@@ -1,0 +1,544 @@
+!---- this routine is prepared only for 1 grid -----
+!
+!----------------------------------------------------------------------
+!- This routine calculates surface fluxes from the ocean using the
+!  approach of the LEAF3 suface scheme. It intends to overwrite the fluxes
+!  calculated by the JULES scheme, if desired.
+!----------------------------------------------------------------------
+
+module ModLeaf3OceanOnly
+
+  use ModParallelEnvironment, only: &
+       MsgDump
+
+  use ModNamelistFile, only: &
+       NamelistFile
+  
+  use ModBasicFields, only: &
+       BasicFields
+
+  use mem_leaf, only: &
+       leaf_vars, &
+       isfcl, &
+       dthcon, &
+       drtcon, &
+       pctlcon, &
+       leaf_g
+
+  use mem_grid, only: &
+       grid_vars, &
+       zt, &
+       zm, &
+       ngrid, &
+       time, &
+       dtlt, &
+       if_adap, &
+       jdim, &
+       dzt, &
+       istp, &
+       itime1, &
+       ngrids, &
+       grid_g, &
+       npatch, &
+       nstbot, &
+       nzg, &
+       nzs
+
+  use ModCuParmFields, only: &
+       CuParmFields
+
+  use ModTurbFields, only: &
+       TurbFields
+
+  use ModRadiateFields, only: &
+       RadiateFields
+  
+  use io_params, only: &
+       iupdsst, &
+       ssttime1, &
+       ssttime2
+
+  use ModLeafComs, only: &
+       timefac_sst, &
+       niter_leaf, &
+       niter_can, &
+       dtll, &
+       dtll_factor, &
+       dtlc_factor, &
+       dtlc, &
+       hcapcan, &
+       wcapcan, &
+       hcapveg, &
+       dtllohcc, &
+       dtllowcc, &
+       dtlcohcc, &
+       dtlcowcc, &
+       dtlcohcv, &
+       z0fac_water, &
+       snowrough, &
+       ups, &
+       vps, &
+       ths, &
+       rvs, &
+       zts, &
+       pis, &
+       dens, &
+       prss, &
+       vels, &
+       gzotheta, &
+       tempk, &
+       snowfac, &
+       thetacan, &
+       vels_pat, &
+       rdi, &
+       pcpgl, &
+       fracliq
+
+  use rconstants, only: &
+       g, &
+       cpor, &
+       p00, &
+       vonk, &
+       cp, &
+       cpi, &
+       rocp, &
+       alvl, &
+       stefan
+
+  use node_mod, only : &
+       mynum  ! INTENT(IN)
+
+  use ccatt_start, only: &
+       ccatt
+
+  use ModLeaf3, only: &
+       sfc_fields, &
+       stars, &
+       leaf_bcond, &
+       sfclmcv
+
+  use ModCuParGrell3,    only : &
+       g3d_g
+
+  use convpar_gf_geos5, only : &
+       use_gustiness
+
+  real, allocatable, dimension(:,:,:) :: can_temp, can_rvap, ustar  ,tstar  ,rstar
+  real, allocatable, dimension(:,:)   :: sflux_t ,sflux_r
+
+  logical :: firsttime = .true.  
+
+  private
+  public :: sfclyr_ocean_only
+  
+contains
+
+  !*****************************************************************************
+
+  subroutine alloc_ocean_only(m2,m3)
+
+    integer, intent(in) :: m2
+    !# number of points in x direction
+    integer, intent(in) :: m3
+    !# number of points in y direction
+
+    integer :: ierr
+    
+    if(ngrids > 1) stop "alloc_ocean_only routine is prepared only for 1 grid" 
+
+    allocate(can_temp(m2,m3,1), can_rvap(m2,m3,1), ustar  (m2,m3,1)  &
+         ,tstar   (m2,m3,1), rstar   (m2,m3,1), sflux_t(m2,m3)    &
+         ,sflux_r (m2,m3),  STAT=ierr)
+
+    if (ierr/=0) call fatal_error("Allocating ocean_only")
+    can_temp=0.0; can_rvap=0.0; ustar=0.0 ;tstar=0.0 ;rstar=0.0
+    sflux_t=0.0;  sflux_r=0.0
+
+  end subroutine alloc_ocean_only
+  !*****************************************************************************
+
+  subroutine sfclyr_ocean_only(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
+       oneNamelistFile, oneBasicFields, oneTurbFields, oneRadiateFields, &
+       oneCuParmFields)
+    implicit none
+
+    !Arguments:
+    integer, intent(in) :: mzp,mxp,myp,ia,iz,ja,jz,ibcon
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
+    type(RadiateFields), pointer, intent(in) :: oneRadiateFields
+    type(CuParmFields), pointer, intent(in) :: oneCuParmFields
+
+    !Local Variables
+    real :: rslif
+    integer :: ng
+
+    real, dimension(mxp,myp) :: l_ths2, l_rvs2, l_pis2, l_dens2, &
+         l_ups2, l_vps2, l_zts2
+
+    character(len=*), parameter :: h="**(sfclyr_ocean_only)**"
+    logical, parameter :: dumpLocal=.false.
+
+    if (nstbot == 0) return
+
+    ng=ngrid
+
+
+    call sub_leaf3_ocean_only(mzp,mxp,myp,nzg,nzs,npatch,ia,iz,ja,jz             &
+         ,leaf_g (ng), oneNamelistFile, oneBasicFields, oneTurbFields, oneRadiateFields   &
+         ,grid_g (ng), oneCuParmFields &
+         ,l_ths2, l_rvs2, l_pis2                   &
+         ,l_dens2,l_ups2, l_vps2                   &
+         ,l_zts2                                             &
+                                !
+         )
+
+    ! Apply lateral boundary conditions to leaf3 arrays
+
+    if (dumpLocal) then
+       call MsgDump(h//" apply lateral bc to soil_energy invoking leaf_bcond")
+    end if
+    
+    call leaf_bcond(mxp,myp,nzg,nzs,1,jdim     &
+         ,leaf_g(ng)%soil_water  ,leaf_g(ng)%sfcwater_mass    &
+         ,leaf_g(ng)%soil_energy ,leaf_g(ng)%sfcwater_energy  &
+         ,leaf_g(ng)%soil_text   ,leaf_g(ng)%sfcwater_depth   &
+         ,leaf_g(ng)%ustar       ,leaf_g(ng)%tstar            &
+         ,leaf_g(ng)%rstar       ,leaf_g(ng)%veg_albedo       &
+         ,leaf_g(ng)%veg_fracarea,leaf_g(ng)%veg_lai          &
+         ,leaf_g(ng)%veg_tai                                  &
+         ,leaf_g(ng)%veg_rough   ,leaf_g(ng)%veg_height       &
+         ,leaf_g(ng)%patch_area  ,leaf_g(ng)%patch_rough      &
+         ,leaf_g(ng)%patch_wetind,leaf_g(ng)%leaf_class       &
+         ,leaf_g(ng)%soil_rough  ,leaf_g(ng)%sfcwater_nlev    &
+         ,leaf_g(ng)%stom_resist ,leaf_g(ng)%ground_rsat      &
+         ,leaf_g(ng)%ground_rvap ,leaf_g(ng)%veg_water        &
+         ,leaf_g(ng)%veg_temp    ,leaf_g(ng)%can_rvap         &
+         ,leaf_g(ng)%can_temp    ,leaf_g(ng)%veg_ndvip        &
+         ,leaf_g(ng)%veg_ndvic   ,leaf_g(ng)%veg_ndvif        )
+
+    return
+  end subroutine sfclyr_ocean_only
+
+  !*****************************************************************************
+
+  subroutine sub_leaf3_ocean_only(m1,m2,m3,mzg,mzs,np,ia,iz,ja,jz  &
+       ,leaf,oneNamelistFile,oneBasicFields,oneTurbFields,oneRadiateFields,grid,&
+       oneCuParmFields &
+       ,ths2,rvs2,pis2,dens2,ups2,vps2,zts2           &
+       )
+
+
+    implicit none
+
+    ! Arguments:
+    integer, intent(in) :: m1,m2,m3,mzg,mzs,np,ia,iz,ja,jz
+    type (leaf_vars)    :: leaf
+    type (NamelistFile), pointer, intent(in) :: oneNamelistFile
+    type (BasicFields), pointer, intent(in) :: oneBasicFields
+    type (TurbFields)    :: oneTurbFields
+    type (RadiateFields), pointer, intent(in) :: oneRadiateFields
+    type (grid_vars)    :: grid
+    type (CuParmFields), pointer, intent(in)  :: oneCuParmFields
+    real, dimension(m2,m3), intent(out) :: ths2,rvs2,pis2,dens2,ups2,vps2,zts2
+
+    ! Local variables:
+    integer :: i,j,ip,iter_leaf
+    real :: rslif
+    integer :: k2
+    real :: alb,dvelu,dvelv,velnew,sflux_uv,cosine1,sine1,cosz,patch_area,albedt,l_area &
+         ,gust,zws,zkhvfl,pahfs,pqhfl,temps,pgeoh,hpbl,vels2
+
+    real, dimension(m2,m3)    :: sflux_u, sflux_v, sflux_w & !sflux_t, sflux_r, O_albedt &
+         , O_rlongup, O_albedt
+    real, dimension(m2,m3,1) :: patch_rough, ground_rsat
+
+    real, parameter :: beta= 1. ,min_ocean=0.1
+
+    character(len=16) :: str_f(10)
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(sub_leaf3_ocean_only)**"
+    logical, parameter :: dumpLocal=.false.
+
+    if(firsttime) then 
+       firsttime = .FALSE. 
+       !allocate(can_temp(m2,m3,1), can_rvap(m2,m3,1), ustar      (m2,m3,1)  &
+       !           ,tstar(m2,m3,1), rstar   (m2,m3,1))
+       call alloc_ocean_only(m2,m3)
+       can_temp(:,:,1) = leaf%can_temp(:,:,1) 
+       can_rvap(:,:,1) = leaf%can_rvap(:,:,1)
+       ustar   (:,:,1) = leaf%ustar   (:,:,1)
+       tstar   (:,:,1) = leaf%tstar   (:,:,1) 	          	       
+       rstar   (:,:,1) = leaf%rstar   (:,:,1)
+    endif
+
+
+    ! Time interpolation factor for updating SST
+
+    if (iupdsst == 0) then
+       timefac_sst = 0.
+    else
+       timefac_sst = (time - ssttime1(ngrid)) / (ssttime2(ngrid) - ssttime1(ngrid))
+    endif
+
+    ! Define leaf3 and canopy time-split timesteps here.  This ensures that leaf3
+    ! will not use a timestep longer than about 40 seconds, and canopy will not
+    ! use a timestep longer than about 15 seconds.  This allows values of
+    ! hcapcan = 2.e4, wcapcan = 2.e1, and hcapveg = 3.e4 as are now defined below.
+
+    niter_leaf  = max(1,nint(dtlt/40.+.4))
+    niter_can   = max(1,nint(dtll/15.+.4))
+    dtll_factor = 1. / float(niter_leaf)
+    dtll        = dtlt * dtll_factor
+    dtlc_factor = 1. / float(niter_can)
+    dtlc        = dtll * dtlc_factor
+
+    hcapcan = 2.0e4
+    wcapcan = 2.0e1
+    hcapveg = 3.e4
+
+    dtllohcc = dtll / hcapcan
+    dtllowcc = dtll / wcapcan
+    dtlcohcc = dtlc / hcapcan
+    dtlcowcc = dtlc / wcapcan
+    dtlcohcv = dtlc / hcapveg
+
+    z0fac_water = .016 / g
+    snowrough = .001
+
+    hpbl = 500. ! typical PBL height over the oceans (m)
+
+    ! Copy surface atmospheric variables into 2d arrays for input to leaf
+    call sfc_fields(m1,m2,m3,ia,iz,ja,jz,jdim                       &
+         ,oneBasicFields%theta ,oneBasicFields%rv  ,oneBasicFields%up  &
+         ,oneBasicFields%vp    ,oneBasicFields%dn0 ,oneBasicFields%pp  &
+         ,oneBasicFields%pi0   ,grid%rtgt   ,zt               &
+         ,ths2,rvs2,ups2,vps2,pis2,dens2,zts2                    )
+
+    do j = ja,jz
+       do i = ia,iz
+
+          if(leaf%patch_area(i,j,1) < min_ocean) cycle 
+
+          ! Copy surface variables to single-column values
+
+          ups = ups2(i,j)
+          vps = vps2(i,j)
+          ths = ths2(i,j)
+          rvs = rvs2(i,j)
+          zts = zts2(i,j)
+          pis = pis2(i,j)
+          dens = dens2(i,j)
+
+          gzotheta = g * zts / ths
+          prss = pis ** cpor * p00
+          vels = sqrt(ups ** 2 + vps ** 2)
+          temps = ths * pis 
+
+          ! **(JP)** wrong code
+          !--- downdraft mass flux for the gustiness parameterization
+          !--- based on Redelsperger et al (2000).
+          !gust = g3d_g(ngrid)%xmb_deep_dd(i,j)
+          !gust = min( 0.6, max(0.0, gust ) )
+          !gust = log(1. + 600.4*gust -4375.*gust**2) 
+          ! **(JP)**: since argument to (log) can be negative when gust prior to log
+          ! is in the range [0.0 : 0.6]
+          ! 
+          ! **(JP)**: the polinomial -4375*x**2 + 600.4*x + 1.0 has roots
+          ! -0.00166458 and +0.1388801
+          !
+          ! **(JP)**: consequently, to garantee non-negative log argument,
+          ! gust prior to log should be on the range [0.0 : 0.138]
+          !
+          ! **(JP)**: code replacement:
+
+          gust = g3d_g(ngrid)%xmb_deep_dd(i,j)
+          gust = min( 0.138, max(0.0, gust ) )
+          gust = log(1. + 600.4*gust -4375.*gust**2) 
+          
+!          if (dumpLocal) then
+!             write(str(1),"(i8)") i
+!             write(str(2),"(i8)") j
+!             write(str_f(1),"(e15.7)") gust
+!             write(str_f(2),"(e15.7)") 1. + 600.4*gust -4375.*gust**2 
+!             call MsgDump(h//" at i="//trim(adjustl(str(1)))// &
+!             ", j="//trim(adjustl(str(2)))// &
+!             "; gust after minmax="//trim(adjustl(str_f(1)))// &
+!             ", log argument="//trim(adjustl(str_f(2))))
+!          end if
+
+          !--- add the gustiness to the grid scale wind
+          vels2 = vels**2 + use_gustiness*(gust**2)
+
+          !--- get the convective-scale velocity w*
+          !--- local le and h fluxes for W*
+          pahfs=-sflux_t(i,j) *dens*1004.64  !W/m^2
+          pqhfl=-sflux_r(i,j)                !kg/m^2/s
+
+          !--- buoyancy flux (h+le)
+          zkhvfl= (pahfs/1004.64+0.608*temps*pqhfl)/dens ! K m s-1
+          pgeoh = hpbl*g
+
+          !--- convective-scale velocity W* (m/s)
+          zws = max(0.,0.001-1.5*0.41*zkhvfl*pgeoh/temps)! m+3 s-3
+          zws = 1.2*zws**.3333 ! m/s
+
+          !---add enhancement by boundary layer convection
+          !--- based on Redelsperger et al (2000) with beta ~1.
+          vels2 = vels2 + (beta*zws)**2 ! m^2/s^2
+
+          !--- get the final vels2 for the fluxes
+          vels = sqrt(vels2)
+
+          ! Update water internal energy from time-dependent SST
+
+          if (dumpLocal) then
+             call MsgDump(h//" update soil_energy from time-dependent sst")
+          end if
+          
+          leaf%soil_energy(mzg,i,j,1) = 334000.  &
+               + 4186. * (leaf%seatp(i,j) + (leaf%seatf(i,j) - leaf%seatp(i,j))  &
+               * timefac_sst - 273.15)
+
+          !---reset the fluxes 
+          sflux_u  (i,j) = 0.
+          sflux_v  (i,j) = 0.
+          sflux_w  (i,j) = 0.
+          sflux_t  (i,j) = 0.
+          sflux_r  (i,j) = 0.
+          O_albedt (i,j) = 0.
+          O_rlongup(i,j) = 0.
+
+          ! Begin patch loop
+          do ip = 1,1
+
+             !if(mynum == 1) print*,"1ocean only",patch_area(i,j,ip), sflux_t(i,j)
+
+             ! Begin leaf small timestep here.
+             do iter_leaf = 1,niter_leaf
+
+                ! Calculate radiative fluxes between atmosphere, vegetation, and ground/snow
+                ! based on already-computed downward shortwave and longwave fluxes from
+                ! the atmosphere.  Fill tempk array with soil and snow temperature (C) and
+                ! fracliq array with liquid fraction of water content in soil and snow.
+                ! Other snowcover properties are also computed here.
+                cosz       = oneRadiateFields%cosz  (i,j)  
+                patch_area = leaf%patch_area(i,j,ip) 
+                l_area     = 1.-patch_area
+                alb        = 0.
+
+                if (cosz>0.03) then
+                   alb    = min(max(-.0139 + .0467*tan(acos(cosz)), 0.03), 0.999)
+                endif
+
+                O_albedt(i,j)= O_albedt(i,j) + patch_area*alb
+
+                if (dumpLocal) then
+                   call MsgDump(h//" invokes qtk passing soil_energy")
+                end if
+                
+                call qtk(leaf%soil_energy(mzg,i,j,ip), tempk(mzg), fracliq(mzg))
+
+                O_rlongup(i,j) = O_rlongup(i,j) + stefan*tempk(mzg)**4
+
+
+                ! For water surface (patch 1), compute surface saturation mixing ratio
+                ! and roughness length based on previous ustar.
+                ! For soil patches, compute roughness length based on vegetation and snow.
+
+                ground_rsat(i,j,ip) = rslif(prss,tempk(mzg))
+                patch_rough(i,j,ip) = max(z0fac_water * ustar(i,j,ip) ** 2,.0001)
+
+
+                ! Calculate turbulent fluxes between atmosphere and canopy (or "canopy")
+
+                thetacan = can_temp(i,j,ip) / pis
+
+                call stars(ustar(i,j,ip),tstar(i,j,ip)                 &
+                     ,rstar(i,j,ip),ths,rvs,thetacan,can_rvap(i,j,ip)  &
+                     ,zts,patch_rough(i,j,ip),leaf%patch_area(i,j,ip)       &
+                     ,vels,vels_pat,vonk,dtllohcc,dens,dtll                      &
+                     ,leaf%R_aer(i,j,ip))
+
+                call sfclmcv(i,j,ustar(i,j,ip), tstar(i,j,ip),        &
+                     rstar(i,j,ip), vels, vels_pat, ups, vps, gzotheta, &
+                     leaf%patch_area(i,j,ip), sflux_u(i,j),		      &
+                     sflux_v(i,j), sflux_w(i,j),		              &        
+                     sflux_t(i,j), sflux_r(i,j)		              &
+                     )
+
+                ! For water patches, update temperature and moisture of "canopy" from
+                ! divergence of fluxes with water surface and atmosphere.  rdi = ustar/5
+                ! is the viscous sublayer conductivity from Garratt (1992).
+
+                rdi = .2 * ustar(i,j,1)
+
+                can_temp(i,j,1) = can_temp(i,j,1)        &
+                     + dtllohcc * dens * cp                          &
+                     * ((tempk(mzg) - can_temp(i,j,1)) * rdi    &
+                     + ustar(i,j,1) * tstar(i,j,1) * pis)
+
+                can_rvap(i,j,1) = can_rvap(i,j,1) + dtllowcc * dens       &
+                     * ((ground_rsat(i,j,1) - can_rvap(i,j,1)) * rdi  &
+                     + ustar(i,j,1) * rstar(i,j,1))
+
+                if (CCATT==1) then
+                   leaf%R_aer(i,j,ip) = rdi
+                endif
+
+             enddo
+          enddo
+
+       enddo
+    enddo
+
+    ! Normalize accumulated fluxes and albedo seen by atmosphere over model
+    ! timestep dtlt.
+    do j = ja,jz
+       do i = ia,iz
+          sflux_u(i,j) = sflux_u(i,j) * dtll_factor * dens2(i,j)
+          sflux_v(i,j) = sflux_v(i,j) * dtll_factor * dens2(i,j)
+          sflux_w(i,j) = sflux_w(i,j) * dtll_factor * dens2(i,j)
+          sflux_t(i,j) = sflux_t(i,j) * dtll_factor * dens2(i,j)
+          sflux_r(i,j) = sflux_r(i,j) * dtll_factor * dens2(i,j)
+       enddo
+    enddo
+    !--- combine the fluxes over the land from JULES + over the ocean calculated here 
+    do j = ja,jz
+       do i = ia,iz  
+          if(leaf%patch_area(i,j,1) < min_ocean) cycle 
+          patch_area = leaf%patch_area(i,j,1)
+          l_area     = 1.-patch_area
+          oneTurbFields%sflux_u(i,j) = l_area*oneTurbFields%sflux_u(i,j) + patch_area * sflux_u(i,j) 
+          oneTurbFields%sflux_v(i,j) = l_area*oneTurbFields%sflux_v(i,j) + patch_area * sflux_v(i,j) 
+          oneTurbFields%sflux_w(i,j) = l_area*oneTurbFields%sflux_w(i,j) + patch_area * sflux_w(i,j) 
+          oneTurbFields%sflux_t(i,j) = l_area*oneTurbFields%sflux_t(i,j) + patch_area * sflux_t(i,j) 
+          oneTurbFields%sflux_r(i,j) = l_area*oneTurbFields%sflux_r(i,j) + patch_area * sflux_r(i,j) 
+       enddo
+    enddo
+
+    if (oneNamelistFile%ilwrtyp > 0 .or. oneNamelistFile%iswrtyp > 0) then
+       do j = ja,jz
+          do i = ia,iz
+             O_albedt (i,j) = O_albedt (i,j) * dtll_factor
+             O_rlongup(i,j) = O_rlongup(i,j) * dtll_factor
+          enddo
+       enddo
+
+       do j = ja,jz
+          do i = ia,iz
+             if(leaf%patch_area(i,j,1) < min_ocean) cycle 
+             patch_area = leaf%patch_area(i,j,1)
+             l_area     = 1.-patch_area
+             oneRadiateFields%albedt (i,j) = l_area*oneRadiateFields%albedt (i,j)  + patch_area * O_albedt (i,j) 
+             oneRadiateFields%rlongup(i,j) = l_area*oneRadiateFields%rlongup(i,j)  + patch_area * O_rlongup(i,j)
+          enddo
+       enddo
+    endif
+
+    !if(mynum == 1) print*,"2ocean only"
+  end subroutine sub_leaf3_ocean_only
+
+  !###########################################################################
+end module ModLeaf3OceanOnly
