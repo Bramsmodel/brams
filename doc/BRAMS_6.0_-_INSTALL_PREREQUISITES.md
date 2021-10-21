@@ -4,6 +4,8 @@ Before You install the prerequisites You must have at least one version of gfort
 
 > We recomend to install the **gfortran revision 8.4.0**  and **gcc revision 8.4.0**. You can install or use newest version of compilers but is by your own risk. You may try to use INTEL, NVIDIA or other compiler too. The strucuture of setup is almost the same.
 
+> In body of text bellow we will use  **<Your_C_compiler>** for your C compiler choice and <Your_Fortran_compiler> for Your Fortran compiler choice.
+
 In most system there are a lot of libraries pre-installed. Yes, if possible use them. But, unfortunatelly, some times a library require other dependencies and the configure may be broken. The instructions bellow in this documents will guide You to install in a particular way. If You got others problems please, contact your system manager.
 
 1. ## Create the prerequisites folder's strucuture:
@@ -29,6 +31,8 @@ In most system there are a lot of libraries pre-installed. Yes, if possible use 
    mkdir /home/oscar/install
    cd /home/oscar/install
    ```
+   
+   >  If You will use differents compilers environment we recommend do create the folder with respective names like /opt/nvidia , /opt/intel or /opt/gnu instead /opt/apps as example above
 
 2. ## Download all necessary prerequisites
    
@@ -65,6 +69,8 @@ In most system there are a lot of libraries pre-installed. Yes, if possible use 
    sudo ln -s /usr/bin/gcc {YOUR_DIR}/bin/gcc
    ```
    
+   > If you will use other compiler instead gfortran/gcc make the export for correct compiler
+   
    Please, check if Your path have in first part {YOUR_DIR} and if the correct library is in first part of LD_LIBRARY_PATH. 
    
    ```batch
@@ -72,7 +78,7 @@ In most system there are a lot of libraries pre-installed. Yes, if possible use 
    echo $LD_LIBRARY_PATH
    ```
    
-   Please check if Fortran and gcc version is the correct. 
+   Please check if Fortran and gcc version is the correct or make the same for the other compiler You will use.
    
    ```
    gfortran --version
@@ -101,7 +107,7 @@ In most system there are a lot of libraries pre-installed. Yes, if possible use 
    ```bash
    tar -xzvf mpich-4.0a2.tar.gz 
    cd mpich-4.0a2/
-   ./configure -disable-fast CC=gcc FC=gfortran CFLAGS=-O2 FFLAGS=-O2 CXXFLAGS=-O2 FCFLAGS=-O2 --prefix={YOUR_DIR} --with-device=ch3
+   ./configure -disable-fast CC=<Your_C_compiler> FC=<Your_fortran_compiler> CFLAGS=-O2 FFLAGS=-O2 CXXFLAGS=-O2 FCFLAGS=-O2 --prefix={YOUR_DIR} --with-device=ch3
    make
    sudo make install
    cd ..
@@ -113,7 +119,7 @@ In most system there are a lot of libraries pre-installed. Yes, if possible use 
    #zlib
    tar -xzvf zlib-1.2.8.tar.gz 
    cd zlib-1.2.8/
-   CC=gcc ./configure --prefix={YOUR_DIR}
+   CC=<Your_C_compiler> ./configure --prefix={YOUR_DIR}
    make
    sudo make install
    cd ..
@@ -121,7 +127,7 @@ In most system there are a lot of libraries pre-installed. Yes, if possible use 
    #szip
    tar -xzvf szip-2.1.tar.gz 
    cd szip-2.1/
-   CC=gcc ./configure --prefix={YOUR_DIR}
+   CC=<Your_C_compiler> ./configure --prefix={YOUR_DIR}
    make
    sudo make install
    cd ..
@@ -129,7 +135,7 @@ In most system there are a lot of libraries pre-installed. Yes, if possible use 
    #Curl
    tar -xzvf curl-7.26.0.tar.gz 
    cd curl-7.26.0/
-   CC=gcc ./configure --prefix={YOUR_DIR} --without-libssh2
+   CC=<Your_C_compiler> ./configure --prefix={YOUR_DIR} --without-libssh2
    make
    make install
    cd ..
@@ -146,10 +152,13 @@ In most system there are a lot of libraries pre-installed. Yes, if possible use 
    cd ..
    ```
    
-    If You are using **NVIDIA** (pgf90/pgcc) to build HDF5, instead the configure above,  make the configure using the command line bellow
+    If You used **NVIDIA** (pgf90/pgcc) to build mpich, instead the configure above,  make the configure using the command lines bellow
    
    ```bash
    ./configure --prefix={YOUR_DIR} FFLAGS=-fPIC FCFLAGS=-fPIC CC={YOUR_DIR}/bin/mpicc FC={YOUR_DIR}/bin/mpif90 --with-zlib={YOUR_DIR}/lib/ --with-szlib={YOUR_DIR}/lib --enable-parallel --enable-fortran 
+   make
+   sudo make install
+   cd ..
    ```
 
 7. ## Building NetCDF libraries
@@ -170,10 +179,13 @@ In most system there are a lot of libraries pre-installed. Yes, if possible use 
    cd ..
    ```
    
-   If You are using NVIDIA (pgf90/pgcc), to build the NetCDF-fortran, instead the configure above, make the configure using the command line bellow
+   If You are using NVIDIA (pgf90/pgcc), to build the NetCDF-fortran, instead the configure above, make the configure using the command lines bellow
    
    ```bash
    FFLAGS=-fPIC FCFLAGS=-fPIC CPPFLAGS=-I{YOUR_DIR}/include LDFLAGS=-L{YOUR_DIR}/lib CFLAGS='-O3' FC={YOUR_DIR}/bin/mpif90  CC={YOUR_DIR}/bin/mpicc ./configure --prefix={YOUR_DIR}
+   make
+   sudo make install
+   cd ..
    ```
 
 8. ## Building grib2 libraries and API
@@ -313,14 +325,37 @@ endif
 With the modifications You can now compile and install:
 
 ```bash
-make CC=gcc FC=gfortran
-make CC=gcc FC=gfortran lib
+make CC=<Your_C_compiler> FC=<Your_Fortran_compiler>
+make CC=<Your_C_compiler> FC=<Your_Fortran_compiler> lib
 sudo cp wgrib2/wgrib2 {YOUR_DIR}/bin/
 sudo cp wgrib2/libwgrib2.a {YOUR_DIR}/lib/
 sudo cp ./lib/*.a {YOUR_DIR}/lib/
 sudo cp ./lib/*.mod {YOUR_DIR}/include/
 cd ..
 ```
+
+9. ## Creating alias for use
+
+If You compile for a specific compiler, gnu, nvidia or intel (or others) all the libraries and binaries will be build in the compiler. For correct use keep in mind that the PATHs must be pointed to correct binary. For example: You will need the mpirun binary for run the model. We recommend You create some alias to call before the use of each run model. Edit the .bashrc in Your home area and put the folowwing lines:
+
+```bash
+alias gnu8='export PATH=/opt/gnu8/bin:$PATH;export LD_LIBRARY_PATH=/opt/gnu8/lib:$LD_LIBRARY_PATH'
+alias nvidia='export PATH=/opt/nvidia/bin:$PATH;export LD_LIBRARY_PATH=/opt/nvidia/lib:$LD_LIBRARY_PATH'
+```
+
+In the example we create two alias, the first "gnu8" adjust the path to search in /opt/gnu8/bin first and use the libs from /opt/gnu8/lib. At same way the nvidia alias but change the pointer to nvidia area.
+
+After edit and save just type on terminal 
+
+```bash
+source ~/.bashrc 
+```
+
+and the two alias will be available. Now You can choose the correct before run the model. If You will run the gnu install execute the alias gnu8 on terminal and You will be ready to go.
+
+---
+
+
 
 ```
    All the required prerequisites are installed. Have fun!

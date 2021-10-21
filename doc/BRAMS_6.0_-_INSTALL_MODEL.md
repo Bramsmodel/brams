@@ -1,6 +1,6 @@
 # BRAMS 6.0 - INSTALL GUIDE
 
-Before You install the model BRAMS-6.0  You must have the prerequisites installed. See the document  [BRAMS_6.0_-_INSTALL_PREREQUISITES](http://ftp.cptec.inpe.br/pesquisa/bramsrd/BRAMS-6.0/docs/BRAMS_6.0_-_INSTALL_PREREQUISITES.html) (extension md or html) to see how to install the requisites.
+Before You install the model BRAMS-6.0  You must have the prerequisites installed. See the document  [BRAMS_6.0_-_INSTALL_PREREQUISITES](http://ftp.cptec.inpe.br/pesquisa/bramsrd/BRAMS-6.0/docs/BRAMS_6.0_-_INSTALL_PREREQUISITES.html) (extension md or html) to see how to install the requisites. **Even You believe the system are ready, please, read the prerequisites document.**
 
 1. Building PATHS and linking compilers.
    
@@ -13,16 +13,18 @@ Before You install the model BRAMS-6.0  You must have the prerequisites installe
    sudo ln -s /usr/bin/gcc {YOUR_DIR}/bin/gcc
    ```
    
-   > Notice: See the prerequisites document to use the correct {YOUR_DIR} .
+   > Notice: See the prerequisites document to use the correct {YOUR_DIR} . <mark>Pay attention in correct compiler You are using!!!!</mark>
    
-   Please, check if Your path have in first part **{YOUR_DIR}** and if the correct library is in first part of LD_LIBRARY_PATH. 
+   Please, check if Your path have in first part **{YOUR_DIR}** and if the correct library is in first part of LD_LIBRARY_PATH.  
+   
+   If You have doubt please, read the prerequisites' doc and use the alias You build (see 9. in prerequisites)
    
    ```batch
    echo $PATH
    echo $LD_LIBRARY_PATH
    ```
    
-   Please check if Fortran and gcc version is the correct. 
+   Please check if Fortran and C version is the correct. (The example is only for Gnu. You must change if use another compiler) 
    
    ```
    gfortran --version
@@ -49,10 +51,10 @@ Before You install the model BRAMS-6.0  You must have the prerequisites installe
    Now You must configure the model passing all libreries You will be use. The **{YOUR_BIN_AREA}** is the folder you want to put the binary and namelists of model. 
    
    ```bash
-   ./configure --program-prefix=BRAMS_6.0 --prefix={YOUR_BIN_AREA} --enable-jules    --with-chem=RELACS_TUV --with-aer=SIMPLE --with-fpcomp={YOUR_DIR}/bin/mpif90    --with-cpcomp={YOUR_DIR}/bin/mpicc --with-fcomp=gfortran --with-ccomp=gcc --with-netcdff={YOUR_DIR} --with-netcdfc={YOUR_DIR} --with-wgrib2={YOUR_DIR}
+   ./configure --program-prefix=BRAMS_6.0 --prefix={YOUR_BIN_AREA} --enable-jules    --with-chem=RELACS_TUV --with-aer=SIMPLE --with-fpcomp={YOUR_DIR}/bin/mpif90    --with-cpcomp={YOUR_DIR}/bin/mpicc --with-fcomp={your_ortran_compiler} --with-ccomp={your_C_compiler} --with-netcdff={YOUR_DIR} --with-netcdfc={YOUR_DIR} --with-wgrib2={YOUR_DIR}
    ```
 
-Bellow an example of use, where {YOUR_BIN_AREA} is /home/oscar.
+Bellow an example of use using Gnu, where {YOUR_BIN_AREA} is /home/oscar.
 
 ```bash
 ./configure --program-prefix=BRAMS_6.0 --prefix=/home/oscar --enable-jules    --with-chem=RELACS_TUV --with-aer=SIMPLE --with-fpcomp=/opt/gnu8/bin/mpif90    --with-cpcomp=/opt/gnu8/bin/mpicc --with-fcomp=gfortran --with-ccomp=gcc --with-netcdff=/opt/gnu8 --with-netcdfc=/opt/gnu8 --with-wgrib2=/opt/gnu8
@@ -306,8 +308,6 @@ A series of logs will be shown on the screen in each of the 3 phases. Be aware o
    
     In the example above gfs data is downloaded for 02Oct2021 and the data will be put in ./datain/GFS/ directory.
 
-
-
-
+------
 
 **<mark>Have Fun with BRAMS-6.0!</mark>**
