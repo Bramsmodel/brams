@@ -450,7 +450,7 @@ contains
     integer, intent(inout) :: request(*)
     integer,intent(in) :: total
     ! Local Variables:
-    integer                :: status(MPI_STATUS_SIZE)
+    integer                :: status(MPI_STATUS_SIZE,total)
     integer                :: ierr, ierr_b, rank
 
     call MPI_Waitall(total, request, status, ierr)
