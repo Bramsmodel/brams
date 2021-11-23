@@ -861,7 +861,9 @@ subroutine commCFL(cfl_max_sum,ngrid)
 
    use node_mod, only: &
        mynum, &        ! INTENT(IN)
-       nMachs
+       nMachs, &
+       nodemxp, &
+       nodemyp
 
    use mem_grid, only: &
        dtlt,          & ! intent(in)
@@ -956,8 +958,8 @@ subroutine commCFL(cfl_max_sum,ngrid)
        endif
         
         !Determina o novo courant
-        nn2 = nnxp(nGrid)
-        nn3 = nnyp(nGrid)
+        nn2 = nodemxp(mynum,nGrid)
+        nn3 = nodemyp(mynum,nGrid)
         do k = 1,nnzp(nGrid)
           aux(k) = th01dn(k,1) * pi01dn(k,1) / c_cp
         enddo
