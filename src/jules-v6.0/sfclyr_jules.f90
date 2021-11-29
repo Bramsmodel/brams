@@ -144,7 +144,7 @@ ENDIF
 !--- Precipitacao total ---
 pcpgl(:,:)=0.
 IF (nnqparm(ng) > 0 .and. level >= 3) THEN
-   pcpgl(:,:)=cuparm_g(ng)%conprr(:1,:) + micro_g(ng)%pcpg(:,:)
+   pcpgl(:,:)=cuparm_g(ng)%conprr(:,:) + micro_g(ng)%pcpg(:,:)
 ELSEIF(nnqparm(ng) == 0 .and. level >= 3) THEN
    pcpgl(:,:)=micro_g(ng)%pcpg(:,:)
 ENDIF
