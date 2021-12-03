@@ -146,7 +146,7 @@ In most system there are a lot of libraries pre-installed. Yes, if possible use 
    ```bash
    tar -xzvf hdf5-1.12.1.tar.gz 
    cd hdf5-1.12.1/
-   ./configure --prefix={YOUR_DIR} CC={YOUR_DIR}/bin/mpicc FC={YOUR_DIR}/bin/mpif90 --with-zlib={YOUR_DIR}/lib/ --with-szlib={YOUR_DIR}/lib --enable-parallel --enable-fortran
+   ./configure --prefix={YOUR_DIR} CC={YOUR_DIR}/bin/mpicc FC={YOUR_DIR}/bin/mpif90 --with-zlib={YOUR_DIR} --with-szlib={YOUR_DIR} --enable-parallel --enable-fortran
    make
    sudo make install
    cd ..
@@ -155,7 +155,7 @@ In most system there are a lot of libraries pre-installed. Yes, if possible use 
     If You used **NVIDIA** (pgf90/pgcc) to build mpich, instead the configure above,  make the configure using the command lines bellow
    
    ```bash
-   ./configure --prefix={YOUR_DIR} FFLAGS=-fPIC FCFLAGS=-fPIC CC={YOUR_DIR}/bin/mpicc FC={YOUR_DIR}/bin/mpif90 --with-zlib={YOUR_DIR}/lib/ --with-szlib={YOUR_DIR}/lib --enable-parallel --enable-fortran 
+   ./configure --prefix={YOUR_DIR} FFLAGS=-fPIC FCFLAGS=-fPIC CC={YOUR_DIR}/bin/mpicc FC={YOUR_DIR}/bin/mpif90 --with-zlib={YOUR_DIR} --with-szlib={YOUR_DIR} --enable-parallel --enable-fortran
    make
    sudo make install
    cd ..
@@ -288,8 +288,6 @@ ifeq ($(need_ftn),1)
   else ifeq ($(findstring ifort,$(notdir $(FC))),ifort)
     a:=$(shell echo '$Hdefine FORTRAN '\"`${FC} --version | head -n 1`\" >> ${CONFIG_H})
   else ifeq ($(findstring nvfortran,$(notdir $(FC))),nvfortran)
-    a:=$(shell echo '$Hdefine FORTRAN '\"`${FC} --version | head -n 2 | tail -n 1`\" >> ${CONFIG_H})
-  else ifeq ($(findstring pgf90,$(notdir $(FC))),pgf90)
     a:=$(shell echo '$Hdefine FORTRAN '\"`${FC} --version | head -n 2 | tail -n 1`\" >> ${CONFIG_H})
   else
     a:=$(shell echo '$Hdefine FORTRAN '\"${FC}\" >> ${CONFIG_H})
