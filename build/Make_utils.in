@@ -30,9 +30,9 @@ PAR_DEFS=    @PAR_DEFS@
 HAVE_ZLIB      = @HAVE_ZLIB@
 ZLIB        = @ZLIB@
 
+include utils.mk
 
 ZLIB_LIB =  -L$(ZLIB) -lz
-
 
 
 ARCHIVE=ar rs
@@ -87,7 +87,7 @@ endif
 
 
 ifeq ($(notdir $(FCOMP)),pgf90)
-FCFLAGS=-fast -O3 -fastsse -Munroll=n:4 #-Mipa=fast,inline,safe  -Msmart 
+FC_FLAGS=-fast -O3 -fastsse -Munroll=n:4 #-Mipa=fast,inline,safe  -Msmart
 CCFLAGS=-O3
 #FC_FLAGS=-O0 -traceback -Mbounds -Mchkptr -Mchkstk 
 #CCFLAGS=-O0 -traceback -Mbounds 
@@ -95,7 +95,7 @@ FPP=-Mpreprocess
 endif 
 
 ifeq ($(notdir $(FCOMP)),ifort)
-FCFLAGS=-O3 
+FC_FLAGS=-O3
 CCFLAGS=-O3
 FPP=-fpp
 endif
@@ -117,16 +117,19 @@ CC_LOADER=$(CC)
 endif
 
 ifeq ($(notdir $(FCOMP)),gfortran)
-#for gfortran >10
-#FCFLAGS=-O3 -ffree-form -ffree-line-length-none -fallow-argument-mismatch -static
-#For gfortran < 10
-FCFLAGS=-O3 -ffree-form -ffree-line-length-none -static
+FC_FLAGS=-O3 -ffree-form -ffree-line-length-none -static
 #FC_FLAGS=-O0 -ffree-form -ffree-line-length-none -fcheck=bounds -fbacktrace -fcheck=bounds -g -fcheck=all -finit-real=nan # -Wall -ffpe-trap=invalid,zero
+
+ifeq ($(GCC_VER_GTE10),)
+     FC_FLAGS +=-fallow-argument-mismatch
+endif
+
 CCFLAGS=-O3 -DLITTLE
 #CCFLAGS=-O0 -DLITTLE
 FPP=-cpp 
 endif 
 
+FCFLAGS=$(FC_FLAGS)
 
 ## Define fancy Make  ###
 ifndef V

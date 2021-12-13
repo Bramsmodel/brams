@@ -39,6 +39,8 @@ ENABLEJULES = @jules@
 
 MOD_EXT   = mod
 
+include utils.mk
+
 ifeq ($(ZLIB),)
 ZLIB_LIB = 
 else
@@ -159,10 +161,12 @@ endif
 ifeq ($(notdir $(FCOMP)),gfortran)
 JULES_DEFS = $(JULES_DEFS0) GNU_FORTRAN
 #FC_FLAGS=-O3 -ffree-form -ffree-line-length-none -fbacktrace -g -fcheck=bounds -fcheck=all -finit-real=nan # -Wall -ffpe-trap=invalid,zero
-#For gfortran > 10
-#FC_FLAGS=-ffree-form -ffree-line-length-none -fallow-argument-mismatch -fbacktrace -g
-#For gfortran< 10
-FC_FLAGS=-fno-range-check -ffree-form -ffree-line-length-none #-fbacktrace -g
+FC_FLAGS=-ffree-form -ffree-line-length-none -fbacktrace -g -fno-range-check
+
+ifeq ($(GCC_VER_GTE10),)
+     FC_FLAGS +=-fallow-argument-mismatch
+endif
+
 OT_FLAGS=-O3
 #CCFLAGS=-O2
 CCFLAGS=-O0
