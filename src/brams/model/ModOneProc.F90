@@ -819,7 +819,8 @@ contains
       if(IPOS==3) &
           iErrNumber=dumpMessage(c_tty,c_yes,header,version,c_fatal," To use NetCDF output the code must be compiled with NetCDF!!! ")
 #endif
-      ! on a "MAKEVFILE" run, call ISAN, then exit.
+   time  = 0.
+   ! on a "MAKEVFILE" run, call ISAN, then exit.
       !if (mchnum==master_num) then
         call chem_isan_driver(namelistFileName)
         if(ccatt==1 .and. chem_assim==1 .and. chemistry >= 0)then

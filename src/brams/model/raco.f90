@@ -115,6 +115,7 @@ contains
           acocc(1) = 0.
           acoaa(mzp,i,j) = 0.
           acobb(mzp) = -1.
+          acocc(mzp) = 0.
 
           amof(1,i,j) = acobb(1)
           amoe(1,i,j) = acocc(1) / amof(1,i,j)
@@ -1706,6 +1707,7 @@ subroutine get_wind_div_v2(m1,m2,m3,ia,iz,ja,jz,izu,jzv &
  integer i,j,k,im,jm
  real dummy,c1x,c1z,c1y
 
+ div=0
    !print*, "subr. [get_wind_div_v2] ..."
 
    !- get div_X--------------------------

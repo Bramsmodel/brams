@@ -252,6 +252,7 @@ subroutine leaf3(m1,m2,m3,mzg,mzs,np,ia,iz,ja,jz  &
 
   END INTERFACE
 
+  dtll=0.0
   !TEB
   nullify(G_URBAN)
   nullify(EMIS_TOWN)

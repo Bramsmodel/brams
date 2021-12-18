@@ -93,7 +93,8 @@ subroutine chem_ISAN_file_inv (iyear1,imonth1,idate1,itime1,timmax,CHEM_ASSIM, C
 !!$ call RAMS_filelist(fnames_fg, rams_filelist_arg, nfgfiles)
 
         nfgfiles = ((timmax/3600) / (isan_inc/100)) + 1    
-
+        
+        
         call date_add_to(iyear1,imonth1,idate1,itime1*100  &
              ,time,'s',iyears,imonths,idates,ihours)
 

@@ -26,7 +26,7 @@ MODULE CUPARM_GRELL3
              		        jz,      &   ! INTENT(IN)
              		        i0,      &   ! INTENT(IN)
              		        j0,      &   ! INTENT(IN)
-			        ibcon        ! INTENT(IN)
+			                 ibcon        ! INTENT(IN)
 
   use mem_grid          , only: time,    &   ! INTENT(IN)
             		   	initial, &   ! INTENT(IN)
@@ -35,13 +35,14 @@ MODULE CUPARM_GRELL3
             		   	ngrid,   &   ! INTENT(IN)
             		   	grid_g,  &   ! INTENT(IN)
             		   	dtlongn, &   ! INTENT(IN)
-           		   	deltaxn, &   ! INTENT(IN)
-           		   	deltayn, &   ! INTENT(IN)
-				npatch,  &   ! INTENT(IN)
-				   ztn,  &   ! INTENT(IN)
-				   zmn,  &   ! INTENT(IN)
-				akminvar,&   ! INTENT(IN)
-                                nxtnest
+           		   	    deltaxn, &   ! INTENT(IN)
+           		   	    deltayn, &   ! INTENT(IN)
+				        npatch,  &   ! INTENT(IN)
+				        ztn,     &   ! INTENT(IN)
+				        zmn,     &   ! INTENT(IN)
+				        akminvar,&   ! INTENT(IN)
+                        nxtnest
+
   use mem_varinit, only: nudlat
 
   use rconstants        , only: tkmin
@@ -65,10 +66,10 @@ MODULE CUPARM_GRELL3
   use mem_scratch1_grell, only: ierr4d,jmin4d,kdet4d,k224d,kbcon4d,ktop4d,kpbl4d,   &
                                 kstabi4d,kstabm4d,xmb4d,edt4d,pwav4d,               &
                                 zup5d, zdn5d,iruncon, pcup5d, prup5d,prdn5d,        &
-				clwup5d,tup5d,enup5d,endn5d,deup5d,dedn5d,zcup5d,   &
+				                    clwup5d,tup5d,enup5d,endn5d,deup5d,dedn5d,zcup5d,   &
                                 up_massdetr5d, up_massentr5d,                       &
                                 dd_massdetr5d, dd_massentr5d,                       &
-				conv_cld_fr5d,sigma4d,klcl4d,cprr4d
+				                    conv_cld_fr5d,sigma4d,klcl4d,cprr4d
 
 
   use mem_grell         , only: cuforc_g,cuforc_sh_g
@@ -87,8 +88,8 @@ MODULE CUPARM_GRELL3
   USE Phys_const, only: cp, p00, tcrit, g, cpor , XL, rm,rgas
 
 !----------- GF - GEOS-5
-  USE ConvPar_GF_GEOS5, only: GF_GEOS5_DRV, deep, shal, mid , nmp, lsmp , cnmp, GF_convpar_init &
-                             ,APPLY_SUB_MP,icumulus_gf
+  USE ConvPar_GF_GEOS5, only: GF_GEOS5_DRV, deep, shal, mid , nmp, lsmp , cnmp &
+                            , GF_convpar_init,apply_sub_mp,icumulus_gf, liq_ice_number_conc
 !-----------
 
   use ccatt_start, only: ccatt
@@ -104,7 +105,7 @@ MODULE CUPARM_GRELL3
      REAL, POINTER, DIMENSION(:,:)  ::weight
      !-----------
   END TYPE g3d_ens_vars
-  TYPE (g3d_ens_vars)    , allocatable :: g3d_ens_g(:,:),g3d_ensm_g(:,:)
+  TYPE (g3d_ens_vars)    , allocatable :: g3d_ens_g(:,:), g3d_ensm_g(:,:)
 
   TYPE g3d_vars
      REAL, POINTER, DIMENSION(:,:  )  ::xmb_deep
@@ -116,6 +117,8 @@ MODULE CUPARM_GRELL3
      REAL, POINTER, DIMENSION(:,:,:)  ::thsrc
      REAL, POINTER, DIMENSION(:,:,:)  ::rtsrc
      REAL, POINTER, DIMENSION(:,:,:)  ::clsrc
+     REAL, POINTER, DIMENSION(:,:,:)  ::nlsrc
+     REAL, POINTER, DIMENSION(:,:,:)  ::nisrc
      REAL, POINTER, DIMENSION(:,:,:)  ::usrc
      REAL, POINTER, DIMENSION(:,:,:)  ::vsrc
      REAL, POINTER, DIMENSION(:,:,:)  ::mup
@@ -129,7 +132,6 @@ MODULE CUPARM_GRELL3
                ,ims,ime, jms,jme, kms,kme            &
                ,ips,ipe, jps,jpe, kps,kpe            &
                ,its,ite, jts,jte, kts,kte
-
 
   integer           ::  imomentum=1
   integer           ::  ishallow_g3
@@ -206,10 +208,11 @@ Contains
     if (associated(g3d%cugd_ttens))  nullify (g3d%cugd_ttens)
     if (associated(g3d%cugd_qvtens)) nullify (g3d%cugd_qvtens)
 
-    !print *,'LFR-DBG: nullify: ',associated(g3d%thsrc);call flush(6)
     if (associated(g3d%thsrc)) nullify (g3d%thsrc)
     if (associated(g3d%rtsrc)) nullify (g3d%rtsrc)
     if (associated(g3d%clsrc)) nullify (g3d%clsrc)
+    if (associated(g3d%nlsrc)) nullify (g3d%nlsrc)
+    if (associated(g3d%nisrc)) nullify (g3d%nisrc)
     if (associated(g3d%usrc )) nullify (g3d%usrc)
     if (associated(g3d%vsrc )) nullify (g3d%vsrc)
     if (associated(g3d%mup  )) nullify (g3d%mup)
@@ -238,12 +241,14 @@ Contains
 
     allocate (g3d%xmb_deep   (m2,m3))       ;g3d%xmb_deep   =0.0
     allocate (g3d%xmb_deep_dd(m2,m3))       ;g3d%xmb_deep_dd=0.0
-    allocate (g3d%err_deep  (m2,m3))        ;g3d%err_deep   =0.0
+    allocate (g3d%err_deep   (m2,m3))       ;g3d%err_deep   =0.0
     allocate (g3d%xmb_shallow(m2,m3))       ;g3d%xmb_shallow=0.0
 
     allocate (g3d%thsrc(m1, m2, m3))  ;g3d%thsrc=0.0
     allocate (g3d%rtsrc(m1, m2, m3))  ;g3d%rtsrc=0.0
     allocate (g3d%clsrc(m1, m2, m3))  ;g3d%clsrc=0.0
+    allocate (g3d%nlsrc(m1, m2, m3))  ;g3d%nlsrc=0.0
+    allocate (g3d%nisrc(m1, m2, m3))  ;g3d%nisrc=0.0
 
     if( (imomentum==0 .or. imomentum==1 ) .and. nnqparm(ng) >= 4) then
      allocate (g3d%usrc(m1, m2, m3))  ;g3d%usrc=0.0
@@ -339,6 +344,15 @@ Contains
          call InsertVTab (g3d%clsrc     ,g3dm%clsrc     &
          ,ng, npts, imean,  &
          'CLSRC :3:hist:anal:mpti:mpt3')
+ 
+    if (associated(g3d%nlsrc))  &
+         call InsertVTab (g3d%nlsrc     ,g3dm%nlsrc     &
+         ,ng, npts, imean,  &
+         'NLSRC :3:hist:anal:mpti:mpt3')
+  if (associated(g3d%nisrc))  &
+         call InsertVTab (g3d%nisrc     ,g3dm%nisrc     &
+         ,ng, npts, imean,  &
+         'NISRC :3:hist:anal:mpti:mpt3')
 
 
     if(imomentum==1 .and. nnqparm(ng) >= 4) then
@@ -399,21 +413,21 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
   REAL   , DIMENSION(mxp,myp) :: CNV_FRC,AA0,AA1,AA2,AA3,AA1_BL,AA1_CIN,TAU_BL,TAU_EC
   REAL   , DIMENSION(mzp,mxp,myp ) ::  zm3d	&
  				      ,zt3d	&
-        			      ,dm3d	&
+        			  ,dm3d	&
  				      ,up	&
  				      ,vp	&
  				      ,wp	&
  				      ,rvap	&
  				      ,temp	&
  				      ,press	&
-        			      , gsf_t	& ! grid-scale forcing for temp
+        			  , gsf_t	& ! grid-scale forcing for temp
  				      , gsf_q	& ! grid-scale forcing fo rv
  				      ,sgsf_t	& ! sub-grid scale forcing for temp
  				      ,sgsf_q	  ! sub-grid scale forcing for rv
 
   REAL,  DIMENSION(mzp , mxp, myp ) ::          &
 		      buoy_exc    &
-		     ,advf_t	  &
+		     ,advf_t	   &
 		     ,SRC_BUOY    &
 		     ,REVSU_GF    &
 		     ,PRFIL_GF    & 
@@ -456,10 +470,10 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
   	    ,sigma4d_tmp
   REAL,DIMENSION(mxp,myp,mzp,maxiens) ::     &
   	     pcup5d_tmp 		     &
-  	    ,up_massentr5d_tmp  	     &
-  	    ,up_massdetr5d_tmp  	     &
-  	    ,dd_massentr5d_tmp  	     &
-  	    ,dd_massdetr5d_tmp  	     &
+  	    ,up_massentr5d_tmp    &
+  	    ,up_massdetr5d_tmp    &
+  	    ,dd_massentr5d_tmp    &
+  	    ,dd_massdetr5d_tmp    &
   	    ,zup5d_tmp  		     &
   	    ,zdn5d_tmp  		     &
   	    ,prup5d_tmp 		     &
@@ -467,9 +481,6 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
   	    ,clwup5d_tmp		     &
   	    ,tup5d_tmp  		     &
   	    ,conv_cld_fr5d_tmp
-
-!----GF-GEOS-5 --------------------------------<
-
 
 !if(initial.eq.2.and.time.lt.cptime) return
 !if(initial.eq.2.and.time.lt.dtlt) return
@@ -488,9 +499,13 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
     g3d_g(ngrid)%mdd         = 0.0
     cuparm_g(ngrid)%conprr   = 0.0
     
+    if(liq_ice_number_conc > 0) then 
+      g3d_g(ngrid)%nlsrc     = 0.0
+      g3d_g(ngrid)%nisrc     = 0.0
+    endif
     if(imomentum == 1 .and. nnqparm(ngrid) >= 4) then
-      g3d_g(ngrid)%usrc = 0.0
-      g3d_g(ngrid)%vsrc = 0.0
+      g3d_g(ngrid)%usrc      = 0.0
+      g3d_g(ngrid)%vsrc      = 0.0
     endif
     ishallow_g3=0
     
@@ -523,7 +538,7 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
       end if
 
       CALL G3DRV( mynum,i0,j0,time          &
-              ,dtlt         		    & !
+              ,dtlt                         & !
               ,grid_length                  & !
               ,autoconv                     & !
               ,aerovap                      & !
@@ -539,7 +554,7 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
               ,basic_g(ngrid)%rv            & !
               ,grid_g(ngrid)%RTGT           & !
               ,tend%PT                      & !
-              ,XL			    & !
+              ,XL			                    & !
               ,CP			    & !
               ,G			    & !
               ,rm                           &
@@ -580,8 +595,8 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
               ,g3d_g(ngrid)%cugd_ttens    &
               ,g3d_g(ngrid)%cugd_qvtens   &
               ! forcings -  for deep/shallow
-              ,cuforc_g(ngrid)%	lsfth     & ! forcing for theta deep
-              ,cuforc_g(ngrid)%	lsfrt     & ! forcing for rv deep
+              ,cuforc_g(ngrid)%	lsfth    & ! forcing for theta deep
+              ,cuforc_g(ngrid)%	lsfrt    & ! forcing for rv deep
               ,cuforc_sh_g(ngrid)%lsfth   & ! forcing for theta shallow
               ,cuforc_sh_g(ngrid)%lsfrt   & ! forcing for rv shallow
               ,level                      &
@@ -615,16 +630,16 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
               ,basic_g(ngrid)%thp           &
               ,basic_g(ngrid)%pp            &
               ,basic_g(ngrid)%pi0           &
-	      ,basic_g(ngrid)%rv            &
+	           ,basic_g(ngrid)%rv            &
               ,tend%PT                      &
-	      ,micro_g(ngrid)%rcp           & ! liquid water
-    	      ,micro_g(ngrid)%rrp           & ! pristine
-    	      ,micro_g(ngrid)%rpp           &
-	      ,micro_g(ngrid)%rsp           &
-    	      ,micro_g(ngrid)%rap           &
-	      ,micro_g(ngrid)%rgp           &
-    	      ,micro_g(ngrid)%rhp           &
-!	      ,
+	           ,micro_g(ngrid)%rcp           & ! liquid water
+    	        ,micro_g(ngrid)%rrp           & ! pristine
+    	        ,micro_g(ngrid)%rpp           &
+	           ,micro_g(ngrid)%rsp           &
+    	        ,micro_g(ngrid)%rap           &
+	           ,micro_g(ngrid)%rgp           &
+    	        ,micro_g(ngrid)%rhp           &
+!	      
               ,g3d_g(ngrid)%THSRC           & ! temp tendency
               ,g3d_g(ngrid)%RTSRC           & ! rv tendency
               ,g3d_g(ngrid)%CLSRC           & ! cloud/ice tendency
@@ -715,8 +730,8 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
               ,g3d_g(ngrid)%CLSRC             & !3d ok ! cloud/ice tendency
               ,g3d_g(ngrid)%cugd_ttens        & !3d ok
               ,g3d_g(ngrid)%cugd_qvtens       & !3d ok
-              ,cuforc_g(ngrid)%	lsfth         & !3d *** borda forcing for theta deep
-              ,cuforc_g(ngrid)%	lsfrt         & !3d *** borda forcing for rv deep
+              ,cuforc_g(ngrid)%	lsfth        & !3d *** borda forcing for theta deep
+              ,cuforc_g(ngrid)%	lsfrt        & !3d *** borda forcing for rv deep
               ,cuforc_sh_g(ngrid)%lsfth       & !3d *** borda forcing for theta shallow
               ,cuforc_sh_g(ngrid)%lsfrt       & !3d *** borda forcing for rv shallow
               ,level                          &
@@ -780,7 +795,7 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
      temp2m(:,:) =0.5*( basic_g(ngrid)%theta(1,:,:)* &
                        (basic_g(ngrid)%pp(1,:,:)+basic_g(ngrid)%pi0(1,:,:))/cp + &
                         basic_g(ngrid)%theta(2,:,:)*&
-		       (basic_g(ngrid)%pp(2,:,:)+basic_g(ngrid)%pi0(2,:,:))/cp )
+		                 (basic_g(ngrid)%pp(2,:,:)+basic_g(ngrid)%pi0(2,:,:))/cp )
    endif
 
    if(iinshcu == 3) ishallow_g3=1
@@ -792,27 +807,27 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
               ,autoconv                     & !
               ,aerovap                      & !
               ,basic_g(ngrid)%dn0           & !
-	      ,cuparm_g(ngrid)%CONPRR       & !
+	           ,cuparm_g(ngrid)%CONPRR       & !
               ,basic_g(ngrid)%up            & !
               ,basic_g(ngrid)%vp            & !
               ,basic_g(ngrid)%theta         & !
               ,basic_g(ngrid)%thp           & !
               ,basic_g(ngrid)%pp            & !
               ,basic_g(ngrid)%pi0           & !
-	      ,basic_g(ngrid)%wp            & !
-	      ,basic_g(ngrid)%rv            & !
-	      ,basic_g(ngrid)%rtp           & !
+	           ,basic_g(ngrid)%wp            & !
+	           ,basic_g(ngrid)%rv            & !
+	           ,basic_g(ngrid)%rtp           & !
               ,grid_g(ngrid)%RTGT           & !
               ,tend%PT                      & !
-	      ,XL			    & !
-	      ,CP			    & !
-	      ,G			    & !
-	      ,rm                           &
-	      ,p00                          &
-	      ,cpor                         & !
-	      ,rgas                         & !
-	      ,zmn(:,ngrid)                 & !
-	      ,ztn(:,ngrid)                 & !
+	           ,XL			                    & !
+	           ,CP			                    & !
+	           ,G			                    & !
+	           ,rm                           &
+	           ,p00                          &
+	           ,cpor                         & !
+	           ,rgas                         & !
+	           ,zmn(:,ngrid)                 & !
+	           ,ztn(:,ngrid)                 & !
               ,g3d_ens_g(apr_gr,ngrid)%apr  &
               ,g3d_ens_g(apr_w ,ngrid)%apr  &
               ,g3d_ens_g(apr_mc,ngrid)%apr  &
@@ -821,21 +836,21 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
               ,g3d_g(ngrid)%xmb_deep        &
               ,g3d_g(ngrid)%err_deep        &
               ,g3d_g(ngrid)%xmb_shallow     &
-	      ,g3d_ens_g(apr_gr,ngrid)%weight &
+	           ,g3d_ens_g(apr_gr,ngrid)%weight &
               ,g3d_ens_g(apr_w ,ngrid)%weight &
               ,g3d_ens_g(apr_mc,ngrid)%weight &
               ,g3d_ens_g(apr_st,ngrid)%weight &
               ,g3d_ens_g(apr_as,ngrid)%weight &
               ,training &
-	      ,grid_g(ngrid)%topt              &
+	           ,grid_g(ngrid)%topt              &
               ,leaf_g(ngrid)%patch_area        &
-	      ,npatch                          &
+	           ,npatch                          &
               ,radiate_g(ngrid)%rshort         &
-	      ,cugd_avedx					&
-	      ,imomentum          				&
+	           ,cugd_avedx					        &
+	           ,imomentum          				  &
               ,ensdim_g3d,maxiens,maxens_g3d,maxens2_g3d,maxens3_g3d,icoic      &
               ,ishallow_g3                                      &
-	      ,ids,ide, jds,jde, kds,kde                        &
+	           ,ids,ide, jds,jde, kds,kde                        &
               ,ims,ime, jms,jme, kms,kme                        &
               ,ips,ipe, jps,jpe, kps,kpe                        &
               ,its,ite, jts,jte, kts,kte                        &
@@ -845,39 +860,39 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
               ,g3d_g(ngrid)%USRC       & ! U tendency
               ,g3d_g(ngrid)%VSRC       & ! V tendency
               ,g3d_g(ngrid)%MUP        & ! updraft mass flux
-	      ,cuforc_g(ngrid)%	lsfth     & ! forcing for theta deep
-	      ,cuforc_g(ngrid)%	lsfrt     & ! forcing for rv deep
-	      ,cuforc_sh_g(ngrid)%lsfth   & ! forcing for theta shallow
-	      ,cuforc_sh_g(ngrid)%lsfrt   & ! forcing for rv shallow
-              ,level                      &
-	      ,micro_g(ngrid)%rcp         & ! liquid water
-	      ,aot500                     &! aot at 500nm
-	      ,temp2m                     &! aot at 500nm
-  	      ,turb_g(ngrid)%sflux_r      &
-              ,turb_g(ngrid)%sflux_t      &
-              ,turb_g(ngrid)%tkep         &
-              ,TKMIN                      &
-	      ,akmin(ngrid)               &
-	      ,do_cupar_mcphys_coupling   &
+	           ,cuforc_g(ngrid)%	lsfth   & ! forcing for theta deep
+	           ,cuforc_g(ngrid)%	lsfrt   & ! forcing for rv deep
+	          ,cuforc_sh_g(ngrid)%lsfth   & ! forcing for theta shallow
+	           ,cuforc_sh_g(ngrid)%lsfrt  & ! forcing for rv shallow
+              ,level                     &
+	           ,micro_g(ngrid)%rcp        & ! liquid water
+	           ,aot500                    &! aot at 500nm
+	           ,temp2m                    &! aot at 500nm
+  	           ,turb_g(ngrid)%sflux_r     &
+              ,turb_g(ngrid)%sflux_t     &
+              ,turb_g(ngrid)%tkep        &
+              ,TKMIN                     &
+	           ,akmin(ngrid)              &
+	           ,do_cupar_mcphys_coupling  &
 !- for convective transport-start
-              ,ierr4d  		     &
+              ,ierr4d  		  &
 	      ,jmin4d  		     &
 	      ,kdet4d  		     &
-	      ,k224d	             &
+	      ,k224d	           &
 	      ,kbcon4d 		     &
 	      ,ktop4d  		     &
 	      ,kpbl4d  		     &
 	      ,kstabi4d		     &
 	      ,kstabm4d		     &
-	      ,xmb4d		     &
-	      ,edt4d		     &
-	      ,pwav4d		     &
+	      ,xmb4d		        &
+	      ,edt4d		        &
+	      ,pwav4d		        &
 	      ,pcup5d  		     &
-              ,up_massentr5d	     &
+         ,up_massentr5d	     &
 	      ,up_massdetr5d	     &
 	      ,dd_massentr5d	     &
 	      ,dd_massdetr5d	     &
-	      ,zup5d		     &
+	      ,zup5d		        &
 	      ,zdn5d   		     &
 	      ,prup5d  		     &
 	      ,prdn5d  		     &
@@ -900,14 +915,14 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
     ierr4d_tmp        = 0.0
     jmin4d_tmp        = 0.0
     klcl4d_tmp        = 0.0
-    k224d_tmp	      = 0.0
+    k224d_tmp	       = 0.0
     kbcon4d_tmp       = 0.0
     ktop4d_tmp        = 0.0
     kstabi4d_tmp      = 0.0
     kstabm4d_tmp      = 0.0
     cprr4d_tmp        = 0.0
-    xmb4d_tmp	      = 0.0
-    edt4d_tmp	      = 0.0
+    xmb4d_tmp	       = 0.0
+    edt4d_tmp	       = 0.0
     pwav4d_tmp        = 0.0
     sigma4d_tmp       = 0.0
     pcup5d_tmp        = 0.0
@@ -915,12 +930,12 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
     up_massdetr5d_tmp = 0.0
     dd_massentr5d_tmp = 0.0
     dd_massdetr5d_tmp = 0.0
-    zup5d_tmp	      = 0.0
-    zdn5d_tmp	      = 0.0
+    zup5d_tmp	       = 0.0
+    zdn5d_tmp	       = 0.0
     prup5d_tmp        = 0.0
     prdn5d_tmp        = 0.0
     clwup5d_tmp       = 0.0
-    tup5d_tmp	      = 0.0
+    tup5d_tmp	       = 0.0
     conv_cld_fr5d_tmp = 0.0
     CNV_FRC (:,:)     = 0.0
     TRACER  (:,:,:,:) = 0.0 
@@ -940,10 +955,10 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
         do i=1,mxp
            call get_zi_gf2018(mzp,tkmin,turb_g(ngrid)%tkep(:,i,j),zmn(:,ngrid),grid_g(ngrid)%rtgt(i,j),&
 	                      grid_g(ngrid)%topt(i,j),kpbl(i,j) )
-	   kpbl (i,j) = max(1,min(kpbl (i,j),mzp-1))
+	        kpbl (i,j) = max(1,min(kpbl (i,j),mzp-1))
       enddo;enddo
     else
-     kpbl = 5  ! check later (introduce better formulation for Zi )
+      kpbl = 5  ! check later (introduce better formulation for Zi )
     endif
     !
     do j=1,myp
@@ -951,41 +966,38 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
          do_this_column(i,j)=0
 
          do k=1,mzp-1
-	   kr=k+1
+	        kr=k+1
            zm3d   (k,i,j) = zmn(kr,ngrid)*grid_g(ngrid)%rtgt(i,j) !m - height above local terrain
            zt3d   (k,i,j) = ztn(kr,ngrid)*grid_g(ngrid)%rtgt(i,j) !m
            dm3d   (k,i,j) = basic_g(ngrid)%dn0  (kr,i,j) !kg/m3
            rvap   (k,i,j) = basic_g(ngrid)%rv   (kr,i,j) !kg/kg
            
-	   theta2temp     = ( basic_g(ngrid)%pp(kr,i,j)+basic_g(ngrid)%pi0(kr,i,j))/cp   !K
-	   temp   (k,i,j) = basic_g(ngrid)%theta(kr,i,j)* theta2temp
-                         
-
-	   press  (k,i,j) = ((basic_g(ngrid)%pp(kr,i,j)+basic_g(ngrid)%pi0(kr,i,j))/cp)**cpor*p00 !Pa
-
+	        theta2temp     = (basic_g(ngrid)%pp(kr,i,j)+basic_g(ngrid)%pi0(kr,i,j))/cp   !K
+	        temp   (k,i,j) = basic_g(ngrid)%theta(kr,i,j)* theta2temp
+           press  (k,i,j) = ((basic_g(ngrid)%pp(kr,i,j)+basic_g(ngrid)%pi0(kr,i,j))/cp)**cpor*p00 !Pa
            up     (k,i,j) = basic_g(ngrid)%up(kr,i,j) !m/s
            vp     (k,i,j) = basic_g(ngrid)%vp(kr,i,j) !m/s
            wp     (k,i,j) = basic_g(ngrid)%wp(kr,i,j)*(-g*basic_g(ngrid)%dn0(kr,i,j)) ! omega Pa/s
 
-	    gsf_t (k,i,j) = (cuforc_g   (ngrid)%lsfth(kr,i,j) + radiate_g(ngrid)%fthrd(kr,i,j))* theta2temp ! Adv+Rad, K/s
+            gsf_t (k,i,j) = (cuforc_g   (ngrid)%lsfth(kr,i,j) + radiate_g(ngrid)%fthrd(kr,i,j))* theta2temp ! Adv+Rad, K/s
             gsf_q (k,i,j) =  cuforc_g   (ngrid)%lsfrt(kr,i,j)              !kg/kg/s  Adv only
            sgsf_t (k,i,j) =  cuforc_sh_g(ngrid)%lsfth(kr,i,j) * theta2temp !K/s     PBL only 
            sgsf_q (k,i,j) =  cuforc_sh_g(ngrid)%lsfrt(kr,i,j)              !kg/kg/s PBL only 
-	   advf_t (k,i,j) =  cuforc_g   (ngrid)%lsfth(kr,i,j) * theta2temp ! advection only, see 'prepare_lsl' routine
+           advf_t (k,i,j) =  cuforc_g   (ngrid)%lsfth(kr,i,j) * theta2temp ! advection only, see 'prepare_lsl' routine
 !falta---
-	   buoy_exc(k,i,j)= 0.
+	        buoy_exc(k,i,j)= 0.
 !falta---    
-
     enddo;enddo;enddo
+
     IF(APPLY_SUB_MP == 1) THEN
       do j=1,myp
        do i=1,mxp
         do k=1,mzp-1
-	    kr=k+1
-	    mp_ice   (:,k,i,j) = 0. ! microg%ice(kr,i,j) in the future includes ice mix ratio 
-	    mp_liq   (:,k,i,j) = 0. ! microg%liq(kr,i,j) in the future includes liq ratio 
-	    mp_cf    (:,k,i,j) = 0. ! cloud fraction  
-      enddo;enddo;enddo
+	      kr=k+1
+	      mp_ice   (:,k,i,j) = 0. ! microg%ice(kr,i,j) in the future includes ice mix ratio 
+	      mp_liq   (:,k,i,j) = 0. ! microg%liq(kr,i,j) in the future includes liq ratio 
+	      mp_cf    (:,k,i,j) = 0. ! cloud fraction  
+      enddo; enddo; enddo
     ENDIF
 
     do j=1,myp
@@ -1003,25 +1015,25 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
     enddo;enddo
 
     if(ilwrtyp==4 .or. iswrtyp==4) THEN
-   	aot500(:,:)=carma(ngrid)%aot(:,:,11)
+   	    aot500(:,:)=carma(ngrid)%aot(:,:,11)
      else
-   	aot500(:,:)=0.0
+   	    aot500(:,:)=0.0
     endif
 
-    if(isfcl == 5 .and. minval(jules_g(ngrid)%t2mj(:,:)) > 100.) then
-     temp2m(:,:) = jules_g(ngrid)%t2mj(:,:) !K
+    if(isfcl == 5 .and.  time > dtlt ) then
+          temp2m(:,:) = jules_g(ngrid)%t2mj(:,:) !K
     else
-     temp2m(:,:) =0.5*( basic_g(ngrid)%theta(1,:,:)* &
-                       (basic_g(ngrid)%pp(1,:,:)+basic_g(ngrid)%pi0(1,:,:))/cp + &
-                        basic_g(ngrid)%theta(2,:,:)*&
-		       (basic_g(ngrid)%pp(2,:,:)+basic_g(ngrid)%pi0(2,:,:))/cp ) !K
+          temp2m(:,:) =0.5*(basic_g(ngrid)%theta(1,:,:)* &
+                           (basic_g(ngrid)%pp(1,:,:)+basic_g(ngrid)%pi0(1,:,:))/cp + &
+                            basic_g(ngrid)%theta(2,:,:)*&
+		                     (basic_g(ngrid)%pp(2,:,:)+basic_g(ngrid)%pi0(2,:,:))/cp ) !Kelvin
     endif
 
     !- call the driver routine to apply the parameterization
     CALL GF_GEOS5_DRV(mxp,myp,mzp,mtp ,nmp        &
                      ,ims,ime, jms,jme, kms,kme   &
                      ,its,ite, jts,jte, kts,kte   &
-		     ,flip        &
+		               ,flip        &
                      ,fscav_int   &
                      ,mynum       &
                      ,dtlt        &
@@ -1029,7 +1041,7 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
                      ,stochastic_sig &
                      ,zm3d        &
                      ,zt3d        &
-		     ,dm3d        &
+		               ,dm3d        &
                      !--- sfc inputs
                      ,lons        &
                      ,lats        &
@@ -1049,25 +1061,27 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
                      ,temp   &
                      ,press  &
                      ,rvap   &
-		     ,mp_ice	 &
-		     ,mp_liq	 &
-		     ,mp_cf	 &
+		               ,mp_ice &
+		               ,mp_liq &
+		               ,mp_cf  &
                      ,rvap   &
-		     !--- atmos composition state
-                     ,TRACER      & !- note: uses GEOS-5 data structure
+		               !--- atmos composition state
+                     ,TRACER   & !- note: uses GEOS-5 data structure
                      !---- forcings---
-                     ,buoy_exc    &
-		     , gsf_t   & ! forcing for theta adv+rad
-		     , gsf_q   & ! forcing for rv    adv
+                     ,buoy_exc &
+		               , gsf_t   & ! forcing for theta adv+rad
+		               , gsf_q   & ! forcing for rv    adv
                      ,advf_t   &
-		     ,sgsf_t   & ! forcing for theta pbl
- 		     ,sgsf_q   & ! forcing for rv    pbl
+		               ,sgsf_t   & ! forcing for theta pbl
+ 		               ,sgsf_q   & ! forcing for rv    pbl
                      !---- output ----
                      ,cuparm_g(ngrid)%CONPRR  &
-                     ,LIGHTN_DENS &
+                     ,LIGHTN_DENS             &
                      ,g3d_g(ngrid)%THSRC      & ! temp tendency
                      ,g3d_g(ngrid)%RTSRC      & ! rv tendency
-                     ,g3d_g(ngrid)%CLSRC      & ! cloud/ice tendency
+                     ,g3d_g(ngrid)%CLSRC      & ! cloud/ice  mass   mix ratio tendency
+                     ,g3d_g(ngrid)%NLSRC      & ! cloud drop number mix ratio tendency
+                     ,g3d_g(ngrid)%NISRC      & ! ice        number mix ratio tendency
                      ,g3d_g(ngrid)%USRC       & ! U tendency
                      ,g3d_g(ngrid)%VSRC       & ! V tendency
                      ,SUB_MPQI    & 
@@ -1076,34 +1090,34 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
                      ,SRC_BUOY    &
                      ,SRC_CHEM    & ! tracer tendency
                      ,REVSU_GF    &
-		     ,PRFIL_GF    & 
+		               ,PRFIL_GF    & 
                      !
-		     ,do_this_column&
-                     ,ierr4d_tmp      &
-                     ,jmin4d_tmp      &
-                     ,klcl4d_tmp      &
-                     ,k224d_tmp       &
-                     ,kbcon4d_tmp     &
-                     ,ktop4d_tmp      &
-                     ,kstabi4d_tmp    &
-                     ,kstabm4d_tmp    &
-                     ,cprr4d_tmp      &
-                     ,xmb4d_tmp       &
-                     ,edt4d_tmp       &
-                     ,pwav4d_tmp      &
-                     ,sigma4d_tmp     &
-                     ,pcup5d_tmp      &
-                     ,up_massentr5d_tmp&
-                     ,up_massdetr5d_tmp&
-                     ,dd_massentr5d_tmp&
-                     ,dd_massdetr5d_tmp&
-                     ,zup5d_tmp       &
-                     ,zdn5d_tmp       &
-                     ,prup5d_tmp      &
-                     ,prdn5d_tmp      &
-                     ,clwup5d_tmp     &
-                     ,tup5d_tmp       &
-                     ,conv_cld_fr5d_tmp&
+		               ,do_this_column    &
+                     ,ierr4d_tmp        & 
+                     ,jmin4d_tmp        &
+                     ,klcl4d_tmp        &
+                     ,k224d_tmp         &
+                     ,kbcon4d_tmp       &
+                     ,ktop4d_tmp        &
+                     ,kstabi4d_tmp      &
+                     ,kstabm4d_tmp      &
+                     ,cprr4d_tmp        &
+                     ,xmb4d_tmp         &
+                     ,edt4d_tmp         &
+                     ,pwav4d_tmp        &
+                     ,sigma4d_tmp       &
+                     ,pcup5d_tmp        &
+                     ,up_massentr5d_tmp &
+                     ,up_massdetr5d_tmp &
+                     ,dd_massentr5d_tmp &
+                     ,dd_massdetr5d_tmp &
+                     ,zup5d_tmp         &
+                     ,zdn5d_tmp         &
+                     ,prup5d_tmp        &
+                     ,prdn5d_tmp        &
+                     ,clwup5d_tmp       &
+                     ,tup5d_tmp         &
+                     ,conv_cld_fr5d_tmp &
                      !-- for debug/diagnostic
                      ,AA0,AA1,AA2,AA3,AA1_BL,AA1_CIN,TAU_BL,TAU_EC  &
                      ,VAR2d,VAR3d_aGF,VAR3d_bGF,VAR3d_cGF,VAR3d_dGF &
@@ -1117,7 +1131,6 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
     g3d_ens_g(3,ngrid)%accapr(:,:)=AA2(:,:) !Tpert_h(10,:,:);
     g3d_ens_g(4,ngrid)%accapr(:,:)=AA3(:,:) !Tpert_v(2,:,:)
    endif
-
 
    if( icumulus_gf(deep) == 1) then 
       ! updraft mass flux at cloud base
@@ -1135,6 +1148,12 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
    g3d_g(ngrid)%CLSRC=EOSHIFT(g3d_g(ngrid)%CLSRC, SHIFT=-1, BOUNDARY=g3d_g(ngrid)%CLSRC(1,:,:), DIM=1)
    g3d_g(ngrid)%USRC =EOSHIFT(g3d_g(ngrid)%USRC,  SHIFT=-1, BOUNDARY=g3d_g(ngrid)%USRC (1,:,:), DIM=1)
    g3d_g(ngrid)%VSRC =EOSHIFT(g3d_g(ngrid)%VSRC,  SHIFT=-1, BOUNDARY=g3d_g(ngrid)%VSRC (1,:,:), DIM=1)
+
+
+   if(liq_ice_number_conc > 0) then
+      g3d_g(ngrid)%NLSRC=EOSHIFT(g3d_g(ngrid)%NLSRC, SHIFT=-1, BOUNDARY=g3d_g(ngrid)%NLSRC(1,:,:), DIM=1)
+      g3d_g(ngrid)%NISRC=EOSHIFT(g3d_g(ngrid)%NISRC, SHIFT=-1, BOUNDARY=g3d_g(ngrid)%NISRC(1,:,:), DIM=1)
+   endif
 
    !-- converting Dtemp/Dt to Dtheta/ Dt (temp = cp * theta/exner function) 
    g3d_g(ngrid)%THSRC = g3d_g(ngrid)%THSRC * cp / (basic_g(ngrid)%pp + basic_g(ngrid)%pi0)
@@ -1165,47 +1184,47 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
      do j=1,myp
       do i=1,mxp
         if(do_this_column(i,j)==0) cycle
-	do n=1,maxiens
+	     do n=1,maxiens
              if( icumulus_gf(n) /= 1) cycle 
              xmb4d   (i,j,n,ngrid) = xmb4d_tmp   (i,j,n)
              ierr4d  (i,j,n,ngrid) = ierr4d_tmp  (i,j,n)
-         enddo
+        enddo
 
-	do k=1,mzp
-	  do n=1,maxiens
+	     do k=1,mzp
+	         do n=1,maxiens
              if( icumulus_gf(n) /= 1) cycle 
              zup5d        (k,i,j,n,ngrid) =  zup5d_tmp        (i,j,k,n)
              clwup5d      (k,i,j,n,ngrid) =  clwup5d_tmp      (i,j,k,n)
              up_massdetr5d(k,i,j,n,ngrid) =  up_massdetr5d_tmp(i,j,k,n)
            enddo
         enddo
-	if( chemistry >= 0) THEN ! - for convective transport only
-	  do n=1,maxiens
-             if( icumulus_gf(n) /= 1) cycle 
-	     jmin4d  (i,j,n,ngrid) = jmin4d_tmp  (i,j,n)
-	     k224d   (i,j,n,ngrid) = k224d_tmp   (i,j,n)
-	     kbcon4d (i,j,n,ngrid) = kbcon4d_tmp (i,j,n)
-	     ktop4d  (i,j,n,ngrid) = ktop4d_tmp  (i,j,n)
-	     kstabi4d(i,j,n,ngrid) = kstabi4d_tmp(i,j,n)
-	     kstabm4d(i,j,n,ngrid) = kstabm4d_tmp(i,j,n)
-	     edt4d   (i,j,n,ngrid) = edt4d_tmp   (i,j,n)
-	     pwav4d  (i,j,n,ngrid) = pwav4d_tmp  (i,j,n)
+	     if( chemistry >= 0) THEN ! - for convective transport only
+	       do n=1,maxiens
+            if( icumulus_gf(n) /= 1) cycle 
+	          jmin4d  (i,j,n,ngrid) = jmin4d_tmp  (i,j,n)
+	          k224d   (i,j,n,ngrid) = k224d_tmp   (i,j,n)
+	          kbcon4d (i,j,n,ngrid) = kbcon4d_tmp (i,j,n)
+	          ktop4d  (i,j,n,ngrid) = ktop4d_tmp  (i,j,n)
+	          kstabi4d(i,j,n,ngrid) = kstabi4d_tmp(i,j,n)
+	          kstabm4d(i,j,n,ngrid) = kstabm4d_tmp(i,j,n)
+	          edt4d   (i,j,n,ngrid) = edt4d_tmp   (i,j,n)
+	          pwav4d  (i,j,n,ngrid) = pwav4d_tmp  (i,j,n)
           enddo
 
-	  do k=1,mzp
-	   do n=1,maxiens
+	       do k=1,mzp
+	         do n=1,maxiens
              if( icumulus_gf(n) /= 1) cycle 
-             zdn5d        (k,i,j,n,ngrid)       =  zdn5d_tmp        (i,j,k,n)
+             zdn5d        (k,i,j,n,ngrid) =  zdn5d_tmp        (i,j,k,n)
              up_massentr5d(k,i,j,n,ngrid)	=  up_massentr5d_tmp(i,j,k,n)
              dd_massentr5d(k,i,j,n,ngrid)	=  dd_massentr5d_tmp(i,j,k,n)
              dd_massdetr5d(k,i,j,n,ngrid)	=  dd_massdetr5d_tmp(i,j,k,n)
              pcup5d       (k,i,j,n,ngrid)	=  pcup5d_tmp       (i,j,k,n)
-	     prup5d       (k,i,j,n,ngrid)	=  prup5d_tmp       (i,j,k,n)
-	     prdn5d       (k,i,j,n,ngrid)	=  prdn5d_tmp       (i,j,k,n)
-	     tup5d        (k,i,j,n,ngrid)	=  tup5d_tmp        (i,j,k,n)
+	          prup5d       (k,i,j,n,ngrid)	=  prup5d_tmp       (i,j,k,n)
+	          prdn5d       (k,i,j,n,ngrid)	=  prdn5d_tmp       (i,j,k,n)
+	          tup5d        (k,i,j,n,ngrid)	=  tup5d_tmp        (i,j,k,n)
            enddo
           enddo
-	endif
+	     endif
      enddo;enddo
    endif
 
@@ -1241,6 +1260,10 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
    g3d_g(ngrid)%VSRC(1  ,1:mxp,1:myp)= g3d_g(ngrid)%VSRC (2    ,1:mxp,1:myp)
    g3d_g(ngrid)%USRC(mzp,1:mxp,1:myp)= g3d_g(ngrid)%USRC (mzp-1,1:mxp,1:myp)
    g3d_g(ngrid)%VSRC(mzp,1:mxp,1:myp)= g3d_g(ngrid)%VSRC (mzp-1,1:mxp,1:myp)
+  endif
+  if(liq_ice_number_conc>0) then
+   g3d_g(ngrid)%NLSRC(mzp,1:mxp,1:myp)= g3d_g(ngrid)%NLSRC(mzp-1,1:mxp,1:myp)
+   g3d_g(ngrid)%NISRC(mzp,1:mxp,1:myp)= g3d_g(ngrid)%NISRC(mzp-1,1:mxp,1:myp)
   endif
 !-------------------------------------------------------------
  endif! 002
@@ -1278,10 +1301,10 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
  if(do_cupar_mcphys_coupling) then
    call cupar2mcphysics(mzp,mxp,myp,ia,iz,ja,jz,ngrid,dtlt,&
                         g3d_g  (ngrid)%clsrc   ,&
-			basic_g(ngrid)%theta   ,&
-			basic_g(ngrid)%pp      ,&
-			basic_g(ngrid)%pi0     ,&
-			basic_g(ngrid)%dn0      )
+			               basic_g(ngrid)%theta   ,&
+			               basic_g(ngrid)%pp      ,&
+			               basic_g(ngrid)%pi0     ,&
+			               basic_g(ngrid)%dn0      )
  else
   !if is not to have direct coupling include cloud/ice source at rtotal tendency
   call accum(int(mxp*myp*mzp,i8), tend%rtt, g3d_g(ngrid)%clsrc)
@@ -1377,7 +1400,7 @@ if(training == 1) then
         !-special treatment over the ocean
         if(leaf_g(ng)%patch_area(i,j,1) .gt. 0.9 ) then ! water
            if(it==apr_as) g3d_ens_g(it,ng)%weight(i,j)=0.0
-	   if(it==apr_st) g3d_ens_g(it,ng)%weight(i,j)=0.425
+	        if(it==apr_st) g3d_ens_g(it,ng)%weight(i,j)=0.425
            if(it==apr_gr) g3d_ens_g(it,ng)%weight(i,j)=0.1667
            if(it==apr_w ) g3d_ens_g(it,ng)%weight(i,j)=0.1667
            if(it==apr_mc) g3d_ens_g(it,ng)%weight(i,j)=0.1667
@@ -1385,7 +1408,7 @@ if(training == 1) then
         else ! land
 
            if(it==apr_as) g3d_ens_g(it,ng)%weight(i,j)=0.0
-	   if(it==apr_st) g3d_ens_g(it,ng)%weight(i,j)=0.175
+	        if(it==apr_st) g3d_ens_g(it,ng)%weight(i,j)=0.175
            if(it==apr_gr) g3d_ens_g(it,ng)%weight(i,j)=0.25
            if(it==apr_w ) g3d_ens_g(it,ng)%weight(i,j)=0.25
            if(it==apr_mc) g3d_ens_g(it,ng)%weight(i,j)=0.25

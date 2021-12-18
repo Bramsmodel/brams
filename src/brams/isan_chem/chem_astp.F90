@@ -37,6 +37,7 @@ subroutine chem_pressure_stage(n1,n2,nhem,glat,glon,glat2,glon2)
     !--(DMK-CCATT-FIM)----------------------------------------------------------------
 
     ! Read the header of input pressure file.
+xnelat=0.0;xnelon=0.0;cntlat=0.0;cntlon=0.0;secondlat=0.0
 
     print 91,innpr(1:len_trim(innpr))
 91  format(//,' Reading pressure gridded data',/,a,//)
@@ -2380,6 +2381,8 @@ subroutine chem_get_press (iunit)
        integer :: nGradsVars
        character(len=8),allocatable :: gradsVarsNames(:)
        character(len=15) :: dataCtl
+
+      xnelat=0.0;xnelon=0.0;cntlat=0.0;cntlon=0.0;secondlat=0.0
 
        ctlFileName=innpr(1:len_trim(innpr)-3)//'ctl'
 

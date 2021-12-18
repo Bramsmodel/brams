@@ -111,6 +111,9 @@ endif
 ifeq ($(notdir $(FPCOMP)),mpif90)
 FC=$(FPCOMP) #-f90=$(FCOMP)
 FC_LOADER=$(FC)
+    # For intel compiler debugging
+	#FC_FLAGS=-O0 -mcmodel=large -check bounds -traceback -fpe0 -check uninit -init=snan,arrays
+	#CCFLAGS=-O0
 endif
 
 ifeq ($(notdir $(FPCOMP)),ftn)
@@ -137,6 +140,9 @@ ifeq ($(notdir $(FCOMP)),ifort)
 JULES_DEFS = $(JULES_DEFS0) INTEL_FORTRAN
 FC_FLAGS=-O3
 CCFLAGS=-O3
+    # For intel compiler debugging
+	#FC_FLAGS=-O0 -mcmodel=large -check bounds -traceback -fpe0 -check uninit -init=snan,arrays
+	#CCFLAGS=-O0
 FPP=-fpp
 FPP_VARSI = INTEL
 endif
