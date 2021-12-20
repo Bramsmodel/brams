@@ -97,9 +97,9 @@ INTEGER :: error
 
 
 if(first_time) then 
-  open(unit=66,file='jules.log',status='replace',action=write)
+  open(unit=66,file='jules.log',status='replace',action='write')
 else
-  open(unit=66,file='jules.log',status='append',action=write)
+  open(unit=66,file='jules.log',position='append',action='write')
 endif
 
 !-----------------------------------------------------------------------------
