@@ -1,4 +1,4 @@
-JULES_SRC     =$(JULES_DIR)/extract/jules/src/
+JULES_SRC     =$(JULES_DIR)/src/
 JULES_01      =$(JULES_SRC)/control/imogen
 JULES_02      =$(JULES_SRC)/control/shared
 JULES_03      =$(JULES_SRC)/control/standalone
