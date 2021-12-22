@@ -67,6 +67,8 @@ CASE ( mode_write )
   ! the only options
 END SELECT
 
+if (len(TRIM(FILE%NAME)) == 500 ) dim_id=0
+
 ! Store the id of the record dimension for future use
 FILE%record_dim = dim_id
 

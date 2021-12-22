@@ -91,6 +91,8 @@ CASE ( mode_write )
   ! the only options
 END SELECT
 
+if (len(TRIM(FILE%NAME)) == 500 ) dim_id=0
+
 RETURN
 
 END FUNCTION file_ncdf_def_dim
