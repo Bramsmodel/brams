@@ -9157,7 +9157,7 @@ contains
 
                del_cap_max = fx* cap_inc(i)
                cap_max(i)  = min(max(cap_max_in(i) + del_cap_max, 10.),150.)
-               print*,"frh=", frh(i),kbcon(i),del_cap_max, cap_max(i)!,  cap_max_in(i)
+               !print*,"frh=", frh(i),kbcon(i),del_cap_max, cap_max(i)!,  cap_max_in(i)
             endif
 
             !- test if the air parcel has enough energy to reach the positive buoyant region
