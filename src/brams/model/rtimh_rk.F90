@@ -27,7 +27,7 @@ subroutine timestep_rk(OneGrid,oneNamelistFile)
        init_div_damping_coeff,  &
        deallocate_alpha_div,    &
        apply_div_damping
-!
+
   use ModGrid, only: &
        Grid
 
@@ -261,6 +261,8 @@ subroutine timestep_rk(OneGrid,oneNamelistFile)
   singleProcRun = nmachs == 1
   julesFile=oneNamelistFile%julesin
 
+  call SynchronizedTimeStamp(TS_RESTO)
+
   !        +------------------------------------------------------------------+
   !        |   Timestep driver for the Runge-Kutta non-hydrostatic time-split |
   !        |      model.                                                      |
@@ -270,31 +272,6 @@ subroutine timestep_rk(OneGrid,oneNamelistFile)
   !--------------------------------
   call TEND0()  
 
-!------------------TMP 
-!------------------TMP 
-!------------------TMP 
-! if(applyIAU == 1 ) then
-!    if(mynum==1) print*,"timeIAU=",time,timeWindowIAU*0.5,abs ( time - dtlt - timeWindowIAU*0.5),applyIAU
-!    call flush(6)
-!    
-!    call CreateIauTendency(ngrid, mzp*mxp*myp, mzp, mxp, myp,ia,iz,ja,jz&
-!          ,varinit_g(ngrid)%varup(:,:,:),varinit_g(ngrid)%varvp(:,:,:)  &
-!          ,varinit_g(ngrid)%varpp(:,:,:),varinit_g(ngrid)%vartp(:,:,:)  &
-!          ,varinit_g(ngrid)%varrp(:,:,:)                                &
-!	  
-!          ,varinit_g(ngrid)%varuf(:,:,:),varinit_g(ngrid)%varvf(:,:,:)  &
-!          ,varinit_g(ngrid)%varpf(:,:,:),varinit_g(ngrid)%vartf(:,:,:)  &
-!          ,varinit_g(ngrid)%varrf(:,:,:)                                &
-!
-!          ,basic_g(ngrid)%up     (:,:,:)   ,basic_g(ngrid)%vp  (:,:,:)  &
-!          ,basic_g(ngrid)%theta  (:,:,:)   ,basic_g(ngrid)%rtp (:,:,:)  &
-!          ,basic_g(ngrid)%pp     (:,:,:)                                )
-!  !RETURN
-!  endif
-!------------------TMP 
-!------------------TMP 
-!------------------TMP 
- 
   ! Implements the Incremental Analysis Update procedure -
   ! phase 2: add the IAU tendencies
   !-------------------------------
@@ -313,13 +290,13 @@ subroutine timestep_rk(OneGrid,oneNamelistFile)
      ! evolution of the Exner pressure: compression term
      call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'ADV')
 
+  call SynchronizedTimeStamp(TS_DYNAMICS)
+
   if (CCATT==1 .and. chemistry >= 0) call aodDriver(mzp,mxp,myp,ia,iz,ja,jz,ngrids)
 
-call TimeStamp(TS_RADIATE)
   !  Radiation parameterization
   !--------------------------------
   call RADIATE(mzp,mxp,myp,ia,iz,ja,jz,mynum)
-call TimeStamp(TS_RADIATE)
 
   !  Surface layer, soil and veggie model
   !----------------------------------------
@@ -384,16 +361,9 @@ call TimeStamp(TS_RADIATE)
      !- call dry deposition and sedimentation routines
      call drydep_driver(mzp,mxp,myp,ia,iz,ja,jz)
 
-     !- call Matrix Aerosol Model
-     !----------------------------------------
-     !if(AEROSOL==2) then
-     !print*,"not doing matrix";call flush(6)
-     !    CALL MatrixDriver(ia,iz,ja,jz,mzp,mxp,myp)
-     !endif
-
   endif
 
-  !!$  call TimeStamp(TS_PHYSICS)
+  call SynchronizedTimeStamp(TS_PHYSICS)
 
   !  Send boundaries to adjoining nodes
   !-------------------------------------------
@@ -407,6 +377,8 @@ call TimeStamp(TS_RADIATE)
     call CORLOS(mzp,mxp,myp,i0,j0,ia,iz,ja,jz,izu,jzv, tend%ut, tend%vt)
   end if
 
+  call SynchronizedTimeStamp(TS_DYNAMICS)
+
   !  Cumulus parameterization version 1
   !----------------------------------------
   if (NNQPARM(ngrid)==1 .or. IF_CUINV==1) then
@@ -416,39 +388,39 @@ call TimeStamp(TS_RADIATE)
   !  Urban canopy parameterization
   !----------------------------------------
   if (IF_URBAN_CANOPY==1) call urban_canopy()
-  !if(stepDebug) print *,mynum,urban_canopy'
+
   !  Analysis nudging and boundary condition
   !------------------------------------------
-  !!$  call TimeStamp(TS_PHYSICS)
-  
   if (NUD_TYPE>0) call DATASSIM()
-  !if(stepDebug) print *,mynum,DATASSIM'
-  !!$  call TimeStamp(TS_DINAMICS)
 
   !  Observation data assimilation
   !----------------------------------------
   if (IF_ODA==1) call oda_nudge()
-  !if(stepDebug) print *,mynum,oda_nudge'
-  !!$  call TimeStamp(TS_PHYSICS)
 
   !  Nested grid boundaries
   !----------------------------------------
   if (nxtnest(ngrid)>=1) call nstbdriv()
-  !if(stepDebug) print *,mynum,nstbdriv'
+
   !  Rayleigh friction for theta
   !----------------------------------------
   call RAYFT()
-  !if(stepDebug) print *,mynum,RAYFT'
+
   !  Get the overlap region between parallel nodes
   !---------------------------------------------------
+
+  call SynchronizedTimeStamp(TS_PHYSICS)
+
   if (nmachs > 1) then
      call WaitRecvMsgs(OneGrid%SelectedGhostZoneSend, OneGrid%SelectedGhostZoneRecv)
   endif
 
   if (iexev == 2) &
      call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'THA')
-  !if(stepDebug) print *,mynum,exevolve'
+
   !- task 2:  NO production by "eclair"
+
+  call SynchronizedTimeStamp(TS_DYNAMICS)
+
   if (ccatt == 1) &
      call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,2,50)
 
@@ -468,7 +440,6 @@ call TimeStamp(TS_RADIATE)
   ! Shallow  cumulus parameterization by Souza
   if (NNSHCU(ngrid)==1) call SHCUPA()
   !---------------------------------------------------
-  !if(stepDebug) print *,mynum,SHCUPA'
   
   if (TEB_SPM==1) then
      ! Update urban emissions
@@ -483,9 +454,10 @@ call TimeStamp(TS_RADIATE)
      endif
   endif
 
+  call SynchronizedTimeStamp(TS_PHYSICS)
+
   if (iexev == 2) &
   call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'THS')
-
 
   !  Sub-grid diffusion terms
   !----------------------------------------
@@ -493,7 +465,9 @@ call TimeStamp(TS_RADIATE)
      call diffuse_brams31() !call optimized subroutine
   else
      call diffuse()
-  endif !;    call dumpVarAllLatLonk(tend%wt, 'WT'  ,412,0,0,1,mxp,1,myp,1,mzp,0.0,0.0)
+  endif
+
+  call SynchronizedTimeStamp(TS_DYNAMICS)
 
   !- STILT-BRAMS coupling (ML)
   if (imassflx == 1) call prep_advflx_to_stilt(mzp,mxp,myp,ia,iz,ja,jz,ngrid)
@@ -507,7 +481,9 @@ call TimeStamp(TS_RADIATE)
   !------------------------------------------------------------------------------
   ! init preparations for Runge-Kutta  -loop
   !------------------------------------------------------------------------------
-call TimeStamp(TS_DYNAMICS)
+
+  call SynchronizedTimeStamp(TS_PHYSICS)
+
   if ( rk_order == 2 ) then
     ! Wicker, Skamarock (1998)-RK-scheme
     rk_beta(1) = 1.0 / 2.0    ! = beta(2,1) of Butcher tableau
@@ -560,78 +536,38 @@ call TimeStamp(TS_DYNAMICS)
   ! begin of Runge-Kutta loop
   !---------------------------------------------------
 
-  !MB>>
-  !nmbr_gpts = mxp * myp * mzp    !MB: only for testing!!!
-  !write(*,"(A,I2,4F15.8)") "uc  ", 0, minval( basic_g(ngrid)%uc  ), maxval( basic_g(ngrid)%uc  ), &
-  !	  sum( basic_g(ngrid)%uc  )/nmbr_gpts, basic_g(ngrid)%uc(7,8,9)
-  !write(*,"(A,I2,4F15.8)") "vc  ", 0, minval( basic_g(ngrid)%vc  ), maxval( basic_g(ngrid)%vc  ), &
-  !	  sum( basic_g(ngrid)%vc  )/nmbr_gpts, basic_g(ngrid)%vc(7,8,9)
-  !write(*,"(A,I2,4F15.8)") "wc  ", 0, minval( basic_g(ngrid)%wc  ), maxval( basic_g(ngrid)%wc  ), &
-  !	  sum( basic_g(ngrid)%wc  )/nmbr_gpts, basic_g(ngrid)%wc(7,8,9)
-  !write(*,"(A,I2,4F15.8)") "pc  ", 0, minval( basic_g(ngrid)%pc  ), maxval( basic_g(ngrid)%pc  ), &
-  !	  sum( basic_g(ngrid)%pc  )/nmbr_gpts, basic_g(ngrid)%pc(7,8,9)
-  !write(*,"(A,I2,4F15.8)") "thc ", 0, minval( basic_g(ngrid)%thc ), maxval( basic_g(ngrid)%thc ), &
-  !	  sum( basic_g(ngrid)%thc )/nmbr_gpts, basic_g(ngrid)%thc(7,8,9)
-  !
-  !write(*,"(A,I2,3F15.8)") "ut  ", 0, minval( tend%ut  ), maxval( tend%ut  ), sum( tend%ut  )/nmbr_gpts
-  !write(*,"(A,I2,3F15.8)") "vt  ", 0, minval( tend%vt  ), maxval( tend%vt  ), sum( tend%vt  )/nmbr_gpts
-  !write(*,"(A,I2,3F15.8)") "wt  ", 0, minval( tend%wt  ), maxval( tend%wt  ), sum( tend%wt  )/nmbr_gpts
-  !write(*,"(A,I2,3F15.8)") "pt  ", 0, minval( tend%pt  ), maxval( tend%pt  ), sum( tend%pt  )/nmbr_gpts
-  !write(*,"(A,I2,3F15.8)") "tht ", 0, minval( tend%tht ), maxval( tend%tht ), sum( tend%tht )/nmbr_gpts
-  !!MB<<
-
-  !MB:
-  !if ( flag_mb_adv_test) then
-  !  !! ascii output for horizontal scalar advection test:
-  !  !do i=1, mxp
-  !  !  write(*,*) "thc  ", i, basic_g(ngrid)%thc(6,i,5)
-  !  !end do
-  !  !! ascii output for vertical scalar advection test:
-  !  do k=1, mzp
-  !    write(*,*) "thc  ", k, zt(k), basic_g(ngrid)%thc(k,10,5)
-  !  end do
-  !end if
-
   !  Lateral velocity boundaries - radiative
   !-------------------------------------------
   call LATBND()
 
+  call SynchronizedTimeStamp(TS_RK_RESTO)
+
   do l_rk = 1, rk_order
-     !write(crk,fmt='(I2.2)') l_rk
-     !print*,"rk:",rk_beta(l_rk),rk_nmbr_small_timesteps(l_rk),  rk_nmbr_small_timesteps(l_rk)*dts,dtlt
 
      !initialize the tendencies with the physics tendencies
      tend%ut_rk (:) =tend%ut (:)
      tend%vt_rk (:) =tend%vt (:)
      tend%wt_rk (:) =tend%wt (:)
-     tend%pt_rk (:) =tend%pt (:) !; call dumpVarAllLatLonk(tend%tht,'THT',515,l_rk,0,1,mxp,1,myp,1,mzp,0.0,0.0)
-     tend%tht_rk(:) =tend%tht(:) !; call dumpVarAllLatLonk(tend%tht_rk,'THT_RK',516,l_rk,0,1,mxp,1,myp,1,mzp,0.0,0.0)
+     tend%pt_rk (:) =tend%pt (:)
+     tend%tht_rk(:) =tend%tht(:)
 
-     !.. call dumpVarAllLatLonk3P(tend%ut_rk , 'UT'  ,528,l_rk,0,1,mxp,1,myp,1,mzp,0.0,0.0,h)
-     !.. call dumpVarAllLatLonk3P(tend%vt_rk , 'VT'  ,528,l_rk,0,1,mxp,1,myp,1,mzp,0.0,0.0,h)
-     !.. call dumpVarAllLatLonk3P(tend%wt_rk , 'WT'  ,528,l_rk,0,1,mxp,1,myp,1,mzp,0.0,0.0,h)
-     !.. call dumpVarAllLatLonk3P(tend%pt_rk , 'PT'  ,528,l_rk,0,1,mxp,1,myp,1,mzp,0.0,0.0,h)
-     !.. call dumpVarAllLatLonk3P(tend%tht_rk,'THT'  ,528,l_rk,0,1,mxp,1,myp,1,mzp,0.0,0.0,h)
-
+     call SynchronizedTimeStamp(TS_RK_RESTO)
+     
      ! advection should give back tendencies
      ! ut_rk, vt_rk, wt_rk, pt_rk, tht_rk = physics tend + advection tendency
 
      !  Velocity advection
      !----------------------------------------
-     call advectc_rk('V',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)!;  call dumpVarAllLatLonk(tend%wt_rk , 'WT'  ,530,l_rk,0,1,mxp,1,myp,1,mzp,0.0,0.0)
-
-     !----------------------------------------
-     !call dumpVarAllLatLonk(basic_g(ngrid)%thp,'aTHPe'//crk,1,mxp,1,myp,1,mzp,0.0,0.0) !ok na 1
-     !call dumpVarAllLatLonk(basic_g(ngrid)%thc,'aTHCe'//crk,1,mxp,1,myp,1,mzp,0.0,0.0) !ok na 1
+     call advectc_rk('V',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
 
      !  advection of pi and theta_il
-     call advectc_rk('THETAIL',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)!;  call dumpVarAllLatLonk(tend%wt_rk , 'WT'  ,536,l_rk,0,1,mxp,1,myp,1,mzp,0.0,0.0)
-     call advectc_rk('PI'     ,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)!;  call dumpVarAllLatLonk(tend%wt_rk , 'WT'  ,537,l_rk,0,1,mxp,1,myp,1,mzp,0.0,0.0)
+     call advectc_rk('THETAIL',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
+     call advectc_rk('PI'     ,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
+
+     call SynchronizedTimeStamp(TS_RK_ADV)
 
      if ( flag_Coriolis_in_every_RK_step ) then
-       !if ( .not. flag_mb_adv_test)
           call CORLOS(mzp,mxp,myp,i0,j0,ia,iz,ja,jz,izu,jzv, tend%ut_rk, tend%vt_rk)
-       !end if
      end if
 
      !  Buoyancy term for w equation
@@ -676,6 +612,7 @@ call TimeStamp(TS_DYNAMICS)
      !MB: does this act on wc???
      if(vveldamp == 1) call w_damping(mzp,mxp,myp,ia,iz,ja,jz,mynum)
 
+     call SynchronizedTimeStamp(TS_RK_RESTO)
 
   end do
   ! end of Runge-Kutta loop
@@ -689,6 +626,8 @@ call TimeStamp(TS_DYNAMICS)
         call deallocate_alpha_div
      end if
   end if
+
+  call SynchronizedTimeStamp(TS_RK_RESTO)
 
   !
   !
@@ -705,7 +644,9 @@ call TimeStamp(TS_DYNAMICS)
       CALL advectc_rk('SCALAR',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
 
   ENDIF
-call TimeStamp(TS_DYNAMICS)
+
+  call SynchronizedTimeStamp(TS_RK_ADVMON)
+  
   !  Update scalars (water species, tke and tracers)
   !----------------------------------------
    call PREDTR()
@@ -731,7 +672,8 @@ call TimeStamp(TS_DYNAMICS)
    elseif(mcphys_type == 1) then
            call negadj1_2M_rams60(mzp,mxp,myp)
   endif
-  call TimeStamp(TS_MICRO)
+
+  call SynchronizedTimeStamp(TS_RK_RESTO)
 
   !  Microphysics (applied on THP, just updated)
   !----------------------------------------
@@ -757,7 +699,8 @@ call TimeStamp(TS_DYNAMICS)
         call micro_gfdl()
   endif
   !----------------------------------------
-  call TimeStamp(TS_MICRO)
+
+  call SynchronizedTimeStamp(TS_PHYSICS)
 
   !- Thermodynamic diagnosis
   if (mcphys_type <= 1 .and. level==3)  then
@@ -788,13 +731,15 @@ call TimeStamp(TS_DYNAMICS)
 
   if (iexev == 2) call get_true_air_density(mzp,mxp,myp,ia,iz,ja,jz)
 
+  call SynchronizedTimeStamp(TS_DYNAMICS)
+
   !----------------------------------------
   !- chemistry - microphysics tranfers - sedimentation and tranfer from clouds to rain
   if (ccatt==1) then
      ! task 5 : sedimentation and mass transfer between clouds and rain
      call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,5,50)
   endif
-  !
+
   !----------------------------------------
   !- chemistry/aerosol solvers
   if (ccatt==1) THEN
@@ -862,8 +807,8 @@ call TimeStamp(TS_DYNAMICS)
           ,basic_g(ngrid)%pp     (:,:,:)                                )
   endif
 
-!!$  call TimeStamp(TS_PHYSICS)
-!if(stepDebug) print *,mynum,end of timestep'
+  call SynchronizedTimeStamp(TS_PHYSICS)
+
 end subroutine timestep_rk
 
 

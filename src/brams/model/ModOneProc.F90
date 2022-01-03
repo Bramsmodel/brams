@@ -1572,6 +1572,9 @@ contains
 
     call DestroyGridTree(AllGrids)
     call DestroyNamelistFile(oneNamelistFile)
+
+    call SynchronizedTimeStamp(TS_RESTO)
+
     call DestroyParallelEnvironment(oneParallelEnvironment)
 
 !--(inspxe)-------------------------------------------------------
