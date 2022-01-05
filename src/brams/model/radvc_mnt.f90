@@ -1024,10 +1024,7 @@ CONTAINS
 	   end do
 	end do
      end do
-     DO iRecS=1,nSend
-       call parf_wait_all_nostatus(nSend,reqSend)
-     END DO
-     !call MPI_Waitall(nSend, reqSend, status2, ierr)
+     call parf_wait_all_nostatus(nSend,reqSend)
 
    end subroutine UpdateBorders
 

@@ -2056,6 +2056,7 @@ contains
          do i=its,itf
             if(do_this_column(i,j) == 0) cycle
             CONPRR(i,j)= (cprr4d(i,j,deep) + cprr4d(i,j,mid) + cprr4d(i,j,shal)) * fixout_qv(i)
+            CONPRR(i,j)= max(0.,CONPRR(i,j))
          enddo
 
          !-- deep + shallow + mid convection
@@ -11038,9 +11039,9 @@ contains
          enddo
 
          if(pre(i)<0.) then
-            print*,"prec evap neg for cumulus=",trim(cumulus)
+            print*,"prec evap neg for cumulus=",pre(i),trim(cumulus)
             call flush(6)
-            stop '@subroutine rain_evap_below_cloudbase'
+            !stop '@subroutine rain_evap_below_cloudbase'
          endif
 
       enddo

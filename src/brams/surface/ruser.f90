@@ -629,7 +629,7 @@ subroutine change_soil_moisture_init(n1,n2,n3,mzg,mzs,npat,ifm   &
   integer, dimension(n2,n3) :: lpw
   real, dimension(mzg):: fx
   real :: tempk,fracliq
-  real, parameter :: fct=0.8
+  real, parameter :: fct=1.0
   !- this routine is left to the user to change the soil-moisture for
   !- sensitivity studies.
   !- For that, the "return" command below must be comment out and the

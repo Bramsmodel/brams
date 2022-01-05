@@ -1,39 +1,12 @@
+!############################# Change Log ##################################
+! 5.0.0
+!
+!###########################################################################
+!  Copyright (C)  1990, 1995, 1999, 2000, 2003 - All Rights Reserved
+!  Regional Atmospheric Modeling System - RAMS
+!###########################################################################
+
 module ModOneProc
-	!# Initialization whenever all processes compute
-	!#
-	!# @note
-	!# ![](http://brams.cptec.inpe.br/wp-content/uploads/2015/11/logo-brams.navigation.png "")
-	!#
-	!# **Brief**: Initialization whenever all processes compute; master also does io_ 
-	!#
-	!# **Documentation**: <http://twixar.me/kW2T>
-	!#
-	!# **Author**: Jairo Panetta **&#9993;**<mailto:jairo.panetta@gmail.com>
-	!#
-	!# **Date**: 2020-04-16
-	!# @endnote
-	!#
-	!# @changes
-	!#**Changelogs:**
-	!# 
-	!# @endchanges
-	!# @bug
-	!# **Open Bugs:**
-	!#
-	!# @endbug
-	!#
-	!# @todo
-	!# **Todo list:**
-	!#
-	!# @endtodo
-	!#
-	!# @warning
-	!# Now is under CC-GPL License, please see
-	!# &copy; <https://creativecommons.org/licenses/GPL/2.0/legalcode.pt>
-	!# @endwarning
-	!#
-	!#--- ----------------------------------------------------------------------------------------
-	
   use ModVarfFile, only: &
        VarfReadStoreOwnChunk
 
@@ -57,15 +30,13 @@ module ModOneProc
        StoreNamelistFileAtTeb_vars_const
 
   use var_tables, only: &
-       num_var,         &
+       num_var, &
        vtab_r
 
   use mem_micro, only: &
        micro_g
 
-  use ModTimestep    , only: timestep
-  use ModTimestep_RK , only: timestep_rk
-  use ModTimestep_ABM, only: timestep_abm
+  use ModTimestep, only: timestep
   use ISO_FORTRAN_ENV, only: OUTPUT_UNIT
   use io_params, only: &
        ndvitime2, &
@@ -76,26 +47,23 @@ module ModOneProc
        iupdsst, &
        frqprt, &
        timstr, &
-       iopunt,   & ! intent(out)
+       iopunt,         & ! intent(out)
        srctime2, &
-       ipastin,  &
-       iinput,  &
+       ipastin, &
+       iinput, &
        ioutput, &
        frqlite, &
-       avgtim,  &
+       avgtim, &
        initfld, &
        StoreNamelistFileAtIo_params
 
-  use Isan_coms, only: &
-      StoreNamelistFileAtIsan_coms, &
-      ICFILETYPE
+  use Isan_coms, only: StoreNamelistFileAtIsan_coms
 
   use mem_cuparm, only: &
        ncufl, &
        cu_times, &
        NNQPARM, &
        if_cuinv, &
-       cuparm_g, &
        StoreNamelistFileAtMem_cuparm
 
   use Mem_globrad, only: &
@@ -137,12 +105,12 @@ module ModOneProc
 
   use Micphys, only: &
        level, &
-       StoreNamelistFileAtMicphys, &
-       mcphys_type, &
-       icloud,idriz,ipris,idust,imd1flg,imd2flg
+       StoreNamelistFileAtMicphys
 
   use Shcu_vars_const, only: StoreNamelistFileAtShcu_vars_const
-
+  use Sib_vars, only: StoreNamelistFileAtSib_vars
+  use Emission_source_map, only: StoreNamelistFileAtEmission_source_map
+  use Plume_utils, only: StoreNamelistFileAtPlume_utils
   use Mem_scalar, only: &
        scalar_g, &
        StoreNamelistFileAtMem_scalar
@@ -160,9 +128,7 @@ module ModOneProc
   use Domain_decomp, only: StoreNamelistFileAtDomain_decomp
   use ModPostProcess, only: AllPostTypes, CreatePostProcess, &
        PostProcess, DestroyPostProcess
-#ifdef cdf
-  use MOdPostGridNetCDF, only: netCDFFirstTime
-#endif
+
   !--(DMK-CCATT-INI)------------------------------------------------------------------
   USE monotonic_adv, ONLY: StoreNamelistFileAtRadvc_mnt
   !  USE newComm, ONLY: findAndFillGhostZone
@@ -190,7 +156,7 @@ module ModOneProc
        chemistry, &
        chem_assim
 
-  use mem_aer1, only: aerosol, StoreNamelistFileAtMem_aer1
+  use mem_aer1, only: StoreNamelistFileAtMem_aer1
   use mem_chem1aq, only: StoreNamelistFileAtMem_chem1aq
   use mem_plume_chem1, only: StoreNamelistFileAtMem_plumeChem1
   use mem_volc_chem1, only: StoreNamelistFileAtMem_volcChem1
@@ -203,12 +169,22 @@ module ModOneProc
   use mem_stilt, only: StoreNamelistFileAtMem_stilt
   !lfr - tuv
   use tuvParameter, only: wstart,wstop,nwint,listFiles
-  use ModTuv, only: initTuv,sw,ns,slabel,ks,kw,wc,wbioStart,wBioEnd !subroutine
+  use ModTuv, only: initTuv !subroutine
   use ModTuvDriver, only: InitTuvDriver
-
-  use wind_Farm, only: StoreNamelistFileAtWindFarm, &
-			output_windFarms, &
-			windfarm
+  use chem1_list, only: &
+       dvj,                       & ! (IN) dep_init()
+       chem_nspecies=>nspecies,   & ! (IN) dep_init(),(IN) read_sourcemaps()
+       spc_chem_alloc=>spc_alloc, & ! (IN) read_sourcemaps()
+       src,                       & ! (IN) read_sourcemaps()
+       off,                       & ! (IN) read_sourcemaps()
+       spc_chem_name =>spc_name,  & ! (IN) read_sourcemaps()
+       on,                        & ! (IN) read_sourcemaps()
+       chemical_mechanism,        & ! (IN) read_sourcemaps()
+       emiss_ajust,               & ! (IN) read_sourcemaps()
+       transport,                 & ! (IN) read_sourcemaps()
+       co, &
+       PhotojMethod, &
+       chemical_mechanism
 
   !lfr - tuv
   !--(DMK-CCATT-OLD)-----------------------------------------------------
@@ -305,7 +281,6 @@ module ModOneProc
        iflag,          & ! INTENT(IN) - ALF - Modifyed in DTSET
        ideltat,        & ! INTENT(IN)
        runtype,        &
-       dyncore_flag,   &
        expnme,         &
        ngrids,         &
        ngrid,          & ! INTENT(OUT)
@@ -323,8 +298,7 @@ module ModOneProc
        cflz,           & ! intent(out)
        time,           &
        timmax,	       &
-       begtime,        &
-       order_h
+       begtime
 
   use ModParallelEnvironment, only : &
        ParallelEnvironment,    & ! type
@@ -332,7 +306,7 @@ module ModOneProc
        MsgDump, & ! Subroutine
        DestroyParallelEnvironment   ! Subroutine
 
-  use node_mod, only:  &
+  use node_mod, only:  &	
        mynum, &
        mchnum, &
        master_num, &
@@ -358,14 +332,14 @@ module ModOneProc
        load_bal,       & ! INTENT(IN)
        nodei0,         & ! INTENT(IN)
        nodej0,         & ! INTENT(IN)
-
-!--(DMK-CCATT-INI)-----------------------------------------------------------
+       
+                                !--(DMK-CCATT-INI)-----------------------------------------------------------
        nodeia, &
        nodeiz, &
        nodeja, &
        nodejz, &
-!--(DMK-CCATT-FIM)-----------------------------------------------------------
-
+                                !--(DMK-CCATT-FIM)-----------------------------------------------------------
+       
        nmachs,         & ! INTENT(IN)
        mynum,          & ! INTENT(IN)
        mxp,            &
@@ -373,19 +347,16 @@ module ModOneProc
        mzp,            &
        mchnum,         &
        master_num,     &
-
-!--(DMK-CCATT-INI)-----------------------------------------------------------
+       
+                                !--(DMK-CCATT-INI)-----------------------------------------------------------
        ixb, ixe, iyb, iye, & !To advect_mnt
-!--(DMK-CCATT-FIM)-----------------------------------------------------------
-
+                                !--(DMK-CCATT-FIM)-----------------------------------------------------------
+       
        ProcessOrder      ! procedure
 
   use dtset, only: &
        SetDt,      &
        dtset_new,  &
-       dtSet_firstTime, &
-       sscourn, &
-       maxCflPercent, &
        dump_courn    ! subroutine
 
   use ReadBcst, only: &
@@ -412,7 +383,6 @@ module ModOneProc
 
   !--(DMK-CCATT-INI)------------------------------------------------------------------
   USE AdvectData, ONLY: InitAdvect
-  USE modComm, ONLY: initExtraComm
 
   USE monotonic_adv, ONLY: advmnt, &
        GhostZoneLength
@@ -434,40 +404,40 @@ module ModOneProc
        chemical_mechanism,        & ! (IN) read_sourcemaps()
        emiss_ajust,               & ! (IN) read_sourcemaps()
        transport,                 & ! (IN) read_sourcemaps()
-       co,                        &
-       co2,                       &
-       PhotojMethod,              &
-       chemical_mechanism
+       co
 
-
+  use mem_chem1, only:               &
+       chem1_src_g,                  & ! (INOUT) read_sourcemaps()
+       chemistry,                    & ! (IN) initOneProc(), (IN) read_sourcemaps()
+       recycle_tracers,              & ! (IN) initOneProc() (conflito com 'use mem_scalar')
+       nsrc,                         & ! (IN) read_sourcemaps()
+       nvert_src=>chem1_src_z_dim_g, & ! (IN) read_sourcemaps()
+       bburn, antro, bioge,  geoge,  & ! (IN) read_sourcemaps()
+       src_name,                     & ! (IN) read_sourcemaps()
+       ntimes_src,                   & ! (IN) read_sourcemaps()
+       diur_cycle                      ! (IN) read_sourcemaps()
 
   use aer1_list, only:           &
        aer_nspecies=>nspecies,   & ! (IN) read_sourcemaps()
-       spc_aer_alloc=>spc_alloc, & ! (IN) read_sourcemaps()
+       spc_aer_alloc=>spc_alloc, & ! (IN) read_sourcemaps() 
        spc_aer_name =>aer_name,  & ! (IN) read_sourcemaps()
-       nmodes,                   & ! (IN) read_sourcemaps()
-       mass_bin_dist,            &
-       aerosol_mechanism,        &
-       emiss_ajust_aer
-
-!- for matrix
-!       ,v_ash,                     &! (IN) read_sourcemaps()
-!       urban, nucle, accum,      & ! (IN) read_sourcemaps()
-!       ,aer_bburn => bburn  ! (IN) read_sourcemaps()
+       urban, nucle, accum,      & ! (IN) read_sourcemaps()
+       aer_bburn => bburn          ! (IN) read_sourcemaps()
 
   use mem_aer1, only:  &
-       aer1_g  ! (INOUT) read_sourcemaps()
+       aerosol,        &
+       aer1_g,         & ! (INOUT) read_sourcemaps()
+       nmodes,         & ! (IN) read_sourcemaps()
 
   use mem_plume_chem1, only: &
        plume_g,              & ! (INOUT) read_sourcemaps()
        plume_mean_g,         & ! (INOUT) read_sourcemaps()
        plumerise,            & ! (IN) read_sourcemaps()
        nveg_agreg,           & ! (IN) read_sourcemaps()
-       tropical_forest,      & ! (IN) read_sourcemaps()
+       tropical_forest,      & ! (IN) read_sourcemaps() 
        boreal_forest,        & ! (IN) read_sourcemaps()
        savannah,             & ! (IN) read_sourcemaps()
-       grassland,            & ! (IN) read_sourcemaps()
-       plume_fre_g             ! (IN) read_sourcemaps()
+       grassland               ! (IN) read_sourcemaps()
 
   use mem_stilt, only: &
        stilt_g,        & ! (OUT) initOneProc()
@@ -497,57 +467,6 @@ module ModOneProc
        DumpGrid, &
        InsertMessagePassingAtOneGrid
 
-
-  use meteogram, only:              &
-      InitMeteogram,                &
-      ProcessLocalMeteogram,        &
-      StoreNamelistFileAtmeteogram, &
-      applyMeteogram,               &
-      meteogramFreq,                &
-      meteogramMap
-
-  use rams_microphysics_2m, only :  &
-        jnmbinit_2M=>jnmbinit       &
-       ,initqin_2M  =>initqin  	    &
-       ,initqin2_2M =>initqin2 	    &
-       ,initqin3_2M =>initqin3 	    &
-       ,initqin4_2M =>initqin4 	    &
-       ,initqin5_2M =>initqin5 	    &
-       ,micro_master_2M =>micro_master
-
-   use mem_carma, only: &
-       read_aotMap, &
-       StoreNamelistFileAtmem_carma, &
-       carma_aotMap
-
-   use dump
-
-   use dam, only: &
-       damModule, &
-       initDams, &
-       acumPrecipInDam, &
-       outputDamPrecip, &
-       StoreNamelistFileAtDams
-
-  use aerClimMod, only: &
-      gradsRead
-
-  use initMicThompson, only: &
-    readDataFriendly, &
-    adJustFriendlyForMonth
-
-  use ModEvaluation, only: &
-    StoreNamelistFileAtEvaluate, &
-    RMSE_average, &
-    evaluate, &
-    timeCount
- 
- use modIau,only: &
-    StoreNamelistFileAtIAU, &
-    initComIau, &
-    applyIAU
-
-
   implicit none
   private
   public :: OneProc
@@ -560,20 +479,11 @@ contains
 
   subroutine OneProc(nmachs_in, mchnum_in, master_num_in)
 
-    !MB: for testing only
-    use ModTimestep_RK, only: flag_mb_adv_test
-    use dump, only: &
-      dumpMessage !dump function
-
-    !If compiler INTEL sometimes is necessary unconmment the line bellow:
-    !USE IFPORT
-    !
 
     include "i8.h"
     include "files.h"
     include "tsNames.h"
     include "mpif.h"
-    include "constants.f90"
 
     ! Arguments:
     integer, intent(in) :: nmachs_in           ! number of processes (0 iff sequential run)
@@ -581,10 +491,13 @@ contains
     integer, intent(in) :: mchnum_in            ! this process rank (0:nmachs_in-1); 0 on sequential runs
     ! Local variables:
     integer :: isendflg, isendlite, isendmean, isendboth, nt, npass, &
-               icm, ifm, nfeed
+         icm, ifm, nfeed
     integer :: isendbackflg ! ALF - For local processing
     integer :: isendiv, isendsst, isendndvi
+
+    !--(DMK-CCATT-INI)------------------------------------------------------------------
     integer :: isendsrc
+    !--(DMK-CCATT-FIM)------------------------------------------------------------------
 
     logical :: instFlag, liteFlag, meanFlag, histFlag, posFlag
     integer :: ng
@@ -593,7 +506,6 @@ contains
     character(len=12) :: c0
     character(len=12) :: c1
     integer :: i,nndtflg
-    integer :: j,k
     real :: w2, w3, w4, wtime_start, wtime_end  ! wall time !w1
     real, external :: walltime    ! wall time
     real :: t1, t2, t6, totcpu       ! cpu time
@@ -603,8 +515,6 @@ contains
     logical :: AKMIN_ALLOC
     character(len=f_name_length) :: namelistFileName ! namelist file name
     character(len=*), parameter :: h="**(OneProc)**"
-    character(len=*), parameter :: header="**(OneProc)**"
-    character(len=*), parameter :: version="5.4"
 
     type(parallelEnvironment), pointer :: oneParallelEnvironment => null()
     type(namelistFile), pointer :: oneNamelistFile => null()
@@ -613,27 +523,12 @@ contains
     type(Grid), pointer :: OneGrid => null()
     type(AllPostTypes), pointer :: oneAllPostTypes => null()
 
+    !--(DMK-CCATT-INI)-----------------------------------------------------------
+    LOGICAL, PARAMETER ::  isEstudo=.true.
+    !--(DMK-CCATT-FIM)-----------------------------------------------------------
+
+
     logical, parameter :: dumpLocal=.false.
-
-    logical :: dirExist
-    character(len=255) :: tmpdir
-
-!XXXsrf    integer :: iau_phase
-
-    dtSet_firstTime=.true.
-
-    !Open the file to log the run
-    ierr=openLogFile()
-
-    open(unit=66,file='jules.log',status='replace',action='write')
-    write(unit=66,fmt='(A)') 'BRAMS - JULES - LOG'
-    close(unit=66)
-    open(unit=66,file='brams.log',status='replace',action='write')
-    write(unit=66,fmt='(A)') 'BRAMS - LOG'
-    close(unit=66)
-
-    !MB: only for testing:
-    !flag_mb_adv_test = .FALSE.
 
     ! store MPI rank, size and master at mpi/node_mod.f90
 
@@ -646,6 +541,7 @@ contains
     wtime_start = walltime()
 
     ! create namelistFile object
+
     call CreateNamelistFile(oneNamelistFile)
 
     ! master gets namelist file name
@@ -656,18 +552,25 @@ contains
        call GetNamelistFileName(oneNamelistFile)
        call ReadNamelistFile(oneNamelistFile)
        call TimeUnitsToSeconds(oneNamelistFile)
-       call DumpNamelistFile(oneNamelistFile,oneParallelEnvironment%nmachs,oneParallelEnvironment%mchnum &
-                         ,oneParallelEnvironment%master_num)
     end if
 
+    ! master prints initial banner and dumps namelist at stdio
 
-
-    if(trim(oneNamelistFile%runtype)=='MAKESFC' .and. oneParallelEnvironment%nmachs>1)&
-       iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal,'For run type '// &
-                  trim(oneNamelistFile%runtype)//' the number of processes must be 1!')
+    if (oneParallelEnvironment%mchnum==oneParallelEnvironment%master_num) then
+       write(c0,"(i12)") oneParallelEnvironment%nmachs
+       write(OUTPUT_UNIT,"(a)") "+-----------------------------------------------------"
+       write(OUTPUT_UNIT,"(a)") "! "//BRAMS_version//" on "//trim(oneNamelistFile%runtype)//" run"
+       write(OUTPUT_UNIT,"(a)") "! input namelist filename is "//trim(oneNamelistFile%fileName)
+       write(OUTPUT_UNIT,"(a)") "! parallel execution with "//trim(adjustl(c0))//" processes"
+       write(OUTPUT_UNIT,"(a)") "+-----------------------------------------------------"
+       call DumpNamelistFile(oneNamelistFile)
+    end if
 
     ! Broadcast namelist
+
     call BroadcastNamelistFile(oneNamelistFile, oneParallelEnvironment)
+
+    ! store namelist info at old places
 
     call StoreNamelistFileAtIo_Params(oneNamelistFile)
     call StoreNamelistFileAtIsan_coms(oneNamelistFile)
@@ -686,11 +589,14 @@ contains
     call StoreNamelistFileAtNode_mod(oneNamelistFile)
     call StoreNamelistFileAtRef_sounding(oneNamelistFile)
     call StoreNamelistFileAtShcu_vars_const(oneNamelistFile)
+    call StoreNamelistFileAtSib_vars(oneNamelistFile)
 
     !--(DMK-CCATT-INI)------------------------------------------------------------------
     !  call StoreNamelistFileAtCatt_start(oneNamelistFile)
     !--(DMK-CCATT-FIM)------------------------------------------------------------------
 
+    call StoreNamelistFileAtEmission_source_map(oneNamelistFile)
+    call StoreNamelistFileAtPlume_utils(oneNamelistFile)
     call StoreNamelistFileAtMem_scalar(oneNamelistFile)
 
     !--(DMK-CCATT-INI)------------------------------------------------------------------
@@ -703,7 +609,7 @@ contains
     call StoreNamelistFileAtMem_plumeChem1(oneNamelistFile)
     call StoreNamelistFileAtMem_volcChem1(oneNamelistFile)
     call StoreNamelistFileAtMem_stilt(oneNamelistFile)
-    !--(DMK-CCATT-FIM)------------------------------------------------------------------
+    !--(DMK-CCATT-FIM)------------------------------------------------------------------ 
 
     call StoreNamelistFileAtTeb_spm_start(oneNamelistFile)
     call StoreNamelistFileAtMem_emiss(oneNamelistFile)
@@ -716,21 +622,20 @@ contains
 
     call StoreNamelistFileAtdigitalFilter(oneNamelistFile)
 
-    call StoreNamelistFileAtmeteogram(oneNamelistFile)
-    call StoreNamelistFileAtmem_carma(oneNamelistFile)
-    call StoreNamelistFileAtWindFarm(oneNamelistFile)
-    call StoreNamelistFileAtDams(oneNamelistFile)
-    call StoreNamelistFileAtEvaluate(oneNamelistFile)
+    ! master dumps namelist at stdio
 
-    call StoreNamelistFileAtIAU(oneNamelistFile)
+!!$  if (oneParallelEnvironment%mchnum==oneParallelEnvironment%master_num) then
+!!$     call nameout()
+!!$  end if
+
+
     ! build and dump all grids
+
     call CreateGridTree(oneNamelistFile, oneParallelEnvironment, AllGrids)
 
     ! Allocating dxtmax_local
     allocate(dxtmax_local(ngrids), STAT=ierr)
-    !if (ierr/=0)  call fatal_error("ERROR allocating dxtmax_local (oneproc)",header,version)
-    if (ierr/=0) iErrNumber=dumpMessage(c_tty,c_yes,header,modelVersion,c_fatal &
-        ,'ERROR allocating dxtmax_local (oneproc)')
+    if (ierr/=0) call fatal_error("ERROR allocating dxtmax_local (oneproc)")
 
     ! Allocating "mem_grid" data
     call createMemGrid(ngrids, nnxp, nnyp, nnzp)
@@ -759,8 +664,8 @@ contains
 
     call opspec1(nmachs, mchnum, master_num)
 
-    ! Basic grid coordinate setup for statically allocated data structures:
-    ! number of grid points, deltas, coordinate and nesting coefficients,
+    ! Basic grid coordinate setup for statically allocated data structures: 
+    ! number of grid points, deltas, coordinate and nesting coefficients, 
     ! all stored at mem_grid
 
     call createVctr(ngrids, nnxp, nnyp, nnzp)
@@ -778,14 +683,15 @@ contains
     ! compute first and last local index of each sub-domain without ghost zone (nodeia, nodeiz, nodeja, nodejz at node_mod);
     !
     ! The execution of decomp_node was antecipated (replacing the execution of node_decomp during initialization by the master)
-    ! since memory has to be allocated for any process' grid before initialization.
+    ! since memory has to be allocated for any process' grid before initialization. 
     ! In the master-slave execution case, memory was allocated by the master for the full grid (by rams_mem_alloc(0)) prior to compute
-    ! domain decomposition. After computing domain decomposition, sub-domain size and position were sent to each slave,
+    ! domain decomposition. After computing domain decomposition, sub-domain size and position were sent to each slave, 
     ! that allocates memory based on the received data and then initializes.
     !
     ! Procedure decomp_node does not fully replace node_decomp, since parts of node_decomp
     ! (par_node_paths and following code) required memory allocation (not done yet).
     ! Remaining code was moved to procedure NodePathsBuffAlloc.
+
     call decomp_node(1)
 
     ! master dumps domain decomposition at stdout and at selected file
@@ -795,12 +701,10 @@ contains
     end if
 
     ! Check sfc,sst,ndvi files; remake if needed
+
     call MakeSfcfiles()
 
-    
-    ! Behave accordingly to run typ
-!================================================================================================
-!================================================================================================
+    ! Behave accordingly to run type
 
     if (runtype(1:7)=='MAKESFC') then
 
@@ -809,70 +713,44 @@ contains
           write(OUTPUT_UNIT,"(a)") ' MAKESFC run complete'
        end if
 
-!================================================================================================
-!================================================================================================
-
     else if (runtype(1:9)=='MAKEVFILE') then
-#ifndef netcdf 
-      if(ICFILETYPE==2 .or. ICFILETYPE==3) &
-          iErrNumber=dumpMessage(c_tty,c_yes,header,version,c_fatal," To use NetCDF (GEOS/ECMWF,etc) the code must be compiled with NetCDF!!! ")
-      if(IPOS==3) &
-          iErrNumber=dumpMessage(c_tty,c_yes,header,version,c_fatal," To use NetCDF output the code must be compiled with NetCDF!!! ")
-#endif
-   time  = 0.
-   ! on a "MAKEVFILE" run, call ISAN, then exit.
-      !if (mchnum==master_num) then
-        call chem_isan_driver(namelistFileName)
-        if(ccatt==1 .and. chem_assim==1 .and. chemistry >= 0)then
-             iErrNumber=dumpMessage(c_tty,c_yes,header,version,c_notice," CHEM_ISAN complete ")
-	      else
-             iErrNumber=dumpMessage(c_tty,c_yes,header,version,c_notice," ISAN complete ")
-	      endif
-      !endif
-!================================================================================================
-!================================================================================================
 
-    else  ! for RUNTYPE = INITIAL/HISTORY (endif @ line ~1536)
-    
-     
-#ifdef cdf
-      !To open netCDF output (if used) just once
-      netCDFFirstTime=.true.
-#endif
-
-      ! If we got here, we are doing an actual simulation (INITIAL)
-      ! Initialize micro arrays. May need to change some settings which affect memory.
-
-      ! initiate tuv tables
-      if (trim(PhotojMethod) == 'FAST-TUV' .and. chemistry >= 0) then
-          CALL initTuv(wstart,wstop,nwint,listFiles,mchnum,chemical_mechanism)
-       !	  TODO - to review code below for bio vars, probably just debug stuff
-       !          write(77,*) wbioStart,wBioEnd
-       !          do i = wbioStart,wBioEnd
-       !            write (77,fmt='(I3.3,1X,A)') i,slabel(i)
-       !            do j=1,kw
-       !              write (77,fmt='(I3.3,F10.4,1X,F10.4)') j,sw(i,j),wc(j)
-       !            end do
-       !          end do
-          CALL InitTuvDriver()
-      endif
-
-      if(mcphys_type==0) then
-            CALL jnmbinit()
-
-       elseif(mcphys_type==1) then
-            CALL jnmbinit_2M()
-
+       ! on a "MAKEVFILE" run, call ISAN, then exit.
+       if (mchnum==master_num) then
+          !--(DMK-CCATT-INI)-----------------------------------------------------
+          if(ccatt==1 .and. chem_assim==1 .and. chemistry >= 0)then
+             call chem_isan_driver(namelistFileName)
+             write(OUTPUT_UNIT,"(' CHEM_ISAN complete ')")
+          else    
+             !--(DMK-CCATT-FIM)-----------------------------------------------------    
+             call isan_driver(namelistFileName)
+             !--(DMK-CCATT-INI)-----------------------------------------------------
+          endif
+          !--(DMK-CCATT-FIM)-----------------------------------------------------
        endif
+
+    else
+
+       !--(DMK-CCATT-INI)-----------------------------------------------------
+       !lfr - tuv
+       if (trim(PhotojMethod) == 'FAST-TUV' .and. chemistry >= 0) then 
+          CALL initTuv(wstart,wstop,nwint,listFiles,mchnum,chemical_mechanism)
+          write(OUTPUT_UNIT,"('out initTuv')") ; call flush(OUTPUT_UNIT)
+          CALL InitTuvDriver()
+          write(OUTPUT_UNIT,"('out initTuvDriver')") ; call flush(OUTPUT_UNIT)
+       endif
+       !lfr - tuv
+       !--(DMK-CCATT-FIM)-----------------------------------------------------
+
+       ! If we got here, we are doing an actual simulation (INITIAL)
+       ! Initialize micro arrays. May need to change some settings which affect memory.
+
+       call jnmbinit()
 
        ! Allocate memory for this process sub-domain only
        !**(JP)** This should allocate memory for all modules (to be certified!!!)
+
        call rams_mem_alloc(2)
-       
-       if(ioutput == 5)then
-       	call setInitial4Vtable(1)
-	     ioutput = 2
-       end if
 
        ! Allocate AKMIN2D if necessary
        AKMIN_ALLOC = .false.
@@ -883,7 +761,7 @@ contains
           call allocAkmin2d(ngrids, nodemxp(mynum,1:ngrids), nodemyp(mynum,1:ngrids))
        endif
 
-       ! Communication paths, sizes and buffers
+       ! Communication paths, sizes and buffers 
        !
        ! Procedure NodePathsBuffAlloc finishes replacing node_decomp, since memory was already allocated
        ! (does the part from call to par_node_paths to the end). It computes values of node_mod module.
@@ -892,7 +770,7 @@ contains
        call NodePathsBuffAlloc()
 
        ! build message passing
-       !print *,'LFR-DBG inside oneproc 4: ',nodemxp(mynum,1); call flush(6)
+
        OneGridTreeNode => GridTreeRoot(AllGrids)
        do while (associated(OneGridTreeNode))
           call InsertMessagePassingAtOneGrid(OneGridTreeNode%curr)
@@ -905,28 +783,19 @@ contains
           call DumpGrid(OneGrid)
        end if
 
-
-!======XXXXXsrf
-!    IAU_phase = 0
-!    do while (IAU_phase <= applyIAU)
-!     IAU_phase = IAU_phase + 1
-!======XXXXXsrf
-
-
-
-
-
-
        !**(JP)** Code brought from old "rams_node" initialization. Its execution
        ! was antecipated to allow message passing during initialization, required
        ! for binary reproducibility (see subroutine FilDn0uv)
-       !call dumpVarAllLatLonk(leaf_g(1)%patch_area,'patch_area',846,0,0,1,nodemxp(mynum,1),1,nodemyp(mynum,1),1,npatch,0.0,600.0,h) !
+
        call InitFields(1)
 
        ! initialization driver
+
        call initOneProc(AllGrids, namelistFileName)
 
+
        ! Compute Courant numbers cflxy and cflz, get maximum over all processes  and dump
+
        do ifm=1,ngrids
           call newgrid(ifm)
           call cfl(mzp, mxp, myp, 0, 0)
@@ -935,6 +804,7 @@ contains
 
        ! Initialize dtlongn, nndtrat, and nnacoust, and compute the timestep
        ! schedule for all grid operations.
+
        call SetDt(mynum, nndtflg, dxtmax_local)
        if (mchnum==master_num) then
           call dump_dtset(nndtflg)
@@ -959,43 +829,35 @@ contains
        isendlite    = 0
        isendmean    = 0
        isendboth    = 0
-       isendbackflg = 0 
-       isendiv      = 0 
-       isendsst     = 0 
-       isendndvi    = 0 
-       isendsrc     = 0 
+       isendbackflg = 0 ! ALF
+       isendiv      = 0 ! ALF
+       isendsst     = 0 ! ALF
+       isendndvi    = 0 ! ALF
+
+       !--(DMK-CCATT-INI)------------------------------------------------------------------
+       isendsrc     = 0 ! DMK
+       !--(DMK-CCATT-FIM)------------------------------------------------------------------
 
        ! correctness of local value of x*y*z
 
        i_xyz = maxval(nodemxp(mynum,1:ngrids))* &
-               maxval(nodemyp(mynum,1:ngrids))*maxval(nnzp(1:ngrids))
+            maxval(nodemyp(mynum,1:ngrids))*maxval(nnzp(1:ngrids))
        l_xyz = maxval(nodemxp(mynum,1:ngrids))* &
-               maxval(nodemyp(mynum,1:ngrids))*maxval(nnzp(1:ngrids))
+            maxval(nodemyp(mynum,1:ngrids))*maxval(nnzp(1:ngrids))
        if (i_xyz/=l_xyz) then
           print *, "NODE:", mynum
           print *, "Checking number of processors and total of points"
           print *, "Integer Total(x*y*z) =", i_xyz, &
                " - Long Total(x*y*z) =", l_xyz
-          !call fatal_error("Integer - Long not equal to Zero! Use more process",header,version)
-          iErrNumber=dumpMessage(c_tty,c_yes,header,modelVersion,c_fatal, &
-                    'Integer - Long not equal to Zero! Use more process')
+          print *, "Error!! Integer - Long not equal to Zero!"
+          print *, "Error!! Use more process"
+          call fatal_error("Program will STOP!!!")
        end if
-      !print *,'lfr-dbg:', nodemxp(mynum,1:ngrids),nodemyp(mynum,1:ngrids),1+2*order_h,dyncore_flag; call flush(6)
-      if(dyncore_flag==2 .and. nodemxp(mynum,1)<1+2*order_h) then
-        write (*,fmt='(A)') '******** WARNING *******'
-        write (*,fmt='(A,I4.4,A,I3,A,I6)') 'Number of columns to be process in X is ',nodemxp(mynum,1),' that is less than ',&
-        1+2*order_h,' for processor #',mynum
-      endif
-      if(dyncore_flag==2 .and. nodemyp(mynum,1)<1+2*order_h) then
-        write (*,fmt='(A)') '******** WARNING *******'
-        write (*,fmt='(A,I4.4,A,I3,A,I6)') 'Number of columns to be process in Y is ',nodemxp(mynum,1),' that is less than ',& 
-        1+2*order_h,' for processor #',mynum
-      endif
 
-
+       nt = 0
 
        ! Calculating DXTMAX
-       nt = 0
+
        do ifm=1,ngrids
           nn2 = nodemxp(mynum,ifm)
           nn3 = nodemyp(mynum,ifm)
@@ -1003,34 +865,21 @@ contains
                grid_g(ifm)%dxt(nn2,nn3), grid_g(ifm)%dxt(1,nn3))
        enddo
 
-       !tst LFR
-       Call initExtraComm(nmachs,mynum,GhostZoneLength,nnxp,nnyp,nnzp,ixb,ixe,iyb,iye,master_num, &
-                   nodei0,nodej0,nodemxp,nodemyp,nodemzp)
-       !CALL InitComm(ngrids,nmachs,mynum,GhostZoneLength,nnxp,nnyp,nnzp,ixb,ixe,iyb,iye)
-       !end tst
-       
-       IF(advmnt>=1) then
-       !- monotonic advection
-          CALL InitAdvect(ngrids,nmachs,mynum,GhostZoneLength,nnxp,nnyp,nnzp,ixb,ixe,iyb,iye)
-       ENDIF
-
-       if(damModule==1) then
-         call initDams(nodemxp(mynum,1),nodemyp(mynum,1) &
-                   ,grid_g(1)%glat,grid_g(1)%glon,mchnum,master_num)
+       !--(DMK-CCATT-INI)-----------------------------------------------------------
+       If(advmnt>=1) then 
+          !PRINT *, 'mynum,GhostZoneLength,nnxp,nnyp,nnzp,ixb,ixe,iyb,iye: '
+          !PRINT *, mynum,GhostZoneLength,nnxp,nnyp,nnzp,ixb,ixe,iyb,iye
+          !PRINT *, '============================================================================================='
+          !CALL flush(6)
+          CALL InitAdvect(ngrids,nmachs,mynum,GhostZoneLength,nnxp,nnyp,nnzp,ixb,ixe,iyb,iye)    !lfr - monotonic advection
        endif
+       !--(DMK-CCATT-FIM)-----------------------------------------------------------
 
-      if(mcphys_type==3) call readDataFriendly()
-
-      if (aerosol==-1 .and. .not. (CCATT==1 .and. chemistry >= 1)) &
-       call gradsRead('./tables/aerClim/','aerosols.gra',grid_g(1)%glat,grid_g(1)%glon)
-
-       IF(machine == 1) then
-         ! Allocate and initialize data for new advection scheme if used
-         ! Actually it is only used if machine=1, defining NEC-SC system
-         call advect_first_alloc(ngrids, nnzp(1:ngrids), &
-                        nodemxp(mynum,1:ngrids), nodemyp(mynum,1:ngrids))
-         call prepare_inv(ngrids)
-       ENDIF
+       ! Allocate and initialize data for new advection scheme if used
+       ! Actually it is only used if machine=1, defining NEC-SC system
+       call advect_first_alloc(ngrids, nnzp(1:ngrids), &
+            nodemxp(mynum,1:ngrids), nodemyp(mynum,1:ngrids))
+       call prepare_inv(ngrids)
 
        ! Checking if the actual node have to run thermo on the boundaries
 
@@ -1055,13 +904,14 @@ contains
 
        select case (IPOS)
 
-      !!$     case (1)
-      !!$        ! post process initial state of the atmosphere in HDF5
-      !!$        call PostProcessHDF5(oneNamelistFile, oneAllPostTypes)
+!!$     case (1)
+!!$        ! post process initial state of the atmosphere in HDF5
+!!$        call PostProcessHDF5(oneNamelistFile, oneAllPostTypes)
 
-       case (2,3)
+       case (2)
           ! post process initial state of the atmosphere in Grads
           call PostProcess(AllGrids, oneNamelistFile, oneAllPostTypes)
+
        end select
 
        ! wall time at the end of initialization
@@ -1070,75 +920,38 @@ contains
        if (mchnum==master_num) then
           w2=walltime()
           write(c1,"(f12.2)") w2-wtime_start
-          write(*,fmt='(A)') c_empty
-#ifdef color
-  iErrNumber=dumpMessage(c_tty,c_yes,'','',c_notice," === Finish"//&
-     " initialization; Wall(sec) = "//c_purple//trim(adjustl(c1))//&
-     c_peach//" [s]"//c_noColor)
-#else
-  iErrNumber=dumpMessage(c_tty,c_no,'','',c_notice," === Finish"//&
-     " initialization; Wall(sec) = "//trim(adjustl(c1))//&
-     " [s]")
-#endif
-          write(*,fmt='(A)') c_empty
-          !write(OUTPUT_UNIT,"(/,a,/)") " === Finish initialization; Wall(sec)="// &
-          !     trim(adjustl(c1))
+          write(OUTPUT_UNIT,"(/,a,/)") " === Finish initialization; Wall(sec)="// &
+               trim(adjustl(c1))
        end if
 
 
-       !--Digital Filter ------------------------------------------------------
-       IF(applyDF)then
+
+       !-srf
+       !--(DMK-CCATT-INI)--------------------------------------------------------
+       iF(applyDF)then
+          !--(DMK-CCATT-OLD)--------------------------------------------------------
+          !     iF(applyDF == .true.)then
+          !--(DMK-CCATT-FIM)--------------------------------------------------------
           frqanldf=frqanl
           frqanl= 0.
           iposDF=ipos
           ipos=0
-       ENDIF
+          !if(mynum==1)     print*,'1 frqanldf frqanl=',frqanldf,frqanl
+       endif
+       !srf
+
        ! force first grid on grid tree
 
        OneGridTreeNode => GridTreeRoot(AllGrids)
        OneGrid => OneGridTreeNode%curr
-       
-
-       IF(applyMeteogram) call InitMeteogram(oneGrid%meteoPolygons, oneGrid%id, trim(meteogramMap))
+!!$       call MsgDump(h//" FORCED: will run timestep with first grid:")
 
        ! loop over time, advancing all grids one long timestep forward
 
-
-       !MB>>
-       !if ( flag_mb_adv_test ) then
-       !  !basic_g(ngrid)%uc(:,:,:) = 267.0  ! for horizontal advection test
-       ! basic_g(ngrid)%uc(:,:,:) =   0.0
-       ! basic_g(ngrid)%vc(:,:,:) =   0.0
-       !  basic_g(ngrid)%wc(:,:,:) =   1.0   ! for vertical advection test
-       !  basic_g(ngrid)%pc(:,:,:) = 0.0
-       !  basic_g(ngrid)%thc(:,:,:) = 300.0
-       !       do k=1, mzp
-       !         do i=1, mxp
-       !           do j=1, myp
-       !                    ! test horizontal scalar advection:
-       !                    ! basic_g(ngrid)%thc(k,i,j) = 300.0 + max( 0.0,  1.0 - abs( (i-10)/5.0 )  )
-       !		            ! test vertical scalar advection:
-       !	            basic_g(ngrid)%thc(k,i,j) = 300.0 + max( 0.0,  1.0 - abs( zt(k)-800.0)/500.0 )
-       !             enddo
-       !         enddo
-       !     enddo
-       !
-       !end if
-       !MB<<
-
-       !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
-       ! call SynchronizedTimeStamp(TS_INIT) ! timestamp before: initialization
-
-       ! loop over time, advancing all grids one long timestep forward
-
-!---> here is the 'big' loop for the model time integration
-
+!!$    call SynchronizedTimeStamp(TS_INIT) ! timestamp before: initialization 
        istp = 0
-
        do while (time<timmax)
 
-          !print*,"time=====", time
-       
           istp    = istp+1
           totcpu  = 0
           w3      = walltime()
@@ -1152,10 +965,10 @@ contains
           if (isendbackflg==1) then
              if (isendiv==1) then
 
-                !print*,"===> going to VarfReadStoreOwnChunk",time
+                !--(DMK-CCATT-INI)-----------------------------------------------------
                 call VarfReadStoreOwnChunk(AllGrids, 2, nud_type)
-                
-		
+                !--(DMK-CCATT-FIM)-----------------------------------------------------
+
              endif
              if (isendsst==1) then
                 do ifm=1,ngrids
@@ -1168,38 +981,42 @@ contains
                 enddo
              endif
 
+             !--(DMK-CCATT-INI)-----------------------------------------------------
+             ! ESQUEMA DE LEITURA DIARA DE FONTES DE EMISSAO
+             !
+             ! Esquema nao esta funcionando por motivo desconhecido.
+             ! MERECE REVISAO!
+             !----------------------------------------------------------------------
              if (isendsrc==1) then
                 do ifm = 1, ngrids
                    call newgrid(ifm)
-                   !if(mynum==1) print*,'->1 chem/aer sources maps reading: ',time/3600.,' grid=',ifm
-
+                   print*,'-> chem sources maps reading: ',time/3600.,' grid=',ifm
                    call read_sourcemaps(ifm,nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm), &
-                        ia,iz,ja,jz, time,iyear1,imonth1,idate1,itime1,ngrids,timmax,        &
+                        time,iyear1,imonth1,idate1,itime1,ngrids,timmax, &
                         chem_nspecies,spc_chem_alloc,src,off,nsrc,nvert_src,chem1_src_g, &
                         bburn,antro, bioge,  geoge,spc_chem_name,on,chemical_mechanism,  &
-                        emiss_ajust,co,aer_nspecies,spc_aer_alloc,spc_aer_name,          &
-                        src_name,chemistry,ntimes_src,aer1_g,nmodes,aerosol,plumerise,   &
+                        emiss_ajust,co,aer_nspecies,spc_aer_alloc,spc_aer_name,urban,nucle, &
+                        accum,src_name,chemistry,ntimes_src,aer1_g,nmodes,aerosol,plumerise,&
                         nveg_agreg,plume_mean_g,nzpmax,dzt,grid_g(ifm)%rtgt,grid_g(ifm)%topt, &
-                        transport,plume_g,tropical_forest,boreal_forest,savannah,         &
-                        grassland,diur_cycle,volcanoes,volc_mean_g,basic_g(ifm)%dn0,zt,zm,&
-                        mchnum, master_num,mass_bin_dist,CO2,ISFCL,aerosol_mechanism,     &
-			plume_fre_g,emiss_ajust_aer)
-
+                        transport,aer_bburn,plume_g,tropical_forest,boreal_forest,savannah, &
+                        grassland,diur_cycle,volcanoes,volc_mean_g,basic_g(ifm)%dn0,zt,zm, &
+                        mchnum, master_num)				   
                 enddo
-                !print*,'----------------------------------------------'
+                print*,'----------------------------------------------'
              endif
+             !--(DMK-CCATT-FIM)-----------------------------------------------------
 
           end if
 
+
           ! If Generate only Pos-Proc read History file
-          !if (IPOS/=0 .and. RUNTYPE=='POS') then
-          !!$           call readFieldsHis(vtab_r, ngrids, WillGather, maxNFields)
-          !endif
+          if (IPOS/=0 .and. RUNTYPE=='POS') then
+!!$           call readFieldsHis(vtab_r, ngrids, WillGather, maxNFields)
+          endif
 
-          !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
-          !   call SynchronizedTimeStamp(TS_INPUT) ! timestamp In
+!!$       call SynchronizedTimeStamp(TS_INPUT) ! timestamp In
 
-          ! compute output flags for this iteration and input flags for
+          ! compute output flags for this iteration and input flags for 
           ! next iteration
 
           call comm_time(isendflg, isendlite, isendmean, isendboth, &
@@ -1207,7 +1024,7 @@ contains
 
           if(applyDF) then
              if( abs(time+dtlongn(1) - timeWindowDF)<0.0001 .or. & ! timemf>=vtime2 (=timewindowDF)
-                  abs(time            - timeWindowDF)<0.0001    ) then
+                  abs(time            - timeWindowDF)<0.0001    ) then  
                 isendbackflg=0
                 frqanl=frqanldf
                 ipos  =iposdf
@@ -1252,28 +1069,13 @@ contains
                 ! advance current grid forward by corresponding deltat
 
                 time = begtime + (isched(npass,5)-1)*dtlt
-                if(mcphys_type==3) call adJustFriendlyForMonth(time)
 
-                !MB: callin the timestep routine
-                !srf print*,"going to timestep ", time
-                if ( ( dyncore_flag == 0 ) .or. ( dyncore_flag == 1 ) ) then
-                  ! Leapfrog/forward-time based scheme
-                  call timestep(OneGrid,oneNamelistFile)
-                else if ( dyncore_flag == 2 ) then
-                  ! Runge-Kutta based scheme
-                  call timestep_rk(OneGrid,oneNamelistFile)
-                else if ( dyncore_flag == 3 ) then
-                  ! ABM3 based scheme
-                  call timestep_abm(OneGrid,oneNamelistFile)
-                else
-                  !call fatal_error("ERROR in subroutine OneProc: value of dyncore_flag is unknown",header,version)
-                  iErrNumber=dumpMessage(c_tty,c_yes,header,modelVersion,c_fatal &
-                         ,'ERROR in subroutine OneProc: value of dyncore_flag is unknown')
-                end if
+                ! timestep driver
+                call timestep(OneGrid)
 
                 ngbegun(ngrid) = 1
 
-                ! whenever required, send the current grid domain points to
+                ! whenever required, send the current grid domain points to 
                 ! the nested grid to interpolate a nested grid's boundaries
 
                 if (isched(npass,2)/=0) then
@@ -1300,9 +1102,7 @@ contains
 
                    !**(JP)** not converted yet
 
-                   !call fatal_error(h//" multiple grids not converted yet")
-                   iErrNumber=dumpMessage(c_tty,c_yes,header,modelVersion,c_fatal, &
-                     "multiple grids not converted yet")
+                   call fatal_error(h//" multiple grids not converted yet")
                    ngrid = isched(npass,1)
                    do nfeed=1,isched(npass, 4)
                       call newgrid(ngrid)
@@ -1319,8 +1119,7 @@ contains
           ! update main time variable by a long timestep.
 
           time = begtime + dtlongn(1)
-	  
-	  ! average analysis variables over time and
+          ! average analysis variables over time and
           ! update cfl numbers
 
           do ngrid=1,ngrids
@@ -1328,13 +1127,12 @@ contains
              if ((avgtim/=0.) .and. (frqmean/=0. .or. frqboth/=0.))  &
                   call anlavg(mzp,mxp,myp,nzg)
              call cfl(mzp, mxp, myp, nodei0(mynum,ngrid), nodej0(mynum,ngrid))
-!print *,'LFR->call CFL',mynum,dtlt
           end do
 
           ! get max CFL from all processes to probe numerical stability
           ! and to recalculate each grid's deltat if necessary
 
-          if (ideltat<0 .or. ideltat==3) then
+          if (ideltat<0) then
              call reduce_max_cfl_and_broadcast(master_num, mynum, &
                   ngrids, cflxy, cflz)
           else
@@ -1342,8 +1140,7 @@ contains
                   ngrids, cflxy, cflz)
           end if
 
-          !		Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
-          !          call SynchronizedTimeStamp(TS_INTEG) ! timestamp CFL
+!!$       call SynchronizedTimeStamp(TS_INTEG) ! timestamp CFL
 
           ! output, if required
 
@@ -1392,113 +1189,37 @@ contains
 
           call OutputFields(histFlag, instFlag, liteFlag, meanFlag )
 
-          ! Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
-          ! call SynchronizedTimeStamp(TS_OUTPUT)
+!!$       call SynchronizedTimeStamp(TS_OUTPUT)
 
           ! post-process file
 
-!srf----------------------------------------
-!IF(applyIAU == 1) posFlag = .FALSE. 
-!IF(applyIAU == 2 .and. time > 10800.) then 
-!-- this is for IAU =2 and model evaluation, for normal operation comment these lines.
-!-- Model starts at 21UTC, after 3 hours the 00UTC forecast is saved.
-!-- then  the forecasts files are saved only each 6 hours.
-
-!  posFlag = (mod(time-10800.,10800.)<dtlongn(1)) .and. (mod(time-10800.,21600.)<dtlongn(1)) .or. &
-!             time>=timmax - 0.01*dtlongn(1)  
-!if(mynum==1)print*,"modoneproc time IAU=",time,posFlag,applyIAU
-!ENDIF 
-!srf----------------------------------------
-
-
           if (posFlag) then
-             if(damModule==1) then
-                call acumPrecipInDam(nodemxp(mynum,1),nodemyp(mynum,1) &
-                ,ia,iz,ja,jz,mcphys_type &
-                ,cuparm_g(1)%aconpr &
-                ,micro_g(1)%accpr &
-                ,micro_g(1)%accpp &
-                ,micro_g(1)%accps &
-                ,micro_g(1)%accpa &
-                ,micro_g(1)%accpg &
-                ,micro_g(1)%accph)
-
-                call outputDamPrecip(time,dtlongn(1),timmax,mchnum,master_num)
-              endif
 
              select case (IPOS)
 
-            !!$              call PostProcessHDF5(oneNamelistFile, oneAllPostTypes)
+!!$              call PostProcessHDF5(oneNamelistFile, oneAllPostTypes)
 
-             case (2,3)
+             case (2)
                 call PostProcess(AllGrids, oneNamelistFile, oneAllPostTypes)
+
              end select
 
           end if
 
-         !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
-         ! call SynchronizedTimeStamp(TS_POST)
+!!$       call SynchronizedTimeStamp(TS_POST)
 
-         !!$ METEOGRAMA
-	 if(applyMeteogram)then
-		if(mod(time,meteogramFreq) .lt. dtlongn(1) .or.  &
-                   time .ge. timmax - 0.01*dtlongn(1)      .or. &
-		   iflag .eq. 1)call ProcessLocalMeteogram(oneGrid%meteoPolygons)
-	  end if
+          ! execution time info and dump
 
-	 IF(windfarm==1) THEN
-		call output_windFarms()
-	 END IF
-
-         ! execution time info and dump
           call timing(2,t6)
           w4     = walltime()
           totcpu = totcpu + t6 - t1
 
-     !#ifdef color
-    if (mchnum==master_num) then
-      if(evaluate/=1) then
-        if(maxCflPercent*100>90.0) then 
-          write(OUTPUT_UNIT, "(a,i6,a,f9.1,a,f8.3,a,f7.2,a,f7.2,a,f7.2,a)", advance="no") &
-            c_lightAqua//" Timestep #"//c_pink, istp,&
-            c_noColor//";"//c_lightAqua//" Sim Time"//c_purple, time,&
-            c_peach//" [s]"//c_noColor//";"//c_lightAqua//" Wall Time"//c_purple &
-            , max(0.001, w4-w3), c_peach//" [s]"//c_noColor//";"//c_lightAqua//" DT"//c_purple &
-            ,dtlongn(1),c_peach//" [s]"//c_noColor//";"//c_lightAqua//" sscourn"//c_purple &
-            ,sscourn(1),c_noColor//";"//c_lightAqua//" MaxCFL"//c_purple//c_blink &
-            ,maxCflPercent*100,c_peach//" [%]"//c_noColor
-        else
-          write(OUTPUT_UNIT, "(a,i6,a,f9.1,a,f8.3,a,f7.2,a,f7.2,a,f7.2,a)", advance="no") &
-            c_lightAqua//" Timestep #"//c_pink, istp,&
-            c_noColor//";"//c_lightAqua//" Sim Time"//c_purple, time,&
-            c_peach//" [s]"//c_noColor//";"//c_lightAqua//" Wall Time"//c_purple &
-            , max(0.001, w4-w3), c_peach//" [s]"//c_noColor//";"//c_lightAqua//" DT"//c_purple &
-            ,dtlongn(1),c_peach//" [s]"//c_noColor//";"//c_lightAqua//" sscourn"//c_purple &
-            ,sscourn(1),c_noColor//";"//c_lightAqua//" MaxCFL"//c_purple &
-            ,maxCflPercent*100,c_peach//" [%]"//c_noColor
-        endif
-      else
-        write(OUTPUT_UNIT, "(a,i6,a,f9.1,a,f11.3,a,f11.3,a,f11.3,a,f11.3,a)", advance="no") &
-            c_lightAqua//" Timestep #"//c_pink, istp,&
-            c_noColor//";"//c_lightAqua//" Sim Time"//c_purple, time,&
-            c_peach//" [s]"//c_noColor//";"//c_lightAqua//" Wall Time"//c_purple &
-            , max(0.001, w4-w3), c_peach//" [s]"//c_noColor//";"//c_lightAqua//" DT"//c_purple &
-            ,dtlongn(1),c_peach//" [s]"//c_noColor//";"//c_lightAqua//" sscourn"//c_purple &
-            ,sscourn(1),c_noColor//";"//c_lightAqua//" rmse_a"//c_purple &
-            ,RMSE_average(timeCount),c_noColor
-      endif
-    endif
-!#else
-!    if (mchnum==master_num) then
-!      write(OUTPUT_UNIT, "(a,i6,a,f9.1,a,f11.3,a,f11.3,a,f11.3,a)", advance="no") &
-!         " Timestep #", istp                  &
-!        ,"; Sim Time", time                   &
-!        ," [s]; Wall Time", max(0.001, w4-w3) &
-!        ," [s]; DT ",dtlongn(1)                &
-!        ," [s]; sscourn",sscourn(1)
-!    endif
-!#endif
-
+          if (mchnum==master_num) then
+             write(OUTPUT_UNIT, "(a,i6,a,f9.1,a,f11.3,a)", advance="no") &
+                  " Timestep ", istp,&
+                  "; Sim Time", time,&
+                  "s; Wall", max(0.001, w4-w3), "s"
+          end if
 
           ! if selected, gather cpu times and print
 
@@ -1510,39 +1231,19 @@ contains
              call gather_cpu_time_master_print(master_num, mynum, nmachs, t6-t1)
           end if
 
-       end do   !---- do while (time<timmax)
-
+       end do
 
        ! DEBUG-ALF - Barreira artificial
        call parf_barrier(99995)
 
-!XXXXXsrf     end do   !---- do while (IAU_phase =< applyIAU)
-
-    end if  !---- runtype == INITIAL or HISTORY
-!================================================================================================
-!================================================================================================
-
-!==== simulation ended =======
+    end if
 
     wtime_end = walltime()
     if (mchnum==master_num) then
-      write(c0,"(f10.1)") wtime_end - wtime_start
-      write(*,fmt='(A)') c_empty
-#ifdef color
-      iErrNumber=dumpMessage(c_tty,c_yes,'','',c_notice," === Time "//&
-           "integration ends; Total run time = "//c_purple//trim(adjustl(c0))//&
-           c_peach//" [s]"//c_noColor)
-#else
-      iErrNumber=dumpMessage(c_tty,c_no,'','',c_notice," === Time "//&
-            "integration ends; Total run time = "//trim(adjustl(c0))//" [s]")
-#endif
-      write(*,fmt='(A)') c_empty
+       write(c0,"(f10.1)") wtime_end - wtime_start
+       write(OUTPUT_UNIT,"(/,a,/)") " === Time integration ends; Total run time="// &
+            trim(adjustl(c0))//"s ===" 
     end if
-
-
-
-
-
 
     ! Deallocating dynamic arrays
 
@@ -1553,9 +1254,8 @@ contains
 
     ! Deallocating dxtmax_local
     deallocate(dxtmax_local, STAT=ierr)
-    if (ierr/=0) &!call fatal_error("ERROR deallocating dxtmax_local (oneproc)")
-      iErrNumber=dumpMessage(c_tty,c_yes,header,modelVersion,c_fatal, &
-      "error deallocating dxtmax_local (oneproc)")
+    if (ierr/=0) call fatal_error("ERROR deallocating dxtmax_local (oneproc)")
+
     ! Deallocating "mem_grid" data
     call destroyMemGrid()
 
@@ -1573,29 +1273,16 @@ contains
     call DestroyGridTree(AllGrids)
     call DestroyNamelistFile(oneNamelistFile)
     call DestroyParallelEnvironment(oneParallelEnvironment)
-
-!--(inspxe)-------------------------------------------------------
-!    call rams_mem_dealloc()
-!--(inspxe)-------------------------------------------------------
-
   end subroutine OneProc
 
 
 
 
   subroutine initOneProc (AllGrids, name_name)
-    use dump, only: &
-      dumpMessage
-    use mem_grid, only: &
-       grid_g, &
-       oneGlobalGridData
-    use mem_aer1, only: dumpAer
 
-    include "constants.f90"
     type(GridTree), pointer :: AllGrids
     character(len=*), intent(in) :: name_name
     character(len=*), parameter :: h="**(initOneProc)**"
-    character(len=*), parameter :: header="**(initOneProc)**"
 
     !---------------------------------------------------------------------
     !     *** This routine is the driver of all initialization packages
@@ -1604,10 +1291,6 @@ contains
     character(len=8) :: rest
     integer :: ifm,icm,ihm,ngr,nv,ierr
     logical :: histFlag, instFlag, meanFlag, liteFlag
-    !- for changing initial soil moisture
-    LOGICAL, PARAMETER ::  change_soilm=.true.
-
-
 
     ! Set version number for common blocks.
 
@@ -1641,9 +1324,11 @@ contains
           !--(DMK-LFR NEC-SX6)----------------------------------------------
 
        enddo
+
        do ifm = 1,ngrids
           call SfcReadStoreOwnChunk(ifm)
        enddo
+
        !     Define grid topography, transform, latitude-longitude,
        !        and map factor arrays.
 
@@ -1678,9 +1363,8 @@ contains
        if ( initial == 1 .or. initial == 3) then
 
           !**(JP)** not worked yet
-          !call fatal_error(h//"**(JP)** initial==1 or initial==3 was not worked yet")
-          iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
-          "**(JP)** initial==1 or initial==3 was not worked yet")
+          call fatal_error(h//"**(JP)** initial==1 or initial==3 was not worked yet")
+
           ! If horizontally homogeneous initialization,
           !    subroutine INITHH loops through all grids and initializes
           !    those for which nxtnest = 0.
@@ -1729,7 +1413,9 @@ contains
           !--(DMK-CCATT-INI)-----------------------------------------------------
           call VarfReadStoreOwnChunk(AllGrids, 0, initial)
           !--(DMK-CCATT-FIM)-----------------------------------------------------
+
        endif
+
 
        !     Initialize past time level velocity and perturbation Exner function
        !     on all grids.
@@ -1743,64 +1429,18 @@ contains
 
           call thermo(mzp,mxp,myp,1,mxp,1,myp,'THRM_ONLY')
 
-          if(ilwrtyp==6 .or. iswrtyp==6 ) THEN
-            if (level  ==  3) &
-	      call effective_radius(mzp,mxp,myp &
-                  ,micro_g(ifm)%rei             &
-                  ,micro_g(ifm)%rel             )
+          if (level  ==  3) then
+             call initqin(mzp,mxp,myp        &
+                  ,micro_g(ifm)%q2    (1,1,1)  &
+                  ,micro_g(ifm)%q6    (1,1,1)  &
+                  ,micro_g(ifm)%q7    (1,1,1)  &
+                  ,basic_g(ifm)%pi0   (1,1,1)  &
+                  ,basic_g(ifm)%pp    (1,1,1)  &
+                  ,basic_g(ifm)%theta (1,1,1)  &
+                  ,basic_g(ifm)%dn0   (1,1,1)  &
+                  ,micro_g(ifm)%cccnp (1,1,1)  &
+                  ,micro_g(ifm)%cifnp (1,1,1)  )
           endif
-          if (mcphys_type == 0) then
-	    if (level  ==  3) then
-               call initqin(mzp,mxp,myp        &
-                  ,micro_g(ifm)%q2      &
-                  ,micro_g(ifm)%q6      &
-                  ,micro_g(ifm)%q7      &
-                  ,basic_g(ifm)%pi0     &
-                  ,basic_g(ifm)%pp      &
-                  ,basic_g(ifm)%theta   &
-                  ,basic_g(ifm)%dn0     &
-                  ,micro_g(ifm)%cccnp   &
-                  ,micro_g(ifm)%cifnp   )
-            endif
-
-	  elseif(mcphys_type == 1) then
-
-	   if (level  ==  3) then
-	     call initqin_2M(mzp,mxp,myp        &
-            ,micro_g(ifm)%q2   &
-	    ,micro_g(ifm)%q6      &
-            ,micro_g(ifm)%q7      &
-            ,basic_g(ifm)%pi0     &
-            ,basic_g(ifm)%pp      &
-            ,basic_g(ifm)%theta   &
-            ,basic_g(ifm)%dn0     )
-
-
-            if(icloud >= 5) call initqin2_2M(mzp,mxp,myp        &
-            ,micro_g(ifm)%cccnp   &
-            ,micro_g(ifm)%cccmp   &
-            ,basic_g(ifm)%dn0   )
-
-            if(idriz  >= 5) call initqin3_2M(mzp,mxp,myp        &
-            ,micro_g(ifm)%gccnp   &
-            ,micro_g(ifm)%gccmp   &
-            ,basic_g(ifm)%dn0   )
-
-            if(ipris  >= 5) call initqin4_2M(mzp,mxp,myp        &
-            ,micro_g(ifm)%cifnp   &
-            ,basic_g(ifm)%dn0   )
-
-            if(idust > 0 .or. imd1flg > 0 .or. imd2flg > 0)  &
-             call initqin5_2M(mzp,mxp,myp    &
-            ,micro_g(ifm)%md1np   &
-            ,micro_g(ifm)%md2np )
-          endif
-	 endif
-	 !-- initialization of current theta_il field
-	 !-- only for RK time integration
-	 if(DYNCORE_FLAG==2) then
-	    basic_g(ifm)%thc(:,:,:)=basic_g(ifm)%thp(:,:,:)
-	 endif
        enddo
 
        ! If initializing some fields from previous runs...
@@ -1818,21 +1458,19 @@ contains
 
        endif
 
-!call dumpAer('Aer_pos1')
 
        ! Fill land surface data for all grids that have no standard input files
 
        ! ALF - For use with SiB
 
-       !DSM if (isfcl <= 2) then
-       if (isfcl <= 2  .or. isfcl == 5) then
+       if (isfcl <= 2) then
           call sfcdata
        elseif (isfcl == 3) then
 
           !**(JP)** not worked yet
-          !call fatal_error(h//"**(JP)** isfcl==3 was not worked yet")
-          iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
-          "**(JP)**isfcl==3 was not worked yet")
+          call fatal_error(h//"**(JP)** isfcl==3 was not worked yet")
+          call sfcdata_sib_driver
+
        endif
 
        ! Initialize various LEAF variables.
@@ -1842,37 +1480,14 @@ contains
        end if
 
 
-       !- change initial soil moisture if desired
-       if(change_soilm) then
-
-        do ifm=1,ngrids
-         call change_soil_moisture_init(nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm)    &
-             ,nzg,nzs,npatch,ifm	 &
-             ,basic_g(ifm)%theta (1,1,1) &
-             ,basic_g(ifm)%pi0   (1,1,1) &
-             ,basic_g(ifm)%pp    (1,1,1) &
-             ,leaf_g(ifm)%soil_water	   (1,1,1,1)  &
-             ,leaf_g(ifm)%soil_energy      (1,1,1,1)  &
-             ,leaf_g(ifm)%soil_text	   (1,1,1,1)  &
-             ,leaf_g(ifm)%sfcwater_mass    (1,1,1,1)  &
-             ,leaf_g(ifm)%sfcwater_energy  (1,1,1,1)  &
-             ,leaf_g(ifm)%sfcwater_depth   (1,1,1,1)  &
-             ,grid_g(ifm)%glat   (1,1)       &
-             ,grid_g(ifm)%glon   (1,1)	     &
-             ,grid_g(ifm)%lpw    (1,1)	     &
-             ,leaf_g(ifm)%leaf_class(1,1,1)  )
-        enddo
-       endif
-
-
-
        ! TEB
+
        if (TEB_SPM==1) then
 
           !**(JP)** not worked yet
 !!$        call fatal_error(h//"**(JP)** TEB_SPM==1 was not worked yet")
-          ! Initial values for Common use TEB vars
-          ! For now, it is only being used to zero out this four common
+          ! Initial values for Common use TEB vars 
+          ! For now, it is only being used to zero out this four common 
           ! use variables.
           ! This variables will be used for other purposes later.
           ! Edmilson D. Freitas 07/07/2006
@@ -1976,41 +1591,51 @@ contains
              stilt_g(ifm)%dnp(:,:,:)= basic_g(ifm)%dn0(:,:,:)
           enddo
        endif
+       if (ccatt == 1) then
 
-       if (ccatt == 1 .and. chemistry >= 0 .and. aerosol > 0) then
+          ! AKMIN variable:
+          do ifm=1,ngrids
+             !srf- initialize akmin = f(x,y)
+             if (AKMIN(ifm)<0.) then
+                call newgrid(ifm)
+                call get_akmin2d(ifm, nodemxp(mynum,ifm), nodemyp(mynum,ifm), &
+                     akminvar(ifm)%akmin2d, mynum, nodei0, nodej0, &
+                     akmin(ifm))
+             endif
+          enddo
+
+       endif
+
+       if (ccatt == 1 .and. chemistry >= 0) then
 
           !srf- initialize dry-dep constants
           call dep_init(chem_nspecies,dvj) ! (DMK) deposicao seca (cod. limpo)
 
-          !-srf: initialize mixing ratios (only if chem assim is off)
-          !-srf: and sources
+          !-srf: initialize mixing ratios (only if chem assim is off) 
+          !-srf: and sources       
           do ifm=1,ngrids
              call newgrid(ifm)
 
              call initial_condition(ifm,nzp,nxp,nyp)
-             !if(mynum==1) print*,'->2 chem/aer sources maps reading: ',time/3600.,' grid=',ifm
-             call read_sourcemaps(ifm,nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm), &
-             	  ia,iz,ja,jz, time,iyear1,imonth1,idate1,itime1,ngrids,timmax,		   &
-             	  chem_nspecies,spc_chem_alloc,src,off,nsrc,nvert_src,chem1_src_g, &
-             	  bburn,antro, bioge,  geoge,spc_chem_name,on,chemical_mechanism,  &
-             	  emiss_ajust,co,aer_nspecies,spc_aer_alloc,spc_aer_name,	   &
-             	  src_name,chemistry,ntimes_src,aer1_g,nmodes,aerosol,plumerise,   &
-             	  nveg_agreg,plume_mean_g,nzpmax,dzt,grid_g(ifm)%rtgt,grid_g(ifm)%topt, &
-             	  transport,plume_g,tropical_forest,boreal_forest,savannah,	    &
-             	  grassland,diur_cycle,volcanoes,volc_mean_g,basic_g(ifm)%dn0,zt,zm,&
-             	  mchnum, master_num,mass_bin_dist,CO2,ISFCL,aerosol_mechanism     ,&
-		  plume_fre_g,emiss_ajust_aer)
 
+             call read_sourcemaps(ifm,nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm), &
+                  time,iyear1,imonth1,idate1,itime1,ngrids,timmax, &
+                  chem_nspecies,spc_chem_alloc,src,off,nsrc,nvert_src,chem1_src_g, &
+                  bburn,antro, bioge,  geoge,spc_chem_name,on,chemical_mechanism,  &
+                  emiss_ajust,co,aer_nspecies,spc_aer_alloc,spc_aer_name,urban,nucle, &
+                  accum,src_name,chemistry,ntimes_src,aer1_g,nmodes,aerosol,plumerise,&
+                  nveg_agreg,plume_mean_g,nzpmax,dzt,grid_g(ifm)%rtgt,grid_g(ifm)%topt, &
+                  transport,aer_bburn,plume_g,tropical_forest,boreal_forest,savannah, &
+                  grassland,diur_cycle,volcanoes,volc_mean_g,basic_g(ifm)%dn0,zt,zm, &
+                  mchnum, master_num)
              call aer_background(ifm,nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm),&
                   1,nodemxp(mynum,ifm),1,nodemyp(mynum,ifm))
           enddo
        end if
-!call dumpAer('Aer_pos2')
-       ! Read Radiation Parameters if CARMA or RRTMG Radiation is selected
-       if (ilwrtyp==4 .or. iswrtyp==4 .or. ilwrtyp==6 .or. iswrtyp==6 ) then
-         CALL master_read_carma_data()
-         CALL read_aotMap()
-       endif
+
+       !--(DMK-CCATT-OLD)-----------------------------------------------------
+       ! Read Radiation Parameters if CARMA Radiation is selected
+       call master_read_carma_data()
 
        ! AKMIN variable:
        do ifm=1,ngrids
@@ -2018,27 +1643,66 @@ contains
           if (AKMIN(ifm)<0.) then
              call newgrid(ifm)
              call get_akmin2d(ifm, nodemxp(mynum,ifm), nodemyp(mynum,ifm), &
-                  akminvar(ifm)%akmin2d, mynum, nodei0, nodej0,akmin(ifm),grid_g(ifm)%topt)
+                  akminvar(ifm)%akmin2d, mynum, nodei0, nodej0,akmin(ifm))
           endif
        enddo
        !--(DMK-CCATT-FIM)-----------------------------------------------------
 
 
+
+       ! training for Grell scheme
+       do ifm=1,ngrids
+          !srf- initialize akmin = f(x,y)
+          if (NNQPARM(ifm)==2) then
+             if(na_EXTRA2D<5) stop ' na_extra2d must be greater than 4' 
+             call newgrid(ifm)
+             call get_traning_grell(ifm, nodemxp(mynum,ifm), nodemyp(mynum,ifm), extra2d(5,ngrid)%d2)
+          endif
+       enddo
+
        !srf-g3d: training for G3d
        do ifm=1,ngrids
-          if(nnqparm(ifm) == 3 .or. nnqparm(ifm) == 5) then ! and training==1
+          if(nnqparm(ifm) == 3) then ! and training==1          
              call newgrid(ifm)
-             call init_weights(ifm,nodemxp(mynum,ifm),nodemyp(mynum,ifm),nnqparm(ifm))
+             call init_weights(ifm,nodemxp(mynum,ifm),nodemyp(mynum,ifm))
           endif
        enddo
        !srf-g3d
 
+
+       ! CATT
+
+       !--(DMK-CCATT-INI)-----------------------------------------------------
+       !     if (CATT==1) then
+       !
+!!!$        !**(JP)** not worked yet
+!!!$        call fatal_error(h//"**(JP)** CATT==1 was not worked yet")
+       !        ! srf......................................................
+       !        ! Initiating tracers concentration and sources
+       !        if (RECYCLE_TRACERS==0) then
+       !           do ifm=1,NGRIDS
+       !              ! Do not perform recycle procedure for tracers
+       !              ! Initiating with zeros
+       !              ! Putting zero on specific scalar vectors
+       !              scalar_g(1,ifm)%sclp(:,:,:) = 0.
+       !              scalar_g(2,ifm)%sclp(:,:,:) = 0.
+       !              scalar_g(3,ifm)%sclp(:,:,:) = 0.
+       !              scalar_g(4,ifm)%sclp(:,:,:) = 0.
+       !              !!scalar_g(5,ifm)%sclp(:,:,:) = 0.
+       !           enddo
+       !        endif
+       !
+       !        ! Reading Emission Maps for all grids
+       !        call read_emission_sources_map()
+       !
+       !     endif
+       !     !
+       !--(DMK-CCATT-FIM)-----------------------------------------------------
+
        if (initial == 3) then
 
           !**(JP)** not worked yet
-          !call fatal_error(h//"**(JP)** sfcinit_hstart was not worked yet")
-          iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
-          "**(JP)** sfcinit_hstart was not worked yet")
+          call fatal_error(h//"**(JP)** sfcinit_hstart was not worked yet")
           call sfcinit_hstart()
 
        end if
@@ -2048,7 +1712,7 @@ contains
     else if(runtype(1:7) == 'HISTORY') then
 
        !**(JP)** not worked yet
-       !call fatal_error(h//"**(JP)** runtype==HISTORY was not worked yet")
+       call fatal_error(h//"**(JP)** runtype==HISTORY was not worked yet")
 
        !                  History file start
 
@@ -2061,14 +1725,14 @@ contains
        call MakeSfcFiles()
 
        ! Read surface and topo files for any added grids
-!       do ifm = ngridsh+1,ngrids
-!       do ifm = ngridsh+1,ngrids
-       do ifm = 1,ngrids
+
+       do ifm = ngridsh+1,ngrids
           call SfcReadStoreOwnChunk(ifm)
        enddo
-!       do ifm = ngridsh+1,ngrids
-       do ifm = 1,ngrids
-          !--(DMK-LFR NEC-SX6)----------------------------------------------
+
+       do ifm = ngridsh+1,ngrids
+
+          !--(DMK-LFR NEC-SX6)----------------------------------------------    
           !        call TopReadStoreFullFieldAndOwnChunk(ifm)
           call TRSFFieldAndOwnChunk(ifm)
           !--(DMK-LFR NEC-SX6)----------------------------------------------
@@ -2079,6 +1743,7 @@ contains
        call gridSetup(2)
 
        ! Read in sst and ndvi files for all grids
+
        do ifm = 1,ngrids
           call SstReadStoreOwnChunk(1, ifm, ierr)
        enddo
@@ -2100,7 +1765,7 @@ contains
           icm = nxtnest(ifm)
           if (icm  ==  0) then
              call newgrid(ifm)
-              call refs3d (mzp,mxp,myp  &
+             call refs3d (nzp,nxp,nyp  &
                   ,basic_g(ifm)%pi0  (1,1,1),basic_g(ifm)%dn0  (1,1,1)  &
                   ,basic_g(ifm)%dn0u (1,1,1),basic_g(ifm)%dn0v (1,1,1)  &
                   ,basic_g(ifm)%th0  (1,1,1),grid_g(ifm)%topt  (1,1)    &
@@ -2111,14 +1776,15 @@ contains
        do ifm = 1,min(ngrids,ngridsh)
           icm = nxtnest(ifm)
           if (icm  >  0) call fmrefs3d(ifm)
-          call negadj1(mzp,mxp,myp)
+          call negadj1(nzp,nxp,nyp)
        enddo
 
        ! ALF - For use with SiB
 
-       !DSM if (isfcl <= 2) then
-       if (isfcl <= 2  .or. isfcl == 5) then
+       if (isfcl <= 2) then
           call sfcdata
+       elseif (isfcl == 3) then
+          call sfcdata_sib_driver
        endif
 
        ! Heterogenous Soil Moisture Init.
@@ -2133,8 +1799,7 @@ contains
                   basic_g(ifm)%theta, basic_g(ifm)%pi0, basic_g(ifm)%pp,  &
                   leaf_g(ifm)%soil_water, leaf_g(ifm)%soil_energy,        &
                   leaf_g(ifm)%soil_text,                                  &
-                  grid_g(ifm)%glat, grid_g(ifm)%glon, grid_g(ifm)%lpw     &
-                 ,leaf_g(ifm)%seatp, leaf_g(ifm)%seatf                    )
+                  grid_g(ifm)%glat, grid_g(ifm)%glon, grid_g(ifm)%lpw     )
 
           enddo
 
@@ -2156,11 +1821,7 @@ contains
           do ifm = ngridsh+1,ngrids
              icm = nxtnest(ifm)
              if (icm  ==  0) then
-                !call fatal_error(h//"Attempted to add "//&
-                !     "a hemispheric grid on a history restart; "//&
-                !     "this cannot be done.")
-                iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
-                     "Attempted to add "//&
+                call fatal_error(h//"Attempted to add "//&
                      "a hemispheric grid on a history restart; "//&
                      "this cannot be done.")
              endif
@@ -2178,52 +1839,19 @@ contains
 
              call thermo(nzp,nxp,nyp,1,nxp,1,nyp,'THRM_ONLY')
 
-            if (mcphys_type == 0) then
-	     if (level  ==  3) then
-               call initqin(mzp,mxp,myp        &
-                  ,micro_g(ifm)%q2      &
-                  ,micro_g(ifm)%q6      &
-                  ,micro_g(ifm)%q7      &
-                  ,basic_g(ifm)%pi0     &
-                  ,basic_g(ifm)%pp      &
-                  ,basic_g(ifm)%theta   &
-                  ,basic_g(ifm)%dn0     &
-                  ,micro_g(ifm)%cccnp   &
-                  ,micro_g(ifm)%cifnp   )
+             if (level  ==  3) then
+                call initqin(nzp,nxp,nyp        &
+                     ,micro_g(ifm)%q2    (1,1,1)  &
+                     ,micro_g(ifm)%q6    (1,1,1)  &
+                     ,micro_g(ifm)%q7    (1,1,1)  &
+                     ,basic_g(ifm)%pi0   (1,1,1)  &
+                     ,basic_g(ifm)%pp    (1,1,1)  &
+                     ,basic_g(ifm)%theta (1,1,1)  &
+                     ,basic_g(ifm)%dn0   (1,1,1)  &
+                     ,micro_g(ifm)%cccnp (1,1,1)  &
+                     ,micro_g(ifm)%cifnp (1,1,1)  )
              endif
 
-	    elseif(mcphys_type == 1) then
-
-	    if (level  ==  3) then
-	     call initqin_2M(mzp,mxp,myp        &
-            ,micro_g(ifm)%q2      &
-            ,micro_g(ifm)%q6      &
-            ,micro_g(ifm)%q7      &
-            ,basic_g(ifm)%pi0     &
-            ,basic_g(ifm)%pp      &
-            ,basic_g(ifm)%theta   &
-            ,basic_g(ifm)%dn0     )
-
-            if(icloud >= 5) call initqin2_2M(mzp,mxp,myp        &
-            ,micro_g(ifm)%cccnp   &
-            ,micro_g(ifm)%cccmp   &
-            ,basic_g(ifm)%dn0   )
-
-            if(idriz  >= 5) call initqin3_2M(mzp,mxp,myp        &
-            ,micro_g(ifm)%gccnp   &
-            ,micro_g(ifm)%gccmp   &
-            ,basic_g(ifm)%dn0   )
-
-            if(ipris  >= 5) call initqin4_2M(mzp,mxp,myp        &
-            ,micro_g(ifm)%cifnp   &
-            ,basic_g(ifm)%dn0   )
-
-            if(idust > 0 .or. imd1flg > 0 .or. imd2flg > 0)  &
-             call initqin5_2M(mzp,mxp,myp    &
-            ,micro_g(ifm)%md1np   &
-            ,micro_g(ifm)%md2np )
-          endif
-	 endif
 
              ! Heterogenous Soil Moisture Init.
              if ((SOIL_MOIST == 'h').or.(SOIL_MOIST == 'H').or.  &
@@ -2233,9 +1861,7 @@ contains
                      basic_g(ifm)%theta, basic_g(ifm)%pi0, basic_g(ifm)%pp,  &
                      leaf_g(ifm)%soil_water, leaf_g(ifm)%soil_energy,        &
                      leaf_g(ifm)%soil_text,                                  &
-                     grid_g(ifm)%glat, grid_g(ifm)%glon, grid_g(ifm)%lpw     &
-                    ,leaf_g(ifm)%seatp, leaf_g(ifm)%seatf                    )
-
+                     grid_g(ifm)%glat, grid_g(ifm)%glon, grid_g(ifm)%lpw     )
              endif
 
 
@@ -2255,11 +1881,9 @@ contains
           print*,' +-------------------------------------'
        endif
 
-       ! Read Radiation Parameters if CARMA or RRTMG Radiation is selected
-       if (ilwrtyp==4 .or. iswrtyp==4 .or. ilwrtyp==6 .or. iswrtyp==6 ) then
-               CALL master_read_carma_data()
-               CALL read_aotMap()
-       endif
+       ! Read Radiation Parameters if CARMA Radiation is selected
+       call master_read_carma_data()
+       !
 
        !--(DMK-CCATT-INI)-----------------------------------------------------
        if (ccatt == 1 .and. chemistry >= 0) then
@@ -2267,42 +1891,33 @@ contains
           !srf- initialize dry-dep constants
           call dep_init(chem_nspecies,dvj) ! (DMK) deposicao seca (cod. limpo)
 
-          !-srf: initialize mixing ratios (only if chem assim is off)
-          !-srf: and sources
+          !-srf: initialize mixing ratios (only if chem assim is off) 
+          !-srf: and sources       
           do ifm=1,ngrids
              call newgrid(ifm)
-             !if(mynum==1) print*,'->3 chem/aer sources maps reading: ',time/3600.,' grid=',ifm
              call read_sourcemaps(ifm,nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm), &
-             	  ia,iz,ja,jz,  						   &
-		  time,iyear1,imonth1,idate1,itime1,ngrids,timmax,		   &
-             	  chem_nspecies,spc_chem_alloc,src,off,nsrc,nvert_src,chem1_src_g, &
-             	  bburn,antro, bioge,  geoge,spc_chem_name,on,chemical_mechanism,  &
-             	  emiss_ajust,co,aer_nspecies,spc_aer_alloc,spc_aer_name,	   &
-             	  src_name,chemistry,ntimes_src,aer1_g,nmodes,aerosol,plumerise,   &
-             	  nveg_agreg,plume_mean_g,nzpmax,dzt,grid_g(ifm)%rtgt,grid_g(ifm)%topt, &
-             	  transport,plume_g,tropical_forest,boreal_forest,savannah,	    &
-             	  grassland,diur_cycle,volcanoes,volc_mean_g,basic_g(ifm)%dn0,zt,zm,&
-             	  mchnum, master_num,mass_bin_dist,CO2,ISFCL,aerosol_mechanism,&
-		  plume_fre_g,emiss_ajust_aer)
-
-	   enddo
+                  time,iyear1,imonth1,idate1,itime1,ngrids,timmax, &
+                  chem_nspecies,spc_chem_alloc,src,off,nsrc,nvert_src,chem1_src_g, &
+                  bburn,antro, bioge,  geoge,spc_chem_name,on,chemical_mechanism,  &
+                  emiss_ajust,co,aer_nspecies,spc_aer_alloc,spc_aer_name,urban,nucle, &
+                  accum,src_name,chemistry,ntimes_src,aer1_g,nmodes,aerosol,plumerise,&
+                  nveg_agreg,plume_mean_g,nzpmax,dzt,grid_g(ifm)%rtgt,grid_g(ifm)%topt, &
+                  transport,aer_bburn,plume_g,tropical_forest,boreal_forest,savannah, &
+                  grassland,diur_cycle,volcanoes,volc_mean_g,basic_g(ifm)%dn0,zt,zm, &
+                  mchnum, master_num)
+          enddo
        end if
 
     else
-       !call fatal_error(h//" wrong runtype")
-       iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
-            "wrong runtype")
+       call fatal_error(h//" wrong runtype")
     endif
 
     ! micro initialization
 
     call newgrid(1)
 
-    if     (mcphys_type == 0) then
-     call micro_master()
-    elseif (mcphys_type == 1) then
-     call micro_master_2M()
-    endif
+    call micro_master()
+
 
     !       Fill latitude-longitude, map factor, and Coriolis arrays.
     do ifm = 1,ngrids
@@ -2318,14 +1933,12 @@ contains
     !     prepare history/varfile files
     !     and fill past/future nudging arrays for start of simulation
 
-!call dumpAer('Aer_pos3')
+
 
     if ( nud_type == 1 ) then
 
        !**(JP)** not worked yet
-       !call fatal_error(h//"**(JP)** nud_type==1 was not worked yet")
-       iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
-            "**(JP)** nud_type==1 was not worked yet")
+       call fatal_error(h//"**(JP)** nud_type==1 was not worked yet")
        call nud_read(1)
 
        !--(DMK-CCATT-INI)-----------------------------------------------------
@@ -2343,9 +1956,7 @@ contains
     if ( nud_cond == 1 ) then
 
        !**(JP)** not worked yet
-       !call fatal_error(h//"**(JP)** nud_cond==1 was not worked yet")
-       iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
-            "**(JP)** nud_cond==1 was not worked yet")
+       call fatal_error(h//"**(JP)** nud_cond==1 was not worked yet")
        call cond_read(1)
 
     end if
@@ -2355,9 +1966,7 @@ contains
     if (if_oda == 1) then
 
        !**(JP)** not worked yet
-       !call fatal_error(h//"**(JP)** if_oda==1 was not worked yet")
-       iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
-            "**(JP)** if_oda==1 was not worked yet")
+       call fatal_error(h//"**(JP)** if_oda==1 was not worked yet")
        call oda_read()
 
     end if
@@ -2368,9 +1977,7 @@ contains
     if (if_cuinv == 1) then
 
        !**(JP)** not worked yet
-       !call fatal_error(h//"**(JP)** if_cuinv==1 was not worked yet")
-       iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
-            "**(JP)** if_cuinv==1 was not worked yet")
+       call fatal_error(h//"**(JP)** if_cuinv==1 was not worked yet")
        call cu_read(1)
 
     end if
@@ -2380,9 +1987,7 @@ contains
     if (if_urban_canopy == 1) then
 
        !**(JP)** not worked yet
-       !call fatal_error(h//"**(JP)** if_urban_canopy==1 was not worked yet")
-       iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
-            "**(JP)** if_urban_canopy==1 was not worked yet")
+       call fatal_error(h//"**(JP)** if_urban_canopy==1 was not worked yet")
        call urb_drag_init()
 
     end if
@@ -2430,7 +2035,7 @@ contains
        liteFlag=.false.
        meanFlag=.false.
     endif
-    !--(DMK-CCATT-INI)--------------------------------------------------------
+    !--(DMK-CCATT-INI)--------------------------------------------------------  
     if( applyDF .and. time <0.00001) instFlag=.true.
     !--(DMK-CCATT-FIM)--------------------------------------------------------
     !srf
@@ -2442,9 +2047,7 @@ contains
     if(avgtim /= 0.)then
 
        !**(JP)** not converted yet
-       !call fatal_error(h//" avgtim /= 0 was not converted yet")
-       iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
-            "**(JP)** avgtim/=0 was not worked yet")
+       call fatal_error(h//" avgtim /= 0 was not converted yet")
 
        do ngr=1,ngrids
           do nv=1,num_var(ngr)
@@ -2462,7 +2065,7 @@ contains
     end if
 
     !**(JP)** ver o que fazer com esses prints
-!call dumpAer('Aer_pos4')
+
 !!$  ngrid=1
 !!$  call prtopt(6)
 !!$  if (initfld  ==  1) then
@@ -2543,8 +2146,7 @@ contains
                timemf.ge.0.*3600.) then
              !       if (timemf>=srctime2 .and. timemf<timmax) then
              isendbackflg = 1
-             write(*,*) "**** Setting isendsrc to 0. The source map will be the last one! (must be reorganized!!!) ****"
-             isendsrc = 0!1
+             isendsrc = 1
           endif
 
        endif
@@ -2606,7 +2208,7 @@ contains
        !return
     endif
 
-    if  ( (nud_type == 2 .or. nud_type == 4 ) .and. timemf  >=  vtime2  &
+    if  ( nud_type == 2 .and. timemf  >=  vtime2  &
          .and. timemf  <  timmax) then
 !!$     isendflg = 1 ! Not used if sending just the necessary input data
        isendbackflg = 1 ! ALF
@@ -2614,7 +2216,7 @@ contains
        return
     endif
 
-    if  (nud_type == 1 .and. timemf  >=  htime2  &
+    if  ( nud_type == 1 .and. timemf  >=  htime2  &
          .and. timemf  <  timmax) then
        isendflg = 1
        isendbackflg = 1 ! ALF
@@ -2673,18 +2275,4 @@ contains
 
     return
   end subroutine comm_time
-
-
-
-
 end module ModOneProc
-
-!subroutine lfr_debug(header,version,message,value)
-!  implicit NONE
-!  character(len=*), intent(in) :: header,version, message
-!  integer, intent(in) :: value
-!
-!  print *,'LFR-DBG '//header//' % '//version//' % '//message//' : ',value
-!  call flush(6)
-!
-!end subroutine lfr_debug
