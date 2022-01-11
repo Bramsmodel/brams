@@ -63,8 +63,7 @@ use node_mod, only: mynum
 
     !use fms_mod,             only: write_version_number, open_namelist_file, &
     !                               check_nml_error, close_file, file_exist
-    use module_mp_radar
-   
+
     implicit none
     
     private
@@ -141,13 +140,7 @@ use node_mod, only: mynum
     
     real, parameter :: sfcrho = 1.2 !< surface air density
     real, parameter :: rhor = 1.e3 !< density of rain water, lin83
-
-    real, parameter :: qmin = 1.0E-12 ! min q for computing precip type
-    real, parameter :: t0c  = 2.7315e+2 ! temp at 0C (K) 
-    !--srf
-    real, parameter :: n0r = 8.0e6, n0s = 3.0e6, n0g = 4.0e6
-    real, parameter :: rhow = 1.0e3, rhos = 1.0e2, rhog = 4.0e2
-
+    
     real :: cracs, csacr, cgacr, cgacs, csacw, craci, csaci, cgacw, cgaci, cracw !< constants for accretions
     real :: acco (3, 4) !< constants for accretions
     real :: cssub (5), cgsub (5), crevp (5), cgfr (2), csmlt (5), cgmlt (5)
@@ -375,7 +368,7 @@ subroutine gfdl_cloud_microphys_driver (qv, ql, qr, qi, qs, qg, qa, qn,   &
         revap, isubl,                                                     &
         rain, snow, ice,                                                  &
         graupel, m2_rain, m2_sol, hydrostatic, phys_hydrostatic,          &
-        iis, iie, jjs, jje, kks, kke, ktop, kbot,re_cloud, re_ice, re_snow)
+        iis, iie, jjs, jje, kks, kke, ktop, kbot)
     
     implicit none
     
@@ -404,9 +397,7 @@ subroutine gfdl_cloud_microphys_driver (qv, ql, qr, qi, qs, qg, qa, qn,   &
     real, intent (out), dimension (:, :, :) :: m2_rain, m2_sol ! Rain and Ice fluxes (Pa kg/kg)
     real, intent (out), dimension (:, :, :) :: revap ! Rain evaporation
     real, intent (out), dimension (:, :, :) :: isubl ! Ice sublimation
-    !rsun 
-    real, intent (inout), dimension (:, :, :) :: re_cloud, re_ice, re_snow
-
+    
     ! logical :: used
     
     real :: mpdt, rdt, dts, convt, tot_prec
@@ -421,14 +412,8 @@ subroutine gfdl_cloud_microphys_driver (qv, ql, qr, qi, qs, qg, qa, qn,   &
     real, dimension (iie - iis + 1, jje - jjs + 1, kke - kks + 1) :: vt_r, vt_s, vt_g, vt_i, qn2
     
     real :: allmax
-    real, dimension (ktop:kbot) :: qvz, qlz, qrz, qiz, qsz,  qaz,t1d
-    real, dimension (ktop:kbot) :: dp0, dp1, dz0, dz1, qa0, den0
-    real, dimension (ktop:kbot) :: re_qc, re_qi, re_qs 
-    real omq 
-    integer islmski
-
-    integer :: firsttime=0
     
+    integer :: firsttime=0
     is = 1
     js = 1
     ks = 1
@@ -439,9 +424,8 @@ subroutine gfdl_cloud_microphys_driver (qv, ql, qr, qi, qs, qg, qa, qn,   &
     ! call mpp_clock_begin (gfdl_mp_clock)
 !################################    
     if(firsttime == 0 .and. mynum == 1) then 
-        firsttime=1
-        print*,"========================================================================"
-        print*,"GFDL parameters:"
+    firsttime=1
+    
         print*,"mp_time, t_min, t_sub, tau_r2g, tau_smlt, tau_g2r, dw_land, dw_ocean", &
         mp_time, t_min, t_sub, tau_r2g, tau_smlt, tau_g2r, dw_land, dw_ocean 
 
@@ -471,8 +455,7 @@ subroutine gfdl_cloud_microphys_driver (qv, ql, qr, qi, qs, qg, qa, qn,   &
 
         print*,"do_sedi_heat, sedi_transport, do_sedi_w, de_ice, icloud_f, irain_f, mp_print", &
         do_sedi_heat, sedi_transport, do_sedi_w, de_ice, icloud_f, irain_f, mp_print
-        print*,"========================================================================"
-
+   
     endif
 !################################    
     
@@ -600,103 +583,82 @@ subroutine gfdl_cloud_microphys_driver (qv, ql, qr, qi, qs, qg, qa, qn,   &
     convt = 86400. * rdt * rgrav
     do j = js, je
         do i = is, ie
-            !-- srf preventing neg precipitations
-            rain    (i, j) = max(0., rain    (i, j) * convt)
-            snow    (i, j) = max(0., snow    (i, j) * convt)
-            ice     (i, j) = max(0., ice     (i, j) * convt)
-            graupel (i, j) = max(0., graupel (i, j) * convt)
+            rain (i, j) = rain (i, j) * convt
+            snow (i, j) = snow (i, j) * convt
+            ice (i, j) = ice (i, j) * convt
+            graupel (i, j) = graupel (i, j) * convt
             prec_mp (i, j) = rain (i, j) + snow (i, j) + ice (i, j) + graupel (i, j)
         enddo
     enddo
     
-
-    !-----------------
-    !srf: get the cloud/ice/snow effective radius for radiation
-    !
-    do j = js, je
-      do i=is,ie
-        do k=kbot,ktop,-1 ! kbot = model top, ktop = 1.
-          re_qc(k) = 2.51E-6
-          re_qi(k) = 10.01E-6
-          re_qs(k) = 25.E-6
-
-          t1d(k)  = pt(i,j,k) 
-
-          dp1 (k) = delp (i, j, k)
-          dp0 (k) = dp1 (k) ! moist air mass * grav
-
-           ! -----------------------------------------------------------------------
-           ! convert moist mixing ratios to dry mixing ratios
-           ! -----------------------------------------------------------------------
-
-           qvz (k) = qv (i, j, k)
-           qlz (k) = ql (i, j, k)
-           qrz (k) = qr (i, j, k)
-           qiz (k) = qi (i, j, k)
-           qsz (k) = qs (i, j, k)
-
-           ! dp1: dry air_mass
-           ! dp1 (k) = dp1 (k) * (1. - (qvz (k) + qlz (k) + qrz (k) + qiz (k) + qsz (k) + qgz (k)))
-           dp1 (k) = dp1 (k) * (1. - qvz (k)) ! gfs
-           omq = dp0 (k) / dp1 (k)
-
-           qvz (k) = qvz (k) * omq
-           qlz (k) = qlz (k) * omq
-           qrz (k) = qrz (k) * omq
-           qiz (k) = qiz (k) * omq
-           qsz (k) = qsz (k) * omq
-
-           qa0 (k) = qa (i, j, k)
-           qaz (k) = 0.
-           dz0 (k) = dz (i, j, k)
-
-           den0 (k) = - dp1 (k) / (grav * dz0 (k)) ! density of dry air
-!           p1 (k) = den0 (k) * rdgas * t0 (k) ! dry air pressure
-        enddo 
-        islmski = nint(land(i,j)) ! 1=land,0=ocean
-        !print*,"islmski",islmski 
-       
-        call effectRad(t1d, qlz, qiz, qsz, den0,               &    
-                       qmin, t0c, re_qc, re_qi, re_qs,         &    
-                       islmski,ktop, kbot, i, land(i,j))
-        do k=kbot,ktop,-1
-          re_cloud(i,j,k) = MAX(2.51E-6,  MIN(re_qc(k),  50.E-6))*1.e6
-          re_ice  (i,j,k) = MAX(10.01E-6, MIN(re_qi(k), 125.E-6))*1.e6
-          re_snow (i,j,k) = MAX(25.E-6,   MIN(re_qs(k), 999.E-6))*1.e6
-        enddo 
-      enddo 
-    enddo 
+    ! if (id_cond > 0) then
+    ! do j = js, je
+    ! do i = is, ie
+    ! cond (i, j) = cond (i, j) * rgrav
+    ! enddo
+    ! enddo
+    ! used = send_data (id_cond, cond, time, is_in = iis, js_in = jjs)
+    ! endif
     
-    !---------------------------------------------------
-    !srf: for future use for radar reflectivity calculation
-    !if(lradar) then
-    !   ! Only set melti to true at the output times
-    !   if (reset) then
-    !     melti=.true.
-    !   else
-    !     melti=.false.
-    !   endif
-    !   do j = js, je
-    !      do i = is, ie
-    !         do k = ktop,kbot
-    !           kflip = kbot-ktop+1-k+1
-    !           t1d(k)  = pt(i,j,kflip)
-    !           p1d(k)  = p(i,j,kflip)
-    !           qv1d(k) = qv(i,j,kflip)/(1-qv(i,j,kflip))
-    !           qr1d(k) = qr(i,j,kflip)
-    !           qs1d(k) = qs(i,j,kflip)
-    !           qg1d(k) = qg(i,j,kflip)
-    !         enddo
-    !         call refl10cm_gfdl (qv1d, qr1d, qs1d, qg1d,                 &
-    !                   t1d, p1d, dBZ, ktop, kbot, i, j, melti)
-    !         do k = ktop,kbot
-    !            kflip = kbot-ktop+1-k+1
-    !            refl_10cm(i,j,kflip) = MAX(-35., dBZ(k))
-    !         enddo
-    !      enddo
-    !   enddo
-    !endif
-
+    ! if (id_snow > 0) then
+    ! used = send_data (id_snow, snow, time, iis, jjs)
+    ! used = send_data (id_snow, snow, time, is_in = iis, js_in = jjs)
+    ! if (mp_print .and. seconds == 0) then
+    ! tot_prec = g_sum (snow, is, ie, js, je, area, 1)
+    ! if (root_proc) write (*, *) 'mean snow = ', tot_prec
+    ! endif
+    ! endif
+    !
+    ! if (id_graupel > 0) then
+    ! used = send_data (id_graupel, graupel, time, iis, jjs)
+    ! used = send_data (id_graupel, graupel, time, is_in = iis, js_in = jjs)
+    ! if (mp_print .and. seconds == 0) then
+    ! tot_prec = g_sum (graupel, is, ie, js, je, area, 1)
+    ! if (root_proc) write (*, *) 'mean graupel = ', tot_prec
+    ! endif
+    ! endif
+    !
+    ! if (id_ice > 0) then
+    ! used = send_data (id_ice, ice, time, iis, jjs)
+    ! used = send_data (id_ice, ice, time, is_in = iis, js_in = jjs)
+    ! if (mp_print .and. seconds == 0) then
+    ! tot_prec = g_sum (ice, is, ie, js, je, area, 1)
+    ! if (root_proc) write (*, *) 'mean ice_mp = ', tot_prec
+    ! endif
+    ! endif
+    !
+    ! if (id_rain > 0) then
+    ! used = send_data (id_rain, rain, time, iis, jjs)
+    ! used = send_data (id_rain, rain, time, is_in = iis, js_in = jjs)
+    ! if (mp_print .and. seconds == 0) then
+    ! tot_prec = g_sum (rain, is, ie, js, je, area, 1)
+    ! if (root_proc) write (*, *) 'mean rain = ', tot_prec
+    ! endif
+    ! endif
+    !
+    ! if (id_rh > 0) then !not used?
+    ! used = send_data (id_rh, rh0, time, iis, jjs)
+    ! used = send_data (id_rh, rh0, time, is_in = iis, js_in = jjs)
+    ! endif
+    !
+    !
+    ! if (id_prec > 0) then
+    ! used = send_data (id_prec, prec_mp, time, iis, jjs)
+    ! used = send_data (id_prec, prec_mp, time, is_in = iis, js_in = jjs)
+    ! endif
+    
+    ! if (mp_print) then
+    ! prec1 (:, :) = prec1 (:, :) + prec_mp (:, :)
+    ! if (seconds == 0) then
+    ! prec1 (:, :) = prec1 (:, :) * dt_in / 86400.
+    ! tot_prec = g_sum (prec1, is, ie, js, je, area, 1)
+    ! if (root_proc) write (*, *) 'daily prec_mp = ', tot_prec
+    ! prec1 (:, :) = 0.
+    ! endif
+    ! endif
+    
+    ! call mpp_clock_end (gfdl_mp_clock)
+    
 end subroutine gfdl_cloud_microphys_driver
 
 ! -----------------------------------------------------------------------
@@ -3608,26 +3570,27 @@ subroutine gfdl_cloud_microphys_init ()
     ! logical :: flag
     ! real :: tmp, q1, q2
    
-    !    call fms_init()     
+!    call fms_init()     
  
     ! root_proc = (mpp_pe () .eq.mpp_root_pe ())
     
-!#ifdef INTERNAL_FILE_NML
-!    read (input_nml_file, nml = gfdl_cloud_microphysics_nml)
-!#else
+#ifdef INTERNAL_FILE_NML
+    read (input_nml_file, nml = gfdl_cloud_microphysics_nml)
+#else
     inquire (file = trim (fn_nml), exist = exists)
-    !print*,"Does ",trim(fn_nml), "exist?", exists
     if (.not. exists) then
         write (6, *) 'gfdl - mp :: namelist file: ', trim (fn_nml), ' does not exist'
         stop
     else
-      ! Read Main namelist
-        !print*,"GFDL MP reading ",trim(fn_nml)
-        open (nlunit,file=fn_nml,status='old',form='formatted')
-        read (nlunit,nml=gfdl_cloud_microphysics_nml,iostat=ios)
+!srf        nlunit=open_namelist_file()
+        rewind (nlunit)
+     ! Read Main namelist
+        read (nlunit,gfdl_cloud_microphysics_nml,iostat=ios)
+!srf        ierr = check_nml_error(ios,'gfdl_cloud_microphysics_nml')
+!srf        call close_file(nlunit)
         close(nlunit)
     endif
-!#endif
+#endif
 
 !    if (mpp_pe() .EQ. mpp_root_pe()) then
 !        write (*, *) " ================================================================== "
@@ -3636,7 +3599,7 @@ subroutine gfdl_cloud_microphys_init ()
 !        write (*, *) " ================================================================== "
 !    endif
     
-   ! write version number and namelist to log file
+    ! write version number and namelist to log file
    !if (me == root_proc) then
    !    write (logunit, *) " ================================================================== "
    !    write (logunit, *) "gfdl_cloud_microphys_mod"
@@ -3703,26 +3666,6 @@ subroutine gfdl_cloud_microphys_init ()
     ! gfdl_mp_clock = mpp_clock_id ('gfdl_cloud_microphys', grain = clock_routine)
     
     module_is_initialized = .true.
-
-    
-    !-srf for future use for computing radar reflectivity
-    return
-
-    !..Set these variables needed for computing radar reflectivity.  These
-    !.. get used within radar_init to create other variables used in the
-    !.. radar module.
-
-    xam_r = pi*rhor/6.
-    xbm_r = 3.
-    xmu_r = 0.
-    xam_s = pi*rhos/6.
-    xbm_s = 3.
-    xmu_s = 0.
-    xam_g = pi*rhog/6.
-    xbm_g = 3.
-    xmu_g = 0.
-
-    call radar_init
     
 end subroutine gfdl_cloud_microphys_init
 
@@ -4816,8 +4759,8 @@ subroutine cloud_diagnosis (is, ie, js, je, den, qw, qi, qr, qs, qg, t, &
     
     real :: lambdar, lambdas, lambdag
     
-   !real :: rhow = 1.0e3, rhor = 1.0e3, rhos = 1.0e2, rhog = 4.0e2
-   !real :: n0r = 8.0e6, n0s = 3.0e6, n0g = 4.0e6
+    real :: rhow = 1.0e3, rhor = 1.0e3, rhos = 1.0e2, rhog = 4.0e2
+    real :: n0r = 8.0e6, n0s = 3.0e6, n0g = 4.0e6
     real :: alphar = 0.8, alphas = 0.25, alphag = 0.5
     real :: gammar = 17.837789, gammas = 8.2850630, gammag = 11.631769
     real :: qmin = 1.0e-5, ccn = 1.0e8, beta = 1.22
@@ -4966,290 +4909,5 @@ real function calipso_ice_polynomial(tk)
      calipso_ice_polynomial = 1.0 - (1.0/(1.0 + exp(-1*ptc)))
    ! Returning the fraction of ice for given T(K)
 end function calipso_ice_polynomial
-
-!-----------------------------------------------------------------------
-subroutine effectRad (t, qc, qi, qs, rho, qmin, t0c,        &
-                     re_qc, re_qi, re_qs, islmski, kts, kte, ii,land)
-
-!-----------------------------------------------------------------------
-!  Compute radiation effective radii of cloud water, ice, and snow for 
-!  single-moment microphysics.
-!  These are entirely consistent with microphysics assumptions, not
-!  constant or otherwise ad hoc as is internal to most radiation
-!  schemes.  
-!  Coded and implemented by Soo ya Bae, KIAPS, January 2015.
-!-----------------------------------------------------------------------
-
-      implicit none
-
-!..Sub arguments
-      integer, intent(in) :: kts, kte, ii
-      real, intent(in) :: qmin,land
-      real, intent(in) :: t0c
-      integer, intent(in) :: islmski
-      real, dimension( kts:kte ), intent(in)::  t
-      real, dimension( kts:kte ), intent(in)::  qc
-      real, dimension( kts:kte ), intent(in)::  qi
-      real, dimension( kts:kte ), intent(in)::  qs
-      real, dimension( kts:kte ), intent(in)::  rho
-      real, dimension( kts:kte ), intent(inout):: re_qc
-      real, dimension( kts:kte ), intent(inout):: re_qi
-      real, dimension( kts:kte ), intent(inout):: re_qs
-!..Local variables
-      integer:: i,k
-      integer :: inu_c
-      real, dimension( kts:kte ):: ni
-      real, dimension( kts:kte ):: rqc
-      real, dimension( kts:kte ):: rqi
-      real, dimension( kts:kte ):: rni
-      real, dimension( kts:kte ):: rqs
-      real :: temp
-      real :: lamdac
-      real :: supcol, n0sfac, lamdas
-      real :: diai      ! diameter of ice in m
-      logical :: has_qc, has_qi, has_qs
-!..Minimum microphys values
-      real, parameter :: R1 = 1.E-12
-      real, parameter :: R2 = 1.E-6
-!..Mass power law relations:  mass = am*D**bm
-      real, parameter :: bm_r = 3.0
-      real, parameter :: obmr = 1.0/bm_r
-!     real, parameter :: nc0  = 3.E8
-      real  :: nc0 
-      real, parameter :: nc0l  = 3.E8
-      real, parameter :: nc0o  = 1.E8
-!->rsun 
-      real, parameter :: denr = 1000.
-      real, parameter :: pidnc  = pi*denr/6. 
-      real, parameter :: alpha  = .12 
-      real, parameter :: n0smax =  1.e11 
-      real, parameter :: n0s    = 2.e6  
-      real, parameter :: dens  =  100.0
-      real, parameter :: pidn0s =  pi*dens*n0s
-!<-rsun 
-!-----------------------------------------------------------------------
-      has_qc = .false.
-      has_qi = .false.
-      has_qs = .false.
-
-      do k = kts, kte
-        ! for cloud
-        rqc(k) = max(R1, qc(k)*rho(k))
-        if (rqc(k).gt.R1) has_qc = .true.
-        ! for ice
-        rqi(k) = max(R1, qi(k)*rho(k))
-        temp = (rho(k)*max(qi(k),qmin))
-        temp = sqrt(sqrt(temp*temp*temp))
-        ni(k) = min(max(5.38e7*temp,1.e3),1.e6)
-        rni(k)= max(R2, ni(k)*rho(k))
-        if (rqi(k).gt.R1 .and. rni(k).gt.R2) has_qi = .true.
-        ! for snow
-        rqs(k) = max(R1, qs(k)*rho(k))
-        if (rqs(k).gt.R1) has_qs = .true.
-      enddo
-      
-      !if(islmski == 1) then 
-      !  nc0 = nc0l
-      !else 
-      !  nc0 = nc0o
-      !endif 
-
-      nc0 = land*nc0l + (1.-land)*nc0o
-
-      if (has_qc) then
-        do k=kts,kte
-          if (rqc(k).le.R1) CYCLE
-          lamdac   = (pidnc*nc0/rqc(k))**obmr 
-          re_qc(k) =  max(2.51E-6,min(1.5*(1.0/lamdac),50.E-6))
-        enddo
-      endif
-
-     if (has_qi) then
-        do k=kts,kte
-          if (rqi(k).le.R1 .or. rni(k).le.R2) CYCLE
-          diai = 11.9*sqrt(rqi(k)/ni(k))
-          re_qi(k) = max(10.01E-6,min(0.75*0.163*diai,125.E-6))
-        enddo
-      endif
-
-      if (has_qs) then
-        do k=kts,kte
-          if (rqs(k).le.R1) CYCLE
-          supcol = t0c-t(k)
-          n0sfac = max(min(exp(alpha*supcol),n0smax/n0s),1.)
-          lamdas = sqrt(sqrt(pidn0s*n0sfac/rqs(k)))
-          re_qs(k) = max(25.E-6,min(0.5*(1./lamdas), 999.E-6))
-        enddo
-      endif
-
-end subroutine effectRad
-!-----------------------------------------------------------------------
-! This subroutine calculates radar reflectivity.
-      subroutine refl10cm_gfdl (qv1d, qr1d, qs1d, qg1d,                 &
-                       t1d, p1d, dBZ, kts, kte, ii, jj, melti)
-
-      IMPLICIT NONE
-
-!..Sub arguments
-      INTEGER, INTENT(IN):: kts, kte, ii,jj
-      REAL, DIMENSION(kts:kte), INTENT(IN)::                            &
-                      qv1d, qr1d, qs1d, qg1d, t1d, p1d
-      REAL, DIMENSION(kts:kte), INTENT(INOUT):: dBZ
-
-!..Local variables
-      REAL, DIMENSION(kts:kte):: temp, pres, qv, rho
-      REAL, DIMENSION(kts:kte):: rr, rs, rg
-!      REAL:: temp_C
-
-      DOUBLE PRECISION, DIMENSION(kts:kte):: ilamr, ilams, ilamg
-      DOUBLE PRECISION, DIMENSION(kts:kte):: N0_r, N0_s, N0_g
-      DOUBLE PRECISION:: lamr, lams, lamg
-      LOGICAL, DIMENSION(kts:kte):: L_qr, L_qs, L_qg
-
-      REAL, DIMENSION(kts:kte):: ze_rain, ze_snow, ze_graupel
-      DOUBLE PRECISION:: fmelt_s, fmelt_g
-
-      INTEGER:: i, k, k_0, kbot, n
-      LOGICAL, INTENT(IN):: melti
-      DOUBLE PRECISION:: cback, x, eta, f_d
-!+---+
-
-      do k = kts, kte
-         dBZ(k) = -35.0
-      enddo
-
-!+---+-----------------------------------------------------------------+
-!..Put column of data into local arrays.
-!+---+-----------------------------------------------------------------+
-      do k = kts, kte
-         temp(k) = t1d(k)
-!         temp_C = min(-0.001, temp(K)-273.15)
-         qv(k) = MAX(1.E-10, qv1d(k))
-         pres(k) = p1d(k)
-         rho(k) = 0.622*pres(k)/(rdgas*temp(k)*(qv(k)+0.622))
-
-         if (qr1d(k) .gt. 1.E-9) then
-            rr(k) = qr1d(k)*rho(k)
-            N0_r(k) = n0r
-            lamr = (xam_r*xcrg(3)*N0_r(k)/rr(k))**(1./xcre(1))
-            ilamr(k) = 1./lamr
-            L_qr(k) = .true.
-         else
-            rr(k) = 1.E-12
-            L_qr(k) = .false.
-         endif
-
-         if (qs1d(k) .gt. 1.E-9) then
-            rs(k) = qs1d(k)*rho(k)
-            N0_s(k) = n0s
-            lams = (xam_s*xcsg(3)*N0_s(k)/rs(k))**(1./xcse(1))
-            ilams(k) = 1./lams
-            L_qs(k) = .true.
-         else
-            rs(k) = 1.E-12
-            L_qs(k) = .false.
-         endif
-
-         if (qg1d(k) .gt. 1.E-9) then
-            rg(k) = qg1d(k)*rho(k)
-            N0_g(k) = n0g
-            lamg = (xam_g*xcgg(3)*N0_g(k)/rg(k))**(1./xcge(1))
-            ilamg(k) = 1./lamg
-            L_qg(k) = .true.
-         else
-            rg(k) = 1.E-12
-            L_qg(k) = .false.
-         endif
-      enddo
-
-!+---+-----------------------------------------------------------------+
-!..Locate K-level of start of melting (k_0 is level above).
-!+---+-----------------------------------------------------------------+
-      k_0 = kts
-      K_LOOP:do k = kte-1, kts, -1
-         if ( melti .and. (temp(k).gt.273.15) .and. L_qr(k)             &
-              .and. (L_qs(k+1).or.L_qg(k+1)) ) then
-            k_0 = MAX(k+1, k_0)
-            EXIT K_LOOP
-         endif
-      enddo K_LOOP
-!+---+-----------------------------------------------------------------+
-!..Assume Rayleigh approximation at 10 cm wavelength. Rain (all temps)
-!.. and non-water-coated snow and graupel when below freezing are
-!.. simple. Integrations of m(D)*m(D)*N(D)*dD.
-!+---+-----------------------------------------------------------------+
-      do k = kts, kte
-         ze_rain(k) = 1.e-22
-         ze_snow(k) = 1.e-22
-         ze_graupel(k) = 1.e-22
-         if (L_qr(k)) ze_rain(k) = N0_r(k)*xcrg(4)*ilamr(k)**xcre(4)
-         if (L_qs(k)) ze_snow(k) = (0.176/0.93) * (6.0/PI)*(6.0/PI)     &
-                                 * (xam_s/900.0)*(xam_s/900.0)          &
-                                 * N0_s(k)*xcsg(4)*ilams(k)**xcse(4)
-         if (L_qg(k)) ze_graupel(k) = (0.176/0.93) * (6.0/PI)*(6.0/PI)  &
-                                    * (xam_g/900.0)*(xam_g/900.0)       &
-                                    * N0_g(k)*xcgg(4)*ilamg(k)**xcge(4)
-      enddo
-
-
-!+---+-----------------------------------------------------------------+
-!..Special case of melting ice (snow/graupel) particles.  Assume the
-!.. ice is surrounded by the liquid water.  Fraction of meltwater is
-!.. extremely simple based on amount found above the melting level.
-!.. Uses code from Uli Blahak (rayleigh_soak_wetgraupel and supporting
-!.. routines).
-!+---+-----------------------------------------------------------------+
-
-      if (melti .and. k_0.ge.kts+1) then
-       do k = k_0-1, kts, -1
-
-!..Reflectivity contributed by melting snow
-          if (L_qs(k) .and. L_qs(k_0) ) then
-           fmelt_s = MAX(0.005d0, MIN(1.0d0-rs(k)/rs(k_0), 0.99d0))
-           eta = 0.d0
-           lams = 1./ilams(k)
-           do n = 1, nrbins
-              x = xam_s * xxDs(n)**xbm_s
-              call rayleigh_soak_wetgraupel (x,DBLE(xocms),DBLE(xobms), &
-                    fmelt_s, melt_outside_s, m_w_0, m_i_0, lamda_radar, &
-                    CBACK, mixingrulestring_s, matrixstring_s,          &
-                    inclusionstring_s, hoststring_s,                    &
-                    hostmatrixstring_s, hostinclusionstring_s)
-              f_d = N0_s(k)*xxDs(n)**xmu_s * DEXP(-lams*xxDs(n))
-              eta = eta + f_d * CBACK * simpson(n) * xdts(n)
-           enddo
-           ze_snow(k) = SNGL(lamda4 / (pi5 * K_w) * eta)
-          endif
-
-
-!..Reflectivity contributed by melting graupel
-
-          if (L_qg(k) .and. L_qg(k_0) ) then
-           fmelt_g = MAX(0.005d0, MIN(1.0d0-rg(k)/rg(k_0), 0.99d0))
-           eta = 0.d0
-           lamg = 1./ilamg(k)
-           do n = 1, nrbins
-              x = xam_g * xxDg(n)**xbm_g
-              call rayleigh_soak_wetgraupel (x,DBLE(xocmg),DBLE(xobmg), &
-                    fmelt_g, melt_outside_g, m_w_0, m_i_0, lamda_radar, &
-                    CBACK, mixingrulestring_g, matrixstring_g,          &
-                    inclusionstring_g, hoststring_g,                    &
-                    hostmatrixstring_g, hostinclusionstring_g)
-              f_d = N0_g(k)*xxDg(n)**xmu_g * DEXP(-lamg*xxDg(n))
-              eta = eta + f_d * CBACK * simpson(n) * xdtg(n)
-           enddo
-           ze_graupel(k) = SNGL(lamda4 / (pi5 * K_w) * eta)
-          endif
-
-       enddo
-      endif
-
-      do k = kte, kts, -1
-         dBZ(k) = 10.*log10((ze_rain(k)+ze_snow(k)+ze_graupel(k))*1.d18)
-      enddo
-
-
-      end subroutine refl10cm_gfdl
-
 
 end module gfdl_cloud_microphys_mod

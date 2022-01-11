@@ -476,9 +476,12 @@
   subroutine advect_ws(mzp,mxp,myp,ia,iz,ja,jz,scp,ufx,vfx,wfx &
                       ,vt3dh,vt3dj,vt3dk,sct,is,js,ks          &
                       ,pd_or_mnt_constraint,order_h,order_v,dt,vname)
+    use ModParallelEnvironment, only: MsgDump
     use advRkParam, only: fifth_order, eps,real_init
-    use ModComm, only: copyMyPart, commHalo, border, &
-        north, south, west, east,expandBorder
+    use ModComm, only: copyMyPart
+    use ModComm, only: commHalo
+    use ModComm, only: border
+    use ModComm, only: expandBorder
     use node_mod, only:  nmachs, myNum,nodei0,nodej0
     use mem_grid, only: time
 
@@ -521,6 +524,9 @@
     integer :: mzpp3,mxpp3,mypp3
     integer :: mzppks,mxppis,myppjs
 
+    logical, parameter :: dumpLocal=.true.
+    character(len=*), parameter :: h="**(advect_ws)**"
+    
     mzpp3=mzp+3; mxpp3=mxp+3; mypp3=myp+3
     mzppks=mzp+ks; mxppis=mxp+is; myppjs=myp+js
 
@@ -554,9 +560,14 @@
        call dumpXYvar(wfx_local,vname,'b',-2,mxp+3,-2,myp+3,-2,mzp+3,0.0,0.0)
 
     ! Set x & y boundary values in halo zones
-    if(nmachs>1) call commHalo(scr,ufx_local,vfx_local,wfx_local, &
-                            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
-                            mxp,myp,mzp,myNum,nmachs,nodei0,nodej0,vname)
+    if (nmachs>1) then
+       if (dumpLocal) then
+          call MsgDump(h//" exchange borders of "//vname)
+       end if
+       call commHalo(scr,ufx_local,vfx_local,wfx_local, &
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mxp,myp,mzp,myNum,nmachs,nodei0,nodej0,vname)
+    end if
 
     if(IsToDump) &
        call dumpXYvar(wfx_local,vname,'c',-2,mxp+3,-2,myp+3,-2,mzp+3,0.0,0.0)
@@ -866,7 +877,6 @@
     real,intent(out)    :: qx(mzppks,mxppis,myppjs)
     real,intent(out)    :: qy(mzppks,mxppis,myppjs)
 
-    integer, parameter :: west=1, east=2, north=3, south=4
     real, external :: flux_upwind
     integer :: i,j,k
     real :: dir
@@ -922,7 +932,6 @@
     real,intent(out)    :: qx(mzppks,mxppis,myppjs)
     real,intent(out)    :: qy(mzppks,mxppis,myppjs)
 
-    integer, parameter :: west=1, east=2, north=3, south=4
     real, external :: fq2
     integer :: i,j,k
 
@@ -951,6 +960,10 @@
                                  mzppks,mxppis,myppjs, &
                                  scr,ufx_local,vfx_local,&
                                  border,qx,qy,variable, vname)
+    use ModComm, only: north
+    use ModComm, only: south
+    use ModComm, only: east
+    use ModComm, only: west
     implicit none
     integer, intent(in) :: mxp
     integer, intent(in) :: myp
@@ -976,7 +989,6 @@
     real,intent(out)    :: qx(mzppks,mxppis,myppjs)
     real,intent(out)    :: qy(mzppks,mxppis,myppjs)
 
-    integer, parameter :: west=1, east=2, north=3, south=4
     real,external :: flux_upwind
     real,external :: fq2,fq3
     real :: dir
@@ -1053,7 +1065,6 @@
     real,intent(out)    :: qx(mzppks,mxppis,myppjs)
     real,intent(out)    :: qy(mzppks,mxppis,myppjs)
 
-    integer, parameter :: west=1, east=2, north=3, south=4
     real, external :: fq4
     integer :: i,j,k
 
@@ -1081,6 +1092,10 @@
                                  mzppks,mxppis,myppjs, &
                                  scr,ufx_local,vfx_local,&
                                  border,qx,qy,variable, vname, order_h)
+    use ModComm, only: north
+    use ModComm, only: south
+    use ModComm, only: east
+    use ModComm, only: west
     use advRkParam, only: fifth_order
     implicit none
     integer, intent(in) :: mxp
@@ -1108,7 +1123,6 @@
     real,intent(out)    :: qx(mzppks,mxppis,myppjs)
     real,intent(out)    :: qy(mzppks,mxppis,myppjs)
 
-    integer, parameter :: west=1, east=2, north=3, south=4
     real, external :: fq,fq3,flux_upwind
     real :: dir
     integer :: i,j,k
@@ -1187,7 +1201,6 @@
     logical, intent(in) :: variable
     real,intent(out)    :: qz(mzppks,mxppis,myppjs)
 
-    integer, parameter :: west=1, east=2, north=3, south=4
     real, external :: flux_upwind
     integer :: i,j,k
     real :: dir
@@ -1230,7 +1243,6 @@
     logical, intent(in) :: variable
     real,intent(out)    :: qz(mzppks,mxppis,myppjs)
 
-    integer, parameter :: west=1, east=2, north=3, south=4
     real, external :: fq2
     integer :: i,j,k
 
@@ -1271,7 +1283,6 @@
     logical, intent(in) :: variable
     real,intent(out)    :: qz(mzppks,mxppis,myppjs)
 
-    integer, parameter :: west=1, east=2, north=3, south=4
     real, external :: fq2,fq3,flux_upwind
     real :: dir
     integer :: i,j,k
@@ -1323,7 +1334,6 @@
     logical, intent(in) :: variable
     real,intent(out)    :: qz(mzppks,mxppis,myppjs)
 
-    integer, parameter :: west=1, east=2, north=3, south=4
     real, external :: fq4,fq2
     integer :: i,j,k
 
@@ -1369,7 +1379,6 @@
     logical, intent(in) :: variable
     real,intent(out)    :: qz(mzppks,mxppis,myppjs)
 
-    integer, parameter :: west=1, east=2, north=3, south=4
     real, external :: fq,fq3,flux_upwind
     real :: dir
     integer :: i,j,k

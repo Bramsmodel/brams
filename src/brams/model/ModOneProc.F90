@@ -604,7 +604,7 @@ contains
     character(len=f_name_length) :: namelistFileName ! namelist file name
     character(len=*), parameter :: h="**(OneProc)**"
     character(len=*), parameter :: header="**(OneProc)**"
-    character(len=*), parameter :: version="5.4"
+    character(len=*), parameter :: version="6.0"
 
     type(parallelEnvironment), pointer :: oneParallelEnvironment => null()
     type(namelistFile), pointer :: oneNamelistFile => null()
@@ -613,11 +613,12 @@ contains
     type(Grid), pointer :: OneGrid => null()
     type(AllPostTypes), pointer :: oneAllPostTypes => null()
 
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     logical :: dirExist
     character(len=255) :: tmpdir
-
+    character(len=8) :: str
+    
 !XXXsrf    integer :: iau_phase
 
     dtSet_firstTime=.true.
@@ -902,7 +903,7 @@ contains
        if (dumpLocal) then
           OneGridTreeNode => GridTreeRoot(AllGrids)
           OneGrid => OneGridTreeNode%curr
-          call DumpGrid(OneGrid)
+!!$          call DumpGrid(OneGrid)
        end if
 
 
@@ -1004,8 +1005,9 @@ contains
        enddo
 
        !tst LFR
-       Call initExtraComm(nmachs,mynum,GhostZoneLength,nnxp,nnyp,nnzp,ixb,ixe,iyb,iye,master_num, &
-                   nodei0,nodej0,nodemxp,nodemyp,nodemzp)
+       Call initExtraComm(nmachs,mynum,GhostZoneLength,&
+            nnxp,nnyp,nnzp,ixb,ixe,iyb,iye,master_num, &
+            nodei0,nodej0,nodemxp,nodemyp,nodemzp)
        !CALL InitComm(ngrids,nmachs,mynum,GhostZoneLength,nnxp,nnyp,nnzp,ixb,ixe,iyb,iye)
        !end tst
        
@@ -1145,6 +1147,13 @@ contains
           call timing(1,t1)
           nt      = nt + 1
           begtime = time
+
+          if (dumpLocal) then
+             write(str,"(i8)") istp
+             call MsgDump(" ")
+             call MsgDump(h//" timestep "//trim(adjustl(str))//" starts")
+             call MsgDump(" ")
+          end if
 
 
           ! if input time, get new fields from master
@@ -1572,6 +1581,9 @@ contains
 
     call DestroyGridTree(AllGrids)
     call DestroyNamelistFile(oneNamelistFile)
+
+    call SynchronizedTimeStamp(TS_RESTO)
+
     call DestroyParallelEnvironment(oneParallelEnvironment)
 
 !--(inspxe)-------------------------------------------------------
