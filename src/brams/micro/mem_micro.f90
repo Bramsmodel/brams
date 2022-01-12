@@ -133,6 +133,11 @@ Contains
 	    !-       cloud water scheme (the same for CCN and IFN).
             allocate(micro%crp  (n1,n2,n3)) ;micro%crp  =0.0 
             allocate(micro%cpp  (n1,n2,n3)) ;micro%cpp  =0.0 
+            !ST
+	    allocate(micro%ccp  (n1,n2,n3)) ;micro%ccp  =0.0 
+            allocate(micro%cccnp(n1,n2,n3)) ;micro%cccnp=0.0 !;endif 
+            allocate(micro%cifnp(n1,n2,n3)) ;micro%cifnp=0.0 !;endif 
+            !ST
           ENDIF
           !- only for cloud water double-moment and aerosol aware microphysics         
 	  IF(mcphys_type  == 3) then ! only for double-moment and 

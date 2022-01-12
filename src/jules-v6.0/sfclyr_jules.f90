@@ -429,7 +429,7 @@ jules_g(ng)%rv2mj(ia:iz,ja:jz)=sf_diag%q1p5m(:,:)/(1-sf_diag%q1p5m(:,:))
  ENDDO
 !-----------------------------------------------------------}
 
-!IF ( end_of_run ) THEN  !esta funcao eh do JULES - pode tambem utilizar o ultimo timestap do BRAMS
+!IF ( end_of_run ) THEN  !esta funcao eh do JULES - pode tambem utilizar o ultimo timestep do BRAMS
 !LFR
 if(time>=timmax) then
    if(mynum==1) then 
@@ -576,11 +576,11 @@ SUBROUTINE brams2jules(veg,ntype)
    if (ntype == 9 ) then
       veg(1)='06 07 20'       !tJ=1 => BT=broadleaf trees
       veg(2)='04 05 14'       !tJ=2 => NT=needleleaf trees
-      veg(3)='15'             !tJ=3 => C3G=C3 (temperate) grass
-      veg(4)='08 09'          !tJ=4 => C4G=C4 (tropical) grass
+      veg(3)='15 08 16 17'    !tJ=3 => C3G=C3 (temperate) grass
+      veg(4)='09'             !tJ=4 => C4G=C4 (tropical) grass
       veg(5)='11 12 13 18'    !tJ=5 => shrub
       veg(6)='19 21'          !tJ=6 => urban
-      veg(7)='00 01 16 17'    !tJ=7 => lake=inland water
+      veg(7)='00 01'          !tJ=7 => lake=inland water
       veg(8)='03 10'          !tJ=8 => soil=bare soil
       veg(9)='02'             !tJ=9 => ice
    elseif (ntype == 13 ) then
@@ -589,12 +589,12 @@ SUBROUTINE brams2jules(veg,ntype)
       veg(3)='06'            !tJ=3 => Broadleaf deciduas
       veg(4)='04'            !tJ=4 => Needle-leaf" "evergreen
       veg(5)='05'            !tJ=5 => "Needle-leaf" deciduas
-      veg(6)='15 08 11'      !tJ=6 => Gramineas - C3
+      veg(6)='15 08 11 16 17'!tJ=6 => Gramineas - C3
       veg(7)='09'            !tJ=7 => Gramineas - C4
       veg(8)='12 18'         !tJ=8 => shrub - Cerrado "evergreen"
       veg(9)='13'            !tJ=9 => shrub - Cerrado deciduo
       veg(10)='19 21'        !tJ=10 => urban
-      veg(11)='00 01 16 17'  !tJ=11 => lake=inland water
+      veg(11)='00 01'        !tJ=11 => lake=inland water
       veg(12)='03 10'        !tJ=12 => bare soil - Solo nu
       veg(13)='02'           !tJ=13 => ice - Gelo
    else

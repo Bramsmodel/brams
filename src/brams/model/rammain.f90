@@ -121,11 +121,11 @@ program main
 #ifdef color
     iErrNumber=dumpMessage(c_tty,c_yes,header,version,c_notice,'BRAMS execution normal ends!')
     iErrNumber=dumpMessage(c_tty,c_yes,header,version,c_notice &
-         ,'for more information about submission(non fatal errors, notices, warnings), please, see the file brams.log and jules.log !')
+         ,'for more information about submission(non fatal errors, notices, warnings), please, see the file bramsLog.out !')
 #else
     iErrNumber=dumpMessage(c_tty,c_no,header,version,c_notice,'BRAMS execution normal ends!')
     iErrNumber=dumpMessage(c_tty,c_no,header,version,c_notice &
-     ,'for more information about submission(non fatal errors, notices, warnings), please, see the file brams.log and jules.log  !')
+     ,'for more information about submission(non fatal errors, notices, warnings), please, see the file bramsLog.out !')
 #endif
   endif
   call parf_exit_mpi()
