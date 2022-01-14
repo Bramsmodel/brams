@@ -105,21 +105,37 @@ module dump
     module procedure cFmt3Dlogical
   end interface
 
-  character(len=*), parameter :: noticeColor=achar(27)//'[97m'&
-                                 //'Notice.! '//achar(27)//'[0m'
-  !# Use to put the notice word in bold color
-  character(len=*), parameter :: warningColor=achar(27)//'[97m'&
-                                // 'Warning! '//achar(27)//'[0m'
-  !# Use to put the warning word in bold color
-  character(len=*), parameter :: fatalColor=achar(27)//'[97m'&
-                                // 'Fatal..! '//achar(27)//'[0m'
-  !# Use to put the fatal word in bold color
-
+!!$
+!!$  JP: Removing colors and blinks from output
+!!$
+!!$  character(len=*), parameter :: noticeColor=achar(27)//'[97m'&
+!!$                                 //'Notice.! '//achar(27)//'[0m'
+!!$  !# Use to put the notice word in bold color
+!!$  character(len=*), parameter :: warningColor=achar(27)//'[97m'&
+!!$                                // 'Warning! '//achar(27)//'[0m'
+!!$  !# Use to put the warning word in bold color
+!!$  character(len=*), parameter :: fatalColor=achar(27)//'[97m'&
+!!$                                // 'Fatal..! '//achar(27)//'[0m'
+!!$  !# Use to put the fatal word in bold color
+!!$
+!!$  JP: Previous declarations replace by following declarations
+!!$  
+  character(len=*), parameter :: noticeColor='Notice.! '
+  character(len=*), parameter :: warningColor='Warning! '
+  character(len=*), parameter :: fatalColor='Fatal..! '
+  
   private
 
   public :: dumpMessage, emptyLine, logical2Int,openLogFile, debug,l2int
 
-  logical, parameter :: showInColor=.true.
+!!$
+!!$  JP: Removing colors and blinks from output
+!!$
+!!$  logical, parameter :: showInColor=.true.
+!!$
+!!$  JP: Previous declarations replace by following declarations
+!!$  
+  logical, parameter :: showInColor=.false.
 
 contains
 

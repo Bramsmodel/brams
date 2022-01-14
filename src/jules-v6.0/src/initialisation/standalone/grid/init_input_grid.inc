@@ -102,7 +102,7 @@ READ(namelist_unit, NML = jules_input_grid, IOSTAT = error, IOMSG = iomessage)
 !print*,'2sssssnx=',nx
 nx=nxB  !DSM
 ny=nyB  !DSM
-print*,'Reading nx and ny from BRAMS',' nx=',nx,' ny=',ny
+!print*,'Reading nx and ny from BRAMS',' nx=',nx,' ny=',ny
 !stop
 
 IF ( error /= 0 )                                                             &

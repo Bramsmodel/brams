@@ -152,46 +152,91 @@
    !# empty string
 
    !Colors strings for print and write commands
-   character(len=*), parameter :: c_darkGrey   =achar(27)//'[90m'
-   character(len=*), parameter :: c_peach      =achar(27)//'[91m'
-   character(len=*), parameter :: c_lightGreen =achar(27)//'[92m'
-   character(len=*), parameter :: c_lightYellow=achar(27)//'[93m'
-   character(len=*), parameter :: c_lightBlue  =achar(27)//'[94m'
-   character(len=*), parameter :: c_pink       =achar(27)//'[95m'
-   character(len=*), parameter :: c_lightAqua  =achar(27)//'[96m'
-   character(len=*), parameter :: c_pearlWhite =achar(27)//'[97m'
-   character(len=*), parameter :: c_black      =achar(27)//'[30m'
-   character(len=*), parameter :: c_red        =achar(27)//'[31m'
-   character(len=*), parameter :: c_green      =achar(27)//'[32m'
-   character(len=*), parameter :: c_yellow     =achar(27)//'[33m'
-   character(len=*), parameter :: c_blue       =achar(27)//'[34m'
-   character(len=*), parameter :: c_purple     =achar(27)//'[35m'
-   character(len=*), parameter :: c_aqua       =achar(27)//'[36m'
-   character(len=*), parameter :: c_blink      =achar(27)//'[31;5;95;38;5;214m'
-   character(len=*), parameter :: c_noColor    =achar(27)//'[0m'
-   character(len=*), parameter :: c_Iblack     =achar(27)//'[40m'
-   character(len=*), parameter :: c_Ired       =achar(27)//'[41m'
-   character(len=*), parameter :: c_Igreen     =achar(27)//'[42m'
-   character(len=*), parameter :: c_Iyellow    =achar(27)//'[43m'
-   character(len=*), parameter :: c_Iblue      =achar(27)//'[44m'
-   character(len=*), parameter :: c_IMagenta   =achar(27)//'[45m'
-   character(len=*), parameter :: c_Icyan      =achar(27)//'[46m'
-   character(len=*), parameter :: c_underline  =achar(27)//'[4m'
-   character(len=*), parameter :: c_strike     =achar(27)//'[9m'
-   character(len=*), parameter :: c_bold       =achar(27)//'[1m'
-   character(len=*), parameter :: c_normal     =achar(27)//'[0m'
-   character(len=*), parameter :: c_blinking   =achar(27)//'[5m'
-   character(len=*), parameter :: c_reverse    =achar(27)//'[7m'
-   character(len=*), parameter :: c_inverted   =achar(27)//'[30m'//achar(27)//'[47m'
-   character(len=*), parameter :: c_bg_black   =achar(27)//'[40m'
-   character(len=*), parameter :: c_bg_red     =achar(27)//'[41m'
-   character(len=*), parameter :: c_bg_green   =achar(27)//'[42m'
-   character(len=*), parameter :: c_bg_brown   =achar(27)//'[43m'
-   character(len=*), parameter :: c_bg_blue    =achar(27)//'[44m'
-   character(len=*), parameter :: c_bg_purple  =achar(27)//'[45m'
-   character(len=*), parameter :: c_bg_cyan    =achar(27)//'[46m'
-   character(len=*), parameter :: c_bg_lgray   =achar(27)//'[47m' 
-
+!!$
+!!$  JP: Removing colors and blinks from output
+!!$
+!!$   character(len=*), parameter :: c_darkGrey   =achar(27)//'[90m'
+!!$   character(len=*), parameter :: c_peach      =achar(27)//'[91m'
+!!$   character(len=*), parameter :: c_lightGreen =achar(27)//'[92m'
+!!$   character(len=*), parameter :: c_lightYellow=achar(27)//'[93m'
+!!$   character(len=*), parameter :: c_lightBlue  =achar(27)//'[94m'
+!!$   character(len=*), parameter :: c_pink       =achar(27)//'[95m'
+!!$   character(len=*), parameter :: c_lightAqua  =achar(27)//'[96m'
+!!$   character(len=*), parameter :: c_pearlWhite =achar(27)//'[97m'
+!!$   character(len=*), parameter :: c_black      =achar(27)//'[30m'
+!!$   character(len=*), parameter :: c_red        =achar(27)//'[31m'
+!!$   character(len=*), parameter :: c_green      =achar(27)//'[32m'
+!!$   character(len=*), parameter :: c_yellow     =achar(27)//'[33m'
+!!$   character(len=*), parameter :: c_blue       =achar(27)//'[34m'
+!!$   character(len=*), parameter :: c_purple     =achar(27)//'[35m'
+!!$   character(len=*), parameter :: c_aqua       =achar(27)//'[36m'
+!!$   character(len=*), parameter :: c_blink      =achar(27)//'[31;5;95;38;5;214m'
+!!$   character(len=*), parameter :: c_noColor    =achar(27)//'[0m'
+!!$   character(len=*), parameter :: c_Iblack     =achar(27)//'[40m'
+!!$   character(len=*), parameter :: c_Ired       =achar(27)//'[41m'
+!!$   character(len=*), parameter :: c_Igreen     =achar(27)//'[42m'
+!!$   character(len=*), parameter :: c_Iyellow    =achar(27)//'[43m'
+!!$   character(len=*), parameter :: c_Iblue      =achar(27)//'[44m'
+!!$   character(len=*), parameter :: c_IMagenta   =achar(27)//'[45m'
+!!$   character(len=*), parameter :: c_Icyan      =achar(27)//'[46m'
+!!$   character(len=*), parameter :: c_underline  =achar(27)//'[4m'
+!!$   character(len=*), parameter :: c_strike     =achar(27)//'[9m'
+!!$   character(len=*), parameter :: c_bold       =achar(27)//'[1m'
+!!$   character(len=*), parameter :: c_normal     =achar(27)//'[0m'
+!!$   character(len=*), parameter :: c_blinking   =achar(27)//'[5m'
+!!$   character(len=*), parameter :: c_reverse    =achar(27)//'[7m'
+!!$   character(len=*), parameter :: c_inverted   =achar(27)//'[30m'//achar(27)//'[47m'
+!!$   character(len=*), parameter :: c_bg_black   =achar(27)//'[40m'
+!!$   character(len=*), parameter :: c_bg_red     =achar(27)//'[41m'
+!!$   character(len=*), parameter :: c_bg_green   =achar(27)//'[42m'
+!!$   character(len=*), parameter :: c_bg_brown   =achar(27)//'[43m'
+!!$   character(len=*), parameter :: c_bg_blue    =achar(27)//'[44m'
+!!$   character(len=*), parameter :: c_bg_purple  =achar(27)//'[45m'
+!!$   character(len=*), parameter :: c_bg_cyan    =achar(27)//'[46m'
+!!$   character(len=*), parameter :: c_bg_lgray   =achar(27)//'[47m' 
+!!$
+!!$  JP: Previous declarations replaced by following declarations
+!!$
+   character(len=*), parameter :: c_darkGrey   =""
+   character(len=*), parameter :: c_peach      =""
+   character(len=*), parameter :: c_lightGreen =""
+   character(len=*), parameter :: c_lightYellow=""
+   character(len=*), parameter :: c_lightBlue  =""
+   character(len=*), parameter :: c_pink       =""
+   character(len=*), parameter :: c_lightAqua  =""
+   character(len=*), parameter :: c_pearlWhite =""
+   character(len=*), parameter :: c_black      =""
+   character(len=*), parameter :: c_red        =""
+   character(len=*), parameter :: c_green      =""
+   character(len=*), parameter :: c_yellow     =""
+   character(len=*), parameter :: c_blue       =""
+   character(len=*), parameter :: c_purple     =""
+   character(len=*), parameter :: c_aqua       =""
+   character(len=*), parameter :: c_blink      =""
+   character(len=*), parameter :: c_noColor    =""
+   character(len=*), parameter :: c_Iblack     =""
+   character(len=*), parameter :: c_Ired       =""
+   character(len=*), parameter :: c_Igreen     =""
+   character(len=*), parameter :: c_Iyellow    =""
+   character(len=*), parameter :: c_Iblue      =""
+   character(len=*), parameter :: c_IMagenta   =""
+   character(len=*), parameter :: c_Icyan      =""
+   character(len=*), parameter :: c_underline  =""
+   character(len=*), parameter :: c_strike     =""
+   character(len=*), parameter :: c_bold       =""
+   character(len=*), parameter :: c_normal     =""
+   character(len=*), parameter :: c_blinking   =""
+   character(len=*), parameter :: c_reverse    =""
+   character(len=*), parameter :: c_inverted   =""
+   character(len=*), parameter :: c_bg_black   =""
+   character(len=*), parameter :: c_bg_red     =""
+   character(len=*), parameter :: c_bg_green   =""
+   character(len=*), parameter :: c_bg_brown   =""
+   character(len=*), parameter :: c_bg_blue    =""
+   character(len=*), parameter :: c_bg_purple  =""
+   character(len=*), parameter :: c_bg_cyan    =""
+   character(len=*), parameter :: c_bg_lgray   =""
+   
 
    integer, parameter :: c_tty=6
    !# Default TTY (terminal) output
