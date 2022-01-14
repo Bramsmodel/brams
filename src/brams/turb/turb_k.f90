@@ -230,7 +230,7 @@ subroutine diffuse()
   !ML -> Nananishi and Niino (2004) scheme based on Mellor-Yamada Level 2.5
   if (idiffk(ngrid) == 7) then
 
-    if(IMASSFLX==1)then
+!    if(IMASSFLX==1)then
       call nakanishi(mzp, mxp, myp, npatch, ia, iz, ja, jz, jdim                           &
              ,turb_g(ngrid)%tkep       ,tend%tket                ,scratch%vt3dd            &
              ,scratch%vt3de            ,scratch%vt3dh            ,scratch%vt3di            &
@@ -251,28 +251,28 @@ subroutine diffuse()
      !---------------------------------------------------------------------------------------!
      !    Integrating average turbulence parameters for mass flux.                           !
      !---------------------------------------------------------------------------------------!
-      call prepare_timeavg_driver(mzp,mxp,myp,ia,iz,ja,jz,dtlt,ngrid,idiffk(ngrid))
+        if(IMASSFLX==1)  call prepare_timeavg_driver(mzp,mxp,myp,ia,iz,ja,jz,dtlt,ngrid,idiffk(ngrid))
      !---------------------------------------------------------------------------------------!
-    else
-      call nakanishi_light(mzp, mxp, myp, npatch, ia, iz, ja, jz, jdim                     &
-             ,turb_g(ngrid)%tkep       ,tend%tket                ,scratch%vt3dd            &
-             ,scratch%vt3de            ,scratch%vt3dh            ,scratch%vt3di            &
-             ,scratch%vt3dj            ,scratch%scr1             ,grid_g(ngrid)%rtgt       &
+!    else
+!      call nakanishi_light(mzp, mxp, myp, npatch, ia, iz, ja, jz, jdim                     &
+!             ,turb_g(ngrid)%tkep       ,tend%tket                ,scratch%vt3dd            &
+!             ,scratch%vt3de            ,scratch%vt3dh            ,scratch%vt3di            &
+!             ,scratch%vt3dj            ,scratch%scr1             ,grid_g(ngrid)%rtgt       &
 !srf-opt     ,basic_g(ngrid)%theta     ,scratch%vt3dp            ,scratch%vt3dq            &
-             ,basic_g(ngrid)%theta     ,basic_g(ngrid)%rv        ,basic_g(ngrid)%rtp     &
+!             ,basic_g(ngrid)%theta     ,basic_g(ngrid)%rv        ,basic_g(ngrid)%rtp     &
 !
-             ,basic_g(ngrid)%dn0       ,basic_g(ngrid)%up        ,basic_g(ngrid)%vp        &
-             ,leaf_g(ngrid)%veg_rough  ,leaf_g(ngrid)%patch_rough,leaf_g(ngrid)%tstar      &
-             ,leaf_g(ngrid)%ustar      ,leaf_g(ngrid)%patch_area ,turb_g(ngrid)%sflux_u    &
-             ,turb_g(ngrid)%sflux_v    ,turb_g(ngrid)%sflux_t    ,grid_g(ngrid)%lpu        &
-             ,grid_g(ngrid)%lpv        ,grid_g(ngrid)%lpw                                  &
-	     !,turb_g(ngrid)%kpbl      & !srf
-             !,stilt_g(ngrid)%pblhgt   & !srf
-	     ,stilt_g(ngrid)%lmo      &
-	     !,stilt_g(ngrid)%ltscale  & !srf
-             !,stilt_g(ngrid)%sigw     & !srf
-	     )
-    endif
+!             ,basic_g(ngrid)%dn0       ,basic_g(ngrid)%up        ,basic_g(ngrid)%vp        &
+!             ,leaf_g(ngrid)%veg_rough  ,leaf_g(ngrid)%patch_rough,leaf_g(ngrid)%tstar      &
+!             ,leaf_g(ngrid)%ustar      ,leaf_g(ngrid)%patch_area ,turb_g(ngrid)%sflux_u    &
+!             ,turb_g(ngrid)%sflux_v    ,turb_g(ngrid)%sflux_t    ,grid_g(ngrid)%lpu        &
+!             ,grid_g(ngrid)%lpv        ,grid_g(ngrid)%lpw                                  &
+!	     !,turb_g(ngrid)%kpbl      & !srf
+!             !,stilt_g(ngrid)%pblhgt   & !srf
+!	     ,stilt_g(ngrid)%lmo      &
+!	     !,stilt_g(ngrid)%ltscale  & !srf
+!             !,stilt_g(ngrid)%sigw     & !srf
+!	     )
+!    endif
   endif
   !ML
 

@@ -87,7 +87,7 @@ subroutine nakanishi(m1,m2,m3,m4,ia,iz,ja,jz,jd,tkep,tket,vt3dd,vt3de,vt3dh,vt3d
                              ,nngama1,nngama2,nnf1,nnf2,nnrf1,nnrf2,nnri1,nnri2,nnri3      &
                              ,nnrfc,nnce1a,nnce1b,nnce2,nnce3,nnce4,nncr1                  &
                              ,nno1,nno2,nno3,nno4, nno5, nno6, nno7, nno8, nnreq,nnrsl     &
-                             ,nnmacheps
+                             ,nnmacheps,assign_const_nakanishi,turb_const_set
 
    use mem_stilt     , only: virtt
    implicit none
@@ -130,6 +130,11 @@ subroutine nakanishi(m1,m2,m3,m4,ia,iz,ja,jz,jd,tkep,tket,vt3dd,vt3de,vt3dh,vt3d
 
    !lfr: Solving a  problem with integer inside vtables
    flpu=int(flpu_R);flpv=int(flpv_R);flpw=int(flpw_R)
+   
+   if( .not. turb_const_set) then 
+     call assign_const_nakanishi
+     turb_const_set = .true.
+   endif
 
    tl = 0.
    
@@ -528,7 +533,7 @@ subroutine nakanishi_light(m1,m2,m3,m4,ia,iz,ja,jz,jd,tkep,tket,vt3dd,vt3de,vt3d
                              ,nngama1,nngama2,nnf1,nnf2,nnrf1,nnrf2,nnri1,nnri2,nnri3      &
                              ,nnrfc,nnce1a,nnce1b,nnce2,nnce3,nnce4,nncr1                  &
                              ,nno1,nno2,nno3,nno4, nno5, nno6, nno7, nno8, nnreq,nnrsl     &
-                             ,nnmacheps
+                             ,nnmacheps,assign_const_nakanishi,turb_const_set
 
    use mem_stilt     , only: virtt
    implicit none
@@ -573,8 +578,13 @@ subroutine nakanishi_light(m1,m2,m3,m4,ia,iz,ja,jz,jd,tkep,tket,vt3dd,vt3de,vt3d
    
    !lfr: Solving a  problem with integer inside vtables
    flpu=int(flpu_R);flpv=int(flpv_R);flpw=int(flpw_R)
-   
-   !tl = 0.
+
+   if( .not. turb_const_set) then 
+     call assign_const_nakanishi
+     turb_const_set = .true.
+   endif
+
+!tl = 0.
    
    do j=ja,jz
       do i=ia,iz

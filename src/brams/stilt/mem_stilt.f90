@@ -57,10 +57,9 @@ contains
    endif
    
    if (idiffk == 7) then
-!-srf aloque somente se stilt esta ligado
-!     allocate (stilt%ltscale(n1,n2,n3))
-!     allocate (stilt%sigw(n1,n2,n3))
-!     allocate (stilt%pblhgt(n2,n3))
+     allocate (stilt%ltscale(n1,n2,n3))
+     allocate (stilt%sigw(n1,n2,n3))
+     allocate (stilt%pblhgt(n2,n3))
 !
      allocate (stilt%lmo(n2,n3))
    end if
