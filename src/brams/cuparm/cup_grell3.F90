@@ -392,7 +392,7 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
          Grid
 !ML -- In case you want to output massflux
     use mem_stilt         , only: imassflx
-!
+
     use mem_jules
 
   implicit none
@@ -951,12 +951,18 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
       flip   (k)   = k
     enddo
     if( idiffk(ngrid) /= 2 .and. idiffk(ngrid) /= 3) then 
-      do j=1,myp
-        do i=1,mxp
-           call get_zi_gf2018(mzp,tkmin,turb_g(ngrid)%tkep(:,i,j),zmn(:,ngrid),grid_g(ngrid)%rtgt(i,j),&
-	                      grid_g(ngrid)%topt(i,j),kpbl(i,j) )
-	        kpbl (i,j) = max(1,min(kpbl (i,j),mzp-1))
-      enddo;enddo
+        if(idiffk(ngrid) == 7 ) then          
+          kpbl (:,:) = nint(turb_g(ngrid)%kpbl(:,:))
+        else
+          do j=1,myp
+            do i=1,mxp
+               call get_zi_gf2018(mzp,tkmin,turb_g(ngrid)%tkep(:,i,j),zmn(:,ngrid) &
+                                 ,grid_g(ngrid)%rtgt(i,j)                          &
+	                              ,grid_g(ngrid)%topt(i,j),kpbl(i,j) )
+	            kpbl (i,j) = max(1,min(kpbl (i,j),mzp-1))
+            enddo
+         enddo
+        end if
     else
       kpbl = 5  ! check later (introduce better formulation for Zi )
     endif
@@ -1125,12 +1131,18 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
   !
   !-- outputs ....
    
-   if( icumulus_gf(deep) == 1) then 
-    g3d_ens_g(1,ngrid)%accapr(:,:)=AA0(:,:) !Tpert_h(2, :,:)
-    g3d_ens_g(2,ngrid)%accapr(:,:)=AA1(:,:) !Tpert_h(5,:,:)
-    g3d_ens_g(3,ngrid)%accapr(:,:)=AA2(:,:) !Tpert_h(10,:,:);
-    g3d_ens_g(4,ngrid)%accapr(:,:)=AA3(:,:) !Tpert_v(2,:,:)
-   endif
+   !if( icumulus_gf(deep) == 1) then 
+   ! g3d_ens_g(1,ngrid)%accapr(:,:)=AA0(:,:) !Tpert_h(2, :,:)
+   ! g3d_ens_g(2,ngrid)%accapr(:,:)=AA1(:,:) !Tpert_h(5,:,:)
+   ! g3d_ens_g(3,ngrid)%accapr(:,:)=AA2(:,:) !Tpert_h(10,:,:);
+   ! g3d_ens_g(4,ngrid)%accapr(:,:)=AA3(:,:) !Tpert_v(2,:,:)
+   !endif
+
+   !-- saving the precip of each mode in the array g3d_ens_g(1,ngrid)%accapr(
+   if( icumulus_gf(deep) == 1)  g3d_ens_g(1,ngrid)%apr(:,:)= cprr4d_tmp(:,:,deep)  
+   if( icumulus_gf(mid)  == 1)  g3d_ens_g(3,ngrid)%apr(:,:)= cprr4d_tmp(:,:,mid)  
+   if( icumulus_gf(shal) == 1)  g3d_ens_g(2,ngrid)%apr(:,:)= cprr4d_tmp(:,:,shal)  
+    
 
    if( icumulus_gf(deep) == 1) then 
       ! updraft mass flux at cloud base
@@ -1274,12 +1286,12 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
    do i=1,train_dim
      call update(mxp*myp, g3d_ens_g(i,ngrid)%accapr,g3d_ens_g(i,ngrid)%apr,dtlt)
    enddo
-  else
-   ! temporary use to save cloud work functions for debug purposes
+ endif;endif
+ !--- for output only 
+ if(nnqparm(ngrid) == 8) then
    do i=1,train_dim
-    g3d_ens_g(i,ngrid)%accapr(:,:)=g3d_ens_g(i,ngrid)%apr(:,:)
+     call update(mxp*myp, g3d_ens_g(i,ngrid)%accapr,g3d_ens_g(i,ngrid)%apr,dtlt)
    enddo
-  endif
  endif
 !----------------------------------------------------------
 
@@ -1293,11 +1305,6 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
   call accum(int(mxp*myp*mzp,i8), tend%vt, g3d_g(ngrid)%vsrc)
  endif
 
- !.. call dumpVarAllLatLonk(tend%tht, 'THT'  ,1024,0,0,1,mxp,1,myp,1,mzp,300.0,660.0,header)
- !.. call dumpVarAllLatLonk(tend%rtt, 'RTT'  ,1024,0,0,1,mxp,1,myp,1,mzp,300.0,660.0,header)
- !.. call dumpVarAllLatLonk(tend%ut, 'UT'  ,1024,0,0,1,mxp,1,myp,1,mzp,300.0,660.0,header)
- !.. call dumpVarAllLatLonk(tend%vt, 'VT'  ,1024,0,0,1,mxp,1,myp,1,mzp,300.0,660.0,header)
-
  if(do_cupar_mcphys_coupling) then
    call cupar2mcphysics(mzp,mxp,myp,ia,iz,ja,jz,ngrid,dtlt,&
                         g3d_g  (ngrid)%clsrc   ,&
@@ -1306,15 +1313,14 @@ subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
 			               basic_g(ngrid)%pi0     ,&
 			               basic_g(ngrid)%dn0      )
  else
-  !if is not to have direct coupling include cloud/ice source at rtotal tendency
-  call accum(int(mxp*myp*mzp,i8), tend%rtt, g3d_g(ngrid)%clsrc)
+   !if there is not direct coupling, send cloud/ice source to rtotal tendency
+   call accum(int(mxp*myp*mzp,i8), tend%rtt, g3d_g(ngrid)%clsrc)
 
  endif
 !
 !--------- Convective Transport based on mass flux scheme -
  if (CCATT == 1 .and. iruncon == 1 .and. (iinqparm==5 .or. iinqparm==6) ) then
-     !print*,"convective transport turned off"
-     !return
+     
      if(iinqparm==5 .and. iens .ne. 1 ) &
        stop 'conv transp with GF scheme version 2014 only for deep convection'
 
@@ -2123,6 +2129,7 @@ subroutine prepare_lsf(nnqparm,nnshcu,iwork)
 	 else
 	      cuforc_g(ngrid)%lsfth(1:mzp,1:mxp,1:myp)= 0.
          endif
+    
          !-reset lsf for water vapor
 	 cuforc_g(ngrid)%lsfrt(1:mzp,1:mxp,1:myp)= 0.
 
@@ -2137,7 +2144,7 @@ subroutine prepare_lsf(nnqparm,nnshcu,iwork)
          vt3dk=0.0
          vctr1=0.0
          vctr2=0.0
-	 IF(dyncore_flag == 0) then
+	 if(dyncore_flag == 0) then
          do j = 1,myp
            do i = 1,mxp
              do k = 1,mzp
@@ -2147,7 +2154,7 @@ subroutine prepare_lsf(nnqparm,nnshcu,iwork)
              end do
            end do
          end do
-         ELSE
+    else
 	 do j = 1,myp
            do i = 1,mxp
              do k = 1,mzp
@@ -2157,7 +2164,7 @@ subroutine prepare_lsf(nnqparm,nnshcu,iwork)
              end do
            end do
          end do
-         ENDIF
+    endif
          call fa_preptc(mzp,mxp,myp            &
 	     ,vt3da	     ,vt3db	       &
 	     ,vt3dc	     ,vt3dd	       &
@@ -2166,7 +2173,7 @@ subroutine prepare_lsf(nnqparm,nnshcu,iwork)
 	     ,vt3dj	     ,vt3dk	       &
 	     ,mynum			       )
 
-	 IF(dyncore_flag == 0) then
+	 if(dyncore_flag == 0) then
          !---- thp
 	 scr1(1:mzp,1:mxp,1:myp) = basic_g(ngrid)%thp(1:mzp,1:mxp,1:myp)
 
@@ -2186,7 +2193,7 @@ subroutine prepare_lsf(nnqparm,nnshcu,iwork)
          ! output: lsfth
          call advtndc(mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%thp,scr1,cuforc_g(ngrid)%lsfth,dtlt,mynum)
          !
-	 ELSE
+	 else
          !---- thc
 	 scr1(1:mzp,1:mxp,1:myp) = basic_g(ngrid)%thc(1:mzp,1:mxp,1:myp)
 
@@ -2205,7 +2212,7 @@ subroutine prepare_lsf(nnqparm,nnshcu,iwork)
          ! input:  thetac , lsfth,scr1, dtlt
          ! output: lsfth
          call advtndc(mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%thc,scr1,cuforc_g(ngrid)%lsfth,dtlt,mynum)
-         ENDIF
+    endif
 
          !---- water vapor
 	 scr1(1:mzp,1:mxp,1:myp) = basic_g(ngrid)%rv(1:mzp,1:mxp,1:myp)
