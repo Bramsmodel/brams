@@ -7,7 +7,7 @@
 !###########################################################################
 
 
-Module turb_constants 
+Module turb_constants
 
 ! Nakanishi and Niino (2004) set of constants
 real, parameter :: nna1=1.18, nna2=0.665, nnb1=24.0, nnb2=15.0, nnc1=0.137
@@ -20,7 +20,7 @@ real :: nngama1, nngama2, nnf1, nnf2, nnrf1, nnrf2, nnri1, nnri2, nnri3, nnrfc
 real :: nnce1a,nnce1b, nnce2,nnce3,nnce4,nncr1
 ! Part of the constants defined in the Janjic (2001) report, adapted to Nakanishi/Niino
 real :: nno1, nno2, nno3, nno4, nno5, nno6, nno7, nno8, nnaeh, nnaem, nnreq,nnrsl, nnmacheps
-logical :: turb_const_set = .false. 
+
 
 Contains
 
@@ -28,7 +28,7 @@ Contains
 
    implicit none
    logical :: printinscreen
-   printinscreen=.true.
+   printinscreen=.false.
 
    nngama1= 1./3.0-2.*nna1/nnb1
    nngama2=(2.*nna1*(3.-2.*nnc2)+nnb2*(1.-nnc3))/nnb1

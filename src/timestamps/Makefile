@@ -4,9 +4,9 @@ INCLUDES=-I../utils/include/
 F90LOAD= $(F90FLAGS)
 
 EXEC1=TimeStampReport.exe
-OBJ1=TimeStampReport.o
+OBJ1=TimeStampReport.o ModInputTimeStamp.o
 EXEC2=TimeStampSummary.exe
-OBJ2=TimeStampSummary.o
+OBJ2=TimeStampSummary.o ModInputTimeStamp.o
 
 all:	$(EXEC1) $(EXEC2)
 
@@ -16,9 +16,11 @@ $(EXEC1):	$(OBJ1)
 $(EXEC2):	$(OBJ2)
 	$(F90) -o $(EXEC2) $(INCLUDES) $(F90LOAD) $(OBJ2)
 
-TimeStampReport.o:	TimeStampReport.f90 ../utils/include/i8.h
+TimeStampReport.o:	TimeStampReport.f90  ModInputTimeStamp.o ../utils/include/i8.h
 
-TimeStampSummary.o:	TimeStampSummary.f90 ../utils/include/i8.h
+TimeStampSummary.o:	TimeStampSummary.f90  ModInputTimeStamp.o ../utils/include/i8.h
+
+ModInputTimeStamp.o:	ModInputTimeStamp.f90 ../utils/include/i8.h
 
 clean:
 	rm -f *.o *.mod $(EXEC1) $(EXEC2)

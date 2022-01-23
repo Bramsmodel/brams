@@ -137,7 +137,7 @@ contains
       real, dimension(nzg) :: soil_energy,soil_water,soil_text
       real, dimension(nzs) :: sfcwater_energy,sfcwater_depth
       real :: maxCloud_fraction
-      real :: solfac
+      real :: solfac, save_time
       integer :: ip,i,j,jday
       integer :: icount = 0
       integer, parameter :: ngpt = 141
@@ -145,17 +145,20 @@ contains
       !- if not including radiation, return
       IF ((ilwrtyp + iswrtyp)==0) return
 
-      icount = icount + 1
-      if (icount>ngpt) icount = 0
+       icount = icount + 1
+       if (icount>ngpt) icount = 0
        
 !-srf moved the update to the end of the routine.
-!!    !--- apply radiative tendencies to model tendencies
-!!    call tend_accum_rtm(mzp, mxp, myp, ia, iz, ja, jz)
+!!      !--- apply radiative tendencies to model tendencies
+!!      call tend_accum_rtm(mzp, mxp, myp, ia, iz, ja, jz)
 
       !--- check if it is time to recompute radiative tendency and fluxes
       !
       !--- radiation calculation is updated only every radfrq seconds
       IF ( (mod(time+.001, radfrq) < dtlt .or. time<0.001)) THEN
+
+        save_time = time
+	time      = time + 0.5*radfrq
 
         !--- set radiation tendency for theta to zero
         radiate_g(ngrid)%fthrd(1:mzp,1:mxp,1:myp) = 0.0
@@ -164,7 +167,7 @@ contains
         !--1st, set zero to the local arrays
          radiate_g(ngrid)%cloud_fraction=0.0;  rain=0.0; lwl=0.0; iwl =0.0
 
-	 call  cloud_prop_rrtm(mzp, mxp, myp, ia, iz, ja, jz &
+	call  cloud_prop_rrtm(mzp, mxp, myp, ia, iz, ja, jz &
 		    !-- output
 		    ,radiate_g(ngrid)%cloud_fraction	  &
 		    ,rain		  &
@@ -173,12 +176,12 @@ contains
 		    )
 
 !-srf tuning section for cloud fraction and other parameters for radiation
-         if(radtun /= 1.0) then
-           radiate_g(ngrid)%cloud_fraction=  min(1.,radtun* radiate_g(ngrid)%cloud_fraction)
+        if(radtun /= 1.0) then
+            radiate_g(ngrid)%cloud_fraction=  min(1.,radtun* radiate_g(ngrid)%cloud_fraction)
 	   rain          =  radtun*rain
 	   lwl           =  radtun*lwl
 	   iwl           =  radtun*iwl
-         endif
+        endif
 
 
 
@@ -253,6 +256,9 @@ contains
 		       ,icount                 &
 		       ,ngpt                   &
                                                )
+       !- restore time to its actual value
+        time = save_time
+
       ENDIF
       !--- apply radiative tendencies to model tendencies
       call tend_accum_rtm(mzp, mxp, myp, ia, iz, ja, jz)
@@ -312,20 +318,20 @@ contains
                 d0     = 6.2831853*float(jday-1)/365.
                 d02    = d0*2.
                 solfac = 1.000110 + 0.034221*cos(d0) + 0.001280*sin(d0) + &
-                         0.000719*cos(d02) + 0.000077*sin(d02)
+                     0.000719*cos(d02) + 0.000077*sin(d02)
 
                 ! find the hour angle, then get cosine of zenith angle.
 
+                !--(dmk-ccatt-ini)-----------------------------------------------------
                 !ner_i - including solar time equation ("eqt" must be defined, it is a new variable)
                 eqt = (0.000075 + 0.001868*cos(d0) - 0.032077*sin(d0) - 0.014615*cos(d02) &
                        - 0.040849*sin(d02))*1440/(2*3.141593)
                 !ner_f - including solar time equation
 
                 !-ner dayhr  = time/3600. + float(itime1/100) + float(mod(itime1,100))/60.
-                dayhr = (time / 3600. + float(itime1/100) + float(mod(itime1,100)) / 60.) !&
-		      !+ (radfrq/(2.*3600.))
-                
-		!-ner (radfrq/(2*3600)) - rad transfer shift half of radfrq(improving rad tendency representativity)
+                dayhr = (time / 3600. + float(itime1/100) + float(mod(itime1,100)) / 60.) &
+		        + (radfrq/(2.*3600.))
+                !-ner (radfrq/(2*3600)) - rad transfer shift half of radfrq(improving rad tendency representativity)
 
                 do j = ja,jz
                    do i = ia,iz
@@ -343,6 +349,11 @@ contains
                       !          hrangl    = 15.*(dayhrr - 12.)*pi180
 
                       radiate_g(ngrid)%cosz(i,j) = snlsnd + cslcsd*cos(hrangle)
+                      !-srf - cosz > 1 no sx6
+
+                !--(dmk-ccatt-old)-----------------------------------------------------
+                !          radiate_g(ngrid)%cosz(i,j) = min(cosz(i,j)+1.0e-10, 1.0) !lfr: prevent 90 degrees z angle
+                !--(dmk-ccatt-fim)-----------------------------------------------------
 
                       !radiate_g(ngrid)%cosz(i,j) = min(radiate_g(ngrid)%cosz(i,j), 1.0)
                       !radiate_g(ngrid)%cosz(i,j) = max(radiate_g(ngrid)%cosz(i,j),-1.0)

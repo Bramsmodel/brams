@@ -155,18 +155,18 @@ END SUBROUTINE micro_gfdl
 
    REAL, DIMENSION( ims:ime, jms:jme , kms:kme) ::                  &
                   qv_curr,qc_curr,qr_curr,qi_curr,qs_curr,qg_curr , &
-                  re_cloud, re_ice ,re_snow, rad_cf , &
+                  re_cloud, re_ice , rad_cf , &
                   DQVDT_micro , & 
-		            DQLDT_micro , & 
-		            DQRDT_micro , & 
-		            DQIDT_micro , & 
-		            DQSDT_micro , & 
-		            DQGDT_micro , & 
-		            DQADT_micro , & 
-		             DUDT_micro , & 
-		             DVDT_micro , & 
-		             DTDT_micro , &
-		             NACTLI     , &
+		              DQLDT_micro , & 
+		              DQRDT_micro , & 
+		              DQIDT_micro , & 
+		              DQSDT_micro , & 
+		              DQGDT_micro , & 
+		              DQADT_micro , & 
+		               DUDT_micro , & 
+		               DVDT_micro , & 
+		               DTDT_micro , &
+		               NACTLI     , &
                    REV_MC_X, RSU_MC_X, EVAPC_X
 		     
    REAL, DIMENSION( ims:ime , jms:jme )  ::  &
@@ -179,8 +179,8 @@ END SUBROUTINE micro_gfdl
 
    REAL, DIMENSION( ims:ime , jms:jme )  ::  &
                    area    &
-		            ,frland  &
-		            ,cnv_fraction
+		              ,frland  &
+		              ,cnv_fraction
                                                                    
    real, dimension(ims:ime , jms:jme ,0:kme) :: &
                   PFI_LS_X &
@@ -235,7 +235,7 @@ END SUBROUTINE micro_gfdl
 	   call gfdl_cloud_microphys_init()
 	   !- define the vector "flip" to invert the z-axis orientation
 	   allocate(flip(m1)); flip(:)=-9999
-      call flipz_minus1(flip,kme+1)
+     call flipz_minus1(flip,kme+1)
 	   !-
 	   start_of_simulation =.false.
 	 ENDIF
@@ -261,8 +261,8 @@ END SUBROUTINE micro_gfdl
                 
 	 DO j = jms,jme ; DO i = ims,ime 
             
-            area	      (i,j) = deltaxn*deltayn
-            frland	   (i,j) = 1.-leaf_g(ngrid)%patch_area(i,j,1)
+            area	(i,j) = deltaxn*deltayn
+            frland	(i,j) = 1.-leaf_g(ngrid)%patch_area(i,j,1)
             cnv_fraction(i,j) = 0.1
            
             DO k=1,kme
@@ -310,9 +310,9 @@ END SUBROUTINE micro_gfdl
             !
             !- get  temperature (temp) from theta_il (thp) and condensates
             DO k=1,kme
-               exner_tmp = exner (flip(k),i,j)
-               tempK	   = basic%theta(flip(k),i,j)*exner_tmp
-         	     til	     = basic%thp  (flip(k),i,j)*exner_tmp
+               exner_tmp= exner (flip(k),i,j)
+               tempK	  = basic%theta(flip(k),i,j)*exner_tmp
+         	     til	    = basic%thp  (flip(k),i,j)*exner_tmp
              
                rliq	=  qc_curr(i,j,k) + qr_curr(i,j,k)		  
                rice	=  qi_curr(i,j,k) + qs_curr(i,j,k) + qg_curr(i,j,k)
@@ -329,21 +329,23 @@ END SUBROUTINE micro_gfdl
 	 ENDDO; ENDDO
 	
    !-------------------- print ---------->
-   ! if(mynum==10000 ) then	
-   !         print*,"WX=",maxval(V), maxval(W),  maxval(U),mynum
-   !         print*,"WN=",minval(V), minval(W),  minval(U),mynum
-   !         print*,"TX=",maxval(TEMP), maxval(qv_curr),  maxval(qc_curr),mynum
-   !         print*,"TN=",minval(TEMP), minval(qv_curr),  minval(qc_curr),mynum
-   !         print*,"PX=",maxval(dp), maxval(dz),  maxval(qc_curr),mynum
-   !         print*,"PN=",minval(dp), minval(dz),  minval(qc_curr),mynum
-	 ! endif
+	 if(mynum==10000 ) then
+	
+            print*,"WX=",maxval(V), maxval(W),  maxval(U),mynum
+            print*,"WN=",minval(V), minval(W),  minval(U),mynum
+            print*,"TX=",maxval(TEMP), maxval(qv_curr),  maxval(qc_curr),mynum
+            print*,"TN=",minval(TEMP), minval(qv_curr),  minval(qc_curr),mynum
+            print*,"PX=",maxval(dp), maxval(dz),  maxval(qc_curr),mynum
+            print*,"PN=",minval(dp), minval(dz),  minval(qc_curr),mynum
+	    
+	 endif
    !-------------------- print ----------<
 
 	
    !--- Execute GFDL microphysics
 	 call gfdl_cloud_microphys_driver( &
-		               ! Input water/cloud species and liquid+ice CCN [NACTL+NACTI]
-                     ! RAD_QV, RAD_QL, RAD_QR, RAD_QI, RAD_QS, RAD_QG, RAD_CF, (NACTL+NACTI)/1.e6, &
+		                   ! Input water/cloud species and liquid+ice CCN [NACTL+NACTI]
+                       ! RAD_QV, RAD_QL, RAD_QR, RAD_QI, RAD_QS, RAD_QG, RAD_CF, (NACTL+NACTI)/1.e6, &
                        qv_curr, 		  &! QV=qv_curr,     
                        qc_curr, 		  &! QC=qc_curr,     
                        qr_curr, 		  &! QR=qr_curr,     
@@ -352,7 +354,7 @@ END SUBROUTINE micro_gfdl
                        qg_curr, 		  &! QG=qg_curr,     
                        rad_cf,  		  &! cloud fraction  
                        NACTLI,  		  &!@NR=qnr_curr, 
-                     ! Output tendencies
+                      !Output tendencies
                        DQVDT_micro, DQLDT_micro, DQRDT_micro, DQIDT_micro, &
                        DQSDT_micro, DQGDT_micro, DQADT_micro, DTDT_micro, &
                      ! Input fields
@@ -369,39 +371,36 @@ END SUBROUTINE micro_gfdl
                      ! Output mass flux during sedimentation (Pa kg/kg)
                        PFL_LS_X(:,:,1:kme), PFI_LS_X(:,:,1:kme), &
                      ! constant grid/time information
-                       LHYDROSTATIC, LPHYS_HYDROSTATIC, &
-                       ims,ime, jms,jme, 1,kme, 1, kme, &
-                       re_cloud, re_ice, re_snow)
+		                   LHYDROSTATIC, LPHYS_HYDROSTATIC, &
+                       ims,ime, jms,jme, 1,kme, 1, kme)
                 
    !-------------------- print ---------->
-	 ! if(mynum==10000 ) then
-   !         print*,"-----------------------------------------------------------------------"
-   !         print*,"WX=",maxval(V), maxval(W),  maxval(U),mynum
-   !         print*,"WN=",minval(V), minval(W),  minval(U),mynum
-   !         print*,"TX=",maxval(TEMP), maxval(qv_curr),  maxval(qc_curr),mynum
-   !         print*,"TN=",minval(TEMP), minval(qv_curr),  minval(qc_curr),mynum
-   !         print*,"PX=",maxval(dp), maxval(dz),  maxval(qc_curr),mynum
-   !         print*,"PN=",minval(dp), minval(dz),  minval(qc_curr),mynum
-   !         call flush(6)	
-	 ! endif
+	 if(mynum==10000 ) then
+            print*,"-----------------------------------------------------------------------"
+            print*,"WX=",maxval(V), maxval(W),  maxval(U),mynum
+            print*,"WN=",minval(V), minval(W),  minval(U),mynum
+            print*,"TX=",maxval(TEMP), maxval(qv_curr),  maxval(qc_curr),mynum
+            print*,"TN=",minval(TEMP), minval(qv_curr),  minval(qc_curr),mynum
+            print*,"PX=",maxval(dp), maxval(dz),  maxval(qc_curr),mynum
+            print*,"PN=",minval(dp), minval(dz),  minval(qc_curr),mynum
+            call flush(6)	
+	 endif
    !-------------------- print ----------<
 
 
    !--- update variables after microphysics processes
    DO j = ja,jz   ; DO i = ia,iz !update only in the halo
 
-         !- surface precipitation (units are kg/m^2 = mm and mm/s)
-	       !accpr,pcprr   kg/m2 - rain+ice+snow+graupel ! p = for each dt  (or per time step)
-         mic%pcprr(i,j) = dt_moist*(PRCP_RAIN(i,j) + PRCP_SNOW   (i,j) + &
-                                    PRCP_ICE (i,j) + PRCP_GRAUPEL(i,j)) / 86400. 
-
+        !- surface precipitation (units are kg/m^2 = mm and mm/s)
+	      !accpr,pcprr   kg/m2 - rain+ice+snow+graupel
+         mic%pcprr(i,j) = dt_moist*(PRCP_RAIN(i,j) + PRCP_SNOW(i,j) + PRCP_ICE(i,j) + PRCP_GRAUPEL(i,j)) / 86400.     ! p = for each dt  (or per time step)
          mic%accpr(i,j) = mic%accpr(i,j) + mic%pcprr(i,j)	  
           
          !accps,pcprs  kg/m2 - ice+snow
          mic%pcprs(i,j) = dt_moist*(PRCP_SNOW(i,j) + PRCP_ICE(i,j))/ 86400.    
          mic%accps(i,j) = mic%accps(i,j) + mic%pcprs(i,j)
           
-         !accpg, pcprg  &! kg/m2 - graupel
+        !accpg, pcprg  &! kg/m2 - graupel
          mic%pcprg(i,j) = dt_moist* PRCP_GRAUPEL(i,j)/ 86400.
          mic%accpg(i,j) = mic%accpg(i,j) + mic%pcprg(i,j)
 
@@ -414,20 +413,14 @@ END SUBROUTINE micro_gfdl
 	        mic%rpp(flip(k),i,j)= qi_curr(i,j,k) + DQIDT_micro(i,j,k) * DT_MOIST
 	        mic%rsp(flip(k),i,j)= qs_curr(i,j,k) + DQSDT_micro(i,j,k) * DT_MOIST
 	        mic%rgp(flip(k),i,j)= qg_curr(i,j,k) + DQGDT_micro(i,j,k) * DT_MOIST
-           
-          !-effective radius,  RRTM requires in micrometer
-          mic%rei (flip(k),i,j)= re_ice  (i,j,k)  
-          mic%rel (flip(k),i,j)= re_cloud(i,j,k)
-	       !mic%snow(flip(k),i,j)= re_snow (i,j,k)  !-- srf check this latter.
-    
-
+	 
 	        basic%rv(flip(k),i,j)=qv_curr(i,j,k) + DQVDT_micro(i,j,k) * DT_MOIST
 	 	 
  	        tempK                =   temp(i,j,k) + DTDT_micro (i,j,k) * DT_MOIST
           
 	        basic%theta(flip(k),i,j) = tempK/ exner(flip(k),i,j)
 
-         ENDDO
+        ENDDO
 
 	      DO k=2,kme
 	          !- update liq-ice potential temperature THP in Kelvin including microphysics processes
@@ -440,7 +433,7 @@ END SUBROUTINE micro_gfdl
  			                       + alvi * rice/(cp * max(tempK,253.)) ) **(-1.0)	
             !- update total water 
 	          basic%rtp(k,i,j) = basic%rv(k,i,j) + rliq + rice
-         ENDDO
+        ENDDO
 !reserved	   
 !	  cpp(k)= qni_curr(1,k,1)
 !	  crp(k)= qnr_curr(1,k,1)
@@ -451,34 +444,32 @@ END SUBROUTINE micro_gfdl
 !         RAD_CF = RAD_CF + DQADT_micro * DT_MOIST
 !reserved
 
-	       !- definition for k=1
-	       basic%rtp(1,i,j)  = basic%rtp(2,i,j)  
-	       mic%rcp  (1,i,j)  = mic%rcp  (2,i,j)  
-	       mic%rrp  (1,i,j)  = mic%rrp  (2,i,j)  
-	       mic%rpp  (1,i,j)  = mic%rpp  (2,i,j)  
-	       mic%rsp  (1,i,j)  = mic%rsp  (2,i,j)  
-	       mic%rgp  (1,i,j)  = mic%rgp  (2,i,j)  
-	       basic%rv (1,i,j)  = basic%rv (2,i,j)  
-	       basic%theta(1,i,j)= basic%theta(2,i,j)
-	       basic%thp  (1,i,j)= basic%thp  (2,i,j)
-        
-         !-effective radius 
-         mic%rei(1,i,j)= mic%rei(2,i,j) 
-         mic%rel(1,i,j)= mic%rel(2,i,j)
-        !mic%snow(1,i,j)=mic%snow(2,i,j)
-
-        !temporary 
-        !mic%rei   (1:m1,i,j) =5.01E-6 * 1.e+6 ! RRTM requires in micrometer
-        !mic%rel   (1:m1,i,j) =2.51E-6 * 1.e+6 ! RRTM requires in micromete
-
-
+	     !- definition for k=1
+	     basic%rtp(1,i,j)  = basic%rtp(2,i,j)  
+	     mic%rcp  (1,i,j)  = mic%rcp  (2,i,j)  
+	     mic%rrp  (1,i,j)  = mic%rrp  (2,i,j)  
+	     mic%rpp  (1,i,j)  = mic%rpp  (2,i,j)  
+	     mic%rsp  (1,i,j)  = mic%rsp  (2,i,j)  
+	     mic%rgp  (1,i,j)  = mic%rgp  (2,i,j)  
+	     basic%rv (1,i,j)  = basic%rv (2,i,j)  
+	     basic%theta(1,i,j)= basic%theta(2,i,j)
+	     basic%thp  (1,i,j)= basic%thp  (2,i,j)  
 !reserved
 !	  mic%cpp (1,i,j)  = mic%cpp (2,i,j)  
 !	  mic%crp (1,i,j)  = mic%crp (2,i,j)  
 !	  mic%ccp (1,i,j)  = mic%ccp (2,i,j) 
-
+!	   DO k=2,kme-1
+!	     rel (k) = re_cloud (1,k,1) * 1.e+6 ! RRTM requires in micrometer
+!	     rei (k) = re_ice	(1,k,1) * 1.e+6 ! RRTM requires in micrometer
+!	   ENDDO
+!	   rel (1) =rel (2);  rel (kme) =rel (kme-1) 
+!	   rei (1) =rei (2);  rei (kme) =rei (kme-1)
+!temporary 
+        mic%rei   (1:m1,i,j) =5.01E-6 * 1.e+6 ! RRTM requires in micrometer
+        mic%rel   (1:m1,i,j) =2.51E-6 * 1.e+6 ! RRTM requires in micrometer
+!
 ENDDO;ENDDO
-
+  
 END  SUBROUTINE brams_to_mic_gfdl
 !------------------------------------------------------------------------------------
 
