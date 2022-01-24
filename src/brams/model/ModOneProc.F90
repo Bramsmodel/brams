@@ -1599,7 +1599,7 @@ contains
     call DestroyGridTree(AllGrids)
     call DestroyNamelistFile(oneNamelistFile)
 
-    call SynchronizedTimeStamp(TS_RESTO)
+!!$    call SynchronizedTimeStamp(TS_RESTO) ! Exper1.2, 2021_12
 
     call DestroyParallelEnvironment(oneParallelEnvironment)
 

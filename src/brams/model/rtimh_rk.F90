@@ -271,7 +271,7 @@ contains
     singleProcRun = nmachs == 1
     julesFile=oneNamelistFile%julesin
 
-    call SynchronizedTimeStamp(TS_RESTO)
+!!$    call SynchronizedTimeStamp(TS_RESTO) ! Exper1.2, 2021_12
 
     !        +------------------------------------------------------------------+
     !        |   Timestep driver for the Runge-Kutta non-hydrostatic time-split |
@@ -300,7 +300,7 @@ contains
                                 ! evolution of the Exner pressure: compression term
          call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'ADV')
 
-    call SynchronizedTimeStamp(TS_DYNAMICS)
+!!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
 
     if (CCATT==1 .and. chemistry >= 0) call aodDriver(mzp,mxp,myp,ia,iz,ja,jz,ngrids)
 
@@ -373,7 +373,7 @@ contains
 
     endif
 
-    call SynchronizedTimeStamp(TS_PHYSICS)
+!!$    call SynchronizedTimeStamp(TS_PHYSICS) ! Exper1.2, 2021_12
 
     !  Send boundaries to adjoining nodes
     !-------------------------------------------
@@ -387,7 +387,7 @@ contains
        call CORLOS(mzp,mxp,myp,i0,j0,ia,iz,ja,jz,izu,jzv, tend%ut, tend%vt)
     end if
 
-    call SynchronizedTimeStamp(TS_DYNAMICS)
+!!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
 
     !  Cumulus parameterization version 1
     !----------------------------------------
@@ -418,7 +418,7 @@ contains
     !  Get the overlap region between parallel nodes
     !---------------------------------------------------
 
-    call SynchronizedTimeStamp(TS_PHYSICS)
+!!$    call SynchronizedTimeStamp(TS_PHYSICS) ! Exper1.2, 2021_12
 
     if (nmachs > 1) then
        call WaitRecvMsgs(OneGrid%SelectedGhostZoneSend, OneGrid%SelectedGhostZoneRecv)
@@ -429,7 +429,7 @@ contains
 
     !- task 2:  NO production by "eclair"
 
-    call SynchronizedTimeStamp(TS_DYNAMICS)
+!!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
 
     if (ccatt == 1) &
          call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,2,50)
@@ -464,7 +464,7 @@ contains
        endif
     endif
 
-    call SynchronizedTimeStamp(TS_PHYSICS)
+!!$    call SynchronizedTimeStamp(TS_PHYSICS) ! Exper1.2, 2021_12
 
     if (iexev == 2) &
          call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'THS')
@@ -477,7 +477,7 @@ contains
        call diffuse()
     endif
 
-    call SynchronizedTimeStamp(TS_DYNAMICS)
+!!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
 
     !- STILT-BRAMS coupling (ML)
     if (imassflx == 1) call prep_advflx_to_stilt(mzp,mxp,myp,ia,iz,ja,jz,ngrid)
@@ -492,7 +492,7 @@ contains
     ! init preparations for Runge-Kutta  -loop
     !------------------------------------------------------------------------------
 
-    call SynchronizedTimeStamp(TS_PHYSICS)
+!!$    call SynchronizedTimeStamp(TS_PHYSICS) ! Exper1.2, 2021_12
 
     if ( rk_order == 2 ) then
        ! Wicker, Skamarock (1998)-RK-scheme
@@ -556,7 +556,7 @@ contains
     !-------------------------------------------
     call LATBND()
 
-    call SynchronizedTimeStamp(TS_RK_RESTO)
+!!$    call SynchronizedTimeStamp(TS_RK_RESTO) ! Exper1.2, 2021_12
 
     do l_rk = 1, rk_order
 
@@ -567,7 +567,7 @@ contains
        tend%pt_rk (:) =tend%pt (:)
        tend%tht_rk(:) =tend%tht(:)
 
-       call SynchronizedTimeStamp(TS_RK_RESTO)
+!!$       call SynchronizedTimeStamp(TS_RK_RESTO) ! Exper1.2, 2021_12
 
        ! advection should give back tendencies
        ! ut_rk, vt_rk, wt_rk, pt_rk, tht_rk = physics tend + advection tendency
@@ -589,7 +589,7 @@ contains
        end if
        call advectc_rk('PI'     ,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
 
-       call SynchronizedTimeStamp(TS_RK_ADV)
+!!$       call SynchronizedTimeStamp(TS_RK_ADV) ! Exper1.2, 2021_12
 
        if ( flag_Coriolis_in_every_RK_step ) then
           call CORLOS(mzp,mxp,myp,i0,j0,ia,iz,ja,jz,izu,jzv, tend%ut_rk, tend%vt_rk)
@@ -640,7 +640,7 @@ contains
        !MB: does this act on wc???
        if(vveldamp == 1) call w_damping(mzp,mxp,myp,ia,iz,ja,jz,mynum)
 
-       call SynchronizedTimeStamp(TS_RK_RESTO)
+!!$       call SynchronizedTimeStamp(TS_RK_RESTO) ! Exper1.2, 2021_12
 
     end do
     ! end of Runge-Kutta loop
@@ -655,7 +655,7 @@ contains
        end if
     end if
 
-    call SynchronizedTimeStamp(TS_RK_RESTO)
+!!$    call SynchronizedTimeStamp(TS_RK_RESTO) ! Exper1.2, 2021_12
 
     !
     !
@@ -673,7 +673,7 @@ contains
 
     ENDIF
 
-    call SynchronizedTimeStamp(TS_RK_ADVMON)
+!!$    call SynchronizedTimeStamp(TS_RK_ADVMON) ! Exper1.2, 2021_12
 
     !  Update scalars (water species, tke and tracers)
     !----------------------------------------
@@ -701,7 +701,7 @@ contains
        call negadj1_2M_rams60(mzp,mxp,myp)
     endif
 
-    call SynchronizedTimeStamp(TS_RK_RESTO)
+!!$    call SynchronizedTimeStamp(TS_RK_RESTO) ! Exper1.2, 2021_12
 
     !  Microphysics (applied on THP, just updated)
     !----------------------------------------
@@ -728,7 +728,7 @@ contains
     endif
     !----------------------------------------
 
-    call SynchronizedTimeStamp(TS_PHYSICS)
+!!$    call SynchronizedTimeStamp(TS_PHYSICS) ! Exper1.2, 2021_12
 
     !- Thermodynamic diagnosis
     if (mcphys_type <= 1 .and. level==3)  then
@@ -759,7 +759,7 @@ contains
 
     if (iexev == 2) call get_true_air_density(mzp,mxp,myp,ia,iz,ja,jz)
 
-    call SynchronizedTimeStamp(TS_DYNAMICS)
+!!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
 
     !----------------------------------------
     !- chemistry - microphysics tranfers - sedimentation and tranfer from clouds to rain
@@ -835,7 +835,7 @@ contains
             ,basic_g(ngrid)%pp     (:,:,:)                                )
     endif
 
-    call SynchronizedTimeStamp(TS_PHYSICS)
+!!$    call SynchronizedTimeStamp(TS_PHYSICS) ! Exper1.2, 2021_12
 
   end subroutine timestep_rk
 
