@@ -15,7 +15,8 @@ module ModDomainDecomp
 
 
   ! DomainDecomp: stores indices of a domain decomposed grid.
-  !               at node i, indices of the sub-domain stored at
+  !               Refering to this node as node i,
+  !               the indices of the sub-domain stored at
   !               this node are are [xb(i):xe(i), yb(i),ye(i)] and
   !               ibcon(i) stores if any sub-domain boundary is
   !               a full domain boundary.
@@ -80,10 +81,82 @@ contains
 
 
 
+
+
+
+  function CreateDomainDecomp(nmachs) result(ptr)
+    ! CreateDomainDecomp: Allocates all fields of a pointer of type DomainDecomp
+    !                     returning the pointer
+    integer, intent(in) :: nmachs
+    type(DomainDecomp), pointer :: ptr
+
+    integer :: ierr
+    character(len=*), parameter :: h="**(CreateDomainDecomp)**"
+    character(len=8) :: c0
+    character(len=10) :: c1
+
+    allocate(ptr, stat=ierr)
+    if (ierr /= 0) then
+       write(c0,"(i8)") ierr
+       call fatal_error(h//" allocate ptr fails with stat="//&
+            trim(adjustl(c0)))
+    end if
+    write(c1,"(a1,i8,a1)") "(",nmachs,")"
+    allocate(ptr%xb(nmachs), stat=ierr)
+    if (ierr /= 0) then
+       write(c0,"(i8)") ierr
+       call fatal_error(h//" allocate ptr%xb"//trim(adjustl(c1))//" fails with stat="//&
+            trim(adjustl(c0)))
+    end if
+    allocate(ptr%xe(nmachs), stat=ierr)
+    if (ierr /= 0) then
+       write(c0,"(i8)") ierr
+       call fatal_error(h//" allocate ptr%xe"//&
+            trim(adjustl(c1))//" fails with stat="//&
+            trim(adjustl(c0)))
+    end if
+    allocate(ptr%nx(nmachs), stat=ierr)
+    if (ierr /= 0) then
+       write(c0,"(i8)") ierr
+       call fatal_error(h//" allocate ptr%nx"//&
+            trim(adjustl(c1))//" fails with stat="//&
+            trim(adjustl(c0)))
+    end if
+    allocate(ptr%yb(nmachs), stat=ierr)
+    if (ierr /= 0) then
+       write(c0,"(i8)") ierr
+       call fatal_error(h//" allocate ptr%yb"//&
+            trim(adjustl(c1))//" fails with stat="//&
+            trim(adjustl(c0)))
+    end if
+    allocate(ptr%ye(nmachs), stat=ierr)
+    if (ierr /= 0) then
+       write(c0,"(i8)") ierr
+       call fatal_error(h//" allocate ptr%ye"//&
+            trim(adjustl(c1))//" fails with stat="//&
+            trim(adjustl(c0)))
+    end if
+    allocate(ptr%ny(nmachs), stat=ierr)
+    if (ierr /= 0) then
+       write(c0,"(i8)") ierr
+       call fatal_error(h//" allocate ptr%ny"//&
+            trim(adjustl(c1))//" fails with stat="//&
+            trim(adjustl(c0)))
+    end if
+    allocate(ptr%ibcon(nmachs), stat=ierr)
+    if (ierr /= 0) then
+       write(c0,"(i8)") ierr
+       call fatal_error(h//" allocate ptr%ibcon"//&
+            trim(adjustl(c1))//" fails with stat="//&
+            trim(adjustl(c0)))
+    end if
+  end function CreateDomainDecomp
+
+
   ! CreateGlobalNoGhost: Creates a variable of type DomainDecomp for
-  !                            given grid and parallel environment. Performs domain
-  !                            decomposition, filling all components of the created
-  !                            variable.
+  !                      given grid and parallel environment. Performs domain
+  !                      decomposition, filling all components of the created
+  !                      variable.
 
 
 
@@ -122,14 +195,15 @@ contains
             "] to decompose into "//trim(adjustl(c2))//" sub-domains")
     end if
 
-    allocate(GlobalNoGhost)
-    allocate(GlobalNoGhost%xb(nmachs))
-    allocate(GlobalNoGhost%xe(nmachs))
-    allocate(GlobalNoGhost%nx(nmachs))
-    allocate(GlobalNoGhost%yb(nmachs))
-    allocate(GlobalNoGhost%ye(nmachs))
-    allocate(GlobalNoGhost%ny(nmachs))
-    allocate(GlobalNoGhost%ibcon(nmachs))
+    GlobalNoGhost => CreateDomainDecomp(nmachs)
+!!$    allocate(GlobalNoGhost)
+!!$    allocate(GlobalNoGhost%xb(nmachs))
+!!$    allocate(GlobalNoGhost%xe(nmachs))
+!!$    allocate(GlobalNoGhost%nx(nmachs))
+!!$    allocate(GlobalNoGhost%yb(nmachs))
+!!$    allocate(GlobalNoGhost%ye(nmachs))
+!!$    allocate(GlobalNoGhost%ny(nmachs))
+!!$    allocate(GlobalNoGhost%ibcon(nmachs))
 
     ! no ghost zone info
 
@@ -538,14 +612,15 @@ contains
             "] with ghost zone of length "//trim(adjustl(c2)))
     end if
 
-    allocate(GlobalWithGhost)
-    allocate(GlobalWithGhost%xb(nmachs))
-    allocate(GlobalWithGhost%xe(nmachs))
-    allocate(GlobalWithGhost%nx(nmachs))
-    allocate(GlobalWithGhost%yb(nmachs))
-    allocate(GlobalWithGhost%ye(nmachs))
-    allocate(GlobalWithGhost%ny(nmachs))
-    allocate(GlobalWithGhost%ibcon(nmachs))
+    GlobalWithGhost => CreateDomainDecomp(nmachs)
+!!$    allocate(GlobalWithGhost)
+!!$    allocate(GlobalWithGhost%xb(nmachs))
+!!$    allocate(GlobalWithGhost%xe(nmachs))
+!!$    allocate(GlobalWithGhost%nx(nmachs))
+!!$    allocate(GlobalWithGhost%yb(nmachs))
+!!$    allocate(GlobalWithGhost%ye(nmachs))
+!!$    allocate(GlobalWithGhost%ny(nmachs))
+!!$    allocate(GlobalWithGhost%ibcon(nmachs))
 
     ! 
 
@@ -618,14 +693,17 @@ contains
     end if
 
     nmachs=ParEnv%nmachs
-    allocate(LocalInterior)
-    allocate(LocalInterior%xb(nmachs))
-    allocate(LocalInterior%xe(nmachs))
-    allocate(LocalInterior%nx(nmachs))
-    allocate(LocalInterior%yb(nmachs))
-    allocate(LocalInterior%ye(nmachs))
-    allocate(LocalInterior%ny(nmachs))
-    allocate(LocalInterior%ibcon(nmachs))
+
+
+    LocalInterior => CreateDomainDecomp(nmachs)
+!!$    allocate(LocalInterior)
+!!$    allocate(LocalInterior%xb(nmachs))
+!!$    allocate(LocalInterior%xe(nmachs))
+!!$    allocate(LocalInterior%nx(nmachs))
+!!$    allocate(LocalInterior%yb(nmachs))
+!!$    allocate(LocalInterior%ye(nmachs))
+!!$    allocate(LocalInterior%ny(nmachs))
+!!$    allocate(LocalInterior%ibcon(nmachs))
 
 
     LocalInterior%GhostZoneLength = GlobalWithGhost%GhostZoneLength 

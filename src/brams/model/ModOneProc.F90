@@ -728,7 +728,24 @@ contains
     call StoreNamelistFileAtEvaluate(oneNamelistFile)
 
     call StoreNamelistFileAtIAU(oneNamelistFile)
-    ! build and dump all grids
+
+    ! Using Namelist info, create a GridTree with nodes of type Grid.
+    ! The GridTree stores the grid hierarchy specified at Namelist.
+    ! For each GridTree node (named oneGrid):
+    !  (1) Copies sizes of full domains of this grid from namelist,
+    !      storing results at oneGrid%GridSize
+    !  (2) Performs Domain Decomposition of this grid,
+    !      using information from ParallelEnvironment,
+    !      storing results at oneGrid%GlobalNoGhost
+    !  (3) Insert Ghost Zone of length 1 at previously computed
+    !      Domain Decomposition, storing results at oneGrid%GlobalWithGhost
+    !  (4) Computes local indices of oneGrid%GlobalWithGhost,
+    !      storing results at oneGrid%LocalInterior
+    !  (5) Finds neighbour ranks to fill Ghost Zone of lenght 1,
+    !      storing results at oneGrid%Neigh
+    !  (6) Nullify all pointers to MessageSet type variables of oneGrid
+    ! Message passing computation is posponed, since it is required only
+    ! on INITIAL runs. 
     call CreateGridTree(oneNamelistFile, oneParallelEnvironment, AllGrids)
 
     ! Allocating dxtmax_local
@@ -898,19 +915,21 @@ contains
 
        call NodePathsBuffAlloc()
 
-       ! build message passing
-       !print *,'LFR-DBG inside oneproc 4: ',nodemxp(mynum,1); call flush(6)
+       ! Build message passing data structure for all grids,
+       ! since this is an INITIAL run.
+       ! The message passing data structure is composed by all
+       ! variables of type(MessageSet) stored at OneGrid
        OneGridTreeNode => GridTreeRoot(AllGrids)
        do while (associated(OneGridTreeNode))
           call InsertMessagePassingAtOneGrid(OneGridTreeNode%curr)
           OneGridTreeNode => NextOnGridTree(OneGridTreeNode)
        end do
 
-       if (dumpLocal) then
-          OneGridTreeNode => GridTreeRoot(AllGrids)
-          OneGrid => OneGridTreeNode%curr
+!!$       if (dumpLocal) then
+!!$          OneGridTreeNode => GridTreeRoot(AllGrids)
+!!$          OneGrid => OneGridTreeNode%curr
 !!$          call DumpGrid(OneGrid)
-       end if
+!!$       end if
 
 
        !======XXXXXsrf

@@ -67,13 +67,28 @@ module ModGrid
 
 
   type Grid
-     integer :: Id    ! grid number on Namelist
+     integer :: Id
+     ! Id: grid number on Namelist
      type(NamelistFile), pointer :: Ramsin => null()
+     ! Ramsin: this grid namelist file
      type(ParallelEnvironment), pointer :: ParEnv => null()
+     ! ParEnv: mpi size, rank and communicator for this run
      type(GridDims), pointer :: GridSize => null()
+     ! GridSize: this grid dimensions as defined by namelist
      type(DomainDecomp), pointer :: GlobalNoGhost => null()
+     ! GlobalNoGhost: global indices of this grid domain
+     !                decomposition (domain partition) on 
+     !                all MPI ranks
      type(DomainDecomp), pointer :: GlobalWithGhost => null()
+     ! GlobalWithGhost_1: global indices of this grid domain
+     !                    decomposition considering a ghost zone
+     !                    of length one on all MPI ranks
+     !                    (Not a domain partition, since
+     !                    includes ghost zone)
      type(DomainDecomp), pointer :: LocalInterior => null()
+     ! LocalInterior_1: local indices of this grid domain
+     !                  decomposition considering a ghost zone
+     !                  of length one on all MPI ranks
      type(NeighbourNodes), pointer :: Neigh => null()
      type(MessageSet), pointer :: AcouSendU
      type(MessageSet), pointer :: AcouRecvU
@@ -95,9 +110,7 @@ module ModGrid
      type(MessageSet), pointer :: SelectedGhostZoneRecv
      type(MessageSet), pointer :: AllGhostZoneSend
      type(MessageSet), pointer :: AllGhostZoneRecv
-     
      type(PolygonContainer), pointer :: meteoPolygons
-
   end type Grid
 
 
