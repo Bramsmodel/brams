@@ -195,18 +195,9 @@ contains
             "] to decompose into "//trim(adjustl(c2))//" sub-domains")
     end if
 
-    GlobalNoGhost => CreateDomainDecomp(nmachs)
-!!$    allocate(GlobalNoGhost)
-!!$    allocate(GlobalNoGhost%xb(nmachs))
-!!$    allocate(GlobalNoGhost%xe(nmachs))
-!!$    allocate(GlobalNoGhost%nx(nmachs))
-!!$    allocate(GlobalNoGhost%yb(nmachs))
-!!$    allocate(GlobalNoGhost%ye(nmachs))
-!!$    allocate(GlobalNoGhost%ny(nmachs))
-!!$    allocate(GlobalNoGhost%ibcon(nmachs))
-
     ! no ghost zone info
 
+    GlobalNoGhost => CreateDomainDecomp(nmachs)
     GlobalNoGhost%GhostZoneLength = 0
 
     ! find Rams domain decomposition xb, xe, yb, ye
@@ -612,18 +603,9 @@ contains
             "] with ghost zone of length "//trim(adjustl(c2)))
     end if
 
+    ! Global With Ghost info
+    
     GlobalWithGhost => CreateDomainDecomp(nmachs)
-!!$    allocate(GlobalWithGhost)
-!!$    allocate(GlobalWithGhost%xb(nmachs))
-!!$    allocate(GlobalWithGhost%xe(nmachs))
-!!$    allocate(GlobalWithGhost%nx(nmachs))
-!!$    allocate(GlobalWithGhost%yb(nmachs))
-!!$    allocate(GlobalWithGhost%ye(nmachs))
-!!$    allocate(GlobalWithGhost%ny(nmachs))
-!!$    allocate(GlobalWithGhost%ibcon(nmachs))
-
-    ! 
-
     GlobalWithGhost%GhostZoneLength = GhostZoneLength
 
     do cell = 1, nmachs
@@ -694,18 +676,9 @@ contains
 
     nmachs=ParEnv%nmachs
 
-
+    ! Local Interior info
+    
     LocalInterior => CreateDomainDecomp(nmachs)
-!!$    allocate(LocalInterior)
-!!$    allocate(LocalInterior%xb(nmachs))
-!!$    allocate(LocalInterior%xe(nmachs))
-!!$    allocate(LocalInterior%nx(nmachs))
-!!$    allocate(LocalInterior%yb(nmachs))
-!!$    allocate(LocalInterior%ye(nmachs))
-!!$    allocate(LocalInterior%ny(nmachs))
-!!$    allocate(LocalInterior%ibcon(nmachs))
-
-
     LocalInterior%GhostZoneLength = GlobalWithGhost%GhostZoneLength 
     do cell = 1, nmachs
        x0 = GlobalWithGhost%xb(cell)-1
@@ -731,17 +704,59 @@ contains
   subroutine DestroyDomainDecomp(OneDomainDecomp)
     type(domainDecomp), pointer :: OneDomainDecomp
 
+    integer :: ierr
     character(len=*), parameter :: h="**(DestroyDomainDecomp)**"
+    character(len=8) :: c0
 
     if (associated(oneDomainDecomp)) then
-       deallocate(oneDomainDecomp%xb)
-       deallocate(oneDomainDecomp%xe)
-       deallocate(oneDomainDecomp%nx)
-       deallocate(oneDomainDecomp%yb)
-       deallocate(oneDomainDecomp%ye)
-       deallocate(oneDomainDecomp%ny)
-       deallocate(oneDomainDecomp%ibcon)
-       deallocate(oneDomainDecomp)
+       deallocate(oneDomainDecomp%xb, stat=ierr)
+       if (ierr /= 0) then
+          write(c0,"(i8)"), ierr
+          call fatal_error(h//" deallocate xb fails with stat="//&
+               trim(adjustl(c0)))
+       end if
+       deallocate(oneDomainDecomp%xe, stat=ierr)
+       if (ierr /= 0) then
+          write(c0,"(i8)"), ierr
+          call fatal_error(h//" deallocate xe fails with stat="//&
+               trim(adjustl(c0)))
+       end if
+       deallocate(oneDomainDecomp%nx, stat=ierr)
+       if (ierr /= 0) then
+          write(c0,"(i8)"), ierr
+          call fatal_error(h//" deallocate nx fails with stat="//&
+               trim(adjustl(c0)))
+       end if
+       deallocate(oneDomainDecomp%yb, stat=ierr)
+       if (ierr /= 0) then
+          write(c0,"(i8)"), ierr
+          call fatal_error(h//" deallocate yb fails with stat="//&
+               trim(adjustl(c0)))
+       end if
+       deallocate(oneDomainDecomp%ye, stat=ierr)
+       if (ierr /= 0) then
+          write(c0,"(i8)"), ierr
+          call fatal_error(h//" deallocate ye fails with stat="//&
+               trim(adjustl(c0)))
+       end if
+       deallocate(oneDomainDecomp%ny, stat=ierr)
+       if (ierr /= 0) then
+          write(c0,"(i8)"), ierr
+          call fatal_error(h//" deallocate ny fails with stat="//&
+               trim(adjustl(c0)))
+       end if
+       deallocate(oneDomainDecomp%ibcon, stat=ierr)
+       if (ierr /= 0) then
+          write(c0,"(i8)"), ierr
+          call fatal_error(h//" deallocate ibcon fails with stat="//&
+               trim(adjustl(c0)))
+       end if
+       deallocate(oneDomainDecomp, stat=ierr)
+       if (ierr /= 0) then
+          write(c0,"(i8)"), ierr
+          call fatal_error(h//" deallocate oneDomainDecomp fails with stat="//&
+               trim(adjustl(c0)))
+       end if
     end if
     nullify(oneDomainDecomp)
   end subroutine DestroyDomainDecomp
