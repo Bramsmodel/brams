@@ -150,13 +150,18 @@ subroutine nudge(m1,m2,m3,ia,iz,ja,jz,varwts  &
   integer :: i,j,k,iCount,v
   real :: tfact, wt_uv, wt_th, wt_pi, wt_rt
   real :: rmse(m1,5),bias(m1,5),soma(m1,5),somaQ(m1,5),centFact
+  
+  !srf - special weights for pressure and/or UV (only for operations) 
+  real, dimension(m1,m2,m3) :: varwts_for_operations_only
+  if(  wt_nudge_pi < 0. .or. wt_nudge_uv < 0. ) varwts_for_operations_only=0.
 
   !         Linearly interpolate values in time, then nudge.
 
   !-- initialize and update (if desired) the nudging weights (lat, top, center)
   call VariableWeight(nnzp(1), nodemxp(mynum,1), nodemyp(mynum,1), nnxp(1),&
                       nnyp(1), nodei0 (mynum,1), nodej0 (mynum,1),  &
-                      grid_g(1)%topt(1,1), grid_g(1)%rtgt(1,1), varinit_g(1)%varwts(1,1,1))
+                      grid_g(1)%topt(1,1), grid_g(1)%rtgt(1,1), varinit_g(1)%varwts(1,1,1),&
+                      varwts_for_operations_only)
 
   if (nud_type == 2 .or. nud_type == 4) then
      tfact=(time-vtime1)/(vtime2-vtime1)
@@ -200,19 +205,35 @@ subroutine nudge(m1,m2,m3,ia,iz,ja,jz,varwts  &
             soma(k,5)=soma(k,5)+(basic_g(1)%pp(k,i,j)-vctr5(k))
            endif
 
-           vctr10(k)=(varwts(k,i,j)+varwts(k,min(m2,i+1),j))*.5* wt_uv
+           vctr10(k)=(varwts(k,i,j)+varwts(k,min(m2,i+1),j)   )*.5* wt_uv
            vctr11(k)=(varwts(k,i,j)+varwts(k,i,min(m3,j+jdim)))*.5* wt_uv
            vctr12(k)=varwts(k,i,j)* wt_th
            vctr13(k)=varwts(k,i,j)* wt_pi
            vctr14(k)=varwts(k,i,j)* wt_rt
         enddo
 
+!-srf special weights for pressure (full domain)
+        if(wt_nudge_pi < 0.) then   
+           do k=1,m1
+               vctr13(k)=varwts_for_operations_only(k,i,j)* abs (wt_pi)
+           enddo
+        endif
+        if(wt_nudge_uv < 0.) then   
+           do k=1,m1              
+               vctr10(k)=(varwts_for_operations_only(k,i,j)+&
+                          varwts_for_operations_only(k,min(m2,i+1),j)   )*.5* abs(wt_uv)
+               vctr11(k)=(varwts_for_operations_only(k,i,j)+&
+                          varwts_for_operations_only(k,i,min(m3,j+jdim)))*.5* abs(wt_uv)
+           enddo
+        endif
+!-srf end
+
         do k=1,m1
-           ut(k,i,j) = ut(k,i,j) + vctr10(k)*(vctr1(k)-up(k,i,j))
-           vt(k,i,j) = vt(k,i,j) + vctr11(k)*(vctr2(k)-vp(k,i,j))
-           tht(k,i,j)=tht(k,i,j) + vctr12(k)*(vctr3(k)-theta(k,i,j))
-           pt(k,i,j) = pt(k,i,j) + vctr13(k)*(vctr5(k)-pp (k,i,j))
-           rtt(k,i,j)=rtt(k,i,j) + vctr14(k)*(vctr4(k)-rtp(k,i,j))
+           ut (k,i,j) = ut(k,i,j) + vctr10(k)*(vctr1(k)-up   (k,i,j))
+           vt (k,i,j) = vt(k,i,j) + vctr11(k)*(vctr2(k)-vp   (k,i,j))
+           tht(k,i,j) =tht(k,i,j) + vctr12(k)*(vctr3(k)-theta(k,i,j))
+           pt (k,i,j) = pt(k,i,j) + vctr13(k)*(vctr5(k)-pp   (k,i,j))
+           rtt(k,i,j) =rtt(k,i,j) + vctr14(k)*(vctr4(k)-rtp  (k,i,j))
         enddo
 
      enddo
@@ -227,14 +248,16 @@ end subroutine nudge
 !     ******************************************************************
 
 subroutine VariableWeight(mzp, mxp, myp, nxp, nyp, i0, j0, &
-     topt, rtgt, varwts)
+     topt, rtgt, varwts,varwts_for_operations_only)
 
   use mem_grid, only: &
        ztop, zt, time,dtlt
 
   use mem_varinit, only: &
        nudlat, tnudcent, tnudtop, tnudlat, znudtop, timeWindowIAU, ramp
-
+  
+  use modIau, only:   applyIAU
+  
   use node_mod, only: mynum,master_num,mchnum
 
   implicit none
@@ -248,11 +271,14 @@ subroutine VariableWeight(mzp, mxp, myp, nxp, nyp, i0, j0, &
   real,    intent(in)    :: topt(mxp,myp)
   real,    intent(in)    :: rtgt(mxp,myp)
   real,    intent(inout) :: varwts(mzp,mxp,myp)
+  !srf - special weights for pressure (only for operations) 
+  real,    intent(inout) :: varwts_for_operations_only(mzp,mxp,myp)
 
   integer :: i,j,k
   integer :: iGlobal
   integer :: jGlobal
   real :: tnudcenti,tnudtopi,tnudlati
+  real :: tnudtopi_x,tnudlati_x
   real :: rown,rows,rowe,roww
   real :: zloc,wttop,wtlat,delzi,centFact,delPBL,wtbot
   character(len=*), parameter :: h="**(VariableWeight)**"
@@ -260,11 +286,11 @@ subroutine VariableWeight(mzp, mxp, myp, nxp, nyp, i0, j0, &
 
   !         Get weights for large scale and model tendencies
   if (nudlat .le. 0) return
-  !if(mynum == 1) print*,"varhe2",time,maxval(varwts),minval(varwts)!; stop 333
   
   ! 1) time = 0. do it anyway (needs for initialization)
-  
-  if((timeWindowIAU==0.0 .and. time>0.0) .or. (timeWindowIAU>0.01 .and. time>timeWindowIAU+RAMP)) return 
+  if(applyIAU > 0)  then 
+     if((timeWindowIAU==0.0 .and. time>0.0) .or. (timeWindowIAU>0.01 .and. time>timeWindowIAU+RAMP)) return 
+  endif
 
   !--- t     => t+ iau => nudging at center with centFact =1 
   !--- t+iau => t+ iau + ramp => nudging decays to zero in this interval with centFact 1 -> 0 
@@ -279,17 +305,23 @@ subroutine VariableWeight(mzp, mxp, myp, nxp, nyp, i0, j0, &
   
   !-- this is for the case of requesting nudging at center of model domain 
   !-- for the total time integration
-  if(time < dtlt + timeWindowIAU)  centFact=1.0
+  if(applyIAU == 0)  centFact=1.0
   
   !if(mynum == 1) print*,"ND=",time,timeWindowIAU,timeWindowIAU+RAMP,centFact;call flush(6)
 
   tnudcenti=0.
   if(tnudcent.gt. .01) tnudcenti=centFact*(1./tnudcent) 
   tnudtopi=0.
-  if(tnudtop.gt. .01) tnudtopi=1./tnudtop-tnudcenti
+  if(tnudtop.gt. .01) then 
+      tnudtopi  =1./tnudtop-tnudcenti
+      tnudtopi_x=1./tnudtop
+  endif
   tnudlati=0.
-  if(tnudlat.gt. .01) tnudlati=1./tnudlat-tnudcenti
-
+  if(tnudlat.gt. .01) then 
+    tnudlati  =1./tnudlat-tnudcenti
+    tnudlati_x=1./tnudlat
+  endif
+  
   if(ztop.gt.znudtop) then
      delzi=1./(ztop-znudtop)
   elseif(tnudtop.gt. .01) then
@@ -333,12 +365,12 @@ subroutine VariableWeight(mzp, mxp, myp, nxp, nyp, i0, j0, &
         do k=1,mzp
            zloc=zt(k)*rtgt(i,j)+topt(i,j)
            wttop=max(0.,(zloc-znudtop)*delzi)
-	   !-- turn off nudging from surface to znudbot
-	   if(znudbot>0.01) then 
+	        !-- turn off nudging from surface to znudbot
+	        if(znudbot>0.01) then 
              wtbot =min(1.,max(0.,(zloc-znudbot+topt(i,j))*delPBL))
            else
              wtbot =1.
-	   endif
+	        endif
 
 ! if( mchnum == master_num) then
 !    if(i==10 .and. j==10) print*,'wtbot=',k,wtbot,zloc-topt(i,j)
@@ -348,10 +380,17 @@ subroutine VariableWeight(mzp, mxp, myp, nxp, nyp, i0, j0, &
            ! full 3-D weight function
 
 !-srf orig varwts(k,i,j)=tnudcenti       + max(tnudlati*wtlat,tnudtopi*wttop)
+!-srf excluding nudging in the PBL (wtbot)
            varwts(k,i,j)=tnudcenti*wtbot + max(tnudlati*wtlat,tnudtopi*wttop)
-        end do
+
+!-srf special weights for pressure (pressure will be nudged in the full domain)          
+           varwts_for_operations_only(k,i,j) = tnudlati_x*wtbot + max(tnudlati_x*wtlat,tnudtopi_x*wttop)          
+       end do
      end do
   end do
+
+!PRINT*,"MX",maxval(varwts),maxval(varwts_for_operations_only)
+!PRINT*,"MN",minval(varwts),minval(varwts_for_operations_only)
 
 100 format(1x,A50,F10.1,F8.2,E12.3)
 

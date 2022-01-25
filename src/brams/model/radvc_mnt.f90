@@ -1561,6 +1561,7 @@ contains
     if (dumpLocal) then
        call MsgDump(h//" update borders of u3d")
     end if
+
     call UpdateBorders(m1, nm2, nm3,advmnt_g(ng)%u3d, &
          nRec, procRecv, tagRecv, &
          iaRecv, izRecv, jaRecv, jzRecv, &

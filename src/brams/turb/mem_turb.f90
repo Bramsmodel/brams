@@ -71,7 +71,8 @@ contains
          allocate (turb%epsp(n1,n2,n3), STAT=ierr)
          if (ierr/=0) call fatal_error(h//"Allocating turb%epsp")
     
-    if(idiffk(ng) == 7 .and. IMASSFLX == 1) & 
+!srf if(idiffk(ng) == 7 .and. IMASSFLX == 1) & 
+    if(idiffk(ng) == 7 ) & 
          allocate (turb%kpbl(n2,n3), STAT=ierr)
          if (ierr/=0) call fatal_error(h//"Allocating turb%kpbl")
     

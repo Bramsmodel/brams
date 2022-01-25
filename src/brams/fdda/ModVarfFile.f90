@@ -164,6 +164,8 @@ contains
     type(Grid), pointer :: OneGrid => null()
     character(len=8) :: c0
     character(len=*), parameter :: h="**(VarfReadStoreOwnChunk)**"
+    !srf - special weights for pressure (only for operations) 
+    real, dimension(mzp,mxp,myp) :: varwts_for_operations_only
 
     ! See if we want to possibly wait for files to be available.
     !    This will control some logic...
@@ -310,7 +312,9 @@ contains
 
        call VariableWeight(nnzp(1), nodemxp(mynum,1), nodemyp(mynum,1), nnxp(1),&
             nnyp(1), nodei0(mynum,1), nodej0(mynum,1),  &
-            grid_g(1)%topt(1,1), grid_g(1)%rtgt(1,1), varinit_g(1)%varwts(1,1,1))
+            grid_g(1)%topt(1,1), grid_g(1)%rtgt(1,1), varinit_g(1)%varwts(1,1,1),&
+!srf 
+            varwts_for_operations_only)
 
        if(chem_assim == 1 .and. chemistry >= 0) &
             call VariableWeightChem(nnzp(1), nodemxp(mynum,1), nodemyp(mynum,1), nnxp(1),&

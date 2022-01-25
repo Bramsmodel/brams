@@ -282,6 +282,31 @@ contains
     !--------------------------------
     call TEND0()  
 
+!------------------TMP 
+!------------------TMP 
+!------------------TMP 
+! if(applyIAU == 1 ) then
+!    if(mynum==1) print*,"timeIAU=",time,timeWindowIAU*0.5,abs ( time - dtlt - timeWindowIAU*0.5),applyIAU
+!    call flush(6)
+!    
+!    call CreateIauTendency(ngrid, mzp*mxp*myp, mzp, mxp, myp,ia,iz,ja,jz&
+!          ,varinit_g(ngrid)%varup(:,:,:),varinit_g(ngrid)%varvp(:,:,:)  &
+!          ,varinit_g(ngrid)%varpp(:,:,:),varinit_g(ngrid)%vartp(:,:,:)  &
+!          ,varinit_g(ngrid)%varrp(:,:,:)                                &
+!	  
+!          ,varinit_g(ngrid)%varuf(:,:,:),varinit_g(ngrid)%varvf(:,:,:)  &
+!          ,varinit_g(ngrid)%varpf(:,:,:),varinit_g(ngrid)%vartf(:,:,:)  &
+!          ,varinit_g(ngrid)%varrf(:,:,:)                                &
+!
+!          ,basic_g(ngrid)%up     (:,:,:)   ,basic_g(ngrid)%vp  (:,:,:)  &
+!          ,basic_g(ngrid)%theta  (:,:,:)   ,basic_g(ngrid)%rtp (:,:,:)  &
+!          ,basic_g(ngrid)%pp     (:,:,:)                                )
+!  !RETURN
+!  endif
+!------------------TMP 
+!------------------TMP 
+!------------------TMP 
+
     ! Implements the Incremental Analysis Update procedure -
     ! phase 2: add the IAU tendencies
     !-------------------------------

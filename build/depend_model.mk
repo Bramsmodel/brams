@@ -731,7 +731,7 @@ cond_update.o : $(FDDA)/cond_update.f90  an_header.o grid_struct.o \
 
 nud_analysis.o : $(FDDA)/nud_analysis.f90  mem_basic.o mem_grid.o \
 	mem_scratch.o mem_tend.o mem_varinit.o node_mod.o \
-	chem1_list.o mem_chem1.o ModEvaluation.o 
+	chem1_list.o mem_chem1.o ModEvaluation.o modIau.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
