@@ -1300,13 +1300,13 @@ contains
                 !srf print*,"going to timestep ", time
                 if ( ( dyncore_flag == 0 ) .or. ( dyncore_flag == 1 ) ) then
                    ! Leapfrog/forward-time based scheme
-                   call timestep(OneGrid,oneNamelistFile)
+                   call timestep(OneGrid)
                 else if ( dyncore_flag == 2 ) then
                    ! Runge-Kutta based scheme
-                   call timestep_rk(OneGrid,oneNamelistFile)
+                   call timestep_rk(OneGrid)
                 else if ( dyncore_flag == 3 ) then
                    ! ABM3 based scheme
-                   call timestep_abm(OneGrid,oneNamelistFile)
+                   call timestep_abm(OneGrid)
                 else
                    !call fatal_error("ERROR in subroutine OneProc: value of dyncore_flag is unknown",header,version)
                    iErrNumber=dumpMessage(c_tty,c_yes,header,modelVersion,c_fatal &

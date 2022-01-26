@@ -12,7 +12,7 @@ module ModTimestep_ABM
   logical :: flag_mb_adv_test=.false.
 
 contains
-subroutine timestep_abm(OneGrid,oneNamelistFile)
+subroutine timestep_abm(OneGrid)
 
   use ModMessageSet, only: &
        PostRecvSendMsgs, &
@@ -199,12 +199,9 @@ subroutine timestep_abm(OneGrid,oneNamelistFile)
   use optical, only: &
             aodDriver
 
-  use ModNamelistFile, only : namelistFile
-
   implicit none
 
   type(Grid), pointer :: OneGrid
-  type(namelistFile), pointer :: oneNamelistFile
 
   ! execution time instrumentation
   include "tsNames.h"
@@ -230,7 +227,7 @@ subroutine timestep_abm(OneGrid,oneNamelistFile)
   !        |      model.                                                             |
   !        +-------------------------------------------------------------------------+
 
-  julesFile=oneNamelistFile%julesin
+  julesFile=OneGrid%Ramsin%julesin
 
   mzxyp =mzp*mxp*myp
 

@@ -16,7 +16,7 @@ module ModTimestep_RK
   logical,parameter :: stepDebug=.true.
 
 contains
-  subroutine timestep_rk(OneGrid,oneNamelistFile)
+  subroutine timestep_rk(OneGrid)
 
     use ModParallelEnvironment, only: MsgDump
 
@@ -219,9 +219,6 @@ contains
          specieName, &
          aercam
 
-    use ModNamelistFile, only : namelistFile
-
-
     use modIau, only:    &
          CreateIauTendency &
          ,readIauTendency   &
@@ -234,7 +231,6 @@ contains
     implicit none
 
     type(Grid), pointer :: OneGrid
-    type(namelistFile), pointer :: oneNamelistFile
 
     ! execution time instrumentation
     include "constants.f90"
@@ -269,7 +265,7 @@ contains
     end if
 
     singleProcRun = nmachs == 1
-    julesFile=oneNamelistFile%julesin
+    julesFile=OneGrid%Ramsin%julesin
 
 !!$    call SynchronizedTimeStamp(TS_RESTO) ! Exper1.2, 2021_12
 
