@@ -293,7 +293,7 @@ contains
     call parf_bcast(fullGrid, int(nz,i8), int(nnxp,i8), &
          int(nnyp,i8), master_num)
 
-    call mk_3_buff(fullGrid(1,1,1), toStore(1,1,1), &
+    call mk_3_buff(fullGrid, toStore, &
          nz, nnxp, nnyp, nz, ldimx, ldimy, ia, iz, ja, jz)
 
     if (dumpLocal) then
@@ -1815,7 +1815,7 @@ contains
     ja = nodej0(mynum,grid)+1
     jz = nodej0(mynum,grid)+nodemyp(mynum,grid)
 
-    call mk_3_buff(fullGrid(1,1,1), toStore(1,1,1), &
+    call mk_3_buff(fullGrid, toStore, &
                    nz, nnxp, nnyp, nz, ldimx, ldimy, ia, iz, ja, jz)
 
 

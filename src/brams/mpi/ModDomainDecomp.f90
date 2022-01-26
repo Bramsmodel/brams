@@ -161,9 +161,9 @@ contains
 
 
   subroutine CreateGlobalNoGhost(GridSize, ParEnv, GlobalNoGhost)
-    type(ParallelEnvironment), pointer :: ParEnv 
-    type(GridDims), pointer :: GridSize
-    type(DomainDecomp), pointer :: GlobalNoGhost
+    type(GridDims), pointer, intent(in) :: GridSize
+    type(ParallelEnvironment), pointer, intent(in) :: ParEnv 
+    type(DomainDecomp), pointer, intent(inout) :: GlobalNoGhost
 
     character(len=8) :: c0, c1, c2
     character(len=*), parameter :: h="**(CreateGlobalNoGhost)**"
@@ -561,11 +561,11 @@ contains
 
   subroutine CreateGlobalWithGhost(GridSize, ParEnv, GhostZoneLength, &
        GlobalNoGhost, GlobalWithGhost)
-    type(GridDims), pointer :: GridSize              ! intent(in)
-    type(ParallelEnvironment), pointer :: ParEnv     ! intent(in)
+    type(GridDims), pointer, intent(in) :: GridSize
+    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
     integer, intent(in) :: GhostZoneLength
-    type(domainDecomp), pointer :: GlobalNoGhost     ! intent(in)
-    type(domainDecomp), pointer :: GlobalWithGhost   ! intent(out)
+    type(domainDecomp), pointer, intent(in) :: GlobalNoGhost
+    type(domainDecomp), pointer, intent(inout) :: GlobalWithGhost
 
     integer :: nxp
     integer :: nyp
@@ -648,10 +648,10 @@ contains
 
   subroutine CreateLocalInterior(ParEnv, GlobalWithGhost, &
        GlobalNoGhost, LocalInterior)
-    type(ParallelEnvironment), pointer :: ParEnv   ! intent(in)
-    type(domainDecomp), pointer :: GlobalWithGhost ! intent(in)
-    type(domainDecomp), pointer :: GlobalNoGhost   ! intent(in)
-    type(domainDecomp), pointer :: LocalInterior   ! intent(out)
+    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+    type(domainDecomp), pointer, intent(in) :: GlobalWithGhost
+    type(domainDecomp), pointer, intent(in) :: GlobalNoGhost
+    type(domainDecomp), pointer, intent(out) :: LocalInterior
 
     integer :: nmachs
     integer :: cell
@@ -702,7 +702,7 @@ contains
 
 
   subroutine DestroyDomainDecomp(OneDomainDecomp)
-    type(domainDecomp), pointer :: OneDomainDecomp
+    type(domainDecomp), pointer, intent(inout) :: OneDomainDecomp
 
     integer :: ierr
     character(len=*), parameter :: h="**(DestroyDomainDecomp)**"
@@ -711,49 +711,49 @@ contains
     if (associated(oneDomainDecomp)) then
        deallocate(oneDomainDecomp%xb, stat=ierr)
        if (ierr /= 0) then
-          write(c0,"(i8)"), ierr
+          write(c0,"(i8)") ierr
           call fatal_error(h//" deallocate xb fails with stat="//&
                trim(adjustl(c0)))
        end if
        deallocate(oneDomainDecomp%xe, stat=ierr)
        if (ierr /= 0) then
-          write(c0,"(i8)"), ierr
+          write(c0,"(i8)") ierr
           call fatal_error(h//" deallocate xe fails with stat="//&
                trim(adjustl(c0)))
        end if
        deallocate(oneDomainDecomp%nx, stat=ierr)
        if (ierr /= 0) then
-          write(c0,"(i8)"), ierr
+          write(c0,"(i8)") ierr
           call fatal_error(h//" deallocate nx fails with stat="//&
                trim(adjustl(c0)))
        end if
        deallocate(oneDomainDecomp%yb, stat=ierr)
        if (ierr /= 0) then
-          write(c0,"(i8)"), ierr
+          write(c0,"(i8)") ierr
           call fatal_error(h//" deallocate yb fails with stat="//&
                trim(adjustl(c0)))
        end if
        deallocate(oneDomainDecomp%ye, stat=ierr)
        if (ierr /= 0) then
-          write(c0,"(i8)"), ierr
+          write(c0,"(i8)") ierr
           call fatal_error(h//" deallocate ye fails with stat="//&
                trim(adjustl(c0)))
        end if
        deallocate(oneDomainDecomp%ny, stat=ierr)
        if (ierr /= 0) then
-          write(c0,"(i8)"), ierr
+          write(c0,"(i8)") ierr
           call fatal_error(h//" deallocate ny fails with stat="//&
                trim(adjustl(c0)))
        end if
        deallocate(oneDomainDecomp%ibcon, stat=ierr)
        if (ierr /= 0) then
-          write(c0,"(i8)"), ierr
+          write(c0,"(i8)") ierr
           call fatal_error(h//" deallocate ibcon fails with stat="//&
                trim(adjustl(c0)))
        end if
        deallocate(oneDomainDecomp, stat=ierr)
        if (ierr /= 0) then
-          write(c0,"(i8)"), ierr
+          write(c0,"(i8)") ierr
           call fatal_error(h//" deallocate oneDomainDecomp fails with stat="//&
                trim(adjustl(c0)))
        end if
@@ -769,7 +769,7 @@ contains
 
 
   subroutine DumpDomainDecomp(oneDomainDecomp, name)
-    type(DomainDecomp), pointer :: oneDomainDecomp
+    type(DomainDecomp), pointer, intent(in) :: oneDomainDecomp
     character(len=*), intent(in) :: name
 
     integer :: nmachs
@@ -841,7 +841,7 @@ contains
 
 
   subroutine DumpDomainDecompHistogram(oneDomainDecomp, name)
-    type(DomainDecomp), pointer :: oneDomainDecomp
+    type(DomainDecomp), pointer, intent(in) :: oneDomainDecomp
     character(len=*), intent(in) :: name
 
     integer :: nmachs
