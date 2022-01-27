@@ -507,7 +507,7 @@ contains
     do n=i_scl,num_scalar(ngrid)
 
        !- if RK or ABM3 scheme, THP/THC are not transported here
-       if (dyncore_flag == 2 .or. dyncore_flag == 3) then
+       if (dyncore_flag == 2) then
           if (scalar_tab(n,ngrid)%name == 'THC' .or. &
                scalar_tab(n,ngrid)%name == 'THP') cycle
        end if

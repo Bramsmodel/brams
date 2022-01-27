@@ -18,7 +18,7 @@ module ModAcoust
   real, private :: div_damp_strength    ! dim.less coeff for div-damping
   real :: div_damp_slope
 
-  !- .TRUE. is necessary at least for dyncore_flags 2 and 3
+  !- .TRUE. is necessary at least for dyncore_flags 2
   !- currently div damping is not applied to leapfrog solver
   logical,parameter :: apply_div_damping =.TRUE.
   integer,parameter :: damp_formulation = 1 !1=orig, 2=wrf
@@ -916,7 +916,7 @@ contains
 
        endif
 
-    else if ( dyncore_flag == 2 .or. dyncore_flag == 3) then
+    else if ( dyncore_flag == 2) then
        ! Runge-Kutta based solver
        ! remark: the philosphy of the time levels is slightly different
        ! than in leapfrog: here always fields uc, vc, .. are updated
@@ -1100,7 +1100,7 @@ contains
     singleProcRun = nmachs == 1
     outermostGrid = nxtnest(ngrid) == 0
 
-    if ( apply_div_damping .and. (dyncore_flag == 2 .or. dyncore_flag == 3) ) then
+    if ( apply_div_damping .and. (dyncore_flag == 2) ) then
        allocate( pp_minus_div ( mzp, mxp, myp) )
        if(damp_formulation==1) allocate( div          ( mzp, mxp, myp) )
        if(damp_formulation==2) allocate( pp_t_minus_dt( mzp, mxp, myp) )
@@ -1127,7 +1127,7 @@ contains
           call WaitRecvMsgs(OneGrid%AcouSendP, OneGrid%AcouRecvP)
        end if
 
-       if ( apply_div_damping .and. ( dyncore_flag == 2 .or. dyncore_flag == 3 )&
+       if ( apply_div_damping .and. ( dyncore_flag == 2)&
             .and. ( iter > 1 ) ) then
           if(damp_formulation==1) then
              ! application of divergence damping in the 1st timestep is detrimental to stability
@@ -1177,7 +1177,7 @@ contains
 
        ! up = f(up, pp); uses pp(i+1,j)
        ! remaining arguments are loop invariant
-       if ( apply_div_damping .AND. ( dyncore_flag == 2 .or. dyncore_flag == 3 ) &
+       if ( apply_div_damping .AND. ( dyncore_flag == 2 ) &
             .AND. (iter > 1) )then
           call prdctu(mzp,mxp,myp,ia,izu,ja,jz,  &
                up,ut,pp_minus_div,th0,f13u,rtgu,rtgt,dxu,topu)
@@ -1193,7 +1193,7 @@ contains
 
        ! vp = f(vp, pp); uses pp(i,j+1)
        ! remaining arguments are loop invariant
-       if ( apply_div_damping .AND. ( dyncore_flag == 2 .or. dyncore_flag == 3 ) &
+       if ( apply_div_damping .AND. ( dyncore_flag == 2 ) &
             .AND. (iter > 1) )then
           call prdctv(mzp,mxp,myp,ia,iz,ja,jzv,&
                vp,vt, pp_minus_div, th0,f23v,rtgv,rtgt,dyv,topv)
@@ -1284,7 +1284,7 @@ contains
 
     enddo
 
-    if ( apply_div_damping .AND. ( dyncore_flag == 2 .or. dyncore_flag == 3) ) then
+    if ( apply_div_damping .AND. ( dyncore_flag == 2) ) then
        if (allocated(div          )) deallocate(div          )
        if (allocated(pp_minus_div )) deallocate(pp_minus_div )
        if (allocated(pp_t_minus_dt)) deallocate(pp_t_minus_dt)
@@ -1576,7 +1576,7 @@ contains
   !.. singleProcRun = nmachs == 1
   !.. outermostGrid = nxtnest(ngrid) == 0
 
-  !.. if ( apply_div_damping .and. (dyncore_flag == 2 .or. dyncore_flag == 3) ) then
+  !.. if ( apply_div_damping .and. (dyncore_flag == 2) ) then
   !.. allocate( pp_minus_div ( mzp, mxp, myp) )
   !.. if(damp_formulation==1) allocate( div          ( mzp, mxp, myp) )
   !.. if(damp_formulation==2) allocate( pp_t_minus_dt( mzp, mxp, myp) )
@@ -1591,7 +1591,7 @@ contains
   !.. do iter=1,lastIter
   !.. write(citer,fmt='(I1)') iter
 
-  !.. if ( apply_div_damping .and. ( dyncore_flag == 2 .or. dyncore_flag == 3 )&
+  !.. if ( apply_div_damping .and. ( dyncore_flag == 2 )&
   !.. .and. ( iter > 1 ) ) then
   !.. if(damp_formulation==1) then
   !.. ! application of divergence damping in the 1st timestep is detrimental to stability
@@ -1624,7 +1624,7 @@ contains
 
   !.. ! up = f(up, pp); uses pp(i+1,j)
   !.. ! remaining arguments are loop invariant
-  !.. if ( apply_div_damping .AND. ( dyncore_flag == 2 .or. dyncore_flag == 3 ) &
+  !.. if ( apply_div_damping .AND. ( dyncore_flag == 2 ) &
   !.. .AND. (iter > 1) )then
   !.. call prdctu(mzp,mxp,myp,ia,izu,ja,jz,  &
   !.. up,ut,pp_minus_div,th0,f13u,rtgu,rtgt,dxu,topu)
@@ -1639,7 +1639,7 @@ contains
 
   ! vp = f(vp, pp); uses pp(i,j+1)
   !.. ! remaining arguments are loop invariant
-  !.. if ( apply_div_damping .AND. ( dyncore_flag == 2 .or. dyncore_flag == 3 ) &
+  !.. if ( apply_div_damping .AND. ( dyncore_flag == 2 ) &
   !.. .AND. (iter > 1) )then
   !.. call prdctv(mzp,mxp,myp,ia,iz,ja,jzv,&
   !.. vp,vt, pp_minus_div, th0,f23v,rtgv,rtgt,dyv,topv)
@@ -1707,7 +1707,7 @@ contains
 
   !.. enddo
 
-  !.. if ( apply_div_damping .AND. ( dyncore_flag == 2 .or. dyncore_flag == 3) ) then
+  !.. if ( apply_div_damping .AND. ( dyncore_flag == 2) ) then
   !.. if (allocated(div          )) deallocate(div          )
   !.. if (allocated(pp_minus_div )) deallocate(pp_minus_div )
   !.. if (allocated(pp_t_minus_dt)) deallocate(pp_t_minus_dt)

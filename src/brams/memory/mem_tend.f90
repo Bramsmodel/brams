@@ -109,62 +109,42 @@ contains
    if (associated(basic_g(1)%up))      then
    	allocate (tend%ut(ntpts))
 	tend%ut = 0.
-        if( dyncore_flag==2 .or. dyncore_flag==3) then
+        if( dyncore_flag==2) then
     	  allocate (tend%ut_rk(ntpts))
 	  tend%ut_rk = 0.
-        endif
-        if( dyncore_flag==3 ) then
-    	  allocate (tend%ut_past(ntpts))
-	  tend%ut_past = 0.
         endif
    endif
    if (associated(basic_g(1)%vp))      then
    	allocate (tend%vt(ntpts))
 	tend%vt = 0.
-        if( dyncore_flag==2 .or. dyncore_flag==3) then
+        if( dyncore_flag==2) then
     	  allocate (tend%vt_rk(ntpts))
 	  tend%vt_rk = 0.
-        endif
-        if( dyncore_flag==3 ) then
-    	  allocate (tend%vt_past(ntpts))
-	  tend%vt_past = 0.
         endif
    endif
    if (associated(basic_g(1)%wp))      then
    	allocate (tend%wt(ntpts))
 	tend%wt = 0.
-        if( dyncore_flag==2 .or. dyncore_flag==3) then
+        if( dyncore_flag==2) then
     	  allocate (tend%wt_rk(ntpts))
 	  tend%wt_rk = 0.
-        endif
-        if( dyncore_flag==3 ) then
-    	  allocate (tend%wt_past(ntpts))
-	  tend%wt_past = 0.
         endif
    endif
    if (associated(basic_g(1)%pp))      then
    	allocate (tend%pt(ntpts))
 	tend%pt = 0.
-        if( dyncore_flag==2 .or. dyncore_flag==3) then
+        if( dyncore_flag==2 ) then
     	  allocate (tend%pt_rk(ntpts))
 	  tend%pt_rk = 0.
-        endif
-        if( dyncore_flag==3 ) then
-    	  allocate (tend%pt_past(ntpts))
-	  tend%pt_past = 0.
         endif
    endif
 
    if (associated(basic_g(1)%thp))     then
         allocate (tend%tht(ntpts))
 	tend%tht = 0.
-        if( dyncore_flag==2 .or. dyncore_flag==3) then
+        if( dyncore_flag==2 ) then
     	  allocate (tend%tht_rk(ntpts))
 	  tend%tht_rk = 0.
-        endif
-        if( dyncore_flag==3 ) then
-    	  allocate (tend%tht_past(ntpts))
-	  tend%tht_past = 0.
         endif
    endif
    if (associated(basic_g(1)%rtp))     then

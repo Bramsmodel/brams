@@ -60,7 +60,7 @@ Contains
     allocate (basic%rtp(n1,n2,n3), STAT=ierr);   IF (ierr/=0) CALL fatal_error("ERROR allocating rtp (alloc_basic)")
     allocate (basic%rv(n1,n2,n3),  STAT=ierr);   IF (ierr/=0) CALL fatal_error("ERROR allocating rv (alloc_basic)")
     allocate (basic%theta(n1,n2,n3), STAT=ierr); IF (ierr/=0) CALL fatal_error("ERROR allocating theta (alloc_basic)")
-    if ( dyncore_flag == 2 .or. dyncore_flag == 3 ) then
+    if ( dyncore_flag == 2 ) then
       allocate (basic%thc(n1,n2,n3), STAT=ierr); IF (ierr/=0) CALL fatal_error("ERROR allocating thc (alloc_basic)")
     end if
     allocate (basic%pi0(n1,n2,n3), STAT=ierr);   IF (ierr/=0) CALL fatal_error("ERROR allocating pi0 (alloc_basic)")
@@ -89,7 +89,7 @@ Contains
     basic%rtp   = 0.
     basic%rv    = 0.
     basic%theta = 0.
-    if ( dyncore_flag == 2 .or. dyncore_flag == 3 ) then
+    if ( dyncore_flag == 2 ) then
       basic%thc = 0.
     end if
     basic%pi0   = 0.
@@ -121,9 +121,7 @@ Contains
     if (associated(basic%rtp  ))    nullify (basic%rtp  )
     if (associated(basic%rv   ))    nullify (basic%rv   )
     if (associated(basic%theta))    nullify (basic%theta)
-    !if ( dyncore_flag == 2 .or. dyncore_flag == 3 ) then
-      if (associated(basic%thc))    nullify (basic%thc)
-    !end if
+    if (associated(basic%thc))    nullify (basic%thc)
     if (associated(basic%pi0  ))    nullify (basic%pi0  )
     if (associated(basic%th0  ))    nullify (basic%th0  )
     if (associated(basic%dn0  ))    nullify (basic%dn0  )
@@ -153,9 +151,7 @@ Contains
     if (associated(basic%rtp  ))    deallocate (basic%rtp  )
     if (associated(basic%rv   ))    deallocate (basic%rv   )
     if (associated(basic%theta))    deallocate (basic%theta)
-    !if ( dyncore_flag == 2 ) then
-       if (associated(basic%thc))    deallocate (basic%thc)
-    !end if	
+    if (associated(basic%thc))    deallocate (basic%thc)
     if (associated(basic%pi0  ))    deallocate (basic%pi0  )
     if (associated(basic%th0  ))    deallocate (basic%th0  )
     if (associated(basic%dn0  ))    deallocate (basic%dn0  )
@@ -237,12 +233,10 @@ Contains
          'THETA :3:hist:anal:mpti:mpt3')
     endif
     
-    !if ( dyncore_flag == 2 ) then
     if (associated(basic%thc)) &
          call InsertVTab (basic%thc,basicm%thc  &
          ,ng, npts, imean,  &
          'THC :3:hist:mpti:mpt3:mpt1')
-    !endif
     
     if(iexev == 2) then
        if (associated(basic%rv)) &
@@ -293,61 +287,4 @@ Contains
          'CPUTIME :2:anal:mpti:mpt3')
     
   end subroutine filltab_basic
-
-
-!!$  subroutine save_inv_basic(basic, fileTypeWrite, fileTypeWriteGlobal)
-!!$
-!!$    implicit none
-!!$    type (basic_vars), intent(in) :: basic
-!!$    integer, intent(in)           :: fileTypeWrite, fileTypeWriteGlobal
-!!$
-!!$    call WRITE_BRAMS_DATA(basic%thp, fileTypeWrite, fileTypeWriteGlobal)
-!!$    call WRITE_BRAMS_DATA(basic%rtp, fileTypeWrite, fileTypeWriteGlobal)
-!!$    call WRITE_BRAMS_DATA(basic%rv, fileTypeWrite, fileTypeWriteGlobal)
-!!$    call WRITE_BRAMS_DATA(basic%theta, fileTypeWrite, fileTypeWriteGlobal)
-!!$    if ( dyncore_flag == 2 ) then
-!!$      call WRITE_BRAMS_DATA(basic%thc, fileTypeWrite, fileTypeWriteGlobal)
-!!$    end if
-!!$    call WRITE_BRAMS_DATA(basic%pi0, fileTypeWrite, fileTypeWriteGlobal)
-!!$    call WRITE_BRAMS_DATA(basic%th0, fileTypeWrite, fileTypeWriteGlobal)
-!!$    call WRITE_BRAMS_DATA(basic%dn0, fileTypeWrite, fileTypeWriteGlobal)
-!!$    call WRITE_BRAMS_DATA(basic%dn0u, fileTypeWrite, fileTypeWriteGlobal)
-!!$    call WRITE_BRAMS_DATA(basic%dn0v, fileTypeWrite, fileTypeWriteGlobal)    
-!!$    call WRITE_BRAMS_DATA(basic%fcoru, fileTypeWrite, fileTypeWriteGlobal)
-!!$    call WRITE_BRAMS_DATA(basic%fcorv, fileTypeWrite, fileTypeWriteGlobal)
-!!$
-!!$  end subroutine save_inv_basic
-!!$
-!!$
-!!$  subroutine save_his_basic(basic, fileTypeWrite, fileTypeWriteGlobal)
-!!$
-!!$    implicit none
-!!$
-!!$    type (basic_vars), intent(in) :: basic
-!!$    integer, intent(in)           :: fileTypeWrite, fileTypeWriteGlobal
-!!$
-!!$    call WRITE_BRAMS_DATA(basic%up, fileTypeWrite, fileTypeWriteGlobal)
-!!$    call WRITE_BRAMS_DATA(basic%uc, fileTypeWrite, fileTypeWriteGlobal)
-!!$    call WRITE_BRAMS_DATA(basic%vp, fileTypeWrite, fileTypeWriteGlobal)
-!!$    call WRITE_BRAMS_DATA(basic%vc, fileTypeWrite, fileTypeWriteGlobal)
-!!$    call WRITE_BRAMS_DATA(basic%wp, fileTypeWrite, fileTypeWriteGlobal)
-!!$    call WRITE_BRAMS_DATA(basic%wc, fileTypeWrite, fileTypeWriteGlobal)
-!!$    call WRITE_BRAMS_DATA(basic%pp, fileTypeWrite, fileTypeWriteGlobal)
-!!$    call WRITE_BRAMS_DATA(basic%pc, fileTypeWrite, fileTypeWriteGlobal)
-!!$
-!!$  end subroutine save_his_basic
-!!$
-!!$
-!!$  subroutine save_all_basic(basic, fileTypeWrite, fileTypeWriteGlobal)
-!!$
-!!$    implicit none
-!!$
-!!$    type (basic_vars), intent(in) :: basic
-!!$    integer, intent(in)           :: fileTypeWrite, fileTypeWriteGlobal
-!!$
-!!$    call save_inv_basic(basic, fileTypeWrite, fileTypeWriteGlobal)
-!!$    call save_his_basic(basic, fileTypeWrite, fileTypeWriteGlobal)
-!!$
-!!$  end subroutine save_all_basic
-  
 End Module mem_basic

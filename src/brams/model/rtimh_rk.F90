@@ -870,7 +870,7 @@ subroutine adv_p_driver(m1,m2,m3,ifm,ia,iz,ja,jz,izu,jzv,jdim,mynum,edt,key)
 
 
   use mem_basic,   only: basic_g
-  use mem_grid,    only: grid_g, itopo,dyncore_flag
+  use mem_grid,    only: grid_g, itopo
   use mem_stilt,    only: stilt_g
   use mem_tend,    only: tend
   use mem_scratch, only: scratch

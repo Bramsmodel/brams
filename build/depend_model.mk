@@ -584,19 +584,6 @@ rtimh_rk.o : $(MODEL)/rtimh_rk.F90 rtimh.o mem_basic.o mem_cuparm.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rtimh_abm.o : $(MODEL)/rtimh_abm.F90 rtimh.o mem_basic.o mem_cuparm.o \
-	mem_grid.o mem_leaf.o mem_oda.o mem_radiate.o mem_scalar.o optical.o \
-	mem_turb.o mem_varinit.o micphys.o node_mod.o shcu_vars_const.o \
-	mod_advect_kit.o machine_arq.o rad_driv.o cup_grell3.o digitalFilter.o\
-	ChemSourcesDriver.o ChemDryDepDriver.o chemistry.o ModTimeStamp.o ModGrid.o \
-	raco.o rthrm.o module_rams_microphysics_2M.o mic_thompson_driver.o\
-        seasalt.o MatrixDriver.o rtm_driver.o radvc_rk.o $(JULES_OBJ_SFCLYR) \
-	ModMessageSet.o $(UTILS_INCS)/i8.h $(UTILS_INCS)/tsNames.h
-	@cp -f $< $(<F:.f90=.f90)
-	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-	rm -f $(<F:.f90=.f90)
-
-
 ModOneProc.o : $(MODEL)/ModOneProc.F90 ModNamelistFile.o \
 	io_params.o machine_arq.o InitAdvect.o \
 	ModPostProcess.o mem_cuparm.o mem_grid.o mem_leaf.o mem_oda.o \
@@ -614,7 +601,7 @@ ModOneProc.o : $(MODEL)/ModOneProc.F90 ModNamelistFile.o \
 	chem_sources.o mem_stilt.o extra.o chem_dry_dep.o \
 	ReadBcst.o ref_sounding.o parlibf.o ModParallelEnvironment.o \
 	tuvParameter.o ModTuv2.7.o ModTuvDriver2.7.o ModGridTree.o \
-	ModGrid.o rtimh.o rtimh_rk.o rtimh_abm.o meteogram.o \
+	ModGrid.o rtimh.o rtimh_rk.o meteogram.o \
 	module_rams_microphysics_2M.o initComm.o dam.o mod_aer.o \
 	initMicThompson.o modIau.o \
 	$(UTILS_INCS)/i8.h $(UTILS_INCS)/tsNames.h

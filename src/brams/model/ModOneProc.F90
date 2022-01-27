@@ -65,7 +65,6 @@ module ModOneProc
 
   use ModTimestep    , only: timestep
   use ModTimestep_RK , only: timestep_rk
-  use ModTimestep_ABM, only: timestep_abm
   use ISO_FORTRAN_ENV, only: OUTPUT_UNIT
   use io_params, only: &
        ndvitime2, &
@@ -1304,9 +1303,6 @@ contains
                 else if ( dyncore_flag == 2 ) then
                    ! Runge-Kutta based scheme
                    call timestep_rk(OneGrid)
-                else if ( dyncore_flag == 3 ) then
-                   ! ABM3 based scheme
-                   call timestep_abm(OneGrid)
                 else
                    !call fatal_error("ERROR in subroutine OneProc: value of dyncore_flag is unknown",header,version)
                    iErrNumber=dumpMessage(c_tty,c_yes,header,modelVersion,c_fatal &
