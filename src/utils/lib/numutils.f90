@@ -916,38 +916,38 @@ subroutine update_long_rk(nlong, dt,rk, a, a0, fa)
 end subroutine update_long_rk
 
 !     ****************************************************************
-!!$subroutine copy_long_rk(nlong, a, a0)
-!!$  implicit none
-!!$  include "i8.h"
-!!$  integer(kind=i8) :: nlong
-!!$  real :: a(nlong),a0(nlong)
-!!$
-!!$  a0 = a
-!!$  return
-!!$
-!!$end subroutine copy_long_rk
-!!$!     ****************************************************************
-!!$subroutine get_ab2_tend(nlong, c1,a1,c2,a2, a0)
-!!$  implicit none
-!!$  include "i8.h"
-!!$  integer(kind=i8) :: nlong
-!!$  real :: a1(nlong),a2(nlong),a0(nlong)
-!!$  real :: c1,c2
-!!$  a0 = c1*a1+c2*a2
-!!$  return
-!!$
-!!$end subroutine get_ab2_tend
-!!$!     ****************************************************************
-!!$subroutine get_am3_tend(nlong, c1,a1,c2,a2,c3,a3, a0)
-!!$  implicit none
-!!$  include "i8.h"
-!!$  integer(kind=i8) :: nlong
-!!$  real :: a1(nlong),a2(nlong),a3(nlong),a0(nlong)
-!!$  real :: c1,c2,c3
-!!$  a0 = c1*a1+c2*a2+c3*a3
-!!$  return
-!!$
-!!$end subroutine get_am3_tend
+subroutine copy_long_rk(nlong, a, a0)
+  implicit none
+  include "i8.h"
+  integer(kind=i8) :: nlong
+  real :: a(nlong),a0(nlong)
+
+  a0 = a
+  return
+
+end subroutine copy_long_rk
+!     ****************************************************************
+subroutine get_ab2_tend(nlong, c1,a1,c2,a2, a0)
+  implicit none
+  include "i8.h"
+  integer(kind=i8) :: nlong
+  real :: a1(nlong),a2(nlong),a0(nlong)
+  real :: c1,c2
+  a0 = c1*a1+c2*a2
+  return
+
+end subroutine get_ab2_tend
+!     ****************************************************************
+subroutine get_am3_tend(nlong, c1,a1,c2,a2,c3,a3, a0)
+  implicit none
+  include "i8.h"
+  integer(kind=i8) :: nlong
+  real :: a1(nlong),a2(nlong),a3(nlong),a0(nlong)
+  real :: c1,c2,c3
+  a0 = c1*a1+c2*a2+c3*a3
+  return
+
+end subroutine get_am3_tend
 
 real function getDistance(LatA,LngA,LatB,LngB)
   !# Get distance between 2 points in lat,lon [m]

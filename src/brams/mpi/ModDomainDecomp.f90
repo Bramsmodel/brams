@@ -15,8 +15,7 @@ module ModDomainDecomp
 
 
   ! DomainDecomp: stores indices of a domain decomposed grid.
-  !               Refering to this node as node i,
-  !               the indices of the sub-domain stored at
+  !               at node i, indices of the sub-domain stored at
   !               this node are are [xb(i):xe(i), yb(i),ye(i)] and
   !               ibcon(i) stores if any sub-domain boundary is
   !               a full domain boundary.
@@ -81,89 +80,17 @@ contains
 
 
 
-
-
-
-  function CreateDomainDecomp(nmachs) result(ptr)
-    ! CreateDomainDecomp: Allocates all fields of a pointer of type DomainDecomp
-    !                     returning the pointer
-    integer, intent(in) :: nmachs
-    type(DomainDecomp), pointer :: ptr
-
-    integer :: ierr
-    character(len=*), parameter :: h="**(CreateDomainDecomp)**"
-    character(len=8) :: c0
-    character(len=10) :: c1
-
-    allocate(ptr, stat=ierr)
-    if (ierr /= 0) then
-       write(c0,"(i8)") ierr
-       call fatal_error(h//" allocate ptr fails with stat="//&
-            trim(adjustl(c0)))
-    end if
-    write(c1,"(a1,i8,a1)") "(",nmachs,")"
-    allocate(ptr%xb(nmachs), stat=ierr)
-    if (ierr /= 0) then
-       write(c0,"(i8)") ierr
-       call fatal_error(h//" allocate ptr%xb"//trim(adjustl(c1))//" fails with stat="//&
-            trim(adjustl(c0)))
-    end if
-    allocate(ptr%xe(nmachs), stat=ierr)
-    if (ierr /= 0) then
-       write(c0,"(i8)") ierr
-       call fatal_error(h//" allocate ptr%xe"//&
-            trim(adjustl(c1))//" fails with stat="//&
-            trim(adjustl(c0)))
-    end if
-    allocate(ptr%nx(nmachs), stat=ierr)
-    if (ierr /= 0) then
-       write(c0,"(i8)") ierr
-       call fatal_error(h//" allocate ptr%nx"//&
-            trim(adjustl(c1))//" fails with stat="//&
-            trim(adjustl(c0)))
-    end if
-    allocate(ptr%yb(nmachs), stat=ierr)
-    if (ierr /= 0) then
-       write(c0,"(i8)") ierr
-       call fatal_error(h//" allocate ptr%yb"//&
-            trim(adjustl(c1))//" fails with stat="//&
-            trim(adjustl(c0)))
-    end if
-    allocate(ptr%ye(nmachs), stat=ierr)
-    if (ierr /= 0) then
-       write(c0,"(i8)") ierr
-       call fatal_error(h//" allocate ptr%ye"//&
-            trim(adjustl(c1))//" fails with stat="//&
-            trim(adjustl(c0)))
-    end if
-    allocate(ptr%ny(nmachs), stat=ierr)
-    if (ierr /= 0) then
-       write(c0,"(i8)") ierr
-       call fatal_error(h//" allocate ptr%ny"//&
-            trim(adjustl(c1))//" fails with stat="//&
-            trim(adjustl(c0)))
-    end if
-    allocate(ptr%ibcon(nmachs), stat=ierr)
-    if (ierr /= 0) then
-       write(c0,"(i8)") ierr
-       call fatal_error(h//" allocate ptr%ibcon"//&
-            trim(adjustl(c1))//" fails with stat="//&
-            trim(adjustl(c0)))
-    end if
-  end function CreateDomainDecomp
-
-
   ! CreateGlobalNoGhost: Creates a variable of type DomainDecomp for
-  !                      given grid and parallel environment. Performs domain
-  !                      decomposition, filling all components of the created
-  !                      variable.
+  !                            given grid and parallel environment. Performs domain
+  !                            decomposition, filling all components of the created
+  !                            variable.
 
 
 
   subroutine CreateGlobalNoGhost(GridSize, ParEnv, GlobalNoGhost)
-    type(GridDims), pointer, intent(in) :: GridSize
-    type(ParallelEnvironment), pointer, intent(in) :: ParEnv 
-    type(DomainDecomp), pointer, intent(inout) :: GlobalNoGhost
+    type(ParallelEnvironment), pointer :: ParEnv 
+    type(GridDims), pointer :: GridSize
+    type(DomainDecomp), pointer :: GlobalNoGhost
 
     character(len=8) :: c0, c1, c2
     character(len=*), parameter :: h="**(CreateGlobalNoGhost)**"
@@ -195,9 +122,17 @@ contains
             "] to decompose into "//trim(adjustl(c2))//" sub-domains")
     end if
 
+    allocate(GlobalNoGhost)
+    allocate(GlobalNoGhost%xb(nmachs))
+    allocate(GlobalNoGhost%xe(nmachs))
+    allocate(GlobalNoGhost%nx(nmachs))
+    allocate(GlobalNoGhost%yb(nmachs))
+    allocate(GlobalNoGhost%ye(nmachs))
+    allocate(GlobalNoGhost%ny(nmachs))
+    allocate(GlobalNoGhost%ibcon(nmachs))
+
     ! no ghost zone info
 
-    GlobalNoGhost => CreateDomainDecomp(nmachs)
     GlobalNoGhost%GhostZoneLength = 0
 
     ! find Rams domain decomposition xb, xe, yb, ye
@@ -561,11 +496,11 @@ contains
 
   subroutine CreateGlobalWithGhost(GridSize, ParEnv, GhostZoneLength, &
        GlobalNoGhost, GlobalWithGhost)
-    type(GridDims), pointer, intent(in) :: GridSize
-    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+    type(GridDims), pointer :: GridSize              ! intent(in)
+    type(ParallelEnvironment), pointer :: ParEnv     ! intent(in)
     integer, intent(in) :: GhostZoneLength
-    type(domainDecomp), pointer, intent(in) :: GlobalNoGhost
-    type(domainDecomp), pointer, intent(inout) :: GlobalWithGhost
+    type(domainDecomp), pointer :: GlobalNoGhost     ! intent(in)
+    type(domainDecomp), pointer :: GlobalWithGhost   ! intent(out)
 
     integer :: nxp
     integer :: nyp
@@ -603,9 +538,17 @@ contains
             "] with ghost zone of length "//trim(adjustl(c2)))
     end if
 
-    ! Global With Ghost info
-    
-    GlobalWithGhost => CreateDomainDecomp(nmachs)
+    allocate(GlobalWithGhost)
+    allocate(GlobalWithGhost%xb(nmachs))
+    allocate(GlobalWithGhost%xe(nmachs))
+    allocate(GlobalWithGhost%nx(nmachs))
+    allocate(GlobalWithGhost%yb(nmachs))
+    allocate(GlobalWithGhost%ye(nmachs))
+    allocate(GlobalWithGhost%ny(nmachs))
+    allocate(GlobalWithGhost%ibcon(nmachs))
+
+    ! 
+
     GlobalWithGhost%GhostZoneLength = GhostZoneLength
 
     do cell = 1, nmachs
@@ -648,10 +591,10 @@ contains
 
   subroutine CreateLocalInterior(ParEnv, GlobalWithGhost, &
        GlobalNoGhost, LocalInterior)
-    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
-    type(domainDecomp), pointer, intent(in) :: GlobalWithGhost
-    type(domainDecomp), pointer, intent(in) :: GlobalNoGhost
-    type(domainDecomp), pointer, intent(out) :: LocalInterior
+    type(ParallelEnvironment), pointer :: ParEnv   ! intent(in)
+    type(domainDecomp), pointer :: GlobalWithGhost ! intent(in)
+    type(domainDecomp), pointer :: GlobalNoGhost   ! intent(in)
+    type(domainDecomp), pointer :: LocalInterior   ! intent(out)
 
     integer :: nmachs
     integer :: cell
@@ -675,10 +618,16 @@ contains
     end if
 
     nmachs=ParEnv%nmachs
+    allocate(LocalInterior)
+    allocate(LocalInterior%xb(nmachs))
+    allocate(LocalInterior%xe(nmachs))
+    allocate(LocalInterior%nx(nmachs))
+    allocate(LocalInterior%yb(nmachs))
+    allocate(LocalInterior%ye(nmachs))
+    allocate(LocalInterior%ny(nmachs))
+    allocate(LocalInterior%ibcon(nmachs))
 
-    ! Local Interior info
-    
-    LocalInterior => CreateDomainDecomp(nmachs)
+
     LocalInterior%GhostZoneLength = GlobalWithGhost%GhostZoneLength 
     do cell = 1, nmachs
        x0 = GlobalWithGhost%xb(cell)-1
@@ -702,61 +651,19 @@ contains
 
 
   subroutine DestroyDomainDecomp(OneDomainDecomp)
-    type(domainDecomp), pointer, intent(inout) :: OneDomainDecomp
+    type(domainDecomp), pointer :: OneDomainDecomp
 
-    integer :: ierr
     character(len=*), parameter :: h="**(DestroyDomainDecomp)**"
-    character(len=8) :: c0
 
     if (associated(oneDomainDecomp)) then
-       deallocate(oneDomainDecomp%xb, stat=ierr)
-       if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate xb fails with stat="//&
-               trim(adjustl(c0)))
-       end if
-       deallocate(oneDomainDecomp%xe, stat=ierr)
-       if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate xe fails with stat="//&
-               trim(adjustl(c0)))
-       end if
-       deallocate(oneDomainDecomp%nx, stat=ierr)
-       if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate nx fails with stat="//&
-               trim(adjustl(c0)))
-       end if
-       deallocate(oneDomainDecomp%yb, stat=ierr)
-       if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate yb fails with stat="//&
-               trim(adjustl(c0)))
-       end if
-       deallocate(oneDomainDecomp%ye, stat=ierr)
-       if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate ye fails with stat="//&
-               trim(adjustl(c0)))
-       end if
-       deallocate(oneDomainDecomp%ny, stat=ierr)
-       if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate ny fails with stat="//&
-               trim(adjustl(c0)))
-       end if
-       deallocate(oneDomainDecomp%ibcon, stat=ierr)
-       if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate ibcon fails with stat="//&
-               trim(adjustl(c0)))
-       end if
-       deallocate(oneDomainDecomp, stat=ierr)
-       if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate oneDomainDecomp fails with stat="//&
-               trim(adjustl(c0)))
-       end if
+       deallocate(oneDomainDecomp%xb)
+       deallocate(oneDomainDecomp%xe)
+       deallocate(oneDomainDecomp%nx)
+       deallocate(oneDomainDecomp%yb)
+       deallocate(oneDomainDecomp%ye)
+       deallocate(oneDomainDecomp%ny)
+       deallocate(oneDomainDecomp%ibcon)
+       deallocate(oneDomainDecomp)
     end if
     nullify(oneDomainDecomp)
   end subroutine DestroyDomainDecomp
@@ -769,7 +676,7 @@ contains
 
 
   subroutine DumpDomainDecomp(oneDomainDecomp, name)
-    type(DomainDecomp), pointer, intent(in) :: oneDomainDecomp
+    type(DomainDecomp), pointer :: oneDomainDecomp
     character(len=*), intent(in) :: name
 
     integer :: nmachs
@@ -841,7 +748,7 @@ contains
 
 
   subroutine DumpDomainDecompHistogram(oneDomainDecomp, name)
-    type(DomainDecomp), pointer, intent(in) :: oneDomainDecomp
+    type(DomainDecomp), pointer :: oneDomainDecomp
     character(len=*), intent(in) :: name
 
     integer :: nmachs

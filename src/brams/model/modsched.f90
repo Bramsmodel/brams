@@ -795,6 +795,28 @@ endif
         "SEVERE PROBLEM in cfl1 RK3: cfl_max_sum has exceeded "// &
         " 150% of the max. allowed value!")
     end if
+  else if ( dyncore_flag==3 ) then
+    if ( cfl_max_sum > 0.9 * 1.0 ) then
+      ! criterion for ABM3 and upwind 3
+      write(cproc,fmt='(I5.5)') mynum
+      call dump_cfl(cproc,n1,n2,n3,jdim,i0,j0,i,j,k,c1x,c1y,c1z,cfl_max_sum &
+          ,dxt(i,j),dtlt,up(k,i,j),up(k,i-1,j),dyt(i,j),vp(k,i,j),vp(k,i,j-jdim) &
+          , f13t(i,j),f23t(i,j),ht(k),rtgt(i,j) &
+          ,wp(k,i,j),wp(k-1,i,j),dzt(k))      
+      print*, "WARNING in cfl1 ABM3: cfl_max_sum has exceeded 90% of the max. allowed value!"
+    end if
+    if ( cfl_max_sum > 1.5 * 1.0 ) then
+      !- criterion for ABM3 and upwind 3 (for upwind 5 -> the maximum allowed is ??)
+      !call fatal_error("SEVERE PROBLEM in cfl1 ABM3: cfl_max_sum has exceeded 150% of the max. allowed value!")
+      write(cproc,fmt='(I5.5)') mynum
+      call dump_cfl(cproc,n1,n2,n3,jdim,i0,j0,i,j,k,c1x,c1y,c1z,cfl_max_sum &
+          ,dxt(i,j),dtlt,up(k,i,j),up(k,i-1,j),dyt(i,j),vp(k,i,j),vp(k,i,j-jdim) &
+          , f13t(i,j),f23t(i,j),ht(k),rtgt(i,j) &
+          ,wp(k,i,j),wp(k-1,i,j),dzt(k))      
+      iErrNumber=dumpMessage(c_tty,c_yes,h,modelVersion,c_fatal, &
+        "SEVERE PROBLEM in cfl1 ABM3: cfl_max_sum has exceeded"//&
+        " 150% of the max. allowed value!")
+    end if
  else
     stop "ERROR in cfl1: false value for dyncore_flag!"
   end if

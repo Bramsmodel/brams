@@ -17,8 +17,8 @@ subroutine history_start(name_name)
   use mem_grid
   use ref_sounding
 
-  !srf- bug at history runtype with carma radiation
-  use mem_aerad, only: nwave
+!srf- bug at history runtype with carma radiation
+  USE mem_aerad, ONLY: nwave
 
   implicit none
 
@@ -39,7 +39,7 @@ subroutine history_start(name_name)
   ! Open the input history header file and read some of the info.
 
   nc=len_trim(hfilin)
-  !  hnameinh=hfilin(1:nc-9)//'.vfm'
+!  hnameinh=hfilin(1:nc-9)//'.vfm'
   hnameinh=hfilin(1:nc-9)//'.bin'
 
   call rams_f_open(iunhd,hfilin(1:nc),'FORMATTED','OLD','READ',0)
@@ -128,7 +128,7 @@ subroutine hist_read_start(maxarr, hnamein, iunhd)
        nwave
   use ParLib, only: &
        parf_bcast
-  use ReadBcst, only: &
+  USE ReadBcst, ONLY: &
        Broadcast
 
   implicit none
@@ -137,25 +137,25 @@ subroutine hist_read_start(maxarr, hnamein, iunhd)
   integer, parameter :: i64 = selected_int_kind(14) !Kind for 64-bits Integer Numbers
   integer, intent(IN) :: maxarr, iunhd
   character(len=f_name_length), intent(IN) :: hnamein
-
+  
   integer :: ngr,nv,nvh,i
   integer(kind=i64) :: npts, nptsh
   character type*1,post*10,fmt*3
   real, allocatable :: scr(:)
   !
-  type scridim
-     real, allocatable :: scr(:,:,:,:)
-  end type scridim
-
+  TYPE scridim
+      real, allocatable :: scr(:,:,:,:)
+  END TYPE scridim
+  
   integer :: inhunt=10
 
   type (head_table), allocatable,save :: hr_table(:)
-  type (scridim), dimension(7) :: srcRead
-  integer :: ia,iz,ja,jz,npointer,idim_type
-  integer :: m1,m2,m3,ngridl,nvalues,nvtabl
-  integer(kind=i64)  :: nzl,nxl,nyl,n4,j,k
-  character(LEN=16) :: cstring
-
+  TYPE (scridim), DIMENSION(7) :: srcRead
+  INTEGER :: ia,iz,ja,jz,npointer,idim_type
+  INTEGER :: m1,m2,m3,ngridl,nvalues,nvtabl
+  INTEGER(kind=i64)  :: nzl,nxl,nyl,n4,j,k
+  CHARACTER(LEN=16) :: cstring
+  
   allocate (scr(maxarr))
   allocate (srcRead(2)%scr(1,nnxp(1),nnyp(1),1))
   allocate (srcRead(3)%scr(nnzp(1),nnxp(1),nnyp(1),1))
@@ -163,8 +163,8 @@ subroutine hist_read_start(maxarr, hnamein, iunhd)
   allocate (srcRead(5)%scr(nzs,nnxp(1),nnyp(1),npatch))
   allocate (srcRead(6)%scr(1,nnxp(1),nnyp(1),npatch))
   allocate (srcRead(7)%scr(1,nnxp(1),nnyp(1),nwave))
-
-  !LFR Begin
+  
+!LFR Begin
   ia = nodei0(mynum,1)+1
   iz = nodei0(mynum,1)+nodemxp(mynum,1)
   ja = nodej0(mynum,1)+1
@@ -172,60 +172,60 @@ subroutine hist_read_start(maxarr, hnamein, iunhd)
   m1=nodemzp(mynum,1)
   m2=nodemxp(mynum,1)
   m3=nodemyp(mynum,1)
-  !LFR END
+!LFR END
 
   !  Read variable header info
 
   rewind(iunhd)
 
-  if (mchnum==master_num) then
+  IF (mchnum==master_num) THEN
      read(iunhd,*) nvtabl
-  end if
-  call Broadcast(nvtabl, master_num, "nvtabl")
-
+  END IF
+  CALL Broadcast(nvtabl, master_num, "nvtabl")
+  
   allocate (hr_table(nvtabl))
   do nv=1,nvtabl
-
-     if (mchnum==master_num) then
-        read(iunhd,*)  hr_table(nv)%string   &
-             ,hr_table(nv)%npointer  &
-             ,hr_table(nv)%idim_type  &
-             ,hr_table(nv)%ngrid  &
-             ,hr_table(nv)%nvalues
-
-        cstring=hr_table(nv)%string
-        npointer= hr_table(nv)%npointer
-        idim_type=hr_table(nv)%idim_type
-        ngridl=hr_table(nv)%ngrid
-        nvalues=hr_table(nv)%nvalues
-     end if
-
-     call Broadcast(cstring, master_num, "cstring")          
-     call Broadcast(npointer, master_num, "npointer")  
-     call Broadcast(idim_type, master_num, "idim_type")  
-     call Broadcast(ngridl, master_num, "ngridl")  
-     call Broadcast(nvalues, master_num, "nvalues")
-
-     if (mchnum/=master_num) then            
-        hr_table(nv)%string=cstring
-        hr_table(nv)%npointer=npointer
-        hr_table(nv)%idim_type=idim_type
-        hr_table(nv)%ngrid=ngridl
-        hr_table(nv)%nvalues=nvalues
-     end if
-
+     
+      IF (mchnum==master_num) THEN
+          read(iunhd,*)  hr_table(nv)%string   &
+          ,hr_table(nv)%npointer  &
+          ,hr_table(nv)%idim_type  &
+          ,hr_table(nv)%ngrid  &
+          ,hr_table(nv)%nvalues
+     
+           cstring=hr_table(nv)%string
+           npointer= hr_table(nv)%npointer
+           idim_type=hr_table(nv)%idim_type
+           ngridl=hr_table(nv)%ngrid
+           nvalues=hr_table(nv)%nvalues
+      END IF
+      
+      CALL Broadcast(cstring, master_num, "cstring")          
+      CALL Broadcast(npointer, master_num, "npointer")  
+      CALL Broadcast(idim_type, master_num, "idim_type")  
+      CALL Broadcast(ngridl, master_num, "ngridl")  
+      CALL Broadcast(nvalues, master_num, "nvalues")
+      
+      IF (mchnum/=master_num) THEN            
+         hr_table(nv)%string=cstring
+         hr_table(nv)%npointer=npointer
+         hr_table(nv)%idim_type=idim_type
+         hr_table(nv)%ngrid=ngridl
+         hr_table(nv)%nvalues=nvalues
+      END IF
+     
   enddo
 
   ! Open history data file
-  if (mchnum==master_num) call rams_f_open(inhunt,hnamein(1:len_trim(hnamein)),'UNFORMATTED','OLD','READ',0)
+  IF (mchnum==master_num) call rams_f_open(inhunt,hnamein(1:len_trim(hnamein)),'UNFORMATTED','OLD','READ',0)
 
   ! Loop through all variables
   do nvh=1,nvtabl
      ! Read a variable
      nptsh=hr_table(nvh)%nvalues
 
-     if (mchnum==master_num) read(inhunt) &
-          srcRead(hr_table(nvh)%idim_type)%scr
+     IF (mchnum==master_num) read(inhunt) &
+               srcRead(hr_table(nvh)%idim_type)%scr
 
      !  See if this variable is active in the current run
      ngr=hr_table(nvh)%ngrid
@@ -234,126 +234,126 @@ subroutine hist_read_start(maxarr, hnamein, iunhd)
      do nv = 1,num_var(ngr)
         npts=vtab_r(nv,ngr)%npts
         if(hr_table(nvh)%string == vtab_r(nv,ngr)%name) then
-           !           if(nptsh /= npts) then
-           !              print*,'Grid point number mismatch on history field:',  &
-           !                   vtab_r(nv,ngr)%name,npts,nptsh
-           !              stop 'History read number points error'
-           !           endif
-           if (mchnum==master_num)  print 33,'History filling grid: ',ngr,nv,vtab_r(nv,ngr)%name,npts
+!           if(nptsh /= npts) then
+!              print*,'Grid point number mismatch on history field:',  &
+!                   vtab_r(nv,ngr)%name,npts,nptsh
+!              stop 'History read number points error'
+!           endif
+IF (mchnum==master_num)  print 33,'History filling grid: ',ngr,nv,vtab_r(nv,ngr)%name,npts
 33         format(a25,2i5,3x,a18,i10)
 
+ 
+           SELECT CASE (hr_table(nvh)%idim_type)
+           CASE (2)
+               nzl = 1
+               nxl = nnxp(1)
+               nyl = nnyp(1)
+               n4 = 1
+               call parf_bcast(srcRead(hr_table(nvh)%idim_type)%scr, &
+                           nzl,nxl,nyl,n4,master_num)
+               call mk_2_buff(srcRead(hr_table(nvh)%idim_type)%scr(1,:,:,1), &
+                              vtab_r(nv,ngr)%var_p, &
+                              nnxp(ngr), nnyp(ngr), &
+                              m2, m3, ia, iz, ja, jz)
+            CASE (3)
+               nzl = nnzp(1)
+               nxl = nnxp(1)
+               nyl = nnyp(1)
+               n4 = 1
+               call parf_bcast(srcRead(hr_table(nvh)%idim_type)%scr, &
+                           nzl,nxl,nyl,n4,master_num)
+               call mk_3_buff(srcRead(hr_table(nvh)%idim_type)%scr(:,:,:,1), &
+                              vtab_r(nv,ngr)%var_p, &
+                              nnzp(ngr),nnxp(ngr), nnyp(ngr), &
+                              m1, m2, m3, ia, iz, ja, jz)
+            CASE (4)               
+               nzl = nzg
+               nxl = nnxp(1)
+               nyl = nnyp(1)
+               n4 = npatch
+               call parf_bcast(srcRead(hr_table(nvh)%idim_type)%scr, &
+                           nzl,nxl,nyl,n4,master_num)
+                               
+               call mk_4_buff(srcRead(hr_table(nvh)%idim_type)%scr, &
+                              vtab_r(nv,ngr)%var_p, &
+                              nzg,nnxp(ngr), nnyp(ngr),npatch, &
+                              nzg, m2, m3,npatch, ia, iz, ja, jz)            
+            CASE (5)
+               nzl = nzs
+               nxl = nnxp(1)
+               nyl = nnyp(1)
+               n4 = npatch
+               call parf_bcast(srcRead(hr_table(nvh)%idim_type)%scr, &
+                           nzl,nxl,nyl,n4,master_num)
 
-           select case (hr_table(nvh)%idim_type)
-           case (2)
-              nzl = 1
-              nxl = nnxp(1)
-              nyl = nnyp(1)
-              n4 = 1
-              call parf_bcast(srcRead(hr_table(nvh)%idim_type)%scr, &
-                   nzl,nxl,nyl,n4,master_num)
-              call mk_2_buff(srcRead(hr_table(nvh)%idim_type)%scr(1,:,:,1), &
-                   vtab_r(nv,ngr)%var_p, &
-                   nnxp(ngr), nnyp(ngr), &
-                   m2, m3, ia, iz, ja, jz)
-           case (3)
-              nzl = nnzp(1)
-              nxl = nnxp(1)
-              nyl = nnyp(1)
-              n4 = 1
-              call parf_bcast(srcRead(hr_table(nvh)%idim_type)%scr, &
-                   nzl,nxl,nyl,n4,master_num)
-              call mk_3_buff(srcRead(hr_table(nvh)%idim_type)%scr(:,:,:,1), &
-                   vtab_r(nv,ngr)%var_p, &
-                   nnzp(ngr),nnxp(ngr), nnyp(ngr), &
-                   m1, m2, m3, ia, iz, ja, jz)
-           case (4)               
-              nzl = nzg
-              nxl = nnxp(1)
-              nyl = nnyp(1)
-              n4 = npatch
-              call parf_bcast(srcRead(hr_table(nvh)%idim_type)%scr, &
-                   nzl,nxl,nyl,n4,master_num)
+               call mk_4_buff(srcRead(hr_table(nvh)%idim_type)%scr, &
+                              vtab_r(nv,ngr)%var_p, &
+                              nzs,nnxp(ngr), nnyp(ngr),npatch, &
+                              nzs, m2, m3,npatch, ia, iz, ja, jz)            
+            CASE (6)
+               nzl = 1
+               nxl = nnxp(1)
+               nyl = nnyp(1)
+               n4 = npatch
+               call parf_bcast(srcRead(hr_table(nvh)%idim_type)%scr, &
+                           nzl,nxl,nyl,n4,master_num)
 
-              call mk_4_buff(srcRead(hr_table(nvh)%idim_type)%scr, &
-                   vtab_r(nv,ngr)%var_p, &
-                   nzg,nnxp(ngr), nnyp(ngr),npatch, &
-                   nzg, m2, m3,npatch, ia, iz, ja, jz)            
-           case (5)
-              nzl = nzs
-              nxl = nnxp(1)
-              nyl = nnyp(1)
-              n4 = npatch
-              call parf_bcast(srcRead(hr_table(nvh)%idim_type)%scr, &
-                   nzl,nxl,nyl,n4,master_num)
-
-              call mk_4_buff(srcRead(hr_table(nvh)%idim_type)%scr, &
-                   vtab_r(nv,ngr)%var_p, &
-                   nzs,nnxp(ngr), nnyp(ngr),npatch, &
-                   nzs, m2, m3,npatch, ia, iz, ja, jz)            
-           case (6)
-              nzl = 1
-              nxl = nnxp(1)
-              nyl = nnyp(1)
-              n4 = npatch
-              call parf_bcast(srcRead(hr_table(nvh)%idim_type)%scr, &
-                   nzl,nxl,nyl,n4,master_num)
-
-              call mk_4_buff(srcRead(hr_table(nvh)%idim_type)%scr(1,:,:,:), &
-                   vtab_r(nv,ngr)%var_p, &
-                   1,nnxp(ngr), nnyp(ngr),npatch, &
-                   1, m2, m3,npatch, ia, iz, ja, jz)
-           case (7)
-              nzl = 1
-              nxl = nnxp(1)
-              nyl = nnyp(1)
-              n4 = nwave
-              call parf_bcast(srcRead(hr_table(nvh)%idim_type)%scr, &
-                   nzl,nxl,nyl,n4,master_num)
+               call mk_4_buff(srcRead(hr_table(nvh)%idim_type)%scr(1,:,:,:), &
+                              vtab_r(nv,ngr)%var_p, &
+                              1,nnxp(ngr), nnyp(ngr),npatch, &
+                              1, m2, m3,npatch, ia, iz, ja, jz)
+            CASE (7)
+               nzl = 1
+               nxl = nnxp(1)
+               nyl = nnyp(1)
+               n4 = nwave
+               call parf_bcast(srcRead(hr_table(nvh)%idim_type)%scr, &
+                           nzl,nxl,nyl,n4,master_num)
 
 
-              call mk_4_buff(srcRead(hr_table(nvh)%idim_type)%scr(1,:,:,:), &
-                   vtab_r(nv,ngr)%var_p, &
-                   1,nnxp(ngr), nnyp(ngr),nwave, &
-                   1, m2, m3,nwave, ia, iz, ja, jz)
-           case DEFAULT
-              print *, 'Wrong idim_type: ',hr_table(nv)%idim_type,hr_table(nvh)%string
-              stop 'history_start'
-           end select
+               call mk_4_buff(srcRead(hr_table(nvh)%idim_type)%scr(1,:,:,:), &
+                              vtab_r(nv,ngr)%var_p, &
+                              1,nnxp(ngr), nnyp(ngr),nwave, &
+                              1, m2, m3,nwave, ia, iz, ja, jz)
+            CASE DEFAULT
+               PRINT *, 'Wrong idim_type: ',hr_table(nv)%idim_type,hr_table(nvh)%string
+               STOP 'history_start'
+            END SELECT
 
-           !            IF(trim(vtab_r(nv,ngr)%name)=='THETA') THEN
-           !               print *,'***',trim(vtab_r(nv,ngr)%name)
-           !               CALL printAux(vtab_r(nv,ngr)%var_p,m1,m2,m3)
-           !            END IF
+!            IF(trim(vtab_r(nv,ngr)%name)=='THETA') THEN
+!               print *,'***',trim(vtab_r(nv,ngr)%name)
+!               CALL printAux(vtab_r(nv,ngr)%var_p,m1,m2,m3)
+!            END IF
            exit
         endif
      enddo
 
   enddo
   close(inhunt)
-  if (mchnum==master_num) print *, 'history file read end'; call flush(6)
+  IF (mchnum==master_num) PRINT *, 'history file read end'; call flush(6)
   deallocate(scr,hr_table)
 
 end subroutine hist_read_start
 
-subroutine printAux(field,m1,m2,m3)
+SUBROUTINE printAux(field,m1,m2,m3)
   use node_mod, only: &
        mzp, mxp, myp,  & ! INTENT(IN)
        izu, jzv,       & ! INTENT(IN)
        mynum
 
-  integer, intent(IN) :: m1,m2,m3
-  real, intent(in) :: field(m1,m2,m3)
-  integer :: i,j,k 
-
-  print *, 'Inside printaux',m1,m2,m3
-  do i=1,m2
-     do j=1,m3
-        write (80+mynum,FMT='(2(I2.2,1X),33(F12.6,1X))') &
-             i,j,(field(k,i,j),k=1,m1)
-     end do
-  end do
-
-end subroutine printAux
+   INTEGER, INTENT(IN) :: m1,m2,m3
+   real, intent(in) :: field(m1,m2,m3)
+   INTEGER :: i,j,k 
+   
+   print *, 'Inside printaux',m1,m2,m3
+   DO i=1,m2
+      DO j=1,m3
+         write (80+mynum,FMT='(2(I2.2,1X),33(F12.6,1X))') &
+            i,j,(field(k,i,j),k=1,m1)
+      END DO
+   END DO
+      
+END SUBROUTINE printAux
 
 subroutine hiswrt(restart)
 
@@ -412,7 +412,7 @@ subroutine hiswrt(restart)
   endif
 
   ! open a new output file.
-  if(restart.eq.'yes') then
+  if(restart.eq.'yes') THEN
      call makefnam(hnamel,hfilout,time,iyear1,imonth1,idate1,itime1*100  &
           ,'R','$','vfm')
      call makefnam(hnamelh,hfilout,time,iyear1,imonth1,idate1,itime1*100  &
@@ -611,7 +611,7 @@ end subroutine writebin
 subroutine AnlwrtInitialize(varType,anamel,anamelh,timeold)
 
   use an_header,only: &
-       nvbtab 
+      nvbtab 
 
   use var_tables, only: &
        num_var,         &
@@ -946,11 +946,11 @@ subroutine OneFieldWrite (ioaunt, vsize, v_pointer, varn, idim_type, ngr, &
 
   if (dumpLocal) then
      print *, h//" test scr"; call flush(6)
-     scr(1)=sum(scr(1:vsize))
+     scr(1)=SUM(scr(1:vsize))
      print *, h//" test cscr"; call flush(6)
-     scr(1)=sum(cscr(1:vsize))
+     scr(1)=SUM(cscr(1:vsize))
      print *, h//" test v_pointer"; call flush(6)
-     scr(1)=sum(v_pointer(1:vsize))
+     scr(1)=SUM(v_pointer(1:vsize))
      print *, h//" test OK; invokes vforecr"; call flush(6)
   end if
 
@@ -997,7 +997,7 @@ subroutine AnlwrtFinalize(varType,anamelh,anamel,ioaunt,iclobber,nvcnt, &
 
   use an_header, only: &
 !!$      aw_table,        &
-       head_table !,      &
+      head_table !,      &
 !!$      nvbtab
 
   implicit none
@@ -1143,7 +1143,7 @@ subroutine CopyLocalChunkReverse(field, LocalChunk, LocalSize)
   integer, intent(in ) :: LocalSize
   real,    intent(out ) :: field(LocalSize)
   real,    intent(in) :: LocalChunk(LocalSize)
-  field(:) = LocalChunk(:)
+	  field(:) = LocalChunk(:)
 end subroutine CopyLocalChunkReverse
 
 
@@ -1172,15 +1172,13 @@ subroutine OutputFields(histFlag, instFlag, liteFlag, meanFlag)
 
   use node_mod, only: mchnum,master_num
 
-  use ModParallelEnvironment, only: MsgDump
-
   implicit none
   logical, intent(in) :: histFlag     ! true iff history output requested
   logical, intent(in) :: instFlag     ! true iff instant output requested
   logical, intent(in) :: liteFlag     ! true iff lite vars output requested
   logical, intent(in) :: meanFlag     ! true iff field average output requested
 
-  integer :: maxNFields, nvMax, ierr, grid
+  integer :: maxNFields, nvMax, ierr
 
   logical, allocatable :: Willwrite(:,:)
 
@@ -1188,37 +1186,29 @@ subroutine OutputFields(histFlag, instFlag, liteFlag, meanFlag)
   character(len=7)            :: cProc
   character(len=16)           :: varn
   character(len=8)            :: c0, c1, c2
-  character(len=8) :: str(10)
   character(len=*), parameter :: h="**(OutputFields)**" 
 
   logical, external :: checkTimeIO
 
   write(cProc,"(a5,i2)") " Proc",mchnum
-
+  if (dumpLocal) then
+     write(*, "(4(a,l1))") h//cProc//" begins with"//&
+          " histFlag=",histFlag, &
+          ", instFlag=",instFlag, &
+          ", liteFlag=",liteFlag, &
+          ", meanFlag=",meanFlag
+  end if
 
   ! nothing to do if no output is selected
   if (.not. checkTimeIO(histFlag, instFlag, liteFlag, meanFlag)) then
-     if(.not. (ioutput/=2 .and. time==86400.)) then
-        if (dumpLocal) then
-           call MsgDump(h//" not output time; returns with no action")
-        end if
-        return
-     end if
-  end if
-
-  if (dumpLocal) then
-     write(str(1),"(l)") histFlag
-     write(str(2),"(l)") instFlag
-     write(str(3),"(l)") liteFlag
-     write(str(4),"(l)") meanFlag
-     call MsgDump(h//" will work with"//&
-          " histFlag="//trim(adjustl(str(1)))//&
-          ", instFlag="//trim(adjustl(str(2)))//&
-          ", liteFlag="//trim(adjustl(str(3)))//&
-          ", meanFlag="//trim(adjustl(str(4))))
+     if(.not. (ioutput/=2 .and. time==86400.))  return
   end if
 
   nvMax = maxval(num_var(1:ngrids))
+  if (dumpLocal) then
+     write(c0, "(i8)") nvMax
+     write(*, "(a)") h//cProc//" nvMax="//trim(adjustl(c0))
+  end if
 
   allocate(Willwrite(nvMax,ngrids), stat=ierr)
   if (ierr /= 0) then
@@ -1227,58 +1217,45 @@ subroutine OutputFields(histFlag, instFlag, liteFlag, meanFlag)
      write(c2,"(i8)") ierr
      call fatal_error(h//" allocate Willwrite("//trim(adjustl(c0))//&
           ","//trim(adjustl(c1))//") failed with stat="//trim(adjustl(c2)))
+  elseif (dumpLocal) then
+     write(*, "(a)") h//cProc//" allocate Willwrite "
   end if
 
   ! required fields for selected outputs:
   ! Willwrite stores if field is required or not
   call fieldWrite(nvMax, ngrids, Willwrite, maxNFields)
-  if (dumpLocal) then
-     do grid = 1, ngrids
-        write(str(1),"(i8)") count(WillWrite(:,grid))
-        write(str(2),"(i8)") grid
-        call MsgDump(h//" for grid "//trim(adjustl(str(2)))//&
-             " will write "//trim(adjustl(str(1)))//" fields")
-     end do
-  end if
 
-  !##############################################
-  !  if(time==86400.) call saveChemRecycleVars()
-  !##############################################
+!##############################################
+!  if(time==86400.) call saveChemRecycleVars()
+!##############################################
 
   !Write the 24h output for use in Recycle 
   if(ioutput/=2 .and. time==86400. .and. RECYCLE_TRACERS>0) then
-     if(mchnum == master_num) then
-        write(*,*) '*** Writing 24h output [.vfm] for use in recyle on next run ***',time
-     end if
+     if(mchnum == master_num) write(*,*) '*** Writing 24h output [.vfm] for use in recyle on next run ***',time
      call saveVFM(histFlag, .true., liteFlag, meanFlag, nvMax, ngrids, &
-          willwrite, maxNFields)
-  endif
-
-  if (dumpLocal) then
-     write(c0, "(i8)") ioutput
-     call MsgDump(h//" selected output flag (ioutput)="//trim(adjustl(c0)))
-  end if
+                willwrite, maxNFields)
+  endif	
 
   if (ioutput/=0) then
      select case (ioutput)
 
         !> Qui 29 Jun 2017 08:02:24 BRT - lufla - revision: <#nr> 
-        !! @attention turn off HDF5
-     case (1)
+				!! @attention turn off HDF5
+        case (1)
         !   call saveHdf5Par(histFlag, instFlag, liteFlag, meanFlag, nvMax, &
         !        ngrids, willwrite, maxNFields)
-        call fatal_error(h//" Output in HDF5, ioutput=1, not permitted anymore")
-     case (2)
-        call saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
-             willwrite, maxNFields)
+						call fatal_error(h//" Output in HDF5, ioutput=1, not permitted anymore")
+        case (2)
+           call saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
+                willwrite, maxNFields)
 
-     case (3)
-        call saveBinMPIIO(histFlag, instFlag, liteFlag, meanFlag, nvMax, &
-             ngrids, willwrite, maxNFields)
+        case (3)
+           call saveBinMPIIO(histFlag, instFlag, liteFlag, meanFlag, nvMax, &
+                ngrids, willwrite, maxNFields)
 
-     case (4)
-        call saveNodeFields(histFlag, instFlag, liteFlag, meanFlag, nvMax, &
-             ngrids, willwrite, maxNFields)
+        case (4)
+           call saveNodeFields(histFlag, instFlag, liteFlag, meanFlag, nvMax, &
+                ngrids, willwrite, maxNFields)
 
      end select
 
@@ -1450,8 +1427,6 @@ subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
 
   use node_mod, only: mchnum, nmachs, master_num, mynum  !INTENT(IN)
 
-  use ModParallelEnvironment, only: MsgDump
-
   implicit none
 
   logical, intent(in) :: histFlag
@@ -1476,8 +1451,7 @@ subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
   character(len=8)            :: c0, c1, c2
   character(len=*), parameter :: h="**(saveVFM)**" 
   logical, parameter :: dumpLocal=.false.
-  character(len=8) :: str(10)
-  
+
   integer, parameter :: idim_type_min=2
   integer, parameter :: idim_type_max=7
   integer :: idim_type
@@ -1506,21 +1480,18 @@ subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
   real, allocatable :: Gathered(:)
   real, allocatable :: FullField(:)
   real, allocatable :: Rear(:)
-
+  
   character(len=1) :: restartStr
   integer :: i,j,k
 
   write(cProc,"(a5,i2)") " Proc",mchnum
 
   if (histFlag .and. mchnum == master_num) then
-     if (trim(runtype) == 'HISTORY') then
-        restartStr = 'R'
-     else
-        restartStr = 'H'
-     end if
-     if (dumpLocal) then
-        call MsgDump(h//" will write history file")
-     end if
+	 if (trim(runtype) == 'HISTORY') then
+		restartStr = 'R'
+	 else
+		restartStr = 'H'
+	 end if
      call CreateEnabledIOFileDS ("HIST", hfilout, restartStr, iclobber, &
           time, iyear1, imonth1, idate1, itime1, &
           .true., .true., ngrids, maxNFields, histFileDS)
@@ -1528,9 +1499,6 @@ subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
      call CreateDisabledIOFileDS("HIST", histFileDS)
   end if
   if (instFlag .and. mchnum == master_num) then
-     if (dumpLocal) then
-        call MsgDump(h//" will write analysis file with instant data")
-     end if
      call CreateEnabledIOFileDS ("INST", afilout, "A", iclobber, &
           time, iyear1, imonth1, idate1, itime1, &
           .false., .false., ngrids, maxNFields, instFileDS)
@@ -1538,9 +1506,6 @@ subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
      call CreateDisabledIOFileDS("INST", instFileDS)
   end if
   if (liteFlag .and. mchnum == master_num) then
-     if (dumpLocal) then
-        call MsgDump(h//" will write analysis file with lite data")
-     end if
      call CreateEnabledIOFileDS ("LITE", afilout, "L", iclobber, &
           time, iyear1, imonth1, idate1, itime1, &
           .false., .false., ngrids, maxNFields, liteFileDS)
@@ -1548,21 +1513,23 @@ subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
      call CreateDisabledIOFileDS("LITE", liteFileDS)
   end if
   if (meanFlag .and. mchnum == master_num) then
-     if (dumpLocal) then
-        call MsgDump(h//" will write analysis file with mean data")
-     end if
      call CreateEnabledIOFileDS ("MEAN", afilout, "M", iclobber, &
           time, iyear1, imonth1, idate1, itime1, &
           .false., .false., ngrids, maxNFields, meanFileDS)
   else
      call CreateDisabledIOFileDS("MEAN", meanFileDS)
   end if
-
+  if (dumpLocal) then
+     write(*, "(a)") h//cProc//" created all IOFileDS"
+     call flush(6)
+  end if
+  
   do ng = 1, ngrids
 
      if (dumpLocal) then
         write(c0,"(i8)") ng
-        call MsgDump(h//" starts processing grid "//trim(adjustl(c0)))
+        write(*,"(a)") h//cProc//" starts processing grid "//trim(adjustl(c0))
+        call flush(6)
      end if
 
      ! grid dependent field sizes as a function of idim_type
@@ -1583,7 +1550,7 @@ subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
      end if
 
      ! full field size (with ghost zones) at any process
-
+     
      sizeGathered(:) = disp(nmachs,:) + localSize(nmachs,:)
 
      ! maximum sizes over all fields
@@ -1592,6 +1559,16 @@ subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
 
      maxSizeFullField = maxval(sizeFullField)
      maxSizeGathered = maxval(sizeGathered)
+     
+     if (dumpLocal) then
+        write(c0,"(i8)") maxLocalSize
+        write(c1,"(i8)") maxSizeFullField
+        write(c2,"(i8)") maxSizeGathered 
+        write(*,"(a)") h//cProc//" maxSizeFullField="//trim(adjustl(c1))//&
+             "; maxLocalSize="//trim(adjustl(c0))//&
+             "; maxSizeGathered="//trim(adjustl(c2))
+        call flush(6)
+     end if
 
      ! maximum space for pre-processed local field
 
@@ -1602,6 +1579,10 @@ subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
         call fatal_error(h//" allocate LocalSize("// &
              trim(adjustl(c0))//") failed with stat="// &
              trim(adjustl(c1)))
+     else if (dumpLocal) then
+        write(c0,"(i8)") maxLocalSize
+        write(*,"(a)") h//cProc//" allocated LocalSize("//trim(adjustl(c0))//")"
+        call flush(6)
      end if
 
      allocate(Gathered(maxSizeGathered), stat=ierr)
@@ -1611,10 +1592,14 @@ subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
         call fatal_error(h//" allocate Gathered("// &
              trim(adjustl(c0))//") failed with stat="// &
              trim(adjustl(c1)))
+     else if (dumpLocal) then
+        write(c0,"(i8)") maxSizeGathered
+        write(*,"(a)") h//cProc//" allocated Gathered("//trim(adjustl(c0))//")"
+        call flush(6)
      end if
-
+     
      ! maximum space for unpacked field
-
+     
      allocate(FullField(maxSizeFullField), stat=ierr)
      if (ierr /= 0) then
         write(c0,"(i8)") maxSizeFullField
@@ -1622,10 +1607,14 @@ subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
         call fatal_error(h//" allocate FullField("// &
              trim(adjustl(c0))//") failed with stat="// &
              trim(adjustl(c1)))
+     else if (dumpLocal) then
+        write(c0,"(i8)") maxSizeFullField
+        write(*,"(a)") h//cProc//" allocated FullField("//trim(adjustl(c0))//")"
+        call flush(6)
      end if
-
+     
      ! maximum space for rearranged area
-
+     
      allocate(Rear(maxSizeFullField), stat=ierr)
      if (ierr /= 0) then
         write(c0,"(i8)") maxSizeFullField
@@ -1633,50 +1622,26 @@ subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
         call fatal_error(h//" allocate Rear("// &
              trim(adjustl(c0))//") failed with stat="// &
              trim(adjustl(c1)))
+     else if (dumpLocal) then
+        write(c0,"(i8)") maxSizeFullField
+        write(*,"(a)") h//cProc//" allocated Rear("//trim(adjustl(c0))//")"
+        call flush(6)
      end if
 
      ! master opens requested output data files for this grid
-
+     
      if (mchnum == master_num) then
         if (histFlag) then
            call OpenDataFile(histFileDS, ng)
-           if (dumpLocal) then
-              if (histFileDS%collapsed) then
-                 call MsgDump(h//" opened output file "//trim(adjustl(histFileDS%fName(1))))
-              else
-                 call MsgDump(h//" opened output file "//trim(adjustl(histFileDS%fName(ng))))
-              end if
-           end if
         end if
         if (instFlag) then
            call OpenDataFile(instFileDS, ng)
-           if (dumpLocal) then
-              if (instFileDS%collapsed) then
-                 call MsgDump(h//" opened output file "//trim(adjustl(instFileDS%fName(1))))
-              else
-                 call MsgDump(h//" opened output file "//trim(adjustl(instFileDS%fName(ng))))
-              end if
-           end if
         end if
         if (liteFlag) then
            call OpenDataFile(liteFileDS, ng)
-           if (dumpLocal) then
-              if (liteFileDS%collapsed) then
-                 call MsgDump(h//" opened output file "//trim(adjustl(liteFileDS%fName(1))))
-              else
-                 call MsgDump(h//" opened output file "//trim(adjustl(liteFileDS%fName(ng))))
-              end if
-           end if
         end if
         if (meanFlag) then
            call OpenDataFile(meanFileDS, ng)
-           if (dumpLocal) then
-              if (meanFileDS%collapsed) then
-                 call MsgDump(h//" opened output file "//trim(adjustl(meanFileDS%fName(1))))
-              else
-                 call MsgDump(h//" opened output file "//trim(adjustl(meanFileDS%fName(ng))))
-              end if
-           end if
         end if
      end if
 
@@ -1714,11 +1679,10 @@ subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
                 (idim_type == 3 .or. idim_type == 4 .or. idim_type == 5)
 
            if (dumpLocal) then
-              write(str(1),"(l)") preProc
-              write(str(2),"(l)") rearran
-              call MsgDump(h//" on var_p field "//varn//&
-                   "; preproc="//trim(adjustl(str(1)))//&
-                   ", rearran="//trim(adjustl(str(2))))
+              write(*,"(2(a,l1))") h//cProc//" on var_p field "//varn//&
+                   "; preproc=",&
+                   preProc, ", rearran=", rearran
+              call flush(6)
            end if
 
            ! case 1: output current field values (for hist, inst and lite output files)
@@ -1731,7 +1695,7 @@ subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
            if (  thisHistFlag .or. &
                 (thisInstFlag .and. .not. preProc) .or. &
                 (thisLiteFlag .and. .not. preProc)        ) then
-
+              
               ! gather untouched field
 
               call PreProcAndGather(.false., ng, idim_type, varn, &
@@ -1771,17 +1735,17 @@ subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
 
            if ( (thisInstFlag .and. preProc) .or. &
                 (thisLiteFlag .and. preProc)        ) then
-
+              
               ! gather preprocessed field
-
+              
               call PreProcAndGather(preProc, ng, idim_type, varn, &
                    il1, ir2, jb1, jt2, localSize, disp, &
                    LocalSize(mynum,idim_type), LocalChunk, &
                    sizeGathered(idim_type), Gathered, &
                    sizeFullField(idim_type), FullField)
-
+              
               ! output rearranged field
-
+              
               if (mchnum == master_num) then
                  call RearrangeAndDump (ng, rearran, &
                       .false., &           ! hist is not rearranged
@@ -1801,13 +1765,10 @@ subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
               varn= vtab_r(nv,ng)%name   ! could be changed on prior calls to PreProcAndGather
 
               if (dumpLocal) then
-                 write(str(1),"(l)") preProc
-                 write(str(2),"(l)") rearran
-                 call MsgDump(h//" on var_m field "//varn//&
-                      "; preproc="//trim(adjustl(str(1)))//&
-                      ", rearran="//trim(adjustl(str(2))))
+                 write(*,"(2(a,l1))") h//cProc//" on var_m field "//varn//&
+                      "; preproc=",preProc, ", rearran=", rearran
               end if
-
+              
               ! gather field, preprocessed or untouched
 
               call PreProcAndGather(preProc, ng, idim_type, varn, &
@@ -1815,7 +1776,7 @@ subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
                    LocalSize(mynum,idim_type), LocalChunk, &
                    sizeGathered(idim_type), Gathered, &
                    sizeFullField(idim_type), FullField)
-
+              
               ! output field, rearranged or untouched
 
               if (mchnum == master_num) then
@@ -1850,16 +1811,16 @@ subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
         call fatal_error(h//" deallocate Gathered failed with stat="// &
              trim(adjustl(c1)))
      end if
-
+     
      ! maximum space for unpacked field
-
+     
      deallocate(FullField, stat=ierr)
      if (ierr /= 0) then
         write(c1,"(i8)") ierr
         call fatal_error(h//" deallocate FullField failed with stat="// &
              trim(adjustl(c1)))
      end if
-
+     
      ! maximum space for rearranged area
 
      deallocate(Rear, stat=ierr)
@@ -1870,7 +1831,7 @@ subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
      end if
 
      ! master closes output file for this grid
-
+     
      if (mchnum == master_num) then
         if (histFlag) then
            call CloseDataFile(histFileDS)
@@ -2065,153 +2026,153 @@ end subroutine saveNodeFields
 
 !LFR... !====
 !LFR... subroutine saveHdf5Par(histFlag, instFlag, liteFlag, meanFlag, nvMax, &
-!LFR... ngrids, willwrite, maxNFields)
+     !LFR... ngrids, willwrite, maxNFields)
 
-!LFR... use node_mod, only: mchnum, nmachs, &
-!LFR... ixb, ixe, iyb, iye, &
-!LFR... nodemxp, nodemyp, nodeia, nodeiz, nodeja, nodejz, nodeibcon
+  !LFR... use node_mod, only: mchnum, nmachs, &
+       !LFR... ixb, ixe, iyb, iye, &
+       !LFR... nodemxp, nodemyp, nodeia, nodeiz, nodeja, nodejz, nodeibcon
 
-!LFR... use mem_grid, only: &
-!LFR... time, iyear1, imonth1, idate1, itime1, &
-!LFR... nnzp, nnxp, nnyp, nzg, nzs, npatch
+  !LFR... use mem_grid, only: &
+       !LFR... time, iyear1, imonth1, idate1, itime1, &
+       !LFR... nnzp, nnxp, nnyp, nzg, nzs, npatch
 
-!LFR... use mem_aerad, only: &
-!LFR... nwave
+  !LFR... use mem_aerad, only: &
+       !LFR... nwave
 
-!LFR... use grid_dims, only: &
-!LFR... maxgrds
+  !LFR... use grid_dims, only: &
+       !LFR... maxgrds
 
-!LFR... use var_tables, only: &
-!LFR... num_var, &
-!LFR... vtab_r
+  !LFR... use var_tables, only: &
+       !LFR... num_var, &
+       !LFR... vtab_r
 
-!LFR... use io_params, only: &
-!LFR... afilout
+  !LFR... use io_params, only: &
+       !LFR... afilout
 
-!LFR... use hdf5_parallel_engine, only: & 
-!LFR... hdf_open, hdf_close, hdf_output, dims_output, hdf_parallel_output
+  !LFR... use hdf5_parallel_engine, only: & 
+       !LFR... hdf_open, hdf_close, hdf_output, dims_output, hdf_parallel_output
 
-!LFR... implicit none
+  !LFR... implicit none
 
-!LFR... include "i8.h"
+  !LFR... include "i8.h"
 
-!LFR... logical, intent(in) :: histFlag       ! true iff history output requested
-!LFR... logical, intent(in) :: instFlag       ! true iff instant output requested
-!LFR... logical, intent(in) :: liteFlag       ! true iff lite vars output requested
-!LFR... logical, intent(in) :: meanFlag       ! true iff field average output requested
-!LFR... integer, intent(in) :: nvMax
-!LFR... integer, intent(in) :: ngrids
-!LFR... logical, intent(in) :: Willwrite(nvMax,ngrids)
-!LFR... integer, intent(in) :: maxNFields
+  !LFR... logical, intent(in) :: histFlag       ! true iff history output requested
+  !LFR... logical, intent(in) :: instFlag       ! true iff instant output requested
+  !LFR... logical, intent(in) :: liteFlag       ! true iff lite vars output requested
+  !LFR... logical, intent(in) :: meanFlag       ! true iff field average output requested
+  !LFR... integer, intent(in) :: nvMax
+  !LFR... integer, intent(in) :: ngrids
+  !LFR... logical, intent(in) :: Willwrite(nvMax,ngrids)
+  !LFR... integer, intent(in) :: maxNFields
 
-!LFR... character(len=7)            :: cProc
-!LFR... character(len=16)           :: varn
-!LFR... character(len=8)            :: c0, c1
-!LFR... character(len=*), parameter :: h="**(saveHdf5Par)**"
-!LFR... logical, parameter          :: dumpLocal = .false.
-!LFR... integer                     :: ierr
+  !LFR... character(len=7)            :: cProc
+  !LFR... character(len=16)           :: varn
+  !LFR... character(len=8)            :: c0, c1
+  !LFR... character(len=*), parameter :: h="**(saveHdf5Par)**"
+  !LFR... logical, parameter          :: dumpLocal = .false.
+  !LFR... integer                     :: ierr
 
-!LFR... integer :: ng, nv, rankplus1
-!LFR... include "files.h"
-!LFR... character(len=f_name_length) :: saida ! File name for HDF5 file
+  !LFR... integer :: ng, nv, rankplus1
+  !LFR... include "files.h"
+  !LFR... character(len=f_name_length) :: saida ! File name for HDF5 file
 
-!LFR... integer, parameter :: idim_type_min=2
-!LFR... integer, parameter :: idim_type_max=7
-!LFR... integer(kind=i8)   :: localSize(idim_type_min:idim_type_max)
+  !LFR... integer, parameter :: idim_type_min=2
+  !LFR... integer, parameter :: idim_type_max=7
+  !LFR... integer(kind=i8)   :: localSize(idim_type_min:idim_type_max)
 
-!LFR... if (dumpLocal) then
-!LFR... write(cProc,"(a5,i2)") " Proc", mchnum
-!LFR... endif
+  !LFR... if (dumpLocal) then
+     !LFR... write(cProc,"(a5,i2)") " Proc", mchnum
+  !LFR... endif
 
-!LFR... rankplus1 = mchnum + 1
+  !LFR... rankplus1 = mchnum + 1
 
-!LFR... ! for all grids
-!LFR... do ng = 1, ngrids
+  !LFR... ! for all grids
+  !LFR... do ng = 1, ngrids
 
-!LFR... if (dumpLocal) then
-!LFR... write(c0,"(i8)") ng
-!LFR... write(*,"(a)") h//cProc//" starts processing grid "//trim(adjustl(c0))
-!LFR... call flush(6)
-!LFR... end if
+     !LFR... if (dumpLocal) then
+        !LFR... write(c0,"(i8)") ng
+        !LFR... write(*,"(a)") h//cProc//" starts processing grid "//trim(adjustl(c0))
+        !LFR... call flush(6)
+     !LFR... end if
 
-!LFR... call DefineNameFileWrite(time, iyear1, imonth1, idate1, itime1, &
-!LFR... maxgrds, ng, "h5", saida)
+     !LFR... call DefineNameFileWrite(time, iyear1, imonth1, idate1, itime1, &
+          !LFR... maxgrds, ng, "h5", saida)
 
-!LFR... call hdf_open(saida, .true.)
+     !LFR... call hdf_open(saida, .true.)
 
-!LFR... if (dumpLocal) then
-!LFR... write(*,"(a)") h//cProc//" open filename: "//trim(adjustl(saida))
-!LFR... call flush(6)
-!LFR... end if
+     !LFR... if (dumpLocal) then
+        !LFR... write(*,"(a)") h//cProc//" open filename: "//trim(adjustl(saida))
+        !LFR... call flush(6)
+     !LFR... end if
 
-!LFR... ! maximum space for pre-processed local field
-!LFR... localSize(2) = nodemxp(rankplus1,ng)*nodemyp(rankplus1,ng)
-!LFR... localSize(3) = nnzp(ng)*nodemxp(rankplus1,ng)*nodemyp(rankplus1,ng)
-!LFR... localSize(4) = nzg*nodemxp(rankplus1,ng)*nodemyp(rankplus1,ng)*npatch
-!LFR... localSize(5) = nzs*nodemxp(rankplus1,ng)*nodemyp(rankplus1,ng)*npatch
-!LFR... localSize(6) = nodemxp(rankplus1,ng)*nodemyp(rankplus1,ng)*npatch
-!LFR... localSize(7) = nodemxp(rankplus1,ng)*nodemyp(rankplus1,ng)*nwave
+     !LFR... ! maximum space for pre-processed local field
+     !LFR... localSize(2) = nodemxp(rankplus1,ng)*nodemyp(rankplus1,ng)
+     !LFR... localSize(3) = nnzp(ng)*nodemxp(rankplus1,ng)*nodemyp(rankplus1,ng)
+     !LFR... localSize(4) = nzg*nodemxp(rankplus1,ng)*nodemyp(rankplus1,ng)*npatch
+     !LFR... localSize(5) = nzs*nodemxp(rankplus1,ng)*nodemyp(rankplus1,ng)*npatch
+     !LFR... localSize(6) = nodemxp(rankplus1,ng)*nodemyp(rankplus1,ng)*npatch
+     !LFR... localSize(7) = nodemxp(rankplus1,ng)*nodemyp(rankplus1,ng)*nwave
 
-!LFR... ! for all fields on this grid
-!LFR... do nv = 1, num_var(ng)
+     !LFR... ! for all fields on this grid
+     !LFR... do nv = 1, num_var(ng)
 
-!LFR... ! field to gather
-!LFR... if (Willwrite(nv,ng)) then
-!LFR... if (vtab_r(nv,ng)%imean/=1) then
+        !LFR... ! field to gather
+        !LFR... if (Willwrite(nv,ng)) then
+           !LFR... if (vtab_r(nv,ng)%imean/=1) then
 !LFR... !!$              rankplus1 = mchnum + 1
-!LFR... if (dumpLocal) then
-!LFR... write(*,*) h//cProc//" var_p field "//varn//&
-!LFR... "; idim_type=", vtab_r(nv,ng)%idim_type, &
-!LFR... ", nnzp(ng), nnxp(ng), nnyp(ng), nzg, nzs, npatch, nwave=", &
-!LFR... nnzp(ng), nnxp(ng), nnyp(ng), nzg, nzs, npatch, nwave, &
-!LFR... "mchnum,rankplus1,ng,ixb,ixe,iyb,iye=", mchnum, &
-!LFR... rankplus1, ng, &
-!LFR... ixb(rankplus1,ng), ixe(rankplus1,ng), &
-!LFR... iyb(rankplus1,ng), iye(rankplus1,ng)
-!LFR... call flush(6)
-!LFR... end if
+              !LFR... if (dumpLocal) then
+                 !LFR... write(*,*) h//cProc//" var_p field "//varn//&
+                      !LFR... "; idim_type=", vtab_r(nv,ng)%idim_type, &
+                      !LFR... ", nnzp(ng), nnxp(ng), nnyp(ng), nzg, nzs, npatch, nwave=", &
+                      !LFR... nnzp(ng), nnxp(ng), nnyp(ng), nzg, nzs, npatch, nwave, &
+                      !LFR... "mchnum,rankplus1,ng,ixb,ixe,iyb,iye=", mchnum, &
+                      !LFR... rankplus1, ng, &
+                      !LFR... ixb(rankplus1,ng), ixe(rankplus1,ng), &
+                      !LFR... iyb(rankplus1,ng), iye(rankplus1,ng)
+                 !LFR... call flush(6)
+              !LFR... end if
 
-!LFR... call dims_output(nnxp(ng), nnyp(ng), nnzp(ng), &
-!LFR... nzg, npatch, nzs, nwave, &
-!LFR... nodemxp(rankplus1,ng), nodemyp(rankplus1,ng), &
-!LFR... nodeia(rankplus1,ng), nodeiz(rankplus1,ng), &
-!LFR... nodeja(rankplus1,ng), nodejz(rankplus1,ng), &
-!LFR... nodeibcon(rankplus1,ng), &
-!LFR... ixb(rankplus1,ng), iyb(rankplus1,ng), &
-!LFR... vtab_r(nv,ng)%idim_type)
+              !LFR... call dims_output(nnxp(ng), nnyp(ng), nnzp(ng), &
+                   !LFR... nzg, npatch, nzs, nwave, &
+                   !LFR... nodemxp(rankplus1,ng), nodemyp(rankplus1,ng), &
+                   !LFR... nodeia(rankplus1,ng), nodeiz(rankplus1,ng), &
+                   !LFR... nodeja(rankplus1,ng), nodejz(rankplus1,ng), &
+                   !LFR... nodeibcon(rankplus1,ng), &
+                   !LFR... ixb(rankplus1,ng), iyb(rankplus1,ng), &
+                   !LFR... vtab_r(nv,ng)%idim_type)
 
-!LFR... if (vtab_r(nv,ng)%idim_type==2) then
+              !LFR... if (vtab_r(nv,ng)%idim_type==2) then
 
-!LFR... call hdf_parallel_output(vtab_r(nv,ng)%name, &
-!LFR... vtab_r(nv,ng)%var_p_2d(:,:), &
-!LFR... localsize(vtab_r(nv,ng)%idim_type))
+                 !LFR... call hdf_parallel_output(vtab_r(nv,ng)%name, &
+                      !LFR... vtab_r(nv,ng)%var_p_2d(:,:), &
+                      !LFR... localsize(vtab_r(nv,ng)%idim_type))
 
-!LFR... elseif (vtab_r(nv,ng)%idim_type==3 .or. &
-!LFR... vtab_r(nv,ng)%idim_type==6 .or. &
-!LFR... vtab_r(nv,ng)%idim_type==7) then
+              !LFR... elseif (vtab_r(nv,ng)%idim_type==3 .or. &
+                   !LFR... vtab_r(nv,ng)%idim_type==6 .or. &
+                   !LFR... vtab_r(nv,ng)%idim_type==7) then
 
-!LFR... call hdf_parallel_output(vtab_r(nv,ng)%name, &
-!LFR... vtab_r(nv,ng)%var_p_3d(:,:,:), &
-!LFR... localsize(vtab_r(nv,ng)%idim_type))
+                 !LFR... call hdf_parallel_output(vtab_r(nv,ng)%name, &
+                      !LFR... vtab_r(nv,ng)%var_p_3d(:,:,:), &
+                      !LFR... localsize(vtab_r(nv,ng)%idim_type))
 
-!LFR... elseif (vtab_r(nv,ng)%idim_type==4 .or. &
-!LFR... vtab_r(nv,ng)%idim_type==5) then
+              !LFR... elseif (vtab_r(nv,ng)%idim_type==4 .or. &
+                   !LFR... vtab_r(nv,ng)%idim_type==5) then
 
-!LFR... call hdf_parallel_output(vtab_r(nv,ng)%name, &
-!LFR... vtab_r(nv,ng)%var_p_4d(:,:,:,:), &
-!LFR... localsize(vtab_r(nv,ng)%idim_type))
+                 !LFR... call hdf_parallel_output(vtab_r(nv,ng)%name, &
+                      !LFR... vtab_r(nv,ng)%var_p_4d(:,:,:,:), &
+                      !LFR... localsize(vtab_r(nv,ng)%idim_type))
 
-!LFR... endif
+              !LFR... endif
 
-!LFR... endif
+           !LFR... endif
 
-!LFR... endif
+        !LFR... endif
 
-!LFR... enddo
+     !LFR... enddo
 
-!LFR... call hdf_close()
+     !LFR... call hdf_close()
 
-!LFR... enddo
+  !LFR... enddo
 
 !LFR... end subroutine saveHdf5Par
 
@@ -2388,7 +2349,7 @@ subroutine saveBinMPIIO(histFlag, instFlag, liteFlag, meanFlag, nvMax, &
                  n4 = 1
                  n5 = 1
               endif
-              call INIT_FILETYPES(nz, nx, ny, n4, n5, &
+              CALL INIT_FILETYPES(nz, nx, ny, n4, n5, &
                    ixb(rankplus1,ng), ixe(rankplus1,ng), &
                    iyb(rankplus1,ng), iye(rankplus1,ng), gZoneSize, &
                    gSizes, subSizesRead, subSizesWrite, &
@@ -2419,7 +2380,7 @@ subroutine saveBinMPIIO(histFlag, instFlag, liteFlag, meanFlag, nvMax, &
               endif
 
            elseif (vtab_r(nv,ng)%imean==1) then       ! case 2: output average field values (for mean output files)
-
+              
            end if
 
         endif
@@ -2443,7 +2404,7 @@ subroutine OpenNodeWrite(unit, time, iyear1, imonth1, idate1, &
        date_add_to
 
   use io_params,only: &
-       afilout
+      afilout
 
   implicit none
 
@@ -2459,7 +2420,7 @@ subroutine OpenNodeWrite(unit, time, iyear1, imonth1, idate1, &
   integer, intent(in) :: ng
   integer, intent(in) :: mchnum
   integer, intent(in) :: nmachs
-
+  
   integer            :: ierr
   integer            :: oyear1
   integer            :: omonth1
@@ -2511,7 +2472,7 @@ subroutine OpenNodeWrite(unit, time, iyear1, imonth1, idate1, &
      call fatal_error("opening "//trim(filename)//" failed with iostat "//&
           trim(adjustl(c0)))
   end if
-
+  
 end subroutine OpenNodeWrite
 !--(DMK)-------------------------------------------------------------------
 
@@ -2553,7 +2514,7 @@ end subroutine nodeWrite
 subroutine writeField(unit, field, LocalSize)
 
   implicit none
-
+  
   integer, intent(in) :: unit
   real,    intent(in) :: field(LocalSize)
   integer, intent(in) :: LocalSize
@@ -2573,7 +2534,7 @@ subroutine DefineNameFileWrite(time, iyear1, imonth1, idate1, &
        date_add_to
 
   use io_params, only: &
-       afilout
+      afilout
 
   implicit none
 
@@ -2588,7 +2549,7 @@ subroutine DefineNameFileWrite(time, iyear1, imonth1, idate1, &
   integer, intent(in) :: ng
   character(len=*), intent(in) :: sufix
   character(len=f_name_length), intent(out) :: filename 
-
+  
   integer            :: ierr
   integer            :: oyear1
   integer            :: omonth1
@@ -2614,7 +2575,7 @@ subroutine DefineNameFileWrite(time, iyear1, imonth1, idate1, &
 
   filename=trim(afilout)//"-A"//yy//"-"//mm//"-"//&
        dd//"-"//hh//"-g"//trim(gg)//"."//sufix
-
+  
 end subroutine DefineNameFileWrite
 
 
@@ -2625,9 +2586,9 @@ subroutine PreProcForOutput(ngrid, varnIn, sizeInOut, &
        basic_g
   use mem_turb,  only:   &
        turb_g, idiffk, xkhkm
-
+  
   implicit none
-
+  
   ! pre process fields PP, HKM and VKH
 
   integer,          intent(in   ) :: ngrid
@@ -2677,7 +2638,7 @@ end subroutine PreProcForOutput
 
 
 subroutine RearrangeForOutput(nxp, nyp, nzp, nzg, nzs, npatch, &
-     idim_type, InField, OutField)
+  idim_type, InField, OutField)
   implicit none
 
   integer,          intent(in   ) :: nxp

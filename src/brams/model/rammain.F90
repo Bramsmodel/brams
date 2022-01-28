@@ -79,7 +79,7 @@ program main
   integer :: master_num_in
   character(len=*), parameter :: h="**(main)**"
   character(len=*), parameter :: header="**(main)**"
-  character(len=*), parameter :: version="6.0"
+  character(len=*), parameter :: version="5.4"
   character(len=8) :: c0, c1
 
   ! execution time instrumentation

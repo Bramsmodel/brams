@@ -936,7 +936,7 @@ ENDIF
 ! time integration schemes
   IF (dyncore_flag .gt. 3) THEN
      PRINT *, 'FATAL - Only the hybrid time integration schemes are allowed in 5.2'
-     call fatal_error('set dyncore_flag == 0 to 2')
+     call fatal_error('set dyncore_flag == 0 to 3')
      IFATERR=IFATERR+1
   ENDIF
 

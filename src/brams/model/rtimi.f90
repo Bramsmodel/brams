@@ -245,7 +245,7 @@ subroutine predtr()
   do n = 1,num_scalar(ngrid)
       
      !- if RK scheme, THP/THC are not predicted here
-     if (dyncore_flag == 2) then
+     if (dyncore_flag == 2 .or. dyncore_flag == 3 ) then
        if (scalar_tab(n,ngrid)%name == 'THC' .or. &
            scalar_tab(n,ngrid)%name == 'THP') cycle
      endif

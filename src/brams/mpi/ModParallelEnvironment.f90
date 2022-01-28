@@ -32,7 +32,8 @@ contains
 
 
 
-  !*** CreateParallelEnvironment: create and fill variable of this type
+  !*** CreateParallelEnvironment: create and fill variable of this type.
+  !                               first call opens dump file for one process
 
 
 
