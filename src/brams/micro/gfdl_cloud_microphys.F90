@@ -550,11 +550,7 @@ subroutine gfdl_cloud_microphys_driver (qv, ql, qr, qi, qs, qg, qa, qn,   &
             revap, isubl,                                                      &
             udt, vdt, pt_dt,                                                   &
             qv_dt, ql_dt, qr_dt, qi_dt, qs_dt, qg_dt, qa_dt, w_var, vt_r,      &
-            vt_s, vt_g, vt_i, qn2                                              & 
-            !srf
-            , re_cloud, re_ice, re_snow                                        &
-            !srf
-            )
+            vt_s, vt_g, vt_i, qn2)
     enddo
     
     ! -----------------------------------------------------------------------
@@ -614,13 +610,9 @@ subroutine gfdl_cloud_microphys_driver (qv, ql, qr, qi, qs, qg, qa, qn,   &
     enddo
     
 
-
-
     !-----------------
     !srf: get the cloud/ice/snow effective radius for radiation
     !
-    RETURN ! calculating inside the routine "mpdrv"
-
     do j = js, je
       do i=is,ie
         do k=kbot,ktop,-1 ! kbot = model top, ktop = 1.
@@ -726,7 +718,7 @@ subroutine mpdrv (hydrostatic, uin, vin, w, delp, pt, qv, ql, qr, qi, qs,     &
         rain, snow, graupel, ice, m2_rain, m2_sol, cond, area1, land, &
         cnv_fraction, anv_icefall, lsc_icefall, revap, isubl,                 &
         u_dt, v_dt, pt_dt, qv_dt, ql_dt, qr_dt, qi_dt, qs_dt, qg_dt, qa_dt,   &
-        w_var, vt_r, vt_s, vt_g, vt_i, qn2 , re_cloud, re_ice, re_snow  )
+        w_var, vt_r, vt_s, vt_g, vt_i, qn2)
     
     implicit none
     
@@ -749,7 +741,6 @@ subroutine mpdrv (hydrostatic, uin, vin, w, delp, pt, qv, ql, qr, qi, qs,     &
     real, intent (inout), dimension (is:, js:, ks:) :: u_dt, v_dt, w, pt_dt, qa_dt
     real, intent (inout), dimension (is:, js:, ks:) :: qv_dt, ql_dt, qr_dt, qi_dt, qs_dt, qg_dt
     real, intent (  out), dimension (is:, js:, ks:) :: revap, isubl
-    real, intent (inout), dimension (is:, js:, ks:) :: re_cloud, re_ice, re_snow
     
     real, intent (inout), dimension (is:) :: rain, snow, ice, graupel, cond
     
@@ -766,8 +757,7 @@ subroutine mpdrv (hydrostatic, uin, vin, w, delp, pt, qv, ql, qr, qi, qs,     &
     real, dimension (ktop:kbot) :: t0, den, den0, tz, p1, denfac
     real, dimension (ktop:kbot) :: ccn, c_praut, m1_rain, m1_sol, m1, evap1, subl1
     real, dimension (ktop:kbot) :: u0, v0, u1, v1, w1
-    real, dimension (ktop:kbot) :: re_qc, re_qi, re_qs 
-
+    
     real :: cpaut, rh_adj, rh_rain
     real :: r1, s1, i1, g1, rdt, ccn0
     real :: dt_rain, dts
@@ -775,7 +765,7 @@ subroutine mpdrv (hydrostatic, uin, vin, w, delp, pt, qv, ql, qr, qi, qs,     &
     real :: cvm, tmp, omq
     real :: dqi, qio, qin
     
-    integer :: i, k, n, islmski
+    integer :: i, k, n
     
     dts = dt_in / real (ntimes)
     dt_rain = dts * 0.5
@@ -1066,31 +1056,6 @@ subroutine mpdrv (hydrostatic, uin, vin, w, delp, pt, qv, ql, qr, qi, qs,     &
         do k = ktop, kbot
              qa_dt (i, j, k) =  rdt * (qaz (k) - qa0 (k))
         enddo
-
-        ! -----------------------------------------------------------------------
-        !srf: get the cloud/ice/snow effective radius for radiation
-        ! -----------------------------------------------------------------------
-        do k=kbot,ktop,-1 ! kbot = model top, ktop = 1.
-             re_qc(k) = 2.51E-6
-             re_qi(k) = 10.01E-6
-             re_qs(k) = 25.E-6
-             dp1  (k) = delp (i, j, k)
-             dz0  (k) = dz (i, j, k)
-             den0 (k) = - dp1 (k) / (grav * dz0 (k)) ! density of dry air        
-        enddo
-        islmski = nint(land(i)) ! 1=land,0=ocean
-       
-        call effectRad(tz, qlz, qiz, qsz, den0,               &    
-                       qmin, t0c, re_qc, re_qi, re_qs,         &    
-                       islmski,ktop, kbot, i, land(i))
-
-        do k=kbot,ktop,-1
-          re_cloud(i,j,k) = MAX(2.51E-6,  MIN(re_qc(k),  50.E-6))*1.e6
-          re_ice  (i,j,k) = MAX(10.01E-6, MIN(re_qi(k), 125.E-6))*1.e6
-          re_snow (i,j,k) = MAX(25.E-6,   MIN(re_qs(k), 999.E-6))*1.e6
-        enddo 
-
-
 
         ! -----------------------------------------------------------------------
         ! fms diagnostics:

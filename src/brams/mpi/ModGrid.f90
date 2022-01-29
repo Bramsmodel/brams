@@ -17,9 +17,9 @@ module ModGrid
 
   use ModDomainDecomp, only: &
        DomainDecomp, &
-       CreateGlobalNoGhost, &
+       CreateGlobalOwn, &
        CreateGlobalWithGhost, &
-       CreateLocalInterior, &
+       CreateLocalOwn, &
        DumpDomainDecomp, &
        DestroyDomainDecomp
 
@@ -67,13 +67,40 @@ module ModGrid
 
 
   type Grid
-     integer :: Id    ! grid number on Namelist
+     integer :: Id
+     ! Id: grid number on Namelist
      type(NamelistFile), pointer :: Ramsin => null()
+     ! Ramsin: this grid namelist file
      type(ParallelEnvironment), pointer :: ParEnv => null()
+     ! ParEnv: mpi size, rank and communicator for this run
      type(GridDims), pointer :: GridSize => null()
-     type(DomainDecomp), pointer :: GlobalNoGhost => null()
+     ! GridSize: this grid dimensions as defined by namelist
+     type(DomainDecomp), pointer :: GlobalOwn => null()
+     ! GlobalOwn: global indices of this grid domain
+     !            decomposition (domain partition) owned by
+     !            each rank - Ghost Zone not included
      type(DomainDecomp), pointer :: GlobalWithGhost => null()
-     type(DomainDecomp), pointer :: LocalInterior => null()
+     ! GlobalWithGhost: global indices of this grid domain
+     !                  decomposition at each rank, including
+     !                  the owned points and a ghost zone of length one.
+     !                  Not a domain partition, due to ghost
+     !                  zone inclusion..
+     type(DomainDecomp), pointer :: LocalOwn => null()
+     ! LocalOwn: local indices of this grid domain
+     !           decomposition owned by each rank. 
+     !           Convertion of GlobalOwn to local indices
+     type(DomainDecomp), pointer :: GlobalWithGhostAdvectc_rk => null()
+     ! GlobalWithGhostAdvectc_rk: global indices of this grid domain
+     !                            decomposition considering the ghost zone
+     !                            width required by procedure advectc_rk 
+     !                            for all ranks
+     type(DomainDecomp), pointer :: LocalOwnAdvectc_rk => null()
+     ! LocalOwnAdvectc_rk: local indices of this grid domain
+     !                     decomposition considering the ghost zone
+     !                     width required by procedure advectc_rk 
+     !                     for all ranks.
+     !                     Convertion of GlobalWithGhostAdvectc_rk
+     !                     to local indices
      type(NeighbourNodes), pointer :: Neigh => null()
      type(MessageSet), pointer :: AcouSendU
      type(MessageSet), pointer :: AcouRecvU
@@ -95,9 +122,7 @@ module ModGrid
      type(MessageSet), pointer :: SelectedGhostZoneRecv
      type(MessageSet), pointer :: AllGhostZoneSend
      type(MessageSet), pointer :: AllGhostZoneRecv
-     
      type(PolygonContainer), pointer :: meteoPolygons
-
   end type Grid
 
 
@@ -107,15 +132,12 @@ contains
 
 
 
-  ! CreateGrid: create and fill variable of this type,
-  !             extracting info from the Namelist File.
+  ! CreateGrid: create and fill variable of this type
 
 
 
-  subroutine CreateGrid(gridId, GhostZoneLength, &
-       oneNamelistFile, oneParallelEnvironment, oneGrid)
+  subroutine CreateGrid(gridId, oneNamelistFile, oneParallelEnvironment, oneGrid)
     integer, intent(in) :: gridId
-    integer, intent(in) :: GhostZoneLength
     type(NamelistFile), pointer :: oneNamelistFile
     type(ParallelEnvironment), pointer :: oneParallelEnvironment
     type(Grid), pointer :: oneGrid
@@ -137,26 +159,71 @@ contains
 
     allocate(oneGrid)
 
+    ! stores input arguments
+    
     oneGrid%id = gridId
     oneGrid%Ramsin => oneNamelistFile
     oneGrid%ParEnv => oneParallelEnvironment
-    call CreateGridDims(gridId, &
-         oneNamelistFile, &
-         oneGrid%GridSize)
-    call CreateGlobalNoGhost(oneGrid%GridSize, &
-         oneGrid%ParEnv, &
-         oneGrid%GlobalNoGhost)
-    call CreateGlobalWithGhost(oneGrid%GridSize, &
-         oneGrid%ParEnv, &
-         GhostZoneLength, &
-         oneGrid%GlobalNoGhost, &
-         oneGrid%GlobalWithGhost)
-    call CreateLocalInterior(oneGrid%ParEnv, &
-         oneGrid%GlobalWithGhost, &
-         oneGrid%GlobalNoGhost, &
-         oneGrid%LocalInterior)
+
+    ! store GridDims extracted from OneNamelistFile 
+
+    oneGrid%GridSize => CreateGridDims(gridId, &
+         oneNamelistFile)
+
+    ! compute domain decomposition, obtaining
+    ! cells owned by each rank and store at GlobalOwn
+    
+    oneGrid%GlobalOwn => CreateGlobalOwn(&
+         GridSize=oneGrid%GridSize, &
+         ParEnv=oneGrid%ParEnv, &
+         varName="GlobalOwn" &
+         )
+
+    ! insert original ghost zone of widht 1
+    ! at GlobalOwn and store at GlobalWithGhost
+    
+    oneGrid%GlobalWithGhost => CreateGlobalWithGhost(&
+         GridSize=oneGrid%GridSize, &
+         ParEnv=oneGrid%ParEnv, &
+         GlobalOwn=oneGrid%GlobalOwn, &
+         GhostZoneWidth=1, &
+         varName="GlobalWithGhost" &
+         )
+
+    ! convert global indices from GlobalWithGhost
+    ! into local indices stored at LocalOwn
+    
+    oneGrid%LocalOwn => CreateLocalOwn(&
+         ParEnv=oneGrid%ParEnv, &
+         GlobalWithGhost=oneGrid%GlobalWithGhost, &
+         GlobalOwn=oneGrid%GlobalOwn, &
+         varName="LocalOwn" &
+         )
+
+    ! insert original ghost zone of required by
+    ! procedure advectc_rk at GlobalOwn and store
+    ! at GlobalWithGhostAdvectc_rk
+    
+    oneGrid%GlobalWithGhostAdvectc_rk => CreateGlobalWithGhost(&
+         GridSize=oneGrid%GridSize, &
+         ParEnv=oneGrid%ParEnv, &
+         GlobalOwn=oneGrid%GlobalOwn, &
+         GhostZoneWidth=3, &
+         varName="GlobalWithGhostAdvectc_rk" &
+         )
+
+    ! convert global indices from GlobalWithGhostAdvectc_rk
+    ! into local indices stored at LocalOwnAdvectc_rk
+
+    oneGrid%LocalOwnAdvectc_rk => CreateLocalOwn(&
+         ParEnv=oneGrid%ParEnv, &
+         GlobalWithGhost=oneGrid%GlobalWithGhostAdvectc_rk, &
+         GlobalOwn=oneGrid%GlobalOwn, &
+         varName="LocalOwnAdvectc_rk" &
+         )
+
     call CreateNeighbourNodes(oneGrid%ParEnv, &
-         oneGrid%GlobalNoGhost, &
+         oneGrid%GlobalOwn, &
          oneGrid%GlobalWithGhost, &
          oneGrid%Neigh)
 	 
@@ -200,7 +267,7 @@ contains
 
     call CreateAcousticMessagePassing(oneGrid%Id, &
          oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
-         oneGrid%GlobalNoGhost, &
+         oneGrid%GlobalOwn, &
          oneGrid%GlobalWithGhost, &
          oneGrid%AcouSendU, oneGrid%AcouRecvU, &
          oneGrid%AcouSendV, oneGrid%AcouRecvV,&
@@ -210,13 +277,13 @@ contains
 
     call CreateDn0MessagePassing(oneGrid%Id, &
          oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
-         oneGrid%GlobalNoGhost, oneGrid%GlobalWithGhost, &
+         oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
          oneGrid%SendDn0u, oneGrid%RecvDn0u, &
          oneGrid%SendDn0v, oneGrid%RecvDn0v)
 
     call CreateG3DMessagePassing(oneGrid%Id, &
          oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
-         oneGrid%GlobalNoGhost, oneGrid%GlobalWithGhost, &
+         oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
          oneGrid%Ramsin, &
          oneGrid%SendG3D, oneGrid%RecvG3D)
 
@@ -226,13 +293,13 @@ contains
     call CreateSelectedGhostZoneMessagePassing(&
        oneGrid%Id, num_var, vtab_r, &
        oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
-       oneGrid%GlobalNoGhost, oneGrid%GlobalWithGhost, &
+       oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
        oneGrid%SelectedGhostZoneSend, oneGrid%SelectedGhostZoneRecv)
 
     call CreateAllGhostZoneMessagePassing(&
        oneGrid%Id, num_var, vtab_r, &
        oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
-       oneGrid%GlobalNoGhost, oneGrid%GlobalWithGhost, &
+       oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
        oneGrid%AllGhostZoneSend, oneGrid%AllGhostZoneRecv)
 
     if (dumpLocal) then
@@ -252,9 +319,9 @@ contains
 
     if (associated(oneGrid)) then
        call DestroyGridDims(oneGrid%GridSize)
-       call DestroyDomainDecomp(oneGrid%GlobalNoGhost)
+       call DestroyDomainDecomp(oneGrid%GlobalOwn)
        call DestroyDomainDecomp(oneGrid%GlobalWithGhost)
-       call DestroyDomainDecomp(oneGrid%LocalInterior)
+       call DestroyDomainDecomp(oneGrid%LocalOwn)
        call DestroyNeighbourNodes(oneGrid%Neigh)
        call DestroyAcousticMessagePassing(&
             oneGrid%AcouSendU, oneGrid%AcouRecvU, &
@@ -302,12 +369,12 @@ contains
     call MsgDump(h//" for grid "//trim(adjustl(c0)))
 
     call MsgDump(h//" dumping component GridSize")
-    call DumpGridDims(oneGrid%GridSize)
+    call DumpGridDims(oneGrid%GridSize, h)
 
     call MsgDump(h//" dumping domain decomposed components")
-    call DumpDomainDecomp(oneGrid%GlobalNoGhost, "GlobalNoGhost")
+    call DumpDomainDecomp(oneGrid%GlobalOwn, "GlobalOwn")
     call DumpDomainDecomp(oneGrid%GlobalWithGhost, "GlobalWithGhost")
-    call DumpDomainDecomp(oneGrid%LocalInterior, "LocalInterior")
+    call DumpDomainDecomp(oneGrid%LocalOwn, "LocalOwn")
 
     call MsgDump(h//" dumping neighborhood")
     call DumpNeighbourNodes(oneGrid%Neigh)

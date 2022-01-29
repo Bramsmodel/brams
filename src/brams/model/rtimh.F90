@@ -8,7 +8,7 @@
 
 module ModTimestep
 contains
-subroutine timestep(OneGrid,oneNamelistFile)
+subroutine timestep(OneGrid)
 
   use ModMessageSet, only: &
        PostRecvSendMsgs, &
@@ -190,15 +190,12 @@ subroutine timestep(OneGrid,oneNamelistFile)
   use optical, only: &
             aodDriver
 
-  use ModNamelistFile, only : namelistFile
-
  ! use ModAdvectc_rk, only: &
  !        advectc_rk
 
   implicit none
 
   type(Grid), pointer :: OneGrid
-  type(namelistFile), pointer :: oneNamelistFile
 
   ! execution time instrumentation
   include "tsNames.h"
@@ -206,7 +203,8 @@ subroutine timestep(OneGrid,oneNamelistFile)
   INTEGER, PARAMETER :: acoshdp = 0
   character(len=256) :: julesFile
 
-  julesFile=oneNamelistFile%julesin
+  julesFile=OneGrid%Ramsin%julesin
+  
   !        +-------------------------------------------------------------+
   !        |   Timestep driver for the hybrid non-hydrostatic time-split |
   !        |      model.                                                 |

@@ -82,10 +82,10 @@ contains
 
 
   subroutine CreateNeighbourNodes(ParEnv, &
-       GlobalNoGhost, GlobalWithGhost, &
+       GlobalOwn, GlobalWithGhost, &
        OneNeighbourNodes)
     type(ParallelEnvironment), pointer :: ParEnv
-    type(DomainDecomp), pointer :: GlobalNoGhost
+    type(DomainDecomp), pointer :: GlobalOwn
     type(DomainDecomp), pointer :: GlobalWithGhost
     type(NeighbourNodes), pointer :: OneNeighbourNodes
 
@@ -104,13 +104,13 @@ contains
        call fatal_error(h//" invoked with null ParEnv")
     else if (.not. associated(GlobalWithGhost)) then
        call fatal_error(h//" invoked with null GlobalWithGhost ")
-    else if (.not. associated(GlobalNoGhost)) then
-       call fatal_error(h//" invoked with null GlobalNoGhost ")
+    else if (.not. associated(GlobalOwn)) then
+       call fatal_error(h//" invoked with null GlobalOwn ")
     else if (associated(oneNeighbourNodes)) then
        call fatal_error(h//" starts with already associated oneNeighbourNodes")
     end if
 
-    nmachs = size(GlobalNoGhost%xb)
+    nmachs = size(GlobalOwn%xb)
     myNum = ParEnv%myNum
 
     ! scratch area storing which nodes are neighbour of this node:
@@ -122,14 +122,14 @@ contains
     allocate(isNeighbour(nmachs))
     do node = 1, nmachs
        call Inter(&
-            GlobalNoGhost%xb(myNum), GlobalNoGhost%xe(myNum), &
-            GlobalNoGhost%yb(myNum), GlobalNoGhost%ye(myNum), &
+            GlobalOwn%xb(myNum), GlobalOwn%xe(myNum), &
+            GlobalOwn%yb(myNum), GlobalOwn%ye(myNum), &
             GlobalWithGhost%xb(node), GlobalWithGhost%xe(node), & 
             GlobalWithGhost%yb(node), GlobalWithGhost%ye(node), &
             xsInter, xeInter, ysInter, yeInter, myNumSend)
        call Inter(&
-            GlobalNoGhost%xb(node), GlobalNoGhost%xe(node), &
-            GlobalNoGhost%yb(node), GlobalNoGhost%ye(node), &
+            GlobalOwn%xb(node), GlobalOwn%xe(node), &
+            GlobalOwn%yb(node), GlobalOwn%ye(node), &
             GlobalWithGhost%xb(myNum), GlobalWithGhost%xe(myNum), & 
             GlobalWithGhost%yb(myNum), GlobalWithGhost%ye(myNum), &
             xsInter, xeInter, ysInter, yeInter, myNumRecv)
@@ -228,14 +228,14 @@ contains
 
 
 
-  subroutine NodesToSendRecvMessages(thisNode, Neigh, GlobalNoGhost, &
+  subroutine NodesToSendRecvMessages(thisNode, Neigh, GlobalOwn, &
        xbToBeUpdated, xeToBeUpdated, ybToBeUpdated, yeToBeUpdated, &
        xbSend, xeSend, ybSend, yeSend, willSend, &
        xbRecv, xeRecv, ybRecv, yeRecv, willRecv)
 
     integer, intent(in) :: thisNode              ! BRAMS process number
     type(NeighbourNodes), pointer :: Neigh       ! intent(in)
-    type(DomainDecomp), pointer :: GlobalNoGhost ! intent(in)
+    type(DomainDecomp), pointer :: GlobalOwn ! intent(in)
 
     ! region to be updated at each node (included at GlobalWithGhost)
 
@@ -274,8 +274,8 @@ contains
 
     ! check arguments
 
-    if (.not. associated(GlobalNoGhost)) then
-       call fatal_error(h//" starts with null GlobalNoGhost")
+    if (.not. associated(GlobalOwn)) then
+       call fatal_error(h//" starts with null GlobalOwn")
     end if
 
     ! default output
@@ -318,10 +318,10 @@ contains
             xeToBeUpdated(otherNode), &
             ybToBeUpdated(otherNode), &
             yeToBeUpdated(otherNode), &
-            GlobalNoGhost%xb(thisNode), &
-            GlobalNoGhost%xe(thisNode), &
-            GlobalNoGhost%yb(thisNode), &
-            GlobalNoGhost%ye(thisNode), &
+            GlobalOwn%xb(thisNode), &
+            GlobalOwn%xe(thisNode), &
+            GlobalOwn%yb(thisNode), &
+            GlobalOwn%ye(thisNode), &
             xbSend(i), xeSend(i), &
             ybSend(i), yeSend(i), &
             willSend(i))
@@ -354,10 +354,10 @@ contains
             xeToBeUpdated(thisNode), &
             ybToBeUpdated(thisNode), &
             yeToBeUpdated(thisNode), &
-            GlobalNoGhost%xb(otherNode), &
-            GlobalNoGhost%xe(otherNode), &
-            GlobalNoGhost%yb(otherNode), &
-            GlobalNoGhost%ye(otherNode), &
+            GlobalOwn%xb(otherNode), &
+            GlobalOwn%xe(otherNode), &
+            GlobalOwn%yb(otherNode), &
+            GlobalOwn%ye(otherNode), &
             xbRecv(i), xeRecv(i), &
             ybRecv(i), yeRecv(i), &
             willRecv(i))
@@ -381,12 +381,12 @@ contains
 
 
 
-  subroutine IncludeDomainBoundaries(Neigh, GridSize, GlobalNoGhost, &
+  subroutine IncludeDomainBoundaries(Neigh, GridSize, GlobalOwn, &
        xbComm, xeComm, ybComm, yeComm, willComm)
 
     type(NeighbourNodes), pointer :: Neigh       ! intent(in)
     type(GridDims), pointer :: GridSize       ! intent(in)
-    type(DomainDecomp), pointer :: GlobalNoGhost ! intent(in)
+    type(DomainDecomp), pointer :: GlobalOwn ! intent(in)
 
     integer, intent(inout) :: xbComm(:)          ! global index, size of Neigh%nNeigh
     integer, intent(inout) :: xeComm(:)          ! global index, size of Neigh%nNeigh
@@ -401,8 +401,8 @@ contains
 
     ! check arguments
 
-    if (.not. associated(GlobalNoGhost)) then
-       call fatal_error(h//" starts with null GlobalNoGhost")
+    if (.not. associated(GlobalOwn)) then
+       call fatal_error(h//" starts with null GlobalOwn")
     end if
 
     if (.not. associated(Neigh)) then

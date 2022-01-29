@@ -29,8 +29,8 @@ Module mem_micro
                           rcp,rdp,rrp,rpp,rsp,rap,rgp,rhp &
                          ,ccp,cdp,crp,cpp,csp,cap,cgp,chp &
                          ,cccnp,gccnp,cifnp,q2,q6,q7 &
-                         ,rei,rel,cldfr                 &
-			                ,cccmp,gccmp,cnm1p,cnm2p,cnm3p,cnm8p &
+                         ,rei,rel                    &
+			 ,cccmp,gccmp,cnm1p,cnm2p,cnm3p,cnm8p &
                          ,md1np,md2np,salt_filmp,salt_jetp,salt_spmp  &
                          ,pcpvr,pcpvp,pcpvs,pcpva,pcpvg,pcpvh,pcpvd   &
            !COMPUTE AND OUTPUT MICRO BUDGET PROCESSES
@@ -73,10 +73,9 @@ Contains
    
    USE micphys, only : level,idriz,irain,ipris,isnow,igraup,ihail,jnmb,&
                        icloud,iccnlev,idust,imd1flg,imd2flg, isalt,&
-		                 imbudget,imbudtot,iaggr,mcphys_type
+		       imbudget,imbudtot,iaggr,mcphys_type
    USE mem_radiate, ONLY: ilwrtyp, iswrtyp       ! INTENT(IN)
-   USE mem_cuparm , ONLY: nnqparm                ! INTENT(IN)
-
+                        
    implicit none          
    type (micro_vars) :: micro
    integer, intent(in) :: n1,n2,n3,ng
@@ -107,65 +106,60 @@ Contains
           allocate (micro%rrp  (n1,n2,n3)) ;micro%rrp  =0.0
           !- for this scheme, the rain rate below will
 	  !- account for rain+ice+snow+graupel
-	       allocate (micro%accpr(n2,n3)) ;   micro%accpr=0.0
+	  allocate (micro%accpr(n2,n3)) ;   micro%accpr=0.0
           allocate (micro%pcprr(n2,n3)) ;   micro%pcprr=0.0
       
           !- ice
           allocate (micro%rpp  (n1,n2,n3)) ;micro%rpp  =0.0
           !- don t need to be allocated, see coments above
-	       !allocate (micro%accpp(n2,n3)) ;   micro%accpp=0.0
+	  !allocate (micro%accpp(n2,n3)) ;   micro%accpp=0.0
           !allocate (micro%pcprp(n2,n3)) ;   micro%pcprp=0.0
       
           !- snow
           allocate (micro%rsp  (n1,n2,n3)) ;micro%rsp	=0.0
           !- the rates bellow will account for snow and ice
-	       allocate (micro%accps(n2,n3)) ;   micro%accps =0.0
+	  allocate (micro%accps(n2,n3)) ;   micro%accps =0.0
           allocate (micro%pcprs(n2,n3)) ;   micro%pcprs =0.0
       
           !- graupel
           allocate (micro%rgp  (n1,n2,n3)) ;micro%rgp  =0.0
           !- the rates bellow will account for only graupel
-	       allocate (micro%accpg(n2,n3)) ;   micro%accpg=0.0
+	  allocate (micro%accpg(n2,n3)) ;   micro%accpg=0.0
           allocate (micro%pcprg(n2,n3)) ;   micro%pcprg=0.0
       
-	       IF(mcphys_type  == 2 .or. mcphys_type  == 3) then ! only for double-moment and 
+	  IF(mcphys_type  == 2 .or. mcphys_type  == 3) then ! only for double-moment and 
             !- number concentration for cloud/rain/ice
             !- obs : ccp don t need to be allocated for the single-moment
-	         !- cloud water scheme (the same for CCN and IFN).
+	    !-       cloud water scheme (the same for CCN and IFN).
             allocate(micro%crp  (n1,n2,n3)) ;micro%crp  =0.0 
             allocate(micro%cpp  (n1,n2,n3)) ;micro%cpp  =0.0 
-!---these should not be allocated for mcphys_type  == 2 because
-!---they are not used for this option
-!            !ST
-!	          allocate(micro%ccp  (n1,n2,n3)) ;micro%ccp  =0.0 
-!            allocate(micro%cccnp(n1,n2,n3)) ;micro%cccnp=0.0 !;endif 
-!            allocate(micro%cifnp(n1,n2,n3)) ;micro%cifnp=0.0 !;endif 
-!            !ST
+            !ST
+	    allocate(micro%ccp  (n1,n2,n3)) ;micro%ccp  =0.0 
+            allocate(micro%cccnp(n1,n2,n3)) ;micro%cccnp=0.0 !;endif 
+            allocate(micro%cifnp(n1,n2,n3)) ;micro%cifnp=0.0 !;endif 
+            !ST
           ENDIF
-         !- only for cloud water double-moment and aerosol aware microphysics         
-	       IF(mcphys_type  == 3) then ! only for double-moment and 
-	        allocate(micro%ccp  (n1,n2,n3)) ;micro%ccp  =0.0 
+          !- only for cloud water double-moment and aerosol aware microphysics         
+	  IF(mcphys_type  == 3) then ! only for double-moment and 
+	    allocate(micro%ccp  (n1,n2,n3)) ;micro%ccp  =0.0 
            allocate(micro%cccnp(n1,n2,n3)) ;micro%cccnp=0.0 !;endif 
            allocate(micro%cifnp(n1,n2,n3)) ;micro%cifnp=0.0 !;endif 
           ENDIF
-          
-          !- 3D cloud fraction from GFDL cloud microphysics and GF convection
-          IF(mcphys_type  == 4 .or. nnqparm(ng) == 8) then 
-           allocate(micro%cldfr  (n1,n2,n3)) ;micro%cldfr  =0.0 
-          ENDIF
-      
-     !- for consistency with the other parts of BRAMS
+        
+          !- for consistency with the other parts of BRAMS
 	  !- pgcp will be the total precipitation rate
-	        allocate (micro%pcpg (n2,n3));micro%pcpg =0.0
+	  allocate (micro%pcpg (n2,n3));micro%pcpg =0.0
           !-the allocations below are tmp for leaf-3
-	        allocate (micro%qpcpg(n2,n3));micro%qpcpg=0.0         
-	        allocate (micro%dpcpg(n2,n3));micro%dpcpg=0.0
+	  allocate (micro%qpcpg(n2,n3));micro%qpcpg=0.0         
+	  allocate (micro%dpcpg(n2,n3));micro%dpcpg=0.0
       
-     !- allocation of memory for effective radius for RRTMG
-	       IF(ilwrtyp==6 .or. iswrtyp==6 ) THEN
-           allocate (micro%rei  (n1,n2,n3)) ;micro%rei  =0.0  
-	        allocate (micro%rel  (n1,n2,n3)) ;micro%rel  =0.0
-	       ENDIF
+      
+          !- allocation of memory for effective radius for RRTMG
+	  !
+	  IF(ilwrtyp==6 .or. iswrtyp==6 ) THEN
+            allocate (micro%rei  (n1,n2,n3)) ;micro%rei  =0.0  
+	    allocate (micro%rel  (n1,n2,n3)) ;micro%rel  =0.0
+	  ENDIF
       
     ELSE  ! for the traditional RAMS microphysics
  
@@ -173,7 +167,7 @@ Contains
             allocate (micro%rcp(n1,n2,n3))   ;micro%rcp    =0.0
       endif
       if (level >= 3) then         
-	      if(irain >= 1)  then
+	 if(irain >= 1)  then
             allocate (micro%rrp  (n1,n2,n3)) ;micro%rrp  =0.0
             allocate (micro%accpr(n2,n3)) ;   micro%accpr=0.0
             allocate (micro%pcprr(n2,n3)) ;   micro%pcprr=0.0
@@ -363,8 +357,9 @@ Contains
   	     endif							     
   	 endif	! mcphys_type=1							     
           !- allocation of memory for effective radius for RRTMG
+	  !
 	  IF(ilwrtyp==6 .or. iswrtyp==6 ) THEN
-       allocate (micro%rei  (n1,n2,n3)) ;micro%rei  =0.0  
+            allocate (micro%rei  (n1,n2,n3)) ;micro%rei  =0.0  
 	    allocate (micro%rel  (n1,n2,n3)) ;micro%rel  =0.0
 	  ENDIF
       endif ! level >=3							 
@@ -540,7 +535,6 @@ Contains
 
    if (associated(micro%rei))     nullify (micro%rei)
    if (associated(micro%rel))     nullify (micro%rel)
-   if (associated(micro%cldfr))   nullify (micro%cldfr)
    return
    end subroutine nullify_micro
 
@@ -711,8 +705,6 @@ Contains
 
    if (associated(micro%rei))     deallocate (micro%rei)
    if (associated(micro%rel))     deallocate (micro%rel)
-   if (associated(micro%cldfr))   deallocate (micro%cldfr)
-   
    return
    end subroutine dealloc_micro
 
@@ -873,11 +865,6 @@ subroutine filltab_micro(micro,microm,imean,n1,n2,n3,ng)
       call InsertVTab (micro%rel,microm%rel  &
                  ,ng, npts, imean,  &
                  'REL :3:hist:anal:mpti:mpt3')
-   if (associated(micro%cldfr))   &
-      call InsertVTab (micro%cldfr,microm%cldfr  &
-                 ,ng, npts, imean,  &
-                 'CLDFR :3:hist:anal:mpti:mpt3')
-  
   
    !VERTICAL PRECIPITATION RATES
    if (associated(micro%pcpvr)) &

@@ -3696,7 +3696,7 @@ contains
       !
       if(cumulus=='deep') then
          wmeanx=3.   ! m/s ! in the future change for Wmean == integral( W dz) / cloud_depth
-         T_star=2.   ! T_star = temp scale in original paper = 1 K
+         T_star=1.   ! T_star = temp scale in original paper = 1 K
       endif
       if(cumulus=='mid' .or. cumulus=='shallow') then
          wmeanx=3

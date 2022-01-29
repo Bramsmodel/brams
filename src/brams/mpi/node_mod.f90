@@ -619,17 +619,17 @@ contains
 
     integer :: gridID, node
     type(GridTree), pointer :: OneGridTree => null()
-    type(DomainDecomp), pointer :: GlobalNoGhost => null()
+    type(DomainDecomp), pointer :: GlobalOwn => null()
 
     OneGridTree => GridTreeRoot(AllGrids)
     do while (associated(OneGridTree))
        gridId = OneGridTree%curr%Id
-       GlobalNoGhost => OneGridTree%curr%GlobalNoGhost
+       GlobalOwn => OneGridTree%curr%GlobalOwn
        do node = 1, OneGridTree%curr%ParEnv%nmachs
-          ixb(node,gridId) = GlobalNoGhost%xb(node)
-          ixe(node,gridId) = GlobalNoGhost%xe(node)
-          iyb(node,gridId) = GlobalNoGhost%yb(node)
-          iye(node,gridId) = GlobalNoGhost%ye(node)
+          ixb(node,gridId) = GlobalOwn%xb(node)
+          ixe(node,gridId) = GlobalOwn%xe(node)
+          iyb(node,gridId) = GlobalOwn%yb(node)
+          iye(node,gridId) = GlobalOwn%ye(node)
        end do
        OneGridTree => NextOnGridTree(OneGridTree)
     end do

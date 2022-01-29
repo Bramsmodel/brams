@@ -54,7 +54,7 @@ contains
 
   subroutine CreateAcousticMessagePassing(&
        gridId, GridSize, ParEnv, Neigh, &
-       GlobalNoGhost, GlobalWithGhost, &
+       GlobalOwn, GlobalWithGhost, &
        AcouSendU, AcouRecvU, &
        AcouSendV, AcouRecvV, &
        AcouSendP, AcouRecvP, &
@@ -65,7 +65,7 @@ contains
     type(GridDims), pointer :: GridSize
     type(ParallelEnvironment), pointer :: ParEnv    ! intent(in)
     type(NeighbourNodes), pointer :: Neigh          ! intent(in)
-    type(DomainDecomp), pointer :: GlobalNoGhost    ! intent(in)
+    type(DomainDecomp), pointer :: GlobalOwn    ! intent(in)
     type(DomainDecomp), pointer :: GlobalWithGhost  ! intent(in)
     type(MessageSet), pointer :: AcouSendU          ! intent(out)
     type(MessageSet), pointer :: AcouRecvU          ! intent(out)
@@ -87,8 +87,8 @@ contains
 
     if (.not. associated(ParEnv)) then
        call fatal_error(h//" starts with null ParEnv")
-    else if (.not. associated(GlobalNoGhost)) then
-       call fatal_error(h//" starts with null GlobalNoGhost")
+    else if (.not. associated(GlobalOwn)) then
+       call fatal_error(h//" starts with null GlobalOwn")
     else if (.not. associated(GlobalWithGhost)) then
        call fatal_error(h//" starts with null GlobalWithGhost")
     end if
@@ -114,27 +114,27 @@ contains
 
        call CreateAcousticSendRecvU(&
             gridId, nMachs, nNeigh, myNum, &
-            Neigh, GlobalNoGhost, GlobalWithGhost, &
+            Neigh, GlobalOwn, GlobalWithGhost, &
             AcouSendU, AcouRecvU)
 
        call CreateAcousticSendRecvV(&
             gridId, nMachs, nNeigh, myNum, &
-            Neigh, GlobalNoGhost, GlobalWithGhost, &
+            Neigh, GlobalOwn, GlobalWithGhost, &
             AcouSendV, AcouRecvV)
 
        call CreateAcousticSendRecvP(&
             gridId, nMachs, nNeigh, myNum, &
-            Neigh, GlobalNoGhost, GlobalWithGhost, &
+            Neigh, GlobalOwn, GlobalWithGhost, &
             AcouSendP, AcouRecvP)
 
        call CreateAcousticSendRecvUV(&
             gridId, nMachs, nNeigh, myNum, &
-            GridSize, Neigh, GlobalNoGhost, GlobalWithGhost, &
+            GridSize, Neigh, GlobalOwn, GlobalWithGhost, &
             AcouSendUV, AcouRecvUV)
 
        call CreateAcousticSendRecvWP(&
             gridId, nMachs, nNeigh, myNum, &
-            GridSize, Neigh, GlobalNoGhost, GlobalWithGhost, &
+            GridSize, Neigh, GlobalOwn, GlobalWithGhost, &
             AcouSendWP, AcouRecvWP)
     end if
   end subroutine CreateAcousticMessagePassing
@@ -144,7 +144,7 @@ contains
 
   subroutine CreateDn0MessagePassing(&
        gridId, GridSize, ParEnv, Neigh, &
-       GlobalNoGhost, GlobalWithGhost, &
+       GlobalOwn, GlobalWithGhost, &
        SendDn0u, RecvDn0u, &
        SendDn0v, RecvDn0v)
 
@@ -152,7 +152,7 @@ contains
     type(GridDims), pointer :: GridSize
     type(ParallelEnvironment), pointer :: ParEnv    ! intent(in)
     type(NeighbourNodes), pointer :: Neigh          ! intent(in)
-    type(DomainDecomp), pointer :: GlobalNoGhost    ! intent(in)
+    type(DomainDecomp), pointer :: GlobalOwn    ! intent(in)
     type(DomainDecomp), pointer :: GlobalWithGhost  ! intent(in)
     type(MessageSet), pointer :: SendDn0u          ! intent(out)
     type(MessageSet), pointer :: RecvDn0u          ! intent(out)
@@ -168,8 +168,8 @@ contains
 
     if (.not. associated(ParEnv)) then
        call fatal_error(h//" starts with null ParEnv")
-    else if (.not. associated(GlobalNoGhost)) then
-       call fatal_error(h//" starts with null GlobalNoGhost")
+    else if (.not. associated(GlobalOwn)) then
+       call fatal_error(h//" starts with null GlobalOwn")
     else if (.not. associated(GlobalWithGhost)) then
        call fatal_error(h//" starts with null GlobalWithGhost")
     end if
@@ -189,12 +189,12 @@ contains
 
        call CreateSendRecvDn0u(&
             gridId, nMachs, nNeigh, myNum, &
-            Neigh, GlobalNoGhost, GlobalWithGhost, &
+            Neigh, GlobalOwn, GlobalWithGhost, &
             SendDn0u, RecvDn0u)
 
        call CreateSendRecvDn0v(&
             gridId, nMachs, nNeigh, myNum, &
-            Neigh, GlobalNoGhost, GlobalWithGhost, &
+            Neigh, GlobalOwn, GlobalWithGhost, &
             SendDn0v, RecvDn0v)
     end if
   end subroutine CreateDn0MessagePassing
@@ -204,7 +204,7 @@ contains
 
   subroutine CreateG3DMessagePassing(&
        gridId, GridSize, ParEnv, Neigh, &
-       GlobalNoGhost, GlobalWithGhost, &
+       GlobalOwn, GlobalWithGhost, &
        Ramsin, &
        SendG3D, RecvG3D)
 
@@ -212,7 +212,7 @@ contains
     type(GridDims), pointer :: GridSize
     type(ParallelEnvironment), pointer :: ParEnv    ! intent(in)
     type(NeighbourNodes), pointer :: Neigh          ! intent(in)
-    type(DomainDecomp), pointer :: GlobalNoGhost    ! intent(in)
+    type(DomainDecomp), pointer :: GlobalOwn    ! intent(in)
     type(DomainDecomp), pointer :: GlobalWithGhost  ! intent(in)
     type(NamelistFile), pointer :: Ramsin           ! intent(in)
     type(MessageSet), pointer :: SendG3D          ! intent(out)
@@ -229,8 +229,8 @@ contains
 
     if (.not. associated(ParEnv)) then
        call fatal_error(h//" starts with null ParEnv")
-    else if (.not. associated(GlobalNoGhost)) then
-       call fatal_error(h//" starts with null GlobalNoGhost")
+    else if (.not. associated(GlobalOwn)) then
+       call fatal_error(h//" starts with null GlobalOwn")
     else if (.not. associated(GlobalWithGhost)) then
        call fatal_error(h//" starts with null GlobalWithGhost")
     end if
@@ -258,7 +258,7 @@ contains
        call CreateG3DSendRecv(&
             gridId, nMachs, nNeigh, myNum, &
             g3d_spread, g3d_smoothh, &
-            GridSize, Neigh, GlobalNoGhost, GlobalWithGhost, &
+            GridSize, Neigh, GlobalOwn, GlobalWithGhost, &
             SendG3D, RecvG3D)
     end if
   end subroutine CreateG3DMessagePassing
@@ -270,7 +270,7 @@ contains
   subroutine CreateSelectedGhostZoneMessagePassing(&
        gridId, num_var, vtab_r, &
        GridSize, ParEnv, Neigh, &
-       GlobalNoGhost, GlobalWithGhost, &
+       GlobalOwn, GlobalWithGhost, &
        SelectedGhostZoneSend, SelectedGhostZoneRecv)
 
     integer, intent(in) :: gridId
@@ -279,7 +279,7 @@ contains
     type(GridDims), pointer :: GridSize
     type(ParallelEnvironment), pointer :: ParEnv    ! intent(in)
     type(NeighbourNodes), pointer :: Neigh          ! intent(in)
-    type(DomainDecomp), pointer :: GlobalNoGhost    ! intent(in)
+    type(DomainDecomp), pointer :: GlobalOwn    ! intent(in)
     type(DomainDecomp), pointer :: GlobalWithGhost  ! intent(in)
     type(MessageSet), pointer :: SelectedGhostZoneSend          ! intent(out)
     type(MessageSet), pointer :: SelectedGhostZoneRecv          ! intent(out)
@@ -294,8 +294,8 @@ contains
 
     if (.not. associated(ParEnv)) then
        call fatal_error(h//" starts with null ParEnv")
-    else if (.not. associated(GlobalNoGhost)) then
-       call fatal_error(h//" starts with null GlobalNoGhost")
+    else if (.not. associated(GlobalOwn)) then
+       call fatal_error(h//" starts with null GlobalOwn")
     else if (.not. associated(GlobalWithGhost)) then
        call fatal_error(h//" starts with null GlobalWithGhost")
     end if
@@ -313,7 +313,7 @@ contains
 
        call CreateSelectedGhostZoneSendRecv(&
             gridId, nMachs, nNeigh, myNum, num_var, vtab_r, &
-            GridSize, Neigh, GlobalNoGhost, GlobalWithGhost, &
+            GridSize, Neigh, GlobalOwn, GlobalWithGhost, &
             SelectedGhostZoneSend, SelectedGhostZoneRecv)
     end if
   end subroutine CreateSelectedGhostZoneMessagePassing
@@ -325,7 +325,7 @@ contains
   subroutine CreateAllGhostZoneMessagePassing(&
        gridId, num_var, vtab_r, &
        GridSize, ParEnv, Neigh, &
-       GlobalNoGhost, GlobalWithGhost, &
+       GlobalOwn, GlobalWithGhost, &
        AllGhostZoneSend, AllGhostZoneRecv)
 
     integer, intent(in) :: gridId
@@ -334,7 +334,7 @@ contains
     type(GridDims), pointer :: GridSize
     type(ParallelEnvironment), pointer :: ParEnv    ! intent(in)
     type(NeighbourNodes), pointer :: Neigh          ! intent(in)
-    type(DomainDecomp), pointer :: GlobalNoGhost    ! intent(in)
+    type(DomainDecomp), pointer :: GlobalOwn    ! intent(in)
     type(DomainDecomp), pointer :: GlobalWithGhost  ! intent(in)
     type(MessageSet), pointer :: AllGhostZoneSend          ! intent(out)
     type(MessageSet), pointer :: AllGhostZoneRecv          ! intent(out)
@@ -349,8 +349,8 @@ contains
 
     if (.not. associated(ParEnv)) then
        call fatal_error(h//" starts with null ParEnv")
-    else if (.not. associated(GlobalNoGhost)) then
-       call fatal_error(h//" starts with null GlobalNoGhost")
+    else if (.not. associated(GlobalOwn)) then
+       call fatal_error(h//" starts with null GlobalOwn")
     else if (.not. associated(GlobalWithGhost)) then
        call fatal_error(h//" starts with null GlobalWithGhost")
     end if
@@ -368,7 +368,7 @@ contains
 
        call CreateAllGhostZoneSendRecv(&
             gridId, nMachs, nNeigh, myNum, num_var, vtab_r, &
-            GridSize, Neigh, GlobalNoGhost, GlobalWithGhost, &
+            GridSize, Neigh, GlobalOwn, GlobalWithGhost, &
             AllGhostZoneSend, AllGhostZoneRecv)
     end if
   end subroutine CreateAllGhostZoneMessagePassing
@@ -478,7 +478,7 @@ contains
 
   subroutine CreateAcousticSendRecvU(&
        gridId, nMachs, nNeigh, myNum, &
-       Neigh, GlobalNoGhost, GlobalWithGhost, &
+       Neigh, GlobalOwn, GlobalWithGhost, &
        AcouSendU, AcouRecvU)
 
     integer, intent(in) :: gridId
@@ -487,7 +487,7 @@ contains
     integer, intent(in) :: myNum
 
     type(NeighbourNodes), pointer :: Neigh          ! intent(in)
-    type(DomainDecomp), pointer :: GlobalNoGhost    ! intent(in)
+    type(DomainDecomp), pointer :: GlobalOwn    ! intent(in)
     type(DomainDecomp), pointer :: GlobalWithGhost  ! intent(in)
     type(MessageSet), pointer :: AcouSendU          ! intent(out)
     type(MessageSet), pointer :: AcouRecvU          ! intent(out)
@@ -527,16 +527,16 @@ contains
     character(len=30) :: tmp_name
 
     ! AcouSendU, AcouRecvU:
-    ! messages update GlobalNoGhost [xb-1:xb-1,yb:ye]
+    ! messages update GlobalOwn [xb-1:xb-1,yb:ye]
 
-    xbToBeUpdated = GlobalNoGhost%xb - 1
+    xbToBeUpdated = GlobalOwn%xb - 1
     xeToBeUpdated = xbToBeUpdated
-    ybToBeUpdated = GlobalNoGhost%yb
-    yeToBeUpdated = GlobalNoGhost%ye
+    ybToBeUpdated = GlobalOwn%yb
+    yeToBeUpdated = GlobalOwn%ye
 
     ! which neighbour nodes will send and receive
 
-    call NodesToSendRecvMessages(myNum, Neigh, GlobalNoGhost, &
+    call NodesToSendRecvMessages(myNum, Neigh, GlobalOwn, &
          xbToBeUpdated, xeToBeUpdated, ybToBeUpdated, yeToBeUpdated, &
          xbSend, xeSend, ybSend, yeSend, willSend, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv)
@@ -572,7 +572,7 @@ contains
 
   subroutine CreateAcousticSendRecvV(&
        gridId, nMachs, nNeigh, myNum, &
-       Neigh, GlobalNoGhost, GlobalWithGhost, &
+       Neigh, GlobalOwn, GlobalWithGhost, &
        AcouSendV, AcouRecvV)
 
     integer, intent(in) :: gridId
@@ -581,7 +581,7 @@ contains
     integer, intent(in) :: myNum
 
     type(NeighbourNodes), pointer :: Neigh          ! intent(in)
-    type(DomainDecomp), pointer :: GlobalNoGhost    ! intent(in)
+    type(DomainDecomp), pointer :: GlobalOwn    ! intent(in)
     type(DomainDecomp), pointer :: GlobalWithGhost  ! intent(in)
     type(MessageSet), pointer :: AcouSendV          ! intent(out)
     type(MessageSet), pointer :: AcouRecvV          ! intent(out)
@@ -621,16 +621,16 @@ contains
     character(len=*), parameter :: h="**(CreateAcousticSendRecvV)**"
 
     ! AcouSendV, AcouRecvV:
-    ! messages update GlobalNoGhost [xb:xe,yb-1:yb-1]
+    ! messages update GlobalOwn [xb:xe,yb-1:yb-1]
 
-    xbToBeUpdated = GlobalNoGhost%xb
-    xeToBeUpdated = GlobalNoGhost%xe
-    ybToBeUpdated = GlobalNoGhost%yb - 1
+    xbToBeUpdated = GlobalOwn%xb
+    xeToBeUpdated = GlobalOwn%xe
+    ybToBeUpdated = GlobalOwn%yb - 1
     yeToBeUpdated = ybToBeUpdated
 
     ! which neighbour nodes will send and receive
 
-    call NodesToSendRecvMessages(myNum, Neigh, GlobalNoGhost, &
+    call NodesToSendRecvMessages(myNum, Neigh, GlobalOwn, &
          xbToBeUpdated, xeToBeUpdated, ybToBeUpdated, yeToBeUpdated, &
          xbSend, xeSend, ybSend, yeSend, willSend, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv)
@@ -666,7 +666,7 @@ contains
 
   subroutine CreateAcousticSendRecvP(&
        gridId, nMachs, nNeigh, myNum, &
-       Neigh, GlobalNoGhost, GlobalWithGhost, &
+       Neigh, GlobalOwn, GlobalWithGhost, &
        AcouSendP, AcouRecvP)
 
     integer, intent(in) :: gridId
@@ -675,7 +675,7 @@ contains
     integer, intent(in) :: myNum
 
     type(NeighbourNodes), pointer :: Neigh          ! intent(in)
-    type(DomainDecomp), pointer :: GlobalNoGhost    ! intent(in)
+    type(DomainDecomp), pointer :: GlobalOwn    ! intent(in)
     type(DomainDecomp), pointer :: GlobalWithGhost  ! intent(in)
     type(MessageSet), pointer :: AcouSendP          ! intent(out)
     type(MessageSet), pointer :: AcouRecvP          ! intent(out)
@@ -729,34 +729,34 @@ contains
     character(len=30) :: tmp_name
 
     ! AcouSendP, AcouRecvP: union of
-    !               GlobalNoGhost [xe+1:xe+1,yb:ye] with
-    !               GlobalNoGhost [xb:xe,ye+1:ye+1]
+    !               GlobalOwn [xe+1:xe+1,yb:ye] with
+    !               GlobalOwn [xb:xe,ye+1:ye+1]
 
     ! first part of the union ([xe+1:xe+1,yb:ye])
 
-    xbToBeUpdated = GlobalNoGhost%xe+1
+    xbToBeUpdated = GlobalOwn%xe+1
     xeToBeUpdated = xbToBeUpdated
-    ybToBeUpdated = GlobalNoGhost%yb
-    yeToBeUpdated = GlobalNoGhost%ye
+    ybToBeUpdated = GlobalOwn%yb
+    yeToBeUpdated = GlobalOwn%ye
 
     ! which neighbour nodes will send and receive
 
-    call NodesToSendRecvMessages(myNum, Neigh, GlobalNoGhost, &
+    call NodesToSendRecvMessages(myNum, Neigh, GlobalOwn, &
          xbToBeUpdated, xeToBeUpdated, ybToBeUpdated, yeToBeUpdated, &
          xbSend, xeSend, ybSend, yeSend, willSend, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv)
 
     ! second part of the union ([xb:xe,ye+1:ye+1])
 
-    xbToBeUpdated = GlobalNoGhost%xb
-    xeToBeUpdated = GlobalNoGhost%xe
-    ybToBeUpdated = GlobalNoGhost%ye + 1
+    xbToBeUpdated = GlobalOwn%xb
+    xeToBeUpdated = GlobalOwn%xe
+    ybToBeUpdated = GlobalOwn%ye + 1
     yeToBeUpdated = ybToBeUpdated
 
 
     ! which neighbour nodes will send and receive
 
-    call NodesToSendRecvMessages(myNum, Neigh, GlobalNoGhost, &
+    call NodesToSendRecvMessages(myNum, Neigh, GlobalOwn, &
          xbToBeUpdated, xeToBeUpdated, ybToBeUpdated, yeToBeUpdated, &
          xbSend_2, xeSend_2, ybSend_2, yeSend_2, willSend_2, &
          xbRecv_2, xeRecv_2, ybRecv_2, yeRecv_2, willRecv_2)
@@ -854,7 +854,7 @@ contains
 
   subroutine CreateAcousticSendRecvUV(&
        gridId, nMachs, nNeigh, myNum, &
-       GridSize, Neigh, GlobalNoGhost, GlobalWithGhost, &
+       GridSize, Neigh, GlobalOwn, GlobalWithGhost, &
        AcouSendUV, AcouRecvUV)
 
     integer, intent(in) :: gridId
@@ -864,7 +864,7 @@ contains
 
     type(GridDims), pointer :: GridSize
     type(NeighbourNodes), pointer :: Neigh          ! intent(in)
-    type(DomainDecomp), pointer :: GlobalNoGhost    ! intent(in)
+    type(DomainDecomp), pointer :: GlobalOwn    ! intent(in)
     type(DomainDecomp), pointer :: GlobalWithGhost  ! intent(in)
     type(MessageSet), pointer :: AcouSendUV          ! intent(out)
     type(MessageSet), pointer :: AcouRecvUV          ! intent(out)
@@ -913,16 +913,16 @@ contains
 
     ! which neighbour nodes will send and receive
 
-    call NodesToSendRecvMessages(myNum, Neigh, GlobalNoGhost, &
+    call NodesToSendRecvMessages(myNum, Neigh, GlobalOwn, &
          xbToBeUpdated, xeToBeUpdated, ybToBeUpdated, yeToBeUpdated, &
          xbSend, xeSend, ybSend, yeSend, willSend, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv)
 
     ! include real domain boundaries
 
-    call IncludeDomainBoundaries(Neigh, GridSize, GlobalNoGhost, &
+    call IncludeDomainBoundaries(Neigh, GridSize, GlobalOwn, &
          xbSend, xeSend, ybSend, yeSend, willSend)
-    call IncludeDomainBoundaries(Neigh, GridSize, GlobalNoGhost, &
+    call IncludeDomainBoundaries(Neigh, GridSize, GlobalOwn, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv)
 
     ! build message set
@@ -980,7 +980,7 @@ contains
 
   subroutine CreateAcousticSendRecvWP(&
        gridId, nMachs, nNeigh, myNum, &
-       GridSize, Neigh, GlobalNoGhost, GlobalWithGhost, &
+       GridSize, Neigh, GlobalOwn, GlobalWithGhost, &
        AcouSendWP, AcouRecvWP)
 
     integer, intent(in) :: gridId
@@ -990,7 +990,7 @@ contains
 
     type(GridDims), pointer :: GridSize
     type(NeighbourNodes), pointer :: Neigh          ! intent(in)
-    type(DomainDecomp), pointer :: GlobalNoGhost    ! intent(in)
+    type(DomainDecomp), pointer :: GlobalOwn    ! intent(in)
     type(DomainDecomp), pointer :: GlobalWithGhost  ! intent(in)
     type(MessageSet), pointer :: AcouSendWP          ! intent(out)
     type(MessageSet), pointer :: AcouRecvWP          ! intent(out)
@@ -1039,16 +1039,16 @@ contains
 
     ! which neighbour nodes will send and receive
 
-    call NodesToSendRecvMessages(myNum, Neigh, GlobalNoGhost, &
+    call NodesToSendRecvMessages(myNum, Neigh, GlobalOwn, &
          xbToBeUpdated, xeToBeUpdated, ybToBeUpdated, yeToBeUpdated, &
          xbSend, xeSend, ybSend, yeSend, willSend, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv)
 
     ! include real domain boundaries
 
-    call IncludeDomainBoundaries(Neigh, GridSize, GlobalNoGhost, &
+    call IncludeDomainBoundaries(Neigh, GridSize, GlobalOwn, &
          xbSend, xeSend, ybSend, yeSend, willSend)
-    call IncludeDomainBoundaries(Neigh, GridSize, GlobalNoGhost, &
+    call IncludeDomainBoundaries(Neigh, GridSize, GlobalOwn, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv)
 
     ! build message set
@@ -1102,7 +1102,7 @@ contains
 
   subroutine CreateSelectedGhostZoneSendRecv(&
        gridId, nMachs, nNeigh, myNum, num_var, vtab_r, &
-       GridSize, Neigh, GlobalNoGhost, GlobalWithGhost, &
+       GridSize, Neigh, GlobalOwn, GlobalWithGhost, &
        SelectedGhostZoneSend, SelectedGhostZoneRecv)
 
     integer, intent(in) :: gridId
@@ -1114,7 +1114,7 @@ contains
 
     type(GridDims), pointer :: GridSize
     type(NeighbourNodes), pointer :: Neigh          ! intent(in)
-    type(DomainDecomp), pointer :: GlobalNoGhost    ! intent(in)
+    type(DomainDecomp), pointer :: GlobalOwn    ! intent(in)
     type(DomainDecomp), pointer :: GlobalWithGhost  ! intent(in)
     type(MessageSet), pointer :: SelectedGhostZoneSend          ! intent(out)
     type(MessageSet), pointer :: SelectedGhostZoneRecv          ! intent(out)
@@ -1163,16 +1163,16 @@ contains
 
     ! which neighbour nodes will send and receive
 
-    call NodesToSendRecvMessages(myNum, Neigh, GlobalNoGhost, &
+    call NodesToSendRecvMessages(myNum, Neigh, GlobalOwn, &
          xbToBeUpdated, xeToBeUpdated, ybToBeUpdated, yeToBeUpdated, &
          xbSend, xeSend, ybSend, yeSend, willSend, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv)
 
     ! include real domain boundaries
 
-    call IncludeDomainBoundaries(Neigh, GridSize, GlobalNoGhost, &
+    call IncludeDomainBoundaries(Neigh, GridSize, GlobalOwn, &
          xbSend, xeSend, ybSend, yeSend, willSend)
-    call IncludeDomainBoundaries(Neigh, GridSize, GlobalNoGhost, &
+    call IncludeDomainBoundaries(Neigh, GridSize, GlobalOwn, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv)
 
     ! build message set
@@ -1212,7 +1212,7 @@ contains
 
   subroutine CreateAllGhostZoneSendRecv(&
        gridId, nMachs, nNeigh, myNum, num_var, vtab_r, &
-       GridSize, Neigh, GlobalNoGhost, GlobalWithGhost, &
+       GridSize, Neigh, GlobalOwn, GlobalWithGhost, &
        AllGhostZoneSend, AllGhostZoneRecv)
 
     integer, intent(in) :: gridId
@@ -1224,7 +1224,7 @@ contains
 
     type(GridDims), pointer :: GridSize
     type(NeighbourNodes), pointer :: Neigh          ! intent(in)
-    type(DomainDecomp), pointer :: GlobalNoGhost    ! intent(in)
+    type(DomainDecomp), pointer :: GlobalOwn    ! intent(in)
     type(DomainDecomp), pointer :: GlobalWithGhost  ! intent(in)
     type(MessageSet), pointer :: AllGhostZoneSend          ! intent(out)
     type(MessageSet), pointer :: AllGhostZoneRecv          ! intent(out)
@@ -1273,16 +1273,16 @@ contains
 
     ! which neighbour nodes will send and receive
 
-    call NodesToSendRecvMessages(myNum, Neigh, GlobalNoGhost, &
+    call NodesToSendRecvMessages(myNum, Neigh, GlobalOwn, &
          xbToBeUpdated, xeToBeUpdated, ybToBeUpdated, yeToBeUpdated, &
          xbSend, xeSend, ybSend, yeSend, willSend, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv)
 
     ! include real domain boundaries
 
-    call IncludeDomainBoundaries(Neigh, GridSize, GlobalNoGhost, &
+    call IncludeDomainBoundaries(Neigh, GridSize, GlobalOwn, &
          xbSend, xeSend, ybSend, yeSend, willSend)
-    call IncludeDomainBoundaries(Neigh, GridSize, GlobalNoGhost, &
+    call IncludeDomainBoundaries(Neigh, GridSize, GlobalOwn, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv)
 
     ! build message set
@@ -1319,7 +1319,7 @@ contains
 
   subroutine CreateSendRecvDn0u(&
        gridId, nMachs, nNeigh, myNum, &
-       Neigh, GlobalNoGhost, GlobalWithGhost, &
+       Neigh, GlobalOwn, GlobalWithGhost, &
        SendDn0u, RecvDn0u)
 
     integer, intent(in) :: gridId
@@ -1328,7 +1328,7 @@ contains
     integer, intent(in) :: myNum
 
     type(NeighbourNodes), pointer :: Neigh          ! intent(in)
-    type(DomainDecomp), pointer :: GlobalNoGhost    ! intent(in)
+    type(DomainDecomp), pointer :: GlobalOwn    ! intent(in)
     type(DomainDecomp), pointer :: GlobalWithGhost  ! intent(in)
     type(MessageSet), pointer :: SendDn0u          ! intent(out)
     type(MessageSet), pointer :: RecvDn0u          ! intent(out)
@@ -1368,16 +1368,16 @@ contains
     character(len=30) :: tmp_name
 
     ! SendDn0u, RecvDn0u:
-    ! messages update GlobalNoGhost [xe+1:xe+1,yb:ye]
+    ! messages update GlobalOwn [xe+1:xe+1,yb:ye]
 
-    xbToBeUpdated = GlobalNoGhost%xe + 1
+    xbToBeUpdated = GlobalOwn%xe + 1
     xeToBeUpdated = xbToBeUpdated
-    ybToBeUpdated = GlobalNoGhost%yb
-    yeToBeUpdated = GlobalNoGhost%ye
+    ybToBeUpdated = GlobalOwn%yb
+    yeToBeUpdated = GlobalOwn%ye
 
     ! which neighbour nodes will send and receive
 
-    call NodesToSendRecvMessages(myNum, Neigh, GlobalNoGhost, &
+    call NodesToSendRecvMessages(myNum, Neigh, GlobalOwn, &
          xbToBeUpdated, xeToBeUpdated, ybToBeUpdated, yeToBeUpdated, &
          xbSend, xeSend, ybSend, yeSend, willSend, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv)
@@ -1408,7 +1408,7 @@ contains
 
   subroutine CreateSendRecvDn0v(&
        gridId, nMachs, nNeigh, myNum, &
-       Neigh, GlobalNoGhost, GlobalWithGhost, &
+       Neigh, GlobalOwn, GlobalWithGhost, &
        SendDn0v, RecvDn0v)
 
     integer, intent(in) :: gridId
@@ -1417,7 +1417,7 @@ contains
     integer, intent(in) :: myNum
 
     type(NeighbourNodes), pointer :: Neigh          ! intent(in)
-    type(DomainDecomp), pointer :: GlobalNoGhost    ! intent(in)
+    type(DomainDecomp), pointer :: GlobalOwn    ! intent(in)
     type(DomainDecomp), pointer :: GlobalWithGhost  ! intent(in)
     type(MessageSet), pointer :: SendDn0v          ! intent(out)
     type(MessageSet), pointer :: RecvDn0v          ! intent(out)
@@ -1457,16 +1457,16 @@ contains
     character(len=30) :: tmp_name
 
     ! SendDn0v, RecvDn0v:
-    ! messages update GlobalNoGhost [xb:xe,ye+1:ye+1]
+    ! messages update GlobalOwn [xb:xe,ye+1:ye+1]
 
-    xbToBeUpdated = GlobalNoGhost%xb
-    xeToBeUpdated = GlobalNoGhost%xe
-    ybToBeUpdated = GlobalNoGhost%ye+1
+    xbToBeUpdated = GlobalOwn%xb
+    xeToBeUpdated = GlobalOwn%xe
+    ybToBeUpdated = GlobalOwn%ye+1
     yeToBeUpdated = ybToBeUpdated
 
     ! which neighbour nodes will send and receive
 
-    call NodesToSendRecvMessages(myNum, Neigh, GlobalNoGhost, &
+    call NodesToSendRecvMessages(myNum, Neigh, GlobalOwn, &
          xbToBeUpdated, xeToBeUpdated, ybToBeUpdated, yeToBeUpdated, &
          xbSend, xeSend, ybSend, yeSend, willSend, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv)
@@ -1500,7 +1500,7 @@ contains
   subroutine CreateG3DSendRecv(&
        gridId, nMachs, nNeigh, myNum, &
        g3d_spread, g3d_smoothh, &
-       GridSize, Neigh, GlobalNoGhost, GlobalWithGhost, &
+       GridSize, Neigh, GlobalOwn, GlobalWithGhost, &
        SendG3D, RecvG3D)
 
     integer, intent(in) :: gridId
@@ -1512,7 +1512,7 @@ contains
 
     type(GridDims), pointer :: GridSize
     type(NeighbourNodes), pointer :: Neigh          ! intent(in)
-    type(DomainDecomp), pointer :: GlobalNoGhost    ! intent(in)
+    type(DomainDecomp), pointer :: GlobalOwn    ! intent(in)
     type(DomainDecomp), pointer :: GlobalWithGhost  ! intent(in)
     type(MessageSet), pointer :: SendG3D          ! intent(out)
     type(MessageSet), pointer :: RecvG3D          ! intent(out)
@@ -1562,16 +1562,16 @@ contains
 
     ! which neighbour nodes will send and receive
 
-    call NodesToSendRecvMessages(myNum, Neigh, GlobalNoGhost, &
+    call NodesToSendRecvMessages(myNum, Neigh, GlobalOwn, &
          xbToBeUpdated, xeToBeUpdated, ybToBeUpdated, yeToBeUpdated, &
          xbSend, xeSend, ybSend, yeSend, willSend, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv)
 
     ! include real domain boundaries
 
-    call IncludeDomainBoundaries(Neigh, GridSize, GlobalNoGhost, &
+    call IncludeDomainBoundaries(Neigh, GridSize, GlobalOwn, &
          xbSend, xeSend, ybSend, yeSend, willSend)
-    call IncludeDomainBoundaries(Neigh, GridSize, GlobalNoGhost, &
+    call IncludeDomainBoundaries(Neigh, GridSize, GlobalOwn, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv)
 
     ! build message set

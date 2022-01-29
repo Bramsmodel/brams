@@ -380,7 +380,7 @@ contains
     !   endif
     !   !LFR ------------------------<
 
-    ! !if ( dyncore_flag == 2 .or. dyncore_flag == 3) then
+    ! !if ( dyncore_flag == 2) then
 	   ! ! don't break here, there exist a better suited criterion in subroutine 'cfl1'
     !   !endif
     ! else

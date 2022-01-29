@@ -22,6 +22,7 @@ subroutine advectc(varn,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
        zt, zm, dzm, dzt, hw4, dyncore_flag
 
   use mem_basic, only: basic_g
+  use ModParallelEnvironment, only: MsgDump
 
   !--(DMK-CCATT-INI)-----------------------------------------------------
   !-srf for aerosols sedimentation
@@ -59,6 +60,11 @@ subroutine advectc(varn,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
 
   real, pointer :: scalarp, scalart
 
+
+  logical, parameter :: dumpLocal=.false.
+  character(len=*), parameter :: h="**(advectc)**"
+  character(len=8) :: str(10)
+  
   !--(DMK-CCATT-INI)-----------------------------------------------------
   integer :: i_scl
   !--(DMK-CCATT-FIM)-----------------------------------------------------
@@ -189,7 +195,7 @@ subroutine advectc(varn,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
      do n=1,i_scl
         
         !- if RK or ABM3 schemes, THP/THC are not transported here
-        if (dyncore_flag == 2 .or. dyncore_flag == 3) then
+        if (dyncore_flag == 2) then
           if (scalar_tab(n,ngrid)%name == 'THC' .or. &
               scalar_tab(n,ngrid)%name == 'THP') cycle
         endif
@@ -260,6 +266,9 @@ subroutine advectc(varn,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
                 ,scratch%vt3dg (1) ,scratch%vt3dk (1)  &
                 ,vctr1,vctr2,mynum                     )
 
+           if (dumpLocal) then
+              call MsgDump(h//" invokes advtndc")
+           end if
            call advtndc(mzp,mxp,myp,ia,iz,ja,jz    &
                 ,scalarp          ,scratch%scr1 (1)  &
                 ,scalart          ,dtlt,mynum        )
@@ -810,12 +819,23 @@ subroutine advtndc(m1,m2,m3,ia,iz,ja,jz,scp,sca,sct,dtl,mynum)
 !! 
 !! @copyright Under CC-GPL License by INPE/CPTEC
 !! Please, read @link https://creativecommons.org/licenses/GPL/2.0/legalcode.pt
+
+  use ModParallelEnvironment, only: MsgDump
+
   implicit none
   integer :: m1,m2,m3,ia,iz,ja,jz,mynum,i,j,k
 
   real :: dtl,dtli
   real, dimension(m1,m2,m3) :: scp,sca,sct
 
+  logical, parameter :: dumpLocal=.false.
+  character(len=*), parameter :: h="**(advtndc)**"
+  character(len=8) :: str(10)
+
+  if (dumpLocal) then
+     call MsgDump(h//" executes")
+  end if
+  
   dtli = 1. / dtl
   do j = ja,jz
      do i = ia,iz

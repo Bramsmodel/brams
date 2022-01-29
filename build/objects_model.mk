@@ -188,7 +188,6 @@ OBJ_MOD = \
 	rthrm.o \
 	rtimh.o \
 	rtimh_rk.o \
-	rtimh_abm.o \
 	rtimi.o \
 	ruser.o \
 	shcu_vars_const.o \
@@ -1132,7 +1131,6 @@ MOD_MOD = \
 	c_0_dg_c.mod \
 	modtimestep.mod \
 	modtimestep_rk.mod \
-	modtimestep_abm.mod \
 	meteogram.mod \
 	dam.mod \
 	initmicthompson.mod \
