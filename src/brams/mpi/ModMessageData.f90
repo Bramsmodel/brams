@@ -43,46 +43,52 @@ contains
 
 
 
-  ! InitializeMessageData: Create MessageData components of each entry
-  !                        of a previously allocated MesageData array 
 
 
 
   subroutine InitializeMessageData (MsgData)
+
+    ! Create MessageData components of each entry
+    ! of a previously allocated MesageData array 
+
     type(MessageData), intent(inout) :: MsgData(:)
 
     integer :: i
     character(len=*), parameter :: h="**(InitializeMessageData)**"
-
+    logical, parameter :: dumpLocal=.false.
+    
     do i = 1, size(MsgData)
        MsgData(i)%bufSize = 0
        MsgData(i)%fieldList => CreateFieldSectionList()
     end do
+    if (dumpLocal) then
+       call MsgDump(h//" done")
+    end if
   end subroutine InitializeMessageData
 
 
 
-  ! TransferMessageData: assignment of MessageData variables
 
 
 
   subroutine TransferMessageData(left, right)
+
+    ! assignment of MessageData variables
+
     type(MessageData) :: left
     type(MessageData) :: right
+    logical, parameter :: dumpLocal=.false.
+    character(len=*), parameter :: h="**(TransferMessageData)**"
+
     left%bufSize = right%bufSize
     left%fieldList => right%fieldList
+    if (dumpLocal) then
+       call MsgDump(h//" left => right")
+    end if
   end subroutine TransferMessageData
 
 
 
-  ! InsertFieldSectionAtSendRecvMessageData: 
-  !    Insert, at previosly existing message data variables,
-  !    field sections to communicate. 
-  !    The field sections are arrays indexed by number of neighbours.
-  !    Logical arrays indicate if each neighbour has field
-  !    sections to communicate.
-  !    Insertion is performed only for neighbours that have
-  !    field sections to communicate.
 
 
 
@@ -91,10 +97,18 @@ contains
        xbSend, xeSend, ybSend, yeSend, willSend, SendMsgData, &
        xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvMsgData)
 
-    type(var_tables_r), pointer :: vTabPtr         ! intent(in)
-    type(ParallelEnvironment), pointer :: ParEnv   ! intent(in)
-    type(NeighbourNodes), pointer :: Neigh         ! intent(in)
-    type(DomainDecomp), pointer :: GlobalWithGhost ! intent(in)
+    ! Insert, at previosly existing message data variable,
+    ! field sections to communicate. 
+    ! The field sections are arrays indexed by number of neighbours.
+    ! Logical arrays indicate if each neighbour has field
+    ! sections to communicate.
+    ! Insertion is performed only for neighbours that have
+    ! field sections to communicate.
+
+    type(var_tables_r), pointer, intent(in) :: vTabPtr
+    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+    type(NeighbourNodes), pointer, intent(in) :: Neigh
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
 
     ! all remaining arguments are dimensioned by number of neighbours 
     ! and indexed by neighbour number
@@ -133,7 +147,9 @@ contains
     integer :: thisNode
     integer :: x0, y0
     type(FieldSection), pointer :: oneFieldSection
+    character(len=8) :: c0, c1
     character(len=*), parameter :: h="**(InsertFieldSectionAtSendRecvMessageData)**"
+    logical, parameter :: dumpLocal=.false.
 
     ! check arguments
 
@@ -165,6 +181,12 @@ contains
           call InsertAtFieldSectionList(oneFieldSection, &
                SendMsgData(i)%fieldList)
           SendMsgData(i)%bufSize = SendMsgData(i)%bufSize+oneFieldSection%fieldSectionSize
+          if (dumpLocal) then
+             write(c0,"(i8)") i
+             write(c1,"(i8)") SendMsgData(i)%bufSize
+             call MsgDump(h//" increased buffer size of SendMsgData("//&
+                  trim(adjustl(c0))//") to "//trim(adjustl(c1)))
+          end if
        end if
        if (willRecv(i)) then
           oneFieldSection =>  CreateFieldSection(&
@@ -175,29 +197,50 @@ contains
           call InsertAtFieldSectionList(oneFieldSection, &
                RecvMsgData(i)%fieldList)
           RecvMsgData(i)%bufSize = RecvMsgData(i)%bufSize+oneFieldSection%fieldSectionSize
+          if (dumpLocal) then
+             write(c0,"(i8)") i
+             write(c1,"(i8)") RecvMsgData(i)%bufSize
+             call MsgDump(h//" increased buffer size of RecvMsgData("//&
+                  trim(adjustl(c0))//") to "//trim(adjustl(c1)))
+          end if
        end if
     end do
   end subroutine InsertFieldSectionAtSendRecvMessageData
 
 
 
-  ! CleanMessageData: To clean a message data array,
-  !                   destroy field section lists of null entries,
-  !                   create fresh areas for non-empty field section lists,
-  !                   since these non-empty entries are pointed by someone else
-
 
 
   subroutine CleanMessageData (MsgData)
     type(MessageData), intent(inout) :: MsgData(:)
 
+    ! To clean a message data array,
+    ! destroy field section lists of null entries,
+    ! create fresh areas for non-empty field section lists,
+    ! since these non-empty entries are pointed by someone else
+
     integer :: i
-    character(len=*), parameter :: h="**(InitializeMessageData)**"
+    character(len=*), parameter :: h="**(CleanMessageData)**"
+    character(len=8) :: c0, c1
+    logical, parameter :: dumpLocal=.false.
 
     do i = 1, size(MsgData)
        if (MsgData(i)%bufSize == 0) then
+          if (dumpLocal) then
+             write(c0,"(i8)") i
+             write(c1,"(i8)") MsgData(i)%bufSize
+             call MsgDump(h//" will destroy field section list of MsgData("//&
+                  trim(adjustl(c0))//") of size "//trim(adjustl(c1)))
+          end if
           call DestroyFieldSectionList(MsgData(i)%fieldList)
        else
+          if (dumpLocal) then
+             write(c0,"(i8)") i
+             write(c1,"(i8)") MsgData(i)%bufSize
+             call MsgDump(h//" sets buffer size of MsgData("//&
+                  trim(adjustl(c0))//") of size "//trim(adjustl(c1))//&
+                  " to zero and nullify fieldList pointer")
+          end if
           MsgData(i)%bufSize = 0
           MsgData(i)%fieldList => null()
        end if
@@ -206,26 +249,35 @@ contains
 
 
 
-  ! DestroyMessageData: destroy a variable of this type
 
 
 
   subroutine DestroyMessageData(msgData)
-    type(MessageData) :: msgData
-    character(len=*), parameter :: h="**(DestroyMessageData)**"
 
-!!$    call MsgDump(h//" starts")
+    ! destroy a variable of this type
+
+    type(MessageData) :: msgData
+
+    integer :: ierr
+    character(len=8) :: c0, c1
+    character(len=*), parameter :: h="**(DestroyMessageData)**"
+    logical, parameter :: dumpLocal=.false.
+
     msgData%bufSize = 0
     if (allocated(msgData%buf)) then
-       call MsgDump(h//" msgData%buf is allocated")
-       deallocate(msgData%buf)
-!!$       call MsgDump(h//" msgData%buf was deallocated")
-!!$    else
-!!$       call MsgDump(h//" msgData%buf is not allocated")
+       deallocate(msgData%buf, stat=ierr)
+          if (ierr /= 0) then
+             write(c0,"(i8)") ierr
+             write(c1,"(i8)") msgData%bufSize
+             call fatal_error(h//" deallocate msgData%buf("//&
+                  trim(adjustl(c1))//") fails with stat="//&
+                  trim(adjustl(c0)))
+          end if
     end if
-!!$    call MsgDump(h//" will destroy field section list:")
-!!$    call DumpFieldSectionList(msgData%fieldList)
+    if (dumpLocal) then
+       call MsgDump(h//" nullify bufSize and deallocate buf of MsgData;"//&
+            " will destroy field section list")
+    end if
     call DestroyFieldSectionList(msgData%fieldList)
-!!$    call MsgDump(h//" done ")
   end subroutine DestroyMessageData
 end module ModMessageData

@@ -990,9 +990,9 @@ contains
 
     use ModGrid, only: Grid, DumpGrid
 
-    use ModMessageSet, only: &
+    use ModMessageSetSendRecv, only: &
          PostRecvSendMsgs, &
-         WaitRecvMsgs
+         WaitSendRecvMsgs
 
     use mem_grid, only : nnacoust, & ! intent(in)
          ngrid,                    & ! intent(in)
@@ -1124,7 +1124,7 @@ contains
        !   if outermost grid,
        !     receives pp on full grid boundaries
        if (iter > 1 .and. .not. singleProcRun) then
-          call WaitRecvMsgs(OneGrid%AcouSendP, OneGrid%AcouRecvP)
+          call WaitSendRecvMsgs(OneGrid%AcouSendP, OneGrid%AcouRecvP)
        end if
 
        if ( apply_div_damping .and. ( dyncore_flag == 2)&
@@ -1237,10 +1237,10 @@ contains
 
        if (.not. singleProcRun) then
           if (iter < lastIter) then
-             call WaitRecvMsgs(OneGrid%AcouSendU, OneGrid%AcouRecvU)
-             call WaitRecvMsgs(OneGrid%AcouSendV, OneGrid%AcouRecvV)
+             call WaitSendRecvMsgs(OneGrid%AcouSendU, OneGrid%AcouRecvU)
+             call WaitSendRecvMsgs(OneGrid%AcouSendV, OneGrid%AcouRecvV)
           else
-             call WaitRecvMsgs(OneGrid%AcouSendUV, OneGrid%AcouRecvUV)
+             call WaitSendRecvMsgs(OneGrid%AcouSendUV, OneGrid%AcouRecvUV)
           end if
        end if
 
@@ -1278,7 +1278,7 @@ contains
              call PostRecvSendMsgs(OneGrid%AcouSendP, OneGrid%AcouRecvP)
           else
              call PostRecvSendMsgs(OneGrid%AcouSendWP, OneGrid%AcouRecvWP)
-             call WaitRecvMsgs(OneGrid%AcouSendWP, OneGrid%AcouRecvWP)
+             call WaitSendRecvMsgs(OneGrid%AcouSendWP, OneGrid%AcouRecvWP)
           end if
        end if
 
@@ -1470,9 +1470,9 @@ contains
 
   !.. use ModGrid, only: Grid, DumpGrid
 
-  !.. use ModMessageSet, only: &
+  !.. use ModMessageSetSendRecv, only: &
   !.. PostRecvSendMsgs, &
-  !.. WaitRecvMsgs
+  !.. WaitSendRecvMsgs
 
   !.. use mem_grid, only : nnacoust, & ! intent(in)
   !.. ngrid,                    & ! intent(in)

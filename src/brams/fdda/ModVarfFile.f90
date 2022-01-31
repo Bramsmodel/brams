@@ -136,9 +136,9 @@ module ModVarfFile
        init_ajust,         &
        spc_name
 
-  use ModMessageSet, only: &
+  use ModMessageSetSendRecv, only: &
        PostRecvSendMsgs, &
-       WaitRecvMsgs
+       WaitSendRecvMsgs
 
 
   implicit none
@@ -1712,7 +1712,7 @@ contains
 
     call PostRecvSendMsgs(OneGrid%SendDn0u, OneGrid%RecvDn0u)
     call PostRecvSendMsgs(OneGrid%SendDn0v, OneGrid%RecvDn0v)
-    call WaitRecvMsgs(OneGrid%SendDn0u, OneGrid%RecvDn0u)
-    call WaitRecvMsgs(OneGrid%SendDn0v, OneGrid%RecvDn0v)
+    call WaitSendRecvMsgs(OneGrid%SendDn0u, OneGrid%RecvDn0u)
+    call WaitSendRecvMsgs(OneGrid%SendDn0v, OneGrid%RecvDn0v)
   end subroutine FillDn0uv
 end module ModVarfFile

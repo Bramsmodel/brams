@@ -10,9 +10,9 @@ module ModTimestep
 contains
 subroutine timestep(OneGrid)
 
-  use ModMessageSet, only: &
+  use ModMessageSetSendRecv, only: &
        PostRecvSendMsgs, &
-       WaitRecvMsgs
+       WaitSendRecvMsgs
 
   use ModAcoust, only: acoustic_new
 
@@ -367,7 +367,7 @@ subroutine timestep(OneGrid)
   !  Get the overlap region between parallel nodes
   !---------------------------------------------------
   if (nmachs > 1) then
-     call WaitRecvMsgs(OneGrid%SelectedGhostZoneSend, OneGrid%SelectedGhostZoneRecv)
+     call WaitSendRecvMsgs(OneGrid%SelectedGhostZoneSend, OneGrid%SelectedGhostZoneRecv)
   endif
 
   if (iexev == 2) &

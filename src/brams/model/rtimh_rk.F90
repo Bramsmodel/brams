@@ -20,9 +20,9 @@ contains
 
     use ModParallelEnvironment, only: MsgDump
 
-    use ModMessageSet, only: &
+    use ModMessageSetSendRecv, only: &
          PostRecvSendMsgs, &
-         WaitRecvMsgs
+         WaitSendRecvMsgs
 
     use ModAcoust, only:         &
          acoustic_new,            &
@@ -442,7 +442,7 @@ contains
 !!$    call SynchronizedTimeStamp(TS_PHYSICS) ! Exper1.2, 2021_12
 
     if (nmachs > 1) then
-       call WaitRecvMsgs(OneGrid%SelectedGhostZoneSend, OneGrid%SelectedGhostZoneRecv)
+       call WaitSendRecvMsgs(OneGrid%SelectedGhostZoneSend, OneGrid%SelectedGhostZoneRecv)
     endif
 
     if (iexev == 2) &

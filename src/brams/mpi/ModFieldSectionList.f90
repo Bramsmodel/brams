@@ -1,8 +1,8 @@
 module ModFieldSectionList
 
 
-  ! ModFieldSectionList: List of field sections to be communicated
-  !                      among processes in a single message
+  ! List of field sections to be communicated
+  ! among processes in a single message
 
 
   use var_tables, only: &
@@ -60,7 +60,6 @@ module ModFieldSectionList
      type(FieldSection), pointer :: tail=>null()
   end type FieldSectionList
 
-  logical, parameter :: dumpLocal=.false.
 
 contains
 
@@ -80,6 +79,7 @@ contains
     type(FieldSection), pointer :: oneEntry
 
     character(len=*), parameter :: h="**(CreateFieldSection)**"
+    logical, parameter :: dumpLocal=.false.
 
     ! verify input arguments
 
@@ -156,6 +156,7 @@ contains
 
     character(len=128) :: name
     character(len=*), parameter :: h="**(DestroyFieldSection)**"
+    logical, parameter :: dumpLocal=.false.
 
     if (associated(oneEntry)) then
        name = oneEntry%vTabPtr%name
@@ -192,6 +193,7 @@ contains
     type(FieldSectionList), pointer :: list
 
     character(len=*), parameter :: h="**(InsertAtFieldSectionList)**"
+    logical, parameter :: dumpLocal=.false.
 
     if (.not. associated(node)) then
        call fatal_error(h//" node not associated")
@@ -236,6 +238,7 @@ contains
     logical :: found
     type(FieldSection), pointer :: isThis
     character(len=*), parameter :: h="**(RemoveFromFieldSectionList)**"
+    logical, parameter :: dumpLocal=.false.
 
     if (.not. associated(node)) then
        call fatal_error(h//" node not associated")
@@ -298,23 +301,16 @@ contains
        return
     end if
 
-!!$    call MsgDump(h//" list ")
-!!$    call DumpFieldSectionList(list)
     do
        if (.not. associated(list%head) .and. &
             .not. associated(list%tail)) then
-!!$          call MsgDump(h//" null tail, null head, will dealocate list")
           deallocate(list)
           list => null()
-!!$          call MsgDump(h//" done deallocating list")
           exit
        else if (associated(list%head) .and. &
             associated(list%tail)) then
-!!$          call MsgDump(h//" both tail and head associated, will dealocate node:")
           node => list%head
-!!$          call DumpFieldSection(node)
           call RemoveFromFieldSectionList(node, list)
-!!$          call MsgDump(h//" done deallocating node")
        else if (associated(list%head)) then
           call fatal_error(h//&
                " head associated but tail not associated")
@@ -351,28 +347,41 @@ contains
           cnt = cnt+1
           node => node%next
        end do
-       select case (cnt)
-       case (0)
-          call MsgDump(h//" list with no entries")
-       case (1)
-          call MsgDump(h//" list has a single entry: "//&
-               trim(adjustl(StringFieldSection(list%head))))
-       case default
-          write(c0,"(i8)") cnt
-          call MsgDump(h//" list has the following "//&
-               trim(adjustl(c0))//" entries:")
-          
-          ! dump each node
-          
+       if (cnt == 0) then
+          call MsgDump(h//" empty list")
+       else
           node=>list%head
           do
              if (.not. associated(node)) then
                 exit
              end if
-             call DumpFieldSection(node)
+             call MsgDump(h//" "//trim(adjustl(StringFieldSection(node))))
              node => node%next
           end do
-       end select
+       end if
+          
+!!$       select case (cnt)
+!!$       case (0)
+!!$          call MsgDump(h//" empty list")
+!!$       case (1)
+!!$          call MsgDump(h//" list has a single entry: "//&
+!!$               trim(adjustl(StringFieldSection(list%head))))
+!!$       case default
+!!$          write(c0,"(i8)") cnt
+!!$          call MsgDump(h//" list has the following "//&
+!!$               trim(adjustl(c0))//" entries:")
+!!$          
+!!$          ! dump each node
+!!$          
+!!$          node=>list%head
+!!$          do
+!!$             if (.not. associated(node)) then
+!!$                exit
+!!$             end if
+!!$             call DumpFieldSection(node)
+!!$             node => node%next
+!!$          end do
+!!$       end select
     end if
   end subroutine DumpFieldSectionList
 
@@ -388,6 +397,7 @@ contains
     type(FieldSection), pointer :: next
 
     character(len=*), parameter :: h="**(NextFieldSection)**"
+    logical, parameter :: dumpLocal=.false.
 
     next => null()
     if (.not. associated(list)) then

@@ -14,8 +14,8 @@ OBJ_MOD = \
 	ModVarfFile.o \
 	ModBuffering.o \
 	ModMessageData.o \
-	ModMessagePassing.o \
 	ModMessageSet.o \
+	ModMessageSetSendRecv.o \
 	ModGridDims.o \
 	ModGrid.o \
 	ModGridTree.o \

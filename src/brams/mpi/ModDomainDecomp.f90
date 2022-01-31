@@ -1,6 +1,8 @@
 module ModDomainDecomp
-  use ModParallelEnvironment, only: &
-       ParallelEnvironment, MsgDump
+  use ModParallelEnvironment, only: ParallelEnvironment
+  use ModParallelEnvironment, only: MsgDump
+  use ModParallelEnvironment, only: Brams2MpiProcNbr
+
   use ModGridDims, only: GridDims
 
   implicit none
@@ -796,7 +798,7 @@ contains
 
     integer :: nmachs
     integer :: mach
-    character(len=*), parameter :: h="**(DomainDecompDump)**"
+    character(len=*), parameter :: h="**(DumpDomainDecomp)**"
     character(len=8) :: c0, c1, c2, bnd
     character(len=128) :: msg
 
@@ -829,7 +831,7 @@ contains
          trim(adjustl(c0))//" sub-domains and ghost zone of width "//&
          trim(adjustl(c1)))
 
-    call MsgDump('    rank   x-beg   x-end      nx   y-beg   y-end      ny    cols   ibcon')
+    call MsgDump(' MPIrank   x-beg   x-end      nx   y-beg   y-end      ny    cols   ibcon')
     do mach = 1,nmachs
        bnd=""
        if (btest(oneDomainDecomp%ibcon(mach),1)) bnd=trim(bnd)//"X-"
@@ -837,7 +839,7 @@ contains
        if (btest(oneDomainDecomp%ibcon(mach),3)) bnd=trim(bnd)//"Y-"
        if (btest(oneDomainDecomp%ibcon(mach),4)) bnd=trim(bnd)//"Y+"
        write(msg,"(8i8,a8)") &
-            mach, &
+            Brams2MpiProcNbr(mach), &
             oneDomainDecomp%xb(mach), &
             oneDomainDecomp%xe(mach), &
             oneDomainDecomp%nx(mach), &

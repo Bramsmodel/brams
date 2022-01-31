@@ -494,7 +494,7 @@ module ModOneProc
   use ModGrid, only: &
        Grid, &
        DumpGrid, &
-       InsertMessagePassingAtOneGrid
+       InsertMessageSetAtOneGrid
 
 
   use meteogram, only:              &
@@ -920,7 +920,7 @@ contains
        ! variables of type(MessageSet) stored at OneGrid
        OneGridTreeNode => GridTreeRoot(AllGrids)
        do while (associated(OneGridTreeNode))
-          call InsertMessagePassingAtOneGrid(OneGridTreeNode%curr)
+          call InsertMessageSetAtOneGrid(OneGridTreeNode%curr)
           OneGridTreeNode => NextOnGridTree(OneGridTreeNode)
        end do
 

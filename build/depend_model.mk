@@ -8,7 +8,7 @@ ModVarfFile.o : $(FDDA)/ModVarfFile.f90\
 	parlibf.o ModDateUtils.o mem_scratch.o rconstants.o \
 	ref_sounding.o mem_varinit.o node_mod.o ReadBcst.o \
 	isan_coms.o mem_grid.o ModGridTree.o ModGrid.o mem_chem1.o mem_aer1.o\
-	mem_leaf.o mem_basic.o micphys.o chem1_list.o ModMessageSet.o mem_aer1.o\
+	mem_leaf.o mem_basic.o micphys.o chem1_list.o ModMessageSetSendRecv.o mem_aer1.o\
 	$(UTILS_INCS)/files.h $(UTILS_INCS)/i8.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
@@ -26,15 +26,15 @@ ModMessageData.o  : $(MPI)/ModMessageData.f90 \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModMessagePassing.o  : $(MPI)/ModMessagePassing.f90 \
+ModMessageSet.o  : $(MPI)/ModMessageSet.f90 \
 	ModGridDims.o ModParallelEnvironment.o ModDomainDecomp.o \
-	ModNeighbourNodes.o ModMessageData.o ModMessageSet.o var_tables.o \
+	ModNeighbourNodes.o ModMessageData.o ModMessageSetSendRecv.o var_tables.o \
 	ModNamelistFile.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModMessageSet.o  : $(MPI)/ModMessageSet.f90 \
+ModMessageSetSendRecv.o  : $(MPI)/ModMessageSetSendRecv.f90 \
 	ModParallelEnvironment.o  ModMessageData.o \
 	ModNeighbourNodes.o ModFieldSectionList.o \
 	ModBuffering.o ModDomainDecomp.o var_tables.o parlibf.o
@@ -51,7 +51,7 @@ ModGridDims.o  : $(MPI)/ModGridDims.f90 \
 ModGrid.o  : $(MPI)/ModGrid.f90 \
 	ModNamelistFile.o ModParallelEnvironment.o \
 	ModGridDims.o ModDomainDecomp.o \
-	ModNeighbourNodes.o ModMessageSet.o ModMessagePassing.o \
+	ModNeighbourNodes.o ModMessageSetSendRecv.o ModMessageSet.o \
 	var_tables.o meteogramType.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
@@ -566,7 +566,7 @@ rtimh.o : $(MODEL)/rtimh.F90 mem_basic.o mem_cuparm.o optical.o \
 	ChemSourcesDriver.o ChemDryDepDriver.o chemistry.o ModTimeStamp.o ModGrid.o \
 	raco.o module_rams_microphysics_2M.o mic_thompson_driver.o module_wind_farm.o \
         seasalt.o MatrixDriver.o rtm_driver.o radvc_rk.o $(JULES_OBJ_SFCLYR) \
-	ModMessageSet.o modIau.o  $(UTILS_INCS)/i8.h $(UTILS_INCS)/tsNames.h
+	ModMessageSetSendRecv.o modIau.o  $(UTILS_INCS)/i8.h $(UTILS_INCS)/tsNames.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -579,7 +579,7 @@ rtimh_rk.o : $(MODEL)/rtimh_rk.F90 rtimh.o mem_basic.o mem_cuparm.o \
 	raco.o rthrm.o module_rams_microphysics_2M.o mic_thompson_driver.o\
         seasalt.o MatrixDriver.o rtm_driver.o radvc_rk.o modIau.o leaf3_ocean_only.o \
 	$(JULES_OBJ_SFCLYR) \
-	ModMessageSet.o $(UTILS_INCS)/i8.h $(UTILS_INCS)/tsNames.h
+	ModMessageSetSendRecv.o $(UTILS_INCS)/i8.h $(UTILS_INCS)/tsNames.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -878,7 +878,7 @@ nest_feed.o : $(NESTING)/nest_feed.f90  mem_grid.o
 
 raco.o : $(MODEL)/raco.f90  mem_basic.o mem_grid.o mem_scratch.o \
 	mem_tend.o micphys.o node_mod.o rconstants.o \
-	ModGrid.o ModMessageSet.o ModParallelEnvironment.o raco_adap.o \
+	ModGrid.o ModMessageSetSendRecv.o ModParallelEnvironment.o raco_adap.o \
 	initComm.o \
 	$(UTILS_INCS)/tsNames.h
 	@cp -f $< $(<F:.f90=.f90)
@@ -1280,7 +1280,7 @@ cup_grell3.o : $(CUPARM)/cup_grell3.F90  Phys_const.o mem_jules.o \
 	mem_scalar.o mem_scratch.o mem_scratch1_grell.o mem_tconv.o \
 	mem_tend.o mem_turb.o micphys.o node_mod.o rconstants.o module_cu_g3.o \
 	module_cu_gd_fim.o var_tables.o mem_carma.o module_cu_gf.o \
-	module_cu_gf_v5.1.o ModGrid.o ModMessageSet.o ConvPar_GF_GEOS5.o
+	module_cu_gf_v5.1.o ModGrid.o ModMessageSetSendRecv.o ConvPar_GF_GEOS5.o
 	@cp -f $< $(<F:.F90=.F90)
 	$(F_COMMAND) -D$(AER) $(<F:.F90=.F90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1421,7 +1421,7 @@ turb_diff_adap.o : $(TURB)/turb_diff_adap.f90  mem_grid.o mem_scratch.o
 	rm -f $(<F:.f90=.f90)
 
 raco_adap.o : $(MODEL)/raco_adap.f90  mem_grid.o mem_scratch.o \
-	ModGrid.o ModMessageSet.o node_mod.o rconstants.o
+	ModGrid.o ModMessageSetSendRecv.o node_mod.o rconstants.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1803,7 +1803,7 @@ ModPostOneField8d.o : $(POST_SRC)/ModPostOneField8d.f90 \
 
 ModPostProcess.o : $(POST_SRC)/ModPostProcess.F90 \
 	ModPostOneField.o ModNamelistFile.o ModBramsGrid.o ModPostGrid.o \
-	ModGrid.o ModGridTree.o ModMessageSet.o ModTimeStamp.o ModParallelEnvironment.o
+	ModGrid.o ModGridTree.o ModMessageSetSendRecv.o ModTimeStamp.o ModParallelEnvironment.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

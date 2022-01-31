@@ -29,21 +29,21 @@ module ModGrid
        DumpNeighbourNodes, &
        DestroyNeighbourNodes
 
-  use ModMessageSet, only: &
+  use ModMessageSetSendRecv, only: &
        MessageSet, &
        DumpMessageSet
 
-  use ModMessagePassing, only: &
-       CreateAcousticMessagePassing, &
-       DestroyAcousticMessagePassing, &
-       CreateDn0MessagePassing, &
-       DestroyDn0MessagePassing, &
-       CreateG3DMessagePassing, &
-       DestroyG3DMessagePassing, &
-       CreateSelectedGhostZoneMessagePassing, &
-       DestroySelectedGhostZoneMessagePassing, &
-       CreateAllGhostZoneMessagePassing, &
-       DestroyAllGhostZoneMessagePassing
+  use ModMessageSet, only: &
+       CreateAcousticMessageSet, &
+       DestroyAcousticMessageSet, &
+       CreateDn0MessageSet, &
+       DestroyDn0MessageSet, &
+       CreateG3DMessageSet, &
+       DestroyG3DMessageSet, &
+       CreateSelectedGhostZoneMessageSet, &
+       DestroySelectedGhostZoneMessageSet, &
+       CreateAllGhostZoneMessageSet, &
+       DestroyAllGhostZoneMessageSet
 
 
   ! JP: temporariamente usa variaveis globais enquanto
@@ -61,7 +61,7 @@ module ModGrid
   private
   public :: Grid
   public :: CreateGrid
-  public :: InsertMessagePassingAtOneGrid
+  public :: InsertMessageSetAtOneGrid
   public :: DestroyGrid
   public :: DumpGrid
 
@@ -89,6 +89,9 @@ module ModGrid
      ! LocalOwn: local indices of this grid domain
      !           decomposition owned by each rank. 
      !           Convertion of GlobalOwn to local indices
+     type(NeighbourNodes), pointer :: Neigh => null()
+     ! Neigh: list of BRAMS process numbers that are neighbours
+     !        of this node for usual ghost zone update operations
      type(DomainDecomp), pointer :: GlobalWithGhostAdvectc_rk => null()
      ! GlobalWithGhostAdvectc_rk: global indices of this grid domain
      !                            decomposition considering the ghost zone
@@ -101,7 +104,9 @@ module ModGrid
      !                     for all ranks.
      !                     Convertion of GlobalWithGhostAdvectc_rk
      !                     to local indices
-     type(NeighbourNodes), pointer :: Neigh => null()
+     type(NeighbourNodes), pointer :: NeighAdvectc_rk => null()
+     ! NeighAdvectc_rk: list of BRAMS process numbers that are neighbours
+     !                  of this node for Advectc_rk ghost zone updates
      type(MessageSet), pointer :: AcouSendU
      type(MessageSet), pointer :: AcouRecvU
      type(MessageSet), pointer :: AcouSendV
@@ -126,7 +131,6 @@ module ModGrid
   end type Grid
 
 
-  logical, parameter :: dumpLocal=.false.
 
 contains
 
@@ -144,6 +148,7 @@ contains
 
     character(len=16) :: c0, c1
     character(len=*), parameter :: h="**(CreateGrid)**"
+    logical, parameter :: dumpLocal=.false.
 
     ! correctness of input arguments
 
@@ -212,6 +217,16 @@ contains
          varName="GlobalWithGhostAdvectc_rk" &
          )
 
+    ! neighbour nodes for original ghost zone update operations
+    
+    oneGrid%Neigh => CreateNeighbourNodes(&
+         ParEnv=oneGrid%ParEnv, &
+         GlobalOwn=oneGrid%GlobalOwn, &
+         GlobalWithGhost=oneGrid%GlobalWithGhost, &
+         varName="oneGrid%Neigh" &
+         )
+
+
     ! convert global indices from GlobalWithGhostAdvectc_rk
     ! into local indices stored at LocalOwnAdvectc_rk
 
@@ -222,10 +237,14 @@ contains
          varName="LocalOwnAdvectc_rk" &
          )
 
-    call CreateNeighbourNodes(oneGrid%ParEnv, &
-         oneGrid%GlobalOwn, &
-         oneGrid%GlobalWithGhost, &
-         oneGrid%Neigh)
+    ! neighbour nodes for Advectc_rk ghost zone update operations
+
+    oneGrid%NeighAdvectc_rk => CreateNeighbourNodes(&
+         ParEnv=oneGrid%ParEnv, &
+         GlobalOwn=oneGrid%GlobalOwn, &
+         GlobalWithGhost=oneGrid%GlobalWithGhostAdvectc_rk, &
+         varName="oneGrid%NeighAdvectc_rk" &
+         )
 	 
     oneGrid%AcouSendU => null()
     oneGrid%AcouRecvU => null()
@@ -255,17 +274,18 @@ contains
 
 
 
-  subroutine InsertMessagePassingAtOneGrid(oneGrid)
+  subroutine InsertMessageSetAtOneGrid(oneGrid)
     type(Grid), pointer :: oneGrid
 
     character(len=16) :: c0, c1
-    character(len=*), parameter :: h="**(InsertMessagePassingAtOneGrid)**"
+    character(len=*), parameter :: h="**(InsertMessageSetAtOneGrid)**"
+    logical, parameter :: dumpLocal=.false.
 
     if (.not. associated(oneGrid)) then
        call fatal_error(h//" invoked with null grid")
     end if
 
-    call CreateAcousticMessagePassing(oneGrid%Id, &
+    call CreateAcousticMessageSet(oneGrid%Id, &
          oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
          oneGrid%GlobalOwn, &
          oneGrid%GlobalWithGhost, &
@@ -275,13 +295,13 @@ contains
          oneGrid%AcouSendUV, oneGrid%AcouRecvUV, &
          oneGrid%AcouSendWP, oneGrid%AcouRecvWP)
 
-    call CreateDn0MessagePassing(oneGrid%Id, &
+    call CreateDn0MessageSet(oneGrid%Id, &
          oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
          oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
          oneGrid%SendDn0u, oneGrid%RecvDn0u, &
          oneGrid%SendDn0v, oneGrid%RecvDn0v)
 
-    call CreateG3DMessagePassing(oneGrid%Id, &
+    call CreateG3DMessageSet(oneGrid%Id, &
          oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
          oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
          oneGrid%Ramsin, &
@@ -290,13 +310,13 @@ contains
     ! temporariamente, num_var e vtab_r sao variaveis globais,
     ! enquanto nao inclusas no tipo Grid
 
-    call CreateSelectedGhostZoneMessagePassing(&
+    call CreateSelectedGhostZoneMessageSet(&
        oneGrid%Id, num_var, vtab_r, &
        oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
        oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
        oneGrid%SelectedGhostZoneSend, oneGrid%SelectedGhostZoneRecv)
 
-    call CreateAllGhostZoneMessagePassing(&
+    call CreateAllGhostZoneMessageSet(&
        oneGrid%Id, num_var, vtab_r, &
        oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
        oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
@@ -306,7 +326,7 @@ contains
        call MsgDump(h//" dumping oneGrid")
        call DumpGrid(OneGrid)
     end if
-  end subroutine InsertMessagePassingAtOneGrid
+  end subroutine InsertMessageSetAtOneGrid
 
 
 
@@ -323,21 +343,21 @@ contains
        call DestroyDomainDecomp(oneGrid%GlobalWithGhost)
        call DestroyDomainDecomp(oneGrid%LocalOwn)
        call DestroyNeighbourNodes(oneGrid%Neigh)
-       call DestroyAcousticMessagePassing(&
+       call DestroyAcousticMessageSet(&
             oneGrid%AcouSendU, oneGrid%AcouRecvU, &
             oneGrid%AcouSendV, oneGrid%AcouRecvV, &
             oneGrid%AcouSendP, oneGrid%AcouRecvP, &
             oneGrid%AcouSendUV, oneGrid%AcouRecvUV, &
             oneGrid%AcouSendWP, oneGrid%AcouRecvWP)
-       call DestroyDn0MessagePassing( &
+       call DestroyDn0MessageSet( &
             oneGrid%SendDn0u, oneGrid%RecvDn0u, &
             oneGrid%SendDn0v, oneGrid%RecvDn0v)
-       call DestroyG3DMessagePassing( &
+       call DestroyG3DMessageSet( &
             oneGrid%SendG3D, oneGrid%RecvG3D)
-       call DestroySelectedGhostZoneMessagePassing( &
+       call DestroySelectedGhostZoneMessageSet( &
             oneGrid%SelectedGhostZoneSend, &
             oneGrid%SelectedGhostZoneRecv)
-       call DestroyAllGhostZoneMessagePassing( &
+       call DestroyAllGhostZoneMessageSet( &
             oneGrid%AllGhostZoneSend, &
             oneGrid%AllGhostZoneRecv)
 
@@ -375,9 +395,11 @@ contains
     call DumpDomainDecomp(oneGrid%GlobalOwn, "GlobalOwn")
     call DumpDomainDecomp(oneGrid%GlobalWithGhost, "GlobalWithGhost")
     call DumpDomainDecomp(oneGrid%LocalOwn, "LocalOwn")
+    call DumpDomainDecomp(oneGrid%GlobalWithGhostAdvectc_rk, "GlobalWithGhostAdvectc_rk")
+    call DumpDomainDecomp(oneGrid%LocalOwnAdvectc_rk, "LocalOwnAdvectc_rk")
 
     call MsgDump(h//" dumping neighborhood")
-    call DumpNeighbourNodes(oneGrid%Neigh)
+    call DumpNeighbourNodes(oneGrid%NeighAdvectc_rk,"oneGrid%NeighAdvectc_rk")
 
     call MsgDump(h//" dumping AcouSendU")
     call DumpMessageSet(oneGrid%AcouSendU)

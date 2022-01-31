@@ -35,9 +35,9 @@ module ModPostProcess
    use ModGrid, only : &
          Grid
 
-   use ModMessageSet, only : &
+   use ModMessageSetSendRecv, only : &
          PostRecvSendMsgs, &
-         WaitRecvMsgs
+         WaitSendRecvMsgs
 
      use io_params, only : & ! 
        IPOS            
@@ -188,7 +188,7 @@ contains
          ! update Ghost Zone of all vartables variables part 2:
          ! receive messages and wait on sends
 
-         call WaitRecvMsgs(&
+         call WaitSendRecvMsgs(&
                OneGrid%AllGhostZoneSend, &
                OneGrid%AllGhostZoneRecv)
 
