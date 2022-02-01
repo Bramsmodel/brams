@@ -8,8 +8,7 @@ module ModFieldSectionList
   use var_tables, only: &
        var_tables_r, &
        GetVTabSectionSize, &
-       VerifyVTabEntry, &
-       StringIndexing
+       VerifyVTabEntry
 
   use ModParallelEnvironment, only: &
        MsgDump
@@ -23,13 +22,10 @@ module ModFieldSectionList
   private
   public :: FieldSection
   public :: CreateFieldSection
-  public :: StringFieldSection
   public :: DumpFieldSection
-  public :: DestroyFieldSection
   public :: FieldSectionList
   public :: CreateFieldSectionList
   public :: InsertAtFieldSectionList
-  public :: RemoveFromFieldSectionList
   public :: DestroyFieldSectionList
   public :: DumpFieldSectionList
   public :: NextFieldSection
@@ -38,15 +34,22 @@ module ModFieldSectionList
   ! FieldSection: one entry of a list of field sections to be sent/received 
   !               in a single message.
   !               It represents the section [xStart:xEnd,yStart:yEnd]
-  !               of the field pointed by vTabPtr (2D, 3D or 4D).
+  !               of the field pointed by field_XXX (XXX=2D, 3D, 4D or I2D).
   !               Number of points (reals) to be communicated is fieldSectionSize.
 
-
+  integer, parameter :: UNDEF=-1
   type FieldSection
-     type(var_tables_r), pointer :: vTabPtr ! field to communicate
-     integer :: xStart, xEnd                ! local indices
-     integer :: yStart, yEnd                ! local indices
-     integer :: fieldSectionSize            ! # reals to communicate
+     real, pointer :: field_2D(:,:) => null()
+     real, pointer :: field_3D(:,:,:) => null()
+     real, pointer :: field_4D(:,:,:,:) => null()
+     integer, pointer :: field_I2D(:,:) => null()
+     integer :: xStart=UNDEF   ! local index
+     integer :: xEnd=UNDEF     ! local index
+     integer :: yStart=UNDEF   ! local index
+     integer :: yEnd=UNDEF     ! local index
+     integer :: fieldSectionSize=UNDEF            ! # reals to communicate
+     integer :: idim_type=UNDEF
+     character(len=16) :: name=""
      type(FieldSection), pointer :: next=>null()
      type(FieldSection), pointer :: previous=>null()
   end type FieldSection
@@ -61,14 +64,21 @@ module ModFieldSectionList
   end type FieldSectionList
 
 
+  interface CreateFieldSection
+     module procedure CreateFieldSectionVarTable
+     module procedure CreateFieldSection_I2D
+     module procedure CreateFieldSection_2D
+     module procedure CreateFieldSection_3D
+     module procedure CreateFieldSection_4D
+  end interface CreateFieldSection
 contains
 
 
-  ! CreateFieldSection: returns pointer to a newly created 
+  ! CreateFieldSectionVarTable: returns pointer to a newly created 
   !                     FieldSection variable
 
 
-  function CreateFieldSection(vTabPtr, &
+  function CreateFieldSectionVarTable(vTabPtr, &
        xStart, xEnd, yStart, yEnd, GlobalWithGhost) result(oneEntry)
     type(var_tables_r), pointer :: vTabPtr
     integer, intent(in) :: xStart
@@ -78,8 +88,9 @@ contains
     type(DomainDecomp), pointer :: GlobalWithGhost
     type(FieldSection), pointer :: oneEntry
 
-    character(len=*), parameter :: h="**(CreateFieldSection)**"
+    character(len=*), parameter :: h="**(CreateFieldSectionVarTable)**"
     logical, parameter :: dumpLocal=.false.
+    character(len=8) :: c0
 
     ! verify input arguments
 
@@ -88,20 +99,251 @@ contains
     ! allocate and fill entry
 
     allocate(oneEntry)
-    oneEntry%vTabPtr => vTabPtr
+    select case (vTabPtr%idim_type)
+    case (2)
+       oneEntry%field_2D => vTabPtr%var_p_2D
+    case (3)
+       oneEntry%field_3D => vTabPtr%var_p_3D
+    case (4)
+       oneEntry%field_4D => vTabPtr%var_p_4D
+    case (5)
+       oneEntry%field_4D => vTabPtr%var_p_4D
+    case (6)
+       oneEntry%field_3D => vTabPtr%var_p_3D
+    case (7)
+       oneEntry%field_3D => vTabPtr%var_p_3D
+    case default
+       write(c0,"(i8)") vTabPtr%idim_type
+       call fatal_error(h//" unknown idim_type="//trim(adjustl(c0)))
+    end select
+!!$    oneEntry%vTabPtr => vTabPtr
     oneEntry%xStart = xStart
     oneEntry%xEnd = xEnd
     oneEntry%yStart = yStart
     oneEntry%yEnd = yEnd
     oneEntry%fieldSectionSize = GetVTabSectionSize(vTabPtr, &
          xStart, xEnd, yStart, yEnd)
+    oneEntry%idim_type=vTabPtr%idim_type
+    oneEntry%name=vTabPtr%name
     oneEntry%next=>null()
     oneEntry%previous=>null()
     if (dumpLocal) then
        call MsgDump(h//" with entries:")
        call DumpFieldSection(oneEntry)
     end if
-  end function CreateFieldSection
+  end function CreateFieldSectionVarTable
+
+
+
+  function CreateFieldSection_I2D(field, name, idim_type, &
+       xStart, xEnd, yStart, yEnd, &
+       GlobalWithGhost) result(oneEntry)
+    integer, pointer, intent(in) :: field(:,:)
+    character(len=*), intent(in) :: name
+    integer, intent(in) :: idim_type
+    integer, intent(in) :: xStart
+    integer, intent(in) :: xEnd
+    integer, intent(in) :: yStart
+    integer, intent(in) :: yEnd
+    type(DomainDecomp), pointer :: GlobalWithGhost
+    type(FieldSection), pointer :: oneEntry
+
+    character(len=8) :: c0
+    character(len=*), parameter :: h="**(CreateFieldSection_I2D)**"
+    logical, parameter :: dumpLocal=.false.
+
+    ! allocate and fill entry
+
+    allocate(oneEntry)
+    oneEntry%field_I2d => field
+    oneEntry%xStart = xStart
+    oneEntry%xEnd = xEnd
+    oneEntry%yStart = yStart
+    oneEntry%yEnd = yEnd
+    if (idim_type == 2) then
+       oneEntry%fieldSectionSize = &
+            (yEnd - yStart +1) * &
+            (xEnd - xStart +1)
+    else
+       write(c0,"(i8)") idim_type
+       call fatal_error(h//" unknown idim_type="//&
+            trim(adjustl(c0)))
+    end if
+    oneEntry%fieldSectionSize = &
+         (yEnd - yStart +1) * &
+         (xEnd - xStart +1) 
+    oneEntry%idim_type=idim_type
+    oneEntry%name=name
+    oneEntry%next=>null()
+    oneEntry%previous=>null()
+    if (dumpLocal) then
+       call MsgDump(h//" with entries:")
+       call DumpFieldSection(oneEntry)
+    end if
+  end function CreateFieldSection_I2D
+
+
+
+  function CreateFieldSection_2D(field, name, idim_type, &
+       xStart, xEnd, yStart, yEnd, &
+       GlobalWithGhost) result(oneEntry)
+    real, pointer, intent(in) :: field(:,:)
+    character(len=*), intent(in) :: name
+    integer, intent(in) :: idim_type
+    integer, intent(in) :: xStart
+    integer, intent(in) :: xEnd
+    integer, intent(in) :: yStart
+    integer, intent(in) :: yEnd
+    type(DomainDecomp), pointer :: GlobalWithGhost
+    type(FieldSection), pointer :: oneEntry
+
+    character(len=8) :: c0
+    character(len=*), parameter :: h="**(CreateFieldSection_2D)**"
+    logical, parameter :: dumpLocal=.false.
+
+    ! allocate and fill entry
+
+    allocate(oneEntry)
+    oneEntry%field_2d => field
+    oneEntry%xStart = xStart
+    oneEntry%xEnd = xEnd
+    oneEntry%yStart = yStart
+    oneEntry%yEnd = yEnd
+    if (idim_type == 2) then
+       oneEntry%fieldSectionSize = &
+            (yEnd - yStart +1) * &
+            (xEnd - xStart +1)
+    else
+       write(c0,"(i8)") idim_type
+       call fatal_error(h//" unknown idim_type="//&
+            trim(adjustl(c0)))
+    end if
+    oneEntry%fieldSectionSize = &
+         (yEnd - yStart +1) * &
+         (xEnd - xStart +1) 
+    oneEntry%idim_type=idim_type
+    oneEntry%name=name
+    oneEntry%next=>null()
+    oneEntry%previous=>null()
+    if (dumpLocal) then
+       call MsgDump(h//" with entries:")
+       call DumpFieldSection(oneEntry)
+    end if
+  end function CreateFieldSection_2D
+  
+
+
+
+  function CreateFieldSection_3D(field, idim_type, name, &
+       xStart, xEnd, yStart, yEnd, &
+       GlobalWithGhost) result(oneEntry)
+    real, pointer, intent(in) :: field(:,:,:)
+    integer, intent(in) :: idim_type
+    character(len=*), intent(in) :: name
+    integer, intent(in) :: xStart
+    integer, intent(in) :: xEnd
+    integer, intent(in) :: yStart
+    integer, intent(in) :: yEnd
+    type(DomainDecomp), pointer :: GlobalWithGhost
+    type(FieldSection), pointer :: oneEntry
+
+    character(len=8) :: c0
+    character(len=*), parameter :: h="**(CreateFieldSection_3D)**"
+    logical, parameter :: dumpLocal=.false.
+
+    ! allocate and fill entry
+
+    allocate(oneEntry)
+    oneEntry%field_3d => field
+    oneEntry%xStart = xStart
+    oneEntry%xEnd = xEnd
+    oneEntry%yStart = yStart
+    oneEntry%yEnd = yEnd
+    if (idim_type == 3) then
+       oneEntry%fieldSectionSize = &
+            (yEnd - yStart +1) * &
+            (xEnd - xStart +1) * &
+            size(field,1)
+    else if (idim_type == 6) then
+       oneEntry%fieldSectionSize = &
+            (yEnd - yStart +1) * &
+            (xEnd - xStart +1) * &
+            size(field,1)
+    else if (idim_type == 7) then
+       oneEntry%fieldSectionSize = &
+            (yEnd - yStart +1) * &
+            (xEnd - xStart +1) * &
+            size(field,3)
+    else
+       write(c0,"(i8)") idim_type
+       call fatal_error(h//" unknown idim_type="//&
+            trim(adjustl(c0)))
+    end if
+    oneEntry%idim_type=idim_type
+    oneEntry%name=name
+    oneEntry%next=>null()
+    oneEntry%previous=>null()
+    if (dumpLocal) then
+       call MsgDump(h//" with entries:")
+       call DumpFieldSection(oneEntry)
+    end if
+  end function CreateFieldSection_3D
+  
+
+
+
+  function CreateFieldSection_4D(field, idim_type, name, &
+       xStart, xEnd, yStart, yEnd, &
+       GlobalWithGhost) result(oneEntry)
+    real, pointer, intent(in) :: field(:,:,:,:)
+    integer, intent(in) :: idim_type
+    character(len=*), intent(in) :: name
+    integer, intent(in) :: xStart
+    integer, intent(in) :: xEnd
+    integer, intent(in) :: yStart
+    integer, intent(in) :: yEnd
+    type(DomainDecomp), pointer :: GlobalWithGhost
+    type(FieldSection), pointer :: oneEntry
+
+    character(len=8) :: c0
+    character(len=*), parameter :: h="**(CreateFieldSection_4D)**"
+    logical, parameter :: dumpLocal=.false.
+
+    ! allocate and fill entry
+
+    allocate(oneEntry)
+    oneEntry%field_4d => field
+    oneEntry%xStart = xStart
+    oneEntry%xEnd = xEnd
+    oneEntry%yStart = yStart
+    oneEntry%yEnd = yEnd
+    if (idim_type == 4) then
+       oneEntry%fieldSectionSize = &
+            (yEnd - yStart +1) * &
+            (xEnd - xStart +1) * &
+            size(field,1) *&
+            size(field,4)
+    else if (idim_type == 5) then
+       oneEntry%fieldSectionSize = &
+            (yEnd - yStart +1) * &
+            (xEnd - xStart +1) * &
+            size(field,1) *&
+            size(field,4)
+    else
+       write(c0,"(i8)") idim_type
+       call fatal_error(h//" unknown idim_type="//&
+            trim(adjustl(c0)))
+    end if
+    oneEntry%idim_type=idim_type
+    oneEntry%name=name
+    oneEntry%next=>null()
+    oneEntry%previous=>null()
+    if (dumpLocal) then
+       call MsgDump(h//" with entries:")
+       call DumpFieldSection(oneEntry)
+    end if
+  end function CreateFieldSection_4D
+  
 
 
   ! StringFieldSection: Returns a string with the fields of 
@@ -112,26 +354,54 @@ contains
     type(FieldSection), pointer :: oneEntry
     character(len=256) :: res
 
-    character(len=128) :: indexing
-    character(len=8) :: c0
+    character(len=128) :: string
+    character(len=8) :: c0, c1, c2, c3, c4, c5
     character(len=*), parameter :: h="**(StringFieldSection)**"
 
     if (.not. associated(oneEntry)) then
        res = " null FieldSection"
-    else if (.not. associated(oneEntry%vTabPtr)) then
-       call fatal_error(h//&
-            " FieldSection associated but vTabPtr not associated")
+    else if (oneEntry%idim_type == UNDEF) then
+       call fatal_error(h//" undefined idim_type: FieldSection not created")
     else
-       call StringIndexing(oneEntry%vTabPtr, &
-            oneEntry%xStart, oneEntry%xEnd, &
-            oneEntry%yStart, oneEntry%yEnd, indexing)
+       write(c0,"(i8)") oneEntry%xStart
+       write(c1,"(i8)") oneEntry%xEnd
+       write(c2,"(i8)") oneEntry%yStart
+       write(c3,"(i8)") oneEntry%yEnd
+       select case (oneEntry%idim_type)
+       case(2)
+          string="("//&
+               trim(adjustl(c0))//":"//trim(adjustl(c1))//","//&
+               trim(adjustl(c2))//":"//trim(adjustl(c3))//")"
+       case(3)
+          write(c4,"(i8)") size(oneEntry%field_3D,1)
+          string="(1:"//trim(adjustl(c4))//","//&
+               trim(adjustl(c0))//":"//trim(adjustl(c1))//","//&
+               trim(adjustl(c2))//":"//trim(adjustl(c3))//")"
+       case(4:5)
+          write(c4,"(i8)") size(oneEntry%field_4D,1)
+          write(c5,"(i8)") size(oneEntry%field_4D,4)
+          string="(1:"//trim(adjustl(c4))//","//&
+               trim(adjustl(c0))//":"//trim(adjustl(c1))//","//&
+               trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
+               "1:"//trim(adjustl(c5))//")"
+       case(6:7)
+          write(c4,"(i8)") size(oneEntry%field_3D,3)
+          string="("//&
+               trim(adjustl(c0))//":"//trim(adjustl(c1))//","//&
+               trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
+               "1:"//trim(adjustl(c4))//")"
+       case default
+          write(c0,"(i8)") oneEntry%idim_type
+          call fatal_error(h//" field section "//trim(oneEntry%name)//&
+               " with unknown idim_type="//trim(adjustl(c0)))
+       end select
        write(c0,"(i8)") oneEntry%FieldSectionSize
-       res = "field section (local indices) "//trim(oneEntry%vTabPtr%name)//&
-            trim(indexing)//" of size "//trim(adjustl(c0))
+       res = "field section (local indices) "//trim(oneEntry%name)//&
+            trim(string)//" of size "//trim(adjustl(c0))
     end if
   end function StringFieldSection
 
-
+  
   ! DumpFieldSection: Dumps a variable of type FieldSection at 
   !                   this processor dump file
 
@@ -139,11 +409,9 @@ contains
   subroutine DumpFieldSection(oneEntry)
     type(FieldSection), pointer :: oneEntry
 
-    character(len=256) :: res
     character(len=*), parameter :: h="**(DumpFieldSection)**"
 
-    res = StringFieldSection(oneEntry)
-    call MsgDump(h//trim(adjustl(res)))
+    call MsgDump(h//trim(adjustl(StringFieldSection(oneEntry))))
   end subroutine DumpFieldSection
             
 
@@ -152,15 +420,22 @@ contains
 
 
   subroutine DestroyFieldSection(oneEntry)
-    type(FieldSection), pointer :: oneEntry
+    type(FieldSection), pointer, intent(inout) :: oneEntry
 
+    integer :: ierr
     character(len=128) :: name
+    character(len=8) :: c0
     character(len=*), parameter :: h="**(DestroyFieldSection)**"
     logical, parameter :: dumpLocal=.false.
 
     if (associated(oneEntry)) then
-       name = oneEntry%vTabPtr%name
-       deallocate(oneEntry)
+       name = oneEntry%name
+       deallocate(oneEntry, stat=ierr)
+       if (ierr /= 0) then
+          write(c0,"(i8)") ierr
+          call fatal_error(h//" deallocate fails with stat="//&
+               trim(adjustl(c0)))
+       end if
        if (dumpLocal) then
           call MsgDump(h//" named "//trim(adjustl(name)))
        end if
@@ -359,29 +634,6 @@ contains
              node => node%next
           end do
        end if
-          
-!!$       select case (cnt)
-!!$       case (0)
-!!$          call MsgDump(h//" empty list")
-!!$       case (1)
-!!$          call MsgDump(h//" list has a single entry: "//&
-!!$               trim(adjustl(StringFieldSection(list%head))))
-!!$       case default
-!!$          write(c0,"(i8)") cnt
-!!$          call MsgDump(h//" list has the following "//&
-!!$               trim(adjustl(c0))//" entries:")
-!!$          
-!!$          ! dump each node
-!!$          
-!!$          node=>list%head
-!!$          do
-!!$             if (.not. associated(node)) then
-!!$                exit
-!!$             end if
-!!$             call DumpFieldSection(node)
-!!$             node => node%next
-!!$          end do
-!!$       end select
     end if
   end subroutine DumpFieldSectionList
 

@@ -566,10 +566,10 @@ contains
                    call MsgDump(h//" insert FieldSection at send buffer")
                    call DumpFieldSection(node)
                 end if
-                if (associated(node%vTabPtr%var_p_2D)) then
+                if (associated(node%field_2D)) then
                    firstBuffer = lastBuffer+1
-                   call FieldSection2Buffer(node%vTabPtr%var_p_2D, &
-                        node%vTabPtr%idim_type, &
+                   call FieldSection2Buffer(node%field_2D, &
+                        node%idim_type, &
                         node%xStart, node%xEnd,&
                         node%yStart, node%yEnd,&
                         msgData%buf, lastBuffer)
@@ -583,15 +583,15 @@ contains
                       write(c5,"(i8)") node%yEnd
                       call MsgDump(h//" filled buf["//trim(adjustl(c0))//&
                            ":"//trim(adjustl(c1))//&
-                           "] with 2D field "//trim(adjustl(node%vTabPtr%name))//"["//&
+                           "] with 2D field "//trim(adjustl(node%name))//"["//&
                            trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
                            trim(adjustl(c4))//":"//trim(adjustl(c5))//"]")
                    end if
 
-                else if (associated(node%vTabPtr%var_p_3D)) then
+                else if (associated(node%field_3D)) then
                    firstBuffer = lastBuffer+1
-                   call FieldSection2Buffer(node%vTabPtr%var_p_3D, &
-                        node%vTabPtr%idim_type, &
+                   call FieldSection2Buffer(node%field_3D, &
+                        node%idim_type, &
                         node%xStart, node%xEnd,&
                         node%yStart, node%yEnd,&
                         msgData%buf, lastBuffer)
@@ -603,26 +603,26 @@ contains
                       write(c3,"(i8)") node%xEnd
                       write(c4,"(i8)") node%yStart
                       write(c5,"(i8)") node%yEnd
-                      select case (node%vTabPtr%idim_type)
+                      select case (node%idim_type)
                       case(3)
                          call MsgDump(h//" filled buf["//trim(adjustl(c0))//&
                               ":"//trim(adjustl(c1))//&
-                              "] with 3D field "//trim(adjustl(node%vTabPtr%name))//"[:,"//&
+                              "] with 3D field "//trim(adjustl(node%name))//"[:,"//&
                               trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
                               trim(adjustl(c4))//":"//trim(adjustl(c5))//"]")
                       case(6:7)
                          call MsgDump(h//" filled buf["//trim(adjustl(c0))//&
                               ":"//trim(adjustl(c1))//&
-                              "] with 3D field "//trim(adjustl(node%vTabPtr%name))//"["//&
+                              "] with 3D field "//trim(adjustl(node%name))//"["//&
                               trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
                               trim(adjustl(c4))//":"//trim(adjustl(c5))//",:]")
                       end select
                    end if
 
-                else if (associated(node%vTabPtr%var_p_4D)) then
+                else if (associated(node%field_4D)) then
                    firstBuffer = lastBuffer+1
-                   call FieldSection2Buffer(node%vTabPtr%var_p_4D, &
-                        node%vTabPtr%idim_type, &
+                   call FieldSection2Buffer(node%field_4D, &
+                        node%idim_type, &
                         node%xStart, node%xEnd,&
                         node%yStart, node%yEnd,&
                         msgData%buf, lastBuffer)
@@ -636,13 +636,13 @@ contains
                       write(c5,"(i8)") node%yEnd
                       call MsgDump(h//" filled buf["//trim(adjustl(c0))//&
                            ":"//trim(adjustl(c1))//&
-                           "] with 4D field "//trim(adjustl(node%vTabPtr%name))//"[:,"//&
+                           "] with 4D field "//trim(adjustl(node%name))//"[:,"//&
                            trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
                            trim(adjustl(c4))//":"//trim(adjustl(c5))//",:]")
                    end if
                 else
                    call fatal_error(h//" inconsistent var_tables entry named "//&
-                        trim(adjustl(node%vTabPtr%name)))
+                        trim(adjustl(node%name)))
                 end if
              else
                 if (dumpLocal) then
@@ -742,10 +742,10 @@ contains
           do
              node => NextFieldSection(node, msgData%fieldList)
              if (associated(node)) then
-                if (associated(node%vTabPtr%var_p_2D)) then
+                if (associated(node%field_2D)) then
                    firstBuffer = lastBuffer+1
-                   call Buffer2FieldSection(node%vTabPtr%var_p_2D, &
-                        node%vTabPtr%idim_type, &
+                   call Buffer2FieldSection(node%field_2D, &
+                        node%idim_type, &
                         node%xStart, node%xEnd,&
                         node%yStart, node%yEnd,&
                         msgData%buf, lastBuffer)
@@ -757,16 +757,16 @@ contains
                       write(c4,"(i8)") node%yStart
                       write(c5,"(i8)") node%yEnd
                       call MsgDump(h//&
-                           "filled 2D field "//trim(adjustl(node%vTabPtr%name))//"["//&
+                           "filled 2D field "//trim(adjustl(node%name))//"["//&
                            trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
                            trim(adjustl(c4))//":"//trim(adjustl(c5))//"]"//&
                            " with buf["//trim(adjustl(c0))//&
                            ":"//trim(adjustl(c1))//"]")
                    end if
-                else if (associated(node%vTabPtr%var_p_3D)) then
+                else if (associated(node%field_3D)) then
                    firstBuffer = lastBuffer+1
-                   call Buffer2FieldSection(node%vTabPtr%var_p_3D, &
-                        node%vTabPtr%idim_type, &
+                   call Buffer2FieldSection(node%field_3D, &
+                        node%idim_type, &
                         node%xStart, node%xEnd,&
                         node%yStart, node%yEnd,&
                         msgData%buf, lastBuffer)
@@ -778,27 +778,27 @@ contains
                       write(c3,"(i8)") node%xEnd
                       write(c4,"(i8)") node%yStart
                       write(c5,"(i8)") node%yEnd
-                      select case (node%vTabPtr%idim_type)
+                      select case (node%idim_type)
                       case(3)
                          call MsgDump(h//&
-                              " filled 3D field "//trim(adjustl(node%vTabPtr%name))//"[:,"//&
+                              " filled 3D field "//trim(adjustl(node%name))//"[:,"//&
                               trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
                               trim(adjustl(c4))//":"//trim(adjustl(c5))//"]"//&
                               " with buf["//trim(adjustl(c0))//&
                               ":"//trim(adjustl(c1))//"]")
                       case(6:7)
                          call MsgDump(h//&
-                              " filled 3D field "//trim(adjustl(node%vTabPtr%name))//"["//&
+                              " filled 3D field "//trim(adjustl(node%name))//"["//&
                               trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
                               trim(adjustl(c4))//":"//trim(adjustl(c5))//",:]"//&
                               " with buf["//trim(adjustl(c0))//&
                               ":"//trim(adjustl(c1))//"]")
                       end select
                    end if
-                else if (associated(node%vTabPtr%var_p_4D)) then
+                else if (associated(node%field_4D)) then
                    firstBuffer = lastBuffer+1
-                   call Buffer2FieldSection(node%vTabPtr%var_p_4D, &
-                        node%vTabPtr%idim_type, &
+                   call Buffer2FieldSection(node%field_4D, &
+                        node%idim_type, &
                         node%xStart, node%xEnd,&
                         node%yStart, node%yEnd,&
                         msgData%buf, lastBuffer)
@@ -811,7 +811,7 @@ contains
                       write(c4,"(i8)") node%yStart
                       write(c5,"(i8)") node%yEnd
                       call MsgDump(h//&
-                           " filled 4D field "//trim(adjustl(node%vTabPtr%name))//"[:,"//&
+                           " filled 4D field "//trim(adjustl(node%name))//"[:,"//&
                            trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
                            trim(adjustl(c4))//":"//trim(adjustl(c5))//",:]"//&
                            " with buf["//trim(adjustl(c0))//&
