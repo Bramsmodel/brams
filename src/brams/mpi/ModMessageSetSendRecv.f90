@@ -322,11 +322,33 @@ contains
                   trim(adjustl(vTabPtr%name))//&
                   " at message "//trim(adjustl(Msgs%name)))
           end if
-          oneFieldSection =>  CreateFieldSection(&
-               vTabPtr, &
-               xbComm(iNeigh)-x0, xeComm(iNeigh)-x0, &
-               ybComm(iNeigh)-y0, yeComm(iNeigh)-y0, &
-               GlobalWithGhost)
+
+          select case (vTabPtr%idim_type)
+          case (2)
+             oneFieldSection =>  CreateFieldSection(&
+                  vTabPtr%var_p_2D, &
+                  vTabPtr%name, &
+                  vTabPtr%idim_type, &
+                  xbComm(iNeigh)-x0, xeComm(iNeigh)-x0, &
+                  ybComm(iNeigh)-y0, yeComm(iNeigh)-y0)
+          case (3,6,7)
+             oneFieldSection =>  CreateFieldSection(&
+                  vTabPtr%var_p_3D, &
+                  vTabPtr%name, &
+                  vTabPtr%idim_type, &
+                  xbComm(iNeigh)-x0, xeComm(iNeigh)-x0, &
+                  ybComm(iNeigh)-y0, yeComm(iNeigh)-y0)
+          case (4,5)
+             oneFieldSection =>  CreateFieldSection(&
+                  vTabPtr%var_p_4D, &
+                  vTabPtr%name, &
+                  vTabPtr%idim_type, &
+                  xbComm(iNeigh)-x0, xeComm(iNeigh)-x0, &
+                  ybComm(iNeigh)-y0, yeComm(iNeigh)-y0)
+          case default
+             write(c0,"(i8)") vTabPtr%idim_type
+             call fatal_error(h//" unknown idim_type="//trim(adjustl(c0)))
+          end select
           call InsertAtFieldSectionList(&
                oneFieldSection, &
                Msgs%oneMsg(cntMsg)%fieldList)

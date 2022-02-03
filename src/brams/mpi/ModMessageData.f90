@@ -173,11 +173,32 @@ contains
 
     do i = 1, Neigh%nNeigh
        if (willSend(i)) then
-          oneFieldSection =>  CreateFieldSection(&
-               vTabPtr, &
-               xbSend(i)-x0, xeSend(i)-x0, &
-               ybSend(i)-y0, yeSend(i)-y0, &
-               GlobalWithGhost)
+          select case (vTabPtr%idim_type)
+          case (2)
+             oneFieldSection =>  CreateFieldSection(&
+                  vTabPtr%var_p_2D, &
+                  vTabPtr%name, &
+                  vTabPtr%idim_type, &
+                  xbSend(i)-x0, xeSend(i)-x0, &
+                  ybSend(i)-y0, yeSend(i)-y0)
+          case (3,6,7)
+             oneFieldSection =>  CreateFieldSection(&
+                  vTabPtr%var_p_3D, &
+                  vTabPtr%name, &
+                  vTabPtr%idim_type, &
+                  xbSend(i)-x0, xeSend(i)-x0, &
+                  ybSend(i)-y0, yeSend(i)-y0)
+          case (4,5)
+             oneFieldSection =>  CreateFieldSection(&
+                  vTabPtr%var_p_4D, &
+                  vTabPtr%name, &
+                  vTabPtr%idim_type, &
+                  xbSend(i)-x0, xeSend(i)-x0, &
+                  ybSend(i)-y0, yeSend(i)-y0)
+          case default
+             write(c0,"(i8)") vTabPtr%idim_type
+             call fatal_error(h//" unknown idim_type="//trim(adjustl(c0)))
+          end select
           call InsertAtFieldSectionList(oneFieldSection, &
                SendMsgData(i)%fieldList)
           SendMsgData(i)%bufSize = SendMsgData(i)%bufSize+oneFieldSection%fieldSectionSize
@@ -189,11 +210,32 @@ contains
           end if
        end if
        if (willRecv(i)) then
-          oneFieldSection =>  CreateFieldSection(&
-               vTabPtr, &
-               xbRecv(i)-x0, xeRecv(i)-x0, &
-               ybRecv(i)-y0, yeRecv(i)-y0, &
-               GlobalWithGhost)
+          select case (vTabPtr%idim_type)
+          case (2)
+             oneFieldSection =>  CreateFieldSection(&
+                  vTabPtr%var_p_2D, &
+                  vTabPtr%name, &
+                  vTabPtr%idim_type, &
+                  xbRecv(i)-x0, xeRecv(i)-x0, &
+                  ybRecv(i)-y0, yeRecv(i)-y0)
+          case (3,6,7)
+             oneFieldSection =>  CreateFieldSection(&
+                  vTabPtr%var_p_3D, &
+                  vTabPtr%name, &
+                  vTabPtr%idim_type, &
+                  xbRecv(i)-x0, xeRecv(i)-x0, &
+                  ybRecv(i)-y0, yeRecv(i)-y0)
+          case (4,5)
+             oneFieldSection =>  CreateFieldSection(&
+                  vTabPtr%var_p_4D, &
+                  vTabPtr%name, &
+                  vTabPtr%idim_type, &
+                  xbRecv(i)-x0, xeRecv(i)-x0, &
+                  ybRecv(i)-y0, yeRecv(i)-y0)
+          case default
+             write(c0,"(i8)") vTabPtr%idim_type
+             call fatal_error(h//" unknown idim_type="//trim(adjustl(c0)))
+          end select
           call InsertAtFieldSectionList(oneFieldSection, &
                RecvMsgData(i)%fieldList)
           RecvMsgData(i)%bufSize = RecvMsgData(i)%bufSize+oneFieldSection%fieldSectionSize
