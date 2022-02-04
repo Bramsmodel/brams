@@ -20,7 +20,7 @@ OBJ_MOD = \
 	ModGrid.o \
 	ModGridTree.o \
 	ModNeighbourNodes.o \
-	ModFieldSectionList.o \
+	ModFieldSection.o \
 	ModDomainDecomp.o \
 	ModDateUtils.o \
 	ReadBcst.o \

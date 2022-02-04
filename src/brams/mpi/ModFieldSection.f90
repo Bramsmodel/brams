@@ -1,4 +1,4 @@
-module ModFieldSectionList
+module ModFieldSection
 
 
   ! field sections to be communicated
@@ -15,12 +15,12 @@ module ModFieldSectionList
   public :: FieldSection
   public :: CreateFieldSection
   public :: DumpFieldSection
-  public :: FieldSectionList
-  public :: CreateFieldSectionList
-  public :: InsertAtFieldSectionList
-  public :: DestroyFieldSectionList
-  public :: DumpFieldSectionList
+  public :: DestroyFieldSection
   public :: NextFieldSection
+  public :: AppendFieldSection
+  public :: FieldSectionSize
+  public :: FieldSectionData2Buffer
+  public :: Buffer2FieldSectionData
 
 
   ! FieldSection: one entry of a list of fields
@@ -79,15 +79,6 @@ module ModFieldSectionList
   end type FieldSection
 
 
-  ! FieldSectionList: list of FieldSection
-
-
-  type FieldSectionList
-     type(FieldSection), pointer :: head=>null()
-     type(FieldSection), pointer :: tail=>null()
-  end type FieldSectionList
-
-
   interface CreateFieldSection
      module procedure CreateFieldSection_I2D
      module procedure CreateFieldSection_2D
@@ -118,7 +109,7 @@ contains
     integer :: ierr
     character(len=8) :: c0
     character(len=*), parameter :: h="**(CreateFieldSection_I2D)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -170,7 +161,7 @@ contains
     integer :: ierr
     character(len=8) :: c0
     character(len=*), parameter :: h="**(CreateFieldSection_2D)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -222,7 +213,7 @@ contains
     integer :: ierr
     character(len=8) :: c0
     character(len=*), parameter :: h="**(CreateFieldSection_3D)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -281,7 +272,7 @@ contains
     integer :: ierr
     character(len=8) :: c0
     character(len=*), parameter :: h="**(CreateFieldSection_4D)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -407,7 +398,7 @@ contains
     character(len=128) :: name
     character(len=8) :: c0
     character(len=*), parameter :: h="**(DestroyFieldSection)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (associated(oneEntry)) then
        name = oneEntry%name
@@ -425,224 +416,22 @@ contains
   end subroutine DestroyFieldSection
 
 
-  ! CreateFieldSectionList: Creates empty list from a null pointer
-
-
-  function CreateFieldSectionList() result (OneList)
-    type (FieldSectionList), pointer :: OneList
-
-    character(len=*), parameter :: h="**(CreateFieldSectionList)**"
-
-    allocate(OneList)
-    OneList%head=>null()
-    OneList%tail=>null()
-  end function CreateFieldSectionList
-
-
-  ! InsertAtFieldSectionList: Given a FieldSectionList variable "list",
-  !                           append FieldSection variable "node" to the
-  !                           list
-
-
-  subroutine InsertAtFieldSectionList(node, list)
-    type(FieldSection), pointer :: node
-    type(FieldSectionList), pointer :: list
-
-    character(len=*), parameter :: h="**(InsertAtFieldSectionList)**"
-    logical, parameter :: dumpLocal=.false.
-
-    if (.not. associated(node)) then
-       call fatal_error(h//" node not associated")
-    else if (.not. associated(list)) then
-       call fatal_error(h//" list not associated")
-    end if
-
-    if (.not. associated(list%head)) then
-
-       ! if empty list, just point head and tail to the node
-
-       list%head => node
-       list%tail => node
-    else if (.not. associated(list%tail)) then
-
-       ! badly formed list if head is associated and tail is not associated
-
-       call fatal_error(h//" bad list: head associated but null tail ")
-    else
-
-       ! append node to the end of the list
-
-       list%tail%next => node
-       node%previous => list%tail
-       node%next => null()
-       list%tail => node
-    end if
-    if (dumpLocal) then
-       call MsgDump(h//" inserted the node "//&
-            trim(adjustl(StringFieldSection(node))))
-    end if
-  end subroutine InsertAtFieldSectionList
-
-
-  ! RemoveFromFieldSectionList: removes a node from the list,
-
-
-  subroutine RemoveFromFieldSectionList(node, list)
-    type(FieldSection), pointer :: node
-    type(FieldSectionList), pointer :: list
-
-    logical :: found
-    type(FieldSection), pointer :: isThis
-    character(len=*), parameter :: h="**(RemoveFromFieldSectionList)**"
-    logical, parameter :: dumpLocal=.false.
-
-    if (.not. associated(node)) then
-       call fatal_error(h//" node not associated")
-    else if (.not. associated(list)) then
-       call fatal_error(h//" list not associated")
-    end if
-
-    found = .false.
-    isThis => list%head
-    do while (associated(isThis))
-       found = associated(isThis, node)
-       if (found) exit
-       isThis => isThis%next
-    end do
-    if (.not. found) then
-       call fatal_error(h//" node "//&
-            trim(adjustl(StringFieldSection(node)))//&
-            " is not in list")
-    end if
-
-    if (associated(list%head, node)) then
-       list%head => node%next
-       if (associated(list%head)) then
-          list%head%previous => null()
-       end if
-    end if
-    if (associated(list%tail, node)) then
-       list%tail => node%previous
-       if (associated(list%tail)) then
-          list%tail%next => null()
-       end if
-    end if
-    if (associated(node%previous)) then
-       node%previous%next => node%next
-    end if
-    if (associated(node%next)) then
-       node%next%previous => node%previous
-    end if
-    node%next => null()
-    node%previous => null()
-    if (dumpLocal) then
-       call MsgDump(h//" removed the node "//&
-            trim(adjustl(StringFieldSection(node))))
-    end if
-    call DestroyFieldSection(node)
-  end subroutine RemoveFromFieldSectionList
-
-
-  ! DestroyFieldSectionList: deallocates all nodes and the list
-
-
-  subroutine DestroyFieldSectionList(list)
-    type(FieldSectionList), pointer :: list
-
-    type(FieldSection), pointer :: node
-    character(len=*), parameter :: h="**(DestroyFieldSectionList)**"
-
-    if (.not. associated(list)) then
-       call MsgDump(h//" list not associated")
-       return
-    end if
-
-    do
-       if (.not. associated(list%head) .and. &
-            .not. associated(list%tail)) then
-          deallocate(list)
-          list => null()
-          exit
-       else if (associated(list%head) .and. &
-            associated(list%tail)) then
-          node => list%head
-          call RemoveFromFieldSectionList(node, list)
-       else if (associated(list%head)) then
-          call fatal_error(h//&
-               " head associated but tail not associated")
-       else if (associated(list%tail)) then
-          call fatal_error(h//&
-               " head not associated but tail associated")
-       end if
-    end do
-  end subroutine DestroyFieldSectionList
-
-
-  ! DumpFieldSectionList: Dumps a variable of type FieldSectionList at 
-  !                       this processor dump file
-
-
-  subroutine DumpFieldSectionList(list)
-    type(FieldSectionList), pointer :: list
-
-    integer :: cnt
-    character(len=8) :: c0
-    type(FieldSection), pointer :: node
-    character(len=*), parameter :: h="**(DumpFieldSectionList)**"
-
-    if (.not. associated(list)) then
-       call MsgDump(h//" list is not associated")
-    else
-
-       ! list length
-
-       cnt = 0
-       node=>list%head
-       do
-          if (.not. associated(node)) exit
-          cnt = cnt+1
-          node => node%next
-       end do
-       if (cnt == 0) then
-          call MsgDump(h//" empty list")
-       else
-          node=>list%head
-          do
-             if (.not. associated(node)) then
-                exit
-             end if
-             call MsgDump(h//" "//trim(adjustl(StringFieldSection(node))))
-             node => node%next
-          end do
-       end if
-    end if
-  end subroutine DumpFieldSectionList
-
-
   ! NextFieldSection: returns node following "node" at the list;
   !                   if input "node" is empty, returns list head;
   !                   if no more nodes in the list, returns null
 
 
-  function NextFieldSection(node, list) result(next)
+  function NextFieldSection(node) result(next)
     type(FieldSection), pointer :: node
-    type(FieldSectionList), pointer :: list
     type(FieldSection), pointer :: next
 
     character(len=*), parameter :: h="**(NextFieldSection)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
-    next => null()
-    if (.not. associated(list)) then
-       call fatal_error(h//" invoked with not associated list")
+    if (.not. associated(node)) then
+       call fatal_error(h//" invoked with not associated node")
     else
-       if (associated(list%head)) then
-          if (.not. associated(node)) then
-             next => list%head
-          else
-             next => node%next
-          end if
-       end if
+       next => node%next
     end if
 
     if (dumpLocal) then
@@ -650,4 +439,291 @@ contains
             trim(adjustl(StringFieldSection(next))))
     end if
   end function NextFieldSection
-end module ModFieldSectionList
+
+
+
+
+  subroutine AppendFieldSection(this, next)
+
+    type(FieldSection), pointer, intent(in) :: this
+    type(FieldSection), pointer, intent(in) :: next
+
+    character(len=*), parameter :: h="**(AppendFieldSection)**"
+
+    if (.not. associated(this)) then
+       call fatal_error(h//" null this")
+    end if
+    if (.not. associated(next)) then
+       call fatal_error(h//" null next")
+    end if
+    next%previous => this
+    this%next => next
+  end subroutine AppendFieldSection
+
+
+
+  function FieldSectionSize(oneFieldSection) result(len)
+
+    type(FieldSection), pointer, intent(in) :: oneFieldSection
+    integer(kind=i8) :: len
+
+    len=0_i8
+    if (associated(oneFieldSection)) then
+       len=oneFieldSection%fieldSectionSize
+    end if
+  end function FieldSectionSize
+
+
+
+
+  subroutine FieldSectionData2Buffer(oneFieldSection, &
+       buf, bufStart, bufSize)
+
+    type(FieldSection), pointer, intent(in) :: oneFieldSection
+    real, intent(inout) :: buf(:)
+    integer(kind=i8), intent(inout) :: bufStart
+    integer(kind=i8), intent(in) :: bufSize
+
+    integer(kind=i8) :: finalPos
+    integer(kind=i8) :: posBuf
+    integer :: x
+    integer :: y
+    integer :: k
+    integer :: lMax
+    integer :: kMax
+    character(len=8) :: c0, c1, c2
+    character(len=8) :: buf0, bufn
+    character(len=64) :: preStr, midStr, posStr
+    character(len=*), parameter :: h="**(FieldSectionData2Buffer)**"
+    logical, parameter :: dumpLocal=.true.
+
+    if (.not. associated(oneFieldSection)) then
+       call fatal_error(h//" null oneFieldSection")
+    end if
+
+    finalPos=bufStart+FieldSectionSize(oneFieldSection)-1
+    if (finalPos > bufSize) then
+       write(c0,"(i8)") FieldSectionSize(oneFieldSection)
+       write(c1,"(i8)") bufStart
+       write(c2,"(i8)") bufSize
+       call fatal_error(h//" field "//&
+            trim(adjustl(oneFieldSection%name))//&
+            " with size "//trim(adjustl(c0))//&
+            " is larger than buffer ("//&
+            trim(adjustl(c1))//":"//trim(adjustl(c2))//")")
+    end if
+
+    if (dumpLocal) then
+       write(buf0,"(i8)") bufStart
+       write(bufn,"(i8)") finalPos
+       preStr=""
+       write(c0,"(i8)") oneFieldSection%xStart
+       write(c1,"(i8)") oneFieldSection%xEnd
+       midStr=trim(adjustl(c0))//":"//trim(adjustl(c1))//"," 
+       write(c0,"(i8)") oneFieldSection%yStart
+       write(c1,"(i8)") oneFieldSection%yEnd
+       midStr=trim(adjustl(midStr))//trim(adjustl(c0))//":"//trim(adjustl(c1))
+       posStr=""
+    end if
+
+    posBuf=bufStart
+    select case (oneFieldSection%idim_type)
+    case(2)
+       do y=oneFieldSection%yStart, oneFieldSection%yEnd
+          do x=oneFieldSection%xStart, oneFieldSection%xEnd
+             buf(posBuf)=oneFieldSection%field_2D(x,y)
+             posBuf=posBuf+1_i8
+          end do
+       end do
+    case(3)
+       kMax = size(oneFieldSection%field_3D,1)
+       do y=oneFieldSection%yStart, oneFieldSection%yEnd
+          do x=oneFieldSection%xStart, oneFieldSection%xEnd
+             buf(posBuf:posBuf+kMax-1)=oneFieldSection%field_3D(:,x,y)
+             posBuf=posBuf+kMax
+          end do
+       end do
+
+       if (dumpLocal) then
+          write(c0,"(i8)") lbound(oneFieldSection%field_3D,1)
+          write(c1,"(i8)") ubound(oneFieldSection%field_3D,1)
+          preStr=trim(adjustl(c0))//":"//trim(adjustl(c1))//"," 
+       end if
+
+    case(4,5)
+       lMax = size(oneFieldSection%field_4D,1)
+       kMax = size(oneFieldSection%field_4D,4)
+       do k=lBound(oneFieldSection%field_4D,4), &
+            uBound(oneFieldSection%field_4D,4)
+          do y=oneFieldSection%yStart, oneFieldSection%yEnd
+             do x=oneFieldSection%xStart, oneFieldSection%xEnd
+                buf(posBuf:posBuf+lMax-1)=oneFieldSection%field_4D(:,x,y,k)
+                posBuf=posBuf+lMax
+             end do
+          end do
+       end do
+
+       if (dumpLocal) then
+          write(c0,"(i8)") lbound(oneFieldSection%field_4D,1)
+          write(c1,"(i8)") ubound(oneFieldSection%field_4D,1)
+          preStr=trim(adjustl(c0))//":"//trim(adjustl(c1))//"," 
+          write(c0,"(i8)") lbound(oneFieldSection%field_4D,4)
+          write(c1,"(i8)") ubound(oneFieldSection%field_4D,4)
+          posStr=trim(adjustl(c0))//":"//trim(adjustl(c1))
+       end if
+
+    case(6,7)
+       do k=lBound(oneFieldSection%field_3D,3), &
+            uBound(oneFieldSection%field_3D,3)
+          do y=oneFieldSection%yStart, oneFieldSection%yEnd
+             do x=oneFieldSection%xStart, oneFieldSection%xEnd
+                buf(posBuf)=oneFieldSection%field_3D(x,y,k)
+                posBuf=posBuf+1_i8
+             end do
+          end do
+       end do
+
+       if (dumpLocal) then
+          write(c0,"(i8)") lbound(oneFieldSection%field_3D,3)
+          write(c1,"(i8)") ubound(oneFieldSection%field_3D,3)
+          posStr=trim(adjustl(c0))//":"//trim(adjustl(c1))
+       end if
+
+    end select
+    bufStart=posBuf
+
+    if (dumpLocal) then
+       call MsgDump(h//" buf("//trim(adjustl(buf0))//":"//trim(adjustl(bufn))//&
+            ") <- "//trim(adjustl(oneFieldSection%name))//"("//&
+            trim(adjustl(preStr))//trim(adjustl(midStr))//trim(adjustl(posStr))//")")
+    end if
+  end subroutine FieldSectionData2Buffer
+
+
+
+
+
+  subroutine Buffer2FieldSectionData(oneFieldSection, &
+       buf, bufStart, bufSize)
+
+    type(FieldSection), pointer, intent(in) :: oneFieldSection
+    real, intent(in) :: buf(:)
+    integer(kind=i8), intent(inout) :: bufStart
+    integer(kind=i8), intent(in) :: bufSize
+
+    integer(kind=i8) :: finalPos
+    integer(kind=i8) :: posBuf
+    integer :: x
+    integer :: y
+    integer :: k
+    integer :: lMax
+    integer :: kMax
+    character(len=8) :: c0, c1, c2
+    character(len=8) :: buf0, bufn
+    character(len=64) :: preStr, midStr, posStr
+    character(len=*), parameter :: h="**(Buffer2FieldSectionData)**"
+    logical, parameter :: dumpLocal=.true.
+
+    if (.not. associated(oneFieldSection)) then
+       call fatal_error(h//" null oneFieldSection")
+    end if
+
+    finalPos=bufStart+FieldSectionSize(oneFieldSection)-1
+    if (finalPos > bufSize) then
+       write(c0,"(i8)") FieldSectionSize(oneFieldSection)
+       write(c1,"(i8)") bufStart
+       write(c2,"(i8)") bufSize
+       call fatal_error(h//" field "//&
+            trim(adjustl(oneFieldSection%name))//&
+            " with size "//trim(adjustl(c0))//&
+            " is larger than buffer ("//&
+            trim(adjustl(c1))//":"//trim(adjustl(c2))//")")
+    end if
+
+    if (dumpLocal) then
+       write(buf0,"(i8)") bufStart
+       write(bufn,"(i8)") finalPos
+       preStr=""
+       write(c0,"(i8)") oneFieldSection%xStart
+       write(c1,"(i8)") oneFieldSection%xEnd
+       midStr=trim(adjustl(c0))//":"//trim(adjustl(c1))//"," 
+       write(c0,"(i8)") oneFieldSection%yStart
+       write(c1,"(i8)") oneFieldSection%yEnd
+       midStr=trim(adjustl(midStr))//trim(adjustl(c0))//":"//trim(adjustl(c1))
+       posStr=""
+    end if
+
+    posBuf=bufStart
+    select case (oneFieldSection%idim_type)
+    case(2)
+       do y=oneFieldSection%yStart, oneFieldSection%yEnd
+          do x=oneFieldSection%xStart, oneFieldSection%xEnd
+             oneFieldSection%field_2D(x,y) = buf(posBuf)
+             posBuf=posBuf+1_i8
+          end do
+       end do
+    case(3)
+       kMax = size(oneFieldSection%field_3D,1)
+       do y=oneFieldSection%yStart, oneFieldSection%yEnd
+          do x=oneFieldSection%xStart, oneFieldSection%xEnd
+             oneFieldSection%field_3D(:,x,y) = buf(posBuf:posBuf+kMax-1)
+             posBuf=posBuf+kMax
+          end do
+       end do
+
+       if (dumpLocal) then
+          write(c0,"(i8)") lbound(oneFieldSection%field_3D,1)
+          write(c1,"(i8)") ubound(oneFieldSection%field_3D,1)
+          preStr=trim(adjustl(c0))//":"//trim(adjustl(c1))//"," 
+       end if
+
+    case(4,5)
+       lMax = size(oneFieldSection%field_4D,1)
+       kMax = size(oneFieldSection%field_4D,4)
+       do k=lBound(oneFieldSection%field_4D,4), &
+            uBound(oneFieldSection%field_4D,4)
+          do y=oneFieldSection%yStart, oneFieldSection%yEnd
+             do x=oneFieldSection%xStart, oneFieldSection%xEnd
+                oneFieldSection%field_4D(:,x,y,k) = buf(posBuf:posBuf+lMax-1)
+                posBuf=posBuf+lMax
+             end do
+          end do
+       end do
+
+       if (dumpLocal) then
+          write(c0,"(i8)") lbound(oneFieldSection%field_4D,1)
+          write(c1,"(i8)") ubound(oneFieldSection%field_4D,1)
+          preStr=trim(adjustl(c0))//":"//trim(adjustl(c1))//"," 
+          write(c0,"(i8)") lbound(oneFieldSection%field_4D,4)
+          write(c1,"(i8)") ubound(oneFieldSection%field_4D,4)
+          posStr=trim(adjustl(c0))//":"//trim(adjustl(c1))
+       end if
+
+    case(6,7)
+       do k=lBound(oneFieldSection%field_3D,3), &
+            uBound(oneFieldSection%field_3D,3)
+          do y=oneFieldSection%yStart, oneFieldSection%yEnd
+             do x=oneFieldSection%xStart, oneFieldSection%xEnd
+                oneFieldSection%field_3D(x,y,k) = buf(posBuf)
+                posBuf=posBuf+1_i8
+             end do
+          end do
+       end do
+
+       if (dumpLocal) then
+          write(c0,"(i8)") lbound(oneFieldSection%field_3D,3)
+          write(c1,"(i8)") ubound(oneFieldSection%field_3D,3)
+          posStr=trim(adjustl(c0))//":"//trim(adjustl(c1))
+       end if
+
+    end select
+    bufStart=posBuf
+
+    if (dumpLocal) then
+       call MsgDump(h//trim(adjustl(oneFieldSection%name))//"("//&
+            trim(adjustl(preStr))//trim(adjustl(midStr))//trim(adjustl(posStr))//&
+            ") <- buf("//trim(adjustl(buf0))//":"//trim(adjustl(bufn))//")")
+            
+    end if
+  end subroutine Buffer2FieldSectionData
+end module ModFieldSection

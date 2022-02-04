@@ -35,20 +35,23 @@ module ModMessageSetSendRecv
 
   use ModMessageData, only: &
        MessageData, &
-       TransferMessageData, &
-       DestroyMessageData
+       InitializeMessageData, &
+       AppendFieldSectionToMessageData, &
+       DestroyMessageData, &
+       FillMessageDataBufferWithFieldSectionData, &
+       ExtractFieldSectionDataFromMessageDataBuffer, &
+       AllocateMessageDataBuffer, &
+       DeallocateMessageDataBuffer
+       
 
   use ModNeighbourNodes, only: &
        NeighbourNodes
 
-  use ModFieldSectionList, only: &
+  use ModFieldSection, only: &
        FieldSection, &
        CreateFieldSection, &
        NextFieldSection, &
-       DumpFieldSection, &
-       CreateFieldSectionList, &
-       InsertAtFieldSectionList, &
-       DumpFieldSectionList
+       DumpFieldSection
 
   use ParLib, only: &
        parf_get_noblock_real, &
@@ -69,6 +72,9 @@ module ModMessageSetSendRecv
 !  use CUPARM_GRELL3, only: g3d_g
 
   implicit none
+  include "mpif.h"
+  include "ranks.h" ! for kind=i8
+
   private
   public :: MessageSet
   public :: CreateMessageSet
@@ -78,7 +84,6 @@ module ModMessageSetSendRecv
   public :: PostRecvSendMsgs
   public :: WaitSendRecvMsgs
 
-  include "mpif.h"
 
   integer, parameter :: UNDEFINED=-1
 
@@ -203,10 +208,9 @@ contains
     do iNeigh = 1, nNeigh
        if (hasMsg(iNeigh)) then
           cntMsg = cntMsg + 1
-          Msgs%oneMsg(cntMsg)%bufSize=0
-          Msgs%oneMsg(cntMsg)%fieldList => CreateFieldSectionList()
           Msgs%request(cntMsg) = MPI_REQUEST_NULL
           Msgs%otherProc(cntMsg)= Brams2MpiProcNbr(Neigh%neigh(iNeigh))
+          call InitializeMessageData(Msgs%oneMsg(cntMsg))
        end if
     end do
 
@@ -349,11 +353,7 @@ contains
              write(c0,"(i8)") vTabPtr%idim_type
              call fatal_error(h//" unknown idim_type="//trim(adjustl(c0)))
           end select
-          call InsertAtFieldSectionList(&
-               oneFieldSection, &
-               Msgs%oneMsg(cntMsg)%fieldList)
-          Msgs%oneMsg(cntMsg)%bufSize = Msgs%oneMsg(cntMsg)%bufSize + &
-               oneFieldSection%fieldSectionSize
+          call AppendFieldSectionToMessageData(oneFieldSection, Msgs%oneMsg(cntMsg))
        end if
     end do
   end subroutine InsertFieldSectionAtMessageSet
@@ -405,7 +405,7 @@ contains
                ", request "//trim(adjustl(c4))//&
                ", size "//trim(adjustl(c3))//&
                " and field sections:")
-          call DumpFieldSectionList(Msgs%oneMsg(i)%fieldList)
+!!$          call DumpFieldSectionList(Msgs%oneMsg(i)%fieldList)
        end do
     end if
   end subroutine DumpMessageSet
@@ -477,11 +477,13 @@ contains
     integer :: firstBuffer
     integer :: lastBuffer
     integer :: ierr
+    integer(kind=i8), parameter :: huge_i4=int(huge(1),kind=i8)
+    integer :: bufSize_i4
     type(MessageData), pointer :: msgData => null()
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
     character(len=*), parameter :: h="**(PostRecvSendMsgs)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! post nonblocking receive for each receiving message;
     ! a single receive msg from each process
@@ -497,31 +499,30 @@ contains
        end if
        do iRecv= 1,RecvMsg%nMsgs
 
-          ! data to receive from one process
-          
-          msgData => RecvMsg%oneMsg(iRecv)
-
-          ! allocate receive buffer for this receive
-
-          allocate(msgData%buf(msgData%bufSize), stat=ierr)
-          if (ierr /= 0) then
-             write(c0,"(i8)") ierr
-             write(c1,"(i8)") msgData%bufSize
-             call fatal_error(h//" allocate msgData%buf("//&
-                  trim(adjustl(c1))//") to recv fails with stat="//&
-                  trim(adjustl(c0)))
-          end if
+          call AllocateMessageDataBuffer(RecvMsg%oneMsg(iRecv))
 
           ! post receive
 
-          call parf_get_noblock_real(msgData%buf, msgData%bufSize, &
+          if (RecvMsg%oneMsg(iRecv)%bufSize > huge_i4) then
+             write(c0,"(i8)") RecvMsg%oneMsg(iRecv)%bufSize
+             write(c1,"(i8)") huge_i4
+             call fatal_error(h//" receive buffer size ("//&
+                  trim(adjustl(c0))//") cannot be represented as default kind,"//&
+                  " since default is limited to "//trim(adjustl(c1)))
+          else
+             bufSize_i4=int(RecvMsg%oneMsg(iRecv)%bufSize)
+          end if
+          call parf_get_noblock_real(&
+               RecvMsg%oneMsg(iRecv)%buf, &
+               bufSize_i4, &
                RecvMsg%otherProc(iRecv), &
-               RecvMsg%tag, RecvMsg%request(iRecv))
+               RecvMsg%tag, &
+               RecvMsg%request(iRecv))
 
           if (dumpLocal) then
              write(c0,"(i8)") iRecv
              write(c1,"(i8)") RecvMsg%otherProc(iRecv)
-             write(c2,"(i8)") size(msgData%buf)
+             write(c2,"(i8)") size(RecvMsg%oneMsg(iRecv)%buf)
              write(c3,"(i8)") RecvMsg%tag
              if (RecvMsg%request(iRecv) == MPI_REQUEST_NULL) then
                 c4="NULL"
@@ -557,137 +558,31 @@ contains
        end if
        do iSend = 1,SendMsg%nMsgs
 
-          ! data to send
+          ! allocate and fill send buffer with field sections to send
           
-          msgData => SendMsg%oneMsg(iSend)
-
-          ! allocate send buffer
-          
-          allocate(msgData%buf(msgData%bufSize), stat=ierr)
-          if (ierr /= 0) then
-             write(c0,"(i8)") ierr
-             write(c1,"(i8)") msgData%bufSize
-             call fatal_error(h//" allocate msgData%buf("//&
-                  trim(adjustl(c1))//") to send fails with stat="//&
-                  trim(adjustl(c0)))
-          end if
-
-          ! fill send buffer with field sections to send
-          
-          node => null()
-          lastBuffer=0
-          if (dumpLocal) then
-             write(c0,"(i8)") iSend
-             call MsgDump(h//" starts building send buffer for send number "//&
-                  trim(adjustl(c0)))
-          end if
-          do
-             node => NextFieldSection(node, msgData%fieldList)
-             if (associated(node)) then
-                if (dumpLocal) then
-                   call MsgDump(h//" insert FieldSection at send buffer")
-                   call DumpFieldSection(node)
-                end if
-                if (associated(node%field_2D)) then
-                   firstBuffer = lastBuffer+1
-                   call FieldSection2Buffer(node%field_2D, &
-                        node%idim_type, &
-                        node%xStart, node%xEnd,&
-                        node%yStart, node%yEnd,&
-                        msgData%buf, lastBuffer)
-
-                   if (dumpLocal) then
-                      write(c0,"(i8)") firstBuffer
-                      write(c1,"(i8)") lastBuffer
-                      write(c2,"(i8)") node%xStart
-                      write(c3,"(i8)") node%xEnd
-                      write(c4,"(i8)") node%yStart
-                      write(c5,"(i8)") node%yEnd
-                      call MsgDump(h//" filled buf["//trim(adjustl(c0))//&
-                           ":"//trim(adjustl(c1))//&
-                           "] with 2D field "//trim(adjustl(node%name))//"["//&
-                           trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
-                           trim(adjustl(c4))//":"//trim(adjustl(c5))//"]")
-                   end if
-
-                else if (associated(node%field_3D)) then
-                   firstBuffer = lastBuffer+1
-                   call FieldSection2Buffer(node%field_3D, &
-                        node%idim_type, &
-                        node%xStart, node%xEnd,&
-                        node%yStart, node%yEnd,&
-                        msgData%buf, lastBuffer)
-
-                   if (dumpLocal) then
-                      write(c0,"(i8)") firstBuffer
-                      write(c1,"(i8)") lastBuffer
-                      write(c2,"(i8)") node%xStart
-                      write(c3,"(i8)") node%xEnd
-                      write(c4,"(i8)") node%yStart
-                      write(c5,"(i8)") node%yEnd
-                      select case (node%idim_type)
-                      case(3)
-                         call MsgDump(h//" filled buf["//trim(adjustl(c0))//&
-                              ":"//trim(adjustl(c1))//&
-                              "] with 3D field "//trim(adjustl(node%name))//"[:,"//&
-                              trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
-                              trim(adjustl(c4))//":"//trim(adjustl(c5))//"]")
-                      case(6:7)
-                         call MsgDump(h//" filled buf["//trim(adjustl(c0))//&
-                              ":"//trim(adjustl(c1))//&
-                              "] with 3D field "//trim(adjustl(node%name))//"["//&
-                              trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
-                              trim(adjustl(c4))//":"//trim(adjustl(c5))//",:]")
-                      end select
-                   end if
-
-                else if (associated(node%field_4D)) then
-                   firstBuffer = lastBuffer+1
-                   call FieldSection2Buffer(node%field_4D, &
-                        node%idim_type, &
-                        node%xStart, node%xEnd,&
-                        node%yStart, node%yEnd,&
-                        msgData%buf, lastBuffer)
-
-                   if (dumpLocal) then
-                      write(c0,"(i8)") firstBuffer
-                      write(c1,"(i8)") lastBuffer
-                      write(c2,"(i8)") node%xStart
-                      write(c3,"(i8)") node%xEnd
-                      write(c4,"(i8)") node%yStart
-                      write(c5,"(i8)") node%yEnd
-                      call MsgDump(h//" filled buf["//trim(adjustl(c0))//&
-                           ":"//trim(adjustl(c1))//&
-                           "] with 4D field "//trim(adjustl(node%name))//"[:,"//&
-                           trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
-                           trim(adjustl(c4))//":"//trim(adjustl(c5))//",:]")
-                   end if
-                else
-                   call fatal_error(h//" inconsistent var_tables entry named "//&
-                        trim(adjustl(node%name)))
-                end if
-             else
-                if (dumpLocal) then
-                   call MsgDump(h//" finishes building sending buffer")
-                end if
-                exit
-             end if
-          end do
-          if (lastBuffer /= size(msgData%buf)) then
-             write(c0,"(i8)") lastBuffer
-             write(c1,"(i8)") size(msgData%buf)
-             call fatal_error(h//" the send buffer of size "//trim(adjustl(c1))//&
-                  " was filled with "//trim(adjustl(c0))//" entries")
-          end if
+          call AllocateMessageDataBuffer(SendMsg%oneMsg(iSend))
+          call FillMessageDataBufferWithFieldSectionData(SendMsg%oneMsg(iSend))
 
           ! post send message
           
-          call parf_send_noblock_real(msgData%buf, msgData%bufSize, &
+          if (SendMsg%oneMsg(iSend)%bufSize > huge_i4) then
+             write(c0,"(i8)") SendMsg%oneMsg(iSend)%bufSize
+             write(c1,"(i8)") huge_i4
+             call fatal_error(h//" send buffer size ("//&
+                  trim(adjustl(c0))//") cannot be represented as default kind,"//&
+                  " since default is limited to "//trim(adjustl(c1)))
+          else
+             bufSize_i4=int(SendMsg%oneMsg(iSend)%bufSize)
+          end if
+          call parf_send_noblock_real(&
+               SendMsg%oneMsg(iSend)%buf, &
+               bufSize_i4, &
                SendMsg%otherProc(iSend), &
-               SendMsg%tag, SendMsg%request(iSend))
+               SendMsg%tag, &
+               SendMsg%request(iSend))
           if (dumpLocal) then
              write(c1,"(i8)") SendMsg%otherProc(iSend)
-             write(c2,"(i8)") size(msgData%buf)
+             write(c2,"(i8)") size(SendMsg%oneMsg(iSend)%buf)
              write(c3,"(i8)") SendMsg%tag
              if (SendMsg%request(iSend) == MPI_REQUEST_NULL) then
                 c4="NULL"
@@ -728,7 +623,7 @@ contains
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
     character(len=*), parameter :: h="**(WaitSendRecvMsgs)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! for each receive message:
     ! build send buffer and copy field sections to the buffer;
@@ -759,105 +654,8 @@ contains
           ! extract field sections from incoming buffer
           ! and store at destination fields
 
-          node => null()
-          lastBuffer=0
-          do
-             node => NextFieldSection(node, msgData%fieldList)
-             if (associated(node)) then
-                if (associated(node%field_2D)) then
-                   firstBuffer = lastBuffer+1
-                   call Buffer2FieldSection(node%field_2D, &
-                        node%idim_type, &
-                        node%xStart, node%xEnd,&
-                        node%yStart, node%yEnd,&
-                        msgData%buf, lastBuffer)
-                   if (dumpLocal) then
-                      write(c0,"(i8)") firstBuffer
-                      write(c1,"(i8)") lastBuffer
-                      write(c2,"(i8)") node%xStart
-                      write(c3,"(i8)") node%xEnd
-                      write(c4,"(i8)") node%yStart
-                      write(c5,"(i8)") node%yEnd
-                      call MsgDump(h//&
-                           "filled 2D field "//trim(adjustl(node%name))//"["//&
-                           trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
-                           trim(adjustl(c4))//":"//trim(adjustl(c5))//"]"//&
-                           " with buf["//trim(adjustl(c0))//&
-                           ":"//trim(adjustl(c1))//"]")
-                   end if
-                else if (associated(node%field_3D)) then
-                   firstBuffer = lastBuffer+1
-                   call Buffer2FieldSection(node%field_3D, &
-                        node%idim_type, &
-                        node%xStart, node%xEnd,&
-                        node%yStart, node%yEnd,&
-                        msgData%buf, lastBuffer)
-
-                   if (dumpLocal) then
-                      write(c0,"(i8)") firstBuffer
-                      write(c1,"(i8)") lastBuffer
-                      write(c2,"(i8)") node%xStart
-                      write(c3,"(i8)") node%xEnd
-                      write(c4,"(i8)") node%yStart
-                      write(c5,"(i8)") node%yEnd
-                      select case (node%idim_type)
-                      case(3)
-                         call MsgDump(h//&
-                              " filled 3D field "//trim(adjustl(node%name))//"[:,"//&
-                              trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
-                              trim(adjustl(c4))//":"//trim(adjustl(c5))//"]"//&
-                              " with buf["//trim(adjustl(c0))//&
-                              ":"//trim(adjustl(c1))//"]")
-                      case(6:7)
-                         call MsgDump(h//&
-                              " filled 3D field "//trim(adjustl(node%name))//"["//&
-                              trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
-                              trim(adjustl(c4))//":"//trim(adjustl(c5))//",:]"//&
-                              " with buf["//trim(adjustl(c0))//&
-                              ":"//trim(adjustl(c1))//"]")
-                      end select
-                   end if
-                else if (associated(node%field_4D)) then
-                   firstBuffer = lastBuffer+1
-                   call Buffer2FieldSection(node%field_4D, &
-                        node%idim_type, &
-                        node%xStart, node%xEnd,&
-                        node%yStart, node%yEnd,&
-                        msgData%buf, lastBuffer)
-
-                   if (dumpLocal) then
-                      write(c0,"(i8)") firstBuffer
-                      write(c1,"(i8)") lastBuffer
-                      write(c2,"(i8)") node%xStart
-                      write(c3,"(i8)") node%xEnd
-                      write(c4,"(i8)") node%yStart
-                      write(c5,"(i8)") node%yEnd
-                      call MsgDump(h//&
-                           " filled 4D field "//trim(adjustl(node%name))//"[:,"//&
-                           trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
-                           trim(adjustl(c4))//":"//trim(adjustl(c5))//",:]"//&
-                           " with buf["//trim(adjustl(c0))//&
-                           ":"//trim(adjustl(c1))//"]")
-                   end if
-                else
-                   call fatal_error(h//" inconsistent var_tables entry")
-                end if
-             else
-                exit
-             end if
-          end do
-
-          ! done with this message; deallocate buffer
-
-          deallocate(msgData%buf, stat=ierr)
-          if (ierr /= 0) then
-             write(c0,"(i8)") ierr
-             write(c1,"(i8)") msgData%bufSize
-             call fatal_error(h//" deallocate msgData%buf("//&
-                  trim(adjustl(c1))//") to recv fails with stat="//&
-                  trim(adjustl(c0)))
-          end if
-
+          call ExtractFieldSectionDataFromMessageDataBuffer(RecvMsg%oneMsg(recvNbr))
+          call DeallocateMessageDataBuffer(RecvMsg%oneMsg(recvNbr))
        end do
     end if
 
@@ -869,16 +667,7 @@ contains
        do iSend = 1,SendMsg%nMsgs
           call parf_wait_any_nostatus(SendMsg%nMsgs, &
                SendMsg%request, sendNbr)
-          msgData => SendMsg%oneMsg(sendNbr)
-          deallocate(msgData%buf, stat=ierr)
-          if (ierr /= 0) then
-             write(c0,"(i8)") ierr
-             write(c1,"(i8)") msgData%bufSize
-             call fatal_error(h//" deallocate msgData%buf("//&
-                  trim(adjustl(c1))//") to send fails with stat="//&
-                  trim(adjustl(c0)))
-          end if
-
+          call DeallocateMessageDataBuffer(SendMsg%oneMsg(sendNbr))
        end do
     end if
   end subroutine WaitSendRecvMsgs

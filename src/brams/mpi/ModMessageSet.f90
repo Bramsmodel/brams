@@ -87,7 +87,7 @@ contains
     integer :: myNum
     integer :: nNeigh
     character(len=*), parameter :: h="**(CreateAcousticMessageSet)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     
     ! verify input arguments
 
@@ -175,7 +175,7 @@ contains
     integer :: myNum
     integer :: nNeigh
     character(len=*), parameter :: h="**(CreateDn0MessageSet)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     
     ! verify input arguments
 
@@ -241,7 +241,7 @@ contains
     integer :: g3d_spread
     integer :: g3d_smoothh
     character(len=*), parameter :: h="**(CreateG3DMessageSet)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     
     ! verify input arguments
 
@@ -311,7 +311,7 @@ contains
     integer :: myNum
     integer :: nNeigh
     character(len=*), parameter :: h="**(CreateSelectedGhostZoneMessageSet)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     
     ! verify input arguments
 
@@ -371,7 +371,7 @@ contains
     integer :: myNum
     integer :: nNeigh
     character(len=*), parameter :: h="**(CreateAllGhostZoneMessageSet)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     
     ! verify input arguments
 
@@ -428,7 +428,7 @@ contains
     type(MessageSet), pointer, intent(inout) :: AcouRecvWP
 
     character(len=*), parameter :: h="**(DestroyAcousticMessageSet)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (dumpLocal) then
        call MsgDump(h//" will destroy "//&
@@ -463,7 +463,7 @@ contains
     type(MessageSet), pointer, intent(inout) :: SendDn0v
     type(MessageSet), pointer, intent(inout) :: RecvDn0v
     character(len=*), parameter :: h="**(DestroyDn0MessageSet)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (dumpLocal) then
        call MsgDump(h//" will destroy "//&
@@ -486,7 +486,7 @@ contains
     type(MessageSet), pointer, intent(inout) :: SendG3D
     type(MessageSet), pointer, intent(inout) :: RecvG3D
     character(len=*), parameter :: h="**(DestroyG3DMessageSet)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (dumpLocal) then
        call MsgDump(h//" will destroy Send/RecvG3D")
@@ -506,7 +506,7 @@ contains
     type(MessageSet), pointer, intent(inout) :: SelectedGhostZoneSend
     type(MessageSet), pointer, intent(inout) :: SelectedGhostZoneRecv
     character(len=*), parameter :: h="**(DestroySelectedGhostZoneMessageSet)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (dumpLocal) then
        call MsgDump(h//" will destroy SelectedGhostZoneSend/Recv")
@@ -527,7 +527,7 @@ contains
     type(MessageSet), pointer, intent(inout) :: AllGhostZoneSend
     type(MessageSet), pointer, intent(inout) :: AllGhostZoneRecv
     character(len=*), parameter :: h="**(DestroyAllGhostZoneMessageSet)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (dumpLocal) then
        call MsgDump(h//" will destroy AllGhostZoneSend/Recv")
@@ -589,7 +589,7 @@ contains
 
     type(var_tables_r), pointer   :: vtabPtr => null()
     character(len=*), parameter :: h="**(CreateAcousticSendRecvU)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=8) :: str(10)
     character(len=30) :: tmp_name
 
@@ -693,7 +693,7 @@ contains
 
     type(var_tables_r), pointer   :: vtabPtr => null()
     character(len=*), parameter :: h="**(CreateAcousticSendRecvV)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=8) :: str(10)
 
     ! AcouSendV, AcouRecvV:
@@ -811,7 +811,7 @@ contains
     character(len=*), parameter :: h="**(CreateAcousticSendRecvP)**"
     character(len=30) :: tmp_name
     character(len=8) :: str(10)
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! AcouSendP, AcouRecvP: union of
     !               GlobalOwn [xe+1:xe+1,yb:ye] with
@@ -911,7 +911,7 @@ contains
     character(len=8) :: c0, c1, c2, c3, c4
     character(len=128) :: inter1, inter2
     character(len=*), parameter :: h="**(BuildUnion)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     
     do iNeigh = 1, nNeigh
        if (willComm1(iNeigh) .and. willComm2(iNeigh)) then
@@ -1006,7 +1006,7 @@ contains
     character(len=*), parameter :: h="**(CreateAcousticSendRecvUV)**"
     character(len=30) :: tmp_name
     character(len=8) :: str(10)
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     
     ! AcouSendUV, AcouRecvUV:
     ! messages update entire GhostZone
@@ -1143,7 +1143,7 @@ contains
     character(len=*), parameter :: h="**(CreateAcousticSendRecvWP)**"
     character(len=30) :: tmp_name
     character(len=8) :: str(10)
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! AcouSendWP, AcouRecvWP:
     ! messages update entire GhostZone
@@ -1278,7 +1278,7 @@ contains
     type(var_tables_r), pointer   :: vtabPtr => null()
     character(len=*), parameter :: h="**(CreateSelectedGhostZoneSendRecv)**"
     character(len=8) :: str(10)
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! SelectedGhostZoneSend, SelectedGhostZoneRecv:
     ! messages update entire GhostZone
@@ -1399,7 +1399,7 @@ contains
     type(var_tables_r), pointer   :: vtabPtr => null()
     character(len=*), parameter :: h="**(CreateAllGhostZoneSendRecv)**"
     character(len=8) :: str(10)
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! AllGhostZoneSend, AllGhostZoneRecv:
     ! messages update entire GhostZone
@@ -1514,7 +1514,7 @@ contains
     character(len=*), parameter :: h="**(CreateSendRecvDn0u)**"
     character(len=30) :: tmp_name
     character(len=8) :: str(10)
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! SendDn0u, RecvDn0u:
     ! messages update GlobalOwn [xe+1:xe+1,yb:ye]
@@ -1612,7 +1612,7 @@ contains
     character(len=*), parameter :: h="**(CreateSendRecvDn0v)**"
     character(len=30) :: tmp_name
     character(len=8) :: str(10)
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! SendDn0v, RecvDn0v:
     ! messages update GlobalOwn [xb:xe,ye+1:ye+1]
@@ -1717,7 +1717,7 @@ contains
     character(len=*), parameter :: h="**(CreateG3DSendRecv)**"
     character(len=30) :: tmp_name
     character(len=8) :: str(10)
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! SendG3D, RecvG3D:
     ! messages update entire GhostZone

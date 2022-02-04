@@ -1,42 +1,37 @@
 module ModMessageData
   use ModParallelEnvironment, only: &
-       ParallelEnvironment, &
        MsgDump
 
-  use ModNeighbourNodes, only: &
-       NeighbourNodes
-
-  use ModDomainDecomp, only: &
-       DomainDecomp
-
-  use ModFieldSectionList, only: &
+  use ModFieldSection, only: &
        FieldSection, &
-       CreateFieldSection, &
-       FieldSectionList, &
-       CreateFieldSectionList, &
-       DestroyFieldSectionList, &
-       InsertAtFieldSectionList, &
-       DumpFieldSectionList
-
-  use var_tables, only: &
-       var_tables_r
+       AppendFieldSection, &
+       FieldSectionSize, &
+       DestroyFieldSection, &
+       FieldSectionData2Buffer, &
+       Buffer2FieldSectionData, &
+       NextFieldSection
   
 
   implicit none
+  include "ranks.h" ! for kind=i8
+  
   private
   public :: MessageData
   public :: InitializeMessageData
-  public :: TransferMessageData
-  public :: InsertFieldSectionAtSendRecvMessageData
-  public :: CleanMessageData
+  public :: AppendFieldSectionToMessageData
   public :: DestroyMessageData
-
+  public :: AllocateMessageDataBuffer
+  public :: FillMessageDataBufferWithFieldSectionData
+  public :: ExtractFieldSectionDataFromMessageDataBuffer
+  public :: DeallocateMessageDataBuffer
+  
   ! data to send/receive to/from one node in one message
 
   type MessageData
+     integer(kind=i8) :: bufSize=0_i8         ! message buffer size
      real, allocatable :: buf(:)  ! message buffer
-     integer :: bufSize=0         ! message buffer size
-     type (FieldSectionList), pointer :: fieldList=> null() ! field sections to communicate
+     type (FieldSection), pointer :: head => null()
+     type (FieldSection), pointer :: tail => null()
   end type MessageData
 
 contains
@@ -49,245 +44,20 @@ contains
   subroutine InitializeMessageData (MsgData)
 
     ! Create MessageData components of each entry
-    ! of a previously allocated MesageData array 
+    ! of a MesageData 
 
-    type(MessageData), intent(inout) :: MsgData(:)
+    type(MessageData), intent(inout) :: MsgData
 
-    integer :: i
     character(len=*), parameter :: h="**(InitializeMessageData)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     
-    do i = 1, size(MsgData)
-       MsgData(i)%bufSize = 0
-       MsgData(i)%fieldList => CreateFieldSectionList()
-    end do
+    MsgData%bufSize = 0
+    MsgData%head => null()
+    MsgData%tail => null()
     if (dumpLocal) then
        call MsgDump(h//" done")
     end if
   end subroutine InitializeMessageData
-
-
-
-
-
-
-  subroutine TransferMessageData(left, right)
-
-    ! assignment of MessageData variables
-
-    type(MessageData) :: left
-    type(MessageData) :: right
-    logical, parameter :: dumpLocal=.false.
-    character(len=*), parameter :: h="**(TransferMessageData)**"
-
-    left%bufSize = right%bufSize
-    left%fieldList => right%fieldList
-    if (dumpLocal) then
-       call MsgDump(h//" left => right")
-    end if
-  end subroutine TransferMessageData
-
-
-
-
-
-
-  subroutine InsertFieldSectionAtSendRecvMessageData(&
-       vTabPtr, ParEnv, Neigh, GlobalWithGhost, &
-       xbSend, xeSend, ybSend, yeSend, willSend, SendMsgData, &
-       xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvMsgData)
-
-    ! Insert, at previosly existing message data variable,
-    ! field sections to communicate. 
-    ! The field sections are arrays indexed by number of neighbours.
-    ! Logical arrays indicate if each neighbour has field
-    ! sections to communicate.
-    ! Insertion is performed only for neighbours that have
-    ! field sections to communicate.
-
-    type(var_tables_r), pointer, intent(in) :: vTabPtr
-    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
-    type(NeighbourNodes), pointer, intent(in) :: Neigh
-    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
-
-    ! all remaining arguments are dimensioned by number of neighbours 
-    ! and indexed by neighbour number
-
-    ! region to be sent to each neighbour (global indices)
-
-    integer, intent(in) :: xbSend(:)
-    integer, intent(in) :: xeSend(:)
-    integer, intent(in) :: ybSend(:)
-    integer, intent(in) :: yeSend(:)
-
-    ! which neighbours will receive msgs from this node
-
-    logical, intent(in) :: willSend(:)
-
-    ! potential sending message data
-
-    type(MessageData), intent(inout) :: SendMsgData(:)
-
-    ! region to be received from each neighbour (global indices)
-
-    integer, intent(in) :: xbRecv(:)
-    integer, intent(in) :: xeRecv(:)
-    integer, intent(in) :: ybRecv(:)
-    integer, intent(in) :: yeRecv(:)
-
-    ! which neighbours will send msgs to this node
-
-    logical, intent(in) :: willRecv(:)
-
-    ! potential receiving message data
-
-    type(MessageData), intent(inout) :: RecvMsgData(:)
-
-    integer :: i
-    integer :: thisNode
-    integer :: x0, y0
-    type(FieldSection), pointer :: oneFieldSection
-    character(len=8) :: c0, c1
-    character(len=*), parameter :: h="**(InsertFieldSectionAtSendRecvMessageData)**"
-    logical, parameter :: dumpLocal=.false.
-
-    ! check arguments
-
-    if (.not. associated(vTabPtr)) then
-       call fatal_error(h//" vTabPtr not associated")
-    else if (.not. associated(ParEnv)) then
-       call fatal_error(h//" ParEnv not associated")
-    else if (.not. associated(Neigh)) then
-       call fatal_error(h//" Neigh not associated")
-    else if (.not. associated(GlobalWithGhost)) then
-       call fatal_error(h//" GlobalWithGhost not associated")
-    end if
-
-    ! offsets to convert global indices to local indices at this proc
-
-    thisNode = ParEnv%myNum
-    x0 = GlobalWithGhost%xb(thisNode) - 1
-    y0 = GlobalWithGhost%yb(thisNode) - 1
-
-    ! create list of Field Sections to send and to receive
-
-    do i = 1, Neigh%nNeigh
-       if (willSend(i)) then
-          select case (vTabPtr%idim_type)
-          case (2)
-             oneFieldSection =>  CreateFieldSection(&
-                  vTabPtr%var_p_2D, &
-                  vTabPtr%name, &
-                  vTabPtr%idim_type, &
-                  xbSend(i)-x0, xeSend(i)-x0, &
-                  ybSend(i)-y0, yeSend(i)-y0)
-          case (3,6,7)
-             oneFieldSection =>  CreateFieldSection(&
-                  vTabPtr%var_p_3D, &
-                  vTabPtr%name, &
-                  vTabPtr%idim_type, &
-                  xbSend(i)-x0, xeSend(i)-x0, &
-                  ybSend(i)-y0, yeSend(i)-y0)
-          case (4,5)
-             oneFieldSection =>  CreateFieldSection(&
-                  vTabPtr%var_p_4D, &
-                  vTabPtr%name, &
-                  vTabPtr%idim_type, &
-                  xbSend(i)-x0, xeSend(i)-x0, &
-                  ybSend(i)-y0, yeSend(i)-y0)
-          case default
-             write(c0,"(i8)") vTabPtr%idim_type
-             call fatal_error(h//" unknown idim_type="//trim(adjustl(c0)))
-          end select
-          call InsertAtFieldSectionList(oneFieldSection, &
-               SendMsgData(i)%fieldList)
-          SendMsgData(i)%bufSize = SendMsgData(i)%bufSize+oneFieldSection%fieldSectionSize
-          if (dumpLocal) then
-             write(c0,"(i8)") i
-             write(c1,"(i8)") SendMsgData(i)%bufSize
-             call MsgDump(h//" increased buffer size of SendMsgData("//&
-                  trim(adjustl(c0))//") to "//trim(adjustl(c1)))
-          end if
-       end if
-       if (willRecv(i)) then
-          select case (vTabPtr%idim_type)
-          case (2)
-             oneFieldSection =>  CreateFieldSection(&
-                  vTabPtr%var_p_2D, &
-                  vTabPtr%name, &
-                  vTabPtr%idim_type, &
-                  xbRecv(i)-x0, xeRecv(i)-x0, &
-                  ybRecv(i)-y0, yeRecv(i)-y0)
-          case (3,6,7)
-             oneFieldSection =>  CreateFieldSection(&
-                  vTabPtr%var_p_3D, &
-                  vTabPtr%name, &
-                  vTabPtr%idim_type, &
-                  xbRecv(i)-x0, xeRecv(i)-x0, &
-                  ybRecv(i)-y0, yeRecv(i)-y0)
-          case (4,5)
-             oneFieldSection =>  CreateFieldSection(&
-                  vTabPtr%var_p_4D, &
-                  vTabPtr%name, &
-                  vTabPtr%idim_type, &
-                  xbRecv(i)-x0, xeRecv(i)-x0, &
-                  ybRecv(i)-y0, yeRecv(i)-y0)
-          case default
-             write(c0,"(i8)") vTabPtr%idim_type
-             call fatal_error(h//" unknown idim_type="//trim(adjustl(c0)))
-          end select
-          call InsertAtFieldSectionList(oneFieldSection, &
-               RecvMsgData(i)%fieldList)
-          RecvMsgData(i)%bufSize = RecvMsgData(i)%bufSize+oneFieldSection%fieldSectionSize
-          if (dumpLocal) then
-             write(c0,"(i8)") i
-             write(c1,"(i8)") RecvMsgData(i)%bufSize
-             call MsgDump(h//" increased buffer size of RecvMsgData("//&
-                  trim(adjustl(c0))//") to "//trim(adjustl(c1)))
-          end if
-       end if
-    end do
-  end subroutine InsertFieldSectionAtSendRecvMessageData
-
-
-
-
-
-  subroutine CleanMessageData (MsgData)
-    type(MessageData), intent(inout) :: MsgData(:)
-
-    ! To clean a message data array,
-    ! destroy field section lists of null entries,
-    ! create fresh areas for non-empty field section lists,
-    ! since these non-empty entries are pointed by someone else
-
-    integer :: i
-    character(len=*), parameter :: h="**(CleanMessageData)**"
-    character(len=8) :: c0, c1
-    logical, parameter :: dumpLocal=.false.
-
-    do i = 1, size(MsgData)
-       if (MsgData(i)%bufSize == 0) then
-          if (dumpLocal) then
-             write(c0,"(i8)") i
-             write(c1,"(i8)") MsgData(i)%bufSize
-             call MsgDump(h//" will destroy field section list of MsgData("//&
-                  trim(adjustl(c0))//") of size "//trim(adjustl(c1)))
-          end if
-          call DestroyFieldSectionList(MsgData(i)%fieldList)
-       else
-          if (dumpLocal) then
-             write(c0,"(i8)") i
-             write(c1,"(i8)") MsgData(i)%bufSize
-             call MsgDump(h//" sets buffer size of MsgData("//&
-                  trim(adjustl(c0))//") of size "//trim(adjustl(c1))//&
-                  " to zero and nullify fieldList pointer")
-          end if
-          MsgData(i)%bufSize = 0
-          MsgData(i)%fieldList => null()
-       end if
-    end do
-  end subroutine CleanMessageData
 
 
 
@@ -301,9 +71,11 @@ contains
     type(MessageData) :: msgData
 
     integer :: ierr
+    type(FieldSection), pointer:: this
+    type(FieldSection), pointer:: next
     character(len=8) :: c0, c1
     character(len=*), parameter :: h="**(DestroyMessageData)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     msgData%bufSize = 0
     if (allocated(msgData%buf)) then
@@ -320,6 +92,129 @@ contains
        call MsgDump(h//" nullify bufSize and deallocate buf of MsgData;"//&
             " will destroy field section list")
     end if
-    call DestroyFieldSectionList(msgData%fieldList)
+    this => msgData%head
+    do while (associated(this))
+       next => this%next
+       call DestroyFieldSection(this)
+       this => next
+    end do
+    nullify(msgData%head)
+    nullify(msgData%tail)
   end subroutine DestroyMessageData
+
+
+
+
+  subroutine AppendFieldSectionToMessageData (oneFieldSection, oneMessageData)
+
+    type(FieldSection), pointer, intent(in) :: oneFieldSection
+    type(MessageData), intent(inout) :: oneMessageData
+
+    type(FieldSection), pointer :: previous
+    character(len=*), parameter :: h="**(AppendFieldSectionToMessageData)**"
+
+    if (.not. associated(oneFieldSection)) then
+       call fatal_error(h//" oneFieldSection not associated")
+    end if
+
+    if (.not. associated(oneMessageData%head)) then
+       oneMessageData%head => oneFieldSection
+    else
+       call AppendFieldSection(oneMessageData%tail, oneFieldSection)
+    end if
+    oneMessageData%tail => oneFieldSection
+
+    oneMessageData%bufSize = oneMessageData%bufSize + FieldSectionSize(oneFieldSection)
+  end subroutine AppendFieldSectionToMessageData
+
+
+
+
+
+  
+  subroutine FillMessageDataBufferWithFieldSectionData(oneMessageData)
+    type(MessageData), intent(inout) :: oneMessageData
+
+    integer(kind=i8) :: bufStart
+    type(FieldSection), pointer :: this
+
+    bufStart=1_i8
+    this => oneMessageData%head
+    do while (associated(this))
+       call FieldSectionData2Buffer(&
+            this, &
+            oneMessageData%buf, &
+            bufStart, &
+            oneMessageData%bufsize)
+       this => NextFieldSection(this)
+    end do
+  end subroutine FillMessageDataBufferWithFieldSectionData
+
+
+
+  
+
+  subroutine ExtractFieldSectionDataFromMessageDataBuffer(oneMessageData)
+    type(MessageData), intent(inout) :: oneMessageData
+
+    integer(kind=i8) :: bufStart
+    type(FieldSection), pointer :: this
+
+    bufStart=1_i8
+    this => oneMessageData%head
+    do while (associated(this))
+       call Buffer2FieldSectionData(&
+            this, &
+            oneMessageData%buf, &
+            bufStart, &
+            oneMessageData%bufsize)
+       this => NextFieldSection(this)
+    end do
+  end subroutine ExtractFieldSectionDataFromMessageDataBuffer
+
+
+
+  
+
+
+  subroutine AllocateMessageDataBuffer(oneMessageData)
+    type(MessageData), intent(inout) :: oneMessageData
+
+    integer :: bufSize
+    integer :: ierr
+    character(len=8) :: c0, c1
+    character(len=*), parameter :: h="**(AllocateMessageDataBuffer)**"
+
+    bufSize=oneMessageData%bufSize
+
+    allocate(oneMessageData%buf(bufSize), stat=ierr)
+    if (ierr /= 0) then
+       write(c0,"(i8)") bufSize
+       write(c1,"(i8)") ierr
+       call fatal_error(h//" allocation of oneMessageData("//&
+            trim(adjustl(c0))//") fails with stat="//&
+            trim(adjustl(c1)))
+    end if
+  end subroutine AllocateMessageDataBuffer
+
+
+
+  
+
+
+  subroutine DeallocateMessageDataBuffer(oneMessageData)
+    type(MessageData), intent(inout) :: oneMessageData
+
+    integer :: ierr
+    character(len=8) :: c0
+    character(len=*), parameter :: h="**(DeallocateMessageDataBuffer)**"
+
+
+    deallocate(oneMessageData%buf, stat=ierr)
+    if (ierr /= 0) then
+       write(c0,"(i8)") ierr
+       call fatal_error(h//" deallocation of oneMessageData"//&
+            " fails with stat="//trim(adjustl(c0)))
+    end if
+  end subroutine DeallocateMessageDataBuffer
 end module ModMessageData
