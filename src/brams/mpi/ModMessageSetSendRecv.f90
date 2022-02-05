@@ -35,7 +35,7 @@ module ModMessageSetSendRecv
 
   use ModMessageData, only: &
        MessageData, &
-       InitializeMessageData, &
+       CreateMessageData, &
        AppendFieldSectionToMessageData, &
        DestroyMessageData, &
        FillMessageDataBufferWithFieldSectionData, &
@@ -122,7 +122,7 @@ contains
 
 
 
-  function CreateMessageSet (name, tag, hasMsg, Neigh) result(Msgs)
+  function CreateMessageSet (name, direction, tag, hasMsg, Neigh) result(Msgs)
 
     ! Generates a variable of type MessageSet containing
     ! all message envelopes and no message data
@@ -138,6 +138,7 @@ contains
     ! are indexed by true value count, at range 1:nMsgs.
 
     character(len=*), intent(in) :: name
+    character(len=*), intent(in) :: direction
     integer, intent(in) :: tag
     logical, intent(in) :: hasMsg(:)
     type(NeighbourNodes), pointer, intent(in) :: Neigh
@@ -210,7 +211,7 @@ contains
           cntMsg = cntMsg + 1
           Msgs%request(cntMsg) = MPI_REQUEST_NULL
           Msgs%otherProc(cntMsg)= Brams2MpiProcNbr(Neigh%neigh(iNeigh))
-          call InitializeMessageData(Msgs%oneMsg(cntMsg))
+          call CreateMessageData(Msgs%oneMsg(cntMsg),name,direction)
        end if
     end do
 

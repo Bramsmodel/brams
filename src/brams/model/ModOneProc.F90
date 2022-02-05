@@ -1582,7 +1582,8 @@ contains
 
 
 
-
+    call MsgDump(h//" fim forcado")
+    if (mynum >= 0) return
 
 
     ! Deallocating dynamic arrays

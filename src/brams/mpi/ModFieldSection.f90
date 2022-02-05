@@ -1,12 +1,13 @@
 module ModFieldSection
 
 
-  ! field sections to be communicated
-  ! among processes in a single message
+  ! a list of field sections to be communicated
+  ! among processes in a single MPI
+  ! message passing. List head and tail are
+  ! stored elsewhere
 
 
   use ModParallelEnvironment, only: MsgDump
-
 
   implicit none
   include "ranks.h" ! for kind=i8
@@ -14,6 +15,7 @@ module ModFieldSection
   private
   public :: FieldSection
   public :: CreateFieldSection
+  public :: StringFieldSection
   public :: DumpFieldSection
   public :: DestroyFieldSection
   public :: NextFieldSection
@@ -22,24 +24,26 @@ module ModFieldSection
   public :: FieldSectionData2Buffer
   public :: Buffer2FieldSectionData
 
-
-  ! FieldSection: one entry of a list of fields
-  !               to be communicated to a single process
-  !               in a single message passing operation.
-  !               Data to communicate is the horizontal
-  !               section [xStart:xEnd,yStart:yEnd] (local indices)
-  !               of field_XXX (XXX=2D, 3D, 4D or I2D).
-  !               If the field has more than 2 dimensions, then
-  !               the remaining dimensions of each pair (x,y) of
-  !               the section should be fully communicated.
-  !               Component idim_type informs which are the remaining
-  !               dimensions to be communicated, in a coded scheme.
-  !               Component name has the field name to be communicated.
-  !               Component fieldSectionSize is the size of the field
-  !               to be communicated.
-
-
   type FieldSection
+
+     ! one entry of a list of fields
+     ! to be communicated to a single process
+     ! in a single message passing operation.
+
+     ! Data to communicate is the horizontal
+     ! section [xStart:xEnd,yStart:yEnd] (local indices)
+     ! of field_XXX (XXX=2D, 3D, 4D or I2D).
+
+     ! If the field has more than 2 dimensions, then
+     ! the remaining dimensions of each pair (x,y) of
+     ! the section should be fully communicated.
+
+     ! Component idim_type informs which are the remaining
+     ! dimensions to be communicated, in a coded scheme.
+     ! Component name has the field name to be communicated.
+     ! Component fieldSectionSize is the size of the field
+     ! to be communicated.
+     
      real, pointer :: field_2D(:,:) => null()
      real, pointer :: field_3D(:,:,:) => null()
      real, pointer :: field_4D(:,:,:,:) => null()
@@ -77,7 +81,6 @@ module ModFieldSection
      ! one communication may have multiple fields
      ! to communicate
   end type FieldSection
-
 
   interface CreateFieldSection
      module procedure CreateFieldSection_I2D
@@ -134,8 +137,7 @@ contains
             trim(adjustl(c0)))
     end if
     if (dumpLocal) then
-       call MsgDump(h//" with entries:")
-       call DumpFieldSection(oneFieldSection, h)
+       call DumpFieldSection(oneFieldSection, h//" has entry ")
     end if
   end function CreateFieldSection_I2D
 
@@ -186,8 +188,7 @@ contains
             trim(adjustl(c0)))
     end if
     if (dumpLocal) then
-       call MsgDump(h//" with entries:")
-       call DumpFieldSection(oneFieldSection, h)
+       call DumpFieldSection(oneFieldSection, h//" has entry ")
     end if
   end function CreateFieldSection_2D
 
@@ -245,8 +246,7 @@ contains
             trim(adjustl(c0)))
     end select
     if (dumpLocal) then
-       call MsgDump(h//" with entries:")
-       call DumpFieldSection(oneFieldSection, h)
+       call DumpFieldSection(oneFieldSection, h//" has entry ")
     end if
   end function CreateFieldSection_3D
 
@@ -300,8 +300,7 @@ contains
             trim(adjustl(c0)))
     end select
     if (dumpLocal) then
-       call MsgDump(h//" with entries:")
-       call DumpFieldSection(oneFieldSection, h)
+       call DumpFieldSection(oneFieldSection, h//" has entry ")
     end if
   end function CreateFieldSection_4D
 
@@ -388,21 +387,36 @@ contains
 
 
 
-  subroutine DestroyFieldSection(oneEntry)
+  subroutine DestroyFieldSection(oneFieldSection)
 
     ! reclaims memory area and returns null pointer
 
-    type(FieldSection), pointer, intent(inout) :: oneEntry
+    type(FieldSection), pointer, intent(inout) :: oneFieldSection
 
     integer :: ierr
     character(len=128) :: name
+    type(FieldSection), pointer :: this
+    type(FieldSection), pointer :: previous
+    type(FieldSection), pointer :: next
     character(len=8) :: c0
     character(len=*), parameter :: h="**(DestroyFieldSection)**"
     logical, parameter :: dumpLocal=.true.
 
-    if (associated(oneEntry)) then
-       name = oneEntry%name
-       deallocate(oneEntry, stat=ierr)
+    if (associated(oneFieldSection)) then
+       name = oneFieldSection%name
+       oneFieldSection%field_2D => null()
+       oneFieldSection%field_3D => null()
+       oneFieldSection%field_4D => null()
+       oneFieldSection%field_I2D => null()
+       previous => oneFieldSection%previous
+       next => oneFieldSection%next
+       if (associated(previous)) then
+          previous%next => next
+       end if
+       if (associated(next)) then
+          next%previous => previous
+       end if
+       deallocate(oneFieldSection, stat=ierr)
        if (ierr /= 0) then
           write(c0,"(i8)") ierr
           call fatal_error(h//" deallocate fails with stat="//&
@@ -412,16 +426,19 @@ contains
           call MsgDump(h//" named "//trim(adjustl(name)))
        end if
     end if
-    nullify(oneEntry)
+    nullify(oneFieldSection)
   end subroutine DestroyFieldSection
 
 
-  ! NextFieldSection: returns node following "node" at the list;
-  !                   if input "node" is empty, returns list head;
-  !                   if no more nodes in the list, returns null
 
 
+  
   function NextFieldSection(node) result(next)
+
+    ! returns node following "node" at the list;
+    ! if input "node" is empty, returns list head;
+    ! if no more nodes in the list, returns null
+
     type(FieldSection), pointer :: node
     type(FieldSection), pointer :: next
 
@@ -435,20 +452,21 @@ contains
     end if
 
     if (dumpLocal) then
-       call MsgDump(h//" returns "//&
-            trim(adjustl(StringFieldSection(next))))
+       call MsgDump(h//" is "//trim(adjustl(StringFieldSection(next))))
     end if
   end function NextFieldSection
 
 
 
 
+  
   subroutine AppendFieldSection(this, next)
 
     type(FieldSection), pointer, intent(in) :: this
     type(FieldSection), pointer, intent(in) :: next
 
     character(len=*), parameter :: h="**(AppendFieldSection)**"
+    logical, parameter :: dumpLocal=.true.
 
     if (.not. associated(this)) then
        call fatal_error(h//" null this")
@@ -458,12 +476,21 @@ contains
     end if
     next%previous => this
     this%next => next
+    if (dumpLocal) then
+       call MsgDump(h//" "//&
+            trim(adjustl(next%name))//" appended to "//&
+            trim(adjustl(this%name)))
+    end if
   end subroutine AppendFieldSection
 
 
 
+
+  
   function FieldSectionSize(oneFieldSection) result(len)
 
+    ! returns the number of elements of a field section
+    
     type(FieldSection), pointer, intent(in) :: oneFieldSection
     integer(kind=i8) :: len
 
@@ -476,13 +503,21 @@ contains
 
 
 
+  
   subroutine FieldSectionData2Buffer(oneFieldSection, &
        buf, bufStart, bufSize)
 
+    ! copy field section values into a 1D buffer in array
+    ! element order
+    
     type(FieldSection), pointer, intent(in) :: oneFieldSection
+    ! field values of the field section to copy from
     real, intent(inout) :: buf(:)
+    ! buffer to copy to
     integer(kind=i8), intent(inout) :: bufStart
+    ! copy starts at buf(bufStart)
     integer(kind=i8), intent(in) :: bufSize
+    ! buf maximum size
 
     integer(kind=i8) :: finalPos
     integer(kind=i8) :: posBuf
@@ -606,10 +641,17 @@ contains
   subroutine Buffer2FieldSectionData(oneFieldSection, &
        buf, bufStart, bufSize)
 
+    ! copy field section values from a 1D buffer to
+    ! the field at field section in array element order
+    
     type(FieldSection), pointer, intent(in) :: oneFieldSection
+    ! field values of the field section to copy to
     real, intent(in) :: buf(:)
+    ! buffer to copy from
     integer(kind=i8), intent(inout) :: bufStart
+    ! copy starts at buf(bufStart)
     integer(kind=i8), intent(in) :: bufSize
+    ! buf maximum size
 
     integer(kind=i8) :: finalPos
     integer(kind=i8) :: posBuf

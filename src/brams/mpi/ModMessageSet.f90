@@ -52,6 +52,9 @@ module ModMessageSet
 
   public :: CreateAllGhostZoneMessageSet
   public :: DestroyAllGhostZoneMessageSet
+
+  character(len=*), parameter :: sendDirection="send"
+  character(len=*), parameter :: recvDirection="recv"
 contains
 
 
@@ -611,8 +614,18 @@ contains
 
     ! build message set
 
-    AcouSendU => CreateMessageSet(NameSendU, TagU, willSend, Neigh)
-    AcouRecvU => CreateMessageSet(NameRecvU, TagU, willRecv, Neigh)
+    AcouSendU => CreateMessageSet(&
+         NameSendU, &
+         sendDirection, &
+         TagU, &
+         willSend, &
+         Neigh)
+    AcouRecvU => CreateMessageSet(&
+         NameRecvU, &
+         recvDirection, &
+         TagU, &
+         willRecv, &
+         Neigh)
 
     ! get field
 
@@ -714,8 +727,18 @@ contains
 
     ! build message set
 
-    AcouSendV => CreateMessageSet(NameSendV, TagV, willSend, Neigh)
-    AcouRecvV => CreateMessageSet(NameRecvV, TagV, willRecv, Neigh)
+    AcouSendV => CreateMessageSet(&
+         NameSendV, &
+         sendDirection, &
+         TagV, &
+         willSend, &
+         Neigh)
+    AcouRecvV => CreateMessageSet(&
+         NameRecvV, &
+         recvDirection, &
+         TagV, &
+         willRecv, &
+         Neigh)
 
     ! get field
 
@@ -858,8 +881,18 @@ contains
 
     ! build message set
 
-    AcouSendP => CreateMessageSet(NameSendP, TagP, willSend, Neigh)
-    AcouRecvP => CreateMessageSet(NameRecvP, TagP, willRecv, Neigh)
+    AcouSendP => CreateMessageSet(&
+         NameSendP, &
+         sendDirection, &
+         TagP, &
+         willSend, &
+         Neigh)
+    AcouRecvP => CreateMessageSet(&
+         NameRecvP, &
+         recvDirection, &
+         TagP, &
+         willRecv, &
+         Neigh)
 
     ! get field
 
@@ -1035,8 +1068,18 @@ contains
 
     ! build message set
 
-    AcouSendUV => CreateMessageSet(NameSendUV, TagUV, willSend, Neigh)
-    AcouRecvUV => CreateMessageSet(NameRecvUV, TagUV, willRecv, Neigh)
+    AcouSendUV => CreateMessageSet(&
+         NameSendUV, &
+         sendDirection, &
+         TagUV, &
+         willSend, &
+         Neigh)
+    AcouRecvUV => CreateMessageSet(&
+         NameRecvUV, &
+         recvDirection, &
+         TagUV, &
+         willRecv, &
+         Neigh)
 
     ! get field UP
 
@@ -1172,8 +1215,18 @@ contains
 
     ! build message set
 
-    AcouSendWP => CreateMessageSet(NameSendWP, TagWP, willSend, Neigh)
-    AcouRecvWP => CreateMessageSet(NameRecvWP, TagWP, willRecv, Neigh)
+    AcouSendWP => CreateMessageSet(&
+         NameSendWP, &
+         sendDirection, &
+         TagWP, &
+         willSend, &
+         Neigh)
+    AcouRecvWP => CreateMessageSet(&
+         NameRecvWP, &
+         recvDirection, &
+         TagWP, &
+         willRecv, &
+         Neigh)
 
     ! get field UP
 
@@ -1308,11 +1361,17 @@ contains
     ! build message set
 
     SelectedGhostZoneSend => CreateMessageSet(&
-         NameSendSelectedGhostZone, TagSelectedGhostZone, &
-         willSend, Neigh)
+         NameSendSelectedGhostZone, &
+         sendDirection, &
+         TagSelectedGhostZone, &
+         willSend, &
+         Neigh)
     SelectedGhostZoneRecv => CreateMessageSet(&
-         NameRecvSelectedGhostZone, TagSelectedGhostZone, &
-         willRecv, Neigh)
+         NameRecvSelectedGhostZone, &
+         recvDirection, &
+         TagSelectedGhostZone, &
+         willRecv, &
+         Neigh)
 
     ! take all var_tables field that should be communicated
 
@@ -1428,8 +1487,18 @@ contains
 
     ! build message set
 
-    AllGhostZoneSend => CreateMessageSet(NameSendAllGhostZone, TagAllGhostZone, willSend, Neigh)
-    AllGhostZoneRecv => CreateMessageSet(NameRecvAllGhostZone, TagAllGhostZone, willRecv, Neigh)
+    AllGhostZoneSend => CreateMessageSet(&
+         NameSendAllGhostZone, &
+         sendDirection, &
+         TagAllGhostZone, &
+         willSend, &
+         Neigh)
+    AllGhostZoneRecv => CreateMessageSet(&
+         NameRecvAllGhostZone, &
+         recvDirection, &
+         TagAllGhostZone, &
+         willRecv, &
+         Neigh)
 
     ! take all var_tables field that should be communicated
 
@@ -1534,8 +1603,18 @@ contains
 
     ! build message set
 
-    SendDn0u => CreateMessageSet(NameSendDn0u, TagDn0u, willSend, Neigh)
-    RecvDn0u => CreateMessageSet(NameRecvDn0u, TagDn0u, willRecv, Neigh)
+    SendDn0u => CreateMessageSet(&
+         NameSendDn0u, &
+         sendDirection, &
+         TagDn0u, &
+         willSend, &
+         Neigh)
+    RecvDn0u => CreateMessageSet(&
+         NameRecvDn0u, &
+         recvDirection, &
+         TagDn0u, &
+         willRecv, &
+         Neigh)
 
     ! get field
 
@@ -1632,8 +1711,18 @@ contains
 
     ! build message set
 
-    SendDn0v => CreateMessageSet(NameSendDn0v, TagDn0v, willSend, Neigh)
-    RecvDn0v => CreateMessageSet(NameRecvDn0v, TagDn0v, willRecv, Neigh)
+    SendDn0v => CreateMessageSet(&
+         NameSendDn0v, &
+         sendDirection, &
+         TagDn0v, &
+         willSend, &
+         Neigh)
+    RecvDn0v => CreateMessageSet(&
+         NameRecvDn0v, &
+         recvDirection, &
+         TagDn0v, &
+         willRecv, &
+         Neigh)
 
     ! get field
 
@@ -1747,11 +1836,17 @@ contains
     ! build message set
 
     SendG3D => CreateMessageSet(&
-         NameSendG3D, TagG3D, &
-         willSend, Neigh)
+         NameSendG3D, &
+         sendDirection, &
+         TagG3D, &
+         willSend, &
+         Neigh)
     RecvG3D => CreateMessageSet(&
-         NameRecvG3D, TagG3D, &
-         willRecv, Neigh)
+         NameRecvG3D, &
+         recvDirection, &
+         TagG3D, &
+         willRecv, &
+         Neigh)
 
     ! when g3d_spread is selected, send and receive fields TTENS and QVTTENS
 
