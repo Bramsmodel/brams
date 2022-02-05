@@ -20,7 +20,7 @@ contains
 
     use ModParallelEnvironment, only: MsgDump
 
-    use ModMessageSetSendRecv, only: &
+    use ModMessagePassing, only: &
          PostRecvSendMsgs, &
          WaitSendRecvMsgs
 

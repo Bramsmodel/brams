@@ -29,11 +29,9 @@ module ModGrid
        DumpNeighbourNodes, &
        DestroyNeighbourNodes
 
-  use ModMessageSetSendRecv, only: &
-       MessageSet, &
-       DumpMessageSet
-
   use ModMessageSet, only: &
+       MessageSet, &
+       DumpMessageSet, &
        CreateAcousticMessageSet, &
        DestroyAcousticMessageSet, &
        CreateDn0MessageSet, &

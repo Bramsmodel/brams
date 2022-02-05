@@ -136,7 +136,7 @@ module ModVarfFile
        init_ajust,         &
        spc_name
 
-  use ModMessageSetSendRecv, only: &
+  use ModMessagePassing, only: &
        PostRecvSendMsgs, &
        WaitSendRecvMsgs
 

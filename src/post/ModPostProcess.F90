@@ -35,7 +35,7 @@ module ModPostProcess
    use ModGrid, only : &
          Grid
 
-   use ModMessageSetSendRecv, only : &
+   use ModMessagePassing, only : &
          PostRecvSendMsgs, &
          WaitSendRecvMsgs
 

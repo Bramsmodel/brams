@@ -10,7 +10,7 @@ module ModTimestep
 contains
 subroutine timestep(OneGrid)
 
-  use ModMessageSetSendRecv, only: &
+  use ModMessagePassing, only: &
        PostRecvSendMsgs, &
        WaitSendRecvMsgs
 

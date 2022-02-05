@@ -990,7 +990,7 @@ contains
 
     use ModGrid, only: Grid, DumpGrid
 
-    use ModMessageSetSendRecv, only: &
+    use ModMessagePassing, only: &
          PostRecvSendMsgs, &
          WaitSendRecvMsgs
 

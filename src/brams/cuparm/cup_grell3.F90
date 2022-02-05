@@ -7,7 +7,7 @@ module CUPARM_GRELL3
 
   use ModNamelistFile, only: namelistFile
 
-  use ModMessageSetSendRecv, only: &
+  use ModMessagePassing, only: &
        PostRecvSendMsgs,    &
        WaitSendRecvMsgs
 
