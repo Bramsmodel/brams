@@ -1,35 +1,40 @@
 module ModMessageSet
 
-  ! Implements specific MessageSet operations
-  ! required by timestep. See description of
-  ! MessageSet operations at ModMessageSetSendRecv
-
   ! At each timestep, the ghost zone of some fixed fields 
-  ! needs updating at fixed points of the computation.
-  ! Ghost zone update requires message passing.
-  ! The set of fields to update varies with the computation point.
+  ! needs updating. Ghost zone update requires message passing.
+  ! There are a few timestep locations that need ghost zone
+  ! update. The set of fields to update is fixed at one
+  ! location, but varies with the location.
   !
   ! For each point of the computation the set of fields
   ! and the ranks to access are stored at a pair of variables
   ! of type MessageSet, one for send and one for receive operations.
   !
+  ! MessageSet variables contain message data and message envelop
+  ! for an array of message passing operations. Each array element
+  ! contains all data to pass to a single rank, on a single
+  ! message exchange operation. Consequently, field sections of
+  ! all fields that require ghost zone update involving two fixed
+  ! ranks are stored at a single MessageSet array entry  and 
+  ! exchanged on a single message passing operation. 
+  !
+  ! Message passing operates on a contiguous buffer. Field sections
+  ! to update are not contiguous in memory and have to be copied
+  ! to/from the buffer. Mapping of a field section to buffer locations
+  ! and inverse mapping are computed once, at MessageSet creation
+  ! and stored at the corresponding MessageSet array entry.
+  !
   ! Type MessageSet and procedures to create, destroy, dump
   ! and perform general message passing operations are implemented
   ! by this module. Procedures to create and destroy specific
-  ! MessageSet operations required by timestep are implemented
-  ! by ModMessageSet, that uses the general operations defined
+  ! MessageSet operations required by timestep are also implemented
   ! at this module.
-  !
-  ! MessageSet variables contain data for a set of message
-  ! passing operations. These variables are created during
-  ! initialization and used throughout integration.
   !
   ! All message passing operations are nonblocking.
   ! Procedure PostRecvSendMsgs initiate all send/recv
   ! operations of one set. Procedure WaitSendRecvMsgs finalize
-  ! all send/recv operations of the same set.
-  !
-  ! MessageSet type components are described bellow.
+  ! all send/recv operations of the same set. These procedures
+  ! are implemented by ModMessagePassing.
 
 
   use ModGridDims, only: &
@@ -55,6 +60,7 @@ module ModMessageSet
   use ModMessageData, only: &
        MessageData, &
        CreateMessageData, &
+       DumpMessageData, &
        AppendFieldSectionToMessageData, &
        DestroyMessageData
 
@@ -66,7 +72,7 @@ module ModMessageSet
        NamelistFile
 
   use mem_grid, only : &
-   	 dyncore_flag
+       dyncore_flag
 
   implicit none
   include "mpif.h"
@@ -75,10 +81,9 @@ module ModMessageSet
   private
 
   public :: MessageSet
-  public :: CreateMessageSet
-  public :: InsertFieldSectionAtMessageSet
+!!$  public :: CreateMessageSet
+!!$  public :: DestroyMessageSet
   public :: DumpMessageSet
-  public :: DestroyMessageSet
 
   public :: CreateAcousticMessageSet
   public :: DestroyAcousticMessageSet
@@ -111,23 +116,724 @@ module ModMessageSet
      ! message passing set name
      integer :: nMsgs=-1
      ! number of messages on the set,
-     ! one message for each rank
+     ! one message for each rank involved
+     ! in message passing for this set of variables
      integer :: tag
-     ! same tag for all messages in the set
-     type(MessageData), allocatable :: oneMsg(:)
-     ! data to communicate at each message;
-     ! array of MessageData is indexed by message
-     ! number on the set. See file ModMessageSet.f90
-     ! for the declaration of MessageSet type
+     ! same tag for all messages in the set; part
+     ! of message passing envelop
      integer, allocatable :: request(:)
      ! communication request; array of requests is
-     ! indexed by message number on the set
+     ! indexed by message number on the set; each
+     ! entry is a part of a message passing envelop
      integer, allocatable :: otherProc(:)
      ! MPI rank to communicate; array of ranks
-     ! is indexed by message number on the set
+     ! is indexed by message number on the set; each
+     ! entry is a part of a message passing envelop
+     type(MessageData), allocatable :: msgData(:)
+     ! data to communicate at each message;
+     ! array of MessageData is indexed by message
+     ! number on the set. Each entry contains message
+     ! data to exchange on a single message passing
+     ! operation
   end type MessageSet
 
 contains
+
+
+
+
+
+  function CreateMessageSet (name, direction, tag, hasMsg, Neigh) result(Msgs)
+
+    ! Generates a variable of type MessageSet containing
+    ! all message envelopes and no message data
+    ! to be sent by this node to all neighbour nodes or
+    ! to be received by this node from all neighbour nodes
+    ! during the communication denoted by "name".
+    ! Input includes "hasMsg", a logical array indexed by
+    ! neighbour count that stores if a neighbour will or
+    ! will not communicate with this node in this communication.
+    ! Same tag should be used on send and recieve.
+    ! Returning variable has as many messages as the number
+    ! of true values in hasMsg. Arrays in returning variable
+    ! are indexed by true value count, at range 1:nMsgs.
+
+    character(len=*), intent(in) :: name
+    character(len=*), intent(in) :: direction
+    integer, intent(in) :: tag
+    logical, intent(in) :: hasMsg(:)
+    type(NeighbourNodes), pointer, intent(in) :: Neigh
+    type(MessageSet), pointer :: Msgs
+
+    character(len=8) :: c0, c1
+    character(len=*), parameter :: h="**(CreateMessageSet)**"
+
+    integer :: nNeigh
+    integer :: nMsgs
+    integer :: iNeigh
+    integer :: ierr
+    integer :: cntMsg
+
+    ! no message if no neighbours or no message to exchange
+
+    nNeigh = Neigh%nNeigh
+    nMsgs = count(hasMsg)
+    if (nNeigh == 0 .or. nMsgs == 0) then
+       Msgs => null()
+       return
+    end if
+
+    ! there are messages: allocate area
+
+    allocate(Msgs, stat=ierr)
+    if (ierr /= 0) then
+       write(c0,"(i8)") ierr
+       call fatal_error(h//" allocate Msgs fails with stat="//&
+            trim(adjustl(c0)))
+    end if
+
+    allocate(Msgs%msgData(nMsgs), stat=ierr)
+    if (ierr /= 0) then
+       write(c0,"(i8)") ierr
+       write(c1,"(i8)") nMsgs
+       call fatal_error(h//" allocate Msgs%msgData("//trim(adjustl(c1))//&
+            ") fails with stat="//trim(adjustl(c0)))
+    end if
+
+    allocate(Msgs%request(nMsgs), stat=ierr)
+    if (ierr /= 0) then
+       write(c0,"(i8)") ierr
+       write(c1,"(i8)") nMsgs
+       call fatal_error(h//" allocate Msgs%request("//trim(adjustl(c1))//&
+            ") fails with stat="//trim(adjustl(c0)))
+    end if
+
+    allocate(Msgs%otherProc(nMsgs), stat=ierr)
+    if (ierr /= 0) then
+       write(c0,"(i8)") ierr
+       write(c1,"(i8)") nMsgs
+       call fatal_error(h//" allocate Msgs%otherProc("//trim(adjustl(c1))//&
+            ") fails with stat="//trim(adjustl(c0)))
+    end if
+
+    ! store basic info
+
+    Msgs%name = name
+    Msgs%nMsgs = nMsgs
+    Msgs%tag = tag
+
+    ! for each neighbour node that will communicate,
+    ! build message envelop to/from neighbour and
+    ! create empty message data.
+
+    cntMsg=0
+    do iNeigh = 1, nNeigh
+       if (hasMsg(iNeigh)) then
+          cntMsg = cntMsg + 1
+          Msgs%request(cntMsg) = MPI_REQUEST_NULL
+          Msgs%otherProc(cntMsg)= Brams2MpiProcNbr(Neigh%neigh(iNeigh))
+          call CreateMessageData(Msgs%msgData(cntMsg),name,direction)
+       end if
+    end do
+
+    if (cntMsg /= nMsgs) then
+       write(c0,"(i8)") cntMsg
+       write(c1,"(i8)") nMsgs
+       call fatal_error(h//" inconsistency: cntMsg="//trim(adjustl(c0))//&
+            " while nMsgs="//trim(adjustl(c1)))
+    end if
+  end function CreateMessageSet
+
+
+
+
+
+  subroutine DestroyMessageSet (Msgs)
+
+    ! deallocate memory of a message set variable
+
+    type(MessageSet), pointer, intent(inout) :: Msgs
+
+    integer :: msg
+    integer :: ierr
+    character(len=8) :: c0
+    character(len=*), parameter :: h="**(DestroyMessageSet)**"
+
+    if (associated(Msgs)) then
+       do msg = 1, Msgs%nMsgs
+          call DestroyMessageData(Msgs%msgData(msg))
+       end do
+       deallocate(Msgs%msgData, stat=ierr)
+       if (ierr /= 0) then
+          write(c0,"(i8)") ierr
+          call fatal_error(h//" deallocate Msgs%msgData fails with stat="//&
+               trim(adjustl(c0)))
+       end if
+
+       deallocate(Msgs%request, stat=ierr)
+       if (ierr /= 0) then
+          write(c0,"(i8)") ierr
+          call fatal_error(h//" deallocate Msgs%request fails with stat="//&
+               trim(adjustl(c0)))
+       end if
+
+       deallocate(Msgs%otherProc, stat=ierr)
+       if (ierr /= 0) then
+          write(c0,"(i8)") ierr
+          call fatal_error(h//" deallocate Msgs%otherProc fails with stat="//&
+               trim(adjustl(c0)))
+       end if
+
+       deallocate(Msgs, stat=ierr)
+       if (ierr /= 0) then
+          write(c0,"(i8)") ierr
+          call fatal_error(h//" deallocate Msgs fails with stat="//&
+               trim(adjustl(c0)))
+       end if
+
+    end if
+    Msgs => null()
+  end subroutine DestroyMessageSet
+
+
+
+
+
+  subroutine DumpMessageSet(Msgs)
+
+    ! dumps a message set variable
+
+    type(MessageSet), pointer, intent(in) :: Msgs
+
+    character(len=8) :: c0, c1, c2, c3, c4
+    character(len=*), parameter :: h="**(DumpMessageSet)**"
+    integer :: i
+
+    if (.not. associated(Msgs)) then
+       call MsgDump(h//" empty messages")
+    else
+       write(c0,"(i8)") Msgs%nMsgs
+       if (Msgs%tag == -1) then
+          c2="UNDEF"
+       else
+          write(c2,"(i8)") Msgs%tag
+       end if
+       call MsgDump(h//" "//trim(adjustl(Msgs%name))//&
+            " has "//trim(adjustl(c0))//" messages and tag "//&
+            trim(adjustl(c2)))
+       do i = 1, Msgs%nMsgs
+          write(c0,"(i8)") i
+          if (Msgs%otherProc(i) == -1) then
+             c1="UNDEF"
+          else
+             write(c1,"(i8)") Msgs%otherProc(i)
+          end if
+          if (Msgs%request(i) == MPI_REQUEST_NULL) then
+             c2="NULL"
+          else
+             write(c2,"(Z8)") Msgs%request(i)
+          end if
+          call MsgDump(h//" message number "//trim(adjustl(c0))//&
+               " to/from MPI node "//trim(adjustl(c1))//&
+               ", has request "//trim(adjustl(c2))//&
+               " and message data:")
+          call DumpMessageData(Msgs%msgData(i),h)
+       end do
+    end if
+  end subroutine DumpMessageSet
+
+
+
+
+
+
+  subroutine CreateAcousticMessageSet(&
+       gridId, GridSize, ParEnv, Neigh, &
+       GlobalOwn, GlobalWithGhost, &
+       AcouSendU, AcouRecvU, &
+       AcouSendV, AcouRecvV, &
+       AcouSendP, AcouRecvP, &
+       AcouSendUV, AcouRecvUV, &
+       AcouSendWP, AcouRecvWP)
+
+    integer, intent(in) :: gridId
+    type(GridDims), pointer, intent(in) :: GridSize
+    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+    type(NeighbourNodes), pointer, intent(in) :: Neigh
+    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+    type(MessageSet), pointer, intent(inout) :: AcouSendU
+    type(MessageSet), pointer, intent(inout) :: AcouRecvU
+    type(MessageSet), pointer, intent(inout) :: AcouSendV
+    type(MessageSet), pointer, intent(inout) :: AcouRecvV
+    type(MessageSet), pointer, intent(inout) :: AcouSendP
+    type(MessageSet), pointer, intent(inout) :: AcouRecvP
+    type(MessageSet), pointer, intent(inout) :: AcouSendUV
+    type(MessageSet), pointer, intent(inout) :: AcouRecvUV
+    type(MessageSet), pointer, intent(inout) :: AcouSendWP
+    type(MessageSet), pointer, intent(inout) :: AcouRecvWP
+
+    integer :: nMachs
+    integer :: myNum
+    integer :: nNeigh
+    character(len=*), parameter :: h="**(CreateAcousticMessageSet)**"
+    logical, parameter :: dumpLocal=.true.
+
+    ! verify input arguments
+
+    if (.not. associated(ParEnv)) then
+       call fatal_error(h//" starts with null ParEnv")
+    else if (.not. associated(GlobalOwn)) then
+       call fatal_error(h//" starts with null GlobalOwn")
+    else if (.not. associated(GlobalWithGhost)) then
+       call fatal_error(h//" starts with null GlobalWithGhost")
+    end if
+
+    ! default output (case no neighbours)
+
+    AcouSendU => null()
+    AcouRecvU => null()
+    AcouSendV => null()
+    AcouRecvV => null()
+    AcouSendP => null()
+    AcouRecvP => null()
+    AcouSendUV => null()
+    AcouRecvUV => null()
+    AcouSendWP => null()
+    AcouRecvWP => null()
+
+    if (associated(Neigh)) then
+
+       if (dumpLocal) then
+          call MsgDump(h//" will create "//&
+               " AcouSend/RecvU, AcouSend/RecvV, AcouSend/RecvP,"//&
+               " AcouSend/RecvUV and AcouSend/RecvWP")
+       end if
+
+       myNum  = ParEnv%myNum
+       nMachs = ParEnv%nMachs
+       nNeigh = Neigh%nNeigh
+
+       call CreateAcousticSendRecvU(&
+            gridId, nMachs, nNeigh, myNum, &
+            Neigh, GlobalOwn, GlobalWithGhost, &
+            AcouSendU, AcouRecvU)
+
+       call CreateAcousticSendRecvV(&
+            gridId, nMachs, nNeigh, myNum, &
+            Neigh, GlobalOwn, GlobalWithGhost, &
+            AcouSendV, AcouRecvV)
+
+       call CreateAcousticSendRecvP(&
+            gridId, nMachs, nNeigh, myNum, &
+            Neigh, GlobalOwn, GlobalWithGhost, &
+            AcouSendP, AcouRecvP)
+
+       call CreateAcousticSendRecvUV(&
+            gridId, nMachs, nNeigh, myNum, &
+            GridSize, Neigh, GlobalOwn, GlobalWithGhost, &
+            AcouSendUV, AcouRecvUV)
+
+       call CreateAcousticSendRecvWP(&
+            gridId, nMachs, nNeigh, myNum, &
+            GridSize, Neigh, GlobalOwn, GlobalWithGhost, &
+            AcouSendWP, AcouRecvWP)
+    end if
+  end subroutine CreateAcousticMessageSet
+
+
+
+
+
+  subroutine DestroyAcousticMessageSet( &
+       AcouSendU, AcouRecvU, &
+       AcouSendV, AcouRecvV, &
+       AcouSendP, AcouRecvP, &
+       AcouSendUV, AcouRecvUV, &
+       AcouSendWP, AcouRecvWP)
+
+    type(MessageSet), pointer, intent(inout) :: AcouSendU
+    type(MessageSet), pointer, intent(inout) :: AcouRecvU
+    type(MessageSet), pointer, intent(inout) :: AcouSendV
+    type(MessageSet), pointer, intent(inout) :: AcouRecvV
+    type(MessageSet), pointer, intent(inout) :: AcouSendP
+    type(MessageSet), pointer, intent(inout) :: AcouRecvP
+    type(MessageSet), pointer, intent(inout) :: AcouSendUV
+    type(MessageSet), pointer, intent(inout) :: AcouRecvUV
+    type(MessageSet), pointer, intent(inout) :: AcouSendWP
+    type(MessageSet), pointer, intent(inout) :: AcouRecvWP
+
+    character(len=*), parameter :: h="**(DestroyAcousticMessageSet)**"
+    logical, parameter :: dumpLocal=.true.
+
+    if (dumpLocal) then
+       call MsgDump(h//" will destroy "//&
+            " AcouSend/RecvU, AcouSend/RecvV, AcouSend/RecvP,"//&
+            " AcouSend/RecvUV and AcouSend/RecvWP")
+    end if
+
+    call DestroyMessageSet(AcouSendU)
+    call DestroyMessageSet(AcouRecvU)
+
+    call DestroyMessageSet(AcouSendV)
+    call DestroyMessageSet(AcouRecvV)
+
+    call DestroyMessageSet(AcouSendP)
+    call DestroyMessageSet(AcouRecvP)
+
+    call DestroyMessageSet(AcouSendUV)
+    call DestroyMessageSet(AcouRecvUV)
+
+    call DestroyMessageSet(AcouSendWP)
+    call DestroyMessageSet(AcouRecvWP)
+  end subroutine DestroyAcousticMessageSet
+
+
+
+
+
+  subroutine CreateDn0MessageSet(&
+       gridId, GridSize, ParEnv, Neigh, &
+       GlobalOwn, GlobalWithGhost, &
+       SendDn0u, RecvDn0u, &
+       SendDn0v, RecvDn0v)
+
+    integer, intent(in) :: gridId
+    type(GridDims), pointer, intent(in) :: GridSize
+    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+    type(NeighbourNodes), pointer, intent(in) :: Neigh
+    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+    type(MessageSet), pointer, intent(inout) :: SendDn0u
+    type(MessageSet), pointer, intent(inout) :: RecvDn0u
+    type(MessageSet), pointer, intent(inout) :: SendDn0v
+    type(MessageSet), pointer, intent(inout) :: RecvDn0v
+
+    integer :: nMachs
+    integer :: myNum
+    integer :: nNeigh
+    character(len=*), parameter :: h="**(CreateDn0MessageSet)**"
+    logical, parameter :: dumpLocal=.true.
+
+    ! verify input arguments
+
+    if (.not. associated(ParEnv)) then
+       call fatal_error(h//" starts with null ParEnv")
+    else if (.not. associated(GlobalOwn)) then
+       call fatal_error(h//" starts with null GlobalOwn")
+    else if (.not. associated(GlobalWithGhost)) then
+       call fatal_error(h//" starts with null GlobalWithGhost")
+    end if
+
+    ! default output (case no neighbours)
+
+    SendDn0u => null()
+    RecvDn0u => null()
+    SendDn0v => null()
+    RecvDn0v => null()
+
+    if (associated(Neigh)) then
+
+       if (dumpLocal) then
+          call MsgDump(h//" will create Send/RecvDn0u and Send/RecvDn0v")
+       end if
+
+       myNum  = ParEnv%myNum
+       nMachs = ParEnv%nMachs
+       nNeigh = Neigh%nNeigh
+
+       call CreateSendRecvDn0u(&
+            gridId, nMachs, nNeigh, myNum, &
+            Neigh, GlobalOwn, GlobalWithGhost, &
+            SendDn0u, RecvDn0u)
+
+       call CreateSendRecvDn0v(&
+            gridId, nMachs, nNeigh, myNum, &
+            Neigh, GlobalOwn, GlobalWithGhost, &
+            SendDn0v, RecvDn0v)
+    end if
+  end subroutine CreateDn0MessageSet
+
+
+
+
+
+  subroutine DestroyDn0MessageSet( &
+       SendDn0u, RecvDn0u, SendDn0v, RecvDn0v)
+
+    type(MessageSet), pointer, intent(inout) :: SendDn0u
+    type(MessageSet), pointer, intent(inout) :: RecvDn0u
+    type(MessageSet), pointer, intent(inout) :: SendDn0v
+    type(MessageSet), pointer, intent(inout) :: RecvDn0v
+    character(len=*), parameter :: h="**(DestroyDn0MessageSet)**"
+    logical, parameter :: dumpLocal=.true.
+
+    if (dumpLocal) then
+       call MsgDump(h//" will destroy "//&
+            " Send/RecvDn0u and Send/RecvDn0v")
+    end if
+
+    call DestroyMessageSet(SendDn0u)
+    call DestroyMessageSet(RecvDn0u)
+    call DestroyMessageSet(SendDn0v)
+    call DestroyMessageSet(RecvDn0v)
+
+  end subroutine DestroyDn0MessageSet
+
+
+
+
+
+  subroutine CreateG3DMessageSet(&
+       gridId, GridSize, ParEnv, Neigh, &
+       GlobalOwn, GlobalWithGhost, &
+       Ramsin, &
+       SendG3D, RecvG3D)
+
+    integer, intent(in) :: gridId
+    type(GridDims), pointer, intent(in) :: GridSize
+    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+    type(NeighbourNodes), pointer, intent(in) :: Neigh
+    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+    type(NamelistFile), pointer, intent(in) :: Ramsin
+    type(MessageSet), pointer, intent(inout) :: SendG3D
+    type(MessageSet), pointer, intent(inout) :: RecvG3D
+
+    integer :: nMachs
+    integer :: myNum
+    integer :: nNeigh
+    integer :: g3d_spread
+    integer :: g3d_smoothh
+    character(len=*), parameter :: h="**(CreateG3DMessageSet)**"
+    logical, parameter :: dumpLocal=.true.
+
+    ! verify input arguments
+
+    if (.not. associated(ParEnv)) then
+       call fatal_error(h//" starts with null ParEnv")
+    else if (.not. associated(GlobalOwn)) then
+       call fatal_error(h//" starts with null GlobalOwn")
+    else if (.not. associated(GlobalWithGhost)) then
+       call fatal_error(h//" starts with null GlobalWithGhost")
+    end if
+
+    ! default output (case no neighbours or
+    ! selected namelist variables were not set)
+
+    SendG3D => null()
+    RecvG3D => null()
+
+    ! there will be messages if there are neighbour nodes
+    ! and any of the namelist variables
+    ! g3d_spread or g3d_smoothh were set
+
+    g3d_spread = Ramsin%g3d_spread
+    g3d_smoothh = Ramsin%g3d_smoothh
+
+    if (associated(Neigh) .and. &
+         (g3d_spread /= 0 .or. g3d_smoothh /= 0)) then
+
+       if (dumpLocal) then
+          call MsgDump(h//" will create Send/RecvG3D")
+       end if
+
+       myNum  = ParEnv%myNum
+       nMachs = ParEnv%nMachs
+       nNeigh = Neigh%nNeigh
+
+       call CreateG3DSendRecv(&
+            gridId, nMachs, nNeigh, myNum, &
+            g3d_spread, g3d_smoothh, &
+            GridSize, Neigh, GlobalOwn, GlobalWithGhost, &
+            SendG3D, RecvG3D)
+    end if
+  end subroutine CreateG3DMessageSet
+
+
+
+
+
+  subroutine DestroyG3DMessageSet( &
+       SendG3D, RecvG3D)
+
+    type(MessageSet), pointer, intent(inout) :: SendG3D
+    type(MessageSet), pointer, intent(inout) :: RecvG3D
+    character(len=*), parameter :: h="**(DestroyG3DMessageSet)**"
+    logical, parameter :: dumpLocal=.true.
+
+    if (dumpLocal) then
+       call MsgDump(h//" will destroy Send/RecvG3D")
+    end if
+
+    call DestroyMessageSet(SendG3D)
+    call DestroyMessageSet(RecvG3D)
+
+  end subroutine DestroyG3DMessageSet
+
+
+
+
+
+  subroutine CreateSelectedGhostZoneMessageSet(&
+       gridId, num_var, vtab_r, &
+       GridSize, ParEnv, Neigh, &
+       GlobalOwn, GlobalWithGhost, &
+       SelectedGhostZoneSend, SelectedGhostZoneRecv)
+
+    integer, intent(in) :: gridId
+    integer, intent(in) :: num_var(:)
+    type(var_tables_r), target, intent(in) ::  vtab_r(:,:)
+    type(GridDims), pointer, intent(in) :: GridSize
+    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+    type(NeighbourNodes), pointer, intent(in) :: Neigh
+    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+    type(MessageSet), pointer, intent(inout) :: SelectedGhostZoneSend
+    type(MessageSet), pointer, intent(inout) :: SelectedGhostZoneRecv
+
+
+    integer :: nMachs
+    integer :: myNum
+    integer :: nNeigh
+    character(len=*), parameter :: h="**(CreateSelectedGhostZoneMessageSet)**"
+    logical, parameter :: dumpLocal=.true.
+
+    ! verify input arguments
+
+    if (.not. associated(ParEnv)) then
+       call fatal_error(h//" starts with null ParEnv")
+    else if (.not. associated(GlobalOwn)) then
+       call fatal_error(h//" starts with null GlobalOwn")
+    else if (.not. associated(GlobalWithGhost)) then
+       call fatal_error(h//" starts with null GlobalWithGhost")
+    end if
+
+    ! default output (case no neighbours)
+
+    SelectedGhostZoneSend => null()
+    SelectedGhostZoneRecv => null()
+
+    if (associated(Neigh)) then
+
+       if (dumpLocal) then
+          call MsgDump(h//" will create SelectedGhostZoneSend/Recv")
+       end if
+
+       myNum  = ParEnv%myNum
+       nMachs = ParEnv%nMachs
+       nNeigh = Neigh%nNeigh
+
+       call CreateSelectedGhostZoneSendRecv(&
+            gridId, nMachs, nNeigh, myNum, num_var, vtab_r, &
+            GridSize, Neigh, GlobalOwn, GlobalWithGhost, &
+            SelectedGhostZoneSend, SelectedGhostZoneRecv)
+    end if
+  end subroutine CreateSelectedGhostZoneMessageSet
+
+
+
+
+
+  subroutine DestroySelectedGhostZoneMessageSet( &
+       SelectedGhostZoneSend, SelectedGhostZoneRecv)
+
+    type(MessageSet), pointer, intent(inout) :: SelectedGhostZoneSend
+    type(MessageSet), pointer, intent(inout) :: SelectedGhostZoneRecv
+    character(len=*), parameter :: h="**(DestroySelectedGhostZoneMessageSet)**"
+    logical, parameter :: dumpLocal=.true.
+
+    if (dumpLocal) then
+       call MsgDump(h//" will destroy SelectedGhostZoneSend/Recv")
+    end if
+    call DestroyMessageSet(SelectedGhostZoneSend)
+    call DestroyMessageSet(SelectedGhostZoneRecv)
+
+  end subroutine DestroySelectedGhostZoneMessageSet
+
+
+
+
+
+  subroutine CreateAllGhostZoneMessageSet(&
+       gridId, num_var, vtab_r, &
+       GridSize, ParEnv, Neigh, &
+       GlobalOwn, GlobalWithGhost, &
+       AllGhostZoneSend, AllGhostZoneRecv)
+
+    integer, intent(in) :: gridId
+    integer, intent(in) :: num_var(:)
+    type(var_tables_r), target, intent(in) ::  vtab_r(:,:)
+    type(GridDims), pointer, intent(in) :: GridSize
+    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+    type(NeighbourNodes), pointer, intent(in) :: Neigh
+    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+    type(MessageSet), pointer, intent(inout) :: AllGhostZoneSend
+    type(MessageSet), pointer, intent(inout) :: AllGhostZoneRecv
+
+
+    integer :: nMachs
+    integer :: myNum
+    integer :: nNeigh
+    character(len=*), parameter :: h="**(CreateAllGhostZoneMessageSet)**"
+    logical, parameter :: dumpLocal=.true.
+
+    ! verify input arguments
+
+    if (.not. associated(ParEnv)) then
+       call fatal_error(h//" starts with null ParEnv")
+    else if (.not. associated(GlobalOwn)) then
+       call fatal_error(h//" starts with null GlobalOwn")
+    else if (.not. associated(GlobalWithGhost)) then
+       call fatal_error(h//" starts with null GlobalWithGhost")
+    end if
+
+    ! default output (case no neighbours)
+
+    AllGhostZoneSend => null()
+    AllGhostZoneRecv => null()
+
+    if (associated(Neigh)) then
+
+       if (dumpLocal) then
+          call MsgDump(h//" will create AllGhostZoneSend/Recv")
+       end if
+
+       myNum  = ParEnv%myNum
+       nMachs = ParEnv%nMachs
+       nNeigh = Neigh%nNeigh
+
+       call CreateAllGhostZoneSendRecv(&
+            gridId, nMachs, nNeigh, myNum, num_var, vtab_r, &
+            GridSize, Neigh, GlobalOwn, GlobalWithGhost, &
+            AllGhostZoneSend, AllGhostZoneRecv)
+    end if
+  end subroutine CreateAllGhostZoneMessageSet
+
+
+
+
+
+  subroutine DestroyAllGhostZoneMessageSet( &
+       AllGhostZoneSend, AllGhostZoneRecv)
+
+    type(MessageSet), pointer, intent(inout) :: AllGhostZoneSend
+    type(MessageSet), pointer, intent(inout) :: AllGhostZoneRecv
+    character(len=*), parameter :: h="**(DestroyAllGhostZoneMessageSet)**"
+    logical, parameter :: dumpLocal=.true.
+
+    if (dumpLocal) then
+       call MsgDump(h//" will destroy AllGhostZoneSend/Recv")
+    end if
+
+    call DestroyMessageSet(AllGhostZoneSend)
+    call DestroyMessageSet(AllGhostZoneRecv)
+
+  end subroutine DestroyAllGhostZoneMessageSet
+
+
+
 
 
   subroutine BuildUnion(nNeigh, &
@@ -151,7 +857,7 @@ contains
     character(len=128) :: inter1, inter2
     character(len=*), parameter :: h="**(BuildUnion)**"
     logical, parameter :: dumpLocal=.true.
-    
+
     do iNeigh = 1, nNeigh
        if (willComm1(iNeigh) .and. willComm2(iNeigh)) then
           write(c0,"(i8)") iNeigh
@@ -190,6 +896,7 @@ contains
        end if
     end do
   end subroutine BuildUnion
+
 
 
 
@@ -246,7 +953,7 @@ contains
     character(len=30) :: tmp_name
     character(len=8) :: str(10)
     logical, parameter :: dumpLocal=.true.
-    
+
     ! AcouSendUV, AcouRecvUV:
     ! messages update entire GhostZone
 
@@ -291,9 +998,9 @@ contains
 
     vTabPtr => null()
     if(dyncore_flag==2) then
-      tmp_name='UC'
+       tmp_name='UC'
     else
-      tmp_name='UP'
+       tmp_name='UP'
     endif
     call GetVTabEntry(trim(tmp_name), gridId, vTabPtr)
 
@@ -310,9 +1017,9 @@ contains
 
     vTabPtr => null()
     if(dyncore_flag==2) then
-      tmp_name='VC'
+       tmp_name='VC'
     else
-      tmp_name='VP'
+       tmp_name='VP'
     endif
     call GetVTabEntry(trim(tmp_name), gridId, vTabPtr)
 
@@ -331,11 +1038,6 @@ contains
        call DumpMessageSet(AcouRecvUV)
     end if
   end subroutine CreateAcousticSendRecvUV
-
-
-
-
-
 
 
 
@@ -438,9 +1140,9 @@ contains
 
     vTabPtr => null()
     if(dyncore_flag==2) then
-      tmp_name='WC'
+       tmp_name='WC'
     else
-      tmp_name='WP'
+       tmp_name='WP'
     endif
     call GetVTabEntry(trim(tmp_name), gridId, vTabPtr)
 
@@ -457,9 +1159,9 @@ contains
 
     vTabPtr => null()
     if(dyncore_flag==2) then
-      tmp_name='PC'
+       tmp_name='PC'
     else
-      tmp_name='PP'
+       tmp_name='PP'
     endif
     call GetVTabEntry(trim(tmp_name), gridId, vTabPtr)
 
@@ -478,7 +1180,6 @@ contains
        call DumpMessageSet(AcouRecvWP)
     end if
   end subroutine CreateAcousticSendRecvWP
-
 
 
 
@@ -605,7 +1306,6 @@ contains
        call DumpMessageSet(SelectedGhostZoneRecv)
     end if
   end subroutine CreateSelectedGhostZoneSendRecv
-
 
 
 
@@ -847,6 +1547,7 @@ contains
 
 
 
+
   subroutine CreateSendRecvDn0v(&
        gridId, nMachs, nNeigh, myNum, &
        Neigh, GlobalOwn, GlobalWithGhost, &
@@ -951,7 +1652,6 @@ contains
        call DumpMessageSet(RecvDn0v)
     end if
   end subroutine CreateSendRecvDn0v
-
 
 
 
@@ -1126,110 +1826,6 @@ contains
 
 
 
-  function CreateMessageSet (name, direction, tag, hasMsg, Neigh) result(Msgs)
-
-    ! Generates a variable of type MessageSet containing
-    ! all message envelopes and no message data
-    ! to be sent by this node to neighbour nodes or
-    ! to be received by this node from neighbour nodes
-    ! during the communication denoted by "name".
-    ! Input includes "hasMsg", a logical array indexed by
-    ! neighbour number that stores if a neighbour will or
-    ! will not communicate with this node in this communication.
-    ! Same tag should be used on send and recieve.
-    ! Returning variable has as many messages as the number
-    ! of true values in hasMsg. Arrays in returning variable
-    ! are indexed by true value count, at range 1:nMsgs.
-
-    character(len=*), intent(in) :: name
-    character(len=*), intent(in) :: direction
-    integer, intent(in) :: tag
-    logical, intent(in) :: hasMsg(:)
-    type(NeighbourNodes), pointer, intent(in) :: Neigh
-    type(MessageSet), pointer :: Msgs
-
-    character(len=8) :: c0, c1
-    character(len=*), parameter :: h="**(CreateMessageSet)**"
-
-    integer :: nNeigh
-    integer :: nMsgs
-    integer :: iNeigh
-    integer :: ierr
-    integer :: cntMsg
-
-    ! no message if no neighbours or no node has messages
-
-    nNeigh = Neigh%nNeigh
-    nMsgs = count(hasMsg)
-    if (nNeigh == 0 .or. nMsgs == 0) then
-       Msgs => null()
-       return
-    end if
-
-    ! there are messages: allocate area
-
-    allocate(Msgs, stat=ierr)
-    if (ierr /= 0) then
-       write(c0,"(i8)") ierr
-       call fatal_error(h//" allocate Msgs fails with stat="//&
-            trim(adjustl(c0)))
-    end if
-
-    allocate(Msgs%oneMsg(nMsgs), stat=ierr)
-    if (ierr /= 0) then
-       write(c0,"(i8)") ierr
-       write(c1,"(i8)") nMsgs
-       call fatal_error(h//" allocate Msgs%oneMsg("//trim(adjustl(c1))//&
-            ") fails with stat="//trim(adjustl(c0)))
-    end if
-
-    allocate(Msgs%request(nMsgs), stat=ierr)
-    if (ierr /= 0) then
-       write(c0,"(i8)") ierr
-       write(c1,"(i8)") nMsgs
-       call fatal_error(h//" allocate Msgs%request("//trim(adjustl(c1))//&
-            ") fails with stat="//trim(adjustl(c0)))
-    end if
-
-    allocate(Msgs%otherProc(nMsgs), stat=ierr)
-    if (ierr /= 0) then
-       write(c0,"(i8)") ierr
-       write(c1,"(i8)") nMsgs
-       call fatal_error(h//" allocate Msgs%otherProc("//trim(adjustl(c1))//&
-            ") fails with stat="//trim(adjustl(c0)))
-    end if
-
-    ! store basic info
-
-    Msgs%name = name
-    Msgs%nMsgs = nMsgs
-    Msgs%tag = tag
-
-    ! for each neighbour node that will communicate,
-    ! build message envelop to/from neighbour and
-    ! create empty message data.
-
-    cntMsg=0
-    do iNeigh = 1, nNeigh
-       if (hasMsg(iNeigh)) then
-          cntMsg = cntMsg + 1
-          Msgs%request(cntMsg) = MPI_REQUEST_NULL
-          Msgs%otherProc(cntMsg)= Brams2MpiProcNbr(Neigh%neigh(iNeigh))
-          call CreateMessageData(Msgs%oneMsg(cntMsg),name,direction)
-       end if
-    end do
-
-    if (cntMsg /= nMsgs) then
-       write(c0,"(i8)") cntMsg
-       write(c1,"(i8)") nMsgs
-       call fatal_error(h//" inconsistency: cntMsg="//trim(adjustl(c0))//&
-            " while nMsgs="//trim(adjustl(c1)))
-    end if
-  end function CreateMessageSet
-
-
-
-
 
   subroutine InsertFieldSectionAtMessageSet(&
        myNum, vTabPtr, Neigh, GlobalWithGhost, &
@@ -1242,9 +1838,9 @@ contains
     ! mynum is this BRAMS process number;
     ! It sends data on a send MessageSet variable or
     ! it receives data on a receive MessageSet variable
-    
+
     integer, intent(in) :: myNum
-    
+
     type(var_tables_r), pointer, intent(in) :: vTabPtr
 
     ! Neigh is an array of neighbours (to this process)
@@ -1257,7 +1853,7 @@ contains
     type(NeighbourNodes), pointer, intent(in) :: Neigh
 
     ! Global indices of domain partition with Ghost Zones
-    
+
     type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
 
     ! all remaining arguments are dimensioned by number of neighbours
@@ -1358,7 +1954,7 @@ contains
              write(c0,"(i8)") vTabPtr%idim_type
              call fatal_error(h//" unknown idim_type="//trim(adjustl(c0)))
           end select
-          call AppendFieldSectionToMessageData(oneFieldSection, Msgs%oneMsg(cntMsg))
+          call AppendFieldSectionToMessageData(oneFieldSection, Msgs%msgData(cntMsg))
        end if
     end do
   end subroutine InsertFieldSectionAtMessageSet
@@ -1366,567 +1962,8 @@ contains
 
 
 
-  subroutine DumpMessageSet(Msgs)
 
-    ! dumps a message set variable
-    
-    type(MessageSet), pointer, intent(in) :: Msgs
-
-    character(len=8) :: c0, c1, c2, c3, c4
-    character(len=*), parameter :: h="**(DumpMessageSet)**"
-    integer :: i
-
-    if (.not. associated(Msgs)) then
-       call MsgDump(h//" empty messages")
-    else
-       write(c0,"(i8)") Msgs%nMsgs
-       if (Msgs%tag == -1) then
-          c2="UNDEF"
-       else
-          write(c2,"(i8)") Msgs%tag
-       end if
-       call MsgDump(h//" "//trim(adjustl(Msgs%name))//&
-            " has "//trim(adjustl(c0))//" messages and tag "//&
-            trim(adjustl(c2)))
-       do i = 1, Msgs%nMsgs
-          write(c0,"(i8)") i
-          if (Msgs%otherProc(i) == -1) then
-             c1="UNDEF"
-          else
-             write(c1,"(i8)") Msgs%otherProc(i)
-          end if
-          if (Msgs%oneMsg(i)%bufSize == -1) then
-             c3="UNDEF"
-          else
-             write(c3,"(i8)") Msgs%oneMsg(i)%bufSize
-          end if
-          if (Msgs%request(i) == MPI_REQUEST_NULL) then
-             c4="NULL"
-          else
-             write(c4,"(Z8)") Msgs%request(i)
-          end if
-          call MsgDump(h//" message number "//trim(adjustl(c0))//&
-               " to/from MPI node "//trim(adjustl(c1))//&
-               ", request "//trim(adjustl(c4))//&
-               ", size "//trim(adjustl(c3))//&
-               " and field sections:")
-       end do
-    end if
-  end subroutine DumpMessageSet
-
-
-
-
-
-  subroutine DestroyMessageSet (Msgs)
-
-    ! deallocate memory of a message set variable
-    
-    type(MessageSet), pointer, intent(inout) :: Msgs
-
-    integer :: msg
-    integer :: ierr
-    character(len=8) :: c0
-    character(len=*), parameter :: h="**(DestroyMessageSet)**"
-
-    if (associated(Msgs)) then
-       do msg = 1, Msgs%nMsgs
-          call DestroyMessageData(Msgs%oneMsg(msg))
-       end do
-       deallocate(Msgs%oneMsg, stat=ierr)
-       if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate Msgs%oneMsg fails with stat="//&
-               trim(adjustl(c0)))
-       end if
-
-       deallocate(Msgs%request, stat=ierr)
-       if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate Msgs%request fails with stat="//&
-               trim(adjustl(c0)))
-       end if
-
-       deallocate(Msgs%otherProc, stat=ierr)
-       if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate Msgs%otherProc fails with stat="//&
-               trim(adjustl(c0)))
-       end if
-
-       deallocate(Msgs, stat=ierr)
-       if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate Msgs fails with stat="//&
-               trim(adjustl(c0)))
-       end if
-
-    end if
-    Msgs => null()
-  end subroutine DestroyMessageSet
-
-
-
-  subroutine CreateAcousticMessageSet(&
-       gridId, GridSize, ParEnv, Neigh, &
-       GlobalOwn, GlobalWithGhost, &
-       AcouSendU, AcouRecvU, &
-       AcouSendV, AcouRecvV, &
-       AcouSendP, AcouRecvP, &
-       AcouSendUV, AcouRecvUV, &
-       AcouSendWP, AcouRecvWP)
-
-    integer, intent(in) :: gridId
-    type(GridDims), pointer, intent(in) :: GridSize
-    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
-    type(NeighbourNodes), pointer, intent(in) :: Neigh
-    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
-    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
-    type(MessageSet), pointer, intent(inout) :: AcouSendU
-    type(MessageSet), pointer, intent(inout) :: AcouRecvU
-    type(MessageSet), pointer, intent(inout) :: AcouSendV
-    type(MessageSet), pointer, intent(inout) :: AcouRecvV
-    type(MessageSet), pointer, intent(inout) :: AcouSendP
-    type(MessageSet), pointer, intent(inout) :: AcouRecvP
-    type(MessageSet), pointer, intent(inout) :: AcouSendUV
-    type(MessageSet), pointer, intent(inout) :: AcouRecvUV
-    type(MessageSet), pointer, intent(inout) :: AcouSendWP
-    type(MessageSet), pointer, intent(inout) :: AcouRecvWP
-
-    integer :: nMachs
-    integer :: myNum
-    integer :: nNeigh
-    character(len=*), parameter :: h="**(CreateAcousticMessageSet)**"
-    logical, parameter :: dumpLocal=.true.
-    
-    ! verify input arguments
-
-    if (.not. associated(ParEnv)) then
-       call fatal_error(h//" starts with null ParEnv")
-    else if (.not. associated(GlobalOwn)) then
-       call fatal_error(h//" starts with null GlobalOwn")
-    else if (.not. associated(GlobalWithGhost)) then
-       call fatal_error(h//" starts with null GlobalWithGhost")
-    end if
-
-    ! default output (case no neighbours)
-
-    AcouSendU => null()
-    AcouRecvU => null()
-    AcouSendV => null()
-    AcouRecvV => null()
-    AcouSendP => null()
-    AcouRecvP => null()
-    AcouSendUV => null()
-    AcouRecvUV => null()
-    AcouSendWP => null()
-    AcouRecvWP => null()
-
-    if (associated(Neigh)) then
-
-       if (dumpLocal) then
-          call MsgDump(h//" will create "//&
-               " AcouSend/RecvU, AcouSend/RecvV, AcouSend/RecvP,"//&
-               " AcouSend/RecvUV and AcouSend/RecvWP")
-       end if
-
-       myNum  = ParEnv%myNum
-       nMachs = ParEnv%nMachs
-       nNeigh = Neigh%nNeigh
-
-       call CreateAcousticSendRecvU(&
-            gridId, nMachs, nNeigh, myNum, &
-            Neigh, GlobalOwn, GlobalWithGhost, &
-            AcouSendU, AcouRecvU)
-
-       call CreateAcousticSendRecvV(&
-            gridId, nMachs, nNeigh, myNum, &
-            Neigh, GlobalOwn, GlobalWithGhost, &
-            AcouSendV, AcouRecvV)
-
-       call CreateAcousticSendRecvP(&
-            gridId, nMachs, nNeigh, myNum, &
-            Neigh, GlobalOwn, GlobalWithGhost, &
-            AcouSendP, AcouRecvP)
-
-       call CreateAcousticSendRecvUV(&
-            gridId, nMachs, nNeigh, myNum, &
-            GridSize, Neigh, GlobalOwn, GlobalWithGhost, &
-            AcouSendUV, AcouRecvUV)
-
-       call CreateAcousticSendRecvWP(&
-            gridId, nMachs, nNeigh, myNum, &
-            GridSize, Neigh, GlobalOwn, GlobalWithGhost, &
-            AcouSendWP, AcouRecvWP)
-    end if
-  end subroutine CreateAcousticMessageSet
-
-
-  subroutine CreateDn0MessageSet(&
-       gridId, GridSize, ParEnv, Neigh, &
-       GlobalOwn, GlobalWithGhost, &
-       SendDn0u, RecvDn0u, &
-       SendDn0v, RecvDn0v)
-
-    integer, intent(in) :: gridId
-    type(GridDims), pointer, intent(in) :: GridSize
-    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
-    type(NeighbourNodes), pointer, intent(in) :: Neigh
-    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
-    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
-    type(MessageSet), pointer, intent(inout) :: SendDn0u
-    type(MessageSet), pointer, intent(inout) :: RecvDn0u
-    type(MessageSet), pointer, intent(inout) :: SendDn0v
-    type(MessageSet), pointer, intent(inout) :: RecvDn0v
-
-    integer :: nMachs
-    integer :: myNum
-    integer :: nNeigh
-    character(len=*), parameter :: h="**(CreateDn0MessageSet)**"
-    logical, parameter :: dumpLocal=.true.
-    
-    ! verify input arguments
-
-    if (.not. associated(ParEnv)) then
-       call fatal_error(h//" starts with null ParEnv")
-    else if (.not. associated(GlobalOwn)) then
-       call fatal_error(h//" starts with null GlobalOwn")
-    else if (.not. associated(GlobalWithGhost)) then
-       call fatal_error(h//" starts with null GlobalWithGhost")
-    end if
-
-    ! default output (case no neighbours)
-
-    SendDn0u => null()
-    RecvDn0u => null()
-    SendDn0v => null()
-    RecvDn0v => null()
-
-    if (associated(Neigh)) then
-
-       if (dumpLocal) then
-          call MsgDump(h//" will create Send/RecvDn0u and Send/RecvDn0v")
-       end if
-
-       myNum  = ParEnv%myNum
-       nMachs = ParEnv%nMachs
-       nNeigh = Neigh%nNeigh
-
-       call CreateSendRecvDn0u(&
-            gridId, nMachs, nNeigh, myNum, &
-            Neigh, GlobalOwn, GlobalWithGhost, &
-            SendDn0u, RecvDn0u)
-
-       call CreateSendRecvDn0v(&
-            gridId, nMachs, nNeigh, myNum, &
-            Neigh, GlobalOwn, GlobalWithGhost, &
-            SendDn0v, RecvDn0v)
-    end if
-  end subroutine CreateDn0MessageSet
-
-
-    subroutine CreateG3DMessageSet(&
-       gridId, GridSize, ParEnv, Neigh, &
-       GlobalOwn, GlobalWithGhost, &
-       Ramsin, &
-       SendG3D, RecvG3D)
-
-    integer, intent(in) :: gridId
-    type(GridDims), pointer, intent(in) :: GridSize
-    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
-    type(NeighbourNodes), pointer, intent(in) :: Neigh
-    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
-    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
-    type(NamelistFile), pointer, intent(in) :: Ramsin
-    type(MessageSet), pointer, intent(inout) :: SendG3D
-    type(MessageSet), pointer, intent(inout) :: RecvG3D
-
-    integer :: nMachs
-    integer :: myNum
-    integer :: nNeigh
-    integer :: g3d_spread
-    integer :: g3d_smoothh
-    character(len=*), parameter :: h="**(CreateG3DMessageSet)**"
-    logical, parameter :: dumpLocal=.true.
-    
-    ! verify input arguments
-
-    if (.not. associated(ParEnv)) then
-       call fatal_error(h//" starts with null ParEnv")
-    else if (.not. associated(GlobalOwn)) then
-       call fatal_error(h//" starts with null GlobalOwn")
-    else if (.not. associated(GlobalWithGhost)) then
-       call fatal_error(h//" starts with null GlobalWithGhost")
-    end if
-
-    ! default output (case no neighbours or
-    ! selected namelist variables were not set)
-
-    SendG3D => null()
-    RecvG3D => null()
-
-    ! there will be messages if there are neighbour nodes
-    ! and any of the namelist variables
-    ! g3d_spread or g3d_smoothh were set
-
-    g3d_spread = Ramsin%g3d_spread
-    g3d_smoothh = Ramsin%g3d_smoothh
-
-    if (associated(Neigh) .and. &
-         (g3d_spread /= 0 .or. g3d_smoothh /= 0)) then
-
-       if (dumpLocal) then
-          call MsgDump(h//" will create Send/RecvG3D")
-       end if
-
-       myNum  = ParEnv%myNum
-       nMachs = ParEnv%nMachs
-       nNeigh = Neigh%nNeigh
-
-       call CreateG3DSendRecv(&
-            gridId, nMachs, nNeigh, myNum, &
-            g3d_spread, g3d_smoothh, &
-            GridSize, Neigh, GlobalOwn, GlobalWithGhost, &
-            SendG3D, RecvG3D)
-    end if
-  end subroutine CreateG3DMessageSet
-
-
-    subroutine CreateSelectedGhostZoneMessageSet(&
-       gridId, num_var, vtab_r, &
-       GridSize, ParEnv, Neigh, &
-       GlobalOwn, GlobalWithGhost, &
-       SelectedGhostZoneSend, SelectedGhostZoneRecv)
-
-    integer, intent(in) :: gridId
-    integer, intent(in) :: num_var(:)
-    type(var_tables_r), target, intent(in) ::  vtab_r(:,:)
-    type(GridDims), pointer, intent(in) :: GridSize
-    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
-    type(NeighbourNodes), pointer, intent(in) :: Neigh
-    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
-    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
-    type(MessageSet), pointer, intent(inout) :: SelectedGhostZoneSend
-    type(MessageSet), pointer, intent(inout) :: SelectedGhostZoneRecv
-
-
-    integer :: nMachs
-    integer :: myNum
-    integer :: nNeigh
-    character(len=*), parameter :: h="**(CreateSelectedGhostZoneMessageSet)**"
-    logical, parameter :: dumpLocal=.true.
-    
-    ! verify input arguments
-
-    if (.not. associated(ParEnv)) then
-       call fatal_error(h//" starts with null ParEnv")
-    else if (.not. associated(GlobalOwn)) then
-       call fatal_error(h//" starts with null GlobalOwn")
-    else if (.not. associated(GlobalWithGhost)) then
-       call fatal_error(h//" starts with null GlobalWithGhost")
-    end if
-
-    ! default output (case no neighbours)
-
-    SelectedGhostZoneSend => null()
-    SelectedGhostZoneRecv => null()
-
-    if (associated(Neigh)) then
-
-       if (dumpLocal) then
-          call MsgDump(h//" will create SelectedGhostZoneSend/Recv")
-       end if
-
-       myNum  = ParEnv%myNum
-       nMachs = ParEnv%nMachs
-       nNeigh = Neigh%nNeigh
-
-       call CreateSelectedGhostZoneSendRecv(&
-            gridId, nMachs, nNeigh, myNum, num_var, vtab_r, &
-            GridSize, Neigh, GlobalOwn, GlobalWithGhost, &
-            SelectedGhostZoneSend, SelectedGhostZoneRecv)
-    end if
-  end subroutine CreateSelectedGhostZoneMessageSet
-
-
-    subroutine CreateAllGhostZoneMessageSet(&
-       gridId, num_var, vtab_r, &
-       GridSize, ParEnv, Neigh, &
-       GlobalOwn, GlobalWithGhost, &
-       AllGhostZoneSend, AllGhostZoneRecv)
-
-    integer, intent(in) :: gridId
-    integer, intent(in) :: num_var(:)
-    type(var_tables_r), target, intent(in) ::  vtab_r(:,:)
-    type(GridDims), pointer, intent(in) :: GridSize
-    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
-    type(NeighbourNodes), pointer, intent(in) :: Neigh
-    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
-    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
-    type(MessageSet), pointer, intent(inout) :: AllGhostZoneSend
-    type(MessageSet), pointer, intent(inout) :: AllGhostZoneRecv
-
-
-    integer :: nMachs
-    integer :: myNum
-    integer :: nNeigh
-    character(len=*), parameter :: h="**(CreateAllGhostZoneMessageSet)**"
-    logical, parameter :: dumpLocal=.true.
-    
-    ! verify input arguments
-
-    if (.not. associated(ParEnv)) then
-       call fatal_error(h//" starts with null ParEnv")
-    else if (.not. associated(GlobalOwn)) then
-       call fatal_error(h//" starts with null GlobalOwn")
-    else if (.not. associated(GlobalWithGhost)) then
-       call fatal_error(h//" starts with null GlobalWithGhost")
-    end if
-
-    ! default output (case no neighbours)
-
-    AllGhostZoneSend => null()
-    AllGhostZoneRecv => null()
-
-    if (associated(Neigh)) then
-
-       if (dumpLocal) then
-          call MsgDump(h//" will create AllGhostZoneSend/Recv")
-       end if
-       
-       myNum  = ParEnv%myNum
-       nMachs = ParEnv%nMachs
-       nNeigh = Neigh%nNeigh
-
-       call CreateAllGhostZoneSendRecv(&
-            gridId, nMachs, nNeigh, myNum, num_var, vtab_r, &
-            GridSize, Neigh, GlobalOwn, GlobalWithGhost, &
-            AllGhostZoneSend, AllGhostZoneRecv)
-    end if
-  end subroutine CreateAllGhostZoneMessageSet
-
-  
-  subroutine DestroyAcousticMessageSet( &
-       AcouSendU, AcouRecvU, &
-       AcouSendV, AcouRecvV, &
-       AcouSendP, AcouRecvP, &
-       AcouSendUV, AcouRecvUV, &
-       AcouSendWP, AcouRecvWP)
-
-    type(MessageSet), pointer, intent(inout) :: AcouSendU
-    type(MessageSet), pointer, intent(inout) :: AcouRecvU
-    type(MessageSet), pointer, intent(inout) :: AcouSendV
-    type(MessageSet), pointer, intent(inout) :: AcouRecvV
-    type(MessageSet), pointer, intent(inout) :: AcouSendP
-    type(MessageSet), pointer, intent(inout) :: AcouRecvP
-    type(MessageSet), pointer, intent(inout) :: AcouSendUV
-    type(MessageSet), pointer, intent(inout) :: AcouRecvUV
-    type(MessageSet), pointer, intent(inout) :: AcouSendWP
-    type(MessageSet), pointer, intent(inout) :: AcouRecvWP
-
-    character(len=*), parameter :: h="**(DestroyAcousticMessageSet)**"
-    logical, parameter :: dumpLocal=.true.
-
-    if (dumpLocal) then
-       call MsgDump(h//" will destroy "//&
-            " AcouSend/RecvU, AcouSend/RecvV, AcouSend/RecvP,"//&
-            " AcouSend/RecvUV and AcouSend/RecvWP")
-    end if
-    
-    call DestroyMessageSet(AcouSendU)
-    call DestroyMessageSet(AcouRecvU)
-
-    call DestroyMessageSet(AcouSendV)
-    call DestroyMessageSet(AcouRecvV)
-
-    call DestroyMessageSet(AcouSendP)
-    call DestroyMessageSet(AcouRecvP)
-
-    call DestroyMessageSet(AcouSendUV)
-    call DestroyMessageSet(AcouRecvUV)
-
-    call DestroyMessageSet(AcouSendWP)
-    call DestroyMessageSet(AcouRecvWP)
-  end subroutine DestroyAcousticMessageSet
-
-
-    subroutine DestroyDn0MessageSet( &
-       SendDn0u, RecvDn0u, SendDn0v, RecvDn0v)
-
-    type(MessageSet), pointer, intent(inout) :: SendDn0u
-    type(MessageSet), pointer, intent(inout) :: RecvDn0u
-    type(MessageSet), pointer, intent(inout) :: SendDn0v
-    type(MessageSet), pointer, intent(inout) :: RecvDn0v
-    character(len=*), parameter :: h="**(DestroyDn0MessageSet)**"
-    logical, parameter :: dumpLocal=.true.
-
-    if (dumpLocal) then
-       call MsgDump(h//" will destroy "//&
-            " Send/RecvDn0u and Send/RecvDn0v")
-    end if
-    
-    call DestroyMessageSet(SendDn0u)
-    call DestroyMessageSet(RecvDn0u)
-    call DestroyMessageSet(SendDn0v)
-    call DestroyMessageSet(RecvDn0v)
-
-  end subroutine DestroyDn0MessageSet
-
-
-  subroutine DestroyG3DMessageSet( &
-       SendG3D, RecvG3D)
-
-    type(MessageSet), pointer, intent(inout) :: SendG3D
-    type(MessageSet), pointer, intent(inout) :: RecvG3D
-    character(len=*), parameter :: h="**(DestroyG3DMessageSet)**"
-    logical, parameter :: dumpLocal=.true.
-
-    if (dumpLocal) then
-       call MsgDump(h//" will destroy Send/RecvG3D")
-    end if
-    
-    call DestroyMessageSet(SendG3D)
-    call DestroyMessageSet(RecvG3D)
-
-  end subroutine DestroyG3DMessageSet
-
-
-    subroutine DestroySelectedGhostZoneMessageSet( &
-       SelectedGhostZoneSend, SelectedGhostZoneRecv)
-
-    type(MessageSet), pointer, intent(inout) :: SelectedGhostZoneSend
-    type(MessageSet), pointer, intent(inout) :: SelectedGhostZoneRecv
-    character(len=*), parameter :: h="**(DestroySelectedGhostZoneMessageSet)**"
-    logical, parameter :: dumpLocal=.true.
-
-    if (dumpLocal) then
-       call MsgDump(h//" will destroy SelectedGhostZoneSend/Recv")
-    end if
-    call DestroyMessageSet(SelectedGhostZoneSend)
-    call DestroyMessageSet(SelectedGhostZoneRecv)
-
-  end subroutine DestroySelectedGhostZoneMessageSet
-
-
-    subroutine DestroyAllGhostZoneMessageSet( &
-       AllGhostZoneSend, AllGhostZoneRecv)
-
-    type(MessageSet), pointer, intent(inout) :: AllGhostZoneSend
-    type(MessageSet), pointer, intent(inout) :: AllGhostZoneRecv
-    character(len=*), parameter :: h="**(DestroyAllGhostZoneMessageSet)**"
-    logical, parameter :: dumpLocal=.true.
-
-    if (dumpLocal) then
-       call MsgDump(h//" will destroy AllGhostZoneSend/Recv")
-    end if
-    
-    call DestroyMessageSet(AllGhostZoneSend)
-    call DestroyMessageSet(AllGhostZoneRecv)
-
-  end subroutine DestroyAllGhostZoneMessageSet
-
-
-    subroutine CreateAcousticSendRecvU(&
+  subroutine CreateAcousticSendRecvU(&
        gridId, nMachs, nNeigh, myNum, &
        Neigh, GlobalOwn, GlobalWithGhost, &
        AcouSendU, AcouRecvU)
@@ -2013,9 +2050,9 @@ contains
 
     vTabPtr => null()
     if(dyncore_flag==2) then
-      tmp_name='UC'
+       tmp_name='UC'
     else
-      tmp_name='UP'
+       tmp_name='UP'
     endif
     call GetVTabEntry(trim(tmp_name), gridId, vTabPtr)
 
@@ -2036,7 +2073,10 @@ contains
   end subroutine CreateAcousticSendRecvU
 
 
-    subroutine CreateAcousticSendRecvV(&
+
+
+
+  subroutine CreateAcousticSendRecvV(&
        gridId, nMachs, nNeigh, myNum, &
        Neigh, GlobalOwn, GlobalWithGhost, &
        AcouSendV, AcouRecvV)
@@ -2123,9 +2163,9 @@ contains
 
     vTabPtr => null()
     if(dyncore_flag==2) then
-      tmp_name='VC'
+       tmp_name='VC'
     else
-      tmp_name='VP'
+       tmp_name='VP'
     endif
     call GetVTabEntry(trim(tmp_name), gridId, vTabPtr)
 
@@ -2146,7 +2186,10 @@ contains
   end subroutine CreateAcousticSendRecvV
 
 
-    subroutine CreateAcousticSendRecvP(&
+
+
+
+  subroutine CreateAcousticSendRecvP(&
        gridId, nMachs, nNeigh, myNum, &
        Neigh, GlobalOwn, GlobalWithGhost, &
        AcouSendP, AcouRecvP)
@@ -2274,9 +2317,9 @@ contains
 
     vTabPtr => null()
     if(dyncore_flag==2) then
-      tmp_name='PC'
+       tmp_name='PC'
     else
-      tmp_name='PP'
+       tmp_name='PP'
     endif
     call GetVTabEntry(trim(tmp_name), gridId, vTabPtr)
 

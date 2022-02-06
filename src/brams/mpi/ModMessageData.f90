@@ -1,4 +1,27 @@
 module ModMessageData
+
+  ! one message of a message passing operation is composed
+  ! by a message data and a message envelop.
+  !
+  ! This module implements the message data of a message
+  ! passing operation. Consequently, it contains all data
+  ! to communicate to a single rank on a single operation.
+  !
+  ! Data to communicate is a list of field sections. A single
+  ! message passing operation collapses all field sections
+  ! into a single communication buffer.
+  !
+  ! This module provides operations to insert/remove field sections at
+  ! the field section list, to copy in and copy out all entries 
+  ! of the field section list to/from the communication buffer,
+  ! procedures to create and destroy the communication buffer
+  ! and procedures to send and receive the buffer.
+  !
+  ! Each field section list is constant throughout the computation.
+  ! The list should be build at initialization and used whenever
+  ! required. This organization avoids recomputing indices of field
+  ! sections to copy in / copy out.
+  
   use ModParallelEnvironment, only: &
        MsgDump
 
@@ -29,7 +52,7 @@ module ModMessageData
   public :: DeallocateMessageDataBuffer
   
   type MessageData
-
+     private
      ! data to communicate to one node in one message
 
      ! message communicates all field values stored

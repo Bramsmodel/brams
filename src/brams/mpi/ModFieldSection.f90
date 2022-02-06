@@ -2,9 +2,8 @@ module ModFieldSection
 
 
   ! a list of field sections to be communicated
-  ! among processes in a single MPI
-  ! message passing. List head and tail are
-  ! stored elsewhere
+  ! among processes in a single message passing operation.
+  ! List head and tail are stored elsewhere
 
 
   use ModParallelEnvironment, only: MsgDump
@@ -25,7 +24,7 @@ module ModFieldSection
   public :: Buffer2FieldSectionData
 
   type FieldSection
-
+     private
      ! one entry of a list of fields
      ! to be communicated to a single process
      ! in a single message passing operation.
@@ -38,7 +37,7 @@ module ModFieldSection
      ! the remaining dimensions of each pair (x,y) of
      ! the section should be fully communicated.
 
-     ! Component idim_type informs which are the remaining
+     ! Component idim_type informs the remaining
      ! dimensions to be communicated, in a coded scheme.
      ! Component name has the field name to be communicated.
      ! Component fieldSectionSize is the size of the field

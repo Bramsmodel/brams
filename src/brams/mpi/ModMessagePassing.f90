@@ -97,21 +97,21 @@ contains
        end if
        do iRecv= 1,RecvMsg%nMsgs
 
-          call AllocateMessageDataBuffer(RecvMsg%oneMsg(iRecv))
+          call AllocateMessageDataBuffer(RecvMsg%msgData(iRecv))
 
           ! post receive
 
-          if (RecvMsg%oneMsg(iRecv)%bufSize > huge_i4) then
-             write(c0,"(i8)") RecvMsg%oneMsg(iRecv)%bufSize
+          if (RecvMsg%msgData(iRecv)%bufSize > huge_i4) then
+             write(c0,"(i8)") RecvMsg%msgData(iRecv)%bufSize
              write(c1,"(i8)") huge_i4
              call fatal_error(h//" receive buffer size ("//&
                   trim(adjustl(c0))//") cannot be represented as default kind,"//&
                   " since default is limited to "//trim(adjustl(c1)))
           else
-             bufSize_i4=int(RecvMsg%oneMsg(iRecv)%bufSize)
+             bufSize_i4=int(RecvMsg%msgData(iRecv)%bufSize)
           end if
           call parf_get_noblock_real(&
-               RecvMsg%oneMsg(iRecv)%buf, &
+               RecvMsg%msgData(iRecv)%buf, &
                bufSize_i4, &
                RecvMsg%otherProc(iRecv), &
                RecvMsg%tag, &
@@ -120,7 +120,7 @@ contains
           if (dumpLocal) then
              write(c0,"(i8)") iRecv
              write(c1,"(i8)") RecvMsg%otherProc(iRecv)
-             write(c2,"(i8)") size(RecvMsg%oneMsg(iRecv)%buf)
+             write(c2,"(i8)") size(RecvMsg%msgData(iRecv)%buf)
              write(c3,"(i8)") RecvMsg%tag
              if (RecvMsg%request(iRecv) == MPI_REQUEST_NULL) then
                 c4="NULL"
@@ -158,29 +158,29 @@ contains
 
           ! allocate and fill send buffer with field sections to send
 
-          call AllocateMessageDataBuffer(SendMsg%oneMsg(iSend))
-          call FillMessageDataBufferWithFieldSectionData(SendMsg%oneMsg(iSend))
+          call AllocateMessageDataBuffer(SendMsg%msgData(iSend))
+          call FillMessageDataBufferWithFieldSectionData(SendMsg%msgData(iSend))
 
           ! post send message
 
-          if (SendMsg%oneMsg(iSend)%bufSize > huge_i4) then
-             write(c0,"(i8)") SendMsg%oneMsg(iSend)%bufSize
+          if (SendMsg%msgData(iSend)%bufSize > huge_i4) then
+             write(c0,"(i8)") SendMsg%msgData(iSend)%bufSize
              write(c1,"(i8)") huge_i4
              call fatal_error(h//" send buffer size ("//&
                   trim(adjustl(c0))//") cannot be represented as default kind,"//&
                   " since default is limited to "//trim(adjustl(c1)))
           else
-             bufSize_i4=int(SendMsg%oneMsg(iSend)%bufSize)
+             bufSize_i4=int(SendMsg%msgData(iSend)%bufSize)
           end if
           call parf_send_noblock_real(&
-               SendMsg%oneMsg(iSend)%buf, &
+               SendMsg%msgData(iSend)%buf, &
                bufSize_i4, &
                SendMsg%otherProc(iSend), &
                SendMsg%tag, &
                SendMsg%request(iSend))
           if (dumpLocal) then
              write(c1,"(i8)") SendMsg%otherProc(iSend)
-             write(c2,"(i8)") size(SendMsg%oneMsg(iSend)%buf)
+             write(c2,"(i8)") size(SendMsg%msgData(iSend)%buf)
              write(c3,"(i8)") SendMsg%tag
              if (SendMsg%request(iSend) == MPI_REQUEST_NULL) then
                 c4="NULL"
@@ -241,7 +241,7 @@ contains
 
           call parf_wait_any_nostatus(RecvMsg%nMsgs, &
                RecvMsg%request, recvNbr)
-          msgData => RecvMsg%oneMsg(recvNbr)
+          msgData => RecvMsg%msgData(recvNbr)
           if (dumpLocal) then
              write(c0,"(i8)") recvNbr
              write(c1,"(i8)") RecvMsg%otherProc(recvNbr)
@@ -252,8 +252,8 @@ contains
           ! extract field sections from incoming buffer
           ! and store at destination fields
 
-          call ExtractFieldSectionDataFromMessageDataBuffer(RecvMsg%oneMsg(recvNbr))
-          call DeallocateMessageDataBuffer(RecvMsg%oneMsg(recvNbr))
+          call ExtractFieldSectionDataFromMessageDataBuffer(RecvMsg%msgData(recvNbr))
+          call DeallocateMessageDataBuffer(RecvMsg%msgData(recvNbr))
        end do
     end if
 
@@ -265,7 +265,7 @@ contains
        do iSend = 1,SendMsg%nMsgs
           call parf_wait_any_nostatus(SendMsg%nMsgs, &
                SendMsg%request, sendNbr)
-          call DeallocateMessageDataBuffer(SendMsg%oneMsg(sendNbr))
+          call DeallocateMessageDataBuffer(SendMsg%msgData(sendNbr))
        end do
     end if
   end subroutine WaitSendRecvMsgs
