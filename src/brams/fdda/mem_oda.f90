@@ -208,7 +208,7 @@ contains
   subroutine filltab_oda(oda,odam,imean,n1,n2,n3,ng)
     use var_tables, only: InsertVTab
     implicit none
-    include "i8.h"
+    include "constants.h"
     type (oda_vars) :: oda,odam
     integer, intent(in) :: imean,n1,n2,n3,ng
     integer(kind=i8) :: npts

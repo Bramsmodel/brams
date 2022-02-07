@@ -146,7 +146,7 @@ contains
     !# ![](http://brams.cptec.inpe.br/wp-content/uploads/2015/11/logo-brams.navigation.png "")
     !#
     !# **Brief**: Open a log file to print log information
-    !# The unit is suplied by logUnit that is set in constants.F90
+    !# The unit is suplied by logUnit that is set in constants.h
     !#
     !# **Documentation**: <http://brams.cptec.inpe.br/documentation/>
     !#
@@ -172,7 +172,7 @@ contains
     !# @endwarning
     !#
     !#--- ----------------------------------------------------------------------------------------
-    include "constants.f90"
+    include "constants.h"
 
     openLogFile=0
     if(logUnit/=6) open(unit=logUnit,file='bramsLog.out',ERR=100)
@@ -257,7 +257,7 @@ contains
     !#--- ----------------------------------------------------------------------------------------
     implicit none
 
-    include "constants.f90"
+    include "constants.h"
     integer, intent(in) :: tty
     !# terminal/file to print
 
@@ -270,7 +270,7 @@ contains
   integer function dumpSingle(tty,color,header,version,dumpType,message)
     implicit none
 
-    include "constants.f90"
+    include "constants.h"
 
     integer, intent(in) :: tty
     !# terminal/file to print
@@ -328,7 +328,7 @@ endif
                    ,value,cFormat)
     implicit none
 
-    include "constants.f90"
+    include "constants.h"
 
     integer, intent(in) :: tty
     !# terminal/file to print
@@ -393,7 +393,7 @@ endif
                    ,value,cFormat)
     implicit none
 
-    include "constants.f90"
+    include "constants.h"
 
     integer, intent(in) :: tty
     !# terminal/file to print
@@ -458,7 +458,7 @@ endif
                    ,value,cFormat)
     implicit none
 
-    include "constants.f90"
+    include "constants.h"
 
     integer, intent(in) :: tty
     !# terminal/file to print
@@ -491,7 +491,7 @@ endif
                    ,cFormat)
     implicit none
 
-    include "constants.f90"
+    include "constants.h"
 
     integer, intent(in) :: tty
     !# terminal/file to print
@@ -524,7 +524,7 @@ endif
                    ,value)
     implicit none
 
-    include "constants.f90"
+    include "constants.h"
 
     integer, intent(in) :: tty
     !# terminal/file to print
@@ -560,7 +560,7 @@ endif
                    ,value)
     implicit none
 
-    include "constants.f90"
+    include "constants.h"
 
     integer, intent(in) :: tty
     !# terminal/file to print
@@ -626,7 +626,7 @@ endif
                    ,cFormat)
     implicit none
 
-    include "constants.f90"
+    include "constants.h"
 
     integer, intent(in) :: tty
     !# terminal/file to print
@@ -712,7 +712,7 @@ endif
                    ,value,cFormat)
     implicit none
 
-    include "constants.f90"
+    include "constants.h"
 
     integer, intent(in) :: tty
     !# terminal/file to print
@@ -799,7 +799,7 @@ endif
                   ,value)
     implicit none
 
-    include "constants.f90"
+    include "constants.h"
 
     integer, intent(in) :: tty
     !# terminal/file to print
@@ -874,7 +874,7 @@ endif
 
 
   integer function debugText(message,author,sourceName,procedureName,action,myProc,wProc)
-    include "constants.f90"
+    include "constants.h"
     character(len=*), intent(in) :: message
     character(len=*), intent(in) :: author
     character(len=*), intent(in) :: sourceName
@@ -897,7 +897,7 @@ endif
   end function debugText
 
   integer function debugChar(message,author,sourceName,procedureName,action,myProc,wProc,CharValue)
-    include "constants.f90"
+    include "constants.h"
     character(len=*), intent(in) :: message
     character(len=*), intent(in) :: author
     character(len=*), intent(in) :: sourceName
@@ -920,7 +920,7 @@ endif
   end function debugChar
 
   integer function debugChar1D(message,author,sourceName,procedureName,action,myProc,wProc,CharValue)
-    include "constants.f90"
+    include "constants.h"
     character(len=*), intent(in) :: message
     character(len=*), intent(in) :: author
     character(len=*), intent(in) :: sourceName
@@ -948,7 +948,7 @@ endif
   end function debugChar1D
 
     integer function debugChar2D(message,author,sourceName,procedureName,action,myProc,wProc,CharValue)
-    include "constants.f90"
+    include "constants.h"
     character(len=*), intent(in) :: message
     character(len=*), intent(in) :: author
     character(len=*), intent(in) :: sourceName
@@ -978,7 +978,7 @@ endif
   end function debugChar2D
 
   integer function debugChar3D(message,author,sourceName,procedureName,action,myProc,wProc,CharValue)
-    include "constants.f90"
+    include "constants.h"
     character(len=*), intent(in) :: message
     character(len=*), intent(in) :: author
     character(len=*), intent(in) :: sourceName
@@ -1012,7 +1012,7 @@ endif
 
 
   integer function debugInt(message,author,sourceName,procedureName,action,myProc,wProc,intValue)
-    include "constants.f90"
+    include "constants.h"
     character(len=*), intent(in) :: message
     character(len=*), intent(in) :: author
     character(len=*), intent(in) :: sourceName
@@ -1035,7 +1035,7 @@ endif
   end function debugInt
 
   integer function debugInt1D(message,author,sourceName,procedureName,action,myProc,wProc,intValue)
-    include "constants.f90"
+    include "constants.h"
     character(len=*), intent(in) :: message
     character(len=*), intent(in) :: author
     character(len=*), intent(in) :: sourceName
@@ -1064,7 +1064,7 @@ endif
   end function debugInt1D
 
   integer function debugInt2D(message,author,sourceName,procedureName,action,myProc,wProc,intValue)
-    include "constants.f90"
+    include "constants.h"
     character(len=*), intent(in) :: message
     character(len=*), intent(in) :: author
     character(len=*), intent(in) :: sourceName
@@ -1094,7 +1094,7 @@ endif
   end function debugInt2D
 
   integer function debugInt3D(message,author,sourceName,procedureName,action,myProc,wProc,intValue)
-    include "constants.f90"
+    include "constants.h"
     character(len=*), intent(in) :: message
     character(len=*), intent(in) :: author
     character(len=*), intent(in) :: sourceName
@@ -1126,7 +1126,7 @@ endif
   end function debugInt3D
 
   integer function writeSimpleMessage(message,author,sourceName,procedureName)
-    include "constants.f90"
+    include "constants.h"
     character(len=*), intent(in) :: message
     character(len=*), intent(in) :: author
     character(len=*), intent(in) :: sourceName
@@ -1279,7 +1279,7 @@ endif
 
 
   integer function debugReal(message,author,sourceName,procedureName,action,myProc,wProc,realValue)
-    include "constants.f90"
+    include "constants.h"
     character(len=*), intent(in) :: message
     character(len=*), intent(in) :: author
     character(len=*), intent(in) :: sourceName
@@ -1302,7 +1302,7 @@ endif
   end function debugReal
 
   integer function debugReal1D(message,author,sourceName,procedureName,action,myProc,wProc,realValue)
-    include "constants.f90"
+    include "constants.h"
     character(len=*), intent(in) :: message
     character(len=*), intent(in) :: author
     character(len=*), intent(in) :: sourceName
@@ -1331,7 +1331,7 @@ endif
   end function debugReal1D
 
   integer function debugReal2D(message,author,sourceName,procedureName,action,myProc,wProc,realValue)
-    include "constants.f90"
+    include "constants.h"
     character(len=*), intent(in) :: message
     character(len=*), intent(in) :: author
     character(len=*), intent(in) :: sourceName
@@ -1361,7 +1361,7 @@ endif
   end function debugReal2D
 
   integer function debugReal3D(message,author,sourceName,procedureName,action,myProc,wProc,realValue)
-    include "constants.f90"
+    include "constants.h"
     character(len=*), intent(in) :: message
     character(len=*), intent(in) :: author
     character(len=*), intent(in) :: sourceName
@@ -1432,7 +1432,7 @@ endif
 
 	!character(len=*),parameter :: procedureName="debugLogical"
 	character(len=*),parameter :: srcName="dump.F90"
-	include "constants.f90"
+	include "constants.h"
 
 	character(len=*), intent(in) :: message
     character(len=*), intent(in) :: author
@@ -1495,7 +1495,7 @@ end function debugLogical
 	
 		!character(len=*),parameter :: procedureName="debugLogical1D"
 		character(len=*),parameter :: srcName="dump.F90"
-		include "constants.f90"
+		include "constants.h"
 	
 		character(len=*), intent(in) :: message
 		character(len=*), intent(in) :: author
@@ -1566,7 +1566,7 @@ end function debugLogical
   end function cFmt3Dlogical
 
   integer function debuglogical2D(message,author,sourceName,procedureName,action,myProc,wProc,logicalValue)
-    include "constants.f90"
+    include "constants.h"
     character(len=*), intent(in) :: message
     character(len=*), intent(in) :: author
     character(len=*), intent(in) :: sourceName
@@ -1596,7 +1596,7 @@ end function debugLogical
   end function debuglogical2D
 
   integer function debuglogical3D(message,author,sourceName,procedureName,action,myProc,wProc,logicalValue)
-    include "constants.f90"
+    include "constants.h"
     character(len=*), intent(in) :: message
     character(len=*), intent(in) :: author
     character(len=*), intent(in) :: sourceName

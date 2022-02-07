@@ -152,7 +152,7 @@ contains
     use errorMod, only: printError
     use dump
 
-    include "constants.f90"
+    include "constants.h"
 
     integer, intent(in) :: nmachs
     integer, intent(in) :: ngrids

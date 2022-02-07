@@ -169,7 +169,7 @@ Contains
     use var_tables, only: InsertVTab
     use mem_stilt, only: iexev
     implicit none
-    include "i8.h"
+    include "constants.h"
     type (basic_vars), intent(in) :: basic, basicm
     integer, intent(in)           :: imean, n1, n2, n3, ng
     integer(kind=i8) :: npts

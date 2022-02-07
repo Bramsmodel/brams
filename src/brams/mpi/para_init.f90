@@ -1421,7 +1421,7 @@ subroutine domain_decomposition_dump(fUnit)
   implicit none
   integer, intent(in) :: fUnit
 
-  include "constants.f90"
+  include "constants.h"
   integer :: ngr
   integer :: jnode
   integer :: ncols

@@ -36,9 +36,12 @@ module ModMessageData
        Buffer2FieldSectionData, &
        NextFieldSection
   
+  use ParLib, only: &
+       parf_get_noblock_real, &
+       parf_send_noblock_real
 
   implicit none
-  include "ranks.h" ! for kind=i8
+  include "mpif.h"
   
   private
   public :: MessageData
@@ -48,6 +51,8 @@ module ModMessageData
   public :: AppendFieldSectionToMessageData
   public :: AllocateMessageDataBuffer
   public :: FillMessageDataBufferWithFieldSectionData
+  public :: PostSendMessageData
+  public :: PostRecvMessageData
   public :: ExtractFieldSectionDataFromMessageDataBuffer
   public :: DeallocateMessageDataBuffer
   
@@ -73,7 +78,7 @@ module ModMessageData
      ! a field section is appended to the field section list
      ! by procedure AppendFieldSectionToMessageData
      
-     integer(kind=i8) :: bufSize=0_i8
+     integer :: bufSize=0
      ! message buffer size
      real, allocatable :: buf(:)
      ! message buffer
@@ -269,7 +274,7 @@ contains
     ! copy field section values of the entire field section list of
     ! the Message Data variable to the buffer of the Message Data variable
 
-    integer(kind=i8) :: bufStart
+    integer :: bufStart
     type(FieldSection), pointer :: this
     logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(FillMessageDataBufferWithFieldSectionData)**"
@@ -277,7 +282,7 @@ contains
     if (dumpLocal) then
        call MsgDump(h//"  to Message Data "//trim(adjustl(oneMessageData%name)))
     end if
-    bufStart=1_i8
+    bufStart=1
     this => oneMessageData%head
     do while (associated(this))
        call FieldSectionData2Buffer(&
@@ -299,7 +304,7 @@ contains
     ! copy all field section values from the buffer of the Message Data variable
     ! to the field section pointed by the Message Data field section list 
 
-    integer(kind=i8) :: bufStart
+    integer :: bufStart
     type(FieldSection), pointer :: this
     logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(ExtractFieldSectionDataFromMessageDataBuffer)**"
@@ -307,7 +312,7 @@ contains
     if (dumpLocal) then
        call MsgDump(h//"  of Message Data "//trim(adjustl(oneMessageData%name)))
     end if
-    bufStart=1_i8
+    bufStart=1
     this => oneMessageData%head
     do while (associated(this))
        call Buffer2FieldSectionData(&
@@ -352,4 +357,106 @@ contains
        end if
     end if
   end subroutine DeallocateMessageDataBuffer
+
+
+
+
+  
+  subroutine PostRecvMessageData(oneMessageData, &
+       otherProc, tag, request, preMsgString)
+    type(MessageData), intent(inout) :: oneMessageData
+    integer, intent(in) :: otherProc
+    integer, intent(in) :: tag
+    integer, intent(inout) :: request
+    character(len=*), optional :: preMsgString
+
+    character(len=*), parameter :: h="**(PostRecvMessageData)**"
+    character(len=8) :: c0, c1, c2, c3
+    character(len=128) :: msgString
+    logical, parameter :: dumpLocal=.true.
+    
+    if (.not. allocated(oneMessageData%buf)) then
+       call fatal_error(h//" buf not allocated")
+    end if
+    
+    call parf_get_noblock_real(&
+         oneMessageData%buf, &
+         oneMessageData%bufSize, &
+         otherProc, &
+         tag, &
+         request)
+
+    if (dumpLocal) then
+       write(c0,"(i8)") oneMessageData%bufSize
+       write(c1,"(i8)") otherProc
+       write(c2,"(i8)") tag
+       if (request == MPI_REQUEST_NULL) then
+          c3="NULL"
+       else
+          write(c3,"(Z8)") request
+       end if
+       if (present(preMsgString)) then
+          msgString=preMsgString
+       else
+          msgString=h
+       end if
+       call MsgDump(&
+            trim(adjustl(msgString))//&
+            " post recv from MPI rank "//trim(adjustl(c1))//&
+            " with buffer size "//trim(adjustl(c0))//&
+            " tag "//trim(adjustl(c2))//&
+            " and request "//trim(adjustl(c3)))
+    end if
+  end subroutine PostRecvMessageData
+
+
+
+
+  
+  subroutine PostSendMessageData(oneMessageData, &
+       otherProc, tag, request, preMsgString)
+    type(MessageData), intent(in) :: oneMessageData
+    integer, intent(in) :: otherProc
+    integer, intent(in) :: tag
+    integer, intent(inout) :: request
+    character(len=*), optional :: preMsgString
+
+    character(len=*), parameter :: h="**(PostSendMessageData)**"
+    character(len=8) :: c0, c1, c2, c3
+    character(len=128) :: msgString
+    logical, parameter :: dumpLocal=.true.
+    
+    if (.not. allocated(oneMessageData%buf)) then
+       call fatal_error(h//" buf not allocated")
+    end if
+    
+    call parf_send_noblock_real(&
+         oneMessageData%buf, &
+         oneMessageData%bufSize, &
+         otherProc, &
+         tag, &
+         request)
+
+    if (dumpLocal) then
+       write(c0,"(i8)") oneMessageData%bufSize
+       write(c1,"(i8)") otherProc
+       write(c2,"(i8)") tag
+       if (request == MPI_REQUEST_NULL) then
+          c3="NULL"
+       else
+          write(c3,"(Z8)") request
+       end if
+       if (present(preMsgString)) then
+          msgString=preMsgString
+       else
+          msgString=h
+       end if
+       call MsgDump(&
+            trim(adjustl(msgString))//&
+            " post send to MPI rank "//trim(adjustl(c1))//&
+            " with buffer size "//trim(adjustl(c0))//&
+            " tag "//trim(adjustl(c2))//&
+            " and request "//trim(adjustl(c3)))
+    end if
+  end subroutine PostSendMessageData
 end module ModMessageData

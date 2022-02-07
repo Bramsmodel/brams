@@ -14,11 +14,11 @@ subroutine advectc(varn,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
 !! 
 !! @copyright Under CC-GPL License by INPE/CPTEC
 !! Please, read @link https://creativecommons.org/licenses/GPL/2.0/legalcode.pt
-  use grid_dims, only: maxgrds
+  use grid_dims, only: maxgrds, nzpmax
   use mem_tend, only: tend
   use var_tables, only: num_scalar, scalar_tab
   use mem_scratch, only: scratch, vctr1, vctr2
-  use mem_grid, only: ngrid, nzpmax, grid_g, dtlt, if_adap, jdim, time, &
+  use mem_grid, only: ngrid, grid_g, dtlt, if_adap, jdim, time, &
        zt, zm, dzm, dzt, hw4, dyncore_flag
 
   use mem_basic, only: basic_g
@@ -48,7 +48,7 @@ subroutine advectc(varn,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
          namelistfile
 
   implicit none
-  include "i8.h"
+  include "constants.h"
   integer :: mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,n
   integer(kind=i8) :: mxyzp
   character(len=*) :: varn

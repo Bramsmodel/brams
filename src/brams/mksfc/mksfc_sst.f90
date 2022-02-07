@@ -104,13 +104,15 @@ subroutine sstnest(ifm, ivtime)
        VSSTFIL, &
        MKSFC_VT2DA, &
        MKSFC_VT2DB
-
+  
+  use grid_dims, only :&
+       NXPMAX, &
+       NYPMAX
+  
   use mem_grid, only: &
        NXTNEST, &
        NNXP, &
        NNYP, &
-       NXPMAX, &
-       NYPMAX, &
        IYEAR1, &
        IMONTH1, &
        IDATE1, &

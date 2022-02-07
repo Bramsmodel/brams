@@ -8,6 +8,7 @@
 
 SUBROUTINE isan_driver (name_name)
   use ModDateUtils
+  use grid_dims, only : maxgrds !INTENT(IN)
   use isan_coms,only: &
         dnref,        &
         guess1st,     &

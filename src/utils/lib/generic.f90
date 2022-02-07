@@ -45,7 +45,7 @@ contains
    
        implicit none
    
-       include "constants.f90"
+       include "constants.h"
        character(len=*),parameter :: sourceName='generic.f90' !Name of source code
        character(len=*),parameter :: procedureName='**getOutputByteSize**' !Name of this procedure
        !
@@ -104,7 +104,7 @@ contains
    
       implicit none
    
-      include "constants.f90"
+      include "constants.h"
       character(len=*),parameter :: sourceName='generic.f90' !Name of source code
       character(len=*),parameter :: procedureName='**arcDistance**' !Name of this procedure
       !

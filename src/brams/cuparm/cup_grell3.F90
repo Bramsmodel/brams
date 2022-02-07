@@ -7,7 +7,7 @@ module CUPARM_GRELL3
 
   use ModNamelistFile, only: namelistFile
 
-  use ModMessagePassing, only: &
+  use ModMessageSet, only: &
        PostRecvSendMsgs,    &
        WaitSendRecvMsgs
 
@@ -283,7 +283,7 @@ contains
   subroutine filltab_grell3(g3d_ens,g3d,g3d_ensm,g3dm,imean, m1, m2, m3, ng,ndim_train)
     use var_tables
     implicit none
-    include "i8.h"
+    include "constants.h"
 
     type (g3d_ens_vars),dimension(ndim_train) :: g3d_ens,g3d_ensm
     type (g3d_vars) :: g3d,g3dm
@@ -416,7 +416,7 @@ contains
 
     implicit none
 
-    include "i8.h"
+    include "constants.h"
     integer, intent(IN) :: iens,iinqparm,iinshcu
     type(Grid), pointer :: OneGrid ! intent(in)
     integer :: i,j,k
@@ -2148,6 +2148,7 @@ end subroutine mcphysics3
 !------------------------------------------------------------------------
 subroutine prepare_lsf(nnqparm,nnshcu,iwork)
 
+  use grid_dims, only: nzpmax
   use mem_grell   ,only: cuforc_g,cuforc_sh_g
   use mem_tend    ,only: tend
   !use mem_scratch ,only: scratch
@@ -2155,13 +2156,13 @@ subroutine prepare_lsf(nnqparm,nnshcu,iwork)
   use mem_cuparm  ,only: confrq ,cuparm_g_sh
   use node_mod    ,only: mxp,myp,mzp ,ia,iz,ja,jz,mynum
   use mem_radiate, only: ilwrtyp, iswrtyp, radiate_g
-  use mem_grid, only:ngrid, nzpmax, grid_g, dtlt, if_adap, jdim, time, &
+  use mem_grid, only:ngrid, grid_g, dtlt, if_adap, jdim, time, &
        zt, zm, dzm, dzt, hw4,itopo
   use mem_basic, only: basic_g
   use mem_scratch, only : vctr1,vctr2
 
   implicit none
-  include "i8.h"
+  include "constants.h"
   character(len=3) :: forcing
   integer,intent(IN) :: nnqparm,nnshcu,iwork
   !- scratchs (local arrays)

@@ -26,7 +26,7 @@ contains
     use node_mod
     use ModGrid, only: &
          Grid
-    use ModMessagePassing, only: &
+    use ModMessageSet, only: &
          PostRecvSendMsgs, &
          WaitSendRecvMsgs
 

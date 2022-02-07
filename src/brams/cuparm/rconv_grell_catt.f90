@@ -63,7 +63,7 @@ subroutine CUPARM_GRELL_CATT(iens)
 !--(DMK-CCATT-FIM)-----------------------------------------------------
   
   implicit none
-  include "i8.h"
+  include "constants.h"
   integer, intent(IN) :: iens
   integer,parameter :: CPTIME = 0. !orig: CPTIME = 7200.
 

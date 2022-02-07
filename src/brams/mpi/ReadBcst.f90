@@ -74,7 +74,7 @@ module ReadBcst
   integer, parameter :: idim_type_min=2
   integer, parameter :: idim_type_max=7
   logical, parameter :: dumpLocal=.false.
-  include "i8.h"
+  include "constants.h"
 contains
 
 
@@ -1465,7 +1465,7 @@ contains
          parf_bcast ! Subroutine
 
     IMPLICIT NONE
-    INCLUDE "i8.h"
+    INCLUDE "constants.h"
     ! Arguments:
     INTEGER, INTENT(IN)           :: idim_type, ifm, nnxp, nnyp, &
          nmachs, mchnum, mynum, master_num
@@ -1555,7 +1555,7 @@ contains
          parf_bcast ! Subroutine
 
     IMPLICIT NONE
-    INCLUDE "i8.h"
+    INCLUDE "constants.h"
     ! Arguments:
     INTEGER, INTENT(IN)           :: idim_type, ifm, nnzp, nnxp, nnyp, &
          nmachs, mchnum, mynum, master_num
@@ -1646,7 +1646,7 @@ contains
          parf_bcast ! Subroutine
 
     IMPLICIT NONE
-    INCLUDE "i8.h"
+    INCLUDE "constants.h"
     ! Arguments:
     INTEGER, INTENT(IN)           :: idim_type, ifm, mzg, nnxp, nnyp, npat, &
          nmachs, mchnum, mynum, master_num
@@ -1753,7 +1753,7 @@ contains
   use ParLib, only: &
       parf_bcast
  
-  include "i8.h"
+  include "constants.h"
 
   integer, intent(in) 			:: grid
   integer, intent(in) 			:: nz

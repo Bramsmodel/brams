@@ -568,11 +568,10 @@ contains
     !USE IFPORT
     !
 
-    include "i8.h"
     include "files.h"
     include "tsNames.h"
     include "mpif.h"
-    include "constants.f90"
+    include "constants.h"
 
     ! Arguments:
     integer, intent(in) :: nmachs_in           ! number of processes (0 iff sequential run)
@@ -1636,7 +1635,7 @@ contains
          oneGlobalGridData
     use mem_aer1, only: dumpAer
 
-    include "constants.f90"
+    include "constants.h"
     type(GridTree), pointer :: AllGrids
     character(len=*), intent(in) :: name_name
     character(len=*), parameter :: h="**(initOneProc)**"

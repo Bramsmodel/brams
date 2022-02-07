@@ -20,6 +20,9 @@ module monotonic_adv
        nodemxp,  &  !intent(in)
        nodemzp      !intent(in)
 
+  use grid_dims, only: &
+       nzpmax !intent(in)
+       
   use mem_grid, only:        &
        dtlt,   & !intent(in)
        time,   &
@@ -32,7 +35,6 @@ module monotonic_adv
        naddsc, & !intent(in)
        hw4   , & !intent(in)
        if_adap,& !intent(in)
-       nzpmax, & !intent(in)
        dyncore_flag  !intent(in)
 
   use mem_basic, only: basic_g  !intent(in)

@@ -11,9 +11,12 @@ subroutine toptnest(ngra,ngrb)
   use mem_mksfc, only: &
        sfcfile_p, mksfc_scr1, mksfc_scr2, mksfc_vt2da, mksfc_vt2db
 
+  use grid_dims, only: &
+       nxpmax, nypmax
+  
   use mem_grid, only: &
        nxtnest, nnxp, nnyp, maxnxp, maxnyp, ngridsh, &
-       nxpmax, nypmax, jdim, nstratx, nstraty
+       jdim, nstratx, nstraty
 
   use io_params, only: &
        itoptflg, itoptfn, toptwvl
@@ -24,7 +27,7 @@ subroutine toptnest(ngra,ngrb)
 !--(DMK-CCATT-FIM)------------------------------------------------------------
 
   implicit none
-  include "i8.h"
+  include "constants.h"
   ! Arguments:
   integer, intent(in) :: ngra, ngrb
   ! Local Variables:
@@ -512,7 +515,7 @@ subroutine GeonestNofile(ngra,ngrb)
 !--(DMK-CCATT-FIM)-----------------------------------------------------------
 
   implicit none
-  include "constants.f90"
+  include "constants.h"
   integer, intent(IN) :: ngra, ngrb
 
   integer :: isiz,ifm,icm,ipat,i,j,k,indfm,ivtime,nc1,ic,jc

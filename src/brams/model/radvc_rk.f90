@@ -31,10 +31,10 @@ end module advRkParam
 !
 subroutine advectc_rk(varn,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
   !use var_tables, only: scalar_table
-  use grid_dims, only: maxgrds
+  use grid_dims, only: maxgrds, nzpmax
   use mem_tend, only: tend
   use var_tables, only: num_scalar, scalar_tab
-  use mem_grid, only: ngrid, nzpmax, grid_g, dtlt, if_adap, jdim, time, &
+  use mem_grid, only: ngrid, grid_g, dtlt, if_adap, jdim, time, &
        zt, zm, dzm, dzt, hw4,itopo,pd_or_mnt_constraint,order_h,order_v
 
   use mem_basic, only: basic_g
@@ -43,7 +43,7 @@ subroutine advectc_rk(varn,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
   use ModParallelEnvironment, only: MsgDump
 
   implicit none
-  include "i8.h"
+  include "constants.h"
   integer, intent(in) :: mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk
   character(len=*), intent(in) :: varn
   !

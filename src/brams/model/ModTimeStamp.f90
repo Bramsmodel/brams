@@ -44,7 +44,7 @@ module ModTimeStamp
 
   private
 
-  include "i8.h"
+  include "constants.h"
   integer              :: count_rate                  ! ticks per second
   integer              :: count_max                   ! measurement overflow
   integer              :: nodes                       ! MPI size

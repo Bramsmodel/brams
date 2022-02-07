@@ -854,7 +854,7 @@ contains
     use ModAcoust_adap, only: acoust_adap
 
     implicit none
-    include "constants.f90"
+    include "constants.h"
     character(len=*),parameter :: h='**(acoustic_new)**'
     type(Grid), pointer :: OneGrid
     integer, intent(in) :: nnacoust_loc  ! number of small time steps
@@ -990,7 +990,7 @@ contains
 
     use ModGrid, only: Grid, DumpGrid
 
-    use ModMessagePassing, only: &
+    use ModMessageSet, only: &
          PostRecvSendMsgs, &
          WaitSendRecvMsgs
 
@@ -1321,7 +1321,7 @@ contains
 
     implicit none
 
-    include "constants.f90"
+    include "constants.h"
 
     real, intent(in) :: dts  ! small time step [s]
 

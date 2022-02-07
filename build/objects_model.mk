@@ -15,7 +15,6 @@ OBJ_MOD = \
 	ModBuffering.o \
 	ModMessageData.o \
 	ModMessageSet.o \
-	ModMessagePassing.o \
 	ModGridDims.o \
 	ModGrid.o \
 	ModGridTree.o \

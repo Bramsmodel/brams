@@ -14,7 +14,7 @@ subroutine anlavg(n1,n2,n3,n4)
   use io_params, only: avgtim, frqmean, frqboth
 
   implicit none
-  include "i8.h"
+  include "constants.h"
   integer :: n1,n2,n3,n4
 
   include 'interface.h'
@@ -141,7 +141,7 @@ end subroutine anlavg
 subroutine average(m, av, v, navg)
 
   implicit none
-  include "i8.h"
+  include "constants.h"
   integer, intent(in)          :: navg
   integer(kind=i8), intent(in) :: m
   real, intent(inout)          :: av(m)

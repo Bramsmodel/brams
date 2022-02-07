@@ -92,7 +92,7 @@ subroutine diffuse_brams31()
                                  ! %ind2_x_a, %weight_x_a, %ind1_x_b  , %ind2_x_b, %weight_x_b,
                                  ! %ind1_y_a, %ind2_y_a  , %weight_y_a, %ind2_y_b, %weight_y_b
   implicit none
-  include "i8.h"
+  include "constants.h"
   integer(kind=i8) :: mxyzp, ind
   integer :: n
   real :: s1,s2,s3

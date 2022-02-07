@@ -447,8 +447,9 @@ end subroutine output_mean_at_inst_analysis_turb
 !------------------------------------------------------------------------------------------!
 
 subroutine get_adv_fluxes_for_stilt(mzp,mxp,myp,ia,iz,ja,jz)
+  use grid_dims, only: nzpmax
   use mem_scratch, only: scratch, vctr1, vctr2
-  use mem_grid, only: ngrid, nzpmax, grid_g, dtlt, if_adap, jdim, time, &
+  use mem_grid, only: ngrid, grid_g, dtlt, if_adap, jdim, time, &
        zt, zm, dzm, dzt, hw4
 
   use mem_basic, only: basic_g
@@ -457,7 +458,7 @@ subroutine get_adv_fluxes_for_stilt(mzp,mxp,myp,ia,iz,ja,jz)
   use monotonic_adv, ONLY: advmnt 
 
   implicit none
-  include "i8.h"
+  include "constants.h"
   integer :: mzp,mxp,myp,ia,iz,ja,jz!,izu,jzv,mynum,n
   integer(kind=i8) :: mxyzp
   

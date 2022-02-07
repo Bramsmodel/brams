@@ -36,7 +36,7 @@ module modSchedUtils
 
    implicit none
 
-   include "constants.f90"
+   include "constants.h"
    character(len=*),parameter :: sourceName='modsched.f90' !Name of this source code
    character(len=*),parameter :: procedureName='**modSchedUtils**' !Name of this procedure
    !
@@ -99,7 +99,7 @@ module modSchedUtils
    
       implicit none
    
-      include "constants.f90"
+      include "constants.h"
       character(len=*),parameter :: sourceName='modsched.f90' !Name of this source code
       character(len=*),parameter :: procedureName='**ismultiple**' !Name of this procedure
       !
@@ -170,7 +170,7 @@ function nextMainPoint(ngrid) result(dt)
 
    implicit none
 
-   include "constants.f90"
+   include "constants.h"
    character(len=*),parameter :: sourceName='modsched.f90' !Name of this source code
    character(len=*),parameter :: procedureName='**nextMainPoint**' !Name of this procedure
    !
@@ -644,7 +644,7 @@ subroutine cfll(n1,n2,n3,i0,j0,up,vp,wp,rtgt,f13t,f23t,dxt,dyt)
        akmin        ! INTENT(in)
 
   implicit none
-  include "constants.f90"
+  include "constants.h"
   character(len=*),parameter :: h='**(cfll)**'
   integer, intent(in) :: n1
   integer, intent(in) :: n2
@@ -868,7 +868,7 @@ subroutine commCFL(cfl_max_sum,ngrid)
 
    implicit none
 
-   include "constants.f90"
+   include "constants.h"
    character(len=*),parameter :: sourceName='modsched.f90' !Name of this source code
    character(len=*),parameter :: procedureName='**commCFL**' !Name of this procedure
    !
@@ -970,7 +970,7 @@ subroutine dump_dtset(nndtflg)
        dtlongn
 
   implicit none
-  include "constants.f90"
+  include "constants.h"
   integer, intent(in) :: nndtflg
   integer :: ifm
 

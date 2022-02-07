@@ -10,7 +10,10 @@ module ModTimestep
 contains
 subroutine timestep(OneGrid)
 
-  use ModMessagePassing, only: &
+  use grid_dims, only: &
+       nzpmax
+
+  use ModMessageSet, only: &
        PostRecvSendMsgs, &
        WaitSendRecvMsgs
 
@@ -75,7 +78,6 @@ subroutine timestep(OneGrid)
        zt,         &
        zm,         &
        dzt,        &
-       nzpmax,     &
        itime1,     &
        vveldamp
 

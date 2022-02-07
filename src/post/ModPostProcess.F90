@@ -35,7 +35,7 @@ module ModPostProcess
    use ModGrid, only : &
          Grid
 
-   use ModMessagePassing, only : &
+   use ModMessageSet, only : &
          PostRecvSendMsgs, &
          WaitSendRecvMsgs
 
@@ -116,7 +116,7 @@ contains
       type(namelistFile), pointer :: oneNamelistFile
       type(AllPostTypes), pointer :: oneAllPostTypes
 
-      include "constants.f90"
+      include "constants.h"
 
       integer :: igrid, ivp, ierr
       character(len = 8) :: c0, c1

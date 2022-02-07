@@ -17,7 +17,7 @@ subroutine tend0()
   use mem_cuparm, only: confrq,NNQPARM! INTENT(IN)
 
   implicit none
-  include "i8.h"
+  include "constants.h"
   integer :: n
   integer(kind=i8) :: mxyzp
 
@@ -68,7 +68,7 @@ subroutine hadvance(iac)
   use node_mod, only: mxp, myp, mzp
 
   implicit none
-  include "i8.h"
+  include "constants.h"
   integer :: iac
 
   integer(kind=i8) :: mxyzp
@@ -139,7 +139,7 @@ subroutine predict(npts,ac,ap,fa,af,iac,dtlp,d,RAW)
   use node_mod, only: nmachs
 
   implicit none
-  include "i8.h"
+  include "constants.h"
   integer :: iac   !,npts, m
   integer(kind=i8) :: m
   integer(kind=i8), intent(in) :: npts
@@ -234,7 +234,7 @@ subroutine predtr()
   use node_mod, only: mxp, myp, mzp
 
   implicit none
-  include "i8.h"
+  include "constants.h"
   integer :: n !mxyzp
   integer(kind=i8) :: mxyzp
 

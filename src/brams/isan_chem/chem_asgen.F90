@@ -12,6 +12,10 @@ SUBROUTINE chem_isan_driver (name_name)
 !SUBROUTINE isan_driver (name_name)
 !--(DMK-CCATT-FIM)----------------------------------------------------------------
   use ModDateUtils
+
+  use grid_dims, only: &
+       maxgrds
+  
   use isan_coms,only: &
         dnref,        &
         guess1st,     &
@@ -106,7 +110,7 @@ SUBROUTINE chem_isan_driver (name_name)
   implicit none
 
   include "files.h"
-  include "constants.f90"
+  include "constants.h"
   character(len=*),parameter :: sourceName='chem_asgen.F90'
   character(len=*),parameter :: procedureName='chem_isan_driver'
 

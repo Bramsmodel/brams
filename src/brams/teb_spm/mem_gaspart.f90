@@ -188,7 +188,7 @@ CONTAINS
     USE mem_emiss, ONLY: ichemi
 
     IMPLICIT NONE
-    include "i8.h"
+    include "constants.h"
     ! Arguments:
     TYPE (gaspart_vars), INTENT(IN) :: gaspart, gaspartm
     INTEGER, INTENT(IN) :: imean, n1, n2, n3, ng

@@ -1,6 +1,8 @@
 MODULE ChemDryDepDriver
 
-
+  use grid_dims, only: &
+       nzpmax
+  
   USE rconstants, ONLY: &
        cpi,             &
        cpor,            &
@@ -13,7 +15,6 @@ MODULE ChemDryDepDriver
        jdim,          &
        dzt,           &
        zt,            &
-       nzpmax,        &
        npatch,        &
        dtlt,          &
        imonth1,       &

@@ -9,7 +9,7 @@ module ModFieldSection
   use ModParallelEnvironment, only: MsgDump
 
   implicit none
-  include "ranks.h" ! for kind=i8
+!!$  include "constants.h"
 
   private
   public :: FieldSection
@@ -70,7 +70,7 @@ module ModFieldSection
      !   communicate  last dimension for each (x,y)
      ! idim_type == 7 means (nmxp, nmyp, nwave)
      !   communicate  last dimension for each (x,y)
-     integer(kind=i8) :: fieldSectionSize = -1_i8
+     integer :: fieldSectionSize = -1
      ! number of data elements to communicate
      character(len=16) :: name = ""
      ! field variable name
@@ -486,16 +486,16 @@ contains
 
 
   
-  function FieldSectionSize(oneFieldSection) result(len)
+  function FieldSectionSize(oneFieldSection) result(nEle)
 
     ! returns the number of elements of a field section
     
     type(FieldSection), pointer, intent(in) :: oneFieldSection
-    integer(kind=i8) :: len
+    integer :: nEle
 
-    len=0_i8
+    nEle=0
     if (associated(oneFieldSection)) then
-       len=oneFieldSection%fieldSectionSize
+       nEle=oneFieldSection%fieldSectionSize
     end if
   end function FieldSectionSize
 
@@ -513,13 +513,13 @@ contains
     ! field values of the field section to copy from
     real, intent(inout) :: buf(:)
     ! buffer to copy to
-    integer(kind=i8), intent(inout) :: bufStart
+    integer, intent(inout) :: bufStart
     ! copy starts at buf(bufStart)
-    integer(kind=i8), intent(in) :: bufSize
+    integer, intent(in) :: bufSize
     ! buf maximum size
 
-    integer(kind=i8) :: finalPos
-    integer(kind=i8) :: posBuf
+    integer :: finalPos
+    integer :: posBuf
     integer :: x
     integer :: y
     integer :: k
@@ -566,7 +566,7 @@ contains
        do y=oneFieldSection%yStart, oneFieldSection%yEnd
           do x=oneFieldSection%xStart, oneFieldSection%xEnd
              buf(posBuf)=oneFieldSection%field_2D(x,y)
-             posBuf=posBuf+1_i8
+             posBuf=posBuf+1
           end do
        end do
     case(3)
@@ -612,7 +612,7 @@ contains
           do y=oneFieldSection%yStart, oneFieldSection%yEnd
              do x=oneFieldSection%xStart, oneFieldSection%xEnd
                 buf(posBuf)=oneFieldSection%field_3D(x,y,k)
-                posBuf=posBuf+1_i8
+                posBuf=posBuf+1
              end do
           end do
        end do
@@ -647,13 +647,13 @@ contains
     ! field values of the field section to copy to
     real, intent(in) :: buf(:)
     ! buffer to copy from
-    integer(kind=i8), intent(inout) :: bufStart
+    integer, intent(inout) :: bufStart
     ! copy starts at buf(bufStart)
-    integer(kind=i8), intent(in) :: bufSize
+    integer, intent(in) :: bufSize
     ! buf maximum size
 
-    integer(kind=i8) :: finalPos
-    integer(kind=i8) :: posBuf
+    integer :: finalPos
+    integer :: posBuf
     integer :: x
     integer :: y
     integer :: k
@@ -700,7 +700,7 @@ contains
        do y=oneFieldSection%yStart, oneFieldSection%yEnd
           do x=oneFieldSection%xStart, oneFieldSection%xEnd
              oneFieldSection%field_2D(x,y) = buf(posBuf)
-             posBuf=posBuf+1_i8
+             posBuf=posBuf+1
           end do
        end do
     case(3)
@@ -746,7 +746,7 @@ contains
           do y=oneFieldSection%yStart, oneFieldSection%yEnd
              do x=oneFieldSection%xStart, oneFieldSection%xEnd
                 oneFieldSection%field_3D(x,y,k) = buf(posBuf)
-                posBuf=posBuf+1_i8
+                posBuf=posBuf+1
              end do
           end do
        end do

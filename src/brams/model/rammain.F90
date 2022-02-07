@@ -72,7 +72,7 @@ program main
 
   implicit none
 
-  include "constants.f90"
+  include "constants.h"
   ! process rank and size (local variables)
   integer :: nmachs_in
   integer :: mchnum_in

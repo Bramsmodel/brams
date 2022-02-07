@@ -10,7 +10,7 @@ module an_header
 
   implicit none
 
-  include "i8.h"
+  include "constants.h"
   include "files.h"
 
   ! head_table: single field on i/o file descriptor data structure

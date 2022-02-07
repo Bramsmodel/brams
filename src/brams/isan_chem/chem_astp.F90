@@ -388,7 +388,7 @@ subroutine chem_pressure_stage_grib2(n1,n2,nhem,glat,glon,glat2,glon2)
 
     implicit none
 
-  include "constants.f90"
+  include "constants.h"
     integer :: n1,n2,nhem
     real :: glat(n1,n2),glon(n1,n2),glat2(n1,n2),glon2(n1,n2)
 
@@ -719,7 +719,7 @@ subroutine chem_get_press_grib2()
 
     implicit none
 
-  include "constants.f90"
+  include "constants.h"
     !
     logical, external :: checkInside
 
@@ -1180,7 +1180,7 @@ subroutine chem_get_press (iunit)
 
        implicit none
 
-  include "constants.f90"
+  include "constants.h"
   include "netcdf.inc"
 
        character(len=*),parameter :: header='**(chem_pressure_stage_netCDF)**'
@@ -1724,7 +1724,7 @@ subroutine chem_get_press (iunit)
 
        implicit none
 
-  include "constants.f90"
+  include "constants.h"
        !
 
        character(len=*), parameter :: cFMT='(" ==  Read pressure field  ",I4," mBar for var=",A1," at ",I2,"/",I2,"/",I4,I6.4," UTC, maxval= ",E18.6,", minval= ",E18.6)'
@@ -1966,7 +1966,7 @@ subroutine chem_get_press (iunit)
        use dump, only: &
            dumpMessage
 
-      include "constants.f90"
+      include "constants.h"
        character(len=*),parameter :: header='**(limitVariable)**'
        real, intent(inout) :: variable
        integer, intent(inout) :: above
@@ -1994,7 +1994,7 @@ subroutine chem_get_press (iunit)
            dumpMessage
        implicit none
   
-      include "constants.f90"
+      include "constants.h"
   
        !Parameters (constants)
   
@@ -2037,7 +2037,7 @@ subroutine chem_get_press (iunit)
       
        implicit none
   
-      include "constants.f90"
+      include "constants.h"
   
        !Parameters (constants)
   
@@ -2129,7 +2129,7 @@ subroutine chem_get_press (iunit)
        use dump, only: &
            dumpMessage
 
-      include "constants.f90"
+      include "constants.h"
        character(len=*),parameter :: header='**(limitVariable)**'
        real, intent(inout) :: variable
        real, intent(in) :: inferiorLim, superiorLim
@@ -2270,7 +2270,7 @@ subroutine chem_get_press (iunit)
        !#
        !#--- ----------------------------------------------------------------------------------------
        !
-    include "constants.f90"
+    include "constants.h"
        integer, parameter :: p_tVar=3
 
        integer, intent(in) :: icFileType
@@ -2359,7 +2359,7 @@ subroutine chem_get_press (iunit)
 
        implicit none
 
-  include "constants.f90"
+  include "constants.h"
 
        character(len=*),parameter :: sourceName='chem_astp.F90' !Name of source code
        character(len=*),parameter :: procedureName='**chem_pressure_stage_grads**' !Name of this procedure
@@ -2671,7 +2671,7 @@ subroutine chem_get_press (iunit)
 
        implicit none
 
-  include "constants.f90"
+  include "constants.h"
 
        real, intent(in) :: lonini,dx,latini,dy
        !
@@ -2908,7 +2908,7 @@ subroutine chem_get_press (iunit)
       
        implicit none
   
-      include "constants.f90"
+      include "constants.h"
   
        !Parameters (constants)
   

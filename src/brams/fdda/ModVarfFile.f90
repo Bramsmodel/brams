@@ -136,7 +136,7 @@ module ModVarfFile
        init_ajust,         &
        spc_name
 
-  use ModMessagePassing, only: &
+  use ModMessageSet, only: &
        PostRecvSendMsgs, &
        WaitSendRecvMsgs
 
@@ -144,7 +144,7 @@ module ModVarfFile
   implicit none
 
   include "files.h"
-  include "i8.h"
+  include "constants.h"
 
   private
   public :: VarfReadStoreOwnChunk

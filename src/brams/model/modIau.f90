@@ -66,7 +66,7 @@ module modIau
 
     implicit none
     include "files.h"
-    include "i8.h"
+    include "constants.h"
 
     character(len=*),parameter :: sourceName='modIau.f90' !Name of source code
 
@@ -805,7 +805,7 @@ contains
     
             implicit none
 
-            include "constants.f90"
+            include "constants.h"
     
             character(len=*),parameter :: procedureName='**initComIau**' !Name of this procedure
             !

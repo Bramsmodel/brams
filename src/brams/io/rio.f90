@@ -373,7 +373,7 @@ subroutine hiswrt(restart)
 
   implicit none
 
-  include "i8.h"
+  include "constants.h"
   include "files.h"
 
   character(len=*), intent(IN) :: restart
@@ -588,7 +588,7 @@ end subroutine rearrange_p
 subroutine writebin(iun,var,npts)
 
   implicit none
-  include "i8.h"
+  include "constants.h"
   integer(kind=i8), intent(in) :: npts
   real, intent(in)             :: var(npts)
   integer, intent(in)          :: iun
@@ -717,7 +717,7 @@ subroutine OneFieldAnlwrt (ioaunt, vsize, v_pointer, varn, idim_type, &
        head_table
 
   implicit none
-  include "i8.h"
+  include "constants.h"
   integer,           intent(in)    :: ioaunt            ! i/o unit (unused variable; actually a C file)
   integer,           intent(in)    :: vsize             ! size of field to write
   real,              intent(in)    :: v_pointer(vsize)  ! field to write
@@ -868,7 +868,7 @@ subroutine OneFieldWrite (ioaunt, vsize, v_pointer, varn, idim_type, ngr, &
        head_table
 
   implicit none
-  include "i8.h"
+  include "constants.h"
   integer,           intent(in)    :: ioaunt            ! i/o unit (unused variable; actually a C file)
   integer,           intent(in)    :: vsize             ! size of field to write
   real,              intent(in)    :: v_pointer(vsize)  ! field to write
@@ -2093,7 +2093,7 @@ end subroutine saveNodeFields
 
 !LFR... implicit none
 
-!LFR... include "i8.h"
+!LFR... include "constants.h"
 
 !LFR... logical, intent(in) :: histFlag       ! true iff history output requested
 !LFR... logical, intent(in) :: instFlag       ! true iff instant output requested
@@ -2245,7 +2245,7 @@ subroutine saveBinMPIIO(histFlag, instFlag, liteFlag, meanFlag, nvMax, &
 
   implicit none
 
-  include "i8.h"
+  include "constants.h"
 
   logical, intent(in) :: histFlag       ! true iff history output requested
   logical, intent(in) :: instFlag       ! true iff instant output requested

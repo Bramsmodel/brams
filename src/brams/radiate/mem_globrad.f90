@@ -769,7 +769,7 @@ module mem_globrad
     use ParLib, only: parf_bcast ! Subroutine
 
     implicit none
-    include "i8.h"
+    include "constants.h"
     ! Local Variables
     integer, parameter :: input_unit=22
     character(len=*), parameter :: h="**(master_read_carma_data)**"

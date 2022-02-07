@@ -39,6 +39,10 @@
    !# 4 byte integer
    integer, parameter :: kind_in = kind(1)
    !# native integer
+   integer, parameter :: i8 = selected_int_kind(14)
+   !Kind for 64-bits Integer Numbers
+   integer, parameter :: r8 = selected_real_kind(15)
+   !Kind for 64-bits Real Numbers
 
    !real kinds
    integer, parameter :: kind_rb = selected_real_kind(12)

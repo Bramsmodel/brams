@@ -3586,7 +3586,7 @@
 
       implicit none
 
-      include "constants.f90"
+      include "constants.h"
 !..Local variables
       INTEGER:: i, j, k, m, n, n2
       INTEGER:: km, km_s, km_e
@@ -3780,7 +3780,7 @@
 
       implicit none
 
-      include "constants.f90"
+      include "constants.h"
 !..Local variables
       INTEGER:: i, j, k, m, n, n2
       INTEGER:: km, km_s, km_e
@@ -4076,7 +4076,7 @@
 
       implicit none
 
-      include "constants.f90"
+      include "constants.h"
 !..Local variables
       INTEGER:: i, j, k, m, n, n2
       INTEGER:: km, km_s, km_e

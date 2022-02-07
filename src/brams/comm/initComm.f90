@@ -1447,7 +1447,7 @@ contains
     !# @endwarning
     !#
     !#--- ----------------------------------------------------------------------------------------
-    include "constants.f90"
+    include "constants.h"
     integer, intent(in) :: mxp
     !# points in x dir
     integer, intent(in) :: myp

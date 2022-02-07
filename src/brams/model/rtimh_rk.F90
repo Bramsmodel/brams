@@ -18,9 +18,12 @@ module ModTimestep_RK
 contains
   subroutine timestep_rk(OneGrid)
 
+    use grid_dims, only: &
+         nzpmax
+         
     use ModParallelEnvironment, only: MsgDump
 
-    use ModMessagePassing, only: &
+    use ModMessageSet, only: &
          PostRecvSendMsgs, &
          WaitSendRecvMsgs
 
@@ -93,7 +96,6 @@ contains
          zt,         &
          zm,         &
          dzt,        &
-         nzpmax,     &
          itime1,     &
          vveldamp    ! INTENT(IN)
 
@@ -233,9 +235,8 @@ contains
     type(Grid), pointer :: OneGrid
 
     ! execution time instrumentation
-    include "constants.f90"
+    include "constants.h"
     include "tsNames.h"
-    include "i8.h"
 
     LOGICAL, parameter :: flag_Coriolis_in_every_RK_step = .FALSE.
 

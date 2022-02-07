@@ -9,7 +9,7 @@ module mem_chem1aq
 !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
   use ModNamelistFile, only: namelistFile
 
-  include "i8.h"
+  include "constants.h"
 !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
 
   type chem1aq_vars   

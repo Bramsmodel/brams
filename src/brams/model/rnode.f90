@@ -93,7 +93,7 @@ subroutine InitFields(init)
   integer, intent(in) :: init
   ! Local variables:
 
-  include "i8.h"
+  include "constants.h"
   integer(i8) :: silly_i8
   integer :: ng, nm, itype, i1, j1, i2, j2, memf, npvar, nv
 

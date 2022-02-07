@@ -77,7 +77,7 @@ contains
     implicit none
 
 
-    include "constants.f90"
+    include "constants.h"
     ! Arguments:
     integer, intent(in)  :: mynum
     integer, intent(out) :: nndtflg
@@ -494,7 +494,7 @@ contains
     use dump
 
     implicit none
-    include "constants.f90"
+    include "constants.h"
     integer :: ifm,err
 
     ! Print out initial values of dtlongn, nndtrat, nnacoust, sscourn,
