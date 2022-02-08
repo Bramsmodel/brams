@@ -1731,7 +1731,7 @@ ModPostGrid.o : $(POST_SRC)/ModPostGrid.F90 ModNamelistFile.o \
 	rm -f $(<F:.f90=.f90)
 
 ModPostGridNetCDF.o: $(POST_SRC)/ModPostGridNetCDF.F90 io_params.o \
-	ModBramsGrid.o ModNamelistFile.o mem_grid.o ModPostOneFieldUtils.o \
+	ModBramsGrid.o ModNamelistFile.o mem_grid.o \
 	dump.o ModDateUtils.o ModPostTypes.o $(UTILS_INCS)/files.h  $(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)

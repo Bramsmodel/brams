@@ -1,6 +1,6 @@
 module ModMessageSet
 
-  ! At each timestep, the ghost zone of some fixed fields 
+  ! At each timestep, the ghost zone of some fields 
   ! needs updating. Ghost zone update requires message passing.
   ! There are a few timestep locations that need ghost zone
   ! update. The set of fields to update is fixed at one
@@ -10,15 +10,15 @@ module ModMessageSet
   ! and the ranks to access are stored at a pair of variables
   ! of type MessageSet, one for send and one for receive operations.
   !
-  ! MessageSet variables contain message data and message envelop
+  ! Each MessageSet variable contains message data and message envelop
   ! for an array of message passing operations. Each array element
   ! contains all data to pass to a single rank, on a single
-  ! message exchange operation. Consequently, field sections of
+  ! message passing operation. Consequently, field sections of
   ! all fields that require ghost zone update involving two fixed
-  ! ranks are stored at a single MessageSet array entry  and 
-  ! exchanged on a single message passing operation. 
+  ! ranks are stored at a single array entry of a MessageSet variable
+  ! and used on a single message passing operation. 
   !
-  ! Message passing operates on a contiguous buffer. Field sections
+  ! Message passing operates on contiguous buffer. Field sections
   ! to update are not contiguous in memory and have to be copied
   ! to/from the buffer. Mapping of a field section to buffer locations
   ! and inverse mapping are computed once, at MessageSet creation
@@ -26,15 +26,18 @@ module ModMessageSet
   !
   ! Type MessageSet and procedures to create, destroy, dump
   ! and perform general message passing operations are implemented
-  ! by this module. Procedures to create and destroy specific
-  ! MessageSet operations required by timestep are also implemented
-  ! at this module.
+  ! by this module.
   !
+  ! Procedures to create and destroy specific MessageSet operations
+  ! (those required by timestep) are implemented by this module.
+  !
+  ! Message passing operations are also implemented by this module.
   ! All message passing operations are nonblocking.
   ! Procedure PostRecvSendMsgs initiate all send/recv
   ! operations of one set. Procedure WaitSendRecvMsgs finalize
-  ! all send/recv operations of the same set. These procedures
-  ! are also implemented by this module.
+  ! all send/recv operations of the same set.
+  ! Copy field sections to the contiguous buffer and the reverse
+  ! opetation are included on both message passing procedures.
 
 
   use ModGridDims, only: &
@@ -85,7 +88,6 @@ module ModMessageSet
 
   implicit none
   include "mpif.h"
-!!$  include "constants.h" ! for kind=i8
 
   private
 
@@ -118,7 +120,7 @@ module ModMessageSet
   ! arrays are indexed 1:nMsgs
 
   type MessageSet
-
+     private
      ! A set of message passing operations in
      ! one direction (send or recv):
 
@@ -126,23 +128,23 @@ module ModMessageSet
      ! message passing set name
      integer :: nMsgs=-1
      ! number of messages on the set,
-     ! one message for each rank involved
-     ! in message passing for this set of variables
+     ! one message for each other rank involved
+     ! in message passing with this rank
      integer :: tag
      ! same tag for all messages in the set; part
      ! of message passing envelop
      integer, allocatable :: request(:)
      ! communication request; array of requests is
      ! indexed by message number on the set; each
-     ! entry is a part of a message passing envelop
+     ! entry is part of message passing envelop
      integer, allocatable :: otherProc(:)
      ! MPI rank to communicate; array of ranks
      ! is indexed by message number on the set; each
-     ! entry is a part of a message passing envelop
+     ! entry is part of message passing envelop
      type(MessageData), allocatable :: msgData(:)
      ! data to communicate at each message;
      ! array of MessageData is indexed by message
-     ! number on the set. Each entry contains message
+     ! number on the set. Each entry contains all message
      ! data to exchange on a single message passing
      ! operation
   end type MessageSet
@@ -387,7 +389,7 @@ contains
     integer :: myNum
     integer :: nNeigh
     character(len=*), parameter :: h="**(CreateAcousticMessageSet)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! verify input arguments
 
@@ -474,7 +476,7 @@ contains
     type(MessageSet), pointer, intent(inout) :: AcouRecvWP
 
     character(len=*), parameter :: h="**(DestroyAcousticMessageSet)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
        call MsgDump(h//" will destroy "//&
@@ -523,7 +525,7 @@ contains
     integer :: myNum
     integer :: nNeigh
     character(len=*), parameter :: h="**(CreateDn0MessageSet)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! verify input arguments
 
@@ -576,7 +578,7 @@ contains
     type(MessageSet), pointer, intent(inout) :: SendDn0v
     type(MessageSet), pointer, intent(inout) :: RecvDn0v
     character(len=*), parameter :: h="**(DestroyDn0MessageSet)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
        call MsgDump(h//" will destroy "//&
@@ -616,7 +618,7 @@ contains
     integer :: g3d_spread
     integer :: g3d_smoothh
     character(len=*), parameter :: h="**(CreateG3DMessageSet)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! verify input arguments
 
@@ -670,7 +672,7 @@ contains
     type(MessageSet), pointer, intent(inout) :: SendG3D
     type(MessageSet), pointer, intent(inout) :: RecvG3D
     character(len=*), parameter :: h="**(DestroyG3DMessageSet)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
        call MsgDump(h//" will destroy Send/RecvG3D")
@@ -707,7 +709,7 @@ contains
     integer :: myNum
     integer :: nNeigh
     character(len=*), parameter :: h="**(CreateSelectedGhostZoneMessageSet)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! verify input arguments
 
@@ -751,7 +753,7 @@ contains
     type(MessageSet), pointer, intent(inout) :: SelectedGhostZoneSend
     type(MessageSet), pointer, intent(inout) :: SelectedGhostZoneRecv
     character(len=*), parameter :: h="**(DestroySelectedGhostZoneMessageSet)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
        call MsgDump(h//" will destroy SelectedGhostZoneSend/Recv")
@@ -787,7 +789,7 @@ contains
     integer :: myNum
     integer :: nNeigh
     character(len=*), parameter :: h="**(CreateAllGhostZoneMessageSet)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! verify input arguments
 
@@ -831,7 +833,7 @@ contains
     type(MessageSet), pointer, intent(inout) :: AllGhostZoneSend
     type(MessageSet), pointer, intent(inout) :: AllGhostZoneRecv
     character(len=*), parameter :: h="**(DestroyAllGhostZoneMessageSet)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
        call MsgDump(h//" will destroy AllGhostZoneSend/Recv")
@@ -866,7 +868,7 @@ contains
     character(len=8) :: c0, c1, c2, c3, c4
     character(len=128) :: inter1, inter2
     character(len=*), parameter :: h="**(BuildUnion)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     do iNeigh = 1, nNeigh
        if (willComm1(iNeigh) .and. willComm2(iNeigh)) then
@@ -962,7 +964,7 @@ contains
     character(len=*), parameter :: h="**(CreateAcousticSendRecvUV)**"
     character(len=30) :: tmp_name
     character(len=8) :: str(10)
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! AcouSendUV, AcouRecvUV:
     ! messages update entire GhostZone
@@ -1104,7 +1106,7 @@ contains
     character(len=*), parameter :: h="**(CreateAcousticSendRecvWP)**"
     character(len=30) :: tmp_name
     character(len=8) :: str(10)
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! AcouSendWP, AcouRecvWP:
     ! messages update entire GhostZone
@@ -1248,7 +1250,7 @@ contains
     type(var_tables_r), pointer   :: vtabPtr => null()
     character(len=*), parameter :: h="**(CreateSelectedGhostZoneSendRecv)**"
     character(len=8) :: str(10)
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! SelectedGhostZoneSend, SelectedGhostZoneRecv:
     ! messages update entire GhostZone
@@ -1374,7 +1376,7 @@ contains
     type(var_tables_r), pointer   :: vtabPtr => null()
     character(len=*), parameter :: h="**(CreateAllGhostZoneSendRecv)**"
     character(len=8) :: str(10)
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! AllGhostZoneSend, AllGhostZoneRecv:
     ! messages update entire GhostZone
@@ -1499,7 +1501,7 @@ contains
     character(len=*), parameter :: h="**(CreateSendRecvDn0u)**"
     character(len=30) :: tmp_name
     character(len=8) :: str(10)
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! SendDn0u, RecvDn0u:
     ! messages update GlobalOwn [xe+1:xe+1,yb:ye]
@@ -1608,7 +1610,7 @@ contains
     character(len=*), parameter :: h="**(CreateSendRecvDn0v)**"
     character(len=30) :: tmp_name
     character(len=8) :: str(10)
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! SendDn0v, RecvDn0v:
     ! messages update GlobalOwn [xb:xe,ye+1:ye+1]
@@ -1722,7 +1724,7 @@ contains
     character(len=*), parameter :: h="**(CreateG3DSendRecv)**"
     character(len=30) :: tmp_name
     character(len=8) :: str(10)
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! SendG3D, RecvG3D:
     ! messages update entire GhostZone
@@ -2021,7 +2023,7 @@ contains
 
     type(var_tables_r), pointer   :: vtabPtr => null()
     character(len=*), parameter :: h="**(CreateAcousticSendRecvU)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=8) :: str(10)
     character(len=30) :: tmp_name
 
@@ -2135,7 +2137,7 @@ contains
 
     type(var_tables_r), pointer   :: vtabPtr => null()
     character(len=*), parameter :: h="**(CreateAcousticSendRecvV)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=8) :: str(10)
 
     ! AcouSendV, AcouRecvV:
@@ -2263,7 +2265,7 @@ contains
     character(len=*), parameter :: h="**(CreateAcousticSendRecvP)**"
     character(len=30) :: tmp_name
     character(len=8) :: str(10)
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! AcouSendP, AcouRecvP: union of
     !               GlobalOwn [xe+1:xe+1,yb:ye] with
@@ -2370,7 +2372,7 @@ contains
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
     character(len=*), parameter :: h="**(PostRecvSendMsgs)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! post nonblocking receive for each receiving message;
     ! a single receive msg from each process
@@ -2460,7 +2462,7 @@ contains
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
     character(len=*), parameter :: h="**(WaitSendRecvMsgs)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! for each receive message:
     ! build send buffer and copy field sections to the buffer;

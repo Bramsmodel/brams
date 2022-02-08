@@ -9,7 +9,6 @@ module ModFieldSection
   use ModParallelEnvironment, only: MsgDump
 
   implicit none
-!!$  include "constants.h"
 
   private
   public :: FieldSection
@@ -111,7 +110,7 @@ contains
     integer :: ierr
     character(len=8) :: c0
     character(len=*), parameter :: h="**(CreateFieldSection_I2D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -162,7 +161,7 @@ contains
     integer :: ierr
     character(len=8) :: c0
     character(len=*), parameter :: h="**(CreateFieldSection_2D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -213,7 +212,7 @@ contains
     integer :: ierr
     character(len=8) :: c0
     character(len=*), parameter :: h="**(CreateFieldSection_3D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -271,7 +270,7 @@ contains
     integer :: ierr
     character(len=8) :: c0
     character(len=*), parameter :: h="**(CreateFieldSection_4D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -399,10 +398,15 @@ contains
     type(FieldSection), pointer :: next
     character(len=8) :: c0
     character(len=*), parameter :: h="**(DestroyFieldSection)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (associated(oneFieldSection)) then
        name = oneFieldSection%name
+
+       ! avoid deallocating pointed area,
+       ! just nullify field pointers since
+       ! some other pointer may be pointing
+       ! to the same field
        oneFieldSection%field_2D => null()
        oneFieldSection%field_3D => null()
        oneFieldSection%field_4D => null()
@@ -442,7 +446,7 @@ contains
     type(FieldSection), pointer :: next
 
     character(len=*), parameter :: h="**(NextFieldSection)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (.not. associated(node)) then
        call fatal_error(h//" invoked with not associated node")
@@ -451,7 +455,9 @@ contains
     end if
 
     if (dumpLocal) then
-       call MsgDump(h//" is "//trim(adjustl(StringFieldSection(next))))
+       if (associated(next)) then
+          call MsgDump(h//" is "//trim(adjustl(StringFieldSection(next))))
+       end if
     end if
   end function NextFieldSection
 
@@ -465,7 +471,7 @@ contains
     type(FieldSection), pointer, intent(in) :: next
 
     character(len=*), parameter :: h="**(AppendFieldSection)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (.not. associated(this)) then
        call fatal_error(h//" null this")
@@ -529,7 +535,7 @@ contains
     character(len=8) :: buf0, bufn
     character(len=64) :: preStr, midStr, posStr
     character(len=*), parameter :: h="**(FieldSectionData2Buffer)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (.not. associated(oneFieldSection)) then
        call fatal_error(h//" null oneFieldSection")
@@ -663,7 +669,7 @@ contains
     character(len=8) :: buf0, bufn
     character(len=64) :: preStr, midStr, posStr
     character(len=*), parameter :: h="**(Buffer2FieldSectionData)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (.not. associated(oneFieldSection)) then
        call fatal_error(h//" null oneFieldSection")

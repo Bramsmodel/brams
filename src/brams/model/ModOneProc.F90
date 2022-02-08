@@ -1579,12 +1579,6 @@ contains
        write(*,fmt='(A)') c_empty
     end if
 
-
-
-    call MsgDump(h//" fim forcado")
-    if (mynum >= 0) return
-
-
     ! Deallocating dynamic arrays
 
     if (runtype(1:7)/='MAKESFC' .and. runtype(1:9)/='MAKEVFILE') &

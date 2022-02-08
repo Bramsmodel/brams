@@ -54,9 +54,6 @@ module ModGrid
   use meteogramType, only: &
       PolygonContainer
 
-  use ParLib, only: &
-       parf_exit_mpi    ! subroutine
-
   implicit none
 
   private
@@ -341,9 +338,6 @@ contains
     character(len=*), parameter :: h="**(DestroyGrid)**"
     
     if (associated(oneGrid)) then
-       call MsgDump(h//" starts and is halted")
-       call parf_exit_mpi()
-       
        call DestroyGridDims(oneGrid%GridSize)
        call DestroyDomainDecomp(oneGrid%GlobalOwn)
        call DestroyDomainDecomp(oneGrid%GlobalWithGhost)

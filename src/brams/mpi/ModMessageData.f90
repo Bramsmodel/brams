@@ -108,7 +108,7 @@ contains
     character(len=*), intent(in) :: direction
 
     character(len=*), parameter :: h="**(CreateMessageData)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     
     oneMessageData%bufSize = 0
     oneMessageData%name = trim(adjustl(name))
@@ -136,7 +136,7 @@ contains
     type(FieldSection), pointer:: next
     character(len=8) :: c0, c1
     character(len=*), parameter :: h="**(DestroyMessageData)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
        call MsgDump(h//" of "//trim(adjustl(oneMessageData%name)))
@@ -147,7 +147,7 @@ contains
     oneMessageData%bufSize = 0
     this => oneMessageData%head
     do while (associated(this))
-       next => NextFieldSection(next)
+       next => NextFieldSection(this)
        call DestroyFieldSection(this)
        this => next
     end do
@@ -182,7 +182,8 @@ contains
             trim(adjustl(oneMessageData%name))//" with field sections")
        this => oneMessageData%head
        do while (associated(this))
-          call DumpFieldSection(this, trim(adjustl(msgHead)))
+          call DumpFieldSection(this)
+!!$          call DumpFieldSection(this, trim(adjustl(msgHead)))
           this => NextFieldSection(this)
        end do
     end if
@@ -202,7 +203,7 @@ contains
     type(FieldSection), pointer :: previous
     character(len=8) :: c0
     character(len=*), parameter :: h="**(AppendFieldSectionToMessageData)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (.not. associated(oneFieldSection)) then
        call fatal_error(h//" oneFieldSection not associated")
@@ -239,7 +240,7 @@ contains
     integer :: ierr
     character(len=8) :: c0, c1
     character(len=*), parameter :: h="**(AllocateMessageDataBuffer)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     bufSize=oneMessageData%bufSize
 
@@ -276,11 +277,11 @@ contains
 
     integer :: bufStart
     type(FieldSection), pointer :: this
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(FillMessageDataBufferWithFieldSectionData)**"
     
     if (dumpLocal) then
-       call MsgDump(h//"  to Message Data "//trim(adjustl(oneMessageData%name)))
+       call MsgDump(h//" to Message Data "//trim(adjustl(oneMessageData%name)))
     end if
     bufStart=1
     this => oneMessageData%head
@@ -306,8 +307,8 @@ contains
 
     integer :: bufStart
     type(FieldSection), pointer :: this
-    logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(ExtractFieldSectionDataFromMessageDataBuffer)**"
+    logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
        call MsgDump(h//"  of Message Data "//trim(adjustl(oneMessageData%name)))
@@ -337,7 +338,7 @@ contains
     integer :: ierr
     character(len=8) :: c0
     character(len=*), parameter :: h="**(DeallocateMessageDataBuffer)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
        call MsgDump(h//" deallocate buf of "//&
@@ -373,7 +374,7 @@ contains
     character(len=*), parameter :: h="**(PostRecvMessageData)**"
     character(len=8) :: c0, c1, c2, c3
     character(len=128) :: msgString
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     
     if (.not. allocated(oneMessageData%buf)) then
        call fatal_error(h//" buf not allocated")
@@ -424,7 +425,7 @@ contains
     character(len=*), parameter :: h="**(PostSendMessageData)**"
     character(len=8) :: c0, c1, c2, c3
     character(len=128) :: msgString
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     
     if (.not. allocated(oneMessageData%buf)) then
        call fatal_error(h//" buf not allocated")
