@@ -216,9 +216,10 @@ contains
     !# local for proc #1
     integer :: p2
     !# local for proc #2
+    integer :: msgCnt
     character :: cmyn
 
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(initExtraComm)**"
     character(len=8) :: str(10)
     
@@ -271,6 +272,67 @@ contains
        call MsgDump(h//" offsets local to global:"//&
             " i0LGZ="//trim(adjustl(str(1)))//&
             "; j0LGZ="//trim(adjustl(str(2))))
+
+       call MsgDump(h//" dump array send")
+       call MsgDump(h//&
+            " MPIdest"//&
+            "     tag"//&
+            "  length"//&
+            "      i0"//&
+            "    xbeg"//&
+            "    xend"//&
+            "      j0"//&
+            "    yBeg"//&
+            "    yEnd")
+       do msgCnt=1,nMess(mynum)
+          call MsgDump(h//DumpSnd(send(mynum,msgCnt)))
+       end do
+       
+       call MsgDump(h//" dump array receive")
+       call MsgDump(h//&
+            " MPIfrom"//&
+            "     tag"//&
+            "  length"//&
+            "      i0"//&
+            "    xbeg"//&
+            "    xend"//&
+            "      j0"//&
+            "    yBeg"//&
+            "    yEnd")
+       do msgCnt=1,nMess(mynum)
+          call MsgDump(h//DumpRcv(receive(mynum,msgCnt)))
+       end do
+
+       call MsgDump(h//" dump array send_acou")
+       call MsgDump(h//&
+            " MPIdest"//&
+            "     tag"//&
+            "  length"//&
+            "      i0"//&
+            "    xbeg"//&
+            "    xend"//&
+            "      j0"//&
+            "    yBeg"//&
+            "    yEnd")
+       do msgCnt=1,nMess(mynum)
+          call MsgDump(h//DumpSnd(send_acou(mynum,msgCnt)))
+       end do
+
+       call MsgDump(h//" dump array receive_acou")
+       call MsgDump(h//&
+            " MPIfrom"//&
+            "     tag"//&
+            "  length"//&
+            "      i0"//&
+            "    xbeg"//&
+            "    xend"//&
+            "      j0"//&
+            "    yBeg"//&
+            "    yEnd")
+       do msgCnt=1,nMess(mynum)
+          call MsgDump(h//DumpRcv(receive_acou(mynum,msgCnt)))
+       end do
+       call MsgDump(h//" finishes")
     endif
   end subroutine initExtraComm
 
@@ -359,7 +421,7 @@ contains
 
     integer :: i,j,k !
 
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(copyMyPart)**"
     character(len=8) :: str(10)
 
@@ -608,7 +670,7 @@ contains
     integer :: recNum
     !# returned position of receive wait messages
     character :: cn
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(commHalo)**"
     character(len=8) :: str(10)
 
@@ -629,7 +691,7 @@ contains
           write(str(2),"(i8)") sizeMess
           write(str(3),"(i8)") receive(mynum,iRecv)%from-1
           write(str(4),"(i8)") receive(mynum,iRecv)%tag
-          call MsgDump(h//" dispatch recv #"//trim(adjustl(str(1)))//&
+          call MsgDump(h//" dispatch receive #"//trim(adjustl(str(1)))//&
                " of section of variables "//trim(adjustl(vname))//&
                ", ufx_local, vfx_local, wfx_local"//&
                " with "//trim(adjustl(str(2)))//" reals"//&
@@ -721,7 +783,7 @@ contains
           write(str(8),"(i8)") receive(mynum,recNum)%xEnd+receive(mynum,recNum)%i0
           write(str(9),"(i8)") -2
           write(str(10),"(i8)") mzp+3
-          call MsgDump(h//" recv #"//trim(adjustl(str(1)))//&
+          call MsgDump(h//" recieved receive #"//trim(adjustl(str(1)))//&
                " of "//trim(adjustl(vname))//&
                "("//trim(adjustl(str(9)))//":"//trim(adjustl(str(10)))//","//&
                trim(adjustl(str(7)))//":"//trim(adjustl(str(8)))//","//&
@@ -907,7 +969,7 @@ contains
     integer :: ie
     !# last position of message in dir
 
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(fillSendReceive)**"
     character(len=8) :: str
 
@@ -1331,7 +1393,7 @@ contains
     !# Auxiliary to communicate logical vars
 
 
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(SendandSetAll)**"
     character(len=8) :: str
 
@@ -1657,7 +1719,7 @@ contains
     !# loop count
     integer :: recNum
     !# returned position of receive wait messages
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(commHaloAcou)**"
     character(len=8) :: str(10)
 
@@ -1678,7 +1740,7 @@ contains
           write(str(2),"(i8)") sizeMess
           write(str(3),"(i8)") receive_acou(mynum,iRecv)%from-1
           write(str(4),"(i8)") receive_acou(mynum,iRecv)%tag
-          call MsgDump(h//" dispatch recv #"//trim(adjustl(str(1)))//&
+          call MsgDump(h//" dispatch receive_acou #"//trim(adjustl(str(1)))//&
                " of section of variable "//trim(adjustl(vname))//&
                " with "//trim(adjustl(str(2)))//" reals"//&
                " from MPI proc "//trim(adjustl(str(3)))//&
@@ -1722,7 +1784,7 @@ contains
           write(str(8),"(i8)") send_acou(mynum,iSend)%xEnd+send_acou(mynum,iSend)%i0
           write(str(9),"(i8)") 1
           write(str(10),"(i8)") mzp
-          call MsgDump(h//" dispatch send #"//trim(adjustl(str(1)))//&
+          call MsgDump(h//" dispatch send_acou #"//trim(adjustl(str(1)))//&
                " of "//trim(adjustl(vname))//&
                "("//trim(adjustl(str(9)))//":"//trim(adjustl(str(10)))//","//&
                trim(adjustl(str(7)))//":"//trim(adjustl(str(8)))//","//&
@@ -1760,7 +1822,7 @@ contains
           write(str(8),"(i8)") receive_acou(mynum,recNum)%xEnd+receive_acou(mynum,recNum)%i0
           write(str(9),"(i8)") 1
           write(str(10),"(i8)") mzp
-          call MsgDump(h//" recv #"//trim(adjustl(str(1)))//&
+          call MsgDump(h//" received receive_acou #"//trim(adjustl(str(1)))//&
                " of "//trim(adjustl(vname))//&
                "("//trim(adjustl(str(9)))//":"//trim(adjustl(str(10)))//","//&
                trim(adjustl(str(7)))//":"//trim(adjustl(str(8)))//","//&
@@ -1782,4 +1844,48 @@ contains
        deallocate(send_acou(mynum,iRecv)%dataMess)
     enddo
   end subroutine commHaloAcou
+
+  function DumpRcv(oneRcv) result(str)
+    type(rcv), intent(in) :: oneRcv
+    character(len=256) :: str
+    character(len=8) :: c0
+    
+    write(str,"(9i8)") &
+         oneRcv%from-1,&
+         oneRcv%tag,&
+         oneRcv%length,&
+         oneRcv%i0,&
+         oneRcv%xbeg,&
+         oneRcv%xend,&
+         oneRcv%j0,&
+         oneRcv%yBeg,&
+         oneRcv%yEnd  
+  end function DumpRcv
+
+  function DumpSnd(oneSnd) result(str)
+    type(snd), intent(in) :: oneSnd
+    character(len=256) :: str
+    character(len=8) :: c0
+    
+    write(str,"(9i8)")&
+         oneSnd%dest-1,&
+         oneSnd%tag,&
+         oneSnd%length,&
+         oneSnd%i0,&
+         oneSnd%xbeg,&
+         oneSnd%xend,&
+         oneSnd%j0,&
+         oneSnd%yBeg,&
+         oneSnd%yEnd  
+  end function DumpSnd
+
+  function DumpBorder(border) result(str)
+    logical :: border(4)
+    character(len=8) :: str
+    str=""
+    if (border(1)) str=trim(str)//"X-"
+    if (border(2)) str=trim(str)//"X+"
+    if (border(3)) str=trim(str)//"Y+"
+    if (border(4)) str=trim(str)//"Y-"
+  end function DumpBorder
 end module modComm

@@ -569,6 +569,10 @@ contains
     posBuf=bufStart
     select case (oneFieldSection%idim_type)
     case(2)
+       if (.not. associated(oneFieldSection%field_2D)) then
+          call fatal_error(h//" field "//trim(adjustl(oneFieldSection%name))//&
+               " not allocated")
+       end if
        do y=oneFieldSection%yStart, oneFieldSection%yEnd
           do x=oneFieldSection%xStart, oneFieldSection%xEnd
              buf(posBuf)=oneFieldSection%field_2D(x,y)
@@ -576,6 +580,10 @@ contains
           end do
        end do
     case(3)
+       if (.not. associated(oneFieldSection%field_3D)) then
+          call fatal_error(h//" field "//trim(adjustl(oneFieldSection%name))//&
+               " not allocated")
+       end if
        kMax = size(oneFieldSection%field_3D,1)
        do y=oneFieldSection%yStart, oneFieldSection%yEnd
           do x=oneFieldSection%xStart, oneFieldSection%xEnd
@@ -591,6 +599,10 @@ contains
        end if
 
     case(4,5)
+       if (.not. associated(oneFieldSection%field_4D)) then
+          call fatal_error(h//" field "//trim(adjustl(oneFieldSection%name))//&
+               " not allocated")
+       end if
        lMax = size(oneFieldSection%field_4D,1)
        kMax = size(oneFieldSection%field_4D,4)
        do k=lBound(oneFieldSection%field_4D,4), &
@@ -613,6 +625,10 @@ contains
        end if
 
     case(6,7)
+       if (.not. associated(oneFieldSection%field_3D)) then
+          call fatal_error(h//" field "//trim(adjustl(oneFieldSection%name))//&
+               " not allocated")
+       end if
        do k=lBound(oneFieldSection%field_3D,3), &
             uBound(oneFieldSection%field_3D,3)
           do y=oneFieldSection%yStart, oneFieldSection%yEnd
@@ -703,6 +719,10 @@ contains
     posBuf=bufStart
     select case (oneFieldSection%idim_type)
     case(2)
+       if (.not. associated(oneFieldSection%field_2D)) then
+          call fatal_error(h//" field "//trim(adjustl(oneFieldSection%name))//&
+               " not allocated")
+       end if
        do y=oneFieldSection%yStart, oneFieldSection%yEnd
           do x=oneFieldSection%xStart, oneFieldSection%xEnd
              oneFieldSection%field_2D(x,y) = buf(posBuf)
@@ -710,6 +730,10 @@ contains
           end do
        end do
     case(3)
+       if (.not. associated(oneFieldSection%field_3D)) then
+          call fatal_error(h//" field "//trim(adjustl(oneFieldSection%name))//&
+               " not allocated")
+       end if
        kMax = size(oneFieldSection%field_3D,1)
        do y=oneFieldSection%yStart, oneFieldSection%yEnd
           do x=oneFieldSection%xStart, oneFieldSection%xEnd
@@ -725,6 +749,10 @@ contains
        end if
 
     case(4,5)
+       if (.not. associated(oneFieldSection%field_4D)) then
+          call fatal_error(h//" field "//trim(adjustl(oneFieldSection%name))//&
+               " not allocated")
+       end if
        lMax = size(oneFieldSection%field_4D,1)
        kMax = size(oneFieldSection%field_4D,4)
        do k=lBound(oneFieldSection%field_4D,4), &
@@ -747,6 +775,10 @@ contains
        end if
 
     case(6,7)
+       if (.not. associated(oneFieldSection%field_3D)) then
+          call fatal_error(h//" field "//trim(adjustl(oneFieldSection%name))//&
+               " not allocated")
+       end if
        do k=lBound(oneFieldSection%field_3D,3), &
             uBound(oneFieldSection%field_3D,3)
           do y=oneFieldSection%yStart, oneFieldSection%yEnd

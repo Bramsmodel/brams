@@ -209,7 +209,7 @@ contains
     real, pointer :: scalart
     logical  :: IsThisScalarAer =.false.
 
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(advmnt_driver)**"
     character(len=8) :: str(11)
 
@@ -625,7 +625,7 @@ contains
     integer, intent(in) :: newM3(ngrids)
 
     integer :: ng
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(initialize_advmnt)**"
     character(len=8) :: str(10)
 
@@ -768,7 +768,7 @@ contains
     ! local var
     integer i,j,k
 
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(initialize_densities)**"
     character(len=8) :: str(10)
 
@@ -823,7 +823,7 @@ contains
     integer i,j,k
     real rtgti
 
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(initialize_grid_spacings)**"
     character(len=8) :: str(10)
 
@@ -884,7 +884,7 @@ contains
     integer i,j,k
     real c3
 
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(get_true_densities)**"
     character(len=8) :: str(10)
 
@@ -985,7 +985,7 @@ contains
     integer i,j,k
     real :: cx1,cx2,rtgti,dum(m1)
 
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(prepare_winds)**"
     character(len=8) :: str(10)
 
@@ -1094,7 +1094,7 @@ contains
     ! local var
     integer i,j,k
 
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(get_Walceks_densities)**"
     character(len=8) :: str(10)
 
@@ -1147,7 +1147,7 @@ contains
     integer ibegin,iend,jbegin,jend
     !- type of sedimentation scheme (0= Walcek, 1=upwind)
     integer , parameter :: iupwind = 0
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(advect_mnt)**"
     character(len=8) :: str(10)
     
@@ -1305,7 +1305,7 @@ contains
     real    :: anrev,curnt,rx,xa,ilop,iwndty,nrec,ya
     real    :: periodo  =   6.*3600.
 
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(prepare_theor_winds)**"
     character(len=8) :: str(10)
 
@@ -1407,7 +1407,7 @@ contains
     integer :: reqRecv(nRecv)
     integer :: reqSend(nSend), recNum
 
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(UpdateBorders)**"
     character(len=8) :: str(10)
 
@@ -1542,7 +1542,7 @@ contains
     integer, intent(in) :: bufSendTotalLength
 
     integer :: i,j,k
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(InitialFieldsUpdate)**"
     character(len=8) :: str(10)
 
@@ -1804,7 +1804,7 @@ contains
     real :: x1
     real :: x1n
 
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(Advec3d_X)**"
     character(len=8) :: str(10)
 
@@ -2045,7 +2045,7 @@ contains
     real :: x1
     real :: x1n
 
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(Advec3d_Y)**"
     character(len=8) :: str(10)
 
@@ -2273,7 +2273,7 @@ contains
     real :: x1
     real :: x1n
 
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(Advec3d_Z)**"
     character(len=8) :: str(10)
 
@@ -2479,7 +2479,7 @@ contains
     real :: x1n
     real :: rtgti
 
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(Advec3d_Z_sedim)**"
     character(len=8) :: str(10)
 
@@ -2581,7 +2581,7 @@ contains
     real :: x1n
     real :: rtgti
 
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(Advec3d_Z_sedim_upw)**"
     character(len=8) :: str(10)
 

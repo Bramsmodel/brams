@@ -43,7 +43,11 @@ module ModGrid
        CreateAllGhostZoneMessageSet, &
        DestroyAllGhostZoneMessageSet
 
-
+  use ModMonotonicAdvection, only: &
+       MonotonicAdvection, &
+       CreateMonotonicAdvection
+  
+  
   ! JP: temporariamente usa variaveis globais enquanto
   !     var_tables nao for inclusa no tipo Grid
 
@@ -90,42 +94,54 @@ module ModGrid
      type(NeighbourNodes), pointer :: Neigh => null()
      ! Neigh: list of BRAMS process numbers that are neighbours
      !        of this node for usual ghost zone update operations
-     type(DomainDecomp), pointer :: GlobalWithGhostAdvectc_rk => null()
-     ! GlobalWithGhostAdvectc_rk: global indices of this grid domain
-     !                            decomposition considering the ghost zone
-     !                            width required by procedure advectc_rk 
-     !                            for all ranks
-     type(DomainDecomp), pointer :: LocalOwnAdvectc_rk => null()
-     ! LocalOwnAdvectc_rk: local indices of this grid domain
-     !                     decomposition considering the ghost zone
-     !                     width required by procedure advectc_rk 
-     !                     for all ranks.
-     !                     Convertion of GlobalWithGhostAdvectc_rk
+     type(DomainDecomp), pointer :: GlobalWithGhostLargeGhost => null()
+     ! GlobalWithGhostLargeGhost: global indices of this grid domain
+     !                            decomposition considering large ghost zone
+     !                            width 
+     type(DomainDecomp), pointer :: LocalOwnLargeGhost => null()
+     ! LocalOwnLargeGhost: local indices of this grid domain
+     !                     decomposition considering the large ghost zone
+     !                     width 
+     !                     Convertion of GlobalWithGhostLargeGhost
      !                     to local indices
-     type(NeighbourNodes), pointer :: NeighAdvectc_rk => null()
-     ! NeighAdvectc_rk: list of BRAMS process numbers that are neighbours
-     !                  of this node for Advectc_rk ghost zone updates
-     type(MessageSet), pointer :: AcouSendU
-     type(MessageSet), pointer :: AcouRecvU
-     type(MessageSet), pointer :: AcouSendV
-     type(MessageSet), pointer :: AcouRecvV
-     type(MessageSet), pointer :: AcouSendP
-     type(MessageSet), pointer :: AcouRecvP
-     type(MessageSet), pointer :: AcouSendUV
-     type(MessageSet), pointer :: AcouRecvUV
-     type(MessageSet), pointer :: AcouSendWP
-     type(MessageSet), pointer :: AcouRecvWP
-     type(MessageSet), pointer :: SendDn0u
-     type(MessageSet), pointer :: RecvDn0u
-     type(MessageSet), pointer :: SendDn0v
-     type(MessageSet), pointer :: RecvDn0v
-     type(MessageSet), pointer :: SendG3D
-     type(MessageSet), pointer :: RecvG3D
-     type(MessageSet), pointer :: SelectedGhostZoneSend
-     type(MessageSet), pointer :: SelectedGhostZoneRecv
-     type(MessageSet), pointer :: AllGhostZoneSend
-     type(MessageSet), pointer :: AllGhostZoneRecv
-     type(PolygonContainer), pointer :: meteoPolygons
+     type(NeighbourNodes), pointer :: NeighLargeGhost => null()
+     ! NeighLargeGhost: list of BRAMS process numbers that are neighbours
+     !                  of this node for large ghost zone updates
+     type(MessageSet), pointer :: AcouSendU => null()
+     type(MessageSet), pointer :: AcouRecvU => null()
+     ! AcouSend/RecvU: Ghost Zone update at acoust_new and acoust_adap
+     type(MessageSet), pointer :: AcouSendV => null()
+     type(MessageSet), pointer :: AcouRecvV => null()
+     ! AcouSend/RecvV: Ghost Zone update at acoust_new and acoust_adap
+     type(MessageSet), pointer :: AcouSendP => null()
+     type(MessageSet), pointer :: AcouRecvP => null()
+     ! AcouSend/RecvP: Ghost Zone update at acoust_new and acoust_adap
+     type(MessageSet), pointer :: AcouSendUV => null()
+     type(MessageSet), pointer :: AcouRecvUV => null()
+     ! AcouSend/RecvUV: Ghost Zone update at acoust_new and acoust_adap
+     type(MessageSet), pointer :: AcouSendWP => null()
+     type(MessageSet), pointer :: AcouRecvWP => null()
+     ! AcouSend/RecvWP: Ghost Zone update at acoust_new and acoust_adap
+     type(MessageSet), pointer :: SendDn0u => null()
+     type(MessageSet), pointer :: RecvDn0u => null()
+     type(MessageSet), pointer :: SendDn0v => null()
+     type(MessageSet), pointer :: RecvDn0v => null()
+     ! Send/RecvDn0u/v: Ghost Zone update at FillDn0uv
+     type(MessageSet), pointer :: SendG3D => null()
+     type(MessageSet), pointer :: RecvG3D => null()
+     ! Send/RecvG3D: Ghost Zone update at cuparm_grell3_catt
+     type(MessageSet), pointer :: SelectedGhostZoneSend => null()
+     type(MessageSet), pointer :: SelectedGhostZoneRecv => null()
+     ! SelectedGhostZoneSend/RecvG3D: Ghost Zone update at timestep and timestep_rk
+     type(MessageSet), pointer :: AllGhostZoneSend => null()
+     type(MessageSet), pointer :: AllGhostZoneRecv => null()
+     ! AllGhostZoneSend/RecvG3D: Ghost Zone update at PostProcess
+     ! type(MessageSet) contains all information required for
+     ! ghost zone update. See description at ModMessageSet 
+     type(PolygonContainer), pointer :: meteoPolygons => null()
+
+     type(MonotonicAdvection), pointer :: MonoAdv => null()
+     ! MonoAdv: Fields with wider ghost zone for high order advection
   end type Grid
 
 
@@ -144,6 +160,9 @@ contains
     type(ParallelEnvironment), pointer :: oneParallelEnvironment
     type(Grid), pointer :: oneGrid
 
+    logical :: largeGhostZone
+    ! if will use extended ghost zone width
+    
     character(len=16) :: c0, c1
     character(len=*), parameter :: h="**(CreateGrid)**"
     logical, parameter :: dumpLocal=.false.
@@ -168,6 +187,13 @@ contains
     oneGrid%Ramsin => oneNamelistFile
     oneGrid%ParEnv => oneParallelEnvironment
 
+    ! run options
+
+    largeGhostZone = oneNamelistFile%dyncore_flag==2 .and. oneNamelistFile%advmnt==3
+    largeGhostZone = largeGhostZone .or. (&
+         (oneNamelistFile%dyncore_flag==0 .or. oneNamelistFile%dyncore_flag==1) .and. &
+         oneNamelistFile%advmnt>=1)
+    
     ! store GridDims extracted from OneNamelistFile 
 
     oneGrid%GridSize => CreateGridDims(gridId, &
@@ -203,18 +229,6 @@ contains
          varName="LocalOwn" &
          )
 
-    ! insert original ghost zone of required by
-    ! procedure advectc_rk at GlobalOwn and store
-    ! at GlobalWithGhostAdvectc_rk
-    
-    oneGrid%GlobalWithGhostAdvectc_rk => CreateGlobalWithGhost(&
-         GridSize=oneGrid%GridSize, &
-         ParEnv=oneGrid%ParEnv, &
-         GlobalOwn=oneGrid%GlobalOwn, &
-         GhostZoneWidth=3, &
-         varName="GlobalWithGhostAdvectc_rk" &
-         )
-
     ! neighbour nodes for original ghost zone update operations
     
     oneGrid%Neigh => CreateNeighbourNodes(&
@@ -224,47 +238,65 @@ contains
          varName="oneGrid%Neigh" &
          )
 
+    ! insert original ghost zone of required by
+    ! procedure advectc_rk at GlobalOwn and store
+    ! at GlobalWithGhostLargeGhost
+    
+    if (largeGhostZone) then
+       oneGrid%GlobalWithGhostLargeGhost => CreateGlobalWithGhost(&
+            GridSize=oneGrid%GridSize, &
+            ParEnv=oneGrid%ParEnv, &
+            GlobalOwn=oneGrid%GlobalOwn, &
+            GhostZoneWidth=3, &
+            varName="GlobalWithGhostLargeGhost" &
+            )
 
-    ! convert global indices from GlobalWithGhostAdvectc_rk
-    ! into local indices stored at LocalOwnAdvectc_rk
+       ! convert global indices from GlobalWithGhostLargeGhost
+       ! into local indices stored at LocalOwnLargeGhost
 
-    oneGrid%LocalOwnAdvectc_rk => CreateLocalOwn(&
+       oneGrid%LocalOwnLargeGhost => CreateLocalOwn(&
          ParEnv=oneGrid%ParEnv, &
-         GlobalWithGhost=oneGrid%GlobalWithGhostAdvectc_rk, &
+         GlobalWithGhost=oneGrid%GlobalWithGhostLargeGhost, &
          GlobalOwn=oneGrid%GlobalOwn, &
-         varName="LocalOwnAdvectc_rk" &
+         varName="LocalOwnLargeGhost" &
          )
 
-    ! neighbour nodes for Advectc_rk ghost zone update operations
+       ! neighbour nodes for LargeGhost ghost zone update operations
 
-    oneGrid%NeighAdvectc_rk => CreateNeighbourNodes(&
-         ParEnv=oneGrid%ParEnv, &
-         GlobalOwn=oneGrid%GlobalOwn, &
-         GlobalWithGhost=oneGrid%GlobalWithGhostAdvectc_rk, &
-         varName="oneGrid%NeighAdvectc_rk" &
-         )
-	 
-    oneGrid%AcouSendU => null()
-    oneGrid%AcouRecvU => null()
-    oneGrid%AcouSendV => null()
-    oneGrid%AcouRecvV => null()
-    oneGrid%AcouSendP => null()
-    oneGrid%AcouRecvP => null()
-    oneGrid%AcouSendUV => null()
-    oneGrid%AcouRecvUV => null()
-    oneGrid%AcouSendWP => null()
-    oneGrid%AcouRecvWP => null()
-    oneGrid%SendDn0u => null()
-    oneGrid%RecvDn0u => null()
-    oneGrid%SendDn0v => null()
-    oneGrid%RecvDn0v => null()
-    oneGrid%SendG3D => null()
-    oneGrid%RecvG3D => null()
-    oneGrid%SelectedGhostZoneSend => null()
-    oneGrid%SelectedGhostZoneRecv => null()
-    oneGrid%AllGhostZoneSend => null()
-    oneGrid%AllGhostZoneRecv => null()
-    oneGrid%meteoPolygons => null()
+       oneGrid%NeighLargeGhost => CreateNeighbourNodes(&
+            ParEnv=oneGrid%ParEnv, &
+            GlobalOwn=oneGrid%GlobalOwn, &
+            GlobalWithGhost=oneGrid%GlobalWithGhostLargeGhost, &
+            varName="oneGrid%NeighLargeGhost" &
+            )
+
+       oneGrid%MonoAdv => CreateMonotonicAdvection(&
+            oneParallelEnvironment=oneGrid%ParEnv, &
+            oneGridDims=oneGrid%GridSize, &
+            oneLocalOwnMonoAdv=oneGrid%LocalOwnLargeGhost)
+    end if
+
+!!$    oneGrid%AcouSendU => null()
+!!$    oneGrid%AcouRecvU => null()
+!!$    oneGrid%AcouSendV => null()
+!!$    oneGrid%AcouRecvV => null()
+!!$    oneGrid%AcouSendP => null()
+!!$    oneGrid%AcouRecvP => null()
+!!$    oneGrid%AcouSendUV => null()
+!!$    oneGrid%AcouRecvUV => null()
+!!$    oneGrid%AcouSendWP => null()
+!!$    oneGrid%AcouRecvWP => null()
+!!$    oneGrid%SendDn0u => null()
+!!$    oneGrid%RecvDn0u => null()
+!!$    oneGrid%SendDn0v => null()
+!!$    oneGrid%RecvDn0v => null()
+!!$    oneGrid%SendG3D => null()
+!!$    oneGrid%RecvG3D => null()
+!!$    oneGrid%SelectedGhostZoneSend => null()
+!!$    oneGrid%SelectedGhostZoneRecv => null()
+!!$    oneGrid%AllGhostZoneSend => null()
+!!$    oneGrid%AllGhostZoneRecv => null()
+!!$    oneGrid%meteoPolygons => null()
     
   end subroutine CreateGrid
 
@@ -395,11 +427,11 @@ contains
     call DumpDomainDecomp(oneGrid%GlobalOwn, "GlobalOwn")
     call DumpDomainDecomp(oneGrid%GlobalWithGhost, "GlobalWithGhost")
     call DumpDomainDecomp(oneGrid%LocalOwn, "LocalOwn")
-    call DumpDomainDecomp(oneGrid%GlobalWithGhostAdvectc_rk, "GlobalWithGhostAdvectc_rk")
-    call DumpDomainDecomp(oneGrid%LocalOwnAdvectc_rk, "LocalOwnAdvectc_rk")
+    call DumpDomainDecomp(oneGrid%GlobalWithGhostLargeGhost, "GlobalWithGhostLargeGhost")
+    call DumpDomainDecomp(oneGrid%LocalOwnLargeGhost, "LocalOwnLargeGhost")
 
     call MsgDump(h//" dumping neighborhood")
-    call DumpNeighbourNodes(oneGrid%NeighAdvectc_rk,"oneGrid%NeighAdvectc_rk")
+    call DumpNeighbourNodes(oneGrid%NeighLargeGhost,"oneGrid%NeighLargeGhost")
 
     call MsgDump(h//" dumping AcouSendU")
     call DumpMessageSet(oneGrid%AcouSendU)

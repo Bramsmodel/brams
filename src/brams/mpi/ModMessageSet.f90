@@ -1,13 +1,13 @@
 module ModMessageSet
 
-  ! At each timestep, the ghost zone of some fields 
-  ! needs updating. Ghost zone update requires message passing.
-  ! There are a few timestep locations that need ghost zone
+  ! At each timestep, the ghost zone of some fields has to be
+  ! updated. Ghost zone update requires message passing.
+  ! There are a few code locations that need ghost zone
   ! update. The set of fields to update is fixed at one
   ! location, but varies with the location.
   !
-  ! For each point of the computation the set of fields
-  ! and the ranks to access are stored at a pair of variables
+  ! For each location that requires message passing, message
+  ! data and message envelop are stored at a pair of variables
   ! of type MessageSet, one for send and one for receive operations.
   !
   ! Each MessageSet variable contains message data and message envelop
@@ -29,7 +29,7 @@ module ModMessageSet
   ! by this module.
   !
   ! Procedures to create and destroy specific MessageSet operations
-  ! (those required by timestep) are implemented by this module.
+  ! (those required by current code version) are implemented by this module.
   !
   ! Message passing operations are also implemented by this module.
   ! All message passing operations are nonblocking.
@@ -38,6 +38,13 @@ module ModMessageSet
   ! all send/recv operations of the same set.
   ! Copy field sections to the contiguous buffer and the reverse
   ! opetation are included on both message passing procedures.
+  !
+  ! To overlap computation with communication, procedure
+  ! PostRecvSendMsgs should be invoked as early as possible,
+  ! mainly when all fields to send are fully computed,
+  ! and procedure WaitSendRecvMsgs should be invoked as
+  ! late as possible, mainly when the ghost zone of the
+  ! updated fields will be used in the computation.
 
 
   use ModGridDims, only: &
@@ -162,10 +169,22 @@ contains
     ! to be sent by this node to all neighbour nodes or
     ! to be received by this node from all neighbour nodes
     ! during the communication denoted by "name".
-    ! Input includes "hasMsg", a logical array indexed by
-    ! neighbour count that stores if a neighbour will or
-    ! will not communicate with this node in this communication.
+    !
+    ! Input variable Neigh contains all neighbour ranks
+    ! that are neighbours to this node, and as so, may
+    ! be used on ghost zone update message exchange.
+    ! See ModNeighbourNodes for further information.
+    !
+    ! Input variable hasMsg stores if a neighbour node
+    ! will or will not communicate with this node in
+    ! this communication. Use of a neighbour node in a
+    ! communication depends on the field that requires
+    ! ghost zone update. 
+    !
     ! Same tag should be used on send and recieve.
+    !
+    ! Input variable direction is just for dumping.
+    !
     ! Returning variable has as many messages as the number
     ! of true values in hasMsg. Arrays in returning variable
     ! are indexed by true value count, at range 1:nMsgs.
@@ -974,7 +993,9 @@ contains
     ybToBeUpdated = GlobalWithGhost%yb
     yeToBeUpdated = GlobalWithGhost%ye
 
-    ! which neighbour nodes will send and receive
+    ! which neighbour nodes will send and receive and
+    ! the rectangular regions to send or receive, at most
+    ! one region per node
 
     call NodesToSendRecvMessages(myNum, Neigh, GlobalOwn, &
          xbToBeUpdated, xeToBeUpdated, ybToBeUpdated, yeToBeUpdated, &
@@ -982,7 +1003,8 @@ contains
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, &
          "AcouSend/RecvUV")
 
-    ! include real domain boundaries
+    ! since GlobalOwn does not contain bounday conditions region, 
+    ! include boundary condition on regions to send or receive
 
     call IncludeDomainBoundaries(Neigh, GridSize, GlobalOwn, &
          xbSend, xeSend, ybSend, yeSend, willSend, &
@@ -1016,7 +1038,7 @@ contains
     endif
     call GetVTabEntry(trim(tmp_name), gridId, vTabPtr)
 
-    ! build field sections to be sent and received
+    ! include UP on field sections to be sent and received
 
     call InsertFieldSectionAtMessageSet(&
          myNum, vTabPtr, Neigh, GlobalWithGhost, &
@@ -1035,7 +1057,7 @@ contains
     endif
     call GetVTabEntry(trim(tmp_name), gridId, vTabPtr)
 
-    ! build field sections to be sent and received
+    ! include VP on field sections to be sent and received
 
     call InsertFieldSectionAtMessageSet(&
          myNum, vTabPtr, Neigh, GlobalWithGhost, &
@@ -1901,7 +1923,7 @@ contains
     type(FieldSection), pointer :: oneFieldSection
     character(len=8) :: c0
     character(len=*), parameter :: h="**(InsertFieldSectionAtMessageSet)**"
-
+    real, pointer :: PNull(:,:) => null()
     ! check arguments
 
     if (.not. associated(vTabPtr)) then

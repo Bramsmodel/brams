@@ -1149,7 +1149,7 @@ contains
                         trim(adjustl(str(2)))//","//&
                         trim(adjustl(str(3)))//")")
                 end if
-                call commHaloAcou(div,mxp,myp,mzp,myNum,'div')
+                call commHaloAcou(div,mxp,myp,mzp,myNum,'div@acoust_new')
              endif
              ! as proposed in Wicker, Skamarock (2002) (?) divergence damping is
              ! used in an approximated form by adding the following term to the pressure:
@@ -1167,7 +1167,7 @@ contains
                         trim(adjustl(str(2)))//","//&
                         trim(adjustl(str(3)))//")")
                 end if
-                call commHaloAcou(pp_t_minus_dt,mxp,myp,mzp,myNum,'pp_t_minus_dt')
+                call commHaloAcou(pp_t_minus_dt,mxp,myp,mzp,myNum,'pp_t_minus_dt@acoust_new')
              endif
              pp_minus_div(:,:,:) = pp(:,:,:) + div_damp_strength*(pp(:,:,:) - pp_t_minus_dt(:,:,:))
           endif
@@ -1426,7 +1426,7 @@ contains
                trim(adjustl(str(2)))//","//&
                trim(adjustl(str(3)))//")")
        end if
-       call commHaloAcou(alpha_div,mxp,myp,mzp,myNum,'alpha_div')
+       call commHaloAcou(alpha_div,mxp,myp,mzp,myNum,'alpha_div@init_div_damping_coeff')
     endif
     !--- mpi paralelization :
 

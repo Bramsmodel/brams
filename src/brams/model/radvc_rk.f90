@@ -67,7 +67,7 @@ subroutine advectc_rk(varn,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
   real :: mfz_wind(mzp,mxp,myp)
 
   logical, parameter :: dumpLocal=.false.
-  character(len=*), parameter :: h="**(advect_rk)**"
+  character(len=*), parameter :: h="**(advectc_rk)**"
   character(len=8) :: str(10)
 
   mxyzp = mxp * myp * mzp

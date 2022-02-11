@@ -1,11 +1,24 @@
 module ModNeighbourNodes
 
-  ! ModNeighbourNodes: get all neighbours of this node.
-  !                    A neighbour is a node which interior points with ghost zone 
-  !                    intersects this node inner points (no ghost zone)
-  !                    or is a node which interior points intersects
-  !                    this node interior points with ghost zone, except that
-  !                    this node is never a neighbour of itself.
+  ! stores info of all BRAMS nodes that are neighbours to this node.
+  !
+  ! There are two kinds of neighbours to this node:
+  !
+  ! 1. another node which grid domain 
+  ! (own grid points and ghost zone grid points) intersects this node
+  ! own grid points (no ghost zone)
+  !
+  ! 2.another node which own grid points
+  ! intersects this node grid domain (own grid points and ghost zone
+  ! points)
+  !
+  ! For neighbours of the first kind, this node sould send its own
+  ! points that reside on the ghost zone of the other node; the other
+  ! node should receive the update.
+  !
+  ! For neighbours of the second kind, the other node sould send its own
+  ! points that reside on the ghost zone of this node; this node
+  ! should receive the update.
 
 
   use ModParallelEnvironment, only: ParallelEnvironment
@@ -276,11 +289,6 @@ contains
 
 
 
-  ! NodesToSendRecvMessages: given a region to be updated at each process,
-  !                          find which processes this node will send messages
-  !                          to and receive messages from to update the area.
-  !                          Also returns the region of each process to be
-  !                          sent or received.
 
 
 
@@ -290,42 +298,50 @@ contains
        xbRecv, xeRecv, ybRecv, yeRecv, willRecv, &
        varName)
 
-    integer, intent(in) :: thisNode ! BRAMS process number
+    ! given a rectangular region of grid points to be updated
+    ! at each rank and the rectangular region of grid points
+    ! owned by each rank,
+    ! find to which rank this node will send messages
+    ! and find from which other rank this rank will receive messages
+    ! to update desired points;
+    ! also finds the rectangular region of each rank to be
+    ! sent or received.
+    
+    integer, intent(in) :: thisNode
+    ! this rank BRAMS process number
     type(NeighbourNodes), pointer, intent(in) :: Neigh
+    ! ranks that are neighbour to this rank
     type(DomainDecomp), pointer, intent(in)  :: GlobalOwn
-
-    ! region to be updated at each node (included at GlobalWithGhost)
-
-    integer, intent(in) :: xbToBeUpdated(:)      ! global index, dimensioned ParEnv%nmachs
-    integer, intent(in) :: xeToBeUpdated(:)      ! global index, dimensioned ParEnv%nmachs
-    integer, intent(in) :: ybToBeUpdated(:)      ! global index, dimensioned ParEnv%nmachs
-    integer, intent(in) :: yeToBeUpdated(:)      ! global index, dimensioned ParEnv%nmachs
-
-    ! region to be sent to each neighbour
-
-    integer, intent(out) :: xbSend(:)            ! global index, dimensioned Neigh%nNeigh
-    integer, intent(out) :: xeSend(:)            ! global index, dimensioned Neigh%nNeigh
-    integer, intent(out) :: ybSend(:)            ! global index, dimensioned Neigh%nNeigh
-    integer, intent(out) :: yeSend(:)            ! global index, dimensioned Neigh%nNeigh
-
-    ! will send msgs to which neighbours
-
-    logical, intent(out) :: willSend(:)          ! BRAMS process number, dimensioned Neigh%nNeigh
-
-    ! region to be received from each neighbour
-
-    integer, intent(out) :: xbRecv(:)            ! global index, dimensioned Neigh%nNeigh
-    integer, intent(out) :: xeRecv(:)            ! global index, dimensioned Neigh%nNeigh
-    integer, intent(out) :: ybRecv(:)            ! global index, dimensioned Neigh%nNeigh
-    integer, intent(out) :: yeRecv(:)            ! global index, dimensioned Neigh%nNeigh
-
-    ! will receive msgs from which neighbours
-
-    logical, intent(out) :: willRecv(:)          ! BRAMS process number, dimensioned Neigh%nNeigh
-
-    ! communication exchange name (variable of type message set)
-
+    ! rectangular grid point regions owned by each rank
+    integer, intent(in) :: xbToBeUpdated(:)
+    integer, intent(in) :: xeToBeUpdated(:)
+    integer, intent(in) :: ybToBeUpdated(:)
+    integer, intent(in) :: yeToBeUpdated(:)
+    ! rectangular grid point region to be updated at each rank;
+    ! contains global indices; arrays are indexed by
+    ! BRAMS process number
+    integer, intent(out) :: xbSend(:)
+    integer, intent(out) :: xeSend(:)
+    integer, intent(out) :: ybSend(:)
+    integer, intent(out) :: yeSend(:)
+    ! rectangular grid point region to be sent to each neighbour;
+    ! contains global indices; arrays indexed by
+    ! neighbour number index
+    logical, intent(out) :: willSend(:)
+    ! to which BRAMS process number this rank
+    ! will send msgs; array indexed by neighbour number index
+    integer, intent(out) :: xbRecv(:)
+    integer, intent(out) :: xeRecv(:)
+    integer, intent(out) :: ybRecv(:)
+    integer, intent(out) :: yeRecv(:)
+    ! rectangular grid point region to be received from each neighbour;
+    ! contains global indices; arrays indexed by
+    ! neighbour number index
+    logical, intent(out) :: willRecv(:)
+    ! from which BRAMS process number this rank
+    ! will receive msgs; array indexed by neighbour number index
     character(len=*), intent(in) :: varName
+    ! message set variable name, for dumpint
 
     integer :: otherNode
     integer :: nNeigh
@@ -340,7 +356,7 @@ contains
        call fatal_error(h//" starts with null GlobalOwn")
     end if
 
-    ! default output
+    ! default output is no message to send or receive
 
     xbSend=0
     xeSend=0
@@ -369,7 +385,7 @@ contains
 
     ! this node will send messages to other node
     ! if the region of the other node to be updated
-    ! intersects with the region that this node owns.
+    ! intersects with the region owned by this node.
     ! find which neighbours this node will send messages to
     ! and the global indices that this node will send
 

@@ -649,7 +649,7 @@ contains
           if (dumpLocal) then
              call MsgDump(h//" exchange borders of tend%tht_rk")
           end if
-          call commHaloAcou(tend%tht_rk,mxp,myp,mzp,myNum,'tht_rk')
+          call commHaloAcou(tend%tht_rk,mxp,myp,mzp,myNum,'tht_rk@timestep_rk')
        endif
        call update_long_rk(int(mxp*myp*mzp,i8),dtlt,rk_beta(l_rk) &
             ,basic_g(ngrid)%thc,basic_g(ngrid)%thp  &

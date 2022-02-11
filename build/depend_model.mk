@@ -42,7 +42,7 @@ ModGrid.o  : $(MPI)/ModGrid.f90 \
 	ModNamelistFile.o ModParallelEnvironment.o \
 	ModGridDims.o ModDomainDecomp.o \
 	ModNeighbourNodes.o ModMessageSet.o \
-	var_tables.o meteogramType.o
+	ModMonotonicAdvection.o var_tables.o meteogramType.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1852,7 +1852,7 @@ GridMod.o : $(ADVC)/GridMod.f90
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-MapMod.o : $(ADVC)/MapMod.f90
+MapMod.o : $(ADVC)/MapMod.f90 ModParallelEnvironment.o
 	@cp -f  $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -2528,6 +2528,12 @@ modIau.o : $(MODEL)/modIau.f90 dump.o $(UTILS_INCS)/constants.h
 modPrintInitial.o : $(INIT)/modPrintInitial.F90 dump.o $(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.F90=.F90)
 	$(F_COMMAND) $(<F:.F90=.F90) $(EXTRAFLAGSF)
+	rm -f $(<F:.f90=.f90)
+
+ModMonotonicAdvection.o : $(MODEL)/ModMonotonicAdvection.f90 \
+	ModParallelEnvironment.o ModGridDims.o ModDomainDecomp.o
+	@cp -f $< $(<F:.f90=.f90)
+	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
 include jules_depend_model.mk

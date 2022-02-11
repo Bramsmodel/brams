@@ -22,6 +22,7 @@ OBJ_MOD = \
 	ModFieldSection.o \
 	ModDomainDecomp.o \
 	ModDateUtils.o \
+	ModMonotonicAdvection.o \
 	ReadBcst.o \
 	mpi_io_engine-5d.o \
 	Phys_const.o \

@@ -1,5 +1,6 @@
 module mapMod
 
+  use ModParallelEnvironment, only: MsgDump
   private
 
   type map_type
@@ -153,7 +154,9 @@ contains
     integer :: nm,i,j
     character(len=*),parameter :: str1="----------------------------"
     character(len=*),parameter :: str2="-------------"
-
+    character(len=256) :: strDump
+    character(len=*), parameter :: h="**(dumpMap)**"
+    
     logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
