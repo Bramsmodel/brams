@@ -27,19 +27,30 @@ module ModMessageData
 
   use ModFieldSection, only: &
        FieldSection, &
-       AppendFieldSection, &
        FieldSectionSize, &
        DestroyFieldSection, &
        StringFieldSection, &
        DumpFieldSection, &
        FieldSectionData2Buffer, &
-       Buffer2FieldSectionData, &
-       NextFieldSection
+       Buffer2FieldSectionData
+
   
   use ParLib, only: &
        parf_get_noblock_real, &
        parf_send_noblock_real
 
+
+  use ModFieldSectionList, only: &
+       FieldSectionNode, &
+       FieldSectionList, &
+       CreateFieldSectionNode, &
+       CreateFieldSectionList, &
+       DumpFieldSectionList, &
+       AppendNodeToFieldSectionList, &
+       FieldSectionListHeadNode, &
+       FieldSectionAtNode, &
+       NextFieldSectionNodeAtList
+  
   implicit none
   include "mpif.h"
   
@@ -87,8 +98,7 @@ module ModMessageData
      character(len=4) :: direction=""
      ! message data direction, used only for
      ! documentation; one of "send" or "recv"
-     type (FieldSection), pointer :: head => null()
-     type (FieldSection), pointer :: tail => null()
+     type (FieldSectionList), pointer :: list => null()
      ! list of Field Sections to communicate
   end type MessageData
 
@@ -113,8 +123,7 @@ contains
     oneMessageData%bufSize = 0
     oneMessageData%name = trim(adjustl(name))
     oneMessageData%direction = trim(adjustl(direction))
-    oneMessageData%head => null()
-    oneMessageData%tail => null()
+    oneMessageData%list => CreateFieldSectionList()
     if (dumpLocal) then
        call DumpMessageData(oneMessageData, h)
     end if
@@ -136,7 +145,7 @@ contains
     type(FieldSection), pointer:: next
     character(len=8) :: c0, c1
     character(len=*), parameter :: h="**(DestroyMessageData)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (dumpLocal) then
        call MsgDump(h//" of "//trim(adjustl(oneMessageData%name)))
@@ -145,14 +154,7 @@ contains
        call DeallocateMessageDataBuffer(oneMessageData)
     end if
     oneMessageData%bufSize = 0
-    this => oneMessageData%head
-    do while (associated(this))
-       next => NextFieldSection(this)
-       call DestroyFieldSection(this)
-       this => next
-    end do
-    nullify(oneMessageData%head)
-    nullify(oneMessageData%tail)
+    nullify(oneMessageData%list)
   end subroutine DestroyMessageData
 
 
@@ -179,13 +181,8 @@ contains
     else
        call MsgDump(trim(adjustl(msgHead))//" "//&
             trim(adjustl(oneMessageData%direction))//" message named "//&
-            trim(adjustl(oneMessageData%name))//" with field sections")
-       this => oneMessageData%head
-       do while (associated(this))
-          call DumpFieldSection(this)
-!!$          call DumpFieldSection(this, trim(adjustl(msgHead)))
-          this => NextFieldSection(this)
-       end do
+            trim(adjustl(oneMessageData%name))//" with field section list")
+       call DumpFieldSectionList(oneMessageData%list)
     end if
   end subroutine DumpMessageData
 
@@ -200,22 +197,17 @@ contains
     type(FieldSection), pointer, intent(in) :: oneFieldSection
     type(MessageData), intent(inout) :: oneMessageData
 
-    type(FieldSection), pointer :: previous
+    type(FieldSectionNode), pointer :: this
     character(len=8) :: c0
     character(len=*), parameter :: h="**(AppendFieldSectionToMessageData)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (.not. associated(oneFieldSection)) then
        call fatal_error(h//" oneFieldSection not associated")
     end if
 
-    if (.not. associated(oneMessageData%head)) then
-       oneMessageData%head => oneFieldSection
-    else
-       call AppendFieldSection(oneMessageData%tail, oneFieldSection)
-    end if
-    oneMessageData%tail => oneFieldSection
-
+    this => CreateFieldSectionNode(oneFieldSection)
+    call AppendNodeToFieldSectionList(this, oneMessageData%list)
     oneMessageData%bufSize = oneMessageData%bufSize + FieldSectionSize(oneFieldSection)
     if (dumpLocal) then
        write(c0,"(i8)") oneMessageData%bufSize
@@ -240,7 +232,7 @@ contains
     integer :: ierr
     character(len=8) :: c0, c1
     character(len=*), parameter :: h="**(AllocateMessageDataBuffer)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     bufSize=oneMessageData%bufSize
 
@@ -276,22 +268,24 @@ contains
     ! the Message Data variable to the buffer of the Message Data variable
 
     integer :: bufStart
+    type(FieldSectionNode), pointer :: thisNode
     type(FieldSection), pointer :: this
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(FillMessageDataBufferWithFieldSectionData)**"
     
     if (dumpLocal) then
        call MsgDump(h//" to Message Data "//trim(adjustl(oneMessageData%name)))
     end if
     bufStart=1
-    this => oneMessageData%head
-    do while (associated(this))
+    thisNode => FieldSectionListHeadNode(oneMessageData%list)
+    do while (associated(thisNode))
+       this => FieldSectionAtNode(thisNode)
        call FieldSectionData2Buffer(&
             this, &
             oneMessageData%buf, &
             bufStart, &
             oneMessageData%bufsize)
-       this => NextFieldSection(this)
+       thisNode => NextFieldSectionNodeAtList(thisNode)
     end do
   end subroutine FillMessageDataBufferWithFieldSectionData
 
@@ -306,22 +300,24 @@ contains
     ! to the field section pointed by the Message Data field section list 
 
     integer :: bufStart
+    type(FieldSectionNode), pointer :: thisNode
     type(FieldSection), pointer :: this
     character(len=*), parameter :: h="**(ExtractFieldSectionDataFromMessageDataBuffer)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (dumpLocal) then
        call MsgDump(h//"  of Message Data "//trim(adjustl(oneMessageData%name)))
     end if
     bufStart=1
-    this => oneMessageData%head
-    do while (associated(this))
+    thisNode => FieldSectionListHeadNode(oneMessageData%list)
+    do while (associated(thisNode))
+       this => FieldSectionAtNode(thisNode)
        call Buffer2FieldSectionData(&
             this, &
             oneMessageData%buf, &
             bufStart, &
             oneMessageData%bufsize)
-       this => NextFieldSection(this)
+       thisNode => NextFieldSectionNodeAtList(thisNode)
     end do
   end subroutine ExtractFieldSectionDataFromMessageDataBuffer
 
@@ -338,7 +334,7 @@ contains
     integer :: ierr
     character(len=8) :: c0
     character(len=*), parameter :: h="**(DeallocateMessageDataBuffer)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (dumpLocal) then
        call MsgDump(h//" deallocate buf of "//&
@@ -374,7 +370,7 @@ contains
     character(len=*), parameter :: h="**(PostRecvMessageData)**"
     character(len=8) :: c0, c1, c2, c3
     character(len=128) :: msgString
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     
     if (.not. allocated(oneMessageData%buf)) then
        call fatal_error(h//" buf not allocated")
@@ -425,7 +421,7 @@ contains
     character(len=*), parameter :: h="**(PostSendMessageData)**"
     character(len=8) :: c0, c1, c2, c3
     character(len=128) :: msgString
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     
     if (.not. allocated(oneMessageData%buf)) then
        call fatal_error(h//" buf not allocated")

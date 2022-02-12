@@ -20,7 +20,8 @@ ModBuffering.o   : $(MPI)/ModBuffering.f90 ModParallelEnvironment.o
 	 rm -f $(<F:.f90=.f90)
 
 ModMessageData.o  : $(MPI)/ModMessageData.f90 \
-	ModParallelEnvironment.o ModFieldSection.o $(UTILS_INCS)/constants.h
+	ModParallelEnvironment.o ModFieldSection.o $(UTILS_INCS)/constants.h \
+	parlibf.o ModFieldSectionList.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -62,6 +63,12 @@ ModNeighbourNodes.o  : $(MPI)/ModNeighbourNodes.f90 \
 
 ModFieldSection.o  : $(MPI)/ModFieldSection.f90 \
 	ModParallelEnvironment.o 
+	@cp -f $< $(<F:.f90=.f90)
+	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
+	rm -f $(<F:.f90=.f90)
+
+ModFieldSectionList.o  : $(MPI)/ModFieldSectionList.f90 \
+	ModParallelEnvironment.o ModFieldSection.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

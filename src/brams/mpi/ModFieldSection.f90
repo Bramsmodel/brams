@@ -12,15 +12,18 @@ module ModFieldSection
 
   private
   public :: FieldSection
+  public :: SizeFieldSectionName
   public :: CreateFieldSection
   public :: StringFieldSection
   public :: DumpFieldSection
   public :: DestroyFieldSection
-  public :: NextFieldSection
-  public :: AppendFieldSection
+  public :: UpdateFieldAddress
   public :: FieldSectionSize
+  public :: FieldSectionName
   public :: FieldSectionData2Buffer
   public :: Buffer2FieldSectionData
+
+  integer, parameter :: SizeFieldSectionName=16
 
   type FieldSection
      private
@@ -38,7 +41,9 @@ module ModFieldSection
 
      ! Component idim_type informs the remaining
      ! dimensions to be communicated, in a coded scheme.
+
      ! Component name has the field name to be communicated.
+
      ! Component fieldSectionSize is the size of the field
      ! to be communicated.
      
@@ -71,13 +76,8 @@ module ModFieldSection
      !   communicate  last dimension for each (x,y)
      integer :: fieldSectionSize = -1
      ! number of data elements to communicate
-     character(len=16) :: name = ""
+     character(len=SizeFieldSectionName) :: name = ""
      ! field variable name
-     type(FieldSection), pointer :: next => null()
-     type(FieldSection), pointer :: previous => null()
-     ! double linked list of FieldSection, since
-     ! one communication may have multiple fields
-     ! to communicate
   end type FieldSection
 
   interface CreateFieldSection
@@ -86,6 +86,13 @@ module ModFieldSection
      module procedure CreateFieldSection_3D
      module procedure CreateFieldSection_4D
   end interface CreateFieldSection
+
+
+  interface UpdateFieldAddress
+     module procedure UpdateFieldAddress_2D
+     module procedure UpdateFieldAddress_3D
+     module procedure UpdateFieldAddress_4D
+  end interface UpdateFieldAddress
 contains
 
 
@@ -110,7 +117,7 @@ contains
     integer :: ierr
     character(len=8) :: c0
     character(len=*), parameter :: h="**(CreateFieldSection_I2D)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -135,7 +142,7 @@ contains
             trim(adjustl(c0)))
     end if
     if (dumpLocal) then
-       call DumpFieldSection(oneFieldSection, h//" has entry ")
+       call DumpFieldSection(oneFieldSection, h//" created ")
     end if
   end function CreateFieldSection_I2D
 
@@ -161,7 +168,7 @@ contains
     integer :: ierr
     character(len=8) :: c0
     character(len=*), parameter :: h="**(CreateFieldSection_2D)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -186,7 +193,7 @@ contains
             trim(adjustl(c0)))
     end if
     if (dumpLocal) then
-       call DumpFieldSection(oneFieldSection, h//" has entry ")
+       call DumpFieldSection(oneFieldSection, h//" created ")
     end if
   end function CreateFieldSection_2D
 
@@ -212,7 +219,7 @@ contains
     integer :: ierr
     character(len=8) :: c0
     character(len=*), parameter :: h="**(CreateFieldSection_3D)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -244,7 +251,7 @@ contains
             trim(adjustl(c0)))
     end select
     if (dumpLocal) then
-       call DumpFieldSection(oneFieldSection, h//" has entry ")
+       call DumpFieldSection(oneFieldSection, h//" created ")
     end if
   end function CreateFieldSection_3D
 
@@ -270,7 +277,7 @@ contains
     integer :: ierr
     character(len=8) :: c0
     character(len=*), parameter :: h="**(CreateFieldSection_4D)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -298,7 +305,7 @@ contains
             trim(adjustl(c0)))
     end select
     if (dumpLocal) then
-       call DumpFieldSection(oneFieldSection, h//" has entry ")
+       call DumpFieldSection(oneFieldSection, h//" created ")
     end if
   end function CreateFieldSection_4D
 
@@ -392,13 +399,10 @@ contains
     type(FieldSection), pointer, intent(inout) :: oneFieldSection
 
     integer :: ierr
-    character(len=128) :: name
-    type(FieldSection), pointer :: this
-    type(FieldSection), pointer :: previous
-    type(FieldSection), pointer :: next
+    character(len=SizeFieldSectionName) :: name
     character(len=8) :: c0
     character(len=*), parameter :: h="**(DestroyFieldSection)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (associated(oneFieldSection)) then
        name = oneFieldSection%name
@@ -411,14 +415,6 @@ contains
        oneFieldSection%field_3D => null()
        oneFieldSection%field_4D => null()
        oneFieldSection%field_I2D => null()
-       previous => oneFieldSection%previous
-       next => oneFieldSection%next
-       if (associated(previous)) then
-          previous%next => next
-       end if
-       if (associated(next)) then
-          next%previous => previous
-       end if
        deallocate(oneFieldSection, stat=ierr)
        if (ierr /= 0) then
           write(c0,"(i8)") ierr
@@ -433,64 +429,77 @@ contains
   end subroutine DestroyFieldSection
 
 
+  
+
+
+  subroutine UpdateFieldAddress_2D(oneFieldSection, field)
+    type(FieldSection), pointer, intent(in) :: oneFieldSection
+    real, pointer, intent(in) :: field(:,:)
+
+    character(len=8) :: c0
+    character(len=*), parameter :: h="**(UpdateFieldAddress_2D)**"
+
+    if (.not. associated(oneFieldSection)) then
+       call fatal_error(h//" oneFieldSection not associated")
+    else if (oneFieldSection%idim_type /= 2) then
+       write(c0,"(i8)") oneFieldSection%idim_type
+       call fatal_error(h//" idim_type ("//trim(adjustl(c0))//&
+            " incompatible with field_2D")
+    end if
+    oneFieldSection%field_2D => field
+  end subroutine UpdateFieldAddress_2D
 
 
   
-  function NextFieldSection(node) result(next)
 
-    ! returns node following "node" at the list;
-    ! if input "node" is empty, returns list head;
-    ! if no more nodes in the list, returns null
 
-    type(FieldSection), pointer :: node
-    type(FieldSection), pointer :: next
+  subroutine UpdateFieldAddress_3D(oneFieldSection, field)
+    type(FieldSection), pointer, intent(in) :: oneFieldSection
+    real, pointer, intent(in) :: field(:,:,:)
 
-    character(len=*), parameter :: h="**(NextFieldSection)**"
-    logical, parameter :: dumpLocal=.false.
+    character(len=8) :: c0
+    character(len=*), parameter :: h="**(UpdateFieldAddress_3D)**"
 
-    if (.not. associated(node)) then
-       call fatal_error(h//" invoked with not associated node")
-    else
-       next => node%next
+    if (.not. associated(oneFieldSection)) then
+       call fatal_error(h//" oneFieldSection not associated")
+    else if (&
+         (oneFieldSection%idim_type /= 3) .and. &
+         (oneFieldSection%idim_type /= 6) .and. &
+         (oneFieldSection%idim_type /= 7) ) then
+       write(c0,"(i8)") oneFieldSection%idim_type
+       call fatal_error(h//" idim_type ("//trim(adjustl(c0))//&
+            " incompatible with field_3D")
     end if
+    oneFieldSection%field_3D => field
+  end subroutine UpdateFieldAddress_3D
 
-    if (dumpLocal) then
-       if (associated(next)) then
-          call MsgDump(h//" is "//trim(adjustl(StringFieldSection(next))))
-       end if
+
+  
+
+
+  subroutine UpdateFieldAddress_4D(oneFieldSection, field)
+    type(FieldSection), pointer, intent(in) :: oneFieldSection
+    real, pointer, intent(in) :: field(:,:,:,:)
+
+    character(len=8) :: c0
+    character(len=*), parameter :: h="**(UpdateFieldAddress_4D)**"
+
+    if (.not. associated(oneFieldSection)) then
+       call fatal_error(h//" oneFieldSection not associated")
+    else if (&
+         (oneFieldSection%idim_type /= 4) .and. &
+         (oneFieldSection%idim_type /= 5) ) then
+       write(c0,"(i8)") oneFieldSection%idim_type
+       call fatal_error(h//" idim_type ("//trim(adjustl(c0))//&
+            " incompatible with field_4D")
     end if
-  end function NextFieldSection
+    oneFieldSection%field_4D => field
+  end subroutine UpdateFieldAddress_4D
 
 
 
 
   
-  subroutine AppendFieldSection(this, next)
-
-    type(FieldSection), pointer, intent(in) :: this
-    type(FieldSection), pointer, intent(in) :: next
-
-    character(len=*), parameter :: h="**(AppendFieldSection)**"
-    logical, parameter :: dumpLocal=.false.
-
-    if (.not. associated(this)) then
-       call fatal_error(h//" null this")
-    end if
-    if (.not. associated(next)) then
-       call fatal_error(h//" null next")
-    end if
-    next%previous => this
-    this%next => next
-    if (dumpLocal) then
-       call MsgDump(h//" "//&
-            trim(adjustl(next%name))//" appended to "//&
-            trim(adjustl(this%name)))
-    end if
-  end subroutine AppendFieldSection
-
-
-
-
   
   function FieldSectionSize(oneFieldSection) result(nEle)
 
@@ -504,6 +513,23 @@ contains
        nEle=oneFieldSection%fieldSectionSize
     end if
   end function FieldSectionSize
+
+
+
+
+  
+  function FieldSectionName(oneFieldSection) result(name)
+
+    ! name of a FieldSection; empty if not associated
+    
+    type(FieldSection), pointer, intent(in) :: oneFieldSection
+    character(len=SizeFieldSectionName) :: name
+
+    name=""
+    if (associated(oneFieldSection)) then
+       name=oneFieldSection%name
+    end if
+  end function FieldSectionName
 
 
 
@@ -535,7 +561,7 @@ contains
     character(len=8) :: buf0, bufn
     character(len=64) :: preStr, midStr, posStr
     character(len=*), parameter :: h="**(FieldSectionData2Buffer)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (.not. associated(oneFieldSection)) then
        call fatal_error(h//" null oneFieldSection")
@@ -685,7 +711,7 @@ contains
     character(len=8) :: buf0, bufn
     character(len=64) :: preStr, midStr, posStr
     character(len=*), parameter :: h="**(Buffer2FieldSectionData)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (.not. associated(oneFieldSection)) then
        call fatal_error(h//" null oneFieldSection")

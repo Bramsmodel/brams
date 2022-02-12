@@ -219,7 +219,7 @@ contains
     integer :: msgCnt
     character :: cmyn
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(initExtraComm)**"
     character(len=8) :: str(10)
     
@@ -421,7 +421,7 @@ contains
 
     integer :: i,j,k !
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(copyMyPart)**"
     character(len=8) :: str(10)
 
@@ -670,7 +670,7 @@ contains
     integer :: recNum
     !# returned position of receive wait messages
     character :: cn
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(commHalo)**"
     character(len=8) :: str(10)
 
@@ -969,7 +969,7 @@ contains
     integer :: ie
     !# last position of message in dir
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(fillSendReceive)**"
     character(len=8) :: str
 
@@ -1393,7 +1393,7 @@ contains
     !# Auxiliary to communicate logical vars
 
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(SendandSetAll)**"
     character(len=8) :: str
 
@@ -1719,7 +1719,7 @@ contains
     !# loop count
     integer :: recNum
     !# returned position of receive wait messages
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(commHaloAcou)**"
     character(len=8) :: str(10)
 

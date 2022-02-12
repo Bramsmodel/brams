@@ -18,6 +18,7 @@ module ModGrid
   use ModDomainDecomp, only: &
        DomainDecomp, &
        CreateGlobalOwn, &
+       CreateGlobalOwnWithBC, &
        CreateGlobalWithGhost, &
        CreateLocalOwn, &
        DumpDomainDecomp, &
@@ -81,6 +82,10 @@ module ModGrid
      ! GlobalOwn: global indices of this grid domain
      !            decomposition (domain partition) owned by
      !            each rank - Ghost Zone not included
+     type(DomainDecomp), pointer :: GlobalOwnWithBC => null()
+     ! GlobalOwnBC: global indices of this grid domain
+     !            decomposition (domain partition) owned by
+     !            each rank including Boundary Conditions
      type(DomainDecomp), pointer :: GlobalWithGhost => null()
      ! GlobalWithGhost: global indices of this grid domain
      !                  decomposition at each rank, including
@@ -208,6 +213,13 @@ contains
          varName="GlobalOwn" &
          )
 
+    
+    oneGrid%GlobalOwnWithBC => CreateGlobalOwnWithBC(&
+         GridSize=oneGrid%GridSize, &
+         ParEnv=oneGrid%ParEnv, &
+         GlobalOwn=oneGrid%GlobalOwn &
+         )
+
     ! insert original ghost zone of widht 1
     ! at GlobalOwn and store at GlobalWithGhost
     
@@ -333,7 +345,7 @@ contains
 
     call CreateG3DMessageSet(oneGrid%Id, &
          oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
-         oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
+         oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhost, &
          oneGrid%Ramsin, &
          oneGrid%SendG3D, oneGrid%RecvG3D)
 
@@ -343,13 +355,13 @@ contains
     call CreateSelectedGhostZoneMessageSet(&
        oneGrid%Id, num_var, vtab_r, &
        oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
-       oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
+       oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhost, &
        oneGrid%SelectedGhostZoneSend, oneGrid%SelectedGhostZoneRecv)
 
     call CreateAllGhostZoneMessageSet(&
        oneGrid%Id, num_var, vtab_r, &
        oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
-       oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
+       oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhost, &
        oneGrid%AllGhostZoneSend, oneGrid%AllGhostZoneRecv)
 
     if (dumpLocal) then

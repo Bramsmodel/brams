@@ -9,6 +9,7 @@ module ModDomainDecomp
   private
   public :: DomainDecomp
   public :: CreateGlobalOwn
+  public :: CreateGlobalOwnWithBC
   public :: CreateGlobalWithGhost
   public :: CreateLocalOwn
   public :: DestroyDomainDecomp
@@ -236,6 +237,102 @@ contains
        call DumpDomainDecomp(CreateGlobalOwn, varName)
     end if
   end function CreateGlobalOwn
+
+
+
+
+
+  function CreateGlobalOwnWithBC(GridSize, ParEnv, GlobalOwn)
+
+    ! Creates a pointer to a variable of type DomainDecomp named
+    ! varName for given grid and parallel environment. Performs domain
+    ! decomposition, filling all components of the created variable
+
+    type(GridDims), pointer, intent(in) :: GridSize
+    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
+    type(DomainDecomp), pointer :: CreateGlobalOwnWithBC
+
+    character(len=*), parameter :: varName="GlobalOwnWithBC"
+    character(len=8) :: c0, c1, c2
+    character(len=*), parameter :: h="**(CreateGlobalOwnWithBC)**"
+    logical, parameter :: dumpLocal=.true.
+
+    integer :: nxp
+    integer :: nyp
+    integer :: nmachs
+    integer :: i
+
+    if (.not. associated(GridSize)) then
+       call fatal_error(h//" invoked with null GridSize")
+    else if (.not. associated(ParEnv)) then
+       call fatal_error(h//" invoked with null ParEnv")
+    end if
+
+    nxp = GridSize%nnxp
+    nyp = GridSize%nnyp
+    nmachs = ParEnv%nmachs
+
+    if (dumpLocal) then
+       write(c0,"(i8)") nxp
+       write(c1,"(i8)") nyp
+       write(c2,"(i8)") nmachs
+       call MsgDump (h//" partitions domain ["//&
+            trim(adjustl(c0))//" x "//trim(adjustl(c1))//&
+            "] into "//trim(adjustl(c2))//" sub-domains including boundary conditions")
+    end if
+
+    CreateGlobalOwnWithBC => AllocDomainDecomp(nmachs)
+
+    CreateGlobalOwnWithBC%GhostZoneWidth = GlobalOwn%GhostZoneWidth
+
+    ! include boundary conditions if at border
+
+    do i = 1, nmachs
+       if (btest(GlobalOwn%ibcon(i),1)) then
+          CreateGlobalOwnWithBC%xb(i) = 1
+       else
+          CreateGlobalOwnWithBC%xb(i) = GlobalOwn%xb(i)
+       end if
+       if (btest(GlobalOwn%ibcon(i),2)) then
+          CreateGlobalOwnWithBC%xe(i) = nxp
+       else
+          CreateGlobalOwnWithBC%xe(i) = GlobalOwn%xe(i)
+       end if
+       if (btest(GlobalOwn%ibcon(i),3)) then
+          CreateGlobalOwnWithBC%yb(i) = 1
+       else
+          CreateGlobalOwnWithBC%yb(i) = GlobalOwn%yb(i)
+       end if
+       if (btest(GlobalOwn%ibcon(i),4)) then
+          CreateGlobalOwnWithBC%ye(i) = nyp
+       else
+          CreateGlobalOwnWithBC%ye(i) = GlobalOwn%ye(i)
+       end if
+    end do
+
+    CreateGlobalOwnWithBC%nx = &
+         CreateGlobalOwnWithBC%xe - &
+         CreateGlobalOwnWithBC%xb + 1
+
+    CreateGlobalOwnWithBC%ny = &
+         CreateGlobalOwnWithBC%ye - &
+         CreateGlobalOwnWithBC%yb + 1
+
+    CreateGlobalOwnWithBC%ibcon = GlobalOwn%ibcon
+
+    ! Verify partition correctness
+
+    call CheckPartition(nxp, nyp, nmachs, &
+         CreateGlobalOwnWithBC%xb, CreateGlobalOwnWithBC%xe, &
+         CreateGlobalOwnWithBC%yb, CreateGlobalOwnWithBC%ye, &
+         CreateGlobalOwnWithBC%ibcon)
+
+    if (dumpLocal) then
+       call DumpDomainDecomp(CreateGlobalOwnWithBC, varName)
+    end if
+  end function CreateGlobalOwnWithBC
+
 
 
 
@@ -471,25 +568,25 @@ contains
     owner = UNASSIGNED
     do rank = 1, ranks
        if (btest(ibcon(rank),1)) then
-          xstart = xb(rank)-1
+          xstart = 1
        else
           xstart = xb(rank)
        end if
 
        if (btest(ibcon(rank),2)) then
-          xend = xe(rank)+1
+          xend = nxp
        else
           xend = xe(rank)
        end if
 
        if (btest(ibcon(rank),3)) then
-          ystart = yb(rank)-1
+          ystart = 1
        else
           ystart = yb(rank)
        end if
 
        if (btest(ibcon(rank),4)) then
-          yend = ye(rank)+1
+          yend = nyp
        else
           yend = ye(rank)
        end if

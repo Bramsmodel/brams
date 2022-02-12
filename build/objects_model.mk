@@ -20,6 +20,7 @@ OBJ_MOD = \
 	ModGridTree.o \
 	ModNeighbourNodes.o \
 	ModFieldSection.o \
+	ModFieldSectionList.o \
 	ModDomainDecomp.o \
 	ModDateUtils.o \
 	ModMonotonicAdvection.o \
@@ -828,7 +829,7 @@ endif
 
 ifeq ($(NETCDFFDIR),)
 #<J3.0> 	OBJ_MODEL =  jules_netcdf_dummy.o $(OBJ_MOD) 
- 	OBJ_MODEL = $(OBJ_MOD) 
+	OBJ_MODEL = $(OBJ_MOD) 
 else
 	OBJ_MODEL = $(OBJ_MOD)
 endif
