@@ -456,7 +456,9 @@ contains
 
   subroutine CreateAcousticMessageSet(&
        gridId, GridSize, ParEnv, Neigh, &
-       GlobalOwn, GlobalWithGhost, &
+       GlobalOwn, &
+       GlobalOwnWithBC, &
+       GlobalWithGhost, &
        AcouSendU, AcouRecvU, &
        AcouSendV, AcouRecvV, &
        AcouSendP, AcouRecvP, &
@@ -468,6 +470,7 @@ contains
     type(ParallelEnvironment), pointer, intent(in) :: ParEnv
     type(NeighbourNodes), pointer, intent(in) :: Neigh
     type(DomainDecomp), pointer, intent(in) :: GlobalOwn
+    type(DomainDecomp), pointer, intent(in) :: GlobalOwnWithBC
     type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
     type(MessageSet), pointer, intent(inout) :: AcouSendU
     type(MessageSet), pointer, intent(inout) :: AcouRecvU
@@ -538,12 +541,12 @@ contains
 
        call CreateAcousticSendRecvUV(&
             gridId, nMachs, nNeigh, myNum, &
-            GridSize, Neigh, GlobalOwn, GlobalWithGhost, &
+            GridSize, Neigh, GlobalOwnWithBC, GlobalWithGhost, &
             AcouSendUV, AcouRecvUV)
 
        call CreateAcousticSendRecvWP(&
             gridId, nMachs, nNeigh, myNum, &
-            GridSize, Neigh, GlobalOwn, GlobalWithGhost, &
+            GridSize, Neigh, GlobalOwnWithBC, GlobalWithGhost, &
             AcouSendWP, AcouRecvWP)
     end if
   end subroutine CreateAcousticMessageSet
@@ -1010,7 +1013,7 @@ contains
 
   subroutine CreateAcousticSendRecvUV(&
        gridId, nMachs, nNeigh, myNum, &
-       GridSize, Neigh, GlobalOwn, GlobalWithGhost, &
+       GridSize, Neigh, GlobalOwnWithBC, GlobalWithGhost, &
        AcouSendUV, AcouRecvUV)
 
     integer, intent(in) :: gridId
@@ -1020,7 +1023,7 @@ contains
 
     type(GridDims), pointer, intent(in) :: GridSize
     type(NeighbourNodes), pointer, intent(in) :: Neigh
-    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
+    type(DomainDecomp), pointer, intent(in) :: GlobalOwnWithBC
     type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
     type(MessageSet), pointer, intent(inout) :: AcouSendUV
     type(MessageSet), pointer, intent(inout) :: AcouRecvUV
@@ -1068,45 +1071,32 @@ contains
     ! AcouSendUV, AcouRecvUV:
     ! messages update entire GhostZone
 
-    xbToBeUpdated = GlobalWithGhost%xb
-    xeToBeUpdated = GlobalWithGhost%xe
-    ybToBeUpdated = GlobalWithGhost%yb
-    yeToBeUpdated = GlobalWithGhost%ye
+    call NodesRegionsSendRecv(&
+         nMachs=nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=TagUV, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwnWithBC, &
+         NameSend=NameSendUV, &
+         NameRecv=NameRecvUV, &
+         xbToUpdate=GlobalWithGhost%xb, &
+         xeToUpdate=GlobalWithGhost%xe, &
+         ybToUpdate=GlobalWithGhost%yb, &
+         yeToUpdate=GlobalWithGhost%ye, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=AcouSendUV, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=AcouRecvUV)
 
-    ! which neighbour nodes will send and receive and
-    ! the rectangular regions to send or receive, at most
-    ! one region per node
-
-    call NodesToSendRecvMessages(myNum, Neigh, GlobalOwn, &
-         xbToBeUpdated, xeToBeUpdated, ybToBeUpdated, yeToBeUpdated, &
-         xbSend, xeSend, ybSend, yeSend, willSend, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, &
-         "AcouSend/RecvUV")
-
-    ! since GlobalOwn does not contain bounday conditions region, 
-    ! include boundary condition on regions to send or receive
-
-    call IncludeDomainBoundaries(Neigh, GridSize, GlobalOwn, &
-         xbSend, xeSend, ybSend, yeSend, willSend, &
-         "AcouSendUV")
-    call IncludeDomainBoundaries(Neigh, GridSize, GlobalOwn, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, &
-         "AcouRecvUV")
-
-    ! build message set
-
-    AcouSendUV => CreateMessageSet(&
-         NameSendUV, &
-         sendDirection, &
-         TagUV, &
-         willSend, &
-         Neigh)
-    AcouRecvUV => CreateMessageSet(&
-         NameRecvUV, &
-         recvDirection, &
-         TagUV, &
-         willRecv, &
-         Neigh)
 
     ! get field UP
 
@@ -1159,7 +1149,7 @@ contains
 
   subroutine CreateAcousticSendRecvWP(&
        gridId, nMachs, nNeigh, myNum, &
-       GridSize, Neigh, GlobalOwn, GlobalWithGhost, &
+       GridSize, Neigh, GlobalOwnWithBC, GlobalWithGhost, &
        AcouSendWP, AcouRecvWP)
 
     integer, intent(in) :: gridId
@@ -1169,7 +1159,7 @@ contains
 
     type(GridDims), pointer, intent(in) :: GridSize
     type(NeighbourNodes), pointer, intent(in) :: Neigh
-    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
+    type(DomainDecomp), pointer, intent(in) :: GlobalOwnWithBC
     type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
     type(MessageSet), pointer, intent(inout) :: AcouSendWP
     type(MessageSet), pointer, intent(inout) :: AcouRecvWP
@@ -1218,42 +1208,31 @@ contains
     ! AcouSendWP, AcouRecvWP:
     ! messages update entire GhostZone
 
-    xbToBeUpdated = GlobalWithGhost%xb
-    xeToBeUpdated = GlobalWithGhost%xe
-    ybToBeUpdated = GlobalWithGhost%yb
-    yeToBeUpdated = GlobalWithGhost%ye
-
-    ! which neighbour nodes will send and receive
-
-    call NodesToSendRecvMessages(myNum, Neigh, GlobalOwn, &
-         xbToBeUpdated, xeToBeUpdated, ybToBeUpdated, yeToBeUpdated, &
-         xbSend, xeSend, ybSend, yeSend, willSend, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, &
-         "AcouSend/RecvWP")
-
-    ! include real domain boundaries
-
-    call IncludeDomainBoundaries(Neigh, GridSize, GlobalOwn, &
-         xbSend, xeSend, ybSend, yeSend, willSend, &
-         "AcouSendWP")
-    call IncludeDomainBoundaries(Neigh, GridSize, GlobalOwn, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, &
-         "AcouRecvWP")
-
-    ! build message set
-
-    AcouSendWP => CreateMessageSet(&
-         NameSendWP, &
-         sendDirection, &
-         TagWP, &
-         willSend, &
-         Neigh)
-    AcouRecvWP => CreateMessageSet(&
-         NameRecvWP, &
-         recvDirection, &
-         TagWP, &
-         willRecv, &
-         Neigh)
+    call NodesRegionsSendRecv(&
+         nMachs=nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=TagWP, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwnWithBC, &
+         NameSend=NameSendWP, &
+         NameRecv=NameRecvWP, &
+         xbToUpdate=GlobalWithGhost%xb, &
+         xeToUpdate=GlobalWithGhost%xe, &
+         ybToUpdate=GlobalWithGhost%yb, &
+         yeToUpdate=GlobalWithGhost%ye, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=AcouSendWP, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=AcouRecvWP)
 
     ! get field UP
 
@@ -1612,7 +1591,7 @@ contains
          myNum=myNum, &
          tag=TagDn0u, &
          Neigh=Neigh, &
-         GlobalOwn=GLobalOwn, &
+         GlobalOwn=GlobalOwn, &
          NameSend=NameSendDn0u, &
          NameRecv=NameRecvDn0u, &
          xbToUpdate=GlobalOwn%xe + 1, &

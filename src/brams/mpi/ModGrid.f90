@@ -330,6 +330,7 @@ contains
     call CreateAcousticMessageSet(oneGrid%Id, &
          oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
          oneGrid%GlobalOwn, &
+         oneGrid%GlobalOwnWithBC, &
          oneGrid%GlobalWithGhost, &
          oneGrid%AcouSendU, oneGrid%AcouRecvU, &
          oneGrid%AcouSendV, oneGrid%AcouRecvV,&
