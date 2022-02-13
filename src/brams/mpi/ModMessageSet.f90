@@ -156,6 +156,10 @@ module ModMessageSet
      ! operation
   end type MessageSet
 
+
+  interface InsertFieldSectionAtSendRecvMessageSet
+     module procedure InsertFieldSectionAtSendRecvMessageSetFromVTab
+  end interface InsertFieldSectionAtSendRecvMessageSet
 contains
 
 
@@ -453,7 +457,211 @@ contains
 
 
 
+  subroutine InsertFieldSectionAtMessageSet(&
+       myNum, vTabPtr, nNeigh, GlobalWithGhost, &
+       xbComm, xeComm, ybComm, yeComm, willComm, &
+       Msgs)
 
+    ! Inserts a section of a field to be communicated
+    ! on a MessageSet variable
+
+    ! mynum is this BRAMS process number;
+    ! It sends data on a send MessageSet variable or
+    ! it receives data on a receive MessageSet variable
+
+    integer, intent(in) :: myNum
+
+    type(var_tables_r), pointer, intent(in) :: vTabPtr
+
+    ! nNeigh is number of processes for potential communication
+
+    integer, intent(in) :: nNeigh
+    
+    ! Global indices of domain partition with Ghost Zones
+
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+
+    ! all remaining arguments are dimensioned by nNeigh
+
+    ! global indices of the region of this process field
+    ! to be sent on a send MessageSet variable or to be received
+    ! on a receive MessageSet variable;
+    ! The arrays of global indices have the same size of the Neigh
+    ! array (number of processes to communicate) and are indexed
+    ! accordingly
+
+    integer, intent(in) :: xbComm(:)
+    integer, intent(in) :: xeComm(:)
+    integer, intent(in) :: ybComm(:)
+    integer, intent(in) :: yeComm(:)
+
+    ! which neighbours (BRAMS process number) will
+    ! receive msgs from this node on a send MessageSet variable
+    ! or will send msgs to this node on a receive Message set
+    ! variable
+
+    logical, intent(in) :: willComm(:)
+
+    ! MessageSet variable to be updated by field section inclusion
+
+    type(MessageSet), pointer, intent(inout) :: Msgs
+
+    integer :: nMsgs
+    integer :: x0, y0
+    integer :: cntMsg
+    integer :: iNeigh
+    type(FieldSection), pointer :: oneFieldSection
+    character(len=8) :: c0
+    character(len=*), parameter :: h="**(InsertFieldSectionAtMessageSet)**"
+    real, pointer :: PNull(:,:) => null()
+    ! check arguments
+
+    if (.not. associated(vTabPtr)) then
+       call fatal_error(h//" vTabPtr not associated")
+    else if (.not. associated(GlobalWithGhost)) then
+       call fatal_error(h//" GlobalWithGhost not associated")
+    end if
+
+    ! return if no messages to send
+
+    if (.not. associated(Msgs)) then
+       return
+    end if
+    nMsgs = Msgs%nMsgs
+
+    ! offsets to convert global indices to local indices at this proc
+
+    x0 = GlobalWithGhost%xb(myNum) - 1
+    y0 = GlobalWithGhost%yb(myNum) - 1
+
+    ! create list of Field Sections to communicate, one for
+    ! each process to communicate and insert at this MessageSet
+    ! field section list
+
+    cntMsg = 0
+    do iNeigh = 1, nNeigh
+       if (willComm(iNeigh)) then
+          cntMsg = cntMsg + 1
+          if (cntMsg > nMsgs) then
+             write(c0,"(i8)") nMsgs
+             call fatal_error(h//" nMsgs ("//&
+                  trim(adjustl(c0))//") exceeded while inserting field "//&
+                  trim(adjustl(vTabPtr%name))//&
+                  " at message "//trim(adjustl(Msgs%name)))
+          end if
+
+          select case (vTabPtr%idim_type)
+          case (2)
+             oneFieldSection =>  CreateFieldSection(&
+                  vTabPtr%var_p_2D, &
+                  vTabPtr%name, &
+                  vTabPtr%idim_type, &
+                  xbComm(iNeigh)-x0, xeComm(iNeigh)-x0, &
+                  ybComm(iNeigh)-y0, yeComm(iNeigh)-y0)
+          case (3,6,7)
+             oneFieldSection =>  CreateFieldSection(&
+                  vTabPtr%var_p_3D, &
+                  vTabPtr%name, &
+                  vTabPtr%idim_type, &
+                  xbComm(iNeigh)-x0, xeComm(iNeigh)-x0, &
+                  ybComm(iNeigh)-y0, yeComm(iNeigh)-y0)
+          case (4,5)
+             oneFieldSection =>  CreateFieldSection(&
+                  vTabPtr%var_p_4D, &
+                  vTabPtr%name, &
+                  vTabPtr%idim_type, &
+                  xbComm(iNeigh)-x0, xeComm(iNeigh)-x0, &
+                  ybComm(iNeigh)-y0, yeComm(iNeigh)-y0)
+          case default
+             write(c0,"(i8)") vTabPtr%idim_type
+             call fatal_error(h//" unknown idim_type="//trim(adjustl(c0)))
+          end select
+          call AppendFieldSectionToMessageData(oneFieldSection, Msgs%msgData(cntMsg))
+       end if
+    end do
+  end subroutine InsertFieldSectionAtMessageSet
+
+
+
+
+  subroutine InsertFieldSectionAtSendRecvMessageSetFromVTab(&
+       varName, myNum, nNeigh, gridId, GlobalWithGhost, &
+       xbSend, xeSend, ybSend, yeSend, willSend, SendMessageSet, &
+       xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvMessageSet)
+
+    ! Inserts a section of a field to be communicated
+    ! on a MessageSet variable
+
+    character(len=*), intent(in) :: varName
+    
+    ! mynum is this BRAMS process number;
+    ! It sends data on a send MessageSet variable or
+    ! it receives data on a receive MessageSet variable
+
+     integer, intent(in) :: myNum
+
+    ! nNeigh is the number of processes for potential communication
+
+     integer, intent(in) :: nNeigh
+
+    ! gridId is this grid number (required while vTabPtr is not included in type(Grid)
+
+     integer, intent(in) :: gridId
+
+    ! Global indices of domain partition with Ghost Zones
+
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+
+    ! this rank will send this rectangular region to each neighbour
+    integer, intent(in) :: xbSend(nNeigh)
+    integer, intent(in) :: xeSend(nNeigh)
+    integer, intent(in) :: ybSend(nNeigh)
+    integer, intent(in) :: yeSend(nNeigh)
+
+    ! this rank will send messages to which neighbours
+    logical, intent(in) :: willSend(nNeigh)
+
+    ! send message set
+    type(MessageSet), pointer, intent(inout) :: SendMessageSet
+
+    ! this rank will recv messsages from which neighbours
+    logical, intent(in) :: willRecv(nNeigh)
+
+    ! this rank will recv this rectangular region from each neighbour
+    integer, intent(in) :: xbRecv(nNeigh)
+    integer, intent(in) :: xeRecv(nNeigh)
+    integer, intent(in) :: ybRecv(nNeigh)
+    integer, intent(in) :: yeRecv(nNeigh)
+
+    ! recv message set
+    type(MessageSet), pointer, intent(inout) :: RecvMessageSet
+
+
+    type(var_tables_r), pointer :: vTabPtr => null()
+
+    character(len=*), parameter :: h="**(InsertFieldSectionAtSendRecvMessageSetFromVTab)**"
+
+    ! check arguments
+
+    if (.not. associated(GlobalWithGhost)) then
+       call fatal_error(h//" GlobalWithGhost not associated")
+    end if
+
+    call GetVTabEntry(trim(varName), gridId, vTabPtr)
+
+    ! include UP on field sections to be sent and received
+
+    call InsertFieldSectionAtMessageSet(&
+         myNum, vTabPtr, nNeigh, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, SendMessageSet)
+    call InsertFieldSectionAtMessageSet(&
+         myNum, vTabPtr, nNeigh, GlobalWithGhost, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvMessageSet)
+  end subroutine InsertFieldSectionAtSendRecvMessageSetFromVTab  
+
+
+
+  
   subroutine CreateAcousticMessageSet(&
        gridId, GridSize, ParEnv, Neigh, &
        GlobalOwn, &
@@ -962,71 +1170,6 @@ contains
 
 
 
-  subroutine BuildUnion(nNeigh, &
-       xbComm1, xeComm1, ybComm1, yeComm1, willComm1, &
-       xbComm2, xeComm2, ybComm2, yeComm2, willComm2)
-    integer, intent(in) :: nNeigh
-    integer, intent(in) :: xbComm1(nNeigh)
-    integer, intent(in) :: xeComm1(nNeigh)
-    integer, intent(in) :: ybComm1(nNeigh)
-    integer, intent(in) :: yeComm1(nNeigh)
-    logical, intent(in) :: willComm1(nNeigh)
-
-    integer, intent(inout) :: xbComm2(nNeigh)
-    integer, intent(inout) :: xeComm2(nNeigh)
-    integer, intent(inout) :: ybComm2(nNeigh)
-    integer, intent(inout) :: yeComm2(nNeigh)
-    logical, intent(inout) :: willComm2(nNeigh)
-
-    integer :: iNeigh
-    character(len=8) :: c0, c1, c2, c3, c4
-    character(len=128) :: inter1, inter2
-    character(len=*), parameter :: h="**(BuildUnion)**"
-    logical, parameter :: dumpLocal=.true.
-
-    do iNeigh = 1, nNeigh
-       if (willComm1(iNeigh) .and. willComm2(iNeigh)) then
-          write(c0,"(i8)") iNeigh
-          inter1="inter1"
-          write(c1,"(i8)") xbComm1(iNeigh)
-          write(c2,"(i8)") xeComm1(iNeigh)
-          inter1=trim(inter1)//"("//trim(adjustl(c1))//":"//trim(adjustl(c2))
-          write(c1,"(i8)") ybComm1(iNeigh)
-          write(c2,"(i8)") yeComm1(iNeigh)
-          inter1=trim(inter1)//","//trim(adjustl(c1))//":"//trim(adjustl(c2))//")"
-          inter2="inter2"
-          write(c1,"(i8)") xbComm2(iNeigh)
-          write(c2,"(i8)") xeComm2(iNeigh)
-          inter2=trim(inter2)//"("//trim(adjustl(c1))//":"//trim(adjustl(c2))
-          write(c1,"(i8)") ybComm2(iNeigh)
-          write(c2,"(i8)") yeComm2(iNeigh)
-          inter2=trim(inter2)//","//trim(adjustl(c1))//":"//trim(adjustl(c2))//")"
-          call fatal_error(h//" both willComm("//trim(adjustl(c0))//&
-               "); intervals="//trim(adjustl(inter1))//", "//trim(adjustl(inter2)))
-       else if (willComm1(iNeigh)) then
-          xbComm2(iNeigh) = xbComm1(iNeigh)
-          xeComm2(iNeigh) = xeComm1(iNeigh)
-          ybComm2(iNeigh) = ybComm1(iNeigh)
-          yeComm2(iNeigh) = yeComm1(iNeigh)
-          willComm2(iNeigh) = willComm1(iNeigh)
-          if (dumpLocal) then
-             write(c0,"(i8)") iNeigh
-             write(c1,"(i8)") xbComm1(iNeigh)
-             write(c2,"(i8)") xeComm1(iNeigh)
-             write(c3,"(i8)") ybComm1(iNeigh)
-             write(c4,"(i8)") yeComm1(iNeigh)
-             call MsgDump(h//" updated Comm2("//trim(adjustl(c0))//") to ["//&
-                  trim(adjustl(c1))//":"//trim(adjustl(c2))//","//&
-                  trim(adjustl(c3))//":"//trim(adjustl(c4))//"]")
-          end if
-       end if
-    end do
-  end subroutine BuildUnion
-
-
-
-
-
   subroutine CreateAcousticSendRecvUV(&
        gridId, nMachs, nNeigh, myNum, &
        GridSize, Neigh, GlobalOwnWithBC, GlobalWithGhost, &
@@ -1074,7 +1217,6 @@ contains
     logical :: willSend(nNeigh)
     logical :: willRecv(nNeigh)
 
-    type(var_tables_r), pointer   :: vtabPtr => null()
     character(len=*), parameter :: h="**(CreateAcousticSendRecvUV)**"
     character(len=30) :: tmp_name
     character(len=8) :: str(10)
@@ -1116,41 +1258,30 @@ contains
 
     ! get field UP
 
-    vTabPtr => null()
     if(dyncore_flag==2) then
        tmp_name='UC'
     else
        tmp_name='UP'
     endif
-    call GetVTabEntry(trim(tmp_name), gridId, vTabPtr)
-
-    ! include UP on field sections to be sent and received
-
-    call InsertFieldSectionAtMessageSet(&
-         myNum, vTabPtr, Neigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendUV)
-    call InsertFieldSectionAtMessageSet(&
-         myNum, vTabPtr, Neigh, GlobalWithGhost, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvUV)
+    
+    call InsertFieldSectionAtSendRecvMessageSet(&
+       tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+       xbSend, xeSend, ybSend, yeSend, willSend, AcouSendUV, &
+       xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvUV)
 
     ! get field VP
 
-    vTabPtr => null()
     if(dyncore_flag==2) then
        tmp_name='VC'
     else
        tmp_name='VP'
     endif
-    call GetVTabEntry(trim(tmp_name), gridId, vTabPtr)
+    
+    call InsertFieldSectionAtSendRecvMessageSet(&
+       tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+       xbSend, xeSend, ybSend, yeSend, willSend, AcouSendUV, &
+       xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvUV)
 
-    ! include VP on field sections to be sent and received
-
-    call InsertFieldSectionAtMessageSet(&
-         myNum, vTabPtr, Neigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendUV)
-    call InsertFieldSectionAtMessageSet(&
-         myNum, vTabPtr, Neigh, GlobalWithGhost, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvUV)
     if (dumpLocal) then
        call MsgDump(h//" finishes with AcouSendUV MessageSet:")
        call DumpMessageSet(AcouSendUV)
@@ -1210,7 +1341,6 @@ contains
     logical :: willSend(nNeigh)
     logical :: willRecv(nNeigh)
 
-    type(var_tables_r), pointer   :: vtabPtr => null()
     character(len=*), parameter :: h="**(CreateAcousticSendRecvWP)**"
     character(len=30) :: tmp_name
     character(len=8) :: str(10)
@@ -1252,41 +1382,30 @@ contains
 
     ! get field UP
 
-    vTabPtr => null()
     if(dyncore_flag==2) then
        tmp_name='WC'
     else
        tmp_name='WP'
     endif
-    call GetVTabEntry(trim(tmp_name), gridId, vTabPtr)
 
-    ! build field sections to be sent and received
-
-    call InsertFieldSectionAtMessageSet(&
-         myNum, vTabPtr, Neigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendWP)
-    call InsertFieldSectionAtMessageSet(&
-         myNum, vTabPtr, Neigh, GlobalWithGhost, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvWP)
+    call InsertFieldSectionAtSendRecvMessageSet(&
+       tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+       xbSend, xeSend, ybSend, yeSend, willSend, AcouSendWP, &
+       xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvWP)
 
     ! get field VP
 
-    vTabPtr => null()
     if(dyncore_flag==2) then
        tmp_name='PC'
     else
        tmp_name='PP'
     endif
-    call GetVTabEntry(trim(tmp_name), gridId, vTabPtr)
 
-    ! build field sections to be sent and received
+    call InsertFieldSectionAtSendRecvMessageSet(&
+       tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+       xbSend, xeSend, ybSend, yeSend, willSend, AcouSendWP, &
+       xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvWP)
 
-    call InsertFieldSectionAtMessageSet(&
-         myNum, vTabPtr, Neigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendWP)
-    call InsertFieldSectionAtMessageSet(&
-         myNum, vTabPtr, Neigh, GlobalWithGhost, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvWP)
     if (dumpLocal) then
        call MsgDump(h//" finishes with AcouSendWP MessageSet:")
        call DumpMessageSet(AcouSendWP)
@@ -1349,7 +1468,6 @@ contains
     logical :: willSend(nNeigh)
     logical :: willRecv(nNeigh)
 
-    type(var_tables_r), pointer   :: vtabPtr => null()
     character(len=*), parameter :: h="**(CreateSelectedGhostZoneSendRecv)**"
     character(len=8) :: str(10)
     logical, parameter :: dumpLocal=.true.
@@ -1393,18 +1511,11 @@ contains
     do vTabNbr = 1, num_var(gridId)
 
        if (vtab_r(vTabNbr,gridId)%impt1 == 1) then
-          vTabPtr => vtab_r(vTabNbr,gridId)
 
-          ! build field sections to be sent and received
-
-          call InsertFieldSectionAtMessageSet(&
-               myNum, vTabPtr, Neigh, GlobalWithGhost, &
-               xbSend, xeSend, ybSend, yeSend, willSend, &
-               SelectedGhostZoneSend)
-          call InsertFieldSectionAtMessageSet(&
-               myNum, vTabPtr, Neigh, GlobalWithGhost, &
-               xbRecv, xeRecv, ybRecv, yeRecv, willRecv, &
-               SelectedGhostZoneRecv)
+          call InsertFieldSectionAtSendRecvMessageSet(&
+               vtab_r(vTabNbr,gridId)%name, myNum, nNeigh, gridId, GlobalWithGhost, &
+               xbSend, xeSend, ybSend, yeSend, willSend, SelectedGhostZoneSend, &
+               xbRecv, xeRecv, ybRecv, yeRecv, willRecv, SelectedGhostZoneRecv)
        end if
     end do
     if (dumpLocal) then
@@ -1469,7 +1580,7 @@ contains
     logical :: willSend(nNeigh)
     logical :: willRecv(nNeigh)
 
-    type(var_tables_r), pointer   :: vtabPtr => null()
+    character(len=32) :: vTabName
     character(len=*), parameter :: h="**(CreateAllGhostZoneSendRecv)**"
     character(len=8) :: str(10)
     logical, parameter :: dumpLocal=.true.
@@ -1512,20 +1623,16 @@ contains
 
     do vTabNbr = 1, num_var(gridId)
 
-       vTabPtr => vtab_r(vTabNbr,gridId)
+       vTabName = vtab_r(vTabNbr,gridId)%name
 
        if (&
-            trim(adjustl(vTabPtr%name)) /= "LPU" .and. &
-            trim(adjustl(vTabPtr%name)) /= "LPV" .and. &
-            trim(adjustl(vTabPtr%name)) /= "LPW" ) then
+            trim(adjustl(vTabName)) /= "LPU" .and. &
+            trim(adjustl(vTabName)) /= "LPV" .and. &
+            trim(adjustl(vTabName)) /= "LPW" ) then
 
-          ! build field sections to be sent and received
-
-          call InsertFieldSectionAtMessageSet(&
-               myNum, vTabPtr, Neigh, GlobalWithGhost, &
-               xbSend, xeSend, ybSend, yeSend, willSend, AllGhostZoneSend)
-          call InsertFieldSectionAtMessageSet(&
-               myNum, vTabPtr, Neigh, GlobalWithGhost, &
+          call InsertFieldSectionAtSendRecvMessageSet(&
+               vTabName, myNum, nNeigh, gridId, GlobalWithGhost, &
+               xbSend, xeSend, ybSend, yeSend, willSend, AllGhostZoneSend, &
                xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AllGhostZoneRecv)
        end if
     end do
@@ -1587,7 +1694,6 @@ contains
     logical :: willSend(nNeigh)
     logical :: willRecv(nNeigh)
 
-    type(var_tables_r), pointer   :: vtabPtr => null()
     character(len=*), parameter :: h="**(CreateSendRecvDn0u)**"
     character(len=30) :: tmp_name
     character(len=8) :: str(10)
@@ -1629,18 +1735,13 @@ contains
 
     ! get field
 
-    vTabPtr => null()
     tmp_name='DN0U'
-    call GetVTabEntry(trim(tmp_name), gridId, vTabPtr)
 
-    ! build field sections to be sent and received
-
-    call InsertFieldSectionAtMessageSet(&
-         myNum, vTabPtr, Neigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, SendDn0u)
-    call InsertFieldSectionAtMessageSet(&
-         myNum, vTabPtr, Neigh, GlobalWithGhost, &
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, SendDn0u, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvDn0u)
+
     if (dumpLocal) then
        call MsgDump(h//" finishes with SendDn0u MessageSet:")
        call DumpMessageSet(SendDn0u)
@@ -1699,7 +1800,6 @@ contains
     logical :: willSend(nNeigh)
     logical :: willRecv(nNeigh)
 
-    type(var_tables_r), pointer   :: vtabPtr => null()
     character(len=*), parameter :: h="**(CreateSendRecvDn0v)**"
     character(len=30) :: tmp_name
     character(len=8) :: str(10)
@@ -1741,18 +1841,13 @@ contains
 
     ! get field
 
-    vTabPtr => null()
     tmp_name='DN0V'
-    call GetVTabEntry(trim(tmp_name), gridId, vTabPtr)
 
-    ! build field sections to be sent and received
-
-    call InsertFieldSectionAtMessageSet(&
-         myNum, vTabPtr, Neigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, SendDn0v)
-    call InsertFieldSectionAtMessageSet(&
-         myNum, vTabPtr, Neigh, GlobalWithGhost, &
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, SendDn0v, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvDn0v)
+
     if (dumpLocal) then
        call MsgDump(h//" finishes with SendDn0v MessageSet:")
        call DumpMessageSet(SendDn0v)
@@ -1815,7 +1910,6 @@ contains
     logical :: willSend(nNeigh)
     logical :: willRecv(nNeigh)
 
-    type(var_tables_r), pointer   :: vtabPtr => null()
     character(len=*), parameter :: h="**(CreateG3DSendRecv)**"
     character(len=30) :: tmp_name
     character(len=8) :: str(10)
@@ -1859,62 +1953,39 @@ contains
 
     if (g3d_spread == 1) then
 
-       vTabPtr => null()
        tmp_name='TTENS'
-       call GetVTabEntry(trim(tmp_name), gridId, vTabPtr)
 
-       call InsertFieldSectionAtMessageSet(&
-            myNum, vTabPtr, Neigh, GlobalWithGhost, &
-            xbSend, xeSend, ybSend, yeSend, willSend, &
-            SendG3D)
-       call InsertFieldSectionAtMessageSet(&
-            myNum, vTabPtr, Neigh, GlobalWithGhost, &
-            xbRecv, xeRecv, ybRecv, yeRecv, willRecv, &
-            RecvG3D)
+       call InsertFieldSectionAtSendRecvMessageSet(&
+            tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+            xbSend, xeSend, ybSend, yeSend, willSend, SendG3D, &
+            xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvG3D)
 
-       vTabPtr => null()
        tmp_name='QVTTENS'
-       call GetVTabEntry(trim(tmp_name), gridId, vTabPtr)
 
-       call InsertFieldSectionAtMessageSet(&
-            myNum, vTabPtr, Neigh, GlobalWithGhost, &
-            xbSend, xeSend, ybSend, yeSend, willSend, &
-            SendG3D)
-       call InsertFieldSectionAtMessageSet(&
-            myNum, vTabPtr, Neigh, GlobalWithGhost, &
-            xbRecv, xeRecv, ybRecv, yeRecv, willRecv, &
-            RecvG3D)
+       call InsertFieldSectionAtSendRecvMessageSet(&
+            tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+            xbSend, xeSend, ybSend, yeSend, willSend, SendG3D, &
+            xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvG3D)
     end if
 
     ! when g3d_smoothh is selected, send and receive fields THSRC and RTSRC
 
     if (g3d_smoothh == 1) then
 
-       vTabPtr => null()
        tmp_name='THSRC'
-       call GetVTabEntry(trim(tmp_name), gridId, vTabPtr)
 
-       call InsertFieldSectionAtMessageSet(&
-            myNum, vTabPtr, Neigh, GlobalWithGhost, &
-            xbSend, xeSend, ybSend, yeSend, willSend, &
-            SendG3D)
-       call InsertFieldSectionAtMessageSet(&
-            myNum, vTabPtr, Neigh, GlobalWithGhost, &
-            xbRecv, xeRecv, ybRecv, yeRecv, willRecv, &
-            RecvG3D)
+       call InsertFieldSectionAtSendRecvMessageSet(&
+            tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+            xbSend, xeSend, ybSend, yeSend, willSend, SendG3D, &
+            xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvG3D)
 
-       vTabPtr => null()
        tmp_name='RTSRC'
-       call GetVTabEntry(trim(tmp_name), gridId, vTabPtr)
 
-       call InsertFieldSectionAtMessageSet(&
-            myNum, vTabPtr, Neigh, GlobalWithGhost, &
-            xbSend, xeSend, ybSend, yeSend, willSend, &
-            SendG3D)
-       call InsertFieldSectionAtMessageSet(&
-            myNum, vTabPtr, Neigh, GlobalWithGhost, &
-            xbRecv, xeRecv, ybRecv, yeRecv, willRecv, &
-            RecvG3D)
+       call InsertFieldSectionAtSendRecvMessageSet(&
+            tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+            xbSend, xeSend, ybSend, yeSend, willSend, SendG3D, &
+            xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvG3D)
+
     end if
     if (dumpLocal) then
        call MsgDump(h//" finishes with SendG3D MessageSet:")
@@ -1928,137 +1999,7 @@ contains
 
 
 
-  subroutine InsertFieldSectionAtMessageSet(&
-       myNum, vTabPtr, Neigh, GlobalWithGhost, &
-       xbComm, xeComm, ybComm, yeComm, willComm, &
-       Msgs)
 
-    ! Inserts a section of a field to be communicated
-    ! on a MessageSet variable
-
-    ! mynum is this BRAMS process number;
-    ! It sends data on a send MessageSet variable or
-    ! it receives data on a receive MessageSet variable
-
-    integer, intent(in) :: myNum
-
-    type(var_tables_r), pointer, intent(in) :: vTabPtr
-
-    ! Neigh is an array of neighbours (to this process)
-    ! BRAMS process numbers to communicate;
-    ! Each neighbour process may (or may not) exchange
-    ! messages with this process on a MessageSet variable;
-    ! The number of processes for potential communication
-    ! is the size of the Neigh array
-
-    type(NeighbourNodes), pointer, intent(in) :: Neigh
-
-    ! Global indices of domain partition with Ghost Zones
-
-    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
-
-    ! all remaining arguments are dimensioned by number of neighbours
-    ! and indexed up to the size of Neigh array
-
-    ! global indices of the region of this process field
-    ! to be sent on a send MessageSet variable or to be received
-    ! on a receive MessageSet variable;
-    ! The arrays of global indices have the same size of the Neigh
-    ! array (number of processes to communicate) and are indexed
-    ! accordingly
-
-    integer, intent(in) :: xbComm(:)
-    integer, intent(in) :: xeComm(:)
-    integer, intent(in) :: ybComm(:)
-    integer, intent(in) :: yeComm(:)
-
-    ! which neighbours (BRAMS process number) will
-    ! receive msgs from this node on a send MessageSet variable
-    ! or will send msgs to this node on a receive Message set
-    ! variable
-
-    logical, intent(in) :: willComm(:)
-
-    ! MessageSet variable to be updated by field section inclusion
-
-    type(MessageSet), pointer, intent(inout) :: Msgs
-
-    integer :: nMsgs
-    integer :: x0, y0
-    integer :: cntMsg
-    integer :: iNeigh
-    type(FieldSection), pointer :: oneFieldSection
-    character(len=8) :: c0
-    character(len=*), parameter :: h="**(InsertFieldSectionAtMessageSet)**"
-    real, pointer :: PNull(:,:) => null()
-    ! check arguments
-
-    if (.not. associated(vTabPtr)) then
-       call fatal_error(h//" vTabPtr not associated")
-    else if (.not. associated(Neigh)) then
-       call fatal_error(h//" Neigh not associated")
-    else if (.not. associated(GlobalWithGhost)) then
-       call fatal_error(h//" GlobalWithGhost not associated")
-    end if
-
-    ! return if no messages to send
-
-    if (.not. associated(Msgs)) then
-       return
-    end if
-    nMsgs = Msgs%nMsgs
-
-    ! offsets to convert global indices to local indices at this proc
-
-    x0 = GlobalWithGhost%xb(myNum) - 1
-    y0 = GlobalWithGhost%yb(myNum) - 1
-
-    ! create list of Field Sections to communicate, one for
-    ! each process to communicate and insert at this MessageSet
-    ! field section list
-
-    cntMsg = 0
-    do iNeigh = 1, Neigh%nNeigh
-       if (willComm(iNeigh)) then
-          cntMsg = cntMsg + 1
-          if (cntMsg > nMsgs) then
-             write(c0,"(i8)") nMsgs
-             call fatal_error(h//" nMsgs ("//&
-                  trim(adjustl(c0))//") exceeded while inserting field "//&
-                  trim(adjustl(vTabPtr%name))//&
-                  " at message "//trim(adjustl(Msgs%name)))
-          end if
-
-          select case (vTabPtr%idim_type)
-          case (2)
-             oneFieldSection =>  CreateFieldSection(&
-                  vTabPtr%var_p_2D, &
-                  vTabPtr%name, &
-                  vTabPtr%idim_type, &
-                  xbComm(iNeigh)-x0, xeComm(iNeigh)-x0, &
-                  ybComm(iNeigh)-y0, yeComm(iNeigh)-y0)
-          case (3,6,7)
-             oneFieldSection =>  CreateFieldSection(&
-                  vTabPtr%var_p_3D, &
-                  vTabPtr%name, &
-                  vTabPtr%idim_type, &
-                  xbComm(iNeigh)-x0, xeComm(iNeigh)-x0, &
-                  ybComm(iNeigh)-y0, yeComm(iNeigh)-y0)
-          case (4,5)
-             oneFieldSection =>  CreateFieldSection(&
-                  vTabPtr%var_p_4D, &
-                  vTabPtr%name, &
-                  vTabPtr%idim_type, &
-                  xbComm(iNeigh)-x0, xeComm(iNeigh)-x0, &
-                  ybComm(iNeigh)-y0, yeComm(iNeigh)-y0)
-          case default
-             write(c0,"(i8)") vTabPtr%idim_type
-             call fatal_error(h//" unknown idim_type="//trim(adjustl(c0)))
-          end select
-          call AppendFieldSectionToMessageData(oneFieldSection, Msgs%msgData(cntMsg))
-       end if
-    end do
-  end subroutine InsertFieldSectionAtMessageSet
 
 
 
@@ -2110,7 +2051,6 @@ contains
     logical :: willSend(nNeigh)
     logical :: willRecv(nNeigh)
 
-    type(var_tables_r), pointer   :: vtabPtr => null()
     character(len=*), parameter :: h="**(CreateAcousticSendRecvU)**"
     logical, parameter :: dumpLocal=.true.
     character(len=8) :: str(10)
@@ -2152,22 +2092,17 @@ contains
 
     ! get field
 
-    vTabPtr => null()
     if(dyncore_flag==2) then
        tmp_name='UC'
     else
        tmp_name='UP'
     endif
-    call GetVTabEntry(trim(tmp_name), gridId, vTabPtr)
 
-    ! build field sections to be sent and received
-
-    call InsertFieldSectionAtMessageSet(&
-         myNum, vTabPtr, Neigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendU)
-    call InsertFieldSectionAtMessageSet(&
-         myNum, vTabPtr, Neigh, GlobalWithGhost, &
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendU, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvU)
+
     if (dumpLocal) then
        call MsgDump(h//" finishes with AcouSendU MessageSet:")
        call DumpMessageSet(AcouSendU)
@@ -2227,7 +2162,6 @@ contains
     logical :: willRecv(nNeigh)
 
 
-    type(var_tables_r), pointer   :: vtabPtr => null()
     character(len=*), parameter :: h="**(CreateAcousticSendRecvV)**"
     logical, parameter :: dumpLocal=.true.
     character(len=8) :: str(10)
@@ -2268,22 +2202,17 @@ contains
 
     ! get field
 
-    vTabPtr => null()
     if(dyncore_flag==2) then
        tmp_name='VC'
     else
        tmp_name='VP'
     endif
-    call GetVTabEntry(trim(tmp_name), gridId, vTabPtr)
 
-    ! build field sections to be sent and received
-
-    call InsertFieldSectionAtMessageSet(&
-         myNum, vTabPtr, Neigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendV)
-    call InsertFieldSectionAtMessageSet(&
-         myNum, vTabPtr, Neigh, GlobalWithGhost, &
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendV, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvV)
+
     if (dumpLocal) then
        call MsgDump(h//" finishes with AcouSendV MessageSet:")
        call DumpMessageSet(AcouSendV)
@@ -2343,7 +2272,6 @@ contains
     logical :: willSend(nNeigh)
     logical :: willRecv(nNeigh)
 
-    type(var_tables_r), pointer   :: vtabPtr => null()
     character(len=*), parameter :: h="**(CreateAcousticSendRecvPNorth)**"
     character(len=30) :: tmp_name
     character(len=8) :: str(10)
@@ -2386,22 +2314,17 @@ contains
 
     ! get field
 
-    vTabPtr => null()
     if(dyncore_flag==2) then
        tmp_name='PC'
     else
        tmp_name='PP'
     endif
-    call GetVTabEntry(trim(tmp_name), gridId, vTabPtr)
 
-    ! build field sections to be sent and received
-
-    call InsertFieldSectionAtMessageSet(&
-         myNum, vTabPtr, Neigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendPNorth)
-    call InsertFieldSectionAtMessageSet(&
-         myNum, vTabPtr, Neigh, GlobalWithGhost, &
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendPNorth, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvPNorth)
+
     if (dumpLocal) then
        call MsgDump(h//" finishes with AcouSendPNorth MessageSet:")
        call DumpMessageSet(AcouSendPNorth)
@@ -2460,7 +2383,6 @@ contains
     logical :: willSend(nNeigh)
     logical :: willRecv(nNeigh)
 
-    type(var_tables_r), pointer   :: vtabPtr => null()
     character(len=*), parameter :: h="**(CreateAcousticSendRecvPEast)**"
     character(len=30) :: tmp_name
     character(len=8) :: str(10)
@@ -2502,22 +2424,17 @@ contains
 
     ! get field
 
-    vTabPtr => null()
     if(dyncore_flag==2) then
        tmp_name='PC'
     else
        tmp_name='PP'
     endif
-    call GetVTabEntry(trim(tmp_name), gridId, vTabPtr)
 
-    ! build field sections to be sent and received
-
-    call InsertFieldSectionAtMessageSet(&
-         myNum, vTabPtr, Neigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendPEast)
-    call InsertFieldSectionAtMessageSet(&
-         myNum, vTabPtr, Neigh, GlobalWithGhost, &
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendPEast, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvPEast)
+
     if (dumpLocal) then
        call MsgDump(h//" finishes with AcouSendPEast MessageSet:")
        call DumpMessageSet(AcouSendPEast)
