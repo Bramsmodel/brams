@@ -476,7 +476,7 @@ contains
     ! nNeigh is number of processes for potential communication
 
     integer, intent(in) :: nNeigh
-    
+
     ! Global indices of domain partition with Ghost Zones
 
     type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
@@ -593,20 +593,20 @@ contains
     ! on a MessageSet variable
 
     character(len=*), intent(in) :: varName
-    
+
     ! mynum is this BRAMS process number;
     ! It sends data on a send MessageSet variable or
     ! it receives data on a receive MessageSet variable
 
-     integer, intent(in) :: myNum
+    integer, intent(in) :: myNum
 
     ! nNeigh is the number of processes for potential communication
 
-     integer, intent(in) :: nNeigh
+    integer, intent(in) :: nNeigh
 
     ! gridId is this grid number (required while vTabPtr is not included in type(Grid)
 
-     integer, intent(in) :: gridId
+    integer, intent(in) :: gridId
 
     ! Global indices of domain partition with Ghost Zones
 
@@ -657,11 +657,11 @@ contains
     call InsertFieldSectionAtMessageSet(&
          myNum, vTabPtr, nNeigh, GlobalWithGhost, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvMessageSet)
-  end subroutine InsertFieldSectionAtSendRecvMessageSetFromVTab  
+  end subroutine InsertFieldSectionAtSendRecvMessageSetFromVTab
 
 
 
-  
+
   subroutine CreateAcousticMessageSet(&
        gridId, GridSize, ParEnv, Neigh, &
        GlobalOwn, &
@@ -697,6 +697,50 @@ contains
     integer :: nMachs
     integer :: myNum
     integer :: nNeigh
+    character(len=30) :: tmp_name
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing global indices of regions for send and receive
+
+    integer :: xbSend(parEnv%nMachs)
+    integer :: xeSend(parEnv%nMachs)
+    integer :: ybSend(parEnv%nMachs)
+    integer :: yeSend(parEnv%nMachs)
+    integer :: xbRecv(parEnv%nMachs)
+    integer :: xeRecv(parEnv%nMachs)
+    integer :: ybRecv(parEnv%nMachs)
+    integer :: yeRecv(parEnv%nMachs)
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing which neighbour nodes will send of receive
+
+    logical :: willSend(parEnv%nMachs)
+    logical :: willRecv(parEnv%nMachs)
+
+    integer, parameter :: TagU=32
+    character(len=*), parameter :: NameSendU="AcouSendU"
+    character(len=*), parameter :: NameRecvU="AcouRecvU"
+
+    integer, parameter :: TagV=33
+    character(len=*), parameter :: NameSendV="AcouSendV"
+    character(len=*), parameter :: NameRecvV="AcouRecvV"
+
+    integer, parameter :: TagPNorth=35
+    character(len=*), parameter :: NameSendPNorth="AcouSendPNorth"
+    character(len=*), parameter :: NameRecvPNorth="AcouRecvPNorth"
+
+    integer, parameter :: TagPEast=36
+    character(len=*), parameter :: NameSendPEast="AcouSendPEast"
+    character(len=*), parameter :: NameRecvPEast="AcouRecvPEast"
+
+    integer, parameter :: TagUV=25
+    character(len=*), parameter :: NameSendUV="AcouSendUV"
+    character(len=*), parameter :: NameRecvUV="AcouRecvUV"
+
+    integer, parameter :: TagWP=26
+    character(len=*), parameter :: NameSendWP="AcouSendWP"
+    character(len=*), parameter :: NameRecvWP="AcouRecvWP"
+
     character(len=*), parameter :: h="**(CreateAcousticMessageSet)**"
     logical, parameter :: dumpLocal=.true.
 
@@ -712,61 +756,356 @@ contains
 
     ! default output (case no neighbours)
 
-    AcouSendU => null()
-    AcouRecvU => null()
-    AcouSendV => null()
-    AcouRecvV => null()
-    AcouSendPNorth => null()
-    AcouRecvPNorth => null()
-    AcouSendPEast => null()
-    AcouRecvPEast => null()
-    AcouSendUV => null()
-    AcouRecvUV => null()
-    AcouSendWP => null()
-    AcouRecvWP => null()
-
-    if (associated(Neigh)) then
-
-       if (dumpLocal) then
-          call MsgDump(h//" will create "//&
-               " AcouSend/RecvU, AcouSend/RecvV, AcouSend/RecvPNorth and East,"//&
-               " AcouSend/RecvUV and AcouSend/RecvWP")
-       end if
-
-       myNum  = ParEnv%myNum
-       nMachs = ParEnv%nMachs
-       nNeigh = Neigh%nNeigh
-
-       call CreateAcousticSendRecvU(&
-            gridId, nMachs, nNeigh, myNum, &
-            Neigh, GlobalOwn, GlobalWithGhost, &
-            AcouSendU, AcouRecvU)
-
-       call CreateAcousticSendRecvV(&
-            gridId, nMachs, nNeigh, myNum, &
-            Neigh, GlobalOwn, GlobalWithGhost, &
-            AcouSendV, AcouRecvV)
-
-       call CreateAcousticSendRecvPNorth(&
-            gridId, nMachs, nNeigh, myNum, &
-            Neigh, GlobalOwn, GlobalWithGhost, &
-            AcouSendPNorth, AcouRecvPNorth)
-
-       call CreateAcousticSendRecvPEast(&
-            gridId, nMachs, nNeigh, myNum, &
-            Neigh, GlobalOwn, GlobalWithGhost, &
-            AcouSendPEast, AcouRecvPEast)
-
-       call CreateAcousticSendRecvUV(&
-            gridId, nMachs, nNeigh, myNum, &
-            GridSize, Neigh, GlobalOwnWithBC, GlobalWithGhost, &
-            AcouSendUV, AcouRecvUV)
-
-       call CreateAcousticSendRecvWP(&
-            gridId, nMachs, nNeigh, myNum, &
-            GridSize, Neigh, GlobalOwnWithBC, GlobalWithGhost, &
-            AcouSendWP, AcouRecvWP)
+    if (.not. associated(Neigh)) then
+       AcouSendU => null()
+       AcouRecvU => null()
+       AcouSendV => null()
+       AcouRecvV => null()
+       AcouSendPNorth => null()
+       AcouRecvPNorth => null()
+       AcouSendPEast => null()
+       AcouRecvPEast => null()
+       AcouSendUV => null()
+       AcouRecvUV => null()
+       AcouSendWP => null()
+       AcouRecvWP => null()
+       return
     end if
+
+    if (dumpLocal) then
+       call MsgDump(h//" starts creating AcousSend/RecvU")
+    end if
+
+    myNum  = ParEnv%myNum
+    nMachs = ParEnv%nMachs
+    nNeigh = Neigh%nNeigh
+
+    ! AcouSendU, AcouRecvU:
+    ! messages update GlobalOwn [xb-1:xb-1,yb:ye]
+
+    call NodesRegionsSendRecv(&
+         nMachs=nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=TagU, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwn, &
+         NameSend=NameSendU, &
+         NameRecv=NameRecvU, &
+         xbToUpdate=GlobalOwn%xb-1, &
+         xeToUpdate=GlobalOwn%xb-1, &
+         ybToUpdate=GlobalOwn%yb, &
+         yeToUpdate=GlobalOwn%ye, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=AcouSendU, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=AcouRecvU)
+
+    ! get field
+
+    if(dyncore_flag==2) then
+       tmp_name='UC'
+    else
+       tmp_name='UP'
+    endif
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendU, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvU)
+
+    if (dumpLocal) then
+       call MsgDump(h//" finishes AcouSendU MessageSet:")
+       call DumpMessageSet(AcouSendU)
+       call MsgDump(h//" finishes AcouRecvU MessageSet:")
+       call DumpMessageSet(AcouRecvU)
+       call MsgDump(h//" starts creating AcousSend/RecvV")
+    end if
+
+    ! AcouSendV, AcouRecvV:
+    ! messages update GlobalOwn [xb:xe,yb-1:yb-1]
+
+    call NodesRegionsSendRecv(&
+         nMachs=nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=TagV, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwn, &
+         NameSend=NameSendV, &
+         NameRecv=NameRecvV, &
+         xbToUpdate=GlobalOwn%xb, &
+         xeToUpdate=GlobalOwn%xe, &
+         ybToUpdate=GlobalOwn%yb-1, &
+         yeToUpdate=GlobalOwn%yb-1, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=AcouSendV, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=AcouRecvV)
+
+    ! get field
+
+    if(dyncore_flag==2) then
+       tmp_name='VC'
+    else
+       tmp_name='VP'
+    endif
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendV, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvV)
+
+    if (dumpLocal) then
+       call MsgDump(h//" finishes AcouSendV MessageSet:")
+       call DumpMessageSet(AcouSendV)
+       call MsgDump(h//" finishes AcouRecvV MessageSet:")
+       call DumpMessageSet(AcouRecvV)
+       call MsgDump(h//" starts creating AcousSend/RecvPNorth")
+    end if
+
+    ! AcouSendPNorth, AcouRecvPNorth: union of
+    !               GlobalOwn [xe+1:xe+1,yb:ye] with
+    !               GlobalOwn [xb:xe,ye+1:ye+1]
+
+    call NodesRegionsSendRecv(&
+         nMachs=nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=TagPNorth, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwn, &
+         NameSend=NameSendPNorth, &
+         NameRecv=NameRecvPNorth, &
+         xbToUpdate=GlobalOwn%xe+1, &
+         xeToUpdate=GlobalOwn%xe+1, &
+         ybToUpdate=GlobalOwn%yb, &
+         yeToUpdate=GlobalOwn%ye, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=AcouSendPNorth, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=AcouRecvPNorth)
+
+    ! get field
+
+    if(dyncore_flag==2) then
+       tmp_name='PC'
+    else
+       tmp_name='PP'
+    endif
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendPNorth, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvPNorth)
+
+    if (dumpLocal) then
+       call MsgDump(h//" finishes AcouSendPNorth MessageSet:")
+       call DumpMessageSet(AcouSendPNorth)
+       call MsgDump(h//" finishes AcouRecvPNorth MessageSet:")
+       call DumpMessageSet(AcouRecvPNorth)
+       call MsgDump(h//" starts creating AcousSend/RecvPEast")
+    end if
+
+    ! AcouSendPEast, AcouRecvPEast: 
+    !               GlobalOwn [xb:xe,ye+1:ye+1]
+
+    call NodesRegionsSendRecv(&
+         nMachs=nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=TagPEast, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwn, &
+         NameSend=NameSendPEast, &
+         NameRecv=NameRecvPEast, &
+         xbToUpdate=GlobalOwn%xb, &
+         xeToUpdate=GlobalOwn%xe, &
+         ybToUpdate=GlobalOwn%ye+1, &
+         yeToUpdate=GlobalOwn%ye+1, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=AcouSendPEast, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=AcouRecvPEast)
+
+    ! get field
+
+    if(dyncore_flag==2) then
+       tmp_name='PC'
+    else
+       tmp_name='PP'
+    endif
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendPEast, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvPEast)
+
+    if (dumpLocal) then
+       call MsgDump(h//" finishes AcouSendPEast MessageSet:")
+       call DumpMessageSet(AcouSendPEast)
+       call MsgDump(h//" finishes AcouRecvPEast MessageSet:")
+       call DumpMessageSet(AcouRecvPEast)
+       call MsgDump(h//" starts creating AcousSend/RecvUV")
+    end if
+
+    ! AcouSendUV, AcouRecvUV:
+    ! messages update entire GhostZone
+
+    call NodesRegionsSendRecv(&
+         nMachs=nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=TagUV, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwnWithBC, &
+         NameSend=NameSendUV, &
+         NameRecv=NameRecvUV, &
+         xbToUpdate=GlobalWithGhost%xb, &
+         xeToUpdate=GlobalWithGhost%xe, &
+         ybToUpdate=GlobalWithGhost%yb, &
+         yeToUpdate=GlobalWithGhost%ye, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=AcouSendUV, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=AcouRecvUV)
+
+    ! get field UP
+
+    if(dyncore_flag==2) then
+       tmp_name='UC'
+    else
+       tmp_name='UP'
+    endif
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendUV, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvUV)
+
+    ! get field VP
+
+    if(dyncore_flag==2) then
+       tmp_name='VC'
+    else
+       tmp_name='VP'
+    endif
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendUV, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvUV)
+
+    if (dumpLocal) then
+       call MsgDump(h//" finishes with AcouSendUV MessageSet:")
+       call DumpMessageSet(AcouSendUV)
+       call MsgDump(h//" finishes with AcouRecvUV MessageSet:")
+       call DumpMessageSet(AcouRecvUV)
+       call MsgDump(h//" starts creating AcousSend/RecvWP")
+    end if
+
+    ! AcouSendWP, AcouRecvWP:
+    ! messages update entire GhostZone
+
+    call NodesRegionsSendRecv(&
+         nMachs=nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=TagWP, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwnWithBC, &
+         NameSend=NameSendWP, &
+         NameRecv=NameRecvWP, &
+         xbToUpdate=GlobalWithGhost%xb, &
+         xeToUpdate=GlobalWithGhost%xe, &
+         ybToUpdate=GlobalWithGhost%yb, &
+         yeToUpdate=GlobalWithGhost%ye, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=AcouSendWP, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=AcouRecvWP)
+
+    ! get field UP
+
+    if(dyncore_flag==2) then
+       tmp_name='WC'
+    else
+       tmp_name='WP'
+    endif
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendWP, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvWP)
+
+    ! get field VP
+
+    if(dyncore_flag==2) then
+       tmp_name='PC'
+    else
+       tmp_name='PP'
+    endif
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendWP, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvWP)
+
+    if (dumpLocal) then
+       call MsgDump(h//" finishes AcouSendWP MessageSet:")
+       call DumpMessageSet(AcouSendWP)
+       call MsgDump(h//" finishes AcouRecvWP MessageSet:")
+       call DumpMessageSet(AcouRecvWP)
+    end if
+
   end subroutine CreateAcousticMessageSet
 
 
@@ -846,6 +1185,34 @@ contains
     integer :: nMachs
     integer :: myNum
     integer :: nNeigh
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing global indices of regions for send and receive
+
+    integer :: xbSend(parEnv%nMachs)
+    integer :: xeSend(parEnv%nMachs)
+    integer :: ybSend(parEnv%nMachs)
+    integer :: yeSend(parEnv%nMachs)
+    integer :: xbRecv(parEnv%nMachs)
+    integer :: xeRecv(parEnv%nMachs)
+    integer :: ybRecv(parEnv%nMachs)
+    integer :: yeRecv(parEnv%nMachs)
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing which neighbour nodes will send of receive
+
+    logical :: willSend(parEnv%nMachs)
+    logical :: willRecv(parEnv%nMachs)
+
+    integer, parameter :: TagDn0u=29
+    character(len=*), parameter :: NameSendDn0u="SendDn0u"
+    character(len=*), parameter :: NameRecvDn0u="RecvDn0u"
+
+    integer, parameter :: TagDn0v=30
+    character(len=*), parameter :: NameSendDn0v="SendDn0v"
+    character(len=*), parameter :: NameRecvDn0v="RecvDn0v"
+
+    character(len=30) :: tmp_name
     character(len=*), parameter :: h="**(CreateDn0MessageSet)**"
     logical, parameter :: dumpLocal=.true.
 
@@ -859,32 +1226,112 @@ contains
        call fatal_error(h//" starts with null GlobalWithGhost")
     end if
 
-    ! default output (case no neighbours)
+    if (.not. associated(Neigh)) then
 
-    SendDn0u => null()
-    RecvDn0u => null()
-    SendDn0v => null()
-    RecvDn0v => null()
+       ! default output (case no neighbours)
 
-    if (associated(Neigh)) then
+       SendDn0u => null()
+       RecvDn0u => null()
+       SendDn0v => null()
+       RecvDn0v => null()
+       return
+    end if
 
-       if (dumpLocal) then
-          call MsgDump(h//" will create Send/RecvDn0u and Send/RecvDn0v")
-       end if
+    if (dumpLocal) then
+       call MsgDump(h//" will create Send/RecvDn0u and Send/RecvDn0v")
+    end if
 
-       myNum  = ParEnv%myNum
-       nMachs = ParEnv%nMachs
-       nNeigh = Neigh%nNeigh
+    myNum  = ParEnv%myNum
+    nNeigh = Neigh%nNeigh
 
-       call CreateSendRecvDn0u(&
-            gridId, nMachs, nNeigh, myNum, &
-            Neigh, GlobalOwn, GlobalWithGhost, &
-            SendDn0u, RecvDn0u)
+    ! SendDn0u, RecvDn0u:
+    ! messages update GlobalOwn [xe+1:xe+1,yb:ye]
 
-       call CreateSendRecvDn0v(&
-            gridId, nMachs, nNeigh, myNum, &
-            Neigh, GlobalOwn, GlobalWithGhost, &
-            SendDn0v, RecvDn0v)
+    call NodesRegionsSendRecv(&
+         nMachs=ParEnv%nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=TagDn0u, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwn, &
+         NameSend=NameSendDn0u, &
+         NameRecv=NameRecvDn0u, &
+         xbToUpdate=GlobalOwn%xe + 1, &
+         xeToUpdate=GlobalOwn%xe + 1, &
+         ybToUpdate=GlobalOwn%yb, &
+         yeToUpdate=GlobalOwn%ye, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=SendDn0u, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=RecvDn0u)
+
+    ! get field
+
+    tmp_name='DN0U'
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, SendDn0u, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvDn0u)
+
+    if (dumpLocal) then
+       call MsgDump(h//" done building SendDn0u MessageSet:")
+       call DumpMessageSet(SendDn0u)
+       call MsgDump(h//" done building RecvDn0u MessageSet:")
+       call DumpMessageSet(RecvDn0u)
+    end if
+
+    ! SendDn0v, RecvDn0v:
+    ! messages update GlobalOwn [xb:xe,ye+1:ye+1]
+
+    call NodesRegionsSendRecv(&
+         nMachs=nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=TagDn0v, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwn, &
+         NameSend=NameSendDn0v, &
+         NameRecv=NameRecvDn0v, &
+         xbToUpdate=GlobalOwn%xb, &
+         xeToUpdate=GlobalOwn%xe, &
+         ybToUpdate=GlobalOwn%ye+1, &
+         yeToUpdate=GlobalOwn%ye+1, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=SendDn0v, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=RecvDn0v)
+
+    ! get field
+
+    tmp_name='DN0V'
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, SendDn0v, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvDn0v)
+
+    if (dumpLocal) then
+       call MsgDump(h//" done building SendDn0v MessageSet:")
+       call DumpMessageSet(SendDn0v)
+       call MsgDump(h//" done building RecvDn0v MessageSet:")
+       call DumpMessageSet(RecvDn0v)
     end if
   end subroutine CreateDn0MessageSet
 
@@ -939,6 +1386,33 @@ contains
     integer :: nNeigh
     integer :: g3d_spread
     integer :: g3d_smoothh
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing global indices of regions for send and receive
+
+    integer :: xbSend(parEnv%nMachs)
+    integer :: xeSend(parEnv%nMachs)
+    integer :: ybSend(parEnv%nMachs)
+    integer :: yeSend(parEnv%nMachs)
+    integer :: xbRecv(parEnv%nMachs)
+    integer :: xeRecv(parEnv%nMachs)
+    integer :: ybRecv(parEnv%nMachs)
+    integer :: yeRecv(parEnv%nMachs)
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing which neighbour nodes will send of receive
+
+    logical :: willSend(parEnv%nMachs)
+    logical :: willRecv(parEnv%nMachs)
+
+    integer, parameter :: TagG3D=31
+    character(len=*), parameter :: NameSendG3D="SendG3D"
+    character(len=*), parameter :: NameRecvG3D="RecvG3D"
+
+    integer :: vTabNbr
+    character(len=30) :: tmp_name
+
+    character(len=8) :: str(10)
     character(len=*), parameter :: h="**(CreateG3DMessageSet)**"
     logical, parameter :: dumpLocal=.true.
 
@@ -966,7 +1440,7 @@ contains
     g3d_smoothh = Ramsin%g3d_smoothh
 
     if (associated(Neigh) .and. &
-         (g3d_spread /= 0 .or. g3d_smoothh /= 0)) then
+         (g3d_spread == 1 .or. g3d_smoothh == 1)) then
 
        if (dumpLocal) then
           call MsgDump(h//" will create Send/RecvG3D")
@@ -976,11 +1450,79 @@ contains
        nMachs = ParEnv%nMachs
        nNeigh = Neigh%nNeigh
 
-       call CreateG3DSendRecv(&
-            gridId, nMachs, nNeigh, myNum, &
-            g3d_spread, g3d_smoothh, &
-            GridSize, Neigh, GlobalOwnWithBC, GlobalWithGhost, &
-            SendG3D, RecvG3D)
+       ! SendG3D, RecvG3D:
+       ! messages update entire GhostZone
+
+       call NodesRegionsSendRecv(&
+            nMachs=nMachs, &
+            nNeigh=nNeigh, &
+            myNum=myNum, &
+            tag=TagG3D, &
+            Neigh=Neigh, &
+            GlobalOwn=GlobalOwnWithBC, &
+            NameSend=NameSendG3D, &
+            NameRecv=NameRecvG3d, &
+            xbToUpdate=GlobalOwnWithBC%xb, &
+            xeToUpdate=GlobalOwnWithBC%xe, &
+            ybToUpdate=GlobalOwnWithBC%yb, &
+            yeToUpdate=GlobalOwnWithBC%ye, &
+            xbSend=xbSend, &
+            xeSend=xeSend, &
+            ybSend=ybSend, &
+            yeSend=yeSend, &
+            willSend=willSend, &
+            SendMessageSet=SendG3D, &
+            xbRecv=xbRecv, &
+            xeRecv=xeRecv, &
+            ybRecv=ybRecv, &
+            yeRecv=yeRecv, &
+            willRecv=willRecv, &
+            RecvMessageSet=RecvG3D)
+
+       ! when g3d_spread is selected, send and receive fields TTENS and QVTTENS
+
+       if (g3d_spread == 1) then
+
+          tmp_name='TTENS'
+
+          call InsertFieldSectionAtSendRecvMessageSet(&
+               tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+               xbSend, xeSend, ybSend, yeSend, willSend, SendG3D, &
+               xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvG3D)
+
+          tmp_name='QVTTENS'
+
+          call InsertFieldSectionAtSendRecvMessageSet(&
+               tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+               xbSend, xeSend, ybSend, yeSend, willSend, SendG3D, &
+               xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvG3D)
+       end if
+
+       ! when g3d_smoothh is selected, send and receive fields THSRC and RTSRC
+
+       if (g3d_smoothh == 1) then
+
+          tmp_name='THSRC'
+
+          call InsertFieldSectionAtSendRecvMessageSet(&
+               tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+               xbSend, xeSend, ybSend, yeSend, willSend, SendG3D, &
+               xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvG3D)
+
+          tmp_name='RTSRC'
+
+          call InsertFieldSectionAtSendRecvMessageSet(&
+               tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+               xbSend, xeSend, ybSend, yeSend, willSend, SendG3D, &
+               xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvG3D)
+
+       end if
+       if (dumpLocal) then
+          call MsgDump(h//" done building SendG3D MessageSet:")
+          call DumpMessageSet(SendG3D)
+          call MsgDump(h//" done building RecvG3D MessageSet:")
+          call DumpMessageSet(RecvG3D)
+       end if
     end if
   end subroutine CreateG3DMessageSet
 
@@ -1030,6 +1572,30 @@ contains
     integer :: nMachs
     integer :: myNum
     integer :: nNeigh
+    integer :: vTabNbr
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing global indices of regions for send and receive
+
+    integer :: xbSend(parEnv%nMachs)
+    integer :: xeSend(parEnv%nMachs)
+    integer :: ybSend(parEnv%nMachs)
+    integer :: yeSend(parEnv%nMachs)
+    integer :: xbRecv(parEnv%nMachs)
+    integer :: xeRecv(parEnv%nMachs)
+    integer :: ybRecv(parEnv%nMachs)
+    integer :: yeRecv(parEnv%nMachs)
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing which neighbour nodes will send of receive
+
+    logical :: willSend(parEnv%nMachs)
+    logical :: willRecv(parEnv%nMachs)
+
+    integer, parameter :: TagSelectedGhostZone=27
+    character(len=*), parameter :: NameSendSelectedGhostZone="SelectedGhostZoneSend"
+    character(len=*), parameter :: NameRecvSelectedGhostZone="SelectedGhostZoneRecv"
+
     character(len=*), parameter :: h="**(CreateSelectedGhostZoneMessageSet)**"
     logical, parameter :: dumpLocal=.true.
 
@@ -1045,23 +1611,67 @@ contains
 
     ! default output (case no neighbours)
 
-    SelectedGhostZoneSend => null()
-    SelectedGhostZoneRecv => null()
+    if (.not. associated(Neigh)) then
+       SelectedGhostZoneSend => null()
+       SelectedGhostZoneRecv => null()
+       return
+    end if
 
-    if (associated(Neigh)) then
+    if (dumpLocal) then
+       call MsgDump(h//" will create SelectedGhostZoneSend/Recv")
+    end if
 
-       if (dumpLocal) then
-          call MsgDump(h//" will create SelectedGhostZoneSend/Recv")
+    myNum  = ParEnv%myNum
+    nMachs = ParEnv%nMachs
+    nNeigh = Neigh%nNeigh
+
+    ! SelectedGhostZoneSend, SelectedGhostZoneRecv:
+    ! messages update entire GhostZone
+
+    call NodesRegionsSendRecv(&
+         nMachs=nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=TagSelectedGhostZone, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwnWithBC, &
+         NameSend=NameSendSelectedGhostZone, &
+         NameRecv=NameRecvSelectedGhostZone, &
+         xbToUpdate=GlobalWithGhost%xb, &
+         xeToUpdate=GlobalWithGhost%xe, &
+         ybToUpdate=GlobalWithGhost%yb, &
+         yeToUpdate=GlobalWithGhost%ye, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=SelectedGhostZoneSend, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=SelectedGhostZoneRecv)
+
+    ! take all var_tables field that should be communicated
+
+    do vTabNbr = 1, num_var(gridId)
+
+       if (vtab_r(vTabNbr,gridId)%impt1 == 1) then
+
+          call InsertFieldSectionAtSendRecvMessageSet(&
+               vtab_r(vTabNbr,gridId)%name, myNum, nNeigh, gridId, GlobalWithGhost, &
+               xbSend, xeSend, ybSend, yeSend, willSend, SelectedGhostZoneSend, &
+               xbRecv, xeRecv, ybRecv, yeRecv, willRecv, SelectedGhostZoneRecv)
        end if
+    end do
 
-       myNum  = ParEnv%myNum
-       nMachs = ParEnv%nMachs
-       nNeigh = Neigh%nNeigh
-
-       call CreateSelectedGhostZoneSendRecv(&
-            gridId, nMachs, nNeigh, myNum, num_var, vtab_r, &
-            GridSize, Neigh, GlobalOwnWithBC, GlobalWithGhost, &
-            SelectedGhostZoneSend, SelectedGhostZoneRecv)
+    if (dumpLocal) then
+       call MsgDump(h//" finishes with SelectedGhostZoneSend MessageSet:")
+       call DumpMessageSet(SelectedGhostZoneSend)
+       call MsgDump(h//" finishes with SelectedGhostZoneRecv MessageSet:")
+       call DumpMessageSet(SelectedGhostZoneRecv)
     end if
   end subroutine CreateSelectedGhostZoneMessageSet
 
@@ -1110,6 +1720,31 @@ contains
     integer :: nMachs
     integer :: myNum
     integer :: nNeigh
+    integer :: vTabNbr
+    character(len=32) :: vTabName
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing global indices of regions for send and receive
+
+    integer :: xbSend(parEnv%nMachs)
+    integer :: xeSend(parEnv%nMachs)
+    integer :: ybSend(parEnv%nMachs)
+    integer :: yeSend(parEnv%nMachs)
+    integer :: xbRecv(parEnv%nMachs)
+    integer :: xeRecv(parEnv%nMachs)
+    integer :: ybRecv(parEnv%nMachs)
+    integer :: yeRecv(parEnv%nMachs)
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing which neighbour nodes will send of receive
+
+    logical :: willSend(parEnv%nMachs)
+    logical :: willRecv(parEnv%nMachs)
+
+    integer, parameter :: TagAllGhostZone=28
+    character(len=*), parameter :: NameSendAllGhostZone="AllGhostZoneSend"
+    character(len=*), parameter :: NameRecvAllGhostZone="AllGhostZoneRecv"
+
     character(len=*), parameter :: h="**(CreateAllGhostZoneMessageSet)**"
     logical, parameter :: dumpLocal=.true.
 
@@ -1125,470 +1760,20 @@ contains
 
     ! default output (case no neighbours)
 
-    AllGhostZoneSend => null()
-    AllGhostZoneRecv => null()
-
-    if (associated(Neigh)) then
-
-       if (dumpLocal) then
-          call MsgDump(h//" will create AllGhostZoneSend/Recv")
-       end if
-
-       myNum  = ParEnv%myNum
-       nMachs = ParEnv%nMachs
-       nNeigh = Neigh%nNeigh
-
-       call CreateAllGhostZoneSendRecv(&
-            gridId, nMachs, nNeigh, myNum, num_var, vtab_r, &
-            GridSize, Neigh, GlobalOwnWithBC, GlobalWithGhost, &
-            AllGhostZoneSend, AllGhostZoneRecv)
+    if (.not. associated(Neigh)) then
+       AllGhostZoneSend => null()
+       AllGhostZoneRecv => null()
+       return
     end if
-  end subroutine CreateAllGhostZoneMessageSet
-
-
-
-
-
-  subroutine DestroyAllGhostZoneMessageSet( &
-       AllGhostZoneSend, AllGhostZoneRecv)
-
-    type(MessageSet), pointer, intent(inout) :: AllGhostZoneSend
-    type(MessageSet), pointer, intent(inout) :: AllGhostZoneRecv
-    character(len=*), parameter :: h="**(DestroyAllGhostZoneMessageSet)**"
-    logical, parameter :: dumpLocal=.true.
-
-    if (dumpLocal) then
-       call MsgDump(h//" will destroy AllGhostZoneSend/Recv")
-    end if
-
-    call DestroyMessageSet(AllGhostZoneSend)
-    call DestroyMessageSet(AllGhostZoneRecv)
-
-  end subroutine DestroyAllGhostZoneMessageSet
-
-
-
-
-
-  subroutine CreateAcousticSendRecvUV(&
-       gridId, nMachs, nNeigh, myNum, &
-       GridSize, Neigh, GlobalOwnWithBC, GlobalWithGhost, &
-       AcouSendUV, AcouRecvUV)
-
-    integer, intent(in) :: gridId
-    integer, intent(in) :: nMachs
-    integer, intent(in) :: nNeigh
-    integer, intent(in) :: myNum
-
-    type(GridDims), pointer, intent(in) :: GridSize
-    type(NeighbourNodes), pointer, intent(in) :: Neigh
-    type(DomainDecomp), pointer, intent(in) :: GlobalOwnWithBC
-    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
-    type(MessageSet), pointer, intent(inout) :: AcouSendUV
-    type(MessageSet), pointer, intent(inout) :: AcouRecvUV
-
-    integer, parameter :: TagUV=25
-    character(len=*), parameter :: NameSendUV="AcouSendUV"
-    character(len=*), parameter :: NameRecvUV="AcouRecvUV"
-
-    ! scratch arrays of size number of BRAMS processes
-    ! containing global indices
-
-    integer :: xbToBeUpdated(nMachs)
-    integer :: xeToBeUpdated(nMachs)
-    integer :: ybToBeUpdated(nMachs)
-    integer :: yeToBeUpdated(nMachs)
-
-    ! scratch arrays of size number of neighbour nodes
-    ! containing global indices of regions for send and receive
-
-    integer :: xbSend(nNeigh)
-    integer :: xeSend(nNeigh)
-    integer :: ybSend(nNeigh)
-    integer :: yeSend(nNeigh)
-    integer :: xbRecv(nNeigh)
-    integer :: xeRecv(nNeigh)
-    integer :: ybRecv(nNeigh)
-    integer :: yeRecv(nNeigh)
-
-    ! scratch arrays of size number of neighbour nodes
-    ! containing which neighbour nodes will send of receive
-
-    logical :: willSend(nNeigh)
-    logical :: willRecv(nNeigh)
-
-    character(len=*), parameter :: h="**(CreateAcousticSendRecvUV)**"
-    character(len=30) :: tmp_name
-    character(len=8) :: str(10)
-    logical, parameter :: dumpLocal=.true.
-
-    if (dumpLocal) then
-       call MsgDump(h// "starts")
-    end if
-
-    ! AcouSendUV, AcouRecvUV:
-    ! messages update entire GhostZone
-
-    call NodesRegionsSendRecv(&
-         nMachs=nMachs, &
-         nNeigh=nNeigh, &
-         myNum=myNum, &
-         tag=TagUV, &
-         Neigh=Neigh, &
-         GlobalOwn=GlobalOwnWithBC, &
-         NameSend=NameSendUV, &
-         NameRecv=NameRecvUV, &
-         xbToUpdate=GlobalWithGhost%xb, &
-         xeToUpdate=GlobalWithGhost%xe, &
-         ybToUpdate=GlobalWithGhost%yb, &
-         yeToUpdate=GlobalWithGhost%ye, &
-         xbSend=xbSend, &
-         xeSend=xeSend, &
-         ybSend=ybSend, &
-         yeSend=yeSend, &
-         willSend=willSend, &
-         SendMessageSet=AcouSendUV, &
-         xbRecv=xbRecv, &
-         xeRecv=xeRecv, &
-         ybRecv=ybRecv, &
-         yeRecv=yeRecv, &
-         willRecv=willRecv, &
-         RecvMessageSet=AcouRecvUV)
-
-
-    ! get field UP
-
-    if(dyncore_flag==2) then
-       tmp_name='UC'
-    else
-       tmp_name='UP'
-    endif
-    
-    call InsertFieldSectionAtSendRecvMessageSet(&
-       tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
-       xbSend, xeSend, ybSend, yeSend, willSend, AcouSendUV, &
-       xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvUV)
-
-    ! get field VP
-
-    if(dyncore_flag==2) then
-       tmp_name='VC'
-    else
-       tmp_name='VP'
-    endif
-    
-    call InsertFieldSectionAtSendRecvMessageSet(&
-       tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
-       xbSend, xeSend, ybSend, yeSend, willSend, AcouSendUV, &
-       xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvUV)
-
-    if (dumpLocal) then
-       call MsgDump(h//" finishes with AcouSendUV MessageSet:")
-       call DumpMessageSet(AcouSendUV)
-       call MsgDump(h//" finishes with AcouRecvUV MessageSet:")
-       call DumpMessageSet(AcouRecvUV)
-    end if
-  end subroutine CreateAcousticSendRecvUV
-
-
-
-
-
-  subroutine CreateAcousticSendRecvWP(&
-       gridId, nMachs, nNeigh, myNum, &
-       GridSize, Neigh, GlobalOwnWithBC, GlobalWithGhost, &
-       AcouSendWP, AcouRecvWP)
-
-    integer, intent(in) :: gridId
-    integer, intent(in) :: nMachs
-    integer, intent(in) :: nNeigh
-    integer, intent(in) :: myNum
-
-    type(GridDims), pointer, intent(in) :: GridSize
-    type(NeighbourNodes), pointer, intent(in) :: Neigh
-    type(DomainDecomp), pointer, intent(in) :: GlobalOwnWithBC
-    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
-    type(MessageSet), pointer, intent(inout) :: AcouSendWP
-    type(MessageSet), pointer, intent(inout) :: AcouRecvWP
-
-    integer, parameter :: TagWP=26
-    character(len=*), parameter :: NameSendWP="AcouSendWP"
-    character(len=*), parameter :: NameRecvWP="AcouRecvWP"
-
-    ! scratch arrays of size number of BRAMS processes
-    ! containing global indices
-
-    integer :: xbToBeUpdated(nMachs)
-    integer :: xeToBeUpdated(nMachs)
-    integer :: ybToBeUpdated(nMachs)
-    integer :: yeToBeUpdated(nMachs)
-
-    ! scratch arrays of size number of neighbour nodes
-    ! containing global indices of regions for send and receive
-
-    integer :: xbSend(nNeigh)
-    integer :: xeSend(nNeigh)
-    integer :: ybSend(nNeigh)
-    integer :: yeSend(nNeigh)
-    integer :: xbRecv(nNeigh)
-    integer :: xeRecv(nNeigh)
-    integer :: ybRecv(nNeigh)
-    integer :: yeRecv(nNeigh)
-
-    ! scratch arrays of size number of neighbour nodes
-    ! containing which neighbour nodes will send of receive
-
-    logical :: willSend(nNeigh)
-    logical :: willRecv(nNeigh)
-
-    character(len=*), parameter :: h="**(CreateAcousticSendRecvWP)**"
-    character(len=30) :: tmp_name
-    character(len=8) :: str(10)
-    logical, parameter :: dumpLocal=.true.
 
 
     if (dumpLocal) then
-       call MsgDump(h// "starts")
+       call MsgDump(h//" will create AllGhostZoneSend/Recv")
     end if
 
-    ! AcouSendWP, AcouRecvWP:
-    ! messages update entire GhostZone
-
-    call NodesRegionsSendRecv(&
-         nMachs=nMachs, &
-         nNeigh=nNeigh, &
-         myNum=myNum, &
-         tag=TagWP, &
-         Neigh=Neigh, &
-         GlobalOwn=GlobalOwnWithBC, &
-         NameSend=NameSendWP, &
-         NameRecv=NameRecvWP, &
-         xbToUpdate=GlobalWithGhost%xb, &
-         xeToUpdate=GlobalWithGhost%xe, &
-         ybToUpdate=GlobalWithGhost%yb, &
-         yeToUpdate=GlobalWithGhost%ye, &
-         xbSend=xbSend, &
-         xeSend=xeSend, &
-         ybSend=ybSend, &
-         yeSend=yeSend, &
-         willSend=willSend, &
-         SendMessageSet=AcouSendWP, &
-         xbRecv=xbRecv, &
-         xeRecv=xeRecv, &
-         ybRecv=ybRecv, &
-         yeRecv=yeRecv, &
-         willRecv=willRecv, &
-         RecvMessageSet=AcouRecvWP)
-
-    ! get field UP
-
-    if(dyncore_flag==2) then
-       tmp_name='WC'
-    else
-       tmp_name='WP'
-    endif
-
-    call InsertFieldSectionAtSendRecvMessageSet(&
-       tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
-       xbSend, xeSend, ybSend, yeSend, willSend, AcouSendWP, &
-       xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvWP)
-
-    ! get field VP
-
-    if(dyncore_flag==2) then
-       tmp_name='PC'
-    else
-       tmp_name='PP'
-    endif
-
-    call InsertFieldSectionAtSendRecvMessageSet(&
-       tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
-       xbSend, xeSend, ybSend, yeSend, willSend, AcouSendWP, &
-       xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvWP)
-
-    if (dumpLocal) then
-       call MsgDump(h//" finishes with AcouSendWP MessageSet:")
-       call DumpMessageSet(AcouSendWP)
-       call MsgDump(h//" finishes with AcouRecvWP MessageSet:")
-       call DumpMessageSet(AcouRecvWP)
-    end if
-  end subroutine CreateAcousticSendRecvWP
-
-
-
-
-
-  subroutine CreateSelectedGhostZoneSendRecv(&
-       gridId, nMachs, nNeigh, myNum, num_var, vtab_r, &
-       GridSize, Neigh, GlobalOwnWithBC, GlobalWithGhost, &
-       SelectedGhostZoneSend, SelectedGhostZoneRecv)
-
-    integer, intent(in) :: gridId
-    integer, intent(in) :: nMachs
-    integer, intent(in) :: nNeigh
-    integer, intent(in) :: myNum
-    integer, intent(in) :: num_var(:)
-    type(var_tables_r), target, intent(in) ::  vtab_r(:,:)
-
-    type(GridDims), pointer, intent(in) :: GridSize
-    type(NeighbourNodes), pointer, intent(in) :: Neigh
-    type(DomainDecomp), pointer, intent(in) :: GlobalOwnWithBC
-    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
-    type(MessageSet), pointer, intent(inout) :: SelectedGhostZoneSend
-    type(MessageSet), pointer, intent(inout) :: SelectedGhostZoneRecv
-
-    integer :: vTabNbr
-    integer, parameter :: TagSelectedGhostZone=27
-    character(len=*), parameter :: NameSendSelectedGhostZone="SelectedGhostZoneSend"
-    character(len=*), parameter :: NameRecvSelectedGhostZone="SelectedGhostZoneRecv"
-
-    ! scratch arrays of size number of BRAMS processes
-    ! containing global indices
-
-    integer :: xbToBeUpdated(nMachs)
-    integer :: xeToBeUpdated(nMachs)
-    integer :: ybToBeUpdated(nMachs)
-    integer :: yeToBeUpdated(nMachs)
-
-    ! scratch arrays of size number of neighbour nodes
-    ! containing global indices of regions for send and receive
-
-    integer :: xbSend(nNeigh)
-    integer :: xeSend(nNeigh)
-    integer :: ybSend(nNeigh)
-    integer :: yeSend(nNeigh)
-    integer :: xbRecv(nNeigh)
-    integer :: xeRecv(nNeigh)
-    integer :: ybRecv(nNeigh)
-    integer :: yeRecv(nNeigh)
-
-    ! scratch arrays of size number of neighbour nodes
-    ! containing which neighbour nodes will send of receive
-
-    logical :: willSend(nNeigh)
-    logical :: willRecv(nNeigh)
-
-    character(len=*), parameter :: h="**(CreateSelectedGhostZoneSendRecv)**"
-    character(len=8) :: str(10)
-    logical, parameter :: dumpLocal=.true.
-
-
-    if (dumpLocal) then
-       call MsgDump(h// "starts")
-    end if
-
-    ! SelectedGhostZoneSend, SelectedGhostZoneRecv:
-    ! messages update entire GhostZone
-
-    call NodesRegionsSendRecv(&
-         nMachs=nMachs, &
-         nNeigh=nNeigh, &
-         myNum=myNum, &
-         tag=TagSelectedGhostZone, &
-         Neigh=Neigh, &
-         GlobalOwn=GlobalOwnWithBC, &
-         NameSend=NameSendSelectedGhostZone, &
-         NameRecv=NameRecvSelectedGhostZone, &
-         xbToUpdate=GlobalWithGhost%xb, &
-         xeToUpdate=GlobalWithGhost%xe, &
-         ybToUpdate=GlobalWithGhost%yb, &
-         yeToUpdate=GlobalWithGhost%ye, &
-         xbSend=xbSend, &
-         xeSend=xeSend, &
-         ybSend=ybSend, &
-         yeSend=yeSend, &
-         willSend=willSend, &
-         SendMessageSet=SelectedGhostZoneSend, &
-         xbRecv=xbRecv, &
-         xeRecv=xeRecv, &
-         ybRecv=ybRecv, &
-         yeRecv=yeRecv, &
-         willRecv=willRecv, &
-         RecvMessageSet=SelectedGhostZoneRecv)
-
-    ! take all var_tables field that should be communicated
-
-    do vTabNbr = 1, num_var(gridId)
-
-       if (vtab_r(vTabNbr,gridId)%impt1 == 1) then
-
-          call InsertFieldSectionAtSendRecvMessageSet(&
-               vtab_r(vTabNbr,gridId)%name, myNum, nNeigh, gridId, GlobalWithGhost, &
-               xbSend, xeSend, ybSend, yeSend, willSend, SelectedGhostZoneSend, &
-               xbRecv, xeRecv, ybRecv, yeRecv, willRecv, SelectedGhostZoneRecv)
-       end if
-    end do
-    if (dumpLocal) then
-       call MsgDump(h//" finishes with SelectedGhostZoneSend MessageSet:")
-       call DumpMessageSet(SelectedGhostZoneSend)
-       call MsgDump(h//" finishes with SelectedGhostZoneRecv MessageSet:")
-       call DumpMessageSet(SelectedGhostZoneRecv)
-    end if
-  end subroutine CreateSelectedGhostZoneSendRecv
-
-
-
-
-
-  subroutine CreateAllGhostZoneSendRecv(&
-       gridId, nMachs, nNeigh, myNum, num_var, vtab_r, &
-       GridSize, Neigh, GlobalOwnWithBC, GlobalWithGhost, &
-       AllGhostZoneSend, AllGhostZoneRecv)
-
-    integer, intent(in) :: gridId
-    integer, intent(in) :: nMachs
-    integer, intent(in) :: nNeigh
-    integer, intent(in) :: myNum
-    integer, intent(in) :: num_var(:)
-    type(var_tables_r), target, intent(in) ::  vtab_r(:,:)
-
-    type(GridDims), pointer, intent(in) :: GridSize
-    type(NeighbourNodes), pointer, intent(in) :: Neigh
-    type(DomainDecomp), pointer, intent(in) :: GlobalOwnWithBC
-    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
-    type(MessageSet), pointer, intent(inout) :: AllGhostZoneSend
-    type(MessageSet), pointer, intent(inout) :: AllGhostZoneRecv
-
-    integer :: vTabNbr
-    integer, parameter :: TagAllGhostZone=28
-    character(len=*), parameter :: NameSendAllGhostZone="AllGhostZoneSend"
-    character(len=*), parameter :: NameRecvAllGhostZone="AllGhostZoneRecv"
-
-    ! scratch arrays of size number of BRAMS processes
-    ! containing global indices
-
-    integer :: xbToBeUpdated(nMachs)
-    integer :: xeToBeUpdated(nMachs)
-    integer :: ybToBeUpdated(nMachs)
-    integer :: yeToBeUpdated(nMachs)
-
-    ! scratch arrays of size number of neighbour nodes
-    ! containing global indices of regions for send and receive
-
-    integer :: xbSend(nNeigh)
-    integer :: xeSend(nNeigh)
-    integer :: ybSend(nNeigh)
-    integer :: yeSend(nNeigh)
-    integer :: xbRecv(nNeigh)
-    integer :: xeRecv(nNeigh)
-    integer :: ybRecv(nNeigh)
-    integer :: yeRecv(nNeigh)
-
-    ! scratch arrays of size number of neighbour nodes
-    ! containing which neighbour nodes will send of receive
-
-    logical :: willSend(nNeigh)
-    logical :: willRecv(nNeigh)
-
-    character(len=32) :: vTabName
-    character(len=*), parameter :: h="**(CreateAllGhostZoneSendRecv)**"
-    character(len=8) :: str(10)
-    logical, parameter :: dumpLocal=.true.
-
-
-    if (dumpLocal) then
-       call MsgDump(h// "starts")
-    end if
+    myNum  = ParEnv%myNum
+    nMachs = ParEnv%nMachs
+    nNeigh = Neigh%nNeigh
 
     ! AllGhostZoneSend, AllGhostZoneRecv:
     ! messages update entire GhostZone
@@ -1636,812 +1821,35 @@ contains
                xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AllGhostZoneRecv)
        end if
     end do
+
     if (dumpLocal) then
        call MsgDump(h//" finishes with AllGhostZoneSend MessageSet:")
        call DumpMessageSet(AllGhostZoneSend)
        call MsgDump(h//" finishes with AllGhostZoneRecv MessageSet:")
        call DumpMessageSet(AllGhostZoneRecv)
     end if
-  end subroutine CreateAllGhostZoneSendRecv
+  end subroutine CreateAllGhostZoneMessageSet
 
 
 
 
 
-  subroutine CreateSendRecvDn0u(&
-       gridId, nMachs, nNeigh, myNum, &
-       Neigh, GlobalOwn, GlobalWithGhost, &
-       SendDn0u, RecvDn0u)
+  subroutine DestroyAllGhostZoneMessageSet( &
+       AllGhostZoneSend, AllGhostZoneRecv)
 
-    integer, intent(in) :: gridId
-    integer, intent(in) :: nMachs
-    integer, intent(in) :: nNeigh
-    integer, intent(in) :: myNum
-
-    type(NeighbourNodes), pointer, intent(in) :: Neigh
-    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
-    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
-    type(MessageSet), pointer, intent(inout) :: SendDn0u
-    type(MessageSet), pointer, intent(inout) :: RecvDn0u
-
-    integer, parameter :: TagDn0u=29
-    character(len=*), parameter :: NameSendDn0u="SendDn0u"
-    character(len=*), parameter :: NameRecvDn0u="RecvDn0u"
-
-    ! scratch arrays of size number of BRAMS processes
-    ! containing global indices
-
-    integer :: xbToBeUpdated(nMachs)
-    integer :: xeToBeUpdated(nMachs)
-    integer :: ybToBeUpdated(nMachs)
-    integer :: yeToBeUpdated(nMachs)
-
-    ! scratch arrays of size number of neighbour nodes
-    ! containing global indices of regions for send and receive
-
-    integer :: xbSend(nNeigh)
-    integer :: xeSend(nNeigh)
-    integer :: ybSend(nNeigh)
-    integer :: yeSend(nNeigh)
-    integer :: xbRecv(nNeigh)
-    integer :: xeRecv(nNeigh)
-    integer :: ybRecv(nNeigh)
-    integer :: yeRecv(nNeigh)
-
-    ! scratch arrays of size number of neighbour nodes
-    ! containing which neighbour nodes will send of receive
-
-    logical :: willSend(nNeigh)
-    logical :: willRecv(nNeigh)
-
-    character(len=*), parameter :: h="**(CreateSendRecvDn0u)**"
-    character(len=30) :: tmp_name
-    character(len=8) :: str(10)
+    type(MessageSet), pointer, intent(inout) :: AllGhostZoneSend
+    type(MessageSet), pointer, intent(inout) :: AllGhostZoneRecv
+    character(len=*), parameter :: h="**(DestroyAllGhostZoneMessageSet)**"
     logical, parameter :: dumpLocal=.true.
 
-
     if (dumpLocal) then
-       call MsgDump(h// "starts")
+       call MsgDump(h//" will destroy AllGhostZoneSend/Recv")
     end if
 
-    ! SendDn0u, RecvDn0u:
-    ! messages update GlobalOwn [xe+1:xe+1,yb:ye]
+    call DestroyMessageSet(AllGhostZoneSend)
+    call DestroyMessageSet(AllGhostZoneRecv)
 
-    call NodesRegionsSendRecv(&
-         nMachs=nMachs, &
-         nNeigh=nNeigh, &
-         myNum=myNum, &
-         tag=TagDn0u, &
-         Neigh=Neigh, &
-         GlobalOwn=GlobalOwn, &
-         NameSend=NameSendDn0u, &
-         NameRecv=NameRecvDn0u, &
-         xbToUpdate=GlobalOwn%xe + 1, &
-         xeToUpdate=GlobalOwn%xe + 1, &
-         ybToUpdate=GlobalOwn%yb, &
-         yeToUpdate=GlobalOwn%ye, &
-         xbSend=xbSend, &
-         xeSend=xeSend, &
-         ybSend=ybSend, &
-         yeSend=yeSend, &
-         willSend=willSend, &
-         SendMessageSet=SendDn0u, &
-         xbRecv=xbRecv, &
-         xeRecv=xeRecv, &
-         ybRecv=ybRecv, &
-         yeRecv=yeRecv, &
-         willRecv=willRecv, &
-         RecvMessageSet=RecvDn0u)
-
-    ! get field
-
-    tmp_name='DN0U'
-
-    call InsertFieldSectionAtSendRecvMessageSet(&
-         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, SendDn0u, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvDn0u)
-
-    if (dumpLocal) then
-       call MsgDump(h//" finishes with SendDn0u MessageSet:")
-       call DumpMessageSet(SendDn0u)
-       call MsgDump(h//" finishes with RecvDn0u MessageSet:")
-       call DumpMessageSet(RecvDn0u)
-    end if
-  end subroutine CreateSendRecvDn0u
-
-
-
-
-
-  subroutine CreateSendRecvDn0v(&
-       gridId, nMachs, nNeigh, myNum, &
-       Neigh, GlobalOwn, GlobalWithGhost, &
-       SendDn0v, RecvDn0v)
-
-    integer, intent(in) :: gridId
-    integer, intent(in) :: nMachs
-    integer, intent(in) :: nNeigh
-    integer, intent(in) :: myNum
-
-    type(NeighbourNodes), pointer, intent(in) :: Neigh
-    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
-    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
-    type(MessageSet), pointer, intent(inout) :: SendDn0v
-    type(MessageSet), pointer, intent(inout) :: RecvDn0v
-
-    integer, parameter :: TagDn0v=30
-    character(len=*), parameter :: NameSendDn0v="SendDn0v"
-    character(len=*), parameter :: NameRecvDn0v="RecvDn0v"
-
-    ! scratch arrays of size number of BRAMS processes
-    ! containing global indices
-
-    integer :: xbToBeUpdated(nMachs)
-    integer :: xeToBeUpdated(nMachs)
-    integer :: ybToBeUpdated(nMachs)
-    integer :: yeToBeUpdated(nMachs)
-
-    ! scratch arrays of size number of neighbour nodes
-    ! containing global indices of regions for send and receive
-
-    integer :: xbSend(nNeigh)
-    integer :: xeSend(nNeigh)
-    integer :: ybSend(nNeigh)
-    integer :: yeSend(nNeigh)
-    integer :: xbRecv(nNeigh)
-    integer :: xeRecv(nNeigh)
-    integer :: ybRecv(nNeigh)
-    integer :: yeRecv(nNeigh)
-
-    ! scratch arrays of size number of neighbour nodes
-    ! containing which neighbour nodes will send of receive
-
-    logical :: willSend(nNeigh)
-    logical :: willRecv(nNeigh)
-
-    character(len=*), parameter :: h="**(CreateSendRecvDn0v)**"
-    character(len=30) :: tmp_name
-    character(len=8) :: str(10)
-    logical, parameter :: dumpLocal=.true.
-
-
-    if (dumpLocal) then
-       call MsgDump(h// "starts")
-    end if
-
-    ! SendDn0v, RecvDn0v:
-    ! messages update GlobalOwn [xb:xe,ye+1:ye+1]
-
-    call NodesRegionsSendRecv(&
-         nMachs=nMachs, &
-         nNeigh=nNeigh, &
-         myNum=myNum, &
-         tag=TagDn0v, &
-         Neigh=Neigh, &
-         GlobalOwn=GlobalOwn, &
-         NameSend=NameSendDn0v, &
-         NameRecv=NameRecvDn0v, &
-         xbToUpdate=GlobalOwn%xb, &
-         xeToUpdate=GlobalOwn%xe, &
-         ybToUpdate=GlobalOwn%ye+1, &
-         yeToUpdate=GlobalOwn%ye+1, &
-         xbSend=xbSend, &
-         xeSend=xeSend, &
-         ybSend=ybSend, &
-         yeSend=yeSend, &
-         willSend=willSend, &
-         SendMessageSet=SendDn0v, &
-         xbRecv=xbRecv, &
-         xeRecv=xeRecv, &
-         ybRecv=ybRecv, &
-         yeRecv=yeRecv, &
-         willRecv=willRecv, &
-         RecvMessageSet=RecvDn0v)
-
-    ! get field
-
-    tmp_name='DN0V'
-
-    call InsertFieldSectionAtSendRecvMessageSet(&
-         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, SendDn0v, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvDn0v)
-
-    if (dumpLocal) then
-       call MsgDump(h//" finishes with SendDn0v MessageSet:")
-       call DumpMessageSet(SendDn0v)
-       call MsgDump(h//" finishes with RecvDn0v MessageSet:")
-       call DumpMessageSet(RecvDn0v)
-    end if
-  end subroutine CreateSendRecvDn0v
-
-
-
-
-  subroutine CreateG3DSendRecv(&
-       gridId, nMachs, nNeigh, myNum, &
-       g3d_spread, g3d_smoothh, &
-       GridSize, Neigh, GlobalOwnWithBC, GlobalWithGhost, &
-       SendG3D, RecvG3D)
-
-    integer, intent(in) :: gridId
-    integer, intent(in) :: nMachs
-    integer, intent(in) :: nNeigh
-    integer, intent(in) :: myNum
-    integer, intent(in) :: g3d_spread
-    integer, intent(in) :: g3d_smoothh
-
-    type(GridDims), pointer, intent(in) :: GridSize
-    type(NeighbourNodes), pointer, intent(in) :: Neigh
-    type(DomainDecomp), pointer, intent(in) :: GlobalOwnWithBC
-    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
-    type(MessageSet), pointer, intent(inout) :: SendG3D
-    type(MessageSet), pointer, intent(inout) :: RecvG3D
-
-    integer :: vTabNbr
-    integer, parameter :: TagG3D=31
-    character(len=*), parameter :: NameSendG3D="SendG3D"
-    character(len=*), parameter :: NameRecvG3D="RecvG3D"
-
-    ! scratch arrays of size number of BRAMS processes
-    ! containing global indices
-
-    integer :: xbToBeUpdated(nMachs)
-    integer :: xeToBeUpdated(nMachs)
-    integer :: ybToBeUpdated(nMachs)
-    integer :: yeToBeUpdated(nMachs)
-
-    ! scratch arrays of size number of neighbour nodes
-    ! containing global indices of regions for send and receive
-
-    integer :: xbSend(nNeigh)
-    integer :: xeSend(nNeigh)
-    integer :: ybSend(nNeigh)
-    integer :: yeSend(nNeigh)
-    integer :: xbRecv(nNeigh)
-    integer :: xeRecv(nNeigh)
-    integer :: ybRecv(nNeigh)
-    integer :: yeRecv(nNeigh)
-
-    ! scratch arrays of size number of neighbour nodes
-    ! containing which neighbour nodes will send of receive
-
-    logical :: willSend(nNeigh)
-    logical :: willRecv(nNeigh)
-
-    character(len=*), parameter :: h="**(CreateG3DSendRecv)**"
-    character(len=30) :: tmp_name
-    character(len=8) :: str(10)
-    logical, parameter :: dumpLocal=.true.
-
-
-    if (dumpLocal) then
-       call MsgDump(h// "starts")
-    end if
-
-    ! SendG3D, RecvG3D:
-    ! messages update entire GhostZone
-
-    call NodesRegionsSendRecv(&
-         nMachs=nMachs, &
-         nNeigh=nNeigh, &
-         myNum=myNum, &
-         tag=TagG3D, &
-         Neigh=Neigh, &
-         GlobalOwn=GlobalOwnWithBC, &
-         NameSend=NameSendG3D, &
-         NameRecv=NameRecvG3d, &
-         xbToUpdate=GlobalOwnWithBC%xb, &
-         xeToUpdate=GlobalOwnWithBC%xe, &
-         ybToUpdate=GlobalOwnWithBC%yb, &
-         yeToUpdate=GlobalOwnWithBC%ye, &
-         xbSend=xbSend, &
-         xeSend=xeSend, &
-         ybSend=ybSend, &
-         yeSend=yeSend, &
-         willSend=willSend, &
-         SendMessageSet=SendG3D, &
-         xbRecv=xbRecv, &
-         xeRecv=xeRecv, &
-         ybRecv=ybRecv, &
-         yeRecv=yeRecv, &
-         willRecv=willRecv, &
-         RecvMessageSet=RecvG3D)
-
-    ! when g3d_spread is selected, send and receive fields TTENS and QVTTENS
-
-    if (g3d_spread == 1) then
-
-       tmp_name='TTENS'
-
-       call InsertFieldSectionAtSendRecvMessageSet(&
-            tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
-            xbSend, xeSend, ybSend, yeSend, willSend, SendG3D, &
-            xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvG3D)
-
-       tmp_name='QVTTENS'
-
-       call InsertFieldSectionAtSendRecvMessageSet(&
-            tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
-            xbSend, xeSend, ybSend, yeSend, willSend, SendG3D, &
-            xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvG3D)
-    end if
-
-    ! when g3d_smoothh is selected, send and receive fields THSRC and RTSRC
-
-    if (g3d_smoothh == 1) then
-
-       tmp_name='THSRC'
-
-       call InsertFieldSectionAtSendRecvMessageSet(&
-            tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
-            xbSend, xeSend, ybSend, yeSend, willSend, SendG3D, &
-            xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvG3D)
-
-       tmp_name='RTSRC'
-
-       call InsertFieldSectionAtSendRecvMessageSet(&
-            tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
-            xbSend, xeSend, ybSend, yeSend, willSend, SendG3D, &
-            xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvG3D)
-
-    end if
-    if (dumpLocal) then
-       call MsgDump(h//" finishes with SendG3D MessageSet:")
-       call DumpMessageSet(SendG3D)
-       call MsgDump(h//" finishes with RecvG3D MessageSet:")
-       call DumpMessageSet(RecvG3D)
-    end if
-  end subroutine CreateG3DSendRecv
-
-
-
-
-
-
-
-
-
-
-
-  subroutine CreateAcousticSendRecvU(&
-       gridId, nMachs, nNeigh, myNum, &
-       Neigh, GlobalOwn, GlobalWithGhost, &
-       AcouSendU, AcouRecvU)
-
-    integer, intent(in) :: gridId
-    integer, intent(in) :: nMachs
-    integer, intent(in) :: nNeigh
-    integer, intent(in) :: myNum
-
-    type(NeighbourNodes), pointer, intent(in) :: Neigh
-    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
-    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
-    type(MessageSet), pointer, intent(inout) :: AcouSendU
-    type(MessageSet), pointer, intent(inout) :: AcouRecvU
-
-    integer, parameter :: TagU=32
-    character(len=*), parameter :: NameSendU="AcouSendU"
-    character(len=*), parameter :: NameRecvU="AcouRecvU"
-
-    ! scratch arrays of size number of BRAMS processes
-    ! containing global indices
-
-    integer :: xbToBeUpdated(nMachs)
-    integer :: xeToBeUpdated(nMachs)
-    integer :: ybToBeUpdated(nMachs)
-    integer :: yeToBeUpdated(nMachs)
-
-    ! scratch arrays of size number of neighbour nodes
-    ! containing global indices of regions for send and receive
-
-    integer :: xbSend(nNeigh)
-    integer :: xeSend(nNeigh)
-    integer :: ybSend(nNeigh)
-    integer :: yeSend(nNeigh)
-    integer :: xbRecv(nNeigh)
-    integer :: xeRecv(nNeigh)
-    integer :: ybRecv(nNeigh)
-    integer :: yeRecv(nNeigh)
-
-    ! scratch arrays of size number of neighbour nodes
-    ! containing which neighbour nodes will send of receive
-
-    logical :: willSend(nNeigh)
-    logical :: willRecv(nNeigh)
-
-    character(len=*), parameter :: h="**(CreateAcousticSendRecvU)**"
-    logical, parameter :: dumpLocal=.true.
-    character(len=8) :: str(10)
-    character(len=30) :: tmp_name
-
-
-    if (dumpLocal) then
-       call MsgDump(h// "starts")
-    end if
-
-    ! AcouSendU, AcouRecvU:
-    ! messages update GlobalOwn [xb-1:xb-1,yb:ye]
-
-    call NodesRegionsSendRecv(&
-         nMachs=nMachs, &
-         nNeigh=nNeigh, &
-         myNum=myNum, &
-         tag=TagU, &
-         Neigh=Neigh, &
-         GlobalOwn=GlobalOwn, &
-         NameSend=NameSendU, &
-         NameRecv=NameRecvU, &
-         xbToUpdate=GlobalOwn%xb-1, &
-         xeToUpdate=GlobalOwn%xb-1, &
-         ybToUpdate=GlobalOwn%yb, &
-         yeToUpdate=GlobalOwn%ye, &
-         xbSend=xbSend, &
-         xeSend=xeSend, &
-         ybSend=ybSend, &
-         yeSend=yeSend, &
-         willSend=willSend, &
-         SendMessageSet=AcouSendU, &
-         xbRecv=xbRecv, &
-         xeRecv=xeRecv, &
-         ybRecv=ybRecv, &
-         yeRecv=yeRecv, &
-         willRecv=willRecv, &
-         RecvMessageSet=AcouRecvU)
-
-    ! get field
-
-    if(dyncore_flag==2) then
-       tmp_name='UC'
-    else
-       tmp_name='UP'
-    endif
-
-    call InsertFieldSectionAtSendRecvMessageSet(&
-         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendU, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvU)
-
-    if (dumpLocal) then
-       call MsgDump(h//" finishes with AcouSendU MessageSet:")
-       call DumpMessageSet(AcouSendU)
-       call MsgDump(h//" finishes with AcouRecvU MessageSet:")
-       call DumpMessageSet(AcouRecvU)
-    end if
-  end subroutine CreateAcousticSendRecvU
-
-
-
-
-
-  subroutine CreateAcousticSendRecvV(&
-       gridId, nMachs, nNeigh, myNum, &
-       Neigh, GlobalOwn, GlobalWithGhost, &
-       AcouSendV, AcouRecvV)
-
-    integer, intent(in) :: gridId
-    integer, intent(in) :: nMachs
-    integer, intent(in) :: nNeigh
-    integer, intent(in) :: myNum
-
-    type(NeighbourNodes), pointer, intent(in) :: Neigh
-    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
-    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
-    type(MessageSet), pointer, intent(inout) :: AcouSendV
-    type(MessageSet), pointer, intent(inout) :: AcouRecvV
-
-    integer, parameter :: TagV=33
-    character(len=*), parameter :: NameSendV="AcouSendV"
-    character(len=*), parameter :: NameRecvV="AcouRecvV"
-    character(len=30) :: tmp_name
-    ! scratch arrays of size number of BRAMS processes
-    ! containing global indices
-
-    integer :: xbToBeUpdated(nMachs)
-    integer :: xeToBeUpdated(nMachs)
-    integer :: ybToBeUpdated(nMachs)
-    integer :: yeToBeUpdated(nMachs)
-
-    ! scratch arrays of size number of neighbour nodes
-    ! containing global indices of regions for send and receive
-
-    integer :: xbSend(nNeigh)
-    integer :: xeSend(nNeigh)
-    integer :: ybSend(nNeigh)
-    integer :: yeSend(nNeigh)
-    integer :: xbRecv(nNeigh)
-    integer :: xeRecv(nNeigh)
-    integer :: ybRecv(nNeigh)
-    integer :: yeRecv(nNeigh)
-
-    ! scratch arrays of size number of neighbour nodes
-    ! containing which neighbour nodes will send of receive
-
-    logical :: willSend(nNeigh)
-    logical :: willRecv(nNeigh)
-
-
-    character(len=*), parameter :: h="**(CreateAcousticSendRecvV)**"
-    logical, parameter :: dumpLocal=.true.
-    character(len=8) :: str(10)
-
-
-    if (dumpLocal) then
-       call MsgDump(h// "starts")
-    end if
-
-    ! AcouSendV, AcouRecvV:
-    ! messages update GlobalOwn [xb:xe,yb-1:yb-1]
-
-    call NodesRegionsSendRecv(&
-         nMachs=nMachs, &
-         nNeigh=nNeigh, &
-         myNum=myNum, &
-         tag=TagV, &
-         Neigh=Neigh, &
-         GlobalOwn=GlobalOwn, &
-         NameSend=NameSendV, &
-         NameRecv=NameRecvV, &
-         xbToUpdate=GlobalOwn%xb, &
-         xeToUpdate=GlobalOwn%xe, &
-         ybToUpdate=GlobalOwn%yb-1, &
-         yeToUpdate=GlobalOwn%yb-1, &
-         xbSend=xbSend, &
-         xeSend=xeSend, &
-         ybSend=ybSend, &
-         yeSend=yeSend, &
-         willSend=willSend, &
-         SendMessageSet=AcouSendV, &
-         xbRecv=xbRecv, &
-         xeRecv=xeRecv, &
-         ybRecv=ybRecv, &
-         yeRecv=yeRecv, &
-         willRecv=willRecv, &
-         RecvMessageSet=AcouRecvV)
-
-    ! get field
-
-    if(dyncore_flag==2) then
-       tmp_name='VC'
-    else
-       tmp_name='VP'
-    endif
-
-    call InsertFieldSectionAtSendRecvMessageSet(&
-         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendV, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvV)
-
-    if (dumpLocal) then
-       call MsgDump(h//" finishes with AcouSendV MessageSet:")
-       call DumpMessageSet(AcouSendV)
-       call MsgDump(h//" finishes with AcouRecvV MessageSet:")
-       call DumpMessageSet(AcouRecvV)
-    end if
-  end subroutine CreateAcousticSendRecvV
-
-
-
-
-
-
-  subroutine CreateAcousticSendRecvPNorth(&
-       gridId, nMachs, nNeigh, myNum, &
-       Neigh, GlobalOwn, GlobalWithGhost, &
-       AcouSendPNorth, AcouRecvPNorth)
-
-    integer, intent(in) :: gridId
-    integer, intent(in) :: nMachs
-    integer, intent(in) :: nNeigh
-    integer, intent(in) :: myNum
-
-    type(NeighbourNodes), pointer, intent(in) :: Neigh
-    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
-    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
-    type(MessageSet), pointer, intent(inout) :: AcouSendPNorth
-    type(MessageSet), pointer, intent(inout) :: AcouRecvPNorth
-
-    integer, parameter :: TagPNorth=35
-    character(len=*), parameter :: NameSendPNorth="AcouSendPNorth"
-    character(len=*), parameter :: NameRecvPNorth="AcouRecvPNorth"
-
-    ! scratch arrays of size number of BRAMS processes
-    ! containing global indices
-
-    integer :: xbToBeUpdated(nMachs)
-    integer :: xeToBeUpdated(nMachs)
-    integer :: ybToBeUpdated(nMachs)
-    integer :: yeToBeUpdated(nMachs)
-
-    ! scratch arrays of size number of neighbour nodes
-    ! containing global indices of regions for send and receive
-
-    integer :: xbSend(nNeigh)
-    integer :: xeSend(nNeigh)
-    integer :: ybSend(nNeigh)
-    integer :: yeSend(nNeigh)
-    integer :: xbRecv(nNeigh)
-    integer :: xeRecv(nNeigh)
-    integer :: ybRecv(nNeigh)
-    integer :: yeRecv(nNeigh)
-
-    ! scratch arrays of size number of neighbour nodes
-    ! containing which neighbour nodes will send of receive
-
-    logical :: willSend(nNeigh)
-    logical :: willRecv(nNeigh)
-
-    character(len=*), parameter :: h="**(CreateAcousticSendRecvPNorth)**"
-    character(len=30) :: tmp_name
-    character(len=8) :: str(10)
-    logical, parameter :: dumpLocal=.true.
-
-
-    if (dumpLocal) then
-       call MsgDump(h// "starts")
-    end if
-
-    ! AcouSendPNorth, AcouRecvPNorth: union of
-    !               GlobalOwn [xe+1:xe+1,yb:ye] with
-    !               GlobalOwn [xb:xe,ye+1:ye+1]
-
-    call NodesRegionsSendRecv(&
-         nMachs=nMachs, &
-         nNeigh=nNeigh, &
-         myNum=myNum, &
-         tag=TagPNorth, &
-         Neigh=Neigh, &
-         GlobalOwn=GlobalOwn, &
-         NameSend=NameSendPNorth, &
-         NameRecv=NameRecvPNorth, &
-         xbToUpdate=GlobalOwn%xe+1, &
-         xeToUpdate=GlobalOwn%xe+1, &
-         ybToUpdate=GlobalOwn%yb, &
-         yeToUpdate=GlobalOwn%ye, &
-         xbSend=xbSend, &
-         xeSend=xeSend, &
-         ybSend=ybSend, &
-         yeSend=yeSend, &
-         willSend=willSend, &
-         SendMessageSet=AcouSendPNorth, &
-         xbRecv=xbRecv, &
-         xeRecv=xeRecv, &
-         ybRecv=ybRecv, &
-         yeRecv=yeRecv, &
-         willRecv=willRecv, &
-         RecvMessageSet=AcouRecvPNorth)
-
-    ! get field
-
-    if(dyncore_flag==2) then
-       tmp_name='PC'
-    else
-       tmp_name='PP'
-    endif
-
-    call InsertFieldSectionAtSendRecvMessageSet(&
-         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendPNorth, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvPNorth)
-
-    if (dumpLocal) then
-       call MsgDump(h//" finishes with AcouSendPNorth MessageSet:")
-       call DumpMessageSet(AcouSendPNorth)
-       call MsgDump(h//" finishes with AcouRecvPNorth MessageSet:")
-       call DumpMessageSet(AcouRecvPNorth)
-    end if
-  end subroutine CreateAcousticSendRecvPNorth
-
-
-
-
-
-  subroutine CreateAcousticSendRecvPEast(&
-       gridId, nMachs, nNeigh, myNum, &
-       Neigh, GlobalOwn, GlobalWithGhost, &
-       AcouSendPEast, AcouRecvPEast)
-
-    integer, intent(in) :: gridId
-    integer, intent(in) :: nMachs
-    integer, intent(in) :: nNeigh
-    integer, intent(in) :: myNum
-
-    type(NeighbourNodes), pointer, intent(in) :: Neigh
-    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
-    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
-    type(MessageSet), pointer, intent(inout) :: AcouSendPEast
-    type(MessageSet), pointer, intent(inout) :: AcouRecvPEast
-
-    integer, parameter :: TagPEast=36
-    character(len=*), parameter :: NameSendPEast="AcouSendPEast"
-    character(len=*), parameter :: NameRecvPEast="AcouRecvPEast"
-
-    ! scratch arrays of size number of BRAMS processes
-    ! containing global indices
-
-    integer :: xbToBeUpdated(nMachs)
-    integer :: xeToBeUpdated(nMachs)
-    integer :: ybToBeUpdated(nMachs)
-    integer :: yeToBeUpdated(nMachs)
-
-    ! scratch arrays of size number of neighbour nodes
-    ! containing global indices of regions for send and receive
-
-    integer :: xbSend(nNeigh)
-    integer :: xeSend(nNeigh)
-    integer :: ybSend(nNeigh)
-    integer :: yeSend(nNeigh)
-    integer :: xbRecv(nNeigh)
-    integer :: xeRecv(nNeigh)
-    integer :: ybRecv(nNeigh)
-    integer :: yeRecv(nNeigh)
-
-    ! scratch arrays of size number of neighbour nodes
-    ! containing which neighbour nodes will send of receive
-
-    logical :: willSend(nNeigh)
-    logical :: willRecv(nNeigh)
-
-    character(len=*), parameter :: h="**(CreateAcousticSendRecvPEast)**"
-    character(len=30) :: tmp_name
-    character(len=8) :: str(10)
-    logical, parameter :: dumpLocal=.true.
-
-
-    if (dumpLocal) then
-       call MsgDump(h// "starts")
-    end if
-
-    ! AcouSendPEast, AcouRecvPEast: 
-    !               GlobalOwn [xb:xe,ye+1:ye+1]
-
-    call NodesRegionsSendRecv(&
-         nMachs=nMachs, &
-         nNeigh=nNeigh, &
-         myNum=myNum, &
-         tag=TagPEast, &
-         Neigh=Neigh, &
-         GlobalOwn=GlobalOwn, &
-         NameSend=NameSendPEast, &
-         NameRecv=NameRecvPEast, &
-         xbToUpdate=GlobalOwn%xb, &
-         xeToUpdate=GlobalOwn%xe, &
-         ybToUpdate=GlobalOwn%ye+1, &
-         yeToUpdate=GlobalOwn%ye+1, &
-         xbSend=xbSend, &
-         xeSend=xeSend, &
-         ybSend=ybSend, &
-         yeSend=yeSend, &
-         willSend=willSend, &
-         SendMessageSet=AcouSendPEast, &
-         xbRecv=xbRecv, &
-         xeRecv=xeRecv, &
-         ybRecv=ybRecv, &
-         yeRecv=yeRecv, &
-         willRecv=willRecv, &
-         RecvMessageSet=AcouRecvPEast)
-
-    ! get field
-
-    if(dyncore_flag==2) then
-       tmp_name='PC'
-    else
-       tmp_name='PP'
-    endif
-
-    call InsertFieldSectionAtSendRecvMessageSet(&
-         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendPEast, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvPEast)
-
-    if (dumpLocal) then
-       call MsgDump(h//" finishes with AcouSendPEast MessageSet:")
-       call DumpMessageSet(AcouSendPEast)
-       call MsgDump(h//" finishes with AcouRecvPEast MessageSet:")
-       call DumpMessageSet(AcouRecvPEast)
-    end if
-  end subroutine CreateAcousticSendRecvPEast
+  end subroutine DestroyAllGhostZoneMessageSet
 
 
 
@@ -2492,7 +1900,7 @@ contains
        end do
     else
        if (dumpLocal) then
-          call MsgDump(h//" no message to receive")
+          call MsgDump(h//" empty receive message set")
        end if
     end if
 
@@ -2527,7 +1935,7 @@ contains
        end do
     else
        if (dumpLocal) then
-          call MsgDump(h//" no message to send")
+          call MsgDump(h//" empty send message set")
        end if
     end if
   end subroutine PostRecvSendMsgs
@@ -2588,6 +1996,10 @@ contains
           call ExtractFieldSectionDataFromMessageDataBuffer(RecvMsg%msgData(recvNbr))
           call DeallocateMessageDataBuffer(RecvMsg%msgData(recvNbr))
        end do
+    else
+       if (dumpLocal) then
+          call MsgDump(h//" empty receive message set")
+       end if
     end if
 
     ! for all posted send messages, wait on pending request,
@@ -2600,6 +2012,10 @@ contains
                SendMsg%request, sendNbr)
           call DeallocateMessageDataBuffer(SendMsg%msgData(sendNbr))
        end do
+    else
+       if (dumpLocal) then
+          call MsgDump(h//" empty send message set")
+       end if
     end if
   end subroutine WaitSendRecvMsgs
 end module ModMessageSet
