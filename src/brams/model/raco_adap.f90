@@ -62,7 +62,8 @@ contains
 
        if (nmachs > 1) then
           if (iter .ne. 1) then
-             call WaitSendRecvMsgs(OneGrid%AcouSendP, OneGrid%AcouRecvP)
+             call WaitSendRecvMsgs(OneGrid%AcouSendPNorth, OneGrid%AcouRecvPNorth)
+             call WaitSendRecvMsgs(OneGrid%AcouSendPEast, OneGrid%AcouRecvPEast)
           endif
        endif
 
@@ -118,7 +119,8 @@ contains
 
        if (nmachs > 1) then
           if (iter .ne. nnacoust(ngrid)) then
-             call PostRecvSendMsgs(OneGrid%AcouSendP, OneGrid%AcouRecvP)
+             call PostRecvSendMsgs(OneGrid%AcouSendPNorth, OneGrid%AcouRecvPNorth)
+             call PostRecvSendMsgs(OneGrid%AcouSendPEast, OneGrid%AcouRecvPEast)
           else
              call PostRecvSendMsgs(OneGrid%AcouSendWP, OneGrid%AcouRecvWP)
              call WaitSendRecvMsgs(OneGrid%AcouSendWP, OneGrid%AcouRecvWP)

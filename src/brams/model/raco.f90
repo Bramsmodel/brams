@@ -1124,7 +1124,8 @@ contains
        !   if outermost grid,
        !     receives pp on full grid boundaries
        if (iter > 1 .and. .not. singleProcRun) then
-          call WaitSendRecvMsgs(OneGrid%AcouSendP, OneGrid%AcouRecvP)
+          call WaitSendRecvMsgs(OneGrid%AcouSendPNorth, OneGrid%AcouRecvPNorth)
+          call WaitSendRecvMsgs(OneGrid%AcouSendPEast, OneGrid%AcouRecvPEast)
        end if
 
        if ( apply_div_damping .and. ( dyncore_flag == 2)&
@@ -1275,7 +1276,8 @@ contains
        !      receives wp and pp and updates this process ghost zone
        if (.not. singleProcRun) then
           if (iter < lastIter) then
-             call PostRecvSendMsgs(OneGrid%AcouSendP, OneGrid%AcouRecvP)
+             call PostRecvSendMsgs(OneGrid%AcouSendPNorth, OneGrid%AcouRecvPNorth)
+             call PostRecvSendMsgs(OneGrid%AcouSendPEast, OneGrid%AcouRecvPEast)
           else
              call PostRecvSendMsgs(OneGrid%AcouSendWP, OneGrid%AcouRecvWP)
              call WaitSendRecvMsgs(OneGrid%AcouSendWP, OneGrid%AcouRecvWP)

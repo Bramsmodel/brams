@@ -118,9 +118,12 @@ module ModGrid
      type(MessageSet), pointer :: AcouSendV => null()
      type(MessageSet), pointer :: AcouRecvV => null()
      ! AcouSend/RecvV: Ghost Zone update at acoust_new and acoust_adap
-     type(MessageSet), pointer :: AcouSendP => null()
-     type(MessageSet), pointer :: AcouRecvP => null()
-     ! AcouSend/RecvP: Ghost Zone update at acoust_new and acoust_adap
+     type(MessageSet), pointer :: AcouSendPNorth => null()
+     type(MessageSet), pointer :: AcouRecvPNorth => null()
+     ! AcouSend/RecvPNorth: Ghost Zone update at acoust_new and acoust_adap
+     type(MessageSet), pointer :: AcouSendPEast => null()
+     type(MessageSet), pointer :: AcouRecvPEast => null()
+     ! AcouSend/RecvPEast: Ghost Zone update at acoust_new and acoust_adap
      type(MessageSet), pointer :: AcouSendUV => null()
      type(MessageSet), pointer :: AcouRecvUV => null()
      ! AcouSend/RecvUV: Ghost Zone update at acoust_new and acoust_adap
@@ -287,29 +290,6 @@ contains
             oneGridDims=oneGrid%GridSize, &
             oneLocalOwnMonoAdv=oneGrid%LocalOwnLargeGhost)
     end if
-
-!!$    oneGrid%AcouSendU => null()
-!!$    oneGrid%AcouRecvU => null()
-!!$    oneGrid%AcouSendV => null()
-!!$    oneGrid%AcouRecvV => null()
-!!$    oneGrid%AcouSendP => null()
-!!$    oneGrid%AcouRecvP => null()
-!!$    oneGrid%AcouSendUV => null()
-!!$    oneGrid%AcouRecvUV => null()
-!!$    oneGrid%AcouSendWP => null()
-!!$    oneGrid%AcouRecvWP => null()
-!!$    oneGrid%SendDn0u => null()
-!!$    oneGrid%RecvDn0u => null()
-!!$    oneGrid%SendDn0v => null()
-!!$    oneGrid%RecvDn0v => null()
-!!$    oneGrid%SendG3D => null()
-!!$    oneGrid%RecvG3D => null()
-!!$    oneGrid%SelectedGhostZoneSend => null()
-!!$    oneGrid%SelectedGhostZoneRecv => null()
-!!$    oneGrid%AllGhostZoneSend => null()
-!!$    oneGrid%AllGhostZoneRecv => null()
-!!$    oneGrid%meteoPolygons => null()
-    
   end subroutine CreateGrid
 
 
@@ -334,7 +314,8 @@ contains
          oneGrid%GlobalWithGhost, &
          oneGrid%AcouSendU, oneGrid%AcouRecvU, &
          oneGrid%AcouSendV, oneGrid%AcouRecvV,&
-         oneGrid%AcouSendP, oneGrid%AcouRecvP, &
+         oneGrid%AcouSendPNorth, oneGrid%AcouRecvPNorth, &
+         oneGrid%AcouSendPEast, oneGrid%AcouRecvPEast, &
          oneGrid%AcouSendUV, oneGrid%AcouRecvUV, &
          oneGrid%AcouSendWP, oneGrid%AcouRecvWP)
 
@@ -391,7 +372,8 @@ contains
        call DestroyAcousticMessageSet(&
             oneGrid%AcouSendU, oneGrid%AcouRecvU, &
             oneGrid%AcouSendV, oneGrid%AcouRecvV, &
-            oneGrid%AcouSendP, oneGrid%AcouRecvP, &
+            oneGrid%AcouSendPNorth, oneGrid%AcouRecvPNorth, &
+            oneGrid%AcouSendPEast, oneGrid%AcouRecvPEast, &
             oneGrid%AcouSendUV, oneGrid%AcouRecvUV, &
             oneGrid%AcouSendWP, oneGrid%AcouRecvWP)
        call DestroyDn0MessageSet( &
@@ -454,10 +436,14 @@ contains
     call DumpMessageSet(oneGrid%AcouSendV)
     call MsgDump(h//" dumping AcouRecvV")
     call DumpMessageSet(oneGrid%AcouRecvV)
-    call MsgDump(h//" dumping AcouSendP")
-    call DumpMessageSet(oneGrid%AcouSendP)
-    call MsgDump(h//" dumping AcouRecvP")
-    call DumpMessageSet(oneGrid%AcouRecvP)
+    call MsgDump(h//" dumping AcouSendPNorth")
+    call DumpMessageSet(oneGrid%AcouSendPNorth)
+    call MsgDump(h//" dumping AcouRecvPNorth")
+    call DumpMessageSet(oneGrid%AcouRecvPNorth)
+    call MsgDump(h//" dumping AcouSendPEast")
+    call DumpMessageSet(oneGrid%AcouSendPEast)
+    call MsgDump(h//" dumping AcouRecvPEast")
+    call DumpMessageSet(oneGrid%AcouRecvPEast)
     call MsgDump(h//" dumping AcouSendUV")
     call DumpMessageSet(oneGrid%AcouSendUV)
     call MsgDump(h//" dumping AcouRecvUV")

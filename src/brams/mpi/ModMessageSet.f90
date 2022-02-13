@@ -416,7 +416,7 @@ contains
 
     character(len=*), parameter :: h="**(NodesRegionsSendRecv)**"
     logical, parameter :: dumpLocal=.true.
- 
+
     if (dumpLocal) then
        call MsgDump(h// "starts")
     end if
@@ -450,7 +450,7 @@ contains
        call DumpMessageSet(RecvMessageSet)
     end if
   end subroutine NodesRegionsSendRecv
-    
+
 
 
 
@@ -461,7 +461,8 @@ contains
        GlobalWithGhost, &
        AcouSendU, AcouRecvU, &
        AcouSendV, AcouRecvV, &
-       AcouSendP, AcouRecvP, &
+       AcouSendPNorth, AcouRecvPNorth, &
+       AcouSendPEast, AcouRecvPEast, &
        AcouSendUV, AcouRecvUV, &
        AcouSendWP, AcouRecvWP)
 
@@ -476,8 +477,10 @@ contains
     type(MessageSet), pointer, intent(inout) :: AcouRecvU
     type(MessageSet), pointer, intent(inout) :: AcouSendV
     type(MessageSet), pointer, intent(inout) :: AcouRecvV
-    type(MessageSet), pointer, intent(inout) :: AcouSendP
-    type(MessageSet), pointer, intent(inout) :: AcouRecvP
+    type(MessageSet), pointer, intent(inout) :: AcouSendPNorth
+    type(MessageSet), pointer, intent(inout) :: AcouRecvPNorth
+    type(MessageSet), pointer, intent(inout) :: AcouSendPEast
+    type(MessageSet), pointer, intent(inout) :: AcouRecvPEast
     type(MessageSet), pointer, intent(inout) :: AcouSendUV
     type(MessageSet), pointer, intent(inout) :: AcouRecvUV
     type(MessageSet), pointer, intent(inout) :: AcouSendWP
@@ -505,8 +508,10 @@ contains
     AcouRecvU => null()
     AcouSendV => null()
     AcouRecvV => null()
-    AcouSendP => null()
-    AcouRecvP => null()
+    AcouSendPNorth => null()
+    AcouRecvPNorth => null()
+    AcouSendPEast => null()
+    AcouRecvPEast => null()
     AcouSendUV => null()
     AcouRecvUV => null()
     AcouSendWP => null()
@@ -516,7 +521,7 @@ contains
 
        if (dumpLocal) then
           call MsgDump(h//" will create "//&
-               " AcouSend/RecvU, AcouSend/RecvV, AcouSend/RecvP,"//&
+               " AcouSend/RecvU, AcouSend/RecvV, AcouSend/RecvPNorth and East,"//&
                " AcouSend/RecvUV and AcouSend/RecvWP")
        end if
 
@@ -534,10 +539,15 @@ contains
             Neigh, GlobalOwn, GlobalWithGhost, &
             AcouSendV, AcouRecvV)
 
-       call CreateAcousticSendRecvP(&
+       call CreateAcousticSendRecvPNorth(&
             gridId, nMachs, nNeigh, myNum, &
             Neigh, GlobalOwn, GlobalWithGhost, &
-            AcouSendP, AcouRecvP)
+            AcouSendPNorth, AcouRecvPNorth)
+
+       call CreateAcousticSendRecvPEast(&
+            gridId, nMachs, nNeigh, myNum, &
+            Neigh, GlobalOwn, GlobalWithGhost, &
+            AcouSendPEast, AcouRecvPEast)
 
        call CreateAcousticSendRecvUV(&
             gridId, nMachs, nNeigh, myNum, &
@@ -558,7 +568,8 @@ contains
   subroutine DestroyAcousticMessageSet( &
        AcouSendU, AcouRecvU, &
        AcouSendV, AcouRecvV, &
-       AcouSendP, AcouRecvP, &
+       AcouSendPNorth, AcouRecvPNorth, &
+       AcouSendPEast, AcouRecvPEast, &
        AcouSendUV, AcouRecvUV, &
        AcouSendWP, AcouRecvWP)
 
@@ -566,8 +577,10 @@ contains
     type(MessageSet), pointer, intent(inout) :: AcouRecvU
     type(MessageSet), pointer, intent(inout) :: AcouSendV
     type(MessageSet), pointer, intent(inout) :: AcouRecvV
-    type(MessageSet), pointer, intent(inout) :: AcouSendP
-    type(MessageSet), pointer, intent(inout) :: AcouRecvP
+    type(MessageSet), pointer, intent(inout) :: AcouSendPNorth
+    type(MessageSet), pointer, intent(inout) :: AcouRecvPNorth
+    type(MessageSet), pointer, intent(inout) :: AcouSendPEast
+    type(MessageSet), pointer, intent(inout) :: AcouRecvPEast
     type(MessageSet), pointer, intent(inout) :: AcouSendUV
     type(MessageSet), pointer, intent(inout) :: AcouRecvUV
     type(MessageSet), pointer, intent(inout) :: AcouSendWP
@@ -588,8 +601,11 @@ contains
     call DestroyMessageSet(AcouSendV)
     call DestroyMessageSet(AcouRecvV)
 
-    call DestroyMessageSet(AcouSendP)
-    call DestroyMessageSet(AcouRecvP)
+    call DestroyMessageSet(AcouSendPNorth)
+    call DestroyMessageSet(AcouRecvPNorth)
+
+    call DestroyMessageSet(AcouSendPEast)
+    call DestroyMessageSet(AcouRecvPEast)
 
     call DestroyMessageSet(AcouSendUV)
     call DestroyMessageSet(AcouRecvUV)
@@ -1067,7 +1083,7 @@ contains
     if (dumpLocal) then
        call MsgDump(h// "starts")
     end if
-    
+
     ! AcouSendUV, AcouRecvUV:
     ! messages update entire GhostZone
 
@@ -1200,7 +1216,7 @@ contains
     character(len=8) :: str(10)
     logical, parameter :: dumpLocal=.true.
 
- 
+
     if (dumpLocal) then
        call MsgDump(h// "starts")
     end if
@@ -1338,7 +1354,7 @@ contains
     character(len=8) :: str(10)
     logical, parameter :: dumpLocal=.true.
 
- 
+
     if (dumpLocal) then
        call MsgDump(h// "starts")
     end if
@@ -1458,7 +1474,7 @@ contains
     character(len=8) :: str(10)
     logical, parameter :: dumpLocal=.true.
 
- 
+
     if (dumpLocal) then
        call MsgDump(h// "starts")
     end if
@@ -1577,7 +1593,7 @@ contains
     character(len=8) :: str(10)
     logical, parameter :: dumpLocal=.true.
 
- 
+
     if (dumpLocal) then
        call MsgDump(h// "starts")
     end if
@@ -1689,7 +1705,7 @@ contains
     character(len=8) :: str(10)
     logical, parameter :: dumpLocal=.true.
 
- 
+
     if (dumpLocal) then
        call MsgDump(h// "starts")
     end if
@@ -1805,7 +1821,7 @@ contains
     character(len=8) :: str(10)
     logical, parameter :: dumpLocal=.true.
 
- 
+
     if (dumpLocal) then
        call MsgDump(h// "starts")
     end if
@@ -2064,7 +2080,7 @@ contains
     type(MessageSet), pointer, intent(inout) :: AcouSendU
     type(MessageSet), pointer, intent(inout) :: AcouRecvU
 
-    integer, parameter :: TagU=22
+    integer, parameter :: TagU=32
     character(len=*), parameter :: NameSendU="AcouSendU"
     character(len=*), parameter :: NameRecvU="AcouRecvU"
 
@@ -2100,7 +2116,7 @@ contains
     character(len=8) :: str(10)
     character(len=30) :: tmp_name
 
- 
+
     if (dumpLocal) then
        call MsgDump(h// "starts")
     end if
@@ -2180,7 +2196,7 @@ contains
     type(MessageSet), pointer, intent(inout) :: AcouSendV
     type(MessageSet), pointer, intent(inout) :: AcouRecvV
 
-    integer, parameter :: TagV=23
+    integer, parameter :: TagV=33
     character(len=*), parameter :: NameSendV="AcouSendV"
     character(len=*), parameter :: NameRecvV="AcouRecvV"
     character(len=30) :: tmp_name
@@ -2216,7 +2232,7 @@ contains
     logical, parameter :: dumpLocal=.true.
     character(len=8) :: str(10)
 
- 
+
     if (dumpLocal) then
        call MsgDump(h// "starts")
     end if
@@ -2280,10 +2296,11 @@ contains
 
 
 
-  subroutine CreateAcousticSendRecvP(&
+
+  subroutine CreateAcousticSendRecvPNorth(&
        gridId, nMachs, nNeigh, myNum, &
        Neigh, GlobalOwn, GlobalWithGhost, &
-       AcouSendP, AcouRecvP)
+       AcouSendPNorth, AcouRecvPNorth)
 
     integer, intent(in) :: gridId
     integer, intent(in) :: nMachs
@@ -2293,12 +2310,12 @@ contains
     type(NeighbourNodes), pointer, intent(in) :: Neigh
     type(DomainDecomp), pointer, intent(in) :: GlobalOwn
     type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
-    type(MessageSet), pointer, intent(inout) :: AcouSendP
-    type(MessageSet), pointer, intent(inout) :: AcouRecvP
+    type(MessageSet), pointer, intent(inout) :: AcouSendPNorth
+    type(MessageSet), pointer, intent(inout) :: AcouRecvPNorth
 
-    integer, parameter :: TagP=24
-    character(len=*), parameter :: NameSendP="AcouSendP"
-    character(len=*), parameter :: NameRecvP="AcouRecvP"
+    integer, parameter :: TagPNorth=35
+    character(len=*), parameter :: NameSendPNorth="AcouSendPNorth"
+    character(len=*), parameter :: NameRecvPNorth="AcouRecvPNorth"
 
     ! scratch arrays of size number of BRAMS processes
     ! containing global indices
@@ -2320,94 +2337,52 @@ contains
     integer :: ybRecv(nNeigh)
     integer :: yeRecv(nNeigh)
 
-    ! second region to build union of regions
-
-    integer :: xbSend_2(nNeigh)
-    integer :: xeSend_2(nNeigh)
-    integer :: ybSend_2(nNeigh)
-    integer :: yeSend_2(nNeigh)
-    integer :: xbRecv_2(nNeigh)
-    integer :: xeRecv_2(nNeigh)
-    integer :: ybRecv_2(nNeigh)
-    integer :: yeRecv_2(nNeigh)
-
     ! scratch arrays of size number of neighbour nodes
     ! containing which neighbour nodes will send of receive
 
     logical :: willSend(nNeigh)
     logical :: willRecv(nNeigh)
 
-    logical :: willSend_2(nNeigh)
-    logical :: willRecv_2(nNeigh)
-
     type(var_tables_r), pointer   :: vtabPtr => null()
-    character(len=*), parameter :: h="**(CreateAcousticSendRecvP)**"
+    character(len=*), parameter :: h="**(CreateAcousticSendRecvPNorth)**"
     character(len=30) :: tmp_name
     character(len=8) :: str(10)
     logical, parameter :: dumpLocal=.true.
 
- 
+
     if (dumpLocal) then
        call MsgDump(h// "starts")
     end if
 
-    ! AcouSendP, AcouRecvP: union of
+    ! AcouSendPNorth, AcouRecvPNorth: union of
     !               GlobalOwn [xe+1:xe+1,yb:ye] with
     !               GlobalOwn [xb:xe,ye+1:ye+1]
 
-    ! first part of the union ([xe+1:xe+1,yb:ye])
-
-    xbToBeUpdated = GlobalOwn%xe+1
-    xeToBeUpdated = xbToBeUpdated
-    ybToBeUpdated = GlobalOwn%yb
-    yeToBeUpdated = GlobalOwn%ye
-
-    ! which neighbour nodes will send and receive
-
-    call NodesToSendRecvMessages(myNum, Neigh, GlobalOwn, &
-         xbToBeUpdated, xeToBeUpdated, ybToBeUpdated, yeToBeUpdated, &
-         xbSend, xeSend, ybSend, yeSend, willSend, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, &
-         "AcouSend/RecvP")
-
-    ! second part of the union ([xb:xe,ye+1:ye+1])
-
-    xbToBeUpdated = GlobalOwn%xb
-    xeToBeUpdated = GlobalOwn%xe
-    ybToBeUpdated = GlobalOwn%ye + 1
-    yeToBeUpdated = ybToBeUpdated
-
-    ! which neighbour nodes will send and receive
-
-    call NodesToSendRecvMessages(myNum, Neigh, GlobalOwn, &
-         xbToBeUpdated, xeToBeUpdated, ybToBeUpdated, yeToBeUpdated, &
-         xbSend_2, xeSend_2, ybSend_2, yeSend_2, willSend_2, &
-         xbRecv_2, xeRecv_2, ybRecv_2, yeRecv_2, willRecv_2, &
-         "AcouSend/RecvP")
-
-    ! make union
-
-    call BuildUnion(nNeigh, &
-         xbSend_2, xeSend_2, ybSend_2, yeSend_2, willSend_2, &
-         xbSend, xeSend, ybSend, yeSend, willSend)
-    call BuildUnion(nNeigh, &
-         xbRecv_2, xeRecv_2, ybRecv_2, yeRecv_2, willRecv_2, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv)
-
-    ! build message set
-
-    AcouSendP => CreateMessageSet(&
-         NameSendP, &
-         sendDirection, &
-         TagP, &
-         willSend, &
-         Neigh)
-    AcouRecvP => CreateMessageSet(&
-         NameRecvP, &
-         recvDirection, &
-         TagP, &
-         willRecv, &
-         Neigh)
+    call NodesRegionsSendRecv(&
+         nMachs=nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=TagPNorth, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwn, &
+         NameSend=NameSendPNorth, &
+         NameRecv=NameRecvPNorth, &
+         xbToUpdate=GlobalOwn%xe+1, &
+         xeToUpdate=GlobalOwn%xe+1, &
+         ybToUpdate=GlobalOwn%yb, &
+         yeToUpdate=GlobalOwn%ye, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=AcouSendPNorth, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=AcouRecvPNorth)
 
     ! get field
 
@@ -2423,17 +2398,133 @@ contains
 
     call InsertFieldSectionAtMessageSet(&
          myNum, vTabPtr, Neigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendP)
+         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendPNorth)
     call InsertFieldSectionAtMessageSet(&
          myNum, vTabPtr, Neigh, GlobalWithGhost, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvP)
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvPNorth)
     if (dumpLocal) then
-       call MsgDump(h//" finishes with AcouSendP MessageSet:")
-       call DumpMessageSet(AcouSendP)
-       call MsgDump(h//" finishes with AcouRecvP MessageSet:")
-       call DumpMessageSet(AcouRecvP)
+       call MsgDump(h//" finishes with AcouSendPNorth MessageSet:")
+       call DumpMessageSet(AcouSendPNorth)
+       call MsgDump(h//" finishes with AcouRecvPNorth MessageSet:")
+       call DumpMessageSet(AcouRecvPNorth)
     end if
-  end subroutine CreateAcousticSendRecvP
+  end subroutine CreateAcousticSendRecvPNorth
+
+
+
+
+
+  subroutine CreateAcousticSendRecvPEast(&
+       gridId, nMachs, nNeigh, myNum, &
+       Neigh, GlobalOwn, GlobalWithGhost, &
+       AcouSendPEast, AcouRecvPEast)
+
+    integer, intent(in) :: gridId
+    integer, intent(in) :: nMachs
+    integer, intent(in) :: nNeigh
+    integer, intent(in) :: myNum
+
+    type(NeighbourNodes), pointer, intent(in) :: Neigh
+    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+    type(MessageSet), pointer, intent(inout) :: AcouSendPEast
+    type(MessageSet), pointer, intent(inout) :: AcouRecvPEast
+
+    integer, parameter :: TagPEast=36
+    character(len=*), parameter :: NameSendPEast="AcouSendPEast"
+    character(len=*), parameter :: NameRecvPEast="AcouRecvPEast"
+
+    ! scratch arrays of size number of BRAMS processes
+    ! containing global indices
+
+    integer :: xbToBeUpdated(nMachs)
+    integer :: xeToBeUpdated(nMachs)
+    integer :: ybToBeUpdated(nMachs)
+    integer :: yeToBeUpdated(nMachs)
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing global indices of regions for send and receive
+
+    integer :: xbSend(nNeigh)
+    integer :: xeSend(nNeigh)
+    integer :: ybSend(nNeigh)
+    integer :: yeSend(nNeigh)
+    integer :: xbRecv(nNeigh)
+    integer :: xeRecv(nNeigh)
+    integer :: ybRecv(nNeigh)
+    integer :: yeRecv(nNeigh)
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing which neighbour nodes will send of receive
+
+    logical :: willSend(nNeigh)
+    logical :: willRecv(nNeigh)
+
+    type(var_tables_r), pointer   :: vtabPtr => null()
+    character(len=*), parameter :: h="**(CreateAcousticSendRecvPEast)**"
+    character(len=30) :: tmp_name
+    character(len=8) :: str(10)
+    logical, parameter :: dumpLocal=.true.
+
+
+    if (dumpLocal) then
+       call MsgDump(h// "starts")
+    end if
+
+    ! AcouSendPEast, AcouRecvPEast: 
+    !               GlobalOwn [xb:xe,ye+1:ye+1]
+
+    call NodesRegionsSendRecv(&
+         nMachs=nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=TagPEast, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwn, &
+         NameSend=NameSendPEast, &
+         NameRecv=NameRecvPEast, &
+         xbToUpdate=GlobalOwn%xb, &
+         xeToUpdate=GlobalOwn%xe, &
+         ybToUpdate=GlobalOwn%ye+1, &
+         yeToUpdate=GlobalOwn%ye+1, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=AcouSendPEast, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=AcouRecvPEast)
+
+    ! get field
+
+    vTabPtr => null()
+    if(dyncore_flag==2) then
+       tmp_name='PC'
+    else
+       tmp_name='PP'
+    endif
+    call GetVTabEntry(trim(tmp_name), gridId, vTabPtr)
+
+    ! build field sections to be sent and received
+
+    call InsertFieldSectionAtMessageSet(&
+         myNum, vTabPtr, Neigh, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendPEast)
+    call InsertFieldSectionAtMessageSet(&
+         myNum, vTabPtr, Neigh, GlobalWithGhost, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvPEast)
+    if (dumpLocal) then
+       call MsgDump(h//" finishes with AcouSendPEast MessageSet:")
+       call DumpMessageSet(AcouSendPEast)
+       call MsgDump(h//" finishes with AcouRecvPEast MessageSet:")
+       call DumpMessageSet(AcouRecvPEast)
+    end if
+  end subroutine CreateAcousticSendRecvPEast
 
 
 
@@ -2586,7 +2677,7 @@ contains
     ! deallocate buffer and empty request
 
     if (associated(SendMsg)) then
-!CDIR$ NOVECTOR
+       !CDIR$ NOVECTOR
        do iSend = 1,SendMsg%nMsgs
           call parf_wait_any_nostatus(SendMsg%nMsgs, &
                SendMsg%request, sendNbr)
