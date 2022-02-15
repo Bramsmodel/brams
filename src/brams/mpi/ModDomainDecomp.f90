@@ -1,9 +1,11 @@
 module ModDomainDecomp
-  use ModParallelEnvironment, only: ParallelEnvironment
-  use ModParallelEnvironment, only: MsgDump
-  use ModParallelEnvironment, only: Brams2MpiProcNbr
+  use ModParallelEnvironment, only: &
+       ParallelEnvironment, &
+       MsgDump, &
+       Brams2MpiProcNbr
 
-  use ModGridDims, only: GridDims
+  use ModGridDims, only: &
+       GridDims
 
   implicit none
   private

@@ -455,7 +455,7 @@ subroutine get_adv_fluxes_for_stilt(mzp,mxp,myp,ia,iz,ja,jz)
   use mem_basic, only: basic_g
 
  
-  use monotonic_adv, ONLY: advmnt 
+  use ModMonotonicAdvection, ONLY: advmnt 
 
   implicit none
   include "constants.h"

@@ -46,7 +46,8 @@ module ModGrid
 
   use ModMonotonicAdvection, only: &
        MonotonicAdvection, &
-       CreateMonotonicAdvection
+       CreateMonotonicAdvection, &
+       DestroyMonotonicAdvection
   
   
   ! JP: temporariamente usa variaveis globais enquanto
@@ -387,6 +388,7 @@ contains
        call DestroyAllGhostZoneMessageSet( &
             oneGrid%AllGhostZoneSend, &
             oneGrid%AllGhostZoneRecv)
+       call DestroyMonotonicAdvection(oneGrid%MonoAdv)
 
        deallocate(oneGrid)
     end if

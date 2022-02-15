@@ -154,7 +154,7 @@ OBJ_MOD = \
 	radvc.o \
 	radvc_rk.o \
 	radvc_adap.o \
-	radvc_mnt.o \
+	ModMonotonicAdvection.o \
 	mod_GhostBlock.o \
 	mod_GhostBlockPartition.o \
 	mod_advect_kit.o \

@@ -34,6 +34,9 @@ module ModOneProc
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModDomainDecomp, only: &
+       DomainDecomp
+  
   use ModVarfFile, only: &
        VarfReadStoreOwnChunk
 
@@ -163,7 +166,10 @@ module ModOneProc
   use MOdPostGridNetCDF, only: netCDFFirstTime
 #endif
   !--(DMK-CCATT-INI)------------------------------------------------------------------
-  USE monotonic_adv, ONLY: StoreNamelistFileAtRadvc_mnt
+  USE ModMonotonicAdvection, ONLY: &
+       StoreNamelistFileAtRadvc_mnt, &
+       advmnt, &
+       GhostZoneLength
   !  USE newComm, ONLY: findAndFillGhostZone
 
   use ccatt_start, only: &
@@ -344,7 +350,6 @@ module ModOneProc
        nodei0, &
        nodej0, &
        StoreNamelistFileAtNode_mod, &
-       StoreDomainDecompAtNode_mod, &
        StoreParallelEnvironmentAtNode_mod, &
        alloc_bounds,   & ! Subroutine
        dealloc_bounds, & ! Subroutine
@@ -370,8 +375,6 @@ module ModOneProc
        mxp,            &
        myp,            &
        mzp,            &
-       mchnum,         &
-       master_num,     &
        
        !--(DMK-CCATT-INI)-----------------------------------------------------------
        ixb, ixe, iyb, iye, & !To advect_mnt
@@ -413,8 +416,6 @@ module ModOneProc
   USE AdvectData, ONLY: InitAdvect
   USE modComm, ONLY: initExtraComm
 
-  USE monotonic_adv, ONLY: advmnt, &
-       GhostZoneLength
 
   ! OBS: MODULOS NECESSARIOS PARA LEITURA DE EMISSAO
   !-----------------------------------------------------------------------------------
@@ -642,7 +643,10 @@ contains
 
     call CreateParallelEnvironment(nmachs_in, mchnum_in, master_num_in, &
          MPI_COMM_WORLD, oneParallelEnvironment)
-    call StoreParallelEnvironmentAtNode_mod(oneParallelEnvironment)
+    call StoreParallelEnvironmentAtNode_mod(&
+         oneParallelEnvironment%nmachs, &
+         oneParallelEnvironment%mchnum, &
+         oneParallelEnvironment%master_num)
 
     ! wall time at the beginning of execution
 
@@ -686,7 +690,7 @@ contains
     call StoreNamelistFileAtMem_turb(oneNamelistFile)
     call StoreNamelistFileAtMem_varinit(oneNamelistFile)
     call StoreNamelistFileAtMicphys(oneNamelistFile)
-    call StoreNamelistFileAtNode_mod(oneNamelistFile)
+    call StoreNamelistFileAtNode_mod(oneNamelistFile%load_bal)
     call StoreNamelistFileAtRef_sounding(oneNamelistFile)
     call StoreNamelistFileAtShcu_vars_const(oneNamelistFile)
 
@@ -1584,7 +1588,7 @@ contains
     if (runtype(1:7)/='MAKESFC' .and. runtype(1:9)/='MAKEVFILE') &
          call destroyVctr()
 
-    call dealloc_bounds()
+    call dealloc_bounds(runtype)
 
     ! Deallocating dxtmax_local
     deallocate(dxtmax_local, STAT=ierr)
@@ -2046,7 +2050,7 @@ contains
        !call dumpAer('Aer_pos2')
        ! Read Radiation Parameters if CARMA or RRTMG Radiation is selected
        if (ilwrtyp==4 .or. iswrtyp==4 .or. ilwrtyp==6 .or. iswrtyp==6 ) then
-          CALL master_read_carma_data()
+          CALL master_read_carma_data(mchnum, master_num)
           CALL read_aotMap()
        endif
 
@@ -2295,7 +2299,7 @@ contains
 
        ! Read Radiation Parameters if CARMA or RRTMG Radiation is selected
        if (ilwrtyp==4 .or. iswrtyp==4 .or. ilwrtyp==6 .or. iswrtyp==6 ) then
-          CALL master_read_carma_data()
+          CALL master_read_carma_data(mchnum, master_num)
           CALL read_aotMap()
        endif
 
@@ -2714,7 +2718,26 @@ contains
 
 
 
+  subroutine StoreDomainDecompAtNode_mod(AllGrids)
+    type(GridTree), pointer :: AllGrids
 
+    integer :: gridID, node
+    type(GridTree), pointer :: OneGridTree => null()
+    type(DomainDecomp), pointer :: GlobalOwn => null()
+
+    OneGridTree => GridTreeRoot(AllGrids)
+    do while (associated(OneGridTree))
+       gridId = OneGridTree%curr%Id
+       GlobalOwn => OneGridTree%curr%GlobalOwn
+       do node = 1, OneGridTree%curr%ParEnv%nmachs
+          ixb(node,gridId) = GlobalOwn%xb(node)
+          ixe(node,gridId) = GlobalOwn%xe(node)
+          iyb(node,gridId) = GlobalOwn%yb(node)
+          iye(node,gridId) = GlobalOwn%ye(node)
+       end do
+       OneGridTree => NextOnGridTree(OneGridTree)
+    end do
+  end subroutine StoreDomainDecompAtNode_mod
 end module ModOneProc
 
 !subroutine lfr_debug(header,version,message,value)

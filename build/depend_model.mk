@@ -276,7 +276,7 @@ mem_scalar.o : $(MEMORY)/mem_scalar.f90 var_tables.o ModNamelistFile.o
 	rm -f $(<F:.f90=.f90)
 
 mem_scratch.o : $(MEMORY)/mem_scratch.f90 grid_dims.o \
-	node_mod.o mem_aerad.o mem_radiate.o var_tables.o
+	mem_aerad.o mem_radiate.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -340,8 +340,7 @@ rconstants.o : $(MEMORY)/rconstants.f90
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-node_mod.o : $(MPI)/node_mod.f90 grid_dims.o mem_grid.o ModNamelistFile.o \
-	ModParallelEnvironment.o ModGridTree.o ModDomainDecomp.o mem_stilt.o
+node_mod.o : $(MPI)/node_mod.f90 grid_dims.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -573,19 +572,19 @@ rtimh_rk.o : $(MODEL)/rtimh_rk.F90 rtimh.o mem_basic.o mem_cuparm.o \
 	ChemSourcesDriver.o ChemDryDepDriver.o chemistry.o ModTimeStamp.o ModGrid.o \
 	raco.o rthrm.o module_rams_microphysics_2M.o mic_thompson_driver.o\
         seasalt.o MatrixDriver.o rtm_driver.o radvc_rk.o modIau.o leaf3_ocean_only.o \
-	$(JULES_OBJ_SFCLYR) \
+	$(JULES_OBJ_SFCLYR)  ModMonotonicAdvection.o \
 	ModMessageSet.o $(UTILS_INCS)/tsNames.h  $(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
 ModOneProc.o : $(MODEL)/ModOneProc.F90 ModNamelistFile.o \
-	io_params.o machine_arq.o InitAdvect.o \
+	ModDomainDecomp.o io_params.o machine_arq.o InitAdvect.o \
 	ModPostProcess.o mem_cuparm.o mem_grid.o mem_leaf.o mem_oda.o \
 	ccatt_start.o domain_decomp.o isan_coms.o mem_basic.o mem_emiss.o \
 	mem_gaspart.o mem_globrad.o mem_grell_param2.o mem_micro.o \
 	mem_scalar.o memSoilMoisture.o mem_teb.o mem_teb_common.o micphys.o \
-	radvc_mnt.o shcu_vars_const.o \
+	ModMonotonicAdvection.o shcu_vars_const.o \
 	soilMoisture.o teb_spm_start.o mem_teb_vars_const.o var_tables.o \
 	mem_varinit.o \
 	grid_dims.o local_proc.o ModTimeStamp.o \
@@ -906,7 +905,7 @@ radvc_new.o : $(MODEL)/radvc_new.f90
 	rm -f $(<F:.f90=.f90)
 
 radvc.o : $(MODEL)/radvc.f90  mem_basic.o mem_grid.o mem_scratch.o \
-	chem_dry_dep.o radvc_mnt.o ModParallelEnvironment.o \
+	chem_dry_dep.o ModMonotonicAdvection.o ModParallelEnvironment.o \
 	mem_tend.o var_tables.o grid_dims.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
@@ -1054,7 +1053,7 @@ turb_k.o : $(TURB)/turb_k.f90  ke_coms.o mem_basic.o \
 	mem_grell.o mem_grid.o mem_leaf.o mem_micro.o mem_scratch.o \
 	mem_tend.o mem_turb.o mem_turb_scalar.o micphys.o node_mod.o \
 	rconstants.o var_tables.o mem_stilt.o tkenn.o \
-	ccatt_start.o mem_chem1.o
+	ccatt_start.o mem_chem1.o ModMonotonicAdvection.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1824,7 +1823,7 @@ rexev.o : $(STILT)/rexev.f90   mem_tend.o  mem_basic.o\
 	rm -f $(<F:.f90=.f90)
 
 rstilt.o : $(STILT)/rstilt.f90   mem_basic.o\
-	mem_grid.o mem_scratch.o var_tables.o
+	mem_grid.o mem_scratch.o var_tables.o ModMonotonicAdvection.o
 	@cp -f  $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1847,12 +1846,15 @@ digitalFilter.o :$(MODEL)/digitalFilter.f90 an_header.o grid_dims.o io_params.o 
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-radvc_mnt.o : $(MODEL)/radvc_mnt.f90  mem_basic.o mem_grid.o mem_scratch.o \
-	var_tables.o node_mod.o micphys.o rconstants.o extra.o \
-	advSendMod.o ModNamelistFile.o initComm.o
+ModMonotonicAdvection.o : $(MODEL)/ModMonotonicAdvection.f90  \
+	mem_chem1.o mem_aer1.o parlibf.o mem_basic.o mem_grid.o ccatt_start.o \
+	initComm.o var_tables.o micphys.o rconstants.o \
+	chem_dry_dep.o advSendMod.o ModNamelistFile.o \
+	ModParallelEnvironment.o ModGridDims.o ModDomainDecomp.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
+
 
 GridMod.o : $(ADVC)/GridMod.f90
 	@cp -f  $< $(<F:.f90=.f90)
@@ -2535,12 +2537,6 @@ modIau.o : $(MODEL)/modIau.f90 dump.o $(UTILS_INCS)/constants.h
 modPrintInitial.o : $(INIT)/modPrintInitial.F90 dump.o $(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.F90=.F90)
 	$(F_COMMAND) $(<F:.F90=.F90) $(EXTRAFLAGSF)
-	rm -f $(<F:.f90=.f90)
-
-ModMonotonicAdvection.o : $(MODEL)/ModMonotonicAdvection.f90 \
-	ModParallelEnvironment.o ModGridDims.o ModDomainDecomp.o
-	@cp -f $< $(<F:.f90=.f90)
-	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
 include jules_depend_model.mk

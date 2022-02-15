@@ -40,7 +40,7 @@ subroutine advectc(varn,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
        dd_sedim,         &
        fa_preptc_with_sedim
 
-  use monotonic_adv, ONLY: advmnt 
+  use ModMonotonicAdvection, ONLY: advmnt 
   !-srf
   !--(DMK-CCATT-FIM)-----------------------------------------------------
 

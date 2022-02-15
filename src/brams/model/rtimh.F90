@@ -32,7 +32,11 @@ subroutine timestep(OneGrid)
        izu, jzv,       & ! INTENT(IN)
        mynum,          & ! INTENT(IN)
        ibcon,          & ! INTENT(IN)
-       nmachs            ! INTENT(IN)
+       nmachs, &            ! INTENT(IN)
+       nodemyp,  &  !intent(in)
+       nodemxp,  &  !intent(in)
+       nodemzp      !intent(in)
+       
 
   use mem_cuparm, only: &
        NNQPARM, & ! INTENT(IN)
@@ -171,7 +175,7 @@ subroutine timestep(OneGrid)
                     dfVars,             &
                     applyDF
 
-  USE monotonic_adv, only:                 &
+  USE ModMonotonicAdvection, only:                 &
                            advmnt_driver,  &        ! subroutine
                            advmnt
 
@@ -392,7 +396,8 @@ subroutine timestep(OneGrid)
 
      IF(advmnt >= 1) THEN
       !-srf monotonic advection scheme
-         call advmnt_driver('T',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
+        call advmnt_driver('T',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,&
+             i0,j0,nodemxp,nodemyp,nodemzp,mynum)
          if(advmnt >= 2) &
             CALL ADVECTc('T',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
      ELSE

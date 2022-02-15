@@ -9,19 +9,13 @@
 
 module node_mod
 
-  use ModNamelistFile, only: namelistFile
-  use ModParallelEnvironment, only: parallelEnvironment
   use grid_dims, only : maxgrds, maxmach
-  use mem_grid,  only : ngrids,runtype
-  use ModGridTree, only: GridTree, GridTreeRoot, NextOnGridTree
-  use ModDomainDecomp, only: DomainDecomp
 
   implicit none
   private
 
   public :: StoreNamelistFileAtNode_mod
   public :: StoreParallelEnvironmentAtnode_mod
-  public :: StoreDomainDecompAtNode_mod
   public :: DumpNodePaths
 
   ! MPI number of this process is mchnum
@@ -241,13 +235,17 @@ contains
 
   !*** StoreParallelEnvironment: copy ParallelEnvironment fields to global variables
 
-  subroutine StoreParallelEnvironmentAtNode_mod(oneParallelEnvironment)
-    type(ParallelEnvironment), pointer :: oneParallelEnvironment
+  subroutine StoreParallelEnvironmentAtNode_mod(parEnv_nmachs, &
+       parEnv_mchnum, parEnv_master_num)
+    integer, intent(in) :: parEnv_nmachs
+    integer, intent(in) :: parEnv_mchnum
+    integer, intent(in) :: parEnv_master_num
+    
     character(len=16) :: fName="Dump.XXXXX.YYYYY"
 
-    nmachs     = oneParallelEnvironment%nmachs
-    mchnum     = oneParallelEnvironment%mchnum
-    master_num = oneParallelEnvironment%master_num
+    nmachs     = parEnv_nmachs
+    mchnum     = parEnv_mchnum
+    master_num = parEnv_master_num
 
     !**(JP)** this file open should be somewhere else
     if (dumpLocal) then
@@ -517,9 +515,10 @@ contains
 
   ! *************************************************************************
 
-  subroutine dealloc_bounds()
+  subroutine dealloc_bounds(runtype)
 
     implicit none
+    character(len=*), intent(in) :: runtype
     ! Local variable
     integer :: ierr
 
@@ -604,34 +603,10 @@ contains
 
   end subroutine dealloc_bounds
 
-  subroutine StoreNamelistFileAtNode_mod(oneNamelistFile)
+  subroutine StoreNamelistFileAtNode_mod(namelist_load_bal)
     implicit none
-    type(namelistFile), pointer :: oneNamelistFile
+    integer, intent(in) :: namelist_load_bal
 
-    load_bal = oneNamelistFile%load_bal
+    load_bal = namelist_load_bal
   end subroutine StoreNamelistFileAtNode_mod
-
-
-
-
-  subroutine StoreDomainDecompAtNode_mod(AllGrids)
-    type(GridTree), pointer :: AllGrids
-
-    integer :: gridID, node
-    type(GridTree), pointer :: OneGridTree => null()
-    type(DomainDecomp), pointer :: GlobalOwn => null()
-
-    OneGridTree => GridTreeRoot(AllGrids)
-    do while (associated(OneGridTree))
-       gridId = OneGridTree%curr%Id
-       GlobalOwn => OneGridTree%curr%GlobalOwn
-       do node = 1, OneGridTree%curr%ParEnv%nmachs
-          ixb(node,gridId) = GlobalOwn%xb(node)
-          ixe(node,gridId) = GlobalOwn%xe(node)
-          iyb(node,gridId) = GlobalOwn%yb(node)
-          iye(node,gridId) = GlobalOwn%ye(node)
-       end do
-       OneGridTree => NextOnGridTree(OneGridTree)
-    end do
-  end subroutine StoreDomainDecompAtNode_mod
 end module node_mod

@@ -3,7 +3,8 @@ module ReadBcst
   use mem_grid, only: &
        ngrids, nnxp, nnyp, nnzp, nzs, nzg, npatch, &
        time, iyear1, imonth1, idate1, itime1, &
-       GlobalSizes
+       GlobalSizes, runtype
+
 
   use node_mod, only:      &
        mchnum, mynum, master_num, &
@@ -36,6 +37,7 @@ module ReadBcst
        parf_GatherAllChunks
 
 
+
   implicit none
 
   private
@@ -51,10 +53,7 @@ module ReadBcst
   public :: DumpVTabEntry
   public :: DumpVarTables
   public :: gatherData
-
-!--(DMK-CCATT-INI)-----------------------------------------------------
   public :: storeOwnChunk_3D
-!--(DMK-CCATT-FIM)-----------------------------------------------------
 
 
   interface ReadStoreOwnChunk
@@ -80,9 +79,6 @@ contains
 
 
   subroutine ReadStoreOwnChunk_2D(grid, fUnit, toStore, fieldName)
-
-    use mem_grid, only:  &
-         runtype
 
     integer, intent(in) :: grid
     integer, intent(in) :: fUnit
@@ -191,8 +187,6 @@ contains
 
 
   subroutine ReadStoreOwnChunk_3D(grid, fUnit, toStore, nz, fieldName)
-    use mem_grid, only:  &
-         runtype
 
     integer, intent(in) :: grid
     integer, intent(in) :: fUnit
@@ -1458,12 +1452,6 @@ contains
        nmachs, mchnum, mynum, master_num,                   &
        localData2D, globalData2D)
 
-    USE mem_grid, ONLY : &
-         GlobalSizes         ! Subroutine
-
-    USE ParLib, ONLY: &
-         parf_bcast ! Subroutine
-
     IMPLICIT NONE
     INCLUDE "constants.h"
     ! Arguments:
@@ -1547,12 +1535,6 @@ contains
   SUBROUTINE gatherData3D(idim_type, varn, ifm, nnzp, nnxp, nnyp, &
        nmachs, mchnum, mynum, master_num,                         &
        localData3D, globalData3D)
-
-    USE mem_grid, ONLY : &
-         GlobalSizes         ! Subroutine
-
-    USE ParLib, ONLY: &
-         parf_bcast ! Subroutine
 
     IMPLICIT NONE
     INCLUDE "constants.h"
@@ -1639,12 +1621,6 @@ contains
        nmachs, mchnum, mynum, master_num,                              &
        localData4D, globalData4D)
 
-    USE mem_grid, ONLY : &
-         GlobalSizes         ! Subroutine
-
-    USE ParLib, ONLY: &
-         parf_bcast ! Subroutine
-
     IMPLICIT NONE
     INCLUDE "constants.h"
     ! Arguments:
@@ -1727,32 +1703,6 @@ contains
   !temporary function 
  subroutine storeOwnChunk_3D(grid, fullGrid, toStore, nz, nx, ny, fieldName)
    
-   use mem_grid, only:  &
-       runtype
-       
-   use node_mod, only:	&
-       mchnum, 		&
-       mynum, 		&
-       master_num, 	&
-       nmachs, 		&
-       nodemxp, 	&
-       nodemyp, 	&
-       nodeia, 		&
-       nodeiz, 		&
-       nodeja, 		&
-       nodejz, 		&
-       nodeibcon, 	&
-       nodei0, 		&
-       nodej0     
-  
-  use mem_grid, only:   &
-      nnzp,			&
-      nnxp,			&
-      nnyp
- 
-  use ParLib, only: &
-      parf_bcast
- 
   include "constants.h"
 
   integer, intent(in) 			:: grid

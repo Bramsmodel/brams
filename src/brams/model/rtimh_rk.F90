@@ -48,7 +48,10 @@ contains
          ibcon,          & ! INTENT(IN)
          nmachs, &
          mchnum,        &
-         master_num
+         master_num, &
+         nodemyp,  &  !intent(in)
+         nodemxp,  &  !intent(in)
+         nodemzp      !intent(in)
 
     use mem_cuparm, only: &
          NNQPARM, & ! INTENT(IN)
@@ -189,7 +192,7 @@ contains
          dfVars,             &
          applyDF
 
-    USE monotonic_adv, only:                 &
+    USE ModMonotonicAdvection, only:                 &
          advmnt_driver,  &        ! subroutine
          advmnt
 
@@ -685,7 +688,8 @@ contains
     !----------------------------------------
     IF(advmnt == 1) THEN
        !- monotonic advection scheme
-       CALL advmnt_driver('SCALAR',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
+       CALL advmnt_driver('SCALAR',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,&
+            i0,j0,nodemxp,nodemyp,nodemzp,mynum)
     ELSEIF(advmnt == 0) THEN
        !- using the 2nd order forward upstream
        CALL ADVECTc   ('SCALAR',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)

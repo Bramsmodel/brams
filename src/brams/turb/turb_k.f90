@@ -1248,7 +1248,7 @@ subroutine mxdefm_tracer(m1, m2, m3, ia, iz, ja, jz, ibcon, jd,  &
        akmin                !INTENT(IN)
 
   !--(DMK-CCATT-INI)-------------------------------------------------------
-  use monotonic_adv, only: advmnt !INTENT(IN)
+  use ModMonotonicAdvection, only: advmnt !INTENT(IN)
   !--(DMK-CCATT-FIM)-------------------------------------------------------
 
   implicit none
