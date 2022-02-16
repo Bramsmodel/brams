@@ -282,9 +282,6 @@ subroutine advectc_rk(varn,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
 
      if ( trim(varn) .eq. "THETAIL" ) THEN
 
-        !.. call dumpVarAllLatLonk(basic_g(ngrid)%thc,'THC',278,l_rk,0,1,mxp,1,myp,1,mzp,0.0,0.0) !
-        !.. call dumpVarAllLatLonk(tend%tht_rk,'THT',279,l_rk,0,1,mxp,1,myp,1,mzp,0.0,0.0)
-
         if (dumpLocal) then
            write(str(1),"(i8)") size(basic_g(ngrid)%thc,1)
            write(str(2),"(i8)") size(basic_g(ngrid)%thc,2)
@@ -302,7 +299,6 @@ subroutine advectc_rk(varn,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
              ,vt3dh & ! fmapt*rtgti*dxt/dn0 = 1(rho dx)
              ,vt3dj & ! similar for v
              ,vt3dk & ! similar for sigma_dot
-                                !
              ,tend%tht_rk         &
              ,is,js,ks            &
              ,pd_or_mnt_constraint&
@@ -310,9 +306,6 @@ subroutine advectc_rk(varn,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
              ,dtlt,                &
              'thc'  &
              )
-
-        !        call dumpVarAllLatLonk(tend%tht_rk,'THT',297,l_rk,0,1,mxp,1,myp,1,mzp,0.0,0.0)
-
         return
      endif !endif of varn .eq. 'THETAIL'
 

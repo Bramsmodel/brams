@@ -137,7 +137,7 @@ module ModVarfFile
        spc_name
 
   use ModMessageSet, only: &
-       PostRecvSendMsgs, &
+       PostSendRecvMsgs, &
        WaitSendRecvMsgs
 
 
@@ -1710,8 +1710,8 @@ contains
 
     ! exchange borders to correct wrong values
 
-    call PostRecvSendMsgs(OneGrid%SendDn0u, OneGrid%RecvDn0u)
-    call PostRecvSendMsgs(OneGrid%SendDn0v, OneGrid%RecvDn0v)
+    call PostSendRecvMsgs(OneGrid%SendDn0u, OneGrid%RecvDn0u)
+    call PostSendRecvMsgs(OneGrid%SendDn0v, OneGrid%RecvDn0v)
     call WaitSendRecvMsgs(OneGrid%SendDn0u, OneGrid%RecvDn0u)
     call WaitSendRecvMsgs(OneGrid%SendDn0v, OneGrid%RecvDn0v)
   end subroutine FillDn0uv

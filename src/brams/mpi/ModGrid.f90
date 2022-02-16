@@ -42,7 +42,10 @@ module ModGrid
        CreateSelectedGhostZoneMessageSet, &
        DestroySelectedGhostZoneMessageSet, &
        CreateAllGhostZoneMessageSet, &
-       DestroyAllGhostZoneMessageSet
+       DestroyAllGhostZoneMessageSet, &
+       CreateAcouDampOneMessageSet, &
+       DestroyAcouDampOneMessageSet
+       
 
   use ModMonotonicAdvection, only: &
        MonotonicAdvection, &
@@ -149,6 +152,14 @@ module ModGrid
      ! ghost zone update. See description at ModMessageSet 
      type(PolygonContainer), pointer :: meteoPolygons => null()
 
+     type(MessageSet), pointer :: AcouDampDivSend => null()
+     type(MessageSet), pointer :: AcouDampDivRecv => null()
+     type(MessageSet), pointer :: AcouDampPPSend => null()
+     type(MessageSet), pointer :: AcouDampPPRecv => null()
+     type(MessageSet), pointer :: AcouDampAlphaSend => null()
+     type(MessageSet), pointer :: AcouDampAlphaRecv => null()
+     ! AcouDampSend/Recv: Ghost Zone update of a single field
+     ! on Runge Kutta Dynamics, acoust_new and init_div_damping_coef
      type(MonotonicAdvection), pointer :: MonoAdv => null()
      ! MonoAdv: Fields with wider ghost zone for high order advection
   end type Grid
@@ -300,10 +311,27 @@ contains
   subroutine InsertMessageSetAtOneGrid(oneGrid)
     type(Grid), pointer :: oneGrid
 
-    character(len=16) :: c0, c1
+    character(len=16) :: str(10)
     character(len=*), parameter :: h="**(InsertMessageSetAtOneGrid)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
+    integer, parameter :: TagAcouDampDiv=36
+    integer, parameter :: TagAcouDampPP=37
+    integer, parameter :: TagAcouDampAlpha=38
+
+    ! Field pointer for fields not yet allocated
+    ! not yet allocated; CreateAcouDampOneMessageSet
+    ! takes bounds from field pointer.
+    ! Field address will be replaced by
+    ! a call to UpdateFieldAddress, once the
+    ! desired field is allocated
+    integer :: ierr
+    integer :: myNum
+    integer :: lbx, ubx
+    integer :: lby, uby
+    integer :: lbz, ubz
+    real, pointer :: defineRegularBounds(:,:,:)
+    
     if (.not. associated(oneGrid)) then
        call fatal_error(h//" invoked with null grid")
     end if
@@ -347,6 +375,59 @@ contains
        oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhost, &
        oneGrid%AllGhostZoneSend, oneGrid%AllGhostZoneRecv)
 
+    ! allocate field with desired bounds
+    myNum=oneGrid%ParEnv%myNum
+    lbx=1
+    ubx=oneGrid%LocalOwn%nx(myNum)
+    lby=1
+    uby=oneGrid%LocalOwn%ny(myNum)
+    lbz=1
+    ubz=oneGrid%GridSize%nnzp
+    allocate(defineRegularBounds(lbz:ubz,lbx:ubx,lby:uby), stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") lbz
+       write(str(2),"(i8)") ubz
+       write(str(3),"(i8)") lbx
+       write(str(4),"(i8)") ubx
+       write(str(5),"(i8)") lby
+       write(str(6),"(i8)") uby
+       write(str(7),"(i8)") ierr
+       call fatal_error(h//" allocate defineRegularBounds("//&
+            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
+            trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//&
+            ") fails with stat="//trim(adjustl(str(7))))
+    end if
+
+
+    call CreateAcouDampOneMessageSet(&
+       defineRegularBounds, "Div", 3,  &
+       oneGrid%ParEnv, oneGrid%Neigh, &
+       oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
+       TagAcouDampDiv, "AcouDampDivSend", "AcouDampDivRecv", &
+       oneGrid%AcouDampDivSend, oneGrid%AcouDampDivRecv)
+
+    call CreateAcouDampOneMessageSet(&
+       defineRegularBounds, "PP", 3,  &
+       oneGrid%ParEnv, oneGrid%Neigh, &
+       oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
+       TagAcouDampPP, "AcouDampPPSend", "AcouDampPPRecv", &
+       oneGrid%AcouDampPPSend, oneGrid%AcouDampPPRecv)
+
+    call CreateAcouDampOneMessageSet(&
+       defineRegularBounds, "Alpha", 3,  &
+       oneGrid%ParEnv, oneGrid%Neigh, &
+       oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
+       TagAcouDampAlpha, "AcouDampAlphaSend", "AcouDampAlphaRecv", &
+       oneGrid%AcouDampAlphaSend, oneGrid%AcouDampAlphaRecv)
+
+    deallocate(defineRegularBounds, stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" deallocate defineRegularBounds"//&
+            " fails with stat="//trim(adjustl(str(1))))
+    end if
+
     if (dumpLocal) then
        call MsgDump(h//" dumping oneGrid")
        call DumpGrid(OneGrid)
@@ -389,6 +470,12 @@ contains
             oneGrid%AllGhostZoneSend, &
             oneGrid%AllGhostZoneRecv)
        call DestroyMonotonicAdvection(oneGrid%MonoAdv)
+       call DestroyAcouDampOneMessageSet( &
+            oneGrid%AcouDampDivSend, oneGrid%AcouDampDivRecv)
+       call DestroyAcouDampOneMessageSet( &
+            oneGrid%AcouDampPPSend, oneGrid%AcouDampPPRecv)
+       call DestroyAcouDampOneMessageSet( &
+            oneGrid%AcouDampAlphaSend, oneGrid%AcouDampAlphaRecv)
 
        deallocate(oneGrid)
     end if
@@ -474,5 +561,17 @@ contains
     call DumpMessageSet(oneGrid%AllGhostZoneSend)
     call MsgDump(h//" dumping AllGhostZoneRecv")
     call DumpMessageSet(oneGrid%AllGhostZoneRecv)
+    call MsgDump(h//" dumping AcouDampDivSend")
+    call DumpMessageSet(oneGrid%AcouDampDivSend)
+    call MsgDump(h//" dumping AcouDampDivRecv")
+    call DumpMessageSet(oneGrid%AcouDampDivRecv)
+    call MsgDump(h//" dumping AcouDampPPSend")
+    call DumpMessageSet(oneGrid%AcouDampPPSend)
+    call MsgDump(h//" dumping AcouDampPPRecv")
+    call DumpMessageSet(oneGrid%AcouDampPPRecv)
+    call MsgDump(h//" dumping AcouDampAlphaSend")
+    call DumpMessageSet(oneGrid%AcouDampAlphaSend)
+    call MsgDump(h//" dumping AcouDampAlphaRecv")
+    call DumpMessageSet(oneGrid%AcouDampAlphaRecv)
   end subroutine DumpGrid
 end module ModGrid

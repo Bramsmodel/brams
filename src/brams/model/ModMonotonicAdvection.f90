@@ -12,7 +12,7 @@ module ModMonotonicAdvection
   use ModParallelEnvironment, only: &
        ParallelEnvironment, &
        MsgDump
-  
+
   use ModGridDims, only: &
        GridDims
 
@@ -98,9 +98,6 @@ module ModMonotonicAdvection
   implicit none
 
   private
-  public :: MonotonicAdvection
-  public :: CreateMonotonicAdvection
-  public :: DestroyMonotonicAdvection
 
   type MonotonicAdvection
      real,pointer :: u3d(:,:,:)
@@ -125,7 +122,10 @@ module ModMonotonicAdvection
      real,pointer :: dztW(:)
   end type MonotonicAdvection
 
-    public :: advmnt_driver  ! Subroutine
+  public :: MonotonicAdvection
+  public :: CreateMonotonicAdvection
+  public :: DestroyMonotonicAdvection
+  public :: advmnt_driver  ! Subroutine
   public :: StoreNamelistFileAtRadvc_mnt ! Subroutine
 
   ! public names, set by StoreNamelistFileAtRadvc_mnt
@@ -715,29 +715,29 @@ contains
 
     !- prepare wind velocities including map factors
     if (dumpLocal) then
-          write(str(1),"(i8)") ia
-          write(str(2),"(i8)") iz
-          write(str(3),"(i8)") ja
-          write(str(4),"(i8)") jz
-          write(str(5),"(i8)") m1
-          write(str(6),"(i8)") m2
-          write(str(7),"(i8)") m3
-          write(str(8),"(i8)") iBegin
-          write(str(9),"(i8)") iEnd
-          write(str(10),"(i8)") jBegin
-          write(str(11),"(i8)") jEnd
-          call MsgDump(h//" invokes prepare_winds on output fields (1:"//&
-               trim(adjustl(str(5)))//","//&
-               trim(adjustl(str(8)))//":"//trim(adjustl(str(9)))//","//&
-               trim(adjustl(str(10)))//":"//trim(adjustl(str(11)))//")"//&
-               " using"//&
-               " m1="//trim(adjustl(str(5)))//&
-               " m2="//trim(adjustl(str(6)))//&
-               " m3="//trim(adjustl(str(7)))//&
-               " ia="//trim(adjustl(str(1)))//&
-               " iz="//trim(adjustl(str(2)))//&
-               " ja="//trim(adjustl(str(3)))//&
-               " jz="//trim(adjustl(str(4))))
+       write(str(1),"(i8)") ia
+       write(str(2),"(i8)") iz
+       write(str(3),"(i8)") ja
+       write(str(4),"(i8)") jz
+       write(str(5),"(i8)") m1
+       write(str(6),"(i8)") m2
+       write(str(7),"(i8)") m3
+       write(str(8),"(i8)") iBegin
+       write(str(9),"(i8)") iEnd
+       write(str(10),"(i8)") jBegin
+       write(str(11),"(i8)") jEnd
+       call MsgDump(h//" invokes prepare_winds on output fields (1:"//&
+            trim(adjustl(str(5)))//","//&
+            trim(adjustl(str(8)))//":"//trim(adjustl(str(9)))//","//&
+            trim(adjustl(str(10)))//":"//trim(adjustl(str(11)))//")"//&
+            " using"//&
+            " m1="//trim(adjustl(str(5)))//&
+            " m2="//trim(adjustl(str(6)))//&
+            " m3="//trim(adjustl(str(7)))//&
+            " ia="//trim(adjustl(str(1)))//&
+            " iz="//trim(adjustl(str(2)))//&
+            " ja="//trim(adjustl(str(3)))//&
+            " jz="//trim(adjustl(str(4))))
     end if
     call prepare_winds(dtlt,m1,m2,m3,ia,iz,ja,jz     &
          ,basic_g(ngrid)%uc  &
@@ -778,30 +778,30 @@ contains
             ,advmnt_g(ngrid)%dd0_3dw(1:m1,iBegin:iEnd,jBegin:jEnd) )
     end if
     !- prepare Walcek's air densities
-   if (dumpLocal) then
-          write(str(1),"(i8)") ia
-          write(str(2),"(i8)") iz
-          write(str(3),"(i8)") ja
-          write(str(4),"(i8)") jz
-          write(str(5),"(i8)") m1
-          write(str(6),"(i8)") m2
-          write(str(7),"(i8)") m3
-          write(str(8),"(i8)") iBegin
-          write(str(9),"(i8)") iEnd
-          write(str(10),"(i8)") jBegin
-          write(str(11),"(i8)") jEnd
-          call MsgDump(h//" invokes get_Walceks_densities on fields (1:"//&
-               trim(adjustl(str(5)))//","//&
-               trim(adjustl(str(8)))//":"//trim(adjustl(str(9)))//","//&
-               trim(adjustl(str(10)))//":"//trim(adjustl(str(11)))//")"//&
-               " using"//&
-               " m1="//trim(adjustl(str(5)))//&
-               " m2="//trim(adjustl(str(6)))//&
-               " m3="//trim(adjustl(str(7)))//&
-               " ia="//trim(adjustl(str(1)))//&
-               " iz="//trim(adjustl(str(2)))//&
-               " ja="//trim(adjustl(str(3)))//&
-               " jz="//trim(adjustl(str(4))))
+    if (dumpLocal) then
+       write(str(1),"(i8)") ia
+       write(str(2),"(i8)") iz
+       write(str(3),"(i8)") ja
+       write(str(4),"(i8)") jz
+       write(str(5),"(i8)") m1
+       write(str(6),"(i8)") m2
+       write(str(7),"(i8)") m3
+       write(str(8),"(i8)") iBegin
+       write(str(9),"(i8)") iEnd
+       write(str(10),"(i8)") jBegin
+       write(str(11),"(i8)") jEnd
+       call MsgDump(h//" invokes get_Walceks_densities on fields (1:"//&
+            trim(adjustl(str(5)))//","//&
+            trim(adjustl(str(8)))//":"//trim(adjustl(str(9)))//","//&
+            trim(adjustl(str(10)))//":"//trim(adjustl(str(11)))//")"//&
+            " using"//&
+            " m1="//trim(adjustl(str(5)))//&
+            " m2="//trim(adjustl(str(6)))//&
+            " m3="//trim(adjustl(str(7)))//&
+            " ia="//trim(adjustl(str(1)))//&
+            " iz="//trim(adjustl(str(2)))//&
+            " ja="//trim(adjustl(str(3)))//&
+            " jz="//trim(adjustl(str(4))))
     end if
     call get_Walceks_densities(dtlt,m1,m2,m3 &
          ,advmnt_g(ngrid)%u3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
@@ -1495,7 +1495,7 @@ contains
     logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(advect_mnt)**"
     character(len=8) :: str(10)
-    
+
     iBegin= newIa(ngrid)-1
     iEnd  = newIz(ngrid)+1
     jBegin= newJa(ngrid)-1
@@ -2648,7 +2648,7 @@ contains
     !  VCMAX and VCMIN are the absolute physical limits to the
     !     mixing ratio at t+dt. If these limits are ever violated,
     !     non-monotonic (oscillatory) behavior in solution results
-   do j=ja,jz
+    do j=ja,jz
        do i=ia,iz
           do k=2,m1-1 
              imxmn(k,i,j)=q0(k,i,j)>=(max(q0(k-1,i,j),q0(k+1,i,j))-eps) .or. & !=true if local
@@ -2849,9 +2849,9 @@ contains
     imxmn=.false.
 
     ! Identify local max and min, specify mixing ratio limits at new time
-          !  VCMAX and VCMIN are the absolute physical limits to the
-          !     mixing ratio at t+dt. If these limits are ever violated,
-          !     non-monotonic (oscillatory) behavior in solution results
+    !  VCMAX and VCMIN are the absolute physical limits to the
+    !     mixing ratio at t+dt. If these limits are ever violated,
+    !     non-monotonic (oscillatory) behavior in solution results
     do j=ja,jz
        do i=ia,iz
           do  k=2,m1-1 !

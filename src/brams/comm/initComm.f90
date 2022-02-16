@@ -46,8 +46,8 @@ module ModComm
   use ParLib  , only: & !Subroutines for parallel comunications
        parf_send_noblock_real, &
        parf_get_noblock_real , &
-       parf_wait_any_nostatus, &
-       parf_wait_all_nostatus
+       parf_wait_any_nostatus
+
   use mem_grid, only: time
   use ModParallelEnvironment, only: MsgDump
   

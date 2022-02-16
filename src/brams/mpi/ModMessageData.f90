@@ -49,7 +49,9 @@ module ModMessageData
        AppendNodeToFieldSectionList, &
        FieldSectionListHeadNode, &
        FieldSectionAtNode, &
-       NextFieldSectionNodeAtList
+       NextFieldSectionNodeAtList, &
+       FindFieldNamed, &
+       UpdateFieldAddress
   
   implicit none
   include "mpif.h"
@@ -66,6 +68,8 @@ module ModMessageData
   public :: PostRecvMessageData
   public :: ExtractFieldSectionDataFromMessageDataBuffer
   public :: DeallocateMessageDataBuffer
+  public :: UpdateFieldAddress
+  public :: FindFieldNamed
   
   type MessageData
      private
@@ -102,6 +106,15 @@ module ModMessageData
      ! list of Field Sections to communicate
   end type MessageData
 
+  interface UpdateFieldAddress
+     module procedure UpdateFieldAddressAtMessageData_2D
+     module procedure UpdateFieldAddressAtMessageData_3D
+     module procedure UpdateFieldAddressAtMessageData_4D
+  end interface UpdateFieldAddress
+
+  interface FindFieldNamed
+     module procedure FindFieldSectionAtMessageData
+  end interface FindFieldNamed
 contains
 
 
@@ -145,7 +158,7 @@ contains
     type(FieldSection), pointer:: next
     character(len=8) :: c0, c1
     character(len=*), parameter :: h="**(DestroyMessageData)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
        call MsgDump(h//" of "//trim(adjustl(oneMessageData%name)))
@@ -200,7 +213,7 @@ contains
     type(FieldSectionNode), pointer :: this
     character(len=8) :: c0
     character(len=*), parameter :: h="**(AppendFieldSectionToMessageData)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (.not. associated(oneFieldSection)) then
        call fatal_error(h//" oneFieldSection not associated")
@@ -232,7 +245,7 @@ contains
     integer :: ierr
     character(len=8) :: c0, c1
     character(len=*), parameter :: h="**(AllocateMessageDataBuffer)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     bufSize=oneMessageData%bufSize
 
@@ -270,7 +283,7 @@ contains
     integer :: bufStart
     type(FieldSectionNode), pointer :: thisNode
     type(FieldSection), pointer :: this
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(FillMessageDataBufferWithFieldSectionData)**"
     
     if (dumpLocal) then
@@ -303,7 +316,7 @@ contains
     type(FieldSectionNode), pointer :: thisNode
     type(FieldSection), pointer :: this
     character(len=*), parameter :: h="**(ExtractFieldSectionDataFromMessageDataBuffer)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
        call MsgDump(h//"  of Message Data "//trim(adjustl(oneMessageData%name)))
@@ -334,7 +347,7 @@ contains
     integer :: ierr
     character(len=8) :: c0
     character(len=*), parameter :: h="**(DeallocateMessageDataBuffer)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
        call MsgDump(h//" deallocate buf of "//&
@@ -370,7 +383,7 @@ contains
     character(len=*), parameter :: h="**(PostRecvMessageData)**"
     character(len=8) :: c0, c1, c2, c3
     character(len=128) :: msgString
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     
     if (.not. allocated(oneMessageData%buf)) then
        call fatal_error(h//" buf not allocated")
@@ -421,7 +434,7 @@ contains
     character(len=*), parameter :: h="**(PostSendMessageData)**"
     character(len=8) :: c0, c1, c2, c3
     character(len=128) :: msgString
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     
     if (.not. allocated(oneMessageData%buf)) then
        call fatal_error(h//" buf not allocated")
@@ -456,4 +469,96 @@ contains
             " and request "//trim(adjustl(c3)))
     end if
   end subroutine PostSendMessageData
+
+
+
+
+
+  subroutine UpdateFieldAddressAtMessageData_2D(oneMessageData, field, name)
+    type(MessageData), pointer, intent(in) :: oneMessageData
+    real, pointer, intent(in) :: field(:,:)
+    character(len=*), intent(in) :: name
+
+    type(FieldSectionList), pointer :: oneFieldSectionList => null()
+    character(len=*), parameter :: h="**(UpdateFieldAddressAtList_2D)**"
+    logical, parameter :: dumpLocal=.false.
+
+    if (.not. associated(oneMessageData)) then
+       call fatal_error(h//" null oneMessageData")
+    end if
+
+    oneFieldSectionList => oneMessageData%list
+    if (.not. associated(oneFieldSectionList)) then
+       call fatal_error(h//" field section list not associated")
+    end if
+
+    call UpdateFieldAddress(oneFieldSectionList, field, name)
+  end subroutine UpdateFieldAddressAtMessageData_2D
+
+
+
+
+
+  subroutine UpdateFieldAddressAtMessageData_3D(oneMessageData, field, name)
+    type(MessageData), pointer, intent(in) :: oneMessageData
+    real, pointer, intent(in) :: field(:,:,:)
+    character(len=*), intent(in) :: name
+
+    type(FieldSectionList), pointer :: oneFieldSectionList => null()
+    character(len=*), parameter :: h="**(UpdateFieldAddressAtList_3D)**"
+    logical, parameter :: dumpLocal=.false.
+
+    if (.not. associated(oneMessageData)) then
+       call fatal_error(h//" null oneMessageData")
+    end if
+
+    oneFieldSectionList => oneMessageData%list
+    if (.not. associated(oneFieldSectionList)) then
+       call fatal_error(h//" field section list not associated")
+    end if
+
+    call UpdateFieldAddress(oneFieldSectionList, field, name)
+  end subroutine UpdateFieldAddressAtMessageData_3D
+
+
+
+
+
+  subroutine UpdateFieldAddressAtMessageData_4D(oneMessageData, field, name)
+    type(MessageData), pointer, intent(in) :: oneMessageData
+    real, pointer, intent(in) :: field(:,:,:,:)
+    character(len=*), intent(in) :: name
+
+    type(FieldSectionList), pointer :: oneFieldSectionList => null()
+    character(len=*), parameter :: h="**(UpdateFieldAddressAtList_4D)**"
+    logical, parameter :: dumpLocal=.false.
+
+    if (.not. associated(oneMessageData)) then
+       call fatal_error(h//" null oneMessageData")
+    end if
+
+    oneFieldSectionList => oneMessageData%list
+    if (.not. associated(oneFieldSectionList)) then
+       call fatal_error(h//" field section list not associated")
+    end if
+
+    call UpdateFieldAddress(oneFieldSectionList, field, name)
+  end subroutine UpdateFieldAddressAtMessageData_4D
+
+
+
+
+  function FindFieldSectionAtMessageData(oneMessageData, fieldName) result(node)
+    type(MessageData), pointer, intent(in) :: oneMessageData
+    character(len=*), intent(in) :: fieldName
+    type(FieldSection), pointer :: node
+    
+    character(len=*), parameter :: h="**(FindFieldSectionAtMessageData)**"
+    if (.not. associated(oneMessageData)) then
+       call fatal_error(h//" oneMessageData not associated")
+    end if
+
+    node => FindFieldNamed(oneMessageData%list, fieldName)
+  end function FindFieldSectionAtMessageData
+
 end module ModMessageData

@@ -14,7 +14,7 @@ subroutine timestep(OneGrid)
        nzpmax
 
   use ModMessageSet, only: &
-       PostRecvSendMsgs, &
+       PostSendRecvMsgs, &
        WaitSendRecvMsgs
 
   use ModAcoust, only: acoustic_new
@@ -315,7 +315,7 @@ subroutine timestep(OneGrid)
   !  Send boundaries to adjoining nodes
   !-------------------------------------------
   if (nmachs > 1) then
-     call PostRecvSendMsgs(OneGrid%SelectedGhostZoneSend, OneGrid%SelectedGhostZoneRecv)
+     call PostSendRecvMsgs(OneGrid%SelectedGhostZoneSend, OneGrid%SelectedGhostZoneRecv)
   endif
 
   !  Coriolis terms

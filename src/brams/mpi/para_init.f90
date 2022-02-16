@@ -6,117 +6,22 @@
 !  Regional Atmospheric Modeling System - RAMS
 !###########################################################################
 
-subroutine decomp_node(init)
+subroutine decomp_node()
 
   use grid_dims, only: &
-       maxmach,        &
        maxgrds
 
   use mem_grid, only: &
-       runtype,       &
        ngrids,        &
        nnxp,          &
        nnyp,          &
-       nnzp,          &
-       nnxyp
-
-  use mem_basic, only: &
-       basic_g
-
-  use node_mod, only: &
-       nmachs,        &
-       mchnum,        &
-       master_num,    &
-       dumpUnit,      &
-       ixb,           &
-       ixe,           &
-       iyb,           &
-       iye
+       nnzp
 
   implicit none
-  ! Arguments:
-  integer, intent(in) :: init
-  ! Local Variables:
-  integer :: ngr
-  logical :: failed
-  integer :: largestDomain
-  real, allocatable :: fakeCPU(:)
-  real, allocatable :: LoadWeight(:)
-  integer :: nm
-  logical, parameter :: dumpLocal=.false.
-!!$
-!!$  ! allocate local scratch area
-!!$
-!!$  largestDomain = maxval(nnxyp(1:ngrids))
-!!$  allocate(LoadWeight(largestDomain))
-!!$  allocate(fakeCPU(largestDomain))
-!!$
-!!$  ! try to read domain decomposition data from input file
-!!$  call decomp_input_par(maxmach, maxgrds, nmachs, ngrids, nnxp, nnyp, &
-!!$       ixb, ixe, iyb, iye, failed)
-!!$
-!!$  ! escape if domain decomposition specified by input file;
-!!$  ! else, Decompose all grids into subdomains
-!!$
-!!$  if (failed) then
-!!$
-!!$     ! Obtain estimates of the fraction of computational time (LoadWeight) required
-!!$     ! for each column in the region of the domain, and
-!!$     ! Decompose the grid taking into account the work numbers.
-!!$
-!!$     if (init == 1) then
-!!$
-!!$        ! first domain decomposition occurs prior to allocate memory
-!!$        ! for basic_g and scratch; due to that, use a fake cputime
-!!$
-!!$        fakeCPU = 1.0
-!!$
-!!$        do ngr = 1,ngrids
-!!$           call est_time_par(nnxp(ngr),nnyp(ngr),LoadWeight(1), fakeCPU(1))
-!!$           call decomp_par(nnxp(ngr),nnyp(ngr),nmachs,LoadWeight(1),  &
-!!$                ixb(1,ngr),ixe(1,ngr),iyb(1,ngr),iye(1,ngr))
-!!$        end do
-!!$
-!!$        if (runtype(1:7)=='MAKESFC' .or. runtype(1:9)=='MAKEVFILE') then
-!!$           do nm = 1, nmachs
-!!$              ixb(nm,1:ngrids) = 2
-!!$              ixe(nm,1:ngrids) = nnxp(1:ngrids) - 1
-!!$              iyb(nm,1:ngrids) = 2
-!!$              iye(nm,1:ngrids) = nnyp(1:ngrids) - 1
-!!$           enddo
-!!$        endif
-!!$
-!!$     else
-!!$
-!!$        ! use collected cpu execution time for non-initialization calls
-!!$        !**(JP)** but cpu time is not collected at a point basis! I do not
-!!$        !         see how computing load may be attributed to a domain point.
-!!$
-!!$        do ngr = 1,ngrids
-!!$
-!!$           call est_time_par(nnxp(ngr),nnyp(ngr),LoadWeight(1),  &
-!!$                basic_g(ngr)%cputime(1,1))
-!!$
-!!$           call decomp_par(nnxp(ngr),nnyp(ngr),nmachs,LoadWeight(1),  &
-!!$                ixb(1,ngr),ixe(1,ngr),iyb(1,ngr),iye(1,ngr))
-!!$        end do
-!!$     end if
-!!$  end if
 
   ! Compute various bounds for the subdomains, storing results at module node_mod
 
   call decomp_bounds_par(maxgrds, ngrids, nnxp, nnyp, nnzp, 1, 1)
-
-  ! deallocate scratch areas
-
-!!$  deallocate(LoadWeight)
-!!$  deallocate(fakeCPU)
-!!$
-!!$  if (dumpLocal) then
-!!$     if (mchnum==master_num) then
-!!$        call domain_decomposition_dump(dumpUnit)
-!!$     end if
-!!$  end if
 
 end subroutine decomp_node
 
@@ -329,7 +234,6 @@ subroutine decomp_bounds_par(maxgrds, ngrids, nnxp, nnyp, nnzp, nbndx, nbndy)
        nodejz,        &
        nodei0,        &
        nodej0,        &
-  !--(DMK)---------------------
        nodeibcon,     &
        nxbeg,         &
        nxend,         &
@@ -340,7 +244,6 @@ subroutine decomp_bounds_par(maxgrds, ngrids, nnxp, nnyp, nnzp, nbndx, nbndy)
        iyb,           &
        iye,           &
        npxy,          &
-                                !--(DMK)---------------------
        nodemxp,       &
        nodemyp,       &
        nodemzp
@@ -415,8 +318,6 @@ subroutine decomp_bounds_par(maxgrds, ngrids, nnxp, nnyp, nnzp, nbndx, nbndy)
            nyend(nm,ng)=iye(nm,ng)+nbndy
            nodejz(nm,ng)=(iye(nm,ng)-iyb(nm,ng))+nodeja(nm,ng)
         endif
-        !print *,'LFR-DBG: ',nm,ng,nxbeg(nm,ng),nxend(nm,ng),nybeg(nm,ng),nyend(nm,ng)
-        !call flush(6)
      enddo
 
      do nm=1,nmachs
@@ -427,9 +328,6 @@ subroutine decomp_bounds_par(maxgrds, ngrids, nnxp, nnyp, nnzp, nbndx, nbndy)
 
   nodemxp(:,:) = nxend(:,:) - nxbeg(:,:) + 1
   nodemyp(:,:) = nyend(:,:) - nybeg(:,:) + 1
-  !do nm=1,nmachs
-  !  print *,'LFR-DBG inside decomp: ',nodemxp(nm,1); call flush(6)
-  !end do
   nodemzp=0
   do ng = 1, ngrids
      nodemzp(:,ng) = nnzp(ng)
@@ -664,45 +562,8 @@ subroutine decomp_par(nxp,nyp,nodes,work,ixb,ixe,iyb,iye)
   return
 end subroutine decomp_par
 
-!******************************************************************************
 
 
-subroutine est_time_par(nxp,nyp,work,cput)
-  implicit none
-  ! Arguments:
-  integer, intent(in)  :: nxp
-  integer, intent(in)  :: nyp
-  real,    intent(out) :: work(nxp,nyp)
-  real,    intent(in)  :: cput(nxp,nyp)
-  ! Local variables:
-  integer :: i,j
-  real :: bfact
-
-  ! Sample routine to fill work elements with values proportional to the time
-  ! required to perform model operations.
-
-  do j = 2,nyp-1
-     do i = 2,nxp-1
-        work(i,j) = cput(i,j)
-     enddo
-  enddo
-
-  ! Fill real boundaries with .2 of interior points
-
-  bfact=.2
-  do j = 1,nyp
-     work(1,j) = bfact * work(2,j)
-     work(nxp,j) = bfact * work(nxp-1,j)
-  enddo
-
-  do i = 1,nxp
-     work(i,1) = bfact * work(i,2)
-     work(i,nyp) = bfact * work(i,nyp-1)
-  enddo
-end subroutine est_time_par
-
-
-!******************************************************************************
 subroutine node_paths_par(maxgrds,ngrids,nxpmax,nypmax,nnxp,nnyp  &
      ,nxtnest,maxmach,nmachs,machs,ibcflg,nxbeg,nxend,nybeg,nyend  &
      ,ipm,jpm,ixb,ixe,iyb,iye,nodebounds                   &  !For Reproducibility - Saulo Barros
@@ -1229,166 +1090,6 @@ end subroutine node_paths_par
 
 !*******************************************************************************
 
-subroutine decomp_input_par (maxmach, maxgrds, nmachs, ngr, nnxp, nnyp, ixb, ixe, iyb, iye, failed)
-
-  ! par_decomp_input:
-  !  reads domain decomposition from input file
-
-  use domain_decomp, only: &
-       domain_fname         ! intent(in)
-
-  implicit none
-  ! Arguments:
-  integer, intent(in)  :: maxmach
-  integer, intent(in)  :: maxgrds
-  integer, intent(in)  :: nmachs
-  integer, intent(in)  :: ngr
-  integer, intent(in)  :: nnxp(maxgrds)
-  integer, intent(in)  :: nnyp(maxgrds)
-  integer, intent(out) :: ixb(nmachs,ngr)
-  integer, intent(out) :: ixe(nmachs,ngr)
-  integer, intent(out) :: iyb(nmachs,ngr)
-  integer, intent(out) :: iye(nmachs,ngr)
-  logical, intent(out) :: failed
-  ! Local variables:
-  integer, parameter :: un=48
-  logical :: ex
-  integer :: err
-  integer :: grid
-  integer :: node
-  integer :: xbeg
-  integer :: xend
-  integer :: ybeg
-  integer :: yend
-  integer :: occur
-  integer :: igr
-  integer :: imachs
-  integer :: iy
-  integer :: ix
-  integer, parameter :: UndefIndex=-234
-  !character(len=*), parameter :: fname="Domains"
-  character(len=*), parameter :: h="**(par_decomp_input)**"
-  character(len=10) :: c0, c1, c2
-  logical, parameter :: dumpLocal=.FALSE.
-
-  ! fail is the default
-  failed = .true.
-
-  ! Checking if domain_fname is valid
-  if (len_trim(domain_fname)==0) then
-     if (dumpLocal) then
-        write(*,"(a)") h//" Explicit domain decomposition file invalid!"
-        write(*,"(a)") h//" Original domain decomposition mode activated"
-     end if
-     return
-  endif
-
-  if (dumpLocal) then
-     write(*,"(a)") h//" fetching file "//domain_fname
-  end if
-
-  ! Checking file existence
-  inquire(file=domain_fname(1:len_trim(domain_fname)), exist=ex)
-  if (.not. ex) then
-     write(*,"(a)") h//" Explicit domain decomposition file "//domain_fname// &
-          " not found"
-     write(*,"(a)") h//" Original domain decomposition mode activated"
-     return
-  end if
-
-  ! initialization
-  ixb(1:nmachs, 1:ngr) = UndefIndex
-  ixe(1:nmachs, 1:ngr) = UndefIndex
-  iyb(1:nmachs, 1:ngr) = UndefIndex
-  iye(1:nmachs, 1:ngr) = UndefIndex
-
-  ! store file contents at desired places
-  open(un, file=domain_fname(1:len_trim(domain_fname)), status="old", action="read")
-  do
-
-     ! read until eof
-     read(un, *, iostat=err) grid, node, xbeg, xend, ybeg, yend
-     if (err /= 0) then
-        exit
-     end if
-
-     ! Checking data consistency
-     if (grid < 1 .or. grid > ngr) then
-        write(c0,"(i10)") grid
-        write(c1,"(i10)") ngr
-        write(*,"(a)") h//" unexpected grid number on input file "//domain_fname
-        write(*,"(a)") h//" grid range [1:"//trim(adjustl(c1))//&
-             &"]; unexpected grid number="//trim(adjustl(c0))
-        write(*,"(a)") h//" Explicit domain decomposition file invalid!"
-        write(*,"(a)") h//" Original domain decomposition mode activated"
-        return
-     end if
-     if (node < 1 .or. node > nmachs) then
-        write(c0,"(i10)") node
-        write(c1,"(i10)") nmachs
-        write(*,"(a)") h//" unexpected node number on input file "//domain_fname
-        write(*,"(a)") h//" node range [1:"//trim(adjustl(c1))//&
-             &"]; unexpected node number="//trim(adjustl(c0))
-        write(*,"(a)") h//" Explicit domain decomposition file invalid!"
-        write(*,"(a)") h//" Original domain decomposition mode activated"
-        return
-     end if
-
-     ! store
-
-     ixb(node,grid) = xbeg
-     ixe(node,grid) = xend
-     iyb(node,grid) = ybeg
-     iye(node,grid) = yend
-  end do
-  close(un)
-
-  ! all data stored?
-  ! it suffices to verify ixb (since ixe,iyb,iye are at the same read)
-  do igr = 1, ngr
-     do imachs = 1, nmachs
-        if (ixb(imachs,igr) == UndefIndex) then
-           write(c0,"(i10)") imachs
-           write(c1,"(i10)") igr
-           write(*,"(a)") h//" missing data for machine "&
-                &//trim(adjustl(c0))//" and grid "//trim(adjustl(c1))
-           write(*,"(a)") h//" on input file "//domain_fname
-           write(*,"(a)") h//" Explicit domain decomposition file invalid!"
-           write(*,"(a)") h//" Original domain decomposition mode activated"
-           return
-        end if
-     end do
-  end do
-
-  ! input data partitions the domain?
-  do igr = 1, ngr
-     do iy = 2, nnyp(igr)-1
-        do ix = 2, nnxp(igr)-1
-           occur = count(&
-                (ixb(1:nmachs,igr) <= ix) .and. &
-                (ixe(1:nmachs,igr) >= ix) .and. &
-                (iyb(1:nmachs,igr) <= iy) .and. &
-                (iye(1:nmachs,igr) >= iy)          )
-           if (occur /= 1) then
-              write(*,"(a)") h//" domain decomposition is not a partition on file "//domain_fname
-              write(*,"(a,3i10)") h//" point igr, ix, iy=",igr,ix,iy
-              write(*,"(a,i10)") h//" number of occurences=",occur
-              write(*,"(a)") h//" Explicit domain decomposition file invalid!"
-              write(*,"(a)") h//" Original domain decomposition mode activated"
-              return
-           end if
-        end do
-     end do
-  end do
-
-  ! accepted domain decomposition by external file
-  failed = .false.
-  if (dumpLocal) then
-     write(*,"(a)") h//" domain decomposition imposed by file "//domain_fname
-  end if
-end subroutine decomp_input_par
-
-
 
 
 ! domain_decomposition_dump: dumps domain decomposition at
@@ -1483,105 +1184,4 @@ end subroutine domain_decomposition_dump
 
 
 
-subroutine domain_decomposition_summary
 
-  use ISO_FORTRAN_ENV
-
-  use mem_grid, only: &
-       nnxp, &
-       nnyp, &
-       ngrids
-
-  use node_mod, only: &
-       ixb,           &
-       ixe,           &
-       iyb,           &
-       iye,           &
-       nmachs
-
-  implicit none
-  integer :: ngr
-  integer :: jnode
-  integer :: ncols(nmachs)
-  integer, allocatable :: bins(:)
-  integer :: low, high, ibin
-  logical, parameter :: dumpLocal=.false.
-  character(len=*), parameter :: h="**(domain_decomposition_summary)**"
-  character(len=8) :: c0, c1, c2, c3
-
-  ! dumps at selected unit
-
-  write(OUTPUT_UNIT,"(//,61('-'))")
-  write(OUTPUT_UNIT,"(a)") &
-       "-----------  DOMAIN DECOMPOSITION HISTOGRAM ----------------"
-  do ngr = 1, ngrids
-
-     ! grid points per rank
-
-     jnode=1
-     ncols(jnode)= (1+ixe(jnode,ngr)-ixb(jnode,ngr))  &
-          *(1+iye(jnode,ngr)-iyb(jnode,ngr))
-     low=ncols(1); high=ncols(1)
-     do jnode = 2,nmachs
-        ncols(jnode)= (1+ixe(jnode,ngr)-ixb(jnode,ngr))  &
-             *(1+iye(jnode,ngr)-iyb(jnode,ngr))
-        if (ncols(jnode) < low) then
-           low=ncols(jnode)
-        else if (ncols(jnode) > high) then
-           high=ncols(jnode)
-        end if
-     enddo
-     write(OUTPUT_UNIT,"(61('-'))")
-     write(c0,"(i8)") ngr
-     write(c1,"(i8)") nmachs
-     write(c2,"(i8)") nnxp(ngr)
-     write(c3,"(i8)") nnyp(ngr)
-     write(OUTPUT_UNIT,"(a)") "Grid "//trim(adjustl(c0))//&
-          " with "//trim(adjustl(c2))//" x "//trim(adjustl(c3))//&
-          " surface points decomposed on "//trim(adjustl(c1))//" MPI ranks:"
-
-     ! build histogram
-
-     allocate(bins(low:high))
-     bins = 0
-     do jnode=1, nmachs
-        bins(ncols(jnode)) = bins(ncols(jnode)) + 1
-     end do
-
-     ! dump histogram
-
-     do ibin = low, high
-        if (bins(ibin) == 0) cycle
-        write(c0,"(i8)") bins(ibin)
-        write(c1,"(i8)") ibin
-        write(c2,"(i8)") (100*bins(ibin))/nmachs
-        write(OUTPUT_UNIT,"(2x,a)") trim(adjustl(c0))//" ranks with "//&
-             trim(adjustl(c1))//" surface points; "//trim(adjustl(c2))//"% of ranks"
-     end do
-     deallocate(bins)
-     write(OUTPUT_UNIT,"(61('-'),//)")
-  end do
-end subroutine domain_decomposition_summary
-
-
-
-
-integer function GetAvailableUnit()
-  implicit none
-
-  integer, parameter :: unitLow=10
-  integer, parameter :: unitHigh=99
-  integer :: iunit
-  logical :: op
-  character(len=*), parameter :: h="**(GetAvailableUnit)**"
-
-  do iunit = unitLow, unitHigh
-     inquire (unit=iunit, opened=op)
-     if (.not. op) exit
-  end do
-  if (iunit > unitHigh) then
-     call fatal_error(h//" Fortran i/o units exausted")
-  else
-     GetAvailableUnit = iunit
-  end if
-end function GetAvailableUnit

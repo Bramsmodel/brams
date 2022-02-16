@@ -8,7 +8,7 @@ module CUPARM_GRELL3
   use ModNamelistFile, only: namelistFile
 
   use ModMessageSet, only: &
-       PostRecvSendMsgs,    &
+       PostSendRecvMsgs,    &
        WaitSendRecvMsgs
 
   use mem_basic         , only: basic_g
@@ -651,7 +651,7 @@ contains
           !
           !- exchange border information for parallel run
           if( g3d_spread == 1 .or. g3d_smoothh == 1) then
-             call PostRecvSendMsgs(OneGrid%SendG3D, OneGrid%RecvG3D)
+             call PostSendRecvMsgs(OneGrid%SendG3D, OneGrid%RecvG3D)
              call WaitSendRecvMsgs    (OneGrid%SendG3D, OneGrid%RecvG3D)
           endif
           !

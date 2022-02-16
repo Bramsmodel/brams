@@ -12,7 +12,7 @@ module ModAcoust
 
   !- divergence damping coefficient [m^2/s];
   !- defined as a 3d field to optionally reduce it over steep orography
-  real, private, allocatable :: alpha_div(:,:,:)
+  real, private, allocatable, target :: alpha_div(:,:,:)
 
 
   real, private :: div_damp_strength    ! dim.less coeff for div-damping
@@ -991,7 +991,8 @@ contains
     use ModGrid, only: Grid, DumpGrid
 
     use ModMessageSet, only: &
-         PostRecvSendMsgs, &
+         UpdateFieldAddress, &
+         PostSendRecvMsgs, &
          WaitSendRecvMsgs
 
     use mem_grid, only : nnacoust, & ! intent(in)
@@ -1019,7 +1020,7 @@ contains
 
     use mem_scratch, only: scratch
 
-    use ModComm, only: commHaloAcou
+!!$    use ModComm, only: commHaloAcou
 
     implicit none
 
@@ -1083,14 +1084,15 @@ contains
     integer :: i, j
     character(len=1) :: citer
 
-    real, dimension(:,:,:), allocatable :: &
-         div,        &
-         pp_minus_div&
-         ,pp_t_minus_dt
+    real, allocatable, target :: div(:,:,:)
+    real, allocatable, target :: pp_minus_div(:,:,:)
+    real, allocatable, target :: pp_t_minus_dt(:,:,:)
+         
 
     character(len=*), parameter :: h="**(acoust_new)**"
     logical, parameter :: dumpLocal=.false.
     character(len=8) :: str(10)
+    real, pointer :: pField(:,:,:) => null()
 
     character(LEN=5) :: ctime
     integer :: nmbr_gpts
@@ -1102,8 +1104,17 @@ contains
 
     if ( apply_div_damping .and. (dyncore_flag == 2) ) then
        allocate( pp_minus_div ( mzp, mxp, myp) )
-       if(damp_formulation==1) allocate( div          ( mzp, mxp, myp) )
-       if(damp_formulation==2) allocate( pp_t_minus_dt( mzp, mxp, myp) )
+       if(damp_formulation==1) then
+          allocate( div ( mzp, mxp, myp) )
+          pField => div
+          call UpdateFieldAddress(OneGrid%AcouDampDivSend, pField, "Div")
+          call UpdateFieldAddress(OneGrid%AcouDampDivRecv, pField, "Div")
+       else if(damp_formulation==2) then
+          allocate( pp_t_minus_dt( mzp, mxp, myp) )
+          pField => pp_t_minus_dt
+          call UpdateFieldAddress(OneGrid%AcouDampPPSend, pField, "PP")
+          call UpdateFieldAddress(OneGrid%AcouDampPPRecv, pField, "PP")
+       end if
     end if
 
     ! computes acoc, acof, acog, a1da2, amoe, amof, acoaa
@@ -1150,7 +1161,13 @@ contains
                         trim(adjustl(str(2)))//","//&
                         trim(adjustl(str(3)))//")")
                 end if
-                call commHaloAcou(div,mxp,myp,mzp,myNum,'div@acoust_new')
+                call PostSendRecvMsgs(&
+                     OneGrid%AcouDampDivSend, &
+                     OneGrid%AcouDampDivRecv)
+                call WaitSendRecvMsgs(&
+                     OneGrid%AcouDampDivSend, &
+                     OneGrid%AcouDampDivRecv)
+!!$                call commHaloAcou(div,mxp,myp,mzp,myNum,'div@acoust_new')
              endif
              ! as proposed in Wicker, Skamarock (2002) (?) divergence damping is
              ! used in an approximated form by adding the following term to the pressure:
@@ -1168,7 +1185,13 @@ contains
                         trim(adjustl(str(2)))//","//&
                         trim(adjustl(str(3)))//")")
                 end if
-                call commHaloAcou(pp_t_minus_dt,mxp,myp,mzp,myNum,'pp_t_minus_dt@acoust_new')
+                call PostSendRecvMsgs(&
+                     OneGrid%AcouDampPPSend, &
+                     OneGrid%AcouDampPPRecv)
+                call WaitSendRecvMsgs(&
+                     OneGrid%AcouDampPPSend, &
+                     OneGrid%AcouDampPPRecv)
+!!$                call commHaloAcou(pp_t_minus_dt,mxp,myp,mzp,myNum,'pp_t_minus_dt@acoust_new')
              endif
              pp_minus_div(:,:,:) = pp(:,:,:) + div_damp_strength*(pp(:,:,:) - pp_t_minus_dt(:,:,:))
           endif
@@ -1189,7 +1212,7 @@ contains
        !call dumpVarAllLatLonk(up, 'UP'  ,1155,lrk,iter,1,mxp,1,myp,1,mzp,0.0,0.0)
        ! if not last loop iteration,  sends up(i-1,j)
        if (iter < lastIter) then
-          call PostRecvSendMsgs(OneGrid%AcouSendU, OneGrid%AcouRecvU)
+          call PostSendRecvMsgs(OneGrid%AcouSendU, OneGrid%AcouRecvU)
        end if
 
        ! vp = f(vp, pp); uses pp(i,j+1)
@@ -1212,9 +1235,9 @@ contains
        if (.not. singleProcRun) then
           !        call commHaloAcou(up,mxp,myp,mzp,myNum,'up')
           if (iter < lastIter) then
-             call PostRecvSendMsgs(OneGrid%AcouSendV, OneGrid%AcouRecvV)
+             call PostSendRecvMsgs(OneGrid%AcouSendV, OneGrid%AcouRecvV)
           else
-             call PostRecvSendMsgs(OneGrid%AcouSendUV, OneGrid%AcouRecvUV)
+             call PostSendRecvMsgs(OneGrid%AcouSendUV, OneGrid%AcouRecvUV)
           end if
        end if
 
@@ -1276,10 +1299,10 @@ contains
        !      receives wp and pp and updates this process ghost zone
        if (.not. singleProcRun) then
           if (iter < lastIter) then
-             call PostRecvSendMsgs(OneGrid%AcouSendPNorth, OneGrid%AcouRecvPNorth)
-             call PostRecvSendMsgs(OneGrid%AcouSendPEast, OneGrid%AcouRecvPEast)
+             call PostSendRecvMsgs(OneGrid%AcouSendPNorth, OneGrid%AcouRecvPNorth)
+             call PostSendRecvMsgs(OneGrid%AcouSendPEast, OneGrid%AcouRecvPEast)
           else
-             call PostRecvSendMsgs(OneGrid%AcouSendWP, OneGrid%AcouRecvWP)
+             call PostSendRecvMsgs(OneGrid%AcouSendWP, OneGrid%AcouRecvWP)
              call WaitSendRecvMsgs(OneGrid%AcouSendWP, OneGrid%AcouRecvWP)
           end if
        end if
@@ -1295,7 +1318,7 @@ contains
   end subroutine acoust_new
 
 
-  subroutine init_div_damping_coeff( dts )
+  subroutine init_div_damping_coeff (OneGrid, dts)
 
     ! Reduction of the divergence damping coefficient over steep terrain
     ! to increase numerical stability
@@ -1319,12 +1342,21 @@ contains
          nmachs, &
          mynum
 
-    use ModComm, only: commHaloAcou
+!!$    use ModComm, only: commHaloAcou
 
+    use ModGrid, only: &
+         Grid
+
+    use ModMessageSet, only: &
+         PostSendRecvMsgs, &
+         WaitSendRecvMsgs, &
+         UpdateFieldAddress
+    
     implicit none
 
     include "constants.h"
 
+    type(Grid), pointer, intent(in) :: OneGrid
     real, intent(in) :: dts  ! small time step [s]
 
     real :: c_sound   ! rough estimate for maximum value of sound velocity [m/s]
@@ -1343,6 +1375,7 @@ contains
     integer :: istat
     logical :: singleProcRun
 
+    real, pointer :: pField(:,:,:)
     character(len=*), parameter :: h="**(init_div_damping_coeff)**"
     logical, parameter :: dumpLocal=.false.
     character(len=8) :: str(10)
@@ -1367,6 +1400,10 @@ contains
     if ( istat /= 0 )  &! call fatal_error("ERROR allocating alpha_div")
          iErrNumber=dumpMessage(c_tty,c_yes,h,modelVersion,c_fatal, &
          "ERROR allocating alpha_div")
+    pField => alpha_div
+    call UpdateFieldAddress(OneGrid%AcouDampAlphaSend, pField, "Alpha")
+    call UpdateFieldAddress(OneGrid%AcouDampAlphaRecv, pField, "Alpha")
+    
     c_sound = 330.0   ! this rough estimation of sound velocity is sufficient here
     ! see Wicker, Skamarock (2002) MWR:
     alpha_div_limit = div_damp_strength * c_sound**2 * dts
@@ -1428,7 +1465,13 @@ contains
                trim(adjustl(str(2)))//","//&
                trim(adjustl(str(3)))//")")
        end if
-       call commHaloAcou(alpha_div,mxp,myp,mzp,myNum,'alpha_div@init_div_damping_coeff')
+       call PostSendRecvMsgs(&
+            OneGrid%AcouDampAlphaSend, &
+            OneGrid%AcouDampAlphaRecv)
+       call WaitSendRecvMsgs(&
+            OneGrid%AcouDampAlphaSend, &
+            OneGrid%AcouDampAlphaRecv)
+!!$       call commHaloAcou(alpha_div,mxp,myp,mzp,myNum,'alpha_div@init_div_damping_coeff')
     endif
     !--- mpi paralelization :
 
@@ -1443,281 +1486,6 @@ contains
     deallocate( alpha_div )
 
   end subroutine deallocate_alpha_div
-
-
-  !.. subroutine acoust_new_rk(OneGrid, mzp,mxp,myp,  &
-  !.. nnacoust_loc,                           &
-  !.. dn0,pi0,th0,                            &
-  !.. up,vp,wp,pp,                            &
-  !.. ut,vt,wt,pt,                            &
-  !.. topt,topu,topv,rtgt,rtgu,f13u,dxu,rtgv, &
-  !.. dyv,f23v,f13t,f23t,fmapui,fmapvi,dxt,dyt,fmapt,lrk)
-  !.. !> @brief: Acoustic terms small time-step driver
-  !.. !! @details: This routine calls all the necessary routines to march the model
-  !.. !!     through the nnacoust_loc small timesteps.
-  !.. !!     The integration starts form the state up, vp, wp, pp; these fields
-  !.. !!     are overwritten with the updated fields at output.
-  !.. !! @author:  unknow
-  !.. !! @date:  18/Nov/2015
-  !.. !! @version:  5.2
-  !.. !! @param: mzp,mxp,myp,i0,j0,ia,iz,ja,jz,izu,jzv
-  !.. !!
-  !.. !! @copyright Under CC-GPL License by INPE/CPTEC
-  !.. !! Please, read @link https://creativecommons.org/licenses/GPL/2.0/legalcode.pt
-
-
-  !.. use ModParallelEnvironment, only: MsgDump
-
-  !.. use ModNamelistFile, only: namelistfile
-
-  !.. use ModGrid, only: Grid, DumpGrid
-
-  !.. use ModMessageSetSendRecv, only: &
-  !.. PostRecvSendMsgs, &
-  !.. WaitSendRecvMsgs
-
-  !.. use mem_grid, only : nnacoust, & ! intent(in)
-  !.. ngrid,                    & ! intent(in)
-  !.. dts,                      & ! intent(out)
-  !.. dtlt,                     & ! intent(in)
-  !.. nxtnest,                  & ! intent(in)
-  !.. nzp, nxp, nyp,            & ! intent(in)
-  !.. impl,                     & ! intent(in)
-  !.. time,                     &
-  !.. dyncore_flag,             &
-  !.. grid_g                      ! for get_wind_div
-
-  !.. use node_mod, only :  nmachs,  & ! intent(in)
-  !.. ia,                       & ! intent(in)
-  !.. iz,                       & ! intent(in)
-  !.. ja,                       & ! intent(in)
-  !.. jz,                       & ! intent(in)
-  !.. izu,                      & ! intent(in)
-  !.. jzv,                      & ! intent(in)
-  !.. mynum
-
-  !.. use ModNamelistFile, only: &
-  !.. namelistfile
-
-  !.. use mem_scratch, only: scratch
-
-  !.. use ModComm, only: commHaloAcou
-
-  !.. implicit none
-
-  !.. type(Grid), pointer :: OneGrid
-  !.. integer, intent(in) :: lrk
-
-  !.. integer, intent(in) :: mzp
-  !.. integer, intent(in) :: mxp
-  !.. integer, intent(in) :: myp
-
-  !.. integer, intent(in) :: nnacoust_loc  ! number of small time steps
-
-  !.. real, intent(in) :: dn0(mzp,mxp,myp)
-  !.. real, intent(in) :: pi0(mzp,mxp,myp)
-  !.. real, intent(in) :: th0(mzp,mxp,myp)
-
-  !.. real, intent(inout) :: up(mzp,mxp,myp)
-  !.. real, intent(inout) :: vp(mzp,mxp,myp)
-  !.. real, intent(inout) :: wp(mzp,mxp,myp)
-  !.. real, intent(inout) :: pp(mzp,mxp,myp)
-
-  !.. real, intent(in) :: topt(mxp,myp)
-  !.. real, intent(in) :: topu(mxp,myp)
-  !.. real, intent(in) :: topv(mxp,myp)
-  !.. real, intent(in) :: rtgt(mxp,myp)
-  !.. real, intent(in) :: rtgu(mxp,myp)
-  !.. real, intent(in) :: f13u(mxp,myp)
-  !.. real, intent(in) :: dxu(mxp,myp)
-  !.. real, intent(in) :: rtgv(mxp,myp)
-  !.. real, intent(in) :: dyv(mxp,myp)
-  !.. real, intent(in) :: f23v(mxp,myp)
-  !.. real, intent(in) :: f13t(mxp,myp)
-  !.. real, intent(in) :: f23t(mxp,myp)
-  !.. real, intent(in) :: fmapui(mxp,myp)
-  !.. real, intent(in) :: fmapvi(mxp,myp)
-  !.. real, intent(in) :: dxt(mxp,myp)
-  !.. real, intent(in) :: dyt(mxp,myp)
-  !.. real, intent(in) :: fmapt(mxp,myp)
-
-  !.. real, intent(in) :: ut(mzp,mxp,myp)
-  !.. real, intent(in) :: vt(mzp,mxp,myp)
-  !.. real, intent(in) :: wt(mzp,mxp,myp)
-  !.. real, intent(in) :: pt(mzp,mxp,myp)
-
-  !.. include "tsNames.h"
-
-  !.. integer :: iter,k
-  !.. integer :: lastIter
-  !.. logical :: singleProcRun
-  !.. logical :: outermostGrid
-  !.. real :: a1da2
-  !.. real :: acoaa(mzp,mxp,myp)
-  !.. real :: acoc(mzp,mxp,myp)
-  !.. real :: acof(mzp,mxp,myp)
-  !.. real :: acog(mzp,mxp,myp)
-  !.. real :: amoe(mzp,mxp,myp)
-  !.. real :: amof(mzp,mxp,myp)
-  !.. real :: amog(mzp,mxp,myp)
-  !.. real :: heatfx1(mxp,myp)
-
-  !.. integer :: i, j
-  !.. character(len=1) :: citer
-
-  !.. real, dimension(:,:,:), allocatable :: &
-  !.. div,        &
-  !.. pp_minus_div&
-  !.. ,pp_t_minus_dt
-  !.. character(len=*), parameter :: h="**(acoust_new)**"
-  !.. logical, parameter :: dumpLocal=.false.
-  !.. character(LEN=5) :: ctime
-  !.. integer :: nmbr_gpts
-
-  !.. lastIter = nnacoust_loc
-  !.. singleProcRun = nmachs == 1
-  !.. outermostGrid = nxtnest(ngrid) == 0
-
-  !.. if ( apply_div_damping .and. (dyncore_flag == 2) ) then
-  !.. allocate( pp_minus_div ( mzp, mxp, myp) )
-  !.. if(damp_formulation==1) allocate( div          ( mzp, mxp, myp) )
-  !.. if(damp_formulation==2) allocate( pp_t_minus_dt( mzp, mxp, myp) )
-  !.. end if
-
-  !.. ! computes acoc, acof, acog, a1da2, amoe, amof, acoaa
-  !.. ! uses dn0, pi0, th0, rtgt
-  !.. call coefz(mzp,mxp,myp,ia,iz,ja,jz,  &
-  !.. acoc,acof,acog,dn0,pi0,th0,rtgt,a1da2,amoe,amof,acoaa)
-
-  !.. ! run small time steps
-  !.. do iter=1,lastIter
-  !.. write(citer,fmt='(I1)') iter
-
-  !.. if ( apply_div_damping .and. ( dyncore_flag == 2 )&
-  !.. .and. ( iter > 1 ) ) then
-  !.. if(damp_formulation==1) then
-  !.. ! application of divergence damping in the 1st timestep is detrimental to stability
-  !.. call get_wind_div_v2 (mzp,mxp,myp,ia,iz,ja,jz,izu,jzv    &
-  !.. ,up(1,1,1),vp(1,1,1),wp(1,1,1)                   &
-  !.. ,scratch%vt3da(1), scratch%vt3db(1), scratch%vt3dh(1) &
-  !.. ,div(1,1,1)          &
-  !.. ,rtgt(1,1),rtgu(1,1),dxu(1,1),rtgv(1,1),dyv(1,1),f13t(1,1)&
-  !.. ,f23t(1,1),fmapui(1,1),fmapvi(1,1)   &
-  !.. ,grid_g(ngrid)%fmapu(1,1), grid_g(ngrid)%fmapv(1,1)&
-  !.. ,grid_g(ngrid)%dxt,grid_g(ngrid)%dyt,fmapt)
-  !.. if (.not. singleProcRun) then
-  !.. call commHaloAcou(div,mxp,myp,mzp,myNum,'div')
-  !.. endif
-  !.. ! as proposed in Wicker, Skamarock (2002) (?) divergence damping is
-  !.. ! used in an approximated form by adding the following term to the pressure:
-  !.. pp_minus_div(:,:,:) = pp(:,:,:) - alpha_div(:,:,:) / th0(:,:,:) * div(:,:,:)
-  !.. elseif(damp_formulation==2) then
-  !.. !- alternative formulation
-  !.. pp_minus_div(:,:,:) = pp(:,:,:) + div_damp_strength*(pp(:,:,:) - pp_t_minus_dt(:,:,:))
-  !.. endif
-  !.. end if
-
-  !.. if(damp_formulation==2) pp_t_minus_dt(:,:,:)=pp(:,:,:)
-
-  !.. call dumpVarAllLatLonk3P(pp , 'PP'  ,1612,lrk,iter,1,mxp,1,myp,1,mzp,0.0,0.0,h)
-  !.. call dumpVarAllLatLonk3P(up , 'UP'  ,1612,lrk,iter,1,mxp,1,myp,1,mzp,0.0,0.0,h)
-  !.. call dumpVarAllLatLonk3P(ut , 'UT'  ,1612,lrk,iter,1,mxp,1,myp,1,mzp,0.0,0.0,h)
-  !.. call dumpVarAllLatLonk3P(pp_minus_div, 'PPMD'  ,1612,lrk,iter,1,mxp,1,myp,1,mzp,0.0,0.0,h)
-
-  !.. ! up = f(up, pp); uses pp(i+1,j)
-  !.. ! remaining arguments are loop invariant
-  !.. if ( apply_div_damping .AND. ( dyncore_flag == 2 ) &
-  !.. .AND. (iter > 1) )then
-  !.. call prdctu(mzp,mxp,myp,ia,izu,ja,jz,  &
-  !.. up,ut,pp_minus_div,th0,f13u,rtgu,rtgt,dxu,topu)
-  !.. else
-  !.. call prdctu(mzp,mxp,myp,ia,izu,ja,jz,  &
-  !.. up,ut,pp,th0,f13u,rtgu,rtgt,dxu,topu)
-  !.. end if
-
-  !.. call dumpVarAllLatLonk3P(up , 'UP'  ,1631,lrk,iter,1,mxp,1,myp,1,mzp,0.0,0.0,h)
-  !.. call dumpVarAllLatLonk3P(vp , 'VP'  ,1631,lrk,iter,1,mxp,1,myp,1,mzp,0.0,0.0,h)
-  !.. call dumpVarAllLatLonk3P(vt , 'VT'  ,1631,lrk,iter,1,mxp,1,myp,1,mzp,0.0,0.0,h)
-
-  ! vp = f(vp, pp); uses pp(i,j+1)
-  !.. ! remaining arguments are loop invariant
-  !.. if ( apply_div_damping .AND. ( dyncore_flag == 2 ) &
-  !.. .AND. (iter > 1) )then
-  !.. call prdctv(mzp,mxp,myp,ia,iz,ja,jzv,&
-  !.. vp,vt, pp_minus_div, th0,f23v,rtgv,rtgt,dyv,topv)
-  !.. else
-  !.. call prdctv(mzp,mxp,myp,ia,iz,ja,jzv,&
-  !.. vp,vt, pp,th0,f23v,rtgv,rtgt,dyv,topv)
-  !.. end if
-
-  !.. call dumpVarAllLatLonk3P(vp , 'VP'  ,1662,lrk,iter,1,mxp,1,myp,1,mzp,0.0,0.0,h)
-
-  ! wp = f(wp, pp); uses node inner cells only
-  !.. ! remaining arguments are loop invariant
-  !.. call prdctw1(mzp,mxp,myp,ia,iz,ja,jz, &
-  !.. wp,wt,pp,acoc,a1da2,rtgt,topt)
-
-  !.. if (.not. singleProcRun) then
-  !.. call commHaloAcou(up,mxp,myp,mzp,myNum,'up')
-  !.. call commHaloAcou(vp,mxp,myp,mzp,myNum,'vp')
-  !.. end if
-
-  !.. call dumpVarAllLatLonk3P(up , 'UP'  ,1685,lrk,iter,1,mxp,1,myp,1,mzp,0.0,0.0,h)
-  !.. call dumpVarAllLatLonk3P(vp , 'VP'  ,1685,lrk,iter,1,mxp,1,myp,1,mzp,0.0,0.0,h)
-
-
-  !.. ! pp = f(pp, up, vp); uses up(i-1,j), vp(i,j-1)
-  !.. ! also computes heatfx1
-  !.. ! remaining arguments are loop invariant
-  !.. call prdctp1(mzp,mxp,myp,ia,iz,ja,jz,  &
-  !.. pp,up,vp,pi0,dn0,th0,pt,f13t,f23t,rtgt,rtgu,rtgv, &
-  !.. heatfx1,fmapui,fmapvi,dxt,dyt,fmapt)
-
-  !.. if (.not. singleProcRun) then
-  !.. call commHaloAcou(wp,mxp,myp,mzp,myNum,'wp')
-  !.. call commHaloAcou(pp,mxp,myp,mzp,myNum,'pp')
-  !.. end if
-
-  !.. call dumpVarAllLatLonk3P(wp , 'WP'  ,1704,lrk,iter,1,mxp,1,myp,1,mzp,0.0,0.0,h)
-  !.. call dumpVarAllLatLonk3P(pp , 'PP'  ,1704,lrk,iter,1,mxp,1,myp,1,mzp,0.0,0.0,h)
-
-  ! wp = f(wp, pp); uses node inner cells only
-  !.. ! uses heatfx1
-  !.. ! also computes amog
-  !.. ! remaining arguments are loop invariant
-  !.. call prdctw2(mzp,mxp,myp,ia,iz,ja,jz, &
-  !.. wp,pp,acoc,amof,amog,acoaa,rtgt,heatfx1)
-
-  !.. ! finishes updating wp=f(wp); uses node inner cells only
-  !.. ! uses amog
-  !.. ! remaining arguments are loop invariant
-  !.. call prdctw3(mzp,mxp,myp,ia,iz,ja,jz,wp,amog,amoe,impl)
-
-  !.. ! finishes updating pp=f(pp,wp); uses node inner cells only
-  !.. ! remaining arguments are loop invariant
-  !.. call prdctp2(mzp,mxp,myp,ia,iz,ja,jz,pp,wp,acof,acog)
-
-  !.. if (.not. singleProcRun) then
-  !.. call commHaloAcou(pp,mxp,myp,mzp,myNum,'pp')
-  !.. call commHaloAcou(wp,mxp,myp,mzp,myNum,'wp')
-  !.. end if
-
-  !.. call dumpVarAllLatLonk3P(pp , 'PP'  ,1732,lrk,iter,1,mxp,1,myp,1,mzp,0.0,0.0,h)
-  !.. call dumpVarAllLatLonk3P(wp , 'WP'  ,1732,lrk,iter,1,mxp,1,myp,1,mzp,0.0,0.0,h)
-  !.. call dumpVarAllLatLonk3P(up , 'UP'  ,1732,lrk,iter,1,mxp,1,myp,1,mzp,0.0,0.0,h)
-  !.. call dumpVarAllLatLonk3P(vp , 'VP'  ,1732,lrk,iter,1,mxp,1,myp,1,mzp,0.0,0.0,h)
-
-  !.. enddo
-
-  !.. if ( apply_div_damping .AND. ( dyncore_flag == 2) ) then
-  !.. if (allocated(div          )) deallocate(div          )
-  !.. if (allocated(pp_minus_div )) deallocate(pp_minus_div )
-  !.. if (allocated(pp_t_minus_dt)) deallocate(pp_t_minus_dt)
-  !.. end if
-
-  !.. end subroutine acoust_new_rk
-
-
 
 end module ModAcoust
 

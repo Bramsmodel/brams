@@ -11,7 +11,6 @@
 module ModTimestep_RK
 
   !MB: for testing only
-  logical :: flag_mb_adv_test=.false.
   character(len=*), parameter :: h="**(rtimh_rk)**"
   logical,parameter :: stepDebug=.true.
 
@@ -24,7 +23,7 @@ contains
     use ModParallelEnvironment, only: MsgDump
 
     use ModMessageSet, only: &
-         PostRecvSendMsgs, &
+         PostSendRecvMsgs, &
          WaitSendRecvMsgs
 
     use ModAcoust, only:         &
@@ -403,7 +402,7 @@ contains
     !  Send boundaries to adjoining nodes
     !-------------------------------------------
     if (nmachs > 1) then
-       call PostRecvSendMsgs(OneGrid%SelectedGhostZoneSend, OneGrid%SelectedGhostZoneRecv)
+       call PostSendRecvMsgs(OneGrid%SelectedGhostZoneSend, OneGrid%SelectedGhostZoneRecv)
     endif
 
     !  Coriolis terms
@@ -563,13 +562,13 @@ contains
              if (dumpLocal) then
                 call MsgDump(h//" invokes init_div_damping_coeff to calculate alpha_div on ideltat=0")
              end if
-             call init_div_damping_coeff( dts )
+             call init_div_damping_coeff (OneGrid, dts)
           end if
        else
           if (dumpLocal) then
              call MsgDump(h//" invokes init_div_damping_coeff to calculate alpha_div on ideltat!=0")
           end if
-          call init_div_damping_coeff( dts )
+          call init_div_damping_coeff (OneGrid, dts)
        end if
     end if
 
@@ -622,9 +621,8 @@ contains
 
        !  Buoyancy term for w equation
        !----------------------------------------
-       !if ( .not. flag_mb_adv_test)
        call BUOYANCY( tend%wt_rk )
-       !end if
+
 
        if ( l_rk > 1 ) then
           ! (not necessary in the first RK substep)
@@ -636,16 +634,7 @@ contains
        end if
 
        !-  Acoustic small timesteps
-       if ( .not. flag_mb_adv_test) then
-          call acoustic_new(OneGrid, rk_nmbr_small_timesteps(l_rk),l_rk )
-       else
-          ! just for testing:
-          ! without the acoustic subroutine, tendencies must be added "manually"
-          ! update pp -> pc (similar for u, v, w, if needed.)
-          call update_long_rk(int(mxp*myp*mzp,i8),dtlt,rk_beta(l_rk) &
-               ,basic_g(ngrid)%pc,basic_g(ngrid)%pp  &
-               ,tend%pt_rk)
-       endif
+       call acoustic_new(OneGrid, rk_nmbr_small_timesteps(l_rk),l_rk )
 
        !- update thp -> thc (theta_il is not contained in acoustic_new)
        if (.not. singleProcRun) then

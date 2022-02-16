@@ -258,7 +258,7 @@ contains
     character(len=*), parameter :: varName="GlobalOwnWithBC"
     character(len=8) :: c0, c1, c2
     character(len=*), parameter :: h="**(CreateGlobalOwnWithBC)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     integer :: nxp
     integer :: nyp

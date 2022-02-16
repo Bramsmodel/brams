@@ -117,7 +117,7 @@ contains
     integer :: ierr
     character(len=8) :: c0
     character(len=*), parameter :: h="**(CreateFieldSection_I2D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -168,7 +168,7 @@ contains
     integer :: ierr
     character(len=8) :: c0
     character(len=*), parameter :: h="**(CreateFieldSection_2D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -219,7 +219,7 @@ contains
     integer :: ierr
     character(len=8) :: c0
     character(len=*), parameter :: h="**(CreateFieldSection_3D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -277,7 +277,7 @@ contains
     integer :: ierr
     character(len=8) :: c0
     character(len=*), parameter :: h="**(CreateFieldSection_4D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -402,7 +402,7 @@ contains
     character(len=SizeFieldSectionName) :: name
     character(len=8) :: c0
     character(len=*), parameter :: h="**(DestroyFieldSection)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (associated(oneFieldSection)) then
        name = oneFieldSection%name
@@ -438,6 +438,7 @@ contains
 
     character(len=8) :: c0
     character(len=*), parameter :: h="**(UpdateFieldAddress_2D)**"
+    logical, parameter :: dumpLocal=.true.
 
     if (.not. associated(oneFieldSection)) then
        call fatal_error(h//" oneFieldSection not associated")
@@ -447,6 +448,11 @@ contains
             " incompatible with field_2D")
     end if
     oneFieldSection%field_2D => field
+    if (dumpLocal) then
+       call MsgDump(h//" successfully updated "//&
+            trim(adjustl(oneFieldSection%name))//&
+            " memory address")
+    end if
   end subroutine UpdateFieldAddress_2D
 
 
@@ -459,6 +465,7 @@ contains
 
     character(len=8) :: c0
     character(len=*), parameter :: h="**(UpdateFieldAddress_3D)**"
+    logical, parameter :: dumpLocal=.true.
 
     if (.not. associated(oneFieldSection)) then
        call fatal_error(h//" oneFieldSection not associated")
@@ -471,6 +478,11 @@ contains
             " incompatible with field_3D")
     end if
     oneFieldSection%field_3D => field
+    if (dumpLocal) then
+       call MsgDump(h//" successfully updated "//&
+            trim(adjustl(oneFieldSection%name))//&
+            " memory address")
+    end if
   end subroutine UpdateFieldAddress_3D
 
 
@@ -483,6 +495,7 @@ contains
 
     character(len=8) :: c0
     character(len=*), parameter :: h="**(UpdateFieldAddress_4D)**"
+    logical, parameter :: dumpLocal=.true.
 
     if (.not. associated(oneFieldSection)) then
        call fatal_error(h//" oneFieldSection not associated")
@@ -494,6 +507,11 @@ contains
             " incompatible with field_4D")
     end if
     oneFieldSection%field_4D => field
+    if (dumpLocal) then
+       call MsgDump(h//" successfully updated "//&
+            trim(adjustl(oneFieldSection%name))//&
+            " memory address")
+    end if
   end subroutine UpdateFieldAddress_4D
 
 
@@ -561,7 +579,7 @@ contains
     character(len=8) :: buf0, bufn
     character(len=64) :: preStr, midStr, posStr
     character(len=*), parameter :: h="**(FieldSectionData2Buffer)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (.not. associated(oneFieldSection)) then
        call fatal_error(h//" null oneFieldSection")
@@ -711,7 +729,7 @@ contains
     character(len=8) :: buf0, bufn
     character(len=64) :: preStr, midStr, posStr
     character(len=*), parameter :: h="**(Buffer2FieldSectionData)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (.not. associated(oneFieldSection)) then
        call fatal_error(h//" null oneFieldSection")
