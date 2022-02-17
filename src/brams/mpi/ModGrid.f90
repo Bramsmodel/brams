@@ -158,6 +158,8 @@ module ModGrid
      type(MessageSet), pointer :: AcouDampPPRecv => null()
      type(MessageSet), pointer :: AcouDampAlphaSend => null()
      type(MessageSet), pointer :: AcouDampAlphaRecv => null()
+     type(MessageSet), pointer :: AcouDampThtSend => null()
+     type(MessageSet), pointer :: AcouDampThtRecv => null()
      ! AcouDampSend/Recv: Ghost Zone update of a single field
      ! on Runge Kutta Dynamics, acoust_new and init_div_damping_coef
      type(MonotonicAdvection), pointer :: MonoAdv => null()
@@ -318,6 +320,7 @@ contains
     integer, parameter :: TagAcouDampDiv=36
     integer, parameter :: TagAcouDampPP=37
     integer, parameter :: TagAcouDampAlpha=38
+    integer, parameter :: TagAcouDampTht=39
 
     ! Field pointer for fields not yet allocated
     ! not yet allocated; CreateAcouDampOneMessageSet
@@ -376,6 +379,9 @@ contains
        oneGrid%AllGhostZoneSend, oneGrid%AllGhostZoneRecv)
 
     ! allocate field with desired bounds
+    ! desired bonds assure that field section will
+    ! be correctly computed for fields that were
+    ! not yet allocated, such as local fields at procedures
     myNum=oneGrid%ParEnv%myNum
     lbx=1
     ubx=oneGrid%LocalOwn%nx(myNum)
@@ -399,7 +405,10 @@ contains
             ") fails with stat="//trim(adjustl(str(7))))
     end if
 
-
+    ! use desired bounds fields to create AcouDamp Message Sets;
+    ! correct field memory address by invoking UpdateFieldAddress
+    ! prior to use the Message Sets
+    
     call CreateAcouDampOneMessageSet(&
        defineRegularBounds, "Div", 3,  &
        oneGrid%ParEnv, oneGrid%Neigh, &
@@ -420,6 +429,13 @@ contains
        oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
        TagAcouDampAlpha, "AcouDampAlphaSend", "AcouDampAlphaRecv", &
        oneGrid%AcouDampAlphaSend, oneGrid%AcouDampAlphaRecv)
+
+    call CreateAcouDampOneMessageSet(&
+       defineRegularBounds, "Tht", 3,  &
+       oneGrid%ParEnv, oneGrid%Neigh, &
+       oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
+       TagAcouDampTht, "AcouDampThtSend", "AcouDampThtRecv", &
+       oneGrid%AcouDampThtSend, oneGrid%AcouDampThtRecv)
 
     deallocate(defineRegularBounds, stat=ierr)
     if (ierr /= 0) then
@@ -476,6 +492,8 @@ contains
             oneGrid%AcouDampPPSend, oneGrid%AcouDampPPRecv)
        call DestroyAcouDampOneMessageSet( &
             oneGrid%AcouDampAlphaSend, oneGrid%AcouDampAlphaRecv)
+       call DestroyAcouDampOneMessageSet( &
+            oneGrid%AcouDampThtSend, oneGrid%AcouDampThtRecv)
 
        deallocate(oneGrid)
     end if
@@ -573,5 +591,9 @@ contains
     call DumpMessageSet(oneGrid%AcouDampAlphaSend)
     call MsgDump(h//" dumping AcouDampAlphaRecv")
     call DumpMessageSet(oneGrid%AcouDampAlphaRecv)
+    call MsgDump(h//" dumping AcouDampThtSend")
+    call DumpMessageSet(oneGrid%AcouDampThtSend)
+    call MsgDump(h//" dumping AcouDampThtRecv")
+    call DumpMessageSet(oneGrid%AcouDampThtRecv)
   end subroutine DumpGrid
 end module ModGrid

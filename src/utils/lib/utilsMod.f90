@@ -1699,4 +1699,41 @@ Contains
 
   end subroutine sortz
 
+  subroutine Copy1DTo3D(p1D, p3D)
+
+    ! for historical reasons, 3D tendency fields
+    ! were declared 1D. This routine copies the 1D
+    ! pointer array to a 3D pointer array
+    
+    implicit none
+    real, pointer, intent(in) :: p1D(:)
+    real, pointer, intent(in) :: p3D(:,:,:)
+
+    integer :: size1D, size3D, s3D_1D
+    integer :: is, ie
+    integer :: i, j
+    character(len=8) :: c0, c1
+    character(len=*), parameter :: h="**(Copy1DTo3D)**"
+
+    size1D=size(p1D)
+    size3D=size(p3D)
+    if (size1D /= size3D) then
+       write(c0,"(i8)") size1D
+       write(c1,"(i8)") size3D
+       call fatal_error(h//" size mismatch: "//&
+            "size of p1D("//trim(adjustl(c0))//") /= "//&
+            "size of p3D("//trim(adjustl(c1))//")")
+    end if
+
+    s3D_1D=size(p3D,1)
+    is=1-s3D_1D
+    ie=0
+    do j = lbound(p3D,3), ubound(p3D,3)
+       do i = lbound(p3D,2), ubound(p3D,2)
+          is=is+s3D_1D
+          ie=ie+s3D_1D
+          p3D(:,i,j)=p1D(is:ie)
+       end do
+    end do
+  end subroutine Copy1DTo3D
 end module utilsMod

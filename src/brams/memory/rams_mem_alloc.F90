@@ -162,6 +162,7 @@ subroutine rams_mem_alloc(proc_type)
        nodebounds,    &
        mchnum,         &
        master_num,     &
+       mxp, myp, mzp, &
        mynum
 
   use mem_shcu, only: &
@@ -1198,7 +1199,7 @@ subroutine rams_mem_alloc(proc_type)
 
   call nullify_tend(naddsc)
 
-  call alloc_tend(nmzp, nmxp, nmyp, ngrids, naddsc, proc_type)
+  call alloc_tend(nmzp, nmxp, nmyp, ngrids, naddsc, proc_type, mxp, myp, mzp)
   !-------------
 
   !-------------

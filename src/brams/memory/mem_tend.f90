@@ -54,25 +54,12 @@ module mem_tend
      real, pointer :: wt_rk(:)
      real, pointer :: pt_rk(:)
      real, pointer :: tht_rk(:)
+     real, pointer :: tht_rk_3D(:,:,:)
      real, pointer :: ut_past(:)
      real, pointer :: vt_past(:)
      real, pointer :: wt_past(:)
      real, pointer :: pt_past(:)
      real, pointer :: tht_past(:)
-!!$   real, pointer, dimension(:) ::  &
-!!$         ut, vt, wt, pt, tht, rtt  &
-!!$        ,rct, rrt, rpt, rst, rat, rgt ,rht  &
-!!$        ,cct, crt, cpt, cst, cat, cgt ,cht  &
-!!$        ,cccnt, cifnt, tket, epst           &
-!!$        ,rdt, cdt, gccnt, cccmt, gccmt            &
-!!$        ,cnm1t, cnm2t, cnm3t, cnm8t, md1nt, md2nt &
-!!$        ,salt_filmt, salt_jett, salt_spmt         &
-!!$        ,ut_rk,vt_rk,wt_rk   &
-!!$	,pt_rk               &
-!!$	,tht_rk              &
-!!$        ,ut_past,vt_past     &
-!!$	,wt_past,pt_past     &
-!!$	,tht_past     ! Tendency for ice liquid water potential temperature
   end type tend_vars
 
   type (tend_vars) :: tend
@@ -80,10 +67,10 @@ module mem_tend
 contains
   !---------------------------------------------------------------
 
-  subroutine alloc_tend(nmzp,nmxp,nmyp,ngrs,naddsc,proc_type)
+  subroutine alloc_tend(nmzp,nmxp,nmyp,ngrs,naddsc,proc_type,mxp,myp,mzp)
 
     use mem_basic, only: basic_g   ! Data Type INTENT(IN)
-    use mem_grid,  only: dyncore_flag
+    use mem_grid,  only: dyncore_flag, ngrid
     use mem_scalar, only: scalar_g ! Data Type INTENT(INOUT)
     use mem_micro, only: micro_g   ! Data Type INTENT(IN)
     use mem_turb, only: turb_g     ! Data Type INTENT(IN)
@@ -99,9 +86,14 @@ contains
     ! Arguments:
     integer, intent(in) :: nmzp(:), nmxp(:), nmyp(:)
     integer, intent(in) :: ngrs, proc_type, naddsc
+    integer, intent(in) :: mxp, myp, mzp
+    !(JP) forcado para alocar tht_rk_3D com dimensoes exatas
 
     ! Local Variables:
     integer :: ng, ntpts, nsc
+    integer :: ierr
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(alloc_tend)**"
 
     !         Find the maximum number of grid points needed for any grid.
 
@@ -120,33 +112,6 @@ contains
 
 !!!!!  WE ARE ONLY CHECKING GRID 1 !!!!!!!!!
 !!!!!    All grids must have same scalars defined !!!!!!!
-
-    !--(DMK-LFR NEC-SX6)----------------------------------------------
-    !   if (associated(basic_g(1)%up))      allocate (tend%ut(ntpts))
-    !   if (associated(basic_g(1)%vp))      allocate (tend%vt(ntpts))
-    !   if (associated(basic_g(1)%wp))      allocate (tend%wt(ntpts))
-    !   if (associated(basic_g(1)%pp))      allocate (tend%pt(ntpts))
-    !
-    !   if (associated(basic_g(1)%thp))     allocate (tend%tht(ntpts))
-    !   if (associated(basic_g(1)%rtp))     allocate (tend%rtt(ntpts))
-    !   if (associated(micro_g(1)%rcp))     allocate (tend%rct(ntpts))
-    !   if (associated(micro_g(1)%rrp))     allocate (tend%rrt(ntpts))
-    !   if (associated(micro_g(1)%rpp))     allocate (tend%rpt(ntpts))
-    !   if (associated(micro_g(1)%rsp))     allocate (tend%rst(ntpts))
-    !   if (associated(micro_g(1)%rap))     allocate (tend%rat(ntpts))
-    !   if (associated(micro_g(1)%rgp))     allocate (tend%rgt(ntpts))
-    !   if (associated(micro_g(1)%rhp))     allocate (tend%rht(ntpts))
-    !   if (associated(micro_g(1)%ccp))     allocate (tend%cct(ntpts))
-    !   if (associated(micro_g(1)%crp))     allocate (tend%crt(ntpts))
-    !   if (associated(micro_g(1)%cpp))     allocate (tend%cpt(ntpts))
-    !   if (associated(micro_g(1)%csp))     allocate (tend%cst(ntpts))
-    !   if (associated(micro_g(1)%cap))     allocate (tend%cat(ntpts))
-    !   if (associated(micro_g(1)%cgp))     allocate (tend%cgt(ntpts))
-    !   if (associated(micro_g(1)%chp))     allocate (tend%cht(ntpts))
-    !   if (associated(micro_g(1)%cccnp))   allocate (tend%cccnt(ntpts))
-    !   if (associated(micro_g(1)%cifnp))   allocate (tend%cifnt(ntpts))
-    !   if (associated(turb_g(1)%tkep))     allocate (tend%tket(ntpts))
-    !   if (associated(turb_g(1)%epsp))     allocate (tend%epst(ntpts))
 
     if (associated(basic_g(1)%up))      then
        allocate (tend%ut(ntpts))
@@ -186,7 +151,22 @@ contains
        tend%tht = 0.
        if( dyncore_flag==2 ) then
     	  allocate (tend%tht_rk(ntpts))
-	  tend%tht_rk = 0.
+          tend%tht_rk = 0.
+          allocate(tend%tht_rk_3D(mzp,mxp,myp), stat=ierr)
+          if (ierr /= 0) then
+             write(str(1),"(i8)") ngrid
+             write(str(2),"(i8)") mzp
+             write(str(3),"(i8)") mxp
+             write(str(4),"(i8)") myp
+             write(str(5),"(i8)") ierr
+             call fatal_error(h//" for grid #"//trim(adjustl(str(1)))//&
+                  " allocate tht_rk_3D ("//&
+                  trim(adjustl(str(2)))//","//&
+                  trim(adjustl(str(3)))//","//&
+                  trim(adjustl(str(4)))//&
+                  ") fails with stat="//&
+                  trim(adjustl(str(5))))
+          end if
        endif
     endif
     if (associated(basic_g(1)%rtp))     then
@@ -495,6 +475,7 @@ contains
     if (associated(tend%wt_rk))   nullify (tend%wt_rk)
     if (associated(tend%pt_rk))   nullify (tend%pt_rk)
     if (associated(tend%tht_rk))  nullify (tend%tht_rk)
+    if (associated(tend%tht_rk_3D))  nullify (tend%tht_rk_3D)
     !- for ABM3 method
     if (associated(tend%ut_past))   nullify (tend%ut_past)
     if (associated(tend%vt_past))   nullify (tend%vt_past)
@@ -630,6 +611,7 @@ contains
     if (associated(tend%wt_rk))   deallocate (tend%wt_rk)
     if (associated(tend%pt_rk))   deallocate (tend%pt_rk)
     if (associated(tend%tht_rk))  deallocate (tend%tht_rk)
+    if (associated(tend%tht_rk_3D))  deallocate (tend%tht_rk_3D)
 
     if (associated(tend%ut_past))   deallocate (tend%ut_past)
     if (associated(tend%vt_past))   deallocate (tend%vt_past)
@@ -1012,6 +994,5 @@ contains
     enddo
 
   end subroutine filltab_tend
-
 end module mem_tend
 

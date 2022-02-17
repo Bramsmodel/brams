@@ -23,6 +23,7 @@ contains
     use ModParallelEnvironment, only: MsgDump
 
     use ModMessageSet, only: &
+         UpdateFieldAddress, &
          PostSendRecvMsgs, &
          WaitSendRecvMsgs
 
@@ -140,6 +141,9 @@ contains
     use mem_tend, only: &
          tend
 
+    use utilsMod, only: &
+         Copy1DTo3D
+
     use mem_chem1, only: &
          nvert_src=>chem1_src_z_dim_g, & ! (IN)
          chem1_g,                      & ! (INOUT)
@@ -210,7 +214,7 @@ contains
     use mem_turb, only:    &
          turb_g
 
-    use ModComm, only: commHaloAcou
+!!$    use ModComm, only: commHaloAcou
 
     use wind_farm, only: wind_farm_driver,windfarm
 
@@ -253,6 +257,7 @@ contains
     logical :: singleProcRun
     character(len=2) :: cnzp
     integer :: nv,itime,i,j
+    integer :: lenCopy
     character(len=256) :: julesFile
 
     logical, parameter :: dumpLocal=.false.
@@ -582,6 +587,11 @@ contains
 
 !!$    call SynchronizedTimeStamp(TS_RK_RESTO) ! Exper1.2, 2021_12
 
+    ! update field memory address at Message Set
+
+    call UpdateFieldAddress(OneGrid%AcouDampThtSend, tend%tht_rk_3D, "Tht")
+    call UpdateFieldAddress(OneGrid%AcouDampThtRecv, tend%tht_rk_3D, "Tht")
+    
     do l_rk = 1, rk_order
 
        !initialize the tendencies with the physics tendencies
@@ -638,10 +648,14 @@ contains
 
        !- update thp -> thc (theta_il is not contained in acoustic_new)
        if (.not. singleProcRun) then
+          lenCopy=size(tend%tht_rk_3D)
+          call Copy1DTo3D(tend%tht_rk(1:lenCopy), tend%tht_rk_3D)
           if (dumpLocal) then
              call MsgDump(h//" exchange borders of tend%tht_rk")
           end if
-          call commHaloAcou(tend%tht_rk,mxp,myp,mzp,myNum,'tht_rk@timestep_rk')
+          call PostSendRecvMsgs(OneGrid%AcouDampThtSend, OneGrid%AcouDampThtRecv)
+          call WaitSendRecvMsgs(OneGrid%AcouDampThtSend, OneGrid%AcouDampThtRecv)
+!!$          call commHaloAcou(tend%tht_rk,mxp,myp,mzp,myNum,'tht_rk@timestep_rk')
        endif
        call update_long_rk(int(mxp*myp*mzp,i8),dtlt,rk_beta(l_rk) &
             ,basic_g(ngrid)%thc,basic_g(ngrid)%thp  &
