@@ -1296,12 +1296,12 @@ contains
        GlobalOwn, &
        GlobalOwnWithBC, &
        GlobalWithGhost, &
-       AcouSendU, AcouRecvU, &
-       AcouSendV, AcouRecvV, &
-       AcouSendPNorth, AcouRecvPNorth, &
-       AcouSendPEast, AcouRecvPEast, &
-       AcouSendUV, AcouRecvUV, &
-       AcouSendWP, AcouRecvWP)
+       AcouSendU, AcouRecvU, TagU, &
+       AcouSendV, AcouRecvV, TagV, &
+       AcouSendPNorth, AcouRecvPNorth, TagPNorth, &
+       AcouSendPEast, AcouRecvPEast, TagPEast, &
+       AcouSendUV, AcouRecvUV, TagUV, &
+       AcouSendWP, AcouRecvWP, TagWP)
 
     integer, intent(in) :: gridId
     type(GridDims), pointer, intent(in) :: GridSize
@@ -1322,6 +1322,12 @@ contains
     type(MessageSet), pointer, intent(inout) :: AcouRecvUV
     type(MessageSet), pointer, intent(inout) :: AcouSendWP
     type(MessageSet), pointer, intent(inout) :: AcouRecvWP
+    integer, intent(in) :: TagU
+    integer, intent(in) :: TagV
+    integer, intent(in) :: TagPNorth
+    integer, intent(in) :: TagPEast
+    integer, intent(in) :: TagUV
+    integer, intent(in) :: TagWP
 
     integer :: nMachs
     integer :: myNum
@@ -1346,27 +1352,21 @@ contains
     logical :: willSend(parEnv%nMachs)
     logical :: willRecv(parEnv%nMachs)
 
-    integer, parameter :: TagU=25
     character(len=*), parameter :: NameSendU="AcouSendU"
     character(len=*), parameter :: NameRecvU="AcouRecvU"
 
-    integer, parameter :: TagV=26
     character(len=*), parameter :: NameSendV="AcouSendV"
     character(len=*), parameter :: NameRecvV="AcouRecvV"
 
-    integer, parameter :: TagPNorth=27
     character(len=*), parameter :: NameSendPNorth="AcouSendPNorth"
     character(len=*), parameter :: NameRecvPNorth="AcouRecvPNorth"
 
-    integer, parameter :: TagPEast=28
     character(len=*), parameter :: NameSendPEast="AcouSendPEast"
     character(len=*), parameter :: NameRecvPEast="AcouRecvPEast"
 
-    integer, parameter :: TagUV=29
     character(len=*), parameter :: NameSendUV="AcouSendUV"
     character(len=*), parameter :: NameRecvUV="AcouRecvUV"
 
-    integer, parameter :: TagWP=30
     character(len=*), parameter :: NameSendWP="AcouSendWP"
     character(len=*), parameter :: NameRecvWP="AcouRecvWP"
 
@@ -1797,8 +1797,8 @@ contains
   subroutine CreateDn0MessageSet(&
        gridId, GridSize, ParEnv, Neigh, &
        GlobalOwn, GlobalWithGhost, &
-       SendDn0u, RecvDn0u, &
-       SendDn0v, RecvDn0v)
+       SendDn0u, RecvDn0u, TagDn0u, &
+       SendDn0v, RecvDn0v, TagDn0v)
 
     integer, intent(in) :: gridId
     type(GridDims), pointer, intent(in) :: GridSize
@@ -1810,6 +1810,8 @@ contains
     type(MessageSet), pointer, intent(inout) :: RecvDn0u
     type(MessageSet), pointer, intent(inout) :: SendDn0v
     type(MessageSet), pointer, intent(inout) :: RecvDn0v
+    integer, intent(in) :: TagDn0u
+    integer, intent(in) :: TagDn0v
 
     integer :: nMachs
     integer :: myNum
@@ -1833,11 +1835,9 @@ contains
     logical :: willSend(parEnv%nMachs)
     logical :: willRecv(parEnv%nMachs)
 
-    integer, parameter :: TagDn0u=31
     character(len=*), parameter :: NameSendDn0u="SendDn0u"
     character(len=*), parameter :: NameRecvDn0u="RecvDn0u"
 
-    integer, parameter :: TagDn0v=32
     character(len=*), parameter :: NameSendDn0v="SendDn0v"
     character(len=*), parameter :: NameRecvDn0v="RecvDn0v"
 
@@ -1998,7 +1998,7 @@ contains
        gridId, GridSize, ParEnv, Neigh, &
        GlobalOwnWithBC, GlobalWithGhost, &
        Ramsin, &
-       SendG3D, RecvG3D)
+       SendG3D, RecvG3D, TagG3D)
 
     integer, intent(in) :: gridId
     type(GridDims), pointer, intent(in) :: GridSize
@@ -2009,6 +2009,7 @@ contains
     type(NamelistFile), pointer, intent(in) :: Ramsin
     type(MessageSet), pointer, intent(inout) :: SendG3D
     type(MessageSet), pointer, intent(inout) :: RecvG3D
+    integer, intent(in) :: TagG3D
 
     integer :: nMachs
     integer :: myNum
@@ -2034,7 +2035,6 @@ contains
     logical :: willSend(parEnv%nMachs)
     logical :: willRecv(parEnv%nMachs)
 
-    integer, parameter :: TagG3D=33
     character(len=*), parameter :: NameSendG3D="SendG3D"
     character(len=*), parameter :: NameRecvG3D="RecvG3D"
 
@@ -2184,7 +2184,7 @@ contains
        gridId, num_var, vtab_r, &
        GridSize, ParEnv, Neigh, &
        GlobalOwnWithBC, GlobalWithGhost, &
-       SelectedGhostZoneSend, SelectedGhostZoneRecv)
+       SelectedGhostZoneSend, SelectedGhostZoneRecv, TagSelectedGhostZone)
 
     integer, intent(in) :: gridId
     integer, intent(in) :: num_var(:)
@@ -2196,6 +2196,7 @@ contains
     type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
     type(MessageSet), pointer, intent(inout) :: SelectedGhostZoneSend
     type(MessageSet), pointer, intent(inout) :: SelectedGhostZoneRecv
+    integer, intent(in) :: TagSelectedGhostZone
 
 
     integer :: nMachs
@@ -2221,7 +2222,6 @@ contains
     logical :: willSend(parEnv%nMachs)
     logical :: willRecv(parEnv%nMachs)
 
-    integer, parameter :: TagSelectedGhostZone=34
     character(len=*), parameter :: NameSendSelectedGhostZone="SelectedGhostZoneSend"
     character(len=*), parameter :: NameRecvSelectedGhostZone="SelectedGhostZoneRecv"
 
@@ -2332,7 +2332,7 @@ contains
        gridId, num_var, vtab_r, &
        GridSize, ParEnv, Neigh, &
        GlobalOwnWithBC, GlobalWithGhost, &
-       AllGhostZoneSend, AllGhostZoneRecv)
+       AllGhostZoneSend, AllGhostZoneRecv, TagAllGhostZone)
 
     integer, intent(in) :: gridId
     integer, intent(in) :: num_var(:)
@@ -2344,6 +2344,7 @@ contains
     type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
     type(MessageSet), pointer, intent(inout) :: AllGhostZoneSend
     type(MessageSet), pointer, intent(inout) :: AllGhostZoneRecv
+    integer, intent(in) :: TagAllGhostZone
 
 
     integer :: nMachs
@@ -2370,7 +2371,6 @@ contains
     logical :: willSend(parEnv%nMachs)
     logical :: willRecv(parEnv%nMachs)
 
-    integer, parameter :: TagAllGhostZone=35
     character(len=*), parameter :: NameSendAllGhostZone="AllGhostZoneSend"
     character(len=*), parameter :: NameRecvAllGhostZone="AllGhostZoneRecv"
 

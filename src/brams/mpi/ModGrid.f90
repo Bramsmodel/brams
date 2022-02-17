@@ -317,6 +317,17 @@ contains
     character(len=*), parameter :: h="**(InsertMessageSetAtOneGrid)**"
     logical, parameter :: dumpLocal=.true.
 
+    integer, parameter :: TagU=25
+    integer, parameter :: TagV=26
+    integer, parameter :: TagPNorth=27
+    integer, parameter :: TagPEast=28
+    integer, parameter :: TagUV=29
+    integer, parameter :: TagWP=30
+    integer, parameter :: TagDn0u=31
+    integer, parameter :: TagDn0v=32
+    integer, parameter :: TagG3D=33
+    integer, parameter :: TagSelectedGhostZone=34
+    integer, parameter :: TagAllGhostZone=35
     integer, parameter :: TagAcouDampDiv=36
     integer, parameter :: TagAcouDampPP=37
     integer, parameter :: TagAcouDampAlpha=38
@@ -344,24 +355,24 @@ contains
          oneGrid%GlobalOwn, &
          oneGrid%GlobalOwnWithBC, &
          oneGrid%GlobalWithGhost, &
-         oneGrid%AcouSendU, oneGrid%AcouRecvU, &
-         oneGrid%AcouSendV, oneGrid%AcouRecvV,&
-         oneGrid%AcouSendPNorth, oneGrid%AcouRecvPNorth, &
-         oneGrid%AcouSendPEast, oneGrid%AcouRecvPEast, &
-         oneGrid%AcouSendUV, oneGrid%AcouRecvUV, &
-         oneGrid%AcouSendWP, oneGrid%AcouRecvWP)
+         oneGrid%AcouSendU, oneGrid%AcouRecvU, TagU, &
+         oneGrid%AcouSendV, oneGrid%AcouRecvV, TagV, &
+         oneGrid%AcouSendPNorth, oneGrid%AcouRecvPNorth, TagPNorth, &
+         oneGrid%AcouSendPEast, oneGrid%AcouRecvPEast, TagPEast, &
+         oneGrid%AcouSendUV, oneGrid%AcouRecvUV, TagUV, &
+         oneGrid%AcouSendWP, oneGrid%AcouRecvWP, TagWP)
 
     call CreateDn0MessageSet(oneGrid%Id, &
          oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
          oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
-         oneGrid%SendDn0u, oneGrid%RecvDn0u, &
-         oneGrid%SendDn0v, oneGrid%RecvDn0v)
+         oneGrid%SendDn0u, oneGrid%RecvDn0u, TagDn0u, &
+         oneGrid%SendDn0v, oneGrid%RecvDn0v, TagDn0v)
 
     call CreateG3DMessageSet(oneGrid%Id, &
          oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
          oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhost, &
          oneGrid%Ramsin, &
-         oneGrid%SendG3D, oneGrid%RecvG3D)
+         oneGrid%SendG3D, oneGrid%RecvG3D, TagG3D)
 
     ! temporariamente, num_var e vtab_r sao variaveis globais,
     ! enquanto nao inclusas no tipo Grid
@@ -370,13 +381,17 @@ contains
        oneGrid%Id, num_var, vtab_r, &
        oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
        oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhost, &
-       oneGrid%SelectedGhostZoneSend, oneGrid%SelectedGhostZoneRecv)
+       oneGrid%SelectedGhostZoneSend, &
+       oneGrid%SelectedGhostZoneRecv, &
+       TagSelectedGhostZone)
 
     call CreateAllGhostZoneMessageSet(&
        oneGrid%Id, num_var, vtab_r, &
        oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
        oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhost, &
-       oneGrid%AllGhostZoneSend, oneGrid%AllGhostZoneRecv)
+       oneGrid%AllGhostZoneSend, &
+       oneGrid%AllGhostZoneRecv, &
+       TagAllGhostZone)
 
     ! allocate field with desired bounds
     ! desired bonds assure that field section will

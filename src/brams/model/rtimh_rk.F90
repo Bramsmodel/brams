@@ -10,9 +10,6 @@
 
 module ModTimestep_RK
 
-  !MB: for testing only
-  character(len=*), parameter :: h="**(rtimh_rk)**"
-  logical,parameter :: stepDebug=.true.
 
 contains
   subroutine timestep_rk(OneGrid)
@@ -214,8 +211,6 @@ contains
     use mem_turb, only:    &
          turb_g
 
-!!$    use ModComm, only: commHaloAcou
-
     use wind_farm, only: wind_farm_driver,windfarm
 
     use optical, only: &
@@ -260,6 +255,8 @@ contains
     integer :: lenCopy
     character(len=256) :: julesFile
 
+    !MB: for testing only
+    logical,parameter :: stepDebug=.true.
     logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(timestep_rk)**"
     character(len=8) :: str(10)
@@ -655,7 +652,6 @@ contains
           end if
           call PostSendRecvMsgs(OneGrid%AcouDampThtSend, OneGrid%AcouDampThtRecv)
           call WaitSendRecvMsgs(OneGrid%AcouDampThtSend, OneGrid%AcouDampThtRecv)
-!!$          call commHaloAcou(tend%tht_rk,mxp,myp,mzp,myNum,'tht_rk@timestep_rk')
        endif
        call update_long_rk(int(mxp*myp*mzp,i8),dtlt,rk_beta(l_rk) &
             ,basic_g(ngrid)%thc,basic_g(ngrid)%thp  &
