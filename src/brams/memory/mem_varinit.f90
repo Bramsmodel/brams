@@ -218,7 +218,7 @@ contains
   subroutine filltab_varinit(varinit,varinitm,imean,n1,n2,n3,ng)
     use var_tables, only: InsertVTab
     implicit none
-    include "constants.h"
+    include "i8.h"
     type (varinit_vars) :: varinit,varinitm
     integer, intent(in) :: imean,n1,n2,n3,ng
     integer(kind=i8) :: npts

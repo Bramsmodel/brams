@@ -17,7 +17,7 @@ subroutine tend0()
   use mem_cuparm, only: confrq,NNQPARM! INTENT(IN)
 
   implicit none
-  include "constants.h"
+  include "i8.h"
   integer :: n
   integer(kind=i8) :: mxyzp
 
@@ -68,7 +68,7 @@ subroutine hadvance(iac)
   use node_mod, only: mxp, myp, mzp
 
   implicit none
-  include "constants.h"
+  include "i8.h"
   integer :: iac
 
   integer(kind=i8) :: mxyzp
@@ -139,7 +139,7 @@ subroutine predict(npts,ac,ap,fa,af,iac,dtlp,d,RAW)
   use node_mod, only: nmachs
 
   implicit none
-  include "constants.h"
+  include "i8.h"
   integer :: iac   !,npts, m
   integer(kind=i8) :: m
   integer(kind=i8), intent(in) :: npts
@@ -234,7 +234,7 @@ subroutine predtr()
   use node_mod, only: mxp, myp, mzp
 
   implicit none
-  include "constants.h"
+  include "i8.h"
   integer :: n !mxyzp
   integer(kind=i8) :: mxyzp
 
@@ -245,7 +245,7 @@ subroutine predtr()
   do n = 1,num_scalar(ngrid)
       
      !- if RK scheme, THP/THC are not predicted here
-     if (dyncore_flag == 2) then
+     if (dyncore_flag == 2 .or. dyncore_flag == 3 ) then
        if (scalar_tab(n,ngrid)%name == 'THC' .or. &
            scalar_tab(n,ngrid)%name == 'THP') cycle
      endif

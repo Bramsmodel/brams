@@ -26,7 +26,7 @@ module modPrintInitial
 
    implicit none
 
-   include "constants.h"
+   include "constants.f90"
    character(len=*),parameter :: sourceName='modPrintInitial.F90' !Name of this source code
    character(len=*),parameter :: procedureName='**modPrintInitial**' !Name of this procedure
 

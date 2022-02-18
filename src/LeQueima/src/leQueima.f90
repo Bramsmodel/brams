@@ -5,7 +5,7 @@ program leQueima
 
    integer, parameter :: iunit=22
 
-   include "constants.h"
+   include "constants.f90"
    integer :: nxp,nyp
    real :: dep_glon(2),dep_glat (2)
    character(len=9) :: date

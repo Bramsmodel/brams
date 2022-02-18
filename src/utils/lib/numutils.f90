@@ -9,7 +9,7 @@
 !ALF
 subroutine azero_l(nlong, along)
   implicit none
-  include "constants.h"
+  include "i8.h"
   integer(kind=i8), intent(in) :: nlong
   real, intent(inout) :: along(nlong)
 
@@ -79,7 +79,7 @@ end subroutine azero_l
 !!$end
 subroutine ae1t0_l(n1, a, b, c)
   implicit none
-  include "constants.h"
+  include "i8.h"
   integer(kind=i8), intent(IN) :: n1
   real, intent(INOUT) :: a(n1)
   real, intent(IN)    :: b(n1)
@@ -102,7 +102,7 @@ end subroutine ae1t0_l
 subroutine ae1p1_l(npts,a,b,c)
   implicit none
   ! Arguments:
-  include "constants.h"
+  include "i8.h"
   integer(kind=i8), intent(IN) :: npts
   real, intent(INOUT)          :: a(npts)
   real, intent(IN)             :: b(npts), c(npts)
@@ -125,7 +125,7 @@ end subroutine ae1p1_l
 !!$!
 subroutine ae1m1_l(npts, a, b, c)
   implicit none
-  include "constants.h"
+  include "i8.h"
   integer(kind=i8), intent(IN) :: npts
   real, intent(OUT)            :: a(npts)
   real, intent(IN)             :: b(npts)
@@ -173,7 +173,7 @@ end subroutine ae1m1_l
 !
 subroutine ae1_l(npts, a, b)
   implicit none
-  include "constants.h"
+  include "i8.h"
   integer(kind=i8), intent(IN) :: npts
   real, intent(OUT)            :: a(npts)
   real, intent(IN)             :: b(npts)
@@ -290,7 +290,7 @@ end subroutine ae1_l
 !!$!
 !!$subroutine ae1t1p1(npts, a, b, c, f)
 !!$  implicit none
-!!$  include "constants.h"
+!!$  include "i8.h"
 !!$  ! Arguments:
 !!$  integer(kind=i8), intent(IN) :: npts
 !!$  real, intent(INOUT) :: a(npts)
@@ -555,7 +555,7 @@ END SUBROUTINE trid
 
 subroutine update(n, a, fa, dt)
   implicit none
-  include "constants.h"
+  include "i8.h"
   integer :: n, nn
   real :: a(n), fa(n), dt
   integer(kind=i8) :: nlong
@@ -578,7 +578,7 @@ end subroutine update
 
 subroutine accum(nxyz, arr1, arr2)
   implicit none
-  include "constants.h"
+  include "i8.h"
   ! Arguments:
   integer(kind=i8), intent(IN) :: nxyz
   real, intent(INOUT)          :: arr1(nxyz)
@@ -597,7 +597,7 @@ end subroutine accum
 
 subroutine atob(n,a,b)
   implicit none
-  include "constants.h"
+  include "i8.h"
   integer :: n,i
   real :: a(n),b(n)
   integer(kind=i8) :: nlong
@@ -890,7 +890,7 @@ subroutine rcopy_i8(dest, source, npts)
   !         como se fosse um array...
 
   implicit none
-  include "constants.h"
+  include "i8.h"
   real, intent(out) :: dest(*)
   real, intent(in ) :: source(*)
   integer(kind=i8), intent(in) :: npts
@@ -904,7 +904,7 @@ end subroutine rcopy_i8
 
 subroutine update_long_rk(nlong, dt,rk, a, a0, fa)
   implicit none
-  include "constants.h"
+  include "i8.h"
   integer(kind=i8) :: nlong
   real ::dt,rk,dtxrk
   real :: a(nlong),a0(nlong), fa(nlong)
@@ -916,38 +916,38 @@ subroutine update_long_rk(nlong, dt,rk, a, a0, fa)
 end subroutine update_long_rk
 
 !     ****************************************************************
-!!$subroutine copy_long_rk(nlong, a, a0)
-!!$  implicit none
-!!$  include "constants.h"
-!!$  integer(kind=i8) :: nlong
-!!$  real :: a(nlong),a0(nlong)
-!!$
-!!$  a0 = a
-!!$  return
-!!$
-!!$end subroutine copy_long_rk
-!!$!     ****************************************************************
-!!$subroutine get_ab2_tend(nlong, c1,a1,c2,a2, a0)
-!!$  implicit none
-!!$  include "constants.h"
-!!$  integer(kind=i8) :: nlong
-!!$  real :: a1(nlong),a2(nlong),a0(nlong)
-!!$  real :: c1,c2
-!!$  a0 = c1*a1+c2*a2
-!!$  return
-!!$
-!!$end subroutine get_ab2_tend
-!!$!     ****************************************************************
-!!$subroutine get_am3_tend(nlong, c1,a1,c2,a2,c3,a3, a0)
-!!$  implicit none
-!!$  include "constants.h"
-!!$  integer(kind=i8) :: nlong
-!!$  real :: a1(nlong),a2(nlong),a3(nlong),a0(nlong)
-!!$  real :: c1,c2,c3
-!!$  a0 = c1*a1+c2*a2+c3*a3
-!!$  return
-!!$
-!!$end subroutine get_am3_tend
+subroutine copy_long_rk(nlong, a, a0)
+  implicit none
+  include "i8.h"
+  integer(kind=i8) :: nlong
+  real :: a(nlong),a0(nlong)
+
+  a0 = a
+  return
+
+end subroutine copy_long_rk
+!     ****************************************************************
+subroutine get_ab2_tend(nlong, c1,a1,c2,a2, a0)
+  implicit none
+  include "i8.h"
+  integer(kind=i8) :: nlong
+  real :: a1(nlong),a2(nlong),a0(nlong)
+  real :: c1,c2
+  a0 = c1*a1+c2*a2
+  return
+
+end subroutine get_ab2_tend
+!     ****************************************************************
+subroutine get_am3_tend(nlong, c1,a1,c2,a2,c3,a3, a0)
+  implicit none
+  include "i8.h"
+  integer(kind=i8) :: nlong
+  real :: a1(nlong),a2(nlong),a3(nlong),a0(nlong)
+  real :: c1,c2,c3
+  a0 = c1*a1+c2*a2+c3*a3
+  return
+
+end subroutine get_am3_tend
 
 real function getDistance(LatA,LngA,LatB,LngB)
   !# Get distance between 2 points in lat,lon [m]
@@ -986,7 +986,7 @@ real function getDistance(LatA,LngA,LatB,LngB)
   use dump, only: &
     dumpMessage
 
-  include "constants.h"
+  include "constants.f90"
   character(len=*), parameter :: header="**(getDistance)**"
 
   !Input/output variables

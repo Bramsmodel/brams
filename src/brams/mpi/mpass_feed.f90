@@ -66,7 +66,7 @@ subroutine node_sendfeed(ngr)
   integer, intent(in) :: ngr
   ! Local Variables:
 
-  include "constants.h"
+  include "i8.h"
 
   integer(i8) :: ipos, nsize
   integer :: IntArr(13)
@@ -250,7 +250,7 @@ subroutine node_getfeed(icm, ifm)
   integer, intent(in) :: icm, ifm
   ! Local Variables:
 
-  include "constants.h"
+  include "i8.h"
 
   integer(i8) :: ipos, nsize
   integer :: IntArr(13)

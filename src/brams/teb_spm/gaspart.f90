@@ -897,10 +897,8 @@ SUBROUTINE init_conc_prev()
 
   ! This routine initializes gas variables from a previous (day-1) history file
 
-  use grid_dims, only: &
-       maxgrds ! INTENT(IN)
-  
   USE mem_grid, ONLY: &
+       maxgrds,       & ! INTENT(IN)
        ngridsh          ! INTENT(OUT)
   USE mem_emiss, ONLY: &
        chemdata_in      ! INTENT(IN)
@@ -910,7 +908,7 @@ SUBROUTINE init_conc_prev()
   USE ParLib, ONLY: &
        parf_bcast       ! Subroutine
   IMPLICIT NONE
-  INCLUDE "constants.h"
+  INCLUDE "i8.h"
   include "files.h"
 
   ! Local variables:
@@ -1000,7 +998,7 @@ SUBROUTINE hist_pol_read(maxarr, hnamein, iunhd)
        parf_bcast       ! Subroutine
 
   IMPLICIT NONE
-  INCLUDE "constants.h"
+  INCLUDE "i8.h"
   include "files.h"
 
   ! Arguments:

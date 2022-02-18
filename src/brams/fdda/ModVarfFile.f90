@@ -137,14 +137,14 @@ module ModVarfFile
        spc_name
 
   use ModMessageSet, only: &
-       PostSendRecvMsgs, &
-       WaitSendRecvMsgs
+       PostRecvSendMsgs, &
+       WaitRecvMsgs
 
 
   implicit none
 
   include "files.h"
-  include "constants.h"
+  include "i8.h"
 
   private
   public :: VarfReadStoreOwnChunk
@@ -1710,9 +1710,9 @@ contains
 
     ! exchange borders to correct wrong values
 
-    call PostSendRecvMsgs(OneGrid%SendDn0u, OneGrid%RecvDn0u)
-    call PostSendRecvMsgs(OneGrid%SendDn0v, OneGrid%RecvDn0v)
-    call WaitSendRecvMsgs(OneGrid%SendDn0u, OneGrid%RecvDn0u)
-    call WaitSendRecvMsgs(OneGrid%SendDn0v, OneGrid%RecvDn0v)
+    call PostRecvSendMsgs(OneGrid%SendDn0u, OneGrid%RecvDn0u)
+    call PostRecvSendMsgs(OneGrid%SendDn0v, OneGrid%RecvDn0v)
+    call WaitRecvMsgs(OneGrid%SendDn0u, OneGrid%RecvDn0u)
+    call WaitRecvMsgs(OneGrid%SendDn0v, OneGrid%RecvDn0v)
   end subroutine FillDn0uv
 end module ModVarfFile

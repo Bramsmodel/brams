@@ -36,8 +36,8 @@ module ModPostProcess
          Grid
 
    use ModMessageSet, only : &
-         PostSendRecvMsgs, &
-         WaitSendRecvMsgs
+         PostRecvSendMsgs, &
+         WaitRecvMsgs
 
      use io_params, only : & ! 
        IPOS            
@@ -116,7 +116,7 @@ contains
       type(namelistFile), pointer :: oneNamelistFile
       type(AllPostTypes), pointer :: oneAllPostTypes
 
-      include "constants.h"
+      include "constants.f90"
 
       integer :: igrid, ivp, ierr
       character(len = 8) :: c0, c1
@@ -157,7 +157,7 @@ contains
 
          ! update Ghost Zone of all vartables variables part 1:
          ! post receives and send messages
-         call PostSendRecvMsgs(&
+         call PostRecvSendMsgs(&
                OneGrid%AllGhostZoneSend, &
                OneGrid%AllGhostZoneRecv)
          igrid = OneGrid%Id
@@ -188,7 +188,7 @@ contains
          ! update Ghost Zone of all vartables variables part 2:
          ! receive messages and wait on sends
 
-         call WaitSendRecvMsgs(&
+         call WaitRecvMsgs(&
                OneGrid%AllGhostZoneSend, &
                OneGrid%AllGhostZoneRecv)
 

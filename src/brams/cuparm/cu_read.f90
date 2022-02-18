@@ -236,7 +236,7 @@ use mem_basic
 use mem_grid, only: ngrids, nnzp, nnxp, nnyp, nxtnest, grid_g
 
 implicit none
-include "constants.h"
+include "i8.h"
 integer :: iswap,ncu
 
 include "files.h"

@@ -26,7 +26,7 @@ module var_tables
   public :: StringIndexing
   public :: ZeroVTab
 
-  include "constants.h"
+  include "i8.h"
 
   ! Maximum number of variables of all types (3d + 2d + leaf)
 
@@ -134,7 +134,7 @@ module var_tables
         subroutine vtables2_I(var, varm, ng, npts, imean, tabstr)
            !use var_tables
            !implicit none
-           include "constants.h"
+           include "i8.h"
            integer, target :: var,varm
            integer, intent(in) :: ng,imean !npts
            integer(kind=i8), intent(in) :: npts
@@ -502,7 +502,7 @@ end module var_tables
     subroutine vtables2_I(var, varm, ng, npts, imean, tabstr)
     use var_tables
     implicit none
-    include "constants.h"
+    include "i8.h"
     real, target :: var,varm
     integer, intent(in) :: ng,imean !npts
     integer(kind=i8), intent(in) :: npts

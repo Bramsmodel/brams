@@ -53,7 +53,7 @@ subroutine node_sendnbc(ifm, icm)
        BASIC_G            ! INTENT(IN)
 
   implicit none
-  include "constants.h"
+  include "i8.h"
   ! Arguments:
   integer, intent(in) :: ifm, icm
   ! Local Variables:
@@ -290,7 +290,8 @@ subroutine node_getnbc(ifm, icm)
        NBOUNDS           ! INTENT(IN)
 
   implicit none
-  include "constants.h"
+  include "i8.h"
+  include "constants.f90"
   ! Arguments:
   integer, intent(in) :: ifm, icm
   ! Local Variables:

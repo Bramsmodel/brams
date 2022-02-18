@@ -3,8 +3,7 @@ module ReadBcst
   use mem_grid, only: &
        ngrids, nnxp, nnyp, nnzp, nzs, nzg, npatch, &
        time, iyear1, imonth1, idate1, itime1, &
-       GlobalSizes, runtype
-
+       GlobalSizes
 
   use node_mod, only:      &
        mchnum, mynum, master_num, &
@@ -37,7 +36,6 @@ module ReadBcst
        parf_GatherAllChunks
 
 
-
   implicit none
 
   private
@@ -53,7 +51,10 @@ module ReadBcst
   public :: DumpVTabEntry
   public :: DumpVarTables
   public :: gatherData
+
+!--(DMK-CCATT-INI)-----------------------------------------------------
   public :: storeOwnChunk_3D
+!--(DMK-CCATT-FIM)-----------------------------------------------------
 
 
   interface ReadStoreOwnChunk
@@ -73,12 +74,15 @@ module ReadBcst
   integer, parameter :: idim_type_min=2
   integer, parameter :: idim_type_max=7
   logical, parameter :: dumpLocal=.false.
-  include "constants.h"
+  include "i8.h"
 contains
 
 
 
   subroutine ReadStoreOwnChunk_2D(grid, fUnit, toStore, fieldName)
+
+    use mem_grid, only:  &
+         runtype
 
     integer, intent(in) :: grid
     integer, intent(in) :: fUnit
@@ -187,6 +191,8 @@ contains
 
 
   subroutine ReadStoreOwnChunk_3D(grid, fUnit, toStore, nz, fieldName)
+    use mem_grid, only:  &
+         runtype
 
     integer, intent(in) :: grid
     integer, intent(in) :: fUnit
@@ -287,7 +293,7 @@ contains
     call parf_bcast(fullGrid, int(nz,i8), int(nnxp,i8), &
          int(nnyp,i8), master_num)
 
-    call mk_3_buff(fullGrid, toStore, &
+    call mk_3_buff(fullGrid(1,1,1), toStore(1,1,1), &
          nz, nnxp, nnyp, nz, ldimx, ldimy, ia, iz, ja, jz)
 
     if (dumpLocal) then
@@ -1452,8 +1458,14 @@ contains
        nmachs, mchnum, mynum, master_num,                   &
        localData2D, globalData2D)
 
+    USE mem_grid, ONLY : &
+         GlobalSizes         ! Subroutine
+
+    USE ParLib, ONLY: &
+         parf_bcast ! Subroutine
+
     IMPLICIT NONE
-    INCLUDE "constants.h"
+    INCLUDE "i8.h"
     ! Arguments:
     INTEGER, INTENT(IN)           :: idim_type, ifm, nnxp, nnyp, &
          nmachs, mchnum, mynum, master_num
@@ -1536,8 +1548,14 @@ contains
        nmachs, mchnum, mynum, master_num,                         &
        localData3D, globalData3D)
 
+    USE mem_grid, ONLY : &
+         GlobalSizes         ! Subroutine
+
+    USE ParLib, ONLY: &
+         parf_bcast ! Subroutine
+
     IMPLICIT NONE
-    INCLUDE "constants.h"
+    INCLUDE "i8.h"
     ! Arguments:
     INTEGER, INTENT(IN)           :: idim_type, ifm, nnzp, nnxp, nnyp, &
          nmachs, mchnum, mynum, master_num
@@ -1621,8 +1639,14 @@ contains
        nmachs, mchnum, mynum, master_num,                              &
        localData4D, globalData4D)
 
+    USE mem_grid, ONLY : &
+         GlobalSizes         ! Subroutine
+
+    USE ParLib, ONLY: &
+         parf_bcast ! Subroutine
+
     IMPLICIT NONE
-    INCLUDE "constants.h"
+    INCLUDE "i8.h"
     ! Arguments:
     INTEGER, INTENT(IN)           :: idim_type, ifm, mzg, nnxp, nnyp, npat, &
          nmachs, mchnum, mynum, master_num
@@ -1703,7 +1727,33 @@ contains
   !temporary function 
  subroutine storeOwnChunk_3D(grid, fullGrid, toStore, nz, nx, ny, fieldName)
    
-  include "constants.h"
+   use mem_grid, only:  &
+       runtype
+       
+   use node_mod, only:	&
+       mchnum, 		&
+       mynum, 		&
+       master_num, 	&
+       nmachs, 		&
+       nodemxp, 	&
+       nodemyp, 	&
+       nodeia, 		&
+       nodeiz, 		&
+       nodeja, 		&
+       nodejz, 		&
+       nodeibcon, 	&
+       nodei0, 		&
+       nodej0     
+  
+  use mem_grid, only:   &
+      nnzp,			&
+      nnxp,			&
+      nnyp
+ 
+  use ParLib, only: &
+      parf_bcast
+ 
+  include "i8.h"
 
   integer, intent(in) 			:: grid
   integer, intent(in) 			:: nz
@@ -1765,7 +1815,7 @@ contains
     ja = nodej0(mynum,grid)+1
     jz = nodej0(mynum,grid)+nodemyp(mynum,grid)
 
-    call mk_3_buff(fullGrid, toStore, &
+    call mk_3_buff(fullGrid(1,1,1), toStore(1,1,1), &
                    nz, nnxp, nnyp, nz, ldimx, ldimy, ia, iz, ja, jz)
 
 

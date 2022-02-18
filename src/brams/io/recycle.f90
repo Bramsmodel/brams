@@ -43,7 +43,8 @@ subroutine recycle()
   implicit none
 
   include "files.h"
-  include "constants.h"
+  include "i8.h"
+  include "constants.f90"
   integer, parameter :: i64 = selected_int_kind(14) !Kind for 64-bits Integer Numbers
 
   character(len=f_name_length) :: flnm
@@ -375,7 +376,7 @@ end
 
 !     implicit none
 
-!     include "constants.h"
+!     include "constants.f90"
 
 !     character(len=*),parameter :: sourceName='recycle.f90' !Name of source code
 !     character(len=*),parameter :: procedureName='**saveChemRecycleVars**' !Name of this procedure
@@ -600,7 +601,7 @@ subroutine CopyLocal(npts,nz,ia,iz,ja,jz,inVar,outVar)
 
     implicit none
 
-    include "constants.h"
+    include "constants.f90"
     character(len=*),parameter :: sourceName='recycle.f90' !Name of source code
     character(len=*),parameter :: procedureName='**CopyLocal()**' !Name of this procedure
     !
@@ -674,7 +675,7 @@ subroutine CopyBackLocal(npts,nz,ia,iz,ja,jz,inVar,outVar)
 
     implicit none
 
-    include "constants.h"
+    include "constants.f90"
     character(len=*),parameter :: sourceName='recycle.f90' !Name of source code
     character(len=*),parameter :: procedureName='**CopyBackLocal()**' !Name of this procedure
     !
@@ -796,7 +797,7 @@ subroutine readChemRecycleVars
 
     implicit none
 
-    include "constants.h"
+    include "constants.f90"
     character(len=*),parameter :: sourceName='recycle.f90' !Name of source code
     character(len=*),parameter :: procedureName='**leChemRecycleVars**' !Name of this procedure
     !

@@ -760,7 +760,7 @@ use node_mod
 use micphys
 
 implicit none
-include "constants.h"
+include "i8.h"
 integer :: ii,i,j,k
 
 integer(kind=i8) :: mxyzp, ind

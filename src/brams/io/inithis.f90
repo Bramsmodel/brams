@@ -37,7 +37,7 @@ subroutine inithis()
 !--(DMK-CCATT-FIM)----------------------------------------------------------
 
   implicit none
-  include "constants.h"
+  include "i8.h"
   include "files.h"
 
   integer :: ngrids1,ioutput1,nzg1,nzs1,npatch1

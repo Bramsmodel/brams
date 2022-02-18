@@ -614,7 +614,7 @@ use dump, only: &
         dumpMessage
 
 implicit none
-include "constants.h"
+include "constants.f90"
 integer :: np1,np2,np3,npi3
 real :: un(np1,np2,np3),vn(np1,np2,np3),tn(np1,np2,np3)  &
          ,zn(np1,np2,np3),rn(np1,np2,np3)  &

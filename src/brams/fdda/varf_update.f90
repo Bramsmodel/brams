@@ -85,7 +85,7 @@ subroutine PrtOpt()
        u01dn, v01dn, dn01dn, pi01dn, th01dn, rt01dn
 
   implicit none
-  include "constants.h"
+  include "constants.f90"
   integer :: k
   real :: vctr1(nnzp(1))
   real :: vctr2(nnzp(1))

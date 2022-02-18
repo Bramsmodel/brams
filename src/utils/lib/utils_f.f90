@@ -43,7 +43,7 @@
    
        implicit none
    
-       include "constants.h"
+       include "constants.f90"
        character(len=*),parameter :: sourceName='generic.f90' !Name of source code
        character(len=*),parameter :: procedureName='**getOutputByteSize**' !Name of this procedure
        !
@@ -254,7 +254,7 @@ subroutine rams_f_open_u(iunit, filenm, formt, stat, act, pos, iclob)
 
   implicit none
 
-  include "constants.h"
+  include "constants.f90"
   integer,          intent(in) :: iunit
   integer,          intent(in) :: iclob
   character(len=*), intent(in) :: filenm
@@ -301,7 +301,7 @@ integer function AvailableFileUnit()
 
   implicit none
 
-  include "constants.h"
+  include "constants.f90"
   integer, parameter :: firstUnit=20  ! lowest io unit number available
   integer, parameter :: lastUnit=99   ! highest io unit number available
 

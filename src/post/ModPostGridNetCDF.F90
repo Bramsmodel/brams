@@ -13,7 +13,7 @@ Module ModPostgridNetCDF
   use dump
 
   !For netCDF
-  include "constants.h"
+  include "constants.f90"
   character(len=256) :: netCDFFileName
   logical :: netCDFFirstTime
   integer :: ncid,LatDimID,LonDimID,LevDimID,timDimId,SurDimID,SoiDimID
@@ -73,7 +73,8 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
     type(PostVarType) :: one_post_variable
     character(len=*), parameter :: h='**(FillNetcdfVarControlFile)**'
 
-    include "constants.h"
+    include "constants.f90"
+    include "ranks.h"
 
     integer :: i,ndims,nvars,cnt
     character(len=256) :: name,varname(30),atName(300),atValue(300)
@@ -257,7 +258,7 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
     use mem_grid, only: time
     use io_params, only: frqanl
 
-    include "constants.h"
+    include "constants.f90"
     integer, intent(in) :: nlon,nlat
     character(len=*), intent(in) :: fieldName
     real, intent(in) :: OutputArray(nlon, nlat)
@@ -280,7 +281,7 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
     use mem_grid, only: time
     use io_params, only: frqanl
 
-    include "constants.h"
+    include "constants.f90"
     integer, intent(in) :: nlon,nlat,iLev
     character(len=*), intent(in) :: fieldName
     real, intent(in) :: OutputArray(nlon,nlat)

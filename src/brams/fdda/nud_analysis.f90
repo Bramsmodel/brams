@@ -689,7 +689,7 @@ subroutine VarfIntrp(ifm,ifflag)
       dumpMessage
 
   implicit none
-  include "constants.h"
+  include "constants.f90"
   integer :: ifm,ifflag,icm
   real :: scr1(maxnxp*maxnyp)
   real :: scr2(maxnxp*maxnyp)

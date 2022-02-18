@@ -36,7 +36,7 @@ module utilsMod
 
     implicit none
 
-    include "constants.h"
+    include "constants.f90"
     character(len=*),parameter :: sourceName='utils.f90' !Name of source code
     character(len=*),parameter :: procedureName='**utils**' !Name of this procedure
     !
@@ -88,7 +88,7 @@ module utilsMod
     
         implicit none
     
-        include "constants.h"
+        include "constants.f90"
         character(len=*),parameter :: sourceName='utils.f90' !Name of source code
         character(len=*),parameter :: procedureName='**initAll**' !Name of this procedure
         !
@@ -144,7 +144,7 @@ module utilsMod
     
         implicit none
     
-        include "constants.h"
+        include "constants.f90"
         character(len=*),parameter :: sourceName='utils.f90' !Name of source code
         character(len=*),parameter :: procedureName='**getUnit**' !Name of this procedure
         !
@@ -205,7 +205,7 @@ module utilsMod
     
         implicit none
     
-        include "constants.h"
+        include "constants.f90"
         character(len=*),parameter :: sourceName='utils.f90' !Name of source code
         character(len=*),parameter :: procedureName='**releaseUnit**' !Name of this procedure
         !
@@ -263,7 +263,7 @@ module utilsMod
     
         implicit none
     
-        include "constants.h"
+        include "constants.f90"
         character(len=*),parameter :: sourceName='utils.f90' !Name of source code
         character(len=*),parameter :: procedureName='**bramsHeader**' !Name of this procedure
         !
@@ -327,7 +327,7 @@ module utilsMod
     
         implicit none
     
-        include "constants.h"
+        include "constants.f90"
         character(len=*),parameter :: sourceName='utils.f90' !Name of source code
         character(len=*),parameter :: procedureName='**to_upper**' !Name of this procedure
         !
@@ -389,7 +389,7 @@ module utilsMod
     
         implicit none
     
-        include "constants.h"
+        include "constants.f90"
         character(len=*),parameter :: sourceName='utils.f90' !Name of source code
         character(len=*),parameter :: procedureName='**to_lower**' !Name of this procedure
         !
@@ -605,7 +605,7 @@ module utilsMod
 
       implicit none
    
-      include "constants.h"
+      include "constants.f90"
       ! 
    
       character(len=14), intent(in ) :: indate1
@@ -678,7 +678,7 @@ module utilsMod
 
       implicit none
    
-      include "constants.h"
+      include "constants.f90"
       ! 
    
       integer,       intent(in ) :: year1
@@ -1050,7 +1050,7 @@ module utilsMod
    
        implicit none
    
-       include "constants.h"
+       include "constants.f90"
        character(len=*),parameter :: sourceName='utils.f90' !Name of source code
        character(len=*),parameter :: procedureName='**fileExist**' !Name of this procedure
        !
@@ -1106,7 +1106,7 @@ module utilsMod
    
        implicit none
    
-       include "constants.h"
+       include "constants.f90"
        character(len=*),parameter :: sourceName='utils.f90' !Name of source code
        character(len=*),parameter :: procedureName='**stepsBetweenDates**' !Name of this procedure
        !
@@ -1190,7 +1190,7 @@ module utilsMod
    
    !     implicit none
    
-   !     include "constants.h"
+   !     include "constants.f90"
    !     character(len=*),parameter :: procedureName='**validateDates**' !Name of this procedure
    !     !
    !     !Local Parameters
@@ -1274,7 +1274,7 @@ module utilsMod
    
        implicit none
    
-       include "constants.h"
+       include "constants.f90"
        character(len=*),parameter :: procedureName='**monthsBetweenDates**' !Name of this procedure
        !
        !Local Parameters
@@ -1362,7 +1362,7 @@ module utilsMod
    
        implicit none
    
-       include "constants.h"
+       include "constants.f90"
        character(len=*),parameter :: procedureName='**interpolationBilinear**' !Name of this procedure
        !
        !Local Parameters
@@ -1570,7 +1570,7 @@ module utilsMod
    
        implicit none
    
-       include "constants.h"
+       include "constants.f90"
        character(len=*),parameter :: sourceName='generic.f90' !Name of source code
        character(len=*),parameter :: procedureName='**getOutputByteSize**' !Name of this procedure
        !
@@ -1629,7 +1629,7 @@ module utilsMod
    
        implicit none
    
-       include "constants.h"
+       include "constants.f90"
        character(len=*),parameter :: procedureName='**sortz**' !Name of this procedure
        !
        !Local Parameters

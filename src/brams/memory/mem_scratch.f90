@@ -16,9 +16,7 @@ module mem_scratch
   !
 
   use grid_dims
-  use mem_aerad,   only: nwave      !intent(in)
-  use mem_radiate, only: ilwrtyp, & !intent(in)
-       iswrtyp                      !intent(in)
+  use node_mod, only: mchnum, master_num
 
   type scratch_vars
      real, pointer :: scr1(:)
@@ -70,6 +68,13 @@ contains
        maxgrds, ngrids, nzg, nzs, npatch, proc_type, maxnxp, maxnyp, maxnzp)
 
     ! FOR CATT
+    use mem_aerad,   only: nwave      !intent(in)
+    use mem_radiate, only: ilwrtyp, & !intent(in)
+         iswrtyp                      !intent(in)
+
+!--(DMK-CCATT-INI)-----------------------------------------------------
+!    use catt_start, only: CATT        ! intent(in)
+!--(DMK-CCATT-FIM)-----------------------------------------------------
 
     implicit none
 

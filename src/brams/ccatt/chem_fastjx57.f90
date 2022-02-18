@@ -1341,6 +1341,7 @@ CONTAINS
     IF (u0 > 0.d0) THEN
        ftau2(l2_+1) = 1.0D0
        DO l2 = l2_,1,-2
+          if(l2<1) exit
           l  = l2/2
           ftau2(l2  ) = ftau2(l2+1)*EXP((ttau(l2+1)-ttau(l2))/u0)
           ftau2(l2-1) = ftau(l)
@@ -1351,6 +1352,7 @@ CONTAINS
        ftau2(l2_)   = SQRT(1.0D0*ftau(l1_))
        ftau2(l2_-1) = ftau(l1_)
        DO l2 = l2_-3,1,-2
+          if(l2<1) exit
           l 	  = (l2+1)/2
           ftau2(l2)   = ftau(l)
           ftau2(l2+1) = SQRT(ftau(l+1)*ftau(l))
@@ -1361,6 +1363,7 @@ CONTAINS
     !  Calculate scattering properties, level centres then level boundaries
     ! ***be careful of order, we are shifting the 'POMEGAJ' upward in index***
     DO l2 = l2_,2,-2
+       if(l2<2) exit
        l	= l2/2
        DO i = 1,mfit
           pomegaj(i,l2) = pomegaj(i,l)
@@ -1417,6 +1420,7 @@ CONTAINS
     END DO
     jaddto(l2_+1) = 0
     DO l2 = l2_,1,-1
+       if(l2<1) exit
        jaddto(l2) = jaddto(l2+1) + jaddlv(l2)
     END DO
 

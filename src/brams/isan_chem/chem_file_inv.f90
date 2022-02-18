@@ -38,7 +38,7 @@ subroutine chem_ISAN_file_inv (iyear1,imonth1,idate1,itime1,timmax,CHEM_ASSIM, C
   implicit none
 
   include "files.h" 
-  include "constants.h"
+  include "constants.f90"
   integer, intent (IN) :: CHEM_ASSIM, CHEMISTRY
   integer :: iyear1,imonth1,idate1,itime1
   real :: timmax
@@ -639,7 +639,7 @@ subroutine makeGrib2fileName(prefix,itime1,isan_inc,nn,gribFileName,invFileName)
     !Header_vai_aqui!
     implicit none
 
-    include "constants.h"
+    include "constants.f90"
 
     !Parameters (constants)
     character(len=*),parameter :: header='**(makeGrib2fileName)**'
@@ -673,7 +673,7 @@ subroutine makeGradsfileName(prefix,isan_inc,nn,gradsFileName,invFileName,iproc_
     !Header_vai_aqui!
     implicit none
 
-    include "constants.h"
+    include "constants.f90"
 
     !Parameters (constants)
     character(len=*),parameter :: header='**(makeGradsfileName)**'
@@ -720,7 +720,7 @@ subroutine makeGeosfileName(prefix,isan_inc,nn,geosFileName,invFileName,iproc_da
     !Header_vai_aqui!
     implicit none
 
-    include "constants.h"
+    include "constants.f90"
 
     !Parameters (constants)
     character(len=*),parameter :: header='**(makeGeosfileName)**'

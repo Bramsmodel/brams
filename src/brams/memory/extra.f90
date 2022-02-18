@@ -3,7 +3,7 @@ module Extras
 
   use ModNamelistFile, only: namelistFile
 
-  include "constants.h"
+  include "i8.h"
 
   ! Used in CCATT
 
@@ -28,7 +28,7 @@ contains
       dumpMessage
 
     implicit none
-    include "constants.h"
+    include "constants.f90"
     ! Arguments:
     type (ext2d), intent(INOUT) :: scal(:,:)
     integer, intent(IN) :: m1,m2 !Dimension of arrays
@@ -55,7 +55,7 @@ contains
       dumpMessage
 
     implicit none
-    include "constants.h"
+    include "constants.f90"
     ! Arguments:
     type (ext3d), intent(INOUT) :: scal(:,:)
     integer, intent(IN) :: m1,m2,m3 !Dimension of arrays
@@ -157,7 +157,7 @@ contains
     use var_tables
 
     implicit none
-    include "constants.h"
+    include "i8.h"
     ! Arguments:
     type (ext2d), intent(IN) :: scal2, scalm2
     integer, intent(IN) :: imean, n1, n2, ng, na
@@ -183,7 +183,7 @@ contains
     use var_tables
 
     implicit none
-    include "constants.h"
+    include "i8.h"
     ! Arguments:
     type (ext3d), intent(IN) :: scal3, scalm3
     integer, intent(IN) :: imean, n1, n2, n3, ng, na

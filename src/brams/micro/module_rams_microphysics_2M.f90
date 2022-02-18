@@ -12127,7 +12127,7 @@ use dump, only: &
 use rconstants
 
 implicit none
-include "constants.h"
+include "constants.f90"
 character(len=*),parameter :: h='**(micro_master)**'
 integer :: lhcat,khcat,lcat,nd1,nd2,nip,ilcat,ilhcat,idum
 integer, dimension(8) :: lcat0

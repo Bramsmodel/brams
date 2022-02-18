@@ -331,15 +331,13 @@ end subroutine SstReadStoreOwnChunk
 
 subroutine SstFileInv(sfilin, ierr)
   use ModDateUtils
-  use grid_dims, only: &
-       maxsstfiles
-       
   use mem_grid, only: &
        iyear1, &
        imonth1, &
        idate1, &
        itime1, &
        ngrids, &
+       maxsstfiles, & 
        nxtnest
 
   use mem_mksfc, only: &

@@ -22,7 +22,7 @@ subroutine cond_update(iswap, ncond)
   use rconstants
 
   implicit none
-  include "constants.h"
+  include "i8.h"
   include "files.h"
 
   ! Arguments:

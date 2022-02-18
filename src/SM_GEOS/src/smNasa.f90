@@ -50,7 +50,7 @@ module smnasa
 	
 		character(len=*),parameter :: procedureName="sm_nasa"
 		character(len=*),parameter :: srcName="modAnalysis.f90"
-		include "constants.h"
+		include "constants.f90"
 	
 		character(len=*), intent(in) :: smFile
 		character(len=*), intent(in) :: outFolder

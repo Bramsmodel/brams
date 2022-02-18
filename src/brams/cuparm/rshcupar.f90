@@ -34,7 +34,7 @@ subroutine SHCUPA()
 
   implicit none
 
-  include "constants.h"
+  include "i8.h"
 
   real    :: CPTIME = 0. !7200.
 

@@ -529,7 +529,7 @@ subroutine AllGatherStoreAllChunks(varType)
 
 
   implicit none
-  include "constants.h"
+  include "i8.h"
   character(len=*), intent(in) :: varType
 
   integer :: idim_type

@@ -24,7 +24,7 @@ module ModOutputUtils
   end interface
 
   character(len=*),parameter :: sourceName='ModOutputUtils.f90' !Name of source code
-  include "constants.h"
+  include "constants.f90"
 contains
 
 

@@ -60,7 +60,7 @@ subroutine PostOneField(varName, oneBramsGrid, onePostGrid)
        mchnum,        &
        master_num
 
-      include "constants.h"
+      include "constants.f90"
       character(len = *), intent(in) :: varName
       type(BramsGrid), pointer :: oneBramsGrid
       type(PostGrid), pointer :: onePostGrid

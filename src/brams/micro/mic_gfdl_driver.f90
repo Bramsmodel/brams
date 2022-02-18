@@ -235,7 +235,7 @@ END SUBROUTINE micro_gfdl
 	   call gfdl_cloud_microphys_init()
 	   !- define the vector "flip" to invert the z-axis orientation
 	   allocate(flip(m1)); flip(:)=-9999
-      call flipz_minus1(flip,kme+1)
+     call flipz_minus1(flip,kme+1)
 	   !-
 	   start_of_simulation =.false.
 	 ENDIF
@@ -272,6 +272,8 @@ END SUBROUTINE micro_gfdl
               qi_curr (i,j,k)= max(0.0,mic%rpp(flip(k),i,j))	      ! QI   
               qs_curr (i,j,k)= max(0.0,mic%rsp(flip(k),i,j))	      ! QS   
               qg_curr (i,j,k)= max(0.0,mic%rgp(flip(k),i,j))	      ! QG   
+
+              rad_cf  (i,j,k)= max(0.0,mic%cldfr(flip(k),i,j))      ! cloud fraction
               
               rcond = qc_curr (i,j,k) + qr_curr (i,j,k) + &
 	      	    qi_curr (i,j,k) + qs_curr (i,j,k) + qg_curr (i,j,k)
@@ -289,10 +291,12 @@ END SUBROUTINE micro_gfdl
             !
             !--special treatment for pressure layers
             DO k=1,kme+2     ! note that kme = mzp-2
-              exner  (k,i,j)= ((basic%pp(k,i,j)+basic%pi0(k,i,j))*cpi) ! Exner function (brams data structure)
+              ! Exner function (brams data structure)
+              exner  (k,i,j)= ((basic%pp(k,i,j)+basic%pi0(k,i,j))*cpi) 
             ENDDO
             DO k=1,kme      
-              dp_tmp(k) = 0.5*(exner(k+2,i,j)** cpor - exner(k,i,j)** cpor) * p00 ! pressure thickness (Pa)
+              ! pressure thickness (Pa)
+              dp_tmp(k) = 0.5*(exner(k+2,i,j)** cpor - exner(k,i,j)** cpor) * p00
               !if(mynum==1 .and. i==ims .and. j==jms) print*,"x=",dp_tmp(k) !, press(k+2,i,j) ,press(k,i,j),k
             ENDDO
             m=kme
@@ -300,9 +304,8 @@ END SUBROUTINE micro_gfdl
               DP(i,j,k) = - dp_tmp(m) ; m=m-1 !invert press
             ENDDO
             !
-            !--special treatment for 3d cloud fraction and CCN/ICN numbers conce
-            DO k=1,kme
-              rad_cf (i,j,k)= 0.1	  !???????????????
+            !--special treatment for CCN/ICN numbers conce
+            DO k=1,kme             
               NACTLI (i,j,k)= 3.e+2 !cm-2 !???????????????
               !qni_curr(i,j,k)= max(0.0,mic%cpp(flip(k),i,j))	      ! NI  !??????????????? 
               !qnr_curr(i,j,k)= max(0.0,mic%crp(flip(k),i,j))	      ! NR  !???????????????
@@ -328,21 +331,10 @@ END SUBROUTINE micro_gfdl
      	     ENDDO
 	 ENDDO; ENDDO
 	
-   !-------------------- print ---------->
-   ! if(mynum==10000 ) then	
-   !         print*,"WX=",maxval(V), maxval(W),  maxval(U),mynum
-   !         print*,"WN=",minval(V), minval(W),  minval(U),mynum
-   !         print*,"TX=",maxval(TEMP), maxval(qv_curr),  maxval(qc_curr),mynum
-   !         print*,"TN=",minval(TEMP), minval(qv_curr),  minval(qc_curr),mynum
-   !         print*,"PX=",maxval(dp), maxval(dz),  maxval(qc_curr),mynum
-   !         print*,"PN=",minval(dp), minval(dz),  minval(qc_curr),mynum
-	 ! endif
-   !-------------------- print ----------<
-
-	
+  	
    !--- Execute GFDL microphysics
 	 call gfdl_cloud_microphys_driver( &
-		               ! Input water/cloud species and liquid+ice CCN [NACTL+NACTI]
+		                 ! input water/cloud species and liquid+ice CCN [NACTL+NACTI]
                      ! RAD_QV, RAD_QL, RAD_QR, RAD_QI, RAD_QS, RAD_QG, RAD_CF, (NACTL+NACTI)/1.e6, &
                        qv_curr, 		  &! QV=qv_curr,     
                        qc_curr, 		  &! QC=qc_curr,     
@@ -362,7 +354,7 @@ END SUBROUTINE micro_gfdl
 		       
                        ANV_ICEFALL, LS_ICEFALL, &
                      ! Output rain re-evaporation and sublimation
-                        REV_MC_X, RSU_MC_X, &   ! EVAPC_X, & 
+                       REV_MC_X, RSU_MC_X, &   ! EVAPC_X, & 
 		       
                      ! Output precipitates
                        PRCP_RAIN, PRCP_SNOW, PRCP_ICE, PRCP_GRAUPEL, &
@@ -387,41 +379,48 @@ END SUBROUTINE micro_gfdl
    !-------------------- print ----------<
 
 
-   !--- update variables after microphysics processes
-   DO j = ja,jz   ; DO i = ia,iz !update only in the halo
+   !--- update variables after cloud microphysics processes (only in the halo)
+   DO j = ja,jz   ; DO i = ia,iz
 
          !- surface precipitation (units are kg/m^2 = mm and mm/s)
-	       !accpr,pcprr   kg/m2 - rain+ice+snow+graupel ! p = for each dt  (or per time step)
+	       !- accpr,pcprr   kg/m2 - rain+ice+snow+graupel ! p = for each dt  (or per time step)
          mic%pcprr(i,j) = dt_moist*(PRCP_RAIN(i,j) + PRCP_SNOW   (i,j) + &
                                     PRCP_ICE (i,j) + PRCP_GRAUPEL(i,j)) / 86400. 
 
          mic%accpr(i,j) = mic%accpr(i,j) + mic%pcprr(i,j)	  
           
-         !accps,pcprs  kg/m2 - ice+snow
+         !- accps,pcprs  kg/m2 - ice+snow
          mic%pcprs(i,j) = dt_moist*(PRCP_SNOW(i,j) + PRCP_ICE(i,j))/ 86400.    
          mic%accps(i,j) = mic%accps(i,j) + mic%pcprs(i,j)
           
-         !accpg, pcprg  &! kg/m2 - graupel
+         !- accpg, pcprg  &! kg/m2 - graupel
          mic%pcprg(i,j) = dt_moist* PRCP_GRAUPEL(i,j)/ 86400.
          mic%accpg(i,j) = mic%accpg(i,j) + mic%pcprg(i,j)
 
 
 	      DO k=kme,1,-1
-	        ! if(mynum==1 .and. j==jms .and. i==ims) print*,">>BB=",k,flip(k);call flush(6)
+!-srf 	   
+!if(i==89 .and. j==22 .and. minval(mic%rcp(:,i,j))< 0.)  then
+!      print*,'rrp',k, mic%rcp(flip(k),i,j), qi_curr(i,j,k) , qi_curr(i,j,k) + DQIDT_micro(i,j,k) * DT_MOIST
+!      print*,'rv ',k, basic%rv(flip(k),i,j), qv_curr(i,j,k), qv_curr(i,j,k) + DQVDT_micro(i,j,k) * DT_MOIST
+!call flush(6)
+!endif
+!-srf 
+	        mic%rcp(flip(k),i,j)= max(0., qc_curr(i,j,k) + DQLDT_micro(i,j,k) * DT_MOIST)
+	        mic%rrp(flip(k),i,j)= max(0., qr_curr(i,j,k) + DQRDT_micro(i,j,k) * DT_MOIST)
+	        mic%rpp(flip(k),i,j)= max(0., qi_curr(i,j,k) + DQIDT_micro(i,j,k) * DT_MOIST)
+	        mic%rsp(flip(k),i,j)= max(0., qs_curr(i,j,k) + DQSDT_micro(i,j,k) * DT_MOIST)
+	        mic%rgp(flip(k),i,j)= max(0., qg_curr(i,j,k) + DQGDT_micro(i,j,k) * DT_MOIST)
 	   
-	        mic%rcp(flip(k),i,j)= qc_curr(i,j,k) + DQLDT_micro(i,j,k) * DT_MOIST
-	        mic%rrp(flip(k),i,j)= qr_curr(i,j,k) + DQRDT_micro(i,j,k) * DT_MOIST
-	        mic%rpp(flip(k),i,j)= qi_curr(i,j,k) + DQIDT_micro(i,j,k) * DT_MOIST
-	        mic%rsp(flip(k),i,j)= qs_curr(i,j,k) + DQSDT_micro(i,j,k) * DT_MOIST
-	        mic%rgp(flip(k),i,j)= qg_curr(i,j,k) + DQGDT_micro(i,j,k) * DT_MOIST
-           
-          !-effective radius,  RRTM requires in micrometer
+          mic%cldfr(flip(k),i,j) = max(0., rad_cf(i,j,k) + DQADT_micro(i,j,k) * DT_MOIST)
+
+          !- cloud ice and liq effective radius,  RRTMG requires in micrometer
           mic%rei (flip(k),i,j)= re_ice  (i,j,k)  
           mic%rel (flip(k),i,j)= re_cloud(i,j,k)
 	       !mic%snow(flip(k),i,j)= re_snow (i,j,k)  !-- srf check this latter.
     
 
-	        basic%rv(flip(k),i,j)=qv_curr(i,j,k) + DQVDT_micro(i,j,k) * DT_MOIST
+	        basic%rv(flip(k),i,j)= max(1.e-12, qv_curr(i,j,k) + DQVDT_micro(i,j,k) * DT_MOIST)
 	 	 
  	        tempK                =   temp(i,j,k) + DTDT_micro (i,j,k) * DT_MOIST
           
@@ -458,11 +457,13 @@ END SUBROUTINE micro_gfdl
 	       mic%rpp  (1,i,j)  = mic%rpp  (2,i,j)  
 	       mic%rsp  (1,i,j)  = mic%rsp  (2,i,j)  
 	       mic%rgp  (1,i,j)  = mic%rgp  (2,i,j)  
-	       basic%rv (1,i,j)  = basic%rv (2,i,j)  
-	       basic%theta(1,i,j)= basic%theta(2,i,j)
-	       basic%thp  (1,i,j)= basic%thp  (2,i,j)
-        
-         !-effective radius 
+         mic%cldfr(1,i,j)  = mic%cldfr(2,i,j)
+
+	       basic%rv   (1,i,j) = basic%rv   (2,i,j)  
+	       basic%theta(1,i,j) = basic%theta(2,i,j)
+	       basic%thp  (1,i,j) = basic%thp  (2,i,j)
+         
+         !- cloud ice and liq effective radius 
          mic%rei(1,i,j)= mic%rei(2,i,j) 
          mic%rel(1,i,j)= mic%rel(2,i,j)
         !mic%snow(1,i,j)=mic%snow(2,i,j)

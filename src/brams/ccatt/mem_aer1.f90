@@ -9,7 +9,7 @@ module mem_aer1
   use mem_chem1, only : chem_assim,RECYCLE_TRACERS
   use ModNamelistFile, only: namelistFile
 
-  include "constants.h"
+  include "i8.h"
 
   type aer1_vars
 !--- All families
@@ -1069,7 +1069,7 @@ subroutine dumpAer(fileName)
 
     implicit none
 
-    include "constants.h"
+    include "constants.f90"
     character(len=*),parameter :: sourceName='mem_chem1.f90' !Name of source code
     character(len=*),parameter :: procedureName='**dumpAer**' !Name of this procedure
     !

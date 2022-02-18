@@ -105,7 +105,7 @@ subroutine NdviReadStoreOwnChunk(runflag, ifm, ierr)
        master_num
 
   implicit none
-  include "constants.h"
+  include "i8.h"
   ! Arguments:
   integer, intent(IN)  :: runflag, ifm
   integer, intent(OUT) :: ierr
@@ -332,12 +332,9 @@ end subroutine NdviReadStoreOwnChunk
 
 subroutine NdviFileInv (sfilin, ierr)
   use ModDateUtils
-  use grid_dims, only: &
-       maxndvifiles
-  
   use mem_grid, only: &
        iyear1, imonth1, idate1, itime1, ihour1, ngrids, &
-       nxtnest
+       maxndvifiles, nxtnest
 
   use mem_mksfc, only: &
       nvsstf,          &

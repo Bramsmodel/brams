@@ -1139,7 +1139,7 @@ contains
     real                       :: scale_factor(5)
     character(len=256)         :: icGradsPrefix
     integer                    :: ccGradsWrite
-    include "constants.h"
+    include "constants.f90"
 
 
     namelist /ISAN_ISENTROPIC/ &
@@ -3550,7 +3550,7 @@ contains
     type(namelistFile), pointer :: oneNamelistFile
     type(parallelEnvironment), pointer :: oneParallelEnvironment
 
-    include "constants.h"
+    include "i8.h"
 
     ! MODEL_GRIDS
     call parf_bcast(oneNamelistFile%expnme,&
@@ -4656,7 +4656,7 @@ contains
     character(len=*),parameter :: revision='6.0'
     character(len=*),parameter :: license='CC Attribution-ShareAlike 4.0 International'
 
-    include "constants.h"
+    include "constants.f90"
 
     integer, intent(in) :: nmachs,mchnum,master_num
 

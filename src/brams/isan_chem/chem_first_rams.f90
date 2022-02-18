@@ -8,9 +8,6 @@
                       
 subroutine first_RAMS(np1,np2,np3,ui2,vi2,pi2,ti2,ri2)
 
-  use grid_dims, only: &
-       maxgrds
-  
 use an_header, only: &
     anal_table,      &
     nvbtab
@@ -414,74 +411,74 @@ end
 
 subroutine isan_comp_dn0 (n1,n2,n3,pi0,th0,dn0,dn0u,dn0v,topt,ngrd) 
 
-  use isan_coms
-  use rconstants
-  use mem_grid
-  use mem_scratch
+use isan_coms
+use rconstants
+use mem_grid
+use mem_scratch
 
-  implicit none
+implicit none
 
-  integer :: n1,n2,n3,ngrd,nmax
-  real :: pi0(n1,n2,n3),th0(n1,n2,n3),dn0(n1,n2,n3),topt(n2,n3)  &
+integer :: n1,n2,n3,ngrd,nmax
+real :: pi0(n1,n2,n3),th0(n1,n2,n3),dn0(n1,n2,n3),topt(n2,n3)  &
        ,dn0u(n1,n2,n3),dn0v(n1,n2,n3)
 
-  integer :: i,j,k
-  real :: c1,c2,c3
+integer :: i,j,k
+real :: c1,c2,c3
 
-  ztop = zmn(nnzp(1)-1,1)
-  !print*,'ngrd,topt(10,10),ztop,ztn(10,ngrd)=',ngrd,topt(10,10),ztop,ztn(10,ngrd)
-  do j=1,n3
-     do i=1,n2
-        do k=1,n1
-           vctr2(k)=ztn(k,ngrd)*(1.-topt(i,j)/ztop)+topt(i,j)
-           ! if(i == 10 .and. j == 10)  &
-           ! print*,'thref,pi01dn,vctr2=',thref(k,ngrd),piref(k,ngrd),vctr2(k)
-        enddo
-        call htint(n1,piref(1,ngrd),ztn(1,ngrd),n1,vctr11(1),vctr2(1))
-        call htint(n1,thref(1,ngrd),ztn(1,ngrd),n1,vctr12(1),vctr2(1))
+ztop = zmn(nnzp(1)-1,1)
+!print*,'ngrd,topt(10,10),ztop,ztn(10,ngrd)=',ngrd,topt(10,10),ztop,ztn(10,ngrd)
+do j=1,n3
+   do i=1,n2
+      do k=1,n1
+         vctr2(k)=ztn(k,ngrd)*(1.-topt(i,j)/ztop)+topt(i,j)
+        ! if(i == 10 .and. j == 10)  &
+        ! print*,'thref,pi01dn,vctr2=',thref(k,ngrd),piref(k,ngrd),vctr2(k)
+      enddo
+      call htint(n1,piref(1,ngrd),ztn(1,ngrd),n1,vctr11(1),vctr2(1))
+      call htint(n1,thref(1,ngrd),ztn(1,ngrd),n1,vctr12(1),vctr2(1))
 
-        do k=1,n1
-           th0(k,i,j)=vctr12(k)
-        enddo
-        pi0(n1,i,j) = vctr11(n1)
+      do k=1,n1
+         th0(k,i,j)=vctr12(k)
+      enddo
+      pi0(n1,i,j) = vctr11(n1)
 
-        c1=g*2.*(1.-topt(i,j)/ztop)
-        c2=(1-cpor)
-        c3=cp**c2
-        do k=n1-1,1,-1
-           pi0(k,i,j)=pi0(k+1,i,j)  &
-                +c1/((th0(k,i,j)+th0(k+1,i,j))*dzmn(k,ngrd))
-        enddo
+      c1=g*2.*(1.-topt(i,j)/ztop)
+      c2=(1-cpor)
+      c3=cp**c2
+      do k=n1-1,1,-1
+         pi0(k,i,j)=pi0(k+1,i,j)  &
+             +c1/((th0(k,i,j)+th0(k+1,i,j))*dzmn(k,ngrd))
+      enddo
 
-        do k=1,n1
-           dn0(k,i,j)=(c3*p00)/(rgas*th0(k,i,j)*pi0(k,i,j)**c2)
-           ! if(i == 10 .and. j == 10)  &
-           ! print*,'th0,pi0,dn0=',th0(k,i,j),pi0(k,i,j),dn0(k,i,j)
-        enddo
+      do k=1,n1
+         dn0(k,i,j)=(c3*p00)/(rgas*th0(k,i,j)*pi0(k,i,j)**c2)
+        ! if(i == 10 .and. j == 10)  &
+        ! print*,'th0,pi0,dn0=',th0(k,i,j),pi0(k,i,j),dn0(k,i,j)
+      enddo
 
-     enddo
-  enddo
+   enddo
+enddo
 
-  do k=1,n1
-     do j=1,n3
-        do i=1,n2-1
-           dn0u(k,i,j)=0.5*(dn0(k,i,j)+dn0(k,i+1,j))
-        enddo
-        dn0u(k,n2,j)=dn0(k,n2,j)
-     enddo
-  enddo
+do k=1,n1
+   do j=1,n3
+      do i=1,n2-1
+         dn0u(k,i,j)=0.5*(dn0(k,i,j)+dn0(k,i+1,j))
+      enddo
+      dn0u(k,n2,j)=dn0(k,n2,j)
+   enddo
+enddo
 
-  do k=1,n1
-     do i=1,n2
-        do j=1,n3-1
-           dn0v(k,i,j)=0.5*(dn0(k,i,j)+dn0(k,i,j+1))
-        enddo
-        dn0v(k,i,n3)=dn0(k,i,n3)
-     enddo
-  enddo
-
-  return
-end subroutine isan_comp_dn0
+do k=1,n1
+   do i=1,n2
+      do j=1,n3-1
+         dn0v(k,i,j)=0.5*(dn0(k,i,j)+dn0(k,i,j+1))
+      enddo
+      dn0v(k,i,n3)=dn0(k,i,n3)
+   enddo
+enddo
+   
+return
+end
 
 !     *****************************************************************
 
@@ -497,7 +494,7 @@ subroutine fmint4_isan(var1, var2, dn0xc, dn0xf, ifm, icm, vpnt, idwt)
        grid_g
 
   implicit none
-  include "constants.h"
+  include "i8.h"
   integer :: ifm,icm,idwt,lll(3)
   real, dimension(*) :: var1,var2,dn0xc,dn0xf
   character(len=*) :: vpnt
@@ -525,37 +522,37 @@ subroutine fmint4_isan(var1, var2, dn0xc, dn0xf, ifm, icm, vpnt, idwt)
           ,nnxp(ifm),nnyp(ifm),var2(1),dn0xf(1),vpnt,2)
   endif
 
-  !  call ezcntr(grid_g(icm)%topta(1,1),nnxp(icm),nnyp(icm))
-  !  call ezcntr(grid_g(ifm)%topta(1,1),nnxp(ifm),nnyp(ifm))
-  !  call ezcntr(rr_vt2da(1),nnxp(ifm),nnyp(ifm))
+!  call ezcntr(grid_g(icm)%topta(1,1),nnxp(icm),nnyp(icm))
+!  call ezcntr(grid_g(ifm)%topta(1,1),nnxp(ifm),nnyp(ifm))
+!  call ezcntr(rr_vt2da(1),nnxp(ifm),nnyp(ifm))
   allocate (plt(nnxp(ifm),nnyp(ifm)))
   allocate (plt3(nnzp(ifm),nnxp(ifm),nnyp(ifm)))
   allocate (plt3b(nnzp(ifm),nnxp(ifm),nnyp(ifm)))
 !!$  call ae1m1(nnxp(ifm)*nnyp(ifm),plt(1,1),grid_g(ifm)%topta(1,1),rr_vt2da(1))
   call ae1m1_l(int(nnxp(ifm)*nnyp(ifm),i8), &
        plt(1,1), grid_g(ifm)%topta(1,1), rr_vt2da(1))
-  !  call ezcntr(plt,nnxp(ifm),nnyp(ifm))
+!  call ezcntr(plt,nnxp(ifm),nnyp(ifm))
 
   ! interp field
 !!$call ae1(nnzp(ifm)*nnxp(ifm)*nnyp(ifm),plt3(1,1,1),var2(1))
   call ae1_l(int(nnzp(ifm)*nnxp(ifm)*nnyp(ifm),i8), plt3(1,1,1), var2(1))
   plt(1:nnxp(ifm),1:nnyp(ifm)) =plt3(12,1:nnxp(ifm),1:nnyp(ifm))
-  !  call ezcntr(plt,nnxp(ifm),nnyp(ifm))
-
+!  call ezcntr(plt,nnxp(ifm),nnyp(ifm))
+  
   !------------------
   call rtgintrp(nnzp(ifm),nnxp(ifm),nnyp(ifm),var2(1),rr_vt2da(1)  &
        ,grid_g(ifm)%topta(1,1),ifm,vpnt)
   !------------------
-
+  
   ! after rtgint
 !!$call ae1(nnzp(ifm)*nnxp(ifm)*nnyp(ifm),plt3(1,1,1),var2(1))
   call ae1_l(int(nnzp(ifm)*nnxp(ifm)*nnyp(ifm),i8), plt3(1,1,1), var2(1))
   plt(1:nnxp(ifm),1:nnyp(ifm)) =plt3(12,1:nnxp(ifm),1:nnyp(ifm))
-  !  call ezcntr(plt,nnxp(ifm),nnyp(ifm))
-
+!  call ezcntr(plt,nnxp(ifm),nnyp(ifm))
+  
   ! diff field
   !call ae1m1(nnzp(ifm)*nnxp(ifm)*nnyp(ifm),plt3b(1,1,1),plt3(1,1,1),var2(1))
   !plt(1:nnxp(ifm),1:nnyp(ifm)) =plt3b(12,1:nnxp(ifm),1:nnyp(ifm))
   !call ezcntr(plt,nnxp(ifm),nnyp(ifm))
-
+  
 end subroutine fmint4_isan

@@ -34,7 +34,7 @@ subroutine gridloc_prt()
   real :: NudLatMax
   real :: NudLonMax
 
-  include "constants.h"
+  include "constants.f90"
 
   character(len=*), parameter :: h="**(gridloc_prt)**"
 

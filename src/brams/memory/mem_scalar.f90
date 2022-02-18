@@ -115,7 +115,7 @@ contains
     use var_tables, only: InsertVTab
         use io_params, only : ioutput         ! INTENT(IN)
     implicit none
-    include "constants.h"
+    include "i8.h"
     type (scalar_vars) :: scal,scalm
     integer, intent(in) :: imean,n1,n2,n3,ng,na
 

@@ -93,12 +93,9 @@ contains
        AllGridNodes(gridId)%this%sibling => null()
        AllGridNodes(gridId)%this%descendent => null()
        AllGridNodes(gridId)%this%PreOrder => null()
-       call CreateGrid(&
-            gridId=gridId, &
-            oneNamelistFile=oneNamelistFile, &
-            oneParallelEnvironment=oneParallelEnvironment, &
-            oneGrid=AllGridNodes(gridId)%this%curr &
-            )
+       call CreateGrid(gridId, GhostZoneLength, &
+            oneNamelistFile, oneParallelEnvironment, &
+            AllGridNodes(gridId)%this%curr)
     end do
 
     ! verify nesting correction

@@ -21,7 +21,7 @@ subroutine ndvi_read_dataheader(ifm)
   implicit none
 
   include "files.h"
-  include "constants.h"
+  include "constants.f90"
 
   integer, intent(IN) :: ifm
   integer             :: itime, nc
