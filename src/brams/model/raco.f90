@@ -1020,8 +1020,6 @@ contains
 
     use mem_scratch, only: scratch
 
-!!$    use ModComm, only: commHaloAcou
-
     implicit none
 
     type(Grid), pointer :: OneGrid
@@ -1167,7 +1165,6 @@ contains
                 call WaitSendRecvMsgs(&
                      OneGrid%AcouDampDivSend, &
                      OneGrid%AcouDampDivRecv)
-!!$                call commHaloAcou(div,mxp,myp,mzp,myNum,'div@acoust_new')
              endif
              ! as proposed in Wicker, Skamarock (2002) (?) divergence damping is
              ! used in an approximated form by adding the following term to the pressure:
@@ -1191,7 +1188,6 @@ contains
                 call WaitSendRecvMsgs(&
                      OneGrid%AcouDampPPSend, &
                      OneGrid%AcouDampPPRecv)
-!!$                call commHaloAcou(pp_t_minus_dt,mxp,myp,mzp,myNum,'pp_t_minus_dt@acoust_new')
              endif
              pp_minus_div(:,:,:) = pp(:,:,:) + div_damp_strength*(pp(:,:,:) - pp_t_minus_dt(:,:,:))
           endif
@@ -1233,7 +1229,6 @@ contains
        !   else if last loop iteration,
        !      sends up, vp to update all neighbour processes ghost zone
        if (.not. singleProcRun) then
-          !        call commHaloAcou(up,mxp,myp,mzp,myNum,'up')
           if (iter < lastIter) then
              call PostSendRecvMsgs(OneGrid%AcouSendV, OneGrid%AcouRecvV)
           else
@@ -1341,8 +1336,6 @@ contains
          mzp,  &
          nmachs, &
          mynum
-
-!!$    use ModComm, only: commHaloAcou
 
     use ModGrid, only: &
          Grid
@@ -1471,7 +1464,6 @@ contains
        call WaitSendRecvMsgs(&
             OneGrid%AcouDampAlphaSend, &
             OneGrid%AcouDampAlphaRecv)
-!!$       call commHaloAcou(alpha_div,mxp,myp,mzp,myNum,'alpha_div@init_div_damping_coeff')
     endif
     !--- mpi paralelization :
 

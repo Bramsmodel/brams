@@ -120,6 +120,9 @@ module ModMessageSet
   public :: CreateAcouDampOneMessageSet
   public :: DestroyAcouDampOneMessageSet
   
+  public :: CreateAdvLargeGhostMessageSet
+  public :: DestroyAdvLargeGhostMessageSet
+  
   public :: UpdateFieldAddress
   
   public :: PostSendRecvMsgs
@@ -2624,6 +2627,235 @@ contains
 
 
 
+
+  subroutine CreateAdvLargeGhostMessageSet(&
+       GridSize, ParEnv, NeighLargeGhost, &
+       GlobalOwn, GlobalWithGhostLargeGhost, LocalOwnLargeGhost, &
+       Tag, NameSend, NameRecv, &
+       AdvLargeGhostSend, AdvLargeGhostRecv)
+
+    ! Message Set to exchange large ghost zone fields
+    ! at advect_ws; exchange on specific fields
+    ! (scr,ufx_local,vfx_local,wfx_local)
+    ! that are local variables to advect_ws, and as so,
+    ! dinamically allocated at each call.
+    ! Since fields memory address changes from exchange
+    ! to exchange, the Message Set is built with a phony
+    ! field memory address, to be updated with the current
+    ! memory address prior to each exchange
+    
+    type(GridDims), pointer, intent(in) :: GridSize
+    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+    type(NeighbourNodes), pointer, intent(in) :: NeighLargeGhost
+    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhostLargeGhost
+    type(DomainDecomp), pointer, intent(in) :: LocalOwnLargeGhost
+    integer, intent(in) :: Tag
+    character(len=*), intent(in) :: NameSend
+    character(len=*), intent(in) :: NameRecv
+    type(MessageSet), pointer, intent(inout) :: AdvLargeGhostSend
+    type(MessageSet), pointer, intent(inout) :: AdvLargeGhostRecv
+
+
+    integer :: nMachs
+    integer :: myNum
+    integer :: nNeigh
+    integer :: lbz, ubz
+    integer :: lbx, ubx
+    integer :: lby, uby
+
+    
+    ! scratch arrays of size number of neighbour nodes
+    ! containing global indices of regions for send and receive
+
+    integer :: xbSend(parEnv%nMachs)
+    integer :: xeSend(parEnv%nMachs)
+    integer :: ybSend(parEnv%nMachs)
+    integer :: yeSend(parEnv%nMachs)
+    integer :: xbRecv(parEnv%nMachs)
+    integer :: xeRecv(parEnv%nMachs)
+    integer :: ybRecv(parEnv%nMachs)
+    integer :: yeRecv(parEnv%nMachs)
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing which neighbour nodes will send of receive
+
+    logical :: willSend(parEnv%nMachs)
+    logical :: willRecv(parEnv%nMachs)
+
+    real, pointer :: phonyField(:,:,:)
+    integer, parameter :: idim_type=3
+
+    integer :: ierr
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(CreateAdvLargeGhostMessageSet)**"
+    logical, parameter :: dumpLocal=.false.
+
+    ! verify input arguments
+
+    if (.not. associated(ParEnv)) then
+       call fatal_error(h//" starts with null ParEnv")
+    else if (.not. associated(GlobalOwn)) then
+       call fatal_error(h//" starts with null GlobalOwn")
+    else if (.not. associated(GlobalWithGhostLargeGhost)) then
+       call fatal_error(h//" starts with null GlobalWithGhostLargeGhost")
+    end if
+
+    ! default output (case no neighbours)
+
+    if (.not. associated(NeighLargeGhost)) then
+       AdvLargeGhostSend => null()
+       AdvLargeGhostRecv => null()
+       return
+    end if
+
+    if (dumpLocal) then
+       call MsgDump(h//" will create AdvLargeGhostSend/Recv")
+    end if
+
+    myNum  = ParEnv%myNum
+    nMachs = ParEnv%nMachs
+    nNeigh = NeighLargeGhost%nNeigh
+
+    ! phony field, just to collect bounds
+    ! define phony field bounds
+
+    if (LocalOwnLargeGhost%GhostZoneWidth == 1) then
+       lbz = 1
+       ubz = GridSize%nnzp
+    else
+       lbz = 1 - LocalOwnLargeGhost%GhostZoneWidth
+       ubz = GridSize%nnzp + LocalOwnLargeGhost%GhostZoneWidth
+    end if
+
+    lbx=1
+    ubx=LocalOwnLargeGhost%nx(myNum)
+
+    lby=1
+    uby=LocalOwnLargeGhost%ny(myNum)
+
+    allocate(phonyField(lbz:ubz,lbx:ubx,lby:uby), stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") lbz
+       write(str(2),"(i8)") ubz
+       write(str(3),"(i8)") lbx
+       write(str(4),"(i8)") ubx
+       write(str(5),"(i8)") lby
+       write(str(6),"(i8)") uby
+       write(str(7),"(i8)") ierr
+       call fatal_error(h//" allocate phonyField("//&
+            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
+            trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//&
+            ") fails with stat="//trim(adjustl(str(7))))
+    end if
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") lbound(phonyField,1)
+       write(str(2),"(i8)") ubound(phonyField,1)
+       write(str(3),"(i8)") lbound(phonyField,2)
+       write(str(4),"(i8)") ubound(phonyField,2)
+       write(str(5),"(i8)") lbound(phonyField,3)
+       write(str(6),"(i8)") ubound(phonyField,3)
+       call MsgDump(h//" allocated phonyField("//&
+            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
+            trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//&
+            ")")
+    end if
+       
+    ! AdvLargeGhostSend, AdvLargeGhostRecv:
+    ! messages update entire GhostZone
+
+    call NodesRegionsSendRecv(&
+         nMachs=nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=Tag, &
+         Neigh=NeighLargeGhost, &
+         GlobalOwn=GlobalOwn, &
+         NameSend=NameSend, &
+         NameRecv=NameRecv, &
+         xbToUpdate=GlobalWithGhostLargeGhost%xb, &
+         xeToUpdate=GlobalWithGhostLargeGhost%xe, &
+         ybToUpdate=GlobalWithGhostLargeGhost%yb, &
+         yeToUpdate=GlobalWithGhostLargeGhost%ye, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=AdvLargeGhostSend, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=AdvLargeGhostRecv)
+
+    ! insert field sections named SCR, UFX, VFX, WFX
+    ! with phony field addresses, to be updated whenever
+    ! real addresses are known
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         phonyField, "SCR", idim_type, myNum, nNeigh, GlobalWithGhostLargeGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, AdvLargeGhostSend, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AdvLargeGhostRecv)
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         phonyField, "UFX", idim_type, myNum, nNeigh, GlobalWithGhostLargeGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, AdvLargeGhostSend, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AdvLargeGhostRecv)
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         phonyField, "VFX", idim_type, myNum, nNeigh, GlobalWithGhostLargeGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, AdvLargeGhostSend, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AdvLargeGhostRecv)
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         phonyField, "WFX", idim_type, myNum, nNeigh, GlobalWithGhostLargeGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, AdvLargeGhostSend, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AdvLargeGhostRecv)
+
+    deallocate(phonyField, stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" deallocate phonyField fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
+
+    if (dumpLocal) then
+       call MsgDump(h//" finishes with AdvLargeGhostSend MessageSet:")
+       call DumpMessageSet(AdvLargeGhostSend)
+       call MsgDump(h//" finishes with AdvLargeGhostRecv MessageSet:")
+       call DumpMessageSet(AdvLargeGhostRecv)
+    end if
+  end subroutine CreateAdvLargeGhostMessageSet  
+
+
+
+
+
+  subroutine DestroyAdvLargeGhostMessageSet( &
+       AdvLargeGhostSend, AdvLargeGhostRecv)
+
+    type(MessageSet), pointer, intent(inout) :: AdvLargeGhostSend
+    type(MessageSet), pointer, intent(inout) :: AdvLargeGhostRecv
+    character(len=*), parameter :: h="**(DestroyAdvLargeGhostMessageSet)**"
+    logical, parameter :: dumpLocal=.false.
+
+    if (dumpLocal) then
+       call MsgDump(h//" will destroy AdvLargeGhostSend/Recv")
+    end if
+
+    call DestroyMessageSet(AdvLargeGhostSend)
+    call DestroyMessageSet(AdvLargeGhostRecv)
+
+  end subroutine DestroyAdvLargeGhostMessageSet
+
+
+
+
   
   subroutine UpdateFieldAddressAtMessageSet_2D(oneMessageSet, field, name)
     type(MessageSet), pointer, intent(in) :: oneMessageSet
@@ -2638,6 +2870,8 @@ contains
 
     if (.not. associated(oneMessageSet)) then
        call fatal_error(h//" null oneMessageSet")
+    else if (.not. associated(field)) then
+       call fatal_error(h//" field not associated")
     end if
 
     do iMsg = 1, oneMessageSet%nMsgs
@@ -2667,8 +2901,16 @@ contains
     character(len=*), parameter :: h="**(UpdateFieldAddressAtMessageSet_3D)**"
     logical, parameter :: dumpLocal=.false.
 
+    if (dumpLocal) then
+       call MsgDump(h//" entrou")
+    end if
     if (.not. associated(oneMessageSet)) then
        call fatal_error(h//" null oneMessageSet")
+    else if (.not. associated(field)) then
+       call fatal_error(h//" field not associated")
+    end if
+    if (dumpLocal) then
+       call MsgDump(h//" passou if associacao")
     end if
 
     do iMsg = 1, oneMessageSet%nMsgs
@@ -2700,6 +2942,8 @@ contains
 
     if (.not. associated(oneMessageSet)) then
        call fatal_error(h//" null oneMessageSet")
+    else if (.not. associated(field)) then
+       call fatal_error(h//" field not associated")
     end if
 
     do iMsg = 1, oneMessageSet%nMsgs

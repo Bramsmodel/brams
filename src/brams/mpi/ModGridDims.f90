@@ -77,19 +77,25 @@ contains
 
   subroutine DumpGridDims(oneGridDims, name)
     type(GridDims), pointer, intent(in) :: oneGridDims
-    character(len=*), intent(in) :: name
+    character(len=*), intent(in), optional :: name
 
     character(len=16) :: c0, c1, c2
     character(len=512) :: str
+    character(len=512) :: pre
     character(len=*), parameter :: h="**(DumpGridDims)**"
 
     if (.not. associated(oneGridDims)) then
        call MsgDump(h//" null GridDims")
     else
-       write(c0,"(i8)") oneGridDims%nnxp
-       write(c1,"(i8)") oneGridDims%nnyp
-       write(c2,"(i8)") oneGridDims%nnzp
-       str = " "//name//" produces grid with dimensions "//&
+       if (present(name)) then
+          pre = name
+       else
+          pre = ""
+       end if
+       write(c0,"(i8)") oneGridDims%nnzp
+       write(c1,"(i8)") oneGridDims%nnxp
+       write(c2,"(i8)") oneGridDims%nnyp
+       str = " "//trim(adjustl(pre))//" produces grid with dimensions "//&
             "["//trim(adjustl(c0))//","//trim(adjustl(c1))//&
             ","//trim(adjustl(c2))//"]"
        call MsgDump(h//trim(str))

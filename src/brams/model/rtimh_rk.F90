@@ -608,17 +608,17 @@ contains
        if (dumpLocal) then
           call MsgDump(h//" invokes advectc_rk for V")
        end if
-       call advectc_rk('V',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
+       call advectc_rk(OneGrid,'V',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
 
        !  advection of pi and theta_il
        if (dumpLocal) then
           call MsgDump(h//" invokes advectc_rk for THETAIL")
        end if
-       call advectc_rk('THETAIL',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
+       call advectc_rk(OneGrid,'THETAIL',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
        if (dumpLocal) then
           call MsgDump(h//" invokes advectc_rk for PI")
        end if
-       call advectc_rk('PI'     ,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
+       call advectc_rk(OneGrid,'PI'     ,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
 
 !!$       call SynchronizedTimeStamp(TS_RK_ADV) ! Exper1.2, 2021_12
 
@@ -694,7 +694,7 @@ contains
        CALL ADVECTc   ('SCALAR',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
     ELSEIF(advmnt == 3) THEN
        !- using the WS advection
-       CALL advectc_rk('SCALAR',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
+       CALL advectc_rk(OneGrid,'SCALAR',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
 
     ENDIF
 

@@ -321,7 +321,7 @@ contains
     character(len=256) :: res
 
     character(len=128) :: string
-    character(len=8) :: c0, c1, c2, c3, c4, c5
+    character(len=8) :: c0, c1, c2, c3, c4, c5, c6, c7
     character(len=*), parameter :: h="**(StringFieldSection)**"
 
     if (.not. associated(oneFieldSection)) then
@@ -337,23 +337,29 @@ contains
                trim(adjustl(c0))//":"//trim(adjustl(c1))//","//&
                trim(adjustl(c2))//":"//trim(adjustl(c3))//")"
        case(3)
-          write(c4,"(i8)") size(oneFieldSection%field_3D,1)
-          string="(1:"//trim(adjustl(c4))//","//&
+          write(c4,"(i8)") lbound(oneFieldSection%field_3D,1)
+          write(c5,"(i8)") ubound(oneFieldSection%field_3D,1)
+          string="("//&
+               trim(adjustl(c4))//":"//trim(adjustl(c5))//","//&
                trim(adjustl(c0))//":"//trim(adjustl(c1))//","//&
                trim(adjustl(c2))//":"//trim(adjustl(c3))//")"
        case(4:5)
-          write(c4,"(i8)") size(oneFieldSection%field_4D,1)
-          write(c5,"(i8)") size(oneFieldSection%field_4D,4)
-          string="(1:"//trim(adjustl(c4))//","//&
+          write(c4,"(i8)") lbound(oneFieldSection%field_4D,1)
+          write(c5,"(i8)") ubound(oneFieldSection%field_4D,1)
+          write(c6,"(i8)") lbound(oneFieldSection%field_4D,4)
+          write(c7,"(i8)") ubound(oneFieldSection%field_4D,4)
+          string="("//&
+               trim(adjustl(c4))//":"//trim(adjustl(c5))//","//&
                trim(adjustl(c0))//":"//trim(adjustl(c1))//","//&
                trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
-               "1:"//trim(adjustl(c5))//")"
+               trim(adjustl(c6))//":"//trim(adjustl(c7))//")"
        case(6:7)
-          write(c4,"(i8)") size(oneFieldSection%field_3D,3)
+          write(c4,"(i8)") lbound(oneFieldSection%field_3D,3)
+          write(c5,"(i8)") ubound(oneFieldSection%field_3D,3)
           string="("//&
                trim(adjustl(c0))//":"//trim(adjustl(c1))//","//&
                trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
-               "1:"//trim(adjustl(c4))//")"
+               trim(adjustl(c4))//":"//trim(adjustl(c5))//")"
        case default
           write(c0,"(i8)") oneFieldSection%idim_type
           call fatal_error(h//" field section "//trim(oneFieldSection%name)//&
@@ -438,7 +444,7 @@ contains
 
     character(len=8) :: c0
     character(len=*), parameter :: h="**(UpdateFieldAddress_2D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (.not. associated(oneFieldSection)) then
        call fatal_error(h//" oneFieldSection not associated")
@@ -465,7 +471,7 @@ contains
 
     character(len=8) :: c0
     character(len=*), parameter :: h="**(UpdateFieldAddress_3D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (.not. associated(oneFieldSection)) then
        call fatal_error(h//" oneFieldSection not associated")
@@ -495,7 +501,7 @@ contains
 
     character(len=8) :: c0
     character(len=*), parameter :: h="**(UpdateFieldAddress_4D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (.not. associated(oneFieldSection)) then
        call fatal_error(h//" oneFieldSection not associated")

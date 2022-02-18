@@ -44,8 +44,9 @@ module ModGrid
        CreateAllGhostZoneMessageSet, &
        DestroyAllGhostZoneMessageSet, &
        CreateAcouDampOneMessageSet, &
-       DestroyAcouDampOneMessageSet
-       
+       DestroyAcouDampOneMessageSet, &
+       CreateAdvLargeGhostMessageSet, & 
+       DestroyAdvLargeGhostMessageSet
 
   use ModMonotonicAdvection, only: &
        MonotonicAdvection, &
@@ -161,7 +162,17 @@ module ModGrid
      type(MessageSet), pointer :: AcouDampThtSend => null()
      type(MessageSet), pointer :: AcouDampThtRecv => null()
      ! AcouDampSend/Recv: Ghost Zone update of a single field
-     ! on Runge Kutta Dynamics, acoust_new and init_div_damping_coef
+     ! on Runge Kutta Dynamics, acoust_new and init_div_damping_coef.
+     ! Fields to update are local variables to these procedures,
+     ! allocated and deallocated at each call. As so, field
+     ! memory address vary with procedure invocation
+     type(MessageSet), pointer :: AdvLargeGhostSend => null()
+     type(MessageSet), pointer :: AdvLargeGhostRecv => null()
+     ! AdvLargeGhostSend/Recv: Ghost Zone update of four fields
+     ! with large ghost zones on advect_ws.
+     ! Fields to update are local variables to these procedures,
+     ! allocated and deallocated at each call. As so, field
+     ! memory address vary with procedure invocation
      type(MonotonicAdvection), pointer :: MonoAdv => null()
      ! MonoAdv: Fields with wider ghost zone for high order advection
   end type Grid
@@ -187,7 +198,7 @@ contains
     
     character(len=16) :: c0, c1
     character(len=*), parameter :: h="**(CreateGrid)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! correctness of input arguments
 
@@ -211,7 +222,7 @@ contains
 
     ! run options
 
-    largeGhostZone = oneNamelistFile%dyncore_flag==2 .and. oneNamelistFile%advmnt==3
+    largeGhostZone = oneNamelistFile%dyncore_flag==2 .and. oneNamelistFile%advmnt==1
     largeGhostZone = largeGhostZone .or. (&
          (oneNamelistFile%dyncore_flag==0 .or. oneNamelistFile%dyncore_flag==1) .and. &
          oneNamelistFile%advmnt>=1)
@@ -304,6 +315,10 @@ contains
             oneGridDims=oneGrid%GridSize, &
             oneLocalOwnMonoAdv=oneGrid%LocalOwnLargeGhost)
     end if
+    if (dumpLocal) then
+       call MsgDump(h//" dumping OneGrid at the end")
+       call DumpGrid(OneGrid)
+    end if
   end subroutine CreateGrid
 
 
@@ -315,7 +330,7 @@ contains
 
     character(len=16) :: str(10)
     character(len=*), parameter :: h="**(InsertMessageSetAtOneGrid)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     integer, parameter :: TagU=25
     integer, parameter :: TagV=26
@@ -332,7 +347,8 @@ contains
     integer, parameter :: TagAcouDampPP=37
     integer, parameter :: TagAcouDampAlpha=38
     integer, parameter :: TagAcouDampTht=39
-
+    integer, parameter :: TagAdvLargeGhost=40
+    
     ! Field pointer for fields not yet allocated
     ! not yet allocated; CreateAcouDampOneMessageSet
     ! takes bounds from field pointer.
@@ -344,7 +360,7 @@ contains
     integer :: lbx, ubx
     integer :: lby, uby
     integer :: lbz, ubz
-    real, pointer :: defineRegularBounds(:,:,:)
+    real, pointer :: boundsRegularGhostZone(:,:,:)
     
     if (.not. associated(oneGrid)) then
        call fatal_error(h//" invoked with null grid")
@@ -404,7 +420,7 @@ contains
     uby=oneGrid%LocalOwn%ny(myNum)
     lbz=1
     ubz=oneGrid%GridSize%nnzp
-    allocate(defineRegularBounds(lbz:ubz,lbx:ubx,lby:uby), stat=ierr)
+    allocate(boundsRegularGhostZone(lbz:ubz,lbx:ubx,lby:uby), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") lbz
        write(str(2),"(i8)") ubz
@@ -413,7 +429,7 @@ contains
        write(str(5),"(i8)") lby
        write(str(6),"(i8)") uby
        write(str(7),"(i8)") ierr
-       call fatal_error(h//" allocate defineRegularBounds("//&
+       call fatal_error(h//" allocate boundsRegularGhostZone("//&
             trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
             trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
             trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//&
@@ -425,39 +441,45 @@ contains
     ! prior to use the Message Sets
     
     call CreateAcouDampOneMessageSet(&
-       defineRegularBounds, "Div", 3,  &
+       boundsRegularGhostZone, "Div", 3,  &
        oneGrid%ParEnv, oneGrid%Neigh, &
        oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
        TagAcouDampDiv, "AcouDampDivSend", "AcouDampDivRecv", &
        oneGrid%AcouDampDivSend, oneGrid%AcouDampDivRecv)
 
     call CreateAcouDampOneMessageSet(&
-       defineRegularBounds, "PP", 3,  &
+       boundsRegularGhostZone, "PP", 3,  &
        oneGrid%ParEnv, oneGrid%Neigh, &
        oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
        TagAcouDampPP, "AcouDampPPSend", "AcouDampPPRecv", &
        oneGrid%AcouDampPPSend, oneGrid%AcouDampPPRecv)
 
     call CreateAcouDampOneMessageSet(&
-       defineRegularBounds, "Alpha", 3,  &
+       boundsRegularGhostZone, "Alpha", 3,  &
        oneGrid%ParEnv, oneGrid%Neigh, &
        oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
        TagAcouDampAlpha, "AcouDampAlphaSend", "AcouDampAlphaRecv", &
        oneGrid%AcouDampAlphaSend, oneGrid%AcouDampAlphaRecv)
 
     call CreateAcouDampOneMessageSet(&
-       defineRegularBounds, "Tht", 3,  &
+       boundsRegularGhostZone, "Tht", 3,  &
        oneGrid%ParEnv, oneGrid%Neigh, &
        oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
        TagAcouDampTht, "AcouDampThtSend", "AcouDampThtRecv", &
        oneGrid%AcouDampThtSend, oneGrid%AcouDampThtRecv)
 
-    deallocate(defineRegularBounds, stat=ierr)
+    deallocate(boundsRegularGhostZone, stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate defineRegularBounds"//&
+       call fatal_error(h//" deallocate boundsRegularGhostZone"//&
             " fails with stat="//trim(adjustl(str(1))))
     end if
+
+    call CreateAdvLargeGhostMessageSet(&
+         oneGrid%GridSize, oneGrid%ParEnv, oneGrid%NeighLargeGhost, &
+         oneGrid%GlobalOwn, oneGrid%GlobalWithGhostLargeGhost, oneGrid%LocalOwnLargeGhost, &
+         TagAdvLargeGhost, "AdvLargeGhostSend", "AdvLargeGhostRecv", &
+         oneGrid%AdvLargeGhostSend, oneGrid%AdvLargeGhostRecv)
 
     if (dumpLocal) then
        call MsgDump(h//" dumping oneGrid")
@@ -509,7 +531,8 @@ contains
             oneGrid%AcouDampAlphaSend, oneGrid%AcouDampAlphaRecv)
        call DestroyAcouDampOneMessageSet( &
             oneGrid%AcouDampThtSend, oneGrid%AcouDampThtRecv)
-
+       call DestroyAdvLargeGhostMessageSet(&
+            oneGrid%AdvLargeGhostSend, oneGrid%AdvLargeGhostRecv)
        deallocate(oneGrid)
     end if
     nullify(oneGrid)
@@ -538,18 +561,21 @@ contains
     call MsgDump(h//" for grid "//trim(adjustl(c0)))
 
     call MsgDump(h//" dumping component GridSize")
-    call DumpGridDims(oneGrid%GridSize, h)
+    call DumpGridDims(oneGrid%GridSize)
 
     call MsgDump(h//" dumping domain decomposed components")
     call DumpDomainDecomp(oneGrid%GlobalOwn, "GlobalOwn")
+    call DumpDomainDecomp(oneGrid%GlobalOwnWithBC, "GlobalOwnWithBC")
     call DumpDomainDecomp(oneGrid%GlobalWithGhost, "GlobalWithGhost")
     call DumpDomainDecomp(oneGrid%LocalOwn, "LocalOwn")
     call DumpDomainDecomp(oneGrid%GlobalWithGhostLargeGhost, "GlobalWithGhostLargeGhost")
     call DumpDomainDecomp(oneGrid%LocalOwnLargeGhost, "LocalOwnLargeGhost")
 
-    call MsgDump(h//" dumping neighborhood")
+    call MsgDump(h//" dumping neighborhood components")
+    call DumpNeighbourNodes(oneGrid%Neigh,"oneGrid%Neigh")
     call DumpNeighbourNodes(oneGrid%NeighLargeGhost,"oneGrid%NeighLargeGhost")
 
+    call MsgDump(h//" dumping message set components")
     call MsgDump(h//" dumping AcouSendU")
     call DumpMessageSet(oneGrid%AcouSendU)
     call MsgDump(h//" dumping AcouRecvU")
@@ -610,5 +636,9 @@ contains
     call DumpMessageSet(oneGrid%AcouDampThtSend)
     call MsgDump(h//" dumping AcouDampThtRecv")
     call DumpMessageSet(oneGrid%AcouDampThtRecv)
+    call MsgDump(h//" dumping AdvLargeGhostSend")
+    call DumpMessageSet(oneGrid%AdvLargeGhostSend)
+    call MsgDump(h//" dumping AdvLargeGhostRecv")
+    call DumpMessageSet(oneGrid%AdvLargeGhostRecv)
   end subroutine DumpGrid
 end module ModGrid

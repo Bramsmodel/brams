@@ -912,7 +912,7 @@ radvc.o : $(MODEL)/radvc.f90  mem_basic.o mem_grid.o mem_scratch.o \
 	rm -f $(<F:.f90=.f90)
 
 radvc_rk.o : $(MODEL)/radvc_rk.f90 var_tables.o mem_stilt.o \
-	initComm.o ModParallelEnvironment.o
+	initComm.o ModParallelEnvironment.o ModGrid.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
