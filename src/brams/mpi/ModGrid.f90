@@ -17,9 +17,10 @@ module ModGrid
 
   use ModDomainDecomp, only: &
        DomainDecomp, &
-       CreateGlobalNoGhost, &
+       CreateGlobalOwn, &
+       CreateGlobalOwnWithBC, &
        CreateGlobalWithGhost, &
-       CreateLocalInterior, &
+       CreateLocalOwn, &
        DumpDomainDecomp, &
        DestroyDomainDecomp
 
@@ -31,21 +32,28 @@ module ModGrid
 
   use ModMessageSet, only: &
        MessageSet, &
-       DumpMessageSet
+       DumpMessageSet, &
+       CreateAcousticMessageSet, &
+       DestroyAcousticMessageSet, &
+       CreateDn0MessageSet, &
+       DestroyDn0MessageSet, &
+       CreateG3DMessageSet, &
+       DestroyG3DMessageSet, &
+       CreateSelectedGhostZoneMessageSet, &
+       DestroySelectedGhostZoneMessageSet, &
+       CreateAllGhostZoneMessageSet, &
+       DestroyAllGhostZoneMessageSet, &
+       CreateAcouDampOneMessageSet, &
+       DestroyAcouDampOneMessageSet, &
+       CreateLuFlaMessageSet, &
+       DestroyLuFlaMessageSet
 
-  use ModMessagePassing, only: &
-       CreateAcousticMessagePassing, &
-       DestroyAcousticMessagePassing, &
-       CreateDn0MessagePassing, &
-       DestroyDn0MessagePassing, &
-       CreateG3DMessagePassing, &
-       DestroyG3DMessagePassing, &
-       CreateSelectedGhostZoneMessagePassing, &
-       DestroySelectedGhostZoneMessagePassing, &
-       CreateAllGhostZoneMessagePassing, &
-       DestroyAllGhostZoneMessagePassing
-
-
+  use ModMonotonicAdvection, only: &
+       MonotonicAdvection, &
+       CreateMonotonicAdvection, &
+       DestroyMonotonicAdvection
+  
+  
   ! JP: temporariamente usa variaveis globais enquanto
   !     var_tables nao for inclusa no tipo Grid
 
@@ -61,67 +69,128 @@ module ModGrid
   private
   public :: Grid
   public :: CreateGrid
-  public :: InsertMessagePassingAtOneGrid
+  public :: InsertMessageSetAtOneGrid
   public :: DestroyGrid
   public :: DumpGrid
 
 
   type Grid
-     integer :: Id    ! grid number on Namelist
+     integer :: Id
+     ! Id: grid number on Namelist
      type(NamelistFile), pointer :: Ramsin => null()
+     ! Ramsin: this grid namelist file
      type(ParallelEnvironment), pointer :: ParEnv => null()
+     ! ParEnv: mpi size, rank and communicator for this run
      type(GridDims), pointer :: GridSize => null()
-     type(DomainDecomp), pointer :: GlobalNoGhost => null()
+     ! GridSize: this grid dimensions as defined by namelist
+     type(DomainDecomp), pointer :: GlobalOwn => null()
+     ! GlobalOwn: global indices of this grid domain
+     !            decomposition (domain partition) owned by
+     !            each rank - Ghost Zone not included
+     type(DomainDecomp), pointer :: GlobalOwnWithBC => null()
+     ! GlobalOwnBC: global indices of this grid domain
+     !            decomposition (domain partition) owned by
+     !            each rank including Boundary Conditions
      type(DomainDecomp), pointer :: GlobalWithGhost => null()
-     type(DomainDecomp), pointer :: LocalInterior => null()
+     ! GlobalWithGhost: global indices of this grid domain
+     !                  decomposition at each rank, including
+     !                  the owned points and a ghost zone of length one.
+     !                  Not a domain partition, due to ghost
+     !                  zone inclusion.
+     type(DomainDecomp), pointer :: LocalOwn => null()
+     ! LocalOwn: local indices of this grid domain
+     !           decomposition owned by each rank. 
+     !           Convertion of GlobalOwn to local indices
      type(NeighbourNodes), pointer :: Neigh => null()
-     type(MessageSet), pointer :: AcouSendU
-     type(MessageSet), pointer :: AcouRecvU
-     type(MessageSet), pointer :: AcouSendV
-     type(MessageSet), pointer :: AcouRecvV
-     type(MessageSet), pointer :: AcouSendP
-     type(MessageSet), pointer :: AcouRecvP
-     type(MessageSet), pointer :: AcouSendUV
-     type(MessageSet), pointer :: AcouRecvUV
-     type(MessageSet), pointer :: AcouSendWP
-     type(MessageSet), pointer :: AcouRecvWP
-     type(MessageSet), pointer :: SendDn0u
-     type(MessageSet), pointer :: RecvDn0u
-     type(MessageSet), pointer :: SendDn0v
-     type(MessageSet), pointer :: RecvDn0v
-     type(MessageSet), pointer :: SendG3D
-     type(MessageSet), pointer :: RecvG3D
-     type(MessageSet), pointer :: SelectedGhostZoneSend
-     type(MessageSet), pointer :: SelectedGhostZoneRecv
-     type(MessageSet), pointer :: AllGhostZoneSend
-     type(MessageSet), pointer :: AllGhostZoneRecv
-     
-     type(PolygonContainer), pointer :: meteoPolygons
+     ! Neigh: list of BRAMS process numbers that are neighbours
+     !        of this node for usual ghost zone update operations
+     type(MessageSet), pointer :: AcouSendU => null()
+     type(MessageSet), pointer :: AcouRecvU => null()
+     ! AcouSend/RecvU: Ghost Zone update at acoust_new and acoust_adap
+     type(MessageSet), pointer :: AcouSendV => null()
+     type(MessageSet), pointer :: AcouRecvV => null()
+     ! AcouSend/RecvV: Ghost Zone update at acoust_new and acoust_adap
+     type(MessageSet), pointer :: AcouSendPNorth => null()
+     type(MessageSet), pointer :: AcouRecvPNorth => null()
+     ! AcouSend/RecvPNorth: Ghost Zone update at acoust_new and acoust_adap
+     type(MessageSet), pointer :: AcouSendPEast => null()
+     type(MessageSet), pointer :: AcouRecvPEast => null()
+     ! AcouSend/RecvPEast: Ghost Zone update at acoust_new and acoust_adap
+     type(MessageSet), pointer :: AcouSendUV => null()
+     type(MessageSet), pointer :: AcouRecvUV => null()
+     ! AcouSend/RecvUV: Ghost Zone update at acoust_new and acoust_adap
+     type(MessageSet), pointer :: AcouSendWP => null()
+     type(MessageSet), pointer :: AcouRecvWP => null()
+     ! AcouSend/RecvWP: Ghost Zone update at acoust_new and acoust_adap
+     type(MessageSet), pointer :: SendDn0u => null()
+     type(MessageSet), pointer :: RecvDn0u => null()
+     type(MessageSet), pointer :: SendDn0v => null()
+     type(MessageSet), pointer :: RecvDn0v => null()
+     ! Send/RecvDn0u/v: Ghost Zone update at FillDn0uv
+     type(MessageSet), pointer :: SendG3D => null()
+     type(MessageSet), pointer :: RecvG3D => null()
+     ! Send/RecvG3D: Ghost Zone update at cuparm_grell3_catt
+     type(MessageSet), pointer :: SelectedGhostZoneSend => null()
+     type(MessageSet), pointer :: SelectedGhostZoneRecv => null()
+     ! SelectedGhostZoneSend/RecvG3D: Ghost Zone update at timestep and timestep_rk
+     type(MessageSet), pointer :: AllGhostZoneSend => null()
+     type(MessageSet), pointer :: AllGhostZoneRecv => null()
+     ! AllGhostZoneSend/RecvG3D: Ghost Zone update at PostProcess
+     ! type(MessageSet) contains all information required for
+     ! ghost zone update. See description at ModMessageSet 
+     type(PolygonContainer), pointer :: meteoPolygons => null()
 
+     type(MessageSet), pointer :: AcouDampDivSend => null()
+     type(MessageSet), pointer :: AcouDampDivRecv => null()
+     type(MessageSet), pointer :: AcouDampPPSend => null()
+     type(MessageSet), pointer :: AcouDampPPRecv => null()
+     type(MessageSet), pointer :: AcouDampAlphaSend => null()
+     type(MessageSet), pointer :: AcouDampAlphaRecv => null()
+     type(MessageSet), pointer :: AcouDampThtSend => null()
+     type(MessageSet), pointer :: AcouDampThtRecv => null()
+     ! AcouDampSend/Recv: Ghost Zone update of a single field
+     ! on Runge Kutta Dynamics, acoust_new and init_div_damping_coef.
+     ! Fields to update are local variables to these procedures,
+     ! allocated and deallocated at each call. As so, field
+     ! memory address vary with procedure invocation
+     type(MessageSet), pointer :: LuFlaSendNorth => null()
+     type(MessageSet), pointer :: LuFlaSendSouth => null()
+     type(MessageSet), pointer :: LuFlaSendEast => null()
+     type(MessageSet), pointer :: LuFlaSendWest => null()
+     type(MessageSet), pointer :: LuFlaRecvNorth => null()
+     type(MessageSet), pointer :: LuFlaRecvSouth => null()
+     type(MessageSet), pointer :: LuFlaRecvEast => null()
+     type(MessageSet), pointer :: LuFlaRecvWest => null()
+
+     ! LuFlaSend/Recv: Ghost Zone update of four fields
+     ! with large ghost zones on advect_ws.
+     ! Fields to update are local variables to these procedures,
+     ! allocated and deallocated at each call. As so, field
+     ! memory address vary with procedure invocation
   end type Grid
 
 
-  logical, parameter :: dumpLocal=.false.
 
 contains
 
 
 
-  ! CreateGrid: create and fill variable of this type,
-  !             extracting info from the Namelist File.
+  ! CreateGrid: create and fill variable of this type
 
 
 
-  subroutine CreateGrid(gridId, GhostZoneLength, &
-       oneNamelistFile, oneParallelEnvironment, oneGrid)
+  subroutine CreateGrid(gridId, oneNamelistFile, oneParallelEnvironment, oneGrid)
     integer, intent(in) :: gridId
-    integer, intent(in) :: GhostZoneLength
     type(NamelistFile), pointer :: oneNamelistFile
     type(ParallelEnvironment), pointer :: oneParallelEnvironment
     type(Grid), pointer :: oneGrid
 
+    logical :: largeGhostZone
+    ! if will use extended ghost zone width
+    
     character(len=16) :: c0, c1
     character(len=*), parameter :: h="**(CreateGrid)**"
+    logical, parameter :: dumpLocal=.true.
 
     ! correctness of input arguments
 
@@ -137,109 +206,250 @@ contains
 
     allocate(oneGrid)
 
+    ! stores input arguments
+    
     oneGrid%id = gridId
     oneGrid%Ramsin => oneNamelistFile
     oneGrid%ParEnv => oneParallelEnvironment
-    call CreateGridDims(gridId, &
-         oneNamelistFile, &
-         oneGrid%GridSize)
-    call CreateGlobalNoGhost(oneGrid%GridSize, &
-         oneGrid%ParEnv, &
-         oneGrid%GlobalNoGhost)
-    call CreateGlobalWithGhost(oneGrid%GridSize, &
-         oneGrid%ParEnv, &
-         GhostZoneLength, &
-         oneGrid%GlobalNoGhost, &
-         oneGrid%GlobalWithGhost)
-    call CreateLocalInterior(oneGrid%ParEnv, &
-         oneGrid%GlobalWithGhost, &
-         oneGrid%GlobalNoGhost, &
-         oneGrid%LocalInterior)
-    call CreateNeighbourNodes(oneGrid%ParEnv, &
-         oneGrid%GlobalNoGhost, &
-         oneGrid%GlobalWithGhost, &
-         oneGrid%Neigh)
-	 
-    oneGrid%AcouSendU => null()
-    oneGrid%AcouRecvU => null()
-    oneGrid%AcouSendV => null()
-    oneGrid%AcouRecvV => null()
-    oneGrid%AcouSendP => null()
-    oneGrid%AcouRecvP => null()
-    oneGrid%AcouSendUV => null()
-    oneGrid%AcouRecvUV => null()
-    oneGrid%AcouSendWP => null()
-    oneGrid%AcouRecvWP => null()
-    oneGrid%SendDn0u => null()
-    oneGrid%RecvDn0u => null()
-    oneGrid%SendDn0v => null()
-    oneGrid%RecvDn0v => null()
-    oneGrid%SendG3D => null()
-    oneGrid%RecvG3D => null()
-    oneGrid%SelectedGhostZoneSend => null()
-    oneGrid%SelectedGhostZoneRecv => null()
-    oneGrid%AllGhostZoneSend => null()
-    oneGrid%AllGhostZoneRecv => null()
-    oneGrid%meteoPolygons => null()
+
+    ! run options
+
+    largeGhostZone = oneNamelistFile%dyncore_flag==2 .and. oneNamelistFile%advmnt==1
+    largeGhostZone = largeGhostZone .or. (&
+         (oneNamelistFile%dyncore_flag==0 .or. oneNamelistFile%dyncore_flag==1) .and. &
+         oneNamelistFile%advmnt>=1)
     
+    ! store GridDims extracted from OneNamelistFile 
+
+    oneGrid%GridSize => CreateGridDims(gridId, &
+         oneNamelistFile)
+
+    ! compute domain decomposition, obtaining
+    ! cells owned by each rank and store at GlobalOwn
+    
+    oneGrid%GlobalOwn => CreateGlobalOwn(&
+         GridSize=oneGrid%GridSize, &
+         ParEnv=oneGrid%ParEnv, &
+         varName="GlobalOwn" &
+         )
+
+    
+    oneGrid%GlobalOwnWithBC => CreateGlobalOwnWithBC(&
+         GridSize=oneGrid%GridSize, &
+         ParEnv=oneGrid%ParEnv, &
+         GlobalOwn=oneGrid%GlobalOwn &
+         )
+
+    ! insert original ghost zone of widht 1
+    ! at GlobalOwn and store at GlobalWithGhost
+    
+    oneGrid%GlobalWithGhost => CreateGlobalWithGhost(&
+         GridSize=oneGrid%GridSize, &
+         ParEnv=oneGrid%ParEnv, &
+         GlobalOwn=oneGrid%GlobalOwn, &
+         GhostZoneWidth=1, &
+         varName="GlobalWithGhost" &
+         )
+
+    ! convert global indices from GlobalWithGhost
+    ! into local indices stored at LocalOwn
+    
+    oneGrid%LocalOwn => CreateLocalOwn(&
+         ParEnv=oneGrid%ParEnv, &
+         GlobalWithGhost=oneGrid%GlobalWithGhost, &
+         GlobalOwn=oneGrid%GlobalOwn, &
+         varName="LocalOwn" &
+         )
+
+    ! neighbour nodes for original ghost zone update operations
+    
+    oneGrid%Neigh => CreateNeighbourNodes(&
+         ParEnv=oneGrid%ParEnv, &
+         GlobalOwn=oneGrid%GlobalOwn, &
+         GlobalWithGhost=oneGrid%GlobalWithGhost, &
+         varName="oneGrid%Neigh" &
+         )
+
+    if (dumpLocal) then
+       call MsgDump(h//" dumping OneGrid at the end")
+       call DumpGrid(OneGrid)
+    end if
   end subroutine CreateGrid
 
 
 
 
 
-  subroutine InsertMessagePassingAtOneGrid(oneGrid)
+  subroutine InsertMessageSetAtOneGrid(oneGrid)
     type(Grid), pointer :: oneGrid
 
-    character(len=16) :: c0, c1
-    character(len=*), parameter :: h="**(InsertMessagePassingAtOneGrid)**"
+    character(len=16) :: str(10)
+    character(len=*), parameter :: h="**(InsertMessageSetAtOneGrid)**"
+    logical, parameter :: dumpLocal=.false.
 
+    integer, parameter :: TagU=25
+    integer, parameter :: TagV=26
+    integer, parameter :: TagPNorth=27
+    integer, parameter :: TagPEast=28
+    integer, parameter :: TagUV=29
+    integer, parameter :: TagWP=30
+    integer, parameter :: TagDn0u=31
+    integer, parameter :: TagDn0v=32
+    integer, parameter :: TagG3D=33
+    integer, parameter :: TagSelectedGhostZone=34
+    integer, parameter :: TagAllGhostZone=35
+    integer, parameter :: TagAcouDampDiv=36
+    integer, parameter :: TagAcouDampPP=37
+    integer, parameter :: TagAcouDampAlpha=38
+    integer, parameter :: TagAcouDampTht=39
+    integer, parameter :: TagAdvLargeGhost=40
+    integer, parameter :: TagLuFlaNorth=41
+    integer, parameter :: TagLuFlaSouth=42
+    integer, parameter :: TagLuFlaEast=43
+    integer, parameter :: TagLuFlaWest=44
+    
+    
+    ! Field pointer for fields not yet allocated
+    ! not yet allocated; CreateAcouDampOneMessageSet
+    ! takes bounds from field pointer.
+    ! Field address will be replaced by
+    ! a call to UpdateFieldAdress, once the
+    ! desired field is allocated
+    integer :: ierr
+    integer :: myNum
+    integer :: lbx, ubx
+    integer :: lby, uby
+    integer :: lbz, ubz
+    real, pointer :: boundsRegularGhostZone(:,:,:)
+    
     if (.not. associated(oneGrid)) then
        call fatal_error(h//" invoked with null grid")
     end if
 
-    call CreateAcousticMessagePassing(oneGrid%Id, &
+    call CreateAcousticMessageSet(oneGrid%Id, &
          oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
-         oneGrid%GlobalNoGhost, &
+         oneGrid%GlobalOwn, &
+         oneGrid%GlobalOwnWithBC, &
          oneGrid%GlobalWithGhost, &
-         oneGrid%AcouSendU, oneGrid%AcouRecvU, &
-         oneGrid%AcouSendV, oneGrid%AcouRecvV,&
-         oneGrid%AcouSendP, oneGrid%AcouRecvP, &
-         oneGrid%AcouSendUV, oneGrid%AcouRecvUV, &
-         oneGrid%AcouSendWP, oneGrid%AcouRecvWP)
+         oneGrid%AcouSendU, oneGrid%AcouRecvU, TagU, &
+         oneGrid%AcouSendV, oneGrid%AcouRecvV, TagV, &
+         oneGrid%AcouSendPNorth, oneGrid%AcouRecvPNorth, TagPNorth, &
+         oneGrid%AcouSendPEast, oneGrid%AcouRecvPEast, TagPEast, &
+         oneGrid%AcouSendUV, oneGrid%AcouRecvUV, TagUV, &
+         oneGrid%AcouSendWP, oneGrid%AcouRecvWP, TagWP)
 
-    call CreateDn0MessagePassing(oneGrid%Id, &
+    call CreateDn0MessageSet(oneGrid%Id, &
          oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
-         oneGrid%GlobalNoGhost, oneGrid%GlobalWithGhost, &
-         oneGrid%SendDn0u, oneGrid%RecvDn0u, &
-         oneGrid%SendDn0v, oneGrid%RecvDn0v)
+         oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
+         oneGrid%SendDn0u, oneGrid%RecvDn0u, TagDn0u, &
+         oneGrid%SendDn0v, oneGrid%RecvDn0v, TagDn0v)
 
-    call CreateG3DMessagePassing(oneGrid%Id, &
+    call CreateG3DMessageSet(oneGrid%Id, &
          oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
-         oneGrid%GlobalNoGhost, oneGrid%GlobalWithGhost, &
+         oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhost, &
          oneGrid%Ramsin, &
-         oneGrid%SendG3D, oneGrid%RecvG3D)
+         oneGrid%SendG3D, oneGrid%RecvG3D, TagG3D)
 
     ! temporariamente, num_var e vtab_r sao variaveis globais,
     ! enquanto nao inclusas no tipo Grid
 
-    call CreateSelectedGhostZoneMessagePassing(&
+    call CreateSelectedGhostZoneMessageSet(&
        oneGrid%Id, num_var, vtab_r, &
        oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
-       oneGrid%GlobalNoGhost, oneGrid%GlobalWithGhost, &
-       oneGrid%SelectedGhostZoneSend, oneGrid%SelectedGhostZoneRecv)
+       oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhost, &
+       oneGrid%SelectedGhostZoneSend, &
+       oneGrid%SelectedGhostZoneRecv, &
+       TagSelectedGhostZone)
 
-    call CreateAllGhostZoneMessagePassing(&
+    call CreateAllGhostZoneMessageSet(&
        oneGrid%Id, num_var, vtab_r, &
        oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
-       oneGrid%GlobalNoGhost, oneGrid%GlobalWithGhost, &
-       oneGrid%AllGhostZoneSend, oneGrid%AllGhostZoneRecv)
+       oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhost, &
+       oneGrid%AllGhostZoneSend, &
+       oneGrid%AllGhostZoneRecv, &
+       TagAllGhostZone)
 
+    ! allocate field with desired bounds
+    ! desired bonds assure that field section will
+    ! be correctly computed for fields that were
+    ! not yet allocated, such as local fields at procedures
+    myNum=oneGrid%ParEnv%myNum
+    lbx=1
+    ubx=oneGrid%LocalOwn%nx(myNum)
+    lby=1
+    uby=oneGrid%LocalOwn%ny(myNum)
+    lbz=1
+    ubz=oneGrid%GridSize%nnzp
+    allocate(boundsRegularGhostZone(lbz:ubz,lbx:ubx,lby:uby), stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") lbz
+       write(str(2),"(i8)") ubz
+       write(str(3),"(i8)") lbx
+       write(str(4),"(i8)") ubx
+       write(str(5),"(i8)") lby
+       write(str(6),"(i8)") uby
+       write(str(7),"(i8)") ierr
+       call fatal_error(h//" allocate boundsRegularGhostZone("//&
+            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
+            trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//&
+            ") fails with stat="//trim(adjustl(str(7))))
+    end if
+
+    ! use desired bounds fields to create AcouDamp Message Sets;
+    ! correct field memory address by invoking UpdateFieldAdress
+    ! prior to use the Message Sets
+    
+    call CreateAcouDampOneMessageSet(&
+       boundsRegularGhostZone, "Div", 3,  &
+       oneGrid%ParEnv, oneGrid%Neigh, &
+       oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
+       TagAcouDampDiv, "AcouDampDivSend", "AcouDampDivRecv", &
+       oneGrid%AcouDampDivSend, oneGrid%AcouDampDivRecv)
+
+    call CreateAcouDampOneMessageSet(&
+       boundsRegularGhostZone, "PP", 3,  &
+       oneGrid%ParEnv, oneGrid%Neigh, &
+       oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
+       TagAcouDampPP, "AcouDampPPSend", "AcouDampPPRecv", &
+       oneGrid%AcouDampPPSend, oneGrid%AcouDampPPRecv)
+
+    call CreateAcouDampOneMessageSet(&
+       boundsRegularGhostZone, "Alpha", 3,  &
+       oneGrid%ParEnv, oneGrid%Neigh, &
+       oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
+       TagAcouDampAlpha, "AcouDampAlphaSend", "AcouDampAlphaRecv", &
+       oneGrid%AcouDampAlphaSend, oneGrid%AcouDampAlphaRecv)
+
+    call CreateAcouDampOneMessageSet(&
+       boundsRegularGhostZone, "Tht", 3,  &
+       oneGrid%ParEnv, oneGrid%Neigh, &
+       oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
+       TagAcouDampTht, "AcouDampThtSend", "AcouDampThtRecv", &
+       oneGrid%AcouDampThtSend, oneGrid%AcouDampThtRecv)
+
+    deallocate(boundsRegularGhostZone, stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" deallocate boundsRegularGhostZone"//&
+            " fails with stat="//trim(adjustl(str(1))))
+    end if
+
+    call CreateLuFlaMessageSet(&
+       oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
+       oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, oneGrid%LocalOwn, &
+       TagLuFlaNorth, TagLuFlaSouth, TagLuFlaEast, TagLuFlaWest, &
+       oneGrid%LuFlaSendNorth, oneGrid%LuFlaSendSouth, &
+       oneGrid%LuFlaSendEast, oneGrid%LuFlaSendWest, &
+       oneGrid%LuFlaRecvNorth, oneGrid%LuFlaRecvSouth, &
+       oneGrid%LuFlaRecvEast, oneGrid%LuFlaRecvWest)
+
+    
     if (dumpLocal) then
        call MsgDump(h//" dumping oneGrid")
        call DumpGrid(OneGrid)
     end if
-  end subroutine InsertMessagePassingAtOneGrid
+  end subroutine InsertMessageSetAtOneGrid
 
 
 
@@ -249,31 +459,46 @@ contains
 
   subroutine DestroyGrid(oneGrid)
     type(Grid), pointer :: oneGrid
-
+    
+    character(len=*), parameter :: h="**(DestroyGrid)**"
+    
     if (associated(oneGrid)) then
        call DestroyGridDims(oneGrid%GridSize)
-       call DestroyDomainDecomp(oneGrid%GlobalNoGhost)
+       call DestroyDomainDecomp(oneGrid%GlobalOwn)
        call DestroyDomainDecomp(oneGrid%GlobalWithGhost)
-       call DestroyDomainDecomp(oneGrid%LocalInterior)
+       call DestroyDomainDecomp(oneGrid%LocalOwn)
        call DestroyNeighbourNodes(oneGrid%Neigh)
-       call DestroyAcousticMessagePassing(&
+       call DestroyAcousticMessageSet(&
             oneGrid%AcouSendU, oneGrid%AcouRecvU, &
             oneGrid%AcouSendV, oneGrid%AcouRecvV, &
-            oneGrid%AcouSendP, oneGrid%AcouRecvP, &
+            oneGrid%AcouSendPNorth, oneGrid%AcouRecvPNorth, &
+            oneGrid%AcouSendPEast, oneGrid%AcouRecvPEast, &
             oneGrid%AcouSendUV, oneGrid%AcouRecvUV, &
             oneGrid%AcouSendWP, oneGrid%AcouRecvWP)
-       call DestroyDn0MessagePassing( &
+       call DestroyDn0MessageSet( &
             oneGrid%SendDn0u, oneGrid%RecvDn0u, &
             oneGrid%SendDn0v, oneGrid%RecvDn0v)
-       call DestroyG3DMessagePassing( &
+       call DestroyG3DMessageSet( &
             oneGrid%SendG3D, oneGrid%RecvG3D)
-       call DestroySelectedGhostZoneMessagePassing( &
+       call DestroySelectedGhostZoneMessageSet( &
             oneGrid%SelectedGhostZoneSend, &
             oneGrid%SelectedGhostZoneRecv)
-       call DestroyAllGhostZoneMessagePassing( &
+       call DestroyAllGhostZoneMessageSet( &
             oneGrid%AllGhostZoneSend, &
             oneGrid%AllGhostZoneRecv)
-
+       call DestroyAcouDampOneMessageSet( &
+            oneGrid%AcouDampDivSend, oneGrid%AcouDampDivRecv)
+       call DestroyAcouDampOneMessageSet( &
+            oneGrid%AcouDampPPSend, oneGrid%AcouDampPPRecv)
+       call DestroyAcouDampOneMessageSet( &
+            oneGrid%AcouDampAlphaSend, oneGrid%AcouDampAlphaRecv)
+       call DestroyAcouDampOneMessageSet( &
+            oneGrid%AcouDampThtSend, oneGrid%AcouDampThtRecv)
+       call DestroyLuFlaMessageSet(&
+            oneGrid%LuFlaSendNorth, oneGrid%LuFlaSendSouth, &
+            oneGrid%LuFlaSendEast, oneGrid%LuFlaSendWest, &
+            oneGrid%LuFlaRecvNorth, oneGrid%LuFlaRecvSouth, &
+            oneGrid%LuFlaRecvEast, oneGrid%LuFlaRecvWest)
        deallocate(oneGrid)
     end if
     nullify(oneGrid)
@@ -305,13 +530,15 @@ contains
     call DumpGridDims(oneGrid%GridSize)
 
     call MsgDump(h//" dumping domain decomposed components")
-    call DumpDomainDecomp(oneGrid%GlobalNoGhost, "GlobalNoGhost")
+    call DumpDomainDecomp(oneGrid%GlobalOwn, "GlobalOwn")
+    call DumpDomainDecomp(oneGrid%GlobalOwnWithBC, "GlobalOwnWithBC")
     call DumpDomainDecomp(oneGrid%GlobalWithGhost, "GlobalWithGhost")
-    call DumpDomainDecomp(oneGrid%LocalInterior, "LocalInterior")
+    call DumpDomainDecomp(oneGrid%LocalOwn, "LocalOwn")
 
-    call MsgDump(h//" dumping neighborhood")
-    call DumpNeighbourNodes(oneGrid%Neigh)
+    call MsgDump(h//" dumping neighborhood components")
+    call DumpNeighbourNodes(oneGrid%Neigh,"oneGrid%Neigh")
 
+    call MsgDump(h//" dumping message set components")
     call MsgDump(h//" dumping AcouSendU")
     call DumpMessageSet(oneGrid%AcouSendU)
     call MsgDump(h//" dumping AcouRecvU")
@@ -320,10 +547,14 @@ contains
     call DumpMessageSet(oneGrid%AcouSendV)
     call MsgDump(h//" dumping AcouRecvV")
     call DumpMessageSet(oneGrid%AcouRecvV)
-    call MsgDump(h//" dumping AcouSendP")
-    call DumpMessageSet(oneGrid%AcouSendP)
-    call MsgDump(h//" dumping AcouRecvP")
-    call DumpMessageSet(oneGrid%AcouRecvP)
+    call MsgDump(h//" dumping AcouSendPNorth")
+    call DumpMessageSet(oneGrid%AcouSendPNorth)
+    call MsgDump(h//" dumping AcouRecvPNorth")
+    call DumpMessageSet(oneGrid%AcouRecvPNorth)
+    call MsgDump(h//" dumping AcouSendPEast")
+    call DumpMessageSet(oneGrid%AcouSendPEast)
+    call MsgDump(h//" dumping AcouRecvPEast")
+    call DumpMessageSet(oneGrid%AcouRecvPEast)
     call MsgDump(h//" dumping AcouSendUV")
     call DumpMessageSet(oneGrid%AcouSendUV)
     call MsgDump(h//" dumping AcouRecvUV")
@@ -352,5 +583,39 @@ contains
     call DumpMessageSet(oneGrid%AllGhostZoneSend)
     call MsgDump(h//" dumping AllGhostZoneRecv")
     call DumpMessageSet(oneGrid%AllGhostZoneRecv)
+    call MsgDump(h//" dumping AcouDampDivSend")
+    call DumpMessageSet(oneGrid%AcouDampDivSend)
+    call MsgDump(h//" dumping AcouDampDivRecv")
+    call DumpMessageSet(oneGrid%AcouDampDivRecv)
+    call MsgDump(h//" dumping AcouDampPPSend")
+    call DumpMessageSet(oneGrid%AcouDampPPSend)
+    call MsgDump(h//" dumping AcouDampPPRecv")
+    call DumpMessageSet(oneGrid%AcouDampPPRecv)
+    call MsgDump(h//" dumping AcouDampAlphaSend")
+    call DumpMessageSet(oneGrid%AcouDampAlphaSend)
+    call MsgDump(h//" dumping AcouDampAlphaRecv")
+    call DumpMessageSet(oneGrid%AcouDampAlphaRecv)
+    call MsgDump(h//" dumping AcouDampThtSend")
+    call DumpMessageSet(oneGrid%AcouDampThtSend)
+    call MsgDump(h//" dumping AcouDampThtRecv")
+    call DumpMessageSet(oneGrid%AcouDampThtRecv)
+
+    call MsgDump(h//" dumping LuFlaSendNorth")
+    call DumpMessageSet(oneGrid%LuFlaSendNorth)
+    call MsgDump(h//" dumping LuFlaRecvNorth")
+    call DumpMessageSet(oneGrid%LuFlaRecvNorth)
+    call MsgDump(h//" dumping LuFlaSendSouth")
+    call DumpMessageSet(oneGrid%LuFlaSendSouth)
+    call MsgDump(h//" dumping LuFlaRecvSouth")
+    call DumpMessageSet(oneGrid%LuFlaRecvSouth)
+    call MsgDump(h//" dumping LuFlaSendEast")
+    call DumpMessageSet(oneGrid%LuFlaSendEast)
+    call MsgDump(h//" dumping LuFlaRecvEast")
+    call DumpMessageSet(oneGrid%LuFlaRecvEast)
+    call MsgDump(h//" dumping LuFlaSendWest")
+    call DumpMessageSet(oneGrid%LuFlaSendWest)
+    call MsgDump(h//" dumping LuFlaRecvWest")
+    call DumpMessageSet(oneGrid%LuFlaRecvWest)
+
   end subroutine DumpGrid
 end module ModGrid

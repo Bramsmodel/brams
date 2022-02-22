@@ -25,10 +25,12 @@ module rrtm_driv
 
     use mcica_subcol_gen_lw, only: &
             mcica_subcol_lw
-    
+
+    use grid_dims, only: &
+         nzpmax
     use mem_grid    , only: &
          ngrid, time, dtlt, itime1, nzg, nzs, npatch, grid_g, & ! intent(in)
-         nnzp, if_adap, zm, zt, naddsc, nzpmax, imonth1,      & ! intent(in)
+         nnzp, if_adap, zm, zt, naddsc, imonth1,      & ! intent(in)
          idate1, iyear1, centlat, centlon, ztop,dzm ,ngrids,  & ! intent(in)
          grid_vars, dzt
 

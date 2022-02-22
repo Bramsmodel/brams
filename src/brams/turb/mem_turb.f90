@@ -148,7 +148,7 @@ contains
   subroutine filltab_turb(turb, turbm, imean, n1, n2, n3, ng)
     use var_tables, only: InsertVTab
     implicit none
-    include "i8.h"
+    include "constants.h"
     ! Arguments:
     type (turb_vars), intent(IN) :: turb, turbm
     integer, intent(IN) :: imean,n1,n2,n3,ng

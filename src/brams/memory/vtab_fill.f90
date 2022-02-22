@@ -204,7 +204,7 @@ subroutine GetVarFromMem (nxp, nyp, nzp, nzg, nzs, npatch, &
   use var_tables, only: vtab_r, num_var
 
   implicit none
-  include "i8.h"
+  include "constants.h"
   integer,            intent(in)    :: nxp  ! as at vartable
   integer,            intent(in)    :: nyp  ! as at vartable
   integer,            intent(in)    :: nzp  ! as at vartable
@@ -293,7 +293,7 @@ subroutine DumpVTab(ngrd)
   use var_tables, only: vtab_r, num_var
 
   implicit none
-  include "i8.h"
+  include "constants.h"
   integer, intent(in) :: ngrd
 
   integer :: i

@@ -25,7 +25,7 @@ subroutine trans_conv_mflx(iens,stcum)
 
   implicit none
 
-  include "i8.h"
+  include "constants.h"
 
   integer, intent(IN) :: iens
   integer :: i,j,k,kr,ipr,jpr,iscl,iconv,iwet

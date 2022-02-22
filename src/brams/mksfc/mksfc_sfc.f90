@@ -196,7 +196,7 @@ subroutine SfcReadStoreOwnChunk(ifm)
   implicit none
 
   include "files.h"
-  include "constants.f90"
+  include "constants.h"
 
   integer :: ifm
   integer :: ipat

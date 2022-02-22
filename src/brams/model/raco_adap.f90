@@ -27,8 +27,8 @@ contains
     use ModGrid, only: &
          Grid
     use ModMessageSet, only: &
-         PostRecvSendMsgs, &
-         WaitRecvMsgs
+         PostSendRecvMsgs, &
+         WaitSendRecvMsgs
 
     implicit none
 
@@ -62,7 +62,8 @@ contains
 
        if (nmachs > 1) then
           if (iter .ne. 1) then
-             call WaitRecvMsgs(OneGrid%AcouSendP, OneGrid%AcouRecvP)
+             call WaitSendRecvMsgs(OneGrid%AcouSendPNorth, OneGrid%AcouRecvPNorth)
+             call WaitSendRecvMsgs(OneGrid%AcouSendPEast, OneGrid%AcouRecvPEast)
           endif
        endif
 
@@ -72,7 +73,7 @@ contains
 
        if (nmachs > 1) then
           if (iter .ne. nnacoust(ngrid)) then
-             call PostRecvSendMsgs(OneGrid%AcouSendU, OneGrid%AcouRecvU)
+             call PostSendRecvMsgs(OneGrid%AcouSendU, OneGrid%AcouRecvU)
           endif
        endif
 
@@ -82,9 +83,9 @@ contains
 
        if (nmachs > 1) then
           if (iter .ne. nnacoust(ngrid)) then
-             call PostRecvSendMsgs(OneGrid%AcouSendV, OneGrid%AcouRecvV)
+             call PostSendRecvMsgs(OneGrid%AcouSendV, OneGrid%AcouRecvV)
           else
-             call PostRecvSendMsgs(OneGrid%AcouSendUV, OneGrid%AcouRecvUV)
+             call PostSendRecvMsgs(OneGrid%AcouSendUV, OneGrid%AcouRecvUV)
           endif
        endif
 
@@ -94,10 +95,10 @@ contains
 
        if (nmachs > 1) then
           if (iter .ne. nnacoust(ngrid)) then
-             call WaitRecvMsgs(OneGrid%AcouSendU, OneGrid%AcouRecvU)
-             call WaitRecvMsgs(OneGrid%AcouSendV, OneGrid%AcouRecvV)
+             call WaitSendRecvMsgs(OneGrid%AcouSendU, OneGrid%AcouRecvU)
+             call WaitSendRecvMsgs(OneGrid%AcouSendV, OneGrid%AcouRecvV)
           else
-             call WaitRecvMsgs(OneGrid%AcouSendUV, OneGrid%AcouRecvUV)
+             call WaitSendRecvMsgs(OneGrid%AcouSendUV, OneGrid%AcouRecvUV)
           endif
        endif
 
@@ -118,10 +119,11 @@ contains
 
        if (nmachs > 1) then
           if (iter .ne. nnacoust(ngrid)) then
-             call PostRecvSendMsgs(OneGrid%AcouSendP, OneGrid%AcouRecvP)
+             call PostSendRecvMsgs(OneGrid%AcouSendPNorth, OneGrid%AcouRecvPNorth)
+             call PostSendRecvMsgs(OneGrid%AcouSendPEast, OneGrid%AcouRecvPEast)
           else
-             call PostRecvSendMsgs(OneGrid%AcouSendWP, OneGrid%AcouRecvWP)
-             call WaitRecvMsgs(OneGrid%AcouSendWP, OneGrid%AcouRecvWP)
+             call PostSendRecvMsgs(OneGrid%AcouSendWP, OneGrid%AcouRecvWP)
+             call WaitSendRecvMsgs(OneGrid%AcouSendWP, OneGrid%AcouRecvWP)
           endif
        endif
 

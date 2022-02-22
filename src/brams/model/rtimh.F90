@@ -8,11 +8,14 @@
 
 module ModTimestep
 contains
-subroutine timestep(OneGrid,oneNamelistFile)
+subroutine timestep(OneGrid)
+
+  use grid_dims, only: &
+       nzpmax
 
   use ModMessageSet, only: &
-       PostRecvSendMsgs, &
-       WaitRecvMsgs
+       PostSendRecvMsgs, &
+       WaitSendRecvMsgs
 
   use ModAcoust, only: acoustic_new
 
@@ -29,7 +32,11 @@ subroutine timestep(OneGrid,oneNamelistFile)
        izu, jzv,       & ! INTENT(IN)
        mynum,          & ! INTENT(IN)
        ibcon,          & ! INTENT(IN)
-       nmachs            ! INTENT(IN)
+       nmachs, &            ! INTENT(IN)
+       nodemyp,  &  !intent(in)
+       nodemxp,  &  !intent(in)
+       nodemzp      !intent(in)
+       
 
   use mem_cuparm, only: &
        NNQPARM, & ! INTENT(IN)
@@ -75,7 +82,6 @@ subroutine timestep(OneGrid,oneNamelistFile)
        zt,         &
        zm,         &
        dzt,        &
-       nzpmax,     &
        itime1,     &
        vveldamp
 
@@ -169,7 +175,7 @@ subroutine timestep(OneGrid,oneNamelistFile)
                     dfVars,             &
                     applyDF
 
-  USE monotonic_adv, only:                 &
+  USE ModMonotonicAdvection, only:                 &
                            advmnt_driver,  &        ! subroutine
                            advmnt
 
@@ -190,15 +196,12 @@ subroutine timestep(OneGrid,oneNamelistFile)
   use optical, only: &
             aodDriver
 
-  use ModNamelistFile, only : namelistFile
-
  ! use ModAdvectc_rk, only: &
  !        advectc_rk
 
   implicit none
 
   type(Grid), pointer :: OneGrid
-  type(namelistFile), pointer :: oneNamelistFile
 
   ! execution time instrumentation
   include "tsNames.h"
@@ -206,7 +209,8 @@ subroutine timestep(OneGrid,oneNamelistFile)
   INTEGER, PARAMETER :: acoshdp = 0
   character(len=256) :: julesFile
 
-  julesFile=oneNamelistFile%julesin
+  julesFile=OneGrid%Ramsin%julesin
+  
   !        +-------------------------------------------------------------+
   !        |   Timestep driver for the hybrid non-hydrostatic time-split |
   !        |      model.                                                 |
@@ -311,7 +315,7 @@ subroutine timestep(OneGrid,oneNamelistFile)
   !  Send boundaries to adjoining nodes
   !-------------------------------------------
   if (nmachs > 1) then
-     call PostRecvSendMsgs(OneGrid%SelectedGhostZoneSend, OneGrid%SelectedGhostZoneRecv)
+     call PostSendRecvMsgs(OneGrid%SelectedGhostZoneSend, OneGrid%SelectedGhostZoneRecv)
   endif
 
   !  Coriolis terms
@@ -369,7 +373,7 @@ subroutine timestep(OneGrid,oneNamelistFile)
   !  Get the overlap region between parallel nodes
   !---------------------------------------------------
   if (nmachs > 1) then
-     call WaitRecvMsgs(OneGrid%SelectedGhostZoneSend, OneGrid%SelectedGhostZoneRecv)
+     call WaitSendRecvMsgs(OneGrid%SelectedGhostZoneSend, OneGrid%SelectedGhostZoneRecv)
   endif
 
   if (iexev == 2) &
@@ -392,7 +396,8 @@ subroutine timestep(OneGrid,oneNamelistFile)
 
      IF(advmnt >= 1) THEN
       !-srf monotonic advection scheme
-         call advmnt_driver('T',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
+        call advmnt_driver('T',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,&
+             i0,j0,nodemxp,nodemyp,nodemzp,mynum)
          if(advmnt >= 2) &
             CALL ADVECTc('T',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
      ELSE

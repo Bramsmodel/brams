@@ -219,7 +219,7 @@ module optical
       integer, intent(in) :: ngrids
       !# Current grid
       
-      include "constants.f90"
+      include "constants.h"
       integer :: n_aer, nb
       integer :: i,j,k,kr
       real :: pmr(m1,m2,m3)
@@ -362,7 +362,7 @@ module optical
                      leaf_g
       
       implicit none
-      include "constants.f90"
+      include "constants.h"
       
       integer,intent(in) :: m1,m2,m3
       !# Size of dimensions of variables for this proc
@@ -540,7 +540,7 @@ endif
       !#--- ----------------------------------------------------------------------------------------
       !
       character(len=*),parameter :: procedureName='initCurrSite'
-      include "constants.f90"
+      include "constants.h"
       integer, intent(in) :: ia
       !#
       integer, intent(in) :: iz
@@ -679,7 +679,7 @@ endif
 
       use dump
       
-      include "constants.f90"
+      include "constants.h"
       character(len=*),parameter :: procedureName='setupraddata'
       logical, parameter :: inventory=.true.
 
@@ -1218,7 +1218,7 @@ endif
       !#--- ----------------------------------------------------------------------------------------
       !
       use var_tables, only: InsertVTab
-      include "i8.h"
+      include "constants.h"
       integer, intent(in) :: ng
       !# grid
       integer, intent(in) :: n1
@@ -1320,6 +1320,9 @@ endif
             parf_bcast ! subroutine
       use readbcst, only: &
          gatherdata
+
+      implicit none
+      include "constants.h"
       
       integer :: i
       integer :: j

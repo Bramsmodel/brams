@@ -36,7 +36,7 @@ subroutine micro_master
   implicit none
 
   include "files.h"
-  include "constants.f90"
+  include "constants.h"
 
   integer :: lhcat,khcat,lcat,nd1,nd2,nip,ilcat,ilhcat,idum
 

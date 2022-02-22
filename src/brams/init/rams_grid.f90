@@ -330,7 +330,7 @@ subroutine transfm(n2,n3,topt,topu,topv,topm,rtgt,rtgu,rtgv,rtgm  &
 
 
   implicit none
-  include "constants.f90"
+  include "constants.h"
   integer, intent(in)  :: n2
   integer, intent(in)  :: n3
   real,    intent(in)  :: topt(n2,n3)
@@ -609,7 +609,7 @@ subroutine GridSetup(num)
        mynum
 
   implicit none
-  include "constants.f90"
+  include "constants.h"
   ! Arguments:
   integer, intent(in) :: num
   ! Local Variables:

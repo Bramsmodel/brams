@@ -102,15 +102,15 @@ subroutine diffuse()
 
   !ml/srf- for stilt/new turb scheme
   use mem_stilt, only: &
-  	stilt_g,       &
-	imassflx
+       stilt_g,       &
+       imassflx
 
   use ccatt_start, only:        &
        ccatt           ! intent(in)
 
 
   implicit none
-  include "i8.h"
+  include "constants.h"
   !local variables:
   integer(kind=i8) :: mxyzp, ind
   integer :: n
@@ -230,49 +230,49 @@ subroutine diffuse()
   !ML -> Nananishi and Niino (2004) scheme based on Mellor-Yamada Level 2.5
   if (idiffk(ngrid) == 7) then
 
-!    if(IMASSFLX==1)then
-      call nakanishi(mzp, mxp, myp, npatch, ia, iz, ja, jz, jdim                           &
-             ,turb_g(ngrid)%tkep       ,tend%tket                ,scratch%vt3dd            &
-             ,scratch%vt3de            ,scratch%vt3dh            ,scratch%vt3di            &
-             ,scratch%vt3dj            ,scratch%scr1             ,grid_g(ngrid)%rtgt       &
-!srf         ,basic_g(ngrid)%theta     ,scratch%vt3dp            ,scratch%vt3dq            &
-             ,basic_g(ngrid)%theta     ,basic_g(ngrid)%rv        ,basic_g(ngrid)%rtp     &
-!
-             ,basic_g(ngrid)%dn0       ,basic_g(ngrid)%up        ,basic_g(ngrid)%vp        &
-             ,leaf_g(ngrid)%veg_rough  ,leaf_g(ngrid)%patch_rough,leaf_g(ngrid)%tstar      &
-             ,leaf_g(ngrid)%ustar      ,leaf_g(ngrid)%patch_area ,turb_g(ngrid)%sflux_u    &
-             ,turb_g(ngrid)%sflux_v    ,turb_g(ngrid)%sflux_t    ,grid_g(ngrid)%lpu        &
-             ,grid_g(ngrid)%lpv        ,grid_g(ngrid)%lpw         ,turb_g(ngrid)%kpbl      &
-             ,stilt_g(ngrid)%pblhgt    ,stilt_g(ngrid)%lmo       ,stilt_g(ngrid)%ltscale   &
-             ,stilt_g(ngrid)%sigw                                                          )
+     !    if(IMASSFLX==1)then
+     call nakanishi(mzp, mxp, myp, npatch, ia, iz, ja, jz, jdim                           &
+          ,turb_g(ngrid)%tkep       ,tend%tket                ,scratch%vt3dd            &
+          ,scratch%vt3de            ,scratch%vt3dh            ,scratch%vt3di            &
+          ,scratch%vt3dj            ,scratch%scr1             ,grid_g(ngrid)%rtgt       &
+          !srf         ,basic_g(ngrid)%theta     ,scratch%vt3dp            ,scratch%vt3dq            &
+          ,basic_g(ngrid)%theta     ,basic_g(ngrid)%rv        ,basic_g(ngrid)%rtp     &
+          !
+          ,basic_g(ngrid)%dn0       ,basic_g(ngrid)%up        ,basic_g(ngrid)%vp        &
+          ,leaf_g(ngrid)%veg_rough  ,leaf_g(ngrid)%patch_rough,leaf_g(ngrid)%tstar      &
+          ,leaf_g(ngrid)%ustar      ,leaf_g(ngrid)%patch_area ,turb_g(ngrid)%sflux_u    &
+          ,turb_g(ngrid)%sflux_v    ,turb_g(ngrid)%sflux_t    ,grid_g(ngrid)%lpu        &
+          ,grid_g(ngrid)%lpv        ,grid_g(ngrid)%lpw         ,turb_g(ngrid)%kpbl      &
+          ,stilt_g(ngrid)%pblhgt    ,stilt_g(ngrid)%lmo       ,stilt_g(ngrid)%ltscale   &
+          ,stilt_g(ngrid)%sigw                                                          )
 
 
      !- from Marcos Longo
      !---------------------------------------------------------------------------------------!
      !    Integrating average turbulence parameters for mass flux.                           !
      !---------------------------------------------------------------------------------------!
-        if(IMASSFLX==1)  call prepare_timeavg_driver(mzp,mxp,myp,ia,iz,ja,jz,dtlt,ngrid,idiffk(ngrid))
+     if(IMASSFLX==1)  call prepare_timeavg_driver(mzp,mxp,myp,ia,iz,ja,jz,dtlt,ngrid,idiffk(ngrid))
      !---------------------------------------------------------------------------------------!
-!    else
-!      call nakanishi_light(mzp, mxp, myp, npatch, ia, iz, ja, jz, jdim                     &
-!             ,turb_g(ngrid)%tkep       ,tend%tket                ,scratch%vt3dd            &
-!             ,scratch%vt3de            ,scratch%vt3dh            ,scratch%vt3di            &
-!             ,scratch%vt3dj            ,scratch%scr1             ,grid_g(ngrid)%rtgt       &
-!srf-opt     ,basic_g(ngrid)%theta     ,scratch%vt3dp            ,scratch%vt3dq            &
-!             ,basic_g(ngrid)%theta     ,basic_g(ngrid)%rv        ,basic_g(ngrid)%rtp     &
-!
-!             ,basic_g(ngrid)%dn0       ,basic_g(ngrid)%up        ,basic_g(ngrid)%vp        &
-!             ,leaf_g(ngrid)%veg_rough  ,leaf_g(ngrid)%patch_rough,leaf_g(ngrid)%tstar      &
-!             ,leaf_g(ngrid)%ustar      ,leaf_g(ngrid)%patch_area ,turb_g(ngrid)%sflux_u    &
-!             ,turb_g(ngrid)%sflux_v    ,turb_g(ngrid)%sflux_t    ,grid_g(ngrid)%lpu        &
-!             ,grid_g(ngrid)%lpv        ,grid_g(ngrid)%lpw                                  &
-!	     !,turb_g(ngrid)%kpbl      & !srf
-!             !,stilt_g(ngrid)%pblhgt   & !srf
-!	     ,stilt_g(ngrid)%lmo      &
-!	     !,stilt_g(ngrid)%ltscale  & !srf
-!             !,stilt_g(ngrid)%sigw     & !srf
-!	     )
-!    endif
+     !    else
+     !      call nakanishi_light(mzp, mxp, myp, npatch, ia, iz, ja, jz, jdim                     &
+     !             ,turb_g(ngrid)%tkep       ,tend%tket                ,scratch%vt3dd            &
+     !             ,scratch%vt3de            ,scratch%vt3dh            ,scratch%vt3di            &
+     !             ,scratch%vt3dj            ,scratch%scr1             ,grid_g(ngrid)%rtgt       &
+     !srf-opt     ,basic_g(ngrid)%theta     ,scratch%vt3dp            ,scratch%vt3dq            &
+     !             ,basic_g(ngrid)%theta     ,basic_g(ngrid)%rv        ,basic_g(ngrid)%rtp     &
+     !
+     !             ,basic_g(ngrid)%dn0       ,basic_g(ngrid)%up        ,basic_g(ngrid)%vp        &
+     !             ,leaf_g(ngrid)%veg_rough  ,leaf_g(ngrid)%patch_rough,leaf_g(ngrid)%tstar      &
+     !             ,leaf_g(ngrid)%ustar      ,leaf_g(ngrid)%patch_area ,turb_g(ngrid)%sflux_u    &
+     !             ,turb_g(ngrid)%sflux_v    ,turb_g(ngrid)%sflux_t    ,grid_g(ngrid)%lpu        &
+     !             ,grid_g(ngrid)%lpv        ,grid_g(ngrid)%lpw                                  &
+     !	     !,turb_g(ngrid)%kpbl      & !srf
+     !             !,stilt_g(ngrid)%pblhgt   & !srf
+     !	     ,stilt_g(ngrid)%lmo      &
+     !	     !,stilt_g(ngrid)%ltscale  & !srf
+     !             !,stilt_g(ngrid)%sigw     & !srf
+     !	     )
+     !    endif
   endif
   !ML
 
@@ -347,27 +347,27 @@ subroutine diffuse()
   !_STC............................................................
 
   if (idiffk(ngrid) == 8) then
-  !-----------------------------------
-  !Call subrotines HCV_driver (Campos Velho - KZZ)
-  !-----------------------------------
-      call HCV_driver(mzp,mxp,myp,ia,iz,ja,jz,mynum   &
-             ,basic_g(ngrid)%up    (:,:,:)        &
-	     ,basic_g(ngrid)%vp    (:,:,:)        &
-             ,basic_g(ngrid)%theta (:,:,:)        &
-	     ,basic_g(ngrid)%rv    (:,:,:)	  &
-             ,basic_g(ngrid)%dn0   (:,:,:)        &
-	     ,turb_g(ngrid)%sflux_t(:,:)          &
-	     ,turb_g(ngrid)%sflux_r(:,:)          &
-	     ,turb_g(ngrid)%sflux_u(:,:)          &
-	     ,turb_g(ngrid)%sflux_v(:,:)          &
-	     ,grid_g(ngrid)%rtgt   (:,:)          &
-	     ,grid_g(ngrid)%lpw    (:,:)          &
-	     ,scratch%scr1	   (:)            &
-	     ,scratch%vt3dh	   (:)            &
-             ,scratch%vt3di        (:)            &
-             ,scratch%vt3dj        (:)            &
-	     ,scratch%vt3dk        (:)            )
-   endif
+     !-----------------------------------
+     !Call subrotines HCV_driver (Campos Velho - KZZ)
+     !-----------------------------------
+     call HCV_driver(mzp,mxp,myp,ia,iz,ja,jz,mynum   &
+          ,basic_g(ngrid)%up    (:,:,:)        &
+          ,basic_g(ngrid)%vp    (:,:,:)        &
+          ,basic_g(ngrid)%theta (:,:,:)        &
+          ,basic_g(ngrid)%rv    (:,:,:)	  &
+          ,basic_g(ngrid)%dn0   (:,:,:)        &
+          ,turb_g(ngrid)%sflux_t(:,:)          &
+          ,turb_g(ngrid)%sflux_r(:,:)          &
+          ,turb_g(ngrid)%sflux_u(:,:)          &
+          ,turb_g(ngrid)%sflux_v(:,:)          &
+          ,grid_g(ngrid)%rtgt   (:,:)          &
+          ,grid_g(ngrid)%lpw    (:,:)          &
+          ,scratch%scr1	   (:)            &
+          ,scratch%vt3dh	   (:)            &
+          ,scratch%vt3di        (:)            &
+          ,scratch%vt3dj        (:)            &
+          ,scratch%vt3dk        (:)            )
+  endif
 
   call klbnd(mzp,mxp,myp,ibcon,jdim  &
        ,scratch%scr1 (:),basic_g(ngrid)%dn0(:,:,:),grid_g(ngrid)%lpw(:,:))
@@ -412,18 +412,18 @@ subroutine diffuse()
   enddo
 
   if (if_adap==0) then
-!call dumpVarAllLatLonk(basic_g(ngrid)%up, 'tUP'  ,415,0,0,1,mxp,1,myp,1,mzp,0.0,0.0) !ok
-!call dumpVarAllLatLonk(basic_g(ngrid)%Vp, 'tVP'  ,415,0,0,1,mxp,1,myp,1,mzp,0.0,0.0) !ok
-!call dumpVarAllLatLonk(basic_g(ngrid)%Wp, 'tWP'  ,415,0,0,1,mxp,1,myp,1,mzp,0.0,0.0) !ok
-!call dumpVarAllLatLonk(basic_g(ngrid)%dn0, 'DN0'  ,415,0,0,1,mxp,1,myp,1,mzp,0.0,0.0) !ok
-!call dumpVarAllLatLonk(basic_g(ngrid)%dn0v, 'DN0V'  ,415,0,0,1,mxp,1,myp,1,mzp,0.0,0.0) !ok
-!call dumpVarAllLatLonk(basic_g(ngrid)%dn0u, 'DN0U'  ,415,0,0,1,mxp,1,myp,1,mzp,0.0,0.0) !ok
-!call dumpVarAllLatLonk(grid_g(ngrid)%rtgu   ,'rtgu',415,0,0,1,mxp,1,myp,1,1,0.0,0.0) !ok
-!call dumpVarAllLatLonk(grid_g(ngrid)%rtgv   ,'rtgv',415,0,0,1,mxp,1,myp,1,1,0.0,0.0) !ok
-!call dumpVarAllLatLonk(grid_g(ngrid)%rtgt   ,'rtgt',415,0,0,1,mxp,1,myp,1,1,0.0,0.0) !ok
-!call dumpVarAllLatLonk(turb_g(ngrid)%sflux_u,'sflux_u',415,0,0,1,mxp,1,myp,1,1,0.0,0.0) !ok
-!call dumpVarAllLatLonk(turb_g(ngrid)%sflux_v,'sflux_v',415,0,0,1,mxp,1,myp,1,1,0.0,0.0) !ok
-!call dumpVarAllLatLonk(turb_g(ngrid)%sflux_w,'sflux_w',415,0,0,1,mxp,1,myp,1,1,0.0,0.0) !***BAD***
+     !call dumpVarAllLatLonk(basic_g(ngrid)%up, 'tUP'  ,415,0,0,1,mxp,1,myp,1,mzp,0.0,0.0) !ok
+     !call dumpVarAllLatLonk(basic_g(ngrid)%Vp, 'tVP'  ,415,0,0,1,mxp,1,myp,1,mzp,0.0,0.0) !ok
+     !call dumpVarAllLatLonk(basic_g(ngrid)%Wp, 'tWP'  ,415,0,0,1,mxp,1,myp,1,mzp,0.0,0.0) !ok
+     !call dumpVarAllLatLonk(basic_g(ngrid)%dn0, 'DN0'  ,415,0,0,1,mxp,1,myp,1,mzp,0.0,0.0) !ok
+     !call dumpVarAllLatLonk(basic_g(ngrid)%dn0v, 'DN0V'  ,415,0,0,1,mxp,1,myp,1,mzp,0.0,0.0) !ok
+     !call dumpVarAllLatLonk(basic_g(ngrid)%dn0u, 'DN0U'  ,415,0,0,1,mxp,1,myp,1,mzp,0.0,0.0) !ok
+     !call dumpVarAllLatLonk(grid_g(ngrid)%rtgu   ,'rtgu',415,0,0,1,mxp,1,myp,1,1,0.0,0.0) !ok
+     !call dumpVarAllLatLonk(grid_g(ngrid)%rtgv   ,'rtgv',415,0,0,1,mxp,1,myp,1,1,0.0,0.0) !ok
+     !call dumpVarAllLatLonk(grid_g(ngrid)%rtgt   ,'rtgt',415,0,0,1,mxp,1,myp,1,1,0.0,0.0) !ok
+     !call dumpVarAllLatLonk(turb_g(ngrid)%sflux_u,'sflux_u',415,0,0,1,mxp,1,myp,1,1,0.0,0.0) !ok
+     !call dumpVarAllLatLonk(turb_g(ngrid)%sflux_v,'sflux_v',415,0,0,1,mxp,1,myp,1,1,0.0,0.0) !ok
+     !call dumpVarAllLatLonk(turb_g(ngrid)%sflux_w,'sflux_w',415,0,0,1,mxp,1,myp,1,1,0.0,0.0) !***BAD***
      call diffvel(mzp,mxp,myp,ia,iz,ja,jz,jdim,ia_1,ja_1             &
           ,ia1,ja1,iz_1,jz_1,iz1,jz1,izu,jzv,idiffk(ngrid)             &
           ,basic_g(ngrid)%up    (:,:,:) ,basic_g(ngrid)%vp    (:,:,:)  &
@@ -441,7 +441,7 @@ subroutine diffuse()
           ,turb_g(ngrid)%sflux_w(:,:)   ,basic_g(ngrid)%dn0   (:,:,:)  &
           ,basic_g(ngrid)%dn0u  (:,:,:) ,basic_g(ngrid)%dn0v  (:,:,:)  &
           ,scratch%scr1         (:)     ,scr2         (:),ibcon,mynum)
-!call dumpVarAllLatLonk(tend%wt, 'tWT'  ,433,0,0,1,mxp,1,myp,1,mzp,0.0,0.0)
+     !call dumpVarAllLatLonk(tend%wt, 'tWT'  ,433,0,0,1,mxp,1,myp,1,mzp,0.0,0.0)
   else
 
      call diffvel_adap(mzp,mxp,myp,ia,iz,ja,jz,jdim                  &
@@ -523,7 +523,7 @@ subroutine diffuse()
 
      if (nstbot==1) then
         if (scalar_tab(n,ngrid)%name=='THP' .or. &
-            scalar_tab(n,ngrid)%name=='THC') then
+             scalar_tab(n,ngrid)%name=='THC') then
            call atob(mxp*myp, turb_g(ngrid)%sflux_t(:,:), scratch%vt2da(:))
 
            ! Large Scale Forcing for GRELL CUPAR
@@ -531,10 +531,10 @@ subroutine diffuse()
            !   !---------------------------------------
            !   !srf- Large Scale Forcing for GRELL CUPAR
            !   lsfcupar_p => cuforc_sh_g(ngrid)%lsfth
-              !---------------------------------------
-          ! endif
+           !---------------------------------------
+           ! endif
         elseif (scalar_tab(n,ngrid)%name=='RTP') then
-          call atob(mxp*myp, turb_g(ngrid)%sflux_r(:,:), scratch%vt2da(:))
+           call atob(mxp*myp, turb_g(ngrid)%sflux_r(:,:), scratch%vt2da(:))
 
            ! Large Scale Forcing for GRELL CUPAR not used
            ! CATT
@@ -565,16 +565,16 @@ subroutine diffuse()
         hkh_p => scr2
         !-ml/srf - for new turb scheme
         if (idiffk(ngrid) >= 4 .and. idiffk(ngrid) /= 7 .and. idiffk(ngrid) /= 8) &
-	 hkh_p => scratch%vt3di
-!       if (idiffk(ngrid)>=4) hkh_p => scratch%vt3di
+             hkh_p => scratch%vt3di
+        !       if (idiffk(ngrid)>=4) hkh_p => scratch%vt3di
         ksf = 1
      elseif (scalar_tab(n,ngrid)%name=='EPSP') then
         vkh_p => scratch%vt3di
         hkh_p => scr2
         !-ml/srf - for new turb scheme
         if (idiffk(ngrid) >= 4 .and. idiffk(ngrid) /= 7.and. idiffk(ngrid) /= 8) &
-	 hkh_p => scratch%vt3di
-!        if (idiffk(ngrid)>=4)  hkh_p => scratch%vt3di
+             hkh_p => scratch%vt3di
+        !        if (idiffk(ngrid)>=4)  hkh_p => scratch%vt3di
         ksf = 3
         ! Convert Ktke to Keps; it will be converted back after use below
         call ae1t0_l(mxyzp, vkh_p, vkh_p, (ALF_EPS/ALF_TKE))
@@ -584,8 +584,8 @@ subroutine diffuse()
         hkh_p => scr2
         !-ml/srf - for new turb scheme
         if (idiffk(ngrid)>=4 .and. idiffk(ngrid) /= 7.and. idiffk(ngrid) /= 8) &
-	 hkh_p => scratch%vt3dh
-!       if (idiffk(ngrid)>=4)  hkh_p => scratch%vt3di
+             hkh_p => scratch%vt3dh
+        !       if (idiffk(ngrid)>=4)  hkh_p => scratch%vt3di
         ksf = 2
      endif
 
@@ -617,17 +617,17 @@ subroutine diffuse()
              basic_g(ngrid)%dn0(:,:,:),                            &
              vkh_p(:)                 , hkh_p(:)                   )
         !
-        IF (nnqparm(ngrid)>=2) then
-          ! SGScale Forcing for GRELL CUPAR
-	  if (scalar_tab(n,ngrid)%name=='THP' .or. scalar_tab(n,ngrid)%name=='THC')     &
-	       call PBLforcing(ngrid, mzp, mxp, myp, ia, iz, ja, jz, &
-                             scratch%vt3df, scalarp(:), cuforc_sh_g(ngrid)%lsfth, n)
+        if (nnqparm(ngrid)>=2) then
+           ! SGScale Forcing for GRELL CUPAR
+           if (scalar_tab(n,ngrid)%name=='THP' .or. scalar_tab(n,ngrid)%name=='THC')     &
+                call PBLforcing(ngrid, mzp, mxp, myp, ia, iz, ja, jz, &
+                scratch%vt3df, scalarp(:), cuforc_sh_g(ngrid)%lsfth, n)
 
-          if (scalar_tab(n,ngrid)%name=='RTP')                                          &
-	       call PBLforcing(ngrid, mzp, mxp, myp, ia, iz, ja, jz, &
-                             scratch%vt3df, scalarp(:), cuforc_sh_g(ngrid)%lsfrt, n)
+           if (scalar_tab(n,ngrid)%name=='RTP')                                          &
+                call PBLforcing(ngrid, mzp, mxp, myp, ia, iz, ja, jz, &
+                scratch%vt3df, scalarp(:), cuforc_sh_g(ngrid)%lsfrt, n)
 
-       ENDIF
+        endif
      else
 
         call diffsclr_adap(mzp,mxp,myp,ia,iz,ja,jz,jdim,n,ksf      &
@@ -665,32 +665,32 @@ subroutine strain(m1,m2,m3,ia,iz,ja,jz,ia_1,ja_1,iz1,jz1  &
   implicit none
 
   integer, intent(in)  :: m1   &
-                        , m2   &
-                        , m3   &
-                        , ia   &
-                        , iz   &
-                        , ja   &
-                        , jz   &
-                        , ia_1 &
-                        , ja_1 &
-                        , iz1  &
-                        , jz1  &
-                        , jd   &
-                        , idiffk
+       , m2   &
+       , m3   &
+       , ia   &
+       , iz   &
+       , ja   &
+       , jz   &
+       , ia_1 &
+       , ja_1 &
+       , iz1  &
+       , jz1  &
+       , jd   &
+       , idiffk
 
   real, dimension(m1,m2,m3), intent(in) :: up,vp,wp
 
   real, dimension(m1,m2,m3), intent(inout):: vt3da,      &
-                                             vt3db,      &
-                                             vt3dc,      &
-                                             vt3dd,      &
-                                             vt3de,      &
-                                             vt3df,      &
-                                             vt3dg,      &
-                                             vt3dh,      &
-                                             vt3di,      &
-                                             vt3dn,      &
-                                             scr2
+       vt3db,      &
+       vt3dc,      &
+       vt3dd,      &
+       vt3de,      &
+       vt3df,      &
+       vt3dg,      &
+       vt3dh,      &
+       vt3di,      &
+       vt3dn,      &
+       scr2
 
   !local variables:
   integer              :: i,j,k
@@ -804,11 +804,13 @@ subroutine bruvais(m1, m2, m3, ia, iz, ja, jz, theta, rtp, rv, rcp, &
        iaggr,     &     !INTENT(in)
        ihail            !INTENT(in)
 
+  use grid_dims, only: &
+       nzpmax           !INTENT(in)
+
   use mem_grid, only: &
        zt,        &     !INTENT(in)
        nzp,       &     !INTENT(in)
-       nz,        &     !INTENT(in)
-       nzpmax           !INTENT(in)
+       nz     !INTENT(in)
 
   use rconstants, only: &
        alvl,      &     !INTENT(in)
@@ -822,12 +824,12 @@ subroutine bruvais(m1, m2, m3, ia, iz, ja, jz, theta, rtp, rv, rcp, &
 
   implicit none
   ! Arguments:
-  integer, INTENT(IN) :: m1, m2, m3, ia, iz, ja, jz
-  real, INTENT(IN)    :: theta(m1,m2,m3), pp(m1,m2,m3), pi0(m1,m2,m3), &
+  integer, intent(IN) :: m1, m2, m3, ia, iz, ja, jz
+  real, intent(IN)    :: theta(m1,m2,m3), pp(m1,m2,m3), pi0(m1,m2,m3), &
        rtp(m1,m2,m3), rcp(m1,m2,m3), rv(m1,m2,m3)
-  real, INTENT(INOUT) :: en2(m1,m2,m3)
-  real, INTENT(IN)    :: rtgt(m2,m3)
-  real, INTENT(IN) :: lpw_R(m2,m3)
+  real, intent(INOUT) :: en2(m1,m2,m3)
+  real, intent(IN)    :: rtgt(m2,m3)
+  real, intent(IN) :: lpw_R(m2,m3)
 
   !local variables
   integer :: lpw(m2,m3)
@@ -875,7 +877,7 @@ subroutine bruvais(m1, m2, m3, ia, iz, ja, jz, theta, rtp, rv, rcp, &
         enddo
         ! **(JP)** fatora expressoes logicas para fora dos lacos
         if (log1) then
-        ! **(JP)** fim modificacao
+           ! **(JP)** fim modificacao
            do k=k1,m1
               vctr12(k) = vctr11(k)*(1. + 0.61*rv(k,i,j))
               vctr32(k) = (rtp(k,i,j) - rv(k,i,j))
@@ -885,7 +887,7 @@ subroutine bruvais(m1, m2, m3, ia, iz, ja, jz, theta, rtp, rv, rcp, &
         !     check for saturation if level is 2 or greater.
         ! **(JP)** fatora expressoes logicas para fora dos lacos
         if (log2) then
-        ! **(JP)** fim modificacao
+           ! **(JP)** fim modificacao
            do k=k1,m1
               pi(k)   = (pp(k,i,j) + pi0(k,i,j))/cp
               temp(k) = theta(k,i,j)*pi(k)
@@ -902,7 +904,7 @@ subroutine bruvais(m1, m2, m3, ia, iz, ja, jz, theta, rtp, rv, rcp, &
            !     if any ice phase microphysics are activated ....
            ! **(JP)** fatora expressoes logicas para fora dos lacos
            if (log3) then
-           ! **(JP)** fim modificacao
+              ! **(JP)** fim modificacao
               !  find level of -20 c.  assume ice saturation above this
               !   level.
               do k=k1,m1
@@ -932,7 +934,7 @@ subroutine bruvais(m1, m2, m3, ia, iz, ja, jz, theta, rtp, rv, rcp, &
 
            ! **(JP)** fatora expressoes logicas para fora dos lacos
            if (log4) then
-           ! **(JP)** fim modificacao
+              ! **(JP)** fim modificacao
               do k=k1,m1
                  rc(k) = rcp(k,i,j)
               enddo
@@ -950,7 +952,7 @@ subroutine bruvais(m1, m2, m3, ia, iz, ja, jz, theta, rtp, rv, rcp, &
 
         ! **(JP)** fatora expressoes logicas para fora dos lacos
         if (log2) then
-        ! **(JP)** fim modificacao
+           ! **(JP)** fim modificacao
            do k=k2,m1-1
               if (rc(k)>0.) then
                  rvii = rvls(k-1)
@@ -1034,12 +1036,12 @@ subroutine mxdefm(m1, m2, m3, ia, iz, ja, jz, ibcon, jd,  &
   ! Arguments:
   integer, intent(IN) :: m1, m2, m3, ia, iz, ja, jz
   integer, intent(IN) :: ibcon, jd, mynum   !- EHE -> nao sao usadas!!!
-  real, INTENT(INOUT) :: vt3dh(m1,m2,m3), vt3dk(m1,m2,m3), &
+  real, intent(INOUT) :: vt3dh(m1,m2,m3), vt3dk(m1,m2,m3), &
        scr1(m1,m2,m3), scr2(m1,m2,m3)
-  real, INTENT(IN)    :: dn0(m1,m2,m3), vt3di(m1,m2,m3), vt3dj(m1,m2,m3)
-  real, INTENT(IN)    :: rtgt(m2,m3), dxt(m2,m3)
-  real, INTENT(IN)    :: dyt(m2,m3)  !- EHE -> nao e' usada!!!
-  real, INTENT(IN) :: lpw_R(m2,m3)
+  real, intent(IN)    :: dn0(m1,m2,m3), vt3di(m1,m2,m3), vt3dj(m1,m2,m3)
+  real, intent(IN)    :: rtgt(m2,m3), dxt(m2,m3)
+  real, intent(IN)    :: dyt(m2,m3)  !- EHE -> nao e' usada!!!
+  real, intent(IN) :: lpw_R(m2,m3)
   ! Local variables:
   integer :: lpw(m2,m3)
   integer :: i, j, k, irich, ienfl
@@ -1156,17 +1158,17 @@ subroutine klbnd(m1,m2,m3,ibcon,jd,akay,dn0,lpw_R)
 
   implicit none
 
-  integer, INTENT(IN)       :: m1     &
-                             , m2     &
-                             , m3     &
-                             , ibcon  &
-                             , jd
+  integer, intent(IN)       :: m1     &
+       , m2     &
+       , m3     &
+       , ibcon  &
+       , jd
 
-  real, dimension(m1,m2,m3), INTENT(INOUT) :: akay
+  real, dimension(m1,m2,m3), intent(INOUT) :: akay
 
-  real, dimension(m1,m2,m3), INTENT(IN)    :: dn0
+  real, dimension(m1,m2,m3), intent(IN)    :: dn0
 
-  real, dimension(m2,m3), INTENT(IN)    :: lpw_R
+  real, dimension(m2,m3), intent(IN)    :: lpw_R
 
   !local variables:
   integer ::i,j,k,k2
@@ -1236,18 +1238,18 @@ subroutine mxdefm_tracer(m1, m2, m3, ia, iz, ja, jz, ibcon, jd,  &
   !
   use mem_grid, only:  &
        ngrid,          &    !INTENT(IN)
-
-!--(DMK-CCATT-INI)-------------------------------------------------------
+       
+       !--(DMK-CCATT-INI)-------------------------------------------------------
        ngrids
-!--(DMK-CCATT-FIM)-------------------------------------------------------
+  !--(DMK-CCATT-FIM)-------------------------------------------------------
 
   use mem_turb, only:  &
        csx,            &    !INTENT(IN)
        akmin                !INTENT(IN)
 
-!--(DMK-CCATT-INI)-------------------------------------------------------
-  use monotonic_adv, ONLY: advmnt !INTENT(IN)
-!--(DMK-CCATT-FIM)-------------------------------------------------------
+  !--(DMK-CCATT-INI)-------------------------------------------------------
+  use ModMonotonicAdvection, only: advmnt !INTENT(IN)
+  !--(DMK-CCATT-FIM)-------------------------------------------------------
 
   implicit none
   ! Arguments:
@@ -1261,16 +1263,16 @@ subroutine mxdefm_tracer(m1, m2, m3, ia, iz, ja, jz, ibcon, jd,  &
   integer :: i, j, k
   real    :: csx2, c2, c3, akm!, frtr
 
-!--(DMK-CCATT-INI)-------------------------------------------------------
+  !--(DMK-CCATT-INI)-------------------------------------------------------
   real    :: frtr(ngrids)
 
   lpw=int(lpw_R)
   frtr = 0.1
   if(advmnt > 0) frtr = 0.01
 
-!--(DMK-CCATT-OLD)-------------------------------------------------------
-!  frtr = 0.05
-!--(DMK-CCATT-FIM)-------------------------------------------------------
+  !--(DMK-CCATT-OLD)-------------------------------------------------------
+  !  frtr = 0.05
+  !--(DMK-CCATT-FIM)-------------------------------------------------------
 
   csx2 = csx(ngrid)*csx(ngrid)
 
@@ -1279,11 +1281,11 @@ subroutine mxdefm_tracer(m1, m2, m3, ia, iz, ja, jz, ibcon, jd,  &
 
         c2  = 1.0/(dxt(i,j)*dxt(i,j))
         c3  = csx2*c2
-!--(DMK-CCATT-INI)-------------------------------------------------------
+        !--(DMK-CCATT-INI)-------------------------------------------------------
         akm = frtr(ngrid) * abs(akmin(ngrid)) * 0.075 * c2 ** (0.666667)
-!--(DMK-CCATT-OLD)-------------------------------------------------------
-!        akm = frtr*abs(akmin(ngrid))*0.075*c2**(0.666667)
-!--(DMK-CCATT-FIM)-------------------------------------------------------
+        !--(DMK-CCATT-OLD)-------------------------------------------------------
+        !        akm = frtr*abs(akmin(ngrid))*0.075*c2**(0.666667)
+        !--(DMK-CCATT-FIM)-------------------------------------------------------
 
         do k=lpw(i,j),m1-1
            khtr(k,i,j) = dn0(k,i,j)*max(akm, c3*sqrt(vt3dh(k,i,j)))
@@ -1317,12 +1319,14 @@ subroutine bruvais_OLAM(m1, m2, m3, ia, iz, ja, jz, theta, rtp, rv, rcp, &
        igraup,    &     !INTENT(in)
        iaggr,     &     !INTENT(in)
        ihail            !INTENT(in)
+ 
+  use grid_dims, only: &
+       nzpmax           !INTENT(in)
 
-  use mem_grid, only: &
+ use mem_grid, only: &
        zt,        &     !INTENT(in)
        nzp,       &     !INTENT(in)
-       nz,        &     !INTENT(in)
-       nzpmax           !INTENT(in)
+       nz     !INTENT(in)
 
   use rconstants, only: &
        alvl,      &     !INTENT(in)
@@ -1336,12 +1340,12 @@ subroutine bruvais_OLAM(m1, m2, m3, ia, iz, ja, jz, theta, rtp, rv, rcp, &
 
   implicit none
   ! Arguments:
-  integer, INTENT(IN) :: m1, m2, m3, ia, iz, ja, jz
-  real, INTENT(IN)    :: theta(m1,m2,m3), pp(m1,m2,m3), pi0(m1,m2,m3), &
+  integer, intent(IN) :: m1, m2, m3, ia, iz, ja, jz
+  real, intent(IN)    :: theta(m1,m2,m3), pp(m1,m2,m3), pi0(m1,m2,m3), &
        rtp(m1,m2,m3), rcp(m1,m2,m3), rv(m1,m2,m3)
-  real, INTENT(INOUT) :: en2(m1,m2,m3)
-  real, INTENT(IN)    :: rtgt(m2,m3)
-  real, INTENT(IN) :: lpw_R(m2,m3)
+  real, intent(INOUT) :: en2(m1,m2,m3)
+  real, intent(IN)    :: rtgt(m2,m3)
+  real, intent(IN) :: lpw_R(m2,m3)
   !local variables
   integer :: i, j, k, iweten, iwdiffk, ki, k2, k1
   real :: c1, c2, c3, ci1, ci2, ci3, rvlsi, rvii
@@ -1368,12 +1372,12 @@ subroutine bruvais_OLAM(m1, m2, m3, ia, iz, ja, jz, theta, rtp, rv, rcp, &
 
   ! **(JP)** fatora expressoes logicas para fora dos lacos
   log1 = level>=1
-!  log2 = level .ge. 2 .and. iweten .eq. 1
-!  log3 = (ipris  .ge. 1 .or. isnow .ge. 1 .or.  &
-!       igraup .ge. 1 .or. iaggr .ge. 1 .or.  &
-!       ihail  .ge. 1) .and. level .eq. 3
-!  log4 = level .eq. 3
-! **(JP)** fim modificacao
+  !  log2 = level .ge. 2 .and. iweten .eq. 1
+  !  log3 = (ipris  .ge. 1 .or. isnow .ge. 1 .or.  &
+  !       igraup .ge. 1 .or. iaggr .ge. 1 .or.  &
+  !       ihail  .ge. 1) .and. level .eq. 3
+  !  log4 = level .eq. 3
+  ! **(JP)** fim modificacao
 
   !     calculate potential temperature profile
 
@@ -1390,7 +1394,7 @@ subroutine bruvais_OLAM(m1, m2, m3, ia, iz, ja, jz, theta, rtp, rv, rcp, &
         enddo
         ! **(JP)** fatora expressoes logicas para fora dos lacos
         if (log1) then
-        ! **(JP)** fim modificacao
+           ! **(JP)** fim modificacao
            do k=k1,m1
               vctr12(k) = vctr11(k)*(1. + 0.61*rv(k,i,j))
               !vctr32(k) = (rtp(k,i,j) - rv(k,i,j))
@@ -1520,171 +1524,171 @@ end subroutine bruvais_OLAM
 
 !-----------------------------------------------------------------------
 subroutine HCV_driver(m1,m2,m3,ia,iz,ja,jz,mynum  &
-             ,up          &
-	     ,vp          &
-             ,theta       &
-	     ,rv          &
-	     ,dn0         &
-             ,sflux_t     &
-	     ,sflux_r     &
-	     ,sflux_u     &
-	     ,sflux_v     &
-	     ,rtgt        &
-	     ,lpw_R       &
-	     ,scr1   	  &
-	     ,vt3dh       &
-	     ,vt3di       &
-	     ,vt3dj       &
-	     ,vt3dk       )
+     ,up          &
+     ,vp          &
+     ,theta       &
+     ,rv          &
+     ,dn0         &
+     ,sflux_t     &
+     ,sflux_r     &
+     ,sflux_u     &
+     ,sflux_v     &
+     ,rtgt        &
+     ,lpw_R       &
+     ,scr1   	  &
+     ,vt3dh       &
+     ,vt3di       &
+     ,vt3dj       &
+     ,vt3dk       )
 
 
-use mem_grid, only: zt, dzt, dzm, ngrid     !INTENT(IN)
-use mem_turb, only: zkhkm
-use rconstants, only:  &
-                tkmin, &   !INTENT(IN)
-                g,     &   !INTENT(IN)
-		vonk       !INTENT(IN)
+  use mem_grid, only: zt, dzt, dzm, ngrid     !INTENT(IN)
+  use mem_turb, only: zkhkm
+  use rconstants, only:  &
+       tkmin, &   !INTENT(IN)
+       g,     &   !INTENT(IN)
+       vonk       !INTENT(IN)
 
 
-use mem_scratch, only: vctr30    !INTENT(OUT)
+  use mem_scratch, only: vctr30    !INTENT(OUT)
 
-implicit none
-real, intent(out)  , dimension(m1,m2,m3) :: scr1,vt3dh,vt3di,vt3dj,vt3dk
+  implicit none
+  real, intent(out)  , dimension(m1,m2,m3) :: scr1,vt3dh,vt3di,vt3dj,vt3dk
 
-real, intent(in)   , dimension(m2,m3)    :: rtgt
+  real, intent(in)   , dimension(m2,m3)    :: rtgt
 
-integer, intent(in) :: m1,m2,m3,ia,iz,ja,jz,mynum
+  integer, intent(in) :: m1,m2,m3,ia,iz,ja,jz,mynum
 
-real, intent(in)   , dimension(m1,m2,m3) :: theta, &
-					    rv,   &
-					    up,   &
-					    vp,   &
-					    dn0
-real, intent(in), dimension(m2,m3) :: lpw_R
+  real, intent(in)   , dimension(m1,m2,m3) :: theta, &
+       rv,   &
+       up,   &
+       vp,   &
+       dn0
+  real, intent(in), dimension(m2,m3) :: lpw_R
 
-real, intent(in), dimension(m2,m3) :: sflux_t, &
-                                      sflux_r, &
-                                      sflux_u, &
-                                      sflux_v
+  real, intent(in), dimension(m2,m3) :: sflux_t, &
+       sflux_r, &
+       sflux_u, &
+       sflux_v
 
-integer :: i,j,k,k2,kzi,lpw
-integer,dimension(m2,m3) :: kzi_2d
-real :: sbf, zl, wstar, ustar, h
-
-
-do j=ja,jz
-   do i=ia,iz
-      lpw=int(lpw_R(i,j))
-      k2=lpw
+  integer :: i,j,k,k2,kzi,lpw
+  integer,dimension(m2,m3) :: kzi_2d
+  real :: sbf, zl, wstar, ustar, h
 
 
-! ---------------
-! Fill column vector with virtual potential temperature
-! ---------------
-!      do k=k2,m1-1
-      do k=1,m1-1
-        vctr30(k) = theta(k,i,j) * (1. + .61 * rv(k,i,j))
-      enddo
-!
-! ---------------
-! Compute velocity scale for neutra/stable layer [ustar]
-! ---------------
+  do j=ja,jz
+     do i=ia,iz
+        lpw=int(lpw_R(i,j))
+        k2=lpw
 
-      ustar = max(0.1,sqrt(sqrt(sflux_u(i,j)**2 + sflux_v(i,j)**2)))
 
-! ---------------
-! Compute surface buoyancy flux [sbf] and Monin Obukhov height [zl]
-! ---------------
+        ! ---------------
+        ! Fill column vector with virtual potential temperature
+        ! ---------------
+        !      do k=k2,m1-1
+        do k=1,m1-1
+           vctr30(k) = theta(k,i,j) * (1. + .61 * rv(k,i,j))
+        enddo
+        !
+        ! ---------------
+        ! Compute velocity scale for neutra/stable layer [ustar]
+        ! ---------------
 
-      sbf = (g/vctr30(k2)) &
+        ustar = max(0.1,sqrt(sqrt(sflux_u(i,j)**2 + sflux_v(i,j)**2)))
 
-            * (sflux_t(i,j) * (1. + .61 * rv(k2,i,j)) &
+        ! ---------------
+        ! Compute surface buoyancy flux [sbf] and Monin Obukhov height [zl]
+        ! ---------------
 
+        sbf = (g/vctr30(k2)) &
+             
+             * (sflux_t(i,j) * (1. + .61 * rv(k2,i,j)) &
+             
 	     + sflux_r(i,j) * .61 * theta(k2,i,j))
 
 
-      if(sbf .ne. 0.) then
-          zl = (-ustar** 3)/(vonk*sbf)
-      else
-          zl = 500.
-      endif
+        if(sbf .ne. 0.) then
+           zl = (-ustar** 3)/(vonk*sbf)
+        else
+           zl = 500.
+        endif
 
-!
-! ---------------
-! Compute boundary layer depth [h]
+        !
+        ! ---------------
+        ! Compute boundary layer depth [h]
 
 
-! Compute boundary layer depth [h] for CLE (Zilitinkevich's, 1972)
+        ! Compute boundary layer depth [h] for CLE (Zilitinkevich's, 1972)
 
-      if (zl <= 500.0 .and. zl > 0) then
+        if (zl <= 500.0 .and. zl > 0) then
 
            h = 2.4E3 * (ustar**(3.0/2.0))
 
-      else
+        else
 
-!Compute boundary layer depth [h] for CLC - using gradient Richardon number [Ri]
+           !Compute boundary layer depth [h] for CLC - using gradient Richardon number [Ri]
 
            call get_richgrad(h,k2,m1,zt,rtgt(i,j),vt3dj(1,i,j),vt3di(1,i,j)&
-	                  ,vt3dk(1,i,j),zkhkm(ngrid),i,j)
-     endif
+                ,vt3dk(1,i,j),zkhkm(ngrid),i,j)
+        endif
 
 
-! ---------------
-! Compute convective velocity scale [wstar] / boundary layer depth [vt2da]
-! ---------------
+        ! ---------------
+        ! Compute convective velocity scale [wstar] / boundary layer depth [vt2da]
+        ! ---------------
 
-      wstar = (max(0., sbf * h)) ** (1./3.)
+        wstar = (max(0., sbf * h)) ** (1./3.)
 
-! ---------------
-! Find the highest model level zt(k) that is at or below boundary layer
-! height h.
-! ---------------
-      do k=k2,m1-1
-         kzi = k
-         if (zt(k+1)*rtgt(i,j) .gt. h) exit
-      enddo
-      kzi_2d(i,j)=kzi
-! ---------------
-! get KZZ
-! ---------------
+        ! ---------------
+        ! Find the highest model level zt(k) that is at or below boundary layer
+        ! height h.
+        ! ---------------
+        do k=k2,m1-1
+           kzi = k
+           if (zt(k+1)*rtgt(i,j) .gt. h) exit
+        enddo
+        kzi_2d(i,j)=kzi
+        ! ---------------
+        ! get KZZ
+        ! ---------------
 
-      vt3dh(:,i,j)=1.e-3
-      scr1 (:,i,j)=1.e-3
+        vt3dh(:,i,j)=1.e-3
+        scr1 (:,i,j)=1.e-3
 
-      do k=k2,kzi
+        do k=k2,kzi
 
-!******************************************************************************
-!
-! Call subroutine kcgcv2 for to calculate KZZ - [scr1(k,i,j]
-!
-!******************************************************************************
+           !******************************************************************************
+           !
+           ! Call subroutine kcgcv2 for to calculate KZZ - [scr1(k,i,j]
+           !
+           !******************************************************************************
 
-	 call kcgcv2(scr1(k,i,j), ustar, wstar, zl, zt(k)*rtgt(i,j),h, i,j)
+           call kcgcv2(scr1(k,i,j), ustar, wstar, zl, zt(k)*rtgt(i,j),h, i,j)
 
 
-! Kmom = scr1(k,i,j)
-	 scr1(k,i,j) = max(1.e-3,scr1(k,i,j) * dn0(k,i,j))
-! For Ksclr = Kmom * 3.0
-	 vt3dh(k,i,j)=scr1(k,i,j)!*3.0 - done outside of this subroutine
+           ! Kmom = scr1(k,i,j)
+           scr1(k,i,j) = max(1.e-3,scr1(k,i,j) * dn0(k,i,j))
+           ! For Ksclr = Kmom * 3.0
+           vt3dh(k,i,j)=scr1(k,i,j)!*3.0 - done outside of this subroutine
 
-      enddo
-   enddo
-enddo
-scr1 (1,:,:)=scr1 (2,:,:)
-vt3dh(1,:,:)=vt3dh(2,:,:)
+        enddo
+     enddo
+  enddo
+  scr1 (1,:,:)=scr1 (2,:,:)
+  vt3dh(1,:,:)=vt3dh(2,:,:)
 
-!write(mynum,*),"kzz=",maxval(scr1),minval(scr1),maxval(kzi_2d),maxloc(kzi_2d)&
-!;call flush(mynum)
-!i=7
-!j=15
-!if(mynum==3) then
-!   do k=1,kzi_2d(i,j)+1
-!     write(mynum,*)"k kzz=",k,scr1(k,i,j)
-!     call flush(3)
-!   enddo
-!endif
+  !write(mynum,*),"kzz=",maxval(scr1),minval(scr1),maxval(kzi_2d),maxloc(kzi_2d)&
+  !;call flush(mynum)
+  !i=7
+  !j=15
+  !if(mynum==3) then
+  !   do k=1,kzi_2d(i,j)+1
+  !     write(mynum,*)"k kzz=",k,scr1(k,i,j)
+  !     call flush(3)
+  !   enddo
+  !endif
 
-return
+  return
 end subroutine HCV_driver
 
 !******************************************************************
@@ -1694,35 +1698,35 @@ end subroutine HCV_driver
 !******************************************************************************
 subroutine get_richgrad(h,k2,m1,zt,rtgt,vt3dj,vt3di,vt3dk,zkhkm,i,j)
 
-implicit none
-integer, intent (in) :: k2,m1,i,j
-real, intent(out) :: h
-real, intent(in)  :: zkhkm,rtgt
-real, dimension(m1), intent(in)     :: zt,vt3dj,vt3di
-real, dimension(m1), intent(inout)  :: vt3dk
-real :: rmin,rmax,agrich,rchmax
-integer k,irich
-   irich = 1
-   rmin = -100.
-   rmax = 1. / zkhkm
-   do k = k2,m1-1
-      vt3dk(k) = max(min(vt3dj(k)  &
-   	            / max(vt3di(k),1.e-15),rmax),rmin)
-   enddo
-   rchmax = 1.0 + 9.0 * float(irich)
+  implicit none
+  integer, intent (in) :: k2,m1,i,j
+  real, intent(out) :: h
+  real, intent(in)  :: zkhkm,rtgt
+  real, dimension(m1), intent(in)     :: zt,vt3dj,vt3di
+  real, dimension(m1), intent(inout)  :: vt3dk
+  real :: rmin,rmax,agrich,rchmax
+  integer k,irich
+  irich = 1
+  rmin = -100.
+  rmax = 1. / zkhkm
+  do k = k2,m1-1
+     vt3dk(k) = max(min(vt3dj(k)  &
+          / max(vt3di(k),1.e-15),rmax),rmin)
+  enddo
+  rchmax = 1.0 + 9.0 * float(irich)
 
-   h=zt(k2)*rtgt
+  h=zt(k2)*rtgt
 
-   do k = k2,m1-1
-      agrich=min(rchmax,sqrt(max(0.,(1.-zkhkm*vt3dk(k)))))
-      if(agrich .le. 1.e-5) then
-         h=max(rtgt*zt(k2), rtgt*(zt(k)+zt(k-1))*.5)
-	 exit
-      endif
-   enddo
+  do k = k2,m1-1
+     agrich=min(rchmax,sqrt(max(0.,(1.-zkhkm*vt3dk(k)))))
+     if(agrich .le. 1.e-5) then
+        h=max(rtgt*zt(k2), rtgt*(zt(k)+zt(k-1))*.5)
+        exit
+     endif
+  enddo
 
 
-return
+  return
 end subroutine get_richgrad
 
 !     *****************************************************************
@@ -1730,177 +1734,177 @@ end subroutine get_richgrad
 ! The goal is to provide exchange turbulent coefficients (KZZ) for the B-RAMS system.
 !     *****************************************************************
 
-      SUBROUTINE kcgcv2 (KZZ, ustar, wstar, zl, z, h, i, j)
+subroutine kcgcv2 (KZZ, ustar, wstar, zl, z, h, i, j)
 
-!################################################################
-!#                                                              #
-!# PURPOUSE: This routine was designed to run in  RMAS, see     #
-!#           reference 4.                                       #
-!#                                                              #
-!#                                                              #
-!# Programer: Haroldo Fraga de Campos Velho                     #
-!#                                                              #
-!#            Permanet Address:                                 #
-!#                                                              #
-!#                LAC-INPE                                      #
-!#                P.O. Box 515                                  #
-!#                12.201-970 - Sao Jose dos Campos (SP)         #
-!#                Brasil                                        #
-!#                                                              #
-!#                Fax:   +55  012  345-6375                     #
-!#                Phone: +55  012  345-6356                     #
-!#                E-mail: haroldo@lac.inpe.br                   #
-!#                Home-page: http://www.lac.inpe.br/~haroldo/   #
-!#                                                              #
-!#                                                              #
-!# Date: Abril 15, 2000                                         #
-!#       Last alteration: June 19, 2006                        #
-!#                                                              #
-!#                                                              #
-!# REFERENCES:                                                  #
-!#                                                              #
-!# 1. G.A. Degrazia,  H.F. Campos Velho,  J.C. Carvalho (1997): #
-!#      "Nonlocal  Exchange  Coefficients  for the  Convective  #
-!#      Boundary  Layer  Derived  from  Spectral  Properties",  #
-!#      Beitrage  zur  Physik der Atmosphare, Vol. 70,  No. 1,  #
-!#      pp. 57-64.                                              #
-!#                                                              #
-!# 2. G.A. Degrazia,  O.L.L. Moraes  (1992): "A Model for Eddy  #
-!#      Diffusivity  in  a  Stable Boundary Layer", Boundary-   #
-!#      Layer Meteorology, Vol. 58, pp. 205-124.                #
-!#                                                              #
-!# 3. G.A. Degrazia, D. Anfossi,  J.C. Carvalho,  T. Tirabassi, #
-!#      H.F. Campos Velho (2000): "Turbulence Parameterization  #
-!#      for PBL Dispersion Models in All Stability Conditions", #
-!#      Atmospheric Environment (to appear)                     #
-!#                                                              #
-!# 4. R.A. Pielke, W.R. Cotton, R.L. Walko, C.J. Tremback, W.A. #
-!#      Lyons,  L.D. Grasso,  M.E. Nicholls,  M.D. Moran,  D.A. #
-!#      Wesley, T.J. Lee, J. Copeland (1992): "A Comprehensive  #
-!#      Meteorological Modeling System - RAMS", Meteorologycal  #
-!#      and Atmospheric Physics, Vol. 49, pp. 69-91.            #
-!#                                                              #
-!################################################################
-!#                                                              #
-!# SUBROUTINES, FUNCTIONS REQUIRED: none                        #
-!#                                                              #
-!# INPUTS PARAMETERS:                                           #
-!#  Z: vertical coordinate                                      #
-!#  H: boundary layer height                                    #
-!#  ZL: Obukhov length                                          #
-!#  USTAR: velocity scale for neutral/stable layer              #
-!#  WSTAR: velocity scale for convective layer                  #
-!#                                                              #
-!# OUTPUT PARAMETERS:                                           #
-!#  KZZ: Vertical eddy diffusivity                              #
-!#                                                              #
-!#                                                              #
-!# LOCAL VARIABLES:                                             #
-!#  LAMB: local Monin-Obukhov length, see reference 2.          #
-!#     Q: stability function, Eq. 2.17 in reference 1.          #
-!#   PSI: Dissipation function, Eq. 2.19 in reference 1.        #
-!#    FC: Coriolis parameter.                                   #
-!#  CORR: Correction factor.                                    #
-!#   ZLM: Average Monin-Obukhov length.                         #
-!#    KN: Vertical eddy diffusivity from wind shear.            #
-!#                                                              #
-!################################################################
+  !################################################################
+  !#                                                              #
+  !# PURPOUSE: This routine was designed to run in  RMAS, see     #
+  !#           reference 4.                                       #
+  !#                                                              #
+  !#                                                              #
+  !# Programer: Haroldo Fraga de Campos Velho                     #
+  !#                                                              #
+  !#            Permanet Address:                                 #
+  !#                                                              #
+  !#                LAC-INPE                                      #
+  !#                P.O. Box 515                                  #
+  !#                12.201-970 - Sao Jose dos Campos (SP)         #
+  !#                Brasil                                        #
+  !#                                                              #
+  !#                Fax:   +55  012  345-6375                     #
+  !#                Phone: +55  012  345-6356                     #
+  !#                E-mail: haroldo@lac.inpe.br                   #
+  !#                Home-page: http://www.lac.inpe.br/~haroldo/   #
+  !#                                                              #
+  !#                                                              #
+  !# Date: Abril 15, 2000                                         #
+  !#       Last alteration: June 19, 2006                        #
+  !#                                                              #
+  !#                                                              #
+  !# REFERENCES:                                                  #
+  !#                                                              #
+  !# 1. G.A. Degrazia,  H.F. Campos Velho,  J.C. Carvalho (1997): #
+  !#      "Nonlocal  Exchange  Coefficients  for the  Convective  #
+  !#      Boundary  Layer  Derived  from  Spectral  Properties",  #
+  !#      Beitrage  zur  Physik der Atmosphare, Vol. 70,  No. 1,  #
+  !#      pp. 57-64.                                              #
+  !#                                                              #
+  !# 2. G.A. Degrazia,  O.L.L. Moraes  (1992): "A Model for Eddy  #
+  !#      Diffusivity  in  a  Stable Boundary Layer", Boundary-   #
+  !#      Layer Meteorology, Vol. 58, pp. 205-124.                #
+  !#                                                              #
+  !# 3. G.A. Degrazia, D. Anfossi,  J.C. Carvalho,  T. Tirabassi, #
+  !#      H.F. Campos Velho (2000): "Turbulence Parameterization  #
+  !#      for PBL Dispersion Models in All Stability Conditions", #
+  !#      Atmospheric Environment (to appear)                     #
+  !#                                                              #
+  !# 4. R.A. Pielke, W.R. Cotton, R.L. Walko, C.J. Tremback, W.A. #
+  !#      Lyons,  L.D. Grasso,  M.E. Nicholls,  M.D. Moran,  D.A. #
+  !#      Wesley, T.J. Lee, J. Copeland (1992): "A Comprehensive  #
+  !#      Meteorological Modeling System - RAMS", Meteorologycal  #
+  !#      and Atmospheric Physics, Vol. 49, pp. 69-91.            #
+  !#                                                              #
+  !################################################################
+  !#                                                              #
+  !# SUBROUTINES, FUNCTIONS REQUIRED: none                        #
+  !#                                                              #
+  !# INPUTS PARAMETERS:                                           #
+  !#  Z: vertical coordinate                                      #
+  !#  H: boundary layer height                                    #
+  !#  ZL: Obukhov length                                          #
+  !#  USTAR: velocity scale for neutral/stable layer              #
+  !#  WSTAR: velocity scale for convective layer                  #
+  !#                                                              #
+  !# OUTPUT PARAMETERS:                                           #
+  !#  KZZ: Vertical eddy diffusivity                              #
+  !#                                                              #
+  !#                                                              #
+  !# LOCAL VARIABLES:                                             #
+  !#  LAMB: local Monin-Obukhov length, see reference 2.          #
+  !#     Q: stability function, Eq. 2.17 in reference 1.          #
+  !#   PSI: Dissipation function, Eq. 2.19 in reference 1.        #
+  !#    FC: Coriolis parameter.                                   #
+  !#  CORR: Correction factor.                                    #
+  !#   ZLM: Average Monin-Obukhov length.                         #
+  !#    KN: Vertical eddy diffusivity from wind shear.            #
+  !#                                                              #
+  !################################################################
 
 
-      IMPLICIT NONE
+  implicit none
 
-      REAL, INTENT(OUT) :: KZZ !scr1(k,i,j)
-      REAL, INTENT(IN)  :: zl, wstar, h, z, ustar
+  real, intent(OUT) :: KZZ !scr1(k,i,j)
+  real, intent(IN)  :: zl, wstar, h, z, ustar
 
-      INTEGER :: i, j
+  integer :: i, j
 
-      REAL LAMB, Q, PSI, FC, CORR, KN, ZIL, ZH
-      REAL AUX1, AUX2, AUXL
-      REAL ALP1, ALP2
-      REAL RNU, DEN
+  real LAMB, Q, PSI, FC, CORR, KN, ZIL, ZH
+  real AUX1, AUX2, AUXL
+  real ALP1, ALP2
+  real RNU, DEN
 
-! Nondimensional vertical coordinate
-      ZH = min(1.,Z/H)
+  ! Nondimensional vertical coordinate
+  ZH = min(1.,Z/H)
 
-! Coriolis parameter (see ref. 3)
-      FC = 1.0E-04
+  ! Coriolis parameter (see ref. 3)
+  FC = 1.0E-04
 
-! Contribution from wind shear to turbulence (see Eq(28) in ref. 3)
+  ! Contribution from wind shear to turbulence (see Eq(28) in ref. 3)
 
-      AUX1 = 0.4*(1-ZH)**0.85 * (USTAR*Z)
-      AUX2 = (1.0 + 15.0*(FC*Z/USTAR))**(4.0/3.0)
-      KN = AUX1/AUX2
+  AUX1 = 0.4*(1-ZH)**0.85 * (USTAR*Z)
+  AUX2 = (1.0 + 15.0*(FC*Z/USTAR))**(4.0/3.0)
+  KN = AUX1/AUX2
 
-      IF(ABS(ZL).GT.500) THEN
+  if(abs(ZL).gt.500) then
 
-	 KZZ = KN
+     KZZ = KN
 
-         RETURN
+     return
 
-      ENDIF
+  endif
 
-      IF(ZL.GT.0.0) THEN
+  if(ZL.gt.0.0) then
 
-! 1 - Stable parameterization (see ref. 2)
-! 1.1 - Set experimental parameters
+     ! 1 - Stable parameterization (see ref. 2)
+     ! 1.1 - Set experimental parameters
 
-	 IF(ZL.le.500.0) THEN
+     if(ZL.le.500.0) then
 
-            ALP1 = 1.5
-            ALP2 = 1.0
+        ALP1 = 1.5
+        ALP2 = 1.0
 
-	 ENDIF
+     endif
 
-! 1.2 - Calculate the local Monin-Obukhov lenght (see Eq(3) in ref. 2)
+     ! 1.2 - Calculate the local Monin-Obukhov lenght (see Eq(3) in ref. 2)
 
      AUXL = (3.0*ALP1)/2.0 - ALP2
-	 LAMB = ABS(ZL)*(1.0 - ZH)**AUXL
+     LAMB = abs(ZL)*(1.0 - ZH)**AUXL
 
-! 1.3 - Stable eddy diffusivity (see Eq(29) in ref. 3)
+     ! 1.3 - Stable eddy diffusivity (see Eq(29) in ref. 3)
 
-         RNU = 0.4 * (1.-ZH)**(3.0/4.0)
-         DEN = 1. + 3.7* (Z/LAMB)
-         KZZ = RNU/DEN * (USTAR*Z)
+     RNU = 0.4 * (1.-ZH)**(3.0/4.0)
+     DEN = 1. + 3.7* (Z/LAMB)
+     KZZ = RNU/DEN * (USTAR*Z)
 
-	 RETURN
+     return
 
-      ELSE
+  else
 
-! 2 - Convective parameterization
+     ! 2 - Convective parameterization
 
-! The stability parameter ZIL is the ratio between the
-! convective boundary layer (CBL) height and Monin-Obukhov
-! length. For a full convective CBL: 50 < ZIL < 360.
-! See comment in page 60 in reference 1.
+     ! The stability parameter ZIL is the ratio between the
+     ! convective boundary layer (CBL) height and Monin-Obukhov
+     ! length. For a full convective CBL: 50 < ZIL < 360.
+     ! See comment in page 60 in reference 1.
 
-! Correction factor (see Eq. (14) in ref. 3)
-
-
-         CORR = SQRT(0.01*(H /(-ZL))) !See Eq. 14 4
-
-! Here will be used the same value in KAMM model.
-         ZIL = 136.0
-
-! 2.1 - Stability function: Eq. (2.17) in reference 1.
-
-         Q = 1.0 - EXP(-4*ZH) - 0.0003*EXP(8*ZH)
+     ! Correction factor (see Eq. (14) in ref. 3)
 
 
-! 2.2 - Eddy diffusivity: Eq. (2.18) in reference 1.
+     CORR = sqrt(0.01*(H /(-ZL))) !See Eq. 14 4
 
-         AUX2 = 4.0/3.0
+     ! Here will be used the same value in KAMM model.
+     ZIL = 136.0
 
+     ! 2.1 - Stability function: Eq. (2.17) in reference 1.
 
-! 2.3 - Eddy diffusivity: Eq. (26) in reference 3.
-	 KZZ = 0.16* (WSTAR*H) * CORR * Q**AUX2
-
-
-! Shear effect contribution (see Eq. (15), ref. 3)
+     Q = 1.0 - exp(-4*ZH) - 0.0003*exp(8*ZH)
 
 
-          KZZ = KZZ + KN
+     ! 2.2 - Eddy diffusivity: Eq. (2.18) in reference 1.
+
+     AUX2 = 4.0/3.0
 
 
-      ENDIF
- END SUBROUTINE kcgcv2
+     ! 2.3 - Eddy diffusivity: Eq. (26) in reference 3.
+     KZZ = 0.16* (WSTAR*H) * CORR * Q**AUX2
+
+
+     ! Shear effect contribution (see Eq. (15), ref. 3)
+
+
+     KZZ = KZZ + KN
+
+
+  endif
+end subroutine kcgcv2
 !-----------------------------------------------------------

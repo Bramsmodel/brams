@@ -316,7 +316,7 @@ subroutine CorrectBorderFcorx(grid, n2, n3, fcor)
   integer, intent(in)  :: n3
   real,    intent(inout) :: fcor(n2,n3)
 
-  include "i8.h"
+  include "constants.h"
   integer(i8) :: cnt_i8
   integer :: StartRecvJ, EndRecvJ
   integer :: StartRecvI, EndRecvI
@@ -691,7 +691,7 @@ subroutine CorrectBorderFcory(grid, n2, n3, fcor)
   integer, intent(in)  :: n3
   real,    intent(inout) :: fcor(n2,n3)
 
-  include "i8.h"
+  include "constants.h"
   integer(i8) :: cnt_i8
   integer :: StartRecvJ, EndRecvJ
   integer :: StartRecvI, EndRecvI

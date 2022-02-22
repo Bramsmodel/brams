@@ -204,7 +204,7 @@ contains
   subroutine filltab_cuparm_sh(cuparm, cuparmm, imean, n1, n2, n3, ng)
     use var_tables
     implicit none
-    include "i8.h"
+    include "constants.h"
     ! Arguments:
     type (cuparm_vars), intent(IN) :: cuparm, cuparmm
     integer, intent(IN)            :: imean, n1, n2, n3, ng
@@ -230,7 +230,7 @@ contains
     use var_tables
 
     implicit none
-    include "i8.h"
+    include "constants.h"
     ! Arguments:
     type (cuparm_vars), intent(IN) :: cuparm, cuparmm
     integer, intent(IN)            :: imean, n1, n2, n3, ng

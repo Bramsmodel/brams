@@ -31,7 +31,7 @@ subroutine cuparm()
 
   implicit none
 
-  include "i8.h"
+  include "constants.h"
 
   real, save :: cptime=7200.
 

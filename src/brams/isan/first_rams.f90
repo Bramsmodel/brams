@@ -28,6 +28,7 @@ use isan_coms, only: &
     thref
 
 use mem_grid
+use grid_dims, only: maxgrds
 
 implicit none
 
@@ -495,7 +496,7 @@ subroutine fmint4_isan(var1, var2, dn0xc, dn0xf, ifm, icm, vpnt, idwt)
        grid_g
 
   implicit none
-  include "i8.h"
+  include "constants.h"
   integer :: ifm,icm,idwt,lll(3)
   real, dimension(*) :: var1,var2,dn0xc,dn0xf
   character(len=*) :: vpnt

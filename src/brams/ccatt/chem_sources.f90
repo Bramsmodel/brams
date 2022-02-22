@@ -53,7 +53,7 @@ MODULE chem_sources
 
   IMPLICIT NONE
 
-  INCLUDE "ranks.h"
+  INCLUDE "constants.h"
 
 
   CHARACTER(len=256)  :: srcmapfn

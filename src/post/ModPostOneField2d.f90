@@ -72,7 +72,7 @@ contains
              master_num
       use mem_aerad, only: nwave  !INTENT(IN)
 
-      include "constants.f90"
+      include "constants.h"
       type(PostVarType) :: one_post_variable
       type(BramsGrid), pointer :: oneBramsGrid
       type(PostGrid), pointer :: onePostGrid
@@ -889,7 +889,7 @@ contains
    
        implicit none
    
-       include "constants.f90"
+       include "constants.h"
        character(len=*),parameter :: sourceName='ModPostOneField2d.f90' !Name of source code
        character(len=*),parameter :: procedureName='**lowCloudFract**' !Name of this procedure
        !

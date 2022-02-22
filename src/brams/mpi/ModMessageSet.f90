@@ -1,98 +1,229 @@
 module ModMessageSet
+
+  ! At each timestep, the ghost zone of some fields has to be
+  ! updated. Ghost zone update requires message passing.
+  ! There are a few code locations that need ghost zone
+  ! update. The set of fields to update is fixed at one
+  ! location, but varies with the location.
+  !
+  ! For each location that requires message passing, message
+  ! data and message envelop are stored at a pair of variables
+  ! of type MessageSet, one for send and one for receive operations.
+  !
+  ! Each MessageSet variable contains message data and message envelop
+  ! for an array of message passing operations. Each array element
+  ! contains all data to pass to a single rank, on a single
+  ! message passing operation. Consequently, field sections of
+  ! all fields that require ghost zone update involving two fixed
+  ! ranks are stored at a single array entry of a MessageSet variable
+  ! and used on a single message passing operation. 
+  !
+  ! Message passing operates on contiguous buffer. Field sections
+  ! to update are not contiguous in memory and have to be copied
+  ! to/from the buffer. Mapping of a field section to buffer locations
+  ! and inverse mapping are computed once, at MessageSet creation
+  ! and stored at the corresponding MessageSet array entry.
+  !
+  ! Type MessageSet and procedures to create, destroy, dump
+  ! and perform general message passing operations are implemented
+  ! by this module.
+  !
+  ! Procedures to create and destroy specific MessageSet operations
+  ! (those required by current code version) are implemented by this module.
+  !
+  ! Message passing operations are also implemented by this module.
+  ! All message passing operations are nonblocking.
+  ! Procedure PostSendRecvMsgs initiate all send/recv
+  ! operations of one set. Procedure WaitSendRecvMsgs finalize
+  ! all send/recv operations of the same set.
+  ! Copy field sections to the contiguous buffer and the reverse
+  ! opetation are included on both message passing procedures.
+  !
+  ! To overlap computation with communication, procedure
+  ! PostSendRecvMsgs should be invoked as early as possible,
+  ! mainly when all fields to send are fully computed,
+  ! and procedure WaitSendRecvMsgs should be invoked as
+  ! late as possible, mainly when the ghost zone of the
+  ! updated fields will be used in the computation.
+
+
+  use ModGridDims, only: &
+       GridDims
+
   use ModParallelEnvironment, only: &
        ParallelEnvironment, &
        Brams2MpiProcNbr, &
-       Mpi2BramsProcNbr, &
        MsgDump
 
-  use ModMessageData, only: &
-       MessageData, &
-       TransferMessageData, &
-       DestroyMessageData
-
   use ModNeighbourNodes, only: &
-       NeighbourNodes
-
-  use ModFieldSectionList, only: &
-       FieldSection, &
-       CreateFieldSection, &
-       NextFieldSection, &
-       DumpFieldSection, &
-       CreateFieldSectionList, &
-       InsertAtFieldSectionList, &
-       DumpFieldSectionList
-
-  use ParLib, only: &
-       parf_get_noblock_real, &
-       parf_send_noblock_real, &
-       parf_wait_any_nostatus, &
-       parf_wait_all_nostatus
-
-  use ModBuffering, only: &
-       FieldSection2Buffer, &
-       Buffer2FieldSection
+       NeighbourNodes, &
+       NodesToSendRecvMessages, &
+       IncludeDomainBoundaries, &
+       DumpNeighbourNodes
 
   use ModDomainDecomp, only: &
        DomainDecomp
 
-  use var_tables, only: &
-       var_tables_r
+  use ModFieldSection, only: &
+       FieldSection, &
+       CreateFieldSection
 
-!  use CUPARM_GRELL3, only: g3d_g
+  use ModMessageData, only: &
+       MessageData, &
+       CreateMessageData, &
+       DumpMessageData, &
+       AppendFieldSectionToMessageData, &
+       PostRecvMessageData, &
+       PostSendMessageData, &
+       FillMessageDataBufferWithFieldSectionData, &
+       ExtractFieldSectionDataFromMessageDataBuffer, &
+       AllocateMessageDataBuffer, &
+       DeallocateMessageDataBuffer, &
+       DestroyMessageData, &
+       UpdateFieldAdress
+
+  use var_tables, only: &
+       var_tables_r, &
+       GetVTabEntry
+
+  use ModNamelistFile, only: &
+       NamelistFile
+
+  use mem_grid, only : &
+       dyncore_flag
+
+  use ParLib, only: &
+       parf_wait_any_nostatus
 
   implicit none
-  private
-  public :: MessageSet
-  public :: CreateMessageSet
-  public :: InsertFieldSectionAtMessageSet
-  public :: DumpMessageSet
-  public :: DestroyMessageSet
-  public :: PostRecvSendMsgs
-  public :: WaitRecvMsgs
-
   include "mpif.h"
 
-  integer, parameter :: UNDEFINED=-1
+  private
+
+  public :: MessageSet
+  public :: DumpMessageSet
+
+  public :: CreateAcousticMessageSet
+  public :: DestroyAcousticMessageSet
+
+  public :: CreateDn0MessageSet
+  public :: DestroyDn0MessageSet
+
+  public :: CreateG3DMessageSet
+  public :: DestroyG3DMessageSet
+
+  public :: CreateSelectedGhostZoneMessageSet
+  public :: DestroySelectedGhostZoneMessageSet
+
+  public :: CreateAllGhostZoneMessageSet
+  public :: DestroyAllGhostZoneMessageSet
+
+  public :: CreateAcouDampOneMessageSet
+  public :: DestroyAcouDampOneMessageSet
+
+  public :: CreateLuFlaMessageSet
+  public :: DestroyLuFlaMessageSet
+
+  public :: UpdateFieldAdress
+
+  public :: PostSendRecvMsgs
+  public :: WaitSendRecvMsgs
+  
+  character(len=*), parameter :: sendDirection="send"
+  character(len=*), parameter :: recvDirection="recv"
 
   ! all messages to send/receive from one process
   ! to update a field.
   ! arrays are indexed 1:nMsgs
 
   type MessageSet
-     character(len=64) :: name                   ! msg name
-     integer :: nMsgs=UNDEFINED                  ! # procs on communication
-     integer :: tag                              ! same tag for all messages in the set
-     type(MessageData), allocatable :: oneMsg(:) ! data on communication
-     integer, allocatable :: request(:)          ! communication request
-     integer, allocatable :: otherProc(:)        ! MPI procs to communicate
+     private
+     ! A set of message passing operations in
+     ! one direction (send or recv):
+
+     character(len=64) :: name
+     ! message passing set name
+     integer :: nMsgs=-1
+     ! number of messages on the set,
+     ! one message for each other rank involved
+     ! in message passing with this rank
+     integer :: tag
+     ! same tag for all messages in the set; part
+     ! of message passing envelop
+     integer, allocatable :: request(:)
+     ! communication request; array of requests is
+     ! indexed by message number on the set; each
+     ! entry is part of message passing envelop
+     integer, allocatable :: otherProc(:)
+     ! MPI rank to communicate; array of ranks
+     ! is indexed by message number on the set; each
+     ! entry is part of message passing envelop
+     type(MessageData), allocatable :: msgData(:)
+     ! data to communicate at each message;
+     ! array of MessageData is indexed by message
+     ! number on the set. Each entry contains all message
+     ! data to exchange on a single message passing
+     ! operation
   end type MessageSet
 
-  logical, parameter :: dumpLocal=.false.
 
+  interface InsertFieldSectionAtSendRecvMessageSet
+     module procedure InsertFieldSectionAtSendRecvMessageSetFromVTab
+     module procedure InsertFieldSectionAtSendRecvMessageSet_2D
+     module procedure InsertFieldSectionAtSendRecvMessageSet_3D
+     module procedure InsertFieldSectionAtSendRecvMessageSet_4D
+  end interface InsertFieldSectionAtSendRecvMessageSet
+
+  interface InsertFieldSectionAtMessageSet
+     module procedure InsertFieldSectionAtMessageSetFromVTab
+     module procedure InsertFieldSectionAtMessageSet_2D  
+     module procedure InsertFieldSectionAtMessageSet_3D  
+     module procedure InsertFieldSectionAtMessageSet_4D
+  end interface InsertFieldSectionAtMessageSet
+
+  interface UpdateFieldAdress
+     module procedure UpdateFieldAdressAtMessageSet_2D
+     module procedure UpdateFieldAdressAtMessageSet_3D
+     module procedure UpdateFieldAdressAtMessageSet_4D
+  end interface UpdateFieldAdress
 contains
 
 
-  ! CreateMessageSet: Generates a variable of type MessageSet containing
-  !                   all message envelopes and no message data
-  !                   to be sent by this node to neighbour nodes or
-  !                   to be received by this node from neighbour nodes
-  !                   during the communication denoted by "name".
-  !                   Input includes "hasMsg", a logical array indexed by
-  !                   neighbour number that stores if a neighbour will or
-  !                   will not communicate with this node in this
-  !                   communication.
-  !                   Same tag should be used on send and recieve.
-  !                   Returning variable has as many messages as the number
-  !                   of true values in hasMsg. Arrays in returning variable
-  !                   are indexed by true value count, at range 1:nMsgs.
 
 
 
-  function CreateMessageSet (name, tag, hasMsg, Neigh) result(Msgs)
+  function CreateMessageSet (name, direction, tag, hasMsg, Neigh) result(Msgs)
+
+    ! Generates a variable of type MessageSet containing
+    ! all message envelopes and no message data
+    ! to be sent by this node to all neighbour nodes or
+    ! to be received by this node from all neighbour nodes
+    ! during the communication denoted by "name".
+    !
+    ! Input variable Neigh contains all neighbour ranks
+    ! that are neighbours to this node, and as so, may
+    ! be used on ghost zone update message exchange.
+    ! See ModNeighbourNodes for further information.
+    !
+    ! Input variable hasMsg stores if a neighbour node
+    ! will or will not communicate with this node in
+    ! this communication. Use of a neighbour node in a
+    ! communication depends on the field that requires
+    ! ghost zone update. 
+    !
+    ! Same tag should be used on send and recieve.
+    !
+    ! Input variable direction is just for dumping.
+    !
+    ! Returning variable has as many messages as the number
+    ! of true values in hasMsg. Arrays in returning variable
+    ! are indexed by true value count, at range 1:nMsgs.
+
     character(len=*), intent(in) :: name
+    character(len=*), intent(in) :: direction
     integer, intent(in) :: tag
     logical, intent(in) :: hasMsg(:)
-    type(NeighbourNodes), pointer :: Neigh
+    type(NeighbourNodes), pointer, intent(in) :: Neigh
     type(MessageSet), pointer :: Msgs
 
     character(len=8) :: c0, c1
@@ -101,9 +232,10 @@ contains
     integer :: nNeigh
     integer :: nMsgs
     integer :: iNeigh
+    integer :: ierr
     integer :: cntMsg
 
-    ! no message if no neighbours or no node has messages
+    ! no message if no neighbours or no message to exchange
 
     nNeigh = Neigh%nNeigh
     nMsgs = count(hasMsg)
@@ -114,10 +246,36 @@ contains
 
     ! there are messages: allocate area
 
-    allocate(Msgs)
-    allocate(Msgs%oneMsg(nMsgs))
-    allocate(Msgs%request(nMsgs))
-    allocate(Msgs%otherProc(nMsgs))
+    allocate(Msgs, stat=ierr)
+    if (ierr /= 0) then
+       write(c0,"(i8)") ierr
+       call fatal_error(h//" allocate Msgs fails with stat="//&
+            trim(adjustl(c0)))
+    end if
+
+    allocate(Msgs%msgData(nMsgs), stat=ierr)
+    if (ierr /= 0) then
+       write(c0,"(i8)") ierr
+       write(c1,"(i8)") nMsgs
+       call fatal_error(h//" allocate Msgs%msgData("//trim(adjustl(c1))//&
+            ") fails with stat="//trim(adjustl(c0)))
+    end if
+
+    allocate(Msgs%request(nMsgs), stat=ierr)
+    if (ierr /= 0) then
+       write(c0,"(i8)") ierr
+       write(c1,"(i8)") nMsgs
+       call fatal_error(h//" allocate Msgs%request("//trim(adjustl(c1))//&
+            ") fails with stat="//trim(adjustl(c0)))
+    end if
+
+    allocate(Msgs%otherProc(nMsgs), stat=ierr)
+    if (ierr /= 0) then
+       write(c0,"(i8)") ierr
+       write(c1,"(i8)") nMsgs
+       call fatal_error(h//" allocate Msgs%otherProc("//trim(adjustl(c1))//&
+            ") fails with stat="//trim(adjustl(c0)))
+    end if
 
     ! store basic info
 
@@ -133,10 +291,9 @@ contains
     do iNeigh = 1, nNeigh
        if (hasMsg(iNeigh)) then
           cntMsg = cntMsg + 1
-          Msgs%oneMsg(cntMsg)%bufSize=0
-          Msgs%oneMsg(cntMsg)%fieldList => CreateFieldSectionList()
           Msgs%request(cntMsg) = MPI_REQUEST_NULL
           Msgs%otherProc(cntMsg)= Brams2MpiProcNbr(Neigh%neigh(iNeigh))
+          call CreateMessageData(Msgs%msgData(cntMsg),name,direction)
        end if
     end do
 
@@ -150,50 +307,230 @@ contains
 
 
 
-  ! InsertFieldSectionAtMessageSet:
-  ! CreateMessageSet: Generates a variable of type MessageSet containing
-  !                   all message envelopes and no message data
-  !                   to be sent by this node to neighbour nodes or
-  !                   to be received by this node from neighbour nodes
-  !                   during the communication denoted by "name".
-  !                   Input includes "hasMsg", a logical array indexed by
-  !                   neighbour number that stores if a neighbour will or
-  !                   will not communicate with this node in this
-  !                   communication.
-  !                   Same tag should be used on send and recieve.
-  !                   Returning variable has as many messages as the number
-  !                   of true values in hasMsg. Arrays in returning variable
-  !                   are indexed by true value count, at range 1:nMsgs.
+
+
+  subroutine DestroyMessageSet (Msgs)
+
+    ! deallocate memory of a message set variable
+
+    type(MessageSet), pointer, intent(inout) :: Msgs
+
+    integer :: msg
+    integer :: ierr
+    character(len=8) :: c0
+    character(len=*), parameter :: h="**(DestroyMessageSet)**"
+
+    if (associated(Msgs)) then
+       do msg = 1, Msgs%nMsgs
+          call DestroyMessageData(Msgs%msgData(msg))
+       end do
+       deallocate(Msgs%msgData, stat=ierr)
+       if (ierr /= 0) then
+          write(c0,"(i8)") ierr
+          call fatal_error(h//" deallocate Msgs%msgData fails with stat="//&
+               trim(adjustl(c0)))
+       end if
+
+       deallocate(Msgs%request, stat=ierr)
+       if (ierr /= 0) then
+          write(c0,"(i8)") ierr
+          call fatal_error(h//" deallocate Msgs%request fails with stat="//&
+               trim(adjustl(c0)))
+       end if
+
+       deallocate(Msgs%otherProc, stat=ierr)
+       if (ierr /= 0) then
+          write(c0,"(i8)") ierr
+          call fatal_error(h//" deallocate Msgs%otherProc fails with stat="//&
+               trim(adjustl(c0)))
+       end if
+
+       deallocate(Msgs, stat=ierr)
+       if (ierr /= 0) then
+          write(c0,"(i8)") ierr
+          call fatal_error(h//" deallocate Msgs fails with stat="//&
+               trim(adjustl(c0)))
+       end if
+
+    end if
+    Msgs => null()
+  end subroutine DestroyMessageSet
 
 
 
-  subroutine InsertFieldSectionAtMessageSet(&
-       myNum, vTabPtr, Neigh, GlobalWithGhost, &
-       xbComm, xeComm, ybComm, yeComm, willComm, Msgs)
+
+
+  subroutine DumpMessageSet(Msgs)
+
+    ! dumps a message set variable
+
+    type(MessageSet), pointer, intent(in) :: Msgs
+
+    character(len=8) :: c0, c1, c2, c3, c4
+    character(len=*), parameter :: h="**(DumpMessageSet)**"
+    integer :: i
+
+    if (.not. associated(Msgs)) then
+       call MsgDump(h//" empty Message Set")
+    else
+       write(c0,"(i8)") Msgs%nMsgs
+       if (Msgs%tag == -1) then
+          c2="UNDEF"
+       else
+          write(c2,"(i8)") Msgs%tag
+       end if
+       call MsgDump(h//" "//trim(adjustl(Msgs%name))//&
+            " has "//trim(adjustl(c0))//" messages and tag "//&
+            trim(adjustl(c2)))
+       do i = 1, Msgs%nMsgs
+          write(c0,"(i8)") i
+          if (Msgs%otherProc(i) == -1) then
+             c1="UNDEF"
+          else
+             write(c1,"(i8)") Msgs%otherProc(i)
+          end if
+          if (Msgs%request(i) == MPI_REQUEST_NULL) then
+             c2="NULL"
+          else
+             write(c2,"(Z8)") Msgs%request(i)
+          end if
+          call MsgDump(h//" message number "//trim(adjustl(c0))//&
+               " to/from MPI node "//trim(adjustl(c1))//&
+               ", has request "//trim(adjustl(c2))//&
+               " and message data:")
+          call DumpMessageData(Msgs%msgData(i),h)
+       end do
+    end if
+  end subroutine DumpMessageSet
+
+
+
+  subroutine NodesRegionsSendRecv(&
+       nMachs, nNeigh, myNum, tag, &
+       Neigh, GlobalOwn, NameSend, NameRecv, &
+       xbToUpdate, xeToUpdate, ybToUpdate, yeToUpdate, &
+       xbSend, xeSend, ybSend, yeSend, willSend, SendMessageSet, &
+       xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvMessageSet)
+
+    integer, intent(in) :: nMachs
+    integer, intent(in) :: nNeigh
+    integer, intent(in) :: myNum
+    integer, intent(in) :: tag
+    type(NeighbourNodes), pointer, intent(in) :: Neigh
+    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
+    character(len=*), intent(in) :: NameSend
+    character(len=*), intent(in) :: NameRecv
+    ! global indices to update at each rank
+    integer, intent(in) :: xbToUpdate(nMachs)
+    integer, intent(in) :: xeToUpdate(nMachs)
+    integer, intent(in) :: ybToUpdate(nMachs)
+    integer, intent(in) :: yeToUpdate(nMachs)
+    ! this rank will send messages to which neighbours
+    logical, intent(out) :: willSend(nNeigh)
+    ! this rank will send this rectangular region to each neighbour
+    integer, intent(out) :: xbSend(nNeigh)
+    integer, intent(out) :: xeSend(nNeigh)
+    integer, intent(out) :: ybSend(nNeigh)
+    integer, intent(out) :: yeSend(nNeigh)
+    ! send message set
+    type(MessageSet), pointer, intent(inout) :: SendMessageSet
+    ! this rank will recv messsages from which neighbours
+    logical, intent(out) :: willRecv(nNeigh)
+    ! this rank will recv this rectangular region from each neighbour
+    integer, intent(out) :: xbRecv(nNeigh)
+    integer, intent(out) :: xeRecv(nNeigh)
+    integer, intent(out) :: ybRecv(nNeigh)
+    integer, intent(out) :: yeRecv(nNeigh)
+    ! recv message set
+    type(MessageSet), pointer, intent(inout) :: RecvMessageSet
+
+    character(len=*), parameter :: h="**(NodesRegionsSendRecv)**"
+    logical, parameter :: dumpLocal=.false.
+
+    if (dumpLocal) then
+       call MsgDump(h// "starts")
+    end if
+
+    ! which neighbour nodes will send and receive
+
+    call NodesToSendRecvMessages(myNum, Neigh, GlobalOwn, &
+         xbToUpdate, xeToUpdate, ybToUpdate, yeToUpdate, &
+         xbSend, xeSend, ybSend, yeSend, willSend, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, &
+         trim(adjustl(NameSend))//trim(adjustl(NameRecv)))
+
+    ! build message set
+
+    SendMessageSet => CreateMessageSet(&
+         NameSend, &
+         sendDirection, &
+         tag, &
+         willSend, &
+         Neigh)
+    RecvMessageSet => CreateMessageSet(&
+         NameRecv, &
+         recvDirection, &
+         tag, &
+         willRecv, &
+         Neigh)
+
+    if (dumpLocal) then
+       call MsgDump(h//" finishes creating Message Sets:")
+       call DumpMessageSet(SendMessageSet)
+       call DumpMessageSet(RecvMessageSet)
+    end if
+  end subroutine NodesRegionsSendRecv
+
+
+
+  subroutine InsertFieldSectionAtMessageSetFromVTab(&
+       myNum, vTabPtr, nNeigh, GlobalWithGhost, &
+       xbComm, xeComm, ybComm, yeComm, willComm, &
+       Msgs)
+
+    ! Inserts a section of a field to be communicated
+    ! on a MessageSet variable
+
+    ! mynum is this BRAMS process number;
+    ! It sends data on a send MessageSet variable or
+    ! it receives data on a receive MessageSet variable
 
     integer, intent(in) :: myNum
-    type(var_tables_r), pointer :: vTabPtr         ! intent(in)
-    type(ParallelEnvironment), pointer :: ParEnv   ! intent(in)
-    type(NeighbourNodes), pointer :: Neigh         ! intent(in)
-    type(DomainDecomp), pointer :: GlobalWithGhost ! intent(in)
 
-    ! all remaining arguments are dimensioned by number of neighbours
-    ! and indexed by neighbour number
+    type(var_tables_r), pointer, intent(in) :: vTabPtr
 
-    ! region to be sent to each neighbour (global indices)
+    ! nNeigh is number of processes for potential communication
+
+    integer, intent(in) :: nNeigh
+
+    ! Global indices of domain partition with Ghost Zones
+
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+
+    ! all remaining arguments are dimensioned by nNeigh
+
+    ! global indices of the region of this process field
+    ! to be sent on a send MessageSet variable or to be received
+    ! on a receive MessageSet variable;
+    ! The arrays of global indices have the same size of the Neigh
+    ! array (number of processes to communicate) and are indexed
+    ! accordingly
 
     integer, intent(in) :: xbComm(:)
     integer, intent(in) :: xeComm(:)
     integer, intent(in) :: ybComm(:)
     integer, intent(in) :: yeComm(:)
 
-    ! which neighbours will receive msgs from this node
+    ! which neighbours (BRAMS process number) will
+    ! receive msgs from this node on a send MessageSet variable
+    ! or will send msgs to this node on a receive Message set
+    ! variable
 
     logical, intent(in) :: willComm(:)
 
-    ! potential sending message data
+    ! MessageSet variable to be updated by field section inclusion
 
-    type(MessageSet), pointer :: Msgs
+    type(MessageSet), pointer, intent(inout) :: Msgs
 
     integer :: nMsgs
     integer :: x0, y0
@@ -201,14 +538,12 @@ contains
     integer :: iNeigh
     type(FieldSection), pointer :: oneFieldSection
     character(len=8) :: c0
-    character(len=*), parameter :: h="**(InsertFieldSectionAtMessageSet)**"
-
+    character(len=*), parameter :: h="**(InsertFieldSectionAtMessageSetFromVTab)**"
+    real, pointer :: PNull(:,:) => null()
     ! check arguments
 
     if (.not. associated(vTabPtr)) then
        call fatal_error(h//" vTabPtr not associated")
-    else if (.not. associated(Neigh)) then
-       call fatal_error(h//" Neigh not associated")
     else if (.not. associated(GlobalWithGhost)) then
        call fatal_error(h//" GlobalWithGhost not associated")
     end if
@@ -216,7 +551,6 @@ contains
     ! return if no messages to send
 
     if (.not. associated(Msgs)) then
-       !print *,'Msgs not associated, return!'; call flush(6)
        return
     end if
     nMsgs = Msgs%nMsgs
@@ -226,10 +560,12 @@ contains
     x0 = GlobalWithGhost%xb(myNum) - 1
     y0 = GlobalWithGhost%yb(myNum) - 1
 
-    ! create list of Field Sections to communicate
+    ! create list of Field Sections to communicate, one for
+    ! each process to communicate and insert at this MessageSet
+    ! field section list
 
     cntMsg = 0
-    do iNeigh = 1, Neigh%nNeigh
+    do iNeigh = 1, nNeigh
        if (willComm(iNeigh)) then
           cntMsg = cntMsg + 1
           if (cntMsg > nMsgs) then
@@ -239,300 +575,2604 @@ contains
                   trim(adjustl(vTabPtr%name))//&
                   " at message "//trim(adjustl(Msgs%name)))
           end if
-          oneFieldSection =>  CreateFieldSection(&
-               vTabPtr, &
-               xbComm(iNeigh)-x0, xeComm(iNeigh)-x0, &
-               ybComm(iNeigh)-y0, yeComm(iNeigh)-y0, &
-               GlobalWithGhost)
-          call InsertAtFieldSectionList(&
-               oneFieldSection, &
-               Msgs%oneMsg(cntMsg)%fieldList)
-          Msgs%oneMsg(cntMsg)%bufSize = Msgs%oneMsg(cntMsg)%bufSize + &
-               oneFieldSection%fieldSectionSize
+
+          select case (vTabPtr%idim_type)
+          case (2)
+             oneFieldSection =>  CreateFieldSection(&
+                  vTabPtr%var_p_2D, &
+                  vTabPtr%name, &
+                  vTabPtr%idim_type, &
+                  xbComm(iNeigh)-x0, xeComm(iNeigh)-x0, &
+                  ybComm(iNeigh)-y0, yeComm(iNeigh)-y0)
+          case (3,6,7)
+             oneFieldSection =>  CreateFieldSection(&
+                  vTabPtr%var_p_3D, &
+                  vTabPtr%name, &
+                  vTabPtr%idim_type, &
+                  xbComm(iNeigh)-x0, xeComm(iNeigh)-x0, &
+                  ybComm(iNeigh)-y0, yeComm(iNeigh)-y0)
+          case (4,5)
+             oneFieldSection =>  CreateFieldSection(&
+                  vTabPtr%var_p_4D, &
+                  vTabPtr%name, &
+                  vTabPtr%idim_type, &
+                  xbComm(iNeigh)-x0, xeComm(iNeigh)-x0, &
+                  ybComm(iNeigh)-y0, yeComm(iNeigh)-y0)
+          case default
+             write(c0,"(i8)") vTabPtr%idim_type
+             call fatal_error(h//" unknown idim_type="//trim(adjustl(c0)))
+          end select
+          call AppendFieldSectionToMessageData(oneFieldSection, Msgs%msgData(cntMsg))
        end if
     end do
-  end subroutine InsertFieldSectionAtMessageSet
+  end subroutine InsertFieldSectionAtMessageSetFromVTab
 
 
 
 
-  subroutine DumpMessageSet(Msgs)
-    type(MessageSet), pointer :: Msgs
 
-    character(len=8) :: c0, c1, c2, c3, c4
-    character(len=*), parameter :: h="**(DumpMessageSet)**"
-    integer :: i
+  subroutine InsertFieldSectionAtMessageSet_2D(&
+       myNum, field, fieldName, idim_type, nNeigh, GlobalWithGhost, &
+       xbComm, xeComm, ybComm, yeComm, willComm, &
+       Msgs)
+
+    ! Inserts a section of a field to be communicated
+    ! on a MessageSet variable
+
+    ! mynum is this BRAMS process number;
+    ! It sends data on a send MessageSet variable or
+    ! it receives data on a receive MessageSet variable
+
+    integer, intent(in) :: myNum
+
+    ! field memory address
+
+    real, pointer, intent(in) :: field(:,:)
+
+    ! field name
+
+    character(len=*), intent(in) :: fieldName
+
+    ! idim_type codes the remained dimensions to communicate 
+
+    integer, intent(in) :: idim_type
+
+    ! nNeigh is number of processes for potential communication
+
+    integer, intent(in) :: nNeigh
+
+    ! Global indices of domain partition with Ghost Zones
+
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+
+    ! all remaining arguments are dimensioned by nNeigh
+
+    ! global indices of the region of this process field
+    ! to be sent on a send MessageSet variable or to be received
+    ! on a receive MessageSet variable;
+    ! The arrays of global indices have the same size of the Neigh
+    ! array (number of processes to communicate) and are indexed
+    ! accordingly
+
+    integer, intent(in) :: xbComm(:)
+    integer, intent(in) :: xeComm(:)
+    integer, intent(in) :: ybComm(:)
+    integer, intent(in) :: yeComm(:)
+
+    ! which neighbours (BRAMS process number) will
+    ! receive msgs from this node on a send MessageSet variable
+    ! or will send msgs to this node on a receive Message set
+    ! variable
+
+    logical, intent(in) :: willComm(:)
+
+    ! MessageSet variable to be updated by field section inclusion
+
+    type(MessageSet), pointer, intent(inout) :: Msgs
+
+    integer :: nMsgs
+    integer :: x0, y0
+    integer :: cntMsg
+    integer :: iNeigh
+    type(FieldSection), pointer :: oneFieldSection
+    character(len=8) :: c0
+    character(len=*), parameter :: h="**(InsertFieldSectionAtMessageSet_2D)**"
+    real, pointer :: PNull(:,:) => null()
+    ! check arguments
+
+    if (.not. associated(GlobalWithGhost)) then
+       call fatal_error(h//" GlobalWithGhost not associated")
+    end if
+
+    ! return if no messages to send
 
     if (.not. associated(Msgs)) then
-       call MsgDump(h//" empty messages")
-    else
-       write(c0,"(i8)") Msgs%nMsgs
-       if (Msgs%tag == UNDEFINED) then
-          c2="UNDEF"
-       else
-          write(c2,"(i8)") Msgs%tag
+       return
+    end if
+    nMsgs = Msgs%nMsgs
+
+    ! offsets to convert global indices to local indices at this proc
+
+    x0 = GlobalWithGhost%xb(myNum) - 1
+    y0 = GlobalWithGhost%yb(myNum) - 1
+
+    ! create list of Field Sections to communicate, one for
+    ! each process to communicate and insert at this MessageSet
+    ! field section list
+
+    cntMsg = 0
+    do iNeigh = 1, nNeigh
+       if (willComm(iNeigh)) then
+          cntMsg = cntMsg + 1
+          if (cntMsg > nMsgs) then
+             write(c0,"(i8)") nMsgs
+             call fatal_error(h//" nMsgs ("//&
+                  trim(adjustl(c0))//") exceeded while inserting field "//&
+                  trim(adjustl(fieldName))//&
+                  " at message "//trim(adjustl(Msgs%name)))
+          end if
+
+          select case (idim_type)
+          case (2)
+             oneFieldSection =>  CreateFieldSection(&
+                  field, &
+                  fieldName, &
+                  idim_type, &
+                  xbComm(iNeigh)-x0, xeComm(iNeigh)-x0, &
+                  ybComm(iNeigh)-y0, yeComm(iNeigh)-y0)
+          case default
+             write(c0,"(i8)") idim_type
+             call fatal_error(h//" idim_type ("//trim(adjustl(c0))//&
+                  ") incompatible with a 2D field")
+          end select
+          call AppendFieldSectionToMessageData(oneFieldSection, Msgs%msgData(cntMsg))
        end if
-       call MsgDump(h//" named "//trim(adjustl(Msgs%name))//&
-            " with "//trim(adjustl(c0))//" messages and tag "//&
-            trim(adjustl(c2)))
-       do i = 1, Msgs%nMsgs
-          write(c0,"(i8)") i
-          if (Msgs%otherProc(i) == UNDEFINED) then
-             c1="UNDEF"
-          else
-             write(c1,"(i8)") Mpi2BramsProcNbr(Msgs%otherProc(i))
-          end if
-          if (Msgs%oneMsg(i)%bufSize == UNDEFINED) then
-             c3="UNDEF"
-          else
-             write(c3,"(i8)") Msgs%oneMsg(i)%bufSize
-          end if
-          if (Msgs%request(i) == MPI_REQUEST_NULL) then
-             c4="NULL"
-          else
-             write(c4,"(Z8)") Msgs%request(i)
-          end if
-          call MsgDump(h//" message "//trim(adjustl(c0))//&
-               " to/from node "//trim(adjustl(c1))//&
-               ", request "//trim(adjustl(c4))//&
-               ", size "//trim(adjustl(c3))//&
-               " and field sections:")
-          call DumpFieldSectionList(Msgs%oneMsg(i)%fieldList)
-       end do
-    end if
-  end subroutine DumpMessageSet
+    end do
+  end subroutine InsertFieldSectionAtMessageSet_2D
 
 
 
 
 
-  subroutine DestroyMessageSet (Msgs)
-    type(MessageSet), pointer :: Msgs
+  subroutine InsertFieldSectionAtMessageSet_3D(&
+       myNum, field, fieldName, idim_type, nNeigh, GlobalWithGhost, &
+       xbComm, xeComm, ybComm, yeComm, willComm, &
+       Msgs)
 
-    integer :: msg
+    ! Inserts a section of a field to be communicated
+    ! on a MessageSet variable
+
+    ! mynum is this BRAMS process number;
+    ! It sends data on a send MessageSet variable or
+    ! it receives data on a receive MessageSet variable
+
+    integer, intent(in) :: myNum
+
+    ! field memory address
+
+    real, pointer, intent(in) :: field(:,:,:)
+
+    ! field name
+
+    character(len=*), intent(in) :: fieldName
+
+    ! idim_type codes the remained dimensions to communicate 
+
+    integer, intent(in) :: idim_type
+
+    ! nNeigh is number of processes for potential communication
+
+    integer, intent(in) :: nNeigh
+
+    ! Global indices of domain partition with Ghost Zones
+
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+
+    ! all remaining arguments are dimensioned by nNeigh
+
+    ! global indices of the region of this process field
+    ! to be sent on a send MessageSet variable or to be received
+    ! on a receive MessageSet variable;
+    ! The arrays of global indices have the same size of the Neigh
+    ! array (number of processes to communicate) and are indexed
+    ! accordingly
+
+    integer, intent(in) :: xbComm(:)
+    integer, intent(in) :: xeComm(:)
+    integer, intent(in) :: ybComm(:)
+    integer, intent(in) :: yeComm(:)
+
+    ! which neighbours (BRAMS process number) will
+    ! receive msgs from this node on a send MessageSet variable
+    ! or will send msgs to this node on a receive Message set
+    ! variable
+
+    logical, intent(in) :: willComm(:)
+
+    ! MessageSet variable to be updated by field section inclusion
+
+    type(MessageSet), pointer, intent(inout) :: Msgs
+
+    integer :: nMsgs
+    integer :: x0, y0
+    integer :: cntMsg
+    integer :: iNeigh
+    type(FieldSection), pointer :: oneFieldSection
     character(len=8) :: c0
-    character(len=*), parameter :: h="**(DestroyMessageSet)**"
+    character(len=*), parameter :: h="**(InsertFieldSectionAtMessageSet_3D)**"
+    real, pointer :: PNull(:,:) => null()
+    ! check arguments
 
-    if (associated(Msgs)) then
-       do msg = 1, Msgs%nMsgs
-          call DestroyMessageData(Msgs%oneMsg(msg))
-       end do
-       deallocate(Msgs%oneMsg)
-       deallocate(Msgs%request)
-       deallocate(Msgs%otherProc)
-       deallocate(Msgs)
+    if (.not. associated(GlobalWithGhost)) then
+       call fatal_error(h//" GlobalWithGhost not associated")
     end if
-    Msgs => null()
-  end subroutine DestroyMessageSet
+
+    ! return if no messages to send
+
+    if (.not. associated(Msgs)) then
+       return
+    end if
+    nMsgs = Msgs%nMsgs
+
+    ! offsets to convert global indices to local indices at this proc
+
+    x0 = GlobalWithGhost%xb(myNum) - 1
+    y0 = GlobalWithGhost%yb(myNum) - 1
+
+    ! create list of Field Sections to communicate, one for
+    ! each process to communicate and insert at this MessageSet
+    ! field section list
+
+    cntMsg = 0
+    do iNeigh = 1, nNeigh
+       if (willComm(iNeigh)) then
+          cntMsg = cntMsg + 1
+          if (cntMsg > nMsgs) then
+             write(c0,"(i8)") nMsgs
+             call fatal_error(h//" nMsgs ("//&
+                  trim(adjustl(c0))//") exceeded while inserting field "//&
+                  trim(adjustl(fieldName))//&
+                  " at message "//trim(adjustl(Msgs%name)))
+          end if
+
+          select case (idim_type)
+          case (3,6,7)
+             oneFieldSection =>  CreateFieldSection(&
+                  field, &
+                  fieldName, &
+                  idim_type, &
+                  xbComm(iNeigh)-x0, xeComm(iNeigh)-x0, &
+                  ybComm(iNeigh)-y0, yeComm(iNeigh)-y0)
+          case default
+             write(c0,"(i8)") idim_type
+             call fatal_error(h//" idim_type ("//trim(adjustl(c0))//&
+                  ") incompatible with a 2D field")
+          end select
+          call AppendFieldSectionToMessageData(oneFieldSection, Msgs%msgData(cntMsg))
+       end if
+    end do
+  end subroutine InsertFieldSectionAtMessageSet_3D
 
 
 
 
-  subroutine PostRecvSendMsgs(SendMsg, RecvMsg)
-    type(MessageSet), pointer :: SendMsg
-    type(MessageSet), pointer :: RecvMsg
+  subroutine InsertFieldSectionAtMessageSet_4D(&
+       myNum, field, fieldName, idim_type, nNeigh, GlobalWithGhost, &
+       xbComm, xeComm, ybComm, yeComm, willComm, &
+       Msgs)
+
+    ! Inserts a section of a field to be communicated
+    ! on a MessageSet variable
+
+    ! mynum is this BRAMS process number;
+    ! It sends data on a send MessageSet variable or
+    ! it receives data on a receive MessageSet variable
+
+    integer, intent(in) :: myNum
+
+    ! field memory address
+
+    real, pointer, intent(in) :: field(:,:,:,:)
+
+    ! field name
+
+    character(len=*), intent(in) :: fieldName
+
+    ! idim_type codes the remained dimensions to communicate 
+
+    integer, intent(in) :: idim_type
+
+    ! nNeigh is number of processes for potential communication
+
+    integer, intent(in) :: nNeigh
+
+    ! Global indices of domain partition with Ghost Zones
+
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+
+    ! all remaining arguments are dimensioned by nNeigh
+
+    ! global indices of the region of this process field
+    ! to be sent on a send MessageSet variable or to be received
+    ! on a receive MessageSet variable;
+    ! The arrays of global indices have the same size of the Neigh
+    ! array (number of processes to communicate) and are indexed
+    ! accordingly
+
+    integer, intent(in) :: xbComm(:)
+    integer, intent(in) :: xeComm(:)
+    integer, intent(in) :: ybComm(:)
+    integer, intent(in) :: yeComm(:)
+
+    ! which neighbours (BRAMS process number) will
+    ! receive msgs from this node on a send MessageSet variable
+    ! or will send msgs to this node on a receive Message set
+    ! variable
+
+    logical, intent(in) :: willComm(:)
+
+    ! MessageSet variable to be updated by field section inclusion
+
+    type(MessageSet), pointer, intent(inout) :: Msgs
+
+    integer :: nMsgs
+    integer :: x0, y0
+    integer :: cntMsg
+    integer :: iNeigh
+    type(FieldSection), pointer :: oneFieldSection
+    character(len=8) :: c0
+    character(len=*), parameter :: h="**(InsertFieldSectionAtMessageSet_4D)**"
+    real, pointer :: PNull(:,:) => null()
+    ! check arguments
+
+    if (.not. associated(GlobalWithGhost)) then
+       call fatal_error(h//" GlobalWithGhost not associated")
+    end if
+
+    ! return if no messages to send
+
+    if (.not. associated(Msgs)) then
+       return
+    end if
+    nMsgs = Msgs%nMsgs
+
+    ! offsets to convert global indices to local indices at this proc
+
+    x0 = GlobalWithGhost%xb(myNum) - 1
+    y0 = GlobalWithGhost%yb(myNum) - 1
+
+    ! create list of Field Sections to communicate, one for
+    ! each process to communicate and insert at this MessageSet
+    ! field section list
+
+    cntMsg = 0
+    do iNeigh = 1, nNeigh
+       if (willComm(iNeigh)) then
+          cntMsg = cntMsg + 1
+          if (cntMsg > nMsgs) then
+             write(c0,"(i8)") nMsgs
+             call fatal_error(h//" nMsgs ("//&
+                  trim(adjustl(c0))//") exceeded while inserting field "//&
+                  trim(adjustl(fieldName))//&
+                  " at message "//trim(adjustl(Msgs%name)))
+          end if
+
+          select case (idim_type)
+          case (4,5)
+             oneFieldSection =>  CreateFieldSection(&
+                  field, &
+                  fieldName, &
+                  idim_type, &
+                  xbComm(iNeigh)-x0, xeComm(iNeigh)-x0, &
+                  ybComm(iNeigh)-y0, yeComm(iNeigh)-y0)
+          case default
+             write(c0,"(i8)") idim_type
+             call fatal_error(h//" idim_type ("//trim(adjustl(c0))//&
+                  ") incompatible with a 2D field")
+          end select
+          call AppendFieldSectionToMessageData(oneFieldSection, Msgs%msgData(cntMsg))
+       end if
+    end do
+  end subroutine InsertFieldSectionAtMessageSet_4D
+
+
+
+  subroutine InsertFieldSectionAtSendRecvMessageSetFromVTab(&
+       varName, myNum, nNeigh, gridId, GlobalWithGhost, &
+       xbSend, xeSend, ybSend, yeSend, willSend, SendMessageSet, &
+       xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvMessageSet)
+
+    ! Inserts a section of a field to be communicated
+    ! on a MessageSet variable
+
+    character(len=*), intent(in) :: varName
+
+    ! mynum is this BRAMS process number;
+    ! It sends data on a send MessageSet variable or
+    ! it receives data on a receive MessageSet variable
+
+    integer, intent(in) :: myNum
+
+    ! nNeigh is the number of processes for potential communication
+
+    integer, intent(in) :: nNeigh
+
+    ! gridId is this grid number (required while vTabPtr is not included in type(Grid)
+
+    integer, intent(in) :: gridId
+
+    ! Global indices of domain partition with Ghost Zones
+
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+
+    ! this rank will send this rectangular region to each neighbour
+    integer, intent(in) :: xbSend(nNeigh)
+    integer, intent(in) :: xeSend(nNeigh)
+    integer, intent(in) :: ybSend(nNeigh)
+    integer, intent(in) :: yeSend(nNeigh)
+
+    ! this rank will send messages to which neighbours
+    logical, intent(in) :: willSend(nNeigh)
+
+    ! send message set
+    type(MessageSet), pointer, intent(inout) :: SendMessageSet
+
+    ! this rank will recv messsages from which neighbours
+    logical, intent(in) :: willRecv(nNeigh)
+
+    ! this rank will recv this rectangular region from each neighbour
+    integer, intent(in) :: xbRecv(nNeigh)
+    integer, intent(in) :: xeRecv(nNeigh)
+    integer, intent(in) :: ybRecv(nNeigh)
+    integer, intent(in) :: yeRecv(nNeigh)
+
+    ! recv message set
+    type(MessageSet), pointer, intent(inout) :: RecvMessageSet
+
+
+    type(var_tables_r), pointer :: vTabPtr => null()
+
+    character(len=*), parameter :: h="**(InsertFieldSectionAtSendRecvMessageSetFromVTab)**"
+
+    ! check arguments
+
+    if (.not. associated(GlobalWithGhost)) then
+       call fatal_error(h//" GlobalWithGhost not associated")
+    end if
+
+    call GetVTabEntry(trim(varName), gridId, vTabPtr)
+
+    ! include vTab field on field sections to be sent and received
+
+    call InsertFieldSectionAtMessageSet(&
+         myNum, vTabPtr, nNeigh, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, SendMessageSet)
+    call InsertFieldSectionAtMessageSet(&
+         myNum, vTabPtr, nNeigh, GlobalWithGhost, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvMessageSet)
+  end subroutine InsertFieldSectionAtSendRecvMessageSetFromVTab
+
+
+
+
+  subroutine InsertFieldSectionAtSendRecvMessageSet_2D(&
+       field, fieldName, idim_type, myNum, nNeigh, GlobalWithGhost, &
+       xbSend, xeSend, ybSend, yeSend, willSend, SendMessageSet, &
+       xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvMessageSet)
+
+    ! Inserts a section of a field to be communicated
+    ! on a MessageSet variable
+
+    ! field memory address
+
+    real, pointer, intent(in) :: field(:,:)
+
+    ! field name
+
+    character(len=*), intent(in) :: fieldName
+
+    ! idim_type codes the remained dimensions to communicate 
+
+    integer, intent(in) :: idim_type
+
+    ! mynum is this BRAMS process number;
+    ! It sends data on a send MessageSet variable or
+    ! it receives data on a receive MessageSet variable
+
+    integer, intent(in) :: myNum
+
+    ! nNeigh is the number of processes for potential communication
+
+    integer, intent(in) :: nNeigh
+
+    ! Global indices of domain partition with Ghost Zones
+
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+
+    ! this rank will send this rectangular region to each neighbour
+    integer, intent(in) :: xbSend(nNeigh)
+    integer, intent(in) :: xeSend(nNeigh)
+    integer, intent(in) :: ybSend(nNeigh)
+    integer, intent(in) :: yeSend(nNeigh)
+
+    ! this rank will send messages to which neighbours
+    logical, intent(in) :: willSend(nNeigh)
+
+    ! send message set
+    type(MessageSet), pointer, intent(inout) :: SendMessageSet
+
+    ! this rank will recv messsages from which neighbours
+    logical, intent(in) :: willRecv(nNeigh)
+
+    ! this rank will recv this rectangular region from each neighbour
+    integer, intent(in) :: xbRecv(nNeigh)
+    integer, intent(in) :: xeRecv(nNeigh)
+    integer, intent(in) :: ybRecv(nNeigh)
+    integer, intent(in) :: yeRecv(nNeigh)
+
+    ! recv message set
+    type(MessageSet), pointer, intent(inout) :: RecvMessageSet
+
+    character(len=*), parameter :: h="**(InsertFieldSectionAtSendRecvMessageSet_2D)**"
+
+    ! check arguments
+
+    if (.not. associated(GlobalWithGhost)) then
+       call fatal_error(h//" GlobalWithGhost not associated")
+    end if
+
+    ! include field on field sections to be sent and received
+
+    call InsertFieldSectionAtMessageSet(&
+         myNum, field, fieldName, idim_type, nNeigh, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, SendMessageSet)
+    call InsertFieldSectionAtMessageSet(&
+         myNum, field, fieldName, idim_type, nNeigh, GlobalWithGhost, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvMessageSet)
+  end subroutine InsertFieldSectionAtSendRecvMessageSet_2D
+
+
+
+
+
+  subroutine InsertFieldSectionAtSendRecvMessageSet_3D(&
+       field, fieldName, idim_type, myNum, nNeigh, GlobalWithGhost, &
+       xbSend, xeSend, ybSend, yeSend, willSend, SendMessageSet, &
+       xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvMessageSet)
+
+    ! Inserts a section of a field to be communicated
+    ! on a MessageSet variable
+
+    ! field memory address
+
+    real, pointer, intent(in) :: field(:,:,:)
+
+    ! field name
+
+    character(len=*), intent(in) :: fieldName
+
+    ! idim_type codes the remained dimensions to communicate 
+
+    integer, intent(in) :: idim_type
+
+    ! mynum is this BRAMS process number;
+    ! It sends data on a send MessageSet variable or
+    ! it receives data on a receive MessageSet variable
+
+    integer, intent(in) :: myNum
+
+    ! nNeigh is the number of processes for potential communication
+
+    integer, intent(in) :: nNeigh
+
+    ! Global indices of domain partition with Ghost Zones
+
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+
+    ! this rank will send this rectangular region to each neighbour
+    integer, intent(in) :: xbSend(nNeigh)
+    integer, intent(in) :: xeSend(nNeigh)
+    integer, intent(in) :: ybSend(nNeigh)
+    integer, intent(in) :: yeSend(nNeigh)
+
+    ! this rank will send messages to which neighbours
+    logical, intent(in) :: willSend(nNeigh)
+
+    ! send message set
+    type(MessageSet), pointer, intent(inout) :: SendMessageSet
+
+    ! this rank will recv messsages from which neighbours
+    logical, intent(in) :: willRecv(nNeigh)
+
+    ! this rank will recv this rectangular region from each neighbour
+    integer, intent(in) :: xbRecv(nNeigh)
+    integer, intent(in) :: xeRecv(nNeigh)
+    integer, intent(in) :: ybRecv(nNeigh)
+    integer, intent(in) :: yeRecv(nNeigh)
+
+    ! recv message set
+    type(MessageSet), pointer, intent(inout) :: RecvMessageSet
+
+    character(len=*), parameter :: h="**(InsertFieldSectionAtSendRecvMessageSet_3D)**"
+
+    ! check arguments
+
+    if (.not. associated(GlobalWithGhost)) then
+       call fatal_error(h//" GlobalWithGhost not associated")
+    end if
+
+    ! include field on field sections to be sent and received
+
+    call InsertFieldSectionAtMessageSet(&
+         myNum, field, fieldName, idim_type, nNeigh, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, SendMessageSet)
+    call InsertFieldSectionAtMessageSet(&
+         myNum, field, fieldName, idim_type, nNeigh, GlobalWithGhost, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvMessageSet)
+  end subroutine InsertFieldSectionAtSendRecvMessageSet_3D
+
+
+
+
+
+  subroutine InsertFieldSectionAtSendRecvMessageSet_4D(&
+       field, fieldName, idim_type, myNum, nNeigh, GlobalWithGhost, &
+       xbSend, xeSend, ybSend, yeSend, willSend, SendMessageSet, &
+       xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvMessageSet)
+
+    ! Inserts a section of a field to be communicated
+    ! on a MessageSet variable
+
+    ! field memory address
+
+    real, pointer, intent(in) :: field(:,:,:,:)
+
+    ! field name
+
+    character(len=*), intent(in) :: fieldName
+
+    ! idim_type codes the remained dimensions to communicate 
+
+    integer, intent(in) :: idim_type
+
+    ! mynum is this BRAMS process number;
+    ! It sends data on a send MessageSet variable or
+    ! it receives data on a receive MessageSet variable
+
+    integer, intent(in) :: myNum
+
+    ! nNeigh is the number of processes for potential communication
+
+    integer, intent(in) :: nNeigh
+
+    ! Global indices of domain partition with Ghost Zones
+
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+
+    ! this rank will send this rectangular region to each neighbour
+    integer, intent(in) :: xbSend(nNeigh)
+    integer, intent(in) :: xeSend(nNeigh)
+    integer, intent(in) :: ybSend(nNeigh)
+    integer, intent(in) :: yeSend(nNeigh)
+
+    ! this rank will send messages to which neighbours
+    logical, intent(in) :: willSend(nNeigh)
+
+    ! send message set
+    type(MessageSet), pointer, intent(inout) :: SendMessageSet
+
+    ! this rank will recv messsages from which neighbours
+    logical, intent(in) :: willRecv(nNeigh)
+
+    ! this rank will recv this rectangular region from each neighbour
+    integer, intent(in) :: xbRecv(nNeigh)
+    integer, intent(in) :: xeRecv(nNeigh)
+    integer, intent(in) :: ybRecv(nNeigh)
+    integer, intent(in) :: yeRecv(nNeigh)
+
+    ! recv message set
+    type(MessageSet), pointer, intent(inout) :: RecvMessageSet
+
+    character(len=*), parameter :: h="**(InsertFieldSectionAtSendRecvMessageSet_4D)**"
+
+    ! check arguments
+
+    if (.not. associated(GlobalWithGhost)) then
+       call fatal_error(h//" GlobalWithGhost not associated")
+    end if
+
+    ! include field on field sections to be sent and received
+
+    call InsertFieldSectionAtMessageSet(&
+         myNum, field, fieldName, idim_type, nNeigh, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, SendMessageSet)
+    call InsertFieldSectionAtMessageSet(&
+         myNum, field, fieldName, idim_type, nNeigh, GlobalWithGhost, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvMessageSet)
+  end subroutine InsertFieldSectionAtSendRecvMessageSet_4D
+
+
+
+
+
+  subroutine CreateAcousticMessageSet(&
+       gridId, GridSize, ParEnv, Neigh, &
+       GlobalOwn, &
+       GlobalOwnWithBC, &
+       GlobalWithGhost, &
+       AcouSendU, AcouRecvU, TagU, &
+       AcouSendV, AcouRecvV, TagV, &
+       AcouSendPNorth, AcouRecvPNorth, TagPNorth, &
+       AcouSendPEast, AcouRecvPEast, TagPEast, &
+       AcouSendUV, AcouRecvUV, TagUV, &
+       AcouSendWP, AcouRecvWP, TagWP)
+
+    integer, intent(in) :: gridId
+    type(GridDims), pointer, intent(in) :: GridSize
+    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+    type(NeighbourNodes), pointer, intent(in) :: Neigh
+    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
+    type(DomainDecomp), pointer, intent(in) :: GlobalOwnWithBC
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+    type(MessageSet), pointer, intent(inout) :: AcouSendU
+    type(MessageSet), pointer, intent(inout) :: AcouRecvU
+    type(MessageSet), pointer, intent(inout) :: AcouSendV
+    type(MessageSet), pointer, intent(inout) :: AcouRecvV
+    type(MessageSet), pointer, intent(inout) :: AcouSendPNorth
+    type(MessageSet), pointer, intent(inout) :: AcouRecvPNorth
+    type(MessageSet), pointer, intent(inout) :: AcouSendPEast
+    type(MessageSet), pointer, intent(inout) :: AcouRecvPEast
+    type(MessageSet), pointer, intent(inout) :: AcouSendUV
+    type(MessageSet), pointer, intent(inout) :: AcouRecvUV
+    type(MessageSet), pointer, intent(inout) :: AcouSendWP
+    type(MessageSet), pointer, intent(inout) :: AcouRecvWP
+    integer, intent(in) :: TagU
+    integer, intent(in) :: TagV
+    integer, intent(in) :: TagPNorth
+    integer, intent(in) :: TagPEast
+    integer, intent(in) :: TagUV
+    integer, intent(in) :: TagWP
+
+    integer :: nMachs
+    integer :: myNum
+    integer :: nNeigh
+    character(len=30) :: tmp_name
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing global indices of regions for send and receive
+
+    integer :: xbSend(parEnv%nMachs)
+    integer :: xeSend(parEnv%nMachs)
+    integer :: ybSend(parEnv%nMachs)
+    integer :: yeSend(parEnv%nMachs)
+    integer :: xbRecv(parEnv%nMachs)
+    integer :: xeRecv(parEnv%nMachs)
+    integer :: ybRecv(parEnv%nMachs)
+    integer :: yeRecv(parEnv%nMachs)
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing which neighbour nodes will send of receive
+
+    logical :: willSend(parEnv%nMachs)
+    logical :: willRecv(parEnv%nMachs)
+
+    character(len=*), parameter :: NameSendU="AcouSendU"
+    character(len=*), parameter :: NameRecvU="AcouRecvU"
+
+    character(len=*), parameter :: NameSendV="AcouSendV"
+    character(len=*), parameter :: NameRecvV="AcouRecvV"
+
+    character(len=*), parameter :: NameSendPNorth="AcouSendPNorth"
+    character(len=*), parameter :: NameRecvPNorth="AcouRecvPNorth"
+
+    character(len=*), parameter :: NameSendPEast="AcouSendPEast"
+    character(len=*), parameter :: NameRecvPEast="AcouRecvPEast"
+
+    character(len=*), parameter :: NameSendUV="AcouSendUV"
+    character(len=*), parameter :: NameRecvUV="AcouRecvUV"
+
+    character(len=*), parameter :: NameSendWP="AcouSendWP"
+    character(len=*), parameter :: NameRecvWP="AcouRecvWP"
+
+    character(len=*), parameter :: h="**(CreateAcousticMessageSet)**"
+    logical, parameter :: dumpLocal=.false.
+
+    ! verify input arguments
+
+    if (.not. associated(ParEnv)) then
+       call fatal_error(h//" starts with null ParEnv")
+    else if (.not. associated(GlobalOwn)) then
+       call fatal_error(h//" starts with null GlobalOwn")
+    else if (.not. associated(GlobalWithGhost)) then
+       call fatal_error(h//" starts with null GlobalWithGhost")
+    end if
+
+    ! default output (case no neighbours)
+
+    if (.not. associated(Neigh)) then
+       AcouSendU => null()
+       AcouRecvU => null()
+       AcouSendV => null()
+       AcouRecvV => null()
+       AcouSendPNorth => null()
+       AcouRecvPNorth => null()
+       AcouSendPEast => null()
+       AcouRecvPEast => null()
+       AcouSendUV => null()
+       AcouRecvUV => null()
+       AcouSendWP => null()
+       AcouRecvWP => null()
+       return
+    end if
+
+    if (dumpLocal) then
+       call MsgDump(h//" starts creating AcousSend/RecvU")
+    end if
+
+    myNum  = ParEnv%myNum
+    nMachs = ParEnv%nMachs
+    nNeigh = Neigh%nNeigh
+
+    ! AcouSendU, AcouRecvU:
+    ! messages update GlobalOwn [xb-1:xb-1,yb:ye]
+
+    call NodesRegionsSendRecv(&
+         nMachs=nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=TagU, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwn, &
+         NameSend=NameSendU, &
+         NameRecv=NameRecvU, &
+         xbToUpdate=GlobalOwn%xb-1, &
+         xeToUpdate=GlobalOwn%xb-1, &
+         ybToUpdate=GlobalOwn%yb, &
+         yeToUpdate=GlobalOwn%ye, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=AcouSendU, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=AcouRecvU)
+
+    ! get field
+
+    if(dyncore_flag==2) then
+       tmp_name='UC'
+    else
+       tmp_name='UP'
+    endif
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendU, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvU)
+
+    if (dumpLocal) then
+       call MsgDump(h//" finishes AcouSendU MessageSet:")
+       call DumpMessageSet(AcouSendU)
+       call MsgDump(h//" finishes AcouRecvU MessageSet:")
+       call DumpMessageSet(AcouRecvU)
+       call MsgDump(h//" starts creating AcousSend/RecvV")
+    end if
+
+    ! AcouSendV, AcouRecvV:
+    ! messages update GlobalOwn [xb:xe,yb-1:yb-1]
+
+    call NodesRegionsSendRecv(&
+         nMachs=nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=TagV, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwn, &
+         NameSend=NameSendV, &
+         NameRecv=NameRecvV, &
+         xbToUpdate=GlobalOwn%xb, &
+         xeToUpdate=GlobalOwn%xe, &
+         ybToUpdate=GlobalOwn%yb-1, &
+         yeToUpdate=GlobalOwn%yb-1, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=AcouSendV, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=AcouRecvV)
+
+    ! get field
+
+    if(dyncore_flag==2) then
+       tmp_name='VC'
+    else
+       tmp_name='VP'
+    endif
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendV, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvV)
+
+    if (dumpLocal) then
+       call MsgDump(h//" finishes AcouSendV MessageSet:")
+       call DumpMessageSet(AcouSendV)
+       call MsgDump(h//" finishes AcouRecvV MessageSet:")
+       call DumpMessageSet(AcouRecvV)
+       call MsgDump(h//" starts creating AcousSend/RecvPNorth")
+    end if
+
+    ! AcouSendPNorth, AcouRecvPNorth: union of
+    !               GlobalOwn [xe+1:xe+1,yb:ye] with
+    !               GlobalOwn [xb:xe,ye+1:ye+1]
+
+    call NodesRegionsSendRecv(&
+         nMachs=nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=TagPNorth, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwn, &
+         NameSend=NameSendPNorth, &
+         NameRecv=NameRecvPNorth, &
+         xbToUpdate=GlobalOwn%xe+1, &
+         xeToUpdate=GlobalOwn%xe+1, &
+         ybToUpdate=GlobalOwn%yb, &
+         yeToUpdate=GlobalOwn%ye, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=AcouSendPNorth, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=AcouRecvPNorth)
+
+    ! get field
+
+    if(dyncore_flag==2) then
+       tmp_name='PC'
+    else
+       tmp_name='PP'
+    endif
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendPNorth, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvPNorth)
+
+    if (dumpLocal) then
+       call MsgDump(h//" finishes AcouSendPNorth MessageSet:")
+       call DumpMessageSet(AcouSendPNorth)
+       call MsgDump(h//" finishes AcouRecvPNorth MessageSet:")
+       call DumpMessageSet(AcouRecvPNorth)
+       call MsgDump(h//" starts creating AcousSend/RecvPEast")
+    end if
+
+    ! AcouSendPEast, AcouRecvPEast: 
+    !               GlobalOwn [xb:xe,ye+1:ye+1]
+
+    call NodesRegionsSendRecv(&
+         nMachs=nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=TagPEast, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwn, &
+         NameSend=NameSendPEast, &
+         NameRecv=NameRecvPEast, &
+         xbToUpdate=GlobalOwn%xb, &
+         xeToUpdate=GlobalOwn%xe, &
+         ybToUpdate=GlobalOwn%ye+1, &
+         yeToUpdate=GlobalOwn%ye+1, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=AcouSendPEast, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=AcouRecvPEast)
+
+    ! get field
+
+    if(dyncore_flag==2) then
+       tmp_name='PC'
+    else
+       tmp_name='PP'
+    endif
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendPEast, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvPEast)
+
+    if (dumpLocal) then
+       call MsgDump(h//" finishes AcouSendPEast MessageSet:")
+       call DumpMessageSet(AcouSendPEast)
+       call MsgDump(h//" finishes AcouRecvPEast MessageSet:")
+       call DumpMessageSet(AcouRecvPEast)
+       call MsgDump(h//" starts creating AcousSend/RecvUV")
+    end if
+
+    ! AcouSendUV, AcouRecvUV:
+    ! messages update entire GhostZone
+
+    call NodesRegionsSendRecv(&
+         nMachs=nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=TagUV, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwnWithBC, &
+         NameSend=NameSendUV, &
+         NameRecv=NameRecvUV, &
+         xbToUpdate=GlobalWithGhost%xb, &
+         xeToUpdate=GlobalWithGhost%xe, &
+         ybToUpdate=GlobalWithGhost%yb, &
+         yeToUpdate=GlobalWithGhost%ye, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=AcouSendUV, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=AcouRecvUV)
+
+    ! get field UP
+
+    if(dyncore_flag==2) then
+       tmp_name='UC'
+    else
+       tmp_name='UP'
+    endif
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendUV, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvUV)
+
+    ! get field VP
+
+    if(dyncore_flag==2) then
+       tmp_name='VC'
+    else
+       tmp_name='VP'
+    endif
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendUV, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvUV)
+
+    if (dumpLocal) then
+       call MsgDump(h//" finishes with AcouSendUV MessageSet:")
+       call DumpMessageSet(AcouSendUV)
+       call MsgDump(h//" finishes with AcouRecvUV MessageSet:")
+       call DumpMessageSet(AcouRecvUV)
+       call MsgDump(h//" starts creating AcousSend/RecvWP")
+    end if
+
+    ! AcouSendWP, AcouRecvWP:
+    ! messages update entire GhostZone
+
+    call NodesRegionsSendRecv(&
+         nMachs=nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=TagWP, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwnWithBC, &
+         NameSend=NameSendWP, &
+         NameRecv=NameRecvWP, &
+         xbToUpdate=GlobalWithGhost%xb, &
+         xeToUpdate=GlobalWithGhost%xe, &
+         ybToUpdate=GlobalWithGhost%yb, &
+         yeToUpdate=GlobalWithGhost%ye, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=AcouSendWP, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=AcouRecvWP)
+
+    ! get field UP
+
+    if(dyncore_flag==2) then
+       tmp_name='WC'
+    else
+       tmp_name='WP'
+    endif
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendWP, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvWP)
+
+    ! get field VP
+
+    if(dyncore_flag==2) then
+       tmp_name='PC'
+    else
+       tmp_name='PP'
+    endif
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, AcouSendWP, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvWP)
+
+    if (dumpLocal) then
+       call MsgDump(h//" finishes AcouSendWP MessageSet:")
+       call DumpMessageSet(AcouSendWP)
+       call MsgDump(h//" finishes AcouRecvWP MessageSet:")
+       call DumpMessageSet(AcouRecvWP)
+    end if
+
+  end subroutine CreateAcousticMessageSet
+
+
+
+
+
+  subroutine DestroyAcousticMessageSet( &
+       AcouSendU, AcouRecvU, &
+       AcouSendV, AcouRecvV, &
+       AcouSendPNorth, AcouRecvPNorth, &
+       AcouSendPEast, AcouRecvPEast, &
+       AcouSendUV, AcouRecvUV, &
+       AcouSendWP, AcouRecvWP)
+
+    type(MessageSet), pointer, intent(inout) :: AcouSendU
+    type(MessageSet), pointer, intent(inout) :: AcouRecvU
+    type(MessageSet), pointer, intent(inout) :: AcouSendV
+    type(MessageSet), pointer, intent(inout) :: AcouRecvV
+    type(MessageSet), pointer, intent(inout) :: AcouSendPNorth
+    type(MessageSet), pointer, intent(inout) :: AcouRecvPNorth
+    type(MessageSet), pointer, intent(inout) :: AcouSendPEast
+    type(MessageSet), pointer, intent(inout) :: AcouRecvPEast
+    type(MessageSet), pointer, intent(inout) :: AcouSendUV
+    type(MessageSet), pointer, intent(inout) :: AcouRecvUV
+    type(MessageSet), pointer, intent(inout) :: AcouSendWP
+    type(MessageSet), pointer, intent(inout) :: AcouRecvWP
+
+    character(len=*), parameter :: h="**(DestroyAcousticMessageSet)**"
+    logical, parameter :: dumpLocal=.false.
+
+    if (dumpLocal) then
+       call MsgDump(h//" will destroy "//&
+            " AcouSend/RecvU, AcouSend/RecvV, AcouSend/RecvP,"//&
+            " AcouSend/RecvUV and AcouSend/RecvWP")
+    end if
+
+    call DestroyMessageSet(AcouSendU)
+    call DestroyMessageSet(AcouRecvU)
+
+    call DestroyMessageSet(AcouSendV)
+    call DestroyMessageSet(AcouRecvV)
+
+    call DestroyMessageSet(AcouSendPNorth)
+    call DestroyMessageSet(AcouRecvPNorth)
+
+    call DestroyMessageSet(AcouSendPEast)
+    call DestroyMessageSet(AcouRecvPEast)
+
+    call DestroyMessageSet(AcouSendUV)
+    call DestroyMessageSet(AcouRecvUV)
+
+    call DestroyMessageSet(AcouSendWP)
+    call DestroyMessageSet(AcouRecvWP)
+  end subroutine DestroyAcousticMessageSet
+
+
+
+
+
+  subroutine CreateDn0MessageSet(&
+       gridId, GridSize, ParEnv, Neigh, &
+       GlobalOwn, GlobalWithGhost, &
+       SendDn0u, RecvDn0u, TagDn0u, &
+       SendDn0v, RecvDn0v, TagDn0v)
+
+    integer, intent(in) :: gridId
+    type(GridDims), pointer, intent(in) :: GridSize
+    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+    type(NeighbourNodes), pointer, intent(in) :: Neigh
+    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+    type(MessageSet), pointer, intent(inout) :: SendDn0u
+    type(MessageSet), pointer, intent(inout) :: RecvDn0u
+    type(MessageSet), pointer, intent(inout) :: SendDn0v
+    type(MessageSet), pointer, intent(inout) :: RecvDn0v
+    integer, intent(in) :: TagDn0u
+    integer, intent(in) :: TagDn0v
+
+    integer :: nMachs
+    integer :: myNum
+    integer :: nNeigh
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing global indices of regions for send and receive
+
+    integer :: xbSend(parEnv%nMachs)
+    integer :: xeSend(parEnv%nMachs)
+    integer :: ybSend(parEnv%nMachs)
+    integer :: yeSend(parEnv%nMachs)
+    integer :: xbRecv(parEnv%nMachs)
+    integer :: xeRecv(parEnv%nMachs)
+    integer :: ybRecv(parEnv%nMachs)
+    integer :: yeRecv(parEnv%nMachs)
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing which neighbour nodes will send of receive
+
+    logical :: willSend(parEnv%nMachs)
+    logical :: willRecv(parEnv%nMachs)
+
+    character(len=*), parameter :: NameSendDn0u="SendDn0u"
+    character(len=*), parameter :: NameRecvDn0u="RecvDn0u"
+
+    character(len=*), parameter :: NameSendDn0v="SendDn0v"
+    character(len=*), parameter :: NameRecvDn0v="RecvDn0v"
+
+    character(len=30) :: tmp_name
+    character(len=*), parameter :: h="**(CreateDn0MessageSet)**"
+    logical, parameter :: dumpLocal=.false.
+
+    ! verify input arguments
+
+    if (.not. associated(ParEnv)) then
+       call fatal_error(h//" starts with null ParEnv")
+    else if (.not. associated(GlobalOwn)) then
+       call fatal_error(h//" starts with null GlobalOwn")
+    else if (.not. associated(GlobalWithGhost)) then
+       call fatal_error(h//" starts with null GlobalWithGhost")
+    end if
+
+    if (.not. associated(Neigh)) then
+
+       ! default output (case no neighbours)
+
+       SendDn0u => null()
+       RecvDn0u => null()
+       SendDn0v => null()
+       RecvDn0v => null()
+       return
+    end if
+
+    if (dumpLocal) then
+       call MsgDump(h//" will create Send/RecvDn0u and Send/RecvDn0v")
+    end if
+
+    myNum  = ParEnv%myNum
+    nNeigh = Neigh%nNeigh
+
+    ! SendDn0u, RecvDn0u:
+    ! messages update GlobalOwn [xe+1:xe+1,yb:ye]
+
+    call NodesRegionsSendRecv(&
+         nMachs=ParEnv%nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=TagDn0u, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwn, &
+         NameSend=NameSendDn0u, &
+         NameRecv=NameRecvDn0u, &
+         xbToUpdate=GlobalOwn%xe + 1, &
+         xeToUpdate=GlobalOwn%xe + 1, &
+         ybToUpdate=GlobalOwn%yb, &
+         yeToUpdate=GlobalOwn%ye, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=SendDn0u, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=RecvDn0u)
+
+    ! get field
+
+    tmp_name='DN0U'
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, SendDn0u, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvDn0u)
+
+    if (dumpLocal) then
+       call MsgDump(h//" done building SendDn0u MessageSet:")
+       call DumpMessageSet(SendDn0u)
+       call MsgDump(h//" done building RecvDn0u MessageSet:")
+       call DumpMessageSet(RecvDn0u)
+    end if
+
+    ! SendDn0v, RecvDn0v:
+    ! messages update GlobalOwn [xb:xe,ye+1:ye+1]
+
+    call NodesRegionsSendRecv(&
+         nMachs=nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=TagDn0v, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwn, &
+         NameSend=NameSendDn0v, &
+         NameRecv=NameRecvDn0v, &
+         xbToUpdate=GlobalOwn%xb, &
+         xeToUpdate=GlobalOwn%xe, &
+         ybToUpdate=GlobalOwn%ye+1, &
+         yeToUpdate=GlobalOwn%ye+1, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=SendDn0v, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=RecvDn0v)
+
+    ! get field
+
+    tmp_name='DN0V'
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, SendDn0v, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvDn0v)
+
+    if (dumpLocal) then
+       call MsgDump(h//" done building SendDn0v MessageSet:")
+       call DumpMessageSet(SendDn0v)
+       call MsgDump(h//" done building RecvDn0v MessageSet:")
+       call DumpMessageSet(RecvDn0v)
+    end if
+  end subroutine CreateDn0MessageSet
+
+
+
+
+
+  subroutine DestroyDn0MessageSet( &
+       SendDn0u, RecvDn0u, SendDn0v, RecvDn0v)
+
+    type(MessageSet), pointer, intent(inout) :: SendDn0u
+    type(MessageSet), pointer, intent(inout) :: RecvDn0u
+    type(MessageSet), pointer, intent(inout) :: SendDn0v
+    type(MessageSet), pointer, intent(inout) :: RecvDn0v
+    character(len=*), parameter :: h="**(DestroyDn0MessageSet)**"
+    logical, parameter :: dumpLocal=.false.
+
+    if (dumpLocal) then
+       call MsgDump(h//" will destroy "//&
+            " Send/RecvDn0u and Send/RecvDn0v")
+    end if
+
+    call DestroyMessageSet(SendDn0u)
+    call DestroyMessageSet(RecvDn0u)
+    call DestroyMessageSet(SendDn0v)
+    call DestroyMessageSet(RecvDn0v)
+
+  end subroutine DestroyDn0MessageSet
+
+
+
+
+
+  subroutine CreateG3DMessageSet(&
+       gridId, GridSize, ParEnv, Neigh, &
+       GlobalOwnWithBC, GlobalWithGhost, &
+       Ramsin, &
+       SendG3D, RecvG3D, TagG3D)
+
+    integer, intent(in) :: gridId
+    type(GridDims), pointer, intent(in) :: GridSize
+    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+    type(NeighbourNodes), pointer, intent(in) :: Neigh
+    type(DomainDecomp), pointer, intent(in) :: GlobalOwnWithBC
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+    type(NamelistFile), pointer, intent(in) :: Ramsin
+    type(MessageSet), pointer, intent(inout) :: SendG3D
+    type(MessageSet), pointer, intent(inout) :: RecvG3D
+    integer, intent(in) :: TagG3D
+
+    integer :: nMachs
+    integer :: myNum
+    integer :: nNeigh
+    integer :: g3d_spread
+    integer :: g3d_smoothh
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing global indices of regions for send and receive
+
+    integer :: xbSend(parEnv%nMachs)
+    integer :: xeSend(parEnv%nMachs)
+    integer :: ybSend(parEnv%nMachs)
+    integer :: yeSend(parEnv%nMachs)
+    integer :: xbRecv(parEnv%nMachs)
+    integer :: xeRecv(parEnv%nMachs)
+    integer :: ybRecv(parEnv%nMachs)
+    integer :: yeRecv(parEnv%nMachs)
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing which neighbour nodes will send of receive
+
+    logical :: willSend(parEnv%nMachs)
+    logical :: willRecv(parEnv%nMachs)
+
+    character(len=*), parameter :: NameSendG3D="SendG3D"
+    character(len=*), parameter :: NameRecvG3D="RecvG3D"
+
+    integer :: vTabNbr
+    character(len=30) :: tmp_name
+
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(CreateG3DMessageSet)**"
+    logical, parameter :: dumpLocal=.false.
+
+    ! verify input arguments
+
+    if (.not. associated(ParEnv)) then
+       call fatal_error(h//" starts with null ParEnv")
+    else if (.not. associated(GlobalOwnWithBC)) then
+       call fatal_error(h//" starts with null GlobalOwnWithBC")
+    else if (.not. associated(GlobalWithGhost)) then
+       call fatal_error(h//" starts with null GlobalWithGhost")
+    end if
+
+    ! default output (case no neighbours or
+    ! selected namelist variables were not set)
+
+    SendG3D => null()
+    RecvG3D => null()
+
+    ! there will be messages if there are neighbour nodes
+    ! and any of the namelist variables
+    ! g3d_spread or g3d_smoothh were set
+
+    g3d_spread = Ramsin%g3d_spread
+    g3d_smoothh = Ramsin%g3d_smoothh
+
+    if (associated(Neigh) .and. &
+         (g3d_spread == 1 .or. g3d_smoothh == 1)) then
+
+       if (dumpLocal) then
+          call MsgDump(h//" will create Send/RecvG3D")
+       end if
+
+       myNum  = ParEnv%myNum
+       nMachs = ParEnv%nMachs
+       nNeigh = Neigh%nNeigh
+
+       ! SendG3D, RecvG3D:
+       ! messages update entire GhostZone
+
+       call NodesRegionsSendRecv(&
+            nMachs=nMachs, &
+            nNeigh=nNeigh, &
+            myNum=myNum, &
+            tag=TagG3D, &
+            Neigh=Neigh, &
+            GlobalOwn=GlobalOwnWithBC, &
+            NameSend=NameSendG3D, &
+            NameRecv=NameRecvG3d, &
+            xbToUpdate=GlobalOwnWithBC%xb, &
+            xeToUpdate=GlobalOwnWithBC%xe, &
+            ybToUpdate=GlobalOwnWithBC%yb, &
+            yeToUpdate=GlobalOwnWithBC%ye, &
+            xbSend=xbSend, &
+            xeSend=xeSend, &
+            ybSend=ybSend, &
+            yeSend=yeSend, &
+            willSend=willSend, &
+            SendMessageSet=SendG3D, &
+            xbRecv=xbRecv, &
+            xeRecv=xeRecv, &
+            ybRecv=ybRecv, &
+            yeRecv=yeRecv, &
+            willRecv=willRecv, &
+            RecvMessageSet=RecvG3D)
+
+       ! when g3d_spread is selected, send and receive fields TTENS and QVTTENS
+
+       if (g3d_spread == 1) then
+
+          tmp_name='TTENS'
+
+          call InsertFieldSectionAtSendRecvMessageSet(&
+               tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+               xbSend, xeSend, ybSend, yeSend, willSend, SendG3D, &
+               xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvG3D)
+
+          tmp_name='QVTTENS'
+
+          call InsertFieldSectionAtSendRecvMessageSet(&
+               tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+               xbSend, xeSend, ybSend, yeSend, willSend, SendG3D, &
+               xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvG3D)
+       end if
+
+       ! when g3d_smoothh is selected, send and receive fields THSRC and RTSRC
+
+       if (g3d_smoothh == 1) then
+
+          tmp_name='THSRC'
+
+          call InsertFieldSectionAtSendRecvMessageSet(&
+               tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+               xbSend, xeSend, ybSend, yeSend, willSend, SendG3D, &
+               xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvG3D)
+
+          tmp_name='RTSRC'
+
+          call InsertFieldSectionAtSendRecvMessageSet(&
+               tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
+               xbSend, xeSend, ybSend, yeSend, willSend, SendG3D, &
+               xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvG3D)
+
+       end if
+       if (dumpLocal) then
+          call MsgDump(h//" done building SendG3D MessageSet:")
+          call DumpMessageSet(SendG3D)
+          call MsgDump(h//" done building RecvG3D MessageSet:")
+          call DumpMessageSet(RecvG3D)
+       end if
+    end if
+  end subroutine CreateG3DMessageSet
+
+
+
+
+
+  subroutine DestroyG3DMessageSet( &
+       SendG3D, RecvG3D)
+
+    type(MessageSet), pointer, intent(inout) :: SendG3D
+    type(MessageSet), pointer, intent(inout) :: RecvG3D
+    character(len=*), parameter :: h="**(DestroyG3DMessageSet)**"
+    logical, parameter :: dumpLocal=.false.
+
+    if (dumpLocal) then
+       call MsgDump(h//" will destroy Send/RecvG3D")
+    end if
+
+    call DestroyMessageSet(SendG3D)
+    call DestroyMessageSet(RecvG3D)
+
+  end subroutine DestroyG3DMessageSet
+
+
+
+
+
+  subroutine CreateSelectedGhostZoneMessageSet(&
+       gridId, num_var, vtab_r, &
+       GridSize, ParEnv, Neigh, &
+       GlobalOwnWithBC, GlobalWithGhost, &
+       SelectedGhostZoneSend, SelectedGhostZoneRecv, TagSelectedGhostZone)
+
+    integer, intent(in) :: gridId
+    integer, intent(in) :: num_var(:)
+    type(var_tables_r), target, intent(in) ::  vtab_r(:,:)
+    type(GridDims), pointer, intent(in) :: GridSize
+    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+    type(NeighbourNodes), pointer, intent(in) :: Neigh
+    type(DomainDecomp), pointer, intent(in) :: GlobalOwnWithBC
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+    type(MessageSet), pointer, intent(inout) :: SelectedGhostZoneSend
+    type(MessageSet), pointer, intent(inout) :: SelectedGhostZoneRecv
+    integer, intent(in) :: TagSelectedGhostZone
+
+
+    integer :: nMachs
+    integer :: myNum
+    integer :: nNeigh
+    integer :: vTabNbr
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing global indices of regions for send and receive
+
+    integer :: xbSend(parEnv%nMachs)
+    integer :: xeSend(parEnv%nMachs)
+    integer :: ybSend(parEnv%nMachs)
+    integer :: yeSend(parEnv%nMachs)
+    integer :: xbRecv(parEnv%nMachs)
+    integer :: xeRecv(parEnv%nMachs)
+    integer :: ybRecv(parEnv%nMachs)
+    integer :: yeRecv(parEnv%nMachs)
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing which neighbour nodes will send of receive
+
+    logical :: willSend(parEnv%nMachs)
+    logical :: willRecv(parEnv%nMachs)
+
+    character(len=*), parameter :: NameSendSelectedGhostZone="SelectedGhostZoneSend"
+    character(len=*), parameter :: NameRecvSelectedGhostZone="SelectedGhostZoneRecv"
+
+    character(len=*), parameter :: h="**(CreateSelectedGhostZoneMessageSet)**"
+    logical, parameter :: dumpLocal=.false.
+
+    ! verify input arguments
+
+    if (.not. associated(ParEnv)) then
+       call fatal_error(h//" starts with null ParEnv")
+    else if (.not. associated(GlobalOwnWithBC)) then
+       call fatal_error(h//" starts with null GlobalOwnWithBC")
+    else if (.not. associated(GlobalWithGhost)) then
+       call fatal_error(h//" starts with null GlobalWithGhost")
+    end if
+
+    ! default output (case no neighbours)
+
+    if (.not. associated(Neigh)) then
+       SelectedGhostZoneSend => null()
+       SelectedGhostZoneRecv => null()
+       return
+    end if
+
+    if (dumpLocal) then
+       call MsgDump(h//" will create SelectedGhostZoneSend/Recv")
+    end if
+
+    myNum  = ParEnv%myNum
+    nMachs = ParEnv%nMachs
+    nNeigh = Neigh%nNeigh
+
+    ! SelectedGhostZoneSend, SelectedGhostZoneRecv:
+    ! messages update entire GhostZone
+
+    call NodesRegionsSendRecv(&
+         nMachs=nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=TagSelectedGhostZone, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwnWithBC, &
+         NameSend=NameSendSelectedGhostZone, &
+         NameRecv=NameRecvSelectedGhostZone, &
+         xbToUpdate=GlobalWithGhost%xb, &
+         xeToUpdate=GlobalWithGhost%xe, &
+         ybToUpdate=GlobalWithGhost%yb, &
+         yeToUpdate=GlobalWithGhost%ye, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=SelectedGhostZoneSend, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=SelectedGhostZoneRecv)
+
+    ! take all var_tables field that should be communicated
+
+    do vTabNbr = 1, num_var(gridId)
+
+       if (vtab_r(vTabNbr,gridId)%impt1 == 1) then
+
+          call InsertFieldSectionAtSendRecvMessageSet(&
+               vtab_r(vTabNbr,gridId)%name, myNum, nNeigh, gridId, GlobalWithGhost, &
+               xbSend, xeSend, ybSend, yeSend, willSend, SelectedGhostZoneSend, &
+               xbRecv, xeRecv, ybRecv, yeRecv, willRecv, SelectedGhostZoneRecv)
+       end if
+    end do
+
+    if (dumpLocal) then
+       call MsgDump(h//" finishes with SelectedGhostZoneSend MessageSet:")
+       call DumpMessageSet(SelectedGhostZoneSend)
+       call MsgDump(h//" finishes with SelectedGhostZoneRecv MessageSet:")
+       call DumpMessageSet(SelectedGhostZoneRecv)
+    end if
+  end subroutine CreateSelectedGhostZoneMessageSet
+
+
+
+
+
+  subroutine DestroySelectedGhostZoneMessageSet( &
+       SelectedGhostZoneSend, SelectedGhostZoneRecv)
+
+    type(MessageSet), pointer, intent(inout) :: SelectedGhostZoneSend
+    type(MessageSet), pointer, intent(inout) :: SelectedGhostZoneRecv
+    character(len=*), parameter :: h="**(DestroySelectedGhostZoneMessageSet)**"
+    logical, parameter :: dumpLocal=.false.
+
+    if (dumpLocal) then
+       call MsgDump(h//" will destroy SelectedGhostZoneSend/Recv")
+    end if
+    call DestroyMessageSet(SelectedGhostZoneSend)
+    call DestroyMessageSet(SelectedGhostZoneRecv)
+
+  end subroutine DestroySelectedGhostZoneMessageSet
+
+
+
+
+
+  subroutine CreateAllGhostZoneMessageSet(&
+       gridId, num_var, vtab_r, &
+       GridSize, ParEnv, Neigh, &
+       GlobalOwnWithBC, GlobalWithGhost, &
+       AllGhostZoneSend, AllGhostZoneRecv, TagAllGhostZone)
+
+    integer, intent(in) :: gridId
+    integer, intent(in) :: num_var(:)
+    type(var_tables_r), target, intent(in) ::  vtab_r(:,:)
+    type(GridDims), pointer, intent(in) :: GridSize
+    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+    type(NeighbourNodes), pointer, intent(in) :: Neigh
+    type(DomainDecomp), pointer, intent(in) :: GlobalOwnWithBC
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+    type(MessageSet), pointer, intent(inout) :: AllGhostZoneSend
+    type(MessageSet), pointer, intent(inout) :: AllGhostZoneRecv
+    integer, intent(in) :: TagAllGhostZone
+
+
+    integer :: nMachs
+    integer :: myNum
+    integer :: nNeigh
+    integer :: vTabNbr
+    character(len=32) :: vTabName
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing global indices of regions for send and receive
+
+    integer :: xbSend(parEnv%nMachs)
+    integer :: xeSend(parEnv%nMachs)
+    integer :: ybSend(parEnv%nMachs)
+    integer :: yeSend(parEnv%nMachs)
+    integer :: xbRecv(parEnv%nMachs)
+    integer :: xeRecv(parEnv%nMachs)
+    integer :: ybRecv(parEnv%nMachs)
+    integer :: yeRecv(parEnv%nMachs)
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing which neighbour nodes will send of receive
+
+    logical :: willSend(parEnv%nMachs)
+    logical :: willRecv(parEnv%nMachs)
+
+    character(len=*), parameter :: NameSendAllGhostZone="AllGhostZoneSend"
+    character(len=*), parameter :: NameRecvAllGhostZone="AllGhostZoneRecv"
+
+    character(len=*), parameter :: h="**(CreateAllGhostZoneMessageSet)**"
+    logical, parameter :: dumpLocal=.false.
+
+    ! verify input arguments
+
+    if (.not. associated(ParEnv)) then
+       call fatal_error(h//" starts with null ParEnv")
+    else if (.not. associated(GlobalOwnWithBC)) then
+       call fatal_error(h//" starts with null GlobalOwnWithBC")
+    else if (.not. associated(GlobalWithGhost)) then
+       call fatal_error(h//" starts with null GlobalWithGhost")
+    end if
+
+    ! default output (case no neighbours)
+
+    if (.not. associated(Neigh)) then
+       AllGhostZoneSend => null()
+       AllGhostZoneRecv => null()
+       return
+    end if
+
+
+    if (dumpLocal) then
+       call MsgDump(h//" will create AllGhostZoneSend/Recv")
+    end if
+
+    myNum  = ParEnv%myNum
+    nMachs = ParEnv%nMachs
+    nNeigh = Neigh%nNeigh
+
+    ! AllGhostZoneSend, AllGhostZoneRecv:
+    ! messages update entire GhostZone
+
+    call NodesRegionsSendRecv(&
+         nMachs=nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=TagAllGhostZone, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwnWithBC, &
+         NameSend=NameSendAllGhostZone, &
+         NameRecv=NameRecvAllGhostZone, &
+         xbToUpdate=GlobalWithGhost%xb, &
+         xeToUpdate=GlobalWithGhost%xe, &
+         ybToUpdate=GlobalWithGhost%yb, &
+         yeToUpdate=GlobalWithGhost%ye, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=AllGhostZoneSend, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=AllGhostZoneRecv)
+
+    ! take all var_tables field that should be communicated
+
+    do vTabNbr = 1, num_var(gridId)
+
+       vTabName = vtab_r(vTabNbr,gridId)%name
+
+       if (&
+            trim(adjustl(vTabName)) /= "LPU" .and. &
+            trim(adjustl(vTabName)) /= "LPV" .and. &
+            trim(adjustl(vTabName)) /= "LPW" ) then
+
+          call InsertFieldSectionAtSendRecvMessageSet(&
+               vTabName, myNum, nNeigh, gridId, GlobalWithGhost, &
+               xbSend, xeSend, ybSend, yeSend, willSend, AllGhostZoneSend, &
+               xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AllGhostZoneRecv)
+       end if
+    end do
+
+    if (dumpLocal) then
+       call MsgDump(h//" finishes with AllGhostZoneSend MessageSet:")
+       call DumpMessageSet(AllGhostZoneSend)
+       call MsgDump(h//" finishes with AllGhostZoneRecv MessageSet:")
+       call DumpMessageSet(AllGhostZoneRecv)
+    end if
+  end subroutine CreateAllGhostZoneMessageSet
+
+
+
+
+
+  subroutine DestroyAllGhostZoneMessageSet( &
+       AllGhostZoneSend, AllGhostZoneRecv)
+
+    type(MessageSet), pointer, intent(inout) :: AllGhostZoneSend
+    type(MessageSet), pointer, intent(inout) :: AllGhostZoneRecv
+    character(len=*), parameter :: h="**(DestroyAllGhostZoneMessageSet)**"
+    logical, parameter :: dumpLocal=.false.
+
+    if (dumpLocal) then
+       call MsgDump(h//" will destroy AllGhostZoneSend/Recv")
+    end if
+
+    call DestroyMessageSet(AllGhostZoneSend)
+    call DestroyMessageSet(AllGhostZoneRecv)
+
+  end subroutine DestroyAllGhostZoneMessageSet
+
+
+
+
+  subroutine CreateAcouDampOneMessageSet(&
+       field, fieldName, idim_type,  &
+       ParEnv, Neigh, GlobalOwn, GlobalWithGhost, &
+       Tag, NameSend, NameRecv, &
+       AcouDampOneSend, AcouDampOneRecv)
+
+    real, pointer, intent(in) :: field(:,:,:)
+    character(len=*), intent(in) :: fieldName
+    integer, intent(in) :: idim_type
+    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+    type(NeighbourNodes), pointer, intent(in) :: Neigh
+    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+    integer, intent(in) :: Tag
+    character(len=*), intent(in) :: NameSend
+    character(len=*), intent(in) :: NameRecv
+    type(MessageSet), pointer, intent(inout) :: AcouDampOneSend
+    type(MessageSet), pointer, intent(inout) :: AcouDampOneRecv
+
+
+    integer :: nMachs
+    integer :: myNum
+    integer :: nNeigh
+    integer :: vTabNbr
+    character(len=32) :: vTabName
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing global indices of regions for send and receive
+
+    integer :: xbSend(parEnv%nMachs)
+    integer :: xeSend(parEnv%nMachs)
+    integer :: ybSend(parEnv%nMachs)
+    integer :: yeSend(parEnv%nMachs)
+    integer :: xbRecv(parEnv%nMachs)
+    integer :: xeRecv(parEnv%nMachs)
+    integer :: ybRecv(parEnv%nMachs)
+    integer :: yeRecv(parEnv%nMachs)
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing which neighbour nodes will send of receive
+
+    logical :: willSend(parEnv%nMachs)
+    logical :: willRecv(parEnv%nMachs)
+
+    character(len=*), parameter :: h="**(CreateAcouDampOneMessageSet)**"
+    logical, parameter :: dumpLocal=.false.
+
+    ! verify input arguments
+
+    if (.not. associated(ParEnv)) then
+       call fatal_error(h//" starts with null ParEnv")
+    else if (.not. associated(GlobalOwn)) then
+       call fatal_error(h//" starts with null GlobalOwn")
+    else if (.not. associated(GlobalWithGhost)) then
+       call fatal_error(h//" starts with null GlobalWithGhost")
+    end if
+
+    ! default output (case no neighbours)
+
+    if (.not. associated(Neigh)) then
+       AcouDampOneSend => null()
+       AcouDampOneRecv => null()
+       return
+    end if
+
+    if (dumpLocal) then
+       call MsgDump(h//" will create AcouDampOneSend/Recv")
+    end if
+
+    myNum  = ParEnv%myNum
+    nMachs = ParEnv%nMachs
+    nNeigh = Neigh%nNeigh
+
+    ! AcouDampOneSend, AcouDampOneRecv:
+    ! messages update entire GhostZone
+
+    call NodesRegionsSendRecv(&
+         nMachs=nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=Tag, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwn, &
+         NameSend=NameSend, &
+         NameRecv=NameRecv, &
+         xbToUpdate=GlobalWithGhost%xb, &
+         xeToUpdate=GlobalWithGhost%xe, &
+         ybToUpdate=GlobalWithGhost%yb, &
+         yeToUpdate=GlobalWithGhost%ye, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=AcouDampOneSend, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=AcouDampOneRecv)
+
+    !
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         field, fieldName, idim_type, myNum, nNeigh, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, AcouDampOneSend, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouDampOneRecv)
+
+    if (dumpLocal) then
+       call MsgDump(h//" finishes with AcouDampOneSend MessageSet:")
+       call DumpMessageSet(AcouDampOneSend)
+       call MsgDump(h//" finishes with AcouDampOneRecv MessageSet:")
+       call DumpMessageSet(AcouDampOneRecv)
+    end if
+  end subroutine CreateAcouDampOneMessageSet
+
+
+
+
+
+  subroutine DestroyAcouDampOneMessageSet( &
+       AcouDampOneSend, AcouDampOneRecv)
+
+    type(MessageSet), pointer, intent(inout) :: AcouDampOneSend
+    type(MessageSet), pointer, intent(inout) :: AcouDampOneRecv
+    character(len=*), parameter :: h="**(DestroyAcouDampOneMessageSet)**"
+    logical, parameter :: dumpLocal=.false.
+
+    if (dumpLocal) then
+       call MsgDump(h//" will destroy AcouDampOneSend/Recv")
+    end if
+
+    call DestroyMessageSet(AcouDampOneSend)
+    call DestroyMessageSet(AcouDampOneRecv)
+
+  end subroutine DestroyAcouDampOneMessageSet
+
+
+
+
+  subroutine CreateLuFlaMessageSet(&
+       GridSize, ParEnv, Neigh, &
+       GlobalOwn, GlobalWithGhost, LocalOwn, &
+       TagLuFlaNorth, TagLuFlaSouth, TagLuFlaEast, TagLuFlaWest, &
+       LuFlaSendNorth, LuFlaSendSouth, LuFlaSendEast, LuFlaSendWest, &
+       LuFlaRecvNorth, LuFlaRecvSouth, LuFlaRecvEast, LuFlaRecvWest)
+
+    type(GridDims), pointer, intent(in) :: GridSize
+    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+    type(NeighbourNodes), pointer, intent(in) :: Neigh
+    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+    type(DomainDecomp), pointer, intent(in) :: LocalOwn
+    integer, intent(in) :: TagLuFlaNorth
+    integer, intent(in) :: TagLuFlaSouth
+    integer, intent(in) :: TagLuFlaEast
+    integer, intent(in) :: TagLuFlaWest
+    type(MessageSet), pointer, intent(inout) :: LuFlaSendNorth
+    type(MessageSet), pointer, intent(inout) :: LuFlaSendSouth
+    type(MessageSet), pointer, intent(inout) :: LuFlaSendEast
+    type(MessageSet), pointer, intent(inout) :: LuFlaSendWest
+    type(MessageSet), pointer, intent(inout) :: LuFlaRecvNorth
+    type(MessageSet), pointer, intent(inout) :: LuFlaRecvSouth
+    type(MessageSet), pointer, intent(inout) :: LuFlaRecvEast
+    type(MessageSet), pointer, intent(inout) :: LuFlaRecvWest
+    
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing global indices of regions for send and receive
+
+    integer :: xbSend(parEnv%nMachs)
+    integer :: xeSend(parEnv%nMachs)
+    integer :: ybSend(parEnv%nMachs)
+    integer :: yeSend(parEnv%nMachs)
+    integer :: xbRecv(parEnv%nMachs)
+    integer :: xeRecv(parEnv%nMachs)
+    integer :: ybRecv(parEnv%nMachs)
+    integer :: yeRecv(parEnv%nMachs)
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing which neighbour nodes will send of receive
+
+    logical :: willSend(parEnv%nMachs)
+    logical :: willRecv(parEnv%nMachs)
+
+    character(len=*), parameter :: NameSendNorth="SendLuFlaNorth"
+    character(len=*), parameter :: NameRecvNorth="RecvLuFlaNorth"
+    character(len=*), parameter :: NameSendSouth="SendLuFlaSouth"
+    character(len=*), parameter :: NameRecvSouth="RecvLuFlaSouth"
+    character(len=*), parameter :: NameSendEast="SendLuFlaEast"
+    character(len=*), parameter :: NameRecvEast="RecvLuFlaEast"
+    character(len=*), parameter :: NameSendWest="SendLuFlaWest"
+    character(len=*), parameter :: NameRecvWest="RecvLuFlaWest"
+
+    integer :: nMachs
+    integer :: myNum
+    integer :: nNeigh
+    integer :: ierr
+    integer :: lbz
+    integer :: ubz
+    integer :: lbx
+    integer :: ubx
+    integer :: lby
+    integer :: uby
+    integer :: iNeigh
+    integer :: iNode
+    integer :: x0, y0
+    integer, parameter :: ghostZoneWidth=3
+    integer, parameter :: idim_type=3
+    real, pointer :: phonyField(:,:,:)
+
+    logical, parameter :: dumpLocal=.true.
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(CreateLuFlaMessageSet)**"
+
+
+    nMachs=ParEnv%nmachs
+    myNum=ParEnv%mynum
+    nNeigh=Neigh%nNeigh
+    
+    if (dumpLocal) then
+       write(str(1),"(i8)") nMachs
+       write(str(2),"(i8)") myNum
+       call MsgDump(h//" enter with nMachs="//trim(adjustl(str(1)))//&
+            "; myNum="//trim(adjustl(str(2))))
+       call DumpNeighbourNodes(Neigh,"LuFla")
+    end if
+    
+    ! phony field, just to collect bounds
+    ! define phony field bounds
+
+    lbz = 1 - ghostZoneWidth
+    ubz = GridSize%nnzp + ghostZoneWidth
+    lbx=1 - ghostZoneWidth
+    ubx=LocalOwn%nx(myNum)+ghostZoneWidth
+    lby=1 - ghostZoneWidth
+    uby=LocalOwn%ny(myNum)+ghostZoneWidth
+    allocate(phonyField(lbz:ubz,lbx:ubx,lby:uby), stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") lbz
+       write(str(2),"(i8)") ubz
+       write(str(3),"(i8)") lbx
+       write(str(4),"(i8)") ubx
+       write(str(5),"(i8)") lby
+       write(str(6),"(i8)") uby
+       write(str(7),"(i8)") ierr
+       call fatal_error(h//" allocate phonyField("//&
+            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
+            trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//&
+            ") fails with stat="//trim(adjustl(str(7))))
+    end if
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") lbound(phonyField,1)
+       write(str(2),"(i8)") ubound(phonyField,1)
+       write(str(3),"(i8)") lbound(phonyField,2)
+       write(str(4),"(i8)") ubound(phonyField,2)
+       write(str(5),"(i8)") lbound(phonyField,3)
+       write(str(6),"(i8)") ubound(phonyField,3)
+       call MsgDump(h//" allocated phonyField("//&
+            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
+            trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//&
+            ")")
+    end if
+
+    ! north neighbour communication
+
+    call NodesRegionsSendRecv(&
+         nMachs=nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=TagLuFlaNorth, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwn, &
+         NameSend=NameSendNorth, &
+         NameRecv=NameRecvNorth, &
+         xbToUpdate=GlobalOwn%xb, &
+         xeToUpdate=GlobalOwn%xe, &
+         ybToUpdate=GlobalOwn%yb-ghostZoneWidth, &
+         yeToUpdate=GlobalOwn%yb-1, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=LuFlaSendNorth, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=LuFlaRecvNorth)
+
+    ! insert field sections named SCR, UFX, VFX, WFX
+    ! with phony field addresses, to be updated whenever
+    ! real addresses are known
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         phonyField, "SCR", idim_type, myNum, nNeigh, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendNorth, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvNorth)
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         phonyField, "UFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendNorth, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvNorth)
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         phonyField, "VFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendNorth, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvNorth)
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         phonyField, "WFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendNorth, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvNorth)
+
+    ! south neighbour communication
+
+    call NodesRegionsSendRecv(&
+         nMachs=nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=TagLuFlaSouth, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwn, &
+         NameSend=NameSendSouth, &
+         NameRecv=NameRecvSouth, &
+         xbToUpdate=GlobalOwn%xb, &
+         xeToUpdate=GlobalOwn%xe, &
+         ybToUpdate=GlobalOwn%ye+1, &
+         yeToUpdate=GlobalOwn%ye+ghostZoneWidth, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=LuFlaSendSouth, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=LuFlaRecvSouth)
+
+    ! insert field sections named SCR, UFX, VFX, WFX
+    ! with phony field addresses, to be updated whenever
+    ! real addresses are known
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         phonyField, "SCR", idim_type, myNum, nNeigh, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendSouth, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvSouth)
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         phonyField, "UFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendSouth, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvSouth)
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         phonyField, "VFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendSouth, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvSouth)
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         phonyField, "WFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendSouth, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvSouth)
+
+    ! east neighbour communication
+
+    call NodesRegionsSendRecv(&
+         nMachs=nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=TagLuFlaEast, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwn, &
+         NameSend=NameSendEast, &
+         NameRecv=NameRecvEast, &
+         xbToUpdate=GlobalOwn%xb-ghostZoneWidth, &
+         xeToUpdate=GlobalOwn%xb-1, &
+         ybToUpdate=GlobalOwn%yb, &
+         yeToUpdate=GlobalOwn%ye, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=LuFlaSendEast, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=LuFlaRecvEast)
+
+    ! insert field sections named SCR, UFX, VFX, WFX
+    ! with phony field addresses, to be updated whenever
+    ! real addresses are known
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         phonyField, "SCR", idim_type, myNum, nNeigh, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendEast, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvEast)
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         phonyField, "UFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendEast, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvEast)
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         phonyField, "VFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendEast, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvEast)
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         phonyField, "WFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendEast, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvEast)
+
+    ! west neighbour communication
+
+    call NodesRegionsSendRecv(&
+         nMachs=nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=TagLuFlaWest, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwn, &
+         NameSend=NameSendWest, &
+         NameRecv=NameRecvWest, &
+         xbToUpdate=GlobalOwn%xe+1, &
+         xeToUpdate=GlobalOwn%xe+ghostZoneWidth, &
+         ybToUpdate=GlobalOwn%yb, &
+         yeToUpdate=GlobalOwn%ye, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=LuFlaSendWest, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=LuFlaRecvWest)
+
+    ! insert field sections named SCR, UFX, VFX, WFX
+    ! with phony field addresses, to be updated whenever
+    ! real addresses are known
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         phonyField, "SCR", idim_type, myNum, nNeigh, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendWest, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvWest)
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         phonyField, "UFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendWest, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvWest)
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         phonyField, "VFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendWest, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvWest)
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         phonyField, "WFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendWest, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvWest)
+
+    deallocate(phonyField, stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" deallocate phonyField fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
+
+    if (dumpLocal) then
+       call MsgDump(h//" finishes with LuFlaSendNorth MessageSet:")
+       call DumpMessageSet(LuFlaSendNorth)
+       call MsgDump(h//" finishes with LuFlaRecvNorth MessageSet:")
+       call DumpMessageSet(LuFlaRecvNorth)
+       call MsgDump(h//" finishes with LuFlaSendSouth MessageSet:")
+       call DumpMessageSet(LuFlaSendSouth)
+       call MsgDump(h//" finishes with LuFlaRecvSouth MessageSet:")
+       call DumpMessageSet(LuFlaRecvSouth)
+       call MsgDump(h//" finishes with LuFlaSendEast MessageSet:")
+       call DumpMessageSet(LuFlaSendEast)
+       call MsgDump(h//" finishes with LuFlaRecvEast MessageSet:")
+       call DumpMessageSet(LuFlaRecvEast)
+       call MsgDump(h//" finishes with LuFlaSendWest MessageSet:")
+       call DumpMessageSet(LuFlaSendWest)
+       call MsgDump(h//" finishes with LuFlaRecvWest MessageSet:")
+       call DumpMessageSet(LuFlaRecvWest)
+    end if
+
+  end subroutine CreateLuFlaMessageSet
+
+
+
+
+  subroutine DestroyLuFlaMessageSet(&
+       LuFlaSendNorth, LuFlaSendSouth, LuFlaSendEast, LuFlaSendWest, &
+       LuFlaRecvNorth, LuFlaRecvSouth, LuFlaRecvEast, LuFlaRecvWest)
+
+    type(MessageSet), pointer, intent(inout) :: LuFlaSendNorth
+    type(MessageSet), pointer, intent(inout) :: LuFlaSendSouth
+    type(MessageSet), pointer, intent(inout) :: LuFlaSendEast
+    type(MessageSet), pointer, intent(inout) :: LuFlaSendWest
+    type(MessageSet), pointer, intent(inout) :: LuFlaRecvNorth
+    type(MessageSet), pointer, intent(inout) :: LuFlaRecvSouth
+    type(MessageSet), pointer, intent(inout) :: LuFlaRecvEast
+    type(MessageSet), pointer, intent(inout) :: LuFlaRecvWest
+
+    character(len=*), parameter :: h="**(DestroyLuFlaMessageSet)**"
+    logical, parameter :: dumpLocal=.false.
+
+    if (dumpLocal) then
+       call MsgDump(h//" will destroy LuFlaSend/RecvNorth")
+    end if
+    call DestroyMessageSet(LuFlaSendNorth)
+    call DestroyMessageSet(LuFlaRecvNorth)
+
+    if (dumpLocal) then
+       call MsgDump(h//" will destroy LuFlaSend/RecvSouth")
+    end if
+    call DestroyMessageSet(LuFlaSendSouth)
+    call DestroyMessageSet(LuFlaRecvSouth)
+
+    if (dumpLocal) then
+       call MsgDump(h//" will destroy LuFlaSend/RecvEast")
+    end if
+    call DestroyMessageSet(LuFlaSendEast)
+    call DestroyMessageSet(LuFlaRecvEast)
+
+    if (dumpLocal) then
+       call MsgDump(h//" will destroy LuFlaSend/RecvWest")
+    end if
+    call DestroyMessageSet(LuFlaSendWest)
+    call DestroyMessageSet(LuFlaRecvWest)
+  end subroutine DestroyLuFlaMessageSet
+
+  
+
+
+  subroutine UpdateFieldAdressAtMessageSet_2D(oneMessageSet, field, name)
+    type(MessageSet), pointer, intent(in) :: oneMessageSet
+    real, pointer, intent(in) :: field(:,:)
+    character(len=*), intent(in) :: name
+    character(len=*), parameter :: h="**(UpdateFieldAdressAtMessageSet_2D)**"
+
+    include "updateFieldAdressBody.f90"
+    
+  end subroutine UpdateFieldAdressAtMessageSet_2D
+
+
+
+
+
+  subroutine UpdateFieldAdressAtMessageSet_3D(oneMessageSet, field, name)
+    type(MessageSet), pointer, intent(in) :: oneMessageSet
+    real, pointer, intent(in) :: field(:,:,:)
+    character(len=*), intent(in) :: name
+    character(len=*), parameter :: h="**(UpdateFieldAdressAtMessageSet_3D)**"
+
+    include "updateFieldAdressBody.f90"
+    
+  end subroutine UpdateFieldAdressAtMessageSet_3D
+
+
+
+
+
+  subroutine UpdateFieldAdressAtMessageSet_4D(oneMessageSet, field, name)
+    type(MessageSet), pointer, intent(in) :: oneMessageSet
+    real, pointer, intent(in) :: field(:,:,:,:)
+    character(len=*), intent(in) :: name
+    character(len=*), parameter :: h="**(UpdateFieldAdressAtMessageSet_4D)**"
+
+    include "updateFieldAdressBody.f90"
+    
+  end subroutine UpdateFieldAdressAtMessageSet_4D
+
+
+
+
+  subroutine PostSendRecvMsgs(SendMsg, RecvMsg)
+
+    ! posts all nonblocking send and recv operations of
+    ! a message set pair of variables
+
+    type(MessageSet), pointer, intent(in) :: SendMsg
+    type(MessageSet), pointer, intent(in) :: RecvMsg
 
     integer :: iSend
     integer :: iRecv
     integer :: firstBuffer
     integer :: lastBuffer
+    integer :: ierr
     type(MessageData), pointer :: msgData => null()
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
-    character(len=*), parameter :: h="**(PostRecvSendMsgs)**"
+    character(len=*), parameter :: h="**(PostSendRecvMsgs)**"
+    logical, parameter :: dumpLocal=.false.
 
-    if (dumpLocal) then
-       call MsgDump(h//" enter with SendMsg:")
-       call DumpMessageSet(SendMsg)
-       call MsgDump(h//" enter with RecvMsg:")
-       call DumpMessageSet(RecvMsg)
-       call MsgDump(h//" finished dumping input arguments")
-    end if
-
-    ! post non-blocking receive for each receiving message
+    ! post nonblocking receive for each receiving message;
+    ! a single receive msg from each process
 
     if (associated(RecvMsg)) then
+       if (dumpLocal) then
+          if (RecvMsg%nMsgs > 0) then
+             write(c0,"(i8)") RecvMsg%nMsgs
+             call MsgDump(h//" for "//trim(adjustl(RecvMsg%name))//&
+                  " will post "//trim(adjustl(c0))//&
+                  " nonblocking receives")
+          end if
+       end if
        do iRecv= 1,RecvMsg%nMsgs
-          msgData => RecvMsg%oneMsg(iRecv)
 
-          ! allocate receive buffer
-
-          allocate(msgData%buf(msgData%bufSize))
+          call AllocateMessageDataBuffer(RecvMsg%msgData(iRecv))
 
           ! post receive
 
-          call parf_get_noblock_real(msgData%buf, msgData%bufSize, &
-               RecvMsg%otherProc(iRecv), &
-               RecvMsg%tag, RecvMsg%request(iRecv))
-
-          if (dumpLocal) then
-             write(c1,"(i8)") RecvMsg%otherProc(iRecv)
-             write(c2,"(i8)") size(msgData%buf)
-             write(c3,"(i8)") RecvMsg%tag
-             if (RecvMsg%request(iRecv) == MPI_REQUEST_NULL) then
-                c4="NULL"
-             else
-                write(c4,"(Z8)") RecvMsg%request(iRecv)
-             end if
-             call MsgDump(h//" for "//trim(adjustl(RecvMsg%name))//&
-                  " post recv from MPI node "//trim(adjustl(c1))//&
-                  " with buffer size "//trim(adjustl(c2))//&
-                  " tag "//trim(adjustl(c3))//" and request "//trim(adjustl(c4)))
-          end if
+          write(c0,"(i8)") iRecv
+          call PostRecvMessageData(RecvMsg%msgData(iRecv), &
+               RecvMsg%otherProc(iRecv), RecvMsg%tag, &
+               RecvMsg%request(iRecv), &
+               h//" for iRecv="//trim(adjustl(c0)))
        end do
     else
        if (dumpLocal) then
-          call MsgDump(h//" no message to receive")
+          call MsgDump(h//" empty receive message set")
        end if
     end if
 
     ! for each sending message,
-    ! build sending buffer copying field sections to the buffer and
-    ! send non-blocking message
+    ! build send buffer and copy field sections to the buffer;
+    ! post nonblocking send;
+    ! A single send message to each process
 
     if (associated(SendMsg)) then
+       if (dumpLocal) then
+          if (SendMsg%nMsgs > 0) then
+             write(c0,"(i8)") SendMsg%nMsgs
+             call MsgDump(h//" for "//trim(adjustl(SendMsg%name))//&
+                  " will post "//trim(adjustl(c0))//&
+                  " nonblocking sends")
+          end if
+       end if
        do iSend = 1,SendMsg%nMsgs
-          if (dumpLocal) then
-             write(c0,"(i8)") iSend
-             call MsgDump(h//" sending message "//trim(adjustl(c0)))
-          end if
-          msgData => SendMsg%oneMsg(iSend)
 
-          allocate(msgData%buf(msgData%bufSize))
+          ! allocate and fill send buffer with field sections to send
 
-          node => null()
-          lastBuffer=0
-          if (dumpLocal) then
-             call MsgDump(h//" starts building sending buffer")
-          end if
-          do
-             node => NextFieldSection(node, msgData%fieldList)
-             if (dumpLocal) then
-                call MsgDump(h//" next FieldSection to insert at sending buffer:")
-                call DumpFieldSection(node)
-             end if
-             if (associated(node)) then
-                if (associated(node%vTabPtr%var_p_2D)) then
-                   firstBuffer = lastBuffer+1
-                   call FieldSection2Buffer(node%vTabPtr%var_p_2D, &
-                        node%vTabPtr%idim_type, &
-                        node%xStart, node%xEnd,&
-                        node%yStart, node%yEnd,&
-                        msgData%buf, lastBuffer)
+          call AllocateMessageDataBuffer(SendMsg%msgData(iSend))
+          call FillMessageDataBufferWithFieldSectionData(SendMsg%msgData(iSend))
 
-                   if (dumpLocal) then
-                      write(c0,"(i8)") firstBuffer
-                      write(c1,"(i8)") lastBuffer
-                      write(c2,"(i8)") node%xStart
-                      write(c3,"(i8)") node%xEnd
-                      write(c4,"(i8)") node%yStart
-                      write(c5,"(i8)") node%yEnd
-                      call MsgDump(h//" filled buf["//trim(adjustl(c0))//&
-                           ":"//trim(adjustl(c1))//&
-                           "] with 2D field "//trim(adjustl(node%vTabPtr%name))//"["//&
-                           trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
-                           trim(adjustl(c4))//":"//trim(adjustl(c5))//"]")
-                   end if
+          ! post send message
 
-                else if (associated(node%vTabPtr%var_p_3D)) then
-                   firstBuffer = lastBuffer+1
-                   call FieldSection2Buffer(node%vTabPtr%var_p_3D, &
-                        node%vTabPtr%idim_type, &
-                        node%xStart, node%xEnd,&
-                        node%yStart, node%yEnd,&
-                        msgData%buf, lastBuffer)
-
-                   if (dumpLocal) then
-                      write(c0,"(i8)") firstBuffer
-                      write(c1,"(i8)") lastBuffer
-                      write(c2,"(i8)") node%xStart
-                      write(c3,"(i8)") node%xEnd
-                      write(c4,"(i8)") node%yStart
-                      write(c5,"(i8)") node%yEnd
-                      select case (node%vTabPtr%idim_type)
-                      case(3)
-                         call MsgDump(h//" filled buf["//trim(adjustl(c0))//&
-                              ":"//trim(adjustl(c1))//&
-                              "] with 3D field "//trim(adjustl(node%vTabPtr%name))//"[:,"//&
-                              trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
-                              trim(adjustl(c4))//":"//trim(adjustl(c5))//"]")
-                      case(6:7)
-                         call MsgDump(h//" filled buf["//trim(adjustl(c0))//&
-                              ":"//trim(adjustl(c1))//&
-                              "] with 3D field "//trim(adjustl(node%vTabPtr%name))//"["//&
-                              trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
-                              trim(adjustl(c4))//":"//trim(adjustl(c5))//",:]")
-                      end select
-                   end if
-
-                else if (associated(node%vTabPtr%var_p_4D)) then
-                   firstBuffer = lastBuffer+1
-                   call FieldSection2Buffer(node%vTabPtr%var_p_4D, &
-                        node%vTabPtr%idim_type, &
-                        node%xStart, node%xEnd,&
-                        node%yStart, node%yEnd,&
-                        msgData%buf, lastBuffer)
-
-                   if (dumpLocal) then
-                      write(c0,"(i8)") firstBuffer
-                      write(c1,"(i8)") lastBuffer
-                      write(c2,"(i8)") node%xStart
-                      write(c3,"(i8)") node%xEnd
-                      write(c4,"(i8)") node%yStart
-                      write(c5,"(i8)") node%yEnd
-                      call MsgDump(h//" filled buf["//trim(adjustl(c0))//&
-                           ":"//trim(adjustl(c1))//&
-                           "] with 4D field "//trim(adjustl(node%vTabPtr%name))//"[:,"//&
-                           trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
-                           trim(adjustl(c4))//":"//trim(adjustl(c5))//",:]")
-                   end if
-                else
-                   call fatal_error(h//" inconsistent var_tables entry named "//&
-                        trim(adjustl(node%vTabPtr%name)))
-                end if
-             else
-                if (dumpLocal) then
-                   call MsgDump(h//" finishes building sending buffer")
-                end if
-                exit
-             end if
-          end do
-          if (lastBuffer /= size(msgData%buf)) then
-             write(c0,"(i8)") lastBuffer
-             write(c1,"(i8)") size(msgData%buf)
-             call fatal_error(h//" the send buffer of size "//trim(adjustl(c1))//&
-                  " was filled with "//trim(adjustl(c0))//" entries")
-          end if
-          call parf_send_noblock_real(msgData%buf, msgData%bufSize, &
-               SendMsg%otherProc(iSend), &
-               SendMsg%tag, SendMsg%request(iSend))
-          if (dumpLocal) then
-             write(c1,"(i8)") SendMsg%otherProc(iSend)
-             write(c2,"(i8)") size(msgData%buf)
-             write(c3,"(i8)") SendMsg%tag
-             if (SendMsg%request(iSend) == MPI_REQUEST_NULL) then
-                c4="NULL"
-             else
-                write(c4,"(Z8)") SendMsg%request(iSend)
-             end if
-             call MsgDump(h//" sends to MPI node "//trim(adjustl(c1))//&
-                  " buffer of size "//trim(adjustl(c2))//&
-                  " tag "//trim(adjustl(c3))//" and request "//trim(adjustl(c4)))
-          end if
+          write(c0,"(i8)") iSend
+          call PostSendMessageData(SendMsg%msgData(iSend), &
+               SendMsg%otherProc(iSend), SendMsg%tag, &
+               SendMsg%request(iSend), &
+               h//" for iSend="//trim(adjustl(c0)))
        end do
     else
        if (dumpLocal) then
-          call MsgDump(h//" no message to send")
+          call MsgDump(h//" empty send message set")
        end if
     end if
-  end subroutine PostRecvSendMsgs
+  end subroutine PostSendRecvMsgs
 
 
 
 
-  subroutine WaitRecvMsgs(SendMsg, RecvMsg)
-    type(MessageSet), pointer :: SendMsg
-    type(MessageSet), pointer :: RecvMsg
+  subroutine WaitSendRecvMsgs(SendMsg, RecvMsg)
+    type(MessageSet), pointer, intent(in) :: SendMsg
+    type(MessageSet), pointer, intent(in) :: RecvMsg
+
+    ! waits for all nonblocking send and recv operations of
+    ! a message set pair of variables
 
     integer :: i
     integer :: iSend
@@ -541,224 +3181,65 @@ contains
     integer :: lastBuffer
     integer :: recvNbr
     integer :: sendNbr
+    integer :: ierr
     type(MessageData), pointer :: msgData => null()
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
-    character(len=*), parameter :: h="**(WaitRecvMsgs)**"
+    character(len=*), parameter :: h="**(WaitSendRecvMsgs)**"
+    logical, parameter :: dumpLocal=.false.
 
     ! for each receive message:
-!print *,'LFR-DBG: inside WMS 1: ',size(g3d_g(1)%cugd_ttens,1), &
-!                 size(g3d_g(1)%cugd_ttens,2),size(g3d_g(1)%cugd_ttens,3); call flush(6)
+    ! build send buffer and copy field sections to the buffer;
+    ! post nonblocking send;
+    ! A single send message to each process
+
     if (associated(RecvMsg)) then
        if (dumpLocal) then
           write(c0,"(i8)") RecvMsg%nMsgs
           call MsgDump(h//" for "//trim(adjustl(RecvMsg%name))//&
-               " waits on "//trim(adjustl(c0))//" recvs with requests: ",.true.)
-          do iRecv= 1,RecvMsg%nMsgs-1
-             if (RecvMsg%request(iRecv) == MPI_REQUEST_NULL) then
-                c0="NULL"
-             else
-                write(c0,"(Z8)") RecvMsg%request(iRecv)
-             end if
-             call MsgDump(" "//trim(adjustl(c0))//",",.true.)
-          end do
-          if (RecvMsg%request(RecvMsg%nMsgs) == MPI_REQUEST_NULL) then
-             c0="NULL"
-          else
-             write(c0,"(Z8)") RecvMsg%request(RecvMsg%nMsgs)
-          end if
-          call MsgDump(" "//trim(adjustl(c0)))
+               " waits on "//trim(adjustl(c0))//" receives")
        end if
-!print *,'LFR-DBG: inside WMS 2: ',size(g3d_g(1)%cugd_ttens,1), &
-!                 size(g3d_g(1)%cugd_ttens,2),size(g3d_g(1)%cugd_ttens,3); call flush(6)
-       !
 
        do iRecv= 1,RecvMsg%nMsgs
 
           ! wait on any arrived message
 
-          if (dumpLocal) then
-             call MsgDump(h//" Dump requests before wait: ",.true.)
-             do i= 1,RecvMsg%nMsgs-1
-                if (RecvMsg%request(i) == MPI_REQUEST_NULL) then
-                   c0="NULL"
-                else
-                   write(c0,"(Z8)") RecvMsg%request(i)
-                end if
-                call MsgDump(" "//trim(adjustl(c0))//",",.true.)
-             end do
-             if (RecvMsg%request(RecvMsg%nMsgs) == MPI_REQUEST_NULL) then
-                c0="NULL"
-             else
-                write(c0,"(Z8)") RecvMsg%request(RecvMsg%nMsgs)
-             end if
-             call MsgDump(" "//trim(adjustl(c0)))
-          end if
           call parf_wait_any_nostatus(RecvMsg%nMsgs, &
                RecvMsg%request, recvNbr)
+          msgData => RecvMsg%msgData(recvNbr)
           if (dumpLocal) then
              write(c0,"(i8)") recvNbr
-             call MsgDump(h//" received message #"//trim(adjustl(c0)))
-             call MsgDump(h//" Dump requests after wait: ",.true.)
-             do i= 1,RecvMsg%nMsgs-1
-                if (RecvMsg%request(i) == MPI_REQUEST_NULL) then
-                   c0="NULL"
-                else
-                   write(c0,"(Z8)") RecvMsg%request(i)
-                end if
-                call MsgDump(" "//trim(adjustl(c0))//",",.true.)
-             end do
-             if (RecvMsg%request(RecvMsg%nMsgs) == MPI_REQUEST_NULL) then
-                c0="NULL"
-             else
-                write(c0,"(Z8)") RecvMsg%request(RecvMsg%nMsgs)
-             end if
-             call MsgDump(" "//trim(adjustl(c0)))
+             write(c1,"(i8)") RecvMsg%otherProc(recvNbr)
+             call MsgDump(h//" received message #"//trim(adjustl(c0))//&
+                  " from MPI proc "//trim(adjustl(c1)))
           end if
-          msgData => RecvMsg%oneMsg(recvNbr)
-!print *,'LFR-DBG: inside WMS 3: ',size(g3d_g(1)%cugd_ttens,1), &
-!                 size(g3d_g(1)%cugd_ttens,2),size(g3d_g(1)%cugd_ttens,3); call flush(6)
+
           ! extract field sections from incoming buffer
+          ! and store at destination fields
 
-          node => null()
-          lastBuffer=0
-          do
-!            print *,'LFR-DBG: inside WMS 3.1: ',size(g3d_g(1)%cugd_ttens,1), &
-!                 size(g3d_g(1)%cugd_ttens,2),size(g3d_g(1)%cugd_ttens,3); call flush(6)
-             node => NextFieldSection(node, msgData%fieldList)
-             if (associated(node)) then
-                if (associated(node%vTabPtr%var_p_2D)) then
-                   firstBuffer = lastBuffer+1
-
-
-!            print *,'LFR-DBG: inside WMS 3.1.0: ', &
-!                        node%vTabPtr%idim_type, &
-!                        node%xStart, node%xEnd,&
-!                        node%yStart, node%yEnd,node%vTabPtr%name; call flush(6)
-
-
-!                   print *,'LFR-DBG: 2D: ',trim(adjustl(node%vTabPtr%name)),node%vTabPtr%idim_type; call flush(6)
-                   call Buffer2FieldSection(node%vTabPtr%var_p_2D, &
-                        node%vTabPtr%idim_type, &
-                        node%xStart, node%xEnd,&
-                        node%yStart, node%yEnd,&
-                        msgData%buf, lastBuffer)
-
-!            print *,'LFR-DBG: inside WMS 3.1.0.1:',size(node%vTabPtr%var_p_2D,1),size(node%vTabPtr%var_p_2D,2),lastBuffer
-
-
-!            print *,'LFR-DBG: inside WMS 3.1.1: ',size(g3d_g(1)%cugd_ttens,1), &
-!                 size(g3d_g(1)%cugd_ttens,2),size(g3d_g(1)%cugd_ttens,3); call flush(6)
-
-
-
-
-
-                   if (dumpLocal) then
-                      write(c0,"(i8)") firstBuffer
-                      write(c1,"(i8)") lastBuffer
-                      write(c2,"(i8)") node%xStart
-                      write(c3,"(i8)") node%xEnd
-                      write(c4,"(i8)") node%yStart
-                      write(c5,"(i8)") node%yEnd
-                      call MsgDump(h//&
-                           "filled 2D field "//trim(adjustl(node%vTabPtr%name))//"["//&
-                           trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
-                           trim(adjustl(c4))//":"//trim(adjustl(c5))//"]"//&
-                           " with buf["//trim(adjustl(c0))//&
-                           ":"//trim(adjustl(c1))//"]")
-                   end if
-!print *,'LFR-DBG: inside WMS 3.2: ',size(g3d_g(1)%cugd_ttens,1), &
-!                 size(g3d_g(1)%cugd_ttens,2),size(g3d_g(1)%cugd_ttens,3); call flush(6)
-                else if (associated(node%vTabPtr%var_p_3D)) then
-                   firstBuffer = lastBuffer+1
-                   !print *,'LFR-DBG: 3D: ',trim(adjustl(node%vTabPtr%name)),node%vTabPtr%idim_type; call flush(6)
-                   call Buffer2FieldSection(node%vTabPtr%var_p_3D, &
-                        node%vTabPtr%idim_type, &
-                        node%xStart, node%xEnd,&
-                        node%yStart, node%yEnd,&
-                        msgData%buf, lastBuffer)
-
-                   if (dumpLocal) then
-                      write(c0,"(i8)") firstBuffer
-                      write(c1,"(i8)") lastBuffer
-                      write(c2,"(i8)") node%xStart
-                      write(c3,"(i8)") node%xEnd
-                      write(c4,"(i8)") node%yStart
-                      write(c5,"(i8)") node%yEnd
-                      select case (node%vTabPtr%idim_type)
-                      case(3)
-                         call MsgDump(h//&
-                              " filled 3D field "//trim(adjustl(node%vTabPtr%name))//"[:,"//&
-                              trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
-                              trim(adjustl(c4))//":"//trim(adjustl(c5))//"]"//&
-                              " with buf["//trim(adjustl(c0))//&
-                              ":"//trim(adjustl(c1))//"]")
-                      case(6:7)
-                         call MsgDump(h//&
-                              " filled 3D field "//trim(adjustl(node%vTabPtr%name))//"["//&
-                              trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
-                              trim(adjustl(c4))//":"//trim(adjustl(c5))//",:]"//&
-                              " with buf["//trim(adjustl(c0))//&
-                              ":"//trim(adjustl(c1))//"]")
-                      end select
-                   end if
-!print *,'LFR-DBG: inside WMS 3.3: ',size(g3d_g(1)%cugd_ttens,1), &
-!                 size(g3d_g(1)%cugd_ttens,2),size(g3d_g(1)%cugd_ttens,3); call flush(6)
-                else if (associated(node%vTabPtr%var_p_4D)) then
-                   firstBuffer = lastBuffer+1
-                   !print *,'LFR-DBG: 4D: ',trim(adjustl(node%vTabPtr%name)),node%vTabPtr%idim_type; call flush(6)
-                   call Buffer2FieldSection(node%vTabPtr%var_p_4D, &
-                        node%vTabPtr%idim_type, &
-                        node%xStart, node%xEnd,&
-                        node%yStart, node%yEnd,&
-                        msgData%buf, lastBuffer)
-
-                   if (dumpLocal) then
-                      write(c0,"(i8)") firstBuffer
-                      write(c1,"(i8)") lastBuffer
-                      write(c2,"(i8)") node%xStart
-                      write(c3,"(i8)") node%xEnd
-                      write(c4,"(i8)") node%yStart
-                      write(c5,"(i8)") node%yEnd
-                      call MsgDump(h//&
-                           " filled 4D field "//trim(adjustl(node%vTabPtr%name))//"[:,"//&
-                           trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
-                           trim(adjustl(c4))//":"//trim(adjustl(c5))//",:]"//&
-                           " with buf["//trim(adjustl(c0))//&
-                           ":"//trim(adjustl(c1))//"]")
-                   end if
-!print *,'LFR-DBG: inside WMS 3.4: ',size(g3d_g(1)%cugd_ttens,1), &
-!                 size(g3d_g(1)%cugd_ttens,2),size(g3d_g(1)%cugd_ttens,3); call flush(6)
-                else
-                   call fatal_error(h//" inconsistent var_tables entry")
-                end if
-             else
-                exit
-             end if
-          end do
-
-          ! done with this message; deallocate buffer
-
-          deallocate(msgData%buf)
+          call ExtractFieldSectionDataFromMessageDataBuffer(RecvMsg%msgData(recvNbr))
+          call DeallocateMessageDataBuffer(RecvMsg%msgData(recvNbr))
        end do
+    else
+       if (dumpLocal) then
+          call MsgDump(h//" empty receive message set")
+       end if
     end if
-!print *,'LFR-DBG: inside WMS 4: ',size(g3d_g(1)%cugd_ttens,1), &
-!                 size(g3d_g(1)%cugd_ttens,2),size(g3d_g(1)%cugd_ttens,3); call flush(6)
+
     ! for all posted send messages, wait on pending request,
     ! deallocate buffer and empty request
 
     if (associated(SendMsg)) then
-!CDIR$ NOVECTOR
+       !CDIR$ NOVECTOR
        do iSend = 1,SendMsg%nMsgs
           call parf_wait_any_nostatus(SendMsg%nMsgs, &
                SendMsg%request, sendNbr)
-          msgData => SendMsg%oneMsg(sendNbr)
-          deallocate(msgData%buf)
+          call DeallocateMessageDataBuffer(SendMsg%msgData(sendNbr))
        end do
+    else
+       if (dumpLocal) then
+          call MsgDump(h//" empty send message set")
+       end if
     end if
-
-    !print *,'LFR-DBG: inside WMS 5: ',size(g3d_g(1)%cugd_ttens,1), &
-!                 size(g3d_g(1)%cugd_ttens,2),size(g3d_g(1)%cugd_ttens,3); call flush(6)
-  end subroutine WaitRecvMsgs
+  end subroutine WaitSendRecvMsgs
 end module ModMessageSet

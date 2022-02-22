@@ -211,7 +211,7 @@ subroutine TopReadStoreOwnChunk(ifm)
   implicit none
 
   include "files.h"
-  include "constants.f90"
+  include "constants.h"
   integer, intent(in) :: ifm
 
   character(len=f_name_length) :: flnm
@@ -289,7 +289,7 @@ subroutine TRSFFieldAndOwnChunk(ifm)
 
   implicit none
   include "files.h"
-  include "constants.f90"
+  include "constants.h"
   integer, intent(in) :: ifm
 
   character(len=f_name_length) :: flnm

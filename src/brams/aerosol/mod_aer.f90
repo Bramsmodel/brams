@@ -1,6 +1,6 @@
 module aerClimMod
 
-   include "constants.f90"
+   include "constants.h"
 
   integer, parameter :: nlat = 46
   !# number of latitude points in aerosol file
@@ -127,8 +127,7 @@ contains
   use readbcst, only: &
      gatherData   ! Subroutine
 
-  include "constants.f90"
-  include "i8.h"
+  include "constants.h"
   character(len=*), parameter :: header="**(gradsREad)**"
 
   !Parameters(constants)

@@ -394,7 +394,7 @@ contains
 !!$    use hdf5
     implicit none
     include 'mpif.h'
-    include "i8.h"
+    include "constants.h"
 
 !!$    integer(hid_t), intent(in) :: hdf_file_id
     character(len=16), intent(in) :: varn

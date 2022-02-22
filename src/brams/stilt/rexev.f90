@@ -762,109 +762,110 @@ end subroutine get_true_air_density
 ! except the heat flux are computed through here. Heat flux is always computed             !
 ! srf - adapted for RK scheme
 !------------------------------------------------------------------------------------------!
-subroutine RK_exevolve(m1,m2,m3,ifm,ia,iz,ja,jz,izu,jzv,jdim,mynum,edt,key)
-
-
-   use mem_basic,   only: basic_g
-   use mem_grid,    only: grid_g, itopo  ,dyncore_flag
-
-   use mem_stilt,    only: stilt_g
-   use mem_tend,    only: tend
-   use mem_scratch, only: scratch
-   use micphys,     only: level  !if(vapour_on)  use therm_lib,   only: vapour_on
-
-   implicit none
-   !----- Arguments -----------------------------------------------------------------------!
-   character(len=*) , intent(in) :: key
-   integer          , intent(in) :: m1,m2,m3,ifm,ia,iz,ja,jz,izu,jzv,jdim,mynum
-   real             , intent(in) :: edt
-   !----- Local variables -----------------------------------------------------------------!
-   integer :: i,j,k
-   !---------------------------------------------------------------------------------------!
-
-   !---------------------------------------------------------------------------------------!
-   !     Copying the vapour and total mixing ratio to scratch arrays if this is not a      !
-   ! "dry" run. Otherwise, leave the values equal to zero, which will impose theta=theta_v !
-   !---------------------------------------------------------------------------------------!
-   
-   !--(DMK-BRAMS-5.0)---------------------------------------------
-   !   call azero2(m1*m2*m3,scratch%vt3dp,scratch%vt3dq)
-   ! srf - opt stilt 
-   !if(level == 0) then 
-   !  scratch%vt3dp = 0.
-   !  scratch%vt3dq = 0.
-    !--(DMK-BRAMS-5.0)---------------------------------------------
-   !elseif (level > 0) then
-   !   !----- If water is allowed, copy them to scratch arrays -----------------------------!
-   !   call atob(m1*m2*m3,basic_g(ifm)%rtp,scratch%vt3dp)
-   !   call atob(m1*m2*m3,basic_g(ifm)%rv,scratch%vt3dq)
-   !end if
-   !---------------------------------------------------------------------------------------!
-
-
-   !---------------------------------------------------------------------------------------!
-   !    Now we compute the contributions on pressure from different terms: Advection, com- !
-   ! pression and heating, following equation (12) of Medvigy et al. (2005). Advection and !
-   ! compression can be computed at the same time, since they don't depend on any other    !
-   ! derivative. Heating, on the other hand, needs to be computed in two steps.            !
-   !---------------------------------------------------------------------------------------!
-   select case (trim(key))
-   case ('COMP')
-      !------------------------------------------------------------------------------------!
-      !   Compression.                                                         !
-      !------------------------------------------------------------------------------------!
-      !----- Initialization ---------------------------------------------------------------!
-      stilt_g(ifm)%thvlast = 0.
-
-      !----- Calculate compression term ---------------------------------------------------!
-      call excondiv(m1,m2,m3,ia,iz,ja,jz,izu,jzv,jdim,itopo                                &
-                   ,basic_g(ifm)%uc                       ,basic_g(ifm)%vc                 &
-                   ,basic_g(ifm)%wc                       ,basic_g(ifm)%pc                 &
-                   ,tend%pt                               ,grid_g(ifm)%dxt                 &
-                   ,grid_g(ifm)%dyt                       ,grid_g(ifm)%rtgt                &
-                   ,grid_g(ifm)%rtgu                      ,grid_g(ifm)%rtgv                &
-                   ,grid_g(ifm)%f13t                      ,grid_g(ifm)%f23t                &
-                   ,grid_g(ifm)%fmapt                     ,grid_g(ifm)%fmapui              &
-                   ,grid_g(ifm)%fmapvi                    )
-      !----- Put theta_v from last timestep into memory ------------------------------------!
-      call fill_thvlast(m1,m2,m3,ia,iz,ja,jz                                               &
-                      ,stilt_g(ifm)%thvlast                   ,basic_g(ifm)%theta          &
-!srf-opt              ,scratch%vt3dp                          ,scratch%vt3dq               )
-                      ,basic_g(ifm)%rtp                       ,basic_g(ifm)%rv             )
-      
-   case ('THA')
-      !------------------------------------------------------------------------------------!
-      !   Advection part of the heating term.                                              !
-      !------------------------------------------------------------------------------------!
-      stilt_g(ifm)%lnthvadv(:,:,:) = 0.
-      call advectc_rk('THA',m1,m2,m3,ia,iz,ja,jz,izu,jzv,mynum)
-      
-      !- switching the sign of the advection term for thetav
-      stilt_g(ifm)%lnthvadv(:,:,:)=-1.*stilt_g(ifm)%lnthvadv(:,:,:)
-        
-      call exhtend_ad(m1,m2,m3,ia,iz,ja,jz &
-                      ,basic_g(ifm)%pi0 &
-		      ,basic_g(ifm)%pc  &  
-		      ,tend%pt  &
-		      ,stilt_g(ifm)%lnthvadv)
-     
-   case ('THS')
-      !------------------------------------------------------------------------------------!
-      !   Advection part of the heating term.                                              !
-      !------------------------------------------------------------------------------------!
-      call storage_theta(m1,m2,m3,ifm,ia,iz,ja,jz,izu,jzv,mynum,edt                        &
-                        ,basic_g(ifm)%pi0                ,basic_g(ifm)%pc                  &
-!srf-oprt               ,scratch%vt3dp                   ,scratch%vt3dq                    &
-                        ,basic_g(ifm)%rtp                ,basic_g(ifm)%rv                  &
-                        ,basic_g(ifm)%theta              ,stilt_g(ifm)%thvlast             &
-                        ,stilt_g(ifm)%lnthvtend          ,tend%pt                          )
-   
-   case default
-      !------------------------------------------------------------------------------------!
-      !   This should never happen...                                                      !
-      !------------------------------------------------------------------------------------!
-      !call abort_run('Unexpected key'//trim(key)//'!!!','exevolve','rexev.f90')
-   end select
-
-   return
-end subroutine RK_exevolve
+!!$subroutine RK_exevolve(OneGrid,m1,m2,m3,ifm,ia,iz,ja,jz,izu,jzv,jdim,mynum,edt,key)
+!!$
+!!$  use ModGrid, only: Grid
+!!$   use mem_basic,   only: basic_g
+!!$   use mem_grid,    only: grid_g, itopo  ,dyncore_flag
+!!$
+!!$   use mem_stilt,    only: stilt_g
+!!$   use mem_tend,    only: tend
+!!$   use mem_scratch, only: scratch
+!!$   use micphys,     only: level  !if(vapour_on)  use therm_lib,   only: vapour_on
+!!$
+!!$   implicit none
+!!$   !----- Arguments -----------------------------------------------------------------------!
+!!$   type(Grid), pointer, intent(in) :: OneGrid
+!!$   character(len=*) , intent(in) :: key
+!!$   integer          , intent(in) :: m1,m2,m3,ifm,ia,iz,ja,jz,izu,jzv,jdim,mynum
+!!$   real             , intent(in) :: edt
+!!$   !----- Local variables -----------------------------------------------------------------!
+!!$   integer :: i,j,k
+!!$   !---------------------------------------------------------------------------------------!
+!!$
+!!$   !---------------------------------------------------------------------------------------!
+!!$   !     Copying the vapour and total mixing ratio to scratch arrays if this is not a      !
+!!$   ! "dry" run. Otherwise, leave the values equal to zero, which will impose theta=theta_v !
+!!$   !---------------------------------------------------------------------------------------!
+!!$   
+!!$   !--(DMK-BRAMS-5.0)---------------------------------------------
+!!$   !   call azero2(m1*m2*m3,scratch%vt3dp,scratch%vt3dq)
+!!$   ! srf - opt stilt 
+!!$   !if(level == 0) then 
+!!$   !  scratch%vt3dp = 0.
+!!$   !  scratch%vt3dq = 0.
+!!$    !--(DMK-BRAMS-5.0)---------------------------------------------
+!!$   !elseif (level > 0) then
+!!$   !   !----- If water is allowed, copy them to scratch arrays -----------------------------!
+!!$   !   call atob(m1*m2*m3,basic_g(ifm)%rtp,scratch%vt3dp)
+!!$   !   call atob(m1*m2*m3,basic_g(ifm)%rv,scratch%vt3dq)
+!!$   !end if
+!!$   !---------------------------------------------------------------------------------------!
+!!$
+!!$
+!!$   !---------------------------------------------------------------------------------------!
+!!$   !    Now we compute the contributions on pressure from different terms: Advection, com- !
+!!$   ! pression and heating, following equation (12) of Medvigy et al. (2005). Advection and !
+!!$   ! compression can be computed at the same time, since they don't depend on any other    !
+!!$   ! derivative. Heating, on the other hand, needs to be computed in two steps.            !
+!!$   !---------------------------------------------------------------------------------------!
+!!$   select case (trim(key))
+!!$   case ('COMP')
+!!$      !------------------------------------------------------------------------------------!
+!!$      !   Compression.                                                         !
+!!$      !------------------------------------------------------------------------------------!
+!!$      !----- Initialization ---------------------------------------------------------------!
+!!$      stilt_g(ifm)%thvlast = 0.
+!!$
+!!$      !----- Calculate compression term ---------------------------------------------------!
+!!$      call excondiv(m1,m2,m3,ia,iz,ja,jz,izu,jzv,jdim,itopo                                &
+!!$                   ,basic_g(ifm)%uc                       ,basic_g(ifm)%vc                 &
+!!$                   ,basic_g(ifm)%wc                       ,basic_g(ifm)%pc                 &
+!!$                   ,tend%pt                               ,grid_g(ifm)%dxt                 &
+!!$                   ,grid_g(ifm)%dyt                       ,grid_g(ifm)%rtgt                &
+!!$                   ,grid_g(ifm)%rtgu                      ,grid_g(ifm)%rtgv                &
+!!$                   ,grid_g(ifm)%f13t                      ,grid_g(ifm)%f23t                &
+!!$                   ,grid_g(ifm)%fmapt                     ,grid_g(ifm)%fmapui              &
+!!$                   ,grid_g(ifm)%fmapvi                    )
+!!$      !----- Put theta_v from last timestep into memory ------------------------------------!
+!!$      call fill_thvlast(m1,m2,m3,ia,iz,ja,jz                                               &
+!!$                      ,stilt_g(ifm)%thvlast                   ,basic_g(ifm)%theta          &
+!!$!srf-opt              ,scratch%vt3dp                          ,scratch%vt3dq               )
+!!$                      ,basic_g(ifm)%rtp                       ,basic_g(ifm)%rv             )
+!!$      
+!!$   case ('THA')
+!!$      !------------------------------------------------------------------------------------!
+!!$      !   Advection part of the heating term.                                              !
+!!$      !------------------------------------------------------------------------------------!
+!!$      stilt_g(ifm)%lnthvadv(:,:,:) = 0.
+!!$      call advectc_rk(OneGrid,'THA',m1,m2,m3,ia,iz,ja,jz,izu,jzv,mynum)
+!!$      
+!!$      !- switching the sign of the advection term for thetav
+!!$      stilt_g(ifm)%lnthvadv(:,:,:)=-1.*stilt_g(ifm)%lnthvadv(:,:,:)
+!!$        
+!!$      call exhtend_ad(m1,m2,m3,ia,iz,ja,jz &
+!!$                      ,basic_g(ifm)%pi0 &
+!!$		      ,basic_g(ifm)%pc  &  
+!!$		      ,tend%pt  &
+!!$		      ,stilt_g(ifm)%lnthvadv)
+!!$     
+!!$   case ('THS')
+!!$      !------------------------------------------------------------------------------------!
+!!$      !   Advection part of the heating term.                                              !
+!!$      !------------------------------------------------------------------------------------!
+!!$      call storage_theta(m1,m2,m3,ifm,ia,iz,ja,jz,izu,jzv,mynum,edt                        &
+!!$                        ,basic_g(ifm)%pi0                ,basic_g(ifm)%pc                  &
+!!$!srf-oprt               ,scratch%vt3dp                   ,scratch%vt3dq                    &
+!!$                        ,basic_g(ifm)%rtp                ,basic_g(ifm)%rv                  &
+!!$                        ,basic_g(ifm)%theta              ,stilt_g(ifm)%thvlast             &
+!!$                        ,stilt_g(ifm)%lnthvtend          ,tend%pt                          )
+!!$   
+!!$   case default
+!!$      !------------------------------------------------------------------------------------!
+!!$      !   This should never happen...                                                      !
+!!$      !------------------------------------------------------------------------------------!
+!!$      !call abort_run('Unexpected key'//trim(key)//'!!!','exevolve','rexev.f90')
+!!$   end select
+!!$
+!!$   return
+!!$end subroutine RK_exevolve

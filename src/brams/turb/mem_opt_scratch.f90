@@ -29,7 +29,7 @@ contains
   subroutine alloc_opt_scratch(proc_type,ngrs,nnzp,nnxp,nnyp,lnxp,lnyp)
 
     implicit none
-    include "i8.h"
+    include "constants.h"
     ! Arguments:
 
     integer, intent(in) :: proc_type, ngrs
