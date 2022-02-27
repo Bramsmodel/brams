@@ -1169,7 +1169,7 @@ contains
              ! as proposed in Wicker, Skamarock (2002) (?) divergence damping is
              ! used in an approximated form by adding the following term to the pressure:
              pp_minus_div(:,:,:) = pp(:,:,:) - alpha_div(:,:,:) / th0(:,:,:) * div(:,:,:)
-             !      call dumpVarAllLatLonk(div,'aDiv'  //crk//citer,1,mxp,1,myp,1,mzp,0.0,0.0)
+
           elseif(damp_formulation==2) then
              !- alternative formulation
              if (.not. singleProcRun) then
@@ -1205,7 +1205,7 @@ contains
           call prdctu(mzp,mxp,myp,ia,izu,ja,jz,  &
                up,ut,pp,th0,f13u,rtgu,rtgt,dxu,topu)
        end if
-       !call dumpVarAllLatLonk(up, 'UP'  ,1155,lrk,iter,1,mxp,1,myp,1,mzp,0.0,0.0)
+
        ! if not last loop iteration,  sends up(i-1,j)
        if (iter < lastIter) then
           call PostSendRecvMsgs(OneGrid%AcouSendU, OneGrid%AcouRecvU)
@@ -1281,7 +1281,7 @@ contains
        ! uses amog
        ! remaining arguments are loop invariant
        call prdctw3(mzp,mxp,myp,ia,iz,ja,jz,wp,amog,amoe,impl)
-       !      call dumpVarAllLatLonk(wp,'aWPg'  //crk//citer,1,mxp,1,myp,1,mzp,0.0,0.0)
+
        ! finishes updating pp=f(pp,wp); uses node inner cells only
        ! remaining arguments are loop invariant
        call prdctp2(mzp,mxp,myp,ia,iz,ja,jz,pp,wp,acof,acog)

@@ -918,7 +918,6 @@ contains
        !**(JP)** Code brought from old "rams_node" initialization. Its execution
        ! was antecipated to allow message passing during initialization, required
        ! for binary reproducibility (see subroutine FilDn0uv)
-       !call dumpVarAllLatLonk(leaf_g(1)%patch_area,'patch_area',846,0,0,1,nodemxp(mynum,1),1,nodemyp(mynum,1),1,npatch,0.0,600.0,h) !
 
        call InitFields(1)
 

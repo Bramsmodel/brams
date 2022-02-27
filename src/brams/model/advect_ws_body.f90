@@ -10,8 +10,6 @@
     !external functions
     real, external :: flux_upwind,fq2, fq3, fq4, fq5, fq6, fq
 
-    logical, parameter :: IsToDump=.false.
-    !< Do a dump os communications?
     logical, parameter :: variable=.true.
     !<
     integer, parameter :: mzi=-2, myi=-2, mxi=-2
@@ -19,8 +17,11 @@
     integer :: mzpp3,mxpp3,mypp3
     integer :: mzppks,mxppis,myppjs
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=8) :: str(10)
+
+    call PostSendRecvMsgsVariableAdress(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv, &
+         scp, ufx, vfx, wfx)
 
     if (dumpLocal) then
        call MsgDump(h//" to advect "//trim(adjustl(vname)))
@@ -37,53 +38,9 @@
     allocate(vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));vfx_local=real_init
     allocate(wfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));wfx_local=real_init
 
-!!$    call DumpGrid(OneGrid)
-!!$    call parf_barrier(1)
-!!$    call parf_exit_mpi()
-!!$    if (mzppks > 0) stop
-    
-    call UpdateFieldAdress(OneGrid%LuFlaSendNorth, scr, "SCR")
-    call UpdateFieldAdress(OneGrid%LuFlaSendNorth, ufx_local, "UFX")
-    call UpdateFieldAdress(OneGrid%LuFlaSendNorth, vfx_local, "VFX")
-    call UpdateFieldAdress(OneGrid%LuFlaSendNorth, wfx_local, "WFX")
-    call UpdateFieldAdress(OneGrid%LuFlaRecvNorth, scr, "SCR")
-    call UpdateFieldAdress(OneGrid%LuFlaRecvNorth, ufx_local, "UFX")
-    call UpdateFieldAdress(OneGrid%LuFlaRecvNorth, vfx_local, "VFX")
-    call UpdateFieldAdress(OneGrid%LuFlaRecvNorth, wfx_local, "WFX")
-
-    call UpdateFieldAdress(OneGrid%LuFlaSendSouth, scr, "SCR")
-    call UpdateFieldAdress(OneGrid%LuFlaSendSouth, ufx_local, "UFX")
-    call UpdateFieldAdress(OneGrid%LuFlaSendSouth, vfx_local, "VFX")
-    call UpdateFieldAdress(OneGrid%LuFlaSendSouth, wfx_local, "WFX")
-    call UpdateFieldAdress(OneGrid%LuFlaRecvSouth, scr, "SCR")
-    call UpdateFieldAdress(OneGrid%LuFlaRecvSouth, ufx_local, "UFX")
-    call UpdateFieldAdress(OneGrid%LuFlaRecvSouth, vfx_local, "VFX")
-    call UpdateFieldAdress(OneGrid%LuFlaRecvSouth, wfx_local, "WFX")
-
-    call UpdateFieldAdress(OneGrid%LuFlaSendEast, scr, "SCR")
-    call UpdateFieldAdress(OneGrid%LuFlaSendEast, ufx_local, "UFX")
-    call UpdateFieldAdress(OneGrid%LuFlaSendEast, vfx_local, "VFX")
-    call UpdateFieldAdress(OneGrid%LuFlaSendEast, wfx_local, "WFX")
-    call UpdateFieldAdress(OneGrid%LuFlaRecvEast, scr, "SCR")
-    call UpdateFieldAdress(OneGrid%LuFlaRecvEast, ufx_local, "UFX")
-    call UpdateFieldAdress(OneGrid%LuFlaRecvEast, vfx_local, "VFX")
-    call UpdateFieldAdress(OneGrid%LuFlaRecvEast, wfx_local, "WFX")
-
-    call UpdateFieldAdress(OneGrid%LuFlaSendWest, scr, "SCR")
-    call UpdateFieldAdress(OneGrid%LuFlaSendWest, ufx_local, "UFX")
-    call UpdateFieldAdress(OneGrid%LuFlaSendWest, vfx_local, "VFX")
-    call UpdateFieldAdress(OneGrid%LuFlaSendWest, wfx_local, "WFX")
-    call UpdateFieldAdress(OneGrid%LuFlaRecvWest, scr, "SCR")
-    call UpdateFieldAdress(OneGrid%LuFlaRecvWest, ufx_local, "UFX")
-    call UpdateFieldAdress(OneGrid%LuFlaRecvWest, vfx_local, "VFX")
-    call UpdateFieldAdress(OneGrid%LuFlaRecvWest, wfx_local, "WFX")
-
     !- flag to determine if a scalar is being advected
     scalar = .false.
-    IF(is==0 .and. js==0 .and. ks==0) scalar = .true.
-
-    if(IsToDump) &
-         call dumpXYvar(scp,vname,'a',1,mxp,1,myp,1,mzp,600.0,660.0)
+    if(is==0 .and. js==0 .and. ks==0) scalar = .true.
 
     !- copy input arrays to extended arrays
     call copyMyPart(scp,scr,ufx_local,vfx_local,wfx_local, &
@@ -96,9 +53,6 @@
          mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
          scr,ufx_local,vfx_local,wfx_local)
 
-    if(IsToDump) &
-         call dumpXYvar(wfx_local,vname,'b',-2,mxp+3,-2,myp+3,-2,mzp+3,0.0,0.0)
-
     ! Set x & y boundary values in halo zones
     if (nmachs>1) then
        if (dumpLocal) then
@@ -110,18 +64,10 @@
                trim(adjustl(str(2)))//","//&
                trim(adjustl(str(3)))//")")
        end if
-       call PostSendRecvMsgs(OneGrid%LuFlaSendNorth, OneGrid%LuFlaRecvNorth)
-       call PostSendRecvMsgs(OneGrid%LuFlaSendSouth, OneGrid%LuFlaRecvSouth)
-       call PostSendRecvMsgs(OneGrid%LuFlaSendEast, OneGrid%LuFlaRecvEast)
-       call PostSendRecvMsgs(OneGrid%LuFlaSendWest, OneGrid%LuFlaRecvWest)
-       call WaitSendRecvMsgs(OneGrid%LuFlaSendNorth, OneGrid%LuFlaRecvNorth)
-       call WaitSendRecvMsgs(OneGrid%LuFlaSendSouth, OneGrid%LuFlaRecvSouth)
-       call WaitSendRecvMsgs(OneGrid%LuFlaSendEast, OneGrid%LuFlaRecvEast)
-       call WaitSendRecvMsgs(OneGrid%LuFlaSendWest, OneGrid%LuFlaRecvWest)
     end if
 
-    if(IsToDump) &
-         call dumpXYvar(wfx_local,vname,'c',-2,mxp+3,-2,myp+3,-2,mzp+3,0.0,0.0)
+    call WaitSendRecvMsgs(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv, &
+         1, mzp, scr, ufx_local, vfx_local, wfx_local)
 
     select case (order_h)
     case (1)
@@ -200,10 +146,7 @@
        stop 'ERROR!'
     end select
 
-    !print *, 'Is scalar? ',scalar,is,js,ks;call flush(6)
-    !iErrNumber=dumpMessage(c_tty,c_yes,header,version,c_notice,vname//' is scalar?: ',(/logical2Int(scalar),is,js,ks/),'I1')
-
-    IF(pd_or_mnt_constraint > 0 .and. scalar .and. vname .ne. 'thc' .and. vname .ne. 'pc') THEN  
+    if(pd_or_mnt_constraint > 0 .and. scalar .and. vname .ne. 'thc' .and. vname .ne. 'pc') then  
 
        !-- positivity/monotonicity constraints
        call PosMonConstraints(mxp,myp,mzp,is,js,ks,ia,iz,ja,jz,&
@@ -213,22 +156,12 @@
             qx,qy,qz,mzi,mzpp3,mxi,mxpp3,myi, &
             mypp3,mzppks,mxppis,myppjs,mynum,vname,sct)
 
-    ENDIF
+    endif
 
     call CreateTendency(mxp,myp,mzp,is,js,ks,ia,iz,ja,jz, &
          mzppks,mxppis,myppjs, &
          dt,ufx,vfx,wfx, &
          vt3dh,vt3dj,vt3dk,scp, &
          qx,qy,qz,sct,vname,mynum)
-    !-----check neg mass
-    !IF(pd_or_mnt_constraint > 0 .and. scalar .and. vname .ne. 'thc' .and. vname .ne. 'pc') THEN  
-    !IF( scalar .and. vname .ne. 'thc' .and. vname .ne. 'pc') THEN  
-    !scp_new=scp+sct*dt
-    !where(scp_new<0.) sct=-scp/dt
-    !print*,"maxmin=",trim(vname),1.-abs(minval(scp_new)-maxval(scp_new))/(1.e-20+maxval(scp_new))
-    !call flush(6)
-    !ENDIF
-    !-----check neg mass
-
 
     deallocate(qx ,qy,    qz,    scr,          ufx_local,    vfx_local ,   wfx_local)
