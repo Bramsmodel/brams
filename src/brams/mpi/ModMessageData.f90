@@ -21,7 +21,7 @@ module ModMessageData
   ! The list should be build at initialization and used whenever
   ! required. This organization avoids recomputing indices of field
   ! sections to copy in / copy out.
-  
+
   use ModParallelEnvironment, only: &
        MsgDump
 
@@ -32,9 +32,11 @@ module ModMessageData
        StringFieldSection, &
        DumpFieldSection, &
        FieldSectionData2Buffer, &
+       FieldSectionData2BufferVariableAdressArr, &
+       FieldSectionData2BufferVariableAdressScalar, &
        Buffer2FieldSectionData
 
-  
+
   use ParLib, only: &
        parf_get_noblock_real, &
        parf_send_noblock_real
@@ -52,10 +54,10 @@ module ModMessageData
        NextFieldSectionNodeAtList, &
        FindFieldNamed, &
        UpdateFieldAdress
-  
+
   implicit none
   include "mpif.h"
-  
+
   private
   public :: MessageData
   public :: CreateMessageData
@@ -63,13 +65,16 @@ module ModMessageData
   public :: DumpMessageData
   public :: AppendFieldSectionToMessageData
   public :: AllocateMessageDataBuffer
-  public :: FillMessageDataBufferWithFieldSectionData
+  public :: FillMessageDataBuffer
   public :: PostSendMessageData
   public :: PostRecvMessageData
-  public :: ExtractFieldSectionDataFromMessageDataBuffer
+  public :: Buffer2FieldSectionData
+  public :: DecomposeMessageDataBuffer
   public :: DeallocateMessageDataBuffer
   public :: UpdateFieldAdress
   public :: FindFieldNamed
+  public :: FillMessageDataBufferVariableAdressArr
+  public :: FillMessageDataBufferVariableAdressScalar
   
   type MessageData
      private
@@ -81,18 +86,18 @@ module ModMessageData
      ! message send/receive the buffer "buf"
 
      ! prior to a send communication, procedure
-     ! FillMessageDataBufferWithFieldSectionData
+     ! FillMessageDataBuffer
      ! copies field values stored at all field sections
      ! on the field section list to the buffer
 
      ! after a receive communication, procedure
-     ! ExtractFieldSectionDataFromMessageDataBuffer
+     ! Buffer2FieldSectionData
      ! copies field values stored at the buffer
      ! to all field sections of the field section list
 
      ! a field section is appended to the field section list
      ! by procedure AppendFieldSectionToMessageData
-     
+
      integer :: bufSize=0
      ! message buffer size
      real, allocatable :: buf(:)
@@ -115,6 +120,16 @@ module ModMessageData
   interface FindFieldNamed
      module procedure FindFieldSectionAtMessageData
   end interface FindFieldNamed
+
+  interface FillMessageDataBuffer
+     module procedure FillMessageDataBufferFixedAdress
+!!$     module procedure FillMessageDataBufferVariableAdress
+  end interface FillMessageDataBuffer
+
+  interface DecomposeMessageDataBuffer
+     module procedure DecomposeMessageDataBufferFixedAdress
+     module procedure DecomposeMessageDataBufferVariableAdress
+  end interface DecomposeMessageDataBuffer
 contains
 
 
@@ -132,7 +147,7 @@ contains
 
     character(len=*), parameter :: h="**(CreateMessageData)**"
     logical, parameter :: dumpLocal=.false.
-    
+
     oneMessageData%bufSize = 0
     oneMessageData%name = trim(adjustl(name))
     oneMessageData%direction = trim(adjustl(direction))
@@ -176,12 +191,13 @@ contains
   subroutine DumpMessageData(oneMessageData, strMsg)
 
     ! dumps components of a MessageData variable
-    
+
     type(MessageData), intent(in) :: oneMessageData
     character(len=*), intent(in), optional :: strMsg
 
     type(FieldSection), pointer :: this
     character(len=128) :: msgHead
+    character(len=8) :: c0
     character(len=*), parameter :: h="**(DumpMessageData)**"
 
     if (present(strMsg)) then
@@ -192,16 +208,18 @@ contains
     if (oneMessageData%name == "") then
        call MsgDump(trim(adjustl(msgHead))//" empty message data")
     else
+       write(c0,"(i8)") oneMessageData%bufSize
        call MsgDump(trim(adjustl(msgHead))//" "//&
             trim(adjustl(oneMessageData%direction))//" message named "//&
-            trim(adjustl(oneMessageData%name))//" with field section list")
+            trim(adjustl(oneMessageData%name))//"; bufSize="//&
+            trim(adjustl(c0))//"; field section list=")
        call DumpFieldSectionList(oneMessageData%list)
     end if
   end subroutine DumpMessageData
 
 
-  
-    
+
+
   subroutine AppendFieldSectionToMessageData (oneFieldSection, oneMessageData)
 
     ! appends a Field Section pointer to the tail of the Field Section list of
@@ -232,7 +250,7 @@ contains
 
 
 
-  
+
 
 
   subroutine AllocateMessageDataBuffer(oneMessageData)
@@ -245,7 +263,7 @@ contains
     integer :: ierr
     character(len=8) :: c0, c1
     character(len=*), parameter :: h="**(AllocateMessageDataBuffer)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     bufSize=oneMessageData%bufSize
 
@@ -273,8 +291,8 @@ contains
 
 
 
-  
-  subroutine FillMessageDataBufferWithFieldSectionData(oneMessageData)
+
+  subroutine FillMessageDataBufferFixedAdress(oneMessageData)
     type(MessageData), intent(inout) :: oneMessageData
 
     ! copy field section values of the entire field section list of
@@ -284,8 +302,8 @@ contains
     type(FieldSectionNode), pointer :: thisNode
     type(FieldSection), pointer :: this
     logical, parameter :: dumpLocal=.false.
-    character(len=*), parameter :: h="**(FillMessageDataBufferWithFieldSectionData)**"
-    
+    character(len=*), parameter :: h="**(FillMessageDataBufferFixedAdress)**"
+
     if (dumpLocal) then
        call MsgDump(h//" to Message Data "//trim(adjustl(oneMessageData%name)))
     end if
@@ -300,13 +318,144 @@ contains
             oneMessageData%bufsize)
        thisNode => NextFieldSectionNodeAtList(thisNode)
     end do
-  end subroutine FillMessageDataBufferWithFieldSectionData
+  end subroutine FillMessageDataBufferFixedAdress
 
 
 
-  
 
-  subroutine ExtractFieldSectionDataFromMessageDataBuffer(oneMessageData)
+
+  subroutine FillMessageDataBufferVariableAdressArr(oneMessageData, scp, ufx, vfx, wfx)
+
+    type(MessageData), intent(inout) :: oneMessageData
+    real, pointer, intent(in):: scp(:,:,:)
+    real, intent(in):: ufx(:,:,:)
+    real, intent(in):: vfx(:,:,:)
+    real, intent(in):: wfx(:,:,:)
+
+    ! copy field section values of the entire field section list of
+    ! the Message Data variable to the buffer of the Message Data variable
+
+    integer :: bufStart
+    type(FieldSectionNode), pointer :: oneNode
+    type(FieldSection), pointer :: oneFieldSection
+    logical, parameter :: dumpLocal=.true.
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(FillMessageDataBufferVariableAdressArr)**"
+
+    if (.not. associated(scp)) then
+       call fatal_error(h//" invoked with null scp")
+    else if (dumpLocal) then
+       call MsgDump(h//" to Message Data "//trim(adjustl(oneMessageData%name)))
+       write(str(1),"(i8)") lbound(scp,1)
+       write(str(2),"(i8)") ubound(scp,1)
+       write(str(3),"(i8)") lbound(scp,2)
+       write(str(4),"(i8)") ubound(scp,2)
+       write(str(5),"(i8)") lbound(scp,3)
+       write(str(6),"(i8)") ubound(scp,3)
+       call MsgDump(h//" scp dimensioned ("//&
+            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
+            trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//")")
+       write(str(1),"(i8)") lbound(ufx,1)
+       write(str(2),"(i8)") ubound(ufx,1)
+       write(str(3),"(i8)") lbound(ufx,2)
+       write(str(4),"(i8)") ubound(ufx,2)
+       write(str(5),"(i8)") lbound(ufx,3)
+       write(str(6),"(i8)") ubound(ufx,3)
+       call MsgDump(h//" ufx dimensioned ("//&
+            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
+            trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//")")
+       write(str(1),"(i8)") lbound(vfx,1)
+       write(str(2),"(i8)") ubound(vfx,1)
+       write(str(3),"(i8)") lbound(vfx,2)
+       write(str(4),"(i8)") ubound(vfx,2)
+       write(str(5),"(i8)") lbound(vfx,3)
+       write(str(6),"(i8)") ubound(vfx,3)
+       call MsgDump(h//" vfx dimensioned ("//&
+            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
+            trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//")")
+       write(str(1),"(i8)") lbound(wfx,1)
+       write(str(2),"(i8)") ubound(wfx,1)
+       write(str(3),"(i8)") lbound(wfx,2)
+       write(str(4),"(i8)") ubound(wfx,2)
+       write(str(5),"(i8)") lbound(wfx,3)
+       write(str(6),"(i8)") ubound(wfx,3)
+       call MsgDump(h//" wfx dimensioned ("//&
+            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
+            trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//")")
+    end if
+
+    bufStart=1
+    oneNode => FieldSectionListHeadNode(oneMessageData%list)
+    oneFieldSection => FieldSectionAtNode(oneNode)
+    call FieldSectionData2BufferVariableAdressArr(scp, size(scp,1), oneFieldSection, &
+         oneMessageData%buf, bufStart, oneMessageData%bufsize)
+    oneNode => NextFieldSectionNodeAtList(oneNode)
+    oneFieldSection => FieldSectionAtNode(oneNode)
+    call FieldSectionData2BufferVariableAdressArr(ufx, size(ufx,1), oneFieldSection, &
+         oneMessageData%buf, bufStart, oneMessageData%bufsize)
+    oneNode => NextFieldSectionNodeAtList(oneNode)
+    oneFieldSection => FieldSectionAtNode(oneNode)
+    call FieldSectionData2BufferVariableAdressArr(vfx, size(vfx,1), oneFieldSection, &
+         oneMessageData%buf, bufStart, oneMessageData%bufsize)
+    oneNode => NextFieldSectionNodeAtList(oneNode)
+    oneFieldSection => FieldSectionAtNode(oneNode)
+    call FieldSectionData2BufferVariableAdressArr(wfx, size(wfx,1), oneFieldSection, &
+         oneMessageData%buf, bufStart, oneMessageData%bufsize)
+  end subroutine FillMessageDataBufferVariableAdressArr
+
+
+
+    subroutine FillMessageDataBufferVariableAdressScalar(oneMessageData, scp, ufx, vfx, wfx)
+
+    type(MessageData), intent(inout) :: oneMessageData
+    real, intent(in):: scp
+    real, intent(in):: ufx(:,:,:)
+    real, intent(in):: vfx(:,:,:)
+    real, intent(in):: wfx(:,:,:)
+
+    ! copy field section values of the entire field section list of
+    ! the Message Data variable to the buffer of the Message Data variable
+
+    ! it is assumed that the "first dimension" of the field pointed by
+    ! scalar scp is the same as the first dimension of ufx
+
+    integer :: bufStart
+    type(FieldSectionNode), pointer :: oneNode
+    type(FieldSection), pointer :: oneFieldSection
+    logical, parameter :: dumpLocal=.false.
+    character(len=*), parameter :: h="**(FillMessageDataBufferVariableAdressScalar)**"
+
+    if (dumpLocal) then
+       call MsgDump(h//" to Message Data "//trim(adjustl(oneMessageData%name)))
+    end if
+    bufStart=1
+    oneNode => FieldSectionListHeadNode(oneMessageData%list)
+    oneFieldSection => FieldSectionAtNode(oneNode)
+    call FieldSectionData2BufferVariableAdressScalar(scp, size(ufx,1), oneFieldSection, &
+         oneMessageData%buf, bufStart, oneMessageData%bufsize)
+    oneNode => NextFieldSectionNodeAtList(oneNode)
+    oneFieldSection => FieldSectionAtNode(oneNode)
+    call FieldSectionData2BufferVariableAdressArr(ufx, size(ufx,1), oneFieldSection, &
+         oneMessageData%buf, bufStart, oneMessageData%bufsize)
+    oneNode => NextFieldSectionNodeAtList(oneNode)
+    oneFieldSection => FieldSectionAtNode(oneNode)
+    call FieldSectionData2BufferVariableAdressArr(vfx, size(vfx,1), oneFieldSection, &
+         oneMessageData%buf, bufStart, oneMessageData%bufsize)
+    oneNode => NextFieldSectionNodeAtList(oneNode)
+    oneFieldSection => FieldSectionAtNode(oneNode)
+    call FieldSectionData2BufferVariableAdressArr(wfx, size(wfx,1), oneFieldSection, &
+         oneMessageData%buf, bufStart, oneMessageData%bufsize)
+  end subroutine FillMessageDataBufferVariableAdressScalar
+
+
+
+
+
+  subroutine DecomposeMessageDataBufferFixedAdress(oneMessageData)
     type(MessageData), intent(inout) :: oneMessageData
 
     ! copy all field section values from the buffer of the Message Data variable
@@ -315,7 +464,7 @@ contains
     integer :: bufStart
     type(FieldSectionNode), pointer :: thisNode
     type(FieldSection), pointer :: this
-    character(len=*), parameter :: h="**(ExtractFieldSectionDataFromMessageDataBuffer)**"
+    character(len=*), parameter :: h="**(DecomposeMessageDataBufferFixedAdress)**"
     logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
@@ -332,11 +481,60 @@ contains
             oneMessageData%bufsize)
        thisNode => NextFieldSectionNodeAtList(thisNode)
     end do
-  end subroutine ExtractFieldSectionDataFromMessageDataBuffer
+  end subroutine DecomposeMessageDataBufferFixedAdress
 
 
 
-  
+
+
+  subroutine DecomposeMessageDataBufferVariableAdress(oneMessageData, &
+       msgStartZ, msgEndZ, scr, ufx_local, wfx_local, vfx_local)
+    type(MessageData), intent(inout) :: oneMessageData
+    integer, intent(in) :: msgStartZ
+    integer, intent(in) :: msgEndZ
+    real, pointer, intent(in):: scr(:,:,:)
+    real, pointer, intent(in):: ufx_local(:,:,:)
+    real, pointer, intent(in):: vfx_local(:,:,:)
+    real, pointer, intent(in):: wfx_local(:,:,:)
+
+    ! copy all field section values from the buffer of the Message Data variable
+    ! to the field section pointed by the Message Data field section list 
+
+    integer :: bufStart
+    type(FieldSectionNode), pointer :: oneNode
+    type(FieldSection), pointer :: oneSection
+    character(len=*), parameter :: h="**(DecomposeMessageDataBufferVariableAdress)**"
+    logical, parameter :: dumpLocal=.false.
+
+    if (dumpLocal) then
+       call MsgDump(h//"  of Message Data "//trim(adjustl(oneMessageData%name)))
+    end if
+    bufStart=1
+    oneNode => FieldSectionListHeadNode(oneMessageData%list)
+    oneSection => FieldSectionAtNode(oneNode)
+    call Buffer2FieldSectionData(oneSection, &
+         scr, msgStartZ, msgEndZ, &
+         oneMessageData%buf, bufStart, oneMessageData%bufsize)
+    oneNode => NextFieldSectionNodeAtList(oneNode)
+    oneSection => FieldSectionAtNode(oneNode)
+    call Buffer2FieldSectionData(oneSection, &
+         ufx_local, msgStartZ, msgEndZ, &
+         oneMessageData%buf, bufStart, oneMessageData%bufsize)
+    oneNode => NextFieldSectionNodeAtList(oneNode)
+    oneSection => FieldSectionAtNode(oneNode)
+    call Buffer2FieldSectionData(oneSection, &
+         vfx_local, msgStartZ, msgEndZ, &
+         oneMessageData%buf, bufStart, oneMessageData%bufsize)
+    oneNode => NextFieldSectionNodeAtList(oneNode)
+    oneSection => FieldSectionAtNode(oneNode)
+    call Buffer2FieldSectionData(oneSection, &
+         wfx_local, msgStartZ, msgEndZ, &
+         oneMessageData%buf, bufStart, oneMessageData%bufsize)
+  end subroutine DecomposeMessageDataBufferVariableAdress
+
+
+
+
 
 
   subroutine DeallocateMessageDataBuffer(oneMessageData)
@@ -371,7 +569,7 @@ contains
 
 
 
-  
+
   subroutine PostRecvMessageData(oneMessageData, &
        otherProc, tag, request, preMsgString)
     type(MessageData), intent(inout) :: oneMessageData
@@ -384,11 +582,11 @@ contains
     character(len=8) :: c0, c1, c2, c3
     character(len=128) :: msgString
     logical, parameter :: dumpLocal=.false.
-    
+
     if (.not. allocated(oneMessageData%buf)) then
        call fatal_error(h//" buf not allocated")
     end if
-    
+
     call parf_get_noblock_real(&
          oneMessageData%buf, &
          oneMessageData%bufSize, &
@@ -422,7 +620,7 @@ contains
 
 
 
-  
+
   subroutine PostSendMessageData(oneMessageData, &
        otherProc, tag, request, preMsgString)
     type(MessageData), intent(in) :: oneMessageData
@@ -435,11 +633,11 @@ contains
     character(len=8) :: c0, c1, c2, c3
     character(len=128) :: msgString
     logical, parameter :: dumpLocal=.false.
-    
+
     if (.not. allocated(oneMessageData%buf)) then
        call fatal_error(h//" buf not allocated")
     end if
-    
+
     call parf_send_noblock_real(&
          oneMessageData%buf, &
          oneMessageData%bufSize, &
@@ -552,7 +750,7 @@ contains
     type(MessageData), pointer, intent(in) :: oneMessageData
     character(len=*), intent(in) :: fieldName
     type(FieldSection), pointer :: node
-    
+
     character(len=*), parameter :: h="**(FindFieldSectionAtMessageData)**"
     if (.not. associated(oneMessageData)) then
        call fatal_error(h//" oneMessageData not associated")

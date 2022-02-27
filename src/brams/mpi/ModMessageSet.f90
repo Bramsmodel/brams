@@ -75,8 +75,10 @@ module ModMessageSet
        AppendFieldSectionToMessageData, &
        PostRecvMessageData, &
        PostSendMessageData, &
-       FillMessageDataBufferWithFieldSectionData, &
-       ExtractFieldSectionDataFromMessageDataBuffer, &
+       FillMessageDataBuffer, &
+       FillMessageDataBufferVariableAdressArr, &
+       FillMessageDataBufferVariableAdressScalar, &
+       DecomposeMessageDataBuffer, &
        AllocateMessageDataBuffer, &
        DeallocateMessageDataBuffer, &
        DestroyMessageData, &
@@ -121,14 +123,18 @@ module ModMessageSet
   public :: CreateAcouDampOneMessageSet
   public :: DestroyAcouDampOneMessageSet
 
-  public :: CreateLuFlaMessageSet
-  public :: DestroyLuFlaMessageSet
+!!$  public :: CreateLuFlaMessageSet
+!!$  public :: DestroyLuFlaMessageSet
+
+  public :: CreateWideGhostZoneMessageSet
+  public :: DestroyWideGhostZoneMessageSet
 
   public :: UpdateFieldAdress
 
   public :: PostSendRecvMsgs
+  public :: PostSendRecvMsgsVariableAdress
   public :: WaitSendRecvMsgs
-  
+
   character(len=*), parameter :: sendDirection="send"
   character(len=*), parameter :: recvDirection="recv"
 
@@ -186,6 +192,22 @@ module ModMessageSet
      module procedure UpdateFieldAdressAtMessageSet_3D
      module procedure UpdateFieldAdressAtMessageSet_4D
   end interface UpdateFieldAdress
+
+  interface PostSendRecvMsgs
+     module procedure PostSendRecvMsgsFixedAdress
+!!$     module procedure PostSendRecvMsgsVariableAdress
+  end interface PostSendRecvMsgs
+
+  interface PostSendRecvMsgsVariableAdress
+     module procedure PostSendRecvMsgsVariableAdressArr
+     module procedure PostSendRecvMsgsVariableAdressScalar
+  end interface PostSendRecvMsgsVariableAdress
+
+
+  interface WaitSendRecvMsgs
+     module procedure WaitSendRecvMsgsFixedAdress
+     module procedure WaitSendRecvMsgsVariableAdress
+  end interface WaitSendRecvMsgs
 contains
 
 
@@ -2628,414 +2650,2271 @@ contains
 
 
 
-  subroutine CreateLuFlaMessageSet(&
+!!$  subroutine CreateLuFlaMessageSet(&
+!!$       GridSize, ParEnv, Neigh, &
+!!$       GlobalOwn, GlobalWithGhost, LocalOwn, &
+!!$       TagLuFlaNorth, TagLuFlaSouth, TagLuFlaEast, TagLuFlaWest, &
+!!$       LuFlaSendNorth, LuFlaSendSouth, LuFlaSendEast, LuFlaSendWest, &
+!!$       LuFlaRecvNorth, LuFlaRecvSouth, LuFlaRecvEast, LuFlaRecvWest)
+!!$
+!!$    type(GridDims), pointer, intent(in) :: GridSize
+!!$    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+!!$    type(NeighbourNodes), pointer, intent(in) :: Neigh
+!!$    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
+!!$    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+!!$    type(DomainDecomp), pointer, intent(in) :: LocalOwn
+!!$    integer, intent(in) :: TagLuFlaNorth
+!!$    integer, intent(in) :: TagLuFlaSouth
+!!$    integer, intent(in) :: TagLuFlaEast
+!!$    integer, intent(in) :: TagLuFlaWest
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaSendNorth
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaSendSouth
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaSendEast
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaSendWest
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaRecvNorth
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaRecvSouth
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaRecvEast
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaRecvWest
+!!$    
+!!$
+!!$    ! scratch arrays of size number of neighbour nodes
+!!$    ! containing global indices of regions for send and receive
+!!$
+!!$    integer :: xbSend(parEnv%nMachs)
+!!$    integer :: xeSend(parEnv%nMachs)
+!!$    integer :: ybSend(parEnv%nMachs)
+!!$    integer :: yeSend(parEnv%nMachs)
+!!$    integer :: xbRecv(parEnv%nMachs)
+!!$    integer :: xeRecv(parEnv%nMachs)
+!!$    integer :: ybRecv(parEnv%nMachs)
+!!$    integer :: yeRecv(parEnv%nMachs)
+!!$
+!!$    ! scratch arrays of size number of neighbour nodes
+!!$    ! containing which neighbour nodes will send of receive
+!!$
+!!$    logical :: willSend(parEnv%nMachs)
+!!$    logical :: willRecv(parEnv%nMachs)
+!!$
+!!$    character(len=*), parameter :: NameSendNorth="SendLuFlaNorth"
+!!$    character(len=*), parameter :: NameRecvNorth="RecvLuFlaNorth"
+!!$    character(len=*), parameter :: NameSendSouth="SendLuFlaSouth"
+!!$    character(len=*), parameter :: NameRecvSouth="RecvLuFlaSouth"
+!!$    character(len=*), parameter :: NameSendEast="SendLuFlaEast"
+!!$    character(len=*), parameter :: NameRecvEast="RecvLuFlaEast"
+!!$    character(len=*), parameter :: NameSendWest="SendLuFlaWest"
+!!$    character(len=*), parameter :: NameRecvWest="RecvLuFlaWest"
+!!$
+!!$    integer :: nMachs
+!!$    integer :: myNum
+!!$    integer :: nNeigh
+!!$    integer :: ierr
+!!$    integer :: lbz
+!!$    integer :: ubz
+!!$    integer :: lbx
+!!$    integer :: ubx
+!!$    integer :: lby
+!!$    integer :: uby
+!!$    integer :: iNeigh
+!!$    integer :: iNode
+!!$    integer :: x0, y0
+!!$    integer, parameter :: ghostZoneWidth=3
+!!$    integer, parameter :: idim_type=3
+!!$    real, pointer :: phonyField(:,:,:)
+!!$
+!!$    logical, parameter :: dumpLocal=.true.
+!!$    character(len=8) :: str(10)
+!!$    character(len=*), parameter :: h="**(CreateLuFlaMessageSet)**"
+!!$
+!!$
+!!$    nMachs=ParEnv%nmachs
+!!$    myNum=ParEnv%mynum
+!!$    nNeigh=Neigh%nNeigh
+!!$    
+!!$    if (dumpLocal) then
+!!$       write(str(1),"(i8)") nMachs
+!!$       write(str(2),"(i8)") myNum
+!!$       call MsgDump(h//" enter with nMachs="//trim(adjustl(str(1)))//&
+!!$            "; myNum="//trim(adjustl(str(2))))
+!!$       call DumpNeighbourNodes(Neigh,"LuFla")
+!!$    end if
+!!$    
+!!$    ! phony field, just to collect bounds
+!!$    ! define phony field bounds
+!!$
+!!$    lbz = 1 - ghostZoneWidth
+!!$    ubz = GridSize%nnzp + ghostZoneWidth
+!!$    lbx=1 - ghostZoneWidth
+!!$    ubx=LocalOwn%nx(myNum)+ghostZoneWidth
+!!$    lby=1 - ghostZoneWidth
+!!$    uby=LocalOwn%ny(myNum)+ghostZoneWidth
+!!$    allocate(phonyField(lbz:ubz,lbx:ubx,lby:uby), stat=ierr)
+!!$    if (ierr /= 0) then
+!!$       write(str(1),"(i8)") lbz
+!!$       write(str(2),"(i8)") ubz
+!!$       write(str(3),"(i8)") lbx
+!!$       write(str(4),"(i8)") ubx
+!!$       write(str(5),"(i8)") lby
+!!$       write(str(6),"(i8)") uby
+!!$       write(str(7),"(i8)") ierr
+!!$       call fatal_error(h//" allocate phonyField("//&
+!!$            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+!!$            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
+!!$            trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//&
+!!$            ") fails with stat="//trim(adjustl(str(7))))
+!!$    end if
+!!$
+!!$    if (dumpLocal) then
+!!$       write(str(1),"(i8)") lbound(phonyField,1)
+!!$       write(str(2),"(i8)") ubound(phonyField,1)
+!!$       write(str(3),"(i8)") lbound(phonyField,2)
+!!$       write(str(4),"(i8)") ubound(phonyField,2)
+!!$       write(str(5),"(i8)") lbound(phonyField,3)
+!!$       write(str(6),"(i8)") ubound(phonyField,3)
+!!$       call MsgDump(h//" allocated phonyField("//&
+!!$            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+!!$            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
+!!$            trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//&
+!!$            ")")
+!!$    end if
+!!$
+!!$    ! north neighbour communication
+!!$
+!!$    call NodesRegionsSendRecv(&
+!!$         nMachs=nMachs, &
+!!$         nNeigh=nNeigh, &
+!!$         myNum=myNum, &
+!!$         tag=TagLuFlaNorth, &
+!!$         Neigh=Neigh, &
+!!$         GlobalOwn=GlobalOwn, &
+!!$         NameSend=NameSendNorth, &
+!!$         NameRecv=NameRecvNorth, &
+!!$         xbToUpdate=GlobalOwn%xb, &
+!!$         xeToUpdate=GlobalOwn%xe, &
+!!$         ybToUpdate=GlobalOwn%yb-ghostZoneWidth, &
+!!$         yeToUpdate=GlobalOwn%yb-1, &
+!!$         xbSend=xbSend, &
+!!$         xeSend=xeSend, &
+!!$         ybSend=ybSend, &
+!!$         yeSend=yeSend, &
+!!$         willSend=willSend, &
+!!$         SendMessageSet=LuFlaSendNorth, &
+!!$         xbRecv=xbRecv, &
+!!$         xeRecv=xeRecv, &
+!!$         ybRecv=ybRecv, &
+!!$         yeRecv=yeRecv, &
+!!$         willRecv=willRecv, &
+!!$         RecvMessageSet=LuFlaRecvNorth)
+!!$
+!!$    ! insert field sections named SCR, UFX, VFX, WFX
+!!$    ! with phony field addresses, to be updated whenever
+!!$    ! real addresses are known
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "SCR", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendNorth, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvNorth)
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "UFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendNorth, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvNorth)
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "VFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendNorth, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvNorth)
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "WFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendNorth, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvNorth)
+!!$
+!!$    ! south neighbour communication
+!!$
+!!$    call NodesRegionsSendRecv(&
+!!$         nMachs=nMachs, &
+!!$         nNeigh=nNeigh, &
+!!$         myNum=myNum, &
+!!$         tag=TagLuFlaSouth, &
+!!$         Neigh=Neigh, &
+!!$         GlobalOwn=GlobalOwn, &
+!!$         NameSend=NameSendSouth, &
+!!$         NameRecv=NameRecvSouth, &
+!!$         xbToUpdate=GlobalOwn%xb, &
+!!$         xeToUpdate=GlobalOwn%xe, &
+!!$         ybToUpdate=GlobalOwn%ye+1, &
+!!$         yeToUpdate=GlobalOwn%ye+ghostZoneWidth, &
+!!$         xbSend=xbSend, &
+!!$         xeSend=xeSend, &
+!!$         ybSend=ybSend, &
+!!$         yeSend=yeSend, &
+!!$         willSend=willSend, &
+!!$         SendMessageSet=LuFlaSendSouth, &
+!!$         xbRecv=xbRecv, &
+!!$         xeRecv=xeRecv, &
+!!$         ybRecv=ybRecv, &
+!!$         yeRecv=yeRecv, &
+!!$         willRecv=willRecv, &
+!!$         RecvMessageSet=LuFlaRecvSouth)
+!!$
+!!$    ! insert field sections named SCR, UFX, VFX, WFX
+!!$    ! with phony field addresses, to be updated whenever
+!!$    ! real addresses are known
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "SCR", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendSouth, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvSouth)
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "UFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendSouth, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvSouth)
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "VFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendSouth, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvSouth)
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "WFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendSouth, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvSouth)
+!!$
+!!$    ! east neighbour communication
+!!$
+!!$    call NodesRegionsSendRecv(&
+!!$         nMachs=nMachs, &
+!!$         nNeigh=nNeigh, &
+!!$         myNum=myNum, &
+!!$         tag=TagLuFlaEast, &
+!!$         Neigh=Neigh, &
+!!$         GlobalOwn=GlobalOwn, &
+!!$         NameSend=NameSendEast, &
+!!$         NameRecv=NameRecvEast, &
+!!$         xbToUpdate=GlobalOwn%xb-ghostZoneWidth, &
+!!$         xeToUpdate=GlobalOwn%xb-1, &
+!!$         ybToUpdate=GlobalOwn%yb, &
+!!$         yeToUpdate=GlobalOwn%ye, &
+!!$         xbSend=xbSend, &
+!!$         xeSend=xeSend, &
+!!$         ybSend=ybSend, &
+!!$         yeSend=yeSend, &
+!!$         willSend=willSend, &
+!!$         SendMessageSet=LuFlaSendEast, &
+!!$         xbRecv=xbRecv, &
+!!$         xeRecv=xeRecv, &
+!!$         ybRecv=ybRecv, &
+!!$         yeRecv=yeRecv, &
+!!$         willRecv=willRecv, &
+!!$         RecvMessageSet=LuFlaRecvEast)
+!!$
+!!$    ! insert field sections named SCR, UFX, VFX, WFX
+!!$    ! with phony field addresses, to be updated whenever
+!!$    ! real addresses are known
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "SCR", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendEast, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvEast)
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "UFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendEast, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvEast)
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "VFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendEast, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvEast)
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "WFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendEast, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvEast)
+!!$
+!!$    ! west neighbour communication
+!!$
+!!$    call NodesRegionsSendRecv(&
+!!$         nMachs=nMachs, &
+!!$         nNeigh=nNeigh, &
+!!$         myNum=myNum, &
+!!$         tag=TagLuFlaWest, &
+!!$         Neigh=Neigh, &
+!!$         GlobalOwn=GlobalOwn, &
+!!$         NameSend=NameSendWest, &
+!!$         NameRecv=NameRecvWest, &
+!!$         xbToUpdate=GlobalOwn%xe+1, &
+!!$         xeToUpdate=GlobalOwn%xe+ghostZoneWidth, &
+!!$         ybToUpdate=GlobalOwn%yb, &
+!!$         yeToUpdate=GlobalOwn%ye, &
+!!$         xbSend=xbSend, &
+!!$         xeSend=xeSend, &
+!!$         ybSend=ybSend, &
+!!$         yeSend=yeSend, &
+!!$         willSend=willSend, &
+!!$         SendMessageSet=LuFlaSendWest, &
+!!$         xbRecv=xbRecv, &
+!!$         xeRecv=xeRecv, &
+!!$         ybRecv=ybRecv, &
+!!$         yeRecv=yeRecv, &
+!!$         willRecv=willRecv, &
+!!$         RecvMessageSet=LuFlaRecvWest)
+!!$
+!!$    ! insert field sections named SCR, UFX, VFX, WFX
+!!$    ! with phony field addresses, to be updated whenever
+!!$    ! real addresses are known
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "SCR", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendWest, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvWest)
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "UFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendWest, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvWest)
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "VFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendWest, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvWest)
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "WFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendWest, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvWest)
+!!$
+!!$    deallocate(phonyField, stat=ierr)
+!!$    if (ierr /= 0) then
+!!$       write(str(1),"(i8)") ierr
+!!$       call fatal_error(h//" deallocate phonyField fails with stat="//&
+!!$            trim(adjustl(str(1))))
+!!$    end if
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" finishes with LuFlaSendNorth MessageSet:")
+!!$       call DumpMessageSet(LuFlaSendNorth)
+!!$       call MsgDump(h//" finishes with LuFlaRecvNorth MessageSet:")
+!!$       call DumpMessageSet(LuFlaRecvNorth)
+!!$       call MsgDump(h//" finishes with LuFlaSendSouth MessageSet:")
+!!$       call DumpMessageSet(LuFlaSendSouth)
+!!$       call MsgDump(h//" finishes with LuFlaRecvSouth MessageSet:")
+!!$       call DumpMessageSet(LuFlaRecvSouth)
+!!$       call MsgDump(h//" finishes with LuFlaSendEast MessageSet:")
+!!$       call DumpMessageSet(LuFlaSendEast)
+!!$       call MsgDump(h//" finishes with LuFlaRecvEast MessageSet:")
+!!$       call DumpMessageSet(LuFlaRecvEast)
+!!$       call MsgDump(h//" finishes with LuFlaSendWest MessageSet:")
+!!$       call DumpMessageSet(LuFlaSendWest)
+!!$       call MsgDump(h//" finishes with LuFlaRecvWest MessageSet:")
+!!$       call DumpMessageSet(LuFlaRecvWest)
+!!$    end if
+!!$
+!!$  end subroutine CreateLuFlaMessageSet
+
+
+
+!!$  subroutine CreateLuFlaMessageSet(&
+!!$       GridSize, ParEnv, Neigh, &
+!!$       GlobalOwn, GlobalWithGhost, LocalOwn, &
+!!$       TagLuFlaNorth, TagLuFlaSouth, TagLuFlaEast, TagLuFlaWest, &
+!!$       LuFlaSendNorth, LuFlaSendSouth, LuFlaSendEast, LuFlaSendWest, &
+!!$       LuFlaRecvNorth, LuFlaRecvSouth, LuFlaRecvEast, LuFlaRecvWest)
+!!$
+!!$    type(GridDims), pointer, intent(in) :: GridSize
+!!$    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+!!$    type(NeighbourNodes), pointer, intent(in) :: Neigh
+!!$    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
+!!$    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+!!$    type(DomainDecomp), pointer, intent(in) :: LocalOwn
+!!$    integer, intent(in) :: TagLuFlaNorth
+!!$    integer, intent(in) :: TagLuFlaSouth
+!!$    integer, intent(in) :: TagLuFlaEast
+!!$    integer, intent(in) :: TagLuFlaWest
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaSendNorth
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaSendSouth
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaSendEast
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaSendWest
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaRecvNorth
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaRecvSouth
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaRecvEast
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaRecvWest
+!!$
+!!$
+!!$    ! scratch arrays of size number of neighbour nodes
+!!$    ! containing global indices of regions to send and receive
+!!$
+!!$    integer :: xbSend(parEnv%nMachs)
+!!$    integer :: xeSend(parEnv%nMachs)
+!!$    integer :: ybSend(parEnv%nMachs)
+!!$    integer :: yeSend(parEnv%nMachs)
+!!$    integer :: xbRecv(parEnv%nMachs)
+!!$    integer :: xeRecv(parEnv%nMachs)
+!!$    integer :: ybRecv(parEnv%nMachs)
+!!$    integer :: yeRecv(parEnv%nMachs)
+!!$
+!!$    ! scratch arrays of size number of neighbour nodes
+!!$    ! containing which neighbour nodes will send of receive
+!!$
+!!$    logical :: willSend(parEnv%nMachs)
+!!$    logical :: willRecv(parEnv%nMachs)
+!!$
+!!$    character(len=*), parameter :: NameSendNorth="SendLuFlaNorth"
+!!$    character(len=*), parameter :: NameRecvNorth="RecvLuFlaNorth"
+!!$    character(len=*), parameter :: NameSendSouth="SendLuFlaSouth"
+!!$    character(len=*), parameter :: NameRecvSouth="RecvLuFlaSouth"
+!!$    character(len=*), parameter :: NameSendEast="SendLuFlaEast"
+!!$    character(len=*), parameter :: NameRecvEast="RecvLuFlaEast"
+!!$    character(len=*), parameter :: NameSendWest="SendLuFlaWest"
+!!$    character(len=*), parameter :: NameRecvWest="RecvLuFlaWest"
+!!$
+!!$    integer :: nMachs
+!!$    integer :: myNum
+!!$    integer :: nNeigh
+!!$    integer :: ierr
+!!$    integer :: lbz
+!!$    integer :: ubz
+!!$    integer :: lbx
+!!$    integer :: ubx
+!!$    integer :: lby
+!!$    integer :: uby
+!!$    integer :: iNeigh
+!!$    integer :: iNode
+!!$    integer :: x0, y0
+!!$    integer, parameter :: ghostZoneWidth=3
+!!$    integer, parameter :: idim_type=3
+!!$    real, pointer :: phonyField(:,:,:)
+!!$
+!!$    logical, parameter :: dumpLocal=.true.
+!!$    character(len=8) :: str(10)
+!!$    character(len=*), parameter :: h="**(CreateLuFlaMessageSet)**"
+!!$
+!!$
+!!$    nMachs=ParEnv%nmachs
+!!$    myNum=ParEnv%mynum
+!!$    nNeigh=Neigh%nNeigh
+!!$
+!!$    if (dumpLocal) then
+!!$       write(str(1),"(i8)") nMachs
+!!$       write(str(2),"(i8)") myNum
+!!$       call MsgDump(h//" enter with nMachs="//trim(adjustl(str(1)))//&
+!!$            "; myNum="//trim(adjustl(str(2))))
+!!$       call DumpNeighbourNodes(Neigh,"LuFla")
+!!$    end if
+!!$
+!!$    ! phony field, just to collect bounds
+!!$    ! define phony field bounds
+!!$
+!!$    lbz = 1 - ghostZoneWidth
+!!$    ubz = GridSize%nnzp + ghostZoneWidth
+!!$    lbx=1 - ghostZoneWidth
+!!$    ubx=LocalOwn%nx(myNum)+ghostZoneWidth
+!!$    lby=1 - ghostZoneWidth
+!!$    uby=LocalOwn%ny(myNum)+ghostZoneWidth
+!!$    allocate(phonyField(lbz:ubz,lbx:ubx,lby:uby), stat=ierr)
+!!$    if (ierr /= 0) then
+!!$       write(str(1),"(i8)") lbz
+!!$       write(str(2),"(i8)") ubz
+!!$       write(str(3),"(i8)") lbx
+!!$       write(str(4),"(i8)") ubx
+!!$       write(str(5),"(i8)") lby
+!!$       write(str(6),"(i8)") uby
+!!$       write(str(7),"(i8)") ierr
+!!$       call fatal_error(h//" allocate phonyField("//&
+!!$            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+!!$            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
+!!$            trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//&
+!!$            ") fails with stat="//trim(adjustl(str(7))))
+!!$    end if
+!!$
+!!$    if (dumpLocal) then
+!!$       write(str(1),"(i8)") lbound(phonyField,1)
+!!$       write(str(2),"(i8)") ubound(phonyField,1)
+!!$       write(str(3),"(i8)") lbound(phonyField,2)
+!!$       write(str(4),"(i8)") ubound(phonyField,2)
+!!$       write(str(5),"(i8)") lbound(phonyField,3)
+!!$       write(str(6),"(i8)") ubound(phonyField,3)
+!!$       call MsgDump(h//" allocated phonyField("//&
+!!$            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+!!$            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
+!!$            trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//&
+!!$            ")")
+!!$    end if
+!!$
+!!$    ! north neighbour communication
+!!$
+!!$    ! which neighbour nodes will send and receive, given by
+!!$    ! willSend and willRecv
+!!$
+!!$    ! which intervals will be send, given by
+!!$    ! (xbSend:xeSend,ybSend:yeSend)
+!!$
+!!$    !  which intervals will be received, given by
+!!$    ! (xbRecv:xeRecv,ybRecv:yeRecv)
+!!$
+!!$    ! intervals are computed as the intersection of
+!!$    ! (xbToUpdate:xeToUpdate, ybToUpdate:yeToUpdate)
+!!$    ! with GlobalOwn of neighbour ranks (given by Neigh)
+!!$
+!!$
+!!$    call NodesToSendRecvMessages( &
+!!$         thisNode=myNum, &
+!!$         Neigh=Neigh, &
+!!$         GlobalOwn=GlobalOwn, &
+!!$         xbToUpdate=GlobalOwn%xb, &
+!!$         xeToUpdate=GlobalOwn%xe, &
+!!$         ybToUpdate=GlobalOwn%yb-ghostZoneWidth, &
+!!$         yeToUpdate=GlobalOwn%yb-1, &
+!!$         xbSend=xbSend, &
+!!$         xeSend=xeSend, &
+!!$         ybSend=ybSend, &
+!!$         yeSend=yeSend, &
+!!$         willSend=willSend, &
+!!$         xbRecv=xbRecv, &
+!!$         xeRecv=xeRecv, &
+!!$         ybRecv=ybRecv, &
+!!$         yeRecv=yeRecv, &
+!!$         willRecv=willRecv, &
+!!$         varName=NameSendNorth//" and "//NameRecvNorth)
+!!$
+!!$    ! build message set
+!!$
+!!$    LuFlaSendNorth => CreateMessageSet(&
+!!$         NameSendNorth, &
+!!$         sendDirection, &
+!!$         TagLuFlaNorth, &
+!!$         willSend, &
+!!$         Neigh)
+!!$    LuFlaRecvNorth => CreateMessageSet(&
+!!$         NameRecvNorth, &
+!!$         recvDirection, &
+!!$         TagLuFlaNorth, &
+!!$         willRecv, &
+!!$         Neigh)
+!!$
+!!$    ! insert field sections named SCR, UFX, VFX, WFX
+!!$    ! with phony field addresses, to be updated whenever
+!!$    ! real addresses are known
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "SCR", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendNorth, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvNorth)
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "UFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendNorth, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvNorth)
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "VFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendNorth, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvNorth)
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "WFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendNorth, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvNorth)
+!!$
+!!$    ! south neighbour communication
+!!$
+!!$    call NodesToSendRecvMessages( &
+!!$         thisNode=myNum, &
+!!$         Neigh=Neigh, &
+!!$         GlobalOwn=GlobalOwn, &
+!!$         xbToUpdate=GlobalOwn%xb, &
+!!$         xeToUpdate=GlobalOwn%xe, &
+!!$         ybToUpdate=GlobalOwn%ye+1, &
+!!$         yeToUpdate=GlobalOwn%ye+ghostZoneWidth, &
+!!$         xbSend=xbSend, &
+!!$         xeSend=xeSend, &
+!!$         ybSend=ybSend, &
+!!$         yeSend=yeSend, &
+!!$         willSend=willSend, &
+!!$         xbRecv=xbRecv, &
+!!$         xeRecv=xeRecv, &
+!!$         ybRecv=ybRecv, &
+!!$         yeRecv=yeRecv, &
+!!$         willRecv=willRecv, &
+!!$         varName=NameSendSouth//" and "//NameRecvSouth)
+!!$
+!!$    ! build message set
+!!$
+!!$    LuFlaSendSouth => CreateMessageSet(&
+!!$         NameSendSouth, &
+!!$         sendDirection, &
+!!$         TagLuFlaSouth, &
+!!$         willSend, &
+!!$         Neigh)
+!!$    LuFlaRecvSouth => CreateMessageSet(&
+!!$         NameRecvSouth, &
+!!$         recvDirection, &
+!!$         TagLuFlaSouth, &
+!!$         willRecv, &
+!!$         Neigh)
+!!$
+!!$    ! insert field sections named SCR, UFX, VFX, WFX
+!!$    ! with phony field addresses, to be updated whenever
+!!$    ! real addresses are known
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "SCR", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendSouth, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvSouth)
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "UFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendSouth, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvSouth)
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "VFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendSouth, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvSouth)
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "WFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendSouth, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvSouth)
+!!$
+!!$    ! east neighbour communication
+!!$
+!!$    call NodesToSendRecvMessages( &
+!!$         thisNode=myNum, &
+!!$         Neigh=Neigh, &
+!!$         GlobalOwn=GlobalOwn, &
+!!$         xbToUpdate=GlobalOwn%xb-ghostZoneWidth, &
+!!$         xeToUpdate=GlobalOwn%xb-1, &
+!!$         ybToUpdate=GlobalOwn%yb, &
+!!$         yeToUpdate=GlobalOwn%ye, &
+!!$         xbSend=xbSend, &
+!!$         xeSend=xeSend, &
+!!$         ybSend=ybSend, &
+!!$         yeSend=yeSend, &
+!!$         willSend=willSend, &
+!!$         xbRecv=xbRecv, &
+!!$         xeRecv=xeRecv, &
+!!$         ybRecv=ybRecv, &
+!!$         yeRecv=yeRecv, &
+!!$         willRecv=willRecv, &
+!!$         varName=NameSendEast//" and "//NameRecvEast)
+!!$
+!!$    ! build message set
+!!$
+!!$    LuFlaSendEast => CreateMessageSet(&
+!!$         NameSendEast, &
+!!$         sendDirection, &
+!!$         TagLuFlaEast, &
+!!$         willSend, &
+!!$         Neigh)
+!!$    LuFlaRecvEast => CreateMessageSet(&
+!!$         NameRecvEast, &
+!!$         recvDirection, &
+!!$         TagLuFlaEast, &
+!!$         willRecv, &
+!!$         Neigh)
+!!$
+!!$    ! insert field sections named SCR, UFX, VFX, WFX
+!!$    ! with phony field addresses, to be updated whenever
+!!$    ! real addresses are known
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "SCR", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendEast, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvEast)
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "UFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendEast, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvEast)
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "VFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendEast, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvEast)
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "WFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendEast, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvEast)
+!!$
+!!$    ! west neighbour communication
+!!$
+!!$    call NodesToSendRecvMessages( &
+!!$         thisNode=myNum, &
+!!$         Neigh=Neigh, &
+!!$         GlobalOwn=GlobalOwn, &
+!!$         xbToUpdate=GlobalOwn%xe+1, &
+!!$         xeToUpdate=GlobalOwn%xe+ghostZoneWidth, &
+!!$         ybToUpdate=GlobalOwn%yb, &
+!!$         yeToUpdate=GlobalOwn%ye, &
+!!$         xbSend=xbSend, &
+!!$         xeSend=xeSend, &
+!!$         ybSend=ybSend, &
+!!$         yeSend=yeSend, &
+!!$         willSend=willSend, &
+!!$         xbRecv=xbRecv, &
+!!$         xeRecv=xeRecv, &
+!!$         ybRecv=ybRecv, &
+!!$         yeRecv=yeRecv, &
+!!$         willRecv=willRecv, &
+!!$         varName=NameSendWest//" and "//NameRecvWest)
+!!$
+!!$    ! build message set
+!!$
+!!$    LuFlaSendWest => CreateMessageSet(&
+!!$         NameSendWest, &
+!!$         sendDirection, &
+!!$         TagLuFlaWest, &
+!!$         willSend, &
+!!$         Neigh)
+!!$    LuFlaRecvWest => CreateMessageSet(&
+!!$         NameRecvWest, &
+!!$         recvDirection, &
+!!$         TagLuFlaWest, &
+!!$         willRecv, &
+!!$         Neigh)
+!!$
+!!$    ! insert field sections named SCR, UFX, VFX, WFX
+!!$    ! with phony field addresses, to be updated whenever
+!!$    ! real addresses are known
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "SCR", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendWest, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvWest)
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "UFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendWest, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvWest)
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "VFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendWest, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvWest)
+!!$
+!!$    call InsertFieldSectionAtSendRecvMessageSet(&
+!!$         phonyField, "WFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
+!!$         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendWest, &
+!!$         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvWest)
+!!$
+!!$    deallocate(phonyField, stat=ierr)
+!!$    if (ierr /= 0) then
+!!$       write(str(1),"(i8)") ierr
+!!$       call fatal_error(h//" deallocate phonyField fails with stat="//&
+!!$            trim(adjustl(str(1))))
+!!$    end if
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" finishes with LuFlaSendNorth MessageSet:")
+!!$       call DumpMessageSet(LuFlaSendNorth)
+!!$       call MsgDump(h//" finishes with LuFlaRecvNorth MessageSet:")
+!!$       call DumpMessageSet(LuFlaRecvNorth)
+!!$       call MsgDump(h//" finishes with LuFlaSendSouth MessageSet:")
+!!$       call DumpMessageSet(LuFlaSendSouth)
+!!$       call MsgDump(h//" finishes with LuFlaRecvSouth MessageSet:")
+!!$       call DumpMessageSet(LuFlaRecvSouth)
+!!$       call MsgDump(h//" finishes with LuFlaSendEast MessageSet:")
+!!$       call DumpMessageSet(LuFlaSendEast)
+!!$       call MsgDump(h//" finishes with LuFlaRecvEast MessageSet:")
+!!$       call DumpMessageSet(LuFlaRecvEast)
+!!$       call MsgDump(h//" finishes with LuFlaSendWest MessageSet:")
+!!$       call DumpMessageSet(LuFlaSendWest)
+!!$       call MsgDump(h//" finishes with LuFlaRecvWest MessageSet:")
+!!$       call DumpMessageSet(LuFlaRecvWest)
+!!$    end if
+!!$
+!!$  end subroutine CreateLuFlaMessageSet
+
+
+
+
+!!$  subroutine CreateLuFlaMessageSet(&
+!!$       GridSize, ParEnv, Neigh, &
+!!$       GlobalOwn, GlobalWithGhost, LocalOwn, &
+!!$       TagLuFlaNorth, TagLuFlaSouth, TagLuFlaEast, TagLuFlaWest, &
+!!$       LuFlaSendNorth, LuFlaSendSouth, LuFlaSendEast, LuFlaSendWest, &
+!!$       LuFlaRecvNorth, LuFlaRecvSouth, LuFlaRecvEast, LuFlaRecvWest)
+!!$
+!!$    type(GridDims), pointer, intent(in) :: GridSize
+!!$    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+!!$    type(NeighbourNodes), pointer, intent(in) :: Neigh
+!!$    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
+!!$    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+!!$    type(DomainDecomp), pointer, intent(in) :: LocalOwn
+!!$    integer, intent(in) :: TagLuFlaNorth
+!!$    integer, intent(in) :: TagLuFlaSouth
+!!$    integer, intent(in) :: TagLuFlaEast
+!!$    integer, intent(in) :: TagLuFlaWest
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaSendNorth
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaSendSouth
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaSendEast
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaSendWest
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaRecvNorth
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaRecvSouth
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaRecvEast
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaRecvWest
+!!$
+!!$
+!!$    ! scratch arrays of size number of neighbour nodes
+!!$    ! containing global indices of regions to send and receive
+!!$
+!!$    integer :: xbSend(parEnv%nMachs)
+!!$    integer :: xeSend(parEnv%nMachs)
+!!$    integer :: ybSend(parEnv%nMachs)
+!!$    integer :: yeSend(parEnv%nMachs)
+!!$    integer :: xbRecv(parEnv%nMachs)
+!!$    integer :: xeRecv(parEnv%nMachs)
+!!$    integer :: ybRecv(parEnv%nMachs)
+!!$    integer :: yeRecv(parEnv%nMachs)
+!!$
+!!$    ! scratch arrays of size number of neighbour nodes
+!!$    ! containing which neighbour nodes will send of receive
+!!$
+!!$    logical :: willSend(parEnv%nMachs)
+!!$    logical :: willRecv(parEnv%nMachs)
+!!$
+!!$    character(len=*), parameter :: NameSendNorth="SendLuFlaNorth"
+!!$    character(len=*), parameter :: NameRecvNorth="RecvLuFlaNorth"
+!!$    character(len=*), parameter :: NameSendSouth="SendLuFlaSouth"
+!!$    character(len=*), parameter :: NameRecvSouth="RecvLuFlaSouth"
+!!$    character(len=*), parameter :: NameSendEast="SendLuFlaEast"
+!!$    character(len=*), parameter :: NameRecvEast="RecvLuFlaEast"
+!!$    character(len=*), parameter :: NameSendWest="SendLuFlaWest"
+!!$    character(len=*), parameter :: NameRecvWest="RecvLuFlaWest"
+!!$
+!!$    character(len=*), parameter :: scrName="SCR"
+!!$    character(len=*), parameter :: ufxName="UFX"
+!!$    character(len=*), parameter :: vfxName="VFX"
+!!$    character(len=*), parameter :: wfxName="WFX"
+!!$
+!!$    integer :: nMachs
+!!$    integer :: myNum
+!!$    integer :: nNeigh
+!!$    integer :: ierr
+!!$    integer :: lbz
+!!$    integer :: ubz
+!!$    integer :: lbx
+!!$    integer :: ubx
+!!$    integer :: lby
+!!$    integer :: uby
+!!$    integer :: iNeigh
+!!$    integer :: iNode
+!!$    integer :: x0, y0
+!!$    integer :: nMsgs
+!!$    integer :: cntMsg
+!!$    integer, parameter :: ghostZoneWidth=3
+!!$    integer, parameter :: idim_type=3
+!!$    type(FieldSection), pointer :: oneFieldSection
+!!$    real, pointer :: phonyField(:,:,:)
+!!$
+!!$    logical, parameter :: dumpLocal=.true.
+!!$    character(len=8) :: str(10)
+!!$    character(len=*), parameter :: h="**(CreateLuFlaMessageSet)**"
+!!$
+!!$
+!!$    nMachs=ParEnv%nmachs
+!!$    myNum=ParEnv%mynum
+!!$    nNeigh=Neigh%nNeigh
+!!$
+!!$    if (dumpLocal) then
+!!$       write(str(1),"(i8)") nMachs
+!!$       write(str(2),"(i8)") myNum
+!!$       call MsgDump(h//" enter with nMachs="//trim(adjustl(str(1)))//&
+!!$            "; myNum="//trim(adjustl(str(2))))
+!!$       call DumpNeighbourNodes(Neigh,"LuFla")
+!!$    end if
+!!$
+!!$    ! phony field, just to collect bounds
+!!$    ! define phony field bounds
+!!$
+!!$    lbz = 1 - ghostZoneWidth
+!!$    ubz = GridSize%nnzp + ghostZoneWidth
+!!$    lbx=1 - ghostZoneWidth
+!!$    ubx=LocalOwn%nx(myNum)+ghostZoneWidth
+!!$    lby=1 - ghostZoneWidth
+!!$    uby=LocalOwn%ny(myNum)+ghostZoneWidth
+!!$    allocate(phonyField(lbz:ubz,lbx:ubx,lby:uby), stat=ierr)
+!!$    if (ierr /= 0) then
+!!$       write(str(1),"(i8)") lbz
+!!$       write(str(2),"(i8)") ubz
+!!$       write(str(3),"(i8)") lbx
+!!$       write(str(4),"(i8)") ubx
+!!$       write(str(5),"(i8)") lby
+!!$       write(str(6),"(i8)") uby
+!!$       write(str(7),"(i8)") ierr
+!!$       call fatal_error(h//" allocate phonyField("//&
+!!$            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+!!$            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
+!!$            trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//&
+!!$            ") fails with stat="//trim(adjustl(str(7))))
+!!$    end if
+!!$
+!!$    if (dumpLocal) then
+!!$       write(str(1),"(i8)") lbound(phonyField,1)
+!!$       write(str(2),"(i8)") ubound(phonyField,1)
+!!$       write(str(3),"(i8)") lbound(phonyField,2)
+!!$       write(str(4),"(i8)") ubound(phonyField,2)
+!!$       write(str(5),"(i8)") lbound(phonyField,3)
+!!$       write(str(6),"(i8)") ubound(phonyField,3)
+!!$       call MsgDump(h//" allocated phonyField("//&
+!!$            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+!!$            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
+!!$            trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//&
+!!$            ")")
+!!$    end if
+!!$
+!!$    ! offsets to convert global indices to local indices at this proc
+!!$
+!!$    x0 = GlobalWithGhost%xb(myNum) - 1
+!!$    y0 = GlobalWithGhost%yb(myNum) - 1
+!!$
+!!$    ! north neighbour communication
+!!$
+!!$    ! which neighbour nodes will send and receive, given by
+!!$    ! willSend and willRecv
+!!$
+!!$    ! which intervals will be send, given by
+!!$    ! (xbSend:xeSend,ybSend:yeSend)
+!!$
+!!$    !  which intervals will be received, given by
+!!$    ! (xbRecv:xeRecv,ybRecv:yeRecv)
+!!$
+!!$    ! intervals are computed as the intersection of
+!!$    ! (xbToUpdate:xeToUpdate, ybToUpdate:yeToUpdate)
+!!$    ! with GlobalOwn of neighbour ranks (given by Neigh)
+!!$
+!!$
+!!$    call NodesToSendRecvMessages( &
+!!$         thisNode=myNum, &
+!!$         Neigh=Neigh, &
+!!$         GlobalOwn=GlobalOwn, &
+!!$         xbToUpdate=GlobalOwn%xb, &
+!!$         xeToUpdate=GlobalOwn%xe, &
+!!$         ybToUpdate=GlobalOwn%yb-ghostZoneWidth, &
+!!$         yeToUpdate=GlobalOwn%yb-1, &
+!!$         xbSend=xbSend, &
+!!$         xeSend=xeSend, &
+!!$         ybSend=ybSend, &
+!!$         yeSend=yeSend, &
+!!$         willSend=willSend, &
+!!$         xbRecv=xbRecv, &
+!!$         xeRecv=xeRecv, &
+!!$         ybRecv=ybRecv, &
+!!$         yeRecv=yeRecv, &
+!!$         willRecv=willRecv, &
+!!$         varName=NameSendNorth//" and "//NameRecvNorth)
+!!$
+!!$    ! build message set
+!!$
+!!$    LuFlaSendNorth => CreateMessageSet(&
+!!$         NameSendNorth, &
+!!$         sendDirection, &
+!!$         TagLuFlaNorth, &
+!!$         willSend, &
+!!$         Neigh)
+!!$
+!!$    ! insert field sections named SCR, UFX, VFX, WFX
+!!$    ! with phony field addresses, to be updated whenever
+!!$    ! real addresses are known
+!!$
+!!$    if ( associated(LuFlaSendNorth)) then
+!!$       nMsgs = LuFlaSendNorth%nMsgs
+!!$
+!!$       ! create list of Field Sections to communicate, one for
+!!$       ! each process to communicate and insert at this MessageSet
+!!$       ! field section list
+!!$
+!!$       cntMsg = 0
+!!$       do iNeigh = 1, nNeigh
+!!$          if (willSend(iNeigh)) then
+!!$
+!!$             cntMsg = cntMsg + 1
+!!$             if (cntMsg > nMsgs) then
+!!$                write(str(1),"(i8)") nMsgs
+!!$                call fatal_error(h//" nMsgs ("//&
+!!$                     trim(adjustl(str(1)))//") exceeded while inserting four fields "//&
+!!$                     " at message "//trim(adjustl(LuFlaSendNorth%name)))
+!!$             end if
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  scrName, &
+!!$                  idim_type, &
+!!$                  xbSend(iNeigh)-x0, xeSend(iNeigh)-x0, &
+!!$                  ybSend(iNeigh)-y0, yeSend(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaSendNorth%msgData(cntMsg))
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  ufxName, &
+!!$                  idim_type, &
+!!$                  xbSend(iNeigh)-x0, xeSend(iNeigh)-x0, &
+!!$                  ybSend(iNeigh)-y0, yeSend(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaSendNorth%msgData(cntMsg))
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  vfxName, &
+!!$                  idim_type, &
+!!$                  xbSend(iNeigh)-x0, xeSend(iNeigh)-x0, &
+!!$                  ybSend(iNeigh)-y0, yeSend(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaSendNorth%msgData(cntMsg))
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  wfxName, &
+!!$                  idim_type, &
+!!$                  xbSend(iNeigh)-x0, xeSend(iNeigh)-x0, &
+!!$                  ybSend(iNeigh)-y0, yeSend(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaSendNorth%msgData(cntMsg))
+!!$          end if
+!!$       end do
+!!$    end if
+!!$
+!!$    ! build message set
+!!$
+!!$    LuFlaRecvNorth => CreateMessageSet(&
+!!$         NameRecvNorth, &
+!!$         recvDirection, &
+!!$         TagLuFlaNorth, &
+!!$         willRecv, &
+!!$         Neigh)
+!!$
+!!$    ! insert field sections named SCR, UFX, VFX, WFX
+!!$    ! with phony field addresses, to be updated whenever
+!!$    ! real addresses are known
+!!$
+!!$    if ( associated(LuFlaRecvNorth)) then
+!!$       nMsgs = LuFlaRecvNorth%nMsgs
+!!$       cntMsg = 0
+!!$       do iNeigh = 1, nNeigh
+!!$          if (willRecv(iNeigh)) then
+!!$
+!!$             cntMsg = cntMsg + 1
+!!$             if (cntMsg > nMsgs) then
+!!$                write(str(1),"(i8)") nMsgs
+!!$                call fatal_error(h//" nMsgs ("//&
+!!$                     trim(adjustl(str(1)))//") exceeded while inserting four fields "//&
+!!$                     " at message "//trim(adjustl(LuFlaRecvNorth%name)))
+!!$             end if
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  scrName, &
+!!$                  idim_type, &
+!!$                  xbRecv(iNeigh)-x0, xeRecv(iNeigh)-x0, &
+!!$                  ybRecv(iNeigh)-y0, yeRecv(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaRecvNorth%msgData(cntMsg))
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  ufxName, &
+!!$                  idim_type, &
+!!$                  xbRecv(iNeigh)-x0, xeRecv(iNeigh)-x0, &
+!!$                  ybRecv(iNeigh)-y0, yeRecv(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaRecvNorth%msgData(cntMsg))
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  vfxName, &
+!!$                  idim_type, &
+!!$                  xbRecv(iNeigh)-x0, xeRecv(iNeigh)-x0, &
+!!$                  ybRecv(iNeigh)-y0, yeRecv(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaRecvNorth%msgData(cntMsg))
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  wfxName, &
+!!$                  idim_type, &
+!!$                  xbRecv(iNeigh)-x0, xeRecv(iNeigh)-x0, &
+!!$                  ybRecv(iNeigh)-y0, yeRecv(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaRecvNorth%msgData(cntMsg))
+!!$          end if
+!!$       end do
+!!$    end if
+!!$
+!!$    ! south neighbour communication
+!!$
+!!$    call NodesToSendRecvMessages( &
+!!$         thisNode=myNum, &
+!!$         Neigh=Neigh, &
+!!$         GlobalOwn=GlobalOwn, &
+!!$         xbToUpdate=GlobalOwn%xb, &
+!!$         xeToUpdate=GlobalOwn%xe, &
+!!$         ybToUpdate=GlobalOwn%ye+1, &
+!!$         yeToUpdate=GlobalOwn%ye+ghostZoneWidth, &
+!!$         xbSend=xbSend, &
+!!$         xeSend=xeSend, &
+!!$         ybSend=ybSend, &
+!!$         yeSend=yeSend, &
+!!$         willSend=willSend, &
+!!$         xbRecv=xbRecv, &
+!!$         xeRecv=xeRecv, &
+!!$         ybRecv=ybRecv, &
+!!$         yeRecv=yeRecv, &
+!!$         willRecv=willRecv, &
+!!$         varName=NameSendSouth//" and "//NameRecvSouth)
+!!$
+!!$    ! build message set
+!!$
+!!$    LuFlaSendSouth => CreateMessageSet(&
+!!$         NameSendSouth, &
+!!$         sendDirection, &
+!!$         TagLuFlaSouth, &
+!!$         willSend, &
+!!$         Neigh)
+!!$
+!!$    ! insert field sections named SCR, UFX, VFX, WFX
+!!$    ! with phony field addresses, to be updated whenever
+!!$    ! real addresses are known
+!!$
+!!$    if ( associated(LuFlaSendSouth)) then
+!!$       nMsgs = LuFlaSendSouth%nMsgs
+!!$
+!!$       ! create list of Field Sections to communicate, one for
+!!$       ! each process to communicate and insert at this MessageSet
+!!$       ! field section list
+!!$
+!!$       cntMsg = 0
+!!$       do iNeigh = 1, nNeigh
+!!$          if (willSend(iNeigh)) then
+!!$
+!!$             cntMsg = cntMsg + 1
+!!$             if (cntMsg > nMsgs) then
+!!$                write(str(1),"(i8)") nMsgs
+!!$                call fatal_error(h//" nMsgs ("//&
+!!$                     trim(adjustl(str(1)))//") exceeded while inserting four fields "//&
+!!$                     " at message "//trim(adjustl(LuFlaSendSouth%name)))
+!!$             end if
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  scrName, &
+!!$                  idim_type, &
+!!$                  xbSend(iNeigh)-x0, xeSend(iNeigh)-x0, &
+!!$                  ybSend(iNeigh)-y0, yeSend(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaSendSouth%msgData(cntMsg))
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  ufxName, &
+!!$                  idim_type, &
+!!$                  xbSend(iNeigh)-x0, xeSend(iNeigh)-x0, &
+!!$                  ybSend(iNeigh)-y0, yeSend(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaSendSouth%msgData(cntMsg))
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  vfxName, &
+!!$                  idim_type, &
+!!$                  xbSend(iNeigh)-x0, xeSend(iNeigh)-x0, &
+!!$                  ybSend(iNeigh)-y0, yeSend(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaSendSouth%msgData(cntMsg))
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  wfxName, &
+!!$                  idim_type, &
+!!$                  xbSend(iNeigh)-x0, xeSend(iNeigh)-x0, &
+!!$                  ybSend(iNeigh)-y0, yeSend(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaSendSouth%msgData(cntMsg))
+!!$          end if
+!!$       end do
+!!$    end if
+!!$
+!!$    ! build message set
+!!$
+!!$    LuFlaRecvSouth => CreateMessageSet(&
+!!$         NameRecvSouth, &
+!!$         recvDirection, &
+!!$         TagLuFlaSouth, &
+!!$         willRecv, &
+!!$         Neigh)
+!!$
+!!$    ! insert field sections named SCR, UFX, VFX, WFX
+!!$    ! with phony field addresses, to be updated whenever
+!!$    ! real addresses are known
+!!$
+!!$    if ( associated(LuFlaRecvSouth)) then
+!!$       nMsgs = LuFlaRecvSouth%nMsgs
+!!$       cntMsg = 0
+!!$       do iNeigh = 1, nNeigh
+!!$          if (willRecv(iNeigh)) then
+!!$
+!!$             cntMsg = cntMsg + 1
+!!$             if (cntMsg > nMsgs) then
+!!$                write(str(1),"(i8)") nMsgs
+!!$                call fatal_error(h//" nMsgs ("//&
+!!$                     trim(adjustl(str(1)))//") exceeded while inserting four fields "//&
+!!$                     " at message "//trim(adjustl(LuFlaRecvSouth%name)))
+!!$             end if
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  scrName, &
+!!$                  idim_type, &
+!!$                  xbRecv(iNeigh)-x0, xeRecv(iNeigh)-x0, &
+!!$                  ybRecv(iNeigh)-y0, yeRecv(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaRecvSouth%msgData(cntMsg))
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  ufxName, &
+!!$                  idim_type, &
+!!$                  xbRecv(iNeigh)-x0, xeRecv(iNeigh)-x0, &
+!!$                  ybRecv(iNeigh)-y0, yeRecv(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaRecvSouth%msgData(cntMsg))
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  vfxName, &
+!!$                  idim_type, &
+!!$                  xbRecv(iNeigh)-x0, xeRecv(iNeigh)-x0, &
+!!$                  ybRecv(iNeigh)-y0, yeRecv(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaRecvSouth%msgData(cntMsg))
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  wfxName, &
+!!$                  idim_type, &
+!!$                  xbRecv(iNeigh)-x0, xeRecv(iNeigh)-x0, &
+!!$                  ybRecv(iNeigh)-y0, yeRecv(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaRecvSouth%msgData(cntMsg))
+!!$          end if
+!!$       end do
+!!$    end if
+!!$
+!!$    ! east neighbour communication
+!!$
+!!$    call NodesToSendRecvMessages( &
+!!$         thisNode=myNum, &
+!!$         Neigh=Neigh, &
+!!$         GlobalOwn=GlobalOwn, &
+!!$         xbToUpdate=GlobalOwn%xb-ghostZoneWidth, &
+!!$         xeToUpdate=GlobalOwn%xb-1, &
+!!$         ybToUpdate=GlobalOwn%yb, &
+!!$         yeToUpdate=GlobalOwn%ye, &
+!!$         xbSend=xbSend, &
+!!$         xeSend=xeSend, &
+!!$         ybSend=ybSend, &
+!!$         yeSend=yeSend, &
+!!$         willSend=willSend, &
+!!$         xbRecv=xbRecv, &
+!!$         xeRecv=xeRecv, &
+!!$         ybRecv=ybRecv, &
+!!$         yeRecv=yeRecv, &
+!!$         willRecv=willRecv, &
+!!$         varName=NameSendEast//" and "//NameRecvEast)
+!!$
+!!$    ! build message set
+!!$
+!!$    LuFlaSendEast => CreateMessageSet(&
+!!$         NameSendEast, &
+!!$         sendDirection, &
+!!$         TagLuFlaEast, &
+!!$         willSend, &
+!!$         Neigh)
+!!$
+!!$    ! insert field sections named SCR, UFX, VFX, WFX
+!!$    ! with phony field addresses, to be updated whenever
+!!$    ! real addresses are known
+!!$
+!!$    if ( associated(LuFlaSendEast)) then
+!!$       nMsgs = LuFlaSendEast%nMsgs
+!!$
+!!$       ! create list of Field Sections to communicate, one for
+!!$       ! each process to communicate and insert at this MessageSet
+!!$       ! field section list
+!!$
+!!$       cntMsg = 0
+!!$       do iNeigh = 1, nNeigh
+!!$          if (willSend(iNeigh)) then
+!!$
+!!$             cntMsg = cntMsg + 1
+!!$             if (cntMsg > nMsgs) then
+!!$                write(str(1),"(i8)") nMsgs
+!!$                call fatal_error(h//" nMsgs ("//&
+!!$                     trim(adjustl(str(1)))//") exceeded while inserting four fields "//&
+!!$                     " at message "//trim(adjustl(LuFlaSendEast%name)))
+!!$             end if
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  scrName, &
+!!$                  idim_type, &
+!!$                  xbSend(iNeigh)-x0, xeSend(iNeigh)-x0, &
+!!$                  ybSend(iNeigh)-y0, yeSend(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaSendEast%msgData(cntMsg))
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  ufxName, &
+!!$                  idim_type, &
+!!$                  xbSend(iNeigh)-x0, xeSend(iNeigh)-x0, &
+!!$                  ybSend(iNeigh)-y0, yeSend(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaSendEast%msgData(cntMsg))
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  vfxName, &
+!!$                  idim_type, &
+!!$                  xbSend(iNeigh)-x0, xeSend(iNeigh)-x0, &
+!!$                  ybSend(iNeigh)-y0, yeSend(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaSendEast%msgData(cntMsg))
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  wfxName, &
+!!$                  idim_type, &
+!!$                  xbSend(iNeigh)-x0, xeSend(iNeigh)-x0, &
+!!$                  ybSend(iNeigh)-y0, yeSend(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaSendEast%msgData(cntMsg))
+!!$          end if
+!!$       end do
+!!$    end if
+!!$
+!!$    ! build message set
+!!$
+!!$    LuFlaRecvEast => CreateMessageSet(&
+!!$         NameRecvEast, &
+!!$         recvDirection, &
+!!$         TagLuFlaEast, &
+!!$         willRecv, &
+!!$         Neigh)
+!!$
+!!$    ! insert field sections named SCR, UFX, VFX, WFX
+!!$    ! with phony field addresses, to be updated whenever
+!!$    ! real addresses are known
+!!$
+!!$    if ( associated(LuFlaRecvEast)) then
+!!$       nMsgs = LuFlaRecvEast%nMsgs
+!!$       cntMsg = 0
+!!$       do iNeigh = 1, nNeigh
+!!$          if (willRecv(iNeigh)) then
+!!$
+!!$             cntMsg = cntMsg + 1
+!!$             if (cntMsg > nMsgs) then
+!!$                write(str(1),"(i8)") nMsgs
+!!$                call fatal_error(h//" nMsgs ("//&
+!!$                     trim(adjustl(str(1)))//") exceeded while inserting four fields "//&
+!!$                     " at message "//trim(adjustl(LuFlaRecvEast%name)))
+!!$             end if
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  scrName, &
+!!$                  idim_type, &
+!!$                  xbRecv(iNeigh)-x0, xeRecv(iNeigh)-x0, &
+!!$                  ybRecv(iNeigh)-y0, yeRecv(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaRecvEast%msgData(cntMsg))
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  ufxName, &
+!!$                  idim_type, &
+!!$                  xbRecv(iNeigh)-x0, xeRecv(iNeigh)-x0, &
+!!$                  ybRecv(iNeigh)-y0, yeRecv(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaRecvEast%msgData(cntMsg))
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  vfxName, &
+!!$                  idim_type, &
+!!$                  xbRecv(iNeigh)-x0, xeRecv(iNeigh)-x0, &
+!!$                  ybRecv(iNeigh)-y0, yeRecv(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaRecvEast%msgData(cntMsg))
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  wfxName, &
+!!$                  idim_type, &
+!!$                  xbRecv(iNeigh)-x0, xeRecv(iNeigh)-x0, &
+!!$                  ybRecv(iNeigh)-y0, yeRecv(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaRecvEast%msgData(cntMsg))
+!!$          end if
+!!$       end do
+!!$    end if
+!!$
+!!$    ! west neighbour communication
+!!$
+!!$    call NodesToSendRecvMessages( &
+!!$         thisNode=myNum, &
+!!$         Neigh=Neigh, &
+!!$         GlobalOwn=GlobalOwn, &
+!!$         xbToUpdate=GlobalOwn%xe+1, &
+!!$         xeToUpdate=GlobalOwn%xe+ghostZoneWidth, &
+!!$         ybToUpdate=GlobalOwn%yb, &
+!!$         yeToUpdate=GlobalOwn%ye, &
+!!$         xbSend=xbSend, &
+!!$         xeSend=xeSend, &
+!!$         ybSend=ybSend, &
+!!$         yeSend=yeSend, &
+!!$         willSend=willSend, &
+!!$         xbRecv=xbRecv, &
+!!$         xeRecv=xeRecv, &
+!!$         ybRecv=ybRecv, &
+!!$         yeRecv=yeRecv, &
+!!$         willRecv=willRecv, &
+!!$         varName=NameSendWest//" and "//NameRecvWest)
+!!$
+!!$
+!!$    ! build message set
+!!$
+!!$    LuFlaSendWest => CreateMessageSet(&
+!!$         NameSendWest, &
+!!$         sendDirection, &
+!!$         TagLuFlaWest, &
+!!$         willSend, &
+!!$         Neigh)
+!!$
+!!$    ! insert field sections named SCR, UFX, VFX, WFX
+!!$    ! with phony field addresses, to be updated whenever
+!!$    ! real addresses are known
+!!$
+!!$    if ( associated(LuFlaSendWest)) then
+!!$       nMsgs = LuFlaSendWest%nMsgs
+!!$
+!!$       ! create list of Field Sections to communicate, one for
+!!$       ! each process to communicate and insert at this MessageSet
+!!$       ! field section list
+!!$
+!!$       cntMsg = 0
+!!$       do iNeigh = 1, nNeigh
+!!$          if (willSend(iNeigh)) then
+!!$
+!!$             cntMsg = cntMsg + 1
+!!$             if (cntMsg > nMsgs) then
+!!$                write(str(1),"(i8)") nMsgs
+!!$                call fatal_error(h//" nMsgs ("//&
+!!$                     trim(adjustl(str(1)))//") exceeded while inserting four fields "//&
+!!$                     " at message "//trim(adjustl(LuFlaSendWest%name)))
+!!$             end if
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  scrName, &
+!!$                  idim_type, &
+!!$                  xbSend(iNeigh)-x0, xeSend(iNeigh)-x0, &
+!!$                  ybSend(iNeigh)-y0, yeSend(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaSendWest%msgData(cntMsg))
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  ufxName, &
+!!$                  idim_type, &
+!!$                  xbSend(iNeigh)-x0, xeSend(iNeigh)-x0, &
+!!$                  ybSend(iNeigh)-y0, yeSend(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaSendWest%msgData(cntMsg))
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  vfxName, &
+!!$                  idim_type, &
+!!$                  xbSend(iNeigh)-x0, xeSend(iNeigh)-x0, &
+!!$                  ybSend(iNeigh)-y0, yeSend(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaSendWest%msgData(cntMsg))
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  wfxName, &
+!!$                  idim_type, &
+!!$                  xbSend(iNeigh)-x0, xeSend(iNeigh)-x0, &
+!!$                  ybSend(iNeigh)-y0, yeSend(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaSendWest%msgData(cntMsg))
+!!$          end if
+!!$       end do
+!!$    end if
+!!$
+!!$    ! build message set
+!!$
+!!$    LuFlaRecvWest => CreateMessageSet(&
+!!$         NameRecvWest, &
+!!$         recvDirection, &
+!!$         TagLuFlaWest, &
+!!$         willRecv, &
+!!$         Neigh)
+!!$
+!!$    ! insert field sections named SCR, UFX, VFX, WFX
+!!$    ! with phony field addresses, to be updated whenever
+!!$    ! real addresses are known
+!!$
+!!$    if ( associated(LuFlaRecvWest)) then
+!!$       nMsgs = LuFlaRecvWest%nMsgs
+!!$       cntMsg = 0
+!!$       do iNeigh = 1, nNeigh
+!!$          if (willRecv(iNeigh)) then
+!!$
+!!$             cntMsg = cntMsg + 1
+!!$             if (cntMsg > nMsgs) then
+!!$                write(str(1),"(i8)") nMsgs
+!!$                call fatal_error(h//" nMsgs ("//&
+!!$                     trim(adjustl(str(1)))//") exceeded while inserting four fields "//&
+!!$                     " at message "//trim(adjustl(LuFlaRecvWest%name)))
+!!$             end if
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  scrName, &
+!!$                  idim_type, &
+!!$                  xbRecv(iNeigh)-x0, xeRecv(iNeigh)-x0, &
+!!$                  ybRecv(iNeigh)-y0, yeRecv(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaRecvWest%msgData(cntMsg))
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  ufxName, &
+!!$                  idim_type, &
+!!$                  xbRecv(iNeigh)-x0, xeRecv(iNeigh)-x0, &
+!!$                  ybRecv(iNeigh)-y0, yeRecv(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaRecvWest%msgData(cntMsg))
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  vfxName, &
+!!$                  idim_type, &
+!!$                  xbRecv(iNeigh)-x0, xeRecv(iNeigh)-x0, &
+!!$                  ybRecv(iNeigh)-y0, yeRecv(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaRecvWest%msgData(cntMsg))
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(&
+!!$                  phonyField, &
+!!$                  wfxName, &
+!!$                  idim_type, &
+!!$                  xbRecv(iNeigh)-x0, xeRecv(iNeigh)-x0, &
+!!$                  ybRecv(iNeigh)-y0, yeRecv(iNeigh)-y0)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, LuFlaRecvWest%msgData(cntMsg))
+!!$          end if
+!!$       end do
+!!$    end if
+!!$
+!!$    deallocate(phonyField, stat=ierr)
+!!$    if (ierr /= 0) then
+!!$       write(str(1),"(i8)") ierr
+!!$       call fatal_error(h//" deallocate phonyField fails with stat="//&
+!!$            trim(adjustl(str(1))))
+!!$    end if
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" finishes with LuFlaSendNorth MessageSet:")
+!!$       call DumpMessageSet(LuFlaSendNorth)
+!!$       call MsgDump(h//" finishes with LuFlaRecvNorth MessageSet:")
+!!$       call DumpMessageSet(LuFlaRecvNorth)
+!!$       call MsgDump(h//" finishes with LuFlaSendSouth MessageSet:")
+!!$       call DumpMessageSet(LuFlaSendSouth)
+!!$       call MsgDump(h//" finishes with LuFlaRecvSouth MessageSet:")
+!!$       call DumpMessageSet(LuFlaRecvSouth)
+!!$       call MsgDump(h//" finishes with LuFlaSendEast MessageSet:")
+!!$       call DumpMessageSet(LuFlaSendEast)
+!!$       call MsgDump(h//" finishes with LuFlaRecvEast MessageSet:")
+!!$       call DumpMessageSet(LuFlaRecvEast)
+!!$       call MsgDump(h//" finishes with LuFlaSendWest MessageSet:")
+!!$       call DumpMessageSet(LuFlaSendWest)
+!!$       call MsgDump(h//" finishes with LuFlaRecvWest MessageSet:")
+!!$       call DumpMessageSet(LuFlaRecvWest)
+!!$    end if
+!!$
+!!$  end subroutine CreateLuFlaMessageSet
+
+
+!!$  subroutine DestroyLuFlaMessageSet(&
+!!$       LuFlaSendNorth, LuFlaSendSouth, LuFlaSendEast, LuFlaSendWest, &
+!!$       LuFlaRecvNorth, LuFlaRecvSouth, LuFlaRecvEast, LuFlaRecvWest)
+!!$
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaSendNorth
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaSendSouth
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaSendEast
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaSendWest
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaRecvNorth
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaRecvSouth
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaRecvEast
+!!$    type(MessageSet), pointer, intent(inout) :: LuFlaRecvWest
+!!$
+!!$    character(len=*), parameter :: h="**(DestroyLuFlaMessageSet)**"
+!!$    logical, parameter :: dumpLocal=.false.
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" will destroy LuFlaSend/RecvNorth")
+!!$    end if
+!!$    call DestroyMessageSet(LuFlaSendNorth)
+!!$    call DestroyMessageSet(LuFlaRecvNorth)
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" will destroy LuFlaSend/RecvSouth")
+!!$    end if
+!!$    call DestroyMessageSet(LuFlaSendSouth)
+!!$    call DestroyMessageSet(LuFlaRecvSouth)
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" will destroy LuFlaSend/RecvEast")
+!!$    end if
+!!$    call DestroyMessageSet(LuFlaSendEast)
+!!$    call DestroyMessageSet(LuFlaRecvEast)
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" will destroy LuFlaSend/RecvWest")
+!!$    end if
+!!$    call DestroyMessageSet(LuFlaSendWest)
+!!$    call DestroyMessageSet(LuFlaRecvWest)
+!!$  end subroutine DestroyLuFlaMessageSet
+
+
+  subroutine CreateWideGhostZoneMessageSet(&
        GridSize, ParEnv, Neigh, &
-       GlobalOwn, GlobalWithGhost, LocalOwn, &
-       TagLuFlaNorth, TagLuFlaSouth, TagLuFlaEast, TagLuFlaWest, &
-       LuFlaSendNorth, LuFlaSendSouth, LuFlaSendEast, LuFlaSendWest, &
-       LuFlaRecvNorth, LuFlaRecvSouth, LuFlaRecvEast, LuFlaRecvWest)
+       GlobalOwnWithBC, GlobalWithGhost, LocalOwn, &
+       TagWideGhostZone, WideGhostZoneSend, WideGhostZoneRecv)
 
     type(GridDims), pointer, intent(in) :: GridSize
     type(ParallelEnvironment), pointer, intent(in) :: ParEnv
     type(NeighbourNodes), pointer, intent(in) :: Neigh
-    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
+    type(DomainDecomp), pointer, intent(in) :: GlobalOwnWithBC
     type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
     type(DomainDecomp), pointer, intent(in) :: LocalOwn
-    integer, intent(in) :: TagLuFlaNorth
-    integer, intent(in) :: TagLuFlaSouth
-    integer, intent(in) :: TagLuFlaEast
-    integer, intent(in) :: TagLuFlaWest
-    type(MessageSet), pointer, intent(inout) :: LuFlaSendNorth
-    type(MessageSet), pointer, intent(inout) :: LuFlaSendSouth
-    type(MessageSet), pointer, intent(inout) :: LuFlaSendEast
-    type(MessageSet), pointer, intent(inout) :: LuFlaSendWest
-    type(MessageSet), pointer, intent(inout) :: LuFlaRecvNorth
-    type(MessageSet), pointer, intent(inout) :: LuFlaRecvSouth
-    type(MessageSet), pointer, intent(inout) :: LuFlaRecvEast
-    type(MessageSet), pointer, intent(inout) :: LuFlaRecvWest
-    
+    integer, intent(in) :: TagWideGhostZone
+    type(MessageSet), pointer, intent(inout) :: WideGhostZoneSend
+    type(MessageSet), pointer, intent(inout) :: WideGhostZoneRecv
 
     ! scratch arrays of size number of neighbour nodes
-    ! containing global indices of regions for send and receive
+    ! containing global indices of regions to send and receive
 
-    integer :: xbSend(parEnv%nMachs)
-    integer :: xeSend(parEnv%nMachs)
-    integer :: ybSend(parEnv%nMachs)
-    integer :: yeSend(parEnv%nMachs)
-    integer :: xbRecv(parEnv%nMachs)
-    integer :: xeRecv(parEnv%nMachs)
-    integer :: ybRecv(parEnv%nMachs)
-    integer :: yeRecv(parEnv%nMachs)
+    integer :: xbSendNorth(parEnv%nMachs)
+    integer :: xeSendNorth(parEnv%nMachs)
+    integer :: ybSendNorth(parEnv%nMachs)
+    integer :: yeSendNorth(parEnv%nMachs)
+    integer :: xbRecvNorth(parEnv%nMachs)
+    integer :: xeRecvNorth(parEnv%nMachs)
+    integer :: ybRecvNorth(parEnv%nMachs)
+    integer :: yeRecvNorth(parEnv%nMachs)
+
+    integer :: xbSendSouth(parEnv%nMachs)
+    integer :: xeSendSouth(parEnv%nMachs)
+    integer :: ybSendSouth(parEnv%nMachs)
+    integer :: yeSendSouth(parEnv%nMachs)
+    integer :: xbRecvSouth(parEnv%nMachs)
+    integer :: xeRecvSouth(parEnv%nMachs)
+    integer :: ybRecvSouth(parEnv%nMachs)
+    integer :: yeRecvSouth(parEnv%nMachs)
+
+    integer :: xbSendEast(parEnv%nMachs)
+    integer :: xeSendEast(parEnv%nMachs)
+    integer :: ybSendEast(parEnv%nMachs)
+    integer :: yeSendEast(parEnv%nMachs)
+    integer :: xbRecvEast(parEnv%nMachs)
+    integer :: xeRecvEast(parEnv%nMachs)
+    integer :: ybRecvEast(parEnv%nMachs)
+    integer :: yeRecvEast(parEnv%nMachs)
+
+    integer :: xbSendWest(parEnv%nMachs)
+    integer :: xeSendWest(parEnv%nMachs)
+    integer :: ybSendWest(parEnv%nMachs)
+    integer :: yeSendWest(parEnv%nMachs)
+    integer :: xbRecvWest(parEnv%nMachs)
+    integer :: xeRecvWest(parEnv%nMachs)
+    integer :: ybRecvWest(parEnv%nMachs)
+    integer :: yeRecvWest(parEnv%nMachs)
 
     ! scratch arrays of size number of neighbour nodes
     ! containing which neighbour nodes will send of receive
 
+    logical :: willSendNorth(parEnv%nMachs)
+    logical :: willRecvNorth(parEnv%nMachs)
+
+    logical :: willSendSouth(parEnv%nMachs)
+    logical :: willRecvSouth(parEnv%nMachs)
+
+    logical :: willSendEast(parEnv%nMachs)
+    logical :: willRecvEast(parEnv%nMachs)
+
+    logical :: willSendWest(parEnv%nMachs)
+    logical :: willRecvWest(parEnv%nMachs)
+
     logical :: willSend(parEnv%nMachs)
     logical :: willRecv(parEnv%nMachs)
 
-    character(len=*), parameter :: NameSendNorth="SendLuFlaNorth"
-    character(len=*), parameter :: NameRecvNorth="RecvLuFlaNorth"
-    character(len=*), parameter :: NameSendSouth="SendLuFlaSouth"
-    character(len=*), parameter :: NameRecvSouth="RecvLuFlaSouth"
-    character(len=*), parameter :: NameSendEast="SendLuFlaEast"
-    character(len=*), parameter :: NameRecvEast="RecvLuFlaEast"
-    character(len=*), parameter :: NameSendWest="SendLuFlaWest"
-    character(len=*), parameter :: NameRecvWest="RecvLuFlaWest"
+    character(len=*), parameter :: NameSend="SendWideGhostZone"
+    character(len=*), parameter :: NameRecv="RecvWideGhostZone"
+    character(len=*), parameter :: NameSendRecvNorth="Send/RecvWideGhostZoneNorth"
+    character(len=*), parameter :: NameSendRecvSouth="Send/RecvWideGhostZoneSouth"
+    character(len=*), parameter :: NameSendRecvEast="Send/RecvWideGhostZoneEast"
+    character(len=*), parameter :: NameSendRecvWest="Send/RecvWideGhostZoneWest"
+
+    character(len=*), parameter :: scrName="SCR"
+    character(len=*), parameter :: ufxName="UFX"
+    character(len=*), parameter :: vfxName="VFX"
+    character(len=*), parameter :: wfxName="WFX"
 
     integer :: nMachs
     integer :: myNum
     integer :: nNeigh
     integer :: ierr
-    integer :: lbz
-    integer :: ubz
-    integer :: lbx
-    integer :: ubx
-    integer :: lby
-    integer :: uby
     integer :: iNeigh
     integer :: iNode
-    integer :: x0, y0
+    integer :: x0
+    integer :: y0
+    integer :: nMsgs
+    integer :: cntMsg
+    integer :: fieldSectionSize
     integer, parameter :: ghostZoneWidth=3
     integer, parameter :: idim_type=3
-    real, pointer :: phonyField(:,:,:)
+    type(FieldSection), pointer :: oneFieldSection
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=8) :: str(10)
-    character(len=*), parameter :: h="**(CreateLuFlaMessageSet)**"
+    character(len=*), parameter :: h="**(CreateWideGhostZoneMessageSet)**"
 
 
     nMachs=ParEnv%nmachs
     myNum=ParEnv%mynum
     nNeigh=Neigh%nNeigh
-    
+
     if (dumpLocal) then
        write(str(1),"(i8)") nMachs
        write(str(2),"(i8)") myNum
        call MsgDump(h//" enter with nMachs="//trim(adjustl(str(1)))//&
             "; myNum="//trim(adjustl(str(2))))
-       call DumpNeighbourNodes(Neigh,"LuFla")
-    end if
-    
-    ! phony field, just to collect bounds
-    ! define phony field bounds
-
-    lbz = 1 - ghostZoneWidth
-    ubz = GridSize%nnzp + ghostZoneWidth
-    lbx=1 - ghostZoneWidth
-    ubx=LocalOwn%nx(myNum)+ghostZoneWidth
-    lby=1 - ghostZoneWidth
-    uby=LocalOwn%ny(myNum)+ghostZoneWidth
-    allocate(phonyField(lbz:ubz,lbx:ubx,lby:uby), stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") lbz
-       write(str(2),"(i8)") ubz
-       write(str(3),"(i8)") lbx
-       write(str(4),"(i8)") ubx
-       write(str(5),"(i8)") lby
-       write(str(6),"(i8)") uby
-       write(str(7),"(i8)") ierr
-       call fatal_error(h//" allocate phonyField("//&
-            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
-            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
-            trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//&
-            ") fails with stat="//trim(adjustl(str(7))))
+       call DumpNeighbourNodes(Neigh,"WideGhostZone")
     end if
 
-    if (dumpLocal) then
-       write(str(1),"(i8)") lbound(phonyField,1)
-       write(str(2),"(i8)") ubound(phonyField,1)
-       write(str(3),"(i8)") lbound(phonyField,2)
-       write(str(4),"(i8)") ubound(phonyField,2)
-       write(str(5),"(i8)") lbound(phonyField,3)
-       write(str(6),"(i8)") ubound(phonyField,3)
-       call MsgDump(h//" allocated phonyField("//&
-            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
-            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
-            trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//&
-            ")")
-    end if
+    ! offsets to convert global indices to local indices at this proc
+
+    x0 = GlobalWithGhost%xb(myNum) - 1
+    y0 = GlobalWithGhost%yb(myNum) - 1
+
+    ! neighbour communication
+
+    ! which neighbour nodes will send and receive, given by
+    ! willSend and willRecv
+
+    ! which intervals will be send, given by
+    ! (xbSend:xeSend,ybSend:yeSend)
+
+    !  which intervals will be received, given by
+    ! (xbRecv:xeRecv,ybRecv:yeRecv)
+
+    ! intervals are computed as the intersection of
+    ! (xbToUpdate:xeToUpdate, ybToUpdate:yeToUpdate)
+    ! with GlobalOwnWithBC of neighbour ranks (given by Neigh)
 
     ! north neighbour communication
 
-    call NodesRegionsSendRecv(&
-         nMachs=nMachs, &
-         nNeigh=nNeigh, &
-         myNum=myNum, &
-         tag=TagLuFlaNorth, &
+    if (dumpLocal) then
+       call MsgDump(h//" compute NodesToSendRecvMessages to update North Ghost Zone")
+    end if
+
+    call NodesToSendRecvMessages( &
+         thisNode=myNum, &
          Neigh=Neigh, &
-         GlobalOwn=GlobalOwn, &
-         NameSend=NameSendNorth, &
-         NameRecv=NameRecvNorth, &
-         xbToUpdate=GlobalOwn%xb, &
-         xeToUpdate=GlobalOwn%xe, &
-         ybToUpdate=GlobalOwn%yb-ghostZoneWidth, &
-         yeToUpdate=GlobalOwn%yb-1, &
-         xbSend=xbSend, &
-         xeSend=xeSend, &
-         ybSend=ybSend, &
-         yeSend=yeSend, &
-         willSend=willSend, &
-         SendMessageSet=LuFlaSendNorth, &
-         xbRecv=xbRecv, &
-         xeRecv=xeRecv, &
-         ybRecv=ybRecv, &
-         yeRecv=yeRecv, &
-         willRecv=willRecv, &
-         RecvMessageSet=LuFlaRecvNorth)
-
-    ! insert field sections named SCR, UFX, VFX, WFX
-    ! with phony field addresses, to be updated whenever
-    ! real addresses are known
-
-    call InsertFieldSectionAtSendRecvMessageSet(&
-         phonyField, "SCR", idim_type, myNum, nNeigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendNorth, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvNorth)
-
-    call InsertFieldSectionAtSendRecvMessageSet(&
-         phonyField, "UFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendNorth, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvNorth)
-
-    call InsertFieldSectionAtSendRecvMessageSet(&
-         phonyField, "VFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendNorth, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvNorth)
-
-    call InsertFieldSectionAtSendRecvMessageSet(&
-         phonyField, "WFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendNorth, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvNorth)
+         GlobalOwn=GlobalOwnWithBC, &
+         xbToUpdate=GlobalOwnWithBC%xb, &
+         xeToUpdate=GlobalOwnWithBC%xe, &
+         ybToUpdate=GlobalOwnWithBC%ye+1, &
+         yeToUpdate=GlobalOwnWithBC%ye+ghostZoneWidth, &
+         xbSend=xbSendNorth, &
+         xeSend=xeSendNorth, &
+         ybSend=ybSendNorth, &
+         yeSend=yeSendNorth, &
+         willSend=willSendNorth, &
+         xbRecv=xbRecvNorth, &
+         xeRecv=xeRecvNorth, &
+         ybRecv=ybRecvNorth, &
+         yeRecv=yeRecvNorth, &
+         willRecv=willRecvNorth, &
+         varName=NameSendRecvNorth)
 
     ! south neighbour communication
 
-    call NodesRegionsSendRecv(&
-         nMachs=nMachs, &
-         nNeigh=nNeigh, &
-         myNum=myNum, &
-         tag=TagLuFlaSouth, &
+    if (dumpLocal) then
+       call MsgDump(h//" compute NodesToSendRecvMessages to update South Ghost Zone")
+    end if
+
+    call NodesToSendRecvMessages( &
+         thisNode=myNum, &
          Neigh=Neigh, &
-         GlobalOwn=GlobalOwn, &
-         NameSend=NameSendSouth, &
-         NameRecv=NameRecvSouth, &
-         xbToUpdate=GlobalOwn%xb, &
-         xeToUpdate=GlobalOwn%xe, &
-         ybToUpdate=GlobalOwn%ye+1, &
-         yeToUpdate=GlobalOwn%ye+ghostZoneWidth, &
-         xbSend=xbSend, &
-         xeSend=xeSend, &
-         ybSend=ybSend, &
-         yeSend=yeSend, &
-         willSend=willSend, &
-         SendMessageSet=LuFlaSendSouth, &
-         xbRecv=xbRecv, &
-         xeRecv=xeRecv, &
-         ybRecv=ybRecv, &
-         yeRecv=yeRecv, &
-         willRecv=willRecv, &
-         RecvMessageSet=LuFlaRecvSouth)
-
-    ! insert field sections named SCR, UFX, VFX, WFX
-    ! with phony field addresses, to be updated whenever
-    ! real addresses are known
-
-    call InsertFieldSectionAtSendRecvMessageSet(&
-         phonyField, "SCR", idim_type, myNum, nNeigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendSouth, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvSouth)
-
-    call InsertFieldSectionAtSendRecvMessageSet(&
-         phonyField, "UFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendSouth, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvSouth)
-
-    call InsertFieldSectionAtSendRecvMessageSet(&
-         phonyField, "VFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendSouth, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvSouth)
-
-    call InsertFieldSectionAtSendRecvMessageSet(&
-         phonyField, "WFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendSouth, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvSouth)
+         GlobalOwn=GlobalOwnWithBC, &
+         xbToUpdate=GlobalOwnWithBC%xb, &
+         xeToUpdate=GlobalOwnWithBC%xe, &
+         ybToUpdate=GlobalOwnWithBC%yb-ghostZoneWidth, &
+         yeToUpdate=GlobalOwnWithBC%yb-1, &
+         xbSend=xbSendSouth, &
+         xeSend=xeSendSouth, &
+         ybSend=ybSendSouth, &
+         yeSend=yeSendSouth, &
+         willSend=willSendSouth, &
+         xbRecv=xbRecvSouth, &
+         xeRecv=xeRecvSouth, &
+         ybRecv=ybRecvSouth, &
+         yeRecv=yeRecvSouth, &
+         willRecv=willRecvSouth, &
+         varName=NameSendRecvSouth)
 
     ! east neighbour communication
 
-    call NodesRegionsSendRecv(&
-         nMachs=nMachs, &
-         nNeigh=nNeigh, &
-         myNum=myNum, &
-         tag=TagLuFlaEast, &
+    if (dumpLocal) then
+       call MsgDump(h//" compute NodesToSendRecvMessages to update East Ghost Zone")
+    end if
+
+    call NodesToSendRecvMessages( &
+         thisNode=myNum, &
          Neigh=Neigh, &
-         GlobalOwn=GlobalOwn, &
-         NameSend=NameSendEast, &
-         NameRecv=NameRecvEast, &
-         xbToUpdate=GlobalOwn%xb-ghostZoneWidth, &
-         xeToUpdate=GlobalOwn%xb-1, &
-         ybToUpdate=GlobalOwn%yb, &
-         yeToUpdate=GlobalOwn%ye, &
-         xbSend=xbSend, &
-         xeSend=xeSend, &
-         ybSend=ybSend, &
-         yeSend=yeSend, &
-         willSend=willSend, &
-         SendMessageSet=LuFlaSendEast, &
-         xbRecv=xbRecv, &
-         xeRecv=xeRecv, &
-         ybRecv=ybRecv, &
-         yeRecv=yeRecv, &
-         willRecv=willRecv, &
-         RecvMessageSet=LuFlaRecvEast)
-
-    ! insert field sections named SCR, UFX, VFX, WFX
-    ! with phony field addresses, to be updated whenever
-    ! real addresses are known
-
-    call InsertFieldSectionAtSendRecvMessageSet(&
-         phonyField, "SCR", idim_type, myNum, nNeigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendEast, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvEast)
-
-    call InsertFieldSectionAtSendRecvMessageSet(&
-         phonyField, "UFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendEast, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvEast)
-
-    call InsertFieldSectionAtSendRecvMessageSet(&
-         phonyField, "VFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendEast, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvEast)
-
-    call InsertFieldSectionAtSendRecvMessageSet(&
-         phonyField, "WFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendEast, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvEast)
+         GlobalOwn=GlobalOwnWithBC, &
+         xbToUpdate=GlobalOwnWithBC%xe+1, &
+         xeToUpdate=GlobalOwnWithBC%xe+ghostZoneWidth, &
+         ybToUpdate=GlobalOwnWithBC%yb, &
+         yeToUpdate=GlobalOwnWithBC%ye, &
+         xbSend=xbSendEast, &
+         xeSend=xeSendEast, &
+         ybSend=ybSendEast, &
+         yeSend=yeSendEast, &
+         willSend=willSendEast, &
+         xbRecv=xbRecvEast, &
+         xeRecv=xeRecvEast, &
+         ybRecv=ybRecvEast, &
+         yeRecv=yeRecvEast, &
+         willRecv=willRecvEast, &
+         varName=NameSendRecvEast)
 
     ! west neighbour communication
 
-    call NodesRegionsSendRecv(&
-         nMachs=nMachs, &
-         nNeigh=nNeigh, &
-         myNum=myNum, &
-         tag=TagLuFlaWest, &
-         Neigh=Neigh, &
-         GlobalOwn=GlobalOwn, &
-         NameSend=NameSendWest, &
-         NameRecv=NameRecvWest, &
-         xbToUpdate=GlobalOwn%xe+1, &
-         xeToUpdate=GlobalOwn%xe+ghostZoneWidth, &
-         ybToUpdate=GlobalOwn%yb, &
-         yeToUpdate=GlobalOwn%ye, &
-         xbSend=xbSend, &
-         xeSend=xeSend, &
-         ybSend=ybSend, &
-         yeSend=yeSend, &
-         willSend=willSend, &
-         SendMessageSet=LuFlaSendWest, &
-         xbRecv=xbRecv, &
-         xeRecv=xeRecv, &
-         ybRecv=ybRecv, &
-         yeRecv=yeRecv, &
-         willRecv=willRecv, &
-         RecvMessageSet=LuFlaRecvWest)
+    if (dumpLocal) then
+       call MsgDump(h//" compute NodesToSendRecvMessages to update West Ghost Zone")
+    end if
 
-    ! insert field sections named SCR, UFX, VFX, WFX
-    ! with phony field addresses, to be updated whenever
+    call NodesToSendRecvMessages( &
+         thisNode=myNum, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwnWithBC, &
+         xbToUpdate=GlobalOwnWithBC%xb-ghostZoneWidth, &
+         xeToUpdate=GlobalOwnWithBC%xb-1, &
+         ybToUpdate=GlobalOwnWithBC%yb, &
+         yeToUpdate=GlobalOwnWithBC%ye, &
+         xbSend=xbSendWest, &
+         xeSend=xeSendWest, &
+         ybSend=ybSendWest, &
+         yeSend=yeSendWest, &
+         willSend=willSendWest, &
+         xbRecv=xbRecvWest, &
+         xeRecv=xeRecvWest, &
+         ybRecv=ybRecvWest, &
+         yeRecv=yeRecvWest, &
+         willRecv=willRecvWest, &
+         varName=NameSendRecvWest)
+
+    ! send message set will contain sends for all four directions
+
+    willSend = willSendNorth .or. willSendSouth .or. willSendEast .or. willSendWest
+    if (dumpLocal) then
+       do iNeigh = 1, nNeigh
+          write(str(1),"(l)") willSendNorth(iNeigh)
+          write(str(2),"(l)") willSendSouth(iNeigh)
+          write(str(3),"(l)") willSendEast(iNeigh)
+          write(str(4),"(l)") willSendWest(iNeigh)
+          write(str(5),"(i8)") Brams2MpiProcNbr(Neigh%neigh(iNeigh))
+          call MsgDump(h//" send to MPI proc #"//trim(adjustl(str(5)))//&
+               " willSendNorth="//trim(adjustl(str(1)))//&
+               " willSendSouth="//trim(adjustl(str(2)))//&
+               " willSendEast="//trim(adjustl(str(3)))//&
+               " willSendWest="//trim(adjustl(str(4))))
+       end do
+    end if
+
+    ! create message set for all sends
+
+    WideGhostZoneSend => CreateMessageSet(&
+         NameSend, &
+         sendDirection, &
+         TagWideGhostZone, &
+         willSend, &
+         Neigh)
+
+    ! insert field sections named SCR, UFX, VFX, WFX at each direction
+    ! with null field addresses, to be updated whenever
     ! real addresses are known
 
-    call InsertFieldSectionAtSendRecvMessageSet(&
-         phonyField, "SCR", idim_type, myNum, nNeigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendWest, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvWest)
+    if ( associated(WideGhostZoneSend)) then
+       nMsgs = WideGhostZoneSend%nMsgs
 
-    call InsertFieldSectionAtSendRecvMessageSet(&
-         phonyField, "UFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendWest, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvWest)
+       ! create list of Field Sections to send, one for
+       ! each process to communicate and insert at the send MessageSet
+       ! field section list
 
-    call InsertFieldSectionAtSendRecvMessageSet(&
-         phonyField, "VFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendWest, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvWest)
+       ! since there is at most one neighbour node at each direction,
+       ! there will be at most one MessageSet at each direction
 
-    call InsertFieldSectionAtSendRecvMessageSet(&
-         phonyField, "WFX", idim_type, myNum, nNeigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, LuFlaSendWest, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, LuFlaRecvWest)
+       cntMsg = 0
+       do iNeigh = 1, nNeigh
 
-    deallocate(phonyField, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate phonyField fails with stat="//&
-            trim(adjustl(str(1))))
+          if (willSendNorth(iNeigh)) then
+
+             ! insert send communications to north
+
+             cntMsg = cntMsg + 1
+             if (cntMsg > nMsgs) then
+                write(str(1),"(i8)") nMsgs
+                call fatal_error(h//" nMsgs ("//&
+                     trim(adjustl(str(1)))//") exceeded while inserting four fields "//&
+                     " at message "//trim(adjustl(WideGhostZoneSend%name)))
+             end if
+
+             fieldSectionSize= &
+                  (xeSendNorth(iNeigh)-xbSendNorth(iNeigh)+1) * &
+                  (yeSendNorth(iNeigh)-ybSendNorth(iNeigh)+1) * &
+                  (GridSize%nnzp + 2* ghostZoneWidth)
+
+             oneFieldSection =>  CreateFieldSection(scrName, idim_type, &
+                  xbSendNorth(iNeigh)-x0, xeSendNorth(iNeigh)-x0, &
+                  ybSendNorth(iNeigh)-y0, yeSendNorth(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneSend%msgData(cntMsg))
+             oneFieldSection =>  CreateFieldSection(ufxName, idim_type, &
+                  xbSendNorth(iNeigh)-x0, xeSendNorth(iNeigh)-x0, &
+                  ybSendNorth(iNeigh)-y0, yeSendNorth(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneSend%msgData(cntMsg))
+             oneFieldSection =>  CreateFieldSection(vfxName, idim_type, &
+                  xbSendNorth(iNeigh)-x0, xeSendNorth(iNeigh)-x0, &
+                  ybSendNorth(iNeigh)-y0, yeSendNorth(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneSend%msgData(cntMsg))
+             oneFieldSection =>  CreateFieldSection(wfxName, idim_type, &
+                  xbSendNorth(iNeigh)-x0, xeSendNorth(iNeigh)-x0, &
+                  ybSendNorth(iNeigh)-y0, yeSendNorth(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneSend%msgData(cntMsg))
+
+          else if (willSendSouth(iNeigh)) then
+
+             ! insert send communications to south
+
+             cntMsg = cntMsg + 1
+             if (cntMsg > nMsgs) then
+                write(str(1),"(i8)") nMsgs
+                call fatal_error(h//" nMsgs ("//&
+                     trim(adjustl(str(1)))//") exceeded while inserting four fields "//&
+                     " at message "//trim(adjustl(WideGhostZoneSend%name)))
+             end if
+
+             fieldSectionSize= &
+                  (xeSendSouth(iNeigh)-xbSendSouth(iNeigh)+1) * &
+                  (yeSendSouth(iNeigh)-ybSendSouth(iNeigh)+1) * &
+                  (GridSize%nnzp + 2* ghostZoneWidth)
+
+             oneFieldSection =>  CreateFieldSection(scrName, idim_type, &
+                  xbSendSouth(iNeigh)-x0, xeSendSouth(iNeigh)-x0, &
+                  ybSendSouth(iNeigh)-y0, yeSendSouth(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneSend%msgData(cntMsg))
+             oneFieldSection =>  CreateFieldSection(ufxName, idim_type, &
+                  xbSendSouth(iNeigh)-x0, xeSendSouth(iNeigh)-x0, &
+                  ybSendSouth(iNeigh)-y0, yeSendSouth(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneSend%msgData(cntMsg))
+             oneFieldSection =>  CreateFieldSection(vfxName, idim_type, &
+                  xbSendSouth(iNeigh)-x0, xeSendSouth(iNeigh)-x0, &
+                  ybSendSouth(iNeigh)-y0, yeSendSouth(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneSend%msgData(cntMsg))
+             oneFieldSection =>  CreateFieldSection(wfxName, idim_type, &
+                  xbSendSouth(iNeigh)-x0, xeSendSouth(iNeigh)-x0, &
+                  ybSendSouth(iNeigh)-y0, yeSendSouth(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneSend%msgData(cntMsg))
+
+          else if (willSendEast(iNeigh)) then
+
+             ! insert send communications to east
+
+             cntMsg = cntMsg + 1
+             if (cntMsg > nMsgs) then
+                write(str(1),"(i8)") nMsgs
+                call fatal_error(h//" nMsgs ("//&
+                     trim(adjustl(str(1)))//") exceeded while inserting four fields "//&
+                     " at message "//trim(adjustl(WideGhostZoneSend%name)))
+             end if
+
+             fieldSectionSize= &
+                  (xeSendEast(iNeigh)-xbSendEast(iNeigh)+1) * &
+                  (yeSendEast(iNeigh)-ybSendEast(iNeigh)+1) * &
+                  (GridSize%nnzp + 2* ghostZoneWidth)
+
+             oneFieldSection =>  CreateFieldSection(scrName, idim_type, &
+                  xbSendEast(iNeigh)-x0, xeSendEast(iNeigh)-x0, &
+                  ybSendEast(iNeigh)-y0, yeSendEast(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneSend%msgData(cntMsg))
+             oneFieldSection =>  CreateFieldSection(ufxName, idim_type, &
+                  xbSendEast(iNeigh)-x0, xeSendEast(iNeigh)-x0, &
+                  ybSendEast(iNeigh)-y0, yeSendEast(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneSend%msgData(cntMsg))
+             oneFieldSection =>  CreateFieldSection(vfxName, idim_type, &
+                  xbSendEast(iNeigh)-x0, xeSendEast(iNeigh)-x0, &
+                  ybSendEast(iNeigh)-y0, yeSendEast(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneSend%msgData(cntMsg))
+             oneFieldSection =>  CreateFieldSection(wfxName, idim_type, &
+                  xbSendEast(iNeigh)-x0, xeSendEast(iNeigh)-x0, &
+                  ybSendEast(iNeigh)-y0, yeSendEast(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneSend%msgData(cntMsg))
+
+          else if (willSendWest(iNeigh)) then
+
+             ! insert send communications to west
+
+             cntMsg = cntMsg + 1
+             if (cntMsg > nMsgs) then
+                write(str(1),"(i8)") nMsgs
+                call fatal_error(h//" nMsgs ("//&
+                     trim(adjustl(str(1)))//") exceeded while inserting four fields "//&
+                     " at message "//trim(adjustl(WideGhostZoneSend%name)))
+             end if
+
+             fieldSectionSize= &
+                  (xeSendWest(iNeigh)-xbSendWest(iNeigh)+1) * &
+                  (yeSendWest(iNeigh)-ybSendWest(iNeigh)+1) * &
+                  (GridSize%nnzp + 2* ghostZoneWidth)
+
+             oneFieldSection =>  CreateFieldSection(scrName, idim_type, &
+                  xbSendWest(iNeigh)-x0, xeSendWest(iNeigh)-x0, &
+                  ybSendWest(iNeigh)-y0, yeSendWest(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneSend%msgData(cntMsg))
+             oneFieldSection =>  CreateFieldSection(ufxName, idim_type, &
+                  xbSendWest(iNeigh)-x0, xeSendWest(iNeigh)-x0, &
+                  ybSendWest(iNeigh)-y0, yeSendWest(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneSend%msgData(cntMsg))
+             oneFieldSection =>  CreateFieldSection(vfxName, idim_type, &
+                  xbSendWest(iNeigh)-x0, xeSendWest(iNeigh)-x0, &
+                  ybSendWest(iNeigh)-y0, yeSendWest(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneSend%msgData(cntMsg))
+             oneFieldSection =>  CreateFieldSection(wfxName, idim_type, &
+                  xbSendWest(iNeigh)-x0, xeSendWest(iNeigh)-x0, &
+                  ybSendWest(iNeigh)-y0, yeSendWest(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneSend%msgData(cntMsg))
+          end if
+
+       end do
+    end if
+
+    ! recv message set will contain recvs for all four directions
+
+    willRecv = willRecvNorth .or. willRecvSouth .or. willRecvEast .or. willRecvWest
+    if (dumpLocal) then
+       do iNeigh = 1, nNeigh
+          write(str(1),"(l)") willRecvNorth(iNeigh)
+          write(str(2),"(l)") willRecvSouth(iNeigh)
+          write(str(3),"(l)") willRecvEast(iNeigh)
+          write(str(4),"(l)") willRecvWest(iNeigh)
+          write(str(5),"(i8)") Brams2MpiProcNbr(Neigh%neigh(iNeigh))
+          call MsgDump(h//" recv from MPI proc #"//trim(adjustl(str(5)))//&
+               " willRecvNorth="//trim(adjustl(str(1)))//&
+               " willRecvSouth="//trim(adjustl(str(2)))//&
+               " willRecvEast="//trim(adjustl(str(3)))//&
+               " willRecvWest="//trim(adjustl(str(4))))
+       end do
+    end if
+
+    ! create message set for all recvs
+
+    WideGhostZoneRecv => CreateMessageSet(&
+         NameRecv, &
+         recvDirection, &
+         TagWideGhostZone, &
+         willRecv, &
+         Neigh)
+
+    if ( associated(WideGhostZoneRecv)) then
+       nMsgs = WideGhostZoneRecv%nMsgs
+       cntMsg = 0
+       do iNeigh = 1, nNeigh
+          if (willRecvNorth(iNeigh)) then
+
+             ! insert recv communications from north
+
+             cntMsg = cntMsg + 1
+             if (cntMsg > nMsgs) then
+                write(str(1),"(i8)") nMsgs
+                call fatal_error(h//" nMsgs ("//&
+                     trim(adjustl(str(1)))//") exceeded while inserting four fields "//&
+                     " at message "//trim(adjustl(WideGhostZoneRecv%name)))
+             end if
+
+             fieldSectionSize= &
+                  (xeRecvNorth(iNeigh)-xbRecvNorth(iNeigh)+1) * &
+                  (yeRecvNorth(iNeigh)-ybRecvNorth(iNeigh)+1) * &
+                  (GridSize%nnzp + 2* ghostZoneWidth)
+
+             oneFieldSection =>  CreateFieldSection(scrName, idim_type, &
+                  xbRecvNorth(iNeigh)-x0, xeRecvNorth(iNeigh)-x0, &
+                  ybRecvNorth(iNeigh)-y0, yeRecvNorth(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneRecv%msgData(cntMsg))
+             oneFieldSection =>  CreateFieldSection(ufxName, idim_type, &
+                  xbRecvNorth(iNeigh)-x0, xeRecvNorth(iNeigh)-x0, &
+                  ybRecvNorth(iNeigh)-y0, yeRecvNorth(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneRecv%msgData(cntMsg))
+             oneFieldSection =>  CreateFieldSection(vfxName, idim_type, &
+                  xbRecvNorth(iNeigh)-x0, xeRecvNorth(iNeigh)-x0, &
+                  ybRecvNorth(iNeigh)-y0, yeRecvNorth(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneRecv%msgData(cntMsg))
+             oneFieldSection =>  CreateFieldSection(wfxName, idim_type, &
+                  xbRecvNorth(iNeigh)-x0, xeRecvNorth(iNeigh)-x0, &
+                  ybRecvNorth(iNeigh)-y0, yeRecvNorth(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneRecv%msgData(cntMsg))
+
+          else if (willRecvSouth(iNeigh)) then
+
+             ! insert recv communications from south
+
+             cntMsg = cntMsg + 1
+             if (cntMsg > nMsgs) then
+                write(str(1),"(i8)") nMsgs
+                call fatal_error(h//" nMsgs ("//&
+                     trim(adjustl(str(1)))//") exceeded while inserting four fields "//&
+                     " at message "//trim(adjustl(WideGhostZoneRecv%name)))
+             end if
+
+             fieldSectionSize= &
+                  (xeRecvSouth(iNeigh)-xbRecvSouth(iNeigh)+1) * &
+                  (yeRecvSouth(iNeigh)-ybRecvSouth(iNeigh)+1) * &
+                  (GridSize%nnzp + 2* ghostZoneWidth)
+
+             oneFieldSection =>  CreateFieldSection(scrName, idim_type, &
+                  xbRecvSouth(iNeigh)-x0, xeRecvSouth(iNeigh)-x0, &
+                  ybRecvSouth(iNeigh)-y0, yeRecvSouth(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneRecv%msgData(cntMsg))
+             oneFieldSection =>  CreateFieldSection(ufxName, idim_type, &
+                  xbRecvSouth(iNeigh)-x0, xeRecvSouth(iNeigh)-x0, &
+                  ybRecvSouth(iNeigh)-y0, yeRecvSouth(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneRecv%msgData(cntMsg))
+             oneFieldSection =>  CreateFieldSection(vfxName, idim_type, &
+                  xbRecvSouth(iNeigh)-x0, xeRecvSouth(iNeigh)-x0, &
+                  ybRecvSouth(iNeigh)-y0, yeRecvSouth(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneRecv%msgData(cntMsg))
+             oneFieldSection =>  CreateFieldSection(wfxName, idim_type, &
+                  xbRecvSouth(iNeigh)-x0, xeRecvSouth(iNeigh)-x0, &
+                  ybRecvSouth(iNeigh)-y0, yeRecvSouth(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneRecv%msgData(cntMsg))
+
+          else if (willRecvEast(iNeigh)) then
+
+             ! insert recv communications from east
+
+             cntMsg = cntMsg + 1
+             if (cntMsg > nMsgs) then
+                write(str(1),"(i8)") nMsgs
+                call fatal_error(h//" nMsgs ("//&
+                     trim(adjustl(str(1)))//") exceeded while inserting four fields "//&
+                     " at message "//trim(adjustl(WideGhostZoneRecv%name)))
+             end if
+
+             fieldSectionSize= &
+                  (xeRecvEast(iNeigh)-xbRecvEast(iNeigh)+1) * &
+                  (yeRecvEast(iNeigh)-ybRecvEast(iNeigh)+1) * &
+                  (GridSize%nnzp + 2* ghostZoneWidth)
+
+             oneFieldSection =>  CreateFieldSection(scrName, idim_type, &
+                  xbRecvEast(iNeigh)-x0, xeRecvEast(iNeigh)-x0, &
+                  ybRecvEast(iNeigh)-y0, yeRecvEast(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneRecv%msgData(cntMsg))
+             oneFieldSection =>  CreateFieldSection(ufxName, idim_type, &
+                  xbRecvEast(iNeigh)-x0, xeRecvEast(iNeigh)-x0, &
+                  ybRecvEast(iNeigh)-y0, yeRecvEast(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneRecv%msgData(cntMsg))
+             oneFieldSection =>  CreateFieldSection(vfxName, idim_type, &
+                  xbRecvEast(iNeigh)-x0, xeRecvEast(iNeigh)-x0, &
+                  ybRecvEast(iNeigh)-y0, yeRecvEast(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneRecv%msgData(cntMsg))
+             oneFieldSection =>  CreateFieldSection(wfxName, idim_type, &
+                  xbRecvEast(iNeigh)-x0, xeRecvEast(iNeigh)-x0, &
+                  ybRecvEast(iNeigh)-y0, yeRecvEast(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneRecv%msgData(cntMsg))
+
+          else if (willRecvWest(iNeigh)) then
+
+             ! insert recv communications from west
+
+             cntMsg = cntMsg + 1
+             if (cntMsg > nMsgs) then
+                write(str(1),"(i8)") nMsgs
+                call fatal_error(h//" nMsgs ("//&
+                     trim(adjustl(str(1)))//") exceeded while inserting four fields "//&
+                     " at message "//trim(adjustl(WideGhostZoneRecv%name)))
+             end if
+
+             fieldSectionSize= &
+                  (xeRecvWest(iNeigh)-xbRecvWest(iNeigh)+1) * &
+                  (yeRecvWest(iNeigh)-ybRecvWest(iNeigh)+1) * &
+                  (GridSize%nnzp + 2* ghostZoneWidth)
+
+             oneFieldSection =>  CreateFieldSection(scrName, idim_type, &
+                  xbRecvWest(iNeigh)-x0, xeRecvWest(iNeigh)-x0, &
+                  ybRecvWest(iNeigh)-y0, yeRecvWest(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneRecv%msgData(cntMsg))
+             oneFieldSection =>  CreateFieldSection(ufxName, idim_type, &
+                  xbRecvWest(iNeigh)-x0, xeRecvWest(iNeigh)-x0, &
+                  ybRecvWest(iNeigh)-y0, yeRecvWest(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneRecv%msgData(cntMsg))
+             oneFieldSection =>  CreateFieldSection(vfxName, idim_type, &
+                  xbRecvWest(iNeigh)-x0, xeRecvWest(iNeigh)-x0, &
+                  ybRecvWest(iNeigh)-y0, yeRecvWest(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneRecv%msgData(cntMsg))
+             oneFieldSection =>  CreateFieldSection(wfxName, idim_type, &
+                  xbRecvWest(iNeigh)-x0, xeRecvWest(iNeigh)-x0, &
+                  ybRecvWest(iNeigh)-y0, yeRecvWest(iNeigh)-y0, &
+                  fieldSectionSize)
+             call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneRecv%msgData(cntMsg))
+          end if
+       end do
     end if
 
     if (dumpLocal) then
-       call MsgDump(h//" finishes with LuFlaSendNorth MessageSet:")
-       call DumpMessageSet(LuFlaSendNorth)
-       call MsgDump(h//" finishes with LuFlaRecvNorth MessageSet:")
-       call DumpMessageSet(LuFlaRecvNorth)
-       call MsgDump(h//" finishes with LuFlaSendSouth MessageSet:")
-       call DumpMessageSet(LuFlaSendSouth)
-       call MsgDump(h//" finishes with LuFlaRecvSouth MessageSet:")
-       call DumpMessageSet(LuFlaRecvSouth)
-       call MsgDump(h//" finishes with LuFlaSendEast MessageSet:")
-       call DumpMessageSet(LuFlaSendEast)
-       call MsgDump(h//" finishes with LuFlaRecvEast MessageSet:")
-       call DumpMessageSet(LuFlaRecvEast)
-       call MsgDump(h//" finishes with LuFlaSendWest MessageSet:")
-       call DumpMessageSet(LuFlaSendWest)
-       call MsgDump(h//" finishes with LuFlaRecvWest MessageSet:")
-       call DumpMessageSet(LuFlaRecvWest)
+       call MsgDump(h//" finishes with WideGhostZoneSend MessageSet:")
+       call DumpMessageSet(WideGhostZoneSend)
+       call MsgDump(h//" finishes with WideGhostZoneRecv MessageSet:")
+       call DumpMessageSet(WideGhostZoneRecv)
     end if
 
-  end subroutine CreateLuFlaMessageSet
+  end subroutine CreateWideGhostZoneMessageSet
 
 
 
+  subroutine DestroyWideGhostZoneMessageSet(&
+       WideGhostZoneSend, WideGhostZoneRecv)
 
-  subroutine DestroyLuFlaMessageSet(&
-       LuFlaSendNorth, LuFlaSendSouth, LuFlaSendEast, LuFlaSendWest, &
-       LuFlaRecvNorth, LuFlaRecvSouth, LuFlaRecvEast, LuFlaRecvWest)
+    type(MessageSet), pointer, intent(inout) :: WideGhostZoneSend
+    type(MessageSet), pointer, intent(inout) :: WideGhostZoneRecv
 
-    type(MessageSet), pointer, intent(inout) :: LuFlaSendNorth
-    type(MessageSet), pointer, intent(inout) :: LuFlaSendSouth
-    type(MessageSet), pointer, intent(inout) :: LuFlaSendEast
-    type(MessageSet), pointer, intent(inout) :: LuFlaSendWest
-    type(MessageSet), pointer, intent(inout) :: LuFlaRecvNorth
-    type(MessageSet), pointer, intent(inout) :: LuFlaRecvSouth
-    type(MessageSet), pointer, intent(inout) :: LuFlaRecvEast
-    type(MessageSet), pointer, intent(inout) :: LuFlaRecvWest
-
-    character(len=*), parameter :: h="**(DestroyLuFlaMessageSet)**"
+    character(len=*), parameter :: h="**(DestroyWideGhostZoneMessageSet)**"
     logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
-       call MsgDump(h//" will destroy LuFlaSend/RecvNorth")
+       call MsgDump(h//" will destroy WideGhostZoneSend/Recv")
     end if
-    call DestroyMessageSet(LuFlaSendNorth)
-    call DestroyMessageSet(LuFlaRecvNorth)
+    call DestroyMessageSet(WideGhostZoneSend)
+    call DestroyMessageSet(WideGhostZoneRecv)
+  end subroutine DestroyWideGhostZoneMessageSet
 
-    if (dumpLocal) then
-       call MsgDump(h//" will destroy LuFlaSend/RecvSouth")
-    end if
-    call DestroyMessageSet(LuFlaSendSouth)
-    call DestroyMessageSet(LuFlaRecvSouth)
 
-    if (dumpLocal) then
-       call MsgDump(h//" will destroy LuFlaSend/RecvEast")
-    end if
-    call DestroyMessageSet(LuFlaSendEast)
-    call DestroyMessageSet(LuFlaRecvEast)
-
-    if (dumpLocal) then
-       call MsgDump(h//" will destroy LuFlaSend/RecvWest")
-    end if
-    call DestroyMessageSet(LuFlaSendWest)
-    call DestroyMessageSet(LuFlaRecvWest)
-  end subroutine DestroyLuFlaMessageSet
-
-  
 
 
   subroutine UpdateFieldAdressAtMessageSet_2D(oneMessageSet, field, name)
@@ -3045,7 +4924,7 @@ contains
     character(len=*), parameter :: h="**(UpdateFieldAdressAtMessageSet_2D)**"
 
     include "updateFieldAdressBody.f90"
-    
+
   end subroutine UpdateFieldAdressAtMessageSet_2D
 
 
@@ -3059,7 +4938,7 @@ contains
     character(len=*), parameter :: h="**(UpdateFieldAdressAtMessageSet_3D)**"
 
     include "updateFieldAdressBody.f90"
-    
+
   end subroutine UpdateFieldAdressAtMessageSet_3D
 
 
@@ -3073,13 +4952,13 @@ contains
     character(len=*), parameter :: h="**(UpdateFieldAdressAtMessageSet_4D)**"
 
     include "updateFieldAdressBody.f90"
-    
+
   end subroutine UpdateFieldAdressAtMessageSet_4D
 
 
 
 
-  subroutine PostSendRecvMsgs(SendMsg, RecvMsg)
+  subroutine PostSendRecvMsgsFixedAdress(SendMsg, RecvMsg)
 
     ! posts all nonblocking send and recv operations of
     ! a message set pair of variables
@@ -3095,7 +4974,7 @@ contains
     type(MessageData), pointer :: msgData => null()
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
-    character(len=*), parameter :: h="**(PostSendRecvMsgs)**"
+    character(len=*), parameter :: h="**(PostSendRecvMsgsFixedAdress)**"
     logical, parameter :: dumpLocal=.false.
 
     ! post nonblocking receive for each receiving message;
@@ -3147,7 +5026,7 @@ contains
           ! allocate and fill send buffer with field sections to send
 
           call AllocateMessageDataBuffer(SendMsg%msgData(iSend))
-          call FillMessageDataBufferWithFieldSectionData(SendMsg%msgData(iSend))
+          call FillMessageDataBuffer(SendMsg%msgData(iSend))
 
           ! post send message
 
@@ -3162,12 +5041,196 @@ contains
           call MsgDump(h//" empty send message set")
        end if
     end if
-  end subroutine PostSendRecvMsgs
+  end subroutine PostSendRecvMsgsFixedAdress
+
+
+
+  subroutine PostSendRecvMsgsVariableAdressArr(SendMsg, RecvMsg, scp, ufx, vfx, wfx)
+
+    ! posts all nonblocking send and recv operations of
+    ! a message set pair of variables
+
+    type(MessageSet), pointer, intent(in) :: SendMsg
+    type(MessageSet), pointer, intent(in) :: RecvMsg
+    real, pointer, intent(in):: scp(:,:,:)
+    real, intent(in):: ufx(:,:,:)
+    real, intent(in):: vfx(:,:,:)
+    real, intent(in):: wfx(:,:,:)
+
+    integer :: iSend
+    integer :: iRecv
+    integer :: firstBuffer
+    integer :: lastBuffer
+    integer :: ierr
+    type(MessageData), pointer :: msgData => null()
+    type(FieldSection), pointer :: node => null()
+    character(len=8) :: c0, c1, c2, c3, c4, c5
+    character(len=*), parameter :: h="**(PostSendRecvMsgsVariableAdressArr)**"
+    logical, parameter :: dumpLocal=.false.
+
+    ! post nonblocking receive for each receiving message;
+    ! a single receive msg from each process
+
+    if (associated(RecvMsg)) then
+       if (dumpLocal) then
+          if (RecvMsg%nMsgs > 0) then
+             write(c0,"(i8)") RecvMsg%nMsgs
+             call MsgDump(h//" for "//trim(adjustl(RecvMsg%name))//&
+                  " will post "//trim(adjustl(c0))//&
+                  " nonblocking receives")
+          end if
+       end if
+       do iRecv= 1,RecvMsg%nMsgs
+
+          call AllocateMessageDataBuffer(RecvMsg%msgData(iRecv))
+
+          ! post receive
+
+          write(c0,"(i8)") iRecv
+          call PostRecvMessageData(RecvMsg%msgData(iRecv), &
+               RecvMsg%otherProc(iRecv), RecvMsg%tag, &
+               RecvMsg%request(iRecv), &
+               h//" for recv #"//trim(adjustl(c0)))
+       end do
+    else
+       if (dumpLocal) then
+          call MsgDump(h//" empty receive message set")
+       end if
+    end if
+
+    ! for each sending message,
+    ! build send buffer and copy field sections to the buffer;
+    ! post nonblocking send;
+    ! A single send message to each process
+
+    if (associated(SendMsg)) then
+       if (dumpLocal) then
+          if (SendMsg%nMsgs > 0) then
+             write(c0,"(i8)") SendMsg%nMsgs
+             call MsgDump(h//" for "//trim(adjustl(SendMsg%name))//&
+                  " will post "//trim(adjustl(c0))//&
+                  " nonblocking sends")
+          end if
+       end if
+       do iSend = 1,SendMsg%nMsgs
+
+          ! allocate and fill send buffer with field sections to send
+
+          call AllocateMessageDataBuffer(SendMsg%msgData(iSend))
+          call FillMessageDataBufferVariableAdressArr(SendMsg%msgData(iSend), &
+               scp, ufx, vfx, wfx)
+
+          ! post send message
+
+          write(c0,"(i8)") iSend
+          call PostSendMessageData(SendMsg%msgData(iSend), &
+               SendMsg%otherProc(iSend), SendMsg%tag, &
+               SendMsg%request(iSend), &
+               h//" for send #"//trim(adjustl(c0)))
+       end do
+    else
+       if (dumpLocal) then
+          call MsgDump(h//" empty send message set")
+       end if
+    end if
+  end subroutine PostSendRecvMsgsVariableAdressArr
+
+
+
+  subroutine PostSendRecvMsgsVariableAdressScalar(SendMsg, RecvMsg, scp, ufx, vfx, wfx)
+
+    ! posts all nonblocking send and recv operations of
+    ! a message set pair of variables
+
+    type(MessageSet), pointer, intent(in) :: SendMsg
+    type(MessageSet), pointer, intent(in) :: RecvMsg
+    real, intent(in):: scp
+    real, intent(in):: ufx(:,:,:)
+    real, intent(in):: vfx(:,:,:)
+    real, intent(in):: wfx(:,:,:)
+
+    integer :: iSend
+    integer :: iRecv
+    integer :: firstBuffer
+    integer :: lastBuffer
+    integer :: ierr
+    type(MessageData), pointer :: msgData => null()
+    type(FieldSection), pointer :: node => null()
+    character(len=8) :: c0, c1, c2, c3, c4, c5
+    character(len=*), parameter :: h="**(PostSendRecvMsgsVariableAdressScalar)**"
+    logical, parameter :: dumpLocal=.false.
+
+    ! post nonblocking receive for each receiving message;
+    ! a single receive msg from each process
+
+    if (associated(RecvMsg)) then
+       if (dumpLocal) then
+          if (RecvMsg%nMsgs > 0) then
+             write(c0,"(i8)") RecvMsg%nMsgs
+             call MsgDump(h//" for "//trim(adjustl(RecvMsg%name))//&
+                  " will post "//trim(adjustl(c0))//&
+                  " nonblocking receives")
+          end if
+       end if
+       do iRecv= 1,RecvMsg%nMsgs
+
+          call AllocateMessageDataBuffer(RecvMsg%msgData(iRecv))
+
+          ! post receive
+
+          write(c0,"(i8)") iRecv
+          call PostRecvMessageData(RecvMsg%msgData(iRecv), &
+               RecvMsg%otherProc(iRecv), RecvMsg%tag, &
+               RecvMsg%request(iRecv), &
+               h//" for recv #"//trim(adjustl(c0)))
+       end do
+    else
+       if (dumpLocal) then
+          call MsgDump(h//" empty receive message set")
+       end if
+    end if
+
+    ! for each sending message,
+    ! build send buffer and copy field sections to the buffer;
+    ! post nonblocking send;
+    ! A single send message to each process
+
+    if (associated(SendMsg)) then
+       if (dumpLocal) then
+          if (SendMsg%nMsgs > 0) then
+             write(c0,"(i8)") SendMsg%nMsgs
+             call MsgDump(h//" for "//trim(adjustl(SendMsg%name))//&
+                  " will post "//trim(adjustl(c0))//&
+                  " nonblocking sends")
+          end if
+       end if
+       do iSend = 1,SendMsg%nMsgs
+
+          ! allocate and fill send buffer with field sections to send
+
+          call AllocateMessageDataBuffer(SendMsg%msgData(iSend))
+          call FillMessageDataBufferVariableAdressScalar(SendMsg%msgData(iSend), &
+               scp, ufx, vfx, wfx)
+
+          ! post send message
+
+          write(c0,"(i8)") iSend
+          call PostSendMessageData(SendMsg%msgData(iSend), &
+               SendMsg%otherProc(iSend), SendMsg%tag, &
+               SendMsg%request(iSend), &
+               h//" for send #"//trim(adjustl(c0)))
+       end do
+    else
+       if (dumpLocal) then
+          call MsgDump(h//" empty send message set")
+       end if
+    end if
+  end subroutine PostSendRecvMsgsVariableAdressScalar  
 
 
 
 
-  subroutine WaitSendRecvMsgs(SendMsg, RecvMsg)
+  subroutine WaitSendRecvMsgsFixedAdress(SendMsg, RecvMsg)
     type(MessageSet), pointer, intent(in) :: SendMsg
     type(MessageSet), pointer, intent(in) :: RecvMsg
 
@@ -3185,7 +5248,7 @@ contains
     type(MessageData), pointer :: msgData => null()
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
-    character(len=*), parameter :: h="**(WaitSendRecvMsgs)**"
+    character(len=*), parameter :: h="**(WaitSendRecvMsgsFixedAdress)**"
     logical, parameter :: dumpLocal=.false.
 
     ! for each receive message:
@@ -3217,7 +5280,7 @@ contains
           ! extract field sections from incoming buffer
           ! and store at destination fields
 
-          call ExtractFieldSectionDataFromMessageDataBuffer(RecvMsg%msgData(recvNbr))
+          call DecomposeMessageDataBuffer(RecvMsg%msgData(recvNbr))
           call DeallocateMessageDataBuffer(RecvMsg%msgData(recvNbr))
        end do
     else
@@ -3241,5 +5304,95 @@ contains
           call MsgDump(h//" empty send message set")
        end if
     end if
-  end subroutine WaitSendRecvMsgs
+  end subroutine WaitSendRecvMsgsFixedAdress
+
+
+
+
+  subroutine WaitSendRecvMsgsVariableAdress(SendMsg, RecvMsg, &
+       msgStartZ, msgEndZ, scr, ufx_local, wfx_local, vfx_local)
+
+    type(MessageSet), pointer, intent(in) :: SendMsg
+    type(MessageSet), pointer, intent(in) :: RecvMsg
+    integer, intent(in) :: msgStartZ
+    integer, intent(in) :: msgEndZ
+    real, pointer, intent(in) :: scr(:,:,:)
+    real, pointer, intent(in) :: ufx_local(:,:,:)
+    real, pointer, intent(in) :: vfx_local(:,:,:)
+    real, pointer, intent(in) :: wfx_local(:,:,:)
+
+    ! waits for all nonblocking send and recv operations of
+    ! a message set pair of variables
+
+    integer :: i
+    integer :: iSend
+    integer :: iRecv
+    integer :: firstBuffer
+    integer :: lastBuffer
+    integer :: recvNbr
+    integer :: sendNbr
+    integer :: ierr
+    type(MessageData), pointer :: msgData => null()
+    type(FieldSection), pointer :: node => null()
+    character(len=8) :: c0, c1, c2, c3, c4, c5
+    character(len=*), parameter :: h="**(WaitSendRecvMsgsVariableAdress)**"
+    logical, parameter :: dumpLocal=.false.
+
+    ! for each receive message:
+    ! build send buffer and copy field sections to the buffer;
+    ! post nonblocking send;
+    ! A single send message to each process
+
+    if (associated(RecvMsg)) then
+       if (dumpLocal) then
+          write(c0,"(i8)") RecvMsg%nMsgs
+          call MsgDump(h//" for "//trim(adjustl(RecvMsg%name))//&
+               " waits on "//trim(adjustl(c0))//" receives")
+       end if
+
+       do iRecv= 1,RecvMsg%nMsgs
+
+          ! wait on any arrived message
+
+          call parf_wait_any_nostatus(RecvMsg%nMsgs, &
+               RecvMsg%request, recvNbr)
+          msgData => RecvMsg%msgData(recvNbr)
+          if (dumpLocal) then
+             write(c0,"(i8)") recvNbr
+             write(c1,"(i8)") RecvMsg%otherProc(recvNbr)
+             call MsgDump(h//" received message #"//trim(adjustl(c0))//&
+                  " from MPI proc "//trim(adjustl(c1)))
+          end if
+
+          ! extract field sections from incoming buffer
+          ! and store at destination fields
+
+          call DecomposeMessageDataBuffer(RecvMsg%msgData(recvNbr), &
+               msgStartZ, msgEndZ, scr, ufx_local, vfx_local, wfx_local)
+          call DeallocateMessageDataBuffer(RecvMsg%msgData(recvNbr))
+       end do
+    else
+       if (dumpLocal) then
+          call MsgDump(h//" empty receive message set")
+       end if
+    end if
+
+    ! for all posted send messages, wait on pending request,
+    ! deallocate buffer and empty request
+
+    if (associated(SendMsg)) then
+       !CDIR$ NOVECTOR
+       do iSend = 1,SendMsg%nMsgs
+          call parf_wait_any_nostatus(SendMsg%nMsgs, &
+               SendMsg%request, sendNbr)
+          call DeallocateMessageDataBuffer(SendMsg%msgData(sendNbr))
+       end do
+    else
+       if (dumpLocal) then
+          call MsgDump(h//" empty send message set")
+       end if
+    end if
+  end subroutine WaitSendRecvMsgsVariableAdress
 end module ModMessageSet
+
+

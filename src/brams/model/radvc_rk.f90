@@ -31,7 +31,7 @@ end module advRkParam
 
 module ModAdvectc_rk
 
-  ! explicit advect_ws interface due to grid pointer argument;
+  ! explicit advect_ws interface due to OneGrid grid pointer argument;
 
   ! the explicit interface generates issues since there are calls
   ! passing full arrays, passing pointers to full arrays and
@@ -69,6 +69,7 @@ module ModAdvectc_rk
   use ModMessageSet, only: &
        UpdateFieldAdress, &
        PostSendRecvMsgs, &
+       PostSendRecvMsgsVariableAdress, &
        WaitSendRecvMsgs
 
   use advRkParam, only: fifth_order, eps,real_init
@@ -78,25 +79,30 @@ module ModAdvectc_rk
 
   use node_mod, only:  nmachs, myNum,nodei0,nodej0
 
-  use ParLib, only: &
-       parf_barrier, &  ! subroutine
-       parf_exit_mpi    ! subroutine
-
   implicit none
   private
   public :: advectc_rk
 
-  interface advect_ws
-     module procedure advect_ws_pointer
-     module procedure advect_ws_field
-     module procedure advect_ws_scalar_tab
-  end interface advect_ws
+  integer :: invocCnt=0
+  character(len=*), parameter :: nomeInput="Input"
+  character(len=*), parameter :: nomeAntes="Antes"
+  character(len=*), parameter :: nomeDepois="Depois"
+  character(len=32) :: fName
+  integer, parameter :: un=43
+
 contains  
 
-  subroutine advect_ws_pointer(OneGrid,&
+
+
+
+  subroutine advect_ws_pointer_rank1(OneGrid,&
        mzp,mxp,myp,ia,iz,ja,jz,&
        scp,ufx,vfx,wfx,vt3dh,vt3dj,vt3dk,sct, &
        is,js,ks,pd_or_mnt_constraint,order_h,order_v,dt,vname)
+
+    ! version for:
+    ! scp is a 3D pointer array and
+    ! sct is a 1D pointer array
 
     type(Grid), pointer, intent(in) :: OneGrid
     integer, intent(in) :: mzp !- z
@@ -113,16 +119,230 @@ contains
     real, dimension(mzp,mxp,myp), intent(in) :: ufx, vfx,wfx,vt3dh,vt3dj,vt3dk
     character(len=*),intent(in) :: vname
 
-    character(len=*), parameter :: h="**(advect_ws_pointer)**"
+    character(len=*), parameter :: h="**(advect_ws_pointer_rank1)**"
 
-    include "advect_ws_body.f90"
+    logical :: scalar
+    real, pointer :: qz(:,:,:)
+    real, pointer :: qx(:,:,:)
+    real, pointer :: qy(:,:,:)
+    real, pointer :: scr(:,:,:)
+    real, pointer :: ufx_local(:,:,:)
+    real, pointer :: vfx_local(:,:,:)
+    real, pointer :: wfx_local(:,:,:)
 
-  end subroutine advect_ws_pointer
+    !external functions
+    real, external :: flux_upwind,fq2, fq3, fq4, fq5, fq6, fq
 
-  subroutine advect_ws_field(OneGrid,&
+    logical, parameter :: variable=.true.
+    !<
+    integer, parameter :: mzi=-2, myi=-2, mxi=-2
+
+    integer :: mzpp3,mxpp3,mypp3
+    integer :: mzppks,mxppis,myppjs
+
+    logical, parameter :: dumpLocal=.true.
+    character(len=8) :: str(10)
+
+    call PostSendRecvMsgsVariableAdress(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv, &
+         scp, ufx, vfx, wfx)
+
+    invocCnt=invocCnt+1
+
+    write(str(1),"(i2.2)") invocCnt
+    write(str(2),"(i2)") OneGrid%ParEnv%mchnum
+    write(fName,"(a)") nomeInput//"."//trim(adjustl(str(1)))//"."//trim(adjustl(str(2)))
+    open(unit=un,file=trim(adjustl(fName)),status="replace",&
+         form="unformatted",action="write")
+    call DumpArr(un, size(scp,1), size(scp,2), size(scp,3), scp)
+    call DumpArr(un, size(ufx,1), size(ufx,2), size(ufx,3), ufx)
+    call DumpArr(un, size(vfx,1), size(vfx,2), size(vfx,3), vfx)
+    call DumpArr(un, size(wfx,1), size(wfx,2), size(wfx,3), wfx)
+    call DumpArr(un, size(vt3dh,1), size(vt3dh,2), size(vt3dh,3), vt3dh)
+    call DumpArr(un, size(vt3dj,1), size(vt3dj,2), size(vt3dj,3), vt3dj)
+    call DumpArr(un, size(vt3dk,1), size(vt3dk,2), size(vt3dk,3), vt3dk)
+    close(unit=un)
+
+
+    if (dumpLocal) then
+       call MsgDump(h//" to advect "//trim(adjustl(vname)))
+    end if
+
+    mzpp3=mzp+3; mxpp3=mxp+3; mypp3=myp+3
+    mzppks=mzp+ks; mxppis=mxp+is; myppjs=myp+js
+
+    allocate(qx(mzppks,mxppis,myppjs));qx=real_init
+    allocate(qy(mzppks,mxppis,myppjs));qy=real_init
+    allocate(qz(mzppks,mxppis,myppjs));qz=real_init
+    allocate(scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3));scr=real_init
+    allocate(ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));ufx_local=real_init
+    allocate(vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));vfx_local=real_init
+    allocate(wfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));wfx_local=real_init
+
+    !- flag to determine if a scalar is being advected
+    scalar = .false.
+    if(is==0 .and. js==0 .and. ks==0) scalar = .true.
+
+    !- copy input arrays to extended arrays
+    call copyMyPart(scp,scr,ufx_local,vfx_local,wfx_local, &
+         ufx,vfx,wfx,mxp,myp,mzp,is,js,ks, &
+         mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+         vname)
+
+    if(.not. variable) &
+         call expandBorder(mxp,myp,mzp,is,js,ks, &
+         mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+         scr,ufx_local,vfx_local,wfx_local)
+
+    ! Set x & y boundary values in halo zones
+    if (nmachs>1) then
+       if (dumpLocal) then
+          write(str(1),"(i8)") size(scr,1)
+          write(str(2),"(i8)") size(scr,2)
+          write(str(3),"(i8)") size(scr,3)
+          call MsgDump(h//" exchange border of "//vname//" dimensioned ("//&
+               trim(adjustl(str(1)))//","//&
+               trim(adjustl(str(2)))//","//&
+               trim(adjustl(str(3)))//")")
+       end if
+    end if
+
+    write(str(1),"(i2.2)") invocCnt
+    write(str(2),"(i2)") OneGrid%ParEnv%mchnum
+    write(fName,"(a)") nomeAntes//"."//trim(adjustl(str(1)))//"."//trim(adjustl(str(2)))
+    open(unit=un,file=trim(adjustl(fName)),status="replace",&
+         form="unformatted",action="write")
+    call DumpArr(un, size(scr,1), size(scr,2), size(scr,3), scr)
+    call DumpArr(un, size(ufx_local,1), size(ufx_local,2), size(ufx_local,3), ufx_local)
+    call DumpArr(un, size(vfx_local,1), size(vfx_local,2), size(vfx_local,3), vfx_local)
+    call DumpArr(un, size(wfx_local,1), size(wfx_local,2), size(wfx_local,3), wfx_local)
+    close(unit=un)
+
+
+    call WaitSendRecvMsgs(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv, &
+         1, mzp, scr, ufx_local, vfx_local, wfx_local)
+    write(str(1),"(i2.2)") invocCnt
+    write(str(2),"(i2)") OneGrid%ParEnv%mchnum
+    write(fName,"(a)") nomeDepois//"."//trim(adjustl(str(1)))//"."//trim(adjustl(str(2)))
+    open(unit=un,file=trim(adjustl(fName)),status="replace",&
+         form="unformatted",action="write")
+    call DumpArr(un, size(scr,1), size(scr,2), size(scr,3), scr)
+    call DumpArr(un, size(ufx_local,1), size(ufx_local,2), size(ufx_local,3), ufx_local)
+    call DumpArr(un, size(vfx_local,1), size(vfx_local,2), size(vfx_local,3), vfx_local)
+    call DumpArr(un, size(wfx_local,1), size(wfx_local,2), size(wfx_local,3), wfx_local)
+    close(unit=un)
+
+
+    select case (order_h)
+    case (1)
+       call compXYInterface_or1(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            border(mynum,:),qx,qy, &
+            variable, vname)
+    case (2)
+       call compXYInterface_or2(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            border(mynum,:),qx,qy, &
+            variable, vname)
+    case (3)
+       call compXYInterface_or3(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            border(mynum,:),qx,qy, &
+            variable, vname)
+    case (4)
+       call compXYInterface_or4(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            border(mynum,:),qx,qy, &
+            variable, vname)
+    case(5,6)
+       call compXYInterface_or56(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            border(mynum,:),qx,qy, &
+            variable, vname, order_h)
+    case default
+       write (*,fmt='(A)') 'Advect Error : the order_h must be from 1 to 6'
+       stop 'ERROR!'
+    end select
+
+    select case (order_v)
+    case (1)
+       call compZInterface_or1(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case (2)
+       call compZInterface_or2(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case (3)
+       call compZInterface_or3(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case (4)
+       call compZInterface_or4(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case(5,6)
+       call compZInterface_or56(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname,order_v)
+    case default
+       write (*,fmt='(A)') 'Advect Error : the order_v must be from 1 to 6'
+       stop 'ERROR!'
+    end select
+
+    if(pd_or_mnt_constraint > 0 .and. scalar .and. vname .ne. 'thc' .and. vname .ne. 'pc') then  
+
+       !-- positivity/monotonicity constraints
+       call PosMonConstraints(mxp,myp,mzp,is,js,ks,ia,iz,ja,jz,&
+            pd_or_mnt_constraint, &
+            dt,ufx,vfx,wfx,vt3dh,vt3dj,vt3dk,scp, &
+            scr,ufx_local,vfx_local,wfx_local, &
+            qx,qy,qz,mzi,mzpp3,mxi,mxpp3,myi, &
+            mypp3,mzppks,mxppis,myppjs,mynum,vname,sct)
+
+    endif
+
+    call CreateTendency(mxp,myp,mzp,is,js,ks,ia,iz,ja,jz, &
+         mzppks,mxppis,myppjs, &
+         dt,ufx,vfx,wfx, &
+         vt3dh,vt3dj,vt3dk,scp, &
+         qx,qy,qz,sct,vname,mynum)
+
+    deallocate(qx ,qy,    qz,    scr,          ufx_local,    vfx_local ,   wfx_local)
+
+  end subroutine advect_ws_pointer_rank1
+
+
+
+
+
+  subroutine advect_ws_pointer_rank3(OneGrid,&
        mzp,mxp,myp,ia,iz,ja,jz,&
        scp,ufx,vfx,wfx,vt3dh,vt3dj,vt3dk,sct, &
        is,js,ks,pd_or_mnt_constraint,order_h,order_v,dt,vname)
+
+    ! version for:
+    ! scp is a 3D pointer array and
+    ! sct is a 3D pointer array
 
     type(Grid), pointer, intent(in) :: OneGrid
     integer, intent(in) :: mzp !- z
@@ -134,21 +354,714 @@ contains
     integer, intent(in) :: jz
     integer, intent(in) :: is,js,ks,pd_or_mnt_constraint,order_h,order_v
     real, intent(in)    :: dt
-    real, intent(in)    :: scp(mzp,mxp,myp)
-    real, intent(inout) :: sct(mzp,mxp,myp)
+    real, pointer, intent(in) :: scp(:,:,:)
+    real, pointer, intent(in) :: sct(:,:,:)
+    real, dimension(mzp,mxp,myp), intent(in) :: ufx, vfx,wfx,vt3dh,vt3dj,vt3dk
+    character(len=*),intent(in) :: vname
+
+    character(len=*), parameter :: h="**(advect_ws_pointer_rank3)**"
+
+    logical :: scalar
+    real, pointer :: qz(:,:,:)
+    real, pointer :: qx(:,:,:)
+    real, pointer :: qy(:,:,:)
+    real, pointer :: scr(:,:,:)
+    real, pointer :: ufx_local(:,:,:)
+    real, pointer :: vfx_local(:,:,:)
+    real, pointer :: wfx_local(:,:,:)
+
+    !external functions
+    real, external :: flux_upwind,fq2, fq3, fq4, fq5, fq6, fq
+
+    logical, parameter :: variable=.true.
+    !<
+    integer, parameter :: mzi=-2, myi=-2, mxi=-2
+
+    integer :: mzpp3,mxpp3,mypp3
+    integer :: mzppks,mxppis,myppjs
+
+    logical, parameter :: dumpLocal=.true.
+    character(len=8) :: str(10)
+
+    call PostSendRecvMsgsVariableAdress(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv, &
+         scp, ufx, vfx, wfx)
+
+    invocCnt=invocCnt+1
+
+    write(str(1),"(i2.2)") invocCnt
+    write(str(2),"(i2)") OneGrid%ParEnv%mchnum
+    write(fName,"(a)") nomeInput//"."//trim(adjustl(str(1)))//"."//trim(adjustl(str(2)))
+    open(unit=un,file=trim(adjustl(fName)),status="replace",&
+         form="unformatted",action="write")
+    call DumpArr(un, size(scp,1), size(scp,2), size(scp,3), scp)
+    call DumpArr(un, size(ufx,1), size(ufx,2), size(ufx,3), ufx)
+    call DumpArr(un, size(vfx,1), size(vfx,2), size(vfx,3), vfx)
+    call DumpArr(un, size(wfx,1), size(wfx,2), size(wfx,3), wfx)
+    call DumpArr(un, size(vt3dh,1), size(vt3dh,2), size(vt3dh,3), vt3dh)
+    call DumpArr(un, size(vt3dj,1), size(vt3dj,2), size(vt3dj,3), vt3dj)
+    call DumpArr(un, size(vt3dk,1), size(vt3dk,2), size(vt3dk,3), vt3dk)
+    close(unit=un)
+
+    if (dumpLocal) then
+       call MsgDump(h//" to advect "//trim(adjustl(vname)))
+    end if
+
+    mzpp3=mzp+3; mxpp3=mxp+3; mypp3=myp+3
+    mzppks=mzp+ks; mxppis=mxp+is; myppjs=myp+js
+
+    allocate(qx(mzppks,mxppis,myppjs));qx=real_init
+    allocate(qy(mzppks,mxppis,myppjs));qy=real_init
+    allocate(qz(mzppks,mxppis,myppjs));qz=real_init
+    allocate(scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3));scr=real_init
+    allocate(ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));ufx_local=real_init
+    allocate(vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));vfx_local=real_init
+    allocate(wfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));wfx_local=real_init
+
+    !- flag to determine if a scalar is being advected
+    scalar = .false.
+    if(is==0 .and. js==0 .and. ks==0) scalar = .true.
+
+    !- copy input arrays to extended arrays
+    call copyMyPart(scp,scr,ufx_local,vfx_local,wfx_local, &
+         ufx,vfx,wfx,mxp,myp,mzp,is,js,ks, &
+         mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+         vname)
+
+    if(.not. variable) &
+         call expandBorder(mxp,myp,mzp,is,js,ks, &
+         mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+         scr,ufx_local,vfx_local,wfx_local)
+
+    ! Set x & y boundary values in halo zones
+    if (nmachs>1) then
+       if (dumpLocal) then
+          write(str(1),"(i8)") size(scr,1)
+          write(str(2),"(i8)") size(scr,2)
+          write(str(3),"(i8)") size(scr,3)
+          call MsgDump(h//" exchange border of "//vname//" dimensioned ("//&
+               trim(adjustl(str(1)))//","//&
+               trim(adjustl(str(2)))//","//&
+               trim(adjustl(str(3)))//")")
+       end if
+    end if
+
+    write(str(1),"(i2.2)") invocCnt
+    write(str(2),"(i2)") OneGrid%ParEnv%mchnum
+    write(fName,"(a)") nomeAntes//"."//trim(adjustl(str(1)))//"."//trim(adjustl(str(2)))
+    open(unit=un,file=trim(adjustl(fName)),status="replace",&
+         form="unformatted",action="write")
+    call DumpArr(un, size(scr,1), size(scr,2), size(scr,3), scr)
+    call DumpArr(un, size(ufx_local,1), size(ufx_local,2), size(ufx_local,3), ufx_local)
+    call DumpArr(un, size(vfx_local,1), size(vfx_local,2), size(vfx_local,3), vfx_local)
+    call DumpArr(un, size(wfx_local,1), size(wfx_local,2), size(wfx_local,3), wfx_local)
+    close(unit=un)
+
+
+    call WaitSendRecvMsgs(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv, &
+         1, mzp, scr, ufx_local, vfx_local, wfx_local)
+    write(str(1),"(i2.2)") invocCnt
+    write(str(2),"(i2)") OneGrid%ParEnv%mchnum
+    write(fName,"(a)") nomeDepois//"."//trim(adjustl(str(1)))//"."//trim(adjustl(str(2)))
+    open(unit=un,file=trim(adjustl(fName)),status="replace",&
+         form="unformatted",action="write")
+    call DumpArr(un, size(scr,1), size(scr,2), size(scr,3), scr)
+    call DumpArr(un, size(ufx_local,1), size(ufx_local,2), size(ufx_local,3), ufx_local)
+    call DumpArr(un, size(vfx_local,1), size(vfx_local,2), size(vfx_local,3), vfx_local)
+    call DumpArr(un, size(wfx_local,1), size(wfx_local,2), size(wfx_local,3), wfx_local)
+    close(unit=un)
+
+
+    select case (order_h)
+    case (1)
+       call compXYInterface_or1(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            border(mynum,:),qx,qy, &
+            variable, vname)
+    case (2)
+       call compXYInterface_or2(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            border(mynum,:),qx,qy, &
+            variable, vname)
+    case (3)
+       call compXYInterface_or3(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            border(mynum,:),qx,qy, &
+            variable, vname)
+    case (4)
+       call compXYInterface_or4(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            border(mynum,:),qx,qy, &
+            variable, vname)
+    case(5,6)
+       call compXYInterface_or56(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            border(mynum,:),qx,qy, &
+            variable, vname, order_h)
+    case default
+       write (*,fmt='(A)') 'Advect Error : the order_h must be from 1 to 6'
+       stop 'ERROR!'
+    end select
+
+    select case (order_v)
+    case (1)
+       call compZInterface_or1(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case (2)
+       call compZInterface_or2(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case (3)
+       call compZInterface_or3(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case (4)
+       call compZInterface_or4(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case(5,6)
+       call compZInterface_or56(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname,order_v)
+    case default
+       write (*,fmt='(A)') 'Advect Error : the order_v must be from 1 to 6'
+       stop 'ERROR!'
+    end select
+
+    if(pd_or_mnt_constraint > 0 .and. scalar .and. vname .ne. 'thc' .and. vname .ne. 'pc') then  
+
+       !-- positivity/monotonicity constraints
+       call PosMonConstraints(mxp,myp,mzp,is,js,ks,ia,iz,ja,jz,&
+            pd_or_mnt_constraint, &
+            dt,ufx,vfx,wfx,vt3dh,vt3dj,vt3dk,scp, &
+            scr,ufx_local,vfx_local,wfx_local, &
+            qx,qy,qz,mzi,mzpp3,mxi,mxpp3,myi, &
+            mypp3,mzppks,mxppis,myppjs,mynum,vname,sct)
+
+    endif
+
+    call CreateTendency(mxp,myp,mzp,is,js,ks,ia,iz,ja,jz, &
+         mzppks,mxppis,myppjs, &
+         dt,ufx,vfx,wfx, &
+         vt3dh,vt3dj,vt3dk,scp, &
+         qx,qy,qz,sct,vname,mynum)
+
+    deallocate(qx ,qy,    qz,    scr,          ufx_local,    vfx_local ,   wfx_local)
+
+  end subroutine advect_ws_pointer_rank3
+
+
+
+
+
+
+  subroutine advect_ws_pointer_scalar(OneGrid,&
+       mzp,mxp,myp,ia,iz,ja,jz,&
+       scp,ufx,vfx,wfx,vt3dh,vt3dj,vt3dk,sct, &
+       is,js,ks,pd_or_mnt_constraint,order_h,order_v,dt,vname)
+
+    ! version for:
+    ! scp is a scalar pointer and
+    ! sct is a scalar pointer 
+    ! case both pointers from scalar_tab
+
+    type(Grid), pointer, intent(in) :: OneGrid
+    integer, intent(in) :: mzp !- z
+    integer, intent(in) :: mxp !- x
+    integer, intent(in) :: myp !- y
+    integer, intent(in) :: ia
+    integer, intent(in) :: iz
+    integer, intent(in) :: ja
+    integer, intent(in) :: jz
+    integer, intent(in) :: is,js,ks,pd_or_mnt_constraint,order_h,order_v
+    real, intent(in)    :: dt
+    real, pointer, intent(in) :: scp
+    real, pointer, intent(in) :: sct
+    real, dimension(mzp,mxp,myp), intent(in) :: ufx, vfx,wfx,vt3dh,vt3dj,vt3dk
+    character(len=*),intent(in) :: vname
+
+    character(len=*), parameter :: h="**(advect_ws_pointer_scalar)**"
+
+    logical :: scalar
+    real, pointer :: qz(:,:,:)
+    real, pointer :: qx(:,:,:)
+    real, pointer :: qy(:,:,:)
+    real, pointer :: scr(:,:,:)
+    real, pointer :: ufx_local(:,:,:)
+    real, pointer :: vfx_local(:,:,:)
+    real, pointer :: wfx_local(:,:,:)
+
+    !external functions
+    real, external :: flux_upwind,fq2, fq3, fq4, fq5, fq6, fq
+
+    logical, parameter :: variable=.true.
+    !<
+    integer, parameter :: mzi=-2, myi=-2, mxi=-2
+
+    integer :: mzpp3,mxpp3,mypp3
+    integer :: mzppks,mxppis,myppjs
+
+    logical, parameter :: dumpLocal=.true.
+    character(len=8) :: str(10)
+
+    call PostSendRecvMsgsVariableAdress(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv, &
+         scp, ufx, vfx, wfx)
+
+    invocCnt=invocCnt+1
+
+    write(str(1),"(i2.2)") invocCnt
+    write(str(2),"(i2)") OneGrid%ParEnv%mchnum
+    write(fName,"(a)") nomeInput//"."//trim(adjustl(str(1)))//"."//trim(adjustl(str(2)))
+    open(unit=un,file=trim(adjustl(fName)),status="replace",&
+         form="unformatted",action="write")
+    call DumpArr(un, mzp, mxp, myp, scp)
+    call DumpArr(un, mzp, mxp, myp, ufx)
+    call DumpArr(un, mzp, mxp, myp, vfx)
+    call DumpArr(un, mzp, mxp, myp, wfx)
+    call DumpArr(un, mzp, mxp, myp, vt3dh)
+    call DumpArr(un, mzp, mxp, myp, vt3dj)
+    call DumpArr(un, mzp, mxp, myp, vt3dk)
+    close(unit=un)
+
+    if (dumpLocal) then
+       call MsgDump(h//" to advect "//trim(adjustl(vname)))
+    end if
+
+    mzpp3=mzp+3; mxpp3=mxp+3; mypp3=myp+3
+    mzppks=mzp+ks; mxppis=mxp+is; myppjs=myp+js
+
+    allocate(qx(mzppks,mxppis,myppjs));qx=real_init
+    allocate(qy(mzppks,mxppis,myppjs));qy=real_init
+    allocate(qz(mzppks,mxppis,myppjs));qz=real_init
+    allocate(scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3));scr=real_init
+    allocate(ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));ufx_local=real_init
+    allocate(vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));vfx_local=real_init
+    allocate(wfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));wfx_local=real_init
+
+    !- flag to determine if a scalar is being advected
+    scalar = .false.
+    if(is==0 .and. js==0 .and. ks==0) scalar = .true.
+
+    !- copy input arrays to extended arrays
+    call copyMyPart(scp,scr,ufx_local,vfx_local,wfx_local, &
+         ufx,vfx,wfx,mxp,myp,mzp,is,js,ks, &
+         mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+         vname)
+
+    if(.not. variable) &
+         call expandBorder(mxp,myp,mzp,is,js,ks, &
+         mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+         scr,ufx_local,vfx_local,wfx_local)
+
+    ! Set x & y boundary values in halo zones
+    if (nmachs>1) then
+       if (dumpLocal) then
+          write(str(1),"(i8)") size(scr,1)
+          write(str(2),"(i8)") size(scr,2)
+          write(str(3),"(i8)") size(scr,3)
+          call MsgDump(h//" exchange border of "//vname//" dimensioned ("//&
+               trim(adjustl(str(1)))//","//&
+               trim(adjustl(str(2)))//","//&
+               trim(adjustl(str(3)))//")")
+       end if
+    end if
+
+    write(str(1),"(i2.2)") invocCnt
+    write(str(2),"(i2)") OneGrid%ParEnv%mchnum
+    write(fName,"(a)") nomeAntes//"."//trim(adjustl(str(1)))//"."//trim(adjustl(str(2)))
+    open(unit=un,file=trim(adjustl(fName)),status="replace",&
+         form="unformatted",action="write")
+    call DumpArr(un, mzp+6, mxp+6, myp+6, scr)
+    call DumpArr(un, mzp+6, mxp+6, myp+6, ufx_local)
+    call DumpArr(un, mzp+6, mxp+6, myp+6, vfx_local)
+    call DumpArr(un, mzp+6, mxp+6, myp+6, wfx_local)
+    close(unit=un)
+
+
+    call WaitSendRecvMsgs(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv, &
+         1, mzp, scr, ufx_local, vfx_local, wfx_local)
+    write(str(1),"(i2.2)") invocCnt
+    write(str(2),"(i2)") OneGrid%ParEnv%mchnum
+    write(fName,"(a)") nomeDepois//"."//trim(adjustl(str(1)))//"."//trim(adjustl(str(2)))
+    open(unit=un,file=trim(adjustl(fName)),status="replace",&
+         form="unformatted",action="write") 
+    call DumpArr(un, mzp+6, mxp+6, myp+6, scr)
+    call DumpArr(un, mzp+6, mxp+6, myp+6, ufx_local)
+    call DumpArr(un, mzp+6, mxp+6, myp+6, vfx_local)
+    call DumpArr(un, mzp+6, mxp+6, myp+6, wfx_local)
+    close(unit=un)
+
+
+    select case (order_h)
+    case (1)
+       call compXYInterface_or1(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            border(mynum,:),qx,qy, &
+            variable, vname)
+    case (2)
+       call compXYInterface_or2(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            border(mynum,:),qx,qy, &
+            variable, vname)
+    case (3)
+       call compXYInterface_or3(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            border(mynum,:),qx,qy, &
+            variable, vname)
+    case (4)
+       call compXYInterface_or4(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            border(mynum,:),qx,qy, &
+            variable, vname)
+    case(5,6)
+       call compXYInterface_or56(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            border(mynum,:),qx,qy, &
+            variable, vname, order_h)
+    case default
+       write (*,fmt='(A)') 'Advect Error : the order_h must be from 1 to 6'
+       stop 'ERROR!'
+    end select
+
+    select case (order_v)
+    case (1)
+       call compZInterface_or1(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case (2)
+       call compZInterface_or2(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case (3)
+       call compZInterface_or3(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case (4)
+       call compZInterface_or4(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case(5,6)
+       call compZInterface_or56(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname,order_v)
+    case default
+       write (*,fmt='(A)') 'Advect Error : the order_v must be from 1 to 6'
+       stop 'ERROR!'
+    end select
+
+    if(pd_or_mnt_constraint > 0 .and. scalar .and. vname .ne. 'thc' .and. vname .ne. 'pc') then  
+
+       !-- positivity/monotonicity constraints
+       call PosMonConstraints(mxp,myp,mzp,is,js,ks,ia,iz,ja,jz,&
+            pd_or_mnt_constraint, &
+            dt,ufx,vfx,wfx,vt3dh,vt3dj,vt3dk,scp, &
+            scr,ufx_local,vfx_local,wfx_local, &
+            qx,qy,qz,mzi,mzpp3,mxi,mxpp3,myi, &
+            mypp3,mzppks,mxppis,myppjs,mynum,vname,sct)
+
+    endif
+
+    call CreateTendency(mxp,myp,mzp,is,js,ks,ia,iz,ja,jz, &
+         mzppks,mxppis,myppjs, &
+         dt,ufx,vfx,wfx, &
+         vt3dh,vt3dj,vt3dk,scp, &
+         qx,qy,qz,sct,vname,mynum)
+
+    deallocate(qx ,qy,    qz,    scr,          ufx_local,    vfx_local ,   wfx_local)
+
+  end subroutine advect_ws_pointer_scalar
+
+
+
+
+
+  subroutine advect_ws_field(OneGrid,&
+       mzp,mxp,myp,ia,iz,ja,jz,&
+       scp,ufx,vfx,wfx,vt3dh,vt3dj,vt3dk,sct, &
+       is,js,ks,pd_or_mnt_constraint,order_h,order_v,dt,vname)
+
+    ! version for:
+    ! scp is a 3D array and
+    ! sct is a 3D array
+
+    type(Grid), pointer, intent(in) :: OneGrid
+    integer, intent(in) :: mzp !- z
+    integer, intent(in) :: mxp !- x
+    integer, intent(in) :: myp !- y
+    integer, intent(in) :: ia
+    integer, intent(in) :: iz
+    integer, intent(in) :: ja
+    integer, intent(in) :: jz
+    integer, intent(in) :: is,js,ks,pd_or_mnt_constraint,order_h,order_v
+    real, intent(in)    :: dt
+    real, target, intent(in)    :: scp(mzp,mxp,myp)
+    real, target, intent(inout) :: sct(mzp,mxp,myp)
     real, dimension(mzp,mxp,myp), intent(in) :: ufx, vfx,wfx,vt3dh,vt3dj,vt3dk
     character(len=*),intent(in) :: vname
 
     character(len=*), parameter :: h="**(advect_ws_field)**"
 
-    include "advect_ws_body.f90"
+    logical :: scalar
+    real, pointer :: qz(:,:,:)
+    real, pointer :: qx(:,:,:)
+    real, pointer :: qy(:,:,:)
+    real, pointer :: scr(:,:,:)
+    real, pointer :: ufx_local(:,:,:)
+    real, pointer :: vfx_local(:,:,:)
+    real, pointer :: wfx_local(:,:,:)
+
+    !external functions
+    real, external :: flux_upwind,fq2, fq3, fq4, fq5, fq6, fq
+
+    logical, parameter :: variable=.true.
+    !<
+    integer, parameter :: mzi=-2, myi=-2, mxi=-2
+
+    integer :: mzpp3,mxpp3,mypp3
+    integer :: mzppks,mxppis,myppjs
+
+    logical, parameter :: dumpLocal=.true.
+    character(len=8) :: str(10)
+
+    call PostSendRecvMsgsVariableAdress(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv, &
+         scp, ufx, vfx, wfx)
+
+    invocCnt=invocCnt+1
+
+    write(str(1),"(i2.2)") invocCnt
+    write(str(2),"(i2)") OneGrid%ParEnv%mchnum
+    write(fName,"(a)") nomeInput//"."//trim(adjustl(str(1)))//"."//trim(adjustl(str(2)))
+    open(unit=un,file=trim(adjustl(fName)),status="replace",&
+         form="unformatted",action="write")
+    call DumpArr(un, size(scp,1), size(scp,2), size(scp,3), scp)
+    call DumpArr(un, size(ufx,1), size(ufx,2), size(ufx,3), ufx)
+    call DumpArr(un, size(vfx,1), size(vfx,2), size(vfx,3), vfx)
+    call DumpArr(un, size(wfx,1), size(wfx,2), size(wfx,3), wfx)
+    call DumpArr(un, size(vt3dh,1), size(vt3dh,2), size(vt3dh,3), vt3dh)
+    call DumpArr(un, size(vt3dj,1), size(vt3dj,2), size(vt3dj,3), vt3dj)
+    call DumpArr(un, size(vt3dk,1), size(vt3dk,2), size(vt3dk,3), vt3dk)
+    close(unit=un)
+
+    if (dumpLocal) then
+       call MsgDump(h//" to advect "//trim(adjustl(vname)))
+    end if
+
+    mzpp3=mzp+3; mxpp3=mxp+3; mypp3=myp+3
+    mzppks=mzp+ks; mxppis=mxp+is; myppjs=myp+js
+
+    allocate(qx(mzppks,mxppis,myppjs));qx=real_init
+    allocate(qy(mzppks,mxppis,myppjs));qy=real_init
+    allocate(qz(mzppks,mxppis,myppjs));qz=real_init
+    allocate(scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3));scr=real_init
+    allocate(ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));ufx_local=real_init
+    allocate(vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));vfx_local=real_init
+    allocate(wfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));wfx_local=real_init
+
+    !- flag to determine if a scalar is being advected
+    scalar = .false.
+    if(is==0 .and. js==0 .and. ks==0) scalar = .true.
+
+    !- copy input arrays to extended arrays
+    call copyMyPart(scp,scr,ufx_local,vfx_local,wfx_local, &
+         ufx,vfx,wfx,mxp,myp,mzp,is,js,ks, &
+         mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+         vname)
+
+    if(.not. variable) &
+         call expandBorder(mxp,myp,mzp,is,js,ks, &
+         mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+         scr,ufx_local,vfx_local,wfx_local)
+
+    ! Set x & y boundary values in halo zones
+    if (nmachs>1) then
+       if (dumpLocal) then
+          write(str(1),"(i8)") size(scr,1)
+          write(str(2),"(i8)") size(scr,2)
+          write(str(3),"(i8)") size(scr,3)
+          call MsgDump(h//" exchange border of "//vname//" dimensioned ("//&
+               trim(adjustl(str(1)))//","//&
+               trim(adjustl(str(2)))//","//&
+               trim(adjustl(str(3)))//")")
+       end if
+    end if
+
+    write(str(1),"(i2.2)") invocCnt
+    write(str(2),"(i2)") OneGrid%ParEnv%mchnum
+    write(fName,"(a)") nomeAntes//"."//trim(adjustl(str(1)))//"."//trim(adjustl(str(2)))
+    open(unit=un,file=trim(adjustl(fName)),status="replace",&
+         form="unformatted",action="write")
+    call DumpArr(un, size(scr,1), size(scr,2), size(scr,3), scr)
+    call DumpArr(un, size(ufx_local,1), size(ufx_local,2), size(ufx_local,3), ufx_local)
+    call DumpArr(un, size(vfx_local,1), size(vfx_local,2), size(vfx_local,3), vfx_local)
+    call DumpArr(un, size(wfx_local,1), size(wfx_local,2), size(wfx_local,3), wfx_local)
+    close(unit=un)
+
+
+    call WaitSendRecvMsgs(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv, &
+         1, mzp, scr, ufx_local, vfx_local, wfx_local)
+    write(str(1),"(i2.2)") invocCnt
+    write(str(2),"(i2)") OneGrid%ParEnv%mchnum
+    write(fName,"(a)") nomeDepois//"."//trim(adjustl(str(1)))//"."//trim(adjustl(str(2)))
+    open(unit=un,file=trim(adjustl(fName)),status="replace",&
+         form="unformatted",action="write")
+    call DumpArr(un, size(scr,1), size(scr,2), size(scr,3), scr)
+    call DumpArr(un, size(ufx_local,1), size(ufx_local,2), size(ufx_local,3), ufx_local)
+    call DumpArr(un, size(vfx_local,1), size(vfx_local,2), size(vfx_local,3), vfx_local)
+    call DumpArr(un, size(wfx_local,1), size(wfx_local,2), size(wfx_local,3), wfx_local)
+    close(unit=un)
+
+
+    select case (order_h)
+    case (1)
+       call compXYInterface_or1(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            border(mynum,:),qx,qy, &
+            variable, vname)
+    case (2)
+       call compXYInterface_or2(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            border(mynum,:),qx,qy, &
+            variable, vname)
+    case (3)
+       call compXYInterface_or3(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            border(mynum,:),qx,qy, &
+            variable, vname)
+    case (4)
+       call compXYInterface_or4(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            border(mynum,:),qx,qy, &
+            variable, vname)
+    case(5,6)
+       call compXYInterface_or56(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            border(mynum,:),qx,qy, &
+            variable, vname, order_h)
+    case default
+       write (*,fmt='(A)') 'Advect Error : the order_h must be from 1 to 6'
+       stop 'ERROR!'
+    end select
+
+    select case (order_v)
+    case (1)
+       call compZInterface_or1(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case (2)
+       call compZInterface_or2(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case (3)
+       call compZInterface_or3(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case (4)
+       call compZInterface_or4(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case(5,6)
+       call compZInterface_or56(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname,order_v)
+    case default
+       write (*,fmt='(A)') 'Advect Error : the order_v must be from 1 to 6'
+       stop 'ERROR!'
+    end select
+
+    if(pd_or_mnt_constraint > 0 .and. scalar .and. vname .ne. 'thc' .and. vname .ne. 'pc') then  
+
+       !-- positivity/monotonicity constraints
+       call PosMonConstraints(mxp,myp,mzp,is,js,ks,ia,iz,ja,jz,&
+            pd_or_mnt_constraint, &
+            dt,ufx,vfx,wfx,vt3dh,vt3dj,vt3dk,scp, &
+            scr,ufx_local,vfx_local,wfx_local, &
+            qx,qy,qz,mzi,mzpp3,mxi,mxpp3,myi, &
+            mypp3,mzppks,mxppis,myppjs,mynum,vname,sct)
+
+    endif
+
+    call CreateTendency(mxp,myp,mzp,is,js,ks,ia,iz,ja,jz, &
+         mzppks,mxppis,myppjs, &
+         dt,ufx,vfx,wfx, &
+         vt3dh,vt3dj,vt3dk,scp, &
+         qx,qy,qz,sct,vname,mynum)
+
+    deallocate(qx ,qy,    qz,    scr,          ufx_local,    vfx_local ,   wfx_local)
 
   end subroutine advect_ws_field
+
+
+
 
   subroutine advect_ws_scalar_tab(OneGrid,&
        mzp,mxp,myp,ia,iz,ja,jz,&
        scp,ufx,vfx,wfx,vt3dh,vt3dj,vt3dk,sct, &
        is,js,ks,pd_or_mnt_constraint,order_h,order_v,dt,vname)
+
+    ! version for:
+    ! scp is a scalar pointer and
+    ! sct is a scalar pointer 
+    ! case both pointers from scalar_tab
 
     type(Grid), pointer, intent(in) :: OneGrid
     integer, intent(in) :: mzp !- z
@@ -167,9 +1080,217 @@ contains
 
     character(len=*), parameter :: h="**(advect_ws_scalar_tab)**"
 
-    include "advect_ws_body.f90"
+    logical :: scalar
+    real, pointer :: qz(:,:,:)
+    real, pointer :: qx(:,:,:)
+    real, pointer :: qy(:,:,:)
+    real, pointer :: scr(:,:,:)
+    real, pointer :: ufx_local(:,:,:)
+    real, pointer :: vfx_local(:,:,:)
+    real, pointer :: wfx_local(:,:,:)
 
+    !external functions
+    real, external :: flux_upwind,fq2, fq3, fq4, fq5, fq6, fq
+
+    logical, parameter :: variable=.true.
+    !<
+    integer, parameter :: mzi=-2, myi=-2, mxi=-2
+
+    integer :: mzpp3,mxpp3,mypp3
+    integer :: mzppks,mxppis,myppjs
+
+    logical, parameter :: dumpLocal=.true.
+    character(len=8) :: str(10)
+
+    call PostSendRecvMsgsVariableAdress(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv, &
+         scp, ufx, vfx, wfx)
+
+    invocCnt=invocCnt+1
+
+    write(str(1),"(i2.2)") invocCnt
+    write(str(2),"(i2)") OneGrid%ParEnv%mchnum
+    write(fName,"(a)") nomeInput//"."//trim(adjustl(str(1)))//"."//trim(adjustl(str(2)))
+    open(unit=un,file=trim(adjustl(fName)),status="replace",&
+         form="unformatted",action="write")
+    call DumpArr(un, mzp, mxp, myp, scp)
+    call DumpArr(un, mzp, mxp, myp, ufx)
+    call DumpArr(un, mzp, mxp, myp, vfx)
+    call DumpArr(un, mzp, mxp, myp, wfx)
+    call DumpArr(un, mzp, mxp, myp, vt3dh)
+    call DumpArr(un, mzp, mxp, myp, vt3dj)
+    call DumpArr(un, mzp, mxp, myp, vt3dk)
+    close(unit=un)
+
+    if (dumpLocal) then
+       call MsgDump(h//" to advect "//trim(adjustl(vname)))
+    end if
+
+    mzpp3=mzp+3; mxpp3=mxp+3; mypp3=myp+3
+    mzppks=mzp+ks; mxppis=mxp+is; myppjs=myp+js
+
+    allocate(qx(mzppks,mxppis,myppjs));qx=real_init
+    allocate(qy(mzppks,mxppis,myppjs));qy=real_init
+    allocate(qz(mzppks,mxppis,myppjs));qz=real_init
+    allocate(scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3));scr=real_init
+    allocate(ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));ufx_local=real_init
+    allocate(vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));vfx_local=real_init
+    allocate(wfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));wfx_local=real_init
+
+    !- flag to determine if a scalar is being advected
+    scalar = .false.
+    if(is==0 .and. js==0 .and. ks==0) scalar = .true.
+
+    !- copy input arrays to extended arrays
+    call copyMyPart(scp,scr,ufx_local,vfx_local,wfx_local, &
+         ufx,vfx,wfx,mxp,myp,mzp,is,js,ks, &
+         mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+         vname)
+
+    if(.not. variable) &
+         call expandBorder(mxp,myp,mzp,is,js,ks, &
+         mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+         scr,ufx_local,vfx_local,wfx_local)
+
+    ! Set x & y boundary values in halo zones
+    if (nmachs>1) then
+       if (dumpLocal) then
+          write(str(1),"(i8)") size(scr,1)
+          write(str(2),"(i8)") size(scr,2)
+          write(str(3),"(i8)") size(scr,3)
+          call MsgDump(h//" exchange border of "//vname//" dimensioned ("//&
+               trim(adjustl(str(1)))//","//&
+               trim(adjustl(str(2)))//","//&
+               trim(adjustl(str(3)))//")")
+       end if
+    end if
+
+    write(str(1),"(i2.2)") invocCnt
+    write(str(2),"(i2)") OneGrid%ParEnv%mchnum
+    write(fName,"(a)") nomeAntes//"."//trim(adjustl(str(1)))//"."//trim(adjustl(str(2)))
+    open(unit=un,file=trim(adjustl(fName)),status="replace",&
+         form="unformatted",action="write")
+    call DumpArr(un, mzp+6, mxp+6, myp+6, scr)
+    call DumpArr(un, mzp+6, mxp+6, myp+6, ufx_local)
+    call DumpArr(un, mzp+6, mxp+6, myp+6, vfx_local)
+    call DumpArr(un, mzp+6, mxp+6, myp+6, wfx_local)
+    close(unit=un)
+
+
+    call WaitSendRecvMsgs(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv, &
+         1, mzp, scr, ufx_local, vfx_local, wfx_local)
+    write(str(1),"(i2.2)") invocCnt
+    write(str(2),"(i2)") OneGrid%ParEnv%mchnum
+    write(fName,"(a)") nomeDepois//"."//trim(adjustl(str(1)))//"."//trim(adjustl(str(2)))
+    open(unit=un,file=trim(adjustl(fName)),status="replace",&
+         form="unformatted",action="write")
+    call DumpArr(un, mzp+6, mxp+6, myp+6, scr)
+    call DumpArr(un, mzp+6, mxp+6, myp+6, ufx_local)
+    call DumpArr(un, mzp+6, mxp+6, myp+6, vfx_local)
+    call DumpArr(un, mzp+6, mxp+6, myp+6, wfx_local)
+    close(unit=un)
+
+
+    select case (order_h)
+    case (1)
+       call compXYInterface_or1(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            border(mynum,:),qx,qy, &
+            variable, vname)
+    case (2)
+       call compXYInterface_or2(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            border(mynum,:),qx,qy, &
+            variable, vname)
+    case (3)
+       call compXYInterface_or3(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            border(mynum,:),qx,qy, &
+            variable, vname)
+    case (4)
+       call compXYInterface_or4(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            border(mynum,:),qx,qy, &
+            variable, vname)
+    case(5,6)
+       call compXYInterface_or56(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            border(mynum,:),qx,qy, &
+            variable, vname, order_h)
+    case default
+       write (*,fmt='(A)') 'Advect Error : the order_h must be from 1 to 6'
+       stop 'ERROR!'
+    end select
+
+    select case (order_v)
+    case (1)
+       call compZInterface_or1(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case (2)
+       call compZInterface_or2(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case (3)
+       call compZInterface_or3(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case (4)
+       call compZInterface_or4(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case(5,6)
+       call compZInterface_or56(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname,order_v)
+    case default
+       write (*,fmt='(A)') 'Advect Error : the order_v must be from 1 to 6'
+       stop 'ERROR!'
+    end select
+
+    if(pd_or_mnt_constraint > 0 .and. scalar .and. vname .ne. 'thc' .and. vname .ne. 'pc') then  
+
+       !-- positivity/monotonicity constraints
+       call PosMonConstraints(mxp,myp,mzp,is,js,ks,ia,iz,ja,jz,&
+            pd_or_mnt_constraint, &
+            dt,ufx,vfx,wfx,vt3dh,vt3dj,vt3dk,scp, &
+            scr,ufx_local,vfx_local,wfx_local, &
+            qx,qy,qz,mzi,mzpp3,mxi,mxpp3,myi, &
+            mypp3,mzppks,mxppis,myppjs,mynum,vname,sct)
+
+    endif
+
+    call CreateTendency(mxp,myp,mzp,is,js,ks,ia,iz,ja,jz, &
+         mzppks,mxppis,myppjs, &
+         dt,ufx,vfx,wfx, &
+         vt3dh,vt3dj,vt3dk,scp, &
+         qx,qy,qz,sct,vname,mynum)
+
+    deallocate(qx ,qy,    qz,    scr,          ufx_local,    vfx_local ,   wfx_local)
   end subroutine advect_ws_scalar_tab
+
+
+
+
 
 
   subroutine advectc_rk(OneGrid,varn,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
@@ -198,7 +1319,7 @@ contains
     real :: mfy_wind(mzp,mxp,myp)
     real :: mfz_wind(mzp,mxp,myp)
 
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(advectc_rk)**"
     character(len=8) :: str(10)
 
@@ -234,7 +1355,6 @@ contains
             ,basic_g(ngrid)%dn0,basic_g(ngrid)%dn0u,basic_g(ngrid)%dn0v&
             ,grid_g(ngrid)%dxt,grid_g(ngrid)%dxu,grid_g(ngrid)%dxv     &
             ,grid_g(ngrid)%dyt,grid_g(ngrid)%dyu,grid_g(ngrid)%dyv     &
-                                !
             ,grid_g(ngrid)%rtgt,grid_g(ngrid)%rtgu,grid_g(ngrid)%rtgv  &
             ,grid_g(ngrid)%f13t,grid_g(ngrid)%f23t,grid_g(ngrid)%fmapt &
             ,grid_g(ngrid)%fmapu ,grid_g(ngrid)%fmapv                  &
@@ -242,16 +1362,62 @@ contains
             ,vt3da,vt3db,vt3dc,mfx_wind,mfy_wind,mfz_wind,is,js,ks)
 
        if (dumpLocal) then
+          call MsgDump(h//" will invoke advect_ws_pointer_rank1 for fields:")
           write(str(1),"(i8)") size(basic_g(ngrid)%uc,1)
           write(str(2),"(i8)") size(basic_g(ngrid)%uc,2)
           write(str(3),"(i8)") size(basic_g(ngrid)%uc,3)
-          call MsgDump(h//" invokes advect_ws for field uc dimensioned ("//&
+          call MsgDump(h//" basic_g(ngrid)%uc dimensioned ("//&
                trim(adjustl(str(1)))//","//&
                trim(adjustl(str(2)))//","//&
                trim(adjustl(str(3)))//")")
+          write(str(1),"(i8)") size(vt3da,1)
+          write(str(2),"(i8)") size(vt3da,2)
+          write(str(3),"(i8)") size(vt3da,3)
+          call MsgDump(h//" vt3da dimensioned ("//&
+               trim(adjustl(str(1)))//","//&
+               trim(adjustl(str(2)))//","//&
+               trim(adjustl(str(3)))//")")
+          write(str(1),"(i8)") size(vt3db,1)
+          write(str(2),"(i8)") size(vt3db,2)
+          write(str(3),"(i8)") size(vt3db,3)
+          call MsgDump(h//" vt3db dimensioned ("//&
+               trim(adjustl(str(1)))//","//&
+               trim(adjustl(str(2)))//","//&
+               trim(adjustl(str(3)))//")")
+          write(str(1),"(i8)") size(vt3dc,1)
+          write(str(2),"(i8)") size(vt3dc,2)
+          write(str(3),"(i8)") size(vt3dc,3)
+          call MsgDump(h//" vt3dc dimensioned ("//&
+               trim(adjustl(str(1)))//","//&
+               trim(adjustl(str(2)))//","//&
+               trim(adjustl(str(3)))//")")
+          write(str(1),"(i8)") size(mfx_wind,1)
+          write(str(2),"(i8)") size(mfx_wind,2)
+          write(str(3),"(i8)") size(mfx_wind,3)
+          call MsgDump(h//" mfx_wind dimensioned ("//&
+               trim(adjustl(str(1)))//","//&
+               trim(adjustl(str(2)))//","//&
+               trim(adjustl(str(3)))//")")
+          write(str(1),"(i8)") size(mfy_wind,1)
+          write(str(2),"(i8)") size(mfy_wind,2)
+          write(str(3),"(i8)") size(mfy_wind,3)
+          call MsgDump(h//" mfy_wind dimensioned ("//&
+               trim(adjustl(str(1)))//","//&
+               trim(adjustl(str(2)))//","//&
+               trim(adjustl(str(3)))//")")
+          write(str(1),"(i8)") size(mfz_wind,1)
+          write(str(2),"(i8)") size(mfz_wind,2)
+          write(str(3),"(i8)") size(mfz_wind,3)
+          call MsgDump(h//" mfz_wind dimensioned ("//&
+               trim(adjustl(str(1)))//","//&
+               trim(adjustl(str(2)))//","//&
+               trim(adjustl(str(3)))//")")
+          write(str(1),"(i8)") size(tend%ut_rk)
+          call MsgDump(h//" tend%ut_rk dimensioned ("//&
+               trim(adjustl(str(1)))//")")
        end if
 
-       call advect_ws(OneGrid,mzp,mxp,myp,ia,iz,ja,jz &
+       call advect_ws_pointer_rank1(OneGrid,mzp,mxp,myp,ia,iz,ja,jz &
             ,basic_g(ngrid)%uc &! field being advected
             ,vt3da    & ! uc*dn0u*fmapui*rtgu = rhou*U
             ,vt3db    & ! similar for v
@@ -285,16 +1451,62 @@ contains
             ,vt3da,vt3db,vt3dc,mfx_wind,mfy_wind,mfz_wind,is,js,ks)
 
        if (dumpLocal) then
+          call MsgDump(h//" will invoke advect_ws_pointer_rank1 for fields:")
           write(str(1),"(i8)") size(basic_g(ngrid)%vc,1)
           write(str(2),"(i8)") size(basic_g(ngrid)%vc,2)
           write(str(3),"(i8)") size(basic_g(ngrid)%vc,3)
-          call MsgDump(h//" invokes advect_ws for field vc dimensioned ("//&
+          call MsgDump(h//" basic_g(ngrid)%vc dimensioned ("//&
                trim(adjustl(str(1)))//","//&
                trim(adjustl(str(2)))//","//&
                trim(adjustl(str(3)))//")")
+          write(str(1),"(i8)") size(vt3da,1)
+          write(str(2),"(i8)") size(vt3da,2)
+          write(str(3),"(i8)") size(vt3da,3)
+          call MsgDump(h//" vt3da dimensioned ("//&
+               trim(adjustl(str(1)))//","//&
+               trim(adjustl(str(2)))//","//&
+               trim(adjustl(str(3)))//")")
+          write(str(1),"(i8)") size(vt3db,1)
+          write(str(2),"(i8)") size(vt3db,2)
+          write(str(3),"(i8)") size(vt3db,3)
+          call MsgDump(h//" vt3db dimensioned ("//&
+               trim(adjustl(str(1)))//","//&
+               trim(adjustl(str(2)))//","//&
+               trim(adjustl(str(3)))//")")
+          write(str(1),"(i8)") size(vt3dc,1)
+          write(str(2),"(i8)") size(vt3dc,2)
+          write(str(3),"(i8)") size(vt3dc,3)
+          call MsgDump(h//" vt3dc dimensioned ("//&
+               trim(adjustl(str(1)))//","//&
+               trim(adjustl(str(2)))//","//&
+               trim(adjustl(str(3)))//")")
+          write(str(1),"(i8)") size(mfx_wind,1)
+          write(str(2),"(i8)") size(mfx_wind,2)
+          write(str(3),"(i8)") size(mfx_wind,3)
+          call MsgDump(h//" mfx_wind dimensioned ("//&
+               trim(adjustl(str(1)))//","//&
+               trim(adjustl(str(2)))//","//&
+               trim(adjustl(str(3)))//")")
+          write(str(1),"(i8)") size(mfy_wind,1)
+          write(str(2),"(i8)") size(mfy_wind,2)
+          write(str(3),"(i8)") size(mfy_wind,3)
+          call MsgDump(h//" mfy_wind dimensioned ("//&
+               trim(adjustl(str(1)))//","//&
+               trim(adjustl(str(2)))//","//&
+               trim(adjustl(str(3)))//")")
+          write(str(1),"(i8)") size(mfz_wind,1)
+          write(str(2),"(i8)") size(mfz_wind,2)
+          write(str(3),"(i8)") size(mfz_wind,3)
+          call MsgDump(h//" mfz_wind dimensioned ("//&
+               trim(adjustl(str(1)))//","//&
+               trim(adjustl(str(2)))//","//&
+               trim(adjustl(str(3)))//")")
+          write(str(1),"(i8)") size(tend%vt_rk)
+          call MsgDump(h//" tend%vt_rk dimensioned ("//&
+               trim(adjustl(str(1)))//")")
        end if
 
-       call advect_ws(OneGrid,mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%vc &
+       call advect_ws_pointer_rank1(OneGrid,mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%vc &
             ,vt3da    & ! uc*dn0u*fmapui*rtgu = rhou*V
             ,vt3db    & ! similar for v
             ,vt3dc    & ! similar for sigma_dot
@@ -329,16 +1541,62 @@ contains
             ,vt3da,vt3db,vt3dc,mfx_wind,mfy_wind,mfz_wind,is,js,ks)
 
        if (dumpLocal) then
+          call MsgDump(h//" will invoke advect_ws_pointer_rank1 for fields:")
           write(str(1),"(i8)") size(basic_g(ngrid)%wc,1)
           write(str(2),"(i8)") size(basic_g(ngrid)%wc,2)
           write(str(3),"(i8)") size(basic_g(ngrid)%wc,3)
-          call MsgDump(h//" invokes advect_ws for field wc dimensioned ("//&
+          call MsgDump(h//" basic_g(ngrid)%wc dimensioned ("//&
                trim(adjustl(str(1)))//","//&
                trim(adjustl(str(2)))//","//&
                trim(adjustl(str(3)))//")")
+          write(str(1),"(i8)") size(vt3da,1)
+          write(str(2),"(i8)") size(vt3da,2)
+          write(str(3),"(i8)") size(vt3da,3)
+          call MsgDump(h//" vt3da dimensioned ("//&
+               trim(adjustl(str(1)))//","//&
+               trim(adjustl(str(2)))//","//&
+               trim(adjustl(str(3)))//")")
+          write(str(1),"(i8)") size(vt3db,1)
+          write(str(2),"(i8)") size(vt3db,2)
+          write(str(3),"(i8)") size(vt3db,3)
+          call MsgDump(h//" vt3db dimensioned ("//&
+               trim(adjustl(str(1)))//","//&
+               trim(adjustl(str(2)))//","//&
+               trim(adjustl(str(3)))//")")
+          write(str(1),"(i8)") size(vt3dc,1)
+          write(str(2),"(i8)") size(vt3dc,2)
+          write(str(3),"(i8)") size(vt3dc,3)
+          call MsgDump(h//" vt3dc dimensioned ("//&
+               trim(adjustl(str(1)))//","//&
+               trim(adjustl(str(2)))//","//&
+               trim(adjustl(str(3)))//")")
+          write(str(1),"(i8)") size(mfx_wind,1)
+          write(str(2),"(i8)") size(mfx_wind,2)
+          write(str(3),"(i8)") size(mfx_wind,3)
+          call MsgDump(h//" mfx_wind dimensioned ("//&
+               trim(adjustl(str(1)))//","//&
+               trim(adjustl(str(2)))//","//&
+               trim(adjustl(str(3)))//")")
+          write(str(1),"(i8)") size(mfy_wind,1)
+          write(str(2),"(i8)") size(mfy_wind,2)
+          write(str(3),"(i8)") size(mfy_wind,3)
+          call MsgDump(h//" mfy_wind dimensioned ("//&
+               trim(adjustl(str(1)))//","//&
+               trim(adjustl(str(2)))//","//&
+               trim(adjustl(str(3)))//")")
+          write(str(1),"(i8)") size(mfz_wind,1)
+          write(str(2),"(i8)") size(mfz_wind,2)
+          write(str(3),"(i8)") size(mfz_wind,3)
+          call MsgDump(h//" mfz_wind dimensioned ("//&
+               trim(adjustl(str(1)))//","//&
+               trim(adjustl(str(2)))//","//&
+               trim(adjustl(str(3)))//")")
+          write(str(1),"(i8)") size(tend%wt_rk)
+          call MsgDump(h//" tend%wt_rk dimensioned ("//&
+               trim(adjustl(str(1)))//")")
        end if
 
-       call advect_ws(OneGrid,mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%wc &
+       call advect_ws_pointer_rank1(OneGrid,mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%wc &
             ,vt3da    & ! uc*dn0u*fmapui*rtgu = rhou*W
             ,vt3db    & ! similar for v
             ,vt3dc    & ! similar for sigma_dot
@@ -409,21 +1667,65 @@ contains
             ,grid_g(ngrid)%dxu,grid_g(ngrid)%dyv                          &
             ,grid_g(ngrid)%dxt,grid_g(ngrid)%dyt,hw4,dzm,dzt,zm,zt)
 
-       !      if(trim(varn)=='THETAIL') call dumpVarAllLatLonk(basic_g(ngrid)%thc,'THC',274,l_rk,0,1,mxp,1,myp,1,mzp,0.0,0.0) !ok
-
        if ( trim(varn) .eq. "THETAIL" ) then
 
           if (dumpLocal) then
-             write(str(1),"(i8)") size(basic_g(ngrid)%thc,1)
-             write(str(2),"(i8)") size(basic_g(ngrid)%thc,2)
-             write(str(3),"(i8)") size(basic_g(ngrid)%thc,3)
-             call MsgDump(h//" invokes advect_ws for field thc dimensioned ("//&
+             call MsgDump(h//" will invoke advect_ws_pointer_rank1 for fields:")
+             write(str(1),"(i8)") size(basic_g(ngrid)%pc,1)
+             write(str(2),"(i8)") size(basic_g(ngrid)%pc,2)
+             write(str(3),"(i8)") size(basic_g(ngrid)%pc,3)
+             call MsgDump(h//" basic_g(ngrid)%pc dimensioned ("//&
                   trim(adjustl(str(1)))//","//&
                   trim(adjustl(str(2)))//","//&
                   trim(adjustl(str(3)))//")")
+             write(str(1),"(i8)") size(vt3da,1)
+             write(str(2),"(i8)") size(vt3da,2)
+             write(str(3),"(i8)") size(vt3da,3)
+             call MsgDump(h//" vt3da dimensioned ("//&
+                  trim(adjustl(str(1)))//","//&
+                  trim(adjustl(str(2)))//","//&
+                  trim(adjustl(str(3)))//")")
+             write(str(1),"(i8)") size(vt3db,1)
+             write(str(2),"(i8)") size(vt3db,2)
+             write(str(3),"(i8)") size(vt3db,3)
+             call MsgDump(h//" vt3db dimensioned ("//&
+                  trim(adjustl(str(1)))//","//&
+                  trim(adjustl(str(2)))//","//&
+                  trim(adjustl(str(3)))//")")
+             write(str(1),"(i8)") size(vt3dc,1)
+             write(str(2),"(i8)") size(vt3dc,2)
+             write(str(3),"(i8)") size(vt3dc,3)
+             call MsgDump(h//" vt3dc dimensioned ("//&
+                  trim(adjustl(str(1)))//","//&
+                  trim(adjustl(str(2)))//","//&
+                  trim(adjustl(str(3)))//")")
+             write(str(1),"(i8)") size(vt3dh,1)
+             write(str(2),"(i8)") size(vt3dh,2)
+             write(str(3),"(i8)") size(vt3dh,3)
+             call MsgDump(h//" vt3dh dimensioned ("//&
+                  trim(adjustl(str(1)))//","//&
+                  trim(adjustl(str(2)))//","//&
+                  trim(adjustl(str(3)))//")")
+             write(str(1),"(i8)") size(vt3dj,1)
+             write(str(2),"(i8)") size(vt3dj,2)
+             write(str(3),"(i8)") size(vt3dj,3)
+             call MsgDump(h//" vt3dj dimensioned ("//&
+                  trim(adjustl(str(1)))//","//&
+                  trim(adjustl(str(2)))//","//&
+                  trim(adjustl(str(3)))//")")
+             write(str(1),"(i8)") size(vt3dk,1)
+             write(str(2),"(i8)") size(vt3dk,2)
+             write(str(3),"(i8)") size(vt3dk,3)
+             call MsgDump(h//" vt3dk dimensioned ("//&
+                  trim(adjustl(str(1)))//","//&
+                  trim(adjustl(str(2)))//","//&
+                  trim(adjustl(str(3)))//")")
+             write(str(1),"(i8)") size(tend%pt_rk)
+             call MsgDump(h//" tend%pt_rk dimensioned ("//&
+                  trim(adjustl(str(1)))//")")
           end if
 
-          call advect_ws(OneGrid,mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%thc &
+          call advect_ws_pointer_rank1(OneGrid,mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%thc &
                ,vt3da & ! uc*dn0u*fmapui*rtgu = rhou*U
                ,vt3db & ! similar for v
                ,vt3dc & ! similar for sigma_dot
@@ -452,13 +1754,13 @@ contains
              write(str(1),"(i8)") size(stilt_g(ngrid)%lnthetav,1)
              write(str(2),"(i8)") size(stilt_g(ngrid)%lnthetav,2)
              write(str(3),"(i8)") size(stilt_g(ngrid)%lnthetav,3)
-             call MsgDump(h//" invokes advect_ws for field lnthetav dimensioned ("//&
+             call MsgDump(h//" invokes advect_ws_pointer for field lnthetav dimensioned ("//&
                   trim(adjustl(str(1)))//","//&
                   trim(adjustl(str(2)))//","//&
                   trim(adjustl(str(3)))//")")
           end if
 
-          call advect_ws(OneGrid,mzp,mxp,myp,ia,iz,ja,jz &
+          call advect_ws_pointer_rank3(OneGrid,mzp,mxp,myp,ia,iz,ja,jz &
                ,stilt_g(ngrid)%lnthetav   &! advected field
                ,vt3da & ! uc*dn0u*fmapui*rtgu = rhou*U
                ,vt3db & ! similar for v
@@ -476,20 +1778,67 @@ contains
 
           return
        endif !endif og varn .eq. 'THA'
-       !
+
+
        if ( trim(varn) .eq. "PI" .and. iexev == 2) then
 
           if (dumpLocal) then
-             write(str(1),"(i8)") size(basic_g(ngrid)%pc,1)
-             write(str(2),"(i8)") size(basic_g(ngrid)%pc,2)
-             write(str(3),"(i8)") size(basic_g(ngrid)%pc,3)
-             call MsgDump(h//" invokes advect_ws for field pc dimensioned ("//&
+             call MsgDump(h//" will invoke advect_ws for fields:")
+             write(str(1),"(i8)") size(basic_g(ngrid)%thc,1)
+             write(str(2),"(i8)") size(basic_g(ngrid)%thc,2)
+             write(str(3),"(i8)") size(basic_g(ngrid)%thc,3)
+             call MsgDump(h//" basic_g(ngrid)%thc dimensioned ("//&
                   trim(adjustl(str(1)))//","//&
                   trim(adjustl(str(2)))//","//&
                   trim(adjustl(str(3)))//")")
+             write(str(1),"(i8)") size(vt3da,1)
+             write(str(2),"(i8)") size(vt3da,2)
+             write(str(3),"(i8)") size(vt3da,3)
+             call MsgDump(h//" vt3da dimensioned ("//&
+                  trim(adjustl(str(1)))//","//&
+                  trim(adjustl(str(2)))//","//&
+                  trim(adjustl(str(3)))//")")
+             write(str(1),"(i8)") size(vt3db,1)
+             write(str(2),"(i8)") size(vt3db,2)
+             write(str(3),"(i8)") size(vt3db,3)
+             call MsgDump(h//" vt3db dimensioned ("//&
+                  trim(adjustl(str(1)))//","//&
+                  trim(adjustl(str(2)))//","//&
+                  trim(adjustl(str(3)))//")")
+             write(str(1),"(i8)") size(vt3dc,1)
+             write(str(2),"(i8)") size(vt3dc,2)
+             write(str(3),"(i8)") size(vt3dc,3)
+             call MsgDump(h//" vt3dc dimensioned ("//&
+                  trim(adjustl(str(1)))//","//&
+                  trim(adjustl(str(2)))//","//&
+                  trim(adjustl(str(3)))//")")
+             write(str(1),"(i8)") size(vt3dh,1)
+             write(str(2),"(i8)") size(vt3dh,2)
+             write(str(3),"(i8)") size(vt3dh,3)
+             call MsgDump(h//" vt3dh dimensioned ("//&
+                  trim(adjustl(str(1)))//","//&
+                  trim(adjustl(str(2)))//","//&
+                  trim(adjustl(str(3)))//")")
+             write(str(1),"(i8)") size(vt3dj,1)
+             write(str(2),"(i8)") size(vt3dj,2)
+             write(str(3),"(i8)") size(vt3dj,3)
+             call MsgDump(h//" vt3dj dimensioned ("//&
+                  trim(adjustl(str(1)))//","//&
+                  trim(adjustl(str(2)))//","//&
+                  trim(adjustl(str(3)))//")")
+             write(str(1),"(i8)") size(vt3dk,1)
+             write(str(2),"(i8)") size(vt3dk,2)
+             write(str(3),"(i8)") size(vt3dk,3)
+             call MsgDump(h//" vt3dk dimensioned ("//&
+                  trim(adjustl(str(1)))//","//&
+                  trim(adjustl(str(2)))//","//&
+                  trim(adjustl(str(3)))//")")
+             write(str(1),"(i8)") size(tend%tht_rk)
+             call MsgDump(h//" tend%tht_rk dimensioned ("//&
+                  trim(adjustl(str(1)))//")")
           end if
 
-          call advect_ws(OneGrid,mzp,mxp,myp,ia,iz,ja,jz&
+          call advect_ws_pointer_rank1(OneGrid,mzp,mxp,myp,ia,iz,ja,jz&
                ,basic_g(ngrid)%pc & !advected field
                ,vt3da & ! uc*dn0u*fmapui*rtgu = rhou*U
                ,vt3db & ! similar for v
@@ -526,11 +1875,11 @@ contains
              ! output: scalart
 
              if (dumpLocal) then
-                call MsgDump(h//" invokes advect_ws for field "//&
+                call MsgDump(h//" invokes advect_ws_pointer for field "//&
                      trim(adjustl(scalar_tab(n,ngrid)%name)))
              end if
 
-             call advect_ws(OneGrid,mzp,mxp,myp,ia,iz,ja,jz &
+             call advect_ws_pointer_scalar(OneGrid,mzp,mxp,myp,ia,iz,ja,jz &
                   ,scalarp & !scalar being advected 
                   ,vt3da   & ! 0.5(up+uc)*dn0u*fmapui*rtgu = rhou*U
                   ,vt3db   & ! similar for v
@@ -554,6 +1903,19 @@ contains
 
   end subroutine advectc_rk
 end module ModAdvectc_rk
+
+
+subroutine DumpArr(unit, dim1, dim2, dim3, arr)
+  integer, intent(in) :: unit
+  integer, intent(in) :: dim1
+  integer, intent(in) :: dim2
+  integer, intent(in) :: dim3
+  real, intent(in) :: arr(dim1,dim2,dim3)
+  write(unit) dim1
+  write(unit) dim2
+  write(unit) dim3
+  write(unit) arr
+end subroutine DumpArr
 
 
 

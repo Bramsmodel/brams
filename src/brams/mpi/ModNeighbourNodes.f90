@@ -325,7 +325,7 @@ contains
 
 
   subroutine NodesToSendRecvMessages(thisNode, Neigh, GlobalOwn, &
-       xbToBeUpdated, xeToBeUpdated, ybToBeUpdated, yeToBeUpdated, &
+       xbToUpdate, xeToUpdate, ybToUpdate, yeToUpdate, &
        xbSend, xeSend, ybSend, yeSend, willSend, &
        xbRecv, xeRecv, ybRecv, yeRecv, willRecv, &
        varName)
@@ -345,10 +345,10 @@ contains
     ! ranks that are neighbour to this rank
     type(DomainDecomp), pointer, intent(in)  :: GlobalOwn
     ! rectangular grid point regions owned by each rank
-    integer, intent(in) :: xbToBeUpdated(:)
-    integer, intent(in) :: xeToBeUpdated(:)
-    integer, intent(in) :: ybToBeUpdated(:)
-    integer, intent(in) :: yeToBeUpdated(:)
+    integer, intent(in) :: xbToUpdate(:)
+    integer, intent(in) :: xeToUpdate(:)
+    integer, intent(in) :: ybToUpdate(:)
+    integer, intent(in) :: yeToUpdate(:)
     ! rectangular grid point region to be updated at each rank;
     ! contains global indices; arrays are indexed by
     ! BRAMS process number
@@ -424,10 +424,10 @@ contains
     do i = 1, nNeigh
        otherNode = Neigh%neigh(i)
        call Inter(&
-            xbToBeUpdated(otherNode), &
-            xeToBeUpdated(otherNode), &
-            ybToBeUpdated(otherNode), &
-            yeToBeUpdated(otherNode), &
+            xbToUpdate(otherNode), &
+            xeToUpdate(otherNode), &
+            ybToUpdate(otherNode), &
+            yeToUpdate(otherNode), &
             GlobalOwn%xb(thisNode), &
             GlobalOwn%xe(thisNode), &
             GlobalOwn%yb(thisNode), &
@@ -463,10 +463,10 @@ contains
     do i = 1, nNeigh
        otherNode = Neigh%neigh(i)
        call Inter(&
-            xbToBeUpdated(thisNode), &
-            xeToBeUpdated(thisNode), &
-            ybToBeUpdated(thisNode), &
-            yeToBeUpdated(thisNode), &
+            xbToUpdate(thisNode), &
+            xeToUpdate(thisNode), &
+            ybToUpdate(thisNode), &
+            yeToUpdate(thisNode), &
             GlobalOwn%xb(otherNode), &
             GlobalOwn%xe(otherNode), &
             GlobalOwn%yb(otherNode), &
