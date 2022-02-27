@@ -505,7 +505,6 @@ contains
 
 
 
-
   subroutine UpdateFieldAdress_2D(oneFieldSection, field)
     type(FieldSection), pointer, intent(in) :: oneFieldSection
     real, pointer, intent(in) :: field(:,:)
@@ -528,7 +527,6 @@ contains
             " memory address")
     end if
   end subroutine UpdateFieldAdress_2D
-
 
 
 
@@ -562,7 +560,6 @@ contains
 
 
 
-
   subroutine UpdateFieldAdress_4D(oneFieldSection, field)
     type(FieldSection), pointer, intent(in) :: oneFieldSection
     real, pointer, intent(in) :: field(:,:,:,:)
@@ -587,8 +584,6 @@ contains
             " memory address")
     end if
   end subroutine UpdateFieldAdress_4D
-
-
 
 
 

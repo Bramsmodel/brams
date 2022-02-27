@@ -51,8 +51,6 @@ module ModGrid
        DestroyAcouDampOneMessageSet, &
        CreateWideGhostZoneMessageSet, &
        DestroyWideGhostZoneMessageSet
-!!$       CreateLuFlaMessageSet, &
-!!$       DestroyLuFlaMessageSet
 
   use ModMonotonicAdvection, only: &
        MonotonicAdvection, &
@@ -159,14 +157,6 @@ module ModGrid
      ! Fields to update are local variables to these procedures,
      ! allocated and deallocated at each call. As so, field
      ! memory address vary with procedure invocation
-!!$     type(MessageSet), pointer :: LuFlaSendNorth => null()
-!!$     type(MessageSet), pointer :: LuFlaSendSouth => null()
-!!$     type(MessageSet), pointer :: LuFlaSendEast => null()
-!!$     type(MessageSet), pointer :: LuFlaSendWest => null()
-!!$     type(MessageSet), pointer :: LuFlaRecvNorth => null()
-!!$     type(MessageSet), pointer :: LuFlaRecvSouth => null()
-!!$     type(MessageSet), pointer :: LuFlaRecvEast => null()
-!!$     type(MessageSet), pointer :: LuFlaRecvWest => null()
      type(MessageSet), pointer :: WideGhostZoneSend => null()
      type(MessageSet), pointer :: WideGhostZoneRecv => null()
      ! WideGhostZoneSend/Recv: Ghost Zone update of four fields
@@ -197,7 +187,7 @@ contains
 
     character(len=16) :: c0, c1
     character(len=*), parameter :: h="**(CreateGrid)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! correctness of input arguments
 
@@ -292,7 +282,7 @@ contains
 
     character(len=16) :: str(10)
     character(len=*), parameter :: h="**(InsertMessageSetAtOneGrid)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     integer, parameter :: TagU=25
     integer, parameter :: TagV=26
@@ -309,11 +299,6 @@ contains
     integer, parameter :: TagAcouDampPP=37
     integer, parameter :: TagAcouDampAlpha=38
     integer, parameter :: TagAcouDampTht=39
-!!$    integer, parameter :: TagAdvLargeGhost=40
-!!$    integer, parameter :: TagLuFlaNorth=41
-!!$    integer, parameter :: TagLuFlaSouth=42
-!!$    integer, parameter :: TagLuFlaEast=43
-!!$    integer, parameter :: TagLuFlaWest=44
     integer, parameter :: TagWideGhostZone=40
 
 
@@ -443,20 +428,10 @@ contains
             " fails with stat="//trim(adjustl(str(1))))
     end if
 
-!!$    call CreateLuFlaMessageSet(&
-!!$       oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
-!!$       oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, oneGrid%LocalOwn, &
-!!$       TagLuFlaNorth, TagLuFlaSouth, TagLuFlaEast, TagLuFlaWest, &
-!!$       oneGrid%LuFlaSendNorth, oneGrid%LuFlaSendSouth, &
-!!$       oneGrid%LuFlaSendEast, oneGrid%LuFlaSendWest, &
-!!$       oneGrid%LuFlaRecvNorth, oneGrid%LuFlaRecvSouth, &
-!!$       oneGrid%LuFlaRecvEast, oneGrid%LuFlaRecvWest)
-
     call CreateWideGhostZoneMessageSet(&
          oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
          oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhost, oneGrid%LocalOwn, &
          TagWideGhostZone, oneGrid%WideGhostZoneSend, oneGrid%WideGhostZoneRecv)
-
 
     if (dumpLocal) then
        call MsgDump(h//" dumping oneGrid")
@@ -507,11 +482,6 @@ contains
             oneGrid%AcouDampAlphaSend, oneGrid%AcouDampAlphaRecv)
        call DestroyAcouDampOneMessageSet( &
             oneGrid%AcouDampThtSend, oneGrid%AcouDampThtRecv)
-!!$       call DestroyLuFlaMessageSet(&
-!!$            oneGrid%LuFlaSendNorth, oneGrid%LuFlaSendSouth, &
-!!$            oneGrid%LuFlaSendEast, oneGrid%LuFlaSendWest, &
-!!$            oneGrid%LuFlaRecvNorth, oneGrid%LuFlaRecvSouth, &
-!!$            oneGrid%LuFlaRecvEast, oneGrid%LuFlaRecvWest)
        call DestroyWideGhostZoneMessageSet(&
             oneGrid%WideGhostZoneSend, oneGrid%WideGhostZoneRecv)
        deallocate(oneGrid)
@@ -615,22 +585,6 @@ contains
     call MsgDump(h//" dumping AcouDampThtRecv")
     call DumpMessageSet(oneGrid%AcouDampThtRecv)
 
-!!$    call MsgDump(h//" dumping LuFlaSendNorth")
-!!$    call DumpMessageSet(oneGrid%LuFlaSendNorth)
-!!$    call MsgDump(h//" dumping LuFlaRecvNorth")
-!!$    call DumpMessageSet(oneGrid%LuFlaRecvNorth)
-!!$    call MsgDump(h//" dumping LuFlaSendSouth")
-!!$    call DumpMessageSet(oneGrid%LuFlaSendSouth)
-!!$    call MsgDump(h//" dumping LuFlaRecvSouth")
-!!$    call DumpMessageSet(oneGrid%LuFlaRecvSouth)
-!!$    call MsgDump(h//" dumping LuFlaSendEast")
-!!$    call DumpMessageSet(oneGrid%LuFlaSendEast)
-!!$    call MsgDump(h//" dumping LuFlaRecvEast")
-!!$    call DumpMessageSet(oneGrid%LuFlaRecvEast)
-!!$    call MsgDump(h//" dumping LuFlaSendWest")
-!!$    call DumpMessageSet(oneGrid%LuFlaSendWest)
-!!$    call MsgDump(h//" dumping LuFlaRecvWest")
-!!$    call DumpMessageSet(oneGrid%LuFlaRecvWest)
     call MsgDump(h//" dumping WideGhostZoneSend")
     call DumpMessageSet(oneGrid%WideGhostZoneSend)
     call MsgDump(h//" dumping WideGhostZoneRecv")

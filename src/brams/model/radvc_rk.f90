@@ -814,7 +814,6 @@ contains
 
 
 
-
   subroutine advect_ws_field(OneGrid,&
        mzp,mxp,myp,ia,iz,ja,jz,&
        scp,ufx,vfx,wfx,vt3dh,vt3dj,vt3dk,sct, &
