@@ -3430,19 +3430,10 @@ contains
     end if
   end subroutine PostSendRecvMsgsFixedAdress
 
-    if (dumpLocal) then
-       call MsgDump(h//" will destroy LuFlaSend/RecvEast")
-    end if
-    call DestroyMessageSet(LuFlaSendEast)
-    call DestroyMessageSet(LuFlaRecvEast)
 
-    if (dumpLocal) then
-       call MsgDump(h//" will destroy LuFlaSend/RecvWest")
-    end if
-    call DestroyMessageSet(LuFlaSendWest)
-    call DestroyMessageSet(LuFlaRecvWest)
-  end subroutine DestroyLuFlaMessageSet
 
+
+  
   subroutine PostSendRecvMsgsVariableAdressArr(SendMsg, RecvMsg, scp, ufx, vfx, wfx)
 
     ! posts all nonblocking send and recv operations of
