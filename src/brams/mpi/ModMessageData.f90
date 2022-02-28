@@ -75,7 +75,8 @@ module ModMessageData
   public :: FindFieldNamed
   public :: FillMessageDataBufferVariableAdressArr
   public :: FillMessageDataBufferVariableAdressScalar
-  
+  public :: FillMessageDataBufferVariableAdressOneArr
+
   type MessageData
      private
      ! data to communicate to one node in one message
@@ -129,6 +130,7 @@ module ModMessageData
   interface DecomposeMessageDataBuffer
      module procedure DecomposeMessageDataBufferFixedAdress
      module procedure DecomposeMessageDataBufferVariableAdress
+     module procedure DecomposeMessageDataBufferVariableAdressOneArr
   end interface DecomposeMessageDataBuffer
 contains
 
@@ -409,7 +411,12 @@ contains
 
 
 
-    subroutine FillMessageDataBufferVariableAdressScalar(oneMessageData, scp, ufx, vfx, wfx)
+
+
+
+
+
+  subroutine FillMessageDataBufferVariableAdressScalar(oneMessageData, scp, ufx, vfx, wfx)
 
     type(MessageData), intent(inout) :: oneMessageData
     real, intent(in):: scp
@@ -759,4 +766,69 @@ contains
     node => FindFieldNamed(oneMessageData%list, fieldName)
   end function FindFieldSectionAtMessageData
 
+  subroutine FillMessageDataBufferVariableAdressOneArr(oneMessageData, field)
+
+    type(MessageData), intent(inout) :: oneMessageData
+    real, target, intent(in):: field(:,:,:)
+
+    ! copy field section values of the entire field section list of
+    ! the Message Data variable to the buffer of the Message Data variable
+
+    integer :: bufStart
+    type(FieldSectionNode), pointer :: oneNode
+    type(FieldSection), pointer :: oneFieldSection
+    logical, parameter :: dumpLocal=.true.
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(FillMessageDataBufferVariableAdressOneArr)**"
+
+    if (dumpLocal) then
+       call MsgDump(h//" to Message Data "//trim(adjustl(oneMessageData%name)))
+       write(str(1),"(i8)") lbound(field,1)
+       write(str(2),"(i8)") ubound(field,1)
+       write(str(3),"(i8)") lbound(field,2)
+       write(str(4),"(i8)") ubound(field,2)
+       write(str(5),"(i8)") lbound(field,3)
+       write(str(6),"(i8)") ubound(field,3)
+       call MsgDump(h//" field dimensioned ("//&
+            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
+            trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//")")
+    end if
+
+    bufStart=1
+    oneNode => FieldSectionListHeadNode(oneMessageData%list)
+    oneFieldSection => FieldSectionAtNode(oneNode)
+    call FieldSectionData2BufferVariableAdressArr(field, size(field,1), oneFieldSection, &
+         oneMessageData%buf, bufStart, oneMessageData%bufsize)
+  end subroutine FillMessageDataBufferVariableAdressOneArr
+
+
+  subroutine DecomposeMessageDataBufferVariableAdressOneArr(oneMessageData, &
+       msgStartZ, msgEndZ, field)
+    type(MessageData), intent(inout) :: oneMessageData
+    integer, intent(in) :: msgStartZ
+    integer, intent(in) :: msgEndZ
+    real, target, intent(in):: field(:,:,:)
+
+    ! copy all field section values from the buffer of the Message Data variable
+    ! to the field section pointed by the Message Data field section list 
+
+    integer :: bufStart
+    type(FieldSectionNode), pointer :: oneNode
+    type(FieldSection), pointer :: oneSection
+    real, pointer :: fieldPtr(:,:,:)
+    character(len=*), parameter :: h="**(DecomposeMessageDataBufferVariableAdressOneArr)**"
+    logical, parameter :: dumpLocal=.false.
+
+    if (dumpLocal) then
+       call MsgDump(h//"  of Message Data "//trim(adjustl(oneMessageData%name)))
+    end if
+    fieldPtr => field
+    bufStart=1
+    oneNode => FieldSectionListHeadNode(oneMessageData%list)
+    oneSection => FieldSectionAtNode(oneNode)
+    call Buffer2FieldSectionData(oneSection, &
+         fieldPtr, msgStartZ, msgEndZ, &
+         oneMessageData%buf, bufStart, oneMessageData%bufsize)
+  end subroutine DecomposeMessageDataBufferVariableAdressOneArr
 end module ModMessageData

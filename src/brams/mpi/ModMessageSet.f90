@@ -77,6 +77,7 @@ module ModMessageSet
        PostSendMessageData, &
        FillMessageDataBuffer, &
        FillMessageDataBufferVariableAdressArr, &
+       FillMessageDataBufferVariableAdressOneArr, &
        FillMessageDataBufferVariableAdressScalar, &
        DecomposeMessageDataBuffer, &
        AllocateMessageDataBuffer, &
@@ -196,6 +197,7 @@ module ModMessageSet
 
   interface PostSendRecvMsgsVariableAdress
      module procedure PostSendRecvMsgsVariableAdressArr
+     module procedure PostSendRecvMsgsVariableAdressOneArr
      module procedure PostSendRecvMsgsVariableAdressScalar
   end interface PostSendRecvMsgsVariableAdress
 
@@ -203,6 +205,7 @@ module ModMessageSet
   interface WaitSendRecvMsgs
      module procedure WaitSendRecvMsgsFixedAdress
      module procedure WaitSendRecvMsgsVariableAdress
+     module procedure WaitSendRecvMsgsVariableAdressOneArr
   end interface WaitSendRecvMsgs
 
 contains
@@ -3782,6 +3785,177 @@ contains
        end if
     end if
   end subroutine WaitSendRecvMsgsVariableAdress
+
+
+  subroutine PostSendRecvMsgsVariableAdressOneArr(SendMsg, RecvMsg, field)
+
+    ! posts all nonblocking send and recv operations of
+    ! a message set pair of variables
+
+    type(MessageSet), pointer, intent(in) :: SendMsg
+    type(MessageSet), pointer, intent(in) :: RecvMsg
+    real, target, intent(in):: field(:,:,:)
+
+    integer :: iSend
+    integer :: iRecv
+    integer :: firstBuffer
+    integer :: lastBuffer
+    integer :: ierr
+    type(MessageData), pointer :: msgData => null()
+    type(FieldSection), pointer :: node => null()
+    character(len=8) :: c0, c1, c2, c3, c4, c5
+    character(len=*), parameter :: h="**(PostSendRecvMsgsVariableAdressOneArr)**"
+    logical, parameter :: dumpLocal=.false.
+
+    ! post nonblocking receive for each receiving message;
+    ! a single receive msg from each process
+
+    if (associated(RecvMsg)) then
+       if (dumpLocal) then
+          if (RecvMsg%nMsgs > 0) then
+             write(c0,"(i8)") RecvMsg%nMsgs
+             call MsgDump(h//" for "//trim(adjustl(RecvMsg%name))//&
+                  " will post "//trim(adjustl(c0))//&
+                  " nonblocking receives")
+          end if
+       end if
+       do iRecv= 1,RecvMsg%nMsgs
+
+          call AllocateMessageDataBuffer(RecvMsg%msgData(iRecv))
+
+          ! post receive
+
+          write(c0,"(i8)") iRecv
+          call PostRecvMessageData(RecvMsg%msgData(iRecv), &
+               RecvMsg%otherProc(iRecv), RecvMsg%tag, &
+               RecvMsg%request(iRecv), &
+               h//" for recv #"//trim(adjustl(c0)))
+       end do
+    else
+       if (dumpLocal) then
+          call MsgDump(h//" empty receive message set")
+       end if
+    end if
+
+    ! for each sending message,
+    ! build send buffer and copy field sections to the buffer;
+    ! post nonblocking send;
+    ! A single send message to each process
+
+    if (associated(SendMsg)) then
+       if (dumpLocal) then
+          if (SendMsg%nMsgs > 0) then
+             write(c0,"(i8)") SendMsg%nMsgs
+             call MsgDump(h//" for "//trim(adjustl(SendMsg%name))//&
+                  " will post "//trim(adjustl(c0))//&
+                  " nonblocking sends")
+          end if
+       end if
+       do iSend = 1,SendMsg%nMsgs
+
+          ! allocate and fill send buffer with field sections to send
+
+          call AllocateMessageDataBuffer(SendMsg%msgData(iSend))
+          call FillMessageDataBufferVariableAdressOneArr(SendMsg%msgData(iSend), &
+               field)
+
+          ! post send message
+
+          write(c0,"(i8)") iSend
+          call PostSendMessageData(SendMsg%msgData(iSend), &
+               SendMsg%otherProc(iSend), SendMsg%tag, &
+               SendMsg%request(iSend), &
+               h//" for send #"//trim(adjustl(c0)))
+       end do
+    else
+       if (dumpLocal) then
+          call MsgDump(h//" empty send message set")
+       end if
+    end if
+  end subroutine PostSendRecvMsgsVariableAdressOneArr
+
+
+  
+  subroutine WaitSendRecvMsgsVariableAdressOneArr(SendMsg, RecvMsg, &
+       msgStartZ, msgEndZ, field)
+
+    type(MessageSet), pointer, intent(in) :: SendMsg
+    type(MessageSet), pointer, intent(in) :: RecvMsg
+    integer, intent(in) :: msgStartZ
+    integer, intent(in) :: msgEndZ
+    real, target, intent(in) :: field(:,:,:)
+
+    ! waits for all nonblocking send and recv operations of
+    ! a message set pair of variables
+
+    integer :: i
+    integer :: iSend
+    integer :: iRecv
+    integer :: firstBuffer
+    integer :: lastBuffer
+    integer :: recvNbr
+    integer :: sendNbr
+    integer :: ierr
+    type(MessageData), pointer :: msgData => null()
+    type(FieldSection), pointer :: node => null()
+    character(len=8) :: c0, c1, c2, c3, c4, c5
+    character(len=*), parameter :: h="**(WaitSendRecvMsgsVariableAdressOneArr)**"
+    logical, parameter :: dumpLocal=.false.
+
+    ! for each receive message:
+    ! build send buffer and copy field sections to the buffer;
+    ! post nonblocking send;
+    ! A single send message to each process
+
+    if (associated(RecvMsg)) then
+       if (dumpLocal) then
+          write(c0,"(i8)") RecvMsg%nMsgs
+          call MsgDump(h//" for "//trim(adjustl(RecvMsg%name))//&
+               " waits on "//trim(adjustl(c0))//" receives")
+       end if
+
+       do iRecv= 1,RecvMsg%nMsgs
+
+          ! wait on any arrived message
+
+          call parf_wait_any_nostatus(RecvMsg%nMsgs, &
+               RecvMsg%request, recvNbr)
+          msgData => RecvMsg%msgData(recvNbr)
+          if (dumpLocal) then
+             write(c0,"(i8)") recvNbr
+             write(c1,"(i8)") RecvMsg%otherProc(recvNbr)
+             call MsgDump(h//" received message #"//trim(adjustl(c0))//&
+                  " from MPI proc "//trim(adjustl(c1)))
+          end if
+
+          ! extract field sections from incoming buffer
+          ! and store at destination fields
+
+          call DecomposeMessageDataBuffer(RecvMsg%msgData(recvNbr), &
+               msgStartZ, msgEndZ, field)
+          call DeallocateMessageDataBuffer(RecvMsg%msgData(recvNbr))
+       end do
+    else
+       if (dumpLocal) then
+          call MsgDump(h//" empty receive message set")
+       end if
+    end if
+
+    ! for all posted send messages, wait on pending request,
+    ! deallocate buffer and empty request
+
+    if (associated(SendMsg)) then
+       !CDIR$ NOVECTOR
+       do iSend = 1,SendMsg%nMsgs
+          call parf_wait_any_nostatus(SendMsg%nMsgs, &
+               SendMsg%request, sendNbr)
+          call DeallocateMessageDataBuffer(SendMsg%msgData(sendNbr))
+       end do
+    else
+       if (dumpLocal) then
+          call MsgDump(h//" empty send message set")
+       end if
+    end if
+  end subroutine WaitSendRecvMsgsVariableAdressOneArr
 end module ModMessageSet
-
-
+  

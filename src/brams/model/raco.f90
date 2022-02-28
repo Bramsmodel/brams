@@ -991,8 +991,8 @@ contains
     use ModGrid, only: Grid, DumpGrid
 
     use ModMessageSet, only: &
-         UpdateFieldAdress, &
          PostSendRecvMsgs, &
+         PostSendRecvMsgsVariableAdress, &
          WaitSendRecvMsgs
 
     use mem_grid, only : nnacoust, & ! intent(in)
@@ -1104,14 +1104,8 @@ contains
        allocate( pp_minus_div ( mzp, mxp, myp) )
        if(damp_formulation==1) then
           allocate( div ( mzp, mxp, myp) )
-          pField => div
-          call UpdateFieldAdress(OneGrid%AcouDampDivSend, pField, "Div")
-          call UpdateFieldAdress(OneGrid%AcouDampDivRecv, pField, "Div")
        else if(damp_formulation==2) then
           allocate( pp_t_minus_dt( mzp, mxp, myp) )
-          pField => pp_t_minus_dt
-          call UpdateFieldAdress(OneGrid%AcouDampPPSend, pField, "PP")
-          call UpdateFieldAdress(OneGrid%AcouDampPPRecv, pField, "PP")
        end if
     end if
 
@@ -1159,12 +1153,14 @@ contains
                         trim(adjustl(str(2)))//","//&
                         trim(adjustl(str(3)))//")")
                 end if
-                call PostSendRecvMsgs(&
+                call PostSendRecvMsgsVariableAdress(&
                      OneGrid%AcouDampDivSend, &
-                     OneGrid%AcouDampDivRecv)
+                     OneGrid%AcouDampDivRecv, &
+                     div)
                 call WaitSendRecvMsgs(&
                      OneGrid%AcouDampDivSend, &
-                     OneGrid%AcouDampDivRecv)
+                     OneGrid%AcouDampDivRecv, &
+                     1, mzp, div)
              endif
              ! as proposed in Wicker, Skamarock (2002) (?) divergence damping is
              ! used in an approximated form by adding the following term to the pressure:
@@ -1182,12 +1178,14 @@ contains
                         trim(adjustl(str(2)))//","//&
                         trim(adjustl(str(3)))//")")
                 end if
-                call PostSendRecvMsgs(&
+                call PostSendRecvMsgsVariableAdress(&
                      OneGrid%AcouDampPPSend, &
-                     OneGrid%AcouDampPPRecv)
+                     OneGrid%AcouDampPPRecv, &
+                     pp_t_minus_dt)
                 call WaitSendRecvMsgs(&
                      OneGrid%AcouDampPPSend, &
-                     OneGrid%AcouDampPPRecv)
+                     OneGrid%AcouDampPPRecv, &
+                     1, mzp, pp_t_minus_dt)
              endif
              pp_minus_div(:,:,:) = pp(:,:,:) + div_damp_strength*(pp(:,:,:) - pp_t_minus_dt(:,:,:))
           endif
@@ -1342,8 +1340,8 @@ contains
 
     use ModMessageSet, only: &
          PostSendRecvMsgs, &
-         WaitSendRecvMsgs, &
-         UpdateFieldAdress
+         PostSendRecvMsgsVariableAdress, &
+         WaitSendRecvMsgs
     
     implicit none
 
@@ -1393,9 +1391,6 @@ contains
     if ( istat /= 0 )  &! call fatal_error("ERROR allocating alpha_div")
          iErrNumber=dumpMessage(c_tty,c_yes,h,modelVersion,c_fatal, &
          "ERROR allocating alpha_div")
-    pField => alpha_div
-    call UpdateFieldAdress(OneGrid%AcouDampAlphaSend, pField, "Alpha")
-    call UpdateFieldAdress(OneGrid%AcouDampAlphaRecv, pField, "Alpha")
     
     c_sound = 330.0   ! this rough estimation of sound velocity is sufficient here
     ! see Wicker, Skamarock (2002) MWR:
@@ -1458,12 +1453,20 @@ contains
                trim(adjustl(str(2)))//","//&
                trim(adjustl(str(3)))//")")
        end if
-       call PostSendRecvMsgs(&
+!!$       call PostSendRecvMsgs(&
+!!$            OneGrid%AcouDampAlphaSend, &
+!!$            OneGrid%AcouDampAlphaRecv)
+!!$       call WaitSendRecvMsgs(&
+!!$            OneGrid%AcouDampAlphaSend, &
+!!$            OneGrid%AcouDampAlphaRecv)
+       call PostSendRecvMsgsVariableAdress(&
             OneGrid%AcouDampAlphaSend, &
-            OneGrid%AcouDampAlphaRecv)
+            OneGrid%AcouDampAlphaRecv, &
+            alpha_div)
        call WaitSendRecvMsgs(&
             OneGrid%AcouDampAlphaSend, &
-            OneGrid%AcouDampAlphaRecv)
+            OneGrid%AcouDampAlphaRecv, &
+            1, mzp, alpha_div)
     endif
     !--- mpi paralelization :
 
