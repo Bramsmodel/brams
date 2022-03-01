@@ -82,7 +82,7 @@ contains
     character(len=8) :: str(10)
     character(len=256) :: strOut
     character(len=*), parameter :: h="**(Inter)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     
     xsInter = max(xs1,xs2)
     xeInter = min(xe1,xe2)
@@ -151,7 +151,7 @@ contains
     integer :: ierr
     logical :: myNumSend, myNumRecv
     logical, allocatable :: isNeighbour(:)
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=8) :: c0, c1
     character(len=*), parameter :: h="**(CreateNeighbourNodes)**"
 
@@ -378,7 +378,7 @@ contains
     integer :: otherNode
     integer :: nNeigh
     integer :: i, indMsg
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=8) :: c0, c1, c2, c3, c4
     character(len=*), parameter :: h="**(NodesToSendRecvMessages)**"
 
@@ -423,6 +423,13 @@ contains
 
     do i = 1, nNeigh
        otherNode = Neigh%neigh(i)
+       if (dumpLocal) then
+          write(c0,"(i8)") Brams2MpiProcNbr(otherNode)
+          write(c1,"(i8)") Brams2MpiProcNbr(thisNode)
+          call MsgDump(h//" intersection region of GlobalOwn of thisNode "//&
+               "(MPIrank="//trim(adjustl(c1))//") with region to update "//&
+               " of otherNode (MPIrank="//trim(adjustl(c0))//")")
+       end if
        call Inter(&
             xbToUpdate(otherNode), &
             xeToUpdate(otherNode), &
@@ -521,7 +528,7 @@ contains
     integer :: indNeigh
     integer :: proc
     logical :: extend
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(IncludeDomainBoundaries)**"
 

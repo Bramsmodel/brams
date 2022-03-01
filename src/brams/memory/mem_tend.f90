@@ -54,7 +54,7 @@ module mem_tend
      real, pointer :: wt_rk(:)
      real, pointer :: pt_rk(:)
      real, pointer :: tht_rk(:)
-     real, pointer :: tht_rk_3D(:,:,:)
+!!$     real, pointer :: tht_rk_3D(:,:,:)
      real, pointer :: ut_past(:)
      real, pointer :: vt_past(:)
      real, pointer :: wt_past(:)
@@ -152,21 +152,21 @@ contains
        if( dyncore_flag==2 ) then
     	  allocate (tend%tht_rk(ntpts))
           tend%tht_rk = 0.
-          allocate(tend%tht_rk_3D(mzp,mxp,myp), stat=ierr)
-          if (ierr /= 0) then
-             write(str(1),"(i8)") ngrid
-             write(str(2),"(i8)") mzp
-             write(str(3),"(i8)") mxp
-             write(str(4),"(i8)") myp
-             write(str(5),"(i8)") ierr
-             call fatal_error(h//" for grid #"//trim(adjustl(str(1)))//&
-                  " allocate tht_rk_3D ("//&
-                  trim(adjustl(str(2)))//","//&
-                  trim(adjustl(str(3)))//","//&
-                  trim(adjustl(str(4)))//&
-                  ") fails with stat="//&
-                  trim(adjustl(str(5))))
-          end if
+!!$          allocate(tend%tht_rk_3D(mzp,mxp,myp), stat=ierr)
+!!$          if (ierr /= 0) then
+!!$             write(str(1),"(i8)") ngrid
+!!$             write(str(2),"(i8)") mzp
+!!$             write(str(3),"(i8)") mxp
+!!$             write(str(4),"(i8)") myp
+!!$             write(str(5),"(i8)") ierr
+!!$             call fatal_error(h//" for grid #"//trim(adjustl(str(1)))//&
+!!$                  " allocate tht_rk_3D ("//&
+!!$                  trim(adjustl(str(2)))//","//&
+!!$                  trim(adjustl(str(3)))//","//&
+!!$                  trim(adjustl(str(4)))//&
+!!$                  ") fails with stat="//&
+!!$                  trim(adjustl(str(5))))
+!!$          end if
        endif
     endif
     if (associated(basic_g(1)%rtp))     then
@@ -475,7 +475,7 @@ contains
     if (associated(tend%wt_rk))   nullify (tend%wt_rk)
     if (associated(tend%pt_rk))   nullify (tend%pt_rk)
     if (associated(tend%tht_rk))  nullify (tend%tht_rk)
-    if (associated(tend%tht_rk_3D))  nullify (tend%tht_rk_3D)
+!!$    if (associated(tend%tht_rk_3D))  nullify (tend%tht_rk_3D)
     !- for ABM3 method
     if (associated(tend%ut_past))   nullify (tend%ut_past)
     if (associated(tend%vt_past))   nullify (tend%vt_past)
@@ -611,7 +611,7 @@ contains
     if (associated(tend%wt_rk))   deallocate (tend%wt_rk)
     if (associated(tend%pt_rk))   deallocate (tend%pt_rk)
     if (associated(tend%tht_rk))  deallocate (tend%tht_rk)
-    if (associated(tend%tht_rk_3D))  deallocate (tend%tht_rk_3D)
+!!$    if (associated(tend%tht_rk_3D))  deallocate (tend%tht_rk_3D)
 
     if (associated(tend%ut_past))   deallocate (tend%ut_past)
     if (associated(tend%vt_past))   deallocate (tend%vt_past)

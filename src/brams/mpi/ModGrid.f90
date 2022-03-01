@@ -2,10 +2,6 @@ module ModGrid
 
   ! ModGrid: 
 
-!!$  use ParLib, only: &
-!!$       parf_barrier, &
-!!$       parf_exit_mpi
-
   use ModNamelistFile, only: &
        NamelistFile
 
@@ -64,6 +60,9 @@ module ModGrid
   use var_tables, only: &
        num_var, &
        vtab_r
+
+  use mem_tend, only: &
+       tend
 
   use meteogramType, only: &
        PolygonContainer
@@ -187,7 +186,7 @@ contains
 
     character(len=16) :: c0, c1
     character(len=*), parameter :: h="**(CreateGrid)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! correctness of input arguments
 
@@ -282,7 +281,7 @@ contains
 
     character(len=16) :: str(10)
     character(len=*), parameter :: h="**(InsertMessageSetAtOneGrid)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     integer, parameter :: TagU=25
     integer, parameter :: TagV=26
@@ -305,15 +304,15 @@ contains
     ! Field pointer for fields not yet allocated
     ! not yet allocated; CreateAcouDampOneMessageSet
     ! takes bounds from field pointer.
-    ! Field address will be replaced by
-    ! a call to UpdateFieldAdress, once the
-    ! desired field is allocated
+    ! Field address will be replaced at
+    ! PostSendRecvMsgs, since when this procedure
+    ! is invoked, field ought to be allocated
     integer :: ierr
     integer :: myNum
     integer :: lbx, ubx
     integer :: lby, uby
     integer :: lbz, ubz
-    real, pointer :: boundsRegularGhostZone(:,:,:)
+    real, pointer :: dummy3DField(:,:,:)
 
     if (.not. associated(oneGrid)) then
        call fatal_error(h//" invoked with null grid")
@@ -373,7 +372,7 @@ contains
     uby=oneGrid%LocalOwn%ny(myNum)
     lbz=1
     ubz=oneGrid%GridSize%nnzp
-    allocate(boundsRegularGhostZone(lbz:ubz,lbx:ubx,lby:uby), stat=ierr)
+    allocate(dummy3DField(lbz:ubz,lbx:ubx,lby:uby), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") lbz
        write(str(2),"(i8)") ubz
@@ -382,7 +381,7 @@ contains
        write(str(5),"(i8)") lby
        write(str(6),"(i8)") uby
        write(str(7),"(i8)") ierr
-       call fatal_error(h//" allocate boundsRegularGhostZone("//&
+       call fatal_error(h//" allocate dummy3DField("//&
             trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
             trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
             trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//&
@@ -394,39 +393,40 @@ contains
     ! prior to use the Message Sets
 
     call CreateAcouDampOneMessageSet(&
-         boundsRegularGhostZone, "Div", 3,  &
+         dummy3DField, "Div", 3,  &
          oneGrid%ParEnv, oneGrid%Neigh, &
          oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
          TagAcouDampDiv, "AcouDampDivSend", "AcouDampDivRecv", &
          oneGrid%AcouDampDivSend, oneGrid%AcouDampDivRecv)
 
     call CreateAcouDampOneMessageSet(&
-         boundsRegularGhostZone, "PP", 3,  &
+         dummy3DField, "PP", 3,  &
          oneGrid%ParEnv, oneGrid%Neigh, &
          oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
          TagAcouDampPP, "AcouDampPPSend", "AcouDampPPRecv", &
          oneGrid%AcouDampPPSend, oneGrid%AcouDampPPRecv)
 
     call CreateAcouDampOneMessageSet(&
-         boundsRegularGhostZone, "Alpha", 3,  &
+         dummy3DField, "Alpha", 3,  &
          oneGrid%ParEnv, oneGrid%Neigh, &
          oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
          TagAcouDampAlpha, "AcouDampAlphaSend", "AcouDampAlphaRecv", &
          oneGrid%AcouDampAlphaSend, oneGrid%AcouDampAlphaRecv)
 
+    deallocate(dummy3DField, stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" deallocate dummy3DField"//&
+            " fails with stat="//trim(adjustl(str(1))))
+    end if
+
     call CreateAcouDampOneMessageSet(&
-         boundsRegularGhostZone, "Tht", 3,  &
+         tend%tht_rk, "Tht", 1,  &
          oneGrid%ParEnv, oneGrid%Neigh, &
          oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
          TagAcouDampTht, "AcouDampThtSend", "AcouDampThtRecv", &
-         oneGrid%AcouDampThtSend, oneGrid%AcouDampThtRecv)
-
-    deallocate(boundsRegularGhostZone, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate boundsRegularGhostZone"//&
-            " fails with stat="//trim(adjustl(str(1))))
-    end if
+         oneGrid%AcouDampThtSend, oneGrid%AcouDampThtRecv, &
+         oneGrid%GridSize%nnzp)
 
     call CreateWideGhostZoneMessageSet(&
          oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &

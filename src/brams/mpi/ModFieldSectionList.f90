@@ -6,8 +6,7 @@ module ModFieldSectionList
   use ModFieldSection, only: &
        FieldSection, &
        FieldSectionName, &
-       DumpFieldSection, &
-       UpdateFieldAdress
+       DumpFieldSection
   
   implicit none
   private
@@ -23,13 +22,6 @@ module ModFieldSectionList
   public :: NextFieldSectionNodeAtList
   public :: FieldSectionListTailNode
   public :: FieldSectionAtNode
-  public :: UpdateFieldAdress
-
-  interface UpdateFieldAdress
-     module procedure UpdateFieldAdressAtList_2D
-     module procedure UpdateFieldAdressAtList_3D
-     module procedure UpdateFieldAdressAtList_4D
-  end interface UpdateFieldAdress
 
   interface FindFieldNamed
      module procedure FindFieldSectionAtList
@@ -127,7 +119,7 @@ contains
     character(len=8) :: c0
     type(FieldSectionNode), pointer :: this
     character(len=*), parameter :: h="**(AppendNodeToFieldSectionList)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (.not. associated(oneFieldSectionNode)) then
        call fatal_error(h//" null oneFieldSectionNode")
@@ -161,7 +153,7 @@ contains
     type(FieldSectionNode), pointer :: this
     type(FieldSection), pointer :: thisSection
     character(len=*), parameter :: h="**(FindFieldSectionAtList)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     node => null()
     if (associated(oneFieldSectionList)) then
@@ -225,82 +217,4 @@ contains
        this => oneFieldSectionNode%entry
     end if
   end function FieldSectionAtNode
-
-
-
-
-  
-  subroutine UpdateFieldAdressAtList_2D(oneFieldSectionList, field, name)
-    type(FieldSectionList), pointer, intent(in) :: oneFieldSectionList
-    real, pointer, intent(in) :: field(:,:)
-    character(len=*), intent(in) :: name
-
-    type(FieldSection), pointer :: oneFieldSection => null()
-    character(len=*), parameter :: h="**(UpdateFieldAdressAtList_2D)**"
-    logical, parameter :: dumpLocal=.false.
-
-    if (.not. associated(oneFieldSectionList)) then
-       call fatal_error(h//" null oneFieldSectionList")
-    end if
-
-    oneFieldSection => FindFieldSectionAtList(oneFieldSectionList, name)
-    if (.not. associated(oneFieldSection)) then
-       call fatal_error(h//" field section "//trim(adjustl(name))//&
-            " not at FieldSectionList")
-    end if
-
-    call UpdateFieldAdress(oneFieldSection, field)
-  end subroutine UpdateFieldAdressAtList_2D
-
-
-
-
-  
-  subroutine UpdateFieldAdressAtList_3D(oneFieldSectionList, field, name)
-    type(FieldSectionList), pointer, intent(in) :: oneFieldSectionList
-    real, pointer, intent(in) :: field(:,:,:)
-    character(len=*), intent(in) :: name
-
-    type(FieldSection), pointer :: oneFieldSection => null()
-    character(len=*), parameter :: h="**(UpdateFieldAdressAtList_3D)**"
-    logical, parameter :: dumpLocal=.false.
-
-    if (.not. associated(oneFieldSectionList)) then
-       call fatal_error(h//" null oneFieldSectionList")
-    end if
-
-    oneFieldSection => FindFieldSectionAtList(oneFieldSectionList, name)
-    if (.not. associated(oneFieldSection)) then
-       call fatal_error(h//" field section "//trim(adjustl(name))//&
-            " not at FieldSectionList")
-    end if
-
-    call UpdateFieldAdress(oneFieldSection, field)
-  end subroutine UpdateFieldAdressAtList_3D
-
-
-
-
-  
-  subroutine UpdateFieldAdressAtList_4D(oneFieldSectionList, field, name)
-    type(FieldSectionList), pointer, intent(in) :: oneFieldSectionList
-    real, pointer, intent(in) :: field(:,:,:,:)
-    character(len=*), intent(in) :: name
-
-    type(FieldSection), pointer :: oneFieldSection => null()
-    character(len=*), parameter :: h="**(UpdateFieldAdressAtList_4D)**"
-    logical, parameter :: dumpLocal=.false.
-
-    if (.not. associated(oneFieldSectionList)) then
-       call fatal_error(h//" null oneFieldSectionList")
-    end if
-
-    oneFieldSection => FindFieldSectionAtList(oneFieldSectionList, name)
-    if (.not. associated(oneFieldSection)) then
-       call fatal_error(h//" field section "//trim(adjustl(name))//&
-            " not at FieldSectionList")
-    end if
-
-    call UpdateFieldAdress(oneFieldSection, field)
-  end subroutine UpdateFieldAdressAtList_4D
 end module ModFieldSectionList

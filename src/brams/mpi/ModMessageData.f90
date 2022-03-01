@@ -52,8 +52,7 @@ module ModMessageData
        FieldSectionListHeadNode, &
        FieldSectionAtNode, &
        NextFieldSectionNodeAtList, &
-       FindFieldNamed, &
-       UpdateFieldAdress
+       FindFieldNamed
 
   implicit none
   include "mpif.h"
@@ -71,7 +70,6 @@ module ModMessageData
   public :: Buffer2FieldSectionData
   public :: DecomposeMessageDataBuffer
   public :: DeallocateMessageDataBuffer
-  public :: UpdateFieldAdress
   public :: FindFieldNamed
   public :: FillMessageDataBufferVariableAdressArr
   public :: FillMessageDataBufferVariableAdressScalar
@@ -112,23 +110,18 @@ module ModMessageData
      ! list of Field Sections to communicate
   end type MessageData
 
-  interface UpdateFieldAdress
-     module procedure UpdateFieldAdressAtMessageData_2D
-     module procedure UpdateFieldAdressAtMessageData_3D
-     module procedure UpdateFieldAdressAtMessageData_4D
-  end interface UpdateFieldAdress
-
   interface FindFieldNamed
      module procedure FindFieldSectionAtMessageData
   end interface FindFieldNamed
 
   interface FillMessageDataBuffer
      module procedure FillMessageDataBufferFixedAdress
-!!$     module procedure FillMessageDataBufferVariableAdress
+     module procedure FillMessageDataBufferFixedAdress1D
   end interface FillMessageDataBuffer
 
   interface DecomposeMessageDataBuffer
      module procedure DecomposeMessageDataBufferFixedAdress
+     module procedure DecomposeMessageDataBufferFixedAdress1D
      module procedure DecomposeMessageDataBufferVariableAdress
      module procedure DecomposeMessageDataBufferVariableAdressOneArr
   end interface DecomposeMessageDataBuffer
@@ -148,7 +141,7 @@ contains
     character(len=*), intent(in) :: direction
 
     character(len=*), parameter :: h="**(CreateMessageData)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     oneMessageData%bufSize = 0
     oneMessageData%name = trim(adjustl(name))
@@ -175,7 +168,7 @@ contains
     type(FieldSection), pointer:: next
     character(len=8) :: c0, c1
     character(len=*), parameter :: h="**(DestroyMessageData)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (dumpLocal) then
        call MsgDump(h//" of "//trim(adjustl(oneMessageData%name)))
@@ -233,7 +226,7 @@ contains
     type(FieldSectionNode), pointer :: this
     character(len=8) :: c0
     character(len=*), parameter :: h="**(AppendFieldSectionToMessageData)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (.not. associated(oneFieldSection)) then
        call fatal_error(h//" oneFieldSection not associated")
@@ -303,8 +296,13 @@ contains
     integer :: bufStart
     type(FieldSectionNode), pointer :: thisNode
     type(FieldSection), pointer :: this
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(FillMessageDataBufferFixedAdress)**"
+
+    if (.not. allocated(oneMessageData%buf)) then
+       call fatal_error(h//" not allocated buf for message data "//&
+            trim(adjustl(oneMessageData%name)))
+    end if
 
     if (dumpLocal) then
        call MsgDump(h//" to Message Data "//trim(adjustl(oneMessageData%name)))
@@ -321,6 +319,47 @@ contains
        thisNode => NextFieldSectionNodeAtList(thisNode)
     end do
   end subroutine FillMessageDataBufferFixedAdress
+
+
+
+
+
+  subroutine FillMessageDataBufferFixedAdress1D(oneMessageData, nzp, nxp, nyp)
+    type(MessageData), intent(inout) :: oneMessageData
+    integer, intent(in) :: nzp
+    integer, intent(in) :: nxp
+    integer, intent(in) :: nyp
+
+    ! copy field section values of the entire field section list of
+    ! the Message Data variable to the buffer of the Message Data variable
+
+    integer :: bufStart
+    type(FieldSectionNode), pointer :: thisNode
+    type(FieldSection), pointer :: this
+    logical, parameter :: dumpLocal=.true.
+    character(len=*), parameter :: h="**(FillMessageDataBufferFixedAdress1D)**"
+
+    if (.not. allocated(oneMessageData%buf)) then
+       call fatal_error(h//" not allocated buf for message data "//&
+            trim(adjustl(oneMessageData%name)))
+    end if
+
+    if (dumpLocal) then
+       call MsgDump(h//" to Message Data "//trim(adjustl(oneMessageData%name)))
+    end if
+    bufStart=1
+    thisNode => FieldSectionListHeadNode(oneMessageData%list)
+    do while (associated(thisNode))
+       this => FieldSectionAtNode(thisNode)
+       call FieldSectionData2Buffer(&
+            this, &
+            nzp, nxp, nyp, &
+            oneMessageData%buf, &
+            bufStart, &
+            oneMessageData%bufsize)
+       thisNode => NextFieldSectionNodeAtList(thisNode)
+    end do
+  end subroutine FillMessageDataBufferFixedAdress1D  
 
 
 
@@ -346,7 +385,14 @@ contains
 
     if (.not. associated(scp)) then
        call fatal_error(h//" invoked with null scp")
-    else if (dumpLocal) then
+    end if
+
+    if (.not. allocated(oneMessageData%buf)) then
+       call fatal_error(h//" not allocated buf for message data "//&
+            trim(adjustl(oneMessageData%name)))
+    end if
+
+    if (dumpLocal) then
        call MsgDump(h//" to Message Data "//trim(adjustl(oneMessageData%name)))
        write(str(1),"(i8)") lbound(scp,1)
        write(str(2),"(i8)") ubound(scp,1)
@@ -430,31 +476,49 @@ contains
     ! it is assumed that the "first dimension" of the field pointed by
     ! scalar scp is the same as the first dimension of ufx
 
+    integer :: nxp
+    integer :: nyp
+    integer :: nzp
     integer :: bufStart
     type(FieldSectionNode), pointer :: oneNode
     type(FieldSection), pointer :: oneFieldSection
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(FillMessageDataBufferVariableAdressScalar)**"
+
+
+    if (.not. allocated(oneMessageData%buf)) then
+       call fatal_error(h//" not allocated buf for message data "//&
+            trim(adjustl(oneMessageData%name)))
+    end if
 
     if (dumpLocal) then
        call MsgDump(h//" to Message Data "//trim(adjustl(oneMessageData%name)))
     end if
+
+    ! assume that field pointed by scp
+    ! have the same shape as ufx
+    
+    nzp=size(ufx,1)
+    nxp=size(ufx,2)
+    nyp=size(ufx,3)
+    
     bufStart=1
     oneNode => FieldSectionListHeadNode(oneMessageData%list)
     oneFieldSection => FieldSectionAtNode(oneNode)
-    call FieldSectionData2BufferVariableAdressScalar(scp, size(ufx,1), oneFieldSection, &
+    call FieldSectionData2BufferVariableAdressScalar(scp, &
+         nzp, nxp, nyp, oneFieldSection, &
          oneMessageData%buf, bufStart, oneMessageData%bufsize)
     oneNode => NextFieldSectionNodeAtList(oneNode)
     oneFieldSection => FieldSectionAtNode(oneNode)
-    call FieldSectionData2BufferVariableAdressArr(ufx, size(ufx,1), oneFieldSection, &
+    call FieldSectionData2BufferVariableAdressArr(ufx, nzp, oneFieldSection, &
          oneMessageData%buf, bufStart, oneMessageData%bufsize)
     oneNode => NextFieldSectionNodeAtList(oneNode)
     oneFieldSection => FieldSectionAtNode(oneNode)
-    call FieldSectionData2BufferVariableAdressArr(vfx, size(vfx,1), oneFieldSection, &
+    call FieldSectionData2BufferVariableAdressArr(vfx, nzp, oneFieldSection, &
          oneMessageData%buf, bufStart, oneMessageData%bufsize)
     oneNode => NextFieldSectionNodeAtList(oneNode)
     oneFieldSection => FieldSectionAtNode(oneNode)
-    call FieldSectionData2BufferVariableAdressArr(wfx, size(wfx,1), oneFieldSection, &
+    call FieldSectionData2BufferVariableAdressArr(wfx, nzp, oneFieldSection, &
          oneMessageData%buf, bufStart, oneMessageData%bufsize)
   end subroutine FillMessageDataBufferVariableAdressScalar
 
@@ -472,7 +536,7 @@ contains
     type(FieldSectionNode), pointer :: thisNode
     type(FieldSection), pointer :: this
     character(len=*), parameter :: h="**(DecomposeMessageDataBufferFixedAdress)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (dumpLocal) then
        call MsgDump(h//"  of Message Data "//trim(adjustl(oneMessageData%name)))
@@ -489,6 +553,42 @@ contains
        thisNode => NextFieldSectionNodeAtList(thisNode)
     end do
   end subroutine DecomposeMessageDataBufferFixedAdress
+
+
+
+
+
+  subroutine DecomposeMessageDataBufferFixedAdress1D(oneMessageData, nzp, nxp, nyp)
+    type(MessageData), intent(inout) :: oneMessageData
+    integer, intent(in) :: nzp
+    integer, intent(in) :: nxp
+    integer, intent(in) :: nyp
+
+    ! copy all field section values from the buffer of the Message Data variable
+    ! to the field section pointed by the Message Data field section list 
+
+    integer :: bufStart
+    type(FieldSectionNode), pointer :: thisNode
+    type(FieldSection), pointer :: this
+    character(len=*), parameter :: h="**(DecomposeMessageDataBufferFixedAdress1D)**"
+    logical, parameter :: dumpLocal=.true.
+
+    if (dumpLocal) then
+       call MsgDump(h//"  of Message Data "//trim(adjustl(oneMessageData%name)))
+    end if
+    bufStart=1
+    thisNode => FieldSectionListHeadNode(oneMessageData%list)
+    do while (associated(thisNode))
+       this => FieldSectionAtNode(thisNode)
+       call Buffer2FieldSectionData(&
+            this, &
+            nzp, nxp, nyp, &
+            oneMessageData%buf, &
+            bufStart, &
+            oneMessageData%bufsize)
+       thisNode => NextFieldSectionNodeAtList(thisNode)
+    end do
+  end subroutine DecomposeMessageDataBufferFixedAdress1D
 
 
 
@@ -511,7 +611,7 @@ contains
     type(FieldSectionNode), pointer :: oneNode
     type(FieldSection), pointer :: oneSection
     character(len=*), parameter :: h="**(DecomposeMessageDataBufferVariableAdress)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (dumpLocal) then
        call MsgDump(h//"  of Message Data "//trim(adjustl(oneMessageData%name)))
@@ -552,7 +652,7 @@ contains
     integer :: ierr
     character(len=8) :: c0
     character(len=*), parameter :: h="**(DeallocateMessageDataBuffer)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (dumpLocal) then
        call MsgDump(h//" deallocate buf of "//&
@@ -588,7 +688,7 @@ contains
     character(len=*), parameter :: h="**(PostRecvMessageData)**"
     character(len=8) :: c0, c1, c2, c3
     character(len=128) :: msgString
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (.not. allocated(oneMessageData%buf)) then
        call fatal_error(h//" buf not allocated")
@@ -639,7 +739,7 @@ contains
     character(len=*), parameter :: h="**(PostSendMessageData)**"
     character(len=8) :: c0, c1, c2, c3
     character(len=128) :: msgString
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (.not. allocated(oneMessageData%buf)) then
        call fatal_error(h//" buf not allocated")
@@ -679,80 +779,6 @@ contains
 
 
 
-  subroutine UpdateFieldAdressAtMessageData_2D(oneMessageData, field, name)
-    type(MessageData), pointer, intent(in) :: oneMessageData
-    real, pointer, intent(in) :: field(:,:)
-    character(len=*), intent(in) :: name
-
-    type(FieldSectionList), pointer :: oneFieldSectionList => null()
-    character(len=*), parameter :: h="**(UpdateFieldAdressAtList_2D)**"
-    logical, parameter :: dumpLocal=.false.
-
-    if (.not. associated(oneMessageData)) then
-       call fatal_error(h//" null oneMessageData")
-    end if
-
-    oneFieldSectionList => oneMessageData%list
-    if (.not. associated(oneFieldSectionList)) then
-       call fatal_error(h//" field section list not associated")
-    end if
-
-    call UpdateFieldAdress(oneFieldSectionList, field, name)
-  end subroutine UpdateFieldAdressAtMessageData_2D
-
-
-
-
-
-  subroutine UpdateFieldAdressAtMessageData_3D(oneMessageData, field, name)
-    type(MessageData), pointer, intent(in) :: oneMessageData
-    real, pointer, intent(in) :: field(:,:,:)
-    character(len=*), intent(in) :: name
-
-    type(FieldSectionList), pointer :: oneFieldSectionList => null()
-    character(len=*), parameter :: h="**(UpdateFieldAdressAtList_3D)**"
-    logical, parameter :: dumpLocal=.false.
-
-    if (.not. associated(oneMessageData)) then
-       call fatal_error(h//" null oneMessageData")
-    end if
-
-    oneFieldSectionList => oneMessageData%list
-    if (.not. associated(oneFieldSectionList)) then
-       call fatal_error(h//" field section list not associated")
-    end if
-
-    call UpdateFieldAdress(oneFieldSectionList, field, name)
-  end subroutine UpdateFieldAdressAtMessageData_3D
-
-
-
-
-
-  subroutine UpdateFieldAdressAtMessageData_4D(oneMessageData, field, name)
-    type(MessageData), pointer, intent(in) :: oneMessageData
-    real, pointer, intent(in) :: field(:,:,:,:)
-    character(len=*), intent(in) :: name
-
-    type(FieldSectionList), pointer :: oneFieldSectionList => null()
-    character(len=*), parameter :: h="**(UpdateFieldAdressAtList_4D)**"
-    logical, parameter :: dumpLocal=.false.
-
-    if (.not. associated(oneMessageData)) then
-       call fatal_error(h//" null oneMessageData")
-    end if
-
-    oneFieldSectionList => oneMessageData%list
-    if (.not. associated(oneFieldSectionList)) then
-       call fatal_error(h//" field section list not associated")
-    end if
-
-    call UpdateFieldAdress(oneFieldSectionList, field, name)
-  end subroutine UpdateFieldAdressAtMessageData_4D
-
-
-
-
   function FindFieldSectionAtMessageData(oneMessageData, fieldName) result(node)
     type(MessageData), pointer, intent(in) :: oneMessageData
     character(len=*), intent(in) :: fieldName
@@ -766,6 +792,9 @@ contains
     node => FindFieldNamed(oneMessageData%list, fieldName)
   end function FindFieldSectionAtMessageData
 
+
+
+  
   subroutine FillMessageDataBufferVariableAdressOneArr(oneMessageData, field)
 
     type(MessageData), intent(inout) :: oneMessageData
@@ -780,6 +809,11 @@ contains
     logical, parameter :: dumpLocal=.true.
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(FillMessageDataBufferVariableAdressOneArr)**"
+
+    if (.not. allocated(oneMessageData%buf)) then
+       call fatal_error(h//" not allocated buf for message data "//&
+            trim(adjustl(oneMessageData%name)))
+    end if
 
     if (dumpLocal) then
        call MsgDump(h//" to Message Data "//trim(adjustl(oneMessageData%name)))
@@ -818,7 +852,7 @@ contains
     type(FieldSection), pointer :: oneSection
     real, pointer :: fieldPtr(:,:,:)
     character(len=*), parameter :: h="**(DecomposeMessageDataBufferVariableAdressOneArr)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (dumpLocal) then
        call MsgDump(h//"  of Message Data "//trim(adjustl(oneMessageData%name)))

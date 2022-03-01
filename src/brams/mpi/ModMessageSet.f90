@@ -82,8 +82,7 @@ module ModMessageSet
        DecomposeMessageDataBuffer, &
        AllocateMessageDataBuffer, &
        DeallocateMessageDataBuffer, &
-       DestroyMessageData, &
-       UpdateFieldAdress
+       DestroyMessageData
 
   use var_tables, only: &
        var_tables_r, &
@@ -126,8 +125,6 @@ module ModMessageSet
 
   public :: CreateWideGhostZoneMessageSet
   public :: DestroyWideGhostZoneMessageSet
-
-  public :: UpdateFieldAdress
 
   public :: PostSendRecvMsgs
   public :: PostSendRecvMsgsVariableAdress
@@ -173,6 +170,7 @@ module ModMessageSet
 
   interface InsertFieldSectionAtSendRecvMessageSet
      module procedure InsertFieldSectionAtSendRecvMessageSetFromVTab
+     module procedure InsertFieldSectionAtSendRecvMessageSet_1D
      module procedure InsertFieldSectionAtSendRecvMessageSet_2D
      module procedure InsertFieldSectionAtSendRecvMessageSet_3D
      module procedure InsertFieldSectionAtSendRecvMessageSet_4D
@@ -180,19 +178,15 @@ module ModMessageSet
 
   interface InsertFieldSectionAtMessageSet
      module procedure InsertFieldSectionAtMessageSetFromVTab
+     module procedure InsertFieldSectionAtMessageSet_1D  
      module procedure InsertFieldSectionAtMessageSet_2D  
      module procedure InsertFieldSectionAtMessageSet_3D  
      module procedure InsertFieldSectionAtMessageSet_4D
   end interface InsertFieldSectionAtMessageSet
 
-  interface UpdateFieldAdress
-     module procedure UpdateFieldAdressAtMessageSet_2D
-     module procedure UpdateFieldAdressAtMessageSet_3D
-     module procedure UpdateFieldAdressAtMessageSet_4D
-  end interface UpdateFieldAdress
-
   interface PostSendRecvMsgs
      module procedure PostSendRecvMsgsFixedAdress
+     module procedure PostSendRecvMsgsFixedAdress1D
   end interface PostSendRecvMsgs
 
   interface PostSendRecvMsgsVariableAdress
@@ -204,9 +198,15 @@ module ModMessageSet
 
   interface WaitSendRecvMsgs
      module procedure WaitSendRecvMsgsFixedAdress
+     module procedure WaitSendRecvMsgsFixedAdress1D
      module procedure WaitSendRecvMsgsVariableAdress
      module procedure WaitSendRecvMsgsVariableAdressOneArr
   end interface WaitSendRecvMsgs
+
+  interface CreateAcouDampOneMessageSet
+     module procedure CreateAcouDampOneMessageSet3D
+     module procedure CreateAcouDampOneMessageSet1D
+  end interface CreateAcouDampOneMessageSet
 
 contains
 
@@ -467,10 +467,11 @@ contains
     type(MessageSet), pointer, intent(inout) :: RecvMessageSet
 
     character(len=*), parameter :: h="**(NodesRegionsSendRecv)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (dumpLocal) then
-       call MsgDump(h// "starts")
+       call MsgDump(h// "starts computing field sections for "//&
+            trim(adjustl(NameSend))//" and "//trim(adjustl(NameRecv)))
     end if
 
     ! which neighbour nodes will send and receive
@@ -497,7 +498,7 @@ contains
          Neigh)
 
     if (dumpLocal) then
-       call MsgDump(h//" finishes creating Message Sets:")
+       call MsgDump(h//" finishes creating Message Sets with empty FieldSections:")
        call DumpMessageSet(SendMessageSet)
        call DumpMessageSet(RecvMessageSet)
     end if
@@ -561,7 +562,7 @@ contains
     type(FieldSection), pointer :: oneFieldSection
     character(len=8) :: c0
     character(len=*), parameter :: h="**(InsertFieldSectionAtMessageSetFromVTab)**"
-    real, pointer :: PNull(:,:) => null()
+
     ! check arguments
 
     if (.not. associated(vTabPtr)) then
@@ -622,7 +623,8 @@ contains
                   ybComm(iNeigh)-y0, yeComm(iNeigh)-y0)
           case default
              write(c0,"(i8)") vTabPtr%idim_type
-             call fatal_error(h//" unknown idim_type="//trim(adjustl(c0)))
+             call fatal_error(h//" unknown idim_type="//trim(adjustl(c0))//&
+                  " for field "//trim(adjustl(vTabPtr%name)))
           end select
           call AppendFieldSectionToMessageData(oneFieldSection, Msgs%msgData(cntMsg))
        end if
@@ -631,6 +633,129 @@ contains
 
 
 
+  subroutine InsertFieldSectionAtMessageSet_1D(&
+       myNum, field, fieldName, idim_type, nNeigh, GlobalWithGhost, &
+       xbComm, xeComm, ybComm, yeComm, willComm, &
+       Msgs, kMax)
+
+    ! Inserts a section of a field to be communicated
+    ! on a MessageSet variable
+
+    ! mynum is this BRAMS process number;
+    ! It sends data on a send MessageSet variable or
+    ! it receives data on a receive MessageSet variable
+
+    integer, intent(in) :: myNum
+
+    ! field memory address
+
+    real, pointer, intent(in) :: field(:)
+
+    ! field name
+
+    character(len=*), intent(in) :: fieldName
+
+    ! idim_type codes the remained dimensions to communicate 
+
+    integer, intent(in) :: idim_type
+
+    ! nNeigh is number of processes for potential communication
+
+    integer, intent(in) :: nNeigh
+
+    ! Global indices of domain partition with Ghost Zones
+
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+
+    ! all remaining arguments are dimensioned by nNeigh
+
+    ! global indices of the region of this process field
+    ! to be sent on a send MessageSet variable or to be received
+    ! on a receive MessageSet variable;
+    ! The arrays of global indices have the same size of the Neigh
+    ! array (number of processes to communicate) and are indexed
+    ! accordingly
+
+    integer, intent(in) :: xbComm(:)
+    integer, intent(in) :: xeComm(:)
+    integer, intent(in) :: ybComm(:)
+    integer, intent(in) :: yeComm(:)
+    integer, intent(in) :: kMax
+
+    ! which neighbours (BRAMS process number) will
+    ! receive msgs from this node on a send MessageSet variable
+    ! or will send msgs to this node on a receive Message set
+    ! variable
+
+    logical, intent(in) :: willComm(:)
+
+    ! MessageSet variable to be updated by field section inclusion
+
+    type(MessageSet), pointer, intent(inout) :: Msgs
+
+    integer :: nMsgs
+    integer :: x0, y0
+    integer :: cntMsg
+    integer :: iNeigh
+    type(FieldSection), pointer :: oneFieldSection
+    character(len=8) :: c0
+    character(len=*), parameter :: h="**(InsertFieldSectionAtMessageSet_1D)**"
+
+    ! check arguments
+
+    if (.not. associated(GlobalWithGhost)) then
+       call fatal_error(h//" GlobalWithGhost not associated")
+    end if
+
+    ! return if no messages to send
+
+    if (.not. associated(Msgs)) then
+       return
+    end if
+    nMsgs = Msgs%nMsgs
+
+    ! offsets to convert global indices to local indices at this proc
+
+    x0 = GlobalWithGhost%xb(myNum) - 1
+    y0 = GlobalWithGhost%yb(myNum) - 1
+
+    ! create list of Field Sections to communicate, one for
+    ! each process to communicate and insert at this MessageSet
+    ! field section list
+
+    cntMsg = 0
+    do iNeigh = 1, nNeigh
+       if (willComm(iNeigh)) then
+          cntMsg = cntMsg + 1
+          if (cntMsg > nMsgs) then
+             write(c0,"(i8)") nMsgs
+             call fatal_error(h//" nMsgs ("//&
+                  trim(adjustl(c0))//") exceeded while inserting field "//&
+                  trim(adjustl(fieldName))//&
+                  " at message "//trim(adjustl(Msgs%name)))
+          end if
+
+          select case (idim_type)
+          case (1)
+             oneFieldSection => CreateFieldSection(&
+                  field, &
+                  fieldName, &
+                  idim_type, &
+                  xbComm(iNeigh)-x0, xeComm(iNeigh)-x0, &
+                  ybComm(iNeigh)-y0, yeComm(iNeigh)-y0, &
+                  kMax)
+          case default
+             write(c0,"(i8)") idim_type
+             call fatal_error(h//" idim_type ("//trim(adjustl(c0))//&
+                  ") incompatible with a 1D field, for field "//trim(adjustl(fieldName)))
+          end select
+          call AppendFieldSectionToMessageData(oneFieldSection, Msgs%msgData(cntMsg))
+       end if
+    end do
+  end subroutine InsertFieldSectionAtMessageSet_1D
+
+
+  
 
 
   subroutine InsertFieldSectionAtMessageSet_2D(&
@@ -699,7 +824,7 @@ contains
     type(FieldSection), pointer :: oneFieldSection
     character(len=8) :: c0
     character(len=*), parameter :: h="**(InsertFieldSectionAtMessageSet_2D)**"
-    real, pointer :: PNull(:,:) => null()
+
     ! check arguments
 
     if (.not. associated(GlobalWithGhost)) then
@@ -745,7 +870,7 @@ contains
           case default
              write(c0,"(i8)") idim_type
              call fatal_error(h//" idim_type ("//trim(adjustl(c0))//&
-                  ") incompatible with a 2D field")
+                  ") incompatible with a 2D field, for field "//trim(adjustl(fieldName)))
           end select
           call AppendFieldSectionToMessageData(oneFieldSection, Msgs%msgData(cntMsg))
        end if
@@ -822,7 +947,7 @@ contains
     type(FieldSection), pointer :: oneFieldSection
     character(len=8) :: c0
     character(len=*), parameter :: h="**(InsertFieldSectionAtMessageSet_3D)**"
-    real, pointer :: PNull(:,:) => null()
+
     ! check arguments
 
     if (.not. associated(GlobalWithGhost)) then
@@ -868,7 +993,7 @@ contains
           case default
              write(c0,"(i8)") idim_type
              call fatal_error(h//" idim_type ("//trim(adjustl(c0))//&
-                  ") incompatible with a 2D field")
+                  ") incompatible with a 3D field, for field "//trim(adjustl(fieldName)))
           end select
           call AppendFieldSectionToMessageData(oneFieldSection, Msgs%msgData(cntMsg))
        end if
@@ -944,7 +1069,7 @@ contains
     type(FieldSection), pointer :: oneFieldSection
     character(len=8) :: c0
     character(len=*), parameter :: h="**(InsertFieldSectionAtMessageSet_4D)**"
-    real, pointer :: PNull(:,:) => null()
+
     ! check arguments
 
     if (.not. associated(GlobalWithGhost)) then
@@ -990,7 +1115,7 @@ contains
           case default
              write(c0,"(i8)") idim_type
              call fatal_error(h//" idim_type ("//trim(adjustl(c0))//&
-                  ") incompatible with a 2D field")
+                  ") incompatible with a 4D field, for field "//trim(adjustl(fieldName)))
           end select
           call AppendFieldSectionToMessageData(oneFieldSection, Msgs%msgData(cntMsg))
        end if
@@ -1077,6 +1202,87 @@ contains
 
 
 
+  subroutine InsertFieldSectionAtSendRecvMessageSet_1D(&
+       field, fieldName, idim_type, myNum, nNeigh, GlobalWithGhost, &
+       xbSend, xeSend, ybSend, yeSend, willSend, SendMessageSet, &
+       xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvMessageSet, &
+       kMax)
+
+    ! Inserts a section of a field to be communicated
+    ! on a MessageSet variable
+
+    ! field memory address
+
+    real, pointer, intent(in) :: field(:)
+
+    ! field name
+
+    character(len=*), intent(in) :: fieldName
+
+    ! idim_type codes the remained dimensions to communicate 
+
+    integer, intent(in) :: idim_type
+
+    ! mynum is this BRAMS process number;
+    ! It sends data on a send MessageSet variable or
+    ! it receives data on a receive MessageSet variable
+
+    integer, intent(in) :: myNum
+
+    ! nNeigh is the number of processes for potential communication
+
+    integer, intent(in) :: nNeigh
+
+    ! Global indices of domain partition with Ghost Zones
+
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+
+    ! this rank will send this rectangular region to each neighbour
+    integer, intent(in) :: xbSend(nNeigh)
+    integer, intent(in) :: xeSend(nNeigh)
+    integer, intent(in) :: ybSend(nNeigh)
+    integer, intent(in) :: yeSend(nNeigh)
+
+    ! this rank will send messages to which neighbours
+    logical, intent(in) :: willSend(nNeigh)
+
+    ! send message set
+    type(MessageSet), pointer, intent(inout) :: SendMessageSet
+
+    ! this rank will recv messsages from which neighbours
+    logical, intent(in) :: willRecv(nNeigh)
+
+    ! this rank will recv this rectangular region from each neighbour
+    integer, intent(in) :: xbRecv(nNeigh)
+    integer, intent(in) :: xeRecv(nNeigh)
+    integer, intent(in) :: ybRecv(nNeigh)
+    integer, intent(in) :: yeRecv(nNeigh)
+    integer, intent(in) :: kMax
+
+    ! recv message set
+    type(MessageSet), pointer, intent(inout) :: RecvMessageSet
+
+    character(len=*), parameter :: h="**(InsertFieldSectionAtSendRecvMessageSet_1D)**"
+
+    ! check arguments
+
+    if (.not. associated(GlobalWithGhost)) then
+       call fatal_error(h//" GlobalWithGhost not associated")
+    end if
+
+    ! include field on field sections to be sent and received
+
+    call InsertFieldSectionAtMessageSet(&
+         myNum, field, fieldName, idim_type, nNeigh, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, SendMessageSet, kMax)
+    call InsertFieldSectionAtMessageSet(&
+         myNum, field, fieldName, idim_type, nNeigh, GlobalWithGhost, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvMessageSet, kMax)
+  end subroutine InsertFieldSectionAtSendRecvMessageSet_1D
+
+
+
+
   subroutine InsertFieldSectionAtSendRecvMessageSet_2D(&
        field, fieldName, idim_type, myNum, nNeigh, GlobalWithGhost, &
        xbSend, xeSend, ybSend, yeSend, willSend, SendMessageSet, &
@@ -1151,7 +1357,7 @@ contains
     call InsertFieldSectionAtMessageSet(&
          myNum, field, fieldName, idim_type, nNeigh, GlobalWithGhost, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvMessageSet)
-  end subroutine InsertFieldSectionAtSendRecvMessageSet_2D
+  end subroutine InsertFieldSectionAtSendRecvMessageSet_2D  
 
 
 
@@ -1397,7 +1603,7 @@ contains
     character(len=*), parameter :: NameRecvWP="AcouRecvWP"
 
     character(len=*), parameter :: h="**(CreateAcousticMessageSet)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! verify input arguments
 
@@ -1789,7 +1995,7 @@ contains
     type(MessageSet), pointer, intent(inout) :: AcouRecvWP
 
     character(len=*), parameter :: h="**(DestroyAcousticMessageSet)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (dumpLocal) then
        call MsgDump(h//" will destroy "//&
@@ -1869,7 +2075,7 @@ contains
 
     character(len=30) :: tmp_name
     character(len=*), parameter :: h="**(CreateDn0MessageSet)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! verify input arguments
 
@@ -2002,7 +2208,7 @@ contains
     type(MessageSet), pointer, intent(inout) :: SendDn0v
     type(MessageSet), pointer, intent(inout) :: RecvDn0v
     character(len=*), parameter :: h="**(DestroyDn0MessageSet)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (dumpLocal) then
        call MsgDump(h//" will destroy "//&
@@ -2069,7 +2275,7 @@ contains
 
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(CreateG3DMessageSet)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! verify input arguments
 
@@ -2191,7 +2397,7 @@ contains
     type(MessageSet), pointer, intent(inout) :: SendG3D
     type(MessageSet), pointer, intent(inout) :: RecvG3D
     character(len=*), parameter :: h="**(DestroyG3DMessageSet)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (dumpLocal) then
        call MsgDump(h//" will destroy Send/RecvG3D")
@@ -2252,7 +2458,7 @@ contains
     character(len=*), parameter :: NameRecvSelectedGhostZone="SelectedGhostZoneRecv"
 
     character(len=*), parameter :: h="**(CreateSelectedGhostZoneMessageSet)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! verify input arguments
 
@@ -2340,7 +2546,7 @@ contains
     type(MessageSet), pointer, intent(inout) :: SelectedGhostZoneSend
     type(MessageSet), pointer, intent(inout) :: SelectedGhostZoneRecv
     character(len=*), parameter :: h="**(DestroySelectedGhostZoneMessageSet)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (dumpLocal) then
        call MsgDump(h//" will destroy SelectedGhostZoneSend/Recv")
@@ -2401,7 +2607,7 @@ contains
     character(len=*), parameter :: NameRecvAllGhostZone="AllGhostZoneRecv"
 
     character(len=*), parameter :: h="**(CreateAllGhostZoneMessageSet)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! verify input arguments
 
@@ -2495,7 +2701,7 @@ contains
     type(MessageSet), pointer, intent(inout) :: AllGhostZoneSend
     type(MessageSet), pointer, intent(inout) :: AllGhostZoneRecv
     character(len=*), parameter :: h="**(DestroyAllGhostZoneMessageSet)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (dumpLocal) then
        call MsgDump(h//" will destroy AllGhostZoneSend/Recv")
@@ -2509,7 +2715,7 @@ contains
 
 
 
-  subroutine CreateAcouDampOneMessageSet(&
+  subroutine CreateAcouDampOneMessageSet3D(&
        field, fieldName, idim_type,  &
        ParEnv, Neigh, GlobalOwn, GlobalWithGhost, &
        Tag, NameSend, NameRecv, &
@@ -2553,8 +2759,8 @@ contains
     logical :: willSend(parEnv%nMachs)
     logical :: willRecv(parEnv%nMachs)
 
-    character(len=*), parameter :: h="**(CreateAcouDampOneMessageSet)**"
-    logical, parameter :: dumpLocal=.false.
+    character(len=*), parameter :: h="**(CreateAcouDampOneMessageSet3D)**"
+    logical, parameter :: dumpLocal=.true.
 
     ! verify input arguments
 
@@ -2624,7 +2830,134 @@ contains
        call MsgDump(h//" finishes with AcouDampOneRecv MessageSet:")
        call DumpMessageSet(AcouDampOneRecv)
     end if
-  end subroutine CreateAcouDampOneMessageSet
+  end subroutine CreateAcouDampOneMessageSet3D
+
+
+
+
+
+  subroutine CreateAcouDampOneMessageSet1D(&
+       field, fieldName, idim_type,  &
+       ParEnv, Neigh, GlobalOwn, GlobalWithGhost, &
+       Tag, NameSend, NameRecv, &
+       AcouDampOneSend, AcouDampOneRecv, kMax)
+
+    real, pointer, intent(in) :: field(:)
+    character(len=*), intent(in) :: fieldName
+    integer, intent(in) :: idim_type
+    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+    type(NeighbourNodes), pointer, intent(in) :: Neigh
+    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+    integer, intent(in) :: Tag
+    character(len=*), intent(in) :: NameSend
+    character(len=*), intent(in) :: NameRecv
+    type(MessageSet), pointer, intent(inout) :: AcouDampOneSend
+    type(MessageSet), pointer, intent(inout) :: AcouDampOneRecv
+    integer, intent(in) :: kMax
+
+
+    integer :: nMachs
+    integer :: myNum
+    integer :: nNeigh
+    integer :: vTabNbr
+    character(len=32) :: vTabName
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing global indices of regions for send and receive
+
+    integer :: xbSend(parEnv%nMachs)
+    integer :: xeSend(parEnv%nMachs)
+    integer :: ybSend(parEnv%nMachs)
+    integer :: yeSend(parEnv%nMachs)
+    integer :: xbRecv(parEnv%nMachs)
+    integer :: xeRecv(parEnv%nMachs)
+    integer :: ybRecv(parEnv%nMachs)
+    integer :: yeRecv(parEnv%nMachs)
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing which neighbour nodes will send of receive
+
+    logical :: willSend(parEnv%nMachs)
+    logical :: willRecv(parEnv%nMachs)
+
+    character(len=*), parameter :: h="**(CreateAcouDampOneMessageSet1D)**"
+    logical, parameter :: dumpLocal=.true.
+
+    ! verify input arguments
+
+    if (.not. associated(ParEnv)) then
+       call fatal_error(h//" starts with null ParEnv")
+    else if (.not. associated(GlobalOwn)) then
+       call fatal_error(h//" starts with null GlobalOwn")
+    else if (.not. associated(GlobalWithGhost)) then
+       call fatal_error(h//" starts with null GlobalWithGhost")
+    end if
+
+    if (dumpLocal) then
+       call MsgDump(h//" for field "//trim(adjustl(fieldName))//&
+            " will create "//trim(adjustl(NameSend))//" and "//&
+            trim(adjustl(NameRecv)))
+    end if
+
+    ! default output (case no neighbours)
+
+    if (.not. associated(Neigh)) then
+       if (dumpLocal) then
+          call MsgDump(h//" no neighbours for this Message Set")
+       end if
+       AcouDampOneSend => null()
+       AcouDampOneRecv => null()
+       return
+    end if
+
+    myNum  = ParEnv%myNum
+    nMachs = ParEnv%nMachs
+    nNeigh = Neigh%nNeigh
+
+    ! AcouDampOneSend, AcouDampOneRecv:
+    ! messages update entire GhostZone
+
+    call NodesRegionsSendRecv(&
+         nMachs=nMachs, &
+         nNeigh=nNeigh, &
+         myNum=myNum, &
+         tag=Tag, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwn, &
+         NameSend=NameSend, &
+         NameRecv=NameRecv, &
+         xbToUpdate=GlobalWithGhost%xb, &
+         xeToUpdate=GlobalWithGhost%xe, &
+         ybToUpdate=GlobalWithGhost%yb, &
+         yeToUpdate=GlobalWithGhost%ye, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         SendMessageSet=AcouDampOneSend, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         RecvMessageSet=AcouDampOneRecv)
+
+    !
+
+    call InsertFieldSectionAtSendRecvMessageSet(&
+         field, fieldName, idim_type, myNum, nNeigh, GlobalWithGhost, &
+         xbSend, xeSend, ybSend, yeSend, willSend, AcouDampOneSend, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouDampOneRecv, kMax)
+
+    if (dumpLocal) then
+       call MsgDump(h//" finishes with AcouDampOneSend MessageSet:")
+       call DumpMessageSet(AcouDampOneSend)
+       call MsgDump(h//" finishes with AcouDampOneRecv MessageSet:")
+       call DumpMessageSet(AcouDampOneRecv)
+    end if
+  end subroutine CreateAcouDampOneMessageSet1D  
 
 
 
@@ -2636,7 +2969,7 @@ contains
     type(MessageSet), pointer, intent(inout) :: AcouDampOneSend
     type(MessageSet), pointer, intent(inout) :: AcouDampOneRecv
     character(len=*), parameter :: h="**(DestroyAcouDampOneMessageSet)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (dumpLocal) then
        call MsgDump(h//" will destroy AcouDampOneSend/Recv")
@@ -2750,7 +3083,7 @@ contains
     integer, parameter :: idim_type=3
     type(FieldSection), pointer :: oneFieldSection
 
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(CreateWideGhostZoneMessageSet)**"
 
@@ -3295,7 +3628,7 @@ contains
     type(MessageSet), pointer, intent(inout) :: WideGhostZoneRecv
 
     character(len=*), parameter :: h="**(DestroyWideGhostZoneMessageSet)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (dumpLocal) then
        call MsgDump(h//" will destroy WideGhostZoneSend/Recv")
@@ -3307,47 +3640,7 @@ contains
 
 
 
-  subroutine UpdateFieldAdressAtMessageSet_2D(oneMessageSet, field, name)
-    type(MessageSet), pointer, intent(in) :: oneMessageSet
-    real, pointer, intent(in) :: field(:,:)
-    character(len=*), intent(in) :: name
-    character(len=*), parameter :: h="**(UpdateFieldAdressAtMessageSet_2D)**"
-
-    include "updateFieldAdressBody.f90"
-
-  end subroutine UpdateFieldAdressAtMessageSet_2D
-
-
-
-
-
-  subroutine UpdateFieldAdressAtMessageSet_3D(oneMessageSet, field, name)
-    type(MessageSet), pointer, intent(in) :: oneMessageSet
-    real, pointer, intent(in) :: field(:,:,:)
-    character(len=*), intent(in) :: name
-    character(len=*), parameter :: h="**(UpdateFieldAdressAtMessageSet_3D)**"
-
-    include "updateFieldAdressBody.f90"
-
-  end subroutine UpdateFieldAdressAtMessageSet_3D
-
-
-
-
-
-  subroutine UpdateFieldAdressAtMessageSet_4D(oneMessageSet, field, name)
-    type(MessageSet), pointer, intent(in) :: oneMessageSet
-    real, pointer, intent(in) :: field(:,:,:,:)
-    character(len=*), intent(in) :: name
-    character(len=*), parameter :: h="**(UpdateFieldAdressAtMessageSet_4D)**"
-
-    include "updateFieldAdressBody.f90"
-
-  end subroutine UpdateFieldAdressAtMessageSet_4D
-
-
-
-
+  
   subroutine PostSendRecvMsgsFixedAdress(SendMsg, RecvMsg)
 
     ! posts all nonblocking send and recv operations of
@@ -3365,7 +3658,7 @@ contains
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
     character(len=*), parameter :: h="**(PostSendRecvMsgsFixedAdress)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! post nonblocking receive for each receiving message;
     ! a single receive msg from each process
@@ -3436,6 +3729,98 @@ contains
 
 
 
+
+  subroutine PostSendRecvMsgsFixedAdress1D(SendMsg, RecvMsg, nzp, nxp, nyp)
+
+    ! posts all nonblocking send and recv operations of
+    ! a message set pair of variables
+
+    type(MessageSet), pointer, intent(in) :: SendMsg
+    type(MessageSet), pointer, intent(in) :: RecvMsg
+    integer, intent(in) :: nzp
+    integer, intent(in) :: nxp
+    integer, intent(in) :: nyp
+
+    integer :: iSend
+    integer :: iRecv
+    integer :: firstBuffer
+    integer :: lastBuffer
+    integer :: ierr
+    type(MessageData), pointer :: msgData => null()
+    type(FieldSection), pointer :: node => null()
+    character(len=8) :: c0, c1, c2, c3, c4, c5
+    character(len=*), parameter :: h="**(PostSendRecvMsgsFixedAdress1D)**"
+    logical, parameter :: dumpLocal=.true.
+
+    ! post nonblocking receive for each receiving message;
+    ! a single receive msg from each process
+
+    if (associated(RecvMsg)) then
+       if (dumpLocal) then
+          if (RecvMsg%nMsgs > 0) then
+             write(c0,"(i8)") RecvMsg%nMsgs
+             call MsgDump(h//" for "//trim(adjustl(RecvMsg%name))//&
+                  " will post "//trim(adjustl(c0))//&
+                  " nonblocking receives")
+          end if
+       end if
+       do iRecv= 1,RecvMsg%nMsgs
+
+          call AllocateMessageDataBuffer(RecvMsg%msgData(iRecv))
+
+          ! post receive
+
+          write(c0,"(i8)") iRecv
+          call PostRecvMessageData(RecvMsg%msgData(iRecv), &
+               RecvMsg%otherProc(iRecv), RecvMsg%tag, &
+               RecvMsg%request(iRecv), &
+               h//" for iRecv="//trim(adjustl(c0)))
+       end do
+    else
+       if (dumpLocal) then
+          call MsgDump(h//" empty receive message set")
+       end if
+    end if
+
+    ! for each sending message,
+    ! build send buffer and copy field sections to the buffer;
+    ! post nonblocking send;
+    ! A single send message to each process
+
+    if (associated(SendMsg)) then
+       if (dumpLocal) then
+          if (SendMsg%nMsgs > 0) then
+             write(c0,"(i8)") SendMsg%nMsgs
+             call MsgDump(h//" for "//trim(adjustl(SendMsg%name))//&
+                  " will post "//trim(adjustl(c0))//&
+                  " nonblocking sends")
+          end if
+       end if
+       do iSend = 1,SendMsg%nMsgs
+
+          ! allocate and fill send buffer with field sections to send
+
+          call AllocateMessageDataBuffer(SendMsg%msgData(iSend))
+          call FillMessageDataBuffer(SendMsg%msgData(iSend), nzp, nxp, nyp)
+
+          ! post send message
+
+          write(c0,"(i8)") iSend
+          call PostSendMessageData(SendMsg%msgData(iSend), &
+               SendMsg%otherProc(iSend), SendMsg%tag, &
+               SendMsg%request(iSend), &
+               h//" for iSend="//trim(adjustl(c0)))
+       end do
+    else
+       if (dumpLocal) then
+          call MsgDump(h//" empty send message set")
+       end if
+    end if
+  end subroutine PostSendRecvMsgsFixedAdress1D  
+
+
+
+
   
   subroutine PostSendRecvMsgsVariableAdressArr(SendMsg, RecvMsg, scp, ufx, vfx, wfx)
 
@@ -3458,7 +3843,7 @@ contains
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
     character(len=*), parameter :: h="**(PostSendRecvMsgsVariableAdressArr)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! post nonblocking receive for each receiving message;
     ! a single receive msg from each process
@@ -3550,7 +3935,7 @@ contains
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
     character(len=*), parameter :: h="**(PostSendRecvMsgsVariableAdressScalar)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! post nonblocking receive for each receiving message;
     ! a single receive msg from each process
@@ -3641,7 +4026,7 @@ contains
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
     character(len=*), parameter :: h="**(WaitSendRecvMsgsFixedAdress)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! for each receive message:
     ! build send buffer and copy field sections to the buffer;
@@ -3701,6 +4086,88 @@ contains
 
 
 
+
+  subroutine WaitSendRecvMsgsFixedAdress1D(SendMsg, RecvMsg, nzp, nxp, nyp)
+    type(MessageSet), pointer, intent(in) :: SendMsg
+    type(MessageSet), pointer, intent(in) :: RecvMsg
+    integer, intent(in) :: nzp
+    integer, intent(in) :: nxp
+    integer, intent(in) :: nyp
+
+    ! waits for all nonblocking send and recv operations of
+    ! a message set pair of variables
+
+    integer :: i
+    integer :: iSend
+    integer :: iRecv
+    integer :: firstBuffer
+    integer :: lastBuffer
+    integer :: recvNbr
+    integer :: sendNbr
+    integer :: ierr
+    type(MessageData), pointer :: msgData => null()
+    type(FieldSection), pointer :: node => null()
+    character(len=8) :: c0, c1, c2, c3, c4, c5
+    character(len=*), parameter :: h="**(WaitSendRecvMsgsFixedAdress1D)**"
+    logical, parameter :: dumpLocal=.true.
+
+    ! for each receive message:
+    ! build send buffer and copy field sections to the buffer;
+    ! post nonblocking send;
+    ! A single send message to each process
+
+    if (associated(RecvMsg)) then
+       if (dumpLocal) then
+          write(c0,"(i8)") RecvMsg%nMsgs
+          call MsgDump(h//" for "//trim(adjustl(RecvMsg%name))//&
+               " waits on "//trim(adjustl(c0))//" receives")
+       end if
+
+       do iRecv= 1,RecvMsg%nMsgs
+
+          ! wait on any arrived message
+
+          call parf_wait_any_nostatus(RecvMsg%nMsgs, &
+               RecvMsg%request, recvNbr)
+          msgData => RecvMsg%msgData(recvNbr)
+          if (dumpLocal) then
+             write(c0,"(i8)") recvNbr
+             write(c1,"(i8)") RecvMsg%otherProc(recvNbr)
+             call MsgDump(h//" received message #"//trim(adjustl(c0))//&
+                  " from MPI proc "//trim(adjustl(c1)))
+          end if
+
+          ! extract field sections from incoming buffer
+          ! and store at destination fields
+
+          call DecomposeMessageDataBuffer(RecvMsg%msgData(recvNbr), nzp, nxp, nyp)
+          call DeallocateMessageDataBuffer(RecvMsg%msgData(recvNbr))
+       end do
+    else
+       if (dumpLocal) then
+          call MsgDump(h//" empty receive message set")
+       end if
+    end if
+
+    ! for all posted send messages, wait on pending request,
+    ! deallocate buffer and empty request
+
+    if (associated(SendMsg)) then
+       !CDIR$ NOVECTOR
+       do iSend = 1,SendMsg%nMsgs
+          call parf_wait_any_nostatus(SendMsg%nMsgs, &
+               SendMsg%request, sendNbr)
+          call DeallocateMessageDataBuffer(SendMsg%msgData(sendNbr))
+       end do
+    else
+       if (dumpLocal) then
+          call MsgDump(h//" empty send message set")
+       end if
+    end if
+  end subroutine WaitSendRecvMsgsFixedAdress1D  
+
+
+
   subroutine WaitSendRecvMsgsVariableAdress(SendMsg, RecvMsg, &
        msgStartZ, msgEndZ, scr, ufx_local, wfx_local, vfx_local)
 
@@ -3728,7 +4195,7 @@ contains
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
     character(len=*), parameter :: h="**(WaitSendRecvMsgsVariableAdress)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! for each receive message:
     ! build send buffer and copy field sections to the buffer;
@@ -3805,7 +4272,7 @@ contains
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
     character(len=*), parameter :: h="**(PostSendRecvMsgsVariableAdressOneArr)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! post nonblocking receive for each receiving message;
     ! a single receive msg from each process
@@ -3900,7 +4367,7 @@ contains
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
     character(len=*), parameter :: h="**(WaitSendRecvMsgsVariableAdressOneArr)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! for each receive message:
     ! build send buffer and copy field sections to the buffer;
@@ -3958,4 +4425,3 @@ contains
     end if
   end subroutine WaitSendRecvMsgsVariableAdressOneArr
 end module ModMessageSet
-  

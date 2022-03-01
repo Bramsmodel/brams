@@ -28,13 +28,10 @@ ModMessageData.o  : $(MPI)/ModMessageData.f90 \
 
 ModMessageSet.o  : $(MPI)/ModMessageSet.f90 \
 	ModGridDims.o ModParallelEnvironment.o ModNeighbourNodes.o ModDomainDecomp.o \
-	ModFieldSection.o ModMessageData.o var_tables.o ModNamelistFile.o mem_grid.o \
-	$(MPI)/updateFieldAdressBody.f90
+	ModFieldSection.o ModMessageData.o var_tables.o ModNamelistFile.o mem_grid.o 
 	@cp -f $< $(<F:.f90=.f90)
-	@cp $(MPI)/updateFieldAdressBody.f90 .
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
-	rm -f updateFieldAdressBody.f90
 
 ModGridDims.o  : $(MPI)/ModGridDims.f90 \
 	ModNamelistFile.o ModParallelEnvironment.o
@@ -46,7 +43,7 @@ ModGrid.o  : $(MPI)/ModGrid.f90 \
 	ModNamelistFile.o ModParallelEnvironment.o \
 	ModGridDims.o ModDomainDecomp.o \
 	ModNeighbourNodes.o ModMessageSet.o \
-	ModMonotonicAdvection.o var_tables.o meteogramType.o
+	ModMonotonicAdvection.o var_tables.o meteogramType.o mem_tend.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

@@ -67,7 +67,6 @@ module ModAdvectc_rk
        Grid
 
   use ModMessageSet, only: &
-       UpdateFieldAdress, &
        PostSendRecvMsgs, &
        PostSendRecvMsgsVariableAdress, &
        WaitSendRecvMsgs

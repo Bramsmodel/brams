@@ -17,10 +17,10 @@ contains
     use grid_dims, only: &
          nzpmax
          
-    use ModParallelEnvironment, only: MsgDump
+    use ModParallelEnvironment, only: &
+         MsgDump
 
     use ModMessageSet, only: &
-         UpdateFieldAdress, &
          PostSendRecvMsgs, &
          WaitSendRecvMsgs
 
@@ -258,6 +258,8 @@ contains
     integer :: lenCopy
     character(len=256) :: julesFile
 
+    integer :: bramsRankNbr
+    integer :: myNxp, myNyp, myNzp
     !MB: for testing only
     logical,parameter :: stepDebug=.true.
     logical, parameter :: dumpLocal=.false.
@@ -587,10 +589,6 @@ contains
 
 !!$    call SynchronizedTimeStamp(TS_RK_RESTO) ! Exper1.2, 2021_12
 
-    ! update field memory address at Message Set
-
-    call UpdateFieldAdress(OneGrid%AcouDampThtSend, tend%tht_rk_3D, "Tht")
-    call UpdateFieldAdress(OneGrid%AcouDampThtRecv, tend%tht_rk_3D, "Tht")
     
     do l_rk = 1, rk_order
 
@@ -648,13 +646,19 @@ contains
 
        !- update thp -> thc (theta_il is not contained in acoustic_new)
        if (.not. singleProcRun) then
-          lenCopy=size(tend%tht_rk_3D)
-          call Copy1DTo3D(tend%tht_rk(1:lenCopy), tend%tht_rk_3D)
+!!$          lenCopy=size(tend%tht_rk_3D)
+!!$          call Copy1DTo3D(tend%tht_rk(1:lenCopy), tend%tht_rk_3D)
           if (dumpLocal) then
              call MsgDump(h//" exchange borders of tend%tht_rk")
           end if
-          call PostSendRecvMsgs(OneGrid%AcouDampThtSend, OneGrid%AcouDampThtRecv)
-          call WaitSendRecvMsgs(OneGrid%AcouDampThtSend, OneGrid%AcouDampThtRecv)
+          bramsRankNbr=OneGrid%ParEnv%mynum
+          myNzp=OneGrid%GridSize%nnzp
+          myNxp=OneGrid%LocalOwn%nx(bramsRankNbr)
+          myNyp=OneGrid%LocalOwn%ny(bramsRankNbr)
+          call PostSendRecvMsgs(OneGrid%AcouDampThtSend, OneGrid%AcouDampThtRecv, &
+               myNzp, myNxp, myNyp)
+          call WaitSendRecvMsgs(OneGrid%AcouDampThtSend, OneGrid%AcouDampThtRecv, &
+               myNzp, myNxp, myNyp)
        endif
        call update_long_rk(int(mxp*myp*mzp,i8),dtlt,rk_beta(l_rk) &
             ,basic_g(ngrid)%thc,basic_g(ngrid)%thp  &
