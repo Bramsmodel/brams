@@ -315,6 +315,7 @@ clean:
 	$(MAKE) -f Make_utils  clean
 	$(MAKE) -f Make_ifs clean
 	rm -f $(OBJ_MODEL) $(MOD_MODEL) $(MAINOBJ) $(JULES_OBJ_SFCLYR) $(JULES_OBJ_MEM) $(EXE) $(LIBMODEL) *.oo
+	rm -f *90
 
 install:
 	install -D $(EXE) $(BINDIR)/$(notdir $(EXE))

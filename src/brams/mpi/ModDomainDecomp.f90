@@ -80,10 +80,10 @@ module ModDomainDecomp
      ! Bit 4 is set iff north sub-domain boundary (high y value) is a global boundary
 
      ! To check if a sub-domain boundary is a global domain boundary, use:
-     !  if btest(ibcon(mach),4) is true, sub-domain north boundary is a global boundary
-     !  if btest(ibcon(mach),3) is true, sub-domain south boundary is a global boundary
-     !  if btest(ibcon(mach),2) is true, sub-domain east boundary is a global boundary
      !  if btest(ibcon(mach),1) is true, sub-domain west boundary is a global boundary
+     !  if btest(ibcon(mach),2) is true, sub-domain east boundary is a global boundary
+     !  if btest(ibcon(mach),3) is true, sub-domain south boundary is a global boundary
+     !  if btest(ibcon(mach),4) is true, sub-domain north boundary is a global boundary
 
      integer, allocatable :: ibcon(:) ! full domain boundary flag
 

@@ -53,7 +53,12 @@ module ModGrid
        CreateMonotonicAdvection, &
        DestroyMonotonicAdvection
 
-
+  use ModNodeDimensions, only: &
+       NodeDimensions, &
+       CreateNodeDimensions, &
+       DestroyNodeDimensions, &
+       DumpNodeDimensions
+  
   ! JP: temporariamente usa variaveis globais enquanto
   !     var_tables nao for inclusa no tipo Grid
 
@@ -163,6 +168,9 @@ module ModGrid
      ! Fields to update are local variables to these procedures,
      ! allocated and deallocated at each call. As so, field
      ! memory address vary with procedure invocation
+     type(NodeDimensions), pointer :: NodeDims => null()
+     ! NodeDims: indices and dimensions of this process
+     ! domain decomposed sub-domain
   end type Grid
 
 
@@ -264,6 +272,16 @@ contains
          GlobalOwn=oneGrid%GlobalOwn, &
          GlobalWithGhost=oneGrid%GlobalWithGhost, &
          varName="oneGrid%Neigh" &
+         )
+
+    oneGrid%NodeDims => CreateNodeDimensions(&
+         GridSize=oneGrid%GridSize, &
+         ParEnv=oneGrid%ParEnv, &
+         LocalOwn=oneGrid%LocalOwn, &
+         GlobalOwn=oneGrid%GlobalOwn, &
+         verticalGhostZoneWidth=0, &
+         surfaceGhostZoneWidth=1, &
+         varName="NodeDims" &
          )
 
     if (dumpLocal) then
@@ -484,6 +502,7 @@ contains
             oneGrid%AcouDampThtSend, oneGrid%AcouDampThtRecv)
        call DestroyWideGhostZoneMessageSet(&
             oneGrid%WideGhostZoneSend, oneGrid%WideGhostZoneRecv)
+       call DestroyNodeDimensions(oneGrid%NodeDims)
        deallocate(oneGrid)
     end if
     nullify(oneGrid)
@@ -589,5 +608,6 @@ contains
     call DumpMessageSet(oneGrid%WideGhostZoneSend)
     call MsgDump(h//" dumping WideGhostZoneRecv")
     call DumpMessageSet(oneGrid%WideGhostZoneRecv)
+    call DumpNodeDimensions(oneGrid%NodeDims, "NodeDims")
   end subroutine DumpGrid
 end module ModGrid

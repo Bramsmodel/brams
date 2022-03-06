@@ -11,6 +11,7 @@ MAINOBJ = rammain.o
 OBJ_MOD = \
 	mem_stilt.o \
 	node_mod.o    \
+	ModNodeDimensions.o \
 	ModVarfFile.o \
 	ModBuffering.o \
 	ModMessageData.o \
