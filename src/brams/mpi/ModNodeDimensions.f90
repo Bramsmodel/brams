@@ -65,15 +65,15 @@ module ModNodeDimensions
      integer :: j0
      ! y offset
 
-     ! wether this process sub-domain boundary is also a full grid boundary
+     ! whether this process sub-domain boundary is also a full grid boundary
 
-     logical :: boundNorth
+     logical :: borderNorth
      ! on y axis upper limit
-     logical :: boundSouth
+     logical :: borderSouth
      ! on y axis lower limit
-     logical :: boundEast
+     logical :: borderEast
      ! on x axis upper limit
-     logical :: boundWest
+     logical :: borderWest
      ! on x axis lower limit
      
   end type NodeDimensions
@@ -128,10 +128,10 @@ contains
 
     res%GhostZoneWidth = surfaceGhostZoneWidth
 
-    res%boundNorth = btest(LocalOwn%ibcon(myNum),4)
-    res%boundSouth = btest(LocalOwn%ibcon(myNum),3)
-    res%boundEast = btest(LocalOwn%ibcon(myNum),2)
-    res%boundWest = btest(LocalOwn%ibcon(myNum),1)
+    res%borderNorth = btest(LocalOwn%ibcon(myNum),4)
+    res%borderSouth = btest(LocalOwn%ibcon(myNum),3)
+    res%borderEast = btest(LocalOwn%ibcon(myNum),2)
+    res%borderWest = btest(LocalOwn%ibcon(myNum),1)
     
     res%mxp = LocalOwn%xe(myNum)-LocalOwn%xb(myNum)+1+2*surfaceGhostZoneWidth
     res%myp = LocalOwn%ye(myNum)-LocalOwn%yb(myNum)+1+2*surfaceGhostZoneWidth
@@ -139,7 +139,7 @@ contains
     
     res%ia=LocalOwn%xb(myNum)
     res%iz=LocalOwn%xe(myNum)
-    if (res%boundEast) then
+    if (res%borderEast) then
        res%izu=res%iz-1
     else
        res%izu=res%iz
@@ -147,7 +147,7 @@ contains
 
     res%ja=LocalOwn%yb(myNum)
     res%jz=LocalOwn%ye(myNum)
-    if (res%boundNorth) then
+    if (res%borderNorth) then
        res%jzv=res%jz-1
     else
        res%jzv=res%jz
@@ -245,10 +245,10 @@ contains
          trim(adjustl(str(1))))
     
     str(1)=""
-    if (oneNodeDimensions%boundWest) str(1)=trim(str(1))//"X-"
-    if (oneNodeDimensions%boundEast) str(1)=trim(str(1))//"X+"
-    if (oneNodeDimensions%boundSouth) str(1)=trim(str(1))//"Y-"
-    if (oneNodeDimensions%boundNorth) str(1)=trim(str(1))//"Y+"
+    if (oneNodeDimensions%borderWest) str(1)=trim(str(1))//"X-"
+    if (oneNodeDimensions%borderEast) str(1)=trim(str(1))//"X+"
+    if (oneNodeDimensions%borderSouth) str(1)=trim(str(1))//"Y-"
+    if (oneNodeDimensions%borderNorth) str(1)=trim(str(1))//"Y+"
     if (len(str(1)) == 0) then
        call MsgDump(h//" this sub-domain has none full grid boundaries")
     else

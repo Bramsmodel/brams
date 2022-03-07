@@ -73,9 +73,6 @@ module ModAdvectc_rk
 
   use advRkParam, only: fifth_order, eps,real_init
 
-  use ModComm, only: &
-       border
-
   use node_mod, only:  nmachs, myNum,nodei0,nodej0
 
   implicit none
@@ -120,7 +117,10 @@ contains
     real, dimension(mzp,mxp,myp), intent(in) :: ufx, vfx,wfx,vt3dh,vt3dj,vt3dk
     character(len=*),intent(in) :: vname
 
+    logical, parameter :: dumpLocal=.false.
+    character(len=8) :: str(10)
     character(len=*), parameter :: h="**(advect_ws_pointer_rank1)**"
+
     logical :: scalar
     real, pointer :: qz(:,:,:)
     real, pointer :: qx(:,:,:)
@@ -140,8 +140,16 @@ contains
     integer :: mzpp3,mxpp3,mypp3
     integer :: mzppks,mxppis,myppjs
 
-    logical, parameter :: dumpLocal=.false.
-    character(len=8) :: str(10)
+    logical :: borderNorth
+    logical :: borderSouth
+    logical :: borderEast
+    logical :: borderWest
+
+    borderNorth=OneGrid%NodeDims%borderNorth
+    borderSouth=OneGrid%NodeDims%borderSouth
+    borderEast=OneGrid%NodeDims%borderEast
+    borderWest=OneGrid%NodeDims%borderWest
+
 
     call PostSendRecvMsgsVariableAdress(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv, &
          scp, ufx, vfx, wfx)
@@ -198,36 +206,33 @@ contains
             mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
             mzppks,mxppis,myppjs, &
             scr,ufx_local,vfx_local,&
-            border(mynum,:),qx,qy, &
-            variable, vname)
+            qx, qy, variable, vname)
     case (2)
        call compXYInterface_or2(mxp,myp,mzp,ks,is,js,&
             mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
             mzppks,mxppis,myppjs, &
             scr,ufx_local,vfx_local,&
-            border(mynum,:),qx,qy, &
-            variable, vname)
+            qx, qy, variable, vname)
     case (3)
        call compXYInterface_or3(mxp,myp,mzp,ks,is,js,&
             mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
             mzppks,mxppis,myppjs, &
             scr,ufx_local,vfx_local,&
-            border(mynum,:),qx,qy, &
-            variable, vname)
+            borderNorth, borderSouth, borderEast, borderWest, &
+            qx, qy, variable, vname)
     case (4)
        call compXYInterface_or4(mxp,myp,mzp,ks,is,js,&
             mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
             mzppks,mxppis,myppjs, &
             scr,ufx_local,vfx_local,&
-            border(mynum,:),qx,qy, &
-            variable, vname)
+            qx, qy, variable, vname)
     case(5,6)
        call compXYInterface_or56(mxp,myp,mzp,ks,is,js,&
             mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
             mzppks,mxppis,myppjs, &
             scr,ufx_local,vfx_local,&
-            border(mynum,:),qx,qy, &
-            variable, vname, order_h)
+            borderNorth, borderSouth, borderEast, borderWest, &
+            qx, qy, variable, vname, order_h)
     case default
        write (*,fmt='(A)') 'Advect Error : the order_h must be from 1 to 6'
        stop 'ERROR!'
@@ -324,7 +329,10 @@ contains
     real, dimension(mzp,mxp,myp), intent(in) :: ufx, vfx,wfx,vt3dh,vt3dj,vt3dk
     character(len=*),intent(in) :: vname
 
+    logical, parameter :: dumpLocal=.false.
+    character(len=8) :: str(10)
     character(len=*), parameter :: h="**(advect_ws_pointer_rank3)**"
+
     logical :: scalar
     real, pointer :: qz(:,:,:)
     real, pointer :: qx(:,:,:)
@@ -344,8 +352,15 @@ contains
     integer :: mzpp3,mxpp3,mypp3
     integer :: mzppks,mxppis,myppjs
 
-    logical, parameter :: dumpLocal=.false.
-    character(len=8) :: str(10)
+    logical :: borderNorth
+    logical :: borderSouth
+    logical :: borderEast
+    logical :: borderWest
+
+    borderNorth=OneGrid%NodeDims%borderNorth
+    borderSouth=OneGrid%NodeDims%borderSouth
+    borderEast=OneGrid%NodeDims%borderEast
+    borderWest=OneGrid%NodeDims%borderWest
 
     call PostSendRecvMsgsVariableAdress(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv, &
          scp, ufx, vfx, wfx)
@@ -402,36 +417,33 @@ contains
             mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
             mzppks,mxppis,myppjs, &
             scr,ufx_local,vfx_local,&
-            border(mynum,:),qx,qy, &
-            variable, vname)
+            qx, qy, variable, vname)
     case (2)
        call compXYInterface_or2(mxp,myp,mzp,ks,is,js,&
             mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
             mzppks,mxppis,myppjs, &
             scr,ufx_local,vfx_local,&
-            border(mynum,:),qx,qy, &
-            variable, vname)
+            qx, qy, variable, vname)
     case (3)
        call compXYInterface_or3(mxp,myp,mzp,ks,is,js,&
             mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
             mzppks,mxppis,myppjs, &
             scr,ufx_local,vfx_local,&
-            border(mynum,:),qx,qy, &
-            variable, vname)
+            borderNorth, borderSouth, borderEast, borderWest, &
+            qx, qy, variable, vname)
     case (4)
        call compXYInterface_or4(mxp,myp,mzp,ks,is,js,&
             mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
             mzppks,mxppis,myppjs, &
             scr,ufx_local,vfx_local,&
-            border(mynum,:),qx,qy, &
-            variable, vname)
+            qx,qy, variable, vname)
     case(5,6)
        call compXYInterface_or56(mxp,myp,mzp,ks,is,js,&
             mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
             mzppks,mxppis,myppjs, &
             scr,ufx_local,vfx_local,&
-            border(mynum,:),qx,qy, &
-            variable, vname, order_h)
+            borderNorth, borderSouth, borderEast, borderWest, &
+            qx, qy, variable, vname, order_h)
     case default
        write (*,fmt='(A)') 'Advect Error : the order_h must be from 1 to 6'
        stop 'ERROR!'
@@ -529,7 +541,10 @@ contains
     real, dimension(mzp,mxp,myp), intent(in) :: ufx, vfx,wfx,vt3dh,vt3dj,vt3dk
     character(len=*),intent(in) :: vname
 
+    logical, parameter :: dumpLocal=.false.
+    character(len=8) :: str(10)
     character(len=*), parameter :: h="**(advect_ws_pointer_scalar)**"
+
     logical :: scalar
     real, pointer :: qz(:,:,:)
     real, pointer :: qx(:,:,:)
@@ -549,8 +564,15 @@ contains
     integer :: mzpp3,mxpp3,mypp3
     integer :: mzppks,mxppis,myppjs
 
-    logical, parameter :: dumpLocal=.false.
-    character(len=8) :: str(10)
+    logical :: borderNorth
+    logical :: borderSouth
+    logical :: borderEast
+    logical :: borderWest
+
+    borderNorth=OneGrid%NodeDims%borderNorth
+    borderSouth=OneGrid%NodeDims%borderSouth
+    borderEast=OneGrid%NodeDims%borderEast
+    borderWest=OneGrid%NodeDims%borderWest
 
     call PostSendRecvMsgsVariableAdress(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv, &
          scp, ufx, vfx, wfx)
@@ -607,36 +629,33 @@ contains
             mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
             mzppks,mxppis,myppjs, &
             scr,ufx_local,vfx_local,&
-            border(mynum,:),qx,qy, &
-            variable, vname)
+            qx, qy, variable, vname)
     case (2)
        call compXYInterface_or2(mxp,myp,mzp,ks,is,js,&
             mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
             mzppks,mxppis,myppjs, &
             scr,ufx_local,vfx_local,&
-            border(mynum,:),qx,qy, &
-            variable, vname)
+            qx, qy, variable, vname)
     case (3)
        call compXYInterface_or3(mxp,myp,mzp,ks,is,js,&
             mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
             mzppks,mxppis,myppjs, &
             scr,ufx_local,vfx_local,&
-            border(mynum,:),qx,qy, &
-            variable, vname)
+            borderNorth, borderSouth, borderEast, borderWest, &
+            qx, qy, variable, vname)
     case (4)
        call compXYInterface_or4(mxp,myp,mzp,ks,is,js,&
             mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
             mzppks,mxppis,myppjs, &
             scr,ufx_local,vfx_local,&
-            border(mynum,:),qx,qy, &
-            variable, vname)
+            qx, qy, variable, vname)
     case(5,6)
        call compXYInterface_or56(mxp,myp,mzp,ks,is,js,&
             mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
             mzppks,mxppis,myppjs, &
             scr,ufx_local,vfx_local,&
-            border(mynum,:),qx,qy, &
-            variable, vname, order_h)
+            borderNorth, borderSouth, borderEast, borderWest, &
+            qx, qy, variable, vname, order_h)
     case default
        write (*,fmt='(A)') 'Advect Error : the order_h must be from 1 to 6'
        stop 'ERROR!'
@@ -1529,7 +1548,7 @@ subroutine compXYInterface_or1(mxp,myp,mzp,ks,isi,js,&
      mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
      mzppks,mxppis,myppjs, &
      scr,ufx_local,vfx_local,&
-     border,qx,qy,variable, vname)
+     qx,qy,variable, vname)
   implicit none
   integer, intent(in) :: mxp
   integer, intent(in) :: myp
@@ -1549,7 +1568,6 @@ subroutine compXYInterface_or1(mxp,myp,mzp,ks,isi,js,&
   real,intent(in)     :: scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3)
   real,intent(in)     :: ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
   real,intent(in)     :: vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  logical, intent(in) :: border(4)
   character(len=*), intent(in) :: vname
   logical, intent(in) :: variable
   real,intent(out)    :: qx(mzppks,mxppis,myppjs)
@@ -1584,7 +1602,7 @@ subroutine compXYInterface_or2(mxp,myp,mzp,ks,isi,js,&
      mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
      mzppks,mxppis,myppjs, &
      scr,ufx_local,vfx_local,&
-     border,qx,qy,variable, vname)
+     qx, qy,variable, vname)
   implicit none
   integer, intent(in) :: mxp
   integer, intent(in) :: myp
@@ -1604,7 +1622,6 @@ subroutine compXYInterface_or2(mxp,myp,mzp,ks,isi,js,&
   real,intent(in)     :: scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3)
   real,intent(in)     :: ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
   real,intent(in)     :: vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  logical, intent(in) :: border(4)
   character(len=*), intent(in) :: vname
   logical, intent(in) :: variable
   real,intent(out)    :: qx(mzppks,mxppis,myppjs)
@@ -1637,11 +1654,8 @@ subroutine compXYInterface_or3(mxp,myp,mzp,ks,isi,js,&
      mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
      mzppks,mxppis,myppjs, &
      scr,ufx_local,vfx_local,&
-     border,qx,qy,variable, vname)
-  use ModComm, only: north
-  use ModComm, only: south
-  use ModComm, only: east
-  use ModComm, only: west
+     borderNorth, borderSouth, borderEast, borderWest, &
+     qx,qy,variable, vname)
   implicit none
   integer, intent(in) :: mxp
   integer, intent(in) :: myp
@@ -1661,7 +1675,10 @@ subroutine compXYInterface_or3(mxp,myp,mzp,ks,isi,js,&
   real,intent(in)     :: scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3)
   real,intent(in)     :: ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
   real,intent(in)     :: vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  logical, intent(in) :: border(4)
+  logical, intent(in) :: borderNorth
+  logical, intent(in) :: borderSouth
+  logical, intent(in) :: borderEast
+  logical, intent(in) :: borderWest
   character(len=*), intent(in) :: vname
   logical, intent(in) :: variable
   real,intent(out)    :: qx(mzppks,mxppis,myppjs)
@@ -1678,7 +1695,7 @@ subroutine compXYInterface_or3(mxp,myp,mzp,ks,isi,js,&
   do j = 1,myp
      do i = 1,mxp-1
         do k = 1,mzp
-           if(((border(west) .and. i==1) .or. (border(east) .and. i>mxp-2)) &
+           if(((borderWest .and. i==1) .or. (borderEast .and. i>mxp-2)) &
                 .and. variable) then
               !Use order 1
               dir = sign(1.0,ufx_local(k,i,j)+ufx_local(k+ks,i+isi,j+js))
@@ -1695,7 +1712,8 @@ subroutine compXYInterface_or3(mxp,myp,mzp,ks,isi,js,&
   do j = 1,myp-1
      do i = 1,mxp
         do k = 1,mzp
-           if(((border(north) .and. j==1) .or. (border(south) .and. j>myp-2)) &
+           if(((borderSouth .and. j==1) .or. (borderNorth .and. j>myp-2)) &
+!!$           if(((borderNorth .and. j==1) .or. (borderSouth .and. j>myp-2)) &
                 .and. variable) then
               dir = sign(1.0,vfx_local(k,i,j)+vfx_local(k+ks,i+isi,j+js))
               qy(k,i,j)=flux_upwind(scr(k,i,j),scr(k,i,j+1),dir)
@@ -1714,7 +1732,7 @@ subroutine compXYInterface_or4(mxp,myp,mzp,ks,isi,js,&
      mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
      mzppks,mxppis,myppjs, &
      scr,ufx_local,vfx_local,&
-     border,qx,qy,variable, vname)
+     qx, qy,variable, vname)
   implicit none
   integer, intent(in) :: mxp
   integer, intent(in) :: myp
@@ -1734,7 +1752,6 @@ subroutine compXYInterface_or4(mxp,myp,mzp,ks,isi,js,&
   real,intent(in)     :: scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3)
   real,intent(in)     :: ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
   real,intent(in)     :: vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  logical, intent(in) :: border(4)
   character(len=*), intent(in) :: vname
   logical, intent(in) :: variable
   real,intent(out)    :: qx(mzppks,mxppis,myppjs)
@@ -1766,11 +1783,8 @@ subroutine compXYInterface_or56(mxp,myp,mzp,ks,isi,js,&
      mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
      mzppks,mxppis,myppjs, &
      scr,ufx_local,vfx_local,&
-     border,qx,qy,variable, vname, order_h)
-  use ModComm, only: north
-  use ModComm, only: south
-  use ModComm, only: east
-  use ModComm, only: west
+     borderNorth, borderSouth, borderEast, borderWest, &
+     qx, qy,variable, vname, order_h)
   use advRkParam, only: fifth_order
   implicit none
   integer, intent(in) :: mxp
@@ -1792,7 +1806,10 @@ subroutine compXYInterface_or56(mxp,myp,mzp,ks,isi,js,&
   real,intent(in)     :: scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3)
   real,intent(in)     :: ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
   real,intent(in)     :: vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  logical, intent(in) :: border(4)
+  logical, intent(in) :: borderNorth
+  logical, intent(in) :: borderSouth
+  logical, intent(in) :: borderEast
+  logical, intent(in) :: borderWest
   character(len=*), intent(in) :: vname
   logical, intent(in) :: variable
   real,intent(out)    :: qx(mzppks,mxppis,myppjs)
@@ -1808,12 +1825,12 @@ subroutine compXYInterface_or56(mxp,myp,mzp,ks,isi,js,&
   do j = 1,myp
      do i = 1,mxp-1
         do k = 1,mzp
-           if(((border(west) .and. i==1) .or. (border(east) .and. i==mxp-1)) &
+           if(((borderWest .and. i==1) .or. (borderEast .and. i==mxp-1)) &
                 .and. variable) then
               !Order=1
               dir = sign(1.0,ufx_local(k,i,j)+ufx_local(k+ks,i+isi,j+js))
               qx(k,i,j)=flux_upwind(scr(k,i,j),scr(k,i+1,j),dir)
-           elseif((border(west) .and. i==2) .or. (border(east) .and. i==mxp-2) .and. variable) then
+           elseif((borderWest .and. i==2) .or. (borderEast .and. i==mxp-2) .and. variable) then
               !use order 3
               dir = sign(1.0,ufx_local(k,i,j)+ufx_local(k+ks,i+isi,j+js))
               qx(k,i,j) = fq3(scr(k,i-1,j),scr(k,i,j),scr(k,i+1,j),scr(k,i+2,j),dir)
@@ -1829,12 +1846,14 @@ subroutine compXYInterface_or56(mxp,myp,mzp,ks,isi,js,&
   do j = 1,myp-1
      do i = 1,mxp
         do k = 1,mzp
-           if(((border(north) .and. j==1) .or. (border(south) .and. j==myp-1)) &
+!!$           if(((borderNorth .and. j==1) .or. (borderSouth .and. j==myp-1)) &
+           if(((borderSouth .and. j==1) .or. (borderNorth .and. j==myp-1)) &
                 .and. variable) then
               ! Order 1
               dir = sign(1.0,vfx_local(k,i,j)+vfx_local(k+ks,i+isi,j+js))
               qy(k,i,j)=flux_upwind(scr(k,i,j),scr(k,i,j+1),dir)
-           elseif( (border(north) .and. j==2)  .or. (border(south) .and. j==myp-2) .and. variable) then
+!!$           elseif( (borderNorth .and. j==2)  .or. (borderSouth .and. j==myp-2) .and. variable) then
+           elseif( (borderSouth .and. j==2)  .or. (borderNorth .and. j==myp-2) .and. variable) then
               !Order 3
               dir = sign(1.0,vfx_local(k,i,j)+vfx_local(k+ks,i+isi,j+js))
               qy(k,i,j) = fq3(scr(k,i,j-1),scr(k,i,j),scr(k,i,j+1), scr(k,i,j+2),dir)

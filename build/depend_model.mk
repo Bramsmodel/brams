@@ -882,7 +882,6 @@ nest_feed.o : $(NESTING)/nest_feed.f90  mem_grid.o
 raco.o : $(MODEL)/raco.f90  mem_basic.o mem_grid.o mem_scratch.o \
 	mem_tend.o micphys.o node_mod.o rconstants.o \
 	ModGrid.o ModMessageSet.o ModParallelEnvironment.o raco_adap.o \
-	initComm.o \
 	$(UTILS_INCS)/tsNames.h  $(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF) 
@@ -921,7 +920,7 @@ radvc.o : $(MODEL)/radvc.f90  mem_basic.o mem_grid.o mem_scratch.o \
 radvc_rk.o : $(MODEL)/radvc_rk.f90 grid_dims.o mem_tend.o var_tables.o \
 	mem_grid.o mem_basic.o mem_chem1.o mem_stilt.o \
 	ModParallelEnvironment.o ModGrid.o ModMessageSet.o \
-	initComm.o node_mod.o parlibf.o 
+	node_mod.o parlibf.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
