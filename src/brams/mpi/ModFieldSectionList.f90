@@ -119,7 +119,7 @@ contains
     character(len=8) :: c0
     type(FieldSectionNode), pointer :: this
     character(len=*), parameter :: h="**(AppendNodeToFieldSectionList)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (.not. associated(oneFieldSectionNode)) then
        call fatal_error(h//" null oneFieldSectionNode")
@@ -153,7 +153,7 @@ contains
     type(FieldSectionNode), pointer :: this
     type(FieldSection), pointer :: thisSection
     character(len=*), parameter :: h="**(FindFieldSectionAtList)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     node => null()
     if (associated(oneFieldSectionList)) then

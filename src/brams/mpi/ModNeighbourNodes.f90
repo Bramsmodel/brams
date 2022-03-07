@@ -82,7 +82,7 @@ contains
     character(len=8) :: str(10)
     character(len=256) :: strOut
     character(len=*), parameter :: h="**(Inter)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     
     xsInter = max(xs1,xs2)
     xeInter = min(xe1,xe2)
@@ -151,7 +151,7 @@ contains
     integer :: ierr
     logical :: myNumSend, myNumRecv
     logical, allocatable :: isNeighbour(:)
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=8) :: c0, c1
     character(len=*), parameter :: h="**(CreateNeighbourNodes)**"
 
@@ -378,7 +378,7 @@ contains
     integer :: otherNode
     integer :: nNeigh
     integer :: i, indMsg
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=8) :: c0, c1, c2, c3, c4
     character(len=*), parameter :: h="**(NodesToSendRecvMessages)**"
 
@@ -528,7 +528,7 @@ contains
     integer :: indNeigh
     integer :: proc
     logical :: extend
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(IncludeDomainBoundaries)**"
 

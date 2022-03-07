@@ -130,7 +130,7 @@ contains
     integer :: ierr
     character(len=8) :: c0
     character(len=*), parameter :: h="**(CreateFieldSection_I2D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -182,7 +182,7 @@ contains
     integer :: ierr
     character(len=8) :: c0
     character(len=*), parameter :: h="**(CreateFieldSection_1D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -235,7 +235,7 @@ contains
     integer :: ierr
     character(len=8) :: c0
     character(len=*), parameter :: h="**(CreateFieldSection_2D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -286,7 +286,7 @@ contains
     integer :: ierr
     character(len=8) :: c0
     character(len=*), parameter :: h="**(CreateFieldSection_3D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -344,7 +344,7 @@ contains
     integer :: ierr
     character(len=8) :: c0
     character(len=*), parameter :: h="**(CreateFieldSection_4D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -397,7 +397,7 @@ contains
     integer :: ierr
     character(len=8) :: c0
     character(len=*), parameter :: h="**(CreateFieldSection_Null)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -535,7 +535,7 @@ contains
     character(len=SizeFieldSectionName) :: name
     character(len=8) :: c0
     character(len=*), parameter :: h="**(DestroyFieldSection)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (associated(oneFieldSection)) then
        name = oneFieldSection%name
@@ -624,7 +624,7 @@ contains
     character(len=8) :: buf0, bufn
     character(len=64) :: preStr, midStr, posStr
     character(len=*), parameter :: h="**(FieldSectionData2BufferFixedAdress)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (.not. associated(oneFieldSection)) then
        call fatal_error(h//" null oneFieldSection")
@@ -781,7 +781,7 @@ contains
     character(len=8) :: buf0, bufn
     character(len=64) :: preStr, midStr
     character(len=*), parameter :: h="**(FieldSectionData2BufferFixedAdress1D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (.not. associated(oneFieldSection)) then
        call fatal_error(h//" null oneFieldSection")
@@ -872,7 +872,7 @@ contains
     character(len=8) :: str(10)
     character(len=8) :: buf0, bufn
     character(len=*), parameter :: h="**(FieldSectionData2BufferVariableAdressArr)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (.not. associated(oneFieldSection)) then
        call fatal_error(h//" null oneFieldSection")
@@ -970,7 +970,7 @@ contains
     character(len=8) :: buf0, bufn
     character(len=64) :: preStr, midStr
     character(len=*), parameter :: h="**(FieldSectionData2BufferVariableAdressScalar)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (.not. associated(oneFieldSection)) then
        call fatal_error(h//" null oneFieldSection")
@@ -1044,7 +1044,7 @@ contains
     character(len=8) :: buf0, bufn
     character(len=64) :: preStr, midStr, posStr
     character(len=*), parameter :: h="**(Buffer2FieldSectionDataFixedAdress)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (.not. associated(oneFieldSection)) then
        call fatal_error(h//" null oneFieldSection")
@@ -1200,7 +1200,7 @@ contains
     character(len=8) :: buf0, bufn
     character(len=64) :: preStr, midStr, posStr
     character(len=*), parameter :: h="**(Buffer2FieldSectionDataFixedAdress1D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (.not. associated(oneFieldSection)) then
        call fatal_error(h//" null oneFieldSection")
@@ -1304,7 +1304,7 @@ contains
     character(len=8) :: buf0, bufn
     character(len=64) :: preStr, midStr
     character(len=*), parameter :: h="**(Buffer2FieldSectionDataVariableAdress)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (.not. associated(oneFieldSection)) then
        call fatal_error(h//" null oneFieldSection")
@@ -1414,7 +1414,7 @@ subroutine HiddenFieldSectionData2Buffer(field, &
   integer :: bufEnd
 
   character(len=*), parameter :: h="**(HiddenFieldSectionData2Buffer)**"
-  logical, parameter :: dumpLocal=.true.
+  logical, parameter :: dumpLocal=.false.
 
   sectionSize=nzp*(xEnd-xStart+1)*(yEnd-yStart+1)
   bufEnd=bufStart+sectionSize-1
@@ -1531,7 +1531,7 @@ subroutine HiddenBuffer2FieldSectionData(field, &
   character(len=8) :: str(10)
 
   character(len=*), parameter :: h="**(HiddenBuffer2FieldSectionData)**"
-  logical, parameter :: dumpLocal=.true.
+  logical, parameter :: dumpLocal=.false.
 
   if (dumpLocal) then
      write(buf0,"(i8)") bufStart

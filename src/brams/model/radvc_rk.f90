@@ -31,25 +31,28 @@ end module advRkParam
 
 module ModAdvectc_rk
 
-  ! explicit advect_ws interface due to OneGrid grid pointer argument;
+  ! advect_ws interface has to be explicit due to the introduction
+  ! of a pointer argument (OneGrid);
 
-  ! the explicit interface generates issues since there are calls
-  ! passing full arrays, passing pointers to full arrays and
-  ! passing pointers to scalars, always to formal variables scp
-  ! and sct
+  ! the same pointer argument is required at the interface of advectc_rk,
+  ! that is called by advect_ws many times with arguments that are fields
+  ! with distinct types and shapes. Procedure advectc_rk has as intent(in)
+  ! one field and as intent(out) another field. There are 3 cases:
 
-  ! this module overloads advect_ws with three procedures that
-  ! differs only on the type of these two formal arguments at
-  ! the interface
+  ! intent(in) field is a pointer to a 3D field (from basic_g%) and
+  ! intent(out) field is a pointer to a 1D field (from tend%);
+  ! use interface advectc_rk_ptr3D_ptr1D
 
-  ! procedure advect_ws_scalar_tab exists only because scalarp
-  ! is a pointer to a scalar. This should be removed whenever
-  ! scalar_tab points to a real 2D, 3D or 4D field array, not
-  ! to the first element
+  ! intent(in) field is a pointer to a 3D field (from stilt_g%) and
+  ! intent(out) field is a pointer to a 3D field (from stilt_g%);
+  ! use interface advectc_rk_ptr3D_ptr3D
 
-  ! the pointer to a scalar issue propagates to copyMypart;
-  ! we took the solution of keeping the copyMyPart interface
-  ! implicit
+  ! intent(in) field is a pointer to a scalar (from scalar_tab%) and
+  ! intent(out) field is a pointer to a scalar (from scalar_tab%);
+  ! use interface advectc_rk_ptr0D_ptr0D
+
+  ! all other procedures invoked by advect_ws do not carry the
+  ! introduced pointer; they remain implicit
 
   use grid_dims, only: maxgrds, nzpmax
   use mem_tend, only: tend
@@ -73,8 +76,8 @@ module ModAdvectc_rk
 
   use advRkParam, only: fifth_order, eps,real_init
 
-  use ModComm, only: &
-       border
+!!$  use ModComm, only: &
+!!$       border
 
   use node_mod, only:  nmachs, myNum,nodei0,nodej0
 
@@ -87,7 +90,7 @@ contains
 
 
 
-  subroutine advect_ws_pointer_rank1(OneGrid,&
+  subroutine advect_ws_ptr3D_ptr1D(OneGrid,&
        mzp,mxp,myp,ia,iz,ja,jz,&
        scp,ufx,vfx,wfx,vt3dh,vt3dj,vt3dk,sct, &
        is,js,ks,pd_or_mnt_constraint,order_h,order_v,dt,vname)
@@ -95,12 +98,6 @@ contains
     ! interface for 
     ! scp as a 3D pointer array and
     ! sct as a 1D pointer array
-
-    ! this interface is invoked only when
-    ! scp is a pointer to a full 3D field and
-    ! sct is a pointer to 1D field at tend%,
-    ! since for historical reasons tendency fields
-    ! are 1D fields.
 
     ! This interface should disapear whenever 1D 
     ! tendency fields at tend% are recoded 3D.
@@ -120,17 +117,210 @@ contains
     real, dimension(mzp,mxp,myp), intent(in) :: ufx, vfx,wfx,vt3dh,vt3dj,vt3dk
     character(len=*),intent(in) :: vname
 
-    character(len=*), parameter :: h="**(advect_ws_pointer_rank1)**"
+    character(len=*), parameter :: h="**(advect_ws_ptr3D_ptr1D)**"
+    logical :: boundNorth
+    logical :: boundSouth
+    logical :: boundEast
+    logical :: boundWest
+    logical :: scalar
+    real, pointer :: qz(:,:,:)
+    real, pointer :: qx(:,:,:)
+    real, pointer :: qy(:,:,:)
+    real, pointer :: scr(:,:,:)
+    real, pointer :: ufx_local(:,:,:)
+    real, pointer :: vfx_local(:,:,:)
+    real, pointer :: wfx_local(:,:,:)
 
-    include "advect_ws_body.f90"
+    !external functions
+    real, external :: flux_upwind,fq2, fq3, fq4, fq5, fq6, fq
 
-  end subroutine advect_ws_pointer_rank1
+    logical, parameter :: variable=.true.
+    !<
+    integer, parameter :: mzi=-2, myi=-2, mxi=-2
+
+    integer :: mzpp3,mxpp3,mypp3
+    integer :: mzppks,mxppis,myppjs
+
+    logical, parameter :: dumpLocal=.true.
+    character(len=8) :: str(10)
+    character(len=16) :: strReal
+
+    if (dumpLocal) then
+       call MsgDump(h//" starts for field "//trim(vname))
+    end if
+
+    boundNorth=OneGrid%NodeDims%boundNorth
+    boundSouth=OneGrid%NodeDims%boundSouth
+    boundEast=OneGrid%NodeDims%boundEast
+    boundWest=OneGrid%NodeDims%boundWest
+
+    if (dumpLocal) then
+       call MsgDump(h//" will postsendrecvmsgs")
+!!$       write(strReal,"(e15.7)") ufx(1,1,1)
+!!$       call MsgDump(h//"ufx(1,1,1)="//strReal)
+!!$       write(strReal,"(e15.7)") vfx(1,1,1)
+!!$       call MsgDump(h//"vfx(1,1,1)="//strReal)
+!!$       write(strReal,"(e15.7)") wfx(1,1,1)
+!!$       call MsgDump(h//"wfx(1,1,1)="//strReal)
+    end if
+
+    call PostSendRecvMsgsVariableAdress(&
+         OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv, &
+         scp, ufx, vfx, wfx)
+
+    mzpp3=mzp+3; mxpp3=mxp+3; mypp3=myp+3
+    mzppks=mzp+ks; mxppis=mxp+is; myppjs=myp+js
+
+    allocate(qx(mzppks,mxppis,myppjs));qx=real_init
+    allocate(qy(mzppks,mxppis,myppjs));qy=real_init
+    allocate(qz(mzppks,mxppis,myppjs));qz=real_init
+    allocate(scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3));scr=real_init
+    allocate(ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));ufx_local=real_init
+    allocate(vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));vfx_local=real_init
+    allocate(wfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));wfx_local=real_init
+
+    !- flag to determine if a scalar is being advected
+    scalar = .false.
+    if(is==0 .and. js==0 .and. ks==0) scalar = .true.
+
+    !- copy input arrays to extended arrays
+    call copyMyPart(scp,scr,ufx_local,vfx_local,wfx_local, &
+         ufx,vfx,wfx,mxp,myp,mzp,is,js,ks, &
+         mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+         vname)
+
+    if(.not. variable) &
+         call expandBorder(mxp,myp,mzp,is,js,ks, &
+         mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+         scr,ufx_local,vfx_local,wfx_local)
+
+    call WaitSendRecvMsgs(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv, &
+         1, mzp, scr, ufx_local, vfx_local, wfx_local)
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") size(scr,1)
+       write(str(2),"(i8)") size(scr,2)
+       write(str(3),"(i8)") size(scr,3)
+       call MsgDump(h//" finished exchanging border of "//vname//" dimensioned ("//&
+            trim(adjustl(str(1)))//","//&
+            trim(adjustl(str(2)))//","//&
+            trim(adjustl(str(3)))//")")
+       write(strReal,"(e15.7)") scr(1,1,1)
+       call MsgDump(h//"scr(1,1,1)="//strReal)
+       write(strReal,"(e15.7)") ufx_local(1,1,1)
+       call MsgDump(h//"ufx_local(1,1,1)="//strReal)
+       write(strReal,"(e15.7)") vfx_local(1,1,1)
+       call MsgDump(h//"vfx_local(1,1,1)="//strReal)
+       write(strReal,"(e15.7)") wfx_local(1,1,1)
+       call MsgDump(h//"wfx_local(1,1,1)="//strReal)
+       write(str(4),"(i8)") order_h
+       call MsgDump(h//" Will compXY interface for order_h="//trim(adjustl(str(4))))
+    end if
+
+    select case (order_h)
+    case (1)
+       call compXYInterface_or1(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            qx, qy, variable, vname)
+    case (2)
+       call compXYInterface_or2(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            qx, qy, variable, vname)
+    case (3)
+       call compXYInterface_or3(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            boundNorth, boundSouth, boundEast, boundWest, &
+            qx, qy, variable, vname)
+    case (4)
+       call compXYInterface_or4(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            qx, qy, variable, vname)
+    case(5,6)
+       call compXYInterface_or56(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            boundNorth, boundSouth, boundEast, boundWest, &
+            qx, qy, variable, vname)
+    case default
+       write (*,fmt='(A)') 'Advect Error : the order_h must be from 1 to 6'
+       stop 'ERROR!'
+    end select
+
+    select case (order_v)
+    case (1)
+       call compZInterface_or1(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case (2)
+       call compZInterface_or2(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case (3)
+       call compZInterface_or3(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case (4)
+       call compZInterface_or4(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case(5,6)
+       call compZInterface_or56(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname,order_v)
+    case default
+       write (*,fmt='(A)') 'Advect Error : the order_v must be from 1 to 6'
+       stop 'ERROR!'
+    end select
+
+    if(pd_or_mnt_constraint > 0 .and. scalar .and. vname .ne. 'thc' .and. vname .ne. 'pc') then  
+
+       !-- positivity/monotonicity constraints
+       call PosMonConstraints(mxp,myp,mzp,is,js,ks,ia,iz,ja,jz,&
+            pd_or_mnt_constraint, &
+            dt,ufx,vfx,wfx,vt3dh,vt3dj,vt3dk,scp, &
+            scr,ufx_local,vfx_local,wfx_local, &
+            qx,qy,qz,mzi,mzpp3,mxi,mxpp3,myi, &
+            mypp3,mzppks,mxppis,myppjs,mynum,vname,sct)
+
+    endif
+
+    call CreateTendency(mxp,myp,mzp,is,js,ks,ia,iz,ja,jz, &
+         mzppks,mxppis,myppjs, &
+         dt,ufx,vfx,wfx, &
+         vt3dh,vt3dj,vt3dk,scp, &
+         qx,qy,qz,sct,vname,mynum)
+
+    deallocate(qx ,qy,    qz,    scr,          ufx_local,    vfx_local ,   wfx_local)
+
+    if (dumpLocal) then
+       call MsgDump(h//" ends for field "//trim(vname))
+    end if
+  end subroutine advect_ws_ptr3D_ptr1D
 
 
 
 
 
-  subroutine advect_ws_pointer_rank3(OneGrid,&
+  subroutine advect_ws_ptr3D_ptr3D(OneGrid,&
        mzp,mxp,myp,ia,iz,ja,jz,&
        scp,ufx,vfx,wfx,vt3dh,vt3dj,vt3dk,sct, &
        is,js,ks,pd_or_mnt_constraint,order_h,order_v,dt,vname)
@@ -144,7 +334,7 @@ contains
     ! which sould be the usual case
 
     ! This interface should not disapear
-    
+
     type(Grid), pointer, intent(in) :: OneGrid
     integer, intent(in) :: mzp !- z
     integer, intent(in) :: mxp !- x
@@ -160,18 +350,210 @@ contains
     real, dimension(mzp,mxp,myp), intent(in) :: ufx, vfx,wfx,vt3dh,vt3dj,vt3dk
     character(len=*),intent(in) :: vname
 
-    character(len=*), parameter :: h="**(advect_ws_pointer_rank3)**"
+    character(len=*), parameter :: h="**(advect_ws_ptr3D_ptr3D)**"
+    logical :: boundNorth
+    logical :: boundSouth
+    logical :: boundEast
+    logical :: boundWest
+    logical :: scalar
+    real, pointer :: qz(:,:,:)
+    real, pointer :: qx(:,:,:)
+    real, pointer :: qy(:,:,:)
+    real, pointer :: scr(:,:,:)
+    real, pointer :: ufx_local(:,:,:)
+    real, pointer :: vfx_local(:,:,:)
+    real, pointer :: wfx_local(:,:,:)
 
-    include "advect_ws_body.f90"
+    !external functions
+    real, external :: flux_upwind,fq2, fq3, fq4, fq5, fq6, fq
 
-  end subroutine advect_ws_pointer_rank3
+    logical, parameter :: variable=.true.
+    !<
+    integer, parameter :: mzi=-2, myi=-2, mxi=-2
+
+    integer :: mzpp3,mxpp3,mypp3
+    integer :: mzppks,mxppis,myppjs
+
+    logical, parameter :: dumpLocal=.true.
+    character(len=8) :: str(10)
+    character(len=16) :: strReal
+
+    if (dumpLocal) then
+       call MsgDump(h//" starts for field "//trim(vname))
+    end if
+
+    boundNorth=OneGrid%NodeDims%boundNorth
+    boundSouth=OneGrid%NodeDims%boundSouth
+    boundEast=OneGrid%NodeDims%boundEast
+    boundWest=OneGrid%NodeDims%boundWest
+
+    if (dumpLocal) then
+       call MsgDump(h//" will postsendrecvmsgs")
+!!$       write(strReal,"(e15.7)") ufx(1,1,1)
+!!$       call MsgDump(h//"ufx(1,1,1)="//strReal)
+!!$       write(strReal,"(e15.7)") vfx(1,1,1)
+!!$       call MsgDump(h//"vfx(1,1,1)="//strReal)
+!!$       write(strReal,"(e15.7)") wfx(1,1,1)
+!!$       call MsgDump(h//"wfx(1,1,1)="//strReal)
+    end if
+
+    call PostSendRecvMsgsVariableAdress(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv, &
+         scp, ufx, vfx, wfx)
+
+    mzpp3=mzp+3; mxpp3=mxp+3; mypp3=myp+3
+    mzppks=mzp+ks; mxppis=mxp+is; myppjs=myp+js
+
+    allocate(qx(mzppks,mxppis,myppjs));qx=real_init
+    allocate(qy(mzppks,mxppis,myppjs));qy=real_init
+    allocate(qz(mzppks,mxppis,myppjs));qz=real_init
+    allocate(scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3));scr=real_init
+    allocate(ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));ufx_local=real_init
+    allocate(vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));vfx_local=real_init
+    allocate(wfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));wfx_local=real_init
+
+    !- flag to determine if a scalar is being advected
+    scalar = .false.
+    if(is==0 .and. js==0 .and. ks==0) scalar = .true.
+
+    !- copy input arrays to extended arrays
+    call copyMyPart(scp,scr,ufx_local,vfx_local,wfx_local, &
+         ufx,vfx,wfx,mxp,myp,mzp,is,js,ks, &
+         mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+         vname)
+
+    if(.not. variable) &
+         call expandBorder(mxp,myp,mzp,is,js,ks, &
+         mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+         scr,ufx_local,vfx_local,wfx_local)
+
+    call WaitSendRecvMsgs(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv, &
+         1, mzp, scr, ufx_local, vfx_local, wfx_local)
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") size(scr,1)
+       write(str(2),"(i8)") size(scr,2)
+       write(str(3),"(i8)") size(scr,3)
+       call MsgDump(h//" finished exchanging border of "//vname//" dimensioned ("//&
+            trim(adjustl(str(1)))//","//&
+            trim(adjustl(str(2)))//","//&
+            trim(adjustl(str(3)))//")")
+       write(strReal,"(e15.7)") scr(1,1,1)
+       call MsgDump(h//"scr(1,1,1)="//strReal)
+       write(strReal,"(e15.7)") ufx_local(1,1,1)
+       call MsgDump(h//"ufx_local(1,1,1)="//strReal)
+       write(strReal,"(e15.7)") vfx_local(1,1,1)
+       call MsgDump(h//"vfx_local(1,1,1)="//strReal)
+       write(strReal,"(e15.7)") wfx_local(1,1,1)
+       call MsgDump(h//"wfx_local(1,1,1)="//strReal)
+       write(str(4),"(i8)") order_h
+       call MsgDump(h//" Will compXY interface for order_h="//trim(adjustl(str(4))))
+    end if
+
+    select case (order_h)
+    case (1)
+       call compXYInterface_or1(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            qx, qy, variable, vname)
+    case (2)
+       call compXYInterface_or2(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            qx, qy, variable, vname)
+    case (3)
+       call compXYInterface_or3(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            boundNorth, boundSouth, boundEast, boundWest, &
+            qx, qy, variable, vname)
+    case (4)
+       call compXYInterface_or4(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            qx, qy, variable, vname)
+    case(5,6)
+       call compXYInterface_or56(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            boundNorth, boundSouth, boundEast, boundWest, &
+            qx, qy, variable, vname)
+    case default
+       write (*,fmt='(A)') 'Advect Error : the order_h must be from 1 to 6'
+       stop 'ERROR!'
+    end select
+
+    select case (order_v)
+    case (1)
+       call compZInterface_or1(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case (2)
+       call compZInterface_or2(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case (3)
+       call compZInterface_or3(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case (4)
+       call compZInterface_or4(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case(5,6)
+       call compZInterface_or56(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname,order_v)
+    case default
+       write (*,fmt='(A)') 'Advect Error : the order_v must be from 1 to 6'
+       stop 'ERROR!'
+    end select
+
+    if(pd_or_mnt_constraint > 0 .and. scalar .and. vname .ne. 'thc' .and. vname .ne. 'pc') then  
+
+       !-- positivity/monotonicity constraints
+       call PosMonConstraints(mxp,myp,mzp,is,js,ks,ia,iz,ja,jz,&
+            pd_or_mnt_constraint, &
+            dt,ufx,vfx,wfx,vt3dh,vt3dj,vt3dk,scp, &
+            scr,ufx_local,vfx_local,wfx_local, &
+            qx,qy,qz,mzi,mzpp3,mxi,mxpp3,myi, &
+            mypp3,mzppks,mxppis,myppjs,mynum,vname,sct)
+
+    endif
+
+    call CreateTendency(mxp,myp,mzp,is,js,ks,ia,iz,ja,jz, &
+         mzppks,mxppis,myppjs, &
+         dt,ufx,vfx,wfx, &
+         vt3dh,vt3dj,vt3dk,scp, &
+         qx,qy,qz,sct,vname,mynum)
+
+    deallocate(qx ,qy,    qz,    scr,          ufx_local,    vfx_local ,   wfx_local)
+
+    if (dumpLocal) then
+       call MsgDump(h//" ends for field "//trim(vname))
+    end if
+  end subroutine advect_ws_ptr3D_ptr3D
 
 
 
 
 
 
-  subroutine advect_ws_pointer_scalar(OneGrid,&
+  subroutine advect_ws_ptr0D_ptr0D(OneGrid,&
        mzp,mxp,myp,ia,iz,ja,jz,&
        scp,ufx,vfx,wfx,vt3dh,vt3dj,vt3dk,sct, &
        is,js,ks,pd_or_mnt_constraint,order_h,order_v,dt,vname)
@@ -201,11 +583,203 @@ contains
     real, dimension(mzp,mxp,myp), intent(in) :: ufx, vfx,wfx,vt3dh,vt3dj,vt3dk
     character(len=*),intent(in) :: vname
 
-    character(len=*), parameter :: h="**(advect_ws_pointer_scalar)**"
+    character(len=*), parameter :: h="**(advect_ws_ptr0D_ptr0D)**"
+    logical :: boundNorth
+    logical :: boundSouth
+    logical :: boundEast
+    logical :: boundWest
+    logical :: scalar
+    real, pointer :: qz(:,:,:)
+    real, pointer :: qx(:,:,:)
+    real, pointer :: qy(:,:,:)
+    real, pointer :: scr(:,:,:)
+    real, pointer :: ufx_local(:,:,:)
+    real, pointer :: vfx_local(:,:,:)
+    real, pointer :: wfx_local(:,:,:)
 
-    include "advect_ws_body.f90"
+    !external functions
+    real, external :: flux_upwind,fq2, fq3, fq4, fq5, fq6, fq
 
-  end subroutine advect_ws_pointer_scalar
+    logical, parameter :: variable=.true.
+    !<
+    integer, parameter :: mzi=-2, myi=-2, mxi=-2
+
+    integer :: mzpp3,mxpp3,mypp3
+    integer :: mzppks,mxppis,myppjs
+
+    logical, parameter :: dumpLocal=.true.
+    character(len=8) :: str(10)
+    character(len=16) :: strReal
+
+    if (dumpLocal) then
+       call MsgDump(h//" starts for field "//trim(vname))
+    end if
+
+    boundNorth=OneGrid%NodeDims%boundNorth
+    boundSouth=OneGrid%NodeDims%boundSouth
+    boundEast=OneGrid%NodeDims%boundEast
+    boundWest=OneGrid%NodeDims%boundWest
+
+    if (dumpLocal) then
+       call MsgDump(h//" will postsendrecvmsgs")
+!!$       write(strReal,"(e15.7)") ufx(1,1,1)
+!!$       call MsgDump(h//"ufx(1,1,1)="//strReal)
+!!$       write(strReal,"(e15.7)") vfx(1,1,1)
+!!$       call MsgDump(h//"vfx(1,1,1)="//strReal)
+!!$       write(strReal,"(e15.7)") wfx(1,1,1)
+!!$       call MsgDump(h//"wfx(1,1,1)="//strReal)
+    end if
+
+    call PostSendRecvMsgsVariableAdress(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv, &
+         scp, ufx, vfx, wfx)
+
+    mzpp3=mzp+3; mxpp3=mxp+3; mypp3=myp+3
+    mzppks=mzp+ks; mxppis=mxp+is; myppjs=myp+js
+
+    allocate(qx(mzppks,mxppis,myppjs));qx=real_init
+    allocate(qy(mzppks,mxppis,myppjs));qy=real_init
+    allocate(qz(mzppks,mxppis,myppjs));qz=real_init
+    allocate(scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3));scr=real_init
+    allocate(ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));ufx_local=real_init
+    allocate(vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));vfx_local=real_init
+    allocate(wfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));wfx_local=real_init
+
+    !- flag to determine if a scalar is being advected
+    scalar = .false.
+    if(is==0 .and. js==0 .and. ks==0) scalar = .true.
+
+    !- copy input arrays to extended arrays
+    call copyMyPart(scp,scr,ufx_local,vfx_local,wfx_local, &
+         ufx,vfx,wfx,mxp,myp,mzp,is,js,ks, &
+         mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+         vname)
+
+    if(.not. variable) &
+         call expandBorder(mxp,myp,mzp,is,js,ks, &
+         mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+         scr,ufx_local,vfx_local,wfx_local)
+
+    call WaitSendRecvMsgs(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv, &
+         1, mzp, scr, ufx_local, vfx_local, wfx_local)
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") size(scr,1)
+       write(str(2),"(i8)") size(scr,2)
+       write(str(3),"(i8)") size(scr,3)
+       call MsgDump(h//" finished exchanging border of "//vname//" dimensioned ("//&
+            trim(adjustl(str(1)))//","//&
+            trim(adjustl(str(2)))//","//&
+            trim(adjustl(str(3)))//")")
+       write(strReal,"(e15.7)") scr(1,1,1)
+       call MsgDump(h//"scr(1,1,1)="//strReal)
+       write(strReal,"(e15.7)") ufx_local(1,1,1)
+       call MsgDump(h//"ufx_local(1,1,1)="//strReal)
+       write(strReal,"(e15.7)") vfx_local(1,1,1)
+       call MsgDump(h//"vfx_local(1,1,1)="//strReal)
+       write(strReal,"(e15.7)") wfx_local(1,1,1)
+       call MsgDump(h//"wfx_local(1,1,1)="//strReal)
+       write(str(4),"(i8)") order_h
+       call MsgDump(h//" Will compXY interface for order_h="//trim(adjustl(str(4))))
+    end if
+
+    select case (order_h)
+    case (1)
+       call compXYInterface_or1(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            qx, qy, variable, vname)
+    case (2)
+       call compXYInterface_or2(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            qx, qy, variable, vname)
+    case (3)
+       call compXYInterface_or3(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            boundNorth, boundSouth, boundEast, boundWest, &
+            qx, qy, variable, vname)
+    case (4)
+       call compXYInterface_or4(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            qx, qy, variable, vname)
+    case(5,6)
+       call compXYInterface_or56(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,ufx_local,vfx_local,&
+            boundNorth, boundSouth, boundEast, boundWest, &
+            qx, qy, variable, vname)
+    case default
+       write (*,fmt='(A)') 'Advect Error : the order_h must be from 1 to 6'
+       stop 'ERROR!'
+    end select
+
+    select case (order_v)
+    case (1)
+       call compZInterface_or1(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case (2)
+       call compZInterface_or2(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case (3)
+       call compZInterface_or3(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case (4)
+       call compZInterface_or4(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname)
+    case(5,6)
+       call compZInterface_or56(mxp,myp,mzp,ks,is,js,&
+            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+            mzppks,mxppis,myppjs, &
+            scr,wfx_local,qz, &
+            variable, vname,order_v)
+    case default
+       write (*,fmt='(A)') 'Advect Error : the order_v must be from 1 to 6'
+       stop 'ERROR!'
+    end select
+
+    if(pd_or_mnt_constraint > 0 .and. scalar .and. vname .ne. 'thc' .and. vname .ne. 'pc') then  
+
+       !-- positivity/monotonicity constraints
+       call PosMonConstraints(mxp,myp,mzp,is,js,ks,ia,iz,ja,jz,&
+            pd_or_mnt_constraint, &
+            dt,ufx,vfx,wfx,vt3dh,vt3dj,vt3dk,scp, &
+            scr,ufx_local,vfx_local,wfx_local, &
+            qx,qy,qz,mzi,mzpp3,mxi,mxpp3,myi, &
+            mypp3,mzppks,mxppis,myppjs,mynum,vname,sct)
+
+    endif
+
+    call CreateTendency(mxp,myp,mzp,is,js,ks,ia,iz,ja,jz, &
+         mzppks,mxppis,myppjs, &
+         dt,ufx,vfx,wfx, &
+         vt3dh,vt3dj,vt3dk,scp, &
+         qx,qy,qz,sct,vname,mynum)
+
+    deallocate(qx ,qy,    qz,    scr,          ufx_local,    vfx_local ,   wfx_local)
+
+    if (dumpLocal) then
+       call MsgDump(h//" ends for field "//trim(vname))
+    end if
+  end subroutine advect_ws_ptr0D_ptr0D
 
 
 
@@ -239,6 +813,10 @@ contains
     logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(advectc_rk)**"
     character(len=8) :: str(10)
+
+    if (dumpLocal) then
+       call MsgDump(h//" starts with varn="//trim(varn))
+    end if
 
     mxyzp = mxp * myp * mzp
 
@@ -279,20 +857,20 @@ contains
             ,vt3da,vt3db,vt3dc,mfx_wind,mfy_wind,mfz_wind,is,js,ks)
 
 
-       call advect_ws_pointer_rank1(OneGrid,mzp,mxp,myp,ia,iz,ja,jz &
-            ,basic_g(ngrid)%uc &! field being advected
-            ,vt3da    & ! uc*dn0u*fmapui*rtgu = rhou*U
-            ,vt3db    & ! similar for v
-            ,vt3dc    & ! similar for sigma_dot
-            ,mfx_wind & ! fmapt*rtgti*dxt/dn0 = 1(rho dx)
-            ,mfy_wind & ! similar for v
-            ,mfz_wind & ! similar for sigma_dot
-            ,tend%ut_rk   &
-            ,is,js,ks     &
-            ,pd_or_mnt_constraint &
-            ,order_h,order_v      &
-            ,dtlt,                 &
-            'uc' &
+       call advect_ws_ptr3D_ptr1D(&
+            OneGrid=OneGrid,&
+            mzp=mzp, mxp=mxp, myp=myp, &
+            ia=ia, iz=iz, ja=ja, jz=jz, &
+            scp=basic_g(ngrid)%uc, & ! field being advected
+            ufx=vt3da,             & ! uc*dn0u*fmapui*rtgu = rhou*U
+            vfx=vt3db,             & ! similar for v
+            wfx=vt3dc,             & ! similar for sigma_dot
+            vt3dh=mfx_wind,        & ! fmapt*rtgti*dxt/dn0 = 1(rho dx)
+            vt3dj=mfy_wind,        & ! similar for v
+            vt3dk=mfz_wind,        & ! similar for sigma_dot
+            sct=tend%ut_rk,        & ! advection output
+            is=is, js=js, ks=ks, pd_or_mnt_constraint=pd_or_mnt_constraint, &
+            order_h=order_h, order_v=order_v, dt=dtlt, vname="uc" &
             )
 
        !--------------- V-advect
@@ -313,19 +891,20 @@ contains
             ,vt3da,vt3db,vt3dc,mfx_wind,mfy_wind,mfz_wind,is,js,ks)
 
 
-       call advect_ws_pointer_rank1(OneGrid,mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%vc &
-            ,vt3da    & ! uc*dn0u*fmapui*rtgu = rhou*V
-            ,vt3db    & ! similar for v
-            ,vt3dc    & ! similar for sigma_dot
-            ,mfx_wind & ! fmapt*rtgti*dxt/dn0 = 1(rho dx)
-            ,mfy_wind & ! similar for v
-            ,mfz_wind & ! similar for sigma_dot
-            ,tend%vt_rk   &
-            ,is,js,ks     &
-            ,pd_or_mnt_constraint &
-            ,order_h,order_v      &
-            ,dtlt,                 &
-            'vc' &
+       call advect_ws_ptr3D_ptr1D(&
+            OneGrid=OneGrid,&
+            mzp=mzp, mxp=mxp, myp=myp, &
+            ia=ia, iz=iz, ja=ja, jz=jz, &
+            scp=basic_g(ngrid)%vc, & ! field being advected
+            ufx=vt3da,             & ! uc*dn0u*fmapui*rtgu = rhou*U
+            vfx=vt3db,             & ! similar for v
+            wfx=vt3dc,             & ! similar for sigma_dot
+            vt3dh=mfx_wind,        & ! fmapt*rtgti*dxt/dn0 = 1(rho dx)
+            vt3dj=mfy_wind,        & ! similar for v
+            vt3dk=mfz_wind,        & ! similar for sigma_dot
+            sct=tend%vt_rk,        & ! advection output
+            is=is, js=js, ks=ks, pd_or_mnt_constraint=pd_or_mnt_constraint, &
+            order_h=order_h, order_v=order_v, dt=dtlt, vname="vc" &
             )
 
 
@@ -347,21 +926,22 @@ contains
             ,vt3da,vt3db,vt3dc,mfx_wind,mfy_wind,mfz_wind,is,js,ks)
 
 
-       call advect_ws_pointer_rank1(OneGrid,mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%wc &
-            ,vt3da    & ! uc*dn0u*fmapui*rtgu = rhou*W
-            ,vt3db    & ! similar for v
-            ,vt3dc    & ! similar for sigma_dot
-            ,mfx_wind & ! fmapt*rtgti*dxt/dn0 = 1(rho dx)
-            ,mfy_wind & ! similar for v
-            ,mfz_wind & ! similar for sigma_dot
-                                !
-            ,tend%wt_rk   &
-            ,is,js,ks     &
-            ,pd_or_mnt_constraint&
-            ,order_h,order_v &
-            ,dtlt,                 &
-            'wc' &
+       call advect_ws_ptr3D_ptr1D(&
+            OneGrid=OneGrid,&
+            mzp=mzp, mxp=mxp, myp=myp, &
+            ia=ia, iz=iz, ja=ja, jz=jz, &
+            scp=basic_g(ngrid)%wc, & ! field being advected
+            ufx=vt3da,             & ! uc*dn0u*fmapui*rtgu = rhou*U
+            vfx=vt3db,             & ! similar for v
+            wfx=vt3dc,             & ! similar for sigma_dot
+            vt3dh=mfx_wind,        & ! fmapt*rtgti*dxt/dn0 = 1(rho dx)
+            vt3dj=mfy_wind,        & ! similar for v
+            vt3dk=mfz_wind,        & ! similar for sigma_dot
+            sct=tend%wt_rk,        & ! advection output
+            is=is, js=js, ks=ks, pd_or_mnt_constraint=pd_or_mnt_constraint, &
+            order_h=order_h, order_v=order_v, dt=dtlt, vname="wc" &
             )
+
     endif  ! endif of varn .eq. 'V'
 
     if (trim(varn) .eq. 'T'   .or. trim(varn) .eq. "PI"      .or. &
@@ -421,20 +1001,22 @@ contains
        if ( trim(varn) .eq. "THETAIL" ) then
 
 
-          call advect_ws_pointer_rank1(OneGrid,mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%thc &
-               ,vt3da & ! uc*dn0u*fmapui*rtgu = rhou*U
-               ,vt3db & ! similar for v
-               ,vt3dc & ! similar for sigma_dot
-               ,vt3dh & ! fmapt*rtgti*dxt/dn0 = 1(rho dx)
-               ,vt3dj & ! similar for v
-               ,vt3dk & ! similar for sigma_dot
-               ,tend%tht_rk         &
-               ,is,js,ks            &
-               ,pd_or_mnt_constraint&
-               ,order_h,order_v     &
-               ,dtlt,                &
-               'thc'  &
+          call advect_ws_ptr3D_ptr1D(&
+               OneGrid=OneGrid,&
+               mzp=mzp, mxp=mxp, myp=myp, &
+               ia=ia, iz=iz, ja=ja, jz=jz, &
+               scp=basic_g(ngrid)%thc, & ! field being advected
+               ufx=vt3da,              & ! uc*dn0u*fmapui*rtgu = rhou*U
+               vfx=vt3db,              & ! similar for v
+               wfx=vt3dc,              & ! similar for sigma_dot
+               vt3dh=vt3dh,            & ! fmapt*rtgti*dxt/dn0 = 1(rho dx)
+               vt3dj=vt3dj,            & ! similar for v
+               vt3dk=vt3dk,            & ! similar for sigma_dot
+               sct=tend%tht_rk,        & ! advection output
+               is=is, js=js, ks=ks, pd_or_mnt_constraint=pd_or_mnt_constraint, &
+               order_h=order_h, order_v=order_v, dt=dtlt, vname="thc" &
                )
+
           return
        endif !endif of varn .eq. 'THETAIL'
 
@@ -446,20 +1028,20 @@ contains
                ,basic_g(ngrid)%rv    &
                ,stilt_g(ngrid)%lnthetav)
 
-          call advect_ws_pointer_rank3(OneGrid,mzp,mxp,myp,ia,iz,ja,jz &
-               ,stilt_g(ngrid)%lnthetav   &! advected field
-               ,vt3da & ! uc*dn0u*fmapui*rtgu = rhou*U
-               ,vt3db & ! similar for v
-               ,vt3dc & ! similar for sigma_dot
-               ,vt3dh & ! fmapt*rtgti*dxt/dn0 = 1(rho dx)
-               ,vt3dj & ! similar for v
-               ,vt3dk & ! similar for sigma_dot
-                                !
-               ,stilt_g(ngrid)%lnthvadv & !tendency field including advection
-               ,is,js,ks,pd_or_mnt_constraint&
-               ,order_h,order_v               &
-               ,dtlt,                &
-               'lnthetav' &
+          call advect_ws_ptr3D_ptr3D(&
+               OneGrid=OneGrid,&
+               mzp=mzp, mxp=mxp, myp=myp, &
+               ia=ia, iz=iz, ja=ja, jz=jz, &
+               scp=stilt_g(ngrid)%lnthetav, & ! field being advected
+               ufx=vt3da,              & ! uc*dn0u*fmapui*rtgu = rhou*U
+               vfx=vt3db,              & ! similar for v
+               wfx=vt3dc,              & ! similar for sigma_dot
+               vt3dh=vt3dh,            & ! fmapt*rtgti*dxt/dn0 = 1(rho dx)
+               vt3dj=vt3dj,            & ! similar for v
+               vt3dk=vt3dk,            & ! similar for sigma_dot
+               sct=stilt_g(ngrid)%lnthvadv,        & ! advection output
+               is=is, js=js, ks=ks, pd_or_mnt_constraint=pd_or_mnt_constraint, &
+               order_h=order_h, order_v=order_v, dt=dtlt, vname="lnthetav" &
                )
 
           return
@@ -469,22 +1051,22 @@ contains
        if ( trim(varn) .eq. "PI" .and. iexev == 2) then
 
 
-          call advect_ws_pointer_rank1(OneGrid,mzp,mxp,myp,ia,iz,ja,jz&
-               ,basic_g(ngrid)%pc & !advected field
-               ,vt3da & ! uc*dn0u*fmapui*rtgu = rhou*U
-               ,vt3db & ! similar for v
-               ,vt3dc & ! similar for sigma_dot
-               ,vt3dh & ! fmapt*rtgti*dxt/dn0 = 1(rho dx)
-               ,vt3dj & ! similar for v
-               ,vt3dk & ! similar for sigma_dot
-                                !
-               ,tend%pt_rk          & !tendency from advection
-               ,is,js,ks            &
-               ,pd_or_mnt_constraint&
-               ,order_h,order_v               &
-               ,dtlt,                &
-               'pc' &
+          call advect_ws_ptr3D_ptr1D(&
+               OneGrid=OneGrid,&
+               mzp=mzp, mxp=mxp, myp=myp, &
+               ia=ia, iz=iz, ja=ja, jz=jz, &
+               scp=basic_g(ngrid)%pc, & ! field being advected
+               ufx=vt3da,              & ! uc*dn0u*fmapui*rtgu = rhou*U
+               vfx=vt3db,              & ! similar for v
+               wfx=vt3dc,              & ! similar for sigma_dot
+               vt3dh=vt3dh,            & ! fmapt*rtgti*dxt/dn0 = 1(rho dx)
+               vt3dj=vt3dj,            & ! similar for v
+               vt3dk=vt3dk,            & ! similar for sigma_dot
+               sct=tend%pt_rk,        & ! advection output
+               is=is, js=js, ks=ks, pd_or_mnt_constraint=pd_or_mnt_constraint, &
+               order_h=order_h, order_v=order_v, dt=dtlt, vname="pc" &
                )
+
           return
        endif !endif og varn .eq. 'PI'
 
@@ -505,20 +1087,21 @@ contains
              ! input: scalarp, scalart, dtlt
              ! output: scalart
 
-             call advect_ws_pointer_scalar(OneGrid,mzp,mxp,myp,ia,iz,ja,jz &
-                  ,scalarp & !scalar being advected 
-                  ,vt3da   & ! 0.5(up+uc)*dn0u*fmapui*rtgu = rhou*U
-                  ,vt3db   & ! similar for v
-                  ,vt3dc   & ! similar for sigma_dot
-                  ,vt3dh   & ! fmapt*rtgti*dxt/dn0 = 1(rho dx)
-                  ,vt3dj   & ! similar for v
-                  ,vt3dk   & ! similar for sigma_dot
-                                !
-                  ,scalart,is,js,ks    & !scalar tendency
-                  ,pd_or_mnt_constraint& ! 
-                  ,order_h,order_v     & !order horiz/vert 
-                  ,dtlt                & !timestep
-                  ,scalar_tab(n,ngrid)%name & ! scalar name
+             call advect_ws_ptr0D_ptr0D(&
+                  OneGrid=OneGrid,&
+                  mzp=mzp, mxp=mxp, myp=myp, &
+                  ia=ia, iz=iz, ja=ja, jz=jz, &
+                  scp=scalarp,   & ! field being advected
+                  ufx=vt3da,     & ! 0.5(up+uc)*dn0u*fmapui*rtgu = rhou*U
+                  vfx=vt3db,     & ! similar for v
+                  wfx=vt3dc,     & ! similar for sigma_dot
+                  vt3dh=vt3dh,   & ! fmapt*rtgti*dxt/dn0 = 1(rho dx)
+                  vt3dj=vt3dj,   & ! similar for v
+                  vt3dk=vt3dk,   & ! similar for sigma_dot
+                  sct=scalart,   & ! advection output
+                  is=is, js=js, ks=ks, pd_or_mnt_constraint=pd_or_mnt_constraint, &
+                  order_h=order_h, order_v=order_v, dt=dtlt, &
+                  vname=scalar_tab(n,ngrid)%name &
                   )
 
           end do
@@ -615,7 +1198,7 @@ subroutine copyMyPart(scp,scr,ufx_local,vfx_local,wfx_local, &
 
   integer :: i,j,k !
 
-  logical, parameter :: dumpLocal=.false.
+  logical, parameter :: dumpLocal=.true.
   character(len=*), parameter :: h="**(copyMyPart)**"
   character(len=8) :: str(10)
 
@@ -716,7 +1299,7 @@ subroutine expandBorder(mxp,myp,mzp,is,js,ks, &
   !# Oversided (extended) var rhou*W
 
   integer :: n
-  logical, parameter :: dumpLocal=.false.
+  logical, parameter :: dumpLocal=.true.
   character(len=*), parameter :: h="**(expandBorder)**"
   character(len=8) :: str(10)
 
@@ -1037,7 +1620,8 @@ subroutine compXYInterface_or1(mxp,myp,mzp,ks,isi,js,&
      mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
      mzppks,mxppis,myppjs, &
      scr,ufx_local,vfx_local,&
-     border,qx,qy,variable, vname)
+     qx,qy,variable, vname)
+  use ModParallelEnvironment, only: MsgDump
   implicit none
   integer, intent(in) :: mxp
   integer, intent(in) :: myp
@@ -1057,7 +1641,6 @@ subroutine compXYInterface_or1(mxp,myp,mzp,ks,isi,js,&
   real,intent(in)     :: scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3)
   real,intent(in)     :: ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
   real,intent(in)     :: vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  logical, intent(in) :: border(4)
   character(len=*), intent(in) :: vname
   logical, intent(in) :: variable
   real,intent(out)    :: qx(mzppks,mxppis,myppjs)
@@ -1066,6 +1649,12 @@ subroutine compXYInterface_or1(mxp,myp,mzp,ks,isi,js,&
   real, external :: flux_upwind
   integer :: i,j,k
   real :: dir
+
+  logical, parameter :: dumpLocal=.true.
+  character(len=*), parameter :: h="**(compXYInterface_or1)**"
+  if (dumpLocal) then
+     call MsgDump(h//" starts for variable "//trim(vname))
+  end if
 
   !- compute x-interface values upwind order
   do j = 1,myp
@@ -1092,7 +1681,8 @@ subroutine compXYInterface_or2(mxp,myp,mzp,ks,isi,js,&
      mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
      mzppks,mxppis,myppjs, &
      scr,ufx_local,vfx_local,&
-     border,qx,qy,variable, vname)
+     qx,qy,variable, vname)
+  use ModParallelEnvironment, only: MsgDump
   implicit none
   integer, intent(in) :: mxp
   integer, intent(in) :: myp
@@ -1112,7 +1702,6 @@ subroutine compXYInterface_or2(mxp,myp,mzp,ks,isi,js,&
   real,intent(in)     :: scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3)
   real,intent(in)     :: ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
   real,intent(in)     :: vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  logical, intent(in) :: border(4)
   character(len=*), intent(in) :: vname
   logical, intent(in) :: variable
   real,intent(out)    :: qx(mzppks,mxppis,myppjs)
@@ -1120,6 +1709,12 @@ subroutine compXYInterface_or2(mxp,myp,mzp,ks,isi,js,&
 
   real, external :: fq2
   integer :: i,j,k
+
+  logical, parameter :: dumpLocal=.true.
+  character(len=*), parameter :: h="**(compXYInterface_or2)**"
+  if (dumpLocal) then
+     call MsgDump(h//" starts for variable "//trim(vname))
+  end if
 
   !- compute x-interface values
   do j = 1,myp
@@ -1145,11 +1740,13 @@ subroutine compXYInterface_or3(mxp,myp,mzp,ks,isi,js,&
      mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
      mzppks,mxppis,myppjs, &
      scr,ufx_local,vfx_local,&
-     border,qx,qy,variable, vname)
+     boundNorth, boundSouth, boundEast, boundWest, &
+     qx,qy,variable, vname)
   use ModComm, only: north
   use ModComm, only: south
   use ModComm, only: east
   use ModComm, only: west
+  use ModParallelEnvironment, only: MsgDump
   implicit none
   integer, intent(in) :: mxp
   integer, intent(in) :: myp
@@ -1169,7 +1766,10 @@ subroutine compXYInterface_or3(mxp,myp,mzp,ks,isi,js,&
   real,intent(in)     :: scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3)
   real,intent(in)     :: ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
   real,intent(in)     :: vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  logical, intent(in) :: border(4)
+  logical, intent(in) :: boundNorth
+  logical, intent(in) :: boundSouth
+  logical, intent(in) :: boundEast
+  logical, intent(in) :: boundWest
   character(len=*), intent(in) :: vname
   logical, intent(in) :: variable
   real,intent(out)    :: qx(mzppks,mxppis,myppjs)
@@ -1180,13 +1780,19 @@ subroutine compXYInterface_or3(mxp,myp,mzp,ks,isi,js,&
   real :: dir
   integer :: i,j,k
 
+  logical, parameter :: dumpLocal=.true.
+  character(len=*), parameter :: h="**(compXYInterface_or3)**"
+  if (dumpLocal) then
+     call MsgDump(h//" starts for variable "//trim(vname))
+  end if
+
   qx=0.0
   qy=0.0
 
   do j = 1,myp
      do i = 1,mxp-1
         do k = 1,mzp
-           if(((border(west) .and. i==1) .or. (border(east) .and. i>mxp-2)) &
+           if(((boundWest .and. i==1) .or. (boundEast .and. i>mxp-2)) &
                 .and. variable) then
               !Use order 1
               dir = sign(1.0,ufx_local(k,i,j)+ufx_local(k+ks,i+isi,j+js))
@@ -1203,7 +1809,7 @@ subroutine compXYInterface_or3(mxp,myp,mzp,ks,isi,js,&
   do j = 1,myp-1
      do i = 1,mxp
         do k = 1,mzp
-           if(((border(north) .and. j==1) .or. (border(south) .and. j>myp-2)) &
+           if(((boundNorth .and. j==1) .or. (boundSouth .and. j>myp-2)) &
                 .and. variable) then
               dir = sign(1.0,vfx_local(k,i,j)+vfx_local(k+ks,i+isi,j+js))
               qy(k,i,j)=flux_upwind(scr(k,i,j),scr(k,i,j+1),dir)
@@ -1222,7 +1828,8 @@ subroutine compXYInterface_or4(mxp,myp,mzp,ks,isi,js,&
      mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
      mzppks,mxppis,myppjs, &
      scr,ufx_local,vfx_local,&
-     border,qx,qy,variable, vname)
+     qx,qy,variable, vname)
+  use ModParallelEnvironment, only: MsgDump
   implicit none
   integer, intent(in) :: mxp
   integer, intent(in) :: myp
@@ -1242,7 +1849,6 @@ subroutine compXYInterface_or4(mxp,myp,mzp,ks,isi,js,&
   real,intent(in)     :: scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3)
   real,intent(in)     :: ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
   real,intent(in)     :: vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  logical, intent(in) :: border(4)
   character(len=*), intent(in) :: vname
   logical, intent(in) :: variable
   real,intent(out)    :: qx(mzppks,mxppis,myppjs)
@@ -1250,6 +1856,12 @@ subroutine compXYInterface_or4(mxp,myp,mzp,ks,isi,js,&
 
   real, external :: fq4
   integer :: i,j,k
+
+  logical, parameter :: dumpLocal=.true.
+  character(len=*), parameter :: h="**(compXYInterface_or4)**"
+  if (dumpLocal) then
+     call MsgDump(h//" starts for variable "//trim(vname))
+  end if
 
   do j = 1,myp
      do i = 1,mxp-1
@@ -1274,7 +1886,9 @@ subroutine compXYInterface_or56(mxp,myp,mzp,ks,isi,js,&
      mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
      mzppks,mxppis,myppjs, &
      scr,ufx_local,vfx_local,&
-     border,qx,qy,variable, vname, order_h)
+     boundNorth, boundSouth, boundEast, boundWest,&
+     qx,qy,variable, vname, order_h)
+  use ModParallelEnvironment, only: MsgDump
   use ModComm, only: north
   use ModComm, only: south
   use ModComm, only: east
@@ -1300,7 +1914,10 @@ subroutine compXYInterface_or56(mxp,myp,mzp,ks,isi,js,&
   real,intent(in)     :: scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3)
   real,intent(in)     :: ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
   real,intent(in)     :: vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  logical, intent(in) :: border(4)
+  logical, intent(in) :: boundNorth
+  logical, intent(in) :: boundSouth
+  logical, intent(in) :: boundEast
+  logical, intent(in) :: boundWest
   character(len=*), intent(in) :: vname
   logical, intent(in) :: variable
   real,intent(out)    :: qx(mzppks,mxppis,myppjs)
@@ -1310,18 +1927,35 @@ subroutine compXYInterface_or56(mxp,myp,mzp,ks,isi,js,&
   real :: dir
   integer :: i,j,k
 
+  character(len=16) :: strReal
+  logical, parameter :: dumpLocal=.true.
+  character(len=*), parameter :: h="**(compXYInterface_or56)**"
+  if (dumpLocal) then
+     call MsgDump(h//" starts for variable "//trim(vname))
+     write(strReal,"(e15.7)") scr(1,1,1)
+     call MsgDump(h//"scr(1,1,1)="//strReal)
+     write(strReal,"(e15.7)") ufx_local(1,1,1)
+     call MsgDump(h//"ufx_local(1,1,1)="//strReal)
+     write(strReal,"(e15.7)") vfx_local(1,1,1)
+     call MsgDump(h//"vfx_local(1,1,1)="//strReal)
+     write(strReal,"(e15.7)") qx(1,1,1)
+     call MsgDump(h//"qx(1,1,1)="//strReal)
+     write(strReal,"(e15.7)") qy(1,1,1)
+     call MsgDump(h//"qy(1,1,1)="//strReal)
+  end if
+
   fifth_order = 1.0                ! 5th order
   if(order_h == 6)fifth_order = 0.0  ! 6th order
 
   do j = 1,myp
      do i = 1,mxp-1
         do k = 1,mzp
-           if(((border(west) .and. i==1) .or. (border(east) .and. i==mxp-1)) &
+           if(((boundWest .and. i==1) .or. (boundEast .and. i==mxp-1)) &
                 .and. variable) then
               !Order=1
               dir = sign(1.0,ufx_local(k,i,j)+ufx_local(k+ks,i+isi,j+js))
               qx(k,i,j)=flux_upwind(scr(k,i,j),scr(k,i+1,j),dir)
-           elseif((border(west) .and. i==2) .or. (border(east) .and. i==mxp-2) .and. variable) then
+           elseif((boundWest .and. i==2) .or. (boundEast .and. i==mxp-2) .and. variable) then
               !use order 3
               dir = sign(1.0,ufx_local(k,i,j)+ufx_local(k+ks,i+isi,j+js))
               qx(k,i,j) = fq3(scr(k,i-1,j),scr(k,i,j),scr(k,i+1,j),scr(k,i+2,j),dir)
@@ -1337,12 +1971,12 @@ subroutine compXYInterface_or56(mxp,myp,mzp,ks,isi,js,&
   do j = 1,myp-1
      do i = 1,mxp
         do k = 1,mzp
-           if(((border(north) .and. j==1) .or. (border(south) .and. j==myp-1)) &
+           if(((boundNorth .and. j==1) .or. (boundSouth .and. j==myp-1)) &
                 .and. variable) then
               ! Order 1
               dir = sign(1.0,vfx_local(k,i,j)+vfx_local(k+ks,i+isi,j+js))
               qy(k,i,j)=flux_upwind(scr(k,i,j),scr(k,i,j+1),dir)
-           elseif( (border(north) .and. j==2)  .or. (border(south) .and. j==myp-2) .and. variable) then
+           elseif( (boundNorth .and. j==2)  .or. (boundSouth .and. j==myp-2) .and. variable) then
               !Order 3
               dir = sign(1.0,vfx_local(k,i,j)+vfx_local(k+ks,i+isi,j+js))
               qy(k,i,j) = fq3(scr(k,i,j-1),scr(k,i,j),scr(k,i,j+1), scr(k,i,j+2),dir)

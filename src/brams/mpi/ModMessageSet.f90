@@ -190,9 +190,12 @@ module ModMessageSet
   end interface PostSendRecvMsgs
 
   interface PostSendRecvMsgsVariableAdress
+     ! takes 4 field arguments: one 3D pointer and 3 implicit shape 3D
      module procedure PostSendRecvMsgsVariableAdressArr
-     module procedure PostSendRecvMsgsVariableAdressOneArr
+     ! takes 4 field arguments: one scalar pointer and 3 implicit shape 3D
      module procedure PostSendRecvMsgsVariableAdressScalar
+     ! takes a single field argument: one implicit shape 3D
+     module procedure PostSendRecvMsgsVariableAdressOneArr
   end interface PostSendRecvMsgsVariableAdress
 
 
@@ -467,7 +470,7 @@ contains
     type(MessageSet), pointer, intent(inout) :: RecvMessageSet
 
     character(len=*), parameter :: h="**(NodesRegionsSendRecv)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
        call MsgDump(h// "starts computing field sections for "//&
@@ -1603,7 +1606,7 @@ contains
     character(len=*), parameter :: NameRecvWP="AcouRecvWP"
 
     character(len=*), parameter :: h="**(CreateAcousticMessageSet)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! verify input arguments
 
@@ -1995,7 +1998,7 @@ contains
     type(MessageSet), pointer, intent(inout) :: AcouRecvWP
 
     character(len=*), parameter :: h="**(DestroyAcousticMessageSet)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
        call MsgDump(h//" will destroy "//&
@@ -2075,7 +2078,7 @@ contains
 
     character(len=30) :: tmp_name
     character(len=*), parameter :: h="**(CreateDn0MessageSet)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! verify input arguments
 
@@ -2208,7 +2211,7 @@ contains
     type(MessageSet), pointer, intent(inout) :: SendDn0v
     type(MessageSet), pointer, intent(inout) :: RecvDn0v
     character(len=*), parameter :: h="**(DestroyDn0MessageSet)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
        call MsgDump(h//" will destroy "//&
@@ -2275,7 +2278,7 @@ contains
 
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(CreateG3DMessageSet)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! verify input arguments
 
@@ -2397,7 +2400,7 @@ contains
     type(MessageSet), pointer, intent(inout) :: SendG3D
     type(MessageSet), pointer, intent(inout) :: RecvG3D
     character(len=*), parameter :: h="**(DestroyG3DMessageSet)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
        call MsgDump(h//" will destroy Send/RecvG3D")
@@ -2458,7 +2461,7 @@ contains
     character(len=*), parameter :: NameRecvSelectedGhostZone="SelectedGhostZoneRecv"
 
     character(len=*), parameter :: h="**(CreateSelectedGhostZoneMessageSet)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! verify input arguments
 
@@ -2546,7 +2549,7 @@ contains
     type(MessageSet), pointer, intent(inout) :: SelectedGhostZoneSend
     type(MessageSet), pointer, intent(inout) :: SelectedGhostZoneRecv
     character(len=*), parameter :: h="**(DestroySelectedGhostZoneMessageSet)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
        call MsgDump(h//" will destroy SelectedGhostZoneSend/Recv")
@@ -2607,7 +2610,7 @@ contains
     character(len=*), parameter :: NameRecvAllGhostZone="AllGhostZoneRecv"
 
     character(len=*), parameter :: h="**(CreateAllGhostZoneMessageSet)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! verify input arguments
 
@@ -2701,7 +2704,7 @@ contains
     type(MessageSet), pointer, intent(inout) :: AllGhostZoneSend
     type(MessageSet), pointer, intent(inout) :: AllGhostZoneRecv
     character(len=*), parameter :: h="**(DestroyAllGhostZoneMessageSet)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
        call MsgDump(h//" will destroy AllGhostZoneSend/Recv")
@@ -2760,7 +2763,7 @@ contains
     logical :: willRecv(parEnv%nMachs)
 
     character(len=*), parameter :: h="**(CreateAcouDampOneMessageSet3D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! verify input arguments
 
@@ -2882,7 +2885,7 @@ contains
     logical :: willRecv(parEnv%nMachs)
 
     character(len=*), parameter :: h="**(CreateAcouDampOneMessageSet1D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! verify input arguments
 
@@ -2969,7 +2972,7 @@ contains
     type(MessageSet), pointer, intent(inout) :: AcouDampOneSend
     type(MessageSet), pointer, intent(inout) :: AcouDampOneRecv
     character(len=*), parameter :: h="**(DestroyAcouDampOneMessageSet)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
        call MsgDump(h//" will destroy AcouDampOneSend/Recv")
@@ -3083,7 +3086,7 @@ contains
     integer, parameter :: idim_type=3
     type(FieldSection), pointer :: oneFieldSection
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(CreateWideGhostZoneMessageSet)**"
 
@@ -3628,7 +3631,7 @@ contains
     type(MessageSet), pointer, intent(inout) :: WideGhostZoneRecv
 
     character(len=*), parameter :: h="**(DestroyWideGhostZoneMessageSet)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
        call MsgDump(h//" will destroy WideGhostZoneSend/Recv")
@@ -3658,7 +3661,7 @@ contains
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
     character(len=*), parameter :: h="**(PostSendRecvMsgsFixedAdress)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! post nonblocking receive for each receiving message;
     ! a single receive msg from each process
@@ -3750,7 +3753,7 @@ contains
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
     character(len=*), parameter :: h="**(PostSendRecvMsgsFixedAdress1D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! post nonblocking receive for each receiving message;
     ! a single receive msg from each process
@@ -3843,7 +3846,7 @@ contains
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
     character(len=*), parameter :: h="**(PostSendRecvMsgsVariableAdressArr)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! post nonblocking receive for each receiving message;
     ! a single receive msg from each process
@@ -3935,7 +3938,7 @@ contains
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
     character(len=*), parameter :: h="**(PostSendRecvMsgsVariableAdressScalar)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! post nonblocking receive for each receiving message;
     ! a single receive msg from each process
@@ -4026,7 +4029,7 @@ contains
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
     character(len=*), parameter :: h="**(WaitSendRecvMsgsFixedAdress)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! for each receive message:
     ! build send buffer and copy field sections to the buffer;
@@ -4109,7 +4112,7 @@ contains
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
     character(len=*), parameter :: h="**(WaitSendRecvMsgsFixedAdress1D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! for each receive message:
     ! build send buffer and copy field sections to the buffer;
@@ -4195,7 +4198,7 @@ contains
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
     character(len=*), parameter :: h="**(WaitSendRecvMsgsVariableAdress)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! for each receive message:
     ! build send buffer and copy field sections to the buffer;
@@ -4272,7 +4275,7 @@ contains
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
     character(len=*), parameter :: h="**(PostSendRecvMsgsVariableAdressOneArr)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! post nonblocking receive for each receiving message;
     ! a single receive msg from each process
@@ -4367,7 +4370,7 @@ contains
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
     character(len=*), parameter :: h="**(WaitSendRecvMsgsVariableAdressOneArr)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! for each receive message:
     ! build send buffer and copy field sections to the buffer;

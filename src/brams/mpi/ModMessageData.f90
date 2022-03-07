@@ -141,7 +141,7 @@ contains
     character(len=*), intent(in) :: direction
 
     character(len=*), parameter :: h="**(CreateMessageData)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     oneMessageData%bufSize = 0
     oneMessageData%name = trim(adjustl(name))
@@ -168,7 +168,7 @@ contains
     type(FieldSection), pointer:: next
     character(len=8) :: c0, c1
     character(len=*), parameter :: h="**(DestroyMessageData)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
        call MsgDump(h//" of "//trim(adjustl(oneMessageData%name)))
@@ -226,7 +226,7 @@ contains
     type(FieldSectionNode), pointer :: this
     character(len=8) :: c0
     character(len=*), parameter :: h="**(AppendFieldSectionToMessageData)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (.not. associated(oneFieldSection)) then
        call fatal_error(h//" oneFieldSection not associated")
@@ -258,7 +258,7 @@ contains
     integer :: ierr
     character(len=8) :: c0, c1
     character(len=*), parameter :: h="**(AllocateMessageDataBuffer)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     bufSize=oneMessageData%bufSize
 
@@ -296,7 +296,7 @@ contains
     integer :: bufStart
     type(FieldSectionNode), pointer :: thisNode
     type(FieldSection), pointer :: this
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(FillMessageDataBufferFixedAdress)**"
 
     if (.not. allocated(oneMessageData%buf)) then
@@ -336,7 +336,7 @@ contains
     integer :: bufStart
     type(FieldSectionNode), pointer :: thisNode
     type(FieldSection), pointer :: this
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(FillMessageDataBufferFixedAdress1D)**"
 
     if (.not. allocated(oneMessageData%buf)) then
@@ -379,7 +379,7 @@ contains
     integer :: bufStart
     type(FieldSectionNode), pointer :: oneNode
     type(FieldSection), pointer :: oneFieldSection
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(FillMessageDataBufferVariableAdressArr)**"
 
@@ -482,7 +482,7 @@ contains
     integer :: bufStart
     type(FieldSectionNode), pointer :: oneNode
     type(FieldSection), pointer :: oneFieldSection
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(FillMessageDataBufferVariableAdressScalar)**"
 
 
@@ -536,7 +536,7 @@ contains
     type(FieldSectionNode), pointer :: thisNode
     type(FieldSection), pointer :: this
     character(len=*), parameter :: h="**(DecomposeMessageDataBufferFixedAdress)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
        call MsgDump(h//"  of Message Data "//trim(adjustl(oneMessageData%name)))
@@ -571,7 +571,7 @@ contains
     type(FieldSectionNode), pointer :: thisNode
     type(FieldSection), pointer :: this
     character(len=*), parameter :: h="**(DecomposeMessageDataBufferFixedAdress1D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
        call MsgDump(h//"  of Message Data "//trim(adjustl(oneMessageData%name)))
@@ -611,7 +611,7 @@ contains
     type(FieldSectionNode), pointer :: oneNode
     type(FieldSection), pointer :: oneSection
     character(len=*), parameter :: h="**(DecomposeMessageDataBufferVariableAdress)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
        call MsgDump(h//"  of Message Data "//trim(adjustl(oneMessageData%name)))
@@ -652,7 +652,7 @@ contains
     integer :: ierr
     character(len=8) :: c0
     character(len=*), parameter :: h="**(DeallocateMessageDataBuffer)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
        call MsgDump(h//" deallocate buf of "//&
@@ -688,7 +688,7 @@ contains
     character(len=*), parameter :: h="**(PostRecvMessageData)**"
     character(len=8) :: c0, c1, c2, c3
     character(len=128) :: msgString
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (.not. allocated(oneMessageData%buf)) then
        call fatal_error(h//" buf not allocated")
@@ -739,7 +739,7 @@ contains
     character(len=*), parameter :: h="**(PostSendMessageData)**"
     character(len=8) :: c0, c1, c2, c3
     character(len=128) :: msgString
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (.not. allocated(oneMessageData%buf)) then
        call fatal_error(h//" buf not allocated")
@@ -806,7 +806,7 @@ contains
     integer :: bufStart
     type(FieldSectionNode), pointer :: oneNode
     type(FieldSection), pointer :: oneFieldSection
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(FillMessageDataBufferVariableAdressOneArr)**"
 
@@ -852,7 +852,7 @@ contains
     type(FieldSection), pointer :: oneSection
     real, pointer :: fieldPtr(:,:,:)
     character(len=*), parameter :: h="**(DecomposeMessageDataBufferVariableAdressOneArr)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
        call MsgDump(h//"  of Message Data "//trim(adjustl(oneMessageData%name)))

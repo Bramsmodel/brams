@@ -196,9 +196,6 @@ subroutine timestep(OneGrid)
   use optical, only: &
             aodDriver
 
- ! use ModAdvectc_rk, only: &
- !        advectc_rk
-
   implicit none
 
   type(Grid), pointer :: OneGrid
@@ -329,7 +326,6 @@ subroutine timestep(OneGrid)
      ! If Generic IA32 use old Advction Scheme
 
      CALL ADVECTc   ('V',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
-!    CALL advectc_rk('V',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
 
   elseif (machine==1) then
      ! Using optmized advection scheme only in SX-6
@@ -403,7 +399,6 @@ subroutine timestep(OneGrid)
      ELSE
 
          CALL ADVECTc   ('T',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
-!        CALL advectc_rk('T',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
 
      ENDIF     ! If Generic IA32 use old Advction Scheme
 !----- for R-Ks time integration ---
