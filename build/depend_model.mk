@@ -905,11 +905,6 @@ mod_advect_kit.o : $(MODEL)/mod_advect_kit.f90 mod_GhostBlockPartition.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-radvc_new.o : $(MODEL)/radvc_new.f90
-	@cp -f $< $(<F:.f90=.f90)
-	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-	rm -f $(<F:.f90=.f90)
-
 radvc.o : $(MODEL)/radvc.f90  mem_basic.o mem_grid.o mem_scratch.o \
 	chem_dry_dep.o ModMonotonicAdvection.o ModParallelEnvironment.o \
 	mem_tend.o var_tables.o grid_dims.o 

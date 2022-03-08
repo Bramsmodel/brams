@@ -116,10 +116,6 @@ contains
          ichemi,         & ! INTENT(IN)
          isource           ! INTENT(IN)
 
-    !ALF- Necessary in new advection scheme
-    use advect_kit, only : &
-         calc_advec          ! Subroutine
-
     ! For specific optimization depending the type of machine
     use machine_arq, only: &
          machine ! INTENT(IN)

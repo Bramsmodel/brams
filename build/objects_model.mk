@@ -159,7 +159,6 @@ OBJ_MOD = \
 	mod_GhostBlock.o \
 	mod_GhostBlockPartition.o \
 	mod_advect_kit.o \
-	radvc_new.o \
 	rams_grid.o \
 	gridset.o \
 	adap_init.o \
