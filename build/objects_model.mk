@@ -403,7 +403,6 @@ OBJ_MOD = \
 	module_mp_radar.o \
 	module_wind_farm.o \
 	module_wind_fitch.o \
-	initComm.o \
 	debugTools.o \
 	ConvPar_GF_GEOS5.o \
 	Henrys_Law_cts.o \

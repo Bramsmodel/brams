@@ -102,6 +102,8 @@ contains
 
     integer :: myNum
     integer :: ierr
+    integer :: borderLow
+    integer :: borderHigh
 
     character(len=8) :: c0
     character(len=*), parameter :: h="**(CreateNodeDimensions)**"
@@ -133,9 +135,39 @@ contains
     res%borderEast = btest(LocalOwn%ibcon(myNum),2)
     res%borderWest = btest(LocalOwn%ibcon(myNum),1)
     
-    res%mxp = LocalOwn%xe(myNum)-LocalOwn%xb(myNum)+1+2*surfaceGhostZoneWidth
-    res%myp = LocalOwn%ye(myNum)-LocalOwn%yb(myNum)+1+2*surfaceGhostZoneWidth
+    ! nxp is x axis span + boundary condition or ghost zone
+
+    if (res%borderWest) then
+       borderLow=1
+    else
+       borderLow=surfaceGhostZoneWidth
+    end if
+    if (res%borderEast) then
+       borderHigh=1
+    else
+       borderHigh=surfaceGhostZoneWidth
+    end if
+    res%mxp = LocalOwn%xe(myNum)-LocalOwn%xb(myNum)+1+borderLow+borderHigh
+    
+    ! nxp is x axis span + boundary condition or ghost zone
+
+    if (res%borderSouth) then
+       borderLow=1
+    else
+       borderLow=surfaceGhostZoneWidth
+    end if
+    if (res%borderNorth) then
+       borderHigh=1
+    else
+       borderHigh=surfaceGhostZoneWidth
+    end if
+    res%myp = LocalOwn%ye(myNum)-LocalOwn%yb(myNum)+1+borderLow+borderHigh
+
+    ! nzp 
+
     res%mzp = GridSize%nnzp + 2*verticalGhostZoneWidth
+
+    ! index range without ghost zone or boundary condition
     
     res%ia=LocalOwn%xb(myNum)
     res%iz=LocalOwn%xe(myNum)
@@ -153,8 +185,21 @@ contains
        res%jzv=res%jz
     end if
 
-    res%i0=GlobalOwn%xb(myNum) - surfaceGhostZoneWidth - 1
-    res%j0=GlobalOwn%yb(myNum) - surfaceGhostZoneWidth - 1
+    ! x global index = x local index + x offset 
+
+    if (res%borderWest) then
+       res%i0=0
+    else
+       res%i0=GlobalOwn%xb(myNum) - surfaceGhostZoneWidth - 1
+    end if
+
+    ! y global index = y local index + y offset 
+
+    if (res%borderSouth) then
+       res%j0=0
+    else
+       res%j0=GlobalOwn%yb(myNum) - surfaceGhostZoneWidth - 1
+    end if
      
     if (dumpLocal) then
        call DumpNodeDimensions(res, varName)

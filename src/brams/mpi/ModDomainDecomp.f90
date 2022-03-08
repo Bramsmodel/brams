@@ -726,21 +726,25 @@ contains
     CreateGlobalWithGhost%GhostZoneWidth = GhostZoneWidth
     do cell = 1, nmachs
        CreateGlobalWithGhost%ibcon(cell) = GlobalOwn%ibcon(cell)
+       ! west boundary (lower x axis)
        if (btest(CreateGlobalWithGhost%ibcon(cell),1)) then
           CreateGlobalWithGhost%xb(cell) = 1
        else
           CreateGlobalWithGhost%xb(cell) = max(1,GlobalOwn%xb(cell) - GhostZoneWidth)
        end if
+       ! east boundary (higher x axis)
        if (btest(CreateGlobalWithGhost%ibcon(cell),2)) then
           CreateGlobalWithGhost%xe(cell) = nxp
        else
           CreateGlobalWithGhost%xe(cell) = min(nxp,GlobalOwn%xe(cell) + GhostZoneWidth)
        end if
+       ! south boundary (lower y axis)
        if (btest(CreateGlobalWithGhost%ibcon(cell),3)) then
           CreateGlobalWithGhost%yb(cell) = 1
        else
           CreateGlobalWithGhost%yb(cell) = max(1,GlobalOwn%yb(cell) - GhostZoneWidth)
        end if
+       ! north boundary (higher y axis)
        if (btest(CreateGlobalWithGhost%ibcon(cell),4)) then
           CreateGlobalWithGhost%ye(cell) = nyp
        else

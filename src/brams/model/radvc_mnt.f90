@@ -79,10 +79,6 @@ module monotonic_adv
   use advMessageMod, only: totalrecvj
   use advMessageMod, only: totalsendj
 
-  use ModComm, only: i0LGZ
-  use ModComm, only: j0LGZ
-
-
   use ParLib, only: parf_send_noblock_real
   use ParLib, only: parf_get_noblock_real
   use ParLib, only: parf_wait_any_nostatus
@@ -1450,15 +1446,15 @@ contains
           end do
        end do
        if (dumpLocal) then
-          write(str(1),"(i8)") iaSend(iSend)+i0LGZ
-          write(str(2),"(i8)") izSend(iSend)+i0LGZ
-          write(str(3),"(i8)") jaSend(iSend)+j0LGZ
-          write(str(4),"(i8)") jzSend(iSend)+j0LGZ
+          write(str(1),"(i8)") iaSend(iSend)
+          write(str(2),"(i8)") izSend(iSend)
+          write(str(3),"(i8)") jaSend(iSend)
+          write(str(4),"(i8)") jzSend(iSend)
           write(str(5),"(i8)") i2
           write(str(6),"(i8)") procSend(iSend)
           write(str(7),"(i8)") tagSend(iSend)
           write(str(8),"(i8)") m1
-          call MsgDump(h//" dispatch send of global section (1:"//&
+          call MsgDump(h//" dispatch send of local section (1:"//&
                trim(adjustl(str(8)))//","//&
                trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
                trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//")"//&
@@ -1483,10 +1479,10 @@ contains
           end do
        end do
        if (dumpLocal) then
-          write(str(1),"(i8)") iaRecv(recNum)+i0LGZ
-          write(str(2),"(i8)") izRecv(recNum)+i0LGZ
-          write(str(3),"(i8)") jaRecv(recNum)+j0LGZ
-          write(str(4),"(i8)") jzRecv(recNum)+j0LGZ
+          write(str(1),"(i8)") iaRecv(recNum)
+          write(str(2),"(i8)") izRecv(recNum)
+          write(str(3),"(i8)") jaRecv(recNum)
+          write(str(4),"(i8)") jzRecv(recNum)
           write(str(5),"(i8)") i2
           write(str(6),"(i8)") recNum
           write(str(7),"(i8)") tagRecv(recNum)
@@ -1495,7 +1491,7 @@ contains
           call MsgDump(h//" recv #"//trim(adjustl(str(6)))//&
                " from MPI proc "//trim(adjustl(str(9)))//&
                " of tag "//trim(adjustl(str(7)))//&
-               " with "//trim(adjustl(str(5)))//" reals and stores at global section (1:"//&
+               " with "//trim(adjustl(str(5)))//" reals and stores at locbal section (1:"//&
                trim(adjustl(str(8)))//","//&
                trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
                trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//")")

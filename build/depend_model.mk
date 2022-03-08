@@ -603,7 +603,7 @@ ModOneProc.o : $(MODEL)/ModOneProc.F90 ModNamelistFile.o \
 	ReadBcst.o ref_sounding.o parlibf.o ModParallelEnvironment.o \
 	tuvParameter.o ModTuv2.7.o ModTuvDriver2.7.o ModGridTree.o \
 	ModGrid.o rtimh.o rtimh_rk.o meteogram.o \
-	module_rams_microphysics_2M.o initComm.o dam.o mod_aer.o \
+	module_rams_microphysics_2M.o dam.o mod_aer.o \
 	initMicThompson.o modIau.o \
 	$(UTILS_INCS)/tsNames.h  $(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
@@ -1856,7 +1856,7 @@ digitalFilter.o :$(MODEL)/digitalFilter.f90 an_header.o grid_dims.o io_params.o 
 
 ModMonotonicAdvection.o : $(MODEL)/ModMonotonicAdvection.f90  \
 	mem_chem1.o mem_aer1.o parlibf.o mem_basic.o mem_grid.o ccatt_start.o \
-	initComm.o var_tables.o micphys.o rconstants.o \
+	var_tables.o micphys.o rconstants.o \
 	chem_dry_dep.o advSendMod.o ModNamelistFile.o \
 	ModParallelEnvironment.o ModGridDims.o ModDomainDecomp.o
 	@cp -f $< $(<F:.f90=.f90)
@@ -2496,11 +2496,6 @@ module_wind_fitch.o : $(WIND_FARM)/module_wind_fitch.f90
 
 module_wind_farm.o: $(WIND_FARM)/module_wind_farm.f90 module_wind_fitch.o mem_grid.o mem_basic.o \
 	mem_turb.o mem_tend.o rconstants.o ReadBcst.o node_mod.o
-	@cp -f $< $(<F:.f90=.f90)
-	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-	rm -f $(<F:.f90=.f90)
-
-initComm.o: $(COMM_SPC)/initComm.f90 parlibf.o ReadBcst.o  $(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

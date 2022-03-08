@@ -414,7 +414,6 @@ module ModOneProc
 
   !--(DMK-CCATT-INI)------------------------------------------------------------------
   USE AdvectData, ONLY: InitAdvect
-  USE modComm, ONLY: initExtraComm
 
 
   ! OBS: MODULOS NECESSARIOS PARA LEITURA DE EMISSAO
@@ -1005,13 +1004,13 @@ contains
        enddo
 
        !tst LFR
-       if (dumpLocal) then
-          call MsgDump(h//" invokes initExtraComm")
-       end if
-    
-       Call initExtraComm(nmachs,mynum,GhostZoneLength,&
-            nnxp,nnyp,nnzp,ixb,ixe,iyb,iye,master_num, &
-            nodei0,nodej0,nodemxp,nodemyp,nodemzp)
+!!$       if (dumpLocal) then
+!!$          call MsgDump(h//" invokes initExtraComm")
+!!$       end if
+!!$    
+!!$       Call initExtraComm(nmachs,mynum,GhostZoneLength,&
+!!$            nnxp,nnyp,nnzp,ixb,ixe,iyb,iye,master_num, &
+!!$            nodei0,nodej0,nodemxp,nodemyp,nodemzp)
 
        IF(advmnt>=1) then
           !- monotonic advection

@@ -189,9 +189,6 @@ contains
     type(ParallelEnvironment), pointer :: oneParallelEnvironment
     type(Grid), pointer :: oneGrid
 
-    logical :: largeGhostZone
-    ! if will use extended ghost zone width
-
     character(len=16) :: c0, c1
     character(len=*), parameter :: h="**(CreateGrid)**"
     logical, parameter :: dumpLocal=.false.
@@ -216,13 +213,6 @@ contains
     oneGrid%Ramsin => oneNamelistFile
     oneGrid%ParEnv => oneParallelEnvironment
 
-    ! run options
-
-    largeGhostZone = oneNamelistFile%dyncore_flag==2 .and. oneNamelistFile%advmnt==1
-    largeGhostZone = largeGhostZone .or. (&
-         (oneNamelistFile%dyncore_flag==0 .or. oneNamelistFile%dyncore_flag==1) .and. &
-         oneNamelistFile%advmnt>=1)
-
     ! store GridDims extracted from OneNamelistFile 
 
     oneGrid%GridSize => CreateGridDims(gridId, &
@@ -237,7 +227,8 @@ contains
          varName="GlobalOwn" &
          )
 
-
+    ! include boundary conditions (no ghost zone)
+    
     oneGrid%GlobalOwnWithBC => CreateGlobalOwnWithBC(&
          GridSize=oneGrid%GridSize, &
          ParEnv=oneGrid%ParEnv, &
@@ -274,6 +265,8 @@ contains
          varName="oneGrid%Neigh" &
          )
 
+    ! this node dimensions and indexing limits
+    
     oneGrid%NodeDims => CreateNodeDimensions(&
          GridSize=oneGrid%GridSize, &
          ParEnv=oneGrid%ParEnv, &
