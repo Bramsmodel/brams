@@ -392,7 +392,7 @@ subroutine timestep(OneGrid)
 
      IF(advmnt >= 1) THEN
       !-srf monotonic advection scheme
-        call advmnt_driver('T',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,&
+        call advmnt_driver(OneGrid, 'T',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,&
              i0,j0,nodemxp,nodemyp,nodemzp,mynum)
          if(advmnt >= 2) &
             CALL ADVECTc('T',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)

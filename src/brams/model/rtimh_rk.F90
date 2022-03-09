@@ -690,7 +690,7 @@ contains
     !----------------------------------------
     IF(advmnt == 1) THEN
        !- monotonic advection scheme
-       CALL advmnt_driver('SCALAR',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,&
+       CALL advmnt_driver(OneGrid, 'SCALAR',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,&
             i0,j0,nodemxp,nodemyp,nodemzp,mynum)
     ELSEIF(advmnt == 0) THEN
        !- using the 2nd order forward upstream

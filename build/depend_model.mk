@@ -49,7 +49,7 @@ ModGrid.o  : $(MPI)/ModGrid.f90 \
 	ModNamelistFile.o ModParallelEnvironment.o \
 	ModGridDims.o ModDomainDecomp.o \
 	ModNeighbourNodes.o ModMessageSet.o \
-	ModMonotonicAdvection.o ModNodeDimensions.o \
+	ModNodeDimensions.o \
 	var_tables.o meteogramType.o mem_tend.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
@@ -1853,7 +1853,7 @@ ModMonotonicAdvection.o : $(MODEL)/ModMonotonicAdvection.f90  \
 	mem_chem1.o mem_aer1.o parlibf.o mem_basic.o mem_grid.o ccatt_start.o \
 	var_tables.o micphys.o rconstants.o \
 	chem_dry_dep.o advSendMod.o ModNamelistFile.o \
-	ModParallelEnvironment.o ModGridDims.o ModDomainDecomp.o
+	ModGrid.o ModParallelEnvironment.o ModGridDims.o ModDomainDecomp.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

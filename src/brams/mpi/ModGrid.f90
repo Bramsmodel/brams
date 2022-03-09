@@ -48,11 +48,6 @@ module ModGrid
        CreateWideGhostZoneMessageSet, &
        DestroyWideGhostZoneMessageSet
 
-  use ModMonotonicAdvection, only: &
-       MonotonicAdvection, &
-       CreateMonotonicAdvection, &
-       DestroyMonotonicAdvection
-
   use ModNodeDimensions, only: &
        NodeDimensions, &
        CreateNodeDimensions, &
@@ -109,6 +104,17 @@ module ModGrid
      ! LocalOwn: local indices of this grid domain
      !           decomposition owned by each rank. 
      !           Convertion of GlobalOwn to local indices
+     type(DomainDecomp), pointer :: GlobalWithGhostAdvMnt => null()
+     ! GlobalWithGhostAdvMnt: global indices of this grid domain
+     !                        decomposition at each rank, including
+     !                        the owned points and a ghost zone of 
+     !                        parametrized width, used at MonotonicAdvection. 
+     !                        Not a domain partition, due to ghost zone inclusion.
+     type(DomainDecomp), pointer :: LocalOwnAdvMnt => null()
+     ! LocalOwnAdvMnt: local indices of this grid domain
+     !                 decomposition owned by each rank,
+     !                 use at MonotonicAdvection.
+     !                 Convertion of GlobalWithGhostAdvMnt to local indices
      type(NeighbourNodes), pointer :: Neigh => null()
      ! Neigh: list of BRAMS process numbers that are neighbours
      !        of this node for usual ghost zone update operations
@@ -171,6 +177,9 @@ module ModGrid
      type(NodeDimensions), pointer :: NodeDims => null()
      ! NodeDims: indices and dimensions of this process
      ! domain decomposed sub-domain
+     type(NodeDimensions), pointer :: NodeDimsAdvMnt => null()
+     ! NodeDims: indices and dimensions of this process
+     ! domain decomposed sub-domain for use inside MonotonicAdvection
   end type Grid
 
 
@@ -277,6 +286,39 @@ contains
          varName="NodeDims" &
          )
 
+    ! for MonotonicAdvection, insert ghost zone of parametrized widht
+    ! at GlobalOwn and store at GlobalWithGhostAdvMnt
+
+    oneGrid%GlobalWithGhostAdvMnt => CreateGlobalWithGhost(&
+         GridSize=oneGrid%GridSize, &
+         ParEnv=oneGrid%ParEnv, &
+         GlobalOwn=oneGrid%GlobalOwn, &
+         GhostZoneWidth=oneNamelistFile%ghostzonelength, &
+         varName="GlobalWithGhostAdvMnt" &
+         )
+
+    ! convert global indices from GlobalWithGhostAdvMnt
+    ! into local indices stored at LocalOwnAdvMnt
+
+    oneGrid%LocalOwnAdvMnt => CreateLocalOwn(&
+         ParEnv=oneGrid%ParEnv, &
+         GlobalWithGhost=oneGrid%GlobalWithGhostAdvMnt, &
+         GlobalOwn=oneGrid%GlobalOwn, &
+         varName="LocalOwnAdvMnt" &
+         )
+
+    ! this node dimensions and indexing limits
+    
+    oneGrid%NodeDimsAdvMnt => CreateNodeDimensions(&
+         GridSize=oneGrid%GridSize, &
+         ParEnv=oneGrid%ParEnv, &
+         LocalOwn=oneGrid%LocalOwnAdvMnt, &
+         GlobalOwn=oneGrid%GlobalOwn, &
+         verticalGhostZoneWidth=0, &
+         surfaceGhostZoneWidth=oneNamelistFile%ghostzonelength, &
+         varName="NodeDimsAdvMnt" &
+         )
+
     if (dumpLocal) then
        call MsgDump(h//" dumping OneGrid at the end")
        call DumpGrid(OneGrid)
@@ -292,7 +334,7 @@ contains
 
     character(len=16) :: str(10)
     character(len=*), parameter :: h="**(InsertMessageSetAtOneGrid)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     integer, parameter :: TagU=25
     integer, parameter :: TagV=26
@@ -447,6 +489,7 @@ contains
     if (dumpLocal) then
        call MsgDump(h//" dumping oneGrid")
        call DumpGrid(OneGrid)
+       call MsgDump(h//" done dumping oneGrid")
     end if
   end subroutine InsertMessageSetAtOneGrid
 
@@ -466,6 +509,8 @@ contains
        call DestroyDomainDecomp(oneGrid%GlobalOwn)
        call DestroyDomainDecomp(oneGrid%GlobalWithGhost)
        call DestroyDomainDecomp(oneGrid%LocalOwn)
+       call DestroyDomainDecomp(oneGrid%GlobalWithGhostAdvMnt)
+       call DestroyDomainDecomp(oneGrid%LocalOwnAdvMnt)
        call DestroyNeighbourNodes(oneGrid%Neigh)
        call DestroyAcousticMessageSet(&
             oneGrid%AcouSendU, oneGrid%AcouRecvU, &
@@ -496,6 +541,7 @@ contains
        call DestroyWideGhostZoneMessageSet(&
             oneGrid%WideGhostZoneSend, oneGrid%WideGhostZoneRecv)
        call DestroyNodeDimensions(oneGrid%NodeDims)
+       call DestroyNodeDimensions(oneGrid%NodeDimsAdvMnt)
        deallocate(oneGrid)
     end if
     nullify(oneGrid)
@@ -531,6 +577,8 @@ contains
     call DumpDomainDecomp(oneGrid%GlobalOwnWithBC, "GlobalOwnWithBC")
     call DumpDomainDecomp(oneGrid%GlobalWithGhost, "GlobalWithGhost")
     call DumpDomainDecomp(oneGrid%LocalOwn, "LocalOwn")
+    call DumpDomainDecomp(oneGrid%GlobalWithGhostAdvMnt, "GlobalWithGhostAdvMnt")
+    call DumpDomainDecomp(oneGrid%LocalOwnAdvMnt, "LocalOwnAdvMnt")
 
     call MsgDump(h//" dumping neighborhood components")
     call DumpNeighbourNodes(oneGrid%Neigh,"oneGrid%Neigh")
@@ -602,5 +650,6 @@ contains
     call MsgDump(h//" dumping WideGhostZoneRecv")
     call DumpMessageSet(oneGrid%WideGhostZoneRecv)
     call DumpNodeDimensions(oneGrid%NodeDims, "NodeDims")
+    call DumpNodeDimensions(oneGrid%NodeDimsAdvMnt, "NodeDimsAdvMnt")
   end subroutine DumpGrid
 end module ModGrid

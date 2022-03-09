@@ -833,7 +833,14 @@ subroutine advtndc(m1,m2,m3,ia,iz,ja,jz,scp,sca,sct,dtl,mynum)
   character(len=8) :: str(10)
 
   if (dumpLocal) then
-     call MsgDump(h//" executes")
+     write(str(1),"(i8)") m1-1
+     write(str(2),"(i8)") ia
+     write(str(3),"(i8)") iz
+     write(str(4),"(i8)") ja
+     write(str(5),"(i8)") jz
+     call MsgDump(h//" updates (2:"//trim(adjustl(str(1)))//","//&
+          trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//","//&
+          trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
   end if
   
   dtli = 1. / dtl

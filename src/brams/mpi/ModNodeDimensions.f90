@@ -119,6 +119,10 @@ contains
        call fatal_error(h//" invoked with null GlobalOwn")
     end if
 
+    if (dumpLocal) then
+       call MsgDump(h//" starts for variable "//trim(varName))
+    end if
+
     myNum = ParEnv%myNum
 
     allocate(res, stat=ierr)
@@ -203,6 +207,7 @@ contains
      
     if (dumpLocal) then
        call DumpNodeDimensions(res, varName)
+       call MsgDump(h//" finishes for variable "//trim(varName))
     end if
   end function CreateNodeDimensions
 
