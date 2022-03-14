@@ -948,7 +948,7 @@ contains
     integer,          intent(in) :: maxdif
     integer,          intent(in) :: maxar1
     integer,          intent(in) :: maxar2
-    character(len=20) :: c0, c1
+    character(len=8) :: c0, c1, c2, c3
 
     if (cntdif == 0_i8) then
 
@@ -957,9 +957,9 @@ contains
           ! no differences; verify if any array is null
 
           if (zero1 .and. zero2) then
-             write(*,"(a,' both null')") msg
+             call MsgDump(trim(msg)//" both null")
           else
-             write(*,"(a,' matches')") msg
+             call MsgDump(trim(msg)//" matches")
           end if
        end if
 
@@ -967,23 +967,31 @@ contains
 
        ! there are differences
 
-       write(c0,"(i20)") cntdif
-       write(c1,"(i20)") sizein
-       write (*,"(a,1x,a,' differences in ',a,' entries; (',i3,'%)')") &
-            h//" "//msg//":", trim(adjustl(c0)), trim(adjustl(c1)), (100*cntdif)/sizein
-
-       ! case one array is null
+       write(c0,"(i8)") cntdif
+       write(c1,"(i8)") sizein
+       write(c2,"(f7.2)") real(100*cntdif)/real(sizein)
+       call MsgDump(trim(msg)//": there are "//trim(adjustl(c0))//&
+            " differences in "//trim(adjustl(c1))//" entries; ("//&
+            trim(adjustl(c2))//" %)")
 
        if (zero1) then
-          write (*,"(10x,' first null; max abs second=',i10)") &
-               maxar2
+          write(c2,"(i8)") maxar2
+          call MsgDump(trim(msg)//" first null; max abs second="//&
+               trim(adjustl(c2)))
        else if (zero2) then
-          write (*,"(10x,' second null; max abs first=',i10)") &
-               maxar1
+          write(c2,"(i8)") maxar1
+          call MsgDump(trim(msg)//" second null; max abs second="//&
+               trim(adjustl(c2)))
        else
-          write (*,"(2x,1p,' dif=',i10, &
-               &', entry1=',i10,', entry2=',i10)")&
-               maxdif, maxar1, maxar2
+
+          ! both arrays not null
+
+          write(c0,"(i8)") maxdif
+          write(c2,"(i8)") maxar1
+          write(c3,"(i8)") maxar2
+          call MsgDump(trim(msg)//" dif="//trim(adjustl(c0))//&
+               "; entry1="//trim(adjustl(c2))//&
+               "; entry2="//trim(adjustl(c3)))
        end if
     end if
   end subroutine OutputI4
@@ -2522,6 +2530,7 @@ module ModMonotonicAdvection
        nspecies_transported !intent(in)
 
   use module_dry_dep, only: &
+       sedim_type,          &
        dd_sedim,            &
        naer_transported
 
@@ -3423,6 +3432,215 @@ contains
 
 
 
+  subroutine PrepareWinds(&
+       ng, mzp, mxp, myp, mxpAdvMnt, mypAdvMnt, &
+       iOffset, i1ExternAtAdvMnt,  iMxpExternAtAdvMnt,  &
+       jOffset, j1ExternAtAdvMnt,  jMypExternAtAdvMnt,  &
+       dtlt, uc, up, vc, vp, wc, wp, &
+       fmapui, fmapvi, rtgt, rtgu, rtgv, f13t, f23t, &
+       u3d, v3d, w3d, &
+       aerosol, naer_transported, dd_sedim, dzt, ndt_z)
+
+    integer, intent(in) :: ng ! grid number, should dissapear
+    integer, intent(in) :: mzp
+    ! z dimension of external and Monotonic Advection fields 
+    integer, intent(in) :: mxp
+    ! x dimension of external fields 
+    integer, intent(in) :: myp
+    ! y dimension of external fields 
+    integer, intent(in) :: mxpAdvMnt
+    ! x dimension of Monotonic Advection fields
+    integer, intent(in) :: mypAdvMnt
+    ! y dimension of Monotonic Advection fields
+    integer, intent(in) :: iOffset
+    ! x index offset from external to Monotonic Advection 
+    integer, intent(in) :: i1ExternAtAdvMnt
+    ! first x position of external fields (1) indexed Monotonic Advection
+    integer, intent(in) :: iMxpExternAtAdvMnt
+    ! last x position of external fields (mxp) indexed Monotonic Advection
+    integer, intent(in) :: jOffset
+    ! y index offset from external to Monotonic Advection 
+    integer, intent(in) :: j1ExternAtAdvMnt
+    ! first y position of external fields (1) indexed Monotonic Advection
+    integer, intent(in) :: jMypExternAtAdvMnt
+    ! last y position of external fields (myp) indexed Monotonic Advection
+    real, intent(in) :: dtlt
+
+    real, pointer, intent(in) :: uc(:,:,:)
+    ! external field, pointer and values are intent(in)
+    real, pointer, intent(in) :: up(:,:,:)
+    ! external field, pointer and values are intent(in)
+    real, pointer, intent(in) :: vc(:,:,:)
+    ! external field, pointer and values are intent(in)
+    real, pointer, intent(in) :: vp(:,:,:)
+    ! external field, pointer and values are intent(in)
+    real, pointer, intent(in) :: wc(:,:,:)
+    ! external field, pointer and values are intent(in)
+    real, pointer, intent(in) :: wp(:,:,:)
+    ! external field, pointer and values are intent(in)
+    real, pointer, intent(in) :: fmapui(:,:)
+    ! external field, pointer and values are intent(in)
+    real, pointer, intent(in) :: fmapvi(:,:)
+    ! external field, pointer and values are intent(in)
+    real, pointer, intent(in) :: rtgt(:,:)
+    ! external field, pointer and values are intent(in)
+    real, pointer, intent(in) :: rtgu(:,:)
+    ! external field, pointer and values are intent(in)
+    real, pointer, intent(in) :: rtgv(:,:)
+    ! external field, pointer and values are intent(in)
+    real, pointer, intent(in) :: f13t(:,:)
+    ! external field, pointer and values are intent(in)
+    real, pointer, intent(in) :: f23t(:,:)
+    ! external field, pointer and values are intent(in)
+    real, pointer, intent(in) :: u3d(:,:,:)
+    ! Monotonic Advection field, pointer is intent(in), values are intent(out)
+    real, pointer, intent(in) :: v3d(:,:,:)
+    ! Monotonic Advection field, pointer is intent(in), values are intent(out)
+    real, pointer, intent(in) :: w3d(:,:,:)
+    ! Monotonic Advection field, pointer is intent(in), values are intent(out)
+    integer, intent(in) :: aerosol
+    ! flag for aerosol computation
+    integer, intent(in) :: naer_transported
+    ! # transported aerosol
+    type(sedim_type), intent(in) :: dd_sedim(:,:)
+    real, intent(in) :: dzt(:)
+    integer, intent(inout) :: ndt_z(:)
+    ! aerosol sedimentation timestep control
+
+    !- local var
+
+    integer :: jm
+    integer :: jp
+    integer :: im
+    integer :: ip
+    integer :: ispc
+    integer :: i
+    integer :: j
+    integer :: k
+    integer :: iExtern
+    integer :: jExtern
+    real :: cx1
+    real :: cx2
+    real :: rtgti
+
+    logical, parameter :: dumpLocal=.true.
+    character(len=*), parameter :: h="**(PrepareWinds)**"
+    character(len=8) :: str(10)
+
+    if (dumpLocal) then
+       call MsgDump(h//" starts; computes u3d, v3d and w3d just at a section"//&
+            " restricted to the original ghost zone of 1")
+    end if
+
+    ! set Monotonic Advection north ghost zone fields to zero
+    do j = 1, j1ExternAtAdvMnt-1
+       do i = 1, mxpAdvMnt
+          do k = 1, mzp
+             w3d(k,i,j) = 0.0
+             u3d(k,i,j) = 0.0
+             v3d(k,i,j) = 0.0
+          end do
+       end do
+    end do
+
+    ! u3d, u3d, and w3d are input as the velocity components (averaged
+    ! between past and current time levels) times dtlt.
+    do j = j1ExternAtAdvMnt, jMypExternAtAdvMnt
+       jExtern = j + jOffset
+       ! set Monotonic Advection west ghost zone fields to zero
+       do i = 1, i1ExternAtAdvMnt-1
+          do k = 1, mzp
+             w3d(k,i,j) = 0.0
+             u3d(k,i,j) = 0.0
+             v3d(k,i,j) = 0.0
+          end do
+       end do
+       ! u3d, u3d, and w3d are input as the velocity components (averaged
+       ! between past and current time levels) times dtlt.
+       do i = i1ExternAtAdvMnt, iMxpExternAtAdvMnt
+          iExtern = i + iOffset
+          do k = 1, mzp
+             w3d(k,i,j) = ( wc(k,iExtern,jExtern) + wp(k,iExtern,jExtern) )*0.5
+             u3d(k,i,j) = ( uc(k,iExtern,jExtern) + up(k,iExtern,jExtern) )*0.5
+             v3d(k,i,j) = ( vc(k,iExtern,jExtern) + vp(k,iExtern,jExtern) )*0.5
+          end do
+       end do
+       ! set Monotonic Advection east ghost zone fields to zero
+       do i = iMxpExternAtAdvMnt+1, mxpAdvMnt
+          do k = 1, mzp
+             w3d(k,i,j) = 0.0
+             u3d(k,i,j) = 0.0
+             v3d(k,i,j) = 0.0
+          end do
+       end do
+    end do
+
+    ! set Monotonic Advection south ghost zone fields to zero
+    do j = jMypExternAtAdvMnt+1, mypAdvMnt
+       do i = 1, mxpAdvMnt
+          do k = 1, mzp
+             w3d(k,i,j) = 0.0
+             u3d(k,i,j) = 0.0
+             v3d(k,i,j) = 0.0
+          end do
+       end do
+    end do
+
+    ! transform w3d from cartesian vertical velocity to sigma_z velocity
+
+    ! Add contribution to w3d from horiz winds crossing sloping sigma surfaces,
+    ! and include 1/rtgt factor in w3d
+    do j = j1ExternAtAdvMnt, jMypExternAtAdvMnt
+       jm = max(j1ExternAtAdvMnt,j-1)
+       jp = min(jMypExternAtAdvMnt,j+1)
+       jExtern = j + jOffset
+       do i = i1ExternAtAdvMnt, iMxpExternAtAdvMnt
+          iExtern = i + iOffset
+          im = max(i1ExternAtAdvMnt,i-1)
+          ip = min(iMxpExternAtAdvMnt,i+1)
+          rtgti = 1. / rtgt(iExtern,jExtern)
+          do k = 1,mzp-1
+             w3d(k,i,j) = &
+                  ( &
+                  (u3d(k,i,j)+u3d(k+1,i,j)+u3d(k,im,j)+u3d(k+1,im,j)) * f13t(iExtern,jExtern) + &
+                  (v3d(k,i,j)+v3d(k+1,i,j)+v3d(k,i,jm)+v3d(k+1,i,jm)) * f23t(iExtern,jExtern)  &
+                  ) * hw4(k) + w3d(k,i,j) * rtgti
+          end do
+       end do
+    end do
+
+    ! include map factors on u and v
+
+    do j = j1ExternAtAdvMnt, jMypExternAtAdvMnt
+       jExtern = j + jOffset
+       do i = i1ExternAtAdvMnt, iMxpExternAtAdvMnt
+          iExtern = i + iOffset
+          cx1 = fmapui(iExtern,jExtern) * rtgu(iExtern,jExtern)
+          cx2 = fmapvi(iExtern,jExtern) * rtgv(iExtern,jExtern)
+          do k = 1,mzp-1
+             u3d(k,i,j) = u3d(k,i,j) * cx1
+             v3d(k,i,j) = v3d(k,i,j) * cx2
+          end do
+       end do
+    end do
+    !-----------------------------------------
+    !- control for aerosol sedimentation
+    if(aerosol > 0 .and. naer_transported > 0) then
+       ! very crude estimation of CFL violation and fix for the number of sub-timesteps
+       ! for large particles
+       do ispc=1,naer_transported
+          ndt_z(ispc)=ceiling(maxval(abs(dd_sedim(ispc,ng)%v_sed_part))*dtlt*maxval(dzt(1:mzp)))
+       end do
+    end if
+    !- end of aerosol sedimentation
+    if (dumpLocal) then
+       call MsgDump(h//" finishes")
+    end if
+  end subroutine PrepareWinds
+
+
+
+
 
 
   subroutine advmnt_driver(OneGrid, varn, &
@@ -3465,7 +3683,10 @@ contains
     integer :: sosj
     integer :: current_aer_ispc
     integer :: current_ndt_z
-    integer :: ndt_z(naer_transported)
+    integer, target :: ndt_z(naer_transported)
+    integer, target :: ndtZ(naer_transported)
+    integer, pointer :: p1(:) => null()
+    integer, pointer :: p2(:) => null()
     real, pointer :: scalarp
     real, pointer :: scalart
     logical  :: IsThisScalarAer =.false.
@@ -3645,8 +3866,9 @@ contains
     call Compare(oneAdvMnt%dxtW, advmnt_g(ng)%dxtW, "dxtW", .true.)
     call Compare(oneAdvMnt%dytW, advmnt_g(ng)%dytW, "dytW", .true.)
     call Compare(oneAdvMnt%dztW, advmnt_g(ng)%dztW, "dztW", .true.)
-    !**(JP)** ends
 
+
+    !**(JP)** ends
 
 
     mxyzp=m1*m2*m3
@@ -3713,14 +3935,14 @@ contains
             oneAdvMnt%dd0_3du, &
             oneAdvMnt%dd0_3dv, &
             oneAdvMnt%dd0_3dw)
+       call Compare(oneAdvMnt%dd0_3d, advmnt_g(ng)%dd0_3d, "dd0_3d", .true.)
+       call Compare(oneAdvMnt%dd0_3du, advmnt_g(ng)%dd0_3du, "dd0_3du", .true.)
+       call Compare(oneAdvMnt%dd0_3dv, advmnt_g(ng)%dd0_3dv, "dd0_3dv", .true.)
+       call Compare(oneAdvMnt%dd0_3dw, advmnt_g(ng)%dd0_3dw, "dd0_3dw", .true.)
+
+       !**(JP)** ends
+
     end if
-
-    call Compare(oneAdvMnt%dd0_3d, advmnt_g(ng)%dd0_3d, "dd0_3d", .true.)
-    call Compare(oneAdvMnt%dd0_3du, advmnt_g(ng)%dd0_3du, "dd0_3du", .true.)
-    call Compare(oneAdvMnt%dd0_3dv, advmnt_g(ng)%dd0_3dv, "dd0_3dv", .true.)
-    call Compare(oneAdvMnt%dd0_3dw, advmnt_g(ng)%dd0_3dw, "dd0_3dw", .true.)
-
-    !**(JP)** ends
 
     !- prepare wind velocities including map factors
     if (dumpLocal) then
@@ -3768,6 +3990,33 @@ contains
          ,advmnt_g(ng)%v3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
          ,advmnt_g(ng)%w3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
          ,ndt_z                )
+
+    !**(JP)** starts
+
+    ng=1
+    ndtZ=0
+    call PrepareWinds(&
+         ng, mzp, mxp, myp, mxpAdvMnt, mypAdvMnt, &
+         iOffset, i1ExternAtAdvMnt,  iMxpExternAtAdvMnt,  &
+         jOffset, j1ExternAtAdvMnt,  jMypExternAtAdvMnt,  &
+         dtlt, &
+         basic_g(ng)%uc, basic_g(ng)%up, &
+         basic_g(ng)%vc, basic_g(ng)%vp, &
+         basic_g(ng)%wc, basic_g(ng)%wp, &
+         grid_g(ng)%fmapui, grid_g(ng)%fmapvi, &
+         grid_g(ng)%rtgt, grid_g(ng)%rtgu, grid_g(ng)%rtgv, &
+         grid_g(ng)%f13t, grid_g(ng)%f23t, &
+         oneAdvMnt%u3d, oneAdvMnt%v3d, oneAdvMnt%w3d, &
+         aerosol, naer_transported, &
+         dd_sedim, dzt, ndtZ)
+    call Compare(oneAdvMnt%u3d, advmnt_g(ng)%u3d, "u3d", .true.)
+    call Compare(oneAdvMnt%v3d, advmnt_g(ng)%v3d, "v3d", .true.)
+    call Compare(oneAdvMnt%w3d, advmnt_g(ng)%w3d, "w3d", .true.)
+    p1 => ndtZ
+    p2 => ndt_z
+    call Compare(p1, p2, "ndt_z", .true.)
+
+    !**(JP)** ends
 
 
     if(theor_wind == on) then
@@ -3832,9 +4081,9 @@ contains
 
 
     if (dumpLocal) then
-       call MsgDump (h//" invokes InitialFieldsUpdate exchanging borders on x")
+       call MsgDump (h//" invokes initial_fields_update exchanging borders on x")
     end if
-    call InitialFieldsUpdate(ngrids,m1,m2,m3,newm2(ng),newm3(ng),ng,mynum, &
+    call initial_fields_update(ngrids,m1,m2,m3,newm2(ng),newm3(ng),ng,mynum, &
          nrecvI(ng),RecvMessageI(ng)%proc,RecvMessageI(ng)%tag, &
          RecvMessageI(ng)%ia,RecvMessageI(ng)%iz,&
          RecvMessageI(ng)%ja,RecvMessageI(ng)%jz, &
@@ -3845,9 +4094,9 @@ contains
          sendMessageI(ng)%start,sendMessageI(ng)%mSize,TotalSendI(ng))
 
     if (dumpLocal) then
-       call MsgDump (h//" invokes InitialFieldsUpdate exchanging borders on y")
+       call MsgDump (h//" invokes initial_fields_update exchanging borders on y")
     end if
-    call InitialFieldsUpdate(ngrids,m1,m2,m3,newm2(ng),newm3(ng),ng,mynum, &
+    call initial_fields_update(ngrids,m1,m2,m3,newm2(ng),newm3(ng),ng,mynum, &
          nrecvJ(ng),RecvMessageJ(ng)%proc,RecvMessageJ(ng)%tag, &
          RecvMessageJ(ng)%ia,RecvMessageJ(ng)%iz,&
          RecvMessageJ(ng)%ja,RecvMessageJ(ng)%jz, &
@@ -4404,9 +4653,6 @@ contains
     end do
     ! after this point w3d is the cartesian vertical velocity
 
-
-    !return ! for pure cartesian coordinates
-
     ! here w3d is the cartesian vertical velocity
 
     ! Add contribution to w3d from horiz winds crossing sloping sigma surfaces,
@@ -4556,7 +4802,7 @@ contains
     if (dumpLocal) then
        call MsgDump(h//" starts; update borders of vc3d_in for x advection")
     end if
-    call UpdateBorders(m1, newm2(ngrid), newm3(ngrid),advmnt_g(ngrid)%vc3d_in, &
+    call update_borders(m1, newm2(ngrid), newm3(ngrid),advmnt_g(ngrid)%vc3d_in, &
          nrecvI(ngrid), RecvMessageI(ngrid)%proc, RecvMessageI(ngrid)%tag, &
          RecvMessageI(ngrid)%ia, RecvMessageI(ngrid)%iz, &
          RecvMessageI(ngrid)%ja, RecvMessageI(ngrid)%jz, &
@@ -4581,7 +4827,7 @@ contains
     if (dumpLocal) then
        call MsgDump(h//" update borders of vc3d_out for y advection")
     end if
-    call UpdateBorders(m1, newm2(ngrid), newm3(ngrid),advmnt_g(ngrid)%vc3d_out, &
+    call update_borders(m1, newm2(ngrid), newm3(ngrid),advmnt_g(ngrid)%vc3d_out, &
          nrecvJ(ngrid), RecvMessageJ(ngrid)%proc, RecvMessageJ(ngrid)%tag, &
          RecvMessageJ(ngrid)%ia, RecvMessageJ(ngrid)%iz, &
          RecvMessageJ(ngrid)%ja, RecvMessageJ(ngrid)%jz, &
@@ -4772,7 +5018,7 @@ contains
 
 
 
-  subroutine UpdateBorders(m1, m2, m3, field, &
+  subroutine update_borders(m1, m2, m3, field, &
        nRecv, procRecv_ext, tagRecv, iaRecv, izRecv, jaRecv, jzRecv, &
        bufRecvStart, bufRecvLength, bufRecvTotalLength, &
        nSend, procSend_ext, tagSend, iaSend, izSend, jaSend, jzSend, &
@@ -4810,7 +5056,7 @@ contains
     integer :: reqSend(nSend), recNum
 
     logical, parameter :: dumpLocal=.true.
-    character(len=*), parameter :: h="**(UpdateBorders)**"
+    character(len=*), parameter :: h="**(update_borders)**"
     character(len=8) :: str(10)
 
     if (dumpLocal) then
@@ -4909,13 +5155,13 @@ contains
     if (dumpLocal) then
        call MsgDump(h//" finishes after waiting for all posted sends")
     end if
-  end subroutine UpdateBorders
+  end subroutine update_borders
 
 
 
 
 
-  subroutine InitialFieldsUpdate(ngrids,m1,m2,m3,Nm2,Nm3,ng,mynum, &
+  subroutine initial_fields_update(ngrids,m1,m2,m3,Nm2,Nm3,ng,mynum, &
        nRec, procRecv, tagRecv, iaRecv, izRecv, jaRecv, jzRecv, &
        bufRecvStart, bufRecvLength, bufRecvTotalLength, &
        nSnd, procSend, tagSend, iaSend, izSend, jaSend, jzSend, &
@@ -4948,7 +5194,7 @@ contains
 
     integer :: i,j,k
     logical, parameter :: dumpLocal=.true.
-    character(len=*), parameter :: h="**(InitialFieldsUpdate)**"
+    character(len=*), parameter :: h="**(initial_fields_update)**"
     character(len=8) :: str(10)
 
     integer, save :: iupdate_dxy=0
@@ -4985,7 +5231,7 @@ contains
        call MsgDump(h//" update borders of u3d")
     end if
 
-    call UpdateBorders(m1, nm2, nm3,advmnt_g(ng)%u3d, &
+    call update_borders(m1, nm2, nm3,advmnt_g(ng)%u3d, &
          nRec, procRecv, tagRecv, &
          iaRecv, izRecv, jaRecv, jzRecv, &
          bufRecvStart, bufRecvLength, bufRecvTotalLength, &
@@ -4996,7 +5242,7 @@ contains
     if (dumpLocal) then
        call MsgDump(h//" update borders of v3d")
     end if
-    call UpdateBorders(m1, nm2, nm3,advmnt_g(ng)%v3d, &
+    call update_borders(m1, nm2, nm3,advmnt_g(ng)%v3d, &
          nRec, procRecv, tagRecv, &
          iaRecv, izRecv, jaRecv, jzRecv, &
          bufRecvStart, bufRecvLength, bufRecvTotalLength, &
@@ -5007,7 +5253,7 @@ contains
     if (dumpLocal) then
        call MsgDump(h//" update borders of dd0_3d")
     end if
-    call UpdateBorders(m1, nm2, nm3,advmnt_g(ng)%dd0_3d, &
+    call update_borders(m1, nm2, nm3,advmnt_g(ng)%dd0_3d, &
          nRec, procRecv, tagRecv, &
          iaRecv, izRecv, jaRecv, jzRecv, &
          bufRecvStart, bufRecvLength, bufRecvTotalLength, &
@@ -5018,7 +5264,7 @@ contains
     if (dumpLocal) then
        call MsgDump(h//" update borders of dd0_3du")
     end if
-    call UpdateBorders(m1, nm2, nm3,advmnt_g(ng)%dd0_3du, &
+    call update_borders(m1, nm2, nm3,advmnt_g(ng)%dd0_3du, &
          nRec, procRecv, tagRecv, &
          iaRecv, izRecv, jaRecv, jzRecv, &
          bufRecvStart, bufRecvLength, bufRecvTotalLength, &
@@ -5029,7 +5275,7 @@ contains
     if (dumpLocal) then
        call MsgDump(h//" update borders of dd0_3dv")
     end if
-    call UpdateBorders(m1, nm2, nm3,advmnt_g(ng)%dd0_3dv, &
+    call update_borders(m1, nm2, nm3,advmnt_g(ng)%dd0_3dv, &
          nRec, procRecv, tagRecv, &
          iaRecv, izRecv, jaRecv, jzRecv, &
          bufRecvStart, bufRecvLength, bufRecvTotalLength, &
@@ -5040,7 +5286,7 @@ contains
     if (dumpLocal) then
        call MsgDump(h//" update borders of dd0_3dw")
     end if
-    call UpdateBorders(m1, nm2, nm3,advmnt_g(ng)%dd0_3dw, &
+    call update_borders(m1, nm2, nm3,advmnt_g(ng)%dd0_3dw, &
          nRec, procRecv, tagRecv, &
          iaRecv, izRecv, jaRecv, jzRecv, &
          bufRecvStart, bufRecvLength, bufRecvTotalLength, &
@@ -5051,7 +5297,7 @@ contains
     if (dumpLocal) then
        call MsgDump(h//" update borders of den0_3d")
     end if
-    call UpdateBorders(m1, nm2, nm3,advmnt_g(ng)%den0_3d, &
+    call update_borders(m1, nm2, nm3,advmnt_g(ng)%den0_3d, &
          nRec, procRecv, tagRecv, &
          iaRecv, izRecv, jaRecv, jzRecv, &
          bufRecvStart, bufRecvLength, bufRecvTotalLength, &
@@ -5062,7 +5308,7 @@ contains
     if (dumpLocal) then
        call MsgDump(h//" update borders of den1_3d")
     end if
-    call UpdateBorders(m1, nm2, nm3,advmnt_g(ng)%den1_3d, &
+    call update_borders(m1, nm2, nm3,advmnt_g(ng)%den1_3d, &
          nRec, procRecv, tagRecv, &
          iaRecv, izRecv, jaRecv, jzRecv, &
          bufRecvStart, bufRecvLength, bufRecvTotalLength, &
@@ -5073,7 +5319,7 @@ contains
     if (dumpLocal) then
        call MsgDump(h//" update borders of den2_3d")
     end if
-    call UpdateBorders(m1, nm2, nm3,advmnt_g(ng)%den2_3d, &
+    call update_borders(m1, nm2, nm3,advmnt_g(ng)%den2_3d, &
          nRec, procRecv, tagRecv, &
          iaRecv, izRecv, jaRecv, jzRecv, &
          bufRecvStart, bufRecvLength, bufRecvTotalLength, &
@@ -5084,7 +5330,7 @@ contains
     if (dumpLocal) then
        call MsgDump(h//" update borders of den3_3d")
     end if
-    call UpdateBorders(m1, nm2, nm3,advmnt_g(ng)%den3_3d, &
+    call update_borders(m1, nm2, nm3,advmnt_g(ng)%den3_3d, &
          nRec, procRecv, tagRecv, &
          iaRecv, izRecv, jaRecv, jzRecv, &
          bufRecvStart, bufRecvLength, bufRecvTotalLength, &
@@ -5095,7 +5341,7 @@ contains
     if (dumpLocal) then
        call MsgDump(h//" update borders of l_dxtW")
     end if
-    call UpdateBorders(m1, nm2, nm3,advmnt_g(ng)%l_dxtW, &
+    call update_borders(m1, nm2, nm3,advmnt_g(ng)%l_dxtW, &
          nRec, procRecv, tagRecv, &
          iaRecv, izRecv, jaRecv, jzRecv, &
          bufRecvStart, bufRecvLength, bufRecvTotalLength, &
@@ -5106,7 +5352,7 @@ contains
     if (dumpLocal) then
        call MsgDump(h//" update borders of l_dytW")
     end if
-    call UpdateBorders(m1, nm2, nm3,advmnt_g(ng)%l_dytW, &
+    call update_borders(m1, nm2, nm3,advmnt_g(ng)%l_dytW, &
          nRec, procRecv, tagRecv, &
          iaRecv, izRecv, jaRecv, jzRecv, &
          bufRecvStart, bufRecvLength, bufRecvTotalLength, &
@@ -5136,7 +5382,7 @@ contains
     if (dumpLocal) then
        call MsgDump(h//" finishes")
     end if
-  end subroutine InitialFieldsUpdate
+  end subroutine initial_fields_update
 
 
 
