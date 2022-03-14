@@ -115,6 +115,12 @@ module ModGrid
      !                 decomposition owned by each rank,
      !                 use at MonotonicAdvection.
      !                 Convertion of GlobalWithGhostAdvMnt to local indices
+     type(NodeDimensions), pointer :: NodeDims => null()
+     ! NodeDims: indices and dimensions of this process
+     ! domain decomposed sub-domain
+     type(NodeDimensions), pointer :: NodeDimsAdvMnt => null()
+     ! NodeDimsAdvMnt: indices and dimensions of this process
+     ! domain decomposed sub-domain for use inside MonotonicAdvection
      type(NeighbourNodes), pointer :: Neigh => null()
      ! Neigh: list of BRAMS process numbers that are neighbours
      !        of this node for usual ghost zone update operations
@@ -174,12 +180,13 @@ module ModGrid
      ! Fields to update are local variables to these procedures,
      ! allocated and deallocated at each call. As so, field
      ! memory address vary with procedure invocation
-     type(NodeDimensions), pointer :: NodeDims => null()
-     ! NodeDims: indices and dimensions of this process
-     ! domain decomposed sub-domain
-     type(NodeDimensions), pointer :: NodeDimsAdvMnt => null()
-     ! NodeDims: indices and dimensions of this process
-     ! domain decomposed sub-domain for use inside MonotonicAdvection
+
+     type(MessageSet), pointer :: AdvMntInitSend => null()
+     type(MessageSet), pointer :: AdvMntInitRecv => null()
+     type(MessageSet), pointer :: AdvMntXSend => null()
+     type(MessageSet), pointer :: AdvMntXRecv => null()
+     type(MessageSet), pointer :: AdvMntYSend => null()
+     type(MessageSet), pointer :: AdvMntYRecv => null()
   end type Grid
 
 

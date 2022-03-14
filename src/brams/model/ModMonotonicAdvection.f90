@@ -22,6 +22,7 @@ module ModUtils
 
   use iso_fortran_env, only: output_unit
 
+  use ModParallelEnvironment, only: MsgDump
   implicit none
 
   private
@@ -64,12 +65,12 @@ contains
        write(c3,"(e16.7)") minval(ptr)
        write(c4,"(e16.7)") maxval(ptr)
        write(c5,"(e16.7)") sum(ptr)/size(ptr)
-       write(*,"(a)") trim(adjustl(caller))//" "//&
+       call MsgDump (trim(adjustl(caller))//" "//&
             trim(adjustl(fieldName))//"("//&
             trim(adjustl(c0))//") with "//&
             " minval="//trim(adjustl(c3))//&
             " maxval="//trim(adjustl(c4))//&
-            " aveval="//trim(adjustl(c5))
+            " aveval="//trim(adjustl(c5)))
     end if
   end subroutine Dump1D_r
 
@@ -101,13 +102,13 @@ contains
        write(c3,"(e16.7)") minval(ptr)
        write(c4,"(e16.7)") maxval(ptr)
        write(c5,"(e16.7)") sum(ptr)/size(ptr)
-       write(*,"(a)") trim(adjustl(caller))//" "//&
+       call MsgDump(trim(adjustl(caller))//" "//&
             trim(adjustl(fieldName))//"("//&
             trim(adjustl(c0))//","//&
             trim(adjustl(c1))//") with "//&
             " minval="//trim(adjustl(c3))//&
             " maxval="//trim(adjustl(c4))//&
-            " aveval="//trim(adjustl(c5))
+            " aveval="//trim(adjustl(c5)))
     end if
   end subroutine Dump2D_r
 
@@ -141,14 +142,14 @@ contains
        write(c3,"(e16.7)") minval(ptr)
        write(c4,"(e16.7)") maxval(ptr)
        write(c5,"(e16.7)") sum(ptr)/size(ptr)
-       write(*,"(a)") trim(adjustl(caller))//" "//&
+       call MsgDump(trim(adjustl(caller))//" "//&
             trim(adjustl(fieldName))//"("//&
             trim(adjustl(c0))//","//&
             trim(adjustl(c1))//","//&
             trim(adjustl(c2))//") with "//&
             " minval="//trim(adjustl(c3))//&
             " maxval="//trim(adjustl(c4))//&
-            " aveval="//trim(adjustl(c5))
+            " aveval="//trim(adjustl(c5)))
     end if
   end subroutine Dump3D_r
 
@@ -184,7 +185,7 @@ contains
        write(c3,"(e16.7)") minval(ptr)
        write(c4,"(e16.7)") maxval(ptr)
        write(c5,"(e16.7)") sum(ptr)/size(ptr)
-       write(*,"(a)") trim(adjustl(caller))//" "//&
+       call MsgDump(trim(adjustl(caller))//" "//&
             trim(adjustl(fieldName))//"("//&
             trim(adjustl(c0))//","//&
             trim(adjustl(c1))//","//&
@@ -192,7 +193,7 @@ contains
             trim(adjustl(c6))//") with "//&
             " minval="//trim(adjustl(c3))//&
             " maxval="//trim(adjustl(c4))//&
-            " aveval="//trim(adjustl(c5))
+            " aveval="//trim(adjustl(c5)))
     end if
   end subroutine Dump4D_r
 
@@ -222,12 +223,12 @@ contains
        write(c3,"(e16.7)") minval(ptr)
        write(c4,"(e16.7)") maxval(ptr)
        write(c5,"(e16.7)") sum(ptr)/size(ptr)
-       write(*,"(a)") trim(adjustl(caller))//" "//&
+       call MsgDump(trim(adjustl(caller))//" "//&
             trim(adjustl(fieldName))//"("//&
             trim(adjustl(c0))//") with "//&
             " minval="//trim(adjustl(c3))//&
             " maxval="//trim(adjustl(c4))//&
-            " aveval="//trim(adjustl(c5))
+            " aveval="//trim(adjustl(c5)))
     end if
   end subroutine Dump1D_i
 
@@ -259,13 +260,13 @@ contains
        write(c3,"(e16.7)") minval(ptr)
        write(c4,"(e16.7)") maxval(ptr)
        write(c5,"(e16.7)") sum(ptr)/size(ptr)
-       write(*,"(a)") trim(adjustl(caller))//" "//&
+       call MsgDump(trim(adjustl(caller))//" "//&
             trim(adjustl(fieldName))//"("//&
             trim(adjustl(c0))//","//&
             trim(adjustl(c1))//") with "//&
             " minval="//trim(adjustl(c3))//&
             " maxval="//trim(adjustl(c4))//&
-            " aveval="//trim(adjustl(c5))
+            " aveval="//trim(adjustl(c5)))
     end if
   end subroutine Dump2D_i
 end module ModUtils
@@ -275,7 +276,7 @@ module ModCompare
   use ModUtils, only: i8
   use ModUtils, only: r4
   use ModUtils, only: r8
-
+  use ModParallelEnvironment, only: MsgDump
   implicit none
 
   private
@@ -288,7 +289,7 @@ module ModCompare
           c0dc,  c1dc,  c2dc,  c3dc,  c4dc,  &
           c0dl,  c1dl,  c2dl,  c3dl,  c4dl
 
-  end interface
+  end interface compare
 
   integer, parameter :: sizepowers=62
   integer(i8),parameter :: powers(sizepowers)=(/ &
@@ -389,7 +390,7 @@ contains
     integer,          intent(in) :: maxbitsmantissa
     integer,          intent(in) :: bins(maxbins)
     integer :: i
-    character(len=20) :: c0, c1
+    character(len=12) :: c0, c1, c2, c3
 
     if (cntdif == 0_i8) then
 
@@ -398,9 +399,9 @@ contains
           ! no differences; verify if any array is null
 
           if (zero1 .and. zero2) then
-             write(*,"(a,' both null')") msg
+             call MsgDump(trim(msg)//' both null')
           else
-             write(*,"(a,' matches')") msg
+             call MsgDump(trim(msg)//' matches')
           end if
        end if
 
@@ -408,31 +409,48 @@ contains
 
        ! there are differences
 
-       write(c0,"(i20)") cntdif
-       write(c1,"(i20)") sizein
-       write (*,"(a,1x,a,' differences in ',a,' entries; (',i3,'%)')") &
-            h//" "//msg//":", trim(adjustl(c0)), trim(adjustl(c1)), (100*cntdif)/sizein
+       write(c0,"(i8)") cntdif
+       write(c1,"(i8)") sizein
+       write(c2,"(f7.2)") real(100*cntdif)/real(sizein)
+       call MsgDump(trim(msg)//": there are "//trim(adjustl(c0))//&
+            " differences in "//trim(adjustl(c1))//" entries; ("//&
+            trim(adjustl(c2))//" %)")
 
        ! case one array is null
 
        if (zero1) then
-          write (*,"(10x,' first null; max abs second=',e11.3)") &
-               maxar2
+          write(c2,"(e12.3)") maxar2
+          call MsgDump(trim(msg)//" first null; max abs second="//&
+               trim(adjustl(c2)))
        else if (zero2) then
-          write (*,"(10x,' second null; max abs first=',e11.3)") &
-               maxar1
+          write(c2,"(e12.3)") maxar1
+          call MsgDump(trim(msg)//" second null; max abs second="//&
+               trim(adjustl(c2)))
        else
 
           ! both arrays not null
 
-          write (*,"(2x,' max rel dif: ',i3,' mantissa bits in ',i3)") &
-               maxbit, maxbitsmantissa 
-          write (*,"(2x,1p,' dif=',e10.3,', spacing=',e10.3,&
-               &', entry1=',e10.3,', entry2=',e10.3)")&
-               maxdif, spacing(maxdif), maxar1, maxar2
+          write(c0,"(i8)") maxbit
+          write(c1,"(i8)") maxbitsmantissa 
+          call MsgDump(trim(msg)//" differ; max rel dif: "//&
+               trim(adjustl(c0))//" mantissa bits in "//&
+               trim(adjustl(c1)))
+          write(c0,"(e12.3)") maxdif
+          write(c1,"(e12.3)") spacing(maxdif)
+          write(c2,"(e12.3)") maxar1
+          write(c3,"(e12.3)") maxar2
+          call MsgDump(trim(msg)//" dif="//trim(adjustl(c0))//&
+               "; spacing="//trim(adjustl(c1))//&
+               "; entry1="//trim(adjustl(c2))//&
+               "; entry2="//trim(adjustl(c3)))
+
           do i = 1, maxbins
-             write (*,"(2x,f6.2,'% differences from ',i2,' to ',i2,' bits')") &
-                  100.0*real(bins(i))/real(cntdif), lboundbins(i), uboundbins(i)
+             write(c0,"(f7.2)") 100.0*real(bins(i))/real(cntdif)
+             write(c1,"(i8)") lboundbins(i)
+             write(c2,"(i8)") uboundbins(i)
+             call MsgDump(trim(msg)//" "//trim(adjustl(c0))//&
+                  "% differences from "//trim(adjustl(c1))//&
+                  " to "//trim(adjustl(c2))//" bits ")
              if (maxbit <= uboundbins(i)) then
                 exit
              end if
@@ -752,11 +770,11 @@ contains
        write(str(1),"(i8)") d1a1
        write(str(2),"(i8)") d2a1
        write(str(3),"(i8)") d3a1
-       write(*,"(a)") h//" for field "//trim(adjustl(msg))//&
+       call MsgDump(h//" for field "//trim(adjustl(msg))//&
             " localy declared ("//&
             "1:"//trim(adjustl(str(1)))//","//&
             "1:"//trim(adjustl(str(2)))//","//&
-            "1:"//trim(adjustl(str(3)))//"):"
+            "1:"//trim(adjustl(str(3)))//"):")
 
        do ind3 = 1, d3a1
           do ind2 = 1, d2a1
@@ -772,10 +790,10 @@ contains
                 write(str(1),"(i8)") cntDifInd1
                 write(str(2),"(i8)") ind2
                 write(str(3),"(i8)") ind3
-                write(*,"(a)")h//" there are "//trim(adjustl(str(1)))//&
+                call MsgDump(h//" there are "//trim(adjustl(str(1)))//&
                      " differences at (:,"//&
                      trim(adjustl(str(2)))//","//&
-                     trim(adjustl(str(3)))//")"
+                     trim(adjustl(str(3)))//")")
              end if
           end do
        end do
@@ -2459,7 +2477,7 @@ end module ModCompare
 module ModMonotonicAdvection
 
   use ModCompare, only: Compare
-  
+
   use ModParallelEnvironment, only: &
        ParallelEnvironment, &
        MsgDump
@@ -2648,194 +2666,184 @@ contains
 
 
 
-  function CreateMonotonicAdvection(&
-       oneParallelEnvironment, &
-       oneGridDims, &
-       oneLocalOwnMonoAdv)      result(oneMonoAdv)
-    type(ParallelEnvironment), pointer, intent(in) :: oneParallelEnvironment
-    type(GridDims), pointer, intent(in) :: oneGridDims
-    type(DomainDecomp), pointer, intent(in) :: oneLocalOwnMonoAdv
-    type(MonotonicAdvection), pointer :: oneMonoAdv
+  function CreateMonotonicAdvection(oneGrid) result(oneAdvMnt)
+    type(Grid), pointer, intent(in) :: OneGrid
+    type(MonotonicAdvection), pointer :: oneAdvMnt
 
-    integer :: myNum
-    integer :: mzp
-    integer :: mxpMonoAdv
-    integer :: mypMonoAdv
+    integer :: mzpAdvMnt
+    integer :: mxpAdvMnt
+    integer :: mypAdvMnt
 
     integer :: ierr
     character(len=8) :: str(10)
-    character(len=*), parameter :: h="**(CreateMonoAdv)**"
+    character(len=*), parameter :: h="**(CreateMonotonicAdvection)**"
     logical, parameter :: dumpLocal=.true.
 
-    if (.not. associated(oneParallelEnvironment)) then
-       call fatal_error(h//" oneParallelEnvironment not associated")
+    if (.not. associated(oneGrid)) then
+       call fatal_error(h//" oneGrid not associated")
     end if
-    if (.not. associated(oneGridDims)) then
-       call fatal_error(h//" oneGridDims not associated")
-    end if
-    if (.not. associated(oneLocalOwnMonoAdv)) then
-       call fatal_error(h//" oneLocalOwnMonoAdv not associated")
+    if (.not. associated(oneGrid%NodeDimsAdvMnt)) then
+       call fatal_error(h//" oneGrid%NodeDimsAdvMnt not associated")
     end if
 
-    myNum = oneParallelEnvironment%myNum
-    mzp = oneGridDims%nnzp
-    mxpMonoAdv = oneLocalOwnMonoAdv%nx(myNum)
-    mypMonoAdv = oneLocalOwnMonoAdv%ny(myNum)
+    mzpAdvMnt = oneGrid%NodeDimsAdvMnt%mzp
+    mxpAdvMnt = oneGrid%NodeDimsAdvMnt%mxp
+    mypAdvMnt = oneGrid%NodeDimsAdvMnt%myp
 
-    allocate(oneMonoAdv, stat=ierr)
+    allocate(oneAdvMnt, stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
-       call fatal_error(h//" allocate oneMonoAdv fails with stat="//&
+       call fatal_error(h//" allocate oneAdvMnt fails with stat="//&
             trim(adjustl(str(1))))
     end if
-    allocate(oneMonoAdv%u3d(mzp,mxpMonoAdv,mypMonoAdv), stat=ierr)
+    allocate(oneAdvMnt%u3d(mzpAdvMnt,mxpAdvMnt,mypAdvMnt), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
-       call fatal_error(h//" allocate oneMonoAdv%u3d fails with stat="//&
+       call fatal_error(h//" allocate oneAdvMnt%u3d fails with stat="//&
             trim(adjustl(str(1))))
     end if
-    allocate(oneMonoAdv%v3d(mzp,mxpMonoAdv,mypMonoAdv), stat=ierr)
+    allocate(oneAdvMnt%v3d(mzpAdvMnt,mxpAdvMnt,mypAdvMnt), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
-       call fatal_error(h//" allocate oneMonoAdv%v3d fails with stat="//&
+       call fatal_error(h//" allocate oneAdvMnt%v3d fails with stat="//&
             trim(adjustl(str(1))))
     end if
-    allocate(oneMonoAdv%w3d(mzp,mxpMonoAdv,mypMonoAdv), stat=ierr)
+    allocate(oneAdvMnt%w3d(mzpAdvMnt,mxpAdvMnt,mypAdvMnt), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
-       call fatal_error(h//" allocate oneMonoAdv%w3d fails with stat="//&
+       call fatal_error(h//" allocate oneAdvMnt%w3d fails with stat="//&
             trim(adjustl(str(1))))
     end if
-    allocate(oneMonoAdv%dd0_3d(mzp,mxpMonoAdv,mypMonoAdv), stat=ierr)
+    allocate(oneAdvMnt%dd0_3d(mzpAdvMnt,mxpAdvMnt,mypAdvMnt), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
-       call fatal_error(h//" allocate oneMonoAdv%dd0_3d  fails with stat="//&
+       call fatal_error(h//" allocate oneAdvMnt%dd0_3d  fails with stat="//&
             trim(adjustl(str(1))))
     end if
-    allocate(oneMonoAdv%dd0_3du(mzp,mxpMonoAdv,mypMonoAdv), stat=ierr)
+    allocate(oneAdvMnt%dd0_3du(mzpAdvMnt,mxpAdvMnt,mypAdvMnt), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
-       call fatal_error(h//" allocate oneMonoAdv%dd0_3du fails with stat="//&
+       call fatal_error(h//" allocate oneAdvMnt%dd0_3du fails with stat="//&
             trim(adjustl(str(1))))
     end if
-    allocate(oneMonoAdv%dd0_3dv(mzp,mxpMonoAdv,mypMonoAdv), stat=ierr)
+    allocate(oneAdvMnt%dd0_3dv(mzpAdvMnt,mxpAdvMnt,mypAdvMnt), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
-       call fatal_error(h//" allocate oneMonoAdv%dd0_3dv fails with stat="//&
+       call fatal_error(h//" allocate oneAdvMnt%dd0_3dv fails with stat="//&
             trim(adjustl(str(1))))
     end if
-    allocate(oneMonoAdv%dd0_3dw(mzp,mxpMonoAdv,mypMonoAdv), stat=ierr)
+    allocate(oneAdvMnt%dd0_3dw(mzpAdvMnt,mxpAdvMnt,mypAdvMnt), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
-       call fatal_error(h//" allocate oneMonoAdv%dd0_3dw fails with stat="//&
+       call fatal_error(h//" allocate oneAdvMnt%dd0_3dw fails with stat="//&
             trim(adjustl(str(1))))
     end if
-    allocate(oneMonoAdv%den0_3d(mzp,mxpMonoAdv,mypMonoAdv), stat=ierr)
+    allocate(oneAdvMnt%den0_3d(mzpAdvMnt,mxpAdvMnt,mypAdvMnt), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
-       call fatal_error(h//" allocate oneMonoAdv%den0_3d fails with stat="//&
+       call fatal_error(h//" allocate oneAdvMnt%den0_3d fails with stat="//&
             trim(adjustl(str(1))))
     end if
-    allocate(oneMonoAdv%den1_3d(mzp,mxpMonoAdv,mypMonoAdv), stat=ierr)
+    allocate(oneAdvMnt%den1_3d(mzpAdvMnt,mxpAdvMnt,mypAdvMnt), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
-       call fatal_error(h//" allocate oneMonoAdv%den1_3d fails with stat="//&
+       call fatal_error(h//" allocate oneAdvMnt%den1_3d fails with stat="//&
             trim(adjustl(str(1))))
     end if
-    allocate(oneMonoAdv%den2_3d(mzp,mxpMonoAdv,mypMonoAdv), stat=ierr)
+    allocate(oneAdvMnt%den2_3d(mzpAdvMnt,mxpAdvMnt,mypAdvMnt), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
-       call fatal_error(h//" allocate oneMonoAdv%den2_3d fails with stat="//&
+       call fatal_error(h//" allocate oneAdvMnt%den2_3d fails with stat="//&
             trim(adjustl(str(1))))
     end if
-    allocate(oneMonoAdv%den3_3d(mzp,mxpMonoAdv,mypMonoAdv), stat=ierr)
+    allocate(oneAdvMnt%den3_3d(mzpAdvMnt,mxpAdvMnt,mypAdvMnt), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
-       call fatal_error(h//" allocate oneMonoAdv%den3_3d fails with stat="//&
+       call fatal_error(h//" allocate oneAdvMnt%den3_3d fails with stat="//&
             trim(adjustl(str(1))))
     end if
-    allocate(oneMonoAdv%l_dxtW(mzp,mxpMonoAdv,mypMonoAdv), stat=ierr)
+    allocate(oneAdvMnt%l_dxtW(mzpAdvMnt,mxpAdvMnt,mypAdvMnt), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
-       call fatal_error(h//" allocate oneMonoAdv%l_dxtW fails with stat="//&
+       call fatal_error(h//" allocate oneAdvMnt%l_dxtW fails with stat="//&
             trim(adjustl(str(1))))
     end if
-    allocate(oneMonoAdv%l_dytW(mzp,mxpMonoAdv,mypMonoAdv), stat=ierr)
+    allocate(oneAdvMnt%l_dytW(mzpAdvMnt,mxpAdvMnt,mypAdvMnt), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
-       call fatal_error(h//" allocate oneMonoAdv%l_dytW fails with stat="//&
+       call fatal_error(h//" allocate oneAdvMnt%l_dytW fails with stat="//&
             trim(adjustl(str(1))))
     end if
-    allocate(oneMonoAdv%dxtW(mxpMonoAdv,mypMonoAdv), stat=ierr)
+    allocate(oneAdvMnt%dxtW(mxpAdvMnt,mypAdvMnt), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
-       call fatal_error(h//" allocate oneMonoAdv%dxtW fails with stat="//&
+       call fatal_error(h//" allocate oneAdvMnt%dxtW fails with stat="//&
             trim(adjustl(str(1))))
     end if
-    allocate(oneMonoAdv%dytW(mxpMonoAdv,mypMonoAdv), stat=ierr)
+    allocate(oneAdvMnt%dytW(mxpAdvMnt,mypAdvMnt), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
-       call fatal_error(h//" allocate oneMonoAdv%dytW fails with stat="//&
+       call fatal_error(h//" allocate oneAdvMnt%dytW fails with stat="//&
             trim(adjustl(str(1))))
     end if
-    allocate(oneMonoAdv%dztW(mzp), stat=ierr)
+    allocate(oneAdvMnt%dztW(mzpAdvMnt), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
-       call fatal_error(h//" allocate oneMonoAdv%dztW fails with stat="//&
+       call fatal_error(h//" allocate oneAdvMnt%dztW fails with stat="//&
             trim(adjustl(str(1))))
     end if
-    allocate(oneMonoAdv%vc3d_in(mzp,mxpMonoAdv,mypMonoAdv), stat=ierr)
+    allocate(oneAdvMnt%vc3d_in(mzpAdvMnt,mxpAdvMnt,mypAdvMnt), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
-       call fatal_error(h//" allocate oneMonoAdv%vc3d_in  fails with stat="//&
+       call fatal_error(h//" allocate oneAdvMnt%vc3d_in  fails with stat="//&
             trim(adjustl(str(1))))
     end if
-    allocate(oneMonoAdv%vc3d_out(mzp,mxpMonoAdv,mypMonoAdv), stat=ierr)
+    allocate(oneAdvMnt%vc3d_out(mzpAdvMnt,mxpAdvMnt,mypAdvMnt), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
-       call fatal_error(h//" allocate oneMonoAdv%vc3d_out fails with stat="//&
+       call fatal_error(h//" allocate oneAdvMnt%vc3d_out fails with stat="//&
             trim(adjustl(str(1))))
     end if
 
     if (dumpLocal) then
-       write(str(2),"(i8)") mzp
-       write(str(3),"(i8)") mxpMonoAdv
-       write(str(4),"(i8)") mypMonoAdv
-       call MsgDump(h//" allocated oneMonoAdv%u3d("//&
+       write(str(2),"(i8)") mzpAdvMnt
+       write(str(3),"(i8)") mxpAdvMnt
+       write(str(4),"(i8)") mypAdvMnt
+       call MsgDump(h//" allocated oneAdvMnt%u3d("//&
             trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-       call MsgDump(h//" allocated oneMonoAdv%v3d("//&
+       call MsgDump(h//" allocated oneAdvMnt%v3d("//&
             trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-       call MsgDump(h//" allocated oneMonoAdv%w3d("//&
+       call MsgDump(h//" allocated oneAdvMnt%w3d("//&
             trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-       call MsgDump(h//" allocated oneMonoAdv%dd0_3d("//&
+       call MsgDump(h//" allocated oneAdvMnt%dd0_3d("//&
             trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-       call MsgDump(h//" allocated oneMonoAdv%dd0_3du("//&
+       call MsgDump(h//" allocated oneAdvMnt%dd0_3du("//&
             trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-       call MsgDump(h//" allocated oneMonoAdv%dd0_3dv("//&
+       call MsgDump(h//" allocated oneAdvMnt%dd0_3dv("//&
             trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-       call MsgDump(h//" allocated oneMonoAdv%dd0_3dw("//&
+       call MsgDump(h//" allocated oneAdvMnt%dd0_3dw("//&
             trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-       call MsgDump(h//" allocated oneMonoAdv%den0_3d("//&
+       call MsgDump(h//" allocated oneAdvMnt%den0_3d("//&
             trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-       call MsgDump(h//" allocated oneMonoAdv%den1_3d("//&
+       call MsgDump(h//" allocated oneAdvMnt%den1_3d("//&
             trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-       call MsgDump(h//" allocated oneMonoAdv%den2_3d("//&
+       call MsgDump(h//" allocated oneAdvMnt%den2_3d("//&
             trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-       call MsgDump(h//" allocated oneMonoAdv%den3_3d("//&
+       call MsgDump(h//" allocated oneAdvMnt%den3_3d("//&
             trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-       call MsgDump(h//" allocated oneMonoAdv%l_dxtW("//&
+       call MsgDump(h//" allocated oneAdvMnt%l_dxtW("//&
             trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-       call MsgDump(h//" allocated oneMonoAdv%l_dytW("//&
+       call MsgDump(h//" allocated oneAdvMnt%l_dytW("//&
             trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-       call MsgDump(h//" allocated oneMonoAdv%dxtW("//&
+       call MsgDump(h//" allocated oneAdvMnt%dxtW("//&
             trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-       call MsgDump(h//" allocated oneMonoAdv%dytW("//&
+       call MsgDump(h//" allocated oneAdvMnt%dytW("//&
             trim(adjustl(str(3)))//")")
-       call MsgDump(h//" allocated oneMonoAdv%dztW("//&
+       call MsgDump(h//" allocated oneAdvMnt%dztW("//&
             trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-       call MsgDump(h//" allocated oneMonoAdv%vc3d_in("//&
+       call MsgDump(h//" allocated oneAdvMnt%vc3d_in("//&
             trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-       call MsgDump(h//" allocated oneMonoAdv%vc3d_out("//&
+       call MsgDump(h//" allocated oneAdvMnt%vc3d_out("//&
             trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
     end if
   end function CreateMonotonicAdvection
@@ -2844,8 +2852,8 @@ contains
 
 
 
-  subroutine DestroyMonotonicAdvection(oneMonoAdv)
-    type(MonotonicAdvection), pointer, intent(inout) :: oneMonoAdv
+  subroutine DestroyMonotonicAdvection(oneAdvMnt)
+    type(MonotonicAdvection), pointer, intent(inout) :: oneAdvMnt
 
     integer :: ierr
     character(len=8) :: str(10)
@@ -2856,122 +2864,563 @@ contains
        call MsgDump(h//" starts")
     end if
 
-    if (associated(oneMonoAdv)) then
-       deallocate(oneMonoAdv%u3d, stat=ierr)
+    if (associated(oneAdvMnt)) then
+       deallocate(oneAdvMnt%u3d, stat=ierr)
        if (ierr /= 0) then
           write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate oneMonoAdv%u3d fails with stat="//&
+          call fatal_error(h//" deallocate oneAdvMnt%u3d fails with stat="//&
                trim(adjustl(str(1))))
        end if
-       deallocate(oneMonoAdv%v3d, stat=ierr)
+       deallocate(oneAdvMnt%v3d, stat=ierr)
        if (ierr /= 0) then
           write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate oneMonoAdv%v3d fails with stat="//&
+          call fatal_error(h//" deallocate oneAdvMnt%v3d fails with stat="//&
                trim(adjustl(str(1))))
        end if
-       deallocate(oneMonoAdv%w3d, stat=ierr)
+       deallocate(oneAdvMnt%w3d, stat=ierr)
        if (ierr /= 0) then
           write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate oneMonoAdv%w3d fails with stat="//&
+          call fatal_error(h//" deallocate oneAdvMnt%w3d fails with stat="//&
                trim(adjustl(str(1))))
        end if
-       deallocate(oneMonoAdv%dd0_3d, stat=ierr)
+       deallocate(oneAdvMnt%dd0_3d, stat=ierr)
        if (ierr /= 0) then
           write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate oneMonoAdv%dd0_3d  fails with stat="//&
+          call fatal_error(h//" deallocate oneAdvMnt%dd0_3d  fails with stat="//&
                trim(adjustl(str(1))))
        end if
-       deallocate(oneMonoAdv%dd0_3du, stat=ierr)
+       deallocate(oneAdvMnt%dd0_3du, stat=ierr)
        if (ierr /= 0) then
           write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate oneMonoAdv%dd0_3du fails with stat="//&
+          call fatal_error(h//" deallocate oneAdvMnt%dd0_3du fails with stat="//&
                trim(adjustl(str(1))))
        end if
-       deallocate(oneMonoAdv%dd0_3dv, stat=ierr)
+       deallocate(oneAdvMnt%dd0_3dv, stat=ierr)
        if (ierr /= 0) then
           write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate oneMonoAdv%dd0_3dv fails with stat="//&
+          call fatal_error(h//" deallocate oneAdvMnt%dd0_3dv fails with stat="//&
                trim(adjustl(str(1))))
        end if
-       deallocate(oneMonoAdv%dd0_3dw, stat=ierr)
+       deallocate(oneAdvMnt%dd0_3dw, stat=ierr)
        if (ierr /= 0) then
           write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate oneMonoAdv%dd0_3dw fails with stat="//&
+          call fatal_error(h//" deallocate oneAdvMnt%dd0_3dw fails with stat="//&
                trim(adjustl(str(1))))
        end if
-       deallocate(oneMonoAdv%den0_3d, stat=ierr)
+       deallocate(oneAdvMnt%den0_3d, stat=ierr)
        if (ierr /= 0) then
           write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate oneMonoAdv%den0_3d fails with stat="//&
+          call fatal_error(h//" deallocate oneAdvMnt%den0_3d fails with stat="//&
                trim(adjustl(str(1))))
        end if
-       deallocate(oneMonoAdv%den1_3d, stat=ierr)
+       deallocate(oneAdvMnt%den1_3d, stat=ierr)
        if (ierr /= 0) then
           write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate oneMonoAdv%den1_3d fails with stat="//&
+          call fatal_error(h//" deallocate oneAdvMnt%den1_3d fails with stat="//&
                trim(adjustl(str(1))))
        end if
-       deallocate(oneMonoAdv%den2_3d, stat=ierr)
+       deallocate(oneAdvMnt%den2_3d, stat=ierr)
        if (ierr /= 0) then
           write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate oneMonoAdv%den2_3d fails with stat="//&
+          call fatal_error(h//" deallocate oneAdvMnt%den2_3d fails with stat="//&
                trim(adjustl(str(1))))
        end if
-       deallocate(oneMonoAdv%den3_3d, stat=ierr)
+       deallocate(oneAdvMnt%den3_3d, stat=ierr)
        if (ierr /= 0) then
           write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate oneMonoAdv%den3_3d fails with stat="//&
+          call fatal_error(h//" deallocate oneAdvMnt%den3_3d fails with stat="//&
                trim(adjustl(str(1))))
        end if
-       deallocate(oneMonoAdv%l_dxtW, stat=ierr)
+       deallocate(oneAdvMnt%l_dxtW, stat=ierr)
        if (ierr /= 0) then
           write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate oneMonoAdv%l_dxtW fails with stat="//&
+          call fatal_error(h//" deallocate oneAdvMnt%l_dxtW fails with stat="//&
                trim(adjustl(str(1))))
        end if
-       deallocate(oneMonoAdv%l_dytW, stat=ierr)
+       deallocate(oneAdvMnt%l_dytW, stat=ierr)
        if (ierr /= 0) then
           write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate oneMonoAdv%l_dytW fails with stat="//&
+          call fatal_error(h//" deallocate oneAdvMnt%l_dytW fails with stat="//&
                trim(adjustl(str(1))))
        end if
-       deallocate(oneMonoAdv%dxtW, stat=ierr)
+       deallocate(oneAdvMnt%dxtW, stat=ierr)
        if (ierr /= 0) then
           write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate oneMonoAdv%dxtW fails with stat="//&
+          call fatal_error(h//" deallocate oneAdvMnt%dxtW fails with stat="//&
                trim(adjustl(str(1))))
        end if
-       deallocate(oneMonoAdv%dytW, stat=ierr)
+       deallocate(oneAdvMnt%dytW, stat=ierr)
        if (ierr /= 0) then
           write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate oneMonoAdv%dytW fails with stat="//&
+          call fatal_error(h//" deallocate oneAdvMnt%dytW fails with stat="//&
                trim(adjustl(str(1))))
        end if
-       deallocate(oneMonoAdv%dztW, stat=ierr)
+       deallocate(oneAdvMnt%dztW, stat=ierr)
        if (ierr /= 0) then
           write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate oneMonoAdv%dztW fails with stat="//&
+          call fatal_error(h//" deallocate oneAdvMnt%dztW fails with stat="//&
                trim(adjustl(str(1))))
        end if
-       deallocate(oneMonoAdv%vc3d_in, stat=ierr)
+       deallocate(oneAdvMnt%vc3d_in, stat=ierr)
        if (ierr /= 0) then
           write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate oneMonoAdv%vc3d_in  fails with stat="//&
+          call fatal_error(h//" deallocate oneAdvMnt%vc3d_in  fails with stat="//&
                trim(adjustl(str(1))))
        end if
-       deallocate(oneMonoAdv%vc3d_out, stat=ierr)
+       deallocate(oneAdvMnt%vc3d_out, stat=ierr)
        if (ierr /= 0) then
           write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate oneMonoAdv%vc3d_out fails with stat="//&
+          call fatal_error(h//" deallocate oneAdvMnt%vc3d_out fails with stat="//&
                trim(adjustl(str(1))))
        end if
     end if
-    nullify(oneMonoAdv)
+    nullify(oneAdvMnt)
 
     if (dumpLocal) then
        call MsgDump(h//" finishes")
     end if
   end subroutine DestroyMonotonicAdvection
+
+
+
+
+
+  subroutine InitializeGridSpacings(&
+       mzp, mxp, myp, mxpAdvMnt, mypAdvMnt, &
+       iOffset, i1ExternAtAdvMnt,  iMxpExternAtAdvMnt,  &
+       jOffset, j1ExternAtAdvMnt,  jMypExternAtAdvMnt,  &
+       dxt, dyt, fmapt, rtgt, dztn, &
+       dxtW, dytW, dztW)
+
+    ! computes new grid spacing on x, y and z
+    ! for Wal2cek monotonic advection
+
+    integer, intent(in) :: mzp
+    ! z dimension of external and Monotonic Advection fields 
+    integer, intent(in) :: mxp
+    ! x dimension of external fields 
+    integer, intent(in) :: myp
+    ! y dimension of external fields 
+    integer, intent(in) :: mxpAdvMnt
+    ! x dimension of Monotonic Advection fields
+    integer, intent(in) :: mypAdvMnt
+    ! y dimension of Monotonic Advection fields
+    integer, intent(in) :: iOffset
+    ! x index offset from external to Monotonic Advection 
+    integer, intent(in) :: i1ExternAtAdvMnt
+    ! first x position of external fields (1) indexed Monotonic Advection
+    integer, intent(in) :: iMxpExternAtAdvMnt
+    ! last x position of external fields (mxp) indexed Monotonic Advection
+    integer, intent(in) :: jOffset
+    ! y index offset from external to Monotonic Advection 
+    integer, intent(in) :: j1ExternAtAdvMnt
+    ! first y position of external fields (1) indexed Monotonic Advection
+    integer, intent(in) :: jMypExternAtAdvMnt
+    ! last y position of external fields (myp) indexed Monotonic Advection
+    real, pointer, intent(in) :: dxt(:,:)
+    ! external field, pointer and values are intent(in)
+    real, pointer, intent(in) :: dyt(:,:)
+    ! external field, pointer and values are intent(in)
+    real, pointer, intent(in) :: fmapt(:,:)
+    ! external field, pointer and values are intent(in)
+    real, pointer, intent(in) :: rtgt(:,:)
+    ! external field, pointer and values are intent(in)
+    real, intent(in) :: dztn(:)
+    ! external field
+    real, pointer, intent(in) :: dxtW(:,:)
+    ! Monotonic Advection field, pointer is intent(in), values are intent(out)
+    real, pointer, intent(in) :: dytW(:,:)
+    ! Monotonic Advection field, pointer is intent(in), values are intent(out)
+    real, pointer, intent(in) :: dztW(:)
+    ! Monotonic Advection field, pointer is intent(in), values are intent(out)
+
+    ! local var
+
+    integer :: iExtern
+    integer :: jExtern
+    integer :: i
+    integer :: j
+    integer :: k
+    real :: rtgti
+
+    logical, parameter :: dumpLocal=.true.
+    character(len=*), parameter :: h="**(InitializeGridSpacings)**"
+    character(len=8) :: str(10)
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") mzp
+       write(str(2),"(i8)") i1ExternAtAdvMnt
+       write(str(3),"(i8)") iMxpExternAtAdvMnt
+       write(str(4),"(i8)") j1ExternAtAdvMnt
+       write(str(5),"(i8)") jMypExternAtAdvMnt
+       call MsgDump(h//" set values of"//&
+            " dxtW, dytW both at ("//&
+            trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//","//&
+            trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")"//&
+            " and dztW at (1:"//trim(adjustl(str(1)))//"), nullifying remaining positions")
+       write(str(1),"(i8)") iOffset
+       write(str(2),"(i8)") jOffset
+       call MsgDump(h//" external fields index = monotonic fields index + ("//&
+            trim(adjustl(str(1)))//","//trim(adjustl(str(2)))//")")
+    end if
+
+    ! set Monotonic Advection north ghost zone fields to zero
+    do j = 1, j1ExternAtAdvMnt-1
+       do i = 1, mxpAdvMnt
+          dxtW(i,j) = 0.0
+          dytW(i,j) = 0.0
+       end do
+    end do
+
+    ! fill Monotonic Advection fields only where
+    ! external fields are in range
+    do j = j1ExternAtAdvMnt, jMypExternAtAdvMnt
+       jExtern = j + jOffset
+       ! set Monotonic Advection west ghost zone fields to zero 
+       do i = 1, i1ExternAtAdvMnt - 1
+          dxtW(i,j) = 0.0
+          dytW(i,j) = 0.0
+       end do
+       ! fill where both Monotonic Advection and external fields
+       ! are in range
+       do i = i1ExternAtAdvMnt, iMxpExternAtAdvMnt
+          iExtern = i + iOffset
+          rtgti = 1. / rtgt(iExtern,jExtern)
+
+          !- at init/rams_grid.f90:
+          !     dxt(i,j)=fmapt(i,j)/(xmn(i,ngrid)-xmn(i-1,ngrid))
+          !     dyt(i,j)=fmapt(i,j)/(ymn(j,ngrid)-ymn(j-1,ngrid))
+
+          dxtW(i,j) = 1./(dxt(iExtern,jExtern) * fmapt(iExtern,jExtern) * rtgti)
+          dytW(i,j) = 1./(dyt(iExtern,jExtern) * fmapt(iExtern,jExtern) * rtgti)
+       end do
+       ! set Monotonic Advection east ghost zone fields to zero 
+       do i = iMxpExternAtAdvMnt+1, mxpAdvMnt
+          dxtW(i,j) = 0.0
+          dytW(i,j) = 0.0
+       end do
+    end do
+
+    ! set Monotonic Advection south ghost zone fields to zero
+    do j = jMypExternAtAdvMnt+1, mypAdvMnt
+       do i = 1, mxpAdvMnt
+          dxtW(i,j) = 0.0
+          dytW(i,j) = 0.0
+       end do
+    end do
+
+    ! z ranges of Monotonic Advection and external fields are identical
+    do k = 1,mzp
+       !- at init/gridset.f90:
+       !  dztn(k,ifm) = 1. / (zmn(k,ifm) - zmn(k-1,ifm))
+       ! Por que o Jacobiano nao depende de Z, o dztw depende somente
+       ! de z.
+       !dztW(k,i,j) = 1./ ( dzt(k) * rtgti * fmapt(i,j)**2 )
+       dztW(k) = 1./ ( dztn(k) ) !
+    end do
+    if (dumpLocal) then
+       call MsgDump(h//" finishes")
+    end if
+  end subroutine InitializeGridSpacings
+
+
+
+
+  subroutine GetTrueDensities(&
+       mzp, mxp, myp, mxpAdvMnt, mypAdvMnt, &
+       iOffset, i1ExternAtAdvMnt,  iMxpExternAtAdvMnt,  &
+       jOffset, j1ExternAtAdvMnt,  jMypExternAtAdvMnt,  &
+       level,&
+       rtp, rv, pp, pi0, theta, &
+       dd0_3d, dd0_3du, dd0_3dv, dd0_3dw)
+
+    integer, intent(in) :: mzp
+    ! z dimension of external and Monotonic Advection fields 
+    integer, intent(in) :: mxp
+    ! x dimension of external fields 
+    integer, intent(in) :: myp
+    ! y dimension of external fields 
+    integer, intent(in) :: mxpAdvMnt
+    ! x dimension of Monotonic Advection fields
+    integer, intent(in) :: mypAdvMnt
+    ! y dimension of Monotonic Advection fields
+    integer, intent(in) :: iOffset
+    ! x index offset from external to Monotonic Advection 
+    integer, intent(in) :: i1ExternAtAdvMnt
+    ! first x position of external fields (1) indexed Monotonic Advection
+    integer, intent(in) :: iMxpExternAtAdvMnt
+    ! last x position of external fields (mxp) indexed Monotonic Advection
+    integer, intent(in) :: jOffset
+    ! y index offset from external to Monotonic Advection 
+    integer, intent(in) :: j1ExternAtAdvMnt
+    ! first y position of external fields (1) indexed Monotonic Advection
+    integer, intent(in) :: jMypExternAtAdvMnt
+    ! last y position of external fields (myp) indexed Monotonic Advection
+    integer, intent(in) :: level
+    real, pointer, intent(in) :: rtp(:,:,:)
+    ! external field, pointer and values are intent(in)
+    real, pointer, intent(in) :: rv(:,:,:)
+    ! external field, pointer and values are intent(in)
+    real, pointer, intent(in) :: pp(:,:,:)
+    ! external field, pointer and values are intent(in)
+    real, pointer, intent(in) :: pi0(:,:,:)
+    ! external field, pointer and values are intent(in)
+    real, pointer, intent(in) :: theta(:,:,:)
+    ! external field, pointer and values are intent(in)
+    real, pointer, intent(in) :: dd0_3d(:,:,:)
+    ! Monotonic Advection field, pointer is intent(in), values are intent(out)
+    real, pointer, intent(in) :: dd0_3du(:,:,:)
+    ! Monotonic Advection field, pointer is intent(in), values are intent(out)
+    real, pointer, intent(in) :: dd0_3dv(:,:,:)
+    ! Monotonic Advection field, pointer is intent(in), values are intent(out)
+    real, pointer, intent(in) :: dd0_3dw(:,:,:)
+    ! Monotonic Advection field, pointer is intent(in), values are intent(out)
+
+    ! local var
+    integer :: iExtern
+    integer :: jExtern
+    integer :: i
+    integer :: j
+    integer :: k
+    integer :: i1
+    integer :: j1
+    real :: c3
+
+    logical, parameter :: dumpLocal=.true.
+    character(len=*), parameter :: h="**(GetTrueDensities)**"
+    character(len=8) :: str(10)
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") lbound(dd0_3d,1)
+       write(str(2),"(i8)") ubound(dd0_3d,1)
+       write(str(3),"(i8)") lbound(dd0_3d,2)
+       write(str(4),"(i8)") ubound(dd0_3d,2)
+       write(str(5),"(i8)") lbound(dd0_3d,3)
+       write(str(6),"(i8)") ubound(dd0_3d,3)
+       call MsgDump(h//" dd0_3d dimensioned ("//&
+            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
+            trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//")")
+       write(str(1),"(i8)") lbound(dd0_3du,1)
+       write(str(2),"(i8)") ubound(dd0_3du,1)
+       write(str(3),"(i8)") lbound(dd0_3du,2)
+       write(str(4),"(i8)") ubound(dd0_3du,2)
+       write(str(5),"(i8)") lbound(dd0_3du,3)
+       write(str(6),"(i8)") ubound(dd0_3du,3)
+       call MsgDump(h//" dd0_3du dimensioned ("//&
+            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
+            trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//")")
+       write(str(1),"(i8)") lbound(dd0_3dv,1)
+       write(str(2),"(i8)") ubound(dd0_3dv,1)
+       write(str(3),"(i8)") lbound(dd0_3dv,2)
+       write(str(4),"(i8)") ubound(dd0_3dv,2)
+       write(str(5),"(i8)") lbound(dd0_3dv,3)
+       write(str(6),"(i8)") ubound(dd0_3dv,3)
+       call MsgDump(h//" dd0_3dv dimensioned ("//&
+            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
+            trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//")")
+       write(str(1),"(i8)") lbound(dd0_3dw,1)
+       write(str(2),"(i8)") ubound(dd0_3dw,1)
+       write(str(3),"(i8)") lbound(dd0_3dw,2)
+       write(str(4),"(i8)") ubound(dd0_3dw,2)
+       write(str(5),"(i8)") lbound(dd0_3dw,3)
+       write(str(6),"(i8)") ubound(dd0_3dw,3)
+       call MsgDump(h//" dd0_3dw dimensioned ("//&
+            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
+            trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//")")
+       write(str(1),"(i8)") mzp
+       write(str(2),"(i8)") i1ExternAtAdvMnt
+       write(str(3),"(i8)") iMxpExternAtAdvMnt
+       write(str(4),"(i8)") j1ExternAtAdvMnt
+       write(str(5),"(i8)") jMypExternAtAdvMnt
+       call MsgDump(h//" set values of"//&
+            " dd0_3d, dd0_3du, dd0_3dv, dd0_3dw, all at ("//&
+            "1:"//trim(adjustl(str(1)))//","//&
+            trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//","//&
+            trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")"//&
+            ", nullifying remaining positions")
+       write(str(1),"(i8)") iOffset
+       write(str(2),"(i8)") jOffset
+       call MsgDump(h//" external fields index = monotonic fields index + ("//&
+            trim(adjustl(str(1)))//","//trim(adjustl(str(2)))//")")
+    end if
+
+    ! dd0_3d computation
+
+    ! set Monotonic Advection north ghost zone fields to zero
+    do j = 1, j1ExternAtAdvMnt-1
+       do i = 1, mxpAdvMnt
+          do k = 1, mzp
+             dd0_3d(k,i,j) = 0.0
+          end do
+       end do
+    end do
+
+    !- true air density at points "T"
+
+    c3 = c2 * (cpi**c1)
+    if( level == 0 ) then
+       do j = j1ExternAtAdvMnt, jMypExternAtAdvMnt
+          jExtern = j + jOffset
+          ! set Monotonic Advection west ghost zone fields to zero
+          do i = 1, i1ExternAtAdvMnt-1
+             do k = 1, mzp
+                dd0_3d(k,i,j) = 0.0
+             end do
+          end do
+          ! fill where both Monotonic Advection and external fields
+          ! are in range
+          do i = i1ExternAtAdvMnt, iMxpExternAtAdvMnt
+             iExtern = i + iOffset
+             do k = 1, mzp
+                dd0_3d(k,i,j) = (c3/theta(k,iExtern,jExtern))*&
+                     (pi0(k,iExtern,jExtern)+pp(k,iExtern,jExtern))**c1
+             end do
+          end do
+          ! set Monotonic Advection east ghost zone fields to zero
+          do i = iMxpExternAtAdvMnt+1, mxpAdvMnt
+             do k = 1, mzp
+                dd0_3d(k,i,j) = 0.0
+             end do
+          end do
+       end do
+    else
+       do j = j1ExternAtAdvMnt, jMypExternAtAdvMnt
+          jExtern = j + jOffset
+          ! set Monotonic Advection west ghost zone fields to zero
+          do i = 1, i1ExternAtAdvMnt-1
+             do k = 1, mzp
+                dd0_3d(k,i,j) = 0.0
+             end do
+          end do
+          ! fill where both Monotonic Advection and external fields
+          ! are in range
+          do i = i1ExternAtAdvMnt, iMxpExternAtAdvMnt
+             iExtern = i + iOffset
+             do k = 1, mzp
+                dd0_3d(k,i,j) = (c3/theta(k,iExtern,jExtern))*&
+                     (1. + rtp(k,iExtern,jExtern))/ &
+                     (1. + 1.61*rv(k,iExtern,jExtern))*&
+                     (pi0(k,iExtern,jExtern)+pp(k,iExtern,jExtern))**c1
+             end do
+          end do
+          ! set Monotonic Advection east ghost zone fields to zero
+          do i = iMxpExternAtAdvMnt+1, mxpAdvMnt
+             do k = 1, mzp
+                dd0_3d(k,i,j) = 0.0
+             end do
+          end do
+       end do
+    end if
+
+    ! set Monotonic Advection south ghost zone fields to zero
+    do j = jMypExternAtAdvMnt+1, mypAdvMnt
+       do i = 1, mxpAdvMnt
+          do k = 1, mzp
+             dd0_3d(k,i,j) = 0.0
+          end do
+       end do
+    end do
+
+
+    ! use dd0_3d to compute dd0_3du and dd0_3dv
+
+    ! set Monotonic Advection north ghost zone fields to zero
+    do j = 1, j1ExternAtAdvMnt-1
+       do i = 1, mxpAdvMnt
+          do k = 1, mzp
+             dd0_3du(k,i,j) = 0.0
+             dd0_3dv(k,i,j) = 0.0
+          end do
+       end do
+    end do
+
+    do j = j1ExternAtAdvMnt, jMypExternAtAdvMnt
+       j1 = min(j+1,jMypExternAtAdvMnt)
+       ! set Monotonic Advection west ghost zone fields to zero
+       do i = 1, i1ExternAtAdvMnt-1
+          do k = 1, mzp
+             dd0_3du(k,i,j) = 0.0
+             dd0_3dv(k,i,j) = 0.0
+          end do
+       end do
+       !- true air density computation
+       do i = i1ExternAtAdvMnt, iMxpExternAtAdvMnt
+          i1 = min(i+1,iMxpExternAtAdvMnt)
+          do k = 1,mzp
+             dd0_3du(k,i,j) = .5 * (dd0_3d(k,i,j) + dd0_3d(k,i1,j))
+             dd0_3dv(k,i,j) = .5 * (dd0_3d(k,i,j) + dd0_3d(k,i,j1))
+          end do
+       end do
+       ! set Monotonic Advection east ghost zone fields to zero
+       do i = iMxpExternAtAdvMnt+1, mxpAdvMnt
+          do k = 1, mzp
+             dd0_3du(k,i,j) = 0.0
+             dd0_3dv(k,i,j) = 0.0
+          end do
+       end do
+    end do
+
+    ! set Monotonic Advection south ghost zone fields to zero
+    do j = jMypExternAtAdvMnt+1, mypAdvMnt
+       do i = 1, mxpAdvMnt
+          do k = 1, mzp
+             dd0_3du(k,i,j) = 0.0
+             dd0_3dv(k,i,j) = 0.0
+          end do
+       end do
+    end do
+
+    ! compute true air density for w
+
+    ! set Monotonic Advection north ghost zone fields to zero
+    do j = 1, j1ExternAtAdvMnt-1
+       do i = 1, mxpAdvMnt
+          do k = 1, mzp
+             dd0_3dw(k,i,j) = 0.0
+          end do
+       end do
+    end do
+
+    do j = j1ExternAtAdvMnt, jMypExternAtAdvMnt
+       ! set Monotonic Advection west ghost zone fields to zero
+       do i = 1, i1ExternAtAdvMnt-1
+          do k = 1, mzp
+             dd0_3dw(k,i,j) = 0.0
+          end do
+       end do
+       ! compute dd0_3dw 
+       do i = i1ExternAtAdvMnt, iMxpExternAtAdvMnt
+          do k = 1,mzp-1
+             dd0_3dw(k,i,j) = 0.5*(dd0_3d(k,i,j) + dd0_3d(k+1,i,j))
+          end do
+          dd0_3dw(mzp,i,j)=dd0_3dw(mzp-1,i,j)
+       end do
+       ! set Monotonic Advection east ghost zone fields to zero
+       do i = iMxpExternAtAdvMnt+1, mxpAdvMnt
+          do k = 1, mzp
+             dd0_3dw(k,i,j) = 0.0
+          end do
+       end do
+    end do
+
+    ! set Monotonic Advection south ghost zone fields to zero
+    do j = jMypExternAtAdvMnt+1, mypAdvMnt
+       do i = 1, mxpAdvMnt
+          do k = 1, mzp
+             dd0_3dw(k,i,j) = 0.0
+          end do
+       end do
+    end do
+
+    if (dumpLocal) then
+       call MsgDump(h//" finishes")
+    end if
+  end subroutine GetTrueDensities
+
 
 
 
@@ -3024,6 +3473,57 @@ contains
     logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(advmnt_driver)**"
     character(len=8) :: str(11)
+
+
+    !**(JP)** starts
+
+    type(MonotonicAdvection), pointer :: oneAdvMnt
+
+    integer :: mzp
+    ! z dimension of external and Monotonic Advection fields 
+    integer :: mxp
+    ! x dimension of external fields 
+    integer :: myp
+    ! y dimension of external fields 
+    integer :: mxpAdvMnt
+    ! x dimension of Monotonic Advection fields
+    integer :: mypAdvMnt
+    ! y dimension of Monotonic Advection fields
+    integer :: iOffset
+    ! x index offset from external to Monotonic Advection 
+    integer :: i1ExternAtAdvMnt
+    ! first x position of external fields (1) indexed Monotonic Advection
+    integer :: iMxpExternAtAdvMnt
+    ! last x position of external fields (mxp) indexed Monotonic Advection
+    integer :: jOffset
+    ! y index offset from external to Monotonic Advection 
+    integer :: j1ExternAtAdvMnt
+    ! first y position of external fields (1) indexed Monotonic Advection
+    integer :: jMypExternAtAdvMnt
+    ! last y position of external fields (myp) indexed Monotonic Advection
+
+
+    ! dimension of external fields (regular ghost zone width)
+
+    mzp=OneGrid%NodeDims%mzp
+    mxp=OneGrid%NodeDims%mxp
+    myp=OneGrid%NodeDims%myp
+
+    ! dimension of Monotonic Advection fields (wide ghost zone width)
+
+    mxpAdvMnt=OneGrid%NodeDimsAdvMnt%mxp
+    mypAdvMnt=OneGrid%NodeDimsAdvMnt%myp
+
+    ! index external = index Monotonic Advection + offset
+
+    iOffset = OneGrid%NodeDimsAdvMnt%i0 - OneGrid%NodeDims%i0 
+    i1ExternAtAdvMnt = 1 - iOffset
+    iMxpExternAtAdvMnt = mxp - iOffset
+    jOffset = OneGrid%NodeDimsAdvMnt%j0 - OneGrid%NodeDims%j0 
+    j1ExternAtAdvMnt = 1 - jOffset
+    jMypExternAtAdvMnt = myp - jOffset
+
+    !**(JP)** ends
 
     if (dumpLocal) then
        write(str(1),"(i8)") m1
@@ -3122,6 +3622,33 @@ contains
        mnt_adv_jnitialized= ON
     end if
 
+    !**(JP)** starts
+
+    oneAdvMnt => CreateMonotonicAdvection(oneGrid)
+
+    ! no more loops on ng; ng is first grid from now on
+
+    ng = 1
+    call InitializeGridSpacings(&
+         mzp, mxp, myp, mxpAdvMnt, mypAdvMnt, &
+         iOffset, i1ExternAtAdvMnt,  iMxpExternAtAdvMnt,  &
+         jOffset, j1ExternAtAdvMnt,  jMypExternAtAdvMnt,  &
+         grid_g(ng)%dxt, &
+         grid_g(ng)%dyt, &
+         grid_g(ng)%fmapt, &
+         grid_g(ng)%rtgt, &
+         dztn(:,ng), &
+         oneAdvMnt%dxtW, &
+         oneAdvMnt%dytW, &
+         oneAdvMnt%dztW)
+
+    call Compare(oneAdvMnt%dxtW, advmnt_g(ng)%dxtW, "dxtW", .true.)
+    call Compare(oneAdvMnt%dytW, advmnt_g(ng)%dytW, "dytW", .true.)
+    call Compare(oneAdvMnt%dztW, advmnt_g(ng)%dztW, "dztW", .true.)
+    !**(JP)** ends
+
+
+
     mxyzp=m1*m2*m3
 
     !- This scheme is not applied to advect  U, V, and W
@@ -3135,10 +3662,10 @@ contains
     ndt_z =0 ! integer initialization
     !
     !- Advect  scalars
-    iBegin=newIa(ngrid)-1
-    iEnd  =newIz(ngrid)+1
-    jBegin=newJa(ngrid)-1
-    jEnd  =newJz(ngrid)+1
+    iBegin=newIa(ng)-1
+    iEnd  =newIz(ng)+1
+    jBegin=newJa(ng)-1
+    jEnd  =newJz(ng)+1
 
     !- get actual air densities, if using them instead of basic state fields
     if(use_true_density == ON) then
@@ -3160,17 +3687,40 @@ contains
                trim(adjustl(str(6)))//":"//trim(adjustl(str(7)))//")")
        end if
        call get_true_densities(m1,m2,m3,level, &
-            basic_g(ngrid)%rtp,     &
-            basic_g(ngrid)%rv,      &
-            basic_g(ngrid)%pp,      &
-            basic_g(ngrid)%pi0,     &
-            basic_g(ngrid)%theta,   &
-            advmnt_g(ngrid)%dd0_3d (1:m1,iBegin:iEnd,jBegin:jEnd), &
-            advmnt_g(ngrid)%dd0_3du(1:m1,iBegin:iEnd,jBegin:jEnd), &
-            advmnt_g(ngrid)%dd0_3dv(1:m1,iBegin:iEnd,jBegin:jEnd), &
-            advmnt_g(ngrid)%dd0_3dw(1:m1,iBegin:iEnd,jBegin:jEnd)  )
+            basic_g(ng)%rtp,     &
+            basic_g(ng)%rv,      &
+            basic_g(ng)%pp,      &
+            basic_g(ng)%pi0,     &
+            basic_g(ng)%theta,   &
+            advmnt_g(ng)%dd0_3d (1:m1,iBegin:iEnd,jBegin:jEnd), &
+            advmnt_g(ng)%dd0_3du(1:m1,iBegin:iEnd,jBegin:jEnd), &
+            advmnt_g(ng)%dd0_3dv(1:m1,iBegin:iEnd,jBegin:jEnd), &
+            advmnt_g(ng)%dd0_3dw(1:m1,iBegin:iEnd,jBegin:jEnd)  )
 
+       !**(JP)** starts
+
+       call GetTrueDensities(&
+            mzp, mxp, myp, mxpAdvMnt, mypAdvMnt, &
+            iOffset, i1ExternAtAdvMnt,  iMxpExternAtAdvMnt,  &
+            jOffset, j1ExternAtAdvMnt,  jMypExternAtAdvMnt,  &
+            level,&
+            basic_g(ng)%rtp, &
+            basic_g(ng)%rv, &
+            basic_g(ng)%pp, &
+            basic_g(ng)%pi0, &
+            basic_g(ng)%theta, &
+            oneAdvMnt%dd0_3d, &
+            oneAdvMnt%dd0_3du, &
+            oneAdvMnt%dd0_3dv, &
+            oneAdvMnt%dd0_3dw)
     end if
+
+    call Compare(oneAdvMnt%dd0_3d, advmnt_g(ng)%dd0_3d, "dd0_3d", .true.)
+    call Compare(oneAdvMnt%dd0_3du, advmnt_g(ng)%dd0_3du, "dd0_3du", .true.)
+    call Compare(oneAdvMnt%dd0_3dv, advmnt_g(ng)%dd0_3dv, "dd0_3dv", .true.)
+    call Compare(oneAdvMnt%dd0_3dw, advmnt_g(ng)%dd0_3dw, "dd0_3dw", .true.)
+
+    !**(JP)** ends
 
     !- prepare wind velocities including map factors
     if (dumpLocal) then
@@ -3199,24 +3749,24 @@ contains
             " jz="//trim(adjustl(str(4))))
     end if
     call prepare_winds(dtlt,m1,m2,m3,ia,iz,ja,jz     &
-         ,basic_g(ngrid)%uc  &
-         ,basic_g(ngrid)%up  &
-         ,basic_g(ngrid)%vc  &
-         ,basic_g(ngrid)%vp  &
-         ,basic_g(ngrid)%wc  &
-         ,basic_g(ngrid)%wp  &
+         ,basic_g(ng)%uc  &
+         ,basic_g(ng)%up  &
+         ,basic_g(ng)%vc  &
+         ,basic_g(ng)%vp  &
+         ,basic_g(ng)%wc  &
+         ,basic_g(ng)%wp  &
                                 !
-         ,grid_g(ngrid)%fmapui &
-         ,grid_g(ngrid)%fmapvi &
-         ,grid_g(ngrid)%rtgt   &
-         ,grid_g(ngrid)%rtgu   &
-         ,grid_g(ngrid)%rtgv   &
-         ,grid_g(ngrid)%f13t   &
-         ,grid_g(ngrid)%f23t   &
+         ,grid_g(ng)%fmapui &
+         ,grid_g(ng)%fmapvi &
+         ,grid_g(ng)%rtgt   &
+         ,grid_g(ng)%rtgu   &
+         ,grid_g(ng)%rtgv   &
+         ,grid_g(ng)%f13t   &
+         ,grid_g(ng)%f23t   &
                                 !
-         ,advmnt_g(ngrid)%u3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
-         ,advmnt_g(ngrid)%v3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
-         ,advmnt_g(ngrid)%w3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
+         ,advmnt_g(ng)%u3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
+         ,advmnt_g(ng)%v3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
+         ,advmnt_g(ng)%w3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
          ,ndt_z                )
 
 
@@ -3226,15 +3776,15 @@ contains
        end if
 
        call prepare_theor_winds(dtlt,m1,m2,m3,ia,iz,ja,jz,time     &
-            ,advmnt_g(ngrid)%u3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
-            ,advmnt_g(ngrid)%v3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
-            ,advmnt_g(ngrid)%w3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
-            ,grid_g(ngrid)%dxt    &
-            ,grid_g(ngrid)%dyt    &
-            ,advmnt_g(ngrid)%dd0_3d (1:m1,iBegin:iEnd,jBegin:jEnd)  &
-            ,advmnt_g(ngrid)%dd0_3du(1:m1,iBegin:iEnd,jBegin:jEnd) &
-            ,advmnt_g(ngrid)%dd0_3dv(1:m1,iBegin:iEnd,jBegin:jEnd) &
-            ,advmnt_g(ngrid)%dd0_3dw(1:m1,iBegin:iEnd,jBegin:jEnd) )
+            ,advmnt_g(ng)%u3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
+            ,advmnt_g(ng)%v3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
+            ,advmnt_g(ng)%w3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
+            ,grid_g(ng)%dxt    &
+            ,grid_g(ng)%dyt    &
+            ,advmnt_g(ng)%dd0_3d (1:m1,iBegin:iEnd,jBegin:jEnd)  &
+            ,advmnt_g(ng)%dd0_3du(1:m1,iBegin:iEnd,jBegin:jEnd) &
+            ,advmnt_g(ng)%dd0_3dv(1:m1,iBegin:iEnd,jBegin:jEnd) &
+            ,advmnt_g(ng)%dd0_3dw(1:m1,iBegin:iEnd,jBegin:jEnd) )
     end if
     !- prepare Walcek's air densities
     if (dumpLocal) then
@@ -3263,73 +3813,73 @@ contains
             " jz="//trim(adjustl(str(4))))
     end if
     call get_Walceks_densities(dtlt,m1,m2,m3 &
-         ,advmnt_g(ngrid)%u3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
-         ,advmnt_g(ngrid)%v3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
-         ,advmnt_g(ngrid)%w3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
-         ,advmnt_g(ngrid)%dd0_3d (1:m1,iBegin:iEnd,jBegin:jEnd)  &
-         ,advmnt_g(ngrid)%dd0_3du(1:m1,iBegin:iEnd,jBegin:jEnd) &
-         ,advmnt_g(ngrid)%dd0_3dv(1:m1,iBegin:iEnd,jBegin:jEnd) &
-         ,advmnt_g(ngrid)%dd0_3dw(1:m1,iBegin:iEnd,jBegin:jEnd) &
-         ,advmnt_g(ngrid)%den0_3d(1:m1,iBegin:iEnd,jBegin:jEnd) &
-         ,advmnt_g(ngrid)%den1_3d(1:m1,iBegin:iEnd,jBegin:jEnd) &
-         ,advmnt_g(ngrid)%den2_3d(1:m1,iBegin:iEnd,jBegin:jEnd) &
-         ,advmnt_g(ngrid)%den3_3d(1:m1,iBegin:iEnd,jBegin:jEnd) &
-         ,advmnt_g(ngrid)%dxtW(iBegin:iEnd,jBegin:jEnd) &
-         ,advmnt_g(ngrid)%dytW(iBegin:iEnd,jBegin:jEnd) &
-         ,advmnt_g(ngrid)%dztW &
-         ,grid_g(ngrid)%dxt    &
-         ,grid_g(ngrid)%dyt    )
+         ,advmnt_g(ng)%u3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
+         ,advmnt_g(ng)%v3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
+         ,advmnt_g(ng)%w3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
+         ,advmnt_g(ng)%dd0_3d (1:m1,iBegin:iEnd,jBegin:jEnd)  &
+         ,advmnt_g(ng)%dd0_3du(1:m1,iBegin:iEnd,jBegin:jEnd) &
+         ,advmnt_g(ng)%dd0_3dv(1:m1,iBegin:iEnd,jBegin:jEnd) &
+         ,advmnt_g(ng)%dd0_3dw(1:m1,iBegin:iEnd,jBegin:jEnd) &
+         ,advmnt_g(ng)%den0_3d(1:m1,iBegin:iEnd,jBegin:jEnd) &
+         ,advmnt_g(ng)%den1_3d(1:m1,iBegin:iEnd,jBegin:jEnd) &
+         ,advmnt_g(ng)%den2_3d(1:m1,iBegin:iEnd,jBegin:jEnd) &
+         ,advmnt_g(ng)%den3_3d(1:m1,iBegin:iEnd,jBegin:jEnd) &
+         ,advmnt_g(ng)%dxtW(iBegin:iEnd,jBegin:jEnd) &
+         ,advmnt_g(ng)%dytW(iBegin:iEnd,jBegin:jEnd) &
+         ,advmnt_g(ng)%dztW &
+         ,grid_g(ng)%dxt    &
+         ,grid_g(ng)%dyt    )
 
 
     if (dumpLocal) then
        call MsgDump (h//" invokes InitialFieldsUpdate exchanging borders on x")
     end if
-    call InitialFieldsUpdate(ngrids,m1,m2,m3,newm2(ngrid),newm3(ngrid),ngrid,mynum, &
-         nrecvI(ngrid),RecvMessageI(ngrid)%proc,RecvMessageI(ngrid)%tag, &
-         RecvMessageI(ngrid)%ia,RecvMessageI(ngrid)%iz,&
-         RecvMessageI(ngrid)%ja,RecvMessageI(ngrid)%jz, &
-         RecvMessageI(ngrid)%start,RecvMessageI(ngrid)%mSize,TotalRecvI(ngrid), &
-         nSendI(ngrid),sendMessageI(ngrid)%proc,sendMessageI(ngrid)%tag, &
-         sendMessageI(ngrid)%ia,sendMessageI(ngrid)%iz,&
-         sendMessageI(ngrid)%ja,sendMessageI(ngrid)%jz, &
-         sendMessageI(ngrid)%start,sendMessageI(ngrid)%mSize,TotalSendI(ngrid))
+    call InitialFieldsUpdate(ngrids,m1,m2,m3,newm2(ng),newm3(ng),ng,mynum, &
+         nrecvI(ng),RecvMessageI(ng)%proc,RecvMessageI(ng)%tag, &
+         RecvMessageI(ng)%ia,RecvMessageI(ng)%iz,&
+         RecvMessageI(ng)%ja,RecvMessageI(ng)%jz, &
+         RecvMessageI(ng)%start,RecvMessageI(ng)%mSize,TotalRecvI(ng), &
+         nSendI(ng),sendMessageI(ng)%proc,sendMessageI(ng)%tag, &
+         sendMessageI(ng)%ia,sendMessageI(ng)%iz,&
+         sendMessageI(ng)%ja,sendMessageI(ng)%jz, &
+         sendMessageI(ng)%start,sendMessageI(ng)%mSize,TotalSendI(ng))
 
     if (dumpLocal) then
        call MsgDump (h//" invokes InitialFieldsUpdate exchanging borders on y")
     end if
-    call InitialFieldsUpdate(ngrids,m1,m2,m3,newm2(ngrid),newm3(ngrid),ngrid,mynum, &
-         nrecvJ(ngrid),RecvMessageJ(ngrid)%proc,RecvMessageJ(ngrid)%tag, &
-         RecvMessageJ(ngrid)%ia,RecvMessageJ(ngrid)%iz,&
-         RecvMessageJ(ngrid)%ja,RecvMessageJ(ngrid)%jz, &
-         RecvMessageJ(ngrid)%start,RecvMessageJ(ngrid)%mSize,TotalRecvJ(ngrid), &
-         nSendJ(ngrid),sendMessageJ(ngrid)%proc,sendMessageJ(ngrid)%tag, &
-         sendMessageJ(ngrid)%ia,sendMessageJ(ngrid)%iz,&
-         sendMessageJ(ngrid)%ja,sendMessageJ(ngrid)%jz, &
-         sendMessageJ(ngrid)%start,sendMessageJ(ngrid)%mSize,TotalSendJ(ngrid))
+    call InitialFieldsUpdate(ngrids,m1,m2,m3,newm2(ng),newm3(ng),ng,mynum, &
+         nrecvJ(ng),RecvMessageJ(ng)%proc,RecvMessageJ(ng)%tag, &
+         RecvMessageJ(ng)%ia,RecvMessageJ(ng)%iz,&
+         RecvMessageJ(ng)%ja,RecvMessageJ(ng)%jz, &
+         RecvMessageJ(ng)%start,RecvMessageJ(ng)%mSize,TotalRecvJ(ng), &
+         nSendJ(ng),sendMessageJ(ng)%proc,sendMessageJ(ng)%tag, &
+         sendMessageJ(ng)%ia,sendMessageJ(ng)%iz,&
+         sendMessageJ(ng)%ja,sendMessageJ(ng)%jz, &
+         sendMessageJ(ng)%start,sendMessageJ(ng)%mSize,TotalSendJ(ng))
 
 
     !- ready to do advection, loop over all scalars
     if(advmnt == 1) then
        i_scl=1                                            !- all scalars
     else if(advmnt == 2) then
-       i_scl=num_scalar(ngrid) - NSPECIES_TRANSPORTED +1  !- only chemical + aer species
+       i_scl=num_scalar(ng) - NSPECIES_TRANSPORTED +1  !- only chemical + aer species
     else if(advmnt == 3) then
        i_scl=2                                            !- all scalars, but not theta_il
     end if
 
-    !srf- do n=1,num_scalar(ngrid)     ! original
-    do n=i_scl,num_scalar(ngrid)
+    !srf- do n=1,num_scalar(ng)     ! original
+    do n=i_scl,num_scalar(ng)
 
        !- if RK or ABM3 scheme, THP/THC are not transported here
        if (dyncore_flag == 2) then
-          if (scalar_tab(n,ngrid)%name == 'THC' .or. &
-               scalar_tab(n,ngrid)%name == 'THP') cycle
+          if (scalar_tab(n,ng)%name == 'THC' .or. &
+               scalar_tab(n,ng)%name == 'THP') cycle
        end if
 
        !srf - somente para gases e aerossois
-       !     do n=num_scalar(ngrid) - NSPECIES_TRANSPORTED +1,num_scalar(ngrid)
-       !      if (scalar_tab(n,ngrid)%name /= 'COP' .and. scalar_tab(n,ngrid)%name /= 'CH4P') cycle
-       !          scalar_tab(n,ngrid)%name /= 'O3P'  ) cycle
+       !     do n=num_scalar(ng) - NSPECIES_TRANSPORTED +1,num_scalar(ng)
+       !      if (scalar_tab(n,ng)%name /= 'COP' .and. scalar_tab(n,ng)%name /= 'CH4P') cycle
+       !          scalar_tab(n,ng)%name /= 'O3P'  ) cycle
 
        !- Aerosol sedimentation
        IsThisScalarAer  = .false.
@@ -3346,11 +3896,11 @@ contains
 
        end if
 
-       scalarp => scalar_tab(n,ngrid)%var_p
-       scalart => scalar_tab(n,ngrid)%var_t
+       scalarp => scalar_tab(n,ng)%var_p
+       scalart => scalar_tab(n,ng)%var_t
        if (dumpLocal) then
           call MsgDump (h//" advects scalar "//&
-               trim(adjustl(scalar_tab(n,ngrid)%name)))
+               trim(adjustl(scalar_tab(n,ng)%name)))
        end if
 
        if (dumpLocal) then
@@ -3360,14 +3910,14 @@ contains
           write(str(4),"(i8)") jBegin
           write(str(5),"(i8)") jEnd
           call MsgDump (h//" atob copies "//&
-               trim(adjustl(scalar_tab(n,ngrid)%name))//&
+               trim(adjustl(scalar_tab(n,ng)%name))//&
                " with ghost zone 1 into vc3d_in(1:"//&
                trim(adjustl(str(1)))//","//&
                trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//","//&
                trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")"//&
                " with ghost zone 3")
        end if
-       call atob(mxyzp,scalarp,advmnt_g(ngrid)%vc3d_in(1:m1,iBegin:iEnd,jBegin:jEnd))
+       call atob(mxyzp,scalarp,advmnt_g(ng)%vc3d_in(1:m1,iBegin:iEnd,jBegin:jEnd))
 
        if (dumpLocal) then
           write(str(1),"(i8)") ia
@@ -3386,7 +3936,7 @@ contains
                " ja="//trim(adjustl(str(3)))//&
                " jz="//trim(adjustl(str(4))))
        end if
-       call advect_mnt(ngrid,m1,m2,m3,ia,iz,ja,jz,dtlt,mynum,n, &
+       call advect_mnt(ng,m1,m2,m3,ia,iz,ja,jz,dtlt,mynum,n, &
             current_aer_ispc,current_ndt_z,IsThisScalarAer)
 
        if (dumpLocal) then
@@ -3407,7 +3957,7 @@ contains
                trim(adjustl(str(10)))//":"//trim(adjustl(str(11)))//")")
        end if
        call advtndc(m1,m2,m3,ia,iz,ja,jz        &
-            ,scalarp  ,advmnt_g(ngrid)%vc3d_out(1:m1,iBegin:iEnd,jBegin:jEnd)  &
+            ,scalarp  ,advmnt_g(ng)%vc3d_out(1:m1,iBegin:iEnd,jBegin:jEnd)  &
             ,scalart  ,dtlt,mynum        )
     end do
     if (dumpLocal) then
@@ -3728,28 +4278,23 @@ contains
        write(str(7),"(i8)") ubound(dd0_3d,2)
        write(str(8),"(i8)") lbound(dd0_3d,3)
        write(str(9),"(i8)") ubound(dd0_3d,3)
-       write(str(10),"(i8)") level
-       call MsgDump(h//" starts; declared ouput array"//&
-            " dd0_3d("//&
-            trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//","//&
-            trim(adjustl(str(6)))//":"//trim(adjustl(str(7)))//","//&
-            trim(adjustl(str(8)))//":"//trim(adjustl(str(9)))//")")
-       call MsgDump(h//" declared ouput array"//&
-            " dd0_3du("//&
-            trim(adjustl(str(1)))//","//&
-            trim(adjustl(str(2)))//","//&
-            trim(adjustl(str(3)))//")")
-       call MsgDump(h//" declared ouput array"//&
-            " dd0_3dv("//&
-            trim(adjustl(str(1)))//","//&
-            trim(adjustl(str(2)))//","//&
-            trim(adjustl(str(3)))//")")
-       call MsgDump(h//" declared ouput array"//&
-            " dd0_3dw("//&
-            trim(adjustl(str(1)))//","//&
-            trim(adjustl(str(2)))//","//&
-            trim(adjustl(str(3)))//")")
-       call MsgDump(h//" level="//trim(adjustl(str(10))))
+
+       if (level == 0) then
+          call MsgDump(h//" starts with level==0; dd0_3d("//&
+               trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//","//&
+               trim(adjustl(str(6)))//":"//trim(adjustl(str(7)))//","//&
+               trim(adjustl(str(8)))//":"//trim(adjustl(str(9)))//")"//&
+               " <- f(theta(:,:,:),pi0(:,:,:),pp(:,:,:)) all at ("//&
+               "1:"//trim(adjustl(str(3)))//","//&
+               "1:"//trim(adjustl(str(2)))//","//&
+               "1:"//trim(adjustl(str(1)))//")")
+       else
+          call MsgDump(h//" starts with level/=0; dd0_3d("//&
+               " dd0_3d(:,:,:) <- f(theta(:,:,:),pi0(:,:,:),pp(:,:,:)) all at ("//&
+               "1:"//trim(adjustl(str(3)))//","//&
+               "1:"//trim(adjustl(str(2)))//","//&
+               "1:"//trim(adjustl(str(1)))//")")
+       end if
     end if
 
     c3 = c2 * (cpi**c1)
@@ -3772,6 +4317,21 @@ contains
     !- true air density at points "U", "V" and "W":
 
     call fill_dn0uv(m1,m2,m3,dd0_3d,dd0_3du,dd0_3dv)
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") m1-1
+       write(str(2),"(i8)") m2
+       write(str(3),"(i8)") m3
+       write(str(4),"(i8)") m1
+       call MsgDump(h//&
+            " dd0_3dw(:,:,:) <- f(dd0_3d(:,:,:)) all at ("//&
+            "1:"//trim(adjustl(str(3)))//","//&
+            "1:"//trim(adjustl(str(2)))//","//&
+            "1:"//trim(adjustl(str(1)))//") + next k, and special copy for ("//&
+            trim(adjustl(str(4)))//","//&
+            "1:"//trim(adjustl(str(2)))//","//&
+            "1:"//trim(adjustl(str(1)))//")")
+    end if
 
     do j = 1,m3
        do i = 1,m2
@@ -4399,6 +4959,18 @@ contains
 
     if(bufSendTotalLength==0 .or. bufRecvTotalLength==0) return
 
+    if (dumpLocal) then
+       write(str(1),"(i8)") nm2
+       write(str(2),"(i8)") nm3
+       call MsgDump(h//" advmnt_g%l_dxtW"//&
+            "(1,1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")"//&
+            " <- advmnt_g%dxtW"//&
+            "(1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")")
+       call MsgDump(h//" advmnt_g%l_dytW"//&
+            "(1,1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")"//&
+            " <- advmnt_g%dytW"//&
+            "(1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")")
+    end if
 
     do i=1,nm2
        do j=1,nm3
@@ -4541,6 +5113,19 @@ contains
          nSnd, procSend, tagSend, &
          iaSend, izSend, jaSend, jzSend, &
          bufSendStart, bufSendLength, bufSendTotalLength)
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") nm2
+       write(str(2),"(i8)") nm3
+       call MsgDump(h//" advmnt_g%dxtW"//&
+            "(1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")"//&
+            " <- advmnt_g%l_dxtW"//&
+            "(1,1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")")
+       call MsgDump(h//" advmnt_g%dytW"//&
+            "(1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")"//&
+            " <- advmnt_g%l_dytW"//&
+            "(1,1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")")
+    end if
 
     do i=1,nm2
        do j=1,nm3
