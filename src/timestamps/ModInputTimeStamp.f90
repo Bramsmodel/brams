@@ -4,7 +4,7 @@ module InputTimeStamp
 
   private
 
-  include "i8.h"
+  include "constants.h"
 
   type directory
      character(len=128)         :: fName

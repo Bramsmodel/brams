@@ -162,7 +162,6 @@ subroutine rams_mem_alloc(proc_type)
        nodebounds,    &
        mchnum,         &
        master_num,     &
-       mxp, myp, mzp, &
        mynum
 
   use mem_shcu, only: &
@@ -1199,7 +1198,7 @@ subroutine rams_mem_alloc(proc_type)
 
   call nullify_tend(naddsc)
 
-  call alloc_tend(nmzp, nmxp, nmyp, ngrids, naddsc, proc_type, mxp, myp, mzp)
+  call alloc_tend(nmzp, nmxp, nmyp, ngrids, naddsc, proc_type)
   !-------------
 
   !-------------
@@ -1693,6 +1692,7 @@ subroutine rams_mem_alloc(proc_type)
 	!call azero_l(vtab_r(nv,ng)%npts, vtab_r(nv,ng)%var_p)
         !
 	select case (vtab_r(nv,ng)%idim_type)
+
         case (2)
            call zeroVtab(vtab_r(nv,ng)%var_p_2D,nmxp(ng),nmyp(ng))
            !print *, size(vtab_r(nv,ng)%var_p_2D,1),size(vtab_r(nv,ng)%var_p_2D,2),nmxp(ng),nmyp(ng)

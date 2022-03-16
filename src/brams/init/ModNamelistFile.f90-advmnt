@@ -3153,7 +3153,7 @@ contains
     type(namelistFile), pointer :: oneNamelistFile
     type(parallelEnvironment), pointer :: oneParallelEnvironment
 
-    include "i8.h"
+    include "constants.h"
 
     ! MODEL_GRIDS
     call parf_bcast(oneNamelistFile%expnme,&

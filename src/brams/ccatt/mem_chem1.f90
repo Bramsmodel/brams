@@ -7,6 +7,7 @@ module mem_chem1
 
   use grid_dims, only : maxgrds
   use chem1_list, only : maxnspecies
+  USE var_tables, ONLY : InsertScalarTab
 
 !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
   use ModNamelistFile, only: namelistFile
@@ -505,11 +506,8 @@ contains
 
 
       if (spc_alloc(transport,ispc) == on .and. associated(chem1_g(ispc,ng)%sc_t)) then
-      	call vtables_scalar (chem1_g(ispc,ng)%sc_p(1,1,1),chem1_g(ispc,ng)%sc_t(1),&
-                           ng,trim(spc_name(ispc))//'P')
-	elements = size(chem1_g(ispc,ng)%sc_t)
-        call vtables_scalar_new (chem1_g(ispc,ng)%sc_p(1,1,1),chem1_g(ispc,ng)%sc_t(1),&
-                           ng,trim(spc_name(ispc))//'P',elements)
+        elements = size(chem1_g(ispc,ng)%sc_t)
+        call InsertScalarTab(chem1_g(ispc,ng)%sc_p,chem1_g(ispc,ng)%sc_t,ng,trim(spc_name(ispc))//'P',elements)
 	
 	!- number of chem transported species
 	nspecies_chem_transported = nspecies_chem_transported + 1	

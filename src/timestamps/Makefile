@@ -16,11 +16,11 @@ $(EXEC1):	$(OBJ1)
 $(EXEC2):	$(OBJ2)
 	$(F90) -o $(EXEC2) $(INCLUDES) $(F90LOAD) $(OBJ2)
 
-TimeStampReport.o:	TimeStampReport.f90  ModInputTimeStamp.o ../utils/include/i8.h
+TimeStampReport.o:	TimeStampReport.f90  ModInputTimeStamp.o ../utils/include/constants.h
 
-TimeStampSummary.o:	TimeStampSummary.f90  ModInputTimeStamp.o ../utils/include/i8.h
+TimeStampSummary.o:	TimeStampSummary.f90  ModInputTimeStamp.o ../utils/include/constants.h
 
-ModInputTimeStamp.o:	ModInputTimeStamp.f90 ../utils/include/i8.h
+ModInputTimeStamp.o:	ModInputTimeStamp.f90 ../utils/include/constants.h
 
 clean:
 	rm -f *.o *.mod $(EXEC1) $(EXEC2)

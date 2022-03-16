@@ -179,7 +179,7 @@ micphys.o : $(MICRO)/micphys.f90 grid_dims.o ModNamelistFile.o
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-var_tables.o : $(MEMORY)/var_tables.f90 
+var_tables.o : $(MEMORY)/var_tables.f90 ModParallelEnvironment.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -2425,35 +2425,6 @@ memMatrix.o: $(MATRIX)/memMatrix.f90
 	cp -f  $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90)
 	rm -f $(<F:.f90=.f90)
-
-#mem_aerosol.o: $(MEMORY)/mem_aerosol.f90  ModNamelistFile.o  setup.o \
-#	subs.o coag.o npf.o memMatrix.o aer1_list.o $(UTILS_INCS)/i8.h
-#	cp -f  $< $(<F:.f90=.f90)
-#	$(F_COMMAND) $(<F:.f90=.f90)
-#	rm -f $(<F:.f90=.f90)
-
-#rrtmg_lw_read_nc.o: $(RRTMG_LW_SRC)/rrtmg_lw_read_nc.f90  rrlw_kg01.o rrlw_kg02.o rrlw_kg03.o rrlw_kg04.o \
-#	rrlw_kg05.o rrlw_kg06.o rrlw_kg07.o rrlw_kg08.o rrlw_kg09.o \
-#	rrlw_kg10.o rrlw_kg11.o rrlw_kg12.o rrlw_kg13.o rrlw_kg14.o \
-#	rrlw_kg15.o rrlw_kg16.o rrlw_ncpar.o
-#	cp -f  $< $(<F:.f90=.f90)
-#	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-#	rm -f $(<F:.f90=.f90)
-
-
-#rrtmg_sw_read_nc.o: $(RRTMG_SW_SRC)/rrtmg_sw_read_nc.f90 rrsw_kg16.o rrsw_kg17.o rrsw_kg18.o rrsw_kg19.o \
-#	rrsw_kg20.o rrsw_kg21.o rrsw_kg22.o rrsw_kg23.o rrsw_kg24.o \
-#	rrsw_kg25.o rrsw_kg26.o rrsw_kg27.o rrsw_kg28.o rrsw_kg29.o \
-#	rrsw_ncpar.o
-#	cp -f  $< $(<F:.f90=.f90)
-#	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-#	rm -f $(<F:.f90=.f90)
-
-
-#rrsw_ncpar.o:$(RRTMG_SW_MOD)/rrsw_ncpar.f90 parkind.o
-#	cp -f  $< $(<F:.f90=.f90)
-#	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-#	rm -f $(<F:.f90=.f90)
 
 mic_thompson_driver.o : $(MICRO)/mic_thompson_driver.f90  mem_basic.o mem_grid.o mem_micro.o \
 	mem_radiate.o micphys.o node_mod.o rconstants.o  io_params.o mem_radiate.o\

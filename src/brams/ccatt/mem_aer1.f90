@@ -8,6 +8,7 @@ module mem_aer1
   use aer1_list, only : nspecies_aer=> nspecies,nmodes
   use mem_chem1, only : chem_assim,RECYCLE_TRACERS
   use ModNamelistFile, only: namelistFile
+  USE var_tables, ONLY : InsertScalarTab
 
   include "constants.h"
 
@@ -386,18 +387,15 @@ contains
 ! Fill pointers to scalar arrays into scalar tables
 
          if (associated(aer1_g(imode,ispc,ng)%sc_t)) then
-           call vtables_scalar (aer1_g(imode,ispc,ng)%sc_p(1,1,1),aer1_g(imode,ispc,ng)%sc_t(1),&
-        		      ng,trim(register_name) //'P')
            elements = size(aer1_g(imode,ispc,ng)%sc_t)
-           call vtables_scalar_new (aer1_g(imode,ispc,ng)%sc_p(1,1,1),aer1_g(imode,ispc,ng)%sc_t(1),&
-        		      ng,trim(register_name) //'P',elements)
-	   !- total number of transported species (CHEM + AER)
-	   nspecies_transported = nspecies_transported + 1
+           call InsertScalarTab(aer1_g(imode,ispc,ng)%sc_p,aer1_g(imode,ispc,ng)%sc_t,ng,trim(register_name) //'P',elements)
+           !- total number of transported species (CHEM + AER)
+           nspecies_transported = nspecies_transported + 1
 
            !-save the aerosol identity for sedimentation/advection routine
            !ind_mode_sedim(num_scalar(ng)) = imode
            !ind_aer_sedim (num_scalar(ng)) = ispc
-	   if(num_scalar_aer_1st == 0) num_scalar_aer_1st = num_scalar(ng)
+           if(num_scalar_aer_1st == 0) num_scalar_aer_1st = num_scalar(ng)
 
          endif
 
@@ -693,13 +691,10 @@ subroutine filltab_tend_aer2(nmodes,ng)
   
   do imode=1,nmodes
         if (associated(aer2_g(imode,ng)%sc_t)) then
-           call vtables_scalar (aer2_g(imode,ng)%sc_p(1,1,1),aer2_g(imode,ng)%sc_t(1),&
-        		      ng,trim(numb_name(imode))//'P')
            elements = size(aer2_g(imode,ng)%sc_t)
-           call vtables_scalar_new (aer2_g(imode,ng)%sc_p(1,1,1),aer2_g(imode,ng)%sc_t(1),&
-        		      ng,trim(numb_name(imode))//'P',elements)
-	   !- total number of transported species (CHEM + AER)
-	   nspecies_transported = nspecies_transported + 1
+           call InsertScalarTab(aer2_g(imode,ng)%sc_p,aer2_g(imode,ng)%sc_t,ng,trim(numb_name(imode))//'P',elements)
+           !- total number of transported species (CHEM + AER)
+           nspecies_transported = nspecies_transported + 1
 
          endif
   enddo
@@ -989,11 +984,8 @@ end subroutine filltab_tend_aer2
 ! Fill pointers to scalar arrays into scalar tables
 
          if (associated(aer1_inorg_g(ispc,ng)%sc_t)) then
-           call vtables_scalar (aer1_inorg_g(ispc,ng)%sc_p(1,1,1),aer1_inorg_g(ispc,ng)%sc_t(1),&
-        		      ng,trim(INORG_name(ispc))//'P')
            elements = size(aer1_inorg_g(ispc,ng)%sc_t)
-           call vtables_scalar_new (aer1_inorg_g(ispc,ng)%sc_p(1,1,1),aer1_inorg_g(ispc,ng)%sc_t(1),&
-        		      ng,trim(INORG_name(ispc))//'P',elements)
+           call InsertScalarTab(aer1_inorg_g(ispc,ng)%sc_p,aer1_inorg_g(ispc,ng)%sc_t,ng,trim(INORG_name(ispc))//'P',elements)
 	   !- total number of transported species (CHEM + AER)
 	   nspecies_transported = nspecies_transported + 1
 

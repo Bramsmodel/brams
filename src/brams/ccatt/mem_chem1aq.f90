@@ -5,6 +5,7 @@
 
 module mem_chem1aq
   use grid_dims, only : maxgrds
+  USE var_tables, ONLY : InsertScalarTab
 
 !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
   use ModNamelistFile, only: namelistFile
@@ -234,31 +235,19 @@ subroutine alloc_tend_chem1aq(nmzp,nmxp,nmyp,ngrs,nspeciesaq,proc_type)
 
 
       if ( associated(chem1aq_g(ispcaq,ng)%sc_tr)) then
-      	call vtables_scalar (chem1aq_g(ispcaq,ng)%sc_pr(1,1,1),&
-        chem1aq_g(ispcaq,ng)%sc_tr(1),ng,trim(spcaq_name(ispcaq))//'PR')
-        
-	elements = size(chem1aq_g(ispcaq,ng)%sc_tr)
-        
-        call vtables_scalar_new (chem1aq_g(ispcaq,ng)%sc_pr(1,1,1),&
-        chem1aq_g(ispcaq,ng)%sc_tr(1),ng, trim(spcaq_name(ispcaq))//'PR',elements)
+        elements = size(chem1aq_g(ispcaq,ng)%sc_tr)
+        call InsertScalarTab(chem1aq_g(ispcaq,ng)%sc_pr,chem1aq_g(ispcaq,ng)%sc_tr,ng,trim(spcaq_name(ispcaq))//'PR',elements)
 
-	!- total number of transported species (CHEM + CHEM_AQ)
-	nspecies_transported = nspecies_transported + 1 		
-
-
+        !- total number of transported species (CHEM + CHEM_AQ)
+        nspecies_transported = nspecies_transported + 1 
       endif
 !      
       if ( associated(chem1aq_g(ispcaq,ng)%sc_tc)) then
-    	call vtables_scalar (chem1aq_g(ispcaq,ng)%sc_pc(1,1,1),&
-       chem1aq_g(ispcaq,ng)%sc_tc(1),ng,trim(spcaq_name(ispcaq))//'PC')
-       
-	elements = size(chem1aq_g(ispcaq,ng)%sc_tc)
-        
-        call vtables_scalar_new (chem1aq_g(ispcaq,ng)%sc_pc(1,1,1),&
-        chem1aq_g(ispcaq,ng)%sc_tc(1),ng, trim(spcaq_name(ispcaq))//'PC',elements)
+        elements = size(chem1aq_g(ispcaq,ng)%sc_tc)
+        call InsertScalarTab(chem1aq_g(ispcaq,ng)%sc_pc,chem1aq_g(ispcaq,ng)%sc_tc,ng,trim(spcaq_name(ispcaq))//'PC',elements)
 
-	!- total number of transported species (CHEM + CHEM_AQ)
-	nspecies_transported = nspecies_transported + 1 		
+        !- total number of transported species (CHEM + CHEM_AQ)
+        nspecies_transported = nspecies_transported + 1 
 
 
       endif
