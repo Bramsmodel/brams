@@ -345,7 +345,7 @@ contains
     !external functions
     real, external :: flux_upwind,fq2, fq3, fq4, fq5, fq6, fq
 
-    logical, parameter :: variable=.true.
+    logical, parameter :: variable=.false.
     !<
     integer, parameter :: mzi=-2, myi=-2, mxi=-2
 
@@ -747,7 +747,7 @@ contains
     real :: mfy_wind(mzp,mxp,myp)
     real :: mfz_wind(mzp,mxp,myp)
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(advectc_rk)**"
     character(len=8) :: str(10)
 

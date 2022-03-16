@@ -2686,7 +2686,7 @@ contains
     integer :: ierr
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(CreateMonotonicAdvection)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (.not. associated(oneGrid)) then
        call fatal_error(h//" oneGrid not associated")
@@ -2866,7 +2866,7 @@ contains
 
     integer :: ierr
     character(len=8) :: str(10)
-    logical :: dumpLocal=.true.
+    logical :: dumpLocal=.false.
     character(len=*), parameter :: h="**(DestroyMonotonicAdvection)**"
 
     if (dumpLocal) then
@@ -3052,7 +3052,7 @@ contains
     integer :: k
     real :: rtgti
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(InitializeGridSpacings)**"
     character(len=8) :: str(10)
 
@@ -3195,7 +3195,7 @@ contains
     integer :: j1
     real :: c3
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(GetTrueDensities)**"
     character(len=8) :: str(10)
 
@@ -3523,7 +3523,7 @@ contains
     real :: cx2
     real :: rtgti
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(PrepareWinds)**"
     character(len=8) :: str(10)
 
@@ -3691,7 +3691,7 @@ contains
     real, pointer :: scalart
     logical  :: IsThisScalarAer =.false.
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(advmnt_driver)**"
     character(len=8) :: str(11)
 
@@ -3863,9 +3863,9 @@ contains
          oneAdvMnt%dytW, &
          oneAdvMnt%dztW)
 
-    call Compare(oneAdvMnt%dxtW, advmnt_g(ng)%dxtW, "dxtW", .true.)
-    call Compare(oneAdvMnt%dytW, advmnt_g(ng)%dytW, "dytW", .true.)
-    call Compare(oneAdvMnt%dztW, advmnt_g(ng)%dztW, "dztW", .true.)
+!!$    call Compare(oneAdvMnt%dxtW, advmnt_g(ng)%dxtW, "dxtW", .true.)
+!!$    call Compare(oneAdvMnt%dytW, advmnt_g(ng)%dytW, "dytW", .true.)
+!!$    call Compare(oneAdvMnt%dztW, advmnt_g(ng)%dztW, "dztW", .true.)
 
 
     !**(JP)** ends
@@ -3935,10 +3935,10 @@ contains
             oneAdvMnt%dd0_3du, &
             oneAdvMnt%dd0_3dv, &
             oneAdvMnt%dd0_3dw)
-       call Compare(oneAdvMnt%dd0_3d, advmnt_g(ng)%dd0_3d, "dd0_3d", .true.)
-       call Compare(oneAdvMnt%dd0_3du, advmnt_g(ng)%dd0_3du, "dd0_3du", .true.)
-       call Compare(oneAdvMnt%dd0_3dv, advmnt_g(ng)%dd0_3dv, "dd0_3dv", .true.)
-       call Compare(oneAdvMnt%dd0_3dw, advmnt_g(ng)%dd0_3dw, "dd0_3dw", .true.)
+!!$       call Compare(oneAdvMnt%dd0_3d, advmnt_g(ng)%dd0_3d, "dd0_3d", .true.)
+!!$       call Compare(oneAdvMnt%dd0_3du, advmnt_g(ng)%dd0_3du, "dd0_3du", .true.)
+!!$       call Compare(oneAdvMnt%dd0_3dv, advmnt_g(ng)%dd0_3dv, "dd0_3dv", .true.)
+!!$       call Compare(oneAdvMnt%dd0_3dw, advmnt_g(ng)%dd0_3dw, "dd0_3dw", .true.)
 
        !**(JP)** ends
 
@@ -4009,12 +4009,12 @@ contains
          oneAdvMnt%u3d, oneAdvMnt%v3d, oneAdvMnt%w3d, &
          aerosol, naer_transported, &
          dd_sedim, dzt, ndtZ)
-    call Compare(oneAdvMnt%u3d, advmnt_g(ng)%u3d, "u3d", .true.)
-    call Compare(oneAdvMnt%v3d, advmnt_g(ng)%v3d, "v3d", .true.)
-    call Compare(oneAdvMnt%w3d, advmnt_g(ng)%w3d, "w3d", .true.)
-    p1 => ndtZ
-    p2 => ndt_z
-    call Compare(p1, p2, "ndt_z", .true.)
+!!$    call Compare(oneAdvMnt%u3d, advmnt_g(ng)%u3d, "u3d", .true.)
+!!$    call Compare(oneAdvMnt%v3d, advmnt_g(ng)%v3d, "v3d", .true.)
+!!$    call Compare(oneAdvMnt%w3d, advmnt_g(ng)%w3d, "w3d", .true.)
+!!$    p1 => ndtZ
+!!$    p2 => ndt_z
+!!$    call Compare(p1, p2, "ndt_z", .true.)
 
     !**(JP)** ends
 
@@ -4231,7 +4231,7 @@ contains
     integer, intent(in) :: newM3(ngrids)
 
     integer :: ng
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(initialize_advmnt)**"
     character(len=8) :: str(10)
 
@@ -4327,7 +4327,7 @@ contains
     integer , intent(in) :: mmzp(ngrids)
 
     character(len=*), parameter :: h="**(Deinitialize_advmnt)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     integer :: ng
 
@@ -4391,7 +4391,7 @@ contains
     ! local var
     integer i,j,k
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(initialize_densities)**"
     character(len=8) :: str(10)
 
@@ -4449,7 +4449,7 @@ contains
     integer i,j,k
     real rtgti
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(initialize_grid_spacings)**"
     character(len=8) :: str(10)
 
@@ -4513,7 +4513,7 @@ contains
     integer i,j,k
     real c3
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(get_true_densities)**"
     character(len=8) :: str(10)
 
@@ -4627,7 +4627,7 @@ contains
     integer i,j,k
     real :: cx1,cx2,rtgti,dum(m1)
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(prepare_winds)**"
     character(len=8) :: str(10)
 
@@ -4736,7 +4736,7 @@ contains
     ! local var
     integer i,j,k
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(get_Walceks_densities)**"
     character(len=8) :: str(10)
 
@@ -4789,7 +4789,7 @@ contains
     integer ibegin,iend,jbegin,jend
     !- type of sedimentation scheme (0= Walcek, 1=upwind)
     integer , parameter :: iupwind = 0
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(advect_mnt)**"
     character(len=8) :: str(10)
 
@@ -4950,7 +4950,7 @@ contains
     real    :: anrev,curnt,rx,xa,ilop,iwndty,nrec,ya
     real    :: periodo  =   6.*3600.
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(prepare_theor_winds)**"
     character(len=8) :: str(10)
 
@@ -5055,7 +5055,7 @@ contains
     integer :: reqRecv(nRecv)
     integer :: reqSend(nSend), recNum
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(update_borders)**"
     character(len=8) :: str(10)
 
@@ -5193,7 +5193,7 @@ contains
     integer, intent(in) :: bufSendTotalLength
 
     integer :: i,j,k
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(initial_fields_update)**"
     character(len=8) :: str(10)
 
@@ -5487,7 +5487,7 @@ contains
     real :: x1
     real :: x1n
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(Advec3d_X)**"
     character(len=8) :: str(10)
 
@@ -5731,7 +5731,7 @@ contains
     real :: x1
     real :: x1n
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(Advec3d_Y)**"
     character(len=8) :: str(10)
 
@@ -5962,7 +5962,7 @@ contains
     real :: x1
     real :: x1n
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(Advec3d_Z)**"
     character(len=8) :: str(10)
 
@@ -6171,7 +6171,7 @@ contains
     real :: x1n
     real :: rtgti
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(Advec3d_Z_sedim)**"
     character(len=8) :: str(10)
 
@@ -6276,7 +6276,7 @@ contains
     real :: x1n
     real :: rtgti
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(Advec3d_Z_sedim_upw)**"
     character(len=8) :: str(10)
 

@@ -190,7 +190,7 @@ contains
 
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(InsertScalarTab_2D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
        write(str(1),"(i8)") ng
@@ -234,7 +234,7 @@ contains
 
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(InsertScalarTab_2D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
        write(str(1),"(i8)") ng
