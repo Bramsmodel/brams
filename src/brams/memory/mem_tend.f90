@@ -56,6 +56,7 @@ module mem_tend
      real, pointer :: wt_past(:)
      real, pointer :: pt_past(:)
      real, pointer :: tht_past(:)
+     real, pointer :: cldfrt(:)
    end type
 
    type (tend_vars) :: tend
@@ -233,10 +234,10 @@ contains
    	allocate (tend%cifnt(ntpts))
 	tend%cifnt = 0.
    endif
-!!$   if (associated(micro_g(1)%cldfr))   then
-!!$      allocate (tend%cldfrt(ntpts))
-!!$   tend%cldfrt = 0.
-!!$   endif
+   if (associated(micro_g(1)%cldfr))   then
+      allocate (tend%cldfrt(ntpts))
+   tend%cldfrt = 0.
+   endif
    if (associated(turb_g(1)%tkep))     then
    	allocate (tend%tket(ntpts))
 	tend%tket = 0.
@@ -449,8 +450,7 @@ contains
    if (associated(tend%cht))  nullify (tend%cht)
    if (associated(tend%cccnt))nullify (tend%cccnt)
    if (associated(tend%cifnt))nullify (tend%cifnt)
-!!$   if (associated(tend%cldfrt))nullify (tend%cldfrt)
-   
+   if (associated(tend%cldfrt))nullify (tend%cldfrt)
    if (associated(tend%tket)) nullify (tend%tket)
    if (associated(tend%epst)) nullify (tend%epst)
 
@@ -557,8 +557,7 @@ contains
    if (associated(tend%cht))  deallocate (tend%cht)
    if (associated(tend%cccnt))deallocate (tend%cccnt)
    if (associated(tend%cifnt))deallocate (tend%cifnt)
-!!$   if (associated(tend%cldfrt))deallocate (tend%cldfrt)
-
+   if (associated(tend%cldfrt))deallocate (tend%cldfrt)
    if (associated(tend%tket)) deallocate (tend%tket)
    if (associated(tend%epst)) deallocate (tend%epst)
 
@@ -752,10 +751,10 @@ contains
       call InsertScalarTab(micro%cifnp,tend%cifnt,ng,'CIFNP',elements)
    endif
 
-!!$  if (associated(tend%cldfrt)) then
-!!$      elements = size(tend%cldfrt)
-!!$      call InsertScalarTab(micro%cldfr,tend%cldfrt,ng,'CLDFR',elements)
-!!$   endif
+  if (associated(tend%cldfrt)) then
+      elements = size(tend%cldfrt)
+      call InsertScalarTab(micro%cldfr,tend%cldfrt,ng,'CLDFR',elements)
+   endif
 
    if( associated(tend%tket)) then
       elements = size(tend%tket)

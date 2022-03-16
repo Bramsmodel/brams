@@ -86,16 +86,6 @@ ModDomainDecomp.o  : $(MPI)/ModDomainDecomp.f90 \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-#ModUkmoAdapt.o  : $(RADIATE)/ModUkmoAdapt.f90
-#	@cp -f $< $(<F:.f90=.f90)
-#	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-#	rm -f $(<F:.f90=.f90)
-
-#Rad_UKMO.o  : $(RADIATE)/Rad_UKMO.f90 ModUkmoAdapt.o
-#	@cp -f $< $(<F:.f90=.f90)
-#	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-#	rm -f $(<F:.f90=.f90)
-
 ReadBcst.o : $(MPI)/ReadBcst.f90 mem_grid.o node_mod.o \
 	an_header.o mem_aerad.o mem_basic.o mem_turb.o \
 	mem_globrad.o parlibf.o shcu_vars_const.o \
@@ -168,11 +158,6 @@ ref_sounding.o : $(MODEL)/ref_sounding.f90 grid_dims.o ModNamelistFile.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
-
-#rrad3.o : $(RADIATE)/rrad3.f90
-#	@cp -f $< $(<F:.f90=.f90)
-#	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-#	rm -f $(<F:.f90=.f90)
 
 micphys.o : $(MICRO)/micphys.f90 grid_dims.o ModNamelistFile.o
 	@cp -f $< $(<F:.f90=.f90)
@@ -1269,7 +1254,8 @@ Henrys_Law_cts.o : $(CUPARM)/Henrys_Law_cts.F90
 
 ConvPar_GF_GEOS5.o : $(CUPARM)/ConvPar_GF_GEOS5.F90 module_gate.o  MAPL_Constants.o Henrys_Law_cts.o
 	@cp -f $< $(<F:.f90=.f90)
-	$(F_COMMAND_LIGHT) $(<F:.f90=.f90) $(EXTRAFLAGSF)
+#	$(F_COMMAND_LIGHT) $(<F:.f90=.f90) $(EXTRAFLAGSF)
+	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
 cup_grell3.o : $(CUPARM)/cup_grell3.F90  Phys_const.o mem_jules.o \
@@ -1336,26 +1322,6 @@ soilMoisture.o : $(SOIL_MOISTURE)/soilMoisture.F90 \
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
-
-#rad_mclat.o : $(RADIATE)/rad_mclat.f90  rconstants.o rrad3.o
-#	@cp -f $< $(<F:.f90=.f90)
-#	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-#	rm -f $(<F:.f90=.f90)
-
-#rad_ccmp.o : $(RADIATE)/rad_ccmp.f90
-#	@cp -f $< $(<F:.f90=.f90)
-#	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-#	rm -f $(<F:.f90=.f90)
-
-#rad_stable.o : $(RADIATE)/rad_stable.f90
-#	@cp -f $< $(<F:.f90=.f90)
-#	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-#	rm -f $(<F:.f90=.f90)
-
-#rrad2.o : $(RADIATE)/rrad2.f90
-#	@cp -f $< $(<F:.f90=.f90)
-#	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-#	rm -f $(<F:.f90=.f90)
 
 rcio.o : $(IO)/rcio.f90  leaf_coms.o mem_all.o mem_stilt.o
 	@cp -f $< $(<F:.f90=.f90)
@@ -2026,11 +1992,6 @@ rrsw_wvn.o: $(RRTMG_SW_MOD)/rrsw_wvn.f90 parkind.o parrrsw.o
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-#mcica_random_numbers.o: $(RRTMG_SW_SRC)/mcica_random_numbers.f90 parkind.o
-#	cp -f  $< $(<F:.f90=.f90)
-#	$(F_COMMAND) -fno-range-check $(<F:.f90=.f90) $(EXTRAFLAGSF)
-#	rm -f $(<F:.f90=.f90)
-
 mcica_random_numbers.o: $(RRTMG_SW_SRC)/mcica_random_numbers.f90 parkind.o
 	cp -f  $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
@@ -2075,12 +2036,6 @@ rrtmg_sw_rad.o: $(RRTMG_SW_SRC)/rrtmg_sw_rad.f90 mcica_subcol_gen_sw.o parkind.o
 	cp -f  $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
-
-#rrtmg_sw_rad.nomcica.o: $(RRTMG_SW_SRC)/rrtmg_sw_rad.nomcica.f90 parkind.o parrrsw.o rrsw_aer.o rrsw_con.o rrsw_vsn.o \
-#	rrsw_wvn.o rrtmg_sw_cldprop.o rrtmg_sw_setcoef.o rrtmg_sw_spcvrt.o
-#	cp -f  $< $(<F:.f90=.f90)
-#	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-#	rm -f $(<F:.f90=.f90)
 
 rrtmg_sw_reftra.o: $(RRTMG_SW_SRC)/rrtmg_sw_reftra.f90 parkind.o rrsw_tbl.o rrsw_vsn.o
 	cp -f  $< $(<F:.f90=.f90)
@@ -2276,13 +2231,6 @@ rrtmg_lw_rad.o: $(RRTMG_LW_SRC)/rrtmg_lw_rad.f90  mcica_subcol_gen_lw.o parkind.
 	cp -f  $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
-
-#rrtmg_lw_rad.nomcica.o: $(RRTMG_LW_SRC)/rrtmg_lw_rad.nomcica.f90  parkind.o parrrtm.o rrlw_con.o rrlw_vsn.o rrlw_wvn.o \
-#	rrtmg_lw_cldprop.o rrtmg_lw_rtrn.o rrtmg_lw_rtrnmr.o \
-#	rrtmg_lw_setcoef.o rrtmg_lw_taumol.o
-#	cp -f  $< $(<F:.f90=.f90)
-#	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-#	rm -f $(<F:.f90=.f90)
 
 rrtmg_lw_rtrn.o: $(RRTMG_LW_SRC)/rrtmg_lw_rtrn.f90  parkind.o parrrtm.o rrlw_con.o rrlw_tbl.o rrlw_vsn.o \
 	rrlw_wvn.o
