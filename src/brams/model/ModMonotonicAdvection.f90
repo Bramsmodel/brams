@@ -3078,7 +3078,7 @@ contains
             trim(adjustl(str(1)))//","//trim(adjustl(str(2)))//")")
     end if
 
-    ! set Monotonic Advection north ghost zone fields to zero
+    ! set Monotonic Advection south ghost zone fields to zero
     do j = 1, j1ExternAtAdvMnt-1
        do i = 1, mxpAdvMnt
           dxtW(i,j) = 0.0
@@ -3115,7 +3115,7 @@ contains
        end do
     end do
 
-    ! set Monotonic Advection south ghost zone fields to zero
+    ! set Monotonic Advection north ghost zone fields to zero
     do j = jMypExternAtAdvMnt+1, mypAdvMnt
        do i = 1, mxpAdvMnt
           dxtW(i,j) = 0.0
@@ -3264,7 +3264,7 @@ contains
 
     ! dd0_3d computation
 
-    ! set Monotonic Advection north ghost zone fields to zero
+    ! set Monotonic Advection south ghost zone fields to zero
     do j = 1, j1ExternAtAdvMnt-1
        do i = 1, mxpAdvMnt
           do k = 1, mzp
@@ -3330,7 +3330,7 @@ contains
        end do
     end if
 
-    ! set Monotonic Advection south ghost zone fields to zero
+    ! set Monotonic Advection north ghost zone fields to zero
     do j = jMypExternAtAdvMnt+1, mypAdvMnt
        do i = 1, mxpAdvMnt
           do k = 1, mzp
@@ -3342,7 +3342,7 @@ contains
 
     ! use dd0_3d to compute dd0_3du and dd0_3dv
 
-    ! set Monotonic Advection north ghost zone fields to zero
+    ! set Monotonic Advection south ghost zone fields to zero
     do j = 1, j1ExternAtAdvMnt-1
        do i = 1, mxpAdvMnt
           do k = 1, mzp
@@ -3378,7 +3378,7 @@ contains
        end do
     end do
 
-    ! set Monotonic Advection south ghost zone fields to zero
+    ! set Monotonic Advection north ghost zone fields to zero
     do j = jMypExternAtAdvMnt+1, mypAdvMnt
        do i = 1, mxpAdvMnt
           do k = 1, mzp
@@ -3390,7 +3390,7 @@ contains
 
     ! compute true air density for w
 
-    ! set Monotonic Advection north ghost zone fields to zero
+    ! set Monotonic Advection south ghost zone fields to zero
     do j = 1, j1ExternAtAdvMnt-1
        do i = 1, mxpAdvMnt
           do k = 1, mzp
@@ -3421,7 +3421,7 @@ contains
        end do
     end do
 
-    ! set Monotonic Advection south ghost zone fields to zero
+    ! set Monotonic Advection north ghost zone fields to zero
     do j = jMypExternAtAdvMnt+1, mypAdvMnt
        do i = 1, mxpAdvMnt
           do k = 1, mzp
@@ -3537,7 +3537,7 @@ contains
             " restricted to the original ghost zone of 1")
     end if
 
-    ! set Monotonic Advection north ghost zone fields to zero
+    ! set Monotonic Advection south ghost zone fields to zero
     do j = 1, j1ExternAtAdvMnt-1
        do i = 1, mxpAdvMnt
           do k = 1, mzp
@@ -3580,7 +3580,7 @@ contains
        end do
     end do
 
-    ! set Monotonic Advection south ghost zone fields to zero
+    ! set Monotonic Advection north ghost zone fields to zero
     do j = jMypExternAtAdvMnt+1, mypAdvMnt
        do i = 1, mxpAdvMnt
           do k = 1, mzp
@@ -3648,7 +3648,7 @@ contains
 
 
   subroutine GetWalceksDensities(&
-       mzp, dtlt, &
+       mzp, dtlt, mxpAdvMnt, mypAdvMnt, &
        i1ExternAtAdvMnt,  iMxpExternAtAdvMnt,  &
        j1ExternAtAdvMnt,  jMypExternAtAdvMnt,  &
        u3d, v3d, w3d, &
@@ -3658,7 +3658,10 @@ contains
 
     integer, intent(in) :: mzp
     real, intent(in) :: dtlt
-
+    integer, intent(in) :: mxpAdvMnt
+    ! x dimension of Monotonic Advection fields
+    integer, intent(in) :: mypAdvMnt
+    ! y dimension of Monotonic Advection fields
     integer, intent(in) :: i1ExternAtAdvMnt
     ! first x position of external fields (1) indexed Monotonic Advection
     integer, intent(in) :: iMxpExternAtAdvMnt
@@ -3695,8 +3698,35 @@ contains
             " just at a section restricted to the original ghost zone of 1")
     end if
 
+
+    ! set Monotonic Advection south ghost zone fields to zero
+    do j = 1, j1ExternAtAdvMnt
+       do i = 1, mxpAdvMnt
+          do k = 1, mzp
+             den0_3d(k,i,j) = 0.0
+             den1_3d(k,i,j) = 0.0
+             den2_3d(k,i,j) = 0.0
+             den3_3d(k,i,j) = 0.0
+          end do
+       end do
+    end do
+
     do  j = jMypExternAtAdvMnt, j1ExternAtAdvMnt+1, -1
+       ! set Monotonic Advection west ghost zone fields to zero
+       do i = 1, i1ExternAtAdvMnt
+          do k = 1, mzp
+             den0_3d(k,i,j) = 0.0
+             den1_3d(k,i,j) = 0.0
+             den2_3d(k,i,j) = 0.0
+             den3_3d(k,i,j) = 0.0
+          end do
+       end do
+
        do  i = i1ExternAtAdvMnt+1, iMxpExternAtAdvMnt
+          den0_3d(1,i,j) = 0.0
+          den1_3d(1,i,j) = 0.0
+          den2_3d(1,i,j) = 0.0
+          den3_3d(1,i,j) = 0.0
           do k = 2, mzp
              den0_3d(k,i,j)=dd0_3d(k,i,j)
              den1_3d(k,i,j)=den0_3d(k,i,j)- dtlt/dxtW(i,j)*&
@@ -3705,6 +3735,27 @@ contains
                   (dd0_3dv(k,i,j)*v3d(k,i,j)-dd0_3dv(k,i,j-1)*v3d(k,i,j-1))
              den3_3d(k,i,j)=den2_3d(k,i,j)- dtlt/dztW(k)  *&
                   (dd0_3dw(k,i,j)*w3d(k,i,j)-dd0_3dw(k-1,i,j)*w3d(k-1,i,j))
+          end do
+       end do
+       ! set Monotonic Advection east ghost zone fields to zero
+       do i = iMxpExternAtAdvMnt+1, mxpAdvMnt
+          do k = 1, mzp
+             den0_3d(k,i,j) = 0.0
+             den1_3d(k,i,j) = 0.0
+             den2_3d(k,i,j) = 0.0
+             den3_3d(k,i,j) = 0.0
+          end do
+       end do
+    end do
+
+    ! set Monotonic Advection north ghost zone fields to zero
+    do j = jMypExternAtAdvMnt+1, mypAdvMnt
+       do i = 1, mxpAdvMnt
+          do k = 1, mzp
+             den0_3d(k,i,j) = 0.0
+             den1_3d(k,i,j) = 0.0
+             den2_3d(k,i,j) = 0.0
+             den3_3d(k,i,j) = 0.0
           end do
        end do
     end do
@@ -4197,14 +4248,8 @@ contains
 
     !**(JP)** starts
 
-    oneAdvMnt%den0_3d = 0.0
-    oneAdvMnt%den1_3d = 0.0
-    oneAdvMnt%den2_3d = 0.0
-    oneAdvMnt%den3_3d = 0.0
-    
-
     call GetWalceksDensities(&
-         mzp, dtlt, &
+         mzp, dtlt, mxpAdvMnt, mypAdvMnt, &
          i1ExternAtAdvMnt,  iMxpExternAtAdvMnt,  &
          j1ExternAtAdvMnt,  jMypExternAtAdvMnt,  &
          oneAdvMnt%u3d, oneAdvMnt%v3d, oneAdvMnt%w3d, &
