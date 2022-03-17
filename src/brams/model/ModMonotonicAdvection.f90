@@ -3812,6 +3812,7 @@ contains
     integer :: mxyzp
     integer :: i
     integer :: j
+    integer :: k
     integer :: procfile
     integer :: ibegin
     integer :: iend
@@ -4233,22 +4234,11 @@ contains
 
     !**(JP)** starts
 
-    ng=1
-    oneAdvMnt%u3d = advmnt_g(ng)%u3d
-    oneAdvMnt%v3d = advmnt_g(ng)%v3d
-    oneAdvMnt%w3d = advmnt_g(ng)%w3d
-    oneAdvMnt%dd0_3d = advmnt_g(ng)%dd0_3d
-    oneAdvMnt%dd0_3du = advmnt_g(ng)%dd0_3du
-    oneAdvMnt%dd0_3dv = advmnt_g(ng)%dd0_3dv
-    oneAdvMnt%dd0_3dw = advmnt_g(ng)%dd0_3dw
-    oneAdvMnt%den0_3d = advmnt_g(ng)%den0_3d
-    oneAdvMnt%den1_3d = advmnt_g(ng)%den1_3d
-    oneAdvMnt%den2_3d = advmnt_g(ng)%den2_3d
-    oneAdvMnt%den3_3d = advmnt_g(ng)%den3_3d
-    oneAdvMnt%dxtW = advmnt_g(ng)%dxtW
-    oneAdvMnt%dytW = advmnt_g(ng)%dytW
-    oneAdvMnt%dztW = advmnt_g(ng)%dztW
-
+    oneAdvMnt%den0_3d = 0.0
+    oneAdvMnt%den1_3d = 0.0
+    oneAdvMnt%den2_3d = 0.0
+    oneAdvMnt%den3_3d = 0.0
+    
     
     !**(JP)** ends
 
