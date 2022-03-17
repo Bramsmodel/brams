@@ -3667,20 +3667,20 @@ contains
     ! first y position of external fields (1) indexed Monotonic Advection
     integer, intent(in) :: jMypExternAtAdvMnt
     ! last y position of external fields (myp) indexed Monotonic Advection
-    real, intent(in) :: u3d(:,:,:)
-    real, intent(in) :: v3d(:,:,:)
-    real, intent(in) :: w3d(:,:,:)
-    real, intent(in) :: dd0_3d(:,:,:)
-    real, intent(in) :: dd0_3du(:,:,:)
-    real, intent(in) :: dd0_3dv(:,:,:)
-    real, intent(in) :: dd0_3dw(:,:,:)
-    real, intent(in) :: dztW(:)
-    real, intent(in) :: dxtW(:,:)
-    real, intent(in) :: dytW(:,:)
-    real, intent(inout) :: den0_3d(:,:,:)
-    real, intent(inout) :: den1_3d(:,:,:)
-    real, intent(inout) :: den2_3d(:,:,:)
-    real, intent(inout) :: den3_3d(:,:,:)
+    real, pointer, intent(in) :: u3d(:,:,:)
+    real, pointer, intent(in) :: v3d(:,:,:)
+    real, pointer, intent(in) :: w3d(:,:,:)
+    real, pointer, intent(in) :: dd0_3d(:,:,:)
+    real, pointer, intent(in) :: dd0_3du(:,:,:)
+    real, pointer, intent(in) :: dd0_3dv(:,:,:)
+    real, pointer, intent(in) :: dd0_3dw(:,:,:)
+    real, pointer, intent(in) :: dztW(:)
+    real, pointer, intent(in) :: dxtW(:,:)
+    real, pointer, intent(in) :: dytW(:,:)
+    real, pointer, intent(in) :: den0_3d(:,:,:)
+    real, pointer, intent(in) :: den1_3d(:,:,:)
+    real, pointer, intent(in) :: den2_3d(:,:,:)
+    real, pointer, intent(in) :: den3_3d(:,:,:)
 
 
     ! local var
