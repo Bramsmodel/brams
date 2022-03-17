@@ -3647,108 +3647,40 @@ contains
 
 
 
-!!$  subroutine GetWalceksDensities(&
-!!$       mzp, dtlt, &
-!!$       i1ExternAtAdvMnt,  iMxpExternAtAdvMnt,  &
-!!$       j1ExternAtAdvMnt,  jMypExternAtAdvMnt,  &
-!!$       u3d, v3d, w3d, &
-!!$       dd0_3d, dd0_3du, dd0_3dv, dd0_3dw, &
-!!$       dxtW, dytW, dztW, &
-!!$       den0_3d, den1_3d, den2_3d, den3_3d)
-!!$
-!!$    integer, intent(in) :: mzp
-!!$    real, intent(in) :: dtlt
-!!$
-!!$    integer, intent(in) :: i1ExternAtAdvMnt
-!!$    ! first x position of external fields (1) indexed Monotonic Advection
-!!$    integer, intent(in) :: iMxpExternAtAdvMnt
-!!$    ! last x position of external fields (mxp) indexed Monotonic Advection
-!!$    integer, intent(in) :: j1ExternAtAdvMnt
-!!$    ! first y position of external fields (1) indexed Monotonic Advection
-!!$    integer, intent(in) :: jMypExternAtAdvMnt
-!!$    ! last y position of external fields (myp) indexed Monotonic Advection
-!!$    real, intent(in) :: u3d(:,:,:)
-!!$    real, intent(in) :: v3d(:,:,:)
-!!$    real, intent(in) :: w3d(:,:,:)
-!!$    real, intent(in) :: dd0_3d(:,:,:)
-!!$    real, intent(in) :: dd0_3du(:,:,:)
-!!$    real, intent(in) :: dd0_3dv(:,:,:)
-!!$    real, intent(in) :: dd0_3dw(:,:,:)
-!!$    real, intent(in) :: dztW(:)
-!!$    real, intent(in) :: dxtW(:,:)
-!!$    real, intent(in) :: dytW(:,:)
-!!$    real, intent(inout) :: den0_3d(:,:,:)
-!!$    real, intent(inout) :: den1_3d(:,:,:)
-!!$    real, intent(inout) :: den2_3d(:,:,:)
-!!$    real, intent(inout) :: den3_3d(:,:,:)
-!!$
-!!$
-!!$    ! local var
-!!$    integer i,j,k
-!!$
-!!$    logical, parameter :: dumpLocal=.false.
-!!$    character(len=*), parameter :: h="**(GetWalceksDensities)**"
-!!$    character(len=8) :: str(10)
-!!$
-!!$    if (dumpLocal) then
-!!$       call MsgDump(h//" starts; computes den0_3d, den1_3d, den2_3d and den3_3d"//&
-!!$            " just at a section restricted to the original ghost zone of 1")
-!!$    end if
-!!$
-!!$    do  j = jMypExternAtAdvMnt, j1ExternAtAdvMnt+1, -1
-!!$       do  i = i1ExternAtAdvMnt+1, iMxpExternAtAdvMnt
-!!$          do k = 2, mzp
-!!$             den0_3d(k,i,j)=dd0_3d(k,i,j)
-!!$             den1_3d(k,i,j)=den0_3d(k,i,j)- dtlt/dxtW(i,j)*&
-!!$                  (dd0_3du(k,i,j)*u3d(k,i,j)-dd0_3du(k,i-1,j)*u3d(k,i-1,j))
-!!$             den2_3d(k,i,j)=den1_3d(k,i,j)- dtlt/dytW(i,j)*&
-!!$                  (dd0_3dv(k,i,j)*v3d(k,i,j)-dd0_3dv(k,i,j-1)*v3d(k,i,j-1))
-!!$             den3_3d(k,i,j)=den2_3d(k,i,j)- dtlt/dztW(k)  *&
-!!$                  (dd0_3dw(k,i,j)*w3d(k,i,j)-dd0_3dw(k-1,i,j)*w3d(k-1,i,j))
-!!$          end do
-!!$       end do
-!!$    end do
-!!$
-!!$    !srf- BC for den3_3d
-!!$    do j = j1ExternAtAdvMnt, jMypExternAtAdvMnt
-!!$       do k = 1, mzp
-!!$          den3_3d(k,i1ExternAtAdvMnt,j)=den3_3d(k,i1ExternAtAdvMnt+1,j)
-!!$       end do
-!!$    end do
-!!$
-!!$    do i = i1ExternAtAdvMnt, iMxpExternAtAdvMnt
-!!$       do k = 1, mzp
-!!$          den3_3d(k,i,j1ExternAtAdvMnt)=den3_3d(k,i,j1ExternAtAdvMnt+1)
-!!$       end do
-!!$    end do
-!!$  end subroutine GetWalceksDensities
+  subroutine GetWalceksDensities(&
+       mzp, dtlt, &
+       i1ExternAtAdvMnt,  iMxpExternAtAdvMnt,  &
+       j1ExternAtAdvMnt,  jMypExternAtAdvMnt,  &
+       u3d, v3d, w3d, &
+       dd0_3d, dd0_3du, dd0_3dv, dd0_3dw, &
+       dxtW, dytW, dztW, &
+       den0_3d, den1_3d, den2_3d, den3_3d)
 
+    integer, intent(in) :: mzp
+    real, intent(in) :: dtlt
 
-  subroutine GetWalceksDensities(dt,m1,m2,m3,u3d,v3d,w3d &
-       ,dd0_3d ,dd0_3du,dd0_3dv,dd0_3dw &
-       ,den0_3d,den1_3d,den2_3d,den3_3d &
-       ,dxtW,dytW,dztW,dxt,dyt)
-
-    integer, intent(in) :: m1
-    integer, intent(in) :: m2
-    integer, intent(in) :: m3
-    real, intent(in) :: dt
-    real, intent(in) :: dztW(m1)
-    real, intent(in) :: dxtW(m2,m3)
-    real, intent(in) :: dytW(m2,m3)
-    real, intent(in) :: dxt(m2,m3)
-    real, intent(in) :: dyt(m2,m3)
-    real, intent(in) :: u3d(m1,m2,m3)
-    real, intent(in) :: v3d(m1,m2,m3)
-    real, intent(in) :: w3d(m1,m2,m3)
-    real, intent(in) :: dd0_3d(m1,m2,m3)
-    real, intent(in) :: dd0_3du(m1,m2,m3)
-    real, intent(in) :: dd0_3dv(m1,m2,m3)
-    real, intent(in) :: dd0_3dw(m1,m2,m3)
-    real, intent(out) :: den0_3d(m1,m2,m3)
-    real, intent(out) :: den1_3d(m1,m2,m3)
-    real, intent(out) :: den2_3d(m1,m2,m3)
-    real, intent(out) :: den3_3d(m1,m2,m3)
+    integer, intent(in) :: i1ExternAtAdvMnt
+    ! first x position of external fields (1) indexed Monotonic Advection
+    integer, intent(in) :: iMxpExternAtAdvMnt
+    ! last x position of external fields (mxp) indexed Monotonic Advection
+    integer, intent(in) :: j1ExternAtAdvMnt
+    ! first y position of external fields (1) indexed Monotonic Advection
+    integer, intent(in) :: jMypExternAtAdvMnt
+    ! last y position of external fields (myp) indexed Monotonic Advection
+    real, intent(in) :: u3d(:,:,:)
+    real, intent(in) :: v3d(:,:,:)
+    real, intent(in) :: w3d(:,:,:)
+    real, intent(in) :: dd0_3d(:,:,:)
+    real, intent(in) :: dd0_3du(:,:,:)
+    real, intent(in) :: dd0_3dv(:,:,:)
+    real, intent(in) :: dd0_3dw(:,:,:)
+    real, intent(in) :: dztW(:)
+    real, intent(in) :: dxtW(:,:)
+    real, intent(in) :: dytW(:,:)
+    real, intent(inout) :: den0_3d(:,:,:)
+    real, intent(inout) :: den1_3d(:,:,:)
+    real, intent(inout) :: den2_3d(:,:,:)
+    real, intent(inout) :: den3_3d(:,:,:)
 
 
     ! local var
@@ -3763,23 +3695,35 @@ contains
             " just at a section restricted to the original ghost zone of 1")
     end if
 
-    do  j=m3,2,-1
-       do  i=2,m2
-          do k = 2,m1
+    do  j = jMypExternAtAdvMnt, j1ExternAtAdvMnt+1, -1
+       do  i = i1ExternAtAdvMnt+1, iMxpExternAtAdvMnt
+          do k = 2, mzp
              den0_3d(k,i,j)=dd0_3d(k,i,j)
-             den1_3d(k,i,j)=den0_3d(k,i,j)- dt/dxtW(i,j)*&
+             den1_3d(k,i,j)=den0_3d(k,i,j)- dtlt/dxtW(i,j)*&
                   (dd0_3du(k,i,j)*u3d(k,i,j)-dd0_3du(k,i-1,j)*u3d(k,i-1,j))
-             den2_3d(k,i,j)=den1_3d(k,i,j)- dt/dytW(i,j)*&
+             den2_3d(k,i,j)=den1_3d(k,i,j)- dtlt/dytW(i,j)*&
                   (dd0_3dv(k,i,j)*v3d(k,i,j)-dd0_3dv(k,i,j-1)*v3d(k,i,j-1))
-             den3_3d(k,i,j)=den2_3d(k,i,j)- dt/dztW(k)  *&
+             den3_3d(k,i,j)=den2_3d(k,i,j)- dtlt/dztW(k)  *&
                   (dd0_3dw(k,i,j)*w3d(k,i,j)-dd0_3dw(k-1,i,j)*w3d(k-1,i,j))
           end do
        end do
     end do
+
     !srf- BC for den3_3d
-    den3_3d(:,1,:)=den3_3d(:,2,:)
-    den3_3d(:,:,1)=den3_3d(:,:,2)
+    do j = j1ExternAtAdvMnt, jMypExternAtAdvMnt
+       do k = 1, mzp
+          den3_3d(k,i1ExternAtAdvMnt,j)=den3_3d(k,i1ExternAtAdvMnt+1,j)
+       end do
+    end do
+
+    do i = i1ExternAtAdvMnt, iMxpExternAtAdvMnt
+       do k = 1, mzp
+          den3_3d(k,i,j1ExternAtAdvMnt)=den3_3d(k,i,j1ExternAtAdvMnt+1)
+       end do
+    end do
   end subroutine GetWalceksDensities
+
+
 
 
 
@@ -4232,15 +4176,6 @@ contains
             trim(adjustl(str(3)))//")")
     end if
 
-    !**(JP)** starts
-
-    oneAdvMnt%den0_3d = 0.0
-    oneAdvMnt%den1_3d = 0.0
-    oneAdvMnt%den2_3d = 0.0
-    oneAdvMnt%den3_3d = 0.0
-    
-    
-    !**(JP)** ends
 
     call get_Walceks_densities(dtlt,m1,m2,m3 &
          ,advmnt_g(ng)%u3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
@@ -4262,36 +4197,22 @@ contains
 
     !**(JP)** starts
 
+    oneAdvMnt%den0_3d = 0.0
+    oneAdvMnt%den1_3d = 0.0
+    oneAdvMnt%den2_3d = 0.0
+    oneAdvMnt%den3_3d = 0.0
+    
 
-    call get_Walceks_densities(&
-         dtlt,m1,m2,m3 &
-         ,oneAdvMnt%u3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
-         ,oneAdvMnt%v3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
-         ,oneAdvMnt%w3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
-         ,oneAdvMnt%dd0_3d (1:m1,iBegin:iEnd,jBegin:jEnd)  &
-         ,oneAdvMnt%dd0_3du(1:m1,iBegin:iEnd,jBegin:jEnd) &
-         ,oneAdvMnt%dd0_3dv(1:m1,iBegin:iEnd,jBegin:jEnd) &
-         ,oneAdvMnt%dd0_3dw(1:m1,iBegin:iEnd,jBegin:jEnd) &
-         ,oneAdvMnt%den0_3d(1:m1,iBegin:iEnd,jBegin:jEnd) &
-         ,oneAdvMnt%den1_3d(1:m1,iBegin:iEnd,jBegin:jEnd) &
-         ,oneAdvMnt%den2_3d(1:m1,iBegin:iEnd,jBegin:jEnd) &
-         ,oneAdvMnt%den3_3d(1:m1,iBegin:iEnd,jBegin:jEnd) &
-         ,oneAdvMnt%dxtW(iBegin:iEnd,jBegin:jEnd) &
-         ,oneAdvMnt%dytW(iBegin:iEnd,jBegin:jEnd) &
-         ,oneAdvMnt%dztW &
-         ,grid_g(ng)%dxt    &
-         ,grid_g(ng)%dyt    )
-
-!!$    call GetWalceksDensities(&
-!!$         mzp, dtlt, &
-!!$         i1ExternAtAdvMnt,  iMxpExternAtAdvMnt,  &
-!!$         j1ExternAtAdvMnt,  jMypExternAtAdvMnt,  &
-!!$         oneAdvMnt%u3d, oneAdvMnt%v3d, oneAdvMnt%w3d, &
-!!$         oneAdvMnt%dd0_3d, oneAdvMnt%dd0_3du, &
-!!$         oneAdvMnt%dd0_3dv, oneAdvMnt%dd0_3dw, &
-!!$         oneAdvMnt%dxtW, oneAdvMnt%dytW, oneAdvMnt%dztW, &
-!!$         oneAdvMnt%den0_3d, oneAdvMnt%den1_3d, &
-!!$         oneAdvMnt%den2_3d, oneAdvMnt%den3_3d)
+    call GetWalceksDensities(&
+         mzp, dtlt, &
+         i1ExternAtAdvMnt,  iMxpExternAtAdvMnt,  &
+         j1ExternAtAdvMnt,  jMypExternAtAdvMnt,  &
+         oneAdvMnt%u3d, oneAdvMnt%v3d, oneAdvMnt%w3d, &
+         oneAdvMnt%dd0_3d, oneAdvMnt%dd0_3du, &
+         oneAdvMnt%dd0_3dv, oneAdvMnt%dd0_3dw, &
+         oneAdvMnt%dxtW, oneAdvMnt%dytW, oneAdvMnt%dztW, &
+         oneAdvMnt%den0_3d, oneAdvMnt%den1_3d, &
+         oneAdvMnt%den2_3d, oneAdvMnt%den3_3d)
 
     call Compare(oneAdvMnt%den0_3d, advmnt_g(ng)%den0_3d, "den0_3d", .true.)
     call Compare(oneAdvMnt%den1_3d, advmnt_g(ng)%den1_3d, "den1_3d", .true.)
@@ -4928,62 +4849,6 @@ contains
 
 
 
-!!$  subroutine get_Walceks_densities(dt,m1,m2,m3,u3d,v3d,w3d &
-!!$       ,dd0_3d ,dd0_3du,dd0_3dv,dd0_3dw &
-!!$       ,den0_3d,den1_3d,den2_3d,den3_3d &
-!!$       ,dxtW,dytW,dztW,dxt,dyt)
-!!$
-!!$    integer, intent(in) :: m1
-!!$    integer, intent(in) :: m2
-!!$    integer, intent(in) :: m3
-!!$    real, intent(in) :: dt
-!!$    real, intent(in) :: dztW(m1)
-!!$    real, intent(in) :: dxtW(m2,m3)
-!!$    real, intent(in) :: dytW(m2,m3)
-!!$    real, intent(in) :: dxt(m2,m3)
-!!$    real, intent(in) :: dyt(m2,m3)
-!!$    real, intent(in) :: u3d(m1,m2,m3)
-!!$    real, intent(in) :: v3d(m1,m2,m3)
-!!$    real, intent(in) :: w3d(m1,m2,m3)
-!!$    real, intent(in) :: dd0_3d(m1,m2,m3)
-!!$    real, intent(in) :: dd0_3du(m1,m2,m3)
-!!$    real, intent(in) :: dd0_3dv(m1,m2,m3)
-!!$    real, intent(in) :: dd0_3dw(m1,m2,m3)
-!!$    real, intent(out) :: den0_3d(m1,m2,m3)
-!!$    real, intent(out) :: den1_3d(m1,m2,m3)
-!!$    real, intent(out) :: den2_3d(m1,m2,m3)
-!!$    real, intent(out) :: den3_3d(m1,m2,m3)
-!!$
-!!$
-!!$    ! local var
-!!$    integer i,j,k
-!!$
-!!$    logical, parameter :: dumpLocal=.false.
-!!$    character(len=*), parameter :: h="**(get_Walceks_densities)**"
-!!$    character(len=8) :: str(10)
-!!$
-!!$    if (dumpLocal) then
-!!$       call MsgDump(h//" starts; computes den0_3d, den1_3d, den2_3d and den3_3d"//&
-!!$            " just at a section restricted to the original ghost zone of 1")
-!!$    end if
-!!$
-!!$    do  j=m3,2,-1
-!!$       do  i=2,m2
-!!$          do k = 2,m1
-!!$             den0_3d(k,i,j)=dd0_3d(k,i,j)
-!!$             den1_3d(k,i,j)=den0_3d(k,i,j)- dt/dxtW(i,j)*&
-!!$                  (dd0_3du(k,i,j)*u3d(k,i,j)-dd0_3du(k,i-1,j)*u3d(k,i-1,j))
-!!$             den2_3d(k,i,j)=den1_3d(k,i,j)- dt/dytW(i,j)*&
-!!$                  (dd0_3dv(k,i,j)*v3d(k,i,j)-dd0_3dv(k,i,j-1)*v3d(k,i,j-1))
-!!$             den3_3d(k,i,j)=den2_3d(k,i,j)- dt/dztW(k)  *&
-!!$                  (dd0_3dw(k,i,j)*w3d(k,i,j)-dd0_3dw(k-1,i,j)*w3d(k-1,i,j))
-!!$          end do
-!!$       end do
-!!$    end do
-!!$    !srf- BC for den3_3d
-!!$    den3_3d(:,1,:)=den3_3d(:,2,:)
-!!$    den3_3d(:,:,1)=den3_3d(:,:,2)
-!!$  end subroutine get_Walceks_densities
 
 
   subroutine get_Walceks_densities(dt,m1,m2,m3,u3d,v3d,w3d &
