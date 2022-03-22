@@ -23,11 +23,12 @@ module ModFieldSection
   public :: FieldSectionData2BufferVariableAdressArr
   public :: FieldSectionData2BufferVariableAdressScalar
   public :: Buffer2FieldSectionData
-
+  public :: UpdateFieldAdress
+  
   integer, parameter :: SizeFieldSectionName=16
 
   type FieldSection
-     private
+!!$     private
      ! one entry of a list of fields
      ! to be communicated to a single process
      ! in a single message passing operation.
@@ -106,6 +107,15 @@ module ModFieldSection
      module procedure Buffer2FieldSectionDataFixedAdress1D
      module procedure Buffer2FieldSectionDataVariableAdress
   end interface Buffer2FieldSectionData
+
+
+  interface UpdateFieldAdress
+     module procedure UpdateFieldAdress_0D
+     module procedure UpdateFieldAdress_1D
+     module procedure UpdateFieldAdress_2D
+     module procedure UpdateFieldAdress_3D
+     module procedure UpdateFieldAdress_4D
+  end interface UpdateFieldAdress
 contains
 
 
@@ -1370,6 +1380,60 @@ contains
 
     end if
   end subroutine Buffer2FieldSectionDataVariableAdress
+
+
+
+subroutine UpdateFieldAdress_0D(oneFieldSection, field, fieldName)
+  type(FieldSection), pointer, intent(in) :: oneFieldSection
+  real, pointer, intent(in) :: field
+  character(len=*), intent(in) :: fieldName
+
+  call HiddenUpdateFieldAdress_0D(oneFieldSection, field, fieldName)
+end subroutine UpdateFieldAdress_0D
+
+
+
+subroutine UpdateFieldAdress_1D(oneFieldSection, field, fieldName)
+  type(FieldSection), pointer, intent(in) :: oneFieldSection
+  real, pointer, intent(in) :: field(:)
+  character(len=*), intent(in) :: fieldName
+
+  oneFieldSection%field_1D => field
+  oneFieldSection%name = fieldName
+end subroutine UpdateFieldAdress_1D
+
+
+
+subroutine UpdateFieldAdress_2D(oneFieldSection, field, fieldName)
+  type(FieldSection), pointer, intent(in) :: oneFieldSection
+  real, pointer, intent(in) :: field(:,:)
+  character(len=*), intent(in) :: fieldName
+
+  oneFieldSection%field_2D => field
+  oneFieldSection%name = fieldName
+end subroutine UpdateFieldAdress_2D
+
+
+
+subroutine UpdateFieldAdress_3D(oneFieldSection, field, fieldName)
+  type(FieldSection), pointer, intent(in) :: oneFieldSection
+  real, pointer, intent(in) :: field(:,:,:)
+  character(len=*), intent(in) :: fieldName
+
+  oneFieldSection%field_3D => field
+  oneFieldSection%name = fieldName
+end subroutine UpdateFieldAdress_3D
+
+
+
+subroutine UpdateFieldAdress_4D(oneFieldSection, field, fieldName)
+  type(FieldSection), pointer, intent(in) :: oneFieldSection
+  real, pointer, intent(in) :: field(:,:,:,:)
+  character(len=*), intent(in) :: fieldName
+
+  oneFieldSection%field_4D => field
+  oneFieldSection%name = fieldName
+end subroutine UpdateFieldAdress_4D
 end module ModFieldSection
 
 
@@ -1573,3 +1637,15 @@ subroutine HiddenBuffer2FieldSectionData(field, &
           " buf("//trim(adjustl(buf0))//":"//trim(adjustl(bufn)))
   end if
 end subroutine HiddenBuffer2FieldSectionData
+
+subroutine HiddenUpdateFieldAdress_0D(oneFieldSection, field, fieldName)
+  use ModFieldSection, only: &
+       FieldSection
+  implicit none
+  type(FieldSection), pointer, intent(in) :: oneFieldSection
+  real, target, intent(in) :: field(:,:,:)
+  character(len=*), intent(in) :: fieldName
+
+  oneFieldSection%field_3D => field
+  oneFieldSection%name = fieldName
+end subroutine HiddenUpdateFieldAdress_0D

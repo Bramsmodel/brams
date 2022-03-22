@@ -1,3 +1,4 @@
+
 mem_stilt.o : $(STILT)/mem_stilt.f90 grid_dims.o \
 	ModNamelistFile.o rconstants.o io_params.o var_tables.o
 	@cp -f  $< $(<F:.f90=.f90)
@@ -32,7 +33,7 @@ ModMessageData.o  : $(MPI)/ModMessageData.f90 \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModMessageSet.o  : $(MPI)/ModMessageSet.f90 \
+ModMessageSet.o  : $(MPI)/ModMessageSet.f90 ModNodeDimensions.o \
 	ModGridDims.o ModParallelEnvironment.o ModNeighbourNodes.o ModDomainDecomp.o \
 	ModFieldSection.o ModMessageData.o var_tables.o ModNamelistFile.o mem_grid.o 
 	@cp -f $< $(<F:.f90=.f90)
@@ -1819,7 +1820,8 @@ ModMonotonicAdvection.o : $(MODEL)/ModMonotonicAdvection.f90  \
 	mem_chem1.o mem_aer1.o parlibf.o mem_basic.o mem_grid.o ccatt_start.o \
 	var_tables.o micphys.o rconstants.o \
 	chem_dry_dep.o advSendMod.o ModNamelistFile.o \
-	ModGrid.o ModParallelEnvironment.o ModGridDims.o ModDomainDecomp.o
+	ModGrid.o ModParallelEnvironment.o ModGridDims.o ModDomainDecomp.o \
+	ModMessageSet.o ModFieldSectionList.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

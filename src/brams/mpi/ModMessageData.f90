@@ -76,7 +76,7 @@ module ModMessageData
   public :: FillMessageDataBufferVariableAdressOneArr
 
   type MessageData
-     private
+!!$     private
      ! data to communicate to one node in one message
 
      ! message communicates all field values stored

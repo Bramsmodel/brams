@@ -28,7 +28,7 @@ module ModFieldSectionList
   end interface FindFieldNamed
 
   type FieldSectionNode
-     private
+!!$     private
      type(FieldSection), pointer :: entry => null()
      ! field variable name
      type(FieldSectionNode), pointer :: next => null()
@@ -39,7 +39,7 @@ module ModFieldSectionList
   end type FieldSectionNode
 
   type FieldSectionList
-     private
+!!$     private
      type(FieldSectionNode), pointer :: head => null()
      type(FieldSectionNode), pointer :: tail => null()
   end type FieldSectionList

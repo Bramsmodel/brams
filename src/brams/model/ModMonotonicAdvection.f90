@@ -2495,6 +2495,11 @@ module ModMonotonicAdvection
        ParallelEnvironment, &
        MsgDump
 
+  use ModMessageSet, only: &
+       UpdateFieldAdressAtAdvMntUV, &
+       PostSendRecvMsgs, &
+       WaitSendRecvMsgs
+  
   use ModGridDims, only: &
        GridDims
 
@@ -2502,7 +2507,8 @@ module ModMonotonicAdvection
        DomainDecomp
 
   use ModGrid, only: &
-       Grid
+       Grid, &
+       DumpGrid
 
   use mem_grid, only:        &
        dtlt,   & !intent(in)
@@ -3864,28 +3870,28 @@ contains
        end do
     end do
 
-    if (dumpLocal) then
-       call MsgDump(h//" update borders of u3d")
-    end if
-
-    call update_borders(m1, nm2, nm3, u3d, &
-         nRec, procRecv, tagRecv, &
-         iaRecv, izRecv, jaRecv, jzRecv, &
-         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
-         nSnd, procSend, tagSend, &
-         iaSend, izSend, jaSend, jzSend, &
-         bufSendStart, bufSendLength, bufSendTotalLength)
-
-    if (dumpLocal) then
-       call MsgDump(h//" update borders of v3d")
-    end if
-    call update_borders(m1, nm2, nm3, v3d, &
-         nRec, procRecv, tagRecv, &
-         iaRecv, izRecv, jaRecv, jzRecv, &
-         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
-         nSnd, procSend, tagSend, &
-         iaSend, izSend, jaSend, jzSend, &
-         bufSendStart, bufSendLength, bufSendTotalLength)
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" update borders of u3d")
+!!$    end if
+!!$
+!!$    call update_borders(m1, nm2, nm3, u3d, &
+!!$         nRec, procRecv, tagRecv, &
+!!$         iaRecv, izRecv, jaRecv, jzRecv, &
+!!$         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
+!!$         nSnd, procSend, tagSend, &
+!!$         iaSend, izSend, jaSend, jzSend, &
+!!$         bufSendStart, bufSendLength, bufSendTotalLength)
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" update borders of v3d")
+!!$    end if
+!!$    call update_borders(m1, nm2, nm3, v3d, &
+!!$         nRec, procRecv, tagRecv, &
+!!$         iaRecv, izRecv, jaRecv, jzRecv, &
+!!$         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
+!!$         nSnd, procSend, tagSend, &
+!!$         iaSend, izSend, jaSend, jzSend, &
+!!$         bufSendStart, bufSendLength, bufSendTotalLength)
 
     if (dumpLocal) then
        call MsgDump(h//" update borders of dd0_3d")
@@ -4253,6 +4259,16 @@ contains
 
     oneAdvMnt => CreateMonotonicAdvection(oneGrid)
 
+    call UpdateFieldAdressAtAdvMntUV(&
+         oneGrid%AdvMntUVSendX, oneGrid%AdvMntUVRecvX, &
+         oneGrid%AdvMntUVSendY, oneGrid%AdvMntUVRecvY, &
+         oneAdvMnt%u3d, oneAdvMnt%v3d)
+
+    if (dumpLocal) then
+       call MsgDump(h//" grid after UpdateFieldAdressAtAdvMntUV")
+       call DumpGrid(oneGrid)
+    end if
+    
     ! no more loops on ng; ng is first grid from now on
 
     ng = 1
@@ -4417,15 +4433,7 @@ contains
          aerosol, naer_transported, &
          dd_sedim, dzt, ndtZ)
 
-!!$    call Compare(oneAdvMnt%u3d, advmnt_g(ng)%u3d, "u3d", .true.)
-!!$    call Compare(oneAdvMnt%v3d, advmnt_g(ng)%v3d, "v3d", .true.)
-!!$    call Compare(oneAdvMnt%w3d, advmnt_g(ng)%w3d, "w3d", .true.)
-!!$    p1 => ndtZ
-!!$    p2 => ndt_z
-!!$    call Compare(p1, p2, "ndt_z", .true.)
-
     !**(JP)** ends
-
 
     if(theor_wind == on) then
        if (dumpLocal) then
@@ -4443,6 +4451,7 @@ contains
             ,advmnt_g(ng)%dd0_3dv(1:m1,iBegin:iEnd,jBegin:jEnd) &
             ,advmnt_g(ng)%dd0_3dw(1:m1,iBegin:iEnd,jBegin:jEnd) )
     end if
+    
     !- prepare Walcek's air densities
     if (dumpLocal) then
        write(str(1),"(i8)") lbound(advmnt_g(ng)%u3d,1)
@@ -4529,6 +4538,9 @@ contains
 
     !**(JP)** starts
 
+    call PostSendRecvMsgs(oneGrid%AdvMntUVSendX, oneGrid%AdvMntUVRecvX)
+    call WaitSendRecvMsgs(oneGrid%AdvMntUVSendX, oneGrid%AdvMntUVRecvX)
+
     oneAdvMnt%l_dxtW=0.0
     oneAdvMnt%l_dytW=0.0
 
@@ -4547,21 +4559,18 @@ contains
          sendMessageI(ng)%ja,sendMessageI(ng)%jz, &
          sendMessageI(ng)%start,sendMessageI(ng)%mSize,TotalSendI(ng))
 
-    call MsgDump(h//" depois de InitialFieldsUpdate on x:")
-    call Compare(oneAdvMnt%u3d, advmnt_g(ng)%u3d, "u3d", .true.)
-    call Compare(oneAdvMnt%v3d, advmnt_g(ng)%v3d, "v3d", .true.)
-    call Compare(oneAdvMnt%dd0_3d, advmnt_g(ng)%dd0_3d, "dd0_3d", .true.)
-    call Compare(oneAdvMnt%dd0_3du, advmnt_g(ng)%dd0_3du, "dd0_3du", .true.)
-    call Compare(oneAdvMnt%dd0_3dv, advmnt_g(ng)%dd0_3dv, "dd0_3dv", .true.)
-    call Compare(oneAdvMnt%dd0_3dw, advmnt_g(ng)%dd0_3dw, "dd0_3dw", .true.)
-    call Compare(oneAdvMnt%den0_3d, advmnt_g(ng)%den0_3d, "den0_3d", .true.)
-    call Compare(oneAdvMnt%den1_3d, advmnt_g(ng)%den1_3d, "den1_3d", .true.)
-    call Compare(oneAdvMnt%den2_3d, advmnt_g(ng)%den2_3d, "den2_3d", .true.)
-    call Compare(oneAdvMnt%den3_3d, advmnt_g(ng)%den3_3d, "den3_3d", .true.)
-    call Compare(oneAdvMnt%l_dxtW, advmnt_g(ng)%l_dxtW, "l_dxtW", .true.)
-    call Compare(oneAdvMnt%l_dytW, advmnt_g(ng)%l_dytW, "l_dytW", .true.)
-    call Compare(oneAdvMnt%dxtW, advmnt_g(ng)%dxtW, "dxtW", .true.)
-    call Compare(oneAdvMnt%dytW, advmnt_g(ng)%dytW, "dytW", .true.)
+!!$    call Compare(oneAdvMnt%dd0_3d, advmnt_g(ng)%dd0_3d, "dd0_3d", .true.)
+!!$    call Compare(oneAdvMnt%dd0_3du, advmnt_g(ng)%dd0_3du, "dd0_3du", .true.)
+!!$    call Compare(oneAdvMnt%dd0_3dv, advmnt_g(ng)%dd0_3dv, "dd0_3dv", .true.)
+!!$    call Compare(oneAdvMnt%dd0_3dw, advmnt_g(ng)%dd0_3dw, "dd0_3dw", .true.)
+!!$    call Compare(oneAdvMnt%den0_3d, advmnt_g(ng)%den0_3d, "den0_3d", .true.)
+!!$    call Compare(oneAdvMnt%den1_3d, advmnt_g(ng)%den1_3d, "den1_3d", .true.)
+!!$    call Compare(oneAdvMnt%den2_3d, advmnt_g(ng)%den2_3d, "den2_3d", .true.)
+!!$    call Compare(oneAdvMnt%den3_3d, advmnt_g(ng)%den3_3d, "den3_3d", .true.)
+!!$    call Compare(oneAdvMnt%l_dxtW, advmnt_g(ng)%l_dxtW, "l_dxtW", .true.)
+!!$    call Compare(oneAdvMnt%l_dytW, advmnt_g(ng)%l_dytW, "l_dytW", .true.)
+!!$    call Compare(oneAdvMnt%dxtW, advmnt_g(ng)%dxtW, "dxtW", .true.)
+!!$    call Compare(oneAdvMnt%dytW, advmnt_g(ng)%dytW, "dytW", .true.)
 
     !**(JP)** ends
 
@@ -4577,6 +4586,11 @@ contains
          sendMessageJ(ng)%ia,sendMessageJ(ng)%iz,&
          sendMessageJ(ng)%ja,sendMessageJ(ng)%jz, &
          sendMessageJ(ng)%start,sendMessageJ(ng)%mSize,TotalSendJ(ng))
+
+    !**(JP)** starts
+
+    call PostSendRecvMsgs(oneGrid%AdvMntUVSendY, oneGrid%AdvMntUVRecvY)
+    call WaitSendRecvMsgs(oneGrid%AdvMntUVSendY, oneGrid%AdvMntUVRecvY)
 
     call InitialFieldsUpdate(&
          oneAdvMnt%u3d, oneAdvMnt%v3d, &
@@ -4596,18 +4610,21 @@ contains
     call MsgDump(h//" depois de InitialFieldsUpdate on y:")
     call Compare(oneAdvMnt%u3d, advmnt_g(ng)%u3d, "u3d", .true.)
     call Compare(oneAdvMnt%v3d, advmnt_g(ng)%v3d, "v3d", .true.)
-    call Compare(oneAdvMnt%dd0_3d, advmnt_g(ng)%dd0_3d, "dd0_3d", .true.)
-    call Compare(oneAdvMnt%dd0_3du, advmnt_g(ng)%dd0_3du, "dd0_3du", .true.)
-    call Compare(oneAdvMnt%dd0_3dv, advmnt_g(ng)%dd0_3dv, "dd0_3dv", .true.)
-    call Compare(oneAdvMnt%dd0_3dw, advmnt_g(ng)%dd0_3dw, "dd0_3dw", .true.)
-    call Compare(oneAdvMnt%den0_3d, advmnt_g(ng)%den0_3d, "den0_3d", .true.)
-    call Compare(oneAdvMnt%den1_3d, advmnt_g(ng)%den1_3d, "den1_3d", .true.)
-    call Compare(oneAdvMnt%den2_3d, advmnt_g(ng)%den2_3d, "den2_3d", .true.)
-    call Compare(oneAdvMnt%den3_3d, advmnt_g(ng)%den3_3d, "den3_3d", .true.)
-    call Compare(oneAdvMnt%l_dxtW, advmnt_g(ng)%l_dxtW, "l_dxtW", .true.)
-    call Compare(oneAdvMnt%l_dytW, advmnt_g(ng)%l_dytW, "l_dytW", .true.)
-    call Compare(oneAdvMnt%dxtW, advmnt_g(ng)%dxtW, "dxtW", .true.)
-    call Compare(oneAdvMnt%dytW, advmnt_g(ng)%dytW, "dytW", .true.)
+    call Compare(oneAdvMnt%w3d, advmnt_g(ng)%w3d, "w3d", .true.)
+!!$    call Compare(oneAdvMnt%dd0_3d, advmnt_g(ng)%dd0_3d, "dd0_3d", .true.)
+!!$    call Compare(oneAdvMnt%dd0_3du, advmnt_g(ng)%dd0_3du, "dd0_3du", .true.)
+!!$    call Compare(oneAdvMnt%dd0_3dv, advmnt_g(ng)%dd0_3dv, "dd0_3dv", .true.)
+!!$    call Compare(oneAdvMnt%dd0_3dw, advmnt_g(ng)%dd0_3dw, "dd0_3dw", .true.)
+!!$    call Compare(oneAdvMnt%den0_3d, advmnt_g(ng)%den0_3d, "den0_3d", .true.)
+!!$    call Compare(oneAdvMnt%den1_3d, advmnt_g(ng)%den1_3d, "den1_3d", .true.)
+!!$    call Compare(oneAdvMnt%den2_3d, advmnt_g(ng)%den2_3d, "den2_3d", .true.)
+!!$    call Compare(oneAdvMnt%den3_3d, advmnt_g(ng)%den3_3d, "den3_3d", .true.)
+!!$    call Compare(oneAdvMnt%l_dxtW, advmnt_g(ng)%l_dxtW, "l_dxtW", .true.)
+!!$    call Compare(oneAdvMnt%l_dytW, advmnt_g(ng)%l_dytW, "l_dytW", .true.)
+!!$    call Compare(oneAdvMnt%dxtW, advmnt_g(ng)%dxtW, "dxtW", .true.)
+!!$    call Compare(oneAdvMnt%dytW, advmnt_g(ng)%dytW, "dytW", .true.)
+
+    !**(JP)** ends
 
     !- ready to do advection, loop over all scalars
     if(advmnt == 1) then
@@ -5292,7 +5309,7 @@ contains
     integer ibegin,iend,jbegin,jend
     !- type of sedimentation scheme (0= Walcek, 1=upwind)
     integer , parameter :: iupwind = 0
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=*), parameter :: h="**(advect_mnt)**"
     character(len=8) :: str(10)
 
