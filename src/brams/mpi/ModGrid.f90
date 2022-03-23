@@ -47,8 +47,8 @@ module ModGrid
        DestroyAcouDampOneMessageSet, &
        CreateWideGhostZoneMessageSet, &
        DestroyWideGhostZoneMessageSet, &
-       CreateAdvMntUVMessageSet, &
-       DestroyAdvMntUVMessageSet
+       CreateAdvMntMessageSet, &
+       DestroyAdvMntMessageSet
 
   use ModNodeDimensions, only: &
        NodeDimensions, &
@@ -192,6 +192,11 @@ module ModGrid
      type(MessageSet), pointer :: AdvMntDxDyRecvX => null()
      type(MessageSet), pointer :: AdvMntDxDySendY => null()
      type(MessageSet), pointer :: AdvMntDxDyRecvY => null()
+
+     type(MessageSet), pointer :: AdvMntDd0SendX => null()
+     type(MessageSet), pointer :: AdvMntDd0RecvX => null()
+     type(MessageSet), pointer :: AdvMntDd0SendY => null()
+     type(MessageSet), pointer :: AdvMntDd0RecvY => null()
  end type Grid
 
 
@@ -368,6 +373,8 @@ contains
     integer, parameter :: TagAdvMntUVY=42
     integer, parameter :: TagAdvMntDxDyX=43
     integer, parameter :: TagAdvMntDxDyY=44
+    integer, parameter :: TagAdvMntDd0X=45
+    integer, parameter :: TagAdvMntDd0Y=46
 
     ! Field pointer for fields not yet allocated
     ! not yet allocated; CreateAcouDampOneMessageSet
@@ -501,13 +508,15 @@ contains
          oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhost, oneGrid%LocalOwn, &
          TagWideGhostZone, oneGrid%WideGhostZoneSend, oneGrid%WideGhostZoneRecv)
 
-    call CreateAdvMntUVMessageSet(&
+    call CreateAdvMntMessageSet(&
          oneGrid%ParEnv, oneGrid%Neigh, &
          oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhostAdvMnt, oneGrid%NodeDimsAdvMnt, &
          TagAdvMntUVX, oneGrid%AdvMntUVSendX, oneGrid%AdvMntUVRecvX, &
          TagAdvMntUVY, oneGrid%AdvMntUVSendY, oneGrid%AdvMntUVRecvY, &
          TagAdvMntDxDyX, oneGrid%AdvMntDxDySendX, oneGrid%AdvMntDxDyRecvX, &
-         TagAdvMntDxDyY, oneGrid%AdvMntDxDySendY, oneGrid%AdvMntDxDyRecvY)
+         TagAdvMntDxDyY, oneGrid%AdvMntDxDySendY, oneGrid%AdvMntDxDyRecvY, &
+         TagAdvMntDd0X, oneGrid%AdvMntDd0SendX, oneGrid%AdvMntDd0RecvX, &
+         TagAdvMntDd0Y, oneGrid%AdvMntDd0SendY, oneGrid%AdvMntDd0RecvY)
 
 
     if (dumpLocal) then
@@ -566,11 +575,13 @@ contains
             oneGrid%WideGhostZoneSend, oneGrid%WideGhostZoneRecv)
        call DestroyNodeDimensions(oneGrid%NodeDims)
        call DestroyNodeDimensions(oneGrid%NodeDimsAdvMnt)
-       call DestroyAdvMntUVMessageSet(&
+       call DestroyAdvMntMessageSet(&
             oneGrid%AdvMntUVSendX, oneGrid%AdvMntUVRecvX, &
             oneGrid%AdvMntUVSendY, oneGrid%AdvMntUVRecvY, &
             oneGrid%AdvMntDxDySendX, oneGrid%AdvMntDxDyRecvX, &
-            oneGrid%AdvMntDxDySendY, oneGrid%AdvMntDxDyRecvY)
+            oneGrid%AdvMntDxDySendY, oneGrid%AdvMntDxDyRecvY, &
+            oneGrid%AdvMntDd0SendX, oneGrid%AdvMntDd0RecvX, &
+            oneGrid%AdvMntDd0SendY, oneGrid%AdvMntDd0RecvY)
 
        deallocate(oneGrid)
     end if
@@ -674,7 +685,6 @@ contains
     call DumpMessageSet(oneGrid%AcouDampThtSend)
     call MsgDump(h//" dumping AcouDampThtRecv")
     call DumpMessageSet(oneGrid%AcouDampThtRecv)
-
     call MsgDump(h//" dumping WideGhostZoneSend")
     call DumpMessageSet(oneGrid%WideGhostZoneSend)
     call MsgDump(h//" dumping WideGhostZoneRecv")
@@ -689,7 +699,7 @@ contains
     call DumpMessageSet(oneGrid%AdvMntUVSendY)
     call MsgDump(h//" dumping AdvMntUVRecvY")
     call DumpMessageSet(oneGrid%AdvMntUVRecvY)
-    call MsgDump(h//" dumping AdvMntUVSendX")
+    call MsgDump(h//" dumping AdvMntDxDySendX")
     call DumpMessageSet(oneGrid%AdvMntDxDySendX)
     call MsgDump(h//" dumping AdvMntDxDyRecvX")
     call DumpMessageSet(oneGrid%AdvMntDxDyRecvX)
@@ -697,6 +707,14 @@ contains
     call DumpMessageSet(oneGrid%AdvMntDxDySendY)
     call MsgDump(h//" dumping AdvMntDxDyRecvY")
     call DumpMessageSet(oneGrid%AdvMntDxDyRecvY)
+    call MsgDump(h//" dumping AdvMntDd0SendX")
+    call DumpMessageSet(oneGrid%AdvMntDd0SendX)
+    call MsgDump(h//" dumping AdvMntDd0RecvX")
+    call DumpMessageSet(oneGrid%AdvMntDd0RecvX)
+    call MsgDump(h//" dumping AdvMntDd0SendY")
+    call DumpMessageSet(oneGrid%AdvMntDd0SendY)
+    call MsgDump(h//" dumping AdvMntDd0RecvY")
+    call DumpMessageSet(oneGrid%AdvMntDd0RecvY)
     call MsgDump(h//" finishes")
   end subroutine DumpGrid
 end module ModGrid

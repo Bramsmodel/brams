@@ -2496,7 +2496,7 @@ module ModMonotonicAdvection
        MsgDump
 
   use ModMessageSet, only: &
-       UpdateFieldAdressAtAdvMntUV, &
+       UpdateFieldAdressAtAdvMnt, &
        PostSendRecvMsgs, &
        WaitSendRecvMsgs
   
@@ -4259,15 +4259,20 @@ contains
 
     oneAdvMnt => CreateMonotonicAdvection(oneGrid)
 
-    call UpdateFieldAdressAtAdvMntUV(&
+    call UpdateFieldAdressAtAdvMnt(&
          oneGrid%AdvMntUVSendX, oneGrid%AdvMntUVRecvX, &
          oneGrid%AdvMntUVSendY, oneGrid%AdvMntUVRecvY, &
          oneGrid%AdvMntDxDySendX, oneGrid%AdvMntDxDyRecvX, &
          oneGrid%AdvMntDxDySendY, oneGrid%AdvMntDxDyRecvY, &
-         oneAdvMnt%u3d, oneAdvMnt%v3d, oneAdvMnt%dxtW, oneAdvMnt%dytW)
+         oneGrid%AdvMntDd0SendX, oneGrid%AdvMntDd0RecvX, &
+         oneGrid%AdvMntDd0SendY, oneGrid%AdvMntDd0RecvY, &
+         oneAdvMnt%u3d, oneAdvMnt%v3d, &
+         oneAdvMnt%dxtW, oneAdvMnt%dytW, &
+         oneAdvMnt%dd0_3d, oneAdvMnt%dd0_3du, &
+         oneAdvMnt%dd0_3dv, oneAdvMnt%dd0_3dw)
 
     if (dumpLocal) then
-       call MsgDump(h//" grid after UpdateFieldAdressAtAdvMntUV")
+       call MsgDump(h//" grid after UpdateFieldAdressAtAdvMnt")
        call DumpGrid(oneGrid)
     end if
     
@@ -4541,9 +4546,11 @@ contains
     !**(JP)** starts
 
     call PostSendRecvMsgs(oneGrid%AdvMntUVSendX, oneGrid%AdvMntUVRecvX)
-    call WaitSendRecvMsgs(oneGrid%AdvMntUVSendX, oneGrid%AdvMntUVRecvX)
     call PostSendRecvMsgs(oneGrid%AdvMntDxDySendX, oneGrid%AdvMntDxDyRecvX)
+    call PostSendRecvMsgs(oneGrid%AdvMntDd0SendX, oneGrid%AdvMntDd0RecvX)
+    call WaitSendRecvMsgs(oneGrid%AdvMntUVSendX, oneGrid%AdvMntUVRecvX)
     call WaitSendRecvMsgs(oneGrid%AdvMntDxDySendX, oneGrid%AdvMntDxDyRecvX)
+    call WaitSendRecvMsgs(oneGrid%AdvMntDd0SendX, oneGrid%AdvMntDd0RecvX)
 
     oneAdvMnt%l_dxtW=0.0
     oneAdvMnt%l_dytW=0.0
@@ -4594,9 +4601,11 @@ contains
     !**(JP)** starts
 
     call PostSendRecvMsgs(oneGrid%AdvMntUVSendY, oneGrid%AdvMntUVRecvY)
-    call WaitSendRecvMsgs(oneGrid%AdvMntUVSendY, oneGrid%AdvMntUVRecvY)
     call PostSendRecvMsgs(oneGrid%AdvMntDxDySendY, oneGrid%AdvMntDxDyRecvY)
+    call PostSendRecvMsgs(oneGrid%AdvMntDd0SendY, oneGrid%AdvMntDd0RecvY)
+    call WaitSendRecvMsgs(oneGrid%AdvMntUVSendY, oneGrid%AdvMntUVRecvY)
     call WaitSendRecvMsgs(oneGrid%AdvMntDxDySendY, oneGrid%AdvMntDxDyRecvY)
+    call WaitSendRecvMsgs(oneGrid%AdvMntDd0SendY, oneGrid%AdvMntDd0RecvY)
 
     call InitialFieldsUpdate(&
          oneAdvMnt%u3d, oneAdvMnt%v3d, &
@@ -4619,6 +4628,10 @@ contains
     call Compare(oneAdvMnt%w3d, advmnt_g(ng)%w3d, "w3d", .true.)
     call Compare(oneAdvMnt%dxtW, advmnt_g(ng)%dxtW, "dxtW", .true.)
     call Compare(oneAdvMnt%dytW, advmnt_g(ng)%dytW, "dytW", .true.)
+    call Compare(oneAdvMnt%dd0_3d, advmnt_g(ng)%dd0_3d, "dd0_3d", .true.)
+    call Compare(oneAdvMnt%dd0_3du, advmnt_g(ng)%dd0_3du, "dd0_3du", .true.)
+    call Compare(oneAdvMnt%dd0_3dv, advmnt_g(ng)%dd0_3dv, "dd0_3dv", .true.)
+    call Compare(oneAdvMnt%dd0_3dw, advmnt_g(ng)%dd0_3dw, "dd0_3dw", .true.)
 !!$    call Compare(oneAdvMnt%dd0_3d, advmnt_g(ng)%dd0_3d, "dd0_3d", .true.)
 !!$    call Compare(oneAdvMnt%dd0_3du, advmnt_g(ng)%dd0_3du, "dd0_3du", .true.)
 !!$    call Compare(oneAdvMnt%dd0_3dv, advmnt_g(ng)%dd0_3dv, "dd0_3dv", .true.)
