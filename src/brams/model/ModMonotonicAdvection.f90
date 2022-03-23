@@ -3848,28 +3848,28 @@ contains
 
     if(bufSendTotalLength==0 .or. bufRecvTotalLength==0) return
 
-    if (dumpLocal) then
-       write(str(1),"(i8)") nm2
-       write(str(2),"(i8)") nm3
-       call MsgDump(h//" advmnt_g%l_dxtW"//&
-            "(1,1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")"//&
-            " <- advmnt_g%dxtW"//&
-            "(1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")")
-       call MsgDump(h//" advmnt_g%l_dytW"//&
-            "(1,1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")"//&
-            " <- advmnt_g%dytW"//&
-            "(1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")")
-    end if
-
-    do i=1,nm2
-       do j=1,nm3
-          do k=1,1!m1
-             l_dxtW(k,i,j)=dxtW(i,j)
-             l_dytW(k,i,j)=dytW(i,j)
-          end do
-       end do
-    end do
-
+!!$    if (dumpLocal) then
+!!$       write(str(1),"(i8)") nm2
+!!$       write(str(2),"(i8)") nm3
+!!$       call MsgDump(h//" advmnt_g%l_dxtW"//&
+!!$            "(1,1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")"//&
+!!$            " <- advmnt_g%dxtW"//&
+!!$            "(1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")")
+!!$       call MsgDump(h//" advmnt_g%l_dytW"//&
+!!$            "(1,1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")"//&
+!!$            " <- advmnt_g%dytW"//&
+!!$            "(1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")")
+!!$    end if
+!!$
+!!$    do i=1,nm2
+!!$       do j=1,nm3
+!!$          do k=1,1!m1
+!!$             l_dxtW(k,i,j)=dxtW(i,j)
+!!$             l_dytW(k,i,j)=dytW(i,j)
+!!$          end do
+!!$       end do
+!!$    end do
+!!$
 !!$    if (dumpLocal) then
 !!$       call MsgDump(h//" update borders of u3d")
 !!$    end if
@@ -3981,27 +3981,27 @@ contains
          iaSend, izSend, jaSend, jzSend, &
          bufSendStart, bufSendLength, bufSendTotalLength)
 
-    if (dumpLocal) then
-       call MsgDump(h//" update borders of l_dxtW")
-    end if
-    call update_borders(m1, nm2, nm3, l_dxtW, &
-         nRec, procRecv, tagRecv, &
-         iaRecv, izRecv, jaRecv, jzRecv, &
-         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
-         nSnd, procSend, tagSend, &
-         iaSend, izSend, jaSend, jzSend, &
-         bufSendStart, bufSendLength, bufSendTotalLength)
-
-    if (dumpLocal) then
-       call MsgDump(h//" update borders of l_dytW")
-    end if
-    call update_borders(m1, nm2, nm3, l_dytW, &
-         nRec, procRecv, tagRecv, &
-         iaRecv, izRecv, jaRecv, jzRecv, &
-         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
-         nSnd, procSend, tagSend, &
-         iaSend, izSend, jaSend, jzSend, &
-         bufSendStart, bufSendLength, bufSendTotalLength)
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" update borders of l_dxtW")
+!!$    end if
+!!$    call update_borders(m1, nm2, nm3, l_dxtW, &
+!!$         nRec, procRecv, tagRecv, &
+!!$         iaRecv, izRecv, jaRecv, jzRecv, &
+!!$         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
+!!$         nSnd, procSend, tagSend, &
+!!$         iaSend, izSend, jaSend, jzSend, &
+!!$         bufSendStart, bufSendLength, bufSendTotalLength)
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" update borders of l_dytW")
+!!$    end if
+!!$    call update_borders(m1, nm2, nm3, l_dytW, &
+!!$         nRec, procRecv, tagRecv, &
+!!$         iaRecv, izRecv, jaRecv, jzRecv, &
+!!$         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
+!!$         nSnd, procSend, tagSend, &
+!!$         iaSend, izSend, jaSend, jzSend, &
+!!$         bufSendStart, bufSendLength, bufSendTotalLength)
 
     if (dumpLocal) then
        write(str(1),"(i8)") nm2
@@ -4016,12 +4016,12 @@ contains
             "(1,1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")")
     end if
 
-    do i=1,nm2
-       do j=1,nm3
-          dxtW(i,j)=l_dxtW(1,i,j)
-          dytW(i,j)=l_dytW(1,i,j)
-       end do
-    end do
+!!$    do i=1,nm2
+!!$       do j=1,nm3
+!!$          dxtW(i,j)=l_dxtW(1,i,j)
+!!$          dytW(i,j)=l_dytW(1,i,j)
+!!$       end do
+!!$    end do
     if (dumpLocal) then
        call MsgDump(h//" finishes")
     end if
@@ -4262,7 +4262,9 @@ contains
     call UpdateFieldAdressAtAdvMntUV(&
          oneGrid%AdvMntUVSendX, oneGrid%AdvMntUVRecvX, &
          oneGrid%AdvMntUVSendY, oneGrid%AdvMntUVRecvY, &
-         oneAdvMnt%u3d, oneAdvMnt%v3d)
+         oneGrid%AdvMntDxDySendX, oneGrid%AdvMntDxDyRecvX, &
+         oneGrid%AdvMntDxDySendY, oneGrid%AdvMntDxDyRecvY, &
+         oneAdvMnt%u3d, oneAdvMnt%v3d, oneAdvMnt%dxtW, oneAdvMnt%dytW)
 
     if (dumpLocal) then
        call MsgDump(h//" grid after UpdateFieldAdressAtAdvMntUV")
@@ -4540,6 +4542,8 @@ contains
 
     call PostSendRecvMsgs(oneGrid%AdvMntUVSendX, oneGrid%AdvMntUVRecvX)
     call WaitSendRecvMsgs(oneGrid%AdvMntUVSendX, oneGrid%AdvMntUVRecvX)
+    call PostSendRecvMsgs(oneGrid%AdvMntDxDySendX, oneGrid%AdvMntDxDyRecvX)
+    call WaitSendRecvMsgs(oneGrid%AdvMntDxDySendX, oneGrid%AdvMntDxDyRecvX)
 
     oneAdvMnt%l_dxtW=0.0
     oneAdvMnt%l_dytW=0.0
@@ -4591,6 +4595,8 @@ contains
 
     call PostSendRecvMsgs(oneGrid%AdvMntUVSendY, oneGrid%AdvMntUVRecvY)
     call WaitSendRecvMsgs(oneGrid%AdvMntUVSendY, oneGrid%AdvMntUVRecvY)
+    call PostSendRecvMsgs(oneGrid%AdvMntDxDySendY, oneGrid%AdvMntDxDyRecvY)
+    call WaitSendRecvMsgs(oneGrid%AdvMntDxDySendY, oneGrid%AdvMntDxDyRecvY)
 
     call InitialFieldsUpdate(&
          oneAdvMnt%u3d, oneAdvMnt%v3d, &
@@ -4611,6 +4617,8 @@ contains
     call Compare(oneAdvMnt%u3d, advmnt_g(ng)%u3d, "u3d", .true.)
     call Compare(oneAdvMnt%v3d, advmnt_g(ng)%v3d, "v3d", .true.)
     call Compare(oneAdvMnt%w3d, advmnt_g(ng)%w3d, "w3d", .true.)
+    call Compare(oneAdvMnt%dxtW, advmnt_g(ng)%dxtW, "dxtW", .true.)
+    call Compare(oneAdvMnt%dytW, advmnt_g(ng)%dytW, "dytW", .true.)
 !!$    call Compare(oneAdvMnt%dd0_3d, advmnt_g(ng)%dd0_3d, "dd0_3d", .true.)
 !!$    call Compare(oneAdvMnt%dd0_3du, advmnt_g(ng)%dd0_3du, "dd0_3du", .true.)
 !!$    call Compare(oneAdvMnt%dd0_3dv, advmnt_g(ng)%dd0_3dv, "dd0_3dv", .true.)
@@ -4621,8 +4629,6 @@ contains
 !!$    call Compare(oneAdvMnt%den3_3d, advmnt_g(ng)%den3_3d, "den3_3d", .true.)
 !!$    call Compare(oneAdvMnt%l_dxtW, advmnt_g(ng)%l_dxtW, "l_dxtW", .true.)
 !!$    call Compare(oneAdvMnt%l_dytW, advmnt_g(ng)%l_dytW, "l_dytW", .true.)
-!!$    call Compare(oneAdvMnt%dxtW, advmnt_g(ng)%dxtW, "dxtW", .true.)
-!!$    call Compare(oneAdvMnt%dytW, advmnt_g(ng)%dytW, "dytW", .true.)
 
     !**(JP)** ends
 
