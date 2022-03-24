@@ -3836,7 +3836,7 @@ contains
     integer, intent(in) :: bufSendTotalLength
 
     integer :: i,j,k
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(InitialFieldsUpdate)**"
     character(len=8) :: str(10)
 
@@ -3893,93 +3893,93 @@ contains
 !!$         iaSend, izSend, jaSend, jzSend, &
 !!$         bufSendStart, bufSendLength, bufSendTotalLength)
 
-    if (dumpLocal) then
-       call MsgDump(h//" update borders of dd0_3d")
-    end if
-    call update_borders(m1, nm2, nm3, dd0_3d, &
-         nRec, procRecv, tagRecv, &
-         iaRecv, izRecv, jaRecv, jzRecv, &
-         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
-         nSnd, procSend, tagSend, &
-         iaSend, izSend, jaSend, jzSend, &
-         bufSendStart, bufSendLength, bufSendTotalLength)
-
-    if (dumpLocal) then
-       call MsgDump(h//" update borders of dd0_3du")
-    end if
-    call update_borders(m1, nm2, nm3, dd0_3du, &
-         nRec, procRecv, tagRecv, &
-         iaRecv, izRecv, jaRecv, jzRecv, &
-         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
-         nSnd, procSend, tagSend, &
-         iaSend, izSend, jaSend, jzSend, &
-         bufSendStart, bufSendLength, bufSendTotalLength)
-
-    if (dumpLocal) then
-       call MsgDump(h//" update borders of dd0_3dv")
-    end if
-    call update_borders(m1, nm2, nm3, dd0_3dv, &
-         nRec, procRecv, tagRecv, &
-         iaRecv, izRecv, jaRecv, jzRecv, &
-         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
-         nSnd, procSend, tagSend, &
-         iaSend, izSend, jaSend, jzSend, &
-         bufSendStart, bufSendLength, bufSendTotalLength)
-
-    if (dumpLocal) then
-       call MsgDump(h//" update borders of dd0_3dw")
-    end if
-    call update_borders(m1, nm2, nm3, dd0_3dw, &
-         nRec, procRecv, tagRecv, &
-         iaRecv, izRecv, jaRecv, jzRecv, &
-         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
-         nSnd, procSend, tagSend, &
-         iaSend, izSend, jaSend, jzSend, &
-         bufSendStart, bufSendLength, bufSendTotalLength)
-
-    if (dumpLocal) then
-       call MsgDump(h//" update borders of den0_3d")
-    end if
-    call update_borders(m1, nm2, nm3, den0_3d, &
-         nRec, procRecv, tagRecv, &
-         iaRecv, izRecv, jaRecv, jzRecv, &
-         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
-         nSnd, procSend, tagSend, &
-         iaSend, izSend, jaSend, jzSend, &
-         bufSendStart, bufSendLength, bufSendTotalLength)
-
-    if (dumpLocal) then
-       call MsgDump(h//" update borders of den1_3d")
-    end if
-    call update_borders(m1, nm2, nm3, den1_3d, &
-         nRec, procRecv, tagRecv, &
-         iaRecv, izRecv, jaRecv, jzRecv, &
-         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
-         nSnd, procSend, tagSend, &
-         iaSend, izSend, jaSend, jzSend, &
-         bufSendStart, bufSendLength, bufSendTotalLength)
-
-    if (dumpLocal) then
-       call MsgDump(h//" update borders of den2_3d")
-    end if
-    call update_borders(m1, nm2, nm3, den2_3d, &
-         nRec, procRecv, tagRecv, &
-         iaRecv, izRecv, jaRecv, jzRecv, &
-         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
-         nSnd, procSend, tagSend, &
-         iaSend, izSend, jaSend, jzSend, &
-         bufSendStart, bufSendLength, bufSendTotalLength)
-
-    if (dumpLocal) then
-       call MsgDump(h//" update borders of den3_3d")
-    end if
-    call update_borders(m1, nm2, nm3, den3_3d, &
-         nRec, procRecv, tagRecv, &
-         iaRecv, izRecv, jaRecv, jzRecv, &
-         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
-         nSnd, procSend, tagSend, &
-         iaSend, izSend, jaSend, jzSend, &
-         bufSendStart, bufSendLength, bufSendTotalLength)
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" update borders of dd0_3d")
+!!$    end if
+!!$    call update_borders(m1, nm2, nm3, dd0_3d, &
+!!$         nRec, procRecv, tagRecv, &
+!!$         iaRecv, izRecv, jaRecv, jzRecv, &
+!!$         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
+!!$         nSnd, procSend, tagSend, &
+!!$         iaSend, izSend, jaSend, jzSend, &
+!!$         bufSendStart, bufSendLength, bufSendTotalLength)
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" update borders of dd0_3du")
+!!$    end if
+!!$    call update_borders(m1, nm2, nm3, dd0_3du, &
+!!$         nRec, procRecv, tagRecv, &
+!!$         iaRecv, izRecv, jaRecv, jzRecv, &
+!!$         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
+!!$         nSnd, procSend, tagSend, &
+!!$         iaSend, izSend, jaSend, jzSend, &
+!!$         bufSendStart, bufSendLength, bufSendTotalLength)
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" update borders of dd0_3dv")
+!!$    end if
+!!$    call update_borders(m1, nm2, nm3, dd0_3dv, &
+!!$         nRec, procRecv, tagRecv, &
+!!$         iaRecv, izRecv, jaRecv, jzRecv, &
+!!$         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
+!!$         nSnd, procSend, tagSend, &
+!!$         iaSend, izSend, jaSend, jzSend, &
+!!$         bufSendStart, bufSendLength, bufSendTotalLength)
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" update borders of dd0_3dw")
+!!$    end if
+!!$    call update_borders(m1, nm2, nm3, dd0_3dw, &
+!!$         nRec, procRecv, tagRecv, &
+!!$         iaRecv, izRecv, jaRecv, jzRecv, &
+!!$         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
+!!$         nSnd, procSend, tagSend, &
+!!$         iaSend, izSend, jaSend, jzSend, &
+!!$         bufSendStart, bufSendLength, bufSendTotalLength)
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" update borders of den0_3d")
+!!$    end if
+!!$    call update_borders(m1, nm2, nm3, den0_3d, &
+!!$         nRec, procRecv, tagRecv, &
+!!$         iaRecv, izRecv, jaRecv, jzRecv, &
+!!$         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
+!!$         nSnd, procSend, tagSend, &
+!!$         iaSend, izSend, jaSend, jzSend, &
+!!$         bufSendStart, bufSendLength, bufSendTotalLength)
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" update borders of den1_3d")
+!!$    end if
+!!$    call update_borders(m1, nm2, nm3, den1_3d, &
+!!$         nRec, procRecv, tagRecv, &
+!!$         iaRecv, izRecv, jaRecv, jzRecv, &
+!!$         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
+!!$         nSnd, procSend, tagSend, &
+!!$         iaSend, izSend, jaSend, jzSend, &
+!!$         bufSendStart, bufSendLength, bufSendTotalLength)
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" update borders of den2_3d")
+!!$    end if
+!!$    call update_borders(m1, nm2, nm3, den2_3d, &
+!!$         nRec, procRecv, tagRecv, &
+!!$         iaRecv, izRecv, jaRecv, jzRecv, &
+!!$         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
+!!$         nSnd, procSend, tagSend, &
+!!$         iaSend, izSend, jaSend, jzSend, &
+!!$         bufSendStart, bufSendLength, bufSendTotalLength)
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" update borders of den3_3d")
+!!$    end if
+!!$    call update_borders(m1, nm2, nm3, den3_3d, &
+!!$         nRec, procRecv, tagRecv, &
+!!$         iaRecv, izRecv, jaRecv, jzRecv, &
+!!$         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
+!!$         nSnd, procSend, tagSend, &
+!!$         iaSend, izSend, jaSend, jzSend, &
+!!$         bufSendStart, bufSendLength, bufSendTotalLength)
 
 !!$    if (dumpLocal) then
 !!$       call MsgDump(h//" update borders of l_dxtW")
@@ -4003,18 +4003,18 @@ contains
 !!$         iaSend, izSend, jaSend, jzSend, &
 !!$         bufSendStart, bufSendLength, bufSendTotalLength)
 
-    if (dumpLocal) then
-       write(str(1),"(i8)") nm2
-       write(str(2),"(i8)") nm3
-       call MsgDump(h//" advmnt_g%dxtW"//&
-            "(1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")"//&
-            " <- advmnt_g%l_dxtW"//&
-            "(1,1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")")
-       call MsgDump(h//" advmnt_g%dytW"//&
-            "(1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")"//&
-            " <- advmnt_g%l_dytW"//&
-            "(1,1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")")
-    end if
+!!$    if (dumpLocal) then
+!!$       write(str(1),"(i8)") nm2
+!!$       write(str(2),"(i8)") nm3
+!!$       call MsgDump(h//" advmnt_g%dxtW"//&
+!!$            "(1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")"//&
+!!$            " <- advmnt_g%l_dxtW"//&
+!!$            "(1,1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")")
+!!$       call MsgDump(h//" advmnt_g%dytW"//&
+!!$            "(1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")"//&
+!!$            " <- advmnt_g%l_dytW"//&
+!!$            "(1,1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")")
+!!$    end if
 
 !!$    do i=1,nm2
 !!$       do j=1,nm3
@@ -4078,7 +4078,7 @@ contains
     real, pointer :: scalart
     logical  :: IsThisScalarAer =.false.
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(advmnt_driver)**"
     character(len=8) :: str(11)
 
@@ -4266,10 +4266,14 @@ contains
          oneGrid%AdvMntDxDySendY, oneGrid%AdvMntDxDyRecvY, &
          oneGrid%AdvMntDd0SendX, oneGrid%AdvMntDd0RecvX, &
          oneGrid%AdvMntDd0SendY, oneGrid%AdvMntDd0RecvY, &
+         oneGrid%AdvMntDenSendX, oneGrid%AdvMntDenRecvX, &
+         oneGrid%AdvMntDenSendY, oneGrid%AdvMntDenRecvY, &
          oneAdvMnt%u3d, oneAdvMnt%v3d, &
          oneAdvMnt%dxtW, oneAdvMnt%dytW, &
          oneAdvMnt%dd0_3d, oneAdvMnt%dd0_3du, &
-         oneAdvMnt%dd0_3dv, oneAdvMnt%dd0_3dw)
+         oneAdvMnt%dd0_3dv, oneAdvMnt%dd0_3dw, &
+         oneAdvMnt%den0_3d, oneAdvMnt%den1_3d, &
+         oneAdvMnt%den2_3d, oneAdvMnt%den3_3d)
 
     if (dumpLocal) then
        call MsgDump(h//" grid after UpdateFieldAdressAtAdvMnt")
@@ -4548,9 +4552,11 @@ contains
     call PostSendRecvMsgs(oneGrid%AdvMntUVSendX, oneGrid%AdvMntUVRecvX)
     call PostSendRecvMsgs(oneGrid%AdvMntDxDySendX, oneGrid%AdvMntDxDyRecvX)
     call PostSendRecvMsgs(oneGrid%AdvMntDd0SendX, oneGrid%AdvMntDd0RecvX)
+    call PostSendRecvMsgs(oneGrid%AdvMntDenSendX, oneGrid%AdvMntDenRecvX)
     call WaitSendRecvMsgs(oneGrid%AdvMntUVSendX, oneGrid%AdvMntUVRecvX)
     call WaitSendRecvMsgs(oneGrid%AdvMntDxDySendX, oneGrid%AdvMntDxDyRecvX)
     call WaitSendRecvMsgs(oneGrid%AdvMntDd0SendX, oneGrid%AdvMntDd0RecvX)
+    call WaitSendRecvMsgs(oneGrid%AdvMntDenSendX, oneGrid%AdvMntDenRecvX)
 
     oneAdvMnt%l_dxtW=0.0
     oneAdvMnt%l_dytW=0.0
@@ -4603,9 +4609,11 @@ contains
     call PostSendRecvMsgs(oneGrid%AdvMntUVSendY, oneGrid%AdvMntUVRecvY)
     call PostSendRecvMsgs(oneGrid%AdvMntDxDySendY, oneGrid%AdvMntDxDyRecvY)
     call PostSendRecvMsgs(oneGrid%AdvMntDd0SendY, oneGrid%AdvMntDd0RecvY)
+    call PostSendRecvMsgs(oneGrid%AdvMntDenSendY, oneGrid%AdvMntDenRecvY)
     call WaitSendRecvMsgs(oneGrid%AdvMntUVSendY, oneGrid%AdvMntUVRecvY)
     call WaitSendRecvMsgs(oneGrid%AdvMntDxDySendY, oneGrid%AdvMntDxDyRecvY)
     call WaitSendRecvMsgs(oneGrid%AdvMntDd0SendY, oneGrid%AdvMntDd0RecvY)
+    call WaitSendRecvMsgs(oneGrid%AdvMntDenSendY, oneGrid%AdvMntDenRecvY)
 
     call InitialFieldsUpdate(&
          oneAdvMnt%u3d, oneAdvMnt%v3d, &
@@ -4622,16 +4630,16 @@ contains
          sendMessageJ(ng)%ja,sendMessageJ(ng)%jz, &
          sendMessageJ(ng)%start,sendMessageJ(ng)%mSize,TotalSendJ(ng))
 
-    call MsgDump(h//" depois de InitialFieldsUpdate on y:")
-    call Compare(oneAdvMnt%u3d, advmnt_g(ng)%u3d, "u3d", .true.)
-    call Compare(oneAdvMnt%v3d, advmnt_g(ng)%v3d, "v3d", .true.)
-    call Compare(oneAdvMnt%w3d, advmnt_g(ng)%w3d, "w3d", .true.)
-    call Compare(oneAdvMnt%dxtW, advmnt_g(ng)%dxtW, "dxtW", .true.)
-    call Compare(oneAdvMnt%dytW, advmnt_g(ng)%dytW, "dytW", .true.)
-    call Compare(oneAdvMnt%dd0_3d, advmnt_g(ng)%dd0_3d, "dd0_3d", .true.)
-    call Compare(oneAdvMnt%dd0_3du, advmnt_g(ng)%dd0_3du, "dd0_3du", .true.)
-    call Compare(oneAdvMnt%dd0_3dv, advmnt_g(ng)%dd0_3dv, "dd0_3dv", .true.)
-    call Compare(oneAdvMnt%dd0_3dw, advmnt_g(ng)%dd0_3dw, "dd0_3dw", .true.)
+!!$    call MsgDump(h//" depois de InitialFieldsUpdate on y:")
+!!$    call Compare(oneAdvMnt%u3d, advmnt_g(ng)%u3d, "u3d", .true.)
+!!$    call Compare(oneAdvMnt%v3d, advmnt_g(ng)%v3d, "v3d", .true.)
+!!$    call Compare(oneAdvMnt%w3d, advmnt_g(ng)%w3d, "w3d", .true.)
+!!$    call Compare(oneAdvMnt%dxtW, advmnt_g(ng)%dxtW, "dxtW", .true.)
+!!$    call Compare(oneAdvMnt%dytW, advmnt_g(ng)%dytW, "dytW", .true.)
+!!$    call Compare(oneAdvMnt%dd0_3d, advmnt_g(ng)%dd0_3d, "dd0_3d", .true.)
+!!$    call Compare(oneAdvMnt%dd0_3du, advmnt_g(ng)%dd0_3du, "dd0_3du", .true.)
+!!$    call Compare(oneAdvMnt%dd0_3dv, advmnt_g(ng)%dd0_3dv, "dd0_3dv", .true.)
+!!$    call Compare(oneAdvMnt%dd0_3dw, advmnt_g(ng)%dd0_3dw, "dd0_3dw", .true.)
 !!$    call Compare(oneAdvMnt%dd0_3d, advmnt_g(ng)%dd0_3d, "dd0_3d", .true.)
 !!$    call Compare(oneAdvMnt%dd0_3du, advmnt_g(ng)%dd0_3du, "dd0_3du", .true.)
 !!$    call Compare(oneAdvMnt%dd0_3dv, advmnt_g(ng)%dd0_3dv, "dd0_3dv", .true.)
@@ -4640,8 +4648,6 @@ contains
 !!$    call Compare(oneAdvMnt%den1_3d, advmnt_g(ng)%den1_3d, "den1_3d", .true.)
 !!$    call Compare(oneAdvMnt%den2_3d, advmnt_g(ng)%den2_3d, "den2_3d", .true.)
 !!$    call Compare(oneAdvMnt%den3_3d, advmnt_g(ng)%den3_3d, "den3_3d", .true.)
-!!$    call Compare(oneAdvMnt%l_dxtW, advmnt_g(ng)%l_dxtW, "l_dxtW", .true.)
-!!$    call Compare(oneAdvMnt%l_dytW, advmnt_g(ng)%l_dytW, "l_dytW", .true.)
 
     !**(JP)** ends
 
@@ -5328,7 +5334,7 @@ contains
     integer ibegin,iend,jbegin,jend
     !- type of sedimentation scheme (0= Walcek, 1=upwind)
     integer , parameter :: iupwind = 0
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(advect_mnt)**"
     character(len=8) :: str(10)
 
@@ -5594,7 +5600,7 @@ contains
     integer :: reqRecv(nRecv)
     integer :: reqSend(nSend), recNum
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(update_borders)**"
     character(len=8) :: str(10)
 
@@ -5732,7 +5738,7 @@ contains
     integer, intent(in) :: bufSendTotalLength
 
     integer :: i,j,k
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(initial_fields_update)**"
     character(len=8) :: str(10)
 

@@ -197,6 +197,11 @@ module ModGrid
      type(MessageSet), pointer :: AdvMntDd0RecvX => null()
      type(MessageSet), pointer :: AdvMntDd0SendY => null()
      type(MessageSet), pointer :: AdvMntDd0RecvY => null()
+
+     type(MessageSet), pointer :: AdvMntDenSendX => null()
+     type(MessageSet), pointer :: AdvMntDenRecvX => null()
+     type(MessageSet), pointer :: AdvMntDenSendY => null()
+     type(MessageSet), pointer :: AdvMntDenRecvY => null()
  end type Grid
 
 
@@ -375,6 +380,8 @@ contains
     integer, parameter :: TagAdvMntDxDyY=44
     integer, parameter :: TagAdvMntDd0X=45
     integer, parameter :: TagAdvMntDd0Y=46
+    integer, parameter :: TagAdvMntDenX=47
+    integer, parameter :: TagAdvMntDenY=48
 
     ! Field pointer for fields not yet allocated
     ! not yet allocated; CreateAcouDampOneMessageSet
@@ -516,7 +523,9 @@ contains
          TagAdvMntDxDyX, oneGrid%AdvMntDxDySendX, oneGrid%AdvMntDxDyRecvX, &
          TagAdvMntDxDyY, oneGrid%AdvMntDxDySendY, oneGrid%AdvMntDxDyRecvY, &
          TagAdvMntDd0X, oneGrid%AdvMntDd0SendX, oneGrid%AdvMntDd0RecvX, &
-         TagAdvMntDd0Y, oneGrid%AdvMntDd0SendY, oneGrid%AdvMntDd0RecvY)
+         TagAdvMntDd0Y, oneGrid%AdvMntDd0SendY, oneGrid%AdvMntDd0RecvY, &
+         TagAdvMntDenX, oneGrid%AdvMntDenSendX, oneGrid%AdvMntDenRecvX, &
+         TagAdvMntDenY, oneGrid%AdvMntDenSendY, oneGrid%AdvMntDenRecvY)
 
 
     if (dumpLocal) then
@@ -581,7 +590,9 @@ contains
             oneGrid%AdvMntDxDySendX, oneGrid%AdvMntDxDyRecvX, &
             oneGrid%AdvMntDxDySendY, oneGrid%AdvMntDxDyRecvY, &
             oneGrid%AdvMntDd0SendX, oneGrid%AdvMntDd0RecvX, &
-            oneGrid%AdvMntDd0SendY, oneGrid%AdvMntDd0RecvY)
+            oneGrid%AdvMntDd0SendY, oneGrid%AdvMntDd0RecvY, &
+            oneGrid%AdvMntDenSendX, oneGrid%AdvMntDenRecvX, &
+            oneGrid%AdvMntDenSendY, oneGrid%AdvMntDenRecvY)
 
        deallocate(oneGrid)
     end if
@@ -715,6 +726,14 @@ contains
     call DumpMessageSet(oneGrid%AdvMntDd0SendY)
     call MsgDump(h//" dumping AdvMntDd0RecvY")
     call DumpMessageSet(oneGrid%AdvMntDd0RecvY)
+    call MsgDump(h//" dumping AdvMntDenSendX")
+    call DumpMessageSet(oneGrid%AdvMntDenSendX)
+    call MsgDump(h//" dumping AdvMntDenRecvX")
+    call DumpMessageSet(oneGrid%AdvMntDenRecvX)
+    call MsgDump(h//" dumping AdvMntDenSendY")
+    call DumpMessageSet(oneGrid%AdvMntDenSendY)
+    call MsgDump(h//" dumping AdvMntDenRecvY")
+    call DumpMessageSet(oneGrid%AdvMntDenRecvY)
     call MsgDump(h//" finishes")
   end subroutine DumpGrid
 end module ModGrid
