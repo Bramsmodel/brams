@@ -90,13 +90,17 @@ module var_tables
   ! Define data type for scalar variable table
 
   type scalar_table
-     real, pointer      :: var_p
-     real, pointer      :: var_t
+     real, pointer      :: var_p => null()
+     real, pointer      :: var_t => null()
      character (len=16) :: name
-     real, pointer      :: a_var_p(:)
-     real, pointer      :: a_var_t(:)
+     real, pointer      :: a_var_p(:) => null()
+     real, pointer      :: a_var_t(:) => null()
+     real, pointer      :: a_var_p_3D(:,:,:) => null()
+     real, pointer      :: a_var_t_3D(:,:,:) => null()
+     real, pointer      :: var_p_1D(:) => null()
      real, pointer      :: var_p_2D(:,:) => null()
      real, pointer      :: var_p_3D(:,:,:) => null()
+     real, pointer      :: var_t_1D(:) => null()
   end type scalar_table
 
   ! Scalar variable table allocated to (maxsclr,maxgrds)
@@ -136,6 +140,7 @@ module var_tables
   end interface
 
   interface InsertScalarTab
+     module procedure InsertScalarTab_1D
      module procedure InsertScalarTab_2D
      module procedure InsertScalarTab_3D
   end interface InsertScalarTab
@@ -180,6 +185,45 @@ contains
   end function StringScalarTableEntry
 
 
+  subroutine InsertScalarTab_1D(varp,vart,ng,tabstr,elements)
+    real, target :: varp(:)
+    real, target :: vart(:)
+    integer, intent(in) :: ng
+    character (len=*), intent(in) :: tabstr
+    integer, intent(in) :: elements
+
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(InsertScalarTab_2D)**"
+    logical, parameter :: dumpLocal=.false.
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") ng
+       write(str(2),"(i8)") num_scalar(ng)
+       call MsgDump(h//" at grid "//trim(adjustl(str(1)))//&
+            " inserting field "//trim(tabstr)//"; last scalar_tab used position is "//&
+            trim(adjustl(str(2))))
+    end if
+    
+    ! insert the old way for vtables_scalar
+    call vtables_scalar(varp(1),vart(1),ng,tabstr)
+
+    ! insert the old way for vtables_scalar_new
+    call vtables_scalar_new(varp,vart,ng,tabstr,elements)
+
+    ! save full field vtables_scalar
+    scalar_tab(num_scalar(ng),ng)%var_p_1D => varp
+    scalar_tab(num_scalar(ng),ng)%var_t_1D => vart
+
+!!$    ! save  field vtables_scalar_new
+!!$    scalar_tab(num_scalar(ng),ng)%a_var_t => vart(:)
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") num_scalar(ng)
+       call MsgDump(h//" inserted at scalar_tab position "//&
+            trim(adjustl(str(1)))//" "//&
+            StringScalarTableEntry(scalar_tab(num_scalar(ng),ng)))
+    end if
+  end subroutine InsertScalarTab_1D
   
   subroutine InsertScalarTab_2D(varp,vart,ng,tabstr,elements)
     real, target :: varp(:,:)
@@ -208,6 +252,7 @@ contains
 
     ! save full field vtables_scalar
     scalar_tab(num_scalar(ng),ng)%var_p_2D => varp
+    scalar_tab(num_scalar(ng),ng)%var_t_1D => vart
 
 !!$    ! save  field vtables_scalar_new
 !!$    scalar_tab(num_scalar(ng),ng)%a_var_t => vart(:)
@@ -252,6 +297,7 @@ contains
 
     ! save full field vtables_scalar
     scalar_tab(num_scalar(ng),ng)%var_p_3D => varp
+    scalar_tab(num_scalar(ng),ng)%var_t_1D => vart
 
 !!$    ! save  field vtables_scalar_new
 !!$    scalar_tab(num_scalar(ng),ng)%a_var_t => vart(:)

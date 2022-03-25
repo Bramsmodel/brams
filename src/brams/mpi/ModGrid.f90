@@ -61,7 +61,10 @@ module ModGrid
 
   use var_tables, only: &
        num_var, &
-       vtab_r
+       vtab_r, &
+       num_scalar, &
+       scalar_table, &
+       scalar_tab
 
   use mem_tend, only: &
        tend
@@ -77,7 +80,8 @@ module ModGrid
   public :: InsertMessageSetAtOneGrid
   public :: DestroyGrid
   public :: DumpGrid
-
+  public :: InsertScalarTabAtOneGrid
+  public :: DeepCopyScalarTabAtOneGrid
 
   type Grid
      integer :: Id
@@ -202,6 +206,9 @@ module ModGrid
      type(MessageSet), pointer :: AdvMntDenRecvX => null()
      type(MessageSet), pointer :: AdvMntDenSendY => null()
      type(MessageSet), pointer :: AdvMntDenRecvY => null()
+
+     type(scalar_table), pointer :: ScalarTab(:) => null()
+     integer :: ScalarTabSize=0
  end type Grid
 
 
@@ -736,4 +743,266 @@ contains
     call DumpMessageSet(oneGrid%AdvMntDenRecvY)
     call MsgDump(h//" finishes")
   end subroutine DumpGrid
+
+
+  subroutine InsertScalarTabAtOneGrid(oneGrid)
+    type(Grid), pointer, intent(in) :: oneGrid
+
+    integer :: ng
+    integer :: ierr
+    integer :: iEle
+    integer :: nEle
+    
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(InsertScalarTabAtOneGrid)**"
+    logical, parameter :: dumpLocal=.true.
+
+    if (dumpLocal) then
+       call MsgDump(h//" starts")
+    end if
+
+    ng=OneGrid%Id
+    nEle=num_scalar(ng)
+    
+    allocate(oneGrid%ScalarTab(nEle), stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") nEle
+       write(str(2),"(i8)") ierr
+       call fatal_error(h//" allocate ScalarTab("//&
+            trim(adjustl(str(1)))//") fails with stat="//&
+            trim(adjustl(str(2))))
+    end if
+
+    oneGrid%ScalarTabSize=nEle
+    
+    do iEle = 1, nEle
+       oneGrid%ScalarTab(iEle)%name = scalar_tab(iEle,ng)%name
+       oneGrid%ScalarTab(iEle)%a_var_p => scalar_tab(iEle,ng)%a_var_p
+       oneGrid%ScalarTab(iEle)%a_var_t => scalar_tab(iEle,ng)%a_var_t
+       oneGrid%ScalarTab(iEle)%var_p_2D => scalar_tab(iEle,ng)%var_p_2D
+       oneGrid%ScalarTab(iEle)%var_p_3D => scalar_tab(iEle,ng)%var_p_3D
+    end do
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") nEle
+       call MsgDump(h//" finishes building ScalarTab with "//&
+            trim(adjustl(str(1)))//" entries")
+    end if
+    
+  end subroutine InsertScalarTabAtOneGrid
+
+
+
+    subroutine DeepCopyScalarTabAtOneGrid(oneGrid)
+    type(Grid), pointer, intent(in) :: oneGrid
+
+    integer :: ng
+    integer :: ierr
+    integer :: iEle
+    integer :: nEle
+    integer :: dim1
+    integer :: dim2
+    integer :: dim3
+    
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(DeepCopyScalarTabAtOneGrid)**"
+    logical, parameter :: dumpLocal=.false.
+
+    if (dumpLocal) then
+       call MsgDump(h//" starts")
+    end if
+
+    call DestroyScalarTabAtOneGrid(oneGrid)
+    ng=OneGrid%Id
+    nEle=num_scalar(ng)
+    
+    allocate(oneGrid%ScalarTab(nEle), stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") nEle
+       write(str(2),"(i8)") ierr
+       call fatal_error(h//" allocate ScalarTab("//&
+            trim(adjustl(str(1)))//") fails with stat="//&
+            trim(adjustl(str(2))))
+    end if
+
+    oneGrid%ScalarTabSize=nEle
+    
+    do iEle = 1, nEle
+       oneGrid%ScalarTab(iEle)%name = scalar_tab(iEle,ng)%name
+
+       if (associated(scalar_tab(iEle,ng)%a_var_p)) then
+          dim1 = size(scalar_tab(iEle,ng)%a_var_p)
+          allocate(oneGrid%ScalarTab(iEle)%a_var_p(dim1), stat=ierr)
+          if (ierr /= 0) then
+             write(str(1),"(i8)") nEle
+             write(str(2),"(i8)") ierr
+             call fatal_error(h//" allocate a_var_p"//&
+                  trim(adjustl(str(1)))//") fails with stat="//&
+                  trim(adjustl(str(2))))
+          end if
+          oneGrid%ScalarTab(iEle)%a_var_p = scalar_tab(iEle,ng)%a_var_p
+       else
+          nullify(oneGrid%ScalarTab(iEle)%a_var_p)
+       end if
+
+       if (associated(scalar_tab(iEle,ng)%a_var_t)) then
+          dim1 = size(scalar_tab(iEle,ng)%a_var_t)
+          allocate(oneGrid%ScalarTab(iEle)%a_var_t(dim1), stat=ierr)
+          if (ierr /= 0) then
+             write(str(1),"(i8)") nEle
+             write(str(2),"(i8)") ierr
+             call fatal_error(h//" allocate a_var_t"//&
+                  trim(adjustl(str(1)))//") fails with stat="//&
+                  trim(adjustl(str(2))))
+          end if
+          oneGrid%ScalarTab(iEle)%a_var_t = scalar_tab(iEle,ng)%a_var_t
+       else
+          nullify(oneGrid%ScalarTab(iEle)%a_var_t)
+       end if
+
+       if (associated(scalar_tab(iEle,ng)%a_var_p_3D)) then
+          dim1 = size(scalar_tab(iEle,ng)%a_var_p_3D,1)
+          dim2 = size(scalar_tab(iEle,ng)%a_var_p_3D,2)
+          dim3 = size(scalar_tab(iEle,ng)%a_var_p_3D,3)
+          allocate(oneGrid%ScalarTab(iEle)%a_var_p_3D(dim1,dim2,dim3), stat=ierr)
+          if (ierr /= 0) then
+             write(str(1),"(i8)") ierr
+             write(str(2),"(i8)") dim1
+             write(str(3),"(i8)") dim2
+             write(str(4),"(i8)") dim3
+             call fatal_error(h//" allocate a_var_p_3D("//&
+                  trim(adjustl(str(2)))//","//&
+                  trim(adjustl(str(3)))//","//&
+                  trim(adjustl(str(4)))//")"//&
+                  " fails with stat="//trim(adjustl(str(1))))
+          end if
+          oneGrid%ScalarTab(iEle)%a_var_p_3D = scalar_tab(iEle,ng)%a_var_p_3D
+       else
+          nullify(oneGrid%ScalarTab(iEle)%a_var_p_3D)
+       end if
+
+       if (associated(scalar_tab(iEle,ng)%a_var_t_3D)) then
+          dim1 = size(scalar_tab(iEle,ng)%a_var_t_3D,1)
+          dim2 = size(scalar_tab(iEle,ng)%a_var_t_3D,2)
+          dim3 = size(scalar_tab(iEle,ng)%a_var_t_3D,3)
+          allocate(oneGrid%ScalarTab(iEle)%a_var_t_3D(dim1,dim2,dim3), stat=ierr)
+          if (ierr /= 0) then
+             write(str(1),"(i8)") ierr
+             write(str(2),"(i8)") dim1
+             write(str(3),"(i8)") dim2
+             write(str(4),"(i8)") dim3
+             call fatal_error(h//" allocate a_var_t_3D("//&
+                  trim(adjustl(str(2)))//","//&
+                  trim(adjustl(str(3)))//","//&
+                  trim(adjustl(str(4)))//")"//&
+                  " fails with stat="//trim(adjustl(str(1))))
+          end if
+          oneGrid%ScalarTab(iEle)%a_var_t_3D = scalar_tab(iEle,ng)%a_var_t_3D
+       else
+          nullify(oneGrid%ScalarTab(iEle)%a_var_t_3D)
+       end if
+
+       if (associated(scalar_tab(iEle,ng)%var_p_1D)) then
+          dim1 = size(scalar_tab(iEle,ng)%var_p_1D,1)
+          allocate(oneGrid%ScalarTab(iEle)%var_p_1D(dim1), stat=ierr)
+          if (ierr /= 0) then
+             write(str(1),"(i8)") nEle
+             write(str(2),"(i8)") ierr
+             call fatal_error(h//" allocate var_p_1D"//&
+                  trim(adjustl(str(1)))//") fails with stat="//&
+                  trim(adjustl(str(2))))
+          end if
+          oneGrid%ScalarTab(iEle)%var_p_1D = scalar_tab(iEle,ng)%var_p_1D
+       else
+          nullify(oneGrid%ScalarTab(iEle)%var_p_1D)
+       end if
+
+       if (associated(scalar_tab(iEle,ng)%var_p_2D)) then
+          dim1 = size(scalar_tab(iEle,ng)%var_p_2D,1)
+          dim2 = size(scalar_tab(iEle,ng)%var_p_2D,2)
+          allocate(oneGrid%ScalarTab(iEle)%var_p_2D(dim1,dim2), stat=ierr)
+          if (ierr /= 0) then
+             write(str(1),"(i8)") nEle
+             write(str(2),"(i8)") ierr
+             call fatal_error(h//" allocate var_p_2D"//&
+                  trim(adjustl(str(1)))//") fails with stat="//&
+                  trim(adjustl(str(2))))
+          end if
+          oneGrid%ScalarTab(iEle)%var_p_2D = scalar_tab(iEle,ng)%var_p_2D
+       else
+          nullify(oneGrid%ScalarTab(iEle)%var_p_2D)
+       end if
+
+       if (associated(scalar_tab(iEle,ng)%var_p_3D)) then
+          dim1 = size(scalar_tab(iEle,ng)%var_p_3D,1)
+          dim2 = size(scalar_tab(iEle,ng)%var_p_3D,2)
+          dim3 = size(scalar_tab(iEle,ng)%var_p_3D,3)
+          allocate(oneGrid%ScalarTab(iEle)%var_p_3D(dim1,dim2,dim3), stat=ierr)
+          if (ierr /= 0) then
+             write(str(1),"(i8)") nEle
+             write(str(2),"(i8)") ierr
+             call fatal_error(h//" allocate var_p_3D"//&
+                  trim(adjustl(str(1)))//") fails with stat="//&
+                  trim(adjustl(str(2))))
+          end if
+          oneGrid%ScalarTab(iEle)%var_p_3D = scalar_tab(iEle,ng)%var_p_3D
+       else
+          nullify(oneGrid%ScalarTab(iEle)%var_p_3D)
+       end if
+
+       if (associated(scalar_tab(iEle,ng)%var_t_1D)) then
+          dim1 = size(scalar_tab(iEle,ng)%var_t_1D,1)
+          allocate(oneGrid%ScalarTab(iEle)%var_t_1D(dim1), stat=ierr)
+          if (ierr /= 0) then
+             write(str(1),"(i8)") nEle
+             write(str(2),"(i8)") ierr
+             call fatal_error(h//" allocate var_t_1D"//&
+                  trim(adjustl(str(1)))//") fails with stat="//&
+                  trim(adjustl(str(2))))
+          end if
+          oneGrid%ScalarTab(iEle)%var_t_1D = scalar_tab(iEle,ng)%var_t_1D
+       else
+          nullify(oneGrid%ScalarTab(iEle)%var_t_1D)
+       end if
+    end do
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") nEle
+       call MsgDump(h//" finishes building ScalarTab with "//&
+            trim(adjustl(str(1)))//" entries")
+    end if
+    
+  end subroutine DeepCopyScalarTabAtOneGrid
+
+
+
+  
+  subroutine DestroyScalarTabAtOneGrid(oneGrid)
+    type(Grid), pointer, intent(in) :: oneGrid
+
+    integer :: iEle
+
+    if (associated(oneGrid%ScalarTab)) then
+       do iEle = 1, oneGrid%ScalarTabSize
+          if (associated(oneGrid%ScalarTab(iEle)%a_var_p)) then
+             deallocate(oneGrid%ScalarTab(iEle)%a_var_p)
+             nullify(oneGrid%ScalarTab(iEle)%a_var_p)
+          end if
+          if (associated(oneGrid%ScalarTab(iEle)%a_var_t)) then
+             deallocate(oneGrid%ScalarTab(iEle)%a_var_t)
+             nullify(oneGrid%ScalarTab(iEle)%a_var_t)
+          end if
+          if (associated(oneGrid%ScalarTab(iEle)%var_p_2D)) then
+             deallocate(oneGrid%ScalarTab(iEle)%var_p_2D)
+             nullify(oneGrid%ScalarTab(iEle)%var_p_2D)
+          end if
+          if (associated(oneGrid%ScalarTab(iEle)%var_p_3D)) then
+             deallocate(oneGrid%ScalarTab(iEle)%var_p_3D)
+             nullify(oneGrid%ScalarTab(iEle)%var_p_3D)
+          end if
+       end do
+       deallocate(oneGrid%ScalarTab)
+       nullify(oneGrid%ScalarTab)
+    end if
+  end subroutine DestroyScalarTabAtOneGrid
 end module ModGrid

@@ -494,7 +494,8 @@ module ModOneProc
   use ModGrid, only: &
        Grid, &
        DumpGrid, &
-       InsertMessageSetAtOneGrid
+       InsertMessageSetAtOneGrid, &
+       InsertScalarTabAtOneGrid
 
 
   use meteogram, only:              &
@@ -908,9 +909,12 @@ contains
        ! The message passing data structure is composed by all
        ! variables of type(MessageSet) stored at OneGrid
 
+       ! for the moment (temporary), copy existing scalar_tab into OneGrid
+       
        OneGridTreeNode => GridTreeRoot(AllGrids)
        do while (associated(OneGridTreeNode))
           call InsertMessageSetAtOneGrid(OneGridTreeNode%curr)
+!!$          call InsertScalarTabAtOneGrid(OneGridTreeNode%curr)
           OneGridTreeNode => NextOnGridTree(OneGridTreeNode)
        end do
 

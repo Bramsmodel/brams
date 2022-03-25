@@ -2448,7 +2448,7 @@ ModEvaluation.o: $(EVAL)/ModEvaluation.f90 mem_grid.o node_mod.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-modIau.o : $(MODEL)/modIau.f90 dump.o $(UTILS_INCS)/constants.h
+modIau.o : $(MODEL)/modIau.f90 dump.o $(UTILS_INCS)/constants.h var_tables.o
 	@cp -f $< $(<F:.F90=.F90)
 	$(F_COMMAND) $(<F:.F90=.F90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
