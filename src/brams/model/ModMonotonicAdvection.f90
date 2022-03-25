@@ -2509,7 +2509,8 @@ module ModMonotonicAdvection
   use ModGrid, only: &
        Grid, &
        DumpGrid, &
-       DeepCopyScalarTabAtOneGrid
+       DeepCopyToScalarTabAtOneGrid, &
+       DeepCopyFromScalarTabAtOneGrid       
 
   use mem_grid, only:        &
        dtlt,   & !intent(in)
@@ -4030,6 +4031,1214 @@ contains
 
 
 
+
+
+
+
+  subroutine CheckBorders(m1, m2, m3, field, &
+       nRecv, procRecv, tagRecv, iaRecv, izRecv, jaRecv, jzRecv, &
+       bufRecvStart, bufRecvLength, bufRecvTotalLength, &
+       nSend, procSend, tagSend, iaSend, izSend, jaSend, jzSend, &
+       bufSendStart, bufSendLength, bufSendTotalLength,mynum,op,ie)
+    integer, intent(in) :: m1,mynum,op,ie
+    integer, intent(in) :: m2
+    integer, intent(in) :: m3
+    real,    intent(inout) :: field(m1,m2,m3)
+    integer, intent(in) :: nRecv
+    integer, intent(in) :: procRecv(nRecv)
+    integer, intent(in) :: tagRecv(nRecv)
+    integer, intent(in) :: iaRecv(nRecv)
+    integer, intent(in) :: izRecv(nRecv)
+    integer, intent(in) :: jaRecv(nRecv)
+    integer, intent(in) :: jzRecv(nRecv)
+    integer, intent(in) :: bufRecvStart(nRecv)
+    integer, intent(in) :: bufRecvLength(nRecv)
+    integer, intent(in) :: bufRecvTotalLength
+    integer, intent(in) :: nSend
+    integer, intent(in) :: procSend(nSend)
+    integer, intent(in) :: tagSend(nSend)
+    integer, intent(in) :: iaSend(nSend)
+    integer, intent(in) :: izSend(nSend)
+    integer, intent(in) :: jaSend(nSend)
+    integer, intent(in) :: jzSend(nSend)
+    integer, intent(in) :: bufSendStart(nSend)
+    integer, intent(in) :: bufSendLength(nSend)
+    integer, intent(in) :: bufSendTotalLength
+
+    integer :: fout,i
+    character :: opc
+
+    fout=80+mynum
+    opc='Y'
+    if(op==1) opc='X'
+
+    if(ie==0) then
+       write (fout,'("Borders updated, direction ",A)') opc
+       return
+    end if
+
+
+    write (fout,'(" Updating borders, direction  ",A)') opc ; call flush(fout)
+    write (fout,'("nRecv: ",I3.3," nSend: ",I3.3)') nRecv,nSend; call flush(fout)
+    write (fout,'("TotRecv: ",I6.6," TotSend: ",I6.6)') bufRecvTotalLength,bufSendTotalLength; call flush(fout)
+    write (fout,'(A)') '---------------------------------- Send ---------------------------'; call flush(fout)
+    write (fout,'(7(A3,1X),2(A,1X))') 'nSn','prc','tag','ia ','iz ','ja ','jz ','Start','Length'; call flush(fout)
+    do i=1,nRecv
+       write (fout,'(7(I3.3,1X),2(I6.6,1X))') i,procRecv(i),tagRecv(i),iaRecv(i),izRecv(i),jaRecv(i),jzRecv(i), &
+            bufRecvStart(i),bufRecvLength(i); call flush(fout)
+    end do
+    write (fout,'(A)') '------------------------------- Receive  --------------------------'; call flush(fout)
+    write (fout,'(7(A3,1X),2(A,1X))') 'nRv','prc','tag','ia ','iz ','ja ','jz ','Start','Length'
+    do i=1,nRecv
+       write (fout,'(7(I3.3,1X),2(I6.6,1X))')	i,procSend(i),tagSend(i),iaSend(i),izSend(i),jaSend(i),jzSend(i), &
+            bufSendStart(i),bufSendLength(i); call flush(fout)
+    end do
+  end subroutine CheckBorders
+
+
+
+
+
+  subroutine AdvectTendency(mzp, mxp, &
+       iOffset, jOffset, &
+       ia, iz, ja, jz, dtl, &
+       scalarp3D, AdvMntField, scalart1D)
+    integer, intent(in) :: mzp ! external field dimension
+    integer, intent(in) :: mxp ! external field dimension
+    integer, intent(in) :: iOffset
+    integer, intent(in) :: jOffset
+    integer, intent(in) :: ia
+    integer, intent(in) :: iz
+    integer, intent(in) :: ja
+    integer, intent(in) :: jz
+    real, intent(in) :: dtl
+    real, pointer, intent(in) :: scalarp3D(:,:,:)
+    ! external field, regular ghost zone, values are intent(in)
+    real, pointer, intent(in) :: AdvMntField(:,:,:)
+    ! monotonic advection field, extended ghost zone, values are intent(in)
+    real, pointer, intent(in) :: scalart1D(:)
+    ! 3D external field with regular ghost zone mapped into a 1D field;
+    ! values are intent(inout)
+
+    integer :: i
+    integer :: iAdvMnt
+    integer :: j
+    integer :: jAdvMnt
+    integer :: k
+    integer :: ind1D
+    real :: dtli
+
+    logical, parameter :: dumpLocal=.false.
+    character(len=*), parameter :: h="**(AdvectTendency)**"
+    character(len=8) :: str(10)
+    if (dumpLocal) then
+       write(str(1),"(i8)") mzp-1
+       write(str(2),"(i8)") ia
+       write(str(3),"(i8)") iz
+       write(str(4),"(i8)") ja
+       write(str(5),"(i8)") jz
+       call MsgDump(h//" at (2:"//trim(adjustl(str(1)))//","//&
+            trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//","//&
+            trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
+    end if
+
+    dtli = 1. / dtl
+
+    ! indexing external field
+
+    do j = ja,jz
+       jAdvMnt=j-jOffset
+       do i = ia,iz
+          iAdvMnt=i-iOffset
+          ind1D=(i-1+(j-1)*mxp)*mzp
+          do k = 2,mzp-1
+             scalart1D(k+ind1D) = scalart1D(k+ind1D) + &
+                  (AdvMntField(k,iAdvMnt,jAdvMnt)-scalarp3D(k,i,j)) * dtli
+          end do
+       end do
+    end do
+  end subroutine AdvectTendency
+
+
+
+
+
+
+  subroutine AdvectMnt(oneAdvMnt,ngrid,m1,m2,m3,ia,iz,ja,jz,dt,mynum,n,&
+       current_aer_ispc,current_ndt_z,IsThisScalarAer)
+
+    type(MonotonicAdvection), pointer, intent(in) :: oneAdvMnt
+    integer , intent(in) :: m1,ngrid
+    integer , intent(in) :: m2
+    integer , intent(in) :: m3
+    integer , intent(in) :: ia
+    integer , intent(in) :: iz
+    integer , intent(in) :: ja
+    integer , intent(in) :: jz,n
+    integer , intent(in) :: mynum
+    real    , intent(in) :: dt
+    integer , intent(in) :: current_ndt_z,current_aer_ispc
+    logical , intent(in) :: IsThisScalarAer
+    !- local var
+    !REAL,DIMENSION(m1)               :: dxx
+    !REAL,DIMENSION(m2,m3)            :: dxy
+    real masscon,initialmass,vol
+    integer nrec,itz
+    integer ibegin,iend,jbegin,jend
+    !- type of sedimentation scheme (0= Walcek, 1=upwind)
+    integer , parameter :: iupwind = 0
+    logical, parameter :: dumpLocal=.false.
+    character(len=*), parameter :: h="**(AdvectMnt)**"
+    character(len=8) :: str(10)
+
+    iBegin= newIa(ngrid)-1
+    iEnd  = newIz(ngrid)+1
+    jBegin= newJa(ngrid)-1
+    jEnd  = newJz(ngrid)+1
+
+    !--- do X-advection
+    if (dumpLocal) then
+       call MsgDump(h//" starts; update borders of vc3d_in for x advection")
+    end if
+    call update_borders(m1, newm2(ngrid), newm3(ngrid),oneAdvMnt%vc3d_in, &
+         nrecvI(ngrid), RecvMessageI(ngrid)%proc, RecvMessageI(ngrid)%tag, &
+         RecvMessageI(ngrid)%ia, RecvMessageI(ngrid)%iz, &
+         RecvMessageI(ngrid)%ja, RecvMessageI(ngrid)%jz, &
+         RecvMessageI(ngrid)%start, RecvMessageI(ngrid)%mSize, TotalRecvI(ngrid), &
+         nSendI(ngrid), sendMessageI(ngrid)%proc, sendMessageI(ngrid)%tag, &
+         sendMessageI(ngrid)%ia, sendMessageI(ngrid)%iz, &
+         sendMessageI(ngrid)%ja, sendMessageI(ngrid)%jz, &
+         sendMessageI(ngrid)%start, sendMessageI(ngrid)%mSize, TotalSendI(ngrid))
+
+    if (dumpLocal) then
+       call MsgDump(h//" invoke Advec3DX to advect vc3d_in, storing result in vc3d_out")
+    end if
+    call Advec3DX(m1,newM2(ngrid),newM3(ngrid),2,newM2(ngrid)-1,2,newM3(ngrid)-1, &
+         oneAdvMnt%vc3d_in,                             &
+         oneAdvMnt%u3d,oneAdvMnt%den0_3d,         &
+         oneAdvMnt%den1_3d,dt,oneAdvMnt%dxtW,     &
+         oneAdvMnt%dd0_3du,                             &
+         oneAdvMnt%vc3d_out, mynum )
+
+    !--- do Y-advection
+
+    if (dumpLocal) then
+       call MsgDump(h//" update borders of vc3d_out for y advection")
+    end if
+    call update_borders(m1, newm2(ngrid), newm3(ngrid),oneAdvMnt%vc3d_out, &
+         nrecvJ(ngrid), RecvMessageJ(ngrid)%proc, RecvMessageJ(ngrid)%tag, &
+         RecvMessageJ(ngrid)%ia, RecvMessageJ(ngrid)%iz, &
+         RecvMessageJ(ngrid)%ja, RecvMessageJ(ngrid)%jz, &
+         RecvMessageJ(ngrid)%start, RecvMessageJ(ngrid)%mSize, TotalRecvJ(ngrid), &
+         nSendJ(ngrid), sendMessageJ(ngrid)%proc, sendMessageJ(ngrid)%tag, &
+         sendMessageJ(ngrid)%ia, sendMessageJ(ngrid)%iz, &
+         sendMessageJ(ngrid)%ja, sendMessageJ(ngrid)%jz, &
+         sendMessageJ(ngrid)%start, sendMessageJ(ngrid)%mSize, TotalSendJ(ngrid))
+
+    if (dumpLocal) then
+       call MsgDump(h//" invoke Advec3DY to advect vc3d_out, storing result in vc3d_in")
+    end if
+    call Advec3DY(m1,newM2(ngrid),newM3(ngrid),2,newM2(ngrid)-1,2,newM3(ngrid)-1, &
+         oneAdvMnt%vc3d_out,                                        &
+         oneAdvMnt%v3d,oneAdvMnt%den1_3d,                     &
+         oneAdvMnt%den2_3d,dt,oneAdvMnt%dytW,                 &
+         oneAdvMnt%dd0_3dv,                                         &
+         oneAdvMnt%vc3d_in, mynum )
+
+    !--- do k-advection
+    if (dumpLocal) then
+       call MsgDump(h//" invoke Advec3d_Z to advect vc3d_in, storing result in vc3d_out")
+    end if
+    call Advec3DZ(m1,newM2(ngrid),newM3(ngrid),ibegin,iend,jbegin,jend, &
+         oneAdvMnt%vc3d_in,                                   &
+         oneAdvMnt%w3d,oneAdvMnt%den2_3d,               &
+         oneAdvMnt%den3_3d,dt,oneAdvMnt%dztW,           &
+         oneAdvMnt%dd0_3dw,                                   &
+         oneAdvMnt%vc3d_out, mynum )
+
+
+    !- aerosol section to include sedimentation
+    !- the sedimentation process is done using pure cartesian coordinates
+    !- so, all sedimentation velocities are treat as cartesian vertical velocities
+    !- which are positive downwards.
+    if (dumpLocal) then
+       write(str(1),"(i8)") aerosol
+       write(str(2),"(l)") IsThisScalarAer
+       call MsgDump(h//" aerosol="//trim(adjustl(str(1)))//&
+            "; IsThisScalarAer="//trim(adjustl(str(2))))
+    end if
+    if(aerosol > 0 .and. IsThisScalarAer) then
+
+       !-srf introducing a time-splitting for aerosol sedimentation
+
+       if (dumpLocal) then
+          write(str(1),"(i8)") iupwind
+          call MsgDump(h//" iupwind="//trim(adjustl(str(1))))
+       end if
+       if(iupwind == 0 ) then
+          ! - Walcek method
+          ! this routine works _only_ for mass concentration or density (kg/m3)
+          ! converting mixing ratio (kg/kg) to density (kg/m3)
+          oneAdvMnt%vc3d_in(:,:,:)=oneAdvMnt%vc3d_out(:,:,:) * oneAdvMnt%den0_3d(:,:,:)
+
+          !- do time splitting for aerosols with large fall velocities
+          do itz=1,current_ndt_z
+             call Advec3DZSedim(m1,m2,m3,ia,iz,ja,jz,                        &
+                  oneAdvMnt%vc3d_in(:,iBegin:iEnd,jBegin:jEnd),	 &
+                  dd_sedim(current_aer_ispc,ngrid)%v_sed_part,          & !fall velocity
+                  dt/float(current_ndt_z),                              & !subtimestep
+                  dzt(1:m1),grid_g(ngrid)%rtgt,	                 &
+                  oneAdvMnt%vc3d_out(:,iBegin:iEnd,jBegin:jEnd),  &
+                  mynum )
+
+             ! copy output to input array for the next sup-timestep
+             if(itz < current_ndt_z) oneAdvMnt%vc3d_in(:,:,:)=oneAdvMnt%vc3d_out(:,:,:)
+
+          end do
+          ! converting back mass concentration to mixing ratio
+          oneAdvMnt%vc3d_out(:,:,:)=&
+               oneAdvMnt%vc3d_out(:,:,:)/&
+               oneAdvMnt%den0_3d(:,:,:)
+
+       else if(iupwind == 1 ) then
+          ! - upwind method
+          !- do time splitting for aerosols with large fall velocities
+          do itz=1,current_ndt_z
+             call Advec3DZSedimUpw(m1,m2,m3,ia,iz,ja,jz,                          &
+                  dd_sedim(current_aer_ispc,ngrid)%v_sed_part,          & !fall velocity
+                  dt/float(current_ndt_z),                              & !subtimestep
+                  dzt(1:m1),grid_g(ngrid)%rtgt,	                                 &
+                  oneAdvMnt%vc3d_out(:,iBegin:iEnd,jBegin:jEnd),  &
+                  mynum )
+
+          end do
+       end if
+    end if
+    if (dumpLocal) then
+       call MsgDump(h//" finishes")
+    end if
+  end subroutine AdvectMnt
+
+
+  subroutine Advec3DX(m1,m2,m3,ia,iz,ja,jz,&
+       q0,&
+       u,den0,&
+       den1,dt,dxx,&
+       dd0,&
+       qn,mynum)
+    !-------------------------
+    ! This subroutine calculates change in mixing ratio (Q0) during time
+    !  step DT due to advection along a grid IDIM in length. Mixing ratios
+    !  from host code (C) are loaded into Q0 array, which is updated to QN.
+    !  Velocities (U) and fluxes (FLUX) are specified at cell FACES, having
+    !  dimensions 0:IDIM. U, Q0, QN, DXX and FLUX indices defined here:
+    !  Densities at beg, end time (DEN0, DEN1) defined in HOST CODE
+    !
+    ! I grid->   |  1  |  2  |  I-1  |   I  |..   ..|  IDIM  | <- host grid
+    ! U-array-> u(0)  u(1)  u(2)   u(i-1)  u(i)           u(IDIM)
+    ! C-array->  | C(1)| C(2)| C(I-1)| C(I) |..   ..| C(IDIM)| mixing ratio
+    ! DXX-arry-> | Dx1 | Dx2 | DxI-1 | DxI  |..   ..| DxIDIM |
+    ! Density->  | Dd1 | Dd2 | DdI-1 | DdI  |..   ..| DdIDIM |
+    !                 Q0 defined along 0 - IDIM+1 cells:
+    !    |       | QN  | QN  |  QN   |  QN  |       |   QN   |        |
+    !    |   Q0--|-Q0--|-Q0--|--Q0 --|--Q0--|..   ..|-- Q0 --|--Q0    |
+    !    |    0  | 1   |  2  | I-1   |  I   |       |  IDIM  | IDIM+1 |
+    !   lower BC |             <---   Q0 grid   --->         | upper BC
+    !           Boundary conditions are stored in Q0 cells 0 & IDIM+1
+    !
+    !  Input to this subroutine, provided in common /sub/, and the calling
+    !  arguments to this subroutine:
+    !     IDIM - #of grid cells being updated
+    !     Q0(0:IDIM+1)- Initial mixing ratio along 1-D array, with two
+    !                 additional boundary value mixing ratios padded into the
+    !                 0th and IDIM+1 cell locations
+    !     U(0:IDIM)- velocities BETWEEN grid cells (at the "higher-I" edges of
+    !                each grid cell in the array, units consistent with DX, DT
+    !     DEN0(IDIM)- Initial fluid density, which needs to be updated during
+    !                 multi-dimensional calculations, as noted in Calling code
+    !     DEN1(IDIM)- Updated fluid density, which needs to be updated during
+    !                 multi-dimensional calculations, as noted in calling code
+    !     DT-         time step- units consistent with U
+    !     DXX(IDIM)-  Grid cell length along advection direction, Units
+    !                   consistent with DT and U
+    !     DD0(0:IDIM)- Initial fluid density flowing BETWEEN each grid cell
+    !                  (remains constant for all dimensions at the initial
+    !                  fluid density of the 1st dimension of a 2-3 D calculation
+    !               one can use UPSTREAM density here (DD0(I)= RHO0(I) if u>0
+    !               or DD0(I)= RHO0(I+1) if u<0) where RHO0 is the initial
+    !               fluid density at the beginning of the 1st dimensional
+    !               advection step of a 2 or 3 D advection calculation done one
+    !               step at a time
+    !
+    !  Output of this subroutine is an updated mixing ratio array QN(IDIM)
+    !
+
+    integer, intent(in) :: m1
+    integer, intent(in) :: m2
+    integer, intent(in) :: m3
+    integer, intent(in) :: ia
+    integer, intent(in) :: iz
+    integer, intent(in) :: ja
+    integer, intent(in) :: jz
+    integer, intent(in) :: mynum
+    real   , intent(in) :: q0(m1,m2,m3)
+    real   , intent(in) :: u(m1,m2,m3)
+    real   , intent(in) :: den0(m1,m2,m3)
+    real   , intent(in) :: den1(m1,m2,m3)
+    real   , intent(in) :: dt
+    real   , intent(in) :: dxx(m2,m3)
+    real   , intent(in) :: dd0(m1,m2,m3)
+    real   , intent(out):: qn(m1,m2,m3)
+
+    integer :: i
+    integer :: j
+    integer :: k
+    integer :: ii
+    integer :: ji
+    integer :: ii0
+    integer :: ji0
+    integer :: ie
+    integer :: je
+    integer :: ie0
+    integer :: je0
+    integer :: ipos
+    integer :: iia
+    integer :: iiz
+    integer :: nvar
+    integer :: nf
+    real :: flux(m1,m2,m3)
+    real :: vcmax(m1,m2,m3)
+    real :: vcmin(m1,m2,m3)
+    logical :: imxmn(m1,m2,m3)
+    real, parameter :: zr0=0.0
+    real, parameter :: EPS=1.e-6
+    real :: cf
+    real :: cf1
+    real :: ck1
+    real :: ck2
+    real :: x1
+    real :: x1n
+
+    logical, parameter :: dumpLocal=.false.
+    character(len=*), parameter :: h="**(Advec3DX)**"
+    character(len=8) :: str(10)
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") m1
+       write(str(2),"(i8)") m2
+       write(str(3),"(i8)") m3
+       write(str(4),"(i8)") ia
+       write(str(5),"(i8)") iz
+       write(str(6),"(i8)") ja
+       write(str(7),"(i8)") jz
+       call MsgDump(h//" starts at surface area ("//&
+            trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//","//&
+            trim(adjustl(str(6)))//":"//trim(adjustl(str(7)))//")"//&
+            " of fields dimensioned ("//&
+            trim(adjustl(str(1)))//","//&
+            trim(adjustl(str(2)))//","//&
+            trim(adjustl(str(3)))//")")
+    end if
+
+    ! copy input field to output field
+    qn=q0
+    imxmn=.false.
+
+    ! Update mixing ratios and limit Fluxes going UP where u>0
+    !  First assume upstream flux at edge of domain
+    do j=ja,jz
+       do k=2,m1-1
+          if(u(k,1,j)>=zr0) flux(k,1,j)= q0(k,1,j)*u(k,1,j)*dt*dd0(k,1,j)
+       end do
+    end do
+
+    ! Identify local max and min, specify mixing ratio limits at new time
+    !  VCMAX and VCMIN are the absolute physical limits to the
+    !     mixing ratio at t+dt. If these limits are ever violated,
+    !     non-monotonic (oscillatory) behavior in solution results
+    do j=ja,jz
+       do  i=2,m2-1 ! ia,iz-1 or 1,iz-1
+          do k=2,m1-1
+             imxmn(k,i,j)=q0(k,i,j)>=(max(q0(k,i-1,j),q0(k,i+1,j))-eps) .or. & !=true if local
+                  q0(k,i,j)<=(min(q0(k,i-1,j),q0(k,i+1,j))+eps)        !       extrema
+             ck1= q0(k,i,j)
+             ck2= q0(k,i,j)
+             if(u(k,i,j  )< zr0) ck1= q0(k,i+1,j)
+             if(u(k,i-1,j)>=zr0) ck2= q0(k,i-1,j)
+             vcmax(k,i,j)= max( q0(k,i,j), ck1, ck2 )                      ! Eq-7
+             vcmin(k,i,j)= min( q0(k,i,j), ck1, ck2 )                      ! Eq-7
+          end do
+       end do
+    end do
+
+    ! Identify local max and min, specify mixing ratio limits at new time
+    do j=ja,jz
+       do  i=2,m2-1 ! ia,iz-1 or 1,iz-1
+          do k=2,m1-1
+             if(u(k,i,j)<zr0) cycle
+             if(u(k,i-1,j)<zr0) then
+                flux(k,i,j)= q0(k,i,j)*u(k,i,j)*dt*dd0(k,i,j)    !  outflow-only cell
+             else                              !      use upstream
+                x1= dt*u(k,i,j)/dxx(i,j)               ! Courant number
+                x1n= (1.-x1)*(q0(k,i+1,j)-q0(k,i-1,j))/4.
+
+                ! First, estimate mixing ratio in outflowing fluid (Cf)
+                cf= q0(k,i,j) + x1n                                       !Eq-4a
+
+                !   Check to see if there is a peak (min) upwind and/or
+                !    downwind of cell face
+                if(imxmn(k,i-1,j)) cf= q0(k,i,j) +max(1.5,1.2  +.6 *x1)*x1n   !Eq-10b
+                if(imxmn(k,i+1,j)) cf= q0(k,i,j) +       (1.75 -.45*x1)*x1n   !Eq-10a
+                !        CF= Q0(k,i,j) + 5.*X1N   ! uncomment this line for "full sharp"
+
+                !   Limit Cf to be between mixing ratio on either side of edge
+                !      where flux is being calculated
+                cf1= min( max( cf, min(q0(k,i,j),q0(k,i+1,j))  ), max(q0(k,i,j),q0(k,i+1,j)) )
+
+                !   Calculate mixing ratio at new time, but limit to physically
+                !    reasonable values
+                qn(k,i,j) = max(vcmin(k,i,j),min(vcmax(k,i,j),          &   !eq-3&8
+                     (q0(k,i,j)*den0(k,i,j)-x1*cf1*dd0(k,i,j)+flux(k,i-1,j)/dxx(i,j))/den1(k,i,j) ))
+
+                !   Re-calculate OUTFLOWING flux before moving on to next cell
+                !    Flux = CF1*X1*DD0 but it must be adjusted if a monotonic limit
+                !    is encountered.
+                flux(k,i,j)= dxx(i,j)*(q0(k,i,j)*den0(k,i,j) - qn(k,i,j)*den1(k,i,j)) + flux(k,i-1,j)
+             end if                                                  !Eq-9a
+          end do
+       end do
+    end do
+
+    ! If periodic boundary conditions are assumed, it is necessary
+    !   to recalculate the updated mixing ratio at cell 1 if there
+    !   is inflow to that cell from the boundary between IDIM and 1
+    !   Here these statements are commented out, but should be uncommented
+    !   if this subroutine is needed for periodic boundary conditions,
+    !   and then one of the calling arguements to the subroutine is IPERIOD
+    !   which is set to "1" if you assume period boundary conditions
+    !      IF(IPERIOD==1) THEN
+    !        IF(U(IDIM-1)>=ZR0.AND.U(IDIM)>=ZR0)
+    !     &  QN(1)=(Q0(1)*DEN0(1)-FLUX(1)/DXX(1)+FLUX(IDIM)/DXX(1))/DEN1(1)
+    !      END IF
+    !
+    ! Update mixing ratios and limit Fluxes going DOWN where u<0
+    !  The logic of this loop through the grid line is identical
+    !  to the "DO 10" Loop above, only you start at the highest I
+    !  edge and work backwards to I=1
+    !
+    do j=ja,jz
+       do k=2,m1-1
+          if(u(k,m2-1,j)<zr0) flux(k,m2-1,j)= &
+               q0(k,m2,j)*u(k,m2-1,j)*dt*dd0(k,m2-1,j)
+       end do
+    end do
+
+    do j=ja,jz
+       do i=m2-1,2,-1 !iz,ia,-1
+          do k=2,m1-1
+             if(u(k,i-1,j)>=zr0) then           ! Inflow-only cell
+                if(u(k,i,j)<zr0) qn(k,i,j)=  max(  vcmin(k,i,j),   min(   vcmax(k,i,j),&
+                     (q0(k,i,j)*den0(k,i,j)-flux(k,i,j)/dxx(i,j) + &
+                     flux(k,i-1,j)/dxx(i,j))/den1(k,i,j) ))
+             else
+                x1=  dt*abs(u(k,i-1,j))/dxx(i,j)     ! Courant number
+                x1n= (1.-x1)*(q0(k,i-1,j)-q0(k,i+1,j))/4.
+                cf= q0(k,i,j) + x1n                                       !Eq-4b
+                if(imxmn(k,i+1,j)) cf= q0(k,i,j) +max(1.5,1.2  +.6 *x1)*x1n   !Eq-10b
+                if(imxmn(k,i-1,j)) cf= q0(k,i,j) +   (1.75 -.45*x1)*x1n       !Eq-10a
+                cf1= min( max( cf, min(q0(k,i,j),q0(k,i-1,j)) ), max(q0(k,i,j),q0(k,i-1,j)) )
+                if(u(k,i,j)>=zr0) cf1= q0(k,i,j)     ! outflow-only cell upstream
+                qn(k,i,j)= max(  vcmin(k,i,j),  min(   vcmax(k,i,j), 	  &   !Eq-3&8
+                     (q0(k,i,j)*den0(k,i,j)-flux(k,i,j)/dxx(i,j)-x1*cf1*dd0(k,i-1,j))/den1(k,i,j) ))
+                flux(k,i-1,j)=dxx(i,j)*(qn(k,i,j)*den1(k,i,j) - q0(k,i,j)*den0(k,i,j)) + flux(k,i,j)!Eq-9b
+             end if
+          end do
+       end do
+    end do !- big loop y-z
+    if (dumpLocal) then
+       call MsgDump(h//" finishes")
+    end if
+  end subroutine Advec3DX
+
+
+
+  subroutine Advec3DY(m1,m2,m3,ia,iz,ja,jz,&
+       q0,&
+       u,den0,&
+       den1,dt,dxx,&
+       dd0,&
+       qn,mynum)
+    !-------------------------
+    ! This subroutine calculates change in mixing ratio (Q0) during time
+    !  step DT due to advection along a grid IDIM in length. Mixing ratios
+    !  from host code (C) are loaded into Q0 array, which is updated to QN.
+    !  Velocities (U) and fluxes (FLUX) are specified at cell FACES, having
+    !  dimensions 0:IDIM. U, Q0, QN, DXX and FLUX indices defined here:
+    !  Densities at beg, end time (DEN0, DEN1) defined in HOST CODE
+    !
+    ! I grid->   |  1  |  2  |  I-1  |   I  |..   ..|  IDIM  | <- host grid
+    ! U-array-> u(0)  u(1)  u(2)   u(i-1)  u(i)           u(IDIM)
+    ! C-array->  | C(1)| C(2)| C(I-1)| C(I) |..   ..| C(IDIM)| mixing ratio
+    ! DXX-arry-> | Dx1 | Dx2 | DxI-1 | DxI  |..   ..| DxIDIM |
+    ! Density->  | Dd1 | Dd2 | DdI-1 | DdI  |..   ..| DdIDIM |
+    !                 Q0 defined along 0 - IDIM+1 cells:
+    !    |       | QN  | QN  |  QN   |  QN  |       |   QN   |        |
+    !    |   Q0--|-Q0--|-Q0--|--Q0 --|--Q0--|..   ..|-- Q0 --|--Q0    |
+    !    |    0  | 1   |  2  | I-1   |  I   |       |  IDIM  | IDIM+1 |
+    !   lower BC |             <---   Q0 grid   --->         | upper BC
+    !           Boundary conditions are stored in Q0 cells 0 & IDIM+1
+    !
+    !  Input to this subroutine, provided in common /sub/, and the calling
+    !  arguments to this subroutine:
+    !     IDIM - #of grid cells being updated
+    !     Q0(0:IDIM+1)- Initial mixing ratio along 1-D array, with two
+    !                 additional boundary value mixing ratios padded into the
+    !                 0th and IDIM+1 cell locations
+    !     U(0:IDIM)- velocities BETWEEN grid cells (at the "higher-I" edges of
+    !                each grid cell in the array, units consistent with DX, DT
+    !     DEN0(IDIM)- Initial fluid density, which needs to be updated during
+    !                 multi-dimensional calculations, as noted in Calling code
+    !     DEN1(IDIM)- Updated fluid density, which needs to be updated during
+    !                 multi-dimensional calculations, as noted in calling code
+    !     DT-         time step- units consistent with U
+    !     DXX(IDIM)-  Grid cell length along advection direction, Units
+    !                   consistent with DT and U
+    !     DD0(0:IDIM)- Initial fluid density flowing BETWEEN each grid cell
+    !                  (remains constant for all dimensions at the initial
+    !                  fluid density of the 1st dimension of a 2-3 D calculation
+    !               one can use UPSTREAM density here (DD0(I)= RHO0(I) if u>0
+    !               or DD0(I)= RHO0(I+1) if u<0) where RHO0 is the initial
+    !               fluid density at the beginning of the 1st dimensional
+    !               advection step of a 2 or 3 D advection calculation done one
+    !               step at a time
+    !
+    !  Output of this subroutine is an updated mixing ratio array QN(IDIM)
+    !
+
+    integer, intent(in) :: m1
+    integer, intent(in) :: m2
+    integer, intent(in) :: m3
+    integer, intent(in) :: ia
+    integer, intent(in) :: iz
+    integer, intent(in) :: ja
+    integer, intent(in) :: jz
+    integer, intent(in) :: mynum
+    real   , intent(in) :: q0(m1,m2,m3)
+    real   , intent(in) :: u(m1,m2,m3)
+    real   , intent(in) :: den0(m1,m2,m3)
+    real   , intent(in) :: den1(m1,m2,m3)
+    real   , intent(in) :: dt
+    real   , intent(in) :: dxx(m2,m3)
+    real   , intent(in) :: dd0(m1,m2,m3)
+    real   , intent(out):: qn(m1,m2,m3)
+
+    integer :: i
+    integer :: j
+    integer :: k
+    integer :: ii
+    integer :: ji
+    integer :: ii0
+    integer :: ji0
+    integer :: ie
+    integer :: je
+    integer :: ie0
+    integer :: je0
+    integer :: ipos
+    integer :: iia
+    integer :: iiz
+    integer :: nvar
+    integer :: nf
+    real :: flux(m1,m2,m3)
+    real :: vcmax(m1,m2,m3)
+    real :: vcmin(m1,m2,m3)
+    logical :: imxmn(m1,m2,m3)
+    real, parameter :: zr0=0.0
+    real, parameter :: EPS=1.e-6
+    real :: cf
+    real :: cf1
+    real :: ck1
+    real :: ck2
+    real :: x1
+    real :: x1n
+
+    logical, parameter :: dumpLocal=.false.
+    character(len=*), parameter :: h="**(Advec3DY)**"
+    character(len=8) :: str(10)
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") m1
+       write(str(2),"(i8)") m2
+       write(str(3),"(i8)") m3
+       write(str(4),"(i8)") ia
+       write(str(5),"(i8)") iz
+       write(str(6),"(i8)") ja
+       write(str(7),"(i8)") jz
+       call MsgDump(h//" starts at surface area ("//&
+            trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//","//&
+            trim(adjustl(str(6)))//":"//trim(adjustl(str(7)))//")"//&
+            " of fields dimensioned ("//&
+            trim(adjustl(str(1)))//","//&
+            trim(adjustl(str(2)))//","//&
+            trim(adjustl(str(3)))//")")
+    end if
+
+    ! copy input field to output field
+    qn= q0
+    imxmn=.false.
+
+    ! Update mixing ratios and limit Fluxes going UP where u>0
+    !  First assume upstream flux at edge of domain
+    do i=ia,iz
+       do k=2,m1-1
+          if(u(k,i,1)>=zr0) flux(k,i,1)= q0(k,i,1)*u(k,i,1)*dt*dd0(k,i,1)
+       end do
+    end do
+
+    ! Identify local max and min, specify mixing ratio limits at new time
+    !  VCMAX and VCMIN are the absolute physical limits to the
+    !	mixing ratio at t+dt. If these limits are ever violated,
+    !	non-monotonic (oscillatory) behavior in solution results
+    do i=ia,iz
+       do  j=2,m3-1 ! ja,jz
+          do k=2,m1-1
+             imxmn(k,i,j)=q0(k,i,j)>=(max(q0(k,i,j-1),q0(k,i,j+1))-eps) .or. & !=true if local
+                  q0(k,i,j)<=(min(q0(k,i,j-1),q0(k,i,j+1))+eps)	    !	    extrema
+             ck1= q0(k,i,j)
+             ck2= q0(k,i,j)
+             if(u(k,i,j  )< zr0) ck1= q0(k,i,j+1)
+             if(u(k,i,j-1)>=zr0) ck2= q0(k,i,j-1)
+             vcmax(k,i,j)= max( q0(k,i,j), ck1, ck2 )                      ! Eq-7
+             vcmin(k,i,j)= min( q0(k,i,j), ck1, ck2 )                      ! Eq-7
+          end do
+       end do
+    end do
+
+    ! Identify local max and min, specify mixing ratio limits at new time
+    do i=ia,iz
+       do  j=2,m3-1 ! ja,jz
+          do k=2,m1-1
+             if(u(k,i,j)<zr0) cycle
+             if(u(k,i,j-1)<zr0) then
+                flux(k,i,j)= q0(k,i,j)*u(k,i,j)*dt*dd0(k,i,j)    !  outflow-only cell
+             else                              !      use upstream
+                x1= dt*u(k,i,j)/dxx(i,j)               ! Courant number
+                x1n= (1.-x1)*(q0(k,i,j+1)-q0(k,i,j-1))/4.
+
+                ! First, estimate mixing ratio in outflowing fluid (Cf)
+                cf= q0(k,i,j) + x1n                                       !Eq-4a
+
+                !   Check to see if there is a peak (min) upwind and/or
+                !    downwind of cell face
+                if(imxmn(k,i,j-1)) cf= q0(k,i,j) +max(1.5,1.2  +.6 *x1)*x1n   !Eq-10b
+                if(imxmn(k,i,j+1)) cf= q0(k,i,j) +       (1.75 -.45*x1)*x1n   !Eq-10a
+                !        CF= Q0(k,i,j) + 5.*X1N   ! uncomment this line for "full sharp"
+
+                !   Limit Cf to be between mixing ratio on either side of edge
+                !      where flux is being calculated
+                cf1= min( max( cf, min(q0(k,i,j),q0(k,i,j+1))  ), max(q0(k,i,j),q0(k,i,j+1)) )
+
+                !   Calculate mixing ratio at new time, but limit to physically
+                !    reasonable values
+                qn(k,i,j)= max(  vcmin(k,i,j),   min(   vcmax(k,i,j),          &   !eq-3&8
+                     (q0(k,i,j)*den0(k,i,j)-x1*cf1*dd0(k,i,j)+flux(k,i,j-1)/dxx(i,j))/den1(k,i,j) ))
+
+                !   Re-calculate OUTFLOWING flux before moving on to next cell
+                !    Flux = CF1*X1*DD0 but it must be adjusted if a monotonic limit
+                !    is encountered.
+                flux(k,i,j)= dxx(i,j)*(q0(k,i,j)*den0(k,i,j) - qn(k,i,j)*den1(k,i,j)) + flux(k,i,j-1) !Eq-9a
+             end if
+          end do
+       end do
+    end do
+
+    ! If periodic boundary conditions are assumed, it is necessary
+    !   to recalculate the updated mixing ratio at cell 1 if there
+    !   is inflow to that cell from the boundary between IDIM and 1
+    !   Here these statements are commented out, but should be uncommented
+    !   if this subroutine is needed for periodic boundary conditions,
+    !   and then one of the calling arguements to the subroutine is IPERIOD
+    !   which is set to "1" if you assume period boundary conditions
+    !      IF(IPERIOD==1) THEN
+    !        IF(U(IDIM-1)>=ZR0.AND.U(IDIM)>=ZR0)
+    !     &  QN(1)=(Q0(1)*DEN0(1)-FLUX(1)/DXX(1)+FLUX(IDIM)/DXX(1))/DEN1(1)
+    !      END IF
+    !
+    ! Update mixing ratios and limit Fluxes going DOWN where u<0
+    !  The logic of this loop through the grid line is identical
+    !  to the "DO 10" Loop above, only you start at the highest I
+    !  edge and work backwards to I=1
+    !
+    do i=ia,iz
+       do k=2,m1-1
+          if(u(k,i,m3-1)<zr0) flux(k,i,m3-1)= &
+               q0(k,i,m3)*u(k,i,m3-1)*dt*dd0(k,i,m3-1)
+       end do
+    end do
+
+    do i=ia,iz
+       do j=m3-1,2,-1 !jz,ja,-1
+          do k=2,m1-1
+             if(u(k,i,j-1)>=zr0) then           ! Inflow-only cell
+                if(u(k,i,j)<zr0) qn(k,i,j)=  max(  vcmin(k,i,j),   min(   vcmax(k,i,j),&
+                     (q0(k,i,j)*den0(k,i,j)-flux(k,i,j)/dxx(i,j) + &
+                     flux(k,i,j-1)/dxx(i,j))/den1(k,i,j) ))
+             else
+                x1=  dt*abs(u(k,i,j-1))/dxx(i,j)     ! Courant number
+                x1n= (1.-x1)*(q0(k,i,j-1)-q0(k,i,j+1))/4.
+                cf= q0(k,i,j) + x1n                                       !Eq-4b
+                if(imxmn(k,i,j+1)) cf= q0(k,i,j) +max(1.5,1.2  +.6 *x1)*x1n   !Eq-10b
+                if(imxmn(k,i,j-1)) cf= q0(k,i,j) +   (1.75 -.45*x1)*x1n       !Eq-10a
+                cf1= min( max( cf, min(q0(k,i,j),q0(k,i,j-1)) ), max(q0(k,i,j),q0(k,i,j-1)) )
+                if(u(k,i,j)>=zr0) cf1= q0(k,i,j)     ! outflow-only cell upstream
+                qn(k,i,j)= max(  vcmin(k,i,j),  min(   vcmax(k,i,j), 	  &   !Eq-3&8
+                     (q0(k,i,j)*den0(k,i,j)-flux(k,i,j)/dxx(i,j)-x1*cf1*dd0(k,i,j-1))/den1(k,i,j) ))
+                flux(k,i,j-1)=dxx(i,j)*(qn(k,i,j)*den1(k,i,j) - q0(k,i,j)*den0(k,i,j)) + flux(k,i,j)!Eq-9b
+             end if
+          end do
+       end do
+    end do !- big loop x-z
+    if (dumpLocal) then
+       call MsgDump(h//" finishes")
+    end if
+  end subroutine Advec3DY
+
+  subroutine Advec3DZ(m1,m2,m3,ia,iz,ja,jz,&
+       q0,&
+       u,den0,&
+       den1,dt,dxx,&
+       dd0,&
+       qn,mynum)
+    !-------------------------
+    ! This subroutine calculates change in mixing ratio (Q0) during time
+    !  step DT due to advection along a grid IDIM in length. Mixing ratios
+    !  from host code (C) are loaded into Q0 array, which is updated to QN.
+    !  Velocities (U) and fluxes (FLUX) are specified at cell FACES, having
+    !  dimensions 0:IDIM. U, Q0, QN, DXX and FLUX indices defined here:
+    !  Densities at beg, end time (DEN0, DEN1) defined in HOST CODE
+    !
+    ! I grid->   |  1  |  2  |  I-1  |   I  |..   ..|  IDIM  | <- host grid
+    ! U-array-> u(0)  u(1)  u(2)   u(i-1)  u(i)           u(IDIM)
+    ! C-array->  | C(1)| C(2)| C(I-1)| C(I) |..   ..| C(IDIM)| mixing ratio
+    ! DXX-arry-> | Dx1 | Dx2 | DxI-1 | DxI  |..   ..| DxIDIM |
+    ! Density->  | Dd1 | Dd2 | DdI-1 | DdI  |..   ..| DdIDIM |
+    !                 Q0 defined along 0 - IDIM+1 cells:
+    !    |       | QN  | QN  |  QN   |  QN  |       |   QN   |        |
+    !    |   Q0--|-Q0--|-Q0--|--Q0 --|--Q0--|..   ..|-- Q0 --|--Q0    |
+    !    |    0  | 1   |  2  | I-1   |  I   |       |  IDIM  | IDIM+1 |
+    !   lower BC |             <---   Q0 grid   --->         | upper BC
+    !           Boundary conditions are stored in Q0 cells 0 & IDIM+1
+    !
+    !  Input to this subroutine, provided in common /sub/, and the calling
+    !  arguments to this subroutine:
+    !     IDIM - #of grid cells being updated
+    !     Q0(0:IDIM+1)- Initial mixing ratio along 1-D array, with two
+    !                 additional boundary value mixing ratios padded into the
+    !                 0th and IDIM+1 cell locations
+    !     U(0:IDIM)- velocities BETWEEN grid cells (at the "higher-I" edges of
+    !                each grid cell in the array, units consistent with DX, DT
+    !     DEN0(IDIM)- Initial fluid density, which needs to be updated during
+    !                 multi-dimensional calculations, as noted in Calling code
+    !     DEN1(IDIM)- Updated fluid density, which needs to be updated during
+    !                 multi-dimensional calculations, as noted in calling code
+    !     DT-         time step- units consistent with U
+    !     DXX(IDIM)-  Grid cell length along advection direction, Units
+    !                   consistent with DT and U
+    !     DD0(0:IDIM)- Initial fluid density flowing BETWEEN each grid cell
+    !                  (remains constant for all dimensions at the initial
+    !                  fluid density of the 1st dimension of a 2-3 D calculation
+    !               one can use UPSTREAM density here (DD0(I)= RHO0(I) if u>0
+    !               or DD0(I)= RHO0(I+1) if u<0) where RHO0 is the initial
+    !               fluid density at the beginning of the 1st dimensional
+    !               advection step of a 2 or 3 D advection calculation done one
+    !               step at a time
+    !
+    !  Output of this subroutine is an updated mixing ratio array QN(IDIM)
+    !
+
+    integer, intent(in) :: m1
+    integer, intent(in) :: m2
+    integer, intent(in) :: m3
+    integer, intent(in) :: ia
+    integer, intent(in) :: iz
+    integer, intent(in) :: ja
+    integer, intent(in) :: jz
+    integer, intent(in) :: mynum
+    real   , intent(in) :: q0(m1,m2,m3)
+    real   , intent(in) :: u(m1,m2,m3)
+    real   , intent(in) :: den0(m1,m2,m3)
+    real   , intent(in) :: den1(m1,m2,m3)
+    real   , intent(in) :: dt
+    real   , intent(in) :: dxx(m1)
+    real   , intent(in) :: dd0(m1,m2,m3)
+    real   , intent(out):: qn(m1,m2,m3)
+
+    integer :: i
+    integer :: j
+    integer :: k
+    real :: flux(m1,m2,m3)
+    real :: vcmax(m1,m2,m3)
+    real :: vcmin(m1,m2,m3)
+    logical :: imxmn(m1,m2,m3)
+    real, parameter :: zr0=0.0
+    real, parameter :: EPS=1.e-6
+    real :: cf
+    real :: cf1
+    real :: ck1
+    real :: ck2
+    real :: x1
+    real :: x1n
+
+    logical, parameter :: dumpLocal=.false.
+    character(len=*), parameter :: h="**(Advec3DZ)**"
+    character(len=8) :: str(10)
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") m1
+       write(str(2),"(i8)") m2
+       write(str(3),"(i8)") m3
+       write(str(4),"(i8)") ia
+       write(str(5),"(i8)") iz
+       write(str(6),"(i8)") ja
+       write(str(7),"(i8)") jz
+       call MsgDump(h//" starts at surface area ("//&
+            trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//","//&
+            trim(adjustl(str(6)))//":"//trim(adjustl(str(7)))//")"//&
+            " of fields dimensioned ("//&
+            trim(adjustl(str(1)))//","//&
+            trim(adjustl(str(2)))//","//&
+            trim(adjustl(str(3)))//")")
+    end if
+
+    ! copy input field to output field
+    qn = q0
+    imxmn=.false.
+
+
+    ! Identify local max and min, specify mixing ratio limits at new time
+    !  VCMAX and VCMIN are the absolute physical limits to the
+    !     mixing ratio at t+dt. If these limits are ever violated,
+    !     non-monotonic (oscillatory) behavior in solution results
+    do j=ja,jz
+       do i=ia,iz
+          do k=2,m1-1 
+             imxmn(k,i,j)=q0(k,i,j)>=(max(q0(k-1,i,j),q0(k+1,i,j))-eps) .or. & !=true if local
+                  q0(k,i,j)<=(min(q0(k-1,i,j),q0(k+1,i,j))+eps)	    !	    extrema
+             ck1= q0(k,i,j)
+             ck2= q0(k,i,j)
+             if(u(k  ,i,j)< zr0) ck1= q0(k+1,i,j)
+             if(u(k-1,i,j)>=zr0) ck2= q0(k-1,i,j)
+             vcmax(k,i,j)= max( q0(k,i,j), ck1, ck2 )                      ! Eq-7
+             vcmin(k,i,j)= min( q0(k,i,j), ck1, ck2 )                      ! Eq-7
+          end do
+       end do
+    end do
+
+
+    ! Update mixing ratios and limit Fluxes going UP where u>0
+    !  First assume upstream flux at edge of domain
+    do j=ja,jz
+       do i=ia,iz
+          if(u(1,i,j)>=zr0) flux(1,i,j)= &
+               q0(1,i,j)*u(1,i,j)*dt*dd0(1,i,j)
+          do k=2,m1-1
+             if(u(k,i  ,j)<zr0) cycle
+             if(u(k-1,i,j)<zr0) then
+                flux(k,i,j)= q0(k,i,j)*u(k,i,j)*dt*dd0(k,i,j)    !  outflow-only cell
+             else                              !      use upstream
+                x1= dt*u(k,i,j)/dxx(k)               ! Courant number
+                x1n= (1.-x1)*(q0(k+1,i,j)-q0(k-1,i,j))/4.
+
+                ! First, estimate mixing ratio in outflowing fluid (Cf)
+                cf= q0(k,i,j) + x1n                                       !Eq-4a
+
+                !   Check to see if there is a peak (min) upwind and/or
+                !    downwind of cell face
+                if(imxmn(k-1,i,j)) cf= q0(k,i,j) +max(1.5,1.2  +.6 *x1)*x1n   !Eq-10b
+                if(imxmn(k+1,i,j)) cf= q0(k,i,j) +       (1.75 -.45*x1)*x1n   !Eq-10a
+                !        CF= Q0(k,i,j) + 5.*X1N   ! uncomment this line for "full sharp"
+
+                !   Limit Cf to be between mixing ratio on either side of edge
+                !      where flux is being calculated
+                cf1= min( max( cf, min(q0(k,i,j),q0(k+1,i,j))  ), max(q0(k,i,j),q0(k+1,i,j)) )
+
+                !   Calculate mixing ratio at new time, but limit to physically
+                !    reasonable values
+                qn(k,i,j)= max(  vcmin(k,i,j),   min(   vcmax(k,i,j),          &   !eq-3&8
+                     (q0(k,i,j)*den0(k,i,j)-x1*cf1*dd0(k,i,j)+flux(k-1,i,j)/dxx(k))/den1(k,i,j) ))
+
+                !   Re-calculate OUTFLOWING flux before moving on to next cell
+                !    Flux = CF1*X1*DD0 but it must be adjusted if a monotonic limit
+                !    is encountered.
+                flux(k,i,j)= dxx(k)*(q0(k,i,j)*den0(k,i,j) - qn(k,i,j)*den1(k,i,j)) + flux(k-1,i,j)
+             end if                                                  !Eq-9a
+          end do
+       end do
+    end do
+
+    ! Update mixing ratios and limit Fluxes going DOWN where u<0
+    !  The logic of this loop through the grid line is identical
+    !  to the "DO 10" Loop above, only you start at the highest I
+    !  edge and work backwards to I=1
+    do j=ja,jz
+       do i=ia,iz
+          if(u(m1-1,i,j)<zr0) flux(m1-1,i,j)=&
+               q0(m1,i,j)*u(m1-1,i,j)*dt*dd0(m1-1,i,j)
+          do k=m1-1,2,-1
+             if(u(k-1,i,j)>=zr0) then           ! Inflow-only cell
+                if(u(k,i,j)<zr0) qn(k,i,j)=  max(  vcmin(k,i,j),   min(   vcmax(k,i,j),&
+                     (q0(k,i,j)*den0(k,i,j)-flux(k,i,j)/dxx(k) + flux(k-1,i,j)/dxx(k))/den1(k,i,j) ))
+             else
+                x1=  dt*abs(u(k-1,i,j))/dxx(k)     ! Courant number
+                x1n= (1.-x1)*(q0(k-1,i,j)-q0(k+1,i,j))/4.
+                cf= q0(k,i,j) + x1n                                       !Eq-4b
+                if(imxmn(k+1,i,j)) cf= q0(k,i,j) +max(1.5,1.2  +.6 *x1)*x1n   !Eq-10b
+                if(imxmn(k-1,i,j)) cf= q0(k,i,j) +   (1.75 -.45*x1)*x1n       !Eq-10a
+                cf1= min( max( cf, min(q0(k,i,j),q0(k-1,i,j)) ), max(q0(k,i,j),q0(k-1,i,j)) )
+                if(u(k,i,j)>=zr0) cf1= q0(k,i,j)     ! outflow-only cell upstream
+                qn(k,i,j) = max(  vcmin(k,i,j),  min(   vcmax(k,i,j), 	  &   !Eq-3&8
+                     (q0(k,i,j)*den0(k,i,j)-flux(k,i,j)/dxx(k)-x1*cf1*dd0(k-1,i,j))/den1(k,i,j) ))
+                flux(k-1,i,j)=dxx(k)*(qn(k,i,j)*den1(k,i,j) - q0(k,i,j)*den0(k,i,j)) + flux(k,i,j)!Eq-9b
+             end if
+          end do
+       end do
+    end do !- big loop y-x
+    if (dumpLocal) then
+       call MsgDump(h//" finishes")
+    end if
+  end subroutine Advec3DZ
+
+
+  subroutine Advec3DZSedim(m1,m2,m3,ia,iz,ja,jz,&
+       q0,&
+       u,&
+       dt,&
+       dzt,rtgt,&
+       qn,&
+       mynum)
+    !-------------------------
+    ! This subroutine calculates change in mixing ratio (Q0) during time
+    !  step DT due to advection along a grid IDIM in length. Mixing ratios
+    !  from host code (C) are loaded into Q0 array, which is updated to QN.
+    !  Velocities (U) and fluxes (FLUX) are specified at cell FACES, having
+    !  dimensions 0:IDIM. U, Q0, QN, DXX and FLUX indices defined here:
+    !  Densities at beg, end time (DEN0, DEN1) defined in HOST CODE
+    !
+    ! I grid->   |  1  |  2  |  I-1  |   I  |..   ..|  IDIM  | <- host grid
+    ! U-array-> u(0)  u(1)  u(2)   u(i-1)  u(i)           u(IDIM)
+    ! C-array->  | C(1)| C(2)| C(I-1)| C(I) |..   ..| C(IDIM)| mixing ratio
+    ! DXX-arry-> | Dx1 | Dx2 | DxI-1 | DxI  |..   ..| DxIDIM |
+    ! Density->  | Dd1 | Dd2 | DdI-1 | DdI  |..   ..| DdIDIM |
+    !                 Q0 defined along 0 - IDIM+1 cells:
+    !    |       | QN  | QN  |  QN   |  QN  |       |   QN   |        |
+    !    |   Q0--|-Q0--|-Q0--|--Q0 --|--Q0--|..   ..|-- Q0 --|--Q0    |
+    !    |    0  | 1   |  2  | I-1   |  I   |       |  IDIM  | IDIM+1 |
+    !   lower BC |             <---   Q0 grid   --->         | upper BC
+    !           Boundary conditions are stored in Q0 cells 0 & IDIM+1
+    !
+    !  Input to this subroutine, provided in common /sub/, and the calling
+    !  arguments to this subroutine:
+    !     IDIM - #of grid cells being updated
+    !     Q0(0:IDIM+1)- Initial mixing ratio along 1-D array, with two
+    !                 additional boundary value mixing ratios padded into the
+    !                 0th and IDIM+1 cell locations
+    !     U(0:IDIM)- velocities BETWEEN grid cells (at the "higher-I" edges of
+    !                each grid cell in the array, units consistent with DX, DT
+    !     DEN0(IDIM)- Initial fluid density, which needs to be updated during
+    !                 multi-dimensional calculations, as noted in Calling code
+    !     DEN1(IDIM)- Updated fluid density, which needs to be updated during
+    !                 multi-dimensional calculations, as noted in calling code
+    !     DT-         time step- units consistent with U
+    !     DXX(IDIM)-  Grid cell length along advection direction, Units
+    !                   consistent with DT and U
+    !     DD0(0:IDIM)- Initial fluid density flowing BETWEEN each grid cell
+    !                  (remains constant for all dimensions at the initial
+    !                  fluid density of the 1st dimension of a 2-3 D calculation
+    !               one can use UPSTREAM density here (DD0(I)= RHO0(I) if u>0
+    !               or DD0(I)= RHO0(I+1) if u<0) where RHO0 is the initial
+    !               fluid density at the beginning of the 1st dimensional
+    !               advection step of a 2 or 3 D advection calculation done one
+    !               step at a time
+    !
+    !  Output of this subroutine is an updated mixing ratio array QN(IDIM)
+    !
+
+    integer, intent(in) :: m1
+    integer, intent(in) :: m2
+    integer, intent(in) :: m3
+    integer, intent(in) :: ia
+    integer, intent(in) :: iz
+    integer, intent(in) :: ja
+    integer, intent(in) :: jz
+    integer, intent(in) :: mynum
+    real   , intent(in) :: q0(m1,m2,m3)
+    real   , intent(in) :: u(m1,m2,m3)
+    real   , intent(in) :: dt
+    real   , intent(in) :: dzt(m1)
+    real   , intent(in) :: rtgt(m2,m3)
+    real   , intent(out):: qn(m1,m2,m3)
+
+    integer :: i
+    integer :: j
+    integer :: k
+    real :: flux(m1,m2,m3)
+    real :: vcmax(m1,m2,m3)
+    real :: vcmin(m1,m2,m3)
+    logical :: imxmn(m1,m2,m3)
+    real, parameter :: zr0=0.0
+    real, parameter :: EPS=1.e-6
+    real :: cf
+    real :: cf1
+    real :: ck1
+    real :: ck2
+    real :: x1
+    real :: x1n
+    real :: rtgti
+
+    logical, parameter :: dumpLocal=.false.
+    character(len=*), parameter :: h="**(Advec3DZSedim)**"
+    character(len=8) :: str(10)
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") m1
+       write(str(2),"(i8)") m2
+       write(str(3),"(i8)") m3
+       write(str(4),"(i8)") ia
+       write(str(5),"(i8)") iz
+       write(str(6),"(i8)") ja
+       write(str(7),"(i8)") jz
+       call MsgDump(h//" starts at surface area ("//&
+            trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//","//&
+            trim(adjustl(str(6)))//":"//trim(adjustl(str(7)))//")"//&
+            " of fields dimensioned ("//&
+            trim(adjustl(str(1)))//","//&
+            trim(adjustl(str(2)))//","//&
+            trim(adjustl(str(3)))//")")
+    end if
+
+    qn = q0
+    imxmn=.false.
+
+    ! Identify local max and min, specify mixing ratio limits at new time
+    !  VCMAX and VCMIN are the absolute physical limits to the
+    !     mixing ratio at t+dt. If these limits are ever violated,
+    !     non-monotonic (oscillatory) behavior in solution results
+    do j=ja,jz
+       do i=ia,iz
+          do  k=2,m1-1 !
+             imxmn(k,i,j)=q0(k,i,j)>=(max(q0(k-1,i,j),q0(k+1,i,j))-eps) .or. & !=true if local
+                  q0(k,i,j)<=(min(q0(k-1,i,j),q0(k+1,i,j))+eps)	    !	    extrema
+             ck1= q0(k,i,j)
+             ck2= q0(k,i,j)
+             if(-u(k  ,i,j)< zr0) ck1= q0(k+1,i,j)
+             if(-u(k-1,i,j)>=zr0) ck2= q0(k-1,i,j)
+             if(k==2) ck2= q0(k,i,j) !for sedim only
+             vcmax(k,i,j)= max( q0(k,i,j), ck1, ck2 )                      ! Eq-7
+             vcmin(k,i,j)= min( q0(k,i,j), ck1, ck2 )                      ! Eq-7
+          end do
+       end do
+    end do
+
+    do j=ja,jz
+       do i=ia,iz
+          rtgti=1./rtgt(i,j)
+          flux(m1-1,i,j)=q0(m1,i,j)*(-u(m1-1,i,j))*dt
+          do k=m1-1,2,-1
+             !srf       x1=  dt*ABS(u(k-1,i,j))/dxx(k)     ! Courant number
+             x1=  dt*abs(u(k-1,i,j))*dzt(k)*rtgti     ! Courant number
+             if(k==2) x1 = 0. ! no flux below sfc terrain,for sedim only
+             x1n= (1.-x1)*(q0(k-1,i,j)-q0(k+1,i,j))/4.
+             cf= q0(k,i,j) + x1n                                       !Eq-4b
+             if(imxmn(k+1,i,j)) cf= q0(k,i,j) +max(1.5,1.2  +.6 *x1)*x1n   !Eq-10b
+             if(imxmn(k-1,i,j)) cf= q0(k,i,j) +   (1.75 -.45*x1)*x1n       !Eq-10a
+             cf1= min( max( cf, min(q0(k,i,j),q0(k-1,i,j)) ), max(q0(k,i,j),q0(k-1,i,j)) )
+             if(k>2) then  !for sedim only
+                qn(k,i,j) = max(  vcmin(k,i,j),  min(   vcmax(k,i,j), 	  &   !Eq-3&8
+                                !srf                 (q0(k,i,j)-flux(k,i,j)/dxx(k)      -x1*cf1) ))
+                     (q0(k,i,j)-flux(k,i,j)*dzt(k)*rtgti-x1*cf1) ))
+             else
+                qn(k,i,j) = (q0(k,i,j)-flux(k,i,j)*dzt(k)*rtgti-x1*cf1)
+             end if
+             !srf	   flux(k-1,i,j)=dxx(k)             *(qn(k,i,j) - q0(k,i,j)) + flux(k,i,j)!Eq-9b
+             flux(k-1,i,j)=(1./(dzt(k)*rtgti))*(qn(k,i,j) - q0(k,i,j)) + flux(k,i,j)!Eq-9b
+          end do
+       end do
+    end do !- big loop y-x
+    if (dumpLocal) then
+       call MsgDump(h//" finishes")
+    end if
+  end subroutine Advec3DZSedim
+
+  subroutine Advec3DZSedimUpw(m1,m2,m3, ia,iz,ja,jz,u,dt,dzt,rtgt,qn,mynum)
+
+    integer, intent(in) :: m1
+    integer, intent(in) :: m2
+    integer, intent(in) :: m3
+    integer, intent(in) :: ia
+    integer, intent(in) :: iz
+    integer, intent(in) :: ja
+    integer, intent(in) :: jz
+    integer, intent(in) :: mynum
+    real   , intent(in) :: u(m1,m2,m3)
+    real   , intent(in) :: dt
+    real   , intent(in) :: dzt(m1)
+    real   , intent(in) :: rtgt(m2,m3)
+    real   , intent(out):: qn(m1,m2,m3)
+
+    integer :: i
+    integer :: j
+    integer :: k
+    real :: cf
+    real :: cf1
+    real :: ck1
+    real :: ck2
+    real :: x1
+    real :: x1n
+    real :: rtgti
+
+    logical, parameter :: dumpLocal=.false.
+    character(len=*), parameter :: h="**(Advec3DZSedimUpw)**"
+    character(len=8) :: str(10)
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") m1
+       write(str(2),"(i8)") m2
+       write(str(3),"(i8)") m3
+       write(str(4),"(i8)") ia
+       write(str(5),"(i8)") iz
+       write(str(6),"(i8)") ja
+       write(str(7),"(i8)") jz
+       call MsgDump(h//" starts at surface area ("//&
+            trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//","//&
+            trim(adjustl(str(6)))//":"//trim(adjustl(str(7)))//")"//&
+            " of fields dimensioned ("//&
+            trim(adjustl(str(1)))//","//&
+            trim(adjustl(str(2)))//","//&
+            trim(adjustl(str(3)))//")")
+    end if
+
+    !- big loop y-x
+    do j=ja,jz
+       do i=ia,iz
+          rtgti=1./rtgt(i,j)
+          !srf dxx = dz = rtgti/dzt
+          !srf qn(m1-1,i,j) = qn(m1-1,i,j) / (1.0 - dt*u(m1-1,i,j)/dxx(m1-1)      )
+          qn(m1-1,i,j) = qn(m1-1,i,j) / (1.0 + dt*u(m1-1,i,j)*dzt(m1-1)*rtgti)
+          do k=m1-2,2,-1 !
+             !srf    qn(k,i,j)= 1.0/(1.0+dt*u(k,i,j)/dxx(k))&
+             !srf               *( qn(k,i,j)+ dt*u(k,i,j) /dxx(k+1) * qn(k+1,i,j) )
+             qn(k,i,j)= 1.0/(1.0 + dt*u(k,i,j)*dzt(k)*rtgti)&
+                  *( qn(k,i,j) + dt*u(k+1,i,j)*dzt(k+1)*rtgti * qn(k+1,i,j) )
+             !   tc(i,j,l,k) = 1.0/(1.0+dt_settl(k)*vd_cor/delz(i,j,l2))&
+             !  	 *(tc(i,j,l,k) + dt_settl(k)*vd_cor /delz(i,j,l2-1) &
+             !  	 * tc(i,j,l+1,k))
+          end do
+       end do
+    end do !- big loop y-x
+    if (dumpLocal) then
+       call MsgDump(h//" finishes")
+    end if
+  end subroutine Advec3DZSedimUpw
+
   subroutine advmnt_driver(OneGrid, varn, &
        m1 ,m2 ,m3 ,ia,iz,ja,jz,izu,jzv,&
        i0,j0,nodemyp,nodemxp,nodemzp,mynum)
@@ -4113,8 +5322,6 @@ contains
     ! first y position of external fields (1) indexed Monotonic Advection
     integer :: jMypExternAtAdvMnt
     ! last y position of external fields (myp) indexed Monotonic Advection
-
-    real, pointer :: auxPtr(:,:,:) => null()
 
     ! dimension of external fields (regular ghost zone width)
 
@@ -4667,35 +5874,19 @@ contains
 
     !**(JP)** starts
 
-    call DeepCopyScalarTabAtOneGrid(oneGrid)
-!!$    if (dumpLocal) then
+    call DeepCopyToScalarTabAtOneGrid(oneGrid)
+    
+    if (dumpLocal) then
        write(str(1),"(i8)") num_scalar(ng)
        call MsgDump(h//" there are "//trim(adjustl(str(1)))//" scalar fields")
-       do n=i_scl,num_scalar(ng)
-          call Compare(scalar_tab(n,ng)%var_p_3D, OneGrid%ScalarTab(n)%var_p_3D, &
-               trim(OneGrid%ScalarTab(n)%name)//"%var_p_3D", .true.)
-          call Compare(scalar_tab(n,ng)%var_t_1D, OneGrid%ScalarTab(n)%var_t_1D, &
-               trim(OneGrid%ScalarTab(n)%name)//"%var_t_1D", .true.)
-       end do
-!!$    end if
+!!$       do n=i_scl,num_scalar(ng)
+!!$          call Compare(scalar_tab(n,ng)%var_p_3D, OneGrid%ScalarTab(n)%var_p_3D, &
+!!$               trim(OneGrid%ScalarTab(n)%name)//"%var_p_3D", .true.)
+!!$          call Compare(scalar_tab(n,ng)%var_t_1D, OneGrid%ScalarTab(n)%var_t_1D, &
+!!$               trim(OneGrid%ScalarTab(n)%name)//"%var_t_1D", .true.)
+!!$       end do
+    end if
 
-!!$    allocate(auxPtr(mzp,mxpAdvMnt,mypAdvMnt), stat=ierr)
-!!$    if (ierr /= 0) then
-!!$       write(str(1),"(i8)") ierr
-!!$       write(str(2),"(i8)") mzp
-!!$       write(str(3),"(i8)") mxpAdvMnt
-!!$       write(str(4),"(i8)") mypAdvMnt
-!!$       call fatal_error(h//" allocate auxPtr("//&
-!!$            trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")"//&
-!!$            " fails with stat="//trim(adjustl(str(1))))
-!!$    end if
-!!$    if (dumpLocal) then
-!!$       write(str(2),"(i8)") mzp
-!!$       write(str(3),"(i8)") mxpAdvMnt
-!!$       write(str(4),"(i8)") mypAdvMnt
-!!$       call MsgDump(h//" allocated auxPtr("//&
-!!$            trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-!!$    end if
 
     !**(JP)** ends
 
@@ -4767,47 +5958,6 @@ contains
 
        if (associated(OneGrid%ScalarTab(n)%var_p_3D)) then
 
-!!$          ! set auxPtr north border to zero
-!!$          do j = 1, j1ExternAtAdvMnt-1
-!!$             do i = 1, mxpAdvMnt
-!!$                do k = 1, mzp
-!!$                   auxPtr(k,i,j) = 0.0
-!!$                end do
-!!$             end do
-!!$          end do
-!!$          do j = j1ExternAtAdvMnt, jMypExternAtAdvMnt
-!!$             jExtern = j + jOffset
-!!$             ! set auxPtr west border to zero
-!!$             do i = 1, i1ExternAtAdvMnt-1
-!!$                do k = 1, mzp
-!!$                   auxPtr(k,i,j) = 0.0
-!!$                end do
-!!$             end do
-!!$             ! copy scalartab external field to the
-!!$             ! inner part of auxPtr
-!!$             do i = i1ExternAtAdvMnt, iMxpExternAtAdvMnt
-!!$                iExtern = i + iOffset
-!!$                do k = 1, mzp
-!!$                   auxPtr(k,i,j) = OneGrid%ScalarTab(n)%var_p_3D(k,iExtern,jExtern)
-!!$                end do
-!!$             end do
-!!$             ! set auxPtr east border to zero
-!!$             do i = iMxpExternAtAdvMnt+1, mxpAdvMnt
-!!$                do k = 1, mzp
-!!$                   auxPtr(k,i,j) = 0.0
-!!$                end do
-!!$             end do
-!!$          end do
-!!$          ! set auxPtr south border to zero
-!!$          do j = jMypExternAtAdvMnt+1, mypAdvMnt
-!!$             do i = 1, mxpAdvMnt
-!!$                do k = 1, mzp
-!!$                   auxPtr(k,i,j) = 0.0
-!!$                end do
-!!$             end do
-!!$          end do
-
-
 
           ! set oneAdvMnt%vc3d_in north border to zero
           do j = 1, j1ExternAtAdvMnt-1
@@ -4848,7 +5998,7 @@ contains
                 end do
              end do
           end do
-          
+
 
           !**(JP)** ends
 
@@ -4872,16 +6022,16 @@ contains
           call advect_mnt(ng,m1,m2,m3,ia,iz,ja,jz,dtlt,mynum,n, &
                current_aer_ispc,current_ndt_z,IsThisScalarAer)
 
-       !**(JP)** starts
+          !**(JP)** starts
 
           call AdvectMnt(oneAdvMnt,ng,m1,m2,m3,ia,iz,ja,jz,dtlt,mynum,n, &
                current_aer_ispc,current_ndt_z,IsThisScalarAer)
 
 
-          call Compare(advmnt_g(ng)%vc3d_in, oneAdvMnt%vc3d_in, &
-               "vc3d_in", .true.)
+!!$          call Compare(advmnt_g(ng)%vc3d_in, oneAdvMnt%vc3d_in, &
+!!$               "vc3d_in", .true.)
 
-       !**(JP)** ends
+          !**(JP)** ends
 
 
           if (dumpLocal) then
@@ -4905,6 +6055,22 @@ contains
                ,scalarp  ,advmnt_g(ng)%vc3d_out(1:m1,iBegin:iEnd,jBegin:jEnd)  &
                ,scalart  ,dtlt,mynum        )
 
+
+          !**(JP)** starts
+
+          call AdvectTendency(mzp, mxp, &
+               iOffset, jOffset, &
+               ia, iz, ja, jz, dtlt, &
+               scalarp3D=OneGrid%ScalarTab(n)%var_p_3D, &
+               AdvMntField=oneAdvMnt%vc3d_out, &
+               scalart1D=OneGrid%ScalarTab(n)%var_t_1D)
+
+!!$          call Compare(scalar_tab(n,ng)%var_t_1D, &
+!!$               OneGrid%ScalarTab(n)%var_t_1D, &
+!!$               "var_t_1D", .true.)
+          
+          !**(JP)** ends
+
 !!$
 !!$       if (dumpLocal) then
 !!$          write(str(1),"(i8)") ia
@@ -4927,139 +6093,18 @@ contains
 !!$            ,scalarp  ,advmnt_g(ng)%vc3d_out(1:m1,iBegin:iEnd,jBegin:jEnd)  &
 !!$            ,scalart  ,dtlt,mynum        )
        else
-!!$          if (dumpLocal) then
-          call MsgDump (h//" not associated "//&
-               trim(adjustl(OneGrid%ScalarTab(n)%name)))
-!!$          end if
-
+          if (dumpLocal) then
+             call MsgDump (h//" not associated "//&
+                  trim(adjustl(OneGrid%ScalarTab(n)%name)))
+          end if
        end if
 
 
     end do
 
-    !**(JP)** starts
-
-
-
-!!$    allocate(auxPtr(mzp,mxpAdvMnt,mypAdvMnt), stat=ierr)
-!!$    if (ierr /= 0) then
-!!$       write(str(1),"(i8)") ierr
-!!$       write(str(2),"(i8)") mzp
-!!$       write(str(3),"(i8)") mxpAdvMnt
-!!$       write(str(4),"(i8)") mypAdvMnt
-!!$       call fatal_error(h//" allocate auxPtr("//&
-!!$            trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")"//&
-!!$            " fails with stat="//trim(adjustl(str(1))))
-!!$    end if
-!!$    if (dumpLocal) then
-!!$       write(str(2),"(i8)") mzp
-!!$       write(str(3),"(i8)") mxpAdvMnt
-!!$       write(str(4),"(i8)") mypAdvMnt
-!!$       call MsgDump(h//" allocated auxPtr("//&
-!!$            trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-!!$    end if
-!!$    
-!!$
-!!$    do n=i_scl,OneGrid%ScalarTabSize
-!!$
-!!$       !- if RK or ABM3 scheme, THP/THC are not transported here
-!!$       if (dyncore_flag == 2) then
-!!$          if (OneGrid%ScalarTab(n)%name == 'THC' .or. &
-!!$               OneGrid%ScalarTab(n)%name == 'THP') cycle
-!!$       end if
-!!$
-!!$       !srf - somente para gases e aerossois
-!!$       !     do n=num_scalar(ng) - NSPECIES_TRANSPORTED +1,num_scalar(ng)
-!!$       !      if (scalar_tab(n,ng)%name /= 'COP' .and. scalar_tab(n,ng)%name /= 'CH4P') cycle
-!!$       !          scalar_tab(n,ng)%name /= 'O3P'  ) cycle
-!!$
-!!$       !- Aerosol sedimentation
-!!$       IsThisScalarAer  = .false.
-!!$       current_aer_ispc = 0
-!!$       current_ndt_z    = 1
-!!$       if(ccatt == 1 .and. aerosol > 0 .and. n >= num_scalar_aer_1st) then
-!!$          !srf-  We are going to include sedimentation of aerosols at
-!!$          !      vertical advection tendency. It is supposed that scalars
-!!$          !      with  N >= num_scalar_aer_1st are _all_ aerosols .
-!!$          !
-!!$          IsThisScalarAer=.true.
-!!$          current_aer_ispc = n - num_scalar_aer_1st + 1
-!!$          current_ndt_z    = ndt_z (current_aer_ispc)
-!!$
-!!$       end if
-!!$
-!!$       if (dumpLocal) then
-!!$          call MsgDump (h//" advects scalar "//&
-!!$               trim(adjustl(OneGrid%ScalarTab(n)%name)))
-!!$       end if
-!!$
-!!$
-!!$
-!!$       if (dumpLocal) then
-!!$          write(str(1),"(i8)") ia
-!!$          write(str(2),"(i8)") iz
-!!$          write(str(3),"(i8)") ja
-!!$          write(str(4),"(i8)") jz
-!!$          write(str(5),"(i8)") m1
-!!$          write(str(6),"(i8)") m2
-!!$          write(str(7),"(i8)") m3
-!!$          call MsgDump(h//" invokes advect_mnt with"//&
-!!$               " m1="//trim(adjustl(str(5)))//&
-!!$               " m2="//trim(adjustl(str(6)))//&
-!!$               " m3="//trim(adjustl(str(7)))//&
-!!$               " ia="//trim(adjustl(str(1)))//&
-!!$               " iz="//trim(adjustl(str(2)))//&
-!!$               " ja="//trim(adjustl(str(3)))//&
-!!$               " jz="//trim(adjustl(str(4))))
-!!$       end if
-!!$       call AdvectMnt(oneAdvMnt,ng,m1,m2,m3,ia,iz,ja,jz,dtlt,mynum,n, &
-!!$            current_aer_ispc,current_ndt_z,IsThisScalarAer)
-!!$
-!!$       if (dumpLocal) then
-!!$          write(str(1),"(i8)") ia
-!!$          write(str(2),"(i8)") iz
-!!$          write(str(3),"(i8)") ja
-!!$          write(str(4),"(i8)") jz
-!!$          write(str(5),"(i8)") m1
-!!$          write(str(6),"(i8)") m2
-!!$          write(str(7),"(i8)") m3
-!!$          write(str(8),"(i8)") iBegin
-!!$          write(str(9),"(i8)") iEnd
-!!$          write(str(10),"(i8)") jBegin
-!!$          write(str(11),"(i8)") jEnd
-!!$          call MsgDump(h//" invokes advtndc to increment scalart with vc3d_out-scalarp on (1:"//&
-!!$               trim(adjustl(str(5)))//","//&
-!!$               trim(adjustl(str(8)))//":"//trim(adjustl(str(9)))//","//&
-!!$               trim(adjustl(str(10)))//":"//trim(adjustl(str(11)))//")")
-!!$       end if
-!!$       call advtndc(m1,m2,m3,ia,iz,ja,jz        &
-!!$            ,scalarp  ,advmnt_g(ng)%vc3d_out(1:m1,iBegin:iEnd,jBegin:jEnd)  &
-!!$            ,scalart  ,dtlt,mynum        )
-!!$       else
-!!$          if (dumpLocal) then
-!!$             call MsgDump (h//" not associated "//&
-!!$                  trim(adjustl(OneGrid%ScalarTab(n)%name)))
-!!$          end if
-!!$          
-!!$       end if
-!!$    end do
-
-!!$    deallocate(auxPtr, stat=ierr)
-!!$    if (ierr /= 0) then
-!!$       write(str(1),"(i8)") ierr
-!!$       call fatal_error(h//" deallocate auxPtr"//&
-!!$            " fails with stat="//trim(adjustl(str(1))))
-!!$    end if
-!!$    if (dumpLocal) then
-!!$       call MsgDump(h//" deallocated auxPtr")
-!!$    end if
-
-    !**(JP)** ends
-
-
-
-
-
+    call DeepCopyFromScalarTabAtOneGrid(oneGrid)
+    call DestroyMonotonicAdvection(oneAdvMnt)
+    
     if (dumpLocal) then
        call MsgDump(h//" finishes")
     end if
@@ -7174,72 +8219,6 @@ contains
 
 
 
-
-
-  subroutine CheckBorders(m1, m2, m3, field, &
-       nRecv, procRecv, tagRecv, iaRecv, izRecv, jaRecv, jzRecv, &
-       bufRecvStart, bufRecvLength, bufRecvTotalLength, &
-       nSend, procSend, tagSend, iaSend, izSend, jaSend, jzSend, &
-       bufSendStart, bufSendLength, bufSendTotalLength,mynum,op,ie)
-    integer, intent(in) :: m1,mynum,op,ie
-    integer, intent(in) :: m2
-    integer, intent(in) :: m3
-    real,    intent(inout) :: field(m1,m2,m3)
-    integer, intent(in) :: nRecv
-    integer, intent(in) :: procRecv(nRecv)
-    integer, intent(in) :: tagRecv(nRecv)
-    integer, intent(in) :: iaRecv(nRecv)
-    integer, intent(in) :: izRecv(nRecv)
-    integer, intent(in) :: jaRecv(nRecv)
-    integer, intent(in) :: jzRecv(nRecv)
-    integer, intent(in) :: bufRecvStart(nRecv)
-    integer, intent(in) :: bufRecvLength(nRecv)
-    integer, intent(in) :: bufRecvTotalLength
-    integer, intent(in) :: nSend
-    integer, intent(in) :: procSend(nSend)
-    integer, intent(in) :: tagSend(nSend)
-    integer, intent(in) :: iaSend(nSend)
-    integer, intent(in) :: izSend(nSend)
-    integer, intent(in) :: jaSend(nSend)
-    integer, intent(in) :: jzSend(nSend)
-    integer, intent(in) :: bufSendStart(nSend)
-    integer, intent(in) :: bufSendLength(nSend)
-    integer, intent(in) :: bufSendTotalLength
-
-    integer :: fout,i
-    character :: opc
-
-    fout=80+mynum
-    opc='Y'
-    if(op==1) opc='X'
-
-    if(ie==0) then
-       write (fout,'("Borders updated, direction ",A)') opc
-       return
-    end if
-
-
-    write (fout,'(" Updating borders, direction  ",A)') opc ; call flush(fout)
-    write (fout,'("nRecv: ",I3.3," nSend: ",I3.3)') nRecv,nSend; call flush(fout)
-    write (fout,'("TotRecv: ",I6.6," TotSend: ",I6.6)') bufRecvTotalLength,bufSendTotalLength; call flush(fout)
-    write (fout,'(A)') '---------------------------------- Send ---------------------------'; call flush(fout)
-    write (fout,'(7(A3,1X),2(A,1X))') 'nSn','prc','tag','ia ','iz ','ja ','jz ','Start','Length'; call flush(fout)
-    do i=1,nRecv
-       write (fout,'(7(I3.3,1X),2(I6.6,1X))') i,procRecv(i),tagRecv(i),iaRecv(i),izRecv(i),jaRecv(i),jzRecv(i), &
-            bufRecvStart(i),bufRecvLength(i); call flush(fout)
-    end do
-    write (fout,'(A)') '------------------------------- Receive  --------------------------'; call flush(fout)
-    write (fout,'(7(A3,1X),2(A,1X))') 'nRv','prc','tag','ia ','iz ','ja ','jz ','Start','Length'
-    do i=1,nRecv
-       write (fout,'(7(I3.3,1X),2(I6.6,1X))')	i,procSend(i),tagSend(i),iaSend(i),izSend(i),jaSend(i),jzSend(i), &
-            bufSendStart(i),bufSendLength(i); call flush(fout)
-    end do
-  end subroutine CheckBorders
-
-
-
-
-
   subroutine StoreNamelistFileAtRadvc_mnt(oneNamelistFile)
 
     ! import NameListFile values into module variables
@@ -7249,1081 +8228,4 @@ contains
     advmnt = oneNamelistFile%advmnt
     GhostZoneLength=oneNamelistFile%GhostZoneLength
   end subroutine StoreNamelistFileAtRadvc_mnt
-
-
-
-  subroutine AdvectMnt(oneAdvMnt,ngrid,m1,m2,m3,ia,iz,ja,jz,dt,mynum,n,&
-       current_aer_ispc,current_ndt_z,IsThisScalarAer)
-
-    type(MonotonicAdvection), pointer, intent(in) :: oneAdvMnt
-    integer , intent(in) :: m1,ngrid
-    integer , intent(in) :: m2
-    integer , intent(in) :: m3
-    integer , intent(in) :: ia
-    integer , intent(in) :: iz
-    integer , intent(in) :: ja
-    integer , intent(in) :: jz,n
-    integer , intent(in) :: mynum
-    real    , intent(in) :: dt
-    integer , intent(in) :: current_ndt_z,current_aer_ispc
-    logical , intent(in) :: IsThisScalarAer
-    !- local var
-    !REAL,DIMENSION(m1)               :: dxx
-    !REAL,DIMENSION(m2,m3)            :: dxy
-    real masscon,initialmass,vol
-    integer nrec,itz
-    integer ibegin,iend,jbegin,jend
-    !- type of sedimentation scheme (0= Walcek, 1=upwind)
-    integer , parameter :: iupwind = 0
-    logical, parameter :: dumpLocal=.false.
-    character(len=*), parameter :: h="**(AdvectMnt)**"
-    character(len=8) :: str(10)
-
-    iBegin= newIa(ngrid)-1
-    iEnd  = newIz(ngrid)+1
-    jBegin= newJa(ngrid)-1
-    jEnd  = newJz(ngrid)+1
-
-    !--- do X-advection
-    if (dumpLocal) then
-       call MsgDump(h//" starts; update borders of vc3d_in for x advection")
-    end if
-    call update_borders(m1, newm2(ngrid), newm3(ngrid),oneAdvMnt%vc3d_in, &
-         nrecvI(ngrid), RecvMessageI(ngrid)%proc, RecvMessageI(ngrid)%tag, &
-         RecvMessageI(ngrid)%ia, RecvMessageI(ngrid)%iz, &
-         RecvMessageI(ngrid)%ja, RecvMessageI(ngrid)%jz, &
-         RecvMessageI(ngrid)%start, RecvMessageI(ngrid)%mSize, TotalRecvI(ngrid), &
-         nSendI(ngrid), sendMessageI(ngrid)%proc, sendMessageI(ngrid)%tag, &
-         sendMessageI(ngrid)%ia, sendMessageI(ngrid)%iz, &
-         sendMessageI(ngrid)%ja, sendMessageI(ngrid)%jz, &
-         sendMessageI(ngrid)%start, sendMessageI(ngrid)%mSize, TotalSendI(ngrid))
-
-    if (dumpLocal) then
-       call MsgDump(h//" invoke Advec3DX to advect vc3d_in, storing result in vc3d_out")
-    end if
-    call Advec3DX(m1,newM2(ngrid),newM3(ngrid),2,newM2(ngrid)-1,2,newM3(ngrid)-1, &
-         oneAdvMnt%vc3d_in,                             &
-         oneAdvMnt%u3d,oneAdvMnt%den0_3d,         &
-         oneAdvMnt%den1_3d,dt,oneAdvMnt%dxtW,     &
-         oneAdvMnt%dd0_3du,                             &
-         oneAdvMnt%vc3d_out, mynum )
-
-    !--- do Y-advection
-
-    if (dumpLocal) then
-       call MsgDump(h//" update borders of vc3d_out for y advection")
-    end if
-    call update_borders(m1, newm2(ngrid), newm3(ngrid),oneAdvMnt%vc3d_out, &
-         nrecvJ(ngrid), RecvMessageJ(ngrid)%proc, RecvMessageJ(ngrid)%tag, &
-         RecvMessageJ(ngrid)%ia, RecvMessageJ(ngrid)%iz, &
-         RecvMessageJ(ngrid)%ja, RecvMessageJ(ngrid)%jz, &
-         RecvMessageJ(ngrid)%start, RecvMessageJ(ngrid)%mSize, TotalRecvJ(ngrid), &
-         nSendJ(ngrid), sendMessageJ(ngrid)%proc, sendMessageJ(ngrid)%tag, &
-         sendMessageJ(ngrid)%ia, sendMessageJ(ngrid)%iz, &
-         sendMessageJ(ngrid)%ja, sendMessageJ(ngrid)%jz, &
-         sendMessageJ(ngrid)%start, sendMessageJ(ngrid)%mSize, TotalSendJ(ngrid))
-
-    if (dumpLocal) then
-       call MsgDump(h//" invoke Advec3DY to advect vc3d_out, storing result in vc3d_in")
-    end if
-    call Advec3DY(m1,newM2(ngrid),newM3(ngrid),2,newM2(ngrid)-1,2,newM3(ngrid)-1, &
-         oneAdvMnt%vc3d_out,                                        &
-         oneAdvMnt%v3d,oneAdvMnt%den1_3d,                     &
-         oneAdvMnt%den2_3d,dt,oneAdvMnt%dytW,                 &
-         oneAdvMnt%dd0_3dv,                                         &
-         oneAdvMnt%vc3d_in, mynum )
-
-    !--- do k-advection
-    if (dumpLocal) then
-       call MsgDump(h//" invoke Advec3d_Z to advect vc3d_in, storing result in vc3d_out")
-    end if
-    call Advec3DZ(m1,newM2(ngrid),newM3(ngrid),ibegin,iend,jbegin,jend, &
-         oneAdvMnt%vc3d_in,                                   &
-         oneAdvMnt%w3d,oneAdvMnt%den2_3d,               &
-         oneAdvMnt%den3_3d,dt,oneAdvMnt%dztW,           &
-         oneAdvMnt%dd0_3dw,                                   &
-         oneAdvMnt%vc3d_out, mynum )
-
-
-    !- aerosol section to include sedimentation
-    !- the sedimentation process is done using pure cartesian coordinates
-    !- so, all sedimentation velocities are treat as cartesian vertical velocities
-    !- which are positive downwards.
-    if (dumpLocal) then
-       write(str(1),"(i8)") aerosol
-       write(str(2),"(l)") IsThisScalarAer
-       call MsgDump(h//" aerosol="//trim(adjustl(str(1)))//&
-            "; IsThisScalarAer="//trim(adjustl(str(2))))
-    end if
-    if(aerosol > 0 .and. IsThisScalarAer) then
-
-       !-srf introducing a time-splitting for aerosol sedimentation
-
-       if (dumpLocal) then
-          write(str(1),"(i8)") iupwind
-          call MsgDump(h//" iupwind="//trim(adjustl(str(1))))
-       end if
-       if(iupwind == 0 ) then
-          ! - Walcek method
-          ! this routine works _only_ for mass concentration or density (kg/m3)
-          ! converting mixing ratio (kg/kg) to density (kg/m3)
-          oneAdvMnt%vc3d_in(:,:,:)=oneAdvMnt%vc3d_out(:,:,:) * oneAdvMnt%den0_3d(:,:,:)
-
-          !- do time splitting for aerosols with large fall velocities
-          do itz=1,current_ndt_z
-             call Advec3DZSedim(m1,m2,m3,ia,iz,ja,jz,                        &
-                  oneAdvMnt%vc3d_in(:,iBegin:iEnd,jBegin:jEnd),	 &
-                  dd_sedim(current_aer_ispc,ngrid)%v_sed_part,          & !fall velocity
-                  dt/float(current_ndt_z),                              & !subtimestep
-                  dzt(1:m1),grid_g(ngrid)%rtgt,	                 &
-                  oneAdvMnt%vc3d_out(:,iBegin:iEnd,jBegin:jEnd),  &
-                  mynum )
-
-             ! copy output to input array for the next sup-timestep
-             if(itz < current_ndt_z) oneAdvMnt%vc3d_in(:,:,:)=oneAdvMnt%vc3d_out(:,:,:)
-
-          end do
-          ! converting back mass concentration to mixing ratio
-          oneAdvMnt%vc3d_out(:,:,:)=&
-               oneAdvMnt%vc3d_out(:,:,:)/&
-               oneAdvMnt%den0_3d(:,:,:)
-
-       else if(iupwind == 1 ) then
-          ! - upwind method
-          !- do time splitting for aerosols with large fall velocities
-          do itz=1,current_ndt_z
-             call Advec3DZSedimUpw(m1,m2,m3,ia,iz,ja,jz,                          &
-                  dd_sedim(current_aer_ispc,ngrid)%v_sed_part,          & !fall velocity
-                  dt/float(current_ndt_z),                              & !subtimestep
-                  dzt(1:m1),grid_g(ngrid)%rtgt,	                                 &
-                  oneAdvMnt%vc3d_out(:,iBegin:iEnd,jBegin:jEnd),  &
-                  mynum )
-
-          end do
-       end if
-    end if
-    if (dumpLocal) then
-       call MsgDump(h//" finishes")
-    end if
-  end subroutine AdvectMnt
-
-
-  subroutine Advec3DX(m1,m2,m3,ia,iz,ja,jz,&
-       q0,&
-       u,den0,&
-       den1,dt,dxx,&
-       dd0,&
-       qn,mynum)
-    !-------------------------
-    ! This subroutine calculates change in mixing ratio (Q0) during time
-    !  step DT due to advection along a grid IDIM in length. Mixing ratios
-    !  from host code (C) are loaded into Q0 array, which is updated to QN.
-    !  Velocities (U) and fluxes (FLUX) are specified at cell FACES, having
-    !  dimensions 0:IDIM. U, Q0, QN, DXX and FLUX indices defined here:
-    !  Densities at beg, end time (DEN0, DEN1) defined in HOST CODE
-    !
-    ! I grid->   |  1  |  2  |  I-1  |   I  |..   ..|  IDIM  | <- host grid
-    ! U-array-> u(0)  u(1)  u(2)   u(i-1)  u(i)           u(IDIM)
-    ! C-array->  | C(1)| C(2)| C(I-1)| C(I) |..   ..| C(IDIM)| mixing ratio
-    ! DXX-arry-> | Dx1 | Dx2 | DxI-1 | DxI  |..   ..| DxIDIM |
-    ! Density->  | Dd1 | Dd2 | DdI-1 | DdI  |..   ..| DdIDIM |
-    !                 Q0 defined along 0 - IDIM+1 cells:
-    !    |       | QN  | QN  |  QN   |  QN  |       |   QN   |        |
-    !    |   Q0--|-Q0--|-Q0--|--Q0 --|--Q0--|..   ..|-- Q0 --|--Q0    |
-    !    |    0  | 1   |  2  | I-1   |  I   |       |  IDIM  | IDIM+1 |
-    !   lower BC |             <---   Q0 grid   --->         | upper BC
-    !           Boundary conditions are stored in Q0 cells 0 & IDIM+1
-    !
-    !  Input to this subroutine, provided in common /sub/, and the calling
-    !  arguments to this subroutine:
-    !     IDIM - #of grid cells being updated
-    !     Q0(0:IDIM+1)- Initial mixing ratio along 1-D array, with two
-    !                 additional boundary value mixing ratios padded into the
-    !                 0th and IDIM+1 cell locations
-    !     U(0:IDIM)- velocities BETWEEN grid cells (at the "higher-I" edges of
-    !                each grid cell in the array, units consistent with DX, DT
-    !     DEN0(IDIM)- Initial fluid density, which needs to be updated during
-    !                 multi-dimensional calculations, as noted in Calling code
-    !     DEN1(IDIM)- Updated fluid density, which needs to be updated during
-    !                 multi-dimensional calculations, as noted in calling code
-    !     DT-         time step- units consistent with U
-    !     DXX(IDIM)-  Grid cell length along advection direction, Units
-    !                   consistent with DT and U
-    !     DD0(0:IDIM)- Initial fluid density flowing BETWEEN each grid cell
-    !                  (remains constant for all dimensions at the initial
-    !                  fluid density of the 1st dimension of a 2-3 D calculation
-    !               one can use UPSTREAM density here (DD0(I)= RHO0(I) if u>0
-    !               or DD0(I)= RHO0(I+1) if u<0) where RHO0 is the initial
-    !               fluid density at the beginning of the 1st dimensional
-    !               advection step of a 2 or 3 D advection calculation done one
-    !               step at a time
-    !
-    !  Output of this subroutine is an updated mixing ratio array QN(IDIM)
-    !
-
-    integer, intent(in) :: m1
-    integer, intent(in) :: m2
-    integer, intent(in) :: m3
-    integer, intent(in) :: ia
-    integer, intent(in) :: iz
-    integer, intent(in) :: ja
-    integer, intent(in) :: jz
-    integer, intent(in) :: mynum
-    real   , intent(in) :: q0(m1,m2,m3)
-    real   , intent(in) :: u(m1,m2,m3)
-    real   , intent(in) :: den0(m1,m2,m3)
-    real   , intent(in) :: den1(m1,m2,m3)
-    real   , intent(in) :: dt
-    real   , intent(in) :: dxx(m2,m3)
-    real   , intent(in) :: dd0(m1,m2,m3)
-    real   , intent(out):: qn(m1,m2,m3)
-
-    integer :: i
-    integer :: j
-    integer :: k
-    integer :: ii
-    integer :: ji
-    integer :: ii0
-    integer :: ji0
-    integer :: ie
-    integer :: je
-    integer :: ie0
-    integer :: je0
-    integer :: ipos
-    integer :: iia
-    integer :: iiz
-    integer :: nvar
-    integer :: nf
-    real :: flux(m1,m2,m3)
-    real :: vcmax(m1,m2,m3)
-    real :: vcmin(m1,m2,m3)
-    logical :: imxmn(m1,m2,m3)
-    real, parameter :: zr0=0.0
-    real, parameter :: EPS=1.e-6
-    real :: cf
-    real :: cf1
-    real :: ck1
-    real :: ck2
-    real :: x1
-    real :: x1n
-
-    logical, parameter :: dumpLocal=.false.
-    character(len=*), parameter :: h="**(Advec3DX)**"
-    character(len=8) :: str(10)
-
-    if (dumpLocal) then
-       write(str(1),"(i8)") m1
-       write(str(2),"(i8)") m2
-       write(str(3),"(i8)") m3
-       write(str(4),"(i8)") ia
-       write(str(5),"(i8)") iz
-       write(str(6),"(i8)") ja
-       write(str(7),"(i8)") jz
-       call MsgDump(h//" starts at surface area ("//&
-            trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//","//&
-            trim(adjustl(str(6)))//":"//trim(adjustl(str(7)))//")"//&
-            " of fields dimensioned ("//&
-            trim(adjustl(str(1)))//","//&
-            trim(adjustl(str(2)))//","//&
-            trim(adjustl(str(3)))//")")
-    end if
-
-    ! copy input field to output field
-    qn=q0
-    imxmn=.false.
-
-    ! Update mixing ratios and limit Fluxes going UP where u>0
-    !  First assume upstream flux at edge of domain
-    do j=ja,jz
-       do k=2,m1-1
-          if(u(k,1,j)>=zr0) flux(k,1,j)= q0(k,1,j)*u(k,1,j)*dt*dd0(k,1,j)
-       end do
-    end do
-
-    ! Identify local max and min, specify mixing ratio limits at new time
-    !  VCMAX and VCMIN are the absolute physical limits to the
-    !     mixing ratio at t+dt. If these limits are ever violated,
-    !     non-monotonic (oscillatory) behavior in solution results
-    do j=ja,jz
-       do  i=2,m2-1 ! ia,iz-1 or 1,iz-1
-          do k=2,m1-1
-             imxmn(k,i,j)=q0(k,i,j)>=(max(q0(k,i-1,j),q0(k,i+1,j))-eps) .or. & !=true if local
-                  q0(k,i,j)<=(min(q0(k,i-1,j),q0(k,i+1,j))+eps)        !       extrema
-             ck1= q0(k,i,j)
-             ck2= q0(k,i,j)
-             if(u(k,i,j  )< zr0) ck1= q0(k,i+1,j)
-             if(u(k,i-1,j)>=zr0) ck2= q0(k,i-1,j)
-             vcmax(k,i,j)= max( q0(k,i,j), ck1, ck2 )                      ! Eq-7
-             vcmin(k,i,j)= min( q0(k,i,j), ck1, ck2 )                      ! Eq-7
-          end do
-       end do
-    end do
-
-    ! Identify local max and min, specify mixing ratio limits at new time
-    do j=ja,jz
-       do  i=2,m2-1 ! ia,iz-1 or 1,iz-1
-          do k=2,m1-1
-             if(u(k,i,j)<zr0) cycle
-             if(u(k,i-1,j)<zr0) then
-                flux(k,i,j)= q0(k,i,j)*u(k,i,j)*dt*dd0(k,i,j)    !  outflow-only cell
-             else                              !      use upstream
-                x1= dt*u(k,i,j)/dxx(i,j)               ! Courant number
-                x1n= (1.-x1)*(q0(k,i+1,j)-q0(k,i-1,j))/4.
-
-                ! First, estimate mixing ratio in outflowing fluid (Cf)
-                cf= q0(k,i,j) + x1n                                       !Eq-4a
-
-                !   Check to see if there is a peak (min) upwind and/or
-                !    downwind of cell face
-                if(imxmn(k,i-1,j)) cf= q0(k,i,j) +max(1.5,1.2  +.6 *x1)*x1n   !Eq-10b
-                if(imxmn(k,i+1,j)) cf= q0(k,i,j) +       (1.75 -.45*x1)*x1n   !Eq-10a
-                !        CF= Q0(k,i,j) + 5.*X1N   ! uncomment this line for "full sharp"
-
-                !   Limit Cf to be between mixing ratio on either side of edge
-                !      where flux is being calculated
-                cf1= min( max( cf, min(q0(k,i,j),q0(k,i+1,j))  ), max(q0(k,i,j),q0(k,i+1,j)) )
-
-                !   Calculate mixing ratio at new time, but limit to physically
-                !    reasonable values
-                qn(k,i,j) = max(vcmin(k,i,j),min(vcmax(k,i,j),          &   !eq-3&8
-                     (q0(k,i,j)*den0(k,i,j)-x1*cf1*dd0(k,i,j)+flux(k,i-1,j)/dxx(i,j))/den1(k,i,j) ))
-
-                !   Re-calculate OUTFLOWING flux before moving on to next cell
-                !    Flux = CF1*X1*DD0 but it must be adjusted if a monotonic limit
-                !    is encountered.
-                flux(k,i,j)= dxx(i,j)*(q0(k,i,j)*den0(k,i,j) - qn(k,i,j)*den1(k,i,j)) + flux(k,i-1,j)
-             end if                                                  !Eq-9a
-          end do
-       end do
-    end do
-
-    ! If periodic boundary conditions are assumed, it is necessary
-    !   to recalculate the updated mixing ratio at cell 1 if there
-    !   is inflow to that cell from the boundary between IDIM and 1
-    !   Here these statements are commented out, but should be uncommented
-    !   if this subroutine is needed for periodic boundary conditions,
-    !   and then one of the calling arguements to the subroutine is IPERIOD
-    !   which is set to "1" if you assume period boundary conditions
-    !      IF(IPERIOD==1) THEN
-    !        IF(U(IDIM-1)>=ZR0.AND.U(IDIM)>=ZR0)
-    !     &  QN(1)=(Q0(1)*DEN0(1)-FLUX(1)/DXX(1)+FLUX(IDIM)/DXX(1))/DEN1(1)
-    !      END IF
-    !
-    ! Update mixing ratios and limit Fluxes going DOWN where u<0
-    !  The logic of this loop through the grid line is identical
-    !  to the "DO 10" Loop above, only you start at the highest I
-    !  edge and work backwards to I=1
-    !
-    do j=ja,jz
-       do k=2,m1-1
-          if(u(k,m2-1,j)<zr0) flux(k,m2-1,j)= &
-               q0(k,m2,j)*u(k,m2-1,j)*dt*dd0(k,m2-1,j)
-       end do
-    end do
-
-    do j=ja,jz
-       do i=m2-1,2,-1 !iz,ia,-1
-          do k=2,m1-1
-             if(u(k,i-1,j)>=zr0) then           ! Inflow-only cell
-                if(u(k,i,j)<zr0) qn(k,i,j)=  max(  vcmin(k,i,j),   min(   vcmax(k,i,j),&
-                     (q0(k,i,j)*den0(k,i,j)-flux(k,i,j)/dxx(i,j) + &
-                     flux(k,i-1,j)/dxx(i,j))/den1(k,i,j) ))
-             else
-                x1=  dt*abs(u(k,i-1,j))/dxx(i,j)     ! Courant number
-                x1n= (1.-x1)*(q0(k,i-1,j)-q0(k,i+1,j))/4.
-                cf= q0(k,i,j) + x1n                                       !Eq-4b
-                if(imxmn(k,i+1,j)) cf= q0(k,i,j) +max(1.5,1.2  +.6 *x1)*x1n   !Eq-10b
-                if(imxmn(k,i-1,j)) cf= q0(k,i,j) +   (1.75 -.45*x1)*x1n       !Eq-10a
-                cf1= min( max( cf, min(q0(k,i,j),q0(k,i-1,j)) ), max(q0(k,i,j),q0(k,i-1,j)) )
-                if(u(k,i,j)>=zr0) cf1= q0(k,i,j)     ! outflow-only cell upstream
-                qn(k,i,j)= max(  vcmin(k,i,j),  min(   vcmax(k,i,j), 	  &   !Eq-3&8
-                     (q0(k,i,j)*den0(k,i,j)-flux(k,i,j)/dxx(i,j)-x1*cf1*dd0(k,i-1,j))/den1(k,i,j) ))
-                flux(k,i-1,j)=dxx(i,j)*(qn(k,i,j)*den1(k,i,j) - q0(k,i,j)*den0(k,i,j)) + flux(k,i,j)!Eq-9b
-             end if
-          end do
-       end do
-    end do !- big loop y-z
-    if (dumpLocal) then
-       call MsgDump(h//" finishes")
-    end if
-  end subroutine Advec3DX
-
-
-
-  subroutine Advec3DY(m1,m2,m3,ia,iz,ja,jz,&
-       q0,&
-       u,den0,&
-       den1,dt,dxx,&
-       dd0,&
-       qn,mynum)
-    !-------------------------
-    ! This subroutine calculates change in mixing ratio (Q0) during time
-    !  step DT due to advection along a grid IDIM in length. Mixing ratios
-    !  from host code (C) are loaded into Q0 array, which is updated to QN.
-    !  Velocities (U) and fluxes (FLUX) are specified at cell FACES, having
-    !  dimensions 0:IDIM. U, Q0, QN, DXX and FLUX indices defined here:
-    !  Densities at beg, end time (DEN0, DEN1) defined in HOST CODE
-    !
-    ! I grid->   |  1  |  2  |  I-1  |   I  |..   ..|  IDIM  | <- host grid
-    ! U-array-> u(0)  u(1)  u(2)   u(i-1)  u(i)           u(IDIM)
-    ! C-array->  | C(1)| C(2)| C(I-1)| C(I) |..   ..| C(IDIM)| mixing ratio
-    ! DXX-arry-> | Dx1 | Dx2 | DxI-1 | DxI  |..   ..| DxIDIM |
-    ! Density->  | Dd1 | Dd2 | DdI-1 | DdI  |..   ..| DdIDIM |
-    !                 Q0 defined along 0 - IDIM+1 cells:
-    !    |       | QN  | QN  |  QN   |  QN  |       |   QN   |        |
-    !    |   Q0--|-Q0--|-Q0--|--Q0 --|--Q0--|..   ..|-- Q0 --|--Q0    |
-    !    |    0  | 1   |  2  | I-1   |  I   |       |  IDIM  | IDIM+1 |
-    !   lower BC |             <---   Q0 grid   --->         | upper BC
-    !           Boundary conditions are stored in Q0 cells 0 & IDIM+1
-    !
-    !  Input to this subroutine, provided in common /sub/, and the calling
-    !  arguments to this subroutine:
-    !     IDIM - #of grid cells being updated
-    !     Q0(0:IDIM+1)- Initial mixing ratio along 1-D array, with two
-    !                 additional boundary value mixing ratios padded into the
-    !                 0th and IDIM+1 cell locations
-    !     U(0:IDIM)- velocities BETWEEN grid cells (at the "higher-I" edges of
-    !                each grid cell in the array, units consistent with DX, DT
-    !     DEN0(IDIM)- Initial fluid density, which needs to be updated during
-    !                 multi-dimensional calculations, as noted in Calling code
-    !     DEN1(IDIM)- Updated fluid density, which needs to be updated during
-    !                 multi-dimensional calculations, as noted in calling code
-    !     DT-         time step- units consistent with U
-    !     DXX(IDIM)-  Grid cell length along advection direction, Units
-    !                   consistent with DT and U
-    !     DD0(0:IDIM)- Initial fluid density flowing BETWEEN each grid cell
-    !                  (remains constant for all dimensions at the initial
-    !                  fluid density of the 1st dimension of a 2-3 D calculation
-    !               one can use UPSTREAM density here (DD0(I)= RHO0(I) if u>0
-    !               or DD0(I)= RHO0(I+1) if u<0) where RHO0 is the initial
-    !               fluid density at the beginning of the 1st dimensional
-    !               advection step of a 2 or 3 D advection calculation done one
-    !               step at a time
-    !
-    !  Output of this subroutine is an updated mixing ratio array QN(IDIM)
-    !
-
-    integer, intent(in) :: m1
-    integer, intent(in) :: m2
-    integer, intent(in) :: m3
-    integer, intent(in) :: ia
-    integer, intent(in) :: iz
-    integer, intent(in) :: ja
-    integer, intent(in) :: jz
-    integer, intent(in) :: mynum
-    real   , intent(in) :: q0(m1,m2,m3)
-    real   , intent(in) :: u(m1,m2,m3)
-    real   , intent(in) :: den0(m1,m2,m3)
-    real   , intent(in) :: den1(m1,m2,m3)
-    real   , intent(in) :: dt
-    real   , intent(in) :: dxx(m2,m3)
-    real   , intent(in) :: dd0(m1,m2,m3)
-    real   , intent(out):: qn(m1,m2,m3)
-
-    integer :: i
-    integer :: j
-    integer :: k
-    integer :: ii
-    integer :: ji
-    integer :: ii0
-    integer :: ji0
-    integer :: ie
-    integer :: je
-    integer :: ie0
-    integer :: je0
-    integer :: ipos
-    integer :: iia
-    integer :: iiz
-    integer :: nvar
-    integer :: nf
-    real :: flux(m1,m2,m3)
-    real :: vcmax(m1,m2,m3)
-    real :: vcmin(m1,m2,m3)
-    logical :: imxmn(m1,m2,m3)
-    real, parameter :: zr0=0.0
-    real, parameter :: EPS=1.e-6
-    real :: cf
-    real :: cf1
-    real :: ck1
-    real :: ck2
-    real :: x1
-    real :: x1n
-
-    logical, parameter :: dumpLocal=.false.
-    character(len=*), parameter :: h="**(Advec3DY)**"
-    character(len=8) :: str(10)
-
-    if (dumpLocal) then
-       write(str(1),"(i8)") m1
-       write(str(2),"(i8)") m2
-       write(str(3),"(i8)") m3
-       write(str(4),"(i8)") ia
-       write(str(5),"(i8)") iz
-       write(str(6),"(i8)") ja
-       write(str(7),"(i8)") jz
-       call MsgDump(h//" starts at surface area ("//&
-            trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//","//&
-            trim(adjustl(str(6)))//":"//trim(adjustl(str(7)))//")"//&
-            " of fields dimensioned ("//&
-            trim(adjustl(str(1)))//","//&
-            trim(adjustl(str(2)))//","//&
-            trim(adjustl(str(3)))//")")
-    end if
-
-    ! copy input field to output field
-    qn= q0
-    imxmn=.false.
-
-    ! Update mixing ratios and limit Fluxes going UP where u>0
-    !  First assume upstream flux at edge of domain
-    do i=ia,iz
-       do k=2,m1-1
-          if(u(k,i,1)>=zr0) flux(k,i,1)= q0(k,i,1)*u(k,i,1)*dt*dd0(k,i,1)
-       end do
-    end do
-
-    ! Identify local max and min, specify mixing ratio limits at new time
-    !  VCMAX and VCMIN are the absolute physical limits to the
-    !	mixing ratio at t+dt. If these limits are ever violated,
-    !	non-monotonic (oscillatory) behavior in solution results
-    do i=ia,iz
-       do  j=2,m3-1 ! ja,jz
-          do k=2,m1-1
-             imxmn(k,i,j)=q0(k,i,j)>=(max(q0(k,i,j-1),q0(k,i,j+1))-eps) .or. & !=true if local
-                  q0(k,i,j)<=(min(q0(k,i,j-1),q0(k,i,j+1))+eps)	    !	    extrema
-             ck1= q0(k,i,j)
-             ck2= q0(k,i,j)
-             if(u(k,i,j  )< zr0) ck1= q0(k,i,j+1)
-             if(u(k,i,j-1)>=zr0) ck2= q0(k,i,j-1)
-             vcmax(k,i,j)= max( q0(k,i,j), ck1, ck2 )                      ! Eq-7
-             vcmin(k,i,j)= min( q0(k,i,j), ck1, ck2 )                      ! Eq-7
-          end do
-       end do
-    end do
-
-    ! Identify local max and min, specify mixing ratio limits at new time
-    do i=ia,iz
-       do  j=2,m3-1 ! ja,jz
-          do k=2,m1-1
-             if(u(k,i,j)<zr0) cycle
-             if(u(k,i,j-1)<zr0) then
-                flux(k,i,j)= q0(k,i,j)*u(k,i,j)*dt*dd0(k,i,j)    !  outflow-only cell
-             else                              !      use upstream
-                x1= dt*u(k,i,j)/dxx(i,j)               ! Courant number
-                x1n= (1.-x1)*(q0(k,i,j+1)-q0(k,i,j-1))/4.
-
-                ! First, estimate mixing ratio in outflowing fluid (Cf)
-                cf= q0(k,i,j) + x1n                                       !Eq-4a
-
-                !   Check to see if there is a peak (min) upwind and/or
-                !    downwind of cell face
-                if(imxmn(k,i,j-1)) cf= q0(k,i,j) +max(1.5,1.2  +.6 *x1)*x1n   !Eq-10b
-                if(imxmn(k,i,j+1)) cf= q0(k,i,j) +       (1.75 -.45*x1)*x1n   !Eq-10a
-                !        CF= Q0(k,i,j) + 5.*X1N   ! uncomment this line for "full sharp"
-
-                !   Limit Cf to be between mixing ratio on either side of edge
-                !      where flux is being calculated
-                cf1= min( max( cf, min(q0(k,i,j),q0(k,i,j+1))  ), max(q0(k,i,j),q0(k,i,j+1)) )
-
-                !   Calculate mixing ratio at new time, but limit to physically
-                !    reasonable values
-                qn(k,i,j)= max(  vcmin(k,i,j),   min(   vcmax(k,i,j),          &   !eq-3&8
-                     (q0(k,i,j)*den0(k,i,j)-x1*cf1*dd0(k,i,j)+flux(k,i,j-1)/dxx(i,j))/den1(k,i,j) ))
-
-                !   Re-calculate OUTFLOWING flux before moving on to next cell
-                !    Flux = CF1*X1*DD0 but it must be adjusted if a monotonic limit
-                !    is encountered.
-                flux(k,i,j)= dxx(i,j)*(q0(k,i,j)*den0(k,i,j) - qn(k,i,j)*den1(k,i,j)) + flux(k,i,j-1) !Eq-9a
-             end if
-          end do
-       end do
-    end do
-
-    ! If periodic boundary conditions are assumed, it is necessary
-    !   to recalculate the updated mixing ratio at cell 1 if there
-    !   is inflow to that cell from the boundary between IDIM and 1
-    !   Here these statements are commented out, but should be uncommented
-    !   if this subroutine is needed for periodic boundary conditions,
-    !   and then one of the calling arguements to the subroutine is IPERIOD
-    !   which is set to "1" if you assume period boundary conditions
-    !      IF(IPERIOD==1) THEN
-    !        IF(U(IDIM-1)>=ZR0.AND.U(IDIM)>=ZR0)
-    !     &  QN(1)=(Q0(1)*DEN0(1)-FLUX(1)/DXX(1)+FLUX(IDIM)/DXX(1))/DEN1(1)
-    !      END IF
-    !
-    ! Update mixing ratios and limit Fluxes going DOWN where u<0
-    !  The logic of this loop through the grid line is identical
-    !  to the "DO 10" Loop above, only you start at the highest I
-    !  edge and work backwards to I=1
-    !
-    do i=ia,iz
-       do k=2,m1-1
-          if(u(k,i,m3-1)<zr0) flux(k,i,m3-1)= &
-               q0(k,i,m3)*u(k,i,m3-1)*dt*dd0(k,i,m3-1)
-       end do
-    end do
-
-    do i=ia,iz
-       do j=m3-1,2,-1 !jz,ja,-1
-          do k=2,m1-1
-             if(u(k,i,j-1)>=zr0) then           ! Inflow-only cell
-                if(u(k,i,j)<zr0) qn(k,i,j)=  max(  vcmin(k,i,j),   min(   vcmax(k,i,j),&
-                     (q0(k,i,j)*den0(k,i,j)-flux(k,i,j)/dxx(i,j) + &
-                     flux(k,i,j-1)/dxx(i,j))/den1(k,i,j) ))
-             else
-                x1=  dt*abs(u(k,i,j-1))/dxx(i,j)     ! Courant number
-                x1n= (1.-x1)*(q0(k,i,j-1)-q0(k,i,j+1))/4.
-                cf= q0(k,i,j) + x1n                                       !Eq-4b
-                if(imxmn(k,i,j+1)) cf= q0(k,i,j) +max(1.5,1.2  +.6 *x1)*x1n   !Eq-10b
-                if(imxmn(k,i,j-1)) cf= q0(k,i,j) +   (1.75 -.45*x1)*x1n       !Eq-10a
-                cf1= min( max( cf, min(q0(k,i,j),q0(k,i,j-1)) ), max(q0(k,i,j),q0(k,i,j-1)) )
-                if(u(k,i,j)>=zr0) cf1= q0(k,i,j)     ! outflow-only cell upstream
-                qn(k,i,j)= max(  vcmin(k,i,j),  min(   vcmax(k,i,j), 	  &   !Eq-3&8
-                     (q0(k,i,j)*den0(k,i,j)-flux(k,i,j)/dxx(i,j)-x1*cf1*dd0(k,i,j-1))/den1(k,i,j) ))
-                flux(k,i,j-1)=dxx(i,j)*(qn(k,i,j)*den1(k,i,j) - q0(k,i,j)*den0(k,i,j)) + flux(k,i,j)!Eq-9b
-             end if
-          end do
-       end do
-    end do !- big loop x-z
-    if (dumpLocal) then
-       call MsgDump(h//" finishes")
-    end if
-  end subroutine Advec3DY
-
-  subroutine Advec3DZ(m1,m2,m3,ia,iz,ja,jz,&
-       q0,&
-       u,den0,&
-       den1,dt,dxx,&
-       dd0,&
-       qn,mynum)
-    !-------------------------
-    ! This subroutine calculates change in mixing ratio (Q0) during time
-    !  step DT due to advection along a grid IDIM in length. Mixing ratios
-    !  from host code (C) are loaded into Q0 array, which is updated to QN.
-    !  Velocities (U) and fluxes (FLUX) are specified at cell FACES, having
-    !  dimensions 0:IDIM. U, Q0, QN, DXX and FLUX indices defined here:
-    !  Densities at beg, end time (DEN0, DEN1) defined in HOST CODE
-    !
-    ! I grid->   |  1  |  2  |  I-1  |   I  |..   ..|  IDIM  | <- host grid
-    ! U-array-> u(0)  u(1)  u(2)   u(i-1)  u(i)           u(IDIM)
-    ! C-array->  | C(1)| C(2)| C(I-1)| C(I) |..   ..| C(IDIM)| mixing ratio
-    ! DXX-arry-> | Dx1 | Dx2 | DxI-1 | DxI  |..   ..| DxIDIM |
-    ! Density->  | Dd1 | Dd2 | DdI-1 | DdI  |..   ..| DdIDIM |
-    !                 Q0 defined along 0 - IDIM+1 cells:
-    !    |       | QN  | QN  |  QN   |  QN  |       |   QN   |        |
-    !    |   Q0--|-Q0--|-Q0--|--Q0 --|--Q0--|..   ..|-- Q0 --|--Q0    |
-    !    |    0  | 1   |  2  | I-1   |  I   |       |  IDIM  | IDIM+1 |
-    !   lower BC |             <---   Q0 grid   --->         | upper BC
-    !           Boundary conditions are stored in Q0 cells 0 & IDIM+1
-    !
-    !  Input to this subroutine, provided in common /sub/, and the calling
-    !  arguments to this subroutine:
-    !     IDIM - #of grid cells being updated
-    !     Q0(0:IDIM+1)- Initial mixing ratio along 1-D array, with two
-    !                 additional boundary value mixing ratios padded into the
-    !                 0th and IDIM+1 cell locations
-    !     U(0:IDIM)- velocities BETWEEN grid cells (at the "higher-I" edges of
-    !                each grid cell in the array, units consistent with DX, DT
-    !     DEN0(IDIM)- Initial fluid density, which needs to be updated during
-    !                 multi-dimensional calculations, as noted in Calling code
-    !     DEN1(IDIM)- Updated fluid density, which needs to be updated during
-    !                 multi-dimensional calculations, as noted in calling code
-    !     DT-         time step- units consistent with U
-    !     DXX(IDIM)-  Grid cell length along advection direction, Units
-    !                   consistent with DT and U
-    !     DD0(0:IDIM)- Initial fluid density flowing BETWEEN each grid cell
-    !                  (remains constant for all dimensions at the initial
-    !                  fluid density of the 1st dimension of a 2-3 D calculation
-    !               one can use UPSTREAM density here (DD0(I)= RHO0(I) if u>0
-    !               or DD0(I)= RHO0(I+1) if u<0) where RHO0 is the initial
-    !               fluid density at the beginning of the 1st dimensional
-    !               advection step of a 2 or 3 D advection calculation done one
-    !               step at a time
-    !
-    !  Output of this subroutine is an updated mixing ratio array QN(IDIM)
-    !
-
-    integer, intent(in) :: m1
-    integer, intent(in) :: m2
-    integer, intent(in) :: m3
-    integer, intent(in) :: ia
-    integer, intent(in) :: iz
-    integer, intent(in) :: ja
-    integer, intent(in) :: jz
-    integer, intent(in) :: mynum
-    real   , intent(in) :: q0(m1,m2,m3)
-    real   , intent(in) :: u(m1,m2,m3)
-    real   , intent(in) :: den0(m1,m2,m3)
-    real   , intent(in) :: den1(m1,m2,m3)
-    real   , intent(in) :: dt
-    real   , intent(in) :: dxx(m1)
-    real   , intent(in) :: dd0(m1,m2,m3)
-    real   , intent(out):: qn(m1,m2,m3)
-
-    integer :: i
-    integer :: j
-    integer :: k
-    real :: flux(m1,m2,m3)
-    real :: vcmax(m1,m2,m3)
-    real :: vcmin(m1,m2,m3)
-    logical :: imxmn(m1,m2,m3)
-    real, parameter :: zr0=0.0
-    real, parameter :: EPS=1.e-6
-    real :: cf
-    real :: cf1
-    real :: ck1
-    real :: ck2
-    real :: x1
-    real :: x1n
-
-    logical, parameter :: dumpLocal=.false.
-    character(len=*), parameter :: h="**(Advec3DZ)**"
-    character(len=8) :: str(10)
-
-    if (dumpLocal) then
-       write(str(1),"(i8)") m1
-       write(str(2),"(i8)") m2
-       write(str(3),"(i8)") m3
-       write(str(4),"(i8)") ia
-       write(str(5),"(i8)") iz
-       write(str(6),"(i8)") ja
-       write(str(7),"(i8)") jz
-       call MsgDump(h//" starts at surface area ("//&
-            trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//","//&
-            trim(adjustl(str(6)))//":"//trim(adjustl(str(7)))//")"//&
-            " of fields dimensioned ("//&
-            trim(adjustl(str(1)))//","//&
-            trim(adjustl(str(2)))//","//&
-            trim(adjustl(str(3)))//")")
-    end if
-
-    ! copy input field to output field
-    qn = q0
-    imxmn=.false.
-
-
-    ! Identify local max and min, specify mixing ratio limits at new time
-    !  VCMAX and VCMIN are the absolute physical limits to the
-    !     mixing ratio at t+dt. If these limits are ever violated,
-    !     non-monotonic (oscillatory) behavior in solution results
-    do j=ja,jz
-       do i=ia,iz
-          do k=2,m1-1 
-             imxmn(k,i,j)=q0(k,i,j)>=(max(q0(k-1,i,j),q0(k+1,i,j))-eps) .or. & !=true if local
-                  q0(k,i,j)<=(min(q0(k-1,i,j),q0(k+1,i,j))+eps)	    !	    extrema
-             ck1= q0(k,i,j)
-             ck2= q0(k,i,j)
-             if(u(k  ,i,j)< zr0) ck1= q0(k+1,i,j)
-             if(u(k-1,i,j)>=zr0) ck2= q0(k-1,i,j)
-             vcmax(k,i,j)= max( q0(k,i,j), ck1, ck2 )                      ! Eq-7
-             vcmin(k,i,j)= min( q0(k,i,j), ck1, ck2 )                      ! Eq-7
-          end do
-       end do
-    end do
-
-
-    ! Update mixing ratios and limit Fluxes going UP where u>0
-    !  First assume upstream flux at edge of domain
-    do j=ja,jz
-       do i=ia,iz
-          if(u(1,i,j)>=zr0) flux(1,i,j)= &
-               q0(1,i,j)*u(1,i,j)*dt*dd0(1,i,j)
-          do k=2,m1-1
-             if(u(k,i  ,j)<zr0) cycle
-             if(u(k-1,i,j)<zr0) then
-                flux(k,i,j)= q0(k,i,j)*u(k,i,j)*dt*dd0(k,i,j)    !  outflow-only cell
-             else                              !      use upstream
-                x1= dt*u(k,i,j)/dxx(k)               ! Courant number
-                x1n= (1.-x1)*(q0(k+1,i,j)-q0(k-1,i,j))/4.
-
-                ! First, estimate mixing ratio in outflowing fluid (Cf)
-                cf= q0(k,i,j) + x1n                                       !Eq-4a
-
-                !   Check to see if there is a peak (min) upwind and/or
-                !    downwind of cell face
-                if(imxmn(k-1,i,j)) cf= q0(k,i,j) +max(1.5,1.2  +.6 *x1)*x1n   !Eq-10b
-                if(imxmn(k+1,i,j)) cf= q0(k,i,j) +       (1.75 -.45*x1)*x1n   !Eq-10a
-                !        CF= Q0(k,i,j) + 5.*X1N   ! uncomment this line for "full sharp"
-
-                !   Limit Cf to be between mixing ratio on either side of edge
-                !      where flux is being calculated
-                cf1= min( max( cf, min(q0(k,i,j),q0(k+1,i,j))  ), max(q0(k,i,j),q0(k+1,i,j)) )
-
-                !   Calculate mixing ratio at new time, but limit to physically
-                !    reasonable values
-                qn(k,i,j)= max(  vcmin(k,i,j),   min(   vcmax(k,i,j),          &   !eq-3&8
-                     (q0(k,i,j)*den0(k,i,j)-x1*cf1*dd0(k,i,j)+flux(k-1,i,j)/dxx(k))/den1(k,i,j) ))
-
-                !   Re-calculate OUTFLOWING flux before moving on to next cell
-                !    Flux = CF1*X1*DD0 but it must be adjusted if a monotonic limit
-                !    is encountered.
-                flux(k,i,j)= dxx(k)*(q0(k,i,j)*den0(k,i,j) - qn(k,i,j)*den1(k,i,j)) + flux(k-1,i,j)
-             end if                                                  !Eq-9a
-          end do
-       end do
-    end do
-
-    ! Update mixing ratios and limit Fluxes going DOWN where u<0
-    !  The logic of this loop through the grid line is identical
-    !  to the "DO 10" Loop above, only you start at the highest I
-    !  edge and work backwards to I=1
-    do j=ja,jz
-       do i=ia,iz
-          if(u(m1-1,i,j)<zr0) flux(m1-1,i,j)=&
-               q0(m1,i,j)*u(m1-1,i,j)*dt*dd0(m1-1,i,j)
-          do k=m1-1,2,-1
-             if(u(k-1,i,j)>=zr0) then           ! Inflow-only cell
-                if(u(k,i,j)<zr0) qn(k,i,j)=  max(  vcmin(k,i,j),   min(   vcmax(k,i,j),&
-                     (q0(k,i,j)*den0(k,i,j)-flux(k,i,j)/dxx(k) + flux(k-1,i,j)/dxx(k))/den1(k,i,j) ))
-             else
-                x1=  dt*abs(u(k-1,i,j))/dxx(k)     ! Courant number
-                x1n= (1.-x1)*(q0(k-1,i,j)-q0(k+1,i,j))/4.
-                cf= q0(k,i,j) + x1n                                       !Eq-4b
-                if(imxmn(k+1,i,j)) cf= q0(k,i,j) +max(1.5,1.2  +.6 *x1)*x1n   !Eq-10b
-                if(imxmn(k-1,i,j)) cf= q0(k,i,j) +   (1.75 -.45*x1)*x1n       !Eq-10a
-                cf1= min( max( cf, min(q0(k,i,j),q0(k-1,i,j)) ), max(q0(k,i,j),q0(k-1,i,j)) )
-                if(u(k,i,j)>=zr0) cf1= q0(k,i,j)     ! outflow-only cell upstream
-                qn(k,i,j) = max(  vcmin(k,i,j),  min(   vcmax(k,i,j), 	  &   !Eq-3&8
-                     (q0(k,i,j)*den0(k,i,j)-flux(k,i,j)/dxx(k)-x1*cf1*dd0(k-1,i,j))/den1(k,i,j) ))
-                flux(k-1,i,j)=dxx(k)*(qn(k,i,j)*den1(k,i,j) - q0(k,i,j)*den0(k,i,j)) + flux(k,i,j)!Eq-9b
-             end if
-          end do
-       end do
-    end do !- big loop y-x
-    if (dumpLocal) then
-       call MsgDump(h//" finishes")
-    end if
-  end subroutine Advec3DZ
-
-
-  subroutine Advec3DZSedim(m1,m2,m3,ia,iz,ja,jz,&
-       q0,&
-       u,&
-       dt,&
-       dzt,rtgt,&
-       qn,&
-       mynum)
-    !-------------------------
-    ! This subroutine calculates change in mixing ratio (Q0) during time
-    !  step DT due to advection along a grid IDIM in length. Mixing ratios
-    !  from host code (C) are loaded into Q0 array, which is updated to QN.
-    !  Velocities (U) and fluxes (FLUX) are specified at cell FACES, having
-    !  dimensions 0:IDIM. U, Q0, QN, DXX and FLUX indices defined here:
-    !  Densities at beg, end time (DEN0, DEN1) defined in HOST CODE
-    !
-    ! I grid->   |  1  |  2  |  I-1  |   I  |..   ..|  IDIM  | <- host grid
-    ! U-array-> u(0)  u(1)  u(2)   u(i-1)  u(i)           u(IDIM)
-    ! C-array->  | C(1)| C(2)| C(I-1)| C(I) |..   ..| C(IDIM)| mixing ratio
-    ! DXX-arry-> | Dx1 | Dx2 | DxI-1 | DxI  |..   ..| DxIDIM |
-    ! Density->  | Dd1 | Dd2 | DdI-1 | DdI  |..   ..| DdIDIM |
-    !                 Q0 defined along 0 - IDIM+1 cells:
-    !    |       | QN  | QN  |  QN   |  QN  |       |   QN   |        |
-    !    |   Q0--|-Q0--|-Q0--|--Q0 --|--Q0--|..   ..|-- Q0 --|--Q0    |
-    !    |    0  | 1   |  2  | I-1   |  I   |       |  IDIM  | IDIM+1 |
-    !   lower BC |             <---   Q0 grid   --->         | upper BC
-    !           Boundary conditions are stored in Q0 cells 0 & IDIM+1
-    !
-    !  Input to this subroutine, provided in common /sub/, and the calling
-    !  arguments to this subroutine:
-    !     IDIM - #of grid cells being updated
-    !     Q0(0:IDIM+1)- Initial mixing ratio along 1-D array, with two
-    !                 additional boundary value mixing ratios padded into the
-    !                 0th and IDIM+1 cell locations
-    !     U(0:IDIM)- velocities BETWEEN grid cells (at the "higher-I" edges of
-    !                each grid cell in the array, units consistent with DX, DT
-    !     DEN0(IDIM)- Initial fluid density, which needs to be updated during
-    !                 multi-dimensional calculations, as noted in Calling code
-    !     DEN1(IDIM)- Updated fluid density, which needs to be updated during
-    !                 multi-dimensional calculations, as noted in calling code
-    !     DT-         time step- units consistent with U
-    !     DXX(IDIM)-  Grid cell length along advection direction, Units
-    !                   consistent with DT and U
-    !     DD0(0:IDIM)- Initial fluid density flowing BETWEEN each grid cell
-    !                  (remains constant for all dimensions at the initial
-    !                  fluid density of the 1st dimension of a 2-3 D calculation
-    !               one can use UPSTREAM density here (DD0(I)= RHO0(I) if u>0
-    !               or DD0(I)= RHO0(I+1) if u<0) where RHO0 is the initial
-    !               fluid density at the beginning of the 1st dimensional
-    !               advection step of a 2 or 3 D advection calculation done one
-    !               step at a time
-    !
-    !  Output of this subroutine is an updated mixing ratio array QN(IDIM)
-    !
-
-    integer, intent(in) :: m1
-    integer, intent(in) :: m2
-    integer, intent(in) :: m3
-    integer, intent(in) :: ia
-    integer, intent(in) :: iz
-    integer, intent(in) :: ja
-    integer, intent(in) :: jz
-    integer, intent(in) :: mynum
-    real   , intent(in) :: q0(m1,m2,m3)
-    real   , intent(in) :: u(m1,m2,m3)
-    real   , intent(in) :: dt
-    real   , intent(in) :: dzt(m1)
-    real   , intent(in) :: rtgt(m2,m3)
-    real   , intent(out):: qn(m1,m2,m3)
-
-    integer :: i
-    integer :: j
-    integer :: k
-    real :: flux(m1,m2,m3)
-    real :: vcmax(m1,m2,m3)
-    real :: vcmin(m1,m2,m3)
-    logical :: imxmn(m1,m2,m3)
-    real, parameter :: zr0=0.0
-    real, parameter :: EPS=1.e-6
-    real :: cf
-    real :: cf1
-    real :: ck1
-    real :: ck2
-    real :: x1
-    real :: x1n
-    real :: rtgti
-
-    logical, parameter :: dumpLocal=.false.
-    character(len=*), parameter :: h="**(Advec3DZSedim)**"
-    character(len=8) :: str(10)
-
-    if (dumpLocal) then
-       write(str(1),"(i8)") m1
-       write(str(2),"(i8)") m2
-       write(str(3),"(i8)") m3
-       write(str(4),"(i8)") ia
-       write(str(5),"(i8)") iz
-       write(str(6),"(i8)") ja
-       write(str(7),"(i8)") jz
-       call MsgDump(h//" starts at surface area ("//&
-            trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//","//&
-            trim(adjustl(str(6)))//":"//trim(adjustl(str(7)))//")"//&
-            " of fields dimensioned ("//&
-            trim(adjustl(str(1)))//","//&
-            trim(adjustl(str(2)))//","//&
-            trim(adjustl(str(3)))//")")
-    end if
-
-    qn = q0
-    imxmn=.false.
-
-    ! Identify local max and min, specify mixing ratio limits at new time
-    !  VCMAX and VCMIN are the absolute physical limits to the
-    !     mixing ratio at t+dt. If these limits are ever violated,
-    !     non-monotonic (oscillatory) behavior in solution results
-    do j=ja,jz
-       do i=ia,iz
-          do  k=2,m1-1 !
-             imxmn(k,i,j)=q0(k,i,j)>=(max(q0(k-1,i,j),q0(k+1,i,j))-eps) .or. & !=true if local
-                  q0(k,i,j)<=(min(q0(k-1,i,j),q0(k+1,i,j))+eps)	    !	    extrema
-             ck1= q0(k,i,j)
-             ck2= q0(k,i,j)
-             if(-u(k  ,i,j)< zr0) ck1= q0(k+1,i,j)
-             if(-u(k-1,i,j)>=zr0) ck2= q0(k-1,i,j)
-             if(k==2) ck2= q0(k,i,j) !for sedim only
-             vcmax(k,i,j)= max( q0(k,i,j), ck1, ck2 )                      ! Eq-7
-             vcmin(k,i,j)= min( q0(k,i,j), ck1, ck2 )                      ! Eq-7
-          end do
-       end do
-    end do
-
-    do j=ja,jz
-       do i=ia,iz
-          rtgti=1./rtgt(i,j)
-          flux(m1-1,i,j)=q0(m1,i,j)*(-u(m1-1,i,j))*dt
-          do k=m1-1,2,-1
-             !srf       x1=  dt*ABS(u(k-1,i,j))/dxx(k)     ! Courant number
-             x1=  dt*abs(u(k-1,i,j))*dzt(k)*rtgti     ! Courant number
-             if(k==2) x1 = 0. ! no flux below sfc terrain,for sedim only
-             x1n= (1.-x1)*(q0(k-1,i,j)-q0(k+1,i,j))/4.
-             cf= q0(k,i,j) + x1n                                       !Eq-4b
-             if(imxmn(k+1,i,j)) cf= q0(k,i,j) +max(1.5,1.2  +.6 *x1)*x1n   !Eq-10b
-             if(imxmn(k-1,i,j)) cf= q0(k,i,j) +   (1.75 -.45*x1)*x1n       !Eq-10a
-             cf1= min( max( cf, min(q0(k,i,j),q0(k-1,i,j)) ), max(q0(k,i,j),q0(k-1,i,j)) )
-             if(k>2) then  !for sedim only
-                qn(k,i,j) = max(  vcmin(k,i,j),  min(   vcmax(k,i,j), 	  &   !Eq-3&8
-                                !srf                 (q0(k,i,j)-flux(k,i,j)/dxx(k)      -x1*cf1) ))
-                     (q0(k,i,j)-flux(k,i,j)*dzt(k)*rtgti-x1*cf1) ))
-             else
-                qn(k,i,j) = (q0(k,i,j)-flux(k,i,j)*dzt(k)*rtgti-x1*cf1)
-             end if
-             !srf	   flux(k-1,i,j)=dxx(k)             *(qn(k,i,j) - q0(k,i,j)) + flux(k,i,j)!Eq-9b
-             flux(k-1,i,j)=(1./(dzt(k)*rtgti))*(qn(k,i,j) - q0(k,i,j)) + flux(k,i,j)!Eq-9b
-          end do
-       end do
-    end do !- big loop y-x
-    if (dumpLocal) then
-       call MsgDump(h//" finishes")
-    end if
-  end subroutine Advec3DZSedim
-
-  subroutine Advec3DZSedimUpw(m1,m2,m3, ia,iz,ja,jz,u,dt,dzt,rtgt,qn,mynum)
-
-    integer, intent(in) :: m1
-    integer, intent(in) :: m2
-    integer, intent(in) :: m3
-    integer, intent(in) :: ia
-    integer, intent(in) :: iz
-    integer, intent(in) :: ja
-    integer, intent(in) :: jz
-    integer, intent(in) :: mynum
-    real   , intent(in) :: u(m1,m2,m3)
-    real   , intent(in) :: dt
-    real   , intent(in) :: dzt(m1)
-    real   , intent(in) :: rtgt(m2,m3)
-    real   , intent(out):: qn(m1,m2,m3)
-
-    integer :: i
-    integer :: j
-    integer :: k
-    real :: cf
-    real :: cf1
-    real :: ck1
-    real :: ck2
-    real :: x1
-    real :: x1n
-    real :: rtgti
-
-    logical, parameter :: dumpLocal=.false.
-    character(len=*), parameter :: h="**(Advec3DZSedimUpw)**"
-    character(len=8) :: str(10)
-
-    if (dumpLocal) then
-       write(str(1),"(i8)") m1
-       write(str(2),"(i8)") m2
-       write(str(3),"(i8)") m3
-       write(str(4),"(i8)") ia
-       write(str(5),"(i8)") iz
-       write(str(6),"(i8)") ja
-       write(str(7),"(i8)") jz
-       call MsgDump(h//" starts at surface area ("//&
-            trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//","//&
-            trim(adjustl(str(6)))//":"//trim(adjustl(str(7)))//")"//&
-            " of fields dimensioned ("//&
-            trim(adjustl(str(1)))//","//&
-            trim(adjustl(str(2)))//","//&
-            trim(adjustl(str(3)))//")")
-    end if
-
-    !- big loop y-x
-    do j=ja,jz
-       do i=ia,iz
-          rtgti=1./rtgt(i,j)
-          !srf dxx = dz = rtgti/dzt
-          !srf qn(m1-1,i,j) = qn(m1-1,i,j) / (1.0 - dt*u(m1-1,i,j)/dxx(m1-1)      )
-          qn(m1-1,i,j) = qn(m1-1,i,j) / (1.0 + dt*u(m1-1,i,j)*dzt(m1-1)*rtgti)
-          do k=m1-2,2,-1 !
-             !srf    qn(k,i,j)= 1.0/(1.0+dt*u(k,i,j)/dxx(k))&
-             !srf               *( qn(k,i,j)+ dt*u(k,i,j) /dxx(k+1) * qn(k+1,i,j) )
-             qn(k,i,j)= 1.0/(1.0 + dt*u(k,i,j)*dzt(k)*rtgti)&
-                  *( qn(k,i,j) + dt*u(k+1,i,j)*dzt(k+1)*rtgti * qn(k+1,i,j) )
-             !   tc(i,j,l,k) = 1.0/(1.0+dt_settl(k)*vd_cor/delz(i,j,l2))&
-             !  	 *(tc(i,j,l,k) + dt_settl(k)*vd_cor /delz(i,j,l2-1) &
-             !  	 * tc(i,j,l+1,k))
-          end do
-       end do
-    end do !- big loop y-x
-    if (dumpLocal) then
-       call MsgDump(h//" finishes")
-    end if
-  end subroutine Advec3DZSedimUpw
 end module ModMonotonicAdvection

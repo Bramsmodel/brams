@@ -81,7 +81,8 @@ module ModGrid
   public :: DestroyGrid
   public :: DumpGrid
   public :: InsertScalarTabAtOneGrid
-  public :: DeepCopyScalarTabAtOneGrid
+  public :: DeepCopyToScalarTabAtOneGrid
+  public :: DeepCopyFromScalarTabAtOneGrid
 
   type Grid
      integer :: Id
@@ -793,7 +794,7 @@ contains
 
 
 
-    subroutine DeepCopyScalarTabAtOneGrid(oneGrid)
+    subroutine DeepCopyToScalarTabAtOneGrid(oneGrid)
     type(Grid), pointer, intent(in) :: oneGrid
 
     integer :: ng
@@ -805,7 +806,7 @@ contains
     integer :: dim3
     
     character(len=8) :: str(10)
-    character(len=*), parameter :: h="**(DeepCopyScalarTabAtOneGrid)**"
+    character(len=*), parameter :: h="**(DeepCopyToScalarTabAtOneGrid)**"
     logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
@@ -972,7 +973,72 @@ contains
             trim(adjustl(str(1)))//" entries")
     end if
     
-  end subroutine DeepCopyScalarTabAtOneGrid
+  end subroutine DeepCopyToScalarTabAtOneGrid
+
+
+
+
+
+  subroutine DeepCopyFromScalarTabAtOneGrid(oneGrid)
+    type(Grid), pointer, intent(in) :: oneGrid
+
+    integer :: ng
+    integer :: ierr
+    integer :: iEle
+    integer :: nEle
+    
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(DeepCopyFromScalarTabAtOneGrid)**"
+    logical, parameter :: dumpLocal=.false.
+
+    if (dumpLocal) then
+       call MsgDump(h//" starts")
+    end if
+    
+    ng=OneGrid%Id
+    nEle=num_scalar(ng)
+    
+    do iEle = 1, nEle
+
+       if (associated(scalar_tab(iEle,ng)%a_var_p)) then
+          scalar_tab(iEle,ng)%a_var_p = oneGrid%ScalarTab(iEle)%a_var_p
+       end if
+
+       if (associated(scalar_tab(iEle,ng)%a_var_t)) then
+          scalar_tab(iEle,ng)%a_var_t = oneGrid%ScalarTab(iEle)%a_var_t
+       end if
+
+       if (associated(scalar_tab(iEle,ng)%a_var_p_3D)) then
+          scalar_tab(iEle,ng)%a_var_p_3D = oneGrid%ScalarTab(iEle)%a_var_p_3D
+       end if
+
+       if (associated(scalar_tab(iEle,ng)%a_var_t_3D)) then
+          scalar_tab(iEle,ng)%a_var_t_3D = oneGrid%ScalarTab(iEle)%a_var_t_3D
+       end if
+
+       if (associated(scalar_tab(iEle,ng)%var_p_1D)) then
+          scalar_tab(iEle,ng)%var_p_1D = oneGrid%ScalarTab(iEle)%var_p_1D
+       end if
+
+       if (associated(scalar_tab(iEle,ng)%var_p_2D)) then
+          scalar_tab(iEle,ng)%var_p_2D = oneGrid%ScalarTab(iEle)%var_p_2D
+       end if
+
+       if (associated(scalar_tab(iEle,ng)%var_p_3D)) then
+          scalar_tab(iEle,ng)%var_p_3D = oneGrid%ScalarTab(iEle)%var_p_3D
+       end if
+
+       if (associated(scalar_tab(iEle,ng)%var_t_1D)) then
+          scalar_tab(iEle,ng)%var_t_1D = oneGrid%ScalarTab(iEle)%var_t_1D
+       end if
+    end do
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") nEle
+       call MsgDump(h//" finishes building ScalarTab with "//&
+            trim(adjustl(str(1)))//" entries")
+    end if
+  end subroutine DeepCopyFromScalarTabAtOneGrid
 
 
 
