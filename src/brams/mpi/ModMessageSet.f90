@@ -4925,9 +4925,32 @@ contains
        fldName_2=dd0_3duName, &
        fldName_3=dd0_3dvName, &
        fldName_4=dd0_3dwName)
-!!$       fldName_3, fldName_4, &
 !!$       fldName_X, fldName_Y)
 
+    ! create message set for Den
+
+    call OneAdvMntSendRecv(ThreeD, Neigh, nNeigh, &
+       willSendNorth, willSendSouth, willSendEast, willSendWest, &
+       willRecvNorth, willRecvSouth, willRecvEast, willRecvWest, &
+       NameSendDenX, NameSendDenY, sendDirection, TagAdvMntDenX, &
+       NameRecvDenX, NameRecvDenY, recvDirection, TagAdvMntDenY, &
+       xbSendEast, xeSendEast, xbSendWest, xeSendWest, &
+       xbSendNorth, xeSendNorth, xbSendSouth, xeSendSouth, &
+       xbRecvEast, xeRecvEast, xbRecvWest, xeRecvWest, &
+       xbRecvNorth, xeRecvNorth, xbRecvSouth, xeRecvSouth, &
+       ybSendEast, yeSendEast, ybSendWest, yeSendWest, &
+       ybSendNorth, yeSendNorth, ybSendSouth, yeSendSouth, &
+       ybRecvEast, yeRecvEast, ybRecvWest, yeRecvWest, &
+       ybRecvNorth, yeRecvNorth, ybRecvSouth, yeRecvSouth, &
+       x0, y0, NodeDimsAdvMnt%mzp, ghostZoneWidth, idim_type_3D, &
+       AdvMntDenSendX, AdvMntDenRecvX, AdvMntDenSendY, AdvMntDenRecvY, &
+       fldName_1=den0_3dName, &
+       fldName_2=den1_3dName, &
+       fldName_3=den2_3dName, &
+       fldName_4=den3_3dName)
+!!$       fldName_X, fldName_Y)
+
+    
 
 
 
@@ -5022,111 +5045,111 @@ contains
 !!$
 !!$       end do
 !!$    end if
-
-    ! create message set for Den east-west sends
-
-    AdvMntDenSendX => CreateMessageSet(&
-         NameSendDenX, &
-         sendDirection, &
-         TagAdvMntDenX, &
-         willSend, &
-         Neigh)
-
-    ! insert field sections named u3d, v3d at each direction
-    ! with null field addresses, to be updated whenever
-    ! real addresses are known
-
-    if ( associated(AdvMntDenSendX)) then
-       nMsgs = AdvMntDenSendX%nMsgs
-
-       ! create list of Field Sections to send, one for
-       ! each process to communicate and insert at the send MessageSet
-       ! field section list
-
-       ! since there is at most one neighbour node at each direction,
-       ! there will be at most one MessageSet at each direction
-
-       cntMsg = 0
-       do iNeigh = 1, nNeigh
-          if (willSendEast(iNeigh)) then
-
-             ! insert send communications to east
-
-             cntMsg = cntMsg + 1
-             if (cntMsg > nMsgs) then
-                write(str(1),"(i8)") nMsgs
-                call fatal_error(h//" nMsgs ("//&
-                     trim(adjustl(str(1)))//") exceeded while inserting fields "//&
-                     " at message "//trim(adjustl(AdvMntDenSendX%name)))
-             end if
-
-             fieldSectionSize= &
-                  (xeSendEast(iNeigh)-xbSendEast(iNeigh)+1) * &
-                  (yeSendEast(iNeigh)-ybSendEast(iNeigh)+1) * &
-                  (NodeDimsAdvMnt%mzp + 2* ghostZoneWidth)
-
-             oneFieldSection =>  CreateFieldSection(den0_3dName, idim_type_3D, &
-                  xbSendEast(iNeigh)-x0, xeSendEast(iNeigh)-x0, &
-                  ybSendEast(iNeigh)-y0, yeSendEast(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendX%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(den1_3dName, idim_type_3D, &
-                  xbSendEast(iNeigh)-x0, xeSendEast(iNeigh)-x0, &
-                  ybSendEast(iNeigh)-y0, yeSendEast(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendX%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(den2_3dName, idim_type_3D, &
-                  xbSendEast(iNeigh)-x0, xeSendEast(iNeigh)-x0, &
-                  ybSendEast(iNeigh)-y0, yeSendEast(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendX%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(den3_3dName, idim_type_3D, &
-                  xbSendEast(iNeigh)-x0, xeSendEast(iNeigh)-x0, &
-                  ybSendEast(iNeigh)-y0, yeSendEast(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendX%msgData(cntMsg))
-
-          else if (willSendWest(iNeigh)) then
-
-             ! insert send communications to west
-
-             cntMsg = cntMsg + 1
-             if (cntMsg > nMsgs) then
-                write(str(1),"(i8)") nMsgs
-                call fatal_error(h//" nMsgs ("//&
-                     trim(adjustl(str(1)))//") exceeded while inserting fields "//&
-                     " at message "//trim(adjustl(AdvMntDenSendX%name)))
-             end if
-
-             fieldSectionSize= &
-                  (xeSendWest(iNeigh)-xbSendWest(iNeigh)+1) * &
-                  (yeSendWest(iNeigh)-ybSendWest(iNeigh)+1) * &
-                  (NodeDimsAdvMnt%mzp + 2* ghostZoneWidth)
-
-             oneFieldSection =>  CreateFieldSection(den0_3dName, idim_type_3D, &
-                  xbSendWest(iNeigh)-x0, xeSendWest(iNeigh)-x0, &
-                  ybSendWest(iNeigh)-y0, yeSendWest(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendX%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(den1_3dName, idim_type_3D, &
-                  xbSendWest(iNeigh)-x0, xeSendWest(iNeigh)-x0, &
-                  ybSendWest(iNeigh)-y0, yeSendWest(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendX%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(den2_3dName, idim_type_3D, &
-                  xbSendWest(iNeigh)-x0, xeSendWest(iNeigh)-x0, &
-                  ybSendWest(iNeigh)-y0, yeSendWest(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendX%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(den3_3dName, idim_type_3D, &
-                  xbSendWest(iNeigh)-x0, xeSendWest(iNeigh)-x0, &
-                  ybSendWest(iNeigh)-y0, yeSendWest(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendX%msgData(cntMsg))
-          end if
-
-       end do
-    end if
+!!$
+!!$    ! create message set for Den east-west sends
+!!$
+!!$    AdvMntDenSendX => CreateMessageSet(&
+!!$         NameSendDenX, &
+!!$         sendDirection, &
+!!$         TagAdvMntDenX, &
+!!$         willSend, &
+!!$         Neigh)
+!!$
+!!$    ! insert field sections named u3d, v3d at each direction
+!!$    ! with null field addresses, to be updated whenever
+!!$    ! real addresses are known
+!!$
+!!$    if ( associated(AdvMntDenSendX)) then
+!!$       nMsgs = AdvMntDenSendX%nMsgs
+!!$
+!!$       ! create list of Field Sections to send, one for
+!!$       ! each process to communicate and insert at the send MessageSet
+!!$       ! field section list
+!!$
+!!$       ! since there is at most one neighbour node at each direction,
+!!$       ! there will be at most one MessageSet at each direction
+!!$
+!!$       cntMsg = 0
+!!$       do iNeigh = 1, nNeigh
+!!$          if (willSendEast(iNeigh)) then
+!!$
+!!$             ! insert send communications to east
+!!$
+!!$             cntMsg = cntMsg + 1
+!!$             if (cntMsg > nMsgs) then
+!!$                write(str(1),"(i8)") nMsgs
+!!$                call fatal_error(h//" nMsgs ("//&
+!!$                     trim(adjustl(str(1)))//") exceeded while inserting fields "//&
+!!$                     " at message "//trim(adjustl(AdvMntDenSendX%name)))
+!!$             end if
+!!$
+!!$             fieldSectionSize= &
+!!$                  (xeSendEast(iNeigh)-xbSendEast(iNeigh)+1) * &
+!!$                  (yeSendEast(iNeigh)-ybSendEast(iNeigh)+1) * &
+!!$                  (NodeDimsAdvMnt%mzp + 2* ghostZoneWidth)
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(den0_3dName, idim_type_3D, &
+!!$                  xbSendEast(iNeigh)-x0, xeSendEast(iNeigh)-x0, &
+!!$                  ybSendEast(iNeigh)-y0, yeSendEast(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendX%msgData(cntMsg))
+!!$             oneFieldSection =>  CreateFieldSection(den1_3dName, idim_type_3D, &
+!!$                  xbSendEast(iNeigh)-x0, xeSendEast(iNeigh)-x0, &
+!!$                  ybSendEast(iNeigh)-y0, yeSendEast(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendX%msgData(cntMsg))
+!!$             oneFieldSection =>  CreateFieldSection(den2_3dName, idim_type_3D, &
+!!$                  xbSendEast(iNeigh)-x0, xeSendEast(iNeigh)-x0, &
+!!$                  ybSendEast(iNeigh)-y0, yeSendEast(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendX%msgData(cntMsg))
+!!$             oneFieldSection =>  CreateFieldSection(den3_3dName, idim_type_3D, &
+!!$                  xbSendEast(iNeigh)-x0, xeSendEast(iNeigh)-x0, &
+!!$                  ybSendEast(iNeigh)-y0, yeSendEast(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendX%msgData(cntMsg))
+!!$
+!!$          else if (willSendWest(iNeigh)) then
+!!$
+!!$             ! insert send communications to west
+!!$
+!!$             cntMsg = cntMsg + 1
+!!$             if (cntMsg > nMsgs) then
+!!$                write(str(1),"(i8)") nMsgs
+!!$                call fatal_error(h//" nMsgs ("//&
+!!$                     trim(adjustl(str(1)))//") exceeded while inserting fields "//&
+!!$                     " at message "//trim(adjustl(AdvMntDenSendX%name)))
+!!$             end if
+!!$
+!!$             fieldSectionSize= &
+!!$                  (xeSendWest(iNeigh)-xbSendWest(iNeigh)+1) * &
+!!$                  (yeSendWest(iNeigh)-ybSendWest(iNeigh)+1) * &
+!!$                  (NodeDimsAdvMnt%mzp + 2* ghostZoneWidth)
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(den0_3dName, idim_type_3D, &
+!!$                  xbSendWest(iNeigh)-x0, xeSendWest(iNeigh)-x0, &
+!!$                  ybSendWest(iNeigh)-y0, yeSendWest(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendX%msgData(cntMsg))
+!!$             oneFieldSection =>  CreateFieldSection(den1_3dName, idim_type_3D, &
+!!$                  xbSendWest(iNeigh)-x0, xeSendWest(iNeigh)-x0, &
+!!$                  ybSendWest(iNeigh)-y0, yeSendWest(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendX%msgData(cntMsg))
+!!$             oneFieldSection =>  CreateFieldSection(den2_3dName, idim_type_3D, &
+!!$                  xbSendWest(iNeigh)-x0, xeSendWest(iNeigh)-x0, &
+!!$                  ybSendWest(iNeigh)-y0, yeSendWest(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendX%msgData(cntMsg))
+!!$             oneFieldSection =>  CreateFieldSection(den3_3dName, idim_type_3D, &
+!!$                  xbSendWest(iNeigh)-x0, xeSendWest(iNeigh)-x0, &
+!!$                  ybSendWest(iNeigh)-y0, yeSendWest(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendX%msgData(cntMsg))
+!!$          end if
+!!$
+!!$       end do
+!!$    end if
     
     ! create message set for DxDy east-west sends
 
@@ -5391,98 +5414,98 @@ contains
 !!$          end if
 !!$       end do
 !!$    end if
-
-    ! create message set for Den east-west recvs
-
-    AdvMntDenRecvX => CreateMessageSet(&
-         NameRecvDenX, &
-         recvDirection, &
-         TagAdvMntDenX, &
-         willRecv, &
-         Neigh)
-
-    if ( associated(AdvMntDenRecvX)) then
-       nMsgs = AdvMntDenRecvX%nMsgs
-       cntMsg = 0
-       do iNeigh = 1, nNeigh
-          if (willRecvEast(iNeigh)) then
-
-             ! insert recv communications from east
-
-             cntMsg = cntMsg + 1
-             if (cntMsg > nMsgs) then
-                write(str(1),"(i8)") nMsgs
-                call fatal_error(h//" nMsgs ("//&
-                     trim(adjustl(str(1)))//") exceeded while inserting fields "//&
-                     " at message "//trim(adjustl(AdvMntDenRecvX%name)))
-             end if
-
-             fieldSectionSize= &
-                  (xeRecvEast(iNeigh)-xbRecvEast(iNeigh)+1) * &
-                  (yeRecvEast(iNeigh)-ybRecvEast(iNeigh)+1) * &
-                  (NodeDimsAdvMnt%mzp + 2* ghostZoneWidth)
-
-             oneFieldSection =>  CreateFieldSection(den0_3dName, idim_type_3D, &
-                  xbRecvEast(iNeigh)-x0, xeRecvEast(iNeigh)-x0, &
-                  ybRecvEast(iNeigh)-y0, yeRecvEast(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvX%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(den1_3dName, idim_type_3D, &
-                  xbRecvEast(iNeigh)-x0, xeRecvEast(iNeigh)-x0, &
-                  ybRecvEast(iNeigh)-y0, yeRecvEast(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvX%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(den2_3dName, idim_type_3D, &
-                  xbRecvEast(iNeigh)-x0, xeRecvEast(iNeigh)-x0, &
-                  ybRecvEast(iNeigh)-y0, yeRecvEast(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvX%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(den3_3dName, idim_type_3D, &
-                  xbRecvEast(iNeigh)-x0, xeRecvEast(iNeigh)-x0, &
-                  ybRecvEast(iNeigh)-y0, yeRecvEast(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvX%msgData(cntMsg))
-
-          else if (willRecvWest(iNeigh)) then
-
-             ! insert recv communications from west
-
-             cntMsg = cntMsg + 1
-             if (cntMsg > nMsgs) then
-                write(str(1),"(i8)") nMsgs
-                call fatal_error(h//" nMsgs ("//&
-                     trim(adjustl(str(1)))//") exceeded while inserting fields "//&
-                     " at message "//trim(adjustl(AdvMntDenRecvX%name)))
-             end if
-
-             fieldSectionSize= &
-                  (xeRecvWest(iNeigh)-xbRecvWest(iNeigh)+1) * &
-                  (yeRecvWest(iNeigh)-ybRecvWest(iNeigh)+1) * &
-                  (NodeDimsAdvMnt%mzp + 2* ghostZoneWidth)
-
-             oneFieldSection =>  CreateFieldSection(den0_3dName, idim_type_3D, &
-                  xbRecvWest(iNeigh)-x0, xeRecvWest(iNeigh)-x0, &
-                  ybRecvWest(iNeigh)-y0, yeRecvWest(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvX%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(den1_3dName, idim_type_3D, &
-                  xbRecvWest(iNeigh)-x0, xeRecvWest(iNeigh)-x0, &
-                  ybRecvWest(iNeigh)-y0, yeRecvWest(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvX%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(den2_3dName, idim_type_3D, &
-                  xbRecvWest(iNeigh)-x0, xeRecvWest(iNeigh)-x0, &
-                  ybRecvWest(iNeigh)-y0, yeRecvWest(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvX%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(den3_3dName, idim_type_3D, &
-                  xbRecvWest(iNeigh)-x0, xeRecvWest(iNeigh)-x0, &
-                  ybRecvWest(iNeigh)-y0, yeRecvWest(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvX%msgData(cntMsg))
-          end if
-       end do
-    end if
+!!$
+!!$    ! create message set for Den east-west recvs
+!!$
+!!$    AdvMntDenRecvX => CreateMessageSet(&
+!!$         NameRecvDenX, &
+!!$         recvDirection, &
+!!$         TagAdvMntDenX, &
+!!$         willRecv, &
+!!$         Neigh)
+!!$
+!!$    if ( associated(AdvMntDenRecvX)) then
+!!$       nMsgs = AdvMntDenRecvX%nMsgs
+!!$       cntMsg = 0
+!!$       do iNeigh = 1, nNeigh
+!!$          if (willRecvEast(iNeigh)) then
+!!$
+!!$             ! insert recv communications from east
+!!$
+!!$             cntMsg = cntMsg + 1
+!!$             if (cntMsg > nMsgs) then
+!!$                write(str(1),"(i8)") nMsgs
+!!$                call fatal_error(h//" nMsgs ("//&
+!!$                     trim(adjustl(str(1)))//") exceeded while inserting fields "//&
+!!$                     " at message "//trim(adjustl(AdvMntDenRecvX%name)))
+!!$             end if
+!!$
+!!$             fieldSectionSize= &
+!!$                  (xeRecvEast(iNeigh)-xbRecvEast(iNeigh)+1) * &
+!!$                  (yeRecvEast(iNeigh)-ybRecvEast(iNeigh)+1) * &
+!!$                  (NodeDimsAdvMnt%mzp + 2* ghostZoneWidth)
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(den0_3dName, idim_type_3D, &
+!!$                  xbRecvEast(iNeigh)-x0, xeRecvEast(iNeigh)-x0, &
+!!$                  ybRecvEast(iNeigh)-y0, yeRecvEast(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvX%msgData(cntMsg))
+!!$             oneFieldSection =>  CreateFieldSection(den1_3dName, idim_type_3D, &
+!!$                  xbRecvEast(iNeigh)-x0, xeRecvEast(iNeigh)-x0, &
+!!$                  ybRecvEast(iNeigh)-y0, yeRecvEast(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvX%msgData(cntMsg))
+!!$             oneFieldSection =>  CreateFieldSection(den2_3dName, idim_type_3D, &
+!!$                  xbRecvEast(iNeigh)-x0, xeRecvEast(iNeigh)-x0, &
+!!$                  ybRecvEast(iNeigh)-y0, yeRecvEast(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvX%msgData(cntMsg))
+!!$             oneFieldSection =>  CreateFieldSection(den3_3dName, idim_type_3D, &
+!!$                  xbRecvEast(iNeigh)-x0, xeRecvEast(iNeigh)-x0, &
+!!$                  ybRecvEast(iNeigh)-y0, yeRecvEast(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvX%msgData(cntMsg))
+!!$
+!!$          else if (willRecvWest(iNeigh)) then
+!!$
+!!$             ! insert recv communications from west
+!!$
+!!$             cntMsg = cntMsg + 1
+!!$             if (cntMsg > nMsgs) then
+!!$                write(str(1),"(i8)") nMsgs
+!!$                call fatal_error(h//" nMsgs ("//&
+!!$                     trim(adjustl(str(1)))//") exceeded while inserting fields "//&
+!!$                     " at message "//trim(adjustl(AdvMntDenRecvX%name)))
+!!$             end if
+!!$
+!!$             fieldSectionSize= &
+!!$                  (xeRecvWest(iNeigh)-xbRecvWest(iNeigh)+1) * &
+!!$                  (yeRecvWest(iNeigh)-ybRecvWest(iNeigh)+1) * &
+!!$                  (NodeDimsAdvMnt%mzp + 2* ghostZoneWidth)
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(den0_3dName, idim_type_3D, &
+!!$                  xbRecvWest(iNeigh)-x0, xeRecvWest(iNeigh)-x0, &
+!!$                  ybRecvWest(iNeigh)-y0, yeRecvWest(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvX%msgData(cntMsg))
+!!$             oneFieldSection =>  CreateFieldSection(den1_3dName, idim_type_3D, &
+!!$                  xbRecvWest(iNeigh)-x0, xeRecvWest(iNeigh)-x0, &
+!!$                  ybRecvWest(iNeigh)-y0, yeRecvWest(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvX%msgData(cntMsg))
+!!$             oneFieldSection =>  CreateFieldSection(den2_3dName, idim_type_3D, &
+!!$                  xbRecvWest(iNeigh)-x0, xeRecvWest(iNeigh)-x0, &
+!!$                  ybRecvWest(iNeigh)-y0, yeRecvWest(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvX%msgData(cntMsg))
+!!$             oneFieldSection =>  CreateFieldSection(den3_3dName, idim_type_3D, &
+!!$                  xbRecvWest(iNeigh)-x0, xeRecvWest(iNeigh)-x0, &
+!!$                  ybRecvWest(iNeigh)-y0, yeRecvWest(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvX%msgData(cntMsg))
+!!$          end if
+!!$       end do
+!!$    end if
     
     ! create message set for DxDy east-west recvs
 
@@ -5758,111 +5781,111 @@ contains
 !!$          end if
 !!$       end do
 !!$    end if
-
-    ! create message set for Den north-south sends
-
-    AdvMntDenSendY => CreateMessageSet(&
-         NameSendDenY, &
-         sendDirection, &
-         TagAdvMntDenY, &
-         willSend, &
-         Neigh)
-
-    ! insert field sections named u3d, v3d at each direction
-    ! with null field addresses, to be updated whenever
-    ! real addresses are known
-
-    if ( associated(AdvMntDenSendY)) then
-       nMsgs = AdvMntDenSendY%nMsgs
-
-       ! create list of Field Sections to send, one for
-       ! each process to communicate and insert at the send MessageSet
-       ! field section list
-
-       ! since there is at most one neighbour node at each direction,
-       ! there will be at most one MessageSet at each direction
-
-       cntMsg = 0
-       do iNeigh = 1, nNeigh
-
-          if (willSendNorth(iNeigh)) then
-
-             ! insert send communications to north
-
-             cntMsg = cntMsg + 1
-             if (cntMsg > nMsgs) then
-                write(str(1),"(i8)") nMsgs
-                call fatal_error(h//" nMsgs ("//&
-                     trim(adjustl(str(1)))//") exceeded while inserting fields "//&
-                     " at message "//trim(adjustl(AdvMntDenSendY%name)))
-             end if
-
-             fieldSectionSize= &
-                  (xeSendNorth(iNeigh)-xbSendNorth(iNeigh)+1) * &
-                  (yeSendNorth(iNeigh)-ybSendNorth(iNeigh)+1) * &
-                  (NodeDimsAdvMnt%mzp + 2* ghostZoneWidth)
-
-             oneFieldSection =>  CreateFieldSection(den0_3dName, idim_type_3D, &
-                  xbSendNorth(iNeigh)-x0, xeSendNorth(iNeigh)-x0, &
-                  ybSendNorth(iNeigh)-y0, yeSendNorth(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendY%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(den1_3dName, idim_type_3D, &
-                  xbSendNorth(iNeigh)-x0, xeSendNorth(iNeigh)-x0, &
-                  ybSendNorth(iNeigh)-y0, yeSendNorth(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendY%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(den2_3dName, idim_type_3D, &
-                  xbSendNorth(iNeigh)-x0, xeSendNorth(iNeigh)-x0, &
-                  ybSendNorth(iNeigh)-y0, yeSendNorth(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendY%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(den3_3dName, idim_type_3D, &
-                  xbSendNorth(iNeigh)-x0, xeSendNorth(iNeigh)-x0, &
-                  ybSendNorth(iNeigh)-y0, yeSendNorth(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendY%msgData(cntMsg))
-
-          else if (willSendSouth(iNeigh)) then
-
-             ! insert send communications to south
-
-             cntMsg = cntMsg + 1
-             if (cntMsg > nMsgs) then
-                write(str(1),"(i8)") nMsgs
-                call fatal_error(h//" nMsgs ("//&
-                     trim(adjustl(str(1)))//") exceeded while inserting fields "//&
-                     " at message "//trim(adjustl(AdvMntDenSendY%name)))
-             end if
-
-             fieldSectionSize= &
-                  (xeSendSouth(iNeigh)-xbSendSouth(iNeigh)+1) * &
-                  (yeSendSouth(iNeigh)-ybSendSouth(iNeigh)+1) * &
-                  (NodeDimsAdvMnt%mzp + 2* ghostZoneWidth)
-
-             oneFieldSection =>  CreateFieldSection(den0_3dName, idim_type_3D, &
-                  xbSendSouth(iNeigh)-x0, xeSendSouth(iNeigh)-x0, &
-                  ybSendSouth(iNeigh)-y0, yeSendSouth(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendY%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(den1_3dName, idim_type_3D, &
-                  xbSendSouth(iNeigh)-x0, xeSendSouth(iNeigh)-x0, &
-                  ybSendSouth(iNeigh)-y0, yeSendSouth(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendY%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(den2_3dName, idim_type_3D, &
-                  xbSendSouth(iNeigh)-x0, xeSendSouth(iNeigh)-x0, &
-                  ybSendSouth(iNeigh)-y0, yeSendSouth(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendY%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(den3_3dName, idim_type_3D, &
-                  xbSendSouth(iNeigh)-x0, xeSendSouth(iNeigh)-x0, &
-                  ybSendSouth(iNeigh)-y0, yeSendSouth(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendY%msgData(cntMsg))
-          end if
-       end do
-    end if
+!!$
+!!$    ! create message set for Den north-south sends
+!!$
+!!$    AdvMntDenSendY => CreateMessageSet(&
+!!$         NameSendDenY, &
+!!$         sendDirection, &
+!!$         TagAdvMntDenY, &
+!!$         willSend, &
+!!$         Neigh)
+!!$
+!!$    ! insert field sections named u3d, v3d at each direction
+!!$    ! with null field addresses, to be updated whenever
+!!$    ! real addresses are known
+!!$
+!!$    if ( associated(AdvMntDenSendY)) then
+!!$       nMsgs = AdvMntDenSendY%nMsgs
+!!$
+!!$       ! create list of Field Sections to send, one for
+!!$       ! each process to communicate and insert at the send MessageSet
+!!$       ! field section list
+!!$
+!!$       ! since there is at most one neighbour node at each direction,
+!!$       ! there will be at most one MessageSet at each direction
+!!$
+!!$       cntMsg = 0
+!!$       do iNeigh = 1, nNeigh
+!!$
+!!$          if (willSendNorth(iNeigh)) then
+!!$
+!!$             ! insert send communications to north
+!!$
+!!$             cntMsg = cntMsg + 1
+!!$             if (cntMsg > nMsgs) then
+!!$                write(str(1),"(i8)") nMsgs
+!!$                call fatal_error(h//" nMsgs ("//&
+!!$                     trim(adjustl(str(1)))//") exceeded while inserting fields "//&
+!!$                     " at message "//trim(adjustl(AdvMntDenSendY%name)))
+!!$             end if
+!!$
+!!$             fieldSectionSize= &
+!!$                  (xeSendNorth(iNeigh)-xbSendNorth(iNeigh)+1) * &
+!!$                  (yeSendNorth(iNeigh)-ybSendNorth(iNeigh)+1) * &
+!!$                  (NodeDimsAdvMnt%mzp + 2* ghostZoneWidth)
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(den0_3dName, idim_type_3D, &
+!!$                  xbSendNorth(iNeigh)-x0, xeSendNorth(iNeigh)-x0, &
+!!$                  ybSendNorth(iNeigh)-y0, yeSendNorth(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendY%msgData(cntMsg))
+!!$             oneFieldSection =>  CreateFieldSection(den1_3dName, idim_type_3D, &
+!!$                  xbSendNorth(iNeigh)-x0, xeSendNorth(iNeigh)-x0, &
+!!$                  ybSendNorth(iNeigh)-y0, yeSendNorth(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendY%msgData(cntMsg))
+!!$             oneFieldSection =>  CreateFieldSection(den2_3dName, idim_type_3D, &
+!!$                  xbSendNorth(iNeigh)-x0, xeSendNorth(iNeigh)-x0, &
+!!$                  ybSendNorth(iNeigh)-y0, yeSendNorth(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendY%msgData(cntMsg))
+!!$             oneFieldSection =>  CreateFieldSection(den3_3dName, idim_type_3D, &
+!!$                  xbSendNorth(iNeigh)-x0, xeSendNorth(iNeigh)-x0, &
+!!$                  ybSendNorth(iNeigh)-y0, yeSendNorth(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendY%msgData(cntMsg))
+!!$
+!!$          else if (willSendSouth(iNeigh)) then
+!!$
+!!$             ! insert send communications to south
+!!$
+!!$             cntMsg = cntMsg + 1
+!!$             if (cntMsg > nMsgs) then
+!!$                write(str(1),"(i8)") nMsgs
+!!$                call fatal_error(h//" nMsgs ("//&
+!!$                     trim(adjustl(str(1)))//") exceeded while inserting fields "//&
+!!$                     " at message "//trim(adjustl(AdvMntDenSendY%name)))
+!!$             end if
+!!$
+!!$             fieldSectionSize= &
+!!$                  (xeSendSouth(iNeigh)-xbSendSouth(iNeigh)+1) * &
+!!$                  (yeSendSouth(iNeigh)-ybSendSouth(iNeigh)+1) * &
+!!$                  (NodeDimsAdvMnt%mzp + 2* ghostZoneWidth)
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(den0_3dName, idim_type_3D, &
+!!$                  xbSendSouth(iNeigh)-x0, xeSendSouth(iNeigh)-x0, &
+!!$                  ybSendSouth(iNeigh)-y0, yeSendSouth(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendY%msgData(cntMsg))
+!!$             oneFieldSection =>  CreateFieldSection(den1_3dName, idim_type_3D, &
+!!$                  xbSendSouth(iNeigh)-x0, xeSendSouth(iNeigh)-x0, &
+!!$                  ybSendSouth(iNeigh)-y0, yeSendSouth(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendY%msgData(cntMsg))
+!!$             oneFieldSection =>  CreateFieldSection(den2_3dName, idim_type_3D, &
+!!$                  xbSendSouth(iNeigh)-x0, xeSendSouth(iNeigh)-x0, &
+!!$                  ybSendSouth(iNeigh)-y0, yeSendSouth(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendY%msgData(cntMsg))
+!!$             oneFieldSection =>  CreateFieldSection(den3_3dName, idim_type_3D, &
+!!$                  xbSendSouth(iNeigh)-x0, xeSendSouth(iNeigh)-x0, &
+!!$                  ybSendSouth(iNeigh)-y0, yeSendSouth(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenSendY%msgData(cntMsg))
+!!$          end if
+!!$       end do
+!!$    end if
     
     ! create message set for DxDy north-south sends
 
@@ -6127,98 +6150,98 @@ contains
 !!$          end if
 !!$       end do
 !!$    end if
-
-    ! create message set for Den north-south recvs
-
-    AdvMntDenRecvY => CreateMessageSet(&
-         NameRecvDenY, &
-         recvDirection, &
-         TagAdvMntDenY, &
-         willRecv, &
-         Neigh)
-
-    if ( associated(AdvMntDenRecvY)) then
-       nMsgs = AdvMntDenRecvY%nMsgs
-       cntMsg = 0
-       do iNeigh = 1, nNeigh
-          if (willRecvNorth(iNeigh)) then
-
-             ! insert recv communications from north
-
-             cntMsg = cntMsg + 1
-             if (cntMsg > nMsgs) then
-                write(str(1),"(i8)") nMsgs
-                call fatal_error(h//" nMsgs ("//&
-                     trim(adjustl(str(1)))//") exceeded while inserting fields "//&
-                     " at message "//trim(adjustl(AdvMntDenRecvY%name)))
-             end if
-
-             fieldSectionSize= &
-                  (xeRecvNorth(iNeigh)-xbRecvNorth(iNeigh)+1) * &
-                  (yeRecvNorth(iNeigh)-ybRecvNorth(iNeigh)+1) * &
-                  (NodeDimsAdvMnt%mzp + 2* ghostZoneWidth)
-
-             oneFieldSection =>  CreateFieldSection(den0_3dName, idim_type_3D, &
-                  xbRecvNorth(iNeigh)-x0, xeRecvNorth(iNeigh)-x0, &
-                  ybRecvNorth(iNeigh)-y0, yeRecvNorth(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvY%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(den1_3dName, idim_type_3D, &
-                  xbRecvNorth(iNeigh)-x0, xeRecvNorth(iNeigh)-x0, &
-                  ybRecvNorth(iNeigh)-y0, yeRecvNorth(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvY%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(den2_3dName, idim_type_3D, &
-                  xbRecvNorth(iNeigh)-x0, xeRecvNorth(iNeigh)-x0, &
-                  ybRecvNorth(iNeigh)-y0, yeRecvNorth(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvY%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(den3_3dName, idim_type_3D, &
-                  xbRecvNorth(iNeigh)-x0, xeRecvNorth(iNeigh)-x0, &
-                  ybRecvNorth(iNeigh)-y0, yeRecvNorth(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvY%msgData(cntMsg))
-
-          else if (willRecvSouth(iNeigh)) then
-
-             ! insert recv communications from south
-
-             cntMsg = cntMsg + 1
-             if (cntMsg > nMsgs) then
-                write(str(1),"(i8)") nMsgs
-                call fatal_error(h//" nMsgs ("//&
-                     trim(adjustl(str(1)))//") exceeded while inserting fields "//&
-                     " at message "//trim(adjustl(AdvMntDenRecvY%name)))
-             end if
-
-             fieldSectionSize= &
-                  (xeRecvSouth(iNeigh)-xbRecvSouth(iNeigh)+1) * &
-                  (yeRecvSouth(iNeigh)-ybRecvSouth(iNeigh)+1) * &
-                  (NodeDimsAdvMnt%mzp + 2* ghostZoneWidth)
-
-             oneFieldSection =>  CreateFieldSection(den0_3dName, idim_type_3D, &
-                  xbRecvSouth(iNeigh)-x0, xeRecvSouth(iNeigh)-x0, &
-                  ybRecvSouth(iNeigh)-y0, yeRecvSouth(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvY%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(den1_3dName, idim_type_3D, &
-                  xbRecvSouth(iNeigh)-x0, xeRecvSouth(iNeigh)-x0, &
-                  ybRecvSouth(iNeigh)-y0, yeRecvSouth(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvY%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(den2_3dName, idim_type_3D, &
-                  xbRecvSouth(iNeigh)-x0, xeRecvSouth(iNeigh)-x0, &
-                  ybRecvSouth(iNeigh)-y0, yeRecvSouth(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvY%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(den3_3dName, idim_type_3D, &
-                  xbRecvSouth(iNeigh)-x0, xeRecvSouth(iNeigh)-x0, &
-                  ybRecvSouth(iNeigh)-y0, yeRecvSouth(iNeigh)-y0, &
-                  fieldSectionSize)
-             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvY%msgData(cntMsg))
-          end if
-       end do
-    end if
+!!$
+!!$    ! create message set for Den north-south recvs
+!!$
+!!$    AdvMntDenRecvY => CreateMessageSet(&
+!!$         NameRecvDenY, &
+!!$         recvDirection, &
+!!$         TagAdvMntDenY, &
+!!$         willRecv, &
+!!$         Neigh)
+!!$
+!!$    if ( associated(AdvMntDenRecvY)) then
+!!$       nMsgs = AdvMntDenRecvY%nMsgs
+!!$       cntMsg = 0
+!!$       do iNeigh = 1, nNeigh
+!!$          if (willRecvNorth(iNeigh)) then
+!!$
+!!$             ! insert recv communications from north
+!!$
+!!$             cntMsg = cntMsg + 1
+!!$             if (cntMsg > nMsgs) then
+!!$                write(str(1),"(i8)") nMsgs
+!!$                call fatal_error(h//" nMsgs ("//&
+!!$                     trim(adjustl(str(1)))//") exceeded while inserting fields "//&
+!!$                     " at message "//trim(adjustl(AdvMntDenRecvY%name)))
+!!$             end if
+!!$
+!!$             fieldSectionSize= &
+!!$                  (xeRecvNorth(iNeigh)-xbRecvNorth(iNeigh)+1) * &
+!!$                  (yeRecvNorth(iNeigh)-ybRecvNorth(iNeigh)+1) * &
+!!$                  (NodeDimsAdvMnt%mzp + 2* ghostZoneWidth)
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(den0_3dName, idim_type_3D, &
+!!$                  xbRecvNorth(iNeigh)-x0, xeRecvNorth(iNeigh)-x0, &
+!!$                  ybRecvNorth(iNeigh)-y0, yeRecvNorth(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvY%msgData(cntMsg))
+!!$             oneFieldSection =>  CreateFieldSection(den1_3dName, idim_type_3D, &
+!!$                  xbRecvNorth(iNeigh)-x0, xeRecvNorth(iNeigh)-x0, &
+!!$                  ybRecvNorth(iNeigh)-y0, yeRecvNorth(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvY%msgData(cntMsg))
+!!$             oneFieldSection =>  CreateFieldSection(den2_3dName, idim_type_3D, &
+!!$                  xbRecvNorth(iNeigh)-x0, xeRecvNorth(iNeigh)-x0, &
+!!$                  ybRecvNorth(iNeigh)-y0, yeRecvNorth(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvY%msgData(cntMsg))
+!!$             oneFieldSection =>  CreateFieldSection(den3_3dName, idim_type_3D, &
+!!$                  xbRecvNorth(iNeigh)-x0, xeRecvNorth(iNeigh)-x0, &
+!!$                  ybRecvNorth(iNeigh)-y0, yeRecvNorth(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvY%msgData(cntMsg))
+!!$
+!!$          else if (willRecvSouth(iNeigh)) then
+!!$
+!!$             ! insert recv communications from south
+!!$
+!!$             cntMsg = cntMsg + 1
+!!$             if (cntMsg > nMsgs) then
+!!$                write(str(1),"(i8)") nMsgs
+!!$                call fatal_error(h//" nMsgs ("//&
+!!$                     trim(adjustl(str(1)))//") exceeded while inserting fields "//&
+!!$                     " at message "//trim(adjustl(AdvMntDenRecvY%name)))
+!!$             end if
+!!$
+!!$             fieldSectionSize= &
+!!$                  (xeRecvSouth(iNeigh)-xbRecvSouth(iNeigh)+1) * &
+!!$                  (yeRecvSouth(iNeigh)-ybRecvSouth(iNeigh)+1) * &
+!!$                  (NodeDimsAdvMnt%mzp + 2* ghostZoneWidth)
+!!$
+!!$             oneFieldSection =>  CreateFieldSection(den0_3dName, idim_type_3D, &
+!!$                  xbRecvSouth(iNeigh)-x0, xeRecvSouth(iNeigh)-x0, &
+!!$                  ybRecvSouth(iNeigh)-y0, yeRecvSouth(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvY%msgData(cntMsg))
+!!$             oneFieldSection =>  CreateFieldSection(den1_3dName, idim_type_3D, &
+!!$                  xbRecvSouth(iNeigh)-x0, xeRecvSouth(iNeigh)-x0, &
+!!$                  ybRecvSouth(iNeigh)-y0, yeRecvSouth(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvY%msgData(cntMsg))
+!!$             oneFieldSection =>  CreateFieldSection(den2_3dName, idim_type_3D, &
+!!$                  xbRecvSouth(iNeigh)-x0, xeRecvSouth(iNeigh)-x0, &
+!!$                  ybRecvSouth(iNeigh)-y0, yeRecvSouth(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvY%msgData(cntMsg))
+!!$             oneFieldSection =>  CreateFieldSection(den3_3dName, idim_type_3D, &
+!!$                  xbRecvSouth(iNeigh)-x0, xeRecvSouth(iNeigh)-x0, &
+!!$                  ybRecvSouth(iNeigh)-y0, yeRecvSouth(iNeigh)-y0, &
+!!$                  fieldSectionSize)
+!!$             call AppendFieldSectionToMessageData(oneFieldSection, AdvMntDenRecvY%msgData(cntMsg))
+!!$          end if
+!!$       end do
+!!$    end if
     
     ! create message set for DxDy north-south recvs
 
