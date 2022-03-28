@@ -3784,72 +3784,72 @@ contains
 
 
 
-  subroutine InitialFieldsUpdate(&
-       u3d, v3d, &
-       dd0_3d, dd0_3du, dd0_3dv, dd0_3dw, &
-       den0_3d, den1_3d, den2_3d, den3_3d, &
-       l_dxtW, l_dytW, dxtW, dytW, &
-       ngrids,m1,m2,m3,Nm2,Nm3,ng,mynum, &
-       nRec, procRecv, tagRecv, iaRecv, izRecv, jaRecv, jzRecv, &
-       bufRecvStart, bufRecvLength, bufRecvTotalLength, &
-       nSnd, procSend, tagSend, iaSend, izSend, jaSend, jzSend, &
-       bufSendStart, bufSendLength, bufSendTotalLength)
-
-    real, pointer, intent(in) :: u3d(:,:,:)
-    real, pointer, intent(in) :: v3d(:,:,:)
-    real, pointer, intent(in) :: dd0_3d(:,:,:)
-    real, pointer, intent(in) :: dd0_3du(:,:,:)
-    real, pointer, intent(in) :: dd0_3dv(:,:,:)
-    real, pointer, intent(in) :: dd0_3dw(:,:,:)
-    real, pointer, intent(in) :: den0_3d(:,:,:)
-    real, pointer, intent(in) :: den1_3d(:,:,:)
-    real, pointer, intent(in) :: den2_3d(:,:,:)
-    real, pointer, intent(in) :: den3_3d(:,:,:)
-    real, pointer, intent(in) :: l_dxtW(:,:,:)
-    real, pointer, intent(in) :: l_dytW(:,:,:)
-
-    real, pointer, intent(inout) :: dxtW(:,:)
-    real, pointer, intent(inout) :: dytW(:,:)
-
-
-    integer, intent(in) :: ngrids
-    integer, intent(in) :: m1
-    integer, intent(in) :: m2,nm2
-    integer, intent(in) :: m3,nm3,ng,mynum
-    integer, intent(in) :: nRec
-    integer, intent(in) :: procRecv(nRec)
-    integer, intent(in) :: tagRecv(nRec)
-    integer, intent(in) :: iaRecv(nRec)
-    integer, intent(in) :: izRecv(nRec)
-    integer, intent(in) :: jaRecv(nRec)
-    integer, intent(in) :: jzRecv(nRec)
-    integer, intent(in) :: bufRecvStart(nRec)
-    integer, intent(in) :: bufRecvLength(nRec)
-    integer, intent(in) :: bufRecvTotalLength
-    integer, intent(in) :: nSnd
-    integer, intent(in) :: procSend(nSnd)
-    integer, intent(in) :: tagSend(nSnd)
-    integer, intent(in) :: iaSend(nSnd)
-    integer, intent(in) :: izSend(nSnd)
-    integer, intent(in) :: jaSend(nSnd)
-    integer, intent(in) :: jzSend(nSnd)
-    integer, intent(in) :: bufSendStart(nSnd)
-    integer, intent(in) :: bufSendLength(nSnd)
-    integer, intent(in) :: bufSendTotalLength
-
-    integer :: i,j,k
-    logical, parameter :: dumpLocal=.false.
-    character(len=*), parameter :: h="**(InitialFieldsUpdate)**"
-    character(len=8) :: str(10)
-
-    integer, save :: iupdate_dxy=0
-
-    if (dumpLocal) then
-       call MsgDump(h//" starts")
-    end if
-
-    if(bufSendTotalLength==0 .or. bufRecvTotalLength==0) return
-
+!!$  subroutine InitialFieldsUpdate(&
+!!$       u3d, v3d, &
+!!$       dd0_3d, dd0_3du, dd0_3dv, dd0_3dw, &
+!!$       den0_3d, den1_3d, den2_3d, den3_3d, &
+!!$       l_dxtW, l_dytW, dxtW, dytW, &
+!!$       ngrids,m1,m2,m3,Nm2,Nm3,ng,mynum, &
+!!$       nRec, procRecv, tagRecv, iaRecv, izRecv, jaRecv, jzRecv, &
+!!$       bufRecvStart, bufRecvLength, bufRecvTotalLength, &
+!!$       nSnd, procSend, tagSend, iaSend, izSend, jaSend, jzSend, &
+!!$       bufSendStart, bufSendLength, bufSendTotalLength)
+!!$
+!!$    real, pointer, intent(in) :: u3d(:,:,:)
+!!$    real, pointer, intent(in) :: v3d(:,:,:)
+!!$    real, pointer, intent(in) :: dd0_3d(:,:,:)
+!!$    real, pointer, intent(in) :: dd0_3du(:,:,:)
+!!$    real, pointer, intent(in) :: dd0_3dv(:,:,:)
+!!$    real, pointer, intent(in) :: dd0_3dw(:,:,:)
+!!$    real, pointer, intent(in) :: den0_3d(:,:,:)
+!!$    real, pointer, intent(in) :: den1_3d(:,:,:)
+!!$    real, pointer, intent(in) :: den2_3d(:,:,:)
+!!$    real, pointer, intent(in) :: den3_3d(:,:,:)
+!!$    real, pointer, intent(in) :: l_dxtW(:,:,:)
+!!$    real, pointer, intent(in) :: l_dytW(:,:,:)
+!!$
+!!$    real, pointer, intent(inout) :: dxtW(:,:)
+!!$    real, pointer, intent(inout) :: dytW(:,:)
+!!$
+!!$
+!!$    integer, intent(in) :: ngrids
+!!$    integer, intent(in) :: m1
+!!$    integer, intent(in) :: m2,nm2
+!!$    integer, intent(in) :: m3,nm3,ng,mynum
+!!$    integer, intent(in) :: nRec
+!!$    integer, intent(in) :: procRecv(nRec)
+!!$    integer, intent(in) :: tagRecv(nRec)
+!!$    integer, intent(in) :: iaRecv(nRec)
+!!$    integer, intent(in) :: izRecv(nRec)
+!!$    integer, intent(in) :: jaRecv(nRec)
+!!$    integer, intent(in) :: jzRecv(nRec)
+!!$    integer, intent(in) :: bufRecvStart(nRec)
+!!$    integer, intent(in) :: bufRecvLength(nRec)
+!!$    integer, intent(in) :: bufRecvTotalLength
+!!$    integer, intent(in) :: nSnd
+!!$    integer, intent(in) :: procSend(nSnd)
+!!$    integer, intent(in) :: tagSend(nSnd)
+!!$    integer, intent(in) :: iaSend(nSnd)
+!!$    integer, intent(in) :: izSend(nSnd)
+!!$    integer, intent(in) :: jaSend(nSnd)
+!!$    integer, intent(in) :: jzSend(nSnd)
+!!$    integer, intent(in) :: bufSendStart(nSnd)
+!!$    integer, intent(in) :: bufSendLength(nSnd)
+!!$    integer, intent(in) :: bufSendTotalLength
+!!$
+!!$    integer :: i,j,k
+!!$    logical, parameter :: dumpLocal=.false.
+!!$    character(len=*), parameter :: h="**(InitialFieldsUpdate)**"
+!!$    character(len=8) :: str(10)
+!!$
+!!$    integer, save :: iupdate_dxy=0
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" starts")
+!!$    end if
+!!$
+!!$    if(bufSendTotalLength==0 .or. bufRecvTotalLength==0) return
+!!$
 !!$    if (dumpLocal) then
 !!$       write(str(1),"(i8)") nm2
 !!$       write(str(2),"(i8)") nm3
@@ -3894,7 +3894,7 @@ contains
 !!$         nSnd, procSend, tagSend, &
 !!$         iaSend, izSend, jaSend, jzSend, &
 !!$         bufSendStart, bufSendLength, bufSendTotalLength)
-
+!!$
 !!$    if (dumpLocal) then
 !!$       call MsgDump(h//" update borders of dd0_3d")
 !!$    end if
@@ -3982,7 +3982,7 @@ contains
 !!$         nSnd, procSend, tagSend, &
 !!$         iaSend, izSend, jaSend, jzSend, &
 !!$         bufSendStart, bufSendLength, bufSendTotalLength)
-
+!!$
 !!$    if (dumpLocal) then
 !!$       call MsgDump(h//" update borders of l_dxtW")
 !!$    end if
@@ -4004,7 +4004,7 @@ contains
 !!$         nSnd, procSend, tagSend, &
 !!$         iaSend, izSend, jaSend, jzSend, &
 !!$         bufSendStart, bufSendLength, bufSendTotalLength)
-
+!!$
 !!$    if (dumpLocal) then
 !!$       write(str(1),"(i8)") nm2
 !!$       write(str(2),"(i8)") nm3
@@ -4017,17 +4017,17 @@ contains
 !!$            " <- advmnt_g%l_dytW"//&
 !!$            "(1,1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")")
 !!$    end if
-
+!!$
 !!$    do i=1,nm2
 !!$       do j=1,nm3
 !!$          dxtW(i,j)=l_dxtW(1,i,j)
 !!$          dytW(i,j)=l_dytW(1,i,j)
 !!$       end do
 !!$    end do
-    if (dumpLocal) then
-       call MsgDump(h//" finishes")
-    end if
-  end subroutine InitialFieldsUpdate
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" finishes")
+!!$    end if
+!!$  end subroutine InitialFieldsUpdate
 
 
 
@@ -5375,101 +5375,101 @@ contains
 
     !**(JP)** ends
 
-    if (dumpLocal) then
-       write(str(1),"(i8)") m1
-       write(str(2),"(i8)") m2
-       write(str(3),"(i8)") m3
-       call MsgDump(h//" starts; MPI rank fields are dimensioned ("//&
-            trim(adjustl(str(1)))//","//&
-            trim(adjustl(str(2)))//","//&
-            trim(adjustl(str(3)))//")")
-       write(str(1),"(i8)") 1+i0
-       write(str(2),"(i8)") m2+i0
-       write(str(3),"(i8)") 1+j0
-       write(str(4),"(i8)") m3+j0
-       call MsgDump(h//" fields global indices ("//&
-            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
-            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//")")
-       write(str(1),"(i8)") ia+i0
-       write(str(2),"(i8)") iz+i0
-       write(str(3),"(i8)") ja+j0
-       write(str(4),"(i8)") jz+j0
-       call MsgDump(h//" own (no ghost) fields global indices ("//&
-            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
-            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//")")
-    end if
-
+!!$    if (dumpLocal) then
+!!$       write(str(1),"(i8)") m1
+!!$       write(str(2),"(i8)") m2
+!!$       write(str(3),"(i8)") m3
+!!$       call MsgDump(h//" starts; MPI rank fields are dimensioned ("//&
+!!$            trim(adjustl(str(1)))//","//&
+!!$            trim(adjustl(str(2)))//","//&
+!!$            trim(adjustl(str(3)))//")")
+!!$       write(str(1),"(i8)") 1+i0
+!!$       write(str(2),"(i8)") m2+i0
+!!$       write(str(3),"(i8)") 1+j0
+!!$       write(str(4),"(i8)") m3+j0
+!!$       call MsgDump(h//" fields global indices ("//&
+!!$            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+!!$            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//")")
+!!$       write(str(1),"(i8)") ia+i0
+!!$       write(str(2),"(i8)") iz+i0
+!!$       write(str(3),"(i8)") ja+j0
+!!$       write(str(4),"(i8)") jz+j0
+!!$       call MsgDump(h//" own (no ghost) fields global indices ("//&
+!!$            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+!!$            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//")")
+!!$    end if
+!!$
     if(mnt_adv_jnitialized == OFF) then
        if (mynum == 0) stop 'ADV MNT called with mynum = 0, try np = 2'
        if (dumpLocal) then
           call MsgDump(h//" enter initialization")
        end if
-
-       ! allocates advmnt_g and its fields for all grids
-       if (dumpLocal) then
-          write(str(1),"(i8)") newM2
-          write(str(2),"(i8)") newM3
-          call MsgDump(h//" invokes initialize_advmnt passing"//&
-               " newM2="//trim(adjustl(str(1)))//&
-               " newM3="//trim(adjustl(str(2))))
-       end if
-       call initialize_advmnt(ngrids, &
-            nodemzp(mynum,:), &
-            newM2, &
-            newM3)
-
-       ! allocates a single buffer for message passing sends
-       ! and a single buffer for message passing receives
-       sori=maxval(totalrecvi)
-       sorj=maxval(totalrecvj)
-       sosi=maxval(totalsendi)
-       sosj=maxval(totalsendj)
-       allocate(bufRecv(max(sori,sorj)))
-       allocate(bufSend(max(sosi,sosj)))
-
-       do ng=1,ngrids
-          iBegin=newIa(ng)-1
-          iEnd=newIz(ng)+1
-          jBegin=newJa(ng)-1
-          jEnd=newJz(ng)+1
-          if (dumpLocal) then
-             call MsgDump(h//" invokes initialize_grid_spacings")
-          end if
-          call initialize_grid_spacings(ng, &
-               nodemzp(mynum,ng), &
-               nodemxp(mynum,ng), &
-               nodemyp(mynum,ng), &
-               grid_g(ng)%dxt, &
-               grid_g(ng)%dyt, &
-               grid_g(ng)%fmapt, &
-               grid_g(ng)%rtgt, &
-               advmnt_g(ng)%dxtW(iBegin:iEnd,jBegin:jEnd), &
-               advmnt_g(ng)%dytW(iBegin:iEnd,jBegin:jEnd), &
-               advmnt_g(ng)%dztW )
-       end do
-
-       if(use_true_density == OFF) then
-          do ng=1,ngrids
-             iBegin=newIa(ng)-1
-             iEnd=newIz(ng)+1
-             jBegin=newJa(ng)-1
-             jEnd=newJz(ng)+1
-             if (dumpLocal) then
-                call MsgDump(h//" invokes initialize_densities")
-             end if
-             call initialize_densities(nodemzp(mynum,ng),&
-                  nodemxp(mynum,ng),nodemyp(mynum,ng) &
-                  , basic_g(ng)%dn0     &
-                  , basic_g(ng)%dn0u    &
-                  , basic_g(ng)%dn0v    &
-                  ,advmnt_g(ng)%dd0_3d (1:m1,iBegin:iEnd,jBegin:jEnd)  &
-                  ,advmnt_g(ng)%dd0_3du(1:m1,iBegin:iEnd,jBegin:jEnd) &
-                  ,advmnt_g(ng)%dd0_3dv(1:m1,iBegin:iEnd,jBegin:jEnd) &
-                  ,advmnt_g(ng)%dd0_3dw(1:m1,iBegin:iEnd,jBegin:jEnd) )
-          end do
-       end if
-
-       mnt_adv_jnitialized= ON
+!!$
+!!$       ! allocates advmnt_g and its fields for all grids
+!!$       if (dumpLocal) then
+!!$          write(str(1),"(i8)") newM2
+!!$          write(str(2),"(i8)") newM3
+!!$          call MsgDump(h//" invokes initialize_advmnt passing"//&
+!!$               " newM2="//trim(adjustl(str(1)))//&
+!!$               " newM3="//trim(adjustl(str(2))))
+!!$       end if
+!!$       call initialize_advmnt(ngrids, &
+!!$            nodemzp(mynum,:), &
+!!$            newM2, &
+!!$            newM3)
+!!$
+!!$       ! allocates a single buffer for message passing sends
+!!$       ! and a single buffer for message passing receives
+!!$       sori=maxval(totalrecvi)
+!!$       sorj=maxval(totalrecvj)
+!!$       sosi=maxval(totalsendi)
+!!$       sosj=maxval(totalsendj)
+!!$       allocate(bufRecv(max(sori,sorj)))
+!!$       allocate(bufSend(max(sosi,sosj)))
+!!$
+!!$       do ng=1,ngrids
+!!$          iBegin=newIa(ng)-1
+!!$          iEnd=newIz(ng)+1
+!!$          jBegin=newJa(ng)-1
+!!$          jEnd=newJz(ng)+1
+!!$          if (dumpLocal) then
+!!$             call MsgDump(h//" invokes initialize_grid_spacings")
+!!$          end if
+!!$          call initialize_grid_spacings(ng, &
+!!$               nodemzp(mynum,ng), &
+!!$               nodemxp(mynum,ng), &
+!!$               nodemyp(mynum,ng), &
+!!$               grid_g(ng)%dxt, &
+!!$               grid_g(ng)%dyt, &
+!!$               grid_g(ng)%fmapt, &
+!!$               grid_g(ng)%rtgt, &
+!!$               advmnt_g(ng)%dxtW(iBegin:iEnd,jBegin:jEnd), &
+!!$               advmnt_g(ng)%dytW(iBegin:iEnd,jBegin:jEnd), &
+!!$               advmnt_g(ng)%dztW )
+!!$       end do
+!!$
+!!$       if(use_true_density == OFF) then
+!!$          do ng=1,ngrids
+!!$             iBegin=newIa(ng)-1
+!!$             iEnd=newIz(ng)+1
+!!$             jBegin=newJa(ng)-1
+!!$             jEnd=newJz(ng)+1
+!!$             if (dumpLocal) then
+!!$                call MsgDump(h//" invokes initialize_densities")
+!!$             end if
+!!$             call initialize_densities(nodemzp(mynum,ng),&
+!!$                  nodemxp(mynum,ng),nodemyp(mynum,ng) &
+!!$                  , basic_g(ng)%dn0     &
+!!$                  , basic_g(ng)%dn0u    &
+!!$                  , basic_g(ng)%dn0v    &
+!!$                  ,advmnt_g(ng)%dd0_3d (1:m1,iBegin:iEnd,jBegin:jEnd)  &
+!!$                  ,advmnt_g(ng)%dd0_3du(1:m1,iBegin:iEnd,jBegin:jEnd) &
+!!$                  ,advmnt_g(ng)%dd0_3dv(1:m1,iBegin:iEnd,jBegin:jEnd) &
+!!$                  ,advmnt_g(ng)%dd0_3dw(1:m1,iBegin:iEnd,jBegin:jEnd) )
+!!$          end do
+!!$       end if
+!!$
+!!$       mnt_adv_jnitialized= ON
     end if
 
     !**(JP)** starts
@@ -5523,9 +5523,9 @@ contains
 
     !**(JP)** ends
 
-
-    mxyzp=m1*m2*m3
-
+!!$
+!!$    mxyzp=m1*m2*m3
+!!$
     !- This scheme is not applied to advect  U, V, and W
     if (varn .eq. 'V' .or. varn .eq. 'ALL') then
        stop 'not using mnt to advect u,v,w'
@@ -5534,43 +5534,43 @@ contains
        stop 'MNT advection not ready for shaved eta'
     end if
     !
-    ndt_z =0 ! integer initialization
-    !
-    !- Advect  scalars
-    iBegin=newIa(ng)-1
-    iEnd  =newIz(ng)+1
-    jBegin=newJa(ng)-1
-    jEnd  =newJz(ng)+1
-
+!!$    ndt_z =0 ! integer initialization
+!!$    !
+!!$    !- Advect  scalars
+!!$    iBegin=newIa(ng)-1
+!!$    iEnd  =newIz(ng)+1
+!!$    jBegin=newJa(ng)-1
+!!$    jEnd  =newJz(ng)+1
+!!$
     !- get actual air densities, if using them instead of basic state fields
     if(use_true_density == ON) then
-       if (dumpLocal) then
-          write(str(1),"(i8)") m1
-          write(str(2),"(i8)") m2
-          write(str(3),"(i8)") m3
-          write(str(4),"(i8)") iBegin
-          write(str(5),"(i8)") iEnd
-          write(str(6),"(i8)") jBegin
-          write(str(7),"(i8)") jEnd
-          call MsgDump(h//" invokes get_true_densities")
-          call MsgDump(h//" passing input arrays of dim (1:"//&
-               trim(adjustl(str(1)))//",1:"//&
-               trim(adjustl(str(2)))//",1:"//trim(adjustl(str(3)))//")")
-          call MsgDump(h//" and section of output arrays dim"//&
-               " (1:"//trim(adjustl(str(1)))//","//&
-               trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//","//&
-               trim(adjustl(str(6)))//":"//trim(adjustl(str(7)))//")")
-       end if
-       call get_true_densities(m1,m2,m3,level, &
-            basic_g(ng)%rtp,     &
-            basic_g(ng)%rv,      &
-            basic_g(ng)%pp,      &
-            basic_g(ng)%pi0,     &
-            basic_g(ng)%theta,   &
-            advmnt_g(ng)%dd0_3d (1:m1,iBegin:iEnd,jBegin:jEnd), &
-            advmnt_g(ng)%dd0_3du(1:m1,iBegin:iEnd,jBegin:jEnd), &
-            advmnt_g(ng)%dd0_3dv(1:m1,iBegin:iEnd,jBegin:jEnd), &
-            advmnt_g(ng)%dd0_3dw(1:m1,iBegin:iEnd,jBegin:jEnd)  )
+!!$       if (dumpLocal) then
+!!$          write(str(1),"(i8)") m1
+!!$          write(str(2),"(i8)") m2
+!!$          write(str(3),"(i8)") m3
+!!$          write(str(4),"(i8)") iBegin
+!!$          write(str(5),"(i8)") iEnd
+!!$          write(str(6),"(i8)") jBegin
+!!$          write(str(7),"(i8)") jEnd
+!!$          call MsgDump(h//" invokes get_true_densities")
+!!$          call MsgDump(h//" passing input arrays of dim (1:"//&
+!!$               trim(adjustl(str(1)))//",1:"//&
+!!$               trim(adjustl(str(2)))//",1:"//trim(adjustl(str(3)))//")")
+!!$          call MsgDump(h//" and section of output arrays dim"//&
+!!$               " (1:"//trim(adjustl(str(1)))//","//&
+!!$               trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//","//&
+!!$               trim(adjustl(str(6)))//":"//trim(adjustl(str(7)))//")")
+!!$       end if
+!!$       call get_true_densities(m1,m2,m3,level, &
+!!$            basic_g(ng)%rtp,     &
+!!$            basic_g(ng)%rv,      &
+!!$            basic_g(ng)%pp,      &
+!!$            basic_g(ng)%pi0,     &
+!!$            basic_g(ng)%theta,   &
+!!$            advmnt_g(ng)%dd0_3d (1:m1,iBegin:iEnd,jBegin:jEnd), &
+!!$            advmnt_g(ng)%dd0_3du(1:m1,iBegin:iEnd,jBegin:jEnd), &
+!!$            advmnt_g(ng)%dd0_3dv(1:m1,iBegin:iEnd,jBegin:jEnd), &
+!!$            advmnt_g(ng)%dd0_3dw(1:m1,iBegin:iEnd,jBegin:jEnd)  )
 
        !**(JP)** starts
 
@@ -5599,51 +5599,51 @@ contains
     end if
 
     !- prepare wind velocities including map factors
-    if (dumpLocal) then
-       write(str(1),"(i8)") ia
-       write(str(2),"(i8)") iz
-       write(str(3),"(i8)") ja
-       write(str(4),"(i8)") jz
-       write(str(5),"(i8)") m1
-       write(str(6),"(i8)") m2
-       write(str(7),"(i8)") m3
-       write(str(8),"(i8)") iBegin
-       write(str(9),"(i8)") iEnd
-       write(str(10),"(i8)") jBegin
-       write(str(11),"(i8)") jEnd
-       call MsgDump(h//" invokes prepare_winds on output fields (1:"//&
-            trim(adjustl(str(5)))//","//&
-            trim(adjustl(str(8)))//":"//trim(adjustl(str(9)))//","//&
-            trim(adjustl(str(10)))//":"//trim(adjustl(str(11)))//")"//&
-            " using"//&
-            " m1="//trim(adjustl(str(5)))//&
-            " m2="//trim(adjustl(str(6)))//&
-            " m3="//trim(adjustl(str(7)))//&
-            " ia="//trim(adjustl(str(1)))//&
-            " iz="//trim(adjustl(str(2)))//&
-            " ja="//trim(adjustl(str(3)))//&
-            " jz="//trim(adjustl(str(4))))
-    end if
-    call prepare_winds(dtlt,m1,m2,m3,ia,iz,ja,jz     &
-         ,basic_g(ng)%uc  &
-         ,basic_g(ng)%up  &
-         ,basic_g(ng)%vc  &
-         ,basic_g(ng)%vp  &
-         ,basic_g(ng)%wc  &
-         ,basic_g(ng)%wp  &
-                                !
-         ,grid_g(ng)%fmapui &
-         ,grid_g(ng)%fmapvi &
-         ,grid_g(ng)%rtgt   &
-         ,grid_g(ng)%rtgu   &
-         ,grid_g(ng)%rtgv   &
-         ,grid_g(ng)%f13t   &
-         ,grid_g(ng)%f23t   &
-                                !
-         ,advmnt_g(ng)%u3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
-         ,advmnt_g(ng)%v3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
-         ,advmnt_g(ng)%w3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
-         ,ndt_z                )
+!!$    if (dumpLocal) then
+!!$       write(str(1),"(i8)") ia
+!!$       write(str(2),"(i8)") iz
+!!$       write(str(3),"(i8)") ja
+!!$       write(str(4),"(i8)") jz
+!!$       write(str(5),"(i8)") m1
+!!$       write(str(6),"(i8)") m2
+!!$       write(str(7),"(i8)") m3
+!!$       write(str(8),"(i8)") iBegin
+!!$       write(str(9),"(i8)") iEnd
+!!$       write(str(10),"(i8)") jBegin
+!!$       write(str(11),"(i8)") jEnd
+!!$       call MsgDump(h//" invokes prepare_winds on output fields (1:"//&
+!!$            trim(adjustl(str(5)))//","//&
+!!$            trim(adjustl(str(8)))//":"//trim(adjustl(str(9)))//","//&
+!!$            trim(adjustl(str(10)))//":"//trim(adjustl(str(11)))//")"//&
+!!$            " using"//&
+!!$            " m1="//trim(adjustl(str(5)))//&
+!!$            " m2="//trim(adjustl(str(6)))//&
+!!$            " m3="//trim(adjustl(str(7)))//&
+!!$            " ia="//trim(adjustl(str(1)))//&
+!!$            " iz="//trim(adjustl(str(2)))//&
+!!$            " ja="//trim(adjustl(str(3)))//&
+!!$            " jz="//trim(adjustl(str(4))))
+!!$    end if
+!!$    call prepare_winds(dtlt,m1,m2,m3,ia,iz,ja,jz     &
+!!$         ,basic_g(ng)%uc  &
+!!$         ,basic_g(ng)%up  &
+!!$         ,basic_g(ng)%vc  &
+!!$         ,basic_g(ng)%vp  &
+!!$         ,basic_g(ng)%wc  &
+!!$         ,basic_g(ng)%wp  &
+!!$                                !
+!!$         ,grid_g(ng)%fmapui &
+!!$         ,grid_g(ng)%fmapvi &
+!!$         ,grid_g(ng)%rtgt   &
+!!$         ,grid_g(ng)%rtgu   &
+!!$         ,grid_g(ng)%rtgv   &
+!!$         ,grid_g(ng)%f13t   &
+!!$         ,grid_g(ng)%f23t   &
+!!$                                !
+!!$         ,advmnt_g(ng)%u3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
+!!$         ,advmnt_g(ng)%v3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
+!!$         ,advmnt_g(ng)%w3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
+!!$         ,ndt_z                )
 
     !**(JP)** starts
 
@@ -5684,53 +5684,53 @@ contains
     end if
 
     !- prepare Walcek's air densities
-    if (dumpLocal) then
-       write(str(1),"(i8)") lbound(advmnt_g(ng)%u3d,1)
-       write(str(2),"(i8)") ubound(advmnt_g(ng)%u3d,1)
-       write(str(3),"(i8)") lbound(advmnt_g(ng)%u3d,2)
-       write(str(4),"(i8)") ubound(advmnt_g(ng)%u3d,2)
-       write(str(5),"(i8)") lbound(advmnt_g(ng)%u3d,3)
-       write(str(6),"(i8)") ubound(advmnt_g(ng)%u3d,3)
-       call MsgDump(h//" invokes get_Walceks_densities; here fields are declared ("//&
-            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
-            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
-            trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//")")
-       write(str(1),"(i8)") 1
-       write(str(2),"(i8)") m1
-       write(str(3),"(i8)") iBegin
-       write(str(4),"(i8)") iEnd
-       write(str(5),"(i8)") jBegin
-       write(str(6),"(i8)") jEnd
-       call MsgDump(h//" call to get_Walceks_densities passes field section ("//&
-            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
-            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
-            trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//")")
-       write(str(1),"(i8)") m1
-       write(str(2),"(i8)") m2
-       write(str(3),"(i8)") m3
-       call MsgDump(h//" inside get_Walceks_densities, fields are declared ("//&
-            trim(adjustl(str(1)))//","//trim(adjustl(str(2)))//","//&
-            trim(adjustl(str(3)))//")")
-    end if
-
-
-    call get_Walceks_densities(dtlt,m1,m2,m3 &
-         ,advmnt_g(ng)%u3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
-         ,advmnt_g(ng)%v3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
-         ,advmnt_g(ng)%w3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
-         ,advmnt_g(ng)%dd0_3d (1:m1,iBegin:iEnd,jBegin:jEnd)  &
-         ,advmnt_g(ng)%dd0_3du(1:m1,iBegin:iEnd,jBegin:jEnd) &
-         ,advmnt_g(ng)%dd0_3dv(1:m1,iBegin:iEnd,jBegin:jEnd) &
-         ,advmnt_g(ng)%dd0_3dw(1:m1,iBegin:iEnd,jBegin:jEnd) &
-         ,advmnt_g(ng)%den0_3d(1:m1,iBegin:iEnd,jBegin:jEnd) &
-         ,advmnt_g(ng)%den1_3d(1:m1,iBegin:iEnd,jBegin:jEnd) &
-         ,advmnt_g(ng)%den2_3d(1:m1,iBegin:iEnd,jBegin:jEnd) &
-         ,advmnt_g(ng)%den3_3d(1:m1,iBegin:iEnd,jBegin:jEnd) &
-         ,advmnt_g(ng)%dxtW(iBegin:iEnd,jBegin:jEnd) &
-         ,advmnt_g(ng)%dytW(iBegin:iEnd,jBegin:jEnd) &
-         ,advmnt_g(ng)%dztW &
-         ,grid_g(ng)%dxt    &
-         ,grid_g(ng)%dyt    )
+!!$    if (dumpLocal) then
+!!$       write(str(1),"(i8)") lbound(advmnt_g(ng)%u3d,1)
+!!$       write(str(2),"(i8)") ubound(advmnt_g(ng)%u3d,1)
+!!$       write(str(3),"(i8)") lbound(advmnt_g(ng)%u3d,2)
+!!$       write(str(4),"(i8)") ubound(advmnt_g(ng)%u3d,2)
+!!$       write(str(5),"(i8)") lbound(advmnt_g(ng)%u3d,3)
+!!$       write(str(6),"(i8)") ubound(advmnt_g(ng)%u3d,3)
+!!$       call MsgDump(h//" invokes get_Walceks_densities; here fields are declared ("//&
+!!$            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+!!$            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
+!!$            trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//")")
+!!$       write(str(1),"(i8)") 1
+!!$       write(str(2),"(i8)") m1
+!!$       write(str(3),"(i8)") iBegin
+!!$       write(str(4),"(i8)") iEnd
+!!$       write(str(5),"(i8)") jBegin
+!!$       write(str(6),"(i8)") jEnd
+!!$       call MsgDump(h//" call to get_Walceks_densities passes field section ("//&
+!!$            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+!!$            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
+!!$            trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//")")
+!!$       write(str(1),"(i8)") m1
+!!$       write(str(2),"(i8)") m2
+!!$       write(str(3),"(i8)") m3
+!!$       call MsgDump(h//" inside get_Walceks_densities, fields are declared ("//&
+!!$            trim(adjustl(str(1)))//","//trim(adjustl(str(2)))//","//&
+!!$            trim(adjustl(str(3)))//")")
+!!$    end if
+!!$
+!!$
+!!$    call get_Walceks_densities(dtlt,m1,m2,m3 &
+!!$         ,advmnt_g(ng)%u3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
+!!$         ,advmnt_g(ng)%v3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
+!!$         ,advmnt_g(ng)%w3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
+!!$         ,advmnt_g(ng)%dd0_3d (1:m1,iBegin:iEnd,jBegin:jEnd)  &
+!!$         ,advmnt_g(ng)%dd0_3du(1:m1,iBegin:iEnd,jBegin:jEnd) &
+!!$         ,advmnt_g(ng)%dd0_3dv(1:m1,iBegin:iEnd,jBegin:jEnd) &
+!!$         ,advmnt_g(ng)%dd0_3dw(1:m1,iBegin:iEnd,jBegin:jEnd) &
+!!$         ,advmnt_g(ng)%den0_3d(1:m1,iBegin:iEnd,jBegin:jEnd) &
+!!$         ,advmnt_g(ng)%den1_3d(1:m1,iBegin:iEnd,jBegin:jEnd) &
+!!$         ,advmnt_g(ng)%den2_3d(1:m1,iBegin:iEnd,jBegin:jEnd) &
+!!$         ,advmnt_g(ng)%den3_3d(1:m1,iBegin:iEnd,jBegin:jEnd) &
+!!$         ,advmnt_g(ng)%dxtW(iBegin:iEnd,jBegin:jEnd) &
+!!$         ,advmnt_g(ng)%dytW(iBegin:iEnd,jBegin:jEnd) &
+!!$         ,advmnt_g(ng)%dztW &
+!!$         ,grid_g(ng)%dxt    &
+!!$         ,grid_g(ng)%dyt    )
 
     !**(JP)** starts
 
@@ -5757,15 +5757,15 @@ contains
     if (dumpLocal) then
        call MsgDump (h//" invokes initial_fields_update exchanging borders on x")
     end if
-    call initial_fields_update(ngrids,m1,m2,m3,newm2(ng),newm3(ng),ng,mynum, &
-         nrecvI(ng),RecvMessageI(ng)%proc,RecvMessageI(ng)%tag, &
-         RecvMessageI(ng)%ia,RecvMessageI(ng)%iz,&
-         RecvMessageI(ng)%ja,RecvMessageI(ng)%jz, &
-         RecvMessageI(ng)%start,RecvMessageI(ng)%mSize,TotalRecvI(ng), &
-         nSendI(ng),sendMessageI(ng)%proc,sendMessageI(ng)%tag, &
-         sendMessageI(ng)%ia,sendMessageI(ng)%iz,&
-         sendMessageI(ng)%ja,sendMessageI(ng)%jz, &
-         sendMessageI(ng)%start,sendMessageI(ng)%mSize,TotalSendI(ng))
+!!$    call initial_fields_update(ngrids,m1,m2,m3,newm2(ng),newm3(ng),ng,mynum, &
+!!$         nrecvI(ng),RecvMessageI(ng)%proc,RecvMessageI(ng)%tag, &
+!!$         RecvMessageI(ng)%ia,RecvMessageI(ng)%iz,&
+!!$         RecvMessageI(ng)%ja,RecvMessageI(ng)%jz, &
+!!$         RecvMessageI(ng)%start,RecvMessageI(ng)%mSize,TotalRecvI(ng), &
+!!$         nSendI(ng),sendMessageI(ng)%proc,sendMessageI(ng)%tag, &
+!!$         sendMessageI(ng)%ia,sendMessageI(ng)%iz,&
+!!$         sendMessageI(ng)%ja,sendMessageI(ng)%jz, &
+!!$         sendMessageI(ng)%start,sendMessageI(ng)%mSize,TotalSendI(ng))
 
     !**(JP)** starts
 
@@ -5781,20 +5781,20 @@ contains
     oneAdvMnt%l_dxtW=0.0
     oneAdvMnt%l_dytW=0.0
 
-    call InitialFieldsUpdate(&
-         oneAdvMnt%u3d, oneAdvMnt%v3d, &
-         oneAdvMnt%dd0_3d, oneAdvMnt%dd0_3du, oneAdvMnt%dd0_3dv, oneAdvMnt%dd0_3dw, &
-         oneAdvMnt%den0_3d, oneAdvMnt%den1_3d, oneAdvMnt%den2_3d, oneAdvMnt%den3_3d, &
-         oneAdvMnt%l_dxtW, oneAdvMnt%l_dytW, oneAdvMnt%dxtW, oneAdvMnt%dytW, &
-         ngrids,m1,m2,m3,newm2(ng),newm3(ng),ng,mynum, &
-         nrecvI(ng),RecvMessageI(ng)%proc,RecvMessageI(ng)%tag, &
-         RecvMessageI(ng)%ia,RecvMessageI(ng)%iz,&
-         RecvMessageI(ng)%ja,RecvMessageI(ng)%jz, &
-         RecvMessageI(ng)%start,RecvMessageI(ng)%mSize,TotalRecvI(ng), &
-         nSendI(ng),sendMessageI(ng)%proc,sendMessageI(ng)%tag, &
-         sendMessageI(ng)%ia,sendMessageI(ng)%iz,&
-         sendMessageI(ng)%ja,sendMessageI(ng)%jz, &
-         sendMessageI(ng)%start,sendMessageI(ng)%mSize,TotalSendI(ng))
+!!$    call InitialFieldsUpdate(&
+!!$         oneAdvMnt%u3d, oneAdvMnt%v3d, &
+!!$         oneAdvMnt%dd0_3d, oneAdvMnt%dd0_3du, oneAdvMnt%dd0_3dv, oneAdvMnt%dd0_3dw, &
+!!$         oneAdvMnt%den0_3d, oneAdvMnt%den1_3d, oneAdvMnt%den2_3d, oneAdvMnt%den3_3d, &
+!!$         oneAdvMnt%l_dxtW, oneAdvMnt%l_dytW, oneAdvMnt%dxtW, oneAdvMnt%dytW, &
+!!$         ngrids,m1,m2,m3,newm2(ng),newm3(ng),ng,mynum, &
+!!$         nrecvI(ng),RecvMessageI(ng)%proc,RecvMessageI(ng)%tag, &
+!!$         RecvMessageI(ng)%ia,RecvMessageI(ng)%iz,&
+!!$         RecvMessageI(ng)%ja,RecvMessageI(ng)%jz, &
+!!$         RecvMessageI(ng)%start,RecvMessageI(ng)%mSize,TotalRecvI(ng), &
+!!$         nSendI(ng),sendMessageI(ng)%proc,sendMessageI(ng)%tag, &
+!!$         sendMessageI(ng)%ia,sendMessageI(ng)%iz,&
+!!$         sendMessageI(ng)%ja,sendMessageI(ng)%jz, &
+!!$         sendMessageI(ng)%start,sendMessageI(ng)%mSize,TotalSendI(ng))
 
 !!$    call Compare(oneAdvMnt%dd0_3d, advmnt_g(ng)%dd0_3d, "dd0_3d", .true.)
 !!$    call Compare(oneAdvMnt%dd0_3du, advmnt_g(ng)%dd0_3du, "dd0_3du", .true.)
@@ -5814,15 +5814,15 @@ contains
     if (dumpLocal) then
        call MsgDump (h//" invokes initial_fields_update exchanging borders on y")
     end if
-    call initial_fields_update(ngrids,m1,m2,m3,newm2(ng),newm3(ng),ng,mynum, &
-         nrecvJ(ng),RecvMessageJ(ng)%proc,RecvMessageJ(ng)%tag, &
-         RecvMessageJ(ng)%ia,RecvMessageJ(ng)%iz,&
-         RecvMessageJ(ng)%ja,RecvMessageJ(ng)%jz, &
-         RecvMessageJ(ng)%start,RecvMessageJ(ng)%mSize,TotalRecvJ(ng), &
-         nSendJ(ng),sendMessageJ(ng)%proc,sendMessageJ(ng)%tag, &
-         sendMessageJ(ng)%ia,sendMessageJ(ng)%iz,&
-         sendMessageJ(ng)%ja,sendMessageJ(ng)%jz, &
-         sendMessageJ(ng)%start,sendMessageJ(ng)%mSize,TotalSendJ(ng))
+!!$    call initial_fields_update(ngrids,m1,m2,m3,newm2(ng),newm3(ng),ng,mynum, &
+!!$         nrecvJ(ng),RecvMessageJ(ng)%proc,RecvMessageJ(ng)%tag, &
+!!$         RecvMessageJ(ng)%ia,RecvMessageJ(ng)%iz,&
+!!$         RecvMessageJ(ng)%ja,RecvMessageJ(ng)%jz, &
+!!$         RecvMessageJ(ng)%start,RecvMessageJ(ng)%mSize,TotalRecvJ(ng), &
+!!$         nSendJ(ng),sendMessageJ(ng)%proc,sendMessageJ(ng)%tag, &
+!!$         sendMessageJ(ng)%ia,sendMessageJ(ng)%iz,&
+!!$         sendMessageJ(ng)%ja,sendMessageJ(ng)%jz, &
+!!$         sendMessageJ(ng)%start,sendMessageJ(ng)%mSize,TotalSendJ(ng))
 
     !**(JP)** starts
 
@@ -5835,21 +5835,21 @@ contains
     call WaitSendRecvMsgs(oneGrid%AdvMntDd0SendY, oneGrid%AdvMntDd0RecvY)
     call WaitSendRecvMsgs(oneGrid%AdvMntDenSendY, oneGrid%AdvMntDenRecvY)
 
-    call InitialFieldsUpdate(&
-         oneAdvMnt%u3d, oneAdvMnt%v3d, &
-         oneAdvMnt%dd0_3d, oneAdvMnt%dd0_3du, oneAdvMnt%dd0_3dv, oneAdvMnt%dd0_3dw, &
-         oneAdvMnt%den0_3d, oneAdvMnt%den1_3d, oneAdvMnt%den2_3d, oneAdvMnt%den3_3d, &
-         oneAdvMnt%l_dxtW, oneAdvMnt%l_dytW, oneAdvMnt%dxtW, oneAdvMnt%dytW, &
-         ngrids,m1,m2,m3,newm2(ng),newm3(ng),ng,mynum, &
-         nrecvJ(ng),RecvMessageJ(ng)%proc,RecvMessageJ(ng)%tag, &
-         RecvMessageJ(ng)%ia,RecvMessageJ(ng)%iz,&
-         RecvMessageJ(ng)%ja,RecvMessageJ(ng)%jz, &
-         RecvMessageJ(ng)%start,RecvMessageJ(ng)%mSize,TotalRecvJ(ng), &
-         nSendJ(ng),sendMessageJ(ng)%proc,sendMessageJ(ng)%tag, &
-         sendMessageJ(ng)%ia,sendMessageJ(ng)%iz,&
-         sendMessageJ(ng)%ja,sendMessageJ(ng)%jz, &
-         sendMessageJ(ng)%start,sendMessageJ(ng)%mSize,TotalSendJ(ng))
-
+!!$    call InitialFieldsUpdate(&
+!!$         oneAdvMnt%u3d, oneAdvMnt%v3d, &
+!!$         oneAdvMnt%dd0_3d, oneAdvMnt%dd0_3du, oneAdvMnt%dd0_3dv, oneAdvMnt%dd0_3dw, &
+!!$         oneAdvMnt%den0_3d, oneAdvMnt%den1_3d, oneAdvMnt%den2_3d, oneAdvMnt%den3_3d, &
+!!$         oneAdvMnt%l_dxtW, oneAdvMnt%l_dytW, oneAdvMnt%dxtW, oneAdvMnt%dytW, &
+!!$         ngrids,m1,m2,m3,newm2(ng),newm3(ng),ng,mynum, &
+!!$         nrecvJ(ng),RecvMessageJ(ng)%proc,RecvMessageJ(ng)%tag, &
+!!$         RecvMessageJ(ng)%ia,RecvMessageJ(ng)%iz,&
+!!$         RecvMessageJ(ng)%ja,RecvMessageJ(ng)%jz, &
+!!$         RecvMessageJ(ng)%start,RecvMessageJ(ng)%mSize,TotalRecvJ(ng), &
+!!$         nSendJ(ng),sendMessageJ(ng)%proc,sendMessageJ(ng)%tag, &
+!!$         sendMessageJ(ng)%ia,sendMessageJ(ng)%iz,&
+!!$         sendMessageJ(ng)%ja,sendMessageJ(ng)%jz, &
+!!$         sendMessageJ(ng)%start,sendMessageJ(ng)%mSize,TotalSendJ(ng))
+!!$
 !!$    call MsgDump(h//" depois de InitialFieldsUpdate on y:")
 !!$    call Compare(oneAdvMnt%u3d, advmnt_g(ng)%u3d, "u3d", .true.)
 !!$    call Compare(oneAdvMnt%v3d, advmnt_g(ng)%v3d, "v3d", .true.)
@@ -5938,28 +5938,28 @@ contains
        !**(JP)** ends
 
 
-       scalarp => scalar_tab(n,ng)%var_p
-       scalart => scalar_tab(n,ng)%var_t
-       if (dumpLocal) then
-          call MsgDump (h//" advects scalar "//&
-               trim(adjustl(scalar_tab(n,ng)%name)))
-       end if
-
-       if (dumpLocal) then
-          write(str(1),"(i8)") m1
-          write(str(2),"(i8)") iBegin
-          write(str(3),"(i8)") iEnd
-          write(str(4),"(i8)") jBegin
-          write(str(5),"(i8)") jEnd
-          call MsgDump (h//" atob copies "//&
-               trim(adjustl(scalar_tab(n,ng)%name))//&
-               " with ghost zone 1 into vc3d_in(1:"//&
-               trim(adjustl(str(1)))//","//&
-               trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//","//&
-               trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")"//&
-               " with ghost zone 3")
-       end if
-       call atob(mxyzp,scalarp,advmnt_g(ng)%vc3d_in(1:m1,iBegin:iEnd,jBegin:jEnd))
+!!$       scalarp => scalar_tab(n,ng)%var_p
+!!$       scalart => scalar_tab(n,ng)%var_t
+!!$       if (dumpLocal) then
+!!$          call MsgDump (h//" advects scalar "//&
+!!$               trim(adjustl(scalar_tab(n,ng)%name)))
+!!$       end if
+!!$
+!!$       if (dumpLocal) then
+!!$          write(str(1),"(i8)") m1
+!!$          write(str(2),"(i8)") iBegin
+!!$          write(str(3),"(i8)") iEnd
+!!$          write(str(4),"(i8)") jBegin
+!!$          write(str(5),"(i8)") jEnd
+!!$          call MsgDump (h//" atob copies "//&
+!!$               trim(adjustl(scalar_tab(n,ng)%name))//&
+!!$               " with ghost zone 1 into vc3d_in(1:"//&
+!!$               trim(adjustl(str(1)))//","//&
+!!$               trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//","//&
+!!$               trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")"//&
+!!$               " with ghost zone 3")
+!!$       end if
+!!$       call atob(mxyzp,scalarp,advmnt_g(ng)%vc3d_in(1:m1,iBegin:iEnd,jBegin:jEnd))
 
        !**(JP)** starts
 
@@ -6027,9 +6027,9 @@ contains
                   " ja="//trim(adjustl(str(3)))//&
                   " jz="//trim(adjustl(str(4))))
           end if
-          call advect_mnt(ng,m1,m2,m3,ia,iz,ja,jz,dtlt,mynum,n, &
-               current_aer_ispc,current_ndt_z,IsThisScalarAer)
-
+!!$          call advect_mnt(ng,m1,m2,m3,ia,iz,ja,jz,dtlt,mynum,n, &
+!!$               current_aer_ispc,current_ndt_z,IsThisScalarAer)
+!!$
           !**(JP)** starts
 
           call AdvectMnt(oneAdvMnt, oneGrid, ng,m1,m2,m3,ia,iz,ja,jz,dtlt,mynum,n, &
@@ -6042,26 +6042,26 @@ contains
           !**(JP)** ends
 
 
-          if (dumpLocal) then
-             write(str(1),"(i8)") ia
-             write(str(2),"(i8)") iz
-             write(str(3),"(i8)") ja
-             write(str(4),"(i8)") jz
-             write(str(5),"(i8)") m1
-             write(str(6),"(i8)") m2
-             write(str(7),"(i8)") m3
-             write(str(8),"(i8)") iBegin
-             write(str(9),"(i8)") iEnd
-             write(str(10),"(i8)") jBegin
-             write(str(11),"(i8)") jEnd
-             call MsgDump(h//" invokes advtndc to increment scalart with vc3d_out-scalarp on (1:"//&
-                  trim(adjustl(str(5)))//","//&
-                  trim(adjustl(str(8)))//":"//trim(adjustl(str(9)))//","//&
-                  trim(adjustl(str(10)))//":"//trim(adjustl(str(11)))//")")
-          end if
-          call advtndc(m1,m2,m3,ia,iz,ja,jz        &
-               ,scalarp  ,advmnt_g(ng)%vc3d_out(1:m1,iBegin:iEnd,jBegin:jEnd)  &
-               ,scalart  ,dtlt,mynum        )
+!!$          if (dumpLocal) then
+!!$             write(str(1),"(i8)") ia
+!!$             write(str(2),"(i8)") iz
+!!$             write(str(3),"(i8)") ja
+!!$             write(str(4),"(i8)") jz
+!!$             write(str(5),"(i8)") m1
+!!$             write(str(6),"(i8)") m2
+!!$             write(str(7),"(i8)") m3
+!!$             write(str(8),"(i8)") iBegin
+!!$             write(str(9),"(i8)") iEnd
+!!$             write(str(10),"(i8)") jBegin
+!!$             write(str(11),"(i8)") jEnd
+!!$             call MsgDump(h//" invokes advtndc to increment scalart with vc3d_out-scalarp on (1:"//&
+!!$                  trim(adjustl(str(5)))//","//&
+!!$                  trim(adjustl(str(8)))//":"//trim(adjustl(str(9)))//","//&
+!!$                  trim(adjustl(str(10)))//":"//trim(adjustl(str(11)))//")")
+!!$          end if
+!!$          call advtndc(m1,m2,m3,ia,iz,ja,jz        &
+!!$               ,scalarp  ,advmnt_g(ng)%vc3d_out(1:m1,iBegin:iEnd,jBegin:jEnd)  &
+!!$               ,scalart  ,dtlt,mynum        )
 
 
           !**(JP)** starts
@@ -6122,102 +6122,102 @@ contains
 
 
 
-  subroutine initialize_advmnt(ngrids, mmzp, newM2, newM3)
-
-    ! allocates module variable advmnt_g of type advmnt_vars
-    ! containing all fields with enlarged ghost zones
-
-    ! allocates each field of advmnt_g for each grid and initializes to zero
-
-    integer, intent(in) :: ngrids
-    integer, intent(in) :: mmzp(ngrids)
-    integer, intent(in) :: newM2(ngrids)
-    integer, intent(in) :: newM3(ngrids)
-
-    integer :: ng
-    logical, parameter :: dumpLocal=.false.
-    character(len=*), parameter :: h="**(initialize_advmnt)**"
-    character(len=8) :: str(10)
-
-    if (dumpLocal) then
-       call MsgDump(h//" starts")
-    end if
-
-    if(allocated(advmnt_g)) then
-       print *,'Error in initialize_advmnt, sub: radvc_mnt: advmnt_g already allocated!'
-       stop 1000
-    end if
-
-    allocate (advmnt_g(ngrids))
-    do ng=1,ngrids
-       allocate(advmnt_g(ng)%u3d    (mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%u3d=0.
-       allocate(advmnt_g(ng)%v3d    (mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%v3d=0.
-       allocate(advmnt_g(ng)%w3d    (mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%w3d=0.
-       allocate(advmnt_g(ng)%dd0_3d (mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%dd0_3d =0.
-       allocate(advmnt_g(ng)%dd0_3du(mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%dd0_3du=0.
-       allocate(advmnt_g(ng)%dd0_3dv(mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%dd0_3dv=0.
-       allocate(advmnt_g(ng)%dd0_3dw(mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%dd0_3dw=0.
-       allocate(advmnt_g(ng)%den0_3d(mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%den0_3d=0.
-       allocate(advmnt_g(ng)%den1_3d(mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%den1_3d=0.
-       allocate(advmnt_g(ng)%den2_3d(mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%den2_3d=0.
-       allocate(advmnt_g(ng)%den3_3d(mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%den3_3d=0.
-       allocate(advmnt_g(ng)%l_dxtW (mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%l_dxtW=0.
-       allocate(advmnt_g(ng)%l_dytW (mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%l_dytW=0.
-       allocate(advmnt_g(ng)%dxtW   (         newM2(ng),newM3(ng))); advmnt_g(ng)%dxtW=0.
-       allocate(advmnt_g(ng)%dytW   (         newM2(ng),newM3(ng))); advmnt_g(ng)%dytW=0.
-       allocate(advmnt_g(ng)%dztW   (mmzp(ng)                    )); advmnt_g(ng)%dztW=0.
-       allocate(advmnt_g(ng)%vc3d_in (mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%vc3d_in =0.
-       allocate(advmnt_g(ng)%vc3d_out(mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%vc3d_out=0.
-
-       if (dumpLocal) then
-          write(str(1),"(i8)") ng
-          write(str(2),"(i8)") mmzp(ng)
-          write(str(3),"(i8)") newM2(ng)
-          write(str(4),"(i8)") newM3(ng)
-          call MsgDump(h//" grid "//trim(adjustl(str(1)))//" allocates advmnt_g fields:")
-          call MsgDump(h//" allocates u3d("//&
-               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-          call MsgDump(h//" allocates v3d("//&
-               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-          call MsgDump(h//" allocates w3d("//&
-               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-          call MsgDump(h//" allocates dd0_3d("//&
-               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-          call MsgDump(h//" allocates dd0_3du("//&
-               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-          call MsgDump(h//" allocates dd0_3dv("//&
-               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-          call MsgDump(h//" allocates dd0_3dw("//&
-               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-          call MsgDump(h//" allocates den0_3d("//&
-               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-          call MsgDump(h//" allocates den1_3d("//&
-               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-          call MsgDump(h//" allocates den2_3d("//&
-               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-          call MsgDump(h//" allocates den3_3d("//&
-               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-          call MsgDump(h//" allocates l_dxtW("//&
-               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-          call MsgDump(h//" allocates l_dytW("//&
-               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-          call MsgDump(h//" allocates dxtW("//&
-               trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-          call MsgDump(h//" allocates dytW("//&
-               trim(adjustl(str(3)))//")")
-          call MsgDump(h//" allocates dztW("//&
-               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-          call MsgDump(h//" allocates vc3d_in("//&
-               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-          call MsgDump(h//" allocates vc3d_out("//&
-               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-       end if
-
-    end do
-    if (dumpLocal) then
-       call MsgDump(h//" finishes")
-    end if
-  end subroutine initialize_advmnt
+!!$  subroutine initialize_advmnt(ngrids, mmzp, newM2, newM3)
+!!$
+!!$    ! allocates module variable advmnt_g of type advmnt_vars
+!!$    ! containing all fields with enlarged ghost zones
+!!$
+!!$    ! allocates each field of advmnt_g for each grid and initializes to zero
+!!$
+!!$    integer, intent(in) :: ngrids
+!!$    integer, intent(in) :: mmzp(ngrids)
+!!$    integer, intent(in) :: newM2(ngrids)
+!!$    integer, intent(in) :: newM3(ngrids)
+!!$
+!!$    integer :: ng
+!!$    logical, parameter :: dumpLocal=.false.
+!!$    character(len=*), parameter :: h="**(initialize_advmnt)**"
+!!$    character(len=8) :: str(10)
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" starts")
+!!$    end if
+!!$
+!!$    if(allocated(advmnt_g)) then
+!!$       print *,'Error in initialize_advmnt, sub: radvc_mnt: advmnt_g already allocated!'
+!!$       stop 1000
+!!$    end if
+!!$
+!!$    allocate (advmnt_g(ngrids))
+!!$    do ng=1,ngrids
+!!$       allocate(advmnt_g(ng)%u3d    (mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%u3d=0.
+!!$       allocate(advmnt_g(ng)%v3d    (mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%v3d=0.
+!!$       allocate(advmnt_g(ng)%w3d    (mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%w3d=0.
+!!$       allocate(advmnt_g(ng)%dd0_3d (mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%dd0_3d =0.
+!!$       allocate(advmnt_g(ng)%dd0_3du(mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%dd0_3du=0.
+!!$       allocate(advmnt_g(ng)%dd0_3dv(mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%dd0_3dv=0.
+!!$       allocate(advmnt_g(ng)%dd0_3dw(mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%dd0_3dw=0.
+!!$       allocate(advmnt_g(ng)%den0_3d(mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%den0_3d=0.
+!!$       allocate(advmnt_g(ng)%den1_3d(mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%den1_3d=0.
+!!$       allocate(advmnt_g(ng)%den2_3d(mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%den2_3d=0.
+!!$       allocate(advmnt_g(ng)%den3_3d(mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%den3_3d=0.
+!!$       allocate(advmnt_g(ng)%l_dxtW (mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%l_dxtW=0.
+!!$       allocate(advmnt_g(ng)%l_dytW (mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%l_dytW=0.
+!!$       allocate(advmnt_g(ng)%dxtW   (         newM2(ng),newM3(ng))); advmnt_g(ng)%dxtW=0.
+!!$       allocate(advmnt_g(ng)%dytW   (         newM2(ng),newM3(ng))); advmnt_g(ng)%dytW=0.
+!!$       allocate(advmnt_g(ng)%dztW   (mmzp(ng)                    )); advmnt_g(ng)%dztW=0.
+!!$       allocate(advmnt_g(ng)%vc3d_in (mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%vc3d_in =0.
+!!$       allocate(advmnt_g(ng)%vc3d_out(mmzp(ng),newM2(ng),newM3(ng))); advmnt_g(ng)%vc3d_out=0.
+!!$
+!!$       if (dumpLocal) then
+!!$          write(str(1),"(i8)") ng
+!!$          write(str(2),"(i8)") mmzp(ng)
+!!$          write(str(3),"(i8)") newM2(ng)
+!!$          write(str(4),"(i8)") newM3(ng)
+!!$          call MsgDump(h//" grid "//trim(adjustl(str(1)))//" allocates advmnt_g fields:")
+!!$          call MsgDump(h//" allocates u3d("//&
+!!$               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
+!!$          call MsgDump(h//" allocates v3d("//&
+!!$               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
+!!$          call MsgDump(h//" allocates w3d("//&
+!!$               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
+!!$          call MsgDump(h//" allocates dd0_3d("//&
+!!$               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
+!!$          call MsgDump(h//" allocates dd0_3du("//&
+!!$               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
+!!$          call MsgDump(h//" allocates dd0_3dv("//&
+!!$               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
+!!$          call MsgDump(h//" allocates dd0_3dw("//&
+!!$               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
+!!$          call MsgDump(h//" allocates den0_3d("//&
+!!$               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
+!!$          call MsgDump(h//" allocates den1_3d("//&
+!!$               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
+!!$          call MsgDump(h//" allocates den2_3d("//&
+!!$               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
+!!$          call MsgDump(h//" allocates den3_3d("//&
+!!$               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
+!!$          call MsgDump(h//" allocates l_dxtW("//&
+!!$               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
+!!$          call MsgDump(h//" allocates l_dytW("//&
+!!$               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
+!!$          call MsgDump(h//" allocates dxtW("//&
+!!$               trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
+!!$          call MsgDump(h//" allocates dytW("//&
+!!$               trim(adjustl(str(3)))//")")
+!!$          call MsgDump(h//" allocates dztW("//&
+!!$               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
+!!$          call MsgDump(h//" allocates vc3d_in("//&
+!!$               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
+!!$          call MsgDump(h//" allocates vc3d_out("//&
+!!$               trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
+!!$       end if
+!!$
+!!$    end do
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" finishes")
+!!$    end if
+!!$  end subroutine initialize_advmnt
 
 
 
@@ -6278,553 +6278,553 @@ contains
 
 
 
-  subroutine initialize_densities(m1,m2,m3,dn0,dn0u,dn0v &
-       ,dd0_3d ,dd0_3du,dd0_3dv,dd0_3dw )
-
-    integer, intent(in) :: m1
-    integer, intent(in) :: m2
-    integer, intent(in) :: m3
-    real, intent(in) :: dn0(m1,m2,m3)
-    real, intent(in) :: dn0u(m1,m2,m3)
-    real, intent(in) :: dn0v(m1,m2,m3)
-    real, intent(out) :: dd0_3d(m1,m2,m3)
-    real, intent(out) :: dd0_3du(m1,m2,m3)
-    real, intent(out) :: dd0_3dv(m1,m2,m3)
-    real, intent(out) :: dd0_3dw(m1,m2,m3)
-
-    ! local var
-    integer i,j,k
-
-    logical, parameter :: dumpLocal=.false.
-    character(len=*), parameter :: h="**(initialize_densities)**"
-    character(len=8) :: str(10)
-
-    if (dumpLocal) then
-       write(str(1),"(i8)") m1
-       write(str(2),"(i8)") m2
-       write(str(3),"(i8)") m3
-       call MsgDump(h//" set values of"//&
-            " dd0_3d("//trim(adjustl(str(1)))//","//trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//")"//&
-            ", dd0_3du("//trim(adjustl(str(1)))//","//trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//")"//&
-            ", dd0_3dv("//trim(adjustl(str(1)))//","//trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//")"//&
-            ", dd0_3dw("//trim(adjustl(str(1)))//","//trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//")")
-    end if
-
-    dd0_3d (:,:,:)=  dn0 (:,:,:)
-    dd0_3du(:,:,:)=  dn0u(:,:,:)
-    dd0_3dv(:,:,:)=  dn0v(:,:,:)
-    do j = 1,m3
-       do i = 1,m2
-          do k = 1,m1-1
-             dd0_3dw(k,i,j) = 0.5*(dn0(k,i,j) +dn0(k+1,i,j))
-          end do
-          dd0_3dw(m1,i,j)=dd0_3dw(m1-1,i,j)
-       end do
-    end do
-    if (dumpLocal) then
-       call MsgDump(h//" finishes")
-    end if
-  end subroutine initialize_densities
-
-
-
-
-
-  subroutine initialize_grid_spacings(ng,m1,m2,m3,&
-       dxt,dyt,fmapt,rtgt, &
-       dxtW,dytW,dztW)
-
-    ! computes new grid spacing on x, y and z
-    ! for Walcek monotonic advection
-
-    integer, intent(in) :: ng
-    integer, intent(in) :: m1
-    integer, intent(in) :: m2
-    integer, intent(in) :: m3
-    real, intent(in) :: dxt(m2,m3)
-    real, intent(in) :: dyt(m2,m3)
-    real, intent(in) :: fmapt(m2,m3)
-    real, intent(in) :: rtgt(m2,m3)
-    real, intent(out) :: dxtW(m2,m3)
-    real, intent(out) :: dytW(m2,m3)
-    real, intent(out) :: dztW(m1)
-
-    ! local var
-    integer i,j,k
-    real rtgti
-
-    logical, parameter :: dumpLocal=.false.
-    character(len=*), parameter :: h="**(initialize_grid_spacings)**"
-    character(len=8) :: str(10)
-
-    if (dumpLocal) then
-       write(str(1),"(i8)") m1
-       write(str(2),"(i8)") m2
-       write(str(3),"(i8)") m3
-       call MsgDump(h//" set values of"//&
-            " dxtW("//trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//")"//&
-            ", dytW("//trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//")"//&
-            ", dztW("//trim(adjustl(str(1)))//")")
-    end if
-
-    do j = 1,m3
-       do i = 1,m2
-          rtgti = 1. / rtgt(i,j)
-
-          !- at init/rams_grid.f90:
-          !     dxt(i,j)=fmapt(i,j)/(xmn(i,ngrid)-xmn(i-1,ngrid))
-          !     dyt(i,j)=fmapt(i,j)/(ymn(j,ngrid)-ymn(j-1,ngrid))
-
-          dxtW(i,j) = 1./(dxt(i,j) * fmapt(i,j) * rtgti)
-          dytW(i,j) = 1./(dyt(i,j) * fmapt(i,j) * rtgti)
-       end do
-    end do
-    do k = 1,m1
-       !- at init/gridset.f90:
-       !  dztn(k,ifm) = 1. / (zmn(k,ifm) - zmn(k-1,ifm))
-       ! Por que o Jacobiano nao depende de Z, o dztw depende somente
-       ! de z.
-       !dztW(k,i,j) = 1./ ( dzt(k) * rtgti * fmapt(i,j)**2 )
-       dztW(k)	 = 1./ ( dztn(k,ng) ) !
-    end do
-    if (dumpLocal) then
-       call MsgDump(h//" finishes")
-    end if
-  end subroutine initialize_grid_spacings
-
-
-
-
-
-  subroutine get_true_densities(m1,m2,m3,level,rtp,rv,pp,pi0,theta &
-       ,dd0_3d ,dd0_3du,dd0_3dv,dd0_3dw )
-
-    integer, intent(in) :: m1
-    integer, intent(in) :: m2
-    integer, intent(in) :: m3
-    integer, intent(in) :: level
-    real, intent(in) :: rtp(m1,m2,m3)
-    real, intent(in) :: rv(m1,m2,m3)
-    real, intent(in) :: pp(m1,m2,m3)
-    real, intent(in) :: pi0(m1,m2,m3)
-    real, intent(in) :: theta(m1,m2,m3)
-    real, intent(out) :: dd0_3d(:,:,:)
-    real, intent(out) :: dd0_3du(m1,m2,m3)
-    real, intent(out) :: dd0_3dv(m1,m2,m3)
-    real, intent(out) :: dd0_3dw(m1,m2,m3)
-
-    ! local var
-    integer i,j,k
-    real c3
-
-    logical, parameter :: dumpLocal=.false.
-    character(len=*), parameter :: h="**(get_true_densities)**"
-    character(len=8) :: str(10)
-
-    if (dumpLocal) then
-       write(str(1),"(i8)") m1
-       write(str(2),"(i8)") m2
-       write(str(3),"(i8)") m3
-       write(str(4),"(i8)") lbound(dd0_3d,1)
-       write(str(5),"(i8)") ubound(dd0_3d,1)
-       write(str(6),"(i8)") lbound(dd0_3d,2)
-       write(str(7),"(i8)") ubound(dd0_3d,2)
-       write(str(8),"(i8)") lbound(dd0_3d,3)
-       write(str(9),"(i8)") ubound(dd0_3d,3)
-
-       if (level == 0) then
-          call MsgDump(h//" starts with level==0; dd0_3d("//&
-               trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//","//&
-               trim(adjustl(str(6)))//":"//trim(adjustl(str(7)))//","//&
-               trim(adjustl(str(8)))//":"//trim(adjustl(str(9)))//")"//&
-               " <- f(theta(:,:,:),pi0(:,:,:),pp(:,:,:)) all at ("//&
-               "1:"//trim(adjustl(str(3)))//","//&
-               "1:"//trim(adjustl(str(2)))//","//&
-               "1:"//trim(adjustl(str(1)))//")")
-       else
-          call MsgDump(h//" starts with level/=0; dd0_3d("//&
-               " dd0_3d(:,:,:) <- f(theta(:,:,:),pi0(:,:,:),pp(:,:,:)) all at ("//&
-               "1:"//trim(adjustl(str(3)))//","//&
-               "1:"//trim(adjustl(str(2)))//","//&
-               "1:"//trim(adjustl(str(1)))//")")
-       end if
-    end if
-
-    c3 = c2 * (cpi**c1)
-
-    !- true air density at points "T"
-
-    if( level == 0 ) then
-       dd0_3d(:,:,:) = (c3/theta(:,:,:))*(pi0(:,:,:)+pp(:,:,:))**c1
-    else
-       do j = 1,m3
-          do i = 1,m2
-             do k = 1,m1
-                dd0_3d(k,i,j) = (c3/theta(k,i,j))* (1. + rtp(k,i,j))/ &
-                     (1. + 1.61*rv(k,i,j))*(pi0(k,i,j)+pp(k,i,j))**c1
-             end do
-          end do
-       end do
-    end if
-
-    !- true air density at points "U", "V" and "W":
-
-    call fill_dn0uv(m1,m2,m3,dd0_3d,dd0_3du,dd0_3dv)
-
-    if (dumpLocal) then
-       write(str(1),"(i8)") m1-1
-       write(str(2),"(i8)") m2
-       write(str(3),"(i8)") m3
-       write(str(4),"(i8)") m1
-       call MsgDump(h//&
-            " dd0_3dw(:,:,:) <- f(dd0_3d(:,:,:)) all at ("//&
-            "1:"//trim(adjustl(str(3)))//","//&
-            "1:"//trim(adjustl(str(2)))//","//&
-            "1:"//trim(adjustl(str(1)))//") + next k, and special copy for ("//&
-            trim(adjustl(str(4)))//","//&
-            "1:"//trim(adjustl(str(2)))//","//&
-            "1:"//trim(adjustl(str(1)))//")")
-    end if
-
-    do j = 1,m3
-       do i = 1,m2
-          do k = 1,m1-1
-             dd0_3dw(k,i,j) = 0.5*(dd0_3d(k,i,j) + dd0_3d(k+1,i,j))
-          end do
-          dd0_3dw(m1,i,j)=dd0_3dw(m1-1,i,j)
-       end do
-    end do
-    if (dumpLocal) then
-       call MsgDump(h//" finishes")
-    end if
-  end subroutine get_true_densities
-
-
-
-
-
-  subroutine prepare_winds(dtlt,m1,m2,m3,ia,iz,ja,jz &
-       ,uc,up,vc,vp,wc,wp &
-       ,fmapui &
-       ,fmapvi &
-       ,rtgt   &
-       ,rtgu   &
-       ,rtgv   &
-       ,f13t   &
-       ,f23t   &
-       ,u3d,v3d,w3d &
-       ,ndt_z                )
-
-    integer , intent(in) :: m1,m2,m3,ia,iz,ja,jz
-    real    , intent(in) :: dtlt
-    real,dimension(m1,m2,m3),intent(in) :: uc,up,vc,vp,wc,wp
-    real,dimension(m2,m3)   ,intent(in) :: rtgt,rtgu,rtgv,fmapui,fmapvi,f13t,f23t
-
-    real,dimension(m1,m2,m3),intent(out)::u3d,v3d,w3d
-
-    !- aerosol sedimentation
-    integer, dimension(naer_transported) , intent(inout) :: ndt_z
-
-    !- local var
-    !real   dtlto2
-    integer jm,jp,im,ip , ispc
-    integer i,j,k
-    real :: cx1,cx2,rtgti,dum(m1)
-
-    logical, parameter :: dumpLocal=.false.
-    character(len=*), parameter :: h="**(prepare_winds)**"
-    character(len=8) :: str(10)
-
-    if (dumpLocal) then
-       call MsgDump(h//" starts; computes u3d, v3d and w3d just at a section"//&
-            " restricted to the original ghost zone of 1")
-    end if
-    ! dtlto2 = .5
-
-
-    ! u3d, u3d, and w3d are input as the velocity components (averaged
-    ! between past and current time levels) times dtlt.
-    do j=1,m3
-       do i = 1,m2
-          do k = 1,m1
-
-             w3d(k,i,j) = ( wc(k,i,j) + wp(k,i,j) )*0.5
-             u3d(k,i,j) = ( uc(k,i,j) + up(k,i,j) )*0.5
-             v3d(k,i,j) = ( vc(k,i,j) + vp(k,i,j) )*0.5
-
-          end do
-       end do
-    end do
-    ! after this point w3d is the cartesian vertical velocity
-
-    ! here w3d is the cartesian vertical velocity
-
-    ! Add contribution to w3d from horiz winds crossing sloping sigma surfaces,
-    ! and include 1/rtgt factor in w3d
-    do j = 1,m3
-       jm = max(1,j-1)
-       jp = min(m3,j+1)
-       do i = 1,m2
-          im = max(1,i-1)
-          ip = min(m2,i+1)
-          rtgti = 1. / rtgt(i,j)
-
-          do k = 1,m1-1
-             w3d(k,i,j) = &
-                  ( &
-                  (u3d(k,i,j)+u3d(k+1,i,j)+u3d(k,im,j)+u3d(k+1,im,j)) * f13t(i,j) + &
-                  (v3d(k,i,j)+v3d(k+1,i,j)+v3d(k,i,jm)+v3d(k+1,i,jm)) * f23t(i,j)  &
-                  ) * hw4(k) + w3d(k,i,j) * rtgti
-          end do
-       end do
-    end do
-    !- after this point w3d is the sigma_z velocity
-
-    !- including map factors on U,V:
-    do j = 1,m3
-       do i = 1,m2
-          cx1 = fmapui(i,j) * rtgu(i,j)
-          cx2 = fmapvi(i,j) * rtgv(i,j)
-          do k = 1,m1-1
-             u3d(k,i,j) = u3d(k,i,j) * cx1
-             v3d(k,i,j) = v3d(k,i,j) * cx2
-          end do
-       end do
-    end do
-    !-----------------------------------------
-    !- control for aerosol sedimentation
-    if(aerosol > 0 .and. naer_transported > 0) then
-       ! very crude estimation of CFL violation and fix for the number of sub-timesteps
-       ! for large particles
-       do ispc=1,naer_transported
-          ndt_z(ispc)=ceiling(maxval(abs(dd_sedim(ispc,ngrid)%v_sed_part))*dtlt*maxval(dzt(1:m1)))
-       end do
-    end if
-    !- end of aerosol sedimentation
-    if (dumpLocal) then
-       call MsgDump(h//" finishes")
-    end if
-  end subroutine prepare_winds
-
-
-
-
-
-
-
-  subroutine get_Walceks_densities(dt,m1,m2,m3,u3d,v3d,w3d &
-       ,dd0_3d ,dd0_3du,dd0_3dv,dd0_3dw &
-       ,den0_3d,den1_3d,den2_3d,den3_3d &
-       ,dxtW,dytW,dztW,dxt,dyt)
-
-    integer, intent(in) :: m1
-    integer, intent(in) :: m2
-    integer, intent(in) :: m3
-    real, intent(in) :: dt
-    real, intent(in) :: dztW(m1)
-    real, intent(in) :: dxtW(m2,m3)
-    real, intent(in) :: dytW(m2,m3)
-    real, intent(in) :: dxt(m2,m3)
-    real, intent(in) :: dyt(m2,m3)
-    real, intent(in) :: u3d(m1,m2,m3)
-    real, intent(in) :: v3d(m1,m2,m3)
-    real, intent(in) :: w3d(m1,m2,m3)
-    real, intent(in) :: dd0_3d(m1,m2,m3)
-    real, intent(in) :: dd0_3du(m1,m2,m3)
-    real, intent(in) :: dd0_3dv(m1,m2,m3)
-    real, intent(in) :: dd0_3dw(m1,m2,m3)
-    real, intent(inout) :: den0_3d(m1,m2,m3)
-    real, intent(inout) :: den1_3d(m1,m2,m3)
-    real, intent(inout) :: den2_3d(m1,m2,m3)
-    real, intent(inout) :: den3_3d(m1,m2,m3)
-
-
-    ! local var
-    integer i,j,k
-
-    logical, parameter :: dumpLocal=.false.
-    character(len=*), parameter :: h="**(get_Walceks_densities)**"
-    character(len=8) :: str(10)
-
-    if (dumpLocal) then
-       call MsgDump(h//" starts; computes den0_3d, den1_3d, den2_3d and den3_3d"//&
-            " just at a section restricted to the original ghost zone of 1")
-    end if
-
-    do  j=m3,2,-1
-       do  i=2,m2
-          do k = 2,m1
-             den0_3d(k,i,j)=dd0_3d(k,i,j)
-             den1_3d(k,i,j)=den0_3d(k,i,j)- dt/dxtW(i,j)*&
-                  (dd0_3du(k,i,j)*u3d(k,i,j)-dd0_3du(k,i-1,j)*u3d(k,i-1,j))
-             den2_3d(k,i,j)=den1_3d(k,i,j)- dt/dytW(i,j)*&
-                  (dd0_3dv(k,i,j)*v3d(k,i,j)-dd0_3dv(k,i,j-1)*v3d(k,i,j-1))
-             den3_3d(k,i,j)=den2_3d(k,i,j)- dt/dztW(k)  *&
-                  (dd0_3dw(k,i,j)*w3d(k,i,j)-dd0_3dw(k-1,i,j)*w3d(k-1,i,j))
-          end do
-       end do
-    end do
-    !srf- BC for den3_3d
-    den3_3d(:,1,:)=den3_3d(:,2,:)
-    den3_3d(:,:,1)=den3_3d(:,:,2)
-  end subroutine get_Walceks_densities
-
-
-
-
-  subroutine advect_mnt(ngrid,m1,m2,m3,ia,iz,ja,jz,dt,mynum,n,&
-       current_aer_ispc,current_ndt_z,IsThisScalarAer)
-
-    integer , intent(in) :: m1,ngrid
-    integer , intent(in) :: m2
-    integer , intent(in) :: m3
-    integer , intent(in) :: ia
-    integer , intent(in) :: iz
-    integer , intent(in) :: ja
-    integer , intent(in) :: jz,n
-    integer , intent(in) :: mynum
-    real    , intent(in) :: dt
-    integer , intent(in) :: current_ndt_z,current_aer_ispc
-    logical , intent(in) :: IsThisScalarAer
-    !- local var
-    !REAL,DIMENSION(m1)               :: dxx
-    !REAL,DIMENSION(m2,m3)            :: dxy
-    real masscon,initialmass,vol
-    integer nrec,itz
-    integer ibegin,iend,jbegin,jend
-    !- type of sedimentation scheme (0= Walcek, 1=upwind)
-    integer , parameter :: iupwind = 0
-    logical, parameter :: dumpLocal=.false.
-    character(len=*), parameter :: h="**(advect_mnt)**"
-    character(len=8) :: str(10)
-
-    iBegin= newIa(ngrid)-1
-    iEnd  = newIz(ngrid)+1
-    jBegin= newJa(ngrid)-1
-    jEnd  = newJz(ngrid)+1
-
-    !--- do X-advection
-    if (dumpLocal) then
-       call MsgDump(h//" starts; update borders of vc3d_in for x advection")
-    end if
-    call update_borders(m1, newm2(ngrid), newm3(ngrid),advmnt_g(ngrid)%vc3d_in, &
-         nrecvI(ngrid), RecvMessageI(ngrid)%proc, RecvMessageI(ngrid)%tag, &
-         RecvMessageI(ngrid)%ia, RecvMessageI(ngrid)%iz, &
-         RecvMessageI(ngrid)%ja, RecvMessageI(ngrid)%jz, &
-         RecvMessageI(ngrid)%start, RecvMessageI(ngrid)%mSize, TotalRecvI(ngrid), &
-         nSendI(ngrid), sendMessageI(ngrid)%proc, sendMessageI(ngrid)%tag, &
-         sendMessageI(ngrid)%ia, sendMessageI(ngrid)%iz, &
-         sendMessageI(ngrid)%ja, sendMessageI(ngrid)%jz, &
-         sendMessageI(ngrid)%start, sendMessageI(ngrid)%mSize, TotalSendI(ngrid))
-
-    if (dumpLocal) then
-       call MsgDump(h//" invoke Advec3d_X to advect vc3d_in, storing result in vc3d_out")
-    end if
-    call Advec3d_X(m1,newM2(ngrid),newM3(ngrid),2,newM2(ngrid)-1,2,newM3(ngrid)-1 &
-         ,advmnt_g(ngrid)%vc3d_in                             &
-         ,advmnt_g(ngrid)%u3d,advmnt_g(ngrid)%den0_3d         &
-         ,advmnt_g(ngrid)%den1_3d,dt,advmnt_g(ngrid)%dxtW     &
-         ,advmnt_g(ngrid)%dd0_3du                             &
-         ,advmnt_g(ngrid)%vc3d_out    ,mynum )
-
-    !--- do Y-advection
-
-    if (dumpLocal) then
-       call MsgDump(h//" update borders of vc3d_out for y advection")
-    end if
-    call update_borders(m1, newm2(ngrid), newm3(ngrid),advmnt_g(ngrid)%vc3d_out, &
-         nrecvJ(ngrid), RecvMessageJ(ngrid)%proc, RecvMessageJ(ngrid)%tag, &
-         RecvMessageJ(ngrid)%ia, RecvMessageJ(ngrid)%iz, &
-         RecvMessageJ(ngrid)%ja, RecvMessageJ(ngrid)%jz, &
-         RecvMessageJ(ngrid)%start, RecvMessageJ(ngrid)%mSize, TotalRecvJ(ngrid), &
-         nSendJ(ngrid), sendMessageJ(ngrid)%proc, sendMessageJ(ngrid)%tag, &
-         sendMessageJ(ngrid)%ia, sendMessageJ(ngrid)%iz, &
-         sendMessageJ(ngrid)%ja, sendMessageJ(ngrid)%jz, &
-         sendMessageJ(ngrid)%start, sendMessageJ(ngrid)%mSize, TotalSendJ(ngrid))
-
-    if (dumpLocal) then
-       call MsgDump(h//" invoke Advec3d_Y to advect vc3d_out, storing result in vc3d_in")
-    end if
-    call Advec3d_Y(m1,newM2(ngrid),newM3(ngrid),2,newM2(ngrid)-1,2,newM3(ngrid)-1 &
-         ,advmnt_g(ngrid)%vc3d_out                                        &
-         ,advmnt_g(ngrid)%v3d,advmnt_g(ngrid)%den1_3d                     &
-         ,advmnt_g(ngrid)%den2_3d,dt,advmnt_g(ngrid)%dytW                 &
-         ,advmnt_g(ngrid)%dd0_3dv                                         &
-         ,advmnt_g(ngrid)%vc3d_in  ,mynum )
-
-    !--- do k-advection
-    if (dumpLocal) then
-       call MsgDump(h//" invoke Advec3d_Z to advect vc3d_in, storing result in vc3d_out")
-    end if
-    call Advec3d_Z(m1,newM2(ngrid),newM3(ngrid),ibegin,iend,jbegin,jend &
-         ,advmnt_g(ngrid)%vc3d_in                                   &
-         ,advmnt_g(ngrid)%w3d,advmnt_g(ngrid)%den2_3d               &
-         ,advmnt_g(ngrid)%den3_3d,dt,advmnt_g(ngrid)%dztW           &
-         ,advmnt_g(ngrid)%dd0_3dw                                   &
-         ,advmnt_g(ngrid)%vc3d_out  ,mynum )
-
-
-    !- aerosol section to include sedimentation
-    !- the sedimentation process is done using pure cartesian coordinates
-    !- so, all sedimentation velocities are treat as cartesian vertical velocities
-    !- which are positive downwards.
-    if (dumpLocal) then
-       write(str(1),"(i8)") aerosol
-       write(str(2),"(l)") IsThisScalarAer
-       call MsgDump(h//" aerosol="//trim(adjustl(str(1)))//&
-            "; IsThisScalarAer="//trim(adjustl(str(2))))
-    end if
-    if(aerosol > 0 .and. IsThisScalarAer) then
-
-       !-srf introducing a time-splitting for aerosol sedimentation
-
-       if (dumpLocal) then
-          write(str(1),"(i8)") iupwind
-          call MsgDump(h//" iupwind="//trim(adjustl(str(1))))
-       end if
-       if(iupwind == 0 ) then
-          ! - Walcek method
-          ! this routine works _only_ for mass concentration or density (kg/m3)
-          ! converting mixing ratio (kg/kg) to density (kg/m3)
-          advmnt_g(ngrid)%vc3d_in(:,:,:)=advmnt_g(ngrid)%vc3d_out(:,:,:) * advmnt_g(ngrid)%den0_3d(:,:,:)
-
-          !- do time splitting for aerosols with large fall velocities
-          do itz=1,current_ndt_z
-             call Advec3d_Z_sedim(m1,m2,m3,ia,iz,ja,jz                        &
-                  ,advmnt_g(ngrid)%vc3d_in(:,iBegin:iEnd,jBegin:jEnd)	 &
-                  ,dd_sedim(current_aer_ispc,ngrid)%v_sed_part          & !fall velocity
-                  ,dt/float(current_ndt_z)                              & !subtimestep
-                  ,dzt(1:m1),grid_g(ngrid)%rtgt	                 &
-                  ,advmnt_g(ngrid)%vc3d_out(:,iBegin:iEnd,jBegin:jEnd)  &
-                  ,mynum )
-
-             ! copy output to input array for the next sup-timestep
-             if(itz < current_ndt_z) advmnt_g(ngrid)%vc3d_in(:,:,:)=advmnt_g(ngrid)%vc3d_out(:,:,:)
-
-          end do
-          ! converting back mass concentration to mixing ratio
-          advmnt_g(ngrid)%vc3d_out(:,:,:)=&
-               advmnt_g(ngrid)%vc3d_out(:,:,:)/&
-               advmnt_g(ngrid)%den0_3d(:,:,:)
-
-       else if(iupwind == 1 ) then
-          ! - upwind method
-          !- do time splitting for aerosols with large fall velocities
-          do itz=1,current_ndt_z
-             call Advec3d_Z_sedim_upw(m1,m2,m3,ia,iz,ja,jz                          &
-                  ,dd_sedim(current_aer_ispc,ngrid)%v_sed_part          & !fall velocity
-                  ,dt/float(current_ndt_z)                              & !subtimestep
-                  ,dzt(1:m1),grid_g(ngrid)%rtgt	                                 &
-                  ,advmnt_g(ngrid)%vc3d_out(:,iBegin:iEnd,jBegin:jEnd)  &
-                  ,mynum )
-
-          end do
-       end if
-    end if
-    if (dumpLocal) then
-       call MsgDump(h//" finishes")
-    end if
-  end subroutine advect_mnt
+!!$  subroutine initialize_densities(m1,m2,m3,dn0,dn0u,dn0v &
+!!$       ,dd0_3d ,dd0_3du,dd0_3dv,dd0_3dw )
+!!$
+!!$    integer, intent(in) :: m1
+!!$    integer, intent(in) :: m2
+!!$    integer, intent(in) :: m3
+!!$    real, intent(in) :: dn0(m1,m2,m3)
+!!$    real, intent(in) :: dn0u(m1,m2,m3)
+!!$    real, intent(in) :: dn0v(m1,m2,m3)
+!!$    real, intent(out) :: dd0_3d(m1,m2,m3)
+!!$    real, intent(out) :: dd0_3du(m1,m2,m3)
+!!$    real, intent(out) :: dd0_3dv(m1,m2,m3)
+!!$    real, intent(out) :: dd0_3dw(m1,m2,m3)
+!!$
+!!$    ! local var
+!!$    integer i,j,k
+!!$
+!!$    logical, parameter :: dumpLocal=.false.
+!!$    character(len=*), parameter :: h="**(initialize_densities)**"
+!!$    character(len=8) :: str(10)
+!!$
+!!$    if (dumpLocal) then
+!!$       write(str(1),"(i8)") m1
+!!$       write(str(2),"(i8)") m2
+!!$       write(str(3),"(i8)") m3
+!!$       call MsgDump(h//" set values of"//&
+!!$            " dd0_3d("//trim(adjustl(str(1)))//","//trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//")"//&
+!!$            ", dd0_3du("//trim(adjustl(str(1)))//","//trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//")"//&
+!!$            ", dd0_3dv("//trim(adjustl(str(1)))//","//trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//")"//&
+!!$            ", dd0_3dw("//trim(adjustl(str(1)))//","//trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//")")
+!!$    end if
+!!$
+!!$    dd0_3d (:,:,:)=  dn0 (:,:,:)
+!!$    dd0_3du(:,:,:)=  dn0u(:,:,:)
+!!$    dd0_3dv(:,:,:)=  dn0v(:,:,:)
+!!$    do j = 1,m3
+!!$       do i = 1,m2
+!!$          do k = 1,m1-1
+!!$             dd0_3dw(k,i,j) = 0.5*(dn0(k,i,j) +dn0(k+1,i,j))
+!!$          end do
+!!$          dd0_3dw(m1,i,j)=dd0_3dw(m1-1,i,j)
+!!$       end do
+!!$    end do
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" finishes")
+!!$    end if
+!!$  end subroutine initialize_densities
+
+
+
+
+
+!!$  subroutine initialize_grid_spacings(ng,m1,m2,m3,&
+!!$       dxt,dyt,fmapt,rtgt, &
+!!$       dxtW,dytW,dztW)
+!!$
+!!$    ! computes new grid spacing on x, y and z
+!!$    ! for Walcek monotonic advection
+!!$
+!!$    integer, intent(in) :: ng
+!!$    integer, intent(in) :: m1
+!!$    integer, intent(in) :: m2
+!!$    integer, intent(in) :: m3
+!!$    real, intent(in) :: dxt(m2,m3)
+!!$    real, intent(in) :: dyt(m2,m3)
+!!$    real, intent(in) :: fmapt(m2,m3)
+!!$    real, intent(in) :: rtgt(m2,m3)
+!!$    real, intent(out) :: dxtW(m2,m3)
+!!$    real, intent(out) :: dytW(m2,m3)
+!!$    real, intent(out) :: dztW(m1)
+!!$
+!!$    ! local var
+!!$    integer i,j,k
+!!$    real rtgti
+!!$
+!!$    logical, parameter :: dumpLocal=.false.
+!!$    character(len=*), parameter :: h="**(initialize_grid_spacings)**"
+!!$    character(len=8) :: str(10)
+!!$
+!!$    if (dumpLocal) then
+!!$       write(str(1),"(i8)") m1
+!!$       write(str(2),"(i8)") m2
+!!$       write(str(3),"(i8)") m3
+!!$       call MsgDump(h//" set values of"//&
+!!$            " dxtW("//trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//")"//&
+!!$            ", dytW("//trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//")"//&
+!!$            ", dztW("//trim(adjustl(str(1)))//")")
+!!$    end if
+!!$
+!!$    do j = 1,m3
+!!$       do i = 1,m2
+!!$          rtgti = 1. / rtgt(i,j)
+!!$
+!!$          !- at init/rams_grid.f90:
+!!$          !     dxt(i,j)=fmapt(i,j)/(xmn(i,ngrid)-xmn(i-1,ngrid))
+!!$          !     dyt(i,j)=fmapt(i,j)/(ymn(j,ngrid)-ymn(j-1,ngrid))
+!!$
+!!$          dxtW(i,j) = 1./(dxt(i,j) * fmapt(i,j) * rtgti)
+!!$          dytW(i,j) = 1./(dyt(i,j) * fmapt(i,j) * rtgti)
+!!$       end do
+!!$    end do
+!!$    do k = 1,m1
+!!$       !- at init/gridset.f90:
+!!$       !  dztn(k,ifm) = 1. / (zmn(k,ifm) - zmn(k-1,ifm))
+!!$       ! Por que o Jacobiano nao depende de Z, o dztw depende somente
+!!$       ! de z.
+!!$       !dztW(k,i,j) = 1./ ( dzt(k) * rtgti * fmapt(i,j)**2 )
+!!$       dztW(k)	 = 1./ ( dztn(k,ng) ) !
+!!$    end do
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" finishes")
+!!$    end if
+!!$  end subroutine initialize_grid_spacings
+
+
+
+
+
+!!$  subroutine get_true_densities(m1,m2,m3,level,rtp,rv,pp,pi0,theta &
+!!$       ,dd0_3d ,dd0_3du,dd0_3dv,dd0_3dw )
+!!$
+!!$    integer, intent(in) :: m1
+!!$    integer, intent(in) :: m2
+!!$    integer, intent(in) :: m3
+!!$    integer, intent(in) :: level
+!!$    real, intent(in) :: rtp(m1,m2,m3)
+!!$    real, intent(in) :: rv(m1,m2,m3)
+!!$    real, intent(in) :: pp(m1,m2,m3)
+!!$    real, intent(in) :: pi0(m1,m2,m3)
+!!$    real, intent(in) :: theta(m1,m2,m3)
+!!$    real, intent(out) :: dd0_3d(:,:,:)
+!!$    real, intent(out) :: dd0_3du(m1,m2,m3)
+!!$    real, intent(out) :: dd0_3dv(m1,m2,m3)
+!!$    real, intent(out) :: dd0_3dw(m1,m2,m3)
+!!$
+!!$    ! local var
+!!$    integer i,j,k
+!!$    real c3
+!!$
+!!$    logical, parameter :: dumpLocal=.false.
+!!$    character(len=*), parameter :: h="**(get_true_densities)**"
+!!$    character(len=8) :: str(10)
+!!$
+!!$    if (dumpLocal) then
+!!$       write(str(1),"(i8)") m1
+!!$       write(str(2),"(i8)") m2
+!!$       write(str(3),"(i8)") m3
+!!$       write(str(4),"(i8)") lbound(dd0_3d,1)
+!!$       write(str(5),"(i8)") ubound(dd0_3d,1)
+!!$       write(str(6),"(i8)") lbound(dd0_3d,2)
+!!$       write(str(7),"(i8)") ubound(dd0_3d,2)
+!!$       write(str(8),"(i8)") lbound(dd0_3d,3)
+!!$       write(str(9),"(i8)") ubound(dd0_3d,3)
+!!$
+!!$       if (level == 0) then
+!!$          call MsgDump(h//" starts with level==0; dd0_3d("//&
+!!$               trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//","//&
+!!$               trim(adjustl(str(6)))//":"//trim(adjustl(str(7)))//","//&
+!!$               trim(adjustl(str(8)))//":"//trim(adjustl(str(9)))//")"//&
+!!$               " <- f(theta(:,:,:),pi0(:,:,:),pp(:,:,:)) all at ("//&
+!!$               "1:"//trim(adjustl(str(3)))//","//&
+!!$               "1:"//trim(adjustl(str(2)))//","//&
+!!$               "1:"//trim(adjustl(str(1)))//")")
+!!$       else
+!!$          call MsgDump(h//" starts with level/=0; dd0_3d("//&
+!!$               " dd0_3d(:,:,:) <- f(theta(:,:,:),pi0(:,:,:),pp(:,:,:)) all at ("//&
+!!$               "1:"//trim(adjustl(str(3)))//","//&
+!!$               "1:"//trim(adjustl(str(2)))//","//&
+!!$               "1:"//trim(adjustl(str(1)))//")")
+!!$       end if
+!!$    end if
+!!$
+!!$    c3 = c2 * (cpi**c1)
+!!$
+!!$    !- true air density at points "T"
+!!$
+!!$    if( level == 0 ) then
+!!$       dd0_3d(:,:,:) = (c3/theta(:,:,:))*(pi0(:,:,:)+pp(:,:,:))**c1
+!!$    else
+!!$       do j = 1,m3
+!!$          do i = 1,m2
+!!$             do k = 1,m1
+!!$                dd0_3d(k,i,j) = (c3/theta(k,i,j))* (1. + rtp(k,i,j))/ &
+!!$                     (1. + 1.61*rv(k,i,j))*(pi0(k,i,j)+pp(k,i,j))**c1
+!!$             end do
+!!$          end do
+!!$       end do
+!!$    end if
+!!$
+!!$    !- true air density at points "U", "V" and "W":
+!!$
+!!$    call fill_dn0uv(m1,m2,m3,dd0_3d,dd0_3du,dd0_3dv)
+!!$
+!!$    if (dumpLocal) then
+!!$       write(str(1),"(i8)") m1-1
+!!$       write(str(2),"(i8)") m2
+!!$       write(str(3),"(i8)") m3
+!!$       write(str(4),"(i8)") m1
+!!$       call MsgDump(h//&
+!!$            " dd0_3dw(:,:,:) <- f(dd0_3d(:,:,:)) all at ("//&
+!!$            "1:"//trim(adjustl(str(3)))//","//&
+!!$            "1:"//trim(adjustl(str(2)))//","//&
+!!$            "1:"//trim(adjustl(str(1)))//") + next k, and special copy for ("//&
+!!$            trim(adjustl(str(4)))//","//&
+!!$            "1:"//trim(adjustl(str(2)))//","//&
+!!$            "1:"//trim(adjustl(str(1)))//")")
+!!$    end if
+!!$
+!!$    do j = 1,m3
+!!$       do i = 1,m2
+!!$          do k = 1,m1-1
+!!$             dd0_3dw(k,i,j) = 0.5*(dd0_3d(k,i,j) + dd0_3d(k+1,i,j))
+!!$          end do
+!!$          dd0_3dw(m1,i,j)=dd0_3dw(m1-1,i,j)
+!!$       end do
+!!$    end do
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" finishes")
+!!$    end if
+!!$  end subroutine get_true_densities
+
+
+
+
+
+!!$  subroutine prepare_winds(dtlt,m1,m2,m3,ia,iz,ja,jz &
+!!$       ,uc,up,vc,vp,wc,wp &
+!!$       ,fmapui &
+!!$       ,fmapvi &
+!!$       ,rtgt   &
+!!$       ,rtgu   &
+!!$       ,rtgv   &
+!!$       ,f13t   &
+!!$       ,f23t   &
+!!$       ,u3d,v3d,w3d &
+!!$       ,ndt_z                )
+!!$
+!!$    integer , intent(in) :: m1,m2,m3,ia,iz,ja,jz
+!!$    real    , intent(in) :: dtlt
+!!$    real,dimension(m1,m2,m3),intent(in) :: uc,up,vc,vp,wc,wp
+!!$    real,dimension(m2,m3)   ,intent(in) :: rtgt,rtgu,rtgv,fmapui,fmapvi,f13t,f23t
+!!$
+!!$    real,dimension(m1,m2,m3),intent(out)::u3d,v3d,w3d
+!!$
+!!$    !- aerosol sedimentation
+!!$    integer, dimension(naer_transported) , intent(inout) :: ndt_z
+!!$
+!!$    !- local var
+!!$    !real   dtlto2
+!!$    integer jm,jp,im,ip , ispc
+!!$    integer i,j,k
+!!$    real :: cx1,cx2,rtgti,dum(m1)
+!!$
+!!$    logical, parameter :: dumpLocal=.false.
+!!$    character(len=*), parameter :: h="**(prepare_winds)**"
+!!$    character(len=8) :: str(10)
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" starts; computes u3d, v3d and w3d just at a section"//&
+!!$            " restricted to the original ghost zone of 1")
+!!$    end if
+!!$    ! dtlto2 = .5
+!!$
+!!$
+!!$    ! u3d, u3d, and w3d are input as the velocity components (averaged
+!!$    ! between past and current time levels) times dtlt.
+!!$    do j=1,m3
+!!$       do i = 1,m2
+!!$          do k = 1,m1
+!!$
+!!$             w3d(k,i,j) = ( wc(k,i,j) + wp(k,i,j) )*0.5
+!!$             u3d(k,i,j) = ( uc(k,i,j) + up(k,i,j) )*0.5
+!!$             v3d(k,i,j) = ( vc(k,i,j) + vp(k,i,j) )*0.5
+!!$
+!!$          end do
+!!$       end do
+!!$    end do
+!!$    ! after this point w3d is the cartesian vertical velocity
+!!$
+!!$    ! here w3d is the cartesian vertical velocity
+!!$
+!!$    ! Add contribution to w3d from horiz winds crossing sloping sigma surfaces,
+!!$    ! and include 1/rtgt factor in w3d
+!!$    do j = 1,m3
+!!$       jm = max(1,j-1)
+!!$       jp = min(m3,j+1)
+!!$       do i = 1,m2
+!!$          im = max(1,i-1)
+!!$          ip = min(m2,i+1)
+!!$          rtgti = 1. / rtgt(i,j)
+!!$
+!!$          do k = 1,m1-1
+!!$             w3d(k,i,j) = &
+!!$                  ( &
+!!$                  (u3d(k,i,j)+u3d(k+1,i,j)+u3d(k,im,j)+u3d(k+1,im,j)) * f13t(i,j) + &
+!!$                  (v3d(k,i,j)+v3d(k+1,i,j)+v3d(k,i,jm)+v3d(k+1,i,jm)) * f23t(i,j)  &
+!!$                  ) * hw4(k) + w3d(k,i,j) * rtgti
+!!$          end do
+!!$       end do
+!!$    end do
+!!$    !- after this point w3d is the sigma_z velocity
+!!$
+!!$    !- including map factors on U,V:
+!!$    do j = 1,m3
+!!$       do i = 1,m2
+!!$          cx1 = fmapui(i,j) * rtgu(i,j)
+!!$          cx2 = fmapvi(i,j) * rtgv(i,j)
+!!$          do k = 1,m1-1
+!!$             u3d(k,i,j) = u3d(k,i,j) * cx1
+!!$             v3d(k,i,j) = v3d(k,i,j) * cx2
+!!$          end do
+!!$       end do
+!!$    end do
+!!$    !-----------------------------------------
+!!$    !- control for aerosol sedimentation
+!!$    if(aerosol > 0 .and. naer_transported > 0) then
+!!$       ! very crude estimation of CFL violation and fix for the number of sub-timesteps
+!!$       ! for large particles
+!!$       do ispc=1,naer_transported
+!!$          ndt_z(ispc)=ceiling(maxval(abs(dd_sedim(ispc,ngrid)%v_sed_part))*dtlt*maxval(dzt(1:m1)))
+!!$       end do
+!!$    end if
+!!$    !- end of aerosol sedimentation
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" finishes")
+!!$    end if
+!!$  end subroutine prepare_winds
+
+
+
+
+
+
+
+!!$  subroutine get_Walceks_densities(dt,m1,m2,m3,u3d,v3d,w3d &
+!!$       ,dd0_3d ,dd0_3du,dd0_3dv,dd0_3dw &
+!!$       ,den0_3d,den1_3d,den2_3d,den3_3d &
+!!$       ,dxtW,dytW,dztW,dxt,dyt)
+!!$
+!!$    integer, intent(in) :: m1
+!!$    integer, intent(in) :: m2
+!!$    integer, intent(in) :: m3
+!!$    real, intent(in) :: dt
+!!$    real, intent(in) :: dztW(m1)
+!!$    real, intent(in) :: dxtW(m2,m3)
+!!$    real, intent(in) :: dytW(m2,m3)
+!!$    real, intent(in) :: dxt(m2,m3)
+!!$    real, intent(in) :: dyt(m2,m3)
+!!$    real, intent(in) :: u3d(m1,m2,m3)
+!!$    real, intent(in) :: v3d(m1,m2,m3)
+!!$    real, intent(in) :: w3d(m1,m2,m3)
+!!$    real, intent(in) :: dd0_3d(m1,m2,m3)
+!!$    real, intent(in) :: dd0_3du(m1,m2,m3)
+!!$    real, intent(in) :: dd0_3dv(m1,m2,m3)
+!!$    real, intent(in) :: dd0_3dw(m1,m2,m3)
+!!$    real, intent(inout) :: den0_3d(m1,m2,m3)
+!!$    real, intent(inout) :: den1_3d(m1,m2,m3)
+!!$    real, intent(inout) :: den2_3d(m1,m2,m3)
+!!$    real, intent(inout) :: den3_3d(m1,m2,m3)
+!!$
+!!$
+!!$    ! local var
+!!$    integer i,j,k
+!!$
+!!$    logical, parameter :: dumpLocal=.false.
+!!$    character(len=*), parameter :: h="**(get_Walceks_densities)**"
+!!$    character(len=8) :: str(10)
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" starts; computes den0_3d, den1_3d, den2_3d and den3_3d"//&
+!!$            " just at a section restricted to the original ghost zone of 1")
+!!$    end if
+!!$
+!!$    do  j=m3,2,-1
+!!$       do  i=2,m2
+!!$          do k = 2,m1
+!!$             den0_3d(k,i,j)=dd0_3d(k,i,j)
+!!$             den1_3d(k,i,j)=den0_3d(k,i,j)- dt/dxtW(i,j)*&
+!!$                  (dd0_3du(k,i,j)*u3d(k,i,j)-dd0_3du(k,i-1,j)*u3d(k,i-1,j))
+!!$             den2_3d(k,i,j)=den1_3d(k,i,j)- dt/dytW(i,j)*&
+!!$                  (dd0_3dv(k,i,j)*v3d(k,i,j)-dd0_3dv(k,i,j-1)*v3d(k,i,j-1))
+!!$             den3_3d(k,i,j)=den2_3d(k,i,j)- dt/dztW(k)  *&
+!!$                  (dd0_3dw(k,i,j)*w3d(k,i,j)-dd0_3dw(k-1,i,j)*w3d(k-1,i,j))
+!!$          end do
+!!$       end do
+!!$    end do
+!!$    !srf- BC for den3_3d
+!!$    den3_3d(:,1,:)=den3_3d(:,2,:)
+!!$    den3_3d(:,:,1)=den3_3d(:,:,2)
+!!$  end subroutine get_Walceks_densities
+
+
+
+
+!!$  subroutine advect_mnt(ngrid,m1,m2,m3,ia,iz,ja,jz,dt,mynum,n,&
+!!$       current_aer_ispc,current_ndt_z,IsThisScalarAer)
+!!$
+!!$    integer , intent(in) :: m1,ngrid
+!!$    integer , intent(in) :: m2
+!!$    integer , intent(in) :: m3
+!!$    integer , intent(in) :: ia
+!!$    integer , intent(in) :: iz
+!!$    integer , intent(in) :: ja
+!!$    integer , intent(in) :: jz,n
+!!$    integer , intent(in) :: mynum
+!!$    real    , intent(in) :: dt
+!!$    integer , intent(in) :: current_ndt_z,current_aer_ispc
+!!$    logical , intent(in) :: IsThisScalarAer
+!!$    !- local var
+!!$    !REAL,DIMENSION(m1)               :: dxx
+!!$    !REAL,DIMENSION(m2,m3)            :: dxy
+!!$    real masscon,initialmass,vol
+!!$    integer nrec,itz
+!!$    integer ibegin,iend,jbegin,jend
+!!$    !- type of sedimentation scheme (0= Walcek, 1=upwind)
+!!$    integer , parameter :: iupwind = 0
+!!$    logical, parameter :: dumpLocal=.false.
+!!$    character(len=*), parameter :: h="**(advect_mnt)**"
+!!$    character(len=8) :: str(10)
+!!$
+!!$    iBegin= newIa(ngrid)-1
+!!$    iEnd  = newIz(ngrid)+1
+!!$    jBegin= newJa(ngrid)-1
+!!$    jEnd  = newJz(ngrid)+1
+!!$
+!!$    !--- do X-advection
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" starts; update borders of vc3d_in for x advection")
+!!$    end if
+!!$    call update_borders(m1, newm2(ngrid), newm3(ngrid),advmnt_g(ngrid)%vc3d_in, &
+!!$         nrecvI(ngrid), RecvMessageI(ngrid)%proc, RecvMessageI(ngrid)%tag, &
+!!$         RecvMessageI(ngrid)%ia, RecvMessageI(ngrid)%iz, &
+!!$         RecvMessageI(ngrid)%ja, RecvMessageI(ngrid)%jz, &
+!!$         RecvMessageI(ngrid)%start, RecvMessageI(ngrid)%mSize, TotalRecvI(ngrid), &
+!!$         nSendI(ngrid), sendMessageI(ngrid)%proc, sendMessageI(ngrid)%tag, &
+!!$         sendMessageI(ngrid)%ia, sendMessageI(ngrid)%iz, &
+!!$         sendMessageI(ngrid)%ja, sendMessageI(ngrid)%jz, &
+!!$         sendMessageI(ngrid)%start, sendMessageI(ngrid)%mSize, TotalSendI(ngrid))
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" invoke Advec3d_X to advect vc3d_in, storing result in vc3d_out")
+!!$    end if
+!!$    call Advec3d_X(m1,newM2(ngrid),newM3(ngrid),2,newM2(ngrid)-1,2,newM3(ngrid)-1 &
+!!$         ,advmnt_g(ngrid)%vc3d_in                             &
+!!$         ,advmnt_g(ngrid)%u3d,advmnt_g(ngrid)%den0_3d         &
+!!$         ,advmnt_g(ngrid)%den1_3d,dt,advmnt_g(ngrid)%dxtW     &
+!!$         ,advmnt_g(ngrid)%dd0_3du                             &
+!!$         ,advmnt_g(ngrid)%vc3d_out    ,mynum )
+!!$
+!!$    !--- do Y-advection
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" update borders of vc3d_out for y advection")
+!!$    end if
+!!$    call update_borders(m1, newm2(ngrid), newm3(ngrid),advmnt_g(ngrid)%vc3d_out, &
+!!$         nrecvJ(ngrid), RecvMessageJ(ngrid)%proc, RecvMessageJ(ngrid)%tag, &
+!!$         RecvMessageJ(ngrid)%ia, RecvMessageJ(ngrid)%iz, &
+!!$         RecvMessageJ(ngrid)%ja, RecvMessageJ(ngrid)%jz, &
+!!$         RecvMessageJ(ngrid)%start, RecvMessageJ(ngrid)%mSize, TotalRecvJ(ngrid), &
+!!$         nSendJ(ngrid), sendMessageJ(ngrid)%proc, sendMessageJ(ngrid)%tag, &
+!!$         sendMessageJ(ngrid)%ia, sendMessageJ(ngrid)%iz, &
+!!$         sendMessageJ(ngrid)%ja, sendMessageJ(ngrid)%jz, &
+!!$         sendMessageJ(ngrid)%start, sendMessageJ(ngrid)%mSize, TotalSendJ(ngrid))
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" invoke Advec3d_Y to advect vc3d_out, storing result in vc3d_in")
+!!$    end if
+!!$    call Advec3d_Y(m1,newM2(ngrid),newM3(ngrid),2,newM2(ngrid)-1,2,newM3(ngrid)-1 &
+!!$         ,advmnt_g(ngrid)%vc3d_out                                        &
+!!$         ,advmnt_g(ngrid)%v3d,advmnt_g(ngrid)%den1_3d                     &
+!!$         ,advmnt_g(ngrid)%den2_3d,dt,advmnt_g(ngrid)%dytW                 &
+!!$         ,advmnt_g(ngrid)%dd0_3dv                                         &
+!!$         ,advmnt_g(ngrid)%vc3d_in  ,mynum )
+!!$
+!!$    !--- do k-advection
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" invoke Advec3d_Z to advect vc3d_in, storing result in vc3d_out")
+!!$    end if
+!!$    call Advec3d_Z(m1,newM2(ngrid),newM3(ngrid),ibegin,iend,jbegin,jend &
+!!$         ,advmnt_g(ngrid)%vc3d_in                                   &
+!!$         ,advmnt_g(ngrid)%w3d,advmnt_g(ngrid)%den2_3d               &
+!!$         ,advmnt_g(ngrid)%den3_3d,dt,advmnt_g(ngrid)%dztW           &
+!!$         ,advmnt_g(ngrid)%dd0_3dw                                   &
+!!$         ,advmnt_g(ngrid)%vc3d_out  ,mynum )
+!!$
+!!$
+!!$    !- aerosol section to include sedimentation
+!!$    !- the sedimentation process is done using pure cartesian coordinates
+!!$    !- so, all sedimentation velocities are treat as cartesian vertical velocities
+!!$    !- which are positive downwards.
+!!$    if (dumpLocal) then
+!!$       write(str(1),"(i8)") aerosol
+!!$       write(str(2),"(l)") IsThisScalarAer
+!!$       call MsgDump(h//" aerosol="//trim(adjustl(str(1)))//&
+!!$            "; IsThisScalarAer="//trim(adjustl(str(2))))
+!!$    end if
+!!$    if(aerosol > 0 .and. IsThisScalarAer) then
+!!$
+!!$       !-srf introducing a time-splitting for aerosol sedimentation
+!!$
+!!$       if (dumpLocal) then
+!!$          write(str(1),"(i8)") iupwind
+!!$          call MsgDump(h//" iupwind="//trim(adjustl(str(1))))
+!!$       end if
+!!$       if(iupwind == 0 ) then
+!!$          ! - Walcek method
+!!$          ! this routine works _only_ for mass concentration or density (kg/m3)
+!!$          ! converting mixing ratio (kg/kg) to density (kg/m3)
+!!$          advmnt_g(ngrid)%vc3d_in(:,:,:)=advmnt_g(ngrid)%vc3d_out(:,:,:) * advmnt_g(ngrid)%den0_3d(:,:,:)
+!!$
+!!$          !- do time splitting for aerosols with large fall velocities
+!!$          do itz=1,current_ndt_z
+!!$             call Advec3d_Z_sedim(m1,m2,m3,ia,iz,ja,jz                        &
+!!$                  ,advmnt_g(ngrid)%vc3d_in(:,iBegin:iEnd,jBegin:jEnd)	 &
+!!$                  ,dd_sedim(current_aer_ispc,ngrid)%v_sed_part          & !fall velocity
+!!$                  ,dt/float(current_ndt_z)                              & !subtimestep
+!!$                  ,dzt(1:m1),grid_g(ngrid)%rtgt	                 &
+!!$                  ,advmnt_g(ngrid)%vc3d_out(:,iBegin:iEnd,jBegin:jEnd)  &
+!!$                  ,mynum )
+!!$
+!!$             ! copy output to input array for the next sup-timestep
+!!$             if(itz < current_ndt_z) advmnt_g(ngrid)%vc3d_in(:,:,:)=advmnt_g(ngrid)%vc3d_out(:,:,:)
+!!$
+!!$          end do
+!!$          ! converting back mass concentration to mixing ratio
+!!$          advmnt_g(ngrid)%vc3d_out(:,:,:)=&
+!!$               advmnt_g(ngrid)%vc3d_out(:,:,:)/&
+!!$               advmnt_g(ngrid)%den0_3d(:,:,:)
+!!$
+!!$       else if(iupwind == 1 ) then
+!!$          ! - upwind method
+!!$          !- do time splitting for aerosols with large fall velocities
+!!$          do itz=1,current_ndt_z
+!!$             call Advec3d_Z_sedim_upw(m1,m2,m3,ia,iz,ja,jz                          &
+!!$                  ,dd_sedim(current_aer_ispc,ngrid)%v_sed_part          & !fall velocity
+!!$                  ,dt/float(current_ndt_z)                              & !subtimestep
+!!$                  ,dzt(1:m1),grid_g(ngrid)%rtgt	                                 &
+!!$                  ,advmnt_g(ngrid)%vc3d_out(:,iBegin:iEnd,jBegin:jEnd)  &
+!!$                  ,mynum )
+!!$
+!!$          end do
+!!$       end if
+!!$    end if
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" finishes")
+!!$    end if
+!!$  end subroutine advect_mnt
 
 
 
@@ -7066,228 +7066,228 @@ contains
 
 
 
-  subroutine initial_fields_update(ngrids,m1,m2,m3,Nm2,Nm3,ng,mynum, &
-       nRec, procRecv, tagRecv, iaRecv, izRecv, jaRecv, jzRecv, &
-       bufRecvStart, bufRecvLength, bufRecvTotalLength, &
-       nSnd, procSend, tagSend, iaSend, izSend, jaSend, jzSend, &
-       bufSendStart, bufSendLength, bufSendTotalLength)
-
-    integer, intent(in) :: ngrids
-    integer, intent(in) :: m1
-    integer, intent(in) :: m2,nm2
-    integer, intent(in) :: m3,nm3,ng,mynum
-    integer, intent(in) :: nRec
-    integer, intent(in) :: procRecv(nRec)
-    integer, intent(in) :: tagRecv(nRec)
-    integer, intent(in) :: iaRecv(nRec)
-    integer, intent(in) :: izRecv(nRec)
-    integer, intent(in) :: jaRecv(nRec)
-    integer, intent(in) :: jzRecv(nRec)
-    integer, intent(in) :: bufRecvStart(nRec)
-    integer, intent(in) :: bufRecvLength(nRec)
-    integer, intent(in) :: bufRecvTotalLength
-    integer, intent(in) :: nSnd
-    integer, intent(in) :: procSend(nSnd)
-    integer, intent(in) :: tagSend(nSnd)
-    integer, intent(in) :: iaSend(nSnd)
-    integer, intent(in) :: izSend(nSnd)
-    integer, intent(in) :: jaSend(nSnd)
-    integer, intent(in) :: jzSend(nSnd)
-    integer, intent(in) :: bufSendStart(nSnd)
-    integer, intent(in) :: bufSendLength(nSnd)
-    integer, intent(in) :: bufSendTotalLength
-
-    integer :: i,j,k
-    logical, parameter :: dumpLocal=.false.
-    character(len=*), parameter :: h="**(initial_fields_update)**"
-    character(len=8) :: str(10)
-
-    integer, save :: iupdate_dxy=0
-
-    if (dumpLocal) then
-       call MsgDump(h//" starts")
-    end if
-
-    if(bufSendTotalLength==0 .or. bufRecvTotalLength==0) return
-
-    if (dumpLocal) then
-       write(str(1),"(i8)") nm2
-       write(str(2),"(i8)") nm3
-       call MsgDump(h//" advmnt_g%l_dxtW"//&
-            "(1,1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")"//&
-            " <- advmnt_g%dxtW"//&
-            "(1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")")
-       call MsgDump(h//" advmnt_g%l_dytW"//&
-            "(1,1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")"//&
-            " <- advmnt_g%dytW"//&
-            "(1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")")
-    end if
-
-    do i=1,nm2
-       do j=1,nm3
-          do k=1,1!m1
-             advmnt_g(ng)%l_dxtW(k,i,j)=advmnt_g(ng)%dxtW(i,j)
-             advmnt_g(ng)%l_dytW(k,i,j)=advmnt_g(ng)%dytW(i,j)
-          end do
-       end do
-    end do
-
-    if (dumpLocal) then
-       call MsgDump(h//" update borders of u3d")
-    end if
-
-    call update_borders(m1, nm2, nm3,advmnt_g(ng)%u3d, &
-         nRec, procRecv, tagRecv, &
-         iaRecv, izRecv, jaRecv, jzRecv, &
-         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
-         nSnd, procSend, tagSend, &
-         iaSend, izSend, jaSend, jzSend, &
-         bufSendStart, bufSendLength, bufSendTotalLength)
-
-    if (dumpLocal) then
-       call MsgDump(h//" update borders of v3d")
-    end if
-    call update_borders(m1, nm2, nm3,advmnt_g(ng)%v3d, &
-         nRec, procRecv, tagRecv, &
-         iaRecv, izRecv, jaRecv, jzRecv, &
-         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
-         nSnd, procSend, tagSend, &
-         iaSend, izSend, jaSend, jzSend, &
-         bufSendStart, bufSendLength, bufSendTotalLength)
-
-    if (dumpLocal) then
-       call MsgDump(h//" update borders of dd0_3d")
-    end if
-    call update_borders(m1, nm2, nm3,advmnt_g(ng)%dd0_3d, &
-         nRec, procRecv, tagRecv, &
-         iaRecv, izRecv, jaRecv, jzRecv, &
-         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
-         nSnd, procSend, tagSend, &
-         iaSend, izSend, jaSend, jzSend, &
-         bufSendStart, bufSendLength, bufSendTotalLength)
-
-    if (dumpLocal) then
-       call MsgDump(h//" update borders of dd0_3du")
-    end if
-    call update_borders(m1, nm2, nm3,advmnt_g(ng)%dd0_3du, &
-         nRec, procRecv, tagRecv, &
-         iaRecv, izRecv, jaRecv, jzRecv, &
-         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
-         nSnd, procSend, tagSend, &
-         iaSend, izSend, jaSend, jzSend, &
-         bufSendStart, bufSendLength, bufSendTotalLength)
-
-    if (dumpLocal) then
-       call MsgDump(h//" update borders of dd0_3dv")
-    end if
-    call update_borders(m1, nm2, nm3,advmnt_g(ng)%dd0_3dv, &
-         nRec, procRecv, tagRecv, &
-         iaRecv, izRecv, jaRecv, jzRecv, &
-         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
-         nSnd, procSend, tagSend, &
-         iaSend, izSend, jaSend, jzSend, &
-         bufSendStart, bufSendLength, bufSendTotalLength)
-
-    if (dumpLocal) then
-       call MsgDump(h//" update borders of dd0_3dw")
-    end if
-    call update_borders(m1, nm2, nm3,advmnt_g(ng)%dd0_3dw, &
-         nRec, procRecv, tagRecv, &
-         iaRecv, izRecv, jaRecv, jzRecv, &
-         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
-         nSnd, procSend, tagSend, &
-         iaSend, izSend, jaSend, jzSend, &
-         bufSendStart, bufSendLength, bufSendTotalLength)
-
-    if (dumpLocal) then
-       call MsgDump(h//" update borders of den0_3d")
-    end if
-    call update_borders(m1, nm2, nm3,advmnt_g(ng)%den0_3d, &
-         nRec, procRecv, tagRecv, &
-         iaRecv, izRecv, jaRecv, jzRecv, &
-         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
-         nSnd, procSend, tagSend, &
-         iaSend, izSend, jaSend, jzSend, &
-         bufSendStart, bufSendLength, bufSendTotalLength)
-
-    if (dumpLocal) then
-       call MsgDump(h//" update borders of den1_3d")
-    end if
-    call update_borders(m1, nm2, nm3,advmnt_g(ng)%den1_3d, &
-         nRec, procRecv, tagRecv, &
-         iaRecv, izRecv, jaRecv, jzRecv, &
-         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
-         nSnd, procSend, tagSend, &
-         iaSend, izSend, jaSend, jzSend, &
-         bufSendStart, bufSendLength, bufSendTotalLength)
-
-    if (dumpLocal) then
-       call MsgDump(h//" update borders of den2_3d")
-    end if
-    call update_borders(m1, nm2, nm3,advmnt_g(ng)%den2_3d, &
-         nRec, procRecv, tagRecv, &
-         iaRecv, izRecv, jaRecv, jzRecv, &
-         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
-         nSnd, procSend, tagSend, &
-         iaSend, izSend, jaSend, jzSend, &
-         bufSendStart, bufSendLength, bufSendTotalLength)
-
-    if (dumpLocal) then
-       call MsgDump(h//" update borders of den3_3d")
-    end if
-    call update_borders(m1, nm2, nm3,advmnt_g(ng)%den3_3d, &
-         nRec, procRecv, tagRecv, &
-         iaRecv, izRecv, jaRecv, jzRecv, &
-         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
-         nSnd, procSend, tagSend, &
-         iaSend, izSend, jaSend, jzSend, &
-         bufSendStart, bufSendLength, bufSendTotalLength)
-
-    if (dumpLocal) then
-       call MsgDump(h//" update borders of l_dxtW")
-    end if
-    call update_borders(m1, nm2, nm3,advmnt_g(ng)%l_dxtW, &
-         nRec, procRecv, tagRecv, &
-         iaRecv, izRecv, jaRecv, jzRecv, &
-         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
-         nSnd, procSend, tagSend, &
-         iaSend, izSend, jaSend, jzSend, &
-         bufSendStart, bufSendLength, bufSendTotalLength)
-
-    if (dumpLocal) then
-       call MsgDump(h//" update borders of l_dytW")
-    end if
-    call update_borders(m1, nm2, nm3,advmnt_g(ng)%l_dytW, &
-         nRec, procRecv, tagRecv, &
-         iaRecv, izRecv, jaRecv, jzRecv, &
-         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
-         nSnd, procSend, tagSend, &
-         iaSend, izSend, jaSend, jzSend, &
-         bufSendStart, bufSendLength, bufSendTotalLength)
-
-    if (dumpLocal) then
-       write(str(1),"(i8)") nm2
-       write(str(2),"(i8)") nm3
-       call MsgDump(h//" advmnt_g%dxtW"//&
-            "(1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")"//&
-            " <- advmnt_g%l_dxtW"//&
-            "(1,1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")")
-       call MsgDump(h//" advmnt_g%dytW"//&
-            "(1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")"//&
-            " <- advmnt_g%l_dytW"//&
-            "(1,1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")")
-    end if
-
-    do i=1,nm2
-       do j=1,nm3
-          advmnt_g(ng)%dxtW(i,j)=advmnt_g(ng)%l_dxtW(1,i,j)
-          advmnt_g(ng)%dytW(i,j)=advmnt_g(ng)%l_dytW(1,i,j)
-       end do
-    end do
-    if (dumpLocal) then
-       call MsgDump(h//" finishes")
-    end if
-  end subroutine initial_fields_update
+!!$  subroutine initial_fields_update(ngrids,m1,m2,m3,Nm2,Nm3,ng,mynum, &
+!!$       nRec, procRecv, tagRecv, iaRecv, izRecv, jaRecv, jzRecv, &
+!!$       bufRecvStart, bufRecvLength, bufRecvTotalLength, &
+!!$       nSnd, procSend, tagSend, iaSend, izSend, jaSend, jzSend, &
+!!$       bufSendStart, bufSendLength, bufSendTotalLength)
+!!$
+!!$    integer, intent(in) :: ngrids
+!!$    integer, intent(in) :: m1
+!!$    integer, intent(in) :: m2,nm2
+!!$    integer, intent(in) :: m3,nm3,ng,mynum
+!!$    integer, intent(in) :: nRec
+!!$    integer, intent(in) :: procRecv(nRec)
+!!$    integer, intent(in) :: tagRecv(nRec)
+!!$    integer, intent(in) :: iaRecv(nRec)
+!!$    integer, intent(in) :: izRecv(nRec)
+!!$    integer, intent(in) :: jaRecv(nRec)
+!!$    integer, intent(in) :: jzRecv(nRec)
+!!$    integer, intent(in) :: bufRecvStart(nRec)
+!!$    integer, intent(in) :: bufRecvLength(nRec)
+!!$    integer, intent(in) :: bufRecvTotalLength
+!!$    integer, intent(in) :: nSnd
+!!$    integer, intent(in) :: procSend(nSnd)
+!!$    integer, intent(in) :: tagSend(nSnd)
+!!$    integer, intent(in) :: iaSend(nSnd)
+!!$    integer, intent(in) :: izSend(nSnd)
+!!$    integer, intent(in) :: jaSend(nSnd)
+!!$    integer, intent(in) :: jzSend(nSnd)
+!!$    integer, intent(in) :: bufSendStart(nSnd)
+!!$    integer, intent(in) :: bufSendLength(nSnd)
+!!$    integer, intent(in) :: bufSendTotalLength
+!!$
+!!$    integer :: i,j,k
+!!$    logical, parameter :: dumpLocal=.false.
+!!$    character(len=*), parameter :: h="**(initial_fields_update)**"
+!!$    character(len=8) :: str(10)
+!!$
+!!$    integer, save :: iupdate_dxy=0
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" starts")
+!!$    end if
+!!$
+!!$    if(bufSendTotalLength==0 .or. bufRecvTotalLength==0) return
+!!$
+!!$    if (dumpLocal) then
+!!$       write(str(1),"(i8)") nm2
+!!$       write(str(2),"(i8)") nm3
+!!$       call MsgDump(h//" advmnt_g%l_dxtW"//&
+!!$            "(1,1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")"//&
+!!$            " <- advmnt_g%dxtW"//&
+!!$            "(1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")")
+!!$       call MsgDump(h//" advmnt_g%l_dytW"//&
+!!$            "(1,1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")"//&
+!!$            " <- advmnt_g%dytW"//&
+!!$            "(1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")")
+!!$    end if
+!!$
+!!$    do i=1,nm2
+!!$       do j=1,nm3
+!!$          do k=1,1!m1
+!!$             advmnt_g(ng)%l_dxtW(k,i,j)=advmnt_g(ng)%dxtW(i,j)
+!!$             advmnt_g(ng)%l_dytW(k,i,j)=advmnt_g(ng)%dytW(i,j)
+!!$          end do
+!!$       end do
+!!$    end do
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" update borders of u3d")
+!!$    end if
+!!$
+!!$    call update_borders(m1, nm2, nm3,advmnt_g(ng)%u3d, &
+!!$         nRec, procRecv, tagRecv, &
+!!$         iaRecv, izRecv, jaRecv, jzRecv, &
+!!$         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
+!!$         nSnd, procSend, tagSend, &
+!!$         iaSend, izSend, jaSend, jzSend, &
+!!$         bufSendStart, bufSendLength, bufSendTotalLength)
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" update borders of v3d")
+!!$    end if
+!!$    call update_borders(m1, nm2, nm3,advmnt_g(ng)%v3d, &
+!!$         nRec, procRecv, tagRecv, &
+!!$         iaRecv, izRecv, jaRecv, jzRecv, &
+!!$         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
+!!$         nSnd, procSend, tagSend, &
+!!$         iaSend, izSend, jaSend, jzSend, &
+!!$         bufSendStart, bufSendLength, bufSendTotalLength)
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" update borders of dd0_3d")
+!!$    end if
+!!$    call update_borders(m1, nm2, nm3,advmnt_g(ng)%dd0_3d, &
+!!$         nRec, procRecv, tagRecv, &
+!!$         iaRecv, izRecv, jaRecv, jzRecv, &
+!!$         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
+!!$         nSnd, procSend, tagSend, &
+!!$         iaSend, izSend, jaSend, jzSend, &
+!!$         bufSendStart, bufSendLength, bufSendTotalLength)
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" update borders of dd0_3du")
+!!$    end if
+!!$    call update_borders(m1, nm2, nm3,advmnt_g(ng)%dd0_3du, &
+!!$         nRec, procRecv, tagRecv, &
+!!$         iaRecv, izRecv, jaRecv, jzRecv, &
+!!$         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
+!!$         nSnd, procSend, tagSend, &
+!!$         iaSend, izSend, jaSend, jzSend, &
+!!$         bufSendStart, bufSendLength, bufSendTotalLength)
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" update borders of dd0_3dv")
+!!$    end if
+!!$    call update_borders(m1, nm2, nm3,advmnt_g(ng)%dd0_3dv, &
+!!$         nRec, procRecv, tagRecv, &
+!!$         iaRecv, izRecv, jaRecv, jzRecv, &
+!!$         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
+!!$         nSnd, procSend, tagSend, &
+!!$         iaSend, izSend, jaSend, jzSend, &
+!!$         bufSendStart, bufSendLength, bufSendTotalLength)
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" update borders of dd0_3dw")
+!!$    end if
+!!$    call update_borders(m1, nm2, nm3,advmnt_g(ng)%dd0_3dw, &
+!!$         nRec, procRecv, tagRecv, &
+!!$         iaRecv, izRecv, jaRecv, jzRecv, &
+!!$         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
+!!$         nSnd, procSend, tagSend, &
+!!$         iaSend, izSend, jaSend, jzSend, &
+!!$         bufSendStart, bufSendLength, bufSendTotalLength)
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" update borders of den0_3d")
+!!$    end if
+!!$    call update_borders(m1, nm2, nm3,advmnt_g(ng)%den0_3d, &
+!!$         nRec, procRecv, tagRecv, &
+!!$         iaRecv, izRecv, jaRecv, jzRecv, &
+!!$         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
+!!$         nSnd, procSend, tagSend, &
+!!$         iaSend, izSend, jaSend, jzSend, &
+!!$         bufSendStart, bufSendLength, bufSendTotalLength)
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" update borders of den1_3d")
+!!$    end if
+!!$    call update_borders(m1, nm2, nm3,advmnt_g(ng)%den1_3d, &
+!!$         nRec, procRecv, tagRecv, &
+!!$         iaRecv, izRecv, jaRecv, jzRecv, &
+!!$         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
+!!$         nSnd, procSend, tagSend, &
+!!$         iaSend, izSend, jaSend, jzSend, &
+!!$         bufSendStart, bufSendLength, bufSendTotalLength)
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" update borders of den2_3d")
+!!$    end if
+!!$    call update_borders(m1, nm2, nm3,advmnt_g(ng)%den2_3d, &
+!!$         nRec, procRecv, tagRecv, &
+!!$         iaRecv, izRecv, jaRecv, jzRecv, &
+!!$         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
+!!$         nSnd, procSend, tagSend, &
+!!$         iaSend, izSend, jaSend, jzSend, &
+!!$         bufSendStart, bufSendLength, bufSendTotalLength)
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" update borders of den3_3d")
+!!$    end if
+!!$    call update_borders(m1, nm2, nm3,advmnt_g(ng)%den3_3d, &
+!!$         nRec, procRecv, tagRecv, &
+!!$         iaRecv, izRecv, jaRecv, jzRecv, &
+!!$         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
+!!$         nSnd, procSend, tagSend, &
+!!$         iaSend, izSend, jaSend, jzSend, &
+!!$         bufSendStart, bufSendLength, bufSendTotalLength)
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" update borders of l_dxtW")
+!!$    end if
+!!$    call update_borders(m1, nm2, nm3,advmnt_g(ng)%l_dxtW, &
+!!$         nRec, procRecv, tagRecv, &
+!!$         iaRecv, izRecv, jaRecv, jzRecv, &
+!!$         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
+!!$         nSnd, procSend, tagSend, &
+!!$         iaSend, izSend, jaSend, jzSend, &
+!!$         bufSendStart, bufSendLength, bufSendTotalLength)
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" update borders of l_dytW")
+!!$    end if
+!!$    call update_borders(m1, nm2, nm3,advmnt_g(ng)%l_dytW, &
+!!$         nRec, procRecv, tagRecv, &
+!!$         iaRecv, izRecv, jaRecv, jzRecv, &
+!!$         bufRecvStart, bufRecvLength, bufRecvTotalLength, &
+!!$         nSnd, procSend, tagSend, &
+!!$         iaSend, izSend, jaSend, jzSend, &
+!!$         bufSendStart, bufSendLength, bufSendTotalLength)
+!!$
+!!$    if (dumpLocal) then
+!!$       write(str(1),"(i8)") nm2
+!!$       write(str(2),"(i8)") nm3
+!!$       call MsgDump(h//" advmnt_g%dxtW"//&
+!!$            "(1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")"//&
+!!$            " <- advmnt_g%l_dxtW"//&
+!!$            "(1,1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")")
+!!$       call MsgDump(h//" advmnt_g%dytW"//&
+!!$            "(1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")"//&
+!!$            " <- advmnt_g%l_dytW"//&
+!!$            "(1,1:"//trim(adjustl(str(1)))//",1:"//trim(adjustl(str(2)))//")")
+!!$    end if
+!!$
+!!$    do i=1,nm2
+!!$       do j=1,nm3
+!!$          advmnt_g(ng)%dxtW(i,j)=advmnt_g(ng)%l_dxtW(1,i,j)
+!!$          advmnt_g(ng)%dytW(i,j)=advmnt_g(ng)%l_dytW(1,i,j)
+!!$       end do
+!!$    end do
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" finishes")
+!!$    end if
+!!$  end subroutine initial_fields_update
 
 
 
