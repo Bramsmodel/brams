@@ -5100,9 +5100,12 @@ contains
        AdvMntDd0SendY, AdvMntDd0RecvY, &
        AdvMntDenSendX, AdvMntDenRecvX, &
        AdvMntDenSendY, AdvMntDenRecvY, &
+       AdvMntScaSendX, AdvMntScaRecvX, &
+       AdvMntScaSendY, AdvMntScaRecvY, &
        u3d, v3d, dxtW, dytW, &
        dd0_3d, dd0_3du, dd0_3dv, dd0_3dw, &
-       den0_3d, den1_3d, den2_3d, den3_3d)
+       den0_3d, den1_3d, den2_3d, den3_3d, &
+       vc3d_in, vc3d_out)
     type(MessageSet), pointer, intent(in) :: AdvMntUVSendX
     type(MessageSet), pointer, intent(in) :: AdvMntUVRecvX
     type(MessageSet), pointer, intent(in) :: AdvMntUVSendY
@@ -5119,6 +5122,10 @@ contains
     type(MessageSet), pointer, intent(in) :: AdvMntDenRecvX
     type(MessageSet), pointer, intent(in) :: AdvMntDenSendY
     type(MessageSet), pointer, intent(in) :: AdvMntDenRecvY
+    type(MessageSet), pointer, intent(in) :: AdvMntScaSendX
+    type(MessageSet), pointer, intent(in) :: AdvMntScaRecvX
+    type(MessageSet), pointer, intent(in) :: AdvMntScaSendY
+    type(MessageSet), pointer, intent(in) :: AdvMntScaRecvY
     real, pointer, intent(in) :: u3d(:,:,:)
     real, pointer, intent(in) :: v3d(:,:,:)
     real, pointer, intent(in) :: dxtW(:,:)
@@ -5131,6 +5138,8 @@ contains
     real, pointer, intent(in) :: den1_3d(:,:,:)
     real, pointer, intent(in) :: den2_3d(:,:,:)
     real, pointer, intent(in) :: den3_3d(:,:,:)
+    real, pointer, intent(in) :: vc3d_in(:,:,:)
+    real, pointer, intent(in) :: vc3d_out(:,:,:)
 
     integer :: iMsg
     type(FieldSectionNode), pointer :: fsnode
@@ -5160,6 +5169,22 @@ contains
        call fatal_error(h//" AdvMntDd0SendY not associated")
     else if (.not. associated(AdvMntDd0RecvY)) then
        call fatal_error(h//" AdvMntDd0RecvY not associated")
+    else if (.not. associated(AdvMntDenSendX)) then
+       call fatal_error(h//" AdvMntDenSendX not associated")
+    else if (.not. associated(AdvMntDenRecvX)) then
+       call fatal_error(h//" AdvMntDenRecvX not associated")
+    else if (.not. associated(AdvMntDenSendY)) then
+       call fatal_error(h//" AdvMntDenSendY not associated")
+    else if (.not. associated(AdvMntDenRecvY)) then
+       call fatal_error(h//" AdvMntDenRecvY not associated")
+    else if (.not. associated(AdvMntScaSendX)) then
+       call fatal_error(h//" AdvMntScaSendX not associated")
+    else if (.not. associated(AdvMntScaRecvX)) then
+       call fatal_error(h//" AdvMntScaRecvX not associated")
+    else if (.not. associated(AdvMntScaSendY)) then
+       call fatal_error(h//" AdvMntScaSendY not associated")
+    else if (.not. associated(AdvMntScaRecvY)) then
+       call fatal_error(h//" AdvMntScaRecvY not associated")
     end if
     
     do iMsg = 1, AdvMntUVSendX%nMsgs
@@ -5295,6 +5320,23 @@ contains
        call UpdateFieldAdress(fsnode%entry, den2_3d, "DEN2_3D")
        fsnode => fsnode%next
        call UpdateFieldAdress(fsnode%entry, den3_3d, "DEN3_3D")
+    end do
+
+    do iMsg = 1, AdvMntScaSendX%nMsgs
+       fsnode => AdvMntScaSendX%msgData(iMsg)%list%head
+       call UpdateFieldAdress(fsnode%entry, vc3d_in, "VC3D_IN")
+    end do
+    do iMsg = 1, AdvMntScaRecvX%nMsgs
+       fsnode => AdvMntScaRecvX%msgData(iMsg)%list%head
+       call UpdateFieldAdress(fsnode%entry, vc3d_in, "VC3D_IN")
+    end do
+    do iMsg = 1, AdvMntScaSendY%nMsgs
+       fsnode => AdvMntScaSendY%msgData(iMsg)%list%head
+       call UpdateFieldAdress(fsnode%entry, vc3d_out, "VC3D_OUT")
+    end do
+    do iMsg = 1, AdvMntScaRecvY%nMsgs
+       fsnode => AdvMntScaRecvY%msgData(iMsg)%list%head
+       call UpdateFieldAdress(fsnode%entry, vc3d_out, "VC3D_OUT")
     end do
   end subroutine UpdateFieldAdressAtAdvMnt
 

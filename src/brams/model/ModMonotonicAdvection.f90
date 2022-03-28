@@ -2689,7 +2689,7 @@ contains
 
 
   function CreateMonotonicAdvection(oneGrid) result(oneAdvMnt)
-    type(Grid), pointer, intent(in) :: OneGrid
+    type(Grid), pointer, intent(in) :: oneGrid
     type(MonotonicAdvection), pointer :: oneAdvMnt
 
     integer :: mzpAdvMnt
@@ -4164,10 +4164,11 @@ contains
 
 
 
-  subroutine AdvectMnt(oneAdvMnt,ngrid,m1,m2,m3,ia,iz,ja,jz,dt,mynum,n,&
+  subroutine AdvectMnt(oneAdvMnt, oneGrid, ngrid,m1,m2,m3,ia,iz,ja,jz,dt,mynum,n,&
        current_aer_ispc,current_ndt_z,IsThisScalarAer)
 
     type(MonotonicAdvection), pointer, intent(in) :: oneAdvMnt
+    type(Grid), pointer, intent(in) :: oneGrid
     integer , intent(in) :: m1,ngrid
     integer , intent(in) :: m2
     integer , intent(in) :: m3
@@ -4200,15 +4201,17 @@ contains
     if (dumpLocal) then
        call MsgDump(h//" starts; update borders of vc3d_in for x advection")
     end if
-    call update_borders(m1, newm2(ngrid), newm3(ngrid),oneAdvMnt%vc3d_in, &
-         nrecvI(ngrid), RecvMessageI(ngrid)%proc, RecvMessageI(ngrid)%tag, &
-         RecvMessageI(ngrid)%ia, RecvMessageI(ngrid)%iz, &
-         RecvMessageI(ngrid)%ja, RecvMessageI(ngrid)%jz, &
-         RecvMessageI(ngrid)%start, RecvMessageI(ngrid)%mSize, TotalRecvI(ngrid), &
-         nSendI(ngrid), sendMessageI(ngrid)%proc, sendMessageI(ngrid)%tag, &
-         sendMessageI(ngrid)%ia, sendMessageI(ngrid)%iz, &
-         sendMessageI(ngrid)%ja, sendMessageI(ngrid)%jz, &
-         sendMessageI(ngrid)%start, sendMessageI(ngrid)%mSize, TotalSendI(ngrid))
+    call PostSendRecvMsgs(oneGrid%AdvMntScaSendX, oneGrid%AdvMntScaRecvX)
+    call WaitSendRecvMsgs(oneGrid%AdvMntScaSendX, oneGrid%AdvMntScaRecvX)
+!!$    call update_borders(m1, newm2(ngrid), newm3(ngrid),oneAdvMnt%vc3d_in, &
+!!$         nrecvI(ngrid), RecvMessageI(ngrid)%proc, RecvMessageI(ngrid)%tag, &
+!!$         RecvMessageI(ngrid)%ia, RecvMessageI(ngrid)%iz, &
+!!$         RecvMessageI(ngrid)%ja, RecvMessageI(ngrid)%jz, &
+!!$         RecvMessageI(ngrid)%start, RecvMessageI(ngrid)%mSize, TotalRecvI(ngrid), &
+!!$         nSendI(ngrid), sendMessageI(ngrid)%proc, sendMessageI(ngrid)%tag, &
+!!$         sendMessageI(ngrid)%ia, sendMessageI(ngrid)%iz, &
+!!$         sendMessageI(ngrid)%ja, sendMessageI(ngrid)%jz, &
+!!$         sendMessageI(ngrid)%start, sendMessageI(ngrid)%mSize, TotalSendI(ngrid))
 
     if (dumpLocal) then
        call MsgDump(h//" invoke Advec3DX to advect vc3d_in, storing result in vc3d_out")
@@ -4225,15 +4228,17 @@ contains
     if (dumpLocal) then
        call MsgDump(h//" update borders of vc3d_out for y advection")
     end if
-    call update_borders(m1, newm2(ngrid), newm3(ngrid),oneAdvMnt%vc3d_out, &
-         nrecvJ(ngrid), RecvMessageJ(ngrid)%proc, RecvMessageJ(ngrid)%tag, &
-         RecvMessageJ(ngrid)%ia, RecvMessageJ(ngrid)%iz, &
-         RecvMessageJ(ngrid)%ja, RecvMessageJ(ngrid)%jz, &
-         RecvMessageJ(ngrid)%start, RecvMessageJ(ngrid)%mSize, TotalRecvJ(ngrid), &
-         nSendJ(ngrid), sendMessageJ(ngrid)%proc, sendMessageJ(ngrid)%tag, &
-         sendMessageJ(ngrid)%ia, sendMessageJ(ngrid)%iz, &
-         sendMessageJ(ngrid)%ja, sendMessageJ(ngrid)%jz, &
-         sendMessageJ(ngrid)%start, sendMessageJ(ngrid)%mSize, TotalSendJ(ngrid))
+    call PostSendRecvMsgs(oneGrid%AdvMntScaSendY, oneGrid%AdvMntScaRecvY)
+    call WaitSendRecvMsgs(oneGrid%AdvMntScaSendY, oneGrid%AdvMntScaRecvY)
+!!$    call update_borders(m1, newm2(ngrid), newm3(ngrid),oneAdvMnt%vc3d_out, &
+!!$         nrecvJ(ngrid), RecvMessageJ(ngrid)%proc, RecvMessageJ(ngrid)%tag, &
+!!$         RecvMessageJ(ngrid)%ia, RecvMessageJ(ngrid)%iz, &
+!!$         RecvMessageJ(ngrid)%ja, RecvMessageJ(ngrid)%jz, &
+!!$         RecvMessageJ(ngrid)%start, RecvMessageJ(ngrid)%mSize, TotalRecvJ(ngrid), &
+!!$         nSendJ(ngrid), sendMessageJ(ngrid)%proc, sendMessageJ(ngrid)%tag, &
+!!$         sendMessageJ(ngrid)%ia, sendMessageJ(ngrid)%iz, &
+!!$         sendMessageJ(ngrid)%ja, sendMessageJ(ngrid)%jz, &
+!!$         sendMessageJ(ngrid)%start, sendMessageJ(ngrid)%mSize, TotalSendJ(ngrid))
 
     if (dumpLocal) then
        call MsgDump(h//" invoke Advec3DY to advect vc3d_out, storing result in vc3d_in")
@@ -5239,11 +5244,11 @@ contains
     end if
   end subroutine Advec3DZSedimUpw
 
-  subroutine advmnt_driver(OneGrid, varn, &
+  subroutine advmnt_driver(oneGrid, varn, &
        m1 ,m2 ,m3 ,ia,iz,ja,jz,izu,jzv,&
        i0,j0,nodemyp,nodemxp,nodemzp,mynum)
 
-    type(Grid), pointer, intent(in) :: OneGrid
+    type(Grid), pointer, intent(in) :: oneGrid
     integer , intent(in) :: m1
     integer , intent(in) :: m2
     integer , intent(in) :: m3
@@ -5325,21 +5330,21 @@ contains
 
     ! dimension of external fields (regular ghost zone width)
 
-    mzp=OneGrid%NodeDims%mzp
-    mxp=OneGrid%NodeDims%mxp
-    myp=OneGrid%NodeDims%myp
+    mzp=oneGrid%NodeDims%mzp
+    mxp=oneGrid%NodeDims%mxp
+    myp=oneGrid%NodeDims%myp
 
     ! dimension of Monotonic Advection fields (wide ghost zone width)
 
-    mxpAdvMnt=OneGrid%NodeDimsAdvMnt%mxp
-    mypAdvMnt=OneGrid%NodeDimsAdvMnt%myp
+    mxpAdvMnt=oneGrid%NodeDimsAdvMnt%mxp
+    mypAdvMnt=oneGrid%NodeDimsAdvMnt%myp
 
     ! index external = index Monotonic Advection + offset
 
-    iOffset = OneGrid%NodeDimsAdvMnt%i0 - OneGrid%NodeDims%i0 
+    iOffset = oneGrid%NodeDimsAdvMnt%i0 - oneGrid%NodeDims%i0 
     i1ExternAtAdvMnt = 1 - iOffset
     iMxpExternAtAdvMnt = mxp - iOffset
-    jOffset = OneGrid%NodeDimsAdvMnt%j0 - OneGrid%NodeDims%j0 
+    jOffset = oneGrid%NodeDimsAdvMnt%j0 - oneGrid%NodeDims%j0 
     j1ExternAtAdvMnt = 1 - jOffset
     jMypExternAtAdvMnt = myp - jOffset
 
@@ -5480,12 +5485,15 @@ contains
          oneGrid%AdvMntDd0SendY, oneGrid%AdvMntDd0RecvY, &
          oneGrid%AdvMntDenSendX, oneGrid%AdvMntDenRecvX, &
          oneGrid%AdvMntDenSendY, oneGrid%AdvMntDenRecvY, &
+         oneGrid%AdvMntScaSendX, oneGrid%AdvMntScaRecvX, &
+         oneGrid%AdvMntScaSendY, oneGrid%AdvMntScaRecvY, &
          oneAdvMnt%u3d, oneAdvMnt%v3d, &
          oneAdvMnt%dxtW, oneAdvMnt%dytW, &
          oneAdvMnt%dd0_3d, oneAdvMnt%dd0_3du, &
          oneAdvMnt%dd0_3dv, oneAdvMnt%dd0_3dw, &
          oneAdvMnt%den0_3d, oneAdvMnt%den1_3d, &
-         oneAdvMnt%den2_3d, oneAdvMnt%den3_3d)
+         oneAdvMnt%den2_3d, oneAdvMnt%den3_3d, &
+         oneAdvMnt%vc3d_in, oneAdvMnt%vc3d_out)
 
     if (dumpLocal) then
        call MsgDump(h//" grid after UpdateFieldAdressAtAdvMnt")
@@ -5880,10 +5888,10 @@ contains
        write(str(1),"(i8)") num_scalar(ng)
        call MsgDump(h//" there are "//trim(adjustl(str(1)))//" scalar fields")
 !!$       do n=i_scl,num_scalar(ng)
-!!$          call Compare(scalar_tab(n,ng)%var_p_3D, OneGrid%ScalarTab(n)%var_p_3D, &
-!!$               trim(OneGrid%ScalarTab(n)%name)//"%var_p_3D", .true.)
-!!$          call Compare(scalar_tab(n,ng)%var_t_1D, OneGrid%ScalarTab(n)%var_t_1D, &
-!!$               trim(OneGrid%ScalarTab(n)%name)//"%var_t_1D", .true.)
+!!$          call Compare(scalar_tab(n,ng)%var_p_3D, oneGrid%ScalarTab(n)%var_p_3D, &
+!!$               trim(oneGrid%ScalarTab(n)%name)//"%var_p_3D", .true.)
+!!$          call Compare(scalar_tab(n,ng)%var_t_1D, oneGrid%ScalarTab(n)%var_t_1D, &
+!!$               trim(oneGrid%ScalarTab(n)%name)//"%var_t_1D", .true.)
 !!$       end do
     end if
 
@@ -5903,8 +5911,8 @@ contains
 !!$       end if
 
        if (dyncore_flag == 2) then
-          if (OneGrid%ScalarTab(n)%name == 'THC' .or. &
-               OneGrid%ScalarTab(n)%name == 'THP') cycle
+          if (oneGrid%ScalarTab(n)%name == 'THC' .or. &
+               oneGrid%ScalarTab(n)%name == 'THP') cycle
        end if
 
        !srf - somente para gases e aerossois
@@ -5956,7 +5964,7 @@ contains
        !**(JP)** starts
 
 
-       if (associated(OneGrid%ScalarTab(n)%var_p_3D)) then
+       if (associated(oneGrid%ScalarTab(n)%var_p_3D)) then
 
 
           ! set oneAdvMnt%vc3d_in north border to zero
@@ -5980,7 +5988,7 @@ contains
              do i = i1ExternAtAdvMnt, iMxpExternAtAdvMnt
                 iExtern = i + iOffset
                 do k = 1, mzp
-                   oneAdvMnt%vc3d_in(k,i,j) = OneGrid%ScalarTab(n)%var_p_3D(k,iExtern,jExtern)
+                   oneAdvMnt%vc3d_in(k,i,j) = oneGrid%ScalarTab(n)%var_p_3D(k,iExtern,jExtern)
                 end do
              end do
              ! set oneAdvMnt%vc3d_in east border to zero
@@ -6024,7 +6032,7 @@ contains
 
           !**(JP)** starts
 
-          call AdvectMnt(oneAdvMnt,ng,m1,m2,m3,ia,iz,ja,jz,dtlt,mynum,n, &
+          call AdvectMnt(oneAdvMnt, oneGrid, ng,m1,m2,m3,ia,iz,ja,jz,dtlt,mynum,n, &
                current_aer_ispc,current_ndt_z,IsThisScalarAer)
 
 
@@ -6061,12 +6069,12 @@ contains
           call AdvectTendency(mzp, mxp, &
                iOffset, jOffset, &
                ia, iz, ja, jz, dtlt, &
-               scalarp3D=OneGrid%ScalarTab(n)%var_p_3D, &
+               scalarp3D=oneGrid%ScalarTab(n)%var_p_3D, &
                AdvMntField=oneAdvMnt%vc3d_out, &
-               scalart1D=OneGrid%ScalarTab(n)%var_t_1D)
+               scalart1D=oneGrid%ScalarTab(n)%var_t_1D)
 
 !!$          call Compare(scalar_tab(n,ng)%var_t_1D, &
-!!$               OneGrid%ScalarTab(n)%var_t_1D, &
+!!$               oneGrid%ScalarTab(n)%var_t_1D, &
 !!$               "var_t_1D", .true.)
           
           !**(JP)** ends
@@ -6095,7 +6103,7 @@ contains
        else
           if (dumpLocal) then
              call MsgDump (h//" not associated "//&
-                  trim(adjustl(OneGrid%ScalarTab(n)%name)))
+                  trim(adjustl(oneGrid%ScalarTab(n)%name)))
           end if
        end if
 
