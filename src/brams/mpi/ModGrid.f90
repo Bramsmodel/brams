@@ -55,7 +55,7 @@ module ModGrid
        CreateNodeDimensions, &
        DestroyNodeDimensions, &
        DumpNodeDimensions
-  
+
   ! JP: temporariamente usa variaveis globais enquanto
   !     var_tables nao for inclusa no tipo Grid
 
@@ -208,9 +208,14 @@ module ModGrid
      type(MessageSet), pointer :: AdvMntDenSendY => null()
      type(MessageSet), pointer :: AdvMntDenRecvY => null()
 
+     type(MessageSet), pointer :: AdvMntScaSendX => null()
+     type(MessageSet), pointer :: AdvMntScaRecvX => null()
+     type(MessageSet), pointer :: AdvMntScaSendY => null()
+     type(MessageSet), pointer :: AdvMntScaRecvY => null()
+
      type(scalar_table), pointer :: ScalarTab(:) => null()
      integer :: ScalarTabSize=0
- end type Grid
+  end type Grid
 
 
 
@@ -267,7 +272,7 @@ contains
          )
 
     ! include boundary conditions (no ghost zone)
-    
+
     oneGrid%GlobalOwnWithBC => CreateGlobalOwnWithBC(&
          GridSize=oneGrid%GridSize, &
          ParEnv=oneGrid%ParEnv, &
@@ -305,7 +310,7 @@ contains
          )
 
     ! this node dimensions and indexing limits
-    
+
     oneGrid%NodeDims => CreateNodeDimensions(&
          GridSize=oneGrid%GridSize, &
          ParEnv=oneGrid%ParEnv, &
@@ -338,7 +343,7 @@ contains
          )
 
     ! this node dimensions and indexing limits
-    
+
     oneGrid%NodeDimsAdvMnt => CreateNodeDimensions(&
          GridSize=oneGrid%GridSize, &
          ParEnv=oneGrid%ParEnv, &
@@ -390,6 +395,8 @@ contains
     integer, parameter :: TagAdvMntDd0Y=46
     integer, parameter :: TagAdvMntDenX=47
     integer, parameter :: TagAdvMntDenY=48
+    integer, parameter :: TagAdvMntScaX=49
+    integer, parameter :: TagAdvMntScaY=50
 
     ! Field pointer for fields not yet allocated
     ! not yet allocated; CreateAcouDampOneMessageSet
@@ -533,7 +540,9 @@ contains
          TagAdvMntDd0X, oneGrid%AdvMntDd0SendX, oneGrid%AdvMntDd0RecvX, &
          TagAdvMntDd0Y, oneGrid%AdvMntDd0SendY, oneGrid%AdvMntDd0RecvY, &
          TagAdvMntDenX, oneGrid%AdvMntDenSendX, oneGrid%AdvMntDenRecvX, &
-         TagAdvMntDenY, oneGrid%AdvMntDenSendY, oneGrid%AdvMntDenRecvY)
+         TagAdvMntDenY, oneGrid%AdvMntDenSendY, oneGrid%AdvMntDenRecvY, &
+         TagAdvMntScaX, oneGrid%AdvMntScaSendX, oneGrid%AdvMntScaRecvX, &
+         TagAdvMntScaY, oneGrid%AdvMntScaSendY, oneGrid%AdvMntScaRecvY)
 
 
     if (dumpLocal) then
@@ -600,7 +609,9 @@ contains
             oneGrid%AdvMntDd0SendX, oneGrid%AdvMntDd0RecvX, &
             oneGrid%AdvMntDd0SendY, oneGrid%AdvMntDd0RecvY, &
             oneGrid%AdvMntDenSendX, oneGrid%AdvMntDenRecvX, &
-            oneGrid%AdvMntDenSendY, oneGrid%AdvMntDenRecvY)
+            oneGrid%AdvMntDenSendY, oneGrid%AdvMntDenRecvY, &
+            oneGrid%AdvMntScaSendX, oneGrid%AdvMntScaRecvX, &
+            oneGrid%AdvMntScaSendY, oneGrid%AdvMntScaRecvY)
 
        deallocate(oneGrid)
     end if
@@ -742,6 +753,14 @@ contains
     call DumpMessageSet(oneGrid%AdvMntDenSendY)
     call MsgDump(h//" dumping AdvMntDenRecvY")
     call DumpMessageSet(oneGrid%AdvMntDenRecvY)
+    call MsgDump(h//" dumping AdvMntScaSendX")
+    call DumpMessageSet(oneGrid%AdvMntScaSendX)
+    call MsgDump(h//" dumping AdvMntScaRecvX")
+    call DumpMessageSet(oneGrid%AdvMntScaRecvX)
+    call MsgDump(h//" dumping AdvMntScaSendY")
+    call DumpMessageSet(oneGrid%AdvMntScaSendY)
+    call MsgDump(h//" dumping AdvMntScaRecvY")
+    call DumpMessageSet(oneGrid%AdvMntScaRecvY)
     call MsgDump(h//" finishes")
   end subroutine DumpGrid
 
@@ -753,10 +772,10 @@ contains
     integer :: ierr
     integer :: iEle
     integer :: nEle
-    
+
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(InsertScalarTabAtOneGrid)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
        call MsgDump(h//" starts")
@@ -764,7 +783,7 @@ contains
 
     ng=OneGrid%Id
     nEle=num_scalar(ng)
-    
+
     allocate(oneGrid%ScalarTab(nEle), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") nEle
@@ -775,7 +794,7 @@ contains
     end if
 
     oneGrid%ScalarTabSize=nEle
-    
+
     do iEle = 1, nEle
        oneGrid%ScalarTab(iEle)%name = scalar_tab(iEle,ng)%name
        oneGrid%ScalarTab(iEle)%a_var_p => scalar_tab(iEle,ng)%a_var_p
@@ -789,12 +808,12 @@ contains
        call MsgDump(h//" finishes building ScalarTab with "//&
             trim(adjustl(str(1)))//" entries")
     end if
-    
+
   end subroutine InsertScalarTabAtOneGrid
 
 
 
-    subroutine DeepCopyToScalarTabAtOneGrid(oneGrid)
+  subroutine DeepCopyToScalarTabAtOneGrid(oneGrid)
     type(Grid), pointer, intent(in) :: oneGrid
 
     integer :: ng
@@ -804,7 +823,7 @@ contains
     integer :: dim1
     integer :: dim2
     integer :: dim3
-    
+
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(DeepCopyToScalarTabAtOneGrid)**"
     logical, parameter :: dumpLocal=.false.
@@ -816,7 +835,7 @@ contains
     call DestroyScalarTabAtOneGrid(oneGrid)
     ng=OneGrid%Id
     nEle=num_scalar(ng)
-    
+
     allocate(oneGrid%ScalarTab(nEle), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") nEle
@@ -827,7 +846,7 @@ contains
     end if
 
     oneGrid%ScalarTabSize=nEle
-    
+
     do iEle = 1, nEle
        oneGrid%ScalarTab(iEle)%name = scalar_tab(iEle,ng)%name
 
@@ -972,7 +991,7 @@ contains
        call MsgDump(h//" finishes building ScalarTab with "//&
             trim(adjustl(str(1)))//" entries")
     end if
-    
+
   end subroutine DeepCopyToScalarTabAtOneGrid
 
 
@@ -986,7 +1005,7 @@ contains
     integer :: ierr
     integer :: iEle
     integer :: nEle
-    
+
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(DeepCopyFromScalarTabAtOneGrid)**"
     logical, parameter :: dumpLocal=.false.
@@ -994,10 +1013,10 @@ contains
     if (dumpLocal) then
        call MsgDump(h//" starts")
     end if
-    
+
     ng=OneGrid%Id
     nEle=num_scalar(ng)
-    
+
     do iEle = 1, nEle
 
        if (associated(scalar_tab(iEle,ng)%a_var_p)) then
@@ -1042,7 +1061,7 @@ contains
 
 
 
-  
+
   subroutine DestroyScalarTabAtOneGrid(oneGrid)
     type(Grid), pointer, intent(in) :: oneGrid
 
