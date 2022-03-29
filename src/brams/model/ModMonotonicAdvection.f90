@@ -2663,7 +2663,7 @@ module ModMonotonicAdvection
 
   ! advmnt_g initialization flag
   ! advmnt_g should be initialized only once
-  integer :: mnt_adv_jnitialized=0 ! 0=not initialized; 1=initialized
+!!$  integer :: mnt_adv_jnitialized=0 ! 0=not initialized; 1=initialized
 
   integer :: nSend_i
   integer :: nSend_j
@@ -4978,6 +4978,282 @@ contains
     end if
   end subroutine Advec3DZSedimUpw
 
+
+  subroutine InitializeDensities(mzp, mxp, myp, &
+       mxpAdvMnt, mypAdvMnt, &
+       iOffset, i1ExternAtAdvMnt, iMxpExternAtAdvMnt,  &
+       jOffset, j1ExternAtAdvMnt, jMypExternAtAdvMnt,  &
+       dn0, dn0u, dn0v, &
+       dd0_3d ,dd0_3du,dd0_3dv,dd0_3dw )
+
+    integer, intent(in) :: mzp
+    ! z dimension of external and Monotonic Advection fields 
+    integer, intent(in) :: mxp
+    ! x dimension of external fields 
+    integer, intent(in) :: myp
+    ! y dimension of external fields 
+    integer, intent(in) :: mxpAdvMnt
+    ! x dimension of Monotonic Advection fields
+    integer, intent(in) :: mypAdvMnt
+    ! y dimension of Monotonic Advection fields
+    integer, intent(in) :: iOffset
+    ! x index offset from external to Monotonic Advection 
+    integer, intent(in) :: i1ExternAtAdvMnt
+    ! first x position of external fields (1) indexed Monotonic Advection
+    integer, intent(in) :: iMxpExternAtAdvMnt
+    ! last x position of external fields (mxp) indexed Monotonic Advection
+    integer, intent(in) :: jOffset
+    ! y index offset from external to Monotonic Advection 
+    integer, intent(in) :: j1ExternAtAdvMnt
+    ! first y position of external fields (1) indexed Monotonic Advection
+    integer, intent(in) :: jMypExternAtAdvMnt
+    ! last y position of external fields (myp) indexed Monotonic Advection
+    real, pointer, intent(in) :: dn0(:,:,:)
+    ! pointer and values intent(in)
+    real, pointer, intent(in) :: dn0u(:,:,:)
+    ! pointer and values intent(in)
+    real, pointer, intent(in) :: dn0v(:,:,:)
+    ! pointer and values intent(in)
+    real, pointer, intent(in) :: dd0_3d(:,:,:)
+    ! pointer intent(in), values intent(out)
+    real, pointer, intent(in) :: dd0_3du(:,:,:)
+    ! pointer intent(in), values intent(out)
+    real, pointer, intent(in) :: dd0_3dv(:,:,:)
+    ! pointer intent(in), values intent(out)
+    real, pointer, intent(in) :: dd0_3dw(:,:,:)
+    ! pointer intent(in), values intent(out)
+
+    ! local var
+    integer :: i
+    integer :: j
+    integer :: k
+    integer :: iExtern
+    integer :: jExtern
+
+    logical, parameter :: dumpLocal=.false.
+    character(len=*), parameter :: h="**(InitializeDensities)**"
+    character(len=8) :: str(10)
+
+    ! set Monotonic Advection south ghost zone fields to zero
+    do j = 1, j1ExternAtAdvMnt-1
+       do i = 1, mxpAdvMnt
+          do k = 1, mzp
+             dd0_3d(k,i,j) = 0.0
+             dd0_3du(k,i,j) = 0.0
+             dd0_3dv(k,i,j) = 0.0
+             dd0_3dw(k,i,j) = 0.0
+          end do
+       end do
+    end do
+
+
+    do j = j1ExternAtAdvMnt, jMypExternAtAdvMnt
+       jExtern = j + jOffset
+       ! set Monotonic Advection west ghost zone fields to zero
+       do i = 1, i1ExternAtAdvMnt-1
+          do k = 1, mzp
+             dd0_3d(k,i,j) = 0.0
+             dd0_3du(k,i,j) = 0.0
+             dd0_3dv(k,i,j) = 0.0
+             dd0_3dw(k,i,j) = 0.0
+          end do
+       end do
+       ! fill where both Monotonic Advection and external fields
+       ! are in range
+       do i = i1ExternAtAdvMnt, iMxpExternAtAdvMnt
+          iExtern = i + iOffset
+          do k = 1, mzp
+             dd0_3d (k,i,j) = dn0 (k,iExtern,jExtern)
+             dd0_3du(k,i,j) = dn0u(k,iExtern,jExtern)
+             dd0_3dv(k,i,j) = dn0v(k,iExtern,jExtern)
+          end do
+          do k = 1,mzp-1
+             dd0_3dw(k,i,j) = 0.5*&
+                  (dn0(k,iExtern,jExtern) + dn0(k+1,iExtern,jExtern))
+          end do
+          dd0_3dw(mzp,i,j)=dd0_3dw(mzp-1,i,j)
+       end do
+       ! set Monotonic Advection east ghost zone fields to zero
+       do i = iMxpExternAtAdvMnt+1, mxpAdvMnt
+          do k = 1, mzp
+             dd0_3d(k,i,j) = 0.0
+             dd0_3du(k,i,j) = 0.0
+             dd0_3dv(k,i,j) = 0.0
+             dd0_3dw(k,i,j) = 0.0
+          end do
+       end do
+    end do
+
+
+    ! set Monotonic Advection north ghost zone fields to zero
+    do j = jMypExternAtAdvMnt+1, mypAdvMnt
+       do i = 1, mxpAdvMnt
+          do k = 1, mzp
+             dd0_3d(k,i,j) = 0.0
+             dd0_3du(k,i,j) = 0.0
+             dd0_3dv(k,i,j) = 0.0
+             dd0_3dw(k,i,j) = 0.0
+          end do
+       end do
+    end do
+  end subroutine InitializeDensities
+  
+
+
+
+  subroutine PrepareTheorWinds(mzp, mxp, myp,&
+       iOffset, i1ExternAtAdvMnt, iMxpExternAtAdvMnt,  &
+       jOffset, j1ExternAtAdvMnt, jMypExternAtAdvMnt,  &
+       dtlt, time,  &
+       u3d, v3d, w3d, &
+       dd0_3d, dd0_3du, dd0_3dv, dd0_3dw)
+
+    integer, intent(in) :: mzp
+    ! z dimension of external and Monotonic Advection fields 
+    integer, intent(in) :: mxp
+    ! x dimension of external fields 
+    integer, intent(in) :: myp
+    ! y dimension of external fields 
+    integer, intent(in) :: iOffset
+    ! x index offset from external to Monotonic Advection 
+    integer, intent(in) :: i1ExternAtAdvMnt
+    ! first x position of external fields (1) indexed Monotonic Advection
+    integer, intent(in) :: iMxpExternAtAdvMnt
+    ! last x position of external fields (mxp) indexed Monotonic Advection
+    integer, intent(in) :: jOffset
+    ! y index offset from external to Monotonic Advection 
+    integer, intent(in) :: j1ExternAtAdvMnt
+    ! first y position of external fields (1) indexed Monotonic Advection
+    integer, intent(in) :: jMypExternAtAdvMnt
+    ! last y position of external fields (myp) indexed Monotonic Advection
+    real, intent(in) :: dtlt
+    real, intent(in) :: time
+    real, pointer, intent(in) :: u3d(:,:,:)
+    ! pointer intent(in), values intent(inout)
+    real, pointer, intent(in) :: v3d(:,:,:)
+    ! pointer intent(in), values intent(inout)
+    real, pointer, intent(in) :: w3d(:,:,:)
+    ! pointer intent(in), values intent(inout)
+    real, pointer, intent(in) :: dd0_3d(:,:,:)
+    ! pointer intent(in), values intent(inout)
+    real, pointer, intent(in) :: dd0_3du(:,:,:)
+    ! pointer intent(in), values intent(inout)
+    real, pointer, intent(in) :: dd0_3dv(:,:,:)
+    ! pointer intent(in), values intent(inout)
+    real, pointer, intent(in) :: dd0_3dw(:,:,:)
+    ! pointer intent(in), values intent(inout)
+
+    !- local var
+    integer :: i
+    integer :: j
+    integer :: k
+    integer :: iExtern
+    integer :: jExtern
+    real :: dtlto2
+    real :: ai0s  =  25.0
+    real :: aj0s  =  50.0
+    real :: umx   =   80.0
+    real, parameter :: pii   =   3.141592653589793
+    real    :: umax  =   0.0
+    real    :: anrev,curnt,rx,xa,ilop,nrec,ya
+    real    :: periodo  =   6.*3600.
+!!$    real, parameter :: iwndty = 0  ! 0-rotating
+!!$    real, parameter :: iwndty = 1  ! 1-divergent winds
+    real, parameter :: iwndty = 2 
+
+    logical, parameter :: dumpLocal=.false.
+    character(len=*), parameter :: h="**(PrepareTheorWinds)**"
+    character(len=8) :: str(10)
+
+    if (dumpLocal) then
+       call MsgDump(h//" starts")
+    end if
+
+    dtlto2 =  10.!*dtlt
+
+
+    if(iwndty==1) ai0s= 50.5
+    ilop= ai0s-21.  ! needed for printouts
+    ! Define wind fields (rotation or divergent) and initial mixing ratios
+    ! Cone at (25,50) for rotating winds; Cone at (50,50) divergent winds
+    do j = jMypExternAtAdvMnt, j1ExternAtAdvMnt, -1
+       jExtern = j + jOffset
+       do i = i1ExternAtAdvMnt, iMxpExternAtAdvMnt
+          iExtern = i + iOffset
+          do k = 1, mzp
+             dd0_3d (k,i,j)=1.
+             dd0_3du(k,i,j)=1.
+             dd0_3dv(k,i,j)=1.
+             dd0_3dw(k,i,j)=1.
+
+             u3d(k,i,j)=-2.*umx*(real(jExtern)-real(110)/2.-.5)/real(110)
+             v3d(k,i,j)= 2.*umx*(real(iExtern)-real(100)/2.-.5)/real(100)
+             w3d(k,i,j)= 0.
+          end do
+       end do
+    end do
+             
+    if(iwndty==1) then
+       do j = jMypExternAtAdvMnt, j1ExternAtAdvMnt, -1
+          jExtern = j + jOffset
+          do i = i1ExternAtAdvMnt, iMxpExternAtAdvMnt
+             iExtern = i + iOffset
+             do k = 1, mzp
+                xa=pii/25.
+                u3d(k,i,j)=umx*&
+                     sin(xa*real(iExtern))*&
+                     sin(xa*(real(jExtern)))
+                v3d(k,i,j)=umx*&
+                     cos(xa*(real(iExtern)-.5))*&
+                     cos(xa*(real(jExtern)+.5))
+             end do
+          end do
+       end do
+
+    else if (iwndty==2) then
+       do j = jMypExternAtAdvMnt, j1ExternAtAdvMnt, -1
+          jExtern = j + jOffset
+          do i = i1ExternAtAdvMnt, iMxpExternAtAdvMnt
+             iExtern = i + iOffset
+             do k = 1, mzp
+                xa=pii/100. ! myp=mxp
+                u3d(k,i,j)=umx*&
+                     (sin(xa*real(iExtern)))**2*&
+                     sin(2*xa*(real(jExtern)))*&
+                     cos(pii*time/periodo)
+                v3d(k,i,j)=-umx*&
+                     (sin(xa*real(jExtern)))**2*&
+                     sin(2*xa*(real(iExtern)))*&
+                     cos(pii*time/periodo)
+             end do
+          end do
+       end do
+
+    else if (iwndty==3) then
+       do j = jMypExternAtAdvMnt, j1ExternAtAdvMnt, -1
+          jExtern = j + jOffset
+          do i = i1ExternAtAdvMnt, iMxpExternAtAdvMnt
+             iExtern = i + iOffset
+             do k = 1, mzp
+                xa=pii/100. ! myp=mxp
+                ya=50.
+                u3d(k,i,j)=-umx*&
+                     (sin(xa*real(iExtern)))**2*&
+                     sin(2.*xa*(real(jExtern)-ya))*&
+                     cos(pii*time/periodo)
+                v3d(k,i,j)=0.5*&
+                     umx*&
+                     sin(2.*xa*real(iExtern))*&
+                     cos(xa*(real(jExtern)-ya))*&
+                     cos(pii*time/periodo)
+             end do
+          end do
+       end do
+    end if
+  end subroutine PrepareTheorWinds
+
+
+  
   subroutine advmnt_driver(oneGrid, varn, &
        m1 ,m2 ,m3 ,ia,iz,ja,jz,izu,jzv,&
        i0,j0,nodemyp,nodemxp,nodemzp,mynum)
@@ -5079,6 +5355,11 @@ contains
     j1ExternAtAdvMnt = 1 - jOffset
     jMypExternAtAdvMnt = myp - jOffset
 
+    ! current grid
+    ! necessary while there are global variables outside oneGrid
+    
+    ng = OneGrid%Id
+    
     if (dumpLocal) then
        write(str(1),"(i8)") mzp
        call MsgDump(h//"mzp="//trim(adjustl(str(1))))
@@ -5104,35 +5385,27 @@ contains
        call MsgDump(h//"jMypExternAtAdvMnt="//trim(adjustl(str(1))))
     end if
 
-    if(mnt_adv_jnitialized == OFF) then
-       if (mynum == 0) stop 'ADV MNT called with mynum = 0, try np = 2'
-       if (dumpLocal) then
-          call MsgDump(h//" enter initialization")
-       end if
-
-       if(use_true_density == OFF) then
-          do ng=1,ngrids
-             iBegin=newIa(ng)-1
-             iEnd=newIz(ng)+1
-             jBegin=newJa(ng)-1
-             jEnd=newJz(ng)+1
-             if (dumpLocal) then
-                call MsgDump(h//" invokes initialize_densities")
-             end if
-             call initialize_densities(nodemzp(mynum,ng),&
-                  nodemxp(mynum,ng),nodemyp(mynum,ng) &
-                  , basic_g(ng)%dn0     &
-                  , basic_g(ng)%dn0u    &
-                  , basic_g(ng)%dn0v    &
-                  ,advmnt_g(ng)%dd0_3d (1:m1,iBegin:iEnd,jBegin:jEnd)  &
-                  ,advmnt_g(ng)%dd0_3du(1:m1,iBegin:iEnd,jBegin:jEnd) &
-                  ,advmnt_g(ng)%dd0_3dv(1:m1,iBegin:iEnd,jBegin:jEnd) &
-                  ,advmnt_g(ng)%dd0_3dw(1:m1,iBegin:iEnd,jBegin:jEnd) )
-          end do
-       end if
-
-       mnt_adv_jnitialized= ON
+!!$    if(mnt_adv_jnitialized == OFF) then
+    if (mynum == 0) stop 'ADV MNT called with mynum = 0, try np = 2'
+    if (dumpLocal) then
+       call MsgDump(h//" enter initialization")
     end if
+    
+    if(use_true_density == OFF) then
+       if (dumpLocal) then
+          call MsgDump(h//" invokes InitializeDensities")
+       end if
+       call InitializeDensities(mzp, mxp, myp, &
+            mxpAdvMnt, mypAdvMnt, &
+            iOffset, i1ExternAtAdvMnt, iMxpExternAtAdvMnt,  &
+            jOffset, j1ExternAtAdvMnt, jMypExternAtAdvMnt,  &
+            basic_g(ng)%dn0, basic_g(ng)%dn0u, basic_g(ng)%dn0v, &
+            oneAdvMnt%dd0_3d, oneAdvMnt%dd0_3du, &
+            oneAdvMnt%dd0_3dv, oneAdvMnt%dd0_3dw)
+    end if
+
+!!$       mnt_adv_jnitialized= ON
+!!$   end if
 
     oneAdvMnt => CreateMonotonicAdvection(oneGrid)
 
@@ -5160,9 +5433,6 @@ contains
        call DumpGrid(oneGrid)
     end if
 
-    ! no more loops on ng; ng is first grid from now on
-
-    ng = 1
     call InitializeGridSpacings(&
          mzp, mxp, myp, mxpAdvMnt, mypAdvMnt, &
          iOffset, i1ExternAtAdvMnt,  iMxpExternAtAdvMnt,  &
@@ -5213,7 +5483,6 @@ contains
 
     !- prepare wind velocities including map factors
 
-    ng=1
     ndtZ=0
     call PrepareWinds(&
          ng, mzp, mxp, myp, mxpAdvMnt, mypAdvMnt, &
@@ -5232,19 +5501,16 @@ contains
 
     if(theor_wind == on) then
        if (dumpLocal) then
-          call MsgDump (h//" invokes prepare_theor_winds")
+          call MsgDump (h//" invokes PrepareTheorWinds")
        end if
 
-       call prepare_theor_winds(dtlt,m1,m2,m3,ia,iz,ja,jz,time     &
-            ,advmnt_g(ng)%u3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
-            ,advmnt_g(ng)%v3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
-            ,advmnt_g(ng)%w3d(1:m1,iBegin:iEnd,jBegin:jEnd)  &
-            ,grid_g(ng)%dxt    &
-            ,grid_g(ng)%dyt    &
-            ,advmnt_g(ng)%dd0_3d (1:m1,iBegin:iEnd,jBegin:jEnd)  &
-            ,advmnt_g(ng)%dd0_3du(1:m1,iBegin:iEnd,jBegin:jEnd) &
-            ,advmnt_g(ng)%dd0_3dv(1:m1,iBegin:iEnd,jBegin:jEnd) &
-            ,advmnt_g(ng)%dd0_3dw(1:m1,iBegin:iEnd,jBegin:jEnd) )
+       call PrepareTheorWinds(mzp, mxp, myp,&
+            iOffset, i1ExternAtAdvMnt, iMxpExternAtAdvMnt,  &
+            jOffset, j1ExternAtAdvMnt, jMypExternAtAdvMnt,  &
+            dtlt, time,  &
+            oneAdvMnt%u3d, oneAdvMnt%v3d, oneAdvMnt%w3d, &
+            oneAdvMnt%dd0_3d, oneAdvMnt%dd0_3du, &
+            oneAdvMnt%dd0_3dv, oneAdvMnt%dd0_3dw)
     end if
 
     !- prepare Walcek's air densities
@@ -5453,144 +5719,11 @@ contains
 
 
 
-  subroutine initialize_densities(m1,m2,m3,dn0,dn0u,dn0v &
-       ,dd0_3d ,dd0_3du,dd0_3dv,dd0_3dw )
-
-    integer, intent(in) :: m1
-    integer, intent(in) :: m2
-    integer, intent(in) :: m3
-    real, intent(in) :: dn0(m1,m2,m3)
-    real, intent(in) :: dn0u(m1,m2,m3)
-    real, intent(in) :: dn0v(m1,m2,m3)
-    real, intent(out) :: dd0_3d(m1,m2,m3)
-    real, intent(out) :: dd0_3du(m1,m2,m3)
-    real, intent(out) :: dd0_3dv(m1,m2,m3)
-    real, intent(out) :: dd0_3dw(m1,m2,m3)
-
-    ! local var
-    integer i,j,k
-
-    logical, parameter :: dumpLocal=.false.
-    character(len=*), parameter :: h="**(initialize_densities)**"
-    character(len=8) :: str(10)
-
-    if (dumpLocal) then
-       write(str(1),"(i8)") m1
-       write(str(2),"(i8)") m2
-       write(str(3),"(i8)") m3
-       call MsgDump(h//" set values of"//&
-            " dd0_3d("//trim(adjustl(str(1)))//","//trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//")"//&
-            ", dd0_3du("//trim(adjustl(str(1)))//","//trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//")"//&
-            ", dd0_3dv("//trim(adjustl(str(1)))//","//trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//")"//&
-            ", dd0_3dw("//trim(adjustl(str(1)))//","//trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//")")
-    end if
-
-    dd0_3d (:,:,:)=  dn0 (:,:,:)
-    dd0_3du(:,:,:)=  dn0u(:,:,:)
-    dd0_3dv(:,:,:)=  dn0v(:,:,:)
-    do j = 1,m3
-       do i = 1,m2
-          do k = 1,m1-1
-             dd0_3dw(k,i,j) = 0.5*(dn0(k,i,j) +dn0(k+1,i,j))
-          end do
-          dd0_3dw(m1,i,j)=dd0_3dw(m1-1,i,j)
-       end do
-    end do
-    if (dumpLocal) then
-       call MsgDump(h//" finishes")
-    end if
-  end subroutine initialize_densities
 
 
 
-  subroutine prepare_theor_winds(dtlt,m1,m2,m3,ia,iz,ja,jz,time &
-       ,u3d,v3d,w3d&
-       ,dxt,dyt &
-       ,dd0_3d ,dd0_3du,dd0_3dv,dd0_3dw )
 
 
-    integer , intent(in) :: m1,m2,m3,ia,iz,ja,jz
-    real, intent(in) :: dtlt,time
-    real, dimension(m2,m3)   , intent(in) :: dxt,dyt
-
-    real,dimension(m1,m2,m3),intent(out)::u3d,v3d,w3d     &
-         ,dd0_3d ,dd0_3du &
-         ,dd0_3dv,dd0_3dw
-
-    !- local var
-    real   :: dtlto2
-    integer :: i,j,k
-    real  :: ai0s  =  25.0
-    real  :: aj0s  =  50.0
-    real  :: umx   =   80.0
-    real,parameter :: pii   =   3.141592653589793
-    real    :: umax  =   0.0
-    real    :: anrev,curnt,rx,xa,ilop,iwndty,nrec,ya
-    real    :: periodo  =   6.*3600.
-
-    logical, parameter :: dumpLocal=.false.
-    character(len=*), parameter :: h="**(prepare_theor_winds)**"
-    character(len=8) :: str(10)
-
-    if (dumpLocal) then
-       call MsgDump(h//" starts")
-    end if
-
-    dtlto2 =  10.!*dtlt
-
-    !WRITE(6,*) ' Wind fields?  0-rotating; or  1-divergent winds'
-    !iwndty = 0  ! 0-rotating
-    !iwndty = 1  ! 1-divergent winds
-    iwndty = 2  ! 1-divergent winds
-
-    if(iwndty==1) ai0s= 50.5
-    ilop= ai0s-21.  ! needed for printouts
-    ! Define wind fields (rotation or divergent) and initial mixing ratios
-    !  Cone at (25,50) for rotating winds; Cone at (50,50) divergent winds
-    do k = 1,m1
-       do  j=m3,1,-1
-          do  i=1,m2
-
-             dd0_3d (k,i,j)=1.
-             dd0_3du(k,i,j)=1.
-             dd0_3dv(k,i,j)=1.
-             dd0_3dw(k,i,j)=1.
-
-             u3d(k,i,j)= -2.*umx*(real(j)-real(110)/2.-.5)/real(110)
-             v3d(k,i,j)=  2.*umx*(real(i)-real(100)/2.-.5)/real(100)
-             w3d(k,i,j)= 0.
-
-             if(iwndty==1) then
-                xa=pii/25.
-                if(J>0) u3d(k,i,j)=umx*sin(xa*real(i))*sin(xa*(real(j)))
-                if(I>0) v3d(k,i,j)=umx*cos(xa*(real(i)-.5))*cos(XA*(real(j)+.5))
-             end if
-
-
-             if(iwndty==2) then
-                xa=pii/100. ! m3=m2
-                if(J>0) u3d(k,i,j)=  umx* (sin(xa*real(i)))**2 *sin(2*xa*(real(j)))*cos(pii*time/periodo)
-                if(I>0) v3d(k,i,j)=- umx* (sin(xa*real(j)))**2 *sin(2*xa*(real(i)))*cos(pii*time/periodo)
-             end if
-
-
-             if(iwndty==3) then
-                xa=pii/100. ! m3=m2
-                ya=50.
-                if(J>0) u3d(k,i,j)= -   umx* (sin(    xa*real(i)))**2 * sin(2.*xa*(real(j)-ya)) *cos(pii*time/periodo)
-                if(I>0) v3d(k,i,j)= 0.5*umx* (sin(2.* xa*real(i)))    * cos(   xa*(real(j)-ya)) *cos(pii*time/periodo)
-             end if
-
-             umax= max(abs(u3d(k,i,j)),abs(v3d(k,i,j)),umax)
-             rx= sqrt((real(i)-ai0s)**2.+(real(j)-aj0s)**2.)
-
-          end do !i
-       end do !j
-    end do !k
-    if (dumpLocal) then
-       call MsgDump(h//" finishes")
-    end if
-  end subroutine prepare_theor_winds
 
 
 
