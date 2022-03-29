@@ -118,8 +118,6 @@ module ModMonotonicAdvection
      real,pointer :: den1_3d(:,:,:)
      real,pointer :: den2_3d(:,:,:)
      real,pointer :: den3_3d(:,:,:)
-!!$     real,pointer :: l_dxtW(:,:,:)
-!!$     real,pointer :: l_dytW(:,:,:)
      real,pointer :: dxtW(:,:)
      real,pointer :: dytW(:,:)
      real,pointer :: dztW(:)
@@ -147,34 +145,6 @@ module ModMonotonicAdvection
   ! constants
   real, parameter :: c1 = cv/rgas
   real, parameter :: c2 = p00/rgas
-
-  ! all fields with enlarged ghost zones
-  type advmnt_vars
-     real,pointer :: u3d(:,:,:)
-     real,pointer :: v3d(:,:,:)
-     real,pointer :: w3d(:,:,:)
-     real,pointer :: vc3d_in(:,:,:)
-     real,pointer :: vc3d_out(:,:,:)
-     real,pointer :: vc3d_x(:,:,:)
-     real,pointer :: vc3d_y(:,:,:)
-     real,pointer :: dd0_3d(:,:,:)
-     real,pointer :: dd0_3du(:,:,:)
-     real,pointer :: dd0_3dv(:,:,:)
-     real,pointer :: dd0_3dw(:,:,:)
-     real,pointer :: den0_3d(:,:,:)
-     real,pointer :: den1_3d(:,:,:)
-     real,pointer :: den2_3d(:,:,:)
-     real,pointer :: den3_3d(:,:,:)
-!!$     real,pointer :: l_dxtW(:,:,:)
-!!$     real,pointer :: l_dytW(:,:,:)
-     real,pointer :: dxtW(:,:)
-     real,pointer :: dytW(:,:)
-     real,pointer :: dztW(:)
-  end type advmnt_vars
-
-  ! single variable containing all enlarged ghost zone fields
-  ! for all grids
-  type(advmnt_vars), allocatable :: advmnt_g(:)
 
   integer :: nSend_i
   integer :: nSend_j
@@ -295,18 +265,6 @@ contains
        call fatal_error(h//" allocate oneAdvMnt%den3_3d fails with stat="//&
             trim(adjustl(str(1))))
     end if
-!!$    allocate(oneAdvMnt%l_dxtW(mzpAdvMnt,mxpAdvMnt,mypAdvMnt), stat=ierr)
-!!$    if (ierr /= 0) then
-!!$       write(str(1),"(i8)") ierr
-!!$       call fatal_error(h//" allocate oneAdvMnt%l_dxtW fails with stat="//&
-!!$            trim(adjustl(str(1))))
-!!$    end if
-!!$    allocate(oneAdvMnt%l_dytW(mzpAdvMnt,mxpAdvMnt,mypAdvMnt), stat=ierr)
-!!$    if (ierr /= 0) then
-!!$       write(str(1),"(i8)") ierr
-!!$       call fatal_error(h//" allocate oneAdvMnt%l_dytW fails with stat="//&
-!!$            trim(adjustl(str(1))))
-!!$    end if
     allocate(oneAdvMnt%dxtW(mxpAdvMnt,mypAdvMnt), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
@@ -364,10 +322,6 @@ contains
             trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
        call MsgDump(h//" allocated oneAdvMnt%den3_3d("//&
             trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-!!$       call MsgDump(h//" allocated oneAdvMnt%l_dxtW("//&
-!!$            trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-!!$       call MsgDump(h//" allocated oneAdvMnt%l_dytW("//&
-!!$            trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
        call MsgDump(h//" allocated oneAdvMnt%dxtW("//&
             trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
        call MsgDump(h//" allocated oneAdvMnt%dytW("//&
@@ -464,18 +418,6 @@ contains
           call fatal_error(h//" deallocate oneAdvMnt%den3_3d fails with stat="//&
                trim(adjustl(str(1))))
        end if
-!!$       deallocate(oneAdvMnt%l_dxtW, stat=ierr)
-!!$       if (ierr /= 0) then
-!!$          write(str(1),"(i8)") ierr
-!!$          call fatal_error(h//" deallocate oneAdvMnt%l_dxtW fails with stat="//&
-!!$               trim(adjustl(str(1))))
-!!$       end if
-!!$       deallocate(oneAdvMnt%l_dytW, stat=ierr)
-!!$       if (ierr /= 0) then
-!!$          write(str(1),"(i8)") ierr
-!!$          call fatal_error(h//" deallocate oneAdvMnt%l_dytW fails with stat="//&
-!!$               trim(adjustl(str(1))))
-!!$       end if
        deallocate(oneAdvMnt%dxtW, stat=ierr)
        if (ierr /= 0) then
           write(str(1),"(i8)") ierr
@@ -3021,10 +2963,6 @@ contains
     call WaitSendRecvMsgs(oneGrid%AdvMntDxDySendX, oneGrid%AdvMntDxDyRecvX)
     call WaitSendRecvMsgs(oneGrid%AdvMntDd0SendX, oneGrid%AdvMntDd0RecvX)
     call WaitSendRecvMsgs(oneGrid%AdvMntDenSendX, oneGrid%AdvMntDenRecvX)
-
-!!$    oneAdvMnt%l_dxtW=0.0
-!!$    oneAdvMnt%l_dytW=0.0
-
     call PostSendRecvMsgs(oneGrid%AdvMntUVSendY, oneGrid%AdvMntUVRecvY)
     call PostSendRecvMsgs(oneGrid%AdvMntDxDySendY, oneGrid%AdvMntDxDyRecvY)
     call PostSendRecvMsgs(oneGrid%AdvMntDd0SendY, oneGrid%AdvMntDd0RecvY)
