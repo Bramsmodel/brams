@@ -33,13 +33,10 @@ module ModMonotonicAdvection
   use mem_grid, only:        &
        dtlt,   & !intent(in)
        time,   &
-       ngrids, & !intent(in)
        ngrid,  & !intent(in)
        dzt,    & !intent(in)
        dztn,   & !intent(in)
        grid_g, & !intent(in)
-       grid_g, & !intent(in)
-       naddsc, & !intent(in)
        hw4   , & !intent(in)
        if_adap,& !intent(in)
        dyncore_flag  !intent(in)
@@ -121,8 +118,8 @@ module ModMonotonicAdvection
      real,pointer :: den1_3d(:,:,:)
      real,pointer :: den2_3d(:,:,:)
      real,pointer :: den3_3d(:,:,:)
-     real,pointer :: l_dxtW(:,:,:)
-     real,pointer :: l_dytW(:,:,:)
+!!$     real,pointer :: l_dxtW(:,:,:)
+!!$     real,pointer :: l_dytW(:,:,:)
      real,pointer :: dxtW(:,:)
      real,pointer :: dytW(:,:)
      real,pointer :: dztW(:)
@@ -168,8 +165,8 @@ module ModMonotonicAdvection
      real,pointer :: den1_3d(:,:,:)
      real,pointer :: den2_3d(:,:,:)
      real,pointer :: den3_3d(:,:,:)
-     real,pointer :: l_dxtW(:,:,:)
-     real,pointer :: l_dytW(:,:,:)
+!!$     real,pointer :: l_dxtW(:,:,:)
+!!$     real,pointer :: l_dytW(:,:,:)
      real,pointer :: dxtW(:,:)
      real,pointer :: dytW(:,:)
      real,pointer :: dztW(:)
@@ -178,10 +175,6 @@ module ModMonotonicAdvection
   ! single variable containing all enlarged ghost zone fields
   ! for all grids
   type(advmnt_vars), allocatable :: advmnt_g(:)
-
-  ! advmnt_g initialization flag
-  ! advmnt_g should be initialized only once
-!!$  integer :: mnt_adv_jnitialized=0 ! 0=not initialized; 1=initialized
 
   integer :: nSend_i
   integer :: nSend_j
@@ -302,18 +295,18 @@ contains
        call fatal_error(h//" allocate oneAdvMnt%den3_3d fails with stat="//&
             trim(adjustl(str(1))))
     end if
-    allocate(oneAdvMnt%l_dxtW(mzpAdvMnt,mxpAdvMnt,mypAdvMnt), stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" allocate oneAdvMnt%l_dxtW fails with stat="//&
-            trim(adjustl(str(1))))
-    end if
-    allocate(oneAdvMnt%l_dytW(mzpAdvMnt,mxpAdvMnt,mypAdvMnt), stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" allocate oneAdvMnt%l_dytW fails with stat="//&
-            trim(adjustl(str(1))))
-    end if
+!!$    allocate(oneAdvMnt%l_dxtW(mzpAdvMnt,mxpAdvMnt,mypAdvMnt), stat=ierr)
+!!$    if (ierr /= 0) then
+!!$       write(str(1),"(i8)") ierr
+!!$       call fatal_error(h//" allocate oneAdvMnt%l_dxtW fails with stat="//&
+!!$            trim(adjustl(str(1))))
+!!$    end if
+!!$    allocate(oneAdvMnt%l_dytW(mzpAdvMnt,mxpAdvMnt,mypAdvMnt), stat=ierr)
+!!$    if (ierr /= 0) then
+!!$       write(str(1),"(i8)") ierr
+!!$       call fatal_error(h//" allocate oneAdvMnt%l_dytW fails with stat="//&
+!!$            trim(adjustl(str(1))))
+!!$    end if
     allocate(oneAdvMnt%dxtW(mxpAdvMnt,mypAdvMnt), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
@@ -371,10 +364,10 @@ contains
             trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
        call MsgDump(h//" allocated oneAdvMnt%den3_3d("//&
             trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-       call MsgDump(h//" allocated oneAdvMnt%l_dxtW("//&
-            trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
-       call MsgDump(h//" allocated oneAdvMnt%l_dytW("//&
-            trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
+!!$       call MsgDump(h//" allocated oneAdvMnt%l_dxtW("//&
+!!$            trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
+!!$       call MsgDump(h//" allocated oneAdvMnt%l_dytW("//&
+!!$            trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
        call MsgDump(h//" allocated oneAdvMnt%dxtW("//&
             trim(adjustl(str(3)))//","//trim(adjustl(str(4)))//")")
        call MsgDump(h//" allocated oneAdvMnt%dytW("//&
@@ -471,18 +464,18 @@ contains
           call fatal_error(h//" deallocate oneAdvMnt%den3_3d fails with stat="//&
                trim(adjustl(str(1))))
        end if
-       deallocate(oneAdvMnt%l_dxtW, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate oneAdvMnt%l_dxtW fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-       deallocate(oneAdvMnt%l_dytW, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate oneAdvMnt%l_dytW fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
+!!$       deallocate(oneAdvMnt%l_dxtW, stat=ierr)
+!!$       if (ierr /= 0) then
+!!$          write(str(1),"(i8)") ierr
+!!$          call fatal_error(h//" deallocate oneAdvMnt%l_dxtW fails with stat="//&
+!!$               trim(adjustl(str(1))))
+!!$       end if
+!!$       deallocate(oneAdvMnt%l_dytW, stat=ierr)
+!!$       if (ierr /= 0) then
+!!$          write(str(1),"(i8)") ierr
+!!$          call fatal_error(h//" deallocate oneAdvMnt%l_dytW fails with stat="//&
+!!$               trim(adjustl(str(1))))
+!!$       end if
        deallocate(oneAdvMnt%dxtW, stat=ierr)
        if (ierr /= 0) then
           write(str(1),"(i8)") ierr
@@ -2879,6 +2872,7 @@ contains
     ng = OneGrid%Id
     
     if (dumpLocal) then
+       call MsgDump(h//" starts")
        write(str(1),"(i8)") mzp
        call MsgDump(h//"mzp="//trim(adjustl(str(1))))
        write(str(1),"(i8)") mxp
@@ -2903,16 +2897,11 @@ contains
        call MsgDump(h//"jMypExternAtAdvMnt="//trim(adjustl(str(1))))
     end if
 
-!!$    if(mnt_adv_jnitialized == OFF) then
-    if (mynum == 0) stop 'ADV MNT called with mynum = 0, try np = 2'
-    if (dumpLocal) then
-       call MsgDump(h//" enter initialization")
+    if (mynum == 0) then
+       call fatal_error(h//' ADV MNT called with mynum = 0, try np = 2')
     end if
     
     if(use_true_density == OFF) then
-       if (dumpLocal) then
-          call MsgDump(h//" invokes InitializeDensities")
-       end if
        call InitializeDensities(mzp, mxp, myp, &
             mxpAdvMnt, mypAdvMnt, &
             iOffset, i1ExternAtAdvMnt, iMxpExternAtAdvMnt,  &
@@ -2921,9 +2910,6 @@ contains
             oneAdvMnt%dd0_3d, oneAdvMnt%dd0_3du, &
             oneAdvMnt%dd0_3dv, oneAdvMnt%dd0_3dw)
     end if
-
-!!$       mnt_adv_jnitialized= ON
-!!$   end if
 
     oneAdvMnt => CreateMonotonicAdvection(oneGrid)
 
@@ -2945,11 +2931,6 @@ contains
          oneAdvMnt%den0_3d, oneAdvMnt%den1_3d, &
          oneAdvMnt%den2_3d, oneAdvMnt%den3_3d, &
          oneAdvMnt%vc3d_in, oneAdvMnt%vc3d_out)
-
-    if (dumpLocal) then
-       call MsgDump(h//" grid after UpdateFieldAdressAtAdvMnt")
-       call DumpGrid(oneGrid)
-    end if
 
     call InitializeGridSpacings(&
          mzp, mxp, myp, mxpAdvMnt, mypAdvMnt, &
@@ -3010,10 +2991,6 @@ contains
          dd_sedim, dzt, ndtZ)
 
     if(theor_wind == on) then
-       if (dumpLocal) then
-          call MsgDump (h//" invokes PrepareTheorWinds")
-       end if
-
        call PrepareTheorWinds(mzp, mxp, myp,&
             iOffset, i1ExternAtAdvMnt, iMxpExternAtAdvMnt,  &
             jOffset, j1ExternAtAdvMnt, jMypExternAtAdvMnt,  &
@@ -3045,12 +3022,8 @@ contains
     call WaitSendRecvMsgs(oneGrid%AdvMntDd0SendX, oneGrid%AdvMntDd0RecvX)
     call WaitSendRecvMsgs(oneGrid%AdvMntDenSendX, oneGrid%AdvMntDenRecvX)
 
-    oneAdvMnt%l_dxtW=0.0
-    oneAdvMnt%l_dytW=0.0
-
-    if (dumpLocal) then
-       call MsgDump (h//" invokes initial_fields_update exchanging borders on y")
-    end if
+!!$    oneAdvMnt%l_dxtW=0.0
+!!$    oneAdvMnt%l_dytW=0.0
 
     call PostSendRecvMsgs(oneGrid%AdvMntUVSendY, oneGrid%AdvMntUVRecvY)
     call PostSendRecvMsgs(oneGrid%AdvMntDxDySendY, oneGrid%AdvMntDxDyRecvY)
@@ -3072,11 +3045,6 @@ contains
 
     call DeepCopyToScalarTabAtOneGrid(oneGrid)
     
-    if (dumpLocal) then
-       write(str(1),"(i8)") num_scalar(ng)
-       call MsgDump(h//" there are "//trim(adjustl(str(1)))//" scalar fields")
-    end if
-
     !srf- do n=1,num_scalar(ng)     ! original
     do n=i_scl,num_scalar(ng)
 
@@ -3160,11 +3128,6 @@ contains
                AdvMntField=oneAdvMnt%vc3d_out, &
                scalart1D=oneGrid%ScalarTab(n)%var_t_1D)
 
-       else
-          if (dumpLocal) then
-             call MsgDump (h//" not associated "//&
-                  trim(adjustl(oneGrid%ScalarTab(n)%name)))
-          end if
        end if
 
 
