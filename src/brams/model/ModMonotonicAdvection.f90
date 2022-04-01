@@ -18,9 +18,6 @@ module ModMonotonicAdvection
        PostSendRecvMsgs, &
        WaitSendRecvMsgs
 
-  use ModGridDims, only: &
-       GridDims
-
   use ModDomainDecomp, only: &
        DomainDecomp
 
@@ -29,6 +26,9 @@ module ModMonotonicAdvection
        DumpGrid, &
        DeepCopyToScalarTabAtOneGrid, &
        DeepCopyFromScalarTabAtOneGrid       
+
+  use ModNamelistFile, only: &
+       NamelistFile
 
   use mem_grid, only:        &
        dtlt,   & !intent(in)
@@ -62,38 +62,9 @@ module ModMonotonicAdvection
        dd_sedim,            &
        naer_transported
 
-  use var_tables, only : scalar_tab & ! (var_p = IN, var_t = INOUT)
-       ,num_scalar   ! (in)
-
-  use advMessageMod, only: &
-       SendMessageI, &
-       RecvMessageI, &
-       SendMessageJ, &
-       RecvMessageJ, &
-       newM2, &
-       newM3, &
-       newIa, &
-       newIz, &
-       newJa, &
-       newJz, &
-       nRecvI, &
-       nRecvJ, &
-       nSendI, &
-       nSendJ, &
-       totalrecvi, &
-       totalsendi, &
-       totalrecvj, &
-       totalsendj
-
-  use ParLib, only: &
-       parf_send_noblock_real, &
-       parf_get_noblock_real, &
-       parf_wait_any_nostatus, &
-       parf_wait_all_nostatus
-
-
-  use ModNamelistFile, only: &
-       NamelistFile
+  use var_tables, only : &
+       scalar_tab, & ! (var_p = IN, var_t = INOUT)
+       num_scalar   ! (in)
 
   use ccatt_start, only: &
        ccatt               ! (in)
@@ -127,42 +98,22 @@ module ModMonotonicAdvection
   public :: CreateMonotonicAdvection
   public :: DestroyMonotonicAdvection
   public :: advmnt_driver  ! Subroutine
-  public :: StoreNamelistFileAtRadvc_mnt ! Subroutine
+  public :: StoreNamelistFileAtAdvMnt ! Subroutine
 
-  ! public names, set by StoreNamelistFileAtRadvc_mnt
+  ! public names, set by StoreNamelistFileAtAdvMnt
   integer, public :: advmnt 
   integer, public :: GhostZoneLength 
 
   ! module private variables
 
   ! flow control flags
-  integer, parameter :: ON=1,OFF=0
-  integer, parameter :: use_true_density  = 1 ! 0= OFF, 1=ON
-
+  logical, parameter :: use_true_density=.true.
   ! for theoretical experiments
-  integer, parameter :: theor_wind = 0        ! 0= OFF, 1=ON
+  logical, parameter :: theor_wind=.false.
 
   ! constants
   real, parameter :: c1 = cv/rgas
   real, parameter :: c2 = p00/rgas
-
-  integer :: nSend_i
-  integer :: nSend_j
-  integer :: nRecv_i
-  integer :: nRecv_j
-  integer, parameter :: bigdump=1
-  real, allocatable :: buffcomm(:,:,:)
-  integer :: nRec_i
-  integer :: nSnd_i
-  integer :: nRec_j
-  integer :: nSnd_j
-  integer :: bufSendTotalLength_i
-  integer :: bufSendTotalLength_j
-  integer :: bufREcvTotalLength_i
-  integer :: bufRecvTotalLength_j
-  real, allocatable :: bufRecv(:)
-  real, allocatable :: bufSend(:)
-
 
 contains
 
@@ -562,9 +513,9 @@ contains
 
     ! current grid
     ! necessary while there are global variables outside oneGrid
-    
+
     ng = OneGrid%Id
-    
+
     if (dumpLocal) then
        call MsgDump(h//" starts")
        write(str(1),"(i8)") mzp
@@ -594,8 +545,8 @@ contains
     if (mynum == 0) then
        call fatal_error(h//' ADV MNT called with mynum = 0, try np = 2')
     end if
-    
-    if(use_true_density == OFF) then
+
+    if(.not. use_true_density) then
        call InitializeDensities(mzp, mxp, myp, &
             mxpAdvMnt, mypAdvMnt, &
             iOffset, i1ExternAtAdvMnt, iMxpExternAtAdvMnt,  &
@@ -606,11 +557,11 @@ contains
     end if
 
     ! create local memory area for large GhostZoneWidth variables
-    
+
     oneAdvMnt => CreateMonotonicAdvection(oneGrid)
 
     ! update field addresses of the local memory area for message passing
-    
+
     call UpdateFieldAdressAtAdvMnt(&
          oneGrid%AdvMntUVSendX, oneGrid%AdvMntUVRecvX, &
          oneGrid%AdvMntUVSendY, oneGrid%AdvMntUVRecvY, &
@@ -653,8 +604,8 @@ contains
     end if
 
     !- get actual air densities, if using them instead of basic state fields
-    
-    if(use_true_density == ON) then
+
+    if(use_true_density) then
        call GetTrueDensities(&
             mzp, mxp, myp, mxpAdvMnt, mypAdvMnt, &
             iOffset, i1ExternAtAdvMnt,  iMxpExternAtAdvMnt,  &
@@ -690,7 +641,7 @@ contains
          aerosol, naer_transported, &
          dd_sedim, dzt, ndtZ)
 
-    if(theor_wind == on) then
+    if(theor_wind) then
        call PrepareTheorWinds(mzp, mxp, myp,&
             iOffset, i1ExternAtAdvMnt, iMxpExternAtAdvMnt,  &
             jOffset, j1ExternAtAdvMnt, jMypExternAtAdvMnt,  &
@@ -714,7 +665,7 @@ contains
          oneAdvMnt%den2_3d, oneAdvMnt%den3_3d)
 
     ! message passing to update ghost zones
-    
+
     call PostSendRecvMsgs(oneGrid%AdvMntUVSendX, oneGrid%AdvMntUVRecvX)
     call PostSendRecvMsgs(oneGrid%AdvMntDxDySendX, oneGrid%AdvMntDxDyRecvX)
     call PostSendRecvMsgs(oneGrid%AdvMntDd0SendX, oneGrid%AdvMntDd0RecvX)
@@ -743,9 +694,9 @@ contains
     end if
 
     ! copy external scalar_tab into oneGrid
-    
+
     call DeepCopyToScalarTabAtOneGrid(oneGrid)
-    
+
     !srf- do n=1,num_scalar(ng)     ! original
     do n=i_scl,num_scalar(ng)
 
@@ -839,16 +790,16 @@ contains
     call DeepCopyFromScalarTabAtOneGrid(oneGrid)
 
     ! destroy local memory area for large GhostZoneWidth variables
-    
+
     call DestroyMonotonicAdvection(oneAdvMnt)
-    
+
     if (dumpLocal) then
        call MsgDump(h//" finishes")
     end if
-  end subroutine advmnt_driver  
+  end subroutine advmnt_driver
 
 
-  
+
 
 
   subroutine InitializeGridSpacings(&
@@ -1631,72 +1582,6 @@ contains
 
 
 
-
-
-  subroutine CheckBorders(m1, m2, m3, field, &
-       nRecv, procRecv, tagRecv, iaRecv, izRecv, jaRecv, jzRecv, &
-       bufRecvStart, bufRecvLength, bufRecvTotalLength, &
-       nSend, procSend, tagSend, iaSend, izSend, jaSend, jzSend, &
-       bufSendStart, bufSendLength, bufSendTotalLength,mynum,op,ie)
-    integer, intent(in) :: m1,mynum,op,ie
-    integer, intent(in) :: m2
-    integer, intent(in) :: m3
-    real,    intent(inout) :: field(m1,m2,m3)
-    integer, intent(in) :: nRecv
-    integer, intent(in) :: procRecv(nRecv)
-    integer, intent(in) :: tagRecv(nRecv)
-    integer, intent(in) :: iaRecv(nRecv)
-    integer, intent(in) :: izRecv(nRecv)
-    integer, intent(in) :: jaRecv(nRecv)
-    integer, intent(in) :: jzRecv(nRecv)
-    integer, intent(in) :: bufRecvStart(nRecv)
-    integer, intent(in) :: bufRecvLength(nRecv)
-    integer, intent(in) :: bufRecvTotalLength
-    integer, intent(in) :: nSend
-    integer, intent(in) :: procSend(nSend)
-    integer, intent(in) :: tagSend(nSend)
-    integer, intent(in) :: iaSend(nSend)
-    integer, intent(in) :: izSend(nSend)
-    integer, intent(in) :: jaSend(nSend)
-    integer, intent(in) :: jzSend(nSend)
-    integer, intent(in) :: bufSendStart(nSend)
-    integer, intent(in) :: bufSendLength(nSend)
-    integer, intent(in) :: bufSendTotalLength
-
-    integer :: fout,i
-    character :: opc
-
-    fout=80+mynum
-    opc='Y'
-    if(op==1) opc='X'
-
-    if(ie==0) then
-       write (fout,'("Borders updated, direction ",A)') opc
-       return
-    end if
-
-
-    write (fout,'(" Updating borders, direction  ",A)') opc ; call flush(fout)
-    write (fout,'("nRecv: ",I3.3," nSend: ",I3.3)') nRecv,nSend; call flush(fout)
-    write (fout,'("TotRecv: ",I6.6," TotSend: ",I6.6)') bufRecvTotalLength,bufSendTotalLength; call flush(fout)
-    write (fout,'(A)') '---------------------------------- Send ---------------------------'; call flush(fout)
-    write (fout,'(7(A3,1X),2(A,1X))') 'nSn','prc','tag','ia ','iz ','ja ','jz ','Start','Length'; call flush(fout)
-    do i=1,nRecv
-       write (fout,'(7(I3.3,1X),2(I6.6,1X))') i,procRecv(i),tagRecv(i),iaRecv(i),izRecv(i),jaRecv(i),jzRecv(i), &
-            bufRecvStart(i),bufRecvLength(i); call flush(fout)
-    end do
-    write (fout,'(A)') '------------------------------- Receive  --------------------------'; call flush(fout)
-    write (fout,'(7(A3,1X),2(A,1X))') 'nRv','prc','tag','ia ','iz ','ja ','jz ','Start','Length'
-    do i=1,nRecv
-       write (fout,'(7(I3.3,1X),2(I6.6,1X))')	i,procSend(i),tagSend(i),iaSend(i),izSend(i),jaSend(i),jzSend(i), &
-            bufSendStart(i),bufSendLength(i); call flush(fout)
-    end do
-  end subroutine CheckBorders
-
-
-
-
-
   subroutine AdvectTendency(mzp, mxp, &
        iOffset, jOffset, &
        ia, iz, ja, jz, dtl, &
@@ -1761,7 +1646,7 @@ contains
 
 
 
-  
+
 
   subroutine AdvectMnt(oneAdvMnt, oneGrid, & 
        ngrid, mzp, mxp, myp, mxpAdvMnt, mypAdvMnt, &
@@ -1846,14 +1731,14 @@ contains
        call MsgDump(h//" invoke Advec3DZ to advect vc3d_in, storing result in vc3d_out")
     end if
     call Advec3DZ(mzp, mxpAdvMnt, mypAdvMnt, &
-       q0=oneAdvMnt%vc3d_in, &
-       u=oneAdvMnt%w3d, &
-       den0=oneAdvMnt%den2_3d, &
-       den1=oneAdvMnt%den3_3d, &
-       dt=dt, &
-       dxx=oneAdvMnt%dztW, &
-       dd0=oneAdvMnt%dd0_3dw, &
-       qn=oneAdvMnt%vc3d_out)
+         q0=oneAdvMnt%vc3d_in, &
+         u=oneAdvMnt%w3d, &
+         den0=oneAdvMnt%den2_3d, &
+         den1=oneAdvMnt%den3_3d, &
+         dt=dt, &
+         dxx=oneAdvMnt%dztW, &
+         dd0=oneAdvMnt%dd0_3dw, &
+         qn=oneAdvMnt%vc3d_out)
 
 
     !- aerosol section to include sedimentation
@@ -1919,161 +1804,8 @@ contains
        call MsgDump(h//" finishes")
     end if
   end subroutine AdvectMnt
-  
 
-!!$  subroutine AdvectMnt(oneAdvMnt, oneGrid, ngrid,m1,m2,m3, mxpAdvMnt, mypAdvMnt, &
-!!$       ia,iz,ja,jz,dt,mynum,n,&
-!!$       current_aer_ispc,current_ndt_z,IsThisScalarAer)
-!!$
-!!$    type(MonotonicAdvection), pointer, intent(in) :: oneAdvMnt
-!!$    type(Grid), pointer, intent(in) :: oneGrid
-!!$    integer , intent(in) :: m1,ngrid
-!!$    integer , intent(in) :: m2
-!!$    integer , intent(in) :: m3
-!!$    integer , intent(in) :: ia
-!!$    integer , intent(in) :: iz
-!!$    integer , intent(in) :: ja
-!!$    integer , intent(in) :: jz,n
-!!$    integer , intent(in) :: mynum
-!!$    integer , intent(in) :: mxpAdvMnt
-!!$    integer , intent(in) :: mypAdvMnt
-!!$    real    , intent(in) :: dt
-!!$    integer , intent(in) :: current_ndt_z,current_aer_ispc
-!!$    logical , intent(in) :: IsThisScalarAer
-!!$    !- local var
-!!$    !REAL,DIMENSION(m1)               :: dxx
-!!$    !REAL,DIMENSION(m2,m3)            :: dxy
-!!$    real masscon,initialmass,vol
-!!$    integer nrec,itz
-!!$    integer ibegin,iend,jbegin,jend
-!!$    !- type of sedimentation scheme (0= Walcek, 1=upwind)
-!!$    integer , parameter :: iupwind = 0
-!!$    logical, parameter :: dumpLocal=.false.
-!!$    character(len=*), parameter :: h="**(AdvectMnt)**"
-!!$    character(len=8) :: str(10)
-!!$
-!!$    iBegin= newIa(ngrid)-1
-!!$    iEnd  = newIz(ngrid)+1
-!!$    jBegin= newJa(ngrid)-1
-!!$    jEnd  = newJz(ngrid)+1
-!!$
-!!$    !--- do X-advection
-!!$    if (dumpLocal) then
-!!$       call MsgDump(h//" starts; update borders of vc3d_in for x advection")
-!!$    end if
-!!$    call PostSendRecvMsgs(oneGrid%AdvMntScaSendX, oneGrid%AdvMntScaRecvX)
-!!$    call WaitSendRecvMsgs(oneGrid%AdvMntScaSendX, oneGrid%AdvMntScaRecvX)
-!!$    if (dumpLocal) then
-!!$       call MsgDump(h//" invoke Advec3DX to advect vc3d_in, storing result in vc3d_out")
-!!$    end if
-!!$    call Advec3DX(m1, mxpAdvMnt, mypAdvMnt, &
-!!$         q0=oneAdvMnt%vc3d_in, &
-!!$         u=oneAdvMnt%u3d, &
-!!$         den0=oneAdvMnt%den0_3d, &
-!!$         den1=oneAdvMnt%den1_3d, &
-!!$         dt=dt, &
-!!$         dxx=oneAdvMnt%dxtW, &
-!!$         dd0=oneAdvMnt%dd0_3du, &
-!!$         qn=oneAdvMnt%vc3d_out)
-!!$
-!!$    !--- do Y-advection
-!!$
-!!$    if (dumpLocal) then
-!!$       call MsgDump(h//" update borders of vc3d_out for y advection")
-!!$    end if
-!!$    call PostSendRecvMsgs(oneGrid%AdvMntScaSendY, oneGrid%AdvMntScaRecvY)
-!!$    call WaitSendRecvMsgs(oneGrid%AdvMntScaSendY, oneGrid%AdvMntScaRecvY)
-!!$    if (dumpLocal) then
-!!$       call MsgDump(h//" invoke Advec3DY to advect vc3d_out, storing result in vc3d_in")
-!!$    end if
-!!$    call Advec3DY(m1, mxpAdvMnt, mypAdvMnt, &
-!!$         q0=oneAdvMnt%vc3d_out, &
-!!$         u=oneAdvMnt%v3d, &
-!!$         den0=oneAdvMnt%den1_3d, &
-!!$         den1=oneAdvMnt%den2_3d, &
-!!$         dt=dt, &
-!!$         dxx=oneAdvMnt%dytW, &
-!!$         dd0=oneAdvMnt%dd0_3dv, &
-!!$         qn=oneAdvMnt%vc3d_in)
-!!$
-!!$    !--- do k-advection
-!!$    if (dumpLocal) then
-!!$       call MsgDump(h//" invoke Advec3DZ to advect vc3d_in, storing result in vc3d_out")
-!!$    end if
-!!$    call Advec3DZ(m1, mxpAdvMnt, mypAdvMnt, &
-!!$       q0=oneAdvMnt%vc3d_in, &
-!!$       u=oneAdvMnt%w3d, &
-!!$       den0=oneAdvMnt%den2_3d, &
-!!$       den1=oneAdvMnt%den3_3d, &
-!!$       dt=dt, &
-!!$       dxx=oneAdvMnt%dztW, &
-!!$       dd0=oneAdvMnt%dd0_3dw, &
-!!$       qn=oneAdvMnt%vc3d_out)
-!!$
-!!$
-!!$    !- aerosol section to include sedimentation
-!!$    !- the sedimentation process is done using pure cartesian coordinates
-!!$    !- so, all sedimentation velocities are treat as cartesian vertical velocities
-!!$    !- which are positive downwards.
-!!$    if (dumpLocal) then
-!!$       write(str(1),"(i8)") aerosol
-!!$       write(str(2),"(l)") IsThisScalarAer
-!!$       call MsgDump(h//" aerosol="//trim(adjustl(str(1)))//&
-!!$            "; IsThisScalarAer="//trim(adjustl(str(2))))
-!!$    end if
-!!$    if(aerosol > 0 .and. IsThisScalarAer) then
-!!$
-!!$       !-srf introducing a time-splitting for aerosol sedimentation
-!!$
-!!$       if (dumpLocal) then
-!!$          write(str(1),"(i8)") iupwind
-!!$          call MsgDump(h//" iupwind="//trim(adjustl(str(1))))
-!!$       end if
-!!$       if(iupwind == 0 ) then
-!!$          ! - Walcek method
-!!$          ! this routine works _only_ for mass concentration or density (kg/m3)
-!!$          ! converting mixing ratio (kg/kg) to density (kg/m3)
-!!$          oneAdvMnt%vc3d_in(:,:,:)=oneAdvMnt%vc3d_out(:,:,:) * oneAdvMnt%den0_3d(:,:,:)
-!!$
-!!$          !- do time splitting for aerosols with large fall velocities
-!!$          do itz=1,current_ndt_z
-!!$             call Advec3DZSedim(m1,m2,m3,&
-!!$                  ia,iz,ja,jz,                        &
-!!$                  q0=oneAdvMnt%vc3d_in(:,iBegin:iEnd,jBegin:jEnd),	 &
-!!$                  u=dd_sedim(current_aer_ispc,ngrid)%v_sed_part,          & !fall velocity
-!!$                  dt=dt/float(current_ndt_z),                              & !subtimestep
-!!$                  dzt=dzt(1:m1), &
-!!$                  rtgt=grid_g(ngrid)%rtgt,	                 &
-!!$                  qn=oneAdvMnt%vc3d_out(:,iBegin:iEnd,jBegin:jEnd))
-!!$
-!!$             ! copy output to input array for the next sup-timestep
-!!$             if(itz < current_ndt_z) oneAdvMnt%vc3d_in(:,:,:)=oneAdvMnt%vc3d_out(:,:,:)
-!!$
-!!$          end do
-!!$          ! converting back mass concentration to mixing ratio
-!!$          oneAdvMnt%vc3d_out(:,:,:)=&
-!!$               oneAdvMnt%vc3d_out(:,:,:)/&
-!!$               oneAdvMnt%den0_3d(:,:,:)
-!!$
-!!$       else if(iupwind == 1 ) then
-!!$          ! - upwind method
-!!$          !- do time splitting for aerosols with large fall velocities
-!!$          do itz=1,current_ndt_z
-!!$             call Advec3DZSedimUpw(m1,m2,m3,&
-!!$                  ia,iz,ja,jz,                          &
-!!$                  u=dd_sedim(current_aer_ispc,ngrid)%v_sed_part,          & !fall velocity
-!!$                  dt=dt/float(current_ndt_z),                              & !subtimestep
-!!$                  dzt=dzt(1:m1),&
-!!$                  rtgt=grid_g(ngrid)%rtgt,	                                 &
-!!$                  qn=oneAdvMnt%vc3d_out(:,iBegin:iEnd,jBegin:jEnd))
-!!$
-!!$          end do
-!!$       end if
-!!$    end if
-!!$    if (dumpLocal) then
-!!$       call MsgDump(h//" finishes")
-!!$    end if
-!!$  end subroutine AdvectMnt
+
 
 
 
@@ -2256,7 +1988,7 @@ contains
        call MsgDump(h//" finishes")
     end if
   end subroutine Advec3DX
-  
+
 
 
 
@@ -2438,8 +2170,8 @@ contains
        call MsgDump(h//" finishes")
     end if
   end subroutine Advec3DY
-  
-  
+
+
 
 
 
@@ -2641,8 +2373,8 @@ contains
        call MsgDump(h//" finishes")
     end if
   end subroutine Advec3DZ
-  
-  
+
+
 
   subroutine Advec3DZSedim(mzp, mxp, myp, &
        ia, iz, ja, jz,&
@@ -2803,17 +2535,17 @@ contains
        call MsgDump(h//" finishes")
     end if
   end subroutine Advec3DZSedim
-  
 
 
 
-subroutine Advec3DZSedimUpw(mzp, mxp, myp, &
-     ia, iz, ja, jz, &
-     u, &
-     dt, &
-     dzt, &
-     rtgt,&
-     qn)
+
+  subroutine Advec3DZSedimUpw(mzp, mxp, myp, &
+       ia, iz, ja, jz, &
+       u, &
+       dt, &
+       dzt, &
+       rtgt,&
+       qn)
 
     integer, intent(in) :: mzp
     integer, intent(in) :: mxp
@@ -2869,12 +2601,12 @@ subroutine Advec3DZSedimUpw(mzp, mxp, myp, &
        call MsgDump(h//" finishes")
     end if
   end subroutine Advec3DZSedimUpw
-  
-  
-  
 
 
-  
+
+
+
+
 
 
   subroutine InitializeDensities(mzp, mxp, myp, &
@@ -2995,7 +2727,7 @@ subroutine Advec3DZSedimUpw(mzp, mxp, myp, &
        end do
     end do
   end subroutine InitializeDensities
-  
+
 
 
 
@@ -3090,7 +2822,7 @@ subroutine Advec3DZSedimUpw(mzp, mxp, myp, &
           end do
        end do
     end do
-             
+
     if(iwndty==1) then
        do j = jMypExternAtAdvMnt, j1ExternAtAdvMnt, -1
           jExtern = j + jOffset
@@ -3151,16 +2883,10 @@ subroutine Advec3DZSedimUpw(mzp, mxp, myp, &
   end subroutine PrepareTheorWinds
 
 
-  
 
 
 
-
-
-
-
-
-  subroutine StoreNamelistFileAtRadvc_mnt(oneNamelistFile)
+  subroutine StoreNamelistFileAtAdvMnt(oneNamelistFile)
 
     ! import NameListFile values into module variables
 
@@ -3168,5 +2894,5 @@ subroutine Advec3DZSedimUpw(mzp, mxp, myp, &
 
     advmnt = oneNamelistFile%advmnt
     GhostZoneLength=oneNamelistFile%GhostZoneLength
-  end subroutine StoreNamelistFileAtRadvc_mnt
+  end subroutine StoreNamelistFileAtAdvMnt
 end module ModMonotonicAdvection

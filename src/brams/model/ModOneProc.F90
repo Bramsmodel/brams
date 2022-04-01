@@ -167,7 +167,7 @@ module ModOneProc
 #endif
   !--(DMK-CCATT-INI)------------------------------------------------------------------
   USE ModMonotonicAdvection, ONLY: &
-       StoreNamelistFileAtRadvc_mnt, &
+       StoreNamelistFileAtAdvMnt, &
        advmnt, &
        GhostZoneLength
   !  USE newComm, ONLY: findAndFillGhostZone
@@ -709,7 +709,7 @@ contains
     call StoreNamelistFileAtMem_emiss(oneNamelistFile)
     call StoreNamelistFileAtTeb_vars_const(oneNamelistFile)
     call StoreNamelistFileAtDomain_decomp(oneNamelistFile)
-    CALL StoreNamelistFileAtradvc_mnt(oneNamelistFile)
+    CALL StoreNamelistFileAtAdvMnt(oneNamelistFile)
     call StoreNamelistFileAtdigitalFilter(oneNamelistFile)
     call StoreNamelistFileAtmeteogram(oneNamelistFile)
     call StoreNamelistFileAtmem_carma(oneNamelistFile)

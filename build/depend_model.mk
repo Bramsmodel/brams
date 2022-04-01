@@ -1817,11 +1817,10 @@ digitalFilter.o :$(MODEL)/digitalFilter.f90 an_header.o grid_dims.o io_params.o 
 	rm -f $(<F:.f90=.f90)
 
 ModMonotonicAdvection.o : $(MODEL)/ModMonotonicAdvection.f90  \
-	mem_chem1.o mem_aer1.o parlibf.o mem_basic.o mem_grid.o ccatt_start.o \
-	var_tables.o micphys.o rconstants.o \
-	chem_dry_dep.o advSendMod.o ModNamelistFile.o \
-	ModGrid.o ModParallelEnvironment.o ModGridDims.o ModDomainDecomp.o \
-	ModMessageSet.o ModFieldSectionList.o
+	ModGrid.o ModParallelEnvironment.o ModDomainDecomp.o \
+	ModMessageSet.o ModNamelistFile.o \
+	mem_grid.o mem_basic.o micphys.o rconstants.o mem_aer1.o mem_chem1.o \
+	chem_dry_dep.o var_tables.o ccatt_start.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
