@@ -412,10 +412,6 @@ module ModOneProc
        timeWindowDF,     &
        frqanlDF, iposDF
 
-  !--(DMK-CCATT-INI)------------------------------------------------------------------
-  USE AdvectData, ONLY: InitAdvect
-
-
   ! OBS: MODULOS NECESSARIOS PARA LEITURA DE EMISSAO
   !-----------------------------------------------------------------------------------
   use module_dry_dep, only: dep_init        ! Subroutine
@@ -1016,10 +1012,10 @@ contains
 !!$            nnxp,nnyp,nnzp,ixb,ixe,iyb,iye,master_num, &
 !!$            nodei0,nodej0,nodemxp,nodemyp,nodemzp)
 
-       IF(advmnt>=1) then
-          !- monotonic advection
-          CALL InitAdvect(ngrids,nmachs,mynum,GhostZoneLength,nnxp,nnyp,nnzp,ixb,ixe,iyb,iye)
-       ENDIF
+!!$       IF(advmnt>=1) then
+!!$          !- monotonic advection
+!!$          CALL InitAdvect(ngrids,nmachs,mynum,GhostZoneLength,nnxp,nnyp,nnzp,ixb,ixe,iyb,iye)
+!!$       ENDIF
 
        if(damModule==1) then
           call initDams(nodemxp(mynum,1),nodemyp(mynum,1) &

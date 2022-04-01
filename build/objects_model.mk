@@ -293,13 +293,6 @@ OBJ_MOD = \
 	turb_constants.o \
 	tkenn.o \
 	digitalFilter.o \
-	GridMod.o \
-	MapMod.o \
-	ProcessorMod.o \
-	BoundaryMod.o \
-	errorMod.o \
-	advSendMod.o \
-	InitAdvect.o \
 	seasalt.o  \
 	meteogram.o \
 	meteogramType.o \

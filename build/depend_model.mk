@@ -572,7 +572,7 @@ rtimh_rk.o : $(MODEL)/rtimh_rk.F90 rtimh.o mem_basic.o mem_cuparm.o \
 	rm -f $(<F:.f90=.f90)
 
 ModOneProc.o : $(MODEL)/ModOneProc.F90 ModNamelistFile.o \
-	ModDomainDecomp.o io_params.o machine_arq.o InitAdvect.o \
+	ModDomainDecomp.o io_params.o machine_arq.o \
 	ModPostProcess.o mem_cuparm.o mem_grid.o mem_leaf.o mem_oda.o \
 	ccatt_start.o domain_decomp.o isan_coms.o mem_basic.o mem_emiss.o \
 	mem_gaspart.o mem_globrad.o mem_grell_param2.o mem_micro.o \
@@ -1167,17 +1167,6 @@ opspec.o : $(IO)/opspec.f90  io_params.o mem_cuparm.o teb_spm_start.o \
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
-
-#rad_driv.o : $(RADIATE)/rad_driv.f90  grid_dims.o \
-#	mem_basic.o mem_grid.o mem_leaf.o mem_micro.o \
-#	mem_radiate.o mem_scalar.o mem_scratch.o mem_tend.o \
-#	micphys.o rad_carma.o rconstants.o ref_sounding.o rrad3.o \
-#	teb_spm_start.o mem_teb_common.o  \
-#	ModDateUtils.o mem_rrtm.o rrtmg_sw_rad.o rrtmg_lw_rad.o \
-#	rrtmg_lw_cldprop.o rrtmg_sw_cldprop.o mem_scratch1_grell.o
-#	@cp -f $< $(<F:.f90=.f90)
-#	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-#	rm -f $(<F:.f90=.f90)
 
 rad_driv.o : $(RADIATE)/rad_driv.f90  carma_driver.o rtm_driver.o mem_radiate.o
 	@cp -f $< $(<F:.f90=.f90)
@@ -1822,43 +1811,6 @@ ModMonotonicAdvection.o : $(MODEL)/ModMonotonicAdvection.f90  \
 	mem_grid.o mem_basic.o micphys.o rconstants.o mem_aer1.o mem_chem1.o \
 	chem_dry_dep.o var_tables.o ccatt_start.o 
 	@cp -f $< $(<F:.f90=.f90)
-	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-	rm -f $(<F:.f90=.f90)
-
-
-GridMod.o : $(ADVC)/GridMod.f90
-	@cp -f  $< $(<F:.f90=.f90)
-	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-	rm -f $(<F:.f90=.f90)
-
-MapMod.o : $(ADVC)/MapMod.f90 ModParallelEnvironment.o
-	@cp -f  $< $(<F:.f90=.f90)
-	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-	rm -f $(<F:.f90=.f90)
-
-ProcessorMod.o : $(ADVC)/ProcessorMod.f90
-	@cp -f  $< $(<F:.f90=.f90)
-	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-	rm -f $(<F:.f90=.f90)
-
-BoundaryMod.o : $(ADVC)/BoundaryMod.f90
-	@cp -f  $< $(<F:.f90=.f90)
-	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-	rm -f $(<F:.f90=.f90)
-
-errorMod.o : $(ADVC)/errorMod.f90
-	@cp -f  $< $(<F:.f90=.f90)
-	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-	rm -f $(<F:.f90=.f90)
-
-advSendMod.o : $(ADVC)/advSendMod.f90
-	@cp -f  $< $(<F:.f90=.f90)
-	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-	rm -f $(<F:.f90=.f90)
-
-InitAdvect.o : $(ADVC)/InitAdvect.f90 errorMod.o GridMod.o MapMod.o \
-             ProcessorMod.o BoundaryMod.o advSendMod.o  $(UTILS_INCS)/constants.h
-	@cp -f  $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
