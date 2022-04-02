@@ -8,20 +8,109 @@
 !  Modifications done for Runge-Kutta dynamical core
 !  Dec/2015 by Saulo Freitas (INPE), Michael Baldauf (DWD)
 !###########################################################################
-module ModAcoust
 
+
+module ModAcoust
+  use mem_basic,only : &
+       basic_g
+
+  use mem_tend, only :&
+       tend
+  
+  use mem_grid, only : &
+       distim, &
+       dts, &
+       dyncore_flag, &
+       dzm, &
+       dzt, &
+       grid_g, &
+       hw4, &
+       icorflg, &
+       if_adap, &
+       impl, &
+       itopo, &
+       jdim, &
+       nfpt, &
+       ngrid, &
+       nnz, &
+       nstbot, &
+       nsttop, &
+       nxtnest, &
+       nz, &
+       nzp, &
+       sspct, &
+       zm, &
+       zmn, &
+       zt, &
+       ztop
+
+  use mem_scratch, only : &
+       scratch, &
+       vctr11, &
+       vctr12, &
+       vctr2, &
+       vctr5
+       
+  use rconstants, only : &
+       cv, &
+       rgas, &
+       rocv 
+
+  use ref_sounding, only : &
+       u01dn, &
+       v01dn
+
+  use node_mod, only :  &
+       ia, &
+       iz, &
+       ja, &
+       jz, &
+       izu, &
+       jzv, &
+       mxp,  &
+       myp,  &
+       mzp,  &
+       mynum, &
+       nmachs
+
+  use ModGrid, only: &
+       Grid
+  
+  use ModAcoust_adap, only: &
+       acoust_adap
+
+  use ModParallelEnvironment, only: &
+       MsgDump
+
+  use ModMessageSet, only: &
+       UpdatePPFieldAdressAtAcoustNew, &       
+       UpdateDivFieldAdressAtAcoustNew, &       
+       UpdateAlphaFieldAdressAtAcoustNew, &
+       PostSendRecvMsgs, &
+       PostSendRecvMsgsVariableAdress, &
+       WaitSendRecvMsgs
+
+
+  implicit none
+
+  private
+  public :: acoustic_new
+  public :: init_div_damping_coeff
+  public :: deallocate_alpha_div
+  public :: apply_div_damping
+  
   !- divergence damping coefficient [m^2/s];
   !- defined as a 3d field to optionally reduce it over steep orography
-  real, private, allocatable, target :: alpha_div(:,:,:)
+  real, allocatable, target :: alpha_div(:,:,:)
 
 
-  real, private :: div_damp_strength    ! dim.less coeff for div-damping
+  real :: div_damp_strength    ! dim.less coeff for div-damping
   real :: div_damp_slope
 
   !- .TRUE. is necessary at least for dyncore_flags 2
   !- currently div damping is not applied to leapfrog solver
-  logical,parameter :: apply_div_damping =.TRUE.
-  integer,parameter :: damp_formulation = 1 !1=orig, 2=wrf
+  logical, parameter :: apply_div_damping =.TRUE.
+  integer, parameter :: damp_formulation = 1 !1=orig, 2=wrf
 contains
 
 
@@ -38,11 +127,7 @@ contains
     !!
     !! @copyright Under CC-GPL License by INPE/CPTEC
     !! Please, read @link https://creativecommons.org/licenses/GPL/2.0/legalcode.pt
-    use mem_grid, only: impl, dts, sspct, dzm, dzt, nzp, nz
-    use mem_scratch, only: vctr11, vctr12
-    use rconstants, only: rgas, cv
 
-    implicit none
     integer, intent(in) :: mzp
     integer, intent(in) :: mxp
     integer, intent(in) :: myp
@@ -139,11 +224,7 @@ contains
     !!
     !! @copyright Under CC-GPL License by INPE/CPTEC
     !! Please, read @link https://creativecommons.org/licenses/GPL/2.0/legalcode.pt
-    use mem_grid, only : nfpt, distim, nnz, zmn, ztop, dts, nzp, zt, ngrid, nz
-    use mem_scratch, only : vctr2, vctr5
-    use ref_sounding, only : u01dn
 
-    implicit none
     integer, intent(in) :: mzp
     integer, intent(in) :: mxp
     integer, intent(in) :: myp
@@ -197,9 +278,7 @@ contains
     !! @copyright Under CC-GPL License by INPE/CPTEC
     !! Please, read @link https://creativecommons.org/licenses/GPL/2.0/legalcode.pt
 
-    use mem_grid, only : hw4, dzt, distim, dts, nstbot, itopo
 
-    implicit none
     integer, intent(in) :: mzp
     integer, intent(in) :: mxp
     integer, intent(in) :: myp
@@ -281,12 +360,7 @@ contains
     !!
     !! @copyright Under CC-GPL License by INPE/CPTEC
     !! Please, read @link https://creativecommons.org/licenses/GPL/2.0/legalcode.pt
-    use mem_grid, only : nfpt, distim, nnz, zmn, ztop, &
-         dts, nzp, zt, ngrid, nz, jdim, icorflg
-    use mem_scratch, only : vctr2, vctr5
-    use ref_sounding, only: v01dn
 
-    implicit none
     integer, intent(in) :: mzp
     integer, intent(in) :: mxp
     integer, intent(in) :: myp
@@ -339,9 +413,7 @@ contains
     !!
     !! @copyright Under CC-GPL License by INPE/CPTEC
     !! Please, read @link https://creativecommons.org/licenses/GPL/2.0/legalcode.pt
-    use mem_grid, only : hw4, dzt, distim, dts, nstbot, itopo, jdim
 
-    implicit none
     integer, intent(in) :: mzp
     integer, intent(in) :: mxp
     integer, intent(in) :: myp
@@ -426,10 +498,7 @@ contains
     !!
     !! @copyright Under CC-GPL License by INPE/CPTEC
     !! Please, read @link https://creativecommons.org/licenses/GPL/2.0/legalcode.pt
-    use mem_grid, only : nfpt, distim, nnz, zmn, ztop, dts, zt, nz
-    use mem_scratch, only : vctr2
 
-    implicit none
     integer, intent(in) :: mzp
     integer, intent(in) :: mxp
     integer, intent(in) :: myp
@@ -478,10 +547,7 @@ contains
     !!
     !! @copyright Under CC-GPL License by INPE/CPTEC
     !! Please, read @link https://creativecommons.org/licenses/GPL/2.0/legalcode.pt
-    use mem_grid, only : distim, dts
-    use node_mod, only :  mynum
 
-    implicit none
     integer, intent(in) :: mzp
     integer, intent(in) :: mxp
     integer, intent(in) :: myp
@@ -541,14 +607,7 @@ contains
     !!
     !! @copyright Under CC-GPL License by INPE/CPTEC
     !! Please, read @link https://creativecommons.org/licenses/GPL/2.0/legalcode.pt
-    use mem_grid, only : sspct, & !intent(in)
-         jdim,                  & !intent(in)
-         hw4,                   & !intent(in)
-         dzt,                   & !intent(in)
-         dts                      !intent(in)
-    use rconstants, only : rocv   !intent(in)
 
-    implicit none
     integer, intent(in) :: mzp
     integer, intent(in) :: mxp
     integer, intent(in) :: myp
@@ -665,9 +724,7 @@ contains
     !!
     !! @copyright Under CC-GPL License by INPE/CPTEC
     !! Please, read @link https://creativecommons.org/licenses/GPL/2.0/legalcode.pt
-    use mem_grid, only: nstbot, nsttop, impl, nz
 
-    implicit none
     integer, intent(in) :: mzp
     integer, intent(in) :: mxp
     integer, intent(in) :: myp
@@ -739,7 +796,6 @@ contains
     !!
     !! @copyright Under CC-GPL License by INPE/CPTEC
     !! Please, read @link https://creativecommons.org/licenses/GPL/2.0/legalcode.pt
-    implicit none
     integer, intent(in) :: mzp
     integer, intent(in) :: mxp
     integer, intent(in) :: myp
@@ -777,10 +833,7 @@ contains
     !!
     !! @copyright Under CC-GPL License by INPE/CPTEC
     !! Please, read @link https://creativecommons.org/licenses/GPL/2.0/legalcode.pt
-    use mem_grid, only: nstbot, dzm
-    use node_mod, only :  mynum
 
-    implicit none
     integer, intent(in) :: mzp
     integer, intent(in) :: mxp
     integer, intent(in) :: myp
@@ -842,18 +895,6 @@ contains
     !!
     !! @copyright Under CC-GPL License by INPE/CPTEC
     !! Please, read @link https://creativecommons.org/licenses/GPL/2.0/legalcode.pt
-    use dump, only: &
-         dumpMessage
-    use mem_tend
-    use mem_grid, only: dts, grid_g, ngrid, if_adap, dyncore_flag
-    use mem_basic
-    use mem_scratch
-    use node_mod
-    use ModGrid, only: &
-         Grid
-    use ModAcoust_adap, only: acoust_adap
-
-    implicit none
     include "constants.h"
     character(len=*),parameter :: h='**(acoustic_new)**'
     type(Grid), pointer :: OneGrid
@@ -953,9 +994,7 @@ contains
        !    sum( basic_g(ngrid)%pc    )/nmbr_gpts, basic_g(ngrid)%pc(7,8,9)
 
     else
-       !call fatal_error("ERROR in acoustic_new: value of dyncore_flag is unknown!")
-       iErrNumber=dumpMessage(c_tty,c_yes,h,modelVersion,c_fatal, &
-            "ERROR in acoustic_new: value of dyncore_flag is unknown!")
+       call fatal_error(h//" value of dyncore_flag is not 0, 1 or 2 at acoustic_new")
     end if
 
     return
@@ -984,43 +1023,6 @@ contains
     !! Please, read @link https://creativecommons.org/licenses/GPL/2.0/legalcode.pt
 
 
-    use ModParallelEnvironment, only: MsgDump
-
-    use ModNamelistFile, only: namelistfile
-
-    use ModGrid, only: Grid, DumpGrid
-
-    use ModMessageSet, only: &
-         PostSendRecvMsgs, &
-         PostSendRecvMsgsVariableAdress, &
-         WaitSendRecvMsgs
-
-    use mem_grid, only : nnacoust, & ! intent(in)
-         ngrid,                    & ! intent(in)
-         dts,                      & ! intent(out)
-         dtlt,                     & ! intent(in)
-         nxtnest,                  & ! intent(in)
-         nzp, nxp, nyp,            & ! intent(in)
-         impl,                     & ! intent(in)
-         time,                     &
-	 dyncore_flag,             &
-         grid_g                      ! for get_wind_div
-
-    use node_mod, only :  nmachs,  & ! intent(in)
-         ia,                       & ! intent(in)
-         iz,                       & ! intent(in)
-         ja,                       & ! intent(in)
-         jz,                       & ! intent(in)
-         izu,                      & ! intent(in)
-         jzv,                      & ! intent(in)
-         mynum
-
-    use ModNamelistFile, only: &
-         namelistfile
-
-    use mem_scratch, only: scratch
-
-    implicit none
 
     type(Grid), pointer :: OneGrid
     integer, intent(in) :: lrk
@@ -1067,6 +1069,7 @@ contains
 
     integer :: iter,k
     integer :: lastIter
+    integer :: ierr
     logical :: singleProcRun
     logical :: outermostGrid
     real :: a1da2
@@ -1082,9 +1085,9 @@ contains
     integer :: i, j
     character(len=1) :: citer
 
-    real, allocatable, target :: div(:,:,:)
+    real, pointer :: div(:,:,:)
+    real, pointer :: pp_t_minus_dt(:,:,:)
     real, allocatable, target :: pp_minus_div(:,:,:)
-    real, allocatable, target :: pp_t_minus_dt(:,:,:)
          
 
     character(len=*), parameter :: h="**(acoust_new)**"
@@ -1103,9 +1106,27 @@ contains
     if ( apply_div_damping .and. (dyncore_flag == 2) ) then
        allocate( pp_minus_div ( mzp, mxp, myp) )
        if(damp_formulation==1) then
-          allocate( div ( mzp, mxp, myp) )
+          allocate (div(mzp,mxp,myp), stat=ierr)
+          if (ierr /= 0) then
+             write(str(1),"(i8)") ierr
+             call fatal_error(h//" allocate div fails with stat="//&
+                  trim(adjustl(str(1))))
+          end if
+          call UpdateDivFieldAdressAtAcoustNew(&
+               oneGrid%AcouDampDivSend, &
+               oneGrid%AcouDampDivRecv, &
+               div)
        else if(damp_formulation==2) then
-          allocate( pp_t_minus_dt( mzp, mxp, myp) )
+          allocate (pp_t_minus_dt(mzp,mxp,myp), stat=ierr)
+          if (ierr /= 0) then
+             write(str(1),"(i8)") ierr
+             call fatal_error(h//" allocate pp_t_minus_dt fails with stat="//&
+                  trim(adjustl(str(1))))
+          end if
+          call UpdatePPFieldAdressAtAcoustNew(&
+               oneGrid%AcouDampPPSend, &
+               oneGrid%AcouDampPPRecv, &
+               pp_t_minus_dt)
        end if
     end if
 
@@ -1303,9 +1324,9 @@ contains
     enddo
 
     if ( apply_div_damping .AND. ( dyncore_flag == 2) ) then
-       if (allocated(div          )) deallocate(div          )
+       if (associated(div)) deallocate(div)
        if (allocated(pp_minus_div )) deallocate(pp_minus_div )
-       if (allocated(pp_t_minus_dt)) deallocate(pp_t_minus_dt)
+       if (associated(pp_t_minus_dt)) deallocate(pp_t_minus_dt)
     end if
 
   end subroutine acoust_new
@@ -1316,34 +1337,6 @@ contains
     ! Reduction of the divergence damping coefficient over steep terrain
     ! to increase numerical stability
     ! see sec. 7 in M. Baldauf (2013) COSMO Techn. Rep., nr. 21, www.cosmo-model.org
-
-    use ModParallelEnvironment, only: MsgDump
-
-    use dump, only: &
-         dumpMessage
-
-    use mem_grid, only: &
-         grid_g,    &
-         ngrid,     &
-         dyncore_flag, &
-         zt, zm
-
-    use node_mod, only:  &
-         mxp,  &
-         myp,  &
-         mzp,  &
-         nmachs, &
-         mynum
-
-    use ModGrid, only: &
-         Grid
-
-    use ModMessageSet, only: &
-         PostSendRecvMsgs, &
-         PostSendRecvMsgsVariableAdress, &
-         WaitSendRecvMsgs
-    
-    implicit none
 
     include "constants.h"
 
@@ -1388,9 +1381,16 @@ contains
     !        "limit_alpha_div_by_slope_stability=",limit_alpha_div_by_slope_stability
 
     allocate( alpha_div( mzp, mxp, myp), STAT=istat )
-    if ( istat /= 0 )  &! call fatal_error("ERROR allocating alpha_div")
-         iErrNumber=dumpMessage(c_tty,c_yes,h,modelVersion,c_fatal, &
-         "ERROR allocating alpha_div")
+    if (istat /= 0) then
+       write(str(1),"(i8)") istat
+       call fatal_error(h//" allocating alpha_div fails with stat "//&
+            trim(adjustl(str(1))))
+    end if
+
+    call UpdateAlphaFieldAdressAtAcoustNew(&
+         OneGrid%AcouDampAlphaSend, &
+         OneGrid%AcouDampAlphaRecv, &
+         alpha_div)
     
     c_sound = 330.0   ! this rough estimation of sound velocity is sufficient here
     ! see Wicker, Skamarock (2002) MWR:
@@ -1483,6 +1483,8 @@ contains
   end subroutine deallocate_alpha_div
 
 end module ModAcoust
+
+
 
 !-------------------------------------------------------
 

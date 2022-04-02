@@ -490,7 +490,7 @@ contains
     ! prior to use the Message Sets
 
     call CreateAcouDampOneMessageSet(&
-         dummy3DField, "Div", 3,  &
+         dummy3DField, "DIV", 3,  &
          oneGrid%ParEnv, oneGrid%Neigh, &
          oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
          TagAcouDampDiv, "AcouDampDivSend", "AcouDampDivRecv", &
@@ -504,7 +504,7 @@ contains
          oneGrid%AcouDampPPSend, oneGrid%AcouDampPPRecv)
 
     call CreateAcouDampOneMessageSet(&
-         dummy3DField, "Alpha", 3,  &
+         dummy3DField, "ALPHA", 3,  &
          oneGrid%ParEnv, oneGrid%Neigh, &
          oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
          TagAcouDampAlpha, "AcouDampAlphaSend", "AcouDampAlphaRecv", &
