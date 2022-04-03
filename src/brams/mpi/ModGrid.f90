@@ -43,8 +43,8 @@ module ModGrid
        DestroySelectedGhostZoneMessageSet, &
        CreateAllGhostZoneMessageSet, &
        DestroyAllGhostZoneMessageSet, &
-       CreateAcouDampOneMessageSet, &
-       DestroyAcouDampOneMessageSet, &
+       CreateAcoustNewMessageSet, &
+       DestroyAcoustNewMessageSet, &
        CreateWideGhostZoneMessageSet, &
        DestroyWideGhostZoneMessageSet, &
        CreateAdvMntMessageSet, &
@@ -167,15 +167,15 @@ module ModGrid
      ! ghost zone update. See description at ModMessageSet 
      type(PolygonContainer), pointer :: meteoPolygons => null()
 
-     type(MessageSet), pointer :: AcouDampDivSend => null()
-     type(MessageSet), pointer :: AcouDampDivRecv => null()
-     type(MessageSet), pointer :: AcouDampPPSend => null()
-     type(MessageSet), pointer :: AcouDampPPRecv => null()
-     type(MessageSet), pointer :: AcouDampAlphaSend => null()
-     type(MessageSet), pointer :: AcouDampAlphaRecv => null()
-     type(MessageSet), pointer :: AcouDampThtSend => null()
-     type(MessageSet), pointer :: AcouDampThtRecv => null()
-     ! AcouDampSend/Recv: Ghost Zone update of a single field
+     type(MessageSet), pointer :: AcoustNewDivSend => null()
+     type(MessageSet), pointer :: AcoustNewDivRecv => null()
+     type(MessageSet), pointer :: AcoustNewPPSend => null()
+     type(MessageSet), pointer :: AcoustNewPPRecv => null()
+     type(MessageSet), pointer :: AcoustNewAlphaSend => null()
+     type(MessageSet), pointer :: AcoustNewAlphaRecv => null()
+     type(MessageSet), pointer :: AcoustNewThtSend => null()
+     type(MessageSet), pointer :: AcoustNewThtRecv => null()
+     ! AcoustNewSend/Recv: Ghost Zone update of a single field
      ! on Runge Kutta Dynamics, acoust_new and init_div_damping_coef.
      ! Fields to update are local variables to these procedures,
      ! allocated and deallocated at each call. As so, field
@@ -382,10 +382,10 @@ contains
     integer, parameter :: TagG3D=33
     integer, parameter :: TagSelectedGhostZone=34
     integer, parameter :: TagAllGhostZone=35
-    integer, parameter :: TagAcouDampDiv=36
-    integer, parameter :: TagAcouDampPP=37
-    integer, parameter :: TagAcouDampAlpha=38
-    integer, parameter :: TagAcouDampTht=39
+    integer, parameter :: TagAcoustNewDiv=36
+    integer, parameter :: TagAcoustNewPP=37
+    integer, parameter :: TagAcoustNewAlpha=38
+    integer, parameter :: TagAcoustNewTht=39
     integer, parameter :: TagWideGhostZone=40
     integer, parameter :: TagAdvMntUVX=41
     integer, parameter :: TagAdvMntUVY=42
@@ -399,17 +399,15 @@ contains
     integer, parameter :: TagAdvMntScaY=50
 
     ! Field pointer for fields not yet allocated
-    ! not yet allocated; CreateAcouDampOneMessageSet
+    ! not yet allocated; CreateAcoustNewMessageSet
     ! takes bounds from field pointer.
     ! Field address will be replaced at
     ! PostSendRecvMsgs, since when this procedure
     ! is invoked, field ought to be allocated
     integer :: ierr
-    integer :: myNum
     integer :: lbx, ubx
     integer :: lby, uby
     integer :: lbz, ubz
-    real, pointer :: dummy3DField(:,:,:)
 
     if (.not. associated(oneGrid)) then
        call fatal_error(h//" invoked with null grid")
@@ -458,72 +456,19 @@ contains
          oneGrid%AllGhostZoneRecv, &
          TagAllGhostZone)
 
-    ! allocate field with desired bounds
-    ! desired bonds assure that field section will
-    ! be correctly computed for fields that were
-    ! not yet allocated, such as local fields at procedures
-    myNum=oneGrid%ParEnv%myNum
-    lbx=1
-    ubx=oneGrid%LocalOwn%nx(myNum)
-    lby=1
-    uby=oneGrid%LocalOwn%ny(myNum)
-    lbz=1
-    ubz=oneGrid%GridSize%nnzp
-    allocate(dummy3DField(lbz:ubz,lbx:ubx,lby:uby), stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") lbz
-       write(str(2),"(i8)") ubz
-       write(str(3),"(i8)") lbx
-       write(str(4),"(i8)") ubx
-       write(str(5),"(i8)") lby
-       write(str(6),"(i8)") uby
-       write(str(7),"(i8)") ierr
-       call fatal_error(h//" allocate dummy3DField("//&
-            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
-            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
-            trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//&
-            ") fails with stat="//trim(adjustl(str(7))))
-    end if
-
-    ! use desired bounds fields to create AcouDamp Message Sets;
+    ! use desired bounds fields to create AcoustNew Message Sets;
     ! correct field memory address by invoking UpdateFieldAdress
     ! prior to use the Message Sets
 
-    call CreateAcouDampOneMessageSet(&
-         dummy3DField, "DIV", 3,  &
-         oneGrid%ParEnv, oneGrid%Neigh, &
+    call CreateAcoustNewMessageSet(&
+         oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
          oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
-         TagAcouDampDiv, "AcouDampDivSend", "AcouDampDivRecv", &
-         oneGrid%AcouDampDivSend, oneGrid%AcouDampDivRecv)
+         TagAcoustNewDiv, oneGrid%AcoustNewDivSend, oneGrid%AcoustNewDivRecv, &
+         TagAcoustNewPP, oneGrid%AcoustNewPPSend, oneGrid%AcoustNewPPRecv, &
+         TagAcoustNewAlpha, oneGrid%AcoustNewAlphaSend, oneGrid%AcoustNewAlphaRecv, &
+         TagAcoustNewTht, oneGrid%AcoustNewThtSend, oneGrid%AcoustNewThtRecv, &
+         tend%tht_rk)
 
-    call CreateAcouDampOneMessageSet(&
-         dummy3DField, "PP", 3,  &
-         oneGrid%ParEnv, oneGrid%Neigh, &
-         oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
-         TagAcouDampPP, "AcouDampPPSend", "AcouDampPPRecv", &
-         oneGrid%AcouDampPPSend, oneGrid%AcouDampPPRecv)
-
-    call CreateAcouDampOneMessageSet(&
-         dummy3DField, "ALPHA", 3,  &
-         oneGrid%ParEnv, oneGrid%Neigh, &
-         oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
-         TagAcouDampAlpha, "AcouDampAlphaSend", "AcouDampAlphaRecv", &
-         oneGrid%AcouDampAlphaSend, oneGrid%AcouDampAlphaRecv)
-
-    deallocate(dummy3DField, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate dummy3DField"//&
-            " fails with stat="//trim(adjustl(str(1))))
-    end if
-
-    call CreateAcouDampOneMessageSet(&
-         tend%tht_rk, "Tht", 1,  &
-         oneGrid%ParEnv, oneGrid%Neigh, &
-         oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
-         TagAcouDampTht, "AcouDampThtSend", "AcouDampThtRecv", &
-         oneGrid%AcouDampThtSend, oneGrid%AcouDampThtRecv, &
-         oneGrid%GridSize%nnzp)
 
     call CreateWideGhostZoneMessageSet(&
          oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
@@ -589,14 +534,11 @@ contains
        call DestroyAllGhostZoneMessageSet( &
             oneGrid%AllGhostZoneSend, &
             oneGrid%AllGhostZoneRecv)
-       call DestroyAcouDampOneMessageSet( &
-            oneGrid%AcouDampDivSend, oneGrid%AcouDampDivRecv)
-       call DestroyAcouDampOneMessageSet( &
-            oneGrid%AcouDampPPSend, oneGrid%AcouDampPPRecv)
-       call DestroyAcouDampOneMessageSet( &
-            oneGrid%AcouDampAlphaSend, oneGrid%AcouDampAlphaRecv)
-       call DestroyAcouDampOneMessageSet( &
-            oneGrid%AcouDampThtSend, oneGrid%AcouDampThtRecv)
+       call DestroyAcoustNewMessageSet( &
+            oneGrid%AcoustNewDivSend, oneGrid%AcoustNewDivRecv, &
+            oneGrid%AcoustNewPPSend, oneGrid%AcoustNewPPRecv, &
+            oneGrid%AcoustNewAlphaSend, oneGrid%AcoustNewAlphaRecv, &
+            oneGrid%AcoustNewThtSend, oneGrid%AcoustNewThtRecv)
        call DestroyWideGhostZoneMessageSet(&
             oneGrid%WideGhostZoneSend, oneGrid%WideGhostZoneRecv)
        call DestroyNodeDimensions(oneGrid%NodeDims)
@@ -699,22 +641,22 @@ contains
     call DumpMessageSet(oneGrid%AllGhostZoneSend)
     call MsgDump(h//" dumping AllGhostZoneRecv")
     call DumpMessageSet(oneGrid%AllGhostZoneRecv)
-    call MsgDump(h//" dumping AcouDampDivSend")
-    call DumpMessageSet(oneGrid%AcouDampDivSend)
-    call MsgDump(h//" dumping AcouDampDivRecv")
-    call DumpMessageSet(oneGrid%AcouDampDivRecv)
-    call MsgDump(h//" dumping AcouDampPPSend")
-    call DumpMessageSet(oneGrid%AcouDampPPSend)
-    call MsgDump(h//" dumping AcouDampPPRecv")
-    call DumpMessageSet(oneGrid%AcouDampPPRecv)
-    call MsgDump(h//" dumping AcouDampAlphaSend")
-    call DumpMessageSet(oneGrid%AcouDampAlphaSend)
-    call MsgDump(h//" dumping AcouDampAlphaRecv")
-    call DumpMessageSet(oneGrid%AcouDampAlphaRecv)
-    call MsgDump(h//" dumping AcouDampThtSend")
-    call DumpMessageSet(oneGrid%AcouDampThtSend)
-    call MsgDump(h//" dumping AcouDampThtRecv")
-    call DumpMessageSet(oneGrid%AcouDampThtRecv)
+    call MsgDump(h//" dumping AcoustNewDivSend")
+    call DumpMessageSet(oneGrid%AcoustNewDivSend)
+    call MsgDump(h//" dumping AcoustNewDivRecv")
+    call DumpMessageSet(oneGrid%AcoustNewDivRecv)
+    call MsgDump(h//" dumping AcoustNewPPSend")
+    call DumpMessageSet(oneGrid%AcoustNewPPSend)
+    call MsgDump(h//" dumping AcoustNewPPRecv")
+    call DumpMessageSet(oneGrid%AcoustNewPPRecv)
+    call MsgDump(h//" dumping AcoustNewAlphaSend")
+    call DumpMessageSet(oneGrid%AcoustNewAlphaSend)
+    call MsgDump(h//" dumping AcoustNewAlphaRecv")
+    call DumpMessageSet(oneGrid%AcoustNewAlphaRecv)
+    call MsgDump(h//" dumping AcoustNewThtSend")
+    call DumpMessageSet(oneGrid%AcoustNewThtSend)
+    call MsgDump(h//" dumping AcoustNewThtRecv")
+    call DumpMessageSet(oneGrid%AcoustNewThtRecv)
     call MsgDump(h//" dumping WideGhostZoneSend")
     call DumpMessageSet(oneGrid%WideGhostZoneSend)
     call MsgDump(h//" dumping WideGhostZoneRecv")

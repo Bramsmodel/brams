@@ -1116,8 +1116,8 @@ contains
                   trim(adjustl(str(1))))
           end if
           call UpdateFieldAdressAtAcoustNew(&
-               oneGrid%AcouDampDivSend, &
-               oneGrid%AcouDampDivRecv, &
+               oneGrid%AcoustNewDivSend, &
+               oneGrid%AcoustNewDivRecv, &
                "DIV", &
                div)
        else if(damp_formulation==2) then
@@ -1128,8 +1128,8 @@ contains
                   trim(adjustl(str(1))))
           end if
           call UpdateFieldAdressAtAcoustNew(&
-               oneGrid%AcouDampPPSend, &
-               oneGrid%AcouDampPPRecv, &
+               oneGrid%AcoustNewPPSend, &
+               oneGrid%AcoustNewPPRecv, &
                "PP", &
                pp_t_minus_dt)
        end if
@@ -1179,14 +1179,20 @@ contains
                         trim(adjustl(str(2)))//","//&
                         trim(adjustl(str(3)))//")")
                 end if
-                call PostSendRecvMsgsVariableAdress(&
-                     OneGrid%AcouDampDivSend, &
-                     OneGrid%AcouDampDivRecv, &
-                     div)
+!!$                call PostSendRecvMsgsVariableAdress(&
+!!$                     OneGrid%AcoustNewDivSend, &
+!!$                     OneGrid%AcoustNewDivRecv, &
+!!$                     div)
+!!$                call WaitSendRecvMsgs(&
+!!$                     OneGrid%AcoustNewDivSend, &
+!!$                     OneGrid%AcoustNewDivRecv, &
+!!$                     1, mzp, div)
+                call PostSendRecvMsgs(&
+                     OneGrid%AcoustNewDivSend, &
+                     OneGrid%AcoustNewDivRecv)
                 call WaitSendRecvMsgs(&
-                     OneGrid%AcouDampDivSend, &
-                     OneGrid%AcouDampDivRecv, &
-                     1, mzp, div)
+                     OneGrid%AcoustNewDivSend, &
+                     OneGrid%AcoustNewDivRecv)
              endif
              ! as proposed in Wicker, Skamarock (2002) (?) divergence damping is
              ! used in an approximated form by adding the following term to the pressure:
@@ -1204,14 +1210,20 @@ contains
                         trim(adjustl(str(2)))//","//&
                         trim(adjustl(str(3)))//")")
                 end if
-                call PostSendRecvMsgsVariableAdress(&
-                     OneGrid%AcouDampPPSend, &
-                     OneGrid%AcouDampPPRecv, &
-                     pp_t_minus_dt)
+!!$                call PostSendRecvMsgsVariableAdress(&
+!!$                     OneGrid%AcoustNewPPSend, &
+!!$                     OneGrid%AcoustNewPPRecv, &
+!!$                     pp_t_minus_dt)
+!!$                call WaitSendRecvMsgs(&
+!!$                     OneGrid%AcoustNewPPSend, &
+!!$                     OneGrid%AcoustNewPPRecv, &
+!!$                     1, mzp, pp_t_minus_dt)
+                call PostSendRecvMsgs(&
+                     OneGrid%AcoustNewPPSend, &
+                     OneGrid%AcoustNewPPRecv)
                 call WaitSendRecvMsgs(&
-                     OneGrid%AcouDampPPSend, &
-                     OneGrid%AcouDampPPRecv, &
-                     1, mzp, pp_t_minus_dt)
+                     OneGrid%AcoustNewPPSend, &
+                     OneGrid%AcoustNewPPRecv)
              endif
              pp_minus_div(:,:,:) = pp(:,:,:) + div_damp_strength*(pp(:,:,:) - pp_t_minus_dt(:,:,:))
           endif
@@ -1393,8 +1405,8 @@ contains
     end if
 
     call UpdateFieldAdressAtAcoustNew(&
-         OneGrid%AcouDampAlphaSend, &
-         OneGrid%AcouDampAlphaRecv, &
+         OneGrid%AcoustNewAlphaSend, &
+         OneGrid%AcoustNewAlphaRecv, &
          "ALPHA", &
          alpha_div)
     
@@ -1459,20 +1471,20 @@ contains
                trim(adjustl(str(2)))//","//&
                trim(adjustl(str(3)))//")")
        end if
-!!$       call PostSendRecvMsgs(&
-!!$            OneGrid%AcouDampAlphaSend, &
-!!$            OneGrid%AcouDampAlphaRecv)
-!!$       call WaitSendRecvMsgs(&
-!!$            OneGrid%AcouDampAlphaSend, &
-!!$            OneGrid%AcouDampAlphaRecv)
-       call PostSendRecvMsgsVariableAdress(&
-            OneGrid%AcouDampAlphaSend, &
-            OneGrid%AcouDampAlphaRecv, &
-            alpha_div)
+       call PostSendRecvMsgs(&
+            OneGrid%AcoustNewAlphaSend, &
+            OneGrid%AcoustNewAlphaRecv)
        call WaitSendRecvMsgs(&
-            OneGrid%AcouDampAlphaSend, &
-            OneGrid%AcouDampAlphaRecv, &
-            1, mzp, alpha_div)
+            OneGrid%AcoustNewAlphaSend, &
+            OneGrid%AcoustNewAlphaRecv)
+!!$       call PostSendRecvMsgsVariableAdress(&
+!!$            OneGrid%AcoustNewAlphaSend, &
+!!$            OneGrid%AcoustNewAlphaRecv, &
+!!$            alpha_div)
+!!$       call WaitSendRecvMsgs(&
+!!$            OneGrid%AcoustNewAlphaSend, &
+!!$            OneGrid%AcoustNewAlphaRecv, &
+!!$            1, mzp, alpha_div)
     endif
     !--- mpi paralelization :
 

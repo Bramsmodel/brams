@@ -127,8 +127,8 @@ module ModMessageSet
   public :: CreateAllGhostZoneMessageSet
   public :: DestroyAllGhostZoneMessageSet
 
-  public :: CreateAcouDampOneMessageSet
-  public :: DestroyAcouDampOneMessageSet
+  public :: CreateAcoustNewMessageSet
+  public :: DestroyAcoustNewMessageSet
 
   public :: CreateWideGhostZoneMessageSet
   public :: DestroyWideGhostZoneMessageSet
@@ -219,10 +219,10 @@ module ModMessageSet
      module procedure WaitSendRecvMsgsVariableAdressOneArr
   end interface WaitSendRecvMsgs
 
-  interface CreateAcouDampOneMessageSet
-     module procedure CreateAcouDampOneMessageSet3D
-     module procedure CreateAcouDampOneMessageSet1D
-  end interface CreateAcouDampOneMessageSet
+  interface CreateAcoustNewOneMessageSet
+     module procedure CreateAcoustNewOneMessageSet3D
+     module procedure CreateAcoustNewOneMessageSet1D
+  end interface CreateAcoustNewOneMessageSet
 
 contains
 
@@ -2731,11 +2731,11 @@ contains
 
 
 
-  subroutine CreateAcouDampOneMessageSet3D(&
+  subroutine CreateAcoustNewOneMessageSet3D(&
        field, fieldName, idim_type,  &
        ParEnv, Neigh, GlobalOwn, GlobalWithGhost, &
        Tag, NameSend, NameRecv, &
-       AcouDampOneSend, AcouDampOneRecv)
+       AcoustNewOneSend, AcoustNewOneRecv)
 
     real, pointer, intent(in) :: field(:,:,:)
     character(len=*), intent(in) :: fieldName
@@ -2747,8 +2747,8 @@ contains
     integer, intent(in) :: Tag
     character(len=*), intent(in) :: NameSend
     character(len=*), intent(in) :: NameRecv
-    type(MessageSet), pointer, intent(inout) :: AcouDampOneSend
-    type(MessageSet), pointer, intent(inout) :: AcouDampOneRecv
+    type(MessageSet), pointer, intent(inout) :: AcoustNewOneSend
+    type(MessageSet), pointer, intent(inout) :: AcoustNewOneRecv
 
 
     integer :: nMachs
@@ -2775,7 +2775,7 @@ contains
     logical :: willSend(parEnv%nMachs)
     logical :: willRecv(parEnv%nMachs)
 
-    character(len=*), parameter :: h="**(CreateAcouDampOneMessageSet3D)**"
+    character(len=*), parameter :: h="**(CreateAcoustNewOneMessageSet3D)**"
     logical, parameter :: dumpLocal=.false.
 
     ! verify input arguments
@@ -2791,20 +2791,20 @@ contains
     ! default output (case no neighbours)
 
     if (.not. associated(Neigh)) then
-       AcouDampOneSend => null()
-       AcouDampOneRecv => null()
+       AcoustNewOneSend => null()
+       AcoustNewOneRecv => null()
        return
     end if
 
     if (dumpLocal) then
-       call MsgDump(h//" will create AcouDampOneSend/Recv")
+       call MsgDump(h//" will create AcoustNewOneSend/Recv")
     end if
 
     myNum  = ParEnv%myNum
     nMachs = ParEnv%nMachs
     nNeigh = Neigh%nNeigh
 
-    ! AcouDampOneSend, AcouDampOneRecv:
+    ! AcoustNewOneSend, AcoustNewOneRecv:
     ! messages update entire GhostZone
 
     call NodesRegionsSendRecv(&
@@ -2825,38 +2825,38 @@ contains
          ybSend=ybSend, &
          yeSend=yeSend, &
          willSend=willSend, &
-         SendMessageSet=AcouDampOneSend, &
+         SendMessageSet=AcoustNewOneSend, &
          xbRecv=xbRecv, &
          xeRecv=xeRecv, &
          ybRecv=ybRecv, &
          yeRecv=yeRecv, &
          willRecv=willRecv, &
-         RecvMessageSet=AcouDampOneRecv)
+         RecvMessageSet=AcoustNewOneRecv)
 
     !
 
     call InsertFieldSectionAtSendRecvMessageSet(&
          field, fieldName, idim_type, myNum, nNeigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, AcouDampOneSend, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouDampOneRecv)
+         xbSend, xeSend, ybSend, yeSend, willSend, AcoustNewOneSend, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcoustNewOneRecv)
 
     if (dumpLocal) then
-       call MsgDump(h//" finishes with AcouDampOneSend MessageSet:")
-       call DumpMessageSet(AcouDampOneSend)
-       call MsgDump(h//" finishes with AcouDampOneRecv MessageSet:")
-       call DumpMessageSet(AcouDampOneRecv)
+       call MsgDump(h//" finishes with AcoustNewOneSend MessageSet:")
+       call DumpMessageSet(AcoustNewOneSend)
+       call MsgDump(h//" finishes with AcoustNewOneRecv MessageSet:")
+       call DumpMessageSet(AcoustNewOneRecv)
     end if
-  end subroutine CreateAcouDampOneMessageSet3D
+  end subroutine CreateAcoustNewOneMessageSet3D
 
 
 
 
 
-  subroutine CreateAcouDampOneMessageSet1D(&
+  subroutine CreateAcoustNewOneMessageSet1D(&
        field, fieldName, idim_type,  &
        ParEnv, Neigh, GlobalOwn, GlobalWithGhost, &
        Tag, NameSend, NameRecv, &
-       AcouDampOneSend, AcouDampOneRecv, kMax)
+       AcoustNewOneSend, AcoustNewOneRecv, kMax)
 
     real, pointer, intent(in) :: field(:)
     character(len=*), intent(in) :: fieldName
@@ -2868,8 +2868,8 @@ contains
     integer, intent(in) :: Tag
     character(len=*), intent(in) :: NameSend
     character(len=*), intent(in) :: NameRecv
-    type(MessageSet), pointer, intent(inout) :: AcouDampOneSend
-    type(MessageSet), pointer, intent(inout) :: AcouDampOneRecv
+    type(MessageSet), pointer, intent(inout) :: AcoustNewOneSend
+    type(MessageSet), pointer, intent(inout) :: AcoustNewOneRecv
     integer, intent(in) :: kMax
 
 
@@ -2897,7 +2897,7 @@ contains
     logical :: willSend(parEnv%nMachs)
     logical :: willRecv(parEnv%nMachs)
 
-    character(len=*), parameter :: h="**(CreateAcouDampOneMessageSet1D)**"
+    character(len=*), parameter :: h="**(CreateAcoustNewOneMessageSet1D)**"
     logical, parameter :: dumpLocal=.false.
 
     ! verify input arguments
@@ -2922,8 +2922,8 @@ contains
        if (dumpLocal) then
           call MsgDump(h//" no neighbours for this Message Set")
        end if
-       AcouDampOneSend => null()
-       AcouDampOneRecv => null()
+       AcoustNewOneSend => null()
+       AcoustNewOneRecv => null()
        return
     end if
 
@@ -2931,7 +2931,7 @@ contains
     nMachs = ParEnv%nMachs
     nNeigh = Neigh%nNeigh
 
-    ! AcouDampOneSend, AcouDampOneRecv:
+    ! AcoustNewOneSend, AcoustNewOneRecv:
     ! messages update entire GhostZone
 
     call NodesRegionsSendRecv(&
@@ -2952,49 +2952,29 @@ contains
          ybSend=ybSend, &
          yeSend=yeSend, &
          willSend=willSend, &
-         SendMessageSet=AcouDampOneSend, &
+         SendMessageSet=AcoustNewOneSend, &
          xbRecv=xbRecv, &
          xeRecv=xeRecv, &
          ybRecv=ybRecv, &
          yeRecv=yeRecv, &
          willRecv=willRecv, &
-         RecvMessageSet=AcouDampOneRecv)
+         RecvMessageSet=AcoustNewOneRecv)
 
     !
 
     call InsertFieldSectionAtSendRecvMessageSet(&
          field, fieldName, idim_type, myNum, nNeigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, AcouDampOneSend, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouDampOneRecv, kMax)
+         xbSend, xeSend, ybSend, yeSend, willSend, AcoustNewOneSend, &
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcoustNewOneRecv, kMax)
 
     if (dumpLocal) then
-       call MsgDump(h//" finishes with AcouDampOneSend MessageSet:")
-       call DumpMessageSet(AcouDampOneSend)
-       call MsgDump(h//" finishes with AcouDampOneRecv MessageSet:")
-       call DumpMessageSet(AcouDampOneRecv)
+       call MsgDump(h//" finishes with AcoustNewOneSend MessageSet:")
+       call DumpMessageSet(AcoustNewOneSend)
+       call MsgDump(h//" finishes with AcoustNewOneRecv MessageSet:")
+       call DumpMessageSet(AcoustNewOneRecv)
     end if
-  end subroutine CreateAcouDampOneMessageSet1D  
+  end subroutine CreateAcoustNewOneMessageSet1D  
 
-
-
-
-
-  subroutine DestroyAcouDampOneMessageSet( &
-       AcouDampOneSend, AcouDampOneRecv)
-
-    type(MessageSet), pointer, intent(inout) :: AcouDampOneSend
-    type(MessageSet), pointer, intent(inout) :: AcouDampOneRecv
-    character(len=*), parameter :: h="**(DestroyAcouDampOneMessageSet)**"
-    logical, parameter :: dumpLocal=.false.
-
-    if (dumpLocal) then
-       call MsgDump(h//" will destroy AcouDampOneSend/Recv")
-    end if
-
-    call DestroyMessageSet(AcouDampOneSend)
-    call DestroyMessageSet(AcouDampOneRecv)
-
-  end subroutine DestroyAcouDampOneMessageSet
 
 
 
@@ -5092,13 +5072,13 @@ contains
 
 
   subroutine UpdateFieldAdressAtAcoustNew(&
-       AcouDampSend, &
-       AcouDampRecv, &
+       AcoustNewSend, &
+       AcoustNewRecv, &
        fieldName, &
        field)
        
-    type(MessageSet), pointer, intent(in) :: AcouDampSend
-    type(MessageSet), pointer, intent(in) :: AcouDampRecv
+    type(MessageSet), pointer, intent(in) :: AcoustNewSend
+    type(MessageSet), pointer, intent(in) :: AcoustNewRecv
     character(len=*), intent(in) :: fieldName
     real, pointer, intent(in) :: field(:,:,:)
 
@@ -5107,19 +5087,19 @@ contains
     character(len=*), parameter :: h="**(UpdateFieldAdressAtAcoustNew)**"
     logical, parameter :: dumpLocal=.false.
     
-    if (.not. associated(AcouDampSend)) then
-       call fatal_error(h//" AcouDampSend not associated")
-    else if (.not. associated(AcouDampRecv)) then
-       call fatal_error(h//" AcouDampRecv not associated")
+    if (.not. associated(AcoustNewSend)) then
+       call fatal_error(h//" AcoustNewSend not associated")
+    else if (.not. associated(AcoustNewRecv)) then
+       call fatal_error(h//" AcoustNewRecv not associated")
     end if
 
-    do iMsg = 1, AcouDampSend%nMsgs
-       fsnode => AcouDampSend%msgData(iMsg)%list%head
+    do iMsg = 1, AcoustNewSend%nMsgs
+       fsnode => AcoustNewSend%msgData(iMsg)%list%head
        call UpdateFieldAdress(fsnode%entry, field, fieldName)
     end do
     
-    do iMsg = 1, AcouDampRecv%nMsgs
-       fsnode => AcouDampRecv%msgData(iMsg)%list%head
+    do iMsg = 1, AcoustNewRecv%nMsgs
+       fsnode => AcoustNewRecv%msgData(iMsg)%list%head
     call UpdateFieldAdress(fsnode%entry, field, fieldName)
     end do
   end subroutine UpdateFieldAdressAtAcoustNew
@@ -6176,6 +6156,390 @@ contains
   
 
 
+  subroutine OneAcoustNewSendRecv(OneD, Neigh, nNeigh, &
+       willSend, willRecv, NameSend, NameRecv, &
+       sendDirection, recvDirection, Tag, &
+       xbSend, xeSend, xbRecv, xeRecv, &
+       ybSend, yeSend, ybRecv, yeRecv, &
+       x0, y0, mzp, fldName, &
+       AcoustNewSend, AcoustNewRecv, field)
+
+    logical, intent(in) :: OneD
+    type(NeighbourNodes), pointer, intent(in) :: Neigh
+    integer, intent(in) :: nNeigh
+    logical, intent(in) :: willSend(:)
+    logical, intent(in) :: willRecv(:)
+    character(len=*), intent(in) :: NameSend
+    character(len=*), intent(in) :: NameRecv
+    character(len=*), intent(in) :: sendDirection
+    character(len=*), intent(in) :: recvDirection
+    integer, intent(in) :: Tag
+    integer, intent(in) :: xbSend(:)
+    integer, intent(in) :: xeSend(:)
+    integer, intent(in) :: xbRecv(:)
+    integer, intent(in) :: xeRecv(:)
+    integer, intent(in) :: ybSend(:)
+    integer, intent(in) :: yeSend(:)
+    integer, intent(in) :: ybRecv(:)
+    integer, intent(in) :: yeRecv(:)
+    integer, intent(in) :: x0
+    integer, intent(in) :: y0
+    integer, intent(in) :: mzp
+    character(len=*), intent(in) :: fldName
+    type(MessageSet), pointer, intent(out) :: AcoustNewSend
+    type(MessageSet), pointer, intent(out) :: AcoustNewRecv
+    real, pointer, optional, intent(in) :: field(:)
+
+    integer :: nMsgs
+    integer :: cntMsg
+    integer :: iNeigh
+    integer :: fieldSectionSize
+    integer :: idim_type
+    type(FieldSection), pointer :: oneFieldSection
+
+    character(len=8) :: str(10)
+    character(len=128) :: strLong
+    character(len=*), parameter :: h="**(OneAcoustNewSendRecv)**"
+    logical, parameter :: dumpLocal=.false.
+
+    if (OneD) then
+       idim_type=1
+    else
+       idim_type=3
+    end if
+    
+    if (dumpLocal) then
+       write(str(1),"(i8)") idim_type
+       call MsgDump(h//" building "//&
+            trim(NameSend)//", "//&
+            trim(NameRecv)//" with idim_type="//&
+            trim(adjustl(str(1))))
+    end if
+
+    ! create message set sends
+
+    AcoustNewSend => CreateMessageSet(&
+         NameSend, &
+         sendDirection, &
+         Tag, &
+         willSend, &
+         Neigh)
+
+    ! insert field sections at each direction
+    ! with null field addresses, to be updated whenever
+    ! real addresses are known
+
+    if (associated(AcoustNewSend)) then
+       nMsgs = AcoustNewSend%nMsgs
+
+       ! create list of Field Sections to send, one for
+       ! each process to communicate and insert at the send MessageSet
+       ! field section list
+
+       ! since there is at most one neighbour node at each direction,
+       ! there will be at most one MessageSet at each direction
+
+       cntMsg = 0
+       do iNeigh = 1, nNeigh
+          if (willSend(iNeigh)) then
+
+             ! insert send communications to east
+
+             cntMsg = cntMsg + 1
+             if (cntMsg > nMsgs) then
+                write(str(1),"(i8)") nMsgs
+                call fatal_error(h//" nMsgs ("//&
+                     trim(adjustl(str(1)))//") exceeded while inserting fields "//&
+                     " at message "//trim(adjustl(AcoustNewSend%name)))
+             end if
+
+             if (present(field)) then
+                oneFieldSection =>  CreateFieldSection(field, fldName, idim_type, &
+                     xbSend(iNeigh)-x0, xeSend(iNeigh)-x0, &
+                     ybSend(iNeigh)-y0, yeSend(iNeigh)-y0, &
+                     mzp)
+             else
+                fieldSectionSize= &
+                     (xeSend(iNeigh)-xbSend(iNeigh)+1) * &
+                     (yeSend(iNeigh)-ybSend(iNeigh)+1) * &
+                     mzp
+                oneFieldSection =>  CreateFieldSection(fldName, idim_type, &
+                     xbSend(iNeigh)-x0, xeSend(iNeigh)-x0, &
+                     ybSend(iNeigh)-y0, yeSend(iNeigh)-y0, &
+                     fieldSectionSize)
+             end if
+             call AppendFieldSectionToMessageData(oneFieldSection, AcoustNewSend%msgData(cntMsg))
+
+          end if
+       end do
+    end if
+
+    ! create message set for recvs
+
+    AcoustNewRecv => CreateMessageSet(&
+         NameRecv, &
+         recvDirection, &
+         Tag, &
+         willRecv, &
+         Neigh)
+
+    if ( associated(AcoustNewRecv)) then
+       nMsgs = AcoustNewRecv%nMsgs
+       cntMsg = 0
+       do iNeigh = 1, nNeigh
+          if (willRecv(iNeigh)) then
+
+             ! insert recv communications from east
+
+             cntMsg = cntMsg + 1
+             if (cntMsg > nMsgs) then
+                write(str(1),"(i8)") nMsgs
+                call fatal_error(h//" nMsgs ("//&
+                     trim(adjustl(str(1)))//") exceeded while inserting fields "//&
+                     " at message "//trim(adjustl(AcoustNewRecv%name)))
+             end if
+
+             if (present(field)) then
+                oneFieldSection =>  CreateFieldSection(field, fldName, idim_type, &
+                     xbRecv(iNeigh)-x0, xeRecv(iNeigh)-x0, &
+                     ybRecv(iNeigh)-y0, yeRecv(iNeigh)-y0, &
+                     mzp)
+             else
+                fieldSectionSize= &
+                     (xeRecv(iNeigh)-xbRecv(iNeigh)+1) * &
+                     (yeRecv(iNeigh)-ybRecv(iNeigh)+1) * &
+                     mzp
+                oneFieldSection =>  CreateFieldSection(fldName, idim_type, &
+                     xbRecv(iNeigh)-x0, xeRecv(iNeigh)-x0, &
+                     ybRecv(iNeigh)-y0, yeRecv(iNeigh)-y0, &
+                     fieldSectionSize) 
+             end if
+             call AppendFieldSectionToMessageData(oneFieldSection, AcoustNewRecv%msgData(cntMsg))
+          end if
+       end do
+    end if
+
+    if (dumpLocal) then
+       call MsgDump(h//" built "//trim(NameSend)//" MessageSet:")
+       call DumpMessageSet(AcoustNewSend)
+       call MsgDump(h//" built "//trim(NameRecv)//" MessageSet:")
+       call DumpMessageSet(AcoustNewRecv)
+    end if
+  end subroutine OneAcoustNewSendRecv
+
+
+  subroutine CreateAcoustNewMessageSet(&
+     GridSize, ParEnv, Neigh, GlobalOwn, GlobalWithGhost, &
+     TagDiv, AcoustNewDivSend, AcoustNewDivRecv, &
+     TagPP, AcoustNewPPSend, AcoustNewPPRecv, &
+     TagAlpha, AcoustNewAlphaSend, AcoustNewAlphaRecv, &
+     TagTht, AcoustNewThtSend, AcoustNewThtRecv, tht)
+
+    type(GridDims), pointer, intent(in) :: GridSize
+    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+    type(NeighbourNodes), pointer, intent(in) :: Neigh
+    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+    integer, intent(in) :: TagDiv
+    type(MessageSet), pointer, intent(inout) :: AcoustNewDivSend
+    type(MessageSet), pointer, intent(inout) :: AcoustNewDivRecv
+    integer, intent(in) :: TagPP
+    type(MessageSet), pointer, intent(inout) :: AcoustNewPPSend
+    type(MessageSet), pointer, intent(inout) :: AcoustNewPPRecv
+    integer, intent(in) :: TagAlpha
+    type(MessageSet), pointer, intent(inout) :: AcoustNewAlphaSend
+    type(MessageSet), pointer, intent(inout) :: AcoustNewAlphaRecv
+    integer, intent(in) :: TagTht
+    type(MessageSet), pointer, intent(inout) :: AcoustNewThtSend
+    type(MessageSet), pointer, intent(inout) :: AcoustNewThtRecv
+    real, pointer, intent(in) :: tht(:)
+    
+    integer :: nMachs
+    integer :: myNum
+    integer :: nNeigh
+    integer :: mzp
+    integer :: x0
+    integer :: y0
+    
+    ! scratch arrays of size number of neighbour nodes
+    ! containing global indices of regions for send and receive
+
+    integer :: xbSend(parEnv%nMachs)
+    integer :: xeSend(parEnv%nMachs)
+    integer :: ybSend(parEnv%nMachs)
+    integer :: yeSend(parEnv%nMachs)
+
+    integer :: xbRecv(parEnv%nMachs)
+    integer :: xeRecv(parEnv%nMachs)
+    integer :: ybRecv(parEnv%nMachs)
+    integer :: yeRecv(parEnv%nMachs)
+
+    ! scratch arrays of size number of neighbour nodes
+    ! containing which neighbour nodes will send of receive
+
+    logical :: willSend(parEnv%nMachs)
+    logical :: willRecv(parEnv%nMachs)
+
+    character(len=*), parameter :: sendDirection="send"
+    character(len=*), parameter :: recvDirection="recv"
+    
+    character(len=*), parameter :: NameAcoustNew="AcoustNew"
+    character(len=*), parameter :: NameSendDiv="AcoustNewDivSend"
+    character(len=*), parameter :: NameRecvDiv="AcoustNewDivRecv"
+    character(len=*), parameter :: NameSendPP="AcoustNewPPSend"
+    character(len=*), parameter :: NameRecvPP="AcoustNewPPRecv"
+    character(len=*), parameter :: NameSendAlpha="AcoustNewAlphaSend"
+    character(len=*), parameter :: NameRecvAlpha="AcoustNewAlphaRecv"
+    character(len=*), parameter :: NameSendTht="AcoustNewThtSend"
+    character(len=*), parameter :: NameRecvTht="AcoustNewThtRecv"
+    
+    character(len=*), parameter :: h="**(CreateAcoustNewMessageSet)**"
+    logical, parameter :: dumpLocal=.false.
+
+    ! verify input arguments
+
+    if (.not. associated(ParEnv)) then
+       call fatal_error(h//" starts with null ParEnv")
+    else if (.not. associated(GlobalOwn)) then
+       call fatal_error(h//" starts with null GlobalOwn")
+    else if (.not. associated(GlobalWithGhost)) then
+       call fatal_error(h//" starts with null GlobalWithGhost")
+    end if
+
+    ! default output (case no neighbours)
+
+    if (.not. associated(Neigh)) then
+       AcoustNewDivSend => null()
+       AcoustNewDivRecv => null()
+       AcoustNewPPSend => null()
+       AcoustNewPPRecv => null()
+       AcoustNewAlphaSend => null()
+       AcoustNewAlphaRecv => null()
+       AcoustNewThtSend => null()
+       AcoustNewThtRecv => null()
+       return
+    end if
+
+    if (dumpLocal) then
+       call MsgDump(h//" will create AcoustNewOneSend/Recv")
+    end if
+
+    myNum  = ParEnv%myNum
+    nMachs = ParEnv%nMachs
+    nNeigh = Neigh%nNeigh
+    mzp = GridSize%nnzp
+    x0 = GlobalWithGhost%xb(myNum) - 1
+    y0 = GlobalWithGhost%yb(myNum) - 1
+    
+    call NodesToSendRecvMessages( &
+         thisNode=myNum, &
+         Neigh=Neigh, &
+         GlobalOwn=GlobalOwn, &
+         xbToUpdate=GlobalWithGhost%xb, &
+         xeToUpdate=GlobalWithGhost%xe, &
+         ybToUpdate=GlobalWithGhost%yb, &
+         yeToUpdate=GlobalWithGhost%ye, &
+         xbSend=xbSend, &
+         xeSend=xeSend, &
+         ybSend=ybSend, &
+         yeSend=yeSend, &
+         willSend=willSend, &
+         xbRecv=xbRecv, &
+         xeRecv=xeRecv, &
+         ybRecv=ybRecv, &
+         yeRecv=yeRecv, &
+         willRecv=willRecv, &
+         varName=NameAcoustNew)
+
+    ! create message sets
+
+    call OneAcoustNewSendRecv(.false., Neigh, nNeigh, &
+         willSend, willRecv, NameSendDiv, NameRecvDiv, &
+         sendDirection, recvDirection, TagDiv, &
+         xbSend, xeSend, xbRecv, xeRecv, &
+         ybSend, yeSend, ybRecv, yeRecv, &
+         x0, y0, mzp, "DIV", &
+         AcoustNewDivSend, AcoustNewDivRecv)
+
+    call OneAcoustNewSendRecv(.false., Neigh, nNeigh, &
+         willSend, willRecv, NameSendPP, NameRecvPP, &
+         sendDirection, recvDirection, TagPP, &
+         xbSend, xeSend, xbRecv, xeRecv, &
+         ybSend, yeSend, ybRecv, yeRecv, &
+         x0, y0, mzp, "PP", &
+         AcoustNewPPSend, AcoustNewPPRecv)
+
+    call OneAcoustNewSendRecv(.false., Neigh, nNeigh, &
+         willSend, willRecv, NameSendAlpha, NameRecvAlpha, &
+         sendDirection, recvDirection, TagAlpha, &
+         xbSend, xeSend, xbRecv, xeRecv, &
+         ybSend, yeSend, ybRecv, yeRecv, &
+         x0, y0, mzp, "ALPHA", &
+         AcoustNewAlphaSend, AcoustNewAlphaRecv)
+
+    call OneAcoustNewSendRecv(.true., Neigh, nNeigh, &
+         willSend, willRecv, NameSendTht, NameRecvTht, &
+         sendDirection, recvDirection, TagTht, &
+         xbSend, xeSend, xbRecv, xeRecv, &
+         ybSend, yeSend, ybRecv, yeRecv, &
+         x0, y0, mzp, "THT", &
+         AcoustNewThtSend, AcoustNewThtRecv, tht)
+    
+    if (dumpLocal) then
+       call MsgDump(h//" finishes with AcoustNewDivSend MessageSet:")
+       call DumpMessageSet(AcoustNewDivSend)
+       call MsgDump(h//" finishes with AcoustNewDivRecv MessageSet:")
+       call DumpMessageSet(AcoustNewDivRecv)
+       call MsgDump(h//" finishes with AcoustNewPPSend MessageSet:")
+       call DumpMessageSet(AcoustNewPPSend)
+       call MsgDump(h//" finishes with AcoustNewPPRecv MessageSet:")
+       call DumpMessageSet(AcoustNewPPRecv)
+       call MsgDump(h//" finishes with AcoustNewAlphaSend MessageSet:")
+       call DumpMessageSet(AcoustNewAlphaSend)
+       call MsgDump(h//" finishes with AcoustNewAlphaRecv MessageSet:")
+       call DumpMessageSet(AcoustNewAlphaRecv)
+       call MsgDump(h//" finishes with AcoustNewThtSend MessageSet:")
+       call DumpMessageSet(AcoustNewThtSend)
+       call MsgDump(h//" finishes with AcoustNewThtRecv MessageSet:")
+       call DumpMessageSet(AcoustNewThtRecv)
+    end if
+  end subroutine CreateAcoustNewMessageSet
+  
+
+
+
+
+  subroutine DestroyAcoustNewMessageSet( &
+       AcoustNewDivSend, AcoustNewDivRecv, &
+       AcoustNewPPSend, AcoustNewPPRecv, &
+       AcoustNewAlphaSend, AcoustNewAlphaRecv, &
+       AcoustNewThtSend, AcoustNewThtRecv)
+
+    type(MessageSet), pointer, intent(inout) :: AcoustNewDivSend
+    type(MessageSet), pointer, intent(inout) :: AcoustNewDivRecv
+    type(MessageSet), pointer, intent(inout) :: AcoustNewPPSend
+    type(MessageSet), pointer, intent(inout) :: AcoustNewPPRecv
+    type(MessageSet), pointer, intent(inout) :: AcoustNewAlphaSend
+    type(MessageSet), pointer, intent(inout) :: AcoustNewAlphaRecv
+    type(MessageSet), pointer, intent(inout) :: AcoustNewThtSend
+    type(MessageSet), pointer, intent(inout) :: AcoustNewThtRecv
+    character(len=*), parameter :: h="**(DestroyAcoustNewMessageSet)**"
+    logical, parameter :: dumpLocal=.false.
+
+    if (dumpLocal) then
+       call MsgDump(h//" will destroy AcoustNew...Send/Recv")
+    end if
+
+    call DestroyMessageSet(AcoustNewDivSend)
+    call DestroyMessageSet(AcoustNewDivRecv)
+    call DestroyMessageSet(AcoustNewPPSend)
+    call DestroyMessageSet(AcoustNewPPRecv)
+    call DestroyMessageSet(AcoustNewAlphaSend)
+    call DestroyMessageSet(AcoustNewAlphaRecv)
+    call DestroyMessageSet(AcoustNewThtSend)
+    call DestroyMessageSet(AcoustNewThtRecv)
+
+  end subroutine DestroyAcoustNewMessageSet
   
        
 end module ModMessageSet
