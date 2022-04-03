@@ -83,9 +83,7 @@ module ModAcoust
        MsgDump
 
   use ModMessageSet, only: &
-       UpdatePPFieldAdressAtAcoustNew, &       
-       UpdateDivFieldAdressAtAcoustNew, &       
-       UpdateAlphaFieldAdressAtAcoustNew, &
+       UpdateFieldAdressAtAcoustNew, &       
        PostSendRecvMsgs, &
        PostSendRecvMsgsVariableAdress, &
        WaitSendRecvMsgs
@@ -1104,7 +1102,12 @@ contains
     outermostGrid = nxtnest(ngrid) == 0
 
     if ( apply_div_damping .and. (dyncore_flag == 2) ) then
-       allocate( pp_minus_div ( mzp, mxp, myp) )
+       allocate (pp_minus_div(mzp, mxp, myp), stat=ierr)
+          if (ierr /= 0) then
+             write(str(1),"(i8)") ierr
+             call fatal_error(h//" allocate pp_minus_div fails with stat="//&
+                  trim(adjustl(str(1))))
+          end if 
        if(damp_formulation==1) then
           allocate (div(mzp,mxp,myp), stat=ierr)
           if (ierr /= 0) then
@@ -1112,9 +1115,10 @@ contains
              call fatal_error(h//" allocate div fails with stat="//&
                   trim(adjustl(str(1))))
           end if
-          call UpdateDivFieldAdressAtAcoustNew(&
+          call UpdateFieldAdressAtAcoustNew(&
                oneGrid%AcouDampDivSend, &
                oneGrid%AcouDampDivRecv, &
+               "DIV", &
                div)
        else if(damp_formulation==2) then
           allocate (pp_t_minus_dt(mzp,mxp,myp), stat=ierr)
@@ -1123,9 +1127,10 @@ contains
              call fatal_error(h//" allocate pp_t_minus_dt fails with stat="//&
                   trim(adjustl(str(1))))
           end if
-          call UpdatePPFieldAdressAtAcoustNew(&
+          call UpdateFieldAdressAtAcoustNew(&
                oneGrid%AcouDampPPSend, &
                oneGrid%AcouDampPPRecv, &
+               "PP", &
                pp_t_minus_dt)
        end if
     end if
@@ -1387,9 +1392,10 @@ contains
             trim(adjustl(str(1))))
     end if
 
-    call UpdateAlphaFieldAdressAtAcoustNew(&
+    call UpdateFieldAdressAtAcoustNew(&
          OneGrid%AcouDampAlphaSend, &
          OneGrid%AcouDampAlphaRecv, &
+         "ALPHA", &
          alpha_div)
     
     c_sound = 330.0   ! this rough estimation of sound velocity is sufficient here

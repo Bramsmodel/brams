@@ -369,7 +369,7 @@ contains
 
     character(len=16) :: str(10)
     character(len=*), parameter :: h="**(InsertMessageSetAtOneGrid)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     integer, parameter :: TagU=25
     integer, parameter :: TagV=26

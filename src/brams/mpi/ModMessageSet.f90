@@ -141,9 +141,7 @@ module ModMessageSet
   public :: WaitSendRecvMsgs
 
   public :: UpdateFieldAdressAtAdvMnt
-  public :: UpdatePPFieldAdressAtAcoustNew  
-  public :: UpdateDivFieldAdressAtAcoustNew  
-  public :: UpdateAlphaFieldAdressAtAcoustNew
+  public :: UpdateFieldAdressAtAcoustNew  
   
   character(len=*), parameter :: sendDirection="send"
   character(len=*), parameter :: recvDirection="recv"
@@ -5093,102 +5091,38 @@ contains
 
 
 
-  subroutine UpdatePPFieldAdressAtAcoustNew(&
-       AcouDampPPSend, &
-       AcouDampPPRecv, &
-       pp_t_minus_dt)
+  subroutine UpdateFieldAdressAtAcoustNew(&
+       AcouDampSend, &
+       AcouDampRecv, &
+       fieldName, &
+       field)
        
-    type(MessageSet), pointer, intent(in) :: AcouDampPPSend
-    type(MessageSet), pointer, intent(in) :: AcouDampPPRecv
-    real, pointer, intent(in) :: pp_t_minus_dt(:,:,:)
+    type(MessageSet), pointer, intent(in) :: AcouDampSend
+    type(MessageSet), pointer, intent(in) :: AcouDampRecv
+    character(len=*), intent(in) :: fieldName
+    real, pointer, intent(in) :: field(:,:,:)
 
     integer :: iMsg
     type(FieldSectionNode), pointer :: fsnode
-    character(len=*), parameter :: h="**(UpdatePPFieldAdressAtAcoustNew)**"
+    character(len=*), parameter :: h="**(UpdateFieldAdressAtAcoustNew)**"
     logical, parameter :: dumpLocal=.false.
     
-    if (.not. associated(AcouDampPPSend)) then
-       call fatal_error(h//" AcouDampPPSend not associated")
-    else if (.not. associated(AcouDampPPRecv)) then
-       call fatal_error(h//" AcouDampPPRecv not associated")
+    if (.not. associated(AcouDampSend)) then
+       call fatal_error(h//" AcouDampSend not associated")
+    else if (.not. associated(AcouDampRecv)) then
+       call fatal_error(h//" AcouDampRecv not associated")
     end if
 
-    do iMsg = 1, AcouDampPPSend%nMsgs
-       fsnode => AcouDampPPSend%msgData(iMsg)%list%head
-       call UpdateFieldAdress(fsnode%entry, pp_t_minus_dt, "PPT")
+    do iMsg = 1, AcouDampSend%nMsgs
+       fsnode => AcouDampSend%msgData(iMsg)%list%head
+       call UpdateFieldAdress(fsnode%entry, field, fieldName)
     end do
     
-    do iMsg = 1, AcouDampPPRecv%nMsgs
-       fsnode => AcouDampPPRecv%msgData(iMsg)%list%head
-    call UpdateFieldAdress(fsnode%entry, pp_t_minus_dt, "PPT")
+    do iMsg = 1, AcouDampRecv%nMsgs
+       fsnode => AcouDampRecv%msgData(iMsg)%list%head
+    call UpdateFieldAdress(fsnode%entry, field, fieldName)
     end do
-  end subroutine UpdatePPFieldAdressAtAcoustNew
-
-
-
-
-    subroutine UpdateDivFieldAdressAtAcoustNew(&
-       AcouDampDivSend, &
-       AcouDampDivRecv, &
-       div)
-       
-    type(MessageSet), pointer, intent(in) :: AcouDampDivSend
-    type(MessageSet), pointer, intent(in) :: AcouDampDivRecv
-    real, pointer, intent(in) :: div(:,:,:)
-
-    integer :: iMsg
-    type(FieldSectionNode), pointer :: fsnode
-    character(len=*), parameter :: h="**(UpdateDivFieldAdressAtAcoustNew)**"
-    logical, parameter :: dumpLocal=.false.
-    
-    if (.not. associated(AcouDampDivSend)) then
-       call fatal_error(h//" AcouDampDivSend not associated")
-    else if (.not. associated(AcouDampDivRecv)) then
-       call fatal_error(h//" AcouDampDivRecv not associated")
-    end if
-
-    do iMsg = 1, AcouDampDivSend%nMsgs
-       fsnode => AcouDampDivSend%msgData(iMsg)%list%head
-       call UpdateFieldAdress(fsnode%entry, div, "DIV")
-    end do
-    
-    do iMsg = 1, AcouDampDivRecv%nMsgs
-       fsnode => AcouDampDivRecv%msgData(iMsg)%list%head
-       call UpdateFieldAdress(fsnode%entry, div, "DIV")
-    end do
-  end subroutine UpdateDivFieldAdressAtAcoustNew
-
-  
-  subroutine UpdateAlphaFieldAdressAtAcoustNew(&
-       AcouDampAlphaSend, &
-       AcouDampAlphaRecv, &
-       alpha_div)
-       
-    type(MessageSet), pointer, intent(in) :: AcouDampAlphaSend
-    type(MessageSet), pointer, intent(in) :: AcouDampAlphaRecv
-    real, pointer, intent(in) :: alpha_div(:,:,:)
-
-    integer :: iMsg
-    type(FieldSectionNode), pointer :: fsnode
-    character(len=*), parameter :: h="**(UpdateAlphaFieldAdressAtAcoustNew)**"
-    logical, parameter :: dumpLocal=.false.
-    
-    if (.not. associated(AcouDampAlphaSend)) then
-       call fatal_error(h//" AcouDampAlphaSend not associated")
-    else if (.not. associated(AcouDampAlphaRecv)) then
-       call fatal_error(h//" AcouDampAlphaRecv not associated")
-    end if
-
-    do iMsg = 1, AcouDampAlphaSend%nMsgs
-       fsnode => AcouDampAlphaSend%msgData(iMsg)%list%head
-       call UpdateFieldAdress(fsnode%entry, alpha_div, "ALPHA")
-    end do
-    
-    do iMsg = 1, AcouDampAlphaRecv%nMsgs
-       fsnode => AcouDampAlphaRecv%msgData(iMsg)%list%head
-       call UpdateFieldAdress(fsnode%entry, alpha_div, "ALPHA")
-    end do
-  end subroutine UpdateAlphaFieldAdressAtAcoustNew
+  end subroutine UpdateFieldAdressAtAcoustNew
   
   
   subroutine UpdateFieldAdressAtAdvMnt(&
