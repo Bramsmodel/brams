@@ -313,7 +313,7 @@ contains
     ! which sould be the usual case
 
     ! This interface should not disapear
-    
+
     type(Grid), pointer, intent(in) :: OneGrid
     integer, intent(in) :: mzp !- z
     integer, intent(in) :: mxp !- x
@@ -732,26 +732,92 @@ contains
     integer(kind=i8) :: mxyzp
     integer :: i,j,k,n
     real, pointer :: scalarp, scalart
+    integer :: ierr
     integer :: i_scl,is,js,ks
     !- scratchs (local arrays)
-    real :: vt3da(mzp,mxp,myp)
-    real :: vt3db(mzp,mxp,myp)
-    real :: vt3dc(mzp,mxp,myp)
-    real :: vt3dh(mzp,mxp,myp)
-    real :: vt3dj(mzp,mxp,myp)
-    real :: vt3dk(mzp,mxp,myp)
     real :: vctr1(mzp)
     real :: vctr2(mzp)
 
-    real :: mfx_wind(mzp,mxp,myp)
-    real :: mfy_wind(mzp,mxp,myp)
-    real :: mfz_wind(mzp,mxp,myp)
+!!$    real :: vt3da(mzp,mxp,myp)
+!!$    real :: vt3db(mzp,mxp,myp)
+!!$    real :: vt3dc(mzp,mxp,myp)
+!!$    real :: vt3dh(mzp,mxp,myp)
+!!$    real :: vt3dj(mzp,mxp,myp)
+!!$    real :: vt3dk(mzp,mxp,myp)
+!!$    real :: mfx_wind(mzp,mxp,myp)
+!!$    real :: mfy_wind(mzp,mxp,myp)
+!!$    real :: mfz_wind(mzp,mxp,myp)
+
+    real, pointer :: vt3da(:,:,:)
+    real, pointer :: vt3db(:,:,:)
+    real, pointer :: vt3dc(:,:,:)
+    real, pointer :: vt3dh(:,:,:)
+    real, pointer :: vt3dj(:,:,:)
+    real, pointer :: vt3dk(:,:,:)
+    real, pointer :: mfx_wind(:,:,:)
+    real, pointer :: mfy_wind(:,:,:)
+    real, pointer :: mfz_wind(:,:,:)
 
     logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(advectc_rk)**"
     character(len=8) :: str(10)
 
     mxyzp = mxp * myp * mzp
+
+    allocate(vt3da(mzp,mxp,myp), stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" allocate vt3da fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
+    allocate(vt3db(mzp,mxp,myp), stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" allocate vt3db fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
+    allocate(vt3dc(mzp,mxp,myp), stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" allocate vt3dc fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
+    allocate(vt3dh(mzp,mxp,myp), stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" allocate vt3dh fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
+    allocate(vt3dj(mzp,mxp,myp), stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" allocate vt3dj fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
+    allocate(vt3dk(mzp,mxp,myp), stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" allocate vt3dk fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
+    allocate(mfx_wind(mzp,mxp,myp), stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" allocate mfx_wind fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
+    allocate(mfy_wind(mzp,mxp,myp), stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" allocate mfy_wind fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
+    allocate(mfz_wind(mzp,mxp,myp), stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" allocate mfz_wind fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
 
     vt3da=0.0
     vt3db=0.0
@@ -816,7 +882,6 @@ contains
             ,basic_g(ngrid)%dn0,basic_g(ngrid)%dn0u,basic_g(ngrid)%dn0v&
             ,grid_g(ngrid)%dxt,grid_g(ngrid)%dxu,grid_g(ngrid)%dxv     &
             ,grid_g(ngrid)%dyt,grid_g(ngrid)%dyu,grid_g(ngrid)%dyv     &
-                                !
             ,grid_g(ngrid)%rtgt,grid_g(ngrid)%rtgu,grid_g(ngrid)%rtgv  &
             ,grid_g(ngrid)%f13t,grid_g(ngrid)%f23t,grid_g(ngrid)%fmapt &
             ,grid_g(ngrid)%fmapu ,grid_g(ngrid)%fmapv                  &
@@ -824,7 +889,8 @@ contains
             ,vt3da,vt3db,vt3dc,mfx_wind,mfy_wind,mfz_wind,is,js,ks)
 
 
-       call advect_ws_pointer_rank1(OneGrid,mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%vc &
+       call advect_ws_pointer_rank1(OneGrid,mzp,mxp,myp,ia,iz,ja,jz,&
+            basic_g(ngrid)%vc &
             ,vt3da    & ! uc*dn0u*fmapui*rtgu = rhou*V
             ,vt3db    & ! similar for v
             ,vt3dc    & ! similar for sigma_dot
@@ -850,7 +916,6 @@ contains
             ,basic_g(ngrid)%dn0,basic_g(ngrid)%dn0u,basic_g(ngrid)%dn0v&
             ,grid_g(ngrid)%dxt,grid_g(ngrid)%dxu,grid_g(ngrid)%dxv     &
             ,grid_g(ngrid)%dyt,grid_g(ngrid)%dyu,grid_g(ngrid)%dyv     &
-                                !
             ,grid_g(ngrid)%rtgt,grid_g(ngrid)%rtgu,grid_g(ngrid)%rtgv  &
             ,grid_g(ngrid)%f13t,grid_g(ngrid)%f23t,grid_g(ngrid)%fmapt &
             ,grid_g(ngrid)%fmapu ,grid_g(ngrid)%fmapv                  &
@@ -858,14 +923,14 @@ contains
             ,vt3da,vt3db,vt3dc,mfx_wind,mfy_wind,mfz_wind,is,js,ks)
 
 
-       call advect_ws_pointer_rank1(OneGrid,mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%wc &
+       call advect_ws_pointer_rank1(OneGrid,mzp,mxp,myp,ia,iz,ja,jz,&
+            basic_g(ngrid)%wc &
             ,vt3da    & ! uc*dn0u*fmapui*rtgu = rhou*W
             ,vt3db    & ! similar for v
             ,vt3dc    & ! similar for sigma_dot
             ,mfx_wind & ! fmapt*rtgti*dxt/dn0 = 1(rho dx)
             ,mfy_wind & ! similar for v
             ,mfz_wind & ! similar for sigma_dot
-                                !
             ,tend%wt_rk   &
             ,is,js,ks     &
             ,pd_or_mnt_constraint&
@@ -932,7 +997,8 @@ contains
        if ( trim(varn) .eq. "THETAIL" ) then
 
 
-          call advect_ws_pointer_rank1(OneGrid,mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%thc &
+          call advect_ws_pointer_rank1(OneGrid,mzp,mxp,myp,ia,iz,ja,jz,&
+               basic_g(ngrid)%thc &
                ,vt3da & ! uc*dn0u*fmapui*rtgu = rhou*U
                ,vt3db & ! similar for v
                ,vt3dc & ! similar for sigma_dot
@@ -965,7 +1031,6 @@ contains
                ,vt3dh & ! fmapt*rtgti*dxt/dn0 = 1(rho dx)
                ,vt3dj & ! similar for v
                ,vt3dk & ! similar for sigma_dot
-                                !
                ,stilt_g(ngrid)%lnthvadv & !tendency field including advection
                ,is,js,ks,pd_or_mnt_constraint&
                ,order_h,order_v               &
@@ -988,7 +1053,6 @@ contains
                ,vt3dh & ! fmapt*rtgti*dxt/dn0 = 1(rho dx)
                ,vt3dj & ! similar for v
                ,vt3dk & ! similar for sigma_dot
-                                !
                ,tend%pt_rk          & !tendency from advection
                ,is,js,ks            &
                ,pd_or_mnt_constraint&
@@ -1024,7 +1088,6 @@ contains
                   ,vt3dh   & ! fmapt*rtgti*dxt/dn0 = 1(rho dx)
                   ,vt3dj   & ! similar for v
                   ,vt3dk   & ! similar for sigma_dot
-                                !
                   ,scalart,is,js,ks    & !scalar tendency
                   ,pd_or_mnt_constraint& ! 
                   ,order_h,order_v     & !order horiz/vert 
@@ -1038,7 +1101,339 @@ contains
 
     end if !endif of varn .eq. 'T' .or. varn .eq. "PI"
 
+    deallocate(vt3da, stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" deallocate vt3da fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
+    deallocate(vt3db, stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" deallocate vt3db fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
+    deallocate(vt3dc, stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" deallocate vt3dc fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
+    deallocate(vt3dh, stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" deallocate vt3dh fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
+    deallocate(vt3dj, stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" deallocate vt3dj fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
+    deallocate(vt3dk, stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" deallocate vt3dk fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
+    deallocate(mfx_wind, stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" deallocate mfx_wind fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
+    deallocate(mfy_wind, stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" deallocate mfy_wind fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
+    deallocate(mfz_wind, stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" deallocate mfz_wind fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
+
   end subroutine advectc_rk
+
+  subroutine mf_wind(m1,m2,m3,ia,iz,ja,jz,izu,jzv,itopo, hw4, jdim, dzt, dzm,&
+       uc,vc,wc,dn0,dn0u,dn0v,                                 &
+       dxt,dxu,dxv,dyt,dyu,dyv,rtgt,rtgu,rtgv,f13t,f23t,       &
+       fmapt,fmapu,fmapv,fmapui,fmapvi,                        &
+       flxu,flxv,flxw, mfx_wind,mfy_wind,mfz_wind,is,js,ks)
+
+    implicit none
+    integer, intent(in) :: m1
+    integer, intent(in) :: m2
+    integer, intent(in) :: m3
+    integer, intent(in) :: ia
+    integer, intent(in) :: iz
+    integer, intent(in) :: ja
+    integer, intent(in) :: jz
+    integer, intent(in) :: izu
+    integer, intent(in) :: jzv
+    integer, intent(in) :: itopo, jdim,is,js,ks
+    real, intent(in) :: dzt(m1), dzm(m1), hw4(m1)
+    real, intent(in) :: uc  (m1,m2,m3)
+    real, intent(in) :: vc  (m1,m2,m3)
+    real, intent(in) :: wc  (m1,m2,m3)
+    real, intent(in) :: dn0 (m1,m2,m3)
+    real, intent(in) :: dn0u(m1,m2,m3)
+    real, intent(in) :: dn0v(m1,m2,m3)
+    real, intent(in) :: dxt(m2,m3)
+    real, intent(in) :: dxu(m2,m3)
+    real, intent(in) :: dxv(m2,m3)
+    real, intent(in) :: dyt(m2,m3)
+    real, intent(in) :: dyu(m2,m3)
+    real, intent(in) :: dyv(m2,m3)
+    real, intent(in) :: rtgt(m2,m3)
+    real, intent(in) :: rtgu(m2,m3)
+    real, intent(in) :: rtgv(m2,m3)
+    real, intent(in) :: f13t(m2,m3)
+    real, intent(in) :: f23t(m2,m3)
+    real, intent(in) :: fmapt(m2,m3)
+    real, intent(in) :: fmapu(m2,m3)
+    real, intent(in) :: fmapv(m2,m3)
+    real, intent(in) :: fmapui(m2,m3)
+    real, intent(in) :: fmapvi(m2,m3)
+
+    real, pointer, intent(in) :: flxu(:,:,:)
+    real, pointer, intent(in) :: flxv(:,:,:)
+    real, pointer, intent(in) :: flxw(:,:,:)
+    real, pointer, intent(in) :: mfx_wind(:,:,:)
+    real, pointer, intent(in) :: mfy_wind(:,:,:)
+    real, pointer, intent(in) :: mfz_wind(:,:,:)
+
+
+    ! Local Variables
+    integer :: j,i,k,jm,im
+    real :: c1z,c1x,c1y
+
+    ! Compute momentum fluxes flxu, flxv, flxw
+    !- only necessary one time per timestep
+    !
+    if(is == 1 .and. js == 0 .and. ks == 0) then
+
+       do j = 1,m3
+          do i = 1,m2
+             do k = 1,m1
+                flxu(k,i,j) = uc(k,i,j) * dn0u(k,i,j) * rtgu(i,j)  &
+                     * fmapui(i,j)
+                flxv(k,i,j) = vc(k,i,j) * dn0v(k,i,j) * rtgv(i,j)  &
+                     * fmapvi(i,j)
+             end do
+          end do
+       end do
+
+       if(itopo.eq.0) then
+          do j = 1,m3
+             do i = 1,m2
+                do k = 1,m1-1
+                   flxw(k,i,j) = wc(k,i,j)  &
+                        * .5 * (dn0(k,i,j) + dn0(k+1,i,j))
+                end do
+             end do
+          end do
+       else
+          do j = 1,m3
+             jm = max(j-1,1)
+             do i = 1,m2
+                im = max(i-1,1)
+                do k = 1,m1-1
+                   flxw(k,i,j) = wc(k,i,j)  &
+                        * .5 * (dn0(k,i,j) + dn0(k+1,i,j))  &
+                        + hw4(k) * ((flxu(k,i,j) + flxu(k+1,i,j)  &
+                        + flxu(k,im,j) + flxu(k+1,im,j)) * f13t(i,j)  &
+                        + (flxv(k,i,j) + flxv(k+1,i,j)  &
+                        + flxv(k,i,jm) + flxv(k+1,i,jm)) * f23t(i,j))
+                end do
+             end do
+          end do
+       end if
+    endif
+
+    if(is == 1 .and. js == 0 .and. ks == 0) then
+       !- Compute metric factors to compute U tendency
+       do j = ja,jz
+          do i = ia,izu
+             c1z = 1. / rtgu(i,j)
+             c1x = c1z * fmapu(i,j) * dxu(i,j)
+             c1y = c1z * fmapu(i,j) * dyu(i,j)
+
+             do k = 2,m1-1
+                mfx_wind(k,i,j)= c1x / dn0u(k,i,j)
+             end do
+
+             do k = 2,m1-1
+                mfy_wind(k,i,j)= c1y / dn0u(k,i,j)
+             end do
+
+             do k = 2,m1-1
+                mfz_wind(k,i,j)= c1z * dzt(k) / dn0u(k,i,j)
+             end do
+          end do
+       end do
+
+
+    elseif(is == 0 .and. js == 1 .and. ks == 0) then
+       !- Compute metric factors to compute V tendency
+       do j = ja,jzv
+          do i = ia,iz
+             c1z = 1. / rtgv(i,j)
+             c1x = c1z * fmapv(i,j) * dxv(i,j)
+             c1y = c1z * fmapv(i,j) * dyv(i,j)
+
+             do k = 2,m1-1
+                mfx_wind(k,i,j) = c1x / dn0v(k,i,j)
+             end do
+
+             do k = 2,m1-1
+                mfy_wind(k,i,j) = c1y / dn0v(k,i,j)
+             end do
+
+             do k = 2,m1-1
+                mfz_wind(k,i,j)= c1z * dzt(k) / dn0v(k,i,j)
+             end do
+          end do
+       end do
+
+    elseif(is == 0 .and. js == 0 .and. ks == 1) then
+       !- Compute metric factors to compute W tendency
+       do j = ja,jz
+          do i = ia,iz
+             c1z = 1. / rtgt(i,j)
+             c1x = c1z * fmapt(i,j) * dxt(i,j)
+             c1y = c1z * fmapt(i,j) * dyt(i,j)
+
+             do k = 2,m1-1
+                mfx_wind(k,i,j) = c1x / (dn0(k,i,j) + dn0(k+1,i,j))
+             end do
+
+             do k = 2,m1-1
+                mfy_wind(k,i,j) = c1y / (dn0(k,i,j) + dn0(k+1,i,j))
+             end do
+
+             do k = 2,m1-1
+                mfz_wind(k,i,j) = c1z * dzm(k) / (dn0(k,i,j) + dn0(k+1,i,j))
+             end do
+          end do
+       end do
+    endif
+  end subroutine mf_wind
+
+
+
+  subroutine fa_preptc_rk(m1,m2,m3,vt3da,vt3db,vt3dc, &
+       vt3dh,vt3dj,vt3dk,vctr1, vctr2,dn0,dn0u,dn0v,  &
+       rtgt,rtgu,rtgv,fmapt,fmapui,fmapvi,f13t,f23t,  &
+       dxu,dyv,dxt,dyt,hw4, dzm, dzt, zm, zt)
+
+
+    implicit none
+    integer, intent(in) :: m1
+    integer, intent(in) :: m2
+    integer, intent(in) :: m3
+    real, intent(in) :: hw4(m1), dzm(m1), dzt(m1), zm(m1), zt(m1)
+    real, pointer, intent(in) :: vt3da(:,:,:)
+    real, pointer, intent(in) :: vt3db(:,:,:)
+    real, pointer, intent(in) :: vt3dc(:,:,:)
+    real, pointer, intent(in) :: vt3dh(:,:,:)
+    real, pointer, intent(in) :: vt3dj(:,:,:)
+    real, pointer, intent(in) :: vt3dk(:,:,:)
+    real, intent(in) :: dn0(m1,m2,m3)
+    real, intent(in) :: dn0u(m1,m2,m3)
+    real, intent(in) :: dn0v(m1,m2,m3)
+    real, intent(in) :: rtgt(m2,m3)
+    real, intent(in) :: rtgu(m2,m3)
+    real, intent(in) :: rtgv(m2,m3)
+    real, intent(in) :: fmapt(m2,m3)
+    real, intent(in) :: fmapui(m2,m3)
+    real, intent(in) :: fmapvi(m2,m3)
+    real, intent(in) :: f13t(m2,m3)
+    real, intent(in) :: f23t(m2,m3)
+    real, intent(in) :: dxu(m2,m3)
+    real, intent(in) :: dyv(m2,m3)
+    real, intent(in) :: dxt(m2,m3)
+    real, intent(in) :: dyt(m2,m3)
+    real, intent(out) :: vctr1(m1)
+    real, intent(out) :: vctr2(m1)
+
+    ! Local Variables
+    integer :: j,i,k,im,ip,jm,jp
+    real :: c1,c2,c3,c4,rtgti
+    real :: vctr3(m1)
+
+
+    ! VT3DA, VT3DB, and VT3DC are input as the velocity components (averaged
+    ! between past and current time levels) times dtlt.
+
+    ! Add contribution to VT3DC from horiz winds crossing sloping sigma surfaces,
+    !    and include 1/rtgt factor in VT3DC
+
+    do j = 1,m3
+       jm = max(1,j-1)
+       jp = min(m3,j+1)
+       do i = 1,m2
+          im = max(1,i-1)
+          ip = min(m2,i+1)
+          rtgti = 1. / rtgt(i,j)
+          c1 = .5 * dxu(i,j)
+          c2 = .5 * dyv(i,j)
+          c3 = dxt(i,j) * fmapt(i,j) * rtgti
+          c4 = dyt(i,j) * fmapt(i,j) * rtgti
+
+          do k = 1,m1-1
+             vt3dc(k,i,j) = ((vt3da(k,i,j) + vt3da(k+1,i,j)  &
+                  + vt3da(k,im,j) + vt3da(k+1,im,j)) * f13t(i,j)  &
+                  + (vt3db(k,i,j) + vt3db(k+1,i,j) + vt3db(k,i,jm)  &
+                  + vt3db(k+1,i,jm)) * f23t(i,j)) * hw4(k)  &
+                  + vt3dc(k,i,j) * rtgti
+             !vt3dd(k,i,j) = c1 * vt3da(k,i,j)
+             !vt3de(k,i,j) = c2 * vt3db(k,i,j)
+             !vt3df(k,i,j) = .5 * vt3dc(k,i,j) * dzm(k)
+             vctr3(k) = 1. / dn0(k,i,j)
+             !-- these are the metric factors for u,v and z directions
+             !-- divided by ( air_dens times grid spacing).
+             vt3dh(k,i,j) = c3 * vctr3(k)
+             vt3dj(k,i,j) = c4 * vctr3(k)
+             vt3dk(k,i,j) = dzt(k) * vctr3(k)
+          end do
+
+          !            vt3di(1,i,j) = dxu(i,j) / (dxu(i,j) + dxt(ip,j))
+          !            vt3di(2,i,j) = dxu(i,j) / (dxu(i,j) + dxt(i,j))
+          !            vt3di(3,i,j) = dyv(i,j) / (dyv(i,j) + dyt(i,jp))
+          !            vt3di(4,i,j) = dyv(i,j) / (dyv(i,j) + dyt(i,j))
+          ! temporary override
+          !vt3di(1,i,j) = .5
+          !vt3di(2,i,j) = .5
+          !vt3di(3,i,j) = .5
+          !vt3di(4,i,j) = .5
+       end do
+    end do
+
+    do k = 1,m1-1
+       vctr1(k) = (zt(k+1) - zm(k)) * dzm(k)
+       vctr2(k) =  (zm(k) - zt(k)) * dzm(k)
+    end do
+
+    ! Convert velocity components * dtlt (VT3DA, VT3DB, VT3DC)
+    ! into mass fluxes times dtlt.
+
+    do j = 1,m3
+       do i = 1,m2
+          c1 = fmapui(i,j) * rtgu(i,j)
+          c2 = fmapvi(i,j) * rtgv(i,j)
+          do k = 1,m1-1
+             vt3da(k,i,j) = vt3da(k,i,j) * c1 * dn0u(k,i,j)
+             vt3db(k,i,j) = vt3db(k,i,j) * c2 * dn0v(k,i,j)
+             vt3dc(k,i,j) = vt3dc(k,i,j) * .5  &
+                  * (dn0(k,i,j) + dn0(k+1,i,j))
+          end do
+       end do
+    end do
+  end subroutine fa_preptc_rk
 end module ModAdvectc_rk
 
 
@@ -1267,281 +1662,14 @@ end subroutine expandBorder
 
 !---------------------------------------------------------------------
 
-subroutine fa_preptc_rk(m1,m2,m3,vt3da,vt3db,vt3dc, &
-     vt3dh,vt3dj,vt3dk,vctr1, vctr2,dn0,dn0u,dn0v,  &
-     rtgt,rtgu,rtgv,fmapt,fmapui,fmapvi,f13t,f23t,  &
-     dxu,dyv,dxt,dyt,hw4, dzm, dzt, zm, zt)
 
-
-  implicit none
-  integer, intent(in) :: m1
-  integer, intent(in) :: m2
-  integer, intent(in) :: m3
-  real, intent(in) :: hw4(m1), dzm(m1), dzt(m1), zm(m1), zt(m1)
-  real, intent(inout) :: vt3da(m1,m2,m3)
-  real, intent(inout) :: vt3db(m1,m2,m3)
-  real, intent(inout) :: vt3dc(m1,m2,m3)
-  real, intent(out) :: vt3dh(m1,m2,m3)
-  real, intent(out) :: vt3dj(m1,m2,m3)
-  real, intent(out) :: vt3dk(m1,m2,m3)
-  real, intent(in) :: dn0(m1,m2,m3)
-  real, intent(in) :: dn0u(m1,m2,m3)
-  real, intent(in) :: dn0v(m1,m2,m3)
-  real, intent(in) :: rtgt(m2,m3)
-  real, intent(in) :: rtgu(m2,m3)
-  real, intent(in) :: rtgv(m2,m3)
-  real, intent(in) :: fmapt(m2,m3)
-  real, intent(in) :: fmapui(m2,m3)
-  real, intent(in) :: fmapvi(m2,m3)
-  real, intent(in) :: f13t(m2,m3)
-  real, intent(in) :: f23t(m2,m3)
-  real, intent(in) :: dxu(m2,m3)
-  real, intent(in) :: dyv(m2,m3)
-  real, intent(in) :: dxt(m2,m3)
-  real, intent(in) :: dyt(m2,m3)
-  real, intent(out) :: vctr1(m1)
-  real, intent(out) :: vctr2(m1)
-
-  ! Local Variables
-  integer :: j,i,k,im,ip,jm,jp
-  real :: c1,c2,c3,c4,rtgti
-  real :: vctr3(m1)
-
-
-  ! VT3DA, VT3DB, and VT3DC are input as the velocity components (averaged
-  ! between past and current time levels) times dtlt.
-
-  ! Add contribution to VT3DC from horiz winds crossing sloping sigma surfaces,
-  !    and include 1/rtgt factor in VT3DC
-
-  do j = 1,m3
-     jm = max(1,j-1)
-     jp = min(m3,j+1)
-     do i = 1,m2
-        im = max(1,i-1)
-        ip = min(m2,i+1)
-        rtgti = 1. / rtgt(i,j)
-        c1 = .5 * dxu(i,j)
-        c2 = .5 * dyv(i,j)
-        c3 = dxt(i,j) * fmapt(i,j) * rtgti
-        c4 = dyt(i,j) * fmapt(i,j) * rtgti
-
-        do k = 1,m1-1
-           vt3dc(k,i,j) = ((vt3da(k,i,j) + vt3da(k+1,i,j)  &
-                + vt3da(k,im,j) + vt3da(k+1,im,j)) * f13t(i,j)  &
-                + (vt3db(k,i,j) + vt3db(k+1,i,j) + vt3db(k,i,jm)  &
-                + vt3db(k+1,i,jm)) * f23t(i,j)) * hw4(k)  &
-                + vt3dc(k,i,j) * rtgti
-           !vt3dd(k,i,j) = c1 * vt3da(k,i,j)
-           !vt3de(k,i,j) = c2 * vt3db(k,i,j)
-           !vt3df(k,i,j) = .5 * vt3dc(k,i,j) * dzm(k)
-           vctr3(k) = 1. / dn0(k,i,j)
-           !-- these are the metric factors for u,v and z directions
-           !-- divided by ( air_dens times grid spacing).
-           vt3dh(k,i,j) = c3 * vctr3(k)
-           vt3dj(k,i,j) = c4 * vctr3(k)
-           vt3dk(k,i,j) = dzt(k) * vctr3(k)
-        end do
-
-        !            vt3di(1,i,j) = dxu(i,j) / (dxu(i,j) + dxt(ip,j))
-        !            vt3di(2,i,j) = dxu(i,j) / (dxu(i,j) + dxt(i,j))
-        !            vt3di(3,i,j) = dyv(i,j) / (dyv(i,j) + dyt(i,jp))
-        !            vt3di(4,i,j) = dyv(i,j) / (dyv(i,j) + dyt(i,j))
-        ! temporary override
-        !vt3di(1,i,j) = .5
-        !vt3di(2,i,j) = .5
-        !vt3di(3,i,j) = .5
-        !vt3di(4,i,j) = .5
-     end do
-  end do
-
-  do k = 1,m1-1
-     vctr1(k) = (zt(k+1) - zm(k)) * dzm(k)
-     vctr2(k) =  (zm(k) - zt(k)) * dzm(k)
-  end do
-
-  ! Convert velocity components * dtlt (VT3DA, VT3DB, VT3DC)
-  ! into mass fluxes times dtlt.
-
-  do j = 1,m3
-     do i = 1,m2
-        c1 = fmapui(i,j) * rtgu(i,j)
-        c2 = fmapvi(i,j) * rtgv(i,j)
-        do k = 1,m1-1
-           vt3da(k,i,j) = vt3da(k,i,j) * c1 * dn0u(k,i,j)
-           vt3db(k,i,j) = vt3db(k,i,j) * c2 * dn0v(k,i,j)
-           vt3dc(k,i,j) = vt3dc(k,i,j) * .5  &
-                * (dn0(k,i,j) + dn0(k+1,i,j))
-        end do
-     end do
-  end do
-end subroutine fa_preptc_rk
 
 !---------------------------------------------------------------------
 
 
 !---------------------------------------------------------------------
 
-subroutine mf_wind(m1,m2,m3,ia,iz,ja,jz,izu,jzv,itopo, hw4, jdim, dzt, dzm,&
-     uc,vc,wc,dn0,dn0u,dn0v,                                 &
-     dxt,dxu,dxv,dyt,dyu,dyv,rtgt,rtgu,rtgv,f13t,f23t,       &
-     fmapt,fmapu,fmapv,fmapui,fmapvi,                        &
-                                !
-     flxu,flxv,flxw, mfx_wind,mfy_wind,mfz_wind,is,js,ks)
 
-  implicit none
-  integer, intent(in) :: m1
-  integer, intent(in) :: m2
-  integer, intent(in) :: m3
-  integer, intent(in) :: ia
-  integer, intent(in) :: iz
-  integer, intent(in) :: ja
-  integer, intent(in) :: jz
-  integer, intent(in) :: izu
-  integer, intent(in) :: jzv
-  integer, intent(in) :: itopo, jdim,is,js,ks
-  real, intent(in) :: dzt(m1), dzm(m1), hw4(m1)
-  real, intent(in) :: uc  (m1,m2,m3)
-  real, intent(in) :: vc  (m1,m2,m3)
-  real, intent(in) :: wc  (m1,m2,m3)
-  real, intent(in) :: dn0 (m1,m2,m3)
-  real, intent(in) :: dn0u(m1,m2,m3)
-  real, intent(in) :: dn0v(m1,m2,m3)
-  real, intent(in) :: dxt(m2,m3)
-  real, intent(in) :: dxu(m2,m3)
-  real, intent(in) :: dxv(m2,m3)
-  real, intent(in) :: dyt(m2,m3)
-  real, intent(in) :: dyu(m2,m3)
-  real, intent(in) :: dyv(m2,m3)
-  real, intent(in) :: rtgt(m2,m3)
-  real, intent(in) :: rtgu(m2,m3)
-  real, intent(in) :: rtgv(m2,m3)
-  real, intent(in) :: f13t(m2,m3)
-  real, intent(in) :: f23t(m2,m3)
-  real, intent(in) :: fmapt(m2,m3)
-  real, intent(in) :: fmapu(m2,m3)
-  real, intent(in) :: fmapv(m2,m3)
-  real, intent(in) :: fmapui(m2,m3)
-  real, intent(in) :: fmapvi(m2,m3)
-
-  real, dimension(m1,m2,m3),intent(inout) :: mfx_wind,mfy_wind,mfz_wind,&
-       flxu,flxv,flxw
-
-  ! Local Variables
-  integer :: j,i,k,jm,im
-  real :: c1z,c1x,c1y
-
-  ! Compute momentum fluxes flxu, flxv, flxw
-  !- only necessary one time per timestep
-  !
-  if(is == 1 .and. js == 0 .and. ks == 0) then
-
-     do j = 1,m3
-        do i = 1,m2
-           do k = 1,m1
-              flxu(k,i,j) = uc(k,i,j) * dn0u(k,i,j) * rtgu(i,j)  &
-                   * fmapui(i,j)
-              flxv(k,i,j) = vc(k,i,j) * dn0v(k,i,j) * rtgv(i,j)  &
-                   * fmapvi(i,j)
-           end do
-        end do
-     end do
-
-     if(itopo.eq.0) then
-        do j = 1,m3
-           do i = 1,m2
-              do k = 1,m1-1
-                 flxw(k,i,j) = wc(k,i,j)  &
-                      * .5 * (dn0(k,i,j) + dn0(k+1,i,j))
-              end do
-           end do
-        end do
-     else
-        do j = 1,m3
-           jm = max(j-1,1)
-           do i = 1,m2
-              im = max(i-1,1)
-              do k = 1,m1-1
-                 flxw(k,i,j) = wc(k,i,j)  &
-                      * .5 * (dn0(k,i,j) + dn0(k+1,i,j))  &
-                      + hw4(k) * ((flxu(k,i,j) + flxu(k+1,i,j)  &
-                      + flxu(k,im,j) + flxu(k+1,im,j)) * f13t(i,j)  &
-                      + (flxv(k,i,j) + flxv(k+1,i,j)  &
-                      + flxv(k,i,jm) + flxv(k+1,i,jm)) * f23t(i,j))
-              end do
-           end do
-        end do
-     end if
-  endif
-
-  if(is == 1 .and. js == 0 .and. ks == 0) then
-     !- Compute metric factors to compute U tendency
-     do j = ja,jz
-        do i = ia,izu
-           c1z = 1. / rtgu(i,j)
-           c1x = c1z * fmapu(i,j) * dxu(i,j)
-           c1y = c1z * fmapu(i,j) * dyu(i,j)
-
-           do k = 2,m1-1
-              mfx_wind(k,i,j)= c1x / dn0u(k,i,j)
-           end do
-
-           do k = 2,m1-1
-              mfy_wind(k,i,j)= c1y / dn0u(k,i,j)
-           end do
-
-           do k = 2,m1-1
-              mfz_wind(k,i,j)= c1z * dzt(k) / dn0u(k,i,j)
-           end do
-        end do
-     end do
-
-
-  elseif(is == 0 .and. js == 1 .and. ks == 0) then
-     !- Compute metric factors to compute V tendency
-     do j = ja,jzv
-        do i = ia,iz
-           c1z = 1. / rtgv(i,j)
-           c1x = c1z * fmapv(i,j) * dxv(i,j)
-           c1y = c1z * fmapv(i,j) * dyv(i,j)
-
-           do k = 2,m1-1
-              mfx_wind(k,i,j) = c1x / dn0v(k,i,j)
-           end do
-
-           do k = 2,m1-1
-              mfy_wind(k,i,j) = c1y / dn0v(k,i,j)
-           end do
-
-           do k = 2,m1-1
-              mfz_wind(k,i,j)= c1z * dzt(k) / dn0v(k,i,j)
-           end do
-        end do
-     end do
-
-  elseif(is == 0 .and. js == 0 .and. ks == 1) then
-     !- Compute metric factors to compute W tendency
-     do j = ja,jz
-        do i = ia,iz
-           c1z = 1. / rtgt(i,j)
-           c1x = c1z * fmapt(i,j) * dxt(i,j)
-           c1y = c1z * fmapt(i,j) * dyt(i,j)
-
-           do k = 2,m1-1
-              mfx_wind(k,i,j) = c1x / (dn0(k,i,j) + dn0(k+1,i,j))
-           end do
-
-           do k = 2,m1-1
-              mfy_wind(k,i,j) = c1y / (dn0(k,i,j) + dn0(k+1,i,j))
-           end do
-
-           do k = 2,m1-1
-              mfz_wind(k,i,j) = c1z * dzm(k) / (dn0(k,i,j) + dn0(k+1,i,j))
-           end do
-        end do
-     end do
-  endif
-end subroutine mf_wind
 
 !!- compute interface values of scalars/wind
 subroutine compXYInterface_or1(mxp,myp,mzp,ks,isi,js,&
