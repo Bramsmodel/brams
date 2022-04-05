@@ -12,23 +12,6 @@
 !call advectc_rk('SCALAR' ,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
 !
 !###########################################################################
-module advRkParam
-  !- parameters for various advection
-  real, parameter :: f30 = 7./12.
-  real, parameter :: f31 = 1./12.
-  real, parameter :: f40 = 7./12.
-  real, parameter :: f41 = 1./12.
-  real, parameter :: f50 = 37./60.
-  real, parameter :: f51 = 2./15.
-  real, parameter :: f52 = 1./60.
-  real, parameter :: f60 = 37./60.
-  real, parameter :: f61 = 2./15.
-  real, parameter :: f62 = 1./60.
-  real, parameter :: eps = 1.e-20
-  real, parameter :: real_init=-0.0*huge(1.)
-  real :: fifth_order
-end module advRkParam
-
 module ModAdvectc_rk
 
   ! explicit advect_ws interface due to OneGrid grid pointer argument;
@@ -41,15 +24,6 @@ module ModAdvectc_rk
   ! this module overloads advect_ws with three procedures that
   ! differs only on the type of these two formal arguments at
   ! the interface
-
-  ! procedure advect_ws_scalar_tab exists only because scalarp
-  ! is a pointer to a scalar. This should be removed whenever
-  ! scalar_tab points to a real 2D, 3D or 4D field array, not
-  ! to the first element
-
-  ! the pointer to a scalar issue propagates to copyMypart;
-  ! we took the solution of keeping the copyMyPart interface
-  ! implicit
 
   use grid_dims, only: maxgrds, nzpmax
   use mem_tend, only: tend
@@ -71,14 +45,27 @@ module ModAdvectc_rk
        PostSendRecvMsgsVariableAdress, &
        WaitSendRecvMsgs
 
-  use advRkParam, only: fifth_order, eps,real_init
-
   use node_mod, only:  nmachs, myNum,nodei0,nodej0
 
   implicit none
+
   private
   public :: advectc_rk
 
+  !- parameters for various advection
+  real, parameter :: f30 = 7./12.
+  real, parameter :: f31 = 1./12.
+  real, parameter :: f40 = 7./12.
+  real, parameter :: f41 = 1./12.
+  real, parameter :: f50 = 37./60.
+  real, parameter :: f51 = 2./15.
+  real, parameter :: f52 = 1./60.
+  real, parameter :: f60 = 37./60.
+  real, parameter :: f61 = 2./15.
+  real, parameter :: f62 = 1./60.
+  real, parameter :: eps = 1.e-20
+  real, parameter :: real_init=-0.0*huge(1.)
+  real :: fifth_order
 contains  
 
 
@@ -110,14 +97,24 @@ contains
     integer, intent(in) :: iz
     integer, intent(in) :: ja
     integer, intent(in) :: jz
-    integer, intent(in) :: is,js,ks,pd_or_mnt_constraint,order_h,order_v
+    integer, intent(in) :: is
+    integer, intent(in) :: js
+    integer, intent(in) :: ks
+    integer, intent(in) :: pd_or_mnt_constraint
+    integer, intent(in) :: order_h
+    integer, intent(in) :: order_v
     real, intent(in)    :: dt
     real, pointer, intent(in) :: scp(:,:,:)
     real, pointer, intent(in) :: sct(:)
-    real, dimension(mzp,mxp,myp), intent(in) :: ufx, vfx,wfx,vt3dh,vt3dj,vt3dk
+    real, pointer, intent(in) :: ufx(:,:,:)
+    real, pointer, intent(in) :: vfx(:,:,:)
+    real, pointer, intent(in) :: wfx(:,:,:)
+    real, pointer, intent(in) :: vt3dh(:,:,:)
+    real, pointer, intent(in) :: vt3dj(:,:,:)
+    real, pointer, intent(in) :: vt3dk(:,:,:)
     character(len=*),intent(in) :: vname
 
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(advect_ws_pointer_rank1)**"
 
@@ -130,8 +127,7 @@ contains
     real, pointer :: vfx_local(:,:,:)
     real, pointer :: wfx_local(:,:,:)
 
-    !external functions
-    real, external :: flux_upwind,fq2, fq3, fq4, fq5, fq6, fq
+    real :: flux_upwind,fq2, fq3, fq4, fq5, fq6, fq
 
     logical, parameter :: variable=.true.
     !<
@@ -322,14 +318,24 @@ contains
     integer, intent(in) :: iz
     integer, intent(in) :: ja
     integer, intent(in) :: jz
-    integer, intent(in) :: is,js,ks,pd_or_mnt_constraint,order_h,order_v
+    integer, intent(in) :: is
+    integer, intent(in) :: js
+    integer, intent(in) :: ks
+    integer, intent(in) :: pd_or_mnt_constraint
+    integer, intent(in) :: order_h
+    integer, intent(in) :: order_v
     real, intent(in)    :: dt
     real, pointer, intent(in) :: scp(:,:,:)
     real, pointer, intent(in) :: sct(:,:,:)
-    real, dimension(mzp,mxp,myp), intent(in) :: ufx, vfx,wfx,vt3dh,vt3dj,vt3dk
+    real, pointer, intent(in) :: ufx(:,:,:)
+    real, pointer, intent(in) :: vfx(:,:,:)
+    real, pointer, intent(in) :: wfx(:,:,:)
+    real, pointer, intent(in) :: vt3dh(:,:,:)
+    real, pointer, intent(in) :: vt3dj(:,:,:)
+    real, pointer, intent(in) :: vt3dk(:,:,:)
     character(len=*),intent(in) :: vname
 
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(advect_ws_pointer_rank3)**"
 
@@ -342,8 +348,7 @@ contains
     real, pointer :: vfx_local(:,:,:)
     real, pointer :: wfx_local(:,:,:)
 
-    !external functions
-    real, external :: flux_upwind,fq2, fq3, fq4, fq5, fq6, fq
+    real :: flux_upwind,fq2, fq3, fq4, fq5, fq6, fq
 
     logical, parameter :: variable=.false.
     !<
@@ -511,218 +516,7 @@ contains
 
 
 
-  subroutine advect_ws_pointer_scalar(OneGrid,&
-       mzp,mxp,myp,ia,iz,ja,jz,&
-       scp,ufx,vfx,wfx,vt3dh,vt3dj,vt3dk,sct, &
-       is,js,ks,pd_or_mnt_constraint,order_h,order_v,dt,vname)
-
-    ! interface for
-    ! scp as a scalar pointer and
-    ! sct as a scalar pointer 
-
-    ! this interface is invoked only when
-    ! scp and sct arise from scalar_tab
-
-    ! This interface should disapear whenever scalar_tab
-    ! is recoded to point to full fields.
-
-    type(Grid), pointer, intent(in) :: OneGrid
-    integer, intent(in) :: mzp !- z
-    integer, intent(in) :: mxp !- x
-    integer, intent(in) :: myp !- y
-    integer, intent(in) :: ia
-    integer, intent(in) :: iz
-    integer, intent(in) :: ja
-    integer, intent(in) :: jz
-    integer, intent(in) :: is,js,ks,pd_or_mnt_constraint,order_h,order_v
-    real, intent(in)    :: dt
-    real, pointer, intent(in) :: scp
-    real, pointer, intent(in) :: sct
-    real, dimension(mzp,mxp,myp), intent(in) :: ufx, vfx,wfx,vt3dh,vt3dj,vt3dk
-    character(len=*),intent(in) :: vname
-
-    logical, parameter :: dumpLocal=.false.
-    character(len=8) :: str(10)
-    character(len=*), parameter :: h="**(advect_ws_pointer_scalar)**"
-
-    logical :: scalar
-    real, pointer :: qz(:,:,:)
-    real, pointer :: qx(:,:,:)
-    real, pointer :: qy(:,:,:)
-    real, pointer :: scr(:,:,:)
-    real, pointer :: ufx_local(:,:,:)
-    real, pointer :: vfx_local(:,:,:)
-    real, pointer :: wfx_local(:,:,:)
-
-    !external functions
-    real, external :: flux_upwind,fq2, fq3, fq4, fq5, fq6, fq
-
-    logical, parameter :: variable=.true.
-    !<
-    integer, parameter :: mzi=-2, myi=-2, mxi=-2
-
-    integer :: mzpp3,mxpp3,mypp3
-    integer :: mzppks,mxppis,myppjs
-
-    logical :: borderNorth
-    logical :: borderSouth
-    logical :: borderEast
-    logical :: borderWest
-
-    borderNorth=OneGrid%NodeDims%borderNorth
-    borderSouth=OneGrid%NodeDims%borderSouth
-    borderEast=OneGrid%NodeDims%borderEast
-    borderWest=OneGrid%NodeDims%borderWest
-
-    call PostSendRecvMsgsVariableAdress(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv, &
-         scp, ufx, vfx, wfx)
-
-    if (dumpLocal) then
-       call MsgDump(h//" to advect "//trim(adjustl(vname)))
-    end if
-
-    mzpp3=mzp+3; mxpp3=mxp+3; mypp3=myp+3
-    mzppks=mzp+ks; mxppis=mxp+is; myppjs=myp+js
-
-    allocate(qx(mzppks,mxppis,myppjs));qx=real_init
-    allocate(qy(mzppks,mxppis,myppjs));qy=real_init
-    allocate(qz(mzppks,mxppis,myppjs));qz=real_init
-    allocate(scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3));scr=real_init
-    allocate(ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));ufx_local=real_init
-    allocate(vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));vfx_local=real_init
-    allocate(wfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));wfx_local=real_init
-
-    !- flag to determine if a scalar is being advected
-    scalar = .false.
-    if(is==0 .and. js==0 .and. ks==0) scalar = .true.
-
-    !- copy input arrays to extended arrays
-    call copyMyPart(scp,scr,ufx_local,vfx_local,wfx_local, &
-         ufx,vfx,wfx,mxp,myp,mzp,is,js,ks, &
-         mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
-         vname)
-
-    if(.not. variable) &
-         call expandBorder(mxp,myp,mzp,is,js,ks, &
-         mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
-         scr,ufx_local,vfx_local,wfx_local)
-
-    ! Set x & y boundary values in halo zones
-    if (nmachs>1) then
-       if (dumpLocal) then
-          write(str(1),"(i8)") size(scr,1)
-          write(str(2),"(i8)") size(scr,2)
-          write(str(3),"(i8)") size(scr,3)
-          call MsgDump(h//" exchange border of "//vname//" dimensioned ("//&
-               trim(adjustl(str(1)))//","//&
-               trim(adjustl(str(2)))//","//&
-               trim(adjustl(str(3)))//")")
-       end if
-    end if
-
-    call WaitSendRecvMsgs(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv, &
-         1, mzp, scr, ufx_local, vfx_local, wfx_local)
-
-    select case (order_h)
-    case (1)
-       call compXYInterface_or1(mxp,myp,mzp,ks,is,js,&
-            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
-            mzppks,mxppis,myppjs, &
-            scr,ufx_local,vfx_local,&
-            qx, qy, variable, vname)
-    case (2)
-       call compXYInterface_or2(mxp,myp,mzp,ks,is,js,&
-            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
-            mzppks,mxppis,myppjs, &
-            scr,ufx_local,vfx_local,&
-            qx, qy, variable, vname)
-    case (3)
-       call compXYInterface_or3(mxp,myp,mzp,ks,is,js,&
-            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
-            mzppks,mxppis,myppjs, &
-            scr,ufx_local,vfx_local,&
-            borderNorth, borderSouth, borderEast, borderWest, &
-            qx, qy, variable, vname)
-    case (4)
-       call compXYInterface_or4(mxp,myp,mzp,ks,is,js,&
-            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
-            mzppks,mxppis,myppjs, &
-            scr,ufx_local,vfx_local,&
-            qx, qy, variable, vname)
-    case(5,6)
-       call compXYInterface_or56(mxp,myp,mzp,ks,is,js,&
-            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
-            mzppks,mxppis,myppjs, &
-            scr,ufx_local,vfx_local,&
-            borderNorth, borderSouth, borderEast, borderWest, &
-            qx, qy, variable, vname, order_h)
-    case default
-       write (*,fmt='(A)') 'Advect Error : the order_h must be from 1 to 6'
-       stop 'ERROR!'
-    end select
-
-    select case (order_v)
-    case (1)
-       call compZInterface_or1(mxp,myp,mzp,ks,is,js,&
-            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
-            mzppks,mxppis,myppjs, &
-            scr,wfx_local,qz, &
-            variable, vname)
-    case (2)
-       call compZInterface_or2(mxp,myp,mzp,ks,is,js,&
-            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
-            mzppks,mxppis,myppjs, &
-            scr,wfx_local,qz, &
-            variable, vname)
-    case (3)
-       call compZInterface_or3(mxp,myp,mzp,ks,is,js,&
-            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
-            mzppks,mxppis,myppjs, &
-            scr,wfx_local,qz, &
-            variable, vname)
-    case (4)
-       call compZInterface_or4(mxp,myp,mzp,ks,is,js,&
-            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
-            mzppks,mxppis,myppjs, &
-            scr,wfx_local,qz, &
-            variable, vname)
-    case(5,6)
-       call compZInterface_or56(mxp,myp,mzp,ks,is,js,&
-            mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
-            mzppks,mxppis,myppjs, &
-            scr,wfx_local,qz, &
-            variable, vname,order_v)
-    case default
-       write (*,fmt='(A)') 'Advect Error : the order_v must be from 1 to 6'
-       stop 'ERROR!'
-    end select
-
-    if(pd_or_mnt_constraint > 0 .and. scalar .and. vname .ne. 'thc' .and. vname .ne. 'pc') then  
-
-       !-- positivity/monotonicity constraints
-       call PosMonConstraints(mxp,myp,mzp,is,js,ks,ia,iz,ja,jz,&
-            pd_or_mnt_constraint, &
-            dt,ufx,vfx,wfx,vt3dh,vt3dj,vt3dk,scp, &
-            scr,ufx_local,vfx_local,wfx_local, &
-            qx,qy,qz,mzi,mzpp3,mxi,mxpp3,myi, &
-            mypp3,mzppks,mxppis,myppjs,mynum,vname,sct)
-
-    endif
-
-    call CreateTendency(mxp,myp,mzp,is,js,ks,ia,iz,ja,jz, &
-         mzppks,mxppis,myppjs, &
-         dt,ufx,vfx,wfx, &
-         vt3dh,vt3dj,vt3dk,scp, &
-         qx,qy,qz,sct,vname,mynum)
-
-    deallocate(qx ,qy,    qz,    scr,          ufx_local,    vfx_local ,   wfx_local)
-  end subroutine advect_ws_pointer_scalar
-
-
-
-
   subroutine advectc_rk(OneGrid,varn,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
-    implicit none
     include "constants.h"
     type(Grid), pointer, intent(in) :: OneGrid
     integer, intent(in) :: mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk
@@ -731,7 +525,6 @@ contains
     ! Local Variables
     integer(kind=i8) :: mxyzp
     integer :: i,j,k,n
-    real, pointer :: scalarp, scalart
     integer :: ierr
     integer :: i_scl,is,js,ks
     !- scratchs (local arrays)
@@ -1073,22 +866,19 @@ contains
              if (scalar_tab(n,ngrid)%name == 'THC' .or. &
                   scalar_tab(n,ngrid)%name == 'THP') cycle
 
-             !if(mynum==1)print*,"scalars=",scalar_tab(n,ngrid)%name,order_h,order_v;call flush(6)
-             scalarp => scalar_tab(n,ngrid)%var_p
-             scalart => scalar_tab(n,ngrid)%var_t
+             ! input: scalarp3d, scalart1d, dtlt
+             ! output: scalart1d
 
-             ! input: scalarp, scalart, dtlt
-             ! output: scalart
-
-             call advect_ws_pointer_scalar(OneGrid,mzp,mxp,myp,ia,iz,ja,jz &
-                  ,scalarp & !scalar being advected 
+             call advect_ws_pointer_rank1(OneGrid,mzp,mxp,myp,ia,iz,ja,jz &
+                  ,scalar_tab(n,ngrid)%var_p_3d & !scalar being advected 
                   ,vt3da   & ! 0.5(up+uc)*dn0u*fmapui*rtgu = rhou*U
                   ,vt3db   & ! similar for v
                   ,vt3dc   & ! similar for sigma_dot
                   ,vt3dh   & ! fmapt*rtgti*dxt/dn0 = 1(rho dx)
                   ,vt3dj   & ! similar for v
                   ,vt3dk   & ! similar for sigma_dot
-                  ,scalart,is,js,ks    & !scalar tendency
+                  ,scalar_tab(n,ngrid)%var_t_1d &
+                  ,is,js,ks    & !scalar tendency
                   ,pd_or_mnt_constraint& ! 
                   ,order_h,order_v     & !order horiz/vert 
                   ,dtlt                & !timestep
@@ -1164,7 +954,6 @@ contains
        fmapt,fmapu,fmapv,fmapui,fmapvi,                        &
        flxu,flxv,flxw, mfx_wind,mfy_wind,mfz_wind,is,js,ks)
 
-    implicit none
     integer, intent(in) :: m1
     integer, intent(in) :: m2
     integer, intent(in) :: m3
@@ -1331,7 +1120,6 @@ contains
        dxu,dyv,dxt,dyt,hw4, dzm, dzt, zm, zt)
 
 
-    implicit none
     integer, intent(in) :: m1
     integer, intent(in) :: m2
     integer, intent(in) :: m3
@@ -1434,1240 +1222,1214 @@ contains
        end do
     end do
   end subroutine fa_preptc_rk
-end module ModAdvectc_rk
 
 
-subroutine copyMyPart(scp,scr,ufx_local,vfx_local,wfx_local, &
-     ufx,vfx,wfx,mxp,myp,mzp,isi,js,ks, &
-     mzi,mzpp3,mxi,mxpp3,myi,mypp3,vname)
+  subroutine copyMyPart(scp,scr,ufx_local,vfx_local,wfx_local, &
+       ufx,vfx,wfx,mxp,myp,mzp,isi,js,ks, &
+       mzi,mzpp3,mxi,mxpp3,myi,mypp3,vname)
 
-  use ModParallelEnvironment, only: MsgDump
+    !# Copy the internal part of arrays inside extended arrays
+    !#
+    !# @note
+    !# ![](http://brams.cptec.inpe.br/wp-content/uploads/2015/11/logo-brams.navigation.png "")
+    !#
+    !# **Brief**: This routine perform a copy of the internal parts of arrays (with no extended halo)
+    !# in the extend arrays.
+    !#
+    !# **Documentation**: <http://brams.cptec.inpe.br/documentation/>
+    !#
+    !# **Author**: Rodrigues, L.F. **&#9993;**<mailto:luiz.rodrigues@inpe.br>
+    !#
+    !# **Date**: 2018Jan
+    !# @endnote
+    !#
+    !# @changes
+    !#
+    !# +
+    !# @endchanges
+    !# @bug
+    !# No active bugs reported now
+    !# @endbug
+    !#
+    !# @todo
+    !#
+    !# @endtodo
+    !#
+    !# @warning
+    !# Now is under CC-GPL License, please see
+    !# &copy; <https://creativecommons.org/licenses/GPL/2.0/legalcode.pt>
+    !# @endwarning
+    !#
+    !#--- ----------------------------------------------------------------------------------------
+    integer, intent(in) :: mxp
+    !# points in x dir
+    integer, intent(in) :: myp
+    !# points in y dir
+    integer, intent(in) :: mzp
+    !# points in z dir
+    integer, intent(in) :: isi
+    !# is=1 -> i direction of advection
+    integer, intent(in) :: js
+    !# js=1 -> j direction of advection
+    integer, intent(in) :: ks
+    !# ks=1 -> k direction of advection
+    integer, intent(in) :: mzi
+    !# initial z position of extended array (-2)
+    integer, intent(in) :: mzpp3
+    !# final z position of extended array (mzp+3)
+    integer, intent(in) :: mxi
+    !# initial x position of extended array (-2)
+    integer, intent(in) :: mxpp3
+    !# final x position of extended array (mxp+3)
+    integer, intent(in) :: myi
+    !# initial y position of extended array (-2)
+    integer, intent(in) :: mypp3
+    !# final y position of extended array (myp+3)
+    real, pointer, intent(in)     :: scp(:,:,:)
+    !# Original Brams' size var to be advected
+    real, pointer, intent(in)     :: ufx(:,:,:)
+    !# Original Brams' size rhou*U
+    real, pointer, intent(in)     :: vfx(:,:,:)
+    !# Original Brams' size rhou*V
+    real, pointer, intent(in)     :: wfx(:,:,:)
+    !# Original Brams' size rhou*W
+    character(len=*), intent(in) :: vname
+    !# name of variable that will be advected
+    real, pointer, intent(in)    :: scr(:,:,:)
+    !# Oversided (extended) var
+    real, pointer, intent(in)    :: ufx_local(:,:,:)
+    !# Oversided (extended) var rhou*U
+    real, pointer, intent(in)    :: vfx_local(:,:,:)
+    !# Oversided (extended) var rhou*V
+    real, pointer, intent(in)    :: wfx_local(:,:,:)
+    !# Oversided (extended) var rhou*W
 
-  !# Copy the internal part of arrays inside extended arrays
-  !#
-  !# @note
-  !# ![](http://brams.cptec.inpe.br/wp-content/uploads/2015/11/logo-brams.navigation.png "")
-  !#
-  !# **Brief**: This routine perform a copy of the internal parts of arrays (with no extended halo)
-  !# in the extend arrays.
-  !#
-  !# **Documentation**: <http://brams.cptec.inpe.br/documentation/>
-  !#
-  !# **Author**: Rodrigues, L.F. **&#9993;**<mailto:luiz.rodrigues@inpe.br>
-  !#
-  !# **Date**: 2018Jan
-  !# @endnote
-  !#
-  !# @changes
-  !#
-  !# +
-  !# @endchanges
-  !# @bug
-  !# No active bugs reported now
-  !# @endbug
-  !#
-  !# @todo
-  !#
-  !# @endtodo
-  !#
-  !# @warning
-  !# Now is under CC-GPL License, please see
-  !# &copy; <https://creativecommons.org/licenses/GPL/2.0/legalcode.pt>
-  !# @endwarning
-  !#
-  !#--- ----------------------------------------------------------------------------------------
-  integer, intent(in) :: mxp
-  !# points in x dir
-  integer, intent(in) :: myp
-  !# points in y dir
-  integer, intent(in) :: mzp
-  !# points in z dir
-  integer, intent(in) :: isi
-  !# is=1 -> i direction of advection
-  integer, intent(in) :: js
-  !# js=1 -> j direction of advection
-  integer, intent(in) :: ks
-  !# ks=1 -> k direction of advection
-  integer, intent(in) :: mzi
-  !# initial z position of extended array (-2)
-  integer, intent(in) :: mzpp3
-  !# final z position of extended array (mzp+3)
-  integer, intent(in) :: mxi
-  !# initial x position of extended array (-2)
-  integer, intent(in) :: mxpp3
-  !# final x position of extended array (mxp+3)
-  integer, intent(in) :: myi
-  !# initial y position of extended array (-2)
-  integer, intent(in) :: mypp3
-  !# final y position of extended array (myp+3)
-  real,intent(in)     :: scp(mzp,mxp,myp)
-  !# Original Brams' size var to be advected
-  real,intent(in)     :: ufx(mzp,mxp,myp)
-  !# Original Brams' size rhou*U
-  real,intent(in)     :: vfx(mzp,mxp,myp)
-  !# Original Brams' size rhou*V
-  real,intent(in)     :: wfx(mzp,mxp,myp)
-  !# Original Brams' size rhou*W
-  character(len=*), intent(in) :: vname
-  !# name of variable that will be advected
-  real,intent(out)    :: scr(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  !# Oversided (extended) var
-  real,intent(out)    :: ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  !# Oversided (extended) var rhou*U
-  real,intent(out)    :: vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  !# Oversided (extended) var rhou*V
-  real,intent(out)    :: wfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  !# Oversided (extended) var rhou*W
+    integer :: i,j,k !
 
-  integer :: i,j,k !
+    logical, parameter :: dumpLocal=.false.
+    character(len=*), parameter :: h="**(copyMyPart)**"
+    character(len=8) :: str(10)
 
-  logical, parameter :: dumpLocal=.false.
-  character(len=*), parameter :: h="**(copyMyPart)**"
-  character(len=8) :: str(10)
-
-  ! Copy the original (mzp,mxp,myp) vars to extended vars (-2:mzp+3,-2:mxp+3,-2:myp+3)
-  ! only the internal values (without extra borders)
-  do j=1,myp !-1+js
-     do i=1,mxp !-1+isi
-        do k=1,mzp !-1+ks
-           scr(k,i,j)=scp(k,i,j)
-        enddo
-     enddo
-  enddo
-  do j=1,myp
-     do i=1,mxp
-        do k=1,mzp
-           ufx_local(k,i,j)=ufx(k,i,j)
-           vfx_local(k,i,j)=vfx(k,i,j)
-           wfx_local(k,i,j)=wfx(k,i,j)
-        enddo
-        ufx_local(mzp+1,i,j)=0.
-        vfx_local(mzp+1,i,j)=0.
-        wfx_local(mzp+1,i,j)=0.
-     enddo
-  enddo
-end subroutine copyMyPart
+    ! Copy the original (mzp,mxp,myp) vars to extended vars (-2:mzp+3,-2:mxp+3,-2:myp+3)
+    ! only the internal values (without extra borders)
+    do j=1,myp !-1+js
+       do i=1,mxp !-1+isi
+          do k=1,mzp !-1+ks
+             scr(k,i,j)=scp(k,i,j)
+          enddo
+       enddo
+    enddo
+    do j=1,myp
+       do i=1,mxp
+          do k=1,mzp
+             ufx_local(k,i,j)=ufx(k,i,j)
+             vfx_local(k,i,j)=vfx(k,i,j)
+             wfx_local(k,i,j)=wfx(k,i,j)
+          enddo
+          ufx_local(mzp+1,i,j)=0.
+          vfx_local(mzp+1,i,j)=0.
+          wfx_local(mzp+1,i,j)=0.
+       enddo
+    enddo
+  end subroutine copyMyPart
 
 
-subroutine expandBorder(mxp,myp,mzp,is,js,ks, &
-     mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
-     scr,ufx_local,vfx_local,wfx_local)
+  subroutine expandBorder(mxp,myp,mzp,is,js,ks, &
+       mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+       scr,ufx_local,vfx_local,wfx_local)
 
-  use ModParallelEnvironment, only: MsgDump
+    !# Copy the original halo (1) for extended halo if in model's border
+    !#
+    !# @note
+    !# ![](http://brams.cptec.inpe.br/wp-content/uploads/2015/11/logo-brams.navigation.png "")
+    !#
+    !# **Brief**: This routine perform a copy of the original halo of 1 (first and last position)
+    !# if it is in model border and if variable=.false. (variable is in radvc_rk routine)
+    !#
+    !# **Documentation**: <http://brams.cptec.inpe.br/documentation/>
+    !#
+    !# **Author**: Rodrigues, L.F. **&#9993;**<mailto:luiz.rodrigues@inpe.br>
+    !#
+    !# **Date**: 2018Jan
+    !# @endnote
+    !#
+    !# @changes
+    !#
+    !# +
+    !# @endchanges
+    !# @bug
+    !# No active bugs reported now
+    !# @endbug
+    !#
+    !# @todo
+    !#
+    !# @endtodo
+    !#
+    !# @warning
+    !# Now is under CC-GPL License, please see
+    !# &copy; <https://creativecommons.org/licenses/GPL/2.0/legalcode.pt>
+    !# @endwarning
+    !#
+    !#--- ----------------------------------------------------------------------------------------
+    integer, intent(in) :: mxp
+    !# points in x dir
+    integer, intent(in) :: myp
+    !# points in y dir
+    integer, intent(in) :: mzp
+    !# points in z dir
+    integer, intent(in) :: is
+    !# is=1 -> i direction of advection
+    integer, intent(in) :: js
+    !# js=1 -> j direction of advection
+    integer, intent(in) :: ks
+    !# ks=1 -> k direction of advection
+    integer, intent(in) :: mzi
+    !# initial z position of extended array (-2)
+    integer, intent(in) :: mzpp3
+    !# final z position of extended array (mzp+3)
+    integer, intent(in) :: mxi
+    !# initial x position of extended array (-2)
+    integer, intent(in) :: mxpp3
+    !# final x position of extended array (mxp+3)
+    integer, intent(in) :: myi
+    !# initial y position of extended array (-2)
+    integer, intent(in) :: mypp3
+    !# final y position of extended array (myp+3)
+    real, pointer, intent(in) :: scr(:,:,:)
+    !# Oversided (extended) var
+    real, pointer, intent(in) :: ufx_local(:,:,:)
+    !# Oversided (extended) var rhou*U
+    real, pointer, intent(in) :: vfx_local(:,:,:)
+    !# Oversided (extended) var rhou*V
+    real, pointer, intent(in) :: wfx_local(:,:,:)
+    !# Oversided (extended) var rhou*W
 
-  !# Copy the original halo (1) for extended halo if in model's border
-  !#
-  !# @note
-  !# ![](http://brams.cptec.inpe.br/wp-content/uploads/2015/11/logo-brams.navigation.png "")
-  !#
-  !# **Brief**: This routine perform a copy of the original halo of 1 (first and last position)
-  !# if it is in model border and if variable=.false. (variable is in radvc_rk routine)
-  !#
-  !# **Documentation**: <http://brams.cptec.inpe.br/documentation/>
-  !#
-  !# **Author**: Rodrigues, L.F. **&#9993;**<mailto:luiz.rodrigues@inpe.br>
-  !#
-  !# **Date**: 2018Jan
-  !# @endnote
-  !#
-  !# @changes
-  !#
-  !# +
-  !# @endchanges
-  !# @bug
-  !# No active bugs reported now
-  !# @endbug
-  !#
-  !# @todo
-  !#
-  !# @endtodo
-  !#
-  !# @warning
-  !# Now is under CC-GPL License, please see
-  !# &copy; <https://creativecommons.org/licenses/GPL/2.0/legalcode.pt>
-  !# @endwarning
-  !#
-  !#--- ----------------------------------------------------------------------------------------
-  integer, intent(in) :: mxp
-  !# points in x dir
-  integer, intent(in) :: myp
-  !# points in y dir
-  integer, intent(in) :: mzp
-  !# points in z dir
-  integer, intent(in) :: is
-  !# is=1 -> i direction of advection
-  integer, intent(in) :: js
-  !# js=1 -> j direction of advection
-  integer, intent(in) :: ks
-  !# ks=1 -> k direction of advection
-  integer, intent(in) :: mzi
-  !# initial z position of extended array (-2)
-  integer, intent(in) :: mzpp3
-  !# final z position of extended array (mzp+3)
-  integer, intent(in) :: mxi
-  !# initial x position of extended array (-2)
-  integer, intent(in) :: mxpp3
-  !# final x position of extended array (mxp+3)
-  integer, intent(in) :: myi
-  !# initial y position of extended array (-2)
-  integer, intent(in) :: mypp3
-  !# final y position of extended array (myp+3)
-  real,intent(inout)    :: scr(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  !# Oversided (extended) var
-  real,intent(inout)    :: ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  !# Oversided (extended) var rhou*U
-  real,intent(inout)    :: vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  !# Oversided (extended) var rhou*V
-  real,intent(inout)    :: wfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  !# Oversided (extended) var rhou*W
+    integer :: n
+    logical, parameter :: dumpLocal=.false.
+    character(len=*), parameter :: h="**(expandBorder)**"
+    character(len=8) :: str(10)
 
-  integer :: n
-  logical, parameter :: dumpLocal=.false.
-  character(len=*), parameter :: h="**(expandBorder)**"
-  character(len=8) :: str(10)
+    ! direction X -
+    do n=1,3
+       scr(:,       1-n,:)=scr(:,       1,:)
+       scr(:,mxp-1+n+is,:)=scr(:,mxp-1+is,:)
+    enddo
+    ufx_local(:,    0,:)=ufx_local(:,  1,:)
+    ufx_local(:,mxp+1,:)=ufx_local(:,mxp,:)
+    vfx_local(:,    0,:)=vfx_local(:,  1,:)
+    wfx_local(:,    0,:)=wfx_local(:,  1,:)
 
-  ! direction X -
-  do n=1,3
-     scr(:,       1-n,:)=scr(:,       1,:)
-     scr(:,mxp-1+n+is,:)=scr(:,mxp-1+is,:)
-  enddo
-  ufx_local(:,    0,:)=ufx_local(:,  1,:)
-  ufx_local(:,mxp+1,:)=ufx_local(:,mxp,:)
-  vfx_local(:,    0,:)=vfx_local(:,  1,:)
-  wfx_local(:,    0,:)=wfx_local(:,  1,:)
+    ! direction Y -
+    do n = 1,3
+       scr(:,:,       1-n)=scr(:,:,       1)
+       scr(:,:,myp-1+n+js)=scr(:,:,myp-1+js)
+    enddo
+    ufx_local(:,:,    0)=ufx_local(:,:,  1)
+    vfx_local(:,:,    0)=vfx_local(:,:,  1)
+    vfx_local(:,:,myp+1)=vfx_local(:,:,myp)
+    wfx_local(:,:,    0)=wfx_local(:,:,  1)
 
-  ! direction Y -
-  do n = 1,3
-     scr(:,:,       1-n)=scr(:,:,       1)
-     scr(:,:,myp-1+n+js)=scr(:,:,myp-1+js)
-  enddo
-  ufx_local(:,:,    0)=ufx_local(:,:,  1)
-  vfx_local(:,:,    0)=vfx_local(:,:,  1)
-  vfx_local(:,:,myp+1)=vfx_local(:,:,myp)
-  wfx_local(:,:,    0)=wfx_local(:,:,  1)
+    ! direction z-
+    do n = 1,3
+       scr(1-n       ,:,:)=scr(1       ,:,:)
+       scr(mzp-1+n+ks,:,:)=scr(mzp-1+ks,:,:)
+    enddo
+    ufx_local(0    ,:,:)=ufx_local(1,  :,:)
+    vfx_local(0    ,:,:)=vfx_local(1,  :,:)
+    wfx_local(0    ,:,:)=wfx_local(1  ,:,:)
+    wfx_local(mzp+1,:,:)=wfx_local(mzp,:,:)
+  end subroutine expandBorder
 
-  ! direction z-
-  do n = 1,3
-     scr(1-n       ,:,:)=scr(1       ,:,:)
-     scr(mzp-1+n+ks,:,:)=scr(mzp-1+ks,:,:)
-  enddo
-  ufx_local(0    ,:,:)=ufx_local(1,  :,:)
-  vfx_local(0    ,:,:)=vfx_local(1,  :,:)
-  wfx_local(0    ,:,:)=wfx_local(1  ,:,:)
-  wfx_local(mzp+1,:,:)=wfx_local(mzp,:,:)
-end subroutine expandBorder
-
-!
+  !
 
 
-!---------------------------------------------------------------------
+  !---------------------------------------------------------------------
 
 
 
-!---------------------------------------------------------------------
-
-
-!---------------------------------------------------------------------
+  !---------------------------------------------------------------------
 
 
 
-!!- compute interface values of scalars/wind
-subroutine compXYInterface_or1(mxp,myp,mzp,ks,isi,js,&
-     mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
-     mzppks,mxppis,myppjs, &
-     scr,ufx_local,vfx_local,&
-     qx,qy,variable, vname)
-  implicit none
-  integer, intent(in) :: mxp
-  integer, intent(in) :: myp
-  integer, intent(in) :: mzp
-  integer,intent(in)  :: ks
-  integer,intent(in)  :: isi
-  integer,intent(in)  :: js
-  integer, intent(in) :: mzi
-  integer, intent(in) :: mzpp3
-  integer, intent(in) :: mxi
-  integer, intent(in) :: mxpp3
-  integer, intent(in) :: myi
-  integer, intent(in) :: mypp3
-  integer, intent(in) :: mzppks
-  integer, intent(in) :: mxppis
-  integer, intent(in) :: myppjs
-  real,intent(in)     :: scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  real,intent(in)     :: ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  real,intent(in)     :: vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  character(len=*), intent(in) :: vname
-  logical, intent(in) :: variable
-  real,intent(out)    :: qx(mzppks,mxppis,myppjs)
-  real,intent(out)    :: qy(mzppks,mxppis,myppjs)
+  !--- 2nd order interpolation operator
+  real function fq2(qi,qip1)
+    real, intent(in) :: qi
+    real, intent(in) :: qip1
 
-  real, external :: flux_upwind
-  integer :: i,j,k
-  real :: dir
+    fq2= 0.5*(qip1+qi)
 
-  !- compute x-interface values upwind order
-  do j = 1,myp
-     do i = 1,mxp-1
-        do k = 1,mzp
-           dir = sign(1.0,ufx_local(k,i,j)+ufx_local(k+ks,i+isi,j+js))
-           qx(k,i,j)=flux_upwind(scr(k,i,j),scr(k,i+1,j),dir)
-        enddo
-     enddo
-  enddo
-  !- compute y-interface values upwind order
-  do j = 1,myp-1
-     do i = 1,mxp
-        do k = 1,mzp
-           dir = sign(1.0,vfx_local(k,i,j)+vfx_local(k+ks,i+isi,j+js))
-           qy(k,i,j)=flux_upwind(scr(k,i,j),scr(k,i,j+1),dir)
-        enddo
-     enddo
-  enddo
+  end function fq2
 
-end subroutine compXYInterface_or1
+  !--- 3rd order interpolation operator
+  real function fq3(qim1,qi,qip1,qip2,dir)
+    real,intent(in) :: qim1
+    real,intent(in) :: qi
+    real,intent(in) :: qip1
+    real,intent(in) :: qip2
+    real,intent(in) :: dir
 
-subroutine compXYInterface_or2(mxp,myp,mzp,ks,isi,js,&
-     mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
-     mzppks,mxppis,myppjs, &
-     scr,ufx_local,vfx_local,&
-     qx, qy,variable, vname)
-  implicit none
-  integer, intent(in) :: mxp
-  integer, intent(in) :: myp
-  integer, intent(in) :: mzp
-  integer,intent(in)  :: ks
-  integer,intent(in)  :: isi
-  integer,intent(in)  :: js
-  integer, intent(in) :: mzi
-  integer, intent(in) :: mzpp3
-  integer, intent(in) :: mxi
-  integer, intent(in) :: mxpp3
-  integer, intent(in) :: myi
-  integer, intent(in) :: mypp3
-  integer, intent(in) :: mzppks
-  integer, intent(in) :: mxppis
-  integer, intent(in) :: myppjs
-  real,intent(in)     :: scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  real,intent(in)     :: ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  real,intent(in)     :: vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  character(len=*), intent(in) :: vname
-  logical, intent(in) :: variable
-  real,intent(out)    :: qx(mzppks,mxppis,myppjs)
-  real,intent(out)    :: qy(mzppks,mxppis,myppjs)
+    fq3= f40*(qip1+qi)-f41*(qip2+qim1) &
+         - f41*(3.*(qip1-qi)-(qip2-qim1))*dir
 
-  real, external :: fq2
-  integer :: i,j,k
+  end function fq3
+
+  !--- 4th order interpolation operator
+  real function fq4(qim1,qi,qip1,qip2)
+    real, intent(in) :: qim1
+    real, intent(in) :: qi
+    real, intent(in) :: qip1
+    real, intent(in) :: qip2
+
+    fq4= f40*(qip1+qi)-f41*(qip2+qim1)
+
+  end function fq4
+
+  !- polynomial interpolation operators
+  ! for 5th and 6th orders
+  real function fq(qim2,qim1,qi,qip1,qip2,qip3,dir)
+    real, intent(in) :: qim2
+    real, intent(in) :: qim1
+    real, intent(in) :: qi
+    real, intent(in) :: qip1
+    real, intent(in) :: qip2
+    real, intent(in) :: qip3
+    real, intent(in) :: dir
+
+    fq = f50*(qip1 + qi) - f51*(qip2 + qim1) + f52*(qip3 + qim2) &
+         - fifth_order* f52*(qip3-qim2-5.*(qip2-qim1)+10.*(qip1-qi))*dir
+
+  end function fq
+
+  !--- 1st order or upwind scheme
+  real function flux_upwind(qi, qip1, dir )
+    real, intent(in) :: dir
+    real, intent(in) :: qi
+    real, intent(in) :: qip1
+
+    flux_upwind = 0.5*(1.+dir)*qi - 0.5*(dir-1.)*qip1
+
+  end function flux_upwind
+
+  !---------------------------------------------------------------------
+
+
+
+  !!- compute interface values of scalars/wind
+  subroutine compXYInterface_or1(mxp,myp,mzp,ks,isi,js,&
+       mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+       mzppks,mxppis,myppjs, &
+       scr,ufx_local,vfx_local,&
+       qx,qy,variable, vname)
+    integer, intent(in) :: mxp
+    integer, intent(in) :: myp
+    integer, intent(in) :: mzp
+    integer,intent(in)  :: ks
+    integer,intent(in)  :: isi
+    integer,intent(in)  :: js
+    integer, intent(in) :: mzi
+    integer, intent(in) :: mzpp3
+    integer, intent(in) :: mxi
+    integer, intent(in) :: mxpp3
+    integer, intent(in) :: myi
+    integer, intent(in) :: mypp3
+    integer, intent(in) :: mzppks
+    integer, intent(in) :: mxppis
+    integer, intent(in) :: myppjs
+    real, pointer, intent(in)     :: scr      (:,:,:)
+    real, pointer, intent(in)     :: ufx_local(:,:,:)
+    real, pointer, intent(in)     :: vfx_local(:,:,:)
+    character(len=*), intent(in) :: vname
+    logical, intent(in) :: variable
+    real, pointer, intent(in)    :: qx(:,:,:)
+    real, pointer, intent(in)    :: qy(:,:,:)
+
+!!$    real :: flux_upwind
+    integer :: i,j,k
+    real :: dir
+
+    !- compute x-interface values upwind order
+    do j = 1,myp
+       do i = 1,mxp-1
+          do k = 1,mzp
+             dir = sign(1.0,ufx_local(k,i,j)+ufx_local(k+ks,i+isi,j+js))
+             qx(k,i,j)=flux_upwind(scr(k,i,j),scr(k,i+1,j),dir)
+          enddo
+       enddo
+    enddo
+    !- compute y-interface values upwind order
+    do j = 1,myp-1
+       do i = 1,mxp
+          do k = 1,mzp
+             dir = sign(1.0,vfx_local(k,i,j)+vfx_local(k+ks,i+isi,j+js))
+             qy(k,i,j)=flux_upwind(scr(k,i,j),scr(k,i,j+1),dir)
+          enddo
+       enddo
+    enddo
+
+  end subroutine compXYInterface_or1
+
+  subroutine compXYInterface_or2(mxp,myp,mzp,ks,isi,js,&
+       mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+       mzppks,mxppis,myppjs, &
+       scr,ufx_local,vfx_local,&
+       qx, qy,variable, vname)
+    integer, intent(in) :: mxp
+    integer, intent(in) :: myp
+    integer, intent(in) :: mzp
+    integer,intent(in)  :: ks
+    integer,intent(in)  :: isi
+    integer,intent(in)  :: js
+    integer, intent(in) :: mzi
+    integer, intent(in) :: mzpp3
+    integer, intent(in) :: mxi
+    integer, intent(in) :: mxpp3
+    integer, intent(in) :: myi
+    integer, intent(in) :: mypp3
+    integer, intent(in) :: mzppks
+    integer, intent(in) :: mxppis
+    integer, intent(in) :: myppjs
+    real, pointer, intent(in)     :: scr      (:,:,:)
+    real, pointer, intent(in)     :: ufx_local(:,:,:)
+    real, pointer, intent(in)     :: vfx_local(:,:,:)
+    character(len=*), intent(in) :: vname
+    logical, intent(in) :: variable
+    real, pointer, intent(in)    :: qx(:,:,:)
+    real, pointer, intent(in)    :: qy(:,:,:)
+
+!!$    real :: fq2
+    integer :: i,j,k
+
+    !- compute x-interface values
+    do j = 1,myp
+       do i = 1,mxp-1
+          do k = 1,mzp
+             qx(k,i,j) = fq2(scr(k,i,j),scr(k,i+1,j))
+          enddo
+       enddo
+    enddo
+    !- compute y-interface values
+    do j = 1,myp-1
+       do i = 1,mxp
+          do k = 1,mzp
+             qy(k,i,j) = fq2(scr(k,i,j),scr(k,i,j+1))
+          enddo
+       enddo
+    enddo
+
+  end subroutine compXYInterface_or2
 
   !- compute x-interface values
-  do j = 1,myp
-     do i = 1,mxp-1
-        do k = 1,mzp
-           qx(k,i,j) = fq2(scr(k,i,j),scr(k,i+1,j))
-        enddo
-     enddo
-  enddo
-  !- compute y-interface values
-  do j = 1,myp-1
-     do i = 1,mxp
-        do k = 1,mzp
-           qy(k,i,j) = fq2(scr(k,i,j),scr(k,i,j+1))
-        enddo
-     enddo
-  enddo
+  subroutine compXYInterface_or3(mxp,myp,mzp,ks,isi,js,&
+       mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+       mzppks,mxppis,myppjs, &
+       scr,ufx_local,vfx_local,&
+       borderNorth, borderSouth, borderEast, borderWest, &
+       qx,qy,variable, vname)
+    integer, intent(in) :: mxp
+    integer, intent(in) :: myp
+    integer, intent(in) :: mzp
+    integer,intent(in)  :: ks
+    integer,intent(in)  :: isi
+    integer,intent(in)  :: js
+    integer, intent(in) :: mzi
+    integer, intent(in) :: mzpp3
+    integer, intent(in) :: mxi
+    integer, intent(in) :: mxpp3
+    integer, intent(in) :: myi
+    integer, intent(in) :: mypp3
+    integer, intent(in) :: mzppks
+    integer, intent(in) :: mxppis
+    integer, intent(in) :: myppjs
+    real, pointer, intent(in)     :: scr      (:,:,:)
+    real, pointer, intent(in)     :: ufx_local(:,:,:)
+    real, pointer, intent(in)     :: vfx_local(:,:,:)
+    logical, intent(in) :: borderNorth
+    logical, intent(in) :: borderSouth
+    logical, intent(in) :: borderEast
+    logical, intent(in) :: borderWest
+    character(len=*), intent(in) :: vname
+    logical, intent(in) :: variable
+    real, pointer, intent(in)    :: qx(:,:,:)
+    real, pointer, intent(in)    :: qy(:,:,:)
 
-end subroutine compXYInterface_or2
+!!$    real :: flux_upwind
+!!$    real :: fq2,fq3
+    real :: dir
+    integer :: i,j,k
 
-!- compute x-interface values
-subroutine compXYInterface_or3(mxp,myp,mzp,ks,isi,js,&
-     mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
-     mzppks,mxppis,myppjs, &
-     scr,ufx_local,vfx_local,&
-     borderNorth, borderSouth, borderEast, borderWest, &
-     qx,qy,variable, vname)
-  implicit none
-  integer, intent(in) :: mxp
-  integer, intent(in) :: myp
-  integer, intent(in) :: mzp
-  integer,intent(in)  :: ks
-  integer,intent(in)  :: isi
-  integer,intent(in)  :: js
-  integer, intent(in) :: mzi
-  integer, intent(in) :: mzpp3
-  integer, intent(in) :: mxi
-  integer, intent(in) :: mxpp3
-  integer, intent(in) :: myi
-  integer, intent(in) :: mypp3
-  integer, intent(in) :: mzppks
-  integer, intent(in) :: mxppis
-  integer, intent(in) :: myppjs
-  real,intent(in)     :: scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  real,intent(in)     :: ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  real,intent(in)     :: vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  logical, intent(in) :: borderNorth
-  logical, intent(in) :: borderSouth
-  logical, intent(in) :: borderEast
-  logical, intent(in) :: borderWest
-  character(len=*), intent(in) :: vname
-  logical, intent(in) :: variable
-  real,intent(out)    :: qx(mzppks,mxppis,myppjs)
-  real,intent(out)    :: qy(mzppks,mxppis,myppjs)
+    qx=0.0
+    qy=0.0
 
-  real,external :: flux_upwind
-  real,external :: fq2,fq3
-  real :: dir
-  integer :: i,j,k
-
-  qx=0.0
-  qy=0.0
-
-  do j = 1,myp
-     do i = 1,mxp-1
-        do k = 1,mzp
-           if(((borderWest .and. i==1) .or. (borderEast .and. i>mxp-2)) &
-                .and. variable) then
-              !Use order 1
-              dir = sign(1.0,ufx_local(k,i,j)+ufx_local(k+ks,i+isi,j+js))
-              qx(k,i,j)=flux_upwind(scr(k,i,j),scr(k,i+1,j),dir)
-           else
-              !use order 3
-              dir = sign(1.0,ufx_local(k,i,j)+ufx_local(k+ks,i+isi,j+js))
-              qx(k,i,j) = fq3(scr(k,i-1,j),scr(k,i,j),scr(k,i+1,j),scr(k,i+2,j),dir)
-           endif
-        enddo
-     enddo
-  enddo
-  !- compute y-interface values
-  do j = 1,myp-1
-     do i = 1,mxp
-        do k = 1,mzp
-           if(((borderSouth .and. j==1) .or. (borderNorth .and. j>myp-2)) &
+    do j = 1,myp
+       do i = 1,mxp-1
+          do k = 1,mzp
+             if(((borderWest .and. i==1) .or. (borderEast .and. i>mxp-2)) &
+                  .and. variable) then
+                !Use order 1
+                dir = sign(1.0,ufx_local(k,i,j)+ufx_local(k+ks,i+isi,j+js))
+                qx(k,i,j)=flux_upwind(scr(k,i,j),scr(k,i+1,j),dir)
+             else
+                !use order 3
+                dir = sign(1.0,ufx_local(k,i,j)+ufx_local(k+ks,i+isi,j+js))
+                qx(k,i,j) = fq3(scr(k,i-1,j),scr(k,i,j),scr(k,i+1,j),scr(k,i+2,j),dir)
+             endif
+          enddo
+       enddo
+    enddo
+    !- compute y-interface values
+    do j = 1,myp-1
+       do i = 1,mxp
+          do k = 1,mzp
+             if(((borderSouth .and. j==1) .or. (borderNorth .and. j>myp-2)) &
 !!$           if(((borderNorth .and. j==1) .or. (borderSouth .and. j>myp-2)) &
-                .and. variable) then
-              dir = sign(1.0,vfx_local(k,i,j)+vfx_local(k+ks,i+isi,j+js))
-              qy(k,i,j)=flux_upwind(scr(k,i,j),scr(k,i,j+1),dir)
-           else
-              dir = sign(1.0,vfx_local(k,i,j)+vfx_local(k+ks,i+isi,j+js))
-              qy(k,i,j) = fq3(scr(k,i,j-1),scr(k,i,j),scr(k,i,j+1), scr(k,i,j+2),dir)
-           endif
-        enddo
-     enddo
-  enddo
+                  .and. variable) then
+                dir = sign(1.0,vfx_local(k,i,j)+vfx_local(k+ks,i+isi,j+js))
+                qy(k,i,j)=flux_upwind(scr(k,i,j),scr(k,i,j+1),dir)
+             else
+                dir = sign(1.0,vfx_local(k,i,j)+vfx_local(k+ks,i+isi,j+js))
+                qy(k,i,j) = fq3(scr(k,i,j-1),scr(k,i,j),scr(k,i,j+1), scr(k,i,j+2),dir)
+             endif
+          enddo
+       enddo
+    enddo
 
-end subroutine compXYInterface_or3
+  end subroutine compXYInterface_or3
 
-!- compute x-interface values
-subroutine compXYInterface_or4(mxp,myp,mzp,ks,isi,js,&
-     mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
-     mzppks,mxppis,myppjs, &
-     scr,ufx_local,vfx_local,&
-     qx, qy,variable, vname)
-  implicit none
-  integer, intent(in) :: mxp
-  integer, intent(in) :: myp
-  integer, intent(in) :: mzp
-  integer,intent(in)  :: ks
-  integer,intent(in)  :: isi
-  integer,intent(in)  :: js
-  integer, intent(in) :: mzi
-  integer, intent(in) :: mzpp3
-  integer, intent(in) :: mxi
-  integer, intent(in) :: mxpp3
-  integer, intent(in) :: myi
-  integer, intent(in) :: mypp3
-  integer, intent(in) :: mzppks
-  integer, intent(in) :: mxppis
-  integer, intent(in) :: myppjs
-  real,intent(in)     :: scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  real,intent(in)     :: ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  real,intent(in)     :: vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  character(len=*), intent(in) :: vname
-  logical, intent(in) :: variable
-  real,intent(out)    :: qx(mzppks,mxppis,myppjs)
-  real,intent(out)    :: qy(mzppks,mxppis,myppjs)
+  !- compute x-interface values
+  subroutine compXYInterface_or4(mxp,myp,mzp,ks,isi,js,&
+       mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+       mzppks,mxppis,myppjs, &
+       scr,ufx_local,vfx_local,&
+       qx, qy,variable, vname)
+    integer, intent(in) :: mxp
+    integer, intent(in) :: myp
+    integer, intent(in) :: mzp
+    integer,intent(in)  :: ks
+    integer,intent(in)  :: isi
+    integer,intent(in)  :: js
+    integer, intent(in) :: mzi
+    integer, intent(in) :: mzpp3
+    integer, intent(in) :: mxi
+    integer, intent(in) :: mxpp3
+    integer, intent(in) :: myi
+    integer, intent(in) :: mypp3
+    integer, intent(in) :: mzppks
+    integer, intent(in) :: mxppis
+    integer, intent(in) :: myppjs
+    real, pointer, intent(in)     :: scr      (:,:,:)
+    real, pointer, intent(in)     :: ufx_local(:,:,:)
+    real, pointer, intent(in)     :: vfx_local(:,:,:)
+    character(len=*), intent(in) :: vname
+    logical, intent(in) :: variable
+    real, pointer, intent(in)    :: qx(:,:,:)
+    real, pointer, intent(in)    :: qy(:,:,:)
 
-  real, external :: fq4
-  integer :: i,j,k
+!!$    real :: fq4
+    integer :: i,j,k
 
-  do j = 1,myp
-     do i = 1,mxp-1
-        do k = 1,mzp
-           qx(k,i,j) = fq4(scr(k,i-1,j),scr(k,i,j),scr(k,i+1,j),scr(k,i+2,j))
-        enddo
-     enddo
-  enddo
-  !- compute y-interface values
-  do j = 1,myp-1
-     do i = 1,mxp
-        do k = 1,mzp
-           qy(k,i,j) = fq4(scr(k,i,j-1),scr(k,i,j),scr(k,i,j+1),scr(k,i,j+2))
-        enddo
-     enddo
-  enddo
+    do j = 1,myp
+       do i = 1,mxp-1
+          do k = 1,mzp
+             qx(k,i,j) = fq4(scr(k,i-1,j),scr(k,i,j),scr(k,i+1,j),scr(k,i+2,j))
+          enddo
+       enddo
+    enddo
+    !- compute y-interface values
+    do j = 1,myp-1
+       do i = 1,mxp
+          do k = 1,mzp
+             qy(k,i,j) = fq4(scr(k,i,j-1),scr(k,i,j),scr(k,i,j+1),scr(k,i,j+2))
+          enddo
+       enddo
+    enddo
 
-end subroutine compXYInterface_or4
+  end subroutine compXYInterface_or4
 
-!- compute x-interface values
-subroutine compXYInterface_or56(mxp,myp,mzp,ks,isi,js,&
-     mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
-     mzppks,mxppis,myppjs, &
-     scr,ufx_local,vfx_local,&
-     borderNorth, borderSouth, borderEast, borderWest, &
-     qx, qy,variable, vname, order_h)
-  use advRkParam, only: fifth_order
-  implicit none
-  integer, intent(in) :: mxp
-  integer, intent(in) :: myp
-  integer, intent(in) :: mzp
-  integer,intent(in)  :: ks
-  integer,intent(in)  :: isi
-  integer,intent(in)  :: js
-  integer, intent(in) :: mzi
-  integer, intent(in) :: mzpp3
-  integer, intent(in) :: mxi
-  integer, intent(in) :: mxpp3
-  integer, intent(in) :: myi
-  integer, intent(in) :: mypp3
-  integer, intent(in) :: mzppks
-  integer, intent(in) :: mxppis
-  integer, intent(in) :: myppjs
-  integer, intent(in) :: order_h
-  real,intent(in)     :: scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  real,intent(in)     :: ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  real,intent(in)     :: vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  logical, intent(in) :: borderNorth
-  logical, intent(in) :: borderSouth
-  logical, intent(in) :: borderEast
-  logical, intent(in) :: borderWest
-  character(len=*), intent(in) :: vname
-  logical, intent(in) :: variable
-  real,intent(out)    :: qx(mzppks,mxppis,myppjs)
-  real,intent(out)    :: qy(mzppks,mxppis,myppjs)
+  !- compute x-interface values
+  subroutine compXYInterface_or56(mxp,myp,mzp,ks,isi,js,&
+       mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+       mzppks,mxppis,myppjs, &
+       scr,ufx_local,vfx_local,&
+       borderNorth, borderSouth, borderEast, borderWest, &
+       qx, qy,variable, vname, order_h)
+    integer, intent(in) :: mxp
+    integer, intent(in) :: myp
+    integer, intent(in) :: mzp
+    integer,intent(in)  :: ks
+    integer,intent(in)  :: isi
+    integer,intent(in)  :: js
+    integer, intent(in) :: mzi
+    integer, intent(in) :: mzpp3
+    integer, intent(in) :: mxi
+    integer, intent(in) :: mxpp3
+    integer, intent(in) :: myi
+    integer, intent(in) :: mypp3
+    integer, intent(in) :: mzppks
+    integer, intent(in) :: mxppis
+    integer, intent(in) :: myppjs
+    integer, intent(in) :: order_h
+    real, pointer, intent(in)     :: scr      (:,:,:)
+    real, pointer, intent(in)     :: ufx_local(:,:,:)
+    real, pointer, intent(in)     :: vfx_local(:,:,:)
+    logical, intent(in) :: borderNorth
+    logical, intent(in) :: borderSouth
+    logical, intent(in) :: borderEast
+    logical, intent(in) :: borderWest
+    character(len=*), intent(in) :: vname
+    logical, intent(in) :: variable
+    real, pointer, intent(in)    :: qx(:,:,:)
+    real, pointer, intent(in)    :: qy(:,:,:)
 
-  real, external :: fq,fq3,flux_upwind
-  real :: dir
-  integer :: i,j,k
+!!$    real :: fq,fq3,flux_upwind
+    real :: dir
+    integer :: i,j,k
 
-  fifth_order = 1.0                ! 5th order
-  if(order_h == 6)fifth_order = 0.0  ! 6th order
+    fifth_order = 1.0                ! 5th order
+    if(order_h == 6)fifth_order = 0.0  ! 6th order
 
-  do j = 1,myp
-     do i = 1,mxp-1
-        do k = 1,mzp
-           if(((borderWest .and. i==1) .or. (borderEast .and. i==mxp-1)) &
-                .and. variable) then
-              !Order=1
-              dir = sign(1.0,ufx_local(k,i,j)+ufx_local(k+ks,i+isi,j+js))
-              qx(k,i,j)=flux_upwind(scr(k,i,j),scr(k,i+1,j),dir)
-           elseif((borderWest .and. i==2) .or. (borderEast .and. i==mxp-2) .and. variable) then
-              !use order 3
-              dir = sign(1.0,ufx_local(k,i,j)+ufx_local(k+ks,i+isi,j+js))
-              qx(k,i,j) = fq3(scr(k,i-1,j),scr(k,i,j),scr(k,i+1,j),scr(k,i+2,j),dir)
-           else
-              !Use order 5 or 6
-              dir = sign(1.0,ufx_local(k,i,j)+ufx_local(k+ks,i+isi,j+js))
-              qx(k,i,j) = fq(scr(k,i-2,j),scr(k,i-1,j),scr(k,i,j),scr(k,i+1,j),scr(k,i+2,j),scr(k,i+3,j),dir)
-           endif
-        enddo
-     enddo
-  enddo
-  !- compute y-interface values
-  do j = 1,myp-1
-     do i = 1,mxp
-        do k = 1,mzp
+    do j = 1,myp
+       do i = 1,mxp-1
+          do k = 1,mzp
+             if(((borderWest .and. i==1) .or. (borderEast .and. i==mxp-1)) &
+                  .and. variable) then
+                !Order=1
+                dir = sign(1.0,ufx_local(k,i,j)+ufx_local(k+ks,i+isi,j+js))
+                qx(k,i,j)=flux_upwind(scr(k,i,j),scr(k,i+1,j),dir)
+             elseif((borderWest .and. i==2) .or. (borderEast .and. i==mxp-2) .and. variable) then
+                !use order 3
+                dir = sign(1.0,ufx_local(k,i,j)+ufx_local(k+ks,i+isi,j+js))
+                qx(k,i,j) = fq3(scr(k,i-1,j),scr(k,i,j),scr(k,i+1,j),scr(k,i+2,j),dir)
+             else
+                !Use order 5 or 6
+                dir = sign(1.0,ufx_local(k,i,j)+ufx_local(k+ks,i+isi,j+js))
+                qx(k,i,j) = fq(scr(k,i-2,j),scr(k,i-1,j),scr(k,i,j),scr(k,i+1,j),scr(k,i+2,j),scr(k,i+3,j),dir)
+             endif
+          enddo
+       enddo
+    enddo
+    !- compute y-interface values
+    do j = 1,myp-1
+       do i = 1,mxp
+          do k = 1,mzp
 !!$           if(((borderNorth .and. j==1) .or. (borderSouth .and. j==myp-1)) &
-           if(((borderSouth .and. j==1) .or. (borderNorth .and. j==myp-1)) &
-                .and. variable) then
-              ! Order 1
-              dir = sign(1.0,vfx_local(k,i,j)+vfx_local(k+ks,i+isi,j+js))
-              qy(k,i,j)=flux_upwind(scr(k,i,j),scr(k,i,j+1),dir)
+             if(((borderSouth .and. j==1) .or. (borderNorth .and. j==myp-1)) &
+                  .and. variable) then
+                ! Order 1
+                dir = sign(1.0,vfx_local(k,i,j)+vfx_local(k+ks,i+isi,j+js))
+                qy(k,i,j)=flux_upwind(scr(k,i,j),scr(k,i,j+1),dir)
 !!$           elseif( (borderNorth .and. j==2)  .or. (borderSouth .and. j==myp-2) .and. variable) then
-           elseif( (borderSouth .and. j==2)  .or. (borderNorth .and. j==myp-2) .and. variable) then
-              !Order 3
-              dir = sign(1.0,vfx_local(k,i,j)+vfx_local(k+ks,i+isi,j+js))
-              qy(k,i,j) = fq3(scr(k,i,j-1),scr(k,i,j),scr(k,i,j+1), scr(k,i,j+2),dir)
-           else
-              !Use order 6
-              dir = sign(1.0,vfx_local(k,i,j)+vfx_local(k+ks,i+isi,j+js))
-              qy(k,i,j) = fq(scr(k,i,j-2),scr(k,i,j-1),scr(k,i,j),scr(k,i,j+1),scr(k,i,j+2),scr(k,i,j+3),dir)
-           endif
-        enddo
-     enddo
-  enddo
+             elseif( (borderSouth .and. j==2)  .or. (borderNorth .and. j==myp-2) .and. variable) then
+                !Order 3
+                dir = sign(1.0,vfx_local(k,i,j)+vfx_local(k+ks,i+isi,j+js))
+                qy(k,i,j) = fq3(scr(k,i,j-1),scr(k,i,j),scr(k,i,j+1), scr(k,i,j+2),dir)
+             else
+                !Use order 6
+                dir = sign(1.0,vfx_local(k,i,j)+vfx_local(k+ks,i+isi,j+js))
+                qy(k,i,j) = fq(scr(k,i,j-2),scr(k,i,j-1),scr(k,i,j),scr(k,i,j+1),scr(k,i,j+2),scr(k,i,j+3),dir)
+             endif
+          enddo
+       enddo
+    enddo
 
-end subroutine compXYInterface_or56
+  end subroutine compXYInterface_or56
 
-!- compute z-interface values upwind order
-subroutine compZInterface_or1(mxp,myp,mzp,ks,isi,js,&
-     mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
-     mzppks,mxppis,myppjs, &
-     scr,wfx_local,qz,variable,vname)
-  implicit none
-  integer, intent(in) :: mxp
-  integer, intent(in) :: myp
-  integer, intent(in) :: mzp
-  integer,intent(in)  :: ks
-  integer,intent(in)  :: isi
-  integer,intent(in)  :: js
-  integer, intent(in) :: mzi
-  integer, intent(in) :: mzpp3
-  integer, intent(in) :: mxi
-  integer, intent(in) :: mxpp3
-  integer, intent(in) :: myi
-  integer, intent(in) :: mypp3
-  integer, intent(in) :: mzppks
-  integer, intent(in) :: mxppis
-  integer, intent(in) :: myppjs
-  real,intent(in)     :: scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  real,intent(in)     :: wfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  character(len=*),intent(in)    :: vname
-  logical, intent(in) :: variable
-  real,intent(out)    :: qz(mzppks,mxppis,myppjs)
+  !- compute z-interface values upwind order
+  subroutine compZInterface_or1(mxp,myp,mzp,ks,isi,js,&
+       mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+       mzppks,mxppis,myppjs, &
+       scr,wfx_local,qz,variable,vname)
+    integer, intent(in) :: mxp
+    integer, intent(in) :: myp
+    integer, intent(in) :: mzp
+    integer,intent(in)  :: ks
+    integer,intent(in)  :: isi
+    integer,intent(in)  :: js
+    integer, intent(in) :: mzi
+    integer, intent(in) :: mzpp3
+    integer, intent(in) :: mxi
+    integer, intent(in) :: mxpp3
+    integer, intent(in) :: myi
+    integer, intent(in) :: mypp3
+    integer, intent(in) :: mzppks
+    integer, intent(in) :: mxppis
+    integer, intent(in) :: myppjs
+    real, pointer, intent(in)     :: scr      (:,:,:)
+    real, pointer, intent(in)     :: wfx_local(:,:,:)
+    character(len=*),intent(in)    :: vname
+    logical, intent(in) :: variable
+    real, pointer, intent(in)    :: qz(:,:,:)
 
-  real, external :: flux_upwind
-  integer :: i,j,k
-  real :: dir
+!!$    real :: flux_upwind
+    integer :: i,j,k
+    real :: dir
 
-  do j = 1,myp
-     do i = 1,mxp
-        do k = 1,mzp-1
-           dir = sign(1.0,wfx_local(k,i,j)+wfx_local(k+ks,i+isi,j+js))
-           qz(k,i,j)=flux_upwind(scr(k,i,j),scr(k+1,i,j),dir)
-        enddo
-     enddo
-  enddo
+    do j = 1,myp
+       do i = 1,mxp
+          do k = 1,mzp-1
+             dir = sign(1.0,wfx_local(k,i,j)+wfx_local(k+ks,i+isi,j+js))
+             qz(k,i,j)=flux_upwind(scr(k,i,j),scr(k+1,i,j),dir)
+          enddo
+       enddo
+    enddo
 
-end subroutine compZInterface_or1
+  end subroutine compZInterface_or1
 
-!- compute z-interface values
-subroutine compZInterface_or2(mxp,myp,mzp,ks,isi,js,&
-     mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
-     mzppks,mxppis,myppjs, &
-     scr,wfx_local,qz,variable,vname)
-  implicit none
-  integer, intent(in) :: mxp
-  integer, intent(in) :: myp
-  integer, intent(in) :: mzp
-  integer,intent(in)  :: ks
-  integer,intent(in)  :: isi
-  integer,intent(in)  :: js
-  integer, intent(in) :: mzi
-  integer, intent(in) :: mzpp3
-  integer, intent(in) :: mxi
-  integer, intent(in) :: mxpp3
-  integer, intent(in) :: myi
-  integer, intent(in) :: mypp3
-  integer, intent(in) :: mzppks
-  integer, intent(in) :: mxppis
-  integer, intent(in) :: myppjs
-  real,intent(in)     :: scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  real,intent(in)     :: wfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  character(len=*),intent(in)    :: vname
-  logical, intent(in) :: variable
-  real,intent(out)    :: qz(mzppks,mxppis,myppjs)
-
-  real, external :: fq2
-  integer :: i,j,k
-
-  do j = 1,myp
-     do i = 1,mxp
-        do k = 1,mzp-1
-           qz(k,i,j) = fq2(scr(k,i,j),scr(k+1,i,j))
-        enddo
-     enddo
-  enddo
-
-end subroutine compZInterface_or2
-
-!- compute z-interface values
-subroutine compZInterface_or3(mxp,myp,mzp,ks,isi,js,&
-     mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
-     mzppks,mxppis,myppjs, &
-     scr,wfx_local,qz,variable,vname)
-  implicit none
-  integer, intent(in) :: mxp
-  integer, intent(in) :: myp
-  integer, intent(in) :: mzp
-  integer,intent(in)  :: ks
-  integer,intent(in)  :: isi
-  integer,intent(in)  :: js
-  integer, intent(in) :: mzi
-  integer, intent(in) :: mzpp3
-  integer, intent(in) :: mxi
-  integer, intent(in) :: mxpp3
-  integer, intent(in) :: myi
-  integer, intent(in) :: mypp3
-  integer, intent(in) :: mzppks
-  integer, intent(in) :: mxppis
-  integer, intent(in) :: myppjs
-  real,intent(in)     :: scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  real,intent(in)     :: wfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  character(len=*),intent(in)    :: vname
-  logical, intent(in) :: variable
-  real,intent(out)    :: qz(mzppks,mxppis,myppjs)
-
-  real, external :: fq2,fq3,flux_upwind
-  real :: dir
-  integer :: i,j,k
-
-  !qz=0.0
-
-  do j = 1,myp
-     do i = 1,mxp
-        do k = 1,mzp-1
-           if((k==1 .or. k>mzp-2) .and. variable) then
-              ! order 1
-              dir = sign(1.0,wfx_local(k,i,j)+wfx_local(k+ks,i+isi,j+js))
-              qz(k,i,j)=flux_upwind(scr(k,i,j),scr(k+1,i,j),dir)
-           else
-              !Order 3
-              dir = sign(1.0,wfx_local(k,i,j)+wfx_local(k+ks,i+isi,j+js))
-              qz(k,i,j) = fq3(scr(k-1,i,j),scr(k,i,j),scr(k+1,i,j), scr(k+2,i,j),dir)
-           endif
-        enddo
-     enddo
-  enddo
-
-end subroutine compZInterface_or3
-
-!- compute z-interface values
-subroutine compZInterface_or4(mxp,myp,mzp,ks,isi,js,&
-     mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
-     mzppks,mxppis,myppjs, &
-     scr,wfx_local,qz,variable,vname)
-  implicit none
-  integer, intent(in) :: mxp
-  integer, intent(in) :: myp
-  integer, intent(in) :: mzp
-  integer,intent(in)  :: ks
-  integer,intent(in)  :: isi
-  integer,intent(in)  :: js
-  integer, intent(in) :: mzi
-  integer, intent(in) :: mzpp3
-  integer, intent(in) :: mxi
-  integer, intent(in) :: mxpp3
-  integer, intent(in) :: myi
-  integer, intent(in) :: mypp3
-  integer, intent(in) :: mzppks
-  integer, intent(in) :: mxppis
-  integer, intent(in) :: myppjs
-  real,intent(in)     :: scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  real,intent(in)     :: wfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  character(len=*),intent(in)    :: vname
-  logical, intent(in) :: variable
-  real,intent(out)    :: qz(mzppks,mxppis,myppjs)
-
-  real, external :: fq4,fq2
-  integer :: i,j,k
-
-  do j = 1,myp
-     do i = 1,mxp
-        do k = 1,mzp-1
-           if(k==1 .or. k>mzp-2) then !use order 2
-              qz(k,i,j) = fq2(scr(k,i,j),scr(k+1,i,j))
-           else
-              qz(k,i,j) = fq4(scr(k-1,i,j),scr(k,i,j),scr(k+1,i,j),scr(k+2,i,j))
-           endif
-        enddo
-     enddo
-  enddo
-
-end subroutine compZInterface_or4
-
-subroutine compZInterface_or56(mxp,myp,mzp,ks,isi,js,&
-     mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
-     mzppks,mxppis,myppjs, &
-     scr,wfx_local,qz,variable,vname,order_v)
-  use advRkParam, only: fifth_order
-  implicit none
-  integer, intent(in) :: mxp
-  integer, intent(in) :: myp
-  integer, intent(in) :: mzp
-  integer,intent(in)  :: ks
-  integer,intent(in)  :: isi
-  integer,intent(in)  :: js
-  integer, intent(in) :: mzi
-  integer, intent(in) :: mzpp3
-  integer, intent(in) :: mxi
-  integer, intent(in) :: mxpp3
-  integer, intent(in) :: myi
-  integer, intent(in) :: mypp3
-  integer, intent(in) :: mzppks
-  integer, intent(in) :: mxppis
-  integer, intent(in) :: myppjs
-  integer, intent(in) :: order_v
-  real,intent(in)     :: scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  real,intent(in)     :: wfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  character(len=*),intent(in)    :: vname
-  logical, intent(in) :: variable
-  real,intent(out)    :: qz(mzppks,mxppis,myppjs)
-
-  real, external :: fq,fq3,flux_upwind
-  real :: dir
-  integer :: i,j,k
-
-  fifth_order = 1.0                   ! 5th order
-  if(order_v == 6) fifth_order = 0.0  ! 6th order
   !- compute z-interface values
-  do j = 1,myp
-     do i = 1,mxp
-        do k = 1,mzp-1
-           if(k==1 .or. k==mzp-1) then
-              ! order 1
-              dir = sign(1.0,wfx_local(k,i,j)+wfx_local(k+ks,i+isi,j+js))
-              qz(k,i,j)=flux_upwind(scr(k,i,j),scr(k+1,i,j),dir)
-           elseif(k==2 .or. k==mzp-2) then
-              !Order 3
-              dir = sign(1.0,wfx_local(k,i,j)+wfx_local(k+ks,i+isi,j+js))
-              qz(k,i,j) = fq3(scr(k-1,i,j),scr(k,i,j),scr(k+1,i,j), scr(k+2,i,j),dir)
-           else
-              !Use order 5
-              dir = sign(1.0,wfx_local(k,i,j)+wfx_local(k+ks,i+isi,j+js))
-              qz(k,i,j) = fq(scr(k-2,i,j),scr(k-1,i,j),scr(k,i,j),scr(k+1,i,j), &
-                   scr(k+2,i,j),scr(k+3,i,j),dir)
-           endif
-        enddo
-     enddo
-  enddo
+  subroutine compZInterface_or2(mxp,myp,mzp,ks,isi,js,&
+       mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+       mzppks,mxppis,myppjs, &
+       scr,wfx_local,qz,variable,vname)
+    integer, intent(in) :: mxp
+    integer, intent(in) :: myp
+    integer, intent(in) :: mzp
+    integer,intent(in)  :: ks
+    integer,intent(in)  :: isi
+    integer,intent(in)  :: js
+    integer, intent(in) :: mzi
+    integer, intent(in) :: mzpp3
+    integer, intent(in) :: mxi
+    integer, intent(in) :: mxpp3
+    integer, intent(in) :: myi
+    integer, intent(in) :: mypp3
+    integer, intent(in) :: mzppks
+    integer, intent(in) :: mxppis
+    integer, intent(in) :: myppjs
+    real, pointer, intent(in)     :: scr      (:,:,:)
+    real, pointer, intent(in)     :: wfx_local(:,:,:)
+    character(len=*),intent(in)    :: vname
+    logical, intent(in) :: variable
+    real, pointer, intent(in)    :: qz(:,:,:)
 
-end subroutine compZInterface_or56
+!!$    real :: fq2
+    integer :: i,j,k
+
+    do j = 1,myp
+       do i = 1,mxp
+          do k = 1,mzp-1
+             qz(k,i,j) = fq2(scr(k,i,j),scr(k+1,i,j))
+          enddo
+       enddo
+    enddo
+
+  end subroutine compZInterface_or2
+
+  !- compute z-interface values
+  subroutine compZInterface_or3(mxp,myp,mzp,ks,isi,js,&
+       mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+       mzppks,mxppis,myppjs, &
+       scr,wfx_local,qz,variable,vname)
+    integer, intent(in) :: mxp
+    integer, intent(in) :: myp
+    integer, intent(in) :: mzp
+    integer,intent(in)  :: ks
+    integer,intent(in)  :: isi
+    integer,intent(in)  :: js
+    integer, intent(in) :: mzi
+    integer, intent(in) :: mzpp3
+    integer, intent(in) :: mxi
+    integer, intent(in) :: mxpp3
+    integer, intent(in) :: myi
+    integer, intent(in) :: mypp3
+    integer, intent(in) :: mzppks
+    integer, intent(in) :: mxppis
+    integer, intent(in) :: myppjs
+    real, pointer, intent(in)     :: scr      (:,:,:)
+    real, pointer, intent(in)     :: wfx_local(:,:,:)
+    character(len=*),intent(in)    :: vname
+    logical, intent(in) :: variable
+    real, pointer, intent(in)    :: qz(:,:,:)
+
+!!$    real :: fq2,fq3,flux_upwind
+    real :: dir
+    integer :: i,j,k
+
+    !qz=0.0
+
+    do j = 1,myp
+       do i = 1,mxp
+          do k = 1,mzp-1
+             if((k==1 .or. k>mzp-2) .and. variable) then
+                ! order 1
+                dir = sign(1.0,wfx_local(k,i,j)+wfx_local(k+ks,i+isi,j+js))
+                qz(k,i,j)=flux_upwind(scr(k,i,j),scr(k+1,i,j),dir)
+             else
+                !Order 3
+                dir = sign(1.0,wfx_local(k,i,j)+wfx_local(k+ks,i+isi,j+js))
+                qz(k,i,j) = fq3(scr(k-1,i,j),scr(k,i,j),scr(k+1,i,j), scr(k+2,i,j),dir)
+             endif
+          enddo
+       enddo
+    enddo
+
+  end subroutine compZInterface_or3
+
+  !- compute z-interface values
+  subroutine compZInterface_or4(mxp,myp,mzp,ks,isi,js,&
+       mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+       mzppks,mxppis,myppjs, &
+       scr,wfx_local,qz,variable,vname)
+    integer, intent(in) :: mxp
+    integer, intent(in) :: myp
+    integer, intent(in) :: mzp
+    integer,intent(in)  :: ks
+    integer,intent(in)  :: isi
+    integer,intent(in)  :: js
+    integer, intent(in) :: mzi
+    integer, intent(in) :: mzpp3
+    integer, intent(in) :: mxi
+    integer, intent(in) :: mxpp3
+    integer, intent(in) :: myi
+    integer, intent(in) :: mypp3
+    integer, intent(in) :: mzppks
+    integer, intent(in) :: mxppis
+    integer, intent(in) :: myppjs
+    real, pointer, intent(in)     :: scr      (:,:,:)
+    real, pointer, intent(in)     :: wfx_local(:,:,:)
+    character(len=*),intent(in)    :: vname
+    logical, intent(in) :: variable
+    real, pointer, intent(in)    :: qz(:,:,:)
+
+!!$    real :: fq4,fq2
+    integer :: i,j,k
+
+    do j = 1,myp
+       do i = 1,mxp
+          do k = 1,mzp-1
+             if(k==1 .or. k>mzp-2) then !use order 2
+                qz(k,i,j) = fq2(scr(k,i,j),scr(k+1,i,j))
+             else
+                qz(k,i,j) = fq4(scr(k-1,i,j),scr(k,i,j),scr(k+1,i,j),scr(k+2,i,j))
+             endif
+          enddo
+       enddo
+    enddo
+
+  end subroutine compZInterface_or4
+
+  subroutine compZInterface_or56(mxp,myp,mzp,ks,isi,js,&
+       mzi,mzpp3,mxi,mxpp3,myi,mypp3, &
+       mzppks,mxppis,myppjs, &
+       scr,wfx_local,qz,variable,vname,order_v)
+    integer, intent(in) :: mxp
+    integer, intent(in) :: myp
+    integer, intent(in) :: mzp
+    integer,intent(in)  :: ks
+    integer,intent(in)  :: isi
+    integer,intent(in)  :: js
+    integer, intent(in) :: mzi
+    integer, intent(in) :: mzpp3
+    integer, intent(in) :: mxi
+    integer, intent(in) :: mxpp3
+    integer, intent(in) :: myi
+    integer, intent(in) :: mypp3
+    integer, intent(in) :: mzppks
+    integer, intent(in) :: mxppis
+    integer, intent(in) :: myppjs
+    integer, intent(in) :: order_v
+    real, pointer, intent(in)     :: scr      (:,:,:)
+    real, pointer, intent(in)     :: wfx_local(:,:,:)
+    character(len=*),intent(in)    :: vname
+    logical, intent(in) :: variable
+    real, pointer, intent(in)    :: qz(:,:,:)
+
+!!$    real :: fq,fq3,flux_upwind
+    real :: dir
+    integer :: i,j,k
+
+    fifth_order = 1.0                   ! 5th order
+    if(order_v == 6) fifth_order = 0.0  ! 6th order
+    !- compute z-interface values
+    do j = 1,myp
+       do i = 1,mxp
+          do k = 1,mzp-1
+             if(k==1 .or. k==mzp-1) then
+                ! order 1
+                dir = sign(1.0,wfx_local(k,i,j)+wfx_local(k+ks,i+isi,j+js))
+                qz(k,i,j)=flux_upwind(scr(k,i,j),scr(k+1,i,j),dir)
+             elseif(k==2 .or. k==mzp-2) then
+                !Order 3
+                dir = sign(1.0,wfx_local(k,i,j)+wfx_local(k+ks,i+isi,j+js))
+                qz(k,i,j) = fq3(scr(k-1,i,j),scr(k,i,j),scr(k+1,i,j), scr(k+2,i,j),dir)
+             else
+                !Use order 5
+                dir = sign(1.0,wfx_local(k,i,j)+wfx_local(k+ks,i+isi,j+js))
+                qz(k,i,j) = fq(scr(k-2,i,j),scr(k-1,i,j),scr(k,i,j),scr(k+1,i,j), &
+                     scr(k+2,i,j),scr(k+3,i,j),dir)
+             endif
+          enddo
+       enddo
+    enddo
+
+  end subroutine compZInterface_or56
 
 
-!positivity/monotonicity constraints
-subroutine posMonConstraints(mxp,myp,mzp,is,js,ks,ia,iz,ja,jz, &
-     pd_or_mnt_constraint, &
-     dt,ufx,vfx,wfx,vt3dh,vt3dj,vt3dk, scp, &
-     scr, ufx_local,vfx_local,wfx_local, &
-     qx,qy,qz,mzi,mzpp3,mxi,mxpp3,myi, &
-     mypp3,mzppks,mxppis,myppjs,mynum,vname,sct)
-  use advRkParam, only: eps
-  implicit none
-  character(len=*), intent(in) :: vname
-  integer, intent(in) :: mynum
-  integer, intent(in) :: mxp
-  integer, intent(in) :: myp
-  integer, intent(in) :: mzp
-  integer, intent(in) :: mzi
-  integer, intent(in) :: mzpp3
-  integer, intent(in) :: mxi
-  integer, intent(in) :: mxpp3
-  integer, intent(in) :: myi
-  integer, intent(in) :: mypp3
-  integer, intent(in) :: mzppks
-  integer, intent(in) :: mxppis
-  integer, intent(in) :: myppjs
-  integer, intent(in) :: is
-  integer, intent(in) :: js
-  integer, intent(in) :: ks
-  integer, intent(in) :: ia
-  integer, intent(in) :: iz
-  integer, intent(in) :: ja
-  integer, intent(in) :: jz
-  integer, intent(in) :: pd_or_mnt_constraint
-  real,    intent(in) :: dt
-  real,    intent(in) :: ufx(mzp,mxp,myp)
-  real,    intent(in) :: vfx(mzp,mxp,myp)
-  real,    intent(in) :: wfx(mzp,mxp,myp)
-  real,    intent(in) :: vt3dh(mzp,mxp,myp)
-  real,    intent(in) :: vt3dj(mzp,mxp,myp)
-  real,    intent(in) :: vt3dk(mzp,mxp,myp)
-  real,    intent(in) :: scp(mzp,mxp,myp)
-  real,    intent(in) :: sct(mzp,mxp,myp)
-  real,    intent(in) :: scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  real,    intent(in) :: ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  real,    intent(in) :: vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  real,    intent(in) :: wfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
-  real,    intent(inout) :: qx(mzppks,mxppis,myppjs)
-  real,    intent(inout) :: qy(mzppks,mxppis,myppjs)
-  real,    intent(inout) :: qz(mzppks,mxppis,myppjs)
 
-  real, external :: flux_upwind
-  real,dimension(mzp+ks,mxp+is,myp+js) :: qxl,qyl,qzl
-  integer :: i,j,k
-  real :: dir,wtop,wbot,div_term,scale
-  real :: ue,uw,vn,vs,scl_low,flux_out
-  real :: flux_out_x,flux_out_y,flux_out_z
+  !positivity/monotonicity constraints
+  subroutine posMonConstraints(mxp,myp,mzp,is,js,ks,ia,iz,ja,jz, &
+       pd_or_mnt_constraint, &
+       dt,ufx,vfx,wfx,vt3dh,vt3dj,vt3dk, scp, &
+       scr, ufx_local,vfx_local,wfx_local, &
+       qx,qy,qz,mzi,mzpp3,mxi,mxpp3,myi, &
+       mypp3,mzppks,mxppis,myppjs,mynum,vname,sct)
+    character(len=*), intent(in) :: vname
+    integer, intent(in) :: mynum
+    integer, intent(in) :: mxp
+    integer, intent(in) :: myp
+    integer, intent(in) :: mzp
+    integer, intent(in) :: mzi
+    integer, intent(in) :: mzpp3
+    integer, intent(in) :: mxi
+    integer, intent(in) :: mxpp3
+    integer, intent(in) :: myi
+    integer, intent(in) :: mypp3
+    integer, intent(in) :: mzppks
+    integer, intent(in) :: mxppis
+    integer, intent(in) :: myppjs
+    integer, intent(in) :: is
+    integer, intent(in) :: js
+    integer, intent(in) :: ks
+    integer, intent(in) :: ia
+    integer, intent(in) :: iz
+    integer, intent(in) :: ja
+    integer, intent(in) :: jz
+    integer, intent(in) :: pd_or_mnt_constraint
+    real,    intent(in) :: dt
+    real,    intent(in) :: ufx(mzp,mxp,myp)
+    real,    intent(in) :: vfx(mzp,mxp,myp)
+    real,    intent(in) :: wfx(mzp,mxp,myp)
+    real,    intent(in) :: vt3dh(mzp,mxp,myp)
+    real,    intent(in) :: vt3dj(mzp,mxp,myp)
+    real,    intent(in) :: vt3dk(mzp,mxp,myp)
+    real,    intent(in) :: scp(mzp,mxp,myp)
+    real,    intent(in) :: sct(mzp,mxp,myp)
+    real,    intent(in) :: scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3)
+    real,    intent(in) :: ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
+    real,    intent(in) :: vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
+    real,    intent(in) :: wfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3)
+    real,    intent(inout) :: qx(mzppks,mxppis,myppjs)
+    real,    intent(inout) :: qy(mzppks,mxppis,myppjs)
+    real,    intent(inout) :: qz(mzppks,mxppis,myppjs)
 
-  !-compute x,y,z-interfaces values with upwind scheme
-  do j = 1,myp
-     do i = 1,mxp-1
-        do k = 1,mzp
-           dir = sign(1.0,ufx_local(k,i,j))
-           !- upwind flux (pd and monotonic)
-           qxl(k,i,j)=flux_upwind(scr(k,i,j),scr(k,i+1,j),dir)
-           !- difference of high order and upwind fluxes
-           qx (k,i,j)=qx (k,i,j)-qxl(k,i,j)
-        enddo
-     enddo
-  enddo
-  qxl(:,mxp,:)=0.
-  !
-  do j = 1,myp-1
-     do i = 1,mxp
-        do k = 1,mzp
-           dir = sign(1.0,vfx_local(k,i,j))
-           !- upwind flux (pd and monotonic)
-           qyl(k,i,j)=flux_upwind(scr(k,i,j),scr(k,i,j+1),dir)
-           !- difference of high order and upwind fluxes
-           qy (k,i,j)=qy (k,i,j)-qyl(k,i,j)
-        enddo
-     enddo
-  enddo
-  qyl(:,:,myp)=0.
-  !
-  do j = 1,myp
-     do i = 1,mxp
-        do k = 1,mzp-1
-           dir = sign(1.0,wfx_local(k,i,j))
-           !- upwind flux (pd and monotonic)
-           qzl(k,i,j)=flux_upwind(scr(k,i,j),scr(k+1,i,j),dir)
-           !- difference of high order and upwind fluxes
-           qz (k,i,j)=qz (k,i,j)-qzl(k,i,j)
-        enddo
-     enddo
-  enddo
-  qzl(mzp,:,:)=0.
+!!$    real :: flux_upwind
+    real,dimension(mzp+ks,mxp+is,myp+js) :: qxl,qyl,qzl
+    integer :: i,j,k
+    real :: dir,wtop,wbot,div_term,scale
+    real :: ue,uw,vn,vs,scl_low,flux_out
+    real :: flux_out_x,flux_out_y,flux_out_z
 
-  !-- this section only imposes positivity constraint on scalars
-  if(pd_or_mnt_constraint == 1) then
-     do i = ia,iz
-        do j = ja,jz
-           do k = 2,mzp
-              ue  =ufx(k,i  ,j)
-              uw  =ufx(k,i-1,j)
-              vn  =vfx(k,i,j  )
-              vs  =vfx(k,i,j-1)
-              wtop=wfx(k  ,i,j)
-              wbot=wfx(k-1,i,j)
-              div_term = scp(k,i,j)*(vt3dh(k,i,j)*(ue   - uw  ) + &
-                   vt3dj(k,i,j)*(vn   - vs  ) + &
-                   vt3dk(k,i,j)*(wtop - wbot))
-              !- 1st order update
-              scl_low = scp(k,i,j) +   &
-                   dt*(- vt3dh(k,i,j)*(ue  *qxl(k,i,j) - uw  *qxl(k,i-1,j)) &
-                   - vt3dj(k,i,j)*(vn  *qyl(k,i,j) - vs  *qyl(k,i,j-1)) &
-                   - vt3dk(k,i,j)*(wtop*qzl(k,i,j) - wbot*qzl(k-1,i,j)) &
-                   + div_term)
-              !- net flux out
-              flux_out_x = vt3dh(k,i,j)*(max(0.,ue  *qx(k,i,j)) - min(0.,uw  *qx(k,i-1,j)))
-              flux_out_y = vt3dj(k,i,j)*(max(0.,vn  *qy(k,i,j)) - min(0.,vs  *qy(k,i,j-1)))
-              flux_out_z = vt3dk(k,i,j)*(max(0.,wtop*qz(k,i,j)) - min(0.,wbot*qz(k-1,i,j)))
-              flux_out = flux_out_x + flux_out_y + flux_out_z
-              !- include divergence term
-              flux_out = (flux_out - div_term)*dt
-              !- re-scale the fluxes to keep positivity
+    !-compute x,y,z-interfaces values with upwind scheme
+    do j = 1,myp
+       do i = 1,mxp-1
+          do k = 1,mzp
+             dir = sign(1.0,ufx_local(k,i,j))
+             !- upwind flux (pd and monotonic)
+             qxl(k,i,j)=flux_upwind(scr(k,i,j),scr(k,i+1,j),dir)
+             !- difference of high order and upwind fluxes
+             qx (k,i,j)=qx (k,i,j)-qxl(k,i,j)
+          enddo
+       enddo
+    enddo
+    qxl(:,mxp,:)=0.
+    !
+    do j = 1,myp-1
+       do i = 1,mxp
+          do k = 1,mzp
+             dir = sign(1.0,vfx_local(k,i,j))
+             !- upwind flux (pd and monotonic)
+             qyl(k,i,j)=flux_upwind(scr(k,i,j),scr(k,i,j+1),dir)
+             !- difference of high order and upwind fluxes
+             qy (k,i,j)=qy (k,i,j)-qyl(k,i,j)
+          enddo
+       enddo
+    enddo
+    qyl(:,:,myp)=0.
+    !
+    do j = 1,myp
+       do i = 1,mxp
+          do k = 1,mzp-1
+             dir = sign(1.0,wfx_local(k,i,j))
+             !- upwind flux (pd and monotonic)
+             qzl(k,i,j)=flux_upwind(scr(k,i,j),scr(k+1,i,j),dir)
+             !- difference of high order and upwind fluxes
+             qz (k,i,j)=qz (k,i,j)-qzl(k,i,j)
+          enddo
+       enddo
+    enddo
+    qzl(mzp,:,:)=0.
+
+    !-- this section only imposes positivity constraint on scalars
+    if(pd_or_mnt_constraint == 1) then
+       do i = ia,iz
+          do j = ja,jz
+             do k = 2,mzp
+                ue  =ufx(k,i  ,j)
+                uw  =ufx(k,i-1,j)
+                vn  =vfx(k,i,j  )
+                vs  =vfx(k,i,j-1)
+                wtop=wfx(k  ,i,j)
+                wbot=wfx(k-1,i,j)
+                div_term = scp(k,i,j)*(vt3dh(k,i,j)*(ue   - uw  ) + &
+                     vt3dj(k,i,j)*(vn   - vs  ) + &
+                     vt3dk(k,i,j)*(wtop - wbot))
+                !- 1st order update
+                scl_low = scp(k,i,j) +   &
+                     dt*(- vt3dh(k,i,j)*(ue  *qxl(k,i,j) - uw  *qxl(k,i-1,j)) &
+                     - vt3dj(k,i,j)*(vn  *qyl(k,i,j) - vs  *qyl(k,i,j-1)) &
+                     - vt3dk(k,i,j)*(wtop*qzl(k,i,j) - wbot*qzl(k-1,i,j)) &
+                     + div_term)
+                !- net flux out
+                flux_out_x = vt3dh(k,i,j)*(max(0.,ue  *qx(k,i,j)) - min(0.,uw  *qx(k,i-1,j)))
+                flux_out_y = vt3dj(k,i,j)*(max(0.,vn  *qy(k,i,j)) - min(0.,vs  *qy(k,i,j-1)))
+                flux_out_z = vt3dk(k,i,j)*(max(0.,wtop*qz(k,i,j)) - min(0.,wbot*qz(k-1,i,j)))
+                flux_out = flux_out_x + flux_out_y + flux_out_z
+                !- include divergence term
+                flux_out = (flux_out - div_term)*dt
+                !- re-scale the fluxes to keep positivity
 
 
-              if( flux_out > scl_low ) then
-                 !- scale factor (=< 1.)
-                 scale = max(0.,scl_low/(flux_out+eps))
-                 !-faces - x
-                 if( ue*qx(k,i  ,j) > 0.  ) qx(k,i  ,j)=scale*qx(k,i  ,j)
-                 if( uw*qx(k,i-1,j) < 0.  ) qx(k,i-1,j)=scale*qx(k,i-1,j)
-                 !-faces - y
-                 if( vn*qy(k,i  ,j) > 0.  ) qy(k,i  ,j)=scale*qy(k,i  ,j)
-                 if( vs*qy(k,i,j-1) < 0.  ) qy(k,i,j-1)=scale*qy(k,i,j-1)
-                 !-faces - z
-                 if( wtop*qz(k  ,i,j) > 0.) qz(k  ,i,j)=scale*qz(k  ,i,j)
-                 if( wbot*qz(k-1,i,j) < 0.) qz(k-1,i,j)=scale*qz(k-1,i,j)
-              endif
-           enddo
-        enddo
-     enddo
-  endif ! endif for pd_or_mnt_constraint == 1
+                if( flux_out > scl_low ) then
+                   !- scale factor (=< 1.)
+                   scale = max(0.,scl_low/(flux_out+eps))
+                   !-faces - x
+                   if( ue*qx(k,i  ,j) > 0.  ) qx(k,i  ,j)=scale*qx(k,i  ,j)
+                   if( uw*qx(k,i-1,j) < 0.  ) qx(k,i-1,j)=scale*qx(k,i-1,j)
+                   !-faces - y
+                   if( vn*qy(k,i  ,j) > 0.  ) qy(k,i  ,j)=scale*qy(k,i  ,j)
+                   if( vs*qy(k,i,j-1) < 0.  ) qy(k,i,j-1)=scale*qy(k,i,j-1)
+                   !-faces - z
+                   if( wtop*qz(k  ,i,j) > 0.) qz(k  ,i,j)=scale*qz(k  ,i,j)
+                   if( wbot*qz(k-1,i,j) < 0.) qz(k-1,i,j)=scale*qz(k-1,i,j)
+                endif
+             enddo
+          enddo
+       enddo
+    endif ! endif for pd_or_mnt_constraint == 1
 
-  !-- this section imposes monotonicity constraint on scalars
-  !-- flux renormalization for monotonicity constraint following Durran (1998)
-  if(pd_or_mnt_constraint == 2) then
-     stop "pd_or_mnt_constraint == 2 is not ready yet"
-     !--- needs to:
-     ! a) expand to 3 dimensions (z)
-     ! b) change (i,j,k) +1 to (i,j,k) 
-     ! c) change (i,j,k)    to (i,j,k) -1
-     !
-     !!- flux renormalization for monotonicity constraint following Durran (1998)
-     !  DO j = 1+js,ny-1
-     !    DO i = 1+is,nx-1
-     !
-     !      uw = u(i,j)   
-     !      ue = u(i+1,j) 
-     !      vs = v(i,j)   
-     !      vn = v(i,j+1) 
-     !      !====	
-     !      !div = rdx * (ue - uw) + rdy * (vn - vs)
-     !      !divplus = 1.0 - dt*div
-     !      
-     !      !- upwind/monotonic (1st order) update
-     !      sn_td(i,j) =sn(i,j) - dt*( rdx * (ue*qxl(i+1,j) - uw*qxl(i,j))  &
-     ! 			      + rdy * (vn*qyl(i,j+1) - vs*qyl(i,j))  )
-     !      !
-     !      !- in the future include the change associated to the wind divergence
-     !      !scl_td=scl_td/divplus
-     !     
-     !      !-this is Pj+ antidiffusive fluxes into grid point (i,j)
-     !      xflux_in(i,j) =  dt*( rdx*( max(0.,u(i  ,j) *qx (i  ,j))  &
-     ! 				-min(0.,u(i+1,j) *qx (i+1,j)) )&
-     ! 			 + rdy*( max(0.,v(i  ,j) *qy (i,j  ))  &
-     ! 				-min(0.,v(i,j+1) *qy (i,j+1)) )) 
-     !     
-     !     !flux_out = flux_out-sn(i,j)*dt*div
-     !      
-     !      !-this is Pj-  antidiffusive fluxes out grid point (i,j)
-     !      xflux_out(i,j)  =  dt*( rdx*( max(0.,u(i+1,j)*qx (i+1,j)) &
-     ! 				  -min(0.,u(i  ,j)*qx (i  ,j)))&  
-     ! 			   + rdy*( max(0.,v(i,j+1)*qy (i,j+1)) &
-     ! 				  -min(0.,v(i,  j)*qy (i,j  )))) 
-     !
-     !    ENDDO
-     !  ENDDO
-     ! !-Durran 1998, pg 278
-     !  DO j = 1+js,ny+js
-     !    DO i = 1+is,nx+is
-     !     !-permissible values of tracer concentration at time n+1
-     !     smaxa(i,j)=max(s(i,j),sn_td(i,j)) 
-     !     sminb(i,j)=min(s(i,j),sn_td(i,j)) 
-     !    ENDDO
-     !  ENDDO
-     !
-     !  DO j = 1+js,ny+js
-     !    jm1=max(1 ,j-1)
-     !    jp1=min(ny,j+1)
-     !    DO i = 1+is,nx+is
-     !     
-     !     im1=max(1 ,i-1)
-     !     ip1=min(nx,i+1)
-     !     !-permissible values of tracer concentration at time n+1
-     !     smax(i,j)=max(smaxa(i,j), smaxa(i,jm1), smaxa(i,jp1), &
-     ! 			      smaxa(im1,j), smaxa(ip1,j)  )
-     !     smin(i,j)=min(sminb(i,j), sminb(i,jm1), sminb(i,jp1), &
-     ! 			      sminb(im1,j), sminb(ip1,j)  )
-     !    ENDDO
-     !  ENDDO
-     !
-     !  DO j = 1+js,ny-1
-     !   DO i = 1+is,nx-1
-     !    
-     !    !- this is Rj+ the required limitation on the net antidiffusive flux _into_ 
-     !    !- grid point (i,j). Attention: from here xflux_in becames Rj+
-     !     IF( xflux_in (i,j) > 0.) &
-     !     xflux_in (i,j)=min(1.,(smax(i,j)-sn_td(i,j))/(xflux_in(i,j)+eps))
-     !
-     !    !- this is Rj- the required limitation on the net antidiffusive flux _out of_
-     !    !- grid point (i,j). Attention: from here xflux_out becames Rj-
-     !     IF( xflux_out(i,j) > 0.) &
-     !     xflux_out(i,j)=min(1.,(sn_td(i,j)-smin(i,j))/(xflux_out(i,j)+eps))
-     !!-srf cm     
-     !!**** by definition xflux_in and xflux_out are both >= 0. In the future, think 
-     !!**** about eliminating the two IF statements above to speed up the code execution
-     !    ENDDO
-     !  ENDDO
-     !
-     !!--- optional preliminary step (not using,see page 260)
-     !  !DO j = 1+js,ny-2
-     !  !  DO i = 1+is,nx-2
-     !    !if(u(i+1,j)*qx(i+1,j) * (sn_td(i+1,j) - sn_td(i,j)) < 0.  ) qx(i+1,j)=0.
-     !    !if(u(i+1,j)*qx(i+1,j) * (sn_td(i+2,j) - sn_td(i+1,j)) < 0.) qx(i+1,j)=0.
-     !    !if(u(i+1,j)*qx(i+1,j) * (sn_td(i,j) - sn_td(i-1,j)) < 0.  ) qx(i+1,j)=0.
-     !    !if(v(i,j+1)*qy( ...
-     !  !  ENDDO
-     !  !ENDDO
-     !!-------
-     !  
-     !  DO j = 1+js,ny
-     !   DO i = 1+is+1,nx
-     !     if(u(i,j) *qx (i,j) >= 0.) then
-     ! 	 rmon_i(i,j) = min(xflux_in(i  ,j),xflux_out(i-1,j))
-     !     else
-     ! 	 rmon_i(i,j) = min(xflux_in(i-1,j),xflux_out(i  ,j))
-     !     endif
-     !   ENDDO 
-     !  ENDDO
-     !  rmon_i(1,:) = 0. ! b.c.
-     !    
-     !  DO j = 1+js+1,ny
-     !   DO i = 1+is,nx
-     !     if(v(i,j) *qy (i,j) >= 0.) then
-     ! 	 rmon_j(i,j) = min(xflux_in(i,j  ),xflux_out(i,j-1))
-     !     else
-     ! 	 rmon_j(i,j) = min(xflux_in(i,j-1),xflux_out(i,j  ))
-     !     endif
-     !   ENDDO
-     !  ENDDO
-     !  rmon_j(:,1) = 0.0 ! b.c.
-     !  
-     !  !- setting rmon_ij = 0. => full upwind scheme
-     !  !- setting rmon_ij = 1. => full high order scheme
-     !  !-
-     !  !- implements the monotonicity selectivity
-     !  !- cm: no futuro reescrever toda esta se��o de modo que  somente seja 
-     !  !-	feito todos estes calculos nos casos em que smoothx ou smoothy < smooth_max
-     !  IF(mnt_selectivity == 1)THEN 
-     !    DO j = 1+js,ny+js!-1
-     !      DO i = 1+is,nx+is!-1
-     !        if( smoothx(i,j) < smooth_max) rmon_i(i,j)=1.
-     !        if( smoothy(i,j) < smooth_max) rmon_j(i,j)=1.  
-     !!	if( log(smoothx(i,j)+1) < 0.02) rmon_i(i+1,j)=1.
-     !!	if( log(smoothy(i,j)+1) < 0.02) rmon_j(i,j+1)=1.  
-     !     ENDDO
-     !    ENDDO
-     !  ENDIF 
-     !  !- get back the "qx fluxes", but now renormalized 
-     !  DO j = 1+js,ny+js-1
-     !    DO i = 1+is,nx+is
-     !       qx(i,j) = rmon_i(i,j)* qx(i,j)
-     !    ENDDO
-     !  ENDDO
-     !  DO j = 1+js,ny+js
-     !    DO i = 1+is,nx+is-1
-     !       qy(i,j) = rmon_j(i,j)* qy(i,j)
-     !    ENDDO
-     !  ENDDO
-  endif
+    !-- this section imposes monotonicity constraint on scalars
+    !-- flux renormalization for monotonicity constraint following Durran (1998)
+    if(pd_or_mnt_constraint == 2) then
+       stop "pd_or_mnt_constraint == 2 is not ready yet"
+       !--- needs to:
+       ! a) expand to 3 dimensions (z)
+       ! b) change (i,j,k) +1 to (i,j,k) 
+       ! c) change (i,j,k)    to (i,j,k) -1
+       !
+       !!- flux renormalization for monotonicity constraint following Durran (1998)
+       !  DO j = 1+js,ny-1
+       !    DO i = 1+is,nx-1
+       !
+       !      uw = u(i,j)   
+       !      ue = u(i+1,j) 
+       !      vs = v(i,j)   
+       !      vn = v(i,j+1) 
+       !      !====	
+       !      !div = rdx * (ue - uw) + rdy * (vn - vs)
+       !      !divplus = 1.0 - dt*div
+       !      
+       !      !- upwind/monotonic (1st order) update
+       !      sn_td(i,j) =sn(i,j) - dt*( rdx * (ue*qxl(i+1,j) - uw*qxl(i,j))  &
+       ! 			      + rdy * (vn*qyl(i,j+1) - vs*qyl(i,j))  )
+       !      !
+       !      !- in the future include the change associated to the wind divergence
+       !      !scl_td=scl_td/divplus
+       !     
+       !      !-this is Pj+ antidiffusive fluxes into grid point (i,j)
+       !      xflux_in(i,j) =  dt*( rdx*( max(0.,u(i  ,j) *qx (i  ,j))  &
+       ! 				-min(0.,u(i+1,j) *qx (i+1,j)) )&
+       ! 			 + rdy*( max(0.,v(i  ,j) *qy (i,j  ))  &
+       ! 				-min(0.,v(i,j+1) *qy (i,j+1)) )) 
+       !     
+       !     !flux_out = flux_out-sn(i,j)*dt*div
+       !      
+       !      !-this is Pj-  antidiffusive fluxes out grid point (i,j)
+       !      xflux_out(i,j)  =  dt*( rdx*( max(0.,u(i+1,j)*qx (i+1,j)) &
+       ! 				  -min(0.,u(i  ,j)*qx (i  ,j)))&  
+       ! 			   + rdy*( max(0.,v(i,j+1)*qy (i,j+1)) &
+       ! 				  -min(0.,v(i,  j)*qy (i,j  )))) 
+       !
+       !    ENDDO
+       !  ENDDO
+       ! !-Durran 1998, pg 278
+       !  DO j = 1+js,ny+js
+       !    DO i = 1+is,nx+is
+       !     !-permissible values of tracer concentration at time n+1
+       !     smaxa(i,j)=max(s(i,j),sn_td(i,j)) 
+       !     sminb(i,j)=min(s(i,j),sn_td(i,j)) 
+       !    ENDDO
+       !  ENDDO
+       !
+       !  DO j = 1+js,ny+js
+       !    jm1=max(1 ,j-1)
+       !    jp1=min(ny,j+1)
+       !    DO i = 1+is,nx+is
+       !     
+       !     im1=max(1 ,i-1)
+       !     ip1=min(nx,i+1)
+       !     !-permissible values of tracer concentration at time n+1
+       !     smax(i,j)=max(smaxa(i,j), smaxa(i,jm1), smaxa(i,jp1), &
+       ! 			      smaxa(im1,j), smaxa(ip1,j)  )
+       !     smin(i,j)=min(sminb(i,j), sminb(i,jm1), sminb(i,jp1), &
+       ! 			      sminb(im1,j), sminb(ip1,j)  )
+       !    ENDDO
+       !  ENDDO
+       !
+       !  DO j = 1+js,ny-1
+       !   DO i = 1+is,nx-1
+       !    
+       !    !- this is Rj+ the required limitation on the net antidiffusive flux _into_ 
+       !    !- grid point (i,j). Attention: from here xflux_in becames Rj+
+       !     IF( xflux_in (i,j) > 0.) &
+       !     xflux_in (i,j)=min(1.,(smax(i,j)-sn_td(i,j))/(xflux_in(i,j)+eps))
+       !
+       !    !- this is Rj- the required limitation on the net antidiffusive flux _out of_
+       !    !- grid point (i,j). Attention: from here xflux_out becames Rj-
+       !     IF( xflux_out(i,j) > 0.) &
+       !     xflux_out(i,j)=min(1.,(sn_td(i,j)-smin(i,j))/(xflux_out(i,j)+eps))
+       !!-srf cm     
+       !!**** by definition xflux_in and xflux_out are both >= 0. In the future, think 
+       !!**** about eliminating the two IF statements above to speed up the code execution
+       !    ENDDO
+       !  ENDDO
+       !
+       !!--- optional preliminary step (not using,see page 260)
+       !  !DO j = 1+js,ny-2
+       !  !  DO i = 1+is,nx-2
+       !    !if(u(i+1,j)*qx(i+1,j) * (sn_td(i+1,j) - sn_td(i,j)) < 0.  ) qx(i+1,j)=0.
+       !    !if(u(i+1,j)*qx(i+1,j) * (sn_td(i+2,j) - sn_td(i+1,j)) < 0.) qx(i+1,j)=0.
+       !    !if(u(i+1,j)*qx(i+1,j) * (sn_td(i,j) - sn_td(i-1,j)) < 0.  ) qx(i+1,j)=0.
+       !    !if(v(i,j+1)*qy( ...
+       !  !  ENDDO
+       !  !ENDDO
+       !!-------
+       !  
+       !  DO j = 1+js,ny
+       !   DO i = 1+is+1,nx
+       !     if(u(i,j) *qx (i,j) >= 0.) then
+       ! 	 rmon_i(i,j) = min(xflux_in(i  ,j),xflux_out(i-1,j))
+       !     else
+       ! 	 rmon_i(i,j) = min(xflux_in(i-1,j),xflux_out(i  ,j))
+       !     endif
+       !   ENDDO 
+       !  ENDDO
+       !  rmon_i(1,:) = 0. ! b.c.
+       !    
+       !  DO j = 1+js+1,ny
+       !   DO i = 1+is,nx
+       !     if(v(i,j) *qy (i,j) >= 0.) then
+       ! 	 rmon_j(i,j) = min(xflux_in(i,j  ),xflux_out(i,j-1))
+       !     else
+       ! 	 rmon_j(i,j) = min(xflux_in(i,j-1),xflux_out(i,j  ))
+       !     endif
+       !   ENDDO
+       !  ENDDO
+       !  rmon_j(:,1) = 0.0 ! b.c.
+       !  
+       !  !- setting rmon_ij = 0. => full upwind scheme
+       !  !- setting rmon_ij = 1. => full high order scheme
+       !  !-
+       !  !- implements the monotonicity selectivity
+       !  !- cm: no futuro reescrever toda esta se��o de modo que  somente seja 
+       !  !-	feito todos estes calculos nos casos em que smoothx ou smoothy < smooth_max
+       !  IF(mnt_selectivity == 1)THEN 
+       !    DO j = 1+js,ny+js!-1
+       !      DO i = 1+is,nx+is!-1
+       !        if( smoothx(i,j) < smooth_max) rmon_i(i,j)=1.
+       !        if( smoothy(i,j) < smooth_max) rmon_j(i,j)=1.  
+       !!	if( log(smoothx(i,j)+1) < 0.02) rmon_i(i+1,j)=1.
+       !!	if( log(smoothy(i,j)+1) < 0.02) rmon_j(i,j+1)=1.  
+       !     ENDDO
+       !    ENDDO
+       !  ENDIF 
+       !  !- get back the "qx fluxes", but now renormalized 
+       !  DO j = 1+js,ny+js-1
+       !    DO i = 1+is,nx+is
+       !       qx(i,j) = rmon_i(i,j)* qx(i,j)
+       !    ENDDO
+       !  ENDDO
+       !  DO j = 1+js,ny+js
+       !    DO i = 1+is,nx+is-1
+       !       qy(i,j) = rmon_j(i,j)* qy(i,j)
+       !    ENDDO
+       !  ENDDO
+    endif
 
-  !-- this section imposes monotonicity constraint on scalars
-  !-- flux renormalization of Blossey&Durran 2008 + Skamarock 2006
-  if(pd_or_mnt_constraint == 3) then
-     !- reserved
-  endif ! endif for pd_or_mnt_constraint == 3
-  !
-  !-- get back the total "flux" , but now renormalized to guarantee
-  !-- positivity and/or monotonicity
-  do j = 1,myp
-     do i = 1,mxp
-        do k = 1,mzp-1
-           qx(k,i,j) = qx(k,i,j) + qxl(k,i,j)
-           qy(k,i,j) = qy(k,i,j) + qyl(k,i,j)
-           qz(k,i,j) = qz(k,i,j) + qzl(k,i,j)
-        enddo
-     enddo
-  enddo
+    !-- this section imposes monotonicity constraint on scalars
+    !-- flux renormalization of Blossey&Durran 2008 + Skamarock 2006
+    if(pd_or_mnt_constraint == 3) then
+       !- reserved
+    endif ! endif for pd_or_mnt_constraint == 3
+    !
+    !-- get back the total "flux" , but now renormalized to guarantee
+    !-- positivity and/or monotonicity
+    do j = 1,myp
+       do i = 1,mxp
+          do k = 1,mzp-1
+             qx(k,i,j) = qx(k,i,j) + qxl(k,i,j)
+             qy(k,i,j) = qy(k,i,j) + qyl(k,i,j)
+             qz(k,i,j) = qz(k,i,j) + qzl(k,i,j)
+          enddo
+       enddo
+    enddo
 
-end subroutine posMonConstraints
+  end subroutine posMonConstraints
 
-subroutine createTendency(mxp,myp,mzp,is,js,ks,ia,iz,ja,jz, &
-     mzppks,mxppis,myppjs, &
-     dt,ufx,vfx,wfx, &
-     vt3dh,vt3dj,vt3dk,scp, &
-     qx,qy,qz,sct,vname,mynum)
-  use advRkParam, only: real_init
-  implicit none
-  integer, intent(in) :: mynum
-  integer, intent(in) :: mxp
-  integer, intent(in) :: myp
-  integer, intent(in) :: mzp
-  integer, intent(in) :: is
-  integer, intent(in) :: js
-  integer, intent(in) :: ks
-  integer, intent(in) :: ia
-  integer, intent(in) :: iz
-  integer, intent(in) :: ja
-  integer, intent(in) :: jz
-  integer, intent(in) :: mzppks
-  integer, intent(in) :: mxppis
-  integer, intent(in) :: myppjs
-  real,    intent(in) :: dt
-  real,    intent(in) :: vt3dh(mzp,mxp,myp)
-  real,    intent(in) :: vt3dj(mzp,mxp,myp)
-  real,    intent(in) :: vt3dk(mzp,mxp,myp)
-  real,    intent(in) :: scp(mzp,mxp,myp)
-  real,    intent(in) :: ufx(mzp,mxp,myp)!(-2:mzp+3,-2:mxp+3,-2:myp+3)
-  real,    intent(in) :: vfx(mzp,mxp,myp)!(-2:mzp+3,-2:mxp+3,-2:myp+3)
-  real,    intent(in) :: wfx(mzp,mxp,myp)!(-2:mzp+3,-2:mxp+3,-2:myp+3)
-  real,    intent(in) :: qx(mzppks,mxppis,myppjs)
-  real,    intent(in) :: qy(mzppks,mxppis,myppjs)
-  real,    intent(in) :: qz(mzppks,mxppis,myppjs)
-  character(len=*), intent(in) :: vname
-  real,    intent(inout) :: sct(mzp,mxp,myp)
+  subroutine createTendency(mxp,myp,mzp,is,js,ks,ia,iz,ja,jz, &
+       mzppks,mxppis,myppjs, &
+       dt,ufx,vfx,wfx, &
+       vt3dh,vt3dj,vt3dk,scp, &
+       qx,qy,qz,sct,vname,mynum)
+    integer, intent(in) :: mynum
+    integer, intent(in) :: mxp
+    integer, intent(in) :: myp
+    integer, intent(in) :: mzp
+    integer, intent(in) :: is
+    integer, intent(in) :: js
+    integer, intent(in) :: ks
+    integer, intent(in) :: ia
+    integer, intent(in) :: iz
+    integer, intent(in) :: ja
+    integer, intent(in) :: jz
+    integer, intent(in) :: mzppks
+    integer, intent(in) :: mxppis
+    integer, intent(in) :: myppjs
+    real,    intent(in) :: dt
+    real,    intent(in) :: vt3dh(mzp,mxp,myp)
+    real,    intent(in) :: vt3dj(mzp,mxp,myp)
+    real,    intent(in) :: vt3dk(mzp,mxp,myp)
+    real,    intent(in) :: scp(mzp,mxp,myp)
+    real,    intent(in) :: ufx(mzp,mxp,myp)!(-2:mzp+3,-2:mxp+3,-2:myp+3)
+    real,    intent(in) :: vfx(mzp,mxp,myp)!(-2:mzp+3,-2:mxp+3,-2:myp+3)
+    real,    intent(in) :: wfx(mzp,mxp,myp)!(-2:mzp+3,-2:mxp+3,-2:myp+3)
+    real,    intent(in) :: qx(mzppks,mxppis,myppjs)
+    real,    intent(in) :: qy(mzppks,mxppis,myppjs)
+    real,    intent(in) :: qz(mzppks,mxppis,myppjs)
+    character(len=*), intent(in) :: vname
+    real,    intent(inout) :: sct(mzp,mxp,myp)
 
-  integer :: i,j,k
-  real :: dir,wtop,wbot,div_term
-  real :: ue,uw,vn,vs
+    integer :: i,j,k
+    real :: dir,wtop,wbot,div_term
+    real :: ue,uw,vn,vs
 
-  do j = ja,jz
-     do i = ia,iz
-        do k = 2,mzp-1
-           ue  =0.5*( ufx(k,i  ,j) + ufx(k+ks,i  +is,j+js) )
-           uw  =0.5*( ufx(k,i-1,j) + ufx(k+ks,i-1+is,j+js) )
-           vn  =0.5*( vfx(k,i,j  ) + vfx(k+ks,i+is,j  +js) )
-           vs  =0.5*( vfx(k,i,j-1) + vfx(k+ks,i+is,j-1+js) )
-           wtop=0.5*( wfx(k  ,i,j) + wfx(k+ks  ,i+is,j+js) )
-           wbot=0.5*( wfx(k-1,i,j) + wfx(k-1+ks,i+is,j+js) )
-           div_term = scp(k,i,j)*(vt3dh(k,i,j)*(ue   - uw  ) + &
-                vt3dj(k,i,j)*(vn   - vs  ) + &
-                vt3dk(k,i,j)*(wtop - wbot))
-           sct(k,i,j) = sct(k,i,j) &
-                - vt3dh(k,i,j)*(ue  *qx(k,i,j) - uw  *qx(k,i-1,j)) &
-                - vt3dj(k,i,j)*(vn  *qy(k,i,j) - vs  *qy(k,i,j-1)) &
-                - vt3dk(k,i,j)*(wtop*qz(k,i,j) - wbot*qz(k-1,i,j)) &
-                + div_term
-        end do
-     end do
-  end do
+    do j = ja,jz
+       do i = ia,iz
+          do k = 2,mzp-1
+             ue  =0.5*( ufx(k,i  ,j) + ufx(k+ks,i  +is,j+js) )
+             uw  =0.5*( ufx(k,i-1,j) + ufx(k+ks,i-1+is,j+js) )
+             vn  =0.5*( vfx(k,i,j  ) + vfx(k+ks,i+is,j  +js) )
+             vs  =0.5*( vfx(k,i,j-1) + vfx(k+ks,i+is,j-1+js) )
+             wtop=0.5*( wfx(k  ,i,j) + wfx(k+ks  ,i+is,j+js) )
+             wbot=0.5*( wfx(k-1,i,j) + wfx(k-1+ks,i+is,j+js) )
+             div_term = scp(k,i,j)*(vt3dh(k,i,j)*(ue   - uw  ) + &
+                  vt3dj(k,i,j)*(vn   - vs  ) + &
+                  vt3dk(k,i,j)*(wtop - wbot))
+             sct(k,i,j) = sct(k,i,j) &
+                  - vt3dh(k,i,j)*(ue  *qx(k,i,j) - uw  *qx(k,i-1,j)) &
+                  - vt3dj(k,i,j)*(vn  *qy(k,i,j) - vs  *qy(k,i,j-1)) &
+                  - vt3dk(k,i,j)*(wtop*qz(k,i,j) - wbot*qz(k-1,i,j)) &
+                  + div_term
+          end do
+       end do
+    end do
 
-end subroutine createTendency
-
-!--- 1st order or upwind scheme
-real function flux_upwind(qi, qip1, dir )
-  implicit none
-  real, intent(in) :: dir
-  real, intent(in) :: qi
-  real, intent(in) :: qip1
-
-  flux_upwind = 0.5*(1.+dir)*qi - 0.5*(dir-1.)*qip1
-
-end function flux_upwind
-
-!--- 2nd order interpolation operator
-real function fq2(qi,qip1)
-  implicit none
-  real, intent(in) :: qi
-  real, intent(in) :: qip1
-
-  fq2= 0.5*(qip1+qi)
-
-end function fq2
-
-!--- 3rd order interpolation operator
-real function fq3(qim1,qi,qip1,qip2,dir)
-  use advRkParam, only: f40,f41
-  implicit none
-  real,intent(in) :: qim1
-  real,intent(in) :: qi
-  real,intent(in) :: qip1
-  real,intent(in) :: qip2
-  real,intent(in) :: dir
-
-  fq3= f40*(qip1+qi)-f41*(qip2+qim1) &
-       - f41*(3.*(qip1-qi)-(qip2-qim1))*dir
-
-end function fq3
-
-!--- 4th order interpolation operator
-real function fq4(qim1,qi,qip1,qip2)
-  use advRkParam, only: f40,f41
-  implicit none
-  real, intent(in) :: qim1
-  real, intent(in) :: qi
-  real, intent(in) :: qip1
-  real, intent(in) :: qip2
-
-  fq4= f40*(qip1+qi)-f41*(qip2+qim1)
-
-end function fq4
-
-!- polynomial interpolation operators
-! for 5th and 6th orders
-real function fq(qim2,qim1,qi,qip1,qip2,qip3,dir)
-  use advRkParam, only: f50,f51,f52,fifth_order
-  implicit none
-  real, intent(in) :: qim2
-  real, intent(in) :: qim1
-  real, intent(in) :: qi
-  real, intent(in) :: qip1
-  real, intent(in) :: qip2
-  real, intent(in) :: qip3
-  real, intent(in) :: dir
-
-  fq = f50*(qip1 + qi) - f51*(qip2 + qim1) + f52*(qip3 + qim2) &
-       - fifth_order* f52*(qip3-qim2-5.*(qip2-qim1)+10.*(qip1-qi))*dir
-
-end function fq
+  end subroutine createTendency
+end module ModAdvectc_rk
