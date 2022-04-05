@@ -379,7 +379,7 @@ contains
     integer :: bufStart
     type(FieldSectionNode), pointer :: oneNode
     type(FieldSection), pointer :: oneFieldSection
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(FillMessageDataBufferVariableAdressArr)**"
 

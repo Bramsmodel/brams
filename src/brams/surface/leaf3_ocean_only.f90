@@ -45,6 +45,7 @@ end subroutine alloc_ocean_only
 subroutine sfclyr_ocean_only(mzp,mxp,myp,ia,iz,ja,jz,ibcon)
 
   use mem_all
+  
   implicit none
 
   !Arguments:

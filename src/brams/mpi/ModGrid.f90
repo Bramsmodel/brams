@@ -471,13 +471,15 @@ contains
 
 
     call CreateWideGhostZoneMessageSet(&
-         oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
-         oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhost, oneGrid%LocalOwn, &
+         oneGrid%ParEnv, oneGrid%Neigh, &
+         oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhost, &
+         oneGrid%NodeDims%mzp, 1, oneGrid%NodeDims%mzp, &
          TagWideGhostZone, oneGrid%WideGhostZoneSend, oneGrid%WideGhostZoneRecv)
 
     call CreateAdvMntMessageSet(&
          oneGrid%ParEnv, oneGrid%Neigh, &
-         oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhostAdvMnt, oneGrid%NodeDimsAdvMnt, &
+         oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhostAdvMnt, &
+         oneGrid%NodeDims, oneGrid%NodeDimsAdvMnt, &
          TagAdvMntUVX, oneGrid%AdvMntUVSendX, oneGrid%AdvMntUVRecvX, &
          TagAdvMntUVY, oneGrid%AdvMntUVSendY, oneGrid%AdvMntUVRecvY, &
          TagAdvMntDxDyX, oneGrid%AdvMntDxDySendX, oneGrid%AdvMntDxDyRecvX, &

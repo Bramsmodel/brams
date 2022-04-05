@@ -2981,16 +2981,17 @@ contains
 
   
   subroutine CreateWideGhostZoneMessageSet(&
-       GridSize, ParEnv, Neigh, &
-       GlobalOwnWithBC, GlobalWithGhost, LocalOwn, &
+       ParEnv, Neigh, &
+       GlobalOwnWithBC, GlobalWithGhost, mzp, zStartAdvMnt, zEndAdvMnt, &
        TagWideGhostZone, WideGhostZoneSend, WideGhostZoneRecv)
 
-    type(GridDims), pointer, intent(in) :: GridSize
     type(ParallelEnvironment), pointer, intent(in) :: ParEnv
     type(NeighbourNodes), pointer, intent(in) :: Neigh
     type(DomainDecomp), pointer, intent(in) :: GlobalOwnWithBC
     type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
-    type(DomainDecomp), pointer, intent(in) :: LocalOwn
+    integer, intent(in) :: mzp
+    integer, intent(in) :: zStartAdvMnt
+    integer, intent(in) :: zendAdvMnt
     integer, intent(in) :: TagWideGhostZone
     type(MessageSet), pointer, intent(inout) :: WideGhostZoneSend
     type(MessageSet), pointer, intent(inout) :: WideGhostZoneRecv
@@ -3059,10 +3060,14 @@ contains
     character(len=*), parameter :: NameSendRecvEast="Send/RecvWideGhostZoneEast"
     character(len=*), parameter :: NameSendRecvWest="Send/RecvWideGhostZoneWest"
 
-    character(len=*), parameter :: scrName="SCR"
+    character(len=*), parameter :: scpName="SCP"
     character(len=*), parameter :: ufxName="UFX"
     character(len=*), parameter :: vfxName="VFX"
     character(len=*), parameter :: wfxName="WFX"
+    character(len=*), parameter :: scrName="SCR"
+    character(len=*), parameter :: ufxLocalName="UFXLOC"
+    character(len=*), parameter :: vfxLocalName="VFXLOC"
+    character(len=*), parameter :: wfxLocalName="WFXLOC"
 
     integer :: nMachs
     integer :: myNum
@@ -3279,24 +3284,28 @@ contains
              fieldSectionSize= &
                   (xeSendNorth(iNeigh)-xbSendNorth(iNeigh)+1) * &
                   (yeSendNorth(iNeigh)-ybSendNorth(iNeigh)+1) * &
-                  (GridSize%nnzp + 2* ghostZoneWidth)
+                  (mzp + 2* ghostZoneWidth)
 
-             oneFieldSection =>  CreateFieldSection(scrName, idim_type, &
+             oneFieldSection =>  CreateFieldSection(scpName, idim_type, &
+                  1, mzp, &
                   xbSendNorth(iNeigh)-x0, xeSendNorth(iNeigh)-x0, &
                   ybSendNorth(iNeigh)-y0, yeSendNorth(iNeigh)-y0, &
                   fieldSectionSize)
              call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneSend%msgData(cntMsg))
              oneFieldSection =>  CreateFieldSection(ufxName, idim_type, &
+                  1, mzp, &
                   xbSendNorth(iNeigh)-x0, xeSendNorth(iNeigh)-x0, &
                   ybSendNorth(iNeigh)-y0, yeSendNorth(iNeigh)-y0, &
                   fieldSectionSize)
              call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneSend%msgData(cntMsg))
              oneFieldSection =>  CreateFieldSection(vfxName, idim_type, &
+                  1, mzp, &
                   xbSendNorth(iNeigh)-x0, xeSendNorth(iNeigh)-x0, &
                   ybSendNorth(iNeigh)-y0, yeSendNorth(iNeigh)-y0, &
                   fieldSectionSize)
              call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneSend%msgData(cntMsg))
              oneFieldSection =>  CreateFieldSection(wfxName, idim_type, &
+                  1, mzp, &
                   xbSendNorth(iNeigh)-x0, xeSendNorth(iNeigh)-x0, &
                   ybSendNorth(iNeigh)-y0, yeSendNorth(iNeigh)-y0, &
                   fieldSectionSize)
@@ -3317,24 +3326,28 @@ contains
              fieldSectionSize= &
                   (xeSendSouth(iNeigh)-xbSendSouth(iNeigh)+1) * &
                   (yeSendSouth(iNeigh)-ybSendSouth(iNeigh)+1) * &
-                  (GridSize%nnzp + 2* ghostZoneWidth)
+                  (mzp + 2* ghostZoneWidth)
 
-             oneFieldSection =>  CreateFieldSection(scrName, idim_type, &
+             oneFieldSection =>  CreateFieldSection(scpName, idim_type, &
+                  1, mzp, &
                   xbSendSouth(iNeigh)-x0, xeSendSouth(iNeigh)-x0, &
                   ybSendSouth(iNeigh)-y0, yeSendSouth(iNeigh)-y0, &
                   fieldSectionSize)
              call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneSend%msgData(cntMsg))
              oneFieldSection =>  CreateFieldSection(ufxName, idim_type, &
+                  1, mzp, &
                   xbSendSouth(iNeigh)-x0, xeSendSouth(iNeigh)-x0, &
                   ybSendSouth(iNeigh)-y0, yeSendSouth(iNeigh)-y0, &
                   fieldSectionSize)
              call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneSend%msgData(cntMsg))
              oneFieldSection =>  CreateFieldSection(vfxName, idim_type, &
+                  1, mzp, &
                   xbSendSouth(iNeigh)-x0, xeSendSouth(iNeigh)-x0, &
                   ybSendSouth(iNeigh)-y0, yeSendSouth(iNeigh)-y0, &
                   fieldSectionSize)
              call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneSend%msgData(cntMsg))
              oneFieldSection =>  CreateFieldSection(wfxName, idim_type, &
+                  1, mzp, &
                   xbSendSouth(iNeigh)-x0, xeSendSouth(iNeigh)-x0, &
                   ybSendSouth(iNeigh)-y0, yeSendSouth(iNeigh)-y0, &
                   fieldSectionSize)
@@ -3355,24 +3368,28 @@ contains
              fieldSectionSize= &
                   (xeSendEast(iNeigh)-xbSendEast(iNeigh)+1) * &
                   (yeSendEast(iNeigh)-ybSendEast(iNeigh)+1) * &
-                  (GridSize%nnzp + 2* ghostZoneWidth)
+                  (mzp + 2* ghostZoneWidth)
 
-             oneFieldSection =>  CreateFieldSection(scrName, idim_type, &
+             oneFieldSection =>  CreateFieldSection(scpName, idim_type, &
+                  1, mzp, &
                   xbSendEast(iNeigh)-x0, xeSendEast(iNeigh)-x0, &
                   ybSendEast(iNeigh)-y0, yeSendEast(iNeigh)-y0, &
                   fieldSectionSize)
              call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneSend%msgData(cntMsg))
              oneFieldSection =>  CreateFieldSection(ufxName, idim_type, &
+                  1, mzp, &
                   xbSendEast(iNeigh)-x0, xeSendEast(iNeigh)-x0, &
                   ybSendEast(iNeigh)-y0, yeSendEast(iNeigh)-y0, &
                   fieldSectionSize)
              call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneSend%msgData(cntMsg))
              oneFieldSection =>  CreateFieldSection(vfxName, idim_type, &
+                  1, mzp, &
                   xbSendEast(iNeigh)-x0, xeSendEast(iNeigh)-x0, &
                   ybSendEast(iNeigh)-y0, yeSendEast(iNeigh)-y0, &
                   fieldSectionSize)
              call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneSend%msgData(cntMsg))
              oneFieldSection =>  CreateFieldSection(wfxName, idim_type, &
+                  1, mzp, &
                   xbSendEast(iNeigh)-x0, xeSendEast(iNeigh)-x0, &
                   ybSendEast(iNeigh)-y0, yeSendEast(iNeigh)-y0, &
                   fieldSectionSize)
@@ -3393,24 +3410,28 @@ contains
              fieldSectionSize= &
                   (xeSendWest(iNeigh)-xbSendWest(iNeigh)+1) * &
                   (yeSendWest(iNeigh)-ybSendWest(iNeigh)+1) * &
-                  (GridSize%nnzp + 2* ghostZoneWidth)
+                  (mzp + 2* ghostZoneWidth)
 
-             oneFieldSection =>  CreateFieldSection(scrName, idim_type, &
+             oneFieldSection =>  CreateFieldSection(scpName, idim_type, &
+                  1, mzp, &
                   xbSendWest(iNeigh)-x0, xeSendWest(iNeigh)-x0, &
                   ybSendWest(iNeigh)-y0, yeSendWest(iNeigh)-y0, &
                   fieldSectionSize)
              call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneSend%msgData(cntMsg))
              oneFieldSection =>  CreateFieldSection(ufxName, idim_type, &
+                  1, mzp, &
                   xbSendWest(iNeigh)-x0, xeSendWest(iNeigh)-x0, &
                   ybSendWest(iNeigh)-y0, yeSendWest(iNeigh)-y0, &
                   fieldSectionSize)
              call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneSend%msgData(cntMsg))
              oneFieldSection =>  CreateFieldSection(vfxName, idim_type, &
+                  1, mzp, &
                   xbSendWest(iNeigh)-x0, xeSendWest(iNeigh)-x0, &
                   ybSendWest(iNeigh)-y0, yeSendWest(iNeigh)-y0, &
                   fieldSectionSize)
              call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneSend%msgData(cntMsg))
              oneFieldSection =>  CreateFieldSection(wfxName, idim_type, &
+                  1, mzp, &
                   xbSendWest(iNeigh)-x0, xeSendWest(iNeigh)-x0, &
                   ybSendWest(iNeigh)-y0, yeSendWest(iNeigh)-y0, &
                   fieldSectionSize)
@@ -3466,24 +3487,28 @@ contains
              fieldSectionSize= &
                   (xeRecvNorth(iNeigh)-xbRecvNorth(iNeigh)+1) * &
                   (yeRecvNorth(iNeigh)-ybRecvNorth(iNeigh)+1) * &
-                  (GridSize%nnzp + 2* ghostZoneWidth)
+                  (mzp + 2* ghostZoneWidth)
 
              oneFieldSection =>  CreateFieldSection(scrName, idim_type, &
+                  zStartAdvMnt, zEndAdvMnt, &
                   xbRecvNorth(iNeigh)-x0, xeRecvNorth(iNeigh)-x0, &
                   ybRecvNorth(iNeigh)-y0, yeRecvNorth(iNeigh)-y0, &
                   fieldSectionSize)
              call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneRecv%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(ufxName, idim_type, &
+             oneFieldSection =>  CreateFieldSection(ufxLocalName, idim_type, &
+                  zStartAdvMnt, zEndAdvMnt, &
                   xbRecvNorth(iNeigh)-x0, xeRecvNorth(iNeigh)-x0, &
                   ybRecvNorth(iNeigh)-y0, yeRecvNorth(iNeigh)-y0, &
                   fieldSectionSize)
              call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneRecv%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(vfxName, idim_type, &
+             oneFieldSection =>  CreateFieldSection(vfxLocalName, idim_type, &
+                  zStartAdvMnt, zEndAdvMnt, &
                   xbRecvNorth(iNeigh)-x0, xeRecvNorth(iNeigh)-x0, &
                   ybRecvNorth(iNeigh)-y0, yeRecvNorth(iNeigh)-y0, &
                   fieldSectionSize)
              call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneRecv%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(wfxName, idim_type, &
+             oneFieldSection =>  CreateFieldSection(wfxLocalName, idim_type, &
+                  zStartAdvMnt, zEndAdvMnt, &
                   xbRecvNorth(iNeigh)-x0, xeRecvNorth(iNeigh)-x0, &
                   ybRecvNorth(iNeigh)-y0, yeRecvNorth(iNeigh)-y0, &
                   fieldSectionSize)
@@ -3504,24 +3529,28 @@ contains
              fieldSectionSize= &
                   (xeRecvSouth(iNeigh)-xbRecvSouth(iNeigh)+1) * &
                   (yeRecvSouth(iNeigh)-ybRecvSouth(iNeigh)+1) * &
-                  (GridSize%nnzp + 2* ghostZoneWidth)
+                  (mzp + 2* ghostZoneWidth)
 
              oneFieldSection =>  CreateFieldSection(scrName, idim_type, &
+                  zStartAdvMnt, zEndAdvMnt, &
                   xbRecvSouth(iNeigh)-x0, xeRecvSouth(iNeigh)-x0, &
                   ybRecvSouth(iNeigh)-y0, yeRecvSouth(iNeigh)-y0, &
                   fieldSectionSize)
              call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneRecv%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(ufxName, idim_type, &
+             oneFieldSection =>  CreateFieldSection(ufxLocalName, idim_type, &
+                  zStartAdvMnt, zEndAdvMnt, &
                   xbRecvSouth(iNeigh)-x0, xeRecvSouth(iNeigh)-x0, &
                   ybRecvSouth(iNeigh)-y0, yeRecvSouth(iNeigh)-y0, &
                   fieldSectionSize)
              call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneRecv%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(vfxName, idim_type, &
+             oneFieldSection =>  CreateFieldSection(vfxLocalName, idim_type, &
+                  zStartAdvMnt, zEndAdvMnt, &
                   xbRecvSouth(iNeigh)-x0, xeRecvSouth(iNeigh)-x0, &
                   ybRecvSouth(iNeigh)-y0, yeRecvSouth(iNeigh)-y0, &
                   fieldSectionSize)
              call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneRecv%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(wfxName, idim_type, &
+             oneFieldSection =>  CreateFieldSection(wfxLocalName, idim_type, &
+                  zStartAdvMnt, zEndAdvMnt, &
                   xbRecvSouth(iNeigh)-x0, xeRecvSouth(iNeigh)-x0, &
                   ybRecvSouth(iNeigh)-y0, yeRecvSouth(iNeigh)-y0, &
                   fieldSectionSize)
@@ -3542,24 +3571,28 @@ contains
              fieldSectionSize= &
                   (xeRecvEast(iNeigh)-xbRecvEast(iNeigh)+1) * &
                   (yeRecvEast(iNeigh)-ybRecvEast(iNeigh)+1) * &
-                  (GridSize%nnzp + 2* ghostZoneWidth)
+                  (mzp + 2* ghostZoneWidth)
 
              oneFieldSection =>  CreateFieldSection(scrName, idim_type, &
+                  zStartAdvMnt, zEndAdvMnt, &
                   xbRecvEast(iNeigh)-x0, xeRecvEast(iNeigh)-x0, &
                   ybRecvEast(iNeigh)-y0, yeRecvEast(iNeigh)-y0, &
                   fieldSectionSize)
              call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneRecv%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(ufxName, idim_type, &
+             oneFieldSection =>  CreateFieldSection(ufxLocalName, idim_type, &
+                  zStartAdvMnt, zEndAdvMnt, &
                   xbRecvEast(iNeigh)-x0, xeRecvEast(iNeigh)-x0, &
                   ybRecvEast(iNeigh)-y0, yeRecvEast(iNeigh)-y0, &
                   fieldSectionSize)
              call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneRecv%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(vfxName, idim_type, &
+             oneFieldSection =>  CreateFieldSection(vfxLocalName, idim_type, &
+                  zStartAdvMnt, zEndAdvMnt, &
                   xbRecvEast(iNeigh)-x0, xeRecvEast(iNeigh)-x0, &
                   ybRecvEast(iNeigh)-y0, yeRecvEast(iNeigh)-y0, &
                   fieldSectionSize)
              call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneRecv%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(wfxName, idim_type, &
+             oneFieldSection =>  CreateFieldSection(wfxLocalName, idim_type, &
+                  zStartAdvMnt, zEndAdvMnt, &
                   xbRecvEast(iNeigh)-x0, xeRecvEast(iNeigh)-x0, &
                   ybRecvEast(iNeigh)-y0, yeRecvEast(iNeigh)-y0, &
                   fieldSectionSize)
@@ -3580,24 +3613,28 @@ contains
              fieldSectionSize= &
                   (xeRecvWest(iNeigh)-xbRecvWest(iNeigh)+1) * &
                   (yeRecvWest(iNeigh)-ybRecvWest(iNeigh)+1) * &
-                  (GridSize%nnzp + 2* ghostZoneWidth)
+                  (mzp + 2* ghostZoneWidth)
 
              oneFieldSection =>  CreateFieldSection(scrName, idim_type, &
+                  zStartAdvMnt, zEndAdvMnt, &
                   xbRecvWest(iNeigh)-x0, xeRecvWest(iNeigh)-x0, &
                   ybRecvWest(iNeigh)-y0, yeRecvWest(iNeigh)-y0, &
                   fieldSectionSize)
              call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneRecv%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(ufxName, idim_type, &
+             oneFieldSection =>  CreateFieldSection(ufxLocalName, idim_type, &
+                  zStartAdvMnt, zEndAdvMnt, &
                   xbRecvWest(iNeigh)-x0, xeRecvWest(iNeigh)-x0, &
                   ybRecvWest(iNeigh)-y0, yeRecvWest(iNeigh)-y0, &
                   fieldSectionSize)
              call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneRecv%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(vfxName, idim_type, &
+             oneFieldSection =>  CreateFieldSection(vfxLocalName, idim_type, &
+                  zStartAdvMnt, zEndAdvMnt, &
                   xbRecvWest(iNeigh)-x0, xeRecvWest(iNeigh)-x0, &
                   ybRecvWest(iNeigh)-y0, yeRecvWest(iNeigh)-y0, &
                   fieldSectionSize)
              call AppendFieldSectionToMessageData(oneFieldSection, WideGhostZoneRecv%msgData(cntMsg))
-             oneFieldSection =>  CreateFieldSection(wfxName, idim_type, &
+             oneFieldSection =>  CreateFieldSection(wfxLocalName, idim_type, &
+                  zStartAdvMnt, zEndAdvMnt, &
                   xbRecvWest(iNeigh)-x0, xeRecvWest(iNeigh)-x0, &
                   ybRecvWest(iNeigh)-y0, yeRecvWest(iNeigh)-y0, &
                   fieldSectionSize)
@@ -3641,6 +3678,7 @@ contains
        willRecvNorth, willRecvSouth, willRecvEast, willRecvWest, &
        NameSendX, NameSendY, sendDirection, TagX, &
        NameRecvX, NameRecvY, recvDirection, TagY, &
+       zStartAdvMnt, zEndAdvMnt, &
        xbSendEast, xeSendEast, xbSendWest, xeSendWest, &
        xbSendNorth, xeSendNorth, xbSendSouth, xeSendSouth, &
        xbRecvEast, xeRecvEast, xbRecvWest, xeRecvWest, &
@@ -3673,6 +3711,8 @@ contains
     character(len=*), intent(in) :: NameRecvY
     character(len=*), intent(in) :: recvDirection
     integer, intent(in) :: TagY
+    integer, intent(in) :: zStartAdvMnt
+    integer, intent(in) :: zEndAdvMnt
     integer, intent(in) :: xbSendEast(:)
     integer, intent(in) :: xeSendEast(:)
     integer, intent(in) :: xbSendWest(:)
@@ -3841,6 +3881,7 @@ contains
 
              if (present(fldName_X)) then
                 oneFieldSection =>  CreateFieldSection(fldName_X, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbSendEast(iNeigh)-x0, xeSendEast(iNeigh)-x0, &
                      ybSendEast(iNeigh)-y0, yeSendEast(iNeigh)-y0, &
                      fieldSectionSize)
@@ -3848,6 +3889,7 @@ contains
              end if
              if (present(fldName_1)) then
                 oneFieldSection =>  CreateFieldSection(fldName_1, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbSendEast(iNeigh)-x0, xeSendEast(iNeigh)-x0, &
                      ybSendEast(iNeigh)-y0, yeSendEast(iNeigh)-y0, &
                      fieldSectionSize)
@@ -3855,6 +3897,7 @@ contains
              end if
              if (present(fldName_2)) then
                 oneFieldSection =>  CreateFieldSection(fldName_2, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbSendEast(iNeigh)-x0, xeSendEast(iNeigh)-x0, &
                      ybSendEast(iNeigh)-y0, yeSendEast(iNeigh)-y0, &
                      fieldSectionSize)
@@ -3862,6 +3905,7 @@ contains
              end if
              if (present(fldName_3)) then
                 oneFieldSection =>  CreateFieldSection(fldName_3, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbSendEast(iNeigh)-x0, xeSendEast(iNeigh)-x0, &
                      ybSendEast(iNeigh)-y0, yeSendEast(iNeigh)-y0, &
                      fieldSectionSize)
@@ -3869,6 +3913,7 @@ contains
              end if
              if (present(fldName_4)) then
                 oneFieldSection =>  CreateFieldSection(fldName_4, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbSendEast(iNeigh)-x0, xeSendEast(iNeigh)-x0, &
                      ybSendEast(iNeigh)-y0, yeSendEast(iNeigh)-y0, &
                      fieldSectionSize)
@@ -3894,6 +3939,7 @@ contains
 
              if (present(fldName_X)) then
                 oneFieldSection =>  CreateFieldSection(fldName_X, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbSendWest(iNeigh)-x0, xeSendWest(iNeigh)-x0, &
                      ybSendWest(iNeigh)-y0, yeSendWest(iNeigh)-y0, &
                      fieldSectionSize)
@@ -3901,6 +3947,7 @@ contains
              end if
              if (present(fldName_1)) then
                 oneFieldSection =>  CreateFieldSection(fldName_1, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbSendWest(iNeigh)-x0, xeSendWest(iNeigh)-x0, &
                      ybSendWest(iNeigh)-y0, yeSendWest(iNeigh)-y0, &
                      fieldSectionSize)
@@ -3908,6 +3955,7 @@ contains
              end if
              if (present(fldName_2)) then
                 oneFieldSection =>  CreateFieldSection(fldName_2, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbSendWest(iNeigh)-x0, xeSendWest(iNeigh)-x0, &
                      ybSendWest(iNeigh)-y0, yeSendWest(iNeigh)-y0, &
                      fieldSectionSize)
@@ -3915,6 +3963,7 @@ contains
              end if
              if (present(fldName_3)) then
                 oneFieldSection =>  CreateFieldSection(fldName_3, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbSendWest(iNeigh)-x0, xeSendWest(iNeigh)-x0, &
                      ybSendWest(iNeigh)-y0, yeSendWest(iNeigh)-y0, &
                      fieldSectionSize)
@@ -3922,6 +3971,7 @@ contains
              end if
              if (present(fldName_4)) then
                 oneFieldSection =>  CreateFieldSection(fldName_4, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbSendWest(iNeigh)-x0, xeSendWest(iNeigh)-x0, &
                      ybSendWest(iNeigh)-y0, yeSendWest(iNeigh)-y0, &
                      fieldSectionSize)
@@ -3967,6 +4017,7 @@ contains
                   fieldSectionSizeZ
              if (present(fldName_X)) then
                 oneFieldSection =>  CreateFieldSection(fldName_X, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbRecvEast(iNeigh)-x0, xeRecvEast(iNeigh)-x0, &
                      ybRecvEast(iNeigh)-y0, yeRecvEast(iNeigh)-y0, &
                      fieldSectionSize)
@@ -3974,6 +4025,7 @@ contains
              end if
              if (present(fldName_1)) then
                 oneFieldSection =>  CreateFieldSection(fldName_1, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbRecvEast(iNeigh)-x0, xeRecvEast(iNeigh)-x0, &
                      ybRecvEast(iNeigh)-y0, yeRecvEast(iNeigh)-y0, &
                      fieldSectionSize)
@@ -3981,6 +4033,7 @@ contains
              end if
              if (present(fldName_2)) then
                 oneFieldSection =>  CreateFieldSection(fldName_2, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbRecvEast(iNeigh)-x0, xeRecvEast(iNeigh)-x0, &
                      ybRecvEast(iNeigh)-y0, yeRecvEast(iNeigh)-y0, &
                      fieldSectionSize)
@@ -3988,6 +4041,7 @@ contains
              end if
              if (present(fldName_3)) then
                 oneFieldSection =>  CreateFieldSection(fldName_3, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbRecvEast(iNeigh)-x0, xeRecvEast(iNeigh)-x0, &
                      ybRecvEast(iNeigh)-y0, yeRecvEast(iNeigh)-y0, &
                      fieldSectionSize)
@@ -3995,6 +4049,7 @@ contains
              end if
              if (present(fldName_4)) then
                 oneFieldSection =>  CreateFieldSection(fldName_4, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbRecvEast(iNeigh)-x0, xeRecvEast(iNeigh)-x0, &
                      ybRecvEast(iNeigh)-y0, yeRecvEast(iNeigh)-y0, &
                      fieldSectionSize)
@@ -4019,6 +4074,7 @@ contains
                   fieldSectionSizeZ
              if (present(fldName_X)) then
                 oneFieldSection =>  CreateFieldSection(fldName_X, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbRecvWest(iNeigh)-x0, xeRecvWest(iNeigh)-x0, &
                      ybRecvWest(iNeigh)-y0, yeRecvWest(iNeigh)-y0, &
                      fieldSectionSize)
@@ -4026,6 +4082,7 @@ contains
              end if
              if (present(fldName_1)) then
                 oneFieldSection =>  CreateFieldSection(fldName_1, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbRecvWest(iNeigh)-x0, xeRecvWest(iNeigh)-x0, &
                      ybRecvWest(iNeigh)-y0, yeRecvWest(iNeigh)-y0, &
                      fieldSectionSize)
@@ -4033,6 +4090,7 @@ contains
              end if
              if (present(fldName_2)) then
                 oneFieldSection =>  CreateFieldSection(fldName_2, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbRecvWest(iNeigh)-x0, xeRecvWest(iNeigh)-x0, &
                      ybRecvWest(iNeigh)-y0, yeRecvWest(iNeigh)-y0, &
                      fieldSectionSize)
@@ -4040,6 +4098,7 @@ contains
              end if
              if (present(fldName_3)) then
                 oneFieldSection =>  CreateFieldSection(fldName_3, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbRecvWest(iNeigh)-x0, xeRecvWest(iNeigh)-x0, &
                      ybRecvWest(iNeigh)-y0, yeRecvWest(iNeigh)-y0, &
                      fieldSectionSize)
@@ -4047,6 +4106,7 @@ contains
              end if
              if (present(fldName_4)) then
                 oneFieldSection =>  CreateFieldSection(fldName_4, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbRecvWest(iNeigh)-x0, xeRecvWest(iNeigh)-x0, &
                      ybRecvWest(iNeigh)-y0, yeRecvWest(iNeigh)-y0, &
                      fieldSectionSize)
@@ -4104,6 +4164,7 @@ contains
                   fieldSectionSizeZ
              if (present(fldName_Y)) then
                 oneFieldSection =>  CreateFieldSection(fldName_Y, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbSendNorth(iNeigh)-x0, xeSendNorth(iNeigh)-x0, &
                      ybSendNorth(iNeigh)-y0, yeSendNorth(iNeigh)-y0, &
                      fieldSectionSize)
@@ -4111,6 +4172,7 @@ contains
              end if
              if (present(fldName_1)) then
                 oneFieldSection =>  CreateFieldSection(fldName_1, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbSendNorth(iNeigh)-x0, xeSendNorth(iNeigh)-x0, &
                      ybSendNorth(iNeigh)-y0, yeSendNorth(iNeigh)-y0, &
                      fieldSectionSize)
@@ -4118,6 +4180,7 @@ contains
              end if
              if (present(fldName_2)) then
                 oneFieldSection =>  CreateFieldSection(fldName_2, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbSendNorth(iNeigh)-x0, xeSendNorth(iNeigh)-x0, &
                      ybSendNorth(iNeigh)-y0, yeSendNorth(iNeigh)-y0, &
                      fieldSectionSize)
@@ -4125,6 +4188,7 @@ contains
              end if
              if (present(fldName_3)) then
                 oneFieldSection =>  CreateFieldSection(fldName_3, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbSendNorth(iNeigh)-x0, xeSendNorth(iNeigh)-x0, &
                      ybSendNorth(iNeigh)-y0, yeSendNorth(iNeigh)-y0, &
                      fieldSectionSize)
@@ -4132,6 +4196,7 @@ contains
              end if
              if (present(fldName_4)) then
                 oneFieldSection =>  CreateFieldSection(fldName_4, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbSendNorth(iNeigh)-x0, xeSendNorth(iNeigh)-x0, &
                      ybSendNorth(iNeigh)-y0, yeSendNorth(iNeigh)-y0, &
                      fieldSectionSize)
@@ -4156,6 +4221,7 @@ contains
                   fieldSectionSizeZ
              if (present(fldName_Y)) then
                 oneFieldSection =>  CreateFieldSection(fldName_Y, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbSendSouth(iNeigh)-x0, xeSendSouth(iNeigh)-x0, &
                      ybSendSouth(iNeigh)-y0, yeSendSouth(iNeigh)-y0, &
                      fieldSectionSize)
@@ -4163,6 +4229,7 @@ contains
              end if
              if (present(fldName_1)) then
                 oneFieldSection =>  CreateFieldSection(fldName_1, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbSendSouth(iNeigh)-x0, xeSendSouth(iNeigh)-x0, &
                      ybSendSouth(iNeigh)-y0, yeSendSouth(iNeigh)-y0, &
                      fieldSectionSize)
@@ -4170,6 +4237,7 @@ contains
              end if
              if (present(fldName_2)) then
                 oneFieldSection =>  CreateFieldSection(fldName_2, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbSendSouth(iNeigh)-x0, xeSendSouth(iNeigh)-x0, &
                      ybSendSouth(iNeigh)-y0, yeSendSouth(iNeigh)-y0, &
                      fieldSectionSize)
@@ -4177,6 +4245,7 @@ contains
              end if
              if (present(fldName_3)) then
                 oneFieldSection =>  CreateFieldSection(fldName_3, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbSendSouth(iNeigh)-x0, xeSendSouth(iNeigh)-x0, &
                      ybSendSouth(iNeigh)-y0, yeSendSouth(iNeigh)-y0, &
                      fieldSectionSize)
@@ -4184,6 +4253,7 @@ contains
              end if
              if (present(fldName_4)) then
                 oneFieldSection =>  CreateFieldSection(fldName_4, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbSendSouth(iNeigh)-x0, xeSendSouth(iNeigh)-x0, &
                      ybSendSouth(iNeigh)-y0, yeSendSouth(iNeigh)-y0, &
                      fieldSectionSize)
@@ -4228,6 +4298,7 @@ contains
                   fieldSectionSizeZ
              if (present(fldName_Y)) then
                 oneFieldSection =>  CreateFieldSection(fldName_Y, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbRecvNorth(iNeigh)-x0, xeRecvNorth(iNeigh)-x0, &
                      ybRecvNorth(iNeigh)-y0, yeRecvNorth(iNeigh)-y0, &
                      fieldSectionSize)
@@ -4235,6 +4306,7 @@ contains
              end if
              if (present(fldName_1)) then
                 oneFieldSection =>  CreateFieldSection(fldName_1, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbRecvNorth(iNeigh)-x0, xeRecvNorth(iNeigh)-x0, &
                      ybRecvNorth(iNeigh)-y0, yeRecvNorth(iNeigh)-y0, &
                      fieldSectionSize)
@@ -4242,6 +4314,7 @@ contains
              end if
              if (present(fldName_2)) then
                 oneFieldSection =>  CreateFieldSection(fldName_2, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbRecvNorth(iNeigh)-x0, xeRecvNorth(iNeigh)-x0, &
                      ybRecvNorth(iNeigh)-y0, yeRecvNorth(iNeigh)-y0, &
                      fieldSectionSize)
@@ -4249,6 +4322,7 @@ contains
              end if
              if (present(fldName_3)) then
                 oneFieldSection =>  CreateFieldSection(fldName_3, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbRecvNorth(iNeigh)-x0, xeRecvNorth(iNeigh)-x0, &
                      ybRecvNorth(iNeigh)-y0, yeRecvNorth(iNeigh)-y0, &
                      fieldSectionSize)
@@ -4256,6 +4330,7 @@ contains
              end if
              if (present(fldName_4)) then
                 oneFieldSection =>  CreateFieldSection(fldName_4, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbRecvNorth(iNeigh)-x0, xeRecvNorth(iNeigh)-x0, &
                      ybRecvNorth(iNeigh)-y0, yeRecvNorth(iNeigh)-y0, &
                      fieldSectionSize)
@@ -4280,6 +4355,7 @@ contains
                   fieldSectionSizeZ
              if (present(fldName_Y)) then
                 oneFieldSection =>  CreateFieldSection(fldName_Y, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbRecvSouth(iNeigh)-x0, xeRecvSouth(iNeigh)-x0, &
                      ybRecvSouth(iNeigh)-y0, yeRecvSouth(iNeigh)-y0, &
                      fieldSectionSize)
@@ -4287,6 +4363,7 @@ contains
              end if
              if (present(fldName_1)) then
                 oneFieldSection =>  CreateFieldSection(fldName_1, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbRecvSouth(iNeigh)-x0, xeRecvSouth(iNeigh)-x0, &
                      ybRecvSouth(iNeigh)-y0, yeRecvSouth(iNeigh)-y0, &
                      fieldSectionSize)
@@ -4294,6 +4371,7 @@ contains
              end if
              if (present(fldName_2)) then
                 oneFieldSection =>  CreateFieldSection(fldName_2, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbRecvSouth(iNeigh)-x0, xeRecvSouth(iNeigh)-x0, &
                      ybRecvSouth(iNeigh)-y0, yeRecvSouth(iNeigh)-y0, &
                      fieldSectionSize)
@@ -4301,6 +4379,7 @@ contains
              end if
              if (present(fldName_3)) then
                 oneFieldSection =>  CreateFieldSection(fldName_3, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbRecvSouth(iNeigh)-x0, xeRecvSouth(iNeigh)-x0, &
                      ybRecvSouth(iNeigh)-y0, yeRecvSouth(iNeigh)-y0, &
                      fieldSectionSize)
@@ -4308,6 +4387,7 @@ contains
              end if
              if (present(fldName_4)) then
                 oneFieldSection =>  CreateFieldSection(fldName_4, idim_type, &
+                     zStartAdvMnt, zEndAdvMnt, &
                      xbRecvSouth(iNeigh)-x0, xeRecvSouth(iNeigh)-x0, &
                      ybRecvSouth(iNeigh)-y0, yeRecvSouth(iNeigh)-y0, &
                      fieldSectionSize)
@@ -4336,7 +4416,8 @@ contains
   
   subroutine CreateAdvMntMessageSet(&
        ParEnv, Neigh, &
-       GlobalOwnWithBC, GlobalWithGhostAdvMnt, NodeDimsAdvMnt, &
+       GlobalOwnWithBC, GlobalWithGhostAdvMnt, &
+       NodeDims, NodeDimsAdvMnt, &
        TagAdvMntUVX, AdvMntUVSendX, AdvMntUVRecvX, &
        TagAdvMntUVY, AdvMntUVSendY, AdvMntUVRecvY, &
        TagAdvMntDxDyX, AdvMntDxDySendX, AdvMntDxDyRecvX, &
@@ -4352,6 +4433,7 @@ contains
     type(NeighbourNodes), pointer, intent(in) :: Neigh
     type(DomainDecomp), pointer, intent(in) :: GlobalOwnWithBC
     type(DomainDecomp), pointer, intent(in) :: GlobalWithGhostAdvMnt
+    type(NodeDimensions), pointer, intent(in) :: NodeDims
     type(NodeDimensions), pointer, intent(in) :: NodeDimsAdvMnt
     integer, intent(in) :: TagAdvMntUVX
     type(MessageSet), pointer, intent(inout) :: AdvMntUVSendX
@@ -4481,6 +4563,7 @@ contains
     integer :: nMachs
     integer :: myNum
     integer :: nNeigh
+    integer :: mzp
     integer :: ierr
     integer :: iNeigh
     integer :: iNode
@@ -4504,6 +4587,7 @@ contains
     nMachs=ParEnv%nmachs
     myNum=ParEnv%mynum
     nNeigh=Neigh%nNeigh
+    mzp=NodeDims%mzp
 
     if (dumpLocal) then
        write(str(1),"(i8)") nMachs
@@ -4864,6 +4948,7 @@ contains
        willRecvNorth, willRecvSouth, willRecvEast, willRecvWest, &
        NameSendUVX, NameSendUVY, sendDirection, TagAdvMntUVX, &
        NameRecvUVX, NameRecvUVY, recvDirection, TagAdvMntUVY, &
+       1, mzp, &
        xbSendEast, xeSendEast, xbSendWest, xeSendWest, &
        xbSendNorth, xeSendNorth, xbSendSouth, xeSendSouth, &
        xbRecvEast, xeRecvEast, xbRecvWest, xeRecvWest, &
@@ -4884,6 +4969,7 @@ contains
        willRecvNorth, willRecvSouth, willRecvEast, willRecvWest, &
        NameSendDd0X, NameSendDd0Y, sendDirection, TagAdvMntDd0X, &
        NameRecvDd0X, NameRecvDd0Y, recvDirection, TagAdvMntDd0Y, &
+       1, mzp, &
        xbSendEast, xeSendEast, xbSendWest, xeSendWest, &
        xbSendNorth, xeSendNorth, xbSendSouth, xeSendSouth, &
        xbRecvEast, xeRecvEast, xbRecvWest, xeRecvWest, &
@@ -4906,6 +4992,7 @@ contains
        willRecvNorth, willRecvSouth, willRecvEast, willRecvWest, &
        NameSendDenX, NameSendDenY, sendDirection, TagAdvMntDenX, &
        NameRecvDenX, NameRecvDenY, recvDirection, TagAdvMntDenY, &
+       1, mzp, &
        xbSendEast, xeSendEast, xbSendWest, xeSendWest, &
        xbSendNorth, xeSendNorth, xbSendSouth, xeSendSouth, &
        xbRecvEast, xeRecvEast, xbRecvWest, xeRecvWest, &
@@ -4928,6 +5015,7 @@ contains
        willRecvNorth, willRecvSouth, willRecvEast, willRecvWest, &
        NameSendDxDyX, NameSendDxDyY, sendDirection, TagAdvMntDxDyX, &
        NameRecvDxDyX, NameRecvDxDyY, recvDirection, TagAdvMntDxDyY, &
+       1, mzp, &
        xbSendEast, xeSendEast, xbSendWest, xeSendWest, &
        xbSendNorth, xeSendNorth, xbSendSouth, xeSendSouth, &
        xbRecvEast, xeRecvEast, xbRecvWest, xeRecvWest, &
@@ -4948,6 +5036,7 @@ contains
        willRecvNorth, willRecvSouth, willRecvEast, willRecvWest, &
        NameSendScaX, NameSendScaY, sendDirection, TagAdvMntScaX, &
        NameRecvScaX, NameRecvScaY, recvDirection, TagAdvMntScaY, &
+       1, mzp, &
        xbSendEast, xeSendEast, xbSendWest, xeSendWest, &
        xbSendNorth, xeSendNorth, xbSendSouth, xeSendSouth, &
        xbRecvEast, xeRecvEast, xbRecvWest, xeRecvWest, &
@@ -5743,7 +5832,7 @@ contains
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
     character(len=*), parameter :: h="**(WaitSendRecvMsgsFixedAdress)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! for each receive message:
     ! build send buffer and copy field sections to the buffer;
@@ -5826,7 +5915,7 @@ contains
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
     character(len=*), parameter :: h="**(WaitSendRecvMsgsFixedAdress1D)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! for each receive message:
     ! build send buffer and copy field sections to the buffer;
@@ -5912,7 +6001,7 @@ contains
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
     character(len=*), parameter :: h="**(WaitSendRecvMsgsVariableAdress)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! for each receive message:
     ! build send buffer and copy field sections to the buffer;
@@ -5989,7 +6078,7 @@ contains
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
     character(len=*), parameter :: h="**(PostSendRecvMsgsVariableAdressOneArr)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! post nonblocking receive for each receiving message;
     ! a single receive msg from each process
@@ -6084,7 +6173,7 @@ contains
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
     character(len=*), parameter :: h="**(WaitSendRecvMsgsVariableAdressOneArr)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! for each receive message:
     ! build send buffer and copy field sections to the buffer;
@@ -6159,6 +6248,7 @@ contains
   subroutine OneAcoustNewSendRecv(OneD, Neigh, nNeigh, &
        willSend, willRecv, NameSend, NameRecv, &
        sendDirection, recvDirection, Tag, &
+       zbSend, zeSend, zbRecv, zeRecv, &
        xbSend, xeSend, xbRecv, xeRecv, &
        ybSend, yeSend, ybRecv, yeRecv, &
        x0, y0, mzp, fldName, &
@@ -6174,6 +6264,10 @@ contains
     character(len=*), intent(in) :: sendDirection
     character(len=*), intent(in) :: recvDirection
     integer, intent(in) :: Tag
+    integer, intent(in) :: zbSend
+    integer, intent(in) :: zeSend
+    integer, intent(in) :: zbRecv
+    integer, intent(in) :: zeRecv
     integer, intent(in) :: xbSend(:)
     integer, intent(in) :: xeSend(:)
     integer, intent(in) :: xbRecv(:)
@@ -6200,7 +6294,7 @@ contains
     character(len=8) :: str(10)
     character(len=128) :: strLong
     character(len=*), parameter :: h="**(OneAcoustNewSendRecv)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if (OneD) then
        idim_type=1
@@ -6264,6 +6358,7 @@ contains
                      (yeSend(iNeigh)-ybSend(iNeigh)+1) * &
                      mzp
                 oneFieldSection =>  CreateFieldSection(fldName, idim_type, &
+                     zbSend, zeSend, &
                      xbSend(iNeigh)-x0, xeSend(iNeigh)-x0, &
                      ybSend(iNeigh)-y0, yeSend(iNeigh)-y0, &
                      fieldSectionSize)
@@ -6310,6 +6405,7 @@ contains
                      (yeRecv(iNeigh)-ybRecv(iNeigh)+1) * &
                      mzp
                 oneFieldSection =>  CreateFieldSection(fldName, idim_type, &
+                     zbRecv, zeRecv, &
                      xbRecv(iNeigh)-x0, xeRecv(iNeigh)-x0, &
                      ybRecv(iNeigh)-y0, yeRecv(iNeigh)-y0, &
                      fieldSectionSize) 
@@ -6456,6 +6552,7 @@ contains
     call OneAcoustNewSendRecv(.false., Neigh, nNeigh, &
          willSend, willRecv, NameSendDiv, NameRecvDiv, &
          sendDirection, recvDirection, TagDiv, &
+         1, mzp, 1, mzp, &
          xbSend, xeSend, xbRecv, xeRecv, &
          ybSend, yeSend, ybRecv, yeRecv, &
          x0, y0, mzp, "DIV", &
@@ -6464,6 +6561,7 @@ contains
     call OneAcoustNewSendRecv(.false., Neigh, nNeigh, &
          willSend, willRecv, NameSendPP, NameRecvPP, &
          sendDirection, recvDirection, TagPP, &
+         1, mzp, 1, mzp, &
          xbSend, xeSend, xbRecv, xeRecv, &
          ybSend, yeSend, ybRecv, yeRecv, &
          x0, y0, mzp, "PP", &
@@ -6472,6 +6570,7 @@ contains
     call OneAcoustNewSendRecv(.false., Neigh, nNeigh, &
          willSend, willRecv, NameSendAlpha, NameRecvAlpha, &
          sendDirection, recvDirection, TagAlpha, &
+         1, mzp, 1, mzp, &
          xbSend, xeSend, xbRecv, xeRecv, &
          ybSend, yeSend, ybRecv, yeRecv, &
          x0, y0, mzp, "ALPHA", &
@@ -6480,6 +6579,7 @@ contains
     call OneAcoustNewSendRecv(.true., Neigh, nNeigh, &
          willSend, willRecv, NameSendTht, NameRecvTht, &
          sendDirection, recvDirection, TagTht, &
+         1, mzp, 1, mzp, &
          xbSend, xeSend, xbRecv, xeRecv, &
          ybSend, yeSend, ybRecv, yeRecv, &
          x0, y0, mzp, "THT", &
