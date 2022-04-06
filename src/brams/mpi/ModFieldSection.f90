@@ -32,7 +32,7 @@ module ModFieldSection
 
      ! Data to communicate is the horizontal
      ! section [xStart:xEnd,yStart:yEnd] (local indices)
-     ! of field_XXX (XXX=2D, 3D, 4D or I2D).
+     ! of field_XXX (XXX=2D, 3D, 4D).
 
      ! If the field has more than 2 dimensions, then
      ! the remaining dimensions of each pair (x,y) of
@@ -50,7 +50,6 @@ module ModFieldSection
      real, pointer :: field_2D(:,:) => null()
      real, pointer :: field_3D(:,:,:) => null()
      real, pointer :: field_4D(:,:,:,:) => null()
-     integer, pointer :: field_I2D(:,:) => null()
      ! field_XXX points to the array to extract
      ! the section to be communicated
      integer :: zStart = -1
@@ -88,7 +87,6 @@ module ModFieldSection
   end type FieldSection
 
   interface CreateFieldSection
-     module procedure CreateFieldSection_I2D
      module procedure CreateFieldSection_1D
      module procedure CreateFieldSection_2D
      module procedure CreateFieldSection_3D
@@ -117,57 +115,6 @@ module ModFieldSection
      module procedure UpdateFieldAdress_4D
   end interface UpdateFieldAdress
 contains
-
-
-
-
-
-  function CreateFieldSection_I2D(field, name, idim_type, &
-       xStart, xEnd, yStart, yEnd) result(oneFieldSection)
-
-    ! stores at oneFieldSection which elements of
-    ! the integer 2D field should be communicated
-
-    integer, pointer, intent(in) :: field(:,:)
-    character(len=*), intent(in) :: name
-    integer, intent(in) :: idim_type
-    integer, intent(in) :: xStart ! local index
-    integer, intent(in) :: xEnd   ! local index
-    integer, intent(in) :: yStart ! local index
-    integer, intent(in) :: yEnd   ! local index
-    type(FieldSection), pointer :: oneFieldSection
-
-    integer :: ierr
-    character(len=8) :: str(10)
-    character(len=*), parameter :: h="**(CreateFieldSection_I2D)**"
-    logical, parameter :: dumpLocal=.false.
-
-    allocate(oneFieldSection, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" allocate(oneFieldSection) fails with stat="//&
-            trim(adjustl(str(1))))
-    end if
-    oneFieldSection%field_I2d => field
-    oneFieldSection%xStart = xStart
-    oneFieldSection%xEnd = xEnd
-    oneFieldSection%yStart = yStart
-    oneFieldSection%yEnd = yEnd
-    oneFieldSection%name = name
-    oneFieldSection%idim_type = idim_type
-    if (idim_type == 2) then
-       oneFieldSection%fieldSectionSize = &
-            (yEnd - yStart +1) * &
-            (xEnd - xStart +1)
-    else
-       write(str(1),"(i8)") idim_type
-       call fatal_error(h//" incompatible idim_type="//&
-            trim(adjustl(str(1))))
-    end if
-    if (dumpLocal) then
-       call DumpFieldSection(oneFieldSection, h//" created ")
-    end if
-  end function CreateFieldSection_I2D
 
 
 
@@ -636,7 +583,6 @@ contains
        oneFieldSection%field_2D => null()
        oneFieldSection%field_3D => null()
        oneFieldSection%field_4D => null()
-       oneFieldSection%field_I2D => null()
        deallocate(oneFieldSection, stat=ierr)
        if (ierr /= 0) then
           write(str(1),"(i8)") ierr
