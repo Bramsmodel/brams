@@ -85,7 +85,6 @@ module ModAcoust
   use ModMessageSet, only: &
        UpdateFieldAdressAtAcoustNew, &       
        PostSendRecvMsgs, &
-       PostSendRecvMsgsVariableAdress, &
        WaitSendRecvMsgs
 
 
@@ -1179,14 +1178,6 @@ contains
                         trim(adjustl(str(2)))//","//&
                         trim(adjustl(str(3)))//")")
                 end if
-!!$                call PostSendRecvMsgsVariableAdress(&
-!!$                     OneGrid%AcoustNewDivSend, &
-!!$                     OneGrid%AcoustNewDivRecv, &
-!!$                     div)
-!!$                call WaitSendRecvMsgs(&
-!!$                     OneGrid%AcoustNewDivSend, &
-!!$                     OneGrid%AcoustNewDivRecv, &
-!!$                     1, mzp, div)
                 call PostSendRecvMsgs(&
                      OneGrid%AcoustNewDivSend, &
                      OneGrid%AcoustNewDivRecv)
@@ -1210,14 +1201,6 @@ contains
                         trim(adjustl(str(2)))//","//&
                         trim(adjustl(str(3)))//")")
                 end if
-!!$                call PostSendRecvMsgsVariableAdress(&
-!!$                     OneGrid%AcoustNewPPSend, &
-!!$                     OneGrid%AcoustNewPPRecv, &
-!!$                     pp_t_minus_dt)
-!!$                call WaitSendRecvMsgs(&
-!!$                     OneGrid%AcoustNewPPSend, &
-!!$                     OneGrid%AcoustNewPPRecv, &
-!!$                     1, mzp, pp_t_minus_dt)
                 call PostSendRecvMsgs(&
                      OneGrid%AcoustNewPPSend, &
                      OneGrid%AcoustNewPPRecv)
@@ -1477,14 +1460,6 @@ contains
        call WaitSendRecvMsgs(&
             OneGrid%AcoustNewAlphaSend, &
             OneGrid%AcoustNewAlphaRecv)
-!!$       call PostSendRecvMsgsVariableAdress(&
-!!$            OneGrid%AcoustNewAlphaSend, &
-!!$            OneGrid%AcoustNewAlphaRecv, &
-!!$            alpha_div)
-!!$       call WaitSendRecvMsgs(&
-!!$            OneGrid%AcoustNewAlphaSend, &
-!!$            OneGrid%AcoustNewAlphaRecv, &
-!!$            1, mzp, alpha_div)
     endif
     !--- mpi paralelization :
 

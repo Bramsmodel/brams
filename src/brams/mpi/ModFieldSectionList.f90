@@ -39,7 +39,6 @@ module ModFieldSectionList
   end type FieldSectionNode
 
   type FieldSectionList
-!!$     private
      type(FieldSectionNode), pointer :: head => null()
      type(FieldSectionNode), pointer :: tail => null()
   end type FieldSectionList

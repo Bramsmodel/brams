@@ -41,8 +41,9 @@ module ModAdvectc_rk
        Grid
 
   use ModMessageSet, only: &
+       UpdateSendFieldAdressAtAdvectcRk, &
+       UpdateRecvFieldAdressAtAdvectcRk, &
        PostSendRecvMsgs, &
-       PostSendRecvMsgsVariableAdress, &
        WaitSendRecvMsgs
 
   use node_mod, only:  nmachs, myNum,nodei0,nodej0
@@ -114,7 +115,7 @@ contains
     real, pointer, intent(in) :: vt3dk(:,:,:)
     character(len=*),intent(in) :: vname
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(advect_ws_pointer_rank1)**"
 
@@ -141,18 +142,20 @@ contains
     logical :: borderEast
     logical :: borderWest
 
+    if (dumpLocal) then
+       call MsgDump(h//" to advect "//trim(adjustl(vname)))
+    end if
+
+    call UpdateSendFieldAdressAtAdvectcRk(&
+         OneGrid%WideGhostZoneSend, &
+         scp, ufx, vfx, wfx)
+    
+    call PostSendRecvMsgs(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv)
+
     borderNorth=OneGrid%NodeDims%borderNorth
     borderSouth=OneGrid%NodeDims%borderSouth
     borderEast=OneGrid%NodeDims%borderEast
     borderWest=OneGrid%NodeDims%borderWest
-
-
-    call PostSendRecvMsgsVariableAdress(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv, &
-         scp, ufx, vfx, wfx)
-
-    if (dumpLocal) then
-       call MsgDump(h//" to advect "//trim(adjustl(vname)))
-    end if
 
     mzpp3=mzp+3; mxpp3=mxp+3; mypp3=myp+3
     mzppks=mzp+ks; mxppis=mxp+is; myppjs=myp+js
@@ -164,6 +167,10 @@ contains
     allocate(ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));ufx_local=real_init
     allocate(vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));vfx_local=real_init
     allocate(wfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));wfx_local=real_init
+
+    call UpdateRecvFieldAdressAtAdvectcRk(&
+         OneGrid%WideGhostZoneRecv, &
+         scr, ufx_local, vfx_local, wfx_local)
 
     !- flag to determine if a scalar is being advected
     scalar = .false.
@@ -193,8 +200,7 @@ contains
        end if
     end if
 
-    call WaitSendRecvMsgs(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv, &
-         1, mzp, scr, ufx_local, vfx_local, wfx_local)
+    call WaitSendRecvMsgs(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv)
 
     select case (order_h)
     case (1)
@@ -335,7 +341,7 @@ contains
     real, pointer, intent(in) :: vt3dk(:,:,:)
     character(len=*),intent(in) :: vname
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(advect_ws_pointer_rank3)**"
 
@@ -362,17 +368,20 @@ contains
     logical :: borderEast
     logical :: borderWest
 
+    if (dumpLocal) then
+       call MsgDump(h//" to advect "//trim(adjustl(vname)))
+    end if
+
+    call UpdateSendFieldAdressAtAdvectcRk(&
+         OneGrid%WideGhostZoneSend, &
+         scp, ufx, vfx, wfx)
+
+    call PostSendRecvMsgs(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv)
+
     borderNorth=OneGrid%NodeDims%borderNorth
     borderSouth=OneGrid%NodeDims%borderSouth
     borderEast=OneGrid%NodeDims%borderEast
     borderWest=OneGrid%NodeDims%borderWest
-
-    call PostSendRecvMsgsVariableAdress(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv, &
-         scp, ufx, vfx, wfx)
-
-    if (dumpLocal) then
-       call MsgDump(h//" to advect "//trim(adjustl(vname)))
-    end if
 
     mzpp3=mzp+3; mxpp3=mxp+3; mypp3=myp+3
     mzppks=mzp+ks; mxppis=mxp+is; myppjs=myp+js
@@ -384,6 +393,10 @@ contains
     allocate(ufx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));ufx_local=real_init
     allocate(vfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));vfx_local=real_init
     allocate(wfx_local(mzi:mzpp3,mxi:mxpp3,myi:mypp3));wfx_local=real_init
+
+    call UpdateRecvFieldAdressAtAdvectcRk(&
+         OneGrid%WideGhostZoneRecv, &
+         scr, ufx_local, vfx_local, wfx_local)
 
     !- flag to determine if a scalar is being advected
     scalar = .false.
@@ -413,8 +426,7 @@ contains
        end if
     end if
 
-    call WaitSendRecvMsgs(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv, &
-         1, mzp, scr, ufx_local, vfx_local, wfx_local)
+    call WaitSendRecvMsgs(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv)
 
     select case (order_h)
     case (1)
@@ -531,16 +543,6 @@ contains
     real :: vctr1(mzp)
     real :: vctr2(mzp)
 
-!!$    real :: vt3da(mzp,mxp,myp)
-!!$    real :: vt3db(mzp,mxp,myp)
-!!$    real :: vt3dc(mzp,mxp,myp)
-!!$    real :: vt3dh(mzp,mxp,myp)
-!!$    real :: vt3dj(mzp,mxp,myp)
-!!$    real :: vt3dk(mzp,mxp,myp)
-!!$    real :: mfx_wind(mzp,mxp,myp)
-!!$    real :: mfy_wind(mzp,mxp,myp)
-!!$    real :: mfz_wind(mzp,mxp,myp)
-
     real, pointer :: vt3da(:,:,:)
     real, pointer :: vt3db(:,:,:)
     real, pointer :: vt3dc(:,:,:)
@@ -555,6 +557,10 @@ contains
     character(len=*), parameter :: h="**(advectc_rk)**"
     character(len=8) :: str(10)
 
+    if (dumpLocal) then
+       call MsgDump(h//" starts with varn="//trim(varn))
+    end if
+    
     mxyzp = mxp * myp * mzp
 
     allocate(vt3da(mzp,mxp,myp), stat=ierr)
@@ -648,6 +654,9 @@ contains
             ,grid_g(ngrid)%fmapui,grid_g(ngrid)%fmapvi                 &
             ,vt3da,vt3db,vt3dc,mfx_wind,mfy_wind,mfz_wind,is,js,ks)
 
+       if (dumpLocal) then
+          call MsgDump(h//" advect uc")
+       end if
 
        call advect_ws_pointer_rank1(OneGrid,mzp,mxp,myp,ia,iz,ja,jz &
             ,basic_g(ngrid)%uc &! field being advected
@@ -681,6 +690,9 @@ contains
             ,grid_g(ngrid)%fmapui,grid_g(ngrid)%fmapvi                 &
             ,vt3da,vt3db,vt3dc,mfx_wind,mfy_wind,mfz_wind,is,js,ks)
 
+       if (dumpLocal) then
+          call MsgDump(h//" advect vc")
+       end if
 
        call advect_ws_pointer_rank1(OneGrid,mzp,mxp,myp,ia,iz,ja,jz,&
             basic_g(ngrid)%vc &
@@ -715,6 +727,9 @@ contains
             ,grid_g(ngrid)%fmapui,grid_g(ngrid)%fmapvi                 &
             ,vt3da,vt3db,vt3dc,mfx_wind,mfy_wind,mfz_wind,is,js,ks)
 
+       if (dumpLocal) then
+          call MsgDump(h//" advect wc")
+       end if
 
        call advect_ws_pointer_rank1(OneGrid,mzp,mxp,myp,ia,iz,ja,jz,&
             basic_g(ngrid)%wc &
@@ -789,6 +804,9 @@ contains
 
        if ( trim(varn) .eq. "THETAIL" ) then
 
+          if (dumpLocal) then
+             call MsgDump(h//" advect thc")
+          end if
 
           call advect_ws_pointer_rank1(OneGrid,mzp,mxp,myp,ia,iz,ja,jz,&
                basic_g(ngrid)%thc &
@@ -816,6 +834,10 @@ contains
                ,basic_g(ngrid)%rv    &
                ,stilt_g(ngrid)%lnthetav)
 
+          if (dumpLocal) then
+             call MsgDump(h//" advect lnthetav")
+          end if
+
           call advect_ws_pointer_rank3(OneGrid,mzp,mxp,myp,ia,iz,ja,jz &
                ,stilt_g(ngrid)%lnthetav   &! advected field
                ,vt3da & ! uc*dn0u*fmapui*rtgu = rhou*U
@@ -837,6 +859,9 @@ contains
 
        if ( trim(varn) .eq. "PI" .and. iexev == 2) then
 
+          if (dumpLocal) then
+             call MsgDump(h//" advect pc")
+          end if
 
           call advect_ws_pointer_rank1(OneGrid,mzp,mxp,myp,ia,iz,ja,jz&
                ,basic_g(ngrid)%pc & !advected field
@@ -869,6 +894,10 @@ contains
              ! input: scalarp3d, scalart1d, dtlt
              ! output: scalart1d
 
+             if (dumpLocal) then
+                call MsgDump(h//" advect "//trim(adjustl(scalar_tab(n,ngrid)%name)))
+             end if
+             
              call advect_ws_pointer_rank1(OneGrid,mzp,mxp,myp,ia,iz,ja,jz &
                   ,scalar_tab(n,ngrid)%var_p_3d & !scalar being advected 
                   ,vt3da   & ! 0.5(up+uc)*dn0u*fmapui*rtgu = rhou*U
@@ -1543,7 +1572,6 @@ contains
     real, pointer, intent(in)    :: qx(:,:,:)
     real, pointer, intent(in)    :: qy(:,:,:)
 
-!!$    real :: flux_upwind
     integer :: i,j,k
     real :: dir
 
@@ -1596,7 +1624,6 @@ contains
     real, pointer, intent(in)    :: qx(:,:,:)
     real, pointer, intent(in)    :: qy(:,:,:)
 
-!!$    real :: fq2
     integer :: i,j,k
 
     !- compute x-interface values
@@ -1652,8 +1679,6 @@ contains
     real, pointer, intent(in)    :: qx(:,:,:)
     real, pointer, intent(in)    :: qy(:,:,:)
 
-!!$    real :: flux_upwind
-!!$    real :: fq2,fq3
     real :: dir
     integer :: i,j,k
 
@@ -1681,7 +1706,6 @@ contains
        do i = 1,mxp
           do k = 1,mzp
              if(((borderSouth .and. j==1) .or. (borderNorth .and. j>myp-2)) &
-!!$           if(((borderNorth .and. j==1) .or. (borderSouth .and. j>myp-2)) &
                   .and. variable) then
                 dir = sign(1.0,vfx_local(k,i,j)+vfx_local(k+ks,i+isi,j+js))
                 qy(k,i,j)=flux_upwind(scr(k,i,j),scr(k,i,j+1),dir)
@@ -1724,7 +1748,6 @@ contains
     real, pointer, intent(in)    :: qx(:,:,:)
     real, pointer, intent(in)    :: qy(:,:,:)
 
-!!$    real :: fq4
     integer :: i,j,k
 
     do j = 1,myp
@@ -1780,7 +1803,6 @@ contains
     real, pointer, intent(in)    :: qx(:,:,:)
     real, pointer, intent(in)    :: qy(:,:,:)
 
-!!$    real :: fq,fq3,flux_upwind
     real :: dir
     integer :: i,j,k
 
@@ -1811,13 +1833,11 @@ contains
     do j = 1,myp-1
        do i = 1,mxp
           do k = 1,mzp
-!!$           if(((borderNorth .and. j==1) .or. (borderSouth .and. j==myp-1)) &
              if(((borderSouth .and. j==1) .or. (borderNorth .and. j==myp-1)) &
                   .and. variable) then
                 ! Order 1
                 dir = sign(1.0,vfx_local(k,i,j)+vfx_local(k+ks,i+isi,j+js))
                 qy(k,i,j)=flux_upwind(scr(k,i,j),scr(k,i,j+1),dir)
-!!$           elseif( (borderNorth .and. j==2)  .or. (borderSouth .and. j==myp-2) .and. variable) then
              elseif( (borderSouth .and. j==2)  .or. (borderNorth .and. j==myp-2) .and. variable) then
                 !Order 3
                 dir = sign(1.0,vfx_local(k,i,j)+vfx_local(k+ks,i+isi,j+js))
@@ -1859,7 +1879,6 @@ contains
     logical, intent(in) :: variable
     real, pointer, intent(in)    :: qz(:,:,:)
 
-!!$    real :: flux_upwind
     integer :: i,j,k
     real :: dir
 
@@ -1900,7 +1919,6 @@ contains
     logical, intent(in) :: variable
     real, pointer, intent(in)    :: qz(:,:,:)
 
-!!$    real :: fq2
     integer :: i,j,k
 
     do j = 1,myp
@@ -1939,7 +1957,6 @@ contains
     logical, intent(in) :: variable
     real, pointer, intent(in)    :: qz(:,:,:)
 
-!!$    real :: fq2,fq3,flux_upwind
     real :: dir
     integer :: i,j,k
 
@@ -1989,7 +2006,6 @@ contains
     logical, intent(in) :: variable
     real, pointer, intent(in)    :: qz(:,:,:)
 
-!!$    real :: fq4,fq2
     integer :: i,j,k
 
     do j = 1,myp
@@ -2032,7 +2048,6 @@ contains
     logical, intent(in) :: variable
     real, pointer, intent(in)    :: qz(:,:,:)
 
-!!$    real :: fq,fq3,flux_upwind
     real :: dir
     integer :: i,j,k
 
@@ -2110,7 +2125,6 @@ contains
     real,    intent(inout) :: qy(mzppks,mxppis,myppjs)
     real,    intent(inout) :: qz(mzppks,mxppis,myppjs)
 
-!!$    real :: flux_upwind
     real,dimension(mzp+ks,mxp+is,myp+js) :: qxl,qyl,qzl
     integer :: i,j,k
     real :: dir,wtop,wbot,div_term,scale
