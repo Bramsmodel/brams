@@ -62,12 +62,20 @@ module ModFieldSection
      ! [xStart:xEnd,yStart:yEnd]
      ! zStart:zEnd simplifies coding for most 3D fields and
      ! accomodate sending a sub-section of the z dimension
+     integer :: lbz = -1
+     integer :: ubz = -1
+     integer :: lbx = -1
+     integer :: ubx = -1
+     integer :: lby = -1
+     integer :: uby = -1
+     ! 1D fields are tipically a linearization of 3D arrays;
+     ! as so, the bounds of the 3D array are unknown and should
+     ! be stored
      integer :: idim_type = -1
      ! field dimensioning code, to know which other dimensions
      ! should be communicated:
      ! idim_type == 1 are linearized 3D fields,
-     !   mapping 3D (nmzp, nmxp, nmyp) into 1D,
-     !   that is, first 3D dimension should be communicated
+     !   mapping 3D (lbz:ubz, lbx:ubx, lby:uby) into 1D
      ! idim_type == 2 means (nmxp, nmyp)
      !   no other dimensions to communicate
      ! idim_type == 3 means (nmzp, nmxp, nmyp)
@@ -121,6 +129,7 @@ contains
 
 
   function CreateFieldSection_1D(field, name, idim_type, &
+       lbz, ubz, lbx, ubx, lby, uby, &
        zStart, zEnd, xStart, xEnd, yStart, yEnd) result(oneFieldSection)
 
     ! stores at oneFieldSection which elements of
@@ -129,6 +138,12 @@ contains
     real, pointer, intent(in) :: field(:)
     character(len=*), intent(in) :: name
     integer, intent(in) :: idim_type
+    integer, intent(in) :: lbz
+    integer, intent(in) :: ubz
+    integer, intent(in) :: lbx
+    integer, intent(in) :: ubx
+    integer, intent(in) :: lby
+    integer, intent(in) :: uby
     integer, intent(in) :: zStart ! local index
     integer, intent(in) :: zEnd   ! local index
     integer, intent(in) :: xStart ! local index
@@ -149,6 +164,12 @@ contains
             trim(adjustl(str(1))))
     end if
     oneFieldSection%field_1D => field
+    oneFieldSection%lbz = lbz
+    oneFieldSection%ubz = ubz
+    oneFieldSection%lbx = lbx
+    oneFieldSection%ubx = ubx
+    oneFieldSection%lby = lby
+    oneFieldSection%uby = uby
     oneFieldSection%zStart = zStart
     oneFieldSection%zEnd = zEnd
     oneFieldSection%xStart = xStart
@@ -260,6 +281,12 @@ contains
        call fatal_error(h//" field "//trim(adjustl(name))//" not associated")
     end if
     oneFieldSection%field_3d => field
+    oneFieldSection%lbz = lbound(field,1)
+    oneFieldSection%ubz = ubound(field,1)
+    oneFieldSection%lbx = lbound(field,2)
+    oneFieldSection%ubx = ubound(field,2)
+    oneFieldSection%lby = lbound(field,3)
+    oneFieldSection%uby = ubound(field,3)
     oneFieldSection%zStart = lbound(field,1)
     oneFieldSection%zEnd = ubound(field,1)
     oneFieldSection%xStart = zStart

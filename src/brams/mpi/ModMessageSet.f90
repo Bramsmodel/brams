@@ -57,7 +57,7 @@ module ModMessageSet
 
   use ModNodeDimensions, only: &
        NodeDimensions
-  
+
   use ModNeighbourNodes, only: &
        NeighbourNodes, &
        NodesToSendRecvMessages, &
@@ -74,7 +74,7 @@ module ModMessageSet
 
   use ModFieldSectionList, only: &
        FieldSectionNode
-  
+
   use ModMessageData, only: &
        MessageData, &
        CreateMessageData, &
@@ -132,7 +132,7 @@ module ModMessageSet
 
   public :: CreateAdvMntMessageSet
   public :: DestroyAdvMntMessageSet
-  
+
   public :: PostSendRecvMsgs
   public :: WaitSendRecvMsgs
 
@@ -140,7 +140,7 @@ module ModMessageSet
   public :: UpdateFieldAdressAtAcoustNew  
   public :: UpdateSendFieldAdressAtAdvectcRk
   public :: UpdateRecvFieldAdressAtAdvectcRk
-  
+
   character(len=*), parameter :: sendDirection="send"
   character(len=*), parameter :: recvDirection="recv"
 
@@ -637,9 +637,10 @@ contains
 
 
   subroutine InsertFieldSectionAtMessageSet_1D(&
-       myNum, field, fieldName, idim_type, nNeigh, GlobalWithGhost, &
+       myNum, field, fieldName, idim_type, nNeigh, &
+       GlobalWithGhost, NodeDims, &
        zStart, zEnd, xbComm, xeComm, ybComm, yeComm, willComm, &
-       Msgs, kMax)
+       Msgs)
 
     ! Inserts a section of a field to be communicated
     ! on a MessageSet variable
@@ -669,6 +670,7 @@ contains
     ! Global indices of domain partition with Ghost Zones
 
     type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+    type(NodeDimensions), pointer, intent(in) :: NodeDims
 
     ! all remaining arguments are dimensioned by nNeigh
 
@@ -685,7 +687,6 @@ contains
     integer, intent(in) :: xeComm(:)
     integer, intent(in) :: ybComm(:)
     integer, intent(in) :: yeComm(:)
-    integer, intent(in) :: kMax
 
     ! which neighbours (BRAMS process number) will
     ! receive msgs from this node on a send MessageSet variable
@@ -700,6 +701,7 @@ contains
 
     integer :: nMsgs
     integer :: x0, y0
+    integer :: kMax
     integer :: cntMsg
     integer :: iNeigh
     type(FieldSection), pointer :: oneFieldSection
@@ -743,9 +745,8 @@ contains
           select case (idim_type)
           case (1)
              oneFieldSection => CreateFieldSection(&
-                  field, &
-                  fieldName, &
-                  idim_type, &
+                  field, fieldName, idim_type, &
+                  1, NodeDims%mzp, 1, NodeDims%mxp, 1, NodeDims%myp, &
                   zStart, zEnd, &
                   xbComm(iNeigh)-x0, xeComm(iNeigh)-x0, &
                   ybComm(iNeigh)-y0, yeComm(iNeigh)-y0)
@@ -760,7 +761,7 @@ contains
   end subroutine InsertFieldSectionAtMessageSet_1D
 
 
-  
+
 
 
   subroutine InsertFieldSectionAtMessageSet_2D(&
@@ -1211,11 +1212,11 @@ contains
 
 
   subroutine InsertFieldSectionAtSendRecvMessageSet_1D(&
-       field, fieldName, idim_type, myNum, nNeigh, GlobalWithGhost, &
+       field, fieldName, idim_type, myNum, nNeigh, &
+       GlobalWithGhost, NodeDims, &
        zbSend, zeSend, zbRecv, zeRecv, &
        xbSend, xeSend, ybSend, yeSend, willSend, SendMessageSet, &
-       xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvMessageSet, &
-       kMax)
+       xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvMessageSet)
 
     ! Inserts a section of a field to be communicated
     ! on a MessageSet variable
@@ -1245,6 +1246,7 @@ contains
     ! Global indices of domain partition with Ghost Zones
 
     type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+    type(NodeDimensions), pointer, intent(in) :: NodeDims
 
     ! this rank will send this rectangular region to each neighbour
     integer, intent(in) :: zbSend
@@ -1270,7 +1272,6 @@ contains
     integer, intent(in) :: xeRecv(nNeigh)
     integer, intent(in) :: ybRecv(nNeigh)
     integer, intent(in) :: yeRecv(nNeigh)
-    integer, intent(in) :: kMax
 
     ! recv message set
     type(MessageSet), pointer, intent(inout) :: RecvMessageSet
@@ -1286,13 +1287,15 @@ contains
     ! include field on field sections to be sent and received
 
     call InsertFieldSectionAtMessageSet(&
-         myNum, field, fieldName, idim_type, nNeigh, GlobalWithGhost, &
+         myNum, field, fieldName, idim_type, nNeigh, &
+         GlobalWithGhost, NodeDims, &
          zbSend, zeSend, xbSend, xeSend, ybSend, yeSend, willSend, &
-         SendMessageSet, kMax)
+         SendMessageSet)
     call InsertFieldSectionAtMessageSet(&
-         myNum, field, fieldName, idim_type, nNeigh, GlobalWithGhost, &
+         myNum, field, fieldName, idim_type, nNeigh, &
+         GlobalWithGhost, NodeDims, &
          zbRecv, zeRecv, xbRecv, xeRecv, ybRecv, yeRecv, willRecv, &
-         RecvMessageSet, kMax)
+         RecvMessageSet)
   end subroutine InsertFieldSectionAtSendRecvMessageSet_1D
 
 
@@ -1372,7 +1375,7 @@ contains
     call InsertFieldSectionAtMessageSet(&
          myNum, field, fieldName, idim_type, nNeigh, GlobalWithGhost, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvMessageSet)
-  end subroutine InsertFieldSectionAtSendRecvMessageSet_2D  
+  end subroutine InsertFieldSectionAtSendRecvMessageSet_2D
 
 
 
@@ -2808,7 +2811,7 @@ contains
     nMachs = ParEnv%nMachs
     nNeigh = Neigh%nNeigh
     mzp = size(field,1)
-    
+
     ! AcoustNewOneSend, AcoustNewOneRecv:
     ! messages update entire GhostZone
 
@@ -2860,7 +2863,7 @@ contains
 
   subroutine CreateAcoustNewOneMessageSet1D(&
        field, fieldName, idim_type,  &
-       ParEnv, Neigh, GlobalOwn, GlobalWithGhost, &
+       ParEnv, Neigh, GlobalOwn, GlobalWithGhost, NodeDims, &
        Tag, NameSend, NameRecv, &
        AcoustNewOneSend, AcoustNewOneRecv, kMax)
 
@@ -2871,6 +2874,7 @@ contains
     type(NeighbourNodes), pointer, intent(in) :: Neigh
     type(DomainDecomp), pointer, intent(in) :: GlobalOwn
     type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+    type(NodeDimensions), pointer, intent(in) :: NodeDims
     integer, intent(in) :: Tag
     character(len=*), intent(in) :: NameSend
     character(len=*), intent(in) :: NameRecv
@@ -2969,9 +2973,9 @@ contains
     !
 
     call InsertFieldSectionAtSendRecvMessageSet(&
-         field, fieldName, idim_type, myNum, nNeigh, GlobalWithGhost, &
+         field, fieldName, idim_type, myNum, nNeigh, GlobalWithGhost, NodeDims, &
          1, kMax, 1, kMax, xbSend, xeSend, ybSend, yeSend, willSend, AcoustNewOneSend, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcoustNewOneRecv, kMax)
+         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcoustNewOneRecv)
 
     if (dumpLocal) then
        call MsgDump(h//" finishes with AcoustNewOneSend MessageSet:")
@@ -2979,13 +2983,13 @@ contains
        call MsgDump(h//" finishes with AcoustNewOneRecv MessageSet:")
        call DumpMessageSet(AcoustNewOneRecv)
     end if
-  end subroutine CreateAcoustNewOneMessageSet1D  
+  end subroutine CreateAcoustNewOneMessageSet1D
 
 
 
 
 
-  
+
   subroutine CreateWideGhostZoneMessageSet(&
        ParEnv, Neigh, &
        GlobalOwnWithBC, GlobalWithGhost, mzp, zStartAdvMnt, zEndAdvMnt, &
@@ -3617,7 +3621,7 @@ contains
     type(FieldSectionNode), pointer :: fsnode
     character(len=*), parameter :: h="**(UpdateSendFieldAdressAtAdvectcRk)**"
     logical, parameter :: dumpLocal=.false.
-    
+
     if (.not. associated(WideGhostZoneSend)) then
        call fatal_error(h//" WideGhostZoneSend not associated")
     end if
@@ -3658,11 +3662,11 @@ contains
     type(FieldSectionNode), pointer :: fsnode
     character(len=*), parameter :: h="**(UpdateRecvFieldAdressAtAdvectcRk)**"
     logical, parameter :: dumpLocal=.false.
-    
+
     if (.not. associated(WideGhostZoneRecv)) then
        call fatal_error(h//" WideGhostZoneRecv not associated")
     end if
-    
+
     if (dumpLocal) then
        call MsgDump(h//" of message set "//trim(adjustl(WideGhostZoneRecv%name)))
        call MsgDump(h//" of field SCR")
@@ -3682,7 +3686,7 @@ contains
        call UpdateFieldAdress(fsnode%entry, wfx_local, "WFXLOC")
     end do
   end subroutine UpdateRecvFieldAdressAtAdvectcRk
-  
+
 
 
   subroutine OneAdvMntSendRecv(TwoD, Neigh, nNeigh, &
@@ -3834,8 +3838,8 @@ contains
        end if
        call MsgDump(trim(strLong))
     end if
-    
-    
+
+
     ! send message set will contain sends for east-west directions
 
     willSend = willSendEast .or. willSendWest
@@ -4337,12 +4341,12 @@ contains
        call DumpMessageSet(AdvMntRecvY)
     end if
   end subroutine OneAdvMntSendRecv
-  
-  
 
 
 
-  
+
+
+
   subroutine CreateAdvMntMessageSet(&
        ParEnv, Neigh, &
        GlobalOwnWithBC, GlobalWithGhostAdvMnt, &
@@ -4488,7 +4492,7 @@ contains
     character(len=*), parameter :: den3_3dName="DEN3_3D"
     character(len=*), parameter :: vc3d_inName="VC3D_IN"
     character(len=*), parameter :: vc3d_outName="VC3D_OUT"
-    
+
     integer :: nMachs
     integer :: myNum
     integer :: nNeigh
@@ -4604,9 +4608,9 @@ contains
        end if
        if (willRecvNorth(iNeigh)) then
           bramsProcNbr = Neigh%neigh(iNeigh)
-             write(str(1),"(i8)") Brams2MpiProcNbr(bramsProcNbr)
-             write(str(2),"(i8)") xbRecvNorth(iNeigh)
-             write(str(3),"(i8)") xeRecvNorth(iNeigh)
+          write(str(1),"(i8)") Brams2MpiProcNbr(bramsProcNbr)
+          write(str(2),"(i8)") xbRecvNorth(iNeigh)
+          write(str(3),"(i8)") xeRecvNorth(iNeigh)
           ! west boundary
           if (.not. NodeDimsAdvMnt%borderWest) then
              xbRecvNorth(iNeigh)=xbRecvNorth(iNeigh)-ghostZoneWidth
@@ -4626,7 +4630,7 @@ contains
           end if
        end if
     end do
-    
+
     ! south neighbour communication
 
     if (dumpLocal) then
@@ -4685,9 +4689,9 @@ contains
        end if
        if (willRecvSouth(iNeigh)) then
           bramsProcNbr = Neigh%neigh(iNeigh)
-             write(str(1),"(i8)") Brams2MpiProcNbr(bramsProcNbr)
-             write(str(2),"(i8)") xbRecvSouth(iNeigh)
-             write(str(3),"(i8)") xeRecvSouth(iNeigh)
+          write(str(1),"(i8)") Brams2MpiProcNbr(bramsProcNbr)
+          write(str(2),"(i8)") xbRecvSouth(iNeigh)
+          write(str(3),"(i8)") xeRecvSouth(iNeigh)
           ! west boundary
           if (.not. NodeDimsAdvMnt%borderWest) then
              xbRecvSouth(iNeigh)=xbRecvSouth(iNeigh)-ghostZoneWidth
@@ -4766,9 +4770,9 @@ contains
        end if
        if (willRecvEast(iNeigh)) then
           bramsProcNbr = Neigh%neigh(iNeigh)
-             write(str(1),"(i8)") Brams2MpiProcNbr(bramsProcNbr)
-             write(str(2),"(i8)") ybRecvEast(iNeigh)
-             write(str(3),"(i8)") yeRecvEast(iNeigh)
+          write(str(1),"(i8)") Brams2MpiProcNbr(bramsProcNbr)
+          write(str(2),"(i8)") ybRecvEast(iNeigh)
+          write(str(3),"(i8)") yeRecvEast(iNeigh)
           ! south boundary
           if (.not. NodeDimsAdvMnt%borderSouth) then
              ybRecvEast(iNeigh)=ybRecvEast(iNeigh)-ghostZoneWidth
@@ -4847,9 +4851,9 @@ contains
        end if
        if (willRecvWest(iNeigh)) then
           bramsProcNbr = Neigh%neigh(iNeigh)
-             write(str(1),"(i8)") Brams2MpiProcNbr(bramsProcNbr)
-             write(str(2),"(i8)") ybRecvWest(iNeigh)
-             write(str(3),"(i8)") yeRecvWest(iNeigh)
+          write(str(1),"(i8)") Brams2MpiProcNbr(bramsProcNbr)
+          write(str(2),"(i8)") ybRecvWest(iNeigh)
+          write(str(3),"(i8)") yeRecvWest(iNeigh)
           ! south boundary
           if (.not. NodeDimsAdvMnt%borderSouth) then
              ybRecvWest(iNeigh)=ybRecvWest(iNeigh)-ghostZoneWidth
@@ -4873,111 +4877,111 @@ contains
     ! create message set for UV 
 
     call OneAdvMntSendRecv(ThreeD, Neigh, nNeigh, &
-       willSendNorth, willSendSouth, willSendEast, willSendWest, &
-       willRecvNorth, willRecvSouth, willRecvEast, willRecvWest, &
-       NameSendUVX, NameSendUVY, sendDirection, TagAdvMntUVX, &
-       NameRecvUVX, NameRecvUVY, recvDirection, TagAdvMntUVY, &
-       1, mzp, &
-       xbSendEast, xeSendEast, xbSendWest, xeSendWest, &
-       xbSendNorth, xeSendNorth, xbSendSouth, xeSendSouth, &
-       xbRecvEast, xeRecvEast, xbRecvWest, xeRecvWest, &
-       xbRecvNorth, xeRecvNorth, xbRecvSouth, xeRecvSouth, &
-       ybSendEast, yeSendEast, ybSendWest, yeSendWest, &
-       ybSendNorth, yeSendNorth, ybSendSouth, yeSendSouth, &
-       ybRecvEast, yeRecvEast, ybRecvWest, yeRecvWest, &
-       ybRecvNorth, yeRecvNorth, ybRecvSouth, yeRecvSouth, &
-       x0, y0, NodeDimsAdvMnt%mzp, ghostZoneWidth, idim_type_3D, &
-       AdvMntUVSendX, AdvMntUVRecvX, AdvMntUVSendY, AdvMntUVRecvY, &
-       fldName_1=u3dName, &
-       fldName_2=v3dName)
+         willSendNorth, willSendSouth, willSendEast, willSendWest, &
+         willRecvNorth, willRecvSouth, willRecvEast, willRecvWest, &
+         NameSendUVX, NameSendUVY, sendDirection, TagAdvMntUVX, &
+         NameRecvUVX, NameRecvUVY, recvDirection, TagAdvMntUVY, &
+         1, mzp, &
+         xbSendEast, xeSendEast, xbSendWest, xeSendWest, &
+         xbSendNorth, xeSendNorth, xbSendSouth, xeSendSouth, &
+         xbRecvEast, xeRecvEast, xbRecvWest, xeRecvWest, &
+         xbRecvNorth, xeRecvNorth, xbRecvSouth, xeRecvSouth, &
+         ybSendEast, yeSendEast, ybSendWest, yeSendWest, &
+         ybSendNorth, yeSendNorth, ybSendSouth, yeSendSouth, &
+         ybRecvEast, yeRecvEast, ybRecvWest, yeRecvWest, &
+         ybRecvNorth, yeRecvNorth, ybRecvSouth, yeRecvSouth, &
+         x0, y0, NodeDimsAdvMnt%mzp, ghostZoneWidth, idim_type_3D, &
+         AdvMntUVSendX, AdvMntUVRecvX, AdvMntUVSendY, AdvMntUVRecvY, &
+         fldName_1=u3dName, &
+         fldName_2=v3dName)
 
     ! create message set for Dd0
 
     call OneAdvMntSendRecv(ThreeD, Neigh, nNeigh, &
-       willSendNorth, willSendSouth, willSendEast, willSendWest, &
-       willRecvNorth, willRecvSouth, willRecvEast, willRecvWest, &
-       NameSendDd0X, NameSendDd0Y, sendDirection, TagAdvMntDd0X, &
-       NameRecvDd0X, NameRecvDd0Y, recvDirection, TagAdvMntDd0Y, &
-       1, mzp, &
-       xbSendEast, xeSendEast, xbSendWest, xeSendWest, &
-       xbSendNorth, xeSendNorth, xbSendSouth, xeSendSouth, &
-       xbRecvEast, xeRecvEast, xbRecvWest, xeRecvWest, &
-       xbRecvNorth, xeRecvNorth, xbRecvSouth, xeRecvSouth, &
-       ybSendEast, yeSendEast, ybSendWest, yeSendWest, &
-       ybSendNorth, yeSendNorth, ybSendSouth, yeSendSouth, &
-       ybRecvEast, yeRecvEast, ybRecvWest, yeRecvWest, &
-       ybRecvNorth, yeRecvNorth, ybRecvSouth, yeRecvSouth, &
-       x0, y0, NodeDimsAdvMnt%mzp, ghostZoneWidth, idim_type_3D, &
-       AdvMntDd0SendX, AdvMntDd0RecvX, AdvMntDd0SendY, AdvMntDd0RecvY, &
-       fldName_1=dd0_3dName, &
-       fldName_2=dd0_3duName, &
-       fldName_3=dd0_3dvName, &
-       fldName_4=dd0_3dwName)
+         willSendNorth, willSendSouth, willSendEast, willSendWest, &
+         willRecvNorth, willRecvSouth, willRecvEast, willRecvWest, &
+         NameSendDd0X, NameSendDd0Y, sendDirection, TagAdvMntDd0X, &
+         NameRecvDd0X, NameRecvDd0Y, recvDirection, TagAdvMntDd0Y, &
+         1, mzp, &
+         xbSendEast, xeSendEast, xbSendWest, xeSendWest, &
+         xbSendNorth, xeSendNorth, xbSendSouth, xeSendSouth, &
+         xbRecvEast, xeRecvEast, xbRecvWest, xeRecvWest, &
+         xbRecvNorth, xeRecvNorth, xbRecvSouth, xeRecvSouth, &
+         ybSendEast, yeSendEast, ybSendWest, yeSendWest, &
+         ybSendNorth, yeSendNorth, ybSendSouth, yeSendSouth, &
+         ybRecvEast, yeRecvEast, ybRecvWest, yeRecvWest, &
+         ybRecvNorth, yeRecvNorth, ybRecvSouth, yeRecvSouth, &
+         x0, y0, NodeDimsAdvMnt%mzp, ghostZoneWidth, idim_type_3D, &
+         AdvMntDd0SendX, AdvMntDd0RecvX, AdvMntDd0SendY, AdvMntDd0RecvY, &
+         fldName_1=dd0_3dName, &
+         fldName_2=dd0_3duName, &
+         fldName_3=dd0_3dvName, &
+         fldName_4=dd0_3dwName)
 
     ! create message set for Den
 
     call OneAdvMntSendRecv(ThreeD, Neigh, nNeigh, &
-       willSendNorth, willSendSouth, willSendEast, willSendWest, &
-       willRecvNorth, willRecvSouth, willRecvEast, willRecvWest, &
-       NameSendDenX, NameSendDenY, sendDirection, TagAdvMntDenX, &
-       NameRecvDenX, NameRecvDenY, recvDirection, TagAdvMntDenY, &
-       1, mzp, &
-       xbSendEast, xeSendEast, xbSendWest, xeSendWest, &
-       xbSendNorth, xeSendNorth, xbSendSouth, xeSendSouth, &
-       xbRecvEast, xeRecvEast, xbRecvWest, xeRecvWest, &
-       xbRecvNorth, xeRecvNorth, xbRecvSouth, xeRecvSouth, &
-       ybSendEast, yeSendEast, ybSendWest, yeSendWest, &
-       ybSendNorth, yeSendNorth, ybSendSouth, yeSendSouth, &
-       ybRecvEast, yeRecvEast, ybRecvWest, yeRecvWest, &
-       ybRecvNorth, yeRecvNorth, ybRecvSouth, yeRecvSouth, &
-       x0, y0, NodeDimsAdvMnt%mzp, ghostZoneWidth, idim_type_3D, &
-       AdvMntDenSendX, AdvMntDenRecvX, AdvMntDenSendY, AdvMntDenRecvY, &
-       fldName_1=den0_3dName, &
-       fldName_2=den1_3dName, &
-       fldName_3=den2_3dName, &
-       fldName_4=den3_3dName)
+         willSendNorth, willSendSouth, willSendEast, willSendWest, &
+         willRecvNorth, willRecvSouth, willRecvEast, willRecvWest, &
+         NameSendDenX, NameSendDenY, sendDirection, TagAdvMntDenX, &
+         NameRecvDenX, NameRecvDenY, recvDirection, TagAdvMntDenY, &
+         1, mzp, &
+         xbSendEast, xeSendEast, xbSendWest, xeSendWest, &
+         xbSendNorth, xeSendNorth, xbSendSouth, xeSendSouth, &
+         xbRecvEast, xeRecvEast, xbRecvWest, xeRecvWest, &
+         xbRecvNorth, xeRecvNorth, xbRecvSouth, xeRecvSouth, &
+         ybSendEast, yeSendEast, ybSendWest, yeSendWest, &
+         ybSendNorth, yeSendNorth, ybSendSouth, yeSendSouth, &
+         ybRecvEast, yeRecvEast, ybRecvWest, yeRecvWest, &
+         ybRecvNorth, yeRecvNorth, ybRecvSouth, yeRecvSouth, &
+         x0, y0, NodeDimsAdvMnt%mzp, ghostZoneWidth, idim_type_3D, &
+         AdvMntDenSendX, AdvMntDenRecvX, AdvMntDenSendY, AdvMntDenRecvY, &
+         fldName_1=den0_3dName, &
+         fldName_2=den1_3dName, &
+         fldName_3=den2_3dName, &
+         fldName_4=den3_3dName)
 
     ! create message set for DxDy
 
     call OneAdvMntSendRecv(TwoD, Neigh, nNeigh, &
-       willSendNorth, willSendSouth, willSendEast, willSendWest, &
-       willRecvNorth, willRecvSouth, willRecvEast, willRecvWest, &
-       NameSendDxDyX, NameSendDxDyY, sendDirection, TagAdvMntDxDyX, &
-       NameRecvDxDyX, NameRecvDxDyY, recvDirection, TagAdvMntDxDyY, &
-       1, mzp, &
-       xbSendEast, xeSendEast, xbSendWest, xeSendWest, &
-       xbSendNorth, xeSendNorth, xbSendSouth, xeSendSouth, &
-       xbRecvEast, xeRecvEast, xbRecvWest, xeRecvWest, &
-       xbRecvNorth, xeRecvNorth, xbRecvSouth, xeRecvSouth, &
-       ybSendEast, yeSendEast, ybSendWest, yeSendWest, &
-       ybSendNorth, yeSendNorth, ybSendSouth, yeSendSouth, &
-       ybRecvEast, yeRecvEast, ybRecvWest, yeRecvWest, &
-       ybRecvNorth, yeRecvNorth, ybRecvSouth, yeRecvSouth, &
-       x0, y0, 1, ghostZoneWidth, idim_type_2D, &
-       AdvMntDxDySendX, AdvMntDxDyRecvX, AdvMntDxDySendY, AdvMntDxDyRecvY, &
-       fldName_1=dxName, &
-       fldName_2=dyName)
+         willSendNorth, willSendSouth, willSendEast, willSendWest, &
+         willRecvNorth, willRecvSouth, willRecvEast, willRecvWest, &
+         NameSendDxDyX, NameSendDxDyY, sendDirection, TagAdvMntDxDyX, &
+         NameRecvDxDyX, NameRecvDxDyY, recvDirection, TagAdvMntDxDyY, &
+         1, mzp, &
+         xbSendEast, xeSendEast, xbSendWest, xeSendWest, &
+         xbSendNorth, xeSendNorth, xbSendSouth, xeSendSouth, &
+         xbRecvEast, xeRecvEast, xbRecvWest, xeRecvWest, &
+         xbRecvNorth, xeRecvNorth, xbRecvSouth, xeRecvSouth, &
+         ybSendEast, yeSendEast, ybSendWest, yeSendWest, &
+         ybSendNorth, yeSendNorth, ybSendSouth, yeSendSouth, &
+         ybRecvEast, yeRecvEast, ybRecvWest, yeRecvWest, &
+         ybRecvNorth, yeRecvNorth, ybRecvSouth, yeRecvSouth, &
+         x0, y0, 1, ghostZoneWidth, idim_type_2D, &
+         AdvMntDxDySendX, AdvMntDxDyRecvX, AdvMntDxDySendY, AdvMntDxDyRecvY, &
+         fldName_1=dxName, &
+         fldName_2=dyName)
 
     ! create message set for Sca
 
     call OneAdvMntSendRecv(ThreeD, Neigh, nNeigh, &
-       willSendNorth, willSendSouth, willSendEast, willSendWest, &
-       willRecvNorth, willRecvSouth, willRecvEast, willRecvWest, &
-       NameSendScaX, NameSendScaY, sendDirection, TagAdvMntScaX, &
-       NameRecvScaX, NameRecvScaY, recvDirection, TagAdvMntScaY, &
-       1, mzp, &
-       xbSendEast, xeSendEast, xbSendWest, xeSendWest, &
-       xbSendNorth, xeSendNorth, xbSendSouth, xeSendSouth, &
-       xbRecvEast, xeRecvEast, xbRecvWest, xeRecvWest, &
-       xbRecvNorth, xeRecvNorth, xbRecvSouth, xeRecvSouth, &
-       ybSendEast, yeSendEast, ybSendWest, yeSendWest, &
-       ybSendNorth, yeSendNorth, ybSendSouth, yeSendSouth, &
-       ybRecvEast, yeRecvEast, ybRecvWest, yeRecvWest, &
-       ybRecvNorth, yeRecvNorth, ybRecvSouth, yeRecvSouth, &
-       x0, y0, NodeDimsAdvMnt%mzp, ghostZoneWidth, idim_type_3D, &
-       AdvMntScaSendX, AdvMntScaRecvX, AdvMntScaSendY, AdvMntScaRecvY, &
-       fldName_X=vc3d_inName, &
-       fldName_Y=vc3d_outName)
+         willSendNorth, willSendSouth, willSendEast, willSendWest, &
+         willRecvNorth, willRecvSouth, willRecvEast, willRecvWest, &
+         NameSendScaX, NameSendScaY, sendDirection, TagAdvMntScaX, &
+         NameRecvScaX, NameRecvScaY, recvDirection, TagAdvMntScaY, &
+         1, mzp, &
+         xbSendEast, xeSendEast, xbSendWest, xeSendWest, &
+         xbSendNorth, xeSendNorth, xbSendSouth, xeSendSouth, &
+         xbRecvEast, xeRecvEast, xbRecvWest, xeRecvWest, &
+         xbRecvNorth, xeRecvNorth, xbRecvSouth, xeRecvSouth, &
+         ybSendEast, yeSendEast, ybSendWest, yeSendWest, &
+         ybSendNorth, yeSendNorth, ybSendSouth, yeSendSouth, &
+         ybRecvEast, yeRecvEast, ybRecvWest, yeRecvWest, &
+         ybRecvNorth, yeRecvNorth, ybRecvSouth, yeRecvSouth, &
+         x0, y0, NodeDimsAdvMnt%mzp, ghostZoneWidth, idim_type_3D, &
+         AdvMntScaSendX, AdvMntScaRecvX, AdvMntScaSendY, AdvMntScaRecvY, &
+         fldName_X=vc3d_inName, &
+         fldName_Y=vc3d_outName)
 
     if (dumpLocal) then
        call MsgDump(h//" finishes with AdvMntUVSendX MessageSet:")
@@ -5025,7 +5029,7 @@ contains
 
 
 
-    subroutine DestroyAdvMntMessageSet(&
+  subroutine DestroyAdvMntMessageSet(&
        AdvMntUVSendX, AdvMntUVRecvX, &
        AdvMntUVSendY, AdvMntUVRecvY, &
        AdvMntDxDySendX, AdvMntDxDyRecvX, &
@@ -5094,7 +5098,7 @@ contains
        AcoustNewRecv, &
        fieldName, &
        field)
-       
+
     type(MessageSet), pointer, intent(in) :: AcoustNewSend
     type(MessageSet), pointer, intent(in) :: AcoustNewRecv
     character(len=*), intent(in) :: fieldName
@@ -5104,7 +5108,7 @@ contains
     type(FieldSectionNode), pointer :: fsnode
     character(len=*), parameter :: h="**(UpdateFieldAdressAtAcoustNew)**"
     logical, parameter :: dumpLocal=.false.
-    
+
     if (.not. associated(AcoustNewSend)) then
        call fatal_error(h//" AcoustNewSend not associated")
     else if (.not. associated(AcoustNewRecv)) then
@@ -5115,14 +5119,14 @@ contains
        fsnode => AcoustNewSend%msgData(iMsg)%list%head
        call UpdateFieldAdress(fsnode%entry, field, fieldName)
     end do
-    
+
     do iMsg = 1, AcoustNewRecv%nMsgs
        fsnode => AcoustNewRecv%msgData(iMsg)%list%head
-    call UpdateFieldAdress(fsnode%entry, field, fieldName)
+       call UpdateFieldAdress(fsnode%entry, field, fieldName)
     end do
   end subroutine UpdateFieldAdressAtAcoustNew
-  
-  
+
+
   subroutine UpdateFieldAdressAtAdvMnt(&
        AdvMntUVSendX, AdvMntUVRecvX, &
        AdvMntUVSendY, AdvMntUVRecvY, &
@@ -5176,7 +5180,7 @@ contains
     integer :: iMsg
     type(FieldSectionNode), pointer :: fsnode
     character(len=*), parameter :: h="**(UpdateFieldAdressAtAdvMnt)**"
-    
+
     if (.not. associated(AdvMntUVSendX)) then
        call fatal_error(h//" AdvMntUVSendX not associated")
     else if (.not. associated(AdvMntUVRecvX)) then
@@ -5218,7 +5222,7 @@ contains
     else if (.not. associated(AdvMntScaRecvY)) then
        call fatal_error(h//" AdvMntScaRecvY not associated")
     end if
-    
+
     do iMsg = 1, AdvMntUVSendX%nMsgs
        fsnode => AdvMntUVSendX%msgData(iMsg)%list%head
        call UpdateFieldAdress(fsnode%entry, u3d, "U3D")
@@ -5245,7 +5249,7 @@ contains
     end do
 
 
-    
+
     do iMsg = 1, AdvMntDxDySendX%nMsgs
        fsnode => AdvMntDxDySendX%msgData(iMsg)%list%head
        call UpdateFieldAdress(fsnode%entry, dxtW, "DXTW")
@@ -5271,7 +5275,7 @@ contains
        call UpdateFieldAdress(fsnode%entry, dytW, "DYTW")
     end do
 
-    
+
     do iMsg = 1, AdvMntDd0SendX%nMsgs
        fsnode => AdvMntDd0SendX%msgData(iMsg)%list%head
        call UpdateFieldAdress(fsnode%entry, dd0_3d, "DD0_3D")
@@ -5371,12 +5375,12 @@ contains
        call UpdateFieldAdress(fsnode%entry, vc3d_out, "VC3D_OUT")
     end do
   end subroutine UpdateFieldAdressAtAdvMnt
-  
 
 
 
-  
-  
+
+
+
   subroutine PostSendRecvMsgsFixedAdress(SendMsg, RecvMsg)
 
     ! posts all nonblocking send and recv operations of
@@ -5552,7 +5556,7 @@ contains
           call MsgDump(h//" empty send message set")
        end if
     end if
-  end subroutine PostSendRecvMsgsFixedAdress1D  
+  end subroutine PostSendRecvMsgsFixedAdress1D
 
 
 
@@ -5714,17 +5718,17 @@ contains
           call MsgDump(h//" empty send message set")
        end if
     end if
-  end subroutine WaitSendRecvMsgsFixedAdress1D  
+  end subroutine WaitSendRecvMsgsFixedAdress1D
 
 
 
   subroutine OneAcoustNewSendRecv(OneD, Neigh, nNeigh, &
        willSend, willRecv, NameSend, NameRecv, &
-       sendDirection, recvDirection, Tag, &
+       NodeDims, sendDirection, recvDirection, Tag, &
        zbSend, zeSend, zbRecv, zeRecv, &
        xbSend, xeSend, xbRecv, xeRecv, &
        ybSend, yeSend, ybRecv, yeRecv, &
-       x0, y0, mzp, fldName, &
+       x0, y0, fldName, &
        AcoustNewSend, AcoustNewRecv, field)
 
     logical, intent(in) :: OneD
@@ -5734,6 +5738,7 @@ contains
     logical, intent(in) :: willRecv(:)
     character(len=*), intent(in) :: NameSend
     character(len=*), intent(in) :: NameRecv
+    type(NodeDimensions), pointer, intent(in) :: NodeDims
     character(len=*), intent(in) :: sendDirection
     character(len=*), intent(in) :: recvDirection
     integer, intent(in) :: Tag
@@ -5751,7 +5756,6 @@ contains
     integer, intent(in) :: yeRecv(:)
     integer, intent(in) :: x0
     integer, intent(in) :: y0
-    integer, intent(in) :: mzp
     character(len=*), intent(in) :: fldName
     type(MessageSet), pointer, intent(out) :: AcoustNewSend
     type(MessageSet), pointer, intent(out) :: AcoustNewRecv
@@ -5774,7 +5778,7 @@ contains
     else
        idim_type=3
     end if
-    
+
     if (dumpLocal) then
        write(str(1),"(i8)") idim_type
        call MsgDump(h//" building "//&
@@ -5821,18 +5825,37 @@ contains
              end if
 
              if (present(field)) then
-                oneFieldSection =>  CreateFieldSection(field, fldName, idim_type, &
-                     zbSend, zeSend, &
-                     xbSend(iNeigh)-x0, xeSend(iNeigh)-x0, &
-                     ybSend(iNeigh)-y0, yeSend(iNeigh)-y0)
+                if (idim_type == 1) then
+                   oneFieldSection =>  CreateFieldSection(field, fldName, idim_type, &
+                        1, NodeDims%mzp, &
+                        1, NodeDims%mxp, &
+                        1, NodeDims%myp, &
+                        zbSend, zeSend, &
+                        xbSend(iNeigh)-x0, xeSend(iNeigh)-x0, &
+                        ybSend(iNeigh)-y0, yeSend(iNeigh)-y0)
+                else
+                   write(str(1),"(i8)") idim_type
+                   call fatal_error(h// " not ready for idim_type="//&
+                        trim(adjustl(str(1)))//" at field "//trim(adjustl(fldName)))
+                end if
              else
-                oneFieldSection =>  CreateFieldSection(fldName, idim_type, &
-                     zbSend, zeSend, &
-                     xbSend(iNeigh)-x0, xeSend(iNeigh)-x0, &
-                     ybSend(iNeigh)-y0, yeSend(iNeigh)-y0)
+                if (idim_type == 1) then
+                   oneFieldSection =>  CreateFieldSection(fldName, idim_type, &
+                        zbSend, zeSend, &
+                        xbSend(iNeigh)-x0, xeSend(iNeigh)-x0, &
+                        ybSend(iNeigh)-y0, yeSend(iNeigh)-y0)
+                else if (idim_type == 3) then
+                   oneFieldSection =>  CreateFieldSection(fldName, idim_type, &
+                        zbSend, zeSend, &
+                        xbSend(iNeigh)-x0, xeSend(iNeigh)-x0, &
+                        ybSend(iNeigh)-y0, yeSend(iNeigh)-y0)
+                else
+                   write(str(1),"(i8)") idim_type
+                   call fatal_error(h// " not ready for idim_type="//&
+                        trim(adjustl(str(1)))//" at field "//trim(adjustl(fldName)))
+                end if
              end if
              call AppendFieldSectionToMessageData(oneFieldSection, AcoustNewSend%msgData(cntMsg))
-
           end if
        end do
     end if
@@ -5863,15 +5886,35 @@ contains
              end if
 
              if (present(field)) then
-                oneFieldSection =>  CreateFieldSection(field, fldName, idim_type, &
-                     zbRecv, zeRecv, &
-                     xbRecv(iNeigh)-x0, xeRecv(iNeigh)-x0, &
-                     ybRecv(iNeigh)-y0, yeRecv(iNeigh)-y0)
+                if (idim_type == 1) then
+                   oneFieldSection =>  CreateFieldSection(field, fldName, idim_type, &
+                        1, NodeDims%mzp, &
+                        1, NodeDims%mxp, &
+                        1, NodeDims%myp, &
+                        zbRecv, zeRecv, &
+                        xbRecv(iNeigh)-x0, xeRecv(iNeigh)-x0, &
+                        ybRecv(iNeigh)-y0, yeRecv(iNeigh)-y0)
+                else
+                   write(str(1),"(i8)") idim_type
+                   call fatal_error(h// " not ready for idim_type="//&
+                        trim(adjustl(str(1)))//" at field "//trim(adjustl(fldName)))
+                end if
              else
-                oneFieldSection =>  CreateFieldSection(fldName, idim_type, &
-                     zbRecv, zeRecv, &
-                     xbRecv(iNeigh)-x0, xeRecv(iNeigh)-x0, &
-                     ybRecv(iNeigh)-y0, yeRecv(iNeigh)-y0)
+                if (idim_type == 1) then
+                   oneFieldSection =>  CreateFieldSection(fldName, idim_type, &
+                        zbRecv, zeRecv, &
+                        xbRecv(iNeigh)-x0, xeRecv(iNeigh)-x0, &
+                        ybRecv(iNeigh)-y0, yeRecv(iNeigh)-y0)
+                else if (idim_type == 3) then
+                   oneFieldSection =>  CreateFieldSection(fldName, idim_type, &
+                        zbRecv, zeRecv, &
+                        xbRecv(iNeigh)-x0, xeRecv(iNeigh)-x0, &
+                        ybRecv(iNeigh)-y0, yeRecv(iNeigh)-y0)
+                else
+                   write(str(1),"(i8)") idim_type
+                   call fatal_error(h// " not ready for idim_type="//&
+                        trim(adjustl(str(1)))//" at field "//trim(adjustl(fldName)))
+                end if
              end if
              call AppendFieldSectionToMessageData(oneFieldSection, AcoustNewRecv%msgData(cntMsg))
           end if
@@ -5888,17 +5931,19 @@ contains
 
 
   subroutine CreateAcoustNewMessageSet(&
-     GridSize, ParEnv, Neigh, GlobalOwn, GlobalWithGhost, &
-     TagDiv, AcoustNewDivSend, AcoustNewDivRecv, &
-     TagPP, AcoustNewPPSend, AcoustNewPPRecv, &
-     TagAlpha, AcoustNewAlphaSend, AcoustNewAlphaRecv, &
-     TagTht, AcoustNewThtSend, AcoustNewThtRecv, tht)
+       GridSize, ParEnv, Neigh, &
+       GlobalOwn, GlobalWithGhost, NodeDims, &
+       TagDiv, AcoustNewDivSend, AcoustNewDivRecv, &
+       TagPP, AcoustNewPPSend, AcoustNewPPRecv, &
+       TagAlpha, AcoustNewAlphaSend, AcoustNewAlphaRecv, &
+       TagTht, AcoustNewThtSend, AcoustNewThtRecv, tht)
 
     type(GridDims), pointer, intent(in) :: GridSize
     type(ParallelEnvironment), pointer, intent(in) :: ParEnv
     type(NeighbourNodes), pointer, intent(in) :: Neigh
     type(DomainDecomp), pointer, intent(in) :: GlobalOwn
     type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+    type(NodeDimensions), pointer, intent(in) :: NodeDims
     integer, intent(in) :: TagDiv
     type(MessageSet), pointer, intent(inout) :: AcoustNewDivSend
     type(MessageSet), pointer, intent(inout) :: AcoustNewDivRecv
@@ -5912,14 +5957,14 @@ contains
     type(MessageSet), pointer, intent(inout) :: AcoustNewThtSend
     type(MessageSet), pointer, intent(inout) :: AcoustNewThtRecv
     real, pointer, intent(in) :: tht(:)
-    
+
     integer :: nMachs
     integer :: myNum
     integer :: nNeigh
     integer :: mzp
     integer :: x0
     integer :: y0
-    
+
     ! scratch arrays of size number of neighbour nodes
     ! containing global indices of regions for send and receive
 
@@ -5941,7 +5986,7 @@ contains
 
     character(len=*), parameter :: sendDirection="send"
     character(len=*), parameter :: recvDirection="recv"
-    
+
     character(len=*), parameter :: NameAcoustNew="AcoustNew"
     character(len=*), parameter :: NameSendDiv="AcoustNewDivSend"
     character(len=*), parameter :: NameRecvDiv="AcoustNewDivRecv"
@@ -5951,7 +5996,7 @@ contains
     character(len=*), parameter :: NameRecvAlpha="AcoustNewAlphaRecv"
     character(len=*), parameter :: NameSendTht="AcoustNewThtSend"
     character(len=*), parameter :: NameRecvTht="AcoustNewThtRecv"
-    
+
     character(len=*), parameter :: h="**(CreateAcoustNewMessageSet)**"
     logical, parameter :: dumpLocal=.false.
 
@@ -5989,7 +6034,7 @@ contains
     mzp = GridSize%nnzp
     x0 = GlobalWithGhost%xb(myNum) - 1
     y0 = GlobalWithGhost%yb(myNum) - 1
-    
+
     call NodesToSendRecvMessages( &
          thisNode=myNum, &
          Neigh=Neigh, &
@@ -6014,40 +6059,40 @@ contains
 
     call OneAcoustNewSendRecv(.false., Neigh, nNeigh, &
          willSend, willRecv, NameSendDiv, NameRecvDiv, &
-         sendDirection, recvDirection, TagDiv, &
+         NodeDims, sendDirection, recvDirection, TagDiv, &
          1, mzp, 1, mzp, &
          xbSend, xeSend, xbRecv, xeRecv, &
          ybSend, yeSend, ybRecv, yeRecv, &
-         x0, y0, mzp, "DIV", &
+         x0, y0, "DIV", &
          AcoustNewDivSend, AcoustNewDivRecv)
 
     call OneAcoustNewSendRecv(.false., Neigh, nNeigh, &
          willSend, willRecv, NameSendPP, NameRecvPP, &
-         sendDirection, recvDirection, TagPP, &
+         NodeDims, sendDirection, recvDirection, TagPP, &
          1, mzp, 1, mzp, &
          xbSend, xeSend, xbRecv, xeRecv, &
          ybSend, yeSend, ybRecv, yeRecv, &
-         x0, y0, mzp, "PP", &
+         x0, y0, "PP", &
          AcoustNewPPSend, AcoustNewPPRecv)
 
     call OneAcoustNewSendRecv(.false., Neigh, nNeigh, &
          willSend, willRecv, NameSendAlpha, NameRecvAlpha, &
-         sendDirection, recvDirection, TagAlpha, &
+         NodeDims, sendDirection, recvDirection, TagAlpha, &
          1, mzp, 1, mzp, &
          xbSend, xeSend, xbRecv, xeRecv, &
          ybSend, yeSend, ybRecv, yeRecv, &
-         x0, y0, mzp, "ALPHA", &
+         x0, y0, "ALPHA", &
          AcoustNewAlphaSend, AcoustNewAlphaRecv)
 
     call OneAcoustNewSendRecv(.true., Neigh, nNeigh, &
          willSend, willRecv, NameSendTht, NameRecvTht, &
-         sendDirection, recvDirection, TagTht, &
+         NodeDims, sendDirection, recvDirection, TagTht, &
          1, mzp, 1, mzp, &
          xbSend, xeSend, xbRecv, xeRecv, &
          ybSend, yeSend, ybRecv, yeRecv, &
-         x0, y0, mzp, "THT", &
+         x0, y0, "THT", &
          AcoustNewThtSend, AcoustNewThtRecv, tht)
-    
+
     if (dumpLocal) then
        call MsgDump(h//" finishes with AcoustNewDivSend MessageSet:")
        call DumpMessageSet(AcoustNewDivSend)
@@ -6067,7 +6112,7 @@ contains
        call DumpMessageSet(AcoustNewThtRecv)
     end if
   end subroutine CreateAcoustNewMessageSet
-  
+
 
 
 
@@ -6103,6 +6148,6 @@ contains
     call DestroyMessageSet(AcoustNewThtRecv)
 
   end subroutine DestroyAcoustNewMessageSet
-  
-       
+
+
 end module ModMessageSet

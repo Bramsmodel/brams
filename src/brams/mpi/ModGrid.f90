@@ -462,7 +462,7 @@ contains
 
     call CreateAcoustNewMessageSet(&
          oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
-         oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
+         oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, oneGrid%NodeDims, &
          TagAcoustNewDiv, oneGrid%AcoustNewDivSend, oneGrid%AcoustNewDivRecv, &
          TagAcoustNewPP, oneGrid%AcoustNewPPSend, oneGrid%AcoustNewPPRecv, &
          TagAcoustNewAlpha, oneGrid%AcoustNewAlphaSend, oneGrid%AcoustNewAlphaRecv, &
