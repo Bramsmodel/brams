@@ -121,7 +121,7 @@ contains
 
 
   function CreateFieldSection_1D(field, name, idim_type, &
-       xStart, xEnd, yStart, yEnd, kMax) result(oneFieldSection)
+       zStart, zEnd, xStart, xEnd, yStart, yEnd) result(oneFieldSection)
 
     ! stores at oneFieldSection which elements of
     ! the real 1D field should be communicated
@@ -129,11 +129,12 @@ contains
     real, pointer, intent(in) :: field(:)
     character(len=*), intent(in) :: name
     integer, intent(in) :: idim_type
+    integer, intent(in) :: zStart ! local index
+    integer, intent(in) :: zEnd   ! local index
     integer, intent(in) :: xStart ! local index
     integer, intent(in) :: xEnd   ! local index
     integer, intent(in) :: yStart ! local index
     integer, intent(in) :: yEnd   ! local index
-    integer, intent(in) :: kMax   ! to compute fieldSectionSize
     type(FieldSection), pointer :: oneFieldSection
 
     integer :: ierr
@@ -148,6 +149,8 @@ contains
             trim(adjustl(str(1))))
     end if
     oneFieldSection%field_1D => field
+    oneFieldSection%zStart = zStart
+    oneFieldSection%zEnd = zEnd
     oneFieldSection%xStart = xStart
     oneFieldSection%xEnd = xEnd
     oneFieldSection%yStart = yStart
@@ -156,7 +159,7 @@ contains
     oneFieldSection%idim_type = idim_type
     if (idim_type == 1) then
        oneFieldSection%fieldSectionSize = &
-            kMax * &
+            (zEnd - zStart +1) * &
             (yEnd - yStart +1) * &
             (xEnd - xStart +1)
     else

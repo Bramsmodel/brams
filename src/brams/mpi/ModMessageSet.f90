@@ -637,7 +637,7 @@ contains
 
   subroutine InsertFieldSectionAtMessageSet_1D(&
        myNum, field, fieldName, idim_type, nNeigh, GlobalWithGhost, &
-       xbComm, xeComm, ybComm, yeComm, willComm, &
+       zStart, zEnd, xbComm, xeComm, ybComm, yeComm, willComm, &
        Msgs, kMax)
 
     ! Inserts a section of a field to be communicated
@@ -678,6 +678,8 @@ contains
     ! array (number of processes to communicate) and are indexed
     ! accordingly
 
+    integer, intent(in) :: zStart
+    integer, intent(in) :: zEnd
     integer, intent(in) :: xbComm(:)
     integer, intent(in) :: xeComm(:)
     integer, intent(in) :: ybComm(:)
@@ -743,9 +745,9 @@ contains
                   field, &
                   fieldName, &
                   idim_type, &
+                  zStart, zEnd, &
                   xbComm(iNeigh)-x0, xeComm(iNeigh)-x0, &
-                  ybComm(iNeigh)-y0, yeComm(iNeigh)-y0, &
-                  kMax)
+                  ybComm(iNeigh)-y0, yeComm(iNeigh)-y0)
           case default
              write(c0,"(i8)") idim_type
              call fatal_error(h//" idim_type ("//trim(adjustl(c0))//&
@@ -1206,6 +1208,7 @@ contains
 
   subroutine InsertFieldSectionAtSendRecvMessageSet_1D(&
        field, fieldName, idim_type, myNum, nNeigh, GlobalWithGhost, &
+       zbSend, zeSend, zbRecv, zeRecv, &
        xbSend, xeSend, ybSend, yeSend, willSend, SendMessageSet, &
        xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvMessageSet, &
        kMax)
@@ -1240,6 +1243,10 @@ contains
     type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
 
     ! this rank will send this rectangular region to each neighbour
+    integer, intent(in) :: zbSend
+    integer, intent(in) :: zeSend
+    integer, intent(in) :: zbRecv
+    integer, intent(in) :: zeRecv
     integer, intent(in) :: xbSend(nNeigh)
     integer, intent(in) :: xeSend(nNeigh)
     integer, intent(in) :: ybSend(nNeigh)
@@ -1276,10 +1283,12 @@ contains
 
     call InsertFieldSectionAtMessageSet(&
          myNum, field, fieldName, idim_type, nNeigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, SendMessageSet, kMax)
+         zbSend, zeSend, xbSend, xeSend, ybSend, yeSend, willSend, &
+         SendMessageSet, kMax)
     call InsertFieldSectionAtMessageSet(&
          myNum, field, fieldName, idim_type, nNeigh, GlobalWithGhost, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvMessageSet, kMax)
+         zbRecv, zeRecv, xbRecv, xeRecv, ybRecv, yeRecv, willRecv, &
+         RecvMessageSet, kMax)
   end subroutine InsertFieldSectionAtSendRecvMessageSet_1D
 
 
@@ -2950,7 +2959,7 @@ contains
 
     call InsertFieldSectionAtSendRecvMessageSet(&
          field, fieldName, idim_type, myNum, nNeigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, AcoustNewOneSend, &
+         1, kMax, 1, kMax, xbSend, xeSend, ybSend, yeSend, willSend, AcoustNewOneSend, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcoustNewOneRecv, kMax)
 
     if (dumpLocal) then
@@ -5896,8 +5905,8 @@ contains
     integer :: nMsgs
     integer :: cntMsg
     integer :: iNeigh
-    integer :: fieldSectionSize
     integer :: idim_type
+    integer :: fieldSectionSize
     type(FieldSection), pointer :: oneFieldSection
 
     character(len=8) :: str(10)
@@ -5958,14 +5967,14 @@ contains
 
              if (present(field)) then
                 oneFieldSection =>  CreateFieldSection(field, fldName, idim_type, &
+                     zbSend, zeSend, &
                      xbSend(iNeigh)-x0, xeSend(iNeigh)-x0, &
-                     ybSend(iNeigh)-y0, yeSend(iNeigh)-y0, &
-                     mzp)
+                     ybSend(iNeigh)-y0, yeSend(iNeigh)-y0)
              else
-                fieldSectionSize= &
+                fieldSectionSize=&
+                     (zeSend-zbSend+1)* &
                      (xeSend(iNeigh)-xbSend(iNeigh)+1) * &
-                     (yeSend(iNeigh)-ybSend(iNeigh)+1) * &
-                     mzp
+                     (yeSend(iNeigh)-ybSend(iNeigh)+1)
                 oneFieldSection =>  CreateFieldSection(fldName, idim_type, &
                      zbSend, zeSend, &
                      xbSend(iNeigh)-x0, xeSend(iNeigh)-x0, &
@@ -6005,19 +6014,19 @@ contains
 
              if (present(field)) then
                 oneFieldSection =>  CreateFieldSection(field, fldName, idim_type, &
+                     zbRecv, zeRecv, &
                      xbRecv(iNeigh)-x0, xeRecv(iNeigh)-x0, &
-                     ybRecv(iNeigh)-y0, yeRecv(iNeigh)-y0, &
-                     mzp)
+                     ybRecv(iNeigh)-y0, yeRecv(iNeigh)-y0)
              else
-                fieldSectionSize= &
+                fieldSectionSize=&
+                     (zeRecv-zbRecv+1)* &
                      (xeRecv(iNeigh)-xbRecv(iNeigh)+1) * &
-                     (yeRecv(iNeigh)-ybRecv(iNeigh)+1) * &
-                     mzp
+                     (yeRecv(iNeigh)-ybRecv(iNeigh)+1)
                 oneFieldSection =>  CreateFieldSection(fldName, idim_type, &
                      zbRecv, zeRecv, &
                      xbRecv(iNeigh)-x0, xeRecv(iNeigh)-x0, &
                      ybRecv(iNeigh)-y0, yeRecv(iNeigh)-y0, &
-                     fieldSectionSize) 
+                     fieldSectionSize)
              end if
              call AppendFieldSectionToMessageData(oneFieldSection, AcoustNewRecv%msgData(cntMsg))
           end if
