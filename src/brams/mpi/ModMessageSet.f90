@@ -614,6 +614,7 @@ contains
                   vTabPtr%var_p_3D, &
                   vTabPtr%name, &
                   vTabPtr%idim_type, &
+                  1, size(vTabPtr%var_p_3D,1), &
                   xbComm(iNeigh)-x0, xeComm(iNeigh)-x0, &
                   ybComm(iNeigh)-y0, yeComm(iNeigh)-y0)
           case (4,5)
@@ -887,7 +888,7 @@ contains
 
   subroutine InsertFieldSectionAtMessageSet_3D(&
        myNum, field, fieldName, idim_type, nNeigh, GlobalWithGhost, &
-       xbComm, xeComm, ybComm, yeComm, willComm, &
+       zStart, zEnd, xbComm, xeComm, ybComm, yeComm, willComm, &
        Msgs)
 
     ! Inserts a section of a field to be communicated
@@ -928,6 +929,8 @@ contains
     ! array (number of processes to communicate) and are indexed
     ! accordingly
 
+    integer, intent(in) :: zStart
+    integer, intent(in) :: zEnd
     integer, intent(in) :: xbComm(:)
     integer, intent(in) :: xeComm(:)
     integer, intent(in) :: ybComm(:)
@@ -992,6 +995,7 @@ contains
                   field, &
                   fieldName, &
                   idim_type, &
+                  zStart, zEnd, &
                   xbComm(iNeigh)-x0, xeComm(iNeigh)-x0, &
                   ybComm(iNeigh)-y0, yeComm(iNeigh)-y0)
           case default
@@ -1376,6 +1380,7 @@ contains
 
   subroutine InsertFieldSectionAtSendRecvMessageSet_3D(&
        field, fieldName, idim_type, myNum, nNeigh, GlobalWithGhost, &
+       zbSend, zeSend, zbRecv, zeRecv, &
        xbSend, xeSend, ybSend, yeSend, willSend, SendMessageSet, &
        xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvMessageSet)
 
@@ -1409,6 +1414,10 @@ contains
     type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
 
     ! this rank will send this rectangular region to each neighbour
+    integer, intent(in) :: zbSend
+    integer, intent(in) :: zeSend
+    integer, intent(in) :: zbRecv
+    integer, intent(in) :: zeRecv
     integer, intent(in) :: xbSend(nNeigh)
     integer, intent(in) :: xeSend(nNeigh)
     integer, intent(in) :: ybSend(nNeigh)
@@ -1444,10 +1453,10 @@ contains
 
     call InsertFieldSectionAtMessageSet(&
          myNum, field, fieldName, idim_type, nNeigh, GlobalWithGhost, &
-         xbSend, xeSend, ybSend, yeSend, willSend, SendMessageSet)
+         zbSend, zeSend, xbSend, xeSend, ybSend, yeSend, willSend, SendMessageSet)
     call InsertFieldSectionAtMessageSet(&
          myNum, field, fieldName, idim_type, nNeigh, GlobalWithGhost, &
-         xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvMessageSet)
+         zbRecv, zeRecv, xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvMessageSet)
   end subroutine InsertFieldSectionAtSendRecvMessageSet_3D
 
 
@@ -2749,7 +2758,7 @@ contains
     integer :: nMachs
     integer :: myNum
     integer :: nNeigh
-    integer :: vTabNbr
+    integer :: mzp
     character(len=32) :: vTabName
 
     ! scratch arrays of size number of neighbour nodes
@@ -2798,7 +2807,8 @@ contains
     myNum  = ParEnv%myNum
     nMachs = ParEnv%nMachs
     nNeigh = Neigh%nNeigh
-
+    mzp = size(field,1)
+    
     ! AcoustNewOneSend, AcoustNewOneRecv:
     ! messages update entire GhostZone
 
@@ -2832,6 +2842,7 @@ contains
 
     call InsertFieldSectionAtSendRecvMessageSet(&
          field, fieldName, idim_type, myNum, nNeigh, GlobalWithGhost, &
+         1, mzp, 1, mzp, &
          xbSend, xeSend, ybSend, yeSend, willSend, AcoustNewOneSend, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcoustNewOneRecv)
 

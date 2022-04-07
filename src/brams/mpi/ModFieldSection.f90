@@ -229,7 +229,7 @@ contains
 
 
   function CreateFieldSection_3D(field, name, idim_type, &
-       xStart, xEnd, yStart, yEnd) result(oneFieldSection)
+       zStart, zEnd, xStart, xEnd, yStart, yEnd) result(oneFieldSection)
 
     ! stores at oneFieldSection which elements of
     ! the real 3D field should be communicated
@@ -237,6 +237,8 @@ contains
     real, pointer, intent(in) :: field(:,:,:)
     character(len=*), intent(in) :: name
     integer, intent(in) :: idim_type
+    integer, intent(in) :: zStart ! local index
+    integer, intent(in) :: zEnd   ! local index
     integer, intent(in) :: xStart ! local index
     integer, intent(in) :: xEnd   ! local index
     integer, intent(in) :: yStart ! local index
@@ -260,6 +262,8 @@ contains
     oneFieldSection%field_3d => field
     oneFieldSection%zStart = lbound(field,1)
     oneFieldSection%zEnd = ubound(field,1)
+    oneFieldSection%xStart = zStart
+    oneFieldSection%xEnd = zEnd
     oneFieldSection%xStart = xStart
     oneFieldSection%xEnd = xEnd
     oneFieldSection%yStart = yStart
@@ -269,9 +273,9 @@ contains
     select case (idim_type)
     case (3)
        oneFieldSection%fieldSectionSize = &
+            (zEnd - zStart +1) * &
             (yEnd - yStart +1) * &
-            (xEnd - xStart +1) * &
-            size(field,1)
+            (xEnd - xStart +1)
     case (6,7)
        oneFieldSection%fieldSectionSize = &
             (yEnd - yStart +1) * &
