@@ -347,8 +347,7 @@ contains
   function CreateFieldSection_Null(name, idim_type, &
        zStart, zEnd, &
        xStart, xEnd, &
-       yStart, yEnd, &
-       fieldSectionSize) result(oneFieldSection)
+       yStart, yEnd) result(oneFieldSection)
 
     ! stores at oneFieldSection which elements of
     ! the real 4D field should be communicated
@@ -361,7 +360,6 @@ contains
     integer, intent(in) :: xEnd   ! local index
     integer, intent(in) :: yStart ! local index
     integer, intent(in) :: yEnd   ! local index
-    integer, intent(in) :: fieldSectionSize   ! acount all dimensions
     type(FieldSection), pointer :: oneFieldSection
 
     integer :: ierr
@@ -383,7 +381,10 @@ contains
     oneFieldSection%yEnd = yEnd
     oneFieldSection%name = name
     oneFieldSection%idim_type=idim_type
-    oneFieldSection%fieldSectionSize = fieldSectionSize
+    oneFieldSection%fieldSectionSize = &
+         (zEnd-zStart+1) * &
+         (xEnd-xStart+1) * &
+         (yEnd-yStart+1) 
     if (dumpLocal) then
        call DumpFieldSection(oneFieldSection, h//" created ")
     end if
