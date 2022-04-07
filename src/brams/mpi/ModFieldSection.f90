@@ -376,15 +376,20 @@ contains
 
 
   function CreateFieldSection_Null(name, idim_type, &
-       zStart, zEnd, &
-       xStart, xEnd, &
-       yStart, yEnd) result(oneFieldSection)
+       lbz, ubz, lbx, ubx, lby, uby, &
+       zStart, zEnd, xStart, xEnd, yStart, yEnd) result(oneFieldSection)
 
     ! stores at oneFieldSection which elements of
     ! the real 4D field should be communicated
 
     character(len=*), intent(in) :: name
     integer, intent(in) :: idim_type
+    integer, intent(in) :: lbz
+    integer, intent(in) :: ubz
+    integer, intent(in) :: lbx
+    integer, intent(in) :: ubx
+    integer, intent(in) :: lby
+    integer, intent(in) :: uby
     integer, intent(in) :: zStart ! local index
     integer, intent(in) :: zEnd   ! local index
     integer, intent(in) :: xStart ! local index
@@ -404,6 +409,22 @@ contains
        call fatal_error(h//" allocate(oneFieldSection) fails with stat="//&
             trim(adjustl(str(1))))
     end if
+    if (idim_type > 3) then
+       write(str(1),"(i8)") idim_type
+       call fatal_error(h//" not prepared for idim_type="//trim(adjustl(str(1)))//&
+            " for field "//trim(adjustl(name)))
+    end if
+    if (idim_type == 2) then
+       oneFieldSection%lbz = 1
+       oneFieldSection%ubz = 1
+    else
+       oneFieldSection%lbz = lbz
+       oneFieldSection%ubz = ubz
+    end if
+    oneFieldSection%lbx = lbx
+    oneFieldSection%ubx = ubx
+    oneFieldSection%lby = lby
+    oneFieldSection%uby = uby
     oneFieldSection%zStart = zStart
     oneFieldSection%zEnd = zEnd
     oneFieldSection%xStart = xStart
