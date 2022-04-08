@@ -103,12 +103,6 @@ module ModFieldSection
   end interface CreateFieldSection
 
 
-  interface FieldSectionData2Buffer
-     module procedure FieldSectionData2BufferFixedAdress
-     module procedure FieldSectionData2BufferFixedAdress1D
-  end interface FieldSectionData2Buffer
-
-
   interface Buffer2FieldSectionData
      module procedure Buffer2FieldSectionDataFixedAdress
      module procedure Buffer2FieldSectionDataFixedAdress1D
@@ -191,7 +185,7 @@ contains
             "; 1D fields are linearized 3D fields with idim_type=1")
     end if
 
-    ! it may be usefull to map the 3D pointer
+    ! it is usefull to map the 3D pointer
 
     size1D=&
          (ubz-lbz+1)* &
@@ -199,7 +193,7 @@ contains
          (uby-lby+1)
     oneFieldSection%field_3D(lbz:ubz,lbx:ubx,lby:uby) => &
          field(1:size1D)
-    
+
     if (dumpLocal) then
        call DumpFieldSection(oneFieldSection, h//" created ")
     end if
@@ -298,8 +292,6 @@ contains
        call fatal_error(h//" field "//trim(adjustl(name))//" not associated")
     end if
     oneFieldSection%field_3d => field
-    oneFieldSection%zStart = zStart
-    oneFieldSection%zEnd = zEnd
     oneFieldSection%xStart = xStart
     oneFieldSection%xEnd = xEnd
     oneFieldSection%yStart = yStart
@@ -308,6 +300,8 @@ contains
     oneFieldSection%idim_type=idim_type
     select case (idim_type)
     case (3)
+       oneFieldSection%zStart = zStart
+       oneFieldSection%zEnd = zEnd
        oneFieldSection%lbz = lbound(field,1)
        oneFieldSection%ubz = ubound(field,1)
        oneFieldSection%lbx = lbound(field,2)
@@ -319,6 +313,8 @@ contains
             (yEnd - yStart +1) * &
             (xEnd - xStart +1)
     case (6,7)
+       oneFieldSection%zStart = lbound(field,3)
+       oneFieldSection%zEnd = ubound(field,3)
        oneFieldSection%lbz = lbound(field,3)
        oneFieldSection%ubz = ubound(field,3)
        oneFieldSection%lbx = lbound(field,1)
@@ -430,11 +426,17 @@ contains
        call fatal_error(h//" allocate(oneFieldSection) fails with stat="//&
             trim(adjustl(str(1))))
     end if
+
     if (idim_type > 3) then
        write(str(1),"(i8)") idim_type
        call fatal_error(h//" not prepared for idim_type="//trim(adjustl(str(1)))//&
             " for field "//trim(adjustl(name)))
     end if
+
+    oneFieldSection%lbx = lbx
+    oneFieldSection%ubx = ubx
+    oneFieldSection%lby = lby
+    oneFieldSection%uby = uby
     if (idim_type == 2) then
        oneFieldSection%lbz = 1
        oneFieldSection%ubz = 1
@@ -442,22 +444,21 @@ contains
        oneFieldSection%lbz = lbz
        oneFieldSection%ubz = ubz
     end if
-    oneFieldSection%lbx = lbx
-    oneFieldSection%ubx = ubx
-    oneFieldSection%lby = lby
-    oneFieldSection%uby = uby
+
     oneFieldSection%zStart = zStart
     oneFieldSection%zEnd = zEnd
     oneFieldSection%xStart = xStart
     oneFieldSection%xEnd = xEnd
     oneFieldSection%yStart = yStart
     oneFieldSection%yEnd = yEnd
+
     oneFieldSection%name = name
     oneFieldSection%idim_type=idim_type
     oneFieldSection%fieldSectionSize = &
          (zEnd-zStart+1) * &
          (xEnd-xStart+1) * &
          (yEnd-yStart+1) 
+
     if (dumpLocal) then
        call DumpFieldSection(oneFieldSection, h//" created ")
     end if
@@ -550,8 +551,8 @@ contains
                trim(adjustl(str(15)))//":"//trim(adjustl(str(16)))//","//&
                trim(adjustl(str(17)))//":"//trim(adjustl(str(18)))//")"
        case(6:7)
-          write(str(1),"(i8)") lbound(oneFieldSection%field_3D,3)
-          write(str(2),"(i8)") ubound(oneFieldSection%field_3D,3)
+          write(str(1),"(i8)") oneFieldSection%zStart
+          write(str(2),"(i8)") oneFieldSection%zEnd
           strSec="("//&
                trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
                trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//","//&
@@ -673,7 +674,7 @@ contains
 
 
 
-  subroutine FieldSectionData2BufferFixedAdress(oneFieldSection, &
+  subroutine FieldSectionData2Buffer(oneFieldSection, &
        buf, bufStart, bufSize)
 
     ! copy field section values into a 1D buffer in array
@@ -699,11 +700,17 @@ contains
     character(len=8) :: str(10)
     character(len=8) :: buf0, bufn
     character(len=64) :: preStr, midStr, posStr
-    character(len=*), parameter :: h="**(FieldSectionData2BufferFixedAdress)**"
-    logical, parameter :: dumpLocal=.false.
+    character(len=*), parameter :: h="**(FieldSectionData2Buffer)**"
+    logical, parameter :: dumpLocal=.true.
 
     if (.not. associated(oneFieldSection)) then
        call fatal_error(h//" null oneFieldSection")
+    end if
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") oneFieldSection%idim_type
+       call MsgDump(h//" start with field "//trim(adjustl(oneFieldSection%name))//&
+            " with idim_type="//trim(adjustl(str(1))))
     end if
 
     finalPos=bufStart+FieldSectionSize(oneFieldSection)-1
@@ -734,8 +741,24 @@ contains
     posBuf=bufStart
     select case (oneFieldSection%idim_type)
     case(1)
-       call fatal_error(h//" unknown kMax;"//&
-            " use FieldSectionData2BufferFixedAdress1D interface")
+       if (.not. associated(oneFieldSection%field_3D)) then
+          call fatal_error(h//" 1D field "//trim(adjustl(oneFieldSection%name))//&
+               " not mapped to 3D")
+       end if
+       do y=oneFieldSection%yStart, oneFieldSection%yEnd
+          do x=oneFieldSection%xStart, oneFieldSection%xEnd
+             do z=oneFieldSection%zStart, oneFieldSection%zEnd
+                buf(posBuf)=oneFieldSection%field_3D(z,x,y)
+                posBuf=posBuf+1
+             end do
+          end do
+       end do
+
+       if (dumpLocal) then
+          write(str(1),"(i8)") oneFieldSection%zStart
+          write(str(2),"(i8)") oneFieldSection%zEnd
+          preStr=trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//"," 
+       end if
     case(2)
        if (.not. associated(oneFieldSection%field_2D)) then
           call fatal_error(h//" field "//trim(adjustl(oneFieldSection%name))//&
@@ -752,7 +775,6 @@ contains
           call fatal_error(h//" field "//trim(adjustl(oneFieldSection%name))//&
                " not allocated")
        end if
-       kMax = size(oneFieldSection%field_3D,1)
        do y=oneFieldSection%yStart, oneFieldSection%yEnd
           do x=oneFieldSection%xStart, oneFieldSection%xEnd
              do z=oneFieldSection%zStart, oneFieldSection%zEnd
@@ -799,8 +821,7 @@ contains
           call fatal_error(h//" field "//trim(adjustl(oneFieldSection%name))//&
                " not allocated")
        end if
-       do k=lBound(oneFieldSection%field_3D,3), &
-            uBound(oneFieldSection%field_3D,3)
+       do k=oneFieldSection%zStart, oneFieldSection%zEnd
           do y=oneFieldSection%yStart, oneFieldSection%yEnd
              do x=oneFieldSection%xStart, oneFieldSection%xEnd
                 buf(posBuf)=oneFieldSection%field_3D(x,y,k)
@@ -810,8 +831,8 @@ contains
        end do
 
        if (dumpLocal) then
-          write(str(1),"(i8)") lbound(oneFieldSection%field_3D,3)
-          write(str(2),"(i8)") ubound(oneFieldSection%field_3D,3)
+          write(str(1),"(i8)") oneFieldSection%zStart
+          write(str(2),"(i8)") oneFieldSection%zEnd
           posStr=trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))
        end if
 
@@ -823,100 +844,8 @@ contains
             ") <- "//trim(adjustl(oneFieldSection%name))//"("//&
             trim(adjustl(preStr))//trim(adjustl(midStr))//trim(adjustl(posStr))//")")
     end if
-  end subroutine FieldSectionData2BufferFixedAdress
+  end subroutine FieldSectionData2Buffer
 
-
-
-
-
-  subroutine FieldSectionData2BufferFixedAdress1D(oneFieldSection, &
-       nzp, nxp, nyp, &
-       buf, bufStart, bufSize)
-
-    ! copy field section values of a 3D pointer array that was
-    ! created as a linearized 1D pointer array
-    ! into a 1D buffer in array element order
-
-    type(FieldSection), pointer, intent(in) :: oneFieldSection
-    ! field values of the field section to copy from
-    real, intent(inout) :: buf(:)
-    ! buffer to copy to
-    integer, intent(inout) :: bufStart
-    ! copy starts at buf(bufStart)
-    integer, intent(in) :: bufSize
-    ! buf maximum size
-    integer, intent(in) :: nzp
-    integer, intent(in) :: nxp
-    integer, intent(in) :: nyp
-    ! first dimension of 3D field
-
-    integer :: finalPos
-    integer :: x
-    integer :: y
-    integer :: k
-    integer :: lMax
-    character(len=8) :: str(10)
-    character(len=8) :: buf0, bufn
-    character(len=64) :: preStr, midStr
-    character(len=*), parameter :: h="**(FieldSectionData2BufferFixedAdress1D)**"
-    logical, parameter :: dumpLocal=.false.
-
-    if (.not. associated(oneFieldSection)) then
-       call fatal_error(h//" null oneFieldSection")
-    end if
-
-    finalPos=bufStart+FieldSectionSize(oneFieldSection)-1
-    if (finalPos > bufSize) then
-       write(str(1),"(i8)") FieldSectionSize(oneFieldSection)
-       write(str(2),"(i8)") bufStart
-       write(str(3),"(i8)") bufSize
-       call fatal_error(h//" field "//&
-            trim(adjustl(oneFieldSection%name))//&
-            " with size "//trim(adjustl(str(1)))//&
-            " is larger than buffer ("//&
-            trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//")")
-    end if
-
-    if (dumpLocal) then
-       write(buf0,"(i8)") bufStart
-       write(bufn,"(i8)") finalPos
-       write(str(1),"(i8)") nzp
-       preStr="1:"//trim(adjustl(str(1)))//","
-       write(str(1),"(i8)") oneFieldSection%xStart
-       write(str(2),"(i8)") oneFieldSection%xEnd
-       midStr=trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//"," 
-       write(str(1),"(i8)") oneFieldSection%yStart
-       write(str(2),"(i8)") oneFieldSection%yEnd
-       midStr=trim(adjustl(midStr))//trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))
-    end if
-
-    select case (oneFieldSection%idim_type)
-    case(1)
-       if (.not. associated(oneFieldSection%field_1D)) then
-          call fatal_error(h//" field "//trim(adjustl(oneFieldSection%name))//&
-               " not allocated")
-       end if
-       call HiddenFieldSectionData2Buffer(&
-            oneFieldSection%field_1D, &
-            oneFieldSection%name, &
-            oneFieldSection%idim_type, &
-            oneFieldSection%xStart, oneFieldSection%xEnd, &
-            oneFieldSection%yStart,oneFieldSection% yEnd, &
-            nzp, nxp, nyp, &
-            bufStart, bufSize, buf)
-
-    case default
-       call fatal_error(h//" wrong FieldSectionData2Buffer interface call for field "//&
-            trim(adjustl(oneFieldSection%name))//&
-            "; remove nzp from the call")
-    end select
-
-    if (dumpLocal) then
-       call MsgDump(h//" buf("//trim(adjustl(buf0))//":"//trim(adjustl(bufn))//&
-            ") <- "//trim(adjustl(oneFieldSection%name))//"("//&
-            trim(adjustl(preStr))//trim(adjustl(midStr))//") mapped 1D")
-    end if
-  end subroutine FieldSectionData2BufferFixedAdress1D
 
 
 
@@ -1228,7 +1157,7 @@ contains
     character(len=*), intent(in) :: fieldName
     character(len=*), parameter :: h="**(UpdateFieldAdress_0D)**"
     logical, parameter :: dumpLocal=.true.
-    
+
     call HiddenUpdateFieldAdress_0D(oneFieldSection, field, fieldName)
     if (dumpLocal) then
        call DumpFieldSection(oneFieldSection, h//" updated to ")
@@ -1310,127 +1239,6 @@ contains
     end if
   end subroutine UpdateFieldAdress_4D
 end module ModFieldSection
-
-
-
-
-
-subroutine HiddenFieldSectionData2Buffer(field, &
-     fieldName, idim_type, xStart, xEnd, yStart, yEnd, &
-     nzp, nxp, nyp, &
-     bufStart, bufSize, buf)
-
-  ! hiden interface to allow actual 1D or 3D field argument,
-  ! due to invocations of FieldSectionData2BufferVariableAdress
-  ! passing scalar_tab pointers and also tendency arrays, besides
-  ! the usual 3D field arrays
-
-  use ModParallelEnvironment, only: MsgDump
-
-  implicit none
-  integer, intent(in) :: nzp
-  integer, intent(in) :: nxp
-  integer, intent(in) :: nyp
-  real, intent(in) :: field(nzp,nxp,nyp)
-  character(len=*), intent(in) :: fieldName
-  integer, intent(in) :: idim_type
-  integer, intent(in) :: xStart
-  integer, intent(in) :: xEnd
-  integer, intent(in) :: yStart
-  integer, intent(in) :: yEnd
-  integer, intent(inout) :: bufStart
-  integer, intent(in) :: bufSize
-  real, intent(inout) :: buf(bufSize)
-
-  integer :: x, y, z
-  integer :: posBuf
-
-  character(len=8) :: buf0
-  character(len=8) :: bufn
-  character(len=8) :: str(10)
-  character(len=16) :: strReal
-  integer :: sectionSize
-  integer :: bufEnd
-
-  character(len=*), parameter :: h="**(HiddenFieldSectionData2Buffer)**"
-  logical, parameter :: dumpLocal=.false.
-
-  sectionSize=nzp*(xEnd-xStart+1)*(yEnd-yStart+1)
-  bufEnd=bufStart+sectionSize-1
-  if (dumpLocal) then
-     write(buf0,"(i8)") bufStart
-     write(str(1),"(i8)") bufSize
-     write(str(1),"(i8)") bufEnd
-     call MsgDump(h//" with bufSize="//trim(adjustl(str(1)))//&
-          ", bufStart="//trim(adjustl(buf0))//&
-          ", bufStart+sectionSize="//trim(adjustl(str(2))))
-  end if
-
-  posBuf=bufStart
-
-  if (dumpLocal) then
-     write(strReal,"(e15.7)") buf(bufStart)
-     call MsgDump(h//" buf(bufStart)="//trim(adjustl(strReal)))
-  end if
-
-  if (dumpLocal) then
-     write(strReal,"(e15.7)") buf(bufEnd)
-     call MsgDump(h//" buf(bufEnd)="//trim(adjustl(strReal)))
-  end if
-
-  if (dumpLocal) then
-     write(str(1),"(i8)") xStart
-     write(str(2),"(i8)") yStart
-     write(strReal,"(e15.7)") field(1,xStart,yStart)
-     call MsgDump(h//" field(1,"//&
-          trim(adjustl(str(1)))//","//&
-          trim(adjustl(str(2)))//")="//&
-          trim(adjustl(strReal)))
-  end if
-
-  if (dumpLocal) then
-     write(str(1),"(i8)") xEnd
-     write(str(2),"(i8)") yEnd
-     write(strReal,"(e15.7)") field(nzp,xEnd,yEnd)
-     call MsgDump(h//" field(nzp,"//&
-          trim(adjustl(str(1)))//","//&
-          trim(adjustl(str(2)))//")="//&
-          trim(adjustl(strReal)))
-  end if
-
-  select case (idim_type)
-  case(1,3)
-     do y=yStart, yEnd
-        do x=xStart, xEnd
-           buf(posBuf:posBuf+nzp-1) = field(1:nzp,x,y)
-           posBuf=posBuf+nzp
-        end do
-     end do
-
-  case default
-     write(str(1),"(i8)") idim_type
-     call fatal_error(h//" idim_type("//&
-          trim(adjustl(str(1)))//") /= 3")
-  end select
-
-  bufStart=posBuf
-
-  if (dumpLocal) then
-     write(bufn,"(i8)") bufStart-1
-     write(str(1),"(i8)") xStart
-     write(str(2),"(i8)") xEnd
-     write(str(3),"(i8)") yStart
-     write(str(4),"(i8)") yEnd
-     write(str(5),"(i8)") 1
-     write(str(6),"(i8)") nzp
-
-     call MsgDump(h//" buf("//trim(adjustl(buf0))//":"//trim(adjustl(bufn))//&
-          ") <- "//trim(adjustl(fieldName))//"("//&
-          trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//","//&
-          trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
-          trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//")")
-  end if
-end subroutine HiddenFieldSectionData2Buffer
 
 
 
