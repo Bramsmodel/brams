@@ -53,7 +53,7 @@ module ModMessageData
   public :: AppendFieldSectionToMessageData
   public :: AllocateMessageDataBuffer
   public :: DeallocateMessageDataBuffer
-  public :: FillMessageDataBuffer
+  public :: ComposeMessageDataBuffer
   public :: DecomposeMessageDataBuffer
 
   type MessageData
@@ -65,7 +65,7 @@ module ModMessageData
      ! message send/receive the buffer "buf"
 
      ! prior to a send communication, procedure
-     ! FillMessageDataBuffer
+     ! ComposeMessageDataBuffer
      ! copies field values stored at all field sections
      ! on the field section list to the buffer
 
@@ -252,7 +252,7 @@ contains
 
 
 
-  subroutine FillMessageDataBuffer(oneMessageData)
+  subroutine ComposeMessageDataBuffer(oneMessageData)
     type(MessageData), intent(inout) :: oneMessageData
 
     ! copy field section values of the entire field section list of
@@ -262,7 +262,7 @@ contains
     type(FieldSectionNode), pointer :: thisNode
     type(FieldSection), pointer :: this
     logical, parameter :: dumpLocal=.false.
-    character(len=*), parameter :: h="**(FillMessageDataBuffer)**"
+    character(len=*), parameter :: h="**(ComposeMessageDataBuffer)**"
 
     if (.not. allocated(oneMessageData%buf)) then
        call fatal_error(h//" not allocated buf for message data "//&
@@ -283,7 +283,7 @@ contains
             oneMessageData%bufsize)
        thisNode => thisNode%next
     end do
-  end subroutine FillMessageDataBuffer
+  end subroutine ComposeMessageDataBuffer
 
 
 

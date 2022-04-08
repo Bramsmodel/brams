@@ -654,8 +654,9 @@ contains
 !!$          call PostSendRecvMsgs(OneGrid%AcoustNewThtSend, OneGrid%AcoustNewThtRecv, &
 !!$               myNzp, myNxp, myNyp)
           call PostSendRecvMsgs(OneGrid%AcoustNewThtSend, OneGrid%AcoustNewThtRecv)
-          call WaitSendRecvMsgs(OneGrid%AcoustNewThtSend, OneGrid%AcoustNewThtRecv, &
-               myNzp, myNxp, myNyp)
+!!$          call WaitSendRecvMsgs(OneGrid%AcoustNewThtSend, OneGrid%AcoustNewThtRecv, &
+!!$               myNzp, myNxp, myNyp)
+          call WaitSendRecvMsgs(OneGrid%AcoustNewThtSend, OneGrid%AcoustNewThtRecv)
        endif
        call update_long_rk(int(mxp*myp*mzp,i8),dtlt,rk_beta(l_rk) &
             ,basic_g(ngrid)%thc,basic_g(ngrid)%thp  &

@@ -80,7 +80,7 @@ module ModMessageSet
        CreateMessageData, &
        DumpMessageData, &
        AppendFieldSectionToMessageData, &
-       FillMessageDataBuffer, &
+       ComposeMessageDataBuffer, &
        DecomposeMessageDataBuffer, &
        AllocateMessageDataBuffer, &
        DeallocateMessageDataBuffer, &
@@ -198,11 +198,6 @@ module ModMessageSet
   interface PostSendRecvMsgs
      module procedure PostSendRecvMsgsFixedAdress
   end interface PostSendRecvMsgs
-
-  interface WaitSendRecvMsgs
-     module procedure WaitSendRecvMsgsFixedAdress
-     module procedure WaitSendRecvMsgsFixedAdress1D
-  end interface WaitSendRecvMsgs
 
   interface CreateAcoustNewOneMessageSet
      module procedure CreateAcoustNewOneMessageSet3D
@@ -5561,7 +5556,7 @@ contains
 
           oneMessageData => SendMsg%msgData(iSend)
           call AllocateMessageDataBuffer(oneMessageData)
-          call FillMessageDataBuffer(oneMessageData)
+          call ComposeMessageDataBuffer(oneMessageData)
 
           ! post send message
 
@@ -5601,7 +5596,7 @@ contains
 
 
 
-  subroutine WaitSendRecvMsgsFixedAdress(SendMsg, RecvMsg)
+  subroutine WaitSendRecvMsgs(SendMsg, RecvMsg)
     type(MessageSet), pointer, intent(in) :: SendMsg
     type(MessageSet), pointer, intent(in) :: RecvMsg
 
@@ -5619,7 +5614,7 @@ contains
     type(MessageData), pointer :: msgData => null()
     type(FieldSection), pointer :: node => null()
     character(len=8) :: c0, c1, c2, c3, c4, c5
-    character(len=*), parameter :: h="**(WaitSendRecvMsgsFixedAdress)**"
+    character(len=*), parameter :: h="**(WaitSendRecvMsgs)**"
     logical, parameter :: dumpLocal=.false.
 
     ! for each receive message:
@@ -5675,90 +5670,7 @@ contains
           call MsgDump(h//" empty send message set")
        end if
     end if
-  end subroutine WaitSendRecvMsgsFixedAdress
-
-
-
-
-
-  subroutine WaitSendRecvMsgsFixedAdress1D(SendMsg, RecvMsg, nzp, nxp, nyp)
-    type(MessageSet), pointer, intent(in) :: SendMsg
-    type(MessageSet), pointer, intent(in) :: RecvMsg
-    integer, intent(in) :: nzp
-    integer, intent(in) :: nxp
-    integer, intent(in) :: nyp
-
-    ! waits for all nonblocking send and recv operations of
-    ! a message set pair of variables
-
-    integer :: i
-    integer :: iSend
-    integer :: iRecv
-    integer :: firstBuffer
-    integer :: lastBuffer
-    integer :: recvNbr
-    integer :: sendNbr
-    integer :: ierr
-    type(MessageData), pointer :: msgData => null()
-    type(FieldSection), pointer :: node => null()
-    character(len=8) :: c0, c1, c2, c3, c4, c5
-    character(len=*), parameter :: h="**(WaitSendRecvMsgsFixedAdress1D)**"
-    logical, parameter :: dumpLocal=.false.
-
-    ! for each receive message:
-    ! build send buffer and copy field sections to the buffer;
-    ! post nonblocking send;
-    ! A single send message to each process
-
-    if (associated(RecvMsg)) then
-       if (dumpLocal) then
-          write(c0,"(i8)") RecvMsg%nMsgs
-          call MsgDump(h//" for "//trim(adjustl(RecvMsg%name))//&
-               " waits on "//trim(adjustl(c0))//" receives")
-       end if
-
-       do iRecv= 1,RecvMsg%nMsgs
-
-          ! wait on any arrived message
-
-          call parf_wait_any_nostatus(RecvMsg%nMsgs, &
-               RecvMsg%request, recvNbr)
-          msgData => RecvMsg%msgData(recvNbr)
-          if (dumpLocal) then
-             write(c0,"(i8)") recvNbr
-             write(c1,"(i8)") RecvMsg%otherProc(recvNbr)
-             call MsgDump(h//" received message #"//trim(adjustl(c0))//&
-                  " from MPI proc "//trim(adjustl(c1)))
-          end if
-
-          ! extract field sections from incoming buffer
-          ! and store at destination fields
-
-          call DecomposeMessageDataBuffer(RecvMsg%msgData(recvNbr))
-          call DeallocateMessageDataBuffer(RecvMsg%msgData(recvNbr))
-       end do
-    else
-       if (dumpLocal) then
-          call MsgDump(h//" empty receive message set")
-       end if
-    end if
-
-    ! for all posted send messages, wait on pending request,
-    ! deallocate buffer and empty request
-
-    if (associated(SendMsg)) then
-       !CDIR$ NOVECTOR
-       do iSend = 1,SendMsg%nMsgs
-          call parf_wait_any_nostatus(SendMsg%nMsgs, &
-               SendMsg%request, sendNbr)
-          call DeallocateMessageDataBuffer(SendMsg%msgData(sendNbr))
-       end do
-    else
-       if (dumpLocal) then
-          call MsgDump(h//" empty send message set")
-       end if
-    end if
-  end subroutine WaitSendRecvMsgsFixedAdress1D
+  end subroutine WaitSendRecvMsgs
 
 
 
