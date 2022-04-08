@@ -411,7 +411,7 @@ contains
        this => FieldSectionAtNode(thisNode)
        call Buffer2FieldSectionData(&
             this, &
-            nzp, nxp, nyp, &
+!!$            nzp, nxp, nyp, &
             oneMessageData%buf, &
             bufStart, &
             oneMessageData%bufsize)
