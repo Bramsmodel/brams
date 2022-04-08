@@ -153,9 +153,10 @@ contains
     type(FieldSection), pointer :: oneFieldSection
 
     integer :: ierr
+    integer :: size1D
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(CreateFieldSection_1D)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -189,6 +190,16 @@ contains
             trim(adjustl(str(1)))//&
             "; 1D fields are linearized 3D fields with idim_type=1")
     end if
+
+    ! it may be usefull to map the 3D pointer
+
+    size1D=&
+         (ubz-lbz+1)* &
+         (ubx-lbx+1)* &
+         (uby-lby+1)
+    oneFieldSection%field_3D(lbz:ubz,lbx:ubx,lby:uby) => &
+         field(1:size1D)
+    
     if (dumpLocal) then
        call DumpFieldSection(oneFieldSection, h//" created ")
     end if
@@ -216,7 +227,7 @@ contains
     integer :: ierr
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(CreateFieldSection_2D)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -225,6 +236,12 @@ contains
             trim(adjustl(str(1))))
     end if
     oneFieldSection%field_2d => field
+    oneFieldSection%lbz = 1
+    oneFieldSection%ubz = 1
+    oneFieldSection%lbx = lbound(field,1)
+    oneFieldSection%ubx = ubound(field,1)
+    oneFieldSection%lby = lbound(field,2)
+    oneFieldSection%uby = ubound(field,2)
     oneFieldSection%xStart = xStart
     oneFieldSection%xEnd = xEnd
     oneFieldSection%yStart = yStart
@@ -269,7 +286,7 @@ contains
     integer :: ierr
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(CreateFieldSection_3D)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -281,16 +298,8 @@ contains
        call fatal_error(h//" field "//trim(adjustl(name))//" not associated")
     end if
     oneFieldSection%field_3d => field
-    oneFieldSection%lbz = lbound(field,1)
-    oneFieldSection%ubz = ubound(field,1)
-    oneFieldSection%lbx = lbound(field,2)
-    oneFieldSection%ubx = ubound(field,2)
-    oneFieldSection%lby = lbound(field,3)
-    oneFieldSection%uby = ubound(field,3)
-    oneFieldSection%zStart = lbound(field,1)
-    oneFieldSection%zEnd = ubound(field,1)
-    oneFieldSection%xStart = zStart
-    oneFieldSection%xEnd = zEnd
+    oneFieldSection%zStart = zStart
+    oneFieldSection%zEnd = zEnd
     oneFieldSection%xStart = xStart
     oneFieldSection%xEnd = xEnd
     oneFieldSection%yStart = yStart
@@ -299,11 +308,23 @@ contains
     oneFieldSection%idim_type=idim_type
     select case (idim_type)
     case (3)
+       oneFieldSection%lbz = lbound(field,1)
+       oneFieldSection%ubz = ubound(field,1)
+       oneFieldSection%lbx = lbound(field,2)
+       oneFieldSection%ubx = ubound(field,2)
+       oneFieldSection%lby = lbound(field,3)
+       oneFieldSection%uby = ubound(field,3)
        oneFieldSection%fieldSectionSize = &
             (zEnd - zStart +1) * &
             (yEnd - yStart +1) * &
             (xEnd - xStart +1)
     case (6,7)
+       oneFieldSection%lbz = lbound(field,3)
+       oneFieldSection%ubz = ubound(field,3)
+       oneFieldSection%lbx = lbound(field,1)
+       oneFieldSection%ubx = ubound(field,1)
+       oneFieldSection%lby = lbound(field,2)
+       oneFieldSection%uby = ubound(field,2)
        oneFieldSection%fieldSectionSize = &
             (yEnd - yStart +1) * &
             (xEnd - xStart +1) * &
@@ -340,7 +361,7 @@ contains
     integer :: ierr
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(CreateFieldSection_4D)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -401,7 +422,7 @@ contains
     integer :: ierr
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(CreateFieldSection_Null)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -451,6 +472,7 @@ contains
     type(FieldSection), pointer :: oneFieldSection
     character(len=256) :: res
 
+    integer :: size1D
     character(len=128) :: strSec
     character(len=128) :: strDim
     character(len=8) :: str(20)
@@ -459,134 +481,96 @@ contains
     if (.not. associated(oneFieldSection)) then
        res = " null FieldSection"
     else
-       write(str(1),"(i8)") oneFieldSection%xStart
-       write(str(2),"(i8)") oneFieldSection%xEnd
-       write(str(3),"(i8)") oneFieldSection%yStart
-       write(str(4),"(i8)") oneFieldSection%yEnd
+       write(str(1),"(i8)") oneFieldSection%zStart
+       write(str(2),"(i8)") oneFieldSection%zEnd
+       write(str(3),"(i8)") oneFieldSection%xStart
+       write(str(4),"(i8)") oneFieldSection%xEnd
+       write(str(5),"(i8)") oneFieldSection%yStart
+       write(str(6),"(i8)") oneFieldSection%yEnd
+
+       write(str(11),"(i8)") oneFieldSection%lbz
+       write(str(12),"(i8)") oneFieldSection%ubz
+       write(str(13),"(i8)") oneFieldSection%lbx
+       write(str(14),"(i8)") oneFieldSection%ubx
+       write(str(15),"(i8)") oneFieldSection%lby
+       write(str(16),"(i8)") oneFieldSection%uby
        select case (oneFieldSection%idim_type)
        case(1)
-          if (oneFieldSection%zStart /= -1) then
-             write(str(5),"(i8)") oneFieldSection%zStart
-             write(str(6),"(i8)") oneFieldSection%zEnd
-          else
-             str(5)="?"
-             str(6)="?"
-          end if
-          strSec="1D map of ("//&
-               trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//","//&
-               trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
-               trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//")"
-          strDim="(?:?)"
-       case(2)
-          strSec="("//&
-               trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
-               trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//")"
-          if (associated(oneFieldSection%field_2D)) then
-             write(str(11),"(i8)") lbound(oneFieldSection%field_2D,1)
-             write(str(12),"(i8)") ubound(oneFieldSection%field_2D,1)
-             write(str(13),"(i8)") lbound(oneFieldSection%field_2D,2)
-             write(str(14),"(i8)") ubound(oneFieldSection%field_2D,2)
-             strDim="("//&
-                  trim(adjustl(str(11)))//":"//trim(adjustl(str(12)))//","//&
-                  trim(adjustl(str(13)))//":"//trim(adjustl(str(14)))//")"
-          else
-             strDim="(?:?,?:?)"
-          end if
-       case(3)
-          if (oneFieldSection%zStart /= -1) then
-             write(str(5),"(i8)") oneFieldSection%zStart
-             write(str(6),"(i8)") oneFieldSection%zEnd
-          else
-             str(5)="?"
-             str(6)="?"
-          end if
-          strSec="("//&
-               trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//","//&
-               trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
-               trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//")"
-          if (associated(oneFieldSection%field_3D)) then
-             write(str(11),"(i8)") lbound(oneFieldSection%field_3D,1)
-             write(str(12),"(i8)") ubound(oneFieldSection%field_3D,1)
-             write(str(13),"(i8)") lbound(oneFieldSection%field_3D,2)
-             write(str(14),"(i8)") ubound(oneFieldSection%field_3D,2)
-             write(str(15),"(i8)") lbound(oneFieldSection%field_3D,3)
-             write(str(16),"(i8)") ubound(oneFieldSection%field_3D,3)
-             strDim="("//&
-                  trim(adjustl(str(11)))//":"//trim(adjustl(str(12)))//","//&
-                  trim(adjustl(str(13)))//":"//trim(adjustl(str(14)))//","//&
-                  trim(adjustl(str(16)))//":"//trim(adjustl(str(16)))//")"
-          else
-             strDim="(?:?,?:?,?:?)"
-          end if
-       case(4:5)
-          if (associated(oneFieldSection%field_4D)) then
-             write(str(5),"(i8)") lbound(oneFieldSection%field_4D,1)
-             write(str(6),"(i8)") ubound(oneFieldSection%field_4D,1)
-             write(str(7),"(i8)") lbound(oneFieldSection%field_4D,4)
-             write(str(8),"(i8)") ubound(oneFieldSection%field_4D,4)
-          else
-             str(5)="?"
-             str(6)="?"
-             str(7)="?"
-             str(8)="?"
-          end if
-          strSec="("//&
-               trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//","//&
+          strSec=", a 1D map of ("//&
                trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
                trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
-               trim(adjustl(str(7)))//":"//trim(adjustl(str(8)))//")"
-          if (associated(oneFieldSection%field_4D)) then
-             write(str(11),"(i8)") lbound(oneFieldSection%field_4D,1)
-             write(str(12),"(i8)") ubound(oneFieldSection%field_4D,1)
-             write(str(13),"(i8)") lbound(oneFieldSection%field_4D,2)
-             write(str(14),"(i8)") ubound(oneFieldSection%field_4D,2)
-             write(str(15),"(i8)") lbound(oneFieldSection%field_4D,3)
-             write(str(16),"(i8)") ubound(oneFieldSection%field_4D,3)
-             write(str(17),"(i8)") lbound(oneFieldSection%field_4D,4)
-             write(str(18),"(i8)") ubound(oneFieldSection%field_4D,4)
-             strDim="("//&
-                  trim(adjustl(str(11)))//":"//trim(adjustl(str(12)))//","//&
-                  trim(adjustl(str(13)))//":"//trim(adjustl(str(14)))//","//&
-                  trim(adjustl(str(16)))//":"//trim(adjustl(str(16)))//","//&
-                  trim(adjustl(str(17)))//":"//trim(adjustl(str(18)))//")"
-          else
-             strDim="(?:?,?:?,?:?,?,?)"
-          end if
-       case(6:7)
-          if (oneFieldSection%zStart /= -1) then
-             write(str(5),"(i8)") oneFieldSection%zStart
-             write(str(6),"(i8)") oneFieldSection%zEnd
-          else
-             str(5)="?"
-             str(6)="?"
-          end if
+               trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//")"
+          size1D=&
+               (oneFieldSection%ubz-oneFieldSection%lbz+1)* &
+               (oneFieldSection%ubx-oneFieldSection%lbx+1)* &
+               (oneFieldSection%uby-oneFieldSection%lby+1)
+          write(str(17),"(i8)") size1D
+          strDim="(1:"//trim(adjustl(str(17)))//")"
+       case(2)
+          strSec="("//&
+               trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
+               trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//")"
+          strDim="("//&
+               trim(adjustl(str(13)))//":"//trim(adjustl(str(14)))//","//&
+               trim(adjustl(str(15)))//":"//trim(adjustl(str(16)))//")"
+       case(3)
           strSec="("//&
                trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
                trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
                trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//")"
-          if (associated(oneFieldSection%field_3D)) then
-             write(str(11),"(i8)") lbound(oneFieldSection%field_3D,1)
-             write(str(12),"(i8)") ubound(oneFieldSection%field_3D,1)
-             write(str(13),"(i8)") lbound(oneFieldSection%field_3D,2)
-             write(str(14),"(i8)") ubound(oneFieldSection%field_3D,2)
-             write(str(15),"(i8)") lbound(oneFieldSection%field_3D,3)
-             write(str(16),"(i8)") ubound(oneFieldSection%field_3D,3)
-             strDim="("//&
-                  trim(adjustl(str(11)))//":"//trim(adjustl(str(12)))//","//&
-                  trim(adjustl(str(13)))//":"//trim(adjustl(str(14)))//","//&
-                  trim(adjustl(str(16)))//":"//trim(adjustl(str(16)))//")"
-          else
-             strDim="(?:?,?:?,?:?)"
-          end if
+          strDim="("//&
+               trim(adjustl(str(11)))//":"//trim(adjustl(str(12)))//","//&
+               trim(adjustl(str(13)))//":"//trim(adjustl(str(14)))//","//&
+               trim(adjustl(str(15)))//":"//trim(adjustl(str(16)))//")"
+       case(4:5)
+          write(str(1),"(i8)") lbound(oneFieldSection%field_4D,1)
+          write(str(2),"(i8)") ubound(oneFieldSection%field_4D,1)
+          write(str(3),"(i8)") oneFieldSection%xStart
+          write(str(4),"(i8)") oneFieldSection%xEnd
+          write(str(5),"(i8)") oneFieldSection%yStart
+          write(str(6),"(i8)") oneFieldSection%yEnd
+          write(str(7),"(i8)") lbound(oneFieldSection%field_4D,4)
+          write(str(8),"(i8)") ubound(oneFieldSection%field_4D,4)
+          strSec="("//&
+               trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+               trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
+               trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//","//&
+               trim(adjustl(str(7)))//":"//trim(adjustl(str(8)))//")"
+          write(str(11),"(i8)") lbound(oneFieldSection%field_4D,1)
+          write(str(12),"(i8)") ubound(oneFieldSection%field_4D,1)
+          write(str(13),"(i8)") lbound(oneFieldSection%field_4D,2)
+          write(str(14),"(i8)") ubound(oneFieldSection%field_4D,2)
+          write(str(15),"(i8)") lbound(oneFieldSection%field_4D,3)
+          write(str(16),"(i8)") ubound(oneFieldSection%field_4D,3)
+          write(str(17),"(i8)") lbound(oneFieldSection%field_4D,4)
+          write(str(18),"(i8)") ubound(oneFieldSection%field_4D,4)
+          strDim="("//&
+               trim(adjustl(str(11)))//":"//trim(adjustl(str(12)))//","//&
+               trim(adjustl(str(13)))//":"//trim(adjustl(str(14)))//","//&
+               trim(adjustl(str(15)))//":"//trim(adjustl(str(16)))//","//&
+               trim(adjustl(str(17)))//":"//trim(adjustl(str(18)))//")"
+       case(6:7)
+          write(str(1),"(i8)") lbound(oneFieldSection%field_3D,3)
+          write(str(2),"(i8)") ubound(oneFieldSection%field_3D,3)
+          strSec="("//&
+               trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
+               trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//","//&
+               trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//")"
+          strDim="("//&
+               trim(adjustl(str(13)))//":"//trim(adjustl(str(14)))//","//&
+               trim(adjustl(str(15)))//":"//trim(adjustl(str(16)))//","//&
+               trim(adjustl(str(11)))//":"//trim(adjustl(str(12)))//")"
        case default
           write(str(1),"(i8)") oneFieldSection%idim_type
           call fatal_error(h//" field section "//trim(oneFieldSection%name)//&
                " with unknown idim_type="//trim(adjustl(str(1))))
        end select
        write(str(1),"(i8)") oneFieldSection%FieldSectionSize
+       write(str(2),"(i8)") oneFieldSection%idim_type
        res = "field section "//trim(oneFieldSection%name)//&
-            trim(strSec)//" of size "//trim(adjustl(str(1)))//&
-            " dim "//trim(adjustl(strDim))
+            trim(strSec)//"; idim_type="//trim(adjustl(str(2)))//&
+            "; size="//trim(adjustl(str(1)))//&
+            "; dim="//trim(adjustl(strDim))
     end if
   end function StringFieldSection
 
@@ -1242,8 +1226,13 @@ contains
     type(FieldSection), pointer, intent(in) :: oneFieldSection
     real, pointer, intent(in) :: field
     character(len=*), intent(in) :: fieldName
-
+    character(len=*), parameter :: h="**(UpdateFieldAdress_0D)**"
+    logical, parameter :: dumpLocal=.true.
+    
     call HiddenUpdateFieldAdress_0D(oneFieldSection, field, fieldName)
+    if (dumpLocal) then
+       call DumpFieldSection(oneFieldSection, h//" updated to ")
+    end if
   end subroutine UpdateFieldAdress_0D
 
 
@@ -1253,8 +1242,24 @@ contains
     real, pointer, intent(in) :: field(:)
     character(len=*), intent(in) :: fieldName
 
+    integer :: size1D
+    character(len=*), parameter :: h="**(UpdateFieldAdress_1D)**"
+    logical, parameter :: dumpLocal=.true.
+
     oneFieldSection%field_1D => field
     oneFieldSection%name = fieldName
+    size1D=&
+         (oneFieldSection%ubz-oneFieldSection%lbz+1)* &
+         (oneFieldSection%ubx-oneFieldSection%lbx+1)* &
+         (oneFieldSection%uby-oneFieldSection%lby+1)
+    oneFieldSection%field_3D(&
+         oneFieldSection%lbz : oneFieldSection%ubz, &
+         oneFieldSection%lbx : oneFieldSection%ubx, &
+         oneFieldSection%lby : oneFieldSection%uby) => &
+         field(1:size1D)
+    if (dumpLocal) then
+       call DumpFieldSection(oneFieldSection, h//" updated to ")
+    end if
   end subroutine UpdateFieldAdress_1D
 
 
@@ -1263,9 +1268,14 @@ contains
     type(FieldSection), pointer, intent(in) :: oneFieldSection
     real, pointer, intent(in) :: field(:,:)
     character(len=*), intent(in) :: fieldName
+    character(len=*), parameter :: h="**(UpdateFieldAdress_2D)**"
+    logical, parameter :: dumpLocal=.true.
 
     oneFieldSection%field_2D => field
     oneFieldSection%name = fieldName
+    if (dumpLocal) then
+       call DumpFieldSection(oneFieldSection, h//" updated to ")
+    end if
   end subroutine UpdateFieldAdress_2D
 
 
@@ -1274,9 +1284,14 @@ contains
     type(FieldSection), pointer, intent(in) :: oneFieldSection
     real, pointer, intent(in) :: field(:,:,:)
     character(len=*), intent(in) :: fieldName
+    character(len=*), parameter :: h="**(UpdateFieldAdress_3D)**"
+    logical, parameter :: dumpLocal=.true.
 
     oneFieldSection%field_3D => field
     oneFieldSection%name = fieldName
+    if (dumpLocal) then
+       call DumpFieldSection(oneFieldSection, h//" updated to ")
+    end if
   end subroutine UpdateFieldAdress_3D
 
 
@@ -1285,9 +1300,14 @@ contains
     type(FieldSection), pointer, intent(in) :: oneFieldSection
     real, pointer, intent(in) :: field(:,:,:,:)
     character(len=*), intent(in) :: fieldName
+    character(len=*), parameter :: h="**(UpdateFieldAdress_4D)**"
+    logical, parameter :: dumpLocal=.true.
 
     oneFieldSection%field_4D => field
     oneFieldSection%name = fieldName
+    if (dumpLocal) then
+       call DumpFieldSection(oneFieldSection, h//" updated to ")
+    end if
   end subroutine UpdateFieldAdress_4D
 end module ModFieldSection
 

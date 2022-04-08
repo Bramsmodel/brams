@@ -210,11 +210,11 @@ contains
 !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
       call InsertVTab (stilt%lnthvadv,stiltm%lnthvadv &
                  ,ng, npts, imean, &
-                 'lnthvadv :3:hist:mpti:mpt3:mpt1')		 
+                 'LNTHVADV :3:hist:mpti:mpt3:mpt1')		 
 !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
 !      call vtables2 (stilt%lnthvadv(1,1,1),stiltm%lnthvadv(1,1,1) &
 !                 ,ng, npts, imean, &
-!                 'lnthvadv :3:hist:mpti:mpt3:mpt1')		 
+!                 'LNTHVADV :3:hist:mpti:mpt3:mpt1')		 
 !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
 		 
    if (associated(stilt%lnthetav)) &
@@ -222,11 +222,11 @@ contains
 !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
       call InsertVTab (stilt%lnthetav,stiltm%lnthetav &
                  ,ng, npts, imean, &
-                 'lnthetav :3:hist:mpti:mpt3:mpt1')	
+                 'LNTHETAV :3:hist:mpti:mpt3:mpt1')	
 !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
 !      call vtables2 (stilt%lnthetav(1,1,1),stiltm%lnthetav(1,1,1) &
 !                 ,ng, npts, imean, &
-!                 'lnthetav :3:hist:mpti:mpt3:mpt1')	
+!                 'LNTHETAV :3:hist:mpti:mpt3:mpt1')	
 !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
 
    if (associated(stilt%lnthvtend)) &
@@ -234,11 +234,11 @@ contains
 !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
       call InsertVTab (stilt%lnthvtend,stiltm%lnthvtend &
                  ,ng, npts, imean, &
-                 'lnthvtend :3:hist:mpti:mpt3:mpt1')		 
+                 'LNTHVTEND :3:hist:mpti:mpt3:mpt1')		 
 !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
 !      call vtables2 (stilt%lnthvtend(1,1,1),stiltm%lnthvtend(1,1,1) &
 !                 ,ng, npts, imean, &
-!                 'lnthvtend :3:hist:mpti:mpt3:mpt1')		 
+!                 'LNTHVTEND :3:hist:mpti:mpt3:mpt1')		 
 !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
 		  
 !-srf : for the true air density
