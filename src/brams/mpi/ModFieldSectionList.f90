@@ -6,7 +6,7 @@ module ModFieldSectionList
   use ModFieldSection, only: &
        FieldSection, &
        DumpFieldSection
-  
+
   implicit none
   private
 
@@ -16,18 +16,8 @@ module ModFieldSectionList
   public :: CreateFieldSectionList
   public :: DumpFieldSectionList
   public :: AppendNodeToFieldSectionList
-  public :: FindFieldNamed
-  public :: FieldSectionListHeadNode
-  public :: NextFieldSectionNodeAtList
-  public :: FieldSectionListTailNode
-  public :: FieldSectionAtNode
-
-  interface FindFieldNamed
-     module procedure FindFieldSectionAtList
-  end interface FindFieldNamed
 
   type FieldSectionNode
-!!$     private
      type(FieldSection), pointer :: entry => null()
      ! field variable name
      type(FieldSectionNode), pointer :: next => null()
@@ -61,7 +51,7 @@ contains
   end function CreateFieldSectionList
 
 
-  
+
 
 
   function CreateFieldSectionNode(oneFieldSection) result(new)
@@ -107,7 +97,7 @@ contains
 
 
 
-  
+
   subroutine AppendNodeToFieldSectionList(oneFieldSectionNode, oneFieldSectionList)
 
     type(FieldSectionNode), pointer, intent(in) :: oneFieldSectionNode
@@ -135,84 +125,4 @@ contains
        oneFieldSectionList%tail => oneFieldSectionNode
     end if
   end subroutine AppendNodeToFieldSectionList
-  
-  
-
-  
-  function FindFieldSectionAtList(oneFieldSectionList, name) result(node)
-
-    ! Finds the Field Section with name in the list;
-    ! returns null Field Section if not in the list
-    
-    type(FieldSectionList), pointer, intent(in) :: oneFieldSectionList
-    character(len=*), intent(in) :: name
-    type(FieldSection), pointer :: node
-
-    type(FieldSectionNode), pointer :: this
-    type(FieldSection), pointer :: thisSection
-    character(len=*), parameter :: h="**(FindFieldSectionAtList)**"
-    logical, parameter :: dumpLocal=.false.
-
-    node => null()
-    if (associated(oneFieldSectionList)) then
-       this => oneFieldSectionList%head
-       do while (associated(this))
-          thisSection => this%entry
-          if (trim(adjustl(thisSection%name)) == &
-               trim(adjustl(name))) then
-             node => thisSection
-             exit
-          else
-             this => this%next
-          end if
-       end do
-    end if
-  end function FindFieldSectionAtList
-
-
-  
-  function FieldSectionListHeadNode(oneFieldSectionList) result(this)
-    type(FieldSectionList), pointer, intent(in) :: oneFieldSectionList
-    type(FieldSectionNode), pointer :: this
-
-    this => null()
-    if (associated(oneFieldSectionList)) then
-       this => oneFieldSectionList%head
-    end if
-  end function FieldSectionListHeadNode
-
-
-  function NextFieldSectionNodeAtList(oneFieldSectionNode) result(this)
-    type(FieldSectionNode), pointer, intent(in) :: oneFieldSectionNode
-    type(FieldSectionNode), pointer :: this
-
-    this => null()
-    if (associated(oneFieldSectionNode)) then
-       this => oneFieldSectionNode%next
-    end if
-  end function NextFieldSectionNodeAtList
-
-
-  
-  function FieldSectionListTailNode(oneFieldSectionList) result(this)
-    type(FieldSectionList), pointer, intent(in) :: oneFieldSectionList
-    type(FieldSectionNode), pointer :: this
-
-    this => null()
-    if (associated(oneFieldSectionList)) then
-       this => oneFieldSectionList%tail
-    end if
-  end function FieldSectionListTailNode
-
-
-
-  function FieldSectionAtNode(oneFieldSectionNode) result(this)
-    type(FieldSectionNode), pointer, intent(in) :: oneFieldSectionNode
-    type(FieldSection), pointer :: this
-
-    this => null()
-    if (associated(oneFieldSectionNode)) then
-       this => oneFieldSectionNode%entry
-    end if
-  end function FieldSectionAtNode
 end module ModFieldSectionList

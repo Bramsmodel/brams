@@ -45,11 +45,7 @@ module ModMessageData
        CreateFieldSectionNode, &
        CreateFieldSectionList, &
        DumpFieldSectionList, &
-       AppendNodeToFieldSectionList, &
-       FieldSectionListHeadNode, &
-       FieldSectionAtNode, &
-       NextFieldSectionNodeAtList, &
-       FindFieldNamed
+       AppendNodeToFieldSectionList
 
   implicit none
   include "mpif.h"
@@ -67,7 +63,6 @@ module ModMessageData
   public :: Buffer2FieldSectionData
   public :: DecomposeMessageDataBuffer
   public :: DeallocateMessageDataBuffer
-  public :: FindFieldNamed
 
   type MessageData
      ! data to communicate to one node in one message
@@ -102,10 +97,6 @@ module ModMessageData
      type (FieldSectionList), pointer :: list => null()
      ! list of Field Sections to communicate
   end type MessageData
-
-  interface FindFieldNamed
-     module procedure FindFieldSectionAtMessageData
-  end interface FindFieldNamed
 
   interface FillMessageDataBuffer
      module procedure FillMessageDataBufferFixedAdress
@@ -299,15 +290,15 @@ contains
        call MsgDump(h//" to Message Data "//trim(adjustl(oneMessageData%name)))
     end if
     bufStart=1
-    thisNode => FieldSectionListHeadNode(oneMessageData%list)
+    thisNode => oneMessageData%list%head
     do while (associated(thisNode))
-       this => FieldSectionAtNode(thisNode)
+       this => thisNode%entry
        call FieldSectionData2Buffer(&
             this, &
             oneMessageData%buf, &
             bufStart, &
             oneMessageData%bufsize)
-       thisNode => NextFieldSectionNodeAtList(thisNode)
+       thisNode => thisNode%next
     end do
   end subroutine FillMessageDataBufferFixedAdress
 
@@ -339,17 +330,17 @@ contains
        call MsgDump(h//" to Message Data "//trim(adjustl(oneMessageData%name)))
     end if
     bufStart=1
-    thisNode => FieldSectionListHeadNode(oneMessageData%list)
+    thisNode => oneMessageData%list%head
     do while (associated(thisNode))
-       this => FieldSectionAtNode(thisNode)
+       this => thisNode%entry
        call FieldSectionData2Buffer(&
             this, &
             oneMessageData%buf, &
             bufStart, &
             oneMessageData%bufsize)
-       thisNode => NextFieldSectionNodeAtList(thisNode)
+       thisNode => thisNode%next
     end do
-  end subroutine FillMessageDataBufferFixedAdress1D  
+  end subroutine FillMessageDataBufferFixedAdress1D
 
 
 
@@ -371,15 +362,15 @@ contains
        call MsgDump(h//"  of Message Data "//trim(adjustl(oneMessageData%name)))
     end if
     bufStart=1
-    thisNode => FieldSectionListHeadNode(oneMessageData%list)
+    thisNode => oneMessageData%list%head
     do while (associated(thisNode))
-       this => FieldSectionAtNode(thisNode)
+       this => thisNode%entry
        call Buffer2FieldSectionData(&
             this, &
             oneMessageData%buf, &
             bufStart, &
             oneMessageData%bufsize)
-       thisNode => NextFieldSectionNodeAtList(thisNode)
+       thisNode => thisNode%next
     end do
   end subroutine DecomposeMessageDataBufferFixedAdress
 
@@ -406,16 +397,15 @@ contains
        call MsgDump(h//"  of Message Data "//trim(adjustl(oneMessageData%name)))
     end if
     bufStart=1
-    thisNode => FieldSectionListHeadNode(oneMessageData%list)
+    thisNode => oneMessageData%list%head
     do while (associated(thisNode))
-       this => FieldSectionAtNode(thisNode)
+       this => thisNode%entry
        call Buffer2FieldSectionData(&
             this, &
-!!$            nzp, nxp, nyp, &
             oneMessageData%buf, &
             bufStart, &
             oneMessageData%bufsize)
-       thisNode => NextFieldSectionNodeAtList(thisNode)
+       thisNode => thisNode%next
     end do
   end subroutine DecomposeMessageDataBufferFixedAdress1D
 
@@ -559,22 +549,6 @@ contains
 
 
 
-  function FindFieldSectionAtMessageData(oneMessageData, fieldName) result(node)
-    type(MessageData), pointer, intent(in) :: oneMessageData
-    character(len=*), intent(in) :: fieldName
-    type(FieldSection), pointer :: node
-
-    character(len=*), parameter :: h="**(FindFieldSectionAtMessageData)**"
-    if (.not. associated(oneMessageData)) then
-       call fatal_error(h//" oneMessageData not associated")
-    end if
-
-    node => FindFieldNamed(oneMessageData%list, fieldName)
-  end function FindFieldSectionAtMessageData
-
-
-
-  
   subroutine FillMessageDataBufferVariableAdressOneArr(oneMessageData, field)
 
     type(MessageData), intent(inout) :: oneMessageData
@@ -610,8 +584,8 @@ contains
     end if
 
     bufStart=1
-    oneNode => FieldSectionListHeadNode(oneMessageData%list)
-    oneFieldSection => FieldSectionAtNode(oneNode)
+    oneNode => oneMessageData%list%head
+    oneFieldSection => oneNode%entry
     call FieldSectionData2BufferVariableAdressArr(field, size(field,1), oneFieldSection, &
          oneMessageData%buf, bufStart, oneMessageData%bufsize)
   end subroutine FillMessageDataBufferVariableAdressOneArr
