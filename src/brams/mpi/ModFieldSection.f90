@@ -12,13 +12,10 @@ module ModFieldSection
 
   private
   public :: FieldSection
-  public :: SizeFieldSectionName
   public :: CreateFieldSection
   public :: StringFieldSection
   public :: DumpFieldSection
   public :: DestroyFieldSection
-  public :: FieldSectionSize
-  public :: FieldSectionName
   public :: FieldSectionData2Buffer
   public :: Buffer2FieldSectionData
   public :: UpdateFieldAdress
@@ -150,7 +147,7 @@ contains
     integer :: size1D
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(CreateFieldSection_1D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -221,7 +218,7 @@ contains
     integer :: ierr
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(CreateFieldSection_2D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -280,7 +277,7 @@ contains
     integer :: ierr
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(CreateFieldSection_3D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -357,7 +354,7 @@ contains
     integer :: ierr
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(CreateFieldSection_4D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -418,7 +415,7 @@ contains
     integer :: ierr
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(CreateFieldSection_Null)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     allocate(oneFieldSection, stat=ierr)
     if (ierr /= 0) then
@@ -640,40 +637,6 @@ contains
 
 
 
-  function FieldSectionSize(oneFieldSection) result(nEle)
-
-    ! returns the number of elements of a field section
-
-    type(FieldSection), pointer, intent(in) :: oneFieldSection
-    integer :: nEle
-
-    nEle=0
-    if (associated(oneFieldSection)) then
-       nEle=oneFieldSection%fieldSectionSize
-    end if
-  end function FieldSectionSize
-
-
-
-
-
-  function FieldSectionName(oneFieldSection) result(name)
-
-    ! name of a FieldSection; empty if not associated
-
-    type(FieldSection), pointer, intent(in) :: oneFieldSection
-    character(len=SizeFieldSectionName) :: name
-
-    name=""
-    if (associated(oneFieldSection)) then
-       name=oneFieldSection%name
-    end if
-  end function FieldSectionName
-
-
-
-
-
   subroutine FieldSectionData2Buffer(oneFieldSection, &
        buf, bufStart, bufSize)
 
@@ -701,7 +664,7 @@ contains
     character(len=8) :: buf0, bufn
     character(len=64) :: preStr, midStr, posStr
     character(len=*), parameter :: h="**(FieldSectionData2Buffer)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (.not. associated(oneFieldSection)) then
        call fatal_error(h//" null oneFieldSection")
@@ -713,9 +676,9 @@ contains
             " with idim_type="//trim(adjustl(str(1))))
     end if
 
-    finalPos=bufStart+FieldSectionSize(oneFieldSection)-1
+    finalPos=bufStart+oneFieldSection%fieldSectionSize-1
     if (finalPos > bufSize) then
-       write(str(1),"(i8)") FieldSectionSize(oneFieldSection)
+       write(str(1),"(i8)") oneFieldSection%fieldSectionSize
        write(str(2),"(i8)") bufStart
        write(str(3),"(i8)") bufSize
        call fatal_error(h//" field "//&
@@ -884,9 +847,9 @@ contains
        call fatal_error(h//" null oneFieldSection")
     end if
 
-    finalPos=bufStart+FieldSectionSize(oneFieldSection)-1
+    finalPos=bufStart+oneFieldSection%fieldSectionSize-1
     if (finalPos > bufSize) then
-       write(str(1),"(i8)") FieldSectionSize(oneFieldSection)
+       write(str(1),"(i8)") oneFieldSection%fieldSectionSize
        write(str(2),"(i8)") bufStart
        write(str(3),"(i8)") bufSize
        call fatal_error(h//" field "//&
@@ -1093,9 +1056,9 @@ contains
        call fatal_error(h//" null oneFieldSection")
     end if
 
-    finalPos=bufStart+FieldSectionSize(oneFieldSection)-1
+    finalPos=bufStart+oneFieldSection%fieldSectionSize-1
     if (finalPos > bufSize) then
-       write(str(1),"(i8)") FieldSectionSize(oneFieldSection)
+       write(str(1),"(i8)") oneFieldSection%fieldSectionSize
        write(str(2),"(i8)") bufStart
        write(str(3),"(i8)") bufSize
        call fatal_error(h//" field "//&
@@ -1156,7 +1119,7 @@ contains
     real, pointer, intent(in) :: field
     character(len=*), intent(in) :: fieldName
     character(len=*), parameter :: h="**(UpdateFieldAdress_0D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     call HiddenUpdateFieldAdress_0D(oneFieldSection, field, fieldName)
     if (dumpLocal) then
@@ -1173,7 +1136,7 @@ contains
 
     integer :: size1D
     character(len=*), parameter :: h="**(UpdateFieldAdress_1D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     oneFieldSection%field_1D => field
     oneFieldSection%name = fieldName
@@ -1198,7 +1161,7 @@ contains
     real, pointer, intent(in) :: field(:,:)
     character(len=*), intent(in) :: fieldName
     character(len=*), parameter :: h="**(UpdateFieldAdress_2D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     oneFieldSection%field_2D => field
     oneFieldSection%name = fieldName
@@ -1214,7 +1177,7 @@ contains
     real, pointer, intent(in) :: field(:,:,:)
     character(len=*), intent(in) :: fieldName
     character(len=*), parameter :: h="**(UpdateFieldAdress_3D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     oneFieldSection%field_3D => field
     oneFieldSection%name = fieldName
@@ -1230,7 +1193,7 @@ contains
     real, pointer, intent(in) :: field(:,:,:,:)
     character(len=*), intent(in) :: fieldName
     character(len=*), parameter :: h="**(UpdateFieldAdress_4D)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     oneFieldSection%field_4D => field
     oneFieldSection%name = fieldName

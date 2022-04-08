@@ -5,7 +5,6 @@ module ModFieldSectionList
 
   use ModFieldSection, only: &
        FieldSection, &
-       FieldSectionName, &
        DumpFieldSection
   
   implicit none
@@ -159,7 +158,7 @@ contains
        this => oneFieldSectionList%head
        do while (associated(this))
           thisSection => this%entry
-          if (trim(adjustl(FieldSectionName(thisSection))) == &
+          if (trim(adjustl(thisSection%name)) == &
                trim(adjustl(name))) then
              node => thisSection
              exit

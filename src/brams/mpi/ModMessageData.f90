@@ -27,7 +27,6 @@ module ModMessageData
 
   use ModFieldSection, only: &
        FieldSection, &
-       FieldSectionSize, &
        DestroyFieldSection, &
        StringFieldSection, &
        DumpFieldSection, &
@@ -226,7 +225,7 @@ contains
 
     this => CreateFieldSectionNode(oneFieldSection)
     call AppendNodeToFieldSectionList(this, oneMessageData%list)
-    oneMessageData%bufSize = oneMessageData%bufSize + FieldSectionSize(oneFieldSection)
+    oneMessageData%bufSize = oneMessageData%bufSize + oneFieldSection%fieldSectionSize
     if (dumpLocal) then
        write(c0,"(i8)") oneMessageData%bufSize
        call MsgDump(h//" appended "//trim(adjustl(StringFieldSection(oneFieldSection)))//&
