@@ -651,8 +651,9 @@ contains
           myNzp=OneGrid%GridSize%nnzp
           myNxp=OneGrid%LocalOwn%nx(bramsRankNbr)
           myNyp=OneGrid%LocalOwn%ny(bramsRankNbr)
-          call PostSendRecvMsgs(OneGrid%AcoustNewThtSend, OneGrid%AcoustNewThtRecv, &
-               myNzp, myNxp, myNyp)
+!!$          call PostSendRecvMsgs(OneGrid%AcoustNewThtSend, OneGrid%AcoustNewThtRecv, &
+!!$               myNzp, myNxp, myNyp)
+          call PostSendRecvMsgs(OneGrid%AcoustNewThtSend, OneGrid%AcoustNewThtRecv)
           call WaitSendRecvMsgs(OneGrid%AcoustNewThtSend, OneGrid%AcoustNewThtRecv, &
                myNzp, myNxp, myNyp)
        endif

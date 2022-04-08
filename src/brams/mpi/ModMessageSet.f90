@@ -80,8 +80,6 @@ module ModMessageSet
        CreateMessageData, &
        DumpMessageData, &
        AppendFieldSectionToMessageData, &
-       PostRecvMessageData, &
-       PostSendMessageData, &
        FillMessageDataBuffer, &
        DecomposeMessageDataBuffer, &
        AllocateMessageDataBuffer, &
@@ -99,7 +97,9 @@ module ModMessageSet
        dyncore_flag
 
   use ParLib, only: &
-       parf_wait_any_nostatus
+       parf_wait_any_nostatus, &
+       parf_get_noblock_real, &
+       parf_send_noblock_real
 
   implicit none
   include "mpif.h"
@@ -197,7 +197,6 @@ module ModMessageSet
 
   interface PostSendRecvMsgs
      module procedure PostSendRecvMsgsFixedAdress
-     module procedure PostSendRecvMsgsFixedAdress1D
   end interface PostSendRecvMsgs
 
   interface WaitSendRecvMsgs
@@ -5488,9 +5487,9 @@ contains
     integer :: firstBuffer
     integer :: lastBuffer
     integer :: ierr
-    type(MessageData), pointer :: msgData => null()
+    type(MessageData), pointer :: oneMessageData => null()
     type(FieldSection), pointer :: node => null()
-    character(len=8) :: c0, c1, c2, c3, c4, c5
+    character(len=8) :: str(10)
     character(len=*), parameter :: h="**(PostSendRecvMsgsFixedAdress)**"
     logical, parameter :: dumpLocal=.false.
 
@@ -5499,24 +5498,44 @@ contains
 
     if (associated(RecvMsg)) then
        if (dumpLocal) then
-          if (RecvMsg%nMsgs > 0) then
-             write(c0,"(i8)") RecvMsg%nMsgs
-             call MsgDump(h//" for "//trim(adjustl(RecvMsg%name))//&
-                  " will post "//trim(adjustl(c0))//&
-                  " nonblocking receives")
-          end if
+          write(str(1),"(i8)") RecvMsg%nMsgs
+          call MsgDump(h//" for "//trim(adjustl(RecvMsg%name))//&
+               " will post "//trim(adjustl(str(1)))//&
+               " nonblocking receives")
        end if
        do iRecv= 1,RecvMsg%nMsgs
 
-          call AllocateMessageDataBuffer(RecvMsg%msgData(iRecv))
+          oneMessageData => RecvMsg%msgData(iRecv)
+
+          call AllocateMessageDataBuffer(oneMessageData)
 
           ! post receive
 
-          write(c0,"(i8)") iRecv
-          call PostRecvMessageData(RecvMsg%msgData(iRecv), &
-               RecvMsg%otherProc(iRecv), RecvMsg%tag, &
-               RecvMsg%request(iRecv), &
-               h//" for iRecv="//trim(adjustl(c0)))
+          call parf_get_noblock_real(&
+               oneMessageData%buf, &
+               oneMessageData%bufSize, &
+               RecvMsg%otherProc(iRecv), &
+               RecvMsg%tag, &
+               RecvMsg%request(iRecv))
+
+          if (dumpLocal) then
+             write(str(1),"(i8)") iRecv
+             write(str(2),"(i8)") oneMessageData%bufSize
+             write(str(3),"(i8)") RecvMsg%otherProc(iRecv)
+             write(str(4),"(i8)") RecvMsg%tag
+             if (RecvMsg%request(iRecv) == MPI_REQUEST_NULL) then
+                str(5)="NULL"
+             else
+                write(str(5),"(Z8)") RecvMsg%request(iRecv)
+             end if
+             call MsgDump(&
+                  h//" for iRecv="//trim(adjustl(str(1)))//&
+                  " post recv from MPI rank "//trim(adjustl(str(3)))//&
+                  " with buffer size "//trim(adjustl(str(2)))//&
+                  " tag "//trim(adjustl(str(4)))//&
+                  " and request "//trim(adjustl(str(5))))
+          end if
+
        end do
     else
        if (dumpLocal) then
@@ -5531,27 +5550,45 @@ contains
 
     if (associated(SendMsg)) then
        if (dumpLocal) then
-          if (SendMsg%nMsgs > 0) then
-             write(c0,"(i8)") SendMsg%nMsgs
-             call MsgDump(h//" for "//trim(adjustl(SendMsg%name))//&
-                  " will post "//trim(adjustl(c0))//&
-                  " nonblocking sends")
-          end if
+          write(str(1),"(i8)") SendMsg%nMsgs
+          call MsgDump(h//" for "//trim(adjustl(SendMsg%name))//&
+               " will post "//trim(adjustl(str(1)))//&
+               " nonblocking sends")
        end if
        do iSend = 1,SendMsg%nMsgs
 
           ! allocate and fill send buffer with field sections to send
 
-          call AllocateMessageDataBuffer(SendMsg%msgData(iSend))
-          call FillMessageDataBuffer(SendMsg%msgData(iSend))
+          oneMessageData => SendMsg%msgData(iSend)
+          call AllocateMessageDataBuffer(oneMessageData)
+          call FillMessageDataBuffer(oneMessageData)
 
           ! post send message
 
-          write(c0,"(i8)") iSend
-          call PostSendMessageData(SendMsg%msgData(iSend), &
-               SendMsg%otherProc(iSend), SendMsg%tag, &
-               SendMsg%request(iSend), &
-               h//" for iSend="//trim(adjustl(c0)))
+          call parf_send_noblock_real(&
+               oneMessageData%buf, &
+               oneMessageData%bufSize, &
+               SendMsg%otherProc(iSend), &
+               SendMsg%tag, &
+               SendMsg%request(iSend))
+
+          if (dumpLocal) then
+             write(str(1),"(i8)") iSend
+             write(str(2),"(i8)") oneMessageData%bufSize
+             write(str(3),"(i8)") SendMsg%otherProc(iSend)
+             write(str(4),"(i8)") SendMsg%tag
+             if (SendMsg%request(iSend) == MPI_REQUEST_NULL) then
+                str(5)="NULL"
+             else
+                write(str(5),"(Z8)") SendMsg%request(iSend)
+             end if
+             call MsgDump(&
+                  h//" for iSend="//trim(adjustl(str(1)))//&
+                  " post send to MPI rank "//trim(adjustl(str(3)))//&
+                  " with buffer size "//trim(adjustl(str(2)))//&
+                  " tag "//trim(adjustl(str(4)))//&
+                  " and request "//trim(adjustl(str(5))))
+          end if
        end do
     else
        if (dumpLocal) then
@@ -5560,97 +5597,6 @@ contains
     end if
   end subroutine PostSendRecvMsgsFixedAdress
 
-
-
-
-
-  subroutine PostSendRecvMsgsFixedAdress1D(SendMsg, RecvMsg, nzp, nxp, nyp)
-
-    ! posts all nonblocking send and recv operations of
-    ! a message set pair of variables
-
-    type(MessageSet), pointer, intent(in) :: SendMsg
-    type(MessageSet), pointer, intent(in) :: RecvMsg
-    integer, intent(in) :: nzp
-    integer, intent(in) :: nxp
-    integer, intent(in) :: nyp
-
-    integer :: iSend
-    integer :: iRecv
-    integer :: firstBuffer
-    integer :: lastBuffer
-    integer :: ierr
-    type(MessageData), pointer :: msgData => null()
-    type(FieldSection), pointer :: node => null()
-    character(len=8) :: c0, c1, c2, c3, c4, c5
-    character(len=*), parameter :: h="**(PostSendRecvMsgsFixedAdress1D)**"
-    logical, parameter :: dumpLocal=.false.
-
-    ! post nonblocking receive for each receiving message;
-    ! a single receive msg from each process
-
-    if (associated(RecvMsg)) then
-       if (dumpLocal) then
-          if (RecvMsg%nMsgs > 0) then
-             write(c0,"(i8)") RecvMsg%nMsgs
-             call MsgDump(h//" for "//trim(adjustl(RecvMsg%name))//&
-                  " will post "//trim(adjustl(c0))//&
-                  " nonblocking receives")
-          end if
-       end if
-       do iRecv= 1,RecvMsg%nMsgs
-
-          call AllocateMessageDataBuffer(RecvMsg%msgData(iRecv))
-
-          ! post receive
-
-          write(c0,"(i8)") iRecv
-          call PostRecvMessageData(RecvMsg%msgData(iRecv), &
-               RecvMsg%otherProc(iRecv), RecvMsg%tag, &
-               RecvMsg%request(iRecv), &
-               h//" for iRecv="//trim(adjustl(c0)))
-       end do
-    else
-       if (dumpLocal) then
-          call MsgDump(h//" empty receive message set")
-       end if
-    end if
-
-    ! for each sending message,
-    ! build send buffer and copy field sections to the buffer;
-    ! post nonblocking send;
-    ! A single send message to each process
-
-    if (associated(SendMsg)) then
-       if (dumpLocal) then
-          if (SendMsg%nMsgs > 0) then
-             write(c0,"(i8)") SendMsg%nMsgs
-             call MsgDump(h//" for "//trim(adjustl(SendMsg%name))//&
-                  " will post "//trim(adjustl(c0))//&
-                  " nonblocking sends")
-          end if
-       end if
-       do iSend = 1,SendMsg%nMsgs
-
-          ! allocate and fill send buffer with field sections to send
-
-          call AllocateMessageDataBuffer(SendMsg%msgData(iSend))
-          call FillMessageDataBuffer(SendMsg%msgData(iSend), nzp, nxp, nyp)
-
-          ! post send message
-
-          write(c0,"(i8)") iSend
-          call PostSendMessageData(SendMsg%msgData(iSend), &
-               SendMsg%otherProc(iSend), SendMsg%tag, &
-               SendMsg%request(iSend), &
-               h//" for iSend="//trim(adjustl(c0)))
-       end do
-    else
-       if (dumpLocal) then
-          call MsgDump(h//" empty send message set")
-       end if
-    end if
-  end subroutine PostSendRecvMsgsFixedAdress1D
 
 
 
@@ -5788,7 +5734,7 @@ contains
           ! extract field sections from incoming buffer
           ! and store at destination fields
 
-          call DecomposeMessageDataBuffer(RecvMsg%msgData(recvNbr), nzp, nxp, nyp)
+          call DecomposeMessageDataBuffer(RecvMsg%msgData(recvNbr))
           call DeallocateMessageDataBuffer(RecvMsg%msgData(recvNbr))
        end do
     else

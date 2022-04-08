@@ -34,11 +34,6 @@ module ModMessageData
        Buffer2FieldSectionData
 
 
-  use ParLib, only: &
-       parf_get_noblock_real, &
-       parf_send_noblock_real
-
-
   use ModFieldSectionList, only: &
        FieldSectionNode, &
        FieldSectionList, &
@@ -57,12 +52,9 @@ module ModMessageData
   public :: DumpMessageData
   public :: AppendFieldSectionToMessageData
   public :: AllocateMessageDataBuffer
-  public :: FillMessageDataBuffer
-  public :: PostSendMessageData
-  public :: PostRecvMessageData
-  public :: Buffer2FieldSectionData
-  public :: DecomposeMessageDataBuffer
   public :: DeallocateMessageDataBuffer
+  public :: FillMessageDataBuffer
+  public :: DecomposeMessageDataBuffer
 
   type MessageData
      ! data to communicate to one node in one message
@@ -98,15 +90,6 @@ module ModMessageData
      ! list of Field Sections to communicate
   end type MessageData
 
-  interface FillMessageDataBuffer
-     module procedure FillMessageDataBufferFixedAdress
-     module procedure FillMessageDataBufferFixedAdress1D
-  end interface FillMessageDataBuffer
-
-  interface DecomposeMessageDataBuffer
-     module procedure DecomposeMessageDataBufferFixedAdress
-     module procedure DecomposeMessageDataBufferFixedAdress1D
-  end interface DecomposeMessageDataBuffer
 contains
 
 
@@ -269,7 +252,7 @@ contains
 
 
 
-  subroutine FillMessageDataBufferFixedAdress(oneMessageData)
+  subroutine FillMessageDataBuffer(oneMessageData)
     type(MessageData), intent(inout) :: oneMessageData
 
     ! copy field section values of the entire field section list of
@@ -279,7 +262,7 @@ contains
     type(FieldSectionNode), pointer :: thisNode
     type(FieldSection), pointer :: this
     logical, parameter :: dumpLocal=.false.
-    character(len=*), parameter :: h="**(FillMessageDataBufferFixedAdress)**"
+    character(len=*), parameter :: h="**(FillMessageDataBuffer)**"
 
     if (.not. allocated(oneMessageData%buf)) then
        call fatal_error(h//" not allocated buf for message data "//&
@@ -300,53 +283,13 @@ contains
             oneMessageData%bufsize)
        thisNode => thisNode%next
     end do
-  end subroutine FillMessageDataBufferFixedAdress
+  end subroutine FillMessageDataBuffer
 
 
 
 
 
-  subroutine FillMessageDataBufferFixedAdress1D(oneMessageData, nzp, nxp, nyp)
-    type(MessageData), intent(inout) :: oneMessageData
-    integer, intent(in) :: nzp
-    integer, intent(in) :: nxp
-    integer, intent(in) :: nyp
-
-    ! copy field section values of the entire field section list of
-    ! the Message Data variable to the buffer of the Message Data variable
-
-    integer :: bufStart
-    type(FieldSectionNode), pointer :: thisNode
-    type(FieldSection), pointer :: this
-    logical, parameter :: dumpLocal=.false.
-    character(len=*), parameter :: h="**(FillMessageDataBufferFixedAdress1D)**"
-
-    if (.not. allocated(oneMessageData%buf)) then
-       call fatal_error(h//" not allocated buf for message data "//&
-            trim(adjustl(oneMessageData%name)))
-    end if
-
-    if (dumpLocal) then
-       call MsgDump(h//" to Message Data "//trim(adjustl(oneMessageData%name)))
-    end if
-    bufStart=1
-    thisNode => oneMessageData%list%head
-    do while (associated(thisNode))
-       this => thisNode%entry
-       call FieldSectionData2Buffer(&
-            this, &
-            oneMessageData%buf, &
-            bufStart, &
-            oneMessageData%bufsize)
-       thisNode => thisNode%next
-    end do
-  end subroutine FillMessageDataBufferFixedAdress1D
-
-
-
-
-
-  subroutine DecomposeMessageDataBufferFixedAdress(oneMessageData)
+  subroutine DecomposeMessageDataBuffer(oneMessageData)
     type(MessageData), intent(inout) :: oneMessageData
 
     ! copy all field section values from the buffer of the Message Data variable
@@ -355,7 +298,7 @@ contains
     integer :: bufStart
     type(FieldSectionNode), pointer :: thisNode
     type(FieldSection), pointer :: this
-    character(len=*), parameter :: h="**(DecomposeMessageDataBufferFixedAdress)**"
+    character(len=*), parameter :: h="**(DecomposeMessageDataBuffer)**"
     logical, parameter :: dumpLocal=.false.
 
     if (dumpLocal) then
@@ -372,42 +315,7 @@ contains
             oneMessageData%bufsize)
        thisNode => thisNode%next
     end do
-  end subroutine DecomposeMessageDataBufferFixedAdress
-
-
-
-
-
-  subroutine DecomposeMessageDataBufferFixedAdress1D(oneMessageData, nzp, nxp, nyp)
-    type(MessageData), intent(inout) :: oneMessageData
-    integer, intent(in) :: nzp
-    integer, intent(in) :: nxp
-    integer, intent(in) :: nyp
-
-    ! copy all field section values from the buffer of the Message Data variable
-    ! to the field section pointed by the Message Data field section list 
-
-    integer :: bufStart
-    type(FieldSectionNode), pointer :: thisNode
-    type(FieldSection), pointer :: this
-    character(len=*), parameter :: h="**(DecomposeMessageDataBufferFixedAdress1D)**"
-    logical, parameter :: dumpLocal=.false.
-
-    if (dumpLocal) then
-       call MsgDump(h//"  of Message Data "//trim(adjustl(oneMessageData%name)))
-    end if
-    bufStart=1
-    thisNode => oneMessageData%list%head
-    do while (associated(thisNode))
-       this => thisNode%entry
-       call Buffer2FieldSectionData(&
-            this, &
-            oneMessageData%buf, &
-            bufStart, &
-            oneMessageData%bufsize)
-       thisNode => thisNode%next
-    end do
-  end subroutine DecomposeMessageDataBufferFixedAdress1D
+  end subroutine DecomposeMessageDataBuffer
 
 
 
@@ -442,151 +350,4 @@ contains
        end if
     end if
   end subroutine DeallocateMessageDataBuffer
-
-
-
-
-
-  subroutine PostRecvMessageData(oneMessageData, &
-       otherProc, tag, request, preMsgString)
-    type(MessageData), intent(inout) :: oneMessageData
-    integer, intent(in) :: otherProc
-    integer, intent(in) :: tag
-    integer, intent(inout) :: request
-    character(len=*), optional :: preMsgString
-
-    character(len=*), parameter :: h="**(PostRecvMessageData)**"
-    character(len=8) :: c0, c1, c2, c3
-    character(len=128) :: msgString
-    logical, parameter :: dumpLocal=.false.
-
-    if (.not. allocated(oneMessageData%buf)) then
-       call fatal_error(h//" buf not allocated")
-    end if
-
-    call parf_get_noblock_real(&
-         oneMessageData%buf, &
-         oneMessageData%bufSize, &
-         otherProc, &
-         tag, &
-         request)
-
-    if (dumpLocal) then
-       write(c0,"(i8)") oneMessageData%bufSize
-       write(c1,"(i8)") otherProc
-       write(c2,"(i8)") tag
-       if (request == MPI_REQUEST_NULL) then
-          c3="NULL"
-       else
-          write(c3,"(Z8)") request
-       end if
-       if (present(preMsgString)) then
-          msgString=preMsgString
-       else
-          msgString=h
-       end if
-       call MsgDump(&
-            trim(adjustl(msgString))//&
-            " post recv from MPI rank "//trim(adjustl(c1))//&
-            " with buffer size "//trim(adjustl(c0))//&
-            " tag "//trim(adjustl(c2))//&
-            " and request "//trim(adjustl(c3)))
-    end if
-  end subroutine PostRecvMessageData
-
-
-
-
-
-  subroutine PostSendMessageData(oneMessageData, &
-       otherProc, tag, request, preMsgString)
-    type(MessageData), intent(in) :: oneMessageData
-    integer, intent(in) :: otherProc
-    integer, intent(in) :: tag
-    integer, intent(inout) :: request
-    character(len=*), optional :: preMsgString
-
-    character(len=*), parameter :: h="**(PostSendMessageData)**"
-    character(len=8) :: c0, c1, c2, c3
-    character(len=128) :: msgString
-    logical, parameter :: dumpLocal=.false.
-
-    if (.not. allocated(oneMessageData%buf)) then
-       call fatal_error(h//" buf not allocated")
-    end if
-
-    call parf_send_noblock_real(&
-         oneMessageData%buf, &
-         oneMessageData%bufSize, &
-         otherProc, &
-         tag, &
-         request)
-
-    if (dumpLocal) then
-       write(c0,"(i8)") oneMessageData%bufSize
-       write(c1,"(i8)") otherProc
-       write(c2,"(i8)") tag
-       if (request == MPI_REQUEST_NULL) then
-          c3="NULL"
-       else
-          write(c3,"(Z8)") request
-       end if
-       if (present(preMsgString)) then
-          msgString=preMsgString
-       else
-          msgString=h
-       end if
-       call MsgDump(&
-            trim(adjustl(msgString))//&
-            " post send to MPI rank "//trim(adjustl(c1))//&
-            " with buffer size "//trim(adjustl(c0))//&
-            " tag "//trim(adjustl(c2))//&
-            " and request "//trim(adjustl(c3)))
-    end if
-  end subroutine PostSendMessageData
-
-
-
-
-
-  subroutine FillMessageDataBufferVariableAdressOneArr(oneMessageData, field)
-
-    type(MessageData), intent(inout) :: oneMessageData
-    real, target, intent(in):: field(:,:,:)
-
-    ! copy field section values of the entire field section list of
-    ! the Message Data variable to the buffer of the Message Data variable
-
-    integer :: bufStart
-    type(FieldSectionNode), pointer :: oneNode
-    type(FieldSection), pointer :: oneFieldSection
-    logical, parameter :: dumpLocal=.false.
-    character(len=8) :: str(10)
-    character(len=*), parameter :: h="**(FillMessageDataBufferVariableAdressOneArr)**"
-
-    if (.not. allocated(oneMessageData%buf)) then
-       call fatal_error(h//" not allocated buf for message data "//&
-            trim(adjustl(oneMessageData%name)))
-    end if
-
-    if (dumpLocal) then
-       call MsgDump(h//" to Message Data "//trim(adjustl(oneMessageData%name)))
-       write(str(1),"(i8)") lbound(field,1)
-       write(str(2),"(i8)") ubound(field,1)
-       write(str(3),"(i8)") lbound(field,2)
-       write(str(4),"(i8)") ubound(field,2)
-       write(str(5),"(i8)") lbound(field,3)
-       write(str(6),"(i8)") ubound(field,3)
-       call MsgDump(h//" field dimensioned ("//&
-            trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
-            trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//","//&
-            trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//")")
-    end if
-
-    bufStart=1
-    oneNode => oneMessageData%list%head
-    oneFieldSection => oneNode%entry
-    call FieldSectionData2BufferVariableAdressArr(field, size(field,1), oneFieldSection, &
-         oneMessageData%buf, bufStart, oneMessageData%bufsize)
-  end subroutine FillMessageDataBufferVariableAdressOneArr
 end module ModMessageData
