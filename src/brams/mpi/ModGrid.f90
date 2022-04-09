@@ -233,7 +233,6 @@ contains
     type(ParallelEnvironment), pointer :: oneParallelEnvironment
     type(Grid), pointer :: oneGrid
 
-    character(len=16) :: c0, c1
     character(len=*), parameter :: h="**(CreateGrid)**"
     logical, parameter :: dumpLocal=.false.
 
@@ -367,7 +366,6 @@ contains
   subroutine InsertMessageSetAtOneGrid(oneGrid)
     type(Grid), pointer :: oneGrid
 
-    character(len=16) :: str(10)
     character(len=*), parameter :: h="**(InsertMessageSetAtOneGrid)**"
     logical, parameter :: dumpLocal=.false.
 
@@ -404,10 +402,6 @@ contains
     ! Field address will be replaced at
     ! PostSendRecvMsgs, since when this procedure
     ! is invoked, field ought to be allocated
-    integer :: ierr
-    integer :: lbx, ubx
-    integer :: lby, uby
-    integer :: lbz, ubz
 
     if (.not. associated(oneGrid)) then
        call fatal_error(h//" invoked with null grid")
@@ -570,7 +564,7 @@ contains
   subroutine DumpGrid(oneGrid)
     type(Grid), pointer :: oneGrid
 
-    character(len=8) :: c0
+    character(len=8) :: str(10)
     character(len=*), parameter :: h="**(DumpGrid)**"
 
     if (.not. associated(oneGrid)) then
@@ -581,8 +575,8 @@ contains
        call fatal_error(h//" invoked with null oneGrid%ParEnv")
     end if
 
-    write(c0,"(i8)") oneGrid%Id
-    call MsgDump(h//" for grid "//trim(adjustl(c0)))
+    write(str(1),"(i8)") oneGrid%Id
+    call MsgDump(h//" for grid "//trim(adjustl(str(1))))
 
     call MsgDump(h//" dumping component GridSize")
     call DumpGridDims(oneGrid%GridSize)
@@ -946,7 +940,6 @@ contains
     type(Grid), pointer, intent(in) :: oneGrid
 
     integer :: ng
-    integer :: ierr
     integer :: iEle
     integer :: nEle
 

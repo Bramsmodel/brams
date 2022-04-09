@@ -103,9 +103,6 @@ contains
     type(FieldSectionNode), pointer, intent(in) :: oneFieldSectionNode
     type(FieldSectionList), pointer, intent(in) :: oneFieldSectionList
 
-    integer :: ierr
-    character(len=8) :: c0
-    type(FieldSectionNode), pointer :: this
     character(len=*), parameter :: h="**(AppendNodeToFieldSectionList)**"
     logical, parameter :: dumpLocal=.false.
 

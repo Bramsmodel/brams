@@ -128,10 +128,6 @@ contains
 
     type(MessageData) :: oneMessageData
 
-    integer :: ierr
-    type(FieldSection), pointer:: this
-    type(FieldSection), pointer:: next
-    character(len=8) :: c0, c1
     character(len=*), parameter :: h="**(DestroyMessageData)**"
     logical, parameter :: dumpLocal=.false.
 
@@ -155,7 +151,6 @@ contains
     type(MessageData), intent(in) :: oneMessageData
     character(len=*), intent(in), optional :: strMsg
 
-    type(FieldSection), pointer :: this
     character(len=128) :: msgHead
     character(len=8) :: c0
     character(len=*), parameter :: h="**(DumpMessageData)**"

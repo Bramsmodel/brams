@@ -435,31 +435,16 @@ contains
     !--- local vars
     integer :: n
     integer :: ng
-    integer :: mxyzp
     integer :: i
     integer :: j
     integer :: k
     integer :: iExtern
     integer :: jExtern
-    integer :: ierr
-    integer :: procfile
-    integer :: ibegin
-    integer :: iend
-    integer :: jbegin
-    integer :: jend
     integer :: i_scl
-    integer :: sori
-    integer :: sorj
-    integer :: sosi
-    integer :: sosj
     integer :: current_aer_ispc
     integer :: current_ndt_z
     integer, target :: ndt_z(naer_transported)
     integer, target :: ndtZ(naer_transported)
-    integer, pointer :: p1(:) => null()
-    integer, pointer :: p2(:) => null()
-    real, pointer :: scalarp
-    real, pointer :: scalart
     logical  :: IsThisScalarAer =.false.
 
     logical, parameter :: dumpLocal=.false.
@@ -1333,7 +1318,6 @@ contains
 
     logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(PrepareWinds)**"
-    character(len=8) :: str(10)
 
     if (dumpLocal) then
        call MsgDump(h//" starts; computes u3d, v3d and w3d just at a section"//&
@@ -1494,7 +1478,6 @@ contains
 
     logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(GetWalceksDensities)**"
-    character(len=8) :: str(10)
 
     if (dumpLocal) then
        call MsgDump(h//" starts; computes den0_3d, den1_3d, den2_3d and den3_3d"//&
@@ -1673,8 +1656,7 @@ contains
 
     !- local var
 
-    real masscon,initialmass,vol
-    integer nrec,itz
+    integer itz
     integer ibegin,iend,jbegin,jend
     !- type of sedimentation scheme (0= Walcek, 1=upwind)
     integer , parameter :: iupwind = 0
@@ -1835,19 +1817,6 @@ contains
     integer :: i
     integer :: j
     integer :: k
-    integer :: ii
-    integer :: ji
-    integer :: ii0
-    integer :: ji0
-    integer :: ie
-    integer :: je
-    integer :: ie0
-    integer :: je0
-    integer :: ipos
-    integer :: iia
-    integer :: iiz
-    integer :: nvar
-    integer :: nf
     real :: flux(mzp,mxp,myp)
     real :: vcmax(mzp,mxp,myp)
     real :: vcmin(mzp,mxp,myp)
@@ -1863,7 +1832,6 @@ contains
 
     logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(Advec3DX)**"
-    character(len=8) :: str(10)
 
     if (dumpLocal) then
        call MsgDump(h//" starts")
@@ -2017,19 +1985,6 @@ contains
     integer :: i
     integer :: j
     integer :: k
-    integer :: ii
-    integer :: ji
-    integer :: ii0
-    integer :: ji0
-    integer :: ie
-    integer :: je
-    integer :: ie0
-    integer :: je0
-    integer :: ipos
-    integer :: iia
-    integer :: iiz
-    integer :: nvar
-    integer :: nf
     real :: flux(mzp,mxp,myp)
     real :: vcmax(mzp,mxp,myp)
     real :: vcmin(mzp,mxp,myp)
@@ -2045,7 +2000,6 @@ contains
 
     logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(Advec3DY)**"
-    character(len=8) :: str(10)
 
     if (dumpLocal) then
        call MsgDump(h//" starts")
@@ -2270,7 +2224,6 @@ contains
 
     logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(Advec3DZ)**"
-    character(len=8) :: str(10)
 
     if (dumpLocal) then
        call MsgDump(h//" starts ")
@@ -2563,17 +2516,10 @@ contains
     integer :: i
     integer :: j
     integer :: k
-    real :: cf
-    real :: cf1
-    real :: ck1
-    real :: ck2
-    real :: x1
-    real :: x1n
     real :: rtgti
 
     logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(Advec3DZSedimUpw)**"
-    character(len=8) :: str(10)
 
     if (dumpLocal) then
        call MsgDump(h//" starts")
@@ -2662,7 +2608,6 @@ contains
 
     logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(InitializeDensities)**"
-    character(len=8) :: str(10)
 
     ! set Monotonic Advection south ghost zone fields to zero
     do j = 1, j1ExternAtAdvMnt-1
@@ -2781,19 +2726,14 @@ contains
     integer :: jExtern
     real :: dtlto2
     real :: ai0s  =  25.0
-    real :: aj0s  =  50.0
     real :: umx   =   80.0
     real, parameter :: pii   =   3.141592653589793
-    real    :: umax  =   0.0
-    real    :: anrev,curnt,rx,xa,ilop,nrec,ya
+    real    :: xa,ilop,ya
     real    :: periodo  =   6.*3600.
-!!$    real, parameter :: iwndty = 0  ! 0-rotating
-!!$    real, parameter :: iwndty = 1  ! 1-divergent winds
     real, parameter :: iwndty = 2 
 
     logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(PrepareTheorWinds)**"
-    character(len=8) :: str(10)
 
     if (dumpLocal) then
        call MsgDump(h//" starts")

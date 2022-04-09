@@ -54,7 +54,6 @@ subroutine advectc(varn,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
   character(len=*) :: varn
 
   real :: dtlto2
-  real, dimension(nzpmax*7) :: advscr
   real, dimension(maxgrds), save :: save_dtlt
   integer :: i,j,k,ind
 
@@ -63,7 +62,6 @@ subroutine advectc(varn,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
 
   logical, parameter :: dumpLocal=.false.
   character(len=*), parameter :: h="**(advectc)**"
-  character(len=8) :: str(10)
   
   !--(DMK-CCATT-INI)-----------------------------------------------------
   integer :: i_scl
@@ -325,7 +323,6 @@ subroutine vel_advectc(m1,m2,m3,ia,iz,ja,jz,izu,jzv  &
 !! Please, read @link https://creativecommons.org/licenses/GPL/2.0/legalcode.pt
   use mem_grid
   use mem_basic
-  use node_mod, only :  mynum
 
   implicit none
 
