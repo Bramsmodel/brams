@@ -1,4 +1,3 @@
-
 mem_stilt.o : $(STILT)/mem_stilt.f90 grid_dims.o \
 	ModNamelistFile.o rconstants.o io_params.o var_tables.o
 	@cp -f  $< $(<F:.f90=.f90)
@@ -553,7 +552,7 @@ rtimh.o : $(MODEL)/rtimh.F90 mem_basic.o mem_cuparm.o optical.o \
 	ChemSourcesDriver.o ChemDryDepDriver.o chemistry.o ModTimeStamp.o ModGrid.o \
 	raco.o module_rams_microphysics_2M.o mic_thompson_driver.o module_wind_farm.o \
         seasalt.o MatrixDriver.o rtm_driver.o radvc_rk.o $(JULES_OBJ_SFCLYR) \
-	ModMessageSet.o modIau.o  $(UTILS_INCS)/tsNames.h
+	ModMessageSet.o modIau.o  ModRbnd.o $(UTILS_INCS)/tsNames.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -564,7 +563,7 @@ rtimh_rk.o : $(MODEL)/rtimh_rk.F90 rtimh.o mem_basic.o mem_cuparm.o \
 	mod_advect_kit.o machine_arq.o rad_driv.o cup_grell3.o digitalFilter.o\
 	ChemSourcesDriver.o ChemDryDepDriver.o chemistry.o ModTimeStamp.o ModGrid.o \
 	raco.o rthrm.o module_rams_microphysics_2M.o mic_thompson_driver.o\
-        seasalt.o MatrixDriver.o rtm_driver.o radvc_rk.o modIau.o leaf3_ocean_only.o \
+        seasalt.o MatrixDriver.o rtm_driver.o radvc_rk.o modIau.o leaf3_ocean_only.o ModRbnd.o \
 	$(JULES_OBJ_SFCLYR)  ModMonotonicAdvection.o utilsMod.o \
 	ModMessageSet.o $(UTILS_INCS)/tsNames.h  $(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
@@ -636,7 +635,7 @@ mpass_dtl.o : $(MPI)/mpass_dtl.f90  mem_grid.o node_mod.o
 	rm -f $(<F:.f90=.f90)
 
 mpass_feed.o : $(MPI)/mpass_feed.f90  grid_dims.o mem_basic.o mem_grid.o \
-	mem_scratch1_brams.o node_mod.o var_tables.o parlibf.o \
+	mem_scratch1_brams.o node_mod.o var_tables.o parlibf.o ModRbnd.o\
 	$(UTILS_INCS)/tsNames.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
@@ -912,7 +911,7 @@ ranlavg.o : $(IO)/ranlavg.f90  io_params.o mem_grid.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rbnd.o : $(BC)/rbnd.f90  mem_basic.o mem_grid.o mem_scratch.o \
+ModRbnd.o : $(BC)/ModRbnd.f90  mem_grid.o mem_scratch.o mem_basic.o \
 	mem_tend.o mem_turb.o micphys.o node_mod.o ref_sounding.o var_tables.o \
 	mem_chem1.o 
 	@cp -f $< $(<F:.f90=.f90)
@@ -927,7 +926,7 @@ rconv.o : $(CUPARM)/rconv.f90  conv_coms.o mem_basic.o mem_cuparm.o \
 
 rinit.o : $(INIT)/rinit.f90  io_params.o mem_basic.o mem_grid.o \
 	mem_micro.o mem_scratch.o mem_turb.o micphys.o node_mod.o \
-	rconstants.o ref_sounding.o  $(UTILS_INCS)/constants.h
+	rconstants.o ref_sounding.o ModRbnd.o $(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1375,15 +1374,12 @@ turb_diff_adap.o : $(TURB)/turb_diff_adap.f90  mem_grid.o mem_scratch.o
 	rm -f $(<F:.f90=.f90)
 
 raco_adap.o : $(MODEL)/raco_adap.f90  mem_grid.o mem_scratch.o \
-	ModGrid.o ModMessageSet.o node_mod.o rconstants.o
+	ModGrid.o ModMessageSet.o node_mod.o rconstants.o ModRbnd.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rbnd_adap.o : $(BC)/rbnd_adap.f90  mem_grid.o ref_sounding.o
-	@cp -f $< $(<F:.f90=.f90)
-	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-	rm -f $(<F:.f90=.f90)
+
 
 mem_teb.o : $(TEB_SPM)/mem_teb.f90 var_tables.o
 	@cp -f $< $(<F:.f90=.f90)
@@ -1441,7 +1437,7 @@ astp.o : $(ISAN)/astp.f90 isan_coms.o rconstants.o
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-avarf.o : $(ISAN)/avarf.f90 isan_coms.o mem_grid.o rconstants.o
+avarf.o : $(ISAN)/avarf.f90 isan_coms.o mem_grid.o rconstants.o ModRbnd.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1504,7 +1500,7 @@ chem_astp.o : $(ISAN_CHEM)/chem_astp.F90 chem1_list.o mem_chem1.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-chem_avarf.o : $(ISAN_CHEM)/chem_avarf.f90 chem_isan_coms.o mem_grid.o rconstants.o
+chem_avarf.o : $(ISAN_CHEM)/chem_avarf.f90 chem_isan_coms.o mem_grid.o rconstants.o ModRbnd.o
 	@cp -f  $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

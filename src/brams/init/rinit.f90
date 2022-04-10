@@ -332,6 +332,8 @@ subroutine FieldInit(initflg)
   use micphys, only: &
        icloud, irain, ipris, isnow, iaggr, igraup, ihail
 
+  use ModRbnd, only: dumset
+
   implicit none
 
   integer, intent(in) :: initflg
@@ -360,10 +362,10 @@ subroutine FieldInit(initflg)
 
   endif
 
-  call dumset(mzp,mxp,myp,1,mxp,1,myp,ibcon,basic_g(ngrid)%uc(1,1,1),'U')
-  call dumset(mzp,mxp,myp,1,mxp,1,myp,ibcon,basic_g(ngrid)%vc(1,1,1),'V')
-  call dumset(mzp,mxp,myp,1,mxp,1,myp,ibcon,basic_g(ngrid)%wc(1,1,1),'W')
-  call dumset(mzp,mxp,myp,1,mxp,1,myp,ibcon,basic_g(ngrid)%up(1,1,1),'U')
-  call dumset(mzp,mxp,myp,1,mxp,1,myp,ibcon,basic_g(ngrid)%vp(1,1,1),'V')
-  call dumset(mzp,mxp,myp,1,mxp,1,myp,ibcon,basic_g(ngrid)%wp(1,1,1),'W')
+  call dumset(mzp,mxp,myp,1,mxp,1,myp,ibcon,basic_g(ngrid)%uc,'U')
+  call dumset(mzp,mxp,myp,1,mxp,1,myp,ibcon,basic_g(ngrid)%vc,'V')
+  call dumset(mzp,mxp,myp,1,mxp,1,myp,ibcon,basic_g(ngrid)%wc,'W')
+  call dumset(mzp,mxp,myp,1,mxp,1,myp,ibcon,basic_g(ngrid)%up,'U')
+  call dumset(mzp,mxp,myp,1,mxp,1,myp,ibcon,basic_g(ngrid)%vp,'V')
+  call dumset(mzp,mxp,myp,1,mxp,1,myp,ibcon,basic_g(ngrid)%wp,'W')
 end subroutine FieldInit

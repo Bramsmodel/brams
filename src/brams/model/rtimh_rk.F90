@@ -10,6 +10,10 @@
 
 module ModTimestep_RK
 
+  use ModRbnd, only: latbnd, &
+          vpsets, &
+          rayft,  &
+          trsets
 
 contains
   subroutine timestep_rk(OneGrid)
@@ -97,7 +101,11 @@ contains
          zm,         &
          dzt,        &
          itime1,     &
-         vveldamp    ! INTENT(IN)
+         vveldamp,   & ! INTENT(IN)
+         ibnd,       &
+         jbnd,       &
+         nstbot,     &
+         nnzp
 
     use shcu_vars_const, only: & ! For Shallow Cumulus Paramet.
          NNSHCU ! INTENT(IN)
@@ -229,6 +237,8 @@ contains
 
     use ModAdvectc_rk, only: &
          advectc_rk
+
+    use mem_scratch, only: scratch    
     
     implicit none
 
@@ -440,7 +450,8 @@ contains
 
     !  Rayleigh friction for theta
     !----------------------------------------
-    call RAYFT()
+  call rayft(mxp,myp,mzp,mynum,ngrid,nnzp,if_adap,level,nodemyp,nodemxp,&
+          scratch%vt3da,basic_g(ngrid)%theta,basic_g(ngrid)%rv)
 
     !  Get the overlap region between parallel nodes
     !---------------------------------------------------
@@ -581,7 +592,10 @@ contains
 
     !  Lateral velocity boundaries - radiative
     !-------------------------------------------
-    call LATBND()
+    call latbnd(mzp,mxp,myp,ia,iz,ja,jz,ibcon,nxtnest,ngrid,ibnd,jbnd, &
+                   grid_g(ngrid)%lpu,grid_g(ngrid)%lpv,basic_g(ngrid)%up,&
+                   basic_g(ngrid)%uc,tend%ut,basic_g(ngrid)%vp,basic_g(ngrid)%vc,&
+                   tend%vt,grid_g(ngrid)%dxt,grid_g(ngrid)%dyt)
 
 !!$    call SynchronizedTimeStamp(TS_RK_RESTO) ! Exper1.2, 2021_12
 
@@ -780,7 +794,12 @@ contains
 
     !  Velocity/pressure boundary conditions
     !----------------------------------------
-    call VPSETS()
+    call vpsets(mzp,mxp,myp,ia,iz,ja,jz,ibcon,nstbot, &
+                    basic_g(ngrid)%up,basic_g(ngrid)%vp,basic_g(ngrid)%wp,&
+                    basic_g(ngrid)%pp,basic_g(ngrid)%uc,basic_g(ngrid)%vc,&
+                    basic_g(ngrid)%wc,basic_g(ngrid)%pc,grid_g(ngrid)%dxu,&
+                    grid_g(ngrid)%dxm,grid_g(ngrid)%dyv,grid_g(ngrid)%dym,&
+                    grid_g(ngrid)%lpu,grid_g(ngrid)%lpv,grid_g(ngrid)%lpw)
 
     !- call THERMO on the boundaries
     call thermo_boundary_driver((time+dtlongn(ngrid)), dtlong, &

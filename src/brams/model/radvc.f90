@@ -57,7 +57,7 @@ subroutine advectc(varn,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
   real, dimension(maxgrds), save :: save_dtlt
   integer :: i,j,k,ind
 
-  real, pointer :: scalarp, scalart
+!!$  real, pointer :: scalarp, scalart
 
 
   logical, parameter :: dumpLocal=.false.
@@ -239,64 +239,115 @@ subroutine advectc(varn,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
         endif
         !--(DMK-CCATT-FIM)-----------------------------------------------------
 
-        scalarp => scalar_tab(n,ngrid)%var_p
-        scalart => scalar_tab(n,ngrid)%var_t
-        call atob_long(mxyzp, scalarp, scratch%scr1(1))
+!!$        scalarp => scalar_tab(n,ngrid)%var_p
+!!$        scalart => scalar_tab(n,ngrid)%var_t
+!!$        call atob_long(mxyzp, scalarp, scratch%scr1(1))
+        call atob_long(mxyzp, scalar_tab(n,ngrid)%var_p_3D, scratch%scr1)
 
         if (if_adap == 0) then
 
-           call fa_xc(mzp,mxp,myp,ia,iz,1,myp        &
-                ,scalarp           ,scratch%scr1  (1)  &
-                ,scratch%vt3da (1) ,scratch%vt3dd (1)  &
-                ,scratch%vt3dg (1) ,scratch%vt3dh (1)  &
-                ,scratch%vt3di (1) ,mynum              )
+!!$           call fa_xc(mzp,mxp,myp,ia,iz,1,myp        &
+!!$                ,scalarp           ,scratch%scr1  (1)  &
+!!$                ,scratch%vt3da (1) ,scratch%vt3dd (1)  &
+!!$                ,scratch%vt3dg (1) ,scratch%vt3dh (1)  &
+!!$                ,scratch%vt3di (1) ,mynum              )
+!!$
+!!$           if (jdim .eq. 1)  &
+!!$                call fa_yc(mzp,mxp,myp,ia,iz,ja,jz        &
+!!$                ,scalarp           ,scratch%scr1  (1)  &
+!!$                ,scratch%vt3db (1) ,scratch%vt3de (1)  &
+!!$                ,scratch%vt3dg (1) ,scratch%vt3dj (1)  &
+!!$                ,scratch%vt3di (1) ,jdim,mynum         )
+!!$
+!!$           call fa_zc(mzp,mxp,myp,ia,iz,ja,jz        &
+!!$                ,scalarp           ,scratch%scr1  (1)  &
+!!$                ,scratch%vt3dc (1) ,scratch%vt3df (1)  &
+!!$                ,scratch%vt3dg (1) ,scratch%vt3dk (1)  &
+!!$                ,vctr1,vctr2,mynum                     )
+
+                      call fa_xc(mzp,mxp,myp,ia,iz,1,myp        &
+                ,scalar_tab(n,ngrid)%var_p_3D ,scratch%scr1   &
+                ,scratch%vt3da ,scratch%vt3dd  &
+                ,scratch%vt3dg ,scratch%vt3dh  &
+                ,scratch%vt3di ,mynum              )
 
            if (jdim .eq. 1)  &
                 call fa_yc(mzp,mxp,myp,ia,iz,ja,jz        &
-                ,scalarp           ,scratch%scr1  (1)  &
-                ,scratch%vt3db (1) ,scratch%vt3de (1)  &
-                ,scratch%vt3dg (1) ,scratch%vt3dj (1)  &
-                ,scratch%vt3di (1) ,jdim,mynum         )
+                ,scalar_tab(n,ngrid)%var_p_3D ,scratch%scr1    &
+                ,scratch%vt3db  ,scratch%vt3de   &
+                ,scratch%vt3dg  ,scratch%vt3dj   &
+                ,scratch%vt3di  ,jdim,mynum         )
 
            call fa_zc(mzp,mxp,myp,ia,iz,ja,jz        &
-                ,scalarp           ,scratch%scr1  (1)  &
-                ,scratch%vt3dc (1) ,scratch%vt3df (1)  &
-                ,scratch%vt3dg (1) ,scratch%vt3dk (1)  &
+                ,scalar_tab(n,ngrid)%var_p_3D ,scratch%scr1    &
+                ,scratch%vt3dc  ,scratch%vt3df   &
+                ,scratch%vt3dg  ,scratch%vt3dk   &
                 ,vctr1,vctr2,mynum                     )
+
 
            if (dumpLocal) then
               call MsgDump(h//" invokes advtndc")
            end if
+
+!!$           call advtndc(mzp,mxp,myp,ia,iz,ja,jz    &
+!!$                ,scalarp          ,scratch%scr1 (1)  &
+!!$                ,scalart          ,dtlt,mynum        )
            call advtndc(mzp,mxp,myp,ia,iz,ja,jz    &
-                ,scalarp          ,scratch%scr1 (1)  &
-                ,scalart          ,dtlt,mynum        )
+                ,scalar_tab(n,ngrid)%var_p_3D ,scratch%scr1  &
+                ,scalar_tab(n,ngrid)%var_t_1D ,dtlt,mynum        )
 
         else
 
+!!$           call fa_xc_adap(mzp,mxp,myp,ia,iz,1,myp         &
+!!$                ,grid_g(ngrid)%lpw (1,1) ,scalarp            &
+!!$                ,scratch%scr1      (1)   ,scratch%vt3da (1)  &
+!!$                ,scratch%vt3dd     (1)   ,scratch%vt3dg (1)  &
+!!$                ,scratch%vt3dh     (1)   ,mynum              )
+!!$
+!!$           if (jdim .eq. 1)                                &
+!!$                call fa_yc_adap(mzp,mxp,myp,ia,iz,ja,jz         &
+!!$                ,grid_g(ngrid)%lpw (1,1) ,scalarp            &
+!!$                ,scratch%scr1      (1)   ,scratch%vt3db (1)  &
+!!$                ,scratch%vt3de     (1)   ,scratch%vt3dg (1)  &
+!!$                ,scratch%vt3dh (1)  &
+!!$                ,jdim                    ,mynum              )
+!!$
+!!$           call fa_zc_adap(mzp,mxp,myp,ia,iz,ja,jz         &
+!!$                ,grid_g(ngrid)%lpw (1,1) ,scalarp            &
+!!$                ,scratch%scr1      (1)   ,scratch%vt3dc (1)  &
+!!$                ,scratch%vt3df     (1)   ,scratch%vt3dg (1)  &
+!!$                ,scratch%vt3dh     (1)   ,vctr1              &
+!!$                ,vctr2                   ,mynum              )
+!!$
+!!$           call advtndc_adap(mzp,mxp,myp,ia,iz,ja,jz  &
+!!$                ,grid_g(ngrid)%lpw (1,1) ,scalarp       &
+!!$                ,scratch%scr1      (1)   ,scalart       &
+!!$                ,dtlt                    ,mynum         )
+
            call fa_xc_adap(mzp,mxp,myp,ia,iz,1,myp         &
-                ,grid_g(ngrid)%lpw (1,1) ,scalarp            &
-                ,scratch%scr1      (1)   ,scratch%vt3da (1)  &
-                ,scratch%vt3dd     (1)   ,scratch%vt3dg (1)  &
-                ,scratch%vt3dh     (1)   ,mynum              )
+                ,grid_g(ngrid)%lpw ,scalar_tab(n,ngrid)%var_p_3D            &
+                ,scratch%scr1      ,scratch%vt3da  &
+                ,scratch%vt3dd     ,scratch%vt3dg  &
+                ,scratch%vt3dh     ,mynum              )
 
            if (jdim .eq. 1)                                &
                 call fa_yc_adap(mzp,mxp,myp,ia,iz,ja,jz         &
-                ,grid_g(ngrid)%lpw (1,1) ,scalarp            &
-                ,scratch%scr1      (1)   ,scratch%vt3db (1)  &
-                ,scratch%vt3de     (1)   ,scratch%vt3dg (1)  &
-                ,scratch%vt3dh (1)  &
+                ,grid_g(ngrid)%lpw ,scalar_tab(n,ngrid)%var_p_3D   &
+                ,scratch%scr1      ,scratch%vt3db   &
+                ,scratch%vt3de     ,scratch%vt3dg   &
+                ,scratch%vt3dh   &
                 ,jdim                    ,mynum              )
 
            call fa_zc_adap(mzp,mxp,myp,ia,iz,ja,jz         &
-                ,grid_g(ngrid)%lpw (1,1) ,scalarp            &
-                ,scratch%scr1      (1)   ,scratch%vt3dc (1)  &
-                ,scratch%vt3df     (1)   ,scratch%vt3dg (1)  &
-                ,scratch%vt3dh     (1)   ,vctr1              &
+                ,grid_g(ngrid)%lpw ,scalar_tab(n,ngrid)%var_p_3D  &
+                ,scratch%scr1      ,scratch%vt3dc   &
+                ,scratch%vt3df     ,scratch%vt3dg   &
+                ,scratch%vt3dh     ,vctr1              &
                 ,vctr2                   ,mynum              )
 
            call advtndc_adap(mzp,mxp,myp,ia,iz,ja,jz  &
-                ,grid_g(ngrid)%lpw (1,1) ,scalarp       &
-                ,scratch%scr1      (1)   ,scalart       &
+                ,grid_g(ngrid)%lpw ,scalar_tab(n,ngrid)%var_p_3D   &
+                ,scratch%scr1      ,scalar_tab(n,ngrid)%var_t_1D   &
                 ,dtlt                    ,mynum         )
 
         endif

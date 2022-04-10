@@ -474,6 +474,7 @@ use isan_coms
 use chem_isan_coms
 use mem_chem1, only:  CHEM_ASSIM     ! intent(in)
 use mem_aer1, only: AER_ASSIM
+use ModRbnd, only: topset, botset
 !srf-chem-end
 !--(DMK-CCATT-FIM)----------------------------------------------------------------
 
@@ -532,28 +533,28 @@ endif
 
 if(nbot == 1) then
    call botset(n1c,n2c,n3c,1,n2c,1,n3c  &
-        ,15 ,is_grids(icm)%rr_u(1,1,1),'U')
+        ,15 ,is_grids(icm)%rr_u,'U')
    call botset(n1c,n2c,n3c,1,n2c,1,n3c  &
-        ,15 ,is_grids(icm)%rr_v(1,1,1),'V')
+        ,15 ,is_grids(icm)%rr_v,'V')
    call botset(n1c,n2c,n3c,1,n2c,1,n3c  &
-        ,15 ,is_grids(icm)%rr_p(1,1,1),'P')
+        ,15 ,is_grids(icm)%rr_p,'P')
    call botset(n1c,n2c,n3c,1,n2c,1,n3c  &
-        ,15 ,is_grids(icm)%rr_t(1,1,1),'T')
+        ,15 ,is_grids(icm)%rr_t,'T')
    call botset(n1c,n2c,n3c,1,n2c,1,n3c  &
-        ,15 ,is_grids(icm)%rr_r(1,1,1),'T')
+        ,15 ,is_grids(icm)%rr_r,'T')
 endif
 
 if(ntop == 1) then
    call topset(n1c,n2c,n3c,1,n2c,1,n3c  &
-        ,15,is_grids(icm)%rr_u(1,1,1),is_grids(icm)%rr_u(1,1,1),'U')
+        ,15,is_grids(icm)%rr_u,'U')
    call topset(n1c,n2c,n3c,1,n2c,1,n3c  &
-        ,15,is_grids(icm)%rr_v(1,1,1),is_grids(icm)%rr_v(1,1,1),'V')
+        ,15,is_grids(icm)%rr_v,'V')
    call topset(n1c,n2c,n3c,1,n2c,1,n3c  &
-        ,15,is_grids(icm)%rr_p(1,1,1),is_grids(icm)%rr_p(1,1,1),'P')
+        ,15,is_grids(icm)%rr_p,'P')
    call topset(n1c,n2c,n3c,1,n2c,1,n3c  &
-        ,15,is_grids(icm)%rr_t(1,1,1),is_grids(icm)%rr_t(1,1,1),'T')
+        ,15,is_grids(icm)%rr_t,'T')
    call topset(n1c,n2c,n3c,1,n2c,1,n3c  &
-        ,15,is_grids(icm)%rr_r(1,1,1),is_grids(icm)%rr_r(1,1,1),'T')
+        ,15,is_grids(icm)%rr_r,'T')
 endif
 
 

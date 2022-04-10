@@ -166,8 +166,7 @@ OBJ_MOD = \
 	rams_mem_alloc.o   \
 	rams_read_header.o \
 	ranlavg.o \
-	rbnd.o \
-	rbnd_adap.o \
+	ModRbnd.o \
 	rcio.o \
 	rconstants.o \
 	rconv.o \

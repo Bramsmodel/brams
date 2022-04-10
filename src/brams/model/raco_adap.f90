@@ -6,6 +6,7 @@
 !  Regional Atmospheric Modeling System - RAMS
 !###########################################################################
 module ModAcoust_adap
+
 contains
 
   subroutine acoust_adap(OneGrid, &
@@ -138,6 +139,8 @@ subroutine prdctu_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpu  &
      ,up,ut,pp,vt3da,th0,dpdx,dxu,vt3dh,aru,volu,mynum)
 
   use mem_grid
+  use ModRbnd, only: botset_adap, &
+                     rayf_adap        
 
   implicit none
 
@@ -164,7 +167,7 @@ subroutine prdctu_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpu  &
   enddo
 
   if (distim .ne. 0.) then
-     call rayf_adap(1,m1,m2,m3,ia,iz,ja,jz,ibcon,lpu(1,1),up,th0,vt3dh)
+     call rayf_adap(1,m1,m2,m3,ia,iz,ja,jz,ibcon,int(lpu),up,th0,vt3dh)
   endif
 
   do j = 1,m3
@@ -176,7 +179,7 @@ subroutine prdctu_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpu  &
   enddo
 
   if (nstbot == 1 .and. itopo == 1)  &
-       call botset_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpu,up,'U')
+       call botset_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,int(lpu),up,'U')
 
   return
 end subroutine prdctu_adap
@@ -187,6 +190,8 @@ subroutine prdctv_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpv  &
      ,vp,vt,pp,vt3da,th0,dpdy,dyv,vt3dh,arv,volv)
 
   use mem_grid
+  use ModRbnd, only: botset_adap
+  use ModRbnd, only: rayf_adap        
 
   implicit none
 
@@ -217,7 +222,7 @@ subroutine prdctv_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpv  &
   endif
 
   if (distim .ne. 0.) then
-     call rayf_adap(1,m1,m2,m3,ia,iz,ja,jz,ibcon,lpv(1,1),vp,th0,vt3dh)
+     call rayf_adap(1,m1,m2,m3,ia,iz,ja,jz,ibcon,int(lpv),vp,th0,vt3dh)
   endif
 
   do j = 1,m3
@@ -229,7 +234,7 @@ subroutine prdctv_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpv  &
   enddo
 
   if (nstbot == 1 .and. itopo == 1)  &
-       call botset_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpv,vp,'V')
+       call botset_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,int(lpv),vp,'V')
 
   return
 end subroutine prdctv_adap
@@ -240,6 +245,7 @@ subroutine prdctw1_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpw  &
      ,wp,wt,pp,acoc,a1da2,vt3dh)
 
   use mem_grid
+  use ModRbnd, only: rayf_adap        
 
   implicit none
 
@@ -255,7 +261,7 @@ subroutine prdctw1_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpw  &
   !     W prediction for explicit case.
 
   if (distim .ne. 0.) then
-     call rayf_adap(1,m1,m2,m3,ia,iz,ja,jz,ibcon,lpw(1,1),wp,vt3dh,vt3dh)
+     call rayf_adap(1,m1,m2,m3,ia,iz,ja,jz,ibcon,int(lpw),wp,vt3dh,vt3dh)
   endif
 
   do j = 1,m3
@@ -432,6 +438,7 @@ end subroutine prdctp1_adap
 subroutine prdctp2_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpw,pp,wp,acof,acog,mynum)
 
   use mem_grid
+  use ModRbnd, only: botset_adap
 
   implicit none
 
@@ -451,7 +458,7 @@ subroutine prdctp2_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpw,pp,wp,acof,acog,mynum)
      enddo
   enddo
 
-  if (nstbot .eq. 1) call botset_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpw,pp,'P')
+  if (nstbot .eq. 1) call botset_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,int(lpw),pp,'P')
 
   return
 end subroutine prdctp2_adap

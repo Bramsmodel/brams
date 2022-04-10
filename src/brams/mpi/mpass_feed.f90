@@ -59,7 +59,7 @@ subroutine node_sendfeed(ngr)
 
   use var_tables, only: &
        num_scalar,      & ! intent(in)
-       scalar_tab         ! intent(in)
+       scalar_tab        ! intent(in)
 
   implicit none
   ! Arguments:
@@ -102,7 +102,7 @@ subroutine node_sendfeed(ngr)
 !!$  endif
   
   
-  !     Feed back this fine grid's portion of the each coarse grid node
+  !     Feed back this finerid's portion of the each coarserid node
   
   k1s=kpm(2,ifm)
   k2s=kpm(nnzp(ifm)-1,ifm)
@@ -111,8 +111,8 @@ subroutine node_sendfeed(ngr)
      isend_req(nm)=0
      if(ipaths(1,itype,ifm,nm).ne.0) then
         
-        !            mtp=total number of coarse grid points created
-        !              and sent from this fine grid node
+        !            mtp=total number of coarserid points created
+        !              and sent from this finerid node
         
         !      i1s=ipaths(1,itype,ifm,nm)
         !      i2s=ipaths(2,itype,ifm,nm)
@@ -127,30 +127,30 @@ subroutine node_sendfeed(ngr)
         j2f=ipaths(4,itypef,ifm,nm)
         
         iptr=0
-        call fdbackp(1,basic_g(ifm)%uc(1,1,1),pbuff(1+iptr),mtp  &
-             ,basic_g(ifm)%dn0(1,1,1),basic_g(ifm)%dn0u(1,1,1)  &
-             ,basic_g(ifm)%dn0v(1,1,1)  &
+        call fdbackp(1,basic_g(ifm)%uc,pbuff(1+iptr),mtp  &
+             ,basic_g(ifm)%dn0,basic_g(ifm)%dn0u  &
+             ,basic_g(ifm)%dn0v  &
              ,nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm)  &
              ,ifm,icm,i1f-i0,i2f-i0,j1f-j0,j2f-j0  &
              ,i0,j0,nodeibcon(mynum,ifm) ,nstratx(ifm),nstraty(ifm),mynum,i1s,i2s)
         iptr=iptr+mtp
-        call fdbackp(2,basic_g(ifm)%vc(1,1,1),pbuff(1+iptr),mtp  &
-             ,basic_g(ifm)%dn0(1,1,1),basic_g(ifm)%dn0u(1,1,1)  &
-             ,basic_g(ifm)%dn0v(1,1,1)  &
+        call fdbackp(2,basic_g(ifm)%vc,pbuff(1+iptr),mtp  &
+             ,basic_g(ifm)%dn0,basic_g(ifm)%dn0u  &
+             ,basic_g(ifm)%dn0v  &
              ,nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm)  &
              ,ifm,icm,i1f-i0,i2f-i0,j1f-j0,j2f-j0  &
              ,i0,j0,nodeibcon(mynum,ifm) ,nstratx(ifm),nstraty(ifm),mynum,j1s,j2s)
         iptr=iptr+mtp
-        call fdbackp(3,basic_g(ifm)%wc(1,1,1),pbuff(1+iptr),mtp  &
-             ,basic_g(ifm)%dn0(1,1,1),basic_g(ifm)%dn0u(1,1,1)  &
-             ,basic_g(ifm)%dn0v(1,1,1)  &
+        call fdbackp(3,basic_g(ifm)%wc,pbuff(1+iptr),mtp  &
+             ,basic_g(ifm)%dn0,basic_g(ifm)%dn0u  &
+             ,basic_g(ifm)%dn0v  &
              ,nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm)  &
              ,ifm,icm,i1f-i0,i2f-i0,j1f-j0,j2f-j0  &
              ,i0,j0,nodeibcon(mynum,ifm) ,nstratx(ifm),nstraty(ifm),mynum,i1,i2)
         iptr=iptr+mtp
-        call fdbackp(4,basic_g(ifm)%pc(1,1,1),pbuff(1+iptr),mtp  &
-             ,basic_g(ifm)%dn0(1,1,1),basic_g(ifm)%dn0u(1,1,1)  &
-             ,basic_g(ifm)%dn0v(1,1,1)  &
+        call fdbackp(4,basic_g(ifm)%pc,pbuff(1+iptr),mtp  &
+             ,basic_g(ifm)%dn0,basic_g(ifm)%dn0u  &
+             ,basic_g(ifm)%dn0v  &
              ,nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm)  &
              ,ifm,icm,i1f-i0,i2f-i0,j1f-j0,j2f-j0  &
              ,i0,j0,nodeibcon(mynum,ifm) ,nstratx(ifm),nstraty(ifm),mynum,i1,i2)
@@ -158,15 +158,15 @@ subroutine node_sendfeed(ngr)
         
         do nv=1,num_scalar(ifm)
            call fdbackp(5,scalar_tab(nv,ifm)%var_p,pbuff(1+iptr),mtp  &
-                ,basic_g(ifm)%dn0(1,1,1),basic_g(ifm)%dn0u(1,1,1)  &
-                ,basic_g(ifm)%dn0v(1,1,1)  &
+                ,basic_g(ifm)%dn0,basic_g(ifm)%dn0u  &
+                ,basic_g(ifm)%dn0v  &
                 ,nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm)  &
                 ,ifm,icm,i1f-i0,i2f-i0,j1f-j0,j2f-j0  &
                 ,i0,j0,nodeibcon(mynum,ifm) ,nstratx(ifm),nstraty(ifm),mynum,i1,i2)
            iptr=iptr+mtp
         enddo
         
-        !     We will send master coarse grid indices to nodes.
+        !     We will send master coarserid indices to nodes.
         ipos = 0_i8
         nsize = node_buffs(nm)%nsend*f_ndmd_size
 
@@ -244,6 +244,7 @@ subroutine node_getfeed(icm, ifm)
        nypmax,         &  ! intent(in)
        nzpmax,         &  ! intent(in)
        maxgrds            ! intent(in)
+  use ModRbnd, only: topset, botset
 
   implicit none
   ! Arguments:
@@ -341,8 +342,8 @@ subroutine node_getfeed(icm, ifm)
         if(icall) then
            icall=.false.
            
-           ! Set the portion of this coarse grid subdomain that will be filled
-           ! with fine grid info to zero.
+           ! Set the portion of this coarserid subdomain that will be filled
+           ! with finerid info to zero.
            
            i1z = max(ipm(2,ifm),1+nodei0(mynum,icm))
            j1z = max(jpm(2,ifm),1+nodej0(mynum,icm))
@@ -354,18 +355,18 @@ subroutine node_getfeed(icm, ifm)
            
            i2zu = min(ipm(nnxp(ifm)-1-nstratx(ifm),ifm)  &
                 ,nodemxp(mynum,icm)+nodei0(mynum,icm))
-           call zeroout(basic_g(icm)%uc(1,1,1),nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm) &
+           call zeroout(basic_g(icm)%uc,nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm) &
                 ,nodei0(mynum,icm),nodej0(mynum,icm),i1z,i2zu,j1z,j2z,k1z,k2z)
            j2zv = min(jpm(nnyp(ifm)-1-nstraty(ifm),ifm)  &
                 ,nodemyp(mynum,icm)+nodej0(mynum,icm))
-           call zeroout(basic_g(icm)%vc(1,1,1),nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm) &
+           call zeroout(basic_g(icm)%vc,nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm) &
                 ,nodei0(mynum,icm),nodej0(mynum,icm),i1z,i2z,j1z,j2zv,k1z,k2z)
            k2zw = kpm(nnzp(ifm)-1-nrz(kpm(nnzp(ifm)-1,ifm)  &
                 ,ifm),ifm)
-           call zeroout(basic_g(icm)%wc(1,1,1),nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm) &
+           call zeroout(basic_g(icm)%wc,nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm) &
                 ,nodei0(mynum,icm),nodej0(mynum,icm),i1z,i2z,j1z,j2z,k1z,k2zw)
            
-           call zeroout(basic_g(icm)%pc(1,1,1),nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm) &
+           call zeroout(basic_g(icm)%pc,nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm) &
                 ,nodei0(mynum,icm),nodej0(mynum,icm),i1z,i2z,j1z,j2z,k1z,k2z)
            
            do nv=1,num_scalar(ifm)
@@ -405,10 +406,10 @@ subroutine node_getfeed(icm, ifm)
      k2f = nnzp(ifm)-1
      
      ! New Sub-Routine - bugs fixed
-     call unfdbackp_fixed(1,basic_g(icm)%uc(1,1,1),scratch1%vtu(1) &
+     call unfdbackp_fixed(1,basic_g(icm)%uc,scratch1%vtu(1) &
           ,i1s,i2s,j1f,j2f,k1f,k2f &
-          ,basic_g(icm)%dn0(1,1,1),basic_g(icm)%dn0u(1,1,1) &
-          ,basic_g(icm)%dn0v(1,1,1)  &
+          ,basic_g(icm)%dn0,basic_g(icm)%dn0u &
+          ,basic_g(icm)%dn0v  &
           ,nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm),nodei0(mynum,icm),nodej0(mynum,icm)  &
           ,i2u,j2v,k2w,i1s,i2s,j1s,j2s  &
           ,k1s,k2s  &
@@ -418,10 +419,10 @@ subroutine node_getfeed(icm, ifm)
           ,mynum)
      
      ! New Sub-Routine by Alvaro L.Fazenda
-     call unfdbackp_fixed(2,basic_g(icm)%vc(1,1,1),scratch1%vtv(1) &
+     call unfdbackp_fixed(2,basic_g(icm)%vc,scratch1%vtv(1) &
           ,i1f,i2f,j1s,j2s,k1f,k2f &
-          ,basic_g(icm)%dn0(1,1,1),basic_g(icm)%dn0u(1,1,1) &
-          ,basic_g(icm)%dn0v(1,1,1)  &
+          ,basic_g(icm)%dn0,basic_g(icm)%dn0u &
+          ,basic_g(icm)%dn0v  &
           ,nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm),nodei0(mynum,icm),nodej0(mynum,icm)  &
           ,i2u,j2v,k2w,i1s,i2s,j1s,j2s  &
           ,k1s,k2s  &
@@ -431,10 +432,10 @@ subroutine node_getfeed(icm, ifm)
           ,mynum)
      
      ! New Sub-Routine by Alvaro L.Fazenda
-     call unfdbackp_fixed(3,basic_g(icm)%wc(1,1,1),scratch1%vtw(1) &
+     call unfdbackp_fixed(3,basic_g(icm)%wc,scratch1%vtw(1) &
           ,i1f,i2f,j1f,j2f,k1s,k2s &
-          ,basic_g(icm)%dn0(1,1,1),basic_g(icm)%dn0u(1,1,1) &
-          ,basic_g(icm)%dn0v(1,1,1)  &
+          ,basic_g(icm)%dn0,basic_g(icm)%dn0u &
+          ,basic_g(icm)%dn0v  &
           ,nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm),nodei0(mynum,icm),nodej0(mynum,icm)  &
           ,i2u,j2v,k2w,i1s,i2s,j1s,j2s  &
           ,k1s,k2s  &
@@ -444,10 +445,10 @@ subroutine node_getfeed(icm, ifm)
           ,mynum)
      
      ! New Sub-Routine by Alvaro L.Fazenda
-     call unfdbackp_fixed(4,basic_g(icm)%pc(1,1,1),scratch1%vtp(1) &
+     call unfdbackp_fixed(4,basic_g(icm)%pc,scratch1%vtp(1) &
           ,i1f,i2f,j1f,j2f,k1f,k2f &
-          ,basic_g(icm)%dn0(1,1,1),basic_g(icm)%dn0u(1,1,1) &
-          ,basic_g(icm)%dn0v(1,1,1)  &
+          ,basic_g(icm)%dn0,basic_g(icm)%dn0u &
+          ,basic_g(icm)%dn0v  &
           ,nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm),nodei0(mynum,icm),nodej0(mynum,icm)  &
           ,i2u,j2v,k2w,i1s,i2s,j1s,j2s  &
           ,k1s,k2s  &
@@ -464,8 +465,8 @@ subroutine node_getfeed(icm, ifm)
         call unfdbackp_fixed(5,scalar_tab(nv,icm)%var_p  &
              ,scratch1%vtscalar(1+iptr) &
              ,i1f,i2f,j1f,j2f,k1f,k2f &
-             ,basic_g(icm)%dn0(1,1,1),basic_g(icm)%dn0u(1,1,1) &
-             ,basic_g(icm)%dn0v(1,1,1)  &
+             ,basic_g(icm)%dn0,basic_g(icm)%dn0u &
+             ,basic_g(icm)%dn0v  &
              ,nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm),nodei0(mynum,icm),nodej0(mynum,icm)  &
              ,i2u,j2v,k2w,i1s,i2s,j1s,j2s  &
              ,k1s,k2s  &
@@ -481,38 +482,37 @@ subroutine node_getfeed(icm, ifm)
   if (nnstbot(icm) == 1) then
      call botset(nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm)  &
           ,1,nodemxp(mynum,icm),1,nodemyp(mynum,icm),nodeibcon(mynum,icm)  &
-          ,basic_g(icm)%uc(1,1,1),'U')
+          ,basic_g(icm)%uc,'U')
      call botset(nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm)  &
           ,1,nodemxp(mynum,icm),1,nodemyp(mynum,icm),nodeibcon(mynum,icm)  &
-          ,basic_g(icm)%vc(1,1,1),'V')
+          ,basic_g(icm)%vc,'V')
      call botset(nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm)  &
           ,1,nodemxp(mynum,icm),1,nodemyp(mynum,icm),nodeibcon(mynum,icm)  &
-          ,basic_g(icm)%pc(1,1,1),'P')
+          ,basic_g(icm)%pc,'P')
   endif
   if (nnsttop(icm) == 1) then
      call topset(nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm)  &
           ,1,nodemxp(mynum,icm),1,nodemyp(mynum,icm),nodeibcon(mynum,icm)  &
-          ,basic_g(icm)%uc(1,1,1),basic_g(icm)%uc(1,1,1),'U')
+          ,basic_g(icm)%uc,'U')
      call topset(nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm)  &
           ,1,nodemxp(mynum,icm),1,nodemyp(mynum,icm),nodeibcon(mynum,icm)  &
-          ,basic_g(icm)%vc(1,1,1),basic_g(icm)%vc(1,1,1),'V')
+          ,basic_g(icm)%vc,'V')
      call topset(nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm)  &
           ,1,nodemxp(mynum,icm),1,nodemyp(mynum,icm),nodeibcon(mynum,icm)  &
-          ,basic_g(icm)%pc(1,1,1),basic_g(icm)%pc(1,1,1),'P')
+          ,basic_g(icm)%pc,'P')
   endif
   
   do nv=1,num_scalar(ifm)
      if (nnstbot(icm) == 1) then   
         call botset(nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm)  &
              ,1,nodemxp(mynum,icm),1,nodemyp(mynum,icm),nodeibcon(mynum,icm)  &
-             ,scalar_tab(nv,icm)%var_p,'T')
+             ,scalar_tab(nv,icm)%var_p_3D,'T')
      endif
      
      if (nnsttop(icm) == 1) then
         call topset(nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm)  &
              ,1,nodemxp(mynum,icm),1,nodemyp(mynum,icm),nodeibcon(mynum,icm)  &
-             ,scalar_tab(nv,icm)%var_p  &
-             ,scalar_tab(nv,icm)%var_p,'T')
+             ,scalar_tab(nv,icm)%var_p_3D,'T')
      endif
   enddo
 
@@ -695,7 +695,7 @@ subroutine unfdbackp_fixed(ivarn,ac,acf,i1,i2,j1,j2,k1,k2 &
   integer, intent(in) :: ivarn, i1, i2, j1, j2, k1, k2, m1, m2, m3, i0, j0,  &
        i2u, j2v, k2w, i1c, i2c, j1c, j2c, k1c, k2c, mynum
   real, intent(in)    :: acf(k1:k2,i1:i2,j1:j2)
-  real, intent(inout) :: ac(m1,m2,m3)
+  real, intent(inout) :: ac(m1,m2,m3)                     
   real, intent(in)    :: den(m1,m2,m3), denu(m1,m2,m3), denv(m1,m2,m3)
   integer, intent(in) :: n_ipm, n_jpm, n_kpm
   integer, intent(in) :: ipm(n_ipm),jpm(n_jpm),kpm(n_kpm)

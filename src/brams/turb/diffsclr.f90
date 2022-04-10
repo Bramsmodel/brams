@@ -44,8 +44,8 @@ subroutine diffsclr_brams31(m1,m2,m3,ia,iz,ja,jz,jd,  &
                        , n      &
                        , ksf
 
-  real, INTENT(IN) :: scp(m1,m2,m3)    &                                                                                                
-                    , vt3dg(m1,m2,m3)  &                                                                                                  
+  real, pointer, INTENT(IN) :: scp(:,:,:)                                                                                                    
+  real, intent(in) :: vt3dg(m1,m2,m3)  &                                                                                                  
                     , rtgt(m2,m3)      &
                     , sfcflx(m2,m3)    &
                     , dn0(m1,m2,m3)    &

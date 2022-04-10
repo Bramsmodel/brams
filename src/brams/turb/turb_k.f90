@@ -115,7 +115,7 @@ subroutine diffuse()
   integer(kind=i8) :: mxyzp, ind
   integer :: n
   real :: s1,s2,s3
-  real, pointer :: scalarp(:), scalart(:), vkh_p(:), hkh_p(:)
+  real, pointer :: vkh_p(:), hkh_p(:)
   integer :: i,j,k,ksf
 
   ! srf - Large Scale Forcing for shallow and deep cumulus
@@ -198,11 +198,11 @@ subroutine diffuse()
 
   !-srf 29/12/2008 adapted from OLAM
   call bruvais_OLAM(mzp, mxp, myp, ia, iz, ja, jz,                  &
-       basic_g(ngrid)%theta(1,1,1), basic_g(ngrid)%rtp(1,1,1), &
-       basic_g(ngrid)%rv(1,1,1),    scratch%vt3dp(1),          &
-       basic_g(ngrid)%pp(1,1,1),    basic_g(ngrid)%pi0(1,1,1), &
-       scratch%vt3dj(1),            grid_g(ngrid)%rtgt(1,1),   &
-       grid_g(ngrid)%lpw(1,1))
+       basic_g(ngrid)%theta, basic_g(ngrid)%rtp, &
+       basic_g(ngrid)%rv,    scratch%vt3dp,          &
+       basic_g(ngrid)%pp,    basic_g(ngrid)%pi0, &
+       scratch%vt3dj,            grid_g(ngrid)%rtgt,   &
+       grid_g(ngrid)%lpw)
 
   !ml/srf- for new turn scheme
   if (idiffk(ngrid) <= 3 .or. idiffk(ngrid) == 7.or. idiffk(ngrid) == 8) then
@@ -515,10 +515,6 @@ subroutine diffuse()
 
   do n = 1,num_scalar(ngrid)
 
-     scalarp => scalar_tab(n,ngrid)%a_var_p
-     scalart => scalar_tab(n,ngrid)%a_var_t
-
-
      scratch%vt2da = 0.
 
      if (nstbot==1) then
@@ -608,7 +604,7 @@ subroutine diffuse()
         ! NEW WAY
         call diffsclr(mzp, mxp, myp, ia, iz, ja, jz, jdim,         &
              ia_1, ja_1, ia1, ja1, iz_1, jz_1, iz1, jz1, n, ksf,   &
-             scalarp(:), scalart(:),                               &
+             scalar_tab(n,ngrid)%a_var_p, scalar_tab(n,ngrid)%a_var_t,                               &
              scratch%vt3da(:), scratch%vt3db(:), scratch%vt3df(:), &
              scratch%vt3dg(:), scratch%vt3dj(:), scratch%vt3dk(:), &
              scratch%vt3do(:), scratch%vt3dc(:), scratch%vt3dd(:), &
@@ -621,18 +617,18 @@ subroutine diffuse()
            ! SGScale Forcing for GRELL CUPAR
            if (scalar_tab(n,ngrid)%name=='THP' .or. scalar_tab(n,ngrid)%name=='THC')     &
                 call PBLforcing(ngrid, mzp, mxp, myp, ia, iz, ja, jz, &
-                scratch%vt3df, scalarp(:), cuforc_sh_g(ngrid)%lsfth, n)
+                scratch%vt3df, scalar_tab(n,ngrid)%a_var_p, cuforc_sh_g(ngrid)%lsfth, n)
 
            if (scalar_tab(n,ngrid)%name=='RTP')                                          &
                 call PBLforcing(ngrid, mzp, mxp, myp, ia, iz, ja, jz, &
-                scratch%vt3df, scalarp(:), cuforc_sh_g(ngrid)%lsfrt, n)
+                scratch%vt3df, scalar_tab(n,ngrid)%a_var_p, cuforc_sh_g(ngrid)%lsfrt, n)
 
         endif
      else
 
         call diffsclr_adap(mzp,mxp,myp,ia,iz,ja,jz,jdim,n,ksf      &
-             ,grid_g(ngrid)%lpw(:,:)     ,scalarp                    &
-             ,scalart                    ,scratch%vt3da     (:)      &
+             ,grid_g(ngrid)%lpw(:,:)     ,scalar_tab(n,ngrid)%a_var_p&
+             ,scalar_tab(n,ngrid)%a_var_t,scratch%vt3da     (:)      &
              ,scratch%vt3dc      (:)     ,scratch%vt3df     (:)      &
              ,scratch%vt3dg      (:)     ,scratch%vt3dj     (:)      &
              ,scratch%vt3dk      (:)     ,scratch%vt3dl     (:)      &
