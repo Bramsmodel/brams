@@ -1247,16 +1247,19 @@ contains
                    !**(JP)** not converted yet
 
                    call fatal_error(h//" multiple grids not converted yet")
-                   icm = ngrid
-                   do ifm=1,ngrids
-                      if (nxtnest(ifm)==icm) then
-                         ngrid = ifm            ! JP: is this necessary?
-                         isstp = isched(npass,3)! JP: is this necessary (maybe incorrect)!
-                         call newgrid(ifm)
-                         call node_sendnbc(ifm, icm)
-                         call node_getnbc(ifm, icm)
-                      end if
-                   end do
+
+                   ! this section is commented out to avoid compilation errors
+                   ! at node_sendnbc, which is also commented out
+!!$                   icm = ngrid
+!!$                   do ifm=1,ngrids
+!!$                      if (nxtnest(ifm)==icm) then
+!!$                         ngrid = ifm            ! JP: is this necessary?
+!!$                         isstp = isched(npass,3)! JP: is this necessary (maybe incorrect)!
+!!$                         call newgrid(ifm)
+!!$                         call node_sendnbc(ifm, icm)
+!!$                         call node_getnbc(ifm, icm)
+!!$                      end if
+!!$                   end do
                 end if
 
                 ! whenever required, send feedback fields from current grids to
@@ -2380,8 +2383,25 @@ contains
        do ngr=1,ngrids
           do nv=1,num_var(ngr)
              if(vtab_r(nv,ngr)%imean == 1) then
-                call atob_long(vtab_r(nv,ngr)%npts, vtab_r(nv,ngr)%var_p, &
-                     vtab_r(nv,ngr)%var_m)
+                if (vtab_r(nv,ngr)%idim_type == 2) then
+                   call atob_long(vtab_r(nv,ngr)%npts, vtab_r(nv,ngr)%var_p_2D, &
+                        vtab_r(nv,ngr)%var_m)
+                else if (vtab_r(nv,ngr)%idim_type == 3) then
+                   call atob_long(vtab_r(nv,ngr)%npts, vtab_r(nv,ngr)%var_p_3D, &
+                        vtab_r(nv,ngr)%var_m)
+                else if (vtab_r(nv,ngr)%idim_type == 4) then
+                   call atob_long(vtab_r(nv,ngr)%npts, vtab_r(nv,ngr)%var_p_4D, &
+                        vtab_r(nv,ngr)%var_m)
+                else if (vtab_r(nv,ngr)%idim_type == 5) then
+                   call atob_long(vtab_r(nv,ngr)%npts, vtab_r(nv,ngr)%var_p_4D, &
+                        vtab_r(nv,ngr)%var_m)
+                else if (vtab_r(nv,ngr)%idim_type == 6) then
+                   call atob_long(vtab_r(nv,ngr)%npts, vtab_r(nv,ngr)%var_p_3D, &
+                        vtab_r(nv,ngr)%var_m)
+                else if (vtab_r(nv,ngr)%idim_type == 7) then
+                   call atob_long(vtab_r(nv,ngr)%npts, vtab_r(nv,ngr)%var_p_3D, &
+                        vtab_r(nv,ngr)%var_m)
+                end if
              endif
           enddo
        enddo

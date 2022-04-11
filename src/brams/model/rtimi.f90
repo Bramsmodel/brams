@@ -52,7 +52,7 @@ subroutine tend0()
 
   do n = 1,num_scalar(ngrid)        
  
-     call azero_l(mxyzp, scalar_tab(n,ngrid)%var_t)
+     call azero_l(mxyzp, scalar_tab(n,ngrid)%var_t_1D)
   enddo
 
 end subroutine tend0
@@ -237,7 +237,8 @@ subroutine predtr()
   include "constants.h"
   integer :: n !mxyzp
   integer(kind=i8) :: mxyzp
-
+  character(len=*), parameter :: h="**(predtr)**"
+  
   !   -  Step thermodynamic variables from  t  to  t+1.
 
   mxyzp = mxp * myp * mzp
@@ -249,9 +250,19 @@ subroutine predtr()
        if (scalar_tab(n,ngrid)%name == 'THC' .or. &
            scalar_tab(n,ngrid)%name == 'THP') cycle
      endif
-     
-     call update_long(mxyzp, scalar_tab(n,ngrid)%var_p,  &
-          scalar_tab(n,ngrid)%var_t, dtlt)
+
+     if (associated(scalar_tab(n,ngrid)%var_p_1D)) then
+        call update_long(mxyzp, scalar_tab(n,ngrid)%var_p_1D,  &
+             scalar_tab(n,ngrid)%var_t_1D, dtlt)
+     else if (associated(scalar_tab(n,ngrid)%var_p_2D)) then
+        call update_long(mxyzp, scalar_tab(n,ngrid)%var_p_2D,  &
+             scalar_tab(n,ngrid)%var_t_1D, dtlt)
+     else if (associated(scalar_tab(n,ngrid)%var_p_3D)) then
+        call update_long(mxyzp, scalar_tab(n,ngrid)%var_p_3D,  &
+             scalar_tab(n,ngrid)%var_t_1D, dtlt)
+     else
+        call fatal_error(h//" no var_p_XD associated for "//trim(scalar_tab(n,ngrid)%name))
+     end if
   enddo
 
 end subroutine predtr

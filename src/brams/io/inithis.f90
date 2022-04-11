@@ -258,7 +258,7 @@ subroutine inithis()
                    ,platn1(ngr),plonn1(ngr)  &
                    ,topt1(1,ngr),ztop1  &
                    ,1,nnxp(1),nnyp(1),1  &
-                   ,vtab_r(nv,1)%var_p  &
+                   ,vtab_r(nv,1)%var_p_2D  &
                    ,1,ngr,vtab_r(nv,1)%name,2)
 
            elseif (vtab_r(nv,1)%idim_type == 3) then
@@ -269,7 +269,7 @@ subroutine inithis()
                    ,platn1(ngr),plonn1(ngr)  &
                    ,topt1(1,ngr),ztop1  &
                    ,nnzp(1),nnxp(1),nnyp(1),1  &
-                   ,vtab_r(nv,1)%var_p  &
+                   ,vtab_r(nv,1)%var_p_3D  &
                    ,1,ngr,vtab_r(nv,1)%name,3)
 
            elseif (vtab_r(nv,1)%idim_type == 4 .and.  &
@@ -283,7 +283,7 @@ subroutine inithis()
                    ,platn1(ngr),plonn1(ngr)  &
                    ,topt1(1,ngr),ztop1  &
                    ,nzg,nnxp(1),nnyp(1),1  &
-                   ,vtab_r(nv,1)%var_p  &
+                   ,vtab_r(nv,1)%var_p_4D  &
                    ,1,ngr,vtab_r(nv,1)%name,4)
 
               ! Copy grid 1, patch 2 to scr3 - Irrelevant if this is the coarsest
@@ -292,7 +292,7 @@ subroutine inithis()
               !   We will overwrite points as we interpolate from finer grids.
 
               call patch_land_copy2(nzg,nnxp(1),nnyp(1),npatch  &
-                   ,vtab_r(nv,1)%var_p,scr3(1))
+                   ,vtab_r(nv,1)%var_p_4D,scr3(1))
 
               ! Then average over history grid patches and interpolate
               call patch_land_average(nzg1,nnxp1(ngr),nnyp1(ngr),npatch1  &
@@ -307,7 +307,7 @@ subroutine inithis()
                    ,scr3(1)  &
                    ,1,ngr,vtab_r(nv,ngr)%name,4)
               call patch_land_unaverage(nzg,nnxp(ngr),nnyp(ngr),npatch  &
-                   ,scr3(1),vtab_r(nv,1)%var_p)
+                   ,scr3(1),vtab_r(nv,1)%var_p_4D)
 
 
            elseif (vtab_r(nv,1)%idim_type == 5 ) then
@@ -319,12 +319,12 @@ subroutine inithis()
                    ,platn1(ngr),plonn1(ngr)  &
                    ,topt1(1,ngr),ztop1  &
                    ,nzs,nnxp(1),nnyp(1),1  &
-                   ,vtab_r(nv,1)%var_p  &
+                   ,vtab_r(nv,1)%var_p_4D  &
                    ,1,ngr,vtab_r(nv,1)%name,5)
 
               ! Copy patch 2 to scr3 - This will contain the land average
               call patch_land_copy2(nzs,nnxp(1),nnyp(1),npatch  &
-                   ,vtab_r(nv,1)%var_p,scr3(1))
+                   ,vtab_r(nv,1)%var_p_4D,scr3(1))
               call patch_land_average(nzs1,nnxp1(ngr),nnyp1(ngr),npatch1  &
                    ,parea(1,ngr),scr(1),scr2(1))
               call hi_interp(nzs1,nnxp1(ngr),nnyp1(ngr),1,scr2(1)  &
@@ -337,7 +337,7 @@ subroutine inithis()
                    ,scr3(1)  &
                    ,1,ngr,vtab_r(nv,1)%name,5)
               call patch_land_unaverage(nzs,nnxp(1),nnyp(1),npatch  &
-                   ,scr3(1),vtab_r(nv,1)%var_p)
+                   ,scr3(1),vtab_r(nv,1)%var_p_4D)
 
            elseif (vtab_r(nv,1)%idim_type == 6 .and.  &
                 hr_table(nvh)%string /= 'LEAF_CLASS' .and.   &
@@ -350,12 +350,12 @@ subroutine inithis()
                    ,platn1(ngr),plonn1(ngr)  &
                    ,topt1(1,ngr),ztop1  &
                    ,1,nnxp(1),nnyp(1),1  &
-                   ,vtab_r(nv,1)%var_p  &
+                   ,vtab_r(nv,1)%var_p_3D  &
                    ,1,ngr,vtab_r(nv,1)%name,6)
 
               ! Copy patch 2 to scr3 - This will contain the land average
               call patch_land_copy2(1,nnxp(1),nnyp(1),npatch  &
-                   ,vtab_r(nv,1)%var_p,scr3(1))
+                   ,vtab_r(nv,1)%var_p_3D,scr3(1))
 
               call patch_land_average(1,nnxp1(ngr),nnyp1(ngr),npatch1  &
                    ,parea(1,ngr),scr(1),scr2(1))
@@ -369,7 +369,7 @@ subroutine inithis()
                    ,scr3(1)  &
                    ,1,ngr,vtab_r(nv,1)%name,6)
               call patch_land_unaverage(1,nnxp(1),nnyp(1),npatch  &
-                   ,scr3(1),vtab_r(nv,1)%var_p)
+                   ,scr3(1),vtab_r(nv,1)%var_p_3D)
            endif
            exit         
         endif

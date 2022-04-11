@@ -27,7 +27,7 @@ subroutine anlavg(n1,n2,n3,n4)
   integer, save :: ncall=0,nvars(maxgrds,2),numadd,navg
   real, save :: avgtim1,frq,avgtim2,timem,timecent
 
-  real, pointer :: v_p, vm_p
+  real, pointer :: vm_p
 
   ! This routine averages all of the analysis variables over
   ! ANLAVG. It also accumulates precipitation for all of the
@@ -118,7 +118,6 @@ subroutine anlavg(n1,n2,n3,n4)
 
      if (vtab_r(nv,ngrid)%imean == 1) then
 
-        v_p => vtab_r(nv,ngrid)%var_p
         vm_p=> vtab_r(nv,ngrid)%var_m
 
         if(izero.eq.1) &
@@ -127,8 +126,19 @@ subroutine anlavg(n1,n2,n3,n4)
         !CALL azero(mxyzp,vm_p)  !Mod. ALF
         ! mxyzp eh 3D enquanto algumas variaveis sao 2D
 
-        call average(vtab_r(nv,ngrid)%npts,vm_p,v_p,navg)
-
+        if (vtab_r(nv,ngrid)%idim_type == 2) then
+           call average(vtab_r(nv,ngrid)%npts,vm_p,vtab_r(nv,ngrid)%var_p_2D,navg)
+        else if (vtab_r(nv,ngrid)%idim_type == 3) then
+           call average(vtab_r(nv,ngrid)%npts,vm_p,vtab_r(nv,ngrid)%var_p_3D,navg)
+        else if (vtab_r(nv,ngrid)%idim_type == 4) then
+           call average(vtab_r(nv,ngrid)%npts,vm_p,vtab_r(nv,ngrid)%var_p_4D,navg)
+        else if (vtab_r(nv,ngrid)%idim_type == 5) then
+           call average(vtab_r(nv,ngrid)%npts,vm_p,vtab_r(nv,ngrid)%var_p_4D,navg)
+        else if (vtab_r(nv,ngrid)%idim_type == 6) then
+           call average(vtab_r(nv,ngrid)%npts,vm_p,vtab_r(nv,ngrid)%var_p_3D,navg)
+        else if (vtab_r(nv,ngrid)%idim_type == 7) then
+           call average(vtab_r(nv,ngrid)%npts,vm_p,vtab_r(nv,ngrid)%var_p_3D,navg)
+        end if
      endif
 
   enddo

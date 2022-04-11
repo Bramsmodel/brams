@@ -7,87 +7,87 @@
 !###########################################################################
 
 
-subroutine nstbdriv()
-
-  use mem_tend, only: &
-       tend
-
-  use var_tables, only: &
-       num_scalar,      &
-       scalar_tab
-
-  use mem_basic, only: &
-       basic_g
-
-  use mem_nestb, only: &
-       nbounds
-
-  use node_mod, only: &
-       mxp,           &
-       myp,           &
-       mzp,           &
-       ia,            &
-       iz,            &
-       ja,            &
-       jz,            &
-       ibcon,mynum
-
-  use mem_grid, only: &
-       dtlv,          &
-       dtlt,          &
-       nndtrat,       &
-       isstp,         &
-       ngrid,         &
-       nstbot,        &
-       nsttop,        &
-       jdim
-
-  implicit none
-
-
-  integer :: n,k
-  real :: tymeinvv,tymeinvs
-
-  tymeinvv = 1.0 / (dtlv * 0.5 * float(nndtrat(ngrid)+2-isstp))
-  tymeinvs = 1.0 / (dtlt * float(nndtrat(ngrid)+1-isstp))
-  
-  write (*,fmt='("wt-nest-in: ",I2.2,1X,I1.1,1X,4(E9.3,1X),"/",4(E9.3,1X))') mynum,1,(tend%wt(k),k=1,4),(tend%wt(k),k=1,4)
-  call flush(6)
-  
-  call nstbtnd(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-       ,basic_g(ngrid)%up(1,1,1),tend%ut(1)  &
-       ,nbounds(ngrid)%bux(1,1,1),nbounds(ngrid)%buy(1,1,1)  &
-       ,nbounds(ngrid)%buz(1,1,1)  &
-       ,'u',tymeinvv,nstbot,nsttop,jdim)
-
-  call nstbtnd(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-       ,basic_g(ngrid)%vp(1,1,1),tend%vt(1)  &
-       ,nbounds(ngrid)%bvx(1,1,1),nbounds(ngrid)%bvy(1,1,1)  &
-       ,nbounds(ngrid)%bvz(1,1,1)  &
-       ,'v',tymeinvv,nstbot,nsttop,jdim)
-
-  call nstbtnd(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-       ,basic_g(ngrid)%wp(1,1,1),tend%wt(1)  &
-       ,nbounds(ngrid)%bwx(1,1,1),nbounds(ngrid)%bwy(1,1,1)  &
-       ,nbounds(ngrid)%bwz(1,1,1)  &
-       ,'w',tymeinvv,nstbot,nsttop,jdim)
-
-  call nstbtnd(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-       ,basic_g(ngrid)%pp(1,1,1),tend%pt(1)  &
-       ,nbounds(ngrid)%bpx(1,1,1),nbounds(ngrid)%bpy(1,1,1)  &
-       ,nbounds(ngrid)%bpz(1,1,1)  &
-       ,'p',tymeinvv,nstbot,nsttop,jdim)
-
-  do n = 1,num_scalar(ngrid)
-     call nstbtnd(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-          ,scalar_tab(n,ngrid)%var_p,scalar_tab(n,ngrid)%var_t  &
-          ,nbounds(ngrid)%bsx(1,1,1,n),nbounds(ngrid)%bsy(1,1,1,n)  &
-          ,nbounds(ngrid)%bsz(1,1,1,n)  &
-          ,'t',tymeinvs,nstbot,nsttop,jdim)
-  enddo
-    write (*,fmt='("wt-nest-ou: ",I2.2,1X,I1.1,1X,4(E9.3,1X),"/",4(E9.3,1X))') mynum,1,(tend%wt(k),k=1,4),(tend%wt(k),k=1,4)
-  call flush(6)
-end subroutine nstbdriv
+!!$subroutine nstbdriv()
+!!$
+!!$  use mem_tend, only: &
+!!$       tend
+!!$
+!!$  use var_tables, only: &
+!!$       num_scalar,      &
+!!$       scalar_tab
+!!$
+!!$  use mem_basic, only: &
+!!$       basic_g
+!!$
+!!$  use mem_nestb, only: &
+!!$       nbounds
+!!$
+!!$  use node_mod, only: &
+!!$       mxp,           &
+!!$       myp,           &
+!!$       mzp,           &
+!!$       ia,            &
+!!$       iz,            &
+!!$       ja,            &
+!!$       jz,            &
+!!$       ibcon,mynum
+!!$
+!!$  use mem_grid, only: &
+!!$       dtlv,          &
+!!$       dtlt,          &
+!!$       nndtrat,       &
+!!$       isstp,         &
+!!$       ngrid,         &
+!!$       nstbot,        &
+!!$       nsttop,        &
+!!$       jdim
+!!$
+!!$  implicit none
+!!$
+!!$
+!!$  integer :: n,k
+!!$  real :: tymeinvv,tymeinvs
+!!$
+!!$  tymeinvv = 1.0 / (dtlv * 0.5 * float(nndtrat(ngrid)+2-isstp))
+!!$  tymeinvs = 1.0 / (dtlt * float(nndtrat(ngrid)+1-isstp))
+!!$  
+!!$  write (*,fmt='("wt-nest-in: ",I2.2,1X,I1.1,1X,4(E9.3,1X),"/",4(E9.3,1X))') mynum,1,(tend%wt(k),k=1,4),(tend%wt(k),k=1,4)
+!!$  call flush(6)
+!!$  
+!!$  call nstbtnd(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
+!!$       ,basic_g(ngrid)%up(1,1,1),tend%ut(1)  &
+!!$       ,nbounds(ngrid)%bux(1,1,1),nbounds(ngrid)%buy(1,1,1)  &
+!!$       ,nbounds(ngrid)%buz(1,1,1)  &
+!!$       ,'u',tymeinvv,nstbot,nsttop,jdim)
+!!$
+!!$  call nstbtnd(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
+!!$       ,basic_g(ngrid)%vp(1,1,1),tend%vt(1)  &
+!!$       ,nbounds(ngrid)%bvx(1,1,1),nbounds(ngrid)%bvy(1,1,1)  &
+!!$       ,nbounds(ngrid)%bvz(1,1,1)  &
+!!$       ,'v',tymeinvv,nstbot,nsttop,jdim)
+!!$
+!!$  call nstbtnd(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
+!!$       ,basic_g(ngrid)%wp(1,1,1),tend%wt(1)  &
+!!$       ,nbounds(ngrid)%bwx(1,1,1),nbounds(ngrid)%bwy(1,1,1)  &
+!!$       ,nbounds(ngrid)%bwz(1,1,1)  &
+!!$       ,'w',tymeinvv,nstbot,nsttop,jdim)
+!!$
+!!$  call nstbtnd(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
+!!$       ,basic_g(ngrid)%pp(1,1,1),tend%pt(1)  &
+!!$       ,nbounds(ngrid)%bpx(1,1,1),nbounds(ngrid)%bpy(1,1,1)  &
+!!$       ,nbounds(ngrid)%bpz(1,1,1)  &
+!!$       ,'p',tymeinvv,nstbot,nsttop,jdim)
+!!$
+!!$  do n = 1,num_scalar(ngrid)
+!!$     call nstbtnd(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
+!!$          ,scalar_tab(n,ngrid)%var_p,scalar_tab(n,ngrid)%var_t  &
+!!$          ,nbounds(ngrid)%bsx(1,1,1,n),nbounds(ngrid)%bsy(1,1,1,n)  &
+!!$          ,nbounds(ngrid)%bsz(1,1,1,n)  &
+!!$          ,'t',tymeinvs,nstbot,nsttop,jdim)
+!!$  enddo
+!!$    write (*,fmt='("wt-nest-ou: ",I2.2,1X,I1.1,1X,4(E9.3,1X),"/",4(E9.3,1X))') mynum,1,(tend%wt(k),k=1,4),(tend%wt(k),k=1,4)
+!!$  call flush(6)
+!!$end subroutine nstbdriv
 
 !******************************************************************************
 !******************************************************************************
@@ -218,8 +218,8 @@ subroutine prgintrp(n1c,n2c,n3c,m1c,m2c,m3c,i0c,j0c,ifm,initflg,mynum)
            call fmint3(m1c,m2c,m3c,nnzp(ifm),nnxp(ifm),nnyp(ifm)  &
                 ,maxnzp,maxnxp,maxnyp,ifm,icm  &
                 ,nnstbot(ifm),nnsttop(ifm),jdim,initflg,1,1,'t'  &
-                ,scalar_tab(nc,icm)%var_p &
-                ,scalar_tab(nf,ifm)%var_p  &
+                ,scalar_tab(nc,icm)%var_p_3D &
+                ,scalar_tab(nf,ifm)%var_p_3D  &
                 ,basic_g(icm)%dn0(1,1,1),basic_g(ifm)%dn0(1,1,1)  &
                 ,scr1(1),scr2(1)  &
                 ,grid_g(ifm)%topt(1,1),scratch%vt2da(1)  &

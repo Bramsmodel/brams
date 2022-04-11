@@ -64,8 +64,7 @@ module ModVarfFile
        ProcWithMin,   &
        ReadStoreOwnChunk, &
        Broadcast, &
-       storeOwnChunk_3D, &
-       DumpFullField
+       storeOwnChunk_3D
 
   use isan_coms, only:           &
        isan_inc

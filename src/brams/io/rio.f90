@@ -252,7 +252,7 @@ subroutine hist_read_start(maxarr, hnamein, iunhd)
               call parf_bcast(srcRead(hr_table(nvh)%idim_type)%scr, &
                    nzl,nxl,nyl,n4,master_num)
               call mk_2_buff(srcRead(hr_table(nvh)%idim_type)%scr(1,:,:,1), &
-                   vtab_r(nv,ngr)%var_p, &
+                   vtab_r(nv,ngr)%var_p_2D, &
                    nnxp(ngr), nnyp(ngr), &
                    m2, m3, ia, iz, ja, jz)
            case (3)
@@ -263,7 +263,7 @@ subroutine hist_read_start(maxarr, hnamein, iunhd)
               call parf_bcast(srcRead(hr_table(nvh)%idim_type)%scr, &
                    nzl,nxl,nyl,n4,master_num)
               call mk_3_buff(srcRead(hr_table(nvh)%idim_type)%scr(:,:,:,1), &
-                   vtab_r(nv,ngr)%var_p, &
+                   vtab_r(nv,ngr)%var_p_3D, &
                    nnzp(ngr),nnxp(ngr), nnyp(ngr), &
                    m1, m2, m3, ia, iz, ja, jz)
            case (4)               
@@ -275,7 +275,7 @@ subroutine hist_read_start(maxarr, hnamein, iunhd)
                    nzl,nxl,nyl,n4,master_num)
 
               call mk_4_buff(srcRead(hr_table(nvh)%idim_type)%scr, &
-                   vtab_r(nv,ngr)%var_p, &
+                   vtab_r(nv,ngr)%var_p_4D, &
                    nzg,nnxp(ngr), nnyp(ngr),npatch, &
                    nzg, m2, m3,npatch, ia, iz, ja, jz)            
            case (5)
@@ -287,7 +287,7 @@ subroutine hist_read_start(maxarr, hnamein, iunhd)
                    nzl,nxl,nyl,n4,master_num)
 
               call mk_4_buff(srcRead(hr_table(nvh)%idim_type)%scr, &
-                   vtab_r(nv,ngr)%var_p, &
+                   vtab_r(nv,ngr)%var_p_4D, &
                    nzs,nnxp(ngr), nnyp(ngr),npatch, &
                    nzs, m2, m3,npatch, ia, iz, ja, jz)            
            case (6)
@@ -299,7 +299,7 @@ subroutine hist_read_start(maxarr, hnamein, iunhd)
                    nzl,nxl,nyl,n4,master_num)
 
               call mk_4_buff(srcRead(hr_table(nvh)%idim_type)%scr(1,:,:,:), &
-                   vtab_r(nv,ngr)%var_p, &
+                   vtab_r(nv,ngr)%var_p_3D, &
                    1,nnxp(ngr), nnyp(ngr),npatch, &
                    1, m2, m3,npatch, ia, iz, ja, jz)
            case (7)
@@ -312,7 +312,7 @@ subroutine hist_read_start(maxarr, hnamein, iunhd)
 
 
               call mk_4_buff(srcRead(hr_table(nvh)%idim_type)%scr(1,:,:,:), &
-                   vtab_r(nv,ngr)%var_p, &
+                   vtab_r(nv,ngr)%var_p_3D, &
                    1,nnxp(ngr), nnyp(ngr),nwave, &
                    1, m2, m3,nwave, ia, iz, ja, jz)
            case DEFAULT
@@ -440,10 +440,27 @@ subroutine hiswrt(restart)
 
      do nv = 1,num_var(ngr)
         if ( vtab_r(nv,ngr)%ihist == 1) then
-           call writebin(iohunt,vtab_r(nv,ngr)%var_p,vtab_r(nv,ngr)%npts)
+           if (vtab_r(nv,ngr)%idim_type == 2) then
+              call writebin(iohunt,vtab_r(nv,ngr)%var_p_2D,vtab_r(nv,ngr)%npts)
+              nmbytes = nmbytes + (vtab_r(nv,ngr)%npts*kind(vtab_r(nv,ngr)%var_p_2D))/1024/1024
+           else if (vtab_r(nv,ngr)%idim_type == 3) then
+              call writebin(iohunt,vtab_r(nv,ngr)%var_p_3D,vtab_r(nv,ngr)%npts)
+              nmbytes = nmbytes + (vtab_r(nv,ngr)%npts*kind(vtab_r(nv,ngr)%var_p_3D))/1024/1024
+           else if (vtab_r(nv,ngr)%idim_type == 4) then
+              call writebin(iohunt,vtab_r(nv,ngr)%var_p_4D,vtab_r(nv,ngr)%npts)
+              nmbytes = nmbytes + (vtab_r(nv,ngr)%npts*kind(vtab_r(nv,ngr)%var_p_4D))/1024/1024
+           else if (vtab_r(nv,ngr)%idim_type == 5) then
+              call writebin(iohunt,vtab_r(nv,ngr)%var_p_4D,vtab_r(nv,ngr)%npts)
+              nmbytes = nmbytes + (vtab_r(nv,ngr)%npts*kind(vtab_r(nv,ngr)%var_p_4D))/1024/1024
+           else if (vtab_r(nv,ngr)%idim_type == 6) then
+              call writebin(iohunt,vtab_r(nv,ngr)%var_p_3D,vtab_r(nv,ngr)%npts)
+              nmbytes = nmbytes + (vtab_r(nv,ngr)%npts*kind(vtab_r(nv,ngr)%var_p_3D))/1024/1024
+           else if (vtab_r(nv,ngr)%idim_type == 7) then
+              call writebin(iohunt,vtab_r(nv,ngr)%var_p_3D,vtab_r(nv,ngr)%npts)
+              nmbytes = nmbytes + (vtab_r(nv,ngr)%npts*kind(vtab_r(nv,ngr)%var_p_3D))/1024/1024
+           end if
            nwordh=nwordh+vtab_r(nv,ngr)%npts
 
-           nmbytes = nmbytes + (vtab_r(nv,ngr)%npts*kind(vtab_r(nv,ngr)%var_p))/1024/1024
 
            nvcnt=nvcnt+1
            hw_table(nvcnt)%string=vtab_r(nv,ngr)%name
@@ -1723,9 +1740,26 @@ subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
 
            ! case 1: output current field values (for hist, inst and lite output files)
 
-           call CopyLocalChunk(vtab_r(nv,ng)%var_p, LocalChunk, &
-                LocalSize(mynum,idim_type))
-
+           if (vtab_r(nv,ng)%idim_type == 2) then
+              call CopyLocalChunk(vtab_r(nv,ng)%var_p_2D, LocalChunk, &
+                   LocalSize(mynum,idim_type))
+           else if (vtab_r(nv,ng)%idim_type == 3) then
+              call CopyLocalChunk(vtab_r(nv,ng)%var_p_3D, LocalChunk, &
+                   LocalSize(mynum,idim_type))
+           else if (vtab_r(nv,ng)%idim_type == 4) then
+              call CopyLocalChunk(vtab_r(nv,ng)%var_p_4D, LocalChunk, &
+                   LocalSize(mynum,idim_type))
+           else if (vtab_r(nv,ng)%idim_type == 5) then
+              call CopyLocalChunk(vtab_r(nv,ng)%var_p_4D, LocalChunk, &
+                   LocalSize(mynum,idim_type))
+           else if (vtab_r(nv,ng)%idim_type == 6) then
+              call CopyLocalChunk(vtab_r(nv,ng)%var_p_3D, LocalChunk, &
+                   LocalSize(mynum,idim_type))
+           else if (vtab_r(nv,ng)%idim_type == 7) then
+              call CopyLocalChunk(vtab_r(nv,ng)%var_p_3D, LocalChunk, &
+                   LocalSize(mynum,idim_type))
+           end if
+           
            ! case 1-A: field with current values does not require pre-processing
 
            if (  thisHistFlag .or. &
@@ -2037,8 +2071,25 @@ subroutine saveNodeFields(histFlag, instFlag, liteFlag, meanFlag, nvMax, &
            ! case 1: output current field values (for hist, inst and lite output files)
 
            if (.not.thisMeanFlag) then
-              call CopyLocalChunk(vtab_r(nv,ng)%var_p, LocalChunk, &
-                   LocalSize(mynum,idim_type))
+              if (vtab_r(nv,ng)%idim_type == 2) then
+                 call CopyLocalChunk(vtab_r(nv,ng)%var_p_2D, LocalChunk, &
+                      LocalSize(mynum,idim_type))
+              else if (vtab_r(nv,ng)%idim_type == 3) then
+                 call CopyLocalChunk(vtab_r(nv,ng)%var_p_3D, LocalChunk, &
+                      LocalSize(mynum,idim_type))
+              else if (vtab_r(nv,ng)%idim_type == 4) then
+                 call CopyLocalChunk(vtab_r(nv,ng)%var_p_4D, LocalChunk, &
+                      LocalSize(mynum,idim_type))
+              else if (vtab_r(nv,ng)%idim_type == 5) then
+                 call CopyLocalChunk(vtab_r(nv,ng)%var_p_4D, LocalChunk, &
+                      LocalSize(mynum,idim_type))
+              else if (vtab_r(nv,ng)%idim_type == 6) then
+                 call CopyLocalChunk(vtab_r(nv,ng)%var_p_3D, LocalChunk, &
+                      LocalSize(mynum,idim_type))
+              else if (vtab_r(nv,ng)%idim_type == 7) then
+                 call CopyLocalChunk(vtab_r(nv,ng)%var_p_3D, LocalChunk, &
+                      LocalSize(mynum,idim_type))
+              end if
               call nodeWrite(25, LocalChunk, LocalSize(mynum,idim_type))
            elseif (thisMeanFlag) then
               call CopyLocalChunk(vtab_r(nv,ng)%var_m, LocalChunk, &
@@ -2400,7 +2451,7 @@ subroutine saveBinMPIIO(histFlag, instFlag, liteFlag, meanFlag, nvMax, &
 !!$                   fileTypeWriteGlobal)
               if (vtab_r(nv,ng)%idim_type==2) then
 
-                 call WRITE_BRAMS_DATA(vtab_r(nv,ng)%var_p_2d(:,:), &
+                 call WRITE_BRAMS_DATA(vtab_r(nv,ng)%var_p_2D(:,:), &
                       fileTypeWrite, fileTypeWriteGlobal)
 
               elseif (vtab_r(nv,ng)%idim_type==3 .or. &

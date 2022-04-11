@@ -49,9 +49,9 @@ module ReadBcst
   public :: LocalSizesAndDisp
   public :: PreProcAndGather
   public :: RearrangeAndDump
-  public :: DumpFullField
-  public :: DumpVTabEntry
-  public :: DumpVarTables
+!!$  public :: DumpFullField
+!!$  public :: DumpVTabEntry
+!!$  public :: DumpVarTables
   public :: gatherData
   public :: storeOwnChunk_3D
 
@@ -1073,64 +1073,64 @@ contains
 
 
 
-  subroutine DumpFullField(ngrid, LocalChunk, name, dumpGathered)
-
-    integer,          intent(in) :: ngrid               ! current grid number
-    real,             pointer    :: LocalChunk(:,:,:)   ! field at this process    
-    character(len=*), intent(in) :: name    ! field name (file name is <name>.<grid>.<nmachs>
-    logical,          intent(in) :: dumpGathered        ! dumps gathered field after full field
-
-    integer, parameter :: idim_type=3
-    integer :: il1(nmachs)
-    integer :: ir2(nmachs)
-    integer :: jb1(nmachs)
-    integer :: jt2(nmachs)
-    integer :: localSize(nmachs, idim_type_min:idim_type_max)
-    integer :: disp(nmachs, idim_type_min:idim_type_max)
-    integer :: sizeFullField(idim_type_min:idim_type_max)
-    character(len=4) :: cProcs
-    character(len=256) :: line
-    integer :: proc
-    real, pointer :: var_p
-    character(len=8) :: c0, c1
-    character(len=*), parameter :: h="**(DumpFullField)**"
-
-    if (dumpLocal) then
-       write(c0,"(i8)") ngrid
-       if (dumpGathered) then
-          write(*,"(a)") h//" only dump FullField "//trim(name)//&
-               " for grid "//trim(adjustl(c0))
-       else
-          write(*,"(a)") h//" dump FullField and gathered for field "//trim(name)//&
-               " at grid "//trim(adjustl(c0))
-       end if
-    end if
-
-    call LocalSizesAndDisp (ngrid, il1, ir2, jb1, jt2, localSize, disp)
-
-    if (dumpLocal) then
-       do proc = 1, nmachs
-          write(line, "(5(a6,i8.8),a12,i8.8,a7,i8.8)") &
-               " proc=", proc, &
-               "; il1=", il1(proc), &
-               "; ir2=", ir2(proc), &
-               "; jb1=", jb1(proc), &
-               "; jt2=", jt2(proc), &
-               "; localSize=", localSize(proc,idim_type), &
-               "; disp=", disp(proc,idim_type)
-          write(*,"(a)") h//trim(line)
-       end do
-    end if
-
-    call GlobalSizes(ngrid, nmachs, nwave, sizeFullField)
-
-    var_p => LocalChunk(1,1,1)
-
-    call DumpVTabEntry(ngrid, name, idim_type, var_p, &
-         sizeFullField, il1, ir2, jb1, jt2, localSize, disp, &
-         name, dumpGathered)
-
-  end subroutine DumpFullField
+!!$  subroutine DumpFullField(ngrid, LocalChunk, name, dumpGathered)
+!!$
+!!$    integer,          intent(in) :: ngrid               ! current grid number
+!!$    real,             pointer    :: LocalChunk(:,:,:)   ! field at this process    
+!!$    character(len=*), intent(in) :: name    ! field name (file name is <name>.<grid>.<nmachs>
+!!$    logical,          intent(in) :: dumpGathered        ! dumps gathered field after full field
+!!$
+!!$    integer, parameter :: idim_type=3
+!!$    integer :: il1(nmachs)
+!!$    integer :: ir2(nmachs)
+!!$    integer :: jb1(nmachs)
+!!$    integer :: jt2(nmachs)
+!!$    integer :: localSize(nmachs, idim_type_min:idim_type_max)
+!!$    integer :: disp(nmachs, idim_type_min:idim_type_max)
+!!$    integer :: sizeFullField(idim_type_min:idim_type_max)
+!!$    character(len=4) :: cProcs
+!!$    character(len=256) :: line
+!!$    integer :: proc
+!!$    real, pointer :: var_p
+!!$    character(len=8) :: c0, c1
+!!$    character(len=*), parameter :: h="**(DumpFullField)**"
+!!$
+!!$    if (dumpLocal) then
+!!$       write(c0,"(i8)") ngrid
+!!$       if (dumpGathered) then
+!!$          write(*,"(a)") h//" only dump FullField "//trim(name)//&
+!!$               " for grid "//trim(adjustl(c0))
+!!$       else
+!!$          write(*,"(a)") h//" dump FullField and gathered for field "//trim(name)//&
+!!$               " at grid "//trim(adjustl(c0))
+!!$       end if
+!!$    end if
+!!$
+!!$    call LocalSizesAndDisp (ngrid, il1, ir2, jb1, jt2, localSize, disp)
+!!$
+!!$    if (dumpLocal) then
+!!$       do proc = 1, nmachs
+!!$          write(line, "(5(a6,i8.8),a12,i8.8,a7,i8.8)") &
+!!$               " proc=", proc, &
+!!$               "; il1=", il1(proc), &
+!!$               "; ir2=", ir2(proc), &
+!!$               "; jb1=", jb1(proc), &
+!!$               "; jt2=", jt2(proc), &
+!!$               "; localSize=", localSize(proc,idim_type), &
+!!$               "; disp=", disp(proc,idim_type)
+!!$          write(*,"(a)") h//trim(line)
+!!$       end do
+!!$    end if
+!!$
+!!$    call GlobalSizes(ngrid, nmachs, nwave, sizeFullField)
+!!$
+!!$    var_p => LocalChunk(1,1,1)
+!!$
+!!$    call DumpVTabEntry(ngrid, name, idim_type, var_p, &
+!!$         sizeFullField, il1, ir2, jb1, jt2, localSize, disp, &
+!!$         name, dumpGathered)
+!!$
+!!$  end subroutine DumpFullField
 
 
 
@@ -1142,223 +1142,223 @@ contains
 
 
 
-  subroutine DumpVTabEntry(ngrid, name, idim_type, var_p, &
-       sizeFullField, il1, ir2, jb1, jt2, localSize, disp, &
-       fPrefix, dumpGathered, unitOpened)
-
-    
-    integer,          intent(in) :: ngrid
-    character(len=16), intent(in) :: name
-    integer,          intent(in) :: idim_type
-    real, pointer                :: var_p
-    integer,          intent(in) :: sizeFullField(idim_type_min:idim_type_max)
-    integer,          intent(in) :: il1(nmachs)
-    integer,          intent(in) :: ir2(nmachs)
-    integer,          intent(in) :: jb1(nmachs)
-    integer,          intent(in) :: jt2(nmachs)
-    integer,          intent(in) :: localSize(nmachs,idim_type_min:idim_type_max)
-    integer,          intent(in) :: disp(nmachs,idim_type_min:idim_type_max)
-    character(len=*), intent(in) :: fPrefix
-    logical,          intent(in) :: dumpGathered
-    integer, optional, intent(in) :: unitOpened
-
-    character(len=2)            :: cGrid
-    character(len=4)            :: cProc
-    character(len=10)           :: cProcHeader
-    character(len=8)            :: c0, c1, c2
-    character(len=*), parameter :: h="**(DumpVTabEntry)**" 
-
-    integer, parameter :: unitLow=10
-    integer, parameter :: unitHigh=99
-    integer :: sizeGathered
-    integer :: sizeLocalChunk
-    integer :: iunit
-    integer :: ierr
-    integer :: proc
-
-    logical :: op
-
-    real, allocatable :: LocalChunk(:)
-    real, allocatable :: Gathered(:)
-    real, allocatable :: FullField(:)
-
-    ! consistency
-
-    if (idim_type < idim_type_min .or. idim_type > idim_type_max) then
-       write(c0,"(i8)") idim_type
-       call fatal_error(h//" unknown idim_type="//trim(adjustl(c0)))
-    end if
-
-    ! names for dumping
-
-    write(cProc,"(i4.4)")  mchnum
-    cProcHeader = " Proc "//cProc
-    write(cProc,"(i4.4)")  nmachs
-    write(cGrid,"(a1,i1)") "g", ngrid
-
-    ! find available Fortran unit
-
-    if (present(unitOpened)) then
-       iunit = unitOpened
-    else if (mchnum == master_num) then
-       do iunit = unitLow, unitHigh
-          inquire (unit=iunit, opened=op)
-          if (.not. op) exit
-       end do
-       if (iunit > unitHigh) then
-          call fatal_error(h//" Fortran i/o units exausted")
-       end if
-    end if
-
-    ! space to copy vtab entry
-
-    sizeLocalChunk=localSize(mynum,idim_type)
-    allocate(LocalChunk(sizeLocalChunk), stat=ierr)
-    if (ierr /= 0) then
-       write(c0,"(i8)") sizeLocalChunk
-       write(c1,"(i8)") ierr
-       call fatal_error(h//" allocate localSize("// &
-            trim(adjustl(c0))//") failed with stat="// &
-            trim(adjustl(c1)))
-    else if (dumpLocal) then
-       write(c0,"(i8)") sizeLocalChunk
-       write(*,"(a)") h//cProcHeader//" allocated localSize("//trim(adjustl(c0))//")"
-       call flush(6)
-    end if
-
-    ! space for gathered full field
-
-    sizeGathered = disp(nmachs,idim_type) + localSize(nmachs,idim_type)
-    allocate(Gathered(sizeGathered), stat=ierr)
-    if (ierr /= 0) then
-       write(c0,"(i8)") sizeGathered
-       write(c1,"(i8)") ierr
-       call fatal_error(h//" allocate Gathered("// &
-            trim(adjustl(c0))//") failed with stat="// &
-            trim(adjustl(c1)))
-    else if (dumpLocal) then
-       write(c0,"(i8)") sizeGathered
-       write(*,"(a)") h//cProcHeader//" allocated Gathered("//trim(adjustl(c0))//")"
-       call flush(6)
-    end if
-
-    ! space for unpacked field
-
-    allocate(FullField(sizeFullField(idim_type)), stat=ierr)
-    if (ierr /= 0) then
-       write(c0,"(i8)") sizeFullField(idim_type)
-       write(c1,"(i8)") ierr
-       call fatal_error(h//" allocate FullField("// &
-            trim(adjustl(c0))//") failed with stat="// &
-            trim(adjustl(c1)))
-    else if (dumpLocal) then
-       write(c0,"(i8)") sizeFullField(idim_type)
-       write(*,"(a)") h//cProcHeader//" allocated FullField("//trim(adjustl(c0))//")"
-       call flush(6)
-    end if
-
-    ! copy vtab entry into a 1D array
-
-    call CopyLocalChunk(var_p, LocalChunk, sizeLocalChunk)
-
-    ! gather local chunks into a single array at master process (on "Gathered") 
-    ! and eliminate ghost zones of the gathered array (on "FullField")
-
-    call GatherOneFullField(ngrid, idim_type, sizeLocalChunk, &
-         LocalChunk, localSize, disp, il1, ir2, jb1, jt2, &
-         sizeGathered, Gathered, sizeFullField(idim_type), FullField)
-
-    ! only master dumps file
-
-    if (mchnum == master_num) then
-
-       ! open file
-
-       if (.not. present(unitOpened)) then
-          open(iunit, file=fPrefix(1:len_trim(fPrefix))//"."//cGrid//"."//cProc, status="replace", &
-               action="write", form="unformatted", iostat=ierr)
-          if (ierr /= 0) then
-             write(c0,"(i8)") ierr
-             call fatal_error(h//" opening "//trim(fPrefix)//"."//cGrid//"."//cProc//&
-                  " failed with iostat="//trim(adjustl(c0)))
-          end if
-       end if
-
-       ! dump name, idim_type and dimensions
-
-       write(iunit) name
-       write(iunit) idim_type
-       select case (idim_type)
-       case (2)
-          write(iunit) nnxp(ngrid), nnyp(ngrid)
-       case (3)
-          write(iunit) nnzp(ngrid), nnxp(ngrid), nnyp(ngrid)
-       case (4)
-          write(iunit) nzg, nnxp(ngrid), nnyp(ngrid), npatch
-       case (5)
-          write(iunit) nzs, nnxp(ngrid), nnyp(ngrid), npatch
-       case (6)
-          write(iunit) nnxp(ngrid), nnyp(ngrid), npatch
-       case (7)
-          write(iunit) nnxp(ngrid), nnyp(ngrid), nwave
-       case default
-          write(c0,"(i8)") idim_type
-          call fatal_error(h//" unknown idim_type="//trim(adjustl(c0)))
-       end select
-
-       ! dump Full Field
-
-       write(iunit) FullField
-
-       ! dump flag for dumpGathered
-
-       write(iunit) dumpGathered
-
-       ! dump Gathered (include ghost zones)
-
-       if (dumpGathered) then
-          write(iunit) nmachs
-          do proc = 1, nmachs
-             write(iunit) localSize(proc,idim_type), nnzp(ngrid), &
-                  nodemxp(proc,ngrid), nodemyp(proc,ngrid), &
-                  nodei0(proc,ngrid), nodej0(proc,ngrid)
-             write(iunit) Gathered(disp(proc,idim_type)+1:&
-                  disp(proc,idim_type)+localSize(proc,idim_type))
-          end do
-       end if
-
-       ! close file
-
-       if (.not. present(unitOpened)) then
-          close(iunit)
-       end if
-    end if
-
-    ! deallocated space
-
-    deallocate(LocalChunk, stat=ierr)
-    if (ierr /= 0) then
-       write(c1,"(i8)") ierr
-       call fatal_error(h//" deallocate localSize failed with stat="// &
-            trim(adjustl(c1)))
-    end if
-
-    deallocate(Gathered, stat=ierr)
-    if (ierr /= 0) then
-       write(c1,"(i8)") ierr
-       call fatal_error(h//" deallocate Gathered failed with stat="// &
-            trim(adjustl(c1)))
-    end if
-
-    ! maximum space for unpacked field
-
-    deallocate(FullField, stat=ierr)
-    if (ierr /= 0) then
-       write(c1,"(i8)") ierr
-       call fatal_error(h//" deallocate FullField failed with stat="// &
-            trim(adjustl(c1)))
-    end if
-  end subroutine DumpVTabEntry
+!!$  subroutine DumpVTabEntry(ngrid, name, idim_type, var_p, &
+!!$       sizeFullField, il1, ir2, jb1, jt2, localSize, disp, &
+!!$       fPrefix, dumpGathered, unitOpened)
+!!$
+!!$    
+!!$    integer,          intent(in) :: ngrid
+!!$    character(len=16), intent(in) :: name
+!!$    integer,          intent(in) :: idim_type
+!!$    real, pointer                :: var_p
+!!$    integer,          intent(in) :: sizeFullField(idim_type_min:idim_type_max)
+!!$    integer,          intent(in) :: il1(nmachs)
+!!$    integer,          intent(in) :: ir2(nmachs)
+!!$    integer,          intent(in) :: jb1(nmachs)
+!!$    integer,          intent(in) :: jt2(nmachs)
+!!$    integer,          intent(in) :: localSize(nmachs,idim_type_min:idim_type_max)
+!!$    integer,          intent(in) :: disp(nmachs,idim_type_min:idim_type_max)
+!!$    character(len=*), intent(in) :: fPrefix
+!!$    logical,          intent(in) :: dumpGathered
+!!$    integer, optional, intent(in) :: unitOpened
+!!$
+!!$    character(len=2)            :: cGrid
+!!$    character(len=4)            :: cProc
+!!$    character(len=10)           :: cProcHeader
+!!$    character(len=8)            :: c0, c1, c2
+!!$    character(len=*), parameter :: h="**(DumpVTabEntry)**" 
+!!$
+!!$    integer, parameter :: unitLow=10
+!!$    integer, parameter :: unitHigh=99
+!!$    integer :: sizeGathered
+!!$    integer :: sizeLocalChunk
+!!$    integer :: iunit
+!!$    integer :: ierr
+!!$    integer :: proc
+!!$
+!!$    logical :: op
+!!$
+!!$    real, allocatable :: LocalChunk(:)
+!!$    real, allocatable :: Gathered(:)
+!!$    real, allocatable :: FullField(:)
+!!$
+!!$    ! consistency
+!!$
+!!$    if (idim_type < idim_type_min .or. idim_type > idim_type_max) then
+!!$       write(c0,"(i8)") idim_type
+!!$       call fatal_error(h//" unknown idim_type="//trim(adjustl(c0)))
+!!$    end if
+!!$
+!!$    ! names for dumping
+!!$
+!!$    write(cProc,"(i4.4)")  mchnum
+!!$    cProcHeader = " Proc "//cProc
+!!$    write(cProc,"(i4.4)")  nmachs
+!!$    write(cGrid,"(a1,i1)") "g", ngrid
+!!$
+!!$    ! find available Fortran unit
+!!$
+!!$    if (present(unitOpened)) then
+!!$       iunit = unitOpened
+!!$    else if (mchnum == master_num) then
+!!$       do iunit = unitLow, unitHigh
+!!$          inquire (unit=iunit, opened=op)
+!!$          if (.not. op) exit
+!!$       end do
+!!$       if (iunit > unitHigh) then
+!!$          call fatal_error(h//" Fortran i/o units exausted")
+!!$       end if
+!!$    end if
+!!$
+!!$    ! space to copy vtab entry
+!!$
+!!$    sizeLocalChunk=localSize(mynum,idim_type)
+!!$    allocate(LocalChunk(sizeLocalChunk), stat=ierr)
+!!$    if (ierr /= 0) then
+!!$       write(c0,"(i8)") sizeLocalChunk
+!!$       write(c1,"(i8)") ierr
+!!$       call fatal_error(h//" allocate localSize("// &
+!!$            trim(adjustl(c0))//") failed with stat="// &
+!!$            trim(adjustl(c1)))
+!!$    else if (dumpLocal) then
+!!$       write(c0,"(i8)") sizeLocalChunk
+!!$       write(*,"(a)") h//cProcHeader//" allocated localSize("//trim(adjustl(c0))//")"
+!!$       call flush(6)
+!!$    end if
+!!$
+!!$    ! space for gathered full field
+!!$
+!!$    sizeGathered = disp(nmachs,idim_type) + localSize(nmachs,idim_type)
+!!$    allocate(Gathered(sizeGathered), stat=ierr)
+!!$    if (ierr /= 0) then
+!!$       write(c0,"(i8)") sizeGathered
+!!$       write(c1,"(i8)") ierr
+!!$       call fatal_error(h//" allocate Gathered("// &
+!!$            trim(adjustl(c0))//") failed with stat="// &
+!!$            trim(adjustl(c1)))
+!!$    else if (dumpLocal) then
+!!$       write(c0,"(i8)") sizeGathered
+!!$       write(*,"(a)") h//cProcHeader//" allocated Gathered("//trim(adjustl(c0))//")"
+!!$       call flush(6)
+!!$    end if
+!!$
+!!$    ! space for unpacked field
+!!$
+!!$    allocate(FullField(sizeFullField(idim_type)), stat=ierr)
+!!$    if (ierr /= 0) then
+!!$       write(c0,"(i8)") sizeFullField(idim_type)
+!!$       write(c1,"(i8)") ierr
+!!$       call fatal_error(h//" allocate FullField("// &
+!!$            trim(adjustl(c0))//") failed with stat="// &
+!!$            trim(adjustl(c1)))
+!!$    else if (dumpLocal) then
+!!$       write(c0,"(i8)") sizeFullField(idim_type)
+!!$       write(*,"(a)") h//cProcHeader//" allocated FullField("//trim(adjustl(c0))//")"
+!!$       call flush(6)
+!!$    end if
+!!$
+!!$    ! copy vtab entry into a 1D array
+!!$
+!!$    call CopyLocalChunk(var_p, LocalChunk, sizeLocalChunk)
+!!$
+!!$    ! gather local chunks into a single array at master process (on "Gathered") 
+!!$    ! and eliminate ghost zones of the gathered array (on "FullField")
+!!$
+!!$    call GatherOneFullField(ngrid, idim_type, sizeLocalChunk, &
+!!$         LocalChunk, localSize, disp, il1, ir2, jb1, jt2, &
+!!$         sizeGathered, Gathered, sizeFullField(idim_type), FullField)
+!!$
+!!$    ! only master dumps file
+!!$
+!!$    if (mchnum == master_num) then
+!!$
+!!$       ! open file
+!!$
+!!$       if (.not. present(unitOpened)) then
+!!$          open(iunit, file=fPrefix(1:len_trim(fPrefix))//"."//cGrid//"."//cProc, status="replace", &
+!!$               action="write", form="unformatted", iostat=ierr)
+!!$          if (ierr /= 0) then
+!!$             write(c0,"(i8)") ierr
+!!$             call fatal_error(h//" opening "//trim(fPrefix)//"."//cGrid//"."//cProc//&
+!!$                  " failed with iostat="//trim(adjustl(c0)))
+!!$          end if
+!!$       end if
+!!$
+!!$       ! dump name, idim_type and dimensions
+!!$
+!!$       write(iunit) name
+!!$       write(iunit) idim_type
+!!$       select case (idim_type)
+!!$       case (2)
+!!$          write(iunit) nnxp(ngrid), nnyp(ngrid)
+!!$       case (3)
+!!$          write(iunit) nnzp(ngrid), nnxp(ngrid), nnyp(ngrid)
+!!$       case (4)
+!!$          write(iunit) nzg, nnxp(ngrid), nnyp(ngrid), npatch
+!!$       case (5)
+!!$          write(iunit) nzs, nnxp(ngrid), nnyp(ngrid), npatch
+!!$       case (6)
+!!$          write(iunit) nnxp(ngrid), nnyp(ngrid), npatch
+!!$       case (7)
+!!$          write(iunit) nnxp(ngrid), nnyp(ngrid), nwave
+!!$       case default
+!!$          write(c0,"(i8)") idim_type
+!!$          call fatal_error(h//" unknown idim_type="//trim(adjustl(c0)))
+!!$       end select
+!!$
+!!$       ! dump Full Field
+!!$
+!!$       write(iunit) FullField
+!!$
+!!$       ! dump flag for dumpGathered
+!!$
+!!$       write(iunit) dumpGathered
+!!$
+!!$       ! dump Gathered (include ghost zones)
+!!$
+!!$       if (dumpGathered) then
+!!$          write(iunit) nmachs
+!!$          do proc = 1, nmachs
+!!$             write(iunit) localSize(proc,idim_type), nnzp(ngrid), &
+!!$                  nodemxp(proc,ngrid), nodemyp(proc,ngrid), &
+!!$                  nodei0(proc,ngrid), nodej0(proc,ngrid)
+!!$             write(iunit) Gathered(disp(proc,idim_type)+1:&
+!!$                  disp(proc,idim_type)+localSize(proc,idim_type))
+!!$          end do
+!!$       end if
+!!$
+!!$       ! close file
+!!$
+!!$       if (.not. present(unitOpened)) then
+!!$          close(iunit)
+!!$       end if
+!!$    end if
+!!$
+!!$    ! deallocated space
+!!$
+!!$    deallocate(LocalChunk, stat=ierr)
+!!$    if (ierr /= 0) then
+!!$       write(c1,"(i8)") ierr
+!!$       call fatal_error(h//" deallocate localSize failed with stat="// &
+!!$            trim(adjustl(c1)))
+!!$    end if
+!!$
+!!$    deallocate(Gathered, stat=ierr)
+!!$    if (ierr /= 0) then
+!!$       write(c1,"(i8)") ierr
+!!$       call fatal_error(h//" deallocate Gathered failed with stat="// &
+!!$            trim(adjustl(c1)))
+!!$    end if
+!!$
+!!$    ! maximum space for unpacked field
+!!$
+!!$    deallocate(FullField, stat=ierr)
+!!$    if (ierr /= 0) then
+!!$       write(c1,"(i8)") ierr
+!!$       call fatal_error(h//" deallocate FullField failed with stat="// &
+!!$            trim(adjustl(c1)))
+!!$    end if
+!!$  end subroutine DumpVTabEntry
 
 
 
@@ -1366,84 +1366,84 @@ contains
 
 
 
-  subroutine DumpVarTables(fPrefix,dumpGathered)
-
-    include "files.h"
-
-    character(len=*), intent(in) :: fPrefix  ! file prefix
-    logical, intent(in) :: dumpGathered
-
-    integer :: ng
-    integer :: nv
-    integer :: global
-    integer :: sizeFullField(idim_type_min:idim_type_max)
-    integer :: il1(nmachs)
-    integer :: ir2(nmachs)
-    integer :: jb1(nmachs)
-    integer :: jt2(nmachs)
-    integer :: localSize(nmachs,idim_type_min:idim_type_max)
-    integer :: disp(nmachs,idim_type_min:idim_type_max)
-
-    integer :: ierr
-    integer :: unitOpened
-    integer, parameter :: unitLow=10
-    integer, parameter :: unitHigh=99
-    logical :: op
-    character(len=2)   :: cGrid
-    character(len=4)   :: cProc
-    character(len=8)   :: c0, c1
-    character(len=*), parameter :: h="**(DumpVarTables)**"
-
-    ! find available Fortran unit
-
-    do unitOpened = unitLow, unitHigh
-       inquire (unit=unitOpened, opened=op)
-       if (.not. op) exit
-    end do
-    if (unitOpened > unitHigh) then
-       call fatal_error(h//" Fortran i/o units exausted")
-    end if
-
-    ! visit all grids
-
-    do ng = 1, ngrids
-
-       call GlobalSizes(ng, nmachs, nwave, sizeFullField)
-       call LocalSizesAndDisp (ng, il1, ir2, jb1, jt2, localSize, disp)
-
-       ! build file name
-
-       write(cProc,"(i4.4)")  nmachs
-       write(cGrid,"(a1,i1)") "g", ng
-
-       ! one process opens file
-
-       if (mchnum == master_num) then
-          open(unitOpened, file=fPrefix(1:len_trim(fPrefix))//"."//cGrid//"."//cProc, status="replace", &
-               action="write", form="unformatted", iostat=ierr)
-          if (ierr /= 0) then
-             write(c0,"(i8)") ierr
-             call fatal_error(h//" opening "//trim(fPrefix)//"."//cGrid//"."//cProc//&
-                  " failed with iostat="//trim(adjustl(c0)))
-          end if
-       end if
-
-       ! visit all vtables entries
-
-       do nv = 1, num_var(ng)
-          call DumpVTabEntry(ng, vtab_r(nv,ng)%name, &
-               vtab_r(nv,ng)%idim_type, vtab_r(nv,ng)%var_p, &
-               sizeFullField, il1, ir2, jb1, jt2, localSize, disp, &
-               fPrefix, dumpGathered, unitOpened)
-       end do
-
-       ! one process closes file
-
-       if (mchnum == master_num) then
-          close(unitOpened)
-       end if
-    end do
-  end subroutine DumpVarTables
+!!$  subroutine DumpVarTables(fPrefix,dumpGathered)
+!!$
+!!$    include "files.h"
+!!$
+!!$    character(len=*), intent(in) :: fPrefix  ! file prefix
+!!$    logical, intent(in) :: dumpGathered
+!!$
+!!$    integer :: ng
+!!$    integer :: nv
+!!$    integer :: global
+!!$    integer :: sizeFullField(idim_type_min:idim_type_max)
+!!$    integer :: il1(nmachs)
+!!$    integer :: ir2(nmachs)
+!!$    integer :: jb1(nmachs)
+!!$    integer :: jt2(nmachs)
+!!$    integer :: localSize(nmachs,idim_type_min:idim_type_max)
+!!$    integer :: disp(nmachs,idim_type_min:idim_type_max)
+!!$
+!!$    integer :: ierr
+!!$    integer :: unitOpened
+!!$    integer, parameter :: unitLow=10
+!!$    integer, parameter :: unitHigh=99
+!!$    logical :: op
+!!$    character(len=2)   :: cGrid
+!!$    character(len=4)   :: cProc
+!!$    character(len=8)   :: c0, c1
+!!$    character(len=*), parameter :: h="**(DumpVarTables)**"
+!!$
+!!$    ! find available Fortran unit
+!!$
+!!$    do unitOpened = unitLow, unitHigh
+!!$       inquire (unit=unitOpened, opened=op)
+!!$       if (.not. op) exit
+!!$    end do
+!!$    if (unitOpened > unitHigh) then
+!!$       call fatal_error(h//" Fortran i/o units exausted")
+!!$    end if
+!!$
+!!$    ! visit all grids
+!!$
+!!$    do ng = 1, ngrids
+!!$
+!!$       call GlobalSizes(ng, nmachs, nwave, sizeFullField)
+!!$       call LocalSizesAndDisp (ng, il1, ir2, jb1, jt2, localSize, disp)
+!!$
+!!$       ! build file name
+!!$
+!!$       write(cProc,"(i4.4)")  nmachs
+!!$       write(cGrid,"(a1,i1)") "g", ng
+!!$
+!!$       ! one process opens file
+!!$
+!!$       if (mchnum == master_num) then
+!!$          open(unitOpened, file=fPrefix(1:len_trim(fPrefix))//"."//cGrid//"."//cProc, status="replace", &
+!!$               action="write", form="unformatted", iostat=ierr)
+!!$          if (ierr /= 0) then
+!!$             write(c0,"(i8)") ierr
+!!$             call fatal_error(h//" opening "//trim(fPrefix)//"."//cGrid//"."//cProc//&
+!!$                  " failed with iostat="//trim(adjustl(c0)))
+!!$          end if
+!!$       end if
+!!$
+!!$       ! visit all vtables entries
+!!$
+!!$       do nv = 1, num_var(ng)
+!!$          call DumpVTabEntry(ng, vtab_r(nv,ng)%name, &
+!!$               vtab_r(nv,ng)%idim_type, vtab_r(nv,ng)%var_p, &
+!!$               sizeFullField, il1, ir2, jb1, jt2, localSize, disp, &
+!!$               fPrefix, dumpGathered, unitOpened)
+!!$       end do
+!!$
+!!$       ! one process closes file
+!!$
+!!$       if (mchnum == master_num) then
+!!$          close(unitOpened)
+!!$       end if
+!!$    end do
+!!$  end subroutine DumpVarTables
 
 
 

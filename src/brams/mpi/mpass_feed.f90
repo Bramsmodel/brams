@@ -157,7 +157,7 @@ subroutine node_sendfeed(ngr)
         iptr=iptr+mtp
         
         do nv=1,num_scalar(ifm)
-           call fdbackp(5,scalar_tab(nv,ifm)%var_p,pbuff(1+iptr),mtp  &
+           call fdbackp(5,scalar_tab(nv,ifm)%var_p_3D,pbuff(1+iptr),mtp  &
                 ,basic_g(ifm)%dn0,basic_g(ifm)%dn0u  &
                 ,basic_g(ifm)%dn0v  &
                 ,nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm)  &
@@ -370,7 +370,7 @@ subroutine node_getfeed(icm, ifm)
                 ,nodei0(mynum,icm),nodej0(mynum,icm),i1z,i2z,j1z,j2z,k1z,k2z)
            
            do nv=1,num_scalar(ifm)
-              call zeroout(scalar_tab(nv,icm)%var_p  &
+              call zeroout(scalar_tab(nv,icm)%var_p_3D  &
                    ,nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm)  &
                    ,nodei0(mynum,icm),nodej0(mynum,icm),i1z,i2z,j1z,j2z,k1z,k2z)
            enddo
@@ -462,7 +462,7 @@ subroutine node_getfeed(icm, ifm)
      
      do nv=1,num_scalar(ifm)
         ! New Sub-Routine by Alvaro L.Fazenda
-        call unfdbackp_fixed(5,scalar_tab(nv,icm)%var_p  &
+        call unfdbackp_fixed(5,scalar_tab(nv,icm)%var_p_3D  &
              ,scratch1%vtscalar(1+iptr) &
              ,i1f,i2f,j1f,j2f,k1f,k2f &
              ,basic_g(icm)%dn0,basic_g(icm)%dn0u &

@@ -172,7 +172,7 @@ subroutine recycle()
                nyl = nnyp(1)
                n4 = 1
                call mk_2_buff(srcRead(vtab_r(nvars,ng)%idim_type)%scr(1,:,:,1), &
-                              vtab_r(nvars,ng)%var_p, &
+                              vtab_r(nvars,ng)%var_p_2D, &
                               nnxp(ng), nnyp(ng), &
                               m2, m3, ia, iz, ja, jz)
             CASE (3)
@@ -181,7 +181,7 @@ subroutine recycle()
                nyl = nnyp(1)
                n4 = 1
                call mk_3_buff(srcRead(vtab_r(nvars,ng)%idim_type)%scr(:,:,:,1), &
-                              vtab_r(nvars,ng)%var_p, &
+                              vtab_r(nvars,ng)%var_p_3D, &
                               nnzp(ng),nnxp(ng), nnyp(ng), &
                               m1, m2, m3, ia, iz, ja, jz)
             CASE (4)
@@ -190,7 +190,7 @@ subroutine recycle()
                nyl = nnyp(1)
                n4 = npatch
                call mk_4_buff(srcRead(vtab_r(nvars,ng)%idim_type)%scr, &
-                              vtab_r(nvars,ng)%var_p, &
+                              vtab_r(nvars,ng)%var_p_4D, &
                               nzg,nnxp(ng), nnyp(ng),npatch, &
                               nzg, m2, m3,npatch, ia, iz, ja, jz)
             CASE (5)
@@ -199,7 +199,7 @@ subroutine recycle()
                nyl = nnyp(1)
                n4 = npatch
                call mk_4_buff(srcRead(vtab_r(nvars,ng)%idim_type)%scr, &
-                              vtab_r(nvars,ng)%var_p, &
+                              vtab_r(nvars,ng)%var_p_4D, &
                               nzs,nnxp(ng), nnyp(ng),npatch, &
                               nzs, m2, m3,npatch, ia, iz, ja, jz)
             CASE (6)
@@ -208,7 +208,7 @@ subroutine recycle()
                nyl = nnyp(1)
                n4 = npatch
                call mk_4_buff(srcRead(vtab_r(nvars,ng)%idim_type)%scr(1,:,:,:), &
-                              vtab_r(nvars,ng)%var_p, &
+                              vtab_r(nvars,ng)%var_p_3D, &
                               1,nnxp(ng), nnyp(ng),npatch, &
                               1, m2, m3,npatch, ia, iz, ja, jz)
             CASE (7)
@@ -217,7 +217,7 @@ subroutine recycle()
                nyl = nnyp(1)
                n4 = nwave
                call mk_4_buff(srcRead(vtab_r(nvars,ng)%idim_type)%scr(1,:,:,:), &
-                              vtab_r(nvars,ng)%var_p, &
+                              vtab_r(nvars,ng)%var_p_3D, &
                               1,nnxp(ng), nnyp(ng),nwave, &
                               1, m2, m3,nwave, ia, iz, ja, jz)
             CASE DEFAULT

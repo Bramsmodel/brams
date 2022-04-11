@@ -19,167 +19,157 @@
 !
 !###########################################################################
 
-subroutine node_sendnbc(ifm, icm)
-
-  use ParLib, only: &
-       parf_get_noblock, &
-       parf_pack, &
-!!$       parf_pack_int, &
-!!$       parf_pack_real, &
-       parf_send_noblock
-
-  use mem_grid, only: &
-       NGRIDS,        & ! INTENT(IN)
-       NNZP             ! INTENT(IN)
-  use node_mod, only: &
-       NMACHS,        & ! INTENT(IN)
-       IRECV_REQ,     & ! INTENT(IN)
-       IGET_PATHS,    & ! INTENT(IN)
-       NODE_BUFFS,    & ! INTENT(OUT)
-       F_NDMD_SIZE,   & ! INTENT(IN)
-       MACHS,         & ! INTENT(IN)
-       IPATHS,        & ! INTENT(IN)
-       MYNUM,         & ! INTENT(IN)
-       ISEND_REQ,     & ! INTENT(INOUT)
-       nodemxp,       & ! INTENT(IN)
-       nodemyp,       & ! INTENT(IN)
-       nodei0,        & ! INTENT(IN)
-       nodej0,        & ! INTENT(IN)
-       mynum
-  use var_tables, only: &
-       NUM_SCALAR,      & ! INTENT(IN)
-       SCALAR_TAB         ! INTENT(IN)
-  use mem_basic, only:  &
-       BASIC_G            ! INTENT(IN)
-
-  implicit none
-  include "constants.h"
-  ! Arguments:
-  integer, intent(in) :: ifm, icm
-  ! Local Variables:
-  integer(i8) :: ipos, nsize
-  integer :: nm,i1,i2,j1,j2,k1,k2,ng,itype,mtp,iptr,nv
-!!$  real, allocatable, save :: buffnest(:)
-!!$  integer, save :: ncall=0, membuff,membuff_extra,nvar
-  real, allocatable :: buffnest(:)
-  integer :: membuff, nvar
-
-  itype=5
-
-  !______________________
-  !
-  !   First, before we send anything, let's post the receives.
-
-  do nm=1,nmachs
-     irecv_req(nm)=0
-     if (iget_paths(itype,ifm,nm).ne.0) then
-        call parf_get_noblock(node_buffs(nm)%lbc_recv_buff, &
-             int(node_buffs(nm)%nrecv*f_ndmd_size,i8), machs(nm), 5000+icm, &
-             irecv_req(nm))
-     endif
-  enddo
-
-  ! Send coarse grid points necessary for fine grid boundary interpolation
-  !   to fine grid nodes. Note that even though coarse grid points are sent,
-  !   ipaths is referenced by the fine grid, since all nests only have one
-  !   parent, not vice versa.
-
-
-  ! Compute size of buffer needed and allocate if necessary
-!!$  if(ncall == 0) then
-!!$     ncall=1
-!!$     membuff_extra=nvar*2+100
-     membuff=0
-     do ng=1,ngrids
-        do nm=1,nmachs
-           if(ipaths(1,itype,ng,nm)/=0) then
-              i1=ipaths(1,itype,ng,nm)
-              i2=ipaths(2,itype,ng,nm)
-              j1=ipaths(3,itype,ng,nm)
-              j2=ipaths(4,itype,ng,nm)
-              k1=1
-              k2=nnzp(ng)
-              nvar=4 + num_scalar(ng)
-              mtp=(i2-i1+1)*(j2-j1+1)*(k2-k1+1)
-              membuff=max(membuff, mtp*nvar)
-           endif
-        enddo
-     enddo
-     membuff=membuff + nvar*2 + 100
-     allocate (buffnest(membuff))
-!!$     print*,'sending nesting condition: Allocate buffer for:',mynum &
-!!$              ,membuff,nvar
-!!$  endif
-
-
-  do nm=1,nmachs
-
-     isend_req(nm)=0
-
-     if(ipaths(1,itype,ifm,nm).ne.0) then
-
-        i1=ipaths(1,itype,ifm,nm)
-        i2=ipaths(2,itype,ifm,nm)
-        j1=ipaths(3,itype,ifm,nm)
-        j2=ipaths(4,itype,ifm,nm)
-        k1=1
-        k2=nnzp(icm)
-
-        mtp=(i2-i1+1)*(j2-j1+1)*(k2-k1+1)
-
-  ! Put variables into buffer. All need coarse grid density weighting first.
-
-        iptr=0
-        call mknest_buff(1,basic_g(icm)%uc(1,1,1),buffnest(1+iptr)  &
-            ,basic_g(icm)%dn0(1,1,1),nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm)  &
-            ,nodei0(mynum,icm),nodej0(mynum,icm),i1,i2,j1,j2,k1,k2,mynum,nm,nv)
-        iptr=iptr+mtp
-        call mknest_buff(2,basic_g(icm)%vc(1,1,1),buffnest(1+iptr)  &
-            ,basic_g(icm)%dn0(1,1,1),nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm)  &
-            ,nodei0(mynum,icm),nodej0(mynum,icm),i1,i2,j1,j2,k1,k2,mynum,nm,nv)
-        iptr=iptr+mtp
-        call mknest_buff(3,basic_g(icm)%wc(1,1,1),buffnest(1+iptr)  &
-            ,basic_g(icm)%dn0(1,1,1),nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm)  &
-            ,nodei0(mynum,icm),nodej0(mynum,icm),i1,i2,j1,j2,k1,k2,mynum,nm,nv)
-        iptr=iptr+mtp
-        call mknest_buff(4,basic_g(icm)%pc(1,1,1),buffnest(1+iptr)  &
-            ,basic_g(icm)%dn0(1,1,1),nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm)  &
-            ,nodei0(mynum,icm),nodej0(mynum,icm),i1,i2,j1,j2,k1,k2,mynum,nm,nv)
-        iptr=iptr+mtp
-
-        do nv=1,num_scalar(ifm)
-           call mknest_buff(5,scalar_tab(nv,icm)%var_p,buffnest(1+iptr)  &
-               ,basic_g(icm)%dn0(1,1,1),nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm)  &
-               ,nodei0(mynum,icm),nodej0(mynum,icm),i1,i2,j1,j2,k1,k2,mynum,nm,nv)
-           iptr=iptr+mtp
-        enddo
-
-
-        ipos = 0
-        nsize = node_buffs(nm)%nsend*f_ndmd_size
-        call parf_pack(i1, node_buffs(nm)%lbc_send_buff, nsize, ipos)
-        call parf_pack(i2, node_buffs(nm)%lbc_send_buff, nsize, ipos)
-        call parf_pack(j1, node_buffs(nm)%lbc_send_buff, nsize, ipos)
-        call parf_pack(j2, node_buffs(nm)%lbc_send_buff, nsize, ipos)
-        call parf_pack(k1, node_buffs(nm)%lbc_send_buff, nsize, ipos)
-        call parf_pack(k2, node_buffs(nm)%lbc_send_buff, nsize, ipos)
-        call parf_pack(mynum, node_buffs(nm)%lbc_send_buff, nsize, ipos)
-        call parf_pack(nvar, node_buffs(nm)%lbc_send_buff, nsize, ipos)
-        call parf_pack(iptr, node_buffs(nm)%lbc_send_buff, nsize, ipos)
-
-        call parf_pack(buffnest, int(iptr,i8), &
-             node_buffs(nm)%lbc_send_buff, &
-             nsize, ipos)
-
-        call parf_send_noblock(node_buffs(nm)%lbc_send_buff, &
-             ipos, ipaths(5,itype,ifm,nm), 5000+icm, isend_req(nm))
-     endif
-
-  enddo
-
-  if (allocated(buffnest)) deallocate(buffnest)
-
-end subroutine node_sendnbc
+!!$subroutine node_sendnbc(ifm, icm)
+!!$
+!!$  use ParLib, only: &
+!!$       parf_get_noblock, &
+!!$       parf_pack, &
+!!$       parf_send_noblock
+!!$
+!!$  use mem_grid, only: &
+!!$       NGRIDS,        & ! INTENT(IN)
+!!$       NNZP             ! INTENT(IN)
+!!$  use node_mod, only: &
+!!$       NMACHS,        & ! INTENT(IN)
+!!$       IRECV_REQ,     & ! INTENT(IN)
+!!$       IGET_PATHS,    & ! INTENT(IN)
+!!$       NODE_BUFFS,    & ! INTENT(OUT)
+!!$       F_NDMD_SIZE,   & ! INTENT(IN)
+!!$       MACHS,         & ! INTENT(IN)
+!!$       IPATHS,        & ! INTENT(IN)
+!!$       MYNUM,         & ! INTENT(IN)
+!!$       ISEND_REQ,     & ! INTENT(INOUT)
+!!$       nodemxp,       & ! INTENT(IN)
+!!$       nodemyp,       & ! INTENT(IN)
+!!$       nodei0,        & ! INTENT(IN)
+!!$       nodej0,        & ! INTENT(IN)
+!!$       mynum
+!!$  use var_tables, only: &
+!!$       NUM_SCALAR,      & ! INTENT(IN)
+!!$       SCALAR_TAB         ! INTENT(IN)
+!!$  use mem_basic, only:  &
+!!$       BASIC_G            ! INTENT(IN)
+!!$
+!!$  implicit none
+!!$  include "constants.h"
+!!$  ! Arguments:
+!!$  integer, intent(in) :: ifm, icm
+!!$  ! Local Variables:
+!!$  integer(i8) :: ipos, nsize
+!!$  integer :: nm,i1,i2,j1,j2,k1,k2,ng,itype,mtp,iptr,nv
+!!$  real, allocatable :: buffnest(:)
+!!$  integer :: membuff, nvar
+!!$
+!!$  itype=5
+!!$
+!!$  !______________________
+!!$  !
+!!$  !   First, before we send anything, let's post the receives.
+!!$
+!!$  do nm=1,nmachs
+!!$     irecv_req(nm)=0
+!!$     if (iget_paths(itype,ifm,nm).ne.0) then
+!!$        call parf_get_noblock(node_buffs(nm)%lbc_recv_buff, &
+!!$             int(node_buffs(nm)%nrecv*f_ndmd_size,i8), machs(nm), 5000+icm, &
+!!$             irecv_req(nm))
+!!$     endif
+!!$  enddo
+!!$
+!!$  ! Send coarse grid points necessary for fine grid boundary interpolation
+!!$  !   to fine grid nodes. Note that even though coarse grid points are sent,
+!!$  !   ipaths is referenced by the fine grid, since all nests only have one
+!!$  !   parent, not vice versa.
+!!$
+!!$
+!!$  ! Compute size of buffer needed and allocate if necessary
+!!$     membuff=0
+!!$     do ng=1,ngrids
+!!$        do nm=1,nmachs
+!!$           if(ipaths(1,itype,ng,nm)/=0) then
+!!$              i1=ipaths(1,itype,ng,nm)
+!!$              i2=ipaths(2,itype,ng,nm)
+!!$              j1=ipaths(3,itype,ng,nm)
+!!$              j2=ipaths(4,itype,ng,nm)
+!!$              k1=1
+!!$              k2=nnzp(ng)
+!!$              nvar=4 + num_scalar(ng)
+!!$              mtp=(i2-i1+1)*(j2-j1+1)*(k2-k1+1)
+!!$              membuff=max(membuff, mtp*nvar)
+!!$           endif
+!!$        enddo
+!!$     enddo
+!!$     membuff=membuff + nvar*2 + 100
+!!$     allocate (buffnest(membuff))
+!!$
+!!$
+!!$  do nm=1,nmachs
+!!$
+!!$     isend_req(nm)=0
+!!$
+!!$     if(ipaths(1,itype,ifm,nm).ne.0) then
+!!$
+!!$        i1=ipaths(1,itype,ifm,nm)
+!!$        i2=ipaths(2,itype,ifm,nm)
+!!$        j1=ipaths(3,itype,ifm,nm)
+!!$        j2=ipaths(4,itype,ifm,nm)
+!!$        k1=1
+!!$        k2=nnzp(icm)
+!!$
+!!$        mtp=(i2-i1+1)*(j2-j1+1)*(k2-k1+1)
+!!$
+!!$  ! Put variables into buffer. All need coarse grid density weighting first.
+!!$
+!!$        iptr=0
+!!$        call mknest_buff(1,basic_g(icm)%uc(1,1,1),buffnest(1+iptr)  &
+!!$            ,basic_g(icm)%dn0(1,1,1),nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm)  &
+!!$            ,nodei0(mynum,icm),nodej0(mynum,icm),i1,i2,j1,j2,k1,k2,mynum,nm,nv)
+!!$        iptr=iptr+mtp
+!!$        call mknest_buff(2,basic_g(icm)%vc(1,1,1),buffnest(1+iptr)  &
+!!$            ,basic_g(icm)%dn0(1,1,1),nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm)  &
+!!$            ,nodei0(mynum,icm),nodej0(mynum,icm),i1,i2,j1,j2,k1,k2,mynum,nm,nv)
+!!$        iptr=iptr+mtp
+!!$        call mknest_buff(3,basic_g(icm)%wc(1,1,1),buffnest(1+iptr)  &
+!!$            ,basic_g(icm)%dn0(1,1,1),nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm)  &
+!!$            ,nodei0(mynum,icm),nodej0(mynum,icm),i1,i2,j1,j2,k1,k2,mynum,nm,nv)
+!!$        iptr=iptr+mtp
+!!$        call mknest_buff(4,basic_g(icm)%pc(1,1,1),buffnest(1+iptr)  &
+!!$            ,basic_g(icm)%dn0(1,1,1),nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm)  &
+!!$            ,nodei0(mynum,icm),nodej0(mynum,icm),i1,i2,j1,j2,k1,k2,mynum,nm,nv)
+!!$        iptr=iptr+mtp
+!!$
+!!$        do nv=1,num_scalar(ifm)
+!!$           call mknest_buff(5,scalar_tab(nv,icm)%var_p,buffnest(1+iptr)  &
+!!$               ,basic_g(icm)%dn0(1,1,1),nnzp(icm),nodemxp(mynum,icm),nodemyp(mynum,icm)  &
+!!$               ,nodei0(mynum,icm),nodej0(mynum,icm),i1,i2,j1,j2,k1,k2,mynum,nm,nv)
+!!$           iptr=iptr+mtp
+!!$        enddo
+!!$
+!!$
+!!$        ipos = 0
+!!$        nsize = node_buffs(nm)%nsend*f_ndmd_size
+!!$        call parf_pack(i1, node_buffs(nm)%lbc_send_buff, nsize, ipos)
+!!$        call parf_pack(i2, node_buffs(nm)%lbc_send_buff, nsize, ipos)
+!!$        call parf_pack(j1, node_buffs(nm)%lbc_send_buff, nsize, ipos)
+!!$        call parf_pack(j2, node_buffs(nm)%lbc_send_buff, nsize, ipos)
+!!$        call parf_pack(k1, node_buffs(nm)%lbc_send_buff, nsize, ipos)
+!!$        call parf_pack(k2, node_buffs(nm)%lbc_send_buff, nsize, ipos)
+!!$        call parf_pack(mynum, node_buffs(nm)%lbc_send_buff, nsize, ipos)
+!!$        call parf_pack(nvar, node_buffs(nm)%lbc_send_buff, nsize, ipos)
+!!$        call parf_pack(iptr, node_buffs(nm)%lbc_send_buff, nsize, ipos)
+!!$
+!!$        call parf_pack(buffnest, int(iptr,i8), &
+!!$             node_buffs(nm)%lbc_send_buff, &
+!!$             nsize, ipos)
+!!$
+!!$        call parf_send_noblock(node_buffs(nm)%lbc_send_buff, &
+!!$             ipos, ipaths(5,itype,ifm,nm), 5000+icm, isend_req(nm))
+!!$     endif
+!!$
+!!$  enddo
+!!$
+!!$  if (allocated(buffnest)) deallocate(buffnest)
+!!$
+!!$end subroutine node_sendnbc
 !
 !     ****************************************************************
 !

@@ -39,8 +39,6 @@ module var_tables
   ! Define data type for main variable table
 
   type var_tables_r
-     real, pointer      :: var_p
-     ! var_p: scalar pointing to field first position
      real, pointer      :: var_m
      ! var_m: scalar pointing to field average first position
      real, pointer      :: var_p_2D(:,:) => null()
@@ -90,8 +88,6 @@ module var_tables
   ! Define data type for scalar variable table
 
   type scalar_table
-     real, pointer      :: var_p => null()
-     real, pointer      :: var_t => null()
      character (len=16) :: name
      real, pointer      :: a_var_p(:) => null()
      real, pointer      :: a_var_t(:) => null()
@@ -214,8 +210,8 @@ contains
     scalar_tab(num_scalar(ng),ng)%var_p_1D => varp
     scalar_tab(num_scalar(ng),ng)%var_t_1D => vart
 
-!!$    ! save  field vtables_scalar_new
-!!$    scalar_tab(num_scalar(ng),ng)%a_var_t => vart(:)
+    ! save  field vtables_scalar_new
+    scalar_tab(num_scalar(ng),ng)%a_var_t => vart(:)
 
     if (dumpLocal) then
        write(str(1),"(i8)") num_scalar(ng)
@@ -254,8 +250,8 @@ contains
     scalar_tab(num_scalar(ng),ng)%var_p_2D => varp
     scalar_tab(num_scalar(ng),ng)%var_t_1D => vart
 
-!!$    ! save  field vtables_scalar_new
-!!$    scalar_tab(num_scalar(ng),ng)%a_var_t => vart(:)
+    ! save  field vtables_scalar_new
+    scalar_tab(num_scalar(ng),ng)%a_var_t => vart(:)
 
     if (dumpLocal) then
        write(str(1),"(i8)") num_scalar(ng)
@@ -299,8 +295,8 @@ contains
     scalar_tab(num_scalar(ng),ng)%var_p_3D => varp
     scalar_tab(num_scalar(ng),ng)%var_t_1D => vart
 
-!!$    ! save  field vtables_scalar_new
-!!$    scalar_tab(num_scalar(ng),ng)%a_var_t => vart(:)
+    ! save  field vtables_scalar_new
+    scalar_tab(num_scalar(ng),ng)%a_var_t => vart(:)
 
     if (dumpLocal) then
        write(str(1),"(i8)") num_scalar(ng)
@@ -427,7 +423,6 @@ contains
     num_var(ng)=num_var(ng)+1
     nv=num_var(ng)
 
-    vtab_r(nv,ng)%var_p => var
     vtab_r(nv,ng)%var_m => varm
 
 
@@ -502,8 +497,6 @@ contains
     num_scalar(ng)=num_scalar(ng)+1
     nv=num_scalar(ng)
     scalar_tab(nv,ng)%name = tokens(1)
-    scalar_tab(nv,ng)%var_p => varp
-    scalar_tab(nv,ng)%var_t => vart
   end subroutine vtables_scalar
 
 
@@ -728,7 +721,6 @@ subroutine vtables2_I(var, varm, ng, npts, imean, tabstr)
   num_var(ng)=num_var(ng)+1
   nv=num_var(ng)
 
-  vtab_r(nv,ng)%var_p => var
   vtab_r(nv,ng)%var_m => varm
 
 

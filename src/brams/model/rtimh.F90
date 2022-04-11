@@ -371,7 +371,9 @@ subroutine timestep(OneGrid)
 
   !  Nested grid boundaries
   !----------------------------------------
-  if (nxtnest(ngrid)>=1) call nstbdriv()
+!!$  ! **(JP)** Comment out to avoid compilation errors due to removal of scalar_tab%var_p
+!!$  ! at procedure nstbdriv, which is also commented out
+!!$  if (nxtnest(ngrid)>=1) call nstbdriv()
 
   !  Rayleigh friction for theta
   !----------------------------------------

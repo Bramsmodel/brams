@@ -1103,7 +1103,19 @@ SUBROUTINE hist_pol_read(maxarr, hnamein, iunhd)
         CALL parf_bcast(npts, master_num)
         CALL parf_bcast(scr, INT(npts, i8), master_num)
 
-        CALL atob(npts, scr(1), vtab_r(nv,ngr)%var_p)
+        if (vtab_r(nv,ngr)%idim_type == 2) then
+           CALL atob(npts, scr(1), vtab_r(nv,ngr)%var_p_2D)
+        else if (vtab_r(nv,ngr)%idim_type == 3) then
+           CALL atob(npts, scr(1), vtab_r(nv,ngr)%var_p_3D)
+        else if (vtab_r(nv,ngr)%idim_type == 4) then
+           CALL atob(npts, scr(1), vtab_r(nv,ngr)%var_p_4D)
+        else if (vtab_r(nv,ngr)%idim_type == 5) then
+           CALL atob(npts, scr(1), vtab_r(nv,ngr)%var_p_4D)
+        else if (vtab_r(nv,ngr)%idim_type == 6) then
+           CALL atob(npts, scr(1), vtab_r(nv,ngr)%var_p_3D)
+        else if (vtab_r(nv,ngr)%idim_type == 7) then
+           CALL atob(npts, scr(1), vtab_r(nv,ngr)%var_p_3D)
+        end if
      ENDIF
 
   ENDDO
