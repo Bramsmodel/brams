@@ -102,8 +102,8 @@ subroutine CUPARM_GRELL_CATT(iens)
        
         !srf - use the old way to define the cumulus forcing
 	if(i_forcing /= 1) then
-             call atob(mxp * myp * mzp,tend%THT(1),cuforc_g(ngrid)%lsfth(1,1,1))
-             call atob(mxp * myp * mzp,tend%RTT(1),cuforc_g(ngrid)%lsfrt(1,1,1))
+             call atob(mxp * myp * mzp,tend%THT(1),cuforc_g(ngrid)%lsfth)
+             call atob(mxp * myp * mzp,tend%RTT(1),cuforc_g(ngrid)%lsfrt)
         endif	
 
         call cuparth_catt(CCATT,           &
@@ -126,35 +126,35 @@ subroutine CUPARM_GRELL_CATT(iens)
              ngrids_cp,                    & !18
              DTLT,                         & !19
              time,                         & !20
-             basic_g(ngrid)%up   (1,1,1),  & !21
-             basic_g(ngrid)%vp   (1,1,1),  & !22
-             basic_g(ngrid)%wp   (1,1,1),  & !23
-             basic_g(ngrid)%theta(1,1,1),  & !24
-             basic_g(ngrid)%thp  (1,1,1),  & !24
-             basic_g(ngrid)%pp   (1,1,1),  & !25
-             basic_g(ngrid)%pi0  (1,1,1),  & !26
-             basic_g(ngrid)%dn0  (1,1,1),  & !27
-             basic_g(ngrid)%rv   (1,1,1),  & !28
-             turb_g(ngrid)%tkep  (1,1,1),  & !29
+             basic_g(ngrid)%up   ,  & !21
+             basic_g(ngrid)%vp   ,  & !22
+             basic_g(ngrid)%wp   ,  & !23
+             basic_g(ngrid)%theta,  & !24
+             basic_g(ngrid)%thp  ,  & !24
+             basic_g(ngrid)%pp   ,  & !25
+             basic_g(ngrid)%pi0  ,  & !26
+             basic_g(ngrid)%dn0  ,  & !27
+             basic_g(ngrid)%rv   ,  & !28
+             turb_g(ngrid)%tkep  ,  & !29
              tkmin,                        & !30
-	     micro_g(ngrid)%rcp(1,1,1),    &! liquid water
-    	     micro_g(ngrid)%rrp(1,1,1),    &! pristine
-    	     micro_g(ngrid)%rpp(1,1,1),    &
-	     micro_g(ngrid)%rsp(1,1,1),    &
-    	     micro_g(ngrid)%rap(1,1,1),    &
-	     micro_g(ngrid)%rgp(1,1,1),    &
-    	     micro_g(ngrid)%rhp(1,1,1),    &
+	     micro_g(ngrid)%rcp,    &! liquid water
+    	     micro_g(ngrid)%rrp,    &! pristine
+    	     micro_g(ngrid)%rpp,    &
+	     micro_g(ngrid)%rsp,    &
+    	     micro_g(ngrid)%rap,    &
+	     micro_g(ngrid)%rgp,    &
+    	     micro_g(ngrid)%rhp,    &
 !
-	     grid_g(ngrid)%topt  (1,1),    & !29
-             grid_g(ngrid)%RTGT  (1,1),    & !30
+	     grid_g(ngrid)%topt  ,    & !29
+             grid_g(ngrid)%RTGT  ,    & !30
              !
-             cuforc_g(ngrid)%lsfth(1,1,1)  ,& !33 
-             cuforc_g(ngrid)%lsfrt(1,1,1)  ,& !34 
-             tend%PT(1),                   & !35
-             cuparm_g(ngrid)%THSRC (1,1,1),& !36 
-             cuparm_g(ngrid)%RTSRC (1,1,1),& !37 
-             cuparm_g(ngrid)%CLSRC (1,1,1),& !37 
-             cuparm_g(ngrid)%CONPRR(1,1),  & !38      
+             cuforc_g(ngrid)%lsfth  ,& !33 
+             cuforc_g(ngrid)%lsfrt  ,& !34 
+             tend%PT,                   & !35
+             cuparm_g(ngrid)%THSRC ,& !36 
+             cuparm_g(ngrid)%RTSRC ,& !37 
+             cuparm_g(ngrid)%CLSRC ,& !37 
+             cuparm_g(ngrid)%CONPRR,  & !38      
 !
 !             extra3d(5,ngrid)%d3   (1,1,1),& !39 ! cloud/ice tendency
 !             extra3d(1,ngrid)%d3   (1,1,1),& !39 ! ensemble output
@@ -186,25 +186,25 @@ subroutine CUPARM_GRELL_CATT(iens)
              clwup5d,                      & !60
              tup5d ,                       & !61
              !
-             grell_g(ngrid)%upmf   (1,1),  & !62
-             grell_g(ngrid)%dnmf   (1,1),  & !63
-             grell_g(ngrid)%xierr  (1,1),  & !64
-             grell_g(ngrid)%xktop  (1,1),  & !65
-             grell_g(ngrid)%xkbcon (1,1),  & !66
-             grell_g(ngrid)%xk22   (1,1),  & !67             
-             grell_g(ngrid)%xjmin  (1,1),  & !68
-             grell_g(ngrid)%xkdt   (1,1),  & !69
-             grell_g(ngrid)%xiact_p(1,1),  & !70
-             grell_g(ngrid)%xiact_c(1,1),  & !71
+             grell_g(ngrid)%upmf   ,  & !62
+             grell_g(ngrid)%dnmf   ,  & !63
+             grell_g(ngrid)%xierr  ,  & !64
+             grell_g(ngrid)%xktop  ,  & !65
+             grell_g(ngrid)%xkbcon ,  & !66
+             grell_g(ngrid)%xk22   ,  & !67             
+             grell_g(ngrid)%xjmin  ,  & !68
+             grell_g(ngrid)%xkdt   ,  & !69
+             grell_g(ngrid)%xiact_p,  & !70
+             grell_g(ngrid)%xiact_c,  & !71
 	     confrq,frqanl,                &
 	     deltaxn(ngrid)*deltayn(ngrid),&
-             leaf_g(ngrid)%patch_area(1,1,1), &
+             leaf_g(ngrid)%patch_area, &
 	     npatch,                       &
 	     level,                        &
-	     grid_g(ngrid)%glat     (1,1), & 
-	     grid_g(ngrid)%glon     (1,1), & !
-  	     turb_g(ngrid)%sflux_r  (1,1), & ! fluxos a serem usados em trigg_ecmwf
-             turb_g(ngrid)%sflux_t  (1,1), &
+	     grid_g(ngrid)%glat     , & 
+	     grid_g(ngrid)%glon     , & !
+  	     turb_g(ngrid)%sflux_r  , & ! fluxos a serem usados em trigg_ecmwf
+             turb_g(ngrid)%sflux_t  , &
 	     trigg,autoconv )    	       
 
 !--(DMK-CCATT-INI)------------------------------------------------------------
@@ -222,10 +222,10 @@ subroutine CUPARM_GRELL_CATT(iens)
 
      end if 
 
-     call accum(int(mxp*myp*mzp,i8), tend%tht(1), cuparm_g(ngrid)%thsrc(1,1,1))
-     call accum(int(mxp*myp*mzp,i8), tend%rtt(1), cuparm_g(ngrid)%rtsrc(1,1,1))
+     call accum(int(mxp*myp*mzp,i8), tend%tht, cuparm_g(ngrid)%thsrc)
+     call accum(int(mxp*myp*mzp,i8), tend%rtt, cuparm_g(ngrid)%rtsrc)
 
-     call update(mxp*myp, cuparm_g(ngrid)%aconpr(1,1),cuparm_g(ngrid)%conprr(1,1),dtlt)
+     call update(mxp*myp, cuparm_g(ngrid)%aconpr,cuparm_g(ngrid)%conprr,dtlt)
 
      if(do_cupar_mcphys_coupling == 1) then
        call cupar2mcphysics(mzp,mxp,myp,ia,iz,ja,jz,ngrid,dtlt,& 
@@ -254,8 +254,8 @@ subroutine CUPARM_GRELL_CATT(iens)
         
         !srf - use the old way to define the cumulus forcing
 	if(i_forcing /= 1) then
-             call atob(mxp * myp * mzp,tend%THT(1),cuforc_sh_g(ngrid)%lsfth(1,1,1))
-             call atob(mxp * myp * mzp,tend%RTT(1),cuforc_sh_g(ngrid)%lsfrt(1,1,1))
+             call atob(mxp * myp * mzp,tend%THT(1),cuforc_sh_g(ngrid)%lsfth)
+             call atob(mxp * myp * mzp,tend%RTT(1),cuforc_sh_g(ngrid)%lsfrt)
         endif	
 
 
@@ -281,27 +281,27 @@ subroutine CUPARM_GRELL_CATT(iens)
              dtlt,         		     &   
              time,         		     &   
              !
-             basic_g(ngrid)%up   (1,1,1),    &   
-             basic_g(ngrid)%vp   (1,1,1),    &   
-             basic_g(ngrid)%wp   (1,1,1),    &   
-             basic_g(ngrid)%theta(1,1,1),    &   
-             basic_g(ngrid)%thp  (1,1,1),    &   
-             basic_g(ngrid)%pp   (1,1,1),    &   
-             basic_g(ngrid)%pi0  (1,1,1),    &   
-             basic_g(ngrid)%dn0  (1,1,1),    &   
-             basic_g(ngrid)%rv   (1,1,1),    &   
-             turb_g(ngrid)%tkep  (1,1,1),    &   
+             basic_g(ngrid)%up   ,    &   
+             basic_g(ngrid)%vp   ,    &   
+             basic_g(ngrid)%wp   ,    &   
+             basic_g(ngrid)%theta,    &   
+             basic_g(ngrid)%thp  ,    &   
+             basic_g(ngrid)%pp   ,    &   
+             basic_g(ngrid)%pi0  ,    &   
+             basic_g(ngrid)%dn0  ,    &   
+             basic_g(ngrid)%rv   ,    &   
+             turb_g(ngrid)%tkep  ,    &   
              !
              tkmin,                          &   
-	     micro_g(ngrid)%rcp(1,1,1),      &! liquid water
+	     micro_g(ngrid)%rcp,      &! liquid water
 !
-             grid_g(ngrid)%topt     (1,1),   &   
-             grid_g(ngrid)%RTGT     (1,1),   &   
-             cuforc_sh_g(ngrid)%lsfth(1,1,1), &   
-             cuforc_sh_g(ngrid)%lsfrt(1,1,1), &   
-             tend%PT(1),		     &   
-             cuparm_g_sh(ngrid)%thsrc(1,1,1),&   
-             cuparm_g_sh(ngrid)%rtsrc(1,1,1),&   
+             grid_g(ngrid)%topt     ,   &   
+             grid_g(ngrid)%RTGT     ,   &   
+             cuforc_sh_g(ngrid)%lsfth, &   
+             cuforc_sh_g(ngrid)%lsfrt, &   
+             tend%PT,     &   
+             cuparm_g_sh(ngrid)%thsrc,&   
+             cuparm_g_sh(ngrid)%rtsrc,&   
 !
 !             extra3d(2,ngrid)%d3     (1,1,1),&   !39 !<< usando extra3d(2)
 !             extra2d(2,ngrid)%d2     (1,1),  &   !39 !<< usando extra2d(2)
@@ -331,16 +331,16 @@ subroutine CUPARM_GRELL_CATT(iens)
              clwup5d,                        & 
              tup5d,                          & 
              !
-             grell_g_sh(ngrid)%upmf  (1,1),  & 
-             grell_g_sh(ngrid)%xierr (1,1),  & 
-             grell_g_sh(ngrid)%xktop (1,1),  & 
-             grell_g_sh(ngrid)%xkbcon(1,1),  & 
-             grell_g_sh(ngrid)%xk22  (1,1),  & 
+             grell_g_sh(ngrid)%upmf  ,  & 
+             grell_g_sh(ngrid)%xierr ,  & 
+             grell_g_sh(ngrid)%xktop ,  & 
+             grell_g_sh(ngrid)%xkbcon,  & 
+             grell_g_sh(ngrid)%xk22  ,  & 
 !            grell_g   (ngrid)%xierr (1,1),  & !para uso futuro, inibir shallow se deep is ON
-             grell_g_sh   (ngrid)%xierr (1,1),  & 
+             grell_g_sh   (ngrid)%xierr ,  & 
 	     confrq,frqanl,                  &
 	     deltaxn(ngrid)*deltayn(ngrid),  &
-             leaf_g(ngrid)%patch_area(1,1,1),&
+             leaf_g(ngrid)%patch_area,&
 	     npatch,                         &
 	     level,                          &
 	     trigg,autoconv )    
@@ -359,8 +359,8 @@ subroutine CUPARM_GRELL_CATT(iens)
 !
      end if 
 
-     call accum(int(mxp*myp*mzp,i8), tend%tht(1), cuparm_g_sh(ngrid)%thsrc(1,1,1))
-     call accum(int(mxp*myp*mzp,i8), tend%rtt(1), cuparm_g_sh(ngrid)%rtsrc(1,1,1))
+     call accum(int(mxp*myp*mzp,i8), tend%tht, cuparm_g_sh(ngrid)%thsrc)
+     call accum(int(mxp*myp*mzp,i8), tend%rtt, cuparm_g_sh(ngrid)%rtsrc)
 	end if
 
 

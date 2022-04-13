@@ -278,50 +278,50 @@ SUBROUTINE chem_isan_driver (name_name)
       if(icFileType==1) then
         if(nhemgrd2 == 0) then
            call chem_pressure_stage_grib2(nnxp(1),nnyp(1),nhemgrd2  &
-                ,grid_g(1)%glat(1,1),grid_g(1)%glon(1,1)  &
-                ,grid_g(1)%glat(1,1),grid_g(1)%glon(1,1))
+                ,grid_g(1)%glat,grid_g(1)%glon  &
+                ,grid_g(1)%glat,grid_g(1)%glon)
         else
            call chem_pressure_stage_grib2(nnxp(1),nnyp(1),nhemgrd2  &
-                ,grid_g(1)%glat(1,1),grid_g(1)%glon(1,1)  &
-                ,grid_g(nhemgrd2)%glat(1,1)  &
-                ,grid_g(nhemgrd2)%glon(1,1))
+                ,grid_g(1)%glat,grid_g(1)%glon  &
+                ,grid_g(nhemgrd2)%glat  &
+                ,grid_g(nhemgrd2)%glon)
         endif
         print*,'after pressure stagep_u(nprx/2,npry/2,1:nprz):',nprx,npry,p_u(nprx/2,npry/2,1:nprz)
       elseif(icFileType==2 .or. icFileType==3) then
 #ifdef cdf
         if(nhemgrd2 == 0) then
           call chem_pressure_stage_netCDF(nnxp(1),nnyp(1),nhemgrd2  &
-              ,grid_g(1)%glat(1,1),grid_g(1)%glon(1,1)  &
-              ,grid_g(1)%glat(1,1),grid_g(1)%glon(1,1))
+              ,grid_g(1)%glat,grid_g(1)%glon  &
+              ,grid_g(1)%glat,grid_g(1)%glon)
         else
           call chem_pressure_stage_netCDF(nnxp(1),nnyp(1),nhemgrd2  &
-              ,grid_g(1)%glat(1,1),grid_g(1)%glon(1,1)  &
-              ,grid_g(nhemgrd2)%glat(1,1)  &
-              ,grid_g(nhemgrd2)%glon(1,1))
+              ,grid_g(1)%glat,grid_g(1)%glon  &
+              ,grid_g(nhemgrd2)%glat  &
+              ,grid_g(nhemgrd2)%glon)
         endif
 #endif
         print*,'after pressure stagep_u(nprx/2,npry/2,1:nprz):',nprx,npry,p_u(nprx/2,npry/2,1:nprz)
       elseif(icFileType==4) then
         if(nhemgrd2 == 0) then
           call chem_pressure_stage_grads(nnxp(1),nnyp(1),nnzp(1),nhemgrd2  &
-                ,oneGlobalGridData(1)%global_glat(1,1),oneGlobalGridData(1)%global_glon(1,1)  &
-                ,oneGlobalGridData(1)%global_glat(1,1),oneGlobalGridData(1)%global_glon(1,1))
+                ,oneGlobalGridData(1)%global_glat,oneGlobalGridData(1)%global_glon  &
+                ,oneGlobalGridData(1)%global_glat,oneGlobalGridData(1)%global_glon)
         else
           call chem_pressure_stage_grads(nnxp(1),nnyp(1),nnzp(1),nhemgrd2  &
-                ,oneGlobalGridData(1)%global_glat(1,1),oneGlobalGridData(1)%global_glon(1,1)  &
-                ,oneGlobalGridData(nhemgrd2)%global_glat(1,1),oneGlobalGridData(nhemgrd2)%global_glon(1,1))
+                ,oneGlobalGridData(1)%global_glat,oneGlobalGridData(1)%global_glon  &
+                ,oneGlobalGridData(nhemgrd2)%global_glat,oneGlobalGridData(nhemgrd2)%global_glon)
         endif
         print*,'after pressure stagep_u(nprx/2,npry/2,1:nprz):',nprx,npry,p_u(nprx/2,npry/2,1:nprz)
       else
         if(nhemgrd2 == 0) then
            call chem_pressure_stage(nnxp(1),nnyp(1),nhemgrd2  &
-                ,grid_g(1)%glat(1,1),grid_g(1)%glon(1,1)  &
-                ,grid_g(1)%glat(1,1),grid_g(1)%glon(1,1))
+                ,grid_g(1)%glat,grid_g(1)%glon  &
+                ,grid_g(1)%glat,grid_g(1)%glon)
         else
            call chem_pressure_stage(nnxp(1),nnyp(1),nhemgrd2  &
-                ,grid_g(1)%glat(1,1),grid_g(1)%glon(1,1)  &
-                ,grid_g(nhemgrd2)%glat(1,1)  &
-                ,grid_g(nhemgrd2)%glon(1,1))
+                ,grid_g(1)%glat,grid_g(1)%glon  &
+                ,grid_g(nhemgrd2)%glat  &
+                ,grid_g(nhemgrd2)%glon)
         endif
         print*,'after pressure stagep_u(nprx/2,npry/2,1:nprz):',nprx,npry,p_u(nprx/2,npry/2,1:nprz)
       endif
@@ -559,12 +559,12 @@ SUBROUTINE chem_isan_driver (name_name)
            ! fill reference states for all grids
 
            call varfile_refstate(nnzp(1),nnxp(1),nnyp(1)  &
-                ,is_grids(1)%rr_t(1,1,1),is_grids(1)%rr_p(1,1,1)  &
-                ,is_grids(1)%rr_pi0(1,1,1),is_grids(1)%rr_th0(1,1,1)  &
-                ,is_grids(1)%rr_r(1,1,1),is_grids(1)%rr_dn0(1,1,1)  &
-                ,is_grids(1)%rr_dn0u(1,1,1),is_grids(1)%rr_dn0v(1,1,1)  &
-                ,grid_g(1)%topt(1,1),grid_g(1)%rtgt(1,1)  &
-                ,ztn(1,1),ztop,piref(1,1),thref(1,1),dnref(1,1),rtref(1,1))
+                ,is_grids(1)%rr_t,is_grids(1)%rr_p  &
+                ,is_grids(1)%rr_pi0,is_grids(1)%rr_th0  &
+                ,is_grids(1)%rr_r,is_grids(1)%rr_dn0  &
+                ,is_grids(1)%rr_dn0u,is_grids(1)%rr_dn0v  &
+                ,grid_g(1)%topt,grid_g(1)%rtgt  &
+                ,ztn,ztop,piref,thref,dnref,rtref)
            is_grids(1)%rr_p(1:nnzp(1),1:nnxp(1),1:nnyp(1)) =  &
                 is_grids(1)%rr_p  (1:nnzp(1),1:nnxp(1),1:nnyp(1)) &
                 -is_grids(1)%rr_pi0(1:nnzp(1),1:nnxp(1),1:nnyp(1))
@@ -576,19 +576,19 @@ SUBROUTINE chem_isan_driver (name_name)
               call fmrefs3d_isan(ifm,icm,nnzp(ifm),nnxp(ifm),nnyp(ifm) &
                    ,nnzp(icm),nnxp(icm),nnyp(icm),maxiz,maxix,maxiy  &
                    ,nnstbot(ifm),nnsttop(ifm),jdim  &
-                   ,rr_scr1(1),rr_scr2(1),rr_vt2da(1)  &
-                   ,grid_g(ifm)%topt(1,1),grid_g(icm)%topt(1,1) &
-                   ,is_grids(icm)%rr_dn0(1,1,1),is_grids(ifm)%rr_dn0(1,1,1) &
-                   ,is_grids(icm)%rr_th0(1,1,1),is_grids(ifm)%rr_th0(1,1,1) &
-                   ,is_grids(ifm)%rr_pi0(1,1,1),is_grids(ifm)%rr_dn0u(1,1,1) &
-                   ,is_grids(ifm)%rr_dn0v(1,1,1),ztn(1,ifm),ztop )
+                   ,rr_scr1,rr_scr2,rr_vt2da  &
+                   ,grid_g(ifm)%topt,grid_g(icm)%topt &
+                   ,is_grids(icm)%rr_dn0,is_grids(ifm)%rr_dn0 &
+                   ,is_grids(icm)%rr_th0,is_grids(ifm)%rr_th0 &
+                   ,is_grids(ifm)%rr_pi0,is_grids(ifm)%rr_dn0u &
+                   ,is_grids(ifm)%rr_dn0v,ztn(1,ifm),ztop )
 
               call fmdn0_isan(ifm,icm,nnzp(ifm),nnxp(ifm),nnyp(ifm) &
                    ,nnzp(icm),nnxp(icm),nnyp(icm),maxiz,maxix,maxiy &
-                   ,rr_scr1(1),rr_scr2(1)  &
-                   ,grid_g(ifm)%topt(1,1),grid_g(icm)%topt(1,1) &
-                   ,is_grids(ifm)%rr_dn0(1,1,1),is_grids(ifm)%rr_dn0u(1,1,1) &
-                   ,is_grids(ifm)%rr_dn0v(1,1,1),ztn(1,ifm),ztop )
+                   ,rr_scr1,rr_scr2  &
+                   ,grid_g(ifm)%topt,grid_g(icm)%topt &
+                   ,is_grids(ifm)%rr_dn0,is_grids(ifm)%rr_dn0u &
+                   ,is_grids(ifm)%rr_dn0v,ztn(1,ifm),ztop )
 
               is_grids(ifm)%rr_p(1:nnzp(ifm),1:nnxp(ifm),1:nnyp(ifm)) =  &
                    is_grids(ifm)%rr_p  (1:nnzp(ifm),1:nnxp(ifm),1:nnyp(ifm)) &
@@ -639,16 +639,16 @@ SUBROUTINE chem_isan_driver (name_name)
 	      endif
         write(*,fmt='("Writing Meteo assimilation for ",I3.3," vars.")') 5 
 
-              call vforec(2,is_grids(ng)%rr_u(1,1,1),nxyzp,18  &
-                   ,rr_scr1(1),'LIN')
-              call vforec(2,is_grids(ng)%rr_v(1,1,1),nxyzp,18  &
-                   ,rr_scr1(1),'LIN')
-              call vforec(2,is_grids(ng)%rr_p(1,1,1),nxyzp,18  &
-                   ,rr_scr1(1),'LIN')
-              call vforec(2,is_grids(ng)%rr_t(1,1,1),nxyzp,18  &
-                   ,rr_scr1(1),'LIN')
-              call vforec(2,is_grids(ng)%rr_r(1,1,1),nxyzp,18  &
-                   ,rr_scr1(1),'LIN')
+              call vforec(2,is_grids(ng)%rr_u,nxyzp,18  &
+                   ,rr_scr1,'LIN')
+              call vforec(2,is_grids(ng)%rr_v,nxyzp,18  &
+                   ,rr_scr1,'LIN')
+              call vforec(2,is_grids(ng)%rr_p,nxyzp,18  &
+                   ,rr_scr1,'LIN')
+              call vforec(2,is_grids(ng)%rr_t,nxyzp,18  &
+                   ,rr_scr1,'LIN')
+              call vforec(2,is_grids(ng)%rr_r,nxyzp,18  &
+                   ,rr_scr1,'LIN')
 
              write(*,fmt='("Var: ",I3.3,1X,A16," MaxVal: ",E13.4," MinVal: ",E13.4)') 1, &
                   'U',maxval(is_grids(ng)%rr_u(:,:,:)), &
@@ -671,7 +671,7 @@ SUBROUTINE chem_isan_driver (name_name)
            write(*,fmt='("Writing chemistry assimilation for ",I3.3," Species.")') nspecies                   
 	         do nspc=1,nspecies
 	           call vforec(2,chem_is_grids(ng)%rr_sc(1,1,1,nspc),nxyzp,18  &
-                              ,rr_scr1(1),'LIN')
+                              ,rr_scr1,'LIN')
                    
 		         write(*,fmt='("Spc: ",I3.3,1X,A16," MaxVal: ",E13.4," MinVal: ",E13.4)') nspc, &
                   trim(assSpecieName(nspc)),maxval(chem_is_grids(ng)%rr_sc(:,:,:,nspc)), &
@@ -706,7 +706,7 @@ SUBROUTINE chem_isan_driver (name_name)
 !              enddo
 ! !LFR ---
              call vforec(2,aer_is_grids(ng)%rr_sc(1,1,1,nspc),nxyzp,18  &
-                              ,rr_scr1(1),'LIN')
+                              ,rr_scr1,'LIN')
                    
              write(*,fmt='("Spc: ",I3.3,1X,A16," MaxVal: ",E13.4," MinVal: ",E13.4)') nspc, &
                   trim(assAerSpecieName(nspc)),maxval(aer_is_grids(ng)%rr_sc(:,:,:,nspc)), &
@@ -744,16 +744,16 @@ SUBROUTINE chem_isan_driver (name_name)
 ! !LFR ---
         endif
 
-              call vmissw(is_grids(ng)%rr_slp(1,1),nxyp,rr_vt2da(1),1E30,-1.)
-              call vforec(2,rr_vt2da(1),nxyp,18,rr_scr1(1),'LIN')
-              call vmissw(is_grids(ng)%rr_sfp(1,1),nxyp,rr_vt2da(1),1E30,-1.)
-              call vforec(2,rr_vt2da(1),nxyp,18,rr_scr1(1),'LIN')
-              call vmissw(is_grids(ng)%rr_sft(1,1),nxyp,rr_vt2da(1),1E30,-1.)
-              call vforec(2,rr_vt2da(1),nxyp,18,rr_scr1(1),'LIN')
-              call vmissw(is_grids(ng)%rr_snow(1,1),nxyp,rr_vt2da(1),1E30,-1.)
-              call vforec(2,rr_vt2da(1),nxyp,18,rr_scr1(1),'LIN')
-              call vmissw(is_grids(ng)%rr_sst(1,1),nxyp,rr_vt2da(1),1E30,-1.)
-              call vforec(2,rr_vt2da(1),nxyp,18,rr_scr1(1),'LIN')
+              call vmissw(is_grids(ng)%rr_slp,nxyp,rr_vt2da,1E30,-1.)
+              call vforec(2,rr_vt2da,nxyp,18,rr_scr1,'LIN')
+              call vmissw(is_grids(ng)%rr_sfp,nxyp,rr_vt2da,1E30,-1.)
+              call vforec(2,rr_vt2da,nxyp,18,rr_scr1,'LIN')
+              call vmissw(is_grids(ng)%rr_sft,nxyp,rr_vt2da,1E30,-1.)
+              call vforec(2,rr_vt2da,nxyp,18,rr_scr1,'LIN')
+              call vmissw(is_grids(ng)%rr_snow,nxyp,rr_vt2da,1E30,-1.)
+              call vforec(2,rr_vt2da,nxyp,18,rr_scr1,'LIN')
+              call vmissw(is_grids(ng)%rr_sst,nxyp,rr_vt2da,1E30,-1.)
+              call vforec(2,rr_vt2da,nxyp,18,rr_scr1,'LIN')
               close(2)
            enddo
            call makefnam (locfn,varpfx,0,iyear,imonth,idate  &

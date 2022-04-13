@@ -132,18 +132,18 @@ subroutine sstnest(ifm, ivtime)
 
   ! Initialize SEATP and SEATF in subroutine sstinit
 
-  call sstinit(nnxp(ifm),nnyp(ifm),ifm, sfcfile_p(ifm)%seatf(1,1))
+  call sstinit(nnxp(ifm),nnyp(ifm),ifm, sfcfile_p(ifm)%seatf)
 
   if (icm>=1 .and. isstflg(ifm)==0) then
 
      ! Interpolate SEATF from coarser grid
 
      call fillscr(1, nxpmax, nypmax, 1, nnxp(icm), nnyp(icm), 1, 1,  &
-          mksfc_scr1, sfcfile_p(icm)%seatf(1,1))
+          mksfc_scr1, sfcfile_p(icm)%seatf)
      call eintp(mksfc_scr1, mksfc_scr2, 1, nxpmax, nypmax, 1,        &
           nnxp(ifm), nnyp(ifm), ifm, 2, 't', 0, 0)
      call fillvar(1, nxpmax, nypmax, 1, nnxp(ifm), nnyp(ifm), 1, 1,  &
-          mksfc_scr2, sfcfile_p(ifm)%seatf(1,1))
+          mksfc_scr2, sfcfile_p(ifm)%seatf)
 
      nvsstf(ifm)                 = nvsstf(icm)
      iyearvs (1:nvsstf(ifm),ifm) = iyearvs (1:nvsstf(ifm),icm)
@@ -155,7 +155,7 @@ subroutine sstnest(ifm, ivtime)
 
      ! Interpolate SEATF from standard dataset
 
-     call geodat(nnxp(ifm), nnyp(ifm), sfcfile_p(ifm)%seatf(1,1),     &
+     call geodat(nnxp(ifm), nnyp(ifm), sfcfile_p(ifm)%seatf,     &
           isstfn(ifm)(1:len_trim(isstfn(ifm))), vsstfil(ivtime,ifm)(1:len_trim(vsstfil(ivtime,ifm))), mksfc_vt2da, mksfc_vt2db, &
           ifm, 'SST')
 
@@ -169,7 +169,7 @@ subroutine sstnest(ifm, ivtime)
   ! If desired, override current values of SEATF with user-defined
   ! changes to subroutine sstinit_user.
 
-  call sstinit_user(nnxp(ifm), nnyp(ifm), ifm, sfcfile_p(ifm)%seatf(1,1))
+  call sstinit_user(nnxp(ifm), nnyp(ifm), ifm, sfcfile_p(ifm)%seatf)
 
 end subroutine sstnest
 
@@ -246,7 +246,7 @@ subroutine sst_write(ifm,ivt)
 101 format(4i5)
 102 format(6f16.5)
 
-  call vforec(25,sfcfile_p(ifm)%seatf(1,1),nnxp(ifm)*nnyp(ifm),24,scrx,'LIN')
+  call vforec(25,sfcfile_p(ifm)%seatf,nnxp(ifm)*nnyp(ifm),24,scrx,'LIN')
 
   !do j=1,nnyp(ifm)
   !do i=1,nnxp(ifm)

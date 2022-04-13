@@ -194,7 +194,7 @@ do nvh=1,nvbtab
    read(inhunt)(scr(i),i=1,nptsh)
 
    if (hr_table(nvh)%string == 'TOPTA') then
-      call atob_long(nptsh, scr(1), topt1(1,ngr))
+      call atob_long(nptsh, scr, topt1(1,ngr))
       if (ngr == ngrids1) exit
    endif
 enddo
@@ -316,20 +316,20 @@ read_loop: do nvh=1,nvbtab
                   print 33,'nud_update: filling: ',ngr &
                     ,ng,vtab_r(nv,ngr)%name,npts
                     33 format(a30,2i5,3x,a8,i8)
-                  call atob_long(nptsh, scr(1), varinit_g(ng)%varuf(1,1,1))
+                  call atob_long(nptsh, scr, varinit_g(ng)%varuf)
                else
                   ! Otherwise, interpolate...
                   print 33,'nud_update: interpolating: ',ngr &
                        ,ng,vtab_r(nv,ng)%name,npts
                   t1=cputime(w1)
-                  call hi_interp(nnzp1(ngr),nnxp1(ngr),nnyp1(ngr),1,scr(1)  &
+                  call hi_interp(nnzp1(ngr),nnxp1(ngr),nnyp1(ngr),1,scr  &
                                    ,xmn1(1,ngr),xtn1(1,ngr)  &
                                    ,ymn1(1,ngr),ytn1(1,ngr)  &
                                    ,zmn1(1,ngr),ztn1(1,ngr)  &
                                    ,platn1(ngr),plonn1(ngr)  &
                                    ,topt1(1,ngr),ztop1  &
                                    ,nnzp(ng),nnxp(ng),nnyp(ng),1  &
-                                   ,varinit_g(ng)%varuf(1,1,1)  &
+                                   ,varinit_g(ng)%varuf  &
                                    ,ng,ngr,vtab_r(nv,ng)%name,3)
                endif
                cycle grid_loop
@@ -338,18 +338,18 @@ read_loop: do nvh=1,nvbtab
                if ( igrid_match(ngr) == ng ) then
                   print 33,'nud_update: filling: ',ngr &
                     ,ng,vtab_r(nv,ng)%name,npts
-                  call atob_long(nptsh, scr(1), varinit_g(ng)%varvf(1,1,1))
+                  call atob_long(nptsh, scr, varinit_g(ng)%varvf)
                else
                   print 33,'nud_update: interpolating: ',ngr &
                        ,ng,vtab_r(nv,ng)%name,npts
-                  call hi_interp(nnzp1(ngr),nnxp1(ngr),nnyp1(ngr),1,scr(1)  &
+                  call hi_interp(nnzp1(ngr),nnxp1(ngr),nnyp1(ngr),1,scr  &
                                    ,xmn1(1,ngr),xtn1(1,ngr)  &
                                    ,ymn1(1,ngr),ytn1(1,ngr)  &
                                    ,zmn1(1,ngr),ztn1(1,ngr)  &
                                    ,platn1(ngr),plonn1(ngr)  &
                                    ,topt1(1,ngr),ztop1  &
                                    ,nnzp(ng),nnxp(ng),nnyp(ng),1  &
-                                   ,varinit_g(ng)%varvf(1,1,1)  &
+                                   ,varinit_g(ng)%varvf  &
                                    ,ng,ngr,vtab_r(nv,ngr)%name,3)
                endif
                cycle grid_loop
@@ -358,18 +358,18 @@ read_loop: do nvh=1,nvbtab
                if ( igrid_match(ngr) == ng ) then
                   print 33,'nud_update: filling: ',ngr &
                     ,ng,vtab_r(nv,ng)%name,npts
-                  call atob_long(nptsh, scr(1), varinit_g(ng)%vartf(1,1,1))
+                  call atob_long(nptsh, scr, varinit_g(ng)%vartf)
                else
                   print 33,'nud_update: interpolating: ',ngr &
                        ,ng,vtab_r(nv,ng)%name,npts
-                  call hi_interp(nnzp1(ngr),nnxp1(ngr),nnyp1(ngr),1,scr(1)  &
+                  call hi_interp(nnzp1(ngr),nnxp1(ngr),nnyp1(ngr),1,scr  &
                                    ,xmn1(1,ngr),xtn1(1,ngr)  &
                                    ,ymn1(1,ngr),ytn1(1,ngr)  &
                                    ,zmn1(1,ngr),ztn1(1,ngr)  &
                                    ,platn1(ngr),plonn1(ngr)  &
                                    ,topt1(1,ngr),ztop1  &
                                    ,nnzp(ng),nnxp(ng),nnyp(ng),1  &
-                                   ,varinit_g(ng)%vartf(1,1,1)  &
+                                   ,varinit_g(ng)%vartf  &
                                    ,ng,ngr,vtab_r(nv,ng)%name,3)
                endif
                cycle grid_loop
@@ -378,18 +378,18 @@ read_loop: do nvh=1,nvbtab
                if ( igrid_match(ngr) == ng ) then
                   print 33,'nud_update: filling: ',ngr &
                     ,ng,vtab_r(nv,ng)%name,npts
-                  call atob_long(nptsh, scr(1), varinit_g(ng)%varrf(1,1,1))
+                  call atob_long(nptsh, scr, varinit_g(ng)%varrf)
                else
                   print 33,'nud_update: interpolating: ',ngr &
                        ,ng,vtab_r(nv,ng)%name,npts
-                  call hi_interp(nnzp1(ngr),nnxp1(ngr),nnyp1(ngr),1,scr(1)  &
+                  call hi_interp(nnzp1(ngr),nnxp1(ngr),nnyp1(ngr),1,scr  &
                                    ,xmn1(1,ngr),xtn1(1,ngr)  &
                                    ,ymn1(1,ngr),ytn1(1,ngr)  &
                                    ,zmn1(1,ngr),ztn1(1,ngr)  &
                                    ,platn1(ngr),plonn1(ngr)  &
                                    ,topt1(1,ngr),ztop1  &
                                    ,nnzp(ng),nnxp(ng),nnyp(ng),1  &
-                                   ,varinit_g(ng)%varrf(1,1,1)  &
+                                   ,varinit_g(ng)%varrf  &
                                    ,ng,ngr,vtab_r(nv,ng)%name,3)
                endif
                cycle grid_loop
@@ -398,18 +398,18 @@ read_loop: do nvh=1,nvbtab
                if ( igrid_match(ngr) == ng ) then
                   print 33,'nud_update: filling: ',ngr &
                     ,ng,vtab_r(nv,ng)%name,npts
-                  call atob_long(nptsh, scr(1), varinit_g(ng)%varpf(1,1,1))
+                  call atob_long(nptsh, scr, varinit_g(ng)%varpf)
                else
                   print 33,'nud_update: interpolating: ',ngr &
                        ,ng,vtab_r(nv,ng)%name,npts
-                  call hi_interp(nnzp1(ngr),nnxp1(ngr),nnyp1(ngr),1,scr(1)  &
+                  call hi_interp(nnzp1(ngr),nnxp1(ngr),nnyp1(ngr),1,scr  &
                                    ,xmn1(1,ngr),xtn1(1,ngr)  &
                                    ,ymn1(1,ngr),ytn1(1,ngr)  &
                                    ,zmn1(1,ngr),ztn1(1,ngr)  &
                                    ,platn1(ngr),plonn1(ngr)  &
                                    ,topt1(1,ngr),ztop1  &
                                    ,nnzp(ng),nnxp(ng),nnyp(ng),1  &
-                                   ,varinit_g(ng)%varpf(1,1,1)  &
+                                   ,varinit_g(ng)%varpf  &
                                    ,ng,ngr,vtab_r(nv,ngr)%name,3)
                endif
                cycle grid_loop

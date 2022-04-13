@@ -49,21 +49,21 @@ subroutine SHCUPA()
      shcu_g(ngrid)%SHMF    = 0.
 
      call SHCUPAR(mzp,mxp,myp,ia,iz,ja,jz,i0,j0,                   &
-          basic_g(ngrid)%wp(1,1,1), basic_g(ngrid)%theta(1,1,1),   &
-          basic_g(ngrid)%pp(1,1,1), basic_g(ngrid)%pi0(1,1,1),     &
-          basic_g(ngrid)%dn0(1,1,1), basic_g(ngrid)%rv(1,1,1),     &
-          shcu_g(ngrid)%THSRCSH(1,1,1),                            &
-          shcu_g(ngrid)%RTSRCSH(1,1,1),                            & 
-          shcu_g(ngrid)%SHMF(1,1), grid_g(ngrid)%rtgt(1,1),        &
-          turb_g(ngrid)%sflux_t(1,1),                              & 
-          turb_g(ngrid)%sflux_r(1,1),                              &
-          turb_g(ngrid)%vkh(1,1,1),                                &
-          micro_g(ngrid)%rcp(1,1,1))
+          basic_g(ngrid)%wp, basic_g(ngrid)%theta,   &
+          basic_g(ngrid)%pp, basic_g(ngrid)%pi0,     &
+          basic_g(ngrid)%dn0, basic_g(ngrid)%rv,     &
+          shcu_g(ngrid)%THSRCSH,                            &
+          shcu_g(ngrid)%RTSRCSH,                            & 
+          shcu_g(ngrid)%SHMF, grid_g(ngrid)%rtgt,        &
+          turb_g(ngrid)%sflux_t,                              & 
+          turb_g(ngrid)%sflux_r,                              &
+          turb_g(ngrid)%vkh,                                &
+          micro_g(ngrid)%rcp)
 
   endif
 
-  call ACCUM(int(mxp*myp*mzp,i8), tend%tht(1), shcu_g(ngrid)%THSRCSH(1,1,1))
-  call ACCUM(int(mxp*myp*mzp,i8), tend%rtt(1), shcu_g(ngrid)%RTSRCSH(1,1,1))
+  call ACCUM(int(mxp*myp*mzp,i8), tend%tht, shcu_g(ngrid)%THSRCSH)
+  call ACCUM(int(mxp*myp*mzp,i8), tend%rtt, shcu_g(ngrid)%RTSRCSH)
 
   return
 end subroutine SHCUPA

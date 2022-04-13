@@ -389,7 +389,7 @@ subroutine node_getnbc(ifm, icm)
            nxc=i2c(nm)-i1c(nm)+1
            nyc=j2c(nm)-j1c(nm)+1
            mtp=nzc*nxc*nyc
-           call unmkbuff(scr1(1),buffnest(iptc(nm)+iptv(nm))  &
+           call unmkbuff(scr1,buffnest(iptc(nm)+iptv(nm))  &
                 ,maxnzp,maxnxp,maxnyp,nzc,nxc,nyc  &
                 ,i1c(nm),i2c(nm),j1c(nm),j2c(nm),k1c(nm),k2c(nm),mynum)
 
@@ -400,40 +400,40 @@ subroutine node_getnbc(ifm, icm)
   !            Do the actual interpolation and put stuff into the "b" array
 
      if(nv.eq.1) then
-        call par_bintp(scr1(1),scr2(1)  &
-             ,basic_g(ifm)%dn0(1,1,1)  &
+        call par_bintp(scr1,scr2  &
+             ,basic_g(ifm)%dn0  &
              ,maxnzp,maxnxp,maxnyp,nnzp(ifm)  &
              ,nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm)  &
              ,ifm,1,nodei0(mynum,ifm),nodej0(mynum,ifm),nodeibcon(mynum,ifm)  &
-             ,nbounds(ifm)%bux(1,1,1),nbounds(ifm)%buy(1,1,1)  &
-             ,nbounds(ifm)%buz(1,1,1),mynum)
+             ,nbounds(ifm)%bux,nbounds(ifm)%buy  &
+             ,nbounds(ifm)%buz,mynum)
      elseif(nv.eq.2) then
-        call par_bintp(scr1(1),scr2(1)  &
-             ,basic_g(ifm)%dn0(1,1,1)  &
+        call par_bintp(scr1,scr2  &
+             ,basic_g(ifm)%dn0  &
              ,maxnzp,maxnxp,maxnyp,nnzp(ifm)  &
              ,nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm)  &
              ,ifm,2,nodei0(mynum,ifm),nodej0(mynum,ifm),nodeibcon(mynum,ifm)  &
-             ,nbounds(ifm)%bvx(1,1,1),nbounds(ifm)%bvy(1,1,1)  &
-             ,nbounds(ifm)%bvz(1,1,1),mynum)
+             ,nbounds(ifm)%bvx,nbounds(ifm)%bvy  &
+             ,nbounds(ifm)%bvz,mynum)
      elseif(nv.eq.3) then
-        call par_bintp(scr1(1),scr2(1)  &
-             ,basic_g(ifm)%dn0(1,1,1)  &
+        call par_bintp(scr1,scr2  &
+             ,basic_g(ifm)%dn0  &
              ,maxnzp,maxnxp,maxnyp,nnzp(ifm)  &
              ,nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm)  &
              ,ifm,3,nodei0(mynum,ifm),nodej0(mynum,ifm),nodeibcon(mynum,ifm)  &
-             ,nbounds(ifm)%bwx(1,1,1),nbounds(ifm)%bwy(1,1,1)  &
-             ,nbounds(ifm)%bwz(1,1,1),mynum)
+             ,nbounds(ifm)%bwx,nbounds(ifm)%bwy  &
+             ,nbounds(ifm)%bwz,mynum)
      elseif(nv.eq.4) then
-        call par_bintp(scr1(1),scr2(1)  &
-             ,basic_g(ifm)%dn0(1,1,1)  &
+        call par_bintp(scr1,scr2  &
+             ,basic_g(ifm)%dn0  &
              ,maxnzp,maxnxp,maxnyp,nnzp(ifm)  &
              ,nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm)  &
              ,ifm,4,nodei0(mynum,ifm),nodej0(mynum,ifm),nodeibcon(mynum,ifm)  &
-             ,nbounds(ifm)%bpx(1,1,1),nbounds(ifm)%bpy(1,1,1)  &
-             ,nbounds(ifm)%bpz(1,1,1),mynum)
+             ,nbounds(ifm)%bpx,nbounds(ifm)%bpy  &
+             ,nbounds(ifm)%bpz,mynum)
      else
-        call par_bintp(scr1(1),scr2(1)  &
-             ,basic_g(ifm)%dn0(1,1,1)  &
+        call par_bintp(scr1,scr2  &
+             ,basic_g(ifm)%dn0  &
              ,maxnzp,maxnxp,maxnyp,nnzp(ifm)  &
              ,nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm)  &
              ,ifm,5,nodei0(mynum,ifm),nodej0(mynum,ifm),nodeibcon(mynum,ifm)  &

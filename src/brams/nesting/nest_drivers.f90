@@ -166,51 +166,51 @@ subroutine prgintrp(n1c,n2c,n3c,m1c,m2c,m3c,i0c,j0c,ifm,initflg,mynum)
   if (icm .eq. 0) return
   if (initflg .eq. 1) then
      call fillscr(1,maxnxp,maxnyp,1,n2c,n3c,1,1  &
-          ,scr1(1),grid_g(icm)%topt(1,1))
-     call eintp(scr1(1),scr2(1)  &
+          ,scr1,grid_g(icm)%topt)
+     call eintp(scr1,scr2  &
           ,1,maxnxp,maxnyp,1,nnxp(ifm),nnyp(ifm),ifm,2,'t',0,0)
      call fillvar(1,maxnxp,maxnyp,1,nnxp(ifm),nnyp(ifm),1,1  &
-          ,scr2(1),scratch%vt2da(1))
+          ,scr2,scratch%vt2da)
   endif
 
   !     Interpolate atmospheric variables
 
   call fmint3(m1c,m2c,m3c,nnzp(ifm),nnxp(ifm),nnyp(ifm),maxnzp,maxnxp,maxnyp  &
        ,ifm,icm,nnstbot(ifm),nnsttop(ifm),jdim,initflg,1,1,'u'  &
-       ,basic_g(icm)%uc(1,1,1),basic_g(ifm)%uc(1,1,1)  &
-       ,basic_g(icm)%dn0u(1,1,1),basic_g(ifm)%dn0u(1,1,1)  &
-       ,scr1(1),scr2(1)  &
-       ,grid_g(ifm)%topt(1,1),scratch%vt2da(1)  &
-       ,nbounds(ifm)%bux(1,1,1),nbounds(ifm)%buy(1,1,1)  &
-       ,nbounds(ifm)%buz(1,1,1))
+       ,basic_g(icm)%uc,basic_g(ifm)%uc  &
+       ,basic_g(icm)%dn0u,basic_g(ifm)%dn0u  &
+       ,scr1,scr2  &
+       ,grid_g(ifm)%topt,scratch%vt2da  &
+       ,nbounds(ifm)%bux,nbounds(ifm)%buy  &
+       ,nbounds(ifm)%buz)
 
   if (jdim .eq. 1 .or. icorflg .eq. 1)  &
        call fmint3(m1c,m2c,m3c,nnzp(ifm),nnxp(ifm),nnyp(ifm),maxnzp,maxnxp,maxnyp  &
        ,ifm,icm,nnstbot(ifm),nnsttop(ifm),jdim,initflg,1,1,'v'  &
-       ,basic_g(icm)%vc(1,1,1),basic_g(ifm)%vc(1,1,1)  &
-       ,basic_g(icm)%dn0v(1,1,1),basic_g(ifm)%dn0v(1,1,1)  &
-       ,scr1(1),scr2(1)  &
-       ,grid_g(ifm)%topt(1,1),scratch%vt2da(1)  &
-       ,nbounds(ifm)%bvx(1,1,1),nbounds(ifm)%bvy(1,1,1)  &
-       ,nbounds(ifm)%bvz(1,1,1))
+       ,basic_g(icm)%vc,basic_g(ifm)%vc  &
+       ,basic_g(icm)%dn0v,basic_g(ifm)%dn0v  &
+       ,scr1,scr2  &
+       ,grid_g(ifm)%topt,scratch%vt2da  &
+       ,nbounds(ifm)%bvx,nbounds(ifm)%bvy  &
+       ,nbounds(ifm)%bvz)
 
   call fmint3(m1c,m2c,m3c,nnzp(ifm),nnxp(ifm),nnyp(ifm),maxnzp,maxnxp,maxnyp  &
        ,ifm,icm,nnstbot(ifm),nnsttop(ifm),jdim,initflg,1,1,'w'  &
-       ,basic_g(icm)%wc(1,1,1),basic_g(ifm)%wc(1,1,1)  &
-       ,basic_g(icm)%dn0(1,1,1),basic_g(ifm)%dn0(1,1,1)  &
-       ,scr1(1),scr2(1)  &
-       ,grid_g(ifm)%topt(1,1),scratch%vt2da(1)  &
-       ,nbounds(ifm)%bwx(1,1,1),nbounds(ifm)%bwy(1,1,1)  &
-       ,nbounds(ifm)%bwz(1,1,1))
+       ,basic_g(icm)%wc,basic_g(ifm)%wc  &
+       ,basic_g(icm)%dn0,basic_g(ifm)%dn0  &
+       ,scr1,scr2  &
+       ,grid_g(ifm)%topt,scratch%vt2da  &
+       ,nbounds(ifm)%bwx,nbounds(ifm)%bwy  &
+       ,nbounds(ifm)%bwz)
 
   call fmint3(m1c,m2c,m3c,nnzp(ifm),nnxp(ifm),nnyp(ifm),maxnzp,maxnxp,maxnyp  &
        ,ifm,icm,nnstbot(ifm),nnsttop(ifm),jdim,initflg,0,1,'t'  &
-       ,basic_g(icm)%pc(1,1,1),basic_g(ifm)%pc(1,1,1)  &
-       ,basic_g(icm)%dn0(1,1,1),basic_g(ifm)%dn0(1,1,1)  &
-       ,scr1(1),scr2(1)  &
-       ,grid_g(ifm)%topt(1,1),scratch%vt2da(1)  &
-       ,nbounds(ifm)%bpx(1,1,1),nbounds(ifm)%bpy(1,1,1)  &
-       ,nbounds(ifm)%bpz(1,1,1))
+       ,basic_g(icm)%pc,basic_g(ifm)%pc  &
+       ,basic_g(icm)%dn0,basic_g(ifm)%dn0  &
+       ,scr1,scr2  &
+       ,grid_g(ifm)%topt,scratch%vt2da  &
+       ,nbounds(ifm)%bpx,nbounds(ifm)%bpy  &
+       ,nbounds(ifm)%bpz)
 
   do nf = 1,num_scalar(ifm)
      do nc = 1,num_scalar(icm)
@@ -220,9 +220,9 @@ subroutine prgintrp(n1c,n2c,n3c,m1c,m2c,m3c,i0c,j0c,ifm,initflg,mynum)
                 ,nnstbot(ifm),nnsttop(ifm),jdim,initflg,1,1,'t'  &
                 ,scalar_tab(nc,icm)%var_p_3D &
                 ,scalar_tab(nf,ifm)%var_p_3D  &
-                ,basic_g(icm)%dn0(1,1,1),basic_g(ifm)%dn0(1,1,1)  &
-                ,scr1(1),scr2(1)  &
-                ,grid_g(ifm)%topt(1,1),scratch%vt2da(1)  &
+                ,basic_g(icm)%dn0,basic_g(ifm)%dn0  &
+                ,scr1,scr2  &
+                ,grid_g(ifm)%topt,scratch%vt2da  &
                 ,nbounds(ifm)%bsx(1,1,1,nf),nbounds(ifm)%bsy(1,1,1,nf)  &
                 ,nbounds(ifm)%bsz(1,1,1,nf))
         endif

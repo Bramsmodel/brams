@@ -67,17 +67,17 @@ subroutine thermo(mzp,mxp,myp,ia,iz,ja,jz,micflg)
   if (level .le. 1) then
 
      call drythrm(mzp,mxp,myp,ia,iz,ja,jz  &
-          ,basic_g(ngrid)%thp(1,1,1) ,basic_g(ngrid)%theta(1,1,1)   &
-          ,basic_g(ngrid)%rtp(1,1,1) ,basic_g(ngrid)%rv(1,1,1),level)
+          ,basic_g(ngrid)%thp ,basic_g(ngrid)%theta   &
+          ,basic_g(ngrid)%rtp ,basic_g(ngrid)%rv,level)
 
   elseif (level .eq. 2) then
 
      call satadjst(mzp,mxp,myp,ia,iz,ja,jz  &
-          ,basic_g(ngrid)%pp(1,1,1)  ,scratch%scr1(1)             &
-          ,basic_g(ngrid)%thp(1,1,1) ,basic_g(ngrid)%theta(1,1,1) &
-          ,scratch%vt3db(1)          ,basic_g(ngrid)%pi0(1,1,1)   &
-          ,basic_g(ngrid)%rtp(1,1,1) ,basic_g(ngrid)%rv(1,1,1)    &
-          ,micro_g(ngrid)%rcp(1,1,1) )
+          ,basic_g(ngrid)%pp  ,scratch%scr1             &
+          ,basic_g(ngrid)%thp ,basic_g(ngrid)%theta &
+          ,scratch%vt3db      ,basic_g(ngrid)%pi0   &
+          ,basic_g(ngrid)%rtp ,basic_g(ngrid)%rv    &
+          ,micro_g(ngrid)%rcp )
 
   elseif (level .eq. 3) then
 
@@ -449,19 +449,19 @@ subroutine theta_thp_rk(mzp,mxp,myp,ia,iz,ja,jz,action)
      if(trim(action)=="get_thetail") stop "not ready for this option"
 
      call drythrm(mzp,mxp,myp,ia,iz,ja,jz  &
-          ,basic_g(ngrid)%thc(1,1,1) ,basic_g(ngrid)%theta(1,1,1)   &
-          ,basic_g(ngrid)%rtp(1,1,1) ,basic_g(ngrid)%rv(1,1,1),level)
+          ,basic_g(ngrid)%thc ,basic_g(ngrid)%theta   &
+          ,basic_g(ngrid)%rtp ,basic_g(ngrid)%rv,level)
 
   elseif (level .eq. 2) then
 
      if(trim(action)=="get_thetail") stop "not ready for this option"
 
      call satadjst(mzp,mxp,myp,ia,iz,ja,jz  &
-          ,basic_g(ngrid)%pc(1,1,1)  ,scratch%scr1(1)             &
-          ,basic_g(ngrid)%thc(1,1,1) ,basic_g(ngrid)%theta(1,1,1) &
-          ,scratch%vt3db(1)          ,basic_g(ngrid)%pi0(1,1,1)   &
-          ,basic_g(ngrid)%rtp(1,1,1) ,basic_g(ngrid)%rv(1,1,1)    &
-          ,micro_g(ngrid)%rcp(1,1,1) )
+          ,basic_g(ngrid)%pc  ,scratch%scr1             &
+          ,basic_g(ngrid)%thc ,basic_g(ngrid)%theta &
+          ,scratch%vt3db          ,basic_g(ngrid)%pi0   &
+          ,basic_g(ngrid)%rtp ,basic_g(ngrid)%rv    &
+          ,micro_g(ngrid)%rcp )
 
   elseif (level .eq. 3) then
 

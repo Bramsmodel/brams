@@ -101,30 +101,30 @@ subroutine hadvance(iac)
 
   !     For both IAC=1 and IAC=2, call PREDICT for U, V, W, and P.
 
-  call predict(mxyzp,basic_g(ngrid)%uc(1,1,1)   &
-                    ,basic_g(ngrid)%up(1,1,1)   &
-		    ,tend%ut(1)                 &
-		    ,scratch%vt3da(1),iac,dtlv  &
-		    ,scratch%vt3di(1),RAW)
+  call predict(mxyzp,basic_g(ngrid)%uc   &
+                    ,basic_g(ngrid)%up   &
+		    ,tend%ut                 &
+		    ,scratch%vt3da,iac,dtlv  &
+		    ,scratch%vt3di,RAW)
 
   if (icorflg .eq. 1 .or. jdim .eq. 1) then
-     call predict(mxyzp,basic_g(ngrid)%vc(1,1,1)  &
-                       ,basic_g(ngrid)%vp(1,1,1)  &
-		       ,tend%vt(1)                &
-		       ,scratch%vt3da(1),iac,dtlv &
-		       ,scratch%vt3dj(1), RAW)
+     call predict(mxyzp,basic_g(ngrid)%vc  &
+                       ,basic_g(ngrid)%vp  &
+		       ,tend%vt                &
+		       ,scratch%vt3da,iac,dtlv &
+		       ,scratch%vt3dj, RAW)
   endif
 
-  call predict(mxyzp,basic_g(ngrid)%wc(1,1,1)  &
-                    ,basic_g(ngrid)%wp(1,1,1)  &
-                    ,tend%wt(1)                &
-		    ,scratch%vt3da(1),iac,dtlv &
-		    ,scratch%vt3dk(1),RAW)
-  call predict(mxyzp,basic_g(ngrid)%pc(1,1,1)  &
-                    ,basic_g(ngrid)%pp(1,1,1)  &
-                    ,tend%pt(1)                &
-		    ,scratch%vt3da(1),iac,dtlv &
-		    ,scratch%vt3dl(1),RAW)
+  call predict(mxyzp,basic_g(ngrid)%wc  &
+                    ,basic_g(ngrid)%wp  &
+                    ,tend%wt                &
+		    ,scratch%vt3da,iac,dtlv &
+		    ,scratch%vt3dk,RAW)
+  call predict(mxyzp,basic_g(ngrid)%pc  &
+                    ,basic_g(ngrid)%pp  &
+                    ,tend%pt                &
+		    ,scratch%vt3da,iac,dtlv &
+		    ,scratch%vt3dl,RAW)
 
 
   return

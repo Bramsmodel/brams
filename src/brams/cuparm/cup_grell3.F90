@@ -1969,38 +1969,38 @@ subroutine cupar2mcphysics(m1,m2,m3,ia,iz,ja,jz,ngrid,dtlt &
   if(level == 2 .and. mcphys_type < 2) then
      call mcphysics0(m1,m2,m3,ia,iz,ja,jz,dtlt &
           ,clsrc                  &
-          ,tend%rct(1)            &
-          ,tend%rtt(1)            )
+          ,tend%rct            &
+          ,tend%rtt            )
 
   elseif(level == 3 .and. (mcphys_type >= 0))  then
 
      call mcphysics1(mcphys_type,m1,m2,m3,ia,iz,ja,jz,dtlt,cpi  &
           ,theta, pp, pi0,dn0 &
           ,clsrc          &! cumulus tendency
-          ,tend%rct(1)    &! cloud water mass mix ratio tendency 
-          ,tend%rpt(1)    &! pristine mass mix ratio tendency 
-          ,tend%rtt(1)    &! total water mass mix ratio tendency
+          ,tend%rct    &! cloud water mass mix ratio tendency 
+          ,tend%rpt    &! pristine mass mix ratio tendency 
+          ,tend%rtt    &! total water mass mix ratio tendency
           )
 
      if(mcphys_type == 2) &
           call mcphysics2(mcphys_type,m1,m2,m3,ia,iz,ja,jz,dtlt,cpi  &
           ,theta, pp, pi0,dn0 &
           ,clsrc          &! cumulus tendency
-          ,tend%rct(1)    &! cloud water mass mix ratio tendency 
-          ,tend%rpt(1)    &! pristine mass mix ratio tendency 
-          ,tend%rtt(1)    &! total water mass mix ratio tendency
-          ,tend%cpt(1)    &! pristine number conc tendency 
+          ,tend%rct    &! cloud water mass mix ratio tendency 
+          ,tend%rpt    &! pristine mass mix ratio tendency 
+          ,tend%rtt    &! total water mass mix ratio tendency
+          ,tend%cpt    &! pristine number conc tendency 
           )
 
      if(mcphys_type == 3) &
           call mcphysics3(mcphys_type,m1,m2,m3,ia,iz,ja,jz,dtlt,cpi  &
           ,theta, pp, pi0,dn0,micro_g(ngrid)%ccp &
           ,clsrc          &! cumulus tendency
-          ,tend%rct(1)    &! cloud water mass mix ratio tendency 
-          ,tend%rpt(1)    &! pristine mass mix ratio tendency 
-          ,tend%rtt(1)    &! total water mass mix ratio tendency
-          ,tend%cpt(1)    &! pristine number conc tendency 
-          ,tend%cct(1)    &! cloud water  number conc tendency 
+          ,tend%rct    &! cloud water mass mix ratio tendency 
+          ,tend%rpt    &! pristine mass mix ratio tendency 
+          ,tend%rtt    &! total water mass mix ratio tendency
+          ,tend%cpt    &! pristine number conc tendency 
+          ,tend%cct    &! cloud water  number conc tendency 
           )
 
   endif
@@ -2320,8 +2320,8 @@ subroutine prepare_lsf(nnqparm,nnshcu,iwork)
      endif
      if(iwork.eq.2) then
 
-        call accum(int(mxp*myp*mzp,i8), cuforc_g(ngrid)%lsfth(1,1,1), cuparm_g_sh(ngrid)%thsrc(1,1,1))
-        call accum(int(mxp*myp*mzp,i8), cuforc_g(ngrid)%lsfrt(1,1,1), cuparm_g_sh(ngrid)%rtsrc(1,1,1))
+        call accum(int(mxp*myp*mzp,i8), cuforc_g(ngrid)%lsfth, cuparm_g_sh(ngrid)%thsrc)
+        call accum(int(mxp*myp*mzp,i8), cuforc_g(ngrid)%lsfrt, cuparm_g_sh(ngrid)%rtsrc)
 
      endif
 

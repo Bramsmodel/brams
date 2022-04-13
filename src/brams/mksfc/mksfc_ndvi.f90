@@ -129,7 +129,7 @@ subroutine ndvinest(ifm, ivtime)
   ! Initialize SEATP and SEATF in subroutine ndviinit
 
   call ndviinit(nnxp(ifm), nnyp(ifm), npatch, ifm, &
-       sfcfile_p(ifm)%veg_ndvif(1,1,1))
+       sfcfile_p(ifm)%veg_ndvif)
 
   if (icm>=1 .and. ndviflg(ifm)==0) then
 
@@ -164,10 +164,10 @@ subroutine ndvinest(ifm, ivtime)
           ivegtflg(ifm), ivegtfn(ifm), isoilflg(ifm), isoilfn(ifm), &
           ndviflg(ifm), ndvifn(ifm), vndvifil(ivtime,ifm),  &
           'ndvi', platn(ifm), plonn(ifm),        &
-          sfcfile_p(ifm)%soil_text(1,1,1,1),  &
-          sfcfile_p(ifm)%patch_area(1,1,1),   &
-          sfcfile_p(ifm)%leaf_class(1,1,1),   &
-          sfcfile_p(ifm)%veg_ndvif(1,1,1))
+          sfcfile_p(ifm)%soil_text,  &
+          sfcfile_p(ifm)%patch_area,   &
+          sfcfile_p(ifm)%leaf_class,   &
+          sfcfile_p(ifm)%veg_ndvif)
   else
 
      iyearvn (1,ifm) = iyear1; imonthvn(1,ifm) = imonth1
@@ -179,7 +179,7 @@ subroutine ndvinest(ifm, ivtime)
   ! changes to subroutine ndviinit_user in the file ruser.f.
 
   call ndviinit_user(nnxp(ifm), nnyp(ifm), npatch, ifm,  &
-       sfcfile_p(ifm)%veg_ndvif(1,1,1))
+       sfcfile_p(ifm)%veg_ndvif)
 
 end subroutine ndvinest
 

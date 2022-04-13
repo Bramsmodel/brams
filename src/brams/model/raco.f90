@@ -1161,12 +1161,12 @@ contains
           if(damp_formulation==1) then
              ! application of divergence damping in the 1st timestep is detrimental to stability
              call get_wind_div_v2 (mzp,mxp,myp,ia,iz,ja,jz,izu,jzv    &
-                  ,up(1,1,1),vp(1,1,1),wp(1,1,1)                   &
-                  ,scratch%vt3da(1), scratch%vt3db(1), scratch%vt3dh(1) &
-                  ,div(1,1,1)          &
-                  ,rtgt(1,1),rtgu(1,1),dxu(1,1),rtgv(1,1),dyv(1,1),f13t(1,1)&
-                  ,f23t(1,1),fmapui(1,1),fmapvi(1,1)   &
-                  ,grid_g(ngrid)%fmapu(1,1), grid_g(ngrid)%fmapv(1,1)&
+                  ,up,vp,wp                   &
+                  ,scratch%vt3da, scratch%vt3db, scratch%vt3dh &
+                  ,div          &
+                  ,rtgt,rtgu,dxu,rtgv,dyv,f13t&
+                  ,f23t,fmapui,fmapvi   &
+                  ,grid_g(ngrid)%fmapu, grid_g(ngrid)%fmapv&
                   ,grid_g(ngrid)%dxt,grid_g(ngrid)%dyt,fmapt)
              if (.not. singleProcRun) then
                 if (dumpLocal) then

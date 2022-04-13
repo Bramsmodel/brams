@@ -180,8 +180,8 @@ subroutine top_write(ifm)
 101 format(2i5,2f11.5,i5,2f11.5)
 
 
-  call vforec(25,sfcfile_p(ifm)%topt(1,1),nnxyp(ifm),24,scrx,'LIN')
-  call vforec(25,sfcfile_p(ifm)%topzo(1,1),nnxyp(ifm),24,scrx,'LIN')
+  call vforec(25,sfcfile_p(ifm)%topt,nnxyp(ifm),24,scrx,'LIN')
+  call vforec(25,sfcfile_p(ifm)%topzo,nnxyp(ifm),24,scrx,'LIN')
 
   close(25)
 

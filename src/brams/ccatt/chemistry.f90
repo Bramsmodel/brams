@@ -500,8 +500,8 @@ CONTAINS
     IF(spc_alloc_chem(transport,CO) == ON) THEN
 
        CALL accum_lifetime(m1*m2*m3     &
-                           ,sc_t(1)     & ! tend
-                           ,sc_p(1,1,1) & ! mix ratio
+                           ,sc_t     & ! tend
+                           ,sc_p & ! mix ratio
                            ,vm_CO_i   )   ! inv of lifetime (1/seconds)
     ENDIF
 

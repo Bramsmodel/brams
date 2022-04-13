@@ -411,7 +411,7 @@ subroutine inithis()
                       ,platn1(ngrid1),plonn1(ngrid1)  &
                       ,topt1,ztop1  &
                       ,nnzp(ngrid1),nnxp(ngrid1),nnyp(ngrid1),1  &
-                      ,varinit_g(ngrid1)%varuf(1,1,1)  &
+                      ,varinit_g(ngrid1)%varuf  &
                       ,ngrid1,ngrid1,'UP',3)
 		      
 	write(*,*) 'initial anl: interpolating: UP', ngrid1, &
@@ -442,7 +442,7 @@ subroutine inithis()
                       ,platn1(ngrid1),plonn1(ngrid1)  &
                       ,topt1,ztop1  &
                       ,nnzp(ngrid1),nnxp(ngrid1),nnyp(ngrid1),1  &
-                      ,varinit_g(ngrid1)%varvf(1,1,1)  &
+                      ,varinit_g(ngrid1)%varvf  &
                       ,ngrid1,ngrid1,'VP',3)
 		      
 	write(*,*) 'initial anl: interpolating: VP', ngrid1, &
@@ -462,7 +462,7 @@ minval(varinit_g(ngrid1)%varvf), maxval(varinit_g(ngrid1)%varvf)
                       ,platn1(ngrid1),plonn1(ngrid1)  &
                       ,topt1,ztop1  &
                       ,nnzp(ngrid1),nnxp(ngrid1),nnyp(ngrid1),1  &
-                      ,varinit_g(ngrid1)%vartf(1,1,1)  &
+                      ,varinit_g(ngrid1)%vartf  &
                       ,ngrid1,ngrid1,'THETA',3)
 		      
 	write(*,*) 'initial anl: interpolating: THETA', ngrid1, &
@@ -486,7 +486,7 @@ minval(varinit_g(ngrid1)%vartf), maxval(varinit_g(ngrid1)%vartf)
                       ,platn1(ngrid1),plonn1(ngrid1)  &
                       ,topt1,ztop1  &
                       ,nnzp(ngrid1),nnxp(ngrid1),nnyp(ngrid1),1  &
-                      ,varinit_g(ngrid1)%varpf(1,1,1)  &
+                      ,varinit_g(ngrid1)%varpf  &
                       ,ngrid1,ngrid1,'PI',3)
 		      
 	write(*,*) 'initial anl: interpolating: PI', ngrid1, minval(varinit_g(ngrid1)%varpf), maxval(varinit_g(ngrid1)%varpf)
@@ -507,7 +507,7 @@ minval(varinit_g(ngrid1)%vartf), maxval(varinit_g(ngrid1)%vartf)
                       ,platn1(ngrid1),plonn1(ngrid1)  &
                       ,topt1,ztop1  &
                       ,nnzp(ngrid1),nnxp(ngrid1),nnyp(ngrid1),1  &
-                      ,varinit_g(ngrid1)%varrf(1,1,1)  &
+                      ,varinit_g(ngrid1)%varrf  &
                       ,ngrid1,ngrid1,'RV',3)
 		      
 	write(*,*) 'initial anl: interpolating: RV', ngrid1, minval(varinit_g(ngrid1)%varrf), maxval(varinit_g(ngrid1)%varrf)	
@@ -533,7 +533,7 @@ minval(varinit_g(ngrid1)%vartf), maxval(varinit_g(ngrid1)%vartf)
                       			      ,platn1(ngrid1),plonn1(ngrid1)  &
                       			      ,topt1,ztop1  &
                       			      ,nnzp(ngrid1),nnxp(ngrid1),nnyp(ngrid1),1  &
-                     			      ,chem1_g(nspc,ngrid1)%sc_pf(1,1,1)  &
+                     			      ,chem1_g(nspc,ngrid1)%sc_pf  &
                      			      ,ngrid1,ngrid1,trim(spc_name(nspc)),3)
 
 !--(DMK-CCATT-OBS) Checar as dimensoes nzp, nxp e nyp no BRAMS 5.0
@@ -627,10 +627,10 @@ minval(varinit_g(ngrid1)%vartf), maxval(varinit_g(ngrid1)%vartf)
 
   call newgrid(1)
   call refs3d(nnzp(1),nnxp(1),nnyp(1)  &
-       ,basic_g(1)%pi0  (1,1,1)  ,basic_g(1)%dn0  (1,1,1)  &
-       ,basic_g(1)%dn0u (1,1,1)  ,basic_g(1)%dn0v (1,1,1)  &
-       ,basic_g(1)%th0  (1,1,1)  ,grid_g(1)%topt  (1,1)    &
-       ,grid_g(1)%rtgt  (1,1)                                )
+       ,basic_g(1)%pi0    ,basic_g(1)%dn0    &
+       ,basic_g(1)%dn0u   ,basic_g(1)%dn0v   &
+       ,basic_g(1)%th0    ,grid_g(1)%topt    &
+       ,grid_g(1)%rtgt                                )
 
 !--(DMK-CCATT-INI)---------------------------------------------------------
   if(initial == 4)then
@@ -639,11 +639,11 @@ minval(varinit_g(ngrid1)%vartf), maxval(varinit_g(ngrid1)%vartf)
 	varinit_g(ngrid)%varpf(:,:,:) = varinit_g(ngrid)%varpf(:,:,:) - basic_g(ngrid)%pi0(:,:,:)
 !	varinit_g(ngrid)%varpf(1:nzp,1:nxp,1:nyp) = varinit_g(ngrid)%varpf(1:nzp,1:nxp,1:nyp) - basic_g(ngrid)%pi0(1:nzp,1:nxp,1:nyp)
 		
-	call atob(nxyzp,varinit_g(ngrid)%varuf(1,1,1),basic_g(ngrid)%uc(1,1,1))
-   	call atob(nxyzp,varinit_g(ngrid)%varvf(1,1,1),basic_g(ngrid)%vc(1,1,1))
-  	call atob(nxyzp,varinit_g(ngrid)%varpf(1,1,1),basic_g(ngrid)%pc(1,1,1))
-   	call atob(nxyzp,varinit_g(ngrid)%vartf(1,1,1),basic_g(ngrid)%thp(1,1,1))
-   	call atob(nxyzp,varinit_g(ngrid)%varrf(1,1,1),basic_g(ngrid)%rtp(1,1,1))
+	call atob(nxyzp,varinit_g(ngrid)%varuf,basic_g(ngrid)%uc)
+   	call atob(nxyzp,varinit_g(ngrid)%varvf,basic_g(ngrid)%vc)
+  	call atob(nxyzp,varinit_g(ngrid)%varpf,basic_g(ngrid)%pc)
+   	call atob(nxyzp,varinit_g(ngrid)%vartf,basic_g(ngrid)%thp)
+   	call atob(nxyzp,varinit_g(ngrid)%varrf,basic_g(ngrid)%rtp)
 	
 	! If this is an initialization, put data into regular arrays
    	
@@ -651,7 +651,7 @@ minval(varinit_g(ngrid1)%vartf), maxval(varinit_g(ngrid1)%vartf)
    	if(CHEM_ASSIM == 1 .and. CHEMISTRY >= 0) then 
       		do nspc=1,nspecies
         		if(spc_alloc(fdda,nspc) == 1) then
-				call atob(nxyzp,chem1_g(nspc,ngrid)%sc_pf(1,1,1),chem1_g(nspc,ngrid)%sc_p (1,1,1))
+				call atob(nxyzp,chem1_g(nspc,ngrid)%sc_pf,chem1_g(nspc,ngrid)%sc_p )
 				!call atob(nxyzp,chem1_g(nspc,ngrid)%sc_pf(1,1,1),chem1_g(nspc,ngrid)%sc_pp (1,1,1))
 			end if              
      		enddo

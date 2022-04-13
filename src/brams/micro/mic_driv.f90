@@ -107,8 +107,8 @@ subroutine micro()
      ncall2g(ngrid) = 5
 
      call mksedim_tab(mzp,mxp,myp,ngrid,nembfall,maxkfall,zm,dzt  &
-          ,pcp_tab(ngrid)%pcpfillc(1,1,1,1),pcp_tab(ngrid)%pcpfillr(1,1,1,1)  &
-	  ,pcp_tab(ngrid)%sfcpcp(1,1,1))
+          ,pcp_tab(ngrid)%pcpfillc,pcp_tab(ngrid)%pcpfillr  &
+	  ,pcp_tab(ngrid)%sfcpcp)
 
      do lhcat = 1,nhcat
         ch2(lhcat,ngrid) = float(nembfall-1) &
@@ -136,8 +136,8 @@ subroutine micro()
              ,basic_g(ngr)%dn0     (1,i,j)   ,basic_g(ngr)%pi0     (1,i,j)   &
              ,grid_g(ngr)%rtgt     (i,j)     ,grid_g(ngr)%lpw      (i,j)     &
              ,micro_g(ngr)%pcpg    (i,j)     ,micro_g(ngr)%qpcpg   (i,j)     &
-             ,micro_g(ngr)%dpcpg   (i,j)     ,pcp_tab(ngr)%pcpfillc(1,1,1,1) &
-             ,pcp_tab(ngr)%pcpfillr(1,1,1,1) ,pcp_tab(ngr)%sfcpcp  (1,1,1)   &
+             ,micro_g(ngr)%dpcpg   (i,j)     ,pcp_tab(ngr)%pcpfillc &
+             ,pcp_tab(ngr)%pcpfillr ,pcp_tab(ngr)%sfcpcp    &
              ,grid_g(ngr)%glat     (i,j)     ,grid_g(ngr)%topt     (i,j),if_adap     )
 
         call copyback(mzp,k1,k2,k3,grid_g(ngr)%lpw(i,j),i,j,micro_g(ngr))

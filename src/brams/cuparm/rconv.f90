@@ -65,18 +65,18 @@ subroutine cuparm()
         cuparm_g(ngrid)%conprr = 0.
 
         call conpar(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-             ,basic_g(ngrid)%up      (1,1,1)  &
-             ,basic_g(ngrid)%vp      (1,1,1)  &
-             ,basic_g(ngrid)%wp      (1,1,1)  &
-             ,basic_g(ngrid)%theta   (1,1,1)  &
-             ,basic_g(ngrid)%pp      (1,1,1)  &
-             ,basic_g(ngrid)%pi0     (1,1,1)  &
-             ,basic_g(ngrid)%dn0     (1,1,1)  &
-             ,basic_g(ngrid)%rv      (1,1,1)  &
-             ,cuparm_g(ngrid)%thsrc  (1,1,1)  &
-             ,cuparm_g(ngrid)%rtsrc  (1,1,1)  &
-             ,grid_g(ngrid)%rtgt     (1,1)    &
-             ,cuparm_g(ngrid)%conprr (1,1), grid_g(ngrid)%lpw(1,1)  )
+             ,basic_g(ngrid)%up        &
+             ,basic_g(ngrid)%vp        &
+             ,basic_g(ngrid)%wp        &
+             ,basic_g(ngrid)%theta     &
+             ,basic_g(ngrid)%pp        &
+             ,basic_g(ngrid)%pi0       &
+             ,basic_g(ngrid)%dn0       &
+             ,basic_g(ngrid)%rv        &
+             ,cuparm_g(ngrid)%thsrc    &
+             ,cuparm_g(ngrid)%rtsrc    &
+             ,grid_g(ngrid)%rtgt       &
+             ,cuparm_g(ngrid)%conprr , grid_g(ngrid)%lpw  )
         
      endif
    
@@ -84,20 +84,20 @@ subroutine cuparm()
      ! Check cumulus inversion tendencies and see if they are usable. If so,
      !   put in thsrc,rtscr,conprr arrays.
      call cu_inv_tend(mzp,mxp,myp,ia,iz,ja,jz  &
-          ,cuparm_g(ngrid)%thsrc(1,1,1)  &
-          ,cuparm_g(ngrid)%thsrcp(1,1,1)  &
-          ,cuparm_g(ngrid)%thsrcf(1,1,1)  &
-          ,cuparm_g(ngrid)%rtsrc(1,1,1)  &
-          ,cuparm_g(ngrid)%rtsrcp(1,1,1)  &
-          ,cuparm_g(ngrid)%rtsrcf(1,1,1)  &
-          ,cuparm_g(ngrid)%conprr (1,1)  &
-          ,cuparm_g(ngrid)%conprrp (1,1)  &
-          ,cuparm_g(ngrid)%conprrf (1,1) )
+          ,cuparm_g(ngrid)%thsrc  &
+          ,cuparm_g(ngrid)%thsrcp &
+          ,cuparm_g(ngrid)%thsrcf &
+          ,cuparm_g(ngrid)%rtsrc  &
+          ,cuparm_g(ngrid)%rtsrcp &
+          ,cuparm_g(ngrid)%rtsrcf &
+          ,cuparm_g(ngrid)%conprr &
+          ,cuparm_g(ngrid)%conprrp &
+          ,cuparm_g(ngrid)%conprrf )
   endif
   
   
-  call accum(int(mxp*myp*mzp,i8), tend%tht(1), cuparm_g(ngrid)%thsrc(1,1,1))
-  call accum(int(mxp*myp*mzp,i8), tend%rtt(1), cuparm_g(ngrid)%rtsrc(1,1,1))
+  call accum(int(mxp*myp*mzp,i8), tend%tht, cuparm_g(ngrid)%thsrc)
+  call accum(int(mxp*myp*mzp,i8), tend%rtt, cuparm_g(ngrid)%rtsrc)
   
 !!$  call update(int(mxp*myp,i8), cuparm_g(ngrid)%aconpr(1,1),  &
 !!$       cuparm_g(ngrid)%conprr(1,1), dtlt)

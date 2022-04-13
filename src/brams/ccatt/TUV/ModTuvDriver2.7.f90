@@ -779,10 +779,10 @@ integer :: kk
 
   	CALL mclatchyTuv(1,m1,IF_adap,koff(ia,ja),jday  &
   		  ,prsnz,prsnzp  &
-  		  ,grid_g(ngrid)%glat	    (1,1)  &
-  		  ,grid_g(ngrid)%rtgt	    (1,1)  &
-  		  ,grid_g(ngrid)%topt	    (1,1)  &
-  		  ,radiate_g(ngrid)%rlongup (1,1)  &
+   		  ,grid_g(ngrid)%glat	    (1,1)  &
+   		  ,grid_g(ngrid)%rtgt	    (1,1)  &
+   		  ,grid_g(ngrid)%topt	    (1,1)  &
+   		  ,radiate_g(ngrid)%rlongup (1,1)  &
   		  ,zm,zt,prd ,temprd(ia,ja,2:2),dair(ia,ja,2:2),rv , &
   		  zml(ia,ja,2:2),ztl(ia,ja,2:2),do3(ia,ja,2:2),&
   		  dzl(ia,ja,2:2),1,1,rgas,g,stefan,1,mclat,mcol)
@@ -828,10 +828,10 @@ integer :: kk
 
      CALL mclatchyTuv(2,m1,IF_adap,koff(ia,ja),jday  &
   	  ,prsnz,prsnzp  &
-  	  ,grid_g(ngrid)%glat	    (1,1)  &
-  	  ,grid_g(ngrid)%rtgt	    (1,1)  &
-  	  ,grid_g(ngrid)%topt	    (1,1)  &
-  	  ,radiate_g(ngrid)%rlongup (1,1)  &
+   	  ,grid_g(ngrid)%glat	    (1,1)  &
+   	  ,grid_g(ngrid)%rtgt	    (1,1)  &
+   	  ,grid_g(ngrid)%topt	    (1,1)  &
+   	  ,radiate_g(ngrid)%rlongup (1,1)  &
   	  ,zm,zt,prd ,temprd(ia,ja,:), &
   	  dair(ia,ja,:),rv ,zml(ia,ja,2:2),ztl(ia,ja,2:2), do3(ia,ja,2:2),&
   	  dzl(ia,ja,2:2),1,1,rgas,g,stefan,1,mclat,mcol)

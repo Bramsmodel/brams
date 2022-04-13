@@ -86,8 +86,8 @@ subroutine oda_nudge()
 
            call oda_proc_obs(nnzp(ng), nodemxp(mynum,ng), nodemyp(mynum,ng), &
                 nodei0(mynum,ng), nodej0(mynum,ng),  &
-                basic_g(ng)%pp(1,1,1), basic_g(ng)%pi0(1,1,1),  &
-                scratch%scr1(1), ng, nobs)
+                basic_g(ng)%pp, basic_g(ng)%pi0,  &
+                scratch%scr1, ng, nobs)
 
 !!!!print*,'oda-sfc nobs:',ng,nobs
 
@@ -99,16 +99,16 @@ subroutine oda_nudge()
            call krig(nnzp(ng),nodemxp(mynum,ng),nodemyp(mynum,ng)  &
                 ,xtn(1+nodei0(mynum,ng),ng),ytn(1+nodej0(mynum,ng),ng),ztn(1,ng)  &
                 ,nobs,xkobs,ykobs,zkobs,ekobs,ukobs  &
-                ,ng,nnzp(ng),grid_g(ng)%topt(1,1)  &
-                ,oda_g(ng)%uk(1,1,1),oda_g(ng)%ukv(1,1,1),1.)
+                ,ng,nnzp(ng),grid_g(ng)%topt  &
+                ,oda_g(ng)%uk,oda_g(ng)%ukv,1.)
 
            oda_g(ng)%vk(1:nnzp(ng),1:nodemxp(mynum,ng),1:nodemyp(mynum,ng))=0.
            oda_g(ng)%vkv(1:nnzp(ng),1:nodemxp(mynum,ng),1:nodemyp(mynum,ng))=0.
            call krig(nnzp(ng),nodemxp(mynum,ng),nodemyp(mynum,ng)  &
                 ,xtn(1+nodei0(mynum,ng),ng),ytn(1+nodej0(mynum,ng),ng),ztn(1,ng)  &
                 ,nobs,xkobs,ykobs,zkobs,ekobs,vkobs  &
-                ,ng,nnzp(ng),grid_g(ng)%topt(1,1)  &
-                ,oda_g(ng)%vk(1,1,1),oda_g(ng)%vkv(1,1,1),1.)
+                ,ng,nnzp(ng),grid_g(ng)%topt  &
+                ,oda_g(ng)%vk,oda_g(ng)%vkv,1.)
 
            !do i=1,nobs
            !if(tkobs(i) > 200. .and. tkobs(i) < 273.) print*,'tobs:',ng,i,tkobs(i)
@@ -118,8 +118,8 @@ subroutine oda_nudge()
            call krig(nnzp(ng),nodemxp(mynum,ng),nodemyp(mynum,ng)  &
                 ,xtn(1+nodei0(mynum,ng),ng),ytn(1+nodej0(mynum,ng),ng),ztn(1,ng)  &
                 ,nobs,xkobs,ykobs,zkobs,ekobs,tkobs  &
-                ,ng,nnzp(ng),grid_g(ng)%topt(1,1)  &
-                ,oda_g(ng)%tk(1,1,1),oda_g(ng)%tkv(1,1,1),1.)
+                ,ng,nnzp(ng),grid_g(ng)%topt  &
+                ,oda_g(ng)%tk,oda_g(ng)%tkv,1.)
 
            !if(mynum == 2) then
            !print*,'nobs:',nobs,xtn(1+nodei0(mynum,ng),ng),ytn(1+nodej0(mynum,ng),ng)
@@ -156,8 +156,8 @@ subroutine oda_nudge()
            call krig(nnzp(ng),nodemxp(mynum,ng),nodemyp(mynum,ng)  &
                 ,xtn(1+nodei0(mynum,ng),ng),ytn(1+nodej0(mynum,ng),ng),ztn(1,ng)  &
                 ,nobs,xkobs,ykobs,zkobs,ekobs,rkobs  &
-                ,ng,nnzp(ng),grid_g(ng)%topt(1,1)  &
-                ,oda_g(ng)%rk(1,1,1),oda_g(ng)%rkv(1,1,1),1.)
+                ,ng,nnzp(ng),grid_g(ng)%topt  &
+                ,oda_g(ng)%rk,oda_g(ng)%rkv,1.)
         endif
 
      enddo
@@ -175,8 +175,8 @@ subroutine oda_nudge()
      call oda_tendency(nnzp(ng), nodemxp(mynum,ng), nodemyp(mynum,ng), &
           nodeia(mynum,ng), nodeiz(mynum,ng), &
           nodeja(mynum,ng), nodejz(mynum,ng), &
-          basic_g(ng)%up(1,1,1), tend%ut(1),  &
-          oda_g(ng)%uk(1,1,1), oda_g(ng)%ukv(1,1,1), &
+          basic_g(ng)%up, tend%ut,  &
+          oda_g(ng)%uk, oda_g(ng)%ukv, &
           wt_oda_uv*wt_oda_grid(ng)/tnudoda, time, &
           nodei0(mynum,ng), nodej0(mynum,ng))
      !      do j=1,nnyp(ng)
@@ -189,8 +189,8 @@ subroutine oda_nudge()
      call oda_tendency(nnzp(ng), nodemxp(mynum,ng), nodemyp(mynum,ng), &
           nodeia(mynum,ng), nodeiz(mynum,ng), &
           nodeja(mynum,ng), nodejz(mynum,ng), &
-          basic_g(ng)%vp(1,1,1), tend%vt(1), &
-          oda_g(ng)%vk(1,1,1), oda_g(ng)%vkv(1,1,1), &
+          basic_g(ng)%vp, tend%vt, &
+          oda_g(ng)%vk, oda_g(ng)%vkv, &
           wt_oda_uv*wt_oda_grid(ng)/tnudoda, time, &
           nodei0(mynum,ng), nodej0(mynum,ng))
      !      do j=1,nnyp(ng)
@@ -203,8 +203,8 @@ subroutine oda_nudge()
      call oda_tendency(nnzp(ng), nodemxp(mynum,ng), nodemyp(mynum,ng), &
           nodeia(mynum,ng), nodeiz(mynum,ng), &
           nodeja(mynum,ng), nodejz(mynum,ng), &
-          basic_g(ng)%theta(1,1,1), tend%tht(1), &
-          oda_g(ng)%tk(1,1,1),oda_g(ng)%tkv(1,1,1),  &
+          basic_g(ng)%theta, tend%tht, &
+          oda_g(ng)%tk,oda_g(ng)%tkv,  &
           wt_oda_th*wt_oda_grid(ng)/tnudoda, time, &
           nodei0(mynum,ng), nodej0(mynum,ng))
      !print*,'ttttt tend:',time,minval(tend%tht(1:nnzp(ng)*nodemxp(mynum,ng)*nodemyp(mynum,ng))) &
@@ -219,8 +219,8 @@ subroutine oda_nudge()
      call oda_tendency(nnzp(ng), nodemxp(mynum,ng), nodemyp(mynum,ng), &
           nodeia(mynum,ng), nodeiz(mynum,ng), &
           nodeja(mynum,ng), nodejz(mynum,ng), &
-          basic_g(ng)%rtp(1,1,1), tend%rtt(1), &
-          oda_g(ng)%rk(1,1,1), oda_g(ng)%rkv(1,1,1), &
+          basic_g(ng)%rtp, tend%rtt, &
+          oda_g(ng)%rk, oda_g(ng)%rkv, &
           wt_oda_rt*wt_oda_grid(ng)/tnudoda, time, &
           nodei0(mynum,ng), nodej0(mynum,ng))
 

@@ -184,11 +184,11 @@ do j=ja,jz
                   ,dd_massdetr5d(1:mgmzp,i,j,iens,ngrid)  & 
                   ,dd_massentr5d(1:mgmzp,i,j,iens,ngrid)  &
 !-
-                  ,stilt_g(ngrid)%cfxup1(1,1,1),stilt_g(ngrid)%cfxdn1(1,1,1)               &
-                  ,stilt_g(ngrid)%dfxup1(1,1,1),stilt_g(ngrid)%efxup1(1,1,1)               &
-                  ,stilt_g(ngrid)%dfxdn1(1,1,1),stilt_g(ngrid)%efxdn1(1,1,1)               &
-                  ,stilt_g(ngrid)%cfxup2(1,1,1),stilt_g(ngrid)%dfxup2(1,1,1)               &
-                  ,stilt_g(ngrid)%efxup2(1,1,1))
+                  ,stilt_g(ngrid)%cfxup1,stilt_g(ngrid)%cfxdn1               &
+                  ,stilt_g(ngrid)%dfxup1,stilt_g(ngrid)%efxup1               &
+                  ,stilt_g(ngrid)%dfxdn1,stilt_g(ngrid)%efxdn1               &
+                  ,stilt_g(ngrid)%cfxup2,stilt_g(ngrid)%dfxup2               &
+                  ,stilt_g(ngrid)%efxup2)
     endif 
   enddo 
 enddo  
@@ -487,16 +487,16 @@ subroutine get_adv_fluxes_for_stilt(mzp,mxp,myp,ia,iz,ja,jz)
      enddo
 
         call fa_preptc_for_stilt(mzp,mxp,myp        &
-             ,scratch%vt3da        (1)     ,scratch%vt3db        (1)      &
-             ,scratch%vt3dc        (1)      & 
-             ,basic_g(ngrid)%dn0   (1,1,1) ,basic_g(ngrid)%dn0u  (1,1,1)  &
-             ,basic_g(ngrid)%dn0v  (1,1,1) ,grid_g(ngrid)%rtgt   (1,1)    &
-             ,grid_g(ngrid)%rtgu   (1,1)   ,grid_g(ngrid)%rtgv   (1,1)    &
-             ,grid_g(ngrid)%fmapt  (1,1)   ,grid_g(ngrid)%fmapui (1,1)    &
-             ,grid_g(ngrid)%fmapvi (1,1)   ,grid_g(ngrid)%f13t   (1,1)    &
-             ,grid_g(ngrid)%f23t   (1,1)   ,grid_g(ngrid)%dxu    (1,1)    &
-             ,grid_g(ngrid)%dyv    (1,1)   ,grid_g(ngrid)%dxt    (1,1)    &
-             ,grid_g(ngrid)%dyt    (1,1)                            )
+             ,scratch%vt3da             ,scratch%vt3db              &
+             ,scratch%vt3dc              & 
+             ,basic_g(ngrid)%dn0   ,basic_g(ngrid)%dn0u    &
+             ,basic_g(ngrid)%dn0v  ,grid_g(ngrid)%rtgt     &
+             ,grid_g(ngrid)%rtgu   ,grid_g(ngrid)%rtgv     &
+             ,grid_g(ngrid)%fmapt  ,grid_g(ngrid)%fmapui   &
+             ,grid_g(ngrid)%fmapvi ,grid_g(ngrid)%f13t     &
+             ,grid_g(ngrid)%f23t   ,grid_g(ngrid)%dxu      &
+             ,grid_g(ngrid)%dyv    ,grid_g(ngrid)%dxt      &
+             ,grid_g(ngrid)%dyt                            )
 
 
 

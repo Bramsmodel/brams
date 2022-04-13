@@ -56,10 +56,10 @@ contains
        dts = 2. * dtlt / nnacoust(ngrid)
 
        if (iter .eq. 1)  &
-            call coefz_adap(mzp,mxp,myp,ia,iz,ja,jz,lpw(1,1)      &
-            ,vt3dc(1),vt3dd(1),vt3de(1),dn0(1,1,1),pi0(1,1,1)  &
-            ,th0(1,1,1),a1da2,vt3df(1),vt3dg(1),scr2(1)        &
-            ,vctr1,vctr2,arw(1,1,1),volt(1,1,1),volw(1,1,1)    )
+            call coefz_adap(mzp,mxp,myp,ia,iz,ja,jz,lpw      &
+            ,vt3dc,vt3dd,vt3de,dn0,pi0  &
+            ,th0,a1da2,vt3df,vt3dg,scr2        &
+            ,vctr1,vctr2,arw,volt,volw    )
 
        if (nmachs > 1) then
           if (iter .ne. 1) then
@@ -68,9 +68,9 @@ contains
           endif
        endif
 
-       call prdctu_adap(mzp,mxp,myp,ia,izu,ja,jz,ibcon,lpu(1,1)    &
-            ,up(1,1,1),ut(1),pp(1,1,1),vt3da(1),th0(1,1,1),vt3db(1)  &
-            ,dxu(1,1),vt3dh(1),aru(1,1,1),volu(1,1,1),mynum          )
+       call prdctu_adap(mzp,mxp,myp,ia,izu,ja,jz,ibcon,lpu    &
+            ,up,ut,pp,vt3da,th0,vt3db  &
+            ,dxu,vt3dh,aru,volu,mynum          )
 
        if (nmachs > 1) then
           if (iter .ne. nnacoust(ngrid)) then
@@ -78,9 +78,9 @@ contains
           endif
        endif
 
-       call prdctv_adap(mzp,mxp,myp,ia,iz,ja,jzv,ibcon,lpv(1,1)    &
-            ,vp(1,1,1),vt(1),pp(1,1,1),vt3da(1),th0(1,1,1),vt3db(1)  &
-            ,dyv(1,1),vt3dh(1),arv(1,1,1),volv(1,1,1)                )
+       call prdctv_adap(mzp,mxp,myp,ia,iz,ja,jzv,ibcon,lpv    &
+            ,vp,vt,pp,vt3da,th0,vt3db  &
+            ,dyv,vt3dh,arv,volv        )
 
        if (nmachs > 1) then
           if (iter .ne. nnacoust(ngrid)) then
@@ -90,9 +90,9 @@ contains
           endif
        endif
 
-       call prdctw1_adap(mzp,mxp,myp,ia,iz,ja,jz,ibcon,lpw(1,1)  &
-            ,wp(1,1,1),wt(1),pp(1,1,1),vt3dc(1)  &
-            ,a1da2,vt3dh(1))
+       call prdctw1_adap(mzp,mxp,myp,ia,iz,ja,jz,ibcon,lpw  &
+            ,wp,wt,pp,vt3dc  &
+            ,a1da2,vt3dh)
 
        if (nmachs > 1) then
           if (iter .ne. nnacoust(ngrid)) then
@@ -103,20 +103,20 @@ contains
           endif
        endif
 
-       call prdctp1_adap(mzp,mxp,myp,ia,iz,ja,jz,jdim,lpw(1,1)                &
-            ,pp(1,1,1),up(1,1,1),vp(1,1,1),pi0(1,1,1),dn0(1,1,1),th0(1,1,1)     &
-            ,pt(1),vt3da(1),vt3db(1),vt2da(1),fmapui(1,1),fmapvi(1,1),dxt(1,1)  &
-            ,dyt(1,1),fmapt(1,1),aru(1,1,1),arv(1,1,1),volt(1,1,1),mynum        )
+       call prdctp1_adap(mzp,mxp,myp,ia,iz,ja,jz,jdim,lpw                &
+            ,pp,up,vp,pi0,dn0,th0     &
+            ,pt,vt3da,vt3db,vt2da,fmapui,fmapvi,dxt  &
+            ,dyt,fmapt,aru,arv,volt,mynum        )
 
-       call prdctw2_adap(mzp,mxp,myp,ia,iz,ja,jz,lpw(1,1)           &
-            ,wp(1,1,1),pp(1,1,1),vt3dc(1),vt3dd(1),vt3de(1),vt3dg(1)  &
-            ,scr1(1),scr2(1),vt2da(1)                                 )
+       call prdctw2_adap(mzp,mxp,myp,ia,iz,ja,jz,lpw           &
+            ,wp,pp,vt3dc,vt3dd,vt3de,vt3dg  &
+            ,scr1,scr2,vt2da                                 )
 
-       call prdctw3_adap(mzp,mxp,myp,ia,iz,ja,jz,lpw(1,1)                 &
-            ,wp(1,1,1),scr1(1),vt3df(1),vt3dg(1),vt3dc(1),vt3dd(1),pp(1,1,1))
+       call prdctw3_adap(mzp,mxp,myp,ia,iz,ja,jz,lpw                 &
+            ,wp,scr1,vt3df,vt3dg,vt3dc,vt3dd,pp)
 
-       call prdctp2_adap(mzp,mxp,myp,ia,iz,ja,jz,ibcon,lpw(1,1)  &
-            ,pp(1,1,1),wp(1,1,1),vt3dd(1),vt3de(1),mynum)
+       call prdctp2_adap(mzp,mxp,myp,ia,iz,ja,jz,ibcon,lpw  &
+            ,pp,wp,vt3dd,vt3de,mynum)
 
        if (nmachs > 1) then
           if (iter .ne. nnacoust(ngrid)) then

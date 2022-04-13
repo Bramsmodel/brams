@@ -651,11 +651,11 @@ subroutine GridSetup(num)
         ! fill the full domain grid_vars variable
 
         call polarst(nnxp(ifm),nnyp(ifm)                      &
-             ,globalGrid%glat  (1,1) ,globalGrid%glon  (1,1)  &
-             ,globalGrid%fmapu (1,1) ,globalGrid%fmapv (1,1)  &
-             ,globalGrid%fmapt (1,1) ,globalGrid%fmapm (1,1)  &
-             ,globalGrid%fmapui(1,1) ,globalGrid%fmapvi(1,1)  &
-             ,globalGrid%fmapti(1,1) ,globalGrid%fmapmi(1,1)  )
+             ,globalGrid%glat   ,globalGrid%glon    &
+             ,globalGrid%fmapu  ,globalGrid%fmapv   &
+             ,globalGrid%fmapt  ,globalGrid%fmapm   &
+             ,globalGrid%fmapui ,globalGrid%fmapvi  &
+             ,globalGrid%fmapti ,globalGrid%fmapmi  )
 
         ! save global latitude and longitude
 
@@ -664,36 +664,36 @@ subroutine GridSetup(num)
 
 
         call grdspc(nnxp(ifm),nnyp(ifm)                      &
-             ,globalGrid%dxu  (1,1)  ,globalGrid%dxv  (1,1)  &
-             ,globalGrid%dxt  (1,1)  ,globalGrid%dxm  (1,1)  &
-             ,globalGrid%dyu  (1,1)  ,globalGrid%dyv  (1,1)  &
-             ,globalGrid%dyt  (1,1)  ,globalGrid%dym  (1,1)  &
-             ,globalGrid%fmapu(1,1)  ,globalGrid%fmapv(1,1)  &
-             ,globalGrid%fmapt(1,1)  ,globalGrid%fmapm(1,1)  )
+             ,globalGrid%dxu    ,globalGrid%dxv    &
+             ,globalGrid%dxt    ,globalGrid%dxm    &
+             ,globalGrid%dyu    ,globalGrid%dyv    &
+             ,globalGrid%dyt    ,globalGrid%dym    &
+             ,globalGrid%fmapu  ,globalGrid%fmapv  &
+             ,globalGrid%fmapt  ,globalGrid%fmapm  )
 
         ! Define transformation Jacobians for all grids
 
         call fill_toptuvm(nnxp(ifm),nnyp(ifm)               &
-             ,globalGrid%topt (1,1) ,globalGrid%topu (1,1)  &
-             ,globalGrid%topv (1,1) ,globalGrid%topm (1,1)  &
-             ,globalGrid%topta(1,1) ,globalGrid%topma(1,1)  )
+             ,globalGrid%topt ,globalGrid%topu  &
+             ,globalGrid%topv ,globalGrid%topm  &
+             ,globalGrid%topta,globalGrid%topma )
 
         call transfm(nnxp(ifm),nnyp(ifm)                  &
-             ,globalGrid%topt(1,1) ,globalGrid%topu(1,1)  &
-             ,globalGrid%topv(1,1) ,globalGrid%topm(1,1)  &
-             ,globalGrid%rtgt(1,1) ,globalGrid%rtgu(1,1)  &
-             ,globalGrid%rtgv(1,1) ,globalGrid%rtgm(1,1)  &
-             ,globalGrid%f13u(1,1) ,globalGrid%f13v(1,1)  &
-             ,globalGrid%f13t(1,1) ,globalGrid%f13m(1,1)  &
-             ,globalGrid%f23u(1,1) ,globalGrid%f23v(1,1)  &
-             ,globalGrid%f23t(1,1) ,globalGrid%f23m(1,1)  &
-             ,globalGrid%dxu (1,1) ,globalGrid%dxv (1,1)  &
-             ,globalGrid%dxt (1,1) ,globalGrid%dxm (1,1)  &
-             ,globalGrid%dyu (1,1) ,globalGrid%dyv (1,1)  &
-             ,globalGrid%dyt (1,1) ,globalGrid%dym (1,1)  )
+             ,globalGrid%topt ,globalGrid%topu  &
+             ,globalGrid%topv ,globalGrid%topm  &
+             ,globalGrid%rtgt ,globalGrid%rtgu  &
+             ,globalGrid%rtgv ,globalGrid%rtgm  &
+             ,globalGrid%f13u ,globalGrid%f13v  &
+             ,globalGrid%f13t ,globalGrid%f13m  &
+             ,globalGrid%f23u ,globalGrid%f23v  &
+             ,globalGrid%f23t ,globalGrid%f23m  &
+             ,globalGrid%dxu  ,globalGrid%dxv   &
+             ,globalGrid%dxt  ,globalGrid%dxm   &
+             ,globalGrid%dyu  ,globalGrid%dyv   &
+             ,globalGrid%dyt  ,globalGrid%dym   )
 
-        call lpuvw_init(nnxp(ifm),nnyp(ifm),globalGrid%lpu(1,1)  &
-             ,globalGrid%lpv(1,1),globalGrid%lpw(1,1)  )
+        call lpuvw_init(nnxp(ifm),nnyp(ifm),globalGrid%lpu  &
+             ,globalGrid%lpv,globalGrid%lpw  )
 
         if (if_adap == 1) then
 
@@ -706,15 +706,15 @@ subroutine GridSetup(num)
            call ctrlvols (nnzp(ifm),nnxp(ifm),nnyp(ifm),nnstbot(ifm)  &
                 ,dztn(1,ifm),xmn(1,ifm),ymn(1,ifm),zmn(1,ifm)           &
                 ,platn(ifm),plonn(ifm)                                  &
-                ,globalGrid%aru  (1,1,1) ,globalGrid%arv (1,1,1)      &
-                ,globalGrid%arw  (1,1,1) ,globalGrid%volt(1,1,1)      &
-                ,globalGrid%volu (1,1,1) ,globalGrid%volv(1,1,1)      &
-                ,globalGrid%volw (1,1,1) ,globalGrid%lpu (1,1)        &
-                ,globalGrid%lpv  (1,1)   ,globalGrid%lpw (1,1)        &
-                ,globalGrid%dxu  (1,1)   ,globalGrid%dxv (1,1)        &
-                ,globalGrid%dxt  (1,1)   ,globalGrid%dyu (1,1)        &
-                ,globalGrid%dyv  (1,1)   ,globalGrid%dyt (1,1)        &
-                ,globalGrid%topma(1,1)   ,globalGrid%topm(1,1)        &
+                ,globalGrid%aru   ,globalGrid%arv       &
+                ,globalGrid%arw   ,globalGrid%volt      &
+                ,globalGrid%volu  ,globalGrid%volv      &
+                ,globalGrid%volw  ,globalGrid%lpu       &
+                ,globalGrid%lpv   ,globalGrid%lpw       &
+                ,globalGrid%dxu   ,globalGrid%dxv       &
+                ,globalGrid%dxt   ,globalGrid%dyu       &
+                ,globalGrid%dyv   ,globalGrid%dyt       &
+                ,globalGrid%topma ,globalGrid%topm      &
                 ,ifm, nzg, npatch  )
         endif
 

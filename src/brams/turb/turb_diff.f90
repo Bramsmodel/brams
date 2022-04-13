@@ -214,15 +214,15 @@ subroutine diffvel(m1,m2,m3,ia,iz,ja,jz,jd  &
      call avgvel(m1,m2,m3,ia,izu,ja,jz,'xdir',jd,vt3da,scr2)
 
      call truhor(m1,m2,m3,ia,izu,ja,jz  &
-          ,              up,vt3dj,'xdir','dxt',grid_g(ngrid)%dxt(1,1)  &
-          ,grid_g(ngrid)%topu(1,1),grid_g(ngrid)%rtgu(1,1)  &
+          ,              up,vt3dj,'xdir','dxt',grid_g(ngrid)%dxt  &
+          ,grid_g(ngrid)%topu,grid_g(ngrid)%rtgu  &
           ,              zt,vctr1,vctr2,vctr3,vctr4,vctr5  &
           ,              vctr6,vctr7,jd,vt3da,dn0,dtlv,ngrid)
 
      call avgvel(m1,m2,m3,ia,izu,ja,jz,'ydir',jd,vt3da,scr2)
      call truhor(m1,m2,m3,ia,izu,ja,jz  &
-          ,              up,vt3dk,'ydir','dym',grid_g(ngrid)%dym(1,1)  &
-          ,grid_g(ngrid)%topu(1,1),grid_g(ngrid)%rtgu(1,1)  &
+          ,              up,vt3dk,'ydir','dym',grid_g(ngrid)%dym  &
+          ,grid_g(ngrid)%topu,grid_g(ngrid)%rtgu  &
           ,              zt,vctr1,vctr2,vctr3,vctr4,vctr5  &
           ,              vctr6,vctr7,jd,vt3da,dn0,dtlv,ngrid)
 
@@ -311,16 +311,16 @@ subroutine diffvel(m1,m2,m3,ia,iz,ja,jz,jd  &
      !        average the dn0*hkh to the velocity points
      call avgvel(m1,m2,m3,ia,iz,ja,jzv,'ydir',jd,vt3da,scr2)
      call truhor(m1,m2,m3,ia,iz,ja,jzv  &
-          ,              vp,vt3dj,'ydir','dyt',grid_g(ngrid)%dyt(1,1)  &
-          ,grid_g(ngrid)%topv(1,1),grid_g(ngrid)%rtgv(1,1)  &
+          ,              vp,vt3dj,'ydir','dyt',grid_g(ngrid)%dyt  &
+          ,grid_g(ngrid)%topv,grid_g(ngrid)%rtgv  &
           ,              zt,vctr1,vctr2,vctr3,vctr4,vctr5  &
           ,              vctr6,vctr7,jd,vt3da,dn0,dtlv,ngrid)
 
      call avgvel(m1,m2,m3,ia,iz,ja,jzv,'xdir',jd  &
           ,              vt3da,scr2)
      call truhor(m1,m2,m3,ia,iz,ja,jzv  &
-          ,              vp,vt3dk,'xdir','dxm',grid_g(ngrid)%dxm(1,1)  &
-          ,grid_g(ngrid)%topv(1,1),grid_g(ngrid)%rtgv(1,1)  &
+          ,              vp,vt3dk,'xdir','dxm',grid_g(ngrid)%dxm  &
+          ,grid_g(ngrid)%topv,grid_g(ngrid)%rtgv  &
           ,              zt,vctr1,vctr2,vctr3,vctr4,vctr5  &
           ,              vctr6,vctr7,jd,vt3da,dn0,dtlv,ngrid)
 
@@ -393,14 +393,14 @@ subroutine diffvel(m1,m2,m3,ia,iz,ja,jz,jd  &
 
      elseif(ihorgrad.eq.2)then
         call truhor(m1,m2,m3,ia,iz,ja,jz  &
-             ,                 wp,vt3dj,'xdir','dxu',grid_g(ngrid)%dxu(1,1)  &
-             ,grid_g(ngrid)%topt(1,1),grid_g(ngrid)%rtgt(1,1)  &
+             ,                 wp,vt3dj,'xdir','dxu',grid_g(ngrid)%dxu  &
+             ,grid_g(ngrid)%topt,grid_g(ngrid)%rtgt  &
              ,                 zm,vctr1,vctr2,vctr3,vctr4,vctr5  &
              ,                 vctr6,vctr7,jd,scr2,dn0,dtlv,ngrid)
 
         call truhor(m1,m2,m3,ia,iz,ja,jz  &
-             ,                 wp,vt3dk,'ydir','dyv',grid_g(ngrid)%dyv(1,1)  &
-             ,grid_g(ngrid)%topt(1,1),grid_g(ngrid)%rtgt(1,1)  &
+             ,                 wp,vt3dk,'ydir','dyv',grid_g(ngrid)%dyv  &
+             ,grid_g(ngrid)%topt,grid_g(ngrid)%rtgt  &
              ,                 zm,vctr1,vctr2,vctr3,vctr4,vctr5  &
              ,                 vctr6,vctr7,jd,scr2,dn0,dtlv,ngrid)
 
@@ -413,14 +413,14 @@ subroutine diffvel(m1,m2,m3,ia,iz,ja,jz,jd  &
 
      elseif(ihorgrad.eq.2)then
         call truhor(m1,m2,m3,ia,iz,ja,jz  &
-             ,wp,vt3dj,'xdir','dxu',grid_g(ngrid)%dxu(1,1)  &
-             ,grid_g(ngrid)%topt(1,1),grid_g(ngrid)%rtgt(1,1)  &
+             ,wp,vt3dj,'xdir','dxu',grid_g(ngrid)%dxu  &
+             ,grid_g(ngrid)%topt,grid_g(ngrid)%rtgt  &
              ,zm,vctr1,vctr2,vctr3,vctr4,vctr5  &
              ,vctr6,vctr7,jd,scr2,dn0,dtlv,ngrid)
 
         call truhor(m1,m2,m3,ia,iz,ja,jz  &
-             ,wp,vt3dk,'ydir','dyv',grid_g(ngrid)%dyv(1,1)  &
-             ,grid_g(ngrid)%topt(1,1),grid_g(ngrid)%rtgt(1,1)  &
+             ,wp,vt3dk,'ydir','dyv',grid_g(ngrid)%dyv  &
+             ,grid_g(ngrid)%topt,grid_g(ngrid)%rtgt  &
              ,zm,vctr1,vctr2,vctr3,vctr4,vctr5  &
              ,vctr6,vctr7,jd,scr2,dn0,dtlv,ngrid)
 
@@ -681,13 +681,13 @@ subroutine diffsclr(m1, m2, m3, ia, iz, ja, jz, jd,                        &
      call divcart(m1, m2, m3, ia, iz, ja, jz, vt3dg, vt3db, 'YDIR', 'VPNT')
   elseif (ihorgrad==2) then
      call truhor(m1, m2, m3, ia, iz, ja, jz,                 &
-          scp, vt3da, 'xdir', 'dxu', grid_g(ngrid)%dxu(1,1), &
-          grid_g(ngrid)%topt(1,1), grid_g(ngrid)%rtgt(1,1),  &
+          scp, vt3da, 'xdir', 'dxu', grid_g(ngrid)%dxu, &
+          grid_g(ngrid)%topt, grid_g(ngrid)%rtgt,  &
           zt, vctr1, vctr2, vctr3, vctr4, vctr5,             &
           vctr6, vctr7, jd, hkkh, dn0, dtlt, ngrid)
      call truhor(m1, m2, m3, ia, iz, ja, jz,                 &
-          scp, vt3db, 'ydir', 'dyv', grid_g(ngrid)%dyv(1,1), &
-          grid_g(ngrid)%topt(1,1), grid_g(ngrid)%rtgt(1,1),  &
+          scp, vt3db, 'ydir', 'dyv', grid_g(ngrid)%dyv, &
+          grid_g(ngrid)%topt, grid_g(ngrid)%rtgt,  &
           zt, vctr1, vctr2, vctr3, vctr4, vctr5,             &
           vctr6, vctr7, jd, hkkh, dn0, dtlt, ngrid)
   endif

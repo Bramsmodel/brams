@@ -31,28 +31,28 @@ SUBROUTINE ozone(mzp, mxp, myp, ia, iz, ja, jz, ng, deltat)
   !          '  UTC TIME (HRS) =',F6.1)
 
   CALL chemistry (mzp, mxp, myp, ia, iz, ja, jz,              &
-       gaspart_g(ng)%pno(1,1,1),   gaspart_g(ng)%pno2(1,1,1), &
-       gaspart_g(ng)%pco(1,1,1),   gaspart_g(ng)%pvoc(1,1,1), &
-       gaspart_g(ng)%po3(1,1,1),   gaspart_g(ng)%pso2(1,1,1), &
-       gaspart_g(ng)%pso4(1,1,1),                             &
-       gaspart_g(ng)%prhco(1,1,1), gaspart_g(ng)%pho2(1,1,1), &
-       gaspart_g(ng)%po3p(1,1,1),  gaspart_g(ng)%po1d(1,1,1), &
-       gaspart_g(ng)%pho(1,1,1),   gaspart_g(ng)%proo(1,1,1), &
-       basic_g(ng)%theta(1,1,1),   basic_g(ng)%dn0(1,1,1),    &
-       basic_g(ng)%pi0(1,1,1),     basic_g(ng)%pp(1,1,1),     &
-       basic_g(ng)%rv(1,1,1),                                 &
+       gaspart_g(ng)%pno,   gaspart_g(ng)%pno2, &
+       gaspart_g(ng)%pco,   gaspart_g(ng)%pvoc, &
+       gaspart_g(ng)%po3,   gaspart_g(ng)%pso2, &
+       gaspart_g(ng)%pso4,                             &
+       gaspart_g(ng)%prhco, gaspart_g(ng)%pho2, &
+       gaspart_g(ng)%po3p,  gaspart_g(ng)%po1d, &
+       gaspart_g(ng)%pho,   gaspart_g(ng)%proo, &
+       basic_g(ng)%theta,   basic_g(ng)%dn0,    &
+       basic_g(ng)%pi0,     basic_g(ng)%pp,     &
+       basic_g(ng)%rv,                                 &
 !!$       radiate_g(ng)%rshort(1,1),                             & ! not used
-       radiate_g(ng)%cosz(1,1),   &
-       grid_g(ng)%rtgt(1,1),       grid_g(ng)%topma (1,1),    &
+       radiate_g(ng)%cosz,   &
+       grid_g(ng)%rtgt,       grid_g(ng)%topma ,    &
        deltat, cpi, cpor, p00, zt,                            &
-       gaspart_g(ng)%pnot(1),      gaspart_g(ng)%pno2t(1),    &
-       gaspart_g(ng)%pcot(1),      gaspart_g(ng)%pvoct(1),    &
-       gaspart_g(ng)%po3t(1),                                 &
+       gaspart_g(ng)%pnot,      gaspart_g(ng)%pno2t,    &
+       gaspart_g(ng)%pcot,      gaspart_g(ng)%pvoct,    &
+       gaspart_g(ng)%po3t,                                 &
 !!$       gaspart_g(ng)%pso2t(1),                                & ! Not used
-       gaspart_g(ng)%pso4t(1),                                &
-       gaspart_g(ng)%prhcot(1),    gaspart_g(ng)%pho2t(1),    &
-       gaspart_g(ng)%po3pt(1),     gaspart_g(ng)%po1dt(1),    &
-       gaspart_g(ng)%phot(1),      gaspart_g(ng)%proot(1)     )
+       gaspart_g(ng)%pso4t,                                &
+       gaspart_g(ng)%prhcot,    gaspart_g(ng)%pho2t,    &
+       gaspart_g(ng)%po3pt,     gaspart_g(ng)%po1dt,    &
+       gaspart_g(ng)%phot,      gaspart_g(ng)%proot     )
 
 
   !endif
@@ -207,18 +207,18 @@ SUBROUTINE chemistry(m1, m2, m3, ia, iz, ja, jz,    &
 
         ENDDO
 
-        CALL conv_ppm_rm(m1, o3  (1), 48.0 , 28.97, 1.e6)
-        CALL conv_ppm_rm(m1, co  (1), 28.0 , 28.97, 1.e6)
-        CALL conv_ppm_rm(m1, no  (1), 30.0 , 28.97, 1.e6)
-        CALL conv_ppm_rm(m1, no2 (1), 46.0 , 28.97, 1.e6)
-        CALL conv_ppm_rm(m1, vocs(1), 42.08, 28.97, 1.e6)
-        CALL conv_ppm_rm(m1, rcho(1), 44.0 , 28.97, 1.e6)
-        CALL conv_ppm_rm(m1, ho2 (1), 33.0 , 28.97, 1.e6)
-        CALL conv_ppm_rm(m1, h2o (1), 18.0 , 28.97, 1.e6)
-        CALL conv_ppm_rm(m1, O3P (1), 16.0 , 28.97, 1.e6)
-        CALL conv_ppm_rm(m1, O1D (1), 16.0 , 28.97, 1.e6)
-        CALL conv_ppm_rm(m1, HO  (1), 17.0 , 28.97, 1.e6)
-        CALL conv_ppm_rm(m1, RO2 (1), 47.0 , 28.97, 1.e6)
+        CALL conv_ppm_rm(m1, o3  , 48.0 , 28.97, 1.e6)
+        CALL conv_ppm_rm(m1, co  , 28.0 , 28.97, 1.e6)
+        CALL conv_ppm_rm(m1, no  , 30.0 , 28.97, 1.e6)
+        CALL conv_ppm_rm(m1, no2 , 46.0 , 28.97, 1.e6)
+        CALL conv_ppm_rm(m1, vocs, 42.08, 28.97, 1.e6)
+        CALL conv_ppm_rm(m1, rcho, 44.0 , 28.97, 1.e6)
+        CALL conv_ppm_rm(m1, ho2 , 33.0 , 28.97, 1.e6)
+        CALL conv_ppm_rm(m1, h2o , 18.0 , 28.97, 1.e6)
+        CALL conv_ppm_rm(m1, O3P , 16.0 , 28.97, 1.e6)
+        CALL conv_ppm_rm(m1, O1D , 16.0 , 28.97, 1.e6)
+        CALL conv_ppm_rm(m1, HO  , 17.0 , 28.97, 1.e6)
+        CALL conv_ppm_rm(m1, RO2 , 47.0 , 28.97, 1.e6)
 
         j2 = MAX(0.001,     42.92e-02*cosz(i,j))/60.
         j6 = MAX(0.0000001,  2.04E-03*cosz(i,j))/60.
@@ -309,18 +309,18 @@ SUBROUTINE chemistry(m1, m2, m3, ia, iz, ja, jz,    &
         ENDDO !levels
 
         !converting units from ppm to kg/kg
-        CALL conv_ppm_rm(m1, o3  (1), 28.97, 48.0 , 1.e-6)
-        CALL conv_ppm_rm(m1, co  (1), 28.97, 28.0 , 1.e-6)
-        CALL conv_ppm_rm(m1, no  (1), 28.97, 30.0 , 1.e-6)
-        CALL conv_ppm_rm(m1, no2 (1), 28.97, 46.0 , 1.e-6)
-        CALL conv_ppm_rm(m1, vocs(1), 28.97, 42.08, 1.e-6)
-        CALL conv_ppm_rm(m1, rcho(1), 28.97, 44.0 , 1.e-6)
-        CALL conv_ppm_rm(m1, ho2 (1), 28.97, 33.0 , 1.e-6)
-        CALL conv_ppm_rm(m1, h2o (1), 28.97, 18.0 , 1.e-6)
-        CALL conv_ppm_rm(m1, O3P (1), 28.97, 16.0 , 1.e-6)
-        CALL conv_ppm_rm(m1, O1D (1), 28.97, 16.0 , 1.e-6)
-        CALL conv_ppm_rm(m1, HO  (1), 28.97, 17.0 , 1.e-6)
-        CALL conv_ppm_rm(m1, RO2 (1), 28.97, 47.0 , 1.e-6)
+        CALL conv_ppm_rm(m1, o3  , 28.97, 48.0 , 1.e-6)
+        CALL conv_ppm_rm(m1, co  , 28.97, 28.0 , 1.e-6)
+        CALL conv_ppm_rm(m1, no  , 28.97, 30.0 , 1.e-6)
+        CALL conv_ppm_rm(m1, no2 , 28.97, 46.0 , 1.e-6)
+        CALL conv_ppm_rm(m1, vocs, 28.97, 42.08, 1.e-6)
+        CALL conv_ppm_rm(m1, rcho, 28.97, 44.0 , 1.e-6)
+        CALL conv_ppm_rm(m1, ho2 , 28.97, 33.0 , 1.e-6)
+        CALL conv_ppm_rm(m1, h2o , 28.97, 18.0 , 1.e-6)
+        CALL conv_ppm_rm(m1, O3P , 28.97, 16.0 , 1.e-6)
+        CALL conv_ppm_rm(m1, O1D , 28.97, 16.0 , 1.e-6)
+        CALL conv_ppm_rm(m1, HO  , 28.97, 17.0 , 1.e-6)
+        CALL conv_ppm_rm(m1, RO2 , 28.97, 47.0 , 1.e-6)
 
         dtlti = 1./dtlt
 

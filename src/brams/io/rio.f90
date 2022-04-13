@@ -2698,7 +2698,7 @@ subroutine PreProcForOutput(ngrid, varnIn, sizeInOut, &
      ! Output total Exner function
 
      call RAMS_aprep_p (sizeInOut, arrayIn,  &
-          basic_g(ngrid)%pi0(1,1,1), arrayOut)
+          basic_g(ngrid)%pi0, arrayOut)
      varnOut='PI'
 
   case ('HKM')
@@ -2706,7 +2706,7 @@ subroutine PreProcForOutput(ngrid, varnIn, sizeInOut, &
      ! Convert to HKM to HKH (note that VKH is HKH for Deardorff)
 
      call RAMS_aprep_hkh (sizeInOut, arrayIn, &
-          turb_g(ngrid)%vkh(1,1,1), basic_g(ngrid)%dn0(1,1,1),  &
+          turb_g(ngrid)%vkh, basic_g(ngrid)%dn0,  &
           arrayOut, idiffk(ngrid), xkhkm(ngrid))
      varnOut='HKH'
 
@@ -2715,7 +2715,7 @@ subroutine PreProcForOutput(ngrid, varnIn, sizeInOut, &
      ! Un-density weight VKH
 
      call RAMS_aprep_vkh (sizeInOut, arrayIn, &
-          basic_g(ngrid)%dn0(1,1,1), arrayOut)
+          basic_g(ngrid)%dn0, arrayOut)
      varnOut='VKH'
 
   case default

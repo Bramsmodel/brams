@@ -184,15 +184,15 @@ subroutine diffuse_brams31()
   !_STC............................................................
   if (idiffk(ngrid) == 5) then
      call tkescl(mzp,mxp,myp,npatch,ia,iz,ja,jz  &
-          ,turb_g(ngrid)%tkep(1,1,1),tend%tket(1)  &
-          ,turb_g(ngrid)%epsp(1,1,1),tend%epst(1)  &
-          ,scratch%vt3da(1),scratch%vt3dc(1)  &
-          ,scratch%vt3dh(1),scratch%vt3di(1)  &
-          ,scratch%vt3dj(1),scratch%scr1(1)  &
-          ,scr2(1) ,grid_g(ngrid)%rtgt(1,1)  &
-          ,scratch%vt3dd(1),scratch%vt3de(1),grid_g(ngrid)%dxt(1,1)  &
-          ,leaf_g(ngrid)%ustar(1,1,1),leaf_g(ngrid)%patch_area(1,1,1) &
-          ,grid_g(ngrid)%lpw(1,1),basic_g(ngrid)%dn0(1,1,1)  )
+          ,turb_g(ngrid)%tkep,tend%tket &
+          ,turb_g(ngrid)%epsp,tend%epst &
+          ,scratch%vt3da,scratch%vt3dc  &
+          ,scratch%vt3dh,scratch%vt3di  &
+          ,scratch%vt3dj,scratch%scr1  &
+          ,scr2 ,grid_g(ngrid)%rtgt  &
+          ,scratch%vt3dd,scratch%vt3de,grid_g(ngrid)%dxt  &
+          ,leaf_g(ngrid)%ustar,leaf_g(ngrid)%patch_area &
+          ,grid_g(ngrid)%lpw,basic_g(ngrid)%dn0  )
   endif
   !_STC............................................................
   !_STC Call to subroutine tkeeps for E-eps closure
@@ -200,14 +200,14 @@ subroutine diffuse_brams31()
   !_STC............................................................
   if (idiffk(ngrid) == 6) then
      call tkeeps(mzp,mxp,myp,npatch,ia,iz,ja,jz  &
-          ,turb_g(ngrid)%tkep(1,1,1),tend%tket(1)  &
-          ,turb_g(ngrid)%epsp(1,1,1),tend%epst(1)  &
-          ,scratch%vt3da(1),scratch%vt3dc(1)  &
-          ,scratch%vt3dh(1),scratch%vt3di(1)  &
-          ,scratch%vt3dj(1),scratch%scr1(1)  &
-          ,scr2(1) ,grid_g(ngrid)%rtgt(1,1)  &
-          ,leaf_g(ngrid)%ustar(1,1,1),leaf_g(ngrid)%patch_area(1,1,1) &
-          ,grid_g(ngrid)%lpw(1,1),basic_g(ngrid)%dn0(1,1,1)  )
+          ,turb_g(ngrid)%tkep,tend%tket  &
+          ,turb_g(ngrid)%epsp,tend%epst  &
+          ,scratch%vt3da,scratch%vt3dc  &
+          ,scratch%vt3dh,scratch%vt3di  &
+          ,scratch%vt3dj,scratch%scr1  &
+          ,scr2 ,grid_g(ngrid)%rtgt  &
+          ,leaf_g(ngrid)%ustar,leaf_g(ngrid)%patch_area &
+          ,grid_g(ngrid)%lpw,basic_g(ngrid)%dn0  )
   endif
   !_STC..................................................
   !_STC    Note: from subroutines TKESCL, TKEEPS :
@@ -219,15 +219,15 @@ subroutine diffuse_brams31()
   !_STC............................................................
   
   call klbnd(mzp,mxp,myp,ibcon,jdim  &
-       ,scratch%scr1 (1),basic_g(ngrid)%dn0(1,1,1),grid_g(ngrid)%lpw(1,1))
+       ,scratch%scr1 ,basic_g(ngrid)%dn0,grid_g(ngrid)%lpw)
   call klbnd(mzp,mxp,myp,ibcon,jdim  &
-       ,scr2 (1),basic_g(ngrid)%dn0(1,1,1),grid_g(ngrid)%lpw(1,1))
+       ,scr2 ,basic_g(ngrid)%dn0,grid_g(ngrid)%lpw)
   call klbnd(mzp,mxp,myp,ibcon,jdim  &
-       ,scratch%vt3dh(1),basic_g(ngrid)%dn0(1,1,1),grid_g(ngrid)%lpw(1,1))
+       ,scratch%vt3dh,basic_g(ngrid)%dn0,grid_g(ngrid)%lpw)
   !_STC ....... boundary conditions even on Ke diffusion coefficient
   if(idiffk(ngrid) ==  5 .or. idiffk(ngrid) == 6) &
        call klbnd(mzp,mxp,myp,ibcon,jdim  &
-       ,scratch%vt3di(1),basic_g(ngrid)%dn0(1,1,1),grid_g(ngrid)%lpw(1,1))
+       ,scratch%vt3di,basic_g(ngrid)%dn0,grid_g(ngrid)%lpw)
   
   !bob  swap new hkm, vkm, and vkh with past time level:  lagged K's have
   !bob  internal lateral boundary values from neighboring nodes
@@ -254,21 +254,21 @@ subroutine diffuse_brams31()
   
   call diffvel(mzp,mxp,myp,ia,iz,ja,jz,jdim,ia_1,ja_1             &
        ,ia1,ja1,iz_1,jz_1,iz1,jz1,izu,jzv,idiffk(ngrid)             &
-       ,basic_g(ngrid)%up    (1,1,1) ,basic_g(ngrid)%vp    (1,1,1)  &
-       ,basic_g(ngrid)%wp    (1,1,1) ,tend%ut              (1)      &
-       ,tend%vt              (1)     ,tend%wt              (1)      &
-       ,scratch%vt3da        (1)     ,scratch%vt3db        (1)      &
-       ,scratch%vt3dc        (1)     ,scratch%vt3dd        (1)      &
-       ,scratch%vt3de        (1)     ,scratch%vt3df        (1)      &
-       ,scratch%vt3dg        (1)     ,scratch%vt3dj        (1)      &
-       ,scratch%vt3dk        (1)     ,scratch%vt3dl        (1)      &
-       ,scratch%vt3dm        (1)     ,scratch%vt3dn        (1)      &
-       ,scratch%vt3do        (1)     ,grid_g(ngrid)%rtgu   (1,1)    &
-       ,grid_g(ngrid)%rtgv   (1,1)   ,grid_g(ngrid)%rtgt   (1,1)    &
-       ,turb_g(ngrid)%sflux_u(1,1)   ,turb_g(ngrid)%sflux_v(1,1)    &
-       ,turb_g(ngrid)%sflux_w(1,1)   ,basic_g(ngrid)%dn0   (1,1,1)  &
-       ,basic_g(ngrid)%dn0u  (1,1,1) ,basic_g(ngrid)%dn0v  (1,1,1)  &
-       ,scratch%scr1         (1)     ,scr2         (1),ibcon,mynum)
+       ,basic_g(ngrid)%up     ,basic_g(ngrid)%vp      &
+       ,basic_g(ngrid)%wp     ,tend%ut                &
+       ,tend%vt               ,tend%wt                &
+       ,scratch%vt3da         ,scratch%vt3db          &
+       ,scratch%vt3dc         ,scratch%vt3dd          &
+       ,scratch%vt3de         ,scratch%vt3df          &
+       ,scratch%vt3dg         ,scratch%vt3dj          &
+       ,scratch%vt3dk         ,scratch%vt3dl          &
+       ,scratch%vt3dm         ,scratch%vt3dn          &
+       ,scratch%vt3do         ,grid_g(ngrid)%rtgu     &
+       ,grid_g(ngrid)%rtgv    ,grid_g(ngrid)%rtgt     &
+       ,turb_g(ngrid)%sflux_u ,turb_g(ngrid)%sflux_v  &
+       ,turb_g(ngrid)%sflux_w ,basic_g(ngrid)%dn0     &
+       ,basic_g(ngrid)%dn0u   ,basic_g(ngrid)%dn0v    &
+       ,scratch%scr1          ,scr2         ,ibcon,mynum)
      
   ! Convert momentum K's to scalar K's, if necessary
   
@@ -362,9 +362,9 @@ subroutine diffuse_brams31()
            if (nstbot == 1) then
               if (scalar_tab(n,ngrid)%name == 'THP' .or. &
 	          scalar_tab(n,ngrid)%name == 'THC' ) then
-                 call atob(mxp*myp, turb_g(ngrid)%sflux_t(1,1), scratch%vt2da(1))
+                 call atob(mxp*myp, turb_g(ngrid)%sflux_t, scratch%vt2da)
               elseif (scalar_tab(n,ngrid)%name == 'RTP') then
-                 call atob(mxp*myp, turb_g(ngrid)%sflux_r(1,1), scratch%vt2da(1))
+                 call atob(mxp*myp, turb_g(ngrid)%sflux_r, scratch%vt2da)
               endif
            endif
      

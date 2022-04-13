@@ -1597,7 +1597,7 @@ contains
        ! Initialize snowcover arrays
        do ifm = 1,ngrids
           call snowinit(nodemxp(mynum,ifm),nodemyp(mynum,ifm)  &
-               ,leaf_g(ifm)%snow_mass(1,1),leaf_g(ifm)%snow_depth(1,1))
+               ,leaf_g(ifm)%snow_mass,leaf_g(ifm)%snow_depth)
        enddo
 
        ! TEB_SPM
@@ -1782,19 +1782,19 @@ contains
           do ifm=1,ngrids
              call change_soil_moisture_init(nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm)    &
                   ,nzg,nzs,npatch,ifm	 &
-                  ,basic_g(ifm)%theta (1,1,1) &
-                  ,basic_g(ifm)%pi0   (1,1,1) &
-                  ,basic_g(ifm)%pp    (1,1,1) &
-                  ,leaf_g(ifm)%soil_water	   (1,1,1,1)  &
-                  ,leaf_g(ifm)%soil_energy      (1,1,1,1)  &
-                  ,leaf_g(ifm)%soil_text	   (1,1,1,1)  &
-                  ,leaf_g(ifm)%sfcwater_mass    (1,1,1,1)  &
-                  ,leaf_g(ifm)%sfcwater_energy  (1,1,1,1)  &
-                  ,leaf_g(ifm)%sfcwater_depth   (1,1,1,1)  &
-                  ,grid_g(ifm)%glat   (1,1)       &
-                  ,grid_g(ifm)%glon   (1,1)	     &
-                  ,grid_g(ifm)%lpw    (1,1)	     &
-                  ,leaf_g(ifm)%leaf_class(1,1,1)  )
+                  ,basic_g(ifm)%theta  &
+                  ,basic_g(ifm)%pi0    &
+                  ,basic_g(ifm)%pp     &
+                  ,leaf_g(ifm)%soil_water	  &
+                  ,leaf_g(ifm)%soil_energy        &
+                  ,leaf_g(ifm)%soil_text	  &
+                  ,leaf_g(ifm)%sfcwater_mass      &
+                  ,leaf_g(ifm)%sfcwater_energy    &
+                  ,leaf_g(ifm)%sfcwater_depth     &
+                  ,grid_g(ifm)%glat          &
+                  ,grid_g(ifm)%glon   	     &
+                  ,grid_g(ifm)%lpw    	     &
+                  ,leaf_g(ifm)%leaf_class  )
           enddo
        endif
 
@@ -1813,10 +1813,10 @@ contains
 
           do ifm=1,ngrids
              call TEBC_INIT(nodemxp(mynum,ifm), nodemyp(mynum,ifm), npatch, &
-                  leaf_g(ifm)%G_URBAN(1,1,1),             &
-                  tebc_g(ifm)%EMIS_TOWN(1,1),             &
-                  tebc_g(ifm)%ALB_TOWN(1,1),              &
-                  tebc_g(ifm)%TS_TOWN(1,1)                )
+                  leaf_g(ifm)%G_URBAN,             &
+                  tebc_g(ifm)%EMIS_TOWN,             &
+                  tebc_g(ifm)%ALB_TOWN,              &
+                  tebc_g(ifm)%TS_TOWN                )
           enddo
 
           if (iteb==1) then
@@ -1826,31 +1826,31 @@ contains
                      nodemxp(mynum,ifm),            &
                      nodemyp(mynum,ifm),            &
                      npatch,                        &
-                     leaf_g(ifm)%leaf_class(1,1,1), &
-                     basic_g(ifm)%theta    (1,1,1), &
-                     basic_g(ifm)%rv       (1,1,1), &
-                     basic_g(ifm)%pi0      (1,1,1), &
-                     basic_g(ifm)%pp       (1,1,1), &
-                     teb_g(ifm)%T_ROOF     (1,1,1), &
-                     teb_g(ifm)%T_ROAD     (1,1,1), &
-                     teb_g(ifm)%T_WALL     (1,1,1), &
-                     teb_g(ifm)%TI_BLD       (1,1), &
-                     teb_g(ifm)%TI_ROAD      (1,1), &
-                     teb_g(ifm)%T_CANYON     (1,1), &
-                     teb_g(ifm)%R_CANYON     (1,1), &
-                     teb_g(ifm)%TS_ROOF      (1,1), &
-                     teb_g(ifm)%TS_ROAD      (1,1), &
-                     teb_g(ifm)%TS_WALL      (1,1), &
-                     teb_g(ifm)%H_TRAFFIC    (1,1), &
-                     teb_g(ifm)%LE_TRAFFIC   (1,1), &
-                     teb_g(ifm)%H_INDUSTRY   (1,1), &
-                     teb_g(ifm)%LE_INDUSTRY  (1,1), &
-                     teb_g(ifm)%WS_ROOF      (1,1), &
-                     teb_g(ifm)%WS_ROAD      (1,1), &
-                     tebc_g(ifm)%EMIS_TOWN   (1,1), &
-                     tebc_g(ifm)%ALB_TOWN    (1,1), &
-                     tebc_g(ifm)%TS_TOWN     (1,1), &
-                     leaf_g(ifm)%G_URBAN   (1,1,1)  )
+                     leaf_g(ifm)%leaf_class, &
+                     basic_g(ifm)%theta    , &
+                     basic_g(ifm)%rv       , &
+                     basic_g(ifm)%pi0      , &
+                     basic_g(ifm)%pp       , &
+                     teb_g(ifm)%T_ROOF     , &
+                     teb_g(ifm)%T_ROAD     , &
+                     teb_g(ifm)%T_WALL     , &
+                     teb_g(ifm)%TI_BLD       , &
+                     teb_g(ifm)%TI_ROAD      , &
+                     teb_g(ifm)%T_CANYON     , &
+                     teb_g(ifm)%R_CANYON     , &
+                     teb_g(ifm)%TS_ROOF      , &
+                     teb_g(ifm)%TS_ROAD      , &
+                     teb_g(ifm)%TS_WALL      , &
+                     teb_g(ifm)%H_TRAFFIC    , &
+                     teb_g(ifm)%LE_TRAFFIC   , &
+                     teb_g(ifm)%H_INDUSTRY   , &
+                     teb_g(ifm)%LE_INDUSTRY  , &
+                     teb_g(ifm)%WS_ROOF      , &
+                     teb_g(ifm)%WS_ROAD      , &
+                     tebc_g(ifm)%EMIS_TOWN   , &
+                     tebc_g(ifm)%ALB_TOWN    , &
+                     tebc_g(ifm)%TS_TOWN     , &
+                     leaf_g(ifm)%G_URBAN    )
 
              enddo
           endif
@@ -1864,15 +1864,15 @@ contains
                      nodemxp(mynum,ifm),          &
                      nodemyp(mynum,ifm),          &
                      npatch,                      &
-                     leaf_g(ifm)%G_URBAN (1,1,1), &
-                     gaspart_g(ifm)%pno  (1,1,1), &
-                     gaspart_g(ifm)%pno2 (1,1,1), &
-                     gaspart_g(ifm)%ppm25(1,1,1), &
-                     gaspart_g(ifm)%pco  (1,1,1), &
-                     gaspart_g(ifm)%pvoc (1,1,1), &
-                     gaspart_g(ifm)%pso2 (1,1,1), &
-                     gaspart_g(ifm)%pso4 (1,1,1), &
-                     gaspart_g(ifm)%paer (1,1,1), &
+                     leaf_g(ifm)%G_URBAN , &
+                     gaspart_g(ifm)%pno  , &
+                     gaspart_g(ifm)%pno2 , &
+                     gaspart_g(ifm)%ppm25, &
+                     gaspart_g(ifm)%pco  , &
+                     gaspart_g(ifm)%pvoc , &
+                     gaspart_g(ifm)%pso2 , &
+                     gaspart_g(ifm)%pso4 , &
+                     gaspart_g(ifm)%paer , &
                      zt                           )
 
                 if (ichemi==1) then  !calling more added scalars for chemistry
@@ -1884,14 +1884,14 @@ contains
                            nodemxp(mynum,ifm),          &
                            nodemyp(mynum,ifm),          &
                            npatch,                      &
-                           leaf_g(ifm)%G_URBAN(1,1,1),  &
-                           gaspart_g(ifm)%po3(1,1,1),   &
-                           gaspart_g(ifm)%prhco(1,1,1), &
-                           gaspart_g(ifm)%pho2(1,1,1),  &
-                           gaspart_g(ifm)%po3p(1,1,1),  &
-                           gaspart_g(ifm)%po1d(1,1,1),  &
-                           gaspart_g(ifm)%pho(1,1,1),   &
-                           gaspart_g(ifm)%proo(1,1,1),  &
+                           leaf_g(ifm)%G_URBAN,  &
+                           gaspart_g(ifm)%po3,   &
+                           gaspart_g(ifm)%prhco, &
+                           gaspart_g(ifm)%pho2,  &
+                           gaspart_g(ifm)%po3p,  &
+                           gaspart_g(ifm)%po1d,  &
+                           gaspart_g(ifm)%pho,   &
+                           gaspart_g(ifm)%proo,  &
                            zt                           )
                    endif
                 endif
@@ -2035,10 +2035,10 @@ contains
           if (icm  ==  0) then
              call newgrid(ifm)
              call refs3d (mzp,mxp,myp  &
-                  ,basic_g(ifm)%pi0  (1,1,1),basic_g(ifm)%dn0  (1,1,1)  &
-                  ,basic_g(ifm)%dn0u (1,1,1),basic_g(ifm)%dn0v (1,1,1)  &
-                  ,basic_g(ifm)%th0  (1,1,1),grid_g(ifm)%topt  (1,1)    &
-                  ,grid_g(ifm)%rtgt  (1,1)  )
+                  ,basic_g(ifm)%pi0  ,basic_g(ifm)%dn0    &
+                  ,basic_g(ifm)%dn0u ,basic_g(ifm)%dn0v   &
+                  ,basic_g(ifm)%th0  ,grid_g(ifm)%topt    &
+                  ,grid_g(ifm)%rtgt  )
           endif
        enddo
 
@@ -2242,9 +2242,9 @@ contains
     do ifm = 1,ngrids
        call newgrid(ifm)
        call fcorio(mxp,myp           &
-            ,basic_g(ifm)%fcoru (1,1)  &
-            ,basic_g(ifm)%fcorv (1,1)  &
-            ,grid_g(ifm)%glat   (1,1)  )
+            ,basic_g(ifm)%fcoru   &
+            ,basic_g(ifm)%fcorv   &
+            ,grid_g(ifm)%glat     )
     enddo
 
 

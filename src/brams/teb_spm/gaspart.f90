@@ -76,17 +76,17 @@ SUBROUTINE le_fontes(ng, n1, n2, n3, np, ia, iz, ja, jz, time)
      len1   = LEN_TRIM(tracer) + 1
 
      CALL read_sources_teb(ng, n1, n2, n3, np, ia, iz, ja, jz, &
-          gaspart_g(ng)%gasr(1,1,1), gaspart_g(ng)%fusog(1,1), &
-          tracer(1:len1), kgas(ig), leaf_g(ng)%G_URBAN(1,1,1), &
-          grid_g(ng)%dxt(1,1), grid_g(ng)%dyt(1,1), time       )
+          gaspart_g(ng)%gasr, gaspart_g(ng)%fusog, &
+          tracer(1:len1), kgas(ig), leaf_g(ng)%G_URBAN, &
+          grid_g(ng)%dxt, grid_g(ng)%dyt, time       )
 
      CALL reorganize_sources_teb(ng, n1, n2, n3, ia, iz, ja, jz, &
-          gaspart_g(ng)%gasr(1,1,1), kgas(ig)                )
+          gaspart_g(ng)%gasr, kgas(ig)                )
 
      CALL convert_to_misture_ratio_teb(ng, n1, n2, n3, ia, iz, ja, jz,     &
-          kgas(ig), gaspart_g(ng)%gasr(1,1,1),                             &
-          basic_g(ng)%dn0(1,1,1), grid_g(ng)%rtgt(1,1),                    &
-          grid_g(ng)%dxt(1,1), grid_g(ng)%dyt(1,1), dzt                    )
+          kgas(ig), gaspart_g(ng)%gasr,                             &
+          basic_g(ng)%dn0, grid_g(ng)%rtgt,                    &
+          grid_g(ng)%dxt, grid_g(ng)%dyt, dzt                    )
 
   ENDDO !end of gases' looping
 
@@ -441,12 +441,12 @@ SUBROUTINE EMISSAO(n1, n2, n3, ia, iz, ja, jz, gaspart)
   INTEGER, INTENT(in)               :: n1, n2, n3, ia, iz, ja, jz
   TYPE(gaspart_vars), INTENT(inout) :: gaspart
 
-  CALL tendgas(n1,n2,n3,ia,iz,ja,jz,gaspart%pnot  (1),gaspart%gasr(1,1,1),2)
-  CALL tendgas(n1,n2,n3,ia,iz,ja,jz,gaspart%pno2t (1),gaspart%gasr(1,1,1),5)
-  CALL tendgas(n1,n2,n3,ia,iz,ja,jz,gaspart%ppm25t(1),gaspart%gasr(1,1,1),8)
-  CALL tendgas(n1,n2,n3,ia,iz,ja,jz,gaspart%pcot  (1),gaspart%gasr(1,1,1),11)
-  CALL tendgas(n1,n2,n3,ia,iz,ja,jz,gaspart%pso2t (1),gaspart%gasr(1,1,1),14)
-  CALL tendgas(n1,n2,n3,ia,iz,ja,jz,gaspart%pvoct (1),gaspart%gasr(1,1,1),17)
+  CALL tendgas(n1,n2,n3,ia,iz,ja,jz,gaspart%pnot  ,gaspart%gasr,2)
+  CALL tendgas(n1,n2,n3,ia,iz,ja,jz,gaspart%pno2t ,gaspart%gasr,5)
+  CALL tendgas(n1,n2,n3,ia,iz,ja,jz,gaspart%ppm25t,gaspart%gasr,8)
+  CALL tendgas(n1,n2,n3,ia,iz,ja,jz,gaspart%pcot  ,gaspart%gasr,11)
+  CALL tendgas(n1,n2,n3,ia,iz,ja,jz,gaspart%pso2t ,gaspart%gasr,14)
+  CALL tendgas(n1,n2,n3,ia,iz,ja,jz,gaspart%pvoct ,gaspart%gasr,17)
 
 END SUBROUTINE EMISSAO
 
@@ -1104,17 +1104,17 @@ SUBROUTINE hist_pol_read(maxarr, hnamein, iunhd)
         CALL parf_bcast(scr, INT(npts, i8), master_num)
 
         if (vtab_r(nv,ngr)%idim_type == 2) then
-           CALL atob(npts, scr(1), vtab_r(nv,ngr)%var_p_2D)
+           CALL atob(npts, scr, vtab_r(nv,ngr)%var_p_2D)
         else if (vtab_r(nv,ngr)%idim_type == 3) then
-           CALL atob(npts, scr(1), vtab_r(nv,ngr)%var_p_3D)
+           CALL atob(npts, scr, vtab_r(nv,ngr)%var_p_3D)
         else if (vtab_r(nv,ngr)%idim_type == 4) then
-           CALL atob(npts, scr(1), vtab_r(nv,ngr)%var_p_4D)
+           CALL atob(npts, scr, vtab_r(nv,ngr)%var_p_4D)
         else if (vtab_r(nv,ngr)%idim_type == 5) then
-           CALL atob(npts, scr(1), vtab_r(nv,ngr)%var_p_4D)
+           CALL atob(npts, scr, vtab_r(nv,ngr)%var_p_4D)
         else if (vtab_r(nv,ngr)%idim_type == 6) then
-           CALL atob(npts, scr(1), vtab_r(nv,ngr)%var_p_3D)
+           CALL atob(npts, scr, vtab_r(nv,ngr)%var_p_3D)
         else if (vtab_r(nv,ngr)%idim_type == 7) then
-           CALL atob(npts, scr(1), vtab_r(nv,ngr)%var_p_3D)
+           CALL atob(npts, scr, vtab_r(nv,ngr)%var_p_3D)
         end if
      ENDIF
 

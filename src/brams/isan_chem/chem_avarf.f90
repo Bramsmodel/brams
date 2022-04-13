@@ -33,22 +33,22 @@ integer :: ng
 
 !            Vertically interpolate isentropic data to sigma-z levels
 
-call isnsig(nnzp(ng),nnxp(ng),nnyp(ng) ,is_grids(ng)%rr_u(1,1,1)  &
-        ,is_grids(ng)%rr_v(1,1,1)      ,is_grids(ng)%rr_t(1,1,1)  &
-        ,is_grids(ng)%rr_r(1,1,1)      ,is_grids(ng)%rr_p(1,1,1)  &
-        ,grid_g(ng)%topt(1,1),ztn(1,ng),ztop)
+call isnsig(nnzp(ng),nnxp(ng),nnyp(ng) ,is_grids(ng)%rr_u  &
+        ,is_grids(ng)%rr_v      ,is_grids(ng)%rr_t  &
+        ,is_grids(ng)%rr_r      ,is_grids(ng)%rr_p  &
+        ,grid_g(ng)%topt,ztn(1,ng),ztop)
 
 !--(DMK-CCATT-INI)----------------------------------------------------------------
 !srf-chem
 if(CHEM_ASSIM == 1 .and. nspecies>0 ) then
     call chem_isnsig(nnzp(ng),nnxp(ng),nnyp(ng),nspecies     &
-                    ,chem_is_grids(ng)%rr_sc(1,1,1,1)        &
-                    ,grid_g(ng)%topt(1,1),ztn(1,ng),ztop)
+                    ,chem_is_grids(ng)%rr_sc        &
+                    ,grid_g(ng)%topt,ztn(1,ng),ztop)
 endif
 if(AER_ASSIM == 1 .and. nspecies_aer_in>0 ) then
     call aer_isnsig(nnzp(ng),nnxp(ng),nnyp(ng),nspecies_aer_in     &
-                    ,aer_is_grids(ng)%rr_sc(1,1,1,1)        &
-                    ,grid_g(ng)%topt(1,1),ztn(1,ng),ztop)
+                    ,aer_is_grids(ng)%rr_sc        &
+                    ,grid_g(ng)%topt,ztn(1,ng),ztop)
 endif
 
 
@@ -59,16 +59,16 @@ endif
 !            Compute Exner function on model sigma-z surfaces
 !              and change relative humidity to mixing ratio.
 
-call vshyd(nnzp(ng),nnxp(ng),nnyp(ng),is_grids(ng)%rr_p(1,1,1)  &
-     ,is_grids(ng)%rr_t(1,1,1)       ,is_grids(ng)%rr_r(1,1,1)  &
-     ,grid_g(ng)%topt(1,1),grid_g(ng)%rtgt(1,1),ztn(1,ng))
+call vshyd(nnzp(ng),nnxp(ng),nnyp(ng),is_grids(ng)%rr_p  &
+     ,is_grids(ng)%rr_t       ,is_grids(ng)%rr_r  &
+     ,grid_g(ng)%topt,grid_g(ng)%rtgt,ztn(1,ng))
 
 !          Combine surface analysis with the upper air data.
 
-call visurf(nnzp(ng),nnxp(ng),nnyp(ng) ,is_grids(ng)%rr_u(1,1,1)  &
-      ,is_grids(ng)%rr_v(1,1,1)        ,is_grids(ng)%rr_t(1,1,1)  &
-      ,is_grids(ng)%rr_r(1,1,1)        ,is_grids(ng)%rr_p(1,1,1)  &
-      ,grid_g(ng)%topt(1,1),grid_g(ng)%rtgt(1,1),ztn(1,ng))
+call visurf(nnzp(ng),nnxp(ng),nnyp(ng) ,is_grids(ng)%rr_u  &
+      ,is_grids(ng)%rr_v        ,is_grids(ng)%rr_t  &
+      ,is_grids(ng)%rr_r        ,is_grids(ng)%rr_p  &
+      ,grid_g(ng)%topt,grid_g(ng)%rtgt,ztn(1,ng))
 
 is_grids(ng)%rr_slp (1:nnxp(ng),1:nnyp(ng)) =rs_slp (1:nnxp(ng),1:nnyp(ng))
 is_grids(ng)%rr_sfp (1:nnxp(ng),1:nnyp(ng)) =rs_sfp (1:nnxp(ng),1:nnyp(ng))
@@ -79,8 +79,8 @@ is_grids(ng)%rr_sst (1:nnxp(ng),1:nnyp(ng)) =rs_sst (1:nnxp(ng),1:nnyp(ng))
 !          average the velocities to the correct points in the stagger
 !             and rotate for polar stereographic transformation.
 
-call varuv(nnzp(ng),nnxp(ng),nnyp(ng),is_grids(ng)%rr_u(1,1,1)  &
-                      ,is_grids(ng)%rr_v(1,1,1))
+call varuv(nnzp(ng),nnxp(ng),nnyp(ng),is_grids(ng)%rr_u  &
+                      ,is_grids(ng)%rr_v)
 
 return
 end

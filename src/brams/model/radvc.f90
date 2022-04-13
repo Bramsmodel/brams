@@ -95,36 +95,36 @@ subroutine advectc(varn,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
         if ( (dyncore_flag == 0) .or. (dyncore_flag == 1) ) then 
 
           call vel_advectc(mzp,mxp,myp,ia,iz,ja,jz,izu,jzv  &
-             ,tend%ut              (1)      &
-             ,tend%vt              (1)     ,tend%wt              (1)      &
-             ,scratch%vt3da        (1)      &
-             ,scratch%vt3db        (1)     ,scratch%vt3dc        (1))
+             ,tend%ut                    &
+             ,tend%vt                   ,tend%wt                    &
+             ,scratch%vt3da              &
+             ,scratch%vt3db             ,scratch%vt3dc        )
 
         else if (dyncore_flag == 2) then 
           !MB: this branch must probably be transferred also to the other if-statements in this subroutine!
      	  print*, "velocity advection"
           call vel_advectc(mzp,mxp,myp,ia,iz,ja,jz,izu,jzv  &
-             ,tend%ut_rk           (1)      &
-             ,tend%vt_rk           (1)     ,tend%wt_rk           (1)      &
-             ,scratch%vt3da        (1)      &
-             ,scratch%vt3db        (1)     ,scratch%vt3dc        (1))
+             ,tend%ut_rk                 &
+             ,tend%vt_rk                ,tend%wt_rk                 &
+             ,scratch%vt3da              &
+             ,scratch%vt3db             ,scratch%vt3dc        )
         end if
 	
      else
 
         call vel_advectc_adap(mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,jdim    &
-             ,grid_g(ngrid)%lpu   (1,1)   ,grid_g(ngrid)%lpv   (1,1)    &
-             ,grid_g(ngrid)%lpw   (1,1)   ,basic_g(ngrid)%uc   (1,1,1)  &
-             ,basic_g(ngrid)%vc   (1,1,1) ,basic_g(ngrid)%wc   (1,1,1)  &
-             ,tend%ut             (1)     ,tend%vt             (1)      &
-             ,tend%wt             (1)     ,basic_g(ngrid)%dn0  (1,1,1)  &
-             ,basic_g(ngrid)%dn0u (1,1,1) ,basic_g(ngrid)%dn0v (1,1,1)  &
-             ,grid_g(ngrid)%aru   (1,1,1) ,grid_g(ngrid)%arv   (1,1,1)  &
-             ,grid_g(ngrid)%arw   (1,1,1) ,grid_g(ngrid)%volu  (1,1,1)  &
-             ,grid_g(ngrid)%volv  (1,1,1) ,grid_g(ngrid)%volw  (1,1,1)  &
-             ,scratch%vt3da       (1)     ,scratch%vt3db       (1)      &
-             ,scratch%vt3dc       (1)     ,scratch%vt3dd       (1)      &
-             ,scratch%vt3de       (1)     ,scratch%vt3df       (1) ,time)
+             ,grid_g(ngrid)%lpu    ,grid_g(ngrid)%lpv       &
+             ,grid_g(ngrid)%lpw    ,basic_g(ngrid)%uc     &
+             ,basic_g(ngrid)%vc    ,basic_g(ngrid)%wc     &
+             ,tend%ut              ,tend%vt               &
+             ,tend%wt              ,basic_g(ngrid)%dn0    &
+             ,basic_g(ngrid)%dn0u  ,basic_g(ngrid)%dn0v   &
+             ,grid_g(ngrid)%aru    ,grid_g(ngrid)%arv     &
+             ,grid_g(ngrid)%arw    ,grid_g(ngrid)%volu    &
+             ,grid_g(ngrid)%volv   ,grid_g(ngrid)%volw    &
+             ,scratch%vt3da        ,scratch%vt3db         &
+             ,scratch%vt3dc        ,scratch%vt3dd         &
+             ,scratch%vt3de        ,scratch%vt3df        ,time)
 
      endif
 
@@ -157,25 +157,25 @@ subroutine advectc(varn,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
      if (if_adap == 0) then
 
         call fa_preptc(mzp,mxp,myp        &
-             ,scratch%vt3da        (1)     ,scratch%vt3db        (1)      &
-             ,scratch%vt3dc        (1)     ,scratch%vt3dd        (1)      &
-             ,scratch%vt3de        (1)     ,scratch%vt3df        (1)      &
-             ,scratch%vt3dh        (1)     ,scratch%vt3di        (1)      &
-             ,scratch%vt3dj        (1)     ,scratch%vt3dk        (1)      &
+             ,scratch%vt3da             ,scratch%vt3db              &
+             ,scratch%vt3dc             ,scratch%vt3dd              &
+             ,scratch%vt3de             ,scratch%vt3df              &
+             ,scratch%vt3dh             ,scratch%vt3di              &
+             ,scratch%vt3dj             ,scratch%vt3dk              &
              ,mynum                         )
 
      else
 
         call fa_preptc_adap(mzp,mxp,myp                               &
-             ,scratch%vt3da       (1)     ,scratch%vt3db       (1)      &
-             ,scratch%vt3dc       (1)     ,scratch%vt3dd       (1)      &
-             ,scratch%vt3de       (1)     ,scratch%vt3df       (1)      &
-             ,scratch%vt3dh       (1)     ,basic_g(ngrid)%dn0  (1,1,1)  &
-             ,basic_g(ngrid)%dn0u (1,1,1) ,basic_g(ngrid)%dn0v (1,1,1)  &
-             ,grid_g(ngrid)%aru   (1,1,1) ,grid_g(ngrid)%arv   (1,1,1)  &
-             ,grid_g(ngrid)%arw   (1,1,1) ,grid_g(ngrid)%volt  (1,1,1)  &
-             ,grid_g(ngrid)%dxu   (1,1)   ,grid_g(ngrid)%dyv   (1,1)    &
-             ,grid_g(ngrid)%dxt   (1,1)   ,grid_g(ngrid)%dyt   (1,1)    &
+             ,scratch%vt3da            ,scratch%vt3db             &
+             ,scratch%vt3dc            ,scratch%vt3dd             &
+             ,scratch%vt3de            ,scratch%vt3df             &
+             ,scratch%vt3dh            ,basic_g(ngrid)%dn0    &
+             ,basic_g(ngrid)%dn0u ,basic_g(ngrid)%dn0v   &
+             ,grid_g(ngrid)%aru   ,grid_g(ngrid)%arv     &
+             ,grid_g(ngrid)%arw   ,grid_g(ngrid)%volt    &
+             ,grid_g(ngrid)%dxu   ,grid_g(ngrid)%dyv     &
+             ,grid_g(ngrid)%dxt   ,grid_g(ngrid)%dyt     &
              ,zt,zm,dzm,vctr1,vctr2,jdim,mynum                          )
 
      endif
