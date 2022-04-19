@@ -107,7 +107,7 @@ module ModMonotonicAdvection
   ! module private variables
 
   ! flow control flags
-  logical, parameter :: use_true_density=.false.
+  logical, parameter :: use_true_density=.true.
   ! for theoretical experiments
   logical, parameter :: theor_wind=.false.
 
@@ -539,6 +539,10 @@ contains
        call MsgDump(h//"jMypExternAtAdvMnt="//trim(adjustl(str(1))))
     end if
 
+    ! create local memory area for large GhostZoneWidth variables
+
+    oneAdvMnt => CreateMonotonicAdvection(oneGrid)
+
     if(.not. use_true_density) then
        call InitializeDensities(mzp, mxp, myp, &
             mxpAdvMnt, mypAdvMnt, &
@@ -548,10 +552,6 @@ contains
             oneAdvMnt%dd0_3d, oneAdvMnt%dd0_3du, &
             oneAdvMnt%dd0_3dv, oneAdvMnt%dd0_3dw)
     end if
-
-    ! create local memory area for large GhostZoneWidth variables
-
-    oneAdvMnt => CreateMonotonicAdvection(oneGrid)
 
     ! update field addresses for message passing from recently allocated local memory area
 
@@ -1874,172 +1874,6 @@ contains
   end subroutine AdvectMnt
 
 
-
-
-
-
-!!$  subroutine Advec3DX(mzp, mxp, myp, &
-!!$       q0, u, den0, den1, dt, dxx, dd0, &
-!!$       qn)
-!!$    integer, intent(in) :: mzp
-!!$    integer, intent(in) :: mxp
-!!$    integer, intent(in) :: myp
-!!$    real, pointer, intent(in) :: q0(:,:,:)
-!!$    ! pointer and values intent(in)
-!!$    real, pointer, intent(in) :: u(:,:,:)
-!!$    ! pointer and values intent(in)
-!!$    real, pointer, intent(in) :: den0(:,:,:)
-!!$    ! pointer and values intent(in)
-!!$    real, pointer, intent(in) :: den1(:,:,:)
-!!$    ! pointer and values intent(in)
-!!$    real, intent(in) :: dt
-!!$    real, pointer, intent(in) :: dxx(:,:)
-!!$    ! pointer and values intent(in)
-!!$    real, pointer, intent(in) :: dd0(:,:,:)
-!!$    ! pointer and values intent(in)
-!!$    real, pointer, intent(in) :: qn(:,:,:)
-!!$    ! pointer intent(in), values intent(out)
-!!$
-!!$    integer :: i
-!!$    integer :: j
-!!$    integer :: k
-!!$    real :: flux(mzp,mxp,myp)
-!!$    real :: vcmax(mzp,mxp,myp)
-!!$    real :: vcmin(mzp,mxp,myp)
-!!$    logical :: imxmn(mzp,mxp,myp)
-!!$    real, parameter :: zr0=0.0
-!!$    real, parameter :: EPS=1.e-6
-!!$    real :: cf
-!!$    real :: cf1
-!!$    real :: ck1
-!!$    real :: ck2
-!!$    real :: x1
-!!$    real :: x1n
-!!$
-!!$    logical, parameter :: dumpLocal=.false.
-!!$    character(len=*), parameter :: h="**(Advec3DX)**"
-!!$
-!!$    if (dumpLocal) then
-!!$       call MsgDump(h//" starts")
-!!$    end if
-!!$
-!!$    imxmn=.false.
-!!$
-!!$    ! Update mixing ratios and limit Fluxes going UP where u>0
-!!$    !  First assume upstream flux at edge of domain
-!!$    do j=2,myp-1
-!!$       do k=2,mzp-1
-!!$          if(u(k,1,j)>=zr0) flux(k,1,j)= q0(k,1,j)*u(k,1,j)*dt*dd0(k,1,j)
-!!$       end do
-!!$    end do
-!!$
-!!$    ! Identify local max and min, specify mixing ratio limits at new time
-!!$    !  VCMAX and VCMIN are the absolute physical limits to the
-!!$    !     mixing ratio at t+dt. If these limits are ever violated,
-!!$    !     non-monotonic (oscillatory) behavior in solution results
-!!$    do j=2,myp-1
-!!$       do  i=2,mxp-1
-!!$          do k=2,mzp-1
-!!$             imxmn(k,i,j)=q0(k,i,j)>=(max(q0(k,i-1,j),q0(k,i+1,j))-eps) .or. & !=true if local
-!!$                  q0(k,i,j)<=(min(q0(k,i-1,j),q0(k,i+1,j))+eps)        !       extrema
-!!$             ck1= q0(k,i,j)
-!!$             ck2= q0(k,i,j)
-!!$             if(u(k,i,j  )< zr0) ck1= q0(k,i+1,j)
-!!$             if(u(k,i-1,j)>=zr0) ck2= q0(k,i-1,j)
-!!$             vcmax(k,i,j)= max( q0(k,i,j), ck1, ck2 )                      ! Eq-7
-!!$             vcmin(k,i,j)= min( q0(k,i,j), ck1, ck2 )                      ! Eq-7
-!!$          end do
-!!$       end do
-!!$    end do
-!!$
-!!$    ! Identify local max and min, specify mixing ratio limits at new time
-!!$    do j=2,myp-1
-!!$       do  i=2,mxp-1 ! ia,iz-1 or 1,iz-1
-!!$          do k=2,mzp-1
-!!$             if(u(k,i,j)<zr0) cycle
-!!$             if(u(k,i-1,j)<zr0) then
-!!$                flux(k,i,j)= q0(k,i,j)*u(k,i,j)*dt*dd0(k,i,j)    !  outflow-only cell
-!!$             else                              !      use upstream
-!!$                x1= dt*u(k,i,j)/dxx(i,j)               ! Courant number
-!!$                x1n= (1.-x1)*(q0(k,i+1,j)-q0(k,i-1,j))/4.
-!!$
-!!$                ! First, estimate mixing ratio in outflowing fluid (Cf)
-!!$                cf= q0(k,i,j) + x1n                                       !Eq-4a
-!!$
-!!$                !   Check to see if there is a peak (min) upwind and/or
-!!$                !    downwind of cell face
-!!$                if(imxmn(k,i-1,j)) cf= q0(k,i,j) +max(1.5,1.2  +.6 *x1)*x1n   !Eq-10b
-!!$                if(imxmn(k,i+1,j)) cf= q0(k,i,j) +       (1.75 -.45*x1)*x1n   !Eq-10a
-!!$                !        CF= Q0(k,i,j) + 5.*X1N   ! uncomment this line for "full sharp"
-!!$
-!!$                !   Limit Cf to be between mixing ratio on either side of edge
-!!$                !      where flux is being calculated
-!!$                cf1= min( max( cf, min(q0(k,i,j),q0(k,i+1,j))  ), max(q0(k,i,j),q0(k,i+1,j)) )
-!!$
-!!$                !   Calculate mixing ratio at new time, but limit to physically
-!!$                !    reasonable values
-!!$                qn(k,i,j) = max(vcmin(k,i,j),min(vcmax(k,i,j),          &   !eq-3&8
-!!$                     (q0(k,i,j)*den0(k,i,j)-x1*cf1*dd0(k,i,j)+flux(k,i-1,j)/dxx(i,j))/den1(k,i,j) ))
-!!$
-!!$                !   Re-calculate OUTFLOWING flux before moving on to next cell
-!!$                !    Flux = CF1*X1*DD0 but it must be adjusted if a monotonic limit
-!!$                !    is encountered.
-!!$                flux(k,i,j)= dxx(i,j)*(q0(k,i,j)*den0(k,i,j) - qn(k,i,j)*den1(k,i,j)) + flux(k,i-1,j)
-!!$             end if                                                  !Eq-9a
-!!$          end do
-!!$       end do
-!!$    end do
-!!$
-!!$    ! If periodic boundary conditions are assumed, it is necessary
-!!$    !   to recalculate the updated mixing ratio at cell 1 if there
-!!$    !   is inflow to that cell from the boundary between IDIM and 1
-!!$    !   Here these statements are commented out, but should be uncommented
-!!$    !   if this subroutine is needed for periodic boundary conditions,
-!!$    !   and then one of the calling arguements to the subroutine is IPERIOD
-!!$    !   which is set to "1" if you assume period boundary conditions
-!!$    !      IF(IPERIOD==1) THEN
-!!$    !        IF(U(IDIM-1)>=ZR0.AND.U(IDIM)>=ZR0)
-!!$    !     &  QN(1)=(Q0(1)*DEN0(1)-FLUX(1)/DXX(1)+FLUX(IDIM)/DXX(1))/DEN1(1)
-!!$    !      END IF
-!!$    !
-!!$    ! Update mixing ratios and limit Fluxes going DOWN where u<0
-!!$    !  The logic of this loop through the grid line is identical
-!!$    !  to the "DO 10" Loop above, only you start at the highest I
-!!$    !  edge and work backwards to I=1
-!!$    !
-!!$    do j=2,myp-1
-!!$       do k=2,mzp-1
-!!$          if(u(k,mxp-1,j)<zr0) flux(k,mxp-1,j)= &
-!!$               q0(k,mxp,j)*u(k,mxp-1,j)*dt*dd0(k,mxp-1,j)
-!!$       end do
-!!$    end do
-!!$
-!!$    do j=2,myp-1
-!!$       do i=mxp-1,2,-1 !iz,ia,-1
-!!$          do k=2,mzp-1
-!!$             if(u(k,i-1,j)>=zr0) then           ! Inflow-only cell
-!!$                if(u(k,i,j)<zr0) qn(k,i,j)=  max(  vcmin(k,i,j),   min(   vcmax(k,i,j),&
-!!$                     (q0(k,i,j)*den0(k,i,j)-flux(k,i,j)/dxx(i,j) + &
-!!$                     flux(k,i-1,j)/dxx(i,j))/den1(k,i,j) ))
-!!$             else
-!!$                x1=  dt*abs(u(k,i-1,j))/dxx(i,j)     ! Courant number
-!!$                x1n= (1.-x1)*(q0(k,i-1,j)-q0(k,i+1,j))/4.
-!!$                cf= q0(k,i,j) + x1n                                       !Eq-4b
-!!$                if(imxmn(k,i+1,j)) cf= q0(k,i,j) +max(1.5,1.2  +.6 *x1)*x1n   !Eq-10b
-!!$                if(imxmn(k,i-1,j)) cf= q0(k,i,j) +   (1.75 -.45*x1)*x1n       !Eq-10a
-!!$                cf1= min( max( cf, min(q0(k,i,j),q0(k,i-1,j)) ), max(q0(k,i,j),q0(k,i-1,j)) )
-!!$                if(u(k,i,j)>=zr0) cf1= q0(k,i,j)     ! outflow-only cell upstream
-!!$                qn(k,i,j)= max(  vcmin(k,i,j),  min(   vcmax(k,i,j), 	  &   !Eq-3&8
-!!$                     (q0(k,i,j)*den0(k,i,j)-flux(k,i,j)/dxx(i,j)-x1*cf1*dd0(k,i-1,j))/den1(k,i,j) ))
-!!$                flux(k,i-1,j)=dxx(i,j)*(qn(k,i,j)*den1(k,i,j) - q0(k,i,j)*den0(k,i,j)) + flux(k,i,j)!Eq-9b
-!!$             end if
-!!$          end do
-!!$       end do
-!!$    end do !- big loop y-z
-!!$    if (dumpLocal) then
-!!$       call MsgDump(h//" finishes")
-!!$    end if
-!!$  end subroutine Advec3DX
 
 
 
