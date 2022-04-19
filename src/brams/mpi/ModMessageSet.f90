@@ -1251,10 +1251,9 @@ contains
        call fatal_error(h//" starts with null GlobalWithGhost")
     end if
 
+    ! default output (case no neighbours)
+
     if (.not. associated(Neigh)) then
-
-       ! default output (case no neighbours)
-
        SendDn0u => null()
        RecvDn0u => null()
        SendDn0v => null()
@@ -1452,8 +1451,11 @@ contains
     ! default output (case no neighbours or
     ! selected namelist variables were not set)
 
-    SendG3D => null()
-    RecvG3D => null()
+    if (.not. associated(Neigh)) then
+       SendG3D => null()
+       RecvG3D => null()
+       return
+    end if
 
     ! there will be messages if there are neighbour nodes
     ! and any of the namelist variables
@@ -1992,7 +1994,14 @@ contains
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(CreateWideGhostZoneMessageSet)**"
 
+    ! null communication if no neighbour
 
+    if (.not. associated(Neigh)) then
+       WideGhostZoneSend => null()
+       WideGhostZoneRecv => null()
+       return
+    end if
+    
     nMachs=ParEnv%nmachs
     myNum=ParEnv%mynum
     nNeigh=Neigh%nNeigh
@@ -3410,6 +3419,31 @@ contains
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(CreateAdvMntMessageSet)**"
 
+    ! no message set if no neighbours
+
+    if (.not. associated(Neigh)) then
+       AdvMntUVSendX => null()
+       AdvMntUVRecvX => null()
+       AdvMntUVSendY => null()
+       AdvMntUVRecvY => null()
+       AdvMntDxDySendX => null()
+       AdvMntDxDyRecvX => null()
+       AdvMntDxDySendY => null()
+       AdvMntDxDyRecvY => null()
+       AdvMntDd0SendX => null()
+       AdvMntDd0RecvX => null()
+       AdvMntDd0SendY => null()
+       AdvMntDd0RecvY => null()
+       AdvMntDenSendX => null()
+       AdvMntDenRecvX => null()
+       AdvMntDenSendY => null()
+       AdvMntDenRecvY => null()
+       AdvMntScaSendX => null()
+       AdvMntScaRecvX => null()
+       AdvMntScaSendY => null()
+       AdvMntScaRecvY => null()
+    end if
+    
     nMachs=ParEnv%nmachs
     myNum=ParEnv%mynum
     nNeigh=Neigh%nNeigh
@@ -3986,199 +4020,6 @@ contains
 
 
 
-  subroutine PostSendRecvMsgs(SendMsg, RecvMsg)
-
-    ! posts all nonblocking send and recv operations of
-    ! a message set pair of variables
-
-    type(MessageSet), pointer, intent(in) :: SendMsg
-    type(MessageSet), pointer, intent(in) :: RecvMsg
-
-    integer :: iSend
-    integer :: iRecv
-    type(MessageData), pointer :: oneMessageData => null()
-    character(len=8) :: str(10)
-    character(len=*), parameter :: h="**(PostSendRecvMsgs)**"
-    logical, parameter :: dumpLocal=.false.
-
-    ! post nonblocking receive for each receiving message;
-    ! a single receive msg from each process
-
-    if (associated(RecvMsg)) then
-       if (dumpLocal) then
-          write(str(1),"(i8)") RecvMsg%nMsgs
-          call MsgDump(h//" for "//trim(adjustl(RecvMsg%name))//&
-               " will post "//trim(adjustl(str(1)))//&
-               " nonblocking receives")
-       end if
-       do iRecv= 1,RecvMsg%nMsgs
-
-          oneMessageData => RecvMsg%msgData(iRecv)
-
-          call AllocateMessageDataBuffer(oneMessageData)
-
-          ! post receive
-
-          call parf_get_noblock_real(&
-               oneMessageData%buf, &
-               oneMessageData%bufSize, &
-               RecvMsg%otherProc(iRecv), &
-               RecvMsg%tag, &
-               RecvMsg%request(iRecv))
-
-          if (dumpLocal) then
-             write(str(1),"(i8)") iRecv
-             write(str(2),"(i8)") oneMessageData%bufSize
-             write(str(3),"(i8)") RecvMsg%otherProc(iRecv)
-             write(str(4),"(i8)") RecvMsg%tag
-             if (RecvMsg%request(iRecv) == MPI_REQUEST_NULL) then
-                str(5)="NULL"
-             else
-                write(str(5),"(Z8)") RecvMsg%request(iRecv)
-             end if
-             call MsgDump(&
-                  h//" for iRecv="//trim(adjustl(str(1)))//&
-                  " post recv from MPI rank "//trim(adjustl(str(3)))//&
-                  " with buffer size "//trim(adjustl(str(2)))//&
-                  " tag "//trim(adjustl(str(4)))//&
-                  " and request "//trim(adjustl(str(5))))
-          end if
-
-       end do
-    else
-       if (dumpLocal) then
-          call MsgDump(h//" empty receive message set")
-       end if
-    end if
-
-    ! for each sending message,
-    ! build send buffer and copy field sections to the buffer;
-    ! post nonblocking send;
-    ! A single send message to each process
-
-    if (associated(SendMsg)) then
-       if (dumpLocal) then
-          write(str(1),"(i8)") SendMsg%nMsgs
-          call MsgDump(h//" for "//trim(adjustl(SendMsg%name))//&
-               " will post "//trim(adjustl(str(1)))//&
-               " nonblocking sends")
-       end if
-       do iSend = 1,SendMsg%nMsgs
-
-          ! allocate and fill send buffer with field sections to send
-
-          oneMessageData => SendMsg%msgData(iSend)
-          call AllocateMessageDataBuffer(oneMessageData)
-          call ComposeMessageDataBuffer(oneMessageData)
-
-          ! post send message
-
-          call parf_send_noblock_real(&
-               oneMessageData%buf, &
-               oneMessageData%bufSize, &
-               SendMsg%otherProc(iSend), &
-               SendMsg%tag, &
-               SendMsg%request(iSend))
-
-          if (dumpLocal) then
-             write(str(1),"(i8)") iSend
-             write(str(2),"(i8)") oneMessageData%bufSize
-             write(str(3),"(i8)") SendMsg%otherProc(iSend)
-             write(str(4),"(i8)") SendMsg%tag
-             if (SendMsg%request(iSend) == MPI_REQUEST_NULL) then
-                str(5)="NULL"
-             else
-                write(str(5),"(Z8)") SendMsg%request(iSend)
-             end if
-             call MsgDump(&
-                  h//" for iSend="//trim(adjustl(str(1)))//&
-                  " post send to MPI rank "//trim(adjustl(str(3)))//&
-                  " with buffer size "//trim(adjustl(str(2)))//&
-                  " tag "//trim(adjustl(str(4)))//&
-                  " and request "//trim(adjustl(str(5))))
-          end if
-       end do
-    else
-       if (dumpLocal) then
-          call MsgDump(h//" empty send message set")
-       end if
-    end if
-  end subroutine PostSendRecvMsgs
-
-
-
-
-
-  subroutine WaitSendRecvMsgs(SendMsg, RecvMsg)
-    type(MessageSet), pointer, intent(in) :: SendMsg
-    type(MessageSet), pointer, intent(in) :: RecvMsg
-
-    ! waits for all nonblocking send and recv operations of
-    ! a message set pair of variables
-
-    integer :: iSend
-    integer :: iRecv
-    integer :: recvNbr
-    integer :: sendNbr
-    type(MessageData), pointer :: msgData => null()
-    character(len=8) :: str(10)
-    character(len=*), parameter :: h="**(WaitSendRecvMsgs)**"
-    logical, parameter :: dumpLocal=.false.
-
-    ! for each receive message:
-    ! build send buffer and copy field sections to the buffer;
-    ! post nonblocking send;
-    ! A single send message to each process
-
-    if (associated(RecvMsg)) then
-       if (dumpLocal) then
-          write(str(1),"(i8)") RecvMsg%nMsgs
-          call MsgDump(h//" for "//trim(adjustl(RecvMsg%name))//&
-               " waits on "//trim(adjustl(str(1)))//" receives")
-       end if
-
-       do iRecv= 1,RecvMsg%nMsgs
-
-          ! wait on any arrived message
-
-          call parf_wait_any_nostatus(RecvMsg%nMsgs, &
-               RecvMsg%request, recvNbr)
-          msgData => RecvMsg%msgData(recvNbr)
-          if (dumpLocal) then
-             write(str(1),"(i8)") recvNbr
-             write(str(2),"(i8)") RecvMsg%otherProc(recvNbr)
-             call MsgDump(h//" received message #"//trim(adjustl(str(1)))//&
-                  " from MPI proc "//trim(adjustl(str(2))))
-          end if
-
-          ! extract field sections from incoming buffer
-          ! and store at destination fields
-
-          call DecomposeMessageDataBuffer(RecvMsg%msgData(recvNbr))
-          call DeallocateMessageDataBuffer(RecvMsg%msgData(recvNbr))
-       end do
-    else
-       if (dumpLocal) then
-          call MsgDump(h//" empty receive message set")
-       end if
-    end if
-
-    ! for all posted send messages, wait on pending request,
-    ! deallocate buffer and empty request
-
-    if (associated(SendMsg)) then
-       !CDIR$ NOVECTOR
-       do iSend = 1,SendMsg%nMsgs
-          call parf_wait_any_nostatus(SendMsg%nMsgs, &
-               SendMsg%request, sendNbr)
-          call DeallocateMessageDataBuffer(SendMsg%msgData(sendNbr))
-       end do
-    else
-       if (dumpLocal) then
-          call MsgDump(h//" empty send message set")
-       end if
-    end if
-  end subroutine WaitSendRecvMsgs
 
 
 
@@ -4400,6 +4241,11 @@ contains
   end subroutine OneAcoustNewSendRecv
 
 
+
+
+
+
+  
   subroutine CreateAcoustNewMessageSet(&
        GridSize, ParEnv, Neigh, &
        GlobalOwn, GlobalWithGhost, NodeDims, &
@@ -4637,10 +4483,6 @@ contains
     character(len=*), parameter :: h="**(UpdateSendFieldAdressAtAdvectcRk)**"
     logical, parameter :: dumpLocal=.false.
 
-    if (.not. associated(WideGhostZoneSend)) then
-       call fatal_error(h//" WideGhostZoneSend not associated")
-    end if
-
     if (dumpLocal) then
        call MsgDump(h//" of message set "//trim(adjustl(WideGhostZoneSend%name)))
        call MsgDump(h//" of field SCP")
@@ -4649,16 +4491,18 @@ contains
        call MsgDump(h//" of field WFX")
     end if
 
-    do iMsg = 1, WideGhostZoneSend%nMsgs
-       fsnode => WideGhostZoneSend%msgData(iMsg)%list%head
-       call UpdateFieldAdress(fsnode%entry, scp, "SCP")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, ufx, "UFX")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, vfx, "VFX")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, wfx, "WFX")
-    end do
+    if (associated(WideGhostZoneSend)) then
+       do iMsg = 1, WideGhostZoneSend%nMsgs
+          fsnode => WideGhostZoneSend%msgData(iMsg)%list%head
+          call UpdateFieldAdress(fsnode%entry, scp, "SCP")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, ufx, "UFX")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, vfx, "VFX")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, wfx, "WFX")
+       end do
+    end if
   end subroutine UpdateSendFieldAdressAtAdvectcRk
 
 
@@ -4678,10 +4522,6 @@ contains
     character(len=*), parameter :: h="**(UpdateRecvFieldAdressAtAdvectcRk)**"
     logical, parameter :: dumpLocal=.false.
 
-    if (.not. associated(WideGhostZoneRecv)) then
-       call fatal_error(h//" WideGhostZoneRecv not associated")
-    end if
-
     if (dumpLocal) then
        call MsgDump(h//" of message set "//trim(adjustl(WideGhostZoneRecv%name)))
        call MsgDump(h//" of field SCR")
@@ -4690,16 +4530,18 @@ contains
        call MsgDump(h//" of field WFXLOC")
     end if
 
-    do iMsg = 1, WideGhostZoneRecv%nMsgs
-       fsnode => WideGhostZoneRecv%msgData(iMsg)%list%head
-       call UpdateFieldAdress(fsnode%entry, scr, "SCR")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, ufx_local, "UFXLOC")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, vfx_local, "VFXLOC")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, wfx_local, "WFXLOC")
-    end do
+    if (associated(WideGhostZoneRecv)) then
+       do iMsg = 1, WideGhostZoneRecv%nMsgs
+          fsnode => WideGhostZoneRecv%msgData(iMsg)%list%head
+          call UpdateFieldAdress(fsnode%entry, scr, "SCR")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, ufx_local, "UFXLOC")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, vfx_local, "VFXLOC")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, wfx_local, "WFXLOC")
+       end do
+    end if
   end subroutine UpdateRecvFieldAdressAtAdvectcRk
 
 
@@ -4722,21 +4564,19 @@ contains
     character(len=*), parameter :: h="**(UpdateFieldAdressAtAcoustNew)**"
     logical, parameter :: dumpLocal=.false.
 
-    if (.not. associated(AcoustNewSend)) then
-       call fatal_error(h//" AcoustNewSend not associated")
-    else if (.not. associated(AcoustNewRecv)) then
-       call fatal_error(h//" AcoustNewRecv not associated")
+    if (associated(AcoustNewSend)) then
+       do iMsg = 1, AcoustNewSend%nMsgs
+          fsnode => AcoustNewSend%msgData(iMsg)%list%head
+          call UpdateFieldAdress(fsnode%entry, field, fieldName)
+       end do
     end if
 
-    do iMsg = 1, AcoustNewSend%nMsgs
-       fsnode => AcoustNewSend%msgData(iMsg)%list%head
-       call UpdateFieldAdress(fsnode%entry, field, fieldName)
-    end do
-
-    do iMsg = 1, AcoustNewRecv%nMsgs
-       fsnode => AcoustNewRecv%msgData(iMsg)%list%head
-       call UpdateFieldAdress(fsnode%entry, field, fieldName)
-    end do
+    if (associated(AcoustNewRecv)) then
+       do iMsg = 1, AcoustNewRecv%nMsgs
+          fsnode => AcoustNewRecv%msgData(iMsg)%list%head
+          call UpdateFieldAdress(fsnode%entry, field, fieldName)
+       end do
+    end if
   end subroutine UpdateFieldAdressAtAcoustNew
 
 
@@ -4797,198 +4637,406 @@ contains
     type(FieldSectionNode), pointer :: fsnode
     character(len=*), parameter :: h="**(UpdateFieldAdressAtAdvMnt)**"
 
-    if (.not. associated(AdvMntUVSendX)) then
-       call fatal_error(h//" AdvMntUVSendX not associated")
-    else if (.not. associated(AdvMntUVRecvX)) then
-       call fatal_error(h//" AdvMntUVRecvX not associated")
-    else if (.not. associated(AdvMntUVSendY)) then
-       call fatal_error(h//" AdvMntUVSendY not associated")
-    else if (.not. associated(AdvMntUVRecvY)) then
-       call fatal_error(h//" AdvMntUVRecvY not associated")
-    else if (.not. associated(AdvMntDxDySendX)) then
-       call fatal_error(h//" AdvMntDxDySendX not associated")
-    else if (.not. associated(AdvMntDxDyRecvX)) then
-       call fatal_error(h//" AdvMntDxDyRecvX not associated")
-    else if (.not. associated(AdvMntDxDySendY)) then
-       call fatal_error(h//" AdvMntDxDySendY not associated")
-    else if (.not. associated(AdvMntDxDyRecvY)) then
-       call fatal_error(h//" AdvMntDxDyRecvY not associated")
-    else if (.not. associated(AdvMntDd0SendX)) then
-       call fatal_error(h//" AdvMntDd0SendX not associated")
-    else if (.not. associated(AdvMntDd0RecvX)) then
-       call fatal_error(h//" AdvMntDd0RecvX not associated")
-    else if (.not. associated(AdvMntDd0SendY)) then
-       call fatal_error(h//" AdvMntDd0SendY not associated")
-    else if (.not. associated(AdvMntDd0RecvY)) then
-       call fatal_error(h//" AdvMntDd0RecvY not associated")
-    else if (.not. associated(AdvMntDenSendX)) then
-       call fatal_error(h//" AdvMntDenSendX not associated")
-    else if (.not. associated(AdvMntDenRecvX)) then
-       call fatal_error(h//" AdvMntDenRecvX not associated")
-    else if (.not. associated(AdvMntDenSendY)) then
-       call fatal_error(h//" AdvMntDenSendY not associated")
-    else if (.not. associated(AdvMntDenRecvY)) then
-       call fatal_error(h//" AdvMntDenRecvY not associated")
-    else if (.not. associated(AdvMntScaSendX)) then
-       call fatal_error(h//" AdvMntScaSendX not associated")
-    else if (.not. associated(AdvMntScaRecvX)) then
-       call fatal_error(h//" AdvMntScaRecvX not associated")
-    else if (.not. associated(AdvMntScaSendY)) then
-       call fatal_error(h//" AdvMntScaSendY not associated")
-    else if (.not. associated(AdvMntScaRecvY)) then
-       call fatal_error(h//" AdvMntScaRecvY not associated")
+    if (associated(AdvMntUVSendX)) then
+       do iMsg = 1, AdvMntUVSendX%nMsgs
+          fsnode => AdvMntUVSendX%msgData(iMsg)%list%head
+          call UpdateFieldAdress(fsnode%entry, u3d, "U3D")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, v3d, "V3D")
+       end do
     end if
 
-    do iMsg = 1, AdvMntUVSendX%nMsgs
-       fsnode => AdvMntUVSendX%msgData(iMsg)%list%head
-       call UpdateFieldAdress(fsnode%entry, u3d, "U3D")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, v3d, "V3D")
-    end do
-    do iMsg = 1, AdvMntUVRecvX%nMsgs
-       fsnode => AdvMntUVRecvX%msgData(iMsg)%list%head
-       call UpdateFieldAdress(fsnode%entry, u3d, "U3D")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, v3d, "V3D")
-    end do
-    do iMsg = 1, AdvMntUVSendY%nMsgs
-       fsnode => AdvMntUVSendY%msgData(iMsg)%list%head
-       call UpdateFieldAdress(fsnode%entry, u3d, "U3D")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, v3d, "V3D")
-    end do
-    do iMsg = 1, AdvMntUVRecvY%nMsgs
-       fsnode => AdvMntUVRecvY%msgData(iMsg)%list%head
-       call UpdateFieldAdress(fsnode%entry, u3d, "U3D")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, v3d, "V3D")
-    end do
+    if (associated(AdvMntUVRecvX)) then
+       do iMsg = 1, AdvMntUVRecvX%nMsgs
+          fsnode => AdvMntUVRecvX%msgData(iMsg)%list%head
+          call UpdateFieldAdress(fsnode%entry, u3d, "U3D")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, v3d, "V3D")
+       end do
+    end if
 
+    if (associated(AdvMntUVSendY)) then
+       do iMsg = 1, AdvMntUVSendY%nMsgs
+          fsnode => AdvMntUVSendY%msgData(iMsg)%list%head
+          call UpdateFieldAdress(fsnode%entry, u3d, "U3D")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, v3d, "V3D")
+       end do
+    end if
 
+    if (associated(AdvMntUVRecvY)) then
+       do iMsg = 1, AdvMntUVRecvY%nMsgs
+          fsnode => AdvMntUVRecvY%msgData(iMsg)%list%head
+          call UpdateFieldAdress(fsnode%entry, u3d, "U3D")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, v3d, "V3D")
+       end do
+    end if
 
-    do iMsg = 1, AdvMntDxDySendX%nMsgs
-       fsnode => AdvMntDxDySendX%msgData(iMsg)%list%head
-       call UpdateFieldAdress(fsnode%entry, dxtW, "DXTW")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, dytW, "DYTW")
-    end do
-    do iMsg = 1, AdvMntDxDyRecvX%nMsgs
-       fsnode => AdvMntDxDyRecvX%msgData(iMsg)%list%head
-       call UpdateFieldAdress(fsnode%entry, dxtW, "DXTW")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, dytW, "DYTW")
-    end do
-    do iMsg = 1, AdvMntDxDySendY%nMsgs
-       fsnode => AdvMntDxDySendY%msgData(iMsg)%list%head
-       call UpdateFieldAdress(fsnode%entry, dxtW, "DXTW")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, dytW, "DYTW")
-    end do
-    do iMsg = 1, AdvMntDxDyRecvY%nMsgs
-       fsnode => AdvMntDxDyRecvY%msgData(iMsg)%list%head
-       call UpdateFieldAdress(fsnode%entry, dxtW, "DXTW")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, dytW, "DYTW")
-    end do
+    if (associated(AdvMntDxDySendX)) then
+       do iMsg = 1, AdvMntDxDySendX%nMsgs
+          fsnode => AdvMntDxDySendX%msgData(iMsg)%list%head
+          call UpdateFieldAdress(fsnode%entry, dxtW, "DXTW")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, dytW, "DYTW")
+       end do
+    end if
 
+    if (associated(AdvMntDxDyRecvX)) then
+       do iMsg = 1, AdvMntDxDyRecvX%nMsgs
+          fsnode => AdvMntDxDyRecvX%msgData(iMsg)%list%head
+          call UpdateFieldAdress(fsnode%entry, dxtW, "DXTW")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, dytW, "DYTW")
+       end do
+    end if
+       
+    if (associated(AdvMntDxDySendY)) then
+       do iMsg = 1, AdvMntDxDySendY%nMsgs
+          fsnode => AdvMntDxDySendY%msgData(iMsg)%list%head
+          call UpdateFieldAdress(fsnode%entry, dxtW, "DXTW")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, dytW, "DYTW")
+       end do
+    end if
+       
+    if (associated(AdvMntDxDyRecvY)) then
+       do iMsg = 1, AdvMntDxDyRecvY%nMsgs
+          fsnode => AdvMntDxDyRecvY%msgData(iMsg)%list%head
+          call UpdateFieldAdress(fsnode%entry, dxtW, "DXTW")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, dytW, "DYTW")
+       end do
+    end if
 
-    do iMsg = 1, AdvMntDd0SendX%nMsgs
-       fsnode => AdvMntDd0SendX%msgData(iMsg)%list%head
-       call UpdateFieldAdress(fsnode%entry, dd0_3d, "DD0_3D")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, dd0_3du, "DD0_3DU")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, dd0_3dv, "DD0_3DV")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, dd0_3dw, "DD0_3DW")
-    end do
-    do iMsg = 1, AdvMntDd0RecvX%nMsgs
-       fsnode => AdvMntDd0RecvX%msgData(iMsg)%list%head
-       call UpdateFieldAdress(fsnode%entry, dd0_3d, "DD0_3D")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, dd0_3du, "DD0_3DU")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, dd0_3dv, "DD0_3DV")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, dd0_3dw, "DD0_3DW")
-    end do
-    do iMsg = 1, AdvMntDd0SendY%nMsgs
-       fsnode => AdvMntDd0SendY%msgData(iMsg)%list%head
-       call UpdateFieldAdress(fsnode%entry, dd0_3d, "DD0_3D")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, dd0_3du, "DD0_3DU")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, dd0_3dv, "DD0_3DV")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, dd0_3dw, "DD0_3DW")
-    end do
-    do iMsg = 1, AdvMntDd0RecvY%nMsgs
-       fsnode => AdvMntDd0RecvY%msgData(iMsg)%list%head
-       call UpdateFieldAdress(fsnode%entry, dd0_3d, "DD0_3D")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, dd0_3du, "DD0_3DU")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, dd0_3dv, "DD0_3DV")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, dd0_3dw, "DD0_3DW")
-    end do
+    if (associated(AdvMntDd0SendX)) then
+       do iMsg = 1, AdvMntDd0SendX%nMsgs
+          fsnode => AdvMntDd0SendX%msgData(iMsg)%list%head
+          call UpdateFieldAdress(fsnode%entry, dd0_3d, "DD0_3D")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, dd0_3du, "DD0_3DU")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, dd0_3dv, "DD0_3DV")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, dd0_3dw, "DD0_3DW")
+       end do
+    end if
 
-    do iMsg = 1, AdvMntDenSendX%nMsgs
-       fsnode => AdvMntDenSendX%msgData(iMsg)%list%head
-       call UpdateFieldAdress(fsnode%entry, den0_3d, "DEN0_3D")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, den1_3d, "DEN1_3D")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, den2_3d, "DEN2_3D")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, den3_3d, "DEN3_3D")
-    end do
-    do iMsg = 1, AdvMntDenRecvX%nMsgs
-       fsnode => AdvMntDenRecvX%msgData(iMsg)%list%head
-       call UpdateFieldAdress(fsnode%entry, den0_3d, "DEN0_3D")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, den1_3d, "DEN1_3D")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, den2_3d, "DEN2_3D")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, den3_3d, "DEN3_3D")
-    end do
-    do iMsg = 1, AdvMntDenSendY%nMsgs
-       fsnode => AdvMntDenSendY%msgData(iMsg)%list%head
-       call UpdateFieldAdress(fsnode%entry, den0_3d, "DEN0_3D")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, den1_3d, "DEN1_3D")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, den2_3d, "DEN2_3D")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, den3_3d, "DEN3_3D")
-    end do
-    do iMsg = 1, AdvMntDenRecvY%nMsgs
-       fsnode => AdvMntDenRecvY%msgData(iMsg)%list%head
-       call UpdateFieldAdress(fsnode%entry, den0_3d, "DEN0_3D")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, den1_3d, "DEN1_3D")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, den2_3d, "DEN2_3D")
-       fsnode => fsnode%next
-       call UpdateFieldAdress(fsnode%entry, den3_3d, "DEN3_3D")
-    end do
+    if (associated(AdvMntDd0RecvX)) then
+       do iMsg = 1, AdvMntDd0RecvX%nMsgs
+          fsnode => AdvMntDd0RecvX%msgData(iMsg)%list%head
+          call UpdateFieldAdress(fsnode%entry, dd0_3d, "DD0_3D")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, dd0_3du, "DD0_3DU")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, dd0_3dv, "DD0_3DV")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, dd0_3dw, "DD0_3DW")
+       end do
+    end if
+       
+    if (associated(AdvMntDd0SendY)) then
+       do iMsg = 1, AdvMntDd0SendY%nMsgs
+          fsnode => AdvMntDd0SendY%msgData(iMsg)%list%head
+          call UpdateFieldAdress(fsnode%entry, dd0_3d, "DD0_3D")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, dd0_3du, "DD0_3DU")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, dd0_3dv, "DD0_3DV")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, dd0_3dw, "DD0_3DW")
+       end do
+    end if
 
-    do iMsg = 1, AdvMntScaSendX%nMsgs
-       fsnode => AdvMntScaSendX%msgData(iMsg)%list%head
-       call UpdateFieldAdress(fsnode%entry, vc3d_in, "VC3D_IN")
-    end do
-    do iMsg = 1, AdvMntScaRecvX%nMsgs
-       fsnode => AdvMntScaRecvX%msgData(iMsg)%list%head
-       call UpdateFieldAdress(fsnode%entry, vc3d_in, "VC3D_IN")
-    end do
-    do iMsg = 1, AdvMntScaSendY%nMsgs
-       fsnode => AdvMntScaSendY%msgData(iMsg)%list%head
-       call UpdateFieldAdress(fsnode%entry, vc3d_out, "VC3D_OUT")
-    end do
-    do iMsg = 1, AdvMntScaRecvY%nMsgs
-       fsnode => AdvMntScaRecvY%msgData(iMsg)%list%head
-       call UpdateFieldAdress(fsnode%entry, vc3d_out, "VC3D_OUT")
-    end do
+    if (associated(AdvMntDd0RecvY)) then
+       do iMsg = 1, AdvMntDd0RecvY%nMsgs
+          fsnode => AdvMntDd0RecvY%msgData(iMsg)%list%head
+          call UpdateFieldAdress(fsnode%entry, dd0_3d, "DD0_3D")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, dd0_3du, "DD0_3DU")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, dd0_3dv, "DD0_3DV")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, dd0_3dw, "DD0_3DW")
+       end do
+    end if
+
+    if (associated(AdvMntDenSendX)) then
+       do iMsg = 1, AdvMntDenSendX%nMsgs
+          fsnode => AdvMntDenSendX%msgData(iMsg)%list%head
+          call UpdateFieldAdress(fsnode%entry, den0_3d, "DEN0_3D")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, den1_3d, "DEN1_3D")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, den2_3d, "DEN2_3D")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, den3_3d, "DEN3_3D")
+       end do
+    end if
+
+    if (associated(AdvMntDenRecvX)) then
+       do iMsg = 1, AdvMntDenRecvX%nMsgs
+          fsnode => AdvMntDenRecvX%msgData(iMsg)%list%head
+          call UpdateFieldAdress(fsnode%entry, den0_3d, "DEN0_3D")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, den1_3d, "DEN1_3D")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, den2_3d, "DEN2_3D")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, den3_3d, "DEN3_3D")
+       end do
+    end if
+
+    if (associated(AdvMntDenSendY)) then
+       do iMsg = 1, AdvMntDenSendY%nMsgs
+          fsnode => AdvMntDenSendY%msgData(iMsg)%list%head
+          call UpdateFieldAdress(fsnode%entry, den0_3d, "DEN0_3D")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, den1_3d, "DEN1_3D")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, den2_3d, "DEN2_3D")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, den3_3d, "DEN3_3D")
+       end do
+    end if
+
+    if (associated(AdvMntDenRecvY)) then
+       do iMsg = 1, AdvMntDenRecvY%nMsgs
+          fsnode => AdvMntDenRecvY%msgData(iMsg)%list%head
+          call UpdateFieldAdress(fsnode%entry, den0_3d, "DEN0_3D")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, den1_3d, "DEN1_3D")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, den2_3d, "DEN2_3D")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, den3_3d, "DEN3_3D")
+       end do
+    end if
+
+    if (associated(AdvMntScaSendX)) then
+       do iMsg = 1, AdvMntScaSendX%nMsgs
+          fsnode => AdvMntScaSendX%msgData(iMsg)%list%head
+          call UpdateFieldAdress(fsnode%entry, vc3d_in, "VC3D_IN")
+       end do
+    end if
+
+    if (associated(AdvMntScaRecvX)) then
+       do iMsg = 1, AdvMntScaRecvX%nMsgs
+          fsnode => AdvMntScaRecvX%msgData(iMsg)%list%head
+          call UpdateFieldAdress(fsnode%entry, vc3d_in, "VC3D_IN")
+       end do
+    end if
+
+    if (associated(AdvMntScaSendY)) then
+       do iMsg = 1, AdvMntScaSendY%nMsgs
+          fsnode => AdvMntScaSendY%msgData(iMsg)%list%head
+          call UpdateFieldAdress(fsnode%entry, vc3d_out, "VC3D_OUT")
+       end do
+    end if
+
+    if (associated(AdvMntScaRecvY)) then
+       do iMsg = 1, AdvMntScaRecvY%nMsgs
+          fsnode => AdvMntScaRecvY%msgData(iMsg)%list%head
+          call UpdateFieldAdress(fsnode%entry, vc3d_out, "VC3D_OUT")
+       end do
+    end if
   end subroutine UpdateFieldAdressAtAdvMnt
+
+
+
+
+
+  subroutine PostSendRecvMsgs(SendMsg, RecvMsg)
+
+    ! posts all nonblocking send and recv operations of
+    ! a message set pair of variables
+
+    type(MessageSet), pointer, intent(in) :: SendMsg
+    type(MessageSet), pointer, intent(in) :: RecvMsg
+
+    integer :: iSend
+    integer :: iRecv
+    type(MessageData), pointer :: oneMessageData => null()
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(PostSendRecvMsgs)**"
+    logical, parameter :: dumpLocal=.false.
+
+    ! post nonblocking receive for each receiving message;
+    ! a single receive msg from each process
+
+    if (associated(RecvMsg)) then
+       if (dumpLocal) then
+          write(str(1),"(i8)") RecvMsg%nMsgs
+          call MsgDump(h//" for "//trim(adjustl(RecvMsg%name))//&
+               " will post "//trim(adjustl(str(1)))//&
+               " nonblocking receives")
+       end if
+       do iRecv= 1,RecvMsg%nMsgs
+
+          oneMessageData => RecvMsg%msgData(iRecv)
+
+          call AllocateMessageDataBuffer(oneMessageData)
+
+          ! post receive
+
+          call parf_get_noblock_real(&
+               oneMessageData%buf, &
+               oneMessageData%bufSize, &
+               RecvMsg%otherProc(iRecv), &
+               RecvMsg%tag, &
+               RecvMsg%request(iRecv))
+
+          if (dumpLocal) then
+             write(str(1),"(i8)") iRecv
+             write(str(2),"(i8)") oneMessageData%bufSize
+             write(str(3),"(i8)") RecvMsg%otherProc(iRecv)
+             write(str(4),"(i8)") RecvMsg%tag
+             if (RecvMsg%request(iRecv) == MPI_REQUEST_NULL) then
+                str(5)="NULL"
+             else
+                write(str(5),"(Z8)") RecvMsg%request(iRecv)
+             end if
+             call MsgDump(&
+                  h//" for iRecv="//trim(adjustl(str(1)))//&
+                  " post recv from MPI rank "//trim(adjustl(str(3)))//&
+                  " with buffer size "//trim(adjustl(str(2)))//&
+                  " tag "//trim(adjustl(str(4)))//&
+                  " and request "//trim(adjustl(str(5))))
+          end if
+
+       end do
+    else
+       if (dumpLocal) then
+          call MsgDump(h//" empty receive message set")
+       end if
+    end if
+
+    ! for each sending message,
+    ! build send buffer and copy field sections to the buffer;
+    ! post nonblocking send;
+    ! A single send message to each process
+
+    if (associated(SendMsg)) then
+       if (dumpLocal) then
+          write(str(1),"(i8)") SendMsg%nMsgs
+          call MsgDump(h//" for "//trim(adjustl(SendMsg%name))//&
+               " will post "//trim(adjustl(str(1)))//&
+               " nonblocking sends")
+       end if
+       do iSend = 1,SendMsg%nMsgs
+
+          ! allocate and fill send buffer with field sections to send
+
+          oneMessageData => SendMsg%msgData(iSend)
+          call AllocateMessageDataBuffer(oneMessageData)
+          call ComposeMessageDataBuffer(oneMessageData)
+
+          ! post send message
+
+          call parf_send_noblock_real(&
+               oneMessageData%buf, &
+               oneMessageData%bufSize, &
+               SendMsg%otherProc(iSend), &
+               SendMsg%tag, &
+               SendMsg%request(iSend))
+
+          if (dumpLocal) then
+             write(str(1),"(i8)") iSend
+             write(str(2),"(i8)") oneMessageData%bufSize
+             write(str(3),"(i8)") SendMsg%otherProc(iSend)
+             write(str(4),"(i8)") SendMsg%tag
+             if (SendMsg%request(iSend) == MPI_REQUEST_NULL) then
+                str(5)="NULL"
+             else
+                write(str(5),"(Z8)") SendMsg%request(iSend)
+             end if
+             call MsgDump(&
+                  h//" for iSend="//trim(adjustl(str(1)))//&
+                  " post send to MPI rank "//trim(adjustl(str(3)))//&
+                  " with buffer size "//trim(adjustl(str(2)))//&
+                  " tag "//trim(adjustl(str(4)))//&
+                  " and request "//trim(adjustl(str(5))))
+          end if
+       end do
+    else
+       if (dumpLocal) then
+          call MsgDump(h//" empty send message set")
+       end if
+    end if
+  end subroutine PostSendRecvMsgs
+
+
+
+
+
+  subroutine WaitSendRecvMsgs(SendMsg, RecvMsg)
+    type(MessageSet), pointer, intent(in) :: SendMsg
+    type(MessageSet), pointer, intent(in) :: RecvMsg
+
+    ! waits for all nonblocking send and recv operations of
+    ! a message set pair of variables
+
+    integer :: iSend
+    integer :: iRecv
+    integer :: recvNbr
+    integer :: sendNbr
+    type(MessageData), pointer :: msgData => null()
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(WaitSendRecvMsgs)**"
+    logical, parameter :: dumpLocal=.false.
+
+    ! for each receive message:
+    ! build send buffer and copy field sections to the buffer;
+    ! post nonblocking send;
+    ! A single send message to each process
+
+    if (associated(RecvMsg)) then
+       if (dumpLocal) then
+          write(str(1),"(i8)") RecvMsg%nMsgs
+          call MsgDump(h//" for "//trim(adjustl(RecvMsg%name))//&
+               " waits on "//trim(adjustl(str(1)))//" receives")
+       end if
+
+       do iRecv= 1,RecvMsg%nMsgs
+
+          ! wait on any arrived message
+
+          call parf_wait_any_nostatus(RecvMsg%nMsgs, &
+               RecvMsg%request, recvNbr)
+          msgData => RecvMsg%msgData(recvNbr)
+          if (dumpLocal) then
+             write(str(1),"(i8)") recvNbr
+             write(str(2),"(i8)") RecvMsg%otherProc(recvNbr)
+             call MsgDump(h//" received message #"//trim(adjustl(str(1)))//&
+                  " from MPI proc "//trim(adjustl(str(2))))
+          end if
+
+          ! extract field sections from incoming buffer
+          ! and store at destination fields
+
+          call DecomposeMessageDataBuffer(RecvMsg%msgData(recvNbr))
+          call DeallocateMessageDataBuffer(RecvMsg%msgData(recvNbr))
+       end do
+    else
+       if (dumpLocal) then
+          call MsgDump(h//" empty receive message set")
+       end if
+    end if
+
+    ! for all posted send messages, wait on pending request,
+    ! deallocate buffer and empty request
+
+    if (associated(SendMsg)) then
+       !CDIR$ NOVECTOR
+       do iSend = 1,SendMsg%nMsgs
+          call parf_wait_any_nostatus(SendMsg%nMsgs, &
+               SendMsg%request, sendNbr)
+          call DeallocateMessageDataBuffer(SendMsg%msgData(sendNbr))
+       end do
+    else
+       if (dumpLocal) then
+          call MsgDump(h//" empty send message set")
+       end if
+    end if
+  end subroutine WaitSendRecvMsgs
 end module ModMessageSet

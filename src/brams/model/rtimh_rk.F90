@@ -11,16 +11,16 @@
 module ModTimestep_RK
 
   use ModRbnd, only: latbnd, &
-          vpsets, &
-          rayft,  &
-          trsets
+       vpsets, &
+       rayft,  &
+       trsets
 
 contains
   subroutine timestep_rk(OneGrid)
 
     use grid_dims, only: &
          nzpmax
-         
+
     use ModParallelEnvironment, only: &
          MsgDump
 
@@ -239,7 +239,7 @@ contains
          advectc_rk
 
     use mem_scratch, only: scratch    
-    
+
     implicit none
 
     type(Grid), pointer :: OneGrid
@@ -264,14 +264,11 @@ contains
     integer :: lenCopy
     character(len=256) :: julesFile
 
-    integer :: bramsRankNbr
-    integer :: myNxp, myNyp, myNzp
-    !MB: for testing only
     logical,parameter :: stepDebug=.true.
     logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(timestep_rk)**"
     character(len=8) :: str(10)
-    
+
     !MB: only for testing
     !integer :: nmbr_gpts
     !real    :: pm,tm
@@ -294,30 +291,30 @@ contains
     !--------------------------------
     call TEND0()  
 
-!------------------TMP 
-!------------------TMP 
-!------------------TMP 
-! if(applyIAU == 1 ) then
-!    if(mynum==1) print*,"timeIAU=",time,timeWindowIAU*0.5,abs ( time - dtlt - timeWindowIAU*0.5),applyIAU
-!    call flush(6)
-!    
-!    call CreateIauTendency(ngrid, mzp*mxp*myp, mzp, mxp, myp,ia,iz,ja,jz&
-!          ,varinit_g(ngrid)%varup(:,:,:),varinit_g(ngrid)%varvp(:,:,:)  &
-!          ,varinit_g(ngrid)%varpp(:,:,:),varinit_g(ngrid)%vartp(:,:,:)  &
-!          ,varinit_g(ngrid)%varrp(:,:,:)                                &
-!	  
-!          ,varinit_g(ngrid)%varuf(:,:,:),varinit_g(ngrid)%varvf(:,:,:)  &
-!          ,varinit_g(ngrid)%varpf(:,:,:),varinit_g(ngrid)%vartf(:,:,:)  &
-!          ,varinit_g(ngrid)%varrf(:,:,:)                                &
-!
-!          ,basic_g(ngrid)%up     (:,:,:)   ,basic_g(ngrid)%vp  (:,:,:)  &
-!          ,basic_g(ngrid)%theta  (:,:,:)   ,basic_g(ngrid)%rtp (:,:,:)  &
-!          ,basic_g(ngrid)%pp     (:,:,:)                                )
-!  !RETURN
-!  endif
-!------------------TMP 
-!------------------TMP 
-!------------------TMP 
+    !------------------TMP 
+    !------------------TMP 
+    !------------------TMP 
+    ! if(applyIAU == 1 ) then
+    !    if(mynum==1) print*,"timeIAU=",time,timeWindowIAU*0.5,abs ( time - dtlt - timeWindowIAU*0.5),applyIAU
+    !    call flush(6)
+    !    
+    !    call CreateIauTendency(ngrid, mzp*mxp*myp, mzp, mxp, myp,ia,iz,ja,jz&
+    !          ,varinit_g(ngrid)%varup(:,:,:),varinit_g(ngrid)%varvp(:,:,:)  &
+    !          ,varinit_g(ngrid)%varpp(:,:,:),varinit_g(ngrid)%vartp(:,:,:)  &
+    !          ,varinit_g(ngrid)%varrp(:,:,:)                                &
+    !	  
+    !          ,varinit_g(ngrid)%varuf(:,:,:),varinit_g(ngrid)%varvf(:,:,:)  &
+    !          ,varinit_g(ngrid)%varpf(:,:,:),varinit_g(ngrid)%vartf(:,:,:)  &
+    !          ,varinit_g(ngrid)%varrf(:,:,:)                                &
+    !
+    !          ,basic_g(ngrid)%up     (:,:,:)   ,basic_g(ngrid)%vp  (:,:,:)  &
+    !          ,basic_g(ngrid)%theta  (:,:,:)   ,basic_g(ngrid)%rtp (:,:,:)  &
+    !          ,basic_g(ngrid)%pp     (:,:,:)                                )
+    !  !RETURN
+    !  endif
+    !------------------TMP 
+    !------------------TMP 
+    !------------------TMP 
 
     ! Implements the Incremental Analysis Update procedure -
     ! phase 2: add the IAU tendencies
@@ -414,9 +411,7 @@ contains
 
     !  Send boundaries to adjoining nodes
     !-------------------------------------------
-    if (nmachs > 1) then
-       call PostSendRecvMsgs(OneGrid%SelectedGhostZoneSend, OneGrid%SelectedGhostZoneRecv)
-    endif
+    call PostSendRecvMsgs(OneGrid%SelectedGhostZoneSend, OneGrid%SelectedGhostZoneRecv)
 
     !  Coriolis terms
     !  ----------------------------------------
@@ -452,17 +447,15 @@ contains
 
     !  Rayleigh friction for theta
     !----------------------------------------
-  call rayft(mxp,myp,mzp,mynum,ngrid,nnzp,if_adap,level,nodemyp,nodemxp,&
-          scratch%vt3da,basic_g(ngrid)%theta,basic_g(ngrid)%rv)
+    call rayft(mxp,myp,mzp,mynum,ngrid,nnzp,if_adap,level,nodemyp,nodemxp,&
+         scratch%vt3da,basic_g(ngrid)%theta,basic_g(ngrid)%rv)
 
     !  Get the overlap region between parallel nodes
     !---------------------------------------------------
 
 !!$    call SynchronizedTimeStamp(TS_PHYSICS) ! Exper1.2, 2021_12
 
-    if (nmachs > 1) then
-       call WaitSendRecvMsgs(OneGrid%SelectedGhostZoneSend, OneGrid%SelectedGhostZoneRecv)
-    endif
+    call WaitSendRecvMsgs(OneGrid%SelectedGhostZoneSend, OneGrid%SelectedGhostZoneRecv)
 
     if (iexev == 2) &
          call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'THA')
@@ -595,13 +588,13 @@ contains
     !  Lateral velocity boundaries - radiative
     !-------------------------------------------
     call latbnd(mzp,mxp,myp,ia,iz,ja,jz,ibcon,nxtnest,ngrid,ibnd,jbnd, &
-                   grid_g(ngrid)%lpu,grid_g(ngrid)%lpv,basic_g(ngrid)%up,&
-                   basic_g(ngrid)%uc,tend%ut,basic_g(ngrid)%vp,basic_g(ngrid)%vc,&
-                   tend%vt,grid_g(ngrid)%dxt,grid_g(ngrid)%dyt)
+         grid_g(ngrid)%lpu,grid_g(ngrid)%lpv,basic_g(ngrid)%up,&
+         basic_g(ngrid)%uc,tend%ut,basic_g(ngrid)%vp,basic_g(ngrid)%vc,&
+         tend%vt,grid_g(ngrid)%dxt,grid_g(ngrid)%dyt)
 
 !!$    call SynchronizedTimeStamp(TS_RK_RESTO) ! Exper1.2, 2021_12
 
-    
+
     do l_rk = 1, rk_order
 
        !initialize the tendencies with the physics tendencies
@@ -643,6 +636,10 @@ contains
        !----------------------------------------
        call BUOYANCY( tend%wt_rk )
 
+       if (dumpLocal) then
+          call MsgDump(h//" starts exchanging borders of tend%tht_rk")
+       end if
+       call PostSendRecvMsgs(OneGrid%AcoustNewThtSend, OneGrid%AcoustNewThtRecv)
 
        if ( l_rk > 1 ) then
           ! (not necessary in the first RK substep)
@@ -657,23 +654,11 @@ contains
        call acoustic_new(OneGrid, rk_nmbr_small_timesteps(l_rk),l_rk )
 
        !- update thp -> thc (theta_il is not contained in acoustic_new)
-       if (.not. singleProcRun) then
-!!$          lenCopy=size(tend%tht_rk_3D)
-!!$          call Copy1DTo3D(tend%tht_rk(1:lenCopy), tend%tht_rk_3D)
-          if (dumpLocal) then
-             call MsgDump(h//" exchange borders of tend%tht_rk")
-          end if
-          bramsRankNbr=OneGrid%ParEnv%mynum
-          myNzp=OneGrid%GridSize%nnzp
-          myNxp=OneGrid%LocalOwn%nx(bramsRankNbr)
-          myNyp=OneGrid%LocalOwn%ny(bramsRankNbr)
-!!$          call PostSendRecvMsgs(OneGrid%AcoustNewThtSend, OneGrid%AcoustNewThtRecv, &
-!!$               myNzp, myNxp, myNyp)
-          call PostSendRecvMsgs(OneGrid%AcoustNewThtSend, OneGrid%AcoustNewThtRecv)
-!!$          call WaitSendRecvMsgs(OneGrid%AcoustNewThtSend, OneGrid%AcoustNewThtRecv, &
-!!$               myNzp, myNxp, myNyp)
-          call WaitSendRecvMsgs(OneGrid%AcoustNewThtSend, OneGrid%AcoustNewThtRecv)
-       endif
+       if (dumpLocal) then
+          call MsgDump(h//" waits exchanging borders of tend%tht_rk")
+       end if
+       call WaitSendRecvMsgs(OneGrid%AcoustNewThtSend, OneGrid%AcoustNewThtRecv)
+
        call update_long_rk(int(mxp*myp*mzp,i8),dtlt,rk_beta(l_rk) &
             ,basic_g(ngrid)%thc,basic_g(ngrid)%thp  &
             ,tend%tht_rk)
@@ -797,11 +782,11 @@ contains
     !  Velocity/pressure boundary conditions
     !----------------------------------------
     call vpsets(mzp,mxp,myp,ia,iz,ja,jz,ibcon,nstbot, &
-                    basic_g(ngrid)%up,basic_g(ngrid)%vp,basic_g(ngrid)%wp,&
-                    basic_g(ngrid)%pp,basic_g(ngrid)%uc,basic_g(ngrid)%vc,&
-                    basic_g(ngrid)%wc,basic_g(ngrid)%pc,grid_g(ngrid)%dxu,&
-                    grid_g(ngrid)%dxm,grid_g(ngrid)%dyv,grid_g(ngrid)%dym,&
-                    grid_g(ngrid)%lpu,grid_g(ngrid)%lpv,grid_g(ngrid)%lpw)
+         basic_g(ngrid)%up,basic_g(ngrid)%vp,basic_g(ngrid)%wp,&
+         basic_g(ngrid)%pp,basic_g(ngrid)%uc,basic_g(ngrid)%vc,&
+         basic_g(ngrid)%wc,basic_g(ngrid)%pc,grid_g(ngrid)%dxu,&
+         grid_g(ngrid)%dxm,grid_g(ngrid)%dyv,grid_g(ngrid)%dym,&
+         grid_g(ngrid)%lpu,grid_g(ngrid)%lpv,grid_g(ngrid)%lpw)
 
     !- call THERMO on the boundaries
     call thermo_boundary_driver((time+dtlongn(ngrid)), dtlong, &
