@@ -107,7 +107,7 @@ module ModMonotonicAdvection
   ! module private variables
 
   ! flow control flags
-  logical, parameter :: use_true_density=.true.
+  logical, parameter :: use_true_density=.false.
   ! for theoretical experiments
   logical, parameter :: theor_wind=.false.
 
@@ -476,6 +476,18 @@ contains
     integer :: jMypExternAtAdvMnt
     ! last y position of external fields (myp) indexed Monotonic Advection
 
+    !- This scheme is not applied to advect  U, V, and W or shaved-eta
+
+    if (varn .eq. 'V' .or. varn .eq. 'ALL') then
+       call fatal_error(h//' not using mnt to advect u,v,w')
+    end if
+    if (if_adap /= 0) then
+       call fatal_error(h//' MNT advection not ready for shaved eta')
+    end if
+    if (mynum == 0) then
+       call fatal_error(h//' ADV MNT called with mynum = 0, try np = 2')
+    end if
+
     ! dimension of external fields (regular ghost zone width)
 
     mzp=oneGrid%NodeDims%mzp
@@ -527,10 +539,6 @@ contains
        call MsgDump(h//"jMypExternAtAdvMnt="//trim(adjustl(str(1))))
     end if
 
-    if (mynum == 0) then
-       call fatal_error(h//' ADV MNT called with mynum = 0, try np = 2')
-    end if
-
     if(.not. use_true_density) then
        call InitializeDensities(mzp, mxp, myp, &
             mxpAdvMnt, mypAdvMnt, &
@@ -545,7 +553,7 @@ contains
 
     oneAdvMnt => CreateMonotonicAdvection(oneGrid)
 
-    ! update field addresses of the local memory area for message passing
+    ! update field addresses for message passing from recently allocated local memory area
 
     call UpdateFieldAdressAtAdvMnt(&
          oneGrid%AdvMntUVSendX, oneGrid%AdvMntUVRecvX, &
@@ -566,6 +574,8 @@ contains
          oneAdvMnt%den2_3d, oneAdvMnt%den3_3d, &
          oneAdvMnt%vc3d_in, oneAdvMnt%vc3d_out)
 
+    ! dxtW, dytW, dztW from external fields
+
     call InitializeGridSpacings(&
          mzp, mxp, myp, mxpAdvMnt, mypAdvMnt, &
          iOffset, i1ExternAtAdvMnt,  iMxpExternAtAdvMnt,  &
@@ -579,18 +589,14 @@ contains
          oneAdvMnt%dytW, &
          oneAdvMnt%dztW)
 
-    !- This scheme is not applied to advect  U, V, and W or shaved-eta
+    ! start ghost zone update for dxtW, dytW, dztW
 
-    if (varn .eq. 'V' .or. varn .eq. 'ALL') then
-       call fatal_error(h//' not using mnt to advect u,v,w')
-    end if
-    if (if_adap /= 0) then
-       call fatal_error(h//' MNT advection not ready for shaved eta')
-    end if
+    call PostSendRecvMsgs(oneGrid%AdvMntDxDySendX, oneGrid%AdvMntDxDyRecvX)
 
     !- get actual air densities, if using them instead of basic state fields
 
     if(use_true_density) then
+       ! dd0_3d, dd0_3du, dd0_3dv, dd0_3dw, from external fields
        call GetTrueDensities(&
             mzp, mxp, myp, mxpAdvMnt, mypAdvMnt, &
             iOffset, i1ExternAtAdvMnt,  iMxpExternAtAdvMnt,  &
@@ -605,12 +611,15 @@ contains
             oneAdvMnt%dd0_3du, &
             oneAdvMnt%dd0_3dv, &
             oneAdvMnt%dd0_3dw)
-
+       if (.not. theor_wind) then
+          call PostSendRecvMsgs(oneGrid%AdvMntDd0SendX, oneGrid%AdvMntDd0RecvX)
+       end if
     end if
 
     !- prepare wind velocities including map factors
 
     ndtZ=0
+    ! u3d, v3d, w3d from external fields
     call PrepareWinds(&
          ng, mzp, mxp, myp, mxpAdvMnt, mypAdvMnt, &
          iOffset, i1ExternAtAdvMnt,  iMxpExternAtAdvMnt,  &
@@ -625,8 +634,12 @@ contains
          oneAdvMnt%u3d, oneAdvMnt%v3d, oneAdvMnt%w3d, &
          aerosol, naer_transported, &
          dd_sedim, dzt, ndtZ)
+    if (.not. theor_wind) then
+       call PostSendRecvMsgs(oneGrid%AdvMntUVSendX, oneGrid%AdvMntUVRecvX)
+    end if
 
     if(theor_wind) then
+       ! dd0_3d, dd0_3du, dd0_3dv, dd0_3dw, u3d, v3d, w3d from external fields
        call PrepareTheorWinds(mzp, mxp, myp,&
             iOffset, i1ExternAtAdvMnt, iMxpExternAtAdvMnt,  &
             jOffset, j1ExternAtAdvMnt, jMypExternAtAdvMnt,  &
@@ -634,10 +647,14 @@ contains
             oneAdvMnt%u3d, oneAdvMnt%v3d, oneAdvMnt%w3d, &
             oneAdvMnt%dd0_3d, oneAdvMnt%dd0_3du, &
             oneAdvMnt%dd0_3dv, oneAdvMnt%dd0_3dw)
+       call PostSendRecvMsgs(oneGrid%AdvMntDd0SendX, oneGrid%AdvMntDd0RecvX)
+       call PostSendRecvMsgs(oneGrid%AdvMntUVSendX, oneGrid%AdvMntUVRecvX)
     end if
 
     !- prepare Walcek's air densities
 
+    ! den0_3d, den1_3d, den2_3d, den3_3d from previously computed
+    ! u3d, v3d, w3d, dxtW, dytW, dztW, dd0_3d, dd0_3du, dd0_3dv, dd0_3dw
     call GetWalceksDensities(&
          mzp, dtlt, mxpAdvMnt, mypAdvMnt, &
          i1ExternAtAdvMnt,  iMxpExternAtAdvMnt,  &
@@ -648,13 +665,10 @@ contains
          oneAdvMnt%dxtW, oneAdvMnt%dytW, oneAdvMnt%dztW, &
          oneAdvMnt%den0_3d, oneAdvMnt%den1_3d, &
          oneAdvMnt%den2_3d, oneAdvMnt%den3_3d)
+    call PostSendRecvMsgs(oneGrid%AdvMntDenSendX, oneGrid%AdvMntDenRecvX)
 
     ! message passing to update ghost zones
 
-    call PostSendRecvMsgs(oneGrid%AdvMntUVSendX, oneGrid%AdvMntUVRecvX)
-    call PostSendRecvMsgs(oneGrid%AdvMntDxDySendX, oneGrid%AdvMntDxDyRecvX)
-    call PostSendRecvMsgs(oneGrid%AdvMntDd0SendX, oneGrid%AdvMntDd0RecvX)
-    call PostSendRecvMsgs(oneGrid%AdvMntDenSendX, oneGrid%AdvMntDenRecvX)
     call WaitSendRecvMsgs(oneGrid%AdvMntUVSendX, oneGrid%AdvMntUVRecvX)
     call WaitSendRecvMsgs(oneGrid%AdvMntDxDySendX, oneGrid%AdvMntDxDyRecvX)
     call WaitSendRecvMsgs(oneGrid%AdvMntDd0SendX, oneGrid%AdvMntDd0RecvX)
@@ -1458,19 +1472,33 @@ contains
     integer, intent(in) :: jMypExternAtAdvMnt
     ! last y position of external fields (myp) indexed Monotonic Advection
     real, pointer, intent(in) :: u3d(:,:,:)
+    ! pointer and values intent(in)
     real, pointer, intent(in) :: v3d(:,:,:)
+    ! pointer and values intent(in)
     real, pointer, intent(in) :: w3d(:,:,:)
+    ! pointer and values intent(in)
     real, pointer, intent(in) :: dd0_3d(:,:,:)
+    ! pointer and values intent(in)
     real, pointer, intent(in) :: dd0_3du(:,:,:)
+    ! pointer and values intent(in)
     real, pointer, intent(in) :: dd0_3dv(:,:,:)
+    ! pointer and values intent(in)
     real, pointer, intent(in) :: dd0_3dw(:,:,:)
+    ! pointer and values intent(in)
     real, pointer, intent(in) :: dztW(:)
+    ! pointer and values intent(in)
     real, pointer, intent(in) :: dxtW(:,:)
+    ! pointer and values intent(in)
     real, pointer, intent(in) :: dytW(:,:)
+    ! pointer and values intent(in)
     real, pointer, intent(in) :: den0_3d(:,:,:)
+    ! pointer intent(in), values intent(out)
     real, pointer, intent(in) :: den1_3d(:,:,:)
+    ! pointer intent(in), values intent(out)
     real, pointer, intent(in) :: den2_3d(:,:,:)
+    ! pointer intent(in), values intent(out)
     real, pointer, intent(in) :: den3_3d(:,:,:)
+    ! pointer intent(in), values intent(out)
 
 
     ! local var
@@ -1559,6 +1587,8 @@ contains
        end do
     end do
   end subroutine GetWalceksDensities
+  
+
 
 
 
@@ -1658,6 +1688,10 @@ contains
 
     integer itz
     integer ibegin,iend,jbegin,jend
+    integer :: yStartSouth
+    integer :: yEndSouth
+    integer :: yStartNorth
+    integer :: yEndNorth
     !- type of sedimentation scheme (0= Walcek, 1=upwind)
     integer , parameter :: iupwind = 0
     logical, parameter :: dumpLocal=.false.
@@ -1666,19 +1700,33 @@ contains
 
     iBegin = oneGrid%NodeDimsAdvMnt%ia-1
     iEnd   = oneGrid%NodeDimsAdvMnt%iz+1
-    iBegin = oneGrid%NodeDimsAdvMnt%ja-1
-    iEnd   = oneGrid%NodeDimsAdvMnt%jz+1
+    jBegin = oneGrid%NodeDimsAdvMnt%ja-1
+    jEnd   = oneGrid%NodeDimsAdvMnt%jz+1
 
-    !--- do X-advection
+    !--- update X borders preparing X advection
     if (dumpLocal) then
        call MsgDump(h//" starts; update borders of vc3d_in for x advection")
     end if
     call PostSendRecvMsgs(oneGrid%AdvMntScaSendX, oneGrid%AdvMntScaRecvX)
     call WaitSendRecvMsgs(oneGrid%AdvMntScaSendX, oneGrid%AdvMntScaRecvX)
     if (dumpLocal) then
-       call MsgDump(h//" invoke Advec3DX to advect vc3d_in, storing result in vc3d_out")
+       call MsgDump(h//" invoke Advec3DX to advect vc3d_in at y border regions")
     end if
+
+    ! initialize vc3d_out
+    
+    oneAdvMnt%vc3d_out = oneAdvMnt%vc3d_in 
+
+    ! do X-advection on Y border exchange regions
+    
+    yStartSouth = oneGrid%NodeDimsAdvMnt%ja
+    yEndSouth = yStartSouth + oneGrid%NodeDimsAdvMnt%GhostZoneWidth - 1
+    yEndNorth = oneGrid%NodeDimsAdvMnt%jz
+    yStartNorth = yEndNorth - oneGrid%NodeDimsAdvMnt%GhostZoneWidth + 1
+
     call Advec3DX(mzp, mxpAdvMnt, mypAdvMnt, &
+         yStart=yStartSouth, &
+         yEnd=yEndSouth, &
          q0=oneAdvMnt%vc3d_in, &
          u=oneAdvMnt%u3d, &
          den0=oneAdvMnt%den0_3d, &
@@ -1688,13 +1736,51 @@ contains
          dd0=oneAdvMnt%dd0_3du, &
          qn=oneAdvMnt%vc3d_out)
 
-    !--- do Y-advection
+    call Advec3DX(mzp, mxpAdvMnt, mypAdvMnt, &
+         yStart=yStartNorth, &
+         yEnd=yEndNorth, &
+         q0=oneAdvMnt%vc3d_in, &
+         u=oneAdvMnt%u3d, &
+         den0=oneAdvMnt%den0_3d, &
+         den1=oneAdvMnt%den1_3d, &
+         dt=dt, &
+         dxx=oneAdvMnt%dxtW, &
+         dd0=oneAdvMnt%dd0_3du, &
+         qn=oneAdvMnt%vc3d_out)
 
+    ! post send/recv, buffering Y border exchange regions
+    
     if (dumpLocal) then
-       call MsgDump(h//" update borders of vc3d_out for y advection")
+       call MsgDump(h//" post send/recv on Y border regions")
     end if
     call PostSendRecvMsgs(oneGrid%AdvMntScaSendY, oneGrid%AdvMntScaRecvY)
+
+    ! do X-advection on remaining Y internal regions 
+
+    if (dumpLocal) then
+       call MsgDump(h//" invoke Advec3DX to advect vc3d_in at remaining y regions")
+    end if
+    call Advec3DX(mzp, mxpAdvMnt, mypAdvMnt, &
+         yStart=yEndSouth+1, &
+         yEnd=yStartNorth-1, &
+         q0=oneAdvMnt%vc3d_in, &
+         u=oneAdvMnt%u3d, &
+         den0=oneAdvMnt%den0_3d, &
+         den1=oneAdvMnt%den1_3d, &
+         dt=dt, &
+         dxx=oneAdvMnt%dxtW, &
+         dd0=oneAdvMnt%dd0_3du, &
+         qn=oneAdvMnt%vc3d_out)
+
+    ! wait on message passing and debuffer Y border exchange regions
+
+    if (dumpLocal) then
+       call MsgDump(h//" wait on message exchange to update borders of vc3d_out for y advection")
+    end if
     call WaitSendRecvMsgs(oneGrid%AdvMntScaSendY, oneGrid%AdvMntScaRecvY)
+
+    !--- do Y-advection
+
     if (dumpLocal) then
        call MsgDump(h//" invoke Advec3DY to advect vc3d_out, storing result in vc3d_in")
     end if
@@ -1792,12 +1878,181 @@ contains
 
 
 
-  subroutine Advec3DX(mzp, mxp, myp, &
+!!$  subroutine Advec3DX(mzp, mxp, myp, &
+!!$       q0, u, den0, den1, dt, dxx, dd0, &
+!!$       qn)
+!!$    integer, intent(in) :: mzp
+!!$    integer, intent(in) :: mxp
+!!$    integer, intent(in) :: myp
+!!$    real, pointer, intent(in) :: q0(:,:,:)
+!!$    ! pointer and values intent(in)
+!!$    real, pointer, intent(in) :: u(:,:,:)
+!!$    ! pointer and values intent(in)
+!!$    real, pointer, intent(in) :: den0(:,:,:)
+!!$    ! pointer and values intent(in)
+!!$    real, pointer, intent(in) :: den1(:,:,:)
+!!$    ! pointer and values intent(in)
+!!$    real, intent(in) :: dt
+!!$    real, pointer, intent(in) :: dxx(:,:)
+!!$    ! pointer and values intent(in)
+!!$    real, pointer, intent(in) :: dd0(:,:,:)
+!!$    ! pointer and values intent(in)
+!!$    real, pointer, intent(in) :: qn(:,:,:)
+!!$    ! pointer intent(in), values intent(out)
+!!$
+!!$    integer :: i
+!!$    integer :: j
+!!$    integer :: k
+!!$    real :: flux(mzp,mxp,myp)
+!!$    real :: vcmax(mzp,mxp,myp)
+!!$    real :: vcmin(mzp,mxp,myp)
+!!$    logical :: imxmn(mzp,mxp,myp)
+!!$    real, parameter :: zr0=0.0
+!!$    real, parameter :: EPS=1.e-6
+!!$    real :: cf
+!!$    real :: cf1
+!!$    real :: ck1
+!!$    real :: ck2
+!!$    real :: x1
+!!$    real :: x1n
+!!$
+!!$    logical, parameter :: dumpLocal=.false.
+!!$    character(len=*), parameter :: h="**(Advec3DX)**"
+!!$
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" starts")
+!!$    end if
+!!$
+!!$    imxmn=.false.
+!!$
+!!$    ! Update mixing ratios and limit Fluxes going UP where u>0
+!!$    !  First assume upstream flux at edge of domain
+!!$    do j=2,myp-1
+!!$       do k=2,mzp-1
+!!$          if(u(k,1,j)>=zr0) flux(k,1,j)= q0(k,1,j)*u(k,1,j)*dt*dd0(k,1,j)
+!!$       end do
+!!$    end do
+!!$
+!!$    ! Identify local max and min, specify mixing ratio limits at new time
+!!$    !  VCMAX and VCMIN are the absolute physical limits to the
+!!$    !     mixing ratio at t+dt. If these limits are ever violated,
+!!$    !     non-monotonic (oscillatory) behavior in solution results
+!!$    do j=2,myp-1
+!!$       do  i=2,mxp-1
+!!$          do k=2,mzp-1
+!!$             imxmn(k,i,j)=q0(k,i,j)>=(max(q0(k,i-1,j),q0(k,i+1,j))-eps) .or. & !=true if local
+!!$                  q0(k,i,j)<=(min(q0(k,i-1,j),q0(k,i+1,j))+eps)        !       extrema
+!!$             ck1= q0(k,i,j)
+!!$             ck2= q0(k,i,j)
+!!$             if(u(k,i,j  )< zr0) ck1= q0(k,i+1,j)
+!!$             if(u(k,i-1,j)>=zr0) ck2= q0(k,i-1,j)
+!!$             vcmax(k,i,j)= max( q0(k,i,j), ck1, ck2 )                      ! Eq-7
+!!$             vcmin(k,i,j)= min( q0(k,i,j), ck1, ck2 )                      ! Eq-7
+!!$          end do
+!!$       end do
+!!$    end do
+!!$
+!!$    ! Identify local max and min, specify mixing ratio limits at new time
+!!$    do j=2,myp-1
+!!$       do  i=2,mxp-1 ! ia,iz-1 or 1,iz-1
+!!$          do k=2,mzp-1
+!!$             if(u(k,i,j)<zr0) cycle
+!!$             if(u(k,i-1,j)<zr0) then
+!!$                flux(k,i,j)= q0(k,i,j)*u(k,i,j)*dt*dd0(k,i,j)    !  outflow-only cell
+!!$             else                              !      use upstream
+!!$                x1= dt*u(k,i,j)/dxx(i,j)               ! Courant number
+!!$                x1n= (1.-x1)*(q0(k,i+1,j)-q0(k,i-1,j))/4.
+!!$
+!!$                ! First, estimate mixing ratio in outflowing fluid (Cf)
+!!$                cf= q0(k,i,j) + x1n                                       !Eq-4a
+!!$
+!!$                !   Check to see if there is a peak (min) upwind and/or
+!!$                !    downwind of cell face
+!!$                if(imxmn(k,i-1,j)) cf= q0(k,i,j) +max(1.5,1.2  +.6 *x1)*x1n   !Eq-10b
+!!$                if(imxmn(k,i+1,j)) cf= q0(k,i,j) +       (1.75 -.45*x1)*x1n   !Eq-10a
+!!$                !        CF= Q0(k,i,j) + 5.*X1N   ! uncomment this line for "full sharp"
+!!$
+!!$                !   Limit Cf to be between mixing ratio on either side of edge
+!!$                !      where flux is being calculated
+!!$                cf1= min( max( cf, min(q0(k,i,j),q0(k,i+1,j))  ), max(q0(k,i,j),q0(k,i+1,j)) )
+!!$
+!!$                !   Calculate mixing ratio at new time, but limit to physically
+!!$                !    reasonable values
+!!$                qn(k,i,j) = max(vcmin(k,i,j),min(vcmax(k,i,j),          &   !eq-3&8
+!!$                     (q0(k,i,j)*den0(k,i,j)-x1*cf1*dd0(k,i,j)+flux(k,i-1,j)/dxx(i,j))/den1(k,i,j) ))
+!!$
+!!$                !   Re-calculate OUTFLOWING flux before moving on to next cell
+!!$                !    Flux = CF1*X1*DD0 but it must be adjusted if a monotonic limit
+!!$                !    is encountered.
+!!$                flux(k,i,j)= dxx(i,j)*(q0(k,i,j)*den0(k,i,j) - qn(k,i,j)*den1(k,i,j)) + flux(k,i-1,j)
+!!$             end if                                                  !Eq-9a
+!!$          end do
+!!$       end do
+!!$    end do
+!!$
+!!$    ! If periodic boundary conditions are assumed, it is necessary
+!!$    !   to recalculate the updated mixing ratio at cell 1 if there
+!!$    !   is inflow to that cell from the boundary between IDIM and 1
+!!$    !   Here these statements are commented out, but should be uncommented
+!!$    !   if this subroutine is needed for periodic boundary conditions,
+!!$    !   and then one of the calling arguements to the subroutine is IPERIOD
+!!$    !   which is set to "1" if you assume period boundary conditions
+!!$    !      IF(IPERIOD==1) THEN
+!!$    !        IF(U(IDIM-1)>=ZR0.AND.U(IDIM)>=ZR0)
+!!$    !     &  QN(1)=(Q0(1)*DEN0(1)-FLUX(1)/DXX(1)+FLUX(IDIM)/DXX(1))/DEN1(1)
+!!$    !      END IF
+!!$    !
+!!$    ! Update mixing ratios and limit Fluxes going DOWN where u<0
+!!$    !  The logic of this loop through the grid line is identical
+!!$    !  to the "DO 10" Loop above, only you start at the highest I
+!!$    !  edge and work backwards to I=1
+!!$    !
+!!$    do j=2,myp-1
+!!$       do k=2,mzp-1
+!!$          if(u(k,mxp-1,j)<zr0) flux(k,mxp-1,j)= &
+!!$               q0(k,mxp,j)*u(k,mxp-1,j)*dt*dd0(k,mxp-1,j)
+!!$       end do
+!!$    end do
+!!$
+!!$    do j=2,myp-1
+!!$       do i=mxp-1,2,-1 !iz,ia,-1
+!!$          do k=2,mzp-1
+!!$             if(u(k,i-1,j)>=zr0) then           ! Inflow-only cell
+!!$                if(u(k,i,j)<zr0) qn(k,i,j)=  max(  vcmin(k,i,j),   min(   vcmax(k,i,j),&
+!!$                     (q0(k,i,j)*den0(k,i,j)-flux(k,i,j)/dxx(i,j) + &
+!!$                     flux(k,i-1,j)/dxx(i,j))/den1(k,i,j) ))
+!!$             else
+!!$                x1=  dt*abs(u(k,i-1,j))/dxx(i,j)     ! Courant number
+!!$                x1n= (1.-x1)*(q0(k,i-1,j)-q0(k,i+1,j))/4.
+!!$                cf= q0(k,i,j) + x1n                                       !Eq-4b
+!!$                if(imxmn(k,i+1,j)) cf= q0(k,i,j) +max(1.5,1.2  +.6 *x1)*x1n   !Eq-10b
+!!$                if(imxmn(k,i-1,j)) cf= q0(k,i,j) +   (1.75 -.45*x1)*x1n       !Eq-10a
+!!$                cf1= min( max( cf, min(q0(k,i,j),q0(k,i-1,j)) ), max(q0(k,i,j),q0(k,i-1,j)) )
+!!$                if(u(k,i,j)>=zr0) cf1= q0(k,i,j)     ! outflow-only cell upstream
+!!$                qn(k,i,j)= max(  vcmin(k,i,j),  min(   vcmax(k,i,j), 	  &   !Eq-3&8
+!!$                     (q0(k,i,j)*den0(k,i,j)-flux(k,i,j)/dxx(i,j)-x1*cf1*dd0(k,i-1,j))/den1(k,i,j) ))
+!!$                flux(k,i-1,j)=dxx(i,j)*(qn(k,i,j)*den1(k,i,j) - q0(k,i,j)*den0(k,i,j)) + flux(k,i,j)!Eq-9b
+!!$             end if
+!!$          end do
+!!$       end do
+!!$    end do !- big loop y-z
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" finishes")
+!!$    end if
+!!$  end subroutine Advec3DX
+
+
+
+
+  subroutine Advec3DX(mzp, mxpAdvMnt, mypAdvMnt, &
+       yStart, yEnd, &
        q0, u, den0, den1, dt, dxx, dd0, &
        qn)
     integer, intent(in) :: mzp
-    integer, intent(in) :: mxp
-    integer, intent(in) :: myp
+    integer, intent(in) :: mxpAdvMnt
+    integer, intent(in) :: mypAdvMnt
+    integer, intent(in) :: yStart
+    integer, intent(in) :: yEnd
     real, pointer, intent(in) :: q0(:,:,:)
     ! pointer and values intent(in)
     real, pointer, intent(in) :: u(:,:,:)
@@ -1817,10 +2072,10 @@ contains
     integer :: i
     integer :: j
     integer :: k
-    real :: flux(mzp,mxp,myp)
-    real :: vcmax(mzp,mxp,myp)
-    real :: vcmin(mzp,mxp,myp)
-    logical :: imxmn(mzp,mxp,myp)
+    real :: flux(mzp,mxpAdvMnt,mypAdvMnt)
+    real :: vcmax(mzp,mxpAdvMnt,mypAdvMnt)
+    real :: vcmin(mzp,mxpAdvMnt,mypAdvMnt)
+    logical :: imxmn(mzp,mxpAdvMnt,mypAdvMnt)
     real, parameter :: zr0=0.0
     real, parameter :: EPS=1.e-6
     real :: cf
@@ -1831,19 +2086,35 @@ contains
     real :: x1n
 
     logical, parameter :: dumpLocal=.false.
+    character(len=8) :: str(10)
     character(len=*), parameter :: h="**(Advec3DX)**"
 
     if (dumpLocal) then
-       call MsgDump(h//" starts")
+       write(str(1),"(i8)") yStart
+       write(str(2),"(i8)") yEnd
+       call MsgDump(h//" starts computing at y=("//trim(adjustl(str(1)))//&
+            ":"//trim(adjustl(str(2)))//")")
     end if
 
-    ! copy input field to output field
-    qn=q0
+    ! verify y limits
+    
+    if (yStart < 2) then
+       write(str(1),"(i8)") yStart
+       call fatal_error(h//" yStart ("//trim(adjustl(str(1)))//&
+            ") should be >= 2")
+    else if (yEnd >= mypAdvMnt) then
+       write(str(1),"(i8)") yEnd
+       write(str(2),"(i8)") mypAdvMnt
+       call fatal_error(h//" yEnd ("//trim(adjustl(str(1)))//&
+            ") should be < mypAdvMnt ("//trim(adjustl(str(2)))//&
+            ")")
+    end if
+    
     imxmn=.false.
 
     ! Update mixing ratios and limit Fluxes going UP where u>0
     !  First assume upstream flux at edge of domain
-    do j=2,myp-1
+    do j=yStart,yEnd
        do k=2,mzp-1
           if(u(k,1,j)>=zr0) flux(k,1,j)= q0(k,1,j)*u(k,1,j)*dt*dd0(k,1,j)
        end do
@@ -1853,8 +2124,8 @@ contains
     !  VCMAX and VCMIN are the absolute physical limits to the
     !     mixing ratio at t+dt. If these limits are ever violated,
     !     non-monotonic (oscillatory) behavior in solution results
-    do j=2,myp-1
-       do  i=2,mxp-1
+    do j=yStart,yEnd
+       do  i=2,mxpAdvMnt-1
           do k=2,mzp-1
              imxmn(k,i,j)=q0(k,i,j)>=(max(q0(k,i-1,j),q0(k,i+1,j))-eps) .or. & !=true if local
                   q0(k,i,j)<=(min(q0(k,i-1,j),q0(k,i+1,j))+eps)        !       extrema
@@ -1869,8 +2140,8 @@ contains
     end do
 
     ! Identify local max and min, specify mixing ratio limits at new time
-    do j=2,myp-1
-       do  i=2,mxp-1 ! ia,iz-1 or 1,iz-1
+    do j=yStart,yEnd
+       do  i=2,mxpAdvMnt-1 ! ia,iz-1 or 1,iz-1
           do k=2,mzp-1
              if(u(k,i,j)<zr0) cycle
              if(u(k,i-1,j)<zr0) then
@@ -1923,15 +2194,15 @@ contains
     !  to the "DO 10" Loop above, only you start at the highest I
     !  edge and work backwards to I=1
     !
-    do j=2,myp-1
+    do j=yStart,yEnd
        do k=2,mzp-1
-          if(u(k,mxp-1,j)<zr0) flux(k,mxp-1,j)= &
-               q0(k,mxp,j)*u(k,mxp-1,j)*dt*dd0(k,mxp-1,j)
+          if(u(k,mxpAdvMnt-1,j)<zr0) flux(k,mxpAdvMnt-1,j)= &
+               q0(k,mxpAdvMnt,j)*u(k,mxpAdvMnt-1,j)*dt*dd0(k,mxpAdvMnt-1,j)
        end do
     end do
 
-    do j=2,myp-1
-       do i=mxp-1,2,-1 !iz,ia,-1
+    do j=yStart,yEnd
+       do i=mxpAdvMnt-1,2,-1 !iz,ia,-1
           do k=2,mzp-1
              if(u(k,i-1,j)>=zr0) then           ! Inflow-only cell
                 if(u(k,i,j)<zr0) qn(k,i,j)=  max(  vcmin(k,i,j),   min(   vcmax(k,i,j),&
@@ -1956,8 +2227,9 @@ contains
        call MsgDump(h//" finishes")
     end if
   end subroutine Advec3DX
+  
 
-
+  
 
 
   subroutine Advec3DY(mzp, mxp, myp, &
@@ -2704,19 +2976,19 @@ contains
     real, intent(in) :: dtlt
     real, intent(in) :: time
     real, pointer, intent(in) :: u3d(:,:,:)
-    ! pointer intent(in), values intent(inout)
+    ! pointer intent(in), values intent(out)
     real, pointer, intent(in) :: v3d(:,:,:)
-    ! pointer intent(in), values intent(inout)
+    ! pointer intent(in), values intent(out)
     real, pointer, intent(in) :: w3d(:,:,:)
-    ! pointer intent(in), values intent(inout)
+    ! pointer intent(in), values intent(out)
     real, pointer, intent(in) :: dd0_3d(:,:,:)
-    ! pointer intent(in), values intent(inout)
+    ! pointer intent(in), values intent(out)
     real, pointer, intent(in) :: dd0_3du(:,:,:)
-    ! pointer intent(in), values intent(inout)
+    ! pointer intent(in), values intent(out)
     real, pointer, intent(in) :: dd0_3dv(:,:,:)
-    ! pointer intent(in), values intent(inout)
+    ! pointer intent(in), values intent(out)
     real, pointer, intent(in) :: dd0_3dw(:,:,:)
-    ! pointer intent(in), values intent(inout)
+    ! pointer intent(in), values intent(out)
 
     !- local var
     integer :: i

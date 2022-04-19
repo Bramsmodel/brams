@@ -21,14 +21,31 @@ Module mem_basic
   Type basic_vars
    
      ! Variables to be dimensioned by (nzp,nxp,nyp)
-     real, pointer, dimension(:,:,:) :: &
-          up,uc,vp,vc,wp,wc,pp,pc  &
-          ,rv,theta,thp,thc,rtp &
-          ,pi0,th0,dn0,dn0u,dn0v
+
+     real, pointer, contiguous :: up(:,:,:)
+     real, pointer, contiguous :: uc(:,:,:)
+     real, pointer, contiguous :: vp(:,:,:)
+     real, pointer, contiguous :: vc(:,:,:)
+     real, pointer, contiguous :: wp(:,:,:)
+     real, pointer, contiguous :: wc(:,:,:)
+     real, pointer, contiguous :: pp(:,:,:)
+     real, pointer, contiguous :: pc(:,:,:)
+     real, pointer, contiguous :: rv(:,:,:)
+     real, pointer, contiguous :: theta(:,:,:)
+     real, pointer, contiguous :: thp(:,:,:)
+     real, pointer, contiguous :: thc(:,:,:)
+     real, pointer, contiguous :: rtp(:,:,:)
+     real, pointer, contiguous :: pi0(:,:,:)
+     real, pointer, contiguous :: th0(:,:,:)
+     real, pointer, contiguous :: dn0(:,:,:)
+     real, pointer, contiguous :: dn0u(:,:,:)
+     real, pointer, contiguous :: dn0v(:,:,:)
                          
      ! Variables to be dimensioned by (nxp,nyp)
-     real, pointer, dimension(:,:) :: &
-          fcoru,fcorv,cputime
+
+     real, pointer, contiguous :: fcoru(:,:)
+     real, pointer, contiguous :: fcorv(:,:)
+     real, pointer, contiguous :: cputime(:,:)
 
   End Type basic_vars
    

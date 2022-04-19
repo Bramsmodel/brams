@@ -906,9 +906,8 @@ contains
        call MsgDump(h//" starts creating AcousSend/RecvPNorth")
     end if
 
-    ! AcouSendPNorth, AcouRecvPNorth: union of
-    !               GlobalOwn [xe+1:xe+1,yb:ye] with
-    !               GlobalOwn [xb:xe,ye+1:ye+1]
+    ! AcouSendPNorth, AcouRecvPNorth:
+    ! messages update GlobalOwn [xe+1:xe+1,yb:ye]
 
     call NodesRegionsSendRecv(&
          nMachs=nMachs, &
