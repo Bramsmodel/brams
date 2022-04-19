@@ -322,9 +322,7 @@ subroutine timestep(OneGrid)
 
   !  Send boundaries to adjoining nodes
   !-------------------------------------------
-  if (nmachs > 1) then
-     call PostSendRecvMsgs(OneGrid%SelectedGhostZoneSend, OneGrid%SelectedGhostZoneRecv)
-  endif
+  call PostSendRecvMsgs(OneGrid%SelectedGhostZoneSend, OneGrid%SelectedGhostZoneRecv)
 
   !  Coriolis terms
   !  ----------------------------------------
@@ -382,9 +380,7 @@ subroutine timestep(OneGrid)
 
   !  Get the overlap region between parallel nodes
   !---------------------------------------------------
-  if (nmachs > 1) then
-     call WaitSendRecvMsgs(OneGrid%SelectedGhostZoneSend, OneGrid%SelectedGhostZoneRecv)
-  endif
+  call WaitSendRecvMsgs(OneGrid%SelectedGhostZoneSend, OneGrid%SelectedGhostZoneRecv)
 
   if (iexev == 2) &
   	call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'THA')

@@ -16,7 +16,7 @@ module ModAcoust
 
   use mem_tend, only :&
        tend
-  
+
   use mem_grid, only : &
        distim, &
        dts, &
@@ -50,7 +50,7 @@ module ModAcoust
        vctr12, &
        vctr2, &
        vctr5
-       
+
   use rconstants, only : &
        cv, &
        rgas, &
@@ -75,7 +75,7 @@ module ModAcoust
 
   use ModGrid, only: &
        Grid
-  
+
   use ModAcoust_adap, only: &
        acoust_adap
 
@@ -95,7 +95,7 @@ module ModAcoust
   public :: init_div_damping_coeff
   public :: deallocate_alpha_div
   public :: apply_div_damping
-  
+
   !- divergence damping coefficient [m^2/s];
   !- defined as a 3d field to optionally reduce it over steep orography
   real, allocatable, target :: alpha_div(:,:,:)
@@ -1085,7 +1085,7 @@ contains
     real, pointer :: div(:,:,:)
     real, pointer :: pp_t_minus_dt(:,:,:)
     real, allocatable, target :: pp_minus_div(:,:,:)
-         
+
 
     character(len=*), parameter :: h="**(acoust_new)**"
     logical, parameter :: dumpLocal=.false.
@@ -1102,11 +1102,11 @@ contains
 
     if ( apply_div_damping .and. (dyncore_flag == 2) ) then
        allocate (pp_minus_div(mzp, mxp, myp), stat=ierr)
-          if (ierr /= 0) then
-             write(str(1),"(i8)") ierr
-             call fatal_error(h//" allocate pp_minus_div fails with stat="//&
-                  trim(adjustl(str(1))))
-          end if 
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" allocate pp_minus_div fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
        if(damp_formulation==1) then
           allocate (div(mzp,mxp,myp), stat=ierr)
           if (ierr /= 0) then
@@ -1151,7 +1151,7 @@ contains
        !   receives pp(i+1,j) and pp(i,j+1)
        !   if outermost grid,
        !     receives pp on full grid boundaries
-       if (iter > 1 .and. .not. singleProcRun) then
+       if (iter > 1) then
           call WaitSendRecvMsgs(OneGrid%AcouSendPNorth, OneGrid%AcouRecvPNorth)
           call WaitSendRecvMsgs(OneGrid%AcouSendPEast, OneGrid%AcouRecvPEast)
        end if
@@ -1168,46 +1168,46 @@ contains
                   ,f23t,fmapui,fmapvi   &
                   ,grid_g(ngrid)%fmapu, grid_g(ngrid)%fmapv&
                   ,grid_g(ngrid)%dxt,grid_g(ngrid)%dyt,fmapt)
-             if (.not. singleProcRun) then
-                if (dumpLocal) then
-                   write(str(1),"(i8)") size(div,1)
-                   write(str(2),"(i8)") size(div,2)
-                   write(str(3),"(i8)") size(div,3)
-                   call MsgDump(h//" exchange border of div dimensioned ("//&
-                        trim(adjustl(str(1)))//","//&
-                        trim(adjustl(str(2)))//","//&
-                        trim(adjustl(str(3)))//")")
-                end if
-                call PostSendRecvMsgs(&
-                     OneGrid%AcoustNewDivSend, &
-                     OneGrid%AcoustNewDivRecv)
-                call WaitSendRecvMsgs(&
-                     OneGrid%AcoustNewDivSend, &
-                     OneGrid%AcoustNewDivRecv)
-             endif
+
+             if (dumpLocal) then
+                write(str(1),"(i8)") size(div,1)
+                write(str(2),"(i8)") size(div,2)
+                write(str(3),"(i8)") size(div,3)
+                call MsgDump(h//" exchange border of div dimensioned ("//&
+                     trim(adjustl(str(1)))//","//&
+                     trim(adjustl(str(2)))//","//&
+                     trim(adjustl(str(3)))//")")
+             end if
+             call PostSendRecvMsgs(&
+                  OneGrid%AcoustNewDivSend, &
+                  OneGrid%AcoustNewDivRecv)
+             call WaitSendRecvMsgs(&
+                  OneGrid%AcoustNewDivSend, &
+                  OneGrid%AcoustNewDivRecv)
+
              ! as proposed in Wicker, Skamarock (2002) (?) divergence damping is
              ! used in an approximated form by adding the following term to the pressure:
              pp_minus_div(:,:,:) = pp(:,:,:) - alpha_div(:,:,:) / th0(:,:,:) * div(:,:,:)
 
           elseif(damp_formulation==2) then
              !- alternative formulation
-             if (.not. singleProcRun) then
-                if (dumpLocal) then
-                   write(str(1),"(i8)") size(pp_t_minus_dt,1)
-                   write(str(2),"(i8)") size(pp_t_minus_dt,2)
-                   write(str(3),"(i8)") size(pp_t_minus_dt,3)
-                   call MsgDump(h//" exchange border of pp_t_minus_dt dimensioned ("//&
-                        trim(adjustl(str(1)))//","//&
-                        trim(adjustl(str(2)))//","//&
-                        trim(adjustl(str(3)))//")")
-                end if
-                call PostSendRecvMsgs(&
-                     OneGrid%AcoustNewPPSend, &
-                     OneGrid%AcoustNewPPRecv)
-                call WaitSendRecvMsgs(&
-                     OneGrid%AcoustNewPPSend, &
-                     OneGrid%AcoustNewPPRecv)
-             endif
+
+             if (dumpLocal) then
+                write(str(1),"(i8)") size(pp_t_minus_dt,1)
+                write(str(2),"(i8)") size(pp_t_minus_dt,2)
+                write(str(3),"(i8)") size(pp_t_minus_dt,3)
+                call MsgDump(h//" exchange border of pp_t_minus_dt dimensioned ("//&
+                     trim(adjustl(str(1)))//","//&
+                     trim(adjustl(str(2)))//","//&
+                     trim(adjustl(str(3)))//")")
+             end if
+             call PostSendRecvMsgs(&
+                  OneGrid%AcoustNewPPSend, &
+                  OneGrid%AcoustNewPPRecv)
+             call WaitSendRecvMsgs(&
+                  OneGrid%AcoustNewPPSend, &
+                  OneGrid%AcoustNewPPRecv)
+
              pp_minus_div(:,:,:) = pp(:,:,:) + div_damp_strength*(pp(:,:,:) - pp_t_minus_dt(:,:,:))
           endif
        end if
@@ -1273,14 +1273,14 @@ contains
        !      if outermost grid,
        !        receives up, vp on full grid boundaries
 
-       if (.not. singleProcRun) then
-          if (iter < lastIter) then
-             call WaitSendRecvMsgs(OneGrid%AcouSendU, OneGrid%AcouRecvU)
-             call WaitSendRecvMsgs(OneGrid%AcouSendV, OneGrid%AcouRecvV)
-          else
-             call WaitSendRecvMsgs(OneGrid%AcouSendUV, OneGrid%AcouRecvUV)
-          end if
+
+       if (iter < lastIter) then
+          call WaitSendRecvMsgs(OneGrid%AcouSendU, OneGrid%AcouRecvU)
+          call WaitSendRecvMsgs(OneGrid%AcouSendV, OneGrid%AcouRecvV)
+       else
+          call WaitSendRecvMsgs(OneGrid%AcouSendUV, OneGrid%AcouRecvUV)
        end if
+
 
        ! pp = f(pp, up, vp); uses up(i-1,j), vp(i,j-1)
        ! also computes heatfx1
@@ -1311,15 +1311,15 @@ contains
        !   else if last loop iteration,
        !      sends wp, pp to update neighbour processes ghost zone
        !      receives wp and pp and updates this process ghost zone
-       if (.not. singleProcRun) then
-          if (iter < lastIter) then
-             call PostSendRecvMsgs(OneGrid%AcouSendPNorth, OneGrid%AcouRecvPNorth)
-             call PostSendRecvMsgs(OneGrid%AcouSendPEast, OneGrid%AcouRecvPEast)
-          else
-             call PostSendRecvMsgs(OneGrid%AcouSendWP, OneGrid%AcouRecvWP)
-             call WaitSendRecvMsgs(OneGrid%AcouSendWP, OneGrid%AcouRecvWP)
-          end if
+
+       if (iter < lastIter) then
+          call PostSendRecvMsgs(OneGrid%AcouSendPNorth, OneGrid%AcouRecvPNorth)
+          call PostSendRecvMsgs(OneGrid%AcouSendPEast, OneGrid%AcouRecvPEast)
+       else
+          call PostSendRecvMsgs(OneGrid%AcouSendWP, OneGrid%AcouRecvWP)
+          call WaitSendRecvMsgs(OneGrid%AcouSendWP, OneGrid%AcouRecvWP)
        end if
+
 
     enddo
 
@@ -1392,7 +1392,7 @@ contains
          OneGrid%AcoustNewAlphaRecv, &
          "ALPHA", &
          alpha_div)
-    
+
     c_sound = 330.0   ! this rough estimation of sound velocity is sufficient here
     ! see Wicker, Skamarock (2002) MWR:
     alpha_div_limit = div_damp_strength * c_sound**2 * dts
@@ -1444,23 +1444,23 @@ contains
 
     !--- mpi paralelization :
     !MB: here an exchange of alpha_div for MPI-parallelization is necessary!
-    if (.not. singleProcRun) then
-       if (dumpLocal) then
-          write(str(1),"(i8)") size(alpha_div,1)
-          write(str(2),"(i8)") size(alpha_div,2)
-          write(str(3),"(i8)") size(alpha_div,3)
-          call MsgDump(h//" exchange border of alpha_div dimensioned ("//&
-               trim(adjustl(str(1)))//","//&
-               trim(adjustl(str(2)))//","//&
-               trim(adjustl(str(3)))//")")
-       end if
-       call PostSendRecvMsgs(&
-            OneGrid%AcoustNewAlphaSend, &
-            OneGrid%AcoustNewAlphaRecv)
-       call WaitSendRecvMsgs(&
-            OneGrid%AcoustNewAlphaSend, &
-            OneGrid%AcoustNewAlphaRecv)
-    endif
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") size(alpha_div,1)
+       write(str(2),"(i8)") size(alpha_div,2)
+       write(str(3),"(i8)") size(alpha_div,3)
+       call MsgDump(h//" exchange border of alpha_div dimensioned ("//&
+            trim(adjustl(str(1)))//","//&
+            trim(adjustl(str(2)))//","//&
+            trim(adjustl(str(3)))//")")
+    end if
+    call PostSendRecvMsgs(&
+         OneGrid%AcoustNewAlphaSend, &
+         OneGrid%AcoustNewAlphaRecv)
+    call WaitSendRecvMsgs(&
+         OneGrid%AcoustNewAlphaSend, &
+         OneGrid%AcoustNewAlphaRecv)
+
     !--- mpi paralelization :
 
     !print*, "alpha_div: ", minval(alpha_div), maxval(alpha_div) ;call flush(6)

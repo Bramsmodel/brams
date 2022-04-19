@@ -41,7 +41,7 @@ contains
     real, dimension(*) ::       scr1,scr2,vt3da,vt3db,vt3dc,vt3dd  &
          ,vt3de,vt3df,vt3dg,vt3dh,vt2da,ut,vt,wt,pt
     real, dimension(m2,m3) :: lpu_R,lpv_R,lpw_R
-    
+
     integer, dimension(m2,m3) :: lpu,lpv,lpw
     real :: t1,w1,a1da2
 
@@ -61,46 +61,38 @@ contains
             ,th0,a1da2,vt3df,vt3dg,scr2        &
             ,vctr1,vctr2,arw,volt,volw    )
 
-       if (nmachs > 1) then
-          if (iter .ne. 1) then
-             call WaitSendRecvMsgs(OneGrid%AcouSendPNorth, OneGrid%AcouRecvPNorth)
-             call WaitSendRecvMsgs(OneGrid%AcouSendPEast, OneGrid%AcouRecvPEast)
-          endif
+       if (iter .ne. 1) then
+          call WaitSendRecvMsgs(OneGrid%AcouSendPNorth, OneGrid%AcouRecvPNorth)
+          call WaitSendRecvMsgs(OneGrid%AcouSendPEast, OneGrid%AcouRecvPEast)
        endif
 
        call prdctu_adap(mzp,mxp,myp,ia,izu,ja,jz,ibcon,lpu    &
             ,up,ut,pp,vt3da,th0,vt3db  &
             ,dxu,vt3dh,aru,volu,mynum          )
 
-       if (nmachs > 1) then
-          if (iter .ne. nnacoust(ngrid)) then
-             call PostSendRecvMsgs(OneGrid%AcouSendU, OneGrid%AcouRecvU)
-          endif
+       if (iter .ne. nnacoust(ngrid)) then
+          call PostSendRecvMsgs(OneGrid%AcouSendU, OneGrid%AcouRecvU)
        endif
 
        call prdctv_adap(mzp,mxp,myp,ia,iz,ja,jzv,ibcon,lpv    &
             ,vp,vt,pp,vt3da,th0,vt3db  &
             ,dyv,vt3dh,arv,volv        )
 
-       if (nmachs > 1) then
-          if (iter .ne. nnacoust(ngrid)) then
-             call PostSendRecvMsgs(OneGrid%AcouSendV, OneGrid%AcouRecvV)
-          else
-             call PostSendRecvMsgs(OneGrid%AcouSendUV, OneGrid%AcouRecvUV)
-          endif
+       if (iter .ne. nnacoust(ngrid)) then
+          call PostSendRecvMsgs(OneGrid%AcouSendV, OneGrid%AcouRecvV)
+       else
+          call PostSendRecvMsgs(OneGrid%AcouSendUV, OneGrid%AcouRecvUV)
        endif
 
        call prdctw1_adap(mzp,mxp,myp,ia,iz,ja,jz,ibcon,lpw  &
             ,wp,wt,pp,vt3dc  &
             ,a1da2,vt3dh)
 
-       if (nmachs > 1) then
-          if (iter .ne. nnacoust(ngrid)) then
-             call WaitSendRecvMsgs(OneGrid%AcouSendU, OneGrid%AcouRecvU)
-             call WaitSendRecvMsgs(OneGrid%AcouSendV, OneGrid%AcouRecvV)
-          else
-             call WaitSendRecvMsgs(OneGrid%AcouSendUV, OneGrid%AcouRecvUV)
-          endif
+       if (iter .ne. nnacoust(ngrid)) then
+          call WaitSendRecvMsgs(OneGrid%AcouSendU, OneGrid%AcouRecvU)
+          call WaitSendRecvMsgs(OneGrid%AcouSendV, OneGrid%AcouRecvV)
+       else
+          call WaitSendRecvMsgs(OneGrid%AcouSendUV, OneGrid%AcouRecvUV)
        endif
 
        call prdctp1_adap(mzp,mxp,myp,ia,iz,ja,jz,jdim,lpw                &
@@ -118,14 +110,12 @@ contains
        call prdctp2_adap(mzp,mxp,myp,ia,iz,ja,jz,ibcon,lpw  &
             ,pp,wp,vt3dd,vt3de,mynum)
 
-       if (nmachs > 1) then
-          if (iter .ne. nnacoust(ngrid)) then
-             call PostSendRecvMsgs(OneGrid%AcouSendPNorth, OneGrid%AcouRecvPNorth)
-             call PostSendRecvMsgs(OneGrid%AcouSendPEast, OneGrid%AcouRecvPEast)
-          else
-             call PostSendRecvMsgs(OneGrid%AcouSendWP, OneGrid%AcouRecvWP)
-             call WaitSendRecvMsgs(OneGrid%AcouSendWP, OneGrid%AcouRecvWP)
-          endif
+       if (iter .ne. nnacoust(ngrid)) then
+          call PostSendRecvMsgs(OneGrid%AcouSendPNorth, OneGrid%AcouRecvPNorth)
+          call PostSendRecvMsgs(OneGrid%AcouSendPEast, OneGrid%AcouRecvPEast)
+       else
+          call PostSendRecvMsgs(OneGrid%AcouSendWP, OneGrid%AcouRecvWP)
+          call WaitSendRecvMsgs(OneGrid%AcouSendWP, OneGrid%AcouRecvWP)
        endif
 
     enddo
@@ -140,7 +130,7 @@ subroutine prdctu_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpu  &
 
   use mem_grid
   use ModRbnd, only: botset_adap, &
-                     rayf_adap        
+       rayf_adap        
 
   implicit none
 
