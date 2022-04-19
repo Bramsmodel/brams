@@ -3442,6 +3442,7 @@ contains
        AdvMntScaRecvX => null()
        AdvMntScaSendY => null()
        AdvMntScaRecvY => null()
+       return
     end if
     
     nMachs=ParEnv%nmachs
