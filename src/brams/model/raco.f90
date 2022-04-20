@@ -60,19 +60,6 @@ module ModAcoust
        u01dn, &
        v01dn
 
-  use node_mod, only :  &
-       ia, &
-       iz, &
-       ja, &
-       jz, &
-       izu, &
-       jzv, &
-       mxp,  &
-       myp,  &
-       mzp,  &
-       mynum, &
-       nmachs
-
   use ModGrid, only: &
        Grid
 
@@ -587,8 +574,6 @@ contains
           enddo
        enddo
     enddo
-    !   write (*,fmt='("wp-pr4: ",I2.2,1X,I1.1,1X,4(E9.3,1X),"/",4(E9.3,1X))') mynum,1,(wp(k,2,2),k=1,4),(wp(k,3,3),k=1,4)
-    !  call flush(6)
 
   end subroutine prdctw1
 
@@ -847,12 +832,6 @@ contains
     real :: dzmr
 
     !  Finish pressure prediction
-    !write (*,fmt='("Pr-pre1: ",I2.2,1X,I1.1,1X,4(E9.3,1X),"/",4(E9.3,1X))') mynum,1,(pp(k,2,2),k=1,4),(pp(k,3,3),k=1,4)
-    !write (*,fmt='("Pr-wp  : ",4(E9.3,1X))') (wp(k,2,2),k=1,4)
-    !write (*,fmt='("Pr-acof: ",4(E9.3,1X))') (acof(k,2,2),k=1,4)
-    !write (*,fmt='("Pr-acog: ",4(E9.3,1X))') (acog(k,2,2),k=1,4)
-
-    !call flush(6)
 
     do j = ja,jz
        do i = ia,iz
@@ -862,7 +841,6 @@ contains
           enddo
        enddo
     enddo
-    !write (*,fmt='("Pr-mid1: ",I2.2,1X,I1.1,1X,4(E9.3,1X),"/",4(E9.3,1X))') mynum,1,(pp(k,2,2),k=1,4),(pp(k,3,3),k=1,4)
 
     if (nstbot .eq. 1) then
        dzmr = dzm(2) / dzm(1)
@@ -873,8 +851,6 @@ contains
        enddo
     end if
 
-    !write (*,fmt='("Pr-pos1: ",I2.2,1X,I1.1,1X,4(E9.3,1X),"/",4(E9.3,1X))') mynum,1,(pp(k,2,2),k=1,4),(pp(k,3,3),k=1,4)
-    !call flush(6)
 
   end subroutine prdctp2
 
@@ -893,24 +869,55 @@ contains
     !! @copyright Under CC-GPL License by INPE/CPTEC
     !! Please, read @link https://creativecommons.org/licenses/GPL/2.0/legalcode.pt
     include "constants.h"
-    character(len=*),parameter :: h='**(acoustic_new)**'
+
     type(Grid), pointer :: OneGrid
     integer, intent(in) :: nnacoust_loc  ! number of small time steps
     integer, intent(in) :: lrk
-    real :: scr2(mzp*mxp*myp)
 
+
+    integer :: ia
+    integer :: iz
+    integer :: ja
+    integer :: jz
+    integer :: izu
+    integer :: jzv
+    integer :: mxp
+    integer :: myp
+    integer :: mzp
+    integer :: ierr
     integer :: nmbr_gpts  !MB: only for testing
+    real, allocatable :: scr2(:)
 
-    !print*, "subr. [acoustic_new] ..."
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(acoustic_new)**"
+    
+    ia = OneGrid%NodeDims%ia
+    iz = OneGrid%NodeDims%iz
+    ja = OneGrid%NodeDims%ja
+    jz = OneGrid%NodeDims%jz
+    izu = OneGrid%NodeDims%izu
+    jzv = OneGrid%NodeDims%jzv
+    mxp = OneGrid%NodeDims%mxp
+    myp = OneGrid%NodeDims%myp
+    mzp = OneGrid%NodeDims%mzp
 
+
+    allocate(scr2(mzp*mxp*myp), stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" allocate scr2 fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
     scr2=0.0
 
+    
     if ( ( dyncore_flag == 0 ) .or. ( dyncore_flag == 1 ) ) then
 
        if ( if_adap == 0) then
 
           call acoust_new(OneGrid, &
                mzp,mxp,myp, &
+               ia, iz, izu, ja, jz, jzv,               &
                nnacoust_loc,  &
                basic_g(ngrid)%dn0,basic_g(ngrid)%pi0,  &
                basic_g(ngrid)%th0,basic_g(ngrid)%up,  &
@@ -959,9 +966,9 @@ contains
        ! remark: the philosphy of the time levels is slightly different
        ! than in leapfrog: here always fields uc, vc, .. are updated
 
-       !call acoust_new_rk(OneGrid, &
        call acoust_new(OneGrid, &
             mzp,mxp,myp, &
+            ia, iz, izu, ja, jz, jzv,               &
             nnacoust_loc,   &
             basic_g(ngrid)%dn0, basic_g(ngrid)%pi0,  &
             basic_g(ngrid)%th0,                      &
@@ -979,27 +986,22 @@ contains
             grid_g(ngrid)%fmapvi,grid_g(ngrid)%dxt,  &
             grid_g(ngrid)%dyt,grid_g(ngrid)%fmapt,lrk)
 
-       !MB:
-       !nmbr_gpts = mxp * myp * mzp    !MB: only for testing!!!
-       !write(*,"(A,I2,4F15.8)") "u    : ", 78, minval( basic_g(ngrid)%uc    ), maxval( basic_g(ngrid)%uc    ), &
-       !    sum( basic_g(ngrid)%uc    )/nmbr_gpts, basic_g(ngrid)%uc(7,8,9)
-       !write(*,"(A,I2,4F15.8)") "v    : ", 78, minval( basic_g(ngrid)%vc    ), maxval( basic_g(ngrid)%vc    ), &
-       !    sum( basic_g(ngrid)%vc    )/nmbr_gpts, basic_g(ngrid)%vc(7,8,9)
-       !write(*,"(A,I2,4F15.8)") "w    : ", 78, minval( basic_g(ngrid)%wc    ), maxval( basic_g(ngrid)%wc    ), &
-       !    sum( basic_g(ngrid)%wc    )/nmbr_gpts, basic_g(ngrid)%wc(7,8,9)
-       !write(*,"(A,I2,4F15.8)") "pi   : ", 78, minval( basic_g(ngrid)%pc    ), maxval( basic_g(ngrid)%pc    ), &
-       !    sum( basic_g(ngrid)%pc    )/nmbr_gpts, basic_g(ngrid)%pc(7,8,9)
-
     else
        call fatal_error(h//" value of dyncore_flag is not 0, 1 or 2 at acoustic_new")
     end if
 
-    return
+    deallocate(scr2, stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" deallocate scr2 fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
   end subroutine acoustic_new
 
 
 
   subroutine acoust_new(OneGrid, mzp,mxp,myp,  &
+       ia, iz, izu, ja, jz, jzv,               &
        nnacoust_loc,                           &
        dn0,pi0,th0,                            &
        up,vp,wp,pp,                            &
@@ -1028,6 +1030,14 @@ contains
     integer, intent(in) :: mxp
     integer, intent(in) :: myp
 
+    integer, intent(in) :: ia
+    integer, intent(in) :: iz
+    integer, intent(in) :: izu
+    
+    integer, intent(in) :: ja
+    integer, intent(in) :: jz
+    integer, intent(in) :: jzv
+    
     integer, intent(in) :: nnacoust_loc  ! number of small time steps
 
     real, intent(in) :: dn0(mzp,mxp,myp)
@@ -1067,7 +1077,6 @@ contains
     integer :: iter,k
     integer :: lastIter
     integer :: ierr
-    logical :: singleProcRun
     logical :: outermostGrid
     real :: a1da2
     real :: acoaa(mzp,mxp,myp)
@@ -1097,7 +1106,6 @@ contains
     real :: dtacum
 
     lastIter = nnacoust_loc
-    singleProcRun = nmachs == 1
     outermostGrid = nxtnest(ngrid) == 0
 
     if ( apply_div_damping .and. (dyncore_flag == 2) ) then
@@ -1247,12 +1255,10 @@ contains
        !      sends vp(i,j-1)
        !   else if last loop iteration,
        !      sends up, vp to update all neighbour processes ghost zone
-       if (.not. singleProcRun) then
-          if (iter < lastIter) then
-             call PostSendRecvMsgs(OneGrid%AcouSendV, OneGrid%AcouRecvV)
-          else
-             call PostSendRecvMsgs(OneGrid%AcouSendUV, OneGrid%AcouRecvUV)
-          end if
+       if (iter < lastIter) then
+          call PostSendRecvMsgs(OneGrid%AcouSendV, OneGrid%AcouRecvV)
+       else
+          call PostSendRecvMsgs(OneGrid%AcouSendUV, OneGrid%AcouRecvUV)
        end if
 
        ! wp = f(wp, pp); uses node inner cells only
@@ -1343,6 +1349,16 @@ contains
     type(Grid), pointer, intent(in) :: OneGrid
     real, intent(in) :: dts  ! small time step [s]
 
+    integer :: ia
+    integer :: iz
+    integer :: ja
+    integer :: jz
+    integer :: izu
+    integer :: jzv
+    integer :: mxp
+    integer :: myp
+    integer :: mzp
+    integer :: ierr
     real :: c_sound   ! rough estimate for maximum value of sound velocity [m/s]
     real :: alpha_div_limit
     logical :: limit_alpha_div_by_slope_stability
@@ -1350,22 +1366,45 @@ contains
     real :: z_kij, z_mij, z_kpj, z_mpj, z_kip, z_mip
     real :: ax, ay
     real :: work
-    real :: delta_h_x_at_u(mxp, myp)
-    real :: delta_h_y_at_v(mxp, myp)
+    real, allocatable :: delta_h_x_at_u(:,:)
+    real, allocatable :: delta_h_y_at_v(:,:)
     real :: delta_h_x, delta_h_y
     real :: delta_z
 
     integer :: i, j, k
     integer :: istat
-    logical :: singleProcRun
 
     real, pointer :: pField(:,:,:)
     character(len=*), parameter :: h="**(init_div_damping_coeff)**"
     logical, parameter :: dumpLocal=.false.
     character(len=8) :: str(10)
 
-    !print*, "Subr. init_div_damping_coeff ..."
-    singleProcRun = nmachs == 1
+
+    ia = OneGrid%NodeDims%ia
+    iz = OneGrid%NodeDims%iz
+    ja = OneGrid%NodeDims%ja
+    jz = OneGrid%NodeDims%jz
+    izu = OneGrid%NodeDims%izu
+    jzv = OneGrid%NodeDims%jzv
+    mxp = OneGrid%NodeDims%mxp
+    myp = OneGrid%NodeDims%myp
+    mzp = OneGrid%NodeDims%mzp
+    
+    allocate(delta_h_x_at_u(mxp, myp), stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" allocate delta_h_x_at_u fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
+    
+    allocate(delta_h_y_at_v(mxp, myp), stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" allocate delta_h_y_at_v fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
+    
+    
     limit_alpha_div_by_slope_stability = .true.
 
     div_damp_strength =  0.1   !MB: might be a namelist-parameter (?)
@@ -1375,10 +1414,6 @@ contains
     ! probably set equal to 1 in accordance with stability theory.
 
     !MB:
-    !if(mynum==1) &
-    !write(logUnit,fmt="(A,F12.6,A,F12.6,1X,A,L1)") "div_damp_strength=", div_damp_strength, &
-    !        "  div_damp_slope=", div_damp_slope,  &
-    !        "limit_alpha_div_by_slope_stability=",limit_alpha_div_by_slope_stability
 
     allocate( alpha_div( mzp, mxp, myp), STAT=istat )
     if (istat /= 0) then
@@ -1461,9 +1496,21 @@ contains
          OneGrid%AcoustNewAlphaSend, &
          OneGrid%AcoustNewAlphaRecv)
 
-    !--- mpi paralelization :
-
-    !print*, "alpha_div: ", minval(alpha_div), maxval(alpha_div) ;call flush(6)
+    
+    deallocate(delta_h_x_at_u, stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" deallocate delta_h_x_at_u fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
+    
+    deallocate(delta_h_y_at_v, stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" deallocate delta_h_y_at_v fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
+    
 
   end subroutine init_div_damping_coeff
 
