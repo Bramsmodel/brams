@@ -1074,10 +1074,14 @@ contains
 
     include "tsNames.h"
 
-    integer :: iter,k
+    integer :: i
+    integer :: j
+    integer :: k
+    integer :: iter
     integer :: lastIter
     integer :: ierr
     logical :: outermostGrid
+    character(len=1) :: citer
     real :: a1da2
     real :: acoaa(mzp,mxp,myp)
     real :: acoc(mzp,mxp,myp)
@@ -1087,23 +1091,16 @@ contains
     real :: amof(mzp,mxp,myp)
     real :: amog(mzp,mxp,myp)
     real :: heatfx1(mxp,myp)
-
-    integer :: i, j
-    character(len=1) :: citer
-
     real, pointer :: div(:,:,:)
     real, pointer :: pp_t_minus_dt(:,:,:)
     real, allocatable, target :: pp_minus_div(:,:,:)
-
-
-    character(len=*), parameter :: h="**(acoust_new)**"
-    logical, parameter :: dumpLocal=.false.
-    character(len=8) :: str(10)
-    real, pointer :: pField(:,:,:) => null()
-
     character(LEN=5) :: ctime
     integer :: nmbr_gpts
     real :: dtacum
+
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(acoust_new)**"
+    logical, parameter :: dumpLocal=.false.
 
     lastIter = nnacoust_loc
     outermostGrid = nxtnest(ngrid) == 0
@@ -1186,16 +1183,66 @@ contains
                      trim(adjustl(str(2)))//","//&
                      trim(adjustl(str(3)))//")")
              end if
+
+             ! starts div ghost zone update
+             
              call PostSendRecvMsgs(&
                   OneGrid%AcoustNewDivSend, &
                   OneGrid%AcoustNewDivRecv)
+
+             ! overlap computation of pp_minus_div with communication of div at inner points
+             
+             ! as proposed in Wicker, Skamarock (2002) (?) divergence damping is
+             ! used in an approximated form by adding the following term to the pressure:
+             do j = ja, jz
+                do i = ia, iz
+                   do k = 1, mzp
+                      pp_minus_div(k,i,j) = pp(k,i,j) - &
+                           alpha_div(k,i,j)/th0(k,i,j) * div(k,i,j)
+                   end do
+                end do
+             end do
+
+             ! waits for div ghost zone update
+             
              call WaitSendRecvMsgs(&
                   OneGrid%AcoustNewDivSend, &
                   OneGrid%AcoustNewDivRecv)
 
-             ! as proposed in Wicker, Skamarock (2002) (?) divergence damping is
-             ! used in an approximated form by adding the following term to the pressure:
-             pp_minus_div(:,:,:) = pp(:,:,:) - alpha_div(:,:,:) / th0(:,:,:) * div(:,:,:)
+             ! complete pp_minus_div computation at ghost zone
+             
+             do j = 1, ja-1
+                do i = 1, mxp
+                   do k = 1, mzp
+                      pp_minus_div(k,i,j) = pp(k,i,j) - &
+                           alpha_div(k,i,j)/th0(k,i,j) * div(k,i,j)
+                   end do
+                end do
+             end do
+             do j = jz+1, myp
+                do i = 1, mxp
+                   do k = 1, mzp
+                      pp_minus_div(k,i,j) = pp(k,i,j) - &
+                           alpha_div(k,i,j)/th0(k,i,j) * div(k,i,j)
+                   end do
+                end do
+             end do
+             do j = 1, myp
+                do i = 1, ia-1
+                   do k = 1, mzp
+                      pp_minus_div(k,i,j) = pp(k,i,j) - &
+                           alpha_div(k,i,j)/th0(k,i,j) * div(k,i,j)
+                   end do
+                end do
+             end do
+             do j = 1, myp
+                do i = iz+1, mxp
+                   do k = 1, mzp
+                      pp_minus_div(k,i,j) = pp(k,i,j) - &
+                           alpha_div(k,i,j)/th0(k,i,j) * div(k,i,j)
+                   end do
+                end do
+             end do
 
           elseif(damp_formulation==2) then
              !- alternative formulation
@@ -1374,11 +1421,9 @@ contains
     integer :: i, j, k
     integer :: istat
 
-    real, pointer :: pField(:,:,:)
+    character(len=8) :: str(10)
     character(len=*), parameter :: h="**(init_div_damping_coeff)**"
     logical, parameter :: dumpLocal=.false.
-    character(len=8) :: str(10)
-
 
     ia = OneGrid%NodeDims%ia
     iz = OneGrid%NodeDims%iz
@@ -1435,9 +1480,9 @@ contains
     if ( .NOT. limit_alpha_div_by_slope_stability ) then
        alpha_div(:,:,:) = alpha_div_limit
     else
-       do k=2, mzp
-          do j=1, myp-1
-             do i=1, mxp-1
+       do k = 2, mzp
+          do j = ja-1, jz
+             do i = ia-1, iz
                 ! it is assumed here that z(k,i,j) is the height of the grid point
                 ! in the position of w(k,i,j)   !!???
                 z_kij = zt(k)   * grid_g(ngrid)%rtgt(i  ,j  ) + grid_g(ngrid)%topt(i  ,j  )
@@ -1453,8 +1498,8 @@ contains
                      - ( z_kij + z_mij ) )
              end do
           end do
-          do j=2, myp-1
-             do i=2, mxp-1
+          do j = ja, jz
+             do i = ia, iz
                 delta_z = zm(k) - zm(k-1)
                 delta_h_x = 0.5 * ( abs(delta_h_x_at_u(i,j)) + abs(delta_h_x_at_u(i-1,j  )) )
                 delta_h_y = 0.5 * ( abs(delta_h_y_at_v(i,j)) + abs(delta_h_y_at_v(i  ,j-1)) )
@@ -1465,20 +1510,15 @@ contains
              end do
           end do
        end do
-       ! fill up boundary values (although these shoudn't be needed)
-       alpha_div(:,1  ,:  ) = alpha_div(:,2    ,:    )
-       alpha_div(:,mxp,:  ) = alpha_div(:,mxp-1,:    )
-       alpha_div(:,:  ,1  ) = alpha_div(:,:    ,2    )
-       alpha_div(:,:  ,myp) = alpha_div(:,:    ,myp-1)
-       alpha_div(:,1  ,1  ) = alpha_div(:,2    ,2    )
-       alpha_div(:,mxp,1  ) = alpha_div(:,mxp-1,2    )
-       alpha_div(:,1  ,myp) = alpha_div(:,2    ,myp-1)
-       alpha_div(:,mxp,myp) = alpha_div(:,mxp-1,myp-1)
-       alpha_div(1,:  ,:  ) = alpha_div(2,:    ,:    )
+       ! fill up alpha_div low k boundary values
+       do j = ja, jz
+          do i = ia, iz
+             alpha_div(1,i,j) = alpha_div(2,i,j)
+          end do
+       end do
     end if
 
-    !--- mpi paralelization :
-    !MB: here an exchange of alpha_div for MPI-parallelization is necessary!
+    ! alpha_div ghost zone update
 
     if (dumpLocal) then
        write(str(1),"(i8)") size(alpha_div,1)
