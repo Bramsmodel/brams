@@ -164,8 +164,8 @@ contains
 
   
   subroutine InsertAtScalarTab_1D(varp, vart, tabstr, ScalarTab, ScalarTabSize)
-    real, target :: varp(:)
-    real, target :: vart(:)
+    real, contiguous, pointer, intent(in) :: varp(:)
+    real, contiguous, pointer, intent(in) :: vart(:)
     character (len=*), intent(in) :: tabstr
     type(ScalarTable), pointer, intent(in) :: ScalarTab(:)
     integer, intent(inout) :: ScalarTabSize
@@ -225,8 +225,8 @@ contains
 
   
   subroutine InsertAtScalarTab_2D(varp, vart, tabstr, ScalarTab, ScalarTabSize)
-    real, contiguous, target :: varp(:,:)
-    real, target :: vart(:)
+    real, contiguous, pointer, intent(in) :: varp(:,:)
+    real, contiguous, pointer, intent(in) :: vart(:)
     character (len=*), intent(in) :: tabstr
     type(ScalarTable), pointer, intent(in) :: ScalarTab(:)
     integer, intent(inout) :: ScalarTabSize
@@ -286,8 +286,8 @@ contains
 
   
   subroutine InsertAtScalarTab_3D(varp, vart, tabstr, ScalarTab, ScalarTabSize)
-    real, contiguous, target :: varp(:,:,:)
-    real, target :: vart(:)
+    real, contiguous, pointer, intent(in) :: varp(:,:,:)
+    real, contiguous, pointer, intent(in) :: vart(:)
     character (len=*), intent(in) :: tabstr
     type(ScalarTable), pointer, intent(in) :: ScalarTab(:)
     integer, intent(inout) :: ScalarTabSize

@@ -534,7 +534,7 @@ alloc.o : $(MEMORY)/alloc.F90 mem_all.o mem_opt_scratch.o mem_shcu.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rams_mem_alloc.o : $(MEMORY)/rams_mem_alloc.F90  extra.o \
+ModMemAlloc.o : $(MEMORY)/ModMemAlloc.F90  extra.o \
 	mem_aerad.o mem_all.o mem_carma.o mem_grell.o mem_grell_param2.o \
 	mem_opt_scratch.o mem_scratch1_grell.o mem_scratch2_grell.o \
 	mem_scratch2_grell_sh.o mem_scratch3_grell.o \
@@ -595,7 +595,7 @@ ModOneProc.o : $(MODEL)/ModOneProc.F90 ModNamelistFile.o \
 	tuvParameter.o ModTuv2.7.o ModTuvDriver2.7.o ModGridTree.o \
 	ModGrid.o rtimh.o rtimh_rk.o meteogram.o \
 	module_rams_microphysics_2M.o dam.o mod_aer.o \
-	initMicThompson.o modIau.o \
+	initMicThompson.o modIau.o ModMemAlloc.o \
 	$(UTILS_INCS)/tsNames.h  $(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
@@ -982,7 +982,7 @@ chem1aq_list.o : $(MODEL_CHEM)/chem1aq_list.f90
 	rm -f $(<F:.f90=.f90)
 
 mem_chem1aq.o : $(CCATT)/mem_chem1aq.f90 chem1aq_list.o var_tables.o \
-	grid_dims.o mem_chem1.o
+	grid_dims.o mem_chem1.o ModScalarTable.o 
 	@cp -f  $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

@@ -34,6 +34,9 @@ module ModOneProc
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModMemAlloc, only: &
+       MemAlloc
+  
   use ModDomainDecomp, only: &
        DomainDecomp
   
@@ -605,8 +608,8 @@ contains
     type(parallelEnvironment), pointer :: oneParallelEnvironment => null()
     type(namelistFile), pointer :: oneNamelistFile => null()
     type(GridTree), pointer :: AllGrids => null()
-    type(GridTree), pointer :: OneGridTreeNode => null()
-    type(Grid), pointer :: OneGrid => null()
+    type(GridTree), pointer :: oneGridTreeNode => null()
+    type(Grid), pointer :: oneGrid => null()
     type(AllPostTypes), pointer :: oneAllPostTypes => null()
 
     logical, parameter :: dumpLocal=.false.
@@ -738,8 +741,8 @@ contains
 
     ! force first grid on grid tree
 
-    OneGridTreeNode => GridTreeRoot(AllGrids)
-    OneGrid => OneGridTreeNode%curr
+    oneGridTreeNode => GridTreeRoot(AllGrids)
+    oneGrid => oneGridTreeNode%curr
 
     ngrids = oneNamelistFile%ngrids
     ! antecipate allocate scalar table, for the moment
@@ -895,7 +898,7 @@ contains
 
        ! Allocate memory for this process sub-domain only
        !**(JP)** This should allocate memory for all modules (to be certified!!!)
-       call rams_mem_alloc(2)
+       call MemAlloc(oneGrid, 2)
 
        if(ioutput == 5)then
           call setInitial4Vtable(1)
@@ -919,14 +922,14 @@ contains
        ! Build message passing data structure for all grids,
        ! since this is an INITIAL run.
        ! The message passing data structure is composed by all
-       ! variables of type(MessageSet) stored at OneGrid
+       ! variables of type(MessageSet) stored at oneGrid
 
-       ! for the moment (temporary), copy existing scalar_tab into OneGrid
+       ! for the moment (temporary), copy existing scalar_tab into oneGrid
        
-       OneGridTreeNode => GridTreeRoot(AllGrids)
-       do while (associated(OneGridTreeNode))
-          call InsertMessageSetAtOneGrid(OneGridTreeNode%curr)
-          OneGridTreeNode => NextOnGridTree(OneGridTreeNode)
+       oneGridTreeNode => GridTreeRoot(AllGrids)
+       do while (associated(oneGridTreeNode))
+          call InsertMessageSetAtOneGrid(oneGridTreeNode%curr)
+          oneGridTreeNode => NextOnGridTree(oneGridTreeNode)
        end do
 
        !**(JP)** Code brought from old "rams_node" initialization. Its execution
@@ -1238,10 +1241,10 @@ contains
                 
                 if ( ( dyncore_flag == 0 ) .or. ( dyncore_flag == 1 ) ) then
                    ! Leapfrog/forward-time based scheme
-                   call timestep(OneGrid)
+                   call timestep(oneGrid)
                 else if ( dyncore_flag == 2 ) then
                    ! Runge-Kutta based scheme
-                   call timestep_rk(OneGrid)
+                   call timestep_rk(oneGrid)
                 else
                    iErrNumber=dumpMessage(c_tty,c_yes,header,modelVersion,c_fatal &
                         ,'ERROR in subroutine OneProc: value of dyncore_flag is unknown')
@@ -2641,20 +2644,20 @@ contains
     type(GridTree), pointer :: AllGrids
 
     integer :: gridID, node
-    type(GridTree), pointer :: OneGridTree => null()
+    type(GridTree), pointer :: oneGridTree => null()
     type(DomainDecomp), pointer :: GlobalOwn => null()
 
-    OneGridTree => GridTreeRoot(AllGrids)
-    do while (associated(OneGridTree))
-       gridId = OneGridTree%curr%Id
-       GlobalOwn => OneGridTree%curr%GlobalOwn
-       do node = 1, OneGridTree%curr%ParEnv%nmachs
+    oneGridTree => GridTreeRoot(AllGrids)
+    do while (associated(oneGridTree))
+       gridId = oneGridTree%curr%Id
+       GlobalOwn => oneGridTree%curr%GlobalOwn
+       do node = 1, oneGridTree%curr%ParEnv%nmachs
           ixb(node,gridId) = GlobalOwn%xb(node)
           ixe(node,gridId) = GlobalOwn%xe(node)
           iyb(node,gridId) = GlobalOwn%yb(node)
           iye(node,gridId) = GlobalOwn%ye(node)
        end do
-       OneGridTree => NextOnGridTree(OneGridTree)
+       oneGridTree => NextOnGridTree(oneGridTree)
     end do
   end subroutine StoreDomainDecompAtNode_mod
 end module ModOneProc

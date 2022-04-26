@@ -164,7 +164,7 @@ OBJ_MOD = \
 	gridset.o \
 	adap_init.o \
 	ModOneProc.o \
-	rams_mem_alloc.o   \
+	ModMemAlloc.o   \
 	rams_read_header.o \
 	ranlavg.o \
 	ModRbnd.o \
