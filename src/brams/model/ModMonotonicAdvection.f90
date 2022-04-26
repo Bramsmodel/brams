@@ -23,9 +23,11 @@ module ModMonotonicAdvection
 
   use ModGrid, only: &
        Grid, &
-       DumpGrid, &
-       DeepCopyToScalarTabAtOneGrid, &
-       DeepCopyFromScalarTabAtOneGrid       
+       DumpGrid
+
+  use ModScalarTable, only: &
+       DeepCopyToScalarTab, &
+       DeepCopyFromScalarTab       
 
   use ModNamelistFile, only: &
        NamelistFile
@@ -694,7 +696,7 @@ contains
 
     ! copy external scalar_tab into oneGrid
 
-    call DeepCopyToScalarTabAtOneGrid(oneGrid)
+    call DeepCopyToScalarTab(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
 
     !srf- do n=1,num_scalar(ng)     ! original
     do n=i_scl,num_scalar(ng)
@@ -786,7 +788,7 @@ contains
 
     end do
 
-    call DeepCopyFromScalarTabAtOneGrid(oneGrid)
+    call DeepCopyFromScalarTab(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
 
     ! destroy local memory area for large GhostZoneWidth variables
 

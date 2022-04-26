@@ -545,13 +545,6 @@ subroutine rams_mem_alloc(proc_type)
   !-------------
 
   !-------------
-  ! Allocate scalar table
-  allocate(num_scalar(ngrids), STAT=ierr)
-  if (ierr/=0) call fatal_error(h//"Allocating num_scalar")
-  allocate(scalar_tab(maxsclr,ngrids), STAT=ierr)
-  if (ierr/=0) call fatal_error(h//"Allocating scalar_tab")
-  num_scalar(:) = 0
-  !-------------
 
   !-------------
   ! Allocate Basic variables data type

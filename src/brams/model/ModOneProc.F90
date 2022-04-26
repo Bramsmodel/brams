@@ -61,7 +61,9 @@ module ModOneProc
 
   use var_tables, only: &
        num_var,         &
-       vtab_r
+       vtab_r, &
+       num_scalar, &
+       scalar_tab
 
   use mem_micro, only: &
        micro_g
@@ -251,6 +253,7 @@ module ModOneProc
 
   use grid_dims, only : &
        nzpmax, &          ! (IN) read_sourcemaps()
+       maxsclr, &
        maxgrds            ! INTENT(IN)
 
   use io_params, only : & ! Include by Alvaro L.Fazenda
@@ -296,6 +299,7 @@ module ModOneProc
        istp,           &
        grid_g,         &
        ngbegun,        & ! INTENT(OUT)
+       ngrids,         &
        nnxp,           &
        nnyp,           &
        nzg,            & ! INTENT(IN)
@@ -312,7 +316,6 @@ module ModOneProc
        runtype,        &
        dyncore_flag,   &
        expnme,         &
-       ngrids,         &
        ngrid,          & ! INTENT(OUT)
        nzp,            &
        nxp,            &
@@ -490,8 +493,7 @@ module ModOneProc
   use ModGrid, only: &
        Grid, &
        DumpGrid, &
-       InsertMessageSetAtOneGrid, &
-       InsertScalarTabAtOneGrid
+       InsertMessageSetAtOneGrid
 
 
   use meteogram, only:              &
@@ -579,7 +581,7 @@ contains
     integer :: isendbackflg ! ALF - For local processing
     integer :: isendiv, isendsst, isendndvi
     integer :: isendsrc
-
+    integer :: ngrids
     logical :: instFlag, liteFlag, meanFlag, histFlag, posFlag
     integer :: ng
     integer :: i_xyz
@@ -734,6 +736,20 @@ contains
 
     call CreateGridTree(oneNamelistFile, oneParallelEnvironment, AllGrids)
 
+    ! force first grid on grid tree
+
+    OneGridTreeNode => GridTreeRoot(AllGrids)
+    OneGrid => OneGridTreeNode%curr
+
+    ngrids = oneNamelistFile%ngrids
+    ! antecipate allocate scalar table, for the moment
+    allocate(num_scalar(ngrids), STAT=ierr)
+    if (ierr/=0) call fatal_error(h//"Allocating num_scalar")
+    allocate(scalar_tab(maxsclr,ngrids), STAT=ierr)
+    if (ierr/=0) call fatal_error(h//"Allocating scalar_tab")
+    num_scalar(:) = 0
+    !-------------
+    
     ! Allocating dxtmax_local
 
     allocate(dxtmax_local(ngrids), STAT=ierr)
@@ -910,7 +926,6 @@ contains
        OneGridTreeNode => GridTreeRoot(AllGrids)
        do while (associated(OneGridTreeNode))
           call InsertMessageSetAtOneGrid(OneGridTreeNode%curr)
-!!$          call InsertScalarTabAtOneGrid(OneGridTreeNode%curr)
           OneGridTreeNode => NextOnGridTree(OneGridTreeNode)
        end do
 
@@ -1096,11 +1111,6 @@ contains
           iposDF=ipos
           ipos=0
        ENDIF
-
-       ! force first grid on grid tree
-
-       OneGridTreeNode => GridTreeRoot(AllGrids)
-       OneGrid => OneGridTreeNode%curr
 
 
        IF(applyMeteogram) call InitMeteogram(oneGrid%meteoPolygons, oneGrid%id, trim(meteogramMap))

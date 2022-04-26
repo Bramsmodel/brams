@@ -26,6 +26,7 @@ OBJ_MOD = \
 	ModDateUtils.o \
 	ModMonotonicAdvection.o \
 	ReadBcst.o \
+	ModScalarTable.o \
 	mpi_io_engine-5d.o \
 	Phys_const.o \
 	alloc.o   \
