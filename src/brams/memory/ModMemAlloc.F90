@@ -1502,14 +1502,19 @@ contains
           call filltab_tend_chem1(nspecies_chem,ng)
 
           !change MP ---chem1aq
-          if(chemistry_aq >= 1) call filltab_tend_chem1aq(&
-               oneGrid%ScalarTab, oneGrid%ScalarTabSize, nspeciesaq_chem, ng)
+          if(chemistry_aq >= 1) call filltab_tend_chem1aq(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
+               nspeciesaq_chem, ng)
           !end change MP --chem1aq- END
 
-          if (aerosol >= 1)  call filltab_tend_aer1(nmodes,nspecies_aer,ng)
+          if (aerosol >= 1)  then
+             call filltab_tend_aer1(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
+                  nmodes,nspecies_aer,ng)
+          end if
           if (aerosol == 2)  then
-             call filltab_tend_aer1_inorg(ninorg,ng)
-             call filltab_tend_aer2      (nmodes,ng)
+             call filltab_tend_aer1_inorg(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
+                  ninorg,ng)
+             call filltab_tend_aer2      (oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
+                  nmodes,ng)
           endif
 
        endif

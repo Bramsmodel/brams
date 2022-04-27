@@ -966,7 +966,7 @@ aer1_list.o : $(AEROSOL)/aer1_list_$(AERLEVEL).f90
 	@ln -fs aer1_list_$(AERLEVEL).o aer1_list.o
 
 mem_aer1.o : $(CCATT)/mem_aer1.f90 aer1_list.o var_tables.o grid_dims.o \
-	ModNamelistFile.o  $(UTILS_INCS)/constants.h
+	ModNamelistFile.o  ModScalarTable.o $(UTILS_INCS)/constants.h
 	@cp -f  $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

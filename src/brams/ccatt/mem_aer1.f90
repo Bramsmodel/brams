@@ -8,15 +8,17 @@ module mem_aer1
   use aer1_list, only : nspecies_aer=> nspecies,nmodes
   use mem_chem1, only : chem_assim,RECYCLE_TRACERS
   use ModNamelistFile, only: namelistFile
-  USE var_tables, ONLY : InsertScalarTab
+  use ModScalarTable, only: &
+       ScalarTable, &
+       InsertAtScalarTab
 
   include "constants.h"
 
   type aer1_vars
 !--- All families
-     real, pointer, dimension(:,:,:)  :: sc_p,sc_pp,sc_pf,sc_src
-     real, pointer, dimension(:,:  )  :: sc_dd,sc_wd
-     real, pointer, dimension(:    )  :: sc_t
+     real, contiguous, pointer, dimension(:,:,:)  :: sc_p,sc_pp,sc_pf,sc_src
+     real, contiguous, pointer, dimension(:,:  )  :: sc_dd,sc_wd
+     real, contiguous, pointer, dimension(:    )  :: sc_t
 !-----------
   end type aer1_vars
   type (aer1_vars), allocatable :: aer1_g      (:,:,:),aer1m_g      (:,:,:) !mass
@@ -364,13 +366,16 @@ contains
 
   !---------------------------------------------------------------
 
-  subroutine filltab_tend_aer1(nmodes,nspecies,ng)
+  subroutine filltab_tend_aer1(oneScalarTab, oneScalarTabSize, &
+       nmodes, nspecies, ng)
    use var_tables, only : num_scalar
    use aer1_list, only:spc_name,mode_name, aer_name 
    use mem_chem1, only: nspecies_transported ! this is first calculated at chemistry
                                              ! "filltab_tend_chem1" routine
    implicit none
 
+   type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
+   integer, intent(inout) :: oneScalarTabSize
     integer,intent(in) :: nmodes,nspecies,ng
     integer ::ispc,imode
     integer :: elements
@@ -388,7 +393,8 @@ contains
 
          if (associated(aer1_g(imode,ispc,ng)%sc_t)) then
            elements = size(aer1_g(imode,ispc,ng)%sc_t)
-           call InsertScalarTab(aer1_g(imode,ispc,ng)%sc_p,aer1_g(imode,ispc,ng)%sc_t,ng,trim(register_name) //'P',elements)
+           call InsertAtScalarTab(aer1_g(imode,ispc,ng)%sc_p, aer1_g(imode,ispc,ng)%sc_t, trim(register_name) //'P', &
+                oneScalarTab, oneScalarTabSize)
            !- total number of transported species (CHEM + AER)
            nspecies_transported = nspecies_transported + 1
 
@@ -677,13 +683,16 @@ end  subroutine dealloc_tend_aer2
 
 !---------------------------------------------------------------
 
-subroutine filltab_tend_aer2(nmodes,ng)
+subroutine filltab_tend_aer2(oneScalarTab, oneScalarTabSize, &
+     nmodes,ng)
  use var_tables, only: num_scalar
  use aer1_list , only: numb_name
  use mem_chem1 , only: nspecies_transported ! this is first calculated at chemistry
                                             ! "filltab_tend_chem1" routine
  implicit none
 
+   type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
+   integer, intent(inout) :: oneScalarTabSize
   integer,intent(in) :: nmodes,ng
   integer :: imode
   integer :: elements
@@ -692,7 +701,8 @@ subroutine filltab_tend_aer2(nmodes,ng)
   do imode=1,nmodes
         if (associated(aer2_g(imode,ng)%sc_t)) then
            elements = size(aer2_g(imode,ng)%sc_t)
-           call InsertScalarTab(aer2_g(imode,ng)%sc_p,aer2_g(imode,ng)%sc_t,ng,trim(numb_name(imode))//'P',elements)
+           call InsertAtScalarTab(aer2_g(imode,ng)%sc_p, aer2_g(imode,ng)%sc_t, trim(numb_name(imode))//'P',&
+                oneScalarTab, oneScalarTabSize)
            !- total number of transported species (CHEM + AER)
            nspecies_transported = nspecies_transported + 1
 
@@ -969,13 +979,16 @@ end subroutine filltab_tend_aer2
 
   !---------------------------------------------------------------
 
-  subroutine filltab_tend_aer1_inorg(ninorg,ng)
+  subroutine filltab_tend_aer1_inorg(oneScalarTab, oneScalarTabSize, &
+       ninorg,ng)
    use var_tables, only : num_scalar
    use aer1_list, only:INORG_name,mode_name
    use mem_chem1, only: nspecies_transported ! this is first calculated at chemistry
                                              ! "filltab_tend_chem1" routine
    implicit none
 
+   type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
+   integer, intent(inout) :: oneScalarTabSize
     integer,intent(in) :: ninorg,ng
     integer ::ispc
     integer :: elements
@@ -985,7 +998,8 @@ end subroutine filltab_tend_aer2
 
          if (associated(aer1_inorg_g(ispc,ng)%sc_t)) then
            elements = size(aer1_inorg_g(ispc,ng)%sc_t)
-           call InsertScalarTab(aer1_inorg_g(ispc,ng)%sc_p,aer1_inorg_g(ispc,ng)%sc_t,ng,trim(INORG_name(ispc))//'P',elements)
+           call InsertAtScalarTab(aer1_inorg_g(ispc,ng)%sc_p, aer1_inorg_g(ispc,ng)%sc_t, trim(INORG_name(ispc))//'P',&
+                oneScalarTab, oneScalarTabSize)
 	   !- total number of transported species (CHEM + AER)
 	   nspecies_transported = nspecies_transported + 1
 
