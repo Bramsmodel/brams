@@ -1492,7 +1492,8 @@ contains
           gaspart_p => gaspart_g(ng)
        endif
 
-       call filltab_tend(basic_g(ng), micro_g(ng), turb_g(ng),  &
+       call filltab_tend(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
+            basic_g(ng), micro_g(ng), turb_g(ng),  &
             scalar_g(:,ng),                                     &
             gaspart_p,                                          &
             naddsc, ng)

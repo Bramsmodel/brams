@@ -293,7 +293,8 @@ mem_turb.o : $(TURB)/mem_turb.f90 grid_dims.o var_tables.o \
 
 mem_tend.o : $(MEMORY)/mem_tend.f90 mem_basic.o mem_micro.o \
 	mem_turb.o mem_scalar.o var_tables.o mem_grid.o \
-	teb_spm_start.o mem_gaspart.o mem_emiss.o ModNamelistFile.o
+	teb_spm_start.o mem_gaspart.o mem_emiss.o ModNamelistFile.o \
+	ModScalarTable.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -988,7 +989,7 @@ mem_chem1aq.o : $(CCATT)/mem_chem1aq.f90 chem1aq_list.o var_tables.o \
 	rm -f $(<F:.f90=.f90)
 
 mem_chem1.o : $(CCATT)/mem_chem1.f90 chem1_list.o var_tables.o grid_dims.o \
-	ModNamelistFile.o io_params.o
+	ModNamelistFile.o io_params.o ModScalarTable.o
 	@cp -f  $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

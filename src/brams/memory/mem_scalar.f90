@@ -14,11 +14,11 @@ module mem_scalar
   ! Added scalar variables and tendencies
 
   type scalar_vars
-     real, pointer :: sclp(:,:,:)
-     real, pointer :: drydep(:,:)
-     real, pointer :: sclt(:)
-     real, pointer :: wetdep(:,:)
-     real, pointer :: srcsc(:,:,:)
+     real, contiguous, pointer :: sclp(:,:,:)
+     real, contiguous, pointer :: drydep(:,:)
+     real, contiguous, pointer :: sclt(:)
+     real, contiguous, pointer :: wetdep(:,:)
+     real, contiguous, pointer :: srcsc(:,:,:)
   end type scalar_vars
 
   ! scal_p allocated by (maxsclr,ngrids)

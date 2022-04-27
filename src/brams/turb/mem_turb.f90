@@ -17,16 +17,25 @@ module mem_turb
   type turb_vars
 
      ! Variables to be dimensioned by (nzp,nxp,nyp)
-     real, pointer, dimension(:,:,:) :: &
-          tkep, epsp, hkm, vkm, vkh, cdrag
+     real, contiguous, pointer :: tkep(:,:,:)
+     real, contiguous, pointer :: epsp(:,:,:)
+     real, contiguous, pointer :: hkm(:,:,:)
+     real, contiguous, pointer :: vkm(:,:,:)
+     real, contiguous, pointer :: vkh(:,:,:)
+     real, contiguous, pointer :: cdrag(:,:,:)
+     
 
      ! Variables to be dimensioned by (nxp,nyp)
-     real, pointer, dimension(:,:) :: &
-          sflux_u, sflux_v, sflux_w, sflux_t, sflux_r
+     real, contiguous, pointer :: sflux_u(:,:)
+     real, contiguous, pointer :: sflux_v(:,:)
+     real, contiguous, pointer :: sflux_w(:,:)
+     real, contiguous, pointer :: sflux_t(:,:)
+     real, contiguous, pointer :: sflux_r(:,:)
+     
 
     ![MLO - For Nakanishi/Niino
     !srf     integer, pointer, dimension(:,:) :: kpbl
-     real, pointer, dimension(:,:) :: kpbl
+     real, contiguous, pointer :: kpbl(:,:)
     !MLO]
 
   end type turb_vars

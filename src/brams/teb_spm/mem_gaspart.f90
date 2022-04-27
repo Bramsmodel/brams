@@ -1,94 +1,94 @@
-MODULE mem_gaspart
+module mem_gaspart
 
-  TYPE gaspart_vars
+  type gaspart_vars
 
      ! Variables to be dimensioned by (nzp,nxp,nyp)
-     REAL, POINTER :: PCO(:,:,:)
-     REAL, POINTER :: PNO(:,:,:)
-     REAL, POINTER :: PNO2(:,:,:)
-     REAL, POINTER :: PPM25(:,:,:)
-     REAL, POINTER :: PVOC(:,:,:)
-     REAL, POINTER :: PSO2(:,:,:)
-     REAL, POINTER :: PROO(:,:,:)
-     REAL, POINTER :: PSO4(:,:,:)
-     REAL, POINTER :: PAER(:,:,:)
-     REAL, POINTER :: PO3(:,:,:)
-     REAL, POINTER :: PRHCO(:,:,:)
-     REAL, POINTER :: PHO2(:,:,:)
-     REAL, POINTER :: PO3P(:,:,:)
-     REAL, POINTER :: PO1D(:,:,:)
-     REAL, POINTER :: PHO(:,:,:)
-     REAL, POINTER :: GASR(:,:,:)
-     REAL, POINTER :: PEOXID(:,:,:)
+     real, contiguous, pointer :: PCO(:,:,:)
+     real, contiguous, pointer :: PNO(:,:,:)
+     real, contiguous, pointer :: PNO2(:,:,:)
+     real, contiguous, pointer :: PPM25(:,:,:)
+     real, contiguous, pointer :: PVOC(:,:,:)
+     real, contiguous, pointer :: PSO2(:,:,:)
+     real, contiguous, pointer :: PROO(:,:,:)
+     real, contiguous, pointer :: PSO4(:,:,:)
+     real, contiguous, pointer :: PAER(:,:,:)
+     real, contiguous, pointer :: PO3(:,:,:)
+     real, contiguous, pointer :: PRHCO(:,:,:)
+     real, contiguous, pointer :: PHO2(:,:,:)
+     real, contiguous, pointer :: PO3P(:,:,:)
+     real, contiguous, pointer :: PO1D(:,:,:)
+     real, contiguous, pointer :: PHO(:,:,:)
+     real, contiguous, pointer :: GASR(:,:,:)
+     real, contiguous, pointer :: PEOXID(:,:,:)
 
      ! Variables to be dimensioned by (nzp,nxp)
-     REAL, POINTER :: fusog(:,:)
+     real, contiguous, pointer :: fusog(:,:)
 
-     REAL, POINTER :: PCOT(:)
-     REAL, POINTER :: PNOT(:)
-     REAL, POINTER :: PNO2T(:)
-     REAL, POINTER :: PPM25T(:)
-     REAL, POINTER :: PVOCT(:)
-     REAL, POINTER :: PSO2T(:)
-     REAL, POINTER :: PSO4T(:)
-     REAL, POINTER :: PAERT(:) 
-     REAL, POINTER :: PO3T(:)
-     REAL, POINTER :: PRHCOT(:)
-     REAL, POINTER :: PHO2T(:)
-     REAL, POINTER :: PO3PT(:)
-     REAL, POINTER :: PO1DT(:)
-     REAL, POINTER :: PHOT(:)
-     REAL, POINTER :: PROOT(:)
+     real, contiguous, pointer :: PCOT(:)
+     real, contiguous, pointer :: PNOT(:)
+     real, contiguous, pointer :: PNO2T(:)
+     real, contiguous, pointer :: PPM25T(:)
+     real, contiguous, pointer :: PVOCT(:)
+     real, contiguous, pointer :: PSO2T(:)
+     real, contiguous, pointer :: PSO4T(:)
+     real, contiguous, pointer :: PAERT(:) 
+     real, contiguous, pointer :: PO3T(:)
+     real, contiguous, pointer :: PRHCOT(:)
+     real, contiguous, pointer :: PHO2T(:)
+     real, contiguous, pointer :: PO3PT(:)
+     real, contiguous, pointer :: PO1DT(:)
+     real, contiguous, pointer :: PHOT(:)
+     real, contiguous, pointer :: PROOT(:)
 
-  END TYPE gaspart_vars
+  end type gaspart_vars
 
-  TYPE (gaspart_vars), ALLOCATABLE, TARGET :: gaspart_g(:), gaspartm_g(:)
+  type (gaspart_vars), allocatable, target :: gaspart_g(:), gaspartm_g(:)
 
-CONTAINS
+contains
 
-  SUBROUTINE alloc_gaspart(gaspart, n1, n2, n3)
+  subroutine alloc_gaspart(gaspart, n1, n2, n3)
 
-    USE mem_emiss, ONLY: ichemi
+    use mem_emiss, only: ichemi
 
-    IMPLICIT NONE
+    implicit none
     ! Arguments:
-    TYPE (gaspart_vars), INTENT(INOUT) :: gaspart
-    INTEGER, INTENT(in) :: n1, n2, n3
+    type (gaspart_vars), intent(INOUT) :: gaspart
+    integer, intent(in) :: n1, n2, n3
 
-    ALLOCATE (gaspart%pco(n1,n2,n3))
-    ALLOCATE (gaspart%pno(n1,n2,n3))
-    ALLOCATE (gaspart%pno2(n1,n2,n3))
-    ALLOCATE (gaspart%ppm25(n1,n2,n3))
-    ALLOCATE (gaspart%pso2(n1,n2,n3))
-    ALLOCATE (gaspart%pvoc(n1,n2,n3))
-    ALLOCATE (gaspart%gasr(n1,n2,n3))
-    ALLOCATE (gaspart%pso4(n1,n2,n3))
-    ALLOCATE (gaspart%paer(n1,n2,n3))
-    ALLOCATE (gaspart%PEOXID(n1,n2,n3))
-    ALLOCATE (gaspart%fusog(n2,n3))
+    allocate (gaspart%pco(n1,n2,n3))
+    allocate (gaspart%pno(n1,n2,n3))
+    allocate (gaspart%pno2(n1,n2,n3))
+    allocate (gaspart%ppm25(n1,n2,n3))
+    allocate (gaspart%pso2(n1,n2,n3))
+    allocate (gaspart%pvoc(n1,n2,n3))
+    allocate (gaspart%gasr(n1,n2,n3))
+    allocate (gaspart%pso4(n1,n2,n3))
+    allocate (gaspart%paer(n1,n2,n3))
+    allocate (gaspart%PEOXID(n1,n2,n3))
+    allocate (gaspart%fusog(n2,n3))
 
     if (ichemi==1) then
-       ALLOCATE (gaspart%po3   (n1,n2,n3))
-       ALLOCATE (gaspart%prhco (n1,n2,n3))
-       ALLOCATE (gaspart%pho2  (n1,n2,n3))
-       ALLOCATE (gaspart%po3p  (n1,n2,n3))
-       ALLOCATE (gaspart%po1d  (n1,n2,n3))
-       ALLOCATE (gaspart%pho   (n1,n2,n3))
-       ALLOCATE (gaspart%proo  (n1,n2,n3))
+       allocate (gaspart%po3   (n1,n2,n3))
+       allocate (gaspart%prhco (n1,n2,n3))
+       allocate (gaspart%pho2  (n1,n2,n3))
+       allocate (gaspart%po3p  (n1,n2,n3))
+       allocate (gaspart%po1d  (n1,n2,n3))
+       allocate (gaspart%pho   (n1,n2,n3))
+       allocate (gaspart%proo  (n1,n2,n3))
     endif
 
-  END SUBROUTINE alloc_gaspart
+  end subroutine alloc_gaspart
 
 
 
-  SUBROUTINE zero_gaspart(gaspart, n1, n2, n3)
+  subroutine zero_gaspart(gaspart, n1, n2, n3)
 
-    USE mem_emiss, ONLY: ichemi
+    use mem_emiss, only: ichemi
 
-    IMPLICIT NONE
+    implicit none
     ! Arguments:
-    TYPE (gaspart_vars), INTENT(OUT) :: gaspart
-    INTEGER, INTENT(in) :: n1, n2, n3
+    type (gaspart_vars), intent(OUT) :: gaspart
+    integer, intent(in) :: n1, n2, n3
 
     gaspart%pco    = 0.0
     gaspart%pno    = 0.0
@@ -112,173 +112,173 @@ CONTAINS
        gaspart%proo  = 0.0
     endif
 
-  END SUBROUTINE zero_gaspart
+  end subroutine zero_gaspart
 
 
-  SUBROUTINE nullify_gaspart(gaspart)
-    USE mem_emiss, ONLY: ichemi
+  subroutine nullify_gaspart(gaspart)
+    use mem_emiss, only: ichemi
 
-    IMPLICIT NONE
+    implicit none
     ! Arguments:
-    TYPE (gaspart_vars), INTENT(INOUT) :: gaspart
+    type (gaspart_vars), intent(INOUT) :: gaspart
 
-    IF (ASSOCIATED(gaspart%pco))    NULLIFY (gaspart%pco)
-    IF (ASSOCIATED(gaspart%pno))    NULLIFY (gaspart%pno)
-    IF (ASSOCIATED(gaspart%pno2))   NULLIFY (gaspart%pno2)
-    IF (ASSOCIATED(gaspart%ppm25))  NULLIFY (gaspart%ppm25)
-    IF (ASSOCIATED(gaspart%pvoc))   NULLIFY (gaspart%pvoc)
-    IF (ASSOCIATED(gaspart%pso2))   NULLIFY (gaspart%pso2)
-    IF (ASSOCIATED(gaspart%pso4))   NULLIFY (gaspart%pso4)
-    IF (ASSOCIATED(gaspart%paer))   NULLIFY (gaspart%paer)
-    IF (ASSOCIATED(gaspart%PEOXID))   NULLIFY (gaspart%PEOXID)
-    IF (ASSOCIATED(gaspart%gasr))   NULLIFY (gaspart%gasr)
-    IF (ASSOCIATED(gaspart%fusog))   NULLIFY (gaspart%fusog)
+    if (associated(gaspart%pco))    nullify (gaspart%pco)
+    if (associated(gaspart%pno))    nullify (gaspart%pno)
+    if (associated(gaspart%pno2))   nullify (gaspart%pno2)
+    if (associated(gaspart%ppm25))  nullify (gaspart%ppm25)
+    if (associated(gaspart%pvoc))   nullify (gaspart%pvoc)
+    if (associated(gaspart%pso2))   nullify (gaspart%pso2)
+    if (associated(gaspart%pso4))   nullify (gaspart%pso4)
+    if (associated(gaspart%paer))   nullify (gaspart%paer)
+    if (associated(gaspart%PEOXID))   nullify (gaspart%PEOXID)
+    if (associated(gaspart%gasr))   nullify (gaspart%gasr)
+    if (associated(gaspart%fusog))   nullify (gaspart%fusog)
 
     if (ichemi==1) then
-       IF (ASSOCIATED(gaspart%po3  ))  NULLIFY (gaspart%po3  )
-       IF (ASSOCIATED(gaspart%prhco))  NULLIFY (gaspart%prhco)
-       IF (ASSOCIATED(gaspart%pho2 ))  NULLIFY (gaspart%pho2 )
-       IF (ASSOCIATED(gaspart%po3p ))  NULLIFY (gaspart%po3p )
-       IF (ASSOCIATED(gaspart%po1d ))  NULLIFY (gaspart%po1d )
-       IF (ASSOCIATED(gaspart%pho  ))  NULLIFY (gaspart%pho  )
-       IF (ASSOCIATED(gaspart%proo ))  NULLIFY (gaspart%proo )
+       if (associated(gaspart%po3  ))  nullify (gaspart%po3  )
+       if (associated(gaspart%prhco))  nullify (gaspart%prhco)
+       if (associated(gaspart%pho2 ))  nullify (gaspart%pho2 )
+       if (associated(gaspart%po3p ))  nullify (gaspart%po3p )
+       if (associated(gaspart%po1d ))  nullify (gaspart%po1d )
+       if (associated(gaspart%pho  ))  nullify (gaspart%pho  )
+       if (associated(gaspart%proo ))  nullify (gaspart%proo )
     endif
 
-  END SUBROUTINE nullify_gaspart
+  end subroutine nullify_gaspart
 
 
 
-  SUBROUTINE dealloc_gaspart(gaspart)
+  subroutine dealloc_gaspart(gaspart)
 
-    USE mem_emiss, ONLY: ichemi
+    use mem_emiss, only: ichemi
 
-    IMPLICIT NONE
+    implicit none
 
     ! Arguments
-    TYPE (gaspart_vars), INTENT(INOUT) :: gaspart
+    type (gaspart_vars), intent(INOUT) :: gaspart
 
-    IF (ASSOCIATED(gaspart%pco))    DEALLOCATE (gaspart%pco)
-    IF (ASSOCIATED(gaspart%pno))    DEALLOCATE (gaspart%pno)
-    IF (ASSOCIATED(gaspart%pno2))   DEALLOCATE (gaspart%pno2)
-    IF (ASSOCIATED(gaspart%ppm25))  DEALLOCATE (gaspart%ppm25)
-    IF (ASSOCIATED(gaspart%pvoc))   DEALLOCATE (gaspart%pvoc)
-    IF (ASSOCIATED(gaspart%pso2))   DEALLOCATE (gaspart%pso2)
-    IF (ASSOCIATED(gaspart%pso4))   DEALLOCATE (gaspart%pso4)
-    IF (ASSOCIATED(gaspart%paer))   DEALLOCATE (gaspart%paer)
-    IF (ASSOCIATED(gaspart%PEOXID))   DEALLOCATE (gaspart%PEOXID)
-    IF (ASSOCIATED(gaspart%gasr))   DEALLOCATE (gaspart%gasr)
-    IF (ASSOCIATED(gaspart%fusog))   DEALLOCATE (gaspart%fusog)
+    if (associated(gaspart%pco))    deallocate (gaspart%pco)
+    if (associated(gaspart%pno))    deallocate (gaspart%pno)
+    if (associated(gaspart%pno2))   deallocate (gaspart%pno2)
+    if (associated(gaspart%ppm25))  deallocate (gaspart%ppm25)
+    if (associated(gaspart%pvoc))   deallocate (gaspart%pvoc)
+    if (associated(gaspart%pso2))   deallocate (gaspart%pso2)
+    if (associated(gaspart%pso4))   deallocate (gaspart%pso4)
+    if (associated(gaspart%paer))   deallocate (gaspart%paer)
+    if (associated(gaspart%PEOXID))   deallocate (gaspart%PEOXID)
+    if (associated(gaspart%gasr))   deallocate (gaspart%gasr)
+    if (associated(gaspart%fusog))   deallocate (gaspart%fusog)
 
     if (ichemi==1) then
-       IF (ASSOCIATED(gaspart%po3  ))  DEALLOCATE (gaspart%po3  )
-       IF (ASSOCIATED(gaspart%prhco))  DEALLOCATE (gaspart%prhco)
-       IF (ASSOCIATED(gaspart%pho2 ))  DEALLOCATE (gaspart%pho2 )
-       IF (ASSOCIATED(gaspart%po3p ))  DEALLOCATE (gaspart%po3p )
-       IF (ASSOCIATED(gaspart%po1d ))  DEALLOCATE (gaspart%po1d )
-       IF (ASSOCIATED(gaspart%pho  ))  DEALLOCATE (gaspart%pho  )
-       IF (ASSOCIATED(gaspart%proo ))  DEALLOCATE (gaspart%proo )
+       if (associated(gaspart%po3  ))  deallocate (gaspart%po3  )
+       if (associated(gaspart%prhco))  deallocate (gaspart%prhco)
+       if (associated(gaspart%pho2 ))  deallocate (gaspart%pho2 )
+       if (associated(gaspart%po3p ))  deallocate (gaspart%po3p )
+       if (associated(gaspart%po1d ))  deallocate (gaspart%po1d )
+       if (associated(gaspart%pho  ))  deallocate (gaspart%pho  )
+       if (associated(gaspart%proo ))  deallocate (gaspart%proo )
     endif
 
-  END SUBROUTINE dealloc_gaspart
+  end subroutine dealloc_gaspart
 
 
-  SUBROUTINE filltab_gaspart(gaspart, gaspartm, imean, n1, n2, n3, ng)
+  subroutine filltab_gaspart(gaspart, gaspartm, imean, n1, n2, n3, ng)
 
-    USE var_tables
-    USE mem_emiss, ONLY: ichemi
+    use var_tables
+    use mem_emiss, only: ichemi
 
-    IMPLICIT NONE
+    implicit none
     include "constants.h"
     ! Arguments:
-    TYPE (gaspart_vars), INTENT(IN) :: gaspart, gaspartm
-    INTEGER, INTENT(IN) :: imean, n1, n2, n3, ng
+    type (gaspart_vars), intent(IN) :: gaspart, gaspartm
+    integer, intent(IN) :: imean, n1, n2, n3, ng
     ! Local Variables:
-    INTEGER(kind=i8)  :: npts
-    REAL, POINTER :: var, varm
+    integer(kind=i8)  :: npts
+    real, pointer :: var, varm
 
     ! Fill pointers to arrays into variable tables
 
     npts=n2*n3
 
-    IF (ASSOCIATED(gaspart%fusog))  &
-         CALL InsertVTab (gaspart%FUSOG,gaspartm%FUSOG &
+    if (associated(gaspart%fusog))  &
+         call InsertVTab (gaspart%FUSOG,gaspartm%FUSOG &
          ,ng, npts, imean,  &
          'FUSOG:2:hist:anal:mpti:mpt3:mpt1')
 
     npts=n1*n2*n3
 
-    IF (ASSOCIATED(gaspart%pco))  &
-         CALL InsertVTab (gaspart%PCO,gaspartm%PCO&
+    if (associated(gaspart%pco))  &
+         call InsertVTab (gaspart%PCO,gaspartm%PCO&
          ,ng, npts, imean,  &
          'PCO:3:hist:anal:mpti:mpt3:mpt1')
-    IF (ASSOCIATED(gaspart%pno))  &
-         CALL InsertVTab (gaspart%PNO,gaspartm%PNO&
+    if (associated(gaspart%pno))  &
+         call InsertVTab (gaspart%PNO,gaspartm%PNO&
          ,ng, npts, imean,  &
          'PNO:3:hist:anal:mpti:mpt3:mpt1')
-    IF (ASSOCIATED(gaspart%pno2))  &
-         CALL InsertVTab (gaspart%PNO2,gaspartm%PNO2&
+    if (associated(gaspart%pno2))  &
+         call InsertVTab (gaspart%PNO2,gaspartm%PNO2&
          ,ng, npts, imean,  &
          'PNO2:3:hist:anal:mpti:mpt3:mpt1')
-    IF (ASSOCIATED(gaspart%ppm25))  &
-         CALL InsertVTab (gaspart%PPM25,gaspartm%PPM25&
+    if (associated(gaspart%ppm25))  &
+         call InsertVTab (gaspart%PPM25,gaspartm%PPM25&
          ,ng, npts, imean,  &
          'PPM25:3:hist:anal:mpti:mpt3:mpt1')
-    IF (ASSOCIATED(gaspart%pvoc))  &
-         CALL InsertVTab (gaspart%PVOC,gaspartm%PVOC&
+    if (associated(gaspart%pvoc))  &
+         call InsertVTab (gaspart%PVOC,gaspartm%PVOC&
          ,ng, npts, imean,  &
          'PVOC:3:hist:anal:mpti:mpt3:mpt1')
-    IF (ASSOCIATED(gaspart%pso2))  &
-         CALL InsertVTab (gaspart%PSO2,gaspartm%PSO2&
+    if (associated(gaspart%pso2))  &
+         call InsertVTab (gaspart%PSO2,gaspartm%PSO2&
          ,ng, npts, imean,  &
          'PSO2:3:hist:anal:mpti:mpt3:mpt1')
-    IF (ASSOCIATED(gaspart%pso4))  &
-         CALL InsertVTab (gaspart%PSO4,gaspartm%PSO4&
+    if (associated(gaspart%pso4))  &
+         call InsertVTab (gaspart%PSO4,gaspartm%PSO4&
          ,ng, npts, imean,  &
          'PSO4:3:hist:anal:mpti:mpt3:mpt1')
-    IF (ASSOCIATED(gaspart%paer))  &
-         CALL InsertVTab (gaspart%PAER,gaspartm%PAER&
+    if (associated(gaspart%paer))  &
+         call InsertVTab (gaspart%PAER,gaspartm%PAER&
          ,ng, npts, imean,  &
          'PAER:3:hist:anal:mpti:mpt3:mpt1')
-    IF (ASSOCIATED(gaspart%PEOXID))  &
-         CALL InsertVTab (gaspart%PEOXID,gaspartm%PEOXID&
+    if (associated(gaspart%PEOXID))  &
+         call InsertVTab (gaspart%PEOXID,gaspartm%PEOXID&
          ,ng, npts, imean,  &
          'PEOXID:3:hist:anal:mpti:mpt3:mpt1')
-    IF (ASSOCIATED(gaspart%gasr))  &
-         CALL InsertVTab (gaspart%GASR,gaspartm%GASR&
+    if (associated(gaspart%gasr))  &
+         call InsertVTab (gaspart%GASR,gaspartm%GASR&
          ,ng, npts, imean,  &
          'GASR:3:mpti:mpt3:mpt1')
 
     if (ichemi==1) then
-       IF (ASSOCIATED(gaspart%po3))  &
-            CALL InsertVTab (gaspart%PO3,gaspartm%PO3&
+       if (associated(gaspart%po3))  &
+            call InsertVTab (gaspart%PO3,gaspartm%PO3&
             ,ng, npts, imean,  &
             'PO3:3:hist:anal:mpti:mpt3:mpt1')
-       IF (ASSOCIATED(gaspart%prhco))  &
-            CALL InsertVTab (gaspart%PRHCO,gaspartm%PRHCO&
+       if (associated(gaspart%prhco))  &
+            call InsertVTab (gaspart%PRHCO,gaspartm%PRHCO&
             ,ng, npts, imean,  &
             'PRHCO:3:hist:anal:mpti:mpt3:mpt1')
-       IF (ASSOCIATED(gaspart%pho2))  &
-            CALL InsertVTab (gaspart%PHO2,gaspartm%PHO2&
+       if (associated(gaspart%pho2))  &
+            call InsertVTab (gaspart%PHO2,gaspartm%PHO2&
             ,ng, npts, imean,  &
             'PHO2:3:hist:anal:mpti:mpt3:mpt1')
-       IF (ASSOCIATED(gaspart%po3p))  &
-            CALL InsertVTab (gaspart%PO3P,gaspartm%PO3P&
+       if (associated(gaspart%po3p))  &
+            call InsertVTab (gaspart%PO3P,gaspartm%PO3P&
             ,ng, npts, imean,  &
             'PO3P:3:hist:anal:mpti:mpt3:mpt1')
-       IF (ASSOCIATED(gaspart%po1d))  &
-            CALL InsertVTab (gaspart%PO1D,gaspartm%PO1D&
+       if (associated(gaspart%po1d))  &
+            call InsertVTab (gaspart%PO1D,gaspartm%PO1D&
             ,ng, npts, imean,  &
             'PO1D:3:hist:anal:mpti:mpt3:mpt1')
-       IF (ASSOCIATED(gaspart%pho))  &
-            CALL InsertVTab (gaspart%PHO,gaspartm%PHO&
+       if (associated(gaspart%pho))  &
+            call InsertVTab (gaspart%PHO,gaspartm%PHO&
             ,ng, npts, imean,  &
             'PHO:3:hist:anal:mpti:mpt3:mpt1')
-       IF (ASSOCIATED(gaspart%proo))  &
-            CALL InsertVTab (gaspart%PROO,gaspartm%PROO&
+       if (associated(gaspart%proo))  &
+            call InsertVTab (gaspart%PROO,gaspartm%PROO&
             ,ng, npts, imean,  &
             'PROO:3:hist:anal:mpti:mpt3:mpt1')
     endif
 
-  END SUBROUTINE filltab_gaspart
+  end subroutine filltab_gaspart
 
-END MODULE mem_gaspart
+end module mem_gaspart
