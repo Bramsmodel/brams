@@ -10,6 +10,9 @@
 
 module ModTimestep_RK
 
+  use ModRadvc, only: &
+       advectc
+  
   use ModRbnd, only: latbnd, &
        vpsets, &
        rayft,  &
@@ -697,7 +700,8 @@ contains
             i0,j0,nodemxp,nodemyp,nodemzp,mynum)
     ELSEIF(advmnt == 0) THEN
        !- using the 2nd order forward upstream
-       CALL ADVECTc   ('SCALAR',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
+       CALL advectc(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
+            'SCALAR',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
     ELSEIF(advmnt == 3) THEN
        !- using the WS advection
        CALL advectc_rk(oneGrid,'SCALAR',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)

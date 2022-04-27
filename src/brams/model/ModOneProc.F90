@@ -250,10 +250,6 @@ module ModOneProc
 
   use ModTimeStamp, only: SynchronizedTimeStamp ! DEBUG
 
-  use advect_kit, only :   &
-       advect_first_alloc, &  ! Subroutine
-       prepare_inv            ! Subroutine
-
   use grid_dims, only : &
        nzpmax, &          ! (IN) read_sourcemaps()
        maxsclr, &
@@ -1044,14 +1040,6 @@ contains
 
        if (aerosol==-1 .and. .not. (CCATT==1 .and. chemistry >= 1)) &
             call gradsRead('./tables/aerClim/','aerosols.gra',grid_g(1)%glat,grid_g(1)%glon)
-
-       IF(machine == 1) then
-          ! Allocate and initialize data for new advection scheme if used
-          ! Actually it is only used if machine=1, defining NEC-SC system
-          call advect_first_alloc(ngrids, nnzp(1:ngrids), &
-               nodemxp(mynum,1:ngrids), nodemyp(mynum,1:ngrids))
-          call prepare_inv(ngrids)
-       ENDIF
 
        ! Checking if the actual node have to run thermo on the boundaries
 

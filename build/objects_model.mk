@@ -153,13 +153,12 @@ OBJ_MOD = \
 	rad_carma.o \
 	rad_driv.o \
 	rtm_driver.o \
-	radvc.o \
+	ModRadvc.o \
 	radvc_rk.o \
 	radvc_adap.o \
 	ModMonotonicAdvection.o \
 	mod_GhostBlock.o \
 	mod_GhostBlockPartition.o \
-	mod_advect_kit.o \
 	rams_grid.o \
 	gridset.o \
 	adap_init.o \

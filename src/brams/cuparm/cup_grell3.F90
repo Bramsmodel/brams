@@ -1573,13 +1573,13 @@ contains
          RQVcuten_tmp     ! tmp RQVcuten
 
     real, dimension (m2,m3) :: & ! orig (its-2:ite+2,jts-2:jte+2) ::
-    Qmem
+         Qmem
 
     real   :: & ! orig (its-1:ite+1,jts-1:jte+1) ::
-    smTT,smTQ
+         smTT,smTQ
 
     real, dimension (m1) :: & ! orig (kts:kte) ::
-    conv_TRASHT,conv_TRASHQ
+         conv_TRASHT,conv_TRASHQ
 
     real :: Qmem1,Qmem2,Qmemf,Thresh
 
