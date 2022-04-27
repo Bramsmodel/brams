@@ -16,7 +16,7 @@ module ModTimestep_RK
        trsets
 
 contains
-  subroutine timestep_rk(OneGrid)
+  subroutine timestep_rk(oneGrid)
 
     use grid_dims, only: &
          nzpmax
@@ -242,7 +242,7 @@ contains
 
     implicit none
 
-    type(Grid), pointer :: OneGrid
+    type(Grid), pointer :: oneGrid
 
     ! execution time instrumentation
     include "constants.h"
@@ -278,7 +278,7 @@ contains
     end if
 
     singleProcRun = nmachs == 1
-    julesFile=OneGrid%Ramsin%julesin
+    julesFile=oneGrid%Ramsin%julesin
 
 !!$    call SynchronizedTimeStamp(TS_RESTO) ! Exper1.2, 2021_12
 
@@ -411,7 +411,7 @@ contains
 
     !  Send boundaries to adjoining nodes
     !-------------------------------------------
-    call PostSendRecvMsgs(OneGrid%SelectedGhostZoneSend, OneGrid%SelectedGhostZoneRecv)
+    call PostSendRecvMsgs(oneGrid%SelectedGhostZoneSend, oneGrid%SelectedGhostZoneRecv)
 
     !  Coriolis terms
     !  ----------------------------------------
@@ -455,7 +455,7 @@ contains
 
 !!$    call SynchronizedTimeStamp(TS_PHYSICS) ! Exper1.2, 2021_12
 
-    call WaitSendRecvMsgs(OneGrid%SelectedGhostZoneSend, OneGrid%SelectedGhostZoneRecv)
+    call WaitSendRecvMsgs(oneGrid%SelectedGhostZoneSend, oneGrid%SelectedGhostZoneRecv)
 
     if (iexev == 2) &
          call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'THA')
@@ -519,7 +519,7 @@ contains
     IF( NNQPARM(ngrid) >=2  ) CALL prepare_lsf(NNQPARM(ngrid), NNSHCU(ngrid),1)
 
     !- cumulus parameterizations options: G3d - GD-FIM and GF
-    IF(NNQPARM(ngrid)>=3) CALL CUPARM_GRELL3_CATT(OneGrid,1,NNQPARM(ngrid),NNSHCU(ngrid))
+    IF(NNQPARM(ngrid)>=3) CALL CUPARM_GRELL3_CATT(oneGrid,1,NNQPARM(ngrid),NNSHCU(ngrid))
 
     !------------------------------------------------------------------------------
     ! init preparations for Runge-Kutta  -loop
@@ -571,13 +571,13 @@ contains
              if (dumpLocal) then
                 call MsgDump(h//" invokes init_div_damping_coeff to calculate alpha_div on ideltat=0")
              end if
-             call init_div_damping_coeff (OneGrid, dts)
+             call init_div_damping_coeff (oneGrid, dts)
           end if
        else
           if (dumpLocal) then
              call MsgDump(h//" invokes init_div_damping_coeff to calculate alpha_div on ideltat!=0")
           end if
-          call init_div_damping_coeff (OneGrid, dts)
+          call init_div_damping_coeff (oneGrid, dts)
        end if
     end if
 
@@ -614,17 +614,17 @@ contains
        if (dumpLocal) then
           call MsgDump(h//" invokes advectc_rk for V")
        end if
-       call advectc_rk(OneGrid,'V',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
+       call advectc_rk(oneGrid,'V',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
 
        !  advection of pi and theta_il
        if (dumpLocal) then
           call MsgDump(h//" invokes advectc_rk for THETAIL")
        end if
-       call advectc_rk(OneGrid,'THETAIL',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
+       call advectc_rk(oneGrid,'THETAIL',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
        if (dumpLocal) then
           call MsgDump(h//" invokes advectc_rk for PI")
        end if
-       call advectc_rk(OneGrid,'PI'     ,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
+       call advectc_rk(oneGrid,'PI'     ,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
 
 !!$       call SynchronizedTimeStamp(TS_RK_ADV) ! Exper1.2, 2021_12
 
@@ -639,7 +639,7 @@ contains
        if (dumpLocal) then
           call MsgDump(h//" starts exchanging borders of tend%tht_rk")
        end if
-       call PostSendRecvMsgs(OneGrid%AcoustNewThtSend, OneGrid%AcoustNewThtRecv)
+       call PostSendRecvMsgs(oneGrid%AcoustNewThtSend, oneGrid%AcoustNewThtRecv)
 
        if ( l_rk > 1 ) then
           ! (not necessary in the first RK substep)
@@ -651,13 +651,13 @@ contains
        end if
 
        !-  Acoustic small timesteps
-       call acoustic_new(OneGrid, rk_nmbr_small_timesteps(l_rk),l_rk )
+       call acoustic_new(oneGrid, rk_nmbr_small_timesteps(l_rk),l_rk )
 
        !- update thp -> thc (theta_il is not contained in acoustic_new)
        if (dumpLocal) then
           call MsgDump(h//" waits exchanging borders of tend%tht_rk")
        end if
-       call WaitSendRecvMsgs(OneGrid%AcoustNewThtSend, OneGrid%AcoustNewThtRecv)
+       call WaitSendRecvMsgs(oneGrid%AcoustNewThtSend, oneGrid%AcoustNewThtRecv)
 
        call update_long_rk(int(mxp*myp*mzp,i8),dtlt,rk_beta(l_rk) &
             ,basic_g(ngrid)%thc,basic_g(ngrid)%thp  &
@@ -693,14 +693,14 @@ contains
     !----------------------------------------
     IF(advmnt == 1) THEN
        !- monotonic advection scheme
-       CALL advmnt_driver(OneGrid, 'SCALAR',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,&
+       CALL advmnt_driver(oneGrid, 'SCALAR',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,&
             i0,j0,nodemxp,nodemyp,nodemzp,mynum)
     ELSEIF(advmnt == 0) THEN
        !- using the 2nd order forward upstream
        CALL ADVECTc   ('SCALAR',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
     ELSEIF(advmnt == 3) THEN
        !- using the WS advection
-       CALL advectc_rk(OneGrid,'SCALAR',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
+       CALL advectc_rk(oneGrid,'SCALAR',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
 
     ENDIF
 
@@ -768,7 +768,7 @@ contains
 
     !  Apply scalar b.c.'s (THP is changed here)
     !----------------------------------------
-    call TRSETS()
+    call trsets(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
 
     !---> THC must be changed to THP to include microphysics/trsets changes
     !---> for the next timestep

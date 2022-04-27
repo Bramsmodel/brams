@@ -8,7 +8,7 @@
 
 module ModTimestep
 contains
-subroutine timestep(OneGrid)
+subroutine timestep(oneGrid)
 
   use grid_dims, only: &
        nzpmax
@@ -209,7 +209,7 @@ subroutine timestep(OneGrid)
 
   implicit none
 
-  type(Grid), pointer :: OneGrid
+  type(Grid), pointer :: oneGrid
 
   ! execution time instrumentation
   include "tsNames.h"
@@ -217,7 +217,7 @@ subroutine timestep(OneGrid)
   INTEGER, PARAMETER :: acoshdp = 0
   character(len=256) :: julesFile
 
-  julesFile=OneGrid%Ramsin%julesin
+  julesFile=oneGrid%Ramsin%julesin
   
   !        +-------------------------------------------------------------+
   !        |   Timestep driver for the hybrid non-hydrostatic time-split |
@@ -322,7 +322,7 @@ subroutine timestep(OneGrid)
 
   !  Send boundaries to adjoining nodes
   !-------------------------------------------
-  call PostSendRecvMsgs(OneGrid%SelectedGhostZoneSend, OneGrid%SelectedGhostZoneRecv)
+  call PostSendRecvMsgs(oneGrid%SelectedGhostZoneSend, oneGrid%SelectedGhostZoneRecv)
 
   !  Coriolis terms
   !  ----------------------------------------
@@ -380,7 +380,7 @@ subroutine timestep(OneGrid)
 
   !  Get the overlap region between parallel nodes
   !---------------------------------------------------
-  call WaitSendRecvMsgs(OneGrid%SelectedGhostZoneSend, OneGrid%SelectedGhostZoneRecv)
+  call WaitSendRecvMsgs(oneGrid%SelectedGhostZoneSend, oneGrid%SelectedGhostZoneRecv)
 
   if (iexev == 2) &
   	call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'THA')
@@ -402,7 +402,7 @@ subroutine timestep(OneGrid)
 
      IF(advmnt >= 1) THEN
       !-srf monotonic advection scheme
-        call advmnt_driver(OneGrid, 'T',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,&
+        call advmnt_driver(oneGrid, 'T',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,&
              i0,j0,nodemxp,nodemyp,nodemzp,mynum)
          if(advmnt >= 2) &
             CALL ADVECTc('T',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
@@ -441,7 +441,7 @@ subroutine timestep(OneGrid)
   IF(NNSHCU(ngrid)==2 ) CALL CUPARM_GRELL_CATT(2)
      !
      !- G3d - GD-FIM and GF
-  IF(NNQPARM(ngrid)>=3) CALL CUPARM_GRELL3_CATT(OneGrid,1,NNQPARM(ngrid),NNSHCU(ngrid))
+  IF(NNQPARM(ngrid)>=3) CALL CUPARM_GRELL3_CATT(oneGrid,1,NNQPARM(ngrid),NNSHCU(ngrid))
 
   !- task 2:  NO production by "eclair"
   if (ccatt == 1) &
@@ -545,7 +545,7 @@ subroutine timestep(OneGrid)
 
   !  Apply scalar b.c.'s
   !----------------------------------------
-  call trsets()
+  call trsets(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
 
   !  Lateral velocity boundaries - radiative
   !-------------------------------------------
@@ -588,7 +588,7 @@ subroutine timestep(OneGrid)
 
   dts = 2. * dtlt / nnacoust(ngrid)
 
-  call acoustic_new(OneGrid, nnacoust(ngrid),0 )   !MB:
+  call acoustic_new(oneGrid, nnacoust(ngrid),0 )   !MB:
 
   !  Last stage of Asselin filter
   !------------------------------------------

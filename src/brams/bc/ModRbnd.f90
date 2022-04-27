@@ -1,60 +1,61 @@
 module ModRbnd
   use mem_grid, only: dtlt, &
-              dtlv, &
-              ibnd, &
-              jbnd, &
-              jdim, &
-              lsflg,&
-              dzm,  &
-              dzt,  &
-              grid_g, &
-              ngrid,  &
-              nxtnest,&
-              cphas,  &
-              if_adap,&
-              nstbot, &
-              nsttop, &
-              nfpt, &
-              distim, &
-              nnzp,   &
-              dts,    &
-              icorflg,&
-              nz,     &
-              nzp,    &
-              ztop,   &
-              nnz,    &
-              zmn,    &
-              zt,     &
-              naddsc
+       dtlv, &
+       ibnd, &
+       jbnd, &
+       jdim, &
+       lsflg,&
+       dzm,  &
+       dzt,  &
+       grid_g, &
+       ngrid,  &
+       nxtnest,&
+       cphas,  &
+       if_adap,&
+       nstbot, &
+       nsttop, &
+       nfpt, &
+       distim, &
+       nnzp,   &
+       dts,    &
+       icorflg,&
+       nz,     &
+       nzp,    &
+       ztop,   &
+       nnz,    &
+       zmn,    &
+       zt,     &
+       naddsc
 
   use mem_scratch, only: vctr17, &
-              vctr18, &
-              scratch,&
-              vctr2,  &
-              vctr5 
+       vctr18, &
+       scratch,&
+       vctr2,  &
+       vctr5 
 
   use mem_tend, only: tend       !tend%ut
   use mem_basic, only:basic_g    !basic_g(ngrid)%up
   use node_mod, only: ia,      &
-                    iz,      &
-                    ja,      &
-                    jz,      &
-                    mxp,     &
-                    myp,     &
-                    mzp,     &
-                    ibcon,   &
-                    mynum,   &
-                    nodemxp, &
-                    nodemyp
+       iz,      &
+       ja,      &
+       jz,      &
+       mxp,     &
+       myp,     &
+       mzp,     &
+       ibcon,   &
+       mynum,   &
+       nodemxp, &
+       nodemyp
 
   use micphys, only: level
   use ref_sounding, only: u01dn, &
-          v01dn
+       v01dn
 
   use ccatt_start, only: ccatt
   use mem_chem1, only: chemistry,nspecies_transported
-  use var_tables, only: scalar_tab,  &
-          num_scalar
+  use ModScalarTable, only: DeepCopyToScalarTab, DeepCopyFromScalarTab
+  use ModScalarTable, only: &
+       ScalarTable
 
   implicit none
   private
@@ -78,7 +79,7 @@ module ModRbnd
 
 contains
 
-    subroutine LatSetScalar(m1,m2,m3,ia,iz,ja,jz,ibcon,vnam,ap,uc,vc,dxu,dxm,dyv,dym)
+  subroutine LatSetScalar(m1,m2,m3,ia,iz,ja,jz,ibcon,vnam,ap,uc,vc,dxu,dxm,dyv,dym)
 
     integer, intent(in) :: m1
     integer, intent(in) :: m2
@@ -326,7 +327,7 @@ contains
   end subroutine LatSetScalar
 
 
-    subroutine TopSetScalar(m1,m2,m3,ia,iz,ja,jz,ibcon,ap,vnam)
+  subroutine TopSetScalar(m1,m2,m3,ia,iz,ja,jz,ibcon,ap,vnam)
 
     implicit none
 
@@ -367,9 +368,9 @@ contains
     endif
 
     return
-    end subroutine TopSetScalar
+  end subroutine TopSetScalar
 
-    subroutine TopSet2Scalar(m1,m2,m3,ia,iz,ja,jz,ibcon,ap,vnam)
+  subroutine TopSet2Scalar(m1,m2,m3,ia,iz,ja,jz,ibcon,ap,vnam)
 
     implicit none
 
@@ -386,33 +387,33 @@ contains
     ! pointer intent(in), values intent(inout)
 
     integer :: i, j
-!real :: dzmr,dztr
+    !real :: dzmr,dztr
 
-!dzmr = dzm(m1-2) / dzm(m1-1)
-!dztr = dzt(m1-2) / dzt(m1-1)
+    !dzmr = dzm(m1-2) / dzm(m1-1)
+    !dztr = dzt(m1-2) / dzt(m1-1)
 
-!     Computation of all prognostic variables (other than W) at
-!       level NZP by extrapolation from below
+    !     Computation of all prognostic variables (other than W) at
+    !       level NZP by extrapolation from below
 
-!if (vnam .eq. 'U' .or. vnam .eq. 'V' .or. vnam .eq. 'P') then
-!  do j = 1,m3
-!      do i = 1,m2
-!         ap(m1,i,j) = ap(m1-1,i,j) + dzmr * (ap(m1-1,i,j) - ap(m1-2,i,j))
-!      enddo
-!   enddo
-!endif
-!if (vnam .eq. 'T') then
-   do j = 1,m3
-      do i = 1,m2
-         ap(m1,i,j) = ap(m1-1,i,j)
-      enddo
-   enddo
-!endif
+    !if (vnam .eq. 'U' .or. vnam .eq. 'V' .or. vnam .eq. 'P') then
+    !  do j = 1,m3
+    !      do i = 1,m2
+    !         ap(m1,i,j) = ap(m1-1,i,j) + dzmr * (ap(m1-1,i,j) - ap(m1-2,i,j))
+    !      enddo
+    !   enddo
+    !endif
+    !if (vnam .eq. 'T') then
+    do j = 1,m3
+       do i = 1,m2
+          ap(m1,i,j) = ap(m1-1,i,j)
+       enddo
+    enddo
+    !endif
 
     return
-    end subroutine TopSet2Scalar
+  end subroutine TopSet2Scalar
 
-    subroutine BotSetScalar(m1,m2,m3,ia,iz,ja,jz,ibcon,aa,vnam)
+  subroutine BotSetScalar(m1,m2,m3,ia,iz,ja,jz,ibcon,aa,vnam)
 
     implicit none
     integer, intent(in) :: m1
@@ -426,7 +427,7 @@ contains
     character(len=*) :: vnam
     real, pointer, intent(in) :: aa(:,:,:)
     ! pointer intent(in), values intent(inout)
-    
+
     integer :: i,j
     real :: dzmr
 
@@ -446,9 +447,9 @@ contains
     endif
 
     return
-    end subroutine BotSetScalar
-      
-    subroutine BotSetAdapScalar(m1,m2,m3,ia,iz,ja,jz,ibcon,lpx,aa,vnam)
+  end subroutine BotSetScalar
+
+  subroutine BotSetAdapScalar(m1,m2,m3,ia,iz,ja,jz,ibcon,lpx,aa,vnam)
 
     implicit none
     integer, intent(in) :: m1
@@ -501,23 +502,23 @@ contains
     endif
 
     return
-    end subroutine BotSetAdapScalar
+  end subroutine BotSetAdapScalar
 
-    subroutine KeepTracersNonnegScalar(mxyzp,scp)
+  subroutine KeepTracersNonnegScalar(mxyzp,scp)
     implicit none
 
     integer, intent(in) :: mxyzp
     real, pointer, intent(in) :: scp(:)
     ! pointer intent(in), values intent(inout)
-    
-    integer :: i 
-        do i = 1,mxyzp
-          scp(i) = max(0.,scp(i))
-        enddo
-    end subroutine KeepTracersNonnegScalar
 
-    subroutine latbnd(mzp,mxp,myp,ia,iz,ja,jz,ibcon,nxtnest,ngrid,ibnd,jbnd, &
-                    lpu,lpv,up,uc,ut,vp,vc,vt,dxt,dyt)
+    integer :: i 
+    do i = 1,mxyzp
+       scp(i) = max(0.,scp(i))
+    enddo
+  end subroutine KeepTracersNonnegScalar
+
+  subroutine latbnd(mzp,mxp,myp,ia,iz,ja,jz,ibcon,nxtnest,ngrid,ibnd,jbnd, &
+       lpu,lpv,up,uc,ut,vp,vc,vt,dxt,dyt)
 
     implicit none
 
@@ -551,26 +552,26 @@ contains
 
     if (nxtnest(ngrid) .eq. 0) then
 
-    !         Radiative and/or mesoscale compensation region lateral
-    !            boundary conditions.
+       !         Radiative and/or mesoscale compensation region lateral
+       !            boundary conditions.
 
        if (ibnd .le. 3 .or. jbnd .le. 3) then
 
           call latnormv(mzp,mxp,myp,ia,iz,ja,jz,ibcon                  &
-         ,lpu ,lpv  &
-         ,up  ,uc   &
-         ,ut  ,vp   &
-         ,vc  ,vt   &
-         ,dxt ,dyt  )
+               ,lpu ,lpv  &
+               ,up  ,uc   &
+               ,ut  ,vp   &
+               ,vc  ,vt   &
+               ,dxt ,dyt  )
 
        endif
 
     endif
     return
-    end subroutine latbnd 
+  end subroutine latbnd
 
-    subroutine latnormv(m1,m2,m3,ia,iz,ja,jz,ibcon,lpu_R,lpv_R  &
-                        ,up,uc,ut,vp,vc,vt,dxt,dyt)
+  subroutine latnormv(m1,m2,m3,ia,iz,ja,jz,ibcon,lpu_R,lpv_R  &
+       ,up,uc,ut,vp,vc,vt,dxt,dyt)
 
 
     implicit none
@@ -638,7 +639,7 @@ contains
 
              cphx = min(0.,max(-dxl,(up(k,1,j)-cphas)))
              ut(k,1,j) = ut(k,1,j) - cphx * dxt(2,j)  &
-                * (up(k,2,j) + ut(k,2,j) * dtlv - up(k,1,j))
+                  * (up(k,2,j) + ut(k,2,j) * dtlv - up(k,1,j))
 
           enddo
        enddo
@@ -651,7 +652,7 @@ contains
 
              cphx = max(0.,min(dxr,(up(k,m2-1,j)+cphas)))
              ut(k,m2-1,j) = ut(k,m2-1,j) - cphx * dxt(m2-1,j)  &
-                * (up(k,m2-1,j) - (up(k,m2-2,j) + ut(k,m2-2,j) * dtlv))
+                  * (up(k,m2-1,j) - (up(k,m2-2,j) + ut(k,m2-2,j) * dtlv))
 
           enddo
        enddo
@@ -667,7 +668,7 @@ contains
              do k = lpv(i,1),m1
                 cphy = min(0.,max(-dxl,(vp(k,i,1)-cphas)))
                 vt(k,i,1) = vt(k,i,1) - cphy * dyt(i,2)  &
-                   * (vp(k,i,2) + vt(k,i,2) * dtlv - vp(k,i,1))
+                     * (vp(k,i,2) + vt(k,i,2) * dtlv - vp(k,i,1))
              enddo
           enddo
        endif
@@ -678,18 +679,18 @@ contains
              do k = lpv(i,m3-1),m1
                 cphy = max(0.,min(dxr,(vp(k,i,m3-1)+cphas)))
                 vt(k,i,m3-1) = vt(k,i,m3-1) - cphy * dyt(i,m3-1)  &
-                   * (vp(k,i,m3-1) - (vp(k,i,m3-2) + vt(k,i,m3-2) * dtlv))
+                     * (vp(k,i,m3-1) - (vp(k,i,m3-2) + vt(k,i,m3-2) * dtlv))
              enddo
           enddo
        endif
 
     endif
     return
-    end subroutine latnormv
+  end subroutine latnormv
 
-    subroutine vpsets(mzp,mxp,myp,ia,iz,ja,jz,ibcon,nstbot, &
-                    up,vp,wp,pp,uc,vc,wc,pc,dxu,dxm,dyv,dym,&
-                    lpu,lpv,lpw)
+  subroutine vpsets(mzp,mxp,myp,ia,iz,ja,jz,ibcon,nstbot, &
+       up,vp,wp,pp,uc,vc,wc,pc,dxu,dxm,dyv,dym,&
+       lpu,lpv,lpw)
 
 
     implicit none
@@ -723,132 +724,132 @@ contains
 
     if (nxtnest(ngrid) .eq. 0) then
        call latset(mzp,mxp,myp,ia,iz,ja,jz,ibcon,'U'              &
-          ,up ,up &
-          ,vp ,dxu &
-          ,dxm,dyv &
-          ,dym )
+            ,up ,up &
+            ,vp ,dxu &
+            ,dxm,dyv &
+            ,dym )
        call latset(mzp,mxp,myp,ia,iz,ja,jz,ibcon,'V'              &
-          ,vp ,up  &
-          ,vp ,dxu  &
-          ,dxm,dyv  &
-          ,dym )
+            ,vp ,up  &
+            ,vp ,dxu  &
+            ,dxm,dyv  &
+            ,dym )
        call latset(mzp,mxp,myp,ia,iz,ja,jz,ibcon,'W'              &
-          ,wp ,up  &
-          ,vp ,dxu  &
-          ,dxm,dyv  &
-          ,dym )
+            ,wp ,up  &
+            ,vp ,dxu  &
+            ,dxm,dyv  &
+            ,dym )
        call latset(mzp,mxp,myp,ia,iz,ja,jz,ibcon,'P'              &
-          ,pp ,up  &
-          ,vp ,dxu  &
-          ,dxm,dyv  &
-          ,dym )
+            ,pp ,up  &
+            ,vp ,dxu  &
+            ,dxm,dyv  &
+            ,dym )
     endif
     if (nsttop .eq. 1) then
        call topset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-          ,up ,'U')
+            ,up ,'U')
        call topset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-          ,vp ,'V')
+            ,vp ,'V')
     endif
 
     if (nstbot .eq. 1) then
        if (if_adap == 0) then
           call botset(mzp,mxp,myp,ia,iz,ja,jz,ibcon   &
-             ,up,'U')
+               ,up,'U')
           call botset(mzp,mxp,myp,ia,iz,ja,jz,ibcon   &
-             ,vp,'V')
+               ,vp,'V')
        else
           call botset_adap(mzp,mxp,myp,ia,iz,ja,jz,ibcon,int(lpu)  &
-             ,up,'U')
+               ,up,'U')
           call botset_adap(mzp,mxp,myp,ia,iz,ja,jz,ibcon,int(lpv)  &
-             ,vp,'V')
+               ,vp,'V')
        endif
     endif
 
     call topset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-          ,pp,'P')
+         ,pp,'P')
 
     if (if_adap == 0) then
        call botset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-          ,pp,'P')
+            ,pp,'P')
     else
        call botset_adap(mzp,mxp,myp,ia,iz,ja,jz,ibcon,int(lpw)  &
-          ,pp,'P')
+            ,pp,'P')
     endif
 
     call dumset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-          ,basic_g(ngrid)%wp,'W')
+         ,basic_g(ngrid)%wp,'W')
 
     call dumset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-          ,basic_g(ngrid)%up,'U')
+         ,basic_g(ngrid)%up,'U')
     call dumset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-          ,basic_g(ngrid)%vp,'V')
+         ,basic_g(ngrid)%vp,'V')
 
     if (nxtnest(ngrid) .eq. 0) then
        call latset(mzp,mxp,myp,ia,iz,ja,jz,ibcon,'U'  &
-          ,uc ,up  &
-          ,vp ,dxu  &
-          ,dxm,dyv  &
-          ,dym )
+            ,uc ,up  &
+            ,vp ,dxu  &
+            ,dxm,dyv  &
+            ,dym )
        call latset(mzp,mxp,myp,ia,iz,ja,jz,ibcon,'V'  &
-          ,vc ,up &
-          ,vp ,dxu &
-          ,dxm,dyv &
-          ,dym )
+            ,vc ,up &
+            ,vp ,dxu &
+            ,dxm,dyv &
+            ,dym )
        call latset(mzp,mxp,myp,ia,iz,ja,jz,ibcon ,'W' &
-          ,wc ,up &
-          ,vp ,dxu &
-          ,dxm,dyv &
-          ,dym )
+            ,wc ,up &
+            ,vp ,dxu &
+            ,dxm,dyv &
+            ,dym )
        call latset(mzp,mxp,myp,ia,iz,ja,jz,ibcon,'P'  &
-          ,pc ,up  &
-          ,vp ,dxu  &
-          ,dxm,dyv  &
-          ,dym )
+            ,pc ,up  &
+            ,vp ,dxu  &
+            ,dxm,dyv  &
+            ,dym )
     endif
     if (nsttop .eq. 1) then
        call topset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-          ,uc ,'U')
+            ,uc ,'U')
        call topset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-          ,vc ,'V')
+            ,vc ,'V')
     endif
 
     if (nstbot .eq. 1) then
        if (if_adap == 0) then
           call botset(mzp,mxp,myp,ia,iz,ja,jz,ibcon   &
-             ,uc,'U')
+               ,uc,'U')
           call botset(mzp,mxp,myp,ia,iz,ja,jz,ibcon   &
-             ,vc,'V')
+               ,vc,'V')
        else
           call botset_adap(mzp,mxp,myp,ia,iz,ja,jz,ibcon,int(lpu)  &
-             ,uc,'U')
+               ,uc,'U')
           call botset_adap(mzp,mxp,myp,ia,iz,ja,jz,ibcon,int(lpv)  &
-             ,vc,'V')
+               ,vc,'V')
        endif
     endif
 
 
     call topset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-          ,pc,'P')
+         ,pc,'P')
 
     if (if_adap == 0) then
        call botset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-          ,pc,'P')
+            ,pc,'P')
     else
        call botset_adap(mzp,mxp,myp,ia,iz,ja,jz,ibcon,int(lpw)  &
-          ,pc,'P')
+            ,pc,'P')
     endif
 
     call dumset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-          ,basic_g(ngrid)%wc,'W')
+         ,basic_g(ngrid)%wc,'W')
     call dumset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-          ,basic_g(ngrid)%uc,'U')
+         ,basic_g(ngrid)%uc,'U')
     call dumset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-          ,basic_g(ngrid)%vc,'V')
+         ,basic_g(ngrid)%vc,'V')
 
     return
-    end subroutine vpsets
+  end subroutine vpsets
 
-    subroutine latset(m1,m2,m3,ia,iz,ja,jz,ibcon,vnam,ap,uc,vc,dxu,dxm,dyv,dym)
+  subroutine latset(m1,m2,m3,ia,iz,ja,jz,ibcon,vnam,ap,uc,vc,dxu,dxm,dyv,dym)
 
 
     implicit none
@@ -871,9 +872,9 @@ contains
     if (iand(ibcon,4) .gt. 0) lbs = ja - 1
     if (iand(ibcon,8) .gt. 0) lbn = jz + 1
 
-    !!$print *, "DEBUG-ALF:latset:m1,m2,m3,lbw,lbe,lbs,lbn=", &
-    !!$     m1,m2,m3,lbw,lbe,lbs,lbn
-    !!$call flush(8)
+!!$print *, "DEBUG-ALF:latset:m1,m2,m3,lbw,lbe,lbs,lbn=", &
+!!$     m1,m2,m3,lbw,lbe,lbs,lbn
+!!$call flush(8)
 
     thresh = 0.
     if (vnam .eq. 'U' .or. vnam .eq. 'V' .or. vnam .eq. 'W' .or. vnam .eq.'P') then
@@ -881,10 +882,10 @@ contains
     else
        dtlx = dtlt
     endif
-    
+
     if (ibnd .ne. 4 .and. vnam .ne. 'U' .and. lsflg .ne. 3) then
 
-    !     Western and Eastern boundaries for zero gradient option
+       !     Western and Eastern boundaries for zero gradient option
 
        if (lsflg .eq. 0) then
           if (iand(ibcon,1) .gt. 0) then
@@ -903,7 +904,7 @@ contains
           endif
        else
 
-    !     Western boundary for lsflg = 1 or 2
+          !     Western boundary for lsflg = 1 or 2
 
           if (iand(ibcon,1) .gt. 0) then
              do j = 1,m3-1 !m3  !ALF
@@ -939,7 +940,7 @@ contains
              enddo
           endif
 
-    !     Eastern Boundary for LSFLG = 1 or 2
+          !     Eastern Boundary for LSFLG = 1 or 2
 
           if (iand(ibcon,2) .gt. 0) then
              do j = 1,m3-1 !m3  !ALF
@@ -979,112 +980,112 @@ contains
 
     if(jdim.eq.1.and.jbnd.ne.4.and.vnam.ne.'V'.and.lsflg.ne.3)then
 
-    !     Southern and Northern boundaries for zero gradient option
+       !     Southern and Northern boundaries for zero gradient option
 
-      if (lsflg .eq. 0) then
-         if (iand(ibcon,4) .gt. 0) then
-            do i = 1,m2
-               do k = 1,m1
-                  ap(k,i,lbs) = ap(k,i,ja)
-               enddo
-            enddo
-         endif
-         if (iand(ibcon,8) .gt. 0) then
-            do i = 1,m2
-               do k = 1,m1
-                  ap(k,i,lbn) = ap(k,i,jz)
-               enddo
-            enddo
-         endif
-      else
+       if (lsflg .eq. 0) then
+          if (iand(ibcon,4) .gt. 0) then
+             do i = 1,m2
+                do k = 1,m1
+                   ap(k,i,lbs) = ap(k,i,ja)
+                enddo
+             enddo
+          endif
+          if (iand(ibcon,8) .gt. 0) then
+             do i = 1,m2
+                do k = 1,m1
+                   ap(k,i,lbn) = ap(k,i,jz)
+                enddo
+             enddo
+          endif
+       else
 
-    !     Southern boundary for LSFLG = 1 or 2
+          !     Southern boundary for LSFLG = 1 or 2
 
 
-         if (iand(ibcon,4) .gt. 0) then
-            do i = 1,m2-1 !m2 !ALF
-               if (vnam .eq. 'U') then
-                  dyr = dym(i,ja) / dym(i,lbs)
-                  c1 = .5 * dtlx * dym(i,lbs)
-                  do k = 1,m1
-                     vctr17(k) = -c1 * (vc(k,i,lbs) + vc(k,i+1,lbs))
-                  enddo
-               elseif (vnam .eq. 'W') then
-                  dyr = dyv(i,ja) / dyv(i,lbs)
-                  c1 = .5 * dtlx * dyv(i,lbs)
-                  do k = 1,m1-1 !m1  !ALF
-                     vctr17(k) = -c1 * (vc(k,i,lbs) + vc(k+1,i,lbs))
-                  enddo
-               else
-                  dyr = dyv(i,ja) / dyv(i,lbs)
-                  c1 = dtlx * dyv(i,lbs)
+          if (iand(ibcon,4) .gt. 0) then
+             do i = 1,m2-1 !m2 !ALF
+                if (vnam .eq. 'U') then
+                   dyr = dym(i,ja) / dym(i,lbs)
+                   c1 = .5 * dtlx * dym(i,lbs)
+                   do k = 1,m1
+                      vctr17(k) = -c1 * (vc(k,i,lbs) + vc(k,i+1,lbs))
+                   enddo
+                elseif (vnam .eq. 'W') then
+                   dyr = dyv(i,ja) / dyv(i,lbs)
+                   c1 = .5 * dtlx * dyv(i,lbs)
+                   do k = 1,m1-1 !m1  !ALF
+                      vctr17(k) = -c1 * (vc(k,i,lbs) + vc(k+1,i,lbs))
+                   enddo
+                else
+                   dyr = dyv(i,ja) / dyv(i,lbs)
+                   c1 = dtlx * dyv(i,lbs)
 
-    !--(DMK-CCATT-INI)-----------------------------------------------------
-                  !srf - fix from rams 60
-                  do k = 1,m1
-    !--(DMK-CCATT-OLD)-----------------------------------------------------
-    !                  do k = 1,nz
-    !--(DMK-CCATT-FIM)-----------------------------------------------------       
+                   !--(DMK-CCATT-INI)-----------------------------------------------------
+                   !srf - fix from rams 60
+                   do k = 1,m1
+                      !--(DMK-CCATT-OLD)-----------------------------------------------------
+                      !                  do k = 1,nz
+                      !--(DMK-CCATT-FIM)-----------------------------------------------------       
 
-                     vctr17(k) = -c1 * vc(k,i,lbs)
-                  enddo
-               endif
-               do k = 1,m1
-                  vctr18(k) = ap(k,i,ja) + dyr * (ap(k,i,ja) - ap(k,i,ja+1))
-               enddo
-               do k = 1,m1
-                  if (vctr17(k) .ge. thresh) then
-                     ap(k,i,lbs) = vctr18(k)
-                  elseif (lsflg .eq. 1) then
-                     ap(k,i,lbs) = ap(k,i,ja)
-                  endif
-               enddo
-            enddo
-         endif
+                      vctr17(k) = -c1 * vc(k,i,lbs)
+                   enddo
+                endif
+                do k = 1,m1
+                   vctr18(k) = ap(k,i,ja) + dyr * (ap(k,i,ja) - ap(k,i,ja+1))
+                enddo
+                do k = 1,m1
+                   if (vctr17(k) .ge. thresh) then
+                      ap(k,i,lbs) = vctr18(k)
+                   elseif (lsflg .eq. 1) then
+                      ap(k,i,lbs) = ap(k,i,ja)
+                   endif
+                enddo
+             enddo
+          endif
 
-    !     Northern Boundary for LSFLG = 1 or 2
+          !     Northern Boundary for LSFLG = 1 or 2
 
-         if (iand(ibcon,8) .gt. 0) then
-            do i = 1,m2-1 !m2 !ALF
-               if (vnam .eq. 'U') then
-                  dyr = dym(i,jz-1) / dym(i,jz)
-                  c1 = .5 * dtlx * dym(i,jz)
-                  do k = 1,m1
-                     vctr17(k) = c1 * (vc(k,i,jz) + vc(k,i+1,jz))
-                  enddo
-               elseif (vnam .eq. 'W') then
-                  dyr = dyv(i,jz-1) / dyv(i,jz)
-                  c1 = .5 * dtlx * dyv(i,jz)
-                  do k = 1,m1-1 !m1  !ALF
-                     vctr17(k) = c1 * (vc(k,i,jz) + vc(k+1,i,jz))
-                  enddo
-               else
-                  dyr = dyv(i,jz-1) / dyv(i,jz)
-                  c1 = dtlx * dyv(i,jz)
-                  do k = 1,m1
-                     vctr17(k) = c1 * vc(k,i,jz)
-                  enddo
-               endif
-               do k = 1,m1
-                  vctr18(k) = ap(k,i,jz) + dyr * (ap(k,i,jz) - ap(k,i,jz-1))
-               enddo
-               do k = 1,m1
-                  if (vctr17(k) .ge. thresh) then
-                     ap(k,i,lbn) = vctr18(k)
-                  elseif (lsflg .eq. 1) then
-                     ap(k,i,lbn) = ap(k,i,jz)
-                  endif
-               enddo
-            enddo
-         endif
-      endif
+          if (iand(ibcon,8) .gt. 0) then
+             do i = 1,m2-1 !m2 !ALF
+                if (vnam .eq. 'U') then
+                   dyr = dym(i,jz-1) / dym(i,jz)
+                   c1 = .5 * dtlx * dym(i,jz)
+                   do k = 1,m1
+                      vctr17(k) = c1 * (vc(k,i,jz) + vc(k,i+1,jz))
+                   enddo
+                elseif (vnam .eq. 'W') then
+                   dyr = dyv(i,jz-1) / dyv(i,jz)
+                   c1 = .5 * dtlx * dyv(i,jz)
+                   do k = 1,m1-1 !m1  !ALF
+                      vctr17(k) = c1 * (vc(k,i,jz) + vc(k+1,i,jz))
+                   enddo
+                else
+                   dyr = dyv(i,jz-1) / dyv(i,jz)
+                   c1 = dtlx * dyv(i,jz)
+                   do k = 1,m1
+                      vctr17(k) = c1 * vc(k,i,jz)
+                   enddo
+                endif
+                do k = 1,m1
+                   vctr18(k) = ap(k,i,jz) + dyr * (ap(k,i,jz) - ap(k,i,jz-1))
+                enddo
+                do k = 1,m1
+                   if (vctr17(k) .ge. thresh) then
+                      ap(k,i,lbn) = vctr18(k)
+                   elseif (lsflg .eq. 1) then
+                      ap(k,i,lbn) = ap(k,i,jz)
+                   endif
+                enddo
+             enddo
+          endif
+       endif
     endif
 
     return
-    end subroutine latset
+  end subroutine latset
 
 
-    subroutine topset(m1,m2,m3,ia,iz,ja,jz,ibcon,ap,vnam)
+  subroutine topset(m1,m2,m3,ia,iz,ja,jz,ibcon,ap,vnam)
 
 
     implicit none
@@ -1127,9 +1128,9 @@ contains
     endif
 
     return
-    end subroutine topset
-   
-    subroutine botset(m1,m2,m3,ia,iz,ja,jz,ibcon,aa,vnam)
+  end subroutine topset
+
+  subroutine botset(m1,m2,m3,ia,iz,ja,jz,ibcon,aa,vnam)
 
 
     implicit none
@@ -1142,7 +1143,7 @@ contains
     integer, intent(in) :: ja
     integer, intent(in) :: jz
     integer, intent(in) :: ibcon
-    
+
     real, pointer, intent(in) :: aa(:,:,:)
     ! pointer intent(in), values intent(inout)
     character(len=*) :: vnam
@@ -1166,9 +1167,9 @@ contains
     endif
 
     return
-    end subroutine botset
+  end subroutine botset
 
-    subroutine dumset(m1,m2,m3,ia,iz,ja,jz,ibcon,aa,vnam)
+  subroutine dumset(m1,m2,m3,ia,iz,ja,jz,ibcon,aa,vnam)
 
     implicit none
 
@@ -1206,12 +1207,12 @@ contains
           enddo
        enddo
     endif
-    
-    return
-    end subroutine dumset
 
-    subroutine rayft(mxp,myp,mzp,mynum,ngrid,nnzp,if_adap,level,nodemyp,nodemxp,vt3da,theta,rv)
-    
+    return
+  end subroutine dumset
+
+  subroutine rayft(mxp,myp,mzp,mynum,ngrid,nnzp,if_adap,level,nodemyp,nodemxp,vt3da,theta,rv)
+
     implicit none
     include "constants.h"
 
@@ -1246,18 +1247,18 @@ contains
     !     First load past virtual theta into temporary.
 
     if (level .ge. 1) then
-    ind = 0
+       ind = 0
        do j = 1,nodemyp(mynum,ngrid)
           do i = 1,nodemxp(mynum,ngrid)
              do k = 1,nnzp(ngrid)
                 ind = ind + 1
                 scratch%vt3da(ind) = basic_g(ngrid)%theta(k,i,j)  &
-                   * (1. + .61 * basic_g(ngrid)%rv(k,i,j))
+                     * (1. + .61 * basic_g(ngrid)%rv(k,i,j))
              enddo
           enddo
        enddo
     else
-      call atob_long(mxyzp, basic_g(ngrid)%theta, scratch%vt3da)
+       call atob_long(mxyzp, basic_g(ngrid)%theta, scratch%vt3da)
     endif
 
     !     Now get rayleigh friction tendency
@@ -1265,21 +1266,21 @@ contains
     if (if_adap == 0) then
 
        call rayf(4,mzp,mxp,myp,ia,iz,ja,jz,ibcon                  &
-          ,scratch%vt3da,basic_g(ngrid)%th0  &
-          ,tend%tht     ,grid_g(ngrid)%rtgt  &
-          ,grid_g(ngrid)%topt)
+            ,scratch%vt3da,basic_g(ngrid)%th0  &
+            ,tend%tht     ,grid_g(ngrid)%rtgt  &
+            ,grid_g(ngrid)%topt)
 
     else
 
        call rayf_adap(4,mzp,mxp,myp,ia,iz,ja,jz,ibcon     &
-          ,int(grid_g(ngrid)%lpw) ,scratch%vt3da  &
-          ,basic_g(ngrid)%th0 ,tend%tht      )
+            ,int(grid_g(ngrid)%lpw) ,scratch%vt3da  &
+            ,basic_g(ngrid)%th0 ,tend%tht      )
 
     endif
     return
-    end subroutine rayft
+  end subroutine rayft
 
-    subroutine rayf(ifrom,m1,m2,m3,ia,iz,ja,jz,ibcon,var,th0,tht,rtgx,topx)
+  subroutine rayf(ifrom,m1,m2,m3,ia,iz,ja,jz,ibcon,var,th0,tht,rtgx,topx)
 
 
     implicit none
@@ -1295,7 +1296,7 @@ contains
     integer, intent(in) :: ibcon
     real, intent(inout), dimension(m1,m2,m3) :: var !TO recebe pointer 1D
     real, intent(inout), dimension(m1,m2,m3) :: tht !TO recebe pointer 1D
-    
+
     real, pointer, intent(in) :: th0(:,:,:)
     ! pointer intent(in), values intent(in)
     real, pointer, intent(in) :: rtgx(:,:)
@@ -1327,12 +1328,12 @@ contains
           call htint(nzp,u01dn(1,ngrid),zt,nzp,vctr5,vctr2)
           do k = nz,2,-1
              if (vctr2(k) .le. zmkf) go to 10
-  
+
              var(k,i,j) = var(k,i,j) + c2 * (vctr2(k) - zmkf)  &
                   * (vctr5(k) - var(k,i,j))
 
-         enddo
-10      continue
+          enddo
+10        continue
        enddo
     enddo
     return
@@ -1351,11 +1352,11 @@ contains
              if (vctr2(k) .le. zmkf) go to 20
              var(k,i,j) = var(k,i,j) + c2 * (vctr2(k) - zmkf)  &
                   * (vctr5(k) - var(k,i,j))
-         enddo
-20      continue
+          enddo
+20        continue
        enddo
-   enddo
-   return
+    enddo
+    return
 300 continue
 
     !     W friction
@@ -1367,7 +1368,7 @@ contains
              if (vctr2(k) .le. zmkf) go to 30
              var(k,i,j) = var(k,i,j) - c2 * (vctr2(k) - zmkf) * var(k,i,j)
           enddo
-30      continue
+30        continue
        enddo
     enddo
     return
@@ -1381,45 +1382,48 @@ contains
              vctr2(k) = zt(k) * rtgx(i,j) + topx(i,j)
              if (vctr2(k) .le. zmkf) go to 40
              tht(k,i,j) = tht(k,i,j) + c1 * (vctr2(k) - zmkf)  &
-                          * (th0(k,i,j) - var(k,i,j))
+                  * (th0(k,i,j) - var(k,i,j))
           enddo
-40      continue
+40        continue
        enddo
     enddo
     return
-    end subroutine rayf
+  end subroutine rayf
 
-    subroutine trsets()
+  subroutine trsets(oneScalarTab, oneScalarTabSize)
 
     implicit none
 
+    type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
+    integer, intent(inout) :: oneScalarTabSize
     integer :: n, mxyzp
 
+    call DeepCopyToScalarTab(oneScalarTab, oneScalarTabSize)
 
     !     Apply lateral, top, and bottom boundary conditions.
 
-    do n = 1,num_scalar(ngrid)
+    do n = 1,oneScalarTabSize
        if (nxtnest(ngrid) .eq. 0) then
-           call LatSetScalar(mzp,mxp,myp,ia,iz,ja,jz,ibcon,'TR'   &
-               ,scalar_tab(n,ngrid)%var_p_3D,basic_g(ngrid)%up  &
-                          ,basic_g(ngrid)%vp ,grid_g(ngrid)%dxu   &
+          call LatSetScalar(mzp,mxp,myp,ia,iz,ja,jz,ibcon,'TR'   &
+               ,oneScalarTab(n)%var_p_3D,basic_g(ngrid)%up  &
+               ,basic_g(ngrid)%vp ,grid_g(ngrid)%dxu   &
                ,grid_g(ngrid)%dxm ,grid_g(ngrid)%dyv   &
                ,grid_g(ngrid)%dym  )
        endif
        if (nsttop .eq. 1)  then
 
-         if(n .le. (num_scalar(ngrid) - ( NADDSC + NSPECIES_TRANSPORTED) ))  then
-               call TopSetScalar (mzp,mxp,myp,ia,iz,ja,jz,ibcon,scalar_tab(n,ngrid)%var_p_3D,'T')
-         else
-               call TopSet2Scalar(mzp,mxp,myp,ia,iz,ja,jz,ibcon,scalar_tab(n,ngrid)%var_p_3D,'T')
-         endif
+          if(n .le. (oneScalarTabSize - ( NADDSC + NSPECIES_TRANSPORTED) ))  then
+             call TopSetScalar (mzp,mxp,myp,ia,iz,ja,jz,ibcon,oneScalarTab(n)%var_p_3D,'T')
+          else
+             call TopSet2Scalar(mzp,mxp,myp,ia,iz,ja,jz,ibcon,oneScalarTab(n)%var_p_3D,'T')
+          endif
        endif
        if (nstbot .eq. 1)  then
           if (if_adap == 0) then
-             call BotSetScalar(mzp,mxp,myp,ia,iz,ja,jz,ibcon,scalar_tab(n,ngrid)%var_p_3D,'T')
+             call BotSetScalar(mzp,mxp,myp,ia,iz,ja,jz,ibcon,oneScalarTab(n)%var_p_3D,'T')
           else
              call BotSetAdapScalar(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-                ,int(grid_g(ngrid)%lpw),scalar_tab(n,ngrid)%var_p_3D,'T')
+                  ,int(grid_g(ngrid)%lpw),oneScalarTab(n)%var_p_3D,'T')
           endif
        endif
     enddo
@@ -1433,21 +1437,21 @@ contains
     !--(DMK-CCATT-INI)-----------------------------------------------------
     !-srf for chem - aerosol quantities
     if( ccatt == 1 .and. CHEMISTRY >= 0) then
-               mxyzp = mzp*mxp*myp
-       do n = 1,num_scalar(ngrid)
+       mxyzp = mzp*mxp*myp
+       do n = 1,oneScalarTabSize
 
-         if(n .le. (num_scalar(ngrid) - ( NADDSC + NSPECIES_TRANSPORTED) )) cycle
+          if(n .le. (oneScalarTabSize - ( NADDSC + NSPECIES_TRANSPORTED) )) cycle
 
-          call KeepTracersNonnegScalar(mxyzp,scalar_tab(n,ngrid)%var_p_1D)
+          call KeepTracersNonnegScalar(mxyzp,oneScalarTab(n)%var_p_1D)
 
        enddo
     endif
-    !--(DMK-CCATT-FIM)-----------------------------------------------------
 
-    return
-    end subroutine trsets
+    call DeepCopyFromScalarTab(oneScalarTab, oneScalarTabSize)
+    
+  end subroutine trsets
 
-    subroutine botset_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpx,aa,vnam)
+  subroutine botset_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpx,aa,vnam)
 
 
     implicit none
@@ -1500,9 +1504,9 @@ contains
     endif
 
     return
-    end subroutine botset_adap
+  end subroutine botset_adap
 
-    subroutine rayf_adap(ifrom,m1,m2,m3,ia,iz,ja,jz,ibcon,lpx,var,th0,tht)
+  subroutine rayf_adap(ifrom,m1,m2,m3,ia,iz,ja,jz,ibcon,lpx,var,th0,tht)
 
 
     implicit none
@@ -1522,7 +1526,7 @@ contains
     c1 = 1. / (distim * (ztop - zmkf))
     c2 = dts * c1
     goto(100,200,300,400) ifrom
-100   continue
+100 continue
 
     !     u friction
     do j = ja,jz
@@ -1531,14 +1535,14 @@ contains
              if (zt(k) .le. zmkf) go to 10
 
              var(k,i,j) = var(k,i,j) + c2 * (zt(k) - zmkf)  &
-                * (u01dn(k,ngrid) - var(k,i,j))
+                  * (u01dn(k,ngrid) - var(k,i,j))
 
           enddo
-10    continue
+10        continue
        enddo
     enddo
     return
-200   continue
+200 continue
 
     !     V friction
 
@@ -1548,13 +1552,13 @@ contains
           do k = m1-1,lpx(i,j),-1
              if (zt(k) .le. zmkf) go to 20
              var(k,i,j) = var(k,i,j) + c2 * (zt(k) - zmkf)  &
-                * (v01dn(1,ngrid) - var(k,i,j))
+                  * (v01dn(1,ngrid) - var(k,i,j))
           enddo
-20         continue
+20        continue
        enddo
     enddo
     return
-300   continue
+300 continue
 
     !     W friction
 
@@ -1564,11 +1568,11 @@ contains
              if (zt(k) .le. zmkf) go to 30
              var(k,i,j) = var(k,i,j) - c2 * (zt(k) - zmkf) * var(k,i,j)
           enddo
-30         continue
+30        continue
        enddo
     enddo
     return
-400   continue
+400 continue
 
     !     THETA FRICTION
 
@@ -1577,13 +1581,13 @@ contains
           do k = m1-1,lpx(i,j),-1
              if (zt(k) .le. zmkf) go to 40
              tht(k,i,j) = tht(k,i,j) + c1 * (zt(k) - zmkf)  &
-                * (th0(k,i,j) - var(k,i,j))
+                  * (th0(k,i,j) - var(k,i,j))
           enddo
-40         continue
+40        continue
        enddo
     enddo
     return
-    end subroutine rayf_adap
+  end subroutine rayf_adap
 
 
 end module ModRbnd
