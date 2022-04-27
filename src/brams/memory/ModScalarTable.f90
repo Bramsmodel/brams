@@ -37,12 +37,12 @@ module ModScalarTable
 
   type ScalarTable
      character (len=16) :: name
-     real, pointer      :: var_p_1D(:) => null()
-     real, pointer      :: var_p_2D(:,:) => null()
-     real, pointer      :: var_p_3D(:,:,:) => null()
-     real, pointer      :: var_t_1D(:) => null()
-     real, pointer      :: a_var_p_1D(:) => null()
-     real, pointer      :: a_var_t_1D(:) => null()
+     real, contiguous, pointer      :: var_p_1D(:) => null()
+     real, contiguous, pointer      :: var_p_2D(:,:) => null()
+     real, contiguous, pointer      :: var_p_3D(:,:,:) => null()
+     real, contiguous, pointer      :: var_t_1D(:) => null()
+     real, contiguous, pointer      :: a_var_p_1D(:) => null()
+     real, contiguous, pointer      :: a_var_t_1D(:) => null()
   end type ScalarTable
 
   interface InsertAtScalarTab

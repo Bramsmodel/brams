@@ -25,9 +25,9 @@ module ModAdvectc_rk
   ! differs only on the type of these two formal arguments at
   ! the interface
 
+  use ModScalarTable, only: DeepCopyToScalarTab, DeepCopyFromScalarTab
   use grid_dims, only: maxgrds, nzpmax
   use mem_tend, only: tend
-  use var_tables, only: num_scalar, scalar_tab
   use mem_grid, only: ngrid, grid_g, dtlt, if_adap, jdim, time, &
        zt, zm, dzm, dzt, hw4,itopo,pd_or_mnt_constraint,order_h,order_v
 
@@ -528,9 +528,9 @@ contains
 
 
 
-  subroutine advectc_rk(OneGrid,varn,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
+  subroutine advectc_rk(oneGrid,varn,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
     include "constants.h"
-    type(Grid), pointer, intent(in) :: OneGrid
+    type(Grid), pointer, intent(in) :: oneGrid
     integer, intent(in) :: mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk
     character(len=*), intent(in) :: varn
     !
@@ -560,6 +560,8 @@ contains
     if (dumpLocal) then
        call MsgDump(h//" starts with varn="//trim(varn))
     end if
+
+    call DeepCopyToScalarTab(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
     
     mxyzp = mxp * myp * mzp
 
@@ -658,7 +660,7 @@ contains
           call MsgDump(h//" advect uc")
        end if
 
-       call advect_ws_pointer_rank1(OneGrid,mzp,mxp,myp,ia,iz,ja,jz &
+       call advect_ws_pointer_rank1(oneGrid,mzp,mxp,myp,ia,iz,ja,jz &
             ,basic_g(ngrid)%uc &! field being advected
             ,vt3da    & ! uc*dn0u*fmapui*rtgu = rhou*U
             ,vt3db    & ! similar for v
@@ -694,7 +696,7 @@ contains
           call MsgDump(h//" advect vc")
        end if
 
-       call advect_ws_pointer_rank1(OneGrid,mzp,mxp,myp,ia,iz,ja,jz,&
+       call advect_ws_pointer_rank1(oneGrid,mzp,mxp,myp,ia,iz,ja,jz,&
             basic_g(ngrid)%vc &
             ,vt3da    & ! uc*dn0u*fmapui*rtgu = rhou*V
             ,vt3db    & ! similar for v
@@ -731,7 +733,7 @@ contains
           call MsgDump(h//" advect wc")
        end if
 
-       call advect_ws_pointer_rank1(OneGrid,mzp,mxp,myp,ia,iz,ja,jz,&
+       call advect_ws_pointer_rank1(oneGrid,mzp,mxp,myp,ia,iz,ja,jz,&
             basic_g(ngrid)%wc &
             ,vt3da    & ! uc*dn0u*fmapui*rtgu = rhou*W
             ,vt3db    & ! similar for v
@@ -759,8 +761,8 @@ contains
 
        ! input: basic_g%up,%uc,%vp,%vc,%wp,%wc,%dn0,%dn0u,%dn0v
        !        grid_g%rtgt,%rtgu,%rtgv,%fmapt,%fmapui,%fmapvi,%f13t,%f23t,%dxu,%dyv,%dxt,%dyt
-       !        scalar_tab%var_p, %var_t
-       ! output: scalar_tab%var_t
+       !        ScalarTab%var_p, %var_t
+       ! output: ScalarTab%var_t
 
        if (trim(varn) .eq. 'T' .or. trim(varn) .eq. 'SCALAR' ) then
           !- combine the 2-time levels wind fields for tracers
@@ -808,7 +810,7 @@ contains
              call MsgDump(h//" advect thc")
           end if
 
-          call advect_ws_pointer_rank1(OneGrid,mzp,mxp,myp,ia,iz,ja,jz,&
+          call advect_ws_pointer_rank1(oneGrid,mzp,mxp,myp,ia,iz,ja,jz,&
                basic_g(ngrid)%thc &
                ,vt3da & ! uc*dn0u*fmapui*rtgu = rhou*U
                ,vt3db & ! similar for v
@@ -838,7 +840,7 @@ contains
              call MsgDump(h//" advect lnthetav")
           end if
 
-          call advect_ws_pointer_rank3(OneGrid,mzp,mxp,myp,ia,iz,ja,jz &
+          call advect_ws_pointer_rank3(oneGrid,mzp,mxp,myp,ia,iz,ja,jz &
                ,stilt_g(ngrid)%lnthetav   &! advected field
                ,vt3da & ! uc*dn0u*fmapui*rtgu = rhou*U
                ,vt3db & ! similar for v
@@ -863,7 +865,7 @@ contains
              call MsgDump(h//" advect pc")
           end if
 
-          call advect_ws_pointer_rank1(OneGrid,mzp,mxp,myp,ia,iz,ja,jz&
+          call advect_ws_pointer_rank1(oneGrid,mzp,mxp,myp,ia,iz,ja,jz&
                ,basic_g(ngrid)%pc & !advected field
                ,vt3da & ! uc*dn0u*fmapui*rtgu = rhou*U
                ,vt3db & ! similar for v
@@ -883,35 +885,35 @@ contains
 
        if (trim(varn) .eq. 'T' .or. trim(varn) .eq. 'SCALAR') then
 
-          i_scl=num_scalar(ngrid)  !- all scalars
+          i_scl=oneGrid%ScalarTabSize  !- all scalars
 
           do n=1,i_scl
              !
              !- if RK or ABM3 schemes, THP/THC are not transported here
-             if (scalar_tab(n,ngrid)%name == 'THC' .or. &
-                  scalar_tab(n,ngrid)%name == 'THP') cycle
+             if (oneGrid%ScalarTab(n)%name == 'THC' .or. &
+                  oneGrid%ScalarTab(n)%name == 'THP') cycle
 
              ! input: scalarp3d, scalart1d, dtlt
              ! output: scalart1d
 
              if (dumpLocal) then
-                call MsgDump(h//" advect "//trim(adjustl(scalar_tab(n,ngrid)%name)))
+                call MsgDump(h//" advect "//trim(adjustl(oneGrid%ScalarTab(n)%name)))
              end if
              
-             call advect_ws_pointer_rank1(OneGrid,mzp,mxp,myp,ia,iz,ja,jz &
-                  ,scalar_tab(n,ngrid)%var_p_3d & !scalar being advected 
+             call advect_ws_pointer_rank1(oneGrid,mzp,mxp,myp,ia,iz,ja,jz &
+                  ,oneGrid%ScalarTab(n)%var_p_3d & !scalar being advected 
                   ,vt3da   & ! 0.5(up+uc)*dn0u*fmapui*rtgu = rhou*U
                   ,vt3db   & ! similar for v
                   ,vt3dc   & ! similar for sigma_dot
                   ,vt3dh   & ! fmapt*rtgti*dxt/dn0 = 1(rho dx)
                   ,vt3dj   & ! similar for v
                   ,vt3dk   & ! similar for sigma_dot
-                  ,scalar_tab(n,ngrid)%var_t_1d &
+                  ,oneGrid%ScalarTab(n)%var_t_1d &
                   ,is,js,ks    & !scalar tendency
                   ,pd_or_mnt_constraint& ! 
                   ,order_h,order_v     & !order horiz/vert 
                   ,dtlt                & !timestep
-                  ,scalar_tab(n,ngrid)%name & ! scalar name
+                  ,oneGrid%ScalarTab(n)%name & ! scalar name
                   )
 
           end do
@@ -974,6 +976,7 @@ contains
        call fatal_error(h//" deallocate mfz_wind fails with stat="//&
             trim(adjustl(str(1))))
     end if
+    call DeepCopyFromScalarTab(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
 
   end subroutine advectc_rk
 
