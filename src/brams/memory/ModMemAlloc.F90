@@ -1499,7 +1499,8 @@ contains
 
        if (ccatt == 1  .and. chemistry >= 0)  then
 
-          call filltab_tend_chem1(nspecies_chem,ng)
+          call filltab_tend_chem1(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
+               nspecies_chem, ng)
 
           !change MP ---chem1aq
           if(chemistry_aq >= 1) call filltab_tend_chem1aq(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
