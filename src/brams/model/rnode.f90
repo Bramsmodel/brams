@@ -47,7 +47,7 @@ end subroutine node_index
 
 ! ---------------------------------------------------------------------------
 
-subroutine InitFields(init)
+subroutine InitFields(oneScalarTabSize, init)
 
   use ParLib, only: &
        parf_pack_max_size
@@ -73,7 +73,6 @@ subroutine InitFields(init)
        mynum
 
   use var_tables, only: &
-       num_scalar,      &
        num_var,         &
        vtab_r
 
@@ -91,6 +90,7 @@ subroutine InitFields(init)
   implicit none
   ! Arguments:
   integer, intent(in) :: init
+  integer, intent(in) :: oneScalarTabSize
   ! Local variables:
 
   include "constants.h"
@@ -146,7 +146,7 @@ subroutine InitFields(init)
         j1=ipaths(3,itype,ng,nm)
         j2=ipaths(4,itype,ng,nm)
         memf=(i2-i1+1)*(j2-j1+1)*(nnzp(ng))  &
-             *(4+num_scalar(ng))
+             *(4+oneScalarTabSize)
         nbuff_feed=max(nbuff_feed,memf)
      enddo
   enddo

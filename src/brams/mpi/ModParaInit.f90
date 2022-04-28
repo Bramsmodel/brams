@@ -55,7 +55,6 @@ contains
     use var_tables, only: &
          num_var,         &
          vtab_r,          &
-         num_scalar,      &
          scalar_tab
 
     use node_mod, only: &

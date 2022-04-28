@@ -936,7 +936,7 @@ contains
        ! was antecipated to allow message passing during initialization, required
        ! for binary reproducibility (see subroutine FilDn0uv)
 
-       call InitFields(1)
+       call InitFields(oneGrid%ScalarTabSize, 1)
 
        ! initialization driver
 

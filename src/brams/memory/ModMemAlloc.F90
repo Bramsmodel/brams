@@ -40,7 +40,6 @@ contains
          frqanl
 
     use var_tables, only: &
-         num_scalar, &
          maxvars, &
          num_var, &
          nvgrids, &
@@ -1535,7 +1534,8 @@ contains
          nzg, nzs, npatch, proc_type, maxnxp, maxnyp, maxnzp)
     ! Reproducibility - Saulo Barros
     call nullify_scratch1()
-    call alloc_scratch1(nodebounds, maxgrds, ngrids, nnzp, mynum)
+    call alloc_scratch1(oneGrid%ScalarTabSize, &
+         nodebounds, maxgrds, ngrids, nnzp, mynum)
     ! For optmization - ALF
     call nullify_opt_scratch()
     if ((if_adap==0) .and. (ihorgrad==2)) &
@@ -1548,9 +1548,9 @@ contains
     if (proc_type==0 .or. proc_type==2 .or. proc_type==1) then
        do ng=1,ngrids
           if (nxtnest(ng)==0 ) then
-             call alloc_nestb(ng,        1,        1,        1)
+             call alloc_nestb(oneGrid%ScalarTabSize, ng,        1,        1,        1)
           else
-             call alloc_nestb(ng, nnxp(ng), nnyp(ng), nnzp(ng))
+             call alloc_nestb(oneGrid%ScalarTabSize, ng, nnxp(ng), nnyp(ng), nnzp(ng))
           endif
        enddo
     endif

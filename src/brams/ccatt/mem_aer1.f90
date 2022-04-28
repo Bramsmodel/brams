@@ -368,7 +368,6 @@ contains
 
   subroutine filltab_tend_aer1(oneScalarTab, oneScalarTabSize, &
        nmodes, nspecies, ng)
-   use var_tables, only : num_scalar
    use aer1_list, only:spc_name,mode_name, aer_name 
    use mem_chem1, only: nspecies_transported ! this is first calculated at chemistry
                                              ! "filltab_tend_chem1" routine
@@ -399,9 +398,7 @@ contains
            nspecies_transported = nspecies_transported + 1
 
            !-save the aerosol identity for sedimentation/advection routine
-           !ind_mode_sedim(num_scalar(ng)) = imode
-           !ind_aer_sedim (num_scalar(ng)) = ispc
-           if(num_scalar_aer_1st == 0) num_scalar_aer_1st = num_scalar(ng)
+           if(num_scalar_aer_1st == 0) num_scalar_aer_1st = oneScalarTabSize
 
          endif
 
@@ -685,7 +682,6 @@ end  subroutine dealloc_tend_aer2
 
 subroutine filltab_tend_aer2(oneScalarTab, oneScalarTabSize, &
      nmodes,ng)
- use var_tables, only: num_scalar
  use aer1_list , only: numb_name
  use mem_chem1 , only: nspecies_transported ! this is first calculated at chemistry
                                             ! "filltab_tend_chem1" routine
@@ -981,7 +977,6 @@ end subroutine filltab_tend_aer2
 
   subroutine filltab_tend_aer1_inorg(oneScalarTab, oneScalarTabSize, &
        ninorg,ng)
-   use var_tables, only : num_scalar
    use aer1_list, only:INORG_name,mode_name
    use mem_chem1, only: nspecies_transported ! this is first calculated at chemistry
                                              ! "filltab_tend_chem1" routine

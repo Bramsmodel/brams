@@ -64,10 +64,6 @@ module ModMonotonicAdvection
        dd_sedim,            &
        naer_transported
 
-  use var_tables, only : &
-       scalar_tab, & ! (var_p = IN, var_t = INOUT)
-       num_scalar   ! (in)
-
   use ccatt_start, only: &
        ccatt               ! (in)
 
@@ -689,7 +685,7 @@ contains
     if(advmnt == 1) then
        i_scl=1                                            !- all scalars
     else if(advmnt == 2) then
-       i_scl=num_scalar(ng) - NSPECIES_TRANSPORTED +1  !- only chemical + aer species
+       i_scl=oneGrid%ScalarTabSize - NSPECIES_TRANSPORTED +1  !- only chemical + aer species
     else if(advmnt == 3) then
        i_scl=2                                            !- all scalars, but not theta_il
     end if
@@ -698,8 +694,8 @@ contains
 
     call DeepCopyToScalarTab(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
 
-    !srf- do n=1,num_scalar(ng)     ! original
-    do n=i_scl,num_scalar(ng)
+    !srf- do n=1,oneGrid%ScalarTabSize     ! original
+    do n=i_scl,oneGrid%ScalarTabSize
 
        !- if RK or ABM3 scheme, THP/THC are not transported here
 
@@ -709,7 +705,7 @@ contains
        end if
 
        !srf - somente para gases e aerossois
-       !     do n=num_scalar(ng) - NSPECIES_TRANSPORTED +1,num_scalar(ng)
+       !     do n=oneGrid%ScalarTabSize - NSPECIES_TRANSPORTED +1,oneGrid%ScalarTabSize
        !      if (scalar_tab(n,ng)%name /= 'COP' .and. scalar_tab(n,ng)%name /= 'CH4P') cycle
        !          scalar_tab(n,ng)%name /= 'O3P'  ) cycle
 
