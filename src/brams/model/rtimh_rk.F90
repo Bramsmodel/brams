@@ -10,6 +10,10 @@
 
 module ModTimestep_RK
 
+  use ModRtimi, only: &
+       tend0, &
+       predtr
+  
   use ModRadvc, only: &
        advectc
   
@@ -292,7 +296,7 @@ contains
     !
     !  Zero out all tendency arrays.
     !--------------------------------
-    call TEND0()  
+    call tend0()  
 
     !------------------TMP 
     !------------------TMP 
@@ -712,7 +716,7 @@ contains
 
     !  Update scalars (water species, tke and tracers)
     !----------------------------------------
-    call PREDTR()
+    call predtr()
 
     !-  copy current time into past time (u,v,w,pi,thetail)
     !---> thp   must be changed to THC for microphysics/bc/theta update

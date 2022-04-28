@@ -188,7 +188,7 @@ OBJ_MOD = \
 	rthrm.o \
 	rtimh.o \
 	rtimh_rk.o \
-	rtimi.o \
+	ModRtimi.o \
 	ruser.o \
 	shcu_vars_const.o \
 	memSoilMoisture.o \

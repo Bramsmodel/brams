@@ -10,6 +10,11 @@ module ModTimestep
 contains
   subroutine timestep(oneGrid)
 
+    use ModRtimi, only: &
+         tend0, &
+         hadvance, &
+         predtr
+    
     use ModRadvc, only: &
          advectc
 
@@ -225,7 +230,7 @@ contains
 
     !  Zero out all tendency arrays.
     !--------------------------------
-    call TEND0()
+    call tend0()
 
 !!!!  IF( NNQPARM(ngrid) >=2 .OR. NNSHCU(ngrid) >=2 )CALL prepare_lsf_OLD(NNQPARM(ngrid), NNSHCU(ngrid),1)
 
@@ -464,7 +469,7 @@ contains
     !  Update scalars
     !----------------------------------------
     !
-    call PREDTR()
+    call predtr()
     !
     !  Moisture variables positive definite
     !----------------------------------------
@@ -558,7 +563,7 @@ contains
     !  +----+--------------+--------------+
     !
     !------------------------------------------
-    call HADVANCE(1)
+    call hadvance(1)
     !  Buoyancy term for w equation
     !----------------------------------------
     call BUOYANCY( tend%wt )
@@ -585,7 +590,7 @@ contains
     !  +----+--------------+--------------+
     !
     !------------------------------------------
-    call HADVANCE(2)
+    call hadvance(2)
 
     !  Velocity/pressure boundary conditions
     !----------------------------------------
