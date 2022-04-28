@@ -10,6 +10,9 @@ module ModTimestep
 contains
   subroutine timestep(oneGrid)
 
+    use ModTurbK, only: &
+         diffuse
+    
     use ModRtimi, only: &
          tend0, &
          hadvance, &
@@ -387,7 +390,7 @@ contains
     if ((if_adap==0) .and. (ihorgrad==2)) then
        call diffuse_brams31() !call optimized subroutine
     else
-       call diffuse()
+       call diffuse(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
     endif
 
 !!!!!  IF( NNQPARM(ngrid) >=2 .OR. NNSHCU(ngrid)>=2 ) CALL prepare_lsf_OLD(NNQPARM(ngrid), NNSHCU(ngrid),3)

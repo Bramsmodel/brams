@@ -126,9 +126,7 @@ OBJ_MOD = \
 	local_proc.o \
 	mpass_dtl.o \
 	mpass_full.o      \
-	mpass_nest.o \
 	ndvi_read.o \
-	nest_drivers.o \
 	nest_feed.o \
 	nest_filldens.o \
 	nest_geosst.o \
@@ -185,8 +183,8 @@ OBJ_MOD = \
 	rnode.o \
 	rshcupar.o \
 	rthrm.o \
-	rtimh.o \
-	rtimh_rk.o \
+	ModTimestep.o \
+	ModTimestepRK.o \
 	ModRtimi.o \
 	ruser.o \
 	shcu_vars_const.o \
@@ -195,7 +193,7 @@ OBJ_MOD = \
 	sst_read.o \
 	turb_diff.o \
 	turb_diff_adap.o \
-	turb_k.o \
+	ModTurbK.o \
 	turb_k_adap.o \
 	turb_ke.o \
 	upcase.o \

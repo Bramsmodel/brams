@@ -72,8 +72,8 @@ module ModOneProc
        micro_g
 
   use ModTimestep    , only: timestep
-  use ModTimestep_RK , only: timestep_rk
-  use ISO_FORTRAN_ENV, only: OUTPUT_UNIT
+  use ModTimestepRK , only: timestep_rk
+  use iso_fortran_env, only: output_unit
   use io_params, only: &
        ndvitime2, &
        ndviflg, &
@@ -814,7 +814,7 @@ contains
     ! master dumps domain decomposition at stdout and at selected file
 
     if (mchnum==master_num) then
-       call domain_decomposition_dump(OUTPUT_UNIT)
+       call domain_decomposition_dump(output_unit)
     end if
 
     ! Check sfc,sst,ndvi files; remake if needed
@@ -830,7 +830,7 @@ contains
 
        ! done on a MAKESFC run
        if (mchnum==master_num) then
-          write(OUTPUT_UNIT,"(a)") ' MAKESFC run complete'
+          write(output_unit,"(a)") ' MAKESFC run complete'
        end if
 
        !================================================================================================
@@ -1021,20 +1021,6 @@ contains
                grid_g(ifm)%dxt(nn2,nn3), grid_g(ifm)%dxt(1,nn3))
        enddo
 
-       !tst LFR
-!!$       if (dumpLocal) then
-!!$          call MsgDump(h//" invokes initExtraComm")
-!!$       end if
-!!$    
-!!$       Call initExtraComm(nmachs,mynum,GhostZoneLength,&
-!!$            nnxp,nnyp,nnzp,ixb,ixe,iyb,iye,master_num, &
-!!$            nodei0,nodej0,nodemxp,nodemyp,nodemzp)
-
-!!$       IF(advmnt>=1) then
-!!$          !- monotonic advection
-!!$          CALL InitAdvect(ngrids,nmachs,mynum,GhostZoneLength,nnxp,nnyp,nnzp,ixb,ixe,iyb,iye)
-!!$       ENDIF
-
        if(damModule==1) then
           call initDams(nodemxp(mynum,1),nodemyp(mynum,1) &
                ,grid_g(1)%glat,grid_g(1)%glon,mchnum,master_num)
@@ -1094,7 +1080,7 @@ contains
                " [s]")
 #endif
           write(*,fmt='(A)') c_empty
-          !write(OUTPUT_UNIT,"(/,a,/)") " === Finish initialization; Wall(sec)="// &
+          !write(output_unit,"(/,a,/)") " === Finish initialization; Wall(sec)="// &
           !     trim(adjustl(c1))
        end if
 
@@ -1253,18 +1239,6 @@ contains
 
                    call fatal_error(h//" multiple grids not converted yet")
 
-                   ! this section is commented out to avoid compilation errors
-                   ! at node_sendnbc, which is also commented out
-!!$                   icm = ngrid
-!!$                   do ifm=1,ngrids
-!!$                      if (nxtnest(ifm)==icm) then
-!!$                         ngrid = ifm            ! JP: is this necessary?
-!!$                         isstp = isched(npass,3)! JP: is this necessary (maybe incorrect)!
-!!$                         call newgrid(ifm)
-!!$                         call node_sendnbc(ifm, icm)
-!!$                         call node_getnbc(ifm, icm)
-!!$                      end if
-!!$                   end do
                 end if
 
                 ! whenever required, send feedback fields from current grids to
@@ -1275,13 +1249,6 @@ contains
                    !**(JP)** not converted yet
 
                    call fatal_error(h//" multiple grids not converted yet")
-!!$                   ngrid = isched(npass,1)
-!!$                   do nfeed=1,isched(npass, 4)
-!!$                      call newgrid(ngrid)
-!!$                      call node_sendfeed(ngrid)
-!!$                      call node_getfeed(nxtnest(ngrid), ngrid)
-!!$                      ngrid = nxtnest(ngrid)
-!!$                   end do
                 end if
              end do
 
@@ -1412,7 +1379,7 @@ contains
           if (mchnum==master_num) then
              if(evaluate/=1) then
                 if(maxCflPercent*100>90.0) then 
-                   write(OUTPUT_UNIT, "(a,i6,a,f9.1,a,f8.3,a,f7.2,a,f7.2,a,f7.2,a)", advance="no") &
+                   write(output_unit, "(a,i6,a,f9.1,a,f8.3,a,f7.2,a,f7.2,a,f7.2,a)", advance="no") &
                         c_lightAqua//" Timestep #"//c_pink, istp,&
                         c_noColor//";"//c_lightAqua//" Sim Time"//c_purple, time,&
                         c_peach//" [s]"//c_noColor//";"//c_lightAqua//" Wall Time"//c_purple &
@@ -1421,7 +1388,7 @@ contains
                         ,sscourn(1),c_noColor//";"//c_lightAqua//" MaxCFL"//c_purple//c_blink &
                         ,maxCflPercent*100,c_peach//" [%]"//c_noColor
                 else
-                   write(OUTPUT_UNIT, "(a,i6,a,f9.1,a,f8.3,a,f7.2,a,f7.2,a,f7.2,a)", advance="no") &
+                   write(output_unit, "(a,i6,a,f9.1,a,f8.3,a,f7.2,a,f7.2,a,f7.2,a)", advance="no") &
                         c_lightAqua//" Timestep #"//c_pink, istp,&
                         c_noColor//";"//c_lightAqua//" Sim Time"//c_purple, time,&
                         c_peach//" [s]"//c_noColor//";"//c_lightAqua//" Wall Time"//c_purple &
@@ -1431,7 +1398,7 @@ contains
                         ,maxCflPercent*100,c_peach//" [%]"//c_noColor
                 endif
              else
-                write(OUTPUT_UNIT, "(a,i6,a,f9.1,a,f11.3,a,f11.3,a,f11.3,a,f11.3,a)", advance="no") &
+                write(output_unit, "(a,i6,a,f9.1,a,f11.3,a,f11.3,a,f11.3,a,f11.3,a)", advance="no") &
                      c_lightAqua//" Timestep #"//c_pink, istp,&
                      c_noColor//";"//c_lightAqua//" Sim Time"//c_purple, time,&
                      c_peach//" [s]"//c_noColor//";"//c_lightAqua//" Wall Time"//c_purple &
@@ -1446,7 +1413,7 @@ contains
 
           if (prtcputime==0) then
              if (mchnum==master_num) then
-                write(OUTPUT_UNIT,"(1x)")
+                write(output_unit,"(1x)")
              end if
           else
              call gather_cpu_time_master_print(master_num, mynum, nmachs, t6-t1)
@@ -1641,21 +1608,6 @@ contains
           !  and the prognostic atmospheric fields by interpolation.
 
           call fmrefs1d(2,ngrids)
-
-          do ifm = 2,ngrids
-             icm = nxtnest(ifm)
-             if (icm  >=  1) then
-                call fmrefs3d(ifm)
-
-                call prgintrp(nnzp(icm),nnxp(icm),nnyp(icm)  &
-                     ,nnzp(icm),nnxp(icm),nnyp(icm),0,0,ifm,1,mynum)
-
-                call fmdn0(ifm)
-
-                print*,'Initial interpolation of grid-',ifm
-             endif
-          enddo
-
 
           !--(DMK-CCATT-INI)-----------------------------------------------------
        elseif(initial == 2 .or. initial == 4) then
@@ -2082,115 +2034,6 @@ contains
        !     surface layer variables, 1-D reference state variables, and
        !     prognostic atmospheric and soil model fields.
 
-       if (ngrids  >  ngridsh) then
-          print*,' +-------------------------------------'
-          print*,'            !      New grids will be added.       '
-          print*,'            !'
-          print*,'            ! ',ngridsh,' grid(s) on history file.'
-          print*,'            ! ',ngrids, ' grids to be run.        '
-          print*,' +-------------------------------------'
-          call fmrefs1d(ngridsh+1,ngrids)
-          do ifm = ngridsh+1,ngrids
-             icm = nxtnest(ifm)
-             if (icm  ==  0) then
-                !call fatal_error(h//"Attempted to add "//&
-                !     "a hemispheric grid on a history restart; "//&
-                !     "this cannot be done.")
-                iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
-                     "Attempted to add "//&
-                     "a hemispheric grid on a history restart; "//&
-                     "this cannot be done.")
-             endif
-             call fmrefs3d(ifm)
-             call prgintrp(nnzp(icm),nnxp(icm),nnyp(icm)  &
-                  ,nnzp(icm),nnxp(icm),nnyp(icm),0,0,ifm,1,mynum)
-             print*,'History start interpolation of added grid-',ngrid
-
-             call fmdn0(ifm)
-             call newgrid(ifm)
-
-             call FieldInit(0)
-
-             call negadj1(nzp,nxp,nyp)
-
-             call thermo(nzp,nxp,nyp,1,nxp,1,nyp,'THRM_ONLY')
-
-             if (mcphys_type == 0) then
-                if (level  ==  3) then
-                   call initqin(mzp,mxp,myp        &
-                        ,micro_g(ifm)%q2      &
-                        ,micro_g(ifm)%q6      &
-                        ,micro_g(ifm)%q7      &
-                        ,basic_g(ifm)%pi0     &
-                        ,basic_g(ifm)%pp      &
-                        ,basic_g(ifm)%theta   &
-                        ,basic_g(ifm)%dn0     &
-                        ,micro_g(ifm)%cccnp   &
-                        ,micro_g(ifm)%cifnp   )
-                endif
-
-             elseif(mcphys_type == 1) then
-
-                if (level  ==  3) then
-                   call initqin_2M(mzp,mxp,myp        &
-                        ,micro_g(ifm)%q2      &
-                        ,micro_g(ifm)%q6      &
-                        ,micro_g(ifm)%q7      &
-                        ,basic_g(ifm)%pi0     &
-                        ,basic_g(ifm)%pp      &
-                        ,basic_g(ifm)%theta   &
-                        ,basic_g(ifm)%dn0     )
-
-                   if(icloud >= 5) call initqin2_2M(mzp,mxp,myp        &
-                        ,micro_g(ifm)%cccnp   &
-                        ,micro_g(ifm)%cccmp   &
-                        ,basic_g(ifm)%dn0   )
-
-                   if(idriz  >= 5) call initqin3_2M(mzp,mxp,myp        &
-                        ,micro_g(ifm)%gccnp   &
-                        ,micro_g(ifm)%gccmp   &
-                        ,basic_g(ifm)%dn0   )
-
-                   if(ipris  >= 5) call initqin4_2M(mzp,mxp,myp        &
-                        ,micro_g(ifm)%cifnp   &
-                        ,basic_g(ifm)%dn0   )
-
-                   if(idust > 0 .or. imd1flg > 0 .or. imd2flg > 0)  &
-                        call initqin5_2M(mzp,mxp,myp    &
-                        ,micro_g(ifm)%md1np   &
-                        ,micro_g(ifm)%md2np )
-                endif
-             endif
-
-             ! Heterogenous Soil Moisture Init.
-             if ((SOIL_MOIST == 'h').or.(SOIL_MOIST == 'H').or.  &
-                  (SOIL_MOIST == 'a').or.(SOIL_MOIST == 'A')) then
-                call soilMoistureInit(nnzp(ifm), nodemxp(mynum,ifm),         &
-                     nodemyp(mynum,ifm), nzg, nzs, npatch, ifm,              &
-                     basic_g(ifm)%theta, basic_g(ifm)%pi0, basic_g(ifm)%pp,  &
-                     leaf_g(ifm)%soil_water, leaf_g(ifm)%soil_energy,        &
-                     leaf_g(ifm)%soil_text,                                  &
-                     grid_g(ifm)%glat, grid_g(ifm)%glon, grid_g(ifm)%lpw     &
-                     ,leaf_g(ifm)%seatp, leaf_g(ifm)%seatf                    )
-
-             endif
-
-
-          enddo
-
-
-          !Fill land surface data for all grids that have no standard input files
-
-          call GeonestNofile(ngridsh+1,ngrids)
-
-       elseif (ngrids  <  ngridsh) then
-          print*,' +-------------------------------------'
-          print*,'            !      Grids will be subtracted.       '
-          print*,'            !'
-          print*,'            ! ',NGRIDSH,' grid(s) on history file.'
-          print*,'            ! ',NGRIDS, ' grids to be run.        '
-          print*,' +-------------------------------------'
-       endif
 
        ! Read Radiation Parameters if CARMA or RRTMG Radiation is selected
        if (ilwrtyp==4 .or. iswrtyp==4 .or. ilwrtyp==6 .or. iswrtyp==6 ) then
@@ -2342,8 +2185,6 @@ contains
     ! produce analysis and history output
     !**(JP)** lite and mean output options not converted
 
-!!$  histFlag=.true.; instFlag=.true.; liteFlag=frqlite > 0.; meanFlag=frqmean >0.
-!!$  histFlag=.true.; instFlag=.true.; liteFlag=.false.; meanFlag=.false.
     if (IOUTPUT/=0) then
        histFlag=.true.; instFlag=.true.
     else
@@ -2414,19 +2255,6 @@ contains
     if (mchnum == master_num) then
        call PrtOpt()
     end if
-
-    !**(JP)** ver o que fazer com esses prints
-    !call dumpAer('Aer_pos4')
-!!$  ngrid=1
-!!$  call prtopt(6)
-!!$  if (initfld  ==  1) then
-!!$     do ifm = 1,ngrids
-!!$        call newgrid(ifm)
-!!$        call prtout()
-!!$     enddo
-!!$  endif
-
-!!$  call opspec3()
   end subroutine initOneProc
 
 
@@ -2437,12 +2265,6 @@ contains
 
   subroutine comm_time(isendflg, isendlite, isendmean, isendboth, &
        isendbackflg, isendiv, isendsst, isendndvi, isendsrc)
-
-!!$    use mem_varinit
-!!$    use mem_cuparm
-!!$    use io_params
-!!$    use mem_grid
-
 
     integer, intent(out) :: isendflg, isendlite, isendmean, isendboth, &
          isendbackflg, isendiv, isendsst, isendndvi
@@ -2562,7 +2384,6 @@ contains
 
     if  ( (nud_type == 2 .or. nud_type == 4 ) .and. timemf  >=  vtime2  &
          .and. timemf  <  timmax) then
-!!$     isendflg = 1 ! Not used if sending just the necessary input data
        isendbackflg = 1 ! ALF
        isendiv = 1 ! ALF
        return
@@ -2651,13 +2472,3 @@ contains
     end do
   end subroutine StoreDomainDecompAtNode_mod
 end module ModOneProc
-
-!subroutine lfr_debug(header,version,message,value)
-!  implicit NONE
-!  character(len=*), intent(in) :: header,version, message
-!  integer, intent(in) :: value
-!
-!  print *,'LFR-DBG '//header//' % '//version//' % '//message//' : ',value
-!  call flush(6)
-!
-!end subroutine lfr_debug

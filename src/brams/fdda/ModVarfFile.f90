@@ -233,52 +233,6 @@ contains
 
        call FineMeshRefSound1D(2, ngrids)
 
-       do ifm=2,ngrids
-
-          !**(JP)** not converted
-
-          call fatal_error(h//"**(JP)** not converted for multiple grids")
-
-          icm = nxtnest(ifm)
-
-          ! Get 3D reference state for this grid
-          call fmrefs3d(ifm)
-
-          ! Interpolate prognostic fields. These will be overwritten if the varfile
-          !    exists
-          call prgintrp(nnzp(icm), nnxp(icm), nnyp(icm), &
-               nnzp(icm), nnxp(icm), nnyp(icm), 0, 0, ifm, 1, 0)
-
-          call newgrid(ifm)
-
-          ! See if this grid's varfile is created.
-
-          OneGrid => FetchGrid(AllGrids, ifm)
-
-          call VarfUpdate(0, OneGrid, ifileok, 1, initialFlag)
-
-         open(unit=22,file='brams.log',position='append',action='write')
-          if (ifileok==1) then
-             ! Everything's cool...
-             if (mchnum==master_num) then
-                write (c0,"(i8)") ifm
-                write (unit=22,fmt="(a)")   &
-                     " Initial varfile read of grid-"//trim(adjustl(c0))
-             endif
-          else
-             ! Using interpolated nudging arrays from parent grid.
-             if (mchnum==master_num) then
-                write (c0,"(i8)") ifm
-                write (unit=22,fmt="(a)")   &
-                     " Initial interpolation of grid-"//trim(adjustl(c0))
-             endif
-          endif
-          close(unit=22)
-
-          call fmdn0(ifm)
-
-       enddo
-
        ! ALF
        lastdate_iv = itotdate_varf(nvarffl)
 
@@ -468,7 +422,6 @@ contains
     integer :: localTime
 
     character(len=f_name_length), dimension(maxnudfiles) :: fnames
-!!$  character(len=f_name_length) :: vpref
     character(len=f_name_length)::rams_filelist_arg
     character(len=14)  :: itotdate
     real(kind=8) :: secs_init, secs_varf
@@ -494,7 +447,6 @@ contains
     ! one process goes through history files and make inventory
 
     if (mchnum==master_num) then
-!!$     vpref=varpref
 
        nvarffiles = ceiling(((timmax/3600)/(isan_inc/100)) + 1)
 
@@ -563,11 +515,6 @@ contains
        enddo
 
        nvarffiles = indice - 1
-
-!!$     rams_filelist_arg = trim(varpref)//'*.tag'
-
-!!$     call RAMS_filelist(fnames,rams_filelist_arg , nvarffiles)
-
 
        if (nvarffiles>maxnudfiles) then
           call fatal_error(h//' too many varf files')
@@ -913,22 +860,6 @@ contains
                abs(platn(ngrid)-rlatx).gt..001.or.  &
                abs(plonn(ngrid)-wlon1x).gt..001) then
 
-!!$     print*,'!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
-!!$     print*,'!!    GRID MISMATCH BETWEEN VARFILE AND NAMELIST !'
-!!$     print*,'!!          RUN IS STOPPED                       !'
-!!$     print*,'!!  File:',trim(flnm)
-!!$     print*,'!!  File, Namelist values for grid:',ngrid
-!!$     print*,'!!  nxp:',nxpx,nxp
-!!$     print*,'!!  nyp:',nypx,nyp
-!!$     print*,'!!  nzp:',nzpx,nzp
-!!$     print*,'!!  deltax:',deltaxx,deltax
-!!$     print*,'!!  deltay:',deltayx,deltay
-!!$     print*,'!!  deltaz:',deltazx,deltaz
-!!$     print*,'!!  dzrat:',dzratx,dzrat
-!!$     print*,'!!  dzmax:',dzmaxx,dzmax
-!!$     print*,'!!  polelat:',rlatx,platn(ngrid)
-!!$     print*,'!!  polelon:',wlon1x,plonn(ngrid)
-!!$     PRINT*,'!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
              call fatal_error(h//" grid mismatch between varfile ("//trim(flnm)//") and namelist")
           end if
 

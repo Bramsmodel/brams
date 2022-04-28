@@ -8,15 +8,18 @@
 !
 !############################# Change Log ##################################
 
-module ModTimestep_RK
+module ModTimestepRK
+
+  use ModTurbK, only: &
+       diffuse
 
   use ModRtimi, only: &
        tend0, &
        predtr
-  
+
   use ModRadvc, only: &
        advectc
-  
+
   use ModRbnd, only: latbnd, &
        vpsets, &
        rayft,  &
@@ -514,7 +517,7 @@ contains
     if ((if_adap==0) .and. (ihorgrad==2)) then
        call diffuse_brams31() !call optimized subroutine
     else
-       call diffuse()
+       call diffuse(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
     endif
 
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
@@ -884,7 +887,7 @@ contains
   end subroutine timestep_rk
 
 
-end module ModTimestep_RK
+end module ModTimestepRK
 
 !*************************************************************************
 !-srf-  temp routine only for testing - not being used
