@@ -924,8 +924,6 @@ contains
        ! The message passing data structure is composed by all
        ! variables of type(MessageSet) stored at oneGrid
 
-       ! for the moment (temporary), copy existing scalar_tab into oneGrid
-       
        oneGridTreeNode => GridTreeRoot(AllGrids)
        do while (associated(oneGridTreeNode))
           call InsertMessageSetAtOneGrid(oneGridTreeNode%curr)

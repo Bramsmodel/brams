@@ -44,7 +44,6 @@ contains
          num_var, &
          nvgrids, &
          vtab_r,  &
-         scalar_tab, &
          ZeroVTab
 
     use mem_grid, only: &

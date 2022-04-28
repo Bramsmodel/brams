@@ -372,7 +372,7 @@ contains
 
     !  Nested grid boundaries
     !----------------------------------------
-!!$  ! **(JP)** Comment out to avoid compilation errors due to removal of scalar_tab%var_p
+!!$  ! **(JP)** Comment out to avoid compilation errors 
 !!$  ! at procedure nstbdriv, which is also commented out
 !!$  if (nxtnest(ngrid)>=1) call nstbdriv()
 

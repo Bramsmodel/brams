@@ -2039,9 +2039,6 @@ SUBROUTINE Scl_Advectc_Plumerise(varn,nm1,nkp,dt,wc,vvel,rho,dzm,dzt,zm,zt, &
      END DO
    END DO
 
-   !      scalarp => scalar_tab(n,ngrid)%var_p
-   !      scalart => scalar_tab(n,ngrid)%var_t
-
    !- temp advection tendency (TT)
     
    DO k=1,nkp

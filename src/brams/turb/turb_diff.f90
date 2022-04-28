@@ -497,9 +497,6 @@ subroutine diffsclr(m1, m2, m3, ia, iz, ja, jz, jd,                        &
   use mem_turb, only: &
        ihorgrad     !INTENT(IN)
 
-  use var_tables, only: &
-       scalar_tab   !INTENT(IN)
-
 !!$  use catt_start, only: &
 !!$       CATT           ! intent(in)
 
@@ -758,43 +755,6 @@ subroutine diffsclr(m1, m2, m3, ia, iz, ja, jz, jd,                        &
      enddo
   endif
 
-  ! CATT
-!!$  if (CATT == 1) then
-!!$     !srf--------- PBL Forcing for GRELL CUPAR (only vertical term) ------
-!!$     !  scalar_tab(n,ngrid)%name == 'THP'
-!!$     !  if(iscalar.eq.9 .or. iscalar.eq.10) then
-!!$     if(scalar_tab(nsc,ngrid)%name == 'THP' .or. &
-!!$          scalar_tab(nsc,ngrid)%name == 'RTP') then
-!!$
-!!$        do j = ja,jz
-!!$           do i = ia,iz
-!!$              do k = 2,m1-1
-!!$
-!!$                 !print
-!!$                 !          if(iscalar.eq.9) then
-!!$                 !           if(j.eq.44.and.i.eq.60)then
-!!$                 !
-!!$                 !            if(k.eq.2) print*,'----DIFF----2-',j,i
-!!$                 !
-!!$                 !            print*,k,lsfcupar(k,i,j),&
-!!$                 !            lsfcupar(k,i,j) + dtlti*(vt3df(k,i,j)-scp(k,i,j)) ,sct(k,i,j),dtlti*(vt3df(k,i,j)-scp(k,i,j))
-!!$                 !           endif
-!!$                 !          endif
-!!$                 !print
-!!$                 !        forcing with radiation plus only the vertical diffusion
-!!$                 lsfcupar(k,i,j) = lsfcupar(k,i,j) + dtlti*(vt3df(k,i,j)-scp(k,i,j))
-!!$                 !        forcing with horizontal diffusion included:
-!!$                 !	 lsfcupar(k,i,j) = lsfcupar(k,i,j) + dtlti*(vt3df(k,i,j)-scp(k,i,j)) &
-!!$                 !           - (vt3da(k,i,j) + vt3db(k,i,j)) / dn0(k,i,j)
-!!$                 !---------------------------------------
-!!$
-!!$              enddo
-!!$           enddo
-!!$        enddo
-!!$
-!!$     endif
-!!$     !-srf----------------
-!!$  endif
 
   do j=ja,jz
      do i=ia,iz
@@ -813,9 +773,6 @@ subroutine PBLforcing(ngrid, m1, m2, m3, ia, iz, ja, jz, vt3df, scp, lsfcupar, n
   use mem_grid, only: &
        dtlt !INTENT(IN)
 
-  use var_tables, only: &
-       scalar_tab   !INTENT(IN)
-
   use mem_cuparm, only : &
        nnqparm       ! intent(in)
 
@@ -833,8 +790,6 @@ subroutine PBLforcing(ngrid, m1, m2, m3, ia, iz, ja, jz, vt3df, scp, lsfcupar, n
   !srf--------- PBL Forcing for GRELL CUPAR (only vertical term) ------
   !if (nnqparm(ngrid)>=2) then
       dtlti = 1.0/dtlt
-  !   if ( scalar_tab(nsc,ngrid)%name=='THP' .or. scalar_tab(nsc,ngrid)%name=='THC' .or.&
-  !        scalar_tab(nsc,ngrid)%name=='RTP') then
         do j=ja,jz
            do i=ia,iz
               do k=2,m1-1

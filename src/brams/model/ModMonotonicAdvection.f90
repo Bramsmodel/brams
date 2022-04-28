@@ -690,8 +690,6 @@ contains
        i_scl=2                                            !- all scalars, but not theta_il
     end if
 
-    ! copy external scalar_tab into oneGrid
-
     call DeepCopyToScalarTab(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
 
     !srf- do n=1,oneGrid%ScalarTabSize     ! original
@@ -703,11 +701,6 @@ contains
           if (oneGrid%ScalarTab(n)%name == 'THC' .or. &
                oneGrid%ScalarTab(n)%name == 'THP') cycle
        end if
-
-       !srf - somente para gases e aerossois
-       !     do n=oneGrid%ScalarTabSize - NSPECIES_TRANSPORTED +1,oneGrid%ScalarTabSize
-       !      if (scalar_tab(n,ng)%name /= 'COP' .and. scalar_tab(n,ng)%name /= 'CH4P') cycle
-       !          scalar_tab(n,ng)%name /= 'O3P'  ) cycle
 
        !- Aerosol sedimentation
        IsThisScalarAer  = .false.
