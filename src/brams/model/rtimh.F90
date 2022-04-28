@@ -230,7 +230,7 @@ contains
 
     !  Zero out all tendency arrays.
     !--------------------------------
-    call tend0()
+    call tend0(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
 
 !!!!  IF( NNQPARM(ngrid) >=2 .OR. NNSHCU(ngrid) >=2 )CALL prepare_lsf_OLD(NNQPARM(ngrid), NNSHCU(ngrid),1)
 
@@ -469,7 +469,7 @@ contains
     !  Update scalars
     !----------------------------------------
     !
-    call predtr()
+    call predtr(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
     !
     !  Moisture variables positive definite
     !----------------------------------------

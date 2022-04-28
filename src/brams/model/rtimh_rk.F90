@@ -296,7 +296,7 @@ contains
     !
     !  Zero out all tendency arrays.
     !--------------------------------
-    call tend0()  
+    call tend0(oneGrid%ScalarTab, oneGrid%ScalarTabSize)  
 
     !------------------TMP 
     !------------------TMP 
@@ -716,7 +716,7 @@ contains
 
     !  Update scalars (water species, tke and tracers)
     !----------------------------------------
-    call predtr()
+    call predtr(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
 
     !-  copy current time into past time (u,v,w,pi,thetail)
     !---> thp   must be changed to THC for microphysics/bc/theta update

@@ -23,9 +23,8 @@ module ModRtimi
   use mem_tend, only: &
        tend
 
-  use var_tables, only: &
-       num_scalar, &
-       scalar_tab
+  use ModScalarTable, only: &
+       ScalarTable
 
   use node_mod, only: &
        mxp, &
@@ -60,7 +59,9 @@ module ModRtimi
   public :: predtr
 
 contains
-  subroutine tend0()
+  subroutine tend0(oneScalarTab, oneScalarTabSize)
+    type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
+    integer, intent(in) :: oneScalarTabSize
 
     integer :: n
     integer(kind=i8) :: mxyzp
@@ -94,9 +95,9 @@ contains
     !ENDIF 
     !     Now sclrr tendencies
 
-    do n = 1,num_scalar(ngrid)        
+    do n = 1,oneScalarTabSize        
 
-       call azero_l(mxyzp, scalar_tab(n,ngrid)%var_t_1D)
+       call azero_l(mxyzp, oneScalarTab(n)%var_t_1D)
     enddo
 
   end subroutine tend0
@@ -189,7 +190,9 @@ contains
 
   !**************************************************************************
 
-  subroutine predtr()
+  subroutine predtr(oneScalarTab, oneScalarTabSize)
+    type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
+    integer, intent(in) :: oneScalarTabSize
     integer :: n !mxyzp
     integer(kind=i8) :: mxyzp
     character(len=*), parameter :: h="**(predtr)**"
@@ -198,25 +201,25 @@ contains
 
     mxyzp = mxp * myp * mzp
 
-    do n = 1,num_scalar(ngrid)
+    do n = 1, oneScalarTabSize
 
        !- if RK scheme, THP/THC are not predicted here
        if (dyncore_flag == 2) then
-          if (scalar_tab(n,ngrid)%name == 'THC' .or. &
-               scalar_tab(n,ngrid)%name == 'THP') cycle
+          if (oneScalarTab(n)%name == 'THC' .or. &
+               oneScalarTab(n)%name == 'THP') cycle
        endif
 
-       if (associated(scalar_tab(n,ngrid)%var_p_1D)) then
-          call update_long(mxyzp, scalar_tab(n,ngrid)%var_p_1D,  &
-               scalar_tab(n,ngrid)%var_t_1D, dtlt)
-       else if (associated(scalar_tab(n,ngrid)%var_p_2D)) then
-          call update_long(mxyzp, scalar_tab(n,ngrid)%var_p_2D,  &
-               scalar_tab(n,ngrid)%var_t_1D, dtlt)
-       else if (associated(scalar_tab(n,ngrid)%var_p_3D)) then
-          call update_long(mxyzp, scalar_tab(n,ngrid)%var_p_3D,  &
-               scalar_tab(n,ngrid)%var_t_1D, dtlt)
+       if (associated(oneScalarTab(n)%var_p_1D)) then
+          call update_long(mxyzp, oneScalarTab(n)%var_p_1D,  &
+               oneScalarTab(n)%var_t_1D, dtlt)
+       else if (associated(oneScalarTab(n)%var_p_2D)) then
+          call update_long(mxyzp, oneScalarTab(n)%var_p_2D,  &
+               oneScalarTab(n)%var_t_1D, dtlt)
+       else if (associated(oneScalarTab(n)%var_p_3D)) then
+          call update_long(mxyzp, oneScalarTab(n)%var_p_3D,  &
+               oneScalarTab(n)%var_t_1D, dtlt)
        else
-          call fatal_error(h//" no var_p_XD associated for "//trim(scalar_tab(n,ngrid)%name))
+          call fatal_error(h//" no var_p_XD associated for "//trim(oneScalarTab(n)%name))
        end if
     enddo
 
