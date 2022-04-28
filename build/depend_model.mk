@@ -97,7 +97,7 @@ ReadBcst.o : $(MPI)/ReadBcst.f90 mem_grid.o node_mod.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mpi_io_engine-5d.o : $(IO)/mpi_io_engine-5d.f90
+mpi_io_engine-5d.o : $(IO)/mpi_io_engine-5d.f90 ModParaInit.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -585,7 +585,7 @@ ModOneProc.o : $(MODEL)/ModOneProc.F90 ModNamelistFile.o \
 	mem_scalar.o memSoilMoisture.o mem_teb.o mem_teb_common.o micphys.o \
 	ModMonotonicAdvection.o shcu_vars_const.o \
 	soilMoisture.o teb_spm_start.o mem_teb_vars_const.o var_tables.o \
-	mem_varinit.o \
+	mem_varinit.o ModParaInit.o \
 	grid_dims.o local_proc.o ModTimeStamp.o \
 	node_mod.o mem_radiate.o \
 	mem_scratch.o cup_grell3.o digitalFilter.o \
@@ -641,13 +641,6 @@ mpass_dtl.o : $(MPI)/mpass_dtl.f90  mem_grid.o node_mod.o
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mpass_feed.o : $(MPI)/mpass_feed.f90  grid_dims.o mem_basic.o mem_grid.o \
-	mem_scratch1_brams.o node_mod.o var_tables.o parlibf.o ModRbnd.o\
-	$(UTILS_INCS)/tsNames.h
-	@cp -f $< $(<F:.f90=.f90)
-	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-	rm -f $(<F:.f90=.f90)
-
 mpass_nest.o : $(MPI)/mpass_nest.f90  mem_basic.o mem_grid.o \
 	mem_nestb.o mem_scratch.o node_mod.o var_tables.o parlibf.o \
 	$(UTILS_INCS)/tsNames.h $(UTILS_INCS)/constants.h
@@ -670,7 +663,7 @@ domain_decomp.o : $(INIT)/domain_decomp.f90 ModNamelistFile.o
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-para_init.o : $(MPI)/para_init.f90  mem_basic.o mem_grid.o \
+ModParaInit.o : $(MPI)/ModParaInit.f90  mem_basic.o mem_grid.o \
 	mem_scratch.o node_mod.o var_tables.o domain_decomp.o grid_dims.o \
 	$(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)

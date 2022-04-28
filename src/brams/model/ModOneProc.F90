@@ -544,6 +544,14 @@ module ModOneProc
        initComIau, &
        applyIAU
 
+  use ModParaInit, only: &
+       decomp_node, &
+       NodePathsBuffAlloc, &
+       domain_decomposition_dump
+  
+  !MB: for testing only
+  use dump, only: &
+       dumpMessage !dump function
 
   implicit none
   private
@@ -556,10 +564,6 @@ contains
   !
 
   subroutine OneProc(nmachs_in, mchnum_in, master_num_in)
-
-    !MB: for testing only
-    use dump, only: &
-         dumpMessage !dump function
 
     !If compiler INTEL sometimes is necessary unconmment the line bellow:
     !USE IFPORT
@@ -1270,16 +1274,14 @@ contains
 
                    !**(JP)** not converted yet
 
-                   !call fatal_error(h//" multiple grids not converted yet")
-                   iErrNumber=dumpMessage(c_tty,c_yes,header,modelVersion,c_fatal, &
-                        "multiple grids not converted yet")
-                   ngrid = isched(npass,1)
-                   do nfeed=1,isched(npass, 4)
-                      call newgrid(ngrid)
-                      call node_sendfeed(ngrid)
-                      call node_getfeed(nxtnest(ngrid), ngrid)
-                      ngrid = nxtnest(ngrid)
-                   end do
+                   call fatal_error(h//" multiple grids not converted yet")
+!!$                   ngrid = isched(npass,1)
+!!$                   do nfeed=1,isched(npass, 4)
+!!$                      call newgrid(ngrid)
+!!$                      call node_sendfeed(ngrid)
+!!$                      call node_getfeed(nxtnest(ngrid), ngrid)
+!!$                      ngrid = nxtnest(ngrid)
+!!$                   end do
                 end if
              end do
 

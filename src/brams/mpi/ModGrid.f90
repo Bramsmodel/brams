@@ -67,10 +67,7 @@ module ModGrid
 
   use var_tables, only: &
        num_var, &
-       vtab_r, &
-       num_scalar, &
-       scalar_table, &
-       scalar_tab
+       vtab_r
 
   use mem_tend, only: &
        tend

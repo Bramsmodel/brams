@@ -125,7 +125,6 @@ OBJ_MOD = \
 	modsched.o \
 	local_proc.o \
 	mpass_dtl.o \
-	mpass_feed.o \
 	mpass_full.o      \
 	mpass_nest.o \
 	ndvi_read.o \
@@ -146,7 +145,7 @@ OBJ_MOD = \
 	oda_sta_input.o \
 	opspec.o \
 	domain_decomp.o \
-	para_init.o \
+	ModParaInit.o \
 	Phys_const.o \
 	raco.o \
 	raco_adap.o \
