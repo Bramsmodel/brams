@@ -10,6 +10,9 @@
 
 module ModTimestepRK
 
+  use ModDiffuse, only: &
+       diffuse_brams31
+
   use ModTurbK, only: &
        diffuse
 
@@ -515,7 +518,7 @@ contains
     !  Sub-grid diffusion terms
     !----------------------------------------
     if ((if_adap==0) .and. (ihorgrad==2)) then
-       call diffuse_brams31() !call optimized subroutine
+       call diffuse_brams31(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
     else
        call diffuse(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
     endif

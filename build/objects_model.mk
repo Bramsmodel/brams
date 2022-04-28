@@ -54,7 +54,7 @@ OBJ_MOD = \
 	cup_output_vars.o \
 	cup_up.o \
 	diffsclr.o \
-	diffuse.o \
+	ModDiffuse.o \
 	file_inv.o \
 	first_rams.o \
 	geodat.o \
