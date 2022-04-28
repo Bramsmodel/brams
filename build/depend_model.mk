@@ -665,7 +665,7 @@ domain_decomp.o : $(INIT)/domain_decomp.f90 ModNamelistFile.o
 
 ModParaInit.o : $(MPI)/ModParaInit.f90  mem_basic.o mem_grid.o \
 	mem_scratch.o node_mod.o var_tables.o domain_decomp.o grid_dims.o \
-	$(UTILS_INCS)/constants.h
+	ModScalarTable.o $(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

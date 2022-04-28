@@ -28,7 +28,12 @@ contains
   end subroutine decomp_node
 
 
-  subroutine NodePathsBuffAlloc()
+  subroutine NodePathsBuffAlloc(oneScalarTab, oneScalarTabSize)
+
+    use ModScalarTable, only: &
+         ScalarTable, &
+         DeepCopyToScalarTab, &
+         DeepCopyFromScalarTab
 
     use grid_dims, only: &
          maxmach,        &
@@ -68,6 +73,9 @@ contains
     !--(DMK)-------------------------
 
     implicit none
+    type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
+    integer, intent(inout) :: oneScalarTabSize
+
 
     integer :: idn
     integer :: isn
@@ -94,6 +102,8 @@ contains
     integer :: ixyz
     integer :: memf
 
+
+    call DeepCopyToScalarTab(oneScalarTab, oneScalarTabSize)
 
     ! Determine node sending paths and numbers of receiving nodes
 
@@ -126,9 +136,9 @@ contains
        ifm=ng
        if(ng /= 1) icm=nxtnest(ifm)
        nestvar=4
-       do nf=1,num_scalar(ifm)
-          do nc=1,num_scalar(icm)
-             if(scalar_tab(nf,ifm)%name==scalar_tab(nc,icm)%name)  &
+       do nf=1,oneScalarTabSize
+          do nc=1,oneScalarTabSize
+             if(oneScalarTab(nf)%name==oneScalarTab(nc)%name)  &
                   nestvar=nestvar+1
           enddo
        enddo
@@ -221,6 +231,8 @@ contains
        enddo !ng
 
     enddo !idn
+
+    call DeepCopyFromScalarTab(oneScalarTab, oneScalarTabSize)
 
   end subroutine NodePathsBuffAlloc
   !
