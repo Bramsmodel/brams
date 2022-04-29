@@ -53,7 +53,7 @@ module ModRbnd
 
   use ccatt_start, only: ccatt
   use mem_chem1, only: chemistry,nspecies_transported
-  use ModScalarTable, only: DeepCopyToScalarTab, DeepCopyFromScalarTab
+
   use ModScalarTable, only: &
        ScalarTable
 
@@ -1398,8 +1398,6 @@ contains
     integer, intent(inout) :: oneScalarTabSize
     integer :: n, mxyzp
 
-    call DeepCopyToScalarTab(oneScalarTab, oneScalarTabSize)
-
     !     Apply lateral, top, and bottom boundary conditions.
 
     do n = 1,oneScalarTabSize
@@ -1447,8 +1445,6 @@ contains
        enddo
     endif
 
-    call DeepCopyFromScalarTab(oneScalarTab, oneScalarTabSize)
-    
   end subroutine trsets
 
   subroutine botset_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpx,aa,vnam)

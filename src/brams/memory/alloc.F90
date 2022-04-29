@@ -53,7 +53,7 @@ subroutine dealloc_all()
 
   integer :: ng
 
-  deallocate(num_var,vtab_r,scalar_tab,num_scalar)
+  deallocate(num_var,vtab_r)
 
   call dealloc_tend(naddsc)
   call dealloc_scratch()

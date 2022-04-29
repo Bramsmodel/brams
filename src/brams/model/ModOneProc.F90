@@ -64,9 +64,7 @@ module ModOneProc
 
   use var_tables, only: &
        num_var,         &
-       vtab_r, &
-       num_scalar, &
-       scalar_tab
+       vtab_r
 
   use mem_micro, only: &
        micro_g
@@ -745,13 +743,6 @@ contains
     oneGrid => oneGridTreeNode%curr
 
     ngrids = oneNamelistFile%ngrids
-    ! antecipate allocate scalar table, for the moment
-    allocate(num_scalar(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error(h//"Allocating num_scalar")
-    allocate(scalar_tab(maxsclr,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error(h//"Allocating scalar_tab")
-    num_scalar(:) = 0
-    !-------------
     
     ! Allocating dxtmax_local
 

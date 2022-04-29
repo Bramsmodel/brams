@@ -20,9 +20,7 @@ contains
     !! Please, read @link https://creativecommons.org/licenses/GPL/2.0/legalcode.pt
 
     use ModScalarTable, only: &
-         ScalarTable, &
-         DeepCopyToScalarTab, &
-         DeepCopyFromScalarTab
+         ScalarTable
 
     use grid_dims, only: maxgrds, nzpmax
     use mem_tend, only: tend
@@ -71,8 +69,6 @@ contains
 
     integer, dimension(maxgrds), save :: ncall
     data ncall/maxgrds*0/
-
-    call DeepCopyToScalarTab(oneScalarTab, oneScalarTabSize)
 
     if (ncall(ngrid) == 0 .or. dtlt .ne. save_dtlt(ngrid) ) then
        ncall(ngrid) = 1
@@ -277,7 +273,6 @@ contains
        enddo
 
     endif
-    call DeepCopyFromScalarTab(oneScalarTab, oneScalarTabSize)
   end subroutine advectc
 end module ModRadvc
 

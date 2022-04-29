@@ -25,10 +25,6 @@ module ModMonotonicAdvection
        Grid, &
        DumpGrid
 
-  use ModScalarTable, only: &
-       DeepCopyToScalarTab, &
-       DeepCopyFromScalarTab       
-
   use ModNamelistFile, only: &
        NamelistFile
 
@@ -690,8 +686,6 @@ contains
        i_scl=2                                            !- all scalars, but not theta_il
     end if
 
-    call DeepCopyToScalarTab(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
-
     !srf- do n=1,oneGrid%ScalarTabSize     ! original
     do n=i_scl,oneGrid%ScalarTabSize
 
@@ -776,8 +770,6 @@ contains
 
 
     end do
-
-    call DeepCopyFromScalarTab(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
 
     ! destroy local memory area for large GhostZoneWidth variables
 

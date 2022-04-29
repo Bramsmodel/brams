@@ -24,9 +24,7 @@ module ModRtimi
        tend
 
   use ModScalarTable, only: &
-       ScalarTable, &
-       DeepCopyToScalarTab, &
-       DeepCopyFromScalarTab
+       ScalarTable
 
   use node_mod, only: &
        mxp, &
@@ -68,8 +66,6 @@ contains
     integer :: n
     integer(kind=i8) :: mxyzp
 
-    call DeepCopyToScalarTab(oneScalarTab, oneScalarTabSize)
-
     !     This routine simply sets all tendency arrays to zero.
 
     !     First u,v tendencies
@@ -103,8 +99,6 @@ contains
 
        call azero_l(mxyzp, oneScalarTab(n)%var_t_1D)
     enddo
-
-    call DeepCopyFromScalarTab(oneScalarTab, oneScalarTabSize)
 
   end subroutine tend0
 
@@ -205,8 +199,6 @@ contains
 
     !   -  Step thermodynamic variables from  t  to  t+1.
 
-    call DeepCopyToScalarTab(oneScalarTab, oneScalarTabSize)
-    
     mxyzp = mxp * myp * mzp
 
     do n = 1, oneScalarTabSize
@@ -230,8 +222,6 @@ contains
           call fatal_error(h//" no var_p_XD associated for "//trim(oneScalarTab(n)%name))
        end if
     enddo
-
-    call DeepCopyFromScalarTab(oneScalarTab, oneScalarTabSize)
 
   end subroutine predtr
 end module ModRtimi

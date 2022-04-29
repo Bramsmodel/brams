@@ -25,7 +25,6 @@ module ModAdvectc_rk
   ! differs only on the type of these two formal arguments at
   ! the interface
 
-  use ModScalarTable, only: DeepCopyToScalarTab, DeepCopyFromScalarTab
   use grid_dims, only: maxgrds, nzpmax
   use mem_tend, only: tend
   use mem_grid, only: ngrid, grid_g, dtlt, if_adap, jdim, time, &
@@ -561,8 +560,6 @@ contains
        call MsgDump(h//" starts with varn="//trim(varn))
     end if
 
-    call DeepCopyToScalarTab(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
-    
     mxyzp = mxp * myp * mzp
 
     allocate(vt3da(mzp,mxp,myp), stat=ierr)
@@ -976,8 +973,6 @@ contains
        call fatal_error(h//" deallocate mfz_wind fails with stat="//&
             trim(adjustl(str(1))))
     end if
-    call DeepCopyFromScalarTab(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
-
   end subroutine advectc_rk
 
   subroutine mf_wind(m1,m2,m3,ia,iz,ja,jz,izu,jzv,itopo, hw4, jdim, dzt, dzm,&

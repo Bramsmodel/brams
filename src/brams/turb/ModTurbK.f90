@@ -13,9 +13,7 @@ module ModTurbK
        basic_g                !  %up(IN), %vp(IN)
 
   use ModScalarTable, only:  &
-       ScalarTable, &
-       DeepCopyToScalarTab, &
-       DeepCopyFromScalarTab
+       ScalarTable
 
   use mem_turb, only:    &
        idiffk,           &    !INTENT(IN)
@@ -146,8 +144,6 @@ contains
     ! Nullifing pointer to Large Scale Forcing for GRELL CUPAR - Not used
     !nullify(lsfcupar_p)
     !
-
-    call DeepCopyToScalarTab(oneScalarTab, oneScalarTabSize)
 
     mxyzp = mxp*myp*mzp
 
@@ -656,8 +652,6 @@ contains
        endif
 
     enddo
-
-    call DeepCopyFromScalarTab(oneScalarTab, oneScalarTabSize)
 
   end subroutine diffuse
 end module ModTurbK

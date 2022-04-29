@@ -12,11 +12,6 @@ module ModScalarTable
   use ModParallelEnvironment, only: &
        MsgDump
   
-  use var_tables, only: &
-       num_scalar, &
-       scalar_tab, &
-       InsertScalarTab
-
   implicit none
   private
   public :: ScalarTable
@@ -24,8 +19,6 @@ module ModScalarTable
   public :: DestroyScalarTab
   public :: DumpScalarTab
   public :: InsertAtScalarTab
-  public :: DeepCopyToScalarTab
-  public :: DeepCopyFromScalarTab
 
   include "constants.h"
 
@@ -207,10 +200,6 @@ contains
     ScalarTab(ScalarTabSize)%a_var_p_1D => varp
     ScalarTab(ScalarTabSize)%a_var_t_1D => vart
 
-    ! for the moment, scalar_tab should be consistent with ScalarTab
-
-    call InsertScalarTab(varp, vart, 1, tabstr, size(varp))
-
     if (dumpLocal) then
        write(str(1),"(i8)") ScalarTabSize
        call MsgDump(h//" inserted at ScalarTab position "//&
@@ -267,10 +256,6 @@ contains
     ScalarTab(ScalarTabSize)%var_t_1D => vart
     ScalarTab(ScalarTabSize)%a_var_p_1D(1:size(varp)) => varp(:,:)
     ScalarTab(ScalarTabSize)%a_var_t_1D => vart
-
-    ! for the moment, scalar_tab should be consistent with ScalarTab
-
-    call InsertScalarTab(varp, vart, 1, tabstr, size(varp))
 
     if (dumpLocal) then
        write(str(1),"(i8)") ScalarTabSize
@@ -329,10 +314,6 @@ contains
     ScalarTab(ScalarTabSize)%a_var_p_1D(1:size(varp)) => varp(:,:,:)
     ScalarTab(ScalarTabSize)%a_var_t_1D => vart
 
-    ! for the moment, scalar_tab should be consistent with ScalarTab
-
-    call InsertScalarTab(varp, vart, 1, tabstr, size(varp))
-    
     if (dumpLocal) then
        write(str(1),"(i8)") ScalarTabSize
        call MsgDump(h//" inserted at ScalarTab position "//&
@@ -340,164 +321,4 @@ contains
             StringScalarTableEntry(ScalarTab(ScalarTabSize)))
     end if
   end subroutine InsertAtScalarTab_3D
-
-
-
-
-  
-  subroutine DeepCopyToScalarTab(oneScalarTab, oneScalarTabSize)
-    type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
-    integer, intent(inout) :: oneScalarTabSize
-
-    integer :: ng
-    integer :: ierr
-    integer :: iEle
-    integer :: nEle
-    integer :: dim1
-    integer :: dim2
-    integer :: dim3
-
-    character(len=8) :: str(10)
-    character(len=*), parameter :: h="**(DeepCopyToScalarTab)**"
-    logical, parameter :: dumpLocal=.false.
-
-    if (dumpLocal) then
-       call MsgDump(h//" starts")
-    end if
-
-    ng=1
-    nEle=num_scalar(ng)
-    oneScalarTabSize=nEle
-
-    do iEle = 1, nEle
-       oneScalarTab(iEle)%name = scalar_tab(iEle,ng)%name
-
-       if (associated(scalar_tab(iEle,ng)%a_var_p_3D)) then
-          call fatal_error(h//" a_var_p_3D associated for "//&
-               trim(adjustl(scalar_tab(iEle,ng)%name)))
-       end if
-
-       if (associated(scalar_tab(iEle,ng)%a_var_t_3D)) then
-          call fatal_error(h//" a_var_t_3D associated for "//&
-               trim(adjustl(scalar_tab(iEle,ng)%name)))
-       end if
-
-       if (associated(scalar_tab(iEle,ng)%a_var_p)) then
-          oneScalarTab(iEle)%a_var_p_1D => scalar_tab(iEle,ng)%a_var_p
-       else
-          nullify(oneScalarTab(iEle)%a_var_p_1D)
-       end if
-
-       if (associated(scalar_tab(iEle,ng)%a_var_t)) then
-          oneScalarTab(iEle)%a_var_t_1D => scalar_tab(iEle,ng)%a_var_t
-       else
-          nullify(oneScalarTab(iEle)%a_var_t_1D)
-       end if
-
-       if (associated(scalar_tab(iEle,ng)%var_p_1D)) then
-          oneScalarTab(iEle)%var_p_1D => scalar_tab(iEle,ng)%var_p_1D
-       else
-          nullify(oneScalarTab(iEle)%var_p_1D)
-       end if
-
-       if (associated(scalar_tab(iEle,ng)%var_p_2D)) then
-          oneScalarTab(iEle)%var_p_2D => scalar_tab(iEle,ng)%var_p_2D
-       else
-          nullify(oneScalarTab(iEle)%var_p_2D)
-       end if
-
-       if (associated(scalar_tab(iEle,ng)%var_p_3D)) then
-          oneScalarTab(iEle)%var_p_3D => scalar_tab(iEle,ng)%var_p_3D
-       else
-          nullify(oneScalarTab(iEle)%var_p_3D)
-       end if
-
-       if (associated(scalar_tab(iEle,ng)%var_t_1D)) then
-          oneScalarTab(iEle)%var_t_1D => scalar_tab(iEle,ng)%var_t_1D
-       else
-          nullify(oneScalarTab(iEle)%var_t_1D)
-       end if
-    end do
-
-    if (dumpLocal) then
-       write(str(1),"(i8)") nEle
-       call MsgDump(h//" finishes building ScalarTab with "//&
-            trim(adjustl(str(1)))//" entries")
-    end if
-
-  end subroutine DeepCopyToScalarTab
-
-
-
-
-
-
-  subroutine DeepCopyFromScalarTab(oneScalarTab, oneScalarTabSize)
-    type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
-    integer, intent(in) :: oneScalarTabSize
-
-    integer :: ng
-    integer :: iEle
-    integer :: nEle
-
-    character(len=8) :: str(10)
-    character(len=*), parameter :: h="**(DeepCopyFromScalarTab)**"
-    logical, parameter :: dumpLocal=.false.
-
-    if (dumpLocal) then
-       call MsgDump(h//" starts")
-    end if
-
-    ng=1
-    nEle=oneScalarTabSize
-    num_scalar(1)=nEle
-    
-    do iEle = 1, nEle
-       scalar_tab(iEle,ng)%name = oneScalarTab(iEle)%name
-
-       if (associated(oneScalarTab(iEle)%a_var_p_1D)) then
-          scalar_tab(iEle,ng)%a_var_p => oneScalarTab(iEle)%a_var_p_1D
-       else
-          nullify(scalar_tab(iEle,ng)%a_var_p)
-       end if
-
-       if (associated(oneScalarTab(iEle)%a_var_t_1D)) then
-          scalar_tab(iEle,ng)%a_var_t => oneScalarTab(iEle)%a_var_t_1D
-       else
-          nullify(scalar_tab(iEle,ng)%a_var_t)
-       end if
-
-       if (associated(oneScalarTab(iEle)%var_p_1D)) then
-          scalar_tab(iEle,ng)%var_p_1D => oneScalarTab(iEle)%var_p_1D
-       else
-          nullify(scalar_tab(iEle,ng)%var_p_1D)
-       end if
-
-       if (associated(oneScalarTab(iEle)%var_p_2D)) then
-          scalar_tab(iEle,ng)%var_p_2D => oneScalarTab(iEle)%var_p_2D
-       else
-          nullify(scalar_tab(iEle,ng)%var_p_2D)
-       end if
-
-       if (associated(oneScalarTab(iEle)%var_p_3D)) then
-          scalar_tab(iEle,ng)%var_p_3D => oneScalarTab(iEle)%var_p_3D
-       else
-          nullify(scalar_tab(iEle,ng)%var_p_3D)
-       end if
-
-       if (associated(oneScalarTab(iEle)%var_t_1D)) then
-          scalar_tab(iEle,ng)%var_t_1D => oneScalarTab(iEle)%var_t_1D
-       else
-          nullify(scalar_tab(iEle,ng)%var_t_1D)
-       end if
-
-    end do
-    
-    if (dumpLocal) then
-       write(str(1),"(i8)") nEle
-       call MsgDump(h//" finishes building ScalarTab with "//&
-            trim(adjustl(str(1)))//" entries")
-    end if
-  end subroutine DeepCopyFromScalarTab
-  
 end module ModScalarTable

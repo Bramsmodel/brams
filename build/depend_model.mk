@@ -164,8 +164,7 @@ micphys.o : $(MICRO)/micphys.f90 grid_dims.o ModNamelistFile.o
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModScalarTable.o : $(MEMORY)/ModScalarTable.f90 ModParallelEnvironment.o \
-	var_tables.o 
+ModScalarTable.o : $(MEMORY)/ModScalarTable.f90 ModParallelEnvironment.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

@@ -1,9 +1,7 @@
 module ModDiffuse
 
   use ModScalarTable, only:  &
-       ScalarTable, &
-       DeepCopyToScalarTab, &
-       DeepCopyFromScalarTab
+       ScalarTable
 
   use mem_tend,  only:    &
        tend                   ! %tket, %epst, %ut, %vt, %wt
@@ -117,8 +115,6 @@ contains
     !
     ! (JP) removing scr2 from scratch
     real, target :: scr2(mxp*myp*mzp)
-
-    call DeepCopyToScalarTab(oneScalarTab, oneScalarTabSize)
 
     mxyzp = mxp*myp*mzp
 
@@ -434,8 +430,6 @@ contains
        enddo
 
     enddo
-
-    call DeepCopyFromScalarTab(oneScalarTab, oneScalarTabSize)
 
   end subroutine diffuse_brams31
 end module ModDiffuse

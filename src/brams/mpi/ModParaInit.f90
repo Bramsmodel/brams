@@ -31,9 +31,7 @@ contains
   subroutine NodePathsBuffAlloc(oneScalarTab, oneScalarTabSize)
 
     use ModScalarTable, only: &
-         ScalarTable, &
-         DeepCopyToScalarTab, &
-         DeepCopyFromScalarTab
+         ScalarTable
 
     use grid_dims, only: &
          maxmach,        &
@@ -100,8 +98,6 @@ contains
     integer :: ixyz
     integer :: memf
 
-
-    call DeepCopyToScalarTab(oneScalarTab, oneScalarTabSize)
 
     ! Determine node sending paths and numbers of receiving nodes
 
@@ -229,8 +225,6 @@ contains
        enddo !ng
 
     enddo !idn
-
-    call DeepCopyFromScalarTab(oneScalarTab, oneScalarTabSize)
 
   end subroutine NodePathsBuffAlloc
   !
