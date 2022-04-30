@@ -9,12 +9,17 @@
 
 module mem_cuparm
 
-  use ModNamelistFile, only: namelistFile
+  use ModNamelistFile, only: &
+       namelistFile
 
   use grid_dims, only: &
        maxgrds,        & ! INTENT(IN)
        maxfiles          ! INTENT(IN)
 
+!!$  use var_tables
+
+  implicit none
+  
   type cuparm_vars
 
      ! Variables to be dimensioned by (nzp,nxp,nyp)
@@ -71,7 +76,6 @@ module mem_cuparm
 contains
 
   logical function hasAconpr(ng)
-    implicit none
     integer, intent(IN) :: ng
 
     hasAconpr = nnqparm(ng)>= 1 .or. if_cuinv == 1
@@ -79,8 +83,6 @@ contains
   end function hasAconpr
 
   subroutine alloc_cuparm(cuparm, n1, n2, n3, ng)
-
-    implicit none
     ! Arguments:
     type (cuparm_vars), intent(INOUT) :: cuparm
     integer, intent(IN)               :: n1, n2, n3, ng
@@ -138,8 +140,6 @@ contains
 
   ! ----------------------------------------------------------------------
   subroutine alloc_cuparm_sh(cuparm,n1,n2,n3,ng)
-
-    implicit none
     type (cuparm_vars) :: cuparm
     integer, intent(in) :: n1,n2,n3,ng
     character(len=*), parameter :: h="**(alloc_cuparm)**"
@@ -158,8 +158,6 @@ contains
   ! ----------------------------------------------------------------------
 
   subroutine nullify_cuparm(cuparm)
-
-    implicit none
     ! Arguments:
     type (cuparm_vars), intent(INOUT) :: cuparm
 
@@ -180,8 +178,6 @@ contains
   ! ----------------------------------------------------------------------
 
   subroutine dealloc_cuparm(cuparm)
-
-    implicit none
     ! Arguments:
     type (cuparm_vars), intent(INOUT) :: cuparm
 
@@ -202,8 +198,8 @@ contains
   ! ----------------------------------------------------------------------
 
   subroutine filltab_cuparm_sh(cuparm, cuparmm, imean, n1, n2, n3, ng)
-    use var_tables
-    implicit none
+    use var_tables, only: &
+         InsertVtab
     include "constants.h"
     ! Arguments:
     type (cuparm_vars), intent(IN) :: cuparm, cuparmm
@@ -227,9 +223,8 @@ contains
   ! ----------------------------------------------------------------------
 
   subroutine filltab_cuparm(cuparm, cuparmm, imean, n1, n2, n3, ng)
-    use var_tables
-
-    implicit none
+    use var_tables, only: &
+         InsertVtab
     include "constants.h"
     ! Arguments:
     type (cuparm_vars), intent(IN) :: cuparm, cuparmm
@@ -280,7 +275,6 @@ contains
   end subroutine filltab_cuparm
 
   subroutine StoreNamelistFileAtMem_cuparm(oneNamelistFile)
-    implicit none
     type(namelistFile), pointer :: oneNamelistFile
     confrq = oneNamelistFile%confrq
     cu_prefix = oneNamelistFile%cu_prefix

@@ -8,13 +8,200 @@
 
 subroutine commio (cfile,io,iun)
 
-  use mem_all
+
+  use io_params, only: &
+       ioutput, &
+       iinput, &
+       ntopsmth, &
+       izflat
+
+  use grid_dims, only: &
+       nzgmax
+
+  use mem_cuparm, only: &
+       nnqparm, &
+       wcldbs, &
+       confrq
+
+  use mem_grid, only: &
+       iversion, &
+       expnme, &
+       if_adap, &
+       ngrids, &
+       nzg, &
+       nzs, &
+       naddsc, &
+       time, &
+       ztop, &
+       polelat, &
+       polelon, &
+       dzrat, &
+       dzmax, &
+       nnxp, &
+       nnyp, &
+       nnzp, &
+       nndtrat, &
+       nstratx, &
+       nstraty, &
+       ngbegun, &
+       nnacoust, &
+       nxtnest, &
+       nnsttop, &
+       nnstbot, &
+       ninest, &
+       njnest, &
+       nknest, &
+       gridu, &
+       gridv, &
+       centlat, &
+       centlon, &
+       dimove, &
+       djmove, &
+       deltazn, &
+       deltaxn, &
+       deltayn, &
+       platn, &
+       plonn, &
+       zz, &
+       nestz1, &
+       nestz2, &
+       nstratz1, &
+       nstratz2, &
+       xmn, &
+       xtn, &
+       ymn, &
+       ytn, &
+       zmn, &
+       ztn, &
+       dzmn, &
+       dztn, &
+       itopo, &
+       initial, &
+       impl, &
+       jdim, &
+       iadvl, &
+       iadvf, &
+       lsflg, &
+       ibnd, &
+       jbnd, &
+       icorflg, &
+       vveldamp, &
+       ihtran, &
+       nfpt, &
+       ideltat, &
+       nacoust, &
+       iflag, &
+       iyear1, &
+       imonth1, &
+       idate1, &
+       itime1, &
+       npatch, &
+       distim, &
+       eps, &
+       cphas, &
+       sspct
+
+  use mem_leaf, only: &
+       isfcl, &
+       nvegpat, &
+       drtcon, &
+       seatmp, &
+       albedo, &
+       dthcon, &
+       slz
+
+  use mem_radiate, only: &
+       lonrad, &
+       ilwrtyp, &
+       iswrtyp, &
+       radfrq
+
+  use mem_turb, only: &
+       idiffk, &
+       akmin, &
+       csz, &
+       csx, &
+       xkhkm, &
+       zkhkm, &
+       brunt, &
+       rmin, &
+       rmax
+
+  use micphys, only: &
+       nhcat, &
+       mcphys_type, &
+       level, &
+       irain, &
+       ipris, &
+       isnow, &
+       iaggr, &
+       igraup, &
+       icloud, &
+       ihail, &
+       rparm, &
+       pparm, &
+       sparm, &
+       aparm, &
+       gparm, &
+       cparm, &
+       hparm, &
+       cfmas, &
+       pwmas
+
+  use ref_sounding, only: &
+       maxsndg, &
+       u01dn, &
+       v01dn, &
+       pi01dn, &
+       th01dn, &
+       dn01dn, &
+       rt01dn, &
+       iref, &
+       jref, &
+       nsndg, &
+       topref, &
+       us, &
+       vs, &
+       ts, &
+       thds, &
+       ps, &
+       hs
+
+  use leaf_coms, only: &
+       nstyp, &
+       nvtyp, &
+       nvtyp_teb, &
+       kroot, &
+       slden, &
+       slcpd, &
+       slbs, &
+       slcond, &
+       slcons, &
+       slmsts, &
+       slpots, &
+       ssand, &
+       sclay, &
+       sorgan, &
+       sporo, &
+       soilcp, &
+       slfc, &
+       emisg, &
+       emisv, &
+       root, &
+       cmin, &
+       corg, &
+       cwat, &
+       cair, &
+       cka, &
+       ckw
+
+!!$  use mem_all
   use leaf_coms
-!--(DMK-CCATT-INI)-----------------------------------------------------
+  !--(DMK-CCATT-INI)-----------------------------------------------------
   use mem_stilt, only: &
        iexev,          &
        imassflx
-!--(DMK-CCATT-END)-----------------------------------------------------
+  !--(DMK-CCATT-END)-----------------------------------------------------
 
   implicit none
   integer :: iun
@@ -118,12 +305,12 @@ subroutine commio (cfile,io,iun)
   ie=cio_i(iun,irw,'jbnd',jbnd,1)
   ie=cio_i(iun,irw,'icorflg',icorflg,1)
   ie=cio_i(iun,irw,'vveldamp',vveldamp,1)
-!--(DMK-CCATT)---------------------------------------------------------
-![ML
+  !--(DMK-CCATT)---------------------------------------------------------
+  ![ML
   ie=cio_i(iun,irw,'iexev',iexev,1)
   ie=cio_i(iun,irw,'imassflx',imassflx,1)
-!ML]
-!--(DMK-CCATT-END)-----------------------------------------------------
+  !ML]
+  !--(DMK-CCATT-END)-----------------------------------------------------
   ie=cio_i(iun,irw,'ilwrtyp',ilwrtyp,1)
   ie=cio_i(iun,irw,'iswrtyp',iswrtyp,1)
   ie=cio_i(iun,irw,'iref',iref,1)
@@ -364,5 +551,3 @@ integer function cio_c(iun,irw,cstr,ia,n)
 
   return
 end function cio_c
-
-

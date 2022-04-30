@@ -15,7 +15,6 @@ module mem_scratch
   ! are dimensioned to store the full domain, not the mpi decomposed one
   !
 
-  use grid_dims
   use mem_aerad,   only: nwave      !intent(in)
   use mem_radiate, only: ilwrtyp, & !intent(in)
        iswrtyp                      !intent(in)

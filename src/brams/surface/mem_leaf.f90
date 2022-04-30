@@ -9,9 +9,11 @@
 
 Module mem_leaf
 
-  use ModNamelistFile, only: namelistFile
+  use ModNamelistFile, only: &
+       namelistFile
 
-  use grid_dims
+  use grid_dims, only: &
+       nzgmax
 
   Type leaf_vars
 

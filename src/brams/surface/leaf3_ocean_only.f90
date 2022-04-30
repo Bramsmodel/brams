@@ -44,8 +44,31 @@ end subroutine alloc_ocean_only
 
 subroutine sfclyr_ocean_only(mzp,mxp,myp,ia,iz,ja,jz,ibcon)
 
-  use mem_all
+  use mem_basic, only: &
+       basic_g
+
+  use mem_leaf, only: &
+       leaf_g
+
+  use mem_grid, only: &
+       grid_g, &
+       jdim, &
+       npatch, &
+       nstbot, &
+       nzg, &
+       nzs
+
+  use mem_cuparm, only: &
+       cuparm_g
+
+  use mem_micro, only: &
+       micro_g
   
+  use mem_turb, only: &
+       turb_g
+
+  use mem_radiate, only: &
+       radiate_g
   implicit none
 
   !Arguments:

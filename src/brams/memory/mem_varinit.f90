@@ -11,7 +11,9 @@ module mem_varinit
 
   use ModNamelistFile, only: namelistFile
 
-  use grid_dims
+  use grid_dims, only: &
+       maxfiles, &
+       maxgrds
 
 !--(DMK-CCATT-INI)-----------------------------------------------------
   use chem1_list, only: &

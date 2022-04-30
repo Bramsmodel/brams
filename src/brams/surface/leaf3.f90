@@ -9,6 +9,8 @@
 subroutine sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon)
 
   use mem_all
+  use mem_basic, only: &
+       basic_g
 
   ! TEB_SPM
   use teb_spm_start, only: TEB_SPM    ! INTENT(IN)

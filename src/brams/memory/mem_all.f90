@@ -9,7 +9,7 @@
 
 module mem_all
 
-  use mem_basic
+!!$  use mem_basic
   use mem_cuparm
   use mem_grid
   use mem_leaf

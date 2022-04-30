@@ -28,8 +28,6 @@ contains
 
   subroutine alloc_nestb(oneScalarTabSize,ng,nx,ny,nz)
 
-    use var_tables
-
     implicit none
     integer, intent(in) :: oneScalarTabSize
     integer :: ng,nx,ny,nz

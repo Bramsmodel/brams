@@ -16,7 +16,6 @@ contains
   subroutine alloc_scratch1(oneScalarTabSize, &
        nodebounds,maxgrds,ngrids,mmzp,mynum)
 
-    use var_tables
 
     implicit none
 

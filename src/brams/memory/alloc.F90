@@ -9,7 +9,13 @@
 
 subroutine dealloc_all()
 
+  use mem_basic, only: &
+       basic_g, &
+       basicm_g, &
+       dealloc_basic
+  
   use mem_all
+  
 #ifdef JULES
   use mem_jules
 #endif

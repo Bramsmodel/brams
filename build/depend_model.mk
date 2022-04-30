@@ -2381,7 +2381,7 @@ modIau.o : $(MODEL)/modIau.f90 dump.o $(UTILS_INCS)/constants.h var_tables.o
 	$(F_COMMAND) $(<F:.F90=.F90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-modPrintInitial.o : $(INIT)/modPrintInitial.F90 dump.o $(UTILS_INCS)/constants.h
+modPrintInitial.o : $(INIT)/modPrintInitial.F90 $(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.F90=.F90)
 	$(F_COMMAND) $(<F:.F90=.F90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

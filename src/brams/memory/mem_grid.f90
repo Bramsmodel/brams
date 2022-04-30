@@ -9,9 +9,15 @@
 
 module mem_grid
 
-  use ModNamelistFile, only: namelistFile
+  use ModNamelistFile, only: &
+       namelistFile
 
-  use grid_dims
+  use grid_dims, only: &
+       maxgrds, &
+       nzpmax
+
+  use var_tables, only: &
+       InsertVTab
 
   implicit none
   private
@@ -1057,8 +1063,6 @@ contains
 
 
   subroutine filltab_grid(grid,gridm,imean,n1,n2,n3,ng)
-    use var_tables
-
     implicit none
     type (grid_vars) :: grid,gridm
     integer, intent(in) :: imean,n1,n2,n3,ng
