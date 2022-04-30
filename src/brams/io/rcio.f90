@@ -195,7 +195,6 @@ subroutine commio (cfile,io,iun)
        cka, &
        ckw
 
-!!$  use mem_all
   use leaf_coms
   !--(DMK-CCATT-INI)-----------------------------------------------------
   use mem_stilt, only: &

@@ -13,9 +13,53 @@ subroutine dealloc_all()
        basic_g, &
        basicm_g, &
        dealloc_basic
-  
-  use mem_all
-  
+
+
+  use mem_cuparm, only: &
+       cuparm_g, &
+       cuparmm_g
+
+  use mem_grid, only: &
+       grid_g, &
+       gridm_g, &
+       naddsc, &
+       ngrids
+
+  use mem_leaf, only: &
+       leaf_g, &
+       leafm_g
+
+  use mem_micro, only: &
+       micro_g, &
+       microm_g
+
+  use mem_oda, only: &
+       oda_g, &
+       odam_g
+
+  use mem_radiate, only: &
+       ilwrtyp, &
+       iswrtyp, &
+       radiate_g, &
+       radiatem_g
+
+  use mem_scalar, only: &
+       scalar_g, &
+       scalarm_g, &
+       dealloc_scalar
+
+  use mem_turb, only: &
+       turb_g, &
+       turbm_g
+
+  use mem_varinit, only: &
+       varinit_g, &
+       varinitm_g
+
+  use var_tables, only: &
+       num_var, &
+       vtab_r
+
 #ifdef JULES
   use mem_jules
 #endif
@@ -23,10 +67,10 @@ subroutine dealloc_all()
 
   use mem_opt    ! Needed for optimization - ALF
 
-!--(DMK-CCATT-INI)-----------------------------------------------------
-!  use catt_start, only: &
-!       CATT                        ! intent(in)
-!--(DMK-CCATT-FIM)-----------------------------------------------------
+  !--(DMK-CCATT-INI)-----------------------------------------------------
+  !  use catt_start, only: &
+  !       CATT                        ! intent(in)
+  !--(DMK-CCATT-FIM)-----------------------------------------------------
 
   use mem_aerad, only: &
        nwave,          &         !INTENT(IN)
@@ -52,6 +96,35 @@ subroutine dealloc_all()
        gaspart_g, gaspartm_g, &
        dealloc_gaspart          ! Subroutine
 
+  use mem_scratch, only: &
+       dealloc_scratch
+
+  use mem_cuparm, only: &
+       dealloc_cuparm
+
+  use mem_grid, only: &
+       dealloc_grid
+
+  use mem_leaf, only: &
+       dealloc_leaf
+
+  use mem_micro, only: &
+       dealloc_micro
+
+  use mem_radiate, only: &
+       dealloc_radiate
+
+  use mem_turb, only: &
+       dealloc_turb
+
+  use mem_oda, only: &
+       dealloc_oda
+
+  use mem_varinit, only: &
+       dealloc_varinit
+
+  use mem_tend, only: &
+       dealloc_tend
 
   implicit none
 
