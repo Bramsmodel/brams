@@ -107,7 +107,7 @@ an_header.o  : $(UTILS_MODS)/an_header.f90
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-sfclyr_jules.o : $(JULES_DIR)/sfclyr_jules.f90 mem_all.o leaf_coms.o rconstants.o mem_globaer.o \
+sfclyr_jules.o : $(JULES_DIR)/sfclyr_jules.f90  leaf_coms.o rconstants.o mem_globaer.o \
 	node_mod.o mem_jules.o mem_carma.o io_constants.o mem_brams_jules.o gridbox_mean_mod.o csigma_mod.o \
 	model_time_mod.o jules_fields_mod.o sf_diags_mod.o gridmean_fluxes.o fluxes.o
 	@cp -f $< $(<F:.f90=.f90)
@@ -364,15 +364,6 @@ mem_oda.o : $(FDDA)/mem_oda.f90 grid_dims.o var_tables.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mem_all.o : $(MEMORY)/mem_all.f90 mem_basic.o mem_cuparm.o \
-	mem_grid.o mem_leaf.o mem_micro.o mem_radiate.o mem_scalar.o \
-	mem_scratch.o mem_scratch1_brams.o mem_tend.o mem_turb.o \
-	mem_varinit.o mem_nestb.o mem_oda.o var_tables.o \
-	io_params.o micphys.o ref_sounding.o
-	@cp -f $< $(<F:.f90=.f90)
-	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-	rm -f $(<F:.f90=.f90)
-
 obs_input.o : $(FDDA)/obs_input.f90
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
@@ -527,7 +518,7 @@ ModOutputUtils.o : $(IO)/ModOutputUtils.f90 var_tables.o mem_basic.o mem_turb.o 
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-alloc.o : $(MEMORY)/alloc.F90 mem_all.o mem_opt_scratch.o mem_shcu.o \
+alloc.o : $(MEMORY)/alloc.F90  mem_opt_scratch.o mem_shcu.o \
 	mem_aerad.o mem_globaer.o mem_globrad.o \
 	teb_spm_start.o mem_teb.o mem_teb_common.o mem_gaspart.o $(JULES_OBJ_MEM)
 	@cp -f $< $(<F:.f90=.f90)
@@ -535,7 +526,7 @@ alloc.o : $(MEMORY)/alloc.F90 mem_all.o mem_opt_scratch.o mem_shcu.o \
 	rm -f $(<F:.f90=.f90)
 
 ModMemAlloc.o : $(MEMORY)/ModMemAlloc.F90  extra.o \
-	mem_aerad.o mem_all.o mem_carma.o mem_grell.o mem_grell_param2.o \
+	mem_aerad.o  mem_carma.o mem_grell.o mem_grell_param2.o \
 	mem_opt_scratch.o mem_scratch1_grell.o mem_scratch2_grell.o \
 	mem_scratch2_grell_sh.o mem_scratch3_grell.o \
 	mem_scratch3_grell_sh.o mem_shcu.o mem_tuv.o \
@@ -723,7 +714,7 @@ landuse_input.o : $(MKSFC)/landuse_input.f90  mem_mksfc.o rconstants.o
 	rm -f $(<F:.f90=.f90)
 
 
-leaf3.o : $(SURFACE)/leaf3.f90  node_mod.o io_params.o leaf_coms.o mem_all.o \
+leaf3.o : $(SURFACE)/leaf3.f90  node_mod.o io_params.o leaf_coms.o  \
 	mem_turb.o mem_radiate.o micphys.o \
 	ccatt_start.o \
         mem_basic.o mem_cuparm.o mem_grid.o mem_leaf.o mem_micro.o \
@@ -733,7 +724,7 @@ leaf3.o : $(SURFACE)/leaf3.f90  node_mod.o io_params.o leaf_coms.o mem_all.o \
 	rm -f $(<F:.f90=.f90)
 
 leaf3_ocean_only.o : $(SURFACE)/leaf3_ocean_only.f90  node_mod.o io_params.o  \
-        leaf_coms.o mem_all.o mem_turb.o mem_radiate.o micphys.o \
+        leaf_coms.o  mem_turb.o mem_radiate.o micphys.o \
 	ccatt_start.o mem_basic.o mem_cuparm.o mem_grid.o mem_leaf.o mem_micro.o \
         mem_scratch.o rconstants.o 
 	@cp -f $< $(<F:.f90=.f90)
@@ -1293,7 +1284,7 @@ soilMoisture.o : $(SOIL_MOISTURE)/soilMoisture.F90 \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rcio.o : $(IO)/rcio.f90  leaf_coms.o mem_all.o mem_stilt.o
+rcio.o : $(IO)/rcio.f90  leaf_coms.o  mem_stilt.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1323,7 +1314,7 @@ recycle.o : $(IO)/recycle.f90  io_params.o mem_grid.o mem_leaf.o \
 	rm -f $(<F:.f90=.f90)
 
 rthrm.o : $(MODEL)/rthrm.f90  mem_basic.o mem_grid.o mem_micro.o \
-	mem_scratch.o micphys.o rconstants.o mem_all.o mem_basic.o \
+	mem_scratch.o micphys.o rconstants.o  mem_basic.o \
 	mem_cuparm.o mem_grid.o mem_leaf.o mem_oda.o mem_radiate.o \
 	mem_scalar.o mem_turb.o mem_varinit.o micphys.o node_mod.o \
 	rconstants.o shcu_vars_const.o
@@ -1593,7 +1584,7 @@ chem_spack_fexchem.o : $(MODEL_CHEM)/chem_spack_fexchem.f90 chem_spack_rates.o
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-chem_spack_ros.o : $(CCATT)/chem_spack_ros.f90 chem_spack_lu.o mem_scalar.o mem_grid.o mem_all.o\
+chem_spack_ros.o : $(CCATT)/chem_spack_ros.f90 chem_spack_lu.o mem_scalar.o mem_grid.o \
         mem_basic.o mem_micro.o mem_radiate.o chem1_list.o mem_chem1.o aer1_list.o mem_aer1.o \
 	chem_spack_solve_sparse.o mem_spack.o chem_fastjx_driv.o chem_spack_jacdchemdc.o \
 	chem_spack_kinetic.o chem_spack_fexchem.o chem_uv_att.o
@@ -1601,21 +1592,21 @@ chem_spack_ros.o : $(CCATT)/chem_spack_ros.f90 chem_spack_lu.o mem_scalar.o mem_
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-chem_spack_ros_dyndt.o : $(CCATT)/chem_spack_ros_dyndt.f90 chem_spack_lu.o mem_scalar.o mem_grid.o mem_all.o\
+chem_spack_ros_dyndt.o : $(CCATT)/chem_spack_ros_dyndt.f90 chem_spack_lu.o mem_scalar.o mem_grid.o \
         mem_basic.o mem_micro.o mem_radiate.o chem1_list.o mem_chem1.o aer1_list.o mem_aer1.o \
 	chem_spack_solve_sparse.o mem_spack.o  chem_fastjx_driv.o chem_uv_att.o
 	@cp -f  $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-chem_spack_rodas3_dyndt.o : $(CCATT)/chem_spack_rodas3_dyndt.f90  chem_spack_lu.o mem_scalar.o mem_grid.o mem_all.o\
+chem_spack_rodas3_dyndt.o : $(CCATT)/chem_spack_rodas3_dyndt.f90  chem_spack_lu.o mem_scalar.o mem_grid.o \
         mem_basic.o mem_micro.o mem_radiate.o chem1_list.o mem_chem1.o aer1_list.o mem_aer1.o \
 	chem_spack_solve_sparse.o mem_spack.o  chem_fastjx_driv.o chem_uv_att.o
 	@cp -f  $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-chem_spack_qssa.o : $(CCATT)/chem_spack_qssa.f90 mem_scalar.o mem_grid.o mem_all.o mem_basic.o\
+chem_spack_qssa.o : $(CCATT)/chem_spack_qssa.f90 mem_scalar.o mem_grid.o  mem_basic.o\
         mem_micro.o mem_radiate.o chem1_list.o mem_chem1.o aer1_list.o mem_aer1.o chem_fastjx_driv.o \
 	chem_spack_fexloss.o chem_spack_fexprod.o chem_uv_att.o
 	@cp -f  $< $(<F:.f90=.f90)
@@ -1642,7 +1633,7 @@ chem_orage.o : $(CCATT)/chem_orage.f90 mem_grid.o mem_micro.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-chemistry.o : $(CCATT)/chemistry.f90 mem_scalar.o mem_grid.o mem_all.o \
+chemistry.o : $(CCATT)/chemistry.f90 mem_scalar.o mem_grid.o  \
 	chem1_list.o mem_chem1.o mem_chem1aq.o aer1_list.o mem_aer1.o chem_fastjx_driv.o \
 	mem_basic.o mem_radiate.o node_mod.o rconstants.o mem_micro.o \
 	chem_spack_utils.o mem_spack.o chem_spack_solve_sparse.o chem_spack_ros.o \
