@@ -5,419 +5,464 @@
 !  Copyright (C)  1990, 1995, 1999, 2000, 2003 - All Rights Reserved
 !  Regional Atmospheric Modeling System - RAMS
 !###########################################################################
-                      
+
 subroutine first_RAMS(np1,np2,np3,ui2,vi2,pi2,ti2,ri2)
 
   use grid_dims, only: &
        maxgrds
-  
-use an_header, only: &
-    anal_table,      &
-    nvbtab
-use isan_coms, only: &
-    dnref,           &
-    innpr,           &
-    is_grids,        &
-    maxix,           &
-    maxiy,           &
-    maxiz,           &
-    maxsigz,         &
-    nigrids,         &
-    piref,           &
-    rr_scr1,         &
-    rr_scr2,         &
-    rtref,           &
-    rr_vt2da,        &
-    thref
 
-use mem_grid
+  use an_header, only: &
+       anal_table,      &
+       nvbtab
 
-implicit none
+  use isan_coms, only: &
+       dnref,           &
+       innpr,           &
+       is_grids,        &
+       maxix,           &
+       maxiy,           &
+       maxiz,           &
+       maxsigz,         &
+       nigrids,         &
+       piref,           &
+       rr_scr1,         &
+       rr_scr2,         &
+       rtref,           &
+       rr_vt2da,        &
+       thref
 
-include "files.h"
+  use mem_grid, only: &
+       grid_g, &
+       ngrid, &
+       nxp, &
+       nyp, &
+       nzp, &
+       nnzp, &
+       nnxp, &
+       nnyp, &
+       jdim, &
+       ztop, &
+       nknest, &
+       nstratx, &
+       nstraty, &
+       nxtnest, &
+       nnsttop, &
+       nnstbot, &
+       ninest, &
+       njnest, &
+       ztn, &
+       nxtnest
 
-integer :: np1,np2,np3
-real, dimension(np1,np2,np3) ::  ui2,vi2,pi2,ti2,ri2
+  implicit none
 
-integer, dimension(maxgrds) :: nnxpx,nnypx,nnzpx,nstratxx,nstratyx  &
-                              ,ngbegunx,nxtnestx,nnsttopx,nnstbotx  &
-                              ,ninestx,njnestx,nknestx
-integer :: lenf,nv,irw,iun,ierr,ng,ngridsx,icm,ifm,k
+  include "files.h"
 
-character(len=f_name_length) :: flnma
-character(len=1) :: cgrid
-character(len=2) :: cng
+  integer :: np1,np2,np3
+  real, dimension(np1,np2,np3) ::  ui2,vi2,pi2,ti2,ri2
 
-integer, external :: cio_i, cio_f, RAMS_getvar
+  integer, dimension(maxgrds) :: nnxpx,nnypx,nnzpx,nstratxx,nstratyx  &
+       ,ngbegunx,nxtnestx,nnsttopx,nnstbotx  &
+       ,ninestx,njnestx,nknestx
+  integer :: lenf,nv,irw,iun,ierr,ng,ngridsx,icm,ifm,k
 
-real, allocatable :: plt(:,:)
-real, allocatable :: pltc(:,:)
+  character(len=f_name_length) :: flnma
+  character(len=1) :: cgrid
+  character(len=2) :: cng
 
-! Open analysis file and read in commons
+  integer, external :: cio_i, cio_f, RAMS_getvar
 
-lenf=len_trim(innpr)
-flnma=innpr(1:lenf)
-open(10,file=flnma(1:len_trim(flnma)),form='formatted',status='old')
+  real, allocatable :: plt(:,:)
+  real, allocatable :: pltc(:,:)
 
-read(10,*) nvbtab
-if(allocated(anal_table)) deallocate(anal_table)
-allocate (anal_table(nvbtab))
-do nv=1,nvbtab
-   read(10,*)  anal_table(nv)%string   &
-              ,anal_table(nv)%npointer  &
-              ,anal_table(nv)%idim_type  &
-              ,anal_table(nv)%ngrid  &
-              ,anal_table(nv)%nvalues
-enddo
+  ! Open analysis file and read in commons
 
-! Reform filename to reflect actual analysis file rather than head file
-lenf=lenf-11
-write(cgrid,'(i1)') ngrid
-flnma=innpr(1:lenf)//'g'//cgrid
-lenf=lenf+2
+  lenf=len_trim(innpr)
+  flnma=innpr(1:lenf)
+  open(10,file=flnma(1:len_trim(flnma)),form='formatted',status='old')
 
-! get stuff from the 1st guess run
-irw=1
-iun=10
-ierr=cio_i(iun,irw,'ngrids',ngridsx,1)
-ierr=cio_i(iun,irw,'nnxp',nnxpx,ngridsx)
-ierr=cio_i(iun,irw,'nnyp',nnypx,ngridsx)
-ierr=cio_i(iun,irw,'nnzp',nnzpx,ngridsx)
-ierr=cio_i(iun,irw,'nstratx',nstratxx,ngridsx)
-ierr=cio_i(iun,irw,'nstraty',nstratyx,ngridsx)
-ierr=cio_i(iun,irw,'nxtnest',nxtnestx,ngridsx)
-ierr=cio_i(iun,irw,'nnsttop',nnsttopx,ngridsx)
-ierr=cio_i(iun,irw,'nnstbot',nnstbotx,ngridsx)
-ierr=cio_i(iun,irw,'ninest',ninestx,ngridsx)
-ierr=cio_i(iun,irw,'njnest',njnestx,ngridsx)
-ierr=cio_i(iun,irw,'nknest',nknestx,ngridsx)
+  read(10,*) nvbtab
+  if(allocated(anal_table)) deallocate(anal_table)
+  allocate (anal_table(nvbtab))
+  do nv=1,nvbtab
+     read(10,*)  anal_table(nv)%string   &
+          ,anal_table(nv)%npointer  &
+          ,anal_table(nv)%idim_type  &
+          ,anal_table(nv)%ngrid  &
+          ,anal_table(nv)%nvalues
+  enddo
 
-do ng=1,ngridsx
-   write(cng,1) ng
-   1 format(i2.2)
+  ! Reform filename to reflect actual analysis file rather than head file
+  lenf=lenf-11
+  write(cgrid,'(i1)') ngrid
+  flnma=innpr(1:lenf)//'g'//cgrid
+  lenf=lenf+2
 
-   !! 1d reference state filled in the old arrays
-   !!ierr=cio_f(iun,irw,'u01dn'//cng,u01dn(1,ng),nnzp(ng))
-   !ierr=cio_f(iun,irw,'v01dn'//cng,v01dn(1,ng),nnzp(ng))
-   !ierr=cio_f(iun,irw,'pi01dn'//cng,pi01dn(1,ng),nnzp(ng))
-   !ierr=cio_f(iun,irw,'th01dn'//cng,th01dn(1,ng),nnzp(ng))
-   !ierr=cio_f(iun,irw,'dn01dn'//cng,dn01dn(1,ng),nnzp(ng))
-   !ierr=cio_f(iun,irw,'rt01dn'//cng,rt01dn(1,ng),nnzp(ng))
+  ! get stuff from the 1st guess run
+  irw=1
+  iun=10
+  ierr=cio_i(iun,irw,'ngrids',ngridsx,1)
+  ierr=cio_i(iun,irw,'nnxp',nnxpx,ngridsx)
+  ierr=cio_i(iun,irw,'nnyp',nnypx,ngridsx)
+  ierr=cio_i(iun,irw,'nnzp',nnzpx,ngridsx)
+  ierr=cio_i(iun,irw,'nstratx',nstratxx,ngridsx)
+  ierr=cio_i(iun,irw,'nstraty',nstratyx,ngridsx)
+  ierr=cio_i(iun,irw,'nxtnest',nxtnestx,ngridsx)
+  ierr=cio_i(iun,irw,'nnsttop',nnsttopx,ngridsx)
+  ierr=cio_i(iun,irw,'nnstbot',nnstbotx,ngridsx)
+  ierr=cio_i(iun,irw,'ninest',ninestx,ngridsx)
+  ierr=cio_i(iun,irw,'njnest',njnestx,ngridsx)
+  ierr=cio_i(iun,irw,'nknest',nknestx,ngridsx)
 
-   ! 1d reference state filled in the new arrays
-   ierr=cio_f(iun,irw,'pi01dn'//cng,piref(1,ng),nnzp(ng))
-   ierr=cio_f(iun,irw,'th01dn'//cng,thref(1,ng),nnzp(ng))
-   ierr=cio_f(iun,irw,'dn01dn'//cng,dnref(1,ng),nnzp(ng))
-   ierr=cio_f(iun,irw,'rt01dn'//cng,rtref(1,ng),nnzp(ng))
-enddo
+  do ng=1,ngridsx
+     write(cng,1) ng
+1    format(i2.2)
 
-close(10)
+     !! 1d reference state filled in the old arrays
+     !!ierr=cio_f(iun,irw,'u01dn'//cng,u01dn(1,ng),nnzp(ng))
+     !ierr=cio_f(iun,irw,'v01dn'//cng,v01dn(1,ng),nnzp(ng))
+     !ierr=cio_f(iun,irw,'pi01dn'//cng,pi01dn(1,ng),nnzp(ng))
+     !ierr=cio_f(iun,irw,'th01dn'//cng,th01dn(1,ng),nnzp(ng))
+     !ierr=cio_f(iun,irw,'dn01dn'//cng,dn01dn(1,ng),nnzp(ng))
+     !ierr=cio_f(iun,irw,'rt01dn'//cng,rt01dn(1,ng),nnzp(ng))
 
-! check that grids are compatible
-! would also like to check pole lat lon and topo (and more?)
-do ng=1,min( nigrids, ngridsx )
-   if(nnxp(ng).ne.nnxpx(ng).or.  &
-      nnyp(ng).ne.nnypx(ng).or.  &
-      nnzp(ng).ne.nnzpx(ng).or.  &
-      nstratx(ng).ne.nstratxx(ng).or.  &
-      nstraty(ng).ne.nstratyx(ng).or.  &
-      nxtnest(ng).ne.nxtnestx(ng).or.  &
-      nnsttop(ng).ne.nnsttopx(ng).or.  &
-      nnstbot(ng).ne.nnstbotx(ng).or.  &
-      ninest(ng).ne.ninestx(ng).or.  &
-      njnest(ng).ne.njnestx(ng).or.  &
-      nknest(ng).ne.nknestx(ng)) then
-      print*,'New run and 1st guess grids incompatible',ng
-      print*,'            new      1st guess'
-      print*,'nnxp   ',nnxp(ng),nnxpx(ng)
-      print*,'nnyp   ',nnyp(ng),nnypx(ng)
-      print*,'nnzp   ',nnzp(ng),nnzpx(ng)
-      print*,'nstratx',nstratx(ng),nstratxx(ng)
-      print*,'nstraty',nstraty(ng),nstratyx(ng)
-      print*,'nxtnest',nxtnest(ng),nxtnestx(ng)
-      print*,'nnsttop',nnsttop(ng),nnsttopx(ng)
-      print*,'nnstbot',nnstbot(ng),nnstbotx(ng)
-      print*,'ninest ',ninest(ng),ninestx(ng)
-      print*,'njnest ',njnest(ng),njnestx(ng)
-      print*,'nknest ',nknest(ng),nknestx(ng)
-      stop 'stop in first_RAMS'
-   endif
-enddo
+     ! 1d reference state filled in the new arrays
+     ierr=cio_f(iun,irw,'pi01dn'//cng,piref(1,ng),nnzp(ng))
+     ierr=cio_f(iun,irw,'th01dn'//cng,thref(1,ng),nnzp(ng))
+     ierr=cio_f(iun,irw,'dn01dn'//cng,dnref(1,ng),nnzp(ng))
+     ierr=cio_f(iun,irw,'rt01dn'//cng,rtref(1,ng),nnzp(ng))
+  enddo
 
-! Read analysis files if they exist, else interpolate from the
-!   parent grid of the new grid.
-! Store everything in the 'A' array as nzp,nxp,nyp and things in the
-!   analysis arrays as nxp,nyp,nzp.
+  close(10)
+
+  ! check that grids are compatible
+  ! would also like to check pole lat lon and topo (and more?)
+  do ng=1,min( nigrids, ngridsx )
+     if(nnxp(ng).ne.nnxpx(ng).or.  &
+          nnyp(ng).ne.nnypx(ng).or.  &
+          nnzp(ng).ne.nnzpx(ng).or.  &
+          nstratx(ng).ne.nstratxx(ng).or.  &
+          nstraty(ng).ne.nstratyx(ng).or.  &
+          nxtnest(ng).ne.nxtnestx(ng).or.  &
+          nnsttop(ng).ne.nnsttopx(ng).or.  &
+          nnstbot(ng).ne.nnstbotx(ng).or.  &
+          ninest(ng).ne.ninestx(ng).or.  &
+          njnest(ng).ne.njnestx(ng).or.  &
+          nknest(ng).ne.nknestx(ng)) then
+        print*,'New run and 1st guess grids incompatible',ng
+        print*,'            new      1st guess'
+        print*,'nnxp   ',nnxp(ng),nnxpx(ng)
+        print*,'nnyp   ',nnyp(ng),nnypx(ng)
+        print*,'nnzp   ',nnzp(ng),nnzpx(ng)
+        print*,'nstratx',nstratx(ng),nstratxx(ng)
+        print*,'nstraty',nstraty(ng),nstratyx(ng)
+        print*,'nxtnest',nxtnest(ng),nxtnestx(ng)
+        print*,'nnsttop',nnsttop(ng),nnsttopx(ng)
+        print*,'nnstbot',nnstbot(ng),nnstbotx(ng)
+        print*,'ninest ',ninest(ng),ninestx(ng)
+        print*,'njnest ',njnest(ng),njnestx(ng)
+        print*,'nknest ',nknest(ng),nknestx(ng)
+        stop 'stop in first_RAMS'
+     endif
+  enddo
+
+  ! Read analysis files if they exist, else interpolate from the
+  !   parent grid of the new grid.
+  ! Store everything in the 'A' array as nzp,nxp,nyp and things in the
+  !   analysis arrays as nxp,nyp,nzp.
 
 
-if(ngrid <= ngridsx)then
+  if(ngrid <= ngridsx)then
 
-   print*,'READING from file current grid=',ngrid,nxp,nyp,nzp
-   print*,'READING from file current grid=',trim(innpr)
-   ! UE_AVG and VE_AVG
+     print*,'READING from file current grid=',ngrid,nxp,nyp,nzp
+     print*,'READING from file current grid=',trim(innpr)
+     ! UE_AVG and VE_AVG
 !!$   ierr=RAMS_getvar('UP', 3, ngrid, ui2(1,1,1), rr_scr1(1), innpr(1:lenf))
 !!$   ierr=RAMS_getvar('VP', 3, ngrid, vi2(1,1,1), rr_scr1(1), innpr(1:lenf))
-   ierr=RAMS_getvar('UP', ngrid, ui2(1,1,1), rr_scr1(1), innpr(1:lenf))
-   ierr=RAMS_getvar('VP', ngrid, vi2(1,1,1), rr_scr1(1), innpr(1:lenf))
-   call comp_avgu(nnxp(ngrid),nnyp(ngrid),nnzp(ngrid),ui2(1,1,1))
-   call comp_avgv(nnxp(ngrid),nnyp(ngrid),nnzp(ngrid),vi2(1,1,1))
-print*,'222'
-   ! RELHUM and THETA
+     ierr=RAMS_getvar('UP', ngrid, ui2(1,1,1), rr_scr1(1), innpr(1:lenf))
+     ierr=RAMS_getvar('VP', ngrid, vi2(1,1,1), rr_scr1(1), innpr(1:lenf))
+     call comp_avgu(nnxp(ngrid),nnyp(ngrid),nnzp(ngrid),ui2(1,1,1))
+     call comp_avgv(nnxp(ngrid),nnyp(ngrid),nnzp(ngrid),vi2(1,1,1))
+     print*,'222'
+     ! RELHUM and THETA
 !!$   ierr=RAMS_getvar('RV',3,ngrid,ri2(1,1,1),rr_scr1(1),innpr(1:lenf))
 !!$   ierr=RAMS_getvar('PI',3,ngrid,pi2(1,1,1),rr_scr1(1),innpr(1:lenf))
 !!$   ierr=RAMS_getvar('THETA',3,ngrid,ti2(1,1,1),rr_scr1(1),innpr(1:lenf))
-   ierr=RAMS_getvar('RV', ngrid, ri2(1,1,1), rr_scr1(1), innpr(1:lenf))
-   ierr=RAMS_getvar('PI', ngrid, pi2(1,1,1), rr_scr1(1), innpr(1:lenf))
-   ierr=RAMS_getvar('THETA',3,ngrid,ti2(1,1,1),rr_scr1(1),innpr(1:lenf))
-   call comp_rhfrac(nnxp(ngrid),nnyp(ngrid),nnzp(ngrid)  &
-                   ,ri2(1,1,1),pi2(1,1,1),ti2(1,1,1))
-print*,'333'
+     ierr=RAMS_getvar('RV', ngrid, ri2(1,1,1), rr_scr1(1), innpr(1:lenf))
+     ierr=RAMS_getvar('PI', ngrid, pi2(1,1,1), rr_scr1(1), innpr(1:lenf))
+     ierr=RAMS_getvar('THETA',3,ngrid,ti2(1,1,1),rr_scr1(1),innpr(1:lenf))
+     call comp_rhfrac(nnxp(ngrid),nnyp(ngrid),nnzp(ngrid)  &
+          ,ri2(1,1,1),pi2(1,1,1),ti2(1,1,1))
+     print*,'333'
 
-   ! PRESS
-   call comp_press(nnxp(ngrid),nnyp(ngrid),nnzp(ngrid),pi2(1,1,1))
+     ! PRESS
+     call comp_press(nnxp(ngrid),nnyp(ngrid),nnzp(ngrid),pi2(1,1,1))
 !!$   call ae1t0(nnxp(ngrid)*nnyp(ngrid)*nnzp(ngrid),pi2(1,1,1),pi2(1,1,1),100.)
-   pi2(:,:,:) = pi2(:,:,:)*100.
-   print*,'444'
+     pi2(:,:,:) = pi2(:,:,:)*100.
+     print*,'444'
 
-   ! Write analysis fields to model vars in case need to interpolate from them
-   ! rearrange(nzp,nxp,nyp,a,b) is b(i,j,k)=a(k,i,j)
-   ! unarrange(nzp,nxp,nyp,a,b) is b(k,i,j)=a(i,j,k)
-   call unarrange(nnzp(ngrid),nnxp(ngrid),nnyp(ngrid)  &
-                  ,ui2,is_grids(ngrid)%rr_ug)
-   call unarrange(nnzp(ngrid),nnxp(ngrid),nnyp(ngrid)  &
-                  ,vi2,is_grids(ngrid)%rr_vg)
-   call unarrange(nnzp(ngrid),nnxp(ngrid),nnyp(ngrid)  &
-                  ,ri2,is_grids(ngrid)%rr_rg)
-   call unarrange(nnzp(ngrid),nnxp(ngrid),nnyp(ngrid)  &
-                  ,ti2,is_grids(ngrid)%rr_tg)
-   call unarrange(nnzp(ngrid),nnxp(ngrid),nnyp(ngrid)  &
-                  ,pi2,is_grids(ngrid)%rr_pg)
-   print*,"ngrid,theta(1,1,1)=",ngrid,is_grids(ngrid)%rr_tg(1,1,1)
-print*,'555'
+     ! Write analysis fields to model vars in case need to interpolate from them
+     ! rearrange(nzp,nxp,nyp,a,b) is b(i,j,k)=a(k,i,j)
+     ! unarrange(nzp,nxp,nyp,a,b) is b(k,i,j)=a(i,j,k)
+     call unarrange(nnzp(ngrid),nnxp(ngrid),nnyp(ngrid)  &
+          ,ui2,is_grids(ngrid)%rr_ug)
+     call unarrange(nnzp(ngrid),nnxp(ngrid),nnyp(ngrid)  &
+          ,vi2,is_grids(ngrid)%rr_vg)
+     call unarrange(nnzp(ngrid),nnxp(ngrid),nnyp(ngrid)  &
+          ,ri2,is_grids(ngrid)%rr_rg)
+     call unarrange(nnzp(ngrid),nnxp(ngrid),nnyp(ngrid)  &
+          ,ti2,is_grids(ngrid)%rr_tg)
+     call unarrange(nnzp(ngrid),nnxp(ngrid),nnyp(ngrid)  &
+          ,pi2,is_grids(ngrid)%rr_pg)
+     print*,"ngrid,theta(1,1,1)=",ngrid,is_grids(ngrid)%rr_tg(1,1,1)
+     print*,'555'
 
-   ! Compute reference state density in case we need it
-   
-   
-   if (ngrid == 1) then
-      call isan_comp_dn0(nnzp(ngrid),nnxp(ngrid),nnyp(ngrid) &
-                        ,is_grids(ngrid)%rr_pi0 &
-                        ,is_grids(ngrid)%rr_th0 &
-                        ,is_grids(ngrid)%rr_dn0 &
-                        ,is_grids(ngrid)%rr_dn0u &
-                        ,is_grids(ngrid)%rr_dn0v &
-                        ,grid_g(ngrid)%topta,ngrid)
-   else
-   
-      ifm=ngrid
-      icm=nxtnest(ifm)
-      call nest_interpolated_topo(nnxp(icm),nnyp(icm),nnxp(ifm),nnyp(ifm) &
-            ,maxix,maxiy,ifm,grid_g(icm)%topt,rr_vt2da  &
-            ,rr_scr1,rr_scr2)
-      call fmrefs3d_isan(ifm,icm,nnzp(ifm),nnxp(ifm),nnyp(ifm) &
-            ,nnzp(icm),nnxp(icm),nnyp(icm),maxiz,maxix,maxiy  &
-            ,nnstbot(ifm),nnsttop(ifm),jdim  &
-            ,rr_scr1,rr_scr2,rr_vt2da  &
-            ,grid_g(ifm)%topt,grid_g(icm)%topt &
-            ,is_grids(icm)%rr_dn0,is_grids(ifm)%rr_dn0 &
-            ,is_grids(icm)%rr_th0,is_grids(ifm)%rr_th0 &
-            ,is_grids(ifm)%rr_pi0,is_grids(ifm)%rr_dn0u &
-            ,is_grids(ifm)%rr_dn0v,ztn(1,ifm),ztop )
-         
-      call fmdn0_isan(ifm,icm,nnzp(ifm),nnxp(ifm),nnyp(ifm) &
-            ,nnzp(icm),nnxp(icm),nnyp(icm),maxiz,maxix,maxiy &
-            ,rr_scr1,rr_scr2  &
-            ,grid_g(ifm)%topt,grid_g(icm)%topt &
-            ,is_grids(ifm)%rr_dn0,is_grids(ifm)%rr_dn0u &
-            ,is_grids(ifm)%rr_dn0v,ztn(1,ifm),ztop )
-   endif
-   
-else
-
-   ifm=ngrid
-   icm=nxtnest(ifm)
-   print*,'INTERPOLATING to current grid=',ifm,' from parent grid=',icm
-   print*,'INTERPOLATING to current grid=',trim(innpr)
-   !!!!!!!!!!!!
-   allocate (plt(nnxp(ifm),nnyp(ifm)))
-   allocate (pltc(nnxp(icm),nnyp(icm)))
-   !!!!!!!!!!!!!!
-
-   print*,'..icm,theta(1,1,1)=',icm,is_grids(icm)%rr_tg(1,1,1)
-   print*,'..ifm,theta(1,1,1)=',ifm,is_grids(ifm)%rr_tg(1,1,1)
-
-   ! Calculate the 3D base state
-   call fmrefs1d_isan(ifm,icm,maxsigz,nnzp(ifm) &
-                     ,piref,thref,dnref,rtref)
-
-   call nest_interpolated_topo(nnxp(icm),nnyp(icm),nnxp(ifm),nnyp(ifm) &
-         ,maxix,maxiy,ifm,grid_g(icm)%topt,rr_vt2da  &
-         ,rr_scr1,rr_scr2)
-   call fmrefs3d_isan(ifm,icm,nnzp(ifm),nnxp(ifm),nnyp(ifm) &
-         ,nnzp(icm),nnxp(icm),nnyp(icm),maxiz,maxix,maxiy  &
-         ,nnstbot(ifm),nnsttop(ifm),jdim  &
-         ,rr_scr1,rr_scr2,rr_vt2da  &
-         ,grid_g(ifm)%topt,grid_g(icm)%topt &
-         ,is_grids(icm)%rr_dn0,is_grids(ifm)%rr_dn0 &
-         ,is_grids(icm)%rr_th0,is_grids(ifm)%rr_th0 &
-         ,is_grids(ifm)%rr_pi0,is_grids(ifm)%rr_dn0u &
-         ,is_grids(ifm)%rr_dn0v  &
-         ,ztn(1,ifm),ztop )
-         
-
-   call fmint4_isan(is_grids(icm)%rr_tg  ,is_grids(ifm)%rr_tg  &
-                   ,is_grids(icm)%rr_dn0,is_grids(ifm)%rr_dn0 &
-                   ,ifm,icm,'t',1)
-   print*,"....icm,theta(1,1,1)=",icm,is_grids(icm)%rr_tg(1,1,1),is_grids(icm)%rr_dn0(1,1,1)
-   print*,"....ifm,theta(1,1,1)=",ifm,is_grids(ifm)%rr_tg(1,1,1),is_grids(ifm)%rr_dn0(1,1,1)
-   call rearrange(nnzp(ifm),nnxp(ifm),nnyp(ifm)  &
-                 ,is_grids(ifm)%rr_tg,ti2)
-   print*,'done with th,ti2(1,1,1)=',ti2(1,1,1)
-
-   pltc(1:nnxp(icm),1:nnyp(icm)) = is_grids(icm)%rr_tg(2,1:nnxp(icm),1:nnyp(icm))
-!   call ezcntr(pltc(1,1),nnxp(icm),nnyp(icm))
-!   call ezcntr(ti2(1,1,2),nnxp(ifm),nnyp(ifm))
+     ! Compute reference state density in case we need it
 
 
-   call fmint4_isan(is_grids(icm)%rr_pg,is_grids(ifm)%rr_pg  &
-                   ,is_grids(icm)%rr_dn0,is_grids(ifm)%rr_dn0 &
-                   ,ifm,icm,'t',0)
-   print*,"....icm,p(1,1,1)=",icm,is_grids(icm)%rr_pg(1,1,1),is_grids(icm)%rr_dn0(1,1,1)
-   print*,"....ifm,p(1,1,1)=",ifm,is_grids(ifm)%rr_pg(1,1,1),is_grids(ifm)%rr_dn0(1,1,1)
-   print*,"....icm,p(1,1,1)max=",maxval(is_grids(icm)%rr_pg(1:nnzp(icm),1:nnxp(icm),1:nnyp(icm)))
-   print*,"....ifm,p(1,1,1)max=",maxval(is_grids(ifm)%rr_pg(1:nnzp(ifm),1:nnxp(ifm),1:nnyp(ifm)))
-   print*,"....icm,p(1,1,1)min=",minval(is_grids(icm)%rr_pg(1:nnzp(icm),1:nnxp(icm),1:nnyp(icm)))
-   print*,"....ifm,p(1,1,1)min=",minval(is_grids(ifm)%rr_pg(1:nnzp(ifm),1:nnxp(ifm),1:nnyp(ifm)))
-   call rearrange(nnzp(ifm),nnxp(ifm),nnyp(ifm)  &
-                 ,is_grids(ifm)%rr_pg,pi2)
+     if (ngrid == 1) then
+        call isan_comp_dn0(nnzp(ngrid),nnxp(ngrid),nnyp(ngrid) &
+             ,is_grids(ngrid)%rr_pi0 &
+             ,is_grids(ngrid)%rr_th0 &
+             ,is_grids(ngrid)%rr_dn0 &
+             ,is_grids(ngrid)%rr_dn0u &
+             ,is_grids(ngrid)%rr_dn0v &
+             ,grid_g(ngrid)%topta,ngrid)
+     else
+
+        ifm=ngrid
+        icm=nxtnest(ifm)
+        call nest_interpolated_topo(nnxp(icm),nnyp(icm),nnxp(ifm),nnyp(ifm) &
+             ,maxix,maxiy,ifm,grid_g(icm)%topt,rr_vt2da  &
+             ,rr_scr1,rr_scr2)
+        call fmrefs3d_isan(ifm,icm,nnzp(ifm),nnxp(ifm),nnyp(ifm) &
+             ,nnzp(icm),nnxp(icm),nnyp(icm),maxiz,maxix,maxiy  &
+             ,nnstbot(ifm),nnsttop(ifm),jdim  &
+             ,rr_scr1,rr_scr2,rr_vt2da  &
+             ,grid_g(ifm)%topt,grid_g(icm)%topt &
+             ,is_grids(icm)%rr_dn0,is_grids(ifm)%rr_dn0 &
+             ,is_grids(icm)%rr_th0,is_grids(ifm)%rr_th0 &
+             ,is_grids(ifm)%rr_pi0,is_grids(ifm)%rr_dn0u &
+             ,is_grids(ifm)%rr_dn0v,ztn(1,ifm),ztop )
+
+        call fmdn0_isan(ifm,icm,nnzp(ifm),nnxp(ifm),nnyp(ifm) &
+             ,nnzp(icm),nnxp(icm),nnyp(icm),maxiz,maxix,maxiy &
+             ,rr_scr1,rr_scr2  &
+             ,grid_g(ifm)%topt,grid_g(icm)%topt &
+             ,is_grids(ifm)%rr_dn0,is_grids(ifm)%rr_dn0u &
+             ,is_grids(ifm)%rr_dn0v,ztn(1,ifm),ztop )
+     endif
+
+  else
+
+     ifm=ngrid
+     icm=nxtnest(ifm)
+     print*,'INTERPOLATING to current grid=',ifm,' from parent grid=',icm
+     print*,'INTERPOLATING to current grid=',trim(innpr)
+!!!!!!!!!!!!
+     allocate (plt(nnxp(ifm),nnyp(ifm)))
+     allocate (pltc(nnxp(icm),nnyp(icm)))
+!!!!!!!!!!!!!!
+
+     print*,'..icm,theta(1,1,1)=',icm,is_grids(icm)%rr_tg(1,1,1)
+     print*,'..ifm,theta(1,1,1)=',ifm,is_grids(ifm)%rr_tg(1,1,1)
+
+     ! Calculate the 3D base state
+     call fmrefs1d_isan(ifm,icm,maxsigz,nnzp(ifm) &
+          ,piref,thref,dnref,rtref)
+
+     call nest_interpolated_topo(nnxp(icm),nnyp(icm),nnxp(ifm),nnyp(ifm) &
+          ,maxix,maxiy,ifm,grid_g(icm)%topt,rr_vt2da  &
+          ,rr_scr1,rr_scr2)
+     call fmrefs3d_isan(ifm,icm,nnzp(ifm),nnxp(ifm),nnyp(ifm) &
+          ,nnzp(icm),nnxp(icm),nnyp(icm),maxiz,maxix,maxiy  &
+          ,nnstbot(ifm),nnsttop(ifm),jdim  &
+          ,rr_scr1,rr_scr2,rr_vt2da  &
+          ,grid_g(ifm)%topt,grid_g(icm)%topt &
+          ,is_grids(icm)%rr_dn0,is_grids(ifm)%rr_dn0 &
+          ,is_grids(icm)%rr_th0,is_grids(ifm)%rr_th0 &
+          ,is_grids(ifm)%rr_pi0,is_grids(ifm)%rr_dn0u &
+          ,is_grids(ifm)%rr_dn0v  &
+          ,ztn(1,ifm),ztop )
 
 
-   call fmint4_isan(is_grids(icm)%rr_rg,  is_grids(ifm)%rr_rg  &
-                   ,is_grids(icm)%rr_dn0,is_grids(ifm)%rr_dn0 &
-                   ,ifm,icm,'t',1)
-   print*,"....icm,rr(1,1,1)=",icm,is_grids(icm)%rr_r(1,1,1),is_grids(icm)%rr_dn0(1,1,1)
-   print*,"....ifm,rr(1,1,1)=",ifm,is_grids(ifm)%rr_r(1,1,1),is_grids(ifm)%rr_dn0(1,1,1)
-   print*,"....icm,rr(1,1,1)max=",maxval(is_grids(icm)%rr_rg(1:nnzp(icm),1:nnxp(icm),1:nnyp(icm)))
-   print*,"....ifm,rr(1,1,1)max=",maxval(is_grids(ifm)%rr_rg(1:nnzp(ifm),1:nnxp(ifm),1:nnyp(ifm)))
-   print*,"....icm,rr(1,1,1)min=",minval(is_grids(icm)%rr_rg(1:nnzp(icm),1:nnxp(icm),1:nnyp(icm)))
-   print*,"....ifm,rr(1,1,1)min=",minval(is_grids(ifm)%rr_rg(1:nnzp(ifm),1:nnxp(ifm),1:nnyp(ifm)))
-   call rearrange(nnzp(ifm),nnxp(ifm),nnyp(ifm)  &
-                      ,is_grids(ifm)%rr_rg,ri2)
+     call fmint4_isan(is_grids(icm)%rr_tg  ,is_grids(ifm)%rr_tg  &
+          ,is_grids(icm)%rr_dn0,is_grids(ifm)%rr_dn0 &
+          ,ifm,icm,'t',1)
+     print*,"....icm,theta(1,1,1)=",icm,is_grids(icm)%rr_tg(1,1,1),is_grids(icm)%rr_dn0(1,1,1)
+     print*,"....ifm,theta(1,1,1)=",ifm,is_grids(ifm)%rr_tg(1,1,1),is_grids(ifm)%rr_dn0(1,1,1)
+     call rearrange(nnzp(ifm),nnxp(ifm),nnyp(ifm)  &
+          ,is_grids(ifm)%rr_tg,ti2)
+     print*,'done with th,ti2(1,1,1)=',ti2(1,1,1)
+
+     pltc(1:nnxp(icm),1:nnyp(icm)) = is_grids(icm)%rr_tg(2,1:nnxp(icm),1:nnyp(icm))
+     !   call ezcntr(pltc(1,1),nnxp(icm),nnyp(icm))
+     !   call ezcntr(ti2(1,1,2),nnxp(ifm),nnyp(ifm))
+
+
+     call fmint4_isan(is_grids(icm)%rr_pg,is_grids(ifm)%rr_pg  &
+          ,is_grids(icm)%rr_dn0,is_grids(ifm)%rr_dn0 &
+          ,ifm,icm,'t',0)
+     print*,"....icm,p(1,1,1)=",icm,is_grids(icm)%rr_pg(1,1,1),is_grids(icm)%rr_dn0(1,1,1)
+     print*,"....ifm,p(1,1,1)=",ifm,is_grids(ifm)%rr_pg(1,1,1),is_grids(ifm)%rr_dn0(1,1,1)
+     print*,"....icm,p(1,1,1)max=",maxval(is_grids(icm)%rr_pg(1:nnzp(icm),1:nnxp(icm),1:nnyp(icm)))
+     print*,"....ifm,p(1,1,1)max=",maxval(is_grids(ifm)%rr_pg(1:nnzp(ifm),1:nnxp(ifm),1:nnyp(ifm)))
+     print*,"....icm,p(1,1,1)min=",minval(is_grids(icm)%rr_pg(1:nnzp(icm),1:nnxp(icm),1:nnyp(icm)))
+     print*,"....ifm,p(1,1,1)min=",minval(is_grids(ifm)%rr_pg(1:nnzp(ifm),1:nnxp(ifm),1:nnyp(ifm)))
+     call rearrange(nnzp(ifm),nnxp(ifm),nnyp(ifm)  &
+          ,is_grids(ifm)%rr_pg,pi2)
+
+
+     call fmint4_isan(is_grids(icm)%rr_rg,  is_grids(ifm)%rr_rg  &
+          ,is_grids(icm)%rr_dn0,is_grids(ifm)%rr_dn0 &
+          ,ifm,icm,'t',1)
+     print*,"....icm,rr(1,1,1)=",icm,is_grids(icm)%rr_r(1,1,1),is_grids(icm)%rr_dn0(1,1,1)
+     print*,"....ifm,rr(1,1,1)=",ifm,is_grids(ifm)%rr_r(1,1,1),is_grids(ifm)%rr_dn0(1,1,1)
+     print*,"....icm,rr(1,1,1)max=",maxval(is_grids(icm)%rr_rg(1:nnzp(icm),1:nnxp(icm),1:nnyp(icm)))
+     print*,"....ifm,rr(1,1,1)max=",maxval(is_grids(ifm)%rr_rg(1:nnzp(ifm),1:nnxp(ifm),1:nnyp(ifm)))
+     print*,"....icm,rr(1,1,1)min=",minval(is_grids(icm)%rr_rg(1:nnzp(icm),1:nnxp(icm),1:nnyp(icm)))
+     print*,"....ifm,rr(1,1,1)min=",minval(is_grids(ifm)%rr_rg(1:nnzp(ifm),1:nnxp(ifm),1:nnyp(ifm)))
+     call rearrange(nnzp(ifm),nnxp(ifm),nnyp(ifm)  &
+          ,is_grids(ifm)%rr_rg,ri2)
 
 
 
 
-   call fmint4_isan(is_grids(icm)%rr_ug,is_grids(ifm)%rr_ug  &
-                   ,is_grids(icm)%rr_dn0u,is_grids(ifm)%rr_dn0u &
-                   ,ifm,icm,'u',1)
-   call rearrange(nnzp(ifm),nnxp(ifm),nnyp(ifm)  &
-                 ,is_grids(ifm)%rr_ug,ui2)
+     call fmint4_isan(is_grids(icm)%rr_ug,is_grids(ifm)%rr_ug  &
+          ,is_grids(icm)%rr_dn0u,is_grids(ifm)%rr_dn0u &
+          ,ifm,icm,'u',1)
+     call rearrange(nnzp(ifm),nnxp(ifm),nnyp(ifm)  &
+          ,is_grids(ifm)%rr_ug,ui2)
 
 
-   call fmint4_isan(is_grids(icm)%rr_vg,is_grids(ifm)%rr_vg  &
-                   ,is_grids(icm)%rr_dn0v,is_grids(ifm)%rr_dn0v &
-                   ,ifm,icm,'v',1)
-   call rearrange(nnzp(ifm),nnxp(ifm),nnyp(ifm)  &
-                 ,is_grids(ngrid)%rr_vg,vi2)
+     call fmint4_isan(is_grids(icm)%rr_vg,is_grids(ifm)%rr_vg  &
+          ,is_grids(icm)%rr_dn0v,is_grids(ifm)%rr_dn0v &
+          ,ifm,icm,'v',1)
+     call rearrange(nnzp(ifm),nnxp(ifm),nnyp(ifm)  &
+          ,is_grids(ngrid)%rr_vg,vi2)
 
-   call fmdn0_isan(ifm,icm,nnzp(ifm),nnxp(ifm),nnyp(ifm) &
-         ,nnzp(icm),nnxp(icm),nnyp(icm),maxiz,maxix,maxiy &
-         ,rr_scr1,rr_scr2  &
-         ,grid_g(ifm)%topt,grid_g(icm)%topt &
-         ,is_grids(ifm)%rr_dn0,is_grids(ifm)%rr_dn0u &
-         ,is_grids(ifm)%rr_dn0v,ztn(1,ifm),ztop )
-endif
+     call fmdn0_isan(ifm,icm,nnzp(ifm),nnxp(ifm),nnyp(ifm) &
+          ,nnzp(icm),nnxp(icm),nnyp(icm),maxiz,maxix,maxiy &
+          ,rr_scr1,rr_scr2  &
+          ,grid_g(ifm)%topt,grid_g(icm)%topt &
+          ,is_grids(ifm)%rr_dn0,is_grids(ifm)%rr_dn0u &
+          ,is_grids(ifm)%rr_dn0v,ztn(1,ifm),ztop )
+  endif
 
 
-return
-end
+  return
+end subroutine first_RAMS
 
 !***************************************************************************
 
 subroutine comp_avgu(n1,n2,n3,a)
-implicit none
-integer :: n1,n2,n3
-real :: a(n1,n2,n3)
-integer :: i,j,k
-do k=1,n3
-   do j=1,n2
-      do i=n1,2,-1
-         a(i,j,k)=0.5*(a(i,j,k)+a(i-1,j,k))
-      enddo
-   enddo
-enddo
-return
-end
+  implicit none
+  integer :: n1,n2,n3
+  real :: a(n1,n2,n3)
+  integer :: i,j,k
+  do k=1,n3
+     do j=1,n2
+        do i=n1,2,-1
+           a(i,j,k)=0.5*(a(i,j,k)+a(i-1,j,k))
+        enddo
+     enddo
+  enddo
+  return
+end subroutine comp_avgu
 
 !***************************************************************************
 
 subroutine comp_avgv(n1,n2,n3,a)
-implicit none
-integer :: n1,n2,n3
-real :: a(n1,n2,n3)
-integer :: i,j,k
-do k=1,n3
-   do j=n2,2,-1
-      do i=1,n1
-         a(i,j,k)=0.5*(a(i,j,k)+a(i,j-1,k))
-      enddo
-   enddo
-enddo
-return
-end
+  implicit none
+  integer :: n1,n2,n3
+  real :: a(n1,n2,n3)
+  integer :: i,j,k
+  do k=1,n3
+     do j=n2,2,-1
+        do i=1,n1
+           a(i,j,k)=0.5*(a(i,j,k)+a(i,j-1,k))
+        enddo
+     enddo
+  enddo
+  return
+end subroutine comp_avgv
 
 
 !***************************************************************************
 
 subroutine comp_rhfrac(n1,n2,n3,a,b,c)
 
-use rconstants
+  use rconstants, only: &
+       cp, &
+       cpor, &
+       p00
 
-implicit none
-integer :: n1,n2,n3
-real :: a(n1,n2,n3),b(n1,n2,n3),c(n1,n2,n3)
-real :: xtemp,xpress
-integer :: i,j,k
-real, external :: rs
-do k=1,n3
-   do j=1,n2
-      do i=1,n1
-         xtemp=c(i,j,k)*b(i,j,k)/cp
-         xpress=(b(i,j,k)/cp)**cpor*p00
-         a(i,j,k)=min(1.,max(0.,a(i,j,k)/rs(xpress,xtemp)))
-      enddo
-   enddo
-enddo
-return
-end
+  implicit none
+  integer :: n1,n2,n3
+  real :: a(n1,n2,n3),b(n1,n2,n3),c(n1,n2,n3)
+  real :: xtemp,xpress
+  integer :: i,j,k
+  real, external :: rs
+  do k=1,n3
+     do j=1,n2
+        do i=1,n1
+           xtemp=c(i,j,k)*b(i,j,k)/cp
+           xpress=(b(i,j,k)/cp)**cpor*p00
+           a(i,j,k)=min(1.,max(0.,a(i,j,k)/rs(xpress,xtemp)))
+        enddo
+     enddo
+  enddo
+  return
+end subroutine comp_rhfrac
 
 !***************************************************************************
 
 subroutine comp_press(n1,n2,n3,a)
 
-use rconstants
+  use rconstants, only: &
+       cp, &
+       cpor, &
+       p00
 
-implicit none
-integer :: n1,n2,n3
-real :: a(n1,n2,n3)
-integer :: i,j,k
-   do k=1,n3
-      do j=1,n2
-         do i=1,n1
-            a(i,j,k)=(a(i,j,k)/cp)**cpor*p00*.01
-         enddo
-      enddo
-   enddo
-return
-end
+  implicit none
+  integer :: n1,n2,n3
+  real :: a(n1,n2,n3)
+  integer :: i,j,k
+  do k=1,n3
+     do j=1,n2
+        do i=1,n1
+           a(i,j,k)=(a(i,j,k)/cp)**cpor*p00*.01
+        enddo
+     enddo
+  enddo
+  return
+end subroutine comp_press
 
 !***************************************************************************
 
 subroutine isan_comp_dn0 (n1,n2,n3,pi0,th0,dn0,dn0u,dn0v,topt,ngrd) 
 
-  use isan_coms
-  use rconstants
-  use mem_grid
-  use mem_scratch
+  use isan_coms, only: &
+       piref, &
+       thref
+  
+  use rconstants, only: &
+       cp, &
+       cpor, &
+       g, &
+       p00, &
+       rgas
+  
+  use mem_grid, only: &
+       ztop, &
+       nnzp, &
+       ztn, &
+       zmn, &
+       dzmn
+  
+  use mem_scratch, only: &
+       vctr2, &
+       vctr11, &
+       vctr12
 
   implicit none
 
@@ -492,6 +537,7 @@ subroutine fmint4_isan(var1, var2, dn0xc, dn0xf, ifm, icm, vpnt, idwt)
   use isan_coms, only: &
        maxiz, maxix, maxiy, &     ! INTENT(IN)
        rr_scr1, rr_scr2, rr_vt2da
+
   use mem_grid, only: &
        nnzp, nnxp, nnyp, & ! INTENT(IN)
        grid_g
@@ -559,3 +605,4 @@ subroutine fmint4_isan(var1, var2, dn0xc, dn0xf, ifm, icm, vpnt, idwt)
   !call ezcntr(plt,nnxp(ifm),nnyp(ifm))
 
 end subroutine fmint4_isan
+

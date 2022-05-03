@@ -8,10 +8,13 @@
 
 !--(DMK-CCATT-INI)----------------------------------------------------------------
 subroutine chem_ISAN_file_inv (iyear1,imonth1,idate1,itime1,timmax,CHEM_ASSIM, CHEMISTRY)
-!--(DMK-CCATT-OLD)----------------------------------------------------------------
-!subroutine ISAN_file_inv (iyear1,imonth1,idate1,itime1,timmax)
-!--(DMK-CCATT-OLD)----------------------------------------------------------------
-  use ModDateUtils
+  !--(DMK-CCATT-OLD)----------------------------------------------------------------
+  !subroutine ISAN_file_inv (iyear1,imonth1,idate1,itime1,timmax)
+  !--(DMK-CCATT-OLD)----------------------------------------------------------------
+  use ModDateUtils, only: &
+       date_add_to, &
+       date_make_big
+  
   use isan_coms, only: &
        IGRIDFL, &
        IAPR, &
@@ -33,7 +36,7 @@ subroutine chem_ISAN_file_inv (iyear1,imonth1,idate1,itime1,timmax,CHEM_ASSIM, C
   use mem_grid, only: &
        time     
   use dump, only: &
-    dumpMessage  
+       dumpMessage  
 
   implicit none
 
@@ -81,8 +84,8 @@ subroutine chem_ISAN_file_inv (iyear1,imonth1,idate1,itime1,timmax,CHEM_ASSIM, C
   if(igridfl.ne.0) then
      if(iapr(1:1).ne.' '.and.iapr(1:1).ne.char(0) ) then
 
-!--(DMK-CCATT-INI)----------------------------------------------------------------
-     print*,'----> performing the data inventory'
+        !--(DMK-CCATT-INI)----------------------------------------------------------------
+        print*,'----> performing the data inventory'
 
         nfgfiles=-1
         nc=len_trim(iapr)
@@ -93,8 +96,8 @@ subroutine chem_ISAN_file_inv (iyear1,imonth1,idate1,itime1,timmax,CHEM_ASSIM, C
 !!$ call RAMS_filelist(fnames_fg, rams_filelist_arg, nfgfiles)
 
         nfgfiles = ((timmax/3600) / (isan_inc/100)) + 1    
-        
-        
+
+
         call date_add_to(iyear1,imonth1,idate1,itime1*100  &
              ,time,'s',iyears,imonths,idates,ihours)
 
@@ -106,48 +109,48 @@ subroutine chem_ISAN_file_inv (iyear1,imonth1,idate1,itime1,timmax,CHEM_ASSIM, C
            call date_add_to(iyears, imonths, idates, localTime*100,  &
                 0., 's', iyears, imonths, idates, ihours)
 
-!--(DMK-CCATT-INI)----------------------------------------------------------------
+           !--(DMK-CCATT-INI)----------------------------------------------------------------
            if(guess1st.eq.'PRESS')  then 
-	    if(CHEM_ASSIM == 1 .and. CHEMISTRY >= 0)  then 
-	        write(sVarName,100) iapr(1:len_trim(iapr)),'-',iyears,'-',imonths,'-',idates,'-',ihours/100   
-                sVarName = TRIM(sVarName) // '.vfm'
-	    else 
-	        write(sVarName,101) iapr(1:len_trim(iapr)),iyears,'-',imonths,'-',idates,'-',ihours/100   
-	    endif
-	   endif
-	   100 format(a,a1,i4.4,a1,i2.2,a1,i2.2,a1,i4.4)
-	   101 format(a,   i4.4,a1,i2.2,a1,i2.2,a1,i4.4)
+              if(CHEM_ASSIM == 1 .and. CHEMISTRY >= 0)  then 
+                 write(sVarName,100) iapr(1:len_trim(iapr)),'-',iyears,'-',imonths,'-',idates,'-',ihours/100   
+                 sVarName = TRIM(sVarName) // '.vfm'
+              else 
+                 write(sVarName,101) iapr(1:len_trim(iapr)),iyears,'-',imonths,'-',idates,'-',ihours/100   
+              endif
+           endif
+100        format(a,a1,i4.4,a1,i2.2,a1,i2.2,a1,i4.4)
+101        format(a,   i4.4,a1,i2.2,a1,i2.2,a1,i4.4)
 
 
            if(guess1st.eq.'RAMS')   then 
-	      write(sVarName,102) iapr(1:len_trim(iapr)),'-A-',iyears,'-',imonths,'-',idates,'-',ihours   
+              write(sVarName,102) iapr(1:len_trim(iapr)),'-A-',iyears,'-',imonths,'-',idates,'-',ihours   
               sVarName = sVarName // "-head.txt"
-	      102 format(a,a3,i4.4,a1,i2.2,a1,i2.2,a1,i6.6)
+102           format(a,a3,i4.4,a1,i2.2,a1,i2.2,a1,i6.6)
            endif
 
 
-!--(DMK-CCATT-OLD)----------------------------------------------------------------
-!           write(sVarName,100) iapr(1:len_trim(iapr)),iyears,'-',imonths,'-',idates,'-',ihours/100   
-!100        format(a,i4.4,a1,i2.2,a1,i2.2,a1,i4.4)
-!--(DMK-CCATT-FIM)----------------------------------------------------------------
-!           if(guess1st.eq.'RAMS') then
-!              sVarName = sVarName // "-head.txt"
-!--(DMK-CCATT-INI)----------------------------------------------------------------
-!           else
-!srf - introduzindo diferenças entre assimilaçao de dp + chem e dp meteo somente 
-!	     if(CHEM_ASSIM == 1 .and. CHEMISTRY >= 0) then 
-!	       sVarName = TRIM(sVarName) // '.vfm'
-!	     else
-!	       sVarName = TRIM(sVarName)
-!	     endif
-!srf
-!--(DMK-CCATT-FIM)----------------------------------------------------------------	      
-!           endif
+           !--(DMK-CCATT-OLD)----------------------------------------------------------------
+           !           write(sVarName,100) iapr(1:len_trim(iapr)),iyears,'-',imonths,'-',idates,'-',ihours/100   
+           !100        format(a,i4.4,a1,i2.2,a1,i2.2,a1,i4.4)
+           !--(DMK-CCATT-FIM)----------------------------------------------------------------
+           !           if(guess1st.eq.'RAMS') then
+           !              sVarName = sVarName // "-head.txt"
+           !--(DMK-CCATT-INI)----------------------------------------------------------------
+           !           else
+           !srf - introduzindo diferenças entre assimilaçao de dp + chem e dp meteo somente 
+           !     if(CHEM_ASSIM == 1 .and. CHEMISTRY >= 0) then 
+           !       sVarName = TRIM(sVarName) // '.vfm'
+           !     else
+           !       sVarName = TRIM(sVarName)
+           !     endif
+           !srf
+           !--(DMK-CCATT-FIM)----------------------------------------------------------------      
+           !           endif
 
 
-!--(DMK-CCATT-INI)----------------------------------------------------------------
+           !--(DMK-CCATT-INI)----------------------------------------------------------------
            print*,'sVarName=',TRIM(sVarName)
-!--(DMK-CCATT-FIM)----------------------------------------------------------------
+           !--(DMK-CCATT-FIM)----------------------------------------------------------------
 
            inquire(file=sVarName(1:len_trim(sVarName)),exist=there)
 
@@ -156,7 +159,7 @@ subroutine chem_ISAN_file_inv (iyear1,imonth1,idate1,itime1,timmax,CHEM_ASSIM, C
               indice = indice + 1
            endif
 
-!--srf change LE 18000 to LE 2100 for  3/3 ivars
+           !--srf change LE 18000 to LE 2100 for  3/3 ivars
            if(localTime .LE. 2100)then
               localTime = localTime + isan_inc
            else
@@ -187,20 +190,20 @@ subroutine chem_ISAN_file_inv (iyear1,imonth1,idate1,itime1,timmax,CHEM_ASSIM, C
 
            lnf=len_trim(fnames_fg(nf))
 
-!--(DMK-CCATT-INI)----------------------------------------------------------------
-!srf-chem         
-	 if(trim(fnames_fg(nf)(len_trim(fnames_fg(nf))-2:len_trim(fnames_fg(nf)))) == 'vfm') then
-            if(guess1st.eq.'PRESS')  &
-                 read(fnames_fg(nf)(lnf-18:lnf-4),20) inyear,inmonth,indate,inhour
-         else
-!--(DMK-CCATT-FIM)----------------------------------------------------------------
+           !--(DMK-CCATT-INI)----------------------------------------------------------------
+           !srf-chem         
+           if(trim(fnames_fg(nf)(len_trim(fnames_fg(nf))-2:len_trim(fnames_fg(nf)))) == 'vfm') then
+              if(guess1st.eq.'PRESS')  &
+                   read(fnames_fg(nf)(lnf-18:lnf-4),20) inyear,inmonth,indate,inhour
+           else
+              !--(DMK-CCATT-FIM)----------------------------------------------------------------
 
-           if(guess1st.eq.'PRESS')  &
-                read(fnames_fg(nf)(lnf-14:lnf),20) inyear,inmonth,indate,inhour
-		
-!--(DMK-CCATT-INI)----------------------------------------------------------------
-          endif
-!--(DMK-CCATT-FIM)----------------------------------------------------------------
+              if(guess1st.eq.'PRESS')  &
+                   read(fnames_fg(nf)(lnf-14:lnf),20) inyear,inmonth,indate,inhour
+
+              !--(DMK-CCATT-INI)----------------------------------------------------------------
+           endif
+           !--(DMK-CCATT-FIM)----------------------------------------------------------------
 
            ! form of a-A-2000-07-01-060000-head.txt
            if(guess1st.eq.'RAMS')  &
@@ -370,33 +373,33 @@ subroutine chem_ISAN_file_inv (iyear1,imonth1,idate1,itime1,timmax,CHEM_ASSIM, C
   write (*,fmt='(A,I1,A,I3,A)')'-- ISAN Input File Date Inventory for icFileType = ',icFileType,', with ',ndates,' dates.'
   print*,'---------------------------------------------------------'
   do nn=1,ndates
-    print*,'---- Date:',itotdates(nn)
+     print*,'---- Date:',itotdates(nn)
 
-    if(icFileType==1) then
-      call makeGrib2fileName(trim(icPrefix),itime1,isan_inc,nn &
-            ,iproc_names(nn,5),iproc_names(nn,6))
-      print*,'---- First guess grib2 file:'  &
-                ,iproc_names(nn,5)(1:len_trim(iproc_names(nn,5)))
-    elseif(icFileType==2) then
-      iproc_names(nn,5)=trim(icPrefix)
-      print*,'---- First guess netCDF file:'  &
-                ,iproc_names(nn,5)(1:len_trim(iproc_names(nn,5)))
-    elseif(icFileType==3) then
-      call makeGeosfileName(trim(icPrefix),isan_inc,nn &
-            ,iproc_names(nn,5),iproc_names(nn,6),itotdates(nn),iyear1,imonth1,idate1,itime1)
-    elseif(icFileType==4) then
-      call makeGradsfileName(trim(icPrefix),isan_inc,nn &
-            ,iproc_names(nn,5),iproc_names(nn,6),itotdates(nn),iyear1,imonth1,idate1,itime1)
-    else
-      do nf=1,nfgfiles
-        if(itotdates(nn).eq.itotdate_fg(nf)) then
-           print*,'---- First guess file:'  &
-                ,fnames_fg(nf)(1:len_trim(fnames_fg(nf)))
-        endif
-      enddo
-    endif
+     if(icFileType==1) then
+        call makeGrib2fileName(trim(icPrefix),itime1,isan_inc,nn &
+             ,iproc_names(nn,5),iproc_names(nn,6))
+        print*,'---- First guess grib2 file:'  &
+             ,iproc_names(nn,5)(1:len_trim(iproc_names(nn,5)))
+     elseif(icFileType==2) then
+        iproc_names(nn,5)=trim(icPrefix)
+        print*,'---- First guess netCDF file:'  &
+             ,iproc_names(nn,5)(1:len_trim(iproc_names(nn,5)))
+     elseif(icFileType==3) then
+        call makeGeosfileName(trim(icPrefix),isan_inc,nn &
+             ,iproc_names(nn,5),iproc_names(nn,6),itotdates(nn),iyear1,imonth1,idate1,itime1)
+     elseif(icFileType==4) then
+        call makeGradsfileName(trim(icPrefix),isan_inc,nn &
+             ,iproc_names(nn,5),iproc_names(nn,6),itotdates(nn),iyear1,imonth1,idate1,itime1)
+     else
+        do nf=1,nfgfiles
+           if(itotdates(nn).eq.itotdate_fg(nf)) then
+              print*,'---- First guess file:'  &
+                   ,fnames_fg(nf)(1:len_trim(fnames_fg(nf)))
+           endif
+        enddo
+     endif
 
-    do nf=1,nupfiles
+     do nf=1,nupfiles
         if(itotdates(nn).eq.itotdate_up(nf)) then
            print*,'---- Upper air   file:'  &
                 ,fnames_up(nf)(1:len_trim(fnames_up(nf)))
@@ -432,10 +435,10 @@ subroutine chem_ISAN_file_inv (iyear1,imonth1,idate1,itime1,timmax,CHEM_ASSIM, C
        ,iproc_dates(npdates))
   do while (iproc_dates(npdates) .lt. idate_end)
      npdates = npdates + 1
-     
-!--(DMK-CCATT-INI)---------------------------------------------------------     
-!   print*,npdates,iproc_dates(npdates),maxisfiles,tinc
-!--(DMK-CCATT-FIM)---------------------------------------------------------     
+
+     !--(DMK-CCATT-INI)---------------------------------------------------------     
+     !   print*,npdates,iproc_dates(npdates),maxisfiles,tinc
+     !--(DMK-CCATT-FIM)---------------------------------------------------------     
 
      call date_add_to (iyear1,imonth1,idate1,ihour1  &
           ,tinc*(npdates-1),'m',iyear2,imonth2,idate2,ihour2)
@@ -475,92 +478,92 @@ subroutine chem_ISAN_file_inv (iyear1,imonth1,idate1,itime1,timmax,CHEM_ASSIM, C
      print*,'---- Date:', iproc_dates(nn)
 
      iproc_flag(nn,1)=1
-     
+
      if(icFileType==1) then
-      print *,itime1; call flush(6)
-      call makeGrib2fileName(trim(icPrefix),itime1,isan_inc,nn &
-            ,iproc_names(nn,5),iproc_names(nn,6))
-      print*,'---- First guess grib2 (NCEP) file:'  &
-                ,iproc_names(nn,5)(1:len_trim(iproc_names(nn,5)))
+        print *,itime1; call flush(6)
+        call makeGrib2fileName(trim(icPrefix),itime1,isan_inc,nn &
+             ,iproc_names(nn,5),iproc_names(nn,6))
+        print*,'---- First guess grib2 (NCEP) file:'  &
+             ,iproc_names(nn,5)(1:len_trim(iproc_names(nn,5)))
      elseif(icFileType==2) then
         iproc_names(nn,5)=trim(icPrefix)
-       print*,'---- First guess nc4 (NASA) file:'  &
-                ,iproc_names(nn,5)(1:len_trim(iproc_names(nn,5)))       
+        print*,'---- First guess nc4 (NASA) file:'  &
+             ,iproc_names(nn,5)(1:len_trim(iproc_names(nn,5)))       
      elseif(icFileType==3) then
         call makeGeosfileName(trim(icPrefix),isan_inc,nn &
-            ,iproc_names(nn,5),iproc_names(nn,6),iproc_dates(nn),iyear1,imonth1,idate1,itime1)
+             ,iproc_names(nn,5),iproc_names(nn,6),iproc_dates(nn),iyear1,imonth1,idate1,itime1)
      elseif(icFileType==4) then
         call makeGradsfileName(trim(icPrefix),isan_inc,nn &
-            ,iproc_names(nn,5),iproc_names(nn,6),iproc_dates(nn),iyear1,imonth1,idate1,itime1)
+             ,iproc_names(nn,5),iproc_names(nn,6),iproc_dates(nn),iyear1,imonth1,idate1,itime1)
      endif
 
-    if(icFileType==1) then
+     if(icFileType==1) then
 
         inquire(file=iproc_names(nn,5)(1:len_trim(iproc_names(nn,5))), exist=fileExist )
         if(.not. fileExist)  iErrNumber=dumpMessage(c_tty,c_yes,header,'468' &
-              ,c_fatal,'File '//iproc_names(nn,5)(1:len_trim(iproc_names(nn,5))) &
-              //' not found. Please, verify and solve it!')
+             ,c_fatal,'File '//iproc_names(nn,5)(1:len_trim(iproc_names(nn,5))) &
+             //' not found. Please, verify and solve it!')
         write(*,fmt='(A)') '---- First guess file' &
-              //iproc_names(nn,5)(1:len_trim(iproc_names(nn,5)))//' exists.'
+             //iproc_names(nn,5)(1:len_trim(iproc_names(nn,5)))//' exists.'
         iproc_flag(nn,2)=1
-    elseif(icFileType==2) then
+     elseif(icFileType==2) then
         inquire(file=iproc_names(nn,5)(1:len_trim(iproc_names(nn,5))), exist=fileExist )
         if(.not. fileExist)  iErrNumber=dumpMessage(c_tty,c_yes,header,'468' &
-              ,c_fatal,'File '//iproc_names(nn,5)(1:len_trim(iproc_names(nn,5))) &
-              //' not found. Please, verify and solve it!')
+             ,c_fatal,'File '//iproc_names(nn,5)(1:len_trim(iproc_names(nn,5))) &
+             //' not found. Please, verify and solve it!')
         write(*,fmt='(A)') '---- First guess file' &
-              //iproc_names(nn,5)(1:len_trim(iproc_names(nn,5)))//' exists.'
+             //iproc_names(nn,5)(1:len_trim(iproc_names(nn,5)))//' exists.'
         iproc_flag(nn,2)=1
-    elseif(icFileType==3) then
+     elseif(icFileType==3) then
         inquire(file=iproc_names(nn,5)(1:len_trim(iproc_names(nn,5))), exist=fileExist )
         if(.not. fileExist)  iErrNumber=dumpMessage(c_tty,c_yes,header,'468' &
-              ,c_fatal,'File '//iproc_names(nn,5)(1:len_trim(iproc_names(nn,5))) &
-              //' not found. Please, verify and solve it!')
+             ,c_fatal,'File '//iproc_names(nn,5)(1:len_trim(iproc_names(nn,5))) &
+             //' not found. Please, verify and solve it!')
         write(*,fmt='(A)') '---- First guess file' &
-              //iproc_names(nn,5)(1:len_trim(iproc_names(nn,5)))//' exists.'
+             //iproc_names(nn,5)(1:len_trim(iproc_names(nn,5)))//' exists.'
         iproc_flag(nn,2)=1
-    elseif(icFileType==4) then
+     elseif(icFileType==4) then
         write(*,fmt='(A)') 'Checking for '//iproc_names(nn,5)(1:len_trim(iproc_names(nn,5)))
         inquire(file=iproc_names(nn,5)(1:len_trim(iproc_names(nn,5))), exist=fileExist )
         if(.not. fileExist)  iErrNumber=dumpMessage(c_tty,c_yes,header,'468' &
-              ,c_fatal,'File '//iproc_names(nn,5)(1:len_trim(iproc_names(nn,5))) &
-              //' not found. Please, verify and solve it!')
+             ,c_fatal,'File '//iproc_names(nn,5)(1:len_trim(iproc_names(nn,5))) &
+             //' not found. Please, verify and solve it!')
         write(*,fmt='(A)') '---- First guess file' &
-              //iproc_names(nn,5)(1:len_trim(iproc_names(nn,5)))//' exists.'
+             //iproc_names(nn,5)(1:len_trim(iproc_names(nn,5)))//' exists.'
         iproc_flag(nn,2)=1
-    else
+     else
 
-      ! first guess
-      iproc_flag(nn,2)=0
-      do nf=1,nfgfiles
-         if(iproc_dates(nn).eq.itotdate_fg(nf)) then
-            print*,'---- First guess file exists.'
-            if(igridfl.eq.0) then
-               iproc_flag(nn,2)=2
-            else
-               iproc_flag(nn,2)=1
-            endif
-            iproc_names(nn,1)=fnames_fg(nf)
-            goto 71
-         endif
-      enddo 
-      ! file doesn't exist
-      if(i1st_flg.eq.1) then
-         print*,'---- First guess file does not exist.'  &
-              ,' Will not process this time.'
-         iproc_flag(nn,1)=0
-      elseif(i1st_flg.eq.2) then
-         isan_err_flag=1
-         print*,'---- First guess file does not exist.'  &
-              ,' Will STOP run.'
-         iproc_flag(nn,1)=0
-      elseif(i1st_flg.eq.3) then
-         print*,'---- First guess file does not exist.'  &
-              ,' Will attempt interpolation.'
-         iproc_flag(nn,2)=3
-      endif 
+        ! first guess
+        iproc_flag(nn,2)=0
+        do nf=1,nfgfiles
+           if(iproc_dates(nn).eq.itotdate_fg(nf)) then
+              print*,'---- First guess file exists.'
+              if(igridfl.eq.0) then
+                 iproc_flag(nn,2)=2
+              else
+                 iproc_flag(nn,2)=1
+              endif
+              iproc_names(nn,1)=fnames_fg(nf)
+              goto 71
+           endif
+        enddo
+        ! file doesn't exist
+        if(i1st_flg.eq.1) then
+           print*,'---- First guess file does not exist.'  &
+                ,' Will not process this time.'
+           iproc_flag(nn,1)=0
+        elseif(i1st_flg.eq.2) then
+           isan_err_flag=1
+           print*,'---- First guess file does not exist.'  &
+                ,' Will STOP run.'
+           iproc_flag(nn,1)=0
+        elseif(i1st_flg.eq.3) then
+           print*,'---- First guess file does not exist.'  &
+                ,' Will attempt interpolation.'
+           iproc_flag(nn,2)=3
+        endif
 
-    endif
+     endif
 71   continue
 
      ! upper air
@@ -630,136 +633,136 @@ subroutine chem_ISAN_file_inv (iyear1,imonth1,idate1,itime1,timmax,CHEM_ASSIM, C
      call fatal_error('isan_file_errors')
   endif
 
-!--(DMK-CCATT-INI)----------------------------------------------------------------
+  !--(DMK-CCATT-INI)----------------------------------------------------------------
 end subroutine chem_ISAN_file_inv
 !--(DMK-CCATT-OLD)----------------------------------------------------------------
 !end subroutine ISAN_file_inv
 !--(DMK-CCATT-FIM)----------------------------------------------------------------
 subroutine makeGrib2fileName(prefix,itime1,isan_inc,nn,gribFileName,invFileName)
-    !Header_vai_aqui!
-    implicit none
+  !Header_vai_aqui!
+  implicit none
 
-    include "constants.h"
+  include "constants.h"
 
-    !Parameters (constants)
-    character(len=*),parameter :: header='**(makeGrib2fileName)**'
+  !Parameters (constants)
+  character(len=*),parameter :: header='**(makeGrib2fileName)**'
 
-    ! Input/Output variables
-    character(len=*), intent(in) :: prefix 
-    !#
-    integer,intent(in)    :: itime1
-    !#
-    integer,intent(in)    :: isan_inc
-    !#
-    integer,intent(in)    :: nn
-    !#
-    character(len=*),intent(out) :: gribFileName
-    !#
-    character(len=*),intent(out) :: invFileName
-    !#
-    !Local variables
-    character(len=3) :: ctime
+  ! Input/Output variables
+  character(len=*), intent(in) :: prefix 
+  !#
+  integer,intent(in)    :: itime1
+  !#
+  integer,intent(in)    :: isan_inc
+  !#
+  integer,intent(in)    :: nn
+  !#
+  character(len=*),intent(out) :: gribFileName
+  !#
+  character(len=*),intent(out) :: invFileName
+  !#
+  !Local variables
+  character(len=3) :: ctime
 
-    !Code
-    !print *,'In: ',itime1,nn,isan_inc
-    write(ctime,fmt='(I3.3)') int(itime1/100)+(nn-1)*isan_inc/100
-    gribFileName=trim(prefix)//ctime
-    invFileName=trim(prefix)//ctime//'.inv'
+  !Code
+  !print *,'In: ',itime1,nn,isan_inc
+  write(ctime,fmt='(I3.3)') int(itime1/100)+(nn-1)*isan_inc/100
+  gribFileName=trim(prefix)//ctime
+  invFileName=trim(prefix)//ctime//'.inv'
 
-    
+
 end subroutine makeGrib2fileName
 
 subroutine makeGradsfileName(prefix,isan_inc,nn,gradsFileName,invFileName,iproc_date,iyear1,imonth1,idate1,itime1)
-    !Header_vai_aqui!
-    implicit none
+  !Header_vai_aqui!
+  implicit none
 
-    include "constants.h"
+  include "constants.h"
 
-    !Parameters (constants)
-    character(len=*),parameter :: header='**(makeGradsfileName)**'
+  !Parameters (constants)
+  character(len=*),parameter :: header='**(makeGradsfileName)**'
 
-    ! Input/Output variables
-    character(len=*), intent(in) :: prefix 
-    !#
-    character(len=*), intent(in) :: iproc_date 
-    !#
-    integer,intent(in)    :: itime1
-    !#
-    integer,intent(in)    :: iyear1
-    !#
-    integer,intent(in)    :: imonth1
-    !#
-    integer,intent(in)    :: idate1
-    !#    
-    integer,intent(in)    :: isan_inc
-    !#
-    integer,intent(in)    :: nn
-    !#
-    character(len=*),intent(out) :: gradsFileName
-    !#
-    character(len=*),intent(out) :: invFileName
-    !#
-    !Local variables
-    character(len=2) :: ctime,cdate,cmonth
-    character(len=4) :: cyear!,cntime
+  ! Input/Output variables
+  character(len=*), intent(in) :: prefix 
+  !#
+  character(len=*), intent(in) :: iproc_date 
+  !#
+  integer,intent(in)    :: itime1
+  !#
+  integer,intent(in)    :: iyear1
+  !#
+  integer,intent(in)    :: imonth1
+  !#
+  integer,intent(in)    :: idate1
+  !#    
+  integer,intent(in)    :: isan_inc
+  !#
+  integer,intent(in)    :: nn
+  !#
+  character(len=*),intent(out) :: gradsFileName
+  !#
+  character(len=*),intent(out) :: invFileName
+  !#
+  !Local variables
+  character(len=2) :: ctime,cdate,cmonth
+  character(len=4) :: cyear!,cntime
 
 
-    !Code
-    !print *,'In: nn,isan_inc,iproc_date,iyear1,imonth1,idate1,itime1= ',nn,isan_inc,iproc_date,iyear1,imonth1,idate1,itime1
-    write(ctime,fmt='(I2.2)') int(itime1/100)
-    write(cyear,fmt='(I4.4)') iyear1
-    write(cmonth,fmt='(I2.2)') imonth1
-    write(cdate,fmt='(I2.2)') idate1
-    gradsFileName=trim(prefix)//iproc_date(1:10)//'.gra'
-    invFileName=trim(prefix)//ctime//'.inv'
-    
+  !Code
+  !print *,'In: nn,isan_inc,iproc_date,iyear1,imonth1,idate1,itime1= ',nn,isan_inc,iproc_date,iyear1,imonth1,idate1,itime1
+  write(ctime,fmt='(I2.2)') int(itime1/100)
+  write(cyear,fmt='(I4.4)') iyear1
+  write(cmonth,fmt='(I2.2)') imonth1
+  write(cdate,fmt='(I2.2)') idate1
+  gradsFileName=trim(prefix)//iproc_date(1:10)//'.gra'
+  invFileName=trim(prefix)//ctime//'.inv'
+
 end subroutine makeGradsfileName
 
 
 subroutine makeGeosfileName(prefix,isan_inc,nn,geosFileName,invFileName,iproc_date,iyear1,imonth1,idate1,itime1)
-    !Header_vai_aqui!
-    implicit none
+  !Header_vai_aqui!
+  implicit none
 
-    include "constants.h"
+  include "constants.h"
 
-    !Parameters (constants)
-    character(len=*),parameter :: header='**(makeGeosfileName)**'
+  !Parameters (constants)
+  character(len=*),parameter :: header='**(makeGeosfileName)**'
 
-    ! Input/Output variables
-    character(len=*), intent(in) :: prefix 
-    !#
-    character(len=*), intent(in) :: iproc_date 
-    !#
-    integer,intent(in)    :: itime1
-    !#
-    integer,intent(in)    :: iyear1
-    !#
-    integer,intent(in)    :: imonth1
-    !#
-    integer,intent(in)    :: idate1
-    !#    
-    integer,intent(in)    :: isan_inc
-    !#
-    integer,intent(in)    :: nn
-    !#
-    character(len=*),intent(out) :: geosFileName
-    !#
-    character(len=*),intent(out) :: invFileName
-    !#
-    !Local variables
-    character(len=2) :: ctime,cdate,cmonth
-    character(len=4) :: cyear!,cntime
+  ! Input/Output variables
+  character(len=*), intent(in) :: prefix 
+  !#
+  character(len=*), intent(in) :: iproc_date 
+  !#
+  integer,intent(in)    :: itime1
+  !#
+  integer,intent(in)    :: iyear1
+  !#
+  integer,intent(in)    :: imonth1
+  !#
+  integer,intent(in)    :: idate1
+  !#    
+  integer,intent(in)    :: isan_inc
+  !#
+  integer,intent(in)    :: nn
+  !#
+  character(len=*),intent(out) :: geosFileName
+  !#
+  character(len=*),intent(out) :: invFileName
+  !#
+  !Local variables
+  character(len=2) :: ctime,cdate,cmonth
+  character(len=4) :: cyear!,cntime
 
 
-    !Code
-    print *,'In: nn,isan_inc,iproc_date,iyear1,imonth1,idate1,itime1= ',nn,isan_inc,iproc_date,iyear1,imonth1,idate1,itime1
-    ! GEOS.fp.fcst.inst3_3d_asm_Cp.20200213_00+20200214_0300.V01.nc4
-    !write(cntime,fmt='(I4.4)') int(itime1)+(nn-1)*isan_inc
-    write(ctime,fmt='(I2.2)') int(itime1/100)
-    write(cyear,fmt='(I4.4)') iyear1
-    write(cmonth,fmt='(I2.2)') imonth1
-    write(cdate,fmt='(I2.2)') idate1
-    geosFileName=trim(prefix)//cyear//cmonth//cdate//'_'//ctime//'+'//iproc_date(1:8)//'_'//iproc_date(9:12)//'.V01.nc4'
-    invFileName=trim(prefix)//ctime//'.inv'
-    
+  !Code
+  print *,'In: nn,isan_inc,iproc_date,iyear1,imonth1,idate1,itime1= ',nn,isan_inc,iproc_date,iyear1,imonth1,idate1,itime1
+  ! GEOS.fp.fcst.inst3_3d_asm_Cp.20200213_00+20200214_0300.V01.nc4
+  !write(cntime,fmt='(I4.4)') int(itime1)+(nn-1)*isan_inc
+  write(ctime,fmt='(I2.2)') int(itime1/100)
+  write(cyear,fmt='(I4.4)') iyear1
+  write(cmonth,fmt='(I2.2)') imonth1
+  write(cdate,fmt='(I2.2)') idate1
+  geosFileName=trim(prefix)//cyear//cmonth//cdate//'_'//ctime//'+'//iproc_date(1:8)//'_'//iproc_date(9:12)//'.V01.nc4'
+  invFileName=trim(prefix)//ctime//'.inv'
+
 end subroutine makeGeosfileName
