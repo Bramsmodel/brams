@@ -61,6 +61,12 @@ module ModGrid
        CreateScalarTab, &
        DestroyScalarTab, &
        DumpScalarTab
+
+  use ModBasicVars, only: &
+       BasicVars, &
+       CreateBasicVars, &
+       DestroyBasicVars, &
+       DumpBasicVars
   
   ! JP: temporariamente usa variaveis globais enquanto
   !     var_tables nao for inclusa no tipo Grid
@@ -128,6 +134,8 @@ module ModGrid
      type(NodeDimensions), pointer :: NodeDimsAdvMnt => null()
      ! NodeDimsAdvMnt: indices and dimensions of this process
      ! domain decomposed sub-domain for use inside MonotonicAdvection
+     type(BasicVars), pointer :: Basic => null()
+     type(BasicVars), pointer :: AveBasic => null()
      type(NeighbourNodes), pointer :: Neigh => null()
      ! Neigh: list of BRAMS process numbers that are neighbours
      !        of this node for usual ghost zone update operations
@@ -356,7 +364,11 @@ contains
     ! this node Scalar Table
 
     oneGrid%ScalarTab => CreateScalarTab()
-    oneGrid%ScalarTabSize = 0    
+    oneGrid%ScalarTabSize = 0
+
+    oneGrid%Basic => CreateBasicVars(oneGrid%NodeDims, oneGrid%Ramsin)
+    
+    oneGrid%AveBasic => CreateBasicVars(oneGrid%NodeDims, oneGrid%Ramsin)
     
     if (dumpLocal) then
        call MsgDump(h//" dumping OneGrid at the end")
@@ -517,6 +529,8 @@ contains
        call DestroyDomainDecomp(oneGrid%GlobalWithGhostAdvMnt)
        call DestroyDomainDecomp(oneGrid%LocalOwnAdvMnt)
        call DestroyNeighbourNodes(oneGrid%Neigh)
+       call DestroyBasicVars(oneGrid%Basic)
+       call DestroyBasicVars(oneGrid%AveBasic)
        call DestroyAcousticMessageSet(&
             oneGrid%AcouSendU, oneGrid%AcouRecvU, &
             oneGrid%AcouSendV, oneGrid%AcouRecvV, &
@@ -595,6 +609,9 @@ contains
     call DumpDomainDecomp(oneGrid%GlobalWithGhostAdvMnt, "GlobalWithGhostAdvMnt")
     call DumpDomainDecomp(oneGrid%LocalOwnAdvMnt, "LocalOwnAdvMnt")
 
+    call DumpBasicVars(oneGrid%Basic, "oneGrid%Basic")
+    call DumpBasicVars(oneGrid%AveBasic, "oneGrid%AveBasic")
+    
     call MsgDump(h//" dumping neighborhood components")
     call DumpNeighbourNodes(oneGrid%Neigh,"oneGrid%Neigh")
 

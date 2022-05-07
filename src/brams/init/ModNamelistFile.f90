@@ -41,7 +41,7 @@ module ModNamelistFile
   implicit none
   
   private
-  public :: namelistFile
+  public :: NamelistFile
   public :: CreateNamelistFile
   public :: DestroyNamelistFile
   public :: GetNamelistFileName
@@ -63,7 +63,7 @@ module ModNamelistFile
   integer, parameter :: nsrc=4   !  number_sources
 !--(DMK-CCATT-FIM)-----------------------------------------------------------
 
-  type namelistFile
+  type NamelistFile
      character(len=f_name_length) :: fileName
 
      ! namelist /MODEL_GRID/
@@ -534,7 +534,7 @@ module ModNamelistFile
      real                         :: meteogramFreq
      character(len=f_name_length) :: meteogramMap
      character(len=f_name_length) :: meteogramDir
-  end type namelistFile
+  end type NamelistFile
 
 contains
 
@@ -543,7 +543,7 @@ contains
 
 
   subroutine CreateNamelistFile(oneNamelistFile)
-    type(namelistFile), pointer :: oneNamelistFile
+    type(NamelistFile), pointer :: oneNamelistFile
     if (associated(oneNamelistFile)) then
        deallocate(oneNamelistFile)
     end if
@@ -554,7 +554,7 @@ contains
 
 
   subroutine DestroyNamelistFile(oneNamelistFile)
-    type(namelistFile), pointer :: oneNamelistFile
+    type(NamelistFile), pointer :: oneNamelistFile
     if (associated(oneNamelistFile)) then
        deallocate(oneNamelistFile)
     end if
@@ -564,7 +564,7 @@ contains
 
 
   subroutine GetNamelistFileName(oneNamelistFile)
-    type(namelistFile), pointer :: oneNamelistFile
+    type(NamelistFile), pointer :: oneNamelistFile
 
     integer :: nargs
     integer :: iarg
@@ -603,7 +603,7 @@ contains
 
 
   subroutine ReadNamelistFile(oneNamelistFile)
-    type(namelistFile), pointer :: oneNamelistFile
+    type(NamelistFile), pointer :: oneNamelistFile
 
     include "files.h"
 
@@ -2896,7 +2896,7 @@ contains
 
 
   subroutine BroadcastNamelistFile(oneNamelistFile, oneParallelEnvironment)
-    type(namelistFile), pointer :: oneNamelistFile
+    type(NamelistFile), pointer :: oneNamelistFile
     type(parallelEnvironment), pointer :: oneParallelEnvironment
 
     include "constants.h"
@@ -3968,7 +3968,7 @@ contains
 
 
   subroutine TimeUnitsToSeconds(oneNamelistFile)
-    type(namelistFile), pointer :: oneNamelistFile
+    type(NamelistFile), pointer :: oneNamelistFile
 
     real :: tfact
     character(len=*), parameter :: h="**(TimeUnitsToSeconds)**"
@@ -3997,7 +3997,7 @@ contains
 
 
   subroutine DumpNamelistFile(oneNamelistFile,nmachs,mchnum,master_num)
-    type(namelistFile), pointer :: oneNamelistFile
+    type(NamelistFile), pointer :: oneNamelistFile
 
     character(len=*),parameter :: revision='6.0'
     character(len=*),parameter :: license='CC Attribution-ShareAlike 4.0 International'

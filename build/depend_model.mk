@@ -49,7 +49,7 @@ ModGrid.o  : $(MPI)/ModGrid.f90 \
 	ModNamelistFile.o ModParallelEnvironment.o \
 	ModGridDims.o ModDomainDecomp.o \
 	ModNeighbourNodes.o ModMessageSet.o \
-	ModNodeDimensions.o ModScalarTable.o \
+	ModNodeDimensions.o ModScalarTable.o ModBasicVars.o\
 	var_tables.o meteogramType.o mem_tend.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
@@ -82,6 +82,13 @@ ModFieldSectionList.o  : $(MPI)/ModFieldSectionList.f90 \
 
 ModDomainDecomp.o  : $(MPI)/ModDomainDecomp.f90 \
 	ModParallelEnvironment.o ModGridDims.o
+	@cp -f $< $(<F:.f90=.f90)
+	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
+	rm -f $(<F:.f90=.f90)
+
+ModBasicVars.o : $(MEMORY)/ModBasicVars.f90 ModNodeDimensions.o \
+	ModNamelistFile.o ModParallelEnvironment.o var_tables.o \
+	mem_stilt.o mem_basic.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
