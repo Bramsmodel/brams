@@ -7,7 +7,7 @@
 !###########################################################################
 
 
-module ModBasicVars
+module ModBasicFields
 
   use ModNodeDimensions, only: &
        NodeDimensions
@@ -34,15 +34,15 @@ module ModBasicVars
   implicit none
 
   private
-  public :: BasicVars
-  public :: CreateBasicVars
-  public :: DestroyBasicVars
-  public :: DumpBasicVars
-  public :: InsertBasicVarsAtVarTable 
-  public :: DeepCopyToBasicVars
-  public :: DeepCopyFromBasicVars
+  public :: BasicFields
+  public :: CreateBasicFields
+  public :: DestroyBasicFields
+  public :: DumpBasicFields
+  public :: InsertBasicFieldsAtVarTable 
+  public :: DeepCopyToBasicFields
+  public :: DeepCopyFromBasicFields
  
-  type BasicVars
+  type BasicFields
 
      ! Variables to be dimensioned by (nzp,nxp,nyp)
 
@@ -71,25 +71,25 @@ module ModBasicVars
      real, pointer, contiguous :: fcorv(:,:) => null()
      real, pointer, contiguous :: cputime(:,:) => null()
 
-  end type BasicVars
+  end type BasicFields
 
 contains
 
 
 
 
-  function CreateBasicVars(oneNodeDims, oneNamelistFile) result(res)
+  function CreateBasicFields(oneNodeDims, oneNamelistFile) result(res)
     type(NodeDimensions), pointer, intent(in) :: oneNodeDims
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
-    type(BasicVars), pointer :: res
+    type(BasicFields), pointer :: res
 
     integer :: ierr
     integer :: mzp
     integer :: mxp
     integer :: myp
     character(len=8) :: str(10)
-    character(len=*), parameter :: h="**(CreateBasicVars)**"
-    logical, parameter :: dumpLocal=.true.
+    character(len=*), parameter :: h="**(CreateBasicFields)**"
+    logical, parameter :: dumpLocal=.false.
 
     mzp=oneNodeDims%mzp
     mxp=oneNodeDims%mxp
@@ -285,23 +285,23 @@ contains
     if (dumpLocal) then
        call MsgDump(h//" finishes")
     end if
-  end function CreateBasicVars
+  end function CreateBasicFields
 
 
 
 
 
-  subroutine DestroyBasicVars(oneBasicVars)
-    type(BasicVars), pointer, intent(inout) :: oneBasicVars
+  subroutine DestroyBasicFields(oneBasicFields)
+    type(BasicFields), pointer, intent(inout) :: oneBasicFields
 
     integer :: ierr
     character(len=8) :: str(10)
-    character(len=*), parameter :: h="**(DestroyBasicVars)**"
-    logical, parameter :: dumpLocal=.true.
+    character(len=*), parameter :: h="**(DestroyBasicFields)**"
+    logical, parameter :: dumpLocal=.false.
 
-    if (.not. associated(oneBasicVars)) then
+    if (.not. associated(oneBasicFields)) then
        if (dumpLocal) then
-          call MsgDump(h//" null oneBasicVars")
+          call MsgDump(h//" null oneBasicFields")
        end if
        return
     end if
@@ -310,85 +310,85 @@ contains
        call MsgDump(h//" starts")
     end if
 
-    deallocate(oneBasicVars%up, stat=ierr)
+    deallocate(oneBasicFields%up, stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" deallocate up fails with stat="//&
             trim(adjustl(str(1))))
     end if
 
-    deallocate(oneBasicVars%uc, stat=ierr)
+    deallocate(oneBasicFields%uc, stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" deallocate uc fails with stat="//&
             trim(adjustl(str(1))))
     end if
 
-    deallocate(oneBasicVars%vp, stat=ierr)
+    deallocate(oneBasicFields%vp, stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" deallocate vp fails with stat="//&
             trim(adjustl(str(1))))
     end if
 
-    deallocate(oneBasicVars%vc, stat=ierr)
+    deallocate(oneBasicFields%vc, stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" deallocate vc fails with stat="//&
             trim(adjustl(str(1))))
     end if
 
-    deallocate(oneBasicVars%wp, stat=ierr)
+    deallocate(oneBasicFields%wp, stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" deallocate wp fails with stat="//&
             trim(adjustl(str(1))))
     end if
 
-    deallocate(oneBasicVars%wc, stat=ierr)
+    deallocate(oneBasicFields%wc, stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" deallocate wc fails with stat="//&
             trim(adjustl(str(1))))
     end if
 
-    deallocate(oneBasicVars%pp, stat=ierr)
+    deallocate(oneBasicFields%pp, stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" deallocate pp fails with stat="//&
             trim(adjustl(str(1))))
     end if
 
-    deallocate(oneBasicVars%pc, stat=ierr)
+    deallocate(oneBasicFields%pc, stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" deallocate pc fails with stat="//&
             trim(adjustl(str(1))))
     end if
 
-    deallocate(oneBasicVars%rv, stat=ierr)
+    deallocate(oneBasicFields%rv, stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" deallocate rv fails with stat="//&
             trim(adjustl(str(1))))
     end if
 
-    deallocate(oneBasicVars%theta, stat=ierr)
+    deallocate(oneBasicFields%theta, stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" deallocate theta fails with stat="//&
             trim(adjustl(str(1))))
     end if
 
-    deallocate(oneBasicVars%thp, stat=ierr)
+    deallocate(oneBasicFields%thp, stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" deallocate thp fails with stat="//&
             trim(adjustl(str(1))))
     end if
 
-    if (associated(oneBasicVars%thc)) then
-       deallocate(oneBasicVars%thc, stat=ierr)
+    if (associated(oneBasicFields%thc)) then
+       deallocate(oneBasicFields%thc, stat=ierr)
        if (ierr /= 0) then
           write(str(1),"(i8)") ierr
           call fatal_error(h//" deallocate thc fails with stat="//&
@@ -396,432 +396,432 @@ contains
        end if
     end if
 
-    deallocate(oneBasicVars%rtp, stat=ierr)
+    deallocate(oneBasicFields%rtp, stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" deallocate rtp fails with stat="//&
             trim(adjustl(str(1))))
     end if
 
-    deallocate(oneBasicVars%pi0, stat=ierr)
+    deallocate(oneBasicFields%pi0, stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" deallocate pi0 fails with stat="//&
             trim(adjustl(str(1))))
     end if
 
-    deallocate(oneBasicVars%th0, stat=ierr)
+    deallocate(oneBasicFields%th0, stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" deallocate th0 fails with stat="//&
             trim(adjustl(str(1))))
     end if
 
-    deallocate(oneBasicVars%dn0, stat=ierr)
+    deallocate(oneBasicFields%dn0, stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" deallocate dn0 fails with stat="//&
             trim(adjustl(str(1))))
     end if
 
-    deallocate(oneBasicVars%dn0u, stat=ierr)
+    deallocate(oneBasicFields%dn0u, stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" deallocate dn0u fails with stat="//&
             trim(adjustl(str(1))))
     end if
 
-    deallocate(oneBasicVars%dn0v, stat=ierr)
+    deallocate(oneBasicFields%dn0v, stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" deallocate dn0v fails with stat="//&
             trim(adjustl(str(1))))
     end if
 
-    deallocate(oneBasicVars%fcoru, stat=ierr)
+    deallocate(oneBasicFields%fcoru, stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" deallocate fcoru fails with stat="//&
             trim(adjustl(str(1))))
     end if
 
-    deallocate(oneBasicVars%fcorv, stat=ierr)
+    deallocate(oneBasicFields%fcorv, stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" deallocate fcorv fails with stat="//&
             trim(adjustl(str(1))))
     end if
 
-    deallocate(oneBasicVars%cputime, stat=ierr)
+    deallocate(oneBasicFields%cputime, stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" deallocate cputime fails with stat="//&
             trim(adjustl(str(1))))
     end if
 
-    deallocate(oneBasicVars, stat=ierr)
+    deallocate(oneBasicFields, stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate oneBasicVars fails with stat="//&
+       call fatal_error(h//" deallocate oneBasicFields fails with stat="//&
             trim(adjustl(str(1))))
     end if
 
-    nullify(oneBasicVars)
+    nullify(oneBasicFields)
 
     if (dumpLocal) then
        call MsgDump(h//" finishes")
     end if
-  end subroutine DestroyBasicVars
+  end subroutine DestroyBasicFields
 
 
 
 
 
 
-  subroutine DumpBasicVars(oneBasicVars, name)
-    type(BasicVars), pointer, intent(in) :: oneBasicVars
+  subroutine DumpBasicFields(oneBasicFields, name)
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
     character(len=*), intent(in) :: name
 
-    character(len=*), parameter :: h="**(DumpBasicVars)**"
+    character(len=*), parameter :: h="**(DumpBasicFields)**"
 
-    if (associated(oneBasicVars)) then
+    if (associated(oneBasicFields)) then
        call MsgDump(h//" "//name//" associated")
     else
        call MsgDump(h//" "//name//" not associated")
     end if
-  end subroutine DumpBasicVars
+  end subroutine DumpBasicFields
 
 
   
 
 
-  subroutine InsertBasicVarsAtVarTable(oneBasicVars, oneAveBasicVars, imean, gridId)
-    type (BasicVars), pointer, intent(in) :: oneBasicVars
-    type (BasicVars), pointer, intent(in) :: oneAveBasicVars
+  subroutine InsertBasicFieldsAtVarTable(oneBasicFields, oneAveBasicFields, imean, gridId)
+    type (BasicFields), pointer, intent(in) :: oneBasicFields
+    type (BasicFields), pointer, intent(in) :: oneAveBasicFields
     integer, intent(in) :: imean
     integer, intent(in) :: gridId
 
     integer(kind=real64) :: npts
-    character(len=*), parameter :: h="**(InsertBasicVarsAtVarTable)**" 
+    character(len=*), parameter :: h="**(InsertBasicFieldsAtVarTable)**" 
 
-    if (.not. associated(oneBasicVars)) then
-       call fatal_error(h//" oneBasicVars not associated")
-    else if (.not. associated(oneAveBasicVars)) then
-       call fatal_error(h//" oneAveBasicVars not associated")
+    if (.not. associated(oneBasicFields)) then
+       call fatal_error(h//" oneBasicFields not associated")
+    else if (.not. associated(oneAveBasicFields)) then
+       call fatal_error(h//" oneAveBasicFields not associated")
     end if
 
     ! Fill pointers to arrays into variable tables
 
-    if (associated(oneBasicVars%up)) then
-       npts=size(oneBasicVars%up)
-       call InsertVTab (oneBasicVars%up,oneAveBasicVars%up  &
+    if (associated(oneBasicFields%up)) then
+       npts=size(oneBasicFields%up)
+       call InsertVTab (oneBasicFields%up,oneAveBasicFields%up  &
             ,gridId, npts, imean,  &
             'UP :3:hist:anal:mpti:mpt3:mpt2')
     else
-       call fatal_error(h//" oneBasicVars%up not associated")
+       call fatal_error(h//" oneBasicFields%up not associated")
     end if
 
-    if (associated(oneBasicVars%vp))  then
-       call InsertVTab (oneBasicVars%vp,oneAveBasicVars%vp  &
+    if (associated(oneBasicFields%vp))  then
+       call InsertVTab (oneBasicFields%vp,oneAveBasicFields%vp  &
             ,gridId, npts, imean,  &
             'VP :3:hist:anal:mpti:mpt3:mpt2')
     end if
 
-    if (associated(oneBasicVars%wp))  then
-       call InsertVTab (oneBasicVars%wp,oneAveBasicVars%wp  &
+    if (associated(oneBasicFields%wp))  then
+       call InsertVTab (oneBasicFields%wp,oneAveBasicFields%wp  &
             ,gridId, npts, imean,  &
             'WP :3:hist:anal:mpti:mpt3:mpt2')
     end if
 
-    if (associated(oneBasicVars%pp))  then
-       call InsertVTab (oneBasicVars%pp,oneAveBasicVars%pp  &
+    if (associated(oneBasicFields%pp))  then
+       call InsertVTab (oneBasicFields%pp,oneAveBasicFields%pp  &
             ,gridId, npts, imean,  &
             'PP :3:hist:anal:mpti:mpt3:mpt2')
     end if
 
-    if (associated(oneBasicVars%uc))  then
-       call InsertVTab (oneBasicVars%uc,oneAveBasicVars%uc  &
+    if (associated(oneBasicFields%uc))  then
+       call InsertVTab (oneBasicFields%uc,oneAveBasicFields%uc  &
             ,gridId, npts, imean,  &
             'UC :3:hist:mpti:mpt3:mpt2')
     end if
 
-    if (associated(oneBasicVars%vc))  then
-       call InsertVTab (oneBasicVars%vc,oneAveBasicVars%vc  &
+    if (associated(oneBasicFields%vc))  then
+       call InsertVTab (oneBasicFields%vc,oneAveBasicFields%vc  &
             ,gridId, npts, imean,  &
             'VC :3:hist:mpti:mpt3:mpt2')
     end if
 
-    if (associated(oneBasicVars%wc))  then
-       call InsertVTab (oneBasicVars%wc,oneAveBasicVars%wc  &
+    if (associated(oneBasicFields%wc))  then
+       call InsertVTab (oneBasicFields%wc,oneAveBasicFields%wc  &
             ,gridId, npts, imean,  &
             'WC :3:hist:mpti:mpt3:mpt2')
     end if
 
-    if (associated(oneBasicVars%pc))  then
-       call InsertVTab (oneBasicVars%pc,oneAveBasicVars%pc  &
+    if (associated(oneBasicFields%pc))  then
+       call InsertVTab (oneBasicFields%pc,oneAveBasicFields%pc  &
             ,gridId, npts, imean,  &
             'PC :3:hist:mpti:mpt3:mpt2')
     end if
 
 
-    if (associated(oneBasicVars%thp)) then
-       call InsertVTab (oneBasicVars%thp,oneAveBasicVars%thp  &
+    if (associated(oneBasicFields%thp)) then
+       call InsertVTab (oneBasicFields%thp,oneAveBasicFields%thp  &
             ,gridId, npts, imean,  &
             'THP :3:hist:mpti:mpt3:mpt1')
     end if
 
-    if (associated(oneBasicVars%rtp)) then
-       call InsertVTab (oneBasicVars%rtp,oneAveBasicVars%rtp  &
+    if (associated(oneBasicFields%rtp)) then
+       call InsertVTab (oneBasicFields%rtp,oneAveBasicFields%rtp  &
             ,gridId, npts, imean,  &
             'RTP :3:hist:mpti:mpt3:mpt1')
     end if
 
 
     if(iexev == 2) then
-       if (associated(oneBasicVars%theta)) then
-          call InsertVTab (oneBasicVars%theta,oneAveBasicVars%theta  &
+       if (associated(oneBasicFields%theta)) then
+          call InsertVTab (oneBasicFields%theta,oneAveBasicFields%theta  &
                ,gridId, npts, imean,  &
                'THETA :3:hist:anal:mpti:mpt3:mpt1')
        end if
     else
-       if (associated(oneBasicVars%theta)) then
-          call InsertVTab (oneBasicVars%theta,oneAveBasicVars%theta  &
+       if (associated(oneBasicFields%theta)) then
+          call InsertVTab (oneBasicFields%theta,oneAveBasicFields%theta  &
                ,gridId, npts, imean,  &
                'THETA :3:hist:anal:mpti:mpt3')
        end if
     endif
 
-    if (associated(oneBasicVars%thc)) then
-       call InsertVTab (oneBasicVars%thc,oneAveBasicVars%thc  &
+    if (associated(oneBasicFields%thc)) then
+       call InsertVTab (oneBasicFields%thc,oneAveBasicFields%thc  &
             ,gridId, npts, imean,  &
             'THC :3:hist:mpti:mpt3:mpt1')
     end if
 
     if(iexev == 2) then
-       if (associated(oneBasicVars%rv)) then
-          call InsertVTab (oneBasicVars%rv,oneAveBasicVars%rv  &
+       if (associated(oneBasicFields%rv)) then
+          call InsertVTab (oneBasicFields%rv,oneAveBasicFields%rv  &
                ,gridId, npts, imean,  &
                'RV :3:hist:anal:mpti:mpt3:mpt1')
        end if
     else
-       if (associated(oneBasicVars%rv)) then
-          call InsertVTab (oneBasicVars%rv,oneAveBasicVars%rv  &
+       if (associated(oneBasicFields%rv)) then
+          call InsertVTab (oneBasicFields%rv,oneAveBasicFields%rv  &
                ,gridId, npts, imean,  &
                'RV :3:hist:anal:mpti:mpt3')
        end if
     endif
 
-    if (associated(oneBasicVars%pi0)) then
-       call InsertVTab (oneBasicVars%pi0,oneAveBasicVars%pi0  &
+    if (associated(oneBasicFields%pi0)) then
+       call InsertVTab (oneBasicFields%pi0,oneAveBasicFields%pi0  &
             ,gridId, npts, imean,  &
             'PI0 :3:mpti')
     end if
 
-    if (associated(oneBasicVars%th0)) then
-       call InsertVTab (oneBasicVars%th0,oneAveBasicVars%th0  &
+    if (associated(oneBasicFields%th0)) then
+       call InsertVTab (oneBasicFields%th0,oneAveBasicFields%th0  &
             ,gridId, npts, imean,  &
             'TH0 :3:mpti')
     end if
 
-    if (associated(oneBasicVars%dn0)) then
-       call InsertVTab (oneBasicVars%dn0,oneAveBasicVars%dn0  &
+    if (associated(oneBasicFields%dn0)) then
+       call InsertVTab (oneBasicFields%dn0,oneAveBasicFields%dn0  &
             ,gridId, npts, imean,  &
             'DN0 :3:mpti')
     end if
 
-    if (associated(oneBasicVars%dn0u)) then
-       call InsertVTab (oneBasicVars%dn0u,oneAveBasicVars%dn0u  &
+    if (associated(oneBasicFields%dn0u)) then
+       call InsertVTab (oneBasicFields%dn0u,oneAveBasicFields%dn0u  &
             ,gridId, npts, imean,  &
             'DN0U :3:mpti')
     end if
 
-    if (associated(oneBasicVars%dn0v)) then
-       call InsertVTab (oneBasicVars%dn0v,oneAveBasicVars%dn0v  &
+    if (associated(oneBasicFields%dn0v)) then
+       call InsertVTab (oneBasicFields%dn0v,oneAveBasicFields%dn0v  &
             ,gridId, npts, imean,  &
             'DN0V :3:mpti')
     end if
 
 
-    if (associated(oneBasicVars%fcoru)) then
-       npts = size(oneBasicVars%fcoru)
-       call InsertVTab (oneBasicVars%fcoru,oneAveBasicVars%fcoru  &
+    if (associated(oneBasicFields%fcoru)) then
+       npts = size(oneBasicFields%fcoru)
+       call InsertVTab (oneBasicFields%fcoru,oneAveBasicFields%fcoru  &
             ,gridId, npts, imean,  &
             'FCORU :2:mpti')
     else
-       call fatal_error(h//" oneBasicVars%fcoru not associated")
+       call fatal_error(h//" oneBasicFields%fcoru not associated")
     end if
 
-    if (associated(oneBasicVars%fcorv)) then
-       call InsertVTab (oneBasicVars%fcorv,oneAveBasicVars%fcorv  &
+    if (associated(oneBasicFields%fcorv)) then
+       call InsertVTab (oneBasicFields%fcorv,oneAveBasicFields%fcorv  &
             ,gridId, npts, imean,  &
             'FCORV :2:mpti')
     end if
 
-    if (associated(oneBasicVars%cputime)) then
-       call InsertVTab (oneBasicVars%cputime,oneAveBasicVars%cputime  &
+    if (associated(oneBasicFields%cputime)) then
+       call InsertVTab (oneBasicFields%cputime,oneAveBasicFields%cputime  &
             ,gridId, npts, imean,  &
             'CPUTIME :2:anal:mpti:mpt3')
     end if
-  end subroutine InsertBasicVarsAtVarTable
+  end subroutine InsertBasicFieldsAtVarTable
 
 
 
   
 
-  subroutine DeepCopyToBasicVars(oneBasicVars, oneAveBasicVars)
-    type(BasicVars), pointer, intent(in) :: oneBasicVars
-    type(BasicVars), pointer, intent(in) :: oneAveBasicVars
+  subroutine DeepCopyToBasicFields(oneBasicFields, oneAveBasicFields)
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(BasicFields), pointer, intent(in) :: oneAveBasicFields
 
-    character(len=*), parameter :: h="**(DeepCopyToBasicVars)**"
+    character(len=*), parameter :: h="**(DeepCopyToBasicFields)**"
 
-    if (.not. associated(oneBasicVars)) then
-       call fatal_error(h//" oneBasicVars not associated")
-    else if (.not. associated(oneAveBasicVars)) then
-       call fatal_error(h//" oneAveBasicVars not associated")
+    if (.not. associated(oneBasicFields)) then
+       call fatal_error(h//" oneBasicFields not associated")
+    else if (.not. associated(oneAveBasicFields)) then
+       call fatal_error(h//" oneAveBasicFields not associated")
     end if
     
-    oneBasicVars%up => basic_g(1)%up
-    oneAveBasicVars%up => basicm_g(1)%up
+    oneBasicFields%up => basic_g(1)%up
+    oneAveBasicFields%up => basicm_g(1)%up
     
-    oneBasicVars%uc => basic_g(1)%uc
-    oneAveBasicVars%uc => basicm_g(1)%uc
+    oneBasicFields%uc => basic_g(1)%uc
+    oneAveBasicFields%uc => basicm_g(1)%uc
     
-    oneBasicVars%vp => basic_g(1)%vp
-    oneAveBasicVars%vp => basicm_g(1)%vp
+    oneBasicFields%vp => basic_g(1)%vp
+    oneAveBasicFields%vp => basicm_g(1)%vp
     
-    oneBasicVars%vc => basic_g(1)%vc
-    oneAveBasicVars%vc => basicm_g(1)%vc
+    oneBasicFields%vc => basic_g(1)%vc
+    oneAveBasicFields%vc => basicm_g(1)%vc
     
-    oneBasicVars%wp => basic_g(1)%wp
-    oneAveBasicVars%wp => basicm_g(1)%wp
+    oneBasicFields%wp => basic_g(1)%wp
+    oneAveBasicFields%wp => basicm_g(1)%wp
     
-    oneBasicVars%wc => basic_g(1)%wc
-    oneAveBasicVars%wc => basicm_g(1)%wc
+    oneBasicFields%wc => basic_g(1)%wc
+    oneAveBasicFields%wc => basicm_g(1)%wc
     
-    oneBasicVars%pp => basic_g(1)%pp
-    oneAveBasicVars%pp => basicm_g(1)%pp
+    oneBasicFields%pp => basic_g(1)%pp
+    oneAveBasicFields%pp => basicm_g(1)%pp
     
-    oneBasicVars%pc => basic_g(1)%pc
-    oneAveBasicVars%pc => basicm_g(1)%pc
+    oneBasicFields%pc => basic_g(1)%pc
+    oneAveBasicFields%pc => basicm_g(1)%pc
     
-    oneBasicVars%rv => basic_g(1)%rv
-    oneAveBasicVars%rv => basicm_g(1)%rv
+    oneBasicFields%rv => basic_g(1)%rv
+    oneAveBasicFields%rv => basicm_g(1)%rv
     
-    oneBasicVars%theta => basic_g(1)%theta
-    oneAveBasicVars%theta => basicm_g(1)%theta
+    oneBasicFields%theta => basic_g(1)%theta
+    oneAveBasicFields%theta => basicm_g(1)%theta
     
-    oneBasicVars%thp => basic_g(1)%thp
-    oneAveBasicVars%thp => basicm_g(1)%thp
+    oneBasicFields%thp => basic_g(1)%thp
+    oneAveBasicFields%thp => basicm_g(1)%thp
     
-    oneBasicVars%thc => basic_g(1)%thc
-    oneAveBasicVars%thc => basicm_g(1)%thc
+    oneBasicFields%thc => basic_g(1)%thc
+    oneAveBasicFields%thc => basicm_g(1)%thc
     
-    oneBasicVars%rtp => basic_g(1)%rtp
-    oneAveBasicVars%rtp => basicm_g(1)%rtp
+    oneBasicFields%rtp => basic_g(1)%rtp
+    oneAveBasicFields%rtp => basicm_g(1)%rtp
     
-    oneBasicVars%pi0 => basic_g(1)%pi0
-    oneAveBasicVars%pi0 => basicm_g(1)%pi0
+    oneBasicFields%pi0 => basic_g(1)%pi0
+    oneAveBasicFields%pi0 => basicm_g(1)%pi0
     
-    oneBasicVars%th0 => basic_g(1)%th0
-    oneAveBasicVars%th0 => basicm_g(1)%th0
+    oneBasicFields%th0 => basic_g(1)%th0
+    oneAveBasicFields%th0 => basicm_g(1)%th0
     
-    oneBasicVars%dn0 => basic_g(1)%dn0
-    oneAveBasicVars%dn0 => basicm_g(1)%dn0
+    oneBasicFields%dn0 => basic_g(1)%dn0
+    oneAveBasicFields%dn0 => basicm_g(1)%dn0
     
-    oneBasicVars%dn0u => basic_g(1)%dn0u
-    oneAveBasicVars%dn0u => basicm_g(1)%dn0u
+    oneBasicFields%dn0u => basic_g(1)%dn0u
+    oneAveBasicFields%dn0u => basicm_g(1)%dn0u
     
-    oneBasicVars%dn0v => basic_g(1)%dn0v
-    oneAveBasicVars%dn0v => basicm_g(1)%dn0v
+    oneBasicFields%dn0v => basic_g(1)%dn0v
+    oneAveBasicFields%dn0v => basicm_g(1)%dn0v
     
-    oneBasicVars%fcoru => basic_g(1)%fcoru
-    oneAveBasicVars%fcoru => basicm_g(1)%fcoru
+    oneBasicFields%fcoru => basic_g(1)%fcoru
+    oneAveBasicFields%fcoru => basicm_g(1)%fcoru
     
-    oneBasicVars%fcorv => basic_g(1)%fcorv
-    oneAveBasicVars%fcorv => basicm_g(1)%fcorv
+    oneBasicFields%fcorv => basic_g(1)%fcorv
+    oneAveBasicFields%fcorv => basicm_g(1)%fcorv
     
-    oneBasicVars%cputime => basic_g(1)%cputime
-    oneAveBasicVars%cputime => basicm_g(1)%cputime
+    oneBasicFields%cputime => basic_g(1)%cputime
+    oneAveBasicFields%cputime => basicm_g(1)%cputime
     
-  end subroutine DeepCopyToBasicVars
+  end subroutine DeepCopyToBasicFields
 
 
 
 
-  subroutine DeepCopyFromBasicVars(oneBasicVars, oneAveBasicVars)
-    type(BasicVars), pointer, intent(in) :: oneBasicVars
-    type(BasicVars), pointer, intent(in) :: oneAveBasicVars
+  subroutine DeepCopyFromBasicFields(oneBasicFields, oneAveBasicFields)
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(BasicFields), pointer, intent(in) :: oneAveBasicFields
 
-    character(len=*), parameter :: h="**(DeepCopyFromBasicVars)**"
+    character(len=*), parameter :: h="**(DeepCopyFromBasicFields)**"
 
-    if (.not. associated(oneBasicVars)) then
-       call fatal_error(h//" oneBasicVars not associated")
-    else if (.not. associated(oneAveBasicVars)) then
-       call fatal_error(h//" oneAveBasicVars not associated")
+    if (.not. associated(oneBasicFields)) then
+       call fatal_error(h//" oneBasicFields not associated")
+    else if (.not. associated(oneAveBasicFields)) then
+       call fatal_error(h//" oneAveBasicFields not associated")
     end if
 
-    basic_g(1)%up => oneBasicVars%up
-    basicm_g(1)%up => oneAveBasicVars%up
+    basic_g(1)%up => oneBasicFields%up
+    basicm_g(1)%up => oneAveBasicFields%up
 
-    basic_g(1)%uc => oneBasicVars%uc
-    basicm_g(1)%uc => oneAveBasicVars%uc
+    basic_g(1)%uc => oneBasicFields%uc
+    basicm_g(1)%uc => oneAveBasicFields%uc
 
-    basic_g(1)%vp => oneBasicVars%vp
-    basicm_g(1)%vp => oneAveBasicVars%vp
+    basic_g(1)%vp => oneBasicFields%vp
+    basicm_g(1)%vp => oneAveBasicFields%vp
 
-    basic_g(1)%vc => oneBasicVars%vc
-    basicm_g(1)%vc => oneAveBasicVars%vc
+    basic_g(1)%vc => oneBasicFields%vc
+    basicm_g(1)%vc => oneAveBasicFields%vc
 
-    basic_g(1)%wp => oneBasicVars%wp
-    basicm_g(1)%wp => oneAveBasicVars%wp
+    basic_g(1)%wp => oneBasicFields%wp
+    basicm_g(1)%wp => oneAveBasicFields%wp
 
-    basic_g(1)%wc => oneBasicVars%wc
-    basicm_g(1)%wc => oneAveBasicVars%wc
+    basic_g(1)%wc => oneBasicFields%wc
+    basicm_g(1)%wc => oneAveBasicFields%wc
 
-    basic_g(1)%pp => oneBasicVars%pp
-    basicm_g(1)%pp => oneAveBasicVars%pp
+    basic_g(1)%pp => oneBasicFields%pp
+    basicm_g(1)%pp => oneAveBasicFields%pp
 
-    basic_g(1)%pc => oneBasicVars%pc
-    basicm_g(1)%pc => oneAveBasicVars%pc
+    basic_g(1)%pc => oneBasicFields%pc
+    basicm_g(1)%pc => oneAveBasicFields%pc
 
-    basic_g(1)%rv => oneBasicVars%rv
-    basicm_g(1)%rv => oneAveBasicVars%rv
+    basic_g(1)%rv => oneBasicFields%rv
+    basicm_g(1)%rv => oneAveBasicFields%rv
 
-    basic_g(1)%theta => oneBasicVars%theta
-    basicm_g(1)%theta => oneAveBasicVars%theta
+    basic_g(1)%theta => oneBasicFields%theta
+    basicm_g(1)%theta => oneAveBasicFields%theta
 
-    basic_g(1)%thp => oneBasicVars%thp
-    basicm_g(1)%thp => oneAveBasicVars%thp
+    basic_g(1)%thp => oneBasicFields%thp
+    basicm_g(1)%thp => oneAveBasicFields%thp
 
-    basic_g(1)%thc => oneBasicVars%thc
-    basicm_g(1)%thc => oneAveBasicVars%thc
+    basic_g(1)%thc => oneBasicFields%thc
+    basicm_g(1)%thc => oneAveBasicFields%thc
 
-    basic_g(1)%rtp => oneBasicVars%rtp
-    basicm_g(1)%rtp => oneAveBasicVars%rtp
+    basic_g(1)%rtp => oneBasicFields%rtp
+    basicm_g(1)%rtp => oneAveBasicFields%rtp
 
-    basic_g(1)%pi0 => oneBasicVars%pi0
-    basicm_g(1)%pi0 => oneAveBasicVars%pi0
+    basic_g(1)%pi0 => oneBasicFields%pi0
+    basicm_g(1)%pi0 => oneAveBasicFields%pi0
 
-    basic_g(1)%th0 => oneBasicVars%th0
-    basicm_g(1)%th0 => oneAveBasicVars%th0
+    basic_g(1)%th0 => oneBasicFields%th0
+    basicm_g(1)%th0 => oneAveBasicFields%th0
 
-    basic_g(1)%dn0 => oneBasicVars%dn0
-    basicm_g(1)%dn0 => oneAveBasicVars%dn0
+    basic_g(1)%dn0 => oneBasicFields%dn0
+    basicm_g(1)%dn0 => oneAveBasicFields%dn0
 
-    basic_g(1)%dn0u => oneBasicVars%dn0u
-    basicm_g(1)%dn0u => oneAveBasicVars%dn0u
+    basic_g(1)%dn0u => oneBasicFields%dn0u
+    basicm_g(1)%dn0u => oneAveBasicFields%dn0u
 
-    basic_g(1)%dn0v => oneBasicVars%dn0v
-    basicm_g(1)%dn0v => oneAveBasicVars%dn0v
+    basic_g(1)%dn0v => oneBasicFields%dn0v
+    basicm_g(1)%dn0v => oneAveBasicFields%dn0v
 
-    basic_g(1)%fcoru => oneBasicVars%fcoru
-    basicm_g(1)%fcoru => oneAveBasicVars%fcoru
+    basic_g(1)%fcoru => oneBasicFields%fcoru
+    basicm_g(1)%fcoru => oneAveBasicFields%fcoru
 
-    basic_g(1)%fcorv => oneBasicVars%fcorv
-    basicm_g(1)%fcorv => oneAveBasicVars%fcorv
+    basic_g(1)%fcorv => oneBasicFields%fcorv
+    basicm_g(1)%fcorv => oneAveBasicFields%fcorv
 
-    basic_g(1)%cputime => oneBasicVars%cputime
-    basicm_g(1)%cputime => oneAveBasicVars%cputime
+    basic_g(1)%cputime => oneBasicFields%cputime
+    basicm_g(1)%cputime => oneAveBasicFields%cputime
 
-  end subroutine DeepCopyFromBasicVars
-end module ModBasicVars
+  end subroutine DeepCopyFromBasicFields
+end module ModBasicFields

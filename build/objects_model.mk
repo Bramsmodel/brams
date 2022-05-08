@@ -27,7 +27,7 @@ OBJ_MOD = \
 	ModMonotonicAdvection.o \
 	ReadBcst.o \
 	ModScalarTable.o \
-	ModBasicVars.o \
+	ModBasicFields.o \
 	mpi_io_engine-5d.o \
 	Phys_const.o \
 	alloc.o   \
