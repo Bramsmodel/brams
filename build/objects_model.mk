@@ -151,7 +151,7 @@ OBJ_MOD = \
 	rad_driv.o \
 	rtm_driver.o \
 	ModRadvc.o \
-	radvc_rk.o \
+	ModRadvcRK.o \
 	radvc_adap.o \
 	ModMonotonicAdvection.o \
 	mod_GhostBlock.o \
@@ -284,7 +284,7 @@ OBJ_MOD = \
 	module_cu_gf_v5.1.o \
 	module_cu_gd_fim.o \
 	cup_grell3.o \
-	rexev.o \
+	ModRexev.o \
 	rstilt.o \
 	turb_constants.o \
 	tkenn.o \

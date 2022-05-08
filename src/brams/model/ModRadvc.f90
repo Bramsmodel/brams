@@ -199,7 +199,8 @@ contains
                ,scratch%vt3de             ,scratch%vt3df              &
                ,scratch%vt3dh             ,scratch%vt3di              &
                ,scratch%vt3dj             ,scratch%vt3dk              &
-               ,mynum                         )
+               ,mynum, &
+               oneBasic, oneAveBasic)
 
        else
 
@@ -518,7 +519,7 @@ contains
   !     *********************************************************************
 
   subroutine fa_preptc(m1,m2,m3,vt3da,vt3db,vt3dc,vt3dd,vt3de,vt3df  &
-       ,vt3dh,vt3di,vt3dj,vt3dk,mynum)
+       ,vt3dh,vt3di,vt3dj,vt3dk,mynum, oneBasic, oneAveBasic)
     !> @brief:  fa_preptc                                      
     !! @author:  unknow
     !! @date:  18/Nov/2015
@@ -531,6 +532,8 @@ contains
 
     integer,intent(in) :: m1,m2,m3,mynum
     integer :: j,i,k,im,ip,jm,jp
+    type(BasicFields), pointer, intent(in) :: oneBasic
+    type(BasicFields), pointer, intent(in) :: oneAveBasic
 
     real :: c1,c2,c3,c4,rtgti
 
@@ -546,6 +549,7 @@ contains
     ! Compute weight at scalar point: VT3DH
     ! Compute advective weights for the linear term: VT3DI, VCTR1, and VCTR2
 
+    call DeepCopyToBasicFields(oneBasic, oneAveBasic)
     do j = 1,m3
        jm = max(1,j-1)
        jp = min(m3,j+1)
@@ -567,7 +571,7 @@ contains
              vt3dd(k,i,j) = c1 * vt3da(k,i,j)
              vt3de(k,i,j) = c2 * vt3db(k,i,j)
              vt3df(k,i,j) = .5 * vt3dc(k,i,j) * dzm(k)
-             vctr3(k) = 1. / basic_g(ngrid)%dn0(k,i,j)
+             vctr3(k) = 1. / oneBasic%dn0(k,i,j)
              vt3dh(k,i,j) = c3 * vctr3(k)
              vt3dj(k,i,j) = c4 * vctr3(k)
              vt3dk(k,i,j) = dzt(k) * vctr3(k)
@@ -594,13 +598,15 @@ contains
           c1 = grid_g(ngrid)%fmapui(i,j) * grid_g(ngrid)%rtgu(i,j)
           c2 = grid_g(ngrid)%fmapvi(i,j) * grid_g(ngrid)%rtgv(i,j)
           do k = 1,m1-1
-             vt3da(k,i,j) = vt3da(k,i,j) * c1 * basic_g(ngrid)%dn0u(k,i,j)
-             vt3db(k,i,j) = vt3db(k,i,j) * c2 * basic_g(ngrid)%dn0v(k,i,j)
+             vt3da(k,i,j) = vt3da(k,i,j) * c1 * oneBasic%dn0u(k,i,j)
+             vt3db(k,i,j) = vt3db(k,i,j) * c2 * oneBasic%dn0v(k,i,j)
              vt3dc(k,i,j) = vt3dc(k,i,j) * .5  &
-                  * (basic_g(ngrid)%dn0(k,i,j) + basic_g(ngrid)%dn0(k+1,i,j))
+                  * (oneBasic%dn0(k,i,j) + oneBasic%dn0(k+1,i,j))
           enddo
        enddo
     enddo
+    call DeepCopyFromBasicFields(oneBasic, oneAveBasic)
+    
   end subroutine fa_preptc
 
   !     *********************************************************************

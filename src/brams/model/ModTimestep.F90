@@ -10,17 +10,24 @@ module ModTimestep
 contains
   subroutine timestep(oneGrid)
 
+    use ModRexev, only: &
+         exevolve, &
+         get_true_air_density
+    
+    use cuparm_grell3, only: &
+         prepare_lsf
+    
     use ModDiffuse, only: &
          diffuse_brams31
 
     use ModTurbK, only: &
          diffuse
-    
+
     use ModRtimi, only: &
          tend0, &
          hadvance, &
          predtr
-    
+
     use ModRadvc, only: &
          advectc
 
@@ -189,23 +196,23 @@ contains
          dfVars,             &
          applyDF
 
-    USE ModMonotonicAdvection, only:                 &
+    use ModMonotonicAdvection, only:                 &
          advmnt_driver,  &        ! subroutine
          advmnt
 
-    USE DriverMatrix, ONLY: MatrixDriver  !Matrix Aerosol Model
+    use DriverMatrix, only: MatrixDriver  !Matrix Aerosol Model
 
 
-    USE rams_microphysics_2M, only: micro_2M_rams60,negadj1_2M_rams60
+    use rams_microphysics_2M, only: micro_2M_rams60,negadj1_2M_rams60
 
     use rrtm_driv, only:  rrtm_driver
 
-    USE mem_radiate, ONLY: &
+    use mem_radiate, only: &
          ilwrtyp, iswrtyp
 
     use CUPARM_GRELL3, only: g3d_g
 
-    USE wind_Farm, ONLY: wind_farm_driver,windfarm
+    use wind_Farm, only: wind_farm_driver,windfarm
 
     use optical, only: &
          aodDriver
@@ -224,7 +231,7 @@ contains
     ! execution time instrumentation
     include "tsNames.h"
 
-    INTEGER, PARAMETER :: acoshdp = 0
+    integer, parameter :: acoshdp = 0
     character(len=256) :: julesFile
 
     julesFile=oneGrid%Ramsin%julesin
@@ -247,8 +254,10 @@ contains
        call THERMO(mzp,mxp,myp,ia,iz,ja,jz,'SUPSAT')
     endif
 
-    if (iexev == 2) &
-         call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'ADV')
+    if (iexev == 2) then
+       call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'ADV', &
+            oneGrid%Basic, oneGrid%AveBasic)
+    end if
 
     !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
     !  call SynchronizedTimeStamp(TS_DYNAMICS)
@@ -319,7 +328,7 @@ contains
        !----------------------------------------
        if(AEROSOL==2) then
           !print*,"not doing matrix";call flush(6)
-          CALL MatrixDriver(ia,iz,ja,jz,mzp,mxp,myp)
+          call MatrixDriver(ia,iz,ja,jz,mzp,mxp,myp)
        endif
 
     endif
@@ -340,7 +349,7 @@ contains
 
     !  Velocity advection
     !----------------------------------------
-    CALL advectc(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, oneGrid%AveBasic, &
+    call advectc(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, oneGrid%AveBasic, &
          'V',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
 
 
@@ -385,8 +394,10 @@ contains
     !---------------------------------------------------
     call WaitSendRecvMsgs(oneGrid%SelectedGhostZoneSend, oneGrid%SelectedGhostZoneRecv)
 
-    if (iexev == 2) &
-         call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'THA')
+    if (iexev == 2) then
+       call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'THA', &
+            oneGrid%Basic, oneGrid%AveBasic)
+    end if
 
     !  Sub-grid diffusion terms
     !----------------------------------------
@@ -400,19 +411,19 @@ contains
 
     !  Velocity advection
     !----------------------------------------
-    IF(advmnt >= 1) THEN
+    if(advmnt >= 1) then
        !-srf monotonic advection scheme
        call advmnt_driver(oneGrid, 'T',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,&
             i0,j0,nodemxp,nodemyp,nodemzp,mynum)
        if(advmnt >= 2) &
-            CALL advectc(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, oneGrid%AveBasic, &
+            call advectc(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, oneGrid%AveBasic, &
             'T',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
-    ELSE
+    else
 
-       CALL advectc(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, oneGrid%AveBasic, &
+       call advectc(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, oneGrid%AveBasic, &
             'T',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
 
-    ENDIF     ! If Generic IA32 use old Advction Scheme
+    endif     ! If Generic IA32 use old Advction Scheme
 
     !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
     !  call SynchronizedTimeStamp(TS_DYNAMICS)
@@ -422,18 +433,20 @@ contains
 
     !- large and subgrid scale forcing for shallow and deep cumulus
     !!1  IF(  NNQPARM(ngrid) >=2 .OR. NNSHCU(ngrid)>=2 ) CALL prepare_lsf_OLD(NNQPARM(ngrid), NNSHCU(ngrid),4)
-    IF( NNQPARM(ngrid) >=2 .OR. NNSHCU(ngrid)>=2 ) CALL prepare_lsf(NNQPARM(ngrid), NNSHCU(ngrid),1)
+    if( NNQPARM(ngrid) >=2 .or. NNSHCU(ngrid)>=2 ) then
+       call prepare_lsf(NNQPARM(ngrid), NNSHCU(ngrid),1, oneGrid%Basic, oneGrid%AveBasic)
+    end if
 
     !-   Cumulus parameterization options 2->6:
     !                    Deep Convection scheme
     !- call deep first, if there is deep convection , turn off shallow.
-    IF(NNQPARM(ngrid)==2) CALL CUPARM_GRELL_CATT(1)
+    if(NNQPARM(ngrid)==2) call CUPARM_GRELL_CATT(1)
     !
     !                    Shallow Convection scheme
-    IF(NNSHCU(ngrid)==2 ) CALL CUPARM_GRELL_CATT(2)
+    if(NNSHCU(ngrid)==2 ) call CUPARM_GRELL_CATT(2)
     !
     !- G3d - GD-FIM and GF
-    IF(NNQPARM(ngrid)>=3) CALL CUPARM_GRELL3_CATT(oneGrid,1,NNQPARM(ngrid),NNSHCU(ngrid))
+    if(NNQPARM(ngrid)>=3) call CUPARM_GRELL3_CATT(oneGrid,1,NNQPARM(ngrid),NNSHCU(ngrid))
 
     !- task 2:  NO production by "eclair"
     if (ccatt == 1) &
@@ -444,7 +457,7 @@ contains
     if (ccatt==1 .and. split_method== 'PARALLEL' .and. n_dyn_chem==1) then
        ! task 3 : production/loss by chemical processes and inclusion of the
        ! chemistry tendency at the total tendency
-       CALL chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,3,50)
+       call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,3,50)
     endif
     if (ccatt==1 ) then
        ! task 4 : mass transfer between gas and liquid
@@ -530,7 +543,10 @@ contains
        call THERMO(mzp,mxp,myp,1,mxp,1,myp,'MICRO')
     endif
 
-    if (iexev == 2) call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'THS')
+    if (iexev == 2) then
+       call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'THS', &
+            oneGrid%Basic, oneGrid%AveBasic)
+    end if
 
     !-damping on vertical velocity to keep stability
     if(vveldamp == 1) call w_damping(mzp,mxp,myp,ia,iz,ja,jz,mynum)
@@ -607,7 +623,9 @@ contains
          grid_g(ngrid)%dxm,grid_g(ngrid)%dyv,grid_g(ngrid)%dym,&
          grid_g(ngrid)%lpu,grid_g(ngrid)%lpv,grid_g(ngrid)%lpw)
 
-    if (iexev == 2) call get_true_air_density(mzp,mxp,myp,ia,iz,ja,jz)
+    if (iexev == 2) then
+       call get_true_air_density(mzp,mxp,myp,ia,iz,ja,jz)
+    end if
 
     ! Call THERMO on the boundaries
     call thermo_boundary_driver((time+dtlongn(ngrid)), dtlong, &
@@ -620,10 +638,10 @@ contains
     !
     !----------------------------------------
     !- chemistry/aerosol solvers
-    if (ccatt==1) THEN
-       if ( (split_method== 'PARALLEL' .AND. N_DYN_CHEM > 1) .OR.  &
-            (split_method== 'SEQUENTIAL'                   ) .OR.  &
-            (split_method== 'SYMMETRIC'                    )       )THEN
+    if (ccatt==1) then
+       if ( (split_method== 'PARALLEL' .and. N_DYN_CHEM > 1) .or.  &
+            (split_method== 'SEQUENTIAL'                   ) .or.  &
+            (split_method== 'SYMMETRIC'                    )       )then
 
           ! task 3 : production/loss by chemical processes and final updated
           !  of each specie
@@ -637,7 +655,7 @@ contains
        !   CALL MatrixDriver(ia,iz,ja,jz,mzp,mxp,myp)
        !endif
     endif
-    if (ccatt==1 .and. aerosol == 1) THEN
+    if (ccatt==1 .and. aerosol == 1) then
        call aer_background(ngrid,mzp,mxp,myp,ia,iz,ja,jz)
     endif
     !----------------------------------------
@@ -647,7 +665,7 @@ contains
        if (isource==1) then
           ! Apply only for last finner grid
           if (ngrid==ngrids) then
-             CALL le_fontes(ngrid, mzp, mxp, myp, &
+             call le_fontes(ngrid, mzp, mxp, myp, &
                   npatch, ia, iz, ja, jz, (time+dtlongn(1)))
           endif
        endif

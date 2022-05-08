@@ -25,6 +25,9 @@ module ModAdvectc_rk
   ! differs only on the type of these two formal arguments at
   ! the interface
 
+  use ModRexev, only : &
+       prep_lnthetv
+  
   use grid_dims, only: maxgrds, nzpmax
   use mem_tend, only: tend
   use mem_grid, only: ngrid, grid_g, dtlt, if_adap, jdim, time, &

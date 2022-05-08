@@ -30,7 +30,7 @@ module CUPARM_GRELL3
 
   use mem_grid          , only: time,    &   ! INTENT(IN)
        initial, &   ! INTENT(IN)
-       dtlt,	 &   ! INTENT(IN)
+       dtlt, &   ! INTENT(IN)
        itime1,  &   ! INTENT(IN)
        ngrid,   &   ! INTENT(IN)
        grid_g,  &   ! INTENT(IN)
@@ -430,23 +430,23 @@ contains
     integer, dimension(mxp,myp) :: kpbl,do_this_column
     real   , dimension(mtp)   :: FSCAV_INT
     real   , dimension(mxp,myp) :: CNV_FRC,AA0,AA1,AA2,AA3,AA1_BL,AA1_CIN,TAU_BL,TAU_EC
-    real   , dimension(mzp,mxp,myp ) ::  zm3d	&
-         ,zt3d	&
-         ,dm3d	&
-         ,up	&
-         ,vp	&
-         ,wp	&
-         ,rvap	&
-         ,temp	&
-         ,press	&
-         , gsf_t	& ! grid-scale forcing for temp
-         , gsf_q	& ! grid-scale forcing fo rv
-         ,sgsf_t	& ! sub-grid scale forcing for temp
-         ,sgsf_q	  ! sub-grid scale forcing for rv
+    real   , dimension(mzp,mxp,myp ) ::  zm3d&
+         ,zt3d&
+         ,dm3d&
+         ,up&
+         ,vp&
+         ,wp&
+         ,rvap&
+         ,temp&
+         ,press&
+         , gsf_t& ! grid-scale forcing for temp
+         , gsf_q& ! grid-scale forcing fo rv
+         ,sgsf_t& ! sub-grid scale forcing for temp
+         ,sgsf_q  ! sub-grid scale forcing for rv
 
     real,  dimension(mzp , mxp, myp ) ::          &
          buoy_exc    &
-         ,advf_t	   &
+         ,advf_t   &
          ,SRC_BUOY    &
          ,REVSU_GF    &
          ,PRFIL_GF    & 
@@ -472,33 +472,33 @@ contains
 
     integer :: kr,n,i1,i2,j1,j2
     integer, dimension(mxp,myp,maxiens) ::     &
-         ierr4d_tmp 		     &
-         ,jmin4d_tmp 		     &
-         ,klcl4d_tmp 		     &
-         ,k224d_tmp  		     &
-         ,kbcon4d_tmp		     &
-         ,ktop4d_tmp 		     &
-         ,kstabi4d_tmp		     &
+         ierr4d_tmp      &
+         ,jmin4d_tmp      &
+         ,klcl4d_tmp      &
+         ,k224d_tmp       &
+         ,kbcon4d_tmp     &
+         ,ktop4d_tmp      &
+         ,kstabi4d_tmp     &
          ,kstabm4d_tmp
 
     real,dimension(mxp,myp,maxiens)     ::     &
-         cprr4d_tmp 		     &
-         ,xmb4d_tmp  		     &
-         ,edt4d_tmp  		     &
-         ,pwav4d_tmp 		     &
+         cprr4d_tmp      &
+         ,xmb4d_tmp       &
+         ,edt4d_tmp       &
+         ,pwav4d_tmp      &
          ,sigma4d_tmp
     real,dimension(mxp,myp,mzp,maxiens) ::     &
-         pcup5d_tmp 		     &
+         pcup5d_tmp      &
          ,up_massentr5d_tmp    &
          ,up_massdetr5d_tmp    &
          ,dd_massentr5d_tmp    &
          ,dd_massdetr5d_tmp    &
-         ,zup5d_tmp  		     &
-         ,zdn5d_tmp  		     &
-         ,prup5d_tmp 		     &
-         ,prdn5d_tmp 		     &
-         ,clwup5d_tmp		     &
-         ,tup5d_tmp  		     &
+         ,zup5d_tmp       &
+         ,zdn5d_tmp       &
+         ,prup5d_tmp      &
+         ,prdn5d_tmp      &
+         ,clwup5d_tmp     &
+         ,tup5d_tmp       &
          ,conv_cld_fr5d_tmp
 
     !if(initial.eq.2.and.time.lt.cptime) return
@@ -593,9 +593,9 @@ contains
                ,basic_g(ngrid)%rv            & !
                ,grid_g(ngrid)%RTGT           & !
                ,tend%PT                      & !
-               ,XL			                    & !
-               ,CP			    & !
-               ,G			    & !
+               ,XL                    & !
+               ,CP    & !
+               ,G    & !
                ,rm                           &
                ,p00                          &
                ,cpor                         & !
@@ -620,8 +620,8 @@ contains
                ,npatch                          &
                ,radiate_g(ngrid)%rshort         &
                
-               ,cugd_avedx					&
-               ,imomentum          				&
+               ,cugd_avedx&
+               ,imomentum          &
                ,ensdim,maxiens,maxens,maxens2,maxens3,icoic      &
                ,ishallow_g3                                      &
                ,ids,ide, jds,jde, kds,kde                        &
@@ -634,8 +634,8 @@ contains
                ,g3d_g(ngrid)%cugd_ttens    &
                ,g3d_g(ngrid)%cugd_qvtens   &
                                 ! forcings -  for deep/shallow
-               ,cuforc_g(ngrid)%	lsfth    & ! forcing for theta deep
-               ,cuforc_g(ngrid)%	lsfrt    & ! forcing for rv deep
+               ,cuforc_g(ngrid)%lsfth    & ! forcing for theta deep
+               ,cuforc_g(ngrid)%lsfrt    & ! forcing for rv deep
                ,cuforc_sh_g(ngrid)%lsfth   & ! forcing for theta shallow
                ,cuforc_sh_g(ngrid)%lsfrt   & ! forcing for rv shallow
                ,level                      &
@@ -658,9 +658,9 @@ contains
           !
           !- call routine to do the lateral spread, smooths and limiters/fixers
           call conv_grell_spread3d_brams(mzp,mxp,myp,ia,iz,ja,jz,dtlt,level,cugd_avedx&
-               ,XL			    &
-               ,CP			    &
-               ,G			    &
+               ,XL    &
+               ,CP    &
+               ,G    &
                ,rm                           &
                ,p00                          &
                ,cpor                         &
@@ -678,7 +678,7 @@ contains
                ,micro_g(ngrid)%rap           &
                ,micro_g(ngrid)%rgp           &
                ,micro_g(ngrid)%rhp           &
-                                !	      
+                                !      
                ,g3d_g(ngrid)%THSRC           & ! temp tendency
                ,g3d_g(ngrid)%RTSRC           & ! rv tendency
                ,g3d_g(ngrid)%CLSRC           & ! cloud/ice tendency
@@ -769,8 +769,8 @@ contains
                ,g3d_g(ngrid)%CLSRC             & !3d ok ! cloud/ice tendency
                ,g3d_g(ngrid)%cugd_ttens        & !3d ok
                ,g3d_g(ngrid)%cugd_qvtens       & !3d ok
-               ,cuforc_g(ngrid)%	lsfth        & !3d *** borda forcing for theta deep
-               ,cuforc_g(ngrid)%	lsfrt        & !3d *** borda forcing for rv deep
+               ,cuforc_g(ngrid)%lsfth        & !3d *** borda forcing for theta deep
+               ,cuforc_g(ngrid)%lsfrt        & !3d *** borda forcing for rv deep
                ,cuforc_sh_g(ngrid)%lsfth       & !3d *** borda forcing for theta shallow
                ,cuforc_sh_g(ngrid)%lsfrt       & !3d *** borda forcing for rv shallow
                ,level                          &
@@ -841,7 +841,7 @@ contains
 
           call GFDRV2(mgmxp,mgmyp,mgmzp,ngrid,ngrids_cp,iens &
                ,mynum,i0,j0,time,mzp,mxp,myp &
-               ,dtlt         		    & !
+               ,dtlt             & !
                ,grid_length                  & !
                ,autoconv                     & !
                ,aerovap                      & !
@@ -858,9 +858,9 @@ contains
                ,basic_g(ngrid)%rtp           & !
                ,grid_g(ngrid)%RTGT           & !
                ,tend%PT                      & !
-               ,XL			                    & !
-               ,CP			                    & !
-               ,G			                    & !
+               ,XL                    & !
+               ,CP                    & !
+               ,G                    & !
                ,rm                           &
                ,p00                          &
                ,cpor                         & !
@@ -885,8 +885,8 @@ contains
                ,leaf_g(ngrid)%patch_area        &
                ,npatch                          &
                ,radiate_g(ngrid)%rshort         &
-               ,cugd_avedx					        &
-               ,imomentum          				  &
+               ,cugd_avedx        &
+               ,imomentum            &
                ,ensdim_g3d,maxiens,maxens_g3d,maxens2_g3d,maxens3_g3d,icoic      &
                ,ishallow_g3                                      &
                ,ids,ide, jds,jde, kds,kde                        &
@@ -899,8 +899,8 @@ contains
                ,g3d_g(ngrid)%USRC       & ! U tendency
                ,g3d_g(ngrid)%VSRC       & ! V tendency
                ,g3d_g(ngrid)%MUP        & ! updraft mass flux
-               ,cuforc_g(ngrid)%	lsfth   & ! forcing for theta deep
-               ,cuforc_g(ngrid)%	lsfrt   & ! forcing for rv deep
+               ,cuforc_g(ngrid)%lsfth   & ! forcing for theta deep
+               ,cuforc_g(ngrid)%lsfrt   & ! forcing for rv deep
                ,cuforc_sh_g(ngrid)%lsfth   & ! forcing for theta shallow
                ,cuforc_sh_g(ngrid)%lsfrt  & ! forcing for rv shallow
                ,level                     &
@@ -914,29 +914,29 @@ contains
                ,akmin(ngrid)              &
                ,do_cupar_mcphys_coupling  &
                                 !- for convective transport-start
-               ,ierr4d  		  &
-               ,jmin4d  		     &
-               ,kdet4d  		     &
-               ,k224d	           &
-               ,kbcon4d 		     &
-               ,ktop4d  		     &
-               ,kpbl4d  		     &
-               ,kstabi4d		     &
-               ,kstabm4d		     &
-               ,xmb4d		        &
-               ,edt4d		        &
-               ,pwav4d		        &
-               ,pcup5d  		     &
-               ,up_massentr5d	     &
-               ,up_massdetr5d	     &
-               ,dd_massentr5d	     &
-               ,dd_massdetr5d	     &
-               ,zup5d		        &
-               ,zdn5d   		     &
-               ,prup5d  		     &
-               ,prdn5d  		     &
-               ,clwup5d 		     &
-               ,tup5d   		     &
+               ,ierr4d    &
+               ,jmin4d       &
+               ,kdet4d       &
+               ,k224d           &
+               ,kbcon4d      &
+               ,ktop4d       &
+               ,kpbl4d       &
+               ,kstabi4d     &
+               ,kstabm4d     &
+               ,xmb4d        &
+               ,edt4d        &
+               ,pwav4d        &
+               ,pcup5d       &
+               ,up_massentr5d     &
+               ,up_massdetr5d     &
+               ,dd_massentr5d     &
+               ,dd_massdetr5d     &
+               ,zup5d        &
+               ,zdn5d        &
+               ,prup5d       &
+               ,prdn5d       &
+               ,clwup5d      &
+               ,tup5d        &
                                 !- for convective transport- end
                )
 
@@ -954,14 +954,14 @@ contains
           ierr4d_tmp        = 0.0
           jmin4d_tmp        = 0.0
           klcl4d_tmp        = 0.0
-          k224d_tmp	       = 0.0
+          k224d_tmp       = 0.0
           kbcon4d_tmp       = 0.0
           ktop4d_tmp        = 0.0
           kstabi4d_tmp      = 0.0
           kstabm4d_tmp      = 0.0
           cprr4d_tmp        = 0.0
-          xmb4d_tmp	       = 0.0
-          edt4d_tmp	       = 0.0
+          xmb4d_tmp       = 0.0
+          edt4d_tmp       = 0.0
           pwav4d_tmp        = 0.0
           sigma4d_tmp       = 0.0
           pcup5d_tmp        = 0.0
@@ -969,12 +969,12 @@ contains
           up_massdetr5d_tmp = 0.0
           dd_massentr5d_tmp = 0.0
           dd_massdetr5d_tmp = 0.0
-          zup5d_tmp	       = 0.0
-          zdn5d_tmp	       = 0.0
+          zup5d_tmp       = 0.0
+          zdn5d_tmp       = 0.0
           prup5d_tmp        = 0.0
           prdn5d_tmp        = 0.0
           clwup5d_tmp       = 0.0
-          tup5d_tmp	       = 0.0
+          tup5d_tmp       = 0.0
           conv_cld_fr5d_tmp = 0.0
           CNV_FRC (:,:)     = 0.0
           TRACER  (:,:,:,:) = 0.0 
@@ -1274,13 +1274,13 @@ contains
                          do n=1,maxiens
                             if( icumulus_gf(n) /= 1) cycle 
                             zdn5d        (k,i,j,n,ngrid) =  zdn5d_tmp        (i,j,k,n)
-                            up_massentr5d(k,i,j,n,ngrid)	=  up_massentr5d_tmp(i,j,k,n)
-                            dd_massentr5d(k,i,j,n,ngrid)	=  dd_massentr5d_tmp(i,j,k,n)
-                            dd_massdetr5d(k,i,j,n,ngrid)	=  dd_massdetr5d_tmp(i,j,k,n)
-                            pcup5d       (k,i,j,n,ngrid)	=  pcup5d_tmp       (i,j,k,n)
-                            prup5d       (k,i,j,n,ngrid)	=  prup5d_tmp       (i,j,k,n)
-                            prdn5d       (k,i,j,n,ngrid)	=  prdn5d_tmp       (i,j,k,n)
-                            tup5d        (k,i,j,n,ngrid)	=  tup5d_tmp        (i,j,k,n)
+                            up_massentr5d(k,i,j,n,ngrid)=  up_massentr5d_tmp(i,j,k,n)
+                            dd_massentr5d(k,i,j,n,ngrid)=  dd_massentr5d_tmp(i,j,k,n)
+                            dd_massdetr5d(k,i,j,n,ngrid)=  dd_massdetr5d_tmp(i,j,k,n)
+                            pcup5d       (k,i,j,n,ngrid)=  pcup5d_tmp       (i,j,k,n)
+                            prup5d       (k,i,j,n,ngrid)=  prup5d_tmp       (i,j,k,n)
+                            prdn5d       (k,i,j,n,ngrid)=  prdn5d_tmp       (i,j,k,n)
+                            tup5d        (k,i,j,n,ngrid)=  tup5d_tmp        (i,j,k,n)
                          enddo
                       enddo
                    endif
@@ -1292,13 +1292,13 @@ contains
           !for checking
           !do j=1,myp
           !  do i=1,mxp
-          !	 if(do_this_column(i,j)==0) cycle
+          ! if(do_this_column(i,j)==0) cycle
           !
-          !	 call moveup(mzp,g3d_g(ngrid)%THSRC (:,i,j))
-          !	 call moveup(mzp,g3d_g(ngrid)%RTSRC (:,i,j))
-          !	 call moveup(mzp,g3d_g(ngrid)%CLSRC (:,i,j))
-          !	 call moveup(mzp,g3d_g(ngrid)%USRC  (:,i,j))
-          ! 	 call moveup(mzp,g3d_g(ngrid)%VSRC  (:,i,j))
+          ! call moveup(mzp,g3d_g(ngrid)%THSRC (:,i,j))
+          ! call moveup(mzp,g3d_g(ngrid)%RTSRC (:,i,j))
+          ! call moveup(mzp,g3d_g(ngrid)%CLSRC (:,i,j))
+          ! call moveup(mzp,g3d_g(ngrid)%USRC  (:,i,j))
+          !  call moveup(mzp,g3d_g(ngrid)%VSRC  (:,i,j))
           !enddo;enddo
           !--------------------------------------------------------------------------------------------------------------------------
           !--------------------------------------------------------------------------------------------------------------------------
@@ -1398,20 +1398,20 @@ contains
        !-srf -  mass fluxes from deep convection
        if( iinqparm==5 .or. iinqparm==6 )                                 &
             call prep_convflx_to_stilt(mzp,mxp,myp,ia,iz,ja,jz              &
-            ,mgmxp,mgmyp,mgmzp,maxiens,ngrid,ngrids_cp		  &
-            ,ierr4d,jmin4d,kdet4d,k224d,kbcon4d,ktop4d,kpbl4d 	  &
-            ,kstabi4d,kstabm4d,xmb4d,edt4d				  &
-            ,zcup5d,pcup5d,enup5d,endn5d,deup5d,dedn5d,zup5d,zdn5d	  &
+            ,mgmxp,mgmyp,mgmzp,maxiens,ngrid,ngrids_cp  &
+            ,ierr4d,jmin4d,kdet4d,k224d,kbcon4d,ktop4d,kpbl4d   &
+            ,kstabi4d,kstabm4d,xmb4d,edt4d  &
+            ,zcup5d,pcup5d,enup5d,endn5d,deup5d,dedn5d,zup5d,zdn5d  &
             ,1)! = iens
        !-srf if shallow convection was solved by GF version 2015, call again
        !-    the convective transport routine to include the mass fluxes
        !-    from the shallow convection scheme.
        if(  iinqparm==6 .and. iinshcu == 3 )                              &
             call prep_convflx_to_stilt(mzp,mxp,myp,ia,iz,ja,jz              &
-            ,mgmxp,mgmyp,mgmzp,maxiens,ngrid,ngrids_cp		  &
-            ,ierr4d,jmin4d,kdet4d,k224d,kbcon4d,ktop4d,kpbl4d 	  &
-            ,kstabi4d,kstabm4d,xmb4d,edt4d				  &
-            ,zcup5d,pcup5d,enup5d,endn5d,deup5d,dedn5d,zup5d,zdn5d	  &
+            ,mgmxp,mgmyp,mgmzp,maxiens,ngrid,ngrids_cp  &
+            ,ierr4d,jmin4d,kdet4d,k224d,kbcon4d,ktop4d,kpbl4d   &
+            ,kstabi4d,kstabm4d,xmb4d,edt4d  &
+            ,zcup5d,pcup5d,enup5d,endn5d,deup5d,dedn5d,zup5d,zdn5d  &
             ,2)! = iens
 
     endif
@@ -1518,16 +1518,16 @@ contains
        XLV,CP,G,r_v,p00,cpor,                         &
        conprr, theta,thetail,pp,pi0,                  &
        rv,pt,rcp,rrp,rpp,rsp,rap,rgp,rhp,             &
-       RTHcuten,				      &
-       RQVcuten,				      &
-       RQCcuten,				      &
-       cugd_ttens,				      &
-       cugd_qvtens,				      &
-       apr_gr,					      &
-       apr_w,					      &
-       apr_mc,					      &
-       apr_st,					      &
-       apr_as					      )
+       RTHcuten,      &
+       RQVcuten,      &
+       RQCcuten,      &
+       cugd_ttens,      &
+       cugd_qvtens,      &
+       apr_gr,      &
+       apr_w,      &
+       apr_mc,      &
+       apr_st,      &
+       apr_as      )
 
     implicit none
 
@@ -1539,18 +1539,18 @@ contains
     real, dimension(m1,m2,m3),intent(IN   ) ::     &
          theta   ,&
          thetail ,&
-         pp	 ,&
-         pi0	 ,&
-         pt	 ,&
+         pp ,&
+         pi0 ,&
+         pt ,&
          rv      ,rcp,rrp,rpp,rsp,rap,rgp,rhp
 
 
     real, dimension(m2,m3),intent(INOUT) ::   &
          conprr,                       &
-         apr_gr,			     &
-         apr_w ,			     &
-         apr_mc,			     &
-         apr_st,			     &
+         apr_gr,     &
+         apr_w ,     &
+         apr_mc,     &
+         apr_st,     &
          apr_as
 
 
@@ -1806,7 +1806,7 @@ contains
              ! Converte tend da temperatura (OUTT) em tend de theta (OUTTEM)
              ! cp*T=Pi*Theta => cp dT/dt = Theta*dPi/dt + Pi*dTheta/dt,
              ! Exner's function = pp(k,i,j)+pi0(k,i,j)
-             exner	   = pp(k,i,j) + pi0(k,i,j)
+             exner   = pp(k,i,j) + pi0(k,i,j)
              ! tendencia do theta devida a conv profunda
              RTHcuten(k,i,J) = cp/exner * RTHCUTEN(k,i,J) !- theta(k,i,j)*pt(k,i,j)/exner
              !endif
@@ -1821,36 +1821,36 @@ contains
     !elseif(level > 2) then
     !
     ! do j=ja,jz; do i=ia,iz; do k=kts,kte
-    !	    !
-    !	 ! - tend na temperatura (para uso na convers�o do thetail
-    !	 outt=RTHCUTEN (k,i,j)
-    !	 ! Exner's function = pp(k,i,j)+pi0(k,i,j)
-    !	 exner= pp(k,i,j) + pi0(k,i,j)
-    !	 if(outt /= 0.0 ) then
-    !	   !
-    !	   ! converte tend da temperatura (outt) em tend de theta (outtem)
-    !	   ! cp*T=Pi*Theta => cp dT/dt = Theta*dPi/dt + Pi*dTheta/dt,
+    !    !
+    ! ! - tend na temperatura (para uso na convers�o do thetail
+    ! outt=RTHCUTEN (k,i,j)
+    ! ! Exner's function = pp(k,i,j)+pi0(k,i,j)
+    ! exner= pp(k,i,j) + pi0(k,i,j)
+    ! if(outt /= 0.0 ) then
+    !   !
+    !   ! converte tend da temperatura (outt) em tend de theta (outtem)
+    !   ! cp*T=Pi*Theta => cp dT/dt = Theta*dPi/dt + Pi*dTheta/dt,
     !
-    !	   ! tendencia do theta  devida a conv profunda
-    !	   RTHCUTEN (k,i,j) = cp/exner * RTHCUTEN(k,i,j) - theta(k,i,j)*pt(k,i,j)/exner
+    !   ! tendencia do theta  devida a conv profunda
+    !   RTHCUTEN (k,i,j) = cp/exner * RTHCUTEN(k,i,j) - theta(k,i,j)*pt(k,i,j)/exner
     !
-    !	 endif
+    ! endif
     !
-    !	 ! tendencia do theta_il devida a conv profunda
-    !	 r_liq= max(0.,rcp(k,i,j) + rrp(k,i,j))
+    ! ! tendencia do theta_il devida a conv profunda
+    ! r_liq= max(0.,rcp(k,i,j) + rrp(k,i,j))
     !
-    !	 r_sol= max(0.,rsp(k,i,j)+rpp(k,i,j)+ &
-    !		       rap(k,i,j)+rgp(k,i,j)+  &
-    !		       rhp(k,i,j))
+    ! r_sol= max(0.,rsp(k,i,j)+rpp(k,i,j)+ &
+    !       rap(k,i,j)+rgp(k,i,j)+  &
+    !       rhp(k,i,j))
     !
-    !	 tempk = theta(k,i,j)*(exner)/cp ! air temp (Kelvin)
+    ! tempk = theta(k,i,j)*(exner)/cp ! air temp (Kelvin)
     !
-    !	 if(tempk.le.253) then
-    !	   fxc =   (2.5e6*r_liq+2.83e6*r_sol)/(cp*amax1(tempk,253.))
+    ! if(tempk.le.253) then
+    !   fxc =   (2.5e6*r_liq+2.83e6*r_sol)/(cp*amax1(tempk,253.))
     !
-    !	   dfxcdt = 2.83e6*RQCCUTEN(k,i,J)/(cp*amax1(tempk,253.))
+    !   dfxcdt = 2.83e6*RQCCUTEN(k,i,J)/(cp*amax1(tempk,253.))
     !
-    !	  RTHCUTEN (k,i,j) = (1./(1.+fxc))*( RTHCUTEN (k,i,j) - thetail(k,i,j)*dfxcdt )
+    !  RTHCUTEN (k,i,j) = (1./(1.+fxc))*( RTHCUTEN (k,i,j) - thetail(k,i,j)*dfxcdt )
     !
     !     else
     !
@@ -1859,8 +1859,8 @@ contains
     !!orig     dfxcdt = 2.5e6*OUTQC(I,K)*cuten(i)/(cp*amax1(tempk,253.)) - &
     !!orig         fxc/(cp*amax1(tempk,253.)) * cp * OUTT(I,K)
     !  !
-    !	  dfxcdt = 2.5e6*RQCCUTEN(k,i,J)/(cp*amax1(tempk,253.)) - &
-    !          	   fxc/(cp*amax1(tempk,253.)) * cp * OUTT
+    !  dfxcdt = 2.5e6*RQCCUTEN(k,i,J)/(cp*amax1(tempk,253.)) - &
+    !             fxc/(cp*amax1(tempk,253.)) * cp * OUTT
     !
     !       RTHCUTEN (k,i,j) = (1./(1.+fxc))*( RTHCUTEN (k,i,j) - thetail(k,i,j)*dfxcdt )
     !
@@ -1891,488 +1891,495 @@ contains
 
   end subroutine StoreNamelistFileAtCup_grell3
 
+  !-----------------------------------------------------------------------------------
+
+  subroutine moveup(m1,A)
+    implicit none
+    integer, intent(in) :: m1
+    real, dimension(m1) :: A,B
+
+    real :: dummy
+    integer :: k,kr
+
+    B=A
+    do k=1,m1-1
+       kr=k+1
+       A(kr) = B(k)
+    enddo
+    A(1) = A(2)
+  end subroutine moveup
+  !-----------------------------------------------------------------------------------
+
+
+  subroutine set_index_loops( ims,ime, jms,jme, kms,kme,    &
+       its,ite, jts,jte, kts,kte,    &
+       mxp,myp,mzp                   )
+
+    implicit none
+    integer, intent(IN)         :: mxp,myp,mzp
+    integer, intent(INOUT)      :: ims,ime, jms,jme, kms,kme,&
+         its,ite, jts,jte, kts,kte
+
+
+    ims=1
+    ime=mxp
+    jms=1
+    jme=myp
+    kms=1
+    kme=mzp
+    its=1
+    ite=mxp
+    jts=1
+    jte=myp
+    kts=1
+    kte=mzp
+
+  end subroutine set_index_loops
+  !*************************************************************************************
+  subroutine check (m1,tht,ath,rtt,artt)
+    implicit none
+    integer, intent(in) :: m1
+    real, dimension(m1), intent(in) :: tht,ath,rtt,artt
+
+    integer k
+    do k=1,m1
+       print*,"check",k, tht(k),ath(k),rtt(k),artt(k)
+    enddo
+    print*,"mx1",maxval(tht),maxval(ath),minval(tht),minval(ath)
+    print*,"mx2",maxval(rtt),maxval(artt),minval(rtt),minval(artt)
+
+  end subroutine check
+  !------------------------------------------------------------
+  subroutine cupar2mcphysics(m1,m2,m3,ia,iz,ja,jz,ngrid,dtlt &
+       ,clsrc  ,theta,pp,pi0,dn0)
+
+    use micphys     ,only: level,mcphys_type
+    use mem_micro   ,only: micro_g
+    use mem_tend    ,only: tend
+    use rconstants  ,only: cpi
+    implicit none
+    integer m1,m2,m3,ia,iz,ja,jz,k,i,j,ngrid
+    real dtlt
+    real, dimension(m1,m2,m3),intent(in) :: theta, pp, pi0,dn0
+    real, dimension(m1,m2,m3),intent(in) :: clsrc! liquid/ice tendency from
+    ! cumulus parameterization
+    if(level < 2  .and. mcphys_type < 2 ) return
+
+    if(level == 2 .and. mcphys_type < 2) then
+       call mcphysics0(m1,m2,m3,ia,iz,ja,jz,dtlt &
+            ,clsrc                  &
+            ,tend%rct            &
+            ,tend%rtt            )
+
+    elseif(level == 3 .and. (mcphys_type >= 0))  then
+
+       call mcphysics1(mcphys_type,m1,m2,m3,ia,iz,ja,jz,dtlt,cpi  &
+            ,theta, pp, pi0,dn0 &
+            ,clsrc          &! cumulus tendency
+            ,tend%rct    &! cloud water mass mix ratio tendency 
+            ,tend%rpt    &! pristine mass mix ratio tendency 
+            ,tend%rtt    &! total water mass mix ratio tendency
+            )
+
+       if(mcphys_type == 2) &
+            call mcphysics2(mcphys_type,m1,m2,m3,ia,iz,ja,jz,dtlt,cpi  &
+            ,theta, pp, pi0,dn0 &
+            ,clsrc          &! cumulus tendency
+            ,tend%rct    &! cloud water mass mix ratio tendency 
+            ,tend%rpt    &! pristine mass mix ratio tendency 
+            ,tend%rtt    &! total water mass mix ratio tendency
+            ,tend%cpt    &! pristine number conc tendency 
+            )
+
+       if(mcphys_type == 3) &
+            call mcphysics3(mcphys_type,m1,m2,m3,ia,iz,ja,jz,dtlt,cpi  &
+            ,theta, pp, pi0,dn0,micro_g(ngrid)%ccp &
+            ,clsrc          &! cumulus tendency
+            ,tend%rct    &! cloud water mass mix ratio tendency 
+            ,tend%rpt    &! pristine mass mix ratio tendency 
+            ,tend%rtt    &! total water mass mix ratio tendency
+            ,tend%cpt    &! pristine number conc tendency 
+            ,tend%cct    &! cloud water  number conc tendency 
+            )
+
+    endif
+    return
+  end  subroutine cupar2mcphysics
+
+  !------------------------------------------------------------------------
+  subroutine mcphysics0(m1,m2,m3,ia,iz,ja,jz,dtlt,clsrc,rct,rtt)
+    implicit none
+    integer m1,m2,m3,ia,iz,ja,jz,k,i,j
+    real dtlt
+    real, dimension(m1,m2,m3),intent(in   ) :: clsrc
+    real, dimension(m1,m2,m3),intent(inout) :: rct,rtt
+
+    do j = ja,jz
+       do i = ia,iz
+          do k = 1,m1
+             rct(k,i,j)=rct(k,i,j)+clsrc(k,i,j)
+             rtt(k,i,j)=rtt(k,i,j)+clsrc(k,i,j)
+          enddo
+       enddo
+    enddo
+  end subroutine mcphysics0
+
+  !------------------------------------------------------------------------
+  subroutine mcphysics1(mcphys_type,m1,m2,m3,ia,iz,ja,jz,dtlt,cpi,theta,pp,pi0,dn0 &
+       ,clsrc,rct,rpt,rtt) 
+
+    use ConvPar_GF_GEOS5, only : fract_liq_f
+    implicit none
+    integer :: m1,m2,m3,ia,iz,ja,jz,k,i,j,mcphys_type
+    real dtlt,cpi
+    real, dimension(m1,m2,m3),intent(in)    :: clsrc
+    real, dimension(m1,m2,m3),intent(in)    :: theta,pp,pi0,dn0
+    real, dimension(m1,m2,m3),intent(inout) :: rct,rpt,rtt 
+    real ::tempk,tem1,tqice,tqliq,add_ncp,add_npp
+    real, parameter :: tf=233.16, tcr=263.16, tcrf=1.0/(tcr-tf)
+
+    do j = ja,jz
+       do i = ia,iz
+          do k = 1,m1
+             tempk = theta(k,i,j)*(pp(k,i,j)+pi0(k,i,j))*cpi ! air temp (Kelvin)
+
+             tem1 = fract_liq_f(tempk)
+
+             !- splitting cumulus tendency into water and ice tendencies
+             rct(k,i,j) = rct(k,i,j)+clsrc(k,i,j)* tem1 ! cloud water
+
+             rpt(k,i,j) = rpt(k,i,j)+clsrc(k,i,j)*(1.-tem1) ! pristine ice
+
+             !- it must include also the ice/liq tendencies at rtt for
+             !- consistency, since rtt includes ice and liq mixing ratios
+             rtt(k,i,j) = rtt(k,i,j)+clsrc(k,i,j)
+
+          enddo
+       enddo
+    enddo
+
+  end subroutine mcphysics1
+  !------------------------------------------------------------------------
+  subroutine mcphysics2(mcphys_type,m1,m2,m3,ia,iz,ja,jz,dtlt,cpi,theta,pp,pi0,dn0 &
+       ,clsrc,rct,rpt,rtt,cpt)
+
+    use ConvPar_GF_GEOS5, only : make_IceNumber     &
+         ,fract_liq_f
+    implicit none
+    integer :: m1,m2,m3,ia,iz,ja,jz,k,i,j,mcphys_type
+    real dtlt,cpi
+    real, dimension(m1,m2,m3),intent(in)    :: clsrc
+    real, dimension(m1,m2,m3),intent(in)    :: theta,pp,pi0,dn0
+    real, dimension(m1,m2,m3),intent(inout) :: rct,rpt,rtt,cpt
+    real ::tempk,tem1,tqice,tqliq,add_ncp,add_npp
+    real, parameter :: tf=233.16, tcr=263.16, tcrf=1.0/(tcr-tf)
+
+    do j = ja,jz
+       do i = ia,iz
+          do k = 1,m1
+             tempk = theta(k,i,j)*(pp(k,i,j)+pi0(k,i,j))*cpi ! air temp (Kelvin)
+
+             tem1 = fract_liq_f(tempk)
+
+             !-- detrained pristine mass mixing ratio
+             tqice = (1.-tem1) * clsrc(k,i,j) * dn0(k,i,j)* dtlt
+
+             !-- detrained ICN ice number concenration in the time "dtlt"
+             add_npp = max(0.0, make_IceNumber(tqice, tempk)/dn0(k,i,j))
+
+             !- update tendency 
+             cpt(k,i,j) = cpt(k,i,j)+ add_npp/dtlt
+
+          enddo
+       enddo
+    enddo
+  end subroutine mcphysics2
+
+  !------------------------------------------------------------------------
+  subroutine mcphysics3(mcphys_type,m1,m2,m3,ia,iz,ja,jz,dtlt,cpi,theta,pp,pi0,dn0 &
+       ,ccp,clsrc,rct,rpt,rtt,cpt,cct)
+
+    use ConvPar_GF_GEOS5, only : make_DropletNumber &
+         ,make_IceNumber     &
+         ,fract_liq_f
+    implicit none
+    integer :: m1,m2,m3,ia,iz,ja,jz,k,i,j,mcphys_type
+    real dtlt,cpi
+    real, dimension(m1,m2,m3),intent(in)    :: clsrc
+    real, dimension(m1,m2,m3),intent(in)    :: theta,pp,pi0,dn0,ccp
+    real, dimension(m1,m2,m3),intent(inout) :: rct,rpt,rtt,cpt,cct
+    real ::tempk,tem1,tqice,tqliq,add_ncp,add_npp
+    real, parameter :: tf=233.16, tcr=263.16, tcrf=1.0/(tcr-tf)
+
+    do j = ja,jz
+       do i = ia,iz
+          do k = 1,m1
+             tempk = theta(k,i,j)*(pp(k,i,j)+pi0(k,i,j))*cpi ! air temp (Kelvin)
+
+             tem1 = fract_liq_f(tempk)
+
+             !-- detrained pristine mass mixing ratio
+             tqice = (1.-tem1) * clsrc(k,i,j) * dn0(k,i,j)* dtlt
+
+             !-- detrained ICN ice number concenration in the time "dtlt"
+             add_npp = max(0.0, make_IceNumber(tqice, tempk)/dn0(k,i,j))
+
+             !- update tendency 
+             cpt(k,i,j) = cpt(k,i,j)+ add_npp/dtlt
+
+             !--cloud number concentration
+             tqliq =  tem1 * clsrc(k,i,j) * dn0(k,i,j) * dtlt
+             !--check if
+
+             add_ncp = make_DropletNumber(tqliq, ccp(k,i,j))/dn0(k,i,j)
+             !or
+             !    add_ncp = make_DropletNumber(tqliq, nwfa(k,i,j))/dn0(k,i,j)
+
+             !- update tendency 
+             cct(k,i,j) = cct(k,i,j)+ max(0.0, add_ncp/dtlt)
+
+          enddo
+       enddo
+    enddo
+
+  end subroutine mcphysics3
+
+  !------------------------------------------------------------------------
+  subroutine prepare_lsf(nnqparm,nnshcu,iwork, oneBasic, oneAveBasic)
+
+    use grid_dims, only: nzpmax
+    use mem_grell   ,only: cuforc_g,cuforc_sh_g
+    use mem_tend    ,only: tend
+    !use mem_scratch ,only: scratch
+    use mem_grid    ,only: time,ngrid,dtlt, dyncore_flag
+    use mem_cuparm  ,only: confrq ,cuparm_g_sh
+    use node_mod    ,only: mxp,myp,mzp ,ia,iz,ja,jz,mynum
+    use mem_radiate, only: ilwrtyp, iswrtyp, radiate_g
+    use mem_grid, only:ngrid, grid_g, dtlt, if_adap, jdim, time, &
+         zt, zm, dzm, dzt, hw4,itopo
+    use mem_scratch, only : vctr1,vctr2
+
+    use ModBasicFields, only: &
+         BasicFields
+    
+    use ModRadvc, only: &
+         advtndc, &
+         fa_preptc, &
+         fa_xc, &
+         fa_yc, &
+         fa_zc
+
+    implicit none
+    include "constants.h"
+    character(len=3) :: forcing
+    integer,intent(IN) :: nnqparm,nnshcu,iwork
+    type(BasicFields), pointer, intent(in) :: oneBasic
+    type(BasicFields), pointer, intent(in) :: oneAveBasic
+
+    !- scratchs (local arrays)
+    real :: vt3da(mzp,mxp,myp)
+    real :: vt3db(mzp,mxp,myp)
+    real :: vt3dc(mzp,mxp,myp)
+    real :: vt3dh(mzp,mxp,myp)
+    real :: vt3dj(mzp,mxp,myp)
+    real :: vt3dk(mzp,mxp,myp)
+    real :: vt3di(mzp,mxp,myp)
+    real :: vt3df(mzp,mxp,myp)
+    real :: vt3dg(mzp,mxp,myp)
+    real :: vt3de(mzp,mxp,myp)
+    real :: vt3dd(mzp,mxp,myp)
+    ! real :: vctr1(mzp)
+    ! real :: vctr2(mzp)
+    real :: scr1(mzp,mxp,myp)
+    integer :: i,j,k
+    !- parameter to define if include or not diffusion tendencies at forcing for deep convection
+    logical,parameter :: forc_deep_pbl = .false.
+
+
+    if(mod(time,confrq).lt.dtlt .or. time .lt. dtlt+.01) then
+
+       !-
+       !  the forcing for shallow is only due to diffusion in PBL only (which is calculated in turb routines)
+       !  the forcing for deep is due to radiation + 3dim advection
+       if(iwork.eq.1) then
+
+          !----------- include radiation for theta
+          if(ilwrtyp + iswrtyp > 0  .and. nnqparm /= 8 ) then
+             cuforc_g(ngrid)%lsfth(1:mzp,1:mxp,1:myp)= radiate_g(ngrid)%fthrd(1:mzp,1:mxp,1:myp)
+          else
+             cuforc_g(ngrid)%lsfth(1:mzp,1:mxp,1:myp)= 0.
+          endif
+
+          !-reset lsf for water vapor
+          cuforc_g(ngrid)%lsfrt(1:mzp,1:mxp,1:myp)= 0.
+
+          !----------- include advection for theta and rv (or should be rtp?)
+          vt3dd=0.0
+          vt3de=0.0
+          vt3df=0.0
+          vt3dg=0.0
+          vt3dh=0.0
+          vt3di=0.0
+          vt3dj=0.0
+          vt3dk=0.0
+          vctr1=0.0
+          vctr2=0.0
+          if(dyncore_flag == 0) then
+             do j = 1,myp
+                do i = 1,mxp
+                   do k = 1,mzp
+                      vt3da(k,i,j) = (basic_g(ngrid)%up(k,i,j)+ basic_g(ngrid)%uc(k,i,j))*dtlt*0.5
+                      vt3db(k,i,j) = (basic_g(ngrid)%vp(k,i,j)+ basic_g(ngrid)%vc(k,i,j))*dtlt*0.5
+                      vt3dc(k,i,j) = (basic_g(ngrid)%wp(k,i,j)+ basic_g(ngrid)%wc(k,i,j))*dtlt*0.5
+                   end do
+                end do
+             end do
+          else
+             do j = 1,myp
+                do i = 1,mxp
+                   do k = 1,mzp
+                      vt3da(k,i,j) = basic_g(ngrid)%uc(k,i,j)*dtlt
+                      vt3db(k,i,j) = basic_g(ngrid)%vc(k,i,j)*dtlt
+                      vt3dc(k,i,j) = basic_g(ngrid)%wc(k,i,j)*dtlt
+                   end do
+                end do
+             end do
+          endif
+          call fa_preptc(mzp,mxp,myp            &
+               ,vt3da     ,vt3db       &
+               ,vt3dc     ,vt3dd       &
+               ,vt3de     ,vt3df       &
+               ,vt3dh     ,vt3di       &
+               ,vt3dj     ,vt3dk       &
+               ,mynum, &
+               oneBasic, oneAveBasic)
+
+          if(dyncore_flag == 0) then
+             !---- thp
+             scr1(1:mzp,1:mxp,1:myp) = basic_g(ngrid)%thp(1:mzp,1:mxp,1:myp)
+
+             ! output: scr1,vt3dg
+             call fa_xc(mzp,mxp,myp,ia,iz,1,myp,basic_g(ngrid)%thp,scr1,vt3da,vt3dd,vt3dg,vt3dh,vt3di,mynum)
+
+             ! input: scalarp, scr1,vt3db,vt3de,vt3dj,vt3di
+             ! output: scr1,vt3dg
+             if (jdim .eq. 1)  &
+                  call fa_yc(mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%thp,scr1,vt3db,vt3de,vt3dg,vt3dj,vt3di,jdim,mynum)
+
+             ! input: scalarp, scr1,vt3dc,vt3df,vt3dk, vctr1,vctr2
+             ! output: scr1,vt3dg
+             call fa_zc(mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%thp,scr1,vt3dc,vt3df,vt3dg,vt3dk,vctr1,vctr2,mynum)
+
+             ! input:  thetap , lsfth,scr1, dtlt
+             ! output: lsfth
+             call advtndc(mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%thp,scr1,cuforc_g(ngrid)%lsfth,dtlt,mynum)
+             !
+          else
+             !---- thc
+             scr1(1:mzp,1:mxp,1:myp) = basic_g(ngrid)%thc(1:mzp,1:mxp,1:myp)
+
+             ! output: scr1,vt3dg
+             call fa_xc(mzp,mxp,myp,ia,iz,1,myp,basic_g(ngrid)%thc,scr1,vt3da,vt3dd,vt3dg,vt3dh,vt3di,mynum)
+
+             ! input: scalarp, scr1,vt3db,vt3de,vt3dj,vt3di
+             ! output: scr1,vt3dg
+             if (jdim .eq. 1)  &
+                  call fa_yc(mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%thc,scr1,vt3db,vt3de,vt3dg,vt3dj,vt3di,jdim,mynum)
+
+             ! input: scalarp, scr1,vt3dc,vt3df,vt3dk, vctr1,vctr2
+             ! output: scr1,vt3dg
+             call fa_zc(mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%thc,scr1,vt3dc,vt3df,vt3dg,vt3dk,vctr1,vctr2,mynum)
+
+             ! input:  thetac , lsfth,scr1, dtlt
+             ! output: lsfth
+             call advtndc(mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%thc,scr1,cuforc_g(ngrid)%lsfth,dtlt,mynum)
+          endif
+
+          !---- water vapor
+          scr1(1:mzp,1:mxp,1:myp) = basic_g(ngrid)%rv(1:mzp,1:mxp,1:myp)
+
+          ! output: scr1,vt3dg
+          call fa_xc(mzp,mxp,myp,ia,iz,1,myp,basic_g(ngrid)%rv,scr1,vt3da,vt3dd,vt3dg,vt3dh,vt3di,mynum)
+
+          ! input: scalarp, scr1,vt3db,vt3de,vt3dj,vt3di
+          ! output: scr1,vt3dg
+          if (jdim .eq. 1)  &
+               call fa_yc(mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%rv,scr1,vt3db,vt3de,vt3dg,vt3dj,vt3di,jdim,mynum)
+
+          ! input: scalarp, scr1,vt3dc,vt3df,vt3dk, vctr1,vctr2
+          ! output: scr1,vt3dg
+          call fa_zc(mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%rv,scr1,vt3dc,vt3df,vt3dg,vt3dk,vctr1,vctr2,mynum)
+
+          ! input: basic(ngrid)%rv, scalart,scr1, dtlt
+          ! output: lsfrt = rad + adv
+          call advtndc(mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%rv,scr1,cuforc_g(ngrid)%lsfrt,dtlt,mynum)
+
+          !- here the forcings contain rad+adv for temp and adv for water vapor
+          !-end of inclusion of the advection forcings
+
+          !- flag to include diffusion in pbl (only vertical) in deep convection forcing.
+          !- the pbl forcing (cuforc_sh_g(ngrid)%lsfth and %lsfrt) has been calculated
+          !- in the turbulence routines.
+          if(forc_deep_pbl) then
+             ! calcula o forcing para conveccao profunda = rad + pbl turb + adv
+             ! for deep convection    LSF =  radiation + pbl_turb + advection
+             cuforc_g(ngrid)%lsfth(:,:,:) = cuforc_g(ngrid)%lsfth(:,:,:)+cuforc_sh_g(ngrid)%lsfth(:,:,:)
+             cuforc_g(ngrid)%lsfrt(:,:,:) = cuforc_g(ngrid)%lsfrt(:,:,:)+cuforc_sh_g(ngrid)%lsfrt(:,:,:)
+          endif
+          !if(mynum==1) print*,"2:lsfth",maxval(cuforc_g(ngrid)%lsfth),minval(cuforc_g(ngrid)%lsfth)
+          !if(mynum==1) print*,"2:lsfrt",maxval(cuforc_g(ngrid)%lsfrt),minval(cuforc_g(ngrid)%lsfrt)
+
+       endif
+       if(iwork.eq.2) then
+
+          call accum(int(mxp*myp*mzp,i8), cuforc_g(ngrid)%lsfth, cuparm_g_sh(ngrid)%thsrc)
+          call accum(int(mxp*myp*mzp,i8), cuforc_g(ngrid)%lsfrt, cuparm_g_sh(ngrid)%rtsrc)
+
+       endif
+
+    endif
+
+  end subroutine prepare_lsf
+
+
+
+  !-------------------------------------------------------------------
+  subroutine get_zi_gf2018(m1,tkmin,tkeg,z,rtgt,ztop,kzi)
+
+    implicit none
+    integer,intent(in):: m1
+    integer :: kzimax,ktke_max,i,k
+    real tkmin,tke_tmp
+    real,intent(in), dimension(m1) :: tkeg,z
+    real,intent(in)    :: ztop,rtgt
+    integer,intent(out) :: kzi
+    real, parameter :: rcpmin=1.e-5 , pblhmax=3000.
+
+    kzi      = 1
+    ktke_max = 1
+    kzimax   = m1-1
+    !---  max level for kzi
+    do k=1,m1
+       if(z(k).ge. pblhmax+ztop) then
+          kzimax = min(k,m1-1)
+          !if(j==8 .and. i==10) print*,"1",z(i,k), pblhmax,ztop(i),kzimax
+          exit
+       endif
+    enddo
+    !---
+    do k=ktke_max,kzimax
+       if(tkeg(k) .gt. 1.1*tkmin )  then
+          kzi = k
+          cycle
+       else
+          kzi = max(1,k-1)
+          exit
+       endif
+    enddo
+    kzi = max(1  ,kzi)
+    kzi = min(kzimax,kzi)
+    !print*,"2",kzi(i),i;call flush(6)
+    !pbl(i) = max( z(i,kzi(i))-ztop(i), z(i,1)-ztop(i) )
+  end subroutine get_zi_gf2018
+  !-------------------------------------------------------------------
 end module CUPARM_GRELL3
-!-----------------------------------------------------------------------------------
-
-subroutine moveup(m1,A)
-  implicit none
-  integer, intent(in) :: m1
-  real, dimension(m1) :: A,B
-
-  real :: dummy
-  integer :: k,kr
-
-  B=A
-  do k=1,m1-1
-     kr=k+1
-     A(kr) = B(k)
-  enddo
-  A(1) = A(2)
-end subroutine moveup
-!-----------------------------------------------------------------------------------
-
-
-subroutine set_index_loops( ims,ime, jms,jme, kms,kme,    &
-     its,ite, jts,jte, kts,kte,    &
-     mxp,myp,mzp                   )
-
-  implicit none
-  integer, intent(IN)         :: mxp,myp,mzp
-  integer, intent(INOUT)      :: ims,ime, jms,jme, kms,kme,&
-       its,ite, jts,jte, kts,kte
-
-
-  ims=1
-  ime=mxp
-  jms=1
-  jme=myp
-  kms=1
-  kme=mzp
-  its=1
-  ite=mxp
-  jts=1
-  jte=myp
-  kts=1
-  kte=mzp
-
-end subroutine set_index_loops
-!*************************************************************************************
-subroutine check (m1,tht,ath,rtt,artt)
-  implicit none
-  integer, intent(in) :: m1
-  real, dimension(m1), intent(in) :: tht,ath,rtt,artt
-
-  integer k
-  do k=1,m1
-     print*,"check",k, tht(k),ath(k),rtt(k),artt(k)
-  enddo
-  print*,"mx1",maxval(tht),maxval(ath),minval(tht),minval(ath)
-  print*,"mx2",maxval(rtt),maxval(artt),minval(rtt),minval(artt)
-
-end subroutine check
-!------------------------------------------------------------
-subroutine cupar2mcphysics(m1,m2,m3,ia,iz,ja,jz,ngrid,dtlt &
-     ,clsrc  ,theta,pp,pi0,dn0)
-
-  use micphys     ,only: level,mcphys_type
-  use mem_micro   ,only: micro_g
-  use mem_tend    ,only: tend
-  use rconstants  ,only: cpi
-  implicit none
-  integer m1,m2,m3,ia,iz,ja,jz,k,i,j,ngrid
-  real dtlt
-  real, dimension(m1,m2,m3),intent(in) :: theta, pp, pi0,dn0
-  real, dimension(m1,m2,m3),intent(in) :: clsrc! liquid/ice tendency from
-  ! cumulus parameterization
-  if(level < 2  .and. mcphys_type < 2 ) return
-
-  if(level == 2 .and. mcphys_type < 2) then
-     call mcphysics0(m1,m2,m3,ia,iz,ja,jz,dtlt &
-          ,clsrc                  &
-          ,tend%rct            &
-          ,tend%rtt            )
-
-  elseif(level == 3 .and. (mcphys_type >= 0))  then
-
-     call mcphysics1(mcphys_type,m1,m2,m3,ia,iz,ja,jz,dtlt,cpi  &
-          ,theta, pp, pi0,dn0 &
-          ,clsrc          &! cumulus tendency
-          ,tend%rct    &! cloud water mass mix ratio tendency 
-          ,tend%rpt    &! pristine mass mix ratio tendency 
-          ,tend%rtt    &! total water mass mix ratio tendency
-          )
-
-     if(mcphys_type == 2) &
-          call mcphysics2(mcphys_type,m1,m2,m3,ia,iz,ja,jz,dtlt,cpi  &
-          ,theta, pp, pi0,dn0 &
-          ,clsrc          &! cumulus tendency
-          ,tend%rct    &! cloud water mass mix ratio tendency 
-          ,tend%rpt    &! pristine mass mix ratio tendency 
-          ,tend%rtt    &! total water mass mix ratio tendency
-          ,tend%cpt    &! pristine number conc tendency 
-          )
-
-     if(mcphys_type == 3) &
-          call mcphysics3(mcphys_type,m1,m2,m3,ia,iz,ja,jz,dtlt,cpi  &
-          ,theta, pp, pi0,dn0,micro_g(ngrid)%ccp &
-          ,clsrc          &! cumulus tendency
-          ,tend%rct    &! cloud water mass mix ratio tendency 
-          ,tend%rpt    &! pristine mass mix ratio tendency 
-          ,tend%rtt    &! total water mass mix ratio tendency
-          ,tend%cpt    &! pristine number conc tendency 
-          ,tend%cct    &! cloud water  number conc tendency 
-          )
-
-  endif
-  return
-end  subroutine cupar2mcphysics
-
-!------------------------------------------------------------------------
-subroutine mcphysics0(m1,m2,m3,ia,iz,ja,jz,dtlt,clsrc,rct,rtt)
-  implicit none
-  integer m1,m2,m3,ia,iz,ja,jz,k,i,j
-  real dtlt
-  real, dimension(m1,m2,m3),intent(in   ) :: clsrc
-  real, dimension(m1,m2,m3),intent(inout) :: rct,rtt
-
-  do j = ja,jz
-     do i = ia,iz
-        do k = 1,m1
-           rct(k,i,j)=rct(k,i,j)+clsrc(k,i,j)
-           rtt(k,i,j)=rtt(k,i,j)+clsrc(k,i,j)
-        enddo
-     enddo
-  enddo
-end subroutine mcphysics0
-
-!------------------------------------------------------------------------
-subroutine mcphysics1(mcphys_type,m1,m2,m3,ia,iz,ja,jz,dtlt,cpi,theta,pp,pi0,dn0 &
-     ,clsrc,rct,rpt,rtt) 
-
-  use ConvPar_GF_GEOS5, only : fract_liq_f
-  implicit none
-  integer :: m1,m2,m3,ia,iz,ja,jz,k,i,j,mcphys_type
-  real dtlt,cpi
-  real, dimension(m1,m2,m3),intent(in)    :: clsrc
-  real, dimension(m1,m2,m3),intent(in)    :: theta,pp,pi0,dn0
-  real, dimension(m1,m2,m3),intent(inout) :: rct,rpt,rtt 
-  real ::tempk,tem1,tqice,tqliq,add_ncp,add_npp
-  real, parameter :: tf=233.16, tcr=263.16, tcrf=1.0/(tcr-tf)
-
-  do j = ja,jz
-     do i = ia,iz
-        do k = 1,m1
-           tempk = theta(k,i,j)*(pp(k,i,j)+pi0(k,i,j))*cpi ! air temp (Kelvin)
-
-           tem1 = fract_liq_f(tempk)
-
-           !- splitting cumulus tendency into water and ice tendencies
-           rct(k,i,j) = rct(k,i,j)+clsrc(k,i,j)* tem1 ! cloud water
-
-           rpt(k,i,j) = rpt(k,i,j)+clsrc(k,i,j)*(1.-tem1) ! pristine ice
-
-           !- it must include also the ice/liq tendencies at rtt for
-           !- consistency, since rtt includes ice and liq mixing ratios
-           rtt(k,i,j) = rtt(k,i,j)+clsrc(k,i,j)
-
-        enddo
-     enddo
-  enddo
-
-end subroutine mcphysics1
-!------------------------------------------------------------------------
-subroutine mcphysics2(mcphys_type,m1,m2,m3,ia,iz,ja,jz,dtlt,cpi,theta,pp,pi0,dn0 &
-     ,clsrc,rct,rpt,rtt,cpt)
-
-  use ConvPar_GF_GEOS5, only : make_IceNumber     &
-       ,fract_liq_f
-  implicit none
-  integer :: m1,m2,m3,ia,iz,ja,jz,k,i,j,mcphys_type
-  real dtlt,cpi
-  real, dimension(m1,m2,m3),intent(in)    :: clsrc
-  real, dimension(m1,m2,m3),intent(in)    :: theta,pp,pi0,dn0
-  real, dimension(m1,m2,m3),intent(inout) :: rct,rpt,rtt,cpt
-  real ::tempk,tem1,tqice,tqliq,add_ncp,add_npp
-  real, parameter :: tf=233.16, tcr=263.16, tcrf=1.0/(tcr-tf)
-
-  do j = ja,jz
-     do i = ia,iz
-        do k = 1,m1
-           tempk = theta(k,i,j)*(pp(k,i,j)+pi0(k,i,j))*cpi ! air temp (Kelvin)
-
-           tem1 = fract_liq_f(tempk)
-
-           !-- detrained pristine mass mixing ratio
-           tqice = (1.-tem1) * clsrc(k,i,j) * dn0(k,i,j)* dtlt
-
-           !-- detrained ICN ice number concenration in the time "dtlt"
-           add_npp = max(0.0, make_IceNumber(tqice, tempk)/dn0(k,i,j))
-
-           !- update tendency 
-           cpt(k,i,j) = cpt(k,i,j)+ add_npp/dtlt
-
-        enddo
-     enddo
-  enddo
-end subroutine mcphysics2
-
-!------------------------------------------------------------------------
-subroutine mcphysics3(mcphys_type,m1,m2,m3,ia,iz,ja,jz,dtlt,cpi,theta,pp,pi0,dn0 &
-     ,ccp,clsrc,rct,rpt,rtt,cpt,cct)
-
-  use ConvPar_GF_GEOS5, only : make_DropletNumber &
-       ,make_IceNumber     &
-       ,fract_liq_f
-  implicit none
-  integer :: m1,m2,m3,ia,iz,ja,jz,k,i,j,mcphys_type
-  real dtlt,cpi
-  real, dimension(m1,m2,m3),intent(in)    :: clsrc
-  real, dimension(m1,m2,m3),intent(in)    :: theta,pp,pi0,dn0,ccp
-  real, dimension(m1,m2,m3),intent(inout) :: rct,rpt,rtt,cpt,cct
-  real ::tempk,tem1,tqice,tqliq,add_ncp,add_npp
-  real, parameter :: tf=233.16, tcr=263.16, tcrf=1.0/(tcr-tf)
-
-  do j = ja,jz
-     do i = ia,iz
-        do k = 1,m1
-           tempk = theta(k,i,j)*(pp(k,i,j)+pi0(k,i,j))*cpi ! air temp (Kelvin)
-
-           tem1 = fract_liq_f(tempk)
-
-           !-- detrained pristine mass mixing ratio
-           tqice = (1.-tem1) * clsrc(k,i,j) * dn0(k,i,j)* dtlt
-
-           !-- detrained ICN ice number concenration in the time "dtlt"
-           add_npp = max(0.0, make_IceNumber(tqice, tempk)/dn0(k,i,j))
-
-           !- update tendency 
-           cpt(k,i,j) = cpt(k,i,j)+ add_npp/dtlt
-
-           !--cloud number concentration
-           tqliq =  tem1 * clsrc(k,i,j) * dn0(k,i,j) * dtlt
-           !--check if
-
-           add_ncp = make_DropletNumber(tqliq, ccp(k,i,j))/dn0(k,i,j)
-           !or
-           !	    add_ncp = make_DropletNumber(tqliq, nwfa(k,i,j))/dn0(k,i,j)
-
-           !- update tendency 
-           cct(k,i,j) = cct(k,i,j)+ max(0.0, add_ncp/dtlt)
-
-        enddo
-     enddo
-  enddo
-
-end subroutine mcphysics3
-
-!------------------------------------------------------------------------
-subroutine prepare_lsf(nnqparm,nnshcu,iwork)
-
-  use grid_dims, only: nzpmax
-  use mem_grell   ,only: cuforc_g,cuforc_sh_g
-  use mem_tend    ,only: tend
-  !use mem_scratch ,only: scratch
-  use mem_grid    ,only: time,ngrid,dtlt, dyncore_flag
-  use mem_cuparm  ,only: confrq ,cuparm_g_sh
-  use node_mod    ,only: mxp,myp,mzp ,ia,iz,ja,jz,mynum
-  use mem_radiate, only: ilwrtyp, iswrtyp, radiate_g
-  use mem_grid, only:ngrid, grid_g, dtlt, if_adap, jdim, time, &
-       zt, zm, dzm, dzt, hw4,itopo
-  use mem_basic, only: basic_g
-  use mem_scratch, only : vctr1,vctr2
-  use ModRadvc, only: &
-       advtndc, &
-       fa_preptc, &
-       fa_xc, &
-       fa_yc, &
-       fa_zc
-  
-  implicit none
-  include "constants.h"
-  character(len=3) :: forcing
-  integer,intent(IN) :: nnqparm,nnshcu,iwork
-  !- scratchs (local arrays)
-  real :: vt3da(mzp,mxp,myp)
-  real :: vt3db(mzp,mxp,myp)
-  real :: vt3dc(mzp,mxp,myp)
-  real :: vt3dh(mzp,mxp,myp)
-  real :: vt3dj(mzp,mxp,myp)
-  real :: vt3dk(mzp,mxp,myp)
-  real :: vt3di(mzp,mxp,myp)
-  real :: vt3df(mzp,mxp,myp)
-  real :: vt3dg(mzp,mxp,myp)
-  real :: vt3de(mzp,mxp,myp)
-  real :: vt3dd(mzp,mxp,myp)
-  ! real :: vctr1(mzp)
-  ! real :: vctr2(mzp)
-  real :: scr1(mzp,mxp,myp)
-  integer :: i,j,k
-  !- parameter to define if include or not diffusion tendencies at forcing for deep convection
-  logical,parameter :: forc_deep_pbl = .false.
-
-
-  if(mod(time,confrq).lt.dtlt .or. time .lt. dtlt+.01) then
-
-     !-
-     !  the forcing for shallow is only due to diffusion in PBL only (which is calculated in turb routines)
-     !  the forcing for deep is due to radiation + 3dim advection
-     if(iwork.eq.1) then
-
-        !----------- include radiation for theta
-        if(ilwrtyp + iswrtyp > 0  .and. nnqparm /= 8 ) then
-           cuforc_g(ngrid)%lsfth(1:mzp,1:mxp,1:myp)= radiate_g(ngrid)%fthrd(1:mzp,1:mxp,1:myp)
-        else
-           cuforc_g(ngrid)%lsfth(1:mzp,1:mxp,1:myp)= 0.
-        endif
-
-        !-reset lsf for water vapor
-        cuforc_g(ngrid)%lsfrt(1:mzp,1:mxp,1:myp)= 0.
-
-        !----------- include advection for theta and rv (or should be rtp?)
-        vt3dd=0.0
-        vt3de=0.0
-        vt3df=0.0
-        vt3dg=0.0
-        vt3dh=0.0
-        vt3di=0.0
-        vt3dj=0.0
-        vt3dk=0.0
-        vctr1=0.0
-        vctr2=0.0
-        if(dyncore_flag == 0) then
-           do j = 1,myp
-              do i = 1,mxp
-                 do k = 1,mzp
-                    vt3da(k,i,j) = (basic_g(ngrid)%up(k,i,j)+ basic_g(ngrid)%uc(k,i,j))*dtlt*0.5
-                    vt3db(k,i,j) = (basic_g(ngrid)%vp(k,i,j)+ basic_g(ngrid)%vc(k,i,j))*dtlt*0.5
-                    vt3dc(k,i,j) = (basic_g(ngrid)%wp(k,i,j)+ basic_g(ngrid)%wc(k,i,j))*dtlt*0.5
-                 end do
-              end do
-           end do
-        else
-           do j = 1,myp
-              do i = 1,mxp
-                 do k = 1,mzp
-                    vt3da(k,i,j) = basic_g(ngrid)%uc(k,i,j)*dtlt
-                    vt3db(k,i,j) = basic_g(ngrid)%vc(k,i,j)*dtlt
-                    vt3dc(k,i,j) = basic_g(ngrid)%wc(k,i,j)*dtlt
-                 end do
-              end do
-           end do
-        endif
-        call fa_preptc(mzp,mxp,myp            &
-             ,vt3da	     ,vt3db	       &
-             ,vt3dc	     ,vt3dd	       &
-             ,vt3de	     ,vt3df	       &
-             ,vt3dh	     ,vt3di	       &
-             ,vt3dj	     ,vt3dk	       &
-             ,mynum			       )
-
-        if(dyncore_flag == 0) then
-           !---- thp
-           scr1(1:mzp,1:mxp,1:myp) = basic_g(ngrid)%thp(1:mzp,1:mxp,1:myp)
-
-           ! output: scr1,vt3dg
-           call fa_xc(mzp,mxp,myp,ia,iz,1,myp,basic_g(ngrid)%thp,scr1,vt3da,vt3dd,vt3dg,vt3dh,vt3di,mynum)
-
-           ! input: scalarp, scr1,vt3db,vt3de,vt3dj,vt3di
-           ! output: scr1,vt3dg
-           if (jdim .eq. 1)  &
-                call fa_yc(mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%thp,scr1,vt3db,vt3de,vt3dg,vt3dj,vt3di,jdim,mynum)
-
-           ! input: scalarp, scr1,vt3dc,vt3df,vt3dk, vctr1,vctr2
-           ! output: scr1,vt3dg
-           call fa_zc(mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%thp,scr1,vt3dc,vt3df,vt3dg,vt3dk,vctr1,vctr2,mynum)
-
-           ! input:  thetap , lsfth,scr1, dtlt
-           ! output: lsfth
-           call advtndc(mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%thp,scr1,cuforc_g(ngrid)%lsfth,dtlt,mynum)
-           !
-        else
-           !---- thc
-           scr1(1:mzp,1:mxp,1:myp) = basic_g(ngrid)%thc(1:mzp,1:mxp,1:myp)
-
-           ! output: scr1,vt3dg
-           call fa_xc(mzp,mxp,myp,ia,iz,1,myp,basic_g(ngrid)%thc,scr1,vt3da,vt3dd,vt3dg,vt3dh,vt3di,mynum)
-
-           ! input: scalarp, scr1,vt3db,vt3de,vt3dj,vt3di
-           ! output: scr1,vt3dg
-           if (jdim .eq. 1)  &
-                call fa_yc(mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%thc,scr1,vt3db,vt3de,vt3dg,vt3dj,vt3di,jdim,mynum)
-
-           ! input: scalarp, scr1,vt3dc,vt3df,vt3dk, vctr1,vctr2
-           ! output: scr1,vt3dg
-           call fa_zc(mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%thc,scr1,vt3dc,vt3df,vt3dg,vt3dk,vctr1,vctr2,mynum)
-
-           ! input:  thetac , lsfth,scr1, dtlt
-           ! output: lsfth
-           call advtndc(mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%thc,scr1,cuforc_g(ngrid)%lsfth,dtlt,mynum)
-        endif
-
-        !---- water vapor
-        scr1(1:mzp,1:mxp,1:myp) = basic_g(ngrid)%rv(1:mzp,1:mxp,1:myp)
-
-        ! output: scr1,vt3dg
-        call fa_xc(mzp,mxp,myp,ia,iz,1,myp,basic_g(ngrid)%rv,scr1,vt3da,vt3dd,vt3dg,vt3dh,vt3di,mynum)
-
-        ! input: scalarp, scr1,vt3db,vt3de,vt3dj,vt3di
-        ! output: scr1,vt3dg
-        if (jdim .eq. 1)  &
-             call fa_yc(mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%rv,scr1,vt3db,vt3de,vt3dg,vt3dj,vt3di,jdim,mynum)
-
-        ! input: scalarp, scr1,vt3dc,vt3df,vt3dk, vctr1,vctr2
-        ! output: scr1,vt3dg
-        call fa_zc(mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%rv,scr1,vt3dc,vt3df,vt3dg,vt3dk,vctr1,vctr2,mynum)
-
-        ! input: basic(ngrid)%rv, scalart,scr1, dtlt
-        ! output: lsfrt = rad + adv
-        call advtndc(mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%rv,scr1,cuforc_g(ngrid)%lsfrt,dtlt,mynum)
-
-        !- here the forcings contain rad+adv for temp and adv for water vapor
-        !-end of inclusion of the advection forcings
-
-        !- flag to include diffusion in pbl (only vertical) in deep convection forcing.
-        !- the pbl forcing (cuforc_sh_g(ngrid)%lsfth and %lsfrt) has been calculated
-        !- in the turbulence routines.
-        if(forc_deep_pbl) then
-           ! calcula o forcing para conveccao profunda = rad + pbl turb + adv
-           ! for deep convection    LSF =  radiation + pbl_turb + advection
-           cuforc_g(ngrid)%lsfth(:,:,:) = cuforc_g(ngrid)%lsfth(:,:,:)+cuforc_sh_g(ngrid)%lsfth(:,:,:)
-           cuforc_g(ngrid)%lsfrt(:,:,:) = cuforc_g(ngrid)%lsfrt(:,:,:)+cuforc_sh_g(ngrid)%lsfrt(:,:,:)
-        endif
-        !if(mynum==1) print*,"2:lsfth",maxval(cuforc_g(ngrid)%lsfth),minval(cuforc_g(ngrid)%lsfth)
-        !if(mynum==1) print*,"2:lsfrt",maxval(cuforc_g(ngrid)%lsfrt),minval(cuforc_g(ngrid)%lsfrt)
-
-     endif
-     if(iwork.eq.2) then
-
-        call accum(int(mxp*myp*mzp,i8), cuforc_g(ngrid)%lsfth, cuparm_g_sh(ngrid)%thsrc)
-        call accum(int(mxp*myp*mzp,i8), cuforc_g(ngrid)%lsfrt, cuparm_g_sh(ngrid)%rtsrc)
-
-     endif
-
-  endif
-
-end subroutine prepare_lsf
-
-
-
-!-------------------------------------------------------------------
-subroutine get_zi_gf2018(m1,tkmin,tkeg,z,rtgt,ztop,kzi)
-
-  implicit none
-  integer,intent(in):: m1
-  integer :: kzimax,ktke_max,i,k
-  real tkmin,tke_tmp
-  real,intent(in), dimension(m1) :: tkeg,z
-  real,intent(in)    :: ztop,rtgt
-  integer,intent(out) :: kzi
-  real, parameter :: rcpmin=1.e-5 , pblhmax=3000.
-
-  kzi      = 1
-  ktke_max = 1
-  kzimax   = m1-1
-  !---  max level for kzi
-  do k=1,m1
-     if(z(k).ge. pblhmax+ztop) then
-        kzimax = min(k,m1-1)
-        !if(j==8 .and. i==10) print*,"1",z(i,k), pblhmax,ztop(i),kzimax
-        exit
-     endif
-  enddo
-  !---
-  do k=ktke_max,kzimax
-     if(tkeg(k) .gt. 1.1*tkmin )  then
-        kzi = k
-        cycle
-     else
-        kzi = max(1,k-1)
-        exit
-     endif
-  enddo
-  kzi = max(1	  ,kzi)
-  kzi = min(kzimax,kzi)
-  !print*,"2",kzi(i),i;call flush(6)
-  !pbl(i) = max( z(i,kzi(i))-ztop(i), z(i,1)-ztop(i) )
-end subroutine get_zi_gf2018
-!-------------------------------------------------------------------

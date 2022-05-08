@@ -10,6 +10,13 @@
 
 module ModTimestepRK
 
+  use ModRexev, only: &
+       exevolve, &
+       get_true_air_density
+
+  use cuparm_grell3, only: &
+       prepare_lsf
+
   use ModDiffuse, only: &
        diffuse_brams31
 
@@ -203,24 +210,24 @@ contains
     use cuparm_grell3, only: cuparm_grell3_catt &  ! subroutine
          ,g3d_g
 
-    use digitalfilter, only: 	        &
+    use digitalfilter, only:         &
          applyDigitalFilter, & ! subroutine
-         fileNameDF,		& ! intent(inout) - file control
+         fileNameDF,& ! intent(inout) - file control
          dfVars,             &
          applyDF
 
-    USE ModMonotonicAdvection, only:                 &
+    use ModMonotonicAdvection, only:                 &
          advmnt_driver,  &        ! subroutine
          advmnt
 
-    USE DriverMatrix, ONLY: MatrixDriver  !Matrix Aerosol Model
+    use DriverMatrix, only: MatrixDriver  !Matrix Aerosol Model
 
 
-    USE rams_microphysics_2M, only: micro_2M_rams60,negadj1_2M_rams60
+    use rams_microphysics_2M, only: micro_2M_rams60,negadj1_2M_rams60
 
     use rrtm_driv, only:  rrtm_driver
 
-    USE mem_radiate, ONLY: &
+    use mem_radiate, only: &
          ilwrtyp, iswrtyp
 
     use CUPARM_GRELL3, only: g3d_g
@@ -261,7 +268,7 @@ contains
     include "constants.h"
     include "tsNames.h"
 
-    LOGICAL, parameter :: flag_Coriolis_in_every_RK_step = .FALSE.
+    logical, parameter :: flag_Coriolis_in_every_RK_step = .false.
 
     integer :: l_rk
     real    :: rk_beta(3)
@@ -315,7 +322,7 @@ contains
     !          ,varinit_g(ngrid)%varup(:,:,:),varinit_g(ngrid)%varvp(:,:,:)  &
     !          ,varinit_g(ngrid)%varpp(:,:,:),varinit_g(ngrid)%vartp(:,:,:)  &
     !          ,varinit_g(ngrid)%varrp(:,:,:)                                &
-    !	  
+    !  
     !          ,varinit_g(ngrid)%varuf(:,:,:),varinit_g(ngrid)%varvf(:,:,:)  &
     !          ,varinit_g(ngrid)%varpf(:,:,:),varinit_g(ngrid)%vartf(:,:,:)  &
     !          ,varinit_g(ngrid)%varrf(:,:,:)                                &
@@ -343,9 +350,11 @@ contains
        call THERMO(mzp,mxp,myp,ia,iz,ja,jz,'SUPSAT'); !if(stepDebug) print *,mynum,THERMO'
     endif
 
-    if (iexev == 2) &
-                                ! evolution of the Exner pressure: compression term
-         call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'ADV')
+    ! evolution of the Exner pressure: compression term
+    if (iexev == 2) then
+       call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'ADV', &
+            oneGrid%Basic, oneGrid%AveBasic)
+    end if
 
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
 
@@ -385,7 +394,7 @@ contains
        if( (.not. emiss_cycle_alloc) .and. (chemistry >= 0) .and. &
             trim(srcmapfn) .ne.  'NONE' .and. trim(srcmapfn) .ne.  'none') then
 
-	  call alloc_emiss_cycle(mxp,myp,ngrids,nsrc)
+          call alloc_emiss_cycle(mxp,myp,ngrids,nsrc)
 
           call init_actual_time_index(nsrc,ntimes_src)
 
@@ -428,7 +437,7 @@ contains
 
     !  Coriolis terms
     !  ----------------------------------------
-    if ( .NOT. flag_Coriolis_in_every_RK_step ) then
+    if ( .not. flag_Coriolis_in_every_RK_step ) then
        call CORLOS(mzp,mxp,myp,i0,j0,ia,iz,ja,jz,izu,jzv, tend%ut, tend%vt)
     end if
 
@@ -470,8 +479,10 @@ contains
 
     call WaitSendRecvMsgs(oneGrid%SelectedGhostZoneSend, oneGrid%SelectedGhostZoneRecv)
 
-    if (iexev == 2) &
-         call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'THA')
+    if (iexev == 2) then
+       call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'THA', &
+            oneGrid%Basic, oneGrid%AveBasic)
+    end if
 
     !- task 2:  NO production by "eclair"
 
@@ -485,7 +496,7 @@ contains
     if (ccatt==1 .and. split_method== 'PARALLEL' .and. n_dyn_chem==1) then
        ! task 3 : production/loss by chemical processes and inclusion of the
        ! chemistry tendency at the total tendency
-       CALL chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,3,50)
+       call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,3,50)
     endif
     if (ccatt==1 ) then
        ! task 4 : mass transfer between gas and liquid
@@ -512,8 +523,10 @@ contains
 
 !!$    call SynchronizedTimeStamp(TS_PHYSICS) ! Exper1.2, 2021_12
 
-    if (iexev == 2) &
-         call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'THS')
+    if (iexev == 2) then
+       call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'THS', &
+            oneGrid%Basic, oneGrid%AveBasic)
+    end if
 
     !  Sub-grid diffusion terms
     !----------------------------------------
@@ -529,10 +542,12 @@ contains
     if (imassflx == 1) call prep_advflx_to_stilt(mzp,mxp,myp,ia,iz,ja,jz,ngrid)
 
     !- large and subgrid scale forcing for shallow and deep cumulus
-    IF( NNQPARM(ngrid) >=2  ) CALL prepare_lsf(NNQPARM(ngrid), NNSHCU(ngrid),1)
+    if( NNQPARM(ngrid) >=2  ) then
+       call prepare_lsf(NNQPARM(ngrid), NNSHCU(ngrid),1, oneGrid%Basic, oneGrid%AveBasic)
+    end if
 
     !- cumulus parameterizations options: G3d - GD-FIM and GF
-    IF(NNQPARM(ngrid)>=3) CALL CUPARM_GRELL3_CATT(oneGrid,1,NNQPARM(ngrid),NNSHCU(ngrid))
+    if(NNQPARM(ngrid)>=3) call CUPARM_GRELL3_CATT(oneGrid,1,NNQPARM(ngrid),NNSHCU(ngrid))
 
     !------------------------------------------------------------------------------
     ! init preparations for Runge-Kutta  -loop
@@ -545,7 +560,7 @@ contains
        rk_beta(1) = 1.0 / 2.0    ! = beta(2,1) of Butcher tableau
        rk_beta(2) = 1.0          ! = beta(3,2) of Butcher tableau
 
-       if ( MOD( nnacoust(ngrid), 2) /= 0 ) then
+       if ( mod( nnacoust(ngrid), 2) /= 0 ) then
           call fatal_error("ERROR in timestep_rk: nnacoust(ngrid) must be an integer multiple of 2")
        end if
 
@@ -558,7 +573,7 @@ contains
        rk_beta(2) = 1.0 / 2.0    ! = beta(3,2) of Butcher tableau
        rk_beta(3) = 1.0          ! = beta(4,3) of Butcher tableau
 
-       if ( MOD( nnacoust(ngrid), 6) /= 0 .and.  MOD( nnacoust(ngrid), 4) /= 0 ) then
+       if ( mod( nnacoust(ngrid), 6) /= 0 .and.  mod( nnacoust(ngrid), 4) /= 0 ) then
           call fatal_error("ERROR in timestep_rk: nnacoust(ngrid) must be an integer multiple of 6 or 4")
        end if
        rk_nmbr_small_timesteps(1) = nnacoust(ngrid) / 3
@@ -704,19 +719,19 @@ contains
     !
     !  water species, tke and tracers advection
     !----------------------------------------
-    IF(advmnt == 1) THEN
+    if(advmnt == 1) then
        !- monotonic advection scheme
-       CALL advmnt_driver(oneGrid, 'SCALAR',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,&
+       call advmnt_driver(oneGrid, 'SCALAR',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,&
             i0,j0,nodemxp,nodemyp,nodemzp,mynum)
-    ELSEIF(advmnt == 0) THEN
+    elseif(advmnt == 0) then
        !- using the 2nd order forward upstream
-       CALL advectc(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, oneGrid%AveBasic, &
+       call advectc(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, oneGrid%AveBasic, &
             'SCALAR',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
-    ELSEIF(advmnt == 3) THEN
+    elseif(advmnt == 3) then
        !- using the WS advection
-       CALL advectc_rk(oneGrid,'SCALAR',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
+       call advectc_rk(oneGrid,'SCALAR',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
 
-    ENDIF
+    endif
 
 !!$    call SynchronizedTimeStamp(TS_RK_ADVMON) ! Exper1.2, 2021_12
 
@@ -807,7 +822,9 @@ contains
          f_thermo_e, f_thermo_w, f_thermo_s, f_thermo_n, &
          nzp, mxp, myp, jdim)
 
-    if (iexev == 2) call get_true_air_density(mzp,mxp,myp,ia,iz,ja,jz)
+    if (iexev == 2) then
+       call get_true_air_density(mzp,mxp,myp,ia,iz,ja,jz)
+    end if
 
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
 
@@ -820,13 +837,13 @@ contains
 
     !----------------------------------------
     !- chemistry/aerosol solvers
-    if (ccatt==1) THEN
-       if ( (split_method== 'PARALLEL' .AND. N_DYN_CHEM > 1) .OR.  &
-            (split_method== 'SEQUENTIAL'                   ) .OR.  &
-            (split_method== 'SYMMETRIC'                    )       )THEN
+    if (ccatt==1) then
+       if ( (split_method== 'PARALLEL' .and. N_DYN_CHEM > 1) .or.  &
+            (split_method== 'SEQUENTIAL'                   ) .or.  &
+            (split_method== 'SYMMETRIC'                    )       )then
 
           ! task 3 : production/loss by chemical processes and final updated
-          !  	of each specie
+          !  of each specie
           call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,3,50)
        endif
 
@@ -834,10 +851,10 @@ contains
        !- using symmetric/sequential spliting operator
        if(AEROSOL==2) then
 
-          CALL MatrixDriver(ia,iz,ja,jz,mzp,mxp,myp)
+          call MatrixDriver(ia,iz,ja,jz,mzp,mxp,myp)
        endif
     endif
-    if (ccatt==1 .and. aerosol == 1) THEN
+    if (ccatt==1 .and. aerosol == 1) then
        call aer_background(ngrid,mzp,mxp,myp,ia,iz,ja,jz)
     endif
     !----------------------------------------
@@ -847,7 +864,7 @@ contains
        if (isource==1) then
           ! Apply only for last finner grid
           if (ngrid==ngrids) then
-             CALL le_fontes(ngrid, mzp, mxp, myp, &
+             call le_fontes(ngrid, mzp, mxp, myp, &
                   npatch, ia, iz, ja, jz, (time+dtlongn(1)))
           endif
        endif

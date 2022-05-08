@@ -4,6 +4,9 @@
 
 subroutine CUPARM_GRELL_CATT(iens)
 
+  use cuparm_grell3, only: &
+       cupar2mcphysics
+  
   use mem_basic         , only: basic_g
   use mem_tend          , only: tend
   use mem_cuparm        , only: confrq,cuparm_g,cuparm_g_sh
@@ -232,7 +235,8 @@ subroutine CUPARM_GRELL_CATT(iens)
                             cuparm_g(ngrid)%clsrc,    &
                             basic_g(ngrid)%theta,    & 
                             basic_g(ngrid)%pp,    & 
-                            basic_g(ngrid)%pi0     )
+                            basic_g(ngrid)%pi0, &
+                            basic_g(ngrid)%dn0)
      endif
      
   endif 
