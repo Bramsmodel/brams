@@ -340,7 +340,7 @@ contains
 
     !  Velocity advection
     !----------------------------------------
-    CALL advectc(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
+    CALL advectc(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, oneGrid%AveBasic, &
          'V',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
 
 
@@ -405,11 +405,11 @@ contains
        call advmnt_driver(oneGrid, 'T',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,&
             i0,j0,nodemxp,nodemyp,nodemzp,mynum)
        if(advmnt >= 2) &
-            CALL advectc(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
+            CALL advectc(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, oneGrid%AveBasic, &
             'T',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
     ELSE
 
-       CALL advectc(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
+       CALL advectc(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, oneGrid%AveBasic, &
             'T',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
 
     ENDIF     ! If Generic IA32 use old Advction Scheme

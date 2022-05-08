@@ -9,6 +9,11 @@ module ModRadvc
   use iso_fortran_env, only: &
        real64
   
+  use ModBasicFields, only: &
+       BasicFields, &
+       DeepCopyToBasicFields, &
+       DeepCopyFromBasicFields
+  
   use ModMonotonicAdvection, only: &
        advmnt 
 
@@ -80,7 +85,7 @@ contains
 
 
   
-  subroutine advectc(oneScalarTab, oneScalarTabSize, &
+  subroutine advectc(oneScalarTab, oneScalarTabSize, oneBasic, oneAveBasic, &
        varn,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
     !> @brief: advectc
     !! @date:  18/Nov/2015
@@ -92,6 +97,8 @@ contains
 
     type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
     integer, intent(inout) :: oneScalarTabSize
+    type(BasicFields), pointer, intent(in) :: oneBasic
+    type(BasicFields), pointer, intent(in) :: oneAveBasic
     integer :: mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,n
     integer(kind=real64) :: mxyzp
     character(len=*) :: varn
@@ -139,19 +146,21 @@ contains
 
        else
 
+          call DeepCopyToBasicFields(oneBasic, oneAveBasic)
           call vel_advectc_adap(mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,jdim    &
                ,grid_g(ngrid)%lpu    ,grid_g(ngrid)%lpv       &
-               ,grid_g(ngrid)%lpw    ,basic_g(ngrid)%uc     &
-               ,basic_g(ngrid)%vc    ,basic_g(ngrid)%wc     &
+               ,grid_g(ngrid)%lpw    ,oneBasic%uc     &
+               ,oneBasic%vc    ,oneBasic%wc     &
                ,tend%ut              ,tend%vt               &
-               ,tend%wt              ,basic_g(ngrid)%dn0    &
-               ,basic_g(ngrid)%dn0u  ,basic_g(ngrid)%dn0v   &
+               ,tend%wt              ,oneBasic%dn0    &
+               ,oneBasic%dn0u  ,oneBasic%dn0v   &
                ,grid_g(ngrid)%aru    ,grid_g(ngrid)%arv     &
                ,grid_g(ngrid)%arw    ,grid_g(ngrid)%volu    &
                ,grid_g(ngrid)%volv   ,grid_g(ngrid)%volw    &
                ,scratch%vt3da        ,scratch%vt3db         &
                ,scratch%vt3dc        ,scratch%vt3dd         &
                ,scratch%vt3de        ,scratch%vt3df        ,time)
+          call DeepCopyFromBasicFields(oneBasic, oneAveBasic)
 
        endif
 
@@ -162,21 +171,23 @@ contains
 
        ! Advect  scalars
 
+       call DeepCopyToBasicFields(oneBasic, oneAveBasic)
        dtlto2 = .5 * dtlt
        ind = 0
        do j = 1,myp
           do i = 1,mxp
              do k = 1,mzp
                 ind = ind + 1
-                scratch%vt3da(ind) = (basic_g(ngrid)%up(k,i,j)  &
-                     + basic_g(ngrid)%uc(k,i,j)) * dtlto2
-                scratch%vt3db(ind) = (basic_g(ngrid)%vp(k,i,j)  &
-                     + basic_g(ngrid)%vc(k,i,j)) * dtlto2
-                scratch%vt3dc(ind) = (basic_g(ngrid)%wp(k,i,j)  &
-                     + basic_g(ngrid)%wc(k,i,j)) * dtlto2
+                scratch%vt3da(ind) = (oneBasic%up(k,i,j)  &
+                     + oneBasic%uc(k,i,j)) * dtlto2
+                scratch%vt3db(ind) = (oneBasic%vp(k,i,j)  &
+                     + oneBasic%vc(k,i,j)) * dtlto2
+                scratch%vt3dc(ind) = (oneBasic%wp(k,i,j)  &
+                     + oneBasic%wc(k,i,j)) * dtlto2
              enddo
           enddo
        enddo
+       call DeepCopyFromBasicFields(oneBasic, oneAveBasic)
 
        if (if_adap == 0) then
 
@@ -190,17 +201,19 @@ contains
 
        else
 
+          call DeepCopyToBasicFields(oneBasic, oneAveBasic)
           call fa_preptc_adap(mzp,mxp,myp                               &
                ,scratch%vt3da            ,scratch%vt3db             &
                ,scratch%vt3dc            ,scratch%vt3dd             &
                ,scratch%vt3de            ,scratch%vt3df             &
-               ,scratch%vt3dh            ,basic_g(ngrid)%dn0    &
-               ,basic_g(ngrid)%dn0u ,basic_g(ngrid)%dn0v   &
+               ,scratch%vt3dh            ,oneBasic%dn0    &
+               ,oneBasic%dn0u ,oneBasic%dn0v   &
                ,grid_g(ngrid)%aru   ,grid_g(ngrid)%arv     &
                ,grid_g(ngrid)%arw   ,grid_g(ngrid)%volt    &
                ,grid_g(ngrid)%dxu   ,grid_g(ngrid)%dyv     &
                ,grid_g(ngrid)%dxt   ,grid_g(ngrid)%dyt     &
                ,zt,zm,dzm,vctr1,vctr2,jdim,mynum                          )
+          call DeepCopyFromBasicFields(oneBasic, oneAveBasic)
 
        endif
 
@@ -224,20 +237,22 @@ contains
           if(ccatt == 1 .and. aerosol == 1) then
              if( n >= num_scalar_aer_1st ) then 
                 if (if_adap == 0) then
+                   call DeepCopyToBasicFields(oneBasic, oneAveBasic)
                    call fa_preptc_with_sedim(mzp,mxp,myp    &
                         ,scratch%vt3da             ,scratch%vt3db      &
                         ,scratch%vt3dc              ,scratch%vt3df &
                         ,scratch%vt3dk      &
-                        ,basic_g(ngrid)%dn0        ,grid_g(ngrid)%rtgt       &
+                        ,oneBasic%dn0        ,grid_g(ngrid)%rtgt       &
                         ,grid_g(ngrid)%f13t        ,grid_g(ngrid)%f23t       &
                                 !srf- aerosol section 
                         ,dtlt      &
                         ,N    & ! current scalar being transported
                         ,num_scalar_aer_1st    & ! 1st aerosol at scalar table
-                        ,basic_g(ngrid)%wp         & ! air vertical velocity (P time)
-                        ,basic_g(ngrid)%wc         & ! air vertical velocity (C time)
+                        ,oneBasic%wp         & ! air vertical velocity (P time)
+                        ,oneBasic%wc         & ! air vertical velocity (C time)
                         ,scratch%vt3dp             & ! ) ! to save horizontal contribution on the sigmaz velocity
                         ,nzpmax,hw4,dzm,dzt,dd_sedim(:,ngrid))   ! (DMK) deposicao seca (cod. limpo)
+                   call DeepCopyFromBasicFields(oneBasic, oneAveBasic)
                 else
                    print*,'sedim not yet prepared for shaved eta'
                    stop 3333

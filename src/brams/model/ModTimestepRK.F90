@@ -710,7 +710,7 @@ contains
             i0,j0,nodemxp,nodemyp,nodemzp,mynum)
     ELSEIF(advmnt == 0) THEN
        !- using the 2nd order forward upstream
-       CALL advectc(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
+       CALL advectc(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, oneGrid%AveBasic, &
             'SCALAR',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
     ELSEIF(advmnt == 3) THEN
        !- using the WS advection
