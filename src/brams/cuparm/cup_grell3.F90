@@ -2160,7 +2160,13 @@ subroutine prepare_lsf(nnqparm,nnshcu,iwork)
        zt, zm, dzm, dzt, hw4,itopo
   use mem_basic, only: basic_g
   use mem_scratch, only : vctr1,vctr2
-
+  use ModRadvc, only: &
+       advtndc, &
+       fa_preptc, &
+       fa_xc, &
+       fa_yc, &
+       fa_zc
+  
   implicit none
   include "constants.h"
   character(len=3) :: forcing

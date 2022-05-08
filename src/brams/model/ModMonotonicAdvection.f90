@@ -28,6 +28,10 @@ module ModMonotonicAdvection
   use ModNamelistFile, only: &
        NamelistFile
 
+  use ModBasicFields, only: &
+       DeepCopyToBasicFields, &
+       DeepCopyFromBasicFields
+
   use mem_grid, only:        &
        dtlt,   & !intent(in)
        time,   &
@@ -38,9 +42,6 @@ module ModMonotonicAdvection
        hw4   , & !intent(in)
        if_adap,& !intent(in)
        dyncore_flag  !intent(in)
-
-  use mem_basic, only: &
-       basic_g  !intent(in)
 
   use micphys, only: &
        level !intent(in)
@@ -482,6 +483,9 @@ contains
        call fatal_error(h//' ADV MNT called with mynum = 0, try np = 2')
     end if
 
+
+    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+
     ! dimension of external fields (regular ghost zone width)
 
     mzp=oneGrid%NodeDims%mzp
@@ -542,7 +546,7 @@ contains
             mxpAdvMnt, mypAdvMnt, &
             iOffset, i1ExternAtAdvMnt, iMxpExternAtAdvMnt,  &
             jOffset, j1ExternAtAdvMnt, jMypExternAtAdvMnt,  &
-            basic_g(ng)%dn0, basic_g(ng)%dn0u, basic_g(ng)%dn0v, &
+            oneGrid%Basic%dn0, oneGrid%Basic%dn0u, oneGrid%Basic%dn0v, &
             oneAdvMnt%dd0_3d, oneAdvMnt%dd0_3du, &
             oneAdvMnt%dd0_3dv, oneAdvMnt%dd0_3dw)
     end if
@@ -596,11 +600,11 @@ contains
             iOffset, i1ExternAtAdvMnt,  iMxpExternAtAdvMnt,  &
             jOffset, j1ExternAtAdvMnt,  jMypExternAtAdvMnt,  &
             level,&
-            basic_g(ng)%rtp, &
-            basic_g(ng)%rv, &
-            basic_g(ng)%pp, &
-            basic_g(ng)%pi0, &
-            basic_g(ng)%theta, &
+            oneGrid%Basic%rtp, &
+            oneGrid%Basic%rv, &
+            oneGrid%Basic%pp, &
+            oneGrid%Basic%pi0, &
+            oneGrid%Basic%theta, &
             oneAdvMnt%dd0_3d, &
             oneAdvMnt%dd0_3du, &
             oneAdvMnt%dd0_3dv, &
@@ -619,9 +623,9 @@ contains
          iOffset, i1ExternAtAdvMnt,  iMxpExternAtAdvMnt,  &
          jOffset, j1ExternAtAdvMnt,  jMypExternAtAdvMnt,  &
          dtlt, &
-         basic_g(ng)%uc, basic_g(ng)%up, &
-         basic_g(ng)%vc, basic_g(ng)%vp, &
-         basic_g(ng)%wc, basic_g(ng)%wp, &
+         oneGrid%Basic%uc, oneGrid%Basic%up, &
+         oneGrid%Basic%vc, oneGrid%Basic%vp, &
+         oneGrid%Basic%wc, oneGrid%Basic%wp, &
          grid_g(ng)%fmapui, grid_g(ng)%fmapvi, &
          grid_g(ng)%rtgt, grid_g(ng)%rtgu, grid_g(ng)%rtgv, &
          grid_g(ng)%f13t, grid_g(ng)%f23t, &
@@ -774,6 +778,8 @@ contains
     ! destroy local memory area for large GhostZoneWidth variables
 
     call DestroyMonotonicAdvection(oneAdvMnt)
+
+    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
     if (dumpLocal) then
        call MsgDump(h//" finishes")

@@ -131,6 +131,12 @@ subroutine exthvadv(m1,m2,m3,ia,iz,ja,jz,izu,jzv,jdim,mynum,edt,up,uc,vp,vc,wp,w
   use mem_scratch , only : scratch & ! intent(in)
        , vctr1   & ! intent(in)
        , vctr2   ! ! intent(in)
+  use ModRadvc, only:&
+       advtndc, &
+       fa_preptc, &
+       fa_xc, &
+       fa_yc, &
+       fa_zc
   implicit none
   !----- Arguments -----------------------------------------------------------------------!
   integer                      , intent(in)   :: m1,m2,m3,ia,iz,ja,jz,izu,jzv,jdim,mynum
