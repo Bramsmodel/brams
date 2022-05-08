@@ -38,9 +38,6 @@ module ModRadvc
        time, &
        dyncore_flag
 
-  use mem_basic, only: &
-       basic_g
-
   use mem_scratch, only: &
        scratch, &
        vctr1, &

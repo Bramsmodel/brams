@@ -869,7 +869,7 @@ mod_GhostBlock.o : $(MODEL)/mod_GhostBlock.f90 mod_GhostBlockPartition.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModRadvc.o : $(MODEL)/ModRadvc.f90  mem_basic.o mem_grid.o mem_scratch.o \
+ModRadvc.o : $(MODEL)/ModRadvc.f90  mem_grid.o mem_scratch.o \
 	chem_dry_dep.o ModMonotonicAdvection.o ModParallelEnvironment.o \
 	mem_tend.o grid_dims.o ModScalarTable.o ModBasicFields.o 
 	@cp -f $< $(<F:.f90=.f90)
