@@ -132,7 +132,8 @@ contains
                   ,tend%ut                    &
                   ,tend%vt                   ,tend%wt                    &
                   ,scratch%vt3da              &
-                  ,scratch%vt3db             ,scratch%vt3dc        )
+                  ,scratch%vt3db             ,scratch%vt3dc, &
+                  oneBasic)
 
           else if (dyncore_flag == 2) then 
              !MB: this branch must probably be transferred also to the other if-statements in this subroutine!
@@ -141,7 +142,8 @@ contains
                   ,tend%ut_rk                 &
                   ,tend%vt_rk                ,tend%wt_rk                 &
                   ,scratch%vt3da              &
-                  ,scratch%vt3db             ,scratch%vt3dc        )
+                  ,scratch%vt3db             ,scratch%vt3dc, &
+                  oneBasic)
           end if
 
        else
@@ -333,7 +335,7 @@ contains
 
 
   subroutine vel_advectc(m1,m2,m3,ia,iz,ja,jz,izu,jzv  &
-       ,ut,vt,wt,flxu,flxv,flxw)
+       ,ut,vt,wt,flxu,flxv,flxw, oneBasic)
     !> @brief: vel_advectc
     !! @date:  18/Nov/2015
     !! @version:  5.2
@@ -344,6 +346,7 @@ contains
 
     integer,intent(in) :: m1,m2,m3,ia,iz,ja,jz,izu,jzv
     real, dimension(m1,m2,m3) :: ut,vt,wt,flxu,flxv,flxw
+    type(BasicFields), pointer, intent(in) :: oneBasic
 
 
     integer :: j,i,k,jm,im
@@ -354,9 +357,9 @@ contains
     do j = 1,m3
        do i = 1,m2
           do k = 1,m1
-             flxu(k,i,j) = basic_g(ngrid)%uc(k,i,j) * basic_g(ngrid)%dn0u(k,i,j) * grid_g(ngrid)%rtgu(i,j)  &
+             flxu(k,i,j) = oneBasic%uc(k,i,j) * oneBasic%dn0u(k,i,j) * grid_g(ngrid)%rtgu(i,j)  &
                   * grid_g(ngrid)%fmapui(i,j)
-             flxv(k,i,j) = basic_g(ngrid)%vc(k,i,j) * basic_g(ngrid)%dn0v(k,i,j) * grid_g(ngrid)%rtgv(i,j)  &
+             flxv(k,i,j) = oneBasic%vc(k,i,j) * oneBasic%dn0v(k,i,j) * grid_g(ngrid)%rtgv(i,j)  &
                   * grid_g(ngrid)%fmapvi(i,j)
           enddo
        enddo
@@ -366,8 +369,8 @@ contains
        do j = 1,m3
           do i = 1,m2
              do k = 1,m1-1
-                flxw(k,i,j) = basic_g(ngrid)%wc(k,i,j)  &
-                     * .5 * (basic_g(ngrid)%dn0(k,i,j) + basic_g(ngrid)%dn0(k+1,i,j))
+                flxw(k,i,j) = oneBasic%wc(k,i,j)  &
+                     * .5 * (oneBasic%dn0(k,i,j) + oneBasic%dn0(k+1,i,j))
              enddo
           enddo
        enddo
@@ -377,8 +380,8 @@ contains
           do i = 1,m2
              im = max(i-1,1)
              do k = 1,m1-1
-                flxw(k,i,j) = basic_g(ngrid)%wc(k,i,j)  &
-                     * .5 * (basic_g(ngrid)%dn0(k,i,j) + basic_g(ngrid)%dn0(k+1,i,j))  &
+                flxw(k,i,j) = oneBasic%wc(k,i,j)  &
+                     * .5 * (oneBasic%dn0(k,i,j) + oneBasic%dn0(k+1,i,j))  &
                      + hw4(k) * ((flxu(k,i,j) + flxu(k+1,i,j)  &
                      + flxu(k,im,j) + flxu(k+1,im,j)) * grid_g(ngrid)%f13t(i,j)  &
                      + (flxv(k,i,j) + flxv(k+1,i,j)  &
@@ -397,32 +400,32 @@ contains
           c1y = c1z * grid_g(ngrid)%fmapu(i,j) * grid_g(ngrid)%dyu(i,j)
 
           do k = 2,m1-1
-             ut(k,i,j) = ut(k,i,j) + c1x / basic_g(ngrid)%dn0u(k,i,j) * (  &
+             ut(k,i,j) = ut(k,i,j) + c1x / oneBasic%dn0u(k,i,j) * (  &
                   (flxu(k,i,j) + flxu(k,i-1,j))  &
-                  * (basic_g(ngrid)%uc(k,i,j) + basic_g(ngrid)%uc(k,i-1,j))  &
+                  * (oneBasic%uc(k,i,j) + oneBasic%uc(k,i-1,j))  &
                   - (flxu(k,i,j) + flxu(k,i+1,j))  &
-                  * (basic_g(ngrid)%uc(k,i,j) + basic_g(ngrid)%uc(k,i+1,j))  &
-                  + (flxu(k,i+1,j) - flxu(k,i-1,j)) * 2.* basic_g(ngrid)%uc(k,i,j) )
+                  * (oneBasic%uc(k,i,j) + oneBasic%uc(k,i+1,j))  &
+                  + (flxu(k,i+1,j) - flxu(k,i-1,j)) * 2.* oneBasic%uc(k,i,j) )
           enddo
 
           do k = 2,m1-1
-             ut(k,i,j) = ut(k,i,j) + c1y / basic_g(ngrid)%dn0u(k,i,j) * (  &
+             ut(k,i,j) = ut(k,i,j) + c1y / oneBasic%dn0u(k,i,j) * (  &
                   (flxv(k,i,j-jdim) + flxv(k,i+1,j-jdim))  &
-                  * (basic_g(ngrid)%uc(k,i,j) + basic_g(ngrid)%uc(k,i,j-jdim))  &
+                  * (oneBasic%uc(k,i,j) + oneBasic%uc(k,i,j-jdim))  &
                   - (flxv(k,i,j) + flxv(k,i+1,j))  &
-                  * (basic_g(ngrid)%uc(k,i,j) + basic_g(ngrid)%uc(k,i,j+jdim))&
+                  * (oneBasic%uc(k,i,j) + oneBasic%uc(k,i,j+jdim))&
                   + (flxv(k,i,j) + flxv(k,i+1,j) - flxv(k,i,j-jdim)  &
-                  - flxv(k,i+1,j-jdim)) * 2.* basic_g(ngrid)%uc(k,i,j) )
+                  - flxv(k,i+1,j-jdim)) * 2.* oneBasic%uc(k,i,j) )
           enddo
 
           do k = 2,m1-1
-             ut(k,i,j) = ut(k,i,j) + c1z * dzt(k) / basic_g(ngrid)%dn0u(k,i,j) * (  &
+             ut(k,i,j) = ut(k,i,j) + c1z * dzt(k) / oneBasic%dn0u(k,i,j) * (  &
                   (flxw(k-1,i,j) + flxw(k-1,i+1,j))  &
-                  * (basic_g(ngrid)%uc(k,i,j) + basic_g(ngrid)%uc(k-1,i,j))  &
+                  * (oneBasic%uc(k,i,j) + oneBasic%uc(k-1,i,j))  &
                   - (flxw(k,i,j) + flxw(k,i+1,j))  &
-                  * (basic_g(ngrid)%uc(k,i,j) + basic_g(ngrid)%uc(k+1,i,j))   &
+                  * (oneBasic%uc(k,i,j) + oneBasic%uc(k+1,i,j))   &
                   + (flxw(k,i,j) + flxw(k,i+1,j) - flxw(k-1,i,j)  &
-                  - flxw(k-1,i+1,j)) * 2.* basic_g(ngrid)%uc(k,i,j) )
+                  - flxw(k-1,i+1,j)) * 2.* oneBasic%uc(k,i,j) )
           enddo
        enddo
     enddo
@@ -436,33 +439,33 @@ contains
           c1y = c1z * grid_g(ngrid)%fmapv(i,j) * grid_g(ngrid)%dyv(i,j)
 
           do k = 2,m1-1
-             vt(k,i,j) = vt(k,i,j) + c1x / basic_g(ngrid)%dn0v(k,i,j) * (  &
+             vt(k,i,j) = vt(k,i,j) + c1x / oneBasic%dn0v(k,i,j) * (  &
                   (flxu(k,i-1,j) + flxu(k,i-1,j+jdim))  &
-                  * (basic_g(ngrid)%vc(k,i,j) + basic_g(ngrid)%vc(k,i-1,j))  &
+                  * (oneBasic%vc(k,i,j) + oneBasic%vc(k,i-1,j))  &
                   - (flxu(k,i,j) + flxu(k,i,j+jdim))  &
-                  * (basic_g(ngrid)%vc(k,i,j) + basic_g(ngrid)%vc(k,i+1,j))  &
+                  * (oneBasic%vc(k,i,j) + oneBasic%vc(k,i+1,j))  &
                   + (flxu(k,i,j) + flxu(k,i,j+jdim) - flxu(k,i-1,j)  &
-                  - flxu(k,i-1,j+jdim)) * 2.* basic_g(ngrid)%vc(k,i,j) )
+                  - flxu(k,i-1,j+jdim)) * 2.* oneBasic%vc(k,i,j) )
           enddo
 
           do k = 2,m1-1
-             vt(k,i,j) = vt(k,i,j) + c1y / basic_g(ngrid)%dn0v(k,i,j) * (  &
+             vt(k,i,j) = vt(k,i,j) + c1y / oneBasic%dn0v(k,i,j) * (  &
                   (flxv(k,i,j) + flxv(k,i,j-jdim))  &
-                  * (basic_g(ngrid)%vc(k,i,j) + basic_g(ngrid)%vc(k,i,j-jdim))  &
+                  * (oneBasic%vc(k,i,j) + oneBasic%vc(k,i,j-jdim))  &
                   - (flxv(k,i,j) + flxv(k,i,j+jdim))  &
-                  * (basic_g(ngrid)%vc(k,i,j) + basic_g(ngrid)%vc(k,i,j+jdim))  &
+                  * (oneBasic%vc(k,i,j) + oneBasic%vc(k,i,j+jdim))  &
                   + (flxv(k,i,j+jdim) - flxv(k,i,j-jdim))  &
-                  * 2.* basic_g(ngrid)%vc(k,i,j) )
+                  * 2.* oneBasic%vc(k,i,j) )
           enddo
 
           do k = 2,m1-1
-             vt(k,i,j) = vt(k,i,j) + c1z * dzt(k) / basic_g(ngrid)%dn0v(k,i,j) * (  &
+             vt(k,i,j) = vt(k,i,j) + c1z * dzt(k) / oneBasic%dn0v(k,i,j) * (  &
                   (flxw(k-1,i,j) + flxw(k-1,i,j+jdim))  &
-                  * (basic_g(ngrid)%vc(k,i,j) + basic_g(ngrid)%vc(k-1,i,j))  &
+                  * (oneBasic%vc(k,i,j) + oneBasic%vc(k-1,i,j))  &
                   - (flxw(k,i,j) + flxw(k,i,j+jdim))  &
-                  * (basic_g(ngrid)%vc(k,i,j) + basic_g(ngrid)%vc(k+1,i,j))  &
+                  * (oneBasic%vc(k,i,j) + oneBasic%vc(k+1,i,j))  &
                   + (flxw(k,i,j) + flxw(k,i,j+jdim) - flxw(k-1,i,j)  &
-                  - flxw(k-1,i,j+jdim)) * 2.* basic_g(ngrid)%vc(k,i,j) )
+                  - flxw(k-1,i,j+jdim)) * 2.* oneBasic%vc(k,i,j) )
           enddo
        enddo
     enddo
@@ -476,34 +479,34 @@ contains
 
           do k = 2,m1-2
              wt(k,i,j) = wt(k,i,j)  &
-                  + c1x / (basic_g(ngrid)%dn0(k,i,j) + basic_g(ngrid)%dn0(k+1,i,j)) * (  &
+                  + c1x / (oneBasic%dn0(k,i,j) + oneBasic%dn0(k+1,i,j)) * (  &
                   (flxu(k,i-1,j) + flxu(k+1,i-1,j))  &
-                  * (basic_g(ngrid)%wc(k,i,j) + basic_g(ngrid)%wc(k,i-1,j))  &
+                  * (oneBasic%wc(k,i,j) + oneBasic%wc(k,i-1,j))  &
                   - (flxu(k,i,j) + flxu(k+1,i,j))  &
-                  * (basic_g(ngrid)%wc(k,i,j) + basic_g(ngrid)%wc(k,i+1,j))  &
+                  * (oneBasic%wc(k,i,j) + oneBasic%wc(k,i+1,j))  &
                   + (flxu(k,i,j) + flxu(k+1,i,j) - flxu(k,i-1,j)  &
-                  - flxu(k+1,i-1,j)) * 2.* basic_g(ngrid)%wc(k,i,j) )
+                  - flxu(k+1,i-1,j)) * 2.* oneBasic%wc(k,i,j) )
           enddo
 
           do k = 2,m1-2
              wt(k,i,j) = wt(k,i,j)  &
-                  + c1y / (basic_g(ngrid)%dn0(k,i,j) + basic_g(ngrid)%dn0(k+1,i,j)) * (  &
+                  + c1y / (oneBasic%dn0(k,i,j) + oneBasic%dn0(k+1,i,j)) * (  &
                   (flxv(k,i,j-jdim) + flxv(k+1,i,j-jdim))  &
-                  * (basic_g(ngrid)%wc(k,i,j) + basic_g(ngrid)%wc(k,i,j-jdim))  &
+                  * (oneBasic%wc(k,i,j) + oneBasic%wc(k,i,j-jdim))  &
                   - (flxv(k,i,j) + flxv(k+1,i,j))  &
-                  * (basic_g(ngrid)%wc(k,i,j) + basic_g(ngrid)%wc(k,i,j+jdim))  &
+                  * (oneBasic%wc(k,i,j) + oneBasic%wc(k,i,j+jdim))  &
                   + (flxv(k,i,j) + flxv(k+1,i,j) - flxv(k,i,j-jdim)  &
-                  - flxv(k+1,i,j-jdim)) * 2.* basic_g(ngrid)%wc(k,i,j) )
+                  - flxv(k+1,i,j-jdim)) * 2.* oneBasic%wc(k,i,j) )
           enddo
 
           do k = 2,m1-2
              wt(k,i,j) = wt(k,i,j)  &
-                  + c1z * dzm(k) / (basic_g(ngrid)%dn0(k,i,j) + basic_g(ngrid)%dn0(k+1,i,j)) * (  &
+                  + c1z * dzm(k) / (oneBasic%dn0(k,i,j) + oneBasic%dn0(k+1,i,j)) * (  &
                   (flxw(k,i,j) + flxw(k-1,i,j))  &
-                  * (basic_g(ngrid)%wc(k,i,j) + basic_g(ngrid)%wc(k-1,i,j))  &
+                  * (oneBasic%wc(k,i,j) + oneBasic%wc(k-1,i,j))  &
                   - (flxw(k,i,j) + flxw(k+1,i,j))  &
-                  * (basic_g(ngrid)%wc(k,i,j) + basic_g(ngrid)%wc(k+1,i,j))   &
-                  + (flxw(k+1,i,j) - flxw(k-1,i,j)) * 2.* basic_g(ngrid)%wc(k,i,j) )
+                  * (oneBasic%wc(k,i,j) + oneBasic%wc(k+1,i,j))   &
+                  + (flxw(k+1,i,j) - flxw(k-1,i,j)) * 2.* oneBasic%wc(k,i,j) )
           enddo
        enddo
     enddo
