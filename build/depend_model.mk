@@ -557,7 +557,7 @@ ModTimestep.o : $(MODEL)/ModTimestep.F90 mem_basic.o mem_cuparm.o optical.o \
 	raco.o module_rams_microphysics_2M.o mic_thompson_driver.o module_wind_farm.o \
         seasalt.o MatrixDriver.o rtm_driver.o ModRadvcRK.o $(JULES_OBJ_SFCLYR) \
 	ModMessageSet.o modIau.o  ModRbnd.o ModRadvc.o ModTurbK.o ModDiffuse.o \
-	ModRexev.o $(UTILS_INCS)/tsNames.h
+	ModRexev.o ModRThrm.o $(UTILS_INCS)/tsNames.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -567,10 +567,10 @@ ModTimestepRK.o : $(MODEL)/ModTimestepRK.F90 ModTimestep.o mem_basic.o mem_cupar
 	mem_turb.o mem_varinit.o micphys.o node_mod.o shcu_vars_const.o \
 	machine_arq.o rad_driv.o cup_grell3.o digitalFilter.o\
 	ChemSourcesDriver.o ChemDryDepDriver.o chemistry.o ModTimeStamp.o ModGrid.o \
-	raco.o rthrm.o module_rams_microphysics_2M.o mic_thompson_driver.o\
+	raco.o ModRThrm.o module_rams_microphysics_2M.o mic_thompson_driver.o\
         seasalt.o MatrixDriver.o rtm_driver.o ModRadvcRK.o modIau.o leaf3_ocean_only.o ModRbnd.o \
 	$(JULES_OBJ_SFCLYR)  ModRadvc.o ModMonotonicAdvection.o utilsMod.o ModRtimi.o \
-	ModMessageSet.o ModTurbK.o ModDiffuse.o ModRexev.o \
+	ModMessageSet.o ModTurbK.o ModDiffuse.o ModRexev.o ModRThrm.o \
 	$(UTILS_INCS)/tsNames.h  $(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
@@ -584,7 +584,7 @@ ModOneProc.o : $(MODEL)/ModOneProc.F90 ModNamelistFile.o \
 	mem_scalar.o memSoilMoisture.o mem_teb.o mem_teb_common.o micphys.o \
 	ModMonotonicAdvection.o shcu_vars_const.o \
 	soilMoisture.o teb_spm_start.o mem_teb_vars_const.o var_tables.o \
-	mem_varinit.o ModParaInit.o \
+	mem_varinit.o ModParaInit.o ModRanlavg.o \
 	grid_dims.o local_proc.o ModTimeStamp.o \
 	node_mod.o mem_radiate.o \
 	mem_scratch.o cup_grell3.o digitalFilter.o \
@@ -595,7 +595,7 @@ ModOneProc.o : $(MODEL)/ModOneProc.F90 ModNamelistFile.o \
 	tuvParameter.o ModTuv2.7.o ModTuvDriver2.7.o ModGridTree.o \
 	ModGrid.o ModTimestep.o ModTimestepRK.o meteogram.o \
 	module_rams_microphysics_2M.o dam.o mod_aer.o \
-	initMicThompson.o modIau.o ModMemAlloc.o \
+	initMicThompson.o modIau.o ModMemAlloc.o ModRThrm.o \
 	$(UTILS_INCS)/tsNames.h  $(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
@@ -884,8 +884,8 @@ ModRadvcRK.o : $(MODEL)/ModRadvcRK.f90 grid_dims.o mem_tend.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ranlavg.o : $(IO)/ranlavg.f90  io_params.o mem_grid.o \
-	grid_dims.o var_tables.o
+ModRanlavg.o : $(IO)/ModRanlavg.f90  io_params.o mem_grid.o \
+	grid_dims.o var_tables.o ModRThrm.o ModBasicFields.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1321,8 +1321,8 @@ recycle.o : $(IO)/recycle.f90  io_params.o mem_grid.o mem_leaf.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rthrm.o : $(MODEL)/rthrm.f90  mem_basic.o mem_grid.o mem_micro.o \
-	mem_scratch.o micphys.o rconstants.o  mem_basic.o \
+ModRThrm.o : $(MODEL)/ModRThrm.f90  mem_grid.o mem_micro.o \
+	mem_scratch.o micphys.o rconstants.o  ModBasicFields.o \
 	mem_cuparm.o mem_grid.o mem_leaf.o mem_oda.o mem_radiate.o \
 	mem_scalar.o mem_turb.o mem_varinit.o micphys.o node_mod.o \
 	rconstants.o shcu_vars_const.o

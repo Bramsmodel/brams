@@ -10,6 +10,11 @@
 
 module ModTimestepRK
 
+  use ModRThrm, only: &
+       thermo, &
+       thermo_boundary_driver, &
+       theta_thp_rk
+  
   use ModRexev, only: &
        exevolve, &
        get_true_air_density
@@ -347,7 +352,7 @@ contains
     !  Thermodynamic diagnosis
     !--------------------------------
     if (mcphys_type <= 1 .and. level/=3) then
-       call THERMO(mzp,mxp,myp,ia,iz,ja,jz,'SUPSAT'); !if(stepDebug) print *,mynum,THERMO'
+       call thermo(mzp, mxp, myp, ia, iz, ja, jz, oneGrid%Basic, oneGrid%AveBasic)
     endif
 
     ! evolution of the Exner pressure: compression term
@@ -692,7 +697,8 @@ contains
             ,tend%tht_rk)
 
        !- determine theta (dry potential temp.) for the buoyancy term:
-       call theta_thp_rk(mzp,mxp,myp,ia,iz,ja,jz,"get_theta")
+       call theta_thp_rk(mzp,mxp,myp,ia,iz,ja,jz,"get_theta", &
+            oneGrid%Basic, oneGrid%AveBasic)
 
        !-damping on vertical velocity to keep stability
        !MB: does this act on wc???
@@ -792,7 +798,7 @@ contains
 
     !- Thermodynamic diagnosis
     if (mcphys_type <= 1 .and. level==3)  then
-       call THERMO(mzp,mxp,myp,1,mxp,1,myp,'MICRO')
+       call thermo(mzp, mxp, myp, 1, mxp, 1, myp, oneGrid%Basic, oneGrid%AveBasic)
     endif
 
     !  Apply scalar b.c.'s (THP is changed here)
@@ -819,8 +825,9 @@ contains
 
     !- call THERMO on the boundaries
     call thermo_boundary_driver((time+dtlongn(ngrid)), dtlong, &
-         f_thermo_e, f_thermo_w, f_thermo_s, f_thermo_n, &
-         nzp, mxp, myp, jdim)
+         f_thermo_e(ngrid), f_thermo_w(ngrid), &
+         f_thermo_s(ngrid), f_thermo_n(ngrid), &
+         nzp, mxp, myp, jdim, oneGrid%Basic, oneGrid%AveBasic)
 
     if (iexev == 2) then
        call get_true_air_density(mzp,mxp,myp,ia,iz,ja,jz)

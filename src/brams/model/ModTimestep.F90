@@ -10,6 +10,10 @@ module ModTimestep
 contains
   subroutine timestep(oneGrid)
 
+    use ModRThrm, only: &
+         thermo, &
+         thermo_boundary_driver
+    
     use ModRexev, only: &
          exevolve, &
          get_true_air_density
@@ -251,7 +255,7 @@ contains
     !  Thermodynamic diagnosis
     !--------------------------------
     if (mcphys_type <= 1 .and. level/=3) then
-       call THERMO(mzp,mxp,myp,ia,iz,ja,jz,'SUPSAT')
+       call thermo(mzp, mxp, myp, ia, iz, ja, jz, oneGrid%Basic, oneGrid%AveBasic)
     endif
 
     if (iexev == 2) then
@@ -540,7 +544,7 @@ contains
     !  Thermodynamic diagnosis
     !----------------------------------------
     if (mcphys_type <= 1 .and. level==3)  then
-       call THERMO(mzp,mxp,myp,1,mxp,1,myp,'MICRO')
+       call thermo(mzp,mxp,myp,1,mxp,1,myp, oneGrid%Basic, oneGrid%AveBasic)
     endif
 
     if (iexev == 2) then
@@ -627,10 +631,11 @@ contains
        call get_true_air_density(mzp,mxp,myp,ia,iz,ja,jz)
     end if
 
-    ! Call THERMO on the boundaries
+    ! Call thermo on the boundaries
     call thermo_boundary_driver((time+dtlongn(ngrid)), dtlong, &
-         f_thermo_e, f_thermo_w, f_thermo_s, f_thermo_n, &
-         nzp, mxp, myp, jdim)
+         f_thermo_e(ngrid), f_thermo_w(ngrid), &
+         f_thermo_s(ngrid), f_thermo_n(ngrid), &
+         nzp, mxp, myp, jdim, oneGrid%Basic, oneGrid%AveBasic)
 
     !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
     !  call SynchronizedTimeStamp(TS_DYNAMICS)

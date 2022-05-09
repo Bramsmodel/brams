@@ -162,7 +162,7 @@ OBJ_MOD = \
 	ModOneProc.o \
 	ModMemAlloc.o   \
 	rams_read_header.o \
-	ranlavg.o \
+	ModRanlavg.o \
 	ModRbnd.o \
 	rcio.o \
 	rconstants.o \
@@ -182,7 +182,7 @@ OBJ_MOD = \
 	rnest_par.o \
 	rnode.o \
 	rshcupar.o \
-	rthrm.o \
+	ModRThrm.o \
 	ModTimestep.o \
 	ModTimestepRK.o \
 	ModRtimi.o \

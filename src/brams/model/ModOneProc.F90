@@ -34,6 +34,12 @@ module ModOneProc
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModRanlavg, only: &
+       anlavg
+  
+  use ModRThrm, only: &
+       thermo
+  
   use ModMemAlloc, only: &
        MemAlloc
   
@@ -1254,7 +1260,7 @@ contains
           do ngrid=1,ngrids
              call newgrid(ngrid)
              if ((avgtim/=0.) .and. (frqmean/=0. .or. frqboth/=0.))  &
-                  call anlavg(mzp,mxp,myp,nzg)
+                  call anlavg(mzp, mxp, myp, oneGrid%Basic, oneGrid%AveBasic)
              call cfl(mzp, mxp, myp, nodei0(mynum,ngrid), nodej0(mynum,ngrid))
           end do
 
@@ -1499,6 +1505,8 @@ contains
     logical :: histFlag, instFlag, meanFlag, liteFlag
     !- for changing initial soil moisture
     LOGICAL, PARAMETER ::  change_soilm=.true.
+    type(GridTree), pointer :: oneGridTreeNode => null()
+    type(Grid), pointer :: oneGrid => null()
 
 
 
@@ -1612,6 +1620,9 @@ contains
        !     Initialize past time level velocity and perturbation Exner function
        !     on all grids.
 
+       oneGridTreeNode => GridTreeRoot(AllGrids)
+       oneGrid => oneGridTreeNode%curr
+       
        do ifm=1,ngrids
           call newgrid(ifm)
 
@@ -1619,7 +1630,7 @@ contains
 
           call negadj1(mzp,mxp,myp)
 
-          call thermo(mzp,mxp,myp,1,mxp,1,myp,'THRM_ONLY')
+          call thermo(mzp, mxp, myp, 1, mxp, 1, myp, oneGrid%Basic, oneGrid%AveBasic)
 
           if(ilwrtyp==6 .or. iswrtyp==6 ) THEN
              if (level  ==  3) &
