@@ -579,7 +579,7 @@ ModTimestepRK.o : $(MODEL)/ModTimestepRK.F90 ModTimestep.o mem_basic.o mem_cupar
 ModOneProc.o : $(MODEL)/ModOneProc.F90 ModNamelistFile.o \
 	ModDomainDecomp.o io_params.o machine_arq.o \
 	ModPostProcess.o mem_cuparm.o mem_grid.o mem_leaf.o mem_oda.o \
-	ccatt_start.o domain_decomp.o isan_coms.o mem_basic.o mem_emiss.o \
+	ccatt_start.o domain_decomp.o isan_coms.o ModBasicFields.o mem_emiss.o \
 	mem_gaspart.o mem_globrad.o mem_grell_param2.o mem_micro.o \
 	mem_scalar.o memSoilMoisture.o mem_teb.o mem_teb_common.o micphys.o \
 	ModMonotonicAdvection.o shcu_vars_const.o \
