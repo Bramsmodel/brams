@@ -34,6 +34,12 @@ module ModOneProc
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModSched, only: &
+       schedule, &
+       dump_schedule, &
+       cfl, &
+       dump_dtset
+  
   use ModCoriolis, only: &
        fcorio
 
@@ -950,7 +956,9 @@ contains
 
        do ifm=1,ngrids
           call newgrid(ifm)
-          call cfl(mzp, mxp, myp, 0, 0)
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+          call cfl(mzp, mxp, myp, 0, 0, oneGrid%Basic)
+          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        enddo
        call MaxCFLOverall(cflxy, cflz)
 
@@ -963,10 +971,10 @@ contains
        end if
 
 
-       call modsched(isched, maxsched, maxschent, ngrids, nxtnest, &
+       call schedule(isched, maxsched, maxschent, ngrids, nxtnest, &
             nndtrat, nsubs)
        if (mchnum==master_num) then
-          call dump_modsched(isched, maxsched, maxschent, ngrids, &
+          call dump_schedule(isched, maxsched, maxschent, ngrids, &
                nxtnest, nndtrat, nsubs)
           call dump_courn()
        end if
@@ -1203,7 +1211,7 @@ contains
           ! new long deltat required by CFL; re-schedule grids
 
           if (nndtflg>0) then
-             call modsched(isched, maxsched, maxschent, ngrids, nxtnest, &
+             call schedule(isched, maxsched, maxschent, ngrids, nxtnest, &
                   nndtrat, nsubs)
           end if
 
@@ -1276,7 +1284,9 @@ contains
              call newgrid(ngrid)
              if ((avgtim/=0.) .and. (frqmean/=0. .or. frqboth/=0.))  &
                   call anlavg(mzp, mxp, myp, oneGrid%Basic, oneGrid%AveBasic)
-             call cfl(mzp, mxp, myp, nodei0(mynum,ngrid), nodej0(mynum,ngrid))
+             call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+             call cfl(mzp, mxp, myp, nodei0(mynum,ngrid), nodej0(mynum,ngrid), oneGrid%Basic)
+             call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
           end do
 
           ! get max CFL from all processes to probe numerical stability

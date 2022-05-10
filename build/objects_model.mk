@@ -122,7 +122,7 @@ OBJ_MOD = \
 	mksfc_sst.o \
 	mksfc_top.o \
 	ModTimeStamp.o \
-	modsched.o \
+	ModSched.o \
 	local_proc.o \
 	mpass_dtl.o \
 	mpass_full.o      \

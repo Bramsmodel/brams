@@ -576,7 +576,7 @@ ModTimestepRK.o : $(MODEL)/ModTimestepRK.F90 ModTimestep.o ModBasicFields.o mem_
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModOneProc.o : $(MODEL)/ModOneProc.F90 ModNamelistFile.o \
+ModOneProc.o : $(MODEL)/ModOneProc.F90 ModNamelistFile.o ModSched.o \
 	ModCoriolis.o ModDomainDecomp.o io_params.o machine_arq.o \
 	ModPostProcess.o mem_cuparm.o mem_grid.o mem_leaf.o mem_oda.o \
 	ccatt_start.o domain_decomp.o isan_coms.o ModBasicFields.o mem_emiss.o \
@@ -1080,8 +1080,10 @@ module_rams_microphysics_2M.o : $(MICRO)/module_rams_microphysics_2M.f90  mem_ba
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-modsched.o : $(MODEL)/modsched.f90  io_params.o mem_basic.o mem_grid.o \
-	mem_scratch.o rconstants.o ref_sounding.o local_proc.o $(UTILS_INCS)/constants.h
+ModSched.o : $(MODEL)/ModSched.f90  dump.o parlibf.o node_mod.o ReadBcst.o io_params.o \
+	ModBasicFields.o mem_grid.o mem_scratch.o rconstants.o ref_sounding.o local_proc.o \
+	io_params.o mem_radiate.o mem_cuparm.o shcu_vars_const.o local_proc.o isan_coms.o \
+	mem_varinit.o $(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
