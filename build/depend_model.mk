@@ -562,7 +562,7 @@ ModTimestep.o : $(MODEL)/ModTimestep.F90 mem_basic.o mem_cuparm.o optical.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModTimestepRK.o : $(MODEL)/ModTimestepRK.F90 ModTimestep.o mem_basic.o mem_cuparm.o \
+ModTimestepRK.o : $(MODEL)/ModTimestepRK.F90 ModTimestep.o ModBasicFields.o mem_cuparm.o \
 	mem_grid.o mem_leaf.o mem_oda.o mem_radiate.o mem_scalar.o optical.o \
 	mem_turb.o mem_varinit.o micphys.o node_mod.o shcu_vars_const.o \
 	machine_arq.o rad_driv.o cup_grell3.o digitalFilter.o\

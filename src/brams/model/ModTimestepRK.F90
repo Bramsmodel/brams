@@ -10,14 +10,21 @@
 
 module ModTimestepRK
 
+  use ModBasicFields, only: &
+       DeepCopyToBasicFields, &
+       DeepCopyFromBasicFields
+
+  use ModTimestep, only: &
+       w_damping
+
   use ModCoriolis, only: &
        corlos
-    
+
   use ModRThrm, only: &
        thermo, &
        thermo_boundary_driver, &
        theta_thp_rk
-  
+
   use ModRexev, only: &
        exevolve, &
        get_true_air_density
@@ -43,8 +50,6 @@ module ModTimestepRK
        rayft,  &
        trsets
 
-contains
-  subroutine timestep_rk(oneGrid)
 
     use grid_dims, only: &
          nzpmax
@@ -64,9 +69,6 @@ contains
 
     use ModGrid, only: &
          Grid
-
-    use mem_basic, only: &
-         basic_g  ! INTENT(INOUT)
 
     use node_mod, only: &
          mzp, mxp, myp,  & ! INTENT(IN)
@@ -102,6 +104,8 @@ contains
          level          ! INTENT(IN)
 
     use mem_grid, only: &
+         hw4, &
+         itopo, &
          ngrids,     & ! INTENT(IN)
          ngrid,      & ! INTENT(IN)
          npatch,     & ! INTENT(IN)
@@ -266,14 +270,28 @@ contains
     use ModAdvectc_rk, only: &
          advectc_rk
 
-    use mem_scratch, only: scratch    
+    use mem_scratch, only: &
+         scratch    
 
+    use iso_fortran_env, only: &
+         int64
+    
+  implicit none
+
+  private
+  public :: timestep_rk
+  
+contains
+
+
+
+  subroutine timestep_rk(oneGrid)
     implicit none
 
     type(Grid), pointer :: oneGrid
 
     ! execution time instrumentation
-    include "constants.h"
+!    include "constants.h"
     include "tsNames.h"
 
     logical, parameter :: flag_Coriolis_in_every_RK_step = .false.
@@ -318,31 +336,6 @@ contains
     !  Zero out all tendency arrays.
     !--------------------------------
     call tend0(oneGrid%ScalarTab, oneGrid%ScalarTabSize)  
-
-    !------------------TMP 
-    !------------------TMP 
-    !------------------TMP 
-    ! if(applyIAU == 1 ) then
-    !    if(mynum==1) print*,"timeIAU=",time,timeWindowIAU*0.5,abs ( time - dtlt - timeWindowIAU*0.5),applyIAU
-    !    call flush(6)
-    !    
-    !    call CreateIauTendency(ngrid, mzp*mxp*myp, mzp, mxp, myp,ia,iz,ja,jz&
-    !          ,varinit_g(ngrid)%varup(:,:,:),varinit_g(ngrid)%varvp(:,:,:)  &
-    !          ,varinit_g(ngrid)%varpp(:,:,:),varinit_g(ngrid)%vartp(:,:,:)  &
-    !          ,varinit_g(ngrid)%varrp(:,:,:)                                &
-    !  
-    !          ,varinit_g(ngrid)%varuf(:,:,:),varinit_g(ngrid)%varvf(:,:,:)  &
-    !          ,varinit_g(ngrid)%varpf(:,:,:),varinit_g(ngrid)%vartf(:,:,:)  &
-    !          ,varinit_g(ngrid)%varrf(:,:,:)                                &
-    !
-    !          ,basic_g(ngrid)%up     (:,:,:)   ,basic_g(ngrid)%vp  (:,:,:)  &
-    !          ,basic_g(ngrid)%theta  (:,:,:)   ,basic_g(ngrid)%rtp (:,:,:)  &
-    !          ,basic_g(ngrid)%pp     (:,:,:)                                )
-    !  !RETURN
-    !  endif
-    !------------------TMP 
-    !------------------TMP 
-    !------------------TMP 
 
     ! Implements the Incremental Analysis Update procedure -
     ! phase 2: add the IAU tendencies
@@ -412,11 +405,12 @@ contains
        !plume_mean_g(:,:) instead of plume_mean_g(:,ngrid) to avoid memory errors.
        !emiss_cycle(:,:)  instead of emiss_cycle(:,ngrid)  to avoid memory errors.
        !the same for the others var
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call sources_driver(ngrid, mzp,mxp,myp,ia,iz,ja,jz,                          &
             g,cp,cpor,p00,rgas,pi180,                                &
-            radiate_g(ngrid)%cosz,basic_g(ngrid)%theta,              &
-            basic_g(ngrid)%pp,basic_g(ngrid)%pi0,basic_g(ngrid)%rv,  &
-            basic_g(ngrid)%dn0,basic_g(ngrid)%up,basic_g(ngrid)%vp,  &
+            radiate_g(ngrid)%cosz,oneGrid%Basic%theta,              &
+            oneGrid%Basic%pp,oneGrid%Basic%pi0,oneGrid%Basic%rv,  &
+            oneGrid%Basic%dn0,oneGrid%Basic%up,oneGrid%Basic%vp,  &
             time,iyear1,imonth1,idate1,itime1,dtlt,                  &
             grid_g(ngrid)%rtgt,grid_g(ngrid)%lpw,grid_g(ngrid)%glat, &
             grid_g(ngrid)%glon,zt,zm,dzt,nzpmax,                     &
@@ -430,6 +424,7 @@ contains
             emiss_cycle  (:,:),                                  &
             aer2_g       (:,:),                                  &
             plume_fre_g  (:,:)                                   )
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
 
        !- call dry deposition and sedimentation routines
@@ -478,8 +473,10 @@ contains
 
     !  Rayleigh friction for theta
     !----------------------------------------
+    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
     call rayft(mxp,myp,mzp,mynum,ngrid,nnzp,if_adap,level,nodemyp,nodemxp,&
-         scratch%vt3da,basic_g(ngrid)%theta,basic_g(ngrid)%rv)
+         scratch%vt3da,oneGrid%Basic%theta,oneGrid%Basic%rv)
+    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
     !  Get the overlap region between parallel nodes
     !---------------------------------------------------
@@ -624,10 +621,12 @@ contains
 
     !  Lateral velocity boundaries - radiative
     !-------------------------------------------
+    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
     call latbnd(mzp,mxp,myp,ia,iz,ja,jz,ibcon,nxtnest,ngrid,ibnd,jbnd, &
-         grid_g(ngrid)%lpu,grid_g(ngrid)%lpv,basic_g(ngrid)%up,&
-         basic_g(ngrid)%uc,tend%ut,basic_g(ngrid)%vp,basic_g(ngrid)%vc,&
+         grid_g(ngrid)%lpu,grid_g(ngrid)%lpv,oneGrid%Basic%up,&
+         oneGrid%Basic%uc,tend%ut,oneGrid%Basic%vp,oneGrid%Basic%vc,&
          tend%vt,grid_g(ngrid)%dxt,grid_g(ngrid)%dyt)
+    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
 !!$    call SynchronizedTimeStamp(TS_RK_RESTO) ! Exper1.2, 2021_12
 
@@ -681,11 +680,13 @@ contains
 
        if ( l_rk > 1 ) then
           ! (not necessary in the first RK substep)
-          basic_g(ngrid)%uc (:,:,:) = basic_g(ngrid)%up (:,:,:)
-          basic_g(ngrid)%vc (:,:,:) = basic_g(ngrid)%vp (:,:,:)
-          basic_g(ngrid)%wc (:,:,:) = basic_g(ngrid)%wp (:,:,:)
-          basic_g(ngrid)%pc (:,:,:) = basic_g(ngrid)%pp (:,:,:)
-          basic_g(ngrid)%thc(:,:,:) = basic_g(ngrid)%thp(:,:,:)
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+          oneGrid%Basic%uc (:,:,:) = oneGrid%Basic%up (:,:,:)
+          oneGrid%Basic%vc (:,:,:) = oneGrid%Basic%vp (:,:,:)
+          oneGrid%Basic%wc (:,:,:) = oneGrid%Basic%wp (:,:,:)
+          oneGrid%Basic%pc (:,:,:) = oneGrid%Basic%pp (:,:,:)
+          oneGrid%Basic%thc(:,:,:) = oneGrid%Basic%thp(:,:,:)
+          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        end if
 
        !-  Acoustic small timesteps
@@ -697,9 +698,11 @@ contains
        end if
        call WaitSendRecvMsgs(oneGrid%AcoustNewThtSend, oneGrid%AcoustNewThtRecv)
 
-       call update_long_rk(int(mxp*myp*mzp,i8),dtlt,rk_beta(l_rk) &
-            ,basic_g(ngrid)%thc,basic_g(ngrid)%thp  &
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+       call update_long_rk(int(mxp*myp*mzp,int64),dtlt,rk_beta(l_rk) &
+            ,oneGrid%Basic%thc,oneGrid%Basic%thp  &
             ,tend%tht_rk)
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
        !- determine theta (dry potential temp.) for the buoyancy term:
        call theta_thp_rk(mzp,mxp,myp,ia,iz,ja,jz,"get_theta", &
@@ -707,8 +710,12 @@ contains
 
        !-damping on vertical velocity to keep stability
        !MB: does this act on wc???
-       if(vveldamp == 1) call w_damping(mzp,mxp,myp,ia,iz,ja,jz,mynum)
-
+       if (vveldamp == 1) then
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+          call w_damping(mzp,mxp,myp,ia,iz,ja,jz,mynum, &
+               oneGrid%Basic)
+          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+       end if
 !!$       call SynchronizedTimeStamp(TS_RK_RESTO) ! Exper1.2, 2021_12
 
     end do
@@ -755,11 +762,13 @@ contains
     !---> pp    must be changed to PC  for microphysics
     !---> wp    must be changed to WC  for microphysics
     !---> up,vp must be changed to UC,VC for output
-    basic_g(ngrid)%up (:,:,:) = basic_g(ngrid)%uc (:,:,:)
-    basic_g(ngrid)%vp (:,:,:) = basic_g(ngrid)%vc (:,:,:)
-    basic_g(ngrid)%wp (:,:,:) = basic_g(ngrid)%wc (:,:,:)
-    basic_g(ngrid)%pp (:,:,:) = basic_g(ngrid)%pc (:,:,:)
-    basic_g(ngrid)%thp(:,:,:) = basic_g(ngrid)%thc(:,:,:)
+    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+    oneGrid%Basic%up (:,:,:) = oneGrid%Basic%uc (:,:,:)
+    oneGrid%Basic%vp (:,:,:) = oneGrid%Basic%vc (:,:,:)
+    oneGrid%Basic%wp (:,:,:) = oneGrid%Basic%wc (:,:,:)
+    oneGrid%Basic%pp (:,:,:) = oneGrid%Basic%pc (:,:,:)
+    oneGrid%Basic%thp(:,:,:) = oneGrid%Basic%thc(:,:,:)
+    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     !---->
     !---->
     !
@@ -812,7 +821,9 @@ contains
 
     !---> THC must be changed to THP to include microphysics/trsets changes
     !---> for the next timestep
-    basic_g(ngrid)%thc(:,:,:) = basic_g(ngrid)%thp(:,:,:)
+    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+    oneGrid%Basic%thc(:,:,:) = oneGrid%Basic%thp(:,:,:)
+    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     !--->
 
     !  Lateral velocity boundaries - radiative
@@ -821,12 +832,14 @@ contains
 
     !  Velocity/pressure boundary conditions
     !----------------------------------------
+    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
     call vpsets(mzp,mxp,myp,ia,iz,ja,jz,ibcon,nstbot, &
-         basic_g(ngrid)%up,basic_g(ngrid)%vp,basic_g(ngrid)%wp,&
-         basic_g(ngrid)%pp,basic_g(ngrid)%uc,basic_g(ngrid)%vc,&
-         basic_g(ngrid)%wc,basic_g(ngrid)%pc,grid_g(ngrid)%dxu,&
+         oneGrid%Basic%up,oneGrid%Basic%vp,oneGrid%Basic%wp,&
+         oneGrid%Basic%pp,oneGrid%Basic%uc,oneGrid%Basic%vc,&
+         oneGrid%Basic%wc,oneGrid%Basic%pc,grid_g(ngrid)%dxu,&
          grid_g(ngrid)%dxm,grid_g(ngrid)%dyv,grid_g(ngrid)%dym,&
          grid_g(ngrid)%lpu,grid_g(ngrid)%lpv,grid_g(ngrid)%lpw)
+    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
     !- call THERMO on the boundaries
     call thermo_boundary_driver((time+dtlongn(ngrid)), dtlong, &
@@ -900,6 +913,7 @@ contains
             abs ( time - dtlt - timeWindowIAU*0.5),applyIAU
        if(mynum==1)call flush(6)
 
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call CreateIauTendency(ngrid, mzp*mxp*myp, mzp, mxp, myp,ia,iz,ja,jz&
             ,varinit_g(ngrid)%varup(:,:,:),varinit_g(ngrid)%varvp(:,:,:)  &
             ,varinit_g(ngrid)%varpp(:,:,:),varinit_g(ngrid)%vartp(:,:,:)  &
@@ -909,153 +923,14 @@ contains
             ,varinit_g(ngrid)%varpf(:,:,:),varinit_g(ngrid)%vartf(:,:,:)  &
             ,varinit_g(ngrid)%varrf(:,:,:)                                &
             
-            ,basic_g(ngrid)%up     (:,:,:)   ,basic_g(ngrid)%vp  (:,:,:)  &
-            ,basic_g(ngrid)%theta  (:,:,:)   ,basic_g(ngrid)%rtp (:,:,:)  &
-            ,basic_g(ngrid)%pp     (:,:,:)                                )
+            ,oneGrid%Basic%up     (:,:,:)   ,oneGrid%Basic%vp  (:,:,:)  &
+            ,oneGrid%Basic%theta  (:,:,:)   ,oneGrid%Basic%rtp (:,:,:)  &
+            ,oneGrid%Basic%pp     (:,:,:)                                )
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     endif
 
 !!$    call SynchronizedTimeStamp(TS_PHYSICS) ! Exper1.2, 2021_12
 
   end subroutine timestep_rk
-
-
 end module ModTimestepRK
 
-!*************************************************************************
-!-srf-  temp routine only for testing - not being used
-!
-subroutine adv_p_driver(m1,m2,m3,ifm,ia,iz,ja,jz,izu,jzv,jdim,mynum,edt,key)
-
-
-  use mem_basic,   only: basic_g
-  use mem_grid,    only: grid_g, itopo
-  use mem_stilt,    only: stilt_g
-  use mem_tend,    only: tend
-  use mem_scratch, only: scratch
-  use micphys,     only: level           !if(vapour_on)  use therm_lib,   only: vapour_on
-
-  implicit none
-  !----- Arguments -----------------------------------------------------------------------!
-  character(len=*) , intent(in) :: key
-  integer          , intent(in) :: m1,m2,m3,ifm,ia,iz,ja,jz,izu,jzv,jdim,mynum
-  real             , intent(in) :: edt
-  !----- Local variables -----------------------------------------------------------------!
-  integer :: i,j,k
-  !---------------------------------------------------------------------------------------!
-  call adv_p(m1,m2,m3,ia,iz,ja,jz,izu,jzv,jdim,itopo                                 &
-       ,grid_g(ifm)%rtgu                       ,grid_g(ifm)%fmapui              &
-       ,grid_g(ifm)%rtgv                       ,grid_g(ifm)%fmapvi              &
-       ,grid_g(ifm)%f13t                       ,grid_g(ifm)%f23t                &
-       ,grid_g(ifm)%rtgt                       ,grid_g(ifm)%fmapt               &
-       ,grid_g(ifm)%dxt                        ,grid_g(ifm)%dyt                 &
-       ,basic_g(ifm)%uc                        ,basic_g(ifm)%dn0u               &
-       ,basic_g(ifm)%vc                        ,basic_g(ifm)%dn0v               &
-       ,basic_g(ifm)%dn0                       ,basic_g(ifm)%wc                 &
-       ,basic_g(ifm)%pc                        ,tend%pt                         )
-
-end subroutine adv_p_driver
-
-subroutine adv_p(m1,m2,m3,ia,iz,ja,jz,izu,jzv,jdim,itopo,rtgu,fmapui,rtgv,fmapvi,f13t    &
-     ,f23t,rtgt,fmapt,dxt,dyt,uc,dn0u,vc,dn0v,dn0,wc,pc,pt)
-
-  use mem_grid , only : hw4 & ! intent(in)
-       , dzt ! ! intent(in)
-  implicit none
-  !----- Arguments -----------------------------------------------------------------------!
-  integer , intent(in)                         :: m1,m2,m3,ia,iz,ja,jz,izu,jzv,itopo,jdim
-  real    , intent(in)   , dimension(m2,m3)    :: rtgu,fmapui,rtgv,fmapvi,f13t,f23t
-  real    , intent(in)   , dimension(m2,m3)    :: rtgt,fmapt,dxt,dyt
-  real    , intent(in)   , dimension(m1,m2,m3) :: uc,dn0u,vc,dn0v,dn0,wc,pc
-  real    , intent(inout), dimension(m1,m2,m3) :: pt
-  !----- Local variables -----------------------------------------------------------------!
-  integer                                      :: i,j,k,im,jm
-  real                                         :: c1z,c1x,c1y
-  real    ,                dimension(m1,m2,m3) :: flxu,flxv,flxw
-  !---------------------------------------------------------------------------------------!
-
-
-
-  !----- Compute momentum fluxes flxu, flxv, flxw ----------------------------------------!
-  do j = 1,m3
-     do i = 1,m2
-        do k = 1,m1
-           flxu(k,i,j) = uc(k,i,j) * dn0u(k,i,j) * rtgu(i,j) * fmapui(i,j)
-           flxv(k,i,j) = vc(k,i,j) * dn0v(k,i,j) * rtgv(i,j) * fmapvi(i,j)
-        enddo
-     enddo
-  enddo
-
-  if(itopo == 0) then
-     do j = 1,m3
-        do i = 1,m2
-           do k = 1,m1-1
-              flxw(k,i,j) = wc(k,i,j) * .5 * (dn0(k,i,j) + dn0(k+1,i,j))
-           end do
-        end do
-     end do
-  else
-     do j = 1,m3
-        jm = max(j-1,1)
-        do i = 1,m2
-           im = max(i-1,1)
-           do k = 1,m1-1
-              flxw(k,i,j) = wc(k,i,j) * .5 * (dn0(k,i,j) + dn0(k+1,i,j))                  &
-                   + hw4(k) * ( ( flxu(k,i,j) + flxu(k+1,i,j)                      &
-                   + flxu(k,im,j) + flxu(k+1,im,j) ) * f13t(i,j)      &
-                   + ( flxv(k,i,j) + flxv(k+1,i,j)                      &
-                   + flxv(k,i,jm) + flxv(k+1,i,jm) ) * f23t(i,j) )
-           end do
-        end do
-     end do
-  end if
-
-  !---------------------------------------------------------------------------------------!
-  !  Compute advection contribution of zonal gradient to Exner function tendency.         !
-  !---------------------------------------------------------------------------------------!
-  do j = ja,jz
-     do i = ia,izu
-        c1x = 0.5 / rtgt(i,j) * fmapt(i,j) * dxt(i,j)
-        do k = 2,m1-1
-           pt(k,i,j) = pt(k,i,j)                                                          &
-                - c1x / dn0(k,i,j)                                                   &
-                * ( flxu(k,i,j)   * (pc(k,i,j) + pc(k,i+1,j))                        &
-                - flxu(k,i-1,j) * (pc(k,i,j) + pc(k,i-1,j))                        &
-                - (flxu(k,i,j) - flxu(k,i-1,j)) * 2.* pc(k,i,j) )
-        end do
-     end do
-  end do
-
-  !---------------------------------------------------------------------------------------!
-  !  Compute advection contribution of meridional gradient to Exner function tendency.    !
-  !---------------------------------------------------------------------------------------!
-  do j=ja,jzv
-     do i=ia,iz
-        c1y = 0.5 / rtgt(i,j) * fmapt(i,j) * dyt(i,j)
-        do k=2,m1-1
-           pt(k,i,j) = pt(k,i,j)                                                          &
-                - c1y /dn0(k,i,j)                                                    &
-                * ( flxv(k,i,j)      * (pc(k,i,j)+pc(k,i,j+jdim))                    &
-                - flxv(k,i,j-jdim) * (pc(k,i,j)+pc(k,i,j-jdim))                    &
-                - (flxv(k,i,j)-flxv(k,i,j-jdim)) * 2.* pc(k,i,j) )
-        end do
-     end do
-  end do
-
-  !---------------------------------------------------------------------------------------!
-  !  Compute advection contribution of vertical gradient to Exner function tendency.      !
-  !---------------------------------------------------------------------------------------!
-  do j=ja,jz
-     do i=ia,iz
-        c1z = 0.5 / rtgt(i,j)
-        do k=2,m1-1
-           pt(k,i,j) = pt(k,i,j)                                                          &
-                - c1z * dzt(k) /dn0(k,i,j)                                           &
-                * ( flxw(k,i,j)   * (pc(k,i,j)+pc(k+1,i,j))                          &
-                - flxw(k-1,i,j) * (pc(k,i,j)+pc(k-1,i,j))                          &
-                -  (flxw(k,i,j)-flxw(k-1,i,j)) * 2. * pc(k,i,j) )
-        end do
-     end do
-  end do
-  return
-end subroutine adv_p
-!==========================================================================================!

@@ -157,6 +157,7 @@ contains
     type(BasicFields), pointer, intent(in) :: oneAveBasicFields
 
     real :: vt3da(mzp,mxp,myp)
+    character(len=*), parameter :: h="**(corlos)**"
 
     if(icorflg.eq.0) return
 
@@ -174,7 +175,7 @@ contains
        end do
     end do
 
-    call DeepCopyToBasicFields(oneBasicFields, oneAveBasicFields)
+    call DeepCopyToBasicFields(oneBasicFields, oneAveBasicFields, h)
     
     call corlsu(mzp,mxp,myp,i0,j0,ia,izu,ja,jz,ut,vt3da,oneBasicFields)
 

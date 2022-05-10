@@ -145,7 +145,7 @@ contains
 
        else
 
-          call DeepCopyToBasicFields(oneBasic, oneAveBasic)
+          call DeepCopyToBasicFields(oneBasic, oneAveBasic, h)
           call vel_advectc_adap(mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,jdim    &
                ,grid_g(ngrid)%lpu    ,grid_g(ngrid)%lpv       &
                ,grid_g(ngrid)%lpw    ,oneBasic%uc     &
@@ -170,7 +170,7 @@ contains
 
        ! Advect  scalars
 
-       call DeepCopyToBasicFields(oneBasic, oneAveBasic)
+       call DeepCopyToBasicFields(oneBasic, oneAveBasic, h)
        dtlto2 = .5 * dtlt
        ind = 0
        do j = 1,myp
@@ -201,7 +201,7 @@ contains
 
        else
 
-          call DeepCopyToBasicFields(oneBasic, oneAveBasic)
+          call DeepCopyToBasicFields(oneBasic, oneAveBasic, h)
           call fa_preptc_adap(mzp,mxp,myp                               &
                ,scratch%vt3da            ,scratch%vt3db             &
                ,scratch%vt3dc            ,scratch%vt3dd             &
@@ -237,7 +237,7 @@ contains
           if(ccatt == 1 .and. aerosol == 1) then
              if( n >= num_scalar_aer_1st ) then 
                 if (if_adap == 0) then
-                   call DeepCopyToBasicFields(oneBasic, oneAveBasic)
+                   call DeepCopyToBasicFields(oneBasic, oneAveBasic, h)
                    call fa_preptc_with_sedim(mzp,mxp,myp    &
                         ,scratch%vt3da             ,scratch%vt3db      &
                         ,scratch%vt3dc              ,scratch%vt3df &
@@ -536,6 +536,7 @@ contains
 
     real, dimension(m1,m2,m3) :: vt3da,vt3db,vt3dc,vt3dd,vt3de,vt3df  &
          ,vt3dh,vt3di,vt3dj,vt3dk
+    character(len=*), parameter :: h="**(fa_preptc)**"
 
     ! VT3DA, VT3DB, and VT3DC are input as the velocity components (averaged
     ! between past and current time levels) times dtlt.
@@ -546,7 +547,7 @@ contains
     ! Compute weight at scalar point: VT3DH
     ! Compute advective weights for the linear term: VT3DI, VCTR1, and VCTR2
 
-    call DeepCopyToBasicFields(oneBasic, oneAveBasic)
+    call DeepCopyToBasicFields(oneBasic, oneAveBasic, h)
     do j = 1,m3
        jm = max(1,j-1)
        jp = min(m3,j+1)

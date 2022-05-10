@@ -74,6 +74,7 @@ module ModBasicFields
   end type BasicFields
 
   logical :: updatingBasicFields=.false.
+  character(len=64) :: fromProcedure=""
   
 contains
 
@@ -670,9 +671,10 @@ contains
 
   
 
-  subroutine DeepCopyToBasicFields(oneBasicFields, oneAveBasicFields)
+  subroutine DeepCopyToBasicFields(oneBasicFields, oneAveBasicFields, procName)
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(BasicFields), pointer, intent(in) :: oneAveBasicFields
+    character(len=*), intent(in) :: procName
 
     character(len=*), parameter :: h="**(DeepCopyToBasicFields)**"
 
@@ -683,9 +685,13 @@ contains
     end if
 
     if (updatingBasicFields) then
-       call fatal_error(h//" invoked whenever BasicFields was beeing updated")
+       call fatal_error(h//" invoked by "//&
+            trim(adjustl(procName))//&
+            " but BasicFields is updated by "//&
+            trim(adjustl(fromProcedure)))
     else
        updatingBasicFields=.true.
+       fromProcedure=procName
     end if
     
     oneBasicFields%up => basic_g(1)%up
@@ -772,6 +778,7 @@ contains
        call fatal_error(h//" invoked whenever BasicFields was not beeing updated")
     else
        updatingBasicFields=.false.
+       fromProcedure=""
     end if
     
     basic_g(1)%up => oneBasicFields%up

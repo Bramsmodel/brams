@@ -562,7 +562,7 @@ contains
     character(len=*), parameter :: h="**(advectc_rk)**"
     character(len=8) :: str(10)
 
-    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
     
     if (dumpLocal) then
        call MsgDump(h//" starts with varn="//trim(varn))

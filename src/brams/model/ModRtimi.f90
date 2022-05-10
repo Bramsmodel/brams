@@ -116,6 +116,7 @@ contains
     integer(kind=i8) :: mxyzp
     logical :: RAW
     real :: vt3da(mzp,mxp,myp)
+    character(len=*), parameter :: h="**(hadvance)**"
 
     !     It is here that the Asselin filter is applied.  For the velocities
     !     and pressure, this must be done in two stages, the first when
@@ -144,7 +145,7 @@ contains
 
     !     For both IAC=1 and IAC=2, call PREDICT for U, V, W, and P.
 
-    call DeepCopyToBasicFields(oneBasicFields, oneAveBasicFields)
+    call DeepCopyToBasicFields(oneBasicFields, oneAveBasicFields, h)
     
     call predict(&
          mxyzp, &

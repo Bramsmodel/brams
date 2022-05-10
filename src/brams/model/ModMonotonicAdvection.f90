@@ -484,7 +484,7 @@ contains
     end if
 
 
-    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
 
     ! dimension of external fields (regular ghost zone width)
 

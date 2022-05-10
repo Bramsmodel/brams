@@ -86,7 +86,9 @@ module ModOneProc
   use mem_micro, only: &
        micro_g
 
-  use ModTimestep    , only: timestep
+  use ModTimestep, only: &
+       timestep
+  
   use ModTimestepRK , only: timestep_rk
   use iso_fortran_env, only: output_unit
   use io_params, only: &
@@ -1143,7 +1145,7 @@ contains
              endif
              if (isendsrc==1) then
 
-                call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+                call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
                 
                 do ifm = 1, ngrids
                    call newgrid(ifm)
@@ -1649,7 +1651,7 @@ contains
           if (mcphys_type == 0) then
              if (level  ==  3) then
 
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
                 
                 call initqin(mzp,mxp,myp        &
                      ,micro_g(ifm)%q2      &
@@ -1670,7 +1672,7 @@ contains
 
              if (level  ==  3) then
 
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
                 
                 call initqin_2M(mzp,mxp,myp        &
                      ,micro_g(ifm)%q2   &
@@ -1687,7 +1689,7 @@ contains
 
           if(icloud >= 5) then
 
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
                 
              call initqin2_2M(mzp,mxp,myp        &
                      ,micro_g(ifm)%cccnp   &
@@ -1700,7 +1702,7 @@ contains
 
           if(idriz  >= 5) then
 
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
                 
              call initqin3_2M(mzp,mxp,myp        &
                      ,micro_g(ifm)%gccnp   &
@@ -1713,7 +1715,7 @@ contains
           
           if(ipris  >= 5) then
 
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
                 
              call initqin4_2M(mzp,mxp,myp        &
                      ,micro_g(ifm)%cifnp   &
@@ -1734,7 +1736,7 @@ contains
           !-- only for RK time integration
           if(DYNCORE_FLAG==2) then
 
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
                 
              oneGrid%Basic%thc(:,:,:)=oneGrid%Basic%thp(:,:,:)
 
@@ -1785,7 +1787,7 @@ contains
        !- change initial soil moisture if desired
        if(change_soilm) then
 
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
                 
 
           do ifm=1,ngrids
@@ -1833,7 +1835,7 @@ contains
 
           if (iteb==1) then
 
-             call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+             call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
                 
              do ifm=1,ngrids
                 call TEB_INIT(                      &
@@ -1924,7 +1926,7 @@ contains
        !-srf  Initialize the true air density
        if (iexev == 2) then
 
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
                 
           do ifm=1,ngrids
              call newgrid(ifm)
@@ -1943,7 +1945,7 @@ contains
           !-srf: initialize mixing ratios (only if chem assim is off)
           !-srf: and sources
 
-             call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+             call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
                 
           do ifm=1,ngrids
              call newgrid(ifm)
@@ -2061,7 +2063,7 @@ contains
        endif
 
 
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
                 
        do ifm = 1,ngrids
           icm = nxtnest(ifm)
@@ -2097,7 +2099,7 @@ contains
             (SOIL_MOIST == 'a').or.(SOIL_MOIST == 'A')) then
 
 
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
                 
           do ifm = 1,min(ngrids,ngridsh)
              call newgrid(ifm)
@@ -2137,7 +2139,7 @@ contains
           !-srf: initialize mixing ratios (only if chem assim is off)
           !-srf: and sources
 
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
                 
           do ifm=1,ngrids
              call newgrid(ifm)
@@ -2179,7 +2181,7 @@ contains
 
     !       Fill latitude-longitude, map factor, and Coriolis arrays.
 
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
                 
     do ifm = 1,ngrids
        call newgrid(ifm)

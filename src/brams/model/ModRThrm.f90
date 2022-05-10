@@ -66,7 +66,7 @@ contains
 
     character(len=*), parameter :: h="**(thermo)**"
 
-    call DeepCopyToBasicFields(oneBasic, oneAveBasic)
+    call DeepCopyToBasicFields(oneBasic, oneAveBasic, h)
     
     if (level .le. 1) then
 
@@ -465,7 +465,7 @@ contains
 
     character(len=*), parameter :: h="**(theta_thp_rk)**"
     
-    call DeepCopyToBasicFields(oneBasic, oneAveBasic)
+    call DeepCopyToBasicFields(oneBasic, oneAveBasic, h)
     
     if (trim(action).ne. "get_thetail" .and. trim(action).ne."get_theta") then
        call fatal_error(h//" unknow action at theta_thp_rk routine")
