@@ -910,8 +910,8 @@ rinit.o : $(INIT)/rinit.f90  io_params.o mem_basic.o mem_grid.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModRtimi.o : $(MODEL)/ModRtimi.f90  mem_basic.o mem_grid.o mem_scratch.o \
-	mem_tend.o node_mod.o ModScalarTable.o
+ModRtimi.o : $(MODEL)/ModRtimi.f90 mem_grid.o mem_scratch.o \
+	mem_tend.o node_mod.o ModScalarTable.o ModBasicFields.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

@@ -589,7 +589,7 @@ contains
     !  +----+--------------+--------------+
     !
     !------------------------------------------
-    call hadvance(1)
+    call hadvance(1, oneGrid%Basic, oneGrid%AveBasic)
     !  Buoyancy term for w equation
     !----------------------------------------
     call BUOYANCY( tend%wt )
@@ -616,7 +616,7 @@ contains
     !  +----+--------------+--------------+
     !
     !------------------------------------------
-    call hadvance(2)
+    call hadvance(2, oneGrid%Basic, oneGrid%AveBasic)
 
     !  Velocity/pressure boundary conditions
     !----------------------------------------

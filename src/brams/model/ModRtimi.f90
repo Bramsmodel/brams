@@ -6,6 +6,12 @@
 !  Regional Atmospheric Modeling System - RAMS
 !###########################################################################
 module ModRtimi
+
+  use ModBasicFields, only: &
+       BasicFields, &
+       DeepCopyToBasicFields, &
+       DeepCopyFromBasicFields
+  
   use mem_grid, only: &
        ngrid, &
        dyncore_flag, &
@@ -42,9 +48,6 @@ module ModRtimi
   use mem_cuparm, only: &
        confrq, &
        NNQPARM
-
-  use mem_basic, only: &
-       basic_g
 
   use mem_scratch, only: &
        scratch
@@ -104,9 +107,11 @@ contains
 
   !**************************************************************************
 
-  subroutine hadvance(iac)
+  subroutine hadvance(iac, oneBasicFields, oneAveBasicFields)
 
     integer, intent(in) :: iac
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(BasicFields), pointer, intent(in) :: oneAveBasicFields
 
     integer(kind=i8) :: mxyzp
     logical :: RAW
@@ -139,10 +144,12 @@ contains
 
     !     For both IAC=1 and IAC=2, call PREDICT for U, V, W, and P.
 
+    call DeepCopyToBasicFields(oneBasicFields, oneAveBasicFields)
+    
     call predict(&
          mxyzp, &
-         basic_g(ngrid)%uc, &
-         basic_g(ngrid)%up,  &
+         oneBasicFields%uc, &
+         oneBasicFields%up,  &
          tend%ut, &
          vt3da,&
          iac, dtlv,  &
@@ -152,8 +159,8 @@ contains
     if (icorflg .eq. 1 .or. jdim .eq. 1) then
        call predict(&
             mxyzp, &
-            basic_g(ngrid)%vc, &
-            basic_g(ngrid)%vp, &
+            oneBasicFields%vc, &
+            oneBasicFields%vp, &
             tend%vt, &
             vt3da,&
             iac, dtlv, &
@@ -163,8 +170,8 @@ contains
 
     call predict(&
          mxyzp, &
-         basic_g(ngrid)%wc, &
-         basic_g(ngrid)%wp, &
+         oneBasicFields%wc, &
+         oneBasicFields%wp, &
          tend%wt, &
          vt3da,&
          iac, dtlv, &
@@ -172,8 +179,8 @@ contains
          RAW)
 
     call predict(mxyzp,&
-         basic_g(ngrid)%pc, &
-         basic_g(ngrid)%pp, &
+         oneBasicFields%pc, &
+         oneBasicFields%pp, &
          tend%pt, &
          vt3da, &
          iac, dtlv, &
@@ -181,7 +188,8 @@ contains
          RAW)
 
 
-    return
+    call DeepCopyFromBasicFields(oneBasicFields, oneAveBasicFields)
+    
   end subroutine hadvance
 
 
