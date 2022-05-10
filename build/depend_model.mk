@@ -557,7 +557,7 @@ ModTimestep.o : $(MODEL)/ModTimestep.F90 mem_basic.o mem_cuparm.o optical.o \
 	raco.o module_rams_microphysics_2M.o mic_thompson_driver.o module_wind_farm.o \
         seasalt.o MatrixDriver.o rtm_driver.o ModRadvcRK.o $(JULES_OBJ_SFCLYR) \
 	ModMessageSet.o modIau.o  ModRbnd.o ModRadvc.o ModTurbK.o ModDiffuse.o \
-	ModRexev.o ModRThrm.o $(UTILS_INCS)/tsNames.h
+	ModRexev.o ModRThrm.o ModCoriolis.o $(UTILS_INCS)/tsNames.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -571,13 +571,13 @@ ModTimestepRK.o : $(MODEL)/ModTimestepRK.F90 ModTimestep.o mem_basic.o mem_cupar
         seasalt.o MatrixDriver.o rtm_driver.o ModRadvcRK.o modIau.o leaf3_ocean_only.o ModRbnd.o \
 	$(JULES_OBJ_SFCLYR)  ModRadvc.o ModMonotonicAdvection.o utilsMod.o ModRtimi.o \
 	ModMessageSet.o ModTurbK.o ModDiffuse.o ModRexev.o ModRThrm.o \
-	$(UTILS_INCS)/tsNames.h  $(UTILS_INCS)/constants.h
+	ModCoriolis.o $(UTILS_INCS)/tsNames.h  $(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
 ModOneProc.o : $(MODEL)/ModOneProc.F90 ModNamelistFile.o \
-	ModDomainDecomp.o io_params.o machine_arq.o \
+	ModCoriolis.o ModDomainDecomp.o io_params.o machine_arq.o \
 	ModPostProcess.o mem_cuparm.o mem_grid.o mem_leaf.o mem_oda.o \
 	ccatt_start.o domain_decomp.o isan_coms.o ModBasicFields.o mem_emiss.o \
 	mem_gaspart.o mem_globrad.o mem_grell_param2.o mem_micro.o \
@@ -702,7 +702,7 @@ nud_analysis.o : $(FDDA)/nud_analysis.f90  mem_basic.o mem_grid.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-coriolis.o : $(MODEL)/coriolis.f90  mem_basic.o mem_grid.o \
+ModCoriolis.o : $(MODEL)/ModCoriolis.f90  mem_basic.o mem_grid.o \
 	node_mod.o mem_scratch.o mem_tend.o rconstants.o ref_sounding.o \
 	parlibf.o $(UTILS_INCS)/tsNames.h  ModBuffering.o
 	@cp -f $< $(<F:.f90=.f90)

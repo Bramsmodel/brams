@@ -10,6 +10,9 @@ module ModTimestep
 contains
   subroutine timestep(oneGrid)
 
+    use ModCoriolis, only: &
+         corlos
+    
     use ModRThrm, only: &
          thermo, &
          thermo_boundary_driver

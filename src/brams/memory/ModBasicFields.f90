@@ -73,6 +73,8 @@ module ModBasicFields
 
   end type BasicFields
 
+  logical :: updatingBasicFields=.false.
+  
 contains
 
 
@@ -679,6 +681,12 @@ contains
     else if (.not. associated(oneAveBasicFields)) then
        call fatal_error(h//" oneAveBasicFields not associated")
     end if
+
+    if (updatingBasicFields) then
+       call fatal_error(h//" invoked whenever BasicFields was beeing updated")
+    else
+       updatingBasicFields=.true.
+    end if
     
     oneBasicFields%up => basic_g(1)%up
     oneAveBasicFields%up => basicm_g(1)%up
@@ -760,6 +768,12 @@ contains
        call fatal_error(h//" oneAveBasicFields not associated")
     end if
 
+    if (.not. updatingBasicFields) then
+       call fatal_error(h//" invoked whenever BasicFields was not beeing updated")
+    else
+       updatingBasicFields=.false.
+    end if
+    
     basic_g(1)%up => oneBasicFields%up
     basicm_g(1)%up => oneAveBasicFields%up
 

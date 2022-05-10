@@ -10,6 +10,9 @@
 
 module ModTimestepRK
 
+  use ModCoriolis, only: &
+       corlos
+    
   use ModRThrm, only: &
        thermo, &
        thermo_boundary_driver, &

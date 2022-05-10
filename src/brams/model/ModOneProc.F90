@@ -34,6 +34,10 @@ module ModOneProc
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModCoriolis, only: &
+       fcorio, &
+       corlos
+
   use ModBasicFields, only: &
        DeepCopyToBasicFields, &
        DeepCopyFromBasicFields

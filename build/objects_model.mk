@@ -45,7 +45,7 @@ OBJ_MOD = \
 	cond_read.o \
 	cond_update.o \
 	conv_coms.o \
-	coriolis.o \
+	ModCoriolis.o \
 	cu_read.o \
 	cup_dn.o \
 	cup_env.o \
