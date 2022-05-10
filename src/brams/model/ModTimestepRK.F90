@@ -446,7 +446,8 @@ contains
     !  Coriolis terms
     !  ----------------------------------------
     if ( .not. flag_Coriolis_in_every_RK_step ) then
-       call CORLOS(mzp,mxp,myp,i0,j0,ia,iz,ja,jz,izu,jzv, tend%ut, tend%vt)
+       call corlos(mzp, mxp, myp, i0, j0, ia, iz, ja, jz, izu, jzv, &
+            tend%ut, tend%vt, oneGrid%Basic, oneGrid%AveBasic)
     end if
 
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
@@ -665,7 +666,8 @@ contains
 !!$       call SynchronizedTimeStamp(TS_RK_ADV) ! Exper1.2, 2021_12
 
        if ( flag_Coriolis_in_every_RK_step ) then
-          call CORLOS(mzp,mxp,myp,i0,j0,ia,iz,ja,jz,izu,jzv, tend%ut_rk, tend%vt_rk)
+          call corlos(mzp, mxp, myp, i0, j0, ia, iz, ja, jz, izu, jzv, &
+               tend%ut_rk, tend%vt_rk, oneGrid%Basic, oneGrid%AveBasic)
        end if
 
        !  Buoyancy term for w equation

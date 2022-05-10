@@ -7,6 +7,12 @@
 !###########################################################################
 
 module ModCoriolis
+
+  use ModBasicFields, only: &
+       BasicFields, &
+       DeepCopyToBasicFields, &
+       DeepCopyFromBasicFields
+  
   use mem_grid, only: &
        grid_g, &
        if_adap, &
@@ -43,9 +49,6 @@ module ModCoriolis
   use ref_sounding, only: &
        u01dn, &
        v01dn
-
-  use mem_basic, only: &
-       basic_g   
 
   use ParLib, only: &
        parf_get_noblock, &
@@ -131,7 +134,8 @@ contains
   !     ******************************************************************
 
 
-  subroutine corlos(mzp,mxp,myp,i0,j0,ia,iz,ja,jz,izu,jzv, ut, vt)
+  subroutine corlos(mzp, mxp, myp, i0, j0, ia, iz, ja, jz, izu, jzv, &
+       ut, vt, oneBasicFields, oneAveBasicFields)
     !> @brief: This routine is the coriolis driver.  Its purpose is to compute
     !!coriolis accelerations for u and v and add them into
     !!the accumulated tendency arrays of ut_ptr and vt_ptr.
@@ -149,6 +153,9 @@ contains
     integer :: i,j,k,n
     real, intent(inout) :: ut(mzp,mxp,myp)
     real, intent(inout) :: vt(mzp,mxp,myp)
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(BasicFields), pointer, intent(in) :: oneAveBasicFields
+
     real :: vt3da(mzp,mxp,myp)
 
     if(icorflg.eq.0) return
@@ -167,10 +174,14 @@ contains
        end do
     end do
 
-    call corlsu(mzp,mxp,myp,i0,j0,ia,izu,ja,jz,ut,vt3da)
+    call DeepCopyToBasicFields(oneBasicFields, oneAveBasicFields)
+    
+    call corlsu(mzp,mxp,myp,i0,j0,ia,izu,ja,jz,ut,vt3da,oneBasicFields)
 
-    call corlsv(mzp,mxp,myp,i0,j0,ia,iz,ja,jzv,vt,vt3da)
+    call corlsv(mzp,mxp,myp,i0,j0,ia,iz,ja,jzv,vt,vt3da,oneBasicFields)
 
+    call DeepCopyFromBasicFields(oneBasicFields, oneAveBasicFields)
+    
     n=0
     do j=1,myp
        do i=1,mxp
@@ -189,7 +200,7 @@ contains
 
   !     ******************************************************************
 
-  subroutine corlsu(m1,m2,m3,i0,j0,ia,iz,ja,jz,ut,vt3da)
+  subroutine corlsu(m1,m2,m3,i0,j0,ia,iz,ja,jz,ut,vt3da,oneBasicFields)
     !> @brief: This routine is the coriolis tendencies U direction
     !! @author:  unknow
     !! @date:  17/Nov/2015
@@ -201,6 +212,7 @@ contains
     !!
     integer,intent(in) :: m1,m2,m3,i0,j0,ia,iz,ja,jz
     real,intent(inout) :: ut(m1,m2,m3),vt3da(m1,m2,m3)
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
 
     integer :: i,j,k
     real :: c1
@@ -208,8 +220,8 @@ contains
     do j=ja,jz
        do i=ia,iz
           do k=2,m1-1
-             vt3da(k,i,j)=(basic_g(ngrid)%vc(k,i,j)+basic_g(ngrid)%vc(k,i,j-jdim)  &
-                  +basic_g(ngrid)%vc(k,i+1,j)+basic_g(ngrid)%vc(k,i+1,j-jdim))*.25
+             vt3da(k,i,j)=(oneBasicFields%vc(k,i,j)+oneBasicFields%vc(k,i,j-jdim)  &
+                  +oneBasicFields%vc(k,i+1,j)+oneBasicFields%vc(k,i+1,j-jdim))*.25
           enddo
        enddo
     enddo
@@ -219,8 +231,8 @@ contains
     do j=ja,jz
        do i=ia,iz
           do k=2,m1-1
-             ut(k,i,j)=ut(k,i,j)-vt3da(k,i,j)*(-basic_g(ngrid)%fcoru(i,j)  &
-                  +c1*(vt3da(k,i,j)*xm(i+i0)-basic_g(ngrid)%uc(k,i,j)*yt(j+j0)))
+             ut(k,i,j)=ut(k,i,j)-vt3da(k,i,j)*(-oneBasicFields%fcoru(i,j)  &
+                  +c1*(vt3da(k,i,j)*xm(i+i0)-oneBasicFields%uc(k,i,j)*yt(j+j0)))
           enddo
        enddo
     enddo
@@ -236,7 +248,7 @@ contains
              enddo
              call htint(nzp,v01dn(1,ngrid),zt,nz,vctr5,vctr2)
              do k = 2,m1-1
-                ut(k,i,j) = ut(k,i,j) - basic_g(ngrid)%fcoru(i,j) * vctr5(k)
+                ut(k,i,j) = ut(k,i,j) - oneBasicFields%fcoru(i,j) * vctr5(k)
              enddo
           enddo
        enddo
@@ -246,7 +258,7 @@ contains
        do j = ja,jz
           do i = ia,iz
              do k = 2,m1-1
-                ut(k,i,j) = ut(k,i,j) - basic_g(ngrid)%fcoru(i,j) * v01dn(k,ngrid)
+                ut(k,i,j) = ut(k,i,j) - oneBasicFields%fcoru(i,j) * v01dn(k,ngrid)
              enddo
           enddo
        enddo
@@ -258,7 +270,7 @@ contains
 
   ! **************************************************************
 
-  subroutine corlsv(m1,m2,m3,i0,j0,ia,iz,ja,jz,vt,vt3da)
+  subroutine corlsv(m1,m2,m3,i0,j0,ia,iz,ja,jz,vt,vt3da,oneBasicFields)
     !> @brief: This routine is the coriolis tendencies V direction
     !! @author:  unknow
     !! @date:  17/Nov/2015
@@ -270,6 +282,7 @@ contains
     !!
     integer,intent(in) :: m1,m2,m3,i0,j0,ia,iz,ja,jz
     real,intent(inout) :: vt(m1,m2,m3),vt3da(m1,m2,m3)
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
 
     integer :: i,j,k
     real :: c1
@@ -277,8 +290,8 @@ contains
     do j = ja,jz
        do i = ia,iz
           do k = 2,m1-1
-             vt3da(k,i,j) = (basic_g(ngrid)%uc(k,i,j) + basic_g(ngrid)%uc(k,i-1,j)  &
-                  + basic_g(ngrid)%uc(k,i,j+jdim) + basic_g(ngrid)%uc(k,i-1,j+jdim)) * .25
+             vt3da(k,i,j) = (oneBasicFields%uc(k,i,j) + oneBasicFields%uc(k,i-1,j)  &
+                  + oneBasicFields%uc(k,i,j+jdim) + oneBasicFields%uc(k,i-1,j+jdim)) * .25
           enddo
        enddo
     enddo
@@ -288,8 +301,8 @@ contains
     do j = ja,jz
        do i = ia,iz
           do k = 2,m1-1
-             vt(k,i,j) = vt(k,i,j) - vt3da(k,i,j) * (basic_g(ngrid)%fcorv(i,j)  &
-                  - c1 * (basic_g(ngrid)%vc(k,i,j) * xt(i+i0) - vt3da(k,i,j) * ym(j+j0)))
+             vt(k,i,j) = vt(k,i,j) - vt3da(k,i,j) * (oneBasicFields%fcorv(i,j)  &
+                  - c1 * (oneBasicFields%vc(k,i,j) * xt(i+i0) - vt3da(k,i,j) * ym(j+j0)))
           enddo
        enddo
     enddo
@@ -304,7 +317,7 @@ contains
              enddo
              call htint(nzp,u01dn(1,ngrid),zt,nz,vctr5,vctr2)
              do k = 2,m1-1
-                vt(k,i,j) = vt(k,i,j) + basic_g(ngrid)%fcorv(i,j) * vctr5(k)
+                vt(k,i,j) = vt(k,i,j) + oneBasicFields%fcorv(i,j) * vctr5(k)
              enddo
           enddo
        enddo
@@ -314,7 +327,7 @@ contains
        do j = ja,jz
           do i = ia,iz
              do k = 2,m1-1
-                vt(k,i,j) = vt(k,i,j) + basic_g(ngrid)%fcorv(i,j) * u01dn(k,ngrid)
+                vt(k,i,j) = vt(k,i,j) + oneBasicFields%fcorv(i,j) * u01dn(k,ngrid)
              enddo
           enddo
        enddo

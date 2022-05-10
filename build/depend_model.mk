@@ -702,7 +702,7 @@ nud_analysis.o : $(FDDA)/nud_analysis.f90  mem_basic.o mem_grid.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModCoriolis.o : $(MODEL)/ModCoriolis.f90  mem_basic.o mem_grid.o \
+ModCoriolis.o : $(MODEL)/ModCoriolis.f90  ModBasicFields.o mem_grid.o \
 	node_mod.o mem_scratch.o mem_tend.o rconstants.o ref_sounding.o \
 	parlibf.o $(UTILS_INCS)/tsNames.h  ModBuffering.o
 	@cp -f $< $(<F:.f90=.f90)

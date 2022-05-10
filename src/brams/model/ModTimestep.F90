@@ -352,7 +352,8 @@ contains
 
     !  Coriolis terms
     !  ----------------------------------------
-    call CORLOS(mzp,mxp,myp,i0,j0,ia,iz,ja,jz,izu,jzv, tend%ut, tend%vt)
+    call corlos(mzp, mxp, myp, i0, j0, ia, iz, ja, jz, izu, jzv,&
+         tend%ut, tend%vt, oneGrid%Basic, oneGrid%AveBasic)
 
     !  Velocity advection
     !----------------------------------------
