@@ -900,7 +900,11 @@ contains
     call wind_farm_driver(ngrid,mzp,mxp,myp,ia,iz,ja,jz)
 
     !- apply digital filter
-    if(applyDF) call applyDigitalFilter(fileNameDF, dfVars)
+    if (applyDF) then
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+       call applyDigitalFilter(fileNameDF, dfVars, oneGrid%Basic, oneGrid%AveBasic)
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+    end if
 
 
     ! Implements the Incremental Analysis Update procedure -

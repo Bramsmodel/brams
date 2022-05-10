@@ -1774,7 +1774,7 @@ tkenn.o : $(STILT)/tkenn.f90  mem_grid.o\
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-digitalFilter.o :$(MODEL)/digitalFilter.f90 an_header.o grid_dims.o io_params.o mem_basic.o \
+digitalFilter.o :$(MODEL)/digitalFilter.f90 an_header.o grid_dims.o io_params.o ModBasicFields.o \
 	mem_grid.o mem_scratch.o mem_turb.o ref_sounding.o var_tables.o \
 	node_mod.o mem_aerad.o ReadBcst.o ModDateUtils.o ModNamelistFile.o
 	@cp -f $< $(<F:.f90=.f90)

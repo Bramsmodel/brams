@@ -2,10 +2,57 @@
 
 module digitalFilter
 
+  use ModBasicFields, only: &
+       BasicFields
+  
+  use node_mod, only: &
+       mchnum, &
+       nmachs, &
+       mynum, &
+       master_num
 
-  use ModNamelistFile, only: namelistFile
+  use mem_grid, only:    &
+       iyear1, &
+       imonth1, &
+       idate1, &
+       itime1, &
+       time, &
+       begtime,&
+       istp, &
+       dtlongn,&
+       ngrids
+
+  use grid_dims, only: &
+       maxgrds
+
+  use var_tables, only: &
+       num_var, &
+       vtab_r
+
+  use ReadBcst, only: &
+       LocalSizesAndDisp
+
+  use ModNamelistFile, only: &
+       namelistFile
+
+  use ModDateUtils, only: &
+       date_add_to
+
+  use io_params,only: &
+       hfilout
 
   implicit none
+
+  private
+  public :: StoreNamelistFileAtdigitalFilter
+  public :: initDigitalFilter
+  public :: applyDigitalFilter
+  public :: fileNameDF
+  public :: dfVars
+  public :: applyDF
+  public :: timeWindowDF
+  public :: iposDF
+  public :: frqanlDF
 
   include "files.h"
 
@@ -27,18 +74,18 @@ module digitalFilter
   end type df_vars
 
   ! # ramsin <--
-  logical				:: applyDF
-  real					:: timeWindowDF
+  logical:: applyDF
+  real:: timeWindowDF
 
   ! # local
-  character(len=f_name_length)		:: fileNameDF
-  type(df_vars), pointer, dimension(:)	:: dfVars
-  real, dimension(:), pointer		:: dfHK
-  integer				:: timestepDF
-  real					:: writeTimeDF
-  integer				:: writeStpDF
-  real					:: frqanlDF
-  integer				:: iposDF
+  character(len=f_name_length):: fileNameDF
+  type(df_vars), pointer, dimension(:):: dfVars
+  real, dimension(:), pointer:: dfHK
+  integer:: timestepDF
+  real:: writeTimeDF
+  integer:: writeStpDF
+  real:: frqanlDF
+  integer:: iposDF
 
 
 contains
@@ -47,7 +94,6 @@ contains
   !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
   subroutine StoreNamelistFileAtdigitalFilter(oneNamelistFile)
-    implicit none
     type(namelistFile), pointer :: oneNamelistFile
 
     applyDF = oneNamelistFile%applyDigitalFilter
@@ -58,18 +104,14 @@ contains
 
   subroutine initDigitalFilter(dfVars, ngrids, nz, nx, ny)
 
-    use mem_grid, only:    &
-         dtlongn !, 		 &
-    !     timmax
-
-    type(df_vars), dimension(:), pointer, intent(out)	:: dfVars
-    integer, intent(in)					:: ngrids
-    integer, dimension(ngrids), intent(in)		:: nz
-    integer, dimension(ngrids), intent(in)		:: nx
-    integer, dimension(ngrids), intent(in)		:: ny
+    type(df_vars), dimension(:), pointer, intent(out):: dfVars
+    integer, intent(in):: ngrids
+    integer, dimension(ngrids), intent(in):: nz
+    integer, dimension(ngrids), intent(in):: nx
+    integer, dimension(ngrids), intent(in):: ny
 
 
-    integer 		:: ng
+    integer :: ng
 
 
     if(applyDF)then
@@ -94,18 +136,18 @@ contains
           allocate(dfVars(ng)%THETA(nz(ng), nx(ng), ny(ng)))
           allocate(dfVars(ng)%RV(nz(ng), nx(ng), ny(ng)))
 
-          dfVars(ng)%UP 		= 0.0
-          dfVars(ng)%VP 		= 0.0
-          dfVars(ng)%WP 		= 0.0
-          dfVars(ng)%PP 		= 0.0
-          dfVars(ng)%UC 		= 0.0
-          dfVars(ng)%VC 		= 0.0
-          dfVars(ng)%WC 		= 0.0
-          dfVars(ng)%PC 		= 0.0
-          dfVars(ng)%THP		= 0.0
-          dfVars(ng)%RTP 		= 0.0
-          dfVars(ng)%THETA	= 0.0
-          dfVars(ng)%RV		= 0.0
+          dfVars(ng)%UP = 0.0
+          dfVars(ng)%VP = 0.0
+          dfVars(ng)%WP = 0.0
+          dfVars(ng)%PP = 0.0
+          dfVars(ng)%UC = 0.0
+          dfVars(ng)%VC = 0.0
+          dfVars(ng)%WC = 0.0
+          dfVars(ng)%PC = 0.0
+          dfVars(ng)%THP= 0.0
+          dfVars(ng)%RTP = 0.0
+          dfVars(ng)%THETA= 0.0
+          dfVars(ng)%RV= 0.0
        end do
     end if
 
@@ -143,28 +185,20 @@ contains
 
   !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-  subroutine applyDigitalFilter(fileName, dfVars)
-
-    use mem_grid, only:    &
-         time, 		&
-         begtime,	&
-         istp,		&
-         dtlongn,	&
-         ngrids
-    use mem_basic, only:   &
-         basic_g
-    use node_mod, only: mynum,master_num,mchnum
+  subroutine applyDigitalFilter(fileName, dfVars, oneBasicFields, oneAveBasicFields)
 
     ! # parameter.
-    character(len=*), intent(inout) 			:: fileName
-    type(df_vars), dimension(:), pointer, intent(inout)	:: dfVars
+    character(len=*), intent(inout) :: fileName
+    type(df_vars), dimension(:), pointer, intent(inout):: dfVars
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(BasicFields), pointer, intent(in) :: oneAveBasicFields
 
     ! # local.
-    integer		:: ng
-    integer		:: idx, k, i
-    integer 		:: n, nsteps,nhlf
-    real			:: tetac,timecut, TC,DT,thetac,wc,arg
-    real, parameter	:: pi = 3.1415927 !there is no such constant in rconstants.f90
+    integer:: ng
+    integer:: idx, k, i
+    integer :: n, nsteps,nhlf
+    real:: tetac,timecut, TC,DT,thetac,wc,arg
+    real, parameter:: pi = 3.1415927 !there is no such constant in rconstants.f90
     real, parameter        :: filter = 1
 
     if(.not. applyDF) return
@@ -182,8 +216,8 @@ contains
 
           allocate(dfHK((n*2)+1)); dfHK=0.0
 
-          !tetac	= 2*pi*dtlongn(1)/(timeWindowDF/2.0)
-          tetac	= 2*pi*dtlongn(1)/(timecut)
+          !tetac= 2*pi*dtlongn(1)/(timeWindowDF/2.0)
+          tetac= 2*pi*dtlongn(1)/(timecut)
 
           do idx = -n, n
 
@@ -233,29 +267,29 @@ contains
     !IF(MYnum==1) print*,' filtering = ',time,istp,dfHK(istp)
 
     do ng = 1, ngrids
-       dfVars(ng)%UP		=  dfVars(ng)%UP    + (dfHK(istp) * basic_g(ng)%UP)
-       dfVars(ng)%VP		=  dfVars(ng)%VP    + (dfHK(istp) * basic_g(ng)%VP)
-       dfVars(ng)%WP		=  dfVars(ng)%WP    + (dfHK(istp) * basic_g(ng)%WP)
-       dfVars(ng)%PP		=  dfVars(ng)%PP    + (dfHK(istp) * basic_g(ng)%PP)
-       dfVars(ng)%UC		=  dfVars(ng)%UC    + (dfHK(istp) * basic_g(ng)%UC)
-       dfVars(ng)%VC		=  dfVars(ng)%VC    + (dfHK(istp) * basic_g(ng)%VC)
-       dfVars(ng)%WC		=  dfVars(ng)%WC    + (dfHK(istp) * basic_g(ng)%WC)
-       dfVars(ng)%PC		=  dfVars(ng)%PC    + (dfHK(istp) * basic_g(ng)%PC)
-       dfVars(ng)%THP		=  dfVars(ng)%THP   + (dfHK(istp) * basic_g(ng)%THP)
-       dfVars(ng)%RTP		=  dfVars(ng)%RTP   + (dfHK(istp) * basic_g(ng)%RTP)
-       dfVars(ng)%THETA	=  dfVars(ng)%THETA + (dfHK(istp) * basic_g(ng)%THETA)
-       dfVars(ng)%RV		=  dfVars(ng)%RV    + (dfHK(istp) * basic_g(ng)%RV)
+       dfVars(ng)%UP=  dfVars(ng)%UP    + (dfHK(istp) * oneBasicFields%UP)
+       dfVars(ng)%VP=  dfVars(ng)%VP    + (dfHK(istp) * oneBasicFields%VP)
+       dfVars(ng)%WP=  dfVars(ng)%WP    + (dfHK(istp) * oneBasicFields%WP)
+       dfVars(ng)%PP=  dfVars(ng)%PP    + (dfHK(istp) * oneBasicFields%PP)
+       dfVars(ng)%UC=  dfVars(ng)%UC    + (dfHK(istp) * oneBasicFields%UC)
+       dfVars(ng)%VC=  dfVars(ng)%VC    + (dfHK(istp) * oneBasicFields%VC)
+       dfVars(ng)%WC=  dfVars(ng)%WC    + (dfHK(istp) * oneBasicFields%WC)
+       dfVars(ng)%PC=  dfVars(ng)%PC    + (dfHK(istp) * oneBasicFields%PC)
+       dfVars(ng)%THP=  dfVars(ng)%THP   + (dfHK(istp) * oneBasicFields%THP)
+       dfVars(ng)%RTP=  dfVars(ng)%RTP   + (dfHK(istp) * oneBasicFields%RTP)
+       dfVars(ng)%THETA=  dfVars(ng)%THETA + (dfHK(istp) * oneBasicFields%THETA)
+       dfVars(ng)%RV=  dfVars(ng)%RV    + (dfHK(istp) * oneBasicFields%RV)
     end do
 
     if(time .ne. 0.0 .and. mod(begtime+dtlongn(1), (timeWindowDF/2.0)) .lt. dtlongn(1) .and. writeTimeDF .eq. 0)then
        writeTimeDF = begtime
        writeStpDF = istp
-       IF(MYNUM==1)then
+       if(MYNUM==1)then
           ng=1
           print*,'================================================================'
           print*, 'saving fields @time(h)=',time,begtime
-          print*, 'max min U V = ', maxval(basic_g(ng)%UP),minval(basic_g(ng)%UP)&
-               ,maxval(basic_g(ng)%VP),minval(basic_g(ng)%vP)
+          print*, 'max min U V = ', maxval(oneBasicFields%UP),minval(oneBasicFields%UP)&
+               ,maxval(oneBasicFields%VP),minval(oneBasicFields%vP)
           call flush(6)
           print*,'================================================================'
        endif
@@ -266,35 +300,35 @@ contains
     if(time .ne. 0.0 .and. mod(begtime, timeWindowDF) .lt. dtlongn(1) .and. writeTimeDF .ne. 0)then
 
        call loadNodeFields_digFilt(fileName)
-       IF(MYNUM==1)then
+       if(MYNUM==1)then
           ng=1
           print*,'================================================================'
           print*, 'loading fields @time(h)=',time,begtime
-          print*, 'max min U V = ', maxval(basic_g(ng)%UP),minval(basic_g(ng)%UP)&
-               ,maxval(basic_g(ng)%VP),minval(basic_g(ng)%vP)
+          print*, 'max min U V = ', maxval(oneBasicFields%UP),minval(oneBasicFields%UP)&
+               ,maxval(oneBasicFields%VP),minval(oneBasicFields%vP)
           call flush(6)
        endif
 
        do ng = 1, ngrids
-          basic_g(ng)%UP       	= dfVars(ng)%UP
-          basic_g(ng)%VP       	= dfVars(ng)%VP
-          basic_g(ng)%WP       	= dfVars(ng)%WP
-          basic_g(ng)%PP       	= dfVars(ng)%PP
-          basic_g(ng)%UC       	= dfVars(ng)%UC
-          basic_g(ng)%VC       	= dfVars(ng)%VC
-          basic_g(ng)%WC       	= dfVars(ng)%WC
-          basic_g(ng)%PC		= dfVars(ng)%PC
-          basic_g(ng)%THP		= dfVars(ng)%THP
-          basic_g(ng)%RTP 	= dfVars(ng)%RTP
-          basic_g(ng)%THETA	= dfVars(ng)%THETA
-          basic_g(ng)%RV       	= dfVars(ng)%RV
+          oneBasicFields%UP       = dfVars(ng)%UP
+          oneBasicFields%VP       = dfVars(ng)%VP
+          oneBasicFields%WP       = dfVars(ng)%WP
+          oneBasicFields%PP       = dfVars(ng)%PP
+          oneBasicFields%UC       = dfVars(ng)%UC
+          oneBasicFields%VC       = dfVars(ng)%VC
+          oneBasicFields%WC       = dfVars(ng)%WC
+          oneBasicFields%PC= dfVars(ng)%PC
+          oneBasicFields%THP= dfVars(ng)%THP
+          oneBasicFields%RTP = dfVars(ng)%RTP
+          oneBasicFields%THETA= dfVars(ng)%THETA
+          oneBasicFields%RV       = dfVars(ng)%RV
        end do
 
-       IF(MYNUM==1)then
+       if(MYNUM==1)then
           ng=1
           print*, 'filtering fields @time(h)=',time,begtime
-          print*, 'max min U V = ', maxval(basic_g(ng)%UP),minval(basic_g(ng)%UP)&
-               ,maxval(basic_g(ng)%VP),minval(basic_g(ng)%vP)
+          print*, 'max min U V = ', maxval(oneBasicFields%UP),minval(oneBasicFields%UP)&
+               ,maxval(oneBasicFields%VP),minval(oneBasicFields%vP)
           print*,'================================================================'
           call flush(6)
        endif
@@ -312,22 +346,6 @@ contains
   !--(DMK)-------------------------------------------------------------------
 
   subroutine saveNodeFields_digFilt(fileName)
-
-    use node_mod, only: mchnum, nmachs, mynum
-
-    use mem_grid, only: &
-         time, iyear1, imonth1, idate1, itime1, ngrids
-
-    use grid_dims, only: &
-         maxgrds
-
-    use var_tables, only: &
-         num_var, &
-         vtab_r
-
-    use ReadBcst, only: &
-         LocalSizesAndDisp
-
 
     character(len=*), intent(out) :: fileName
 
@@ -432,22 +450,6 @@ contains
   end subroutine saveNodeFields_digFilt
   !--(DMK)-------------------------------------------------------------------
   subroutine loadNodeFields_digFilt(fileName)
-
-    use node_mod, only: mchnum, nmachs, mynum
-
-    use mem_grid, only: &
-         time, iyear1, imonth1, idate1, itime1, ngrids
-
-    use grid_dims, only: &
-         maxgrds
-
-    use var_tables, only: &
-         num_var, &
-         vtab_r
-
-    use ReadBcst, only: &
-         LocalSizesAndDisp
-
 
     character(len=*), intent(in) :: fileName
 
@@ -556,14 +558,6 @@ contains
   subroutine OpenNodeWrite_digFilt(iUnit, time, iyear1, imonth1, idate1, &
        itime1, maxgrds, ng, mchnum, nmachs, fileName)
 
-    use ModDateUtils, only: &
-         date_add_to
-
-    use io_params,only: &
-         hfilout
-
-    implicit none
-
     integer, intent(in) :: iUnit
     real,    intent(in) :: time
     integer, intent(in) :: iyear1
@@ -631,9 +625,6 @@ contains
 
   !--(DMK)-------------------------------------------------------------------
   subroutine CloseNodeWrite_digFilt(iUnit)
-
-    implicit none
-
     integer, intent(in) :: iUnit
 
     close (iUnit)
@@ -646,9 +637,6 @@ contains
 
   !--(DMK)-------------------------------------------------------------------
   subroutine nodeWrite_digFilt(iUnit, field, LocalSize)
-
-    implicit none
-
     integer, intent(in) :: iUnit
     real,    intent(in) :: field(LocalSize)
     integer, intent(in) :: LocalSize
@@ -663,9 +651,6 @@ contains
 
   !--(DMK)-------------------------------------------------------------------
   subroutine writeField_digFilt(iUnit, field, LocalSize)
-
-    implicit none
-
     integer, intent(in) :: iUnit
     real,    intent(in) :: field(LocalSize)
     integer, intent(in) :: LocalSize
@@ -678,9 +663,6 @@ contains
 
   !--(DMK)-------------------------------------------------------------------
   subroutine nodeRead_digFilt(iUnit, field)
-
-    implicit none
-
     integer, intent(in) :: iUnit
     real,    intent(inout) :: field(*)
 
@@ -694,9 +676,6 @@ contains
 
   !--(DMK)-------------------------------------------------------------------
   subroutine readField_digFilt(iUnit, field)
-
-    implicit none
-
     integer, intent(in) :: iUnit
     real,    intent(inout) :: field(*)
 
