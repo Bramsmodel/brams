@@ -877,7 +877,7 @@ ModRadvc.o : $(MODEL)/ModRadvc.f90  mem_grid.o mem_scratch.o \
 	rm -f $(<F:.f90=.f90)
 
 ModRadvcRK.o : $(MODEL)/ModRadvcRK.f90 grid_dims.o mem_tend.o \
-	mem_grid.o mem_basic.o mem_chem1.o mem_stilt.o \
+	mem_grid.o ModBasicFields.o mem_chem1.o mem_stilt.o \
 	ModParallelEnvironment.o ModGrid.o ModMessageSet.o \
 	node_mod.o parlibf.o ModScalarTable.o ModRexev.o 
 	@cp -f $< $(<F:.f90=.f90)

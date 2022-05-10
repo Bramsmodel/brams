@@ -25,6 +25,10 @@ module ModAdvectc_rk
   ! differs only on the type of these two formal arguments at
   ! the interface
 
+  use ModBasicFields, only: &
+       DeepCopyToBasicFields, &
+       DeepCopyFromBasicFields
+       
   use ModRexev, only : &
        prep_lnthetv
   
@@ -33,7 +37,6 @@ module ModAdvectc_rk
   use mem_grid, only: ngrid, grid_g, dtlt, if_adap, jdim, time, &
        zt, zm, dzm, dzt, hw4,itopo,pd_or_mnt_constraint,order_h,order_v
 
-  use mem_basic, only: basic_g
   use mem_chem1, only: nspecies_transported
   use mem_stilt, only: stilt_g,iexev
   use ModParallelEnvironment, only: MsgDump
@@ -559,6 +562,8 @@ contains
     character(len=*), parameter :: h="**(advectc_rk)**"
     character(len=8) :: str(10)
 
+    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+    
     if (dumpLocal) then
        call MsgDump(h//" starts with varn="//trim(varn))
     end if
@@ -646,8 +651,8 @@ contains
        ks=0
 
        call mf_wind(mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,itopo,hw4,jdim,dzt,dzm  &
-            ,basic_g(ngrid)%uc,basic_g(ngrid)%vc,basic_g(ngrid)%wc              &
-            ,basic_g(ngrid)%dn0,basic_g(ngrid)%dn0u,basic_g(ngrid)%dn0v&
+            ,oneGrid%Basic%uc,oneGrid%Basic%vc,oneGrid%Basic%wc              &
+            ,oneGrid%Basic%dn0,oneGrid%Basic%dn0u,oneGrid%Basic%dn0v&
             ,grid_g(ngrid)%dxt,grid_g(ngrid)%dxu,grid_g(ngrid)%dxv     &
             ,grid_g(ngrid)%dyt,grid_g(ngrid)%dyu,grid_g(ngrid)%dyv     &
             ,grid_g(ngrid)%rtgt,grid_g(ngrid)%rtgu,grid_g(ngrid)%rtgv  &
@@ -661,7 +666,7 @@ contains
        end if
 
        call advect_ws_pointer_rank1(oneGrid,mzp,mxp,myp,ia,iz,ja,jz &
-            ,basic_g(ngrid)%uc &! field being advected
+            ,oneGrid%Basic%uc &! field being advected
             ,vt3da    & ! uc*dn0u*fmapui*rtgu = rhou*U
             ,vt3db    & ! similar for v
             ,vt3dc    & ! similar for sigma_dot
@@ -682,8 +687,8 @@ contains
        ks=0
 
        call mf_wind(mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,itopo,hw4,jdim,dzt,dzm  &
-            ,basic_g(ngrid)%uc,basic_g(ngrid)%vc,basic_g(ngrid)%wc              &
-            ,basic_g(ngrid)%dn0,basic_g(ngrid)%dn0u,basic_g(ngrid)%dn0v&
+            ,oneGrid%Basic%uc,oneGrid%Basic%vc,oneGrid%Basic%wc              &
+            ,oneGrid%Basic%dn0,oneGrid%Basic%dn0u,oneGrid%Basic%dn0v&
             ,grid_g(ngrid)%dxt,grid_g(ngrid)%dxu,grid_g(ngrid)%dxv     &
             ,grid_g(ngrid)%dyt,grid_g(ngrid)%dyu,grid_g(ngrid)%dyv     &
             ,grid_g(ngrid)%rtgt,grid_g(ngrid)%rtgu,grid_g(ngrid)%rtgv  &
@@ -697,7 +702,7 @@ contains
        end if
 
        call advect_ws_pointer_rank1(oneGrid,mzp,mxp,myp,ia,iz,ja,jz,&
-            basic_g(ngrid)%vc &
+            oneGrid%Basic%vc &
             ,vt3da    & ! uc*dn0u*fmapui*rtgu = rhou*V
             ,vt3db    & ! similar for v
             ,vt3dc    & ! similar for sigma_dot
@@ -719,8 +724,8 @@ contains
        ks=1
 
        call mf_wind(mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,itopo,hw4,jdim,dzt,dzm  &
-            ,basic_g(ngrid)%uc,basic_g(ngrid)%vc,basic_g(ngrid)%wc              &
-            ,basic_g(ngrid)%dn0,basic_g(ngrid)%dn0u,basic_g(ngrid)%dn0v&
+            ,oneGrid%Basic%uc,oneGrid%Basic%vc,oneGrid%Basic%wc              &
+            ,oneGrid%Basic%dn0,oneGrid%Basic%dn0u,oneGrid%Basic%dn0v&
             ,grid_g(ngrid)%dxt,grid_g(ngrid)%dxu,grid_g(ngrid)%dxv     &
             ,grid_g(ngrid)%dyt,grid_g(ngrid)%dyu,grid_g(ngrid)%dyv     &
             ,grid_g(ngrid)%rtgt,grid_g(ngrid)%rtgu,grid_g(ngrid)%rtgv  &
@@ -734,7 +739,7 @@ contains
        end if
 
        call advect_ws_pointer_rank1(oneGrid,mzp,mxp,myp,ia,iz,ja,jz,&
-            basic_g(ngrid)%wc &
+            oneGrid%Basic%wc &
             ,vt3da    & ! uc*dn0u*fmapui*rtgu = rhou*W
             ,vt3db    & ! similar for v
             ,vt3dc    & ! similar for sigma_dot
@@ -769,12 +774,12 @@ contains
           do j = 1,myp
              do i = 1,mxp
                 do k = 1,mzp
-                   vt3da(k,i,j) = (basic_g(ngrid)%up(k,i,j)  &
-                        + basic_g(ngrid)%uc(k,i,j)) * 0.5
-                   vt3db(k,i,j) = (basic_g(ngrid)%vp(k,i,j)  &
-                        + basic_g(ngrid)%vc(k,i,j)) * 0.5
-                   vt3dc(k,i,j) = (basic_g(ngrid)%wp(k,i,j)  &
-                        + basic_g(ngrid)%wc(k,i,j)) * 0.5
+                   vt3da(k,i,j) = (oneGrid%Basic%up(k,i,j)  &
+                        + oneGrid%Basic%uc(k,i,j)) * 0.5
+                   vt3db(k,i,j) = (oneGrid%Basic%vp(k,i,j)  &
+                        + oneGrid%Basic%vc(k,i,j)) * 0.5
+                   vt3dc(k,i,j) = (oneGrid%Basic%wp(k,i,j)  &
+                        + oneGrid%Basic%wc(k,i,j)) * 0.5
                 end do
              end do
           end do
@@ -782,9 +787,9 @@ contains
           do j = 1,myp
              do i = 1,mxp
                 do k = 1,mzp
-                   vt3da(k,i,j) = basic_g(ngrid)%uc(k,i,j)
-                   vt3db(k,i,j) = basic_g(ngrid)%vc(k,i,j)
-                   vt3dc(k,i,j) = basic_g(ngrid)%wc(k,i,j)
+                   vt3da(k,i,j) = oneGrid%Basic%uc(k,i,j)
+                   vt3db(k,i,j) = oneGrid%Basic%vc(k,i,j)
+                   vt3dc(k,i,j) = oneGrid%Basic%wc(k,i,j)
                 end do
              end do
           end do
@@ -797,7 +802,7 @@ contains
        !
        call fa_preptc_rk(mzp,mxp,myp    &
             ,vt3da,vt3db,vt3dc,vt3dh,vt3dj,vt3dk,vctr1,vctr2              &
-            ,basic_g(ngrid)%dn0,basic_g(ngrid)%dn0u,basic_g(ngrid)%dn0v   &
+            ,oneGrid%Basic%dn0,oneGrid%Basic%dn0u,oneGrid%Basic%dn0v   &
             ,grid_g(ngrid)%rtgt,grid_g(ngrid)%rtgu,grid_g(ngrid)%rtgv     &
             ,grid_g(ngrid)%fmapt,grid_g(ngrid)%fmapui,grid_g(ngrid)%fmapvi&
             ,grid_g(ngrid)%f13t,grid_g(ngrid)%f23t                        &
@@ -811,7 +816,7 @@ contains
           end if
 
           call advect_ws_pointer_rank1(oneGrid,mzp,mxp,myp,ia,iz,ja,jz,&
-               basic_g(ngrid)%thc &
+               oneGrid%Basic%thc &
                ,vt3da & ! uc*dn0u*fmapui*rtgu = rhou*U
                ,vt3db & ! similar for v
                ,vt3dc & ! similar for sigma_dot
@@ -825,15 +830,18 @@ contains
                ,dtlt,                &
                'thc'  &
                )
+
+          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+    
           return
        endif !endif of varn .eq. 'THETAIL'
 
        if ( trim(varn) .eq. "THA" .and. iexev == 2) then
           !-get log(thetav)
           call prep_lnthetv(mzp,mxp,myp,ia,iz,ja,jz&
-               ,basic_g(ngrid)%theta &
-               ,basic_g(ngrid)%rtp   &
-               ,basic_g(ngrid)%rv    &
+               ,oneGrid%Basic%theta &
+               ,oneGrid%Basic%rtp   &
+               ,oneGrid%Basic%rv    &
                ,stilt_g(ngrid)%lnthetav)
 
           if (dumpLocal) then
@@ -855,6 +863,9 @@ contains
                'lnthetav' &
                )
 
+          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+    
+
           return
        endif !endif og varn .eq. 'THA'
 
@@ -866,7 +877,7 @@ contains
           end if
 
           call advect_ws_pointer_rank1(oneGrid,mzp,mxp,myp,ia,iz,ja,jz&
-               ,basic_g(ngrid)%pc & !advected field
+               ,oneGrid%Basic%pc & !advected field
                ,vt3da & ! uc*dn0u*fmapui*rtgu = rhou*U
                ,vt3db & ! similar for v
                ,vt3dc & ! similar for sigma_dot
@@ -880,6 +891,9 @@ contains
                ,dtlt,                &
                'pc' &
                )
+
+          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+    
           return
        endif !endif og varn .eq. 'PI'
 
@@ -976,7 +990,13 @@ contains
        call fatal_error(h//" deallocate mfz_wind fails with stat="//&
             trim(adjustl(str(1))))
     end if
+
+    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+    
   end subroutine advectc_rk
+
+
+  
 
   subroutine mf_wind(m1,m2,m3,ia,iz,ja,jz,izu,jzv,itopo, hw4, jdim, dzt, dzm,&
        uc,vc,wc,dn0,dn0u,dn0v,                                 &
