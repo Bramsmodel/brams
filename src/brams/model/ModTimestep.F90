@@ -43,7 +43,9 @@ module ModTimestep
        PostSendRecvMsgs, &
        WaitSendRecvMsgs
 
-  use ModAcoust, only: acoustic_new
+  use ModAcoust, only: &
+       acoustic_new, &
+       buoyancy
 
   use ModGrid, only: &
        Grid
@@ -614,7 +616,9 @@ contains
     call hadvance(1, oneGrid%Basic, oneGrid%AveBasic)
     !  Buoyancy term for w equation
     !----------------------------------------
-    call BUOYANCY( tend%wt )
+    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+    call buoyancy(tend%wt, oneGrid%Basic)
+    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
     !  Acoustic small timesteps
     !----------------------------------------

@@ -65,7 +65,8 @@ module ModTimestepRK
          acoustic_new,            &
          init_div_damping_coeff,  &
          deallocate_alpha_div,    &
-         apply_div_damping
+         apply_div_damping, &
+         buoyancy
 
     use ModGrid, only: &
          Grid
@@ -671,7 +672,9 @@ contains
 
        !  Buoyancy term for w equation
        !----------------------------------------
-       call BUOYANCY( tend%wt_rk )
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+       call buoyancy(tend%wt_rk, oneGrid%Basic)
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
        if (dumpLocal) then
           call MsgDump(h//" starts exchanging borders of tend%tht_rk")

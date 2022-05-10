@@ -554,7 +554,7 @@ ModTimestep.o : $(MODEL)/ModTimestep.F90 mem_basic.o mem_cuparm.o optical.o \
 	mem_turb.o mem_varinit.o micphys.o node_mod.o shcu_vars_const.o \
 	machine_arq.o rad_driv.o cup_grell3.o digitalFilter.o ModRtimi.o \
 	ChemSourcesDriver.o ChemDryDepDriver.o chemistry.o ModTimeStamp.o ModGrid.o \
-	raco.o module_rams_microphysics_2M.o mic_thompson_driver.o module_wind_farm.o \
+	ModAcoust.o module_rams_microphysics_2M.o mic_thompson_driver.o module_wind_farm.o \
         seasalt.o MatrixDriver.o rtm_driver.o ModRadvcRK.o $(JULES_OBJ_SFCLYR) \
 	ModMessageSet.o modIau.o  ModRbnd.o ModRadvc.o ModTurbK.o ModDiffuse.o \
 	ModRexev.o ModRThrm.o ModCoriolis.o $(UTILS_INCS)/tsNames.h
@@ -567,7 +567,7 @@ ModTimestepRK.o : $(MODEL)/ModTimestepRK.F90 ModTimestep.o ModBasicFields.o mem_
 	mem_turb.o mem_varinit.o micphys.o node_mod.o shcu_vars_const.o \
 	machine_arq.o rad_driv.o cup_grell3.o digitalFilter.o\
 	ChemSourcesDriver.o ChemDryDepDriver.o chemistry.o ModTimeStamp.o ModGrid.o \
-	raco.o ModRThrm.o module_rams_microphysics_2M.o mic_thompson_driver.o\
+	ModAcoust.o ModRThrm.o module_rams_microphysics_2M.o mic_thompson_driver.o\
         seasalt.o MatrixDriver.o rtm_driver.o ModRadvcRK.o modIau.o leaf3_ocean_only.o ModRbnd.o \
 	$(JULES_OBJ_SFCLYR)  ModRadvc.o ModMonotonicAdvection.o utilsMod.o ModRtimi.o \
 	ModMessageSet.o ModTurbK.o ModDiffuse.o ModRexev.o ModRThrm.o \
@@ -850,7 +850,7 @@ nest_feed.o : $(NESTING)/nest_feed.f90  mem_grid.o
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-raco.o : $(MODEL)/raco.f90  mem_basic.o mem_grid.o mem_scratch.o \
+ModAcoust.o : $(MODEL)/ModAcoust.f90  ModBasicFields.o mem_grid.o mem_scratch.o \
 	mem_tend.o micphys.o node_mod.o rconstants.o \
 	ModGrid.o ModMessageSet.o ModParallelEnvironment.o raco_adap.o \
 	$(UTILS_INCS)/tsNames.h  $(UTILS_INCS)/constants.h

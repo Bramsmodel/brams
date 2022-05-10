@@ -11,11 +11,14 @@
 
 
 module ModAcoust
-  use mem_basic,only : &
-       basic_g
+  use ModBasicFields, only: &
+       BasicFields
 
-  use mem_tend, only :&
-       tend
+  use rconstants, only : &
+       cv, &
+       rgas, &
+       rocv, & 
+       gg
 
   use mem_grid, only : &
        distim, &
@@ -44,17 +47,29 @@ module ModAcoust
        zt, &
        ztop
 
+  use node_mod, only: &
+       mzp, &
+       mxp, &
+       myp, &
+       ia, &
+       iz, &
+       ja, &
+       jz, &
+       mynum
+
+  use micphys , only: &
+       level
+
+  use mem_tend, only :&
+       tend
+
+
   use mem_scratch, only : &
        scratch, &
        vctr11, &
        vctr12, &
        vctr2, &
        vctr5
-
-  use rconstants, only : &
-       cv, &
-       rgas, &
-       rocv 
 
   use ref_sounding, only : &
        u01dn, &
@@ -82,7 +97,8 @@ module ModAcoust
   public :: init_div_damping_coeff
   public :: deallocate_alpha_div
   public :: apply_div_damping
-
+  public :: buoyancy
+  
   !- divergence damping coefficient [m^2/s];
   !- defined as a 3d field to optionally reduce it over steep orography
   real, allocatable, target :: alpha_div(:,:,:)
@@ -173,7 +189,7 @@ contains
           acog(mzp,i,j) = vctr11(nzp) * (vctr12(nzp) + vctr12(nz))
 
           !srf - bug-fix 04092012
-	  acof(mzp,i,j) = -vctr11(nzp) * (vctr12(nzp) + vctr12(nz))
+          acof(mzp,i,j) = -vctr11(nzp) * (vctr12(nzp) + vctr12(nz))
 
           do k = 2,mzp-1
              acoaa(k,i,j) = acoc(k,i,j) * acog(k,i,j)
@@ -890,7 +906,7 @@ contains
 
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(acoustic_new)**"
-    
+
     ia = OneGrid%NodeDims%ia
     iz = OneGrid%NodeDims%iz
     ja = OneGrid%NodeDims%ja
@@ -910,7 +926,7 @@ contains
     end if
     scr2=0.0
 
-    
+
     if ( ( dyncore_flag == 0 ) .or. ( dyncore_flag == 1 ) ) then
 
        if ( if_adap == 0) then
@@ -919,10 +935,10 @@ contains
                mzp,mxp,myp, &
                ia, iz, izu, ja, jz, jzv,               &
                nnacoust_loc,  &
-               basic_g(ngrid)%dn0,basic_g(ngrid)%pi0,  &
-               basic_g(ngrid)%th0,basic_g(ngrid)%up,  &
-               basic_g(ngrid)%vp,basic_g(ngrid)%wp,  &
-               basic_g(ngrid)%pp,  &
+               oneGrid%Basic%dn0,oneGrid%Basic%pi0,  &
+               oneGrid%Basic%th0,oneGrid%Basic%up,  &
+               oneGrid%Basic%vp,oneGrid%Basic%wp,  &
+               oneGrid%Basic%pp,  &
                tend%ut,tend%vt,tend%wt,tend%pt,  &
                grid_g(ngrid)%topt,grid_g(ngrid)%topu,  &
                grid_g(ngrid)%topv,grid_g(ngrid)%rtgt,  &
@@ -945,11 +961,11 @@ contains
                ,scratch%vt3dd        ,scratch%vt3de       &
                ,scratch%vt3df        ,scratch%vt3dg       &
                ,scratch%vt3dh        ,scratch%vt2da       &
-               ,basic_g(ngrid)%dn0   ,basic_g(ngrid)%pi0  &
-               ,basic_g(ngrid)%th0   ,basic_g(ngrid)%up   &
-               ,basic_g(ngrid)%vp    ,basic_g(ngrid)%wp   &
-               ,basic_g(ngrid)%pp    ,tend%ut	       &
-               ,tend%vt              ,tend%wt	       &
+               ,oneGrid%Basic%dn0   ,oneGrid%Basic%pi0  &
+               ,oneGrid%Basic%th0   ,oneGrid%Basic%up   &
+               ,oneGrid%Basic%vp    ,oneGrid%Basic%wp   &
+               ,oneGrid%Basic%pp    ,tend%ut       &
+               ,tend%vt              ,tend%wt       &
                ,tend%pt              ,grid_g(ngrid)%dxu   &
                ,grid_g(ngrid)%dyv    ,grid_g(ngrid)%fmapu &
                ,grid_g(ngrid)%fmapvi ,grid_g(ngrid)%dxt   &
@@ -957,7 +973,7 @@ contains
                ,grid_g(ngrid)%aru    ,grid_g(ngrid)%arv   &
                ,grid_g(ngrid)%arw    ,grid_g(ngrid)%volt  &
                ,grid_g(ngrid)%volu   ,grid_g(ngrid)%volv  &
-               ,grid_g(ngrid)%volw  		       )
+               ,grid_g(ngrid)%volw         )
 
        endif
 
@@ -970,12 +986,12 @@ contains
             mzp,mxp,myp, &
             ia, iz, izu, ja, jz, jzv,               &
             nnacoust_loc,   &
-            basic_g(ngrid)%dn0, basic_g(ngrid)%pi0,  &
-            basic_g(ngrid)%th0,                      &
-	    basic_g(ngrid)%uc, basic_g(ngrid)%vc,    &
-	    basic_g(ngrid)%wc, basic_g(ngrid)%pc,    &
+            oneGrid%Basic%dn0, oneGrid%Basic%pi0,  &
+            oneGrid%Basic%th0,                      &
+            oneGrid%Basic%uc, oneGrid%Basic%vc,    &
+            oneGrid%Basic%wc, oneGrid%Basic%pc,    &
             tend%ut_rk, tend%vt_rk,            &
-	    tend%wt_rk, tend%pt_rk,            &
+            tend%wt_rk, tend%pt_rk,            &
             grid_g(ngrid)%topt, grid_g(ngrid)%topu,  &
             grid_g(ngrid)%topv, grid_g(ngrid)%rtgt,  &
             grid_g(ngrid)%rtgu, grid_g(ngrid)%f13u,  &
@@ -1033,11 +1049,11 @@ contains
     integer, intent(in) :: ia
     integer, intent(in) :: iz
     integer, intent(in) :: izu
-    
+
     integer, intent(in) :: ja
     integer, intent(in) :: jz
     integer, intent(in) :: jzv
-    
+
     integer, intent(in) :: nnacoust_loc  ! number of small time steps
 
     real, intent(in) :: dn0(mzp,mxp,myp)
@@ -1185,13 +1201,13 @@ contains
              end if
 
              ! starts div ghost zone update
-             
+
              call PostSendRecvMsgs(&
                   OneGrid%AcoustNewDivSend, &
                   OneGrid%AcoustNewDivRecv)
 
              ! overlap computation of pp_minus_div with communication of div at inner points
-             
+
              ! as proposed in Wicker, Skamarock (2002) (?) divergence damping is
              ! used in an approximated form by adding the following term to the pressure:
              do j = ja, jz
@@ -1204,13 +1220,13 @@ contains
              end do
 
              ! waits for div ghost zone update
-             
+
              call WaitSendRecvMsgs(&
                   OneGrid%AcoustNewDivSend, &
                   OneGrid%AcoustNewDivRecv)
 
              ! complete pp_minus_div computation at ghost zone
-             
+
              do j = 1, ja-1
                 do i = 1, mxp
                    do k = 1, mzp
@@ -1434,22 +1450,22 @@ contains
     mxp = OneGrid%NodeDims%mxp
     myp = OneGrid%NodeDims%myp
     mzp = OneGrid%NodeDims%mzp
-    
+
     allocate(delta_h_x_at_u(mxp, myp), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" allocate delta_h_x_at_u fails with stat="//&
             trim(adjustl(str(1))))
     end if
-    
+
     allocate(delta_h_y_at_v(mxp, myp), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" allocate delta_h_y_at_v fails with stat="//&
             trim(adjustl(str(1))))
     end if
-    
-    
+
+
     limit_alpha_div_by_slope_stability = .true.
 
     div_damp_strength =  0.1   !MB: might be a namelist-parameter (?)
@@ -1536,21 +1552,21 @@ contains
          OneGrid%AcoustNewAlphaSend, &
          OneGrid%AcoustNewAlphaRecv)
 
-    
+
     deallocate(delta_h_x_at_u, stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" deallocate delta_h_x_at_u fails with stat="//&
             trim(adjustl(str(1))))
     end if
-    
+
     deallocate(delta_h_y_at_v, stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" deallocate delta_h_y_at_v fails with stat="//&
             trim(adjustl(str(1))))
     end if
-    
+
 
   end subroutine init_div_damping_coeff
 
@@ -1562,214 +1578,196 @@ contains
 
   end subroutine deallocate_alpha_div
 
+
+
+
+  !-------------------------------------------------------
+
+  subroutine get_wind_div_v2(m1,m2,m3,ia,iz,ja,jz,izu,jzv &
+       ,up,vp,wp,flxu,flxv,flxw,div  &
+       ,rtgt,rtgu,dxu,rtgv          &
+       ,dyv,f13t,f23t,fmapui,fmapvi,fmapu,fmapv,dxt,dyt,fmapt)
+
+    ! author: Saulo Freitas
+    integer, intent(in):: m1,m2,m3,ia,iz,ja,jz,izu,jzv
+    real, dimension(m1,m2,m3),intent(in):: up,vp,wp
+    real, dimension(m2,m3)   ,intent(in):: rtgt,rtgu,dxu,rtgv  &
+         ,dyv,f13t,f23t,fmapui,fmapvi&
+         ,fmapu,fmapv,dxt,dyt,fmapt
+    real, dimension(m1,m2,m3),intent(inout):: flxu,flxv,flxw
+    real, dimension(m1,m2,m3),intent(out):: div
+
+    integer i,j,k,im,jm
+    real dummy,c1x,c1z,c1y
+
+    div=0
+    !print*, "subr. [get_wind_div_v2] ..."
+
+    !- get div_X--------------------------
+    do j = 1,m3
+       do i = 1,m2
+          dummy = rtgu(i,j)  * fmapui(i,j)
+
+          do k = 1,m1
+             flxu(k,i,j) = up(k,i,j)  * dummy
+          enddo
+       enddo
+    enddo
+
+
+    do j = ja,jz
+       do i = ia,izu
+          c1z = 1.0 / rtgt(i,j)
+          c1x = c1z * fmapt(i,j) * dxt(i,j)
+          do k = 2,m1-1
+             div(k,i,j) = c1x * ( flxu(k,i,j) - flxu(k,i-1,j) )
+          enddo
+       enddo
+    enddo
+
+    !- get div_Y --------------------------
+    do j = 1,m3
+       do i = 1,m2
+          dummy = rtgv(i,j)  * fmapvi(i,j)
+
+          do k = 1,m1
+             flxv(k,i,j) = vp(k,i,j)  * dummy
+          enddo
+       enddo
+    enddo
+    do j = ja,jzv
+       do i = ia,iz
+          c1z = 1.0 / rtgt(i,j)
+          c1y = c1z * fmapt(i,j) * dyt(i,j)
+          do k = 2,m1-1
+             div(k,i,j) = c1y * ( flxv(k,i,j) - flxv(k,i,j-1) ) + div(k,i,j)
+          enddo
+       enddo
+    enddo
+
+    !- get div_Z --------------------------
+    if(itopo.eq.0) then
+       do j = 1,m3
+          do i = 1,m2
+             do k = 1,m1-1
+                flxw(k,i,j) = wp(k,i,j)
+             enddo
+          enddo
+       enddo
+    else
+       do j = 1,m3
+          jm = max(j-1,1)
+          do i = 1,m2
+             im = max(i-1,1)
+             do k = 1,m1-1
+                flxw(k,i,j) = wp(k,i,j)  &
+                     + hw4(k) * ((up(k,i ,j) + up(k+1,i ,j)  &
+                     +            up(k,im,j) + up(k+1,im,j)) * f13t(i,j)  &
+                     +           (vp(k,i ,j) + vp(k+1,i ,j)  &
+                     +            vp(k,i,jm) + vp(k+1,i,jm)) * f23t(i,j)  &
+                     )
+             enddo
+          enddo
+       enddo
+    endif
+
+    do j = ja,jz
+       do i = ia,iz
+          c1z = 1.0 / rtgt(i,j)
+
+          do k = 2,m1-2
+             !srf check
+             div(k,i,j) = c1z * dzt(k) * ( flxw(k,i,j) - flxw(k-1,i,j) ) + div(k,i,j)
+             !       div(k,i,j) =       dzt(k) * ( flxw(k,i,j) - flxw(k-1,i,j) ) + div(k,i,j)
+          enddo
+       enddo
+    enddo
+
+    if(jzv /= jz) div(:  , :,jz)=div(   :,: ,jzv)
+    if(izu /= iz) div(:  ,iz,: )=div(   :,izu,: )
+    div(:   , 1,: )=div(   :,ia,: )
+    div(:   ,m2,: )=div(   :,iz,: )
+    div(:   ,: ,1 )=div(   :,: ,ja)
+    div(:   ,: ,m3)=div(   :,: ,jz)
+    div(1   ,: ,: )=div(   2,: ,: )
+    div(m1  ,: ,: )=div(m1-2,: ,: )
+    div(m1-1,: ,: )=div(m1-2,: ,: )
+
+  end subroutine get_wind_div_v2
+
+
+  !******************************************************************************
+
+  subroutine buoyancy (wt, oneBasicFields)
+    !> @brief: buoyancy
+    !! @author:  unknow
+    !! @date:  18/Nov/2015
+    !! @version:  5.2
+    !! @param: mzp,mxp,myp,i0,j0,ia,iz,ja,jz,izu,jzv, wt_ptr
+    !!
+    !! @copyright Under CC-GPL License by INPE/CPTEC
+    !! Please, read @link https://creativecommons.org/licenses/GPL/2.0/legalcode.pt
+    real, intent(inout) :: wt( mzp, mxp, myp )
+    type(BasicFields), pointer, intent(in) :: oneBasicFields 
+
+    call boyanc(mzp,mxp,myp,ia,iz,ja,jz,level   &
+         ,wt                                       &
+         ,oneBasicFields%theta ,oneBasicFields%rtp  &
+         ,oneBasicFields%rv    ,oneBasicFields%th0  &
+         ,mynum                      )
+  end subroutine buoyancy
+
+  !******************************************************************************
+
+
+  subroutine boyanc(m1,m2,m3,ia,iz,ja,jz,level,wt,theta,rtp,rv,th0,mynum)
+    !> @brief: boyancy
+    !! Some remarks about the meaning of the timelevels of the fields:
+    !! in the leapfrog dynamical core, theta and rv are defined at timelevel t.
+    !! In RK they have the same "timelevel-meaning" as uc, vc, wc, pc.
+    !! @author:  unknow
+    !! @date:  18/Nov/2015
+    !! @version:  5.2
+    !! @param: mzp,mxp,myp,i0,j0,ia,iz,ja,jz,izu,jzv, wt
+    !!
+    !! @copyright Under CC-GPL License by INPE/CPTEC
+    !! Please, read @link https://creativecommons.org/licenses/GPL/2.0/legalcode.pt
+    integer, intent(in) :: m1,m2,m3,ia,iz,ja,jz,level,mynum
+    real, dimension(m1,m2,m3),intent(in   ) :: theta,rtp,rv,th0
+    real, dimension(m1,m2,m3),intent(inout) :: wt
+
+    integer, dimension(m2,m3) :: lpw
+    real, dimension(m1,m2,m3) :: vtemp
+    integer :: i,j,k
+
+    lpw(:,:)= 2
+
+    if (level .ge. 1) then
+       do j = ja,jz
+          do i = ia,iz
+             do k = lpw(i,j),m1-1
+                vtemp(k,i,j) = gg * ((theta(k,i,j) * (1. + .61 * rv(k,i,j))  &
+                     - th0(k,i,j)) / th0(k,i,j) - (rtp(k,i,j) - rv(k,i,j)) )
+             enddo
+          enddo
+       enddo
+    else
+       do j = ja,jz
+          do i = ia,iz
+             do k = lpw(i,j),m1-1
+                vtemp(k,i,j) = gg * (theta(k,i,j) / th0(k,i,j) - 1.)
+             enddo
+          enddo
+       enddo
+    endif
+
+    do j = ja,jz
+       do i = ia,iz
+          do k = lpw(i,j),m1-2
+             wt(k,i,j) = wt(k,i,j) + vtemp(k,i,j) + vtemp(k+1,i,j)
+          enddo
+       enddo
+    enddo
+
+  end subroutine boyanc
 end module ModAcoust
-
-
-
-!-------------------------------------------------------
-
-subroutine get_wind_div_v2(m1,m2,m3,ia,iz,ja,jz,izu,jzv &
-     ,up,vp,wp,flxu,flxv,flxw,div  &
-     ,rtgt,rtgu,dxu,rtgv          &
-     ,dyv,f13t,f23t,fmapui,fmapvi,fmapu,fmapv,dxt,dyt,fmapt)
-  use mem_grid, only :       & !intent(in)
-       jdim,                  & !intent(in)
-       hw4,                   & !intent(in)
-       dzm, itopo,dzt         !intent(in)
-
-  ! author: Saulo Freitas
-
-  implicit none
-  integer, intent(in):: m1,m2,m3,ia,iz,ja,jz,izu,jzv
-  real, dimension(m1,m2,m3),intent(in):: up,vp,wp
-  real, dimension(m2,m3)   ,intent(in):: rtgt,rtgu,dxu,rtgv  &
-       ,dyv,f13t,f23t,fmapui,fmapvi&
-       ,fmapu,fmapv,dxt,dyt,fmapt
-  real, dimension(m1,m2,m3),intent(inout):: flxu,flxv,flxw
-  real, dimension(m1,m2,m3),intent(out):: div
-
-  integer i,j,k,im,jm
-  real dummy,c1x,c1z,c1y
-
-  div=0
-  !print*, "subr. [get_wind_div_v2] ..."
-
-  !- get div_X--------------------------
-  do j = 1,m3
-     do i = 1,m2
-    	dummy = rtgu(i,j)  * fmapui(i,j)
-
-    	do k = 1,m1
-    	   flxu(k,i,j) = up(k,i,j)  * dummy
-    	enddo
-     enddo
-  enddo
-
-
-  do j = ja,jz
-     do i = ia,izu
-        c1z = 1.0 / rtgt(i,j)
-        c1x = c1z * fmapt(i,j) * dxt(i,j)
-        do k = 2,m1-1
-           div(k,i,j) = c1x * ( flxu(k,i,j) - flxu(k,i-1,j) )
-    	enddo
-     enddo
-  enddo
-
-  !- get div_Y --------------------------
-  do j = 1,m3
-     do i = 1,m2
-    	dummy = rtgv(i,j)  * fmapvi(i,j)
-
-    	do k = 1,m1
-    	   flxv(k,i,j) = vp(k,i,j)  * dummy
-    	enddo
-     enddo
-  enddo
-  do j = ja,jzv
-     do i = ia,iz
-        c1z = 1.0 / rtgt(i,j)
-        c1y = c1z * fmapt(i,j) * dyt(i,j)
-        do k = 2,m1-1
-           div(k,i,j) = c1y * ( flxv(k,i,j) - flxv(k,i,j-1) ) + div(k,i,j)
-    	enddo
-     enddo
-  enddo
-
-  !- get div_Z --------------------------
-  if(itopo.eq.0) then
-     do j = 1,m3
-        do i = 1,m2
-           do k = 1,m1-1
-              flxw(k,i,j) = wp(k,i,j)
-           enddo
-        enddo
-     enddo
-  else
-     do j = 1,m3
-        jm = max(j-1,1)
-        do i = 1,m2
-           im = max(i-1,1)
-           do k = 1,m1-1
-              flxw(k,i,j) = wp(k,i,j)  &
-                   + hw4(k) * ((up(k,i ,j) + up(k+1,i ,j)  &
-                   +            up(k,im,j) + up(k+1,im,j)) * f13t(i,j)  &
-                   +           (vp(k,i ,j) + vp(k+1,i ,j)  &
-                   +            vp(k,i,jm) + vp(k+1,i,jm)) * f23t(i,j)  &
-                   )
-           enddo
-        enddo
-     enddo
-  endif
-
-  do j = ja,jz
-     do i = ia,iz
-        c1z = 1.0 / rtgt(i,j)
-
-        do k = 2,m1-2
-           !srf check
-           div(k,i,j) = c1z * dzt(k) * ( flxw(k,i,j) - flxw(k-1,i,j) ) + div(k,i,j)
-           !       div(k,i,j) =       dzt(k) * ( flxw(k,i,j) - flxw(k-1,i,j) ) + div(k,i,j)
-        enddo
-     enddo
-  enddo
-
-  if(jzv /= jz) div(:  , :,jz)=div(   :,: ,jzv)
-  if(izu /= iz) div(:  ,iz,: )=div(   :,izu,: )
-  div(:   , 1,: )=div(   :,ia,: )
-  div(:   ,m2,: )=div(   :,iz,: )
-  div(:   ,: ,1 )=div(   :,: ,ja)
-  div(:   ,: ,m3)=div(   :,: ,jz)
-  div(1   ,: ,: )=div(   2,: ,: )
-  div(m1  ,: ,: )=div(m1-2,: ,: )
-  div(m1-1,: ,: )=div(m1-2,: ,: )
-
-end subroutine get_wind_div_v2
-
-
-!******************************************************************************
-
-subroutine buoyancy( wt )
-  !> @brief: buoyancy
-  !! @author:  unknow
-  !! @date:  18/Nov/2015
-  !! @version:  5.2
-  !! @param: mzp,mxp,myp,i0,j0,ia,iz,ja,jz,izu,jzv, wt_ptr
-  !!
-  !! @copyright Under CC-GPL License by INPE/CPTEC
-  !! Please, read @link https://creativecommons.org/licenses/GPL/2.0/legalcode.pt
-  use mem_basic,only: basic_g
-  use mem_grid, only: ngrid
-  use node_mod, only: mzp,mxp,myp,ia,iz,ja,jz,mynum
-  use micphys , only: level
-
-  implicit none
-  real, intent(inout) :: wt( mzp, mxp, myp )
-
-  call boyanc(mzp,mxp,myp,ia,iz,ja,jz,level   &
-       ,wt                                       &
-       ,basic_g(ngrid)%theta ,basic_g(ngrid)%rtp  &
-       ,basic_g(ngrid)%rv    ,basic_g(ngrid)%th0  &
-       ,mynum                      )
-
-
-end subroutine buoyancy
-
-!******************************************************************************
-
-
-subroutine boyanc(m1,m2,m3,ia,iz,ja,jz,level,wt,theta,rtp,rv,th0,mynum)
-  !> @brief: boyancy
-  !! Some remarks about the meaning of the timelevels of the fields:
-  !! in the leapfrog dynamical core, theta and rv are defined at timelevel t.
-  !! In RK they have the same "timelevel-meaning" as uc, vc, wc, pc.
-  !! @author:  unknow
-  !! @date:  18/Nov/2015
-  !! @version:  5.2
-  !! @param: mzp,mxp,myp,i0,j0,ia,iz,ja,jz,izu,jzv, wt
-  !!
-  !! @copyright Under CC-GPL License by INPE/CPTEC
-  !! Please, read @link https://creativecommons.org/licenses/GPL/2.0/legalcode.pt
-
-  use rconstants, only : gg
-
-  implicit none
-
-  integer, intent(in) :: m1,m2,m3,ia,iz,ja,jz,level,mynum
-  real, dimension(m1,m2,m3),intent(in   ) :: theta,rtp,rv,th0
-  real, dimension(m1,m2,m3),intent(inout) :: wt
-
-  integer, dimension(m2,m3) :: lpw
-  real, dimension(m1,m2,m3) :: vtemp
-  integer :: i,j,k
-
-  lpw(:,:)= 2
-
-  if (level .ge. 1) then
-     do j = ja,jz
-        do i = ia,iz
-           do k = lpw(i,j),m1-1
-              vtemp(k,i,j) = gg * ((theta(k,i,j) * (1. + .61 * rv(k,i,j))  &
-                   - th0(k,i,j)) / th0(k,i,j) - (rtp(k,i,j) - rv(k,i,j)) )
-           enddo
-        enddo
-     enddo
-  else
-     do j = ja,jz
-        do i = ia,iz
-           do k = lpw(i,j),m1-1
-              vtemp(k,i,j) = gg * (theta(k,i,j) / th0(k,i,j) - 1.)
-           enddo
-        enddo
-     enddo
-  endif
-
-  do j = ja,jz
-     do i = ia,iz
-        do k = lpw(i,j),m1-2
-           wt(k,i,j) = wt(k,i,j) + vtemp(k,i,j) + vtemp(k+1,i,j)
-        enddo
-     enddo
-  enddo
-
-end subroutine boyanc

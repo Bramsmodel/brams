@@ -145,7 +145,7 @@ OBJ_MOD = \
 	domain_decomp.o \
 	ModParaInit.o \
 	Phys_const.o \
-	raco.o \
+	ModAcoust.o \
 	raco_adap.o \
 	rad_carma.o \
 	rad_driv.o \
