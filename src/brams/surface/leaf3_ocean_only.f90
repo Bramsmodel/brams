@@ -8,6 +8,12 @@
 
 module mod_leaf3_ocean_only
 
+  use ModLeaf3, only: &
+       sfc_fields, &
+       stars, &
+       leaf_bcond, &
+       sfclmcv
+  
   use mem_grid, only:   ngrid,ngrids
   use cuparm_grell3,    only : g3d_g
   use convpar_gf_geos5, only : use_gustiness
@@ -199,18 +205,6 @@ subroutine sub_leaf3_ocean_only(m1,m2,m3,mzg,mzs,np,ia,iz,ja,jz  &
   real, dimension(m2,m3,1) :: patch_rough, ground_rsat
 
   real, parameter :: beta= 1. ,min_ocean=0.1
-
-  INTERFACE
-
-     subroutine sfclmcv(i,j,ustar, tstar, rstar, vels, vels_pat, ups, vps, &
-          gzotheta, patch_area, sflux_u, sflux_v, sflux_w, sflux_t, sflux_r)
-       real, intent(in)    :: ustar, tstar, rstar, vels,vels_pat, ups, vps, &
-            gzotheta, patch_area
-       real, intent(inout) :: sflux_u, sflux_v, sflux_w, sflux_t, sflux_r
-       integer, intent(in) :: i,j
-     end subroutine sfclmcv
-
-  END INTERFACE
 
 
   if(firsttime) then 

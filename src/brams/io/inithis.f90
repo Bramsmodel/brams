@@ -690,6 +690,10 @@ end subroutine prtptr
 
 subroutine sfcinit_hstart()
 
+  use ModLeaf3, only: &
+       vegndvi, &
+       grndvap
+  
   use mem_leaf
   use mem_basic
   use mem_grid

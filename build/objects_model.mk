@@ -67,7 +67,7 @@ OBJ_MOD = \
 	isan_io.o \
 	ke_coms.o \
 	landuse_input.o \
-	leaf3.o \
+	ModLeaf3.o \
 	leaf3_hyd.o \
 	leaf3_init.o \
 	leaf_coms.o \

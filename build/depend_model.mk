@@ -550,7 +550,7 @@ ModMemAlloc.o : $(MEMORY)/ModMemAlloc.F90  extra.o \
 	rm -f $(<F:.f90=.f90)
 
 ModTimestep.o : $(MODEL)/ModTimestep.F90 mem_basic.o mem_cuparm.o optical.o ModGasPart.o \
-	ModOzone.o mem_grid.o mem_leaf.o mem_oda.o mem_radiate.o mem_scalar.o \
+	ModOzone.o mem_grid.o mem_leaf.o mem_oda.o mem_radiate.o mem_scalar.o ModLeaf3.o \
 	mem_turb.o mem_varinit.o micphys.o node_mod.o shcu_vars_const.o \
 	machine_arq.o rad_driv.o cup_grell3.o digitalFilter.o ModRtimi.o \
 	ChemSourcesDriver.o ChemDryDepDriver.o chemistry.o ModTimeStamp.o ModGrid.o \
@@ -563,7 +563,7 @@ ModTimestep.o : $(MODEL)/ModTimestep.F90 mem_basic.o mem_cuparm.o optical.o ModG
 	rm -f $(<F:.f90=.f90)
 
 ModTimestepRK.o : $(MODEL)/ModTimestepRK.F90 ModTimestep.o ModBasicFields.o mem_cuparm.o ModGasPart.o \
-	ModOzone.o mem_grid.o mem_leaf.o mem_oda.o mem_radiate.o mem_scalar.o optical.o \
+	ModOzone.o mem_grid.o mem_leaf.o mem_oda.o mem_radiate.o mem_scalar.o optical.o ModLeaf3.o \
 	mem_turb.o mem_varinit.o micphys.o node_mod.o shcu_vars_const.o \
 	machine_arq.o rad_driv.o cup_grell3.o digitalFilter.o\
 	ChemSourcesDriver.o ChemDryDepDriver.o chemistry.o ModTimeStamp.o ModGrid.o \
@@ -721,7 +721,7 @@ landuse_input.o : $(MKSFC)/landuse_input.f90  mem_mksfc.o rconstants.o
 	rm -f $(<F:.f90=.f90)
 
 
-leaf3.o : $(SURFACE)/leaf3.f90  node_mod.o io_params.o leaf_coms.o  \
+ModLeaf3.o : $(SURFACE)/ModLeaf3.f90  node_mod.o io_params.o leaf_coms.o  \
 	mem_turb.o mem_radiate.o micphys.o \
 	ccatt_start.o \
         mem_basic.o mem_cuparm.o mem_grid.o mem_leaf.o mem_micro.o \
@@ -733,7 +733,7 @@ leaf3.o : $(SURFACE)/leaf3.f90  node_mod.o io_params.o leaf_coms.o  \
 leaf3_ocean_only.o : $(SURFACE)/leaf3_ocean_only.f90  node_mod.o io_params.o  \
         leaf_coms.o  mem_turb.o mem_radiate.o micphys.o \
 	ccatt_start.o mem_basic.o mem_cuparm.o mem_grid.o mem_leaf.o mem_micro.o \
-        mem_scratch.o rconstants.o 
+        mem_scratch.o rconstants.o ModLeaf3.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND_LIGHT) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -744,7 +744,7 @@ leaf3_hyd.o : $(SURFACE)/leaf3_hyd.f90  leaf_coms.o mem_grid.o mem_leaf.o
 	rm -f $(<F:.f90=.f90)
 
 leaf3_init.o : $(SURFACE)/leaf3_init.f90  io_params.o leaf_coms.o \
-	mem_grid.o mem_leaf.o rconstants.o teb_spm_start.o
+	mem_grid.o mem_leaf.o rconstants.o teb_spm_start.o ModLeaf3.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND_LIGHT) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1158,7 +1158,7 @@ carma_driver.o :$(RADIATE)/carma_driver.f90 grid_dims.o \
 	mem_radiate.o mem_scalar.o mem_scratch.o mem_tend.o \
 	micphys.o rad_carma.o rconstants.o ref_sounding.o  \
 	teb_spm_start.o mem_teb_common.o  \
-	ModDateUtils.o mem_scratch1_grell.o
+	ModDateUtils.o mem_scratch1_grell.o ModLeaf3.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1312,7 +1312,7 @@ rhhi.o : $(INIT)/rhhi.f90  mem_basic.o mem_grid.o mem_scratch.o \
 
 inithis.o : $(IO)/inithis.f90  an_header.o io_params.o leaf_coms.o \
 	mem_basic.o mem_grid.o mem_leaf.o mem_scratch.o micphys.o \
-	rconstants.o ref_sounding.o var_tables.o 
+	rconstants.o ref_sounding.o var_tables.o ModLeaf3.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

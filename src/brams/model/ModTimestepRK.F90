@@ -9,6 +9,9 @@
 !############################# Change Log ##################################
 
 module ModTimestepRK
+  
+  use ModLeaf3, only: &
+       sfclyr
 
   use ModOzone, only: &
        ozone
@@ -377,12 +380,16 @@ contains
     !  Surface layer, soil and veggie model
     !----------------------------------------
     if (isfcl<=2) then
-       call SFCLYR(mzp,mxp,myp,ia,iz,ja,jz,ibcon)
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+       call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, oneGrid%Basic)
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 #ifdef JULES
     elseif (isfcl == 5) then
-       if (time==0.) &
-            call SFCLYR      (mzp,mxp,myp,ia,iz,ja,jz,ibcon)
-
+       if (time==0.) then
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+          call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, oneGrid%Basic)
+          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+       end if
        call SFCLYR_JULES(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile)
        !--- this combines the JULES land + LEAF ocean models.
        if (isfcl_ocean == 1) & 

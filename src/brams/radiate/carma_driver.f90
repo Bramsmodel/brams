@@ -1,5 +1,9 @@
 
 module carma_driv
+  
+  use ModLeaf3, only: &
+       sfcrad
+       
   use mem_tend, only: tend ! INTENT(INOUT)
   use mem_radiate, only: &
        ilwrtyp, iswrtyp, &       ! INTENT(IN)
@@ -298,40 +302,6 @@ contains
     real, pointer :: L_EMIS_TOWN, L_ALB_TOWN, L_TS_TOWN, L_G_URBAN
     !
     integer :: ip, i, j
-
-    interface
-
-       subroutine sfcrad(mzg, mzs, ip,                  &
-            soil_energy, soil_water, soil_text,         &
-            sfcwater_energy, sfcwater_depth,            &
-            patch_area, can_temp, veg_temp, leaf_class, &
-            veg_height, veg_fracarea, veg_albedo,       &
-            sfcwater_nlev, rshort, rlong, albedt,       &
-            rlongup, cosz,                              &
-            G_URBAN, ETOWN, ALBTOWN, TSTOWN             )
-         integer, intent(IN) :: mzg, mzs, ip
-         real, intent(IN)    :: soil_energy(mzg)
-         real, intent(IN)    :: soil_water(mzg)
-         real, intent(IN)    :: soil_text(mzg)
-         real, intent(IN)    :: sfcwater_energy(mzs)
-         real, intent(IN)    :: sfcwater_depth(mzs)
-         real, intent(IN)    :: patch_area
-         real, intent(IN)    :: can_temp
-         real, intent(IN)    :: veg_temp
-         real, intent(IN)    :: leaf_class
-         real, intent(IN)    :: veg_height
-         real, intent(IN)    :: veg_fracarea
-         real, intent(IN)    :: veg_albedo
-         real, intent(IN)    :: sfcwater_nlev
-         real, intent(IN)    :: rshort
-         real, intent(IN)    :: rlong
-         real, intent(INOUT) :: albedt
-         real, intent(INOUT) :: rlongup
-         real, intent(IN)    :: cosz
-         real, pointer, optional :: G_URBAN, ETOWN, ALBTOWN, TSTOWN
-       end subroutine sfcrad
-
-    end interface
 
     ! TEB_SPM
     nullify(L_EMIS_TOWN)
