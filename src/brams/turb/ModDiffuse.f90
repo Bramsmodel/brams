@@ -9,11 +9,11 @@ module ModDiffuse
   use ModScalarTable, only:  &
        ScalarTable
 
+  use ModBasicFields, only: &
+       BasicFields
+  
   use mem_tend,  only:    &
        tend                   ! %tket, %epst, %ut, %vt, %wt
-
-  use mem_basic, only:    &
-       basic_g                ! %up (IN), %vp(IN)
 
   use mem_turb, only:     &
        idiffk,            &   ! INTENT(IN)
@@ -90,11 +90,16 @@ module ModDiffuse
        istep,   &
        opt                       ! %ind1_x_a, 
 
+  implicit none
+  
   private
   public :: diffuse_brams31
 
 contains
-  subroutine diffuse_brams31(oneScalarTab, oneScalarTabSize)
+
+
+
+  subroutine diffuse_brams31(oneScalarTab, oneScalarTabSize, oneBasicFields)
 
     ! +-----------------------------------------------------------------+
     ! \     this routine is the subdriver to compute tendencies due to  \
@@ -102,10 +107,9 @@ contains
     ! +-----------------------------------------------------------------+
 
 
-    implicit none
-
     type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
     integer, intent(inout) :: oneScalarTabSize
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
 
     include "constants.h"
 
@@ -129,8 +133,8 @@ contains
 
     call strain(mzp,mxp,myp,ia,iz,ja,jz                       &
          ,ia_1,ja_1,iz1,jz1,jdim                                &
-         ,basic_g(ngrid)%up ,basic_g(ngrid)%vp  &
-         ,basic_g(ngrid)%wp ,scratch%vt3da      &
+         ,oneBasicFields%up ,oneBasicFields%vp  &
+         ,oneBasicFields%wp ,scratch%vt3da      &
          ,scratch%vt3db     ,scratch%vt3dc      &
          ,scratch%vt3dd     ,scratch%vt3de      &
          ,scratch%vt3df     ,scratch%vt3dg      &
@@ -146,9 +150,9 @@ contains
 
 
     call bruvais(mzp,mxp,myp,ia,iz,ja,jz                          &
-         ,basic_g(ngrid)%theta ,basic_g(ngrid)%rtp  &
-         ,basic_g(ngrid)%rv    ,scratch%vt3dp       &
-         ,basic_g(ngrid)%pp    ,basic_g(ngrid)%pi0  &
+         ,oneBasicFields%theta ,oneBasicFields%rtp  &
+         ,oneBasicFields%rv    ,scratch%vt3dp       &
+         ,oneBasicFields%pp    ,oneBasicFields%pi0  &
          ,scratch%vt3dj        ,grid_g(ngrid)%rtgt  &
          ,grid_g(ngrid)%lpw    )
 
@@ -157,7 +161,7 @@ contains
             ,scratch%vt3dh      ,scratch%vt3di      &
             ,scratch%vt3dj      ,scratch%vt3dk      &
             ,scratch%scr1       ,scr2           &
-            ,basic_g(ngrid)%dn0 ,grid_g(ngrid)%rtgt &
+            ,oneBasicFields%dn0 ,grid_g(ngrid)%rtgt &
             ,grid_g(ngrid)%dxt  ,grid_g(ngrid)%dyt  &
             ,grid_g(ngrid)%lpw  ,mynum  )
     endif
@@ -167,9 +171,9 @@ contains
             ,turb_g(ngrid)%tkep   ,tend%tket            &
             ,scratch%vt3dh        ,scratch%vt3di        &
             ,scratch%vt3dj        ,scratch%scr1         &
-            ,grid_g(ngrid)%rtgt   ,basic_g(ngrid)%theta &
-            ,basic_g(ngrid)%dn0   ,basic_g(ngrid)%up    &
-            ,basic_g(ngrid)%vp    ,basic_g(ngrid)%wp    &
+            ,grid_g(ngrid)%rtgt   ,oneBasicFields%theta &
+            ,oneBasicFields%dn0   ,oneBasicFields%up    &
+            ,oneBasicFields%vp    ,oneBasicFields%wp    &
             ,turb_g(ngrid)%sflux_u   ,turb_g(ngrid)%sflux_v    &
             ,turb_g(ngrid)%sflux_w   ,turb_g(ngrid)%sflux_t,vctr34 &
             ,grid_g(ngrid)%lpw       ,grid_g(ngrid)%lpu       &
@@ -180,9 +184,9 @@ contains
        call mxtked(mzp,mxp,myp,ia,iz,ja,jz  &
             ,ibcon,jdim  &
             ,turb_g(ngrid)%tkep   ,tend%tket            &
-            ,basic_g(ngrid)%up    ,basic_g(ngrid)%vp    &
-            ,basic_g(ngrid)%wp    ,basic_g(ngrid)%rtp   &
-            ,basic_g(ngrid)%rv    ,basic_g(ngrid)%theta &
+            ,oneBasicFields%up    ,oneBasicFields%vp    &
+            ,oneBasicFields%wp    ,oneBasicFields%rtp   &
+            ,oneBasicFields%rv    ,oneBasicFields%theta &
             ,scratch%vt3da        ,scratch%vt3dc        &
             ,scratch%vt3dh        ,scratch%vt3dj        &
             ,scratch%scr1         ,scr2             &
@@ -206,7 +210,7 @@ contains
             ,scr2 ,grid_g(ngrid)%rtgt  &
             ,scratch%vt3dd,scratch%vt3de,grid_g(ngrid)%dxt  &
             ,leaf_g(ngrid)%ustar,leaf_g(ngrid)%patch_area &
-            ,grid_g(ngrid)%lpw,basic_g(ngrid)%dn0  )
+            ,grid_g(ngrid)%lpw,oneBasicFields%dn0  )
     endif
     !_STC............................................................
     !_STC Call to subroutine tkeeps for E-eps closure
@@ -221,7 +225,7 @@ contains
             ,scratch%vt3dj,scratch%scr1  &
             ,scr2 ,grid_g(ngrid)%rtgt  &
             ,leaf_g(ngrid)%ustar,leaf_g(ngrid)%patch_area &
-            ,grid_g(ngrid)%lpw,basic_g(ngrid)%dn0  )
+            ,grid_g(ngrid)%lpw,oneBasicFields%dn0  )
     endif
     !_STC..................................................
     !_STC    Note: from subroutines TKESCL, TKEEPS :
@@ -233,15 +237,15 @@ contains
     !_STC............................................................
 
     call klbnd(mzp,mxp,myp,ibcon,jdim  &
-         ,scratch%scr1 ,basic_g(ngrid)%dn0,grid_g(ngrid)%lpw)
+         ,scratch%scr1 ,oneBasicFields%dn0,grid_g(ngrid)%lpw)
     call klbnd(mzp,mxp,myp,ibcon,jdim  &
-         ,scr2 ,basic_g(ngrid)%dn0,grid_g(ngrid)%lpw)
+         ,scr2 ,oneBasicFields%dn0,grid_g(ngrid)%lpw)
     call klbnd(mzp,mxp,myp,ibcon,jdim  &
-         ,scratch%vt3dh,basic_g(ngrid)%dn0,grid_g(ngrid)%lpw)
+         ,scratch%vt3dh,oneBasicFields%dn0,grid_g(ngrid)%lpw)
     !_STC ....... boundary conditions even on Ke diffusion coefficient
     if(idiffk(ngrid) ==  5 .or. idiffk(ngrid) == 6) &
          call klbnd(mzp,mxp,myp,ibcon,jdim  &
-         ,scratch%vt3di,basic_g(ngrid)%dn0,grid_g(ngrid)%lpw)
+         ,scratch%vt3di,oneBasicFields%dn0,grid_g(ngrid)%lpw)
 
     !bob  swap new hkm, vkm, and vkh with past time level:  lagged K's have
     !bob  internal lateral boundary values from neighboring nodes
@@ -268,8 +272,8 @@ contains
 
     call diffvel(mzp,mxp,myp,ia,iz,ja,jz,jdim,ia_1,ja_1             &
          ,ia1,ja1,iz_1,jz_1,iz1,jz1,izu,jzv,idiffk(ngrid)             &
-         ,basic_g(ngrid)%up     ,basic_g(ngrid)%vp      &
-         ,basic_g(ngrid)%wp     ,tend%ut                &
+         ,oneBasicFields%up     ,oneBasicFields%vp      &
+         ,oneBasicFields%wp     ,tend%ut                &
          ,tend%vt               ,tend%wt                &
          ,scratch%vt3da         ,scratch%vt3db          &
          ,scratch%vt3dc         ,scratch%vt3dd          &
@@ -280,8 +284,8 @@ contains
          ,scratch%vt3do         ,grid_g(ngrid)%rtgu     &
          ,grid_g(ngrid)%rtgv    ,grid_g(ngrid)%rtgt     &
          ,turb_g(ngrid)%sflux_u ,turb_g(ngrid)%sflux_v  &
-         ,turb_g(ngrid)%sflux_w ,basic_g(ngrid)%dn0     &
-         ,basic_g(ngrid)%dn0u   ,basic_g(ngrid)%dn0v    &
+         ,turb_g(ngrid)%sflux_w ,oneBasicFields%dn0     &
+         ,oneBasicFields%dn0u   ,oneBasicFields%dn0v    &
          ,scratch%scr1          ,scr2         ,ibcon,mynum)
 
     ! Convert momentum K's to scalar K's, if necessary
@@ -423,7 +427,7 @@ contains
                   ,scratch%vt3dc           ,scratch%vt3dd            &
                   ,scratch%vt3dl           ,scratch%vt3dm            &
                   ,scratch%vt2db           ,grid_g(ngrid)%rtgt     &
-                  ,scratch%vt2da           ,basic_g(ngrid)%dn0   &
+                  ,scratch%vt2da           ,oneBasicFields%dn0   &
                   ,vkh_p                      ,hkh_p                       )
 
              if (oneScalarTab(n)%name == 'EPSP') then

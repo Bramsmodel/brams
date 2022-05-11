@@ -28,7 +28,7 @@ module ModTurbK
 
   use grid_dims, only: &
        nzpmax           !INTENT(in)
- 
+
   use mem_grid, only:     &
        zm,               &     !INTENT(in)
        zt,        &     !INTENT(in)
@@ -80,9 +80,6 @@ module ModTurbK
 
   use mem_tend, only:    &
        tend 
-
-  use mem_basic, only:   &
-       basic_g                !  %up(IN), %vp(IN)
 
   use ModScalarTable, only:  &
        ScalarTable
@@ -145,22 +142,22 @@ module ModTurbK
 
   use ModBasicFields, only: &
        BasicFields
-  
+
   implicit none
 
   private
+  public :: diffuse
   public :: strain
   public :: bruvais
   public :: mxdefm
   public :: klbnd
-  public :: diffuse
-  
+
 contains
 
 
 
 
-  
+
   subroutine diffuse(oneScalarTab, oneScalarTabSize, oneBasicFields)
 
     ! +-----------------------------------------------------------------+

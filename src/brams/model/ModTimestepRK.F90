@@ -538,13 +538,13 @@ contains
 
     !  Sub-grid diffusion terms
     !----------------------------------------
+    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
     if ((if_adap==0) .and. (ihorgrad==2)) then
-       call diffuse_brams31(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
+       call diffuse_brams31(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic)
     else
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call diffuse(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic)
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     endif
+    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
 
