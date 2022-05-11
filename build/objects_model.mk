@@ -405,7 +405,7 @@ OBJ_MOD = \
 	ModPostTypes.o \
 	ModEvaluation.o \
 	modIau.o \
-	leaf3_ocean_only.o \
+	ModLeaf3OceanOnly.o \
 	   CN_utils_mod.o \
    Jin11_osa_mod.o \
    aero.o \
@@ -1161,7 +1161,7 @@ MOD_MOD = \
 	init_out_map_mod.mod \
 	gfdl_cloud_microphys_mod.mod \
 	modIau.mod \
-	leaf3_ocean_only.mod 
+	ModLeaf3OceanOnly.mod 
 
 ifeq ($(NETCDFFDIR),)
 	MOD_MODEL =  netcdf.mod $(MOD_MOD) 

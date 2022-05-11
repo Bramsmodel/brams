@@ -277,7 +277,8 @@ module ModTimestepRK
          ,timeWindowIAU     &
          ,applyIAU
 
-    use mod_leaf3_ocean_only, only: sfclyr_ocean_only
+    use ModLeaf3OceanOnly, only: &
+         sfclyr_ocean_only
 
     use ModAdvectc_rk, only: &
          advectc_rk
@@ -392,8 +393,11 @@ contains
        end if
        call SFCLYR_JULES(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile)
        !--- this combines the JULES land + LEAF ocean models.
-       if (isfcl_ocean == 1) & 
-            call sfclyr_ocean_only  (mzp,mxp,myp,ia,iz,ja,jz,ibcon)
+       if (isfcl_ocean == 1) then
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+          call sfclyr_ocean_only  (mzp,mxp,myp,ia,iz,ja,jz,ibcon, oneGrid%Basic)
+          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+       end if
 
        !if(stepDebug) print *,mynum,SFCLYR_JULES'
 #endif

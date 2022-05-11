@@ -568,7 +568,7 @@ ModTimestepRK.o : $(MODEL)/ModTimestepRK.F90 ModTimestep.o ModBasicFields.o mem_
 	machine_arq.o rad_driv.o cup_grell3.o digitalFilter.o\
 	ChemSourcesDriver.o ChemDryDepDriver.o chemistry.o ModTimeStamp.o ModGrid.o \
 	ModAcoust.o ModRThrm.o module_rams_microphysics_2M.o mic_thompson_driver.o\
-        seasalt.o MatrixDriver.o rtm_driver.o ModRadvcRK.o modIau.o leaf3_ocean_only.o ModRbnd.o \
+        seasalt.o MatrixDriver.o rtm_driver.o ModRadvcRK.o modIau.o ModLeaf3OceanOnly.o ModRbnd.o \
 	$(JULES_OBJ_SFCLYR)  ModRadvc.o ModMonotonicAdvection.o utilsMod.o ModRtimi.o \
 	ModMessageSet.o ModTurbK.o ModDiffuse.o ModRexev.o ModRThrm.o ModWindFarm.o \
 	ModCoriolis.o $(UTILS_INCS)/tsNames.h  $(UTILS_INCS)/constants.h
@@ -730,10 +730,9 @@ ModLeaf3.o : $(SURFACE)/ModLeaf3.f90  node_mod.o io_params.o leaf_coms.o  \
 	$(F_COMMAND_LIGHT) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-leaf3_ocean_only.o : $(SURFACE)/leaf3_ocean_only.f90  node_mod.o io_params.o  \
-        leaf_coms.o  mem_turb.o mem_radiate.o micphys.o \
-	ccatt_start.o mem_basic.o mem_cuparm.o mem_grid.o mem_leaf.o mem_micro.o \
-        mem_scratch.o rconstants.o ModLeaf3.o 
+ModLeaf3OceanOnly.o : $(SURFACE)/ModLeaf3OceanOnly.f90 ModBasicFields.o mem_leaf.o mem_grid.o \
+	mem_cuparm.o mem_micro.o mem_turb.o mem_radiate.o micphys.o io_params.o leaf_coms.o \
+	rconstants.o node_mod.o ccatt_start.o ModLeaf3.o cup_grell3.o ConvPar_GF_GEOS5.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND_LIGHT) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
