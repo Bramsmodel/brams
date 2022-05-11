@@ -1,5 +1,11 @@
 module ModDiffuse
 
+  use ModTurbK, only: &
+       strain, &
+       bruvais, &
+       mxdefm, &
+       klbnd
+  
   use ModScalarTable, only:  &
        ScalarTable
 

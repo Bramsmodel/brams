@@ -541,7 +541,9 @@ contains
     if ((if_adap==0) .and. (ihorgrad==2)) then
        call diffuse_brams31(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
     else
-       call diffuse(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+       call diffuse(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic)
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     endif
 
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12

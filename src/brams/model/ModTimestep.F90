@@ -428,7 +428,9 @@ contains
     if ((if_adap==0) .and. (ihorgrad==2)) then
        call diffuse_brams31(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
     else
-       call diffuse(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+       call diffuse(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic)
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     endif
 
 !!!!!  IF( NNQPARM(ngrid) >=2 .OR. NNSHCU(ngrid)>=2 ) CALL prepare_lsf_OLD(NNQPARM(ngrid), NNSHCU(ngrid),3)

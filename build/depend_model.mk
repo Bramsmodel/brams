@@ -1016,18 +1016,18 @@ ChemDryDepDriver.o : $(MODEL_CHEM)/ChemDryDepDriver.f90 rconstants.o mem_grid.o 
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModTurbK.o : $(TURB)/ModTurbK.f90  ke_coms.o mem_basic.o \
-	mem_grell.o mem_grid.o mem_leaf.o mem_micro.o mem_scratch.o \
-	mem_tend.o mem_turb.o mem_turb_scalar.o micphys.o node_mod.o \
-	rconstants.o var_tables.o mem_stilt.o tkenn.o \
-	ccatt_start.o mem_chem1.o ModMonotonicAdvection.o
+ModTurbK.o : $(TURB)/ModTurbK.f90 mem_scratch.o micphys.o grid_dims.o \
+	mem_grid.o rconstants.o mem_turb.o ModMonotonicAdvection.o \
+	mem_tend.o mem_basic.o ModScalarTable.o mem_leaf.o mem_micro.o \
+	node_mod.o ke_coms.o mem_turb_scalar.o mem_grell.o mem_cuparm.o \
+	mem_chem1.o mem_stilt.o ccatt_start.o ModBasicFields.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
 ModDiffuse.o : $(TURB)/ModDiffuse.f90  ke_coms.o mem_basic.o mem_grid.o \
 	mem_leaf.o mem_micro.o mem_opt_scratch.o mem_scratch.o mem_tend.o \
-	mem_turb.o micphys.o node_mod.o ModScalarTable.o
+	mem_turb.o micphys.o node_mod.o ModScalarTable.o ModTurbK.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1088,7 +1088,7 @@ ModSched.o : $(MODEL)/ModSched.f90  dump.o parlibf.o node_mod.o ReadBcst.o io_pa
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-local_proc.o : $(MODEL)/local_proc.F90 mem_varinit.o mem_cuparm.o grid_dims.o \
+local_proc.o : $(MODEL)/local_proc.F90 mem_varinit.o mem_cuparm.o  \
 	mem_grid.o rconstants.o ref_sounding.o io_params.o mem_stilt.o $(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
