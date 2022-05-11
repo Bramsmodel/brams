@@ -229,8 +229,7 @@ OBJ_MOD = \
 	mem_emiss.o \
 	urban.o \
 	ModGasPart.o \
-	ozone.o \
-	mod_ozone.o \
+	ModOzone.o \
 	chem_isan_coms.o \
 	chem_aobj.o \
 	chem_asgen.o \

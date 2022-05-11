@@ -550,7 +550,7 @@ ModMemAlloc.o : $(MEMORY)/ModMemAlloc.F90  extra.o \
 	rm -f $(<F:.f90=.f90)
 
 ModTimestep.o : $(MODEL)/ModTimestep.F90 mem_basic.o mem_cuparm.o optical.o ModGasPart.o \
-	mem_grid.o mem_leaf.o mem_oda.o mem_radiate.o mem_scalar.o \
+	ModOzone.o mem_grid.o mem_leaf.o mem_oda.o mem_radiate.o mem_scalar.o \
 	mem_turb.o mem_varinit.o micphys.o node_mod.o shcu_vars_const.o \
 	machine_arq.o rad_driv.o cup_grell3.o digitalFilter.o ModRtimi.o \
 	ChemSourcesDriver.o ChemDryDepDriver.o chemistry.o ModTimeStamp.o ModGrid.o \
@@ -563,7 +563,7 @@ ModTimestep.o : $(MODEL)/ModTimestep.F90 mem_basic.o mem_cuparm.o optical.o ModG
 	rm -f $(<F:.f90=.f90)
 
 ModTimestepRK.o : $(MODEL)/ModTimestepRK.F90 ModTimestep.o ModBasicFields.o mem_cuparm.o ModGasPart.o \
-	mem_grid.o mem_leaf.o mem_oda.o mem_radiate.o mem_scalar.o optical.o \
+	ModOzone.o mem_grid.o mem_leaf.o mem_oda.o mem_radiate.o mem_scalar.o optical.o \
 	mem_turb.o mem_varinit.o micphys.o node_mod.o shcu_vars_const.o \
 	machine_arq.o rad_driv.o cup_grell3.o digitalFilter.o\
 	ChemSourcesDriver.o ChemDryDepDriver.o chemistry.o ModTimeStamp.o ModGrid.o \
@@ -760,8 +760,8 @@ ModGasPart.o : $(TEB_SPM)/ModGasPart.f90 mem_grid.o mem_leaf.o ModBasicFields.o 
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ozone.o : $(TEB_SPM)/ozone.f90 mem_grid.o mem_basic.o mem_gaspart.o \
-	mem_radiate.o rconstants.o mod_ozone.o mem_gaspart.o
+ModOzone.o : $(TEB_SPM)/ModOzone.f90 mem_grid.o mem_basic.o mem_gaspart.o \
+	mem_radiate.o rconstants.o mem_gaspart.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1385,11 +1385,6 @@ mem_gaspart.o : $(TEB_SPM)/mem_gaspart.f90 mem_emiss.o var_tables.o
 	rm -f $(<F:.f90=.f90)
 
 mem_emiss.o : $(TEB_SPM)/mem_emiss.f90 ModNamelistFile.o
-	@cp -f $< $(<F:.f90=.f90)
-	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-	rm -f $(<F:.f90=.f90)
-
-mod_ozone.o : $(TEB_SPM)/mod_ozone.f90
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

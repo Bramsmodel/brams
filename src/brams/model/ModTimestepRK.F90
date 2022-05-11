@@ -10,6 +10,9 @@
 
 module ModTimestepRK
 
+  use ModOzone, only: &
+       ozone
+  
   use ModGasPart, only: &
        le_fontes, &
        sources_teb
