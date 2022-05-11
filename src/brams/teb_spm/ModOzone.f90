@@ -10,8 +10,8 @@ module ModOzone
        grid_g,        & ! INTENT(IN)
        zt               ! INTENT(IN)
 
-  use mem_basic, only: &
-       basic_g
+  use ModBasicFields, only: &
+       BasicFields
 
   use mem_gaspart, only: &
        gaspart_g
@@ -68,10 +68,11 @@ contains
 
 
 
-  subroutine ozone(mzp, mxp, myp, ia, iz, ja, jz, ng, deltat)
+  subroutine ozone(mzp, mxp, myp, ia, iz, ja, jz, ng, deltat, oneBasicFields)
     ! Arguments:
     integer, intent(in) :: mzp, mxp, myp, ia, iz, ja, jz, ng
     real, intent(in)    :: deltat
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
 
     call chemistry (mzp, mxp, myp, ia, iz, ja, jz,              &
          gaspart_g(ng)%pno,   gaspart_g(ng)%pno2, &
@@ -81,9 +82,9 @@ contains
          gaspart_g(ng)%prhco, gaspart_g(ng)%pho2, &
          gaspart_g(ng)%po3p,  gaspart_g(ng)%po1d, &
          gaspart_g(ng)%pho,   gaspart_g(ng)%proo, &
-         basic_g(ng)%theta,   basic_g(ng)%dn0,    &
-         basic_g(ng)%pi0,     basic_g(ng)%pp,     &
-         basic_g(ng)%rv,                                 &
+         oneBasicFields%theta,   oneBasicFields%dn0,    &
+         oneBasicFields%pi0,     oneBasicFields%pp,     &
+         oneBasicFields%rv,                                 &
          radiate_g(ng)%cosz,   &
          grid_g(ng)%rtgt,       grid_g(ng)%topma ,    &
          deltat, cpi, cpor, p00, zt,                            &

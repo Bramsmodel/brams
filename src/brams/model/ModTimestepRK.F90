@@ -532,7 +532,9 @@ contains
        !  Update chemistry
        !----------------------------------------
        if (ichemi==1) then
-          call ozone(mzp, mxp, myp, ia, iz, ja, jz, ngrid, dtlt)
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+          call ozone(mzp, mxp, myp, ia, iz, ja, jz, ngrid, dtlt, oneGrid%Basic)
+          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        endif
     endif
 

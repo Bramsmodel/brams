@@ -760,8 +760,8 @@ ModGasPart.o : $(TEB_SPM)/ModGasPart.f90 mem_grid.o mem_leaf.o ModBasicFields.o 
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModOzone.o : $(TEB_SPM)/ModOzone.f90 mem_grid.o mem_basic.o mem_gaspart.o \
-	mem_radiate.o rconstants.o mem_gaspart.o
+ModOzone.o : $(TEB_SPM)/ModOzone.f90 mem_grid.o ModBasicFields.o mem_gaspart.o \
+	mem_radiate.o rconstants.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
