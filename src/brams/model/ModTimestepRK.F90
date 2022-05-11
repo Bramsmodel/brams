@@ -248,7 +248,8 @@ module ModTimestepRK
     use mem_turb, only:    &
          turb_g
 
-    use wind_farm, only: wind_farm_driver,windfarm
+    use ModWindFarm, only: &
+         wind_farm_driver
 
     use optical, only: &
          aodDriver
@@ -900,7 +901,10 @@ contains
     endif
 
     !- windfarm
-    call wind_farm_driver(ngrid,mzp,mxp,myp,ia,iz,ja,jz)
+    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+    call wind_farm_driver(ngrid,mzp,mxp,myp,ia,iz,ja,jz, &
+         oneGrid%Basic)
+    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
     !- apply digital filter
     if (applyDF) then

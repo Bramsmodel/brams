@@ -19,9 +19,6 @@ module ReadBcst
   use mem_aerad, only: &
        nwave
 
-  use mem_basic, only:  &
-       basic_g
-
   use mem_turb,  only:   &
        turb_g, idiffk, xkhkm
 

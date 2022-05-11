@@ -94,7 +94,7 @@ ModBasicFields.o : $(MEMORY)/ModBasicFields.f90 ModNodeDimensions.o \
 	rm -f $(<F:.f90=.f90)
 
 ReadBcst.o : $(MPI)/ReadBcst.f90 mem_grid.o node_mod.o \
-	an_header.o mem_aerad.o mem_basic.o mem_turb.o \
+	an_header.o mem_aerad.o mem_turb.o \
 	mem_globrad.o parlibf.o shcu_vars_const.o \
 	domain_decomp.o \
 	io_params.o isan_coms.o mem_cuparm.o mem_grell_param2.o \
@@ -554,7 +554,7 @@ ModTimestep.o : $(MODEL)/ModTimestep.F90 mem_basic.o mem_cuparm.o optical.o \
 	mem_turb.o mem_varinit.o micphys.o node_mod.o shcu_vars_const.o \
 	machine_arq.o rad_driv.o cup_grell3.o digitalFilter.o ModRtimi.o \
 	ChemSourcesDriver.o ChemDryDepDriver.o chemistry.o ModTimeStamp.o ModGrid.o \
-	ModAcoust.o module_rams_microphysics_2M.o mic_thompson_driver.o module_wind_farm.o \
+	ModAcoust.o module_rams_microphysics_2M.o mic_thompson_driver.o ModWindFarm.o \
         seasalt.o MatrixDriver.o rtm_driver.o ModRadvcRK.o $(JULES_OBJ_SFCLYR) \
 	ModMessageSet.o modIau.o  ModRbnd.o ModRadvc.o ModTurbK.o ModDiffuse.o \
 	ModRexev.o ModRThrm.o ModCoriolis.o $(UTILS_INCS)/tsNames.h
@@ -570,7 +570,7 @@ ModTimestepRK.o : $(MODEL)/ModTimestepRK.F90 ModTimestep.o ModBasicFields.o mem_
 	ModAcoust.o ModRThrm.o module_rams_microphysics_2M.o mic_thompson_driver.o\
         seasalt.o MatrixDriver.o rtm_driver.o ModRadvcRK.o modIau.o leaf3_ocean_only.o ModRbnd.o \
 	$(JULES_OBJ_SFCLYR)  ModRadvc.o ModMonotonicAdvection.o utilsMod.o ModRtimi.o \
-	ModMessageSet.o ModTurbK.o ModDiffuse.o ModRexev.o ModRThrm.o \
+	ModMessageSet.o ModTurbK.o ModDiffuse.o ModRexev.o ModRThrm.o ModWindFarm.o \
 	ModCoriolis.o $(UTILS_INCS)/tsNames.h  $(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
@@ -586,7 +586,7 @@ ModOneProc.o : $(MODEL)/ModOneProc.F90 ModNamelistFile.o ModSched.o \
 	soilMoisture.o teb_spm_start.o mem_teb_vars_const.o var_tables.o \
 	mem_varinit.o ModParaInit.o ModRanlavg.o \
 	grid_dims.o local_proc.o ModTimeStamp.o \
-	node_mod.o mem_radiate.o \
+	node_mod.o mem_radiate.o ModWindFarm.o \
 	mem_scratch.o cup_grell3.o digitalFilter.o \
 	chem1_list.o mem_chem1.o aer1_list.o mem_aer1.o mem_chem1aq.o \
 	mem_plume_chem1.o mem_volc_chem1.o \
@@ -2339,7 +2339,7 @@ module_wind_fitch.o : $(WIND_FARM)/module_wind_fitch.f90
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-module_wind_farm.o: $(WIND_FARM)/module_wind_farm.f90 module_wind_fitch.o mem_grid.o mem_basic.o \
+ModWindFarm.o: $(WIND_FARM)/ModWindFarm.f90 module_wind_fitch.o mem_grid.o ModBasicFields.o \
 	mem_turb.o mem_tend.o rconstants.o ReadBcst.o node_mod.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)

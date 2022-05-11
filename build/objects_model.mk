@@ -389,7 +389,7 @@ OBJ_MOD = \
 	mic_thompson_driver.o\
 	module_mp_thompson.o\
 	module_mp_radar.o \
-	module_wind_farm.o \
+	ModWindFarm.o \
 	module_wind_fitch.o \
 	debugTools.o \
 	ConvPar_GF_GEOS5.o \

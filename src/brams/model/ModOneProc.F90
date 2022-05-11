@@ -239,7 +239,8 @@ module ModOneProc
   use ModTuv, only: initTuv,sw,ns,slabel,ks,kw,wc,wbioStart,wBioEnd !subroutine
   use ModTuvDriver, only: InitTuvDriver
 
-  use wind_Farm, only: StoreNamelistFileAtWindFarm, &
+  use ModWindFarm, only: &
+       StoreNamelistFileAtWindFarm, &
        output_windFarms, &
        windfarm
 
