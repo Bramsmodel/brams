@@ -8,6 +8,10 @@
 
 module ModTimestep
 
+  use ModGasPart, only: &
+       le_fontes, &
+       sources_teb
+  
   use ModCoriolis, only: &
        corlos
 
@@ -699,8 +703,10 @@ contains
        if (isource==1) then
           ! Apply only for last finner grid
           if (ngrid==ngrids) then
+             call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
              call le_fontes(ngrid, mzp, mxp, myp, &
-                  npatch, ia, iz, ja, jz, (time+dtlongn(1)))
+                  npatch, ia, iz, ja, jz, (time+dtlongn(1)), oneGrid%Basic)
+             call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
           endif
        endif
        !EDF

@@ -31,9 +31,13 @@ SUBROUTINE LEAF3_TEB_INTERFACE(             &
      T2M, R2M,                              &
      time, itime1, dpdz, dens               )
 
+  use ModGasPart, only: &
+       emfactor
+  
   USE teb_vars_const
   USE mem_emiss, ONLY: EFSAT, EFSUN, WEEKDAYIN ! INTENT(IN)
 
+  
   IMPLICIT NONE
   ! constants:
   INTEGER, PARAMETER  :: INTEB = 3    ! TEB Vertical dimension

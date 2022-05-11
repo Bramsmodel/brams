@@ -34,6 +34,11 @@ module ModOneProc
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModGasPart, only: &
+       init_conc1, &
+       init_conc2, &
+       init_conc_prev
+  
   use ModSched, only: &
        schedule, &
        dump_schedule, &
