@@ -8,6 +8,11 @@
 
 subroutine MakeSfcFiles()
 
+  use ModNestGeoSst, only: &
+       toptnest, &
+       geonest_file, &
+       fusonest
+  
   use grid_dims, only: &
        nxpmax,         &
        nypmax

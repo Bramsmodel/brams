@@ -129,7 +129,7 @@ OBJ_MOD = \
 	ndvi_read.o \
 	nest_feed.o \
 	nest_filldens.o \
-	nest_geosst.o \
+	ModNestGeoSst.o \
 	nest_intrp.o \
 	nud_analysis.o \
 	nud_read.o \

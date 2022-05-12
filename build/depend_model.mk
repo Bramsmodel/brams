@@ -584,7 +584,7 @@ ModOneProc.o : $(MODEL)/ModOneProc.F90 ModNamelistFile.o ModSched.o ModGasPart.o
 	mem_scalar.o memSoilMoisture.o mem_teb.o mem_teb_common.o micphys.o \
 	ModMonotonicAdvection.o shcu_vars_const.o ModUrbanCanopy.o \
 	soilMoisture.o teb_spm_start.o mem_teb_vars_const.o var_tables.o \
-	mem_varinit.o ModParaInit.o ModRanlavg.o \
+	mem_varinit.o ModParaInit.o ModRanlavg.o ModNestGeoSst.o \
 	grid_dims.o local_proc.o ModTimeStamp.o \
 	node_mod.o mem_radiate.o ModWindFarm.o \
 	mem_scratch.o cup_grell3.o digitalFilter.o \
@@ -778,7 +778,7 @@ ndvi_read.o : $(MKSFC)/ndvi_read.f90  io_params.o mem_grid.o mem_leaf.o \
 	rm -f $(<F:.f90=.f90)
 
 mksfc_driver.o : $(MKSFC)/mksfc_driver.f90 teb_spm_start.o io_params.o \
-	mem_grid.o mem_mksfc.o grid_dims.o node_mod.o
+	mem_grid.o mem_mksfc.o grid_dims.o node_mod.o ModNestGeoSst.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -826,8 +826,9 @@ paral.o : $(MPI)/paral.f90  mem_aerad.o mem_grid.o mem_scratch.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-nest_geosst.o : $(MKSFC)/nest_geosst.f90  io_params.o mem_basic.o node_mod.o \
-	mem_grid.o mem_leaf.o mem_mksfc.o mem_scratch.o memSoilMoisture.o soilMoisture.o \
+ModNestGeoSst.o : $(MKSFC)/ModNestGeoSst.f90 mem_mksfc.o dump.o io_params.o \
+	ModBasicFields.o node_mod.o mem_grid.o mem_leaf.o mem_mksfc.o mem_scratch.o \
+	grid_dims.o ccatt_start.o memSoilMoisture.o soilMoisture.o \
 	$(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)

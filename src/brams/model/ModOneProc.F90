@@ -34,6 +34,9 @@ module ModOneProc
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModNestGeoSst, only: &
+       GeonestNoFile
+  
   use ModUrbanCanopy, only: &
        urb_drag_init
   
@@ -1799,7 +1802,9 @@ contains
        ! Initialize various LEAF variables.
 
        if (ipastin == 0) then
-          call GeonestNoFile(1,ngrids)
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+          call GeonestNoFile(1,ngrids,oneGrid%Basic)
+          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        end if
 
 
