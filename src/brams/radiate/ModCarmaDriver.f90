@@ -1,59 +1,120 @@
+module ModCarmaDriver
 
-module carma_driv
-  
-  use ModLeaf3, only: &
-       sfcrad
-       
-  use mem_tend, only: tend ! INTENT(INOUT)
+  use ModDateUtils, only: &
+       julday
+
+  use rad_carma, only: &
+       radcomp_carma 
+
+  use teb_spm_start, only: &
+       TEB_SPM ! INTENT(IN)
+
+  use mem_teb_common, only: &
+       tebc_g ! INTENT(INOUT)
+
+  use mem_carma, only: &
+       carma_aotMap, &
+       solfac
+
+  use mem_leaf, only: &
+       leaf_g, & ! INTENT(IN)
+       isfcl  !DSM
+
   use mem_radiate, only: &
-       ilwrtyp, iswrtyp, &       ! INTENT(IN)
+       ilwrtyp, &
+       iswrtyp, &       ! INTENT(IN)
        radiate_g,        &       ! INTENT(INOUT)
        radfrq, &                 ! INTENT(IN)
-       ncall_i, prsnz, prsnzp, & ! INTENT(INOUT)
+       ncall_i, &
+       prsnz, &
+       prsnzp, & ! INTENT(INOUT)
        lonrad                    ! INTENT(IN)
-  use mem_micro, only: micro_g,micro_vars ! INTENT(INOUT)
-  use mem_basic, only: basic_g,basic_vars  ! INTENT(INOUT)
+
+  use node_mod, only: &
+       mynum ! INTENT(IN)
+
+  use ModLeaf3, only: &
+       sfcrad
+
+  use mem_tend, only: &
+       tend ! INTENT(INOUT)
+
+  use mem_micro, only: &
+       micro_g, &
+       micro_vars ! INTENT(INOUT)
+
+  use ModBasicFields, only: &
+       BasicFields
+
   use micphys, only: &
-       gnu, level, icloud, irain, ipris, & ! INTENT(IN)
-       isnow, iaggr, igraup, ihail,mcphys_type         ! INTENT(IN)
+       gnu, &
+       level, &
+       icloud, &
+       irain, &
+       ipris, &
+       isnow, &
+       iaggr, &
+       igraup, &
+       ihail, &
+       mcphys_type
 
-  use mem_cuparm, only: cuparm_g, cuparm_vars, nnqparm  ! INTENT(IN)
-  use mem_leaf, only: leaf_g ! INTENT(IN)
+  use mem_cuparm, only: &
+       cuparm_g, &
+       cuparm_vars, &
+       nnqparm  ! INTENT(IN)
+
   use rconstants  , only : &
-       cp,cpor,p00,stefan,cpi,pi180,solar
+       cp, &
+       cpor, &
+       p00, &
+       stefan, &
+       cpi, &
+       pi180, &
+       solar
 
-  use grid_dims, only: nzpmax
+  use grid_dims, only: &
+       nzpmax
 
   use mem_grid, only: &
-       ngrid, time, dtlt, itime1, nzg, nzs, npatch, grid_g, & ! INTENT(IN)
-       nnzp, if_adap, zm, zt, naddsc, imonth1,      & ! INTENT(IN)
-       idate1, iyear1, centlat, centlon, ztop,dzm ,ngrids     ! INTENT(IN)
+       ngrid, &
+       time, &
+       dtlt, &
+       itime1, &
+       nzg, &
+       nzs, &
+       npatch, &
+       grid_g, &
+       nnzp, &
+       if_adap, &
+       zm, &
+       zt, &
+       naddsc, &
+       imonth1, &
+       idate1, &
+       iyear1, &
+       centlat, &
+       centlon, &
+       ztop, &
+       dzm , &
+       ngrids     ! INTENT(IN)
+
   use mem_scratch1_grell, only: &
-       ierr4d,xmb4d,zup5d,clwup5d
+       ierr4d, &
+       xmb4d, &
+       zup5d, &
+       clwup5d
+
+  implicit none
+
   private
-  public carma_driver
+  public :: carma_driver
 
 contains
 
-  subroutine carma_driver(mzp, mxp, myp, ia, iz, ja, jz, mynum)
-
-
-
-    !    USE mem_leaf, ONLY: leaf_g ! INTENT(IN)
-
-
-    use rad_carma, only: radcomp_carma 
-
-    use teb_spm_start, only: TEB_SPM ! INTENT(IN)
-    use mem_teb_common, only: tebc_g ! INTENT(INOUT)
-
-    !    USE rconstants , ONLY : solar
-
-    use mem_carma, only: carma_aotMap,solfac
-
-    implicit none
+  subroutine carma_driver(mzp, mxp, myp, ia, iz, ja, jz, mynum, oneBasicFields)
     ! arguments:
     integer, intent(in) :: mzp, mxp, myp, ia, iz, ja, jz, mynum
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
     ! local variables:
     real :: hranglelocal
     real :: solc
@@ -121,7 +182,7 @@ contains
             radiate_g(ngrid)%rlongup,                               &
             radiate_g(ngrid)%albedt,                                &
             radiate_g(ngrid)%cosz,                                  &
-            hrAngleLocal,                                           &	       
+            hrAngleLocal,                                           &       
             cdec,                                                   &
                                 ! TEB_SPM
             EMIS_TOWN, ALB_TOWN, TS_TOWN, G_URBAN                   )
@@ -151,7 +212,7 @@ contains
             radiate_g(ngrid)%rlongup,                               &
             radiate_g(ngrid)%albedt,                                &
             radiate_g(ngrid)%cosz,                                  &
-            hrAngleLocal,                                           &	       
+            hrAngleLocal,                                           &       
             cdec                                                    )
     endif
 
@@ -162,24 +223,24 @@ contains
 
     !--- get cloud properties         
     !--- alocate arrays for cloud/radiation interaction
-    allocate(lwl(mzp,mxp,myp),ice_frac      (mzp,mxp,myp) &	   
-         ,iwl(mzp,mxp,myp),cloud_fraction(mzp,mxp,myp))	
-    allocate(rain(mxp,myp))						   	
-    !- set zero to the local arrays:				   		
+    allocate(lwl(mzp,mxp,myp),ice_frac      (mzp,mxp,myp) &   
+         ,iwl(mzp,mxp,myp),cloud_fraction(mzp,mxp,myp))
+    allocate(rain(mxp,myp))   
+    !- set zero to the local arrays:   
     cloud_fraction=0.0
     ice_frac =0.0
     rain=0.0
     lwl =0.0
-    iwl =0.0 							   		
+    iwl =0.0    
 
     call  cloud_prop_carma(mzp, mxp, myp, ia, iz, ja, jz &
-                                !-- output  		  
-         ,cloud_fraction	  &
-         ,rain		  &
-         ,lwl		  &
-         ,iwl		  &
-         ,ice_frac		  &
-         )
+                                !-- output    
+         ,cloud_fraction  &
+         ,rain  &
+         ,lwl  &
+         ,iwl  &
+         ,ice_frac,  &
+         oneBasicFields)
 
     !- CARMA Radiation
 
@@ -202,29 +263,29 @@ contains
 
 
     call radcomp_carma(mzp,mxp,myp,ia,iz,ja,jz,solfac  &
-         ,basic_g(ngrid)%theta	   &
-         ,basic_g(ngrid)%pi0	   &
-         ,basic_g(ngrid)%pp	   &
-         ,basic_g(ngrid)%rv	   &
-         ,RAIN,LWL,IWL		   &
-         ,basic_g(ngrid)%dn0	   &
-         ,basic_g(ngrid)%rtp	   &
+         ,oneBasicFields%theta   &
+         ,oneBasicFields%pi0   &
+         ,oneBasicFields%pp   &
+         ,oneBasicFields%rv   &
+         ,RAIN,LWL,IWL   &
+         ,oneBasicFields%dn0   &
+         ,oneBasicFields%rtp   &
          ,radiate_g(ngrid)%fthrd     &
-         ,grid_g(ngrid)%rtgt	   &
-         ,grid_g(ngrid)%f13t	   &
-         ,grid_g(ngrid)%f23t	   &
-         ,grid_g(ngrid)%glat	   &
-         ,grid_g(ngrid)%glon	   &
+         ,grid_g(ngrid)%rtgt   &
+         ,grid_g(ngrid)%f13t   &
+         ,grid_g(ngrid)%f23t   &
+         ,grid_g(ngrid)%glat   &
+         ,grid_g(ngrid)%glon   &
          ,radiate_g(ngrid)%rshort    &
          ,radiate_g(ngrid)%rlong     &
          ,radiate_g(ngrid)%albedt    &
-         ,radiate_g(ngrid)%cosz	   &
+         ,radiate_g(ngrid)%cosz   &
          ,radiate_g(ngrid)%rlongup   &
-         ,mynum			   &
-         ,grid_g(ngrid)%fmapt	   &
+         ,mynum   &
+         ,grid_g(ngrid)%fmapt   &
          ,leaf_g(ngrid)%patch_area   &
-         ,npatch  		   &
-         ,hrAngleLocal		   &
+         ,npatch     &
+         ,hrAngleLocal   &
          ,carma_aotMap(ngrid)%aotMap &
          )
 
@@ -234,8 +295,8 @@ contains
     !     write(mynum+1,*) "max/min rlong ",maxval(radiate_g(ngrid)%rlong),minval(radiate_g(ngrid)%rlong)
     !     write(mynum+1,*) "max/min rshort",maxval(radiate_g(ngrid)%rshort),minval(radiate_g(ngrid)%rshort)
     !     write(mynum+1,*) "max/min fthrd ",maxval(86400.*radiate_g(ngrid)%fthrd ),&
-    !                  		      minval(86400.*radiate_g(ngrid)%fthrd )
-    !     write(mynum+1,*) "max/min theta ",maxval(basic_g(ngrid)%theta),minval(basic_g(ngrid)%theta)
+    !                        minval(86400.*radiate_g(ngrid)%fthrd )
+    !     write(mynum+1,*) "max/min theta ",maxval(oneBasicFields%theta),minval(oneBasicFields%theta)
     !     write(mynum+1,*) "============= radiation-carma ===================="
     !     call flush(mynum+1)
     !    endif
@@ -259,11 +320,6 @@ contains
        EMIS_TOWN, ALB_TOWN, TS_TOWN, G_URBAN                                &
                                 !
        )
-
-    use mem_leaf, only: isfcl  !DSM
-
-    implicit none
-
     ! Arguments:
     integer, intent(IN)      :: TEB_SPM
     integer, intent(IN)      :: imonth1, idate1, iyear1, itime1
@@ -376,12 +432,6 @@ contains
        lonrad, pi180, &
        ia, iz, ja, jz, jday, glat, glon, cosz, solfac, hrangle,&
        cdec)
-
-    use ModDateUtils
-    use mem_radiate, only: radfrq
-    use node_mod, only: mynum ! INTENT(IN)
-
-    implicit none
     ! Arguments:
     integer, intent(IN)  :: imonth1, idate1, iyear1, itime1
     real, intent(IN)     :: time
@@ -428,8 +478,8 @@ contains
     !--(DMK-CCATT-INI)-----------------------------------------------------
     !NER_i - including solar time equation ("eqt" must be defined, it is a new variable)
     eqt = (0.000075 + 0.001868*cos(d0) - 0.032077*sin(d0) - 0.014615*cos(d02) &
-         - 0.040849*sin(d02))*1440/(2*3.141593)	   
-    !NER_f - including solar time equation	
+         - 0.040849*sin(d02))*1440/(2*3.141593)   
+    !NER_f - including solar time equation
 
     dayhr = (time / 3600. + float(itime1/100) + float(mod(itime1,100)) / 60.)+ (radfrq/(2*3600))
     !NER (radfrq/(2*3600)) - rad transfer shift half of radfrq(improving rad tendency representativity)
@@ -448,8 +498,8 @@ contains
           if (lonrad==0)      gglon = centlon(1)
 
           !--(DMK-CCATT-INI)-----------------------------------------------------
-          !NER_i new hour angle calculation		
-          hrangle=((dayhr+(gglon/15.)-(12.-eqt/60.))*15./1.)*3.141593/180.	
+          !NER_i new hour angle calculation
+          hrangle=((dayhr+(gglon/15.)-(12.-eqt/60.))*15./1.)*3.141593/180.
           !--(DMK-CCATT-OLD)-----------------------------------------------------
           !          dayhrr    = mod(dayhr+gglon/15.+24., 24.)
           !          hrangl    = 15.*(dayhrr - 12.)*pi180
@@ -488,7 +538,7 @@ contains
     do j=1,m3
        do i=1,m2
           do k=1,m1
-             ipos=ipos+1	 
+             ipos=ipos+1 
              tend%tht(ipos) = tend%tht(ipos) + radiate_g(ngrid)%fthrd(k,i,j)
           end do
        end do
@@ -503,12 +553,10 @@ contains
        , rain             &
        , lwl             &
        , iwl             &
-       , ice_frac      &
-       )
-
-    implicit none
+       , ice_frac,      &
+       oneBasicFields)
     integer, intent(in) :: m1,m2,m3,ia,iz,ja,jz
-
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
     real, intent(out), dimension(m1,m2,m3) :: cloud_fraction !cloud_fraction
     real, intent(out), dimension(m2,m3   ) :: rain !total rain water 
     real, intent(out), dimension(m1,m2,m3) :: lwl !total cloud liquid water (kg/kg for carma and g/m2 for rrtm)
@@ -575,21 +623,16 @@ contains
           clwupsh   (1:m1,1:m2,1:m3)=0.0 
        endif
     endif
-    ! print*,"=============radiation 0 ==================="
-    ! print*,"max/min theta",maxval(basic_g(ngrid)%theta),minval(basic_g(ngrid)%theta)
-    ! print*,"max/min    pi",maxval(basic_g(ngrid)%pi0),minval(basic_g(ngrid)%pp)
-    ! print*,"=============radiation 0 ==================="
-    ! call flush(6)
 
     do j=ja,jz
        do i=ia,iz
 
           ! evaluate potential temperature and relative humidity
           do k=1,m1
-             picpi = (basic_g(ngrid)%pi0(k,i,j) + basic_g(ngrid)%pp(k,i,j)) * cpi
+             picpi = (oneBasicFields%pi0(k,i,j) + oneBasicFields%pp(k,i,j)) * cpi
              press(k) = p00 * picpi ** cpor
-             temp = basic_g(ngrid)%theta(k,i,j) * picpi 
-             rh(k) =min(1.,max(0.05,basic_g(ngrid)%rv(k,i,j)/rs(press(k),temp)))
+             temp = oneBasicFields%theta(k,i,j) * picpi 
+             rh(k) =min(1.,max(0.05,oneBasicFields%rv(k,i,j)/rs(press(k),temp)))
              !------
              !
              cloud_fraction(k,i,j)  = 0.
@@ -597,7 +640,7 @@ contains
              concld(k)      = 0.
           enddo
           ps    =0.5*(press(1)    +press(2))
-          thetas=0.5*(basic_g(ngrid)%theta(1,i,j)+basic_g(ngrid)%theta(2,i,j))
+          thetas=0.5*(oneBasicFields%theta(1,i,j)+oneBasicFields%theta(2,i,j))
           !print*,"press=",ps,thetas;call flush(6)
           !
           ocnfrac=0.
@@ -689,7 +732,7 @@ contains
           do k=2,m1
              if (press(k) >= premib .and. ocnfrac.gt. 0.01) then
                 ! i think this is done so that dtheta/dp is in units of dg/mb (jjh)
-                dthdp = 100.0*(basic_g(ngrid)%theta(k,i,j) - basic_g(ngrid)%theta(k-1,i,j))*rpdeli(k-1)
+                dthdp = 100.0*(oneBasicFields%theta(k,i,j) - oneBasicFields%theta(k-1,i,j))*rpdeli(k-1)
                 if (dthdp < dthdpmn) then
                    dthdpmn = dthdp
                    kdthdp  = k     ! index of interface of max inversion
@@ -701,7 +744,7 @@ contains
           ! only perform this check if the criteria were not met above
 
           if ( kdthdp .eq. 0 .and. ocnfrac.gt.0.01) then
-             dthdp = 100.0 * (thetas - basic_g(ngrid)%theta(m1,i,j)) / (ps-press(m1))
+             dthdp = 100.0 * (thetas - oneBasicFields%theta(m1,i,j)) / (ps-press(m1))
              if (dthdp < dthdpmn) then
                 dthdpmn = dthdp
                 kdthdp  = m1     ! index of interface of max inversion
@@ -727,7 +770,7 @@ contains
              k = kdthdp     
              kp1 = min(k+1,m1)
              ! note: strat will be zero unless ocnfrac > 0.01
-             strat = min(1.,max(0., ocnfrac * ((basic_g(ngrid)%theta(k700,i,j)-thetas)*0.057-0.5573)))           
+             strat = min(1.,max(0., ocnfrac * ((oneBasicFields%theta(k700,i,j)-thetas)*0.057-0.5573)))           
              !
              ! assign the stratus to the layer just below max inversion
              ! the relative humidity changes so rapidly across the inversion
@@ -834,7 +877,7 @@ contains
        do j = ja,jz
           do i = ia,iz
              do k = 1,m1
-                temp = basic_g(ngrid)%theta(k,i,j)*(basic_g(ngrid)%pp(k,i,j)+basic_g(ngrid)%pi0(k,i,j))*cpi ! air temp (kelvin)
+                temp = oneBasicFields%theta(k,i,j)*(oneBasicFields%pp(k,i,j)+oneBasicFields%pi0(k,i,j))*cpi ! air temp (kelvin)
 
                 if(temp .gt. 253.)then               
                    lwl(k,i,j)=lwl(k,i,j)+ clwup(k,i,j)+  clwupsh(k,i,j)
@@ -875,4 +918,4 @@ contains
 
   end subroutine cloud_prop_carma
 
-end module carma_driv
+end module ModCarmaDriver

@@ -1147,17 +1147,16 @@ opspec.o : $(IO)/opspec.f90  io_params.o mem_cuparm.o teb_spm_start.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rad_driv.o : $(RADIATE)/rad_driv.f90  carma_driver.o rtm_driver.o mem_radiate.o
+rad_driv.o : $(RADIATE)/rad_driv.f90  ModCarmaDriver.o rtm_driver.o \
+	mem_radiate.o ModBasicFields.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-carma_driver.o :$(RADIATE)/carma_driver.f90 grid_dims.o \
-	mem_basic.o mem_grid.o mem_leaf.o mem_micro.o \
-	mem_radiate.o mem_scalar.o mem_scratch.o mem_tend.o \
-	micphys.o rad_carma.o rconstants.o ref_sounding.o  \
-	teb_spm_start.o mem_teb_common.o  \
-	ModDateUtils.o mem_scratch1_grell.o ModLeaf3.o
+ModCarmaDriver.o :$(RADIATE)/ModCarmaDriver.f90 ModDateUtils.o rad_carma.o \
+	teb_spm_start.o mem_teb_common.o mem_carma.o mem_leaf.o mem_radiate.o \
+	node_mod.o ModLeaf3.o mem_tend.o mem_micro.o ModBasicFields.o micphys.o \
+	mem_cuparm.o rconstants.o grid_dims.o mem_grid.o mem_scratch1_grell.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

@@ -74,7 +74,7 @@ OBJ_MOD = \
 	leaf3_teb.o \
 	mem_aerad.o \
 	mem_basic.o \
-	carma_driver.o \
+	ModCarmaDriver.o \
 	mem_carma.o \
 	mem_cuparm.o \
 	mem_cutrans.o \

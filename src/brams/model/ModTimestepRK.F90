@@ -382,7 +382,9 @@ contains
 
     !  Radiation parameterization
     !--------------------------------
-    call RADIATE(mzp,mxp,myp,ia,iz,ja,jz,mynum)
+    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+    call radiate(mzp,mxp,myp,ia,iz,ja,jz,mynum, oneGrid%Basic)
+    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
     !  Surface layer, soil and veggie model
     !----------------------------------------
