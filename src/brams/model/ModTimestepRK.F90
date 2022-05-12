@@ -9,6 +9,9 @@
 !############################# Change Log ##################################
 
 module ModTimestepRK
+
+  use ModUrbanCanopy, only: &
+       urban_canopy
   
   use ModLeaf3, only: &
        sfclyr
@@ -475,7 +478,11 @@ contains
 
     !  Urban canopy parameterization
     !----------------------------------------
-    if (IF_URBAN_CANOPY==1) call urban_canopy()
+    if (IF_URBAN_CANOPY==1) then
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+       call urban_canopy(oneGrid%Basic)
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+    end if
 
     !  Analysis nudging and boundary condition
     !------------------------------------------

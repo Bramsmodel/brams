@@ -557,7 +557,7 @@ ModTimestep.o : $(MODEL)/ModTimestep.F90 mem_basic.o mem_cuparm.o optical.o ModG
 	ModAcoust.o module_rams_microphysics_2M.o mic_thompson_driver.o ModWindFarm.o \
         seasalt.o MatrixDriver.o rtm_driver.o ModRadvcRK.o $(JULES_OBJ_SFCLYR) \
 	ModMessageSet.o modIau.o  ModRbnd.o ModRadvc.o ModTurbK.o ModDiffuse.o \
-	ModRexev.o ModRThrm.o ModCoriolis.o $(UTILS_INCS)/tsNames.h
+	ModUrbanCanopy.o ModRexev.o ModRThrm.o ModCoriolis.o $(UTILS_INCS)/tsNames.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -571,7 +571,7 @@ ModTimestepRK.o : $(MODEL)/ModTimestepRK.F90 ModTimestep.o ModBasicFields.o mem_
         seasalt.o MatrixDriver.o rtm_driver.o ModRadvcRK.o modIau.o ModLeaf3OceanOnly.o ModRbnd.o \
 	$(JULES_OBJ_SFCLYR)  ModRadvc.o ModMonotonicAdvection.o utilsMod.o ModRtimi.o \
 	ModMessageSet.o ModTurbK.o ModDiffuse.o ModRexev.o ModRThrm.o ModWindFarm.o \
-	ModCoriolis.o $(UTILS_INCS)/tsNames.h  $(UTILS_INCS)/constants.h
+	ModUrbanCanopy.o ModCoriolis.o $(UTILS_INCS)/tsNames.h  $(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -582,7 +582,7 @@ ModOneProc.o : $(MODEL)/ModOneProc.F90 ModNamelistFile.o ModSched.o ModGasPart.o
 	ccatt_start.o domain_decomp.o isan_coms.o ModBasicFields.o mem_emiss.o \
 	mem_gaspart.o mem_globrad.o mem_grell_param2.o mem_micro.o \
 	mem_scalar.o memSoilMoisture.o mem_teb.o mem_teb_common.o micphys.o \
-	ModMonotonicAdvection.o shcu_vars_const.o \
+	ModMonotonicAdvection.o shcu_vars_const.o ModUrbanCanopy.o \
 	soilMoisture.o teb_spm_start.o mem_teb_vars_const.o var_tables.o \
 	mem_varinit.o ModParaInit.o ModRanlavg.o \
 	grid_dims.o local_proc.o ModTimeStamp.o \
@@ -1053,7 +1053,7 @@ urban.o : $(SURFACE)/urban.f90 mem_teb_vars_const.o
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-urban_canopy.o : $(SURFACE)/urban_canopy.f90  mem_basic.o mem_grid.o \
+ModUrbanCanopy.o : $(SURFACE)/ModUrbanCanopy.f90  ModBasicFields.o mem_grid.o \
 	mem_scratch.o mem_tend.o mem_turb.o node_mod.o mem_grid.o mem_varinit.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)

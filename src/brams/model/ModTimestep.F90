@@ -8,6 +8,9 @@
 
 module ModTimestep
   
+  use ModUrbanCanopy, only: &
+       urban_canopy
+  
   use ModLeaf3, only: &
        sfclyr
   
@@ -403,7 +406,11 @@ contains
 
     !  Urban canopy parameterization
     !----------------------------------------
-    if (IF_URBAN_CANOPY==1) call urban_canopy()
+    if (IF_URBAN_CANOPY==1) then
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+       call urban_canopy(oneGrid%Basic)
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+    end if
 
     !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
     !  call SynchronizedTimeStamp(TS_PHYSICS)

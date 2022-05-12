@@ -34,6 +34,9 @@ module ModOneProc
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModUrbanCanopy, only: &
+       urb_drag_init
+  
   use ModGasPart, only: &
        init_conc1, &
        init_conc2, &
