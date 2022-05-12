@@ -462,7 +462,7 @@ contains
          dfVars,                & ! intent(out) - initializing
          applyDF
 
-    use optical, only: &
+    use ModOptical, only: &
          setOptMemory
 
     use ModEvaluation, only: &

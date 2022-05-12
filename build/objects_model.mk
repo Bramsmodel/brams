@@ -394,7 +394,7 @@ OBJ_MOD = \
 	ConvPar_GF_GEOS5.o \
 	Henrys_Law_cts.o \
 	MAPL_Constants.o \
-	optical.o        \
+	ModOptical.o        \
 	mic_gfdl_driver.o \
 	gfdl_cloud_microphys.o \
 	dam.o \
@@ -1002,7 +1002,7 @@ MOD_MOD = \
 	rrtmg_lw_rad.mod \
 	rrtmg_lw_cldprop.mod \
 	rrtmg_sw_cldprop.mod \
-	optical.mod \
+	ModOptical.mod \
 	rrtm_driv.mod \
 	radiation.mod \
 	extras.mod \

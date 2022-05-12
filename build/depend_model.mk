@@ -544,12 +544,12 @@ ModMemAlloc.o : $(MEMORY)/ModMemAlloc.F90  extra.o \
 	mem_stilt.o mem_chem1.o mem_plume_chem1.o mem_volc_chem1.o \
 	mem_chem1aq.o mem_chemic.o chem_sources.o chem_dry_dep.o carma_fastjx.o \
 	chem1_list.o aer1_list.o chem1aq_list.o	ModDomainDecomp.o \
-	optical.o ModEvaluation.o modIau.o $(JULES_OBJ_MEM)
+	ModOptical.o ModEvaluation.o modIau.o $(JULES_OBJ_MEM)
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModTimestep.o : $(MODEL)/ModTimestep.F90 mem_basic.o mem_cuparm.o optical.o ModGasPart.o \
+ModTimestep.o : $(MODEL)/ModTimestep.F90 mem_basic.o mem_cuparm.o ModOptical.o ModGasPart.o \
 	ModOzone.o mem_grid.o mem_leaf.o mem_oda.o mem_radiate.o mem_scalar.o ModLeaf3.o \
 	ModRstilt.o mem_turb.o mem_varinit.o micphys.o node_mod.o shcu_vars_const.o \
 	machine_arq.o rad_driv.o cup_grell3.o digitalFilter.o ModRtimi.o \
@@ -563,7 +563,7 @@ ModTimestep.o : $(MODEL)/ModTimestep.F90 mem_basic.o mem_cuparm.o optical.o ModG
 	rm -f $(<F:.f90=.f90)
 
 ModTimestepRK.o : $(MODEL)/ModTimestepRK.F90 ModTimestep.o ModBasicFields.o mem_cuparm.o ModGasPart.o \
-	ModOzone.o mem_grid.o mem_leaf.o mem_oda.o mem_radiate.o mem_scalar.o optical.o ModLeaf3.o \
+	ModOzone.o mem_grid.o mem_leaf.o mem_oda.o mem_radiate.o mem_scalar.o ModOptical.o ModLeaf3.o \
 	ModRstilt.o mem_turb.o mem_varinit.o micphys.o node_mod.o shcu_vars_const.o \
 	machine_arq.o rad_driv.o cup_grell3.o digitalFilter.o\
 	ChemSourcesDriver.o ChemDryDepDriver.o chemistry.o ModTimeStamp.o ModGrid.o \
@@ -1168,7 +1168,7 @@ rtm_driver.o : $(RADIATE)/rtm_driver.f90  grid_dims.o \
 	teb_spm_start.o mem_teb_common.o \
 	ModDateUtils.o mem_rrtm.o rrtmg_sw_rad.o rrtmg_lw_rad.o \
 	rrtmg_lw_cldprop.o rrtmg_sw_cldprop.o mem_scratch1_grell.o \
-	optical.o
+	ModOptical.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -2344,8 +2344,9 @@ debugTools.o: $(UTILS_TOOLS)/debugTools.f90 node_mod.o
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-optical.o : $(RADIATE)/optical.f90 mem_grid.o var_tables.o node_mod.o parlibf.o \
-	ReadBcst.o aer1_list.o mem_aer1.o mem_leaf.o  $(UTILS_INCS)/constants.h
+ModOptical.o : $(RADIATE)/ModOptical.f90 mem_grid.o var_tables.o node_mod.o parlibf.o \
+	ReadBcst.o aer1_list.o mem_aer1.o mem_leaf.o  ModBasicFields.o \
+	$(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

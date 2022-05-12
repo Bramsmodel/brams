@@ -568,7 +568,7 @@ contains
                    deltaxn, &
                    deltayn, &
                    zmn
-   use optical, only: &
+   use ModOptical, only: &
                    optProp
 
    use mem_carma, only: &

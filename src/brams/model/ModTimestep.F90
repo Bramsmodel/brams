@@ -241,7 +241,7 @@ module ModTimestep
   use ModWindFarm, only: &
        wind_farm_driver
 
-  use optical, only: &
+  use ModOptical, only: &
        aodDriver
 
   use ModRbnd, only: latbnd, &
@@ -300,7 +300,11 @@ contains
 
     !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
     !  call SynchronizedTimeStamp(TS_DYNAMICS)
-    if (CCATT==1 .and. chemistry >= 1) call aodDriver(mzp,mxp,myp,ia,iz,ja,jz,ngrids)
+    if (CCATT==1 .and. chemistry >= 1) then
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+       call aodDriver(mzp,mxp,myp,ia,iz,ja,jz,ngrids,oneGrid%Basic)
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+    end if
 
     !  Radiation parameterization
     !--------------------------------
