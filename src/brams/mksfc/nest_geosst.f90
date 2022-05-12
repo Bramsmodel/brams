@@ -47,16 +47,16 @@ subroutine toptnest(ngra,ngrb)
         ! Interpolate TOPO from coarser grid:
         call fillscr(1,maxnxp,maxnyp,1,nnxp(icm),nnyp(icm),1,1  &
              ,mksfc_scr1,sfcfile_p(icm)%topt)
-        call eintp(mksfc_scr1,mksfc_scr2,1,maxnxp,maxnyp  &
-             ,1,nnxp(ifm),nnyp(ifm),ifm,2,'t',0,0)
+!!$        call eintp(mksfc_scr1,mksfc_scr2,1,maxnxp,maxnyp  &
+!!$             ,1,nnxp(ifm),nnyp(ifm),ifm,2,'t',0,0)
         call fillvar(1,maxnxp,maxnyp,1,nnxp(ifm),nnyp(ifm),1,1  &
              ,mksfc_scr2,sfcfile_p(ifm)%topt)
 
         ! Interpolate TOPO ZO from coarser grid:
         call fillscr(1,maxnxp,maxnyp,1,nnxp(icm),nnyp(icm),1,1  &
              ,mksfc_scr1,sfcfile_p(icm)%topzo)
-        call eintp(mksfc_scr1,mksfc_scr2,1,maxnxp,maxnyp  &
-             ,1,nnxp(ifm),nnyp(ifm),ifm,2,'t',0,0)
+!!$        call eintp(mksfc_scr1,mksfc_scr2,1,maxnxp,maxnyp  &
+!!$             ,1,nnxp(ifm),nnyp(ifm),ifm,2,'t',0,0)
         call fillvar(1,maxnxp,maxnyp,1,nnxp(ifm),nnyp(ifm),1,1  &
              ,mksfc_scr2,sfcfile_p(ifm)%topzo)
 
@@ -150,8 +150,8 @@ subroutine toptnest(ngra,ngrb)
         call fillscr(1,nxpmax,nypmax,1,nnxp(icm),nnyp(icm),1,1  &
              ,mksfc_scr1,sfcfile_p(icm)%topt)
 
-        call eintp(mksfc_scr1,mksfc_scr2,1,nxpmax,nypmax  &
-             ,1,nnxp(ifm),nnyp(ifm),ifm,2,'t',0,0)
+!!$        call eintp(mksfc_scr1,mksfc_scr2,1,nxpmax,nypmax  &
+!!$             ,1,nnxp(ifm),nnyp(ifm),ifm,2,'t',0,0)
         call fillvar(1,nxpmax,nypmax,1,nnxp(ifm),nnyp(ifm),1,1  &
              ,mksfc_scr2,mksfc_scr1)
 
@@ -326,7 +326,7 @@ subroutine patch_interp(icm,ifm,nc1,nc2,nc3,nc4,nf1,nf2,nf3,nf4 &
         enddo
      enddo
 
-     call fmint2d(icm,ifm,'t',slabc,slabf)
+!!$     call fmint2d(icm,ifm,'t',slabc,slabf)
 
      do j=1,nf3
         do i=1,nf2
@@ -455,8 +455,8 @@ subroutine fusonest(ngra,ngrb)
         ! Interpolate FUSO from coarser grid:
         call fillscr(1,maxnxp,maxnyp,1,nnxp(icm),nnyp(icm),1,1  &
              ,mksfc_scr1,sfcfile_p(icm)%fuso)
-        call eintp(mksfc_scr1,mksfc_scr2,1,maxnxp,maxnyp  &
-             ,1,nnxp(ifm),nnyp(ifm),ifm,2,'t',0,0)
+!!$        call eintp(mksfc_scr1,mksfc_scr2,1,maxnxp,maxnyp  &
+!!$             ,1,nnxp(ifm),nnyp(ifm),ifm,2,'t',0,0)
         call fillvar(1,maxnxp,maxnyp,1,nnxp(ifm),nnyp(ifm),1,1  &
              ,mksfc_scr2,sfcfile_p(ifm)%fuso)
 

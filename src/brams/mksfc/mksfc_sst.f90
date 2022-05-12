@@ -140,8 +140,8 @@ subroutine sstnest(ifm, ivtime)
 
      call fillscr(1, nxpmax, nypmax, 1, nnxp(icm), nnyp(icm), 1, 1,  &
           mksfc_scr1, sfcfile_p(icm)%seatf)
-     call eintp(mksfc_scr1, mksfc_scr2, 1, nxpmax, nypmax, 1,        &
-          nnxp(ifm), nnyp(ifm), ifm, 2, 't', 0, 0)
+!!$     call eintp(mksfc_scr1, mksfc_scr2, 1, nxpmax, nypmax, 1,        &
+!!$          nnxp(ifm), nnyp(ifm), ifm, 2, 't', 0, 0)
      call fillvar(1, nxpmax, nypmax, 1, nnxp(ifm), nnyp(ifm), 1, 1,  &
           mksfc_scr2, sfcfile_p(ifm)%seatf)
 

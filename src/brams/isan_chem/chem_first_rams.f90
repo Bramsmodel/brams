@@ -560,8 +560,8 @@ subroutine fmint4_isan(var1, var2, dn0xc, dn0xf, ifm, icm, vpnt, idwt)
           ,rr_scr1,dn0xc,vpnt,1)
   endif
 
-  call eintp(rr_scr1,rr_scr2,maxiz,maxix,maxiy  &
-       ,nnzp(ifm),nnxp(ifm),nnyp(ifm),ifm,3,vpnt,0,0)
+!!$  call eintp(rr_scr1,rr_scr2,maxiz,maxix,maxiy  &
+!!$       ,nnzp(ifm),nnxp(ifm),nnyp(ifm),ifm,3,vpnt,0,0)
 
   call fillvar(maxiz,maxix,maxiy,nnzp(ifm),nnxp(ifm),nnyp(ifm)  &
        ,1,nnzp(ifm),rr_scr2,var2)
@@ -589,8 +589,8 @@ subroutine fmint4_isan(var1, var2, dn0xc, dn0xf, ifm, icm, vpnt, idwt)
   !  call ezcntr(plt,nnxp(ifm),nnyp(ifm))
 
   !------------------
-  call rtgintrp(nnzp(ifm),nnxp(ifm),nnyp(ifm),var2,rr_vt2da  &
-       ,grid_g(ifm)%topta,ifm,vpnt)
+!!$  call rtgintrp(nnzp(ifm),nnxp(ifm),nnyp(ifm),var2,rr_vt2da  &
+!!$       ,grid_g(ifm)%topta,ifm,vpnt)
   !------------------
 
   ! after rtgint

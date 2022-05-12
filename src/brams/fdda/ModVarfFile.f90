@@ -231,7 +231,7 @@ contains
        !  the 3-D reference state arrays,
        !  and the prognostic atmospheric fields by interpolation.
 
-       call FineMeshRefSound1D(2, ngrids)
+!!$       call FineMeshRefSound1D(2, ngrids)
 
        ! ALF
        lastdate_iv = itotdate_varf(nvarffl)

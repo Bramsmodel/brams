@@ -617,44 +617,44 @@ subroutine vfintrpf(ifm,ifflag)
 
   call fillscr(1,maxnxp,maxnyp,1,nnxp(icm),nnyp(icm),1,1  &
        ,scr1,grid_g(icm)%topt)
-  call eintp(scr1,scr2  &
-       ,1,maxnxp,maxnyp,1,nnxp(ifm),nnyp(ifm),ifm,2,'t',0,0)
+!!$  call eintp(scr1,scr2  &
+!!$       ,1,maxnxp,maxnyp,1,nnxp(ifm),nnyp(ifm),ifm,2,'t',0,0)
   call fillvar(1,maxnxp,maxnyp,1,nnxp(ifm),nnyp(ifm),1,1  &
        ,scr2,scratch%vt2da)
 
-  if (ifflag == 1) then
+!!$  if (ifflag == 1) then
+!!$
+!!$     !     Interpolate varwts
+!!$
+!!$     call fmint4(varinit_g(icm)%varwts   &
+!!$          ,varinit_g(ifm)%varwts   &
+!!$          ,basic_g(icm)%dn0 ,basic_g(ifm)%dn0   &
+!!$          ,scratch%vt2da,ifm,icm,'t',0)
+!!$
+!!$  endif
 
-     !     Interpolate varwts
 
-     call fmint4(varinit_g(icm)%varwts   &
-          ,varinit_g(ifm)%varwts   &
-          ,basic_g(icm)%dn0 ,basic_g(ifm)%dn0   &
-          ,scratch%vt2da,ifm,icm,'t',0)
-
-  endif
-
-
-  if (ifflag == 2) then
-
-     !     Interpolate future level atmospheric variables
-
-     call fmint4(varinit_g(icm)%varuf ,varinit_g(ifm)%varuf   &
-          ,basic_g(icm)%dn0u ,basic_g(ifm)%dn0u   &
-          ,scratch%vt2da,ifm,icm,'u',1)
-     call fmint4(varinit_g(icm)%varvf ,varinit_g(ifm)%varvf   &
-          ,basic_g(icm)%dn0v ,basic_g(ifm)%dn0v   &
-          ,scratch%vt2da,ifm,icm,'v',1)
-     call fmint4(varinit_g(icm)%varpf ,varinit_g(ifm)%varpf   &
-          ,basic_g(icm)%dn0v ,basic_g(ifm)%dn0v   &
-          ,scratch%vt2da,ifm,icm,'t',1)
-     call fmint4(varinit_g(icm)%vartf ,varinit_g(ifm)%vartf   &
-          ,basic_g(icm)%dn0 ,basic_g(ifm)%dn0   &
-          ,scratch%vt2da,ifm,icm,'t',1)
-     call fmint4(varinit_g(icm)%varrf ,varinit_g(ifm)%varrf   &
-          ,basic_g(icm)%dn0 ,basic_g(ifm)%dn0   &
-          ,scratch%vt2da,ifm,icm,'t',1)
-
-  endif
+!!$  if (ifflag == 2) then
+!!$
+!!$     !     Interpolate future level atmospheric variables
+!!$
+!!$     call fmint4(varinit_g(icm)%varuf ,varinit_g(ifm)%varuf   &
+!!$          ,basic_g(icm)%dn0u ,basic_g(ifm)%dn0u   &
+!!$          ,scratch%vt2da,ifm,icm,'u',1)
+!!$     call fmint4(varinit_g(icm)%varvf ,varinit_g(ifm)%varvf   &
+!!$          ,basic_g(icm)%dn0v ,basic_g(ifm)%dn0v   &
+!!$          ,scratch%vt2da,ifm,icm,'v',1)
+!!$     call fmint4(varinit_g(icm)%varpf ,varinit_g(ifm)%varpf   &
+!!$          ,basic_g(icm)%dn0v ,basic_g(ifm)%dn0v   &
+!!$          ,scratch%vt2da,ifm,icm,'t',1)
+!!$     call fmint4(varinit_g(icm)%vartf ,varinit_g(ifm)%vartf   &
+!!$          ,basic_g(icm)%dn0 ,basic_g(ifm)%dn0   &
+!!$          ,scratch%vt2da,ifm,icm,'t',1)
+!!$     call fmint4(varinit_g(icm)%varrf ,varinit_g(ifm)%varrf   &
+!!$          ,basic_g(icm)%dn0 ,basic_g(ifm)%dn0   &
+!!$          ,scratch%vt2da,ifm,icm,'t',1)
+!!$
+!!$  endif
 
   return
 end subroutine vfintrpf
@@ -711,64 +711,64 @@ subroutine VarfIntrp(ifm,ifflag)
 
   call fillscr(1,maxnxp,maxnyp,1,nnxp(icm),nnyp(icm),1,1  &
        ,scr1,grid_g(icm)%topt)
-  call eintp(scr1,scr2  &
-       ,1,maxnxp,maxnyp,1,nnxp(ifm),nnyp(ifm),ifm,2,'t',0,0)
+!!$  call eintp(scr1,scr2  &
+!!$       ,1,maxnxp,maxnyp,1,nnxp(ifm),nnyp(ifm),ifm,2,'t',0,0)
   call fillvar(1,maxnxp,maxnyp,1,nnxp(ifm),nnyp(ifm),1,1  &
        ,scr2,scratch%vt2da)
 
-  if (ifflag == 1) then
-
-     !     Interpolate varwts
-
-     call fmint4(varinit_g(icm)%varwts   &
-          ,varinit_g(ifm)%varwts   &
-          ,basic_g(icm)%dn0 ,basic_g(ifm)%dn0   &
-          ,scratch%vt2da,ifm,icm,'t',0)
-
-!--(DMK-CCATT-INI)-----------------------------------------------------
-!     Interpolate varwts_chem
-      if(chem_assim == 1 ) call fmint4(varinit_g(icm)%varwts_chem   &
-                                       ,varinit_g(ifm)%varwts_chem   &
-                                       ,basic_g(icm)%dn0 ,basic_g(ifm)%dn0   &
-                                       ,scratch%vt2da,ifm,icm,'t',0)
-!--(DMK-CCATT-END)-----------------------------------------------------
-
-  else if (ifflag == 2) then
-
-     !     Interpolate future level atmospheric variables
-
-     call fmint4(varinit_g(icm)%varuf ,varinit_g(ifm)%varuf   &
-          ,basic_g(icm)%dn0u ,basic_g(ifm)%dn0u   &
-          ,scratch%vt2da,ifm,icm,'u',1)
-     call fmint4(varinit_g(icm)%varvf ,varinit_g(ifm)%varvf   &
-          ,basic_g(icm)%dn0v ,basic_g(ifm)%dn0v   &
-          ,scratch%vt2da,ifm,icm,'v',1)
-     call fmint4(varinit_g(icm)%varpf ,varinit_g(ifm)%varpf   &
-          ,basic_g(icm)%dn0v ,basic_g(ifm)%dn0v   &
-          ,scratch%vt2da,ifm,icm,'t',1)
-     call fmint4(varinit_g(icm)%vartf ,varinit_g(ifm)%vartf   &
-          ,basic_g(icm)%dn0 ,basic_g(ifm)%dn0   &
-          ,scratch%vt2da,ifm,icm,'t',1)
-     call fmint4(varinit_g(icm)%varrf ,varinit_g(ifm)%varrf   &
-          ,basic_g(icm)%dn0 ,basic_g(ifm)%dn0   &
-          ,scratch%vt2da,ifm,icm,'t',1)
-
-!--(DMK-CCATT-INI)-----------------------------------------------------
-!     Interpolate future level chemical variables
-     if (chem_assim == 1) then
-        do nspc=1,nspecies
-           if(spc_alloc(fdda,nspc) == 1) then
-              call fmint4(chem1_g(nspc,icm)%sc_pf  &! varinit_g(icm)%varrf 
-       	                  ,chem1_g(nspc,ifm)%sc_pf  &! varinit_g(ifm)%varrf   &
-                          ,basic_g(icm)%dn0   &
-                          ,basic_g(ifm)%dn0   &
-                          ,scratch%vt2da,ifm,icm,'t',1)
-           endif
-        enddo
-     endif
-!--(DMK-CCATT-END)-----------------------------------------------------
-
-  endif
+!!$  if (ifflag == 1) then
+!!$
+!!$     !     Interpolate varwts
+!!$
+!!$     call fmint4(varinit_g(icm)%varwts   &
+!!$          ,varinit_g(ifm)%varwts   &
+!!$          ,basic_g(icm)%dn0 ,basic_g(ifm)%dn0   &
+!!$          ,scratch%vt2da,ifm,icm,'t',0)
+!!$
+!!$!--(DMK-CCATT-INI)-----------------------------------------------------
+!!$!     Interpolate varwts_chem
+!!$      if(chem_assim == 1 ) call fmint4(varinit_g(icm)%varwts_chem   &
+!!$                                       ,varinit_g(ifm)%varwts_chem   &
+!!$                                       ,basic_g(icm)%dn0 ,basic_g(ifm)%dn0   &
+!!$                                       ,scratch%vt2da,ifm,icm,'t',0)
+!!$!--(DMK-CCATT-END)-----------------------------------------------------
+!!$
+!!$  else if (ifflag == 2) then
+!!$
+!!$     !     Interpolate future level atmospheric variables
+!!$
+!!$     call fmint4(varinit_g(icm)%varuf ,varinit_g(ifm)%varuf   &
+!!$          ,basic_g(icm)%dn0u ,basic_g(ifm)%dn0u   &
+!!$          ,scratch%vt2da,ifm,icm,'u',1)
+!!$     call fmint4(varinit_g(icm)%varvf ,varinit_g(ifm)%varvf   &
+!!$          ,basic_g(icm)%dn0v ,basic_g(ifm)%dn0v   &
+!!$          ,scratch%vt2da,ifm,icm,'v',1)
+!!$     call fmint4(varinit_g(icm)%varpf ,varinit_g(ifm)%varpf   &
+!!$          ,basic_g(icm)%dn0v ,basic_g(ifm)%dn0v   &
+!!$          ,scratch%vt2da,ifm,icm,'t',1)
+!!$     call fmint4(varinit_g(icm)%vartf ,varinit_g(ifm)%vartf   &
+!!$          ,basic_g(icm)%dn0 ,basic_g(ifm)%dn0   &
+!!$          ,scratch%vt2da,ifm,icm,'t',1)
+!!$     call fmint4(varinit_g(icm)%varrf ,varinit_g(ifm)%varrf   &
+!!$          ,basic_g(icm)%dn0 ,basic_g(ifm)%dn0   &
+!!$          ,scratch%vt2da,ifm,icm,'t',1)
+!!$
+!!$!--(DMK-CCATT-INI)-----------------------------------------------------
+!!$!     Interpolate future level chemical variables
+!!$     if (chem_assim == 1) then
+!!$        do nspc=1,nspecies
+!!$           if(spc_alloc(fdda,nspc) == 1) then
+!!$              call fmint4(chem1_g(nspc,icm)%sc_pf  &! varinit_g(icm)%varrf 
+!!$       	                  ,chem1_g(nspc,ifm)%sc_pf  &! varinit_g(ifm)%varrf   &
+!!$                          ,basic_g(icm)%dn0   &
+!!$                          ,basic_g(ifm)%dn0   &
+!!$                          ,scratch%vt2da,ifm,icm,'t',1)
+!!$           endif
+!!$        enddo
+!!$     endif
+!!$!--(DMK-CCATT-END)-----------------------------------------------------
+!!$
+!!$  endif
 end subroutine VarfIntrp
 
 !--(DMK-CCATT-INI)-----------------------------------------------------------

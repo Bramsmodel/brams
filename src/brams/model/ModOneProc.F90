@@ -1635,7 +1635,7 @@ contains
           !  the 1-D reference state arrays, the 3-D reference state arrays,
           !  and the prognostic atmospheric fields by interpolation.
 
-          call fmrefs1d(2,ngrids)
+!!$          call fmrefs1d(2,ngrids)
 
           !--(DMK-CCATT-INI)-----------------------------------------------------
        elseif(initial == 2 .or. initial == 4) then
@@ -2101,7 +2101,7 @@ contains
                 
        do ifm = 1,min(ngrids,ngridsh)
           icm = nxtnest(ifm)
-          if (icm  >  0) call fmrefs3d(ifm)
+!!$          if (icm  >  0) call fmrefs3d(ifm)
           call negadj1(mzp,mxp,myp)
        enddo
 
