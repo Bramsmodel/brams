@@ -5,6 +5,9 @@
 !--------------------------------------------------------------------------------!
 module CUPARM_GRELL3
 
+  use ModRstilt, only: &
+       prep_convflx_to_stilt
+  
   use ModNamelistFile, only: namelistFile
 
   use ModMessageSet, only: &

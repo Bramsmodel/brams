@@ -7,6 +7,9 @@
 !###########################################################################
 
 module ModTimestep
+
+  use ModRstilt, only: &
+       prep_advflx_to_stilt
   
   use ModUrbanCanopy, only: &
        urban_canopy
@@ -477,7 +480,11 @@ contains
     !  call SynchronizedTimeStamp(TS_DYNAMICS)
 
     !- STILT-BRAMS coupling (ML)
-    if (imassflx == 1) call prep_advflx_to_stilt(mzp,mxp,myp,ia,iz,ja,jz,ngrid)
+    if (imassflx == 1) then
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+       call prep_advflx_to_stilt(mzp,mxp,myp,ia,iz,ja,jz,ngrid, oneGrid%Basic)
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+    end if
 
     !- large and subgrid scale forcing for shallow and deep cumulus
     !!1  IF(  NNQPARM(ngrid) >=2 .OR. NNSHCU(ngrid)>=2 ) CALL prepare_lsf_OLD(NNQPARM(ngrid), NNSHCU(ngrid),4)

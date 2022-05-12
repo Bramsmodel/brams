@@ -551,7 +551,7 @@ ModMemAlloc.o : $(MEMORY)/ModMemAlloc.F90  extra.o \
 
 ModTimestep.o : $(MODEL)/ModTimestep.F90 mem_basic.o mem_cuparm.o optical.o ModGasPart.o \
 	ModOzone.o mem_grid.o mem_leaf.o mem_oda.o mem_radiate.o mem_scalar.o ModLeaf3.o \
-	mem_turb.o mem_varinit.o micphys.o node_mod.o shcu_vars_const.o \
+	ModRstilt.o mem_turb.o mem_varinit.o micphys.o node_mod.o shcu_vars_const.o \
 	machine_arq.o rad_driv.o cup_grell3.o digitalFilter.o ModRtimi.o \
 	ChemSourcesDriver.o ChemDryDepDriver.o chemistry.o ModTimeStamp.o ModGrid.o \
 	ModAcoust.o module_rams_microphysics_2M.o mic_thompson_driver.o ModWindFarm.o \
@@ -564,7 +564,7 @@ ModTimestep.o : $(MODEL)/ModTimestep.F90 mem_basic.o mem_cuparm.o optical.o ModG
 
 ModTimestepRK.o : $(MODEL)/ModTimestepRK.F90 ModTimestep.o ModBasicFields.o mem_cuparm.o ModGasPart.o \
 	ModOzone.o mem_grid.o mem_leaf.o mem_oda.o mem_radiate.o mem_scalar.o optical.o ModLeaf3.o \
-	mem_turb.o mem_varinit.o micphys.o node_mod.o shcu_vars_const.o \
+	ModRstilt.o mem_turb.o mem_varinit.o micphys.o node_mod.o shcu_vars_const.o \
 	machine_arq.o rad_driv.o cup_grell3.o digitalFilter.o\
 	ChemSourcesDriver.o ChemDryDepDriver.o chemistry.o ModTimeStamp.o ModGrid.o \
 	ModAcoust.o ModRThrm.o module_rams_microphysics_2M.o mic_thompson_driver.o\
@@ -1016,7 +1016,7 @@ ChemDryDepDriver.o : $(MODEL_CHEM)/ChemDryDepDriver.f90 rconstants.o mem_grid.o 
 	rm -f $(<F:.f90=.f90)
 
 ModTurbK.o : $(TURB)/ModTurbK.f90 mem_scratch.o micphys.o grid_dims.o \
-	mem_grid.o rconstants.o mem_turb.o ModMonotonicAdvection.o \
+	ModRstilt.o mem_grid.o rconstants.o mem_turb.o ModMonotonicAdvection.o \
 	mem_tend.o ModScalarTable.o mem_leaf.o mem_micro.o \
 	node_mod.o ke_coms.o mem_turb_scalar.o mem_grell.o mem_cuparm.o \
 	mem_chem1.o mem_stilt.o ccatt_start.o ModBasicFields.o
@@ -1182,7 +1182,7 @@ rshcupar.o : $(CUPARM)/rshcupar.f90  conv_coms.o mem_basic.o \
 	rm -f $(<F:.f90=.f90)
 
 rconv_grell_catt.o : $(CUPARM)/rconv_grell_catt.f90  Phys_const.o \
-	extra.o io_params.o mem_basic.o mem_cuparm.o mem_grell.o \
+	ModRstilt.o extra.o io_params.o mem_basic.o mem_cuparm.o mem_grell.o \
 	mem_grell_param2.o mem_grid.o mem_leaf.o mem_micro.o \
 	mem_scalar.o mem_scratch.o mem_scratch1_grell.o mem_tconv.o \
 	mem_tend.o mem_turb.o micphys.o node_mod.o rconstants.o \
@@ -1228,7 +1228,7 @@ ConvPar_GF_GEOS5.o : $(CUPARM)/ConvPar_GF_GEOS5.F90 module_gate.o  MAPL_Constant
 	rm -f $(<F:.f90=.f90)
 
 cup_grell3.o : $(CUPARM)/cup_grell3.F90  Phys_const.o mem_jules.o \
-	extra.o io_params.o mem_basic.o mem_cuparm.o mem_grell.o \
+	ModRstilt.o extra.o io_params.o mem_basic.o mem_cuparm.o mem_grell.o \
 	mem_grell_param2.o mem_grid.o mem_leaf.o mem_micro.o \
 	mem_scalar.o mem_scratch.o mem_scratch1_grell.o mem_tconv.o \
 	mem_tend.o mem_turb.o micphys.o node_mod.o rconstants.o module_cu_g3.o \
@@ -1753,8 +1753,9 @@ ModRexev.o : $(STILT)/ModRexev.f90 mem_tend.o mem_scratch.o mem_micro.o micphys.
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rstilt.o : $(STILT)/rstilt.f90   mem_basic.o\
-	mem_grid.o mem_scratch.o var_tables.o ModMonotonicAdvection.o
+ModRstilt.o : $(STILT)/ModRstilt.f90 mem_stilt.o mem_scratch1_grell.o ModBasicFields.o \
+	mem_cuparm.o grid_dims.o mem_turb.o mem_grid.o mem_scratch.o var_tables.o \
+	ModMonotonicAdvection.o
 	@cp -f  $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

@@ -6,6 +6,10 @@
 !  Regional Atmospheric Modeling System - RAMS
 !###########################################################################
 module ModTurbK
+
+  use ModRstilt, only: &
+       prepare_timeavg_driver
+  
   use mem_scratch, only: &
        scratch,           &
        vctr11,    &     !INTENT(INOUT)

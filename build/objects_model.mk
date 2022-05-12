@@ -284,7 +284,7 @@ OBJ_MOD = \
 	module_cu_gd_fim.o \
 	cup_grell3.o \
 	ModRexev.o \
-	rstilt.o \
+	ModRstilt.o \
 	turb_constants.o \
 	tkenn.o \
 	digitalFilter.o \
