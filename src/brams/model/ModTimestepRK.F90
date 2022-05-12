@@ -254,8 +254,6 @@ module ModTimestepRK
 
     use rams_microphysics_2M, only: micro_2M_rams60,negadj1_2M_rams60
 
-    use rrtm_driv, only:  rrtm_driver
-
     use mem_radiate, only: &
          ilwrtyp, iswrtyp
 

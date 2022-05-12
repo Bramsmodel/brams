@@ -149,7 +149,7 @@ OBJ_MOD = \
 	raco_adap.o \
 	rad_carma.o \
 	rad_driv.o \
-	rtm_driver.o \
+	ModRrtmDriver.o \
 	ModRadvc.o \
 	ModRadvcRK.o \
 	radvc_adap.o \

@@ -555,7 +555,7 @@ ModTimestep.o : $(MODEL)/ModTimestep.F90 mem_basic.o mem_cuparm.o ModOptical.o M
 	machine_arq.o rad_driv.o cup_grell3.o digitalFilter.o ModRtimi.o \
 	ChemSourcesDriver.o ChemDryDepDriver.o chemistry.o ModTimeStamp.o ModGrid.o \
 	ModAcoust.o module_rams_microphysics_2M.o mic_thompson_driver.o ModWindFarm.o \
-        seasalt.o MatrixDriver.o rtm_driver.o ModRadvcRK.o $(JULES_OBJ_SFCLYR) \
+        seasalt.o MatrixDriver.o ModRadvcRK.o $(JULES_OBJ_SFCLYR) \
 	ModMessageSet.o modIau.o  ModRbnd.o ModRadvc.o ModTurbK.o ModDiffuse.o \
 	ModUrbanCanopy.o ModRexev.o ModRThrm.o ModCoriolis.o $(UTILS_INCS)/tsNames.h
 	@cp -f $< $(<F:.f90=.f90)
@@ -568,7 +568,7 @@ ModTimestepRK.o : $(MODEL)/ModTimestepRK.F90 ModTimestep.o ModBasicFields.o mem_
 	machine_arq.o rad_driv.o cup_grell3.o digitalFilter.o\
 	ChemSourcesDriver.o ChemDryDepDriver.o chemistry.o ModTimeStamp.o ModGrid.o \
 	ModAcoust.o ModRThrm.o module_rams_microphysics_2M.o mic_thompson_driver.o\
-        seasalt.o MatrixDriver.o rtm_driver.o ModRadvcRK.o modIau.o ModLeaf3OceanOnly.o ModRbnd.o \
+        seasalt.o MatrixDriver.o ModRadvcRK.o modIau.o ModLeaf3OceanOnly.o ModRbnd.o \
 	$(JULES_OBJ_SFCLYR)  ModRadvc.o ModMonotonicAdvection.o utilsMod.o ModRtimi.o \
 	ModMessageSet.o ModTurbK.o ModDiffuse.o ModRexev.o ModRThrm.o ModWindFarm.o \
 	ModUrbanCanopy.o ModCoriolis.o $(UTILS_INCS)/tsNames.h  $(UTILS_INCS)/constants.h
@@ -1147,7 +1147,7 @@ opspec.o : $(IO)/opspec.f90  io_params.o mem_cuparm.o teb_spm_start.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rad_driv.o : $(RADIATE)/rad_driv.f90  ModCarmaDriver.o rtm_driver.o \
+rad_driv.o : $(RADIATE)/rad_driv.f90  ModCarmaDriver.o ModRrtmDriver.o \
 	mem_radiate.o ModBasicFields.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
@@ -1161,14 +1161,14 @@ ModCarmaDriver.o :$(RADIATE)/ModCarmaDriver.f90 ModDateUtils.o rad_carma.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rtm_driver.o : $(RADIATE)/rtm_driver.f90  grid_dims.o \
-	mem_basic.o mem_grid.o mem_leaf.o mem_micro.o \
-	mem_radiate.o mem_scalar.o mem_scratch.o mem_tend.o \
-	micphys.o rad_carma.o rconstants.o ref_sounding.o  \
-	teb_spm_start.o mem_teb_common.o \
-	ModDateUtils.o mem_rrtm.o rrtmg_sw_rad.o rrtmg_lw_rad.o \
-	rrtmg_lw_cldprop.o rrtmg_sw_cldprop.o mem_scratch1_grell.o \
-	ModOptical.o
+ModRrtmDriver.o : $(RADIATE)/ModRrtmDriver.f90  ccatt_start.o \
+	mem_basic.o mem_grid.o ModOptical.o mem_carma.o node_mod.o \
+	mem_rrtm.o mem_tend.o rrtmg_sw_rad.o rrtmg_lw_rad.o mcica_subcol_gen_sw.o \
+	mcica_subcol_gen_lw.o grid_dims.o micphys.o mem_cuparm.o mem_micro.o \
+	mem_radiate.o parkind.o rconstants.o parrrsw.o mem_leaf.o \
+	ModDateUtils.o mem_chem1.o ref_sounding.o parrrtm.o \
+	rrtmg_lw_cldprop.o rrtmg_sw_cldprop.o mem_tuv.o mem_grell_param2.o mem_scratch1_grell.o \
+	leaf_coms.o teb_spm_start.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
