@@ -681,7 +681,9 @@ contains
          grid_g(ngrid)%lpu,grid_g(ngrid)%lpv,grid_g(ngrid)%lpw)
 
     if (iexev == 2) then
-       call get_true_air_density(mzp,mxp,myp,ia,iz,ja,jz)
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+       call get_true_air_density(mzp,mxp,myp,ia,iz,ja,jz,oneGrid%Basic)
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     end if
 
     ! Call thermo on the boundaries

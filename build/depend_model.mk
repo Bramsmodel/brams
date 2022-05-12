@@ -1747,8 +1747,8 @@ ModPostUtils.o : $(POST_SRC)/ModPostUtils.f90 ModNamelistFile.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModRexev.o : $(STILT)/ModRexev.f90   mem_tend.o  mem_basic.o\
-	mem_grid.o mem_stilt.o ModRadvc.o ModBasicFields.o
+ModRexev.o : $(STILT)/ModRexev.f90 mem_tend.o mem_scratch.o mem_micro.o micphys.o \
+	rconstants.o mem_grid.o mem_stilt.o ModRadvc.o ModBasicFields.o 
 	@cp -f  $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

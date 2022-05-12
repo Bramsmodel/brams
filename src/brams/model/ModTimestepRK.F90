@@ -881,7 +881,9 @@ contains
          nzp, mxp, myp, jdim, oneGrid%Basic, oneGrid%AveBasic)
 
     if (iexev == 2) then
-       call get_true_air_density(mzp,mxp,myp,ia,iz,ja,jz)
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+       call get_true_air_density(mzp,mxp,myp,ia,iz,ja,jz,oneGrid%Basic)
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     end if
 
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12

@@ -21,27 +21,73 @@
 ! except the heat flux are computed through here. Heat flux is always computed             !
 !------------------------------------------------------------------------------------------!
 module ModRexev
+
+  use mem_scratch, only: &
+       scratch, & ! intent(in)
+       vctr1,   & ! intent(in)
+       vctr2   ! ! intent(in)
+  
+  use ModRadvc, only:&
+       advtndc, &
+       fa_preptc, &
+       fa_xc, &
+       fa_yc, &
+       fa_zc
+  
+  use ModBasicFields, only: &
+       BasicFields
+  
+  use mem_grid, only: &
+       dzm,  &
+       hw4,  & ! intent(in)
+       dzt,  &  ! intent(in)
+       time, & ! intent(in)
+       dtlongn, &  ! intent(in)
+       ngrid, &
+       grid_g, &
+       itopo, &
+       dyncore_flag
+
+  use rconstants, only: &
+       cp, &
+       p00, &
+       cv, &
+       rgas, &
+       cpi, &
+       rocv  ! ! intent(in)
+  
+  use mem_stilt, only: &
+       virtt, &
+       stilt_g
+  
+  use mem_micro, only: &
+       micro_g
+  
+  use micphys, only: &
+       level
+
+  use mem_tend, only: &
+       tend
+
+  implicit none
+
+  private
+  public :: exevolve
+  public :: prep_lnthetv
+  public :: get_true_air_density
+  
 contains
+
+
+  
   subroutine exevolve(m1,m2,m3,ifm,ia,iz,ja,jz,izu,jzv,jdim,mynum,edt,key, &
-       oneBasic, oneAveBasic)
-
-    use ModBasicFields, only: &
-         BasicFields
-    
-    use mem_basic,   only: basic_g
-    use mem_grid,    only: grid_g, itopo,dyncore_flag
-    use mem_stilt,    only: stilt_g
-    use mem_tend,    only: tend
-    use mem_scratch, only: scratch
-    use micphys,     only: level           !if(vapour_on)  use therm_lib,   only: vapour_on
-
-    implicit none
+       oneBasicFields, oneAveBasicFields)
     !----- Arguments -----------------------------------------------------------------------!
     character(len=*) , intent(in) :: key
     integer          , intent(in) :: m1,m2,m3,ifm,ia,iz,ja,jz,izu,jzv,jdim,mynum
     real             , intent(in) :: edt
-    type(BasicFields), pointer, intent(in) :: oneBasic
-    type(BasicFields), pointer, intent(in) :: oneAveBasic
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(BasicFields), pointer, intent(in) :: oneAveBasicFields
     !----- Local variables -----------------------------------------------------------------!
     integer :: i,j,k
     !---------------------------------------------------------------------------------------!
@@ -73,15 +119,15 @@ contains
                ,grid_g(ifm)%f13t                       ,grid_g(ifm)%f23t                &
                ,grid_g(ifm)%rtgt                       ,grid_g(ifm)%fmapt               &
                ,grid_g(ifm)%dxt                        ,grid_g(ifm)%dyt                 &
-               ,basic_g(ifm)%uc                        ,basic_g(ifm)%dn0u               &
-               ,basic_g(ifm)%vc                        ,basic_g(ifm)%dn0v               &
-               ,basic_g(ifm)%dn0                       ,basic_g(ifm)%wc                 &
-               ,basic_g(ifm)%pc                        ,tend%pt                         )
+               ,oneBasicFields%uc                        ,oneBasicFields%dn0u               &
+               ,oneBasicFields%vc                        ,oneBasicFields%dn0v               &
+               ,oneBasicFields%dn0                       ,oneBasicFields%wc                 &
+               ,oneBasicFields%pc                        ,tend%pt                         )
        endif
        !----- Calculate compression term ---------------------------------------------------!
        call excondiv(m1,m2,m3,ia,iz,ja,jz,izu,jzv,jdim,itopo                                &
-            ,basic_g(ifm)%uc                       ,basic_g(ifm)%vc                 &
-            ,basic_g(ifm)%wc                       ,basic_g(ifm)%pc                 &
+            ,oneBasicFields%uc                       ,oneBasicFields%vc                 &
+            ,oneBasicFields%wc                       ,oneBasicFields%pc                 &
             ,tend%pt                               ,grid_g(ifm)%dxt                 &
             ,grid_g(ifm)%dyt                       ,grid_g(ifm)%rtgt                &
             ,grid_g(ifm)%rtgu                      ,grid_g(ifm)%rtgv                &
@@ -90,22 +136,22 @@ contains
             ,grid_g(ifm)%fmapvi                    )
        !----- Put theta_v from last timestep into memory ------------------------------------!
        call fill_thvlast(m1,m2,m3,ia,iz,ja,jz                                               &
-            ,stilt_g(ifm)%thvlast                   ,basic_g(ifm)%theta         &
-            ,basic_g(ifm)%rtp                       ,basic_g(ifm)%rv          )
+            ,stilt_g(ifm)%thvlast                   ,oneBasicFields%theta         &
+            ,oneBasicFields%rtp                       ,oneBasicFields%rv          )
 
     case ('THA')
        !------------------------------------------------------------------------------------!
        !   Advection part of the heating term.                                              !
        !------------------------------------------------------------------------------------!
        call advect_theta(m1,m2,m3,ia,iz,ja,jz,izu,jzv,jdim,mynum,edt                        &
-            ,basic_g(ifm)%up                  ,basic_g(ifm)%uc                  &
-            ,basic_g(ifm)%vp                  ,basic_g(ifm)%vc                  &
-            ,basic_g(ifm)%wp                  ,basic_g(ifm)%wc                  &
-            ,basic_g(ifm)%pi0                 ,basic_g(ifm)%pc                  &
-            ,tend%pt                          ,basic_g(ifm)%theta               &
-            ,basic_g(ifm)%rtp                 ,basic_g(ifm)%rv                  &
-            ,basic_g(ifm)%dn0                 ,basic_g(ifm)%dn0u                &
-            ,basic_g(ifm)%dn0v                ,grid_g(ifm)%rtgt                 &
+            ,oneBasicFields%up                  ,oneBasicFields%uc                  &
+            ,oneBasicFields%vp                  ,oneBasicFields%vc                  &
+            ,oneBasicFields%wp                  ,oneBasicFields%wc                  &
+            ,oneBasicFields%pi0                 ,oneBasicFields%pc                  &
+            ,tend%pt                          ,oneBasicFields%theta               &
+            ,oneBasicFields%rtp                 ,oneBasicFields%rv                  &
+            ,oneBasicFields%dn0                 ,oneBasicFields%dn0u                &
+            ,oneBasicFields%dn0v                ,grid_g(ifm)%rtgt                 &
             ,grid_g(ifm)%rtgu                 ,grid_g(ifm)%rtgv                 &
             ,grid_g(ifm)%fmapt                ,grid_g(ifm)%fmapui               &
             ,grid_g(ifm)%fmapvi               ,grid_g(ifm)%f13t                 &
@@ -113,16 +159,16 @@ contains
             ,grid_g(ifm)%dyv                  ,grid_g(ifm)%dxt                  &
             ,grid_g(ifm)%dyt                  ,stilt_g(ifm)%lnthvadv             &
             ,stilt_g(ifm)%lnthetav, &
-            oneBasic, oneAveBasic)
+            oneBasicFields, oneAveBasicFields)
 
     case ('THS')
        !------------------------------------------------------------------------------------!
        !   Advection part of the heating term.                                              !
        !------------------------------------------------------------------------------------!
        call storage_theta(m1,m2,m3,ifm,ia,iz,ja,jz,izu,jzv,mynum,edt                        &
-            ,basic_g(ifm)%pi0                ,basic_g(ifm)%pc                  &
-            ,basic_g(ifm)%rtp                ,basic_g(ifm)%rv                  &
-            ,basic_g(ifm)%theta              ,stilt_g(ifm)%thvlast              &
+            ,oneBasicFields%pi0                ,oneBasicFields%pc                  &
+            ,oneBasicFields%rtp                ,oneBasicFields%rv                  &
+            ,oneBasicFields%theta              ,stilt_g(ifm)%thvlast              &
             ,stilt_g(ifm)%lnthvtend          ,tend%pt                          )
 
     case default
@@ -134,22 +180,11 @@ contains
 
   end subroutine exevolve
 
+
+  
   subroutine exthvadv(m1,m2,m3,ia,iz,ja,jz,izu,jzv,jdim,mynum,edt,up,uc,vp,vc,wp,wc,theta    &
        ,rtp,rv,dn0,dn0u,dn0v,rtgt,rtgu,rtgv,fmapt,fmapui,fmapvi,f13t,f23t,dxu  &
-       ,dyv,dxt,dyt,lnthvadv,lnthetav, oneBasic, oneAveBasic)
-    use mem_scratch , only : scratch & ! intent(in)
-         , vctr1   & ! intent(in)
-         , vctr2   ! ! intent(in)
-    use ModRadvc, only:&
-         advtndc, &
-         fa_preptc, &
-         fa_xc, &
-         fa_yc, &
-         fa_zc
-    use ModBasicFields, only: &
-         BasicFields
-
-    implicit none
+       ,dyv,dxt,dyt,lnthvadv,lnthetav, oneBasicFields, oneAveBasicFields)
     !----- Arguments -----------------------------------------------------------------------!
     integer                      , intent(in)   :: m1,m2,m3,ia,iz,ja,jz,izu,jzv,jdim,mynum
     real                         , intent(in)   :: edt
@@ -158,8 +193,8 @@ contains
     real    , dimension(   m2,m3), intent(in)   :: rtgt,rtgu,rtgv,fmapt,fmapui,fmapvi
     real    , dimension(   m2,m3), intent(in)   :: f13t,f23t,dxu,dyv,dxt,dyt
     real    , dimension(m1,m2,m3), intent(out)  :: lnthvadv,lnthetav
-    type(BasicFields), pointer, intent(in) :: oneBasic
-    type(BasicFields), pointer, intent(in) :: oneAveBasic
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(BasicFields), pointer, intent(in) :: oneAveBasicFields
     !----- Local variables -----------------------------------------------------------------!
     integer                                     :: i,j,k,isiz
     !---------------------------------------------------------------------------------------!
@@ -178,7 +213,7 @@ contains
 
     call fa_preptc(m1,m2,m3,scratch%vt3da,scratch%vt3db,scratch%vt3dc,scratch%vt3dd         &
          ,scratch%vt3de,scratch%vt3df,scratch%vt3dh,scratch%vt3di,scratch%vt3dj    &
-         ,scratch%vt3dk,mynum, oneBasic, oneAveBasic)
+         ,scratch%vt3dk,mynum, oneBasicFields, oneAveBasicFields)
     call atob(m1*m2*m3,lnthetav,scratch%scr1)
 
 
@@ -218,10 +253,6 @@ contains
   !------------------------------------------------------------------------------------------!
   subroutine exadvlf(m1,m2,m3,ia,iz,ja,jz,izu,jzv,jdim,itopo,rtgu,fmapui,rtgv,fmapvi,f13t    &
        ,f23t,rtgt,fmapt,dxt,dyt,uc,dn0u,vc,dn0v,dn0,wc,pc,pt)
-
-    use mem_grid , only : hw4 & ! intent(in)
-         , dzt ! ! intent(in)
-    implicit none
     !----- Arguments -----------------------------------------------------------------------!
     integer , intent(in)                         :: m1,m2,m3,ia,iz,ja,jz,izu,jzv,itopo,jdim
     real    , intent(in)   , dimension(m2,m3)    :: rtgu,fmapui,rtgv,fmapvi,f13t,f23t
@@ -327,10 +358,6 @@ contains
   !------------------------------------------------------------------------------------------!
   subroutine excondiv(m1,m2,m3,ia,iz,ja,jz,izu,jzv,jdim,itopo,uc,vc,wc,pc,pt,dxt,dyt,rtgt    &
        ,rtgu,rtgv,f13t,f23t,fmapt,fmapui,fmapvi )
-    use rconstants , only : rocv  ! ! intent(in)
-    use mem_grid   , only : hw4   & ! intent(in)
-         , dzm   ! ! intent(in)
-    implicit none
     !----- Arguments -----------------------------------------------------------------------!
     integer                      , intent(in)     :: m1,m2,m3,ia,iz,ja,jz,izu,jzv,jdim,itopo
     real    , dimension(   m2,m3), intent(in)     :: dxt,dyt,rtgt,rtgu,rtgv
@@ -427,8 +454,6 @@ contains
   !   This subroutine will save the current value of theta-v for the advection term.         !
   !------------------------------------------------------------------------------------------!
   subroutine fill_thvlast(m1,m2,m3,ia,iz,ja,jz,thvlast,theta,rtp,rv)
-    use mem_stilt, only : virtt
-    implicit none
     !----- Arguments -----------------------------------------------------------------------!
     integer                      , intent(in)    :: m1, m2, m3, ia, iz, ja, jz
     real    , dimension(m1,m2,m3), intent(in)    :: theta, rtp, rv
@@ -464,10 +489,7 @@ contains
   !------------------------------------------------------------------------------------------!
   subroutine advect_theta(m1,m2,m3,ia,iz,ja,jz,izu,jzv,jdim,mynum,edt,up,uc,vp,vc,wp,wc,pi0  &
        ,pc,pt,theta,rtp,rv,dn0,dn0u,dn0v,rtgt,rtgu,rtgv,fmapt,fmapui       &
-       ,fmapvi,f13t,f23t,dxu,dyv,dxt,dyt,lnthvadv,lnthetav, oneBasic, oneAveBasic)
-    use ModBasicFields, only: &
-         BasicFields
-    implicit none
+       ,fmapvi,f13t,f23t,dxu,dyv,dxt,dyt,lnthvadv,lnthetav, oneBasicFields, oneAveBasicFields)
     !----- Arguments -----------------------------------------------------------------------!
     integer                       , intent(in)    :: m1,m2,m3,ia,iz,ja,jz,izu,jzv,jdim,mynum
     real                          , intent(in)    :: edt 
@@ -477,13 +499,13 @@ contains
     real    , dimension(   m2,m3) , intent(in)    :: f13t,f23t,dxu,dyv,dxt,dyt
     real    , dimension(m1,m2,m3) , intent(inout)   :: lnthvadv,lnthetav
     real    , dimension(m1,m2,m3) , intent(inout) :: pt
-    type(BasicFields), pointer, intent(in) :: oneBasic
-    type(BasicFields), pointer, intent(in) :: oneAveBasic
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(BasicFields), pointer, intent(in) :: oneAveBasicFields
     !---------------------------------------------------------------------------------------!
 
     call exthvadv(m1,m2,m3,ia,iz,ja,jz,izu,jzv,jdim,mynum,edt,up,uc,vp,vc,wp,wc,theta,rtp   &
          ,rv,dn0,dn0u,dn0v,rtgt,rtgu,rtgv,fmapt,fmapui,fmapvi,f13t,f23t,dxu,dyv,dxt &
-         ,dyt,lnthvadv,lnthetav, oneBasic, oneAveBasic)
+         ,dyt,lnthvadv,lnthetav, oneBasicFields, oneAveBasicFields)
     call exhtend_ad(m1,m2,m3,ia,iz,ja,jz,pi0,pc,pt,lnthvadv)
 
   end subroutine advect_theta
@@ -504,7 +526,6 @@ contains
   !    Finding the mid-point between past and present for advection terms.                   !
   !------------------------------------------------------------------------------------------!
   subroutine prep_timeave(m1,m2,m3,edt,up,uc,vp,vc,wp,wc,vt3da,vt3db,vt3dc)
-    implicit none
     !----- Arguments -----------------------------------------------------------------------!
     integer                       , intent(in)  :: m1,m2,m3
     real                          , intent(in)  :: edt
@@ -531,8 +552,6 @@ contains
   !    Finding the log of virtual potential temperature.                                     !
   !------------------------------------------------------------------------------------------!
   subroutine prep_lnthetv(m1,m2,m3,ia,iz,ja,jz,theta,rtp,rv,lnthetav)
-    use mem_stilt , only : virtt
-    implicit none
     !----- Arguments -----------------------------------------------------------------------!
     integer                       , intent(in)  :: m1,m2,m3,ia,iz,ja,jz
     real    , dimension(m1,m2,m3) , intent(in)  :: theta,rtp,rv
@@ -558,8 +577,6 @@ contains
   ! tendency.                                                                                !
   !------------------------------------------------------------------------------------------!
   subroutine exhtend_ad(m1,m2,m3,ia,iz,ja,jz,pi0,pc,pt,lnthvadv)
-    use rconstants , only : rocv  ! intent(in)
-    implicit none
     !----- Arguments -----------------------------------------------------------------------!
     integer                       , intent(in)    :: m1,m2,m3,ia,iz,ja,jz
     real    , dimension(m1,m2,m3) , intent(in)    :: pi0,pc,lnthvadv
@@ -602,7 +619,6 @@ contains
   !------------------------------------------------------------------------------------------!
   subroutine storage_theta(m1,m2,m3,ifm,ia,iz,ja,jz,izu,jzv,mynum,edt,pi0,pc,rtp,rv,theta    &
        ,thvlast,lnthvtend,pt)
-    implicit none
     !----- Arguments -----------------------------------------------------------------------!
     integer                       , intent(in)    :: m1,m2,m3,ifm,ia,iz,ja,jz,izu,jzv,mynum
     real                          , intent(in)    :: edt
@@ -627,10 +643,6 @@ contains
   !------------------------------------------------------------------------------------------!
   subroutine prep_lnthvtend(m1,m2,m3,ifm,ia,iz,ja,jz,izu,jzv,edt,theta,thvlast,rtp,rv        &
        ,lnthvtend)
-    use mem_grid  , only : time     & ! intent(in)
-         , dtlongn  ! ! intent(in)
-    use mem_stilt , only : virtt    ! ! Function
-    implicit none
     !----- Arguments -----------------------------------------------------------------------!
     integer                       , intent(in)  :: m1,m2,m3,ifm,ia,iz,ja,jz,izu,jzv
     real                          , intent(in)  :: edt
@@ -673,9 +685,6 @@ contains
   !   This will compute the tendency part of the heating term.                               !
   !------------------------------------------------------------------------------------------!
   subroutine exhtend_st(m1,m2,m3,ia,iz,ja,jz,pi0,pc,rtp,theta,lnthvtend,rv,pt)
-    use rconstants , only : rocv  ! ! intent(in)
-    use mem_stilt  , only : virtt ! ! Function
-    implicit none
     !----- Arguments -----------------------------------------------------------------------!
     integer                       , intent(in)    :: m1,m2,m3,ia,iz,ja,jz
     real    , dimension(m1,m2,m3) , intent(in)    :: pi0,pc,rtp,theta,lnthvtend,rv
@@ -701,15 +710,9 @@ contains
 
   !-----------------------------------------------------------------------
   !srf-
-  subroutine get_true_air_density(mzp,mxp,myp,ia,iz,ja,jz)
-    use mem_basic  ,  only: basic_g
-    use mem_micro  ,  only: micro_g
-    use rconstants ,  only: cp,p00,cv,rgas,cpi
-    use micphys    ,  only: level
-    use mem_stilt  ,  only: stilt_g
-    use mem_grid   ,  only: ngrid
-    implicit none
-    integer, intent (IN) :: mzp,mxp,myp,ia,iz,ja,jz
+  subroutine get_true_air_density(mzp,mxp,myp,ia,iz,ja,jz,oneBasicFields)
+    integer, intent(in) :: mzp,mxp,myp,ia,iz,ja,jz
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
     real, parameter :: c1 = cv/rgas, c2 = p00/rgas !c2 = p00*(cpi**c1)/rgas
     real, dimension(mzp,mxp,myp) :: b
     real c3
@@ -720,16 +723,15 @@ contains
        b(:,:,:) = 1.
     else
        ! b      = (1 + rtp)/(1+1.61*rv)
-       b(:,:,:) = (1. + basic_g(ngrid)%rtp(:,:,:))/(1. + 1.61*basic_g(ngrid)%rv(:,:,:))
+       b(:,:,:) = (1. + oneBasicFields%rtp(:,:,:))/(1. + 1.61*oneBasicFields%rv(:,:,:))
     endif
 
     !- true air density
 
-    stilt_g(ngrid)%dnp(:,:,:) = ( c3/basic_g(ngrid)%theta(:,:,:)  ) * b(:,:,:) * &
+    stilt_g(ngrid)%dnp(:,:,:) = ( c3/oneBasicFields%theta(:,:,:)  ) * b(:,:,:) * &
          
-         ( basic_g(ngrid)%pi0(:,:,:) + basic_g(ngrid)%pp(:,:,:)) ** c1
+         ( oneBasicFields%pi0(:,:,:) + oneBasicFields%pp(:,:,:)) ** c1
 
 
   end subroutine get_true_air_density
-
 end module ModRexev
