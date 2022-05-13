@@ -552,7 +552,7 @@ ModMemAlloc.o : $(MEMORY)/ModMemAlloc.F90  extra.o \
 ModTimestep.o : $(MODEL)/ModTimestep.F90 mem_basic.o mem_cuparm.o ModOptical.o ModGasPart.o \
 	ModOzone.o mem_grid.o mem_leaf.o mem_oda.o mem_radiate.o mem_scalar.o ModLeaf3.o \
 	ModRstilt.o mem_turb.o mem_varinit.o micphys.o node_mod.o shcu_vars_const.o \
-	machine_arq.o rad_driv.o cup_grell3.o digitalFilter.o ModRtimi.o \
+	machine_arq.o rad_driv.o cup_grell3.o digitalFilter.o ModRtimi.o ModMicrophysicsMisc.o \
 	ChemSourcesDriver.o ChemDryDepDriver.o chemistry.o ModTimeStamp.o ModGrid.o \
 	ModAcoust.o ModRamsMicrophysics2M.o mic_thompson_driver.o ModWindFarm.o \
         ModMicrophysicsDrive.o seasalt.o MatrixDriver.o ModRadvcRK.o $(JULES_OBJ_SFCLYR) \
@@ -565,7 +565,7 @@ ModTimestep.o : $(MODEL)/ModTimestep.F90 mem_basic.o mem_cuparm.o ModOptical.o M
 ModTimestepRK.o : $(MODEL)/ModTimestepRK.F90 ModTimestep.o ModBasicFields.o mem_cuparm.o ModGasPart.o \
 	ModOzone.o mem_grid.o mem_leaf.o mem_oda.o mem_radiate.o mem_scalar.o ModOptical.o ModLeaf3.o \
 	ModRstilt.o mem_turb.o mem_varinit.o micphys.o node_mod.o shcu_vars_const.o \
-	ModMicrophysicsDrive.o machine_arq.o rad_driv.o cup_grell3.o digitalFilter.o\
+	ModMicrophysicsMisc.o ModMicrophysicsDrive.o machine_arq.o rad_driv.o cup_grell3.o digitalFilter.o\
 	ChemSourcesDriver.o ChemDryDepDriver.o chemistry.o ModTimeStamp.o ModGrid.o \
 	ModAcoust.o ModRThrm.o ModRamsMicrophysics2M.o mic_thompson_driver.o\
         seasalt.o MatrixDriver.o ModRadvcRK.o modIau.o ModLeaf3OceanOnly.o ModRbnd.o \
@@ -577,7 +577,7 @@ ModTimestepRK.o : $(MODEL)/ModTimestepRK.F90 ModTimestep.o ModBasicFields.o mem_
 	rm -f $(<F:.f90=.f90)
 
 ModOneProc.o : $(MODEL)/ModOneProc.F90 ModNamelistFile.o ModSched.o ModGasPart.o \
-	ModCoriolis.o ModDomainDecomp.o io_params.o machine_arq.o \
+	ModCoriolis.o ModDomainDecomp.o io_params.o machine_arq.o ModMicrophysicsMisc.o \
 	ModPostProcess.o mem_cuparm.o mem_grid.o mem_leaf.o mem_oda.o \
 	ccatt_start.o domain_decomp.o isan_coms.o ModBasicFields.o mem_emiss.o \
 	mem_gaspart.o mem_globrad.o mem_grell_param2.o mem_micro.o \
@@ -890,9 +890,9 @@ ModRanlavg.o : $(IO)/ModRanlavg.f90  io_params.o mem_grid.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModRbnd.o : $(BC)/ModRbnd.f90  mem_grid.o mem_scratch.o mem_basic.o \
+ModRbnd.o : $(BC)/ModRbnd.f90  mem_grid.o mem_scratch.o mem_basic.o ModBasicFields.o \
 	mem_tend.o mem_turb.o micphys.o node_mod.o ref_sounding.o ModScalarTable.o \
-	mem_chem1.o 
+	mem_chem1.o ModMicrophysicsMisc.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1062,7 +1062,7 @@ ModUrbanCanopy.o : $(SURFACE)/ModUrbanCanopy.f90  ModBasicFields.o mem_grid.o \
 
 ModMicrophysicsDrive.o : $(MICRO)/ModMicrophysicsDrive.f90 mem_micro.o micphys.o \
 	mem_chemic.o mem_radiate.o ModBasicFields.o mem_grid.o node_mod.o mem_chem1.o \
-	mem_chem1aq.o 
+	mem_chem1aq.o ModMicrophysicsMisc.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1093,8 +1093,8 @@ mic_init.o : $(MICRO)/mic_init.f90  micphys.o rconstants.o $(UTILS_INCS)/constan
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mic_misc.o : $(MICRO)/mic_misc.f90  mem_basic.o mem_grid.o mem_micro.o \
-	mem_scratch.o micphys.o rconstants.o
+ModMicrophysicsMisc.o : $(MICRO)/ModMicrophysicsMisc.f90  mem_basic.o mem_grid.o mem_micro.o \
+	mem_scratch.o micphys.o rconstants.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

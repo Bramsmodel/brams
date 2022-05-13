@@ -34,6 +34,9 @@ module ModOneProc
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModMicrophysicsMisc, only: &
+       negadj1
+
   use ModNestGeoSst, only: &
        GeonestNoFile
   
@@ -1643,7 +1646,9 @@ contains
 
           call FieldInit(1)
 
-          call negadj1(mzp,mxp,myp)
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+          call negadj1(mzp,mxp,myp, oneGrid%Basic)
+          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
           call thermo(mzp, mxp, myp, 1, mxp, 1, myp, oneGrid%Basic, oneGrid%AveBasic)
 
@@ -2091,7 +2096,9 @@ contains
        do ifm = 1,min(ngrids,ngridsh)
           icm = nxtnest(ifm)
 !!$          if (icm  >  0) call fmrefs3d(ifm)
-          call negadj1(mzp,mxp,myp)
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+          call negadj1(mzp,mxp,myp, oneGrid%Basic)
+          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        enddo
 
        ! ALF - For use with SiB

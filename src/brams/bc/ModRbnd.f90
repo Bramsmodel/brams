@@ -1,4 +1,8 @@
 module ModRbnd
+
+  use ModMicrophysicsMisc, only: &
+       negadj1
+
   use mem_grid, only: dtlt, &
        dtlv, &
        ibnd, &
@@ -34,7 +38,13 @@ module ModRbnd
        vctr5 
 
   use mem_tend, only: tend       !tend%ut
-  use mem_basic, only:basic_g    !basic_g(ngrid)%up
+
+  use mem_basic, only: &
+       basic_g
+  
+  use ModBasicFields, only: &
+       BasicFields
+  
   use node_mod, only: ia,      &
        iz,      &
        ja,      &
@@ -1390,12 +1400,12 @@ contains
     return
   end subroutine rayf
 
-  subroutine trsets(oneScalarTab, oneScalarTabSize)
-
+  subroutine trsets(oneScalarTab, oneScalarTabSize, oneBasicFields)
     implicit none
 
     type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
     integer, intent(inout) :: oneScalarTabSize
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
     integer :: n, mxyzp
 
     !     Apply lateral, top, and bottom boundary conditions.
@@ -1430,7 +1440,7 @@ contains
 
     call tkeinit(mzp,mxp,myp)
 
-    call negadj1(mzp,mxp,myp)
+    call negadj1(mzp,mxp,myp, oneBasicFields)
 
     !--(DMK-CCATT-INI)-----------------------------------------------------
     !-srf for chem - aerosol quantities

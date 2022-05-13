@@ -7,6 +7,17 @@
 !###########################################################################
 module ModMicrophysicsDrive
 
+  use ModMicrophysicsMisc, only: &
+       each_column, &
+       enemb, &
+       x02, &
+       pc03, &
+       sedim, &
+       c03, &
+       each_call, &
+       range_check, &
+       ae1kmic
+  
   use mem_micro, only:  &
        micro_g, &
        micro_vars        ! INTENT(IN) ! Only a type structure
@@ -487,53 +498,53 @@ contains
 
 
     if (jnmb(1) >= 1) then
-       call ae1kmic(lpw,k3(1),micro%rcp(1,i,j),rx(1,1))
-       if (jnmb(1) >= 5) call ae1kmic(lpw,k3(1),micro%ccp(1,i,j),cx(1,1))
+       call ae1kmic(lpw,k3(1),micro%rcp(:,i,j),rx(:,1))
+       if (jnmb(1) >= 5) call ae1kmic(lpw,k3(1),micro%ccp(:,i,j),cx(:,1))
     endif
 
     if (jnmb(2) >= 1) then
-       call ae1kmic(lpw,k2(10),micro%rrp(1,i,j),rx(1,2))
-       call ae1kmic(lpw,k2(10),micro%q2(1,i,j),qx(1,2))
+       call ae1kmic(lpw,k2(10),micro%rrp(:,i,j),rx(:,2))
+       call ae1kmic(lpw,k2(10),micro%q2(:,i,j),qx(:,2))
        micro%accpr(i,j) = micro%accpr(i,j) + accpx(2)
        micro%pcprr(i,j) = pcprx(2)
-       if (jnmb(2) >= 5) call ae1kmic(lpw,k3(1),micro%crp(1,i,j),cx(1,2))
+       if (jnmb(2) >= 5) call ae1kmic(lpw,k3(1),micro%crp(:,i,j),cx(:,2))
     endif
 
     if (jnmb(3) >= 1) then
-       call ae1kmic(lpw,k3(3),micro%rpp(1,i,j),rx(1,3))
+       call ae1kmic(lpw,k3(3),micro%rpp(:,i,j),rx(:,3))
        micro%accpp(i,j) = micro%accpp(i,j) + accpx(3)
        micro%pcprp(i,j) = pcprx(3)
-       if (jnmb(3) >= 5) call ae1kmic(lpw,k3(3),micro%cpp(1,i,j),cx(1,3))
+       if (jnmb(3) >= 5) call ae1kmic(lpw,k3(3),micro%cpp(:,i,j),cx(:,3))
     endif
 
     if (jnmb(4) >= 1) then
-       call ae1kmic(lpw,k2(10),micro%rsp(1,i,j),rx(1,4))
+       call ae1kmic(lpw,k2(10),micro%rsp(:,i,j),rx(:,4))
        micro%accps(i,j) = micro%accps(i,j) + accpx(4)
        micro%pcprs(i,j) = pcprx(4)
-       if (jnmb(4) >= 5) call ae1kmic(lpw,k2(10),micro%csp(1,i,j),cx(1,4))
+       if (jnmb(4) >= 5) call ae1kmic(lpw,k2(10),micro%csp(:,i,j),cx(:,4))
     endif
 
     if (jnmb(5) >= 1) then
-       call ae1kmic(lpw,k2(10),micro%rap(1,i,j),rx(1,5))
+       call ae1kmic(lpw,k2(10),micro%rap(:,i,j),rx(:,5))
        micro%accpa(i,j) = micro%accpa(i,j) + accpx(5)
        micro%pcpra(i,j) = pcprx(5)
-       if (jnmb(5) >= 5) call ae1kmic(lpw,k2(10),micro%cap(1,i,j),cx(1,5))
+       if (jnmb(5) >= 5) call ae1kmic(lpw,k2(10),micro%cap(:,i,j),cx(:,5))
     endif
 
     if (jnmb(6) >= 1) then
-       call ae1kmic(lpw,k2(10),micro%rgp(1,i,j),rx(1,6))
-       call ae1kmic(lpw,k2(10),micro%q6(1,i,j),qx(1,6))
+       call ae1kmic(lpw,k2(10),micro%rgp(:,i,j),rx(:,6))
+       call ae1kmic(lpw,k2(10),micro%q6(:,i,j),qx(:,6))
        micro%accpg(i,j) = micro%accpg(i,j) + accpx(6)
        micro%pcprg(i,j) = pcprx(6)
-       if (jnmb(6) >= 5) call ae1kmic(lpw,k2(10),micro%cgp(1,i,j),cx(1,6))
+       if (jnmb(6) >= 5) call ae1kmic(lpw,k2(10),micro%cgp(:,i,j),cx(:,6))
     endif
 
     if (jnmb(7) >= 1) then
-       call ae1kmic(lpw,k2(10),micro%rhp(1,i,j),rx(1,7))
-       call ae1kmic(lpw,k2(10),micro%q7(1,i,j),qx(1,7))
+       call ae1kmic(lpw,k2(10),micro%rhp(:,i,j),rx(:,7))
+       call ae1kmic(lpw,k2(10),micro%q7(:,i,j),qx(:,7))
        micro%accph(i,j) = micro%accph(i,j) + accpx(7)
        micro%pcprh(i,j) = pcprx(7)
-       if (jnmb(7) >= 5) call ae1kmic(lpw,k2(10),micro%chp(1,i,j),cx(1,7))
+       if (jnmb(7) >= 5) call ae1kmic(lpw,k2(10),micro%chp(:,i,j),cx(:,7))
     endif
 
     return
@@ -556,8 +567,8 @@ contains
     lpw=int(lpw_R)
 
     if (jnmb(2) >= 1) then
-       call ae1kmic(lpw,k2(10),chemic%coll(1,i,j),xcoll(1))
-       call ae1kmic(lpw,k2(10),chemic%sedimr(1,i,j),rsedim(1))
+       call ae1kmic(lpw,k2(10),chemic%coll(:,i,j),xcoll)
+       call ae1kmic(lpw,k2(10),chemic%sedimr(:,i,j),rsedim)
     endif
 
     return

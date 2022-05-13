@@ -8,6 +8,9 @@
 
 module ModTimestep
 
+  use ModMicrophysicsMisc, only: &
+       negadj1
+  
   use ModMicrophysicsDrive, only: &
        micro
   
@@ -559,7 +562,10 @@ contains
     !  Moisture variables positive definite
     !----------------------------------------
     if    (mcphys_type == 0) then
-       call negadj1(mzp,mxp,myp)
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+       call negadj1(mzp,mxp,myp, oneGrid%Basic)
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+
 
     elseif(mcphys_type == 1) then
        call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
@@ -629,7 +635,9 @@ contains
 
     !  Apply scalar b.c.'s
     !----------------------------------------
-    call trsets(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
+    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+    call trsets(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic)
+    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
     !  Lateral velocity boundaries - radiative
     !-------------------------------------------

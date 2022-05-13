@@ -110,7 +110,7 @@ OBJ_MOD = \
 	ModMicrophysicsDrive.o \
 	mic_gamma.o \
 	mic_init.o \
-	mic_misc.o \
+	ModMicrophysicsMisc.o \
 	mic_nuc.o \
 	mic_tabs.o \
 	mic_vap.o \
