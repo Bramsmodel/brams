@@ -724,7 +724,8 @@ init_imogen.o : $(JULES_39)/init_imogen.F90
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-init_irrigation.o : $(JULES_39)/init_irrigation.F90 
+init_irrigation.o : $(JULES_39)/init_irrigation.F90 jules_irrig_mod.o string_utils_mod.o io_constants.o \
+ 	jules_hydrology_mod.o jules_vegetation_mod.o logging_mod.o errormessagelength_mod.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

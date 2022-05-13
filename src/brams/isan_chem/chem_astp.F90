@@ -8,17 +8,67 @@
 
 
 subroutine chem_pressure_stage(n1,n2,nhem,glat,glon,glat2,glon2)
-    use isan_coms
+    USE isan_coms, ONLY: innpr,       &
+                         levpr     ,  &
+                         ivertcoord,  &
+                         p_u,         &
+                         p_v,         &
+                         p_t,         &
+                         p_z,         &
+                         p_r,         &
+                         p_ur,        &
+                         p_vr,        &
+                         p_lat,       &
+                         p_lon,       &
+                         p_slp,       &
+                         p_sfp,       &
+                         p_sft,       &
+                         p_snow,      &
+                         p_sst,       &
+                         cntlat,      &
+                         cntlon,      &
+                         maxpr,       &
+                         gdatdx,      &
+                         gdatdy,      &
+                         idate,       &
+                         idatelin,    &
+                         idd,         &
+                         iglobew,     &
+                         iglobn,      &
+                         iglobs,      &
+                         ihh,         &
+                         ihour,       &
+                         imm,         &
+                         imonth,      &
+                         inproj,      &
+                         isversion,   &
+                         itinc,       &
+                         iyear,       &
+                         iyy,         &
+                         marker,      &
+                         nprx,        &
+                         npry,        &
+                         nprz,        &
+                         secondlat,   &
+                         xnelat,      &
+                         xnelon,      &
+                         xswlat,      &
+                         xswlon,      &
+                         pnpr
+
 
     !--(DMK-CCATT-INI)----------------------------------------------------------------
     !srf-chem
-    use chem_isan_coms
+    USE chem_isan_coms, ONLY: p_sc,  &
+                              nspecies
+
     use chem1_list, only: chemical_mechanism ! intent(in)
     use mem_chem1, only:  CHEM_ASSIM, CHEMISTRY         ! intent(in)
     !srf-chem-end
     !--(DMK-CCATT-FIM)----------------------------------------------------------------
 
-    use rconstants
+    USE rconstants, ONLY: p00,  &
+                          rocp
 
     implicit none
 
@@ -365,20 +415,18 @@ subroutine chem_pressure_stage_grib2(n1,n2,nhem,glat,glon,glat2,glon2)
     !subroutine pressure_stage(n1,n2,nhem,glat,glon,glat2,glon2)
     !--(DMK-CCATT-FIM)----------------------------------------------------------------
 
-    use isan_coms
+    USE isan_coms, ONLY: maxpr,  &
+                         innpr
 
     use ModDateUtils, only: &
         date_add_to
 
     !--(DMK-CCATT-INI)----------------------------------------------------------------
     !srf-chem
-    use chem_isan_coms
     use chem1_list, only: chemical_mechanism ! intent(in)
     use mem_chem1, only:  CHEM_ASSIM, CHEMISTRY         ! intent(in)
     !srf-chem-end
     !--(DMK-CCATT-FIM)----------------------------------------------------------------
-
-    use rconstants
 
     !use dump, only: &
     !  dumpMessage
@@ -709,8 +757,11 @@ subroutine chem_pressure_stage_grib2(n1,n2,nhem,glat,glon,glat2,glon2)
 end subroutine chem_pressure_stage_grib2
 
 subroutine chem_get_press_grib2()
-    use isan_coms
-    use chem_isan_coms
+    USE isan_coms, ONLY: dlimit,   &
+                         maxpr,    &
+                         nprx,     &
+                         npry,     &
+                         ulimit
 #ifdef GRIB2
     use wgrib2api
 #endif
@@ -945,11 +996,34 @@ subroutine chem_get_press (iunit)
     !subroutine get_press (iunit)
     !--(DMK-CCATT-FIM)----------------------------------------------------------------
 
-    use isan_coms
+    USE isan_coms, ONLY: innpr,   &
+                         ccgradswrite,  &
+                         idate,   &
+                         ihour,   &
+                         imonth,  &
+                         maxpr,   &
+                         iyear,   &
+                         nprx,    &
+                         npry,    &
+                         nprz,    &
+                         levpr,   &
+                         p_t,     &
+                         p_r,     &
+                         p_u,     &
+                         p_v,     &
+                         p_z,     &
+                         p_slp,   &
+                         p_sfp,   &
+                         p_sft,   &
+                         p_snow,  &
+                         p_sst,   &
+                         pnpr
+
 
     !--(DMK-CCATT-INI)----------------------------------------------------------------
     !srf-chem
-    use chem_isan_coms
+    USE chem_isan_coms, ONLY: nspecies,  &
+                              p_sc
     !!!!  use chem1_list, only : spc_name
     !srf-chem-end
     !--(DMK-CCATT-FIM)----------------------------------------------------------------
@@ -1158,22 +1232,103 @@ subroutine chem_get_press (iunit)
        !subroutine pressure_stage(n1,n2,nhem,glat,glon,glat2,glon2)
        !--(DMK-CCATT-FIM)----------------------------------------------------------------
 
-       use isan_coms
+       USE isan_coms, ONLY: innpr,   &
+                            ncvar,   &
+                            p_u,     &
+                            p_v,     &
+                            p_t,     &
+                            p_z,     &
+                            p_r,     &
+                            p_ur,    &
+                            p_vr,    &
+                            p_lat,   &
+                            p_lon,   &
+                            p_slp,   &
+                            p_sfp,   &
+                            p_sft,   &
+                            p_sst,   &
+                            PressLevs,&
+                            mask,    &
+                            p_snow,  &
+                            cntlat,  &
+                            cntlon,  &
+                            maxpr,  &
+                            final_latitude,  &
+                            final_longitude,  &
+                            gdatdx,  &
+                            gdatdy,  &
+                            geo_varname,  &
+                            icfiletype,  &
+                            idate,  &
+                            idatelin,  &
+                            idd,  &
+                            iglobew,  &
+                            iglobn,  &
+                            iglobs,  &
+                            ihh,  &
+                            ihour,  &
+                            imm,  &
+                            imonth,  &
+                            initial_latitude,  &
+                            initial_longitude,  &
+                            inproj,  &
+                            iyear,  &
+                            iyy,  &
+                            nprx,  &
+                            npry,  &
+                            nprz,  &
+                            nprz_grib2,  &
+                            nxgrib,  &
+                            nygrib,  &
+                            temperature_varname,  &
+                            ur_varname,  &
+                            wind_u_varname,  &
+                            wind_v_varname,  &
+                            xnelat,  &
+                            xnelon,  &
+                            xswlat,  &
+                            xswlon,  &
+                            z_max_level,  &
+                            presslevs,  &
+                            levpr_grib2,  &
+                            presslevs,  &
+                            scale_factor,  &
+                            ulimit,  &
+                            dlimit,  &
+                            pnpr,  &
+                            levpr
+
+
+
 
        use ModDateUtils, only: &
            date_add_to, date_add_to_dble
 
        !--(DMK-CCATT-INI)----------------------------------------------------------------
        !srf-chem
-       use chem_isan_coms
+       USE chem_isan_coms, ONLY: p_sc, &
+                                 nspecies
+
        use chem1_list, only: chemical_mechanism ! intent(in)
        use mem_chem1, only:  CHEM_ASSIM, CHEMISTRY         ! intent(in)
        !srf-chem-end
        !--(DMK-CCATT-FIM)----------------------------------------------------------------
 
-       use rconstants
+       USE rconstants, ONLY: p00,  &
+                             rocp
 
-       use netcdf
+       USE netcdf, ONLY: nf90_open,    &
+                         nf90_noerr,   &
+                         nf90_nowrite, &
+                         nf90_inquire, &
+                         nf90_inquire_dimension, &
+                         nf90_get_var, &
+                         nf90_inquire_variable, &
+                         nf90_inq_attname, &
+                         nf90_inquire_attribute, &
+                         nf90_get_att, &
+                         nf90_get_var, &
+                         nf90_close
 
        use dump, only: &
            dumpMessage
@@ -1715,12 +1870,44 @@ subroutine chem_get_press (iunit)
 
    subroutine chem_get_press_netCDF(uVarN,vVarN,tVarN,zVarN,qVarN &
        ,llat,llon,nTimes)
-       use isan_coms
-       use chem_isan_coms
+       USE isan_coms, ONLY: ncvar,  &
+                            mask,   &
+                            pressLevs,   &
+                            ncVar,   &
+                            nygrib,   &
+                            nxgrib,   &
+                            ccgradswrite,   &
+                            icfiletype,   &
+                            idate,   &
+                            ihour,   &
+                            imonth,   &
+                            maxpr ,   &
+                            iyear,   &
+                            nprx,   &
+                            npry,   &
+                            nprz,   &
+                            nprz_grib2,   &
+                            z_max_level,   &
+                            levpr,   &
+                            levpr_grib2,   &
+                            pnpr,   &
+                            p_t,   &
+                            p_r,   &
+                            p_u,   &
+                            p_v,   &
+                            p_z,   &
+                            p_slp,   &
+                            p_sfp,   &
+                            p_sft,   &
+                            p_snow,   &
+                            p_sst ,   &
+                            pnpr
+
+
+
        use dump, only: &
            dumpMessage
 
-       use netcdf
 
        implicit none
 
@@ -1949,7 +2136,6 @@ subroutine chem_get_press (iunit)
    !Utils functions and subroutines
 
    logical function checkInside(xlat,xlon)
-       use isan_coms
 
        real, intent(in) :: xlat,xlon
        checkInside=.false.
@@ -2033,7 +2219,26 @@ subroutine chem_get_press (iunit)
    subroutine writeGradsSub()
        !Header_vai_aqui!
 
-       use isan_coms
+       USE isan_coms, ONLY: p_u,   &
+                            p_v,   &
+                            p_t,   &
+                            p_z,   &
+                            p_r,   &
+                            p_v,   &
+                            levpr, &
+                            gdatdx,&
+                            gdatdy,&
+                            icgradsprefix,&
+                            idate,&
+                            ihour,&
+                            imonth,&
+                            iyear,&
+                            nprx,&
+                            npry,&
+                            nprz,&
+                            xswlat,&
+                            xswlon
+
       
        implicit none
   
@@ -2341,18 +2546,71 @@ subroutine chem_get_press (iunit)
 
    subroutine chem_pressure_stage_grads(n1,n2,n3,nhem,glat,glon,glat2,glon2)
 
-       use isan_coms
+       USE isan_coms, ONLY: innpr,  &
+                            slevs,  &
+                            p_u,    &
+                            p_v,    &
+                            p_t,    &
+                            p_z,    &
+                            p_r,    &
+                            p_ur,   &
+                            p_vr,   &
+                            p_lat,  &
+                            p_lon,  &
+                            p_slp,  &
+                            p_sfp,  &
+                            p_sft,  &
+                            p_snow, &
+                            p_sst,  &
+                            cntlat, &
+                            cntlon, &
+                            maxpr,  &
+                            gdatdx, &
+                            gdatdy, &
+                            idatelin,&
+                            iglobew, &
+                            iglobn,  &
+                            iglobs,  &
+                            inproj,  &
+                            nprx,    &
+                            npry,    &
+                            nprz,    &
+                            nprz_grib2,&
+                            nxgrib,  &
+                            nygrib,  &
+                            secondlat,&
+                            xnelat,  &
+                            xnelon,  &
+                            xswlat,  &
+                            xswlon,  &
+                            z_max_level, &
+                            slevs,   &
+                            levpr_grib2, &
+                            levpr_grib2, &
+                            p_t,     &
+                            pnpr,    &
+                            levpr,   &
+                            p_lat,   &
+                            p_lon
+
+
 
        use ModDateUtils, only: &
            date_add_to
 
-       use chem_isan_coms
+       USE chem_isan_coms, ONLY: p_sc,  &
+                                 p_aer_sc, &
+                                 nspecies, &
+                                 nspecies_aer_in
+
        use chem1_list, only: chemical_mechanism ! intent(in)
        use mem_chem1, only:  CHEM_ASSIM, CHEMISTRY         ! intent(in)
 
-       use rconstants
+       USE rconstants, ONLY: p00,  &
+                             rocp
 
-       use dump
+       USE dump, ONLY: dumpmessage
+                       
 
        use mem_varinit, only: &
               nudlat
@@ -2661,8 +2919,37 @@ subroutine chem_get_press (iunit)
    end subroutine chem_pressure_stage_grads
 
    subroutine chem_get_press_grads(lonini,dx,latini,dy,nGradsVars,gradsVarsNames)
-       use isan_coms
-       use chem_isan_coms
+       USE isan_coms, ONLY: slevs,   &
+                            ccgradswrite, &
+                            dlimit,  &
+                            innpr,   &
+                            maxpr,   &
+                            nprx,   &
+                            npry,   &
+                            nprz,   &
+                            nprz_grib2,   &
+                            nxgrib,   &
+                            nygrib,   &
+                            ulimit,   &
+                            levpr,   &
+                            levpr_grib2,   &
+                            pnpr,   &
+                            scale_factor,   &
+                            p_t,   &
+                            p_r,   &
+                            p_u,   &
+                            p_v,   &
+                            p_z,   &
+                            p_slp,   &
+                            p_sfp,   &
+                            p_sft,   &
+                            p_snow,   &
+                            p_sst
+
+       USE chem_isan_coms, ONLY: nspecies,  &
+                                 nspecies_aer_in, &
+                                 p_sc,      &
+                                 p_aer_sc
 #ifdef GRIB2
        use wgrib2api
 #endif
@@ -2902,8 +3189,29 @@ subroutine chem_get_press (iunit)
    subroutine writeGradsSub4Grads(nGradsVars,gradsVarsNames)
        !Header_vai_aqui!
 
-       use isan_coms
-       use chem_isan_coms
+       USE isan_coms, ONLY: p_u,   &
+                            p_v,   &
+                            p_t,   &
+                            p_z,   &
+                            p_r,   &
+                            p_slp, &
+                            p_sfp, &
+                            p_sft, &
+                            p_snow,&
+                            p_sst, &
+                            levpr, &
+                            nprx,  &
+                            npry,  &
+                            gdatdx,  &
+                            gdatdy,  &
+                            icgradsprefix,  &
+                            idate,  &
+                            ihour,  &
+                            imonth,  &
+                            iyear,  &
+                            nprz,  &
+                            xswlat,  &
+                            xswlon
 
       
        implicit none

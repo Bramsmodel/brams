@@ -12,16 +12,30 @@ subroutine chem_makevarf(ng)
 !subroutine makevarf(ng)
 !--(DMK-CCATT-FIM)----------------------------------------------------------------
 
-use isan_coms
+use isan_coms, only: is_grids,  &
+                     rs_sfp,    &
+                     rs_sft,    &
+                     rs_snow,   &
+                     rs_sst,    &
+                     rs_slp
 
 !--(DMK-CCATT-INI)----------------------------------------------------------------
 !srf-chem
-use chem_isan_coms
+use chem_isan_coms, only: chem_is_grids,  &
+                          aer_is_grids,  &
+                          nspecies,  &
+                          nspecies_aer_in
+
 use mem_chem1, only:  CHEM_ASSIM     ! intent(in)
 !srf-chem-end
 !--(DMK-CCATT-FIM)----------------------------------------------------------------
 use mem_aer1, only: aer_assim
-use mem_grid
+use mem_grid, only: grid_g,   &
+                    nnxp,     &
+                    nnyp,     &
+                    nnzp,     &
+                    ztop,     &
+                    ztn
 
 implicit none
 
@@ -462,104 +476,108 @@ end
 
 !--(DMK-CCATT-INI)----------------------------------------------------------------
 subroutine chem_varfile_nstfeed(ifm,icm,n1f,n2f,n3f,n1c,n2c,n3c &
-!--(DMK-CCATT-OLD)----------------------------------------------------------------
-!subroutine varfile_nstfeed(ifm,icm,n1f,n2f,n3f,n1c,n2c,n3c &
-!--(DMK-CCATT-FIM)----------------------------------------------------------------
-                          ,nbot,ntop)
+     !--(DMK-CCATT-OLD)----------------------------------------------------------------
+     !subroutine varfile_nstfeed(ifm,icm,n1f,n2f,n3f,n1c,n2c,n3c &
+     !--(DMK-CCATT-FIM)----------------------------------------------------------------
+     ,nbot,ntop)
 
-use isan_coms
+  use isan_coms, only: is_grids,  &
+       rr_scr1                     
 
-!--(DMK-CCATT-INI)----------------------------------------------------------------
-!srf-chem
-use chem_isan_coms
-use mem_chem1, only:  CHEM_ASSIM     ! intent(in)
-use mem_aer1, only: AER_ASSIM
-use ModRbnd, only: topset, botset
-!srf-chem-end
-!--(DMK-CCATT-FIM)----------------------------------------------------------------
+  !--(DMK-CCATT-INI)----------------------------------------------------------------
+  !srf-chem
+  use chem_isan_coms, only: chem_is_grids,  &
+       aer_is_grids,   &
+       nspecies,       &
+       nspecies_aer_in 
+  use mem_chem1, only:  CHEM_ASSIM     ! intent(in)
+  use mem_aer1, only: AER_ASSIM
+  use ModRbnd, only: topset, botset
+  !srf-chem-end
+  !--(DMK-CCATT-FIM)----------------------------------------------------------------
 
-implicit none
+  implicit none
 
-integer :: ifm,icm,n1f,n2f,n3f,n1c,n2c,n3c,nbot,ntop, &
-!--(DMK-CCATT-INI)----------------------------------------------------------------
-           nspc
-!--(DMK-CCATT-FIM)----------------------------------------------------------------
+  integer :: ifm,icm,n1f,n2f,n3f,n1c,n2c,n3c,nbot,ntop, &
+       !--(DMK-CCATT-INI)----------------------------------------------------------------
+       nspc
+  !--(DMK-CCATT-FIM)----------------------------------------------------------------
 
 
-!     Feed back the finer mesh to the coarser mesh.
+  !     Feed back the finer mesh to the coarser mesh.
 
-call fdback(is_grids(icm)%rr_u   (1,1,1),is_grids(ifm)%rr_u   (1,1,1) &
-           ,is_grids(icm)%rr_dn0u(1,1,1),is_grids(ifm)%rr_dn0u(1,1,1) &
-           ,n1c,n2c,n3c,n1f,n2f,n3f,ifm,'u',rr_scr1(1))
+  call fdback(is_grids(icm)%rr_u   (1,1,1),is_grids(ifm)%rr_u   (1,1,1) &
+       ,is_grids(icm)%rr_dn0u(1,1,1),is_grids(ifm)%rr_dn0u(1,1,1) &
+       ,n1c,n2c,n3c,n1f,n2f,n3f,ifm,'u',rr_scr1(1))
 
-call fdback(is_grids(icm)%rr_v   (1,1,1),is_grids(ifm)%rr_v   (1,1,1) &
-           ,is_grids(icm)%rr_dn0v(1,1,1),is_grids(ifm)%rr_dn0v(1,1,1) &
-           ,n1c,n2c,n3c,n1f,n2f,n3f,ifm,'v',rr_scr1(1))
+  call fdback(is_grids(icm)%rr_v   (1,1,1),is_grids(ifm)%rr_v   (1,1,1) &
+       ,is_grids(icm)%rr_dn0v(1,1,1),is_grids(ifm)%rr_dn0v(1,1,1) &
+       ,n1c,n2c,n3c,n1f,n2f,n3f,ifm,'v',rr_scr1(1))
 
-call fdback(is_grids(icm)%rr_p  (1,1,1),is_grids(ifm)%rr_p  (1,1,1) &
-           ,is_grids(icm)%rr_dn0(1,1,1),is_grids(ifm)%rr_dn0(1,1,1) &
-           ,n1c,n2c,n3c,n1f,n2f,n3f,ifm,'p',rr_scr1(1))
+  call fdback(is_grids(icm)%rr_p  (1,1,1),is_grids(ifm)%rr_p  (1,1,1) &
+       ,is_grids(icm)%rr_dn0(1,1,1),is_grids(ifm)%rr_dn0(1,1,1) &
+       ,n1c,n2c,n3c,n1f,n2f,n3f,ifm,'p',rr_scr1(1))
 
-call fdback(is_grids(icm)%rr_t  (1,1,1),is_grids(ifm)%rr_t  (1,1,1) &
-           ,is_grids(icm)%rr_dn0(1,1,1),is_grids(ifm)%rr_dn0(1,1,1) &
-           ,n1c,n2c,n3c,n1f,n2f,n3f,ifm,'t',rr_scr1(1))
+  call fdback(is_grids(icm)%rr_t  (1,1,1),is_grids(ifm)%rr_t  (1,1,1) &
+       ,is_grids(icm)%rr_dn0(1,1,1),is_grids(ifm)%rr_dn0(1,1,1) &
+       ,n1c,n2c,n3c,n1f,n2f,n3f,ifm,'t',rr_scr1(1))
 
-call fdback(is_grids(icm)%rr_r  (1,1,1),is_grids(ifm)%rr_r  (1,1,1) &
-           ,is_grids(icm)%rr_dn0(1,1,1),is_grids(ifm)%rr_dn0(1,1,1) &
-           ,n1c,n2c,n3c,n1f,n2f,n3f,ifm,'t',rr_scr1(1))
+  call fdback(is_grids(icm)%rr_r  (1,1,1),is_grids(ifm)%rr_r  (1,1,1) &
+       ,is_grids(icm)%rr_dn0(1,1,1),is_grids(ifm)%rr_dn0(1,1,1) &
+       ,n1c,n2c,n3c,n1f,n2f,n3f,ifm,'t',rr_scr1(1))
 
-!--(DMK-CCATT-INI)----------------------------------------------------------------
-!srf-chem
-if(CHEM_ASSIM == 1 .and. nspecies>0 ) then
- do nspc=1,nspecies
-  print*,'fdback for spc=',nspc
-  call fdback(chem_is_grids(icm)%rr_sc  (1,1,1,nspc) &
+  !--(DMK-CCATT-INI)----------------------------------------------------------------
+  !srf-chem
+  if(CHEM_ASSIM == 1 .and. nspecies>0 ) then
+     do nspc=1,nspecies
+        print*,'fdback for spc=',nspc
+        call fdback(chem_is_grids(icm)%rr_sc  (1,1,1,nspc) &
              ,chem_is_grids(ifm)%rr_sc  (1,1,1,nspc) &
              ,is_grids(icm)%rr_dn0(1,1,1),is_grids(ifm)%rr_dn0(1,1,1) &
              ,n1c,n2c,n3c,n1f,n2f,n3f,ifm,'t',rr_scr1(1))
- enddo
-endif
-if(aer_ASSIM == 1 .and. nspecies_aer_in>0 ) then
- do nspc=1,nspecies_aer_in
-  print*,'fdback for spc=',nspc
-  call fdback(aer_is_grids(icm)%rr_sc  (1,1,1,nspc) &
+     enddo
+  endif
+  if(aer_ASSIM == 1 .and. nspecies_aer_in>0 ) then
+     do nspc=1,nspecies_aer_in
+        print*,'fdback for spc=',nspc
+        call fdback(aer_is_grids(icm)%rr_sc  (1,1,1,nspc) &
              ,aer_is_grids(ifm)%rr_sc  (1,1,1,nspc) &
              ,is_grids(icm)%rr_dn0(1,1,1),is_grids(ifm)%rr_dn0(1,1,1) &
              ,n1c,n2c,n3c,n1f,n2f,n3f,ifm,'t',rr_scr1(1))
- enddo
-endif
-!srf-chem-end
-!--(DMK-CCATT-FIM)----------------------------------------------------------------
+     enddo
+  endif
+  !srf-chem-end
+  !--(DMK-CCATT-FIM)----------------------------------------------------------------
 
-if(nbot == 1) then
-   call botset(n1c,n2c,n3c,1,n2c,1,n3c  &
-        ,15 ,is_grids(icm)%rr_u,'U')
-   call botset(n1c,n2c,n3c,1,n2c,1,n3c  &
-        ,15 ,is_grids(icm)%rr_v,'V')
-   call botset(n1c,n2c,n3c,1,n2c,1,n3c  &
-        ,15 ,is_grids(icm)%rr_p,'P')
-   call botset(n1c,n2c,n3c,1,n2c,1,n3c  &
-        ,15 ,is_grids(icm)%rr_t,'T')
-   call botset(n1c,n2c,n3c,1,n2c,1,n3c  &
-        ,15 ,is_grids(icm)%rr_r,'T')
-endif
+  if(nbot == 1) then
+     call botset(n1c,n2c,n3c,1,n2c,1,n3c  &
+          ,15 ,is_grids(icm)%rr_u,'U')
+     call botset(n1c,n2c,n3c,1,n2c,1,n3c  &
+          ,15 ,is_grids(icm)%rr_v,'V')
+     call botset(n1c,n2c,n3c,1,n2c,1,n3c  &
+          ,15 ,is_grids(icm)%rr_p,'P')
+     call botset(n1c,n2c,n3c,1,n2c,1,n3c  &
+          ,15 ,is_grids(icm)%rr_t,'T')
+     call botset(n1c,n2c,n3c,1,n2c,1,n3c  &
+          ,15 ,is_grids(icm)%rr_r,'T')
+  endif
 
-if(ntop == 1) then
-   call topset(n1c,n2c,n3c,1,n2c,1,n3c  &
-        ,15,is_grids(icm)%rr_u,'U')
-   call topset(n1c,n2c,n3c,1,n2c,1,n3c  &
-        ,15,is_grids(icm)%rr_v,'V')
-   call topset(n1c,n2c,n3c,1,n2c,1,n3c  &
-        ,15,is_grids(icm)%rr_p,'P')
-   call topset(n1c,n2c,n3c,1,n2c,1,n3c  &
-        ,15,is_grids(icm)%rr_t,'T')
-   call topset(n1c,n2c,n3c,1,n2c,1,n3c  &
-        ,15,is_grids(icm)%rr_r,'T')
-endif
+  if(ntop == 1) then
+     call topset(n1c,n2c,n3c,1,n2c,1,n3c  &
+          ,15,is_grids(icm)%rr_u,'U')
+     call topset(n1c,n2c,n3c,1,n2c,1,n3c  &
+          ,15,is_grids(icm)%rr_v,'V')
+     call topset(n1c,n2c,n3c,1,n2c,1,n3c  &
+          ,15,is_grids(icm)%rr_p,'P')
+     call topset(n1c,n2c,n3c,1,n2c,1,n3c  &
+          ,15,is_grids(icm)%rr_t,'T')
+     call topset(n1c,n2c,n3c,1,n2c,1,n3c  &
+          ,15,is_grids(icm)%rr_r,'T')
+  endif
 
 
-return
-end
+  return
+end subroutine chem_varfile_nstfeed
 
 
 !--(DMK-CCATT-INI)----------------------------------------------------------------
@@ -567,213 +585,237 @@ end
 !
 !srf-chem
 subroutine chem_isnsig(n1,n2,n3,nsp_dummy,sc,topt,zt,ztop)
-   
-use isan_coms
 
-!srf-chem
-use chem_isan_coms
-!srf-chem-end
+  use isan_coms, only: guess1st,   &
+       hybbot,     &
+       hybtop,     &
+       nisn,       &
+       nsigz,      &
+       sigzwt,     &
+       pi_s,       &
+       pi_p,       &
+       levth
 
-use rconstants
+  !srf-chem
+  use chem_isan_coms, only: pi_sc,  &
+       ps_sc
+  !srf-chem-end
 
-implicit none
+  use rconstants, only: cp,  &
+       g,   &
+       p00i,&
+       rocp
 
-!srf-chem
-integer :: n1,n2,n3,nsp_dummy
-real, dimension(n1,n2,n3,nsp_dummy) :: sc
-!srf-chem-end
-real, dimension(n2,n3) :: topt
-real, dimension(n1) :: zt
-real :: ztop
+  implicit none
 
-!srf-chem
-real, allocatable :: v1(:),v2(:),v6(:,:)
-integer :: i,j,k,nki,ki,kbeg,kend,nspc
-!srf-chem-end
-real :: rtg,wtsz
+  !srf-chem
+  integer :: n1,n2,n3,nsp_dummy
+  real, dimension(n1,n2,n3,nsp_dummy) :: sc
+  !srf-chem-end
+  real, dimension(n2,n3) :: topt
+  real, dimension(n1) :: zt
+  real :: ztop
 
-!srf-chem
-allocate (v1(n1),v2(nisn),v6(nisn,nsp_dummy))
-!srf-chem-end
+  !srf-chem
+  real, allocatable :: v1(:),v2(:),v6(:,:)
+  integer :: i,j,k,nki,ki,kbeg,kend,nspc
+  !srf-chem-end
+  real :: rtg,wtsz
 
-do j=1,n3
-   do i=1,n2
+  !srf-chem
+  allocate (v1(n1),v2(nisn),v6(nisn,nsp_dummy))
+  !srf-chem-end
 
-      rtg=(1.-topt(i,j)/ztop)
-      do k=1,n1
-         v1(k)=topt(i,j)+zt(k)*rtg
-      enddo
+  do j=1,n3
+     do i=1,n2
 
-      if (guess1st.eq.'PRESS') then
-!srf-chem
-         do nspc=1,nsp_dummy
-            nki=0
-            do ki=1,nisn
-              if(pi_p(i,j,ki).lt.1e20 .and. pi_s(i,j,ki).lt.1e20  &
-                 .and. pi_sc(i,j,ki,nspc).lt.1e20)  then
-                 nki=nki+1
-                 v2(nki)=(pi_s(i,j,ki)-cp*levth(ki)  &
-                      *(pi_p(i,j,ki)*p00i)**rocp)/g
-                 v6(nki,nspc)=pi_sc(i,j,ki,nspc)
-              endif
-            enddo  ! loop ki
-         enddo   ! loop nspc
+        rtg=(1.-topt(i,j)/ztop)
+        do k=1,n1
+           v1(k)=topt(i,j)+zt(k)*rtg
+        enddo
 
-!srf-chem
-         do nspc=1,nsp_dummy
-          call htint(nki,v6(1,nspc),v2,n1,sc(1,i,j,nspc),v1)
-         enddo  ! loop nspc
+        if (guess1st.eq.'PRESS') then
+           !srf-chem
+           do nspc=1,nsp_dummy
+              nki=0
+              do ki=1,nisn
+                 if(pi_p(i,j,ki).lt.1e20 .and. pi_s(i,j,ki).lt.1e20  &
+                      .and. pi_sc(i,j,ki,nspc).lt.1e20)  then
+                    nki=nki+1
+                    v2(nki)=(pi_s(i,j,ki)-cp*levth(ki)  &
+                         *(pi_p(i,j,ki)*p00i)**rocp)/g
+                    v6(nki,nspc)=pi_sc(i,j,ki,nspc)
+                 endif
+              enddo  ! loop ki
+           enddo   ! loop nspc
 
-      endif
+           !srf-chem
+           do nspc=1,nsp_dummy
+              call htint(nki,v6(1,nspc),v2,n1,sc(1,i,j,nspc),v1)
+           enddo  ! loop nspc
+
+        endif
 
 
-      kbeg=n1+1
-      kend=n1+1
-      do k=1,nsigz
-         if(zt(k).gt.hybbot) then
-            kbeg=k-1
-            exit
-         endif
-      enddo
+        kbeg=n1+1
+        kend=n1+1
+        do k=1,nsigz
+           if(zt(k).gt.hybbot) then
+              kbeg=k-1
+              exit
+           endif
+        enddo
 
-      do k=1,nsigz
-         if(zt(k).gt.hybtop) then
-            kend=k
-            exit
-         endif
-      enddo
+        do k=1,nsigz
+           if(zt(k).gt.hybtop) then
+              kend=k
+              exit
+           endif
+        enddo
 
-      do k=1,nsigz
+        do k=1,nsigz
 
-         if(k.lt.kbeg) then
-            wtsz=sigzwt
-         elseif(k.gt.kend) then
-            wtsz=0.
-         elseif(k.ge.kbeg.and.k.le.kend) then
-            wtsz= (zt(kend)-zt(k))  &
-                 /(zt(kend)-zt(kbeg))  &
-                 *sigzwt
-         endif
+           if(k.lt.kbeg) then
+              wtsz=sigzwt
+           elseif(k.gt.kend) then
+              wtsz=0.
+           elseif(k.ge.kbeg.and.k.le.kend) then
+              wtsz= (zt(kend)-zt(k))  &
+                   /(zt(kend)-zt(kbeg))  &
+                   *sigzwt
+           endif
 
-!srf-chem
-         do nspc=1,nsp_dummy
-           sc(k,i,j,nspc)=(1.-wtsz)*sc(k,i,j,nspc)+wtsz*ps_sc(i,j,k,nspc)
-         enddo  ! loop nspc
+           !srf-chem
+           do nspc=1,nsp_dummy
+              sc(k,i,j,nspc)=(1.-wtsz)*sc(k,i,j,nspc)+wtsz*ps_sc(i,j,k,nspc)
+           enddo  ! loop nspc
 
-      enddo
+        enddo
 
-   enddo
-enddo
+     enddo
+  enddo
 
-deallocate (v1,v2,v6)
+  deallocate (v1,v2,v6)
 
-return
+  return
 end subroutine chem_isnsig
 
 
 !srf-chem
 subroutine aer_isnsig(n1,n2,n3,nsp_dummy,sc,topt,zt,ztop)
-   
-use isan_coms
 
-!srf-chem
-use chem_isan_coms
-!srf-chem-end
+  use isan_coms, only:  guess1st,  &
+       hybbot,    &
+       hybtop,    &
+       nisn,      &
+       nsigz,     &
+       sigzwt,    &
+       pi_s,      &
+       pi_p,      &
+       levth
 
-use rconstants
+  !srf-chem
+  use chem_isan_coms, only: pi_aer_sc,   &
+       ps_aer_sc
+  !srf-chem-end
 
-implicit none
+  use rconstants, only: cp,   &
+       g,    &
+       p00i, &
+       rocp
 
-!srf-chem
-integer :: n1,n2,n3,nsp_dummy
-real, dimension(n1,n2,n3,nsp_dummy) :: sc
-!srf-chem-end
-real, dimension(n2,n3) :: topt
-real, dimension(n1) :: zt
-real :: ztop
+  implicit none
 
-!srf-chem
-real, allocatable :: v1(:),v2(:),v6(:,:)
-integer :: i,j,k,nki,ki,kbeg,kend,nspc
-!srf-chem-end
-real :: rtg,wtsz
+  !srf-chem
+  integer :: n1,n2,n3,nsp_dummy
+  real, dimension(n1,n2,n3,nsp_dummy) :: sc
+  !srf-chem-end
+  real, dimension(n2,n3) :: topt
+  real, dimension(n1) :: zt
+  real :: ztop
 
-!srf-chem
-allocate (v1(n1),v2(nisn),v6(nisn,nsp_dummy))
-!srf-chem-end
+  !srf-chem
+  real, allocatable :: v1(:),v2(:),v6(:,:)
+  integer :: i,j,k,nki,ki,kbeg,kend,nspc
+  !srf-chem-end
+  real :: rtg,wtsz
 
-do j=1,n3
-   do i=1,n2
+  !srf-chem
+  allocate (v1(n1),v2(nisn),v6(nisn,nsp_dummy))
+  !srf-chem-end
 
-      rtg=(1.-topt(i,j)/ztop)
-      do k=1,n1
-         v1(k)=topt(i,j)+zt(k)*rtg
-      enddo
+  do j=1,n3
+     do i=1,n2
 
-      if (guess1st.eq.'PRESS') then
-!srf-chem
-         do nspc=1,nsp_dummy
-            nki=0
-            do ki=1,nisn
-              if(pi_p(i,j,ki).lt.1e20 .and. pi_s(i,j,ki).lt.1e20  &
-                 .and. pi_aer_sc(i,j,ki,nspc).lt.1e20)  then
-                 nki=nki+1
-                 v2(nki)=(pi_s(i,j,ki)-cp*levth(ki)  &
-                      *(pi_p(i,j,ki)*p00i)**rocp)/g
-                 v6(nki,nspc)=pi_aer_sc(i,j,ki,nspc)
-              endif
-            enddo  ! loop ki
-         enddo   ! loop nspc
+        rtg=(1.-topt(i,j)/ztop)
+        do k=1,n1
+           v1(k)=topt(i,j)+zt(k)*rtg
+        enddo
 
-!srf-chem
-         do nspc=1,nsp_dummy
-          call htint(nki,v6(1,nspc),v2,n1,sc(1,i,j,nspc),v1)
-         enddo  ! loop nspc
+        if (guess1st.eq.'PRESS') then
+           !srf-chem
+           do nspc=1,nsp_dummy
+              nki=0
+              do ki=1,nisn
+                 if(pi_p(i,j,ki).lt.1e20 .and. pi_s(i,j,ki).lt.1e20  &
+                      .and. pi_aer_sc(i,j,ki,nspc).lt.1e20)  then
+                    nki=nki+1
+                    v2(nki)=(pi_s(i,j,ki)-cp*levth(ki)  &
+                         *(pi_p(i,j,ki)*p00i)**rocp)/g
+                    v6(nki,nspc)=pi_aer_sc(i,j,ki,nspc)
+                 endif
+              enddo  ! loop ki
+           enddo   ! loop nspc
 
-      endif
+           !srf-chem
+           do nspc=1,nsp_dummy
+              call htint(nki,v6(1,nspc),v2,n1,sc(1,i,j,nspc),v1)
+           enddo  ! loop nspc
+
+        endif
 
 
-      kbeg=n1+1
-      kend=n1+1
-      do k=1,nsigz
-         if(zt(k).gt.hybbot) then
-            kbeg=k-1
-            exit
-         endif
-      enddo
+        kbeg=n1+1
+        kend=n1+1
+        do k=1,nsigz
+           if(zt(k).gt.hybbot) then
+              kbeg=k-1
+              exit
+           endif
+        enddo
 
-      do k=1,nsigz
-         if(zt(k).gt.hybtop) then
-            kend=k
-            exit
-         endif
-      enddo
+        do k=1,nsigz
+           if(zt(k).gt.hybtop) then
+              kend=k
+              exit
+           endif
+        enddo
 
-      do k=1,nsigz
+        do k=1,nsigz
 
-         if(k.lt.kbeg) then
-            wtsz=sigzwt
-         elseif(k.gt.kend) then
-            wtsz=0.
-         elseif(k.ge.kbeg.and.k.le.kend) then
-            wtsz= (zt(kend)-zt(k))  &
-                 /(zt(kend)-zt(kbeg))  &
-                 *sigzwt
-         endif
+           if(k.lt.kbeg) then
+              wtsz=sigzwt
+           elseif(k.gt.kend) then
+              wtsz=0.
+           elseif(k.ge.kbeg.and.k.le.kend) then
+              wtsz= (zt(kend)-zt(k))  &
+                   /(zt(kend)-zt(kbeg))  &
+                   *sigzwt
+           endif
 
-!srf-chem
-         do nspc=1,nsp_dummy
-           sc(k,i,j,nspc)=(1.-wtsz)*sc(k,i,j,nspc)+wtsz*ps_aer_sc(i,j,k,nspc)
-         enddo  ! loop nspc
+           !srf-chem
+           do nspc=1,nsp_dummy
+              sc(k,i,j,nspc)=(1.-wtsz)*sc(k,i,j,nspc)+wtsz*ps_aer_sc(i,j,k,nspc)
+           enddo  ! loop nspc
 
-      enddo
+        enddo
 
-   enddo
-enddo
+     enddo
+  enddo
 
-deallocate (v1,v2,v6)
+  deallocate (v1,v2,v6)
 
-return
+  return
 end subroutine aer_isnsig
 !srf-chem-end
 !     ****************************************************************
