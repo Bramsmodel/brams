@@ -394,7 +394,7 @@ OBJ_MOD = \
 	Henrys_Law_cts.o \
 	MAPL_Constants.o \
 	ModOptical.o        \
-	mic_gfdl_driver.o \
+	ModMicGfdlDriver.o \
 	gfdl_cloud_microphys.o \
 	dam.o \
 	mod_aer.o \

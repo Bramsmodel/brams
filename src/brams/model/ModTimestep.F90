@@ -8,6 +8,9 @@
 
 module ModTimestep
 
+  use ModMicGfdlDriver, only: &
+       micro_gfdl
+  
   use ModMicrophysicsMisc, only: &
        negadj1
   
@@ -600,7 +603,9 @@ contains
        call micro_thompson()
     endif
     if (mcphys_type == 4 ) then
-       call micro_gfdl()
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+       call micro_gfdl(oneGrid%Basic)
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     endif
 
     !----------------------------------------

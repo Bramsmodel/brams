@@ -557,7 +557,8 @@ ModTimestep.o : $(MODEL)/ModTimestep.F90 mem_basic.o mem_cuparm.o ModOptical.o M
 	ModAcoust.o ModRamsMicrophysics2M.o mic_thompson_driver.o ModWindFarm.o \
         ModMicrophysicsDrive.o seasalt.o MatrixDriver.o ModRadvcRK.o $(JULES_OBJ_SFCLYR) \
 	ModMessageSet.o modIau.o  ModRbnd.o ModRadvc.o ModTurbK.o ModDiffuse.o \
-	ModUrbanCanopy.o ModRexev.o ModRThrm.o ModCoriolis.o $(UTILS_INCS)/tsNames.h
+	ModUrbanCanopy.o ModRexev.o ModRThrm.o ModCoriolis.o $(UTILS_INCS)/tsNames.h \
+	ModMicGfdlDriver.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -571,7 +572,8 @@ ModTimestepRK.o : $(MODEL)/ModTimestepRK.F90 ModTimestep.o ModBasicFields.o mem_
         seasalt.o MatrixDriver.o ModRadvcRK.o modIau.o ModLeaf3OceanOnly.o ModRbnd.o \
 	$(JULES_OBJ_SFCLYR)  ModRadvc.o ModMonotonicAdvection.o utilsMod.o ModRtimi.o \
 	ModMessageSet.o ModTurbK.o ModDiffuse.o ModRexev.o ModRThrm.o ModWindFarm.o \
-	ModUrbanCanopy.o ModCoriolis.o $(UTILS_INCS)/tsNames.h  $(UTILS_INCS)/constants.h
+	ModUrbanCanopy.o ModCoriolis.o $(UTILS_INCS)/tsNames.h  $(UTILS_INCS)/constants.h \
+	ModMicGfdlDriver.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -2306,9 +2308,9 @@ module_mp_thompson.o : $(MICRO)/module_mp_thompson.f90  module_mp_radar.o  $(UTI
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mic_gfdl_driver.o : $(MICRO)/mic_gfdl_driver.f90  mem_basic.o mem_grid.o mem_micro.o \
-	mem_radiate.o micphys.o node_mod.o rconstants.o  io_params.o mem_radiate.o\
-	gfdl_cloud_microphys.o
+ModMicGfdlDriver.o : $(MICRO)/ModMicGfdlDriver.f90 ModBasicFields.o mem_grid.o mem_micro.o \
+	mem_radiate.o micphys.o node_mod.o rconstants.o  io_params.o mem_radiate.o \
+	gfdl_cloud_microphys.o mem_leaf.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

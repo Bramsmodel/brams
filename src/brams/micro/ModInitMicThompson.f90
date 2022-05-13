@@ -20,7 +20,9 @@ module ModInitMicThompson
   use dump, only: &
        dumpMessage
 
-  use genericFunctions
+  use genericFunctions, only: &
+       arcDistance, &
+       outRealSize
 
   use ReadBcst, only: & 
        Broadcast, &
