@@ -595,7 +595,7 @@ ModOneProc.o : $(MODEL)/ModOneProc.F90 ModNamelistFile.o ModSched.o ModGasPart.o
 	tuvParameter.o ModTuv2.7.o ModTuvDriver2.7.o ModGridTree.o \
 	ModGrid.o ModTimestep.o ModTimestepRK.o meteogram.o \
 	ModRamsMicrophysics2M.o dam.o mod_aer.o \
-	initMicThompson.o modIau.o ModMemAlloc.o ModRThrm.o \
+	ModInitMicThompson.o modIau.o ModMemAlloc.o ModRThrm.o \
 	$(UTILS_INCS)/tsNames.h  $(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
@@ -2356,7 +2356,7 @@ mod_aer.o : $(AERCLIM)/mod_aer.f90 dump.o $(UTILS_INCS)/constants.h
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-initMicThompson.o : $(MICRO)/initMicThompson.f90 node_mod.o  $(UTILS_INCS)/constants.h
+ModInitMicThompson.o : $(MICRO)/ModInitMicThompson.f90 node_mod.o  $(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

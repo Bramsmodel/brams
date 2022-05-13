@@ -548,9 +548,9 @@ module ModOneProc
   use aerClimMod, only: &
        gradsRead
 
-  use initMicThompson, only: &
+  use ModInitMicThompson, only: &
        readDataFriendly, &
-       adJustFriendlyForMonth
+       adjustFriendlyForMonth
 
   use ModEvaluation, only: &
        StoreNamelistFileAtEvaluate, &
@@ -1230,7 +1230,11 @@ contains
                 ! advance current grid forward by corresponding deltat
 
                 time = begtime + (isched(npass,5)-1)*dtlt
-                if(mcphys_type==3) call adJustFriendlyForMonth(time)
+                if (mcphys_type==3) then
+                   call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+                   call adjustFriendlyForMonth(time,oneGrid%Basic)
+                   call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+                end if
 
                 ! timestep routine
                 

@@ -398,7 +398,7 @@ OBJ_MOD = \
 	gfdl_cloud_microphys.o \
 	dam.o \
 	mod_aer.o \
-	initMicThompson.o \
+	ModInitMicThompson.o \
 	ModPostGridNetCDF.o \
 	ModPostOneFieldNetCDF.o \
 	ModPostTypes.o \

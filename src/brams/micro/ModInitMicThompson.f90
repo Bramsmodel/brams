@@ -1,10 +1,69 @@
-module initMicThompson
+module ModInitMicThompson
+
+  use node_mod, only: &
+       nodei0, & ! intent(in)
+       nodej0, & ! intent(in)
+       nodemxp, & ! intent(in)
+       nodemyp, & ! intent(in)
+       nmachs,  & ! intent(in)
+       mynum,  &  ! intent(in)
+       mchnum, &  ! intent(in)
+       master_num, &! intent(in)
+       ia, &
+       iz, &
+       ja, &
+       jz, &
+       mzp, &
+       mxp, &
+       myp
+
+  use dump, only: &
+       dumpMessage
+
+  use genericFunctions
+
+  use ReadBcst, only: & 
+       Broadcast, &
+       gatherData   ! Subroutine
+
+  use parlib, only: &
+       parf_bcast ! Subroutine
+
+  use mem_grid, only : &
+       grid_g, &
+       zt, &
+       runtype,  &  ! intent(in)
+       iyear1, &    ! intent(in)
+       imonth1, &   ! intent(in)
+       idate1, &    ! intent(in)
+       itime1, &    ! intent(in)
+       ihour1, &
+       timmax, &    ! intent(in)
+       timeunit, &  ! intent(in)
+       nnxp, &      ! intent(in)
+       nnyp, &      ! intent(in)
+       nnzp,    &   ! intent(in)
+       deltaxn, &
+       deltayn, &
+       oneGlobalGridData, &
+       GlobalSizes  ! Subroutine
+
+  use ModBasicFields, only: &
+       BasicFields
+
+  use mem_micro, only: &
+       micro_g
 
   use ModDateUtils, only: &
        date_add_to
 
-  use genericFunctions
+  implicit none
 
+  private
+
+  public :: readDataFriendly
+  public :: adjustFriendlyForMonth
+  
   real,allocatable :: dataValues(:,:,:,:,:)
   character(len=256), allocatable :: varName(:)
   integer :: xdef,ydef,zdef,zbeg,zend,tdef,vars
@@ -54,30 +113,6 @@ contains
     !# @endwarning
     !#
     !#---
-    use node_mod, only: &
-         nodei0, & ! intent(in)
-         nodej0, & ! intent(in)
-         nodemxp, & ! intent(in)
-         nodemyp, & ! intent(in)
-         nmachs,  & ! intent(in)
-         mynum,  &  ! intent(in)
-         mchnum, &  ! intent(in)
-         master_num, &! intent(in)
-         ia,iz,ja,jz
-
-    use dump, only: &
-         dumpMessage
-
-    use genericFunctions
-
-    use ReadBcst, only: & !Just for broadcast comm infos
-         Broadcast
-
-    use parlib, only: &
-         parf_bcast ! Subroutine
-
-    implicit none
-
     include "constants.h"
 
     !Parameters (constants)
@@ -208,52 +243,6 @@ contains
     !# @endwarning
     !#
     !#---
-    use node_mod, only: &
-         nodei0, & ! intent(in)
-         nodej0, & ! intent(in)
-         nodemxp, & ! intent(in)
-         nodemyp, & ! intent(in)
-         nmachs,  & ! intent(in)
-         mynum,  &  ! intent(in)
-         mchnum, &  ! intent(in)
-         master_num, &! intent(in)
-         ia,iz,ja,jz, &
-         mzp,mxp,myp
-
-    use dump, only: &
-         dumpMessage
-
-    use genericFunctions
-
-    use mem_grid, only : &
-         grid_g, &
-         zt, &
-         runtype,  &  ! intent(in)
-         iyear1, &    ! intent(in)
-         imonth1, &   ! intent(in)
-         idate1, &    ! intent(in)
-         itime1, &    ! intent(in)
-         timmax, &    ! intent(in)
-         timeunit, &  ! intent(in)
-         nnxp, &      ! intent(in)
-         nnyp, &      ! intent(in)
-         nnzp,    &   ! intent(in)
-         deltaxn, &
-         deltayn, &
-         oneGlobalGridData, &
-         GlobalSizes  ! Subroutine
-
-    use readbcst, only: &
-         gatherData   ! Subroutine
-
-    use mem_basic, only: &
-         basic_g
-
-    use ParLib, only: &
-         parf_bcast
-
-    implicit none
-
     include "constants.h"
 
     !Parameters (constants)
@@ -554,7 +543,13 @@ contains
 
   end subroutine interpolateDataFriendly
 
-  subroutine adJustFriendlyForMonth(time)
+
+
+
+
+
+  
+  subroutine adjustFriendlyForMonth(time, oneBasicFields)
     !# Adjust aerosol data friendly for month and pressures
     !#
     !# @note
@@ -588,47 +583,6 @@ contains
     !# &copy; <https://creativecommons.org/licenses/GPL/2.0/legalcode.pt>
     !# @endwarning
     !#
-    use mem_micro, only: &
-         micro_g
-
-    use mem_grid, only: &
-         idate1, &
-         imonth1, &
-         iyear1, &
-         ihour1, &
-         itime1, &
-         grid_g
-
-    use node_mod, only: &
-         nodei0, & ! intent(in)
-         nodej0, & ! intent(in)
-         nodemxp, & ! intent(in)
-         nodemyp, & ! intent(in)
-         nmachs,  & ! intent(in)
-         mynum,  &  ! intent(in)
-         mchnum, &  ! intent(in)
-         master_num, &! intent(in)
-         ia,iz,ja,jz, &
-         mzp,mxp,myp
-
-
-    use mem_grid, only : &
-         grid_g, &
-         runtype,  &  ! intent(in)
-         iyear1, &    ! intent(in)
-         imonth1, &   ! intent(in)
-         idate1, &    ! intent(in)
-         itime1, &    ! intent(in)
-         nnxp, &      ! intent(in)
-         nnyp, &      ! intent(in)
-         nnzp,    &   ! intent(in)
-         GlobalSizes  ! Subroutine
-
-    use mem_basic, only: &
-         basic_g
-
-    implicit none
-
     include "constants.h"
 
     !Parameters (constants)
@@ -637,6 +591,7 @@ contains
 
     ! Input/Output variables
     real   ,intent(in)    :: time
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
     !# current time
 
     !Local variables
@@ -671,8 +626,8 @@ contains
           !Calc the model pressure in each layer
           do k=1,mzp
              dens=0.0
-             pressBrams(k,i,j)=((basic_g(ifm)%pp(k,i,j) &
-                  +basic_g(ifm)%pi0(k,i,j))/c_cp)**c_cpor*C_p00 !Pa
+             pressBrams(k,i,j)=((oneBasicFields%pp(k,i,j) &
+                  +oneBasicFields%pi0(k,i,j))/c_cp)**c_cpor*C_p00 !Pa
              do kk=k-4,k+4
                 if(kk<1 .or. kk>zdef) cycle
                 dist=pressBrams(k,i,j)-qPress(omn,kk,i,j)
@@ -730,4 +685,4 @@ contains
   end subroutine adJustFriendlyForMonth
 
 
-end module initMicThompson
+end module ModInitMicThompson
