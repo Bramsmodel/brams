@@ -567,13 +567,13 @@ contains
     !  Microphysics
     !----------------------------------------
     if (mcphys_type == 0 .and. level==3) then
-       if (machine==1 .and. TEB_SPM==0) then
-          ! Optimized version only for SX-6
-          call micro_opt()
-       else
+!!$       if (machine==1 .and. TEB_SPM==0) then
+!!$          ! Optimized version only for SX-6
+!!$          call micro_opt()
+!!$       else
           ! Original Version used in a Generic IA32 machine
           call micro()
-       endif
+!!$       endif
     endif
     if (mcphys_type == 1 .and. level==3) then
        ! 2M rams microphysics

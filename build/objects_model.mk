@@ -108,7 +108,6 @@ OBJ_MOD = \
 	mem_micro_optij.o \
 	mic_coll.o \
 	mic_driv.o \
-	mic_driv_new.o \
 	mic_gamma.o \
 	mic_init.o \
 	mic_misc.o \
