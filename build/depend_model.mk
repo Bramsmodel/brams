@@ -220,8 +220,8 @@ ModTuv2.7.o    : $(TUV)/ModTuv2.7.f90 tuvParameter.o
 	rm -f $(<F:.f90=.f90)
 
 ModTuvDriver2.7.o : $(TUV)/ModTuvDriver2.7.f90 tuvParameter.o rconstants.o mem_grid.o \
-               mem_globrad.o mem_radiate.o mem_basic.o \
-	       mem_carma.o ModTuv2.7.o chem_fastjx_driv.o mem_tuv.o
+	mem_globrad.o mem_radiate.o mem_basic.o \
+	mem_carma.o ModTuv2.7.o chem_fastjx_driv.o mem_tuv.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -554,7 +554,7 @@ ModTimestep.o : $(MODEL)/ModTimestep.F90 mem_basic.o mem_cuparm.o ModOptical.o M
 	ModRstilt.o mem_turb.o mem_varinit.o micphys.o node_mod.o shcu_vars_const.o \
 	machine_arq.o rad_driv.o cup_grell3.o digitalFilter.o ModRtimi.o \
 	ChemSourcesDriver.o ChemDryDepDriver.o chemistry.o ModTimeStamp.o ModGrid.o \
-	ModAcoust.o module_rams_microphysics_2M.o mic_thompson_driver.o ModWindFarm.o \
+	ModAcoust.o ModRamsMicrophysics2M.o mic_thompson_driver.o ModWindFarm.o \
         seasalt.o MatrixDriver.o ModRadvcRK.o $(JULES_OBJ_SFCLYR) \
 	ModMessageSet.o modIau.o  ModRbnd.o ModRadvc.o ModTurbK.o ModDiffuse.o \
 	ModUrbanCanopy.o ModRexev.o ModRThrm.o ModCoriolis.o $(UTILS_INCS)/tsNames.h
@@ -567,7 +567,7 @@ ModTimestepRK.o : $(MODEL)/ModTimestepRK.F90 ModTimestep.o ModBasicFields.o mem_
 	ModRstilt.o mem_turb.o mem_varinit.o micphys.o node_mod.o shcu_vars_const.o \
 	machine_arq.o rad_driv.o cup_grell3.o digitalFilter.o\
 	ChemSourcesDriver.o ChemDryDepDriver.o chemistry.o ModTimeStamp.o ModGrid.o \
-	ModAcoust.o ModRThrm.o module_rams_microphysics_2M.o mic_thompson_driver.o\
+	ModAcoust.o ModRThrm.o ModRamsMicrophysics2M.o mic_thompson_driver.o\
         seasalt.o MatrixDriver.o ModRadvcRK.o modIau.o ModLeaf3OceanOnly.o ModRbnd.o \
 	$(JULES_OBJ_SFCLYR)  ModRadvc.o ModMonotonicAdvection.o utilsMod.o ModRtimi.o \
 	ModMessageSet.o ModTurbK.o ModDiffuse.o ModRexev.o ModRThrm.o ModWindFarm.o \
@@ -594,7 +594,7 @@ ModOneProc.o : $(MODEL)/ModOneProc.F90 ModNamelistFile.o ModSched.o ModGasPart.o
 	ReadBcst.o ref_sounding.o parlibf.o ModParallelEnvironment.o \
 	tuvParameter.o ModTuv2.7.o ModTuvDriver2.7.o ModGridTree.o \
 	ModGrid.o ModTimestep.o ModTimestepRK.o meteogram.o \
-	module_rams_microphysics_2M.o dam.o mod_aer.o \
+	ModRamsMicrophysics2M.o dam.o mod_aer.o \
 	initMicThompson.o modIau.o ModMemAlloc.o ModRThrm.o \
 	$(UTILS_INCS)/tsNames.h  $(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
@@ -1067,8 +1067,8 @@ mic_driv.o : $(MICRO)/mic_driv.f90  mem_basic.o mem_grid.o mem_micro.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-module_rams_microphysics_2M.o : $(MICRO)/module_rams_microphysics_2M.f90  mem_basic.o mem_grid.o mem_micro.o \
-	mem_radiate.o micphys.o node_mod.o \
+ModRamsMicrophysics2M.o : $(MICRO)/ModRamsMicrophysics2M.f90  ModBasicFields.o \
+	mem_grid.o mem_micro.o mem_radiate.o micphys.o node_mod.o \
 	mem_chemic.o mem_chem1aq.o $(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)

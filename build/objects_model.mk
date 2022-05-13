@@ -383,7 +383,7 @@ OBJ_MOD = \
 	MatrixDriver.o \
 	ModParticle.o \
 	memMatrix.o\
-	module_rams_microphysics_2M.o\
+	ModRamsMicrophysics2M.o\
 	mic_thompson_driver.o\
 	module_mp_thompson.o\
 	module_mp_radar.o \

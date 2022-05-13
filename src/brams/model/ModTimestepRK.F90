@@ -252,7 +252,9 @@ module ModTimestepRK
     use DriverMatrix, only: MatrixDriver  !Matrix Aerosol Model
 
 
-    use rams_microphysics_2M, only: micro_2M_rams60,negadj1_2M_rams60
+    use ModRamsMicrophysics2M, only: &
+         micro_2M_rams60, &
+         negadj1_2M_rams60
 
     use mem_radiate, only: &
          ilwrtyp, iswrtyp
@@ -822,7 +824,9 @@ contains
        call negadj1(mzp,mxp,myp)
 
     elseif(mcphys_type == 1) then
-       call negadj1_2M_rams60(mzp,mxp,myp)
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+       call negadj1_2M_rams60(mzp,mxp,myp, oneGrid%Basic)
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     endif
 
 !!$    call SynchronizedTimeStamp(TS_RK_RESTO) ! Exper1.2, 2021_12
@@ -841,7 +845,9 @@ contains
 
     if (mcphys_type == 1 .and. level==3) then
        !- 2M rams microphysics
-       call micro_2M_rams60()
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+       call micro_2M_rams60(oneGrid%Basic)
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
     elseif (mcphys_type == 2 .or. mcphys_type == 3 ) then
        !- G. Thompson microphysics

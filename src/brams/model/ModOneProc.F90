@@ -204,12 +204,11 @@ module ModOneProc
 #ifdef cdf
   use MOdPostGridNetCDF, only: netCDFFirstTime
 #endif
-  !--(DMK-CCATT-INI)------------------------------------------------------------------
+
   USE ModMonotonicAdvection, ONLY: &
        StoreNamelistFileAtAdvMnt, &
        advmnt, &
        GhostZoneLength
-  !  USE newComm, ONLY: findAndFillGhostZone
 
   use ccatt_start, only: &
        StoreNamelistFileAtCCatt_start, &
@@ -245,7 +244,6 @@ module ModOneProc
        StoreNamelistFileAtChemSources
 
   use mem_stilt, only: StoreNamelistFileAtMem_stilt
-  !lfr - tuv
   use tuvParameter, only: wstart,wstop,nwint,listFiles
   use ModTuv, only: initTuv,sw,ns,slabel,ks,kw,wc,wbioStart,wBioEnd !subroutine
   use ModTuvDriver, only: InitTuvDriver
@@ -254,11 +252,6 @@ module ModOneProc
        StoreNamelistFileAtWindFarm, &
        output_windFarms, &
        windfarm
-
-  !lfr - tuv
-  !--(DMK-CCATT-OLD)-----------------------------------------------------
-  !  use Catt_start, only: StoreNamelistFileAtCatt_start
-  !--(DMK-CCATT-FIM)------------------------------------------------------------------
 
   use cuparm_grell3, only: &
        init_weights, &
@@ -450,8 +443,6 @@ module ModOneProc
        timeWindowDF,     &
        frqanlDF, iposDF
 
-  ! OBS: MODULOS NECESSARIOS PARA LEITURA DE EMISSAO
-  !-----------------------------------------------------------------------------------
   use module_dry_dep, only: dep_init        ! Subroutine
 
   use chem_sources, only:   read_sourcemaps ! Subroutine
@@ -483,11 +474,6 @@ module ModOneProc
        aerosol_mechanism,        &
        emiss_ajust_aer
 
-  !- for matrix
-  !       ,v_ash,                     &! (IN) read_sourcemaps()
-  !       urban, nucle, accum,      & ! (IN) read_sourcemaps()
-  !       ,aer_bburn => bburn  ! (IN) read_sourcemaps()
-
   use mem_aer1, only:  &
        aer1_g  ! (INOUT) read_sourcemaps()
 
@@ -512,7 +498,6 @@ module ModOneProc
 
   use grid_dims, only: &
        nzpmax            ! (IN) read_sourcemaps()
-  !--(DMK-CCATT-FIM)------------------------------------------------------------------
 
   use ModGridTree, only: &
        GridTree, &
@@ -536,7 +521,7 @@ module ModOneProc
        meteogramFreq,                &
        meteogramMap
 
-  use rams_microphysics_2m, only :  &
+  use ModRamsMicrophysics2M, only :  &
        jnmbinit_2M=>jnmbinit       &
        ,initqin_2M  =>initqin  	    &
        ,initqin2_2M =>initqin2 	    &
@@ -580,7 +565,6 @@ module ModOneProc
        NodePathsBuffAlloc, &
        domain_decomposition_dump
   
-  !MB: for testing only
   use dump, only: &
        dumpMessage !dump function
 
