@@ -10,6 +10,9 @@
 
 module ModTimestepRK
 
+  use ModMicThompsonDriver, only: &
+       micro_thompson
+  
   use ModMicGfdlDriver, only: &
        micro_gfdl
 
@@ -864,7 +867,9 @@ contains
 
     elseif (mcphys_type == 2 .or. mcphys_type == 3 ) then
        !- G. Thompson microphysics
-       call micro_thompson()
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+       call micro_thompson(oneGrid%Basic)
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
     elseif(mcphys_type == 4 ) then
        call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)

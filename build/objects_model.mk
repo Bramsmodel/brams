@@ -384,7 +384,7 @@ OBJ_MOD = \
 	ModParticle.o \
 	memMatrix.o\
 	ModRamsMicrophysics2M.o\
-	mic_thompson_driver.o\
+	ModMicThompsonDriver.o\
 	module_mp_thompson.o\
 	module_mp_radar.o \
 	ModWindFarm.o \
