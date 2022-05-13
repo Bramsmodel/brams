@@ -8,6 +8,9 @@
 
 module ModTimestep
 
+  use ModMicrophysicsDrive, only: &
+       micro
+  
   use ModRstilt, only: &
        prep_advflx_to_stilt
   
@@ -575,7 +578,9 @@ contains
 !!$          call micro_opt()
 !!$       else
           ! Original Version used in a Generic IA32 machine
-          call micro()
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+       call micro(oneGrid%Basic)
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 !!$       endif
     endif
     if (mcphys_type == 1 .and. level==3) then

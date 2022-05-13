@@ -107,7 +107,7 @@ OBJ_MOD = \
 	mem_varinit.o \
 	mem_micro_optij.o \
 	mic_coll.o \
-	mic_driv.o \
+	ModMicrophysicsDrive.o \
 	mic_gamma.o \
 	mic_init.o \
 	mic_misc.o \
