@@ -6,480 +6,494 @@
 !  Regional Atmospheric Modeling System - RAMS
 !###########################################################################
 module ModMemAlloc
+
+  use ModGrid, only: &
+       Grid
+
+  use grid_dims, only: &
+       maxmach, &
+       maxsclr, &
+       maxgrds
+
+  use mem_tend, only: &
+       nullify_tend, &
+       alloc_tend, &
+       filltab_tend
+
+  use mem_scratch1, only: &
+       alloc_scratch1, &
+       nullify_scratch1
+
+  use mem_nestb, only: &
+       alloc_nestb
+
+  use mem_scratch, only: &
+       alloc_scratch,    &
+       nullify_scratch,  &
+       createvctr
+
+  use io_params, only: &
+       avgtim, &
+       frqanl
+
+  use var_tables, only: &
+       maxvars, &
+       num_var, &
+       nvgrids, &
+       vtab_r,  &
+       ZeroVTab
+
+  use mem_grid, only: &
+       nxtnest, &
+       oneGlobalGridData, &
+       grid_g, &
+       gridm_g, &
+       naddsc, &
+       maxnxp, &
+       maxnyp, &
+       maxnzp, &
+       if_adap, &
+       npatch, &
+       nnxp, &
+       nnyp, &
+       nnzp, &
+       nzg,  &
+       nzs,  &
+       ngrids, &
+       nullify_grid, &
+       alloc_grid, &
+       nullify_GlobalGridData, &
+       alloc_GlobalGridData, &
+       dtlong, &
+       nndtrat, &
+       filltab_grid, &
+       timmax
+
+  use mem_oda, only: &
+       oda_g, &
+       odam_g, &
+       nullify_oda, &
+       alloc_oda, &
+       filltab_oda
+
+  use mem_cuparm, only: &
+       nnqparm, &
+       cuparm_g_sh, &
+       cuparmm_g_sh, &
+       cuparm_g, &
+       cuparmm_g, &
+       nullify_cuparm, &
+       alloc_cuparm, &
+       alloc_cuparm_sh, &
+       filltab_cuparm, &
+       filltab_cuparm_sh
+
+  use mem_scalar, only: &
+       scalar_g, &
+       scalarm_g, &
+       alloc_scalar, &
+       nullify_scalar, &
+       filltab_scalar
+
+  use mem_radiate, only: &
+       ilwrtyp, &
+       iswrtyp, &
+       radiate_g, &
+       radiatem_g, &
+       nullify_radiate, &
+       alloc_radiate, &
+       filltab_radiate
+
+  use mem_micro, only: &
+       micro_g, &
+       microm_g, &
+       nullify_micro, &
+       alloc_micro, &
+       filltab_micro
+
+  use mem_leaf, only: &
+       leaf_g, &
+       leafm_g, &
+       nullify_leaf, &
+       alloc_leaf, &
+       filltab_leaf,&
+       isfcl
+
+#ifdef JULES
+  use mem_jules, only: &
+       jules_g, &
+       julesm_g, &
+       nullify_jules, &
+       alloc_jules, &
+       filltab_jules
+#endif
+
+  use mem_varinit, only: &
+       varinit_g, &
+       varinitm_g, &
+       nullify_varinit, &
+       alloc_varinit, &
+       filltab_varinit
+
+  use mem_turb, only: &
+       ihorgrad, &
+       idiffk, &
+       turb_g, &
+       turbm_g, &
+       nullify_turb, &
+       alloc_turb, &
+       filltab_turb
+
+  use mem_basic, only: &
+       basic_g,        &
+       basicm_g,       &
+       nullify_basic,  &
+       alloc_basic,    &
+       filltab_basic
+
+  use node_mod, only: &
+       alloc_paths,   & !Subroutine
+       nmachs,        &
+       ipaths,        &
+       iget_paths,    &
+       nodemxp,       &
+       nodemyp,       &
+       nodebounds,    &
+       mchnum,         &
+       master_num,     &
+       mynum
+
+  use mem_shcu, only: &
+       shcu_g,        &
+       shcum_g,       &
+       nullify_shcu,  &
+       alloc_shcu,    &
+       filltab_shcu
+
+  use shcu_vars_const, only : &
+       nnshcu                           ! INTENT(IN)
+
+  use mem_grell_param, only: &
+       ngrids_cp,            &
+       flag_grell,           &
+       closure_type,         &
+       icoic,                &
+       icoic_sh,             &
+       define_memory
+
+  use mem_grell, only: &
+       grell_g,        &
+       grellm_g,       &
+       grell_g_sh,     &
+       grellm_g_sh,    &
+       alloc_grell,    &
+       nullify_grell,  &
+       filltab_grell,  &
+       filltab_grell_sh, &
+       cuforc_g, &
+       cuforc_sh_g, &
+       cuforcm_g, &
+       cuforcm_sh_g, &
+       nullify_cuforc, &
+       alloc_cu_forcings, &
+       filltab_cuforc_sh, &
+       filltab_cuforc, &
+       alloc_grell_sh
+
+  use mem_scratch1_grell, only: &
+       alloc_scratch1_grell
+
+  use mem_scratch2_grell, only: &
+       alloc_scratch2_grell
+
+  use mem_scratch3_grell, only: &
+       alloc_scratch3_grell
+
+  use mem_opt, only: &
+       nullify_opt_scratch, &
+       alloc_opt_scratch
+
+  use mem_carma, only: &
+       carma,          &
+       carma_m,        &
+       nullify_carma,  &
+       filltab_carma,  &
+       alloc_carma,    &
+       zero_carma,     &
+       filltab_aotMap, &
+       alloc_aotMap,   &
+       carma_aotMap, &
+       carma_aotMapm,  &
+       nullify_aotMap
+
+  use mem_aerad, only: &
+       nwave,          &           !INTENT(IN)
+       initial_definitions_aerad !Subroutine
+
+  use mem_globaer, only: &
+       initial_definitions_globaer !Subroutine
+
+  use mem_globrad, only: &
+       initial_definitions_globrad !Subroutine
+
+  use Extras, only: &
+       extra2d,     &
+       extra3d,     &
+       extra2dm,    &
+       extra3dm,    &
+       na_extra2d,  &
+       na_extra3d,  &
+       nullify_extra2d, &
+       alloc_extra2d,   &
+       zero_extra2d,    &
+       filltab_extra2d, &
+       nullify_extra3d, &
+       alloc_extra3d,   &
+       filltab_extra3d, &
+       zero_extra3d
+
+  use mem_turb_scalar, only: &
+       turb_s,         &
+       turbm_s,        &
+       nullify_turb_s, &
+       alloc_turb_s,   &
+       filltab_turb_s
+
+  use mem_scratch2_grell_sh, only: &
+       alloc_scratch2_grell_sh
+
+  use mem_scratch3_grell_sh, only: &
+       alloc_scratch3_grell_sh
+
+
+  ! Data for Optimization for vector machines
+  use mem_micro_opt, only: &
+       alloc_micro_opt
+
+  ! For specific optimization depending the type of machine
+  use machine_arq, only: machine ! INTENT(IN)
+
+  ! Global grid dimension definitions
+  use mem_grid_dim_defs, only: define_grid_dim_pointer ! subroutine
+
+  ! TEB_SPM
+  use teb_spm_start, only: TEB_SPM ! INTENT(IN)
+
+  use mem_emiss, only: isource ! INTENT(IN)
+
+  use mem_gaspart, only: &
+       gaspart_g,        & ! INTENT(IN)
+       gaspartm_g,       & ! INTENT(IN)
+       gaspart_vars,     & ! Type
+       nullify_gaspart,  & ! Subroutine
+       alloc_gaspart,    & ! Subroutine
+       zero_gaspart,     & ! Subroutine
+       filltab_gaspart     ! Subroutine
+
+  use mem_teb_common, only: &
+       tebc_g,              & ! INTENT(IN)
+       tebcm_g,             & ! INTENT(IN)
+       nullify_tebc,        & ! Subroutine
+       alloc_tebc,          & ! Subroutine
+       filltab_tebc           ! Subroutine
+
+  use teb_vars_const, only: iteb ! INTENT(IN)
+
+  use mem_teb, only: &
+       teb_g,        & ! INTENT(IN)
+       tebm_g,       & ! INTENT(IN)
+       nullify_teb,  & ! Subroutine
+       alloc_teb,    & ! Subroutine
+       filltab_teb     ! Subroutine
+
+  use cuparm_grell3, only: &
+       alloc_grell3, &
+       nullify_grell3, &
+       filltab_grell3, &
+       ngrids_cp, &
+       g3d_ens_g, &
+       g3d_ensm_g, &
+       g3d_g, &
+       g3dm_g, &
+       train_dim
+
+  use chem1_list, only:  &
+       PhotojMethod,    &       ! INTENT(IN)
+       nspecies_chem=> nspecies ! INTENT(IN)
+
+  use aer1_list, only: &        ! INTENT(IN)
+       on,             &        ! INTENT(IN)
+       mode_alloc,     &        ! INTENT(IN)
+       nmodes,         &
+       nspecies_aer=> nspecies , & ! INTENT(IN)
+       spc_name, &
+       numb_alloc, & ! INTENT(IN)
+       aerosol_mechanism, NINORG ! INTENT(IN)
+
+  use chem1aq_list, only: &
+       nspeciesaq_chem=> nspeciesaq ! INTENT(IN)
+
+  use ccatt_start, only: &
+       ccatt                ! CHEM_RAMSIN
+
+  use mem_chem1, only:     &
+       nullify_chem1,      & ! Subroutine
+       alloc_chem1,        & ! Subroutine
+       filltab_chem1,      & ! Subroutine
+       define_n_dyn_chem,  & ! Subroutine
+       nullify_tend_chem1, & ! Subroutine
+       alloc_tend_chem1,   & ! Subroutine
+       filltab_tend_chem1, & ! Subroutine
+       nsrc,               & ! INTENT(IN)
+       max_ntimes_src,     & ! INTENT(IN)
+       chemistry,          & ! CHEM_RAMSIN
+       chem1_g,            &
+       chem1m_g,           &
+       chem1_src_g,        &
+       chem1m_src_g,       &
+       chem1_src_z_dim_g
+
+  use mem_chemic, only: &
+       nullify_chemic,  & ! Subroutine
+       alloc_chemic,    & ! Subroutine
+       chemic_g
+
+  use mem_chem1aq, only:     &
+       nullify_chem1aq,      & ! Subroutine
+       alloc_chem1aq,        & ! Subroutine
+       filltab_chem1aq,      & ! Subroutine
+       nullify_tend_chem1aq, & ! Subroutine
+       alloc_tend_chem1aq,   & ! Subroutine
+       filltab_tend_chem1aq, & ! Subroutine
+       chemistry_aq,         & ! CHEM_RAMSIN
+       chem1aq_g,            &
+       chem1maq_g
+
+  use mem_aer1, only:        &
+       nullify_aer1,         & ! Subroutine
+       nullify_aer2,         & !
+       alloc_aer1,           & ! Subroutine
+       alloc_aer2,           & ! Subroutine
+       filltab_aer1,         & ! Subroutine
+       filltab_aer2,         & ! Subroutine
+       nullify_tend_aer1,    & ! Subroutine
+       nullify_tend_aer2,    & ! Subroutine
+       alloc_tend_aer1,      & ! Subroutine
+       alloc_tend_aer2,      & ! Subroutine
+       filltab_tend_aer1,    & ! Subroutine
+       filltab_tend_aer2,    & ! Subroutine
+       aer1_g,               &
+       aer1m_g,              &
+       aer1_src_z_dim_g,     &
+       aer2_src_z_dim_g,     &
+       aerosol         ,     &
+       aer2_g          ,     &
+       aer2m_g         ,     &
+                                !-srf including inorganics for matrix aer model
+       nullify_aer1_inorg,         & ! Subroutine
+       alloc_aer1_inorg,           & ! Subroutine
+       filltab_aer1_inorg,         & ! Subroutine
+       nullify_tend_aer1_inorg,    & ! Subroutine
+       alloc_tend_aer1_inorg,      & ! Subroutine
+       filltab_tend_aer1_inorg,    & ! Subroutine
+       aer1_inorg_g,               &
+       aer1m_inorg_g,              &
+       aer2mp_g,                   &
+       aer2mpm_g
+
+
+  use mem_plume_chem1, only: &
+       nullify_plume_chem1,  & ! Subroutine
+       alloc_plume_chem1,    & ! Subroutine
+       filltab_plume_chem1,  & ! Subroutine
+       nveg_agreg,           & ! INTENT(IN)
+       plumerise,            & ! CHEM_RAMSIN
+       plume_g,              &
+       plumem_g,             &
+       plume_mean_g,         &
+       plume_meanm_g,        &
+       plume_fre_g,          &
+       plumem_fre_g
+
+  use mem_volc_chem1, only: &
+       nullify_volc_chem1,  & ! Subroutine
+       alloc_volc_chem1,    & ! Subroutine
+       filltab_volc_chem1,  & ! Subroutine
+       volcanoes,           & ! CHEM_RAMSIN
+       volc_mean_g,         &
+       volc_meanm_g
+
+  use chem_sources, only:       &
+       oneGlobalEmissData,      &
+       alloc_GlobalEmissData,   &
+       nullify_GlobalEmissData
+
+  use module_dry_dep, only: &
+       alloc_aer_sedim,     & ! Subroutine
+       alloc_aer_sedim_numb
+
+  use mem_stilt, only: &
+       nullify_stilt,  & ! Subroutine
+       alloc_stilt,    & ! Subroutine
+       filltab_stilt,  & ! Subroutine
+       stilt_g,        &
+       stiltm_g
+
+  use carma_fastjx, only: &
+       alloc_carma_fastjx   ! Subroutine
+
+  use mem_tuv, only : &
+       alloc_carma_tuv, &     ! Subroutine
+       nullify_carma_tuv, &
+       tuv2carma, &
+       carma_tuv, &
+       carma_tuvm, &
+       alloc_tuv_bio, &
+       nullify_tuv_bio, &
+       filltab_tuv_bio, &
+       tuv_bio, &
+       tuv_biom, &
+       nbio
+
+  use mem_globrad, only : ntotal, &
+       nlayer
+
+  use modtuv, only: ks,nw
+
+  use micphys, only : level,mcphys_type
+
+  use digitalFilter, only:     &
+       initDigitalFilter,     & ! subroutine
+       dfVars,                & ! intent(out) - initializing
+       applyDF
+
+  use ModOptical, only: &
+       setOptMemory
+
+  use ModEvaluation, only: &
+       allocStatistic, &
+       timeCount, &
+       nTimes
+
+
+  use modIau, only : &
+       applyIAU         &
+       ,tend_iau_g       &
+       ,nullifyIAU       &
+       ,allocIau
+
+  use parrrsw, only : &
+       nbndsw
+
+  implicit none
+
+  private
+
+  public :: MemAlloc
+
 contains
 
   subroutine MemAlloc(oneGrid, proc_type)
-
-    use ModGrid, only: &
-         Grid
-    
-    use grid_dims, only: &
-         maxmach, &
-         maxsclr, &
-         maxgrds
-
-    use mem_tend, only: &
-         nullify_tend, &
-         alloc_tend, &
-         filltab_tend
-
-    use mem_scratch1, only: &
-         alloc_scratch1, &
-         nullify_scratch1
-
-    use mem_nestb, only: &
-         alloc_nestb
-
-    use mem_scratch, only: &
-         alloc_scratch,    &
-         nullify_scratch,  &
-         createvctr
-
-    use io_params, only: &
-         avgtim, &
-         frqanl
-
-    use var_tables, only: &
-         maxvars, &
-         num_var, &
-         nvgrids, &
-         vtab_r,  &
-         ZeroVTab
-
-    use mem_grid, only: &
-         nxtnest, &
-         oneGlobalGridData, &
-         grid_g, &
-         gridm_g, &
-         naddsc, &
-         maxnxp, &
-         maxnyp, &
-         maxnzp, &
-         if_adap, &
-         npatch, &
-         nnxp, &
-         nnyp, &
-         nnzp, &
-         nzg,  &
-         nzs,  &
-         ngrids, &
-         nullify_grid, &
-         alloc_grid, &
-         nullify_GlobalGridData, &
-         alloc_GlobalGridData, &
-         dtlong, &
-         nndtrat, &
-         filltab_grid, &
-         timmax
-
-    use mem_oda, only: &
-         oda_g, &
-         odam_g, &
-         nullify_oda, &
-         alloc_oda, &
-         filltab_oda
-
-    use mem_cuparm, only: &
-         nnqparm, &
-         cuparm_g_sh, &
-         cuparmm_g_sh, &
-         cuparm_g, &
-         cuparmm_g, &
-         nullify_cuparm, &
-         alloc_cuparm, &
-         alloc_cuparm_sh, &
-         filltab_cuparm, &
-         filltab_cuparm_sh
-
-    use mem_scalar, only: &
-         scalar_g, &
-         scalarm_g, &
-         alloc_scalar, &
-         nullify_scalar, &
-         filltab_scalar
-
-    use mem_radiate, only: &
-         ilwrtyp, &
-         iswrtyp, &
-         radiate_g, &
-         radiatem_g, &
-         nullify_radiate, &
-         alloc_radiate, &
-         filltab_radiate
-
-    use mem_micro, only: &
-         micro_g, &
-         microm_g, &
-         nullify_micro, &
-         alloc_micro, &
-         filltab_micro
-
-    use mem_leaf, only: &
-         leaf_g, &
-         leafm_g, &
-         nullify_leaf, &
-         alloc_leaf, &
-         filltab_leaf,&
-         isfcl
-
-#ifdef JULES
-    use mem_jules, only: &
-         jules_g, &
-         julesm_g, &
-         nullify_jules, &
-         alloc_jules, &
-         filltab_jules
-#endif
-
-    use mem_varinit, only: &
-         varinit_g, &
-         varinitm_g, &
-         nullify_varinit, &
-         alloc_varinit, &
-         filltab_varinit
-
-    use mem_turb, only: &
-         ihorgrad, &
-         idiffk, &
-         turb_g, &
-         turbm_g, &
-         nullify_turb, &
-         alloc_turb, &
-         filltab_turb
-
-    use mem_basic, only: &
-         basic_g,        &
-         basicm_g,       &
-         nullify_basic,  &
-         alloc_basic,    &
-         filltab_basic
-
-    use node_mod, only: &
-         alloc_paths,   & !Subroutine
-         nmachs,        &
-         ipaths,        &
-         iget_paths,    &
-         nodemxp,       &
-         nodemyp,       &
-         nodebounds,    &
-         mchnum,         &
-         master_num,     &
-         mynum
-
-    use mem_shcu, only: &
-         shcu_g,        &
-         shcum_g,       &
-         nullify_shcu,  &
-         alloc_shcu,    &
-         filltab_shcu
-
-    use shcu_vars_const, only : &
-         nnshcu                           ! INTENT(IN)
-
-    use mem_grell_param, only: &
-         ngrids_cp,            &
-         flag_grell,           &
-         closure_type,         &
-         icoic,                &
-         icoic_sh,             &
-         define_memory
-
-    use mem_grell, only: &
-         grell_g,        &
-         grellm_g,       &
-         grell_g_sh,     &
-         grellm_g_sh,    &
-         alloc_grell,    &
-         nullify_grell,  &
-         filltab_grell,  &
-         filltab_grell_sh, &
-         cuforc_g, &
-         cuforc_sh_g, &
-         cuforcm_g, &
-         cuforcm_sh_g, &
-         nullify_cuforc, &
-         alloc_cu_forcings, &
-         filltab_cuforc_sh, &
-         filltab_cuforc, &
-         alloc_grell_sh
-
-    use mem_scratch1_grell, only: &
-         alloc_scratch1_grell
-
-    use mem_scratch2_grell, only: &
-         alloc_scratch2_grell
-
-    use mem_scratch3_grell, only: &
-         alloc_scratch3_grell
-
-    use mem_opt, only: &
-         nullify_opt_scratch, &
-         alloc_opt_scratch
-
-    use mem_carma, only: &
-         carma,          &
-         carma_m,        &
-         nullify_carma,  &
-         filltab_carma,  &
-         alloc_carma,    &
-         zero_carma,     &
-         filltab_aotMap, &
-         alloc_aotMap,   &
-         carma_aotMap, &
-         carma_aotMapm,  &
-         nullify_aotMap
-
-
-    use mem_aerad, only: &
-         nwave,          &           !INTENT(IN)
-         initial_definitions_aerad !Subroutine
-
-    use mem_globaer, only: &
-         initial_definitions_globaer !Subroutine
-
-    use mem_globrad, only: &
-         initial_definitions_globrad !Subroutine
-
-    use Extras, only: &
-         extra2d,     &
-         extra3d,     &
-         extra2dm,    &
-         extra3dm,    &
-         na_extra2d,  &
-         na_extra3d,  &
-         nullify_extra2d, &
-         alloc_extra2d,   &
-         zero_extra2d,    &
-         filltab_extra2d, &
-         nullify_extra3d, &
-         alloc_extra3d,   &
-         filltab_extra3d, &
-         zero_extra3d
-
-    use mem_turb_scalar, only: &
-         turb_s,         &
-         turbm_s,        &
-         nullify_turb_s, &
-         alloc_turb_s,   &
-         filltab_turb_s
-
-    use mem_scratch2_grell_sh, only: &
-         alloc_scratch2_grell_sh
-
-    use mem_scratch3_grell_sh, only: &
-         alloc_scratch3_grell_sh
-
-
-    ! Data for Optimization for vector machines
-    use mem_micro_opt, only: &
-         alloc_micro_opt
-
-    ! For specific optimization depending the type of machine
-    use machine_arq, only: machine ! INTENT(IN)
-
-    ! Global grid dimension definitions
-    use mem_grid_dim_defs, only: define_grid_dim_pointer ! subroutine
-
-    ! TEB_SPM
-    use teb_spm_start, only: TEB_SPM ! INTENT(IN)
-
-    use mem_emiss, only: isource ! INTENT(IN)
-
-    use mem_gaspart, only: &
-         gaspart_g,        & ! INTENT(IN)
-         gaspartm_g,       & ! INTENT(IN)
-         gaspart_vars,     & ! Type
-         nullify_gaspart,  & ! Subroutine
-         alloc_gaspart,    & ! Subroutine
-         zero_gaspart,     & ! Subroutine
-         filltab_gaspart     ! Subroutine
-
-    use mem_teb_common, only: &
-         tebc_g,              & ! INTENT(IN)
-         tebcm_g,             & ! INTENT(IN)
-         nullify_tebc,        & ! Subroutine
-         alloc_tebc,          & ! Subroutine
-         filltab_tebc           ! Subroutine
-
-    use teb_vars_const, only: iteb ! INTENT(IN)
-
-    use mem_teb, only: &
-         teb_g,        & ! INTENT(IN)
-         tebm_g,       & ! INTENT(IN)
-         nullify_teb,  & ! Subroutine
-         alloc_teb,    & ! Subroutine
-         filltab_teb     ! Subroutine
-
-    use cuparm_grell3
-
-    use chem1_list, only:  &
-         PhotojMethod,    &       ! INTENT(IN)
-         nspecies_chem=> nspecies ! INTENT(IN)
-
-    use aer1_list, only: &        ! INTENT(IN)
-         on,             &        ! INTENT(IN)
-         mode_alloc,     &        ! INTENT(IN)
-         nmodes,         &
-         nspecies_aer=> nspecies , & ! INTENT(IN)
-         spc_name, &
-         numb_alloc, & ! INTENT(IN)
-         aerosol_mechanism, NINORG ! INTENT(IN)
-
-    use chem1aq_list, only: &
-         nspeciesaq_chem=> nspeciesaq ! INTENT(IN)
-
-    use ccatt_start, only: &
-         ccatt                ! CHEM_RAMSIN
-
-    use mem_chem1, only:     &
-         nullify_chem1,      & ! Subroutine
-         alloc_chem1,        & ! Subroutine
-         filltab_chem1,      & ! Subroutine
-         define_n_dyn_chem,  & ! Subroutine
-         nullify_tend_chem1, & ! Subroutine
-         alloc_tend_chem1,   & ! Subroutine
-         filltab_tend_chem1, & ! Subroutine
-         nsrc,               & ! INTENT(IN)
-         max_ntimes_src,     & ! INTENT(IN)
-         chemistry,          & ! CHEM_RAMSIN
-         chem1_g,            &
-         chem1m_g,           &
-         chem1_src_g,        &
-         chem1m_src_g,       &
-         chem1_src_z_dim_g
-
-    use mem_chemic, only: &
-         nullify_chemic,  & ! Subroutine
-         alloc_chemic,    & ! Subroutine
-         chemic_g
-
-    use mem_chem1aq, only:     &
-         nullify_chem1aq,      & ! Subroutine
-         alloc_chem1aq,        & ! Subroutine
-         filltab_chem1aq,      & ! Subroutine
-         nullify_tend_chem1aq, & ! Subroutine
-         alloc_tend_chem1aq,   & ! Subroutine
-         filltab_tend_chem1aq, & ! Subroutine
-         chemistry_aq,         & ! CHEM_RAMSIN
-         chem1aq_g,            &
-         chem1maq_g
-
-    use mem_aer1, only:        &
-         nullify_aer1,         & ! Subroutine
-         nullify_aer2,         & !
-         alloc_aer1,           & ! Subroutine
-         alloc_aer2,           & ! Subroutine
-         filltab_aer1,         & ! Subroutine
-         filltab_aer2,         & ! Subroutine
-         nullify_tend_aer1,    & ! Subroutine
-         nullify_tend_aer2,    & ! Subroutine
-         alloc_tend_aer1,      & ! Subroutine
-         alloc_tend_aer2,      & ! Subroutine
-         filltab_tend_aer1,    & ! Subroutine
-         filltab_tend_aer2,    & ! Subroutine
-         aer1_g,               &
-         aer1m_g,              &
-         aer1_src_z_dim_g,     &
-         aer2_src_z_dim_g,     &
-         aerosol         ,     &
-         aer2_g          ,     &
-         aer2m_g         ,     &
-         !-srf including inorganics for matrix aer model
-         nullify_aer1_inorg,         & ! Subroutine
-         alloc_aer1_inorg,           & ! Subroutine
-         filltab_aer1_inorg,         & ! Subroutine
-         nullify_tend_aer1_inorg,    & ! Subroutine
-         alloc_tend_aer1_inorg,      & ! Subroutine
-         filltab_tend_aer1_inorg,    & ! Subroutine
-         aer1_inorg_g,               &
-         aer1m_inorg_g,              &
-         aer2mp_g,                   &
-         aer2mpm_g
-
-
-    use mem_plume_chem1, only: &
-         nullify_plume_chem1,  & ! Subroutine
-         alloc_plume_chem1,    & ! Subroutine
-         filltab_plume_chem1,  & ! Subroutine
-         nveg_agreg,           & ! INTENT(IN)
-         plumerise,            & ! CHEM_RAMSIN
-         plume_g,              &
-         plumem_g,             &
-         plume_mean_g,         &
-         plume_meanm_g,        &
-         plume_fre_g,          &
-         plumem_fre_g
-
-    use mem_volc_chem1, only: &
-         nullify_volc_chem1,  & ! Subroutine
-         alloc_volc_chem1,    & ! Subroutine
-         filltab_volc_chem1,  & ! Subroutine
-         volcanoes,           & ! CHEM_RAMSIN
-         volc_mean_g,         &
-         volc_meanm_g
-
-    use chem_sources, only:       &
-         oneGlobalEmissData,      &
-         alloc_GlobalEmissData,   &
-         nullify_GlobalEmissData
-
-    use module_dry_dep, only: &
-         alloc_aer_sedim,     & ! Subroutine
-         alloc_aer_sedim_numb
-
-    use mem_stilt, only: &
-         nullify_stilt,  & ! Subroutine
-         alloc_stilt,    & ! Subroutine
-         filltab_stilt,  & ! Subroutine
-         stilt_g,        &
-         stiltm_g
-
-    use carma_fastjx, only: &
-         alloc_carma_fastjx   ! Subroutine
-
-    use mem_tuv, only : &
-         alloc_carma_tuv, &     ! Subroutine
-         nullify_carma_tuv, &
-         tuv2carma, &
-         carma_tuv, &
-         carma_tuvm, &
-         alloc_tuv_bio, &
-         nullify_tuv_bio, &
-         filltab_tuv_bio, &
-         tuv_bio, &
-         tuv_biom, &
-         nbio
-
-    use mem_globrad, only : ntotal, &
-         nlayer
-
-    use modtuv, only: ks,nw
-
-    use micphys, only : level,mcphys_type
-
-    use digitalFilter, only:     &
-         initDigitalFilter,     & ! subroutine
-         dfVars,                & ! intent(out) - initializing
-         applyDF
-
-    use ModOptical, only: &
-         setOptMemory
-
-    use ModEvaluation, only: &
-         allocStatistic, &
-         timeCount, &
-         nTimes
-
-
-    use modIau, only : &
-         applyIAU         &
-         ,tend_iau_g       &
-         ,nullifyIAU       &
-         ,allocIau
-
-    use parrrsw, only : &
-         nbndsw
-    implicit none
 
     ! Argumenst:
     type(Grid), pointer, intent(in) :: oneGrid
