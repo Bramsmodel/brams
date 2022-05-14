@@ -189,6 +189,9 @@ end subroutine SHCUPAR
 !
 subroutine SHCU_ENV(NZ,make_conv_grid_interpol)  
 
+  use ModRConv, only: &
+       lcl
+  
   use conv_coms, only : NKP,    &   ! INTENT(IN)  ! Parameter
        ZC,                      &   ! INTENT(OUT)
        ZE,                      &   ! INTENT(OUT)
@@ -518,6 +521,9 @@ end subroutine SHCU_ENV
 !
 subroutine SH2MOD(m1)
 
+  use ModRConv, only: &
+       vertmap2
+  
   use conv_coms, only : KMT,  &   ! INTENT(IN)
        QVCT1,                 &   ! INTENT(OUT)
        RHOE,                  &   ! INTENT(IN)

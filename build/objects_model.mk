@@ -165,7 +165,7 @@ OBJ_MOD = \
 	ModRbnd.o \
 	rcio.o \
 	rconstants.o \
-	rconv.o \
+	ModRConv.o \
 	rconv_grell_catt.o \
 	chem_conv_transp.o \
 	ModNamelistFile.o  \

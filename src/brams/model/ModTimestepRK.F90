@@ -10,6 +10,9 @@
 
 module ModTimestepRK
 
+  use ModRConv, only: &
+       cuparm
+
   use ModMicThompsonDriver, only: &
        micro_thompson
 
@@ -495,7 +498,9 @@ contains
     !  Cumulus parameterization version 1
     !----------------------------------------
     if (NNQPARM(ngrid)==1 .or. IF_CUINV==1) then
-       call cuparm()
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+       call cuparm(oneGrid%Basic)
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     end if
 
     !  Urban canopy parameterization
