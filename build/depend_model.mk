@@ -573,7 +573,7 @@ ModTimestepRK.o : $(MODEL)/ModTimestepRK.F90 ModTimestep.o ModBasicFields.o mem_
 	$(JULES_OBJ_SFCLYR)  ModRadvc.o ModMonotonicAdvection.o utilsMod.o ModRtimi.o \
 	ModMessageSet.o ModTurbK.o ModDiffuse.o ModRexev.o ModRThrm.o ModWindFarm.o \
 	ModUrbanCanopy.o ModCoriolis.o $(UTILS_INCS)/tsNames.h  $(UTILS_INCS)/constants.h \
-	ModMicGfdlDriver.o 
+	ModMicGfdlDriver.o ModAerClim.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -596,7 +596,7 @@ ModOneProc.o : $(MODEL)/ModOneProc.F90 ModNamelistFile.o ModSched.o ModGasPart.o
 	ReadBcst.o ref_sounding.o parlibf.o ModParallelEnvironment.o \
 	tuvParameter.o ModTuv2.7.o ModTuvDriver2.7.o ModGridTree.o \
 	ModGrid.o ModTimestep.o ModTimestepRK.o meteogram.o \
-	ModRamsMicrophysics2M.o dam.o mod_aer.o \
+	ModRamsMicrophysics2M.o dam.o ModAerClim.o \
 	ModInitMicThompson.o modIau.o ModMemAlloc.o ModRThrm.o \
 	$(UTILS_INCS)/tsNames.h  $(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
@@ -1784,7 +1784,7 @@ ModMonotonicAdvection.o : $(MODEL)/ModMonotonicAdvection.f90  \
 	rm -f $(<F:.f90=.f90)
 
 seasalt.o: $(CCATT)/seasalt.f90 mem_leaf.o mem_grid.o leaf_coms.o \
-	    io_params.o mem_basic.o mod_aer.o
+	    io_params.o mem_basic.o ModAerClim.o
 	@cp -f  $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -2354,7 +2354,8 @@ dam.o : $(ENERGY)/dam.f90 dump.o $(UTILS_INCS)/constants.h
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mod_aer.o : $(AERCLIM)/mod_aer.f90 dump.o $(UTILS_INCS)/constants.h
+ModAerClim.o : $(AERCLIM)/ModAerClim.f90 dump.o parlibf.o node_mod.o mem_grid.o \
+	ModBasicFields.o ReadBcst.o $(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

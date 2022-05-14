@@ -283,7 +283,7 @@ module ModTimestepRK
   use ModOptical, only: &
        aodDriver
 
-  use aerClimMod, only: &
+  use ModAerClim, only: &
        no_months, &
        no_src_types, &
        specieName, &

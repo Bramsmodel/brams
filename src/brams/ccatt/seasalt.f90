@@ -284,7 +284,7 @@ subroutine seaSaltDriver(ia,iz,ja,jz,ngrid,m2,m3)
       matrix_level,      &
       aer_name,nmodes,nspecies,spc_alloc
 
-  use aerClimMod, only: &
+  use ModAerClim, only: &
       SScam, &
       aerCam
 

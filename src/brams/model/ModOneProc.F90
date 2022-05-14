@@ -39,21 +39,21 @@ module ModOneProc
 
   use ModNestGeoSst, only: &
        GeonestNoFile
-  
+
   use ModUrbanCanopy, only: &
        urb_drag_init
-  
+
   use ModGasPart, only: &
        init_conc1, &
        init_conc2, &
        init_conc_prev
-  
+
   use ModSched, only: &
        schedule, &
        dump_schedule, &
        cfl, &
        dump_dtset
-  
+
   use ModCoriolis, only: &
        fcorio
 
@@ -64,19 +64,19 @@ module ModOneProc
   use dump, only: &
        dumpMessage, &
        openLogFile
-  
+
   use ModRanlavg, only: &
        anlavg
-  
+
   use ModRThrm, only: &
        thermo
-  
+
   use ModMemAlloc, only: &
        MemAlloc
-  
+
   use ModDomainDecomp, only: &
        DomainDecomp
-  
+
   use ModVarfFile, only: &
        VarfReadStoreOwnChunk
 
@@ -108,7 +108,7 @@ module ModOneProc
 
   use ModTimestep, only: &
        timestep
-  
+
   use ModTimestepRK , only: timestep_rk
   use iso_fortran_env, only: output_unit
   use io_params, only: &
@@ -208,7 +208,7 @@ module ModOneProc
   use MOdPostGridNetCDF, only: netCDFFirstTime
 #endif
 
-  USE ModMonotonicAdvection, ONLY: &
+  use ModMonotonicAdvection, only: &
        StoreNamelistFileAtAdvMnt, &
        advmnt, &
        GhostZoneLength
@@ -361,7 +361,7 @@ module ModOneProc
        cflxy,          & ! intent(out)
        cflz,           & ! intent(out)
        time,           &
-       timmax,	       &
+       timmax,       &
        begtime,        &
        order_h
 
@@ -397,12 +397,12 @@ module ModOneProc
        nodei0,         & ! INTENT(IN)
        nodej0,         & ! INTENT(IN)
        
-       !--(DMK-CCATT-INI)-----------------------------------------------------------
+                                !--(DMK-CCATT-INI)-----------------------------------------------------------
        nodeia, &
        nodeiz, &
        nodeja, &
        nodejz, &
-       !--(DMK-CCATT-FIM)-----------------------------------------------------------
+                                !--(DMK-CCATT-FIM)-----------------------------------------------------------
        
        nmachs,         & ! INTENT(IN)
        mynum,          & ! INTENT(IN)
@@ -410,9 +410,9 @@ module ModOneProc
        myp,            &
        mzp,            &
        
-       !--(DMK-CCATT-INI)-----------------------------------------------------------
+                                !--(DMK-CCATT-INI)-----------------------------------------------------------
        ixb, ixe, iyb, iye, & !To advect_mnt
-       !--(DMK-CCATT-FIM)-----------------------------------------------------------
+                                !--(DMK-CCATT-FIM)-----------------------------------------------------------
        
        ProcessOrder      ! procedure
 
@@ -526,11 +526,11 @@ module ModOneProc
 
   use ModRamsMicrophysics2M, only :  &
        jnmbinit_2M=>jnmbinit       &
-       ,initqin_2M  =>initqin  	    &
-       ,initqin2_2M =>initqin2 	    &
-       ,initqin3_2M =>initqin3 	    &
-       ,initqin4_2M =>initqin4 	    &
-       ,initqin5_2M =>initqin5 	    &
+       ,initqin_2M  =>initqin      &
+       ,initqin2_2M =>initqin2     &
+       ,initqin3_2M =>initqin3     &
+       ,initqin4_2M =>initqin4     &
+       ,initqin5_2M =>initqin5     &
        ,micro_master_2M =>micro_master
 
   use mem_carma, only: &
@@ -545,7 +545,7 @@ module ModOneProc
        outputDamPrecip, &
        StoreNamelistFileAtDams
 
-  use aerClimMod, only: &
+  use ModAerClim, only: &
        gradsRead
 
   use ModInitMicThompson, only: &
@@ -567,7 +567,7 @@ module ModOneProc
        decomp_node, &
        NodePathsBuffAlloc, &
        domain_decomposition_dump
-  
+
   use dump, only: &
        dumpMessage !dump function
 
@@ -641,7 +641,7 @@ contains
     if (dumpLocal) then
        call MsgDump(h//" starts")
     end if
-    
+
     dtSet_firstTime=.true.
 
     !Open the file to log the run
@@ -696,7 +696,7 @@ contains
     end if
 
     ! store Namelist File into old modules
-    
+
     call StoreNamelistFileAtIo_Params(oneNamelistFile)
     call StoreNamelistFileAtIsan_coms(oneNamelistFile)
     call StoreNamelistFileAtMem_cuparm(oneNamelistFile)
@@ -728,7 +728,7 @@ contains
     call StoreNamelistFileAtMem_emiss(oneNamelistFile)
     call StoreNamelistFileAtTeb_vars_const(oneNamelistFile)
     call StoreNamelistFileAtDomain_decomp(oneNamelistFile)
-    CALL StoreNamelistFileAtAdvMnt(oneNamelistFile)
+    call StoreNamelistFileAtAdvMnt(oneNamelistFile)
     call StoreNamelistFileAtdigitalFilter(oneNamelistFile)
     call StoreNamelistFileAtmeteogram(oneNamelistFile)
     call StoreNamelistFileAtmem_carma(oneNamelistFile)
@@ -763,7 +763,7 @@ contains
     oneGrid => oneGridTreeNode%curr
 
     ngrids = oneNamelistFile%ngrids
-    
+
     ! Allocating dxtmax_local
 
     allocate(dxtmax_local(ngrids), STAT=ierr)
@@ -819,7 +819,7 @@ contains
     ! decomp_node just copy grid variables to node_mod;
     ! does not work with more than one grid;
     ! remove whenever node_mod is replaced
-    
+
     call decomp_node()
 
     ! master dumps domain decomposition at stdout and at selected file
@@ -887,8 +887,8 @@ contains
 
        ! initiate tuv tables
        if (trim(PhotojMethod) == 'FAST-TUV' .and. chemistry >= 0) then
-          CALL initTuv(wstart,wstop,nwint,listFiles,mchnum,chemical_mechanism)
-          !	  TODO - to review code below for bio vars, probably just debug stuff
+          call initTuv(wstart,wstop,nwint,listFiles,mchnum,chemical_mechanism)
+          !  TODO - to review code below for bio vars, probably just debug stuff
           !          write(77,*) wbioStart,wBioEnd
           !          do i = wbioStart,wBioEnd
           !            write (77,fmt='(I3.3,1X,A)') i,slabel(i)
@@ -896,14 +896,14 @@ contains
           !              write (77,fmt='(I3.3,F10.4,1X,F10.4)') j,sw(i,j),wc(j)
           !            end do
           !          end do
-          CALL InitTuvDriver()
+          call InitTuvDriver()
        endif
 
        if(mcphys_type==0) then
-          CALL jnmbinit()
+          call jnmbinit()
 
        elseif(mcphys_type==1) then
-          CALL jnmbinit_2M()
+          call jnmbinit_2M()
 
        endif
 
@@ -1039,8 +1039,11 @@ contains
 
        if(mcphys_type==3) call readDataFriendly()
 
-       if (aerosol==-1 .and. .not. (CCATT==1 .and. chemistry >= 1)) &
-            call gradsRead('./tables/aerClim/','aerosols.gra',grid_g(1)%glat,grid_g(1)%glon)
+       if (aerosol==-1 .and. .not. (CCATT==1 .and. chemistry >= 1)) then
+          call gradsRead('./tables/aerClim/','aerosols.gra',&
+               grid_g(1)%glat,grid_g(1)%glon, &
+               oneGrid%Basic)
+       end if
 
        ! Checking if the actual node have to run thermo on the boundaries
 
@@ -1097,15 +1100,15 @@ contains
 
 
        !--Digital Filter ------------------------------------------------------
-       IF(applyDF)then
+       if(applyDF)then
           frqanldf=frqanl
           frqanl= 0.
           iposDF=ipos
           ipos=0
-       ENDIF
+       endif
 
 
-       IF(applyMeteogram) call InitMeteogram(oneGrid%meteoPolygons, oneGrid%id, trim(meteogramMap))
+       if(applyMeteogram) call InitMeteogram(oneGrid%meteoPolygons, oneGrid%id, trim(meteogramMap))
 
        !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
        ! call SynchronizedTimeStamp(TS_INIT) ! timestamp before: initialization
@@ -1153,7 +1156,7 @@ contains
              if (isendsrc==1) then
 
                 call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
-                
+
                 do ifm = 1, ngrids
                    call newgrid(ifm)
                    call read_sourcemaps(ifm,nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm), &
@@ -1166,11 +1169,11 @@ contains
                         transport,plume_g,tropical_forest,boreal_forest,savannah,         &
                         grassland,diur_cycle,volcanoes,volc_mean_g,oneGrid%Basic%dn0,zt,zm,&
                         mchnum, master_num,mass_bin_dist,CO2,ISFCL,aerosol_mechanism,     &
-			plume_fre_g,emiss_ajust_aer)
+                        plume_fre_g,emiss_ajust_aer)
                 enddo
 
                 call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
-                
+
              endif
           end if
 
@@ -1237,7 +1240,7 @@ contains
                 end if
 
                 ! timestep routine
-                
+
                 if ( ( dyncore_flag == 0 ) .or. ( dyncore_flag == 1 ) ) then
                    ! Leapfrog/forward-time based scheme
                    call timestep(oneGrid)
@@ -1280,7 +1283,7 @@ contains
 
           time = begtime + dtlongn(1)
 
-	  ! average analysis variables over time and
+          ! average analysis variables over time and
           ! update cfl numbers
 
           do ngrid=1,ngrids
@@ -1388,11 +1391,11 @@ contains
              if(mod(time,meteogramFreq) .lt. dtlongn(1) .or.  &
                   time .ge. timmax - 0.01*dtlongn(1)      .or. &
                   iflag .eq. 1)call ProcessLocalMeteogram(oneGrid%meteoPolygons)
-	  end if
+          end if
 
-          IF(windfarm==1) THEN
+          if(windfarm==1) then
              call output_windFarms()
-          END IF
+          end if
 
           ! execution time info and dump
           call timing(2,t6)
@@ -1525,15 +1528,15 @@ contains
     integer :: ifm,icm,ihm,ngr,nv,ierr
     logical :: histFlag, instFlag, meanFlag, liteFlag
     !- for changing initial soil moisture
-    LOGICAL, PARAMETER ::  change_soilm=.true.
+    logical, parameter ::  change_soilm=.true.
     type(GridTree), pointer :: oneGridTreeNode => null()
     type(Grid), pointer :: oneGrid => null()
 
     !**(JP)** works only for a single grid
-    
+
     oneGridTreeNode => GridTreeRoot(AllGrids)
     oneGrid => oneGridTreeNode%curr
-       
+
 
     ! Set version number for common blocks.
 
@@ -1656,7 +1659,7 @@ contains
 
           call thermo(mzp, mxp, myp, 1, mxp, 1, myp, oneGrid%Basic, oneGrid%AveBasic)
 
-          if(ilwrtyp==6 .or. iswrtyp==6 ) THEN
+          if(ilwrtyp==6 .or. iswrtyp==6 ) then
              if (level  ==  3) &
                   call effective_radius(mzp,mxp,myp &
                   ,micro_g(ifm)%rei             &
@@ -1666,8 +1669,8 @@ contains
           if (mcphys_type == 0) then
              if (level  ==  3) then
 
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
-                
+                call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+
                 call initqin(mzp,mxp,myp        &
                      ,micro_g(ifm)%q2      &
                      ,micro_g(ifm)%q6      &
@@ -1679,16 +1682,16 @@ contains
                      ,micro_g(ifm)%cccnp   &
                      ,micro_g(ifm)%cifnp   )
 
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
-                
+                call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+
              endif
 
-	  elseif(mcphys_type == 1) then
+          elseif(mcphys_type == 1) then
 
              if (level  ==  3) then
 
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
-                
+                call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+
                 call initqin_2M(mzp,mxp,myp        &
                      ,micro_g(ifm)%q2   &
                      ,micro_g(ifm)%q6      &
@@ -1698,66 +1701,66 @@ contains
                      ,oneGrid%Basic%theta   &
                      ,oneGrid%Basic%dn0     )
 
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
-                
+                call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
 
-          if(icloud >= 5) then
 
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
-                
-             call initqin2_2M(mzp,mxp,myp        &
-                     ,micro_g(ifm)%cccnp   &
-                     ,micro_g(ifm)%cccmp   &
-                     ,oneGrid%Basic%dn0   )
+                if(icloud >= 5) then
 
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
-                
-          end if
+                   call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
 
-          if(idriz  >= 5) then
+                   call initqin2_2M(mzp,mxp,myp        &
+                        ,micro_g(ifm)%cccnp   &
+                        ,micro_g(ifm)%cccmp   &
+                        ,oneGrid%Basic%dn0   )
 
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
-                
-             call initqin3_2M(mzp,mxp,myp        &
-                     ,micro_g(ifm)%gccnp   &
-                     ,micro_g(ifm)%gccmp   &
-                     ,oneGrid%Basic%dn0   )
+                   call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
-                
-          end if
-          
-          if(ipris  >= 5) then
+                end if
 
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
-                
-             call initqin4_2M(mzp,mxp,myp        &
-                     ,micro_g(ifm)%cifnp   &
-                     ,oneGrid%Basic%dn0   )
+                if(idriz  >= 5) then
 
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
-                
-          end if
+                   call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+
+                   call initqin3_2M(mzp,mxp,myp        &
+                        ,micro_g(ifm)%gccnp   &
+                        ,micro_g(ifm)%gccmp   &
+                        ,oneGrid%Basic%dn0   )
+
+                   call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+
+                end if
+
+                if(ipris  >= 5) then
+
+                   call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+
+                   call initqin4_2M(mzp,mxp,myp        &
+                        ,micro_g(ifm)%cifnp   &
+                        ,oneGrid%Basic%dn0   )
+
+                   call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+
+                end if
 
                 if(idust > 0 .or. imd1flg > 0 .or. imd2flg > 0)  then
-                     call initqin5_2M(mzp,mxp,myp    &
-                     ,micro_g(ifm)%md1np   &
-                     ,micro_g(ifm)%md2np )
-                  end if
+                   call initqin5_2M(mzp,mxp,myp    &
+                        ,micro_g(ifm)%md1np   &
+                        ,micro_g(ifm)%md2np )
+                end if
              endif
           endif
           !-- initialization of current theta_il field
           !-- only for RK time integration
           if(DYNCORE_FLAG==2) then
 
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
-                
+             call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+
              oneGrid%Basic%thc(:,:,:)=oneGrid%Basic%thp(:,:,:)
 
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+             call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
           endif
-                
+
        enddo
 
        ! If initializing some fields from previous runs...
@@ -1805,28 +1808,28 @@ contains
        if(change_soilm) then
 
           call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
-                
+
 
           do ifm=1,ngrids
              call change_soil_moisture_init(nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm)    &
-                  ,nzg,nzs,npatch,ifm	 &
+                  ,nzg,nzs,npatch,ifm &
                   ,oneGrid%Basic%theta  &
                   ,oneGrid%Basic%pi0    &
                   ,oneGrid%Basic%pp     &
-                  ,leaf_g(ifm)%soil_water	  &
+                  ,leaf_g(ifm)%soil_water  &
                   ,leaf_g(ifm)%soil_energy        &
-                  ,leaf_g(ifm)%soil_text	  &
+                  ,leaf_g(ifm)%soil_text  &
                   ,leaf_g(ifm)%sfcwater_mass      &
                   ,leaf_g(ifm)%sfcwater_energy    &
                   ,leaf_g(ifm)%sfcwater_depth     &
                   ,grid_g(ifm)%glat          &
-                  ,grid_g(ifm)%glon   	     &
-                  ,grid_g(ifm)%lpw    	     &
+                  ,grid_g(ifm)%glon        &
+                  ,grid_g(ifm)%lpw         &
                   ,leaf_g(ifm)%leaf_class  )
           enddo
 
           call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
-                
+
        endif
 
 
@@ -1853,7 +1856,7 @@ contains
           if (iteb==1) then
 
              call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
-                
+
              do ifm=1,ngrids
                 call TEB_INIT(                      &
                      nnzp(ifm),                     &
@@ -1888,8 +1891,8 @@ contains
 
              enddo
 
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
-                
+             call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+
           endif
 
           ! Initialize gases and particulate matter
@@ -1944,14 +1947,14 @@ contains
        if (iexev == 2) then
 
           call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
-                
+
           do ifm=1,ngrids
              call newgrid(ifm)
              stilt_g(ifm)%dnp(:,:,:)= oneGrid%Basic%dn0(:,:,:)
           enddo
 
           call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
-                
+
        endif
 
        if (ccatt == 1 .and. chemistry >= 0 .and. aerosol > 0) then
@@ -1962,37 +1965,37 @@ contains
           !-srf: initialize mixing ratios (only if chem assim is off)
           !-srf: and sources
 
-             call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
-                
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+
           do ifm=1,ngrids
              call newgrid(ifm)
 
              call initial_condition(ifm,nzp,nxp,nyp)
              !if(mynum==1) print*,'->2 chem/aer sources maps reading: ',time/3600.,' grid=',ifm
              call read_sourcemaps(ifm,nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm), &
-             	  ia,iz,ja,jz, time,iyear1,imonth1,idate1,itime1,ngrids,timmax,		   &
-             	  chem_nspecies,spc_chem_alloc,src,off,nsrc,nvert_src,chem1_src_g, &
-             	  bburn,antro, bioge,  geoge,spc_chem_name,on,chemical_mechanism,  &
-             	  emiss_ajust,co,aer_nspecies,spc_aer_alloc,spc_aer_name,	   &
-             	  src_name,chemistry,ntimes_src,aer1_g,nmodes,aerosol,plumerise,   &
-             	  nveg_agreg,plume_mean_g,nzpmax,dzt,grid_g(ifm)%rtgt,grid_g(ifm)%topt, &
-             	  transport,plume_g,tropical_forest,boreal_forest,savannah,	    &
-             	  grassland,diur_cycle,volcanoes,volc_mean_g,oneGrid%Basic%dn0,zt,zm,&
-             	  mchnum, master_num,mass_bin_dist,CO2,ISFCL,aerosol_mechanism     ,&
-		  plume_fre_g,emiss_ajust_aer)
+                  ia,iz,ja,jz, time,iyear1,imonth1,idate1,itime1,ngrids,timmax,   &
+                  chem_nspecies,spc_chem_alloc,src,off,nsrc,nvert_src,chem1_src_g, &
+                  bburn,antro, bioge,  geoge,spc_chem_name,on,chemical_mechanism,  &
+                  emiss_ajust,co,aer_nspecies,spc_aer_alloc,spc_aer_name,   &
+                  src_name,chemistry,ntimes_src,aer1_g,nmodes,aerosol,plumerise,   &
+                  nveg_agreg,plume_mean_g,nzpmax,dzt,grid_g(ifm)%rtgt,grid_g(ifm)%topt, &
+                  transport,plume_g,tropical_forest,boreal_forest,savannah,    &
+                  grassland,diur_cycle,volcanoes,volc_mean_g,oneGrid%Basic%dn0,zt,zm,&
+                  mchnum, master_num,mass_bin_dist,CO2,ISFCL,aerosol_mechanism     ,&
+                  plume_fre_g,emiss_ajust_aer)
 
              call aer_background(ifm,nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm),&
                   1,nodemxp(mynum,ifm),1,nodemyp(mynum,ifm))
           enddo
 
-             call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
-                
+          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+
        end if
        !call dumpAer('Aer_pos2')
        ! Read Radiation Parameters if CARMA or RRTMG Radiation is selected
        if (ilwrtyp==4 .or. iswrtyp==4 .or. ilwrtyp==6 .or. iswrtyp==6 ) then
-          CALL master_read_carma_data(mchnum, master_num)
-          CALL read_aotMap()
+          call master_read_carma_data(mchnum, master_num)
+          call read_aotMap()
        endif
 
        ! AKMIN variable:
@@ -2080,8 +2083,8 @@ contains
        endif
 
 
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
-                
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+
        do ifm = 1,ngrids
           icm = nxtnest(ifm)
           if (icm  ==  0) then
@@ -2095,8 +2098,8 @@ contains
        enddo
 
 
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
-                
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+
        do ifm = 1,min(ngrids,ngridsh)
           icm = nxtnest(ifm)
 !!$          if (icm  >  0) call fmrefs3d(ifm)
@@ -2119,7 +2122,7 @@ contains
 
 
           call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
-                
+
           do ifm = 1,min(ngrids,ngridsh)
              call newgrid(ifm)
              call soilMoistureInit(nnzp(ifm), nodemxp(mynum,ifm),         &
@@ -2133,7 +2136,7 @@ contains
           enddo
 
           call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
-                
+
 
        endif
 
@@ -2145,8 +2148,8 @@ contains
 
        ! Read Radiation Parameters if CARMA or RRTMG Radiation is selected
        if (ilwrtyp==4 .or. iswrtyp==4 .or. ilwrtyp==6 .or. iswrtyp==6 ) then
-          CALL master_read_carma_data(mchnum, master_num)
-          CALL read_aotMap()
+          call master_read_carma_data(mchnum, master_num)
+          call read_aotMap()
        endif
 
        !--(DMK-CCATT-INI)-----------------------------------------------------
@@ -2159,27 +2162,27 @@ contains
           !-srf: and sources
 
           call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
-                
+
           do ifm=1,ngrids
              call newgrid(ifm)
              !if(mynum==1) print*,'->3 chem/aer sources maps reading: ',time/3600.,' grid=',ifm
              call read_sourcemaps(ifm,nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm), &
-             	  ia,iz,ja,jz,  						   &
-		  time,iyear1,imonth1,idate1,itime1,ngrids,timmax,		   &
-             	  chem_nspecies,spc_chem_alloc,src,off,nsrc,nvert_src,chem1_src_g, &
-             	  bburn,antro, bioge,  geoge,spc_chem_name,on,chemical_mechanism,  &
-             	  emiss_ajust,co,aer_nspecies,spc_aer_alloc,spc_aer_name,	   &
-             	  src_name,chemistry,ntimes_src,aer1_g,nmodes,aerosol,plumerise,   &
-             	  nveg_agreg,plume_mean_g,nzpmax,dzt,grid_g(ifm)%rtgt,grid_g(ifm)%topt, &
-             	  transport,plume_g,tropical_forest,boreal_forest,savannah,	    &
-             	  grassland,diur_cycle,volcanoes,volc_mean_g,oneGrid%Basic%dn0,zt,zm,&
-             	  mchnum, master_num,mass_bin_dist,CO2,ISFCL,aerosol_mechanism,&
-		  plume_fre_g,emiss_ajust_aer)
+                  ia,iz,ja,jz,     &
+                  time,iyear1,imonth1,idate1,itime1,ngrids,timmax,   &
+                  chem_nspecies,spc_chem_alloc,src,off,nsrc,nvert_src,chem1_src_g, &
+                  bburn,antro, bioge,  geoge,spc_chem_name,on,chemical_mechanism,  &
+                  emiss_ajust,co,aer_nspecies,spc_aer_alloc,spc_aer_name,   &
+                  src_name,chemistry,ntimes_src,aer1_g,nmodes,aerosol,plumerise,   &
+                  nveg_agreg,plume_mean_g,nzpmax,dzt,grid_g(ifm)%rtgt,grid_g(ifm)%topt, &
+                  transport,plume_g,tropical_forest,boreal_forest,savannah,    &
+                  grassland,diur_cycle,volcanoes,volc_mean_g,oneGrid%Basic%dn0,zt,zm,&
+                  mchnum, master_num,mass_bin_dist,CO2,ISFCL,aerosol_mechanism,&
+                  plume_fre_g,emiss_ajust_aer)
 
           enddo
 
           call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
-                
+
        end if
 
     else
@@ -2200,8 +2203,8 @@ contains
 
     !       Fill latitude-longitude, map factor, and Coriolis arrays.
 
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
-                
+    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+
     do ifm = 1,ngrids
        call newgrid(ifm)
        call fcorio(mxp,myp           &
@@ -2211,8 +2214,8 @@ contains
     enddo
 
 
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
-                
+    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+
 
     !  If we are doing one-way nesting or varfile nudging, inventory,
     !     prepare history/varfile files
@@ -2322,7 +2325,7 @@ contains
     endif
     !srf
     !--(DMK-CCATT-INI)--------------------------------------------------------
-    iF(applyDF)then
+    if(applyDF)then
        !--(DMK-CCATT-FIM)--------------------------------------------------------
        histFlag=.false.; instFlag=.false.
        liteFlag=.false.

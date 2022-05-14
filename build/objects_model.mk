@@ -397,7 +397,7 @@ OBJ_MOD = \
 	ModMicGfdlDriver.o \
 	gfdl_cloud_microphys.o \
 	dam.o \
-	mod_aer.o \
+	ModAerClim.o \
 	ModInitMicThompson.o \
 	ModPostGridNetCDF.o \
 	ModPostOneFieldNetCDF.o \
