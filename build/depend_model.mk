@@ -297,10 +297,10 @@ mem_turb.o : $(TURB)/mem_turb.f90 grid_dims.o var_tables.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mem_tend.o : $(MEMORY)/mem_tend.f90 mem_basic.o mem_micro.o \
+mem_tend.o : $(MEMORY)/mem_tend.f90 mem_micro.o \
 	mem_turb.o mem_scalar.o var_tables.o mem_grid.o \
 	teb_spm_start.o mem_gaspart.o mem_emiss.o ModNamelistFile.o \
-	ModScalarTable.o
+	ModScalarTable.o ModBasicFields.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -543,7 +543,7 @@ ModMemAlloc.o : $(MEMORY)/ModMemAlloc.F90  extra.o \
 	mem_teb.o mem_gaspart.o ModMemory.o cup_grell3.o mem_stilt.o digitalFilter.o \
 	mem_stilt.o mem_chem1.o mem_plume_chem1.o mem_volc_chem1.o \
 	mem_chem1aq.o mem_chemic.o chem_sources.o chem_dry_dep.o carma_fastjx.o \
-	chem1_list.o aer1_list.o chem1aq_list.o	ModDomainDecomp.o \
+	chem1_list.o aer1_list.o chem1aq_list.o	ModDomainDecomp.o ModBasicFields.o \
 	ModOptical.o ModEvaluation.o modIau.o $(JULES_OBJ_MEM)
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)

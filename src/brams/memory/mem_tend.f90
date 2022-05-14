@@ -7,6 +7,53 @@
 !###########################################################################
 module mem_tend
 
+    use ModScalarTable, only:  &
+         ScalarTable, &
+         InsertAtScalarTab 
+
+    use ModBasicFields, only: &
+         BasicFields
+    
+    use mem_micro, only: &
+         micro_vars, &
+         micro_g
+    
+    use mem_turb, only: &
+         turb_vars, &
+         turb_g
+
+    use mem_scalar, only: &
+         scalar_g, &
+         scalar_vars
+    
+    use mem_grid,   only: &
+         dyncore_flag
+
+    use mem_gaspart, only: &
+         gaspart_g, &
+         gaspart_vars
+    
+    use teb_spm_start, only: &
+         TEB_SPM
+    
+    use mem_emiss, only: &
+         ichemi, &
+         isource
+
+    use ModNamelistFile, only: &
+         namelistFile
+
+    implicit none
+
+    private
+
+    public :: tend_vars
+    public :: tend
+    public :: alloc_tend
+    public :: nullify_tend
+    public :: dealloc_tend
+    public :: filltab_tend
+    
   type tend_vars
      real, contiguous, pointer :: ut(:)
      real, contiguous, pointer :: vt(:)
@@ -64,25 +111,12 @@ module mem_tend
 contains
   !---------------------------------------------------------------
 
-  subroutine alloc_tend(nmzp,nmxp,nmyp,ngrs,naddsc,proc_type)
-
-    use mem_basic, only: basic_g   ! Data Type INTENT(IN)
-    use mem_grid,  only: dyncore_flag
-    use mem_scalar, only: scalar_g ! Data Type INTENT(INOUT)
-    use mem_micro, only: micro_g   ! Data Type INTENT(IN)
-    use mem_turb, only: turb_g     ! Data Type INTENT(IN)
-    use ModNamelistFile, only: namelistFile
-
-    ! TEB_SPM
-    use teb_spm_start, only: TEB_SPM ! INTENT(IN)
-    use mem_gaspart, only:  gaspart_g !Data Type INTENT(INOUT)
-    use mem_emiss, only: ichemi, isource ! INTENT(IN)
-
-    implicit none
-
+  subroutine alloc_tend(nmzp,nmxp,nmyp,ngrs,naddsc,proc_type,&
+       oneBasicFields)
     ! Arguments:
     integer, intent(in) :: nmzp(:), nmxp(:), nmyp(:)
     integer, intent(in) :: ngrs, proc_type, naddsc
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
 
     ! Local Variables:
     integer :: ng, ntpts, nsc
@@ -105,7 +139,7 @@ contains
 !!!!!  WE ARE ONLY CHECKING GRID 1 !!!!!!!!!
 !!!!!    All grids must have same scalars defined !!!!!!!
 
-    if (associated(basic_g(1)%up))      then
+    if (associated(oneBasicFields%up))      then
        allocate (tend%ut(ntpts))
        tend%ut = 0.
        if( dyncore_flag==2 .or. dyncore_flag==3) then
@@ -117,7 +151,7 @@ contains
           tend%ut_past = 0.
        endif
     endif
-    if (associated(basic_g(1)%vp))      then
+    if (associated(oneBasicFields%vp))      then
        allocate (tend%vt(ntpts))
        tend%vt = 0.
        if( dyncore_flag==2 .or. dyncore_flag==3) then
@@ -129,7 +163,7 @@ contains
           tend%vt_past = 0.
        endif
     endif
-    if (associated(basic_g(1)%wp))      then
+    if (associated(oneBasicFields%wp))      then
        allocate (tend%wt(ntpts))
        tend%wt = 0.
        if( dyncore_flag==2 .or. dyncore_flag==3) then
@@ -141,7 +175,7 @@ contains
           tend%wt_past = 0.
        endif
     endif
-    if (associated(basic_g(1)%pp))      then
+    if (associated(oneBasicFields%pp))      then
        allocate (tend%pt(ntpts))
        tend%pt = 0.
        if( dyncore_flag==2 .or. dyncore_flag==3) then
@@ -154,7 +188,7 @@ contains
        endif
     endif
 
-    if (associated(basic_g(1)%thp))     then
+    if (associated(oneBasicFields%thp))     then
        allocate (tend%tht(ntpts))
        tend%tht = 0.
        if( dyncore_flag==2 .or. dyncore_flag==3) then
@@ -166,7 +200,7 @@ contains
           tend%tht_past = 0.
        endif
     endif
-    if (associated(basic_g(1)%rtp))     then
+    if (associated(oneBasicFields%rtp))     then
        allocate (tend%rtt(ntpts))
        tend%rtt = 0.
     endif
@@ -410,16 +444,6 @@ contains
   !---------------------------------------------------------------
 
   subroutine nullify_tend(naddsc)
-
-    use mem_scalar, only: scalar_g ! Data Type INTENT(INOUT)
-
-    ! TEB_SPM
-    use teb_spm_start, only: TEB_SPM ! INTENT(IN)
-    use mem_gaspart, only:  gaspart_g !Data Type INTENT(INOUT)
-    use mem_emiss, only: ichemi, isource ! INTENT(IN)
-
-    implicit none
-
     ! Arguments:
     integer, intent(in) :: naddsc
 
@@ -517,16 +541,6 @@ contains
   !---------------------------------------------------------------
 
   subroutine dealloc_tend(naddsc)
-
-    use mem_scalar, only: scalar_g ! Data Type INTENT(INOUT)
-
-    ! TEB_SPM
-    use teb_spm_start, only: TEB_SPM ! INTENT(IN)
-    use mem_gaspart, only:  gaspart_g ! Data Type INTENT(INOUT)
-    use mem_emiss, only: ichemi, isource ! INTENT(IN)
-
-    implicit none
-
     ! Arguments:
     integer, intent(in) :: naddsc
 
@@ -624,27 +638,12 @@ contains
   !---------------------------------------------------------------
 
   subroutine filltab_tend(oneScalarTab, oneScalarTabSize, &
-       basic, micro, turb, scalar, gaspart, &
+       oneBasicFields, micro, turb, scalar, gaspart, &
        naddsc, ng)
-
-    use ModScalarTable, only:  &
-         ScalarTable, &
-         InsertAtScalarTab 
-    use mem_basic, only: basic_vars
-    use mem_micro, only: micro_vars
-    use mem_turb, only: turb_vars
-    use mem_scalar, only: scalar_vars !Type
-    use mem_grid,   only: dyncore_flag
-    use mem_gaspart, only: gaspart_vars
-    use teb_spm_start, only: TEB_SPM ! INTENT(IN)
-    use mem_emiss, only: ichemi, isource ! INTENT(IN)
-
-    implicit none
-
     ! Arguments:
     type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
     integer, intent(inout) :: oneScalarTabSize
-    type(basic_vars), intent(in) :: basic
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(micro_vars), intent(in) :: micro 
     type(turb_vars), intent(in) :: turb
     type(scalar_vars), intent(in)  :: scalar(:)
@@ -661,12 +660,12 @@ contains
     !- not need to include THC in scalar table, including only THP
     !- will works better for leapfrog and RK schemes
     if (associated(tend%tht)) then
-       call InsertAtScalarTab(basic%thp,tend%tht, 'THP', &
+       call InsertAtScalarTab(oneBasicFields%thp,tend%tht, 'THP', &
             oneScalarTab, oneScalarTabSize)     
     endif
 
     if (associated(tend%rtt)) then
-       call InsertAtScalarTab(basic%rtp,tend%rtt, 'RTP', &
+       call InsertAtScalarTab(oneBasicFields%rtp,tend%rtt, 'RTP', &
             oneScalarTab, oneScalarTabSize)
     endif
 

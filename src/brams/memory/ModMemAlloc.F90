@@ -150,6 +150,9 @@ module ModMemAlloc
        nullify_basic,  &
        alloc_basic,    &
        filltab_basic
+  use ModBasicFields, only: &
+       DeepCopyToBasicFields, &
+       DeepCopyFromBasicFields
 
   use node_mod, only: &
        alloc_paths,   & !Subroutine
@@ -1208,7 +1211,9 @@ contains
 
     call nullify_tend(naddsc)
 
-    call alloc_tend(nmzp, nmxp, nmyp, ngrids, naddsc, proc_type)
+    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+    call alloc_tend(nmzp, nmxp, nmyp, ngrids, naddsc, proc_type, oneGrid%Basic)
+    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     !-------------
 
     !-------------
@@ -1504,11 +1509,13 @@ contains
           gaspart_p => gaspart_g(ng)
        endif
 
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call filltab_tend(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
-            basic_g(ng), micro_g(ng), turb_g(ng),  &
+            oneGrid%Basic, micro_g(ng), turb_g(ng),  &
             scalar_g(:,ng),                                     &
             gaspart_p,                                          &
             naddsc, ng)
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
        if (ccatt == 1  .and. chemistry >= 0)  then
 
