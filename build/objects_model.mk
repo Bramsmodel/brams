@@ -175,7 +175,7 @@ OBJ_MOD = \
 	ref_sounding.o \
 	refstate.o \
 	rgrad.o \
-	rhhi.o  \
+	ModRhhi.o  \
 	rinit.o  \
 	rio.o \
 	rnest_par.o \

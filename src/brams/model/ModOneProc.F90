@@ -34,6 +34,9 @@ module ModOneProc
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModRhhi, only: &
+       inithh
+  
   use ModMicrophysicsMisc, only: &
        negadj1
 
@@ -1616,7 +1619,9 @@ contains
 
           if(initial == 1) then
              print*,'Horizontally-homogeneous-INITIAL start of grid- 1'
-             call inithh()
+             call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+             call inithh(oneGrid%Basic)
+             call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
           endif
 
           !If "history" initialization, call INITHIS.
