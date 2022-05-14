@@ -2,7 +2,7 @@
 !! it uses blocks of athmosferic points to prepare the data. 
 !! @author Luiz Flavio
 !! @date Oct/2011
-module DriverMatrix 
+module ModMatrixDriver 
 
 #ifdef MATRIX
 
@@ -644,5 +644,5 @@ contains
   end subroutine MatrixDriver
 
 #endif
-end module DriverMatrix
+end module ModMatrixDriver
 

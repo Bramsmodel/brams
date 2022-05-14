@@ -261,7 +261,7 @@ module ModTimestepRK
        advmnt_driver,  &        ! subroutine
        advmnt
 
-  use DriverMatrix, only: &
+  use ModMatrixDriver, only: &
        MatrixDriver  !Matrix Aerosol Model
 
 

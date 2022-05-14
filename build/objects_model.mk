@@ -380,7 +380,7 @@ OBJ_MOD = \
 	subs.o \
 	thermo_isorr.o \
 	isrpia.o \
-	MatrixDriver.o \
+	ModMatrixDriver.o \
 	ModParticle.o \
 	memMatrix.o\
 	ModRamsMicrophysics2M.o\
