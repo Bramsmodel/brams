@@ -238,7 +238,8 @@ module ModTimestep
        advmnt_driver,  &        ! subroutine
        advmnt
 
-  use DriverMatrix, only: MatrixDriver  !Matrix Aerosol Model
+  use DriverMatrix, only: &
+       MatrixDriver  !Matrix Aerosol Model
 
 
   use ModRamsMicrophysics2M, only: &
@@ -389,8 +390,9 @@ contains
        !- call Matrix Aerosol Model
        !----------------------------------------
        if(AEROSOL==2) then
-          !print*,"not doing matrix";call flush(6)
-          call MatrixDriver(ia,iz,ja,jz,mzp,mxp,myp)
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+          call MatrixDriver(ia,iz,ja,jz,mzp,mxp,myp, oneGrid%Basic)
+          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        endif
 
     endif

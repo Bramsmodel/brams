@@ -12,7 +12,7 @@ module ModTimestepRK
 
   use ModMicThompsonDriver, only: &
        micro_thompson
-  
+
   use ModMicGfdlDriver, only: &
        micro_gfdl
 
@@ -21,23 +21,23 @@ module ModTimestepRK
 
   use ModMicrophysicsDrive, only: &
        micro
-  
+
   use ModRstilt, only: &
        prep_advflx_to_stilt
 
   use ModUrbanCanopy, only: &
        urban_canopy
-  
+
   use ModLeaf3, only: &
        sfclyr
 
   use ModOzone, only: &
        ozone
-  
+
   use ModGasPart, only: &
        le_fontes, &
        sources_teb
-  
+
   use ModBasicFields, only: &
        DeepCopyToBasicFields, &
        DeepCopyFromBasicFields
@@ -79,239 +79,240 @@ module ModTimestepRK
        trsets
 
 
-    use grid_dims, only: &
-         nzpmax
+  use grid_dims, only: &
+       nzpmax
 
-    use ModParallelEnvironment, only: &
-         MsgDump
+  use ModParallelEnvironment, only: &
+       MsgDump
 
-    use ModMessageSet, only: &
-         PostSendRecvMsgs, &
-         WaitSendRecvMsgs
+  use ModMessageSet, only: &
+       PostSendRecvMsgs, &
+       WaitSendRecvMsgs
 
-    use ModAcoust, only:         &
-         acoustic_new,            &
-         init_div_damping_coeff,  &
-         deallocate_alpha_div,    &
-         apply_div_damping, &
-         buoyancy
+  use ModAcoust, only:         &
+       acoustic_new,            &
+       init_div_damping_coeff,  &
+       deallocate_alpha_div,    &
+       apply_div_damping, &
+       buoyancy
 
-    use ModGrid, only: &
-         Grid
+  use ModGrid, only: &
+       Grid
 
-    use node_mod, only: &
-         mzp, mxp, myp,  & ! INTENT(IN)
-         ia, iz, ja, jz, & ! INTENT(IN)
-         i0, j0,         & ! INTENT(IN)
-         izu, jzv,       & ! INTENT(IN)
-         mynum,          & ! INTENT(IN)
-         ibcon,          & ! INTENT(IN)
-         nmachs, &
-         mchnum,        &
-         master_num, &
-         nodemyp,  &  !intent(in)
-         nodemxp,  &  !intent(in)
-         nodemzp      !intent(in)
+  use node_mod, only: &
+       mzp, mxp, myp,  & ! INTENT(IN)
+       ia, iz, ja, jz, & ! INTENT(IN)
+       i0, j0,         & ! INTENT(IN)
+       izu, jzv,       & ! INTENT(IN)
+       mynum,          & ! INTENT(IN)
+       ibcon,          & ! INTENT(IN)
+       nmachs, &
+       mchnum,        &
+       master_num, &
+       nodemyp,  &  !intent(in)
+       nodemxp,  &  !intent(in)
+       nodemzp      !intent(in)
 
-    use mem_cuparm, only: &
-         NNQPARM, & ! INTENT(IN)
-         IF_CUINV   ! INTENT(IN)
+  use mem_cuparm, only: &
+       NNQPARM, & ! INTENT(IN)
+       IF_CUINV   ! INTENT(IN)
 
-    use mem_varinit, only: &
-         NUD_TYPE   &! INTENT(IN)
-         ,varinit_g  ! INTENT(IN)
+  use mem_varinit, only: &
+       NUD_TYPE   &! INTENT(IN)
+       ,varinit_g  ! INTENT(IN)
 
-    use mem_turb, only: &
-         IF_URBAN_CANOPY, & ! INTENT(IN)
-         ihorgrad           ! INTENT(IN)
+  use mem_turb, only: &
+       IF_URBAN_CANOPY, & ! INTENT(IN)
+       ihorgrad           ! INTENT(IN)
 
-    use mem_oda,   only: &
-         if_oda ! INTENT(IN)
+  use mem_oda,   only: &
+       if_oda ! INTENT(IN)
 
-    use micphys,   only: &
-         mcphys_type,  &! INTENT(IN)
-         level          ! INTENT(IN)
+  use micphys,   only: &
+       mcphys_type,  &! INTENT(IN)
+       level          ! INTENT(IN)
 
-    use mem_grid, only: &
-         hw4, &
-         itopo, &
-         ngrids,     & ! INTENT(IN)
-         ngrid,      & ! INTENT(IN)
-         npatch,     & ! INTENT(IN)
-         time,       & ! INTENT(IN)
-         dts,        &
-         dtlong,     & ! INTENT(IN)
-         dtlongn,    & ! INTENT(IN)
-         ideltat,    &
-         nnacoust,   &
-         iyear1,     & ! INTENT(IN)
-         imonth1,    & ! INTENT(IN)
-         idate1,     & ! INTENT(IN)
-         grid_g,     & ! INTENT(INOUT)
-         nxtnest,    & ! INTENT(IN)
-         if_adap,    & ! INTENT(IN)
-         dtlt,       & ! INTENT(IN)
-         istp,       & ! INTENT(IN)
-         jdim,       & ! INTENT(IN)
-         nzp,        & ! INTENT(IN)
-         f_thermo_e, & ! INTENT(IN)
-         f_thermo_w, & ! INTENT(IN)
-         f_thermo_s, & ! INTENT(IN)
-         f_thermo_n, &   ! INTENT(IN)
-         zt,         &
-         zm,         &
-         dzt,        &
-         itime1,     &
-         vveldamp,   & ! INTENT(IN)
-         ibnd,       &
-         jbnd,       &
-         nstbot,     &
-         nnzp
+  use mem_grid, only: &
+       hw4, &
+       itopo, &
+       ngrids,     & ! INTENT(IN)
+       ngrid,      & ! INTENT(IN)
+       npatch,     & ! INTENT(IN)
+       time,       & ! INTENT(IN)
+       dts,        &
+       dtlong,     & ! INTENT(IN)
+       dtlongn,    & ! INTENT(IN)
+       ideltat,    &
+       nnacoust,   &
+       iyear1,     & ! INTENT(IN)
+       imonth1,    & ! INTENT(IN)
+       idate1,     & ! INTENT(IN)
+       grid_g,     & ! INTENT(INOUT)
+       nxtnest,    & ! INTENT(IN)
+       if_adap,    & ! INTENT(IN)
+       dtlt,       & ! INTENT(IN)
+       istp,       & ! INTENT(IN)
+       jdim,       & ! INTENT(IN)
+       nzp,        & ! INTENT(IN)
+       f_thermo_e, & ! INTENT(IN)
+       f_thermo_w, & ! INTENT(IN)
+       f_thermo_s, & ! INTENT(IN)
+       f_thermo_n, &   ! INTENT(IN)
+       zt,         &
+       zm,         &
+       dzt,        &
+       itime1,     &
+       vveldamp,   & ! INTENT(IN)
+       ibnd,       &
+       jbnd,       &
+       nstbot,     &
+       nnzp
 
-    use shcu_vars_const, only: & ! For Shallow Cumulus Paramet.
-         NNSHCU ! INTENT(IN)
+  use shcu_vars_const, only: & ! For Shallow Cumulus Paramet.
+       NNSHCU ! INTENT(IN)
 
-    use mem_scalar, only: & ! For SiB
-         scalar_g ! INTENT(IN)
+  use mem_scalar, only: & ! For SiB
+       scalar_g ! INTENT(IN)
 
-    use mem_leaf, only: & 
-         ISFCL          & ! INTENT(IN)
-         ,ISFCL_OCEAN      ! INTENT(IN)
+  use mem_leaf, only: & 
+       ISFCL          & ! INTENT(IN)
+       ,ISFCL_OCEAN      ! INTENT(IN)
 
-    ! TEB_SPM
-    use teb_spm_start, only: &
-         TEB_SPM ! INTENT(IN)
-    use mem_emiss, only: &
-         ichemi,         & ! INTENT(IN)
-         isource           ! INTENT(IN)
+  ! TEB_SPM
+  use teb_spm_start, only: &
+       TEB_SPM ! INTENT(IN)
+  use mem_emiss, only: &
+       ichemi,         & ! INTENT(IN)
+       isource           ! INTENT(IN)
 
-    ! For specific optimization depending the type of machine
-    use machine_arq, only: &
-         machine ! INTENT(IN)
+  ! For specific optimization depending the type of machine
+  use machine_arq, only: &
+       machine ! INTENT(IN)
 
-    use rconstants, only:  &
-         g,                & ! (IN)
-         cp,               & ! (IN)
-         cpor,             & ! (IN)
-         p00,              & ! (IN)
-         rgas,             & ! (IN)
-         pi180               ! (IN)
+  use rconstants, only:  &
+       g,                & ! (IN)
+       cp,               & ! (IN)
+       cpor,             & ! (IN)
+       p00,              & ! (IN)
+       rgas,             & ! (IN)
+       pi180               ! (IN)
 
-    use ccatt_start, only: &
-         ccatt               ! (IN)
+  use ccatt_start, only: &
+       ccatt               ! (IN)
 
-    use mem_tend, only: &
-         tend
+  use mem_tend, only: &
+       tend
 
-    use utilsMod, only: &
-         Copy1DTo3D
+  use utilsMod, only: &
+       Copy1DTo3D
 
-    use mem_chem1, only: &
-         nvert_src=>chem1_src_z_dim_g, & ! (IN)
-         chem1_g,                      & ! (INOUT)
-         nsrc,                         & ! (IN)
-         chem1_src_g,                  & ! %sc_src(INOUT)
-         chemistry,                    & ! (IN)
-         split_method,                 & ! (IN)
-         n_dyn_chem,                   &
-         ntimes_src
+  use mem_chem1, only: &
+       nvert_src=>chem1_src_z_dim_g, & ! (IN)
+       chem1_g,                      & ! (INOUT)
+       nsrc,                         & ! (IN)
+       chem1_src_g,                  & ! %sc_src(INOUT)
+       chemistry,                    & ! (IN)
+       split_method,                 & ! (IN)
+       n_dyn_chem,                   &
+       ntimes_src
 
-    use mem_aer1, only:                  &
-         aerosol,                        &! (IN)
-         aer1_g,                         &! %sc_src(INOUT)
-         aer2_g,                         &! %sc_src(INOUT)
-         aer_nvert_src=>aer1_src_z_dim_g  ! (IN)
+  use mem_aer1, only:                  &
+       aerosol,                        &! (IN)
+       aer1_g,                         &! %sc_src(INOUT)
+       aer2_g,                         &! %sc_src(INOUT)
+       aer_nvert_src=>aer1_src_z_dim_g  ! (IN)
 
-    use mem_plume_chem1, only:  plume_mean_g &   ! %flam_frac(IN), %fire_size(IN)
-         ,plume_fre_g
-    use mem_stilt, only: &
-         iexev,          &  ! (IN)
-         imassflx,       &  ! (IN)
-         stilt_g            ! %dnp (IN)
+  use mem_plume_chem1, only:  plume_mean_g &   ! %flam_frac(IN), %fire_size(IN)
+       ,plume_fre_g
+  use mem_stilt, only: &
+       iexev,          &  ! (IN)
+       imassflx,       &  ! (IN)
+       stilt_g            ! %dnp (IN)
 
-    use mem_radiate, only: radiate_g
+  use mem_radiate, only: radiate_g
 
-    use chem_sources, only :     &
-         alloc_emiss_cycle,      &  ! Subroutine
-         init_actual_time_index, &  ! Subroutine
-         emiss_cycle,            &  ! (INOUT)
-         emiss_cycle_alloc,      &
-         srcmapfn                   ! (IN)
+  use chem_sources, only :     &
+       alloc_emiss_cycle,      &  ! Subroutine
+       init_actual_time_index, &  ! Subroutine
+       emiss_cycle,            &  ! (INOUT)
+       emiss_cycle_alloc,      &
+       srcmapfn                   ! (IN)
 
-    use ChemSourcesDriver, only:  sources_driver            ! Subroutine
+  use ChemSourcesDriver, only:  sources_driver            ! Subroutine
 
-    use ChemDryDepDriver , only:  drydep_driver             ! Subroutine
+  use ChemDryDepDriver , only:  drydep_driver             ! Subroutine
 
-    use module_chemistry_driver, only: chemistry_driver ! Subroutine
+  use module_chemistry_driver, only: chemistry_driver ! Subroutine
 
-    use radiation, only: radiate ! Subroutine
+  use radiation, only: radiate ! Subroutine
 
-    use ModTimeStamp, only: SynchronizedTimeStamp, TimeStamp
+  use ModTimeStamp, only: SynchronizedTimeStamp, TimeStamp
 
-    use cuparm_grell3, only: cuparm_grell3_catt &  ! subroutine
-         ,g3d_g
+  use cuparm_grell3, only: cuparm_grell3_catt &  ! subroutine
+       ,g3d_g
 
-    use digitalfilter, only:         &
-         applyDigitalFilter, & ! subroutine
-         fileNameDF,& ! intent(inout) - file control
-         dfVars,             &
-         applyDF
+  use digitalfilter, only:         &
+       applyDigitalFilter, & ! subroutine
+       fileNameDF,& ! intent(inout) - file control
+       dfVars,             &
+       applyDF
 
-    use ModMonotonicAdvection, only:                 &
-         advmnt_driver,  &        ! subroutine
-         advmnt
+  use ModMonotonicAdvection, only:                 &
+       advmnt_driver,  &        ! subroutine
+       advmnt
 
-    use DriverMatrix, only: MatrixDriver  !Matrix Aerosol Model
+  use DriverMatrix, only: &
+       MatrixDriver  !Matrix Aerosol Model
 
 
-    use ModRamsMicrophysics2M, only: &
-         micro_2M_rams60, &
-         negadj1_2M_rams60
+  use ModRamsMicrophysics2M, only: &
+       micro_2M_rams60, &
+       negadj1_2M_rams60
 
-    use mem_radiate, only: &
-         ilwrtyp, iswrtyp
+  use mem_radiate, only: &
+       ilwrtyp, iswrtyp
 
-    use CUPARM_GRELL3, only: g3d_g
+  use CUPARM_GRELL3, only: g3d_g
 
-    use mem_turb, only:    &
-         turb_g
+  use mem_turb, only:    &
+       turb_g
 
-    use ModWindFarm, only: &
-         wind_farm_driver
+  use ModWindFarm, only: &
+       wind_farm_driver
 
-    use ModOptical, only: &
-         aodDriver
+  use ModOptical, only: &
+       aodDriver
 
-    use aerClimMod, only: &
-         no_months, &
-         no_src_types, &
-         specieName, &
-         aercam
+  use aerClimMod, only: &
+       no_months, &
+       no_src_types, &
+       specieName, &
+       aercam
 
-    use modIau, only:    &
-         CreateIauTendency &
-         ,readIauTendency   &
-         ,GetIauTendency    &
-         ,timeWindowIAU     &
-         ,applyIAU
+  use modIau, only:    &
+       CreateIauTendency &
+       ,readIauTendency   &
+       ,GetIauTendency    &
+       ,timeWindowIAU     &
+       ,applyIAU
 
-    use ModLeaf3OceanOnly, only: &
-         sfclyr_ocean_only
+  use ModLeaf3OceanOnly, only: &
+       sfclyr_ocean_only
 
-    use ModAdvectc_rk, only: &
-         advectc_rk
+  use ModAdvectc_rk, only: &
+       advectc_rk
 
-    use mem_scratch, only: &
-         scratch    
+  use mem_scratch, only: &
+       scratch    
 
-    use iso_fortran_env, only: &
-         int64
-    
+  use iso_fortran_env, only: &
+       int64
+
   implicit none
 
   private
   public :: timestep_rk
-  
+
 contains
 
 
@@ -322,7 +323,7 @@ contains
     type(Grid), pointer :: oneGrid
 
     ! execution time instrumentation
-!    include "constants.h"
+    !    include "constants.h"
     include "tsNames.h"
 
     logical, parameter :: flag_Coriolis_in_every_RK_step = .false.
@@ -852,7 +853,7 @@ contains
 !!$          !- optimized version only for SX-6
 !!$          call micro_opt()
 !!$       else
-          !- original Version used in a Generic IA32 machine
+       !- original Version used in a Generic IA32 machine
        call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call micro(oneGrid%Basic)
        call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
@@ -949,8 +950,9 @@ contains
        !- call Matrix Aerosol Model
        !- using symmetric/sequential spliting operator
        if(AEROSOL==2) then
-
-          call MatrixDriver(ia,iz,ja,jz,mzp,mxp,myp)
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+          call MatrixDriver(ia,iz,ja,jz,mzp,mxp,myp, oneGrid%Basic)
+          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        endif
     endif
     if (ccatt==1 .and. aerosol == 1) then

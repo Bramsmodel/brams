@@ -2280,7 +2280,7 @@ isorev.o: $(MATRIX)/isorev.f90 isrpia.o
 	rm -f $(<F:.f90=.f90)
 
 MatrixDriver.o: $(MATRIX)/MatrixDriver.F90 subs.o diam.o coag.o npf.o \
-	mem_basic.o mem_grid.o rconstants.o  ModParticle.o  memMatrix.o isrpia.o \
+	ModBasicFields.o mem_grid.o rconstants.o  ModParticle.o  memMatrix.o isrpia.o \
 	chem1_list.o
 	cp -f  $< $(<F:.F90=.F90)
 	$(F_COMMAND) -D$(AER) $(<F:.F90=.F90)
