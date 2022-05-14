@@ -586,7 +586,7 @@ ModOneProc.o : $(MODEL)/ModOneProc.F90 ModNamelistFile.o ModSched.o ModGasPart.o
 	mem_scalar.o memSoilMoisture.o mem_teb.o mem_teb_common.o micphys.o \
 	ModMonotonicAdvection.o shcu_vars_const.o ModUrbanCanopy.o \
 	soilMoisture.o teb_spm_start.o mem_teb_vars_const.o var_tables.o \
-	mem_varinit.o ModParaInit.o ModRanlavg.o ModNestGeoSst.o \
+	mem_varinit.o ModParaInit.o ModRanlavg.o ModNestGeoSst.o ModRinit.o \
 	grid_dims.o local_proc.o ModTimeStamp.o \
 	node_mod.o mem_radiate.o ModWindFarm.o \
 	mem_scratch.o cup_grell3.o digitalFilter.o \
@@ -905,9 +905,9 @@ rconv.o : $(CUPARM)/rconv.f90  conv_coms.o mem_basic.o mem_cuparm.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rinit.o : $(INIT)/rinit.f90  io_params.o mem_basic.o mem_grid.o \
-	mem_micro.o mem_scratch.o mem_turb.o micphys.o node_mod.o \
-	rconstants.o ref_sounding.o ModRbnd.o $(UTILS_INCS)/constants.h
+ModRinit.o : $(INIT)/ModRinit.f90 mem_grid.o mem_varinit.o mem_scratch.o \
+	ref_sounding.o rconstants.o io_params.o node_mod.o mem_basic.o mem_micro.o \
+	micphys.o ModRbnd.o $(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1299,15 +1299,15 @@ rgrad.o : $(TURB)/rgrad.f90  mem_grid.o mem_scratch.o
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModRhhi.o : $(INIT)/ModRhhi.f90  mem_basic.o mem_grid.o mem_scratch.o \
-	micphys.o rconstants.o ref_sounding.o
+ModRhhi.o : $(INIT)/ModRhhi.f90 ModBasicFields.o mem_grid.o mem_scratch.o \
+	micphys.o rconstants.o ref_sounding.o ModRinit.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
 inithis.o : $(IO)/inithis.f90  an_header.o io_params.o leaf_coms.o \
 	mem_basic.o mem_grid.o mem_leaf.o mem_scratch.o micphys.o \
-	rconstants.o ref_sounding.o var_tables.o ModLeaf3.o
+	rconstants.o ref_sounding.o var_tables.o ModLeaf3.o ModRinit.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

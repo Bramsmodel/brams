@@ -8,6 +8,9 @@
 
 subroutine inithis()
 
+  use ModRinit, only: &
+       refs3d
+  
   use var_tables, only: num_var, vtab_r
   use an_header, only: nvbtab, head_table
   use mem_basic, only: basic_g

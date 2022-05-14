@@ -176,7 +176,7 @@ OBJ_MOD = \
 	refstate.o \
 	rgrad.o \
 	ModRhhi.o  \
-	rinit.o  \
+	ModRinit.o  \
 	rio.o \
 	rnest_par.o \
 	rnode.o \

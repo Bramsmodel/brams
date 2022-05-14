@@ -34,6 +34,11 @@ module ModOneProc
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModRinit, only: &
+       gridloc_prt, &
+       refs3d, &
+       FieldInit
+  
   use ModRhhi, only: &
        inithh
   
@@ -1656,9 +1661,8 @@ contains
        do ifm=1,ngrids
           call newgrid(ifm)
 
-          call FieldInit(1)
-
           call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+          call FieldInit(1, oneGrid%Basic)
           call negadj1(mzp,mxp,myp, oneGrid%Basic)
           call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 

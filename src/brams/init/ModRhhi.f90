@@ -8,6 +8,9 @@
 
 module ModRhhi
 
+  use ModRinit, only: &
+       refs3d
+  
   use ModBasicFields, only: &
        BasicFields
 
