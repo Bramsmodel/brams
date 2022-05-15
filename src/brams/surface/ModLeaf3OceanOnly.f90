@@ -124,7 +124,7 @@ module ModLeaf3OceanOnly
        leaf_bcond, &
        sfclmcv
 
-  use cuparm_grell3,    only : &
+  use ModCuParGrell3,    only : &
        g3d_g
 
   use convpar_gf_geos5, only : &

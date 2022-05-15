@@ -264,7 +264,7 @@ module ModOneProc
        output_windFarms, &
        windfarm
 
-  use cuparm_grell3, only: &
+  use ModCuParGrell3, only: &
        init_weights, &
        StoreNamelistFileAtCup_grell3
 

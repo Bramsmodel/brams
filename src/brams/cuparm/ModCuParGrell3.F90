@@ -3,33 +3,43 @@
 ! Implemented in BRAMS by Saulo Freitas @ Feb/2012 /  Feb/2021                               !
 ! Rafael Mello: included parallelization for spread/g3d_smoothh arrays               !
 !--------------------------------------------------------------------------------!
-module CUPARM_GRELL3
+module ModCuParGrell3
 
+  use mem_radiate, only: &
+       ilwrtyp, &
+       iswrtyp, &
+       radiate_g
 
-    use mem_radiate, only: &
-         ilwrtyp, iswrtyp        ! INTENT(IN)
-    use ModGrid, only: &
-         Grid
-    !ML -- In case you want to output massflux
-    use mem_stilt         , only: imassflx
+  use ModGrid, only: &
+       Grid
 
-    use mem_jules
+  use mem_stilt, only: &
+       imassflx
+
+  use mem_jules
+  use mem_jules, only: jules_g
 
   use ModRstilt, only: &
        prep_convflx_to_stilt
-  
-  use ModNamelistFile, only: namelistFile
+
+  use ModNamelistFile, only: &
+       namelistFile
 
   use ModMessageSet, only: &
        PostSendRecvMsgs,    &
        WaitSendRecvMsgs
 
-  use mem_basic         , only: basic_g
-  use mem_tend          , only: tend
-  use mem_cuparm        , only: confrq,cuparm_g,cuparm_g_sh&
-       ,nnqparm
+  use mem_tend, only: &
+       tend
 
-  use node_mod          , only: mynum,   &   ! INTENT(IN)
+  use mem_cuparm, only: &
+       confrq,&
+       cuparm_g,&
+       cuparm_g_sh, &
+       nnqparm
+
+  use node_mod, only: &
+       mynum,   &   ! INTENT(IN)
        mxp,     &   ! INTENT(IN)
        myp,     &   ! INTENT(IN)
        mzp,     &   ! INTENT(IN)
@@ -41,7 +51,17 @@ module CUPARM_GRELL3
        j0,      &   ! INTENT(IN)
        ibcon        ! INTENT(IN)
 
-  use mem_grid          , only: time,    &   ! INTENT(IN)
+  use mem_grid, only: &
+       if_adap, &
+       jdim, &
+       zt, &
+       zm, &
+       dzm, &
+       dzt, &
+       hw4, &
+       itopo, &
+       dyncore_flag, &
+       time,    &   ! INTENT(IN)
        initial, &   ! INTENT(IN)
        dtlt, &   ! INTENT(IN)
        itime1,  &   ! INTENT(IN)
@@ -56,16 +76,38 @@ module CUPARM_GRELL3
        akminvar,&   ! INTENT(IN)
        nxtnest
 
-  use mem_varinit, only: nudlat
+  use mem_varinit, only: &
+       nudlat
 
-  use rconstants        , only: tkmin
-  use mem_turb          , only: turb_g,akmin
-  use mem_micro         , only: micro_g
-  use io_params         , only: frqanl
-  use mem_leaf          , only: leaf_g, isfcl
-  use micphys           , only: level,mcphys_type
+  use rconstants, only: &
+       tkmin, &
+       cpi
 
-  use mem_grell_param, only: mgmxp,mgmyp,mgmzp,maxiens,ngrids_cp,&
+  use mem_turb, only: &
+       idiffk, &
+       turb_g,&
+       akmin
+
+  use mem_micro, only: &
+       micro_g
+
+  use io_params, only: &
+       frqanl
+
+  use mem_leaf, only: &
+       leaf_g, &
+       isfcl
+
+  use micphys, only: &
+       level, &
+       mcphys_type
+
+  use mem_grell_param, only: &
+       mgmxp, &
+       mgmyp, &
+       mgmzp, &
+       maxiens, &
+       ngrids_cp,&
        maxens_g3d ,                        & !INTENT(IN)
        maxens2_g3d,                        & !INTENT(IN)
        maxens3_g3d,                        & !INTENT(IN)
@@ -76,77 +118,129 @@ module CUPARM_GRELL3
        ensdim ,                            & !INTENT(IN)
        icoic
 
-  use mem_scratch1_grell, only: ierr4d,jmin4d,kdet4d,k224d,kbcon4d,ktop4d,kpbl4d,   &
-       kstabi4d,kstabm4d,xmb4d,edt4d,pwav4d,               &
-       zup5d, zdn5d,iruncon, pcup5d, prup5d,prdn5d,        &
-       clwup5d,tup5d,enup5d,endn5d,deup5d,dedn5d,zcup5d,   &
-       up_massdetr5d, up_massentr5d,                       &
-       dd_massdetr5d, dd_massentr5d,                       &
-       conv_cld_fr5d,sigma4d,klcl4d,cprr4d
+  use mem_scratch1_grell, only: &
+       ierr4d, &
+       jmin4d, &
+       kdet4d, &
+       k224d, &
+       kbcon4d, &
+       ktop4d, &
+       kpbl4d, &
+       kstabi4d, &
+       kstabm4d, &
+       xmb4d, &
+       edt4d, &
+       pwav4d, &
+       zup5d, &
+       zdn5d, &
+       iruncon, &
+       pcup5d, &
+       prup5d, &
+       prdn5d, &
+       clwup5d, &
+       tup5d, &
+       enup5d, &
+       endn5d, &
+       deup5d, &
+       dedn5d, &
+       zcup5d, &
+       up_massdetr5d, &
+       up_massentr5d, &
+       dd_massdetr5d, &
+       dd_massentr5d, &
+       conv_cld_fr5d, &
+       sigma4d, &
+       klcl4d, &
+       cprr4d
 
 
-  use mem_grell         , only: cuforc_g,cuforc_sh_g
+  use mem_grell, only: &
+       cuforc_g, &
+       cuforc_sh_g
 
-  use mem_carma, only: carma
+  use mem_carma, only: &
+       carma
 
-  use mem_radiate, only: ISWRTYP, ILWRTYP,radiate_g ! Intent(in)
+  use module_cu_g3, only: &
+       G3DRV
 
-  use mem_turb, only:  idiffk !INTENT(IN)
+  use module_cu_gf, only: &
+       GFDRV
 
-  !-----------Grell G3d - GD-FIM - GF
-  use module_cu_g3    , only:  G3DRV
-  use module_cu_gf    , only:  GFDRV
-  use module_cu_gf2   , only:  GFDRV2
+  use module_cu_gf2, only: &
+       GFDRV2
 
-  use Phys_const, only: cp, p00, tcrit, g, cpor , XL, rm,rgas
+  use Phys_const, only: &
+       cp, &
+       p00, &
+       tcrit, &
+       g, &
+       cpor , &
+       XL, &
+       rm, &
+       rgas
 
-  !----------- GF - GEOS-5
-  use ConvPar_GF_GEOS5, only: GF_GEOS5_DRV, deep, shal, mid , nmp, lsmp , cnmp &
-       , GF_convpar_init,apply_sub_mp,icumulus_gf, liq_ice_number_conc
-  !-----------
+  use ConvPar_GF_GEOS5, only: &
+       make_IceNumber, &
+       fract_liq_f, &
+       make_DropletNumber, & 
+       GF_GEOS5_DRV, &
+       deep, &
+       shal, &
+       mid, &
+       nmp, &
+       lsmp, &
+       cnmp,  &
+       GF_convpar_init, &
+       apply_sub_mp, &
+       icumulus_gf, &
+       liq_ice_number_conc
 
-  use ccatt_start, only: ccatt
-  use mem_chem1  , only: chemistry
+  use ccatt_start, only: &
+       ccatt
 
-  use mem_jules, only: jules_g
-    use var_tables
+  use mem_chem1, only: &
+       chemistry
 
-    use micphys     ,only: level,mcphys_type
-    use mem_micro   ,only: micro_g
-    use mem_tend    ,only: tend
-    use rconstants  ,only: cpi
-    use ConvPar_GF_GEOS5, only : fract_liq_f
-    use ConvPar_GF_GEOS5, only : make_IceNumber     &
-         ,fract_liq_f
-    use ConvPar_GF_GEOS5, only : make_DropletNumber &
-         ,make_IceNumber     &
-         ,fract_liq_f
+  use var_tables
 
-    use grid_dims, only: nzpmax
-    use mem_grell   ,only: cuforc_g,cuforc_sh_g
-    use mem_tend    ,only: tend
-    !use mem_scratch ,only: scratch
-    use mem_grid    ,only: time,ngrid,dtlt, dyncore_flag
-    use mem_cuparm  ,only: confrq ,cuparm_g_sh
-    use node_mod    ,only: mxp,myp,mzp ,ia,iz,ja,jz,mynum
-    use mem_radiate, only: ilwrtyp, iswrtyp, radiate_g
-    use mem_grid, only:ngrid, grid_g, dtlt, if_adap, jdim, time, &
-         zt, zm, dzm, dzt, hw4,itopo
-    use mem_scratch, only : vctr1,vctr2
+  use grid_dims, only: &
+       nzpmax
 
-    use ModBasicFields, only: &
-         BasicFields
-    
-    use ModRadvc, only: &
-         advtndc, &
-         fa_preptc, &
-         fa_xc, &
-         fa_yc, &
-         fa_zc
+  use mem_scratch, only: &
+       vctr1, &
+       vctr2
+
+  use ModBasicFields, only: &
+       BasicFields
+
+  use ModRadvc, only: &
+       advtndc, &
+       fa_preptc, &
+       fa_xc, &
+       fa_yc, &
+       fa_zc
 
 
   implicit none
 
+  include "constants.h"
+
+  private
+  public :: cupar2mcphysics
+  public :: prepare_lsf
+  public :: init_weights
+  public :: StoreNamelistFileAtCup_grell3
+  public :: cuparm_grell3_catt
+  public :: alloc_grell3
+  public :: nullify_grell3
+  public :: filltab_grell3
+  public :: g3d_ens_g
+  public :: g3d_ensm_g
+  public :: g3d_g
+  public :: g3dm_g
+  public :: train_dim
+  
   type g3d_ens_vars
      real, pointer, dimension(:,:)  ::apr
      real, pointer, dimension(:,:)  ::accapr
@@ -235,8 +329,6 @@ module CUPARM_GRELL3
 contains
   !-----------------------------------------
   subroutine nullify_grell3(g3d_ens,g3d,ndim_train)
-
-    implicit none
     integer, intent(in) ::ndim_train
     type (g3d_ens_vars),dimension(ndim_train) :: g3d_ens
     type (g3d_vars) :: g3d
@@ -270,7 +362,6 @@ contains
   end subroutine nullify_grell3
   !-----------------------------------------
   subroutine alloc_grell3(g3d_ens,g3d, m1, m2, m3, ng,ndim_train)
-    implicit none
     type (g3d_ens_vars),dimension(ndim_train) :: g3d_ens
     type (g3d_vars) :: g3d
     integer, intent(in) :: m1, m2, m3, ng,ndim_train
@@ -329,9 +420,6 @@ contains
 
   !-----------------------------------------
   subroutine filltab_grell3(g3d_ens,g3d,g3d_ensm,g3dm,imean, m1, m2, m3, ng,ndim_train)
-    implicit none
-    include "constants.h"
-
     type (g3d_ens_vars),dimension(ndim_train) :: g3d_ens,g3d_ensm
     type (g3d_vars) :: g3d,g3dm
     integer, intent(in) :: imean, m1, m2, m3, ng,ndim_train
@@ -451,9 +539,6 @@ contains
   !-------------------------------------------------------------
 
   subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
-    implicit none
-
-    include "constants.h"
     integer, intent(IN) :: iens,iinqparm,iinshcu
     type(Grid), pointer :: OneGrid ! intent(in)
     integer :: i,j,k
@@ -618,16 +703,16 @@ contains
                ,grid_length                  & !
                ,autoconv                     & !
                ,aerovap                      & !
-               ,basic_g(ngrid)%dn0           & !
+               ,oneGrid%Basic%dn0           & !
                ,cuparm_g(ngrid)%CONPRR       & !
-               ,basic_g(ngrid)%up            & !
-               ,basic_g(ngrid)%vp            & !
-               ,basic_g(ngrid)%theta         & !
-               ,basic_g(ngrid)%thp           & !
-               ,basic_g(ngrid)%pp            & !
-               ,basic_g(ngrid)%pi0           & !
-               ,basic_g(ngrid)%wp            & !
-               ,basic_g(ngrid)%rv            & !
+               ,oneGrid%Basic%up            & !
+               ,oneGrid%Basic%vp            & !
+               ,oneGrid%Basic%theta         & !
+               ,oneGrid%Basic%thp           & !
+               ,oneGrid%Basic%pp            & !
+               ,oneGrid%Basic%pi0           & !
+               ,oneGrid%Basic%wp            & !
+               ,oneGrid%Basic%rv            & !
                ,grid_g(ngrid)%RTGT           & !
                ,tend%PT                      & !
                ,XL                    & !
@@ -702,11 +787,11 @@ contains
                ,p00                          &
                ,cpor                         &
                ,cuparm_g(ngrid)%CONPRR       &!preci rate
-               ,basic_g(ngrid)%theta         &
-               ,basic_g(ngrid)%thp           &
-               ,basic_g(ngrid)%pp            &
-               ,basic_g(ngrid)%pi0           &
-               ,basic_g(ngrid)%rv            &
+               ,oneGrid%Basic%theta         &
+               ,oneGrid%Basic%thp           &
+               ,oneGrid%Basic%pp            &
+               ,oneGrid%Basic%pi0           &
+               ,oneGrid%Basic%rv            &
                ,tend%PT                      &
                ,micro_g(ngrid)%rcp           & ! liquid water
                ,micro_g(ngrid)%rrp           & ! pristine
@@ -748,17 +833,17 @@ contains
                ,grid_length                    & !
                ,autoconv                       & ! Const
                ,aerovap                        & ! Const
-               ,basic_g(ngrid)%dn0             & !3d ok
+               ,oneGrid%Basic%dn0             & !3d ok
                ,cuparm_g(ngrid)%CONPRR         & !2d ok
-               ,basic_g(ngrid)%up              & !3d ok
-               ,basic_g(ngrid)%vp              & !3d ok
-               ,basic_g(ngrid)%theta           & !3d ok
-               ,basic_g(ngrid)%thp             & !3d ok
-               ,basic_g(ngrid)%pp              & !3d ok
-               ,basic_g(ngrid)%pi0             & !3d ok
-               ,basic_g(ngrid)%wp              & !3d ok
-               ,basic_g(ngrid)%rv              & !3d ok
-               ,basic_g(ngrid)%rtp             & !3d ok
+               ,oneGrid%Basic%up              & !3d ok
+               ,oneGrid%Basic%vp              & !3d ok
+               ,oneGrid%Basic%theta           & !3d ok
+               ,oneGrid%Basic%thp             & !3d ok
+               ,oneGrid%Basic%pp              & !3d ok
+               ,oneGrid%Basic%pi0             & !3d ok
+               ,oneGrid%Basic%wp              & !3d ok
+               ,oneGrid%Basic%rv              & !3d ok
+               ,oneGrid%Basic%rtp             & !3d ok
                ,grid_g(ngrid)%rtgt             & !2d ok
                ,tend%pt                        & !3d !*** borda
                ,xl                             & ! Const
@@ -868,10 +953,10 @@ contains
           if(isfcl == 5) then
              temp2m(:,:) = jules_g(ngrid)%t2mj(:,:)
           else
-             temp2m(:,:) =0.5*( basic_g(ngrid)%theta(1,:,:)* &
-                  (basic_g(ngrid)%pp(1,:,:)+basic_g(ngrid)%pi0(1,:,:))/cp + &
-                  basic_g(ngrid)%theta(2,:,:)*&
-                  (basic_g(ngrid)%pp(2,:,:)+basic_g(ngrid)%pi0(2,:,:))/cp )
+             temp2m(:,:) =0.5*( oneGrid%Basic%theta(1,:,:)* &
+                  (oneGrid%Basic%pp(1,:,:)+oneGrid%Basic%pi0(1,:,:))/cp + &
+                  oneGrid%Basic%theta(2,:,:)*&
+                  (oneGrid%Basic%pp(2,:,:)+oneGrid%Basic%pi0(2,:,:))/cp )
           endif
 
           if(iinshcu == 3) ishallow_g3=1
@@ -882,17 +967,17 @@ contains
                ,grid_length                  & !
                ,autoconv                     & !
                ,aerovap                      & !
-               ,basic_g(ngrid)%dn0           & !
+               ,oneGrid%Basic%dn0           & !
                ,cuparm_g(ngrid)%CONPRR       & !
-               ,basic_g(ngrid)%up            & !
-               ,basic_g(ngrid)%vp            & !
-               ,basic_g(ngrid)%theta         & !
-               ,basic_g(ngrid)%thp           & !
-               ,basic_g(ngrid)%pp            & !
-               ,basic_g(ngrid)%pi0           & !
-               ,basic_g(ngrid)%wp            & !
-               ,basic_g(ngrid)%rv            & !
-               ,basic_g(ngrid)%rtp           & !
+               ,oneGrid%Basic%up            & !
+               ,oneGrid%Basic%vp            & !
+               ,oneGrid%Basic%theta         & !
+               ,oneGrid%Basic%thp           & !
+               ,oneGrid%Basic%pp            & !
+               ,oneGrid%Basic%pi0           & !
+               ,oneGrid%Basic%wp            & !
+               ,oneGrid%Basic%rv            & !
+               ,oneGrid%Basic%rtp           & !
                ,grid_g(ngrid)%RTGT           & !
                ,tend%PT                      & !
                ,XL                    & !
@@ -1051,15 +1136,15 @@ contains
                    kr=k+1
                    zm3d   (k,i,j) = zmn(kr,ngrid)*grid_g(ngrid)%rtgt(i,j) !m - height above local terrain
                    zt3d   (k,i,j) = ztn(kr,ngrid)*grid_g(ngrid)%rtgt(i,j) !m
-                   dm3d   (k,i,j) = basic_g(ngrid)%dn0  (kr,i,j) !kg/m3
-                   rvap   (k,i,j) = basic_g(ngrid)%rv   (kr,i,j) !kg/kg
+                   dm3d   (k,i,j) = oneGrid%Basic%dn0  (kr,i,j) !kg/m3
+                   rvap   (k,i,j) = oneGrid%Basic%rv   (kr,i,j) !kg/kg
 
-                   theta2temp     = (basic_g(ngrid)%pp(kr,i,j)+basic_g(ngrid)%pi0(kr,i,j))/cp   !K
-                   temp   (k,i,j) = basic_g(ngrid)%theta(kr,i,j)* theta2temp
-                   press  (k,i,j) = ((basic_g(ngrid)%pp(kr,i,j)+basic_g(ngrid)%pi0(kr,i,j))/cp)**cpor*p00 !Pa
-                   up     (k,i,j) = basic_g(ngrid)%up(kr,i,j) !m/s
-                   vp     (k,i,j) = basic_g(ngrid)%vp(kr,i,j) !m/s
-                   wp     (k,i,j) = basic_g(ngrid)%wp(kr,i,j)*(-g*basic_g(ngrid)%dn0(kr,i,j)) ! omega Pa/s
+                   theta2temp     = (oneGrid%Basic%pp(kr,i,j)+oneGrid%Basic%pi0(kr,i,j))/cp   !K
+                   temp   (k,i,j) = oneGrid%Basic%theta(kr,i,j)* theta2temp
+                   press  (k,i,j) = ((oneGrid%Basic%pp(kr,i,j)+oneGrid%Basic%pi0(kr,i,j))/cp)**cpor*p00 !Pa
+                   up     (k,i,j) = oneGrid%Basic%up(kr,i,j) !m/s
+                   vp     (k,i,j) = oneGrid%Basic%vp(kr,i,j) !m/s
+                   wp     (k,i,j) = oneGrid%Basic%wp(kr,i,j)*(-g*oneGrid%Basic%dn0(kr,i,j)) ! omega Pa/s
 
                    gsf_t (k,i,j) = (cuforc_g   (ngrid)%lsfth(kr,i,j) + radiate_g(ngrid)%fthrd(kr,i,j))* theta2temp ! Adv+Rad, K/s
                    gsf_q (k,i,j) =  cuforc_g   (ngrid)%lsfrt(kr,i,j)              !kg/kg/s  Adv only
@@ -1088,8 +1173,8 @@ contains
 
           do j=1,myp
              do i=1,mxp
-                sfc_press(i,j) = 0.5*( ((basic_g(ngrid)%pp(1,i,j)+basic_g(ngrid)%pi0(1,i,j))/cp)**cpor*p00 +  &
-                     ((basic_g(ngrid)%pp(2,i,j)+basic_g(ngrid)%pi0(2,i,j))/cp)**cpor*p00 ) !Pa
+                sfc_press(i,j) = 0.5*( ((oneGrid%Basic%pp(1,i,j)+oneGrid%Basic%pi0(1,i,j))/cp)**cpor*p00 +  &
+                     ((oneGrid%Basic%pp(2,i,j)+oneGrid%Basic%pi0(2,i,j))/cp)**cpor*p00 ) !Pa
 
                 xland(i,j) = leaf_g(ngrid)%patch_area(i,j,1) ! water = 1, land < 1
                 lons (i,j) = grid_g(ngrid)%glon(i,j)
@@ -1110,10 +1195,10 @@ contains
           if(isfcl == 5 .and.  time > dtlt ) then
              temp2m(:,:) = jules_g(ngrid)%t2mj(:,:) !K
           else
-             temp2m(:,:) =0.5*(basic_g(ngrid)%theta(1,:,:)* &
-                  (basic_g(ngrid)%pp(1,:,:)+basic_g(ngrid)%pi0(1,:,:))/cp + &
-                  basic_g(ngrid)%theta(2,:,:)*&
-                  (basic_g(ngrid)%pp(2,:,:)+basic_g(ngrid)%pi0(2,:,:))/cp ) !Kelvin
+             temp2m(:,:) =0.5*(oneGrid%Basic%theta(1,:,:)* &
+                  (oneGrid%Basic%pp(1,:,:)+oneGrid%Basic%pi0(1,:,:))/cp + &
+                  oneGrid%Basic%theta(2,:,:)*&
+                  (oneGrid%Basic%pp(2,:,:)+oneGrid%Basic%pi0(2,:,:))/cp ) !Kelvin
           endif
 
           !- call the driver routine to apply the parameterization
@@ -1249,7 +1334,7 @@ contains
           endif
 
           !-- converting Dtemp/Dt to Dtheta/ Dt (temp = cp * theta/exner function) 
-          g3d_g(ngrid)%THSRC = g3d_g(ngrid)%THSRC * cp / (basic_g(ngrid)%pp + basic_g(ngrid)%pi0)
+          g3d_g(ngrid)%THSRC = g3d_g(ngrid)%THSRC * cp / (oneGrid%Basic%pp + oneGrid%Basic%pi0)
 
           if( icumulus_gf(deep) == 1) then 
              do j=1,myp
@@ -1394,10 +1479,10 @@ contains
     if(do_cupar_mcphys_coupling) then
        call cupar2mcphysics(mzp,mxp,myp,ia,iz,ja,jz,ngrid,dtlt,&
             g3d_g  (ngrid)%clsrc   ,&
-            basic_g(ngrid)%theta   ,&
-            basic_g(ngrid)%pp      ,&
-            basic_g(ngrid)%pi0     ,&
-            basic_g(ngrid)%dn0      )
+            oneGrid%Basic%theta   ,&
+            oneGrid%Basic%pp      ,&
+            oneGrid%Basic%pi0     ,&
+            oneGrid%Basic%dn0      )
     else
        !if there is not direct coupling, send cloud/ice source to rtotal tendency
        call accum(int(mxp*myp*mzp,i8), tend%rtt, g3d_g(ngrid)%clsrc)
@@ -1459,7 +1544,6 @@ contains
   !-------------------------------------------------------------------------------------------------
   !
   subroutine init_weights(ng,n2,n3,nnqparm)
-    implicit none
     integer, intent(in)::ng,n2,n3,nnqparm
     integer :: it,i,j
     real sumx,hweight
@@ -1565,8 +1649,6 @@ contains
        apr_mc,      &
        apr_st,      &
        apr_as      )
-
-    implicit none
 
     integer,      intent(IN   ) :: m1,m2,m3,ia,iz,ja,jz,level,cugd_avedx
     real,         intent(IN   ) :: dt
@@ -1919,7 +2001,6 @@ contains
   !-------------------------------------------------------------
 
   subroutine StoreNamelistFileAtCup_grell3(oneNamelistFile)
-    implicit none
     type(namelistFile), pointer :: oneNamelistFile
 
     g3d_spread = oneNamelistFile%g3d_spread
@@ -1931,7 +2012,6 @@ contains
   !-----------------------------------------------------------------------------------
 
   subroutine moveup(m1,A)
-    implicit none
     integer, intent(in) :: m1
     real, dimension(m1) :: A,B
 
@@ -1952,7 +2032,6 @@ contains
        its,ite, jts,jte, kts,kte,    &
        mxp,myp,mzp                   )
 
-    implicit none
     integer, intent(IN)         :: mxp,myp,mzp
     integer, intent(INOUT)      :: ims,ime, jms,jme, kms,kme,&
          its,ite, jts,jte, kts,kte
@@ -1974,7 +2053,6 @@ contains
   end subroutine set_index_loops
   !*************************************************************************************
   subroutine check (m1,tht,ath,rtt,artt)
-    implicit none
     integer, intent(in) :: m1
     real, dimension(m1), intent(in) :: tht,ath,rtt,artt
 
@@ -1989,7 +2067,6 @@ contains
   !------------------------------------------------------------
   subroutine cupar2mcphysics(m1,m2,m3,ia,iz,ja,jz,ngrid,dtlt &
        ,clsrc  ,theta,pp,pi0,dn0)
-    implicit none
     integer m1,m2,m3,ia,iz,ja,jz,k,i,j,ngrid
     real dtlt
     real, dimension(m1,m2,m3),intent(in) :: theta, pp, pi0,dn0
@@ -2040,7 +2117,6 @@ contains
 
   !------------------------------------------------------------------------
   subroutine mcphysics0(m1,m2,m3,ia,iz,ja,jz,dtlt,clsrc,rct,rtt)
-    implicit none
     integer m1,m2,m3,ia,iz,ja,jz,k,i,j
     real dtlt
     real, dimension(m1,m2,m3),intent(in   ) :: clsrc
@@ -2060,7 +2136,6 @@ contains
   subroutine mcphysics1(mcphys_type,m1,m2,m3,ia,iz,ja,jz,dtlt,cpi,theta,pp,pi0,dn0 &
        ,clsrc,rct,rpt,rtt) 
 
-    implicit none
     integer :: m1,m2,m3,ia,iz,ja,jz,k,i,j,mcphys_type
     real dtlt,cpi
     real, dimension(m1,m2,m3),intent(in)    :: clsrc
@@ -2094,7 +2169,6 @@ contains
   subroutine mcphysics2(mcphys_type,m1,m2,m3,ia,iz,ja,jz,dtlt,cpi,theta,pp,pi0,dn0 &
        ,clsrc,rct,rpt,rtt,cpt)
 
-    implicit none
     integer :: m1,m2,m3,ia,iz,ja,jz,k,i,j,mcphys_type
     real dtlt,cpi
     real, dimension(m1,m2,m3),intent(in)    :: clsrc
@@ -2128,7 +2202,6 @@ contains
   subroutine mcphysics3(mcphys_type,m1,m2,m3,ia,iz,ja,jz,dtlt,cpi,theta,pp,pi0,dn0 &
        ,ccp,clsrc,rct,rpt,rtt,cpt,cct)
 
-    implicit none
     integer :: m1,m2,m3,ia,iz,ja,jz,k,i,j,mcphys_type
     real dtlt,cpi
     real, dimension(m1,m2,m3),intent(in)    :: clsrc
@@ -2171,12 +2244,10 @@ contains
   end subroutine mcphysics3
 
   !------------------------------------------------------------------------
-  subroutine prepare_lsf(nnqparm,nnshcu,iwork, oneBasic, oneAveBasic)
-    implicit none
-    include "constants.h"
+  subroutine prepare_lsf(nnqparm,nnshcu,iwork, oneBasicFields, oneAveBasic)
     character(len=3) :: forcing
     integer,intent(IN) :: nnqparm,nnshcu,iwork
-    type(BasicFields), pointer, intent(in) :: oneBasic
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(BasicFields), pointer, intent(in) :: oneAveBasic
 
     !- scratchs (local arrays)
@@ -2231,9 +2302,9 @@ contains
              do j = 1,myp
                 do i = 1,mxp
                    do k = 1,mzp
-                      vt3da(k,i,j) = (basic_g(ngrid)%up(k,i,j)+ basic_g(ngrid)%uc(k,i,j))*dtlt*0.5
-                      vt3db(k,i,j) = (basic_g(ngrid)%vp(k,i,j)+ basic_g(ngrid)%vc(k,i,j))*dtlt*0.5
-                      vt3dc(k,i,j) = (basic_g(ngrid)%wp(k,i,j)+ basic_g(ngrid)%wc(k,i,j))*dtlt*0.5
+                      vt3da(k,i,j) = (oneBasicFields%up(k,i,j)+ oneBasicFields%uc(k,i,j))*dtlt*0.5
+                      vt3db(k,i,j) = (oneBasicFields%vp(k,i,j)+ oneBasicFields%vc(k,i,j))*dtlt*0.5
+                      vt3dc(k,i,j) = (oneBasicFields%wp(k,i,j)+ oneBasicFields%wc(k,i,j))*dtlt*0.5
                    end do
                 end do
              end do
@@ -2241,9 +2312,9 @@ contains
              do j = 1,myp
                 do i = 1,mxp
                    do k = 1,mzp
-                      vt3da(k,i,j) = basic_g(ngrid)%uc(k,i,j)*dtlt
-                      vt3db(k,i,j) = basic_g(ngrid)%vc(k,i,j)*dtlt
-                      vt3dc(k,i,j) = basic_g(ngrid)%wc(k,i,j)*dtlt
+                      vt3da(k,i,j) = oneBasicFields%uc(k,i,j)*dtlt
+                      vt3db(k,i,j) = oneBasicFields%vc(k,i,j)*dtlt
+                      vt3dc(k,i,j) = oneBasicFields%wc(k,i,j)*dtlt
                    end do
                 end do
              end do
@@ -2255,67 +2326,67 @@ contains
                ,vt3dh     ,vt3di       &
                ,vt3dj     ,vt3dk       &
                ,mynum, &
-               oneBasic, oneAveBasic)
+               oneBasicFields, oneAveBasic)
 
           if(dyncore_flag == 0) then
              !---- thp
-             scr1(1:mzp,1:mxp,1:myp) = basic_g(ngrid)%thp(1:mzp,1:mxp,1:myp)
+             scr1(1:mzp,1:mxp,1:myp) = oneBasicFields%thp(1:mzp,1:mxp,1:myp)
 
              ! output: scr1,vt3dg
-             call fa_xc(mzp,mxp,myp,ia,iz,1,myp,basic_g(ngrid)%thp,scr1,vt3da,vt3dd,vt3dg,vt3dh,vt3di,mynum)
+             call fa_xc(mzp,mxp,myp,ia,iz,1,myp,oneBasicFields%thp,scr1,vt3da,vt3dd,vt3dg,vt3dh,vt3di,mynum)
 
              ! input: scalarp, scr1,vt3db,vt3de,vt3dj,vt3di
              ! output: scr1,vt3dg
              if (jdim .eq. 1)  &
-                  call fa_yc(mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%thp,scr1,vt3db,vt3de,vt3dg,vt3dj,vt3di,jdim,mynum)
+                  call fa_yc(mzp,mxp,myp,ia,iz,ja,jz,oneBasicFields%thp,scr1,vt3db,vt3de,vt3dg,vt3dj,vt3di,jdim,mynum)
 
              ! input: scalarp, scr1,vt3dc,vt3df,vt3dk, vctr1,vctr2
              ! output: scr1,vt3dg
-             call fa_zc(mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%thp,scr1,vt3dc,vt3df,vt3dg,vt3dk,vctr1,vctr2,mynum)
+             call fa_zc(mzp,mxp,myp,ia,iz,ja,jz,oneBasicFields%thp,scr1,vt3dc,vt3df,vt3dg,vt3dk,vctr1,vctr2,mynum)
 
              ! input:  thetap , lsfth,scr1, dtlt
              ! output: lsfth
-             call advtndc(mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%thp,scr1,cuforc_g(ngrid)%lsfth,dtlt,mynum)
+             call advtndc(mzp,mxp,myp,ia,iz,ja,jz,oneBasicFields%thp,scr1,cuforc_g(ngrid)%lsfth,dtlt,mynum)
              !
           else
              !---- thc
-             scr1(1:mzp,1:mxp,1:myp) = basic_g(ngrid)%thc(1:mzp,1:mxp,1:myp)
+             scr1(1:mzp,1:mxp,1:myp) = oneBasicFields%thc(1:mzp,1:mxp,1:myp)
 
              ! output: scr1,vt3dg
-             call fa_xc(mzp,mxp,myp,ia,iz,1,myp,basic_g(ngrid)%thc,scr1,vt3da,vt3dd,vt3dg,vt3dh,vt3di,mynum)
+             call fa_xc(mzp,mxp,myp,ia,iz,1,myp,oneBasicFields%thc,scr1,vt3da,vt3dd,vt3dg,vt3dh,vt3di,mynum)
 
              ! input: scalarp, scr1,vt3db,vt3de,vt3dj,vt3di
              ! output: scr1,vt3dg
              if (jdim .eq. 1)  &
-                  call fa_yc(mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%thc,scr1,vt3db,vt3de,vt3dg,vt3dj,vt3di,jdim,mynum)
+                  call fa_yc(mzp,mxp,myp,ia,iz,ja,jz,oneBasicFields%thc,scr1,vt3db,vt3de,vt3dg,vt3dj,vt3di,jdim,mynum)
 
              ! input: scalarp, scr1,vt3dc,vt3df,vt3dk, vctr1,vctr2
              ! output: scr1,vt3dg
-             call fa_zc(mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%thc,scr1,vt3dc,vt3df,vt3dg,vt3dk,vctr1,vctr2,mynum)
+             call fa_zc(mzp,mxp,myp,ia,iz,ja,jz,oneBasicFields%thc,scr1,vt3dc,vt3df,vt3dg,vt3dk,vctr1,vctr2,mynum)
 
              ! input:  thetac , lsfth,scr1, dtlt
              ! output: lsfth
-             call advtndc(mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%thc,scr1,cuforc_g(ngrid)%lsfth,dtlt,mynum)
+             call advtndc(mzp,mxp,myp,ia,iz,ja,jz,oneBasicFields%thc,scr1,cuforc_g(ngrid)%lsfth,dtlt,mynum)
           endif
 
           !---- water vapor
-          scr1(1:mzp,1:mxp,1:myp) = basic_g(ngrid)%rv(1:mzp,1:mxp,1:myp)
+          scr1(1:mzp,1:mxp,1:myp) = oneBasicFields%rv(1:mzp,1:mxp,1:myp)
 
           ! output: scr1,vt3dg
-          call fa_xc(mzp,mxp,myp,ia,iz,1,myp,basic_g(ngrid)%rv,scr1,vt3da,vt3dd,vt3dg,vt3dh,vt3di,mynum)
+          call fa_xc(mzp,mxp,myp,ia,iz,1,myp,oneBasicFields%rv,scr1,vt3da,vt3dd,vt3dg,vt3dh,vt3di,mynum)
 
           ! input: scalarp, scr1,vt3db,vt3de,vt3dj,vt3di
           ! output: scr1,vt3dg
           if (jdim .eq. 1)  &
-               call fa_yc(mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%rv,scr1,vt3db,vt3de,vt3dg,vt3dj,vt3di,jdim,mynum)
+               call fa_yc(mzp,mxp,myp,ia,iz,ja,jz,oneBasicFields%rv,scr1,vt3db,vt3de,vt3dg,vt3dj,vt3di,jdim,mynum)
 
           ! input: scalarp, scr1,vt3dc,vt3df,vt3dk, vctr1,vctr2
           ! output: scr1,vt3dg
-          call fa_zc(mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%rv,scr1,vt3dc,vt3df,vt3dg,vt3dk,vctr1,vctr2,mynum)
+          call fa_zc(mzp,mxp,myp,ia,iz,ja,jz,oneBasicFields%rv,scr1,vt3dc,vt3df,vt3dg,vt3dk,vctr1,vctr2,mynum)
 
           ! input: basic(ngrid)%rv, scalart,scr1, dtlt
           ! output: lsfrt = rad + adv
-          call advtndc(mzp,mxp,myp,ia,iz,ja,jz,basic_g(ngrid)%rv,scr1,cuforc_g(ngrid)%lsfrt,dtlt,mynum)
+          call advtndc(mzp,mxp,myp,ia,iz,ja,jz,oneBasicFields%rv,scr1,cuforc_g(ngrid)%lsfrt,dtlt,mynum)
 
           !- here the forcings contain rad+adv for temp and adv for water vapor
           !-end of inclusion of the advection forcings
@@ -2349,7 +2420,6 @@ contains
   !-------------------------------------------------------------------
   subroutine get_zi_gf2018(m1,tkmin,tkeg,z,rtgt,ztop,kzi)
 
-    implicit none
     integer,intent(in):: m1
     integer :: kzimax,ktke_max,i,k
     real tkmin,tke_tmp
@@ -2385,4 +2455,4 @@ contains
     !pbl(i) = max( z(i,kzi(i))-ztop(i), z(i,1)-ztop(i) )
   end subroutine get_zi_gf2018
   !-------------------------------------------------------------------
-end module CUPARM_GRELL3
+end module ModCuParGrell3

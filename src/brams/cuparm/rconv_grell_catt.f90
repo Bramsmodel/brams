@@ -7,7 +7,7 @@ subroutine CUPARM_GRELL_CATT(iens)
   use ModRstilt, only: &
        prep_convflx_to_stilt
   
-  use cuparm_grell3, only: &
+  use ModCuParGrell3, only: &
        cupar2mcphysics
   
   use mem_basic         , only: basic_g

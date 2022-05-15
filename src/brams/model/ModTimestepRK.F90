@@ -63,8 +63,11 @@ module ModTimestepRK
        exevolve, &
        get_true_air_density
 
-  use cuparm_grell3, only: &
-       prepare_lsf
+  use ModCuParGrell3, only: &
+       prepare_lsf, &
+       cuparm_grell3_catt, &  ! subroutine
+       g3d_g
+
 
   use ModDiffuse, only: &
        diffuse_brams31
@@ -254,9 +257,6 @@ module ModTimestepRK
 
   use ModTimeStamp, only: SynchronizedTimeStamp, TimeStamp
 
-  use cuparm_grell3, only: cuparm_grell3_catt &  ! subroutine
-       ,g3d_g
-
   use digitalfilter, only:         &
        applyDigitalFilter, & ! subroutine
        fileNameDF,& ! intent(inout) - file control
@@ -278,7 +278,7 @@ module ModTimestepRK
   use mem_radiate, only: &
        ilwrtyp, iswrtyp
 
-  use CUPARM_GRELL3, only: g3d_g
+  use MODCUPARGRELL3, only: g3d_g
 
   use mem_turb, only:    &
        turb_g

@@ -281,7 +281,7 @@ OBJ_MOD = \
 	module_cu_gf.o \
 	module_cu_gf_v5.1.o \
 	module_cu_gd_fim.o \
-	cup_grell3.o \
+	ModCuParGrell3.o \
 	ModRexev.o \
 	ModRstilt.o \
 	turb_constants.o \

@@ -42,8 +42,6 @@ module ModPostProcess
      use io_params, only : & ! 
        IPOS            
 
-   !use CUPARM_GRELL3, only: g3d_g
-
    implicit none
    include "tsNames.h"
    private

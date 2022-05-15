@@ -53,8 +53,10 @@ module ModTimestep
        exevolve, &
        get_true_air_density
 
-  use cuparm_grell3, only: &
-       prepare_lsf
+  use ModCuParGrell3, only: &
+       prepare_lsf, &
+       cuparm_grell3_catt, &  ! subroutine
+       g3d_g
 
   use ModDiffuse, only: &
        diffuse_brams31
@@ -231,8 +233,6 @@ module ModTimestep
 
   use ModTimeStamp, only: SynchronizedTimeStamp, TimeStamp
 
-  use cuparm_grell3, only: cuparm_grell3_catt &  ! subroutine
-       ,g3d_g
 
   use digitalFilter, only:         &
        applyDigitalFilter, & ! subroutine
@@ -255,7 +255,7 @@ module ModTimestep
   use mem_radiate, only: &
        ilwrtyp, iswrtyp
 
-  use CUPARM_GRELL3, only: g3d_g
+  use MODCUPARGRELL3, only: g3d_g
 
   use ModWindFarm, only: &
        wind_farm_driver

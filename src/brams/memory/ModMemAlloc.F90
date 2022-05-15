@@ -150,6 +150,7 @@ module ModMemAlloc
        nullify_basic,  &
        alloc_basic,    &
        filltab_basic
+
   use ModBasicFields, only: &
        DeepCopyToBasicFields, &
        DeepCopyFromBasicFields
@@ -309,11 +310,10 @@ module ModMemAlloc
        alloc_teb,    & ! Subroutine
        filltab_teb     ! Subroutine
 
-  use cuparm_grell3, only: &
+  use ModCuParGrell3, only: &
        alloc_grell3, &
        nullify_grell3, &
        filltab_grell3, &
-       ngrids_cp, &
        g3d_ens_g, &
        g3d_ensm_g, &
        g3d_g, &
