@@ -558,7 +558,7 @@ ModTimestep.o : $(MODEL)/ModTimestep.F90 mem_basic.o mem_cuparm.o ModOptical.o M
         ModMicrophysicsDrive.o seasalt.o ModMatrixDriver.o ModRadvcRK.o $(JULES_OBJ_SFCLYR) \
 	ModMessageSet.o modIau.o  ModRbnd.o ModRadvc.o ModTurbK.o ModDiffuse.o \
 	ModUrbanCanopy.o ModRexev.o ModRThrm.o ModCoriolis.o $(UTILS_INCS)/tsNames.h \
-	ModMicGfdlDriver.o ModRConv.o ModRShCuPar.o 
+	ModMicGfdlDriver.o ModRConv.o ModRShCuPar.o ModRConvGrellCatt.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1177,12 +1177,11 @@ ModRShCuPar.o : $(CUPARM)/ModRShCuPar.f90 conv_coms.o ModBasicFields.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rconv_grell_catt.o : $(CUPARM)/rconv_grell_catt.f90  Phys_const.o \
-	ModRstilt.o extra.o io_params.o mem_basic.o mem_cuparm.o mem_grell.o \
-	mem_grell_param2.o mem_grid.o mem_leaf.o mem_micro.o \
-	mem_scalar.o mem_scratch.o mem_scratch1_grell.o mem_tconv.o \
-	mem_tend.o mem_turb.o micphys.o node_mod.o rconstants.o \
-	ModCuParGrell3.o $(UTILS_INCS)/tsNames.h
+ModRConvGrellCatt.o : $(CUPARM)/ModRConvGrellCatt.f90  mem_grid.o node_mod.o \
+	ModRstilt.o ModCuParGrell3.o ModBasicFields.o mem_tend.o mem_cuparm.o \
+	rconstants.o mem_turb.o mem_micro.o mem_scratch.o mem_scalar.o \
+	io_params.o mem_leaf.o micphys.o mem_grell_param2.o mem_scratch1_grell.o \
+	mem_grell.o mem_radiate.o ccatt_start.o mem_stilt.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

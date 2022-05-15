@@ -8,6 +8,9 @@
 
 module ModTimestep
 
+  use ModRConvGrellCatt, only: &
+       cuparm_grell_catt
+  
   use ModRShCuPar, only: &
        shcupa
   
@@ -523,13 +526,23 @@ contains
     !-   Cumulus parameterization options 2->6:
     !                    Deep Convection scheme
     !- call deep first, if there is deep convection , turn off shallow.
-    if(NNQPARM(ngrid)==2) call CUPARM_GRELL_CATT(1)
+    if (NNQPARM(ngrid)==2) then
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+       call cuparm_grell_catt(1, oneGrid%Basic)
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+    end if
     !
     !                    Shallow Convection scheme
-    if(NNSHCU(ngrid)==2 ) call CUPARM_GRELL_CATT(2)
+    if (NNSHCU(ngrid)==2 ) then
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+       call cuparm_grell_catt(2, oneGrid%Basic)
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+    end if
     !
     !- G3d - GD-FIM and GF
-    if(NNQPARM(ngrid)>=3) call CUPARM_GRELL3_CATT(oneGrid,1,NNQPARM(ngrid),NNSHCU(ngrid))
+    if (NNQPARM(ngrid)>=3) then
+       call CUPARM_GRELL3_CATT(oneGrid,1,NNQPARM(ngrid),NNSHCU(ngrid))
+    end if
 
     !- task 2:  NO production by "eclair"
     if (ccatt == 1) &
