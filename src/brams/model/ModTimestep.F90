@@ -8,43 +8,46 @@
 
 module ModTimestep
 
+  use ModSeaSalt, only: &
+       SeaSaltDriver
+  
   use ModRConvGrellCatt, only: &
        cuparm_grell_catt
-  
+
   use ModRShCuPar, only: &
        shcupa
-  
+
   use ModRConv, only: &
        cuparm
-  
+
   use ModMicThompsonDriver, only: &
        micro_thompson
 
   use ModMicGfdlDriver, only: &
        micro_gfdl
-  
+
   use ModMicrophysicsMisc, only: &
        negadj1
-  
+
   use ModMicrophysicsDrive, only: &
        micro
-  
+
   use ModRstilt, only: &
        prep_advflx_to_stilt
-  
+
   use ModUrbanCanopy, only: &
        urban_canopy
-  
+
   use ModLeaf3, only: &
        sfclyr
-  
+
   use ModOzone, only: &
        ozone
 
   use ModGasPart, only: &
        le_fontes, &
        sources_teb
-  
+
   use ModCoriolis, only: &
        corlos
 
@@ -353,7 +356,9 @@ contains
     endif
 
     !-LFR Sea salt Aerossol inline source
-    call SeaSaltDriver(ia,iz,ja,jz,ngrid,mxp,myp)
+    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+    call SeaSaltDriver(ia,iz,ja,jz,ngrid,mxp,myp, oneGrid%Basic)
+    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
     !-- emission/deposition for CCATT chemistry models
     if (CCATT==1 .and. chemistry >= 0) then
@@ -557,12 +562,12 @@ contains
        ! task 3 : production/loss by chemical processes and inclusion of the
        ! chemistry tendency at the total tendency
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,3,50,&
-         oneGrid%Basic, oneGrid%AveBasic)
+            oneGrid%Basic, oneGrid%AveBasic)
     endif
     if (ccatt==1 ) then
        ! task 4 : mass transfer between gas and liquid
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,4,50,&
-         oneGrid%Basic, oneGrid%AveBasic)
+            oneGrid%Basic, oneGrid%AveBasic)
     endif
 
     !---------------------------------------------------
@@ -621,7 +626,7 @@ contains
 !!$          ! Optimized version only for SX-6
 !!$          call micro_opt()
 !!$       else
-          ! Original Version used in a Generic IA32 machine
+       ! Original Version used in a Generic IA32 machine
        call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call micro(oneGrid%Basic)
        call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
@@ -650,7 +655,7 @@ contains
     if (ccatt==1) then
        ! task 5 : sedimentation and mass transfer between clouds and rain
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,5,50,&
-         oneGrid%Basic, oneGrid%AveBasic)
+            oneGrid%Basic, oneGrid%AveBasic)
     endif
 
     !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
@@ -781,7 +786,7 @@ contains
           ! task 3 : production/loss by chemical processes and final updated
           !  of each specie
           call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,3,50,&
-         oneGrid%Basic, oneGrid%AveBasic)
+               oneGrid%Basic, oneGrid%AveBasic)
        endif
 
        !- call Matrix Aerosol Model

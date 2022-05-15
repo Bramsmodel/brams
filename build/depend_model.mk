@@ -556,7 +556,7 @@ ModTimestep.o : $(MODEL)/ModTimestep.F90 mem_basic.o mem_cuparm.o ModOptical.o M
 	machine_arq.o rad_driv.o ModCuParGrell3.o digitalFilter.o ModRtimi.o ModMicrophysicsMisc.o \
 	ChemSourcesDriver.o ChemDryDepDriver.o chemistry.o ModTimeStamp.o ModGrid.o \
 	ModAcoust.o ModRamsMicrophysics2M.o ModMicThompsonDriver.o ModWindFarm.o \
-        ModMicrophysicsDrive.o seasalt.o ModMatrixDriver.o ModRadvcRK.o $(JULES_OBJ_SFCLYR) \
+        ModMicrophysicsDrive.o ModSeaSalt.o ModMatrixDriver.o ModRadvcRK.o $(JULES_OBJ_SFCLYR) \
 	ModMessageSet.o modIau.o  ModRbnd.o ModRadvc.o ModTurbK.o ModDiffuse.o \
 	ModUrbanCanopy.o ModRexev.o ModRThrm.o ModCoriolis.o $(UTILS_INCS)/tsNames.h \
 	ModMicGfdlDriver.o ModRConv.o ModRShCuPar.o ModRConvGrellCatt.o 
@@ -570,7 +570,7 @@ ModTimestepRK.o : $(MODEL)/ModTimestepRK.F90 ModTimestep.o ModBasicFields.o mem_
 	ModMicrophysicsMisc.o ModMicrophysicsDrive.o machine_arq.o rad_driv.o ModCuParGrell3.o digitalFilter.o\
 	ChemSourcesDriver.o ChemDryDepDriver.o chemistry.o ModTimeStamp.o ModGrid.o \
 	ModAcoust.o ModRThrm.o ModRamsMicrophysics2M.o ModMicThompsonDriver.o\
-        seasalt.o ModMatrixDriver.o ModRadvcRK.o modIau.o ModLeaf3OceanOnly.o ModRbnd.o \
+        ModSeaSalt.o ModMatrixDriver.o ModRadvcRK.o modIau.o ModLeaf3OceanOnly.o ModRbnd.o \
 	$(JULES_OBJ_SFCLYR)  ModRadvc.o ModMonotonicAdvection.o utilsMod.o ModRtimi.o \
 	ModMessageSet.o ModTurbK.o ModDiffuse.o ModRexev.o ModRThrm.o ModWindFarm.o \
 	ModUrbanCanopy.o ModCoriolis.o $(UTILS_INCS)/tsNames.h  $(UTILS_INCS)/constants.h \
@@ -1783,7 +1783,7 @@ ModMonotonicAdvection.o : $(MODEL)/ModMonotonicAdvection.f90  \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-seasalt.o: $(CCATT)/seasalt.f90 mem_leaf.o mem_grid.o leaf_coms.o \
+ModSeaSalt.o: $(CCATT)/ModSeaSalt.f90 mem_leaf.o mem_grid.o leaf_coms.o \
 	    io_params.o mem_basic.o ModAerClim.o
 	@cp -f  $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)

@@ -10,6 +10,9 @@
 
 module ModTimestepRK
 
+  use ModSeaSalt, only: &
+       SeaSaltDriver
+
   use ModRShCuPar, only: &
        shcupa
 
@@ -435,7 +438,9 @@ contains
     endif
 
     !- Sea salt Aerossol inline source
-    call SeaSaltDriver(ia,iz,ja,jz,ngrid,mxp,myp)
+    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+    call SeaSaltDriver(ia,iz,ja,jz,ngrid,mxp,myp, oneGrid%Basic)
+    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
     !-- emission/deposition for CCATT chemistry models
     if (CCATT==1 .and. chemistry >= 0) then
@@ -563,12 +568,12 @@ contains
        ! task 3 : production/loss by chemical processes and inclusion of the
        ! chemistry tendency at the total tendency
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,3,50,&
-         oneGrid%Basic, oneGrid%AveBasic)
+            oneGrid%Basic, oneGrid%AveBasic)
     endif
     if (ccatt==1 ) then
        ! task 4 : mass transfer between gas and liquid
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,4,50,&
-         oneGrid%Basic, oneGrid%AveBasic)
+            oneGrid%Basic, oneGrid%AveBasic)
     endif
 
     !---------------------------------------------------
@@ -951,7 +956,7 @@ contains
     if (ccatt==1) then
        ! task 5 : sedimentation and mass transfer between clouds and rain
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,5,50,&
-         oneGrid%Basic, oneGrid%AveBasic)
+            oneGrid%Basic, oneGrid%AveBasic)
     endif
 
     !----------------------------------------
@@ -964,7 +969,7 @@ contains
           ! task 3 : production/loss by chemical processes and final updated
           !  of each specie
           call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,3,50,&
-         oneGrid%Basic, oneGrid%AveBasic)
+               oneGrid%Basic, oneGrid%AveBasic)
        endif
 
        !- call Matrix Aerosol Model

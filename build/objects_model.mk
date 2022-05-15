@@ -287,7 +287,7 @@ OBJ_MOD = \
 	turb_constants.o \
 	tkenn.o \
 	digitalFilter.o \
-	seasalt.o  \
+	ModSeaSalt.o  \
 	meteogram.o \
 	meteogramType.o \
 	mcica_random_numbers.o \
@@ -1073,7 +1073,7 @@ MOD_MOD = \
 	module_wind_fitch.mod \
 	wind_farm.mod \
 	aerclimmod.mod \
-	seasalt.mod \
+	ModSeaSalt.mod \
 	memmatrix.mod \
 	aero_setup.mod \
 	aero_subs.mod \
