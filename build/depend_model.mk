@@ -892,7 +892,7 @@ ModRanlavg.o : $(IO)/ModRanlavg.f90  io_params.o mem_grid.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModRbnd.o : $(BC)/ModRbnd.f90  mem_grid.o mem_scratch.o mem_basic.o ModBasicFields.o \
+ModRbnd.o : $(BC)/ModRbnd.f90  mem_grid.o mem_scratch.o ModBasicFields.o \
 	mem_tend.o mem_turb.o micphys.o node_mod.o ref_sounding.o ModScalarTable.o \
 	mem_chem1.o ModMicrophysicsMisc.o
 	@cp -f $< $(<F:.f90=.f90)

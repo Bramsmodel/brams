@@ -39,9 +39,6 @@ module ModRbnd
 
   use mem_tend, only: tend       !tend%ut
 
-  use mem_basic, only: &
-       basic_g
-  
   use ModBasicFields, only: &
        BasicFields
   
@@ -68,6 +65,9 @@ module ModRbnd
        ScalarTable
 
   implicit none
+
+  include "constants.h"
+
   private
   public :: LatSetScalar
   public :: TopSetScalar
@@ -338,9 +338,6 @@ contains
 
 
   subroutine TopSetScalar(m1,m2,m3,ia,iz,ja,jz,ibcon,ap,vnam)
-
-    implicit none
-
     integer, intent(in) :: m1
     integer, intent(in) :: m2
     integer, intent(in) :: m3
@@ -381,9 +378,6 @@ contains
   end subroutine TopSetScalar
 
   subroutine TopSet2Scalar(m1,m2,m3,ia,iz,ja,jz,ibcon,ap,vnam)
-
-    implicit none
-
     integer, intent(in) :: m1
     integer, intent(in) :: m2
     integer, intent(in) :: m3
@@ -424,8 +418,6 @@ contains
   end subroutine TopSet2Scalar
 
   subroutine BotSetScalar(m1,m2,m3,ia,iz,ja,jz,ibcon,aa,vnam)
-
-    implicit none
     integer, intent(in) :: m1
     integer, intent(in) :: m2
     integer, intent(in) :: m3
@@ -460,8 +452,6 @@ contains
   end subroutine BotSetScalar
 
   subroutine BotSetAdapScalar(m1,m2,m3,ia,iz,ja,jz,ibcon,lpx,aa,vnam)
-
-    implicit none
     integer, intent(in) :: m1
     integer, intent(in) :: m2
     integer, intent(in) :: m3
@@ -515,8 +505,6 @@ contains
   end subroutine BotSetAdapScalar
 
   subroutine KeepTracersNonnegScalar(mxyzp,scp)
-    implicit none
-
     integer, intent(in) :: mxyzp
     real, pointer, intent(in) :: scp(:)
     ! pointer intent(in), values intent(inout)
@@ -529,9 +517,6 @@ contains
 
   subroutine latbnd(mzp,mxp,myp,ia,iz,ja,jz,ibcon,nxtnest,ngrid,ibnd,jbnd, &
        lpu,lpv,up,uc,ut,vp,vc,vt,dxt,dyt)
-
-    implicit none
-
     integer, intent(in) :: mzp
     integer, intent(in) :: mxp
     integer, intent(in) :: myp
@@ -582,10 +567,6 @@ contains
 
   subroutine latnormv(m1,m2,m3,ia,iz,ja,jz,ibcon,lpu_R,lpv_R  &
        ,up,uc,ut,vp,vc,vt,dxt,dyt)
-
-
-    implicit none
-
     integer, intent(in) :: m1
     integer, intent(in) :: m2
     integer, intent(in) :: m3
@@ -700,12 +681,7 @@ contains
 
   subroutine vpsets(mzp,mxp,myp,ia,iz,ja,jz,ibcon,nstbot, &
        up,vp,wp,pp,uc,vc,wc,pc,dxu,dxm,dyv,dym,&
-       lpu,lpv,lpw)
-
-
-    implicit none
-
-
+       lpu,lpv,lpw, oneBasicFields)
     integer, intent(in) :: mzp
     integer, intent(in) :: mxp
     integer, intent(in) :: myp
@@ -731,7 +707,8 @@ contains
     real, pointer, intent(in) :: lpu(:,:)
     real, pointer, intent(in) :: lpv(:,:)
     real, pointer, intent(in) :: lpw(:,:)
-
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
+    
     if (nxtnest(ngrid) .eq. 0) then
        call latset(mzp,mxp,myp,ia,iz,ja,jz,ibcon,'U'              &
             ,up ,up &
@@ -787,12 +764,12 @@ contains
     endif
 
     call dumset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-         ,basic_g(ngrid)%wp,'W')
+         ,oneBasicFields%wp,'W')
 
     call dumset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-         ,basic_g(ngrid)%up,'U')
+         ,oneBasicFields%up,'U')
     call dumset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-         ,basic_g(ngrid)%vp,'V')
+         ,oneBasicFields%vp,'V')
 
     if (nxtnest(ngrid) .eq. 0) then
        call latset(mzp,mxp,myp,ia,iz,ja,jz,ibcon,'U'  &
@@ -850,20 +827,16 @@ contains
     endif
 
     call dumset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-         ,basic_g(ngrid)%wc,'W')
+         ,oneBasicFields%wc,'W')
     call dumset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-         ,basic_g(ngrid)%uc,'U')
+         ,oneBasicFields%uc,'U')
     call dumset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-         ,basic_g(ngrid)%vc,'V')
+         ,oneBasicFields%vc,'V')
 
     return
   end subroutine vpsets
 
   subroutine latset(m1,m2,m3,ia,iz,ja,jz,ibcon,vnam,ap,uc,vc,dxu,dxm,dyv,dym)
-
-
-    implicit none
-
     integer,intent(in) :: m1,m2,m3,ia,iz,ja,jz,ibcon
     real,  pointer, intent(in) :: ap(:,:,:)
     real,  pointer, intent(in) :: uc(:,:,:)
@@ -1096,10 +1069,6 @@ contains
 
 
   subroutine topset(m1,m2,m3,ia,iz,ja,jz,ibcon,ap,vnam)
-
-
-    implicit none
-
     integer, intent(in) :: m1
     integer, intent(in) :: m2
     integer, intent(in) :: m3
@@ -1141,10 +1110,6 @@ contains
   end subroutine topset
 
   subroutine botset(m1,m2,m3,ia,iz,ja,jz,ibcon,aa,vnam)
-
-
-    implicit none
-
     integer, intent(in) :: m1
     integer, intent(in) :: m2
     integer, intent(in) :: m3
@@ -1180,9 +1145,6 @@ contains
   end subroutine botset
 
   subroutine dumset(m1,m2,m3,ia,iz,ja,jz,ibcon,aa,vnam)
-
-    implicit none
-
     integer, intent(in) :: m1
     integer, intent(in) :: m2
     integer, intent(in) :: m3
@@ -1221,11 +1183,8 @@ contains
     return
   end subroutine dumset
 
-  subroutine rayft(mxp,myp,mzp,mynum,ngrid,nnzp,if_adap,level,nodemyp,nodemxp,vt3da,theta,rv)
-
-    implicit none
-    include "constants.h"
-
+  subroutine rayft(mxp,myp,mzp,mynum,ngrid,nnzp,if_adap,level,nodemyp,nodemxp,&
+       vt3da, oneBasicFields)
     integer, intent(in)   :: mxp
     integer, intent(in)   :: myp
     integer, intent(in)   :: mzp
@@ -1238,11 +1197,8 @@ contains
     integer, intent(in)   :: nodemxp(:,:)
     real   , pointer, intent(in)   :: vt3da(:)
     ! pointer intent(in), values intent(inout)
-    real   , pointer, intent(in)   :: theta(:,:,:)
-    ! pointer intent(in), values intent(in)
-    real   , pointer, intent(in)   :: rv(:,:,:)
-    ! pointer intent(in), values intent(in)
-
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
+    
     integer :: ii,i,j,k
 
     integer(kind=i8) :: mxyzp, ind
@@ -1262,13 +1218,13 @@ contains
           do i = 1,nodemxp(mynum,ngrid)
              do k = 1,nnzp(ngrid)
                 ind = ind + 1
-                scratch%vt3da(ind) = basic_g(ngrid)%theta(k,i,j)  &
-                     * (1. + .61 * basic_g(ngrid)%rv(k,i,j))
+                scratch%vt3da(ind) = oneBasicFields%theta(k,i,j)  &
+                     * (1. + .61 * oneBasicFields%rv(k,i,j))
              enddo
           enddo
        enddo
     else
-       call atob_long(mxyzp, basic_g(ngrid)%theta, scratch%vt3da)
+       call atob_long(mxyzp, oneBasicFields%theta, scratch%vt3da)
     endif
 
     !     Now get rayleigh friction tendency
@@ -1276,7 +1232,7 @@ contains
     if (if_adap == 0) then
 
        call rayf(4,mzp,mxp,myp,ia,iz,ja,jz,ibcon                  &
-            ,scratch%vt3da,basic_g(ngrid)%th0  &
+            ,scratch%vt3da,oneBasicFields%th0  &
             ,tend%tht     ,grid_g(ngrid)%rtgt  &
             ,grid_g(ngrid)%topt)
 
@@ -1284,17 +1240,13 @@ contains
 
        call rayf_adap(4,mzp,mxp,myp,ia,iz,ja,jz,ibcon     &
             ,int(grid_g(ngrid)%lpw) ,scratch%vt3da  &
-            ,basic_g(ngrid)%th0 ,tend%tht      )
+            ,oneBasicFields%th0 ,tend%tht      )
 
     endif
     return
   end subroutine rayft
 
   subroutine rayf(ifrom,m1,m2,m3,ia,iz,ja,jz,ibcon,var,th0,tht,rtgx,topx)
-
-
-    implicit none
-
     integer, intent(in) :: ifrom
     integer, intent(in) :: m1
     integer, intent(in) :: m2
@@ -1401,8 +1353,6 @@ contains
   end subroutine rayf
 
   subroutine trsets(oneScalarTab, oneScalarTabSize, oneBasicFields)
-    implicit none
-
     type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
     integer, intent(inout) :: oneScalarTabSize
     type(BasicFields), pointer, intent(in) :: oneBasicFields
@@ -1413,8 +1363,8 @@ contains
     do n = 1,oneScalarTabSize
        if (nxtnest(ngrid) .eq. 0) then
           call LatSetScalar(mzp,mxp,myp,ia,iz,ja,jz,ibcon,'TR'   &
-               ,oneScalarTab(n)%var_p_3D,basic_g(ngrid)%up  &
-               ,basic_g(ngrid)%vp ,grid_g(ngrid)%dxu   &
+               ,oneScalarTab(n)%var_p_3D,oneBasicFields%up  &
+               ,oneBasicFields%vp ,grid_g(ngrid)%dxu   &
                ,grid_g(ngrid)%dxm ,grid_g(ngrid)%dyv   &
                ,grid_g(ngrid)%dym  )
        endif
@@ -1458,10 +1408,6 @@ contains
   end subroutine trsets
 
   subroutine botset_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpx,aa,vnam)
-
-
-    implicit none
-
     integer, intent(in)    :: m1
     integer, intent(in)    :: m2
     integer, intent(in)    :: m3
@@ -1513,10 +1459,6 @@ contains
   end subroutine botset_adap
 
   subroutine rayf_adap(ifrom,m1,m2,m3,ia,iz,ja,jz,ibcon,lpx,var,th0,tht)
-
-
-    implicit none
-
     integer :: ifrom,m1,m2,m3,ia,iz,ja,jz,ibcon
     integer, dimension(m2,m3) :: lpx
     real, dimension(m1,m2,m3) :: var,th0,tht

@@ -468,7 +468,7 @@ contains
     !  Rayleigh friction for theta
     !----------------------------------------
     call rayft(mxp,myp,mzp,mynum,ngrid,nnzp,if_adap,level,nodemyp,nodemxp,&
-         scratch%vt3da,oneGrid%Basic%theta,oneGrid%Basic%rv)
+         scratch%vt3da,oneGrid%Basic)
 
     !  Get the overlap region between parallel nodes
     !---------------------------------------------------
@@ -739,12 +739,15 @@ contains
 
     !  Velocity/pressure boundary conditions
     !----------------------------------------
+    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
     call vpsets(mzp,mxp,myp,ia,iz,ja,jz,ibcon,nstbot, &
          oneGrid%Basic%up,oneGrid%Basic%vp,oneGrid%Basic%wp,&
          oneGrid%Basic%pp,oneGrid%Basic%uc,oneGrid%Basic%vc,&
          oneGrid%Basic%wc,oneGrid%Basic%pc,grid_g(ngrid)%dxu,&
          grid_g(ngrid)%dxm,grid_g(ngrid)%dyv,grid_g(ngrid)%dym,&
-         grid_g(ngrid)%lpu,grid_g(ngrid)%lpv,grid_g(ngrid)%lpw)
+         grid_g(ngrid)%lpu,grid_g(ngrid)%lpv,grid_g(ngrid)%lpw, &
+         oneGrid%Basic)
+    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
     if (iexev == 2) then
        call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)

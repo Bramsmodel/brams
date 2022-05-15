@@ -532,7 +532,7 @@ contains
     !----------------------------------------
     call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
     call rayft(mxp,myp,mzp,mynum,ngrid,nnzp,if_adap,level,nodemyp,nodemxp,&
-         scratch%vt3da,oneGrid%Basic%theta,oneGrid%Basic%rv)
+         scratch%vt3da,oneGrid%Basic)
     call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
     !  Get the overlap region between parallel nodes
@@ -923,7 +923,8 @@ contains
          oneGrid%Basic%pp,oneGrid%Basic%uc,oneGrid%Basic%vc,&
          oneGrid%Basic%wc,oneGrid%Basic%pc,grid_g(ngrid)%dxu,&
          grid_g(ngrid)%dxm,grid_g(ngrid)%dyv,grid_g(ngrid)%dym,&
-         grid_g(ngrid)%lpu,grid_g(ngrid)%lpv,grid_g(ngrid)%lpw)
+         grid_g(ngrid)%lpu,grid_g(ngrid)%lpv,grid_g(ngrid)%lpw, &
+         oneGrid%Basic)
     call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
     !- call THERMO on the boundaries
