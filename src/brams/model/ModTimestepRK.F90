@@ -10,6 +10,9 @@
 
 module ModTimestepRK
 
+  use ModRShCuPar, only: &
+       shcupa
+
   use ModRConv, only: &
        cuparm
 
@@ -565,7 +568,11 @@ contains
 
     !---------------------------------------------------
     ! Shallow  cumulus parameterization by Souza
-    if (NNSHCU(ngrid)==1) call SHCUPA()
+    if (NNSHCU(ngrid)==1) then
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+       call shcupa(oneGrid%Basic)
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+    end if
     !---------------------------------------------------
 
     if (TEB_SPM==1) then

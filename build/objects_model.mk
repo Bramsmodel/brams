@@ -180,7 +180,7 @@ OBJ_MOD = \
 	rio.o \
 	rnest_par.o \
 	rnode.o \
-	rshcupar.o \
+	ModRShCuPar.o \
 	ModRThrm.o \
 	ModTimestep.o \
 	ModTimestepRK.o \
