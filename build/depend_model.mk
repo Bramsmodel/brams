@@ -1013,7 +1013,7 @@ chem_dry_dep.o : $(MODEL_CHEM)/chem_dry_dep.f90 \
 	rm -f $(<F:.f90=.f90)
 
 ChemDryDepDriver.o : $(MODEL_CHEM)/ChemDryDepDriver.f90 rconstants.o mem_grid.o \
-	micphys.o mem_cuparm.o mem_basic.o mem_turb.o mem_leaf.o mem_micro.o \
+	micphys.o mem_cuparm.o ModBasicFields.o mem_turb.o mem_leaf.o mem_micro.o \
 	mem_radiate.o mem_chem1.o mem_aer1.o chem_dry_dep.o
 	@cp -f  $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)

@@ -479,7 +479,9 @@ contains
 
 
        !- call dry deposition and sedimentation routines
-       call drydep_driver(mzp,mxp,myp,ia,iz,ja,jz)
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+       call drydep_driver(mzp,mxp,myp,ia,iz,ja,jz, oneGrid%Basic)
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
     endif
 
