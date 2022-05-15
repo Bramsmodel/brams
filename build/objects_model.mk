@@ -167,7 +167,7 @@ OBJ_MOD = \
 	rconstants.o \
 	ModRConv.o \
 	ModRConvGrellCatt.o \
-	chem_conv_transp.o \
+	ModChemConvTransp.o \
 	ModNamelistFile.o  \
 	ModParallelEnvironment.o  \
 	read_ralph.o \

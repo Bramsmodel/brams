@@ -1182,7 +1182,7 @@ ModRConvGrellCatt.o : $(CUPARM)/ModRConvGrellCatt.f90  mem_grid.o node_mod.o \
 	ModRstilt.o ModCuParGrell3.o ModBasicFields.o mem_tend.o mem_cuparm.o \
 	rconstants.o mem_turb.o mem_micro.o mem_scratch.o mem_scalar.o \
 	io_params.o mem_leaf.o micphys.o mem_grell_param2.o mem_scratch1_grell.o \
-	mem_grell.o mem_radiate.o ccatt_start.o mem_stilt.o
+	mem_grell.o mem_radiate.o ccatt_start.o mem_stilt.o ModChemConvTransp.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1230,7 +1230,7 @@ ModCuParGrell3.o : $(CUPARM)/ModCuParGrell3.F90  Phys_const.o mem_jules.o \
 	mem_tend.o mem_turb.o micphys.o node_mod.o rconstants.o module_cu_g3.o \
 	module_cu_gd_fim.o var_tables.o mem_carma.o module_cu_gf.o \
 	module_cu_gf_v5.1.o ModGrid.o ModMessageSet.o ModRadvc.o ModBasicFields.o \
-	ConvPar_GF_GEOS5.o
+	ConvPar_GF_GEOS5.o ModChemConvTransp.o
 	@cp -f $< $(<F:.F90=.F90)
 	$(F_COMMAND) -D$(AER) $(<F:.F90=.F90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1247,9 +1247,9 @@ cup_grell_catt_deep.o : $(CUPARM)/cup_grell_catt_deep.f90  \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-chem_conv_transp.o: $(CCATT)/chem_conv_transp.f90 \
+ModChemConvTransp.o: $(CCATT)/ModChemConvTransp.f90 \
 	mem_tconv.o mem_scalar.o node_mod.o mem_grid.o mem_scratch.o \
-	mem_basic.o mem_cuparm.o mem_grell_param2.o mem_scratch1_grell.o \
+	mem_cuparm.o mem_grell_param2.o mem_scratch1_grell.o \
 	Phys_const.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)

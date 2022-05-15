@@ -5,6 +5,9 @@
 !--------------------------------------------------------------------------------!
 module ModCuParGrell3
 
+  use ModChemConvTransp, only: &
+       trans_conv_mflx_GF
+  
   use mem_radiate, only: &
        ilwrtyp, &
        iswrtyp, &

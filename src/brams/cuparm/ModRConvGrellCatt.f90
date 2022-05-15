@@ -3,6 +3,9 @@
 !--------------------------------------------------------------------------------
 module ModRConvGrellCatt
 
+  use ModChemConvTransp, only: &
+       trans_conv_mflx
+  
   use mem_grid, only: &
        time,    &   ! INTENT(IN)
        initial, &   ! INTENT(IN)
@@ -439,7 +442,7 @@ contains
     !--------- Convective Transport based on mass flux scheme ------------------------------------
     if(CCATT == 1 .and. iruncon == 1) then
        scratch%scr1(:)=0.
-       call trans_conv_mflx(iens,scratch%scr1(1))
+       call trans_conv_mflx(iens,scratch%scr1,oneBasicFields%dn0)
     end if
 
   end subroutine cuparm_grell_catt
