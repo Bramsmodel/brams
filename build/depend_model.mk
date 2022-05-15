@@ -220,8 +220,9 @@ ModTuv2.7.o    : $(TUV)/ModTuv2.7.f90 tuvParameter.o
 	rm -f $(<F:.f90=.f90)
 
 ModTuvDriver2.7.o : $(TUV)/ModTuvDriver2.7.f90 tuvParameter.o rconstants.o mem_grid.o \
-	mem_globrad.o mem_radiate.o mem_basic.o \
-	mem_carma.o ModTuv2.7.o chem_fastjx_driv.o mem_tuv.o
+	mem_globrad.o mem_radiate.o ModBasicFields.o node_mod.o mem_aerad.o mem_chem1.o \
+	mem_carma.o ModTuv2.7.o chem_fastjx_driv.o mem_tuv.o chem1_list.o ref_sounding.o \
+	mem_rrtm.o extra.o mem_leaf.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1637,7 +1638,7 @@ chemistry.o : $(CCATT)/chemistry.f90 mem_scalar.o mem_grid.o  \
 	mem_basic.o mem_radiate.o node_mod.o rconstants.o mem_micro.o \
 	chem_spack_utils.o mem_spack.o chem_spack_solve_sparse.o chem_spack_ros.o \
 	chem_spack_ros_dyndt.o chem_spack_qssa.o chem_trans_gasaq.o chem_orage.o \
-	chem_spack_rodas3_dyndt.o chem_trans_liq.o\
+	chem_spack_rodas3_dyndt.o chem_trans_liq.o ModBasicFields.o \
 	tuvParameter.o ModTuv2.7.o ModTuvDriver2.7.o
 	@cp -f  $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)

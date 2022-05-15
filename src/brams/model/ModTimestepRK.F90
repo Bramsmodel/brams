@@ -552,18 +552,21 @@ contains
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
 
     if (ccatt == 1) &
-         call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,2,50)
+         call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,2,50,&
+         oneGrid%Basic, oneGrid%AveBasic)
 
     !- CATT & Chemistry == CCATT
     !----------------------------------------
     if (ccatt==1 .and. split_method== 'PARALLEL' .and. n_dyn_chem==1) then
        ! task 3 : production/loss by chemical processes and inclusion of the
        ! chemistry tendency at the total tendency
-       call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,3,50)
+       call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,3,50,&
+         oneGrid%Basic, oneGrid%AveBasic)
     endif
     if (ccatt==1 ) then
        ! task 4 : mass transfer between gas and liquid
-       call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,4,50)
+       call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,4,50,&
+         oneGrid%Basic, oneGrid%AveBasic)
     endif
 
     !---------------------------------------------------
@@ -945,7 +948,8 @@ contains
     !- chemistry - microphysics tranfers - sedimentation and tranfer from clouds to rain
     if (ccatt==1) then
        ! task 5 : sedimentation and mass transfer between clouds and rain
-       call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,5,50)
+       call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,5,50,&
+         oneGrid%Basic, oneGrid%AveBasic)
     endif
 
     !----------------------------------------
@@ -957,7 +961,8 @@ contains
 
           ! task 3 : production/loss by chemical processes and final updated
           !  of each specie
-          call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,3,50)
+          call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,3,50,&
+         oneGrid%Basic, oneGrid%AveBasic)
        endif
 
        !- call Matrix Aerosol Model

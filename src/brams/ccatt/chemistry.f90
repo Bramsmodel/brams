@@ -78,6 +78,10 @@ MODULE module_chemistry_driver
     USE mem_basic, ONLY: &
          basic_g,        &   ! %up(IN), %vp(IN), %wp(IN), %theta(IN), %pp(IN), %pi0(IN), %dn0(IN?), %rv(IN), %rtp(IN)
          basic_vars          ! Type
+    use ModBasicFields, only: &
+         DeepCopyToBasicFields, &
+         DeepCopyFromBasicFields, &
+         BasicFields
 
     USE mem_radiate, ONLY : &
          radfrq,            & ! (IN)
@@ -256,7 +260,8 @@ MODULE module_chemistry_driver
 CONTAINS
 
   !------------------------------------------------------------------
-  SUBROUTINE chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,task,nt)
+  SUBROUTINE chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,task,nt, &
+       oneBasicFields, oneAveBasicFields)
 
     INTEGER , INTENT(IN) :: mzp
     INTEGER , INTENT(IN) :: mxp
@@ -267,13 +272,16 @@ CONTAINS
     INTEGER , INTENT(IN) :: jz
     INTEGER , INTENT(IN) :: task
     INTEGER , INTENT(IN) :: nt
-
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(BasicFields), pointer, intent(in) :: oneAveBasicFields
+    
     INTEGER, DIMENSION(ngrids) :: itchim
     INTEGER, DIMENSION(ngrids) :: ncycle
 
     INTEGER,PARAMETER :: block_size_qssa=45
     INTEGER,PARAMETER :: block_size_ros=64 ! use 64 for pgi / 48 for intel compilers
-
+    character(len=*), parameter :: h="**(chemistry_driver)**"
+    
 !     INTEGER,PARAMETER :: blockSize=1 !tmp
 
 
@@ -365,16 +373,19 @@ CONTAINS
                                     ilwrtyp,iswrtyp,uv_atten_g(ngrid)%att,2)
                 END IF
 
-	    ELSEIF(TRIM(PhotojMethod) == 'FAST-TUV') THEN
-
-	       call tuvDriver(mzp,mxp,myp,ia,iz,ja,jz)!,nstr,wstart,wstop,nwint,blockSize,listFiles)
+             ELSEIF(TRIM(PhotojMethod) == 'FAST-TUV') THEN
+                call DeepCopyToBasicFields(oneBasicFields, oneAveBasicFields, h)
+                call tuvDriver(mzp,mxp,myp,ia,iz,ja,jz, oneBasicFields)
+                call DeepCopyFromBasicFields(oneBasicFields, oneAveBasicFields)
 
              ELSE
 	        STOP ' unknonw photolysis calculation method '
 
              ENDIF
              IF(TRIM(PhotojMethod) == 'LUT') THEN
-               call tuvDriver(mzp,mxp,myp,ia,iz,ja,jz)
+                call DeepCopyToBasicFields(oneBasicFields, oneAveBasicFields, h)
+                call tuvDriver(mzp,mxp,myp,ia,iz,ja,jz, oneBasicFields)
+                call DeepCopyFromBasicFields(oneBasicFields, oneAveBasicFields)
           ENDIF
           ENDIF
 

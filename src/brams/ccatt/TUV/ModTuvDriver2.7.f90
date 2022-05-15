@@ -1,4 +1,124 @@
-module ModtuvDriver
+module ModTuvDriver
+
+  use mem_grid, only: &
+       grid_g,   &  ! glat,glon,lpw,rtgt,topt
+       ngrid, &
+       zm,      &
+       zt,      &
+       nnzp,    &
+       if_adap, &
+       dzt,     &
+       maxnzp,  &
+       imonth1, &
+       idate1,  &
+       iyear1,  &
+       time,    &
+       ngrids,  &
+       dtlt
+
+  use node_mod, only : &
+       mynum, &
+       nodemxp, &
+       nodemyp, &
+       nodemzp
+
+  use rconstants, only: &
+       cp, &
+       cpor, &
+       p00, &
+       rgas, &
+       g, &
+       stefan
+
+  use mem_globrad, only: &
+       nlayer, &
+       ntotal, &
+       wave, &
+       nwave, &
+       caseW, &
+       caseW_tuv
+  
+  use mem_aerad, only: &
+       nwave
+  
+  use mem_radiate, only: &
+       radiate_g, &
+       prsnz, &
+       prsnzp, &
+       iswrtyp, &
+       ilwrtyp
+  
+  use ModBasicFields, only: &
+       BasicFields
+  
+  use mem_carma, only: &
+       carma, &   !aot
+       carma_aotMap !aot
+
+  use ModTuv, only: &
+       kz, &
+       kw, &
+       ks, &
+       kj, &
+       Tuv, &
+       slabel, &
+       jlabel, &
+       nj, &
+       xRef, &
+       initTuv, &
+       wl, &
+       wc, &
+       wu, &
+       nw, &
+       sw, &
+       wbioStart, &
+       wBioEnd
+  
+  use mem_chem1, only: &
+       chem1_g
+  
+  use chem1_list, only: &
+       spc_name, &
+       nspecies, &
+       chemical_mechanism, &
+       O3, &
+       nr_photo
+  
+  use ref_sounding, only: &
+       pi01dn
+  
+  use FastJX, only: &
+       fast_JX_g
+
+  use mem_tuv, only: &
+       carma_tuv, &
+       tuv2carma, &
+       firstBio, &
+       lastBio, &
+       tuv_bio
+  
+  use tuvParameter, only: &
+       nstr, &
+       wstart, &
+       wstop, &
+       nwint, &
+       listFiles
+  
+  use mem_rrtm, only: &
+       co3FromTuv
+
+  use extras, only:   &
+       extra3d
+
+  use mem_leaf, only: &
+       leaf_g
+
+  implicit none
+  
+  private
+
+  public :: InitTuvDriver
+  public :: tuvDriver
 
   logical :: no2Present,so2Present
   integer :: iPosNo2,iPosSo2
@@ -475,58 +595,9 @@ module ModtuvDriver
 contains
 
 
-  subroutine tuvDriver(m1,m2,m3,ia,iz,ja,jz)!,nstr,&
-    !wstart,wstop,nwint,blockSize,listFiles)
-
-    !--(DMK-BRAMS-5.0-INI)--------------------------------------------------
-    use node_mod  , only : mynum,nodemxp,nodemyp,nodemzp
-    !--(DMK-BRAMS-5.0-OLD)--------------------------------------------------
-    !    USE node_mod  , ONLY : mynum,mmxp,mmyp,mmzp
-    !--(DMK-BRAMS-5.0-FIM)--------------------------------------------------
-
-    use rconstants, only: cp,cpor,p00,rgas,g,stefan
-
-    use mem_grid  , only: grid_g,   &  ! glat,glon,lpw,rtgt,topt
-         ngrid, &
-         zm,      &
-         zt,      &
-         nnzp,    &
-         if_adap, &
-         dzt,     &
-         maxnzp,  &
-         imonth1, &
-         idate1,  &
-         iyear1,  &
-         time,    &
-         ngrids,  &
-         dtlt
-    use mem_globrad , only: nlayer,ntotal,wave,nwave,caseW,caseW_tuv
-    use mem_aerad   , only: nwave
-    use mem_radiate , only: radiate_g,prsnz,prsnzp,iswrtyp, ilwrtyp   ! Surface Albedo, cosz
-    use mem_basic   , only: basic_g    ! pp,pi0
-    use mem_carma   , only: carma, &   !aot
-         carma_aotMap !aot
-
-    use ModTuv      , only: kz,kw,ks,kj,Tuv,slabel,jlabel,nj,xRef,initTuv, &
-         wl,wc,wu,nw,sw,wbioStart,wBioEnd!,narad
-    use mem_chem1   , only: chem1_g
-    use chem1_list  , only: spc_name,nspecies,chemical_mechanism,O3,nr_photo
-    use ref_sounding, only: pi01dn
-    use FastJX      , only: fast_JX_g
-
-    use mem_tuv     , only: carma_tuv,tuv2carma,firstBio,lastBio, &
-         tuv_bio
-    use tuvParameter, only: nstr,wstart,wstop,nwint,listFiles
-    use mem_rrtm, only: co3FromTuv
-
-    !tmp-srf para output
-    use extras      , only:   extra3d
-
-    use mem_leaf, only: leaf_g  !aotMap
-
-    implicit none
-
+  subroutine tuvDriver(m1,m2,m3,ia,iz,ja,jz, oneBasicFields)
     integer,intent(IN) :: m1,m2,m3,ia,iz,ja,jz
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
     !INTEGER,INTENT(IN) :: nstr   !number of streams
     !INTEGER,INTENT(IN) :: nwint  !number of wavelength intervals. Equally spaces
     !INTEGER,INTENT(IN) :: blockSize !Size of each column block
@@ -855,17 +926,17 @@ contains
 
              kvert =  k+koff(i,j) + 1
 
-             pird(k)= ( basic_g(ngrid)%  pp(kvert,i,j) + &
-                  basic_g(ngrid)% pi0(kvert,i,j)   ) / cp ! Exner function
+             pird(k)= ( oneBasicFields%  pp(kvert,i,j) + &
+                  oneBasicFields% pi0(kvert,i,j)   ) / cp ! Exner function
              !press
              prd(k) = pird(k) ** cpor * p00
              ! temp (K)
-             temprd(i,j,k) = dble( basic_g(ngrid)% theta(kvert,i,j) * pird(k) )
+             temprd(i,j,k) = dble( oneBasicFields% theta(kvert,i,j) * pird(k) )
 
-             dair  (i,j,k) = dble( basic_g(ngrid)% dn0(kvert,i,j) )
+             dair  (i,j,k) = dble( oneBasicFields% dn0(kvert,i,j) )
 
-             rv  (k) = dble( basic_g(ngrid)% rv(kvert,i,j) *  &
-                  basic_g(ngrid)%dn0(kvert,i,j)    )
+             rv  (k) = dble( oneBasicFields% rv(kvert,i,j) *  &
+                  oneBasicFields%dn0(kvert,i,j)    )
 
              if (if_adap == 1) then
                 zml(i,j,k) = zm(k+koff(i,j))
@@ -1032,7 +1103,7 @@ contains
                 ! 1.D-9)*cair(i,j,k)*dzl(i,j,k)
                 so2col_(i,j)=so2col_(i,j)+ &
                      ( chem1_g(iPosSo2,ngrid)%sc_p(k+koff(i,j),i,j)* 1.D-9) * &
-                     basic_g(ngrid)% dn0(k+koff(i,j),i,j) *& ! kg[NO2]/m^3
+                     oneBasicFields% dn0(k+koff(i,j),i,j) *& ! kg[NO2]/m^3
                      (1000.   /& ! g[SO2]/m^3
                      64.   )    *& !  mol[SO2]/m^3 (64 = molec. weight)
                      (rtgt(i,j)/dzt(k)) /& !  mol[NO3]/m^2
@@ -1047,7 +1118,7 @@ contains
              do k = 2,m1-1-koff(i,j)
                 no2col_(i,j)=no2col_(i,j)+ &
                      (chem1_g(iPosNo2,ngrid)%sc_p(k+koff(i,j),i,j)*1.D-9)* &
-                     basic_g(ngrid)% dn0(k+koff(i,j),i,j) *& ! kg[NO2]/m^3
+                     oneBasicFields% dn0(k+koff(i,j),i,j) *& ! kg[NO2]/m^3
                      (1000.      /& ! g[NO2]/m^3
                      46.   )    *& !  mol[NO2]/m^3 (46 = molec. weight)
                      (rtgt(i,j)/dzt(k)) /& !  mol[NO2]/m^2
@@ -1432,7 +1503,6 @@ contains
   end subroutine InitTuvDriver
 
   subroutine ctlOut(ia,iz,ja,jz,m1,kj,nReact,cMyNum,cTime,jjlabel)
-    use mem_grid, only: grid_g,ngrid
     integer,intent(IN) :: ia,iz,ja,jz,m1,nReact,kj
     character(LEN=4), intent(IN) :: cMyNum
     character(LEN=8), intent(IN) :: cTime
@@ -1461,7 +1531,6 @@ contains
   end subroutine ctlOut
 
   subroutine ctlIn3d(ia,iz,ja,jz,kz,kj,nReact,cMyNum,cTime,jjlabel)
-    use mem_grid, only: grid_g,ngrid
     integer,intent(IN) :: ia,iz,ja,jz,kz,nReact,kj
     character(LEN=4), intent(IN) :: cMyNum
     character(LEN=8), intent(IN) :: cTime
@@ -1492,7 +1561,6 @@ contains
   end subroutine ctlIn3d
 
   subroutine ctlIn2d(ia,iz,ja,jz,kz,kj,nReact,cMyNum,cTime,jjlabel)
-    use mem_grid, only: grid_g,ngrid
     integer,intent(IN) :: ia,iz,ja,jz,kz,nReact,kj
     character(LEN=4), intent(IN) :: cMyNum
     character(LEN=8), intent(IN) :: cTime
@@ -1528,7 +1596,6 @@ contains
        ,prsnz,prsnzp,glat,rtgt,topt,rlongup  &
        ,zm,zt,pl,tl,dl,rl,zml,ztl,o3l,dzl, &
        iPos,jPos,rgas,g,stefan,nZRad,mclat,mcol)
-    implicit none
     integer,intent(IN) :: iaction
     integer,intent(IN) :: m1
     integer,intent(IN) :: if_adap
@@ -1608,10 +1675,10 @@ contains
 
           !srf-changed from 1500 to 200 Pa
           deltap = max(200.,  &
-               !mp
-               !                     2.*(prsnz-prsnzp),  &
+                                !mp
+                                !                     2.*(prsnz-prsnzp),  &
                (prsnz-prsnzp)/2.,  &
-               !mp
+                                !mp
                (prsnz-200.1)/float(namax))
           narad = max(1,int((prsnz-200.)/deltap))
           !    narad = 1
@@ -1826,7 +1893,6 @@ contains
   end subroutine mclatchyTuv
 
   subroutine AllocIndex(block_size,ia,ja,iz,jz,sza,Is2Alloc)
-    implicit none
     integer,intent(IN) :: block_size,ia,iz,ja,jz
     real,dimension(ia:iz,ja:jz),intent(IN) :: sza
     logical :: Is2Alloc
@@ -1936,4 +2002,4 @@ contains
 
 
 
-end module ModtuvDriver
+end module ModTuvDriver
