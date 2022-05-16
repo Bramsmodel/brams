@@ -34,6 +34,10 @@ module ModOneProc
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModInitHis, only: &
+       sfcinit_hstart, &
+       inithis
+  
   use ModChemistryDriver, only: &
        aer_background, &
        initial_condition

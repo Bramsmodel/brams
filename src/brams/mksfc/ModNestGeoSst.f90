@@ -7,6 +7,10 @@
 !###########################################################################
 module ModNestGeoSst
 
+  use ModInitHis, only: &
+       patch_land_average, &
+       patch_land_unaverage
+  
   use mem_mksfc, only: &
        sfcfile_p, &
        vndvifil, &

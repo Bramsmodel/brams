@@ -61,7 +61,7 @@ OBJ_MOD = \
 	geodat.o \
 	grid_dims.o \
 	grid_struct.o \
-	inithis.o  \
+	ModInitHis.o  \
 	io_params.o \
 	isan_coms.o \
 	isan_io.o \

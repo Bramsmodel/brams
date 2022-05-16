@@ -9,6 +9,9 @@
 
 subroutine nud_update(iswap,nnud)
 
+  use ModInitHis, only: &
+       hi_interp
+  
 use var_tables
 use mem_varinit,only: &
     fnames_nud,       &

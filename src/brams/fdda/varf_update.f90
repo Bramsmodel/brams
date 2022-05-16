@@ -120,6 +120,11 @@ end subroutine PrtOpt
 
 subroutine hi_interpInitial4(n1,n2,n3,vn,xm1,xt1,ym1,yt1,zm1,zt1,plat1,plon1,topt1,ztop1,m1,m2,m3,vm,ngm,ngr1,vname,idim)
 
+  use ModInitHis, only: &
+       hi_avgu, &
+       hi_avgv, &
+       hi_avgw
+  
  use mem_grid, only: grid_g, ztn
  use mem_scratch, only: vctr1, vctr2, vctr3, vctr10
 

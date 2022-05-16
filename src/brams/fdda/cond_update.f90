@@ -8,6 +8,9 @@
 
 subroutine cond_update(iswap, ncond)
 
+  use ModInitHis, only: &
+       hi_interp
+  
   use var_tables, only: num_var, vtab_r
   use an_header, only: head_table, nvbtab
   use mem_grid, only: ngrids, nnzp, nnxp, nnyp, ngridsh, &
@@ -276,7 +279,7 @@ subroutine cond_update(iswap, ncond)
                          platn1(ngr), plonn1(ngr),                     &
                          topt1(1,ngr), ztop1,                          &
                          nnzp(ng), nnxp(ng),nnyp(ng), 1,               &
-                         varinit_g(ng)%varrfh(1,1,1),                  &
+                         varinit_g(ng)%varrfh,                  &
                          ng, ngr, vtab_r(nv,ng)%name, 3)
                  endif
                  cycle grid_loop2
