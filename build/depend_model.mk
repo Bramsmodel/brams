@@ -521,7 +521,8 @@ ModParallelEnvironment.o : $(MPI)/ModParallelEnvironment.f90
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModOutputUtils.o : $(IO)/ModOutputUtils.f90 var_tables.o mem_basic.o mem_turb.o  $(UTILS_INCS)/constants.h
+ModOutputUtils.o : $(IO)/ModOutputUtils.f90 var_tables.o ModBasicFields.o mem_turb.o dump.o \
+	$(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1659,7 +1660,8 @@ ModBramsGrid.o : $(POST_SRC)/ModBramsGrid.f90 ModNamelistFile.o \
 
 ModPostGrid.o : $(POST_SRC)/ModPostGrid.F90 ModNamelistFile.o \
 	ModBramsGrid.o ModPostUtils.o mem_grid.o parlibf.o ModPostTypes.o \
-	ModParallelEnvironment.o ModOutputUtils.o ModPostOneFieldNetCDF.o $(UTILS_INCS)/files.h
+	ModParallelEnvironment.o ModOutputUtils.o ModPostOneFieldNetCDF.o \
+	ModBasicFields.o $(UTILS_INCS)/files.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1693,7 +1695,8 @@ ModPostOneFieldUtils.o : $(POST_SRC)/ModPostOneFieldUtils.f90 \
 ModPostOneField.o : $(POST_SRC)/ModPostOneField.f90 \
 	ModPostOneFieldUtils.o ModBramsGrid.o ModPostGrid.o \
 	ModPostOneField2d.o ModPostOneField3d.o \
-	ModPostOneField7d.o ModPostOneField8d.o $(UTILS_INCS)/constants.h
+	ModPostOneField7d.o ModPostOneField8d.o ModBasicFields.o \
+	$(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1701,28 +1704,28 @@ ModPostOneField.o : $(POST_SRC)/ModPostOneField.f90 \
 ModPostOneField2d.o : $(POST_SRC)/ModPostOneField2d.f90 \
 	ModPostOneFieldUtils.o ModBramsGrid.o ModPostGrid.o \
 	ModPostUtils.o ModOutputUtils.o mem_grid.o micphys.o\
-	$(UTILS_INCS)/constants.h
+	ModBasicFields.o $(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
 ModPostOneField3d.o : $(POST_SRC)/ModPostOneField3d.f90 \
 	ModPostOneFieldUtils.o ModBramsGrid.o ModPostGrid.o \
-	ModPostUtils.o ModOutputUtils.o micphys.o
+	ModBasicFields.o ModPostUtils.o ModOutputUtils.o micphys.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
 ModPostOneField7d.o : $(POST_SRC)/ModPostOneField7d.f90 \
 	ModPostOneFieldUtils.o ModBramsGrid.o ModPostGrid.o \
-	ModPostUtils.o ModOutputUtils.o
+	ModPostUtils.o ModOutputUtils.o ModBasicFields.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
 ModPostOneField8d.o : $(POST_SRC)/ModPostOneField8d.f90 \
 	ModPostOneFieldUtils.o ModBramsGrid.o ModPostGrid.o \
-	ModPostUtils.o ModOutputUtils.o
+	ModPostUtils.o ModOutputUtils.o ModBasicFields.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1730,7 +1733,7 @@ ModPostOneField8d.o : $(POST_SRC)/ModPostOneField8d.f90 \
 ModPostProcess.o : $(POST_SRC)/ModPostProcess.F90 \
 	ModPostOneField.o ModNamelistFile.o ModBramsGrid.o ModPostGrid.o \
 	ModGrid.o ModGridTree.o ModMessageSet.o ModTimeStamp.o \
-	ModParallelEnvironment.o  $(UTILS_INCS)/constants.h
+	ModParallelEnvironment.o  ModBasicFields.o $(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

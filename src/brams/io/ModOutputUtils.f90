@@ -1,16 +1,19 @@
 module ModOutputUtils
+
   use var_tables, only: &
        var_tables_r, &
        GetVTabEntry
 
-  use mem_basic, only: basic_g
+  use ModBasicFields, only: &
+       BasicFields
 
   use mem_turb, only: &
        turb_g, &
        idiffk, &
        xkhkm
 
-  use dump
+  use dump, only: &
+       dumpMessage
 
   implicit none
 
@@ -21,17 +24,18 @@ module ModOutputUtils
      module procedure GetVarFromMemToOutput_2D
      module procedure GetVarFromMemToOutput_3D
      module procedure GetVarFromMemToOutput_4D
-  end interface
+  end interface GetVarFromMemToOutput
 
   character(len=*),parameter :: sourceName='ModOutputUtils.f90' !Name of source code
   include "constants.h"
 contains
 
 
-  subroutine GetVarFromMemToOutput_2D (varName, ngrd, arrayOut)
+  subroutine GetVarFromMemToOutput_2D (varName, ngrd, arrayOut, oneBasicFields)
     character(LEN=*),   intent(in ) :: varName
     integer,            intent(in ) :: ngrd
-    real,	        intent(out) :: arrayOut(:,:)
+    real,        intent(out) :: arrayOut(:,:)
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
 
     type(var_tables_r), pointer   :: vtabPtr
     character(len=30), parameter :: h="**(GetVarFromMemToOutput_2D)**"
@@ -42,8 +46,8 @@ contains
     vtabPtr => null()
     call GetVTabEntry(varName, ngrd, vtabPtr)
     if (.not. associated(vtabPtr)) then
-        iErrNumber=dumpMessage(c_tty,c_yes,sourceName,h &
-              ,c_fatal,'var '//trim(varName)//' not found in vtab_r')
+       iErrNumber=dumpMessage(c_tty,c_yes,sourceName,h &
+            ,c_fatal,'var '//trim(varName)//' not found in vtab_r')
     end if
 
     ! copy the field
@@ -55,11 +59,12 @@ contains
 
 
 
-  subroutine GetVarFromMemToOutput_3D (varName, ngrd, arrayOut)
+  subroutine GetVarFromMemToOutput_3D (varName, ngrd, arrayOut, oneBasicFields)
     character(LEN=*),   intent(in ) :: varName
     integer,            intent(in ) :: ngrd
-    real,	        intent(out) :: arrayOut(:,:,:)
-
+    real,        intent(out) :: arrayOut(:,:,:)
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
+    
     type(var_tables_r), pointer   :: vtabPtr
     real :: transposed(size(arrayOut,3),size(arrayOut,1),size(arrayOut,2))
     character(len=len(varName)) :: varnIn, varnOut
@@ -90,8 +95,8 @@ contains
     vtabPtr => null()
     call GetVTabEntry(varnIn, ngrd, vtabPtr)
     if (.not. associated(vtabPtr)) then
-               iErrNumber=dumpMessage(c_tty,c_yes,sourceName,h &
-              ,c_fatal,'var '//trim(varName)//' not found in vtab_r')
+       iErrNumber=dumpMessage(c_tty,c_yes,sourceName,h &
+            ,c_fatal,'var '//trim(varName)//' not found in vtab_r')
     end if
 
     ! copy the field observing that
@@ -132,7 +137,7 @@ contains
           do i = 1, n1
              do k = 1, n3
                 arrayOut(i,j,k) = transposed(k,i,j) + &
-                     basic_g(ngrd)%pi0(k,i,j)
+                     oneBasicFields%pi0(k,i,j)
              end do
           end do
        end do
@@ -148,7 +153,7 @@ contains
              do i = 1, n1
                 do k = 1, n3
                    arrayOut(i,j,k) = transposed(k,i,j) * &
-                        xkhkm(ngrd) / basic_g(ngrd)%dn0(k,i,j)
+                        xkhkm(ngrd) / oneBasicFields%dn0(k,i,j)
                 end do
              end do
           end do
@@ -159,7 +164,7 @@ contains
              do i = 1, n1
                 do k = 1, n3
                    arrayOut(i,j,k) = turb_g(ngrd)%vkh(k,i,j) / &
-                        basic_g(ngrd)%dn0(k,i,j)
+                        oneBasicFields%dn0(k,i,j)
                 end do
              end do
           end do
@@ -173,7 +178,7 @@ contains
           do i = 1, n1
              do k = 1, n3
                 arrayOut(i,j,k) = transposed(k,i,j) / &
-                     basic_g(ngrd)%dn0(k,i,j)
+                     oneBasicFields%dn0(k,i,j)
              end do
           end do
        end do
@@ -196,10 +201,11 @@ contains
 
 
 
-  subroutine GetVarFromMemToOutput_4D (varName, ngrd, arrayOut)
+  subroutine GetVarFromMemToOutput_4D (varName, ngrd, arrayOut, oneBasicFields)
     character(LEN=*),   intent(in ) :: varName
     integer,            intent(in ) :: ngrd
-    real,	        intent(out) :: arrayOut(:,:,:,:)
+    real,        intent(out) :: arrayOut(:,:,:,:)
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
 
     type(var_tables_r), pointer   :: vtabPtr
     integer :: i, j, k, l
@@ -221,8 +227,8 @@ contains
     vtabPtr => null()
     call GetVTabEntry(varName, ngrd, vtabPtr)
     if (.not. associated(vtabPtr)) then
-               iErrNumber=dumpMessage(c_tty,c_yes,sourceName,h &
-              ,c_fatal,'var '//trim(varName)//' not found in vtab_r')
+       iErrNumber=dumpMessage(c_tty,c_yes,sourceName,h &
+            ,c_fatal,'var '//trim(varName)//' not found in vtab_r')
     end if
 
     ! prepared for idim_type 4 or 5

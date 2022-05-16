@@ -1079,7 +1079,9 @@ contains
        if (IPOS/=0) then
           ! create post processing
           oneAllPostTypes => null()
-          call CreatePostProcess(oneNamelistFile, oneAllPostTypes)
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+          call CreatePostProcess(oneNamelistFile, oneAllPostTypes, oneGrid%Basic)
+          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        endif
 
        select case (IPOS)
@@ -1090,7 +1092,9 @@ contains
 
        case (2,3)
           ! post process initial state of the atmosphere in Grads
-          call PostProcess(AllGrids, oneNamelistFile, oneAllPostTypes)
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+          call PostProcess(AllGrids, oneNamelistFile, oneAllPostTypes, oneGrid%Basic)
+          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        end select
 
        ! wall time at the end of initialization
@@ -1394,7 +1398,9 @@ contains
 
              select case (IPOS)
              case (2,3)
-                call PostProcess(AllGrids, oneNamelistFile, oneAllPostTypes)
+                call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+                call PostProcess(AllGrids, oneNamelistFile, oneAllPostTypes, oneGrid%Basic)
+                call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
              end select
 
           end if
