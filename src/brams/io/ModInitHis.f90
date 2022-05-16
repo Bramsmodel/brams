@@ -18,12 +18,11 @@ module ModInitHis
        nvbtab, &
        head_table
 
-  use mem_basic
   use mem_basic, only: &
        basic_g
 
-  use mem_grid
   use mem_grid, only: &
+       ngrids, &
        nzg, &
        nzs, &
        npatch, &
@@ -41,13 +40,31 @@ module ModInitHis
        itime1, &
        nxyzp
 
-  use rconstants
+  use rconstants, only: &
+       p00, &
+       cp, &
+       cpor, &
+       g, &
+       rgas, &
+       cpi
 
-  use ref_sounding
+  use ref_sounding, only: &
+       th01dn, &
+       pi01dn, &
+       dn01dn, &
+       rt01dn, &
+       v01dn, &
+       u01dn
 
-  use io_params
+  use io_params, only: &
+       hfilin
 
-  use mem_scratch
+  use mem_scratch, only: &
+       vctr1, &
+       vctr2, &
+       vctr3, &
+       vctr4, &
+       vctr10
 
   use micphys, only: &
        level
@@ -76,9 +93,12 @@ module ModInitHis
        vegndvi, &
        grndvap
 
-  use mem_leaf
+  use mem_leaf, only: &
+       zrough, &
+       leaf_g
 
-  use leaf_coms
+  use leaf_coms, only: &
+       veg_ht
 
   implicit none
 
