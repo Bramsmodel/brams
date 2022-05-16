@@ -554,7 +554,7 @@ ModTimestep.o : $(MODEL)/ModTimestep.F90 mem_basic.o mem_cuparm.o ModOptical.o M
 	ModOzone.o mem_grid.o mem_leaf.o mem_oda.o mem_radiate.o mem_scalar.o ModLeaf3.o \
 	ModRstilt.o mem_turb.o mem_varinit.o micphys.o node_mod.o shcu_vars_const.o \
 	machine_arq.o rad_driv.o ModCuParGrell3.o digitalFilter.o ModRtimi.o ModMicrophysicsMisc.o \
-	ChemSourcesDriver.o ChemDryDepDriver.o chemistry.o ModTimeStamp.o ModGrid.o \
+	ChemSourcesDriver.o ChemDryDepDriver.o ModChemistryDriver.o ModTimeStamp.o ModGrid.o \
 	ModAcoust.o ModRamsMicrophysics2M.o ModMicThompsonDriver.o ModWindFarm.o \
         ModMicrophysicsDrive.o ModSeaSalt.o ModMatrixDriver.o ModRadvcRK.o $(JULES_OBJ_SFCLYR) \
 	ModMessageSet.o modIau.o  ModRbnd.o ModRadvc.o ModTurbK.o ModDiffuse.o \
@@ -568,7 +568,7 @@ ModTimestepRK.o : $(MODEL)/ModTimestepRK.F90 ModTimestep.o ModBasicFields.o mem_
 	ModOzone.o mem_grid.o mem_leaf.o mem_oda.o mem_radiate.o mem_scalar.o ModOptical.o ModLeaf3.o \
 	ModRstilt.o mem_turb.o mem_varinit.o micphys.o node_mod.o shcu_vars_const.o \
 	ModMicrophysicsMisc.o ModMicrophysicsDrive.o machine_arq.o rad_driv.o ModCuParGrell3.o digitalFilter.o\
-	ChemSourcesDriver.o ChemDryDepDriver.o chemistry.o ModTimeStamp.o ModGrid.o \
+	ChemSourcesDriver.o ChemDryDepDriver.o ModChemistryDriver.o ModTimeStamp.o ModGrid.o \
 	ModAcoust.o ModRThrm.o ModRamsMicrophysics2M.o ModMicThompsonDriver.o\
         ModSeaSalt.o ModMatrixDriver.o ModRadvcRK.o modIau.o ModLeaf3OceanOnly.o ModRbnd.o \
 	$(JULES_OBJ_SFCLYR)  ModRadvc.o ModMonotonicAdvection.o utilsMod.o ModRtimi.o \
@@ -588,7 +588,7 @@ ModOneProc.o : $(MODEL)/ModOneProc.F90 ModNamelistFile.o ModSched.o ModGasPart.o
 	ModMonotonicAdvection.o shcu_vars_const.o ModUrbanCanopy.o \
 	soilMoisture.o teb_spm_start.o mem_teb_vars_const.o var_tables.o \
 	mem_varinit.o ModParaInit.o ModRanlavg.o ModNestGeoSst.o ModRinit.o \
-	grid_dims.o local_proc.o ModTimeStamp.o \
+	grid_dims.o local_proc.o ModTimeStamp.o ModChemistryDriver.o \
 	node_mod.o mem_radiate.o ModWindFarm.o \
 	mem_scratch.o ModCuParGrell3.o digitalFilter.o \
 	chem1_list.o mem_chem1.o aer1_list.o mem_aer1.o mem_chem1aq.o \
@@ -1633,9 +1633,9 @@ chem_orage.o : $(CCATT)/chem_orage.f90 mem_grid.o mem_micro.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-chemistry.o : $(CCATT)/chemistry.f90 mem_scalar.o mem_grid.o  \
+ModChemistryDriver.o : $(CCATT)/ModChemistryDriver.f90 mem_scalar.o mem_grid.o  \
 	chem1_list.o mem_chem1.o mem_chem1aq.o aer1_list.o mem_aer1.o chem_fastjx_driv.o \
-	mem_basic.o mem_radiate.o node_mod.o rconstants.o mem_micro.o \
+	mem_radiate.o node_mod.o rconstants.o mem_micro.o \
 	chem_spack_utils.o mem_spack.o chem_spack_solve_sparse.o chem_spack_ros.o \
 	chem_spack_ros_dyndt.o chem_spack_qssa.o chem_trans_gasaq.o chem_orage.o \
 	chem_spack_rodas3_dyndt.o chem_trans_liq.o ModBasicFields.o \

@@ -34,6 +34,10 @@ module ModOneProc
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModChemistryDriver, only: &
+       aer_background, &
+       initial_condition
+       
   use ModRinit, only: &
        gridloc_prt, &
        refs3d, &
