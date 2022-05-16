@@ -1306,7 +1306,7 @@ ModRhhi.o : $(INIT)/ModRhhi.f90 ModBasicFields.o mem_grid.o mem_scratch.o \
 	rm -f $(<F:.f90=.f90)
 
 ModInitHis.o : $(IO)/ModInitHis.f90 an_header.o chem1_list.o io_params.o \
-	leaf_coms.o mem_aerad.o mem_basic.o mem_chem1.o mem_grid.o mem_leaf.o \
+	leaf_coms.o mem_aerad.o ModBasicFields.o mem_chem1.o mem_grid.o mem_leaf.o \
 	mem_scratch.o mem_varinit.o micphys.o ModLeaf3.o ModRinit.o rconstants.o \
 	ref_sounding.o var_tables.o 
 	@cp -f $< $(<F:.f90=.f90)

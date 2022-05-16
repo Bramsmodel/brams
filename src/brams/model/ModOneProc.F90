@@ -1643,7 +1643,9 @@ contains
 
           if (initial == 3) then
              print*,'History-INITIAL start of grid- 1'
-             call inithis()
+             call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+             call inithis(oneGrid%Basic)
+             call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
           endif
 
           !  On all fine grids, initialize the surface layer characteristics,
@@ -2042,8 +2044,9 @@ contains
           !call fatal_error(h//"**(JP)** sfcinit_hstart was not worked yet")
           iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
                "**(JP)** sfcinit_hstart was not worked yet")
-          call sfcinit_hstart()
-
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+          call sfcinit_hstart(oneGrid%Basic)
+          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        end if
 
 

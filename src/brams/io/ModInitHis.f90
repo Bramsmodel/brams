@@ -18,8 +18,8 @@ module ModInitHis
        nvbtab, &
        head_table
 
-  use mem_basic, only: &
-       basic_g
+  use ModBasicFields, only: &
+       BasicFields
 
   use mem_grid, only: &
        ngrids, &
@@ -122,7 +122,8 @@ contains
 
 
   
-  subroutine initHis()
+  subroutine initHis(oneBasicFields)
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
     integer :: ngrids1,ioutput1,nzg1,nzs1,npatch1
     real :: time1,ztop1
     integer, allocatable, dimension(:) :: nnxp1,nnyp1,nnzp1
@@ -710,23 +711,23 @@ contains
 
     call newgrid(1)
     call refs3d(nnzp(1),nnxp(1),nnyp(1)  &
-         ,basic_g(1)%pi0    ,basic_g(1)%dn0    &
-         ,basic_g(1)%dn0u   ,basic_g(1)%dn0v   &
-         ,basic_g(1)%th0    ,grid_g(1)%topt    &
+         ,oneBasicFields%pi0    ,oneBasicFields%dn0    &
+         ,oneBasicFields%dn0u   ,oneBasicFields%dn0v   &
+         ,oneBasicFields%th0    ,grid_g(1)%topt    &
          ,grid_g(1)%rtgt                                )
 
     !--(DMK-CCATT-INI)---------------------------------------------------------
     if(initial == 4)then
 
        !--(DMK-CCATT-OBS) Checar as dimensoes nzp, nxp e nyp no BRAMS 5.0
-       varinit_g(ngrid)%varpf(:,:,:) = varinit_g(ngrid)%varpf(:,:,:) - basic_g(ngrid)%pi0(:,:,:)
-       !varinit_g(ngrid)%varpf(1:nzp,1:nxp,1:nyp) = varinit_g(ngrid)%varpf(1:nzp,1:nxp,1:nyp) - basic_g(ngrid)%pi0(1:nzp,1:nxp,1:nyp)
+       varinit_g(ngrid)%varpf(:,:,:) = varinit_g(ngrid)%varpf(:,:,:) - oneBasicFields%pi0(:,:,:)
+       !varinit_g(ngrid)%varpf(1:nzp,1:nxp,1:nyp) = varinit_g(ngrid)%varpf(1:nzp,1:nxp,1:nyp) - oneBasicFields%pi0(1:nzp,1:nxp,1:nyp)
 
-       call atob(nxyzp,varinit_g(ngrid)%varuf,basic_g(ngrid)%uc)
-       call atob(nxyzp,varinit_g(ngrid)%varvf,basic_g(ngrid)%vc)
-       call atob(nxyzp,varinit_g(ngrid)%varpf,basic_g(ngrid)%pc)
-       call atob(nxyzp,varinit_g(ngrid)%vartf,basic_g(ngrid)%thp)
-       call atob(nxyzp,varinit_g(ngrid)%varrf,basic_g(ngrid)%rtp)
+       call atob(nxyzp,varinit_g(ngrid)%varuf,oneBasicFields%uc)
+       call atob(nxyzp,varinit_g(ngrid)%varvf,oneBasicFields%vc)
+       call atob(nxyzp,varinit_g(ngrid)%varpf,oneBasicFields%pc)
+       call atob(nxyzp,varinit_g(ngrid)%vartf,oneBasicFields%thp)
+       call atob(nxyzp,varinit_g(ngrid)%varrf,oneBasicFields%rtp)
 
        ! If this is an initialization, put data into regular arrays
 
@@ -761,7 +762,8 @@ contains
 
 
 
-  subroutine sfcinit_hstart()
+  subroutine sfcinit_hstart(oneBasicFields)
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
     integer :: i,j,ifm,ipat,k2,k,nveg
     real :: c1
     real, allocatable, dimension(:,:) :: hpis,hprss
@@ -779,14 +781,14 @@ contains
        do j = 1,nnyp(ifm)
           do i = 1,nnxp(ifm)
              k2=int(grid_g(ifm)%lpw(i,j))
-             hpis(i,j) = c1 * (basic_g(ifm)%pi0(k2-1,i,j) + basic_g(ifm)%pi0(k2,i,j)   &
-                  + basic_g(ifm)%pp(k2-1,i,j) + basic_g(ifm)%pp(k2,i,j))
-             !  airtemp = basic_g(ifm)%theta(k2,i,j) * pis(i,j)
+             hpis(i,j) = c1 * (oneBasicFields%pi0(k2-1,i,j) + oneBasicFields%pi0(k2,i,j)   &
+                  + oneBasicFields%pp(k2-1,i,j) + oneBasicFields%pp(k2,i,j))
+             !  airtemp = oneBasicFields%theta(k2,i,j) * pis(i,j)
              hprss(i,j) = hpis(i,j) ** cpor * p00
 
              leaf_g(ifm)%patch_rough(i,j,1) = 0.001
              ! leaf_g(ifm)%can_temp(i,j,1) = airtemp
-             ! leaf_g(ifm)%can_rvap(i,j,1) = basic_g(ifm)%rv(k2,i,j)
+             ! leaf_g(ifm)%can_rvap(i,j,1) = oneBasicFields%rv(k2,i,j)
 
              do ipat = 2,npatch
 
