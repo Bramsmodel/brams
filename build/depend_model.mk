@@ -114,7 +114,7 @@ an_header.o  : $(UTILS_MODS)/an_header.f90
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-sfclyr_jules.o : $(JULES_DIR)/sfclyr_jules.f90 io_params.o mem_basic.o leaf_coms.o \
+sfclyr_jules.o : $(JULES_DIR)/sfclyr_jules.f90 io_params.o ModBasicFields.o leaf_coms.o \
 	rconstants.o mem_globaer.o mem_grid.o mem_radiate.o mem_turb.o mem_cuparm.o micphys.o \
 	mem_micro.o chem1_list.o mem_chem1.o mem_leaf.o node_mod.o mem_jules.o mem_carma.o \
 	io_constants.o mem_brams_jules.o gridbox_mean_mod.o csigma_mod.o \
@@ -563,7 +563,8 @@ ModTimestep.o : $(MODEL)/ModTimestep.F90 mem_basic.o mem_cuparm.o ModOptical.o M
         ModMicrophysicsDrive.o ModSeaSalt.o ModMatrixDriver.o ModRadvcRK.o $(JULES_OBJ_SFCLYR) \
 	ModMessageSet.o modIau.o  ModRbnd.o ModRadvc.o ModTurbK.o ModDiffuse.o ModOdaNudge.o \
 	ModUrbanCanopy.o ModRexev.o ModRThrm.o ModCoriolis.o $(UTILS_INCS)/tsNames.h \
-	ModNudAnalysis.o ModMicGfdlDriver.o ModRConv.o ModRShCuPar.o ModRConvGrellCatt.o 
+	ModNudAnalysis.o ModMicGfdlDriver.o ModRConv.o ModRShCuPar.o ModRConvGrellCatt.o \
+	sfclyr_jules.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -578,7 +579,7 @@ ModTimestepRK.o : $(MODEL)/ModTimestepRK.F90 ModTimestep.o ModBasicFields.o mem_
 	$(JULES_OBJ_SFCLYR)  ModRadvc.o ModMonotonicAdvection.o utilsMod.o ModRtimi.o \
 	ModNudAnalysis.o ModMessageSet.o ModTurbK.o ModDiffuse.o ModRexev.o ModRThrm.o ModWindFarm.o \
 	ModUrbanCanopy.o ModCoriolis.o $(UTILS_INCS)/tsNames.h  $(UTILS_INCS)/constants.h \
-	ModMicGfdlDriver.o ModAerClim.o ModRConv.o ModRShCuPar.o 
+	ModMicGfdlDriver.o ModAerClim.o ModRConv.o ModRShCuPar.o sfclyr_jules.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

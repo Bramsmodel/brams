@@ -10,6 +10,11 @@
 
 module ModTimestepRK
 
+#ifdef JULES
+  use ModSfcLyrJules, only: &
+       sfclyr_jules
+#endif
+  
   use ModNudAnalysis, only: &
        datassim
   
@@ -433,15 +438,15 @@ contains
           call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, oneGrid%Basic)
           call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        end if
-       call SFCLYR_JULES(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile)
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+       call sfclyr_jules(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile, oneGrid%Basic)
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        !--- this combines the JULES land + LEAF ocean models.
        if (isfcl_ocean == 1) then
           call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
           call sfclyr_ocean_only  (mzp,mxp,myp,ia,iz,ja,jz,ibcon, oneGrid%Basic)
           call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        end if
-
-       !if(stepDebug) print *,mynum,SFCLYR_JULES'
 #endif
     endif
 

@@ -8,6 +8,11 @@
 
 module ModTimestep
 
+#ifdef JULES
+  use ModSfcLyrJules, only: &
+       sfclyr_jules
+#endif
+  
   use ModNudAnalysis, only: &
        datassim
   
@@ -358,8 +363,9 @@ contains
           call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, oneGrid%Basic)
           call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        end if
-       call SFCLYR_JULES(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile)
-       !DSM}
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+       call sfclyr_jules(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile, oneGrid%Basic)
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 #endif
     endif
 
