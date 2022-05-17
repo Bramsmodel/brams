@@ -1,5 +1,10 @@
 module ModVarfFile
 
+  use ModNudAnalysis, only: &
+       VariableWeight, &
+       VariableWeightChem, &
+       VarfIntrp
+  
   use ModDateUtils
        
   use mem_scratch, only: &
@@ -265,15 +270,14 @@ contains
 
        call VariableWeight(nnzp(1), nodemxp(mynum,1), nodemyp(mynum,1), nnxp(1),&
             nnyp(1), nodei0(mynum,1), nodej0(mynum,1),  &
-            grid_g(1)%topt(1,1), grid_g(1)%rtgt(1,1), varinit_g(1)%varwts(1,1,1),&
-!srf 
+            grid_g(1)%topt, grid_g(1)%rtgt, varinit_g(1)%varwts,&
             varwts_for_operations_only)
 
        if(chem_assim == 1 .and. chemistry >= 0) &
             call VariableWeightChem(nnzp(1), nodemxp(mynum,1), nodemyp(mynum,1), nnxp(1),&
             nnyp(1), nodei0(mynum,1), nodej0(mynum,1),  &
-            grid_g(1)%topt(1,1), grid_g(1)%rtgt(1,1), &
-            varinit_g(1)%varwts_chem(1,1,1))
+            grid_g(1)%topt, grid_g(1)%rtgt, &
+            varinit_g(1)%varwts_chem)
 
        ! Read files
 

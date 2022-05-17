@@ -130,7 +130,7 @@ OBJ_MOD = \
 	nest_filldens.o \
 	ModNestGeoSst.o \
 	nest_intrp.o \
-	nud_analysis.o \
+	ModNudAnalysis.o \
 	nud_read.o \
 	nud_update.o \
 	obs_input.o \

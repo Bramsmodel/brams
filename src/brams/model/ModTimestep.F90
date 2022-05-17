@@ -8,6 +8,9 @@
 
 module ModTimestep
 
+  use ModNudAnalysis, only: &
+       datassim
+  
   use ModOdaNudge, only: &
        oda_nudge
   
