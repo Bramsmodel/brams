@@ -536,7 +536,11 @@ contains
 
     !  Analysis nudging and boundary condition
     !------------------------------------------
-    if (NUD_TYPE>0) call DATASSIM()
+    if (NUD_TYPE>0) then
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+       call datassim(oneGrid%Basic)
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+    end if
 
     !  Observation data assimilation
     !----------------------------------------

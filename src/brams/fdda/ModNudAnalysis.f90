@@ -10,8 +10,8 @@ module ModNudAnalysis
   use mem_tend, only: &
        tend
 
-  use mem_basic, only: &
-       basic_g
+  use ModBasicFields, only: &
+       BasicFields
 
   use mem_grid, only: &
        time, &
@@ -30,7 +30,6 @@ module ModNudAnalysis
        maxnxp, &
        maxnyp
 
-!  use mem_varinit
   use mem_varinit, only: &
        nud_cond, &
        tcond_beg, &
@@ -126,7 +125,9 @@ module ModNudAnalysis
 
 contains
 
-  subroutine datassim()
+  subroutine datassim(oneBasicFields)
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
+    
     integer :: il,ir,jl,jr
 
     !--(DMK-CCATT-INI)-----------------------------------------------------
@@ -152,19 +153,16 @@ contains
     ! Basic boundary and analysis nudging scheme
 
     call nudge(mzp,mxp,myp,il,ir,jl,jr,varinit_g(ngrid)%varwts   &
-         
          ,varinit_g(ngrid)%varup ,varinit_g(ngrid)%varvp   &
          ,varinit_g(ngrid)%varpp ,varinit_g(ngrid)%vartp   &
          ,varinit_g(ngrid)%varrp  &
-         
          ,varinit_g(ngrid)%varuf ,varinit_g(ngrid)%varvf   &
          ,varinit_g(ngrid)%varpf ,varinit_g(ngrid)%vartf   &
          ,varinit_g(ngrid)%varrf   &
-         
-         ,basic_g(ngrid)%up    ,basic_g(ngrid)%vp   &
-         ,basic_g(ngrid)%theta ,basic_g(ngrid)%rtp   &
-         ,basic_g(ngrid)%pp   &
-         ,tend%ut,tend%vt,tend%tht,tend%rtt,tend%pt)
+         ,oneBasicFields%up    ,oneBasicFields%vp   &
+         ,oneBasicFields%theta ,oneBasicFields%rtp   &
+         ,oneBasicFields%pp   &
+         ,tend%ut,tend%vt,tend%tht,tend%rtt,tend%pt, oneBasicFields)
 
     !--(DMK-CCATT-INI)-----------------------------------------------------
     if (chem_assim == 1) then
@@ -187,7 +185,7 @@ contains
          call nudge_cond(mzp,mxp,myp,il,ir,jl,jr,varinit_g(ngrid)%varwts   &
          ,varinit_g(ngrid)%varrph ,varinit_g(ngrid)%varcph  &
          ,varinit_g(ngrid)%varrfh ,varinit_g(ngrid)%varcfh   &
-         ,basic_g(ngrid)%rtp ,tend%rtt)
+         ,oneBasicFields%rtp ,tend%rtt)
 
     return
   end subroutine datassim
@@ -197,7 +195,9 @@ contains
   subroutine nudge(m1,m2,m3,ia,iz,ja,jz,varwts  &
        ,varup,varvp,varpp,vartp,varrp  &
        ,varuf,varvf,varpf,vartf,varrf  &
-       ,up,vp,theta,rtp,pp,ut,vt,tht,rtt,pt)
+       ,up,vp,theta,rtp,pp,ut,vt,tht,rtt,pt,oneBasicFields)
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
+    
     integer :: m1,m2,m3,ia,iz,ja,jz
     real, dimension(m1,m2,m3) :: varup,varvp,vartp,varrp,varpp  &
          ,varuf,varvf,vartf,varrf,varpf  &
@@ -248,18 +248,18 @@ contains
 
              if(evaluate==1) then
                 !Sum the quadratic error to statistic RMSE
-                somaQ(k,1)=somaQ(k,1)+(basic_g(1)%up(k,i,j)-vctr1(k))**2
-                somaQ(k,2)=somaQ(k,2)+(basic_g(1)%vp(k,i,j)-vctr2(k))**2
-                somaQ(k,3)=somaQ(k,3)+(basic_g(1)%theta(k,i,j)-vctr3(k))**2
-                somaQ(k,4)=somaQ(k,4)+(basic_g(1)%rtp(k,i,j)-vctr4(k))**2
-                somaQ(k,5)=somaQ(k,5)+(basic_g(1)%pp(k,i,j)-vctr5(k))**2
+                somaQ(k,1)=somaQ(k,1)+(oneBasicFields%up(k,i,j)-vctr1(k))**2
+                somaQ(k,2)=somaQ(k,2)+(oneBasicFields%vp(k,i,j)-vctr2(k))**2
+                somaQ(k,3)=somaQ(k,3)+(oneBasicFields%theta(k,i,j)-vctr3(k))**2
+                somaQ(k,4)=somaQ(k,4)+(oneBasicFields%rtp(k,i,j)-vctr4(k))**2
+                somaQ(k,5)=somaQ(k,5)+(oneBasicFields%pp(k,i,j)-vctr5(k))**2
 
                 !Sum the absolute error to statistic
-                soma(k,1)=soma(k,1)+(basic_g(1)%up(k,i,j)-vctr1(k))
-                soma(k,2)=soma(k,2)+(basic_g(1)%vp(k,i,j)-vctr2(k))
-                soma(k,3)=soma(k,3)+(basic_g(1)%theta(k,i,j)-vctr3(k))
-                soma(k,4)=soma(k,4)+(basic_g(1)%rtp(k,i,j)-vctr4(k))
-                soma(k,5)=soma(k,5)+(basic_g(1)%pp(k,i,j)-vctr5(k))
+                soma(k,1)=soma(k,1)+(oneBasicFields%up(k,i,j)-vctr1(k))
+                soma(k,2)=soma(k,2)+(oneBasicFields%vp(k,i,j)-vctr2(k))
+                soma(k,3)=soma(k,3)+(oneBasicFields%theta(k,i,j)-vctr3(k))
+                soma(k,4)=soma(k,4)+(oneBasicFields%rtp(k,i,j)-vctr4(k))
+                soma(k,5)=soma(k,5)+(oneBasicFields%pp(k,i,j)-vctr5(k))
              endif
 
              vctr10(k)=(varwts(k,i,j)+varwts(k,min(m2,i+1),j)   )*.5* wt_uv
@@ -570,46 +570,9 @@ contains
 
     call fillscr(1,maxnxp,maxnyp,1,nnxp(icm),nnyp(icm),1,1  &
          ,scr1,grid_g(icm)%topt)
-!!$  call eintp(scr1,scr2  &
-!!$       ,1,maxnxp,maxnyp,1,nnxp(ifm),nnyp(ifm),ifm,2,'t',0,0)
     call fillvar(1,maxnxp,maxnyp,1,nnxp(ifm),nnyp(ifm),1,1  &
          ,scr2,scratch%vt2da)
 
-!!$  if (ifflag == 1) then
-!!$
-!!$     !     Interpolate varwts
-!!$
-!!$     call fmint4(varinit_g(icm)%varwts   &
-!!$          ,varinit_g(ifm)%varwts   &
-!!$          ,basic_g(icm)%dn0 ,basic_g(ifm)%dn0   &
-!!$          ,scratch%vt2da,ifm,icm,'t',0)
-!!$
-!!$  endif
-
-
-!!$  if (ifflag == 2) then
-!!$
-!!$     !     Interpolate future level atmospheric variables
-!!$
-!!$     call fmint4(varinit_g(icm)%varuf ,varinit_g(ifm)%varuf   &
-!!$          ,basic_g(icm)%dn0u ,basic_g(ifm)%dn0u   &
-!!$          ,scratch%vt2da,ifm,icm,'u',1)
-!!$     call fmint4(varinit_g(icm)%varvf ,varinit_g(ifm)%varvf   &
-!!$          ,basic_g(icm)%dn0v ,basic_g(ifm)%dn0v   &
-!!$          ,scratch%vt2da,ifm,icm,'v',1)
-!!$     call fmint4(varinit_g(icm)%varpf ,varinit_g(ifm)%varpf   &
-!!$          ,basic_g(icm)%dn0v ,basic_g(ifm)%dn0v   &
-!!$          ,scratch%vt2da,ifm,icm,'t',1)
-!!$     call fmint4(varinit_g(icm)%vartf ,varinit_g(ifm)%vartf   &
-!!$          ,basic_g(icm)%dn0 ,basic_g(ifm)%dn0   &
-!!$          ,scratch%vt2da,ifm,icm,'t',1)
-!!$     call fmint4(varinit_g(icm)%varrf ,varinit_g(ifm)%varrf   &
-!!$          ,basic_g(icm)%dn0 ,basic_g(ifm)%dn0   &
-!!$          ,scratch%vt2da,ifm,icm,'t',1)
-!!$
-!!$  endif
-
-    return
   end subroutine vfintrpf
 
 
@@ -638,64 +601,9 @@ contains
 
     call fillscr(1,maxnxp,maxnyp,1,nnxp(icm),nnyp(icm),1,1  &
          ,scr1,grid_g(icm)%topt)
-!!$  call eintp(scr1,scr2  &
-!!$       ,1,maxnxp,maxnyp,1,nnxp(ifm),nnyp(ifm),ifm,2,'t',0,0)
     call fillvar(1,maxnxp,maxnyp,1,nnxp(ifm),nnyp(ifm),1,1  &
          ,scr2,scratch%vt2da)
 
-!!$  if (ifflag == 1) then
-!!$
-!!$     !     Interpolate varwts
-!!$
-!!$     call fmint4(varinit_g(icm)%varwts   &
-!!$          ,varinit_g(ifm)%varwts   &
-!!$          ,basic_g(icm)%dn0 ,basic_g(ifm)%dn0   &
-!!$          ,scratch%vt2da,ifm,icm,'t',0)
-!!$
-!!$!--(DMK-CCATT-INI)-----------------------------------------------------
-!!$!     Interpolate varwts_chem
-!!$      if(chem_assim == 1 ) call fmint4(varinit_g(icm)%varwts_chem   &
-!!$                                       ,varinit_g(ifm)%varwts_chem   &
-!!$                                       ,basic_g(icm)%dn0 ,basic_g(ifm)%dn0   &
-!!$                                       ,scratch%vt2da,ifm,icm,'t',0)
-!!$!--(DMK-CCATT-END)-----------------------------------------------------
-!!$
-!!$  else if (ifflag == 2) then
-!!$
-!!$     !     Interpolate future level atmospheric variables
-!!$
-!!$     call fmint4(varinit_g(icm)%varuf ,varinit_g(ifm)%varuf   &
-!!$          ,basic_g(icm)%dn0u ,basic_g(ifm)%dn0u   &
-!!$          ,scratch%vt2da,ifm,icm,'u',1)
-!!$     call fmint4(varinit_g(icm)%varvf ,varinit_g(ifm)%varvf   &
-!!$          ,basic_g(icm)%dn0v ,basic_g(ifm)%dn0v   &
-!!$          ,scratch%vt2da,ifm,icm,'v',1)
-!!$     call fmint4(varinit_g(icm)%varpf ,varinit_g(ifm)%varpf   &
-!!$          ,basic_g(icm)%dn0v ,basic_g(ifm)%dn0v   &
-!!$          ,scratch%vt2da,ifm,icm,'t',1)
-!!$     call fmint4(varinit_g(icm)%vartf ,varinit_g(ifm)%vartf   &
-!!$          ,basic_g(icm)%dn0 ,basic_g(ifm)%dn0   &
-!!$          ,scratch%vt2da,ifm,icm,'t',1)
-!!$     call fmint4(varinit_g(icm)%varrf ,varinit_g(ifm)%varrf   &
-!!$          ,basic_g(icm)%dn0 ,basic_g(ifm)%dn0   &
-!!$          ,scratch%vt2da,ifm,icm,'t',1)
-!!$
-!!$!--(DMK-CCATT-INI)-----------------------------------------------------
-!!$!     Interpolate future level chemical variables
-!!$     if (chem_assim == 1) then
-!!$        do nspc=1,nspecies
-!!$           if(spc_alloc(fdda,nspc) == 1) then
-!!$              call fmint4(chem1_g(nspc,icm)%sc_pf  &! varinit_g(icm)%varrf 
-!!$       	                  ,chem1_g(nspc,ifm)%sc_pf  &! varinit_g(ifm)%varrf   &
-!!$                          ,basic_g(icm)%dn0   &
-!!$                          ,basic_g(ifm)%dn0   &
-!!$                          ,scratch%vt2da,ifm,icm,'t',1)
-!!$           endif
-!!$        enddo
-!!$     endif
-!!$!--(DMK-CCATT-END)-----------------------------------------------------
-!!$
-!!$  endif
   end subroutine VarfIntrp
 
   !--(DMK-CCATT-INI)-----------------------------------------------------------

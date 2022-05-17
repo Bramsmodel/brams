@@ -21,7 +21,6 @@ use mem_varinit,only: &
 use an_header,only:   &
     head_table,       &
     nvbtab
-use mem_basic
 use mem_grid
 use grid_struct
 use rconstants

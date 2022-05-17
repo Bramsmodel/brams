@@ -1008,335 +1008,335 @@ contains
 
   !***************************************************************************
 
-  subroutine init_copy_mic_block(ngr, m1, m2, ia, iz, m3, ja, jz, ijm, &
-       micro, basic, rtgt, lpw_R)
-
-    use mem_micro, only:  &
-         micro_vars            ! INTENT(IN)
-
-    use mem_basic, only:  &
-         basic_vars            ! INTENT(IN)
-
-    use micphys, only:  &
-         level,icloud,irain,ipris,isnow,iaggr,igraup,ihail,ncat, & !INTENT(IN)
-         scrmic1,         & !INTENT(IN)
-         scrmic2,         & !INTENT(IN)
-         emb,             & !INTENT(IN)
-         pitot,           & !INTENT(IN)
-         press,           & !INTENT(IN)
-         tair,            & !INTENT(IN)
-         til,             & !INTENT(IN)
-         rliq,            & !INTENT(IN)
-         rice,            & !INTENT(IN)
-         cx,              & !INTENT(IN)
-         rx,              & !INTENT(IN)
-         qx,              & !INTENT(IN)
-         sm,              & !INTENT(IN)
-         vap,             & !INTENT(IN)
-         qhydm,           & !INTENT(IN)
-         rvstr,           & !INTENT(IN)
-         sa,              & !INTENT(IN)
-         tairstrc,        & !INTENT(IN)
-         tref,            & !INTENT(IN)
-         vapdif,          & !INTENT(IN)
-         eff,             & !INTENT(IN)
-         sh,              & !INTENT(IN)
-         dn0i,            & !INTENT(IN)
-         jhcat              !INTENT(IN)
-
-    use mem_grid, only: ngrids !INTENT(IN)
-
-    implicit none
-
-    ! Arguments
-    type (micro_vars), intent(in)      :: micro 
-    type (basic_vars), intent(in)      :: basic
-    integer, intent(in)                :: m1,m2,ia,iz,m3,ja,jz,ijm, ngr
-    real, intent(in)                :: lpw_R(:,:)
-    real, intent(in)                   :: rtgt(:,:)
-
-    integer :: lpw(m2,m3)
-    ! Local Variables
-    integer :: i, j, k, ij, cat
-
-    lpw=int(lpw_R)
-    ! *** 2D Arrays:
-
-    do ij=1,ij_final
-
-       lpw_opt(ij) = lpw(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))
-       rtgt_opt_tile(ij) = rtgt(indicei(ij,indextile,ngr),                 &
-            indicej(ij,indextile,ngr))
-
-       if (level >= 3) then
-          if(irain >= 1)  then
-             accpr_tile(ij) = micro%accpr(indicei(ij,indextile,ngr),       &
-                  indicej(ij,indextile,ngr))
-             pcprr_tile(ij) = micro%pcprr(indicei(ij,indextile,ngr),       &
-                  indicej(ij,indextile,ngr))
-          endif
-          if(ipris >= 1)  then
-             accpp_tile(ij) = micro%accpp(indicei(ij,indextile,ngr),       &
-                  indicej(ij,indextile,ngr))
-             pcprp_tile(ij) = micro%pcprp(indicei(ij,indextile,ngr),       &
-                  indicej(ij,indextile,ngr))
-          endif
-          if(isnow >= 1)  then
-             accps_tile(ij) = micro%accps(indicei(ij,indextile,ngr),       &
-                  indicej(ij,indextile,ngr))
-             pcprs_tile(ij) = micro%pcprs(indicei(ij,indextile,ngr),       &
-                  indicej(ij,indextile,ngr))
-          endif
-          if(iaggr >= 1)  then
-             accpa_tile(ij) = micro%accpa(indicei(ij,indextile,ngr),       &
-                  indicej(ij,indextile,ngr))
-             pcpra_tile(ij) = micro%pcpra(indicei(ij,indextile,ngr),       &
-                  indicej(ij,indextile,ngr))
-          endif
-          if(igraup >= 1) then
-             accpg_tile(ij) = micro%accpg(indicei(ij,indextile,ngr),       &
-                  indicej(ij,indextile,ngr))
-             pcprg_tile(ij) = micro%pcprg(indicei(ij,indextile,ngr),       &
-                  indicej(ij,indextile,ngr))
-          endif
-          if(ihail >= 1)  then
-             accph_tile(ij) = micro%accph(indicei(ij,indextile,ngr),       &
-                  indicej(ij,indextile,ngr))
-             pcprh_tile(ij) = micro%pcprh(indicei(ij,indextile,ngr),       &
-                  indicej(ij,indextile,ngr))
-          endif
-          pcpg_opt_tile(ij)    = micro%pcpg(indicei(ij,indextile,ngr),     &
-               indicej(ij,indextile,ngr))
-          qpcpg_opt_tile(ij)   = micro%qpcpg(indicei(ij,indextile,ngr),    &
-               indicej(ij,indextile,ngr))
-          dpcpg_opt_tile(ij)   = micro%dpcpg(indicei(ij,indextile,ngr),    &
-               indicej(ij,indextile,ngr))
-       endif
-
-    enddo
-
-    ! *** 3D Arrays:
-
-    cccnx_mod(:,:) = 0. ! cldnuc
-    cifnx_mod(:,:) = 0. ! icenuc
-
-    do k = 1,m1
-
-       do ij=1,ij_final
-
-          ! Input data used in thrmstr_opt
-          pp_opt_tile(ij,k)    = basic%pp(k,indicei(ij,indextile,ngr),     &
-               indicej(ij,indextile,ngr))
-          thp_opt_tile(ij,k)   = basic%thp(k,indicei(ij,indextile,ngr),    &
-               indicej(ij,indextile,ngr))
-          pi0_opt_tile(ij,k)   = basic%pi0(k,indicei(ij,indextile,ngr),    &
-               indicej(ij,indextile,ngr))
-          rtp_opt_tile(ij,k)   = basic%rtp(k,indicei(ij,indextile,ngr),    &
-               indicej(ij,indextile,ngr))
-          theta_opt_tile(ij,k) = basic%theta(k,indicei(ij,indextile,ngr),  &
-               indicej(ij,indextile,ngr))
-          rv_opt_tile(ij,k)    = basic%rv(k,indicei(ij,indextile,ngr),     &
-               indicej(ij,indextile,ngr))
-          ! Checando em each_column
-          dn0_opt_tile(ij,k)   = basic%dn0(k,indicei(ij,indextile,ngr),    &
-               indicej(ij,indextile,ngr))
-          ! cldnuc
-          wp_opt_tile(ij,k)    = basic%wp(k,indicei(ij,indextile,ngr),     &
-               indicej(ij,indextile,ngr))
-
-          if (level >= 2 ) then
-             rcp_tile(ij,k)   = micro%rcp(k,indicei(ij,indextile,ngr),     &
-                  indicej(ij,indextile,ngr))
-          endif
-          if (level >= 3) then
-             if(irain >= 1) then
-                rrp_tile(ij,k)   = micro%rrp(k,indicei(ij,indextile,ngr),  &
-                     indicej(ij,indextile,ngr))
-                q2_tile(ij,k)    = micro%q2(k,indicei(ij,indextile,ngr),   &
-                     indicej(ij,indextile,ngr))
-             endif
-             if(ipris >= 1)  then
-                rpp_tile(ij,k)   = micro%rpp(k,indicei(ij,indextile,ngr),  &
-                     indicej(ij,indextile,ngr))
-             endif
-             if(isnow >= 1)  then
-                rsp_tile(ij,k)   = micro%rsp(k,indicei(ij,indextile,ngr),  &
-                     indicej(ij,indextile,ngr))
-             endif
-             if(iaggr >= 1)  then
-                rap_tile(ij,k)   = micro%rap(k,indicei(ij,indextile,ngr),  &
-                     indicej(ij,indextile,ngr))
-             endif
-             if(igraup >= 1) then
-                rgp_tile(ij,k)   = micro%rgp(k,indicei(ij,indextile,ngr),  &
-                     indicej(ij,indextile,ngr))
-                q6_tile(ij,k)    = micro%q6(k,indicei(ij,indextile,ngr),   &
-                     indicej(ij,indextile,ngr))
-                rhp_tile(ij,k)   = micro%rhp(k,indicei(ij,indextile,ngr),  &
-                     indicej(ij,indextile,ngr))
-                q7_tile(ij,k)    = micro%q7(k,indicei(ij,indextile,ngr),   &
-                     indicej(ij,indextile,ngr))
-             endif
-!--(DMK-CARRIO-INI)------------------------------------------------------------------	     
-             if(icloud >= 5) then
-!--(DMK-CARRIO-OLD)------------------------------------------------------------------	     
-!             if(icloud == 5) then
-!--(DMK-CARRIO-FIM)------------------------------------------------------------------	     
-                ccp_tile(ij,k)   = micro%ccp(k,indicei(ij,indextile,ngr),  &
-                     indicej(ij,indextile,ngr))
-             endif
-             if(irain == 5) then
-                crp_tile(ij,k)   = micro%crp(k,indicei(ij,indextile,ngr),  &
-                     indicej(ij,indextile,ngr))
-             endif
-             if(ipris == 5) then
-                cpp_tile(ij,k)   = micro%cpp(k,indicei(ij,indextile,ngr),  &
-                     indicej(ij,indextile,ngr))
-             endif
-             if(isnow == 5) then
-                csp_tile(ij,k)   = micro%csp(k,indicei(ij,indextile,ngr),  &
-                     indicej(ij,indextile,ngr))
-             endif
-             if(iaggr == 5) then
-                cap_tile(ij,k)   = micro%cap(k,indicei(ij,indextile,ngr),  &
-                     indicej(ij,indextile,ngr))
-             endif
-             if(igraup == 5) then
-                cgp_tile(ij,k)   = micro%cgp(k,indicei(ij,indextile,ngr),  &
-                     indicej(ij,indextile,ngr))
-             endif
-             if(ihail == 5) then
-                chp_tile(ij,k)   = micro%chp(k,indicei(ij,indextile,ngr),  &
-                     indicej(ij,indextile,ngr))
-             endif
-             cccnp_tile(ij,k)   = micro%cccnp(k,indicei(ij,indextile,ngr),  &
-                  indicej(ij,indextile,ngr))
-             cifnp_tile(ij,k)   = micro%cifnp(k,indicei(ij,indextile,ngr),  &
-                  indicej(ij,indextile,ngr))
-          endif
-
-       enddo
-
-    enddo
-
-    ! *** 3D Arrays (ij,10):
-
-    do k = 1,10
-       do ij=1,ij_final
-
-          k1_mod(ij,k) = 0
-          k2_mod(ij,k) = 0
-          k3_mod(ij,k) = 0
-
-       enddo
-    enddo
-
-    ! *** 3D Arrays:
-    do k = 1,m1
-       pitot_mod(:,k)    = pitot(k)    !(OUT)
-       press_mod(:,k)    = press(k)    !(OUT)
-       tair_mod(:,k)     = 0.
-       til_mod(:,k)      = 0.
-       rliq_mod(:,k)     = 0.
-       rice_mod(:,k)     = 0.
-       qhydm_mod(:,k)    = 0.
-       rvstr_mod(:,k)    = 0.
-       tairstrc_mod(:,k) = 0.
-       vapdif_mod(:,k)   = 0.
-       rdynvsci_mod(:,k) = 0.
-       denfac_mod(:,k) = 0.
-       colfacr_mod(:,k) = 0.
-       colfacr2_mod(:,k) = 0.
-       colfacc_mod(:,k) = 0.
-       colfacc2_mod(:,k) = 0.
-       sumuy_mod(:,k) = 0.
-       sumuz_mod(:,k) = 0.
-       sumvr_mod(:,k) = 0.
-       rvs0_mod(:,k) = 0.
-       dn0i_mod(:,k) = dn0i(k)
-       scrmic1_mod(:,k) = 0.
-       scrmic2_mod(:,k) = 0.
-       scrmic3_mod(:,k) = 0.
-
-    enddo
-
-    ! *** 4D Arrays:
-    do cat = 1, ncat
-       do k = 1,m1
-
-          ! Input data used in thrmstr_opt
-          cx_mod(:,k,cat) = cx(k,cat) !(IN)
-
-          rx_mod(:,k,cat) = rx(k,cat) !(IN)
-
-          qx_mod(:,k,cat) = 0 !(INOUT)
-
-          ! enemb, each_call
-          emb_mod(:,k,cat)= emb(k,cat)
-
-          vterm_mod(:,k,cat) = 0.;
-
-          jhcat_mod(:,k,cat) = jhcat(k,cat)
-
-          sh_mod(:,k,cat) = sh(k,cat)
-
-          emb_mod(:,k,cat) = emb(k,cat)
-
-          vap_mod(:,k,cat) = 0.
-
-          sd_mod(:,k,cat) = 0.
-          se_mod(:,k,cat) = 0.
-          sf_mod(:,k,cat) = 0.
-          sg_mod(:,k,cat) = 0.
-          sm_mod(:,k,cat) = sm(k,cat)
-          ss_mod(:,k,cat) = 0.
-          su_mod(:,k,cat) = 0.
-          sw_mod(:,k,cat) = 0.
-          sy_mod(:,k,cat) = 0.
-          sz_mod(:,k,cat) = 0.
-          ict1_mod(:,k,cat) = 0
-          ict2_mod(:,k,cat) = 0
-          wct1_mod(:,k,cat) = 0.
-          wct2_mod(:,k,cat) = 0.
-
-       enddo
-    enddo
-
-    ! *** 5D Arrays:
-    rxfer_mod(:,:,:,:)  = 0.
-    qrxfer_mod(:,:,:,:) = 0.
-    enxfer_mod(:,:,:,:) = 0
-
-    do k = 1, m1
-       eff_mod(:,k,1) = 1.0
-    enddo
-
-    do cat = 2, 10
-       do k = 1, m1
-          eff_mod(:,k,cat) = 0.
-       enddo
-    enddo
-
-    do cat = 1, 9
-       do k = 1,m1
-          ! Input data used in thrmstr_opt
-          sa_mod(:,k,cat) = 0.
-       enddo
-    enddo
-
-    do cat = 1, 2
-       do k = 1,m1
-          tref_mod(:,k,cat) = 0.
-          rvsref_mod(:,k,cat) = 0.
-          rvsrefp_mod(:,k,cat) = 0.
-       enddo
-    enddo
-
-    ! movi de mic_driv_new
-
-    qx_mod(:,:,:) = 0.
-
-  end subroutine init_copy_mic_block
+!!$  subroutine init_copy_mic_block(ngr, m1, m2, ia, iz, m3, ja, jz, ijm, &
+!!$       micro, basic, rtgt, lpw_R)
+!!$
+!!$    use mem_micro, only:  &
+!!$         micro_vars            ! INTENT(IN)
+!!$
+!!$    use mem_basic, only:  &
+!!$         basic_vars            ! INTENT(IN)
+!!$
+!!$    use micphys, only:  &
+!!$         level,icloud,irain,ipris,isnow,iaggr,igraup,ihail,ncat, & !INTENT(IN)
+!!$         scrmic1,         & !INTENT(IN)
+!!$         scrmic2,         & !INTENT(IN)
+!!$         emb,             & !INTENT(IN)
+!!$         pitot,           & !INTENT(IN)
+!!$         press,           & !INTENT(IN)
+!!$         tair,            & !INTENT(IN)
+!!$         til,             & !INTENT(IN)
+!!$         rliq,            & !INTENT(IN)
+!!$         rice,            & !INTENT(IN)
+!!$         cx,              & !INTENT(IN)
+!!$         rx,              & !INTENT(IN)
+!!$         qx,              & !INTENT(IN)
+!!$         sm,              & !INTENT(IN)
+!!$         vap,             & !INTENT(IN)
+!!$         qhydm,           & !INTENT(IN)
+!!$         rvstr,           & !INTENT(IN)
+!!$         sa,              & !INTENT(IN)
+!!$         tairstrc,        & !INTENT(IN)
+!!$         tref,            & !INTENT(IN)
+!!$         vapdif,          & !INTENT(IN)
+!!$         eff,             & !INTENT(IN)
+!!$         sh,              & !INTENT(IN)
+!!$         dn0i,            & !INTENT(IN)
+!!$         jhcat              !INTENT(IN)
+!!$
+!!$    use mem_grid, only: ngrids !INTENT(IN)
+!!$
+!!$    implicit none
+!!$
+!!$    ! Arguments
+!!$    type (micro_vars), intent(in)      :: micro 
+!!$    type (basic_vars), intent(in)      :: basic
+!!$    integer, intent(in)                :: m1,m2,ia,iz,m3,ja,jz,ijm, ngr
+!!$    real, intent(in)                :: lpw_R(:,:)
+!!$    real, intent(in)                   :: rtgt(:,:)
+!!$
+!!$    integer :: lpw(m2,m3)
+!!$    ! Local Variables
+!!$    integer :: i, j, k, ij, cat
+!!$
+!!$    lpw=int(lpw_R)
+!!$    ! *** 2D Arrays:
+!!$
+!!$    do ij=1,ij_final
+!!$
+!!$       lpw_opt(ij) = lpw(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))
+!!$       rtgt_opt_tile(ij) = rtgt(indicei(ij,indextile,ngr),                 &
+!!$            indicej(ij,indextile,ngr))
+!!$
+!!$       if (level >= 3) then
+!!$          if(irain >= 1)  then
+!!$             accpr_tile(ij) = micro%accpr(indicei(ij,indextile,ngr),       &
+!!$                  indicej(ij,indextile,ngr))
+!!$             pcprr_tile(ij) = micro%pcprr(indicei(ij,indextile,ngr),       &
+!!$                  indicej(ij,indextile,ngr))
+!!$          endif
+!!$          if(ipris >= 1)  then
+!!$             accpp_tile(ij) = micro%accpp(indicei(ij,indextile,ngr),       &
+!!$                  indicej(ij,indextile,ngr))
+!!$             pcprp_tile(ij) = micro%pcprp(indicei(ij,indextile,ngr),       &
+!!$                  indicej(ij,indextile,ngr))
+!!$          endif
+!!$          if(isnow >= 1)  then
+!!$             accps_tile(ij) = micro%accps(indicei(ij,indextile,ngr),       &
+!!$                  indicej(ij,indextile,ngr))
+!!$             pcprs_tile(ij) = micro%pcprs(indicei(ij,indextile,ngr),       &
+!!$                  indicej(ij,indextile,ngr))
+!!$          endif
+!!$          if(iaggr >= 1)  then
+!!$             accpa_tile(ij) = micro%accpa(indicei(ij,indextile,ngr),       &
+!!$                  indicej(ij,indextile,ngr))
+!!$             pcpra_tile(ij) = micro%pcpra(indicei(ij,indextile,ngr),       &
+!!$                  indicej(ij,indextile,ngr))
+!!$          endif
+!!$          if(igraup >= 1) then
+!!$             accpg_tile(ij) = micro%accpg(indicei(ij,indextile,ngr),       &
+!!$                  indicej(ij,indextile,ngr))
+!!$             pcprg_tile(ij) = micro%pcprg(indicei(ij,indextile,ngr),       &
+!!$                  indicej(ij,indextile,ngr))
+!!$          endif
+!!$          if(ihail >= 1)  then
+!!$             accph_tile(ij) = micro%accph(indicei(ij,indextile,ngr),       &
+!!$                  indicej(ij,indextile,ngr))
+!!$             pcprh_tile(ij) = micro%pcprh(indicei(ij,indextile,ngr),       &
+!!$                  indicej(ij,indextile,ngr))
+!!$          endif
+!!$          pcpg_opt_tile(ij)    = micro%pcpg(indicei(ij,indextile,ngr),     &
+!!$               indicej(ij,indextile,ngr))
+!!$          qpcpg_opt_tile(ij)   = micro%qpcpg(indicei(ij,indextile,ngr),    &
+!!$               indicej(ij,indextile,ngr))
+!!$          dpcpg_opt_tile(ij)   = micro%dpcpg(indicei(ij,indextile,ngr),    &
+!!$               indicej(ij,indextile,ngr))
+!!$       endif
+!!$
+!!$    enddo
+!!$
+!!$    ! *** 3D Arrays:
+!!$
+!!$    cccnx_mod(:,:) = 0. ! cldnuc
+!!$    cifnx_mod(:,:) = 0. ! icenuc
+!!$
+!!$    do k = 1,m1
+!!$
+!!$       do ij=1,ij_final
+!!$
+!!$          ! Input data used in thrmstr_opt
+!!$          pp_opt_tile(ij,k)    = basic%pp(k,indicei(ij,indextile,ngr),     &
+!!$               indicej(ij,indextile,ngr))
+!!$          thp_opt_tile(ij,k)   = basic%thp(k,indicei(ij,indextile,ngr),    &
+!!$               indicej(ij,indextile,ngr))
+!!$          pi0_opt_tile(ij,k)   = basic%pi0(k,indicei(ij,indextile,ngr),    &
+!!$               indicej(ij,indextile,ngr))
+!!$          rtp_opt_tile(ij,k)   = basic%rtp(k,indicei(ij,indextile,ngr),    &
+!!$               indicej(ij,indextile,ngr))
+!!$          theta_opt_tile(ij,k) = basic%theta(k,indicei(ij,indextile,ngr),  &
+!!$               indicej(ij,indextile,ngr))
+!!$          rv_opt_tile(ij,k)    = basic%rv(k,indicei(ij,indextile,ngr),     &
+!!$               indicej(ij,indextile,ngr))
+!!$          ! Checando em each_column
+!!$          dn0_opt_tile(ij,k)   = basic%dn0(k,indicei(ij,indextile,ngr),    &
+!!$               indicej(ij,indextile,ngr))
+!!$          ! cldnuc
+!!$          wp_opt_tile(ij,k)    = basic%wp(k,indicei(ij,indextile,ngr),     &
+!!$               indicej(ij,indextile,ngr))
+!!$
+!!$          if (level >= 2 ) then
+!!$             rcp_tile(ij,k)   = micro%rcp(k,indicei(ij,indextile,ngr),     &
+!!$                  indicej(ij,indextile,ngr))
+!!$          endif
+!!$          if (level >= 3) then
+!!$             if(irain >= 1) then
+!!$                rrp_tile(ij,k)   = micro%rrp(k,indicei(ij,indextile,ngr),  &
+!!$                     indicej(ij,indextile,ngr))
+!!$                q2_tile(ij,k)    = micro%q2(k,indicei(ij,indextile,ngr),   &
+!!$                     indicej(ij,indextile,ngr))
+!!$             endif
+!!$             if(ipris >= 1)  then
+!!$                rpp_tile(ij,k)   = micro%rpp(k,indicei(ij,indextile,ngr),  &
+!!$                     indicej(ij,indextile,ngr))
+!!$             endif
+!!$             if(isnow >= 1)  then
+!!$                rsp_tile(ij,k)   = micro%rsp(k,indicei(ij,indextile,ngr),  &
+!!$                     indicej(ij,indextile,ngr))
+!!$             endif
+!!$             if(iaggr >= 1)  then
+!!$                rap_tile(ij,k)   = micro%rap(k,indicei(ij,indextile,ngr),  &
+!!$                     indicej(ij,indextile,ngr))
+!!$             endif
+!!$             if(igraup >= 1) then
+!!$                rgp_tile(ij,k)   = micro%rgp(k,indicei(ij,indextile,ngr),  &
+!!$                     indicej(ij,indextile,ngr))
+!!$                q6_tile(ij,k)    = micro%q6(k,indicei(ij,indextile,ngr),   &
+!!$                     indicej(ij,indextile,ngr))
+!!$                rhp_tile(ij,k)   = micro%rhp(k,indicei(ij,indextile,ngr),  &
+!!$                     indicej(ij,indextile,ngr))
+!!$                q7_tile(ij,k)    = micro%q7(k,indicei(ij,indextile,ngr),   &
+!!$                     indicej(ij,indextile,ngr))
+!!$             endif
+!!$!--(DMK-CARRIO-INI)------------------------------------------------------------------	     
+!!$             if(icloud >= 5) then
+!!$!--(DMK-CARRIO-OLD)------------------------------------------------------------------	     
+!!$!             if(icloud == 5) then
+!!$!--(DMK-CARRIO-FIM)------------------------------------------------------------------	     
+!!$                ccp_tile(ij,k)   = micro%ccp(k,indicei(ij,indextile,ngr),  &
+!!$                     indicej(ij,indextile,ngr))
+!!$             endif
+!!$             if(irain == 5) then
+!!$                crp_tile(ij,k)   = micro%crp(k,indicei(ij,indextile,ngr),  &
+!!$                     indicej(ij,indextile,ngr))
+!!$             endif
+!!$             if(ipris == 5) then
+!!$                cpp_tile(ij,k)   = micro%cpp(k,indicei(ij,indextile,ngr),  &
+!!$                     indicej(ij,indextile,ngr))
+!!$             endif
+!!$             if(isnow == 5) then
+!!$                csp_tile(ij,k)   = micro%csp(k,indicei(ij,indextile,ngr),  &
+!!$                     indicej(ij,indextile,ngr))
+!!$             endif
+!!$             if(iaggr == 5) then
+!!$                cap_tile(ij,k)   = micro%cap(k,indicei(ij,indextile,ngr),  &
+!!$                     indicej(ij,indextile,ngr))
+!!$             endif
+!!$             if(igraup == 5) then
+!!$                cgp_tile(ij,k)   = micro%cgp(k,indicei(ij,indextile,ngr),  &
+!!$                     indicej(ij,indextile,ngr))
+!!$             endif
+!!$             if(ihail == 5) then
+!!$                chp_tile(ij,k)   = micro%chp(k,indicei(ij,indextile,ngr),  &
+!!$                     indicej(ij,indextile,ngr))
+!!$             endif
+!!$             cccnp_tile(ij,k)   = micro%cccnp(k,indicei(ij,indextile,ngr),  &
+!!$                  indicej(ij,indextile,ngr))
+!!$             cifnp_tile(ij,k)   = micro%cifnp(k,indicei(ij,indextile,ngr),  &
+!!$                  indicej(ij,indextile,ngr))
+!!$          endif
+!!$
+!!$       enddo
+!!$
+!!$    enddo
+!!$
+!!$    ! *** 3D Arrays (ij,10):
+!!$
+!!$    do k = 1,10
+!!$       do ij=1,ij_final
+!!$
+!!$          k1_mod(ij,k) = 0
+!!$          k2_mod(ij,k) = 0
+!!$          k3_mod(ij,k) = 0
+!!$
+!!$       enddo
+!!$    enddo
+!!$
+!!$    ! *** 3D Arrays:
+!!$    do k = 1,m1
+!!$       pitot_mod(:,k)    = pitot(k)    !(OUT)
+!!$       press_mod(:,k)    = press(k)    !(OUT)
+!!$       tair_mod(:,k)     = 0.
+!!$       til_mod(:,k)      = 0.
+!!$       rliq_mod(:,k)     = 0.
+!!$       rice_mod(:,k)     = 0.
+!!$       qhydm_mod(:,k)    = 0.
+!!$       rvstr_mod(:,k)    = 0.
+!!$       tairstrc_mod(:,k) = 0.
+!!$       vapdif_mod(:,k)   = 0.
+!!$       rdynvsci_mod(:,k) = 0.
+!!$       denfac_mod(:,k) = 0.
+!!$       colfacr_mod(:,k) = 0.
+!!$       colfacr2_mod(:,k) = 0.
+!!$       colfacc_mod(:,k) = 0.
+!!$       colfacc2_mod(:,k) = 0.
+!!$       sumuy_mod(:,k) = 0.
+!!$       sumuz_mod(:,k) = 0.
+!!$       sumvr_mod(:,k) = 0.
+!!$       rvs0_mod(:,k) = 0.
+!!$       dn0i_mod(:,k) = dn0i(k)
+!!$       scrmic1_mod(:,k) = 0.
+!!$       scrmic2_mod(:,k) = 0.
+!!$       scrmic3_mod(:,k) = 0.
+!!$
+!!$    enddo
+!!$
+!!$    ! *** 4D Arrays:
+!!$    do cat = 1, ncat
+!!$       do k = 1,m1
+!!$
+!!$          ! Input data used in thrmstr_opt
+!!$          cx_mod(:,k,cat) = cx(k,cat) !(IN)
+!!$
+!!$          rx_mod(:,k,cat) = rx(k,cat) !(IN)
+!!$
+!!$          qx_mod(:,k,cat) = 0 !(INOUT)
+!!$
+!!$          ! enemb, each_call
+!!$          emb_mod(:,k,cat)= emb(k,cat)
+!!$
+!!$          vterm_mod(:,k,cat) = 0.;
+!!$
+!!$          jhcat_mod(:,k,cat) = jhcat(k,cat)
+!!$
+!!$          sh_mod(:,k,cat) = sh(k,cat)
+!!$
+!!$          emb_mod(:,k,cat) = emb(k,cat)
+!!$
+!!$          vap_mod(:,k,cat) = 0.
+!!$
+!!$          sd_mod(:,k,cat) = 0.
+!!$          se_mod(:,k,cat) = 0.
+!!$          sf_mod(:,k,cat) = 0.
+!!$          sg_mod(:,k,cat) = 0.
+!!$          sm_mod(:,k,cat) = sm(k,cat)
+!!$          ss_mod(:,k,cat) = 0.
+!!$          su_mod(:,k,cat) = 0.
+!!$          sw_mod(:,k,cat) = 0.
+!!$          sy_mod(:,k,cat) = 0.
+!!$          sz_mod(:,k,cat) = 0.
+!!$          ict1_mod(:,k,cat) = 0
+!!$          ict2_mod(:,k,cat) = 0
+!!$          wct1_mod(:,k,cat) = 0.
+!!$          wct2_mod(:,k,cat) = 0.
+!!$
+!!$       enddo
+!!$    enddo
+!!$
+!!$    ! *** 5D Arrays:
+!!$    rxfer_mod(:,:,:,:)  = 0.
+!!$    qrxfer_mod(:,:,:,:) = 0.
+!!$    enxfer_mod(:,:,:,:) = 0
+!!$
+!!$    do k = 1, m1
+!!$       eff_mod(:,k,1) = 1.0
+!!$    enddo
+!!$
+!!$    do cat = 2, 10
+!!$       do k = 1, m1
+!!$          eff_mod(:,k,cat) = 0.
+!!$       enddo
+!!$    enddo
+!!$
+!!$    do cat = 1, 9
+!!$       do k = 1,m1
+!!$          ! Input data used in thrmstr_opt
+!!$          sa_mod(:,k,cat) = 0.
+!!$       enddo
+!!$    enddo
+!!$
+!!$    do cat = 1, 2
+!!$       do k = 1,m1
+!!$          tref_mod(:,k,cat) = 0.
+!!$          rvsref_mod(:,k,cat) = 0.
+!!$          rvsrefp_mod(:,k,cat) = 0.
+!!$       enddo
+!!$    enddo
+!!$
+!!$    ! movi de mic_driv_new
+!!$
+!!$    qx_mod(:,:,:) = 0.
+!!$
+!!$  end subroutine init_copy_mic_block
 
   !****************************************************************************
 
@@ -4728,183 +4728,183 @@ contains
 
   !***************************************************************************
 
-  subroutine final_copy_mic_block(ngr, m1, m2, m3, micro, basic, rtgt, lpw_R)
-
-    use mem_micro, only:  &
-         micro_vars            ! INTENT(OUT)
-
-    use mem_basic, only:  &
-         basic_vars            ! INTENT(OUT)
-
-    use micphys, only:  &
-         level,         &      ! INTENT(IN)
-         irain,         &      ! INTENT(IN)
-         ipris,         &      ! INTENT(IN)
-         isnow,         &      ! INTENT(IN)
-         iaggr,         &      ! INTENT(IN)
-         igraup,        &      ! INTENT(IN)
-         icloud,        &      ! INTENT(IN)
-         ihail                 ! INTENT(IN)
-
-    implicit none
-
-    ! Arguments
-    type (micro_vars), intent(out)    :: micro 
-    type (basic_vars), intent(out)    :: basic
-    integer, intent(in)               :: ngr, m1, m2, m3
-    real, intent(out)              :: lpw_R(:,:)
-    real, intent(out)                 :: rtgt(:,:)
-
-    ! Local Variables
-    integer :: k, ij
-    integer :: lpw(m2,m3)
-
-    ! *** 2D Arrays:
-
-    do ij=1,ij_final
-
-       lpw(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))  = lpw_opt(ij)
-       rtgt(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) =              &
-            rtgt_opt_tile(ij)
-
-       if (level >= 3) then
-          if(irain >= 1)  then
-             micro%accpr(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) = &
-                  accpr_tile(ij)
-             micro%pcprr(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) = &
-                  pcprr_tile(ij)
-          endif
-          if(ipris >= 1)  then
-             micro%accpp(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) = &
-                  accpp_tile(ij)
-             micro%pcprp(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) = &
-                  pcprp_tile(ij)
-          endif
-          if(isnow >= 1)  then
-             micro%accps(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) = &
-                  accps_tile(ij)
-             micro%pcprs(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) = &
-                  pcprs_tile(ij)
-          endif
-          if(iaggr >= 1)  then
-             micro%accpa(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) = &
-                  accpa_tile(ij)
-             micro%pcpra(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) = &
-                  pcpra_tile(ij)
-          endif
-          if(igraup >= 1) then
-             micro%accpg(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) = &
-                  accpg_tile(ij)
-             micro%pcprg(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) = &
-                  pcprg_tile(ij)
-          endif
-          if(ihail >= 1)  then
-             micro%accph(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) = &
-                  accph_tile(ij)
-             micro%pcprh(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) = &
-                  pcprh_tile(ij)
-          endif
-          micro%pcpg(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))  =    &
-               pcpg_opt_tile(ij)
-          micro%qpcpg(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) =    &
-               qpcpg_opt_tile(ij)
-          micro%dpcpg(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) =    &
-               dpcpg_opt_tile(ij)
-       endif
-
-    enddo
-
-    ! *** 3D Arrays:
-
-    do k = 1,m1
-
-       do ij=1,ij_final
-
-          ! Input data used in thrmstr_opt
-          basic%pp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))   =   &
-               pp_opt_tile(ij,k)
-          basic%thp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))   =  &
-               thp_opt_tile(ij,k)
-          basic%rtp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))   =  &
-               rtp_opt_tile(ij,k)
-          basic%theta(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) =  &
-               theta_opt_tile(ij,k)
-          basic%rv(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))    =  &
-               rv_opt_tile(ij,k)
-          ! each_column
-          basic%dn0(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))   =  &
-               dn0_opt_tile(ij,k)
-          if (level >= 2 ) then
-             micro%rcp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) = &
-                  rcp_tile(ij,k)
-          endif
-          if (level >= 3) then
-             if(irain >= 1) then
-                micro%rrp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
-                     rrp_tile(ij,k)
-                micro%q2(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
-                     q2_tile(ij,k)
-             endif
-             if(ipris >= 1)  then
-                micro%rpp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
-                     rpp_tile(ij,k)
-             endif
-             if(isnow >= 1)  then
-                micro%rsp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
-                     rsp_tile(ij,k)
-             endif
-             if(iaggr >= 1)  then
-                micro%rap(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
-                     rap_tile(ij,k)
-             endif
-             if(igraup >= 1) then
-                micro%rgp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
-                     rgp_tile(ij,k)
-                micro%q6(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
-                     q6_tile(ij,k)
-                micro%rhp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
-                     rhp_tile(ij,k)
-                micro%q7(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
-                     q7_tile(ij,k)
-             endif
-             if(icloud == 5) then
-                micro%ccp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
-                     ccp_tile(ij,k)
-             endif
-             if(irain == 5) then
-                micro%crp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
-                     crp_tile(ij,k)
-             endif
-             if(ipris == 5) then
-                micro%cpp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
-                     cpp_tile(ij,k)
-             endif
-             if(isnow == 5) then
-                micro%csp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
-                     csp_tile(ij,k)
-             endif
-             if(iaggr == 5) then
-                micro%cap(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
-                     cap_tile(ij,k)
-             endif
-             if(igraup == 5) then
-                micro%cgp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
-                     cgp_tile(ij,k)
-             endif
-             if(ihail == 5) then
-                micro%chp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
-                     chp_tile(ij,k)
-             endif
-             micro%cifnp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
-                  cifnp_tile(ij,k)
-          endif
-
-       enddo
-
-    enddo
-    lpw_R=real(lpw)
-    
-  end subroutine final_copy_mic_block
+!!$  subroutine final_copy_mic_block(ngr, m1, m2, m3, micro, basic, rtgt, lpw_R)
+!!$
+!!$    use mem_micro, only:  &
+!!$         micro_vars            ! INTENT(OUT)
+!!$
+!!$    use mem_basic, only:  &
+!!$         basic_vars            ! INTENT(OUT)
+!!$
+!!$    use micphys, only:  &
+!!$         level,         &      ! INTENT(IN)
+!!$         irain,         &      ! INTENT(IN)
+!!$         ipris,         &      ! INTENT(IN)
+!!$         isnow,         &      ! INTENT(IN)
+!!$         iaggr,         &      ! INTENT(IN)
+!!$         igraup,        &      ! INTENT(IN)
+!!$         icloud,        &      ! INTENT(IN)
+!!$         ihail                 ! INTENT(IN)
+!!$
+!!$    implicit none
+!!$
+!!$    ! Arguments
+!!$    type (micro_vars), intent(out)    :: micro 
+!!$    type (basic_vars), intent(out)    :: basic
+!!$    integer, intent(in)               :: ngr, m1, m2, m3
+!!$    real, intent(out)              :: lpw_R(:,:)
+!!$    real, intent(out)                 :: rtgt(:,:)
+!!$
+!!$    ! Local Variables
+!!$    integer :: k, ij
+!!$    integer :: lpw(m2,m3)
+!!$
+!!$    ! *** 2D Arrays:
+!!$
+!!$    do ij=1,ij_final
+!!$
+!!$       lpw(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))  = lpw_opt(ij)
+!!$       rtgt(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) =              &
+!!$            rtgt_opt_tile(ij)
+!!$
+!!$       if (level >= 3) then
+!!$          if(irain >= 1)  then
+!!$             micro%accpr(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) = &
+!!$                  accpr_tile(ij)
+!!$             micro%pcprr(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) = &
+!!$                  pcprr_tile(ij)
+!!$          endif
+!!$          if(ipris >= 1)  then
+!!$             micro%accpp(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) = &
+!!$                  accpp_tile(ij)
+!!$             micro%pcprp(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) = &
+!!$                  pcprp_tile(ij)
+!!$          endif
+!!$          if(isnow >= 1)  then
+!!$             micro%accps(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) = &
+!!$                  accps_tile(ij)
+!!$             micro%pcprs(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) = &
+!!$                  pcprs_tile(ij)
+!!$          endif
+!!$          if(iaggr >= 1)  then
+!!$             micro%accpa(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) = &
+!!$                  accpa_tile(ij)
+!!$             micro%pcpra(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) = &
+!!$                  pcpra_tile(ij)
+!!$          endif
+!!$          if(igraup >= 1) then
+!!$             micro%accpg(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) = &
+!!$                  accpg_tile(ij)
+!!$             micro%pcprg(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) = &
+!!$                  pcprg_tile(ij)
+!!$          endif
+!!$          if(ihail >= 1)  then
+!!$             micro%accph(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) = &
+!!$                  accph_tile(ij)
+!!$             micro%pcprh(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) = &
+!!$                  pcprh_tile(ij)
+!!$          endif
+!!$          micro%pcpg(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))  =    &
+!!$               pcpg_opt_tile(ij)
+!!$          micro%qpcpg(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) =    &
+!!$               qpcpg_opt_tile(ij)
+!!$          micro%dpcpg(indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) =    &
+!!$               dpcpg_opt_tile(ij)
+!!$       endif
+!!$
+!!$    enddo
+!!$
+!!$    ! *** 3D Arrays:
+!!$
+!!$    do k = 1,m1
+!!$
+!!$       do ij=1,ij_final
+!!$
+!!$          ! Input data used in thrmstr_opt
+!!$          basic%pp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))   =   &
+!!$               pp_opt_tile(ij,k)
+!!$          basic%thp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))   =  &
+!!$               thp_opt_tile(ij,k)
+!!$          basic%rtp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))   =  &
+!!$               rtp_opt_tile(ij,k)
+!!$          basic%theta(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) =  &
+!!$               theta_opt_tile(ij,k)
+!!$          basic%rv(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))    =  &
+!!$               rv_opt_tile(ij,k)
+!!$          ! each_column
+!!$          basic%dn0(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))   =  &
+!!$               dn0_opt_tile(ij,k)
+!!$          if (level >= 2 ) then
+!!$             micro%rcp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr)) = &
+!!$                  rcp_tile(ij,k)
+!!$          endif
+!!$          if (level >= 3) then
+!!$             if(irain >= 1) then
+!!$                micro%rrp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
+!!$                     rrp_tile(ij,k)
+!!$                micro%q2(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
+!!$                     q2_tile(ij,k)
+!!$             endif
+!!$             if(ipris >= 1)  then
+!!$                micro%rpp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
+!!$                     rpp_tile(ij,k)
+!!$             endif
+!!$             if(isnow >= 1)  then
+!!$                micro%rsp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
+!!$                     rsp_tile(ij,k)
+!!$             endif
+!!$             if(iaggr >= 1)  then
+!!$                micro%rap(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
+!!$                     rap_tile(ij,k)
+!!$             endif
+!!$             if(igraup >= 1) then
+!!$                micro%rgp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
+!!$                     rgp_tile(ij,k)
+!!$                micro%q6(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
+!!$                     q6_tile(ij,k)
+!!$                micro%rhp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
+!!$                     rhp_tile(ij,k)
+!!$                micro%q7(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
+!!$                     q7_tile(ij,k)
+!!$             endif
+!!$             if(icloud == 5) then
+!!$                micro%ccp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
+!!$                     ccp_tile(ij,k)
+!!$             endif
+!!$             if(irain == 5) then
+!!$                micro%crp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
+!!$                     crp_tile(ij,k)
+!!$             endif
+!!$             if(ipris == 5) then
+!!$                micro%cpp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
+!!$                     cpp_tile(ij,k)
+!!$             endif
+!!$             if(isnow == 5) then
+!!$                micro%csp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
+!!$                     csp_tile(ij,k)
+!!$             endif
+!!$             if(iaggr == 5) then
+!!$                micro%cap(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
+!!$                     cap_tile(ij,k)
+!!$             endif
+!!$             if(igraup == 5) then
+!!$                micro%cgp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
+!!$                     cgp_tile(ij,k)
+!!$             endif
+!!$             if(ihail == 5) then
+!!$                micro%chp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
+!!$                     chp_tile(ij,k)
+!!$             endif
+!!$             micro%cifnp(k,indicei(ij,indextile,ngr),indicej(ij,indextile,ngr))=&
+!!$                  cifnp_tile(ij,k)
+!!$          endif
+!!$
+!!$       enddo
+!!$
+!!$    enddo
+!!$    lpw_R=real(lpw)
+!!$    
+!!$  end subroutine final_copy_mic_block
 
   !****************************************************************************
 
