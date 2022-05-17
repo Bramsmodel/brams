@@ -303,7 +303,7 @@ contains
        !Fill the arrays with optical characteristics
        call setupraddata() 
        !Read aotMap
-       call opt_read_aotmap()
+       call opt_read_aotmap(oneBasicFields)
 
        !Adjust the site accordongly aot map end veg patch area
        !compute particles R0 and Particles density
@@ -1273,7 +1273,7 @@ contains
 
   end subroutine opt_filltab_aotMap
 
-  subroutine opt_read_aotmap()
+  subroutine opt_read_aotmap(oneBasicFields)
     !# Read  aot Map from input file
     !#
     !# @note
@@ -1325,6 +1325,8 @@ contains
     !#
     !#--- ----------------------------------------------------------------------------------------
     !
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
+
     integer :: i
     integer :: j
     integer :: nlon
@@ -1446,11 +1448,11 @@ contains
        varn = 'glon'
        call gatherdata(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
             nmachs, mchnum, mynum, master_num,             &
-            grid_g(ifm)%glon, globalglon)
+            grid_g(ifm)%glon, globalglon, oneBasicFields)
        varn = 'glat'
        call gatherdata(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
             nmachs, mchnum, mynum, master_num,             &
-            grid_g(ifm)%glat, globalglat)
+            grid_g(ifm)%glat, globalglat, oneBasicFields)
 
        globalaot=0
 

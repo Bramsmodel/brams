@@ -93,7 +93,7 @@ ModBasicFields.o : $(MEMORY)/ModBasicFields.f90 ModNodeDimensions.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ReadBcst.o : $(MPI)/ReadBcst.f90 mem_grid.o node_mod.o \
+ReadBcst.o : $(MPI)/ReadBcst.f90 mem_grid.o node_mod.o ModBasicFields.o \
 	an_header.o mem_aerad.o mem_turb.o \
 	mem_globrad.o parlibf.o shcu_vars_const.o \
 	domain_decomp.o \
@@ -246,8 +246,9 @@ mem_globaer.o : $(RADIATE)/mem_globaer.f90 mem_precision.o mem_aerad.o
 	rm -f $(<F:.f90=.f90)
 
 mem_carma.o : $(RADIATE)/mem_carma.f90 grid_dims.o var_tables.o \
-	mem_globrad.o mem_aerad.o \
-	mem_scalar.o io_params.o
+	mem_globrad.o mem_aerad.o ModNamelistFile.o mem_grid.o \
+	mem_scalar.o io_params.o ModBasicFields.o node_mod.o \
+	parlibf.o ReadBcst.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -635,7 +636,7 @@ model.o : $(MODEL)/model.f90  io_params.o mem_grid.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rio.o : $(IO)/rio.f90  an_header.o grid_dims.o io_params.o mem_basic.o \
+rio.o : $(IO)/rio.f90 an_header.o grid_dims.o io_params.o ModBasicFields.o \
 	mem_grid.o mem_scratch.o mem_turb.o ref_sounding.o var_tables.o \
 	node_mod.o mem_aerad.o ReadBcst.o ModDateUtils.o \
 	mpi_io_engine-5d.o ModParallelEnvironment.o
@@ -1282,12 +1283,12 @@ upcase.o : $(CUPARM)/upcase.f90
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-memSoilMoisture.o : $(SOIL_MOISTURE)/memSoilMoisture.f90
+memSoilMoisture.o : $(SOIL_MOISTURE)/memSoilMoisture.f90 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-soilMoisture.o : $(SOIL_MOISTURE)/soilMoisture.F90 \
+soilMoisture.o : $(SOIL_MOISTURE)/soilMoisture.F90 dump.o ModBasicFields.o \
 	mem_grid.o io_params.o rconstants.o leaf_coms.o mem_leaf.o node_mod.o parlibf.o \
 	mem_aerad.o ReadBcst.o memSoilMoisture.o ModNamelistFile.o $(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)

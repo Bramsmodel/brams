@@ -37,19 +37,19 @@ module ModOneProc
   use ModInitHis, only: &
        sfcinit_hstart, &
        inithis
-  
+
   use ModChemistryDriver, only: &
        aer_background, &
        initial_condition
-       
+
   use ModRinit, only: &
        gridloc_prt, &
        refs3d, &
        FieldInit
-  
+
   use ModRhhi, only: &
        inithh
-  
+
   use ModMicrophysicsMisc, only: &
        negadj1
 
@@ -74,6 +74,7 @@ module ModOneProc
        fcorio
 
   use ModBasicFields, only: &
+       BasicFields, &
        DeepCopyToBasicFields, &
        DeepCopyFromBasicFields
 
@@ -588,7 +589,21 @@ module ModOneProc
        dumpMessage !dump function
 
   implicit none
+
+  interface
+     subroutine OutputFields(histFlag, instFlag, liteFlag, meanFlag, oneBasicFields)
+       use ModBasicFields, only: BasicFields
+       logical, intent(in) :: histFlag     ! true iff history output requested
+       logical, intent(in) :: instFlag     ! true iff instant output requested
+       logical, intent(in) :: liteFlag     ! true iff lite vars output requested
+       logical, intent(in) :: meanFlag     ! true iff field average output requested
+       type(BasicFields), pointer, intent(in) :: oneBasicFields
+     end subroutine OutputFields
+  end interface
+
+
   private
+
   public :: OneProc
 
 contains
@@ -1376,7 +1391,9 @@ contains
                   iflag==1
           end if
 
-          call OutputFields(histFlag, instFlag, liteFlag, meanFlag )
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+          call OutputFields(histFlag, instFlag, liteFlag, meanFlag, oneGrid%Basic)
+          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
           ! Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
           ! call SynchronizedTimeStamp(TS_OUTPUT)
@@ -2024,7 +2041,9 @@ contains
        ! Read Radiation Parameters if CARMA or RRTMG Radiation is selected
        if (ilwrtyp==4 .or. iswrtyp==4 .or. ilwrtyp==6 .or. iswrtyp==6 ) then
           call master_read_carma_data(mchnum, master_num)
-          call read_aotMap()
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+          call read_aotMap(oneGrid%Basic)
+          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        endif
 
        ! AKMIN variable:
@@ -2161,7 +2180,7 @@ contains
                   leaf_g(ifm)%soil_water, leaf_g(ifm)%soil_energy,        &
                   leaf_g(ifm)%soil_text,                                  &
                   grid_g(ifm)%glat, grid_g(ifm)%glon, grid_g(ifm)%lpw     &
-                  ,leaf_g(ifm)%seatp, leaf_g(ifm)%seatf                    )
+                  ,leaf_g(ifm)%seatp, leaf_g(ifm)%seatf, oneGrid%Basic)
 
           enddo
 
@@ -2179,7 +2198,9 @@ contains
        ! Read Radiation Parameters if CARMA or RRTMG Radiation is selected
        if (ilwrtyp==4 .or. iswrtyp==4 .or. ilwrtyp==6 .or. iswrtyp==6 ) then
           call master_read_carma_data(mchnum, master_num)
-          call read_aotMap()
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+          call read_aotMap(oneGrid%Basic)
+          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        endif
 
        !--(DMK-CCATT-INI)-----------------------------------------------------
@@ -2368,7 +2389,9 @@ contains
     !--(DMK-CCATT-FIM)--------------------------------------------------------
     !srf
 
-    call OutputFields(histFlag, instFlag, liteFlag, meanFlag)
+    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+    call OutputFields(histFlag, instFlag, liteFlag, meanFlag, oneGrid%Basic)
+    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
     ! Save initial fields into the averaged arrays
 

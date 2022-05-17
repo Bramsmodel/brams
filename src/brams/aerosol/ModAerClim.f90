@@ -246,11 +246,11 @@ contains
     varn = 'GLON'
     call gatherData(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
          nmachs, mchnum, mynum, master_num,             &
-         glon, globalGlon)
+         glon, globalGlon, oneBasicFields)
     varn = 'GLAT'
     call gatherData(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
          nmachs, mchnum, mynum, master_num,             &
-         glat, globalGlat)
+         glat, globalGlat, oneBasicFields)
 
     !write(88,fmt='("Grades: ",2(A2,1X),8(A8,1X),6(A8,1X),8(A8,1X))') &
     !    'i','j','globGlat','globGlon','latni','latnf','lonni','lonnf','prlat','prlon' &

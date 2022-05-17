@@ -682,8 +682,11 @@ contains
   end subroutine filltab_aotMap
 
 
-  subroutine read_aotMap()
+  subroutine read_aotMap(oneBasicFields)
 
+    use ModBasicFields, only: &
+         BasicFields
+    
     use mem_grid
     use mem_globrad, only: aotMapPath
     use node_mod, only: &
@@ -705,6 +708,8 @@ contains
 
     implicit none
     include 'constants.h'
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
+    
     integer :: i,       &
          j,       &
          nLon,    &
@@ -841,11 +846,11 @@ contains
        varn = 'GLON'
        call gatherData(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
             nmachs, mchnum, mynum, master_num,             &
-            grid_g(ifm)%glon, globalGlon)
+            grid_g(ifm)%glon, globalGlon, oneBasicFields)
        varn = 'GLAT'
        call gatherData(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
             nmachs, mchnum, mynum, master_num,             &
-            grid_g(ifm)%glat, globalGlat)
+            grid_g(ifm)%glat, globalGlat, oneBasicFields)
 
        do i =1, nnxp(ifm)
           do j=1, nnyp(ifm)

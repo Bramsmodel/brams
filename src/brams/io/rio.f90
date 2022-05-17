@@ -1167,7 +1167,7 @@ end subroutine CopyLocalChunkReverse
 !----------------ALF--------------------------------------------------------
 
 
-subroutine OutputFields(histFlag, instFlag, liteFlag, meanFlag)
+subroutine OutputFields(histFlag, instFlag, liteFlag, meanFlag, oneBasicFields)
 
   ! OutputFields: Define the fields to write and select the output
   !               method: parallel HDF5, VFM, parallel MPI-IO,
@@ -1189,14 +1189,37 @@ subroutine OutputFields(histFlag, instFlag, liteFlag, meanFlag)
 
   use node_mod, only: mchnum,master_num
 
-  use ModParallelEnvironment, only: MsgDump
+  use ModParallelEnvironment, only: &
+       MsgDump
+
+  use ModBasicFields, only: &
+       BasicFields
 
   implicit none
+
+
+  interface
+     subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
+          willwrite, maxNFields, oneBasicFields)
+       use ModBasicFields, only: BasicFields
+       logical, intent(in) :: histFlag
+       logical, intent(in) :: instFlag
+       logical, intent(in) :: liteFlag
+       logical, intent(in) :: meanFlag
+       integer, intent(in) :: nvMax
+       integer, intent(in) :: ngrids
+       logical, intent(in) :: Willwrite(nvMax, ngrids)
+       integer, intent(in) :: maxNFields
+       type(BasicFields), pointer, intent(in) :: oneBasicFields
+     end subroutine saveVFM
+  end interface
+  
   logical, intent(in) :: histFlag     ! true iff history output requested
   logical, intent(in) :: instFlag     ! true iff instant output requested
   logical, intent(in) :: liteFlag     ! true iff lite vars output requested
   logical, intent(in) :: meanFlag     ! true iff field average output requested
-
+  type(BasicFields), pointer, intent(in) :: oneBasicFields
+  
   integer :: maxNFields, nvMax, ierr, grid
 
   logical, allocatable :: Willwrite(:,:)
@@ -1268,7 +1291,7 @@ subroutine OutputFields(histFlag, instFlag, liteFlag, meanFlag)
         write(*,*) '*** Writing 24h output [.vfm] for use in recyle on next run ***',time
      end if
      call saveVFM(histFlag, .true., liteFlag, meanFlag, nvMax, ngrids, &
-          willwrite, maxNFields)
+          willwrite, maxNFields, oneBasicFields)
   endif
 
   if (dumpLocal) then
@@ -1287,7 +1310,7 @@ subroutine OutputFields(histFlag, instFlag, liteFlag, meanFlag)
         call fatal_error(h//" Output in HDF5, ioutput=1, not permitted anymore")
      case (2)
         call saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
-             willwrite, maxNFields)
+             willwrite, maxNFields, oneBasicFields)
 
      case (3)
         call saveBinMPIIO(histFlag, instFlag, liteFlag, meanFlag, nvMax, &
@@ -1423,7 +1446,7 @@ end subroutine fieldWrite
 !====
 
 subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
-     willwrite, maxNFields)
+     willwrite, maxNFields, oneBasicFields)
 
   ! saveVFM: Master process gathers fields that are domain decomposed
   !          over slaves and builds selected output files. 
@@ -1432,6 +1455,9 @@ subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
   !          Once a field is gathered, it is used on all selected 
   !          output options.
 
+  use ModBasicFields, only: &
+       BasicFields
+  
   use an_header, only: &
        IOFileDS,       &
        CreateDisabledIOFileDS, &
@@ -1479,7 +1505,8 @@ subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
   integer, intent(in) :: ngrids
   logical, intent(in) :: Willwrite(nvMax, ngrids)
   integer, intent(in) :: maxNFields
-
+  type(BasicFields), pointer, intent(in) :: oneBasicFields
+  
   type(IOFileDS) :: histFileDS
   type(IOFileDS) :: instFileDS
   type(IOFileDS) :: liteFileDS
@@ -1772,7 +1799,7 @@ subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
                    il1, ir2, jb1, jt2, localSize, disp, &
                    LocalSize(mynum,idim_type), LocalChunk, &
                    sizeGathered(idim_type), Gathered, &
-                   sizeFullField(idim_type), FullField)
+                   sizeFullField(idim_type), FullField, oneBasicFields)
 
               ! output untouched field and, if appropriate,
               ! rearrange and output rearranged field
@@ -1812,7 +1839,7 @@ subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
                    il1, ir2, jb1, jt2, localSize, disp, &
                    LocalSize(mynum,idim_type), LocalChunk, &
                    sizeGathered(idim_type), Gathered, &
-                   sizeFullField(idim_type), FullField)
+                   sizeFullField(idim_type), FullField, oneBasicFields)
 
               ! output rearranged field
 
@@ -1848,7 +1875,7 @@ subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
                    il1, ir2, jb1, jt2, localSize, disp, &
                    LocalSize(mynum,idim_type), LocalChunk, &
                    sizeGathered(idim_type), Gathered, &
-                   sizeFullField(idim_type), FullField)
+                   sizeFullField(idim_type), FullField, oneBasicFields)
 
               ! output field, rearranged or untouched
 
@@ -2671,9 +2698,9 @@ end subroutine DefineNameFileWrite
 
 
 subroutine PreProcForOutput(ngrid, varnIn, sizeInOut, &
-     arrayIn, arrayOut, varnOut)
-  use mem_basic, only:  &
-       basic_g
+     arrayIn, arrayOut, varnOut, oneBasicFields)
+  use ModBasicFields, only:  &
+       BasicFields
   use mem_turb,  only:   &
        turb_g, idiffk, xkhkm
 
@@ -2687,6 +2714,7 @@ subroutine PreProcForOutput(ngrid, varnIn, sizeInOut, &
   real,             intent(in   ) :: arrayIn(sizeInOut)
   real,             intent(out  ) :: arrayOut(sizeInOut)
   character(len=*), intent(out  ) :: varnOut
+  type(BasicFields), pointer, intent(in) :: oneBasicFields
 
   character(len=*), parameter :: h="**(PreProc)**" 
 
@@ -2698,7 +2726,7 @@ subroutine PreProcForOutput(ngrid, varnIn, sizeInOut, &
      ! Output total Exner function
 
      call RAMS_aprep_p (sizeInOut, arrayIn,  &
-          basic_g(ngrid)%pi0, arrayOut)
+          oneBasicFields%pi0, arrayOut)
      varnOut='PI'
 
   case ('HKM')
@@ -2706,7 +2734,7 @@ subroutine PreProcForOutput(ngrid, varnIn, sizeInOut, &
      ! Convert to HKM to HKH (note that VKH is HKH for Deardorff)
 
      call RAMS_aprep_hkh (sizeInOut, arrayIn, &
-          turb_g(ngrid)%vkh, basic_g(ngrid)%dn0,  &
+          turb_g(ngrid)%vkh, oneBasicFields%dn0,  &
           arrayOut, idiffk(ngrid), xkhkm(ngrid))
      varnOut='HKH'
 
@@ -2715,7 +2743,7 @@ subroutine PreProcForOutput(ngrid, varnIn, sizeInOut, &
      ! Un-density weight VKH
 
      call RAMS_aprep_vkh (sizeInOut, arrayIn, &
-          basic_g(ngrid)%dn0, arrayOut)
+          oneBasicFields%dn0, arrayOut)
      varnOut='VKH'
 
   case default

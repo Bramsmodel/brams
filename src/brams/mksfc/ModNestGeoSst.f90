@@ -799,8 +799,8 @@ contains
                oneBasicFields%theta, oneBasicFields%pi0, oneBasicFields%pp,  &
                leaf_g(ifm)%soil_water, leaf_g(ifm)%soil_energy,        &
                leaf_g(ifm)%soil_text,                                  &
-               grid_g(ifm)%glat , grid_g(ifm)%glon, grid_g(ifm)%lpw    &
-               ,leaf_g(ifm)%seatp, leaf_g(ifm)%seatf                    )
+               grid_g(ifm)%glat , grid_g(ifm)%glon, grid_g(ifm)%lpw,   &
+               leaf_g(ifm)%seatp, leaf_g(ifm)%seatf, oneBasicFields)
 
           !-moved to initOneProc
           !        call change_soil_moisture_init(nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm)    &

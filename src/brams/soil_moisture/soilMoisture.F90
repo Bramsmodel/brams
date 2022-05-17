@@ -25,8 +25,8 @@ contains
        theta, pi0, pp,                                           &
        soil_water, soil_energy, soil_text,                       &
        glat, glon,                                               &
-       lpw_r,seatp,seatf                                         &
-       )
+       lpw_r,seatp,seatf,                                        &
+       oneBasicFields)
     !# _
     !#
     !# @note
@@ -95,6 +95,9 @@ contains
     use readbcst, only: &
          gatherdata
 
+    use ModBasicFields, only: &
+         BasicFields
+    
 !!!!!!DSM {
 #ifdef cdf
 
@@ -124,7 +127,8 @@ contains
     real, intent(in)    :: soil_text(:,:,:,:)   !(mzg,n2,n3,npat)
 
     real, intent(in)    :: seatp(:,:) ,seatf(:,:) 
-
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
+    
     integer :: lpw(n2,n3)             !(n2,n3)
     ! local variables:
 
@@ -827,19 +831,19 @@ contains
        varn = 'soil_water'
        call gatherdata(idim_type, varn, ifm, mzg, nnxp(ifm), nnyp(ifm), &
             npat, nmachs, mchnum, mynum, master_num,                    &
-            soil_water, globalsoilwater)
+            soil_water, globalsoilwater, oneBasicFields)
        varn = 'soil_text'
        call gatherdata(idim_type, varn, ifm, mzg, nnxp(ifm), nnyp(ifm), &
             npat, nmachs, mchnum, mynum, master_num,                    &
-            soil_text, globalsoiltext)
+            soil_text, globalsoiltext, oneBasicFields)
        varn = 'glon'
        call gatherdata(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
             nmachs, mchnum, mynum, master_num,             &
-            glon, globalglon)
+            glon, globalglon, oneBasicFields)
        varn = 'glat'
        call gatherdata(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
             nmachs, mchnum, mynum, master_num,             &
-            glat, globalglat)
+            glat, globalglat, oneBasicFields)
 
 
        ! loop no dominio global do modelo
@@ -990,24 +994,24 @@ contains
        varn = 'soil_water'
        call gatherdata(idim_type, varn, ifm, mzg, nnxp(ifm), nnyp(ifm), &
             npat, nmachs, mchnum, mynum, master_num,			 &
-            soil_water, globalsoilwater)
+            soil_water, globalsoilwater, oneBasicFields)
 
        varn = 'soil_energy'
        call gatherdata(idim_type, varn, ifm, mzg, nnxp(ifm), nnyp(ifm), &
             npat, nmachs, mchnum, mynum, master_num,			 &
-            soil_energy, globalsoilenergy)
+            soil_energy, globalsoilenergy, oneBasicFields)
        varn = 'soil_text'
        call gatherdata(idim_type, varn, ifm, mzg, nnxp(ifm), nnyp(ifm), &
             npat, nmachs, mchnum, mynum, master_num,			 &
-            soil_text, globalsoiltext)
+            soil_text, globalsoiltext, oneBasicFields)
        varn = 'glon'
        call gatherdata(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
             nmachs, mchnum, mynum, master_num, 	    &
-            glon, globalglon)
+            glon, globalglon, oneBasicFields)
        varn = 'glat'
        call gatherdata(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
             nmachs, mchnum, mynum, master_num, 	    &
-            glat, globalglat)
+            glat, globalglat, oneBasicFields)
 
 
        ! loop no dominio global do modelo
