@@ -7,8 +7,8 @@ mem_stilt.o : $(STILT)/mem_stilt.f90 grid_dims.o \
 ModVarfFile.o : $(FDDA)/ModVarfFile.f90 ModNudAnalysis.o \
 	parlibf.o ModDateUtils.o mem_scratch.o rconstants.o \
 	ref_sounding.o mem_varinit.o node_mod.o ReadBcst.o \
-	isan_coms.o mem_grid.o ModGridTree.o ModGrid.o mem_chem1.o mem_aer1.o\
-	mem_leaf.o mem_basic.o micphys.o chem1_list.o ModMessageSet.o mem_aer1.o\
+	isan_coms.o mem_grid.o ModGridTree.o ModGrid.o mem_chem1.o mem_aer1.o \
+	mem_leaf.o mem_basic.o micphys.o chem1_list.o ModMessageSet.o aer1_list.o \
 	ModInitHis.o $(UTILS_INCS)/files.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)

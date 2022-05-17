@@ -126,8 +126,8 @@ module ModVarfFile
   use mem_leaf, only: &
        leaf_g
 
-  use mem_basic, only: &
-       basic_g
+  use ModBasicFields, only: &
+       BasicFields
 
   use micphys, only: &
        level
@@ -135,6 +135,7 @@ module ModVarfFile
   use chem1_list, only:    &
        nspecies,           &
        spc_alloc,          &
+       on, &
        fdda,               &
        chemical_mechanism, &
        init_ajust,         &
@@ -143,6 +144,21 @@ module ModVarfFile
   use ModMessageSet, only: &
        PostSendRecvMsgs, &
        WaitSendRecvMsgs
+
+
+  use mem_aer1, only: &
+       AEROSOL, &
+       aer1_g, &
+       AER_ASSIM
+  
+  use aer1_list, only: &
+       aer_name=>spc_name,     &
+       aer_mod_spc=>aer_name, &
+       aer_nspecies=>nspecies, &
+       aer_alloc=>spc_alloc,     &
+       aer_fdda=>fdda,           &
+       aer_on=>on,               &
+       aer_nmodes=>nmodes
 
 
   implicit none
@@ -156,11 +172,12 @@ module ModVarfFile
 contains
 
 
-  subroutine VarfReadStoreOwnChunk(AllGrids, ivflag, initialFlag)
+  subroutine VarfReadStoreOwnChunk(AllGrids, ivflag, initialFlag, oneBasicFields)
 
     type(GridTree), pointer :: AllGrids
     integer, intent(IN) :: ivflag
     integer, intent(in) :: initialFlag
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
 
     character(len=14)  :: itotdate_current
     integer :: iyears, imonths, idates, ihours, nf, ifm, &
@@ -230,7 +247,7 @@ contains
 
        OneGrid => FetchGrid(AllGrids, 1)
 
-       call VarfUpdate(0, OneGrid, ifileok, 1, initialFlag)
+       call VarfUpdate(0, OneGrid, ifileok, 1, initialFlag, oneBasicFields)
 
        !  On all fine grids, initialize the 1-D reference state arrays,
        !  the 3-D reference state arrays,
@@ -295,7 +312,7 @@ contains
 
           OneGrid => FetchGrid(AllGrids, ifm)
 
-          call VarfUpdate(0, OneGrid, ifileok, 0, initialFlag)
+          call VarfUpdate(0, OneGrid, ifileok, 0, initialFlag, oneBasicFields)
           open(unit=22,file='brams.log',position='append',action='write')
           if (ifileok==1) then
              ! Everything's cool...
@@ -375,7 +392,7 @@ contains
 
        OneGrid => FetchGrid(AllGrids, ifm)
 
-       call VarfUpdate(1, OneGrid, ifileok, 0, initialFlag)
+       call VarfUpdate(1, OneGrid, ifileok, 0, initialFlag, oneBasicFields)
        open(unit=22,file='brams.log',position='append',action='write')
        if (ifileok==1) then
           ! Everything's cool...
@@ -629,24 +646,13 @@ contains
 
 
 
-  subroutine VarfUpdate(iswap, OneGrid, ifileok, initflag, initialFlag)
-
-    use chem1_list, only: spc_name, spc_alloc, on, fdda, nspecies
-    use mem_chem1 , only: CHEM_ASSIM, CHEMISTRY
-    use mem_aer1  , only: AEROSOL, aer1_g, AER_ASSIM
-    use aer1_list , only: aer_name=>spc_name,     &
-                          aer_mod_spc=>aer_name, &
-                          aer_nspecies=>nspecies, &
-		          aer_alloc=>spc_alloc,     &
-		          aer_fdda=>fdda,           &
-		          aer_on=>on,               &
-		          aer_nmodes=>nmodes
-
+  subroutine VarfUpdate(iswap, OneGrid, ifileok, initflag, initialFlag, oneBasicFields)
     integer, intent(in) :: iswap
     type(Grid), pointer :: OneGrid
     integer, intent(out) :: ifileok
     integer, intent(in) :: initflag
     integer, intent(in) :: initialFlag
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
 
     real :: scratch(nxyp),scratch2(nxyzp)
 
@@ -1284,25 +1290,25 @@ contains
     if(initflag == 1 .and. ngrid == 1) then
        call RefVar(OneGrid, mzp,mxp,myp &
             ,varinit_g(ngrid)%vartf ,varinit_g(ngrid)%varpf  &
-            ,basic_g(ngrid)%pi0,     basic_g(ngrid)%th0  &
-            ,varinit_g(ngrid)%varrf, basic_g(ngrid)%dn0  &
-            ,basic_g(ngrid)%dn0u,    basic_g(ngrid)%dn0v  &
+            ,oneBasicFields%pi0,     oneBasicFields%th0  &
+            ,varinit_g(ngrid)%varrf, oneBasicFields%dn0  &
+            ,oneBasicFields%dn0u,    oneBasicFields%dn0v  &
             ,varinit_g(ngrid)%varuf, varinit_g(ngrid)%varvf  &
             ,grid_g(ngrid)%topt,       grid_g(ngrid)%rtgt  &
             ,grid_g(ngrid)%topta, level)
     end if
 
     varinit_g(ngrid)%varpf(:,:,:)=  &
-         varinit_g(ngrid)%varpf(:,:,:) - basic_g(ngrid)%pi0(:,:,:)
+         varinit_g(ngrid)%varpf(:,:,:) - oneBasicFields%pi0(:,:,:)
 
     ! If this is an initialization, put data into regular arrays
 
     if(initflag == 1 ) then
-       basic_g(ngrid)%uc(:,:,:)=varinit_g(ngrid)%varuf(:,:,:)
-       basic_g(ngrid)%vc(:,:,:)=varinit_g(ngrid)%varvf(:,:,:)
-       basic_g(ngrid)%pc(:,:,:)=varinit_g(ngrid)%varpf(:,:,:)
-       basic_g(ngrid)%thp(:,:,:)=varinit_g(ngrid)%vartf(:,:,:)
-       basic_g(ngrid)%rtp(:,:,:)=varinit_g(ngrid)%varrf(:,:,:)
+       oneBasicFields%uc(:,:,:)=varinit_g(ngrid)%varuf(:,:,:)
+       oneBasicFields%vc(:,:,:)=varinit_g(ngrid)%varvf(:,:,:)
+       oneBasicFields%pc(:,:,:)=varinit_g(ngrid)%varpf(:,:,:)
+       oneBasicFields%thp(:,:,:)=varinit_g(ngrid)%vartf(:,:,:)
+       oneBasicFields%rtp(:,:,:)=varinit_g(ngrid)%varrf(:,:,:)
 
        !--(DMK-CCATT-INI)------------------------------------------------------
        if(chem_assim == 1 .and. chemistry >= 0) then

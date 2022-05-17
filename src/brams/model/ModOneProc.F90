@@ -1161,7 +1161,9 @@ contains
 
           if (isendbackflg==1) then
              if (isendiv==1) then
-                call VarfReadStoreOwnChunk(AllGrids, 2, nud_type)
+                call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+                call VarfReadStoreOwnChunk(AllGrids, 2, nud_type, oneGrid%Basic)
+                call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
              endif
              if (isendsst==1) then
                 do ifm=1,ngrids
@@ -1667,7 +1669,9 @@ contains
           ! If "variable initialization", do it all here
 
           !--(DMK-CCATT-INI)-----------------------------------------------------
-          call VarfReadStoreOwnChunk(AllGrids, 0, initial)
+          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+          call VarfReadStoreOwnChunk(AllGrids, 0, initial, oneGrid%Basic)
+          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
           !--(DMK-CCATT-FIM)-----------------------------------------------------
        endif
 
@@ -2262,7 +2266,9 @@ contains
        !--(DMK-CCATT-FIM)-----------------------------------------------------
 
        !--(DMK-CCATT-INI)-----------------------------------------------------
-       call VarfReadStoreOwnChunk(AllGrids, 1, nud_type)
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+       call VarfReadStoreOwnChunk(AllGrids, 1, nud_type, oneGrid%Basic)
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        !--(DMK-CCATT-FIM)-----------------------------------------------------
 
     endif
