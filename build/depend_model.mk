@@ -477,7 +477,7 @@ oda_krig.o : $(FDDA)/oda_krig.f90  mem_oda.o
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-oda_nudge.o : $(FDDA)/oda_nudge.f90  io_params.o mem_basic.o \
+ModOdaNudge.o : $(FDDA)/ModOdaNudge.f90 io_params.o ModBasicFields.o \
 	mem_grid.o mem_oda.o mem_scratch.o mem_tend.o node_mod.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
@@ -558,7 +558,7 @@ ModTimestep.o : $(MODEL)/ModTimestep.F90 mem_basic.o mem_cuparm.o ModOptical.o M
 	ChemSourcesDriver.o ChemDryDepDriver.o ModChemistryDriver.o ModTimeStamp.o ModGrid.o \
 	ModAcoust.o ModRamsMicrophysics2M.o ModMicThompsonDriver.o ModWindFarm.o \
         ModMicrophysicsDrive.o ModSeaSalt.o ModMatrixDriver.o ModRadvcRK.o $(JULES_OBJ_SFCLYR) \
-	ModMessageSet.o modIau.o  ModRbnd.o ModRadvc.o ModTurbK.o ModDiffuse.o \
+	ModMessageSet.o modIau.o  ModRbnd.o ModRadvc.o ModTurbK.o ModDiffuse.o ModOdaNudge.o \
 	ModUrbanCanopy.o ModRexev.o ModRThrm.o ModCoriolis.o $(UTILS_INCS)/tsNames.h \
 	ModMicGfdlDriver.o ModRConv.o ModRShCuPar.o ModRConvGrellCatt.o 
 	@cp -f $< $(<F:.f90=.f90)
@@ -570,7 +570,7 @@ ModTimestepRK.o : $(MODEL)/ModTimestepRK.F90 ModTimestep.o ModBasicFields.o mem_
 	ModRstilt.o mem_turb.o mem_varinit.o micphys.o node_mod.o shcu_vars_const.o \
 	ModMicrophysicsMisc.o ModMicrophysicsDrive.o machine_arq.o rad_driv.o ModCuParGrell3.o digitalFilter.o\
 	ChemSourcesDriver.o ChemDryDepDriver.o ModChemistryDriver.o ModTimeStamp.o ModGrid.o \
-	ModAcoust.o ModRThrm.o ModRamsMicrophysics2M.o ModMicThompsonDriver.o\
+	ModAcoust.o ModRThrm.o ModRamsMicrophysics2M.o ModMicThompsonDriver.o ModOdaNudge.o \
         ModSeaSalt.o ModMatrixDriver.o ModRadvcRK.o modIau.o ModLeaf3OceanOnly.o ModRbnd.o \
 	$(JULES_OBJ_SFCLYR)  ModRadvc.o ModMonotonicAdvection.o utilsMod.o ModRtimi.o \
 	ModMessageSet.o ModTurbK.o ModDiffuse.o ModRexev.o ModRThrm.o ModWindFarm.o \

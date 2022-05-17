@@ -135,7 +135,7 @@ OBJ_MOD = \
 	nud_update.o \
 	obs_input.o \
 	oda_krig.o \
-	oda_nudge.o \
+	ModOdaNudge.o \
 	oda_proc_obs.o \
 	oda_read.o \
 	oda_sta_count.o \

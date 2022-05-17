@@ -8,6 +8,9 @@
 
 module ModTimestep
 
+  use ModOdaNudge, only: &
+       oda_nudge
+  
   use ModSeaSalt, only: &
        SeaSaltDriver
   
@@ -466,7 +469,11 @@ contains
 
     !  Observation data assimilation
     !----------------------------------------
-    if (IF_ODA==1) call oda_nudge()
+    if (IF_ODA==1) then
+       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
+       call oda_nudge(oneGrid%Basic)
+       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
+    end if
 
     !  Nested grid boundaries
     !----------------------------------------
