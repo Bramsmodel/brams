@@ -144,16 +144,8 @@ module ModMemAlloc
        alloc_turb, &
        filltab_turb
 
-  use mem_basic, only: &
-       basic_g,        &
-       basicm_g,       &
-       nullify_basic,  &
-       alloc_basic,    &
-       filltab_basic
-
   use ModBasicFields, only: &
-       DeepCopyToBasicFields, &
-       DeepCopyFromBasicFields
+       InsertBasicFieldsAtVarTable
 
   use node_mod, only: &
        alloc_paths,   & !Subroutine
@@ -567,22 +559,10 @@ contains
     !-------------
 
     !-------------
-    ! Allocate Basic variables data type
-    allocate(basic_g(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error(h//"Allocating basic_g")
-    allocate(basicm_g(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error(h//"Allocating basicm_g")
+    ! insert Basic Field variables at var_table
     do ng=1,ngrids
-       call nullify_basic(basic_g(ng)); call nullify_basic(basicm_g(ng))
-       call alloc_basic(basic_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
-       if (imean==1) then
-          call alloc_basic(basicm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
-       elseif (imean==0) then
-          call alloc_basic(basicm_g(ng),        1,        1,        1, ng)
-       endif
-
-       call filltab_basic(basic_g(ng), basicm_g(ng), imean,  &
-            nmzp(ng), nmxp(ng), nmyp(ng), ng)
+       call InsertBasicFieldsAtVarTable(oneGrid%Basic, oneGrid%AveBasic, &
+            oneGrid%Ramsin, oneGrid%Id)
     enddo
     !
     !Allocate and prepare optical properties memory
@@ -1211,9 +1191,7 @@ contains
 
     call nullify_tend(naddsc)
 
-    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
     call alloc_tend(nmzp, nmxp, nmyp, ngrids, naddsc, proc_type, oneGrid%Basic)
-    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     !-------------
 
     !-------------
@@ -1509,13 +1487,11 @@ contains
           gaspart_p => gaspart_g(ng)
        endif
 
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call filltab_tend(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
             oneGrid%Basic, micro_g(ng), turb_g(ng),  &
             scalar_g(:,ng),                                     &
             gaspart_p,                                          &
             naddsc, ng)
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
        if (ccatt == 1  .and. chemistry >= 0)  then
 

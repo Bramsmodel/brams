@@ -58,10 +58,6 @@ module ModTimestepRK
        le_fontes, &
        sources_teb
 
-  use ModBasicFields, only: &
-       DeepCopyToBasicFields, &
-       DeepCopyFromBasicFields
-
   use ModTimestep, only: &
        w_damping
 
@@ -414,46 +410,32 @@ contains
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
 
     if (CCATT==1 .and. chemistry >= 0) then
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call aodDriver(mzp,mxp,myp,ia,iz,ja,jz,ngrids,oneGrid%Basic)
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     end if
 
     !  Radiation parameterization
     !--------------------------------
-    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
     call radiate(mzp,mxp,myp,ia,iz,ja,jz,mynum, oneGrid%Basic)
-    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
     !  Surface layer, soil and veggie model
     !----------------------------------------
     if (isfcl<=2) then
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, oneGrid%Basic)
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 #ifdef JULES
     elseif (isfcl == 5) then
        if (time==0.) then
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
           call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, oneGrid%Basic)
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        end if
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call sfclyr_jules(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile, oneGrid%Basic)
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        !--- this combines the JULES land + LEAF ocean models.
        if (isfcl_ocean == 1) then
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
           call sfclyr_ocean_only  (mzp,mxp,myp,ia,iz,ja,jz,ibcon, oneGrid%Basic)
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        end if
 #endif
     endif
 
     !- Sea salt Aerossol inline source
-    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
     call SeaSaltDriver(ia,iz,ja,jz,ngrid,mxp,myp, oneGrid%Basic)
-    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
     !-- emission/deposition for CCATT chemistry models
     if (CCATT==1 .and. chemistry >= 0) then
@@ -474,7 +456,6 @@ contains
        !plume_mean_g(:,:) instead of plume_mean_g(:,ngrid) to avoid memory errors.
        !emiss_cycle(:,:)  instead of emiss_cycle(:,ngrid)  to avoid memory errors.
        !the same for the others var
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call sources_driver(ngrid, mzp,mxp,myp,ia,iz,ja,jz,                          &
             g,cp,cpor,p00,rgas,pi180,                                &
             radiate_g(ngrid)%cosz,oneGrid%Basic%theta,              &
@@ -493,13 +474,10 @@ contains
             emiss_cycle  (:,:),                                  &
             aer2_g       (:,:),                                  &
             plume_fre_g  (:,:)                                   )
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
 
        !- call dry deposition and sedimentation routines
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call drydep_driver(mzp,mxp,myp,ia,iz,ja,jz, oneGrid%Basic)
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
     endif
 
@@ -521,33 +499,25 @@ contains
     !  Cumulus parameterization version 1
     !----------------------------------------
     if (NNQPARM(ngrid)==1 .or. IF_CUINV==1) then
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call cuparm(oneGrid%Basic)
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     end if
 
     !  Urban canopy parameterization
     !----------------------------------------
     if (IF_URBAN_CANOPY==1) then
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call urban_canopy(oneGrid%Basic)
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     end if
 
     !  Analysis nudging and boundary condition
     !------------------------------------------
     if (NUD_TYPE>0) then
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call datassim(oneGrid%Basic)
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     end if
 
     !  Observation data assimilation
     !----------------------------------------
     if (IF_ODA==1) then
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call oda_nudge(oneGrid%Basic)
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     end if
 
     !  Nested grid boundaries
@@ -558,10 +528,8 @@ contains
 
     !  Rayleigh friction for theta
     !----------------------------------------
-    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
     call rayft(mxp,myp,mzp,mynum,ngrid,nnzp,if_adap,level,nodemyp,nodemxp,&
          scratch%vt3da,oneGrid%Basic)
-    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
     !  Get the overlap region between parallel nodes
     !---------------------------------------------------
@@ -580,10 +548,8 @@ contains
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
 
     if (ccatt == 1) then
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,2,50,&
             oneGrid%Basic)
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     end if
 
     !- CATT & Chemistry == CCATT
@@ -591,25 +557,19 @@ contains
     if (ccatt==1 .and. split_method== 'PARALLEL' .and. n_dyn_chem==1) then
        ! task 3 : production/loss by chemical processes and inclusion of the
        ! chemistry tendency at the total tendency
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,3,50,&
             oneGrid%Basic)
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     endif
     if (ccatt==1 ) then
        ! task 4 : mass transfer between gas and liquid
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,4,50,&
             oneGrid%Basic)
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     endif
 
     !---------------------------------------------------
     ! Shallow  cumulus parameterization by Souza
     if (NNSHCU(ngrid)==1) then
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call shcupa(oneGrid%Basic)
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     end if
     !---------------------------------------------------
 
@@ -622,9 +582,7 @@ contains
        !  Update chemistry
        !----------------------------------------
        if (ichemi==1) then
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
           call ozone(mzp, mxp, myp, ia, iz, ja, jz, ngrid, dtlt, oneGrid%Basic)
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        endif
     endif
 
@@ -637,21 +595,17 @@ contains
 
     !  Sub-grid diffusion terms
     !----------------------------------------
-    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
     if ((if_adap==0) .and. (ihorgrad==2)) then
        call diffuse_brams31(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic)
     else
        call diffuse(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic)
     endif
-    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
 
     !- STILT-BRAMS coupling (ML)
     if (imassflx == 1) then
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call prep_advflx_to_stilt(mzp,mxp,myp,ia,iz,ja,jz,ngrid, oneGrid%Basic)
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     end if
 
     !- large and subgrid scale forcing for shallow and deep cumulus
@@ -728,12 +682,10 @@ contains
 
     !  Lateral velocity boundaries - radiative
     !-------------------------------------------
-    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
     call latbnd(mzp,mxp,myp,ia,iz,ja,jz,ibcon,nxtnest,ngrid,ibnd,jbnd, &
          grid_g(ngrid)%lpu,grid_g(ngrid)%lpv,oneGrid%Basic%up,&
          oneGrid%Basic%uc,tend%ut,oneGrid%Basic%vp,oneGrid%Basic%vc,&
          tend%vt,grid_g(ngrid)%dxt,grid_g(ngrid)%dyt)
-    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
 !!$    call SynchronizedTimeStamp(TS_RK_RESTO) ! Exper1.2, 2021_12
 
@@ -778,9 +730,7 @@ contains
 
        !  Buoyancy term for w equation
        !----------------------------------------
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call buoyancy(tend%wt_rk, oneGrid%Basic)
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
        if (dumpLocal) then
           call MsgDump(h//" starts exchanging borders of tend%tht_rk")
@@ -789,13 +739,11 @@ contains
 
        if ( l_rk > 1 ) then
           ! (not necessary in the first RK substep)
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
           oneGrid%Basic%uc (:,:,:) = oneGrid%Basic%up (:,:,:)
           oneGrid%Basic%vc (:,:,:) = oneGrid%Basic%vp (:,:,:)
           oneGrid%Basic%wc (:,:,:) = oneGrid%Basic%wp (:,:,:)
           oneGrid%Basic%pc (:,:,:) = oneGrid%Basic%pp (:,:,:)
           oneGrid%Basic%thc(:,:,:) = oneGrid%Basic%thp(:,:,:)
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        end if
 
        !-  Acoustic small timesteps
@@ -807,11 +755,9 @@ contains
        end if
        call WaitSendRecvMsgs(oneGrid%AcoustNewThtSend, oneGrid%AcoustNewThtRecv)
 
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call update_long_rk(int(mxp*myp*mzp,int64),dtlt,rk_beta(l_rk) &
             ,oneGrid%Basic%thc,oneGrid%Basic%thp  &
             ,tend%tht_rk)
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
        !- determine theta (dry potential temp.) for the buoyancy term:
        call theta_thp_rk(mzp,mxp,myp,ia,iz,ja,jz,"get_theta", &
@@ -820,10 +766,8 @@ contains
        !-damping on vertical velocity to keep stability
        !MB: does this act on wc???
        if (vveldamp == 1) then
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
           call w_damping(mzp,mxp,myp,ia,iz,ja,jz,mynum, &
                oneGrid%Basic)
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        end if
 !!$       call SynchronizedTimeStamp(TS_RK_RESTO) ! Exper1.2, 2021_12
 
@@ -871,27 +815,21 @@ contains
     !---> pp    must be changed to PC  for microphysics
     !---> wp    must be changed to WC  for microphysics
     !---> up,vp must be changed to UC,VC for output
-    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
     oneGrid%Basic%up (:,:,:) = oneGrid%Basic%uc (:,:,:)
     oneGrid%Basic%vp (:,:,:) = oneGrid%Basic%vc (:,:,:)
     oneGrid%Basic%wp (:,:,:) = oneGrid%Basic%wc (:,:,:)
     oneGrid%Basic%pp (:,:,:) = oneGrid%Basic%pc (:,:,:)
     oneGrid%Basic%thp(:,:,:) = oneGrid%Basic%thc(:,:,:)
-    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     !---->
     !---->
     !
     !  Moisture variables positive definite
     !----------------------------------------
     if     (mcphys_type == 0) then
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call negadj1(mzp,mxp,myp, oneGrid%Basic)
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
     elseif(mcphys_type == 1) then
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call negadj1_2M_rams60(mzp,mxp,myp, oneGrid%Basic)
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     endif
 
 !!$    call SynchronizedTimeStamp(TS_RK_RESTO) ! Exper1.2, 2021_12
@@ -904,28 +842,20 @@ contains
 !!$          call micro_opt()
 !!$       else
        !- original Version used in a Generic IA32 machine
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call micro(oneGrid%Basic)
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 !!$       endif
     endif
 
     if (mcphys_type == 1 .and. level==3) then
        !- 2M rams microphysics
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call micro_2M_rams60(oneGrid%Basic)
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
     elseif (mcphys_type == 2 .or. mcphys_type == 3 ) then
        !- G. Thompson microphysics
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call micro_thompson(oneGrid%Basic)
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
     elseif(mcphys_type == 4 ) then
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call micro_gfdl(oneGrid%Basic)
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     endif
     !----------------------------------------
 
@@ -938,15 +868,11 @@ contains
 
     !  Apply scalar b.c.'s (THP is changed here)
     !----------------------------------------
-    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
     call trsets(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic)
-    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
     !---> THC must be changed to THP to include microphysics/trsets changes
     !---> for the next timestep
-    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
     oneGrid%Basic%thc(:,:,:) = oneGrid%Basic%thp(:,:,:)
-    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     !--->
 
     !  Lateral velocity boundaries - radiative
@@ -955,7 +881,6 @@ contains
 
     !  Velocity/pressure boundary conditions
     !----------------------------------------
-    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
     call vpsets(mzp,mxp,myp,ia,iz,ja,jz,ibcon,nstbot, &
          oneGrid%Basic%up,oneGrid%Basic%vp,oneGrid%Basic%wp,&
          oneGrid%Basic%pp,oneGrid%Basic%uc,oneGrid%Basic%vc,&
@@ -963,7 +888,6 @@ contains
          grid_g(ngrid)%dxm,grid_g(ngrid)%dyv,grid_g(ngrid)%dym,&
          grid_g(ngrid)%lpu,grid_g(ngrid)%lpv,grid_g(ngrid)%lpw, &
          oneGrid%Basic)
-    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
     !- call THERMO on the boundaries
     call thermo_boundary_driver((time+dtlongn(ngrid)), dtlong, &
@@ -972,9 +896,7 @@ contains
          nzp, mxp, myp, jdim, oneGrid%Basic, oneGrid%AveBasic)
 
     if (iexev == 2) then
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call get_true_air_density(mzp,mxp,myp,ia,iz,ja,jz,oneGrid%Basic)
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     end if
 
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
@@ -983,10 +905,8 @@ contains
     !- chemistry - microphysics tranfers - sedimentation and tranfer from clouds to rain
     if (ccatt==1) then
        ! task 5 : sedimentation and mass transfer between clouds and rain
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,5,50,&
             oneGrid%Basic)
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     endif
 
     !----------------------------------------
@@ -998,18 +918,14 @@ contains
 
           ! task 3 : production/loss by chemical processes and final updated
           !  of each specie
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
           call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,3,50,&
                oneGrid%Basic)
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        endif
 
        !- call Matrix Aerosol Model
        !- using symmetric/sequential spliting operator
        if(AEROSOL==2) then
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
           call MatrixDriver(ia,iz,ja,jz,mzp,mxp,myp, oneGrid%Basic)
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        endif
     endif
     if (ccatt==1 .and. aerosol == 1) then
@@ -1022,26 +938,20 @@ contains
        if (isource==1) then
           ! Apply only for last finner grid
           if (ngrid==ngrids) then
-             call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
              call le_fontes(ngrid, mzp, mxp, myp, &
                   npatch, ia, iz, ja, jz, (time+dtlongn(1)), oneGrid%Basic)
-             call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
           endif
        endif
        !EDF
     endif
 
     !- windfarm
-    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
     call wind_farm_driver(ngrid,mzp,mxp,myp,ia,iz,ja,jz, &
          oneGrid%Basic)
-    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
     !- apply digital filter
     if (applyDF) then
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call applyDigitalFilter(fileNameDF, dfVars, oneGrid%Basic, oneGrid%AveBasic)
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     end if
 
 
@@ -1055,7 +965,6 @@ contains
             abs ( time - dtlt - timeWindowIAU*0.5),applyIAU
        if(mynum==1)call flush(6)
 
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call CreateIauTendency(ngrid, mzp*mxp*myp, mzp, mxp, myp,ia,iz,ja,jz&
             ,varinit_g(ngrid)%varup(:,:,:),varinit_g(ngrid)%varvp(:,:,:)  &
             ,varinit_g(ngrid)%varpp(:,:,:),varinit_g(ngrid)%vartp(:,:,:)  &
@@ -1068,7 +977,6 @@ contains
             ,oneGrid%Basic%up     (:,:,:)   ,oneGrid%Basic%vp  (:,:,:)  &
             ,oneGrid%Basic%theta  (:,:,:)   ,oneGrid%Basic%rtp (:,:,:)  &
             ,oneGrid%Basic%pp     (:,:,:)                                )
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     endif
 
 !!$    call SynchronizedTimeStamp(TS_PHYSICS) ! Exper1.2, 2021_12

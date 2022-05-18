@@ -8,9 +8,7 @@
 module ModRtimi
 
   use ModBasicFields, only: &
-       BasicFields, &
-       DeepCopyToBasicFields, &
-       DeepCopyFromBasicFields
+       BasicFields
   
   use mem_grid, only: &
        ngrid, &
@@ -145,7 +143,6 @@ contains
 
     !     For both IAC=1 and IAC=2, call PREDICT for U, V, W, and P.
 
-    call DeepCopyToBasicFields(oneBasicFields, oneAveBasicFields, h)
     
     call predict(&
          mxyzp, &
@@ -189,7 +186,6 @@ contains
          RAW)
 
 
-    call DeepCopyFromBasicFields(oneBasicFields, oneAveBasicFields)
     
   end subroutine hadvance
 

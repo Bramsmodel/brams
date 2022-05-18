@@ -25,10 +25,6 @@ module ModAdvectc_rk
   ! differs only on the type of these two formal arguments at
   ! the interface
 
-  use ModBasicFields, only: &
-       DeepCopyToBasicFields, &
-       DeepCopyFromBasicFields
-       
   use ModRexev, only : &
        prep_lnthetv
   
@@ -562,7 +558,6 @@ contains
     character(len=*), parameter :: h="**(advectc_rk)**"
     character(len=8) :: str(10)
 
-    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
     
     if (dumpLocal) then
        call MsgDump(h//" starts with varn="//trim(varn))
@@ -831,7 +826,6 @@ contains
                'thc'  &
                )
 
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     
           return
        endif !endif of varn .eq. 'THETAIL'
@@ -863,7 +857,6 @@ contains
                'lnthetav' &
                )
 
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     
 
           return
@@ -892,7 +885,6 @@ contains
                'pc' &
                )
 
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     
           return
        endif !endif og varn .eq. 'PI'
@@ -991,7 +983,6 @@ contains
             trim(adjustl(str(1))))
     end if
 
-    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
     
   end subroutine advectc_rk
 

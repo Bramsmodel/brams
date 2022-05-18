@@ -379,7 +379,6 @@ contains
 
 
 
-
   subroutine InsertMessageSetAtOneGrid(oneGrid)
     type(Grid), pointer :: oneGrid
 

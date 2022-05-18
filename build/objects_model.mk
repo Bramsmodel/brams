@@ -73,7 +73,6 @@ OBJ_MOD = \
 	leaf_coms.o \
 	leaf3_teb.o \
 	mem_aerad.o \
-	mem_basic.o \
 	ModCarmaDriver.o \
 	mem_carma.o \
 	mem_cuparm.o \
@@ -859,7 +858,6 @@ MOD_MOD = \
 	chem1_list.mod \
 	mem_chem1.mod \
 	mem_varinit.mod \
-	mem_basic.mod \
 	mem_turb.mod \
 	mem_precision.mod \
 	mem_globrad.mod \

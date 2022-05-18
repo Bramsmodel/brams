@@ -9,12 +9,6 @@
 
 subroutine dealloc_all()
 
-  use mem_basic, only: &
-       basic_g, &
-       basicm_g, &
-       dealloc_basic
-
-
   use mem_cuparm, only: &
        cuparm_g, &
        cuparmm_g
@@ -66,11 +60,6 @@ subroutine dealloc_all()
   use mem_shcu   ! needed for Shallow Cumulus
 
   use mem_opt    ! Needed for optimization - ALF
-
-  !--(DMK-CCATT-INI)-----------------------------------------------------
-  !  use catt_start, only: &
-  !       CATT                        ! intent(in)
-  !--(DMK-CCATT-FIM)-----------------------------------------------------
 
   use mem_aerad, only: &
        nwave,          &         !INTENT(IN)
@@ -146,8 +135,6 @@ subroutine dealloc_all()
   endif
 
   do ng=1,ngrids
-     call dealloc_basic(basic_g(ng))
-     call dealloc_basic(basicm_g(ng))
      call dealloc_cuparm(cuparm_g(ng))
      call dealloc_cuparm(cuparmm_g(ng))
      call dealloc_grid(grid_g(ng))
@@ -189,7 +176,7 @@ subroutine dealloc_all()
      endif
 
   enddo
-  deallocate(basic_g,basicm_g)
+!!$  deallocate(basic_g,basicm_g)
   deallocate(cuparm_g,cuparmm_g)
   deallocate(grid_g,gridm_g)
   deallocate(leaf_g,leafm_g)

@@ -74,9 +74,7 @@ module ModOneProc
        fcorio
 
   use ModBasicFields, only: &
-       BasicFields, &
-       DeepCopyToBasicFields, &
-       DeepCopyFromBasicFields
+       BasicFields
 
   use dump, only: &
        dumpMessage, &
@@ -986,9 +984,7 @@ contains
 
        do ifm=1,ngrids
           call newgrid(ifm)
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
           call cfl(mzp, mxp, myp, 0, 0, oneGrid%Basic)
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        enddo
        call MaxCFLOverall(cflxy, cflz)
 
@@ -1094,9 +1090,7 @@ contains
        if (IPOS/=0) then
           ! create post processing
           oneAllPostTypes => null()
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
           call CreatePostProcess(oneNamelistFile, oneAllPostTypes, oneGrid%Basic)
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        endif
 
        select case (IPOS)
@@ -1107,9 +1101,7 @@ contains
 
        case (2,3)
           ! post process initial state of the atmosphere in Grads
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
           call PostProcess(AllGrids, oneNamelistFile, oneAllPostTypes, oneGrid%Basic)
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        end select
 
        ! wall time at the end of initialization
@@ -1176,9 +1168,7 @@ contains
 
           if (isendbackflg==1) then
              if (isendiv==1) then
-                call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
                 call VarfReadStoreOwnChunk(AllGrids, 2, nud_type, oneGrid%Basic)
-                call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
              endif
              if (isendsst==1) then
                 do ifm=1,ngrids
@@ -1192,7 +1182,6 @@ contains
              endif
              if (isendsrc==1) then
 
-                call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
 
                 do ifm = 1, ngrids
                    call newgrid(ifm)
@@ -1209,7 +1198,6 @@ contains
                         plume_fre_g,emiss_ajust_aer)
                 enddo
 
-                call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
              endif
           end if
@@ -1271,9 +1259,7 @@ contains
 
                 time = begtime + (isched(npass,5)-1)*dtlt
                 if (mcphys_type==3) then
-                   call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
                    call adjustFriendlyForMonth(time,oneGrid%Basic)
-                   call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
                 end if
 
                 ! timestep routine
@@ -1327,9 +1313,7 @@ contains
              call newgrid(ngrid)
              if ((avgtim/=0.) .and. (frqmean/=0. .or. frqboth/=0.))  &
                   call anlavg(mzp, mxp, myp, oneGrid%Basic, oneGrid%AveBasic)
-             call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
              call cfl(mzp, mxp, myp, nodei0(mynum,ngrid), nodej0(mynum,ngrid), oneGrid%Basic)
-             call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
           end do
 
           ! get max CFL from all processes to probe numerical stability
@@ -1391,9 +1375,7 @@ contains
                   iflag==1
           end if
 
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
           call OutputFields(histFlag, instFlag, liteFlag, meanFlag, oneGrid%Basic)
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
           ! Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
           ! call SynchronizedTimeStamp(TS_OUTPUT)
@@ -1417,9 +1399,7 @@ contains
 
              select case (IPOS)
              case (2,3)
-                call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
                 call PostProcess(AllGrids, oneNamelistFile, oneAllPostTypes, oneGrid%Basic)
-                call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
              end select
 
           end if
@@ -1657,9 +1637,7 @@ contains
 
           if(initial == 1) then
              print*,'Horizontally-homogeneous-INITIAL start of grid- 1'
-             call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
              call inithh(oneGrid%Basic)
-             call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
           endif
 
           !If "history" initialization, call INITHIS.
@@ -1668,9 +1646,7 @@ contains
 
           if (initial == 3) then
              print*,'History-INITIAL start of grid- 1'
-             call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
              call inithis(oneGrid%Basic)
-             call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
           endif
 
           !  On all fine grids, initialize the surface layer characteristics,
@@ -1686,9 +1662,7 @@ contains
           ! If "variable initialization", do it all here
 
           !--(DMK-CCATT-INI)-----------------------------------------------------
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
           call VarfReadStoreOwnChunk(AllGrids, 0, initial, oneGrid%Basic)
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
           !--(DMK-CCATT-FIM)-----------------------------------------------------
        endif
 
@@ -1698,10 +1672,8 @@ contains
        do ifm=1,ngrids
           call newgrid(ifm)
 
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
           call FieldInit(1, oneGrid%Basic)
           call negadj1(mzp,mxp,myp, oneGrid%Basic)
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
           call thermo(mzp, mxp, myp, 1, mxp, 1, myp, oneGrid%Basic, oneGrid%AveBasic)
 
@@ -1715,7 +1687,6 @@ contains
           if (mcphys_type == 0) then
              if (level  ==  3) then
 
-                call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
 
                 call initqin(mzp,mxp,myp        &
                      ,micro_g(ifm)%q2      &
@@ -1728,7 +1699,6 @@ contains
                      ,micro_g(ifm)%cccnp   &
                      ,micro_g(ifm)%cifnp   )
 
-                call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
              endif
 
@@ -1736,7 +1706,6 @@ contains
 
              if (level  ==  3) then
 
-                call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
 
                 call initqin_2M(mzp,mxp,myp        &
                      ,micro_g(ifm)%q2   &
@@ -1747,45 +1716,38 @@ contains
                      ,oneGrid%Basic%theta   &
                      ,oneGrid%Basic%dn0     )
 
-                call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
 
 
                 if(icloud >= 5) then
 
-                   call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
 
                    call initqin2_2M(mzp,mxp,myp        &
                         ,micro_g(ifm)%cccnp   &
                         ,micro_g(ifm)%cccmp   &
                         ,oneGrid%Basic%dn0   )
 
-                   call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
                 end if
 
                 if(idriz  >= 5) then
 
-                   call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
 
                    call initqin3_2M(mzp,mxp,myp        &
                         ,micro_g(ifm)%gccnp   &
                         ,micro_g(ifm)%gccmp   &
                         ,oneGrid%Basic%dn0   )
 
-                   call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
                 end if
 
                 if(ipris  >= 5) then
 
-                   call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
 
                    call initqin4_2M(mzp,mxp,myp        &
                         ,micro_g(ifm)%cifnp   &
                         ,oneGrid%Basic%dn0   )
 
-                   call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
                 end if
 
@@ -1800,11 +1762,9 @@ contains
           !-- only for RK time integration
           if(DYNCORE_FLAG==2) then
 
-             call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
 
              oneGrid%Basic%thc(:,:,:)=oneGrid%Basic%thp(:,:,:)
 
-             call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
           endif
 
        enddo
@@ -1844,16 +1804,13 @@ contains
        ! Initialize various LEAF variables.
 
        if (ipastin == 0) then
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
           call GeonestNoFile(1,ngrids,oneGrid%Basic)
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        end if
 
 
        !- change initial soil moisture if desired
        if(change_soilm) then
 
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
 
 
           do ifm=1,ngrids
@@ -1874,7 +1831,6 @@ contains
                   ,leaf_g(ifm)%leaf_class  )
           enddo
 
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
        endif
 
@@ -1901,7 +1857,6 @@ contains
 
           if (iteb==1) then
 
-             call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
 
              do ifm=1,ngrids
                 call TEB_INIT(                      &
@@ -1937,7 +1892,6 @@ contains
 
              enddo
 
-             call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
           endif
 
@@ -1992,14 +1946,12 @@ contains
        !-srf  Initialize the true air density
        if (iexev == 2) then
 
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
 
           do ifm=1,ngrids
              call newgrid(ifm)
              stilt_g(ifm)%dnp(:,:,:)= oneGrid%Basic%dn0(:,:,:)
           enddo
 
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
        endif
 
@@ -2011,7 +1963,6 @@ contains
           !-srf: initialize mixing ratios (only if chem assim is off)
           !-srf: and sources
 
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
 
           do ifm=1,ngrids
              call newgrid(ifm)
@@ -2034,16 +1985,13 @@ contains
                   1,nodemxp(mynum,ifm),1,nodemyp(mynum,ifm))
           enddo
 
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
        end if
        !call dumpAer('Aer_pos2')
        ! Read Radiation Parameters if CARMA or RRTMG Radiation is selected
        if (ilwrtyp==4 .or. iswrtyp==4 .or. ilwrtyp==6 .or. iswrtyp==6 ) then
           call master_read_carma_data(mchnum, master_num)
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
           call read_aotMap(oneGrid%Basic)
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        endif
 
        ! AKMIN variable:
@@ -2073,9 +2021,7 @@ contains
           !call fatal_error(h//"**(JP)** sfcinit_hstart was not worked yet")
           iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
                "**(JP)** sfcinit_hstart was not worked yet")
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
           call sfcinit_hstart(oneGrid%Basic)
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        end if
 
 
@@ -2132,7 +2078,6 @@ contains
        endif
 
 
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
 
        do ifm = 1,ngrids
           icm = nxtnest(ifm)
@@ -2147,14 +2092,11 @@ contains
        enddo
 
 
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
        do ifm = 1,min(ngrids,ngridsh)
           icm = nxtnest(ifm)
 !!$          if (icm  >  0) call fmrefs3d(ifm)
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
           call negadj1(mzp,mxp,myp, oneGrid%Basic)
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        enddo
 
        ! ALF - For use with SiB
@@ -2170,7 +2112,6 @@ contains
             (SOIL_MOIST == 'a').or.(SOIL_MOIST == 'A')) then
 
 
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
 
           do ifm = 1,min(ngrids,ngridsh)
              call newgrid(ifm)
@@ -2184,7 +2125,6 @@ contains
 
           enddo
 
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
 
        endif
@@ -2198,9 +2138,7 @@ contains
        ! Read Radiation Parameters if CARMA or RRTMG Radiation is selected
        if (ilwrtyp==4 .or. iswrtyp==4 .or. ilwrtyp==6 .or. iswrtyp==6 ) then
           call master_read_carma_data(mchnum, master_num)
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
           call read_aotMap(oneGrid%Basic)
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        endif
 
        !--(DMK-CCATT-INI)-----------------------------------------------------
@@ -2212,7 +2150,6 @@ contains
           !-srf: initialize mixing ratios (only if chem assim is off)
           !-srf: and sources
 
-          call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
 
           do ifm=1,ngrids
              call newgrid(ifm)
@@ -2232,7 +2169,6 @@ contains
 
           enddo
 
-          call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
        end if
 
@@ -2254,7 +2190,6 @@ contains
 
     !       Fill latitude-longitude, map factor, and Coriolis arrays.
 
-    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
 
     do ifm = 1,ngrids
        call newgrid(ifm)
@@ -2265,7 +2200,6 @@ contains
     enddo
 
 
-    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
 
     !  If we are doing one-way nesting or varfile nudging, inventory,
@@ -2287,9 +2221,7 @@ contains
        !--(DMK-CCATT-FIM)-----------------------------------------------------
 
        !--(DMK-CCATT-INI)-----------------------------------------------------
-       call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
        call VarfReadStoreOwnChunk(AllGrids, 1, nud_type, oneGrid%Basic)
-       call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
        !--(DMK-CCATT-FIM)-----------------------------------------------------
 
     endif
@@ -2389,9 +2321,7 @@ contains
     !--(DMK-CCATT-FIM)--------------------------------------------------------
     !srf
 
-    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
     call OutputFields(histFlag, instFlag, liteFlag, meanFlag, oneGrid%Basic)
-    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
     ! Save initial fields into the averaged arrays
 

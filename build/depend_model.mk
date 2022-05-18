@@ -88,7 +88,7 @@ ModDomainDecomp.o  : $(MPI)/ModDomainDecomp.f90 \
 
 ModBasicFields.o : $(MEMORY)/ModBasicFields.f90 ModNodeDimensions.o \
 	ModNamelistFile.o ModParallelEnvironment.o var_tables.o \
-	mem_stilt.o mem_basic.o
+	mem_stilt.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -179,12 +179,6 @@ ModScalarTable.o : $(MEMORY)/ModScalarTable.f90 ModParallelEnvironment.o
 	rm -f $(<F:.f90=.f90)
 
 var_tables.o : $(MEMORY)/var_tables.f90 ModParallelEnvironment.o
-	@cp -f $< $(<F:.f90=.f90)
-	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-	rm -f $(<F:.f90=.f90)
-
-mem_basic.o : $(MEMORY)/mem_basic.f90 var_tables.o ModNamelistFile.o \
-	mem_stilt.o mem_grid.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -531,14 +525,14 @@ ModOutputUtils.o : $(IO)/ModOutputUtils.f90 var_tables.o ModBasicFields.o mem_tu
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-alloc.o : $(MEMORY)/alloc.F90  mem_basic.o mem_opt_scratch.o mem_shcu.o \
+alloc.o : $(MEMORY)/alloc.F90 mem_opt_scratch.o mem_shcu.o \
 	mem_aerad.o mem_globaer.o mem_globrad.o \
 	teb_spm_start.o mem_teb.o mem_teb_common.o mem_gaspart.o $(JULES_OBJ_MEM)
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModMemAlloc.o : $(MEMORY)/ModMemAlloc.F90  mem_basic.o extra.o \
+ModMemAlloc.o : $(MEMORY)/ModMemAlloc.F90 extra.o \
 	mem_aerad.o  mem_carma.o mem_grell.o mem_grell_param2.o \
 	mem_opt_scratch.o mem_scratch1_grell.o mem_scratch2_grell.o \
 	mem_scratch2_grell_sh.o mem_scratch3_grell.o \
@@ -704,7 +698,7 @@ cond_update.o : $(FDDA)/cond_update.f90  an_header.o grid_struct.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModNudAnalysis.o : $(FDDA)/ModNudAnalysis.f90 chem1_list.o dump.o mem_basic.o mem_chem1.o \
+ModNudAnalysis.o : $(FDDA)/ModNudAnalysis.f90 chem1_list.o dump.o ModBasicFields.o mem_chem1.o \
 	mem_grid.o mem_scratch.o mem_tend.o mem_varinit.o ModEvaluation.o modIau.o node_mod.o \
 	$(UTILS_INCS)/constants.h
 	@cp -f $< $(<F:.f90=.f90)
@@ -886,7 +880,7 @@ ModRadvc.o : $(MODEL)/ModRadvc.f90  mem_grid.o mem_scratch.o \
 	rm -f $(<F:.f90=.f90)
 
 ModRadvcRK.o : $(MODEL)/ModRadvcRK.f90 grid_dims.o mem_tend.o \
-	mem_grid.o ModBasicFields.o mem_chem1.o mem_stilt.o \
+	mem_grid.o mem_chem1.o mem_stilt.o \
 	ModParallelEnvironment.o ModGrid.o ModMessageSet.o \
 	node_mod.o parlibf.o ModScalarTable.o ModRexev.o 
 	@cp -f $< $(<F:.f90=.f90)
@@ -1786,7 +1780,7 @@ digitalFilter.o :$(MODEL)/digitalFilter.f90 an_header.o grid_dims.o io_params.o 
 ModMonotonicAdvection.o : $(MODEL)/ModMonotonicAdvection.f90  \
 	ModGrid.o ModParallelEnvironment.o ModDomainDecomp.o \
 	ModMessageSet.o ModNamelistFile.o ModScalarTable.o \
-	ModBasicFields.o mem_grid.o micphys.o rconstants.o mem_aer1.o mem_chem1.o \
+	mem_grid.o micphys.o rconstants.o mem_aer1.o mem_chem1.o \
 	chem_dry_dep.o var_tables.o ccatt_start.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)

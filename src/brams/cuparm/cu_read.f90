@@ -128,11 +128,6 @@ subroutine cu_file_inv (iyear1,imonth1,idate1,itime1)
 
   nhftot=-1
 
-!!$ rams_filelist_arg = cu_prefix(1:len_trim(cu_prefix))//&
-!!$     '????-??-??-??????-g?.vfm'
-
-!!$ call RAMS_filelist(fnames, rams_filelist_arg, nhftot)
-
   nhftot = ((timmax/3600) / (isan_inc/100)) + 1    
 
   call date_add_to(iyear1,imonth1,idate1,itime1*100  &
@@ -233,7 +228,6 @@ subroutine cu_update(iswap,ncu)
   fnames_cu,        &
   wt_cu_grid
 
-!  use mem_basic
   use mem_grid, only: ngrids, nnzp, nnxp, nnyp, nxtnest, grid_g
 
   implicit none
@@ -292,18 +286,6 @@ subroutine cu_update(iswap,ncu)
 
            npts=nnxp(ngr)*nnyp(ngr)
            call vfirec(iun,cuparm_g(ngr)%conprrf,npts,'LIN')
-!!$      else
-!!$         call fmint4(cuparm_g(icm)%thsrcf  &
-!!$                    ,cuparm_g(ifm)%thsrcf  &
-!!$                    ,basic_g(icm)%dn0,basic_g(ifm)%dn0  &
-!!$                    ,grid_g(icm)%topt,ifm,icm,'t',1)
-!!$         call fmint4(cuparm_g(icm)%rtsrcf  &
-!!$                    ,cuparm_g(ifm)%thsrcf  &
-!!$                    ,basic_g(icm)%dn0,basic_g(ifm)%dn0  &
-!!$                    ,grid_g(icm)%topt,ifm,icm,'t',1)
-!!$         call fmint2d(icm,ifm,'t'  &
-!!$                     ,cuparm_g(icm)%conprrf  &
-!!$                     ,cuparm_g(ifm)%conprrf )
         endif
      endif
 

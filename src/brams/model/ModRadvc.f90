@@ -10,9 +10,7 @@ module ModRadvc
        real64
   
   use ModBasicFields, only: &
-       BasicFields, &
-       DeepCopyToBasicFields, &
-       DeepCopyFromBasicFields
+       BasicFields
   
   use ModMonotonicAdvection, only: &
        advmnt 
@@ -145,7 +143,6 @@ contains
 
        else
 
-          call DeepCopyToBasicFields(oneBasic, oneAveBasic, h)
           call vel_advectc_adap(mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,jdim    &
                ,grid_g(ngrid)%lpu    ,grid_g(ngrid)%lpv       &
                ,grid_g(ngrid)%lpw    ,oneBasic%uc     &
@@ -159,7 +156,6 @@ contains
                ,scratch%vt3da        ,scratch%vt3db         &
                ,scratch%vt3dc        ,scratch%vt3dd         &
                ,scratch%vt3de        ,scratch%vt3df        ,time)
-          call DeepCopyFromBasicFields(oneBasic, oneAveBasic)
 
        endif
 
@@ -170,7 +166,6 @@ contains
 
        ! Advect  scalars
 
-       call DeepCopyToBasicFields(oneBasic, oneAveBasic, h)
        dtlto2 = .5 * dtlt
        ind = 0
        do j = 1,myp
@@ -186,7 +181,6 @@ contains
              enddo
           enddo
        enddo
-       call DeepCopyFromBasicFields(oneBasic, oneAveBasic)
 
        if (if_adap == 0) then
 
@@ -201,7 +195,6 @@ contains
 
        else
 
-          call DeepCopyToBasicFields(oneBasic, oneAveBasic, h)
           call fa_preptc_adap(mzp,mxp,myp                               &
                ,scratch%vt3da            ,scratch%vt3db             &
                ,scratch%vt3dc            ,scratch%vt3dd             &
@@ -213,7 +206,6 @@ contains
                ,grid_g(ngrid)%dxu   ,grid_g(ngrid)%dyv     &
                ,grid_g(ngrid)%dxt   ,grid_g(ngrid)%dyt     &
                ,zt,zm,dzm,vctr1,vctr2,jdim,mynum                          )
-          call DeepCopyFromBasicFields(oneBasic, oneAveBasic)
 
        endif
 
@@ -237,7 +229,6 @@ contains
           if(ccatt == 1 .and. aerosol == 1) then
              if( n >= num_scalar_aer_1st ) then 
                 if (if_adap == 0) then
-                   call DeepCopyToBasicFields(oneBasic, oneAveBasic, h)
                    call fa_preptc_with_sedim(mzp,mxp,myp    &
                         ,scratch%vt3da             ,scratch%vt3db      &
                         ,scratch%vt3dc              ,scratch%vt3df &
@@ -252,7 +243,6 @@ contains
                         ,oneBasic%wc         & ! air vertical velocity (C time)
                         ,scratch%vt3dp             & ! ) ! to save horizontal contribution on the sigmaz velocity
                         ,nzpmax,hw4,dzm,dzt,dd_sedim(:,ngrid))   ! (DMK) deposicao seca (cod. limpo)
-                   call DeepCopyFromBasicFields(oneBasic, oneAveBasic)
                 else
                    print*,'sedim not yet prepared for shaved eta'
                    stop 3333
@@ -547,7 +537,6 @@ contains
     ! Compute weight at scalar point: VT3DH
     ! Compute advective weights for the linear term: VT3DI, VCTR1, and VCTR2
 
-    call DeepCopyToBasicFields(oneBasic, oneAveBasic, h)
     do j = 1,m3
        jm = max(1,j-1)
        jp = min(m3,j+1)
@@ -603,7 +592,6 @@ contains
           enddo
        enddo
     enddo
-    call DeepCopyFromBasicFields(oneBasic, oneAveBasic)
     
   end subroutine fa_preptc
 

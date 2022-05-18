@@ -1519,7 +1519,7 @@ subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
   character(len=7)            :: cProc
   character(len=8)            :: c0, c1, c2
   character(len=*), parameter :: h="**(saveVFM)**" 
-  logical, parameter :: dumpLocal=.false.
+  logical, parameter :: dumpLocal=.true.
   character(len=8) :: str(10)
   
   integer, parameter :: idim_type_min=2

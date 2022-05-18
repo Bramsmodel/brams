@@ -8,9 +8,7 @@
 module ModRThrm
 
   use ModBasicFields, only: &
-       BasicFields, &
-       DeepCopyToBasicFields, &
-       DeepCopyFromBasicFields
+       BasicFields
 
   use mem_grid, only: &
        ngrid !INTENT(IN)
@@ -66,7 +64,6 @@ contains
 
     character(len=*), parameter :: h="**(thermo)**"
 
-    call DeepCopyToBasicFields(oneBasic, oneAveBasic, h)
     
     if (level .le. 1) then
 
@@ -118,7 +115,6 @@ contains
 
     endif
 
-    call DeepCopyFromBasicFields(oneBasic, oneAveBasic)
     
   end subroutine thermo
 
@@ -465,7 +461,6 @@ contains
 
     character(len=*), parameter :: h="**(theta_thp_rk)**"
     
-    call DeepCopyToBasicFields(oneBasic, oneAveBasic, h)
     
     if (trim(action).ne. "get_thetail" .and. trim(action).ne."get_theta") then
        call fatal_error(h//" unknow action at theta_thp_rk routine")
@@ -532,7 +527,6 @@ contains
 
     endif
     
-    call DeepCopyFromBasicFields(oneBasic, oneAveBasic)
     
   end subroutine theta_thp_rk
 

@@ -27,10 +27,6 @@ module ModBasicFields
   use mem_stilt, only: &
        iexev
 
-  use mem_basic, only: &
-       basic_g, &
-       basicm_g
-  
   implicit none
 
   private
@@ -39,8 +35,6 @@ module ModBasicFields
   public :: DestroyBasicFields
   public :: DumpBasicFields
   public :: InsertBasicFieldsAtVarTable 
-  public :: DeepCopyToBasicFields
-  public :: DeepCopyFromBasicFields
  
   type BasicFields
 
@@ -498,12 +492,14 @@ contains
   
 
 
-  subroutine InsertBasicFieldsAtVarTable(oneBasicFields, oneAveBasicFields, imean, gridId)
-    type (BasicFields), pointer, intent(in) :: oneBasicFields
-    type (BasicFields), pointer, intent(in) :: oneAveBasicFields
-    integer, intent(in) :: imean
+  subroutine InsertBasicFieldsAtVarTable(oneBasicFields, oneAveBasicFields, &
+       oneNamelistFile, gridId)
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(BasicFields), pointer, intent(in) :: oneAveBasicFields
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     integer, intent(in) :: gridId
 
+    integer :: imean
     integer(kind=real64) :: npts
     character(len=*), parameter :: h="**(InsertBasicFieldsAtVarTable)**" 
 
@@ -511,8 +507,18 @@ contains
        call fatal_error(h//" oneBasicFields not associated")
     else if (.not. associated(oneAveBasicFields)) then
        call fatal_error(h//" oneAveBasicFields not associated")
+    else if (.not. associated(oneNamelistFile)) then
+       call fatal_error(h//" oneNamelistFile not associated")
     end if
 
+    ! Should average fields be stored at variable tables?
+
+    if (oneNamelistFile%avgtim == 0) then
+       imean=0 ! do not store
+    else
+       imean=1 ! store
+    end if
+    
     ! Fill pointers to arrays into variable tables
 
     if (associated(oneBasicFields%up)) then
@@ -666,183 +672,4 @@ contains
             'CPUTIME :2:anal:mpti:mpt3')
     end if
   end subroutine InsertBasicFieldsAtVarTable
-
-
-
-  
-
-  subroutine DeepCopyToBasicFields(oneBasicFields, oneAveBasicFields, procName)
-    type(BasicFields), pointer, intent(in) :: oneBasicFields
-    type(BasicFields), pointer, intent(in) :: oneAveBasicFields
-    character(len=*), intent(in) :: procName
-
-    character(len=*), parameter :: h="**(DeepCopyToBasicFields)**"
-
-    if (.not. associated(oneBasicFields)) then
-       call fatal_error(h//" oneBasicFields not associated")
-    else if (.not. associated(oneAveBasicFields)) then
-       call fatal_error(h//" oneAveBasicFields not associated")
-    end if
-
-    if (updatingBasicFields) then
-       call fatal_error(h//" invoked by "//&
-            trim(adjustl(procName))//&
-            " but BasicFields is updated by "//&
-            trim(adjustl(fromProcedure)))
-    else
-       updatingBasicFields=.true.
-       fromProcedure=procName
-    end if
-    
-    oneBasicFields%up => basic_g(1)%up
-    oneAveBasicFields%up => basicm_g(1)%up
-    
-    oneBasicFields%uc => basic_g(1)%uc
-    oneAveBasicFields%uc => basicm_g(1)%uc
-    
-    oneBasicFields%vp => basic_g(1)%vp
-    oneAveBasicFields%vp => basicm_g(1)%vp
-    
-    oneBasicFields%vc => basic_g(1)%vc
-    oneAveBasicFields%vc => basicm_g(1)%vc
-    
-    oneBasicFields%wp => basic_g(1)%wp
-    oneAveBasicFields%wp => basicm_g(1)%wp
-    
-    oneBasicFields%wc => basic_g(1)%wc
-    oneAveBasicFields%wc => basicm_g(1)%wc
-    
-    oneBasicFields%pp => basic_g(1)%pp
-    oneAveBasicFields%pp => basicm_g(1)%pp
-    
-    oneBasicFields%pc => basic_g(1)%pc
-    oneAveBasicFields%pc => basicm_g(1)%pc
-    
-    oneBasicFields%rv => basic_g(1)%rv
-    oneAveBasicFields%rv => basicm_g(1)%rv
-    
-    oneBasicFields%theta => basic_g(1)%theta
-    oneAveBasicFields%theta => basicm_g(1)%theta
-    
-    oneBasicFields%thp => basic_g(1)%thp
-    oneAveBasicFields%thp => basicm_g(1)%thp
-    
-    oneBasicFields%thc => basic_g(1)%thc
-    oneAveBasicFields%thc => basicm_g(1)%thc
-    
-    oneBasicFields%rtp => basic_g(1)%rtp
-    oneAveBasicFields%rtp => basicm_g(1)%rtp
-    
-    oneBasicFields%pi0 => basic_g(1)%pi0
-    oneAveBasicFields%pi0 => basicm_g(1)%pi0
-    
-    oneBasicFields%th0 => basic_g(1)%th0
-    oneAveBasicFields%th0 => basicm_g(1)%th0
-    
-    oneBasicFields%dn0 => basic_g(1)%dn0
-    oneAveBasicFields%dn0 => basicm_g(1)%dn0
-    
-    oneBasicFields%dn0u => basic_g(1)%dn0u
-    oneAveBasicFields%dn0u => basicm_g(1)%dn0u
-    
-    oneBasicFields%dn0v => basic_g(1)%dn0v
-    oneAveBasicFields%dn0v => basicm_g(1)%dn0v
-    
-    oneBasicFields%fcoru => basic_g(1)%fcoru
-    oneAveBasicFields%fcoru => basicm_g(1)%fcoru
-    
-    oneBasicFields%fcorv => basic_g(1)%fcorv
-    oneAveBasicFields%fcorv => basicm_g(1)%fcorv
-    
-    oneBasicFields%cputime => basic_g(1)%cputime
-    oneAveBasicFields%cputime => basicm_g(1)%cputime
-    
-  end subroutine DeepCopyToBasicFields
-
-
-
-
-  subroutine DeepCopyFromBasicFields(oneBasicFields, oneAveBasicFields)
-    type(BasicFields), pointer, intent(in) :: oneBasicFields
-    type(BasicFields), pointer, intent(in) :: oneAveBasicFields
-
-    character(len=*), parameter :: h="**(DeepCopyFromBasicFields)**"
-
-    if (.not. associated(oneBasicFields)) then
-       call fatal_error(h//" oneBasicFields not associated")
-    else if (.not. associated(oneAveBasicFields)) then
-       call fatal_error(h//" oneAveBasicFields not associated")
-    end if
-
-    if (.not. updatingBasicFields) then
-       call fatal_error(h//" invoked whenever BasicFields was not beeing updated")
-    else
-       updatingBasicFields=.false.
-       fromProcedure=""
-    end if
-    
-    basic_g(1)%up => oneBasicFields%up
-    basicm_g(1)%up => oneAveBasicFields%up
-
-    basic_g(1)%uc => oneBasicFields%uc
-    basicm_g(1)%uc => oneAveBasicFields%uc
-
-    basic_g(1)%vp => oneBasicFields%vp
-    basicm_g(1)%vp => oneAveBasicFields%vp
-
-    basic_g(1)%vc => oneBasicFields%vc
-    basicm_g(1)%vc => oneAveBasicFields%vc
-
-    basic_g(1)%wp => oneBasicFields%wp
-    basicm_g(1)%wp => oneAveBasicFields%wp
-
-    basic_g(1)%wc => oneBasicFields%wc
-    basicm_g(1)%wc => oneAveBasicFields%wc
-
-    basic_g(1)%pp => oneBasicFields%pp
-    basicm_g(1)%pp => oneAveBasicFields%pp
-
-    basic_g(1)%pc => oneBasicFields%pc
-    basicm_g(1)%pc => oneAveBasicFields%pc
-
-    basic_g(1)%rv => oneBasicFields%rv
-    basicm_g(1)%rv => oneAveBasicFields%rv
-
-    basic_g(1)%theta => oneBasicFields%theta
-    basicm_g(1)%theta => oneAveBasicFields%theta
-
-    basic_g(1)%thp => oneBasicFields%thp
-    basicm_g(1)%thp => oneAveBasicFields%thp
-
-    basic_g(1)%thc => oneBasicFields%thc
-    basicm_g(1)%thc => oneAveBasicFields%thc
-
-    basic_g(1)%rtp => oneBasicFields%rtp
-    basicm_g(1)%rtp => oneAveBasicFields%rtp
-
-    basic_g(1)%pi0 => oneBasicFields%pi0
-    basicm_g(1)%pi0 => oneAveBasicFields%pi0
-
-    basic_g(1)%th0 => oneBasicFields%th0
-    basicm_g(1)%th0 => oneAveBasicFields%th0
-
-    basic_g(1)%dn0 => oneBasicFields%dn0
-    basicm_g(1)%dn0 => oneAveBasicFields%dn0
-
-    basic_g(1)%dn0u => oneBasicFields%dn0u
-    basicm_g(1)%dn0u => oneAveBasicFields%dn0u
-
-    basic_g(1)%dn0v => oneBasicFields%dn0v
-    basicm_g(1)%dn0v => oneAveBasicFields%dn0v
-
-    basic_g(1)%fcoru => oneBasicFields%fcoru
-    basicm_g(1)%fcoru => oneAveBasicFields%fcoru
-
-    basic_g(1)%fcorv => oneBasicFields%fcorv
-    basicm_g(1)%fcorv => oneAveBasicFields%fcorv
-
-    basic_g(1)%cputime => oneBasicFields%cputime
-    basicm_g(1)%cputime => oneAveBasicFields%cputime
-
-  end subroutine DeepCopyFromBasicFields
 end module ModBasicFields

@@ -28,10 +28,6 @@ module ModMonotonicAdvection
   use ModNamelistFile, only: &
        NamelistFile
 
-  use ModBasicFields, only: &
-       DeepCopyToBasicFields, &
-       DeepCopyFromBasicFields
-
   use mem_grid, only:        &
        dtlt,   & !intent(in)
        time,   &
@@ -484,7 +480,6 @@ contains
     end if
 
 
-    call DeepCopyToBasicFields(oneGrid%Basic, oneGrid%AveBasic, h)
 
     ! dimension of external fields (regular ghost zone width)
 
@@ -779,7 +774,6 @@ contains
 
     call DestroyMonotonicAdvection(oneAdvMnt)
 
-    call DeepCopyFromBasicFields(oneGrid%Basic, oneGrid%AveBasic)
 
     if (dumpLocal) then
        call MsgDump(h//" finishes")

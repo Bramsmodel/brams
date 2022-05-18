@@ -9,9 +9,7 @@
 module ModCoriolis
 
   use ModBasicFields, only: &
-       BasicFields, &
-       DeepCopyToBasicFields, &
-       DeepCopyFromBasicFields
+       BasicFields
   
   use mem_grid, only: &
        grid_g, &
@@ -175,14 +173,10 @@ contains
        end do
     end do
 
-    call DeepCopyToBasicFields(oneBasicFields, oneAveBasicFields, h)
-    
     call corlsu(mzp,mxp,myp,i0,j0,ia,izu,ja,jz,ut,vt3da,oneBasicFields)
 
     call corlsv(mzp,mxp,myp,i0,j0,ia,iz,ja,jzv,vt,vt3da,oneBasicFields)
 
-    call DeepCopyFromBasicFields(oneBasicFields, oneAveBasicFields)
-    
     n=0
     do j=1,myp
        do i=1,mxp
