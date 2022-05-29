@@ -16,6 +16,10 @@ module ModTimestep
   use ModNudAnalysis, only: &
        datassim
   
+  use ModTurbFields, only: &
+       DeepCopyToTurbFields,&
+       DeepCopyFromTurbFields
+  
   use ModOdaNudge, only: &
        oda_nudge
   
@@ -353,7 +357,10 @@ contains
        if (time==0.) then
           call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, oneGrid%Basic)
        end if
-       call sfclyr_jules(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile, oneGrid%Basic)
+       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb)
+       call sfclyr_jules(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile, &
+            oneGrid%Basic, oneGrid%Turb)
+       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb)
 #endif
     endif
 

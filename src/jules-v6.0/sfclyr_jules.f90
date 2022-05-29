@@ -55,8 +55,8 @@ module ModSfcLyrJules
   use mem_radiate, only: &
        radiate_g 
 
-  use mem_turb, only: &
-       turb_g
+  use ModTurbFields, only: &
+       TurbFields
 
   use mem_cuparm, only: &
        cuparm_g, &
@@ -164,7 +164,7 @@ contains
 
 
   subroutine sfclyr_jules(mzp,mxp,myp,iaI,izI,jaI,jzI,jdim,julesFile,&
-       oneBasicFields)
+       oneBasicFields, oneTurbFields)
 
     !--- Modulos do BRAMS ---
 
@@ -178,6 +178,7 @@ contains
     integer, intent(in) :: jdim
     character(len=*), intent(in) :: julesFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
 
     integer               :: nsoil, fase,ia,iz,ja,jz,hh,mm
     integer, parameter :: fat_dtlong=1  ! > 1 para nao executar o JULES em todos os timestep do BRAMS
@@ -458,21 +459,23 @@ contains
     deallocate(rlongupJ)
 
     !--- Acoplando fluxo de calor latente ---
-    turb_g(ng)%sflux_r(ia:iz,ja:jz) = sf_diag%latent_heat(:,:)/alvl
+    oneTurbFields%sflux_r(ia:iz,ja:jz) = sf_diag%latent_heat(:,:)/alvl
 
     !--- Acoplando fluxo de calor sensivel ---
-    turb_g(ng)%sflux_t(ia:iz,ja:jz) = ftl_1_ij(:,:)/cp
+    oneTurbFields%sflux_t(ia:iz,ja:jz) = ftl_1_ij(:,:)/cp
 
     allocate(dens2(nxB,nyB))
     !--- Acoplando fluxo sflux_u e sflux_v ---
     dens2(:,:) = (oneBasicFields%dn0(1,ia:iz,ja:jz) + oneBasicFields%dn0(2,ia:iz,ja:jz)) * .5
-    turb_g(ng)%sflux_u(ia:iz,ja:jz) = -1*taux_1_ij(:,:)/dens2(:,:)
-    turb_g(ng)%sflux_v(ia:iz,ja:jz) = -1*tauy_1_ij(:,:)/dens2(:,:)
+    oneTurbFields%sflux_u(ia:iz,ja:jz) = -1*taux_1_ij(:,:)/dens2(:,:)
+    oneTurbFields%sflux_v(ia:iz,ja:jz) = -1*tauy_1_ij(:,:)/dens2(:,:)
 
     do j=ja,jz
        do i=ia,iz
           !--- Acoplando ustar, tstar, rstar ---
-          ustar2 = max(0.000001,sqrt( sqrt( (turb_g(ng)%sflux_u(i+ia-1,j+ja-1))**2 + (turb_g(ng)%sflux_v(i+ia-1,j+ja-1))**2 )))
+          ustar2 = max(0.000001,sqrt( &
+               sqrt((oneTurbFields%sflux_u(i+ia-1,j+ja-1))**2 + &
+               (oneTurbFields%sflux_v(i+ia-1,j+ja-1))**2)))
           tstar2 = ftl_1_ij(i,j)/(dens2(i,j) * cp * ustar2)
           rstar2 = sf_diag%latent_heat(i,j)/(dens2(i,j) * alvl * ustar2)
           leaf_g(ng)%ustar(i+ia-1,j+ja-1,1:npatch)=ustar2
@@ -491,7 +494,7 @@ contains
           endif
           psin = sqrt((1.-2.86 * cx) / (1. + cx * (-5.39 + cx * 6.998 )))
           ip=2
-          turb_g(ng)%sflux_w(i+ia-1,j+ja-1) = (0.27 * max(6.25 * (1. - cx) * &
+          oneTurbFields%sflux_w(i+ia-1,j+ja-1) = (0.27 * max(6.25 * (1. - cx) * &
                psin,wtol)- 1.18 * cx * psin) * ustar2 * ustar2 * leaf_g(ng)%patch_area(i+ia-1,j+ja-1,ip)    
        enddo
     enddo

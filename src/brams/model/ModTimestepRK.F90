@@ -97,7 +97,10 @@ module ModTimestepRK
        rayft,  &
        trsets
 
-
+  use ModTurbFields, only: &
+       DeepCopyToTurbFields,&
+       DeepCopyFromTurbFields
+  
   use grid_dims, only: &
        nzpmax
 
@@ -426,7 +429,10 @@ contains
        if (time==0.) then
           call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, oneGrid%Basic)
        end if
-       call sfclyr_jules(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile, oneGrid%Basic)
+       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb)
+       call sfclyr_jules(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile, &
+            oneGrid%Basic, oneGrid%Turb)
+       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb)
        !--- this combines the JULES land + LEAF ocean models.
        if (isfcl_ocean == 1) then
           call sfclyr_ocean_only  (mzp,mxp,myp,ia,iz,ja,jz,ibcon, oneGrid%Basic)
