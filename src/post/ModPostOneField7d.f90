@@ -1,5 +1,11 @@
 module ModPostOneField7d
 
+  use ModNamelistFile, only: &
+       NamelistFile
+
+  use ModTurbFields, only: &
+       TurbFields
+
   use ModBasicFields, only: &
        BasicFields
 
@@ -31,35 +37,47 @@ module ModPostOneField7d
 contains
 
 
-  subroutine Brams2Post_7d (one_post_variable, oneBramsGrid, onePostGrid, oneBasicFields)
+  subroutine Brams2Post_7d (one_post_variable, oneBramsGrid, onePostGrid, &
+       oneNamelistFile, oneBasicFields, oneTurbFields)
     type(PostVarType) :: one_post_variable
     type(BramsGrid), pointer :: oneBramsGrid
     type(PostGrid), pointer :: onePostGrid
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
 
     real :: OutputField(oneBramsGrid%mxp, oneBramsGrid%myp, oneBramsGrid%npatch)
 
     select case (one_post_variable%fieldName)
     case ('TVEG')
-       call GetVarFromMemToOutput ('VEG_TEMP', oneBramsGrid%currGrid, OutputField, oneBasicFields)
+       call GetVarFromMemToOutput ('VEG_TEMP', oneBramsGrid%currGrid, OutputField, &
+            oneNamelistFile, oneBasicFields, oneTurbFields)
        call rams_comp_tempc (OutputField)
     case ('VTYPE')
-       call GetVarFromMemToOutput ('LEAF_CLASS', oneBramsGrid%currGrid, OutputField, oneBasicFields)
+       call GetVarFromMemToOutput ('LEAF_CLASS', oneBramsGrid%currGrid, OutputField, &
+            oneNamelistFile, oneBasicFields, oneTurbFields)
        call rams_comp_vegclass(OutputField)
     case ('LAI')
-       call GetVarFromMemToOutput ('VEG_LAI', oneBramsGrid%currGrid, OutputField, oneBasicFields)
+       call GetVarFromMemToOutput ('VEG_LAI', oneBramsGrid%currGrid, OutputField, &
+            oneNamelistFile, oneBasicFields, oneTurbFields)
     case ('H_ANTRHJ')
-       call GetVarFromMemToOutput ('anthrop_heatj', oneBramsGrid%currGrid, OutputField, oneBasicFields)
+       call GetVarFromMemToOutput ('anthrop_heatj', oneBramsGrid%currGrid, OutputField, &
+            oneNamelistFile, oneBasicFields, oneTurbFields)
     case ('RADNETJ')
-       call GetVarFromMemToOutput ('radnet_tilej', oneBramsGrid%currGrid, OutputField, oneBasicFields)
+       call GetVarFromMemToOutput ('radnet_tilej', oneBramsGrid%currGrid, OutputField, &
+            oneNamelistFile, oneBasicFields, oneTurbFields)
     case ('H_TILEJ')
-       call GetVarFromMemToOutput ('ftl_tilej', oneBramsGrid%currGrid, OutputField, oneBasicFields)
+       call GetVarFromMemToOutput ('ftl_tilej', oneBramsGrid%currGrid, OutputField, &
+            oneNamelistFile, oneBasicFields, oneTurbFields)
     case ('LE_TILEJ')
-       call GetVarFromMemToOutput ('le_tilej', oneBramsGrid%currGrid, OutputField, oneBasicFields)
+       call GetVarFromMemToOutput ('le_tilej', oneBramsGrid%currGrid, OutputField, &
+            oneNamelistFile, oneBasicFields, oneTurbFields)
     case ('HTF_TILEJ')
-       call GetVarFromMemToOutput ('htf_tilej', oneBramsGrid%currGrid, OutputField, oneBasicFields)
+       call GetVarFromMemToOutput ('htf_tilej', oneBramsGrid%currGrid, OutputField, &
+            oneNamelistFile, oneBasicFields, oneTurbFields)
     case ('NDVI')
-       call GetVarFromMemToOutput ('VEG_NDVIC', oneBramsGrid%currGrid, OutputField, oneBasicFields)
+       call GetVarFromMemToOutput ('VEG_NDVIC', oneBramsGrid%currGrid, OutputField, &
+            oneNamelistFile, oneBasicFields, oneTurbFields)
     case default
        write(*, "(a)") "**(OnePostField)** Post field 7d " // one_post_variable%fieldName // " not implemented!"
        stop

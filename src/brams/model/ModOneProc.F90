@@ -34,6 +34,10 @@ module ModOneProc
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModTurbFields, only: &
+       DeepCopyToTurbFields, &
+       DeepCopyFromTurbFields
+  
   use ModInitHis, only: &
        sfcinit_hstart, &
        inithis
@@ -1090,7 +1094,10 @@ contains
        if (IPOS/=0) then
           ! create post processing
           oneAllPostTypes => null()
-          call CreatePostProcess(oneNamelistFile, oneAllPostTypes, oneGrid%Basic)
+          call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb)
+          call CreatePostProcess(oneNamelistFile, oneAllPostTypes, &
+               oneGrid%Basic, oneGrid%Turb)
+          call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb)
        endif
 
        select case (IPOS)
@@ -1101,7 +1108,7 @@ contains
 
        case (2,3)
           ! post process initial state of the atmosphere in Grads
-          call PostProcess(AllGrids, oneNamelistFile, oneAllPostTypes, oneGrid%Basic)
+          call PostProcess(AllGrids, oneAllPostTypes)
        end select
 
        ! wall time at the end of initialization
@@ -1399,7 +1406,7 @@ contains
 
              select case (IPOS)
              case (2,3)
-                call PostProcess(AllGrids, oneNamelistFile, oneAllPostTypes, oneGrid%Basic)
+                call PostProcess(AllGrids, oneAllPostTypes)
              end select
 
           end if

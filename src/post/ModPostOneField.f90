@@ -1,5 +1,8 @@
 module ModPostOneField
 
+  use ModTurbFields, only: &
+       TurbFields
+  
   use ModBasicFields, only: &
        BasicFields
 
@@ -74,20 +77,29 @@ contains
   end subroutine initialize_post_variables
 
 
+
+  
   subroutine finalize_post_variables()
     call finalize_all_post_variables()
   end subroutine finalize_post_variables
 
 
-  subroutine PostOneField(varName, oneBramsGrid, onePostGrid, oneBasicFields)
+  
+
+  subroutine PostOneField(varName, oneBramsGrid, onePostGrid, &
+       oneNamelistFile, oneBasicFields, oneTurbFields)
     include "constants.h"
     character(len = *), intent(in) :: varName
     type(BramsGrid), pointer :: oneBramsGrid
     type(PostGrid), pointer :: onePostGrid
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
 
     type(PostVarType) :: one_post_variable
     character(len = 16) :: varNameUpper
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(PostOneField)**"
     integer :: err
 
     varNameUpper = trim(UpperCase(varName))
@@ -99,13 +111,20 @@ contains
     else
        select case (one_post_variable%ivar_type)
        case (2)
-          call Brams2Post_2d(one_post_variable, oneBramsGrid, onePostGrid, oneBasicFields)
+          call Brams2Post_2d(one_post_variable, oneBramsGrid, onePostGrid, &
+               oneNamelistFile, oneBasicFields, oneTurbFields)
        case (3)
-          call Brams2Post_3d(one_post_variable, oneBramsGrid, onePostGrid, oneBasicFields)
+          call Brams2Post_3d(one_post_variable, oneBramsGrid, onePostGrid, &
+               oneNamelistFile, oneBasicFields, oneTurbFields)
        case (7)
-          call Brams2Post_7d(one_post_variable, oneBramsGrid, onePostGrid, oneBasicFields)
+          call Brams2Post_7d(one_post_variable, oneBramsGrid, onePostGrid, &
+               oneNamelistFile, oneBasicFields, oneTurbFields)
        case (8)
-          call Brams2Post_8d(one_post_variable, oneBramsGrid, onePostGrid, oneBasicFields)
+          call Brams2Post_8d(one_post_variable, oneBramsGrid, onePostGrid, &
+               oneNamelistFile, oneBasicFields, oneTurbFields)
+       case default
+          write(str(1),"(i8)") one_post_variable%ivar_type
+          call fatal_error(h//" unknown ivar_type="//trim(adjustl(str(1))))
        end select
     end if
 

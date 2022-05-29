@@ -1,4 +1,10 @@
 module ModPostProcess
+
+  use ModTurbFields, only: &
+       TurbFields, &
+       DeepCopyToTurbFields, &
+       DeepCopyFromTurbFields
+  
   use ModBasicFields, only: &
        BasicFields
 
@@ -77,10 +83,12 @@ module ModPostProcess
 contains
 
 
-  subroutine CreatePostProcess(oneNamelistFile, oneAllPostTypes, oneBasicFields)
+  subroutine CreatePostProcess(oneNamelistFile, oneAllPostTypes, &
+       oneBasicFields, oneTurbFields)
     type(namelistFile), pointer :: oneNamelistFile
     type(AllPostTypes), pointer :: oneAllPostTypes
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
 
     integer :: igrid
     integer :: ierr
@@ -117,17 +125,15 @@ contains
        call CreatePostGrid(oneNamelistFile, &
             oneAllPostTypes%allGrids(igrid)%bg, &
             oneAllPostTypes%allGrids(igrid)%pg, &
-            igrid, oneBasicFields)
+            igrid, oneBasicFields, oneTurbFields)
     end do
 
   end subroutine CreatePostProcess
 
 
-  subroutine PostProcess(AllGrids, oneNamelistFile, oneAllPostTypes, oneBasicFields)
+  subroutine PostProcess(AllGrids, oneAllPostTypes)
     type(GridTree), pointer :: AllGrids
-    type(namelistFile), pointer :: oneNamelistFile
     type(AllPostTypes), pointer :: oneAllPostTypes
-    type(BasicFields), pointer :: oneBasicFields
 
     include "constants.h"
 
@@ -136,31 +142,12 @@ contains
     type(GridTree), pointer :: OneGridTreeNode => null ()
     type(Grid), pointer :: OneGrid => null()
     character(len = *), parameter :: h = "**(PostProcess)**"
-    if (.not. associated(oneNamelistFile)) then
-       call fatal_error(h // " invoked with null oneNamelistFile")
-    else if (.not. associated(oneAllPostTypes)) then
+    if (.not. associated(oneAllPostTypes)) then
        call fatal_error(h // " invoked with null oneAllPostTypes")
     else if (.not. allocated(oneAllPostTypes%allGrids)) then
        call fatal_error(h // " invoked with null oneAllPostTypes%allGrids")
-    else if (size(oneAllPostTypes%allGrids) /= oneNamelistFile%ngrids) then
-       write(c0, "(i8)") size(oneAllPostTypes%allGrids)
-       write(c1, "(i8)") oneNamelistFile%ngrids
-       call fatal_error(h // " number of grids at oneAllPostTypes (" // &
-            trim(adjustl(c0)) // ") differs from required (" // trim(adjustl(c1)) // ")")
-    else
-
-       do igrid = 1, oneNamelistFile%ngrids
-          if (.not. associated(oneAllPostTypes%allGrids(igrid)%bg)) then
-             write(c0, "(i8)") igrid
-             call fatal_error(h // " Brams grid type for grid " // &
-                  trim(adjustl(c0)) // " not created")
-          else if (.not. associated(oneAllPostTypes%allGrids(igrid)%pg)) then
-             write(c0, "(i8)") igrid
-             call fatal_error(h // " Post grid type for grid " // &
-                  trim(adjustl(c0)) // " not created")
-          end if
-       end do
     end if
+
     ! for each grid
 
     OneGridTreeNode => GridTreeRoot(AllGrids)
@@ -168,6 +155,8 @@ contains
 
        OneGrid => OneGridTreeNode%curr
 
+       call DeepCopyToTurbFields(OneGrid%Turb, OneGrid%AveTurb)
+       
        ! update Ghost Zone of all vartables variables part 1:
        ! post receives and send messages
        call PostSendRecvMsgs(&
@@ -177,16 +166,16 @@ contains
 
        ! open grads files
        if(IPOS==2) then
-          call OpenGradsBinaryFile(oneNamelistFile, &
+          call OpenGradsBinaryFile(OneGrid%Ramsin, &
                oneAllPostTypes%allGrids(igrid)%pg, &
                oneAllPostTypes%allGrids(igrid)%bg, igrid)
-          call OpenGradsControlFile(oneNamelistFile, &
+          call OpenGradsControlFile(OneGrid%Ramsin, &
                oneAllPostTypes%allGrids(igrid)%pg, &
                oneAllPostTypes%allGrids(igrid)%bg, igrid)
        endif
 #ifdef cdf
        if(IPOS==3) then
-          call OpenNetCDFBinaryFile(oneNamelistFile, &
+          call OpenNetCDFBinaryFile(OneGrid%Ramsin, &
                oneAllPostTypes%allGrids(igrid)%pg, &
                oneAllPostTypes%allGrids(igrid)%bg, igrid)
        endif
@@ -210,26 +199,30 @@ contains
        call UpdateVerticals(&
             oneAllPostTypes%allGrids(igrid)%bg, &
             oneAllPostTypes%allGrids(igrid)%pg, &
-            oneBasicFields)
+            OneGrid%Ramsin, &
+            OneGrid%Basic, &
+            OneGrid%Turb)
        ! post process each desired field and
        ! write resulting field to grads binary file
-       call initialize_post_variables(oneNamelistFile)
+       call initialize_post_variables(OneGrid%Ramsin)
 #ifdef cdf
        if(IPOS==3) then
-          call FillNetcdfVarControlFile(oneNamelistFile, &
+          call FillNetcdfVarControlFile(OneGrid%Ramsin, &
                oneAllPostTypes%allGrids(igrid)%pg, &
                oneAllPostTypes%allGrids(igrid)%bg)
        endif
 #endif
-       do ivp = 1, oneNamelistFile%nvp
+       do ivp = 1, OneGrid%Ramsin%nvp
           if (dumpLocal) then
              call MsgDump (h // " variable " // &
-                  trim(oneNamelistFile%vp(ivp)))
+                  trim(OneGrid%Ramsin%vp(ivp)))
           end if
-          call PostOneField(trim(oneNamelistFile%vp(ivp)), &
+          call PostOneField(trim(OneGrid%Ramsin%vp(ivp)), &
                oneAllPostTypes%allGrids(igrid)%bg, &
                oneAllPostTypes%allGrids(igrid)%pg, &
-               oneBasicFields)
+               OneGrid%Ramsin, &
+               OneGrid%Basic,&
+               OneGrid%Turb)
        end do
        call finalize_post_variables()
        ! control file contents
@@ -249,6 +242,9 @@ contains
 #ifdef cdf 
        if(IPOS==3) ierr=nf90_close(ncid)
 #endif         
+
+       call DeepCopyFromTurbFields(OneGrid%Turb, OneGrid%AveTurb)
+
        OneGridTreeNode => NextOnGridTree(OneGridTreeNode)
 
 
