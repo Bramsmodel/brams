@@ -1,7 +1,7 @@
 module ModGrid
 
   ! ModGrid: 
-
+       
   use ModNamelistFile, only: &
        NamelistFile
 
@@ -68,6 +68,12 @@ module ModGrid
        DestroyBasicFields, &
        DumpBasicFields
   
+  use ModTurbFields, only: &
+       TurbFields, &
+       CreateTurbFields, &
+       DestroyTurbFields, &
+       DumpTurbFields
+
   ! JP: temporariamente usa variaveis globais enquanto
   !     var_tables nao for inclusa no tipo Grid
 
@@ -136,6 +142,18 @@ module ModGrid
      ! domain decomposed sub-domain for use inside MonotonicAdvection
      type(BasicFields), pointer :: Basic => null()
      type(BasicFields), pointer :: AveBasic => null()
+
+     type(TurbFields), pointer :: Turb => null()
+     type(TurbFields), pointer :: AveTurb => null()
+
+     type(ScalarTable), pointer :: ScalarTab(:) => null()
+     integer :: ScalarTabSize=0
+
+     ! AllGhostZoneSend/RecvG3D: Ghost Zone update at PostProcess
+     ! type(MessageSet) contains all information required for
+     ! ghost zone update. See description at ModMessageSet 
+     type(PolygonContainer), pointer :: meteoPolygons => null()
+
      type(NeighbourNodes), pointer :: Neigh => null()
      ! Neigh: list of BRAMS process numbers that are neighbours
      !        of this node for usual ghost zone update operations
@@ -170,11 +188,6 @@ module ModGrid
      ! SelectedGhostZoneSend/RecvG3D: Ghost Zone update at timestep and timestep_rk
      type(MessageSet), pointer :: AllGhostZoneSend => null()
      type(MessageSet), pointer :: AllGhostZoneRecv => null()
-     ! AllGhostZoneSend/RecvG3D: Ghost Zone update at PostProcess
-     ! type(MessageSet) contains all information required for
-     ! ghost zone update. See description at ModMessageSet 
-     type(PolygonContainer), pointer :: meteoPolygons => null()
-
      type(MessageSet), pointer :: AcoustNewDivSend => null()
      type(MessageSet), pointer :: AcoustNewDivRecv => null()
      type(MessageSet), pointer :: AcoustNewPPSend => null()
@@ -220,9 +233,6 @@ module ModGrid
      type(MessageSet), pointer :: AdvMntScaRecvX => null()
      type(MessageSet), pointer :: AdvMntScaSendY => null()
      type(MessageSet), pointer :: AdvMntScaRecvY => null()
-
-     type(ScalarTable), pointer :: ScalarTab(:) => null()
-     integer :: ScalarTabSize=0
   end type Grid
 
 
@@ -235,10 +245,10 @@ contains
 
 
 
-  subroutine CreateGrid(gridId, oneNamelistFile, oneParallelEnvironment, oneGrid)
+  function CreateGrid(gridId, oneNamelistFile, oneParallelEnvironment) result(oneGrid)
     integer, intent(in) :: gridId
-    type(NamelistFile), pointer :: oneNamelistFile
-    type(ParallelEnvironment), pointer :: oneParallelEnvironment
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
+    type(ParallelEnvironment), pointer, intent(in) :: oneParallelEnvironment
     type(Grid), pointer :: oneGrid
 
     character(len=*), parameter :: h="**(CreateGrid)**"
@@ -361,20 +371,28 @@ contains
          varName="NodeDimsAdvMnt" &
          )
 
+    ! this node Basic Fields
+
+    oneGrid%Basic => CreateBasicFields(oneGrid%NodeDims, oneGrid%Ramsin)
+    oneGrid%AveBasic => CreateBasicFields(oneGrid%NodeDims, oneGrid%Ramsin)
+
+    ! this node Turb Fields
+
+    oneGrid%Turb => CreateTurbFields(oneGrid%NodeDims, oneGrid%Ramsin, gridId, .false.)
+    ! AveTurb fields allocated with size (1,1,1) if avgtim null at Ramsin
+    oneGrid%AveTurb => CreateTurbFields(oneGrid%NodeDims, oneGrid%Ramsin, gridId, .true.)
+
     ! this node Scalar Table
 
     oneGrid%ScalarTab => CreateScalarTab()
     oneGrid%ScalarTabSize = 0
 
-    oneGrid%Basic => CreateBasicFields(oneGrid%NodeDims, oneGrid%Ramsin)
-    
-    oneGrid%AveBasic => CreateBasicFields(oneGrid%NodeDims, oneGrid%Ramsin)
     
     if (dumpLocal) then
        call MsgDump(h//" dumping OneGrid at the end")
        call DumpGrid(OneGrid)
     end if
-  end subroutine CreateGrid
+  end function CreateGrid
 
 
 
@@ -528,8 +546,6 @@ contains
        call DestroyDomainDecomp(oneGrid%GlobalWithGhostAdvMnt)
        call DestroyDomainDecomp(oneGrid%LocalOwnAdvMnt)
        call DestroyNeighbourNodes(oneGrid%Neigh)
-       call DestroyBasicFields(oneGrid%Basic)
-       call DestroyBasicFields(oneGrid%AveBasic)
        call DestroyAcousticMessageSet(&
             oneGrid%AcouSendU, oneGrid%AcouRecvU, &
             oneGrid%AcouSendV, oneGrid%AcouRecvV, &
@@ -568,6 +584,10 @@ contains
             oneGrid%AdvMntDenSendY, oneGrid%AdvMntDenRecvY, &
             oneGrid%AdvMntScaSendX, oneGrid%AdvMntScaRecvX, &
             oneGrid%AdvMntScaSendY, oneGrid%AdvMntScaRecvY)
+       call DestroyBasicFields(oneGrid%Basic)
+       call DestroyBasicFields(oneGrid%AveBasic)
+       call DestroyTurbFields(oneGrid%Turb)
+       call DestroyTurbFields(oneGrid%AveTurb)
        call DestroyScalarTab(oneGrid%ScalarTab)
        oneGrid%ScalarTabSize=0
        deallocate(oneGrid)
@@ -607,9 +627,6 @@ contains
     call DumpDomainDecomp(oneGrid%LocalOwn, "LocalOwn")
     call DumpDomainDecomp(oneGrid%GlobalWithGhostAdvMnt, "GlobalWithGhostAdvMnt")
     call DumpDomainDecomp(oneGrid%LocalOwnAdvMnt, "LocalOwnAdvMnt")
-
-    call DumpBasicFields(oneGrid%Basic, "oneGrid%Basic")
-    call DumpBasicFields(oneGrid%AveBasic, "oneGrid%AveBasic")
     
     call MsgDump(h//" dumping neighborhood components")
     call DumpNeighbourNodes(oneGrid%Neigh,"oneGrid%Neigh")
@@ -721,6 +738,12 @@ contains
     call DumpMessageSet(oneGrid%AdvMntScaSendY)
     call MsgDump(h//" dumping AdvMntScaRecvY")
     call DumpMessageSet(oneGrid%AdvMntScaRecvY)
+
+
+    call DumpBasicFields(oneGrid%Basic, "oneGrid%Basic")
+    call DumpBasicFields(oneGrid%AveBasic, "oneGrid%AveBasic")
+    call DumpTurbFields(oneGrid%Turb, "oneGrid%Turb")
+    call DumpTurbFields(oneGrid%AveTurb, "oneGrid%AveTurb")
     call MsgDump(h//" dumping Scalar Table")
     call DumpScalarTab(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
     call MsgDump(h//" finishes")

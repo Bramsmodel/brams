@@ -7,6 +7,9 @@
 !###########################################################################
 module ModMemAlloc
 
+  use ModParallelEnvironment, only: &
+       MsgDump
+  
   use ModGrid, only: &
        Grid
 
@@ -146,6 +149,11 @@ module ModMemAlloc
 
   use ModBasicFields, only: &
        InsertBasicFieldsAtVarTable
+
+  use ModTurbFields, only: &
+       InsertTurbFieldsAtVarTable, &
+       DeepCopyToTurbFields, &
+       DeepCopyFromTurbFields
 
   use node_mod, only: &
        alloc_paths,   & !Subroutine
@@ -664,6 +672,15 @@ contains
        call filltab_turb(turb_g(ng), turbm_g(ng), imean,  &
             nmzp(ng), nmxp(ng), nmyp(ng), ng)
     enddo
+
+    ! insert Turb Field variables at var_table
+    do ng=1,ngrids
+       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb)
+!!$       call InsertTurbFieldsAtVarTable(oneGrid%Turb, oneGrid%AveTurb, &
+!!$            oneGrid%Ramsin, oneGrid%Id)
+       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb)
+    enddo
+
     if (CCATT==1 .and. chemistry >= 0) then
        allocate(turb_s(ngrids), STAT=ierr)
        if (ierr/=0) call fatal_error(h//"Allocating turb_s")
