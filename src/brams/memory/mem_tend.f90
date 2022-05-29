@@ -19,9 +19,11 @@ module mem_tend
          micro_g
     
     use mem_turb, only: &
-         turb_vars, &
-         turb_g
+         turb_vars
 
+    use ModTurbFields, only: &
+         TurbFields
+    
     use mem_scalar, only: &
          scalar_g, &
          scalar_vars
@@ -112,11 +114,12 @@ contains
   !---------------------------------------------------------------
 
   subroutine alloc_tend(nmzp,nmxp,nmyp,ngrs,naddsc,proc_type,&
-       oneBasicFields)
+       oneBasicFields, oneTurbFields)
     ! Arguments:
     integer, intent(in) :: nmzp(:), nmxp(:), nmyp(:)
     integer, intent(in) :: ngrs, proc_type, naddsc
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
 
     ! Local Variables:
     integer :: ng, ntpts, nsc
@@ -272,11 +275,11 @@ contains
        allocate (tend%cldfrt(ntpts))
        tend%cldfrt = 0.
     endif
-    if (associated(turb_g(1)%tkep))     then
+    if (associated(oneTurbFields%tkep))     then
        allocate (tend%tket(ntpts))
        tend%tket = 0.
     endif
-    if (associated(turb_g(1)%epsp))     then
+    if (associated(oneTurbFields%epsp))     then
        allocate (tend%epst(ntpts))
        tend%epst = 0.
     endif

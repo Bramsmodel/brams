@@ -1208,7 +1208,8 @@ contains
 
     call nullify_tend(naddsc)
 
-    call alloc_tend(nmzp, nmxp, nmyp, ngrids, naddsc, proc_type, oneGrid%Basic)
+    call alloc_tend(nmzp, nmxp, nmyp, ngrids, naddsc, proc_type, &
+         oneGrid%Basic, oneGrid%Turb)
     !-------------
 
     !-------------
