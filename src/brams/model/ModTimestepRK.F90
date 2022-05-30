@@ -613,7 +613,11 @@ contains
     end if
 
     !- cumulus parameterizations options: G3d - GD-FIM and GF
-    if(NNQPARM(ngrid)>=3) call CUPARM_GRELL3_CATT(oneGrid,1,NNQPARM(ngrid),NNSHCU(ngrid))
+    if (NNQPARM(ngrid)>=3) then
+       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb)
+       call CUPARM_GRELL3_CATT(oneGrid,1,NNQPARM(ngrid),NNSHCU(ngrid))
+       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb)
+    end if
 
     !------------------------------------------------------------------------------
     ! init preparations for Runge-Kutta  -loop

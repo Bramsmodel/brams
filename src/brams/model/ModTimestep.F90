@@ -539,7 +539,9 @@ contains
     !
     !- G3d - GD-FIM and GF
     if (NNQPARM(ngrid)>=3) then
+       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb)
        call CUPARM_GRELL3_CATT(oneGrid,1,NNQPARM(ngrid),NNSHCU(ngrid))
+       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb)
     end if
 
     !- task 2:  NO production by "eclair"

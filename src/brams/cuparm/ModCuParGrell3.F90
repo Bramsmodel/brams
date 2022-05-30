@@ -86,11 +86,6 @@ module ModCuParGrell3
        tkmin, &
        cpi
 
-  use mem_turb, only: &
-       idiffk, &
-       turb_g,&
-       akmin
-
   use mem_micro, only: &
        micro_g
 
@@ -596,6 +591,9 @@ contains
     real   , dimension(mxp,myp)  :: dx2d ,lons,lats,sfc_press,xland
 
     integer :: kr,n,i1,i2,j1,j2
+    integer :: gridID
+    integer :: idiffk
+    real :: akmin
     integer, dimension(mxp,myp,maxiens) ::     &
          ierr4d_tmp      &
          ,jmin4d_tmp      &
@@ -628,6 +626,10 @@ contains
 
     !if(initial.eq.2.and.time.lt.cptime) return
     !if(initial.eq.2.and.time.lt.dtlt) return
+
+    gridId=OneGrid%Id
+    idiffk=OneGrid%Ramsin%idiffk(gridId)
+    akmin=OneGrid%Ramsin%akmin(gridId)
 
     if(mod(time,confrq) < dtlt  .or. time < 0.01 .or. abs(time-cptime) < 0.01) then
 
@@ -905,11 +907,11 @@ contains
                ,micro_g(ngrid)%rsp             & !3d ok
                ,micro_g(ngrid)%rgp             & !3d ok
                ,aot500                         &! aot at 500nm
-               ,turb_g(ngrid)%sflux_r          & !2d *** borda
-               ,turb_g(ngrid)%sflux_t          & !2d *** borda
-               ,turb_g(ngrid)%tkep             & !3d ok
+               ,OneGrid%Turb%sflux_r          & !2d *** borda
+               ,OneGrid%Turb%sflux_t          & !2d *** borda
+               ,OneGrid%Turb%tkep             & !3d ok
                ,TKMIN                          &
-               ,akmin(ngrid)                   &
+               ,akmin                   &
                                 !- for convective transport-start
                ,ierr4d                         & !4d *** borda
                ,jmin4d                         & !4d ok
@@ -1032,11 +1034,11 @@ contains
                ,micro_g(ngrid)%rcp        & ! liquid water
                ,aot500                    &! aot at 500nm
                ,temp2m                    &! aot at 500nm
-               ,turb_g(ngrid)%sflux_r     &
-               ,turb_g(ngrid)%sflux_t     &
-               ,turb_g(ngrid)%tkep        &
+               ,OneGrid%Turb%sflux_r     &
+               ,OneGrid%Turb%sflux_t     &
+               ,OneGrid%Turb%tkep        &
                ,TKMIN                     &
-               ,akmin(ngrid)              &
+               ,akmin              &
                ,do_cupar_mcphys_coupling  &
                                 !- for convective transport-start
                ,ierr4d    &
@@ -1114,13 +1116,13 @@ contains
           do k=1,mzp
              flip   (k)   = k
           enddo
-          if( idiffk(ngrid) /= 2 .and. idiffk(ngrid) /= 3) then 
-             if(idiffk(ngrid) == 7 ) then          
-                kpbl (:,:) = nint(turb_g(ngrid)%kpbl(:,:))
+          if( idiffk /= 2 .and. idiffk /= 3) then 
+             if(idiffk == 7 ) then          
+                kpbl (:,:) = nint(OneGrid%Turb%kpbl(:,:))
              else
                 do j=1,myp
                    do i=1,mxp
-                      call get_zi_gf2018(mzp,tkmin,turb_g(ngrid)%tkep(:,i,j),zmn(:,ngrid) &
+                      call get_zi_gf2018(mzp,tkmin,OneGrid%Turb%tkep(:,i,j),zmn(:,ngrid) &
                            ,grid_g(ngrid)%rtgt(i,j)                          &
                            ,grid_g(ngrid)%topt(i,j),kpbl(i,j) )
                       kpbl (i,j) = max(1,min(kpbl (i,j),mzp-1))
@@ -1222,8 +1224,8 @@ contains
                ,lats        &
                ,aot500      &
                ,temp2m      &
-               ,turb_g(ngrid)%sflux_r &
-               ,turb_g(ngrid)%sflux_t &
+               ,OneGrid%Turb%sflux_r &
+               ,OneGrid%Turb%sflux_t &
                ,grid_g(ngrid)%topt    &
                ,xland                 &
                ,sfc_press   &
