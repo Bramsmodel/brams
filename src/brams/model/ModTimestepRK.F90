@@ -568,7 +568,9 @@ contains
     !---------------------------------------------------
     ! Shallow  cumulus parameterization by Souza
     if (NNSHCU(ngrid)==1) then
-       call shcupa(oneGrid%Basic)
+       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb)
+       call shcupa(oneGrid%Basic, oneGrid%Turb)
+       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb)
     end if
     !---------------------------------------------------
 

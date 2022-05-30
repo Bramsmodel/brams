@@ -22,8 +22,8 @@ module ModRShCuPar
        dtlt,    &   ! INTENT(IN)
        grid_g       ! INTENT(IN)
 
-  use mem_turb, only: &
-       turb_g
+  use ModTurbFields, only: &
+       TurbFields
 
   use mem_tend, only: &
        tend
@@ -150,8 +150,9 @@ module ModRShCuPar
 contains
 
   
-  subroutine shcupa(oneBasicFields)
+  subroutine shcupa(oneBasicFields, oneTurbFields)
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
 
 
     real    :: cptime = 0. !7200.
@@ -173,9 +174,9 @@ contains
             shcu_g(ngrid)%THSRCSH,                            &
             shcu_g(ngrid)%RTSRCSH,                            & 
             shcu_g(ngrid)%SHMF, grid_g(ngrid)%rtgt,        &
-            turb_g(ngrid)%sflux_t,                              & 
-            turb_g(ngrid)%sflux_r,                              &
-            turb_g(ngrid)%vkh,                                &
+            oneTurbFields%sflux_t,                              & 
+            oneTurbFields%sflux_r,                              &
+            oneTurbFields%vkh,                                &
             micro_g(ngrid)%rcp)
 
     endif
