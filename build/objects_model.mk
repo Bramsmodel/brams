@@ -190,7 +190,7 @@ OBJ_MOD = \
 	memSoilMoisture.o \
 	soilMoisture.o \
 	sst_read.o \
-	turb_diff.o \
+	ModTurbDiff.o \
 	turb_diff_adap.o \
 	ModTurbK.o \
 	turb_k_adap.o \

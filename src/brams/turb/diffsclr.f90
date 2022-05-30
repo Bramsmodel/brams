@@ -4,6 +4,9 @@ subroutine diffsclr_brams31(m1,m2,m3,ia,iz,ja,jz,jd,  &
      vt3dj,vt3dk,vt3do,vt3dc,dn03i,vt3dl,vt3dm,vt2db,rtgt,sfcflx,  &
      dn0,vkkh,hkkh)
 
+  use ModTurbDiff, only: &
+       truhor_opt
+
   use mem_grid, only:    &
        dzm,     &      !INTENT(IN)
        dtlt,    &      !INTENT(IN)

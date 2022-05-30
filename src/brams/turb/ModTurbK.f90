@@ -9,6 +9,11 @@ module ModTurbK
 
   use ModRstilt, only: &
        prepare_timeavg_driver
+
+  use ModTurbDiff, only: &
+       diffvel, &
+       diffsclr, &
+       PBLforcing
   
   use mem_scratch, only: &
        scratch,           &

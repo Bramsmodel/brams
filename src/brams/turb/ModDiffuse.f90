@@ -5,6 +5,9 @@ module ModDiffuse
        bruvais, &
        mxdefm, &
        klbnd
+
+  use ModTurbDiff, only: &
+       diffvel
   
   use ModScalarTable, only:  &
        ScalarTable
