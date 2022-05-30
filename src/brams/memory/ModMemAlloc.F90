@@ -139,8 +139,6 @@ module ModMemAlloc
        filltab_varinit
 
   use mem_turb, only: &
-       ihorgrad, &
-       idiffk, &
        turb_g, &
        turbm_g, &
        nullify_turb, &
@@ -517,7 +515,7 @@ contains
     character(len=*), parameter :: h="**(MemAlloc)**"
     integer :: ierr,n
     integer :: ne2d, ne3d, nsa
-
+    integer :: idiffk
     real, pointer :: v_p
 
 
@@ -1552,7 +1550,7 @@ contains
          nodebounds, maxgrds, ngrids, nnzp, mynum)
     ! For optmization - ALF
     call nullify_opt_scratch()
-    if ((if_adap==0) .and. (ihorgrad==2)) &
+    if ((if_adap==0) .and. (OneGrid%Ramsin%ihorgrad==2)) &
          call alloc_opt_scratch(proc_type, ngrids, nnzp, nnxp, nnyp, 1000, 1000)
 
     ! Allocate nested boundary interpolation arrays. All grids will be allocated.
@@ -1574,12 +1572,13 @@ contains
     !Allocate stilt variables data type
     allocate(stilt_g(ngrids), stiltm_g(ngrids))
     do ng=1, ngrids
+       idiffk = OneGrid%Ramsin%idiffk(ng)
        call nullify_stilt(stilt_g(ng)); call nullify_stilt(stiltm_g(ng))
-       call alloc_stilt(idiffk(ng),stilt_g(ng),nmzp(ng),nmxp(ng),nmyp(ng),ng)
+       call alloc_stilt(idiffk,stilt_g(ng),nmzp(ng),nmxp(ng),nmyp(ng),ng)
        if (imean == 1) then
-          call alloc_stilt(idiffk(ng),stiltm_g(ng),nmzp(ng),nmxp(ng),nmyp(ng),ng)
+          call alloc_stilt(idiffk,stiltm_g(ng),nmzp(ng),nmxp(ng),nmyp(ng),ng)
        else if (imean == 0) then
-          call alloc_stilt(idiffk(ng),stiltm_g(ng),1,1,1,ng)
+          call alloc_stilt(idiffk,stiltm_g(ng),1,1,1,ng)
        endif
        call filltab_stilt(stilt_g(ng),stiltm_g(ng),imean, &
             nmzp(ng),nmxp(ng),nmyp(ng),ng)

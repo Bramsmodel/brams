@@ -42,10 +42,6 @@ subroutine dealloc_all()
        scalarm_g, &
        dealloc_scalar
 
-  use mem_turb, only: &
-       turb_g, &
-       turbm_g
-
   use mem_varinit, only: &
        varinit_g, &
        varinitm_g
@@ -103,8 +99,6 @@ subroutine dealloc_all()
   use mem_radiate, only: &
        dealloc_radiate
 
-  use mem_turb, only: &
-       dealloc_turb
 
   use mem_oda, only: &
        dealloc_oda
@@ -149,8 +143,6 @@ subroutine dealloc_all()
      call dealloc_micro(microm_g(ng))
      call dealloc_radiate(radiate_g(ng))
      call dealloc_radiate(radiatem_g(ng))
-     call dealloc_turb(turb_g(ng))
-     call dealloc_turb(turbm_g(ng))
      call dealloc_varinit(varinit_g(ng))
      call dealloc_varinit(varinitm_g(ng))
 
@@ -185,7 +177,6 @@ subroutine dealloc_all()
 #endif
   deallocate(micro_g,microm_g)
   deallocate(radiate_g,radiatem_g)
-  deallocate(turb_g,turbm_g)
   deallocate(varinit_g,varinitm_g)
   deallocate(oda_g,odam_g)
 
