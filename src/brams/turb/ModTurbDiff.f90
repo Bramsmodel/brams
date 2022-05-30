@@ -29,9 +29,6 @@ module ModTurbDiff
        vctr6,    &     !INTENT(OUT)
        vctr7           !INTENT(OUT)
 
-  use mem_turb, only: &
-       ihorgrad     !INTENT(IN)
-
   use mem_cuparm, only : &
        nnqparm       ! intent(in)
 
@@ -57,7 +54,8 @@ contains
        ,up,vp,wp,ut,vt,wt,vt3da,vt3db,vt3dc  &
        ,vt3dd,vt3de,vt3df,vt3dg,vt3dj,vt3dk  &
        ,vt3dl,vt3dm,vt3dn,vt3do,rtgu,rtgv,rtgt  &
-       ,sflux_u,sflux_v,sflux_w,dn0,dn0u,dn0v,scr1,scr2,ibcon,mynum)
+       ,sflux_u,sflux_v,sflux_w,dn0,dn0u,dn0v,scr1,scr2,&
+       ibcon,mynum,ihorgrad)
     integer, intent(in) :: m1       &
          , m2       &
          , m3       &
@@ -78,7 +76,8 @@ contains
          , jzv      &
          , idiffkk  &
          , ibcon    &
-         , mynum
+         , mynum    &
+         , ihorgrad
 
     real, dimension(m1,m2,m3), intent(in)    :: up    &
          , vp    &
@@ -480,24 +479,17 @@ contains
 
   !     ***************************************************************
 
-!!$subroutine diffsclr(m1, m2, m3, ia, iz, ja, jz, jd,                        &
-!!$     ia_1, ja_1, ia1, ja1, iz_1, jz_1, iz1, jz1, n, ksf,                   &
-!!$     scp, sct, vt3da, vt3db, vt3df, vt3dg,                                 &
-!!$     vt3dj, vt3dk, vt3do, vt3dc, dn03i, vt3dl, vt3dm, vt2db, rtgt, sfcflx, &
-!!$     dn0, vkkh, hkkh,                                                      &
-!!$     ! srf - Large Scale Forcing for GRELL CUPAR
-!!$     lsfcupar, nsc)
   subroutine diffsclr(m1, m2, m3, ia, iz, ja, jz, jd,                        &
        ia_1, ja_1, ia1, ja1, iz_1, jz_1, iz1, jz1, n, ksf,                   &
        scp, sct, vt3da, vt3db, vt3df, vt3dg,                                 &
        vt3dj, vt3dk, vt3do, vt3dc, dn03i, vt3dl, vt3dm, vt2db, rtgt, sfcflx, &
-       dn0, vkkh, hkkh                                                       )
+       dn0, vkkh, hkkh, ihorgrad)
     ! srf - Large Scale Forcing for GRELL CUPAR
     !!lsfcupar, nsc)
     ! Arguments:
     integer, intent(in) :: n, ksf
     integer, intent(in) :: m1, m2, m3, ia, iz, ja, jz, jd, ia_1, ja_1, &
-         ia1, ja1, iz_1, jz_1, iz1, jz1
+         ia1, ja1, iz_1, jz_1, iz1, jz1, ihorgrad
     real, intent(in)    :: scp(m1,m2,m3), vkkh(m1,m2,m3), hkkh(m1,m2,m3), &
          dn0(m1,m2,m3)
     real, intent(inout) :: sct(m1,m2,m3), vt3da(m1,m2,m3), vt3db(m1,m2,m3),  &

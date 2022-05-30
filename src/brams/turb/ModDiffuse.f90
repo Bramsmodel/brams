@@ -91,7 +91,10 @@ module ModDiffuse
   use mem_opt, only:      &      ! For optmization
        jstep,   &
        istep,   &
-       opt                       ! %ind1_x_a, 
+       opt                       ! %ind1_x_a,
+
+  use ModNamelistFile, only: &
+       NamelistFile
 
   implicit none
   
@@ -102,7 +105,7 @@ contains
 
 
 
-  subroutine diffuse_brams31(oneScalarTab, oneScalarTabSize, oneBasicFields)
+  subroutine diffuse_brams31(oneScalarTab, oneScalarTabSize, oneBasicFields, oneNamelistFile)
 
     ! +-----------------------------------------------------------------+
     ! \     this routine is the subdriver to compute tendencies due to  \
@@ -113,6 +116,7 @@ contains
     type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
     integer, intent(inout) :: oneScalarTabSize
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
 
     include "constants.h"
 
@@ -289,7 +293,8 @@ contains
          ,turb_g(ngrid)%sflux_u ,turb_g(ngrid)%sflux_v  &
          ,turb_g(ngrid)%sflux_w ,oneBasicFields%dn0     &
          ,oneBasicFields%dn0u   ,oneBasicFields%dn0v    &
-         ,scratch%scr1          ,scr2         ,ibcon,mynum)
+         ,scratch%scr1          ,scr2                   &
+         ,ibcon,mynum,oneNamelistFile%ihorgrad)
 
     ! Convert momentum K's to scalar K's, if necessary
 
@@ -431,7 +436,7 @@ contains
                   ,scratch%vt3dl           ,scratch%vt3dm            &
                   ,scratch%vt2db           ,grid_g(ngrid)%rtgt     &
                   ,scratch%vt2da           ,oneBasicFields%dn0   &
-                  ,vkh_p                      ,hkh_p                       )
+                  ,vkh_p                   ,hkh_p                       )
 
              if (oneScalarTab(n)%name == 'EPSP') then
                 call ae1t0_l(mxyzp, vkh_p, vkh_p, (ALF_TKE/ALF_EPS))

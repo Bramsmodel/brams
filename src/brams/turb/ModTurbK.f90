@@ -152,6 +152,9 @@ module ModTurbK
   use ModBasicFields, only: &
        BasicFields
 
+  use ModNamelistFile, only: &
+       NamelistFile
+  
   use ModTurbFields, only: &
        TurbFields, &
        DeepCopyToTurbFields, &
@@ -172,7 +175,8 @@ contains
 
 
 
-  subroutine diffuse(oneScalarTab, oneScalarTabSize, oneBasicFields, oneTurbFields, oneAveTurbFields)
+  subroutine diffuse(oneScalarTab, oneScalarTabSize, oneBasicFields, &
+       oneTurbFields, oneAveTurbFields, oneNamelistFile)
 
     ! +-----------------------------------------------------------------+
     ! \this routine is the subdriver to compute tendencies due to    \
@@ -184,6 +188,7 @@ contains
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     type(TurbFields), pointer, intent(in) :: oneAveTurbFields
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
 
     include "constants.h"
 
@@ -520,7 +525,8 @@ contains
             ,turb_g(ngrid)%sflux_u(:,:)   ,turb_g(ngrid)%sflux_v(:,:)    &
             ,turb_g(ngrid)%sflux_w(:,:)   ,oneBasicFields%dn0   (:,:,:)  &
             ,oneBasicFields%dn0u  (:,:,:) ,oneBasicFields%dn0v  (:,:,:)  &
-            ,scratch%scr1         (:)     ,scr2         (:),ibcon,mynum)
+            ,scratch%scr1         (:)     ,scr2         (:),&
+            ibcon,mynum,oneNamelistFile%ihorgrad)
        !call dumpVarAllLatLonk(tend%wt, 'tWT'  ,433,0,0,1,mxp,1,myp,1,mzp,0.0,0.0)
     else
 
@@ -691,7 +697,8 @@ contains
                scratch%vt3dl(:), scratch%vt3dm(:), scratch%vt2db(:), &
                grid_g(ngrid)%rtgt(:,:), scratch%vt2da(:),            &
                oneBasicFields%dn0(:,:,:),                            &
-               vkh_p(:)                 , hkh_p(:)                   )
+               vkh_p(:)                 , hkh_p(:),                  &
+               oneNamelistFile%ihorgrad)
           !
           if (nnqparm(ngrid)>=2) then
              ! SGScale Forcing for GRELL CUPAR
