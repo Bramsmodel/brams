@@ -29,8 +29,8 @@ module ModWindFarm
   use ModBasicFields, only: &
        BasicFields
 
-  use mem_turb, only: &
-       turb_g
+  use ModTurbFields, only: &
+       TurbFields
   
   use mem_tend, only: &
        tend
@@ -97,10 +97,11 @@ contains
 
 
   subroutine wind_farm_driver(ngrid,m1,m2,m3,ia,iz,ja,jz, &
-       oneBasicFields)
+       oneBasicFields, oneTurbFields)
 
     integer, intent(in) :: ngrid,m1,m2,m3,ia,iz,ja,jz
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
 
     real, dimension(m1,m2,m3) :: dz       !dz between full levels (m)
     real, dimension(m1,m2,m3) :: z_at_w   !height above sea level at interface (m)
@@ -162,7 +163,7 @@ contains
          grid_g(ngrid)%dyt, &
          dz,      & ! 07
          dtlongn(ngrid),            & ! 08
-         turb_g(ngrid)%tkep, & ! 09
+         oneTurbFields%tkep, & ! 09
          tend%ut               , & ! 10
          tend%vt,                & ! 11
          windfarm_opt,              & ! 12

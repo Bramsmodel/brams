@@ -780,8 +780,10 @@ contains
     endif
 
     !windfarm
+    call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb)
     call wind_farm_driver(ngrid,mzp,mxp,myp,ia,iz,ja,jz, &
-         oneGrid%Basic)
+         oneGrid%Basic, oneGrid%Turb)
+    call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb)
 
     !- apply digital filter
     if (applyDF) then

@@ -291,9 +291,6 @@ module ModTimestepRK
 
   use MODCUPARGRELL3, only: g3d_g
 
-  use mem_turb, only:    &
-       turb_g
-
   use ModWindFarm, only: &
        wind_farm_driver
 
@@ -948,8 +945,10 @@ contains
     endif
 
     !- windfarm
+    call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb)
     call wind_farm_driver(ngrid,mzp,mxp,myp,ia,iz,ja,jz, &
-         oneGrid%Basic)
+         oneGrid%Basic, oneGrid%Turb)
+    call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb)
 
     !- apply digital filter
     if (applyDF) then
