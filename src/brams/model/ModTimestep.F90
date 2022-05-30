@@ -529,12 +529,16 @@ contains
     !                    Deep Convection scheme
     !- call deep first, if there is deep convection , turn off shallow.
     if (NNQPARM(ngrid)==2) then
-       call cuparm_grell_catt(1, oneGrid%Basic)
+       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb)
+       call cuparm_grell_catt(OneGrid, 1)
+       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb)
     end if
     !
     !                    Shallow Convection scheme
     if (NNSHCU(ngrid)==2 ) then
-       call cuparm_grell_catt(2, oneGrid%Basic)
+       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb)
+       call cuparm_grell_catt(OneGrid, 2)
+       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb)
     end if
     !
     !- G3d - GD-FIM and GF
