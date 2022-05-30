@@ -986,7 +986,7 @@ contains
 
        do ifm=1,ngrids
           call newgrid(ifm)
-          call cfl(mzp, mxp, myp, 0, 0, oneGrid%Basic)
+          call cfl(mzp, mxp, myp, 0, 0, oneGrid%Basic, oneGrid%Ramsin, oneGrid%Id)
        enddo
        call MaxCFLOverall(cflxy, cflz)
 
@@ -1318,7 +1318,8 @@ contains
              call newgrid(ngrid)
              if ((avgtim/=0.) .and. (frqmean/=0. .or. frqboth/=0.))  &
                   call anlavg(mzp, mxp, myp, oneGrid%Basic, oneGrid%AveBasic)
-             call cfl(mzp, mxp, myp, nodei0(mynum,ngrid), nodej0(mynum,ngrid), oneGrid%Basic)
+             call cfl(mzp, mxp, myp, nodei0(mynum,ngrid), nodej0(mynum,ngrid), &
+                  oneGrid%Basic, oneGrid%Ramsin, oneGrid%Id)
           end do
 
           ! get max CFL from all processes to probe numerical stability

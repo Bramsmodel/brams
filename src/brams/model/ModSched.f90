@@ -34,6 +34,9 @@ module ModSched
   use dump, only: &
        dumpMessage
 
+  use ModNamelistFile, only: &
+       NamelistFile
+  
   use ModBasicFields, only: &
        BasicFields
 
@@ -106,10 +109,6 @@ module ModSched
 
   use shcu_vars_const, only: &
        shcufrq   
-
-  use mem_turb, only: &
-       akmin        ! INTENT(in)
-
 
   implicit none
   private
@@ -632,26 +631,30 @@ contains
 
   !     *****************************************************************
 
-  subroutine cfl(n1,n2,n3,i0,j0,oneBasicFields)
+  subroutine cfl(n1,n2,n3,i0,j0,&
+       oneBasicFields, oneNamelistFile, gridId)
     integer, intent(in) :: n1
     integer, intent(in) :: n2
     integer, intent(in) :: n3
     integer, intent(in) :: i0
     integer, intent(in) :: j0
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
+    integer, intent(in) :: gridId
 
     call cfll(n1,n2,n3,i0,j0  &
          ,oneBasicFields%up     ,oneBasicFields%vp     &
          ,oneBasicFields%wp     ,grid_g(ngrid)%rtgt    &
          ,grid_g(ngrid)%f13t    ,grid_g(ngrid)%f23t    &
          ,grid_g(ngrid)%dxt     ,grid_g(ngrid)%dyt, &
-         oneBasicFields)
+         oneBasicFields, oneNamelistFile, gridId)
     return
   end subroutine cfl
 
   ! **********************************************************************
 
-  subroutine cfll(n1,n2,n3,i0,j0,up,vp,wp,rtgt,f13t,f23t,dxt,dyt,oneBasicFields)
+  subroutine cfll(n1,n2,n3,i0,j0,up,vp,wp,rtgt,f13t,f23t,dxt,dyt,&
+       oneBasicFields, oneNamelistFile, gridId)
     character(len=*),parameter :: h='**(cfll)**'
     integer, intent(in) :: n1
     integer, intent(in) :: n2
@@ -667,6 +670,8 @@ contains
     real,    intent(in) :: dxt(n2,n3)
     real,    intent(in) :: dyt(n2,n3)
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
+    integer, intent(in) :: gridId
 
 
     integer :: i,j,k,ifm,icm,innest
@@ -726,7 +731,7 @@ contains
           enddo kloop
 
 
-          if (AKMIN(ngrid) == -1.0) then
+          if (OneNamelistFile%akmin(gridId) == -1.0) then
              c1x = maxval(abs(vctr1(2:n1-1)))
              c1y = maxval(abs(vctr2(2:n1-1)))
              c1z = maxval(abs(vctr3(2:n1-1)))
