@@ -924,7 +924,7 @@ contains
        !- call Matrix Aerosol Model
        !- using symmetric/sequential spliting operator
        if(AEROSOL==2) then
-          call MatrixDriver(ia,iz,ja,jz,mzp,mxp,myp, oneGrid%Basic)
+          call MatrixDriver(ia,iz,ja,jz,mzp,mxp,myp, oneGrid%Basic, oneGrid%Turb)
        endif
     endif
     if (ccatt==1 .and. aerosol == 1) then

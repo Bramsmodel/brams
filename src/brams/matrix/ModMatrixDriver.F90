@@ -76,9 +76,9 @@ module ModMatrixDriver
   use mem_leaf, only: &
        leaf_g
 
-  use mem_turb, only: &
-       turb_g
-
+  use ModTurbFields, only: &
+       TurbFields
+  
   use mem_micro, only: &
        micro_g
 
@@ -136,7 +136,7 @@ contains
   !! @todo aqso4rate is fixed using the box value, must be changed
   !! @todo emis_map is fixed to zero. Must be changed to real values
   !!
-  subroutine MatrixDriver(ia,iz,ja,jz,m1,m2,m3, oneBasicFields)
+  subroutine MatrixDriver(ia,iz,ja,jz,m1,m2,m3, oneBasicFields, oneTurbFields)
 
     !ngases     = 3      ! number of gas-phase species
     !nmass_spcs = 5      ! total number of mass species
@@ -152,6 +152,7 @@ contains
     integer, intent(IN) :: m2 !< i size               
     integer, intent(IN) :: m3 !< j size               
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
     
     character(LEN=20):: aer_split_method ="PARALLEL"
     !CHARACTER(LEN=20):: aer_split_method ="SYMMETRIC"
@@ -247,12 +248,12 @@ contains
 
           matrixVar(noc)%Zi = zt(2)*grid_g(ngrid)%rtgt(i,j) 
           !- convective layer
-          if(turb_g(ngrid)%sflux_t(i,j) >= 1.e-8) then 
+          if(oneTurbFields%sflux_t(i,j) >= 1.e-8) then 
              pblht=zt(2)*grid_g(ngrid)%rtgt(i,j) 
              do k=2,m1-1
                 pblht=zt(k)*grid_g(ngrid)%rtgt(i,j) 
                 if( micro_g(ngrid)%rcp(k,i,j) .gt. rcmin     ) exit ! dry convective layer
-                if( turb_g(ngrid)%tkep(k,i,j) .le. tkethrsh  ) exit 
+                if( oneTurbFields%tkep(k,i,j) .le. tkethrsh  ) exit 
              enddo
              matrixVar(noc)%Zi=pblht
           endif
@@ -604,6 +605,9 @@ contains
   use ModBasicFields, only: &
        BasicFields
 
+  use ModTurbFields, only: &
+       TurbFields
+
   implicit none
 
   private
@@ -621,7 +625,7 @@ contains
   !! @todo aqso4rate is fixed using the box value, must be changed
   !! @todo emis_map is fixed to zero. Must be changed to real values
   !!
-  subroutine MatrixDriver(ia,iz,ja,jz,m1,m2,m3, oneBasicFields)
+  subroutine MatrixDriver(ia,iz,ja,jz,m1,m2,m3, oneBasicFields, oneTurbFields)
 
     !ngases     = 3      ! number of gas-phase species
     !nmass_spcs = 5      ! total number of mass species
@@ -637,6 +641,7 @@ contains
     integer, intent(IN) :: m2 !< i size               
     integer, intent(IN) :: m3 !< j size               
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
 
     call fatal_error("**(MatrixDriver)** Matrix only works with AER=MATRIX and CHEM=RELACS_MX; "//&
          "Please run config and compile the code from scratch")

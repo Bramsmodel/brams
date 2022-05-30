@@ -407,7 +407,7 @@ contains
        !- call Matrix Aerosol Model
        !----------------------------------------
        if(AEROSOL==2) then
-          call MatrixDriver(ia,iz,ja,jz,mzp,mxp,myp, oneGrid%Basic)
+          call MatrixDriver(ia,iz,ja,jz,mzp,mxp,myp, oneGrid%Basic, oneGrid%Turb)
        endif
 
     endif
