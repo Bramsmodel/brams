@@ -51,8 +51,8 @@ module ModRstilt
   use ModMonotonicAdvection, only: &
        advmnt 
 
-  use mem_turb, only: &
-       turb_g   ! intent(in)
+  use ModTurbFields, only: &
+       TurbFields   ! intent(in)
 
   implicit none
 
@@ -604,10 +604,11 @@ contains
 
   !     *********************************************************************
 
-  subroutine prepare_timeavg_driver(mzp,mxp,myp,ia,iz,ja,jz,dtlt,ifm,idiffkk)
+  subroutine prepare_timeavg_driver(mzp,mxp,myp,ia,iz,ja,jz,dtlt,ifm,idiffkk, oneTurbFields)
     !------ Arguments ----------------------------------------------------------------------!
     integer, intent(in) :: mzp, mxp, myp, ia, iz, ja, jz, ifm, idiffkk
     real   , intent(in) :: dtlt
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
     !---------------------------------------------------------------------------------------!
 
 
@@ -625,7 +626,7 @@ contains
 
     !----- Nakanishi-Niino closure, TKE, sig-W and Lagrangian time scale exist. ---!
     call prepare_timeavg_to_mass(mzp,mxp,myp,ia,iz,ja,jz,dtlt                            &
-         ,turb_g(ifm)%tkep     ,stilt_g(ifm)%tkepb                 )
+         ,oneTurbFields%tkep     ,stilt_g(ifm)%tkepb                 )
 
     call prepare_timeavg_to_mass(mzp,mxp,myp,ia,iz,ja,jz,dtlt                            &
          ,stilt_g(ifm)%sigw     ,stilt_g(ifm)%sigwb                 )

@@ -597,7 +597,7 @@ contains
     if ((if_adap==0) .and. (OneGrid%Ramsin%ihorgrad==2)) then
        call diffuse_brams31(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic)
     else
-       call diffuse(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic)
+       call diffuse(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, oneGrid%Turb, oneGrid%AveTurb)
     endif
 
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12

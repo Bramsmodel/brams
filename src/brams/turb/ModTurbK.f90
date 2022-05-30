@@ -147,6 +147,11 @@ module ModTurbK
   use ModBasicFields, only: &
        BasicFields
 
+  use ModTurbFields, only: &
+       TurbFields, &
+       DeepCopyToTurbFields, &
+       DeepCopyFromTurbFields
+  
   implicit none
 
   private
@@ -162,7 +167,7 @@ contains
 
 
 
-  subroutine diffuse(oneScalarTab, oneScalarTabSize, oneBasicFields)
+  subroutine diffuse(oneScalarTab, oneScalarTabSize, oneBasicFields, oneTurbFields, oneAveTurbFields)
 
     ! +-----------------------------------------------------------------+
     ! \this routine is the subdriver to compute tendencies due to    \
@@ -172,6 +177,8 @@ contains
     type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
     integer, intent(inout) :: oneScalarTabSize
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
+    type(TurbFields), pointer, intent(in) :: oneAveTurbFields
 
     include "constants.h"
 
@@ -315,7 +322,11 @@ contains
        !---------------------------------------------------------------------------------------!
        !    Integrating average turbulence parameters for mass flux.                           !
        !---------------------------------------------------------------------------------------!
-       if(IMASSFLX==1)  call prepare_timeavg_driver(mzp,mxp,myp,ia,iz,ja,jz,dtlt,ngrid,idiffk(ngrid))
+       if (IMASSFLX==1) then
+          call DeepCopyToTurbFields(oneTurbFields, oneAveTurbFields)
+          call prepare_timeavg_driver(mzp,mxp,myp,ia,iz,ja,jz,dtlt,ngrid,idiffk(ngrid),oneTurbFields)
+          call DeepCopyFromTurbFields(oneTurbFields, oneAveTurbFields)
+       end if
        !---------------------------------------------------------------------------------------!
        !    else
        !      call nakanishi_light(mzp, mxp, myp, npatch, ia, iz, ja, jz, jdim                     &

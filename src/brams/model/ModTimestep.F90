@@ -490,7 +490,7 @@ contains
     if ((if_adap==0) .and. (OneGrid%Ramsin%ihorgrad==2)) then
        call diffuse_brams31(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic)
     else
-       call diffuse(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic)
+       call diffuse(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, oneGrid%Turb, oneGrid%AveTurb)
     endif
 
 !!!!!  IF( NNQPARM(ngrid) >=2 .OR. NNSHCU(ngrid)>=2 ) CALL prepare_lsf_OLD(NNQPARM(ngrid), NNSHCU(ngrid),3)
