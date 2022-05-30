@@ -186,8 +186,6 @@ module ModOneProc
        StoreNamelistFileAtSoilMoisture
 
   use Mem_turb, only: &
-       AKMIN,         &
-       if_urban_canopy, &
        StoreNamelistFileAtMem_turb
 
   use Mem_varinit, only: &
@@ -953,7 +951,7 @@ contains
 
        AKMIN_ALLOC = .false.
        do ifm=1,ngrids
-          if (AKMIN(ifm)<0.) AKMIN_ALLOC = .true.
+          if (OneGrid%Ramsin%akmin(ifm)<0.) AKMIN_ALLOC = .true.
        end do
        if (AKMIN_ALLOC) then
           call allocAkmin2d(ngrids, nodemxp(mynum,1:ngrids), nodemyp(mynum,1:ngrids))
@@ -2004,10 +2002,11 @@ contains
        ! AKMIN variable:
        do ifm=1,ngrids
           !srf- initialize akmin = f(x,y)
-          if (AKMIN(ifm)<0.) then
+          if (OneGrid%Ramsin%akmin(ifm)<0.) then
              call newgrid(ifm)
              call get_akmin2d(ifm, nodemxp(mynum,ifm), nodemyp(mynum,ifm), &
-                  akminvar(ifm)%akmin2d, mynum, nodei0, nodej0,akmin(ifm),grid_g(ifm)%topt)
+                  akminvar(ifm)%akmin2d, mynum, nodei0, nodej0, &
+                  OneGrid%Ramsin%akmin(ifm),grid_g(ifm)%topt)
           endif
        enddo
        !--(DMK-CCATT-FIM)-----------------------------------------------------
@@ -2272,7 +2271,7 @@ contains
 
     ! Initialize urban canopy drag coefficients
 
-    if (if_urban_canopy == 1) then
+    if (OneGrid%Ramsin%if_urban_canopy == 1) then
 
        !**(JP)** not worked yet
        !call fatal_error(h//"**(JP)** if_urban_canopy==1 was not worked yet")

@@ -130,10 +130,6 @@ module ModTimestep
   use mem_varinit, only: &
        NUD_TYPE ! INTENT(IN)
 
-  use mem_turb, only: &
-       IF_URBAN_CANOPY, & ! INTENT(IN)
-       ihorgrad           ! INTENT(IN)
-
   use mem_oda,   only: &
        if_oda ! INTENT(IN)
 
@@ -448,7 +444,7 @@ contains
 
     !  Urban canopy parameterization
     !----------------------------------------
-    if (IF_URBAN_CANOPY==1) then
+    if (OneGrid%Ramsin%if_urban_canopy==1) then
        call urban_canopy(oneGrid%Basic)
     end if
 
@@ -491,7 +487,7 @@ contains
 
     !  Sub-grid diffusion terms
     !----------------------------------------
-    if ((if_adap==0) .and. (ihorgrad==2)) then
+    if ((if_adap==0) .and. (OneGrid%Ramsin%ihorgrad==2)) then
        call diffuse_brams31(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic)
     else
        call diffuse(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic)
