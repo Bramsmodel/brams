@@ -187,9 +187,8 @@ module ModLeaf3
        vctr18, &
        vctr32
 
-  use mem_turb, only: &
-       turb_vars, &
-       turb_g
+  use ModTurbFields, only: &
+       TurbFields
 
   use mem_radiate, only: &
        radiate_vars, &
@@ -225,10 +224,11 @@ contains
 
 
 
-  subroutine sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, oneBasicFields)
+  subroutine sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, oneBasicFields, oneTurbFields)
     !Arguments:
     integer, intent(in) :: mzp,mxp,myp,ia,iz,ja,jz,ibcon
-    type(BasicFields), pointer :: oneBasicFields
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
 
     !Local Variables
     real :: rslif
@@ -268,7 +268,7 @@ contains
     endif
 
     call leaf3(mzp,mxp,myp,nzg,nzs,npatch,ia,iz,ja,jz             &
-         ,leaf_g (ng), oneBasicFields, turb_g (ng), radiate_g(ng)   &
+         ,leaf_g (ng), oneBasicFields, oneTurbFields, radiate_g(ng)   &
          ,grid_g (ng), cuparm_g(ng), micro_g(ng)                  &
          ,l_ths2, l_rvs2, l_pis2                   &
          ,l_dens2,l_ups2, l_vps2                   &
@@ -315,7 +315,7 @@ contains
   !*****************************************************************************
 
   subroutine leaf3(m1,m2,m3,mzg,mzs,np,ia,iz,ja,jz  &
-       ,leaf,oneBasicFields,turb,radiate,grid,cuparm,micro     &
+       ,leaf,oneBasicFields,oneTurbFields,radiate,grid,cuparm,micro     &
        ,ths2,rvs2,pis2,dens2,ups2,vps2,zts2           &
        ,pteb,ptebc                                    &
        )
@@ -323,7 +323,7 @@ contains
     integer, intent(in) :: m1,m2,m3,mzg,mzs,np,ia,iz,ja,jz
     type (leaf_vars)    :: leaf
     type (BasicFields), pointer, intent(in)   :: oneBasicFields
-    type (turb_vars)    :: turb
+    type (TurbFields)    :: oneTurbFields
     type (radiate_vars) :: radiate
     type (grid_vars)    :: grid
     type (cuparm_vars)  :: cuparm
@@ -439,11 +439,11 @@ contains
              radiate%rlongup(i,j) = 0.
           endif
 
-          turb%sflux_u(i,j) = 0.
-          turb%sflux_v(i,j) = 0.
-          turb%sflux_w(i,j) = 0.
-          turb%sflux_t(i,j) = 0.
-          turb%sflux_r(i,j) = 0.
+          oneTurbFields%sflux_u(i,j) = 0.
+          oneTurbFields%sflux_v(i,j) = 0.
+          oneTurbFields%sflux_w(i,j) = 0.
+          oneTurbFields%sflux_t(i,j) = 0.
+          oneTurbFields%sflux_r(i,j) = 0.
 
           ! For no soil model (patch 2) fill "canopy" temperature and moisture
 
@@ -575,9 +575,9 @@ contains
                 else
                    call sfclmcv(i,j,leaf%ustar(i,j,ip), leaf%tstar(i,j,ip),         &
                         leaf%rstar(i,j,ip), vels, vels_pat, ups, vps, gzotheta, &
-                        leaf%patch_area(i,j,ip), turb%sflux_u(i,j),             &
-                        turb%sflux_v(i,j), turb%sflux_w(i,j),                   &
-                        turb%sflux_t(i,j), turb%sflux_r(i,j)                    &
+                        leaf%patch_area(i,j,ip), oneTurbFields%sflux_u(i,j),             &
+                        oneTurbFields%sflux_v(i,j), oneTurbFields%sflux_w(i,j),                   &
+                        oneTurbFields%sflux_t(i,j), oneTurbFields%sflux_r(i,j)                    &
                         )
                 endif
 
@@ -648,15 +648,15 @@ contains
                               pteb%T2M_TOWN(i,j), pteb%R2M_TOWN(i,j),      &
                               time, itime1, dpdz, dens                     )
 
-                         turb%sflux_u(i,j) = &
-                              turb%sflux_u(i,j) + leaf%patch_area(i,j,ip)*ZSFU_TOWN
-                         turb%sflux_v(i,j) = &
-                              turb%sflux_v(i,j) + leaf%patch_area(i,j,ip)*ZSFV_TOWN
-                         turb%sflux_t(i,j) = &
-                              turb%sflux_t(i,j) + &
+                         oneTurbFields%sflux_u(i,j) = &
+                              oneTurbFields%sflux_u(i,j) + leaf%patch_area(i,j,ip)*ZSFU_TOWN
+                         oneTurbFields%sflux_v(i,j) = &
+                              oneTurbFields%sflux_v(i,j) + leaf%patch_area(i,j,ip)*ZSFV_TOWN
+                         oneTurbFields%sflux_t(i,j) = &
+                              oneTurbFields%sflux_t(i,j) + &
                               leaf%patch_area(i,j,ip)*ZH_TOWN/(CP*DENS)
-                         turb%sflux_r(i,j) = &
-                              turb%sflux_r(i,j) + &
+                         oneTurbFields%sflux_r(i,j) = &
+                              oneTurbFields%sflux_r(i,j) + &
                               leaf%patch_area(i,j,ip)*ZLE_TOWN/(ALVL*DENS)
 
                       endif
@@ -720,14 +720,14 @@ contains
 
     do j = ja,jz
        do i = ia,iz
-          turb%sflux_u(i,j) = turb%sflux_u(i,j) * dtll_factor * dens2(i,j)
-          turb%sflux_v(i,j) = turb%sflux_v(i,j) * dtll_factor * dens2(i,j)
-          turb%sflux_w(i,j) = turb%sflux_w(i,j) * dtll_factor * dens2(i,j)
-          turb%sflux_t(i,j) = turb%sflux_t(i,j) * dtll_factor * dens2(i,j)
-          turb%sflux_r(i,j) = turb%sflux_r(i,j) * dtll_factor * dens2(i,j)
+          oneTurbFields%sflux_u(i,j) = oneTurbFields%sflux_u(i,j) * dtll_factor * dens2(i,j)
+          oneTurbFields%sflux_v(i,j) = oneTurbFields%sflux_v(i,j) * dtll_factor * dens2(i,j)
+          oneTurbFields%sflux_w(i,j) = oneTurbFields%sflux_w(i,j) * dtll_factor * dens2(i,j)
+          oneTurbFields%sflux_t(i,j) = oneTurbFields%sflux_t(i,j) * dtll_factor * dens2(i,j)
+          oneTurbFields%sflux_r(i,j) = oneTurbFields%sflux_r(i,j) * dtll_factor * dens2(i,j)
        enddo
     enddo
-    !call dumpVarAllLatLonk(turb%sflux_w,'Lsflux_w',683,0,0,ia-1,iz+1,ja-1,jz+1,1,1,0.0,0.0) !
+    !call dumpVarAllLatLonk(oneTurbFields%sflux_w,'Lsflux_w',683,0,0,ia-1,iz+1,ja-1,jz+1,1,1,0.0,0.0) !
     if (ilwrtyp > 0 .or. iswrtyp > 0) then
        do j = ja,jz
           do i = ia,iz

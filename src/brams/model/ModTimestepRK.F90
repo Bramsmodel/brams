@@ -416,11 +416,17 @@ contains
     !  Surface layer, soil and veggie model
     !----------------------------------------
     if (isfcl<=2) then
-       call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, oneGrid%Basic)
+       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
+       call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
+            oneGrid%Basic, oneGrid%Turb)
+       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
 #ifdef JULES
     elseif (isfcl == 5) then
        if (time==0.) then
-          call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, oneGrid%Basic)
+          call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
+          call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
+               oneGrid%Basic, oneGrid%Turb)
+          call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
        end if
        call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
        call sfclyr_jules(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile, &
