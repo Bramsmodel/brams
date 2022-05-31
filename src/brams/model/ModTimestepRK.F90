@@ -598,7 +598,7 @@ contains
     !----------------------------------------
     if ((if_adap==0) .and. (OneGrid%Ramsin%ihorgrad==2)) then
        call diffuse_brams31(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
-            oneGrid%Basic, oneGrid%Ramsin)
+            oneGrid%Basic, oneGrid%Ramsin, oneGrid%Turb, oneGrid%AveTurb, oneGrid%Id)
     else
        call diffuse(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, &
             oneGrid%Turb, oneGrid%AveTurb, oneGrid%Ramsin)

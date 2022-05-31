@@ -24,10 +24,10 @@ module ModDiffuse
   use mem_tend,  only:    &
        tend                   ! %tket, %epst, %ut, %vt, %wt
 
-  use mem_turb, only:     &
-       idiffk,            &   ! INTENT(IN)
-       xkhkm,             &   ! INTENT(IN)
-       turb_g                 ! %tkep, %hkm, %vkh
+  use ModTurbFields, only:     &
+       DeepCopyToTurbFields, &
+       DeepCopyFromTurbFields, &
+       TurbFields
 
 
   use mem_grid, only:     &
@@ -111,7 +111,8 @@ contains
 
 
 
-  subroutine diffuse_brams31(oneScalarTab, oneScalarTabSize, oneBasicFields, oneNamelistFile)
+  subroutine diffuse_brams31(oneScalarTab, oneScalarTabSize, oneBasicFields, &
+       oneNamelistFile, oneTurbFields, oneAveTurbFields, gridId)
 
     ! +-----------------------------------------------------------------+
     ! \     this routine is the subdriver to compute tendencies due to  \
@@ -123,6 +124,9 @@ contains
     integer, intent(inout) :: oneScalarTabSize
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
+    type(TurbFields), pointer, intent(in) :: oneAveTurbFields
+    integer, intent(in) :: gridId
 
     include "constants.h"
 
@@ -131,6 +135,8 @@ contains
     real :: s1,s2,s3
     real, pointer :: vkh_p,hkh_p
     integer :: i,j,k,ksf
+    integer :: idiffk
+    real :: xkhkm
 
     !! For Optimization
     integer      :: htint_i, htint_j, iia, jja, iiz, jjz, iistep, jjstep
@@ -139,6 +145,11 @@ contains
     ! (JP) removing scr2 from scratch
     real, target :: scr2(mxp*myp*mzp)
 
+    call DeepCopyToTurbFields(oneTurbFields, oneAveTurbFields)
+    
+    idiffk=oneNamelistFile%idiffk(gridId)
+    xkhkm=oneNamelistFile%xkhkm(gridId)
+    
     mxyzp = mxp*myp*mzp
 
     ! Shaved-Eta Coordinate not available in this optimization method
@@ -153,7 +164,7 @@ contains
          ,scratch%vt3df     ,scratch%vt3dg      &
          ,scratch%vt3dh     ,scratch%vt3di      &
          ,scratch%vt3dn     ,scr2           &
-         ,idiffk(ngrid))
+         ,idiffk)
 
     if (level<=1) &
          scratch%vt3dp = 0.
@@ -169,7 +180,7 @@ contains
          ,scratch%vt3dj        ,grid_g(ngrid)%rtgt  &
          ,grid_g(ngrid)%lpw    )
 
-    if (idiffk(ngrid) <= 3) then
+    if (idiffk <= 3) then
        call mxdefm(mzp,mxp,myp,ia,iz,ja,jz,ibcon,jdim            &
             ,scratch%vt3dh      ,scratch%vt3di      &
             ,scratch%vt3dj      ,scratch%vt3dk      &
@@ -179,32 +190,32 @@ contains
             ,grid_g(ngrid)%lpw  ,mynum  )
     endif
 
-    if (idiffk(ngrid) == 1) then
+    if (idiffk == 1) then
        call tkemy(mzp,mxp,myp,ia,iz,ja,jz,ibcon,jdim,nodei0(mynum,ngrid),nodej0(mynum,ngrid)  &
-            ,turb_g(ngrid)%tkep   ,tend%tket            &
+            ,oneTurbFields%tkep   ,tend%tket            &
             ,scratch%vt3dh        ,scratch%vt3di        &
             ,scratch%vt3dj        ,scratch%scr1         &
             ,grid_g(ngrid)%rtgt   ,oneBasicFields%theta &
             ,oneBasicFields%dn0   ,oneBasicFields%up    &
             ,oneBasicFields%vp    ,oneBasicFields%wp    &
-            ,turb_g(ngrid)%sflux_u   ,turb_g(ngrid)%sflux_v    &
-            ,turb_g(ngrid)%sflux_w   ,turb_g(ngrid)%sflux_t,vctr34 &
+            ,oneTurbFields%sflux_u   ,oneTurbFields%sflux_v    &
+            ,oneTurbFields%sflux_w   ,oneTurbFields%sflux_t,vctr34 &
             ,grid_g(ngrid)%lpw       ,grid_g(ngrid)%lpu       &
             ,grid_g(ngrid)%lpv    )
     endif
 
-    if (idiffk(ngrid) == 4) then
+    if (idiffk == 4) then
        call mxtked(mzp,mxp,myp,ia,iz,ja,jz  &
             ,ibcon,jdim  &
-            ,turb_g(ngrid)%tkep   ,tend%tket            &
+            ,oneTurbFields%tkep   ,tend%tket            &
             ,oneBasicFields%up    ,oneBasicFields%vp    &
             ,oneBasicFields%wp    ,oneBasicFields%rtp   &
             ,oneBasicFields%rv    ,oneBasicFields%theta &
             ,scratch%vt3da        ,scratch%vt3dc        &
             ,scratch%vt3dh        ,scratch%vt3dj        &
             ,scratch%scr1         ,scr2             &
-            ,turb_g(ngrid)%sflux_u   ,turb_g(ngrid)%sflux_v    &
-            ,turb_g(ngrid)%sflux_w   ,turb_g(ngrid)%sflux_t    &
+            ,oneTurbFields%sflux_u   ,oneTurbFields%sflux_v    &
+            ,oneTurbFields%sflux_w   ,oneTurbFields%sflux_t    &
             ,grid_g(ngrid)%dxt       ,grid_g(ngrid)%rtgt       &
             ,grid_g(ngrid)%lpw       )
     endif
@@ -213,10 +224,10 @@ contains
     !_STC Call to subroutine tkescl for E-l closure
     !_STC (S. Trini Castelli)
     !_STC............................................................
-    if (idiffk(ngrid) == 5) then
+    if (idiffk == 5) then
        call tkescl(mzp,mxp,myp,npatch,ia,iz,ja,jz  &
-            ,turb_g(ngrid)%tkep,tend%tket &
-            ,turb_g(ngrid)%epsp,tend%epst &
+            ,oneTurbFields%tkep,tend%tket &
+            ,oneTurbFields%epsp,tend%epst &
             ,scratch%vt3da,scratch%vt3dc  &
             ,scratch%vt3dh,scratch%vt3di  &
             ,scratch%vt3dj,scratch%scr1  &
@@ -229,10 +240,10 @@ contains
     !_STC Call to subroutine tkeeps for E-eps closure
     !_STC (S. Trini Castelli)
     !_STC............................................................
-    if (idiffk(ngrid) == 6) then
+    if (idiffk == 6) then
        call tkeeps(mzp,mxp,myp,npatch,ia,iz,ja,jz  &
-            ,turb_g(ngrid)%tkep,tend%tket  &
-            ,turb_g(ngrid)%epsp,tend%epst  &
+            ,oneTurbFields%tkep,tend%tket  &
+            ,oneTurbFields%epsp,tend%epst  &
             ,scratch%vt3da,scratch%vt3dc  &
             ,scratch%vt3dh,scratch%vt3di  &
             ,scratch%vt3dj,scratch%scr1  &
@@ -256,7 +267,7 @@ contains
     call klbnd(mzp,mxp,myp,ibcon,jdim  &
          ,scratch%vt3dh,oneBasicFields%dn0,grid_g(ngrid)%lpw)
     !_STC ....... boundary conditions even on Ke diffusion coefficient
-    if(idiffk(ngrid) ==  5 .or. idiffk(ngrid) == 6) &
+    if(idiffk ==  5 .or. idiffk == 6) &
          call klbnd(mzp,mxp,myp,ibcon,jdim  &
          ,scratch%vt3di,oneBasicFields%dn0,grid_g(ngrid)%lpw)
 
@@ -271,20 +282,20 @@ contains
              s1 = scr2(ind)
              s2 = scratch%scr1(ind)
              s3 = scratch%vt3dh(ind)
-             scr2(ind) = turb_g(ngrid)%hkm(k,i,j)
-             scratch%scr1(ind) = turb_g(ngrid)%vkm(k,i,j)
-             scratch%vt3dh(ind) = turb_g(ngrid)%vkh(k,i,j)
+             scr2(ind) = oneTurbFields%hkm(k,i,j)
+             scratch%scr1(ind) = oneTurbFields%vkm(k,i,j)
+             scratch%vt3dh(ind) = oneTurbFields%vkh(k,i,j)
              !! also for vt3di = K(tke) ?????    22 March 02
-             !!         scratch%vt3di(ind) = turb_g(ngrid)%vke(k,i,j)
-             turb_g(ngrid)%hkm(k,i,j) = s1
-             turb_g(ngrid)%vkm(k,i,j) = s2
-             turb_g(ngrid)%vkh(k,i,j) = s3
+             !!         scratch%vt3di(ind) = oneTurbFields%vke(k,i,j)
+             oneTurbFields%hkm(k,i,j) = s1
+             oneTurbFields%vkm(k,i,j) = s2
+             oneTurbFields%vkh(k,i,j) = s3
           enddo
        enddo
     enddo
 
     call diffvel(mzp,mxp,myp,ia,iz,ja,jz,jdim,ia_1,ja_1             &
-         ,ia1,ja1,iz_1,jz_1,iz1,jz1,izu,jzv,idiffk(ngrid)             &
+         ,ia1,ja1,iz_1,jz_1,iz1,jz1,izu,jzv,idiffk             &
          ,oneBasicFields%up     ,oneBasicFields%vp      &
          ,oneBasicFields%wp     ,tend%ut                &
          ,tend%vt               ,tend%wt                &
@@ -296,19 +307,19 @@ contains
          ,scratch%vt3dm         ,scratch%vt3dn          &
          ,scratch%vt3do         ,grid_g(ngrid)%rtgu     &
          ,grid_g(ngrid)%rtgv    ,grid_g(ngrid)%rtgt     &
-         ,turb_g(ngrid)%sflux_u ,turb_g(ngrid)%sflux_v  &
-         ,turb_g(ngrid)%sflux_w ,oneBasicFields%dn0     &
+         ,oneTurbFields%sflux_u ,oneTurbFields%sflux_v  &
+         ,oneTurbFields%sflux_w ,oneBasicFields%dn0     &
          ,oneBasicFields%dn0u   ,oneBasicFields%dn0v    &
          ,scratch%scr1          ,scr2                   &
          ,ibcon,mynum,oneNamelistFile%ihorgrad)
 
     ! Convert momentum K's to scalar K's, if necessary
 
-    if (idiffk(ngrid) <= 3) then
+    if (idiffk <= 3) then
        do ind = 1,mxyzp
-          scr2(ind) = scr2(ind) * xkhkm(ngrid)
+          scr2(ind) = scr2(ind) * xkhkm
        enddo
-    elseif (idiffk(ngrid) == 4) then
+    elseif (idiffk == 4) then
        do ind = 1,mxyzp
           scratch%vt3di(ind) = 2. * scratch%scr1(ind)
        enddo
@@ -393,9 +404,9 @@ contains
              if (nstbot == 1) then
                 if (oneScalarTab(n)%name == 'THP' .or. &
                      oneScalarTab(n)%name == 'THC' ) then
-                   call atob(mxp*myp, turb_g(ngrid)%sflux_t, scratch%vt2da)
+                   call atob(mxp*myp, oneTurbFields%sflux_t, scratch%vt2da)
                 elseif (oneScalarTab(n)%name == 'RTP') then
-                   call atob(mxp*myp, turb_g(ngrid)%sflux_r, scratch%vt2da)
+                   call atob(mxp*myp, oneTurbFields%sflux_r, scratch%vt2da)
                 endif
              endif
 
@@ -414,12 +425,12 @@ contains
              if (oneScalarTab(n)%name == 'TKEP') then
                 vkh_p => scratch%vt3di(1)
                 hkh_p => scr2(1)
-                if (idiffk(ngrid) >= 4) hkh_p => scratch%vt3di(1)
+                if (idiffk >= 4) hkh_p => scratch%vt3di(1)
                 ksf = 1   
              elseif (oneScalarTab(n)%name == 'EPSP') then
                 vkh_p => scratch%vt3di(1)
                 hkh_p => scr2(1)
-                if (idiffk(ngrid) >= 4)  hkh_p => scratch%vt3di(1)
+                if (idiffk >= 4)  hkh_p => scratch%vt3di(1)
                 ksf = 3
                 ! Convert Ktke to Keps; it will be converted back after use below
                 call ae1t0_l(mxyzp, vkh_p, vkh_p, (ALF_EPS/ALF_TKE))
@@ -427,7 +438,7 @@ contains
              else
                 vkh_p => scratch%vt3dh(1)
                 hkh_p => scr2(1)
-                if (idiffk(ngrid) >= 4) hkh_p => scratch%vt3dh(1)
+                if (idiffk >= 4) hkh_p => scratch%vt3dh(1)
                 ksf = 2
              endif
 
@@ -455,5 +466,6 @@ contains
 
     enddo
 
+    call DeepCopyFromTurbFields(oneTurbFields, oneAveTurbFields)
   end subroutine diffuse_brams31
 end module ModDiffuse
