@@ -7,8 +7,8 @@
 !###########################################################################
 module ModUrbanCanopy
 
-  use mem_turb, only: &
-       turb_g
+  use ModTurbFields, only: &
+       TurbFields
   
   use mem_grid, only: &
        nnxp, &
@@ -48,8 +48,9 @@ contains
 
 
   
-  subroutine urban_canopy(oneBasicFields)
+  subroutine urban_canopy(oneBasicFields, oneTurbFields)
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
 
     real :: scr2(mzp*mxp*myp)
 
@@ -61,7 +62,7 @@ contains
 
     call urb_tend(mzp,mxp,myp,ia,iz,ja,jz,jdim  &
          ,oneBasicFields%up,oneBasicFields%vp  &
-         ,turb_g(ngrid)%cdrag,scr2  &
+         ,oneTurbFields%cdrag,scr2  &
          ,tend%ut,tend%vt,dtlv)
 
   end subroutine urban_canopy
@@ -110,8 +111,9 @@ contains
 
   !************************************************************************
 
-  subroutine urb_drag_init()
-
+  subroutine urb_drag_init(oneTurbFields)
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
+    
     integer :: ng,k
     real, allocatable :: plt(:,:)
 
@@ -127,11 +129,11 @@ contains
 
        call getdrag(nnzp(ng),nnxp(ng),nnyp(ng)  &
             ,xmn(1,ng),ymn(1,ng),zmn(1,ng)  &
-            ,turb_g(ng)%cdrag)
+            ,oneTurbFields%cdrag)
 
        allocate (plt(nnxp(ng),nnyp(ng)))
        do k=1,10
-          plt(1:nnxp(ng),1:nnyp(ng))=turb_g(ng)%cdrag(k,1:nnxp(ng),1:nnyp(ng))
+          plt(1:nnxp(ng),1:nnyp(ng))=oneTurbFields%cdrag(k,1:nnxp(ng),1:nnyp(ng))
           !        call ezcntr(plt,nnxp(ng),nnyp(ng))
        enddo
        deallocate(plt)

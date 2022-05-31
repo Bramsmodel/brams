@@ -2278,8 +2278,9 @@ contains
        !call fatal_error(h//"**(JP)** if_urban_canopy==1 was not worked yet")
        iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
             "**(JP)** if_urban_canopy==1 was not worked yet")
-       call urb_drag_init()
-
+       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
+       call urb_drag_init(oneGrid%Turb)
+       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
     end if
 
     ! one process prints locations of all grids

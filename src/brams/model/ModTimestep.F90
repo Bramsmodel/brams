@@ -445,7 +445,9 @@ contains
     !  Urban canopy parameterization
     !----------------------------------------
     if (OneGrid%Ramsin%if_urban_canopy==1) then
-       call urban_canopy(oneGrid%Basic)
+       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
+       call urban_canopy(oneGrid%Basic, oneGrid%Turb)
+       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
     end if
 
     !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
