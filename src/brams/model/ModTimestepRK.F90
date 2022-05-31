@@ -485,7 +485,10 @@ contains
 
 
        !- call dry deposition and sedimentation routines
-       call drydep_driver(mzp,mxp,myp,ia,iz,ja,jz, oneGrid%Basic)
+       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
+       call drydep_driver(mzp,mxp,myp,ia,iz,ja,jz, &
+            oneGrid%Basic, oneGrid%Turb)
+       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
 
     endif
 

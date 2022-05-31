@@ -31,8 +31,8 @@ module ChemDryDepDriver
   use ModBasicFields, only: &
        BasicFields
 
-  use mem_turb, only: &
-       turb_g
+  use ModTurbFields, only: &
+       TurbFields
 
   use mem_leaf, only: &
        leaf_g
@@ -70,7 +70,8 @@ contains
 
 
   !========================================================================
-  subroutine drydep_driver(m1,m2,m3,ia,iz,ja,jz, oneBasicFields)
+  subroutine drydep_driver(m1,m2,m3,ia,iz,ja,jz, &
+       oneBasicFields, oneTurbFields)
 
     integer,              intent(IN)    :: m1
     integer,              intent(IN)    :: m2
@@ -80,6 +81,7 @@ contains
     integer,              intent(IN)    :: ja
     integer,              intent(IN)    :: jz
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
 
 
     return
