@@ -47,9 +47,8 @@ module ModLeaf3OceanOnly
        micro_vars, &
        micro_g
 
-  use mem_turb, only: &
-       turb_vars, &
-       turb_g
+  use ModTurbFields, only: &
+       TurbFields
 
   use mem_radiate, only: &
        radiate_vars, &
@@ -162,12 +161,14 @@ contains
   end subroutine alloc_ocean_only
   !*****************************************************************************
 
-  subroutine sfclyr_ocean_only(mzp,mxp,myp,ia,iz,ja,jz,ibcon, oneBasicFields)
+  subroutine sfclyr_ocean_only(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
+       oneBasicFields, oneTurbFields)
     implicit none
 
     !Arguments:
     integer, intent(in) :: mzp,mxp,myp,ia,iz,ja,jz,ibcon
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
 
     !Local Variables
     real :: rslif
@@ -183,7 +184,7 @@ contains
 
 
     call sub_leaf3_ocean_only(mzp,mxp,myp,nzg,nzs,npatch,ia,iz,ja,jz             &
-         ,leaf_g (ng), oneBasicFields, turb_g (ng), radiate_g(ng)   &
+         ,leaf_g (ng), oneBasicFields, oneTurbFields, radiate_g(ng)   &
          ,grid_g (ng), cuparm_g(ng), micro_g(ng)                  &
          ,l_ths2, l_rvs2, l_pis2                   &
          ,l_dens2,l_ups2, l_vps2                   &
@@ -217,7 +218,7 @@ contains
   !*****************************************************************************
 
   subroutine sub_leaf3_ocean_only(m1,m2,m3,mzg,mzs,np,ia,iz,ja,jz  &
-       ,leaf,oneBasicFields,turb,radiate,grid,cuparm,micro     &
+       ,leaf,oneBasicFields,oneTurbFields,radiate,grid,cuparm,micro     &
        ,ths2,rvs2,pis2,dens2,ups2,vps2,zts2           &
        )
 
@@ -228,7 +229,7 @@ contains
     integer, intent(in) :: m1,m2,m3,mzg,mzs,np,ia,iz,ja,jz
     type (leaf_vars)    :: leaf
     type (BasicFields), pointer, intent(in) :: oneBasicFields
-    type (turb_vars)    :: turb
+    type (TurbFields)    :: oneTurbFields
     type (radiate_vars) :: radiate
     type (grid_vars)    :: grid
     type (cuparm_vars)  :: cuparm
@@ -463,11 +464,11 @@ contains
           if(leaf%patch_area(i,j,1) < min_ocean) cycle 
           patch_area = leaf%patch_area(i,j,1)
           l_area     = 1.-patch_area
-          turb%sflux_u(i,j) = l_area*turb%sflux_u(i,j) + patch_area * sflux_u(i,j) 
-          turb%sflux_v(i,j) = l_area*turb%sflux_v(i,j) + patch_area * sflux_v(i,j) 
-          turb%sflux_w(i,j) = l_area*turb%sflux_w(i,j) + patch_area * sflux_w(i,j) 
-          turb%sflux_t(i,j) = l_area*turb%sflux_t(i,j) + patch_area * sflux_t(i,j) 
-          turb%sflux_r(i,j) = l_area*turb%sflux_r(i,j) + patch_area * sflux_r(i,j) 
+          oneTurbFields%sflux_u(i,j) = l_area*oneTurbFields%sflux_u(i,j) + patch_area * sflux_u(i,j) 
+          oneTurbFields%sflux_v(i,j) = l_area*oneTurbFields%sflux_v(i,j) + patch_area * sflux_v(i,j) 
+          oneTurbFields%sflux_w(i,j) = l_area*oneTurbFields%sflux_w(i,j) + patch_area * sflux_w(i,j) 
+          oneTurbFields%sflux_t(i,j) = l_area*oneTurbFields%sflux_t(i,j) + patch_area * sflux_t(i,j) 
+          oneTurbFields%sflux_r(i,j) = l_area*oneTurbFields%sflux_r(i,j) + patch_area * sflux_r(i,j) 
        enddo
     enddo
 

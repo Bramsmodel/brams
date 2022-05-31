@@ -428,7 +428,10 @@ contains
        call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
        !--- this combines the JULES land + LEAF ocean models.
        if (isfcl_ocean == 1) then
-          call sfclyr_ocean_only  (mzp,mxp,myp,ia,iz,ja,jz,ibcon, oneGrid%Basic)
+          call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
+          call sfclyr_ocean_only  (mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
+               oneGrid%Basic, oneGrid%Turb)
+          call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
        end if
 #endif
     endif
