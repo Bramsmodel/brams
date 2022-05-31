@@ -7,6 +7,11 @@
 !###########################################################################
 module ModRinit
 
+  use ModTurbFields, only: &
+       TurbFields, &
+       DeepCopyToTurbFields, &
+       DeepCopyFromTurbFields
+
   use ModTurbKE, only: &
        tkeinit
   
@@ -368,9 +373,12 @@ contains
 
 
 
-  subroutine FieldInit(initflg, oneBasicFields)
+  subroutine FieldInit(initflg, oneBasicFields, &
+       oneTurbFields, oneAveTurbFields)
     integer, intent(in) :: initflg
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
+    type(TurbFields), pointer, intent(in) :: oneAveTurbFields
 
     ! finish initializing past time level variables
 
@@ -392,7 +400,9 @@ contains
           oneBasicFields%wp = 0.
        endif
 
-       call tkeinit(mzp,mxp,myp)
+       call DeepCopyToTurbFields(oneTurbFields, oneAveTurbFields)
+       call tkeinit(mzp,mxp,myp,oneTurbFields)
+       call DeepCopyFromTurbFields(oneTurbFields, oneAveTurbFields)
 
     endif
 

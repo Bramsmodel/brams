@@ -1678,7 +1678,7 @@ contains
        do ifm=1,ngrids
           call newgrid(ifm)
 
-          call FieldInit(1, oneGrid%Basic)
+          call FieldInit(1, oneGrid%Basic, oneGrid%Turb, oneGrid%AveTurb)
           call negadj1(mzp,mxp,myp, oneGrid%Basic)
 
           call thermo(mzp, mxp, myp, 1, mxp, 1, myp, oneGrid%Basic, oneGrid%AveBasic)

@@ -49,8 +49,8 @@ module ModTurbKE
        tkmin, &       !INTENT(IN)
        g              !INTENT(IN)
 
-  use mem_turb, only: &
-       turb_g           !INTENT(INOUT)
+  use ModTurbFields, only: &
+       TurbFields     !INTENT(INOUT)
 
   implicit none
   private
@@ -795,8 +795,9 @@ contains
 
   !     *****************************************************************
 
-  subroutine tkeinit(n1,n2,n3)
+  subroutine tkeinit(n1,n2,n3, oneTurbFields)
     integer, intent(in) :: n1,n2,n3
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
 
     !srf-chem
     integer, parameter :: nznot=3     ! number of vertical layers with tke >= tkeminot
@@ -809,29 +810,29 @@ contains
 
     !        limit the values to the minimum
 
-    if( associated(turb_g(ngrid)%tkep) ) then
+    if( associated(oneTurbFields%tkep) ) then
        do j = 1,n3
           do i = 1,n2
              do k = 1,n1
-                turb_g(ngrid)%tkep(k,i,j) = max(tkmin,turb_g(ngrid)%tkep(k,i,j))
+                oneTurbFields%tkep(k,i,j) = max(tkmin,oneTurbFields%tkep(k,i,j))
              enddo
              !srf-
              do k = 1,nznot
-                if(turb_g(ngrid)%tkep(k,i,j) < tkeminnot) &
-                     turb_g(ngrid)%tkep(k,i,j) = tkeminnot+turb_g(ngrid)%tkep(k,i,j)
-                !    turb_g(ngrid)%tkep(k,i,j) = max(tkeminnot,turb_g(ngrid)%tkep(k,i,j))
+                if(oneTurbFields%tkep(k,i,j) < tkeminnot) &
+                     oneTurbFields%tkep(k,i,j) = tkeminnot+oneTurbFields%tkep(k,i,j)
+                !    oneTurbFields%tkep(k,i,j) = max(tkeminnot,oneTurbFields%tkep(k,i,j))
              enddo
              !srf-
 
           enddo
        enddo
     endif
-    if( associated(turb_g(ngrid)%epsp) ) then
+    if( associated(oneTurbFields%epsp) ) then
        epsmin=(c_eps*(tkmin**1.5))/(vonk*zt(2))
        do j = 1,n3
           do i = 1,n2
              do k = 1,n1
-                turb_g(ngrid)%epsp(k,i,j) = max(epsmin,turb_g(ngrid)%epsp(k,i,j))
+                oneTurbFields%epsp(k,i,j) = max(epsmin,oneTurbFields%epsp(k,i,j))
              enddo
           enddo
        enddo

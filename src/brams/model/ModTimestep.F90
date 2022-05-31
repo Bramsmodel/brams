@@ -667,7 +667,8 @@ contains
 
     !  Apply scalar b.c.'s
     !----------------------------------------
-    call trsets(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic)
+    call trsets(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic,&
+         oneGrid%Turb, oneGrid%AveTurb)
 
     !  Lateral velocity boundaries - radiative
     !-------------------------------------------

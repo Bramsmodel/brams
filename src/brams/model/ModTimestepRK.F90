@@ -875,7 +875,8 @@ contains
 
     !  Apply scalar b.c.'s (THP is changed here)
     !----------------------------------------
-    call trsets(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic)
+    call trsets(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, &
+         oneGrid%Turb, oneGrid%AveTurb)
 
     !---> THC must be changed to THP to include microphysics/trsets changes
     !---> for the next timestep

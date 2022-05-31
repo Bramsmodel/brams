@@ -1,5 +1,10 @@
 module ModRbnd
 
+  use ModTurbFields, only: &
+       TurbFields, &
+       DeepCopyToTurbFields, &
+       DeepCopyFromTurbFields
+  
   use ModTurbKE, only: &
        tkeinit
   
@@ -1355,10 +1360,13 @@ contains
     return
   end subroutine rayf
 
-  subroutine trsets(oneScalarTab, oneScalarTabSize, oneBasicFields)
+  subroutine trsets(oneScalarTab, oneScalarTabSize, oneBasicFields, &
+       oneTurbFields, oneAveTurbFields)
     type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
     integer, intent(inout) :: oneScalarTabSize
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
+    type(TurbFields), pointer, intent(in) :: oneAveTurbFields
     integer :: n, mxyzp
 
     !     Apply lateral, top, and bottom boundary conditions.
@@ -1391,7 +1399,9 @@ contains
 
     !       Make sure all positive definite quantities remain such.
 
-    call tkeinit(mzp,mxp,myp)
+    call DeepCopyToTurbFields(oneTurbFields, oneAveTurbFields)
+    call tkeinit(mzp,mxp,myp, oneTurbFields)
+    call DeepCopyFromTurbFields(oneTurbFields, oneAveTurbFields)
 
     call negadj1(mzp,mxp,myp, oneBasicFields)
 
