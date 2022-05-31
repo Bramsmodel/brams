@@ -78,16 +78,7 @@ module ModTurbK
 
 
   use mem_turb, only:  &
-       csx,            &    !INTENT(IN)
-       zkhkm, &
-       idiffk,           &     !INTENT(in)
-       rmin,             &     !INTENT(out)
-       rmax,             &     !INTENT(out)
-       csz,              &     !INTENT(in)
-       akmin, &                   !INTENT(in)
-       idiffk,           &    !INTENT(IN)
-       turb_g,           &    ! %tkep, %hkm, %vkh
-       xkhkm
+       turb_g
 
 
   use ModMonotonicAdvection, only: &
@@ -182,7 +173,7 @@ contains
 
 
   subroutine diffuse(oneScalarTab, oneScalarTabSize, oneBasicFields, &
-       oneTurbFields, oneAveTurbFields, oneNamelistFile)
+       oneTurbFields, oneAveTurbFields, oneNamelistFile, gridId)
 
     ! +-----------------------------------------------------------------+
     ! \this routine is the subdriver to compute tendencies due to    \
@@ -195,6 +186,7 @@ contains
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     type(TurbFields), pointer, intent(in) :: oneAveTurbFields
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
+    integer, intent(in) :: gridId
 
     include "constants.h"
 
@@ -204,7 +196,11 @@ contains
     real :: s1,s2,s3
     real, pointer :: vkh_p(:), hkh_p(:)
     integer :: i,j,k,ksf
-
+    real :: csx
+    integer :: idiffk
+    real :: akmin
+    real :: xkhkm
+    
     ! srf - Large Scale Forcing for shallow and deep cumulus
     !real, pointer :: lsfcupar_p(:,:,:)
 
@@ -228,6 +224,11 @@ contains
     !nullify(lsfcupar_p)
     !
 
+    csx=oneNamelistFile%csx(gridId)
+    idiffk=oneNamelistFile%idiffk(gridId)
+    akmin=oneNamelistFile%akmin(gridId)
+    xkhkm=oneNamelistFile%xkhkm(gridId)
+    
     mxyzp = mxp*myp*mzp
 
     scr2 = 0.0
@@ -254,7 +255,7 @@ contains
             ,scratch%vt3df     (:)     ,scratch%vt3dg     (:)      &
             ,scratch%vt3dh     (:)     ,scratch%vt3di     (:)      &
             ,scratch%vt3dn     (:)     ,scr2      (:)      &
-            ,idiffk(ngrid))
+            ,idiffk)
 
     else
 
@@ -268,7 +269,7 @@ contains
             ,scratch%vt3de     (:)     ,scratch%vt3df     (:)      &
             ,scratch%vt3dg     (:)     ,scratch%vt3dh     (:)      &
             ,scratch%vt3di     (:)     ,scratch%vt3dn     (:)      &
-            ,scr2      (:)     ,idiffk(ngrid)              &
+            ,scr2      (:)     ,idiffk              &
             ,grid_g(ngrid)%dxm (:,:)   ,grid_g(ngrid)%dxt (:,:)    &
             ,grid_g(ngrid)%dxu (:,:)   ,grid_g(ngrid)%dxv (:,:)    &
             ,grid_g(ngrid)%dym (:,:)   ,grid_g(ngrid)%dyt (:,:)    &
@@ -292,14 +293,15 @@ contains
          grid_g(ngrid)%lpw)
 
     !ml/srf- for new turn scheme
-    if (idiffk(ngrid) <= 3 .or. idiffk(ngrid) == 7.or. idiffk(ngrid) == 8) then
+    if (idiffk <= 3 .or. idiffk == 7.or. idiffk == 8) then
        call mxdefm(mzp,mxp,myp,ia,iz,ja,jz,ibcon,jdim            &
             ,scratch%vt3dh      (:)     ,scratch%vt3di      (:)    &
             ,scratch%vt3dj      (:)     ,scratch%vt3dk      (:)    &
             ,scratch%scr1       (:)     ,scr2       (:)    &
             ,oneBasicFields%dn0 (:,:,:) ,grid_g(ngrid)%rtgt (:,:)  &
             ,grid_g(ngrid)%dxt  (:,:)   ,grid_g(ngrid)%dyt  (:,:)  &
-            ,grid_g(ngrid)%lpw  (:,:)   ,mynum  )
+            ,grid_g(ngrid)%lpw  (:,:)   ,mynum  &
+            ,oneNamelistFile, gridId)
 
        if (CCATT==1 .and. chemistry >= 0) then
           !srf------
@@ -307,7 +309,8 @@ contains
           call mxdefm_tracer(mzp,mxp,myp,ia,iz,ja,jz  &
                ,ibcon,jdim,scratch%vt3dh(:),scr3(:) &
                ,oneBasicFields%dn0(:,:,:),grid_g(ngrid)%dxt(:,:),&
-               grid_g(ngrid)%dyt(:,:),grid_g(ngrid)%lpw(:,:),mynum)
+               grid_g(ngrid)%dyt(:,:),grid_g(ngrid)%lpw(:,:),mynum, &
+               csx, akmin)
 
           !srf------
        endif
@@ -315,7 +318,7 @@ contains
     endif
 
     !ML -> Nananishi and Niino (2004) scheme based on Mellor-Yamada Level 2.5
-    if (idiffk(ngrid) == 7) then
+    if (idiffk == 7) then
 
        !    if(IMASSFLX==1)then
        call nakanishi(mzp, mxp, myp, npatch, ia, iz, ja, jz, jdim                           &
@@ -340,7 +343,7 @@ contains
        !---------------------------------------------------------------------------------------!
        if (IMASSFLX==1) then
           call DeepCopyToTurbFields(oneTurbFields, oneAveTurbFields)
-          call prepare_timeavg_driver(mzp,mxp,myp,ia,iz,ja,jz,dtlt,ngrid,idiffk(ngrid),oneTurbFields)
+          call prepare_timeavg_driver(mzp,mxp,myp,ia,iz,ja,jz,dtlt,ngrid,idiffk,oneTurbFields)
           call DeepCopyFromTurbFields(oneTurbFields, oneAveTurbFields)
        end if
        !---------------------------------------------------------------------------------------!
@@ -367,7 +370,7 @@ contains
     endif
     !ML
 
-    if (idiffk(ngrid)==1) then
+    if (idiffk==1) then
        call tkemy(mzp,mxp,myp,ia,iz,ja,jz,ibcon,jdim,nodei0(mynum,ngrid),nodej0(mynum,ngrid)  &
             ,turb_g(ngrid)%tkep   (:,:,:) ,tend%tket            (:)      &
             ,scratch%vt3dh        (:)     ,scratch%vt3di        (:)      &
@@ -381,7 +384,7 @@ contains
             ,grid_g(ngrid)%lpv    (:,:))
     endif
 
-    if (idiffk(ngrid)==4) then
+    if (idiffk==4) then
        call mxtked(mzp,mxp,myp,ia,iz,ja,jz  &
             ,ibcon,jdim  &
             ,turb_g(ngrid)%tkep   (:,:,:) ,tend%tket            (:)      &
@@ -401,7 +404,7 @@ contains
     !_STC Call to subroutine tkescl for E-l closure
     !_STC (S. Trini Castelli)
     !_STC............................................................
-    if (idiffk(ngrid)==5) then
+    if (idiffk==5) then
        call tkescl(mzp,mxp,myp,npatch,ia,iz,ja,jz  &
             ,turb_g(ngrid)%tkep(:,:,:),tend%tket(:)  &
             ,turb_g(ngrid)%epsp(:,:,:),tend%epst(:)  &
@@ -417,7 +420,7 @@ contains
     !_STC Call to subroutine tkeeps for E-eps closure
     !_STC (S. Trini Castelli)
     !_STC............................................................
-    if (idiffk(ngrid)==6) then
+    if (idiffk==6) then
        call tkeeps(mzp,mxp,myp,npatch,ia,iz,ja,jz  &
             ,turb_g(ngrid)%tkep(:,:,:),tend%tket(:)  &
             ,turb_g(ngrid)%epsp(:,:,:),tend%epst(:)  &
@@ -437,7 +440,7 @@ contains
     !_STC..................................................
     !_STC............................................................
 
-    if (idiffk(ngrid) == 8) then
+    if (idiffk == 8) then
        !-----------------------------------
        !Call subrotines HCV_driver (Campos Velho - KZZ)
        !-----------------------------------
@@ -457,7 +460,8 @@ contains
             ,scratch%vt3dh   (:)            &
             ,scratch%vt3di        (:)            &
             ,scratch%vt3dj        (:)            &
-            ,scratch%vt3dk        (:)            )
+            ,scratch%vt3dk        (:)            &
+            ,oneNamelistFile%zkhkm(gridId))
     endif
 
     call klbnd(mzp,mxp,myp,ibcon,jdim  &
@@ -476,7 +480,7 @@ contains
     endif
 
     !_STC ....... boundary conditions even on Ke diffusion coefficient
-    if (idiffk(ngrid)==5 .or. idiffk(ngrid)==6) &
+    if (idiffk==5 .or. idiffk==6) &
          call klbnd(mzp,mxp,myp,ibcon,jdim  &
          ,scratch%vt3di(:),oneBasicFields%dn0(:,:,:),grid_g(ngrid)%lpw(:,:))
 
@@ -516,7 +520,7 @@ contains
        !call dumpVarAllLatLonk(turb_g(ngrid)%sflux_v,'sflux_v',415,0,0,1,mxp,1,myp,1,1,0.0,0.0) !ok
        !call dumpVarAllLatLonk(turb_g(ngrid)%sflux_w,'sflux_w',415,0,0,1,mxp,1,myp,1,1,0.0,0.0) !***BAD***
        call diffvel(mzp,mxp,myp,ia,iz,ja,jz,jdim,ia_1,ja_1             &
-            ,ia1,ja1,iz_1,jz_1,iz1,jz1,izu,jzv,idiffk(ngrid)             &
+            ,ia1,ja1,iz_1,jz_1,iz1,jz1,izu,jzv,idiffk             &
             ,oneBasicFields%up    (:,:,:) ,oneBasicFields%vp    (:,:,:)  &
             ,oneBasicFields%wp    (:,:,:) ,tend%ut              (:)      &
             ,tend%vt              (:)     ,tend%wt              (:)      &
@@ -537,7 +541,7 @@ contains
     else
 
        call diffvel_adap(mzp,mxp,myp,ia,iz,ja,jz,jdim                  &
-            ,iz1,jz1,izu,jzv,idiffk(ngrid)                               &
+            ,iz1,jz1,izu,jzv,idiffk                               &
             ,oneBasicFields%up    (:,:,:) ,oneBasicFields%vp    (:,:,:)  &
             ,oneBasicFields%wp    (:,:,:) ,tend%ut              (:)      &
             ,tend%vt              (:)     ,tend%wt              (:)      &
@@ -562,11 +566,11 @@ contains
 
     ! Convert momentum K's to scalar K's, if necessary
     !-ml/srf - for new turb scheme
-    if (idiffk(ngrid) <= 3 .or. idiffk(ngrid) == 7 .or. idiffk(ngrid) == 8) then
+    if (idiffk <= 3 .or. idiffk == 7 .or. idiffk == 8) then
        do ind = 1,mxyzp
-          scr2(ind) = scr2(ind) * xkhkm(ngrid)
+          scr2(ind) = scr2(ind) * xkhkm
        enddo
-    elseif (idiffk(ngrid) == 4) then
+    elseif (idiffk == 4) then
        do ind = 1,mxyzp
           scratch%vt3di(ind) = 2. * scratch%scr1(ind)
        enddo
@@ -590,14 +594,14 @@ contains
           enddo
        enddo
 
-       if (idiffk(ngrid)<=3 .or. idiffk(ngrid) == 7.or. idiffk(ngrid) == 8) then
+       if (idiffk<=3 .or. idiffk == 7.or. idiffk == 8) then
 
           ind = 0
           do j = 1,nodemyp(mynum,ngrid)
              do i = 1,nodemxp(mynum,ngrid)
                 do k = 1,nnzp(ngrid)
                    ind = ind + 1
-                   scr3(ind)  =  scr3(ind)  * xkhkm(ngrid)
+                   scr3(ind)  =  scr3(ind)  * xkhkm
                 enddo
              enddo
           enddo
@@ -652,17 +656,17 @@ contains
           vkh_p => scratch%vt3di
           hkh_p => scr2
           !-ml/srf - for new turb scheme
-          if (idiffk(ngrid) >= 4 .and. idiffk(ngrid) /= 7 .and. idiffk(ngrid) /= 8) &
+          if (idiffk >= 4 .and. idiffk /= 7 .and. idiffk /= 8) &
                hkh_p => scratch%vt3di
-          !       if (idiffk(ngrid)>=4) hkh_p => scratch%vt3di
+          !       if (idiffk>=4) hkh_p => scratch%vt3di
           ksf = 1
        elseif (oneScalarTab(n)%name=='EPSP') then
           vkh_p => scratch%vt3di
           hkh_p => scr2
           !-ml/srf - for new turb scheme
-          if (idiffk(ngrid) >= 4 .and. idiffk(ngrid) /= 7.and. idiffk(ngrid) /= 8) &
+          if (idiffk >= 4 .and. idiffk /= 7.and. idiffk /= 8) &
                hkh_p => scratch%vt3di
-          !        if (idiffk(ngrid)>=4)  hkh_p => scratch%vt3di
+          !        if (idiffk>=4)  hkh_p => scratch%vt3di
           ksf = 3
           ! Convert Ktke to Keps; it will be converted back after use below
           call ae1t0_l(mxyzp, vkh_p, vkh_p, (ALF_EPS/ALF_TKE))
@@ -671,9 +675,9 @@ contains
           vkh_p => scratch%vt3dh
           hkh_p => scr2
           !-ml/srf - for new turb scheme
-          if (idiffk(ngrid)>=4 .and. idiffk(ngrid) /= 7.and. idiffk(ngrid) /= 8) &
+          if (idiffk>=4 .and. idiffk /= 7.and. idiffk /= 8) &
                hkh_p => scratch%vt3dh
-          !       if (idiffk(ngrid)>=4)  hkh_p => scratch%vt3di
+          !       if (idiffk>=4)  hkh_p => scratch%vt3di
           ksf = 2
        endif
 
@@ -682,7 +686,7 @@ contains
        if (CCATT==1 .and. CHEMISTRY >=0) then
           !srf----------------- Hor. Diffusion Coef for tracers
           if(n > (oneScalarTabSize - (NADDSC + NSPECIES_TRANSPORTED))) then
-             if (idiffk(ngrid) < 4 .or.  idiffk(ngrid) == 7.or.  idiffk(ngrid) == 8) then
+             if (idiffk < 4 .or.  idiffk == 7.or.  idiffk == 8) then
 
                 hkh_p => scr3
              endif
@@ -1052,7 +1056,8 @@ contains
   !     *****************************************************************
 
   subroutine mxdefm(m1, m2, m3, ia, iz, ja, jz, ibcon, jd,  &
-       vt3dh, vt3di, vt3dj, vt3dk, scr1, scr2, dn0, rtgt, dxt, dyt, lpw_R, mynum)
+       vt3dh, vt3di, vt3dj, vt3dk, scr1, scr2, dn0, rtgt, dxt, dyt, lpw_R, mynum, &
+       oneNamelistFile, gridId)
 
     !     +-------------------------------------------------------------+
     !     \   this routine calculates the mixing coefficients with a    \
@@ -1070,21 +1075,37 @@ contains
     real, intent(IN)    :: rtgt(m2,m3), dxt(m2,m3)
     real, intent(IN)    :: dyt(m2,m3)  !- EHE -> nao e' usada!!!
     real, intent(IN) :: lpw_R(m2,m3)
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
+    integer, intent(in) :: gridId
+    
     ! Local variables:
     integer :: lpw(m2,m3)
     integer :: i, j, k, irich, ienfl
     real :: csx2, sq300, enfl, rchmax, c1, c2, c3, c4, akm, ambda, vkz2
-
+    real :: csx
+    real :: zkhkm
+    integer :: idiffk
+    real :: rmin
+    real :: rmax
+    real :: csz
+    real :: akmin 
+    
     lpw=int(lpw_R)
-
+    
+    csx=oneNamelistFile%csx(gridId)
+    zkhkm=oneNamelistFile%zkhkm(gridId)
+    idiffk=oneNamelistFile%idiffk(gridId)
+    csz=oneNamelistFile%csz(gridId)
+    akmin=oneNamelistFile%akmin(gridId)
+    
     irich = 1
     ienfl = 1
 
-    csx2 = csx(ngrid)*csx(ngrid)
+    csx2 = csx*csx
     sq300 = 90000.
-    if (idiffk(ngrid)==2 .or. idiffk(ngrid)==3) then
+    if (idiffk==2 .or. idiffk==3) then
        rmin = -100.
-       rmax = 1./zkhkm(ngrid)
+       rmax = 1./zkhkm
        do j=ja,jz
           do i=ia,iz
              do k=lpw(i,j),m1-1
@@ -1101,18 +1122,18 @@ contains
           !--(DMK-original)------------------------------------------------------
           !     do k = lpw(i,j),m1
           !--(DMK-CCATT)---------------------------------------------------------
-          vctr1(k) = csz(ngrid)*(zm(k) - zm(k-1))
+          vctr1(k) = csz*(zm(k) - zm(k-1))
           vctr2(k) = vctr1(k)*vctr1(k)
        enddo
     endif
 
-    if (idiffk(ngrid)==1 .or. idiffk(ngrid)==7.or. idiffk(ngrid)==8) then
+    if (idiffk==1 .or. idiffk==7.or. idiffk==8) then
        do j=ja,jz
           do i=ia,iz
              c2 = 1.0/(dxt(i,j)*dxt(i,j))
              c3 = csx2*c2
-             akm = abs(akmin(ngrid))*0.075*c2**(0.666667)
-             if (AKMIN(ngrid)<0.) then !ml/srf - for new turb scheme
+             akm = abs(akmin)*0.075*c2**(0.666667)
+             if (akmin<0.) then !ml/srf - for new turb scheme
                 !----
                 !srf-define diferentes AKMINs para melhorar estabilidade
                 !srf-sobre os Andes
@@ -1124,13 +1145,13 @@ contains
              enddo
           enddo
        enddo
-    elseif (idiffk(ngrid)==2) then
+    elseif (idiffk==2) then
        do j=ja,jz
           do i=ia,iz
              c1  = rtgt(i,j)*rtgt(i,j)
              c2  = 1.0/(dxt(i,j)*dxt(i,j))
              c3  = csx2*c2
-             akm = abs(akmin(ngrid))*0.075*c2**(0.666667)
+             akm = abs(akmin)*0.075*c2**(0.666667)
              c4  = vonk*vonk*c1
              do k=lpw(i,j),m1-1
                 ! old csz*dz len  scr1(k,i,j) = dn0(k,i,j)*c1*vctr2(k)
@@ -1146,10 +1167,10 @@ contains
                 scr1(k,i,j)  = dn0(k,i,j)*vkz2/(vkz2/ambda + 1)*&
                      (sqrt(vt3di(k,i,j)) +                      &
                      enfl*sqrt(max(0., -vt3dj(k,i,j))))*        &
-                     min(rchmax, sqrt(max(0.,(1.-zkhkm(ngrid)*vt3dk(k,i,j)))))
+                     min(rchmax, sqrt(max(0.,(1.-zkhkm*vt3dk(k,i,j)))))
 
                 scr2(k,i,j)  = dn0(k,i,j)*max(akm, c3*sqrt(vt3dh(k,i,j)))
-                vt3dh(k,i,j) = scr1(k,i,j)*zkhkm(ngrid)
+                vt3dh(k,i,j) = scr1(k,i,j)*zkhkm
              enddo
           enddo
        enddo
@@ -1158,16 +1179,16 @@ contains
        !    +    ,a(iustarw),a(itstarw),a(ipctlnd),a(itheta),a(irtgt))
        !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
-    elseif (idiffk(ngrid)==3) then
+    elseif (idiffk==3) then
        do j=ja,jz
           do i=ia,iz
              c1 = rtgt(i,j)*rtgt(i,j)
              do k=lpw(i,j),m1-1
                 scr1(k,i,j)  = dn0(k,i,j)*c1*vctr2(k)*(sqrt(vt3dh(k,i,j)) + &
                      enfl*sqrt(max(0.,-vt3dj(k,i,j))))*                     &
-                     min(rchmax, sqrt(max(0.,(1.-zkhkm(ngrid)*vt3dk(k,i,j)))))
+                     min(rchmax, sqrt(max(0.,(1.-zkhkm*vt3dk(k,i,j)))))
                 scr2(k,i,j)  = scr1(k,i,j)
-                vt3dh(k,i,j) = scr1(k,i,j)*zkhkm(ngrid)
+                vt3dh(k,i,j) = scr1(k,i,j)*zkhkm
              enddo
           enddo
        enddo
@@ -1253,7 +1274,7 @@ contains
 
   !     *****************************************************************
   subroutine mxdefm_tracer(m1, m2, m3, ia, iz, ja, jz, ibcon, jd,  &
-       vt3dh, khtr, dn0, dxt, dyt, lpw_R, mynum)  !ALF
+       vt3dh, khtr, dn0, dxt, dyt, lpw_R, mynum, csx, akmin)  !ALF
 
     !     +-------------------------------------------------------------+
     !     \   this routine calculates the mixing coefficients with a    \
@@ -1268,6 +1289,8 @@ contains
     real, intent(in)    :: dxt(m2,m3), dyt(m2,m3)    !dyt nao eh usada
     real, intent(in)    :: vt3dh(m1,m2,m3), dn0(m1,m2,m3)
     real, intent(inout) :: khtr(m1,m2,m3)
+    real, intent(in) :: csx
+    real, intent(in) :: akmin
     ! local variables:
     integer :: lpw(m2,m3)
     integer :: i, j, k
@@ -1284,7 +1307,7 @@ contains
     !  frtr = 0.05
     !--(DMK-CCATT-FIM)-------------------------------------------------------
 
-    csx2 = csx(ngrid)*csx(ngrid)
+    csx2 = csx*csx
 
     do j=min(1,ja),max(jz,m3)
        do i=min(1,ia),max(iz,m2)
@@ -1292,9 +1315,9 @@ contains
           c2  = 1.0/(dxt(i,j)*dxt(i,j))
           c3  = csx2*c2
           !--(DMK-CCATT-INI)-------------------------------------------------------
-          akm = frtr(ngrid) * abs(akmin(ngrid)) * 0.075 * c2 ** (0.666667)
+          akm = frtr(ngrid) * abs(akmin) * 0.075 * c2 ** (0.666667)
           !--(DMK-CCATT-OLD)-------------------------------------------------------
-          !        akm = frtr*abs(akmin(ngrid))*0.075*c2**(0.666667)
+          !        akm = frtr*abs(akmin)*0.075*c2**(0.666667)
           !--(DMK-CCATT-FIM)-------------------------------------------------------
 
           do k=lpw(i,j),m1-1
@@ -1514,7 +1537,8 @@ contains
        ,vt3dh       &
        ,vt3di       &
        ,vt3dj       &
-       ,vt3dk       )
+       ,vt3dk       &
+       ,zkhkm       )
 
     real, intent(out)  , dimension(m1,m2,m3) :: scr1,vt3dh,vt3di,vt3dj,vt3dk
 
@@ -1534,6 +1558,8 @@ contains
          sflux_u, &
          sflux_v
 
+    real, intent(in) :: zkhkm
+    
     integer :: i,j,k,k2,kzi,lpw
     integer,dimension(m2,m3) :: kzi_2d
     real :: sbf, zl, wstar, ustar, h
@@ -1592,7 +1618,7 @@ contains
              !Compute boundary layer depth [h] for CLC - using gradient Richardon number [Ri]
 
              call get_richgrad(h,k2,m1,zt,rtgt(i,j),vt3dj(1,i,j),vt3di(1,i,j)&
-                  ,vt3dk(1,i,j),zkhkm(ngrid),i,j)
+                  ,vt3dk(1,i,j),zkhkm,i,j)
           endif
 
 

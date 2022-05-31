@@ -601,7 +601,7 @@ contains
             oneGrid%Basic, oneGrid%Ramsin, oneGrid%Turb, oneGrid%AveTurb, oneGrid%Id)
     else
        call diffuse(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, &
-            oneGrid%Turb, oneGrid%AveTurb, oneGrid%Ramsin)
+            oneGrid%Turb, oneGrid%AveTurb, oneGrid%Ramsin, oneGrid%Id)
     endif
 
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12

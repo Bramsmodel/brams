@@ -187,7 +187,8 @@ contains
             ,scratch%scr1       ,scr2           &
             ,oneBasicFields%dn0 ,grid_g(ngrid)%rtgt &
             ,grid_g(ngrid)%dxt  ,grid_g(ngrid)%dyt  &
-            ,grid_g(ngrid)%lpw  ,mynum  )
+            ,grid_g(ngrid)%lpw  ,mynum  &
+            ,oneNamelistFile, gridId)
     endif
 
     if (idiffk == 1) then
