@@ -207,7 +207,7 @@ contains
     real, target :: scr3(mxp*myp*mzp)
     real, target :: scr2(mxp*myp*mzp)
 
-
+    character(len=*), parameter :: h="**(diffuse)**" 
     !interface
     !   subroutine PBLforcing(ngrid, m1, m2, m3, ia, iz, ja, jz, &
     !        vt3df, scp, lsfcupar, nsc)
@@ -342,9 +342,9 @@ contains
        !    Integrating average turbulence parameters for mass flux.                           !
        !---------------------------------------------------------------------------------------!
        if (IMASSFLX==1) then
-          call DeepCopyToTurbFields(oneTurbFields, oneAveTurbFields)
+          call DeepCopyToTurbFields(oneTurbFields, oneAveTurbFields,h)
           call prepare_timeavg_driver(mzp,mxp,myp,ia,iz,ja,jz,dtlt,ngrid,idiffk,oneTurbFields)
-          call DeepCopyFromTurbFields(oneTurbFields, oneAveTurbFields)
+          call DeepCopyFromTurbFields(oneTurbFields, oneAveTurbFields,h)
        end if
        !---------------------------------------------------------------------------------------!
        !    else

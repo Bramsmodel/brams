@@ -380,6 +380,7 @@ contains
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     type(TurbFields), pointer, intent(in) :: oneAveTurbFields
 
+    character(len=*), parameter :: h="**(FieldInit)**"
     ! finish initializing past time level variables
 
     if (initial /= 3) then
@@ -400,9 +401,9 @@ contains
           oneBasicFields%wp = 0.
        endif
 
-       call DeepCopyToTurbFields(oneTurbFields, oneAveTurbFields)
+       call DeepCopyToTurbFields(oneTurbFields, oneAveTurbFields,h)
        call tkeinit(mzp,mxp,myp,oneTurbFields)
-       call DeepCopyFromTurbFields(oneTurbFields, oneAveTurbFields)
+       call DeepCopyFromTurbFields(oneTurbFields, oneAveTurbFields,h)
 
     endif
 

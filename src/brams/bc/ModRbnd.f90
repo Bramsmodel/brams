@@ -1368,6 +1368,7 @@ contains
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     type(TurbFields), pointer, intent(in) :: oneAveTurbFields
     integer :: n, mxyzp
+    character(len=*), parameter :: h="**(trsets)**"
 
     !     Apply lateral, top, and bottom boundary conditions.
 
@@ -1399,9 +1400,9 @@ contains
 
     !       Make sure all positive definite quantities remain such.
 
-    call DeepCopyToTurbFields(oneTurbFields, oneAveTurbFields)
+    call DeepCopyToTurbFields(oneTurbFields, oneAveTurbFields,h)
     call tkeinit(mzp,mxp,myp, oneTurbFields)
-    call DeepCopyFromTurbFields(oneTurbFields, oneAveTurbFields)
+    call DeepCopyFromTurbFields(oneTurbFields, oneAveTurbFields,h)
 
     call negadj1(mzp,mxp,myp, oneBasicFields)
 

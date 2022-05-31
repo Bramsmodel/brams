@@ -155,7 +155,7 @@ contains
 
        OneGrid => OneGridTreeNode%curr
 
-       call DeepCopyToTurbFields(OneGrid%Turb, OneGrid%AveTurb)
+       call DeepCopyToTurbFields(OneGrid%Turb, OneGrid%AveTurb,h)
        
        ! update Ghost Zone of all vartables variables part 1:
        ! post receives and send messages
@@ -243,7 +243,7 @@ contains
        if(IPOS==3) ierr=nf90_close(ncid)
 #endif         
 
-       call DeepCopyFromTurbFields(OneGrid%Turb, OneGrid%AveTurb)
+       call DeepCopyFromTurbFields(OneGrid%Turb, OneGrid%AveTurb,h)
 
        OneGridTreeNode => NextOnGridTree(OneGridTreeNode)
 

@@ -47,6 +47,8 @@ module ModTurbFields
   public :: InsertTurbFieldsAtVarTable
   public :: DeepCopyToTurbFields
   public :: DeepCopyFromTurbFields
+
+  character(len=32) :: previousCall=""
   
   type TurbFields
 
@@ -624,9 +626,11 @@ contains
 
 
 
-  subroutine DeepCopyToTurbFields(oneTurbFields, oneAveTurbFields)
+  subroutine DeepCopyToTurbFields(oneTurbFields, oneAveTurbFields, caller)
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     type(TurbFields), pointer, intent(in) :: oneAveTurbFields
+    character(len=*), intent(in) :: caller
+    
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(DeepCopyToTurbFields)**"
     logical, parameter :: dumpLocal=.true.
@@ -635,8 +639,12 @@ contains
        call fatal_error(h//" oneTurbFields not associated")
     else if (.not. associated(oneAveTurbFields)) then
        call fatal_error(h//" oneAveTurbFields not associated")
+    else if (previousCall /= "") then
+       call fatal_error(h//" called by "//trim(adjustl(caller))//&
+            " but previously called by "//trim(adjustl(previousCall)))
     end if
-    
+
+    previousCall=trim(adjustl(caller))
     if (associated(oneTurbFields%tkep)) then
        oneTurbFields%tkep=turb_g(1)%tkep
     end if
@@ -714,9 +722,10 @@ contains
 
 
 
-  subroutine DeepCopyFromTurbFields(oneTurbFields, oneAveTurbFields)
+  subroutine DeepCopyFromTurbFields(oneTurbFields, oneAveTurbFields, caller)
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     type(TurbFields), pointer, intent(in) :: oneAveTurbFields
+    character(len=*), intent(in) :: caller
 
     integer :: i
     integer :: j
@@ -729,8 +738,12 @@ contains
        call fatal_error(h//" oneTurbFields not associated")
     else if (.not. associated(oneAveTurbFields)) then
        call fatal_error(h//" oneAveTurbFields not associated")
+    else if (previousCall == "") then
+       call fatal_error(h//" invoked by "//trim(adjustl(caller))//&
+            " while DeepCopyToTurbFields was not invoked")
     end if
-    
+
+    previousCall=""
     if (associated(oneTurbFields%tkep)) then
        do j = 1, size(oneTurbFields%tkep,3)
           do i = 1, size(oneTurbFields%tkep,2)

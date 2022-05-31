@@ -422,10 +422,10 @@ contains
        if (time==0.) then
           call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, oneGrid%Basic)
        end if
-       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb)
+       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
        call sfclyr_jules(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile, &
             oneGrid%Basic, oneGrid%Turb)
-       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb)
+       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
        !--- this combines the JULES land + LEAF ocean models.
        if (isfcl_ocean == 1) then
           call sfclyr_ocean_only  (mzp,mxp,myp,ia,iz,ja,jz,ibcon, oneGrid%Basic)
@@ -568,9 +568,9 @@ contains
     !---------------------------------------------------
     ! Shallow  cumulus parameterization by Souza
     if (NNSHCU(ngrid)==1) then
-       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb)
+       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
        call shcupa(oneGrid%Basic, oneGrid%Turb)
-       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb)
+       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
     end if
     !---------------------------------------------------
 
@@ -618,9 +618,9 @@ contains
 
     !- cumulus parameterizations options: G3d - GD-FIM and GF
     if (NNQPARM(ngrid)>=3) then
-       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb)
+       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
        call CUPARM_GRELL3_CATT(oneGrid,1,NNQPARM(ngrid),NNSHCU(ngrid))
-       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb)
+       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
     end if
 
     !------------------------------------------------------------------------------
@@ -954,10 +954,10 @@ contains
     endif
 
     !- windfarm
-    call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb)
+    call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
     call wind_farm_driver(ngrid,mzp,mxp,myp,ia,iz,ja,jz, &
          oneGrid%Basic, oneGrid%Turb)
-    call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb)
+    call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
 
     !- apply digital filter
     if (applyDF) then

@@ -145,7 +145,9 @@ contains
     ! (JP) removing scr2 from scratch
     real, target :: scr2(mxp*myp*mzp)
 
-    call DeepCopyToTurbFields(oneTurbFields, oneAveTurbFields)
+    character(len=*), parameter :: h="**(diffuse_brams31)**" 
+    
+    call DeepCopyToTurbFields(oneTurbFields, oneAveTurbFields,h)
     
     idiffk=oneNamelistFile%idiffk(gridId)
     xkhkm=oneNamelistFile%xkhkm(gridId)
@@ -467,6 +469,6 @@ contains
 
     enddo
 
-    call DeepCopyFromTurbFields(oneTurbFields, oneAveTurbFields)
+    call DeepCopyFromTurbFields(oneTurbFields, oneAveTurbFields,h)
   end subroutine diffuse_brams31
 end module ModDiffuse

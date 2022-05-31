@@ -673,10 +673,10 @@ contains
 
     ! insert Turb Field variables at var_table
     do ng=1,ngrids
-       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb)
+       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
 !!$       call InsertTurbFieldsAtVarTable(oneGrid%Turb, oneGrid%AveTurb, &
 !!$            oneGrid%Ramsin, oneGrid%Id)
-       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb)
+       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
     enddo
 
     if (CCATT==1 .and. chemistry >= 0) then

@@ -1092,10 +1092,10 @@ contains
        if (IPOS/=0) then
           ! create post processing
           oneAllPostTypes => null()
-          call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb)
+          call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
           call CreatePostProcess(oneNamelistFile, oneAllPostTypes, &
                oneGrid%Basic, oneGrid%Turb)
-          call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb)
+          call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
        endif
 
        select case (IPOS)
