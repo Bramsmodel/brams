@@ -77,10 +77,6 @@ module ModTurbK
        vonk       !INTENT(IN)
 
 
-  use mem_turb, only:  &
-       turb_g
-
-
   use ModMonotonicAdvection, only: &
        advmnt 
 
@@ -224,6 +220,8 @@ contains
     !nullify(lsfcupar_p)
     !
 
+    call DeepCopyToTurbFields(oneTurbFields, oneAveTurbFields,h)
+
     csx=oneNamelistFile%csx(gridId)
     idiffk=oneNamelistFile%idiffk(gridId)
     akmin=oneNamelistFile%akmin(gridId)
@@ -322,7 +320,7 @@ contains
 
        !    if(IMASSFLX==1)then
        call nakanishi(mzp, mxp, myp, npatch, ia, iz, ja, jz, jdim                           &
-            ,turb_g(ngrid)%tkep       ,tend%tket                ,scratch%vt3dd            &
+            ,oneTurbFields%tkep       ,tend%tket                ,scratch%vt3dd            &
             ,scratch%vt3de            ,scratch%vt3dh            ,scratch%vt3di            &
             ,scratch%vt3dj            ,scratch%scr1             ,grid_g(ngrid)%rtgt       &
                                 !srf         ,oneBasicFields%theta     ,scratch%vt3dp            ,scratch%vt3dq            &
@@ -330,9 +328,9 @@ contains
                                 !
             ,oneBasicFields%dn0       ,oneBasicFields%up        ,oneBasicFields%vp        &
             ,leaf_g(ngrid)%veg_rough  ,leaf_g(ngrid)%patch_rough,leaf_g(ngrid)%tstar      &
-            ,leaf_g(ngrid)%ustar      ,leaf_g(ngrid)%patch_area ,turb_g(ngrid)%sflux_u    &
-            ,turb_g(ngrid)%sflux_v    ,turb_g(ngrid)%sflux_t    ,grid_g(ngrid)%lpu        &
-            ,grid_g(ngrid)%lpv        ,grid_g(ngrid)%lpw         ,turb_g(ngrid)%kpbl      &
+            ,leaf_g(ngrid)%ustar      ,leaf_g(ngrid)%patch_area ,oneTurbFields%sflux_u    &
+            ,oneTurbFields%sflux_v    ,oneTurbFields%sflux_t    ,grid_g(ngrid)%lpu        &
+            ,grid_g(ngrid)%lpv        ,grid_g(ngrid)%lpw         ,oneTurbFields%kpbl      &
             ,stilt_g(ngrid)%pblhgt    ,stilt_g(ngrid)%lmo       ,stilt_g(ngrid)%ltscale   &
             ,stilt_g(ngrid)%sigw                                                          )
 
@@ -342,14 +340,12 @@ contains
        !    Integrating average turbulence parameters for mass flux.                           !
        !---------------------------------------------------------------------------------------!
        if (IMASSFLX==1) then
-          call DeepCopyToTurbFields(oneTurbFields, oneAveTurbFields,h)
           call prepare_timeavg_driver(mzp,mxp,myp,ia,iz,ja,jz,dtlt,ngrid,idiffk,oneTurbFields)
-          call DeepCopyFromTurbFields(oneTurbFields, oneAveTurbFields,h)
        end if
        !---------------------------------------------------------------------------------------!
        !    else
        !      call nakanishi_light(mzp, mxp, myp, npatch, ia, iz, ja, jz, jdim                     &
-       !             ,turb_g(ngrid)%tkep       ,tend%tket                ,scratch%vt3dd            &
+       !             ,oneTurbFields%tkep       ,tend%tket                ,scratch%vt3dd            &
        !             ,scratch%vt3de            ,scratch%vt3dh            ,scratch%vt3di            &
        !             ,scratch%vt3dj            ,scratch%scr1             ,grid_g(ngrid)%rtgt       &
        !srf-opt     ,oneBasicFields%theta     ,scratch%vt3dp            ,scratch%vt3dq            &
@@ -357,10 +353,10 @@ contains
        !
        !             ,oneBasicFields%dn0       ,oneBasicFields%up        ,oneBasicFields%vp        &
        !             ,leaf_g(ngrid)%veg_rough  ,leaf_g(ngrid)%patch_rough,leaf_g(ngrid)%tstar      &
-       !             ,leaf_g(ngrid)%ustar      ,leaf_g(ngrid)%patch_area ,turb_g(ngrid)%sflux_u    &
-       !             ,turb_g(ngrid)%sflux_v    ,turb_g(ngrid)%sflux_t    ,grid_g(ngrid)%lpu        &
+       !             ,leaf_g(ngrid)%ustar      ,leaf_g(ngrid)%patch_area ,oneTurbFields%sflux_u    &
+       !             ,oneTurbFields%sflux_v    ,oneTurbFields%sflux_t    ,grid_g(ngrid)%lpu        &
        !             ,grid_g(ngrid)%lpv        ,grid_g(ngrid)%lpw                                  &
-       !     !,turb_g(ngrid)%kpbl      & !srf
+       !     !,oneTurbFields%kpbl      & !srf
        !             !,stilt_g(ngrid)%pblhgt   & !srf
        !     ,stilt_g(ngrid)%lmo      &
        !     !,stilt_g(ngrid)%ltscale  & !srf
@@ -372,14 +368,14 @@ contains
 
     if (idiffk==1) then
        call tkemy(mzp,mxp,myp,ia,iz,ja,jz,ibcon,jdim,nodei0(mynum,ngrid),nodej0(mynum,ngrid)  &
-            ,turb_g(ngrid)%tkep   (:,:,:) ,tend%tket            (:)      &
+            ,oneTurbFields%tkep   (:,:,:) ,tend%tket            (:)      &
             ,scratch%vt3dh        (:)     ,scratch%vt3di        (:)      &
             ,scratch%vt3dj        (:)     ,scratch%scr1         (:)      &
             ,grid_g(ngrid)%rtgt   (:,:)   ,oneBasicFields%theta (:,:,:)  &
             ,oneBasicFields%dn0   (:,:,:) ,oneBasicFields%up    (:,:,:)  &
             ,oneBasicFields%vp    (:,:,:) ,oneBasicFields%wp    (:,:,:)  &
-            ,turb_g(ngrid)%sflux_u(:,:)   ,turb_g(ngrid)%sflux_v(:,:)    &
-            ,turb_g(ngrid)%sflux_w(:,:)   ,turb_g(ngrid)%sflux_t(:,:),vctr34 &
+            ,oneTurbFields%sflux_u(:,:)   ,oneTurbFields%sflux_v(:,:)    &
+            ,oneTurbFields%sflux_w(:,:)   ,oneTurbFields%sflux_t(:,:),vctr34 &
             ,grid_g(ngrid)%lpw    (:,:)   ,grid_g(ngrid)%lpu    (:,:)   &
             ,grid_g(ngrid)%lpv    (:,:))
     endif
@@ -387,15 +383,15 @@ contains
     if (idiffk==4) then
        call mxtked(mzp,mxp,myp,ia,iz,ja,jz  &
             ,ibcon,jdim  &
-            ,turb_g(ngrid)%tkep   (:,:,:) ,tend%tket            (:)      &
+            ,oneTurbFields%tkep   (:,:,:) ,tend%tket            (:)      &
             ,oneBasicFields%up    (:,:,:) ,oneBasicFields%vp    (:,:,:)  &
             ,oneBasicFields%wp    (:,:,:) ,oneBasicFields%rtp   (:,:,:)  &
             ,oneBasicFields%rv    (:,:,:) ,oneBasicFields%theta (:,:,:)  &
             ,scratch%vt3da        (:)     ,scratch%vt3dc        (:)      &
             ,scratch%vt3dh        (:)     ,scratch%vt3dj        (:)      &
             ,scratch%scr1         (:)     ,scr2         (:)      &
-            ,turb_g(ngrid)%sflux_u(:,:)   ,turb_g(ngrid)%sflux_v(:,:)    &
-            ,turb_g(ngrid)%sflux_w(:,:)   ,turb_g(ngrid)%sflux_t(:,:)    &
+            ,oneTurbFields%sflux_u(:,:)   ,oneTurbFields%sflux_v(:,:)    &
+            ,oneTurbFields%sflux_w(:,:)   ,oneTurbFields%sflux_t(:,:)    &
             ,grid_g(ngrid)%dxt    (:,:)   ,grid_g(ngrid)%rtgt   (:,:)    &
             ,grid_g(ngrid)%lpw    (:,:)   )
     endif
@@ -406,8 +402,8 @@ contains
     !_STC............................................................
     if (idiffk==5) then
        call tkescl(mzp,mxp,myp,npatch,ia,iz,ja,jz  &
-            ,turb_g(ngrid)%tkep(:,:,:),tend%tket(:)  &
-            ,turb_g(ngrid)%epsp(:,:,:),tend%epst(:)  &
+            ,oneTurbFields%tkep(:,:,:),tend%tket(:)  &
+            ,oneTurbFields%epsp(:,:,:),tend%epst(:)  &
             ,scratch%vt3da(:),scratch%vt3dc(:)  &
             ,scratch%vt3dh(:),scratch%vt3di(:)  &
             ,scratch%vt3dj(:),scratch%scr1(:)  &
@@ -422,8 +418,8 @@ contains
     !_STC............................................................
     if (idiffk==6) then
        call tkeeps(mzp,mxp,myp,npatch,ia,iz,ja,jz  &
-            ,turb_g(ngrid)%tkep(:,:,:),tend%tket(:)  &
-            ,turb_g(ngrid)%epsp(:,:,:),tend%epst(:)  &
+            ,oneTurbFields%tkep(:,:,:),tend%tket(:)  &
+            ,oneTurbFields%epsp(:,:,:),tend%epst(:)  &
             ,scratch%vt3da(:),scratch%vt3dc(:)  &
             ,scratch%vt3dh(:),scratch%vt3di(:)  &
             ,scratch%vt3dj(:),scratch%scr1(:)  &
@@ -450,10 +446,10 @@ contains
             ,oneBasicFields%theta (:,:,:)        &
             ,oneBasicFields%rv    (:,:,:)  &
             ,oneBasicFields%dn0   (:,:,:)        &
-            ,turb_g(ngrid)%sflux_t(:,:)          &
-            ,turb_g(ngrid)%sflux_r(:,:)          &
-            ,turb_g(ngrid)%sflux_u(:,:)          &
-            ,turb_g(ngrid)%sflux_v(:,:)          &
+            ,oneTurbFields%sflux_t(:,:)          &
+            ,oneTurbFields%sflux_r(:,:)          &
+            ,oneTurbFields%sflux_u(:,:)          &
+            ,oneTurbFields%sflux_v(:,:)          &
             ,grid_g(ngrid)%rtgt   (:,:)          &
             ,grid_g(ngrid)%lpw    (:,:)          &
             ,scratch%scr1   (:)            &
@@ -495,13 +491,13 @@ contains
              s1 = scr2(ind)
              s2 = scratch%scr1(ind)
              s3 = scratch%vt3dh(ind)
-             scr2(ind) = turb_g(ngrid)%hkm(k,i,j)
-             scratch%scr1(ind) = turb_g(ngrid)%vkm(k,i,j)
-             scratch%vt3dh(ind) = turb_g(ngrid)%vkh(k,i,j)
+             scr2(ind) = oneTurbFields%hkm(k,i,j)
+             scratch%scr1(ind) = oneTurbFields%vkm(k,i,j)
+             scratch%vt3dh(ind) = oneTurbFields%vkh(k,i,j)
              !! also for vt3di = K(tke) ?????    22 March 02
-             turb_g(ngrid)%hkm(k,i,j) = s1
-             turb_g(ngrid)%vkm(k,i,j) = s2
-             turb_g(ngrid)%vkh(k,i,j) = s3
+             oneTurbFields%hkm(k,i,j) = s1
+             oneTurbFields%vkm(k,i,j) = s2
+             oneTurbFields%vkh(k,i,j) = s3
           enddo
        enddo
     enddo
@@ -516,9 +512,9 @@ contains
        !call dumpVarAllLatLonk(grid_g(ngrid)%rtgu   ,'rtgu',415,0,0,1,mxp,1,myp,1,1,0.0,0.0) !ok
        !call dumpVarAllLatLonk(grid_g(ngrid)%rtgv   ,'rtgv',415,0,0,1,mxp,1,myp,1,1,0.0,0.0) !ok
        !call dumpVarAllLatLonk(grid_g(ngrid)%rtgt   ,'rtgt',415,0,0,1,mxp,1,myp,1,1,0.0,0.0) !ok
-       !call dumpVarAllLatLonk(turb_g(ngrid)%sflux_u,'sflux_u',415,0,0,1,mxp,1,myp,1,1,0.0,0.0) !ok
-       !call dumpVarAllLatLonk(turb_g(ngrid)%sflux_v,'sflux_v',415,0,0,1,mxp,1,myp,1,1,0.0,0.0) !ok
-       !call dumpVarAllLatLonk(turb_g(ngrid)%sflux_w,'sflux_w',415,0,0,1,mxp,1,myp,1,1,0.0,0.0) !***BAD***
+       !call dumpVarAllLatLonk(oneTurbFields%sflux_u,'sflux_u',415,0,0,1,mxp,1,myp,1,1,0.0,0.0) !ok
+       !call dumpVarAllLatLonk(oneTurbFields%sflux_v,'sflux_v',415,0,0,1,mxp,1,myp,1,1,0.0,0.0) !ok
+       !call dumpVarAllLatLonk(oneTurbFields%sflux_w,'sflux_w',415,0,0,1,mxp,1,myp,1,1,0.0,0.0) !***BAD***
        call diffvel(mzp,mxp,myp,ia,iz,ja,jz,jdim,ia_1,ja_1             &
             ,ia1,ja1,iz_1,jz_1,iz1,jz1,izu,jzv,idiffk             &
             ,oneBasicFields%up    (:,:,:) ,oneBasicFields%vp    (:,:,:)  &
@@ -532,8 +528,8 @@ contains
             ,scratch%vt3dm        (:)     ,scratch%vt3dn        (:)      &
             ,scratch%vt3do        (:)     ,grid_g(ngrid)%rtgu   (:,:)    &
             ,grid_g(ngrid)%rtgv   (:,:)   ,grid_g(ngrid)%rtgt   (:,:)    &
-            ,turb_g(ngrid)%sflux_u(:,:)   ,turb_g(ngrid)%sflux_v(:,:)    &
-            ,turb_g(ngrid)%sflux_w(:,:)   ,oneBasicFields%dn0   (:,:,:)  &
+            ,oneTurbFields%sflux_u(:,:)   ,oneTurbFields%sflux_v(:,:)    &
+            ,oneTurbFields%sflux_w(:,:)   ,oneBasicFields%dn0   (:,:,:)  &
             ,oneBasicFields%dn0u  (:,:,:) ,oneBasicFields%dn0v  (:,:,:)  &
             ,scratch%scr1         (:)     ,scr2         (:),&
             ibcon,mynum,oneNamelistFile%ihorgrad)
@@ -556,8 +552,8 @@ contains
             ,grid_g(ngrid)%volu   (:,:,:) ,grid_g(ngrid)%volv   (:,:,:)  &
             ,grid_g(ngrid)%volw   (:,:,:) ,grid_g(ngrid)%lpu    (:,:)    &
             ,grid_g(ngrid)%lpv    (:,:)   ,grid_g(ngrid)%lpw    (:,:)    &
-            ,turb_g(ngrid)%sflux_u(:,:)   ,turb_g(ngrid)%sflux_v(:,:)    &
-            ,turb_g(ngrid)%sflux_w(:,:)   ,oneBasicFields%dn0   (:,:,:)  &
+            ,oneTurbFields%sflux_u(:,:)   ,oneTurbFields%sflux_v(:,:)    &
+            ,oneTurbFields%sflux_w(:,:)   ,oneBasicFields%dn0   (:,:,:)  &
             ,oneBasicFields%dn0u  (:,:,:) ,oneBasicFields%dn0v  (:,:,:)  &
             ,scratch%scr1         (:)     ,scr2         (:)      &
             ,grid_g(ngrid)%topma  (:,:)   ,ibcon,mynum)
@@ -616,7 +612,7 @@ contains
        if (nstbot==1) then
           if (oneScalarTab(n)%name=='THP' .or. &
                oneScalarTab(n)%name=='THC') then
-             call atob(mxp*myp, turb_g(ngrid)%sflux_t(:,:), scratch%vt2da(:))
+             call atob(mxp*myp, oneTurbFields%sflux_t(:,:), scratch%vt2da(:))
 
              ! Large Scale Forcing for GRELL CUPAR
              !if (nnqparm(ngrid)>=2) then
@@ -626,7 +622,7 @@ contains
              !---------------------------------------
              ! endif
           elseif (oneScalarTab(n)%name=='RTP') then
-             call atob(mxp*myp, turb_g(ngrid)%sflux_r(:,:), scratch%vt2da(:))
+             call atob(mxp*myp, oneTurbFields%sflux_r(:,:), scratch%vt2da(:))
 
              ! Large Scale Forcing for GRELL CUPAR not used
              ! CATT
@@ -746,6 +742,7 @@ contains
 
     enddo
 
+    call DeepCopyFromTurbFields(oneTurbFields, oneAveTurbFields,h)
   end subroutine diffuse
 
   !     ******************************************************************
