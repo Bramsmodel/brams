@@ -1,5 +1,8 @@
 module ModRbnd
 
+  use ModTurbKE, only: &
+       tkeinit
+  
   use ModMicrophysicsMisc, only: &
        negadj1
 

@@ -194,7 +194,7 @@ OBJ_MOD = \
 	turb_diff_adap.o \
 	ModTurbK.o \
 	turb_k_adap.o \
-	turb_ke.o \
+	ModTurbKE.o \
 	upcase.o \
 	ModUrbanCanopy.o \
 	v_interps.o \

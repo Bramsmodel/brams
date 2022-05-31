@@ -1,5 +1,11 @@
 module ModDiffuse
 
+  use ModTurbKE, only: &
+       tkescl, &
+       tkeeps, &
+       mxtked, &
+       tkemy
+  
   use ModTurbK, only: &
        strain, &
        bruvais, &

@@ -7,6 +7,12 @@
 !###########################################################################
 module ModTurbK
 
+  use ModTurbKE, only: &
+       tkescl, &
+       tkeeps, &
+       mxtked, &
+       tkemy
+  
   use ModRstilt, only: &
        prepare_timeavg_driver
 

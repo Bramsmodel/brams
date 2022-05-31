@@ -7,6 +7,9 @@
 !###########################################################################
 module ModRinit
 
+  use ModTurbKE, only: &
+       tkeinit
+  
   use mem_grid, only: &
        oneGlobalGridData, &
        ngrids, &
