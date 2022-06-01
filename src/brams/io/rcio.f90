@@ -195,12 +195,11 @@ subroutine commio (cfile,io,iun)
        cka, &
        ckw
 
-  use leaf_coms
-  !--(DMK-CCATT-INI)-----------------------------------------------------
+
   use mem_stilt, only: &
        iexev,          &
        imassflx
-  !--(DMK-CCATT-END)-----------------------------------------------------
+
 
   implicit none
   integer :: iun
