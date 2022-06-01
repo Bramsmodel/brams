@@ -1,5 +1,8 @@
 module ReadBcst
 
+  use mem_turb, only: &
+       turb_g, idiffk, xkhkm
+  
   use mem_grid, only: &
        ngrids, nnxp, nnyp, nnzp, nzs, nzg, npatch, &
        time, iyear1, imonth1, idate1, itime1, &
@@ -35,19 +38,6 @@ module ReadBcst
 
   implicit none
 
-  interface 
-     subroutine PreProcForOutput(ngrid, varnIn, sizeInOut, &
-          arrayIn, arrayOut, varnOut, oneBasicFields)
-       use ModBasicFields, only: BasicFields
-       integer,          intent(in   ) :: ngrid
-       character(len=*), intent(in   ) :: varnIn
-       integer,          intent(in   ) :: sizeInOut
-       real,             intent(in   ) :: arrayIn(sizeInOut)
-       real,             intent(out  ) :: arrayOut(sizeInOut)
-       character(len=*), intent(out  ) :: varnOut
-       type(BasicFields), pointer, intent(in) :: oneBasicFields
-     end subroutine PreProcForOutput
-  end interface
 
   private
   public :: ReadStoreOwnChunk
@@ -746,7 +736,7 @@ contains
 
   subroutine PreProcAndGather(preProc, ngrid, idim_type, varn, &
        il1, ir2, jb1, jt2, localSize, disp, thisChunkSize, LocalChunk, &
-       sizeGathered, gathered, sizeFullField, FullField, oneBasicField)
+       sizeGathered, gathered, sizeFullField, FullField, oneBasicFields)
 
     logical,          intent(in   ) :: preProc
     integer,          intent(in   ) :: ngrid
@@ -764,7 +754,7 @@ contains
     real,             intent(out  ) :: gathered(sizeGathered)    !scratch
     integer,          intent(in   ) :: sizeFullField
     real,             intent(out  ) :: FullField(sizeFullField)
-    type(BasicFields), pointer, intent(in) :: oneBasicField
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
 
     character(len=len(varn)) :: varnOut
     integer :: ierr
@@ -786,10 +776,37 @@ contains
 
        ! pre-process LocalChunk before gathering
 
-       call PreProcForOutput(ngrid, varn, thisChunkSize, LocalChunk, &
-            LocalChunk, varnOut, oneBasicField)
-       varn = varnOut
+       select case (varn)
+       case ('PP')
 
+          ! Output total Exner function
+          
+          call RAMS_aprep_p (thisChunkSize, LocalChunk,  &
+               oneBasicFields%pi0, LocalChunk)
+          varnOut='PI'
+          
+       case ('HKM')
+          
+          ! Convert to HKM to HKH (note that VKH is HKH for Deardorff)
+          
+          call RAMS_aprep_hkh (thisChunkSize, LocalChunk, &
+               turb_g(ngrid)%vkh, oneBasicFields%dn0,  &
+               LocalChunk, idiffk(ngrid), xkhkm(ngrid))
+          varnOut='HKH'
+          
+       case ('VKH')
+          
+          ! Un-density weight VKH
+          
+          call RAMS_aprep_vkh (thisChunkSize, LocalChunk, &
+               oneBasicFields%dn0, LocalChunk)
+          varnOut='VKH'
+          
+       case default
+          varnOut=varn
+       end select
+
+       varn = varnOut
 
     end if
 
@@ -1786,5 +1803,56 @@ contains
 
   end subroutine storeOwnChunk_3D
   !--(DMK-CCATT-FIM)-----------------------------------------------------
+
+  subroutine rams_aprep_p (n1,a,b,c)
+    integer :: n1
+    real :: a(*),b(*),c(*)
+
+    integer :: i
+
+    do i=1,n1
+       c(i)=a(i)+b(i)
+    enddo
+
+    return
+  end subroutine rams_aprep_p
+
+
+
+  !******************************************************************************
+
+  subroutine rams_aprep_hkh(n1,hkm,vkh,dn0,scr1,idiffk,xkhkm)
+    integer :: n1,idiffk
+    real :: xkhkm
+    real, dimension(*) :: hkm,vkh,dn0,scr1
+    integer :: ind
+
+    if (idiffk <= 3) then
+       do ind = 1,n1
+          scr1(ind) = hkm(ind) * xkhkm / dn0(ind)
+       enddo
+    elseif (idiffk >= 4) then
+       do ind = 1,n1
+          scr1(ind) = vkh(ind) / dn0(ind)
+       enddo
+    endif
+
+    return
+  end subroutine rams_aprep_hkh
+
+  !******************************************************************************
+
+  subroutine rams_aprep_vkh(n1,vkh,dn0,vt3dd)
+    integer :: n1
+    real :: vkh(*),dn0(*),vt3dd(*)
+    integer :: ind
+
+    do ind = 1,n1
+       vt3dd(ind) = vkh(ind) / dn0(ind)
+    enddo
+
+    return
+  end subroutine rams_aprep_vkh
+
 
 end module ReadBcst

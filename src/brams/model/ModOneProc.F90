@@ -34,6 +34,10 @@ module ModOneProc
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModRio, only: &
+       OutputFields, &
+       history_start
+  
   use ModTurbFields, only: &
        DeepCopyToTurbFields, &
        DeepCopyFromTurbFields
@@ -589,18 +593,6 @@ module ModOneProc
        dumpMessage !dump function
 
   implicit none
-
-  interface
-     subroutine OutputFields(histFlag, instFlag, liteFlag, meanFlag, oneBasicFields)
-       use ModBasicFields, only: BasicFields
-       logical, intent(in) :: histFlag     ! true iff history output requested
-       logical, intent(in) :: instFlag     ! true iff instant output requested
-       logical, intent(in) :: liteFlag     ! true iff lite vars output requested
-       logical, intent(in) :: meanFlag     ! true iff field average output requested
-       type(BasicFields), pointer, intent(in) :: oneBasicFields
-     end subroutine OutputFields
-  end interface
-
 
   private
 
