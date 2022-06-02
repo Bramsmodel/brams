@@ -45,9 +45,11 @@ module ModRio
        CreateEnabledIOFileDS, &
        OpenDataFile, &
        CloseDataFile, &
-       DumpIOHeadTable, &
        DestroyIOFileDS
 
+  use ModRcio, only: &
+       DumpIOHeadTable
+       
   use node_mod, only: &
        mzp, mxp, myp,  & ! INTENT(IN)
        ixb, ixe, iyb, iye, &
@@ -1221,16 +1223,16 @@ contains
 
        if (mchnum == master_num) then
           if (histFlag) then
-             call DumpIOHeadTable(histFileDS)
+             call DumpIOHeadTable(histFileDS, oneNamelistFile)
           end if
           if (instFlag) then
-             call DumpIOHeadTable(instFileDS)
+             call DumpIOHeadTable(instFileDS, oneNamelistFile)
           end if
           if (liteFlag) then
-             call DumpIOHeadTable(liteFileDS)
+             call DumpIOHeadTable(liteFileDS, oneNamelistFile)
           end if
           if (meanFlag) then
-             call DumpIOHeadTable(meanFileDS)
+             call DumpIOHeadTable(meanFileDS, oneNamelistFile)
           end if
        end if
 

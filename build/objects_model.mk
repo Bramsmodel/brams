@@ -163,7 +163,7 @@ OBJ_MOD = \
 	rams_read_header.o \
 	ModRanlavg.o \
 	ModRbnd.o \
-	rcio.o \
+	ModRcio.o \
 	rconstants.o \
 	ModRConv.o \
 	ModRConvGrellCatt.o \
