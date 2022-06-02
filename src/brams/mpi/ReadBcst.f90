@@ -1,8 +1,14 @@
 module ReadBcst
 
-  use mem_turb, only: &
-       turb_g, idiffk, xkhkm
+  use ModNamelistFile, only: &
+       NamelistFile
+
+  use ModTurbFields, only: &
+       TurbFields
   
+  use ModBasicFields, only: &
+       BasicFields
+
   use mem_grid, only: &
        ngrids, nnxp, nnyp, nnzp, nzs, nzg, npatch, &
        time, iyear1, imonth1, idate1, itime1, &
@@ -33,9 +39,6 @@ module ReadBcst
        parf_allreduce_max, &
        parf_GatherAllChunks
 
-  use ModBasicFields, only: &
-       BasicFields
-
   implicit none
 
 
@@ -48,9 +51,6 @@ module ReadBcst
   public :: LocalSizesAndDisp
   public :: PreProcAndGather
   public :: RearrangeAndDump
-!!$  public :: DumpFullField
-!!$  public :: DumpVTabEntry
-!!$  public :: DumpVarTables
   public :: gatherData
   public :: storeOwnChunk_3D
 
@@ -736,7 +736,8 @@ contains
 
   subroutine PreProcAndGather(preProc, ngrid, idim_type, varn, &
        il1, ir2, jb1, jt2, localSize, disp, thisChunkSize, LocalChunk, &
-       sizeGathered, gathered, sizeFullField, FullField, oneBasicFields)
+       sizeGathered, gathered, sizeFullField, FullField, &
+       oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
 
     logical,          intent(in   ) :: preProc
     integer,          intent(in   ) :: ngrid
@@ -754,7 +755,10 @@ contains
     real,             intent(out  ) :: gathered(sizeGathered)    !scratch
     integer,          intent(in   ) :: sizeFullField
     real,             intent(out  ) :: FullField(sizeFullField)
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
+    integer, intent(in) :: gridId
 
     character(len=len(varn)) :: varnOut
     integer :: ierr
@@ -790,8 +794,9 @@ contains
           ! Convert to HKM to HKH (note that VKH is HKH for Deardorff)
           
           call RAMS_aprep_hkh (thisChunkSize, LocalChunk, &
-               turb_g(ngrid)%vkh, oneBasicFields%dn0,  &
-               LocalChunk, idiffk(ngrid), xkhkm(ngrid))
+               oneTurbFields%vkh, oneBasicFields%dn0,  &
+               LocalChunk, oneNamelistFile%idiffk(gridId), &
+               oneNamelistFile%xkhkm(gridId))
           varnOut='HKH'
           
        case ('VKH')
@@ -1477,7 +1482,8 @@ contains
   ! Recreating Global Information (Gathering data)
   subroutine gatherData2D(idim_type, varn, ifm, nnxp, nnyp, &
        nmachs, mchnum, mynum, master_num,                   &
-       localData2D, globalData2D, oneBasicFields)
+       localData2D, globalData2D, &
+       oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
 
     implicit none
     include "constants.h"
@@ -1487,7 +1493,11 @@ contains
     character(LEN=16), intent(IN) :: varn
     real, intent(IN)              :: localData2D(:,:)
     real, intent(OUT)             :: globalData2D(:,:)
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
+    integer, intent(in) :: gridId
+
     ! Local Variables:
     character(LEN=16)  :: localVarn
     integer            :: ierr
@@ -1543,7 +1553,8 @@ contains
          il1, ir2, jb1, jt2, localSize, disp,                 &
          localSize(mynum,idim_type), LocalChunk,              &
          sizeGathered(idim_type), gathered,                   &
-         sizeFullField(idim_type), fullField, oneBasicFields)
+         sizeFullField(idim_type), fullField, &
+         oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
 
     if (mchnum==master_num) then
        globalData2D = reshape(fullField, (/nnxp, nnyp/))
@@ -1562,7 +1573,8 @@ contains
   ! Recreating Global Information (Gathering data)
   subroutine gatherData3D(idim_type, varn, ifm, nnzp, nnxp, nnyp, &
        nmachs, mchnum, mynum, master_num,                         &
-       localData3D, globalData3D, oneBasicFields)
+       localData3D, globalData3D, &
+       oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
 
     implicit none
     include "constants.h"
@@ -1572,7 +1584,11 @@ contains
     character(LEN=16), intent(IN) :: varn
     real, intent(IN)              :: localData3D(:,:,:)
     real, intent(OUT)             :: globalData3D(:,:,:)
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
+    integer, intent(in) :: gridId
+
     ! Local Variables:
     character(LEN=16)  :: localVarn
     integer            :: ierr
@@ -1628,7 +1644,8 @@ contains
          il1, ir2, jb1, jt2, localSize, disp,                 &
          localSize(mynum,idim_type), LocalChunk,              &
          sizeGathered(idim_type), gathered,                   &
-         sizeFullField(idim_type), fullField, oneBasicFields)
+         sizeFullField(idim_type), fullField, &
+         oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
 
     if (mchnum==master_num) then
        globalData3D = reshape(fullField, (/nnzp, nnxp, nnyp/))
@@ -1648,7 +1665,8 @@ contains
   ! Recreating Global Information (Gathering data)
   subroutine gatherData4D(idim_type, varn, ifm, mzg, nnxp, nnyp, npat, &
        nmachs, mchnum, mynum, master_num,                              &
-       localData4D, globalData4D, oneBasicFields)
+       localData4D, globalData4D, &
+       oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
 
     implicit none
     include "constants.h"
@@ -1658,7 +1676,10 @@ contains
     character(LEN=16), intent(IN) :: varn
     real, intent(IN)              :: localData4D(:,:,:,:)
     real, intent(OUT)             :: globalData4D(:,:,:,:)
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
+    integer, intent(in) :: gridId
 
     ! Local Variables:
     character(LEN=16)  :: localVarn
@@ -1715,7 +1736,8 @@ contains
          il1, ir2, jb1, jt2, localSize, disp,                 &
          localSize(mynum,idim_type), LocalChunk,              &
          sizeGathered(idim_type), gathered,                   &
-         sizeFullField(idim_type), fullField, oneBasicFields)
+         sizeFullField(idim_type), fullField, &
+         oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
 
     if (mchnum==master_num) then
        globalData4D = reshape(fullField, (/mzg, nnxp, nnyp, npat/))

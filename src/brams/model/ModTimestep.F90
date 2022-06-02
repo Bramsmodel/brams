@@ -337,7 +337,10 @@ contains
     !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
     !  call SynchronizedTimeStamp(TS_DYNAMICS)
     if (CCATT==1 .and. chemistry >= 1) then
-       call aodDriver(mzp,mxp,myp,ia,iz,ja,jz,ngrids,oneGrid%Basic)
+       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
+       call aodDriver(mzp,mxp,myp,ia,iz,ja,jz,ngrids,&
+            oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id)
+       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
     end if
 
     !  Radiation parameterization
@@ -416,7 +419,9 @@ contains
        !- call Matrix Aerosol Model
        !----------------------------------------
        if(AEROSOL==2) then
+          call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
           call MatrixDriver(ia,iz,ja,jz,mzp,mxp,myp, oneGrid%Basic, oneGrid%Turb)
+          call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
        endif
 
     endif

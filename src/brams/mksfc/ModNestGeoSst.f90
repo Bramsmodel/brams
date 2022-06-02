@@ -7,6 +7,9 @@
 !###########################################################################
 module ModNestGeoSst
 
+  use ModNamelistFile, only: &
+       NamelistFile
+  
   use ModInitHis, only: &
        patch_land_average, &
        patch_land_unaverage
@@ -64,6 +67,9 @@ module ModNestGeoSst
 
   use ModBasicFields, only: &
        BasicFields
+
+  use ModTurbFields, only: &
+       TurbFields
 
   use mem_scratch, only: &
        scratch
@@ -518,10 +524,14 @@ contains
 
   !*************************************************************************
 
-  subroutine GeonestNofile(ngra, ngrb, oneBasicFields)
+  subroutine GeonestNofile(ngra, ngrb, &
+       oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
     include "constants.h"
     integer, intent(IN) :: ngra, ngrb
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
+    integer, intent(in) :: gridId
 
     integer :: isiz,ifm,icm,ipat,i,j,k,indfm,ivtime,nc1,ic,jc
 
@@ -800,7 +810,8 @@ contains
                leaf_g(ifm)%soil_water, leaf_g(ifm)%soil_energy,        &
                leaf_g(ifm)%soil_text,                                  &
                grid_g(ifm)%glat , grid_g(ifm)%glon, grid_g(ifm)%lpw,   &
-               leaf_g(ifm)%seatp, leaf_g(ifm)%seatf, oneBasicFields)
+               leaf_g(ifm)%seatp, leaf_g(ifm)%seatf, &
+               oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
 
           !-moved to initOneProc
           !        call change_soil_moisture_init(nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm)    &

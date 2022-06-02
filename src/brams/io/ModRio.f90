@@ -90,9 +90,12 @@ module ModRio
   use ModDateUtils, only: &
        date_add_to
 
-  use mem_turb,  only:   &
-       turb_g, idiffk, xkhkm
-
+  use ModTurbFields, only: &
+       TurbFields
+  
+  use ModNamelistFile, only: &
+       NamelistFile
+  
   implicit none
   private
 
@@ -546,7 +549,8 @@ contains
   !----------------ALF--------------------------------------------------------
 
 
-  subroutine OutputFields(histFlag, instFlag, liteFlag, meanFlag, oneBasicFields)
+  subroutine OutputFields(histFlag, instFlag, liteFlag, meanFlag, &
+       oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
 
     ! OutputFields: Define the fields to write and select the output
     !               method: parallel HDF5, VFM, parallel MPI-IO,
@@ -557,7 +561,10 @@ contains
     logical, intent(in) :: instFlag     ! true iff instant output requested
     logical, intent(in) :: liteFlag     ! true iff lite vars output requested
     logical, intent(in) :: meanFlag     ! true iff field average output requested
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
+    integer, intent(in) :: gridId
 
     integer :: maxNFields, nvMax, ierr, grid
 
@@ -628,7 +635,7 @@ contains
           write(*,*) '*** Writing 24h output [.vfm] for use in recyle on next run ***',time
        end if
        call saveVFM(histFlag, .true., liteFlag, meanFlag, nvMax, ngrids, &
-            willwrite, maxNFields, oneBasicFields)
+            willwrite, maxNFields, oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
     endif
 
     if (dumpLocal) then
@@ -647,7 +654,8 @@ contains
           call fatal_error(h//" Output in HDF5, ioutput=1, not permitted anymore")
        case (2)
           call saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
-               willwrite, maxNFields, oneBasicFields)
+               willwrite, maxNFields, oneNamelistFile, oneBasicFields, &
+               oneTurbFields, gridId)
 
        case (3)
           call saveBinMPIIO(histFlag, instFlag, liteFlag, meanFlag, nvMax, &
@@ -744,7 +752,7 @@ contains
   !====
 
   subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
-       willwrite, maxNFields, oneBasicFields)
+       willwrite, maxNFields, oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
 
     ! saveVFM: Master process gathers fields that are domain decomposed
     !          over slaves and builds selected output files. 
@@ -761,7 +769,10 @@ contains
     integer, intent(in) :: ngrids
     logical, intent(in) :: Willwrite(nvMax, ngrids)
     integer, intent(in) :: maxNFields
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
+    integer, intent(in) :: gridId
 
     type(IOFileDS) :: histFileDS
     type(IOFileDS) :: instFileDS
@@ -1055,7 +1066,8 @@ contains
                      il1, ir2, jb1, jt2, localSize, disp, &
                      LocalSize(mynum,idim_type), LocalChunk, &
                      sizeGathered(idim_type), Gathered, &
-                     sizeFullField(idim_type), FullField, oneBasicFields)
+                     sizeFullField(idim_type), FullField, &
+                     oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
 
                 ! output untouched field and, if appropriate,
                 ! rearrange and output rearranged field
@@ -1095,7 +1107,8 @@ contains
                      il1, ir2, jb1, jt2, localSize, disp, &
                      LocalSize(mynum,idim_type), LocalChunk, &
                      sizeGathered(idim_type), Gathered, &
-                     sizeFullField(idim_type), FullField, oneBasicFields)
+                     sizeFullField(idim_type), FullField, &
+                     oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
 
                 ! output rearranged field
 
@@ -1131,7 +1144,8 @@ contains
                      il1, ir2, jb1, jt2, localSize, disp, &
                      LocalSize(mynum,idim_type), LocalChunk, &
                      sizeGathered(idim_type), Gathered, &
-                     sizeFullField(idim_type), FullField, oneBasicFields)
+                     sizeFullField(idim_type), FullField, &
+                     oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
 
                 ! output field, rearranged or untouched
 

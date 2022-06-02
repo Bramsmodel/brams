@@ -28,8 +28,14 @@ module ModAerClim
        nnzp,    &   ! intent(in)
        GlobalSizes  ! Subroutine
 
+  use ModNamelistFile, only: &
+       NamelistFile
+
   use ModBasicFields, only: &
        BasicFields
+
+  use ModTurbFields, only: &
+       TurbFields
 
   use ReadBcst, only: &
        gatherData   ! Subroutine
@@ -105,7 +111,8 @@ contains
 
 
   
-  subroutine gradsRead(filePath, fileName, glat, glon, oneBasicFields)
+  subroutine gradsRead(filePath, fileName, glat, glon, &
+       oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
     !# Read a grads file and store information
     !#
     !# @note
@@ -155,7 +162,10 @@ contains
     !# Grads file directory
     real,intent(in) :: glat(:,:)
     real,intent(in) :: glon(:,:)
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
+    integer, intent(in) :: gridId
 
     !Local variables
     !#
@@ -246,11 +256,13 @@ contains
     varn = 'GLON'
     call gatherData(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
          nmachs, mchnum, mynum, master_num,             &
-         glon, globalGlon, oneBasicFields)
+         glon, globalGlon, &
+         oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
     varn = 'GLAT'
     call gatherData(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
          nmachs, mchnum, mynum, master_num,             &
-         glat, globalGlat, oneBasicFields)
+         glat, globalGlat, &
+         oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
 
     !write(88,fmt='("Grades: ",2(A2,1X),8(A8,1X),6(A8,1X),8(A8,1X))') &
     !    'i','j','globGlat','globGlon','latni','latnf','lonni','lonnf','prlat','prlon' &

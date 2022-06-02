@@ -406,7 +406,10 @@ contains
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
 
     if (CCATT==1 .and. chemistry >= 0) then
-       call aodDriver(mzp,mxp,myp,ia,iz,ja,jz,ngrids,oneGrid%Basic)
+       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
+       call aodDriver(mzp,mxp,myp,ia,iz,ja,jz,ngrids,&
+            oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id)
+       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
     end if
 
     !  Radiation parameterization
@@ -947,7 +950,9 @@ contains
        !- call Matrix Aerosol Model
        !- using symmetric/sequential spliting operator
        if(AEROSOL==2) then
+          call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
           call MatrixDriver(ia,iz,ja,jz,mzp,mxp,myp, oneGrid%Basic, oneGrid%Turb)
+          call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
        endif
     endif
     if (ccatt==1 .and. aerosol == 1) then

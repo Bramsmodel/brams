@@ -682,10 +682,16 @@ contains
   end subroutine filltab_aotMap
 
 
-  subroutine read_aotMap(oneBasicFields)
+  subroutine read_aotMap(gridId, oneNamelistFile, oneBasicFields, oneTurbFields)
 
+    use ModNamelistFile, only: &
+         NamelistFile
+    
     use ModBasicFields, only: &
          BasicFields
+
+    use ModTurbFields, only: &
+         TurbFields
     
     use mem_grid
     use mem_globrad, only: aotMapPath
@@ -708,7 +714,11 @@ contains
 
     implicit none
     include 'constants.h'
+
+    integer, intent(in) :: gridId
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
     
     integer :: i,       &
          j,       &
@@ -846,11 +856,13 @@ contains
        varn = 'GLON'
        call gatherData(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
             nmachs, mchnum, mynum, master_num,             &
-            grid_g(ifm)%glon, globalGlon, oneBasicFields)
+            grid_g(ifm)%glon, globalGlon, &
+            oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
        varn = 'GLAT'
        call gatherData(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
             nmachs, mchnum, mynum, master_num,             &
-            grid_g(ifm)%glat, globalGlat, oneBasicFields)
+            grid_g(ifm)%glat, globalGlat, &
+            oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
 
        do i =1, nnxp(ifm)
           do j=1, nnyp(ifm)

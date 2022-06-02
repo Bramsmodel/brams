@@ -36,6 +36,12 @@ module ModOptical
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModNamelistFile, only: &
+       NamelistFile
+
+  use ModTurbFields, only: &
+       TurbFields
+  
   use iso_fortran_env, only: &
        int64
   
@@ -219,7 +225,8 @@ module ModOptical
 contains
 
 
-  subroutine aodDriver(m1,m2,m3,ia,iz,ja,jz,ngrids,oneBasicFields)
+  subroutine aodDriver(m1,m2,m3,ia,iz,ja,jz,ngrids,&
+       oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
     !# Driver to compute tauaer to RRTGM 
     !#
     !# @note
@@ -280,7 +287,10 @@ contains
     !#
     integer, intent(in) :: ngrids
     !# Current grid
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
+    integer, intent(in) :: gridId
     
     integer :: n_aer, nb
     integer :: i,j,k,kr
@@ -303,7 +313,7 @@ contains
        !Fill the arrays with optical characteristics
        call setupraddata() 
        !Read aotMap
-       call opt_read_aotmap(oneBasicFields)
+       call opt_read_aotmap(oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
 
        !Adjust the site accordongly aot map end veg patch area
        !compute particles R0 and Particles density
@@ -1273,7 +1283,7 @@ contains
 
   end subroutine opt_filltab_aotMap
 
-  subroutine opt_read_aotmap(oneBasicFields)
+  subroutine opt_read_aotmap(oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
     !# Read  aot Map from input file
     !#
     !# @note
@@ -1325,8 +1335,11 @@ contains
     !#
     !#--- ----------------------------------------------------------------------------------------
     !
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
-
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
+    integer, intent(in) :: gridId
+    
     integer :: i
     integer :: j
     integer :: nlon
@@ -1448,11 +1461,13 @@ contains
        varn = 'glon'
        call gatherdata(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
             nmachs, mchnum, mynum, master_num,             &
-            grid_g(ifm)%glon, globalglon, oneBasicFields)
+            grid_g(ifm)%glon, globalglon, &
+            oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
        varn = 'glat'
        call gatherdata(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
             nmachs, mchnum, mynum, master_num,             &
-            grid_g(ifm)%glat, globalglat, oneBasicFields)
+            grid_g(ifm)%glat, globalglat, &
+            oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
 
        globalaot=0
 

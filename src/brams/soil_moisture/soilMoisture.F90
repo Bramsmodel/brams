@@ -8,11 +8,18 @@
 !========================================================================
 module soilMoisture
 
-  use ModNamelistFile, only: namelistFile
+  use ModNamelistFile, only: &
+       namelistFile
 
   use memSoilMoisture, only: &
        soil_moist, soil_moist_fail, usdata_in, usmodel_in ! INTENT(IN)
 
+  use ModBasicFields, only : &
+       BasicFields
+
+  use ModTurbFields, only: &
+       TurbFields
+  
   implicit none
 
   public  :: soilMoistureInit
@@ -26,7 +33,7 @@ contains
        soil_water, soil_energy, soil_text,                       &
        glat, glon,                                               &
        lpw_r,seatp,seatf,                                        &
-       oneBasicFields)
+       oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
     !# _
     !#
     !# @note
@@ -95,9 +102,6 @@ contains
     use readbcst, only: &
          gatherdata
 
-    use ModBasicFields, only: &
-         BasicFields
-    
 !!!!!!DSM {
 #ifdef cdf
 
@@ -127,7 +131,10 @@ contains
     real, intent(in)    :: soil_text(:,:,:,:)   !(mzg,n2,n3,npat)
 
     real, intent(in)    :: seatp(:,:) ,seatf(:,:) 
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
+    integer, intent(in) :: gridId
     
     integer :: lpw(n2,n3)             !(n2,n3)
     ! local variables:
@@ -831,19 +838,23 @@ contains
        varn = 'soil_water'
        call gatherdata(idim_type, varn, ifm, mzg, nnxp(ifm), nnyp(ifm), &
             npat, nmachs, mchnum, mynum, master_num,                    &
-            soil_water, globalsoilwater, oneBasicFields)
+            soil_water, globalsoilwater, &
+            oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
        varn = 'soil_text'
        call gatherdata(idim_type, varn, ifm, mzg, nnxp(ifm), nnyp(ifm), &
             npat, nmachs, mchnum, mynum, master_num,                    &
-            soil_text, globalsoiltext, oneBasicFields)
+            soil_text, globalsoiltext, &
+            oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
        varn = 'glon'
        call gatherdata(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
             nmachs, mchnum, mynum, master_num,             &
-            glon, globalglon, oneBasicFields)
+            glon, globalglon, &
+            oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
        varn = 'glat'
        call gatherdata(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
             nmachs, mchnum, mynum, master_num,             &
-            glat, globalglat, oneBasicFields)
+            glat, globalglat, &
+            oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
 
 
        ! loop no dominio global do modelo
@@ -994,24 +1005,32 @@ contains
        varn = 'soil_water'
        call gatherdata(idim_type, varn, ifm, mzg, nnxp(ifm), nnyp(ifm), &
             npat, nmachs, mchnum, mynum, master_num,			 &
-            soil_water, globalsoilwater, oneBasicFields)
+            soil_water, globalsoilwater, &
+            oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
 
        varn = 'soil_energy'
        call gatherdata(idim_type, varn, ifm, mzg, nnxp(ifm), nnyp(ifm), &
             npat, nmachs, mchnum, mynum, master_num,			 &
-            soil_energy, globalsoilenergy, oneBasicFields)
+            soil_energy, globalsoilenergy, &
+            oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
+            
        varn = 'soil_text'
        call gatherdata(idim_type, varn, ifm, mzg, nnxp(ifm), nnyp(ifm), &
             npat, nmachs, mchnum, mynum, master_num,			 &
-            soil_text, globalsoiltext, oneBasicFields)
+            soil_text, globalsoiltext, &
+            oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
+            
        varn = 'glon'
        call gatherdata(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
             nmachs, mchnum, mynum, master_num, 	    &
-            glon, globalglon, oneBasicFields)
+            glon, globalglon, &
+            oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
+            
        varn = 'glat'
        call gatherdata(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
             nmachs, mchnum, mynum, master_num, 	    &
-            glat, globalglat, oneBasicFields)
+            glat, globalglat, &
+            oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
 
 
        ! loop no dominio global do modelo
@@ -1232,186 +1251,6 @@ contains
   end subroutine soilMoistureInit
 
 
-!!$  ! Recreating Global Information (Gathering data)
-!!$  SUBROUTINE gatherData2D(idim_type, varn, ifm, mzg, nnxp, nnyp, npat, nwave, &
-!!$       nmachs, mchnum, mynum, master_num,                                   &
-!!$       localData2D, globalData2D)
-!!$
-!!$    USE ReadBcst, ONLY: &
-!!$         PreProcAndGather, & ! Subroutine
-!!$         LocalSizesAndDisp   ! Subroutine
-!!$    USE mem_grid, ONLY : &
-!!$         GlobalSizes         ! Subroutine
-!!$    USE ParLib, ONLY: &
-!!$         parf_bcast ! Subroutine
-!!$
-!!$    IMPLICIT NONE
-!!$    INCLUDE "constants.h"
-!!$    ! Arguments:
-!!$    INTEGER, INTENT(IN)           :: idim_type, ifm, mzg, nnxp, nnyp, npat, &
-!!$         nwave, nmachs, mchnum, mynum, master_num
-!!$    CHARACTER(LEN=16), INTENT(IN) :: varn
-!!$    REAL, INTENT(IN)              :: localData2D(:,:)
-!!$    REAL, INTENT(OUT)             :: globalData2D(:,:)
-!!$    ! Local Variables:
-!!$    CHARACTER(LEN=16)  :: localVarn
-!!$    INTEGER            :: ierr
-!!$    INTEGER, PARAMETER :: idim_type_min = 2
-!!$    INTEGER, PARAMETER :: idim_type_max = 7
-!!$    INTEGER            :: il1(nmachs)
-!!$    INTEGER            :: ir2(nmachs)
-!!$    INTEGER            :: jb1(nmachs)
-!!$    INTEGER            :: jt2(nmachs)
-!!$    INTEGER            :: localSize(nmachs,idim_type_min:idim_type_max)
-!!$    INTEGER            :: disp(nmachs,idim_type_min:idim_type_max)
-!!$    INTEGER            :: maxLocalSize
-!!$    INTEGER            :: sizeGathered(idim_type_min:idim_type_max)
-!!$    INTEGER            :: maxSizeGathered
-!!$    INTEGER            :: sizeFullField(idim_type_min:idim_type_max)
-!!$    INTEGER            :: maxsizeFullField
-!!$    INTEGER            :: globalSize(idim_type_min:idim_type_max)
-!!$    REAL, ALLOCATABLE  :: localChunk(:)
-!!$    REAL, ALLOCATABLE  :: gathered(:)
-!!$    REAL, ALLOCATABLE  :: fullField(:)
-!!$
-!!$    ! Recreating Global information about Soil Water
-!!$    ! grid dependent, field independent constants for gather and unpacking
-!!$    ! as a function of idim_type
-!!$    CALL LocalSizesAndDisp(ifm, il1, ir2, jb1, jt2, localSize, disp)
-!!$    maxLocalSize = MAXVAL(localSize(mynum,:))
-!!$    ALLOCATE(localChunk(maxLocalSize), stat=ierr)
-!!$    IF (ierr/=0) THEN
-!!$       CALL fatal_error("Error allocating localChunk (gatherData)")
-!!$    ENDIF
-!!$    CALL CopyLocalChunk(localData2D(1,1), localChunk, &
-!!$         LocalSize(mynum,idim_type))
-!!$    sizeGathered(:) = disp(nmachs,:) + localSize(nmachs,:)
-!!$    maxSizeGathered = MAXVAL(sizeGathered)
-!!$    ALLOCATE(gathered(maxSizeGathered), stat=ierr)
-!!$    IF (ierr/=0) THEN
-!!$       CALL fatal_error("Error allocating gathered (gatherData)")
-!!$    ENDIF
-!!$    ! grid dependent field sizes as a function of idim_type
-!!$    CALL GlobalSizes(ifm, nmachs, nwave, globalSize)
-!!$    IF (mchnum==master_num) THEN
-!!$       sizeFullField(:) = globalSize(:)
-!!$    ELSE
-!!$       sizeFullField(:) = 1
-!!$    END IF
-!!$    maxSizeFullField = MAXVAL(sizeFullField)
-!!$    ALLOCATE(fullField(sizeFullField(idim_type)), stat=ierr)
-!!$    IF (ierr/=0) THEN
-!!$       CALL fatal_error("Error allocating fullField (gatherData)")
-!!$    ENDIF
-!!$    localVarn = trim(varn)
-!!$    CALL PreProcAndGather(.FALSE., ifm, idim_type, localVarn, &
-!!$         il1, ir2, jb1, jt2, localSize, disp,                 &
-!!$         localSize(mynum,idim_type), LocalChunk,              &
-!!$         sizeGathered(idim_type), gathered,                   &
-!!$         sizeFullField(idim_type), fullField                  )
-!!$
-!!$    IF (mchnum==master_num) THEN
-!!$       globalData2D = RESHAPE(fullField, (/nnxp, nnyp/))
-!!$    ENDIF
-!!$
-!!$    call parf_bcast(globalData2D, int(nnxp,i8), int(nnyp,i8), master_num)
-!!$
-!!$    DEALLOCATE(fullField)
-!!$    DEALLOCATE(gathered)
-!!$    DEALLOCATE(localChunk)
-!!$
-!!$  END SUBROUTINE gatherData2D
-!!$
-!!$  ! Recreating Global Information (Gathering data)
-!!$  SUBROUTINE gatherData4D(idim_type, varn, ifm, mzg, nnxp, nnyp, npat, nwave, &
-!!$       nmachs, mchnum, mynum, master_num,                                   &
-!!$       localData4D, globalData4D)
-!!$
-!!$    USE ReadBcst, ONLY: &
-!!$         PreProcAndGather, & ! Subroutine
-!!$         LocalSizesAndDisp   ! Subroutine
-!!$    USE mem_grid, ONLY : &
-!!$         GlobalSizes         ! Subroutine
-!!$    USE ParLib, ONLY: &
-!!$         parf_bcast ! Subroutine
-!!$
-!!$    IMPLICIT NONE
-!!$    INCLUDE "constants.h"
-!!$    ! Arguments:
-!!$    INTEGER, INTENT(IN)           :: idim_type, ifm, mzg, nnxp, nnyp, npat, &
-!!$         nwave, nmachs, mchnum, mynum, master_num
-!!$    CHARACTER(LEN=16), INTENT(IN) :: varn
-!!$    REAL, INTENT(IN)              :: localData4D(:,:,:,:)
-!!$    REAL, INTENT(OUT)             :: globalData4D(:,:,:,:)
-!!$    ! Local Variables:
-!!$    CHARACTER(LEN=16)  :: localVarn
-!!$    INTEGER            :: ierr
-!!$    INTEGER, PARAMETER :: idim_type_min = 2
-!!$    INTEGER, PARAMETER :: idim_type_max = 7
-!!$    INTEGER            :: il1(nmachs)
-!!$    INTEGER            :: ir2(nmachs)
-!!$    INTEGER            :: jb1(nmachs)
-!!$    INTEGER            :: jt2(nmachs)
-!!$    INTEGER            :: localSize(nmachs,idim_type_min:idim_type_max)
-!!$    INTEGER            :: disp(nmachs,idim_type_min:idim_type_max)
-!!$    INTEGER            :: maxLocalSize
-!!$    INTEGER            :: sizeGathered(idim_type_min:idim_type_max)
-!!$    INTEGER            :: maxSizeGathered
-!!$    INTEGER            :: sizeFullField(idim_type_min:idim_type_max)
-!!$    INTEGER            :: maxsizeFullField
-!!$    INTEGER            :: globalSize(idim_type_min:idim_type_max)
-!!$    REAL, ALLOCATABLE  :: localChunk(:)
-!!$    REAL, ALLOCATABLE  :: gathered(:)
-!!$    REAL, ALLOCATABLE  :: fullField(:)
-!!$
-!!$    ! Recreating Global information about Soil Water
-!!$    ! grid dependent, field independent constants for gather and unpacking
-!!$    ! as a function of idim_type
-!!$    CALL LocalSizesAndDisp(ifm, il1, ir2, jb1, jt2, localSize, disp)
-!!$    maxLocalSize = MAXVAL(localSize(mynum,:))
-!!$    ALLOCATE(localChunk(maxLocalSize), stat=ierr)
-!!$    IF (ierr/=0) THEN
-!!$       CALL fatal_error("Error allocating localChunk (gatherData)")
-!!$    ENDIF
-!!$    CALL CopyLocalChunk(localData4D(1,1,1,1), localChunk, &
-!!$         LocalSize(mynum,idim_type))
-!!$    sizeGathered(:) = disp(nmachs,:) + localSize(nmachs,:)
-!!$    maxSizeGathered = MAXVAL(sizeGathered)
-!!$    ALLOCATE(gathered(maxSizeGathered), stat=ierr)
-!!$    IF (ierr/=0) THEN
-!!$       CALL fatal_error("Error allocating gathered (gatherData)")
-!!$    ENDIF
-!!$    ! grid dependent field sizes as a function of idim_type
-!!$    CALL GlobalSizes(ifm, nmachs, nwave, globalSize)
-!!$    IF (mchnum==master_num) THEN
-!!$       sizeFullField(:) = globalSize(:)
-!!$    ELSE
-!!$       sizeFullField(:) = 1
-!!$    END IF
-!!$    maxSizeFullField = MAXVAL(sizeFullField)
-!!$    ALLOCATE(fullField(sizeFullField(idim_type)), stat=ierr)
-!!$    IF (ierr/=0) THEN
-!!$       CALL fatal_error("Error allocating fullField (gatherData)")
-!!$    ENDIF
-!!$    localVarn = trim(varn)
-!!$    CALL PreProcAndGather(.FALSE., ifm, idim_type, localVarn, &
-!!$         il1, ir2, jb1, jt2, localSize, disp,                 &
-!!$         localSize(mynum,idim_type), LocalChunk,              &
-!!$         sizeGathered(idim_type), gathered,                   &
-!!$         sizeFullField(idim_type), fullField                  )
-!!$
-!!$    IF (mchnum==master_num) THEN
-!!$       globalData4D = RESHAPE(fullField, (/mzg, nnxp, nnyp, npat/))
-!!$    ENDIF
-!!$
-!!$    call parf_bcast(globalData4D, &
-!!$         int(mzg,i8), int(nnxp,i8), int(nnyp,i8), int(npat,i8), master_num)
-!!$
-!!$    DEALLOCATE(fullField)
-!!$    DEALLOCATE(gathered)
-!!$    DEALLOCATE(localChunk)
-!!$
-!!$  END SUBROUTINE gatherData4D
   subroutine StoreNamelistFileAtSoilMoisture(oneNamelistFile)
     implicit none
     type(namelistFile), pointer :: oneNamelistFile
