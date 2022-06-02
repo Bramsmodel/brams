@@ -1576,7 +1576,7 @@ contains
     iopunt=6
 
 
-    call opspec3()
+    call opspec3(oneGrid%Ramsin, oneGrid%Id)
 
     if (runtype(1:7) == 'INITIAL') then
 

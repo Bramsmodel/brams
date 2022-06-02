@@ -7,6 +7,9 @@
 !###########################################################################
 module ModOpspec
 
+  use ModNamelistFile, only: &
+       NamelistFile
+  
   use grid_dims, only: &
        maxgrds,        &
        nxpmax,         &
@@ -15,19 +18,38 @@ module ModOpspec
        nzgmax
 
   use mem_grid, only: &
+       ngrids,  &
+       nxtnest, &
+       ninest,  &
+       njnest,  &
+       nknest,  &
+       nnxp,    &
+       nnyp,    &
+       nstratx, &
+       nstraty, &
+       nnsttop, &
+       nnstbot, &
+       nestz1,  &
+       nnzp,    &
+       nrz, &
+       deltaz, &
+       distim, &
+       dtlong, &
+       dtlongn, &
+       dzmax, &
+       dzrat, &
+       iadvf, &
+       iadvl, &
+       if_adap, &
+       initial, &
+       nfpt, &
+       sspct, &
+       gridu, &
+       gridv, &
        runtype,       &
-       ngrids,        &
        ngrid,         &
-       nnxp,          &
-       nnyp,          &
-       nnzp,          &
        nzg,           &
        nzs,           &
-       nstratx,       &
-       nstraty,       &
-       nxtnest,       &
-       ninest,        &
-       njnest,        &
        polelat,       &
        polelon,       &
        centlat,       &
@@ -35,8 +57,6 @@ module ModOpspec
        nhemgrd2,      &
        ibnd,          &
        jbnd,          &
-       nnsttop,       &
-       nnstbot,       &
        naddsc,        &
        dyncore_flag,  &
        pd_or_mnt_constraint, &
@@ -45,6 +65,14 @@ module ModOpspec
 
 
   use micphys, only: &
+       aparm, &
+       cparm, &
+       dparm, &
+       gparm, &
+       hparm, &
+       pparm, &
+       rparm, &
+       sparm, &
        mcphys_type,  &
        level,        &
        icloud,       &
@@ -61,63 +89,9 @@ module ModOpspec
        imd2flg,        &
        epsil
 
-
-  !--(DMK-CCATT-INI)------------------------------------------------------------
   use ccatt_start, only: &
        ccatt
-  use mem_chem1, only: &
-       chemistry
-  !--(DMK-CCATT-FIM)------------------------------------------------------------
 
-  use mem_grid, only: &
-       ngrids,  &
-       nxtnest, &
-       ninest,  &
-       njnest,  &
-       nknest,  &
-       nnxp,    &
-       nnyp,    &
-       nstratx, &
-       nstraty, &
-       nnsttop, &
-       nnstbot, &
-       nestz1,  &
-       nnzp,    &
-       nrz
-
-  use mem_varinit, only: &
-       vwaittot, &
-       vwait1
-
-  use mem_radiate, only: ISWRTYP, ILWRTYP ! Intent(in)
-  use mem_globrad, only: raddatfn ! Intent(in)
-
-  use mem_varinit
-  use mem_grid
-  use micphys
-  use io_params
-  use mem_radiate
-  use mem_cuparm
-  use mem_turb
-  use mem_leaf
-
-  use mem_grell_param, only : CLOSURE_TYPE ! INTENT(IN)
-
-  ! TEB_SPM
-  use teb_spm_start, only: TEB_SPM ! INTENT(IN)
-  use mem_emiss, only: ichemi, isource ! INTENT(IN)
-
-  !--(DMK-CCATT-INI)-----------------------------------------------------
-  use ccatt_start, only: &
-       ccatt
-  use mem_stilt, only: &
-       iexev,          &
-       imassflx
-  use chem1_list, only: &
-       nspecies,        &
-       PhotojMethod   ! intent(in)
-  use chem1aq_list, only: &
-       nspeciesaq            ! intent(in)
   use mem_chem1, only: &
        chemistry,      &
        chem_assim,     &
@@ -127,19 +101,80 @@ module ModOpspec
        diur_cycle,     &
        bburn,          &
        src_name  ! intent(in)
+
+
+  use mem_varinit, only: &
+       vwaittot, &
+       vwait1
+
+  use mem_radiate, only: &
+       ISWRTYP, &
+       ILWRTYP ! Intent(in)
+
+  use mem_globrad, only: &
+       raddatfn ! Intent(in)
+
+  use io_params, only: &
+       avgtim,  &
+       frqboth, &
+       frqlite, &
+       frqmean, &
+       nplt, &
+       itoptflg, &
+       isbval, &
+       ixsctn
+
+  use mem_cuparm, only: &
+       nnqparm
+
+  use mem_leaf, only: &
+       isfcl, &
+       slz
+
+  use mem_grell_param, only : &
+       CLOSURE_TYPE ! INTENT(IN)
+
+  use teb_spm_start, only: &
+       TEB_SPM ! INTENT(IN)
+
+  use mem_emiss, only: &
+       ichemi, &
+       isource ! INTENT(IN)
+
+  use mem_stilt, only: &
+       iexev,          &
+       imassflx
+
+  use chem1_list, only: &
+       nspecies,        &
+       PhotojMethod   ! intent(in)
+
+  use chem1aq_list, only: &
+       nspeciesaq            ! intent(in)
+
   use mem_chem1aq, only: &
        chemistry_aq
+
   use mem_aer1, only:  &
-       aerosol&
-       ,aer_timestep
+       aerosol, &
+       aer_timestep
 
   use aer1_list, only:  &
        aerosol_mechanism
+
   use chem_sources, only: &
        def_proc_src
+
   use shcu_vars_const, only: &
        nnshcu
-  use modIau
+  
+  use modIau, only: &
+       applyiau, &
+       npatch, &
+       nudlat, &
+       tnudcent, &
+       tnudlat, &
+       tnudtop
 
   implicit none 
 
@@ -780,17 +815,20 @@ contains
 
   ! ********************************************************************
 
-  subroutine opspec3
-
+  subroutine opspec3(oneNamelistFile, gridId)
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
+    integer, intent(in) :: gridId
+    
     integer :: ip,k,ifaterr,iwarerr,infoerr,ng,ngr
     character(len=*), parameter :: h="**(opspec3)**"
     character(len=*), parameter :: header="**(opspec3)**"
     character(len=*), parameter :: version="5.4"
 
-    !--(DMK-CCATT-INI)-----------------------------------------------------
     integer :: isrc
-    !--(DMK-CCATT-FIM)-----------------------------------------------------
+    integer :: idiffk
 
+    idiffk=oneNamelistFile%idiffk(gridId)
+    
     ifaterr=0
     iwarerr=0
     infoerr=0
@@ -977,7 +1015,7 @@ contains
           IFATERR=IFATERR+1
        endif
 
-       if (IMASSFLX == 1 .and. IDIFFK(NG) /= 7) then
+       if (IMASSFLX == 1 .and. IDIFFK /= 7) then
           print *, 'FATAL - Mass flux output can be used only with Nakanishi parameterization (IDIFFK=7)'
           IFATERR=IFATERR+1
        endif
@@ -1043,23 +1081,23 @@ contains
        !_stc for the e-l and e-eps closures: idiffk <= 6
        !_stc  (s. trini castelli)
        !_stc.............................................
-       !_stc  if(idiffk(ngr).lt.1.or.idiffk(ngr).gt.4)then
+       !_stc  if(idiffk.lt.1.or.idiffk.gt.4)then
        !_stc    print*,' fatal - idiffk must be 1, 2, 3,or 4.'
        !_stc
-       if(idiffk(ngr).lt.1.or.idiffk(ngr).gt.8)then
+       if(idiffk.lt.1.or.idiffk.gt.8)then
           print*,' fatal - idiffk must be 1, 2, 3, 4, 5, 6 , 7 or 8'
           ifaterr=ifaterr+1
        endif
        !srf-opt
-       if(level.lt.1.and.idiffk(ngr).eq.7)then
+       if(level.lt.1.and.idiffk.eq.7)then
           print*,' fatal - idiffk 7 cannot be used with microphysics level 0'
           ifaterr=ifaterr+1
        endif
     enddo
     ! check that diffusion flags are compatible if using ihorgrad=1
 
-    if(ihorgrad.eq.2)then
-       if(idiffk(ngr) >= 3)then
+    if(oneNamelistFile%ihorgrad.eq.2)then
+       if(idiffk >= 3)then
           print*,' fatal - cant use ihorgrad=2 if idiffk >= 3'
           ifaterr=ifaterr+1
        endif
@@ -1375,7 +1413,7 @@ contains
     do ng=1,ngrids
        ![MLO - Blocking Grell deep/shallow convection without TKE
        if (nnshcu(ng) == 2 .or. NNQPARM(NG) == 2  .or. NNQPARM(NG) == 5 .or. NNQPARM(NG) == 6) then
-          if (idiffk(ng) == 2 .or. idiffk(ng) == 3) then
+          if (idiffk == 2 .or. idiffk == 3) then
              print *, 'FATAL - deep (nnqparm 2 or  5 or 6) and shallow (nnshcu 2) requires turbulence scheme with TKE (1,4,5,6,7)'
              print *, 'Please change your setup for grid ',ng,'...'
              IFATERR=IFATERR+1
