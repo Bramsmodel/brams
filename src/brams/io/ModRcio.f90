@@ -114,11 +114,6 @@ module ModRcio
        iswrtyp, &
        radfrq
 
-  use mem_turb, only: &
-       brunt, &
-       rmin, &
-       rmax
-
   use micphys, only: &
        nhcat, &
        mcphys_type, &
@@ -283,6 +278,14 @@ contains
     integer, external :: cio_i,cio_f,cio_f8,cio_c
     character(len=2) :: cng
     integer :: irw,ie,ng
+
+    !**(JP)**
+    ! variables originaly declared at mem_turb but not referenced elsewhere
+    ! still dumped at XXX-head.txt to maintain reproducibility
+    ! should be removed on future versions
+    real, parameter :: brunt=0.0
+    real, parameter :: rmin=0.0
+    real, parameter :: rmax=0.0
 
     IF(io.eq.'READ') irw=1
     IF(io.eq.'WRITE') irw=2
