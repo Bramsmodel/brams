@@ -34,6 +34,11 @@ module ModOneProc
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModOpspec, only: &
+       opspec1, &
+       opspec2, &
+       opspec3
+
   use ModRio, only: &
        OutputFields, &
        history_start

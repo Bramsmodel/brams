@@ -140,7 +140,7 @@ OBJ_MOD = \
 	oda_read.o \
 	oda_sta_count.o \
 	oda_sta_input.o \
-	opspec.o \
+	ModOpspec.o \
 	domain_decomp.o \
 	ModParaInit.o \
 	Phys_const.o \
