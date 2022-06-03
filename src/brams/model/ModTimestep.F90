@@ -322,12 +322,12 @@ contains
     !  Thermodynamic diagnosis
     !--------------------------------
     if (mcphys_type <= 1 .and. level/=3) then
-       call thermo(mzp, mxp, myp, ia, iz, ja, jz, oneGrid%Basic, oneGrid%AveBasic)
+       call thermo(mzp, mxp, myp, ia, iz, ja, jz, oneGrid%Basic)
     endif
 
     if (iexev == 2) then
        call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'ADV', &
-            oneGrid%Basic, oneGrid%AveBasic)
+            oneGrid%Basic)
     end if
 
     !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
@@ -423,11 +423,11 @@ contains
     !  Coriolis terms
     !  ----------------------------------------
     call corlos(mzp, mxp, myp, i0, j0, ia, iz, ja, jz, izu, jzv,&
-         tend%ut, tend%vt, oneGrid%Basic, oneGrid%AveBasic)
+         tend%ut, tend%vt, oneGrid%Basic)
 
     !  Velocity advection
     !----------------------------------------
-    call advectc(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, oneGrid%AveBasic, &
+    call advectc(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, &
          'V',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
 
 
@@ -480,17 +480,17 @@ contains
 
     if (iexev == 2) then
        call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'THA', &
-            oneGrid%Basic, oneGrid%AveBasic)
+            oneGrid%Basic)
     end if
 
     !  Sub-grid diffusion terms
     !----------------------------------------
     if ((if_adap==0) .and. (OneGrid%Ramsin%ihorgrad==2)) then
        call diffuse_brams31(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
-            oneGrid%Basic, oneGrid%Ramsin, oneGrid%Turb, oneGrid%AveTurb, oneGrid%Id)
+            oneGrid%Basic, oneGrid%Ramsin, oneGrid%Turb, oneGrid%Id)
     else
        call diffuse(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, &
-            oneGrid%Turb, oneGrid%AveTurb, oneGrid%Ramsin, oneGrid%Id)
+            oneGrid%Turb, oneGrid%Ramsin, oneGrid%Id)
     endif
 
 !!!!!  IF( NNQPARM(ngrid) >=2 .OR. NNSHCU(ngrid)>=2 ) CALL prepare_lsf_OLD(NNQPARM(ngrid), NNSHCU(ngrid),3)
@@ -502,11 +502,11 @@ contains
        call advmnt_driver(oneGrid, 'T',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,&
             i0,j0,nodemxp,nodemyp,nodemzp,mynum)
        if(advmnt >= 2) &
-            call advectc(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, oneGrid%AveBasic, &
+            call advectc(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, &
             'T',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
     else
 
-       call advectc(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, oneGrid%AveBasic, &
+       call advectc(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, &
             'T',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
 
     endif     ! If Generic IA32 use old Advction Scheme
@@ -522,7 +522,7 @@ contains
     !- large and subgrid scale forcing for shallow and deep cumulus
     !!1  IF(  NNQPARM(ngrid) >=2 .OR. NNSHCU(ngrid)>=2 ) CALL prepare_lsf_OLD(NNQPARM(ngrid), NNSHCU(ngrid),4)
     if( NNQPARM(ngrid) >=2 .or. NNSHCU(ngrid)>=2 ) then
-       call prepare_lsf(NNQPARM(ngrid), NNSHCU(ngrid),1, oneGrid%Basic, oneGrid%AveBasic)
+       call prepare_lsf(NNQPARM(ngrid), NNSHCU(ngrid),1, oneGrid%Basic)
     end if
 
     !-   Cumulus parameterization options 2->6:
@@ -641,12 +641,12 @@ contains
     !  Thermodynamic diagnosis
     !----------------------------------------
     if (mcphys_type <= 1 .and. level==3)  then
-       call thermo(mzp,mxp,myp,1,mxp,1,myp, oneGrid%Basic, oneGrid%AveBasic)
+       call thermo(mzp,mxp,myp,1,mxp,1,myp, oneGrid%Basic)
     endif
 
     if (iexev == 2) then
        call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'THS', &
-            oneGrid%Basic, oneGrid%AveBasic)
+            oneGrid%Basic)
     end if
 
     !-damping on vertical velocity to keep stability
@@ -658,7 +658,7 @@ contains
     !  Apply scalar b.c.'s
     !----------------------------------------
     call trsets(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic,&
-         oneGrid%Turb, oneGrid%AveTurb)
+         oneGrid%Turb)
 
     !  Lateral velocity boundaries - radiative
     !-------------------------------------------
@@ -690,7 +690,7 @@ contains
     !  +----+--------------+--------------+
     !
     !------------------------------------------
-    call hadvance(1, oneGrid%Basic, oneGrid%AveBasic)
+    call hadvance(1, oneGrid%Basic)
     !  Buoyancy term for w equation
     !----------------------------------------
     call buoyancy(tend%wt, oneGrid%Basic)
@@ -717,7 +717,7 @@ contains
     !  +----+--------------+--------------+
     !
     !------------------------------------------
-    call hadvance(2, oneGrid%Basic, oneGrid%AveBasic)
+    call hadvance(2, oneGrid%Basic)
 
     !  Velocity/pressure boundary conditions
     !----------------------------------------
@@ -737,7 +737,7 @@ contains
     call thermo_boundary_driver((time+dtlongn(ngrid)), dtlong, &
          f_thermo_e(ngrid), f_thermo_w(ngrid), &
          f_thermo_s(ngrid), f_thermo_n(ngrid), &
-         nzp, mxp, myp, jdim, oneGrid%Basic, oneGrid%AveBasic)
+         nzp, mxp, myp, jdim, oneGrid%Basic)
 
     !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
     !  call SynchronizedTimeStamp(TS_DYNAMICS)
@@ -786,7 +786,7 @@ contains
 
     !- apply digital filter
     if (applyDF) then
-       call applyDigitalFilter(fileNameDF, dfVars, oneGrid%Basic, oneGrid%AveBasic)
+       call applyDigitalFilter(fileNameDF, dfVars, oneGrid%Basic)
     end if
 
     !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90

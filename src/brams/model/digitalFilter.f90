@@ -185,13 +185,12 @@ contains
 
   !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-  subroutine applyDigitalFilter(fileName, dfVars, oneBasicFields, oneAveBasicFields)
+  subroutine applyDigitalFilter(fileName, dfVars, oneBasicFields)
 
     ! # parameter.
     character(len=*), intent(inout) :: fileName
     type(df_vars), dimension(:), pointer, intent(inout):: dfVars
     type(BasicFields), pointer, intent(in) :: oneBasicFields
-    type(BasicFields), pointer, intent(in) :: oneAveBasicFields
 
     ! # local.
     integer:: ng

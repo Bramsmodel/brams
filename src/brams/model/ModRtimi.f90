@@ -105,11 +105,10 @@ contains
 
   !**************************************************************************
 
-  subroutine hadvance(iac, oneBasicFields, oneAveBasicFields)
+  subroutine hadvance(iac, oneBasicFields)
 
     integer, intent(in) :: iac
     type(BasicFields), pointer, intent(in) :: oneBasicFields
-    type(BasicFields), pointer, intent(in) :: oneAveBasicFields
 
     integer(kind=i8) :: mxyzp
     logical :: RAW

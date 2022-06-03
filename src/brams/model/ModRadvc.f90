@@ -80,7 +80,7 @@ contains
 
 
   
-  subroutine advectc(oneScalarTab, oneScalarTabSize, oneBasic, oneAveBasic, &
+  subroutine advectc(oneScalarTab, oneScalarTabSize, oneBasic, &
        varn,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
     !> @brief: advectc
     !! @date:  18/Nov/2015
@@ -93,7 +93,6 @@ contains
     type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
     integer, intent(inout) :: oneScalarTabSize
     type(BasicFields), pointer, intent(in) :: oneBasic
-    type(BasicFields), pointer, intent(in) :: oneAveBasic
     integer :: mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,n
     integer(kind=real64) :: mxyzp
     character(len=*) :: varn
@@ -191,7 +190,7 @@ contains
                ,scratch%vt3dh             ,scratch%vt3di              &
                ,scratch%vt3dj             ,scratch%vt3dk              &
                ,mynum, &
-               oneBasic, oneAveBasic)
+               oneBasic)
 
        else
 
@@ -506,7 +505,7 @@ contains
   !     *********************************************************************
 
   subroutine fa_preptc(m1,m2,m3,vt3da,vt3db,vt3dc,vt3dd,vt3de,vt3df  &
-       ,vt3dh,vt3di,vt3dj,vt3dk,mynum, oneBasic, oneAveBasic)
+       ,vt3dh,vt3di,vt3dj,vt3dk,mynum, oneBasic)
     !> @brief:  fa_preptc                                      
     !! @author:  unknow
     !! @date:  18/Nov/2015
@@ -520,7 +519,6 @@ contains
     integer,intent(in) :: m1,m2,m3,mynum
     integer :: j,i,k,im,ip,jm,jp
     type(BasicFields), pointer, intent(in) :: oneBasic
-    type(BasicFields), pointer, intent(in) :: oneAveBasic
 
     real :: c1,c2,c3,c4,rtgti
 

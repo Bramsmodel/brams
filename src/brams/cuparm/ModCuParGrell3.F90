@@ -2249,11 +2249,10 @@ contains
   end subroutine mcphysics3
 
   !------------------------------------------------------------------------
-  subroutine prepare_lsf(nnqparm,nnshcu,iwork, oneBasicFields, oneAveBasic)
+  subroutine prepare_lsf(nnqparm,nnshcu,iwork, oneBasicFields)
     character(len=3) :: forcing
     integer,intent(IN) :: nnqparm,nnshcu,iwork
     type(BasicFields), pointer, intent(in) :: oneBasicFields
-    type(BasicFields), pointer, intent(in) :: oneAveBasic
 
     !- scratchs (local arrays)
     real :: vt3da(mzp,mxp,myp)
@@ -2331,7 +2330,7 @@ contains
                ,vt3dh     ,vt3di       &
                ,vt3dj     ,vt3dk       &
                ,mynum, &
-               oneBasicFields, oneAveBasic)
+               oneBasicFields)
 
           if(dyncore_flag == 0) then
              !---- thp

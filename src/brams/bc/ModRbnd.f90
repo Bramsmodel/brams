@@ -1359,12 +1359,11 @@ contains
   end subroutine rayf
 
   subroutine trsets(oneScalarTab, oneScalarTabSize, oneBasicFields, &
-       oneTurbFields, oneAveTurbFields)
+       oneTurbFields)
     type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
     integer, intent(inout) :: oneScalarTabSize
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
-    type(TurbFields), pointer, intent(in) :: oneAveTurbFields
     integer :: n, mxyzp
     character(len=*), parameter :: h="**(trsets)**"
 

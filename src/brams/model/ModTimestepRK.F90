@@ -390,13 +390,13 @@ contains
     !  Thermodynamic diagnosis
     !--------------------------------
     if (mcphys_type <= 1 .and. level/=3) then
-       call thermo(mzp, mxp, myp, ia, iz, ja, jz, oneGrid%Basic, oneGrid%AveBasic)
+       call thermo(mzp, mxp, myp, ia, iz, ja, jz, oneGrid%Basic)
     endif
 
     ! evolution of the Exner pressure: compression term
     if (iexev == 2) then
        call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'ADV', &
-            oneGrid%Basic, oneGrid%AveBasic)
+            oneGrid%Basic)
     end if
 
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
@@ -488,7 +488,7 @@ contains
     !  ----------------------------------------
     if ( .not. flag_Coriolis_in_every_RK_step ) then
        call corlos(mzp, mxp, myp, i0, j0, ia, iz, ja, jz, izu, jzv, &
-            tend%ut, tend%vt, oneGrid%Basic, oneGrid%AveBasic)
+            tend%ut, tend%vt, oneGrid%Basic)
     end if
 
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
@@ -537,7 +537,7 @@ contains
 
     if (iexev == 2) then
        call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'THA', &
-            oneGrid%Basic, oneGrid%AveBasic)
+            oneGrid%Basic)
     end if
 
     !- task 2:  NO production by "eclair"
@@ -587,17 +587,17 @@ contains
 
     if (iexev == 2) then
        call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'THS', &
-            oneGrid%Basic, oneGrid%AveBasic)
+            oneGrid%Basic)
     end if
 
     !  Sub-grid diffusion terms
     !----------------------------------------
     if ((if_adap==0) .and. (OneGrid%Ramsin%ihorgrad==2)) then
        call diffuse_brams31(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
-            oneGrid%Basic, oneGrid%Ramsin, oneGrid%Turb, oneGrid%AveTurb, oneGrid%Id)
+            oneGrid%Basic, oneGrid%Ramsin, oneGrid%Turb, oneGrid%Id)
     else
        call diffuse(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, &
-            oneGrid%Turb, oneGrid%AveTurb, oneGrid%Ramsin, oneGrid%Id)
+            oneGrid%Turb, oneGrid%Ramsin, oneGrid%Id)
     endif
 
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
@@ -609,7 +609,7 @@ contains
 
     !- large and subgrid scale forcing for shallow and deep cumulus
     if( NNQPARM(ngrid) >=2  ) then
-       call prepare_lsf(NNQPARM(ngrid), NNSHCU(ngrid),1, oneGrid%Basic, oneGrid%AveBasic)
+       call prepare_lsf(NNQPARM(ngrid), NNSHCU(ngrid),1, oneGrid%Basic)
     end if
 
     !- cumulus parameterizations options: G3d - GD-FIM and GF
@@ -726,7 +726,7 @@ contains
 
        if ( flag_Coriolis_in_every_RK_step ) then
           call corlos(mzp, mxp, myp, i0, j0, ia, iz, ja, jz, izu, jzv, &
-               tend%ut_rk, tend%vt_rk, oneGrid%Basic, oneGrid%AveBasic)
+               tend%ut_rk, tend%vt_rk, oneGrid%Basic)
        end if
 
        !  Buoyancy term for w equation
@@ -762,7 +762,7 @@ contains
 
        !- determine theta (dry potential temp.) for the buoyancy term:
        call theta_thp_rk(mzp,mxp,myp,ia,iz,ja,jz,"get_theta", &
-            oneGrid%Basic, oneGrid%AveBasic)
+            oneGrid%Basic)
 
        !-damping on vertical velocity to keep stability
        !MB: does this act on wc???
@@ -797,7 +797,7 @@ contains
             i0,j0,nodemxp,nodemyp,nodemzp,mynum)
     elseif(advmnt == 0) then
        !- using the 2nd order forward upstream
-       call advectc(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, oneGrid%AveBasic, &
+       call advectc(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, &
             'SCALAR',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
     elseif(advmnt == 3) then
        !- using the WS advection
@@ -864,13 +864,13 @@ contains
 
     !- Thermodynamic diagnosis
     if (mcphys_type <= 1 .and. level==3)  then
-       call thermo(mzp, mxp, myp, 1, mxp, 1, myp, oneGrid%Basic, oneGrid%AveBasic)
+       call thermo(mzp, mxp, myp, 1, mxp, 1, myp, oneGrid%Basic)
     endif
 
     !  Apply scalar b.c.'s (THP is changed here)
     !----------------------------------------
     call trsets(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, &
-         oneGrid%Turb, oneGrid%AveTurb)
+         oneGrid%Turb)
 
     !---> THC must be changed to THP to include microphysics/trsets changes
     !---> for the next timestep
@@ -895,7 +895,7 @@ contains
     call thermo_boundary_driver((time+dtlongn(ngrid)), dtlong, &
          f_thermo_e(ngrid), f_thermo_w(ngrid), &
          f_thermo_s(ngrid), f_thermo_n(ngrid), &
-         nzp, mxp, myp, jdim, oneGrid%Basic, oneGrid%AveBasic)
+         nzp, mxp, myp, jdim, oneGrid%Basic)
 
     if (iexev == 2) then
        call get_true_air_density(mzp,mxp,myp,ia,iz,ja,jz,oneGrid%Basic)
@@ -953,7 +953,7 @@ contains
 
     !- apply digital filter
     if (applyDF) then
-       call applyDigitalFilter(fileNameDF, dfVars, oneGrid%Basic, oneGrid%AveBasic)
+       call applyDigitalFilter(fileNameDF, dfVars, oneGrid%Basic)
     end if
 
 

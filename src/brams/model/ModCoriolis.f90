@@ -133,7 +133,7 @@ contains
 
 
   subroutine corlos(mzp, mxp, myp, i0, j0, ia, iz, ja, jz, izu, jzv, &
-       ut, vt, oneBasicFields, oneAveBasicFields)
+       ut, vt, oneBasicFields)
     !> @brief: This routine is the coriolis driver.  Its purpose is to compute
     !!coriolis accelerations for u and v and add them into
     !!the accumulated tendency arrays of ut_ptr and vt_ptr.
@@ -152,7 +152,6 @@ contains
     real, intent(inout) :: ut(mzp,mxp,myp)
     real, intent(inout) :: vt(mzp,mxp,myp)
     type(BasicFields), pointer, intent(in) :: oneBasicFields
-    type(BasicFields), pointer, intent(in) :: oneAveBasicFields
 
     real :: vt3da(mzp,mxp,myp)
     character(len=*), parameter :: h="**(corlos)**"

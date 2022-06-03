@@ -51,7 +51,7 @@ contains
 
 
 
-  subroutine thermo(mzp, mxp, myp, ia, iz, ja, jz, oneBasic, oneAveBasic)
+  subroutine thermo(mzp, mxp, myp, ia, iz, ja, jz, oneBasic)
     integer, intent(in) :: mzp
     integer, intent(in) :: mxp
     integer, intent(in) :: myp
@@ -60,7 +60,6 @@ contains
     integer, intent(in) :: ja
     integer, intent(in) :: jz
     type(BasicFields), pointer, intent(in) :: oneBasic
-    type(BasicFields), pointer, intent(in) :: oneAveBasic
 
     character(len=*), parameter :: h="**(thermo)**"
 
@@ -122,7 +121,7 @@ contains
 
   subroutine thermo_boundary_driver(time, dtlong, f_thermo_e, f_thermo_w, f_thermo_s, &
        f_thermo_n, mzp, mxp, myp, jdim, &
-       oneBasic, oneAveBasic)
+       oneBasic)
 
     ! Arguments
     real, intent(in) :: time
@@ -136,7 +135,6 @@ contains
     integer, intent(in) :: myp
     integer, intent(in) :: jdim
     type(BasicFields), pointer, intent(in) :: oneBasic
-    type(BasicFields), pointer, intent(in) :: oneAveBasic
     
     ! Local Variables
     ! real, parameter :: frq_thermo_bd = 100. !in seconds
@@ -148,21 +146,21 @@ contains
     end if
 
     if (f_thermo_e) then
-       call thermo(mzp, mxp, myp, 1,   1,   1, myp, oneBasic, oneAveBasic)
+       call thermo(mzp, mxp, myp, 1,   1,   1, myp, oneBasic)
     end if
 
     if (f_thermo_w) then
-       call thermo(mzp, mxp, myp, mxp, mxp, 1, myp, oneBasic, oneAveBasic)
+       call thermo(mzp, mxp, myp, mxp, mxp, 1, myp, oneBasic)
     end if
 
     if (jdim==1) then
 
        if (f_thermo_s) then
-          call thermo(mzp, mxp, myp, 1, mxp, 1, 1, oneBasic, oneAveBasic)
+          call thermo(mzp, mxp, myp, 1, mxp, 1, 1, oneBasic)
        end if
 
        if (f_thermo_n) then
-          call thermo(mzp, mxp, myp, 1, mxp, myp, myp, oneBasic, oneAveBasic)
+          call thermo(mzp, mxp, myp, 1, mxp, myp, myp, oneBasic)
        end if
     endif
 
@@ -445,7 +443,7 @@ contains
 
   
   subroutine theta_thp_rk(mzp,mxp,myp,ia,iz,ja,jz,action, &
-       oneBasic, oneAveBasic)
+       oneBasic)
     !-this is only for RK scheme (uses thc and pc)
     ! Arguments:
     integer, intent(in) :: mzp
@@ -457,7 +455,6 @@ contains
     integer, intent(in) :: jz
     character(len=*), intent(in) :: action
     type(BasicFields), pointer, intent(in) :: oneBasic
-    type(BasicFields), pointer, intent(in) :: oneAveBasic
 
     character(len=*), parameter :: h="**(theta_thp_rk)**"
     

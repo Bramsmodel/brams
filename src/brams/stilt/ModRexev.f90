@@ -81,13 +81,12 @@ contains
 
   
   subroutine exevolve(m1,m2,m3,ifm,ia,iz,ja,jz,izu,jzv,jdim,mynum,edt,key, &
-       oneBasicFields, oneAveBasicFields)
+       oneBasicFields)
     !----- Arguments -----------------------------------------------------------------------!
     character(len=*) , intent(in) :: key
     integer          , intent(in) :: m1,m2,m3,ifm,ia,iz,ja,jz,izu,jzv,jdim,mynum
     real             , intent(in) :: edt
     type(BasicFields), pointer, intent(in) :: oneBasicFields
-    type(BasicFields), pointer, intent(in) :: oneAveBasicFields
     !----- Local variables -----------------------------------------------------------------!
     integer :: i,j,k
     !---------------------------------------------------------------------------------------!
@@ -159,7 +158,7 @@ contains
             ,grid_g(ifm)%dyv                  ,grid_g(ifm)%dxt                  &
             ,grid_g(ifm)%dyt                  ,stilt_g(ifm)%lnthvadv             &
             ,stilt_g(ifm)%lnthetav, &
-            oneBasicFields, oneAveBasicFields)
+            oneBasicFields)
 
     case ('THS')
        !------------------------------------------------------------------------------------!
@@ -184,7 +183,7 @@ contains
   
   subroutine exthvadv(m1,m2,m3,ia,iz,ja,jz,izu,jzv,jdim,mynum,edt,up,uc,vp,vc,wp,wc,theta    &
        ,rtp,rv,dn0,dn0u,dn0v,rtgt,rtgu,rtgv,fmapt,fmapui,fmapvi,f13t,f23t,dxu  &
-       ,dyv,dxt,dyt,lnthvadv,lnthetav, oneBasicFields, oneAveBasicFields)
+       ,dyv,dxt,dyt,lnthvadv,lnthetav, oneBasicFields)
     !----- Arguments -----------------------------------------------------------------------!
     integer                      , intent(in)   :: m1,m2,m3,ia,iz,ja,jz,izu,jzv,jdim,mynum
     real                         , intent(in)   :: edt
@@ -194,7 +193,6 @@ contains
     real    , dimension(   m2,m3), intent(in)   :: f13t,f23t,dxu,dyv,dxt,dyt
     real    , dimension(m1,m2,m3), intent(out)  :: lnthvadv,lnthetav
     type(BasicFields), pointer, intent(in) :: oneBasicFields
-    type(BasicFields), pointer, intent(in) :: oneAveBasicFields
     !----- Local variables -----------------------------------------------------------------!
     integer                                     :: i,j,k,isiz
     !---------------------------------------------------------------------------------------!
@@ -213,7 +211,7 @@ contains
 
     call fa_preptc(m1,m2,m3,scratch%vt3da,scratch%vt3db,scratch%vt3dc,scratch%vt3dd         &
          ,scratch%vt3de,scratch%vt3df,scratch%vt3dh,scratch%vt3di,scratch%vt3dj    &
-         ,scratch%vt3dk,mynum, oneBasicFields, oneAveBasicFields)
+         ,scratch%vt3dk,mynum, oneBasicFields)
     call atob(m1*m2*m3,lnthetav,scratch%scr1)
 
 
@@ -489,7 +487,7 @@ contains
   !------------------------------------------------------------------------------------------!
   subroutine advect_theta(m1,m2,m3,ia,iz,ja,jz,izu,jzv,jdim,mynum,edt,up,uc,vp,vc,wp,wc,pi0  &
        ,pc,pt,theta,rtp,rv,dn0,dn0u,dn0v,rtgt,rtgu,rtgv,fmapt,fmapui       &
-       ,fmapvi,f13t,f23t,dxu,dyv,dxt,dyt,lnthvadv,lnthetav, oneBasicFields, oneAveBasicFields)
+       ,fmapvi,f13t,f23t,dxu,dyv,dxt,dyt,lnthvadv,lnthetav, oneBasicFields)
     !----- Arguments -----------------------------------------------------------------------!
     integer                       , intent(in)    :: m1,m2,m3,ia,iz,ja,jz,izu,jzv,jdim,mynum
     real                          , intent(in)    :: edt 
@@ -500,12 +498,11 @@ contains
     real    , dimension(m1,m2,m3) , intent(inout)   :: lnthvadv,lnthetav
     real    , dimension(m1,m2,m3) , intent(inout) :: pt
     type(BasicFields), pointer, intent(in) :: oneBasicFields
-    type(BasicFields), pointer, intent(in) :: oneAveBasicFields
     !---------------------------------------------------------------------------------------!
 
     call exthvadv(m1,m2,m3,ia,iz,ja,jz,izu,jzv,jdim,mynum,edt,up,uc,vp,vc,wp,wc,theta,rtp   &
          ,rv,dn0,dn0u,dn0v,rtgt,rtgu,rtgv,fmapt,fmapui,fmapvi,f13t,f23t,dxu,dyv,dxt &
-         ,dyt,lnthvadv,lnthetav, oneBasicFields, oneAveBasicFields)
+         ,dyt,lnthvadv,lnthetav, oneBasicFields)
     call exhtend_ad(m1,m2,m3,ia,iz,ja,jz,pi0,pc,pt,lnthvadv)
 
   end subroutine advect_theta

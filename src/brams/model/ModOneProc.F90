@@ -1304,7 +1304,7 @@ contains
           do ngrid=1,ngrids
              call newgrid(ngrid)
              if ((avgtim/=0.) .and. (frqmean/=0. .or. frqboth/=0.))  &
-                  call anlavg(mzp, mxp, myp, oneGrid%Basic, oneGrid%AveBasic)
+                  call anlavg(mzp, mxp, myp, oneGrid%Basic)
              call cfl(mzp, mxp, myp, nodei0(mynum,ngrid), nodej0(mynum,ngrid), &
                   oneGrid%Basic, oneGrid%Ramsin, oneGrid%Id)
           end do
@@ -1666,10 +1666,10 @@ contains
        do ifm=1,ngrids
           call newgrid(ifm)
 
-          call FieldInit(1, oneGrid%Basic, oneGrid%Turb, oneGrid%AveTurb)
+          call FieldInit(1, oneGrid%Basic, oneGrid%Turb)
           call negadj1(mzp,mxp,myp, oneGrid%Basic)
 
-          call thermo(mzp, mxp, myp, 1, mxp, 1, myp, oneGrid%Basic, oneGrid%AveBasic)
+          call thermo(mzp, mxp, myp, 1, mxp, 1, myp, oneGrid%Basic)
 
           if(ilwrtyp==6 .or. iswrtyp==6 ) then
              if (level  ==  3) &

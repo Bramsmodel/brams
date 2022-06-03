@@ -12,7 +12,7 @@ contains
 
 
 
-  subroutine anlavg(n1, n2, n3, oneBasic, oneAveBasic)
+  subroutine anlavg(n1, n2, n3, oneBasic)
 
     use grid_dims, only: maxgrds
     use var_tables, only: num_var, vtab_r
@@ -34,7 +34,6 @@ contains
     integer, intent(in) :: n2
     integer, intent(in) :: n3
     type(BasicFields), pointer, intent(in) :: oneBasic
-    type(BasicFields), pointer, intent(in) :: oneAveBasic
 
     include 'interface.h'
 
@@ -118,11 +117,11 @@ contains
     !      Implement THERMO call for THETA and RV so matches code in rdriv.f
     !         Note that theta is changed, BUT never used on boundary points
 
-    call thermo(n1,n2,n3,1,1,1,n3,oneBasic,oneAveBasic)
-    call thermo(n1,n2,n3,n2,n2,1,n3,oneBasic,oneAveBasic)
+    call thermo(n1,n2,n3,1,1,1,n3,oneBasic)
+    call thermo(n1,n2,n3,n2,n2,1,n3,oneBasic)
     if (jdim .eq. 1) then
-       call thermo(n1,n2,n3,1,n2,1,1,oneBasic,oneAveBasic)
-       call thermo(n1,n2,n3,1,n2,n3,n3,oneBasic,oneAveBasic)
+       call thermo(n1,n2,n3,1,n2,1,1,oneBasic)
+       call thermo(n1,n2,n3,1,n2,n3,n3,oneBasic)
     endif
 
     ! Loop through the main variable table

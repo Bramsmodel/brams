@@ -372,11 +372,10 @@ contains
 
 
   subroutine FieldInit(initflg, oneBasicFields, &
-       oneTurbFields, oneAveTurbFields)
+       oneTurbFields)
     integer, intent(in) :: initflg
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
-    type(TurbFields), pointer, intent(in) :: oneAveTurbFields
 
     character(len=*), parameter :: h="**(FieldInit)**"
     ! finish initializing past time level variables

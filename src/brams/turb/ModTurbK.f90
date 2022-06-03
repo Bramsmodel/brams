@@ -167,7 +167,7 @@ contains
 
 
   subroutine diffuse(oneScalarTab, oneScalarTabSize, oneBasicFields, &
-       oneTurbFields, oneAveTurbFields, oneNamelistFile, gridId)
+       oneTurbFields, oneNamelistFile, gridId)
 
     ! +-----------------------------------------------------------------+
     ! \this routine is the subdriver to compute tendencies due to    \
@@ -178,7 +178,6 @@ contains
     integer, intent(inout) :: oneScalarTabSize
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
-    type(TurbFields), pointer, intent(in) :: oneAveTurbFields
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     integer, intent(in) :: gridId
 
