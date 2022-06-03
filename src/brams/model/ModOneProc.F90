@@ -194,8 +194,8 @@ module ModOneProc
        soilMoistureInit, &
        StoreNamelistFileAtSoilMoisture
 
-  use Mem_turb, only: &
-       StoreNamelistFileAtMem_turb
+!!$  use Mem_turb, only: &
+!!$       StoreNamelistFileAtMem_turb
 
   use Mem_varinit, only: &
        vtime2,&
@@ -736,7 +736,7 @@ contains
     call StoreNamelistFileAtMem_oda(oneNamelistFile)
     call StoreNamelistFileAtMem_radiate(oneNamelistFile)
     call StoreNamelistFileAtSoilMoisture(oneNamelistFile)
-    call StoreNamelistFileAtMem_turb(oneNamelistFile)
+!!$    call StoreNamelistFileAtMem_turb(oneNamelistFile)
     call StoreNamelistFileAtMem_varinit(oneNamelistFile)
     call StoreNamelistFileAtMicphys(oneNamelistFile)
     call StoreNamelistFileAtNode_mod(oneNamelistFile%load_bal)

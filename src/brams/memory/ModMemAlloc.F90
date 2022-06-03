@@ -138,12 +138,12 @@ module ModMemAlloc
        alloc_varinit, &
        filltab_varinit
 
-  use mem_turb, only: &
-       turb_g, &
-       turbm_g, &
-       nullify_turb, &
-       alloc_turb, &
-       filltab_turb
+!!$  use mem_turb, only: &
+!!$       turb_g, &
+!!$       turbm_g, &
+!!$       nullify_turb, &
+!!$       alloc_turb, &
+!!$       filltab_turb
 
   use ModBasicFields, only: &
        InsertBasicFieldsAtVarTable
@@ -654,28 +654,28 @@ contains
 
     !-------------
     ! Allocate turb variables data type
-    allocate(turb_g(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error(h//"Allocating turb_g")
-    allocate(turbm_g(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error(h//"Allocating turbm_g")
-    do ng=1,ngrids
-       call nullify_turb(turb_g(ng)); call nullify_turb(turbm_g(ng))
-       call alloc_turb(turb_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
-       if (imean==1) then
-          call alloc_turb(turbm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
-       elseif (imean==0) then
-          call alloc_turb(turbm_g(ng),        1,        1,        1, ng)
-       endif
-
-       call filltab_turb(turb_g(ng), turbm_g(ng), imean,  &
-            nmzp(ng), nmxp(ng), nmyp(ng), ng)
-    enddo
+!!$    allocate(turb_g(ngrids), STAT=ierr)
+!!$    if (ierr/=0) call fatal_error(h//"Allocating turb_g")
+!!$    allocate(turbm_g(ngrids), STAT=ierr)
+!!$    if (ierr/=0) call fatal_error(h//"Allocating turbm_g")
+!!$    do ng=1,ngrids
+!!$       call nullify_turb(turb_g(ng)); call nullify_turb(turbm_g(ng))
+!!$       call alloc_turb(turb_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
+!!$       if (imean==1) then
+!!$          call alloc_turb(turbm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
+!!$       elseif (imean==0) then
+!!$          call alloc_turb(turbm_g(ng),        1,        1,        1, ng)
+!!$       endif
+!!$
+!!$       call filltab_turb(turb_g(ng), turbm_g(ng), imean,  &
+!!$            nmzp(ng), nmxp(ng), nmyp(ng), ng)
+!!$    enddo
 
     ! insert Turb Field variables at var_table
     do ng=1,ngrids
        call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
-!!$       call InsertTurbFieldsAtVarTable(oneGrid%Turb, oneGrid%AveTurb, &
-!!$            oneGrid%Ramsin, oneGrid%Id)
+       call InsertTurbFieldsAtVarTable(oneGrid%Turb, oneGrid%AveTurb, &
+            oneGrid%Ramsin, oneGrid%Id)
        call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
     enddo
 
@@ -1504,7 +1504,7 @@ contains
        endif
 
        call filltab_tend(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
-            oneGrid%Basic, micro_g(ng), turb_g(ng),  &
+            oneGrid%Basic, micro_g(ng), oneGrid%Turb,  &
             scalar_g(:,ng),                                     &
             gaspart_p,                                          &
             naddsc, ng)

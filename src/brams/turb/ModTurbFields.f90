@@ -24,18 +24,9 @@ module ModTurbFields
   use var_tables, only: &
        InsertVTab
 
-  use mem_turb, only: &
-       turb_g, &
-       turbm_g
-
-!!$  use grid_dims, only:  &
-!!$       maxgrds ! INTENT(IN)
-!!$  
-!!$  use mem_stilt, only:  &
-!!$       imassflx! INTENT(IN)
-!!$
-!!$  use var_tables, only: &
-!!$       InsertVTab
+!!$  use mem_turb, only: &
+!!$       turb_g, &
+!!$       turbm_g
 
   implicit none
 
@@ -72,19 +63,6 @@ module ModTurbFields
      !MLO]
 
   end type TurbFields
-
-!!$  integer :: if_urban_canopy ! from RAMSIN
-!!$  integer :: ihorgrad        ! from RAMSIN
-!!$  integer :: idiffk(maxgrds) ! from RAMSIN
-!!$  real    :: zkhkm(maxgrds)  ! from RAMSIN
-!!$  real    :: xkhkm(maxgrds)  ! from RAMSIN
-!!$  real    :: csz(maxgrds)    ! from RAMSIN
-!!$  real    :: csx(maxgrds)    ! from RAMSIN
-!!$  real    :: akmin(maxgrds)  ! from RAMSIN
-!!$
-!!$  real    :: brunt
-!!$  real    :: rmax
-!!$  real    :: rmin
 
 contains
 
@@ -631,92 +609,92 @@ contains
     type(TurbFields), pointer, intent(in) :: oneAveTurbFields
     character(len=*), intent(in) :: caller
     
-    character(len=8) :: str(10)
-    character(len=*), parameter :: h="**(DeepCopyToTurbFields)**"
-    logical, parameter :: dumpLocal=.true.
-    
-    if (.not. associated(oneTurbFields)) then
-       call fatal_error(h//" oneTurbFields not associated")
-    else if (.not. associated(oneAveTurbFields)) then
-       call fatal_error(h//" oneAveTurbFields not associated")
-    else if (previousCall /= "") then
-       call fatal_error(h//" called by "//trim(adjustl(caller))//&
-            " but previously called by "//trim(adjustl(previousCall)))
-    end if
-
-    previousCall=trim(adjustl(caller))
-    if (associated(oneTurbFields%tkep)) then
-       oneTurbFields%tkep=turb_g(1)%tkep
-    end if
-    if (associated(oneAveTurbFields%tkep)) then
-       oneAveTurbFields%tkep=turbm_g(1)%tkep
-    end if
-    if (associated(oneTurbFields%epsp)) then
-       oneTurbFields%epsp=turb_g(1)%epsp
-    end if
-    if (associated(oneAveTurbFields%epsp)) then
-       oneAveTurbFields%epsp=turbm_g(1)%epsp
-    end if
-    if (associated(oneTurbFields%hkm)) then
-       oneTurbFields%hkm=turb_g(1)%hkm
-    end if
-    if (associated(oneAveTurbFields%hkm)) then
-       oneAveTurbFields%hkm=turbm_g(1)%hkm
-    end if
-    if (associated(oneTurbFields%vkm)) then
-       oneTurbFields%vkm=turb_g(1)%vkm
-    end if
-    if (associated(oneAveTurbFields%vkm)) then
-       oneAveTurbFields%vkm=turbm_g(1)%vkm
-    end if
-    if (associated(oneTurbFields%vkh)) then
-       oneTurbFields%vkh=turb_g(1)%vkh
-    end if
-    if (associated(oneAveTurbFields%vkh)) then
-       oneAveTurbFields%vkh=turbm_g(1)%vkh
-    end if
-    if (associated(oneTurbFields%cdrag)) then
-       oneTurbFields%cdrag=turb_g(1)%cdrag
-    end if
-    if (associated(oneAveTurbFields%cdrag)) then
-       oneAveTurbFields%cdrag=turbm_g(1)%cdrag
-    end if
-    if (associated(oneTurbFields%sflux_u)) then
-       oneTurbFields%sflux_u=turb_g(1)%sflux_u
-    end if
-    if (associated(oneAveTurbFields%sflux_u)) then
-       oneAveTurbFields%sflux_u=turbm_g(1)%sflux_u
-    end if
-    if (associated(oneTurbFields%sflux_v)) then
-       oneTurbFields%sflux_v=turb_g(1)%sflux_v
-    end if
-    if (associated(oneAveTurbFields%sflux_v)) then
-       oneAveTurbFields%sflux_v=turbm_g(1)%sflux_v
-    end if
-    if (associated(oneTurbFields%sflux_w)) then
-       oneTurbFields%sflux_w=turb_g(1)%sflux_w
-    end if
-    if (associated(oneAveTurbFields%sflux_w)) then
-       oneAveTurbFields%sflux_w=turbm_g(1)%sflux_w
-    end if
-    if (associated(oneTurbFields%sflux_t)) then
-       oneTurbFields%sflux_t=turb_g(1)%sflux_t
-    end if
-    if (associated(oneAveTurbFields%sflux_t)) then
-       oneAveTurbFields%sflux_t=turbm_g(1)%sflux_t
-    end if
-    if (associated(oneTurbFields%sflux_r)) then
-       oneTurbFields%sflux_r=turb_g(1)%sflux_r
-    end if
-    if (associated(oneAveTurbFields%sflux_r)) then
-       oneAveTurbFields%sflux_r=turbm_g(1)%sflux_r
-    end if
-    if (associated(oneTurbFields%kpbl)) then
-       oneTurbFields%kpbl=turb_g(1)%kpbl
-    end if
-    if (associated(oneAveTurbFields%kpbl)) then
-       oneAveTurbFields%kpbl=turbm_g(1)%kpbl
-    end if
+!!$    character(len=8) :: str(10)
+!!$    character(len=*), parameter :: h="**(DeepCopyToTurbFields)**"
+!!$    logical, parameter :: dumpLocal=.true.
+!!$    
+!!$    if (.not. associated(oneTurbFields)) then
+!!$       call fatal_error(h//" oneTurbFields not associated")
+!!$    else if (.not. associated(oneAveTurbFields)) then
+!!$       call fatal_error(h//" oneAveTurbFields not associated")
+!!$    else if (previousCall /= "") then
+!!$       call fatal_error(h//" called by "//trim(adjustl(caller))//&
+!!$            " but previously called by "//trim(adjustl(previousCall)))
+!!$    end if
+!!$
+!!$    previousCall=trim(adjustl(caller))
+!!$    if (associated(oneTurbFields%tkep)) then
+!!$       oneTurbFields%tkep=turb_g(1)%tkep
+!!$    end if
+!!$    if (associated(oneAveTurbFields%tkep)) then
+!!$       oneAveTurbFields%tkep=turbm_g(1)%tkep
+!!$    end if
+!!$    if (associated(oneTurbFields%epsp)) then
+!!$       oneTurbFields%epsp=turb_g(1)%epsp
+!!$    end if
+!!$    if (associated(oneAveTurbFields%epsp)) then
+!!$       oneAveTurbFields%epsp=turbm_g(1)%epsp
+!!$    end if
+!!$    if (associated(oneTurbFields%hkm)) then
+!!$       oneTurbFields%hkm=turb_g(1)%hkm
+!!$    end if
+!!$    if (associated(oneAveTurbFields%hkm)) then
+!!$       oneAveTurbFields%hkm=turbm_g(1)%hkm
+!!$    end if
+!!$    if (associated(oneTurbFields%vkm)) then
+!!$       oneTurbFields%vkm=turb_g(1)%vkm
+!!$    end if
+!!$    if (associated(oneAveTurbFields%vkm)) then
+!!$       oneAveTurbFields%vkm=turbm_g(1)%vkm
+!!$    end if
+!!$    if (associated(oneTurbFields%vkh)) then
+!!$       oneTurbFields%vkh=turb_g(1)%vkh
+!!$    end if
+!!$    if (associated(oneAveTurbFields%vkh)) then
+!!$       oneAveTurbFields%vkh=turbm_g(1)%vkh
+!!$    end if
+!!$    if (associated(oneTurbFields%cdrag)) then
+!!$       oneTurbFields%cdrag=turb_g(1)%cdrag
+!!$    end if
+!!$    if (associated(oneAveTurbFields%cdrag)) then
+!!$       oneAveTurbFields%cdrag=turbm_g(1)%cdrag
+!!$    end if
+!!$    if (associated(oneTurbFields%sflux_u)) then
+!!$       oneTurbFields%sflux_u=turb_g(1)%sflux_u
+!!$    end if
+!!$    if (associated(oneAveTurbFields%sflux_u)) then
+!!$       oneAveTurbFields%sflux_u=turbm_g(1)%sflux_u
+!!$    end if
+!!$    if (associated(oneTurbFields%sflux_v)) then
+!!$       oneTurbFields%sflux_v=turb_g(1)%sflux_v
+!!$    end if
+!!$    if (associated(oneAveTurbFields%sflux_v)) then
+!!$       oneAveTurbFields%sflux_v=turbm_g(1)%sflux_v
+!!$    end if
+!!$    if (associated(oneTurbFields%sflux_w)) then
+!!$       oneTurbFields%sflux_w=turb_g(1)%sflux_w
+!!$    end if
+!!$    if (associated(oneAveTurbFields%sflux_w)) then
+!!$       oneAveTurbFields%sflux_w=turbm_g(1)%sflux_w
+!!$    end if
+!!$    if (associated(oneTurbFields%sflux_t)) then
+!!$       oneTurbFields%sflux_t=turb_g(1)%sflux_t
+!!$    end if
+!!$    if (associated(oneAveTurbFields%sflux_t)) then
+!!$       oneAveTurbFields%sflux_t=turbm_g(1)%sflux_t
+!!$    end if
+!!$    if (associated(oneTurbFields%sflux_r)) then
+!!$       oneTurbFields%sflux_r=turb_g(1)%sflux_r
+!!$    end if
+!!$    if (associated(oneAveTurbFields%sflux_r)) then
+!!$       oneAveTurbFields%sflux_r=turbm_g(1)%sflux_r
+!!$    end if
+!!$    if (associated(oneTurbFields%kpbl)) then
+!!$       oneTurbFields%kpbl=turb_g(1)%kpbl
+!!$    end if
+!!$    if (associated(oneAveTurbFields%kpbl)) then
+!!$       oneAveTurbFields%kpbl=turbm_g(1)%kpbl
+!!$    end if
   end subroutine DeepCopyToTurbFields
 
 
@@ -727,102 +705,102 @@ contains
     type(TurbFields), pointer, intent(in) :: oneAveTurbFields
     character(len=*), intent(in) :: caller
 
-    integer :: i
-    integer :: j
-    integer :: k
-    character(len=8) :: str(10)
-    character(len=*), parameter :: h="**(DeepCopyFromTurbFields)**"
-    logical, parameter :: dumpLocal=.true.
-    
-    if (.not. associated(oneTurbFields)) then
-       call fatal_error(h//" oneTurbFields not associated")
-    else if (.not. associated(oneAveTurbFields)) then
-       call fatal_error(h//" oneAveTurbFields not associated")
-    else if (previousCall == "") then
-       call fatal_error(h//" invoked by "//trim(adjustl(caller))//&
-            " while DeepCopyToTurbFields was not invoked")
-    end if
-
-    previousCall=""
-    if (associated(oneTurbFields%tkep)) then
-       do j = 1, size(oneTurbFields%tkep,3)
-          do i = 1, size(oneTurbFields%tkep,2)
-             do k = 1, size(oneTurbFields%tkep,1)
-                turb_g(1)%tkep(k,i,j)=oneTurbFields%tkep(k,i,j)
-             end do
-          end do
-       end do
-    end if
-    
-    if (associated(oneAveTurbFields%tkep)) then
-       turbm_g(1)%tkep=oneAveTurbFields%tkep
-    end if
-    if (associated(oneTurbFields%epsp)) then
-       turb_g(1)%epsp=oneTurbFields%epsp
-    end if
-    if (associated(oneAveTurbFields%epsp)) then
-       turbm_g(1)%epsp=oneAveTurbFields%epsp
-    end if
-    if (associated(oneTurbFields%hkm)) then
-       turb_g(1)%hkm=oneTurbFields%hkm
-    end if
-    if (associated(oneAveTurbFields%hkm)) then
-       turbm_g(1)%hkm=oneAveTurbFields%hkm
-    end if
-    if (associated(oneTurbFields%vkm)) then
-       turb_g(1)%vkm=oneTurbFields%vkm
-    end if
-    if (associated(oneAveTurbFields%vkm)) then
-       turbm_g(1)%vkm=oneAveTurbFields%vkm
-    end if
-    if (associated(oneTurbFields%vkh)) then
-       turb_g(1)%vkh=oneTurbFields%vkh
-    end if
-    if (associated(oneAveTurbFields%vkh)) then
-       turbm_g(1)%vkh=oneAveTurbFields%vkh
-    end if
-    if (associated(oneTurbFields%cdrag)) then
-       turb_g(1)%cdrag=oneTurbFields%cdrag
-    end if
-    if (associated(oneAveTurbFields%cdrag)) then
-       turbm_g(1)%cdrag=oneAveTurbFields%cdrag
-    end if
-    if (associated(oneTurbFields%sflux_u)) then
-       turb_g(1)%sflux_u=oneTurbFields%sflux_u
-    end if
-    if (associated(oneAveTurbFields%sflux_u)) then
-       turbm_g(1)%sflux_u=oneAveTurbFields%sflux_u
-    end if
-    if (associated(oneTurbFields%sflux_v)) then
-       turb_g(1)%sflux_v=oneTurbFields%sflux_v
-    end if
-    if (associated(oneAveTurbFields%sflux_v)) then
-       turbm_g(1)%sflux_v=oneAveTurbFields%sflux_v
-    end if
-    if (associated(oneTurbFields%sflux_w)) then
-       turb_g(1)%sflux_w=oneTurbFields%sflux_w
-    end if
-    if (associated(oneAveTurbFields%sflux_w)) then
-       turbm_g(1)%sflux_w=oneAveTurbFields%sflux_w
-    end if
-    if (associated(oneTurbFields%sflux_t)) then
-       turb_g(1)%sflux_t=oneTurbFields%sflux_t
-    end if
-    if (associated(oneAveTurbFields%sflux_t)) then
-       turbm_g(1)%sflux_t=oneAveTurbFields%sflux_t
-    end if
-    if (associated(oneTurbFields%sflux_r)) then
-       turb_g(1)%sflux_r=oneTurbFields%sflux_r
-    end if
-    if (associated(oneAveTurbFields%sflux_r)) then
-       turbm_g(1)%sflux_r=oneAveTurbFields%sflux_r
-    end if
-    if (associated(oneTurbFields%kpbl)) then
-       turb_g(1)%kpbl=oneTurbFields%kpbl
-    end if
-    if (associated(oneAveTurbFields%kpbl)) then
-       turbm_g(1)%kpbl=oneAveTurbFields%kpbl
-    end if
+!!$    integer :: i
+!!$    integer :: j
+!!$    integer :: k
+!!$    character(len=8) :: str(10)
+!!$    character(len=*), parameter :: h="**(DeepCopyFromTurbFields)**"
+!!$    logical, parameter :: dumpLocal=.true.
+!!$    
+!!$    if (.not. associated(oneTurbFields)) then
+!!$       call fatal_error(h//" oneTurbFields not associated")
+!!$    else if (.not. associated(oneAveTurbFields)) then
+!!$       call fatal_error(h//" oneAveTurbFields not associated")
+!!$    else if (previousCall == "") then
+!!$       call fatal_error(h//" invoked by "//trim(adjustl(caller))//&
+!!$            " while DeepCopyToTurbFields was not invoked")
+!!$    end if
+!!$
+!!$    previousCall=""
+!!$    if (associated(oneTurbFields%tkep)) then
+!!$       do j = 1, size(oneTurbFields%tkep,3)
+!!$          do i = 1, size(oneTurbFields%tkep,2)
+!!$             do k = 1, size(oneTurbFields%tkep,1)
+!!$                turb_g(1)%tkep(k,i,j)=oneTurbFields%tkep(k,i,j)
+!!$             end do
+!!$          end do
+!!$       end do
+!!$    end if
+!!$    
+!!$    if (associated(oneAveTurbFields%tkep)) then
+!!$       turbm_g(1)%tkep=oneAveTurbFields%tkep
+!!$    end if
+!!$    if (associated(oneTurbFields%epsp)) then
+!!$       turb_g(1)%epsp=oneTurbFields%epsp
+!!$    end if
+!!$    if (associated(oneAveTurbFields%epsp)) then
+!!$       turbm_g(1)%epsp=oneAveTurbFields%epsp
+!!$    end if
+!!$    if (associated(oneTurbFields%hkm)) then
+!!$       turb_g(1)%hkm=oneTurbFields%hkm
+!!$    end if
+!!$    if (associated(oneAveTurbFields%hkm)) then
+!!$       turbm_g(1)%hkm=oneAveTurbFields%hkm
+!!$    end if
+!!$    if (associated(oneTurbFields%vkm)) then
+!!$       turb_g(1)%vkm=oneTurbFields%vkm
+!!$    end if
+!!$    if (associated(oneAveTurbFields%vkm)) then
+!!$       turbm_g(1)%vkm=oneAveTurbFields%vkm
+!!$    end if
+!!$    if (associated(oneTurbFields%vkh)) then
+!!$       turb_g(1)%vkh=oneTurbFields%vkh
+!!$    end if
+!!$    if (associated(oneAveTurbFields%vkh)) then
+!!$       turbm_g(1)%vkh=oneAveTurbFields%vkh
+!!$    end if
+!!$    if (associated(oneTurbFields%cdrag)) then
+!!$       turb_g(1)%cdrag=oneTurbFields%cdrag
+!!$    end if
+!!$    if (associated(oneAveTurbFields%cdrag)) then
+!!$       turbm_g(1)%cdrag=oneAveTurbFields%cdrag
+!!$    end if
+!!$    if (associated(oneTurbFields%sflux_u)) then
+!!$       turb_g(1)%sflux_u=oneTurbFields%sflux_u
+!!$    end if
+!!$    if (associated(oneAveTurbFields%sflux_u)) then
+!!$       turbm_g(1)%sflux_u=oneAveTurbFields%sflux_u
+!!$    end if
+!!$    if (associated(oneTurbFields%sflux_v)) then
+!!$       turb_g(1)%sflux_v=oneTurbFields%sflux_v
+!!$    end if
+!!$    if (associated(oneAveTurbFields%sflux_v)) then
+!!$       turbm_g(1)%sflux_v=oneAveTurbFields%sflux_v
+!!$    end if
+!!$    if (associated(oneTurbFields%sflux_w)) then
+!!$       turb_g(1)%sflux_w=oneTurbFields%sflux_w
+!!$    end if
+!!$    if (associated(oneAveTurbFields%sflux_w)) then
+!!$       turbm_g(1)%sflux_w=oneAveTurbFields%sflux_w
+!!$    end if
+!!$    if (associated(oneTurbFields%sflux_t)) then
+!!$       turb_g(1)%sflux_t=oneTurbFields%sflux_t
+!!$    end if
+!!$    if (associated(oneAveTurbFields%sflux_t)) then
+!!$       turbm_g(1)%sflux_t=oneAveTurbFields%sflux_t
+!!$    end if
+!!$    if (associated(oneTurbFields%sflux_r)) then
+!!$       turb_g(1)%sflux_r=oneTurbFields%sflux_r
+!!$    end if
+!!$    if (associated(oneAveTurbFields%sflux_r)) then
+!!$       turbm_g(1)%sflux_r=oneAveTurbFields%sflux_r
+!!$    end if
+!!$    if (associated(oneTurbFields%kpbl)) then
+!!$       turb_g(1)%kpbl=oneTurbFields%kpbl
+!!$    end if
+!!$    if (associated(oneAveTurbFields%kpbl)) then
+!!$       turbm_g(1)%kpbl=oneAveTurbFields%kpbl
+!!$    end if
   end subroutine DeepCopyFromTurbFields
 
 end module ModTurbFields

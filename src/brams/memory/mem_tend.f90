@@ -18,8 +18,8 @@ module mem_tend
          micro_vars, &
          micro_g
     
-    use mem_turb, only: &
-         turb_vars
+    use ModTurbFields, only: &
+         TurbFields
 
     use ModTurbFields, only: &
          TurbFields
@@ -641,14 +641,14 @@ contains
   !---------------------------------------------------------------
 
   subroutine filltab_tend(oneScalarTab, oneScalarTabSize, &
-       oneBasicFields, micro, turb, scalar, gaspart, &
+       oneBasicFields, micro, oneTurbFields, scalar, gaspart, &
        naddsc, ng)
     ! Arguments:
     type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
     integer, intent(inout) :: oneScalarTabSize
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(micro_vars), intent(in) :: micro 
-    type(turb_vars), intent(in) :: turb
+    type(TurbFields), intent(in) :: oneTurbFields
     type(scalar_vars), intent(in)  :: scalar(:)
     type(gaspart_vars), intent(in) :: gaspart
     integer, intent(in)             :: naddsc, ng
@@ -758,12 +758,12 @@ contains
     endif
 
     if( associated(tend%tket)) then
-       call InsertAtScalarTab(turb%tkep,tend%tket, 'TKEP', &
+       call InsertAtScalarTab(oneTurbFields%tkep,tend%tket, 'TKEP', &
             oneScalarTab, oneScalarTabSize)
     endif
 
     if( associated(tend%epst)) then
-       call InsertAtScalarTab(turb%epsp,tend%epst, 'EPSP', &
+       call InsertAtScalarTab(oneTurbFields%epsp,tend%epst, 'EPSP', &
             oneScalarTab, oneScalarTabSize)
     endif
 
