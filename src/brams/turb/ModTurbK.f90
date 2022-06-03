@@ -149,9 +149,7 @@ module ModTurbK
        NamelistFile
   
   use ModTurbFields, only: &
-       TurbFields, &
-       DeepCopyToTurbFields, &
-       DeepCopyFromTurbFields
+       TurbFields
   
   implicit none
 
@@ -219,8 +217,6 @@ contains
     ! Nullifing pointer to Large Scale Forcing for GRELL CUPAR - Not used
     !nullify(lsfcupar_p)
     !
-
-    call DeepCopyToTurbFields(oneTurbFields, oneAveTurbFields,h)
 
     csx=oneNamelistFile%csx(gridId)
     idiffk=oneNamelistFile%idiffk(gridId)
@@ -742,7 +738,6 @@ contains
 
     enddo
 
-    call DeepCopyFromTurbFields(oneTurbFields, oneAveTurbFields,h)
   end subroutine diffuse
 
   !     ******************************************************************

@@ -1,9 +1,7 @@
 module ModRbnd
 
   use ModTurbFields, only: &
-       TurbFields, &
-       DeepCopyToTurbFields, &
-       DeepCopyFromTurbFields
+       TurbFields
   
   use ModTurbKE, only: &
        tkeinit
@@ -1400,9 +1398,7 @@ contains
 
     !       Make sure all positive definite quantities remain such.
 
-    call DeepCopyToTurbFields(oneTurbFields, oneAveTurbFields,h)
     call tkeinit(mzp,mxp,myp, oneTurbFields)
-    call DeepCopyFromTurbFields(oneTurbFields, oneAveTurbFields,h)
 
     call negadj1(mzp,mxp,myp, oneBasicFields)
 

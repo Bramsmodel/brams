@@ -8,9 +8,7 @@
 module ModRinit
 
   use ModTurbFields, only: &
-       TurbFields, &
-       DeepCopyToTurbFields, &
-       DeepCopyFromTurbFields
+       TurbFields
 
   use ModTurbKE, only: &
        tkeinit
@@ -401,9 +399,7 @@ contains
           oneBasicFields%wp = 0.
        endif
 
-       call DeepCopyToTurbFields(oneTurbFields, oneAveTurbFields,h)
        call tkeinit(mzp,mxp,myp,oneTurbFields)
-       call DeepCopyFromTurbFields(oneTurbFields, oneAveTurbFields,h)
 
     endif
 

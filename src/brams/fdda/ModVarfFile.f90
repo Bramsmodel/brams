@@ -1,9 +1,5 @@
 module ModVarfFile
 
-  use ModTurbFields, only: &
-       DeepCopyToTurbFields, &
-       DeepCopyFromTurbFields
-  
   use ModNudAnalysis, only: &
        VariableWeight, &
        VariableWeightChem, &
@@ -1402,12 +1398,10 @@ contains
     ! for THP
 
     varn="THP"
-    call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
     call gatherData(3, varn, 1, nnzp(1), nnxp(1), nnyp(1), &
          nmachs, mchnum, mynum, master_num,                &
          thp, global_data, &
          oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id)
-    call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
     if (mchnum==master_num) then
        do k=1,n1
           thp_ref(k) = sum(global_data(k,:,:))/real(nxyp)
@@ -1418,12 +1412,10 @@ contains
     ! for UC
 
     varn="UC"
-    call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
     call gatherData(3, varn, 1, nnzp(1), nnxp(1), nnyp(1), &
          nmachs, mchnum, mynum, master_num,                &
          uc, global_data, &
          oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id)
-    call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
     if (mchnum==master_num) then
        do k=1,n1
           uc_ref(k) = sum(global_data(k,:,:))/real(nxyp)
@@ -1434,12 +1426,10 @@ contains
     ! for VC
 
     varn="VC"
-    call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
     call gatherData(3, varn, 1, nnzp(1), nnxp(1), nnyp(1), &
          nmachs, mchnum, mynum, master_num,                &
          vc, global_data, &
          oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id)
-    call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
     if (mchnum==master_num) then
        do k=1,n1
           vc_ref(k) = sum(global_data(k,:,:))/real(nxyp)
@@ -1450,12 +1440,10 @@ contains
     ! for RTP
 
     varn="RTP"
-    call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
     call gatherData(3, varn, 1, nnzp(1), nnxp(1), nnyp(1), &
          nmachs, mchnum, mynum, master_num,                &
          rtp, global_data, &
          oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id)
-    call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
     if (mchnum==master_num) then
        do k=1,n1
           rtp_ref(k) = sum(global_data(k,:,:))/real(nxyp)
@@ -1466,12 +1454,10 @@ contains
     ! for PC
 
     varn="PC"
-    call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
     call gatherData(3, varn, 1, nnzp(1), nnxp(1), nnyp(1), &
          nmachs, mchnum, mynum, master_num,                &
          pc, global_data, &
          oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id)
-    call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
     if (mchnum==master_num) then
        do k=1,n1
           pc_ref(k) = sum(global_data(k,:,:))/real(nxyp)
@@ -1482,12 +1468,10 @@ contains
     ! for TOPTA
 
     varn="TOPTA"
-    call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
     call gatherData(2, varn, 1, nnxp(1), nnyp(1), &
          nmachs, mchnum, mynum, master_num,                &
          topta, global_data2d, &
          oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id)
-    call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
     if (mchnum==master_num) then
        top_ref = sum(global_data2d(:,:))/real(nxyp)
     end if

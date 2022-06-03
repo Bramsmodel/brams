@@ -97,10 +97,6 @@ module ModTimestepRK
        rayft,  &
        trsets
 
-  use ModTurbFields, only: &
-       DeepCopyToTurbFields,&
-       DeepCopyFromTurbFields
-  
   use grid_dims, only: &
        nzpmax
 
@@ -406,10 +402,8 @@ contains
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
 
     if (CCATT==1 .and. chemistry >= 0) then
-       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
        call aodDriver(mzp,mxp,myp,ia,iz,ja,jz,ngrids,&
             oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id)
-       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
     end if
 
     !  Radiation parameterization
@@ -419,28 +413,20 @@ contains
     !  Surface layer, soil and veggie model
     !----------------------------------------
     if (isfcl<=2) then
-       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
        call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
             oneGrid%Basic, oneGrid%Turb)
-       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
 #ifdef JULES
     elseif (isfcl == 5) then
        if (time==0.) then
-          call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
           call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
                oneGrid%Basic, oneGrid%Turb)
-          call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
        end if
-       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
        call sfclyr_jules(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile, &
             oneGrid%Basic, oneGrid%Turb)
-       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
        !--- this combines the JULES land + LEAF ocean models.
        if (isfcl_ocean == 1) then
-          call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
           call sfclyr_ocean_only  (mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
                oneGrid%Basic, oneGrid%Turb)
-          call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
        end if
 #endif
     endif
@@ -488,11 +474,8 @@ contains
 
 
        !- call dry deposition and sedimentation routines
-       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
        call drydep_driver(mzp,mxp,myp,ia,iz,ja,jz, &
             oneGrid%Basic, oneGrid%Turb)
-       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
-
     endif
 
 !!$    call SynchronizedTimeStamp(TS_PHYSICS) ! Exper1.2, 2021_12
@@ -519,9 +502,7 @@ contains
     !  Urban canopy parameterization
     !----------------------------------------
     if (OneGrid%Ramsin%if_urban_canopy==1) then
-       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
        call urban_canopy(oneGrid%Basic, oneGrid%Turb)
-       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
     end if
 
     !  Analysis nudging and boundary condition
@@ -585,9 +566,7 @@ contains
     !---------------------------------------------------
     ! Shallow  cumulus parameterization by Souza
     if (NNSHCU(ngrid)==1) then
-       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
        call shcupa(oneGrid%Basic, oneGrid%Turb)
-       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
     end if
     !---------------------------------------------------
 
@@ -635,9 +614,7 @@ contains
 
     !- cumulus parameterizations options: G3d - GD-FIM and GF
     if (NNQPARM(ngrid)>=3) then
-       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
        call CUPARM_GRELL3_CATT(oneGrid,1,NNQPARM(ngrid),NNSHCU(ngrid))
-       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
     end if
 
     !------------------------------------------------------------------------------
@@ -950,9 +927,7 @@ contains
        !- call Matrix Aerosol Model
        !- using symmetric/sequential spliting operator
        if(AEROSOL==2) then
-          call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
           call MatrixDriver(ia,iz,ja,jz,mzp,mxp,myp, oneGrid%Basic, oneGrid%Turb)
-          call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb, h)
        endif
     endif
     if (ccatt==1 .and. aerosol == 1) then
@@ -973,10 +948,8 @@ contains
     endif
 
     !- windfarm
-    call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
     call wind_farm_driver(ngrid,mzp,mxp,myp,ia,iz,ja,jz, &
          oneGrid%Basic, oneGrid%Turb)
-    call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
 
     !- apply digital filter
     if (applyDF) then

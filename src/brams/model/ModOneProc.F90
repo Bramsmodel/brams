@@ -42,11 +42,7 @@ module ModOneProc
   use ModRio, only: &
        OutputFields, &
        history_start
-  
-  use ModTurbFields, only: &
-       DeepCopyToTurbFields, &
-       DeepCopyFromTurbFields
-  
+
   use ModInitHis, only: &
        sfcinit_hstart, &
        inithis
@@ -193,9 +189,6 @@ module ModOneProc
   use SoilMoisture, only: &
        soilMoistureInit, &
        StoreNamelistFileAtSoilMoisture
-
-!!$  use Mem_turb, only: &
-!!$       StoreNamelistFileAtMem_turb
 
   use Mem_varinit, only: &
        vtime2,&
@@ -736,7 +729,6 @@ contains
     call StoreNamelistFileAtMem_oda(oneNamelistFile)
     call StoreNamelistFileAtMem_radiate(oneNamelistFile)
     call StoreNamelistFileAtSoilMoisture(oneNamelistFile)
-!!$    call StoreNamelistFileAtMem_turb(oneNamelistFile)
     call StoreNamelistFileAtMem_varinit(oneNamelistFile)
     call StoreNamelistFileAtMicphys(oneNamelistFile)
     call StoreNamelistFileAtNode_mod(oneNamelistFile%load_bal)
@@ -1066,11 +1058,9 @@ contains
        if(mcphys_type==3) call readDataFriendly()
 
        if (aerosol==-1 .and. .not. (CCATT==1 .and. chemistry >= 1)) then
-          call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
           call gradsRead('./tables/aerClim/','aerosols.gra',&
                grid_g(1)%glat,grid_g(1)%glon, &
                oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%ID)
-          call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
        end if
 
        ! Checking if the actual node have to run thermo on the boundaries
@@ -1091,10 +1081,8 @@ contains
        if (IPOS/=0) then
           ! create post processing
           oneAllPostTypes => null()
-          call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
           call CreatePostProcess(oneNamelistFile, oneAllPostTypes, &
                oneGrid%Basic, oneGrid%Turb)
-          call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
        endif
 
        select case (IPOS)
@@ -1380,10 +1368,8 @@ contains
                   iflag==1
           end if
 
-          call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
           call OutputFields(histFlag, instFlag, liteFlag, meanFlag, &
                oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id)
-          call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
 
           ! Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
           ! call SynchronizedTimeStamp(TS_OUTPUT)
@@ -1812,10 +1798,8 @@ contains
        ! Initialize various LEAF variables.
 
        if (ipastin == 0) then
-          call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
           call GeonestNoFile(1,ngrids,&
                oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id)
-          call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
        end if
 
 
@@ -2002,9 +1986,7 @@ contains
        ! Read Radiation Parameters if CARMA or RRTMG Radiation is selected
        if (ilwrtyp==4 .or. iswrtyp==4 .or. ilwrtyp==6 .or. iswrtyp==6 ) then
           call master_read_carma_data(mchnum, master_num)
-          call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
           call read_aotMap(oneGrid%Id, oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb)
-          call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
        endif
 
        ! AKMIN variable:
@@ -2129,7 +2111,6 @@ contains
 
           do ifm = 1,min(ngrids,ngridsh)
              call newgrid(ifm)
-             call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
              call soilMoistureInit(nnzp(ifm), nodemxp(mynum,ifm),         &
                   nodemyp(mynum,ifm), nzg, nzs, npatch, ifm,              &
                   oneGrid%Basic%theta, oneGrid%Basic%pi0, oneGrid%Basic%pp,  &
@@ -2138,8 +2119,6 @@ contains
                   grid_g(ifm)%glat, grid_g(ifm)%glon, grid_g(ifm)%lpw     &
                   ,leaf_g(ifm)%seatp, leaf_g(ifm)%seatf, &
                   oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id)
-             call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
-
           enddo
 
 
@@ -2155,9 +2134,7 @@ contains
        ! Read Radiation Parameters if CARMA or RRTMG Radiation is selected
        if (ilwrtyp==4 .or. iswrtyp==4 .or. ilwrtyp==6 .or. iswrtyp==6 ) then
           call master_read_carma_data(mchnum, master_num)
-          call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
           call read_aotMap(oneGrid%Id, oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb)
-          call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
        endif
 
        !--(DMK-CCATT-INI)-----------------------------------------------------
@@ -2290,9 +2267,7 @@ contains
        !call fatal_error(h//"**(JP)** if_urban_canopy==1 was not worked yet")
        iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
             "**(JP)** if_urban_canopy==1 was not worked yet")
-       call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
        call urb_drag_init(oneGrid%Turb)
-       call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
     end if
 
     ! one process prints locations of all grids
@@ -2341,10 +2316,8 @@ contains
     !--(DMK-CCATT-FIM)--------------------------------------------------------
     !srf
 
-    call DeepCopyToTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
     call OutputFields(histFlag, instFlag, liteFlag, meanFlag, &
          oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id)
-    call DeepCopyFromTurbFields(oneGrid%Turb, oneGrid%AveTurb,h)
 
     ! Save initial fields into the averaged arrays
 

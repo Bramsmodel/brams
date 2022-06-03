@@ -1,9 +1,7 @@
 module ModPostProcess
 
   use ModTurbFields, only: &
-       TurbFields, &
-       DeepCopyToTurbFields, &
-       DeepCopyFromTurbFields
+       TurbFields
   
   use ModBasicFields, only: &
        BasicFields
@@ -155,8 +153,6 @@ contains
 
        OneGrid => OneGridTreeNode%curr
 
-       call DeepCopyToTurbFields(OneGrid%Turb, OneGrid%AveTurb,h)
-       
        ! update Ghost Zone of all vartables variables part 1:
        ! post receives and send messages
        call PostSendRecvMsgs(&
@@ -242,8 +238,6 @@ contains
 #ifdef cdf 
        if(IPOS==3) ierr=nf90_close(ncid)
 #endif         
-
-       call DeepCopyFromTurbFields(OneGrid%Turb, OneGrid%AveTurb,h)
 
        OneGridTreeNode => NextOnGridTree(OneGridTreeNode)
 

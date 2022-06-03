@@ -25,8 +25,6 @@ module ModDiffuse
        tend                   ! %tket, %epst, %ut, %vt, %wt
 
   use ModTurbFields, only:     &
-       DeepCopyToTurbFields, &
-       DeepCopyFromTurbFields, &
        TurbFields
 
 
@@ -146,8 +144,6 @@ contains
     real, target :: scr2(mxp*myp*mzp)
 
     character(len=*), parameter :: h="**(diffuse_brams31)**" 
-    
-    call DeepCopyToTurbFields(oneTurbFields, oneAveTurbFields,h)
     
     idiffk=oneNamelistFile%idiffk(gridId)
     xkhkm=oneNamelistFile%xkhkm(gridId)
@@ -468,7 +464,5 @@ contains
        enddo
 
     enddo
-
-    call DeepCopyFromTurbFields(oneTurbFields, oneAveTurbFields,h)
   end subroutine diffuse_brams31
 end module ModDiffuse

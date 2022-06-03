@@ -101,7 +101,6 @@ OBJ_MOD = \
 	mem_shcu.o \
 	mem_tconv.o \
 	mem_tend.o \
-	mem_turb.o \
 	ModTurbFields.o \
 	mem_turb_scalar.o \
 	mem_varinit.o \
