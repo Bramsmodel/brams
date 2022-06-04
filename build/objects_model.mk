@@ -168,6 +168,7 @@ OBJ_MOD = \
 	ModRConvGrellCatt.o \
 	ModChemConvTransp.o \
 	ModNamelistFile.o  \
+	ModSingleGridNamelist.o \
 	ModParallelEnvironment.o  \
 	read_ralph.o \
 	recycle.o  \

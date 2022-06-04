@@ -74,6 +74,11 @@ module ModGrid
        DestroyTurbFields, &
        DumpTurbFields
 
+  use ModSingleGridNamelist, only: &
+       SingleGridNamelist, &
+       CreateSingleGridNamelist, &
+       DestroySingleGridNamelist
+  
   ! JP: temporariamente usa variaveis globais enquanto
   !     var_tables nao for inclusa no tipo Grid
 
@@ -100,7 +105,11 @@ module ModGrid
      integer :: Id
      ! Id: grid number on Namelist
      type(NamelistFile), pointer :: Ramsin => null()
-     ! Ramsin: this grid namelist file
+     ! Ramsin: full namelist file
+     type(SingleGridNamelist), pointer :: ThisGridRamsin => null()
+     ! ThisGridRamsin: all namelist values replacing arrays indexed
+     !                 by grid number with scalars for this grid number
+     !                 Avoid indexing Ramsin variables by grid number
      type(ParallelEnvironment), pointer :: ParEnv => null()
      ! ParEnv: mpi size, rank and communicator for this run
      type(GridDims), pointer :: GridSize => null()
@@ -279,6 +288,9 @@ contains
     oneGrid%GridSize => CreateGridDims(gridId, &
          oneNamelistFile)
 
+    oneGrid%ThisGridRamsin => CreateSingleGridNamelist(&
+         oneGrid%Ramsin, gridId)
+    
     ! compute domain decomposition, obtaining
     ! cells owned by each rank and store at GlobalOwn
 
@@ -540,6 +552,7 @@ contains
 
     if (associated(oneGrid)) then
        call DestroyGridDims(oneGrid%GridSize)
+       call DestroySingleGridNamelist(oneGrid%ThisGridRamsin)
        call DestroyDomainDecomp(oneGrid%GlobalOwn)
        call DestroyDomainDecomp(oneGrid%GlobalWithGhost)
        call DestroyDomainDecomp(oneGrid%LocalOwn)
