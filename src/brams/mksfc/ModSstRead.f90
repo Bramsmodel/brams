@@ -7,6 +7,9 @@
 !###########################################################################
 module ModSstRead
 
+  use ModMkSfcSst, only: &
+       sst_read_dataheader
+
   use mem_grid, only: &
        platn, &
        plonn, &

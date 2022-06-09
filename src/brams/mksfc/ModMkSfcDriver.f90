@@ -7,6 +7,20 @@
 !###########################################################################
 module ModMkSfcDriver
 
+  use ModMkSfcNdvi, only: &
+       ndvi_read_dataheader, &
+       ndvi_write, &
+       ndvinest
+  
+  use ModMkSfcSst, only: &
+       sst_read_dataheader, &
+       sst_write, &
+       sstnest
+  
+  use ModLanduseInput, only: &
+       patch_array_size, &
+       patch_latlon
+  
   use ModControlVars, only: &
        ControlVars
 

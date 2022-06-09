@@ -58,7 +58,7 @@ OBJ_MOD = \
 	ModDiffuse.o \
 	file_inv.o \
 	first_rams.o \
-	geodat.o \
+	ModGeodat.o \
 	grid_dims.o \
 	grid_struct.o \
 	ModInitHis.o  \
@@ -66,7 +66,7 @@ OBJ_MOD = \
 	isan_coms.o \
 	isan_io.o \
 	ke_coms.o \
-	landuse_input.o \
+	ModLanduseInput.o \
 	ModLeaf3.o \
 	leaf3_hyd.o \
 	leaf3_init.o \
@@ -115,9 +115,9 @@ OBJ_MOD = \
 	mic_vap.o \
 	micphys.o \
 	ModMkSfcDriver.o \
-	mksfc_ndvi.o \
+	ModMkSfcNdvi.o \
 	ModMkSfcSfc.o \
-	mksfc_sst.o \
+	ModMkSfcSst.o \
 	ModMkSfcTop.o \
 	ModTimeStamp.o \
 	ModSched.o \

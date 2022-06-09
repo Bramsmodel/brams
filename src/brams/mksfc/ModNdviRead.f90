@@ -8,6 +8,9 @@
 
 module ModNdviRead
 
+  use ModMkSfcNdvi, only: &
+       ndvi_read_dataheader
+  
   use ModControlVars, only: &
        ControlVars
   

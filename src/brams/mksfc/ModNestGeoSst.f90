@@ -7,6 +7,14 @@
 !###########################################################################
 module ModNestGeoSst
 
+  use ModLanduseInput, only: &
+       landuse_opqr
+  
+  use ModGeodat, only: &
+       geodat, &
+       geodat_var, &
+       geodat_var_opt
+  
   use ModMkSfcTop, only: &
        toptinit
   
