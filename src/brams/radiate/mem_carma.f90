@@ -9,8 +9,14 @@
 
 module mem_carma
 
-  use grid_dims, only: nzpmax ! INTENT(IN)
-  use ModNamelistFile, only: namelistFile
+  use grid_dims, only: &
+       nzpmax ! INTENT(IN)
+
+  use ModNamelistFile, only: &
+       NamelistFile
+  
+  use ModControlVars, only: &
+       ControlVars
 
   implicit none
 
@@ -682,11 +688,8 @@ contains
   end subroutine filltab_aotMap
 
 
-  subroutine read_aotMap(gridId, oneNamelistFile, oneBasicFields, oneTurbFields)
+  subroutine read_aotMap(gridId, oneControlVars, oneBasicFields, oneTurbFields)
 
-    use ModNamelistFile, only: &
-         NamelistFile
-    
     use ModBasicFields, only: &
          BasicFields
 
@@ -716,7 +719,7 @@ contains
     include 'constants.h'
 
     integer, intent(in) :: gridId
-    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
+    type(ControlVars), pointer, intent(in) :: oneControlVars
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     
@@ -857,12 +860,12 @@ contains
        call gatherData(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
             nmachs, mchnum, mynum, master_num,             &
             grid_g(ifm)%glon, globalGlon, &
-            oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
+            oneControlVars, oneBasicFields, oneTurbFields)
        varn = 'GLAT'
        call gatherData(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
             nmachs, mchnum, mynum, master_num,             &
             grid_g(ifm)%glat, globalGlat, &
-            oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
+            oneControlVars, oneBasicFields, oneTurbFields)
 
        do i =1, nnxp(ifm)
           do j=1, nnyp(ifm)

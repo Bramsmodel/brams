@@ -8,6 +8,9 @@
 !========================================================================
 module soilMoisture
 
+  use ModControlVars, only: &
+       ControlVars
+  
   use ModNamelistFile, only: &
        namelistFile
 
@@ -33,7 +36,7 @@ contains
        soil_water, soil_energy, soil_text,                       &
        glat, glon,                                               &
        lpw_r,seatp,seatf,                                        &
-       oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
+       oneControlVars, oneBasicFields, oneTurbFields)
     !# _
     !#
     !# @note
@@ -131,10 +134,9 @@ contains
     real, intent(in)    :: soil_text(:,:,:,:)   !(mzg,n2,n3,npat)
 
     real, intent(in)    :: seatp(:,:) ,seatf(:,:) 
-    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
+    type(ControlVars), pointer, intent(in) :: oneControlVars
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
-    integer, intent(in) :: gridId
     
     integer :: lpw(n2,n3)             !(n2,n3)
     ! local variables:
@@ -839,22 +841,22 @@ contains
        call gatherdata(idim_type, varn, ifm, mzg, nnxp(ifm), nnyp(ifm), &
             npat, nmachs, mchnum, mynum, master_num,                    &
             soil_water, globalsoilwater, &
-            oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
+            oneControlVars, oneBasicFields, oneTurbFields)
        varn = 'soil_text'
        call gatherdata(idim_type, varn, ifm, mzg, nnxp(ifm), nnyp(ifm), &
             npat, nmachs, mchnum, mynum, master_num,                    &
             soil_text, globalsoiltext, &
-            oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
+            oneControlVars, oneBasicFields, oneTurbFields)
        varn = 'glon'
        call gatherdata(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
             nmachs, mchnum, mynum, master_num,             &
             glon, globalglon, &
-            oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
+            oneControlVars, oneBasicFields, oneTurbFields)
        varn = 'glat'
        call gatherdata(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
             nmachs, mchnum, mynum, master_num,             &
             glat, globalglat, &
-            oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
+            oneControlVars, oneBasicFields, oneTurbFields)
 
 
        ! loop no dominio global do modelo
@@ -1006,31 +1008,31 @@ contains
        call gatherdata(idim_type, varn, ifm, mzg, nnxp(ifm), nnyp(ifm), &
             npat, nmachs, mchnum, mynum, master_num,			 &
             soil_water, globalsoilwater, &
-            oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
+            oneControlVars, oneBasicFields, oneTurbFields)
 
        varn = 'soil_energy'
        call gatherdata(idim_type, varn, ifm, mzg, nnxp(ifm), nnyp(ifm), &
             npat, nmachs, mchnum, mynum, master_num,			 &
             soil_energy, globalsoilenergy, &
-            oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
+            oneControlVars, oneBasicFields, oneTurbFields)
             
        varn = 'soil_text'
        call gatherdata(idim_type, varn, ifm, mzg, nnxp(ifm), nnyp(ifm), &
             npat, nmachs, mchnum, mynum, master_num,			 &
             soil_text, globalsoiltext, &
-            oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
+            oneControlVars, oneBasicFields, oneTurbFields)
             
        varn = 'glon'
        call gatherdata(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
             nmachs, mchnum, mynum, master_num, 	    &
             glon, globalglon, &
-            oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
+            oneControlVars, oneBasicFields, oneTurbFields)
             
        varn = 'glat'
        call gatherdata(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
             nmachs, mchnum, mynum, master_num, 	    &
             glat, globalglat, &
-            oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
+            oneControlVars, oneBasicFields, oneTurbFields)
 
 
        ! loop no dominio global do modelo

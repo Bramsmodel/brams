@@ -36,6 +36,9 @@ module ModOptical
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModControlVars, only: &
+       ControlVars
+  
   use ModNamelistFile, only: &
        NamelistFile
 
@@ -226,7 +229,7 @@ contains
 
 
   subroutine aodDriver(m1,m2,m3,ia,iz,ja,jz,ngrids,&
-       oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
+       oneNamelistFile, oneBasicFields, oneTurbFields, gridId, oneControlVars)
     !# Driver to compute tauaer to RRTGM 
     !#
     !# @note
@@ -291,6 +294,7 @@ contains
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     integer, intent(in) :: gridId
+    type(ControlVars), pointer, intent(in) :: oneControlVars
     
     integer :: n_aer, nb
     integer :: i,j,k,kr
@@ -313,7 +317,7 @@ contains
        !Fill the arrays with optical characteristics
        call setupraddata() 
        !Read aotMap
-       call opt_read_aotmap(oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
+       call opt_read_aotmap(oneNamelistFile, oneBasicFields, oneTurbFields, gridId, oneControlVars)
 
        !Adjust the site accordongly aot map end veg patch area
        !compute particles R0 and Particles density
@@ -1283,7 +1287,7 @@ contains
 
   end subroutine opt_filltab_aotMap
 
-  subroutine opt_read_aotmap(oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
+  subroutine opt_read_aotmap(oneNamelistFile, oneBasicFields, oneTurbFields, gridId, oneControlVars)
     !# Read  aot Map from input file
     !#
     !# @note
@@ -1338,6 +1342,7 @@ contains
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
+    type(ControlVars), pointer, intent(in) :: oneControlVars
     integer, intent(in) :: gridId
     
     integer :: i
@@ -1462,12 +1467,12 @@ contains
        call gatherdata(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
             nmachs, mchnum, mynum, master_num,             &
             grid_g(ifm)%glon, globalglon, &
-            oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
+            oneControlVars, oneBasicFields, oneTurbFields)
        varn = 'glat'
        call gatherdata(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
             nmachs, mchnum, mynum, master_num,             &
             grid_g(ifm)%glat, globalglat, &
-            oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
+            oneControlVars, oneBasicFields, oneTurbFields)
 
        globalaot=0
 

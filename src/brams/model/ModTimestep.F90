@@ -334,7 +334,7 @@ contains
     !  call SynchronizedTimeStamp(TS_DYNAMICS)
     if (CCATT==1 .and. chemistry >= 1) then
        call aodDriver(mzp,mxp,myp,ia,iz,ja,jz,ngrids,&
-            oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id)
+            oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id, oneGrid%Control)
     end if
 
     !  Radiation parameterization
@@ -786,7 +786,7 @@ contains
 
     !- apply digital filter
     if (applyDF) then
-       call applyDigitalFilter(fileNameDF, dfVars, oneGrid%Basic)
+       call applyDigitalFilter(fileNameDF, dfVars, oneGrid%Basic, oneGrid%Control)
     end if
 
     !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90

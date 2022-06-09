@@ -7,6 +7,9 @@
 !###########################################################################
 module ModRio
 
+  use ModControlVars, only: &
+       ControlVars
+  
   use grid_dims
   use grid_dims, only: &
        maxgrds
@@ -552,7 +555,7 @@ contains
 
 
   subroutine OutputFields(histFlag, instFlag, liteFlag, meanFlag, &
-       oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
+       oneNamelistFile, oneBasicFields, oneTurbFields, gridId, oneControlVars)
 
     ! OutputFields: Define the fields to write and select the output
     !               method: parallel HDF5, VFM, parallel MPI-IO,
@@ -567,7 +570,8 @@ contains
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     integer, intent(in) :: gridId
-
+    type(ControlVars), pointer, intent(in) :: oneControlVars
+    
     integer :: maxNFields, nvMax, ierr, grid
 
     logical, allocatable :: Willwrite(:,:)
@@ -637,7 +641,8 @@ contains
           write(*,*) '*** Writing 24h output [.vfm] for use in recyle on next run ***',time
        end if
        call saveVFM(histFlag, .true., liteFlag, meanFlag, nvMax, ngrids, &
-            willwrite, maxNFields, oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
+            willwrite, maxNFields, oneNamelistFile, oneBasicFields, oneTurbFields, &
+            gridId, oneControlVars)
     endif
 
     if (dumpLocal) then
@@ -657,7 +662,7 @@ contains
        case (2)
           call saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
                willwrite, maxNFields, oneNamelistFile, oneBasicFields, &
-               oneTurbFields, gridId)
+               oneTurbFields, gridId, oneControlVars)
 
        case (3)
           call saveBinMPIIO(histFlag, instFlag, liteFlag, meanFlag, nvMax, &
@@ -665,7 +670,7 @@ contains
 
        case (4)
           call saveNodeFields(histFlag, instFlag, liteFlag, meanFlag, nvMax, &
-               ngrids, willwrite, maxNFields)
+               ngrids, willwrite, maxNFields, oneControlVars)
 
        end select
 
@@ -754,7 +759,7 @@ contains
   !====
 
   subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
-       willwrite, maxNFields, oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
+       willwrite, maxNFields, oneNamelistFile, oneBasicFields, oneTurbFields, gridId, oneControlVars)
 
     ! saveVFM: Master process gathers fields that are domain decomposed
     !          over slaves and builds selected output files. 
@@ -775,6 +780,7 @@ contains
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     integer, intent(in) :: gridId
+    type(ControlVars), pointer, intent(in) :: oneControlVars
 
     type(IOFileDS) :: histFileDS
     type(IOFileDS) :: instFileDS
@@ -885,7 +891,7 @@ contains
        ! grid dependent, field independent constants for gather and unpacking
        ! as a function of idim_type
 
-       call LocalSizesAndDisp(ng, il1, ir2, jb1, jt2, localSize, disp)
+       call LocalSizesAndDisp(ng, il1, ir2, jb1, jt2, localSize, disp, oneControlVars)
 
        ! full field size (no ghost zones) at this process
 
@@ -1069,7 +1075,7 @@ contains
                      LocalSize(mynum,idim_type), LocalChunk, &
                      sizeGathered(idim_type), Gathered, &
                      sizeFullField(idim_type), FullField, &
-                     oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
+                     oneControlVars, oneBasicFields, oneTurbFields)
 
                 ! output untouched field and, if appropriate,
                 ! rearrange and output rearranged field
@@ -1083,7 +1089,7 @@ contains
                         .false., &           ! mean takes var_m
                         histFileDS, instFileDS, liteFileDS, meanFileDS, &
                         varn, idim_type, sizeFullField(idim_type), &
-                        FullField, Rear)
+                        FullField, Rear, oneControlVars)
                    if ( (thisInstFlag .and. (.not. preProc) .and. rearran) .or. &
                         (thisLiteFlag .and. (.not. preProc) .and. rearran) ) then
                       call RearrangeAndDump (ng, rearran,  &
@@ -1093,7 +1099,7 @@ contains
                            .false., &        ! mean takes var_m
                            histFileDS, instFileDS, liteFileDS, meanFileDS, &
                            varn, idim_type, sizeFullField(idim_type), &
-                           FullField, Rear)
+                           FullField, Rear, oneControlVars)
                    end if
                 end if
              end if
@@ -1110,7 +1116,7 @@ contains
                      LocalSize(mynum,idim_type), LocalChunk, &
                      sizeGathered(idim_type), Gathered, &
                      sizeFullField(idim_type), FullField, &
-                     oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
+                     oneControlVars, oneBasicFields, oneTurbFields)
 
                 ! output rearranged field
 
@@ -1122,7 +1128,7 @@ contains
                         .false., &           ! mean takes var_m
                         histFileDS, instFileDS, liteFileDS, meanFileDS, &
                         varn, idim_type, sizeFullField(idim_type), &
-                        FullField, Rear)
+                        FullField, Rear, oneControlVars)
                 end if
              end if
 
@@ -1147,7 +1153,7 @@ contains
                      LocalSize(mynum,idim_type), LocalChunk, &
                      sizeGathered(idim_type), Gathered, &
                      sizeFullField(idim_type), FullField, &
-                     oneNamelistFile, oneBasicFields, oneTurbFields, gridId)
+                     oneControlVars, oneBasicFields, oneTurbFields)
 
                 ! output field, rearranged or untouched
 
@@ -1159,7 +1165,7 @@ contains
                         thisMeanFlag, &
                         histFileDS, instFileDS, liteFileDS, meanFileDS, &
                         varn, idim_type, sizeFullField(idim_type), &
-                        FullField, Rear)
+                        FullField, Rear, oneControlVars)
                 end if
 
              endif
@@ -1249,7 +1255,7 @@ contains
 
   !====
   subroutine saveNodeFields(histFlag, instFlag, liteFlag, meanFlag, nvMax, &
-       ngrids, willwrite, maxNFields)
+       ngrids, willwrite, maxNFields, oneControlVars)
 
     logical, intent(in) :: histFlag       ! true iff history output requested
     logical, intent(in) :: instFlag       ! true iff instant output requested
@@ -1259,6 +1265,7 @@ contains
     integer, intent(in) :: ngrids
     logical, intent(in) :: Willwrite(nvMax, ngrids)
     integer, intent(in) :: maxNFields
+    type(ControlVars), pointer, intent(in) :: oneControlVars
 
     logical :: thisHistFlag   ! true iff history output requested and current field applies
     logical :: thisInstFlag   ! true iff instant output requested and current field applies
@@ -1299,7 +1306,7 @@ contains
 
        ! grid dependent, field independent constants for gather and unpacking
        ! as a function of idim_type
-       call LocalSizesAndDisp(ng, il1, ir2, jb1, jt2, localSize, disp)
+       call LocalSizesAndDisp(ng, il1, ir2, jb1, jt2, localSize, disp, oneControlVars)
 
        ! maximum sizes over all fields
        maxLocalSize = maxval(LocalSize(mynum,:))

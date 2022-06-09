@@ -2,6 +2,9 @@
 
 module digitalFilter
 
+  use ModControlVars, only: &
+       ControlVars
+  
   use ModBasicFields, only: &
        BasicFields
   
@@ -185,13 +188,14 @@ contains
 
   !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-  subroutine applyDigitalFilter(fileName, dfVars, oneBasicFields)
+  subroutine applyDigitalFilter(fileName, dfVars, oneBasicFields, oneControlVars)
 
     ! # parameter.
     character(len=*), intent(inout) :: fileName
     type(df_vars), dimension(:), pointer, intent(inout):: dfVars
     type(BasicFields), pointer, intent(in) :: oneBasicFields
-
+    type(ControlVars), pointer, intent(in) :: oneControlVars
+    
     ! # local.
     integer:: ng
     integer:: idx, k, i
@@ -293,12 +297,12 @@ contains
           print*,'================================================================'
        endif
 
-       call saveNodeFields_digFilt(fileName)
+       call saveNodeFields_digFilt(fileName, oneControlVars)
     end if
 
     if(time .ne. 0.0 .and. mod(begtime, timeWindowDF) .lt. dtlongn(1) .and. writeTimeDF .ne. 0)then
 
-       call loadNodeFields_digFilt(fileName)
+       call loadNodeFields_digFilt(fileName, oneControlVars)
        if(MYNUM==1)then
           ng=1
           print*,'================================================================'
@@ -344,9 +348,10 @@ contains
   !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
   !--(DMK)-------------------------------------------------------------------
 
-  subroutine saveNodeFields_digFilt(fileName)
+  subroutine saveNodeFields_digFilt(fileName, oneControlVars)
 
     character(len=*), intent(out) :: fileName
+    type(ControlVars), pointer, intent(in) :: oneControlVars
 
     integer :: idim_type
 
@@ -383,7 +388,7 @@ contains
 
        ! grid dependent, field independent constants for gather and unpacking
        ! as a function of idim_type
-       call LocalSizesAndDisp(ng, il1, ir2, jb1, jt2, localSize, disp)
+       call LocalSizesAndDisp(ng, il1, ir2, jb1, jt2, localSize, disp, oneControlVars)
 
        ! maximum sizes over all fields
        maxLocalSize = maxval(LocalSize(mynum,:))
@@ -448,9 +453,10 @@ contains
 
   end subroutine saveNodeFields_digFilt
   !--(DMK)-------------------------------------------------------------------
-  subroutine loadNodeFields_digFilt(fileName)
+  subroutine loadNodeFields_digFilt(fileName, oneControlVars)
 
     character(len=*), intent(in) :: fileName
+    type(ControlVars), pointer, intent(in) :: oneControlVars
 
     integer :: idim_type
 
@@ -487,7 +493,7 @@ contains
 
        ! grid dependent, field independent constants for gather and unpacking
        ! as a function of idim_type
-       call LocalSizesAndDisp(ng, il1, ir2, jb1, jt2, localSize, disp)
+       call LocalSizesAndDisp(ng, il1, ir2, jb1, jt2, localSize, disp, oneControlVars)
 
        ! maximum sizes over all fields
        maxLocalSize = maxval(LocalSize(mynum,:))

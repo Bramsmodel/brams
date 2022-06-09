@@ -114,17 +114,17 @@ OBJ_MOD = \
 	mic_tabs.o \
 	mic_vap.o \
 	micphys.o \
-	mksfc_driver.o \
+	ModMkSfcDriver.o \
 	mksfc_ndvi.o \
-	mksfc_sfc.o \
+	ModMkSfcSfc.o \
 	mksfc_sst.o \
-	mksfc_top.o \
+	ModMkSfcTop.o \
 	ModTimeStamp.o \
 	ModSched.o \
 	local_proc.o \
 	mpass_dtl.o \
 	mpass_full.o      \
-	ndvi_read.o \
+	ModNdviRead.o \
 	nest_feed.o \
 	nest_filldens.o \
 	ModNestGeoSst.o \
@@ -168,7 +168,7 @@ OBJ_MOD = \
 	ModRConvGrellCatt.o \
 	ModChemConvTransp.o \
 	ModNamelistFile.o  \
-	ModSingleGridNamelist.o \
+	ModControlVars.o \
 	ModParallelEnvironment.o  \
 	read_ralph.o \
 	recycle.o  \
@@ -189,7 +189,7 @@ OBJ_MOD = \
 	shcu_vars_const.o \
 	memSoilMoisture.o \
 	soilMoisture.o \
-	sst_read.o \
+	ModSstRead.o \
 	ModTurbDiff.o \
 	turb_diff_adap.o \
 	ModTurbK.o \
@@ -220,7 +220,7 @@ OBJ_MOD = \
 	var_tables.o \
 	varf_update.o \
 	vtab_fill.o \
-	mksfc_fuso.o \
+	ModMkSfcFuso.o \
 	mem_teb.o \
 	mem_teb_common.o \
 	mem_teb_vars_const.o \
@@ -231,7 +231,7 @@ OBJ_MOD = \
 	ModOzone.o \
 	chem_isan_coms.o \
 	chem_aobj.o \
-	chem_asgen.o \
+	ModChemAsgen.o \
 	chem_asti2.o \
 	chem_asti.o \
 	chem_astp.o \

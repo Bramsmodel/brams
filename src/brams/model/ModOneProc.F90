@@ -34,6 +34,27 @@ module ModOneProc
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModChemAsgen, only: &
+       chem_isan_driver
+  
+  use ModNdviRead, only: &
+       NdviReadStoreOwnChunk
+  
+  use ModMkSfcDriver, only: &
+       MakeSfcFiles
+
+  use ModMkSfcSfc, only: &
+       SfcReadStoreOwnChunk
+
+  use ModMkSfcTop, only: &
+       TRSFFieldAndOwnChunk
+  
+  use ModSstRead, only: &
+       SstReadStoreOwnChunk
+
+  use ModMkSfcFuso, only:&
+       FusoReadStoreOwnChunk
+  
   use ModOpspec, only: &
        opspec1, &
        opspec2, &
@@ -850,7 +871,7 @@ contains
 
     ! Check sfc,sst,ndvi files; remake if needed
 
-    call MakeSfcfiles()
+    call MakeSfcfiles(oneGrid%Control)
 
 
     ! Behave accordingly to run typ
@@ -882,7 +903,7 @@ contains
 
        ! on a "MAKEVFILE" run, call ISAN, then exit.
 
-       call chem_isan_driver(namelistFileName)
+       call chem_isan_driver(namelistFileName, oneGrid%Control)
        if(ccatt==1 .and. chem_assim==1 .and. chemistry >= 0)then
           iErrNumber=dumpMessage(c_tty,c_yes,header,version,c_notice," CHEM_ISAN complete ")
        else
@@ -1060,7 +1081,7 @@ contains
        if (aerosol==-1 .and. .not. (CCATT==1 .and. chemistry >= 1)) then
           call gradsRead('./tables/aerClim/','aerosols.gra',&
                grid_g(1)%glat,grid_g(1)%glon, &
-               oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%ID)
+               oneGrid%Control, oneGrid%Basic, oneGrid%Turb, oneGrid%ID)
        end if
 
        ! Checking if the actual node have to run thermo on the boundaries
@@ -1164,12 +1185,12 @@ contains
              endif
              if (isendsst==1) then
                 do ifm=1,ngrids
-                   call SstReadStoreOwnChunk(3,ifm,ierr)
+                   call SstReadStoreOwnChunk(3,ifm,ierr, oneGrid%Control)
                 enddo
              endif
              if (isendndvi==1) then
                 do ifm=1,ngrids
-                   call NdviReadStoreOwnChunk(3,ifm,ierr)
+                   call NdviReadStoreOwnChunk(3,ifm,ierr, oneGrid%Control)
                 enddo
              endif
              if (isendsrc==1) then
@@ -1187,7 +1208,7 @@ contains
                         transport,plume_g,tropical_forest,boreal_forest,savannah,         &
                         grassland,diur_cycle,volcanoes,volc_mean_g,oneGrid%Basic%dn0,zt,zm,&
                         mchnum, master_num,mass_bin_dist,CO2,ISFCL,aerosol_mechanism,     &
-                        plume_fre_g,emiss_ajust_aer)
+                        plume_fre_g,emiss_ajust_aer, oneGrid%Control)
                 enddo
 
 
@@ -1369,7 +1390,7 @@ contains
           end if
 
           call OutputFields(histFlag, instFlag, liteFlag, meanFlag, &
-               oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id)
+               oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id, oneGrid%Control)
 
           ! Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
           ! call SynchronizedTimeStamp(TS_OUTPUT)
@@ -1581,12 +1602,12 @@ contains
        do ifm = 1,ngrids
 
           !--(DMK-LFR NEC-SX6)----------------------------------------------
-          call TRSFFieldAndOwnChunk(ifm)
+          call TRSFFieldAndOwnChunk(ifm, oneGrid%Control)
           !--(DMK-LFR NEC-SX6)----------------------------------------------
 
        enddo
        do ifm = 1,ngrids
-          call SfcReadStoreOwnChunk(ifm)
+          call SfcReadStoreOwnChunk(ifm, oneGrid%Control)
        enddo
        !     Define grid topography, transform, latitude-longitude,
        !        and map factor arrays.
@@ -1596,12 +1617,12 @@ contains
 
        ! read SST files
        do ifm = 1,ngrids
-          call SstReadStoreOwnChunk(1,ifm,ierr)
+          call SstReadStoreOwnChunk(1,ifm,ierr, oneGrid%Control)
        enddo
 
        ! read NDVI files
        do ifm = 1,ngrids
-          call NdviReadStoreOwnChunk(1,ifm,ierr)
+          call NdviReadStoreOwnChunk(1,ifm,ierr, oneGrid%Control)
        enddo
 
        ! Initialize snowcover arrays
@@ -1614,7 +1635,7 @@ contains
        if (TEB_SPM==1) then
           ! read FUSO (Local Time) files
           do ifm = 1,ngrids
-             call FusoReadStoreOwnChunk(ifm)
+             call FusoReadStoreOwnChunk(ifm, oneGrid%Control)
           enddo
        endif
 
@@ -1799,7 +1820,7 @@ contains
 
        if (ipastin == 0) then
           call GeonestNoFile(1,ngrids,&
-               oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id)
+               oneGrid%Control, oneGrid%Basic, oneGrid%Turb)
        end if
 
 
@@ -1974,7 +1995,7 @@ contains
                   transport,plume_g,tropical_forest,boreal_forest,savannah,    &
                   grassland,diur_cycle,volcanoes,volc_mean_g,oneGrid%Basic%dn0,zt,zm,&
                   mchnum, master_num,mass_bin_dist,CO2,ISFCL,aerosol_mechanism     ,&
-                  plume_fre_g,emiss_ajust_aer)
+                  plume_fre_g,emiss_ajust_aer, oneGrid%Control)
 
              call aer_background(ifm,nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm),&
                   1,nodemxp(mynum,ifm),1,nodemyp(mynum,ifm))
@@ -1986,7 +2007,7 @@ contains
        ! Read Radiation Parameters if CARMA or RRTMG Radiation is selected
        if (ilwrtyp==4 .or. iswrtyp==4 .or. ilwrtyp==6 .or. iswrtyp==6 ) then
           call master_read_carma_data(mchnum, master_num)
-          call read_aotMap(oneGrid%Id, oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb)
+          call read_aotMap(oneGrid%Id, oneGrid%Control, oneGrid%Basic, oneGrid%Turb)
        endif
 
        ! AKMIN variable:
@@ -2035,19 +2056,19 @@ contains
        call gridSetup(1)
 
        ! Check surface,topo,sst,ndvi files. Remake if necessary.
-       call MakeSfcFiles()
+       call MakeSfcFiles(oneGrid%Control)
 
        ! Read surface and topo files for any added grids
        !       do ifm = ngridsh+1,ngrids
        !       do ifm = ngridsh+1,ngrids
        do ifm = 1,ngrids
-          call SfcReadStoreOwnChunk(ifm)
+          call SfcReadStoreOwnChunk(ifm, oneGrid%Control)
        enddo
        !       do ifm = ngridsh+1,ngrids
        do ifm = 1,ngrids
           !--(DMK-LFR NEC-SX6)----------------------------------------------
           !        call TopReadStoreFullFieldAndOwnChunk(ifm)
-          call TRSFFieldAndOwnChunk(ifm)
+          call TRSFFieldAndOwnChunk(ifm, oneGrid%Control)
           !--(DMK-LFR NEC-SX6)----------------------------------------------
 
        enddo
@@ -2057,11 +2078,11 @@ contains
 
        ! Read in sst and ndvi files for all grids
        do ifm = 1,ngrids
-          call SstReadStoreOwnChunk(1, ifm, ierr)
+          call SstReadStoreOwnChunk(1, ifm, ierr, oneGrid%Control)
        enddo
 
        do ifm = 1,ngrids
-          call NdviReadStoreOwnChunk(1, ifm, ierr)
+          call NdviReadStoreOwnChunk(1, ifm, ierr, oneGrid%Control)
        enddo
 
        ! TEB
@@ -2069,7 +2090,7 @@ contains
        if (TEB_SPM==1) then
           ! Read FUSO (Local Time) files for any added grids
           do ifm = ngridsh+1,ngrids
-             call FusoReadStoreOwnChunk(ifm)
+             call FusoReadStoreOwnChunk(ifm, oneGrid%Control)
           enddo
        endif
 
@@ -2118,7 +2139,7 @@ contains
                   leaf_g(ifm)%soil_text,                                  &
                   grid_g(ifm)%glat, grid_g(ifm)%glon, grid_g(ifm)%lpw     &
                   ,leaf_g(ifm)%seatp, leaf_g(ifm)%seatf, &
-                  oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id)
+                  oneGrid%Control, oneGrid%Basic, oneGrid%Turb)
           enddo
 
 
@@ -2134,7 +2155,7 @@ contains
        ! Read Radiation Parameters if CARMA or RRTMG Radiation is selected
        if (ilwrtyp==4 .or. iswrtyp==4 .or. ilwrtyp==6 .or. iswrtyp==6 ) then
           call master_read_carma_data(mchnum, master_num)
-          call read_aotMap(oneGrid%Id, oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb)
+          call read_aotMap(oneGrid%Id, oneGrid%Control, oneGrid%Basic, oneGrid%Turb)
        endif
 
        !--(DMK-CCATT-INI)-----------------------------------------------------
@@ -2161,7 +2182,7 @@ contains
                   transport,plume_g,tropical_forest,boreal_forest,savannah,    &
                   grassland,diur_cycle,volcanoes,volc_mean_g,oneGrid%Basic%dn0,zt,zm,&
                   mchnum, master_num,mass_bin_dist,CO2,ISFCL,aerosol_mechanism,&
-                  plume_fre_g,emiss_ajust_aer)
+                  plume_fre_g,emiss_ajust_aer, oneGrid%Control)
 
           enddo
 
@@ -2317,7 +2338,7 @@ contains
     !srf
 
     call OutputFields(histFlag, instFlag, liteFlag, meanFlag, &
-         oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id)
+         oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id, oneGrid%Control)
 
     ! Save initial fields into the averaged arrays
 

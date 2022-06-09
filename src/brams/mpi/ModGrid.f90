@@ -74,10 +74,10 @@ module ModGrid
        DestroyTurbFields, &
        DumpTurbFields
 
-  use ModSingleGridNamelist, only: &
-       SingleGridNamelist, &
-       CreateSingleGridNamelist, &
-       DestroySingleGridNamelist
+  use ModControlVars, only: &
+       ControlVars, &
+       CreateControlVars, &
+       DestroyControlVars
   
   ! JP: temporariamente usa variaveis globais enquanto
   !     var_tables nao for inclusa no tipo Grid
@@ -106,10 +106,12 @@ module ModGrid
      ! Id: grid number on Namelist
      type(NamelistFile), pointer :: Ramsin => null()
      ! Ramsin: full namelist file
-     type(SingleGridNamelist), pointer :: ThisGridRamsin => null()
-     ! ThisGridRamsin: all namelist values replacing arrays indexed
-     !                 by grid number with scalars for this grid number
-     !                 Avoid indexing Ramsin variables by grid number
+     type(ControlVars), pointer :: Control => null()
+     ! Control: all variables used to control flow; include all Ramsin
+     !          variables, replacing arrays indexed by grid number by
+     !          scalars for this grid number, avoiding grid number
+     !          reference; include all other variables spreaded by
+     !          the code that control if statements
      type(ParallelEnvironment), pointer :: ParEnv => null()
      ! ParEnv: mpi size, rank and communicator for this run
      type(GridDims), pointer :: GridSize => null()
@@ -288,7 +290,7 @@ contains
     oneGrid%GridSize => CreateGridDims(gridId, &
          oneNamelistFile)
 
-    oneGrid%ThisGridRamsin => CreateSingleGridNamelist(&
+    oneGrid%Control => CreateControlVars(&
          oneGrid%Ramsin, gridId)
     
     ! compute domain decomposition, obtaining
@@ -552,7 +554,7 @@ contains
 
     if (associated(oneGrid)) then
        call DestroyGridDims(oneGrid%GridSize)
-       call DestroySingleGridNamelist(oneGrid%ThisGridRamsin)
+       call DestroyControlVars(oneGrid%Control)
        call DestroyDomainDecomp(oneGrid%GlobalOwn)
        call DestroyDomainDecomp(oneGrid%GlobalWithGhost)
        call DestroyDomainDecomp(oneGrid%LocalOwn)
