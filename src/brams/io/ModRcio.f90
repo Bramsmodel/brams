@@ -7,6 +7,9 @@
 !###########################################################################
 module ModRcio
 
+  use iso_fortran_env, only: &
+       real64
+  
   use ModParallelEnvironment, only: &
        MsgDump
 
@@ -209,6 +212,9 @@ module ModRcio
      module procedure cio_i_1d
      module procedure cio_c_s
      module procedure cio_f_s
+     module procedure cio_f_1d
+     module procedure cio_f_2d
+     module procedure cio_f8_s
   end interface cio
 contains
 
@@ -333,7 +339,7 @@ contains
                " not found at unit "//trim(adjustl(str(1))))
        end if
        read(iun,*) nn
-       read(iun,"(a)") ia
+       read(iun,*) ia
     else if (irw == 2) then
        write(iun,"('__',a)") cstr
        write(iun,*) 1
@@ -345,10 +351,121 @@ contains
             trim(adjustl(str(1))))
     endif
   end function cio_f_s
-  
-    
-  subroutine DumpIOHeadTable(oneIOFileDS, oneNamelistFile)
 
+
+
+
+  integer function cio_f_1d(iun,irw,cstr,ia)
+    integer, intent(in) :: iun
+    integer, intent(in) :: irw
+    character(len=*), intent(in) :: cstr
+    real :: ia(:)
+
+    integer :: nn
+    integer :: i
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(cio_f_1d)**"
+
+    nn=size(ia)
+    if (irw == 1) then
+       call cio_pos_file (iun,cstr,cio_f_1d)
+       if (cio_f_1d == 1) then
+          write(str(1),"(i8)") iun
+          call fatal_error(h//" string "//cstr//&
+               " not found at unit "//trim(adjustl(str(1))))
+       end if
+       read(iun,*) nn
+       read(iun,*) (ia(i),i=1,nn)
+    else if (irw == 2) then
+       write(iun,"('__',a)") cstr
+       write(iun,*) nn
+       write(iun,"(e16.8)") (ia(i),i=1,nn)
+       cio_f_1d=0
+    else
+       write(str(1),"(i8)") irw
+       call fatal_error(h//" invoked with unknown irw="//&
+            trim(adjustl(str(1))))
+    endif
+  end function cio_f_1d
+
+
+
+
+  integer function cio_f_2d(iun,irw,cstr,ia)
+    integer, intent(in) :: iun
+    integer, intent(in) :: irw
+    character(len=*), intent(in) :: cstr
+    real :: ia(:,:)
+
+    integer :: nn
+    integer :: n1
+    integer :: n2
+    integer :: i
+    integer :: j
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(cio_f_2d)**"
+
+    nn=size(ia)
+    n1=size(ia,1)
+    n2=size(ia,2)
+    if (irw == 1) then
+       call cio_pos_file (iun,cstr,cio_f_2d)
+       if (cio_f_2d == 1) then
+          write(str(1),"(i8)") iun
+          call fatal_error(h//" string "//cstr//&
+               " not found at unit "//trim(adjustl(str(1))))
+       end if
+       read(iun,*) nn
+       read(iun,*) ((ia(i,j),i=1,n1),j=1,n2)
+    else if (irw == 2) then
+       write(iun,"('__',a)") cstr
+       write(iun,*) nn
+       write(iun,"(e16.8)") ((ia(i,j),i=1,n1),j=1,n2)
+       cio_f_2d=0
+    else
+       write(str(1),"(i8)") irw
+       call fatal_error(h//" invoked with unknown irw="//&
+            trim(adjustl(str(1))))
+    endif
+  end function cio_f_2d  
+
+
+
+  integer function cio_f8_s(iun,irw,cstr,ia)
+    integer, intent(in) :: iun
+    integer, intent(in) :: irw
+    character(len=*), intent(in) :: cstr
+    real(kind=real64) :: ia
+
+    integer :: nn
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(cio_f8_s)**"
+
+    if (irw == 1) then
+       call cio_pos_file (iun,cstr,cio_f8_s)
+       if (cio_f8_s == 1) then
+          write(str(1),"(i8)") iun
+          call fatal_error(h//" string "//cstr//&
+               " not found at unit "//trim(adjustl(str(1))))
+       end if
+       read(iun,*) nn
+       read(iun,*) ia
+    else if (irw == 2) then
+       write(iun,"('__',a)") cstr
+       write(iun,*) 1
+       write(iun,"(e24.16)") ia
+       cio_f8_s=0
+    else
+       write(str(1),"(i8)") irw
+       call fatal_error(h//" invoked with unknown irw="//&
+            trim(adjustl(str(1))))
+    endif
+  end function cio_f8_s  
+  
+
+
+  
+  subroutine DumpIOHeadTable(oneIOFileDS, oneNamelistFile)
     type(IOFileDS), intent(inout) :: oneIOFileDS
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
 
@@ -420,7 +537,7 @@ contains
 
     !     This routine reads or writes the history and analysis file common blocks.
 
-    integer, external :: cio_i,cio_f,cio_f8,cio_c
+!!$    integer, external :: cio_i,cio_f,cio_f8,cio_c
     character(len=2) :: cng
     integer :: irw,ie,ng
 
@@ -476,23 +593,23 @@ contains
     ie=cio(iun,irw,'njnest',njnest(1:ngrids))
     ie=cio(iun,irw,'nknest',nknest(1:ngrids))
     ie=cio(iun,irw,'idiffk',oneNamelistFile%idiffk(1:ngrids))
-    ie=cio_f(iun,irw,'gridu',gridu,ngrids)
-    ie=cio_f(iun,irw,'gridv',gridv,ngrids)
-    ie=cio_f(iun,irw,'akmin',oneNamelistFile%akmin,ngrids)
-    ie=cio_f(iun,irw,'csz',oneNamelistFile%csz,ngrids)
-    ie=cio_f(iun,irw,'csx',oneNamelistFile%csx,ngrids)
-    ie=cio_f(iun,irw,'xkhkm',oneNamelistFile%xkhkm,ngrids)
-    ie=cio_f(iun,irw,'zkhkm',oneNamelistFile%zkhkm,ngrids)
-    ie=cio_f(iun,irw,'centlat',centlat,ngrids)
-    ie=cio_f(iun,irw,'centlon',centlon,ngrids)
-    ie=cio_f(iun,irw,'dimove',dimove,ngrids)
-    ie=cio_f(iun,irw,'djmove',djmove,ngrids)
-    ie=cio_f(iun,irw,'deltazn',deltazn,ngrids)
-    ie=cio_f(iun,irw,'deltaxn',deltaxn,ngrids)
-    ie=cio_f(iun,irw,'deltayn',deltayn,ngrids)
-    ie=cio_f(iun,irw,'platn',platn,ngrids)
-    ie=cio_f(iun,irw,'plonn',plonn,ngrids)
-    ie=cio_f(iun,irw,'zz',zz,nnzp(1))
+    ie=cio(iun,irw,'gridu',gridu(1:ngrids))
+    ie=cio(iun,irw,'gridv',gridv(1:ngrids))
+    ie=cio(iun,irw,'akmin',oneNamelistFile%akmin(1:ngrids))
+    ie=cio(iun,irw,'csz',oneNamelistFile%csz(1:ngrids))
+    ie=cio(iun,irw,'csx',oneNamelistFile%csx(1:ngrids))
+    ie=cio(iun,irw,'xkhkm',oneNamelistFile%xkhkm(1:ngrids))
+    ie=cio(iun,irw,'zkhkm',oneNamelistFile%zkhkm(1:ngrids))
+    ie=cio(iun,irw,'centlat',centlat(1:ngrids))
+    ie=cio(iun,irw,'centlon',centlon(1:ngrids))
+    ie=cio(iun,irw,'dimove',dimove(1:ngrids))
+    ie=cio(iun,irw,'djmove',djmove(1:ngrids))
+    ie=cio(iun,irw,'deltazn',deltazn(1:ngrids))
+    ie=cio(iun,irw,'deltaxn',deltaxn(1:ngrids))
+    ie=cio(iun,irw,'deltayn',deltayn(1:ngrids))
+    ie=cio(iun,irw,'platn',platn(1:ngrids))
+    ie=cio(iun,irw,'plonn',plonn(1:ngrids))
+    ie=cio(iun,irw,'zz',zz(1:nnzp(1)))
 
     ie=cio(iun,irw,'nestz1',nestz1)
     ie=cio(iun,irw,'nestz2',nestz2)
@@ -502,20 +619,20 @@ contains
     do ng=1,ngrids
        write(cng,1) ng
 1      format(i2.2)
-       ie=cio_f(iun,irw,'xmn'//cng,xmn(1,ng),nnxp(ng))
-       ie=cio_f(iun,irw,'xtn'//cng,xtn(1,ng),nnxp(ng))
-       ie=cio_f(iun,irw,'ymn'//cng,ymn(1,ng),nnyp(ng))
-       ie=cio_f(iun,irw,'ytn'//cng,ytn(1,ng),nnyp(ng))
-       ie=cio_f(iun,irw,'zmn'//cng,zmn(1,ng),nnzp(ng))
-       ie=cio_f(iun,irw,'ztn'//cng,ztn(1,ng),nnzp(ng))
-       ie=cio_f(iun,irw,'dzmn'//cng,dzmn(1,ng),nnzp(ng))
-       ie=cio_f(iun,irw,'dztn'//cng,dztn(1,ng),nnzp(ng))
-       ie=cio_f(iun,irw,'u01dn'//cng,u01dn(1,ng),nnzp(ng))
-       ie=cio_f(iun,irw,'v01dn'//cng,v01dn(1,ng),nnzp(ng))
-       ie=cio_f(iun,irw,'pi01dn'//cng,pi01dn(1,ng),nnzp(ng))
-       ie=cio_f(iun,irw,'th01dn'//cng,th01dn(1,ng),nnzp(ng))
-       ie=cio_f(iun,irw,'dn01dn'//cng,dn01dn(1,ng),nnzp(ng))
-       ie=cio_f(iun,irw,'rt01dn'//cng,rt01dn(1,ng),nnzp(ng))
+       ie=cio(iun,irw,'xmn'//cng,xmn(1:nnxp(ng),ng))
+       ie=cio(iun,irw,'xtn'//cng,xtn(1:nnxp(ng),ng))
+       ie=cio(iun,irw,'ymn'//cng,ymn(1:nnyp(ng),ng))
+       ie=cio(iun,irw,'ytn'//cng,ytn(1:nnyp(ng),ng))
+       ie=cio(iun,irw,'zmn'//cng,zmn(1:nnzp(ng),ng))
+       ie=cio(iun,irw,'ztn'//cng,ztn(1:nnzp(ng),ng))
+       ie=cio(iun,irw,'dzmn'//cng,dzmn(1:nnzp(ng),ng))
+       ie=cio(iun,irw,'dztn'//cng,dztn(1:nnzp(ng),ng))
+       ie=cio(iun,irw,'u01dn'//cng,u01dn(1:nnzp(ng),ng))
+       ie=cio(iun,irw,'v01dn'//cng,v01dn(1:nnzp(ng),ng))
+       ie=cio(iun,irw,'pi01dn'//cng,pi01dn(1:nnzp(ng),ng))
+       ie=cio(iun,irw,'th01dn'//cng,th01dn(1:nnzp(ng),ng))
+       ie=cio(iun,irw,'dn01dn'//cng,dn01dn(1:nnzp(ng),ng))
+       ie=cio(iun,irw,'rt01dn'//cng,rt01dn(1:nnzp(ng),ng))
     enddo
 
     ie=cio(iun,irw,'kroot',kroot(1:nvtyp+nvtyp_teb))
@@ -591,35 +708,35 @@ contains
     ie=cio(iun,irw,'cparm',cparm)
     ie=cio(iun,irw,'hparm',hparm)
 
-    ie=cio_f(iun,irw,'cfmas',cfmas,nhcat)
-    ie=cio_f(iun,irw,'pwmas',pwmas,nhcat)
+    ie=cio(iun,irw,'cfmas',cfmas(1:nhcat))
+    ie=cio(iun,irw,'pwmas',pwmas(1:nhcat))
 
-    ie=cio_f(iun,irw,'us',us,maxsndg)
-    ie=cio_f(iun,irw,'vs',vs,maxsndg)
-    ie=cio_f(iun,irw,'ts',ts,maxsndg)
-    ie=cio_f(iun,irw,'thds',thds,maxsndg)
-    ie=cio_f(iun,irw,'ps',ps,maxsndg)
-    ie=cio_f(iun,irw,'hs',hs,maxsndg)
+    ie=cio(iun,irw,'us',us(1:maxsndg))
+    ie=cio(iun,irw,'vs',vs(1:maxsndg))
+    ie=cio(iun,irw,'ts',ts(1:maxsndg))
+    ie=cio(iun,irw,'thds',thds(1:maxsndg))
+    ie=cio(iun,irw,'ps',ps(1:maxsndg))
+    ie=cio(iun,irw,'hs',hs(1:maxsndg))
 
-    ie=cio_f(iun,irw,'slden',slden,nstyp)
-    ie=cio_f(iun,irw,'slcpd',slcpd,nstyp)
-    ie=cio_f(iun,irw,'slbs',slbs,nstyp)
-    ie=cio_f(iun,irw,'slcond',slcond,nstyp)
-    ie=cio_f(iun,irw,'slcons',slcons,nstyp)
-    ie=cio_f(iun,irw,'slmsts',slmsts,nstyp)
-    ie=cio_f(iun,irw,'slpots',slpots,nstyp)
-    ie=cio_f(iun,irw,'ssand',ssand,nstyp)
-    ie=cio_f(iun,irw,'sclay',sclay,nstyp)
-    ie=cio_f(iun,irw,'sorgan',sorgan,nstyp)
-    ie=cio_f(iun,irw,'sporo',sporo,nstyp)
-    ie=cio_f(iun,irw,'soilcp',soilcp,nstyp)
-    ie=cio_f(iun,irw,'slfc',slfc,nstyp)
-    ie=cio_f(iun,irw,'emisg',emisg,nstyp)
+    ie=cio(iun,irw,'slden',slden(1:nstyp))
+    ie=cio(iun,irw,'slcpd',slcpd(1:nstyp))
+    ie=cio(iun,irw,'slbs',slbs(1:nstyp))
+    ie=cio(iun,irw,'slcond',slcond(1:nstyp))
+    ie=cio(iun,irw,'slcons',slcons(1:nstyp))
+    ie=cio(iun,irw,'slmsts',slmsts(1:nstyp))
+    ie=cio(iun,irw,'slpots',slpots(1:nstyp))
+    ie=cio(iun,irw,'ssand',ssand(1:nstyp))
+    ie=cio(iun,irw,'sclay',sclay(1:nstyp))
+    ie=cio(iun,irw,'sorgan',sorgan(1:nstyp))
+    ie=cio(iun,irw,'sporo',sporo(1:nstyp))
+    ie=cio(iun,irw,'soilcp',soilcp(1:nstyp))
+    ie=cio(iun,irw,'slfc',slfc(1:nstyp))
+    ie=cio(iun,irw,'emisg',emisg(1:nstyp))
 
-    ie=cio_f(iun,irw,'emisv',emisv,nvtyp+nvtyp_teb)
+    ie=cio(iun,irw,'emisv',emisv(1:nvtyp+nvtyp_teb))
 
-    ie=cio_f(iun,irw,'root',root,nzgmax*(nvtyp+nvtyp_teb))
-    ie=cio_f(iun,irw,'slz',slz,nzg)
+    ie=cio(iun,irw,'root',root)
+    ie=cio(iun,irw,'slz',slz(1:nzg))
 
     ie=cio(iun,irw,'cmin',cmin)
     ie=cio(iun,irw,'corg',corg)
