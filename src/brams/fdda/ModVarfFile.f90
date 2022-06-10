@@ -1,5 +1,8 @@
 module ModVarfFile
 
+  use ModRamsReadHeader, only: &
+       rams_read_header
+  
   use ModRcio, only: &
        cio
   

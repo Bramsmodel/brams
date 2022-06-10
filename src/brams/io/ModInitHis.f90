@@ -7,6 +7,9 @@
 !###########################################################################
 module ModInitHis
 
+  use ModRamsReadHeader, only: &
+       rams_read_header
+  
   use ModRinit, only: &
        refs3d
 

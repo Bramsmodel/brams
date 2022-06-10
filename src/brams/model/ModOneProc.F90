@@ -34,6 +34,9 @@ module ModOneProc
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModRecycle, only: &
+       recycle
+  
   use ModChemAsgen, only: &
        chem_isan_driver
   

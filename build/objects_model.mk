@@ -159,7 +159,7 @@ OBJ_MOD = \
 	adap_init.o \
 	ModOneProc.o \
 	ModMemAlloc.o   \
-	rams_read_header.o \
+	ModRamsReadHeader.o \
 	ModRanlavg.o \
 	ModRbnd.o \
 	ModRcio.o \
@@ -171,7 +171,7 @@ OBJ_MOD = \
 	ModControlVars.o \
 	ModParallelEnvironment.o  \
 	read_ralph.o \
-	recycle.o  \
+	ModRecycle.o  \
 	ref_sounding.o \
 	refstate.o \
 	rgrad.o \
