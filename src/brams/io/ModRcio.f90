@@ -7,6 +7,9 @@
 !###########################################################################
 module ModRcio
 
+  use ModParallelEnvironment, only: &
+       MsgDump
+
   use io_params, only: &
        ioutput, &
        iinput, &
@@ -200,8 +203,86 @@ module ModRcio
 
   public :: DumpIOHeadTable
 
+  public :: cio
+
+  interface cio
+     module procedure cio_i_s
+     module procedure cio_i_1d
+  end interface cio
 contains
 
+
+  integer function cio_i_s(iun,irw,cstr,ia)
+    integer, intent(in) :: iun
+    integer, intent(in) :: irw
+    character(len=*), intent(in) :: cstr
+    integer :: ia
+
+    character(len=256) :: string
+    integer :: nn
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(cio_i_s)**"
+    
+    if (irw == 1) then
+       call cio_pos_file (iun,cstr,cio_i_s)
+       if (cio_i_s == 1) then
+          write(str(1),"(i8)") iun
+          call fatal_error(h//" string "//cstr//&
+               " not found at unit "//trim(adjustl(str(1))))
+       end if
+       read(iun,*) nn
+       read(iun,*) ia
+    else if (irw == 2) then
+       write(iun,"('__',a)") cstr
+       write(iun,*) 1
+       write(iun,"(i6)") ia
+       cio_i_s=0
+    else
+       write(str(1),"(i8)") irw
+       call fatal_error(h//" invoked with unknown irw="//&
+            trim(adjustl(str(1))))
+    end if
+  end function cio_i_s
+
+
+
+
+    integer function cio_i_1d(iun,irw,cstr,ia)
+    integer, intent(in) :: iun
+    integer, intent(in) :: irw
+    character(len=*), intent(in) :: cstr
+    integer :: ia(:)
+
+    character(len=256) :: string
+    integer :: nn
+    integer :: i
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(cio_i_1d)**"
+    
+    if (irw == 1) then
+       call cio_pos_file (iun,cstr,cio_i_1d)
+       if (cio_i_1d == 1) then
+          write(str(1),"(i8)") iun
+          call fatal_error(h//" string "//cstr//&
+               " not found at unit "//trim(adjustl(str(1))))
+       end if
+       read(iun,*) nn
+       read(iun,*) ia
+    else if (irw == 2) then
+       nn=size(ia)
+       write(iun,"('__',a)") cstr
+       write(iun,*) nn
+       write(iun,"(i6)") (ia(i),i=1,nn)
+       cio_i_1d=0
+    else
+       write(str(1),"(i8)") irw
+       call fatal_error(h//" invoked with unknown irw="//&
+            trim(adjustl(str(1))))
+    end if
+  end function cio_i_1d
+
+  
+    
   subroutine DumpIOHeadTable(oneIOFileDS, oneNamelistFile)
 
     type(IOFileDS), intent(inout) :: oneIOFileDS
@@ -279,6 +360,10 @@ contains
     character(len=2) :: cng
     integer :: irw,ie,ng
 
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(commio)**"
+    logical, parameter :: dumpLocal=.true.
+
     !**(JP)**
     ! variables originaly declared at mem_turb but not referenced elsewhere
     ! still dumped at XXX-head.txt to maintain reproducibility
@@ -286,18 +371,24 @@ contains
     real, parameter :: brunt=0.0
     real, parameter :: rmin=0.0
     real, parameter :: rmax=0.0
+    
+    if (io == 'READ') then
+       irw=1
+    else if (io == 'WRITE') then
+       irw=2
+    else
+       call fatal_error(h//" invoked with io not READ or WRITE, but **"//&
+            io//"**")
+    end if
 
-    IF(io.eq.'READ') irw=1
-    IF(io.eq.'WRITE') irw=2
-
-    ie=cio_i(iun,irw,'iversion',iversion,1)
+    ie=cio(iun,irw,'iversion',iversion)
     ie=cio_c(iun,irw,'expnme',expnme,1)
-    ie=cio_i(iun,irw,'ioutput',ioutput,1)
-    ie=cio_i(iun,irw,'if_adap',if_adap,1)
-    ie=cio_i(iun,irw,'ngrids',ngrids,1)
-    ie=cio_i(iun,irw,'nzg',nzg,1)
-    ie=cio_i(iun,irw,'nzs',nzs,1)
-    ie=cio_i(iun,irw,'naddsc',naddsc,1)
+    ie=cio(iun,irw,'ioutput',ioutput)
+    ie=cio(iun,irw,'if_adap',if_adap)
+    ie=cio(iun,irw,'ngrids',ngrids)
+    ie=cio(iun,irw,'nzg',nzg)
+    ie=cio(iun,irw,'nzs',nzs)
+    ie=cio(iun,irw,'naddsc',naddsc)
     ie=cio_f(iun,irw,'time',time,1)
     ie=cio_f(iun,irw,'ztop',ztop,1)
     ie=cio_f(iun,irw,'polelat',polelat,1)
@@ -305,22 +396,22 @@ contains
     ie=cio_f(iun,irw,'dzrat',dzrat,1)
     ie=cio_f(iun,irw,'dzmax',dzmax,1)
 
-    ie=cio_i(iun,irw,'nnxp',nnxp,ngrids)
-    ie=cio_i(iun,irw,'nnyp',nnyp,ngrids)
-    ie=cio_i(iun,irw,'nnzp',nnzp,ngrids)
-    ie=cio_i(iun,irw,'nnqparm',nnqparm,ngrids)
-    ie=cio_i(iun,irw,'nndtrat',nndtrat,ngrids)
-    ie=cio_i(iun,irw,'nstratx',nstratx,ngrids)
-    ie=cio_i(iun,irw,'nstraty',nstraty,ngrids)
-    ie=cio_i(iun,irw,'ngbegun',ngbegun,ngrids)
-    ie=cio_i(iun,irw,'nnacoust',nnacoust,ngrids)
-    ie=cio_i(iun,irw,'nxtnest',nxtnest,ngrids)
-    ie=cio_i(iun,irw,'nnsttop',nnsttop,ngrids)
-    ie=cio_i(iun,irw,'nnstbot',nnstbot,ngrids)
-    ie=cio_i(iun,irw,'ninest',ninest,ngrids)
-    ie=cio_i(iun,irw,'njnest',njnest,ngrids)
-    ie=cio_i(iun,irw,'nknest',nknest,ngrids)
-    ie=cio_i(iun,irw,'idiffk',oneNamelistFile%idiffk,ngrids)
+    ie=cio(iun,irw,'nnxp',nnxp(1:ngrids))
+    ie=cio(iun,irw,'nnyp',nnyp(1:ngrids))
+    ie=cio(iun,irw,'nnzp',nnzp(1:ngrids))
+    ie=cio(iun,irw,'nnqparm',nnqparm(1:ngrids))
+    ie=cio(iun,irw,'nndtrat',nndtrat(1:ngrids))
+    ie=cio(iun,irw,'nstratx',nstratx(1:ngrids))
+    ie=cio(iun,irw,'nstraty',nstraty(1:ngrids))
+    ie=cio(iun,irw,'ngbegun',ngbegun(1:ngrids))
+    ie=cio(iun,irw,'nnacoust',nnacoust(1:ngrids))
+    ie=cio(iun,irw,'nxtnest',nxtnest(1:ngrids))
+    ie=cio(iun,irw,'nnsttop',nnsttop(1:ngrids))
+    ie=cio(iun,irw,'nnstbot',nnstbot(1:ngrids))
+    ie=cio(iun,irw,'ninest',ninest(1:ngrids))
+    ie=cio(iun,irw,'njnest',njnest(1:ngrids))
+    ie=cio(iun,irw,'nknest',nknest(1:ngrids))
+    ie=cio(iun,irw,'idiffk',oneNamelistFile%idiffk(1:ngrids))
     ie=cio_f(iun,irw,'gridu',gridu,ngrids)
     ie=cio_f(iun,irw,'gridv',gridv,ngrids)
     ie=cio_f(iun,irw,'akmin',oneNamelistFile%akmin,ngrids)
@@ -339,10 +430,10 @@ contains
     ie=cio_f(iun,irw,'plonn',plonn,ngrids)
     ie=cio_f(iun,irw,'zz',zz,nnzp(1))
 
-    ie=cio_i(iun,irw,'nestz1',nestz1,1)
-    ie=cio_i(iun,irw,'nestz2',nestz2,1)
-    ie=cio_i(iun,irw,'nstratz1',nstratz1,nnzp(1))
-    ie=cio_i(iun,irw,'nstratz2',nstratz2,nnzp(1))
+    ie=cio(iun,irw,'nestz1',nestz1)
+    ie=cio(iun,irw,'nestz2',nestz2)
+    ie=cio(iun,irw,'nstratz1',nstratz1(1:nnzp(1)))
+    ie=cio(iun,irw,'nstratz2',nstratz2(1:nnzp(1)))
 
     do ng=1,ngrids
        write(cng,1) ng
@@ -363,55 +454,55 @@ contains
        ie=cio_f(iun,irw,'rt01dn'//cng,rt01dn(1,ng),nnzp(ng))
     enddo
 
-    ie=cio_i(iun,irw,'kroot',kroot,nvtyp+nvtyp_teb)
+    ie=cio(iun,irw,'kroot',kroot(1:nvtyp+nvtyp_teb))
 
-    ie=cio_i(iun,irw,'itopo',itopo,1)
-    ie=cio_i(iun,irw,'initial',initial,1)
-    ie=cio_i(iun,irw,'impl',impl,1)
-    ie=cio_i(iun,irw,'iinput',iinput,1)
-    ie=cio_i(iun,irw,'jdim',jdim,1)
-    ie=cio_i(iun,irw,'iadvl',iadvl,1)
-    ie=cio_i(iun,irw,'iadvf',iadvf,1)
-    ie=cio_i(iun,irw,'lonrad',lonrad,1)
-    ie=cio_i(iun,irw,'lsflg',lsflg,1)
-    ie=cio_i(iun,irw,'ibnd',ibnd,1)
-    ie=cio_i(iun,irw,'jbnd',jbnd,1)
-    ie=cio_i(iun,irw,'icorflg',icorflg,1)
-    ie=cio_i(iun,irw,'vveldamp',vveldamp,1)
+    ie=cio(iun,irw,'itopo',itopo)
+    ie=cio(iun,irw,'initial',initial)
+    ie=cio(iun,irw,'impl',impl)
+    ie=cio(iun,irw,'iinput',iinput)
+    ie=cio(iun,irw,'jdim',jdim)
+    ie=cio(iun,irw,'iadvl',iadvl)
+    ie=cio(iun,irw,'iadvf',iadvf)
+    ie=cio(iun,irw,'lonrad',lonrad)
+    ie=cio(iun,irw,'lsflg',lsflg)
+    ie=cio(iun,irw,'ibnd',ibnd)
+    ie=cio(iun,irw,'jbnd',jbnd)
+    ie=cio(iun,irw,'icorflg',icorflg)
+    ie=cio(iun,irw,'vveldamp',vveldamp)
     !--(DMK-CCATT)---------------------------------------------------------
     ![ML
-    ie=cio_i(iun,irw,'iexev',iexev,1)
-    ie=cio_i(iun,irw,'imassflx',imassflx,1)
+    ie=cio(iun,irw,'iexev',iexev)
+    ie=cio(iun,irw,'imassflx',imassflx)
     !ML]
     !--(DMK-CCATT-END)-----------------------------------------------------
-    ie=cio_i(iun,irw,'ilwrtyp',ilwrtyp,1)
-    ie=cio_i(iun,irw,'iswrtyp',iswrtyp,1)
-    ie=cio_i(iun,irw,'iref',iref,1)
-    ie=cio_i(iun,irw,'jref',jref,1)
-    ie=cio_i(iun,irw,'ihtran',ihtran,1)
-    ie=cio_i(iun,irw,'nfpt',nfpt,1)
-    ie=cio_i(iun,irw,'nsndg',nsndg,1)
-    ie=cio_i(iun,irw,'ideltat',ideltat,1)
-    ie=cio_i(iun,irw,'nacoust',nacoust,1)
-    ie=cio_i(iun,irw,'iflag',iflag,1)
-    ie=cio_i(iun,irw,'ntopsmth',ntopsmth,1)
-    ie=cio_i(iun,irw,'izflat',izflat,1)
-    ie=cio_i(iun,irw,'iyear1',iyear1,1)
-    ie=cio_i(iun,irw,'imonth1',imonth1,1)
-    ie=cio_i(iun,irw,'idate1',idate1,1)
-    ie=cio_i(iun,irw,'itime1',itime1,1)
-    ie=cio_i(iun,irw,'isfcl',isfcl,1)
-    ie=cio_i(iun,irw,'npatch',npatch,1)
-    ie=cio_i(iun,irw,'nvegpat',nvegpat,1)
-    ie=cio_i(iun,irw,'mcphys_type',mcphys_type,1)
-    ie=cio_i(iun,irw,'level',level,1)
-    ie=cio_i(iun,irw,'irain',irain,1)
-    ie=cio_i(iun,irw,'ipris',ipris,1)
-    ie=cio_i(iun,irw,'isnow',isnow,1)
-    ie=cio_i(iun,irw,'iaggr',iaggr,1)
-    ie=cio_i(iun,irw,'igraup',igraup,1)
-    ie=cio_i(iun,irw,'icloud',icloud,1)
-    ie=cio_i(iun,irw,'ihail',ihail,1)
+    ie=cio(iun,irw,'ilwrtyp',ilwrtyp)
+    ie=cio(iun,irw,'iswrtyp',iswrtyp)
+    ie=cio(iun,irw,'iref',iref)
+    ie=cio(iun,irw,'jref',jref)
+    ie=cio(iun,irw,'ihtran',ihtran)
+    ie=cio(iun,irw,'nfpt',nfpt)
+    ie=cio(iun,irw,'nsndg',nsndg)
+    ie=cio(iun,irw,'ideltat',ideltat)
+    ie=cio(iun,irw,'nacoust',nacoust)
+    ie=cio(iun,irw,'iflag',iflag)
+    ie=cio(iun,irw,'ntopsmth',ntopsmth)
+    ie=cio(iun,irw,'izflat',izflat)
+    ie=cio(iun,irw,'iyear1',iyear1)
+    ie=cio(iun,irw,'imonth1',imonth1)
+    ie=cio(iun,irw,'idate1',idate1)
+    ie=cio(iun,irw,'itime1',itime1)
+    ie=cio(iun,irw,'isfcl',isfcl)
+    ie=cio(iun,irw,'npatch',npatch)
+    ie=cio(iun,irw,'nvegpat',nvegpat)
+    ie=cio(iun,irw,'mcphys_type',mcphys_type)
+    ie=cio(iun,irw,'level',level)
+    ie=cio(iun,irw,'irain',irain)
+    ie=cio(iun,irw,'ipris',ipris)
+    ie=cio(iun,irw,'isnow',isnow)
+    ie=cio(iun,irw,'iaggr',iaggr)
+    ie=cio(iun,irw,'igraup',igraup)
+    ie=cio(iun,irw,'icloud',icloud)
+    ie=cio(iun,irw,'ihail',ihail)
 
     ie=cio_f(iun,irw,'brunt',brunt,1)
     ie=cio_f(iun,irw,'wcldbs',wcldbs,1)
