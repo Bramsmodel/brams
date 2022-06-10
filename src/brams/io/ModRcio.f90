@@ -208,6 +208,7 @@ module ModRcio
      module procedure cio_i_s
      module procedure cio_i_1d
      module procedure cio_c_s
+     module procedure cio_f_s
   end interface cio
 contains
 
@@ -311,6 +312,39 @@ contains
             trim(adjustl(str(1))))
     endif
   end function cio_c_s
+
+
+
+  integer function cio_f_s(iun,irw,cstr,ia)
+    integer, intent(in) :: iun
+    integer, intent(in) :: irw
+    character(len=*), intent(in) :: cstr
+    real :: ia
+
+    integer :: nn
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(cio_f_s)**"
+
+    if (irw == 1) then
+       call cio_pos_file (iun,cstr,cio_f_s)
+       if (cio_f_s == 1) then
+          write(str(1),"(i8)") iun
+          call fatal_error(h//" string "//cstr//&
+               " not found at unit "//trim(adjustl(str(1))))
+       end if
+       read(iun,*) nn
+       read(iun,"(a)") ia
+    else if (irw == 2) then
+       write(iun,"('__',a)") cstr
+       write(iun,*) 1
+       write(iun,"(e16.8)") ia
+       cio_f_s=0
+    else
+       write(str(1),"(i8)") irw
+       call fatal_error(h//" invoked with unknown irw="//&
+            trim(adjustl(str(1))))
+    endif
+  end function cio_f_s
   
     
   subroutine DumpIOHeadTable(oneIOFileDS, oneNamelistFile)
@@ -419,12 +453,12 @@ contains
     ie=cio(iun,irw,'nzg',nzg)
     ie=cio(iun,irw,'nzs',nzs)
     ie=cio(iun,irw,'naddsc',naddsc)
-    ie=cio_f(iun,irw,'time',time,1)
-    ie=cio_f(iun,irw,'ztop',ztop,1)
-    ie=cio_f(iun,irw,'polelat',polelat,1)
-    ie=cio_f(iun,irw,'polelon',polelon,1)
-    ie=cio_f(iun,irw,'dzrat',dzrat,1)
-    ie=cio_f(iun,irw,'dzmax',dzmax,1)
+    ie=cio(iun,irw,'time',time)
+    ie=cio(iun,irw,'ztop',ztop)
+    ie=cio(iun,irw,'polelat',polelat)
+    ie=cio(iun,irw,'polelon',polelon)
+    ie=cio(iun,irw,'dzrat',dzrat)
+    ie=cio(iun,irw,'dzmax',dzmax)
 
     ie=cio(iun,irw,'nnxp',nnxp(1:ngrids))
     ie=cio(iun,irw,'nnyp',nnyp(1:ngrids))
@@ -534,28 +568,28 @@ contains
     ie=cio(iun,irw,'icloud',icloud)
     ie=cio(iun,irw,'ihail',ihail)
 
-    ie=cio_f(iun,irw,'brunt',brunt,1)
-    ie=cio_f(iun,irw,'wcldbs',wcldbs,1)
-    ie=cio_f(iun,irw,'drtcon',drtcon,1)
-    ie=cio_f(iun,irw,'rmin',rmin,1)
-    ie=cio_f(iun,irw,'radfrq',radfrq,1)
-    ie=cio_f(iun,irw,'distim',distim,1)
-    ie=cio_f(iun,irw,'seatmp',seatmp,1)
-    ie=cio_f(iun,irw,'confrq',confrq,1)
-    ie=cio_f(iun,irw,'rmax',rmax,1)
-    ie=cio_f(iun,irw,'eps',eps,1)
-    ie=cio_f(iun,irw,'albedo',albedo,1)
-    ie=cio_f(iun,irw,'dthcon',dthcon,1)
-    ie=cio_f(iun,irw,'cphas',cphas,1)
-    ie=cio_f(iun,irw,'topref',topref,1)
-    ie=cio_f(iun,irw,'sspct',sspct,1)
-    ie=cio_f(iun,irw,'rparm',rparm,1)
-    ie=cio_f(iun,irw,'pparm',pparm,1)
-    ie=cio_f(iun,irw,'sparm',sparm,1)
-    ie=cio_f(iun,irw,'aparm',aparm,1)
-    ie=cio_f(iun,irw,'gparm',gparm,1)
-    ie=cio_f(iun,irw,'cparm',cparm,1)
-    ie=cio_f(iun,irw,'hparm',hparm,1)
+    ie=cio(iun,irw,'brunt',brunt)
+    ie=cio(iun,irw,'wcldbs',wcldbs)
+    ie=cio(iun,irw,'drtcon',drtcon)
+    ie=cio(iun,irw,'rmin',rmin)
+    ie=cio(iun,irw,'radfrq',radfrq)
+    ie=cio(iun,irw,'distim',distim)
+    ie=cio(iun,irw,'seatmp',seatmp)
+    ie=cio(iun,irw,'confrq',confrq)
+    ie=cio(iun,irw,'rmax',rmax)
+    ie=cio(iun,irw,'eps',eps)
+    ie=cio(iun,irw,'albedo',albedo)
+    ie=cio(iun,irw,'dthcon',dthcon)
+    ie=cio(iun,irw,'cphas',cphas)
+    ie=cio(iun,irw,'topref',topref)
+    ie=cio(iun,irw,'sspct',sspct)
+    ie=cio(iun,irw,'rparm',rparm)
+    ie=cio(iun,irw,'pparm',pparm)
+    ie=cio(iun,irw,'sparm',sparm)
+    ie=cio(iun,irw,'aparm',aparm)
+    ie=cio(iun,irw,'gparm',gparm)
+    ie=cio(iun,irw,'cparm',cparm)
+    ie=cio(iun,irw,'hparm',hparm)
 
     ie=cio_f(iun,irw,'cfmas',cfmas,nhcat)
     ie=cio_f(iun,irw,'pwmas',pwmas,nhcat)
@@ -587,12 +621,12 @@ contains
     ie=cio_f(iun,irw,'root',root,nzgmax*(nvtyp+nvtyp_teb))
     ie=cio_f(iun,irw,'slz',slz,nzg)
 
-    ie=cio_f(iun,irw,'cmin',cmin,1)
-    ie=cio_f(iun,irw,'corg',corg,1)
-    ie=cio_f(iun,irw,'cwat',cwat,1)
-    ie=cio_f(iun,irw,'cair',cair,1)
-    ie=cio_f(iun,irw,'cka',cka,1)
-    ie=cio_f(iun,irw,'ckw',ckw,1)
+    ie=cio(iun,irw,'cmin',cmin)
+    ie=cio(iun,irw,'corg',corg)
+    ie=cio(iun,irw,'cwat',cwat)
+    ie=cio(iun,irw,'cair',cair)
+    ie=cio(iun,irw,'cka',cka)
+    ie=cio(iun,irw,'ckw',ckw)
 
     return
   end subroutine commio
