@@ -202,12 +202,12 @@ module ModRcio
   private
 
   public :: DumpIOHeadTable
-
   public :: cio
 
   interface cio
      module procedure cio_i_s
      module procedure cio_i_1d
+     module procedure cio_c_s
   end interface cio
 contains
 
@@ -218,7 +218,6 @@ contains
     character(len=*), intent(in) :: cstr
     integer :: ia
 
-    character(len=256) :: string
     integer :: nn
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(cio_i_s)**"
@@ -253,7 +252,6 @@ contains
     character(len=*), intent(in) :: cstr
     integer :: ia(:)
 
-    character(len=256) :: string
     integer :: nn
     integer :: i
     character(len=8) :: str(10)
@@ -281,6 +279,38 @@ contains
     end if
   end function cio_i_1d
 
+
+
+  integer function cio_c_s(iun,irw,cstr,ia)
+    integer, intent(in) :: iun
+    integer, intent(in) :: irw
+    character(len=*), intent(in) :: cstr
+    character(len=*) :: ia
+
+    integer :: nn
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(cio_c_s)**"
+
+    if (irw == 1) then
+       call cio_pos_file (iun,cstr,cio_c_s)
+       if (cio_c_s == 1) then
+          write(str(1),"(i8)") iun
+          call fatal_error(h//" string "//cstr//&
+               " not found at unit "//trim(adjustl(str(1))))
+       end if
+       read(iun,*) nn
+       read(iun,"(a)") ia
+    else if (irw == 2) then
+       write(iun,"('__',a)") cstr
+       write(iun,*) 1
+       write(iun,"(a)") ia
+       cio_c_s=0
+    else
+       write(str(1),"(i8)") irw
+       call fatal_error(h//" invoked with unknown irw="//&
+            trim(adjustl(str(1))))
+    endif
+  end function cio_c_s
   
     
   subroutine DumpIOHeadTable(oneIOFileDS, oneNamelistFile)
@@ -382,7 +412,7 @@ contains
     end if
 
     ie=cio(iun,irw,'iversion',iversion)
-    ie=cio_c(iun,irw,'expnme',expnme,1)
+    ie=cio(iun,irw,'expnme',expnme)
     ie=cio(iun,irw,'ioutput',ioutput)
     ie=cio(iun,irw,'if_adap',if_adap)
     ie=cio(iun,irw,'ngrids',ngrids)
