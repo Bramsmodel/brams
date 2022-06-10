@@ -8,6 +8,9 @@
 
 subroutine first_RAMS(np1,np2,np3,ui2,vi2,pi2,ti2,ri2)
 
+  use ModRcio, only: &
+       cio
+  
   use grid_dims, only: &
        maxgrds
 
@@ -69,7 +72,7 @@ subroutine first_RAMS(np1,np2,np3,ui2,vi2,pi2,ti2,ri2)
   character(len=1) :: cgrid
   character(len=2) :: cng
 
-  integer, external :: cio_i, cio_f, RAMS_getvar
+  integer, external :: RAMS_getvar
 
   real, allocatable :: plt(:,:)
   real, allocatable :: pltc(:,:)
@@ -100,36 +103,28 @@ subroutine first_RAMS(np1,np2,np3,ui2,vi2,pi2,ti2,ri2)
   ! get stuff from the 1st guess run
   irw=1
   iun=10
-  ierr=cio_i(iun,irw,'ngrids',ngridsx,1)
-  ierr=cio_i(iun,irw,'nnxp',nnxpx,ngridsx)
-  ierr=cio_i(iun,irw,'nnyp',nnypx,ngridsx)
-  ierr=cio_i(iun,irw,'nnzp',nnzpx,ngridsx)
-  ierr=cio_i(iun,irw,'nstratx',nstratxx,ngridsx)
-  ierr=cio_i(iun,irw,'nstraty',nstratyx,ngridsx)
-  ierr=cio_i(iun,irw,'nxtnest',nxtnestx,ngridsx)
-  ierr=cio_i(iun,irw,'nnsttop',nnsttopx,ngridsx)
-  ierr=cio_i(iun,irw,'nnstbot',nnstbotx,ngridsx)
-  ierr=cio_i(iun,irw,'ninest',ninestx,ngridsx)
-  ierr=cio_i(iun,irw,'njnest',njnestx,ngridsx)
-  ierr=cio_i(iun,irw,'nknest',nknestx,ngridsx)
+  ierr=cio(iun,irw,'ngrids',ngridsx)
+  ierr=cio(iun,irw,'nnxp',nnxpx(1:ngridsx))
+  ierr=cio(iun,irw,'nnyp',nnypx(1:ngridsx))
+  ierr=cio(iun,irw,'nnzp',nnzpx(1:ngridsx))
+  ierr=cio(iun,irw,'nstratx',nstratxx(1:ngridsx))
+  ierr=cio(iun,irw,'nstraty',nstratyx(1:ngridsx))
+  ierr=cio(iun,irw,'nxtnest',nxtnestx(1:ngridsx))
+  ierr=cio(iun,irw,'nnsttop',nnsttopx(1:ngridsx))
+  ierr=cio(iun,irw,'nnstbot',nnstbotx(1:ngridsx))
+  ierr=cio(iun,irw,'ninest',ninestx(1:ngridsx))
+  ierr=cio(iun,irw,'njnest',njnestx(1:ngridsx))
+  ierr=cio(iun,irw,'nknest',nknestx(1:ngridsx))
 
   do ng=1,ngridsx
      write(cng,1) ng
 1    format(i2.2)
 
-     !! 1d reference state filled in the old arrays
-     !!ierr=cio_f(iun,irw,'u01dn'//cng,u01dn(1,ng),nnzp(ng))
-     !ierr=cio_f(iun,irw,'v01dn'//cng,v01dn(1,ng),nnzp(ng))
-     !ierr=cio_f(iun,irw,'pi01dn'//cng,pi01dn(1,ng),nnzp(ng))
-     !ierr=cio_f(iun,irw,'th01dn'//cng,th01dn(1,ng),nnzp(ng))
-     !ierr=cio_f(iun,irw,'dn01dn'//cng,dn01dn(1,ng),nnzp(ng))
-     !ierr=cio_f(iun,irw,'rt01dn'//cng,rt01dn(1,ng),nnzp(ng))
-
      ! 1d reference state filled in the new arrays
-     ierr=cio_f(iun,irw,'pi01dn'//cng,piref(1,ng),nnzp(ng))
-     ierr=cio_f(iun,irw,'th01dn'//cng,thref(1,ng),nnzp(ng))
-     ierr=cio_f(iun,irw,'dn01dn'//cng,dnref(1,ng),nnzp(ng))
-     ierr=cio_f(iun,irw,'rt01dn'//cng,rtref(1,ng),nnzp(ng))
+     ierr=cio(iun,irw,'pi01dn'//cng,piref(1:nnzp(ng),ng))
+     ierr=cio(iun,irw,'th01dn'//cng,thref(1:nnzp(ng),ng))
+     ierr=cio(iun,irw,'dn01dn'//cng,dnref(1:nnzp(ng),ng))
+     ierr=cio(iun,irw,'rt01dn'//cng,rtref(1:nnzp(ng),ng))
   enddo
 
   close(10)
