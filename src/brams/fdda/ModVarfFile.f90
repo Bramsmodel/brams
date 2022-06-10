@@ -1,5 +1,8 @@
 module ModVarfFile
 
+  use ModRcio, only: &
+       cio
+  
   use ModControlVars, only: &
        ControlVars
   
@@ -680,8 +683,6 @@ contains
     character(len=f_name_length)		:: fileName
 
     logical				:: sameGrid
-    integer, external			:: cio_i
-    integer, external			:: cio_f
     integer, external			:: RAMS_getvar
     integer                             :: imode
     integer				:: ngr
@@ -807,7 +808,7 @@ contains
 
           call rams_f_open(iunhd,fileName,'FORMATTED','OLD','READ',0)
 
-          ie=cio_i(iunhd,1,'ngrids',ngrids1(1),1)
+          ie=cio(iunhd,1,'ngrids',ngrids1(1))
           !print*,"====>In",trim(h),time,initialFlag,trim(flnm)
 
        end if
@@ -979,16 +980,16 @@ contains
        if (mchnum == master_num) then
 
 
-          ie=cio_i(iunhd,1,'nnxp',nnxp1,ngrids1(1))
-          ie=cio_i(iunhd,1,'nnyp',nnyp1,ngrids1(1))
-          ie=cio_i(iunhd,1,'nnzp',nnzp1,ngrids1(1))
-          ie=cio_i(iunhd,1,'npatch',npatch1,1)
-          ie=cio_i(iunhd,1,'nzg',nzg1,1)
-          ie=cio_i(iunhd,1,'nzs',nzs1,1)
-          ie=cio_f(iunhd,1,'time',time1,1)
-          ie=cio_f(iunhd,1,'ztop',ztop1,1)
-          ie=cio_f(iunhd,1,'platn',platn1,ngrids1(1))
-          ie=cio_f(iunhd,1,'plonn',plonn1,ngrids1(1))
+          ie=cio(iunhd,1,'nnxp',nnxp1(1:ngrids1(1)))
+          ie=cio(iunhd,1,'nnyp',nnyp1(1:ngrids1(1)))
+          ie=cio(iunhd,1,'nnzp',nnzp1(1:ngrids1(1)))
+          ie=cio(iunhd,1,'npatch',npatch1)
+          ie=cio(iunhd,1,'nzg',nzg1)
+          ie=cio(iunhd,1,'nzs',nzs1)
+          ie=cio(iunhd,1,'time',time1)
+          ie=cio(iunhd,1,'ztop',ztop1)
+          ie=cio(iunhd,1,'platn',platn1(1:ngrids1(1)))
+          ie=cio(iunhd,1,'plonn',plonn1(1:ngrids1(1)))
 
           if(nzg .ne. nzg1 .or. nzs .ne. nzs1 .or. npatch .ne. npatch1)then
              print*,'LEAF parameters must be same for initial-history start'
@@ -1045,12 +1046,12 @@ contains
 
           do ngr=1,ngrids1(1)
              write(cng,'(i2.2)') ngr
-             ie=cio_f(iunhd,1,'xmn'//cng,xmn1(1,ngr),nnxp1(ngr))
-             ie=cio_f(iunhd,1,'xtn'//cng,xtn1(1,ngr),nnxp1(ngr))
-             ie=cio_f(iunhd,1,'ymn'//cng,ymn1(1,ngr),nnyp1(ngr))
-             ie=cio_f(iunhd,1,'ytn'//cng,ytn1(1,ngr),nnyp1(ngr))
-             ie=cio_f(iunhd,1,'zmn'//cng,zmn1(1,ngr),nnzp1(ngr))
-             ie=cio_f(iunhd,1,'ztn'//cng,ztn1(1,ngr),nnzp1(ngr))
+             ie=cio(iunhd,1,'xmn'//cng,xmn1(1:nnxp1(ngr),ngr))
+             ie=cio(iunhd,1,'xtn'//cng,xtn1(1:nnxp1(ngr),ngr))
+             ie=cio(iunhd,1,'ymn'//cng,ymn1(1:nnyp1(ngr),ngr))
+             ie=cio(iunhd,1,'ytn'//cng,ytn1(1:nnyp1(ngr),ngr))
+             ie=cio(iunhd,1,'zmn'//cng,zmn1(1:nnzp1(ngr),ngr))
+             ie=cio(iunhd,1,'ztn'//cng,ztn1(1:nnzp1(ngr),ngr))
           enddo
           close(iunhd)
           close(inhunt)
