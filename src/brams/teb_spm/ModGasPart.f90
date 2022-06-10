@@ -8,6 +8,9 @@
 
 module ModGasPart
 
+  use ModRcio, only: &
+       cio
+  
   use mem_gaspart, only : &
        gaspart_g, &
        gaspart_vars ! Type
@@ -791,7 +794,6 @@ contains
          nnxp1(maxgrds), nnyp1(maxgrds), nnzp1(maxgrds), nzg1, nzs1, npatch1
     integer :: ie, maxarr, ngr, nc
     character (len=f_name_length) :: hnameinh
-    integer, external  :: cio_i
     integer, parameter :: iunhd=11
 
 
@@ -807,15 +809,15 @@ contains
 
        call rams_f_open(iunhd, chemdata_in(1:len_trim(chemdata_in)), 'FORMATTED', 'OLD', 'READ', 0)
 
-       ie      = cio_i(iunhd, 1, 'ngrids',  ngrids1,  1)
+       ie      = cio(iunhd, 1, 'ngrids',  ngrids1)
        ngridsh = ngrids1
-       ie      = cio_i(iunhd, 1, 'nnxp',    nnxp1,    ngrids1)
-       ie      = cio_i(iunhd, 1, 'nnyp',    nnyp1,    ngrids1)
-       ie      = cio_i(iunhd, 1, 'nnzp',    nnzp1,    ngrids1)
-       ie      = cio_i(iunhd, 1, 'npatch',  npatch1,  1)
-       ie      = cio_i(iunhd, 1, 'nzg',     nzg1,     1)
-       ie      = cio_i(iunhd, 1, 'nzs',     nzs1,     1)
-       ie      = cio_i(iunhd, 1, 'ioutput', ioutput1, 1)
+       ie      = cio(iunhd, 1, 'nnxp',    nnxp1(1:ngrids1))
+       ie      = cio(iunhd, 1, 'nnyp',    nnyp1(1:ngrids1))
+       ie      = cio(iunhd, 1, 'nnzp',    nnzp1(1:ngrids1))
+       ie      = cio(iunhd, 1, 'npatch',  npatch1)
+       ie      = cio(iunhd, 1, 'nzg',     nzg1)
+       ie      = cio(iunhd, 1, 'nzs',     nzs1)
+       ie      = cio(iunhd, 1, 'ioutput', ioutput1)
 
        ! Find maximum size of any array on history file.
        ! Allocate scratch array of this size.
