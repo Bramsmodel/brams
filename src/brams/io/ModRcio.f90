@@ -9,7 +9,7 @@ module ModRcio
 
   use iso_fortran_env, only: &
        real64
-  
+
   use ModParallelEnvironment, only: &
        MsgDump
 
@@ -199,7 +199,7 @@ module ModRcio
 
   use an_header, only: &
        IOFileDS
-  
+
   implicit none
 
   private
@@ -228,7 +228,7 @@ contains
     integer :: nn
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(cio_i_s)**"
-    
+
     if (irw == 1) then
        call cio_pos_file (iun,cstr,cio_i_s)
        if (cio_i_s == 1) then
@@ -253,7 +253,7 @@ contains
 
 
 
-    integer function cio_i_1d(iun,irw,cstr,ia)
+  integer function cio_i_1d(iun,irw,cstr,ia)
     integer, intent(in) :: iun
     integer, intent(in) :: irw
     character(len=*), intent(in) :: cstr
@@ -263,7 +263,7 @@ contains
     integer :: i
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(cio_i_1d)**"
-    
+
     if (irw == 1) then
        call cio_pos_file (iun,cstr,cio_i_1d)
        if (cio_i_1d == 1) then
@@ -427,7 +427,7 @@ contains
        call fatal_error(h//" invoked with unknown irw="//&
             trim(adjustl(str(1))))
     endif
-  end function cio_f_2d  
+  end function cio_f_2d
 
 
 
@@ -460,11 +460,11 @@ contains
        call fatal_error(h//" invoked with unknown irw="//&
             trim(adjustl(str(1))))
     endif
-  end function cio_f8_s  
-  
+  end function cio_f8_s
 
 
-  
+
+
   subroutine DumpIOHeadTable(oneIOFileDS, oneNamelistFile)
     type(IOFileDS), intent(inout) :: oneIOFileDS
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
@@ -483,7 +483,7 @@ contains
     if (.not. oneIOFileDS%enable) return
 
     ! find available Fortran unit
-    
+
     do iunit = unitLow, unitHigh
        inquire (unit=iunit, opened=op)
        if (.not. op) exit
@@ -525,15 +525,15 @@ contains
     oneIOFileDS%unit = -1
   end subroutine DumpIOHeadTable
 
-  
 
-  
+
+
   subroutine commio (cfile,io,iun,oneNamelistFile)
     character(len=*) :: cfile !**(JP)** not used
     character(len=*), intent(in) :: io
     integer, intent(in) :: iun
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
-    
+
 
     !     This routine reads or writes the history and analysis file common blocks.
 
@@ -551,7 +551,7 @@ contains
     real, parameter :: brunt=0.0
     real, parameter :: rmin=0.0
     real, parameter :: rmax=0.0
-    
+
     if (io == 'READ') then
        irw=1
     else if (io == 'WRITE') then
@@ -746,153 +746,153 @@ contains
 
     return
   end subroutine commio
-end module ModRcio
 
-!---------------------------------------------------------
+  !---------------------------------------------------------
 
-subroutine cio_pos_file(iun,cstr,ierr)
-  implicit none
-  integer :: iun,ierr
-  character(len=*) :: cstr
-  character(len=256) :: line,csearch
+  subroutine cio_pos_file(iun,cstr,ierr)
+    implicit none
+    integer :: iun,ierr
+    character(len=*) :: cstr
+    character(len=256) :: line,csearch
 
-  integer :: nl,nc,iend,ilen
+    integer :: nl,nc,iend,ilen
 
-  !      print*,'cio_pos:',iun,cstr
+    !      print*,'cio_pos:',iun,cstr
 
-  iend=0
-1 continue
-  do nl=1,1000000
-     read(iun,10,end=100) line
-10   format(a)
-     ilen=len(cstr)
-     csearch='__'//cstr(1:ilen)
-     nc=index(line,csearch(1:ilen+2) )
-     !         print*,'cio_pos:',nl,nc,line
-     if(nc.eq.1) then
-        ierr=0
-        !            print*,'---- Name found on header file:',cstr
-        return
-     endif
-  enddo
+    iend=0
+1   continue
+    do nl=1,1000000
+       read(iun,10,end=100) line
+10     format(a)
+       ilen=len(cstr)
+       csearch='__'//cstr(1:ilen)
+       nc=index(line,csearch(1:ilen+2) )
+       !         print*,'cio_pos:',nl,nc,line
+       if(nc.eq.1) then
+          ierr=0
+          !            print*,'---- Name found on header file:',cstr
+          return
+       endif
+    enddo
 
 100 continue
-  if(iend.eq.1) then
-     ierr=1
-     print*,'---- Name NOT found on header file:',cstr
-     rewind(iun)
-     return
-  endif
-  rewind(iun)
-  iend=1
-  goto 1
+    if(iend.eq.1) then
+       ierr=1
+       print*,'---- Name NOT found on header file:',cstr
+       rewind(iun)
+       return
+    endif
+    rewind(iun)
+    iend=1
+    goto 1
 
-end subroutine cio_pos_file
+  end subroutine cio_pos_file
 
-!---------------------------------------------------------
+  !---------------------------------------------------------
 
-integer function cio_i(iun,irw,cstr,ia,n)
-  implicit none
-  integer :: iun,irw,n
-  integer, dimension(n) :: ia
-  character(len=*) :: cstr
-  character(len=256) :: string
-  integer :: nn,i
-
-  if (irw.eq.1) then
-     call cio_pos_file (iun,cstr,cio_i)
-     if(cio_i.eq.1) return
-     read(iun,*) nn
-     read(iun,*) (ia(i),i=1,nn)
-  elseif(irw.eq.2) then
-     write(iun,20) cstr
-20   format('__',a)
-     write(iun,*) n
-     write(iun,11) (ia(i),i=1,n)
-11   format(i6)
-     cio_i=0
-  endif
-
-  return
-end function cio_i
-
-!---------------------------------------------------------
-
-integer function cio_f(iun,irw,cstr,ia,n)
-  implicit none
-  integer :: iun,irw,n
-  real, dimension(n) :: ia
-  character(len=*) :: cstr
-  character(len=256) :: string
-  integer :: nn,i
-
-  if (irw.eq.1) then
-     call cio_pos_file (iun,cstr,cio_f)
-     if(cio_f.eq.1) return
-     read(iun,*) nn
-     read(iun,*) (ia(i),i=1,nn)
-  elseif(irw.eq.2) then
-     write(iun,20) cstr
-20   format('__',a)
-     write(iun,*) n
-     write(iun,11) (ia(i),i=1,n)
-11   format(e16.8)
-     cio_f=0
-  endif
-
-  return
-end function cio_f
-
-!---------------------------------------------------------
-
-integer function cio_f8(iun,irw,cstr,ia,n)
-  implicit none
-  integer :: iun,irw,n
-  real(kind=8) :: ia(*)
-  character(len=*) :: cstr
-  character(len=256) :: string
-  integer :: nn,i
-
-  if (irw.eq.1) then
-     call cio_pos_file (iun,cstr,cio_f8)
-     if(cio_f8.eq.1) return
-     read(iun,*) nn
-     read(iun,*) (ia(i),i=1,nn)
-  elseif(irw.eq.2) then
-     write(iun,20) cstr
-20   format('__',a)
-     write(iun,*) n
-     write(iun,11) (ia(i),i=1,n)
-11   format(e24.16)
-     cio_f8=0
-  endif
-
-  return
-end function cio_f8
-
-!---------------------------------------------------------
-
-integer function cio_c(iun,irw,cstr,ia,n)
-  implicit none
-  integer :: iun,irw,n
-  character(len=*) :: ia(*)
-  character(len=*) :: cstr
-  character(len=256) :: string
-  integer :: nn,i
-
-  if (irw.eq.1) then
-     call cio_pos_file (iun,cstr,cio_c)
-     if(cio_c.eq.1) return
-     read(iun,*) nn
-     read(iun,10) (ia(i),i=1,nn)
-  elseif(irw.eq.2) then
-     write(iun,20) cstr
-20   format('__',a)
-     write(iun,*) n
-     write(iun,10) (ia(i),i=1,n)
-10   format(a)
-     cio_c=0
-  endif
-
-  return
-end function cio_c
+!!$integer function cio_i(iun,irw,cstr,ia,n)
+!!$  implicit none
+!!$  integer :: iun,irw,n
+!!$  integer, dimension(n) :: ia
+!!$  character(len=*) :: cstr
+!!$  character(len=256) :: string
+!!$  integer :: nn,i
+!!$
+!!$  if (irw.eq.1) then
+!!$     call cio_pos_file (iun,cstr,cio_i)
+!!$     if(cio_i.eq.1) return
+!!$     read(iun,*) nn
+!!$     read(iun,*) (ia(i),i=1,nn)
+!!$  elseif(irw.eq.2) then
+!!$     write(iun,20) cstr
+!!$20   format('__',a)
+!!$     write(iun,*) n
+!!$     write(iun,11) (ia(i),i=1,n)
+!!$11   format(i6)
+!!$     cio_i=0
+!!$  endif
+!!$
+!!$  return
+!!$end function cio_i
+!!$
+!!$!---------------------------------------------------------
+!!$
+!!$integer function cio_f(iun,irw,cstr,ia,n)
+!!$  implicit none
+!!$  integer :: iun,irw,n
+!!$  real, dimension(n) :: ia
+!!$  character(len=*) :: cstr
+!!$  character(len=256) :: string
+!!$  integer :: nn,i
+!!$
+!!$  if (irw.eq.1) then
+!!$     call cio_pos_file (iun,cstr,cio_f)
+!!$     if(cio_f.eq.1) return
+!!$     read(iun,*) nn
+!!$     read(iun,*) (ia(i),i=1,nn)
+!!$  elseif(irw.eq.2) then
+!!$     write(iun,20) cstr
+!!$20   format('__',a)
+!!$     write(iun,*) n
+!!$     write(iun,11) (ia(i),i=1,n)
+!!$11   format(e16.8)
+!!$     cio_f=0
+!!$  endif
+!!$
+!!$  return
+!!$end function cio_f
+!!$
+!!$!---------------------------------------------------------
+!!$
+!!$integer function cio_f8(iun,irw,cstr,ia,n)
+!!$  implicit none
+!!$  integer :: iun,irw,n
+!!$  real(kind=8) :: ia(*)
+!!$  character(len=*) :: cstr
+!!$  character(len=256) :: string
+!!$  integer :: nn,i
+!!$
+!!$  if (irw.eq.1) then
+!!$     call cio_pos_file (iun,cstr,cio_f8)
+!!$     if(cio_f8.eq.1) return
+!!$     read(iun,*) nn
+!!$     read(iun,*) (ia(i),i=1,nn)
+!!$  elseif(irw.eq.2) then
+!!$     write(iun,20) cstr
+!!$20   format('__',a)
+!!$     write(iun,*) n
+!!$     write(iun,11) (ia(i),i=1,n)
+!!$11   format(e24.16)
+!!$     cio_f8=0
+!!$  endif
+!!$
+!!$  return
+!!$end function cio_f8
+!!$
+!!$!---------------------------------------------------------
+!!$
+!!$integer function cio_c(iun,irw,cstr,ia,n)
+!!$  implicit none
+!!$  integer :: iun,irw,n
+!!$  character(len=*) :: ia(*)
+!!$  character(len=*) :: cstr
+!!$  character(len=256) :: string
+!!$  integer :: nn,i
+!!$
+!!$  if (irw.eq.1) then
+!!$     call cio_pos_file (iun,cstr,cio_c)
+!!$     if(cio_c.eq.1) return
+!!$     read(iun,*) nn
+!!$     read(iun,10) (ia(i),i=1,nn)
+!!$  elseif(irw.eq.2) then
+!!$     write(iun,20) cstr
+!!$20   format('__',a)
+!!$     write(iun,*) n
+!!$     write(iun,10) (ia(i),i=1,n)
+!!$10   format(a)
+!!$     cio_c=0
+!!$  endif
+!!$
+!!$  return
+!!$end function cio_c
+end module ModRcio
