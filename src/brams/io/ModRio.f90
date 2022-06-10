@@ -10,37 +10,54 @@ module ModRio
   use ModControlVars, only: &
        ControlVars
   
-  use grid_dims
   use grid_dims, only: &
        maxgrds
 
-  use var_tables
   use var_tables, only: &
+       nvgrids, &
        num_var, &
        vtab_r, &
        var_tables_r ! TYPE
 
-  use io_params
   use io_params, only: &
+       hfilin, &
+       timstr, &
        iclobber, &
        hfilout,  &
        afilout,  &
        ioutput
 
-  use mem_grid
   use mem_grid, only: &
+       dtlong, &
+       ngridsh, &
+       ninest, &
+       njnest, &
        ngrids, &
-       time, iyear1, imonth1, idate1, itime1, &
+       time, &
+       iyear1, &
+       imonth1, &
+       idate1, &
+       itime1, &
        GlobalSizes, &
-       nnzp, nnxp, nnyp, nzg, nzs, npatch, &
+       nnzp, &
+       nnxp, &
+       nnyp, &
+       nzg, &
+       nzs, &
+       npatch, &
        runtype
 
-  use ref_sounding
+  use ref_sounding, only: &
+       rt01dn, &
+       dn01dn, &
+       th01dn, &
+       pi01dn, &
+       v01dn, &
+       u01dn
 
   use mem_aerad, only: &
        nwave
 
-  use an_header
   use an_header, only: &
        head_table, &
        IOFileDS,       &
@@ -51,12 +68,19 @@ module ModRio
        DestroyIOFileDS
 
   use ModRcio, only: &
+       cio, &
        DumpIOHeadTable
        
   use node_mod, only: &
-       mzp, mxp, myp,  & ! INTENT(IN)
-       ixb, ixe, iyb, iye, &
-       izu, jzv,       & ! INTENT(IN)
+       mzp, &
+       mxp, &
+       myp,  & ! INTENT(IN)
+       ixb, &
+       ixe, &
+       iyb, &
+       iye, &
+       izu, &
+       jzv,       & ! INTENT(IN)
        mynum,          & ! INTENT(IN)
        ibcon,          & ! INTENT(IN)
        nmachs,         &   ! INTENT(IN)
@@ -102,6 +126,9 @@ module ModRio
        NamelistFile
   
   implicit none
+
+  include "files.h"
+  
   private
 
   public :: OutputFields
@@ -126,7 +153,6 @@ contains
     integer :: iyr,imn,idy,itm,ie,maxarr,ngr,nc
     character (len=f_name_length) :: hnameinh !,prefix
     character (len=2) :: cng
-    integer, external :: cio_i,cio_f
     integer,save :: iunhd=11
 
 
@@ -138,33 +164,33 @@ contains
 
     call rams_f_open(iunhd,hfilin(1:nc),'FORMATTED','OLD','READ',0)
 
-    ie=cio_i(iunhd,1,'ngrids',ngrids1,1)
+    ie=cio(iunhd,1,'ngrids',ngrids1)
     ngridsh=ngrids1
-    ie=cio_i(iunhd,1,'nnxp',nnxp1,ngrids1)
-    ie=cio_i(iunhd,1,'nnyp',nnyp1,ngrids1)
-    ie=cio_i(iunhd,1,'nnzp',nnzp1,ngrids1)
-    ie=cio_i(iunhd,1,'npatch',npatch1,1)
-    ie=cio_i(iunhd,1,'nzg',nzg1,1)
-    ie=cio_i(iunhd,1,'nzs',nzs1,1)
-    ie=cio_i(iunhd,1,'ioutput',ioutput1,1)
-    ie=cio_f(iunhd,1,'time',time,1)
+    ie=cio(iunhd,1,'nnxp',nnxp1(1:ngrids1))
+    ie=cio(iunhd,1,'nnyp',nnyp1(1:ngrids1))
+    ie=cio(iunhd,1,'nnzp',nnzp1(1:ngrids1))
+    ie=cio(iunhd,1,'npatch',npatch1)
+    ie=cio(iunhd,1,'nzg',nzg1)
+    ie=cio(iunhd,1,'nzs',nzs1)
+    ie=cio(iunhd,1,'ioutput',ioutput1)
+    ie=cio(iunhd,1,'time',time)
 
     ! Get the 1-d reference state
 
     do ngr=1,ngridsh
        write(cng,1) ngr
 1      format(i2.2)
-       ie=cio_f(iunhd,1,'u01dn'//cng,u01dn(1,ngr),nnzp(ngr))
-       ie=cio_f(iunhd,1,'v01dn'//cng,v01dn(1,ngr),nnzp(ngr))
-       ie=cio_f(iunhd,1,'pi01dn'//cng,pi01dn(1,ngr),nnzp(ngr))
-       ie=cio_f(iunhd,1,'th01dn'//cng,th01dn(1,ngr),nnzp(ngr))
-       ie=cio_f(iunhd,1,'dn01dn'//cng,dn01dn(1,ngr),nnzp(ngr))
-       ie=cio_f(iunhd,1,'rt01dn'//cng,rt01dn(1,ngr),nnzp(ngr))
+       ie=cio(iunhd,1,'u01dn'//cng,u01dn(1:nnzp(ngr),ngr))
+       ie=cio(iunhd,1,'v01dn'//cng,v01dn(1:nnzp(ngr),ngr))
+       ie=cio(iunhd,1,'pi01dn'//cng,pi01dn(1:nnzp(ngr),ngr))
+       ie=cio(iunhd,1,'th01dn'//cng,th01dn(1:nnzp(ngr),ngr))
+       ie=cio(iunhd,1,'dn01dn'//cng,dn01dn(1:nnzp(ngr),ngr))
+       ie=cio(iunhd,1,'rt01dn'//cng,rt01dn(1:nnzp(ngr),ngr))
     enddo
 
     ! Put these into regular arrays (for moving grids)
-    ie=cio_i(iunhd,1,'ninest',ninest,ngrids1)
-    ie=cio_i(iunhd,1,'njnest',njnest,ngrids1)
+    ie=cio(iunhd,1,'ninest',ninest(1:ngrids1))
+    ie=cio(iunhd,1,'njnest',njnest(1:ngrids1))
 
     ! Check time on file for time requested
 

@@ -21,6 +21,9 @@ module ModInitHis
   use ModBasicFields, only: &
        BasicFields
 
+  use ModRcio, only: &
+       cio
+  
   use mem_grid, only: &
        ngrids, &
        nzg, &
@@ -137,16 +140,12 @@ contains
 
     integer :: iyr,imn,idy,itm,ie,ngr,maxx1,maxy1,maxz1
     character (len=f_name_length) :: hnameinh
-!!$  character (len=80) :: prefix
     character (len=1) :: type
     character (len=10) :: post
     character (len=3) :: fmt
     character (len=2) :: cng
-    integer, external :: cio_i,cio_f, &
          
-         !--(DMK-CCATT-INI----------------------------------------------------------
-         RAMS_getvar
-    !--(DMK-CCATT-FIM)----------------------------------------------------------
+    integer, external :: RAMS_getvar
 
     integer,save :: iunhd=11,inhunt=10
 
@@ -185,22 +184,22 @@ contains
 
     call rams_f_open(iunhd,hfilin(1:nc),'FORMATTED','OLD','READ',0)
 
-    ie=cio_i(iunhd,1,'ngrids',ngrids1,1)
+    ie=cio(iunhd,1,'ngrids',ngrids1)
 
     allocate (nnxp1(ngrids1),nnyp1(ngrids1),nnzp1(ngrids1))
     allocate (platn1(ngrids1),plonn1(ngrids1))
 
-    ie=cio_i(iunhd,1,'nnxp',nnxp1,ngrids1)
-    ie=cio_i(iunhd,1,'nnyp',nnyp1,ngrids1)
-    ie=cio_i(iunhd,1,'nnzp',nnzp1,ngrids1)
-    ie=cio_i(iunhd,1,'npatch',npatch1,1)
-    ie=cio_i(iunhd,1,'nzg',nzg1,1)
-    ie=cio_i(iunhd,1,'nzs',nzs1,1)
-    ie=cio_i(iunhd,1,'ioutput',ioutput1,1)
-    ie=cio_f(iunhd,1,'time',time1,1)
-    ie=cio_f(iunhd,1,'ztop',ztop1,1)
-    ie=cio_f(iunhd,1,'platn',platn1,ngrids1)
-    ie=cio_f(iunhd,1,'plonn',plonn1,ngrids1)
+    ie=cio(iunhd,1,'nnxp',nnxp1(1:ngrids1))
+    ie=cio(iunhd,1,'nnyp',nnyp1(1:ngrids1))
+    ie=cio(iunhd,1,'nnzp',nnzp1(1:ngrids1))
+    ie=cio(iunhd,1,'npatch',npatch1)
+    ie=cio(iunhd,1,'nzg',nzg1)
+    ie=cio(iunhd,1,'nzs',nzs1)
+    ie=cio(iunhd,1,'ioutput',ioutput1)
+    ie=cio(iunhd,1,'time',time1)
+    ie=cio(iunhd,1,'ztop',ztop1)
+    ie=cio(iunhd,1,'platn',platn1(1:ngrids1))
+    ie=cio(iunhd,1,'plonn',plonn1(1:ngrids1))
 
     ! Check time on file for time requested
 
@@ -251,12 +250,12 @@ contains
 
     do ngr=1,ngrids1
        write(cng,'(i2.2)') ngr
-       ie=cio_f(iunhd,1,'xmn'//cng,xmn1(1,ngr),nnxp1(ngr))
-       ie=cio_f(iunhd,1,'xtn'//cng,xtn1(1,ngr),nnxp1(ngr))
-       ie=cio_f(iunhd,1,'ymn'//cng,ymn1(1,ngr),nnyp1(ngr))
-       ie=cio_f(iunhd,1,'ytn'//cng,ytn1(1,ngr),nnyp1(ngr))
-       ie=cio_f(iunhd,1,'zmn'//cng,zmn1(1,ngr),nnzp1(ngr))
-       ie=cio_f(iunhd,1,'ztn'//cng,ztn1(1,ngr),nnzp1(ngr))
+       ie=cio(iunhd,1,'xmn'//cng,xmn1(1:nnxp1(ngr),ngr))
+       ie=cio(iunhd,1,'xtn'//cng,xtn1(1:nnxp1(ngr),ngr))
+       ie=cio(iunhd,1,'ymn'//cng,ymn1(1:nnyp1(ngr),ngr))
+       ie=cio(iunhd,1,'ytn'//cng,ytn1(1:nnyp1(ngr),ngr))
+       ie=cio(iunhd,1,'zmn'//cng,zmn1(1:nnzp1(ngr),ngr))
+       ie=cio(iunhd,1,'ztn'//cng,ztn1(1:nnzp1(ngr),ngr))
     enddo
 
     allocate (topt1(maxarr2,ngrids1))
@@ -665,12 +664,12 @@ contains
          ,th01dn1(nzpg1),pi01dn1(nzpg1),dn01dn1(nzpg1) )
 
     cng='01'
-    ie=cio_f(iunhd,1,'u01dn'//cng,  u01dn1(1),nnzp1(1))
-    ie=cio_f(iunhd,1,'v01dn'//cng,  v01dn1(1),nnzp1(1))
-    ie=cio_f(iunhd,1,'pi01dn'//cng,pi01dn1(1),nnzp1(1))
-    ie=cio_f(iunhd,1,'th01dn'//cng,th01dn1(1),nnzp1(1))
-    ie=cio_f(iunhd,1,'dn01dn'//cng,dn01dn1(1),nnzp1(1))
-    ie=cio_f(iunhd,1,'rt01dn'//cng,rt01dn1(1),nnzp1(1))
+    ie=cio(iunhd,1,'u01dn'//cng,  u01dn1(1:nzpg1))
+    ie=cio(iunhd,1,'v01dn'//cng,  v01dn1(1:nzpg1))
+    ie=cio(iunhd,1,'pi01dn'//cng,pi01dn1(1:nzpg1))
+    ie=cio(iunhd,1,'th01dn'//cng,th01dn1(1:nzpg1))
+    ie=cio(iunhd,1,'dn01dn'//cng,dn01dn1(1:nzpg1))
+    ie=cio(iunhd,1,'rt01dn'//cng,rt01dn1(1:nzpg1)) 
 
 
     call htint(nzpg1,th01dn1,ztn1(1,1),nnzp(1),vctr1,ztn(1,1))

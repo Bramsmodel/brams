@@ -537,7 +537,6 @@ contains
 
     !     This routine reads or writes the history and analysis file common blocks.
 
-!!$    integer, external :: cio_i,cio_f,cio_f8,cio_c
     character(len=2) :: cng
     integer :: irw,ie,ng
 
