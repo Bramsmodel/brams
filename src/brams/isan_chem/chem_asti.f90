@@ -12,15 +12,184 @@ SUBROUTINE chem_ISNSTAGE ()
 !SUBROUTINE ISNSTAGE ()
 !--(DMK-CCATT-FIM)----------------------------------------------------------------
 
-  use isan_coms
+  USE isan_coms, ONLY: up_p,  &
+                       up_t,  &
+                       up_z,  &
+                       up_r,  &
+                       up_uz,  &
+                       up_vz,  &
+                       up_ur,  &
+                       up_vr,  &
+                       up_zz,  &
+                       up_lat,  &
+                       up_lon,  &
+                       up_top,  &
+                       up_lp,  &
+                       up_lz,  &
+                       up_topg,  &
+                       up_chstid,  &
+                       sf_u,  &
+                       sf_v,  &
+                       sf_ur,  &
+                       sf_vr,  &
+                       sf_p,  &
+                       sf_t,  &
+                       sf_s,  &
+                       sf_r,  &
+                       sf_lat,  &
+                       sf_lon,  &
+                       sf_top,  &
+                       sf_scra,  &
+                       sf_chstid,  &
+                       sf_date,  &
+                       pp_u,  &
+                       pp_v,  &
+                       pp_t,  &
+                       pp_z,  &
+                       pp_r,  &
+                       pp_sglob,  &
+                       upi_u,  &
+                       upi_v,  &
+                       upi_p,  &
+                       upi_s,  &
+                       upi_r,  &
+                       ups_u,  &
+                       ups_v,  &
+                       ups_p,  &
+                       ups_t,  &
+                       ups_r,  &
+                       cntlat,  &
+                       cntlon,  &
+                       gdatdx,  &
+                       gdatdy,  &
+                       guess1st,  &
+                       maxlev,  &
+                       idatelin,  &
+                       iglobew,  &
+                       iglobn,  &
+                       iglobs,  &
+                       igridfl,  &
+                       inproj,  &
+                       inrawi,  &
+                       insrfce,  &
+                       maxsta,  &
+                       natime,  &
+                       nigrids,  &
+                       nisn,  &
+                       nprx,  &
+                       npry,  &
+                       nprz,  &
+                       nsigz,  &
+                       nssfc,  &
+                       nsta,  &
+                       p_lat,  &
+                       p_lon,  &
+                       p_r,  &
+                       p_sfp,  &
+                       p_sft,  &
+                       p_slp,  &
+                       p_snow,  &
+                       p_sst,  &
+                       p_t,  &
+                       p_u,  &
+                       p_ur,  &
+                       p_v,  &
+                       p_vr,  &
+                       p_z,  &
+                       pi_p,  &
+                       pi_r,  &
+                       pi_s,  &
+                       pi_u,  &
+                       pi_v,  &
+                       pp_r,  &
+                       pp_sglob,  &
+                       pp_t,  &
+                       pp_u,  &
+                       pp_v,  &
+                       pp_z,  &
+                       ps_p,  &
+                       ps_r,  &
+                       ps_t,  &
+                       ps_u,  &
+                       ps_v,  &
+                       rs_qual,  &
+                       rs_sfp,  &
+                       rs_sft,  &
+                       rs_slp,  &
+                       rs_snow,  &
+                       rs_sst,  &
+                       rs_slp,  &
+                       rs_snow,  &
+                       sf_lat,  &
+                       sf_lon,  &
+                       sf_p,  &
+                       sf_scra,  &
+                       sf_u,  &
+                       sf_ur,  &
+                       sf_v,  &
+                       sf_vr,  &
+                       up_chstid,  &
+                       up_lat,  &
+                       up_lon,  &
+                       up_lp,  &
+                       up_lz,  &
+                       up_p,  &
+                       up_r,  &
+                       up_t,  &
+                       up_top,  &
+                       up_ur,  &
+                       up_uz,  &
+                       up_vz,  &
+                       up_z,  &
+                       up_zz,  &
+                       upi_p,  &
+                       upi_r,  &
+                       upi_u,  &
+                       upi_v,  &
+                       ups_p,  &
+                       ups_r,  &
+                       ups_t,  &
+                       ups_u,  &
+                       ups_v,  &
+                       xswlat,  &
+                       xswlon,  &
+                       maxsfc,  &
+                       iproc_flag,  &
+                       iproc_names                       
+
+
 
 !--(DMK-CCATT-INI)----------------------------------------------------------------
-  use chem_isan_coms
+  USE chem_isan_coms, ONLY:  pp_sc,  &
+                             pp_aer_sc,  &
+                             nspecies,  &
+                             nspecies_aer_in,  &
+                             p_sc,  &
+                             p_aer_sc,  &
+                             pi_sc,  &
+                             pi_aer_sc,  &
+                             ps_sc,  &
+                             ps_aer_sc
+                             
+
   use mem_chem1, only:  CHEM_ASSIM , CHEMISTRY    ! intent(in)
   use mem_aer1, only: aer_assim, aerosol
 !--(DMK-CCATT-FIM)----------------------------------------------------------------
   
-  use mem_grid
+  USE mem_grid, ONLY:  grid_g,  &
+                       ngrid,   &
+                       nxtnest, &
+                       nnxp,    &
+                       nnzp,    &
+                       nnyp,    &
+                       platn,   &
+                       plonn,   &
+                       zmn,     &
+                       xtn,     &
+                       ytn,     &
+                       deltaxn, &
+                       deltayn
+                       
 
   implicit none
   ! Local Variables:

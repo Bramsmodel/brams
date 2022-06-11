@@ -40,7 +40,7 @@ module ModPostProcess
        FillNetcdfVarControlFile, &
        ncid, OpenNetCDFBinaryFile
 
-  use netcdf
+  use netcdf, only: nf90_close
 #endif
   use ModGridTree, only : &
        GridTree, &

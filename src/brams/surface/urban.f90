@@ -173,7 +173,8 @@ subroutine URBAN(PTS_TOWN, PEMIS_TOWN, PALB_TOWN,             &
   !
   !
 
-  use teb_vars_const
+  use teb_vars_const, ONLY: xcpd,  &
+                            xlvtt
 
   implicit none
 
@@ -824,7 +825,7 @@ subroutine URBAN_SOLAR_ABS(PDIR_SW, PSCA_SW,  TZEN,&
   !*       0.     DECLARATIONS
   !               ------------
   !
-  use teb_vars_const
+  use teb_vars_const, ONLY: xpi
   implicit none
   !
   !*      0.1    declarations of arguments
@@ -1079,7 +1080,9 @@ subroutine URBAN_DRAG(PTSTEP, PT_CANYON, PQ_CANYON,    &
   !               ------------
   !
   !
-  use teb_vars_const
+  use teb_vars_const, ONLY: xcpd,   &
+                            xlvtt,  &
+                            xpi
   implicit none
   !*      0.1    declarations of arguments
   !
@@ -1407,7 +1410,10 @@ subroutine SURFACE_RI(PTS, PQS, PEXNS, PEXNA, PTA, PQA,   &
   !               ------------
   !
   !
-  use teb_vars_const
+  use teb_vars_const, ONLY: xg,   &
+                            xrd,  &
+                            xrv
+                           
   implicit none
   !
   !*      0.1    declarations of arguments
@@ -1513,7 +1519,7 @@ subroutine SURFACE_CD(PRI, PZREF,  PZ0EFF, PZ0H,   &
   !
   !*       0.     DECLARATIONS
   !               ------------
-  use teb_vars_const
+  use teb_vars_const, ONLY: xkarman
   implicit none
   !
   !*      0.1    declarations of arguments
@@ -1625,7 +1631,7 @@ subroutine SURFACE_AERO_COND(PRI, PZREF, PVMOD, PZ0,&
   !               ------------
   !
   !
-  use teb_vars_const
+  use teb_vars_const, ONLY: xkarman
   implicit none
   !
   !*      0.1    declarations of arguments
@@ -1740,7 +1746,10 @@ subroutine BLD_E_BUDGET(OTI_EVOL, PTSTEP, PBLD, PWALL_O_HOR,           &
   !               ------------
   !
   !
-  use teb_vars_const
+  use teb_vars_const, ONLY: tminbld,  &
+                            xcpd,     &
+                            xday,     &
+                            xtt
   implicit none
   !
   !*      0.1    declarations of arguments
@@ -1886,7 +1895,10 @@ subroutine  ROOF_LAYER_E_BUDGET(PTS_ROOF, PT_ROOF, ZQSAT_ROOF,            &
   !               ------------
   !
   !
-  use teb_vars_const
+  use teb_vars_const, ONLY: xcpd,  &
+                            xlvtt, &
+                            xstefan
+                   
   implicit none
   !
   !*      0.1    declarations of arguments
@@ -2218,7 +2230,9 @@ subroutine ROAD_WALL_LAYER_E_BUDGET(PTS_ROAD, PT_ROAD,                     &
   !               ------------
   !
   !
-  use teb_vars_const
+  use teb_vars_const, ONLY: xcpd,  &
+                            xlvtt
+ 
   implicit none
   !
   !*      0.1    declarations of arguments
@@ -2776,7 +2790,8 @@ subroutine URBAN_LW_COEF(PEMIS_ROAD, PSVF_ROAD, PEMIS_WALL, PSVF_WALL,   &
   !*       0.     DECLARATIONS
   !               ------------
   !
-  use teb_vars_const
+  use teb_vars_const, ONLY: xstefan
+                            
   implicit none
   !
   !*      0.1    declarations of arguments
@@ -2884,7 +2899,7 @@ subroutine URBAN_HYDRO(PWS_ROOF_MAX,PWS_ROAD_MAX, PWS_ROOF, PWS_ROAD,  &
   !               ------------
   !
   !
-  use teb_vars_const
+  use teb_vars_const, ONLY: xlvtt
   implicit none
   !
   !*      0.1    declarations of arguments

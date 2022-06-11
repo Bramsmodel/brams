@@ -6,11 +6,13 @@ Module ModPostgridNetCDF
 
   use ModPostUtils, only: UpperCase
 
-  use ModPostTypes
+  use ModPostTypes, ONLY: PostVarType, &
+                          postgrid,   &
+                          getPostVarible, &
+                          all_post_variables
 
   use mem_grid, only: time
 
-  use dump
 
   !For netCDF
   include "constants.h"
@@ -32,8 +34,7 @@ Module ModPostgridNetCDF
 contains
 
 subroutine OpenNetCDFBinaryFile(oneNamelistFile, onePostGrid, oneBramsGrid, igrid) 
-    use netCDF 
-    use dump
+    use netCDF, ONLY: nf90_create
     type(NamelistFile), pointer :: oneNamelistFile
     type(PostGrid), pointer :: onePostGrid
     type(BramsGrid), pointer :: oneBramsGrid  
@@ -63,9 +64,14 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
                         iyear1,imonth1,idate1,ihour1, &
                         timmax, timeunit,npatch
     use io_params, only: frqanl
-    use netcdf
+    use netcdf, ONLY: nf90_def_var, &
+                      nf90_def_dim, &
+                      nf90_redef,   &
+                      nf90_put_att, &
+                      nf90_enddef,  &
+                      nf90_put_var
     use dump, only: dumpMessage
-    use ModDateUtils
+    use ModDateUtils, ONLY: date_abs_secs2
 
     type(NamelistFile), pointer :: oneNamelistFile
     type(PostGrid), pointer :: onePostGrid
@@ -252,7 +258,7 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
 
   subroutine netCdfPostField2D(fieldName,nLon,nLat,OutputArray)
 
-    use netcdf
+    use netcdf, ONLY: nf90_put_var
     use dump, only: dumpMessage
     use mem_grid, only: time
     use io_params, only: frqanl
@@ -275,7 +281,7 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
 
   subroutine netCdfPostField3D(fieldName,nLon,nLat,ilev,OutputArray)
 
-    use netcdf
+    use netcdf, ONLY: nf90_put_var
     use dump, only: dumpMessage
     use mem_grid, only: time
     use io_params, only: frqanl

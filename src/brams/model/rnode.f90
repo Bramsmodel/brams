@@ -11,7 +11,23 @@
 
 subroutine node_index()
 
-  use node_mod
+  use node_mod, ONLY: ia,   &
+                      ia1,  &
+                      ia_1,  &
+                      ibcon,  &
+                      iz,  &
+                      iz1,  &
+                      iz_1,  &
+                      izu,  &
+                      ja,  &
+                      ja1,  &
+                      ja_1,  &
+                      jz,  &
+                      jz1,  &
+                      jz_1,  &
+                      jzv,  &
+                      mxp,  &
+                      myp
 
   implicit none
 

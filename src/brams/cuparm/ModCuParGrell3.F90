@@ -19,7 +19,6 @@ module ModCuParGrell3
   use mem_stilt, only: &
        imassflx
 
-  use mem_jules
   use mem_jules, only: jules_g
 
   use ModRstilt, only: &
@@ -200,7 +199,7 @@ module ModCuParGrell3
   use mem_chem1, only: &
        chemistry
 
-  use var_tables
+  use var_tables, only: insertvtab
 
   use grid_dims, only: &
        nzpmax
