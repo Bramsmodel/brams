@@ -54,7 +54,7 @@ OBJ_MOD = \
 	cup_grell_catt_shallow.o \
 	cup_output_vars.o \
 	cup_up.o \
-	diffsclr.o \
+	ModDiffSclr.o \
 	ModDiffuse.o \
 	file_inv.o \
 	first_rams.o \
@@ -174,7 +174,7 @@ OBJ_MOD = \
 	ModRecycle.o  \
 	ref_sounding.o \
 	refstate.o \
-	rgrad.o \
+	ModRGrad.o \
 	ModRhhi.o  \
 	ModRinit.o  \
 	ModRio.o \
@@ -191,9 +191,9 @@ OBJ_MOD = \
 	soilMoisture.o \
 	ModSstRead.o \
 	ModTurbDiff.o \
-	turb_diff_adap.o \
+	ModTurbDiffAdap.o \
 	ModTurbK.o \
-	turb_k_adap.o \
+	ModTurbKAdap.o \
 	ModTurbKE.o \
 	upcase.o \
 	ModUrbanCanopy.o \

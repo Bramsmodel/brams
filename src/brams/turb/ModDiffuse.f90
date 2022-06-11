@@ -1,5 +1,8 @@
 module ModDiffuse
 
+  use ModDiffSclr, only: &
+       diffsclr_brams31
+  
   use ModTurbKE, only: &
        tkescl, &
        tkeeps, &
@@ -117,6 +120,9 @@ contains
     ! \       subgrid-scale turbulence.                                 \
     ! +-----------------------------------------------------------------+
 
+    !**(JP)** uses 1D arrays and scalar pointers representing 3D arrays;
+    !**(JP)** requires full rewriting, affecting diffscalar_brams31, that is
+    !**(JP)** called only here
 
     type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
     integer, intent(inout) :: oneScalarTabSize

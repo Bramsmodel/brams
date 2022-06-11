@@ -7,6 +7,16 @@
 !###########################################################################
 module ModTurbK
 
+  use ModTurbDiffAdap, only: &
+       diffsclr_adap, &
+       diffvel_adap
+  
+  use ModTurbKAdap, only: &
+       strain_adap
+  
+  use ModRGrad, only: &
+       grad
+  
   use ModTurbKE, only: &
        tkescl, &
        tkeeps, &

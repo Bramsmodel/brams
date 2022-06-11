@@ -8,6 +8,10 @@
 
 module ModTurbDiff
 
+  use ModRGrad, only: &
+       divcart, &
+       grad
+  
   use mem_grid, only: &
        dzm,      &     !INTENT(IN)
        nstbot,   &     !INTENT(IN)
