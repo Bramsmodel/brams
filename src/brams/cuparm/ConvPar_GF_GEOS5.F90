@@ -18,10 +18,31 @@ module ConvPar_GF_GEOS5
    !  The identation was fixed and all keywords are lowercase                   !
    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    !
-   use module_gate
+   use module_gate, ONLY: cupout,  &
+                          rundata,    &
+                          nvar_grads,    &
+                          runlabel,    &
+                          runname,    &
+                          jl,    &
+                          use_gate,    &
+                          ppres,    &
+                          ptemp,    &
+                          pq,    &
+                          pu,    &
+                          pv,    &
+                          pvervel,    &
+                          pgeo,    &
+                          ppres,    &
+                          zqr,    &
+                          zadvq,    &
+                          zqr,    &
+                          zadvt
+
    !USE MAPL
-   use MAPL_ConstantsMod ! - only for GATE soundings
-   !
+   use MAPL_ConstantsMod, ONLY:  & ! - only for GATE soundings
+                               mapl_grav,   &
+                               mapl_pi
+
    use Henrys_law_ConstantsMod, only: get_HenrysLawCts
    !.. USE GTMP_2_GFCONVPAR, only : GTMP_2_GFCONVPAR_interface
 

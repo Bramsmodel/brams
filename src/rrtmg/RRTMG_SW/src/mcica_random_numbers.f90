@@ -87,9 +87,12 @@
   ! Period parameters
   integer(kind=im), parameter :: blockSize = 624,         &
                         M         = 397,         &
-                        MATRIX_A  = -1727483681, & ! constant vector a         (0x9908b0dfUL)
-                        UMASK     = -2147483648, & ! most significant w-r bits (0x80000000UL)
-                        LMASK     =  2147483647    ! least significant r bits  (0x7fffffffUL)
+                        UMASK     = int(z'80000000'), &! most significant w-r bits (0x80000000UL)
+                        MATRIX_A  = int(z'9908b0df'), &! constant vector a         (0x9908b0dfUL)
+                        LMASK     = int(z'7fffffff')   ! least significant r bits  (0x7fffffffUL)
+  !                     MATRIX_A  = -1727483681, &     ! constant vector a         (0x9908b0dfUL)
+  !                     UMASK     = -2147483648, & ! most significant w-r bits (0x80000000UL)
+  !                     LMASK     =  2147483647    ! least significant r bits  (0x7fffffffUL)
   ! Tempering parameters
   integer(kind=im), parameter :: TMASKB= -1658038656, & ! (0x9d2c5680UL)
                         TMASKC= -272236544     ! (0xefc60000UL)

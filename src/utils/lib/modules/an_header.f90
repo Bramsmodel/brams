@@ -10,7 +10,7 @@ module an_header
 
   implicit none
 
-  include "i8.h"
+  include "constants.h"
   include "files.h"
 
   ! head_table: single field on i/o file descriptor data structure
@@ -784,68 +784,6 @@ contains
             varn, idim_type, ngr, oneIOFileDS)
     end if
   end subroutine ArrayWriteStoreInfo
-
-
-
-
-  subroutine DumpIOHeadTable(oneIOFileDS)
-
-    type(IOFileDS), intent(inout) :: oneIOFileDS
-
-    integer, parameter :: unitLow=10
-    integer, parameter :: unitHigh=99
-    integer :: iunit
-    integer :: nv
-    logical :: op
-    character(len=8) :: c0
-    character(len=*), parameter :: h="**(DumpIOHeadTable)**"
-
-    ! return if disabled 
-
-    if (.not. oneIOFileDS%enable) return
-
-    ! find available Fortran unit
-    
-    do iunit = unitLow, unitHigh
-       inquire (unit=iunit, opened=op)
-       if (.not. op) exit
-    end do
-    if (iunit <= unitHigh) then
-       oneIOFileDS%unit = iunit
-    else
-       call fatal_error(h//" Fortran i/o units exausted")
-    end if
-
-    ! open file, write header information, close file
-
-    call rams_f_open_u(oneIOFileDS%unit, oneIOFileDS%fHeadName,  &
-         'FORMATTED','REPLACE','WRITE', "ASIS", oneIOFileDS%iclobber)
-    if (dumpLocal) then
-       write(c0,"(i8)") oneIOFileDS%unit
-       write(*, "(a)") h//" opened new file "//trim(oneIOFileDS%fHeadName)//&
-            " at unit "//trim(adjustl(c0))
-    end if
-
-    write(oneIOFileDS%unit,'(i6)') oneIOFileDS%ht%lastUsed
-    do nv = 1, oneIOFileDS%ht%lastUsed
-       write(oneIOFileDS%unit,fmt='(a16,1x,i12,i3,i3,1x,i9)') &
-            oneIOFileDS%ht%f(nv)%string,                      &
-            oneIOFileDS%ht%f(nv)%npointer,                    &
-            oneIOFileDS%ht%f(nv)%idim_type,                   &
-            oneIOFileDS%ht%f(nv)%ngrid,                       &
-            oneIOFileDS%ht%f(nv)%nvalues
-    end do
-
-    call commio(oneIOFileDS%fId,'WRITE',oneIOFileDS%unit)
-    close(oneIOFileDS%unit)
-    if (dumpLocal) then
-       write(c0,"(i8)") oneIOFileDS%unit
-       write(*, "(a)") h//" dumped and close file "//trim(oneIOFileDS%fHeadName)//&
-            " at unit "//trim(adjustl(c0))
-    end if
-
-    oneIOFileDS%unit = -1
-  end subroutine DumpIOHeadTable
 
 
 

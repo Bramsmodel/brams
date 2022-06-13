@@ -40,10 +40,10 @@ subroutine varf_adap(n1,n2,n3,varu,varv,varp,vart,varr,topta)
         vctr2(1:n1)=varv(1:n1,i,j)
         vctr3(1:n1)=vart(1:n1,i,j)
         vctr4(1:n1)=varr(1:n1,i,j)
-        call htint2(n1,vctr1(1),vctr10,n1,vctr11(1),ztn(1,ngrid))
-        call htint2(n1,vctr2(1),vctr10,n1,vctr12(1),ztn(1,ngrid))
-        call htint2(n1,vctr3(1),vctr10,n1,vctr13(1),ztn(1,ngrid))
-        call htint2(n1,vctr4(1),vctr10,n1,vctr14(1),ztn(1,ngrid))
+        call htint2(n1,vctr1,vctr10,n1,vctr11,ztn(1,ngrid))
+        call htint2(n1,vctr2,vctr10,n1,vctr12,ztn(1,ngrid))
+        call htint2(n1,vctr3,vctr10,n1,vctr13,ztn(1,ngrid))
+        call htint2(n1,vctr4,vctr10,n1,vctr14,ztn(1,ngrid))
 
         ! Do hydrostatic balance
         do k=1,n1
@@ -85,7 +85,7 @@ subroutine PrtOpt()
        u01dn, v01dn, dn01dn, pi01dn, th01dn, rt01dn
 
   implicit none
-  include "constants.f90"
+  include "constants.h"
   integer :: k
   real :: vctr1(nnzp(1))
   real :: vctr2(nnzp(1))
@@ -120,6 +120,11 @@ end subroutine PrtOpt
 
 subroutine hi_interpInitial4(n1,n2,n3,vn,xm1,xt1,ym1,yt1,zm1,zt1,plat1,plon1,topt1,ztop1,m1,m2,m3,vm,ngm,ngr1,vname,idim)
 
+  use ModInitHis, only: &
+       hi_avgu, &
+       hi_avgv, &
+       hi_avgw
+  
  use mem_grid, only: grid_g, ztn
  use mem_scratch, only: vctr1, vctr2, vctr3, vctr10
 
@@ -226,7 +231,7 @@ subroutine hi_interpInitial4(n1,n2,n3,vn,xm1,xt1,ym1,yt1,zm1,zt1,plat1,plon1,top
 
               			! Interpolate vertically
 
-              			call htint(n1,vctr1(1),vctr3(1),m1,vctr10(1),vctr2(1))
+              			call htint(n1,vctr1,vctr3,m1,vctr10,vctr2)
               			vm(1:m1,i,j) = vctr10(1:m1)
 
 			elseif (idim == 2) then

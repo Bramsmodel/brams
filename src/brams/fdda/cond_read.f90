@@ -8,6 +8,10 @@
 
 
 subroutine cond_read(initflag)
+  use ModNudAnalysis, only: &
+       vfintrpf, &
+       varweight
+  
 use ModDateUtils
 use mem_grid
 use mem_varinit
@@ -53,7 +57,7 @@ if (initflag == 1) then   ! Initialization
    ! Calculate varweights just like var init
    !print *,'LFR-DEB->cond_read.f90'
    call varweight(nnzp(1),nnxp(1),nnyp(1)  &
-       ,grid_g(1)%topt(1,1),grid_g(1)%rtgt(1,1),varinit_g(1)%varwts(1,1,1))
+       ,grid_g(1)%topt,grid_g(1)%rtgt,varinit_g(1)%varwts)
    
    ! Read and interpolate files to new grid 1. Put stuff in varinit arrays.
    

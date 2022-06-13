@@ -311,7 +311,7 @@ end subroutine ctrlvols
 subroutine adap_bldg(n1,n2,n3,xm,ym,zm,platn,plonn,aru,arv,arw,topma  &
      ,ifm, nzg, npatch)
 
-  use mem_leaf
+  use mem_leaf, ONLY: leaf_g
 
   ! subroutine adap_bldg 
 
