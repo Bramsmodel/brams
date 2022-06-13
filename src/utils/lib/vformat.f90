@@ -207,7 +207,7 @@ subroutine vfirec(iunit, a, n, type)
     dumpMessage
     
   implicit none
-  include "constants.h"
+  include "constants.f90"
   character(len=*),parameter :: header="***(vfirec)***"
   ! Arguments:
   integer, intent(IN)          :: iunit, n

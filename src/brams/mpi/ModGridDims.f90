@@ -10,6 +10,7 @@ module ModGridDims
   public :: GridDims
   public :: CreateGridDims
   public :: DumpGridDims
+  public :: StringGridDims
   public :: DestroyGridDims
 
   type GridDims
@@ -23,16 +24,17 @@ contains
 
 
   ! CreateGridDims: create and fill variable of this type,
-  !                 extracting info from the Namelist File.
+  !             extracting info from the Namelist File.
 
 
 
-  function CreateGridDims(gridId, oneNamelistFile)
+  subroutine CreateGridDims(gridId, oneNamelistFile, oneGridDims)
     integer, intent(in) :: gridId
-    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
-    type(GridDims), pointer :: CreateGridDims
+    type(NamelistFile), pointer :: oneNamelistFile
+    type(GridDims), pointer :: oneGridDims
     
     character(len=16) :: c0, c1
+    character(len=512) :: str
     character(len=*), parameter :: h="**(CreateGridDims)**"
     logical, parameter :: dumpLocal=.false.
 
@@ -54,20 +56,68 @@ contains
        write(c1,"(i16)") gridId 
        call fatal_error(h//" invoked with gridId ("//&
             trim(adjustl(c1))//") < 1 ")
+    else if (associated(oneGridDims)) then
+       call fatal_error(h//" invoked with oneGridDims already asociated")
     end if
 
-    ! create a variable of type GridDims and fill entries
+    ! create a variable of type grid and fill entries
 
-    allocate(CreateGridDims)
+    allocate(oneGridDims)
     
-    CreateGridDims%nnxp = oneNamelistFile%nnxp(gridId)
-    CreateGridDims%nnyp = oneNamelistFile%nnyp(gridId)
-    CreateGridDims%nnzp = oneNamelistFile%nnzp(gridId)
-
+    oneGridDims%nnxp = oneNamelistFile%nnxp(gridId)
+    oneGridDims%nnyp = oneNamelistFile%nnyp(gridId)
+    oneGridDims%nnzp = oneNamelistFile%nnzp(gridId)
     if (dumpLocal) then
-       call DumpGridDims(CreateGridDims, h)
+       call StringGridDims(oneGridDims, str)
+       call MsgDump(h//" ends producing grid "//trim(str))
     end if
-  end function CreateGridDims
+  end subroutine CreateGridDims
+
+
+
+  ! StringGridDims: creates string with info of a variable of type GridDims
+
+
+
+  subroutine StringGridDims(oneGridDims, str)
+    type(GridDims), pointer :: oneGridDims
+    character(len=*), intent(out) :: str
+
+    integer :: lenIn, lenOut
+    character(len=8) :: c0, c1, c2
+    character(len=*), parameter :: h="**(StringGridDims)**"
+
+    if (.not. associated(oneGridDims)) then
+       lenIn = len(str)
+       lenOut = len(" empty grid")
+       if (lenIn >= lenOut) then
+          str = " empty grid"
+       else
+          write(c0,"(i8)") lenIn
+          write(c1,"(i8)") lenOut
+          call fatal_error(h//" input string has size "//trim(adjustl(c0))//&
+               " but should be at least "//trim(adjustl(c1)))
+       end if
+    else
+       write(c0,"(i8)") oneGridDims%nnxp
+       write(c1,"(i8)") oneGridDims%nnyp
+       write(c2,"(i8)") oneGridDims%nnzp
+       lenOut = len(" with dimensions "//&
+            "["//trim(adjustl(c0))//","//trim(adjustl(c1))//&
+            ","//trim(adjustl(c2))//"]")
+       lenIn = len(str)
+       if (lenIn >= lenOut) then
+          str = " with dimensions "//&
+               "["//trim(adjustl(c0))//","//trim(adjustl(c1))//&
+               ","//trim(adjustl(c2))//"]"
+       else
+          write(c0,"(i8)") lenIn
+          write(c1,"(i8)") lenOut
+          call fatal_error(h//" input string has size "//trim(adjustl(c0))//&
+               " but should be at least "//trim(adjustl(c1)))
+       end if
+    end if
+  end subroutine StringGridDims
 
 
 
@@ -75,29 +125,16 @@ contains
 
 
 
-  subroutine DumpGridDims(oneGridDims, name)
-    type(GridDims), pointer, intent(in) :: oneGridDims
-    character(len=*), intent(in), optional :: name
+  subroutine DumpGridDims(oneGridDims)
+    type(GridDims), pointer :: oneGridDims
 
-    character(len=16) :: c0, c1, c2
     character(len=512) :: str
-    character(len=512) :: pre
     character(len=*), parameter :: h="**(DumpGridDims)**"
 
     if (.not. associated(oneGridDims)) then
        call MsgDump(h//" null GridDims")
     else
-       if (present(name)) then
-          pre = name
-       else
-          pre = ""
-       end if
-       write(c0,"(i8)") oneGridDims%nnzp
-       write(c1,"(i8)") oneGridDims%nnxp
-       write(c2,"(i8)") oneGridDims%nnyp
-       str = " "//trim(adjustl(pre))//" produces grid with dimensions "//&
-            "["//trim(adjustl(c0))//","//trim(adjustl(c1))//&
-            ","//trim(adjustl(c2))//"]"
+       call StringGridDims(oneGridDims, str)
        call MsgDump(h//trim(str))
     end if
   end subroutine DumpGridDims
@@ -109,18 +146,10 @@ contains
 
 
   subroutine DestroyGridDims(oneGridDims)
-    type(GridDims), pointer, intent(inout) :: oneGridDims
-    integer :: ierr
-    character(len=8) :: c0
-    character(len=*), parameter :: h="**(DestroyGridDims)**"
-    
+    type(GridDims), pointer :: oneGridDims
+
     if (associated(oneGridDims)) then
-       deallocate(oneGridDims, stat=ierr)
-       if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate fails with stat="//&
-               trim(adjustl(c0)))
-       end if
+       deallocate(oneGridDims)
     end if
     nullify(oneGridDims)
   end subroutine DestroyGridDims

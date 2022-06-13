@@ -6,7 +6,6 @@
 !  Regional Atmospheric Modeling System - RAMS
 !###########################################################################
 module ModAcoust_adap
-
 contains
 
   subroutine acoust_adap(OneGrid, &
@@ -28,8 +27,8 @@ contains
     use ModGrid, only: &
          Grid
     use ModMessageSet, only: &
-         PostSendRecvMsgs, &
-         WaitSendRecvMsgs
+         PostRecvSendMsgs, &
+         WaitRecvMsgs
 
     implicit none
 
@@ -41,7 +40,7 @@ contains
     real, dimension(*) ::       scr1,scr2,vt3da,vt3db,vt3dc,vt3dd  &
          ,vt3de,vt3df,vt3dg,vt3dh,vt2da,ut,vt,wt,pt
     real, dimension(m2,m3) :: lpu_R,lpv_R,lpw_R
-
+    
     integer, dimension(m2,m3) :: lpu,lpv,lpw
     real :: t1,w1,a1da2
 
@@ -56,66 +55,74 @@ contains
        dts = 2. * dtlt / nnacoust(ngrid)
 
        if (iter .eq. 1)  &
-            call coefz_adap(mzp,mxp,myp,ia,iz,ja,jz,lpw      &
-            ,vt3dc,vt3dd,vt3de,dn0,pi0  &
-            ,th0,a1da2,vt3df,vt3dg,scr2        &
-            ,vctr1,vctr2,arw,volt,volw    )
+            call coefz_adap(mzp,mxp,myp,ia,iz,ja,jz,lpw(1,1)      &
+            ,vt3dc(1),vt3dd(1),vt3de(1),dn0(1,1,1),pi0(1,1,1)  &
+            ,th0(1,1,1),a1da2,vt3df(1),vt3dg(1),scr2(1)        &
+            ,vctr1,vctr2,arw(1,1,1),volt(1,1,1),volw(1,1,1)    )
 
-       if (iter .ne. 1) then
-          call WaitSendRecvMsgs(OneGrid%AcouSendPNorth, OneGrid%AcouRecvPNorth)
-          call WaitSendRecvMsgs(OneGrid%AcouSendPEast, OneGrid%AcouRecvPEast)
+       if (nmachs > 1) then
+          if (iter .ne. 1) then
+             call WaitRecvMsgs(OneGrid%AcouSendP, OneGrid%AcouRecvP)
+          endif
        endif
 
-       call prdctu_adap(mzp,mxp,myp,ia,izu,ja,jz,ibcon,lpu    &
-            ,up,ut,pp,vt3da,th0,vt3db  &
-            ,dxu,vt3dh,aru,volu,mynum          )
+       call prdctu_adap(mzp,mxp,myp,ia,izu,ja,jz,ibcon,lpu(1,1)    &
+            ,up(1,1,1),ut(1),pp(1,1,1),vt3da(1),th0(1,1,1),vt3db(1)  &
+            ,dxu(1,1),vt3dh(1),aru(1,1,1),volu(1,1,1),mynum          )
 
-       if (iter .ne. nnacoust(ngrid)) then
-          call PostSendRecvMsgs(OneGrid%AcouSendU, OneGrid%AcouRecvU)
+       if (nmachs > 1) then
+          if (iter .ne. nnacoust(ngrid)) then
+             call PostRecvSendMsgs(OneGrid%AcouSendU, OneGrid%AcouRecvU)
+          endif
        endif
 
-       call prdctv_adap(mzp,mxp,myp,ia,iz,ja,jzv,ibcon,lpv    &
-            ,vp,vt,pp,vt3da,th0,vt3db  &
-            ,dyv,vt3dh,arv,volv        )
+       call prdctv_adap(mzp,mxp,myp,ia,iz,ja,jzv,ibcon,lpv(1,1)    &
+            ,vp(1,1,1),vt(1),pp(1,1,1),vt3da(1),th0(1,1,1),vt3db(1)  &
+            ,dyv(1,1),vt3dh(1),arv(1,1,1),volv(1,1,1)                )
 
-       if (iter .ne. nnacoust(ngrid)) then
-          call PostSendRecvMsgs(OneGrid%AcouSendV, OneGrid%AcouRecvV)
-       else
-          call PostSendRecvMsgs(OneGrid%AcouSendUV, OneGrid%AcouRecvUV)
+       if (nmachs > 1) then
+          if (iter .ne. nnacoust(ngrid)) then
+             call PostRecvSendMsgs(OneGrid%AcouSendV, OneGrid%AcouRecvV)
+          else
+             call PostRecvSendMsgs(OneGrid%AcouSendUV, OneGrid%AcouRecvUV)
+          endif
        endif
 
-       call prdctw1_adap(mzp,mxp,myp,ia,iz,ja,jz,ibcon,lpw  &
-            ,wp,wt,pp,vt3dc  &
-            ,a1da2,vt3dh)
+       call prdctw1_adap(mzp,mxp,myp,ia,iz,ja,jz,ibcon,lpw(1,1)  &
+            ,wp(1,1,1),wt(1),pp(1,1,1),vt3dc(1)  &
+            ,a1da2,vt3dh(1))
 
-       if (iter .ne. nnacoust(ngrid)) then
-          call WaitSendRecvMsgs(OneGrid%AcouSendU, OneGrid%AcouRecvU)
-          call WaitSendRecvMsgs(OneGrid%AcouSendV, OneGrid%AcouRecvV)
-       else
-          call WaitSendRecvMsgs(OneGrid%AcouSendUV, OneGrid%AcouRecvUV)
+       if (nmachs > 1) then
+          if (iter .ne. nnacoust(ngrid)) then
+             call WaitRecvMsgs(OneGrid%AcouSendU, OneGrid%AcouRecvU)
+             call WaitRecvMsgs(OneGrid%AcouSendV, OneGrid%AcouRecvV)
+          else
+             call WaitRecvMsgs(OneGrid%AcouSendUV, OneGrid%AcouRecvUV)
+          endif
        endif
 
-       call prdctp1_adap(mzp,mxp,myp,ia,iz,ja,jz,jdim,lpw                &
-            ,pp,up,vp,pi0,dn0,th0     &
-            ,pt,vt3da,vt3db,vt2da,fmapui,fmapvi,dxt  &
-            ,dyt,fmapt,aru,arv,volt,mynum        )
+       call prdctp1_adap(mzp,mxp,myp,ia,iz,ja,jz,jdim,lpw(1,1)                &
+            ,pp(1,1,1),up(1,1,1),vp(1,1,1),pi0(1,1,1),dn0(1,1,1),th0(1,1,1)     &
+            ,pt(1),vt3da(1),vt3db(1),vt2da(1),fmapui(1,1),fmapvi(1,1),dxt(1,1)  &
+            ,dyt(1,1),fmapt(1,1),aru(1,1,1),arv(1,1,1),volt(1,1,1),mynum        )
 
-       call prdctw2_adap(mzp,mxp,myp,ia,iz,ja,jz,lpw           &
-            ,wp,pp,vt3dc,vt3dd,vt3de,vt3dg  &
-            ,scr1,scr2,vt2da                                 )
+       call prdctw2_adap(mzp,mxp,myp,ia,iz,ja,jz,lpw(1,1)           &
+            ,wp(1,1,1),pp(1,1,1),vt3dc(1),vt3dd(1),vt3de(1),vt3dg(1)  &
+            ,scr1(1),scr2(1),vt2da(1)                                 )
 
-       call prdctw3_adap(mzp,mxp,myp,ia,iz,ja,jz,lpw                 &
-            ,wp,scr1,vt3df,vt3dg,vt3dc,vt3dd,pp)
+       call prdctw3_adap(mzp,mxp,myp,ia,iz,ja,jz,lpw(1,1)                 &
+            ,wp(1,1,1),scr1(1),vt3df(1),vt3dg(1),vt3dc(1),vt3dd(1),pp(1,1,1))
 
-       call prdctp2_adap(mzp,mxp,myp,ia,iz,ja,jz,ibcon,lpw  &
-            ,pp,wp,vt3dd,vt3de,mynum)
+       call prdctp2_adap(mzp,mxp,myp,ia,iz,ja,jz,ibcon,lpw(1,1)  &
+            ,pp(1,1,1),wp(1,1,1),vt3dd(1),vt3de(1),mynum)
 
-       if (iter .ne. nnacoust(ngrid)) then
-          call PostSendRecvMsgs(OneGrid%AcouSendPNorth, OneGrid%AcouRecvPNorth)
-          call PostSendRecvMsgs(OneGrid%AcouSendPEast, OneGrid%AcouRecvPEast)
-       else
-          call PostSendRecvMsgs(OneGrid%AcouSendWP, OneGrid%AcouRecvWP)
-          call WaitSendRecvMsgs(OneGrid%AcouSendWP, OneGrid%AcouRecvWP)
+       if (nmachs > 1) then
+          if (iter .ne. nnacoust(ngrid)) then
+             call PostRecvSendMsgs(OneGrid%AcouSendP, OneGrid%AcouRecvP)
+          else
+             call PostRecvSendMsgs(OneGrid%AcouSendWP, OneGrid%AcouRecvWP)
+             call WaitRecvMsgs(OneGrid%AcouSendWP, OneGrid%AcouRecvWP)
+          endif
        endif
 
     enddo
@@ -129,8 +136,6 @@ subroutine prdctu_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpu  &
      ,up,ut,pp,vt3da,th0,dpdx,dxu,vt3dh,aru,volu,mynum)
 
   use mem_grid
-  use ModRbnd, only: botset_adap, &
-       rayf_adap        
 
   implicit none
 
@@ -157,7 +162,7 @@ subroutine prdctu_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpu  &
   enddo
 
   if (distim .ne. 0.) then
-     call rayf_adap(1,m1,m2,m3,ia,iz,ja,jz,ibcon,int(lpu),up,th0,vt3dh)
+     call rayf_adap(1,m1,m2,m3,ia,iz,ja,jz,ibcon,lpu(1,1),up,th0,vt3dh)
   endif
 
   do j = 1,m3
@@ -169,7 +174,7 @@ subroutine prdctu_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpu  &
   enddo
 
   if (nstbot == 1 .and. itopo == 1)  &
-       call botset_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,int(lpu),up,'U')
+       call botset_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpu,up,'U')
 
   return
 end subroutine prdctu_adap
@@ -180,8 +185,6 @@ subroutine prdctv_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpv  &
      ,vp,vt,pp,vt3da,th0,dpdy,dyv,vt3dh,arv,volv)
 
   use mem_grid
-  use ModRbnd, only: botset_adap
-  use ModRbnd, only: rayf_adap        
 
   implicit none
 
@@ -212,7 +215,7 @@ subroutine prdctv_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpv  &
   endif
 
   if (distim .ne. 0.) then
-     call rayf_adap(1,m1,m2,m3,ia,iz,ja,jz,ibcon,int(lpv),vp,th0,vt3dh)
+     call rayf_adap(1,m1,m2,m3,ia,iz,ja,jz,ibcon,lpv(1,1),vp,th0,vt3dh)
   endif
 
   do j = 1,m3
@@ -224,7 +227,7 @@ subroutine prdctv_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpv  &
   enddo
 
   if (nstbot == 1 .and. itopo == 1)  &
-       call botset_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,int(lpv),vp,'V')
+       call botset_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpv,vp,'V')
 
   return
 end subroutine prdctv_adap
@@ -235,7 +238,6 @@ subroutine prdctw1_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpw  &
      ,wp,wt,pp,acoc,a1da2,vt3dh)
 
   use mem_grid
-  use ModRbnd, only: rayf_adap        
 
   implicit none
 
@@ -251,7 +253,7 @@ subroutine prdctw1_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpw  &
   !     W prediction for explicit case.
 
   if (distim .ne. 0.) then
-     call rayf_adap(1,m1,m2,m3,ia,iz,ja,jz,ibcon,int(lpw),wp,vt3dh,vt3dh)
+     call rayf_adap(1,m1,m2,m3,ia,iz,ja,jz,ibcon,lpw(1,1),wp,vt3dh,vt3dh)
   endif
 
   do j = 1,m3
@@ -428,7 +430,6 @@ end subroutine prdctp1_adap
 subroutine prdctp2_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpw,pp,wp,acof,acog,mynum)
 
   use mem_grid
-  use ModRbnd, only: botset_adap
 
   implicit none
 
@@ -448,7 +449,7 @@ subroutine prdctp2_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpw,pp,wp,acof,acog,mynum)
      enddo
   enddo
 
-  if (nstbot .eq. 1) call botset_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,int(lpw),pp,'P')
+  if (nstbot .eq. 1) call botset_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpw,pp,'P')
 
   return
 end subroutine prdctp2_adap

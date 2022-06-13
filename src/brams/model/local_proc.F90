@@ -77,7 +77,7 @@ contains
     implicit none
 
 
-    include "constants.h"
+    include "constants.f90"
     ! Arguments:
     integer, intent(in)  :: mynum
     integer, intent(out) :: nndtflg
@@ -380,7 +380,7 @@ contains
     !   endif
     !   !LFR ------------------------<
 
-    ! !if ( dyncore_flag == 2) then
+    ! !if ( dyncore_flag == 2 .or. dyncore_flag == 3) then
 	   ! ! don't break here, there exist a better suited criterion in subroutine 'cfl1'
     !   !endif
     ! else
@@ -494,7 +494,7 @@ contains
     use dump
 
     implicit none
-    include "constants.h"
+    include "constants.f90"
     integer :: ifm,err
 
     ! Print out initial values of dtlongn, nndtrat, nnacoust, sscourn,

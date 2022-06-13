@@ -10,9 +10,7 @@ subroutine rr_upa_ver (ifile)
 
 ! Reads Ralph sfc file version and header
 
-use obs_input, ONLY: header,   &
-                     max_head_vars,  &
-                     max_upa_vars
+use obs_input
 
 implicit none
 
@@ -59,10 +57,7 @@ subroutine rr_upa_obs (ifile,qcheck,ierr)
 ! Reads one upper air obs from Ralph upper air file
 !   need to detect if there is an additional header
 
-use obs_input, ONLY: header,    &
-                     rupa_obs,  &
-                     max_up_levs
-
+use obs_input
 
 implicit none
 
@@ -254,9 +249,7 @@ subroutine rr_sfc_ver (ifile)
 
 ! Reads Ralph sfc file version and header
 
-use obs_input, ONLY: header,   &
-                     max_head_vars,  &
-                     max_sfc_vars
+use obs_input
 
 implicit none
 
@@ -298,8 +291,7 @@ subroutine rr_sfc_obs(ifile,qcheck,ierr)
 ! Reads one surface obs from Ralph sfc file
 !   need to detect if there is an additional header
 
-use obs_input, ONLY: header,   &
-                     rsfc_obs
+use obs_input
 
 implicit none
 
@@ -510,8 +502,7 @@ end
 
 subroutine sfc_data_convert (varn,cvars,nvars)
 
-use obs_input, ONLY: header,   &
-                     rsfc_obs
+use obs_input
 
 implicit none
 
@@ -580,12 +571,8 @@ end
 
 subroutine upa_get_profile (varn,nlevels,cvar,ctype)
 
-use obs_input, ONLY: header,   &
-                     rupa_obs
-use rconstants, ONLY: cp,   &
-                      p00,  &
-                      p00i, &
-                      rocp
+use obs_input
+use rconstants
 
 implicit none
 

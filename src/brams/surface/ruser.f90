@@ -245,6 +245,7 @@ end
 subroutine sfcinit_file_user(n2,n3,mzg,npat,ifm  &
    ,patch_area,leaf_class,soil_text)
 
+use rconstants
 
 use ccatt_start, only: ccatt !INTENT(IN)
 
@@ -366,6 +367,7 @@ subroutine sfcinit_nofile_user(n1,n2,n3,mzg,mzs,npat,ifm  &
 
    ,rvs,prss,pis,vt2da,vt2db,glat,glon,zot,lpw_R)
 
+use rconstants
 
 implicit none
 

@@ -64,7 +64,8 @@ contains
     integer, parameter :: GhostZoneLength=1
     integer :: gridId
     type(GridTree), pointer :: oneGridNode, ancestor, brother, root
-    character(len=16) :: str(10)
+    type(Grid), pointer :: oneGrid
+    character(len=16) :: c0, c1
     character(len=*), parameter :: h="**(CreateGridTree)**"
 
     ! input arguments consistency
@@ -74,9 +75,9 @@ contains
     else if (.not. associated(oneParallelEnvironment)) then
        call fatal_error(h//" invoked with null oneParallelEnvironment")
     else if (oneNamelistFile%ngrids <= 0) then
-       write(str(1),"(i16)") oneNamelistFile%ngrids 
+       write(c0,"(i16)") oneNamelistFile%ngrids 
        call fatal_error(h//" ngrids on namelist file "//&
-            "should be >= 1 but is"//trim(adjustl(str(1))))
+            "should be >= 1 but is"//trim(adjustl(c0)))
     end if
 
     ! copy namelist file values into array of GridTrees pointers
@@ -92,24 +93,25 @@ contains
        AllGridNodes(gridId)%this%sibling => null()
        AllGridNodes(gridId)%this%descendent => null()
        AllGridNodes(gridId)%this%PreOrder => null()
-       AllGridNodes(gridId)%this%curr => CreateGrid(gridId, &
-            oneNamelistFile, oneParallelEnvironment)
+       call CreateGrid(gridId, GhostZoneLength, &
+            oneNamelistFile, oneParallelEnvironment, &
+            AllGridNodes(gridId)%this%curr)
     end do
 
     ! verify nesting correction
 
     if (oneNamelistFile%nxtnest(1) /= 0) then
-       write(str(1),"(i16)") oneNamelistFile%nxtnest(1)
+       write(c0,"(i16)") oneNamelistFile%nxtnest(1)
        call fatal_error(h//" nxtnext(1) on namelist file "//&
-            "should be 0 but is"//trim(adjustl(str(1))))
+            "should be 0 but is"//trim(adjustl(c0)))
     end if
     do gridId = 2, oneNamelistFile%ngrids
        if (oneNamelistFile%nxtnest(gridId) >= gridId) then
-          write(str(1),"(i16)") gridId
-          write(str(2),"(i16)") oneNamelistFile%nxtnest(gridId)
-          call fatal_error(h//" nxtnext("//trim(adjustl(str(1)))//&
-               ") on namelist file should be <= "//trim(adjustl(str(1)))//&
-               " but is"//trim(adjustl(str(2))))
+          write(c0,"(i16)") gridId
+          write(c1,"(i16)") oneNamelistFile%nxtnest(gridId)
+          call fatal_error(h//" nxtnext("//trim(adjustl(c0))//&
+               ") on namelist file should be <= "//trim(adjustl(c0))//&
+               " but is"//trim(adjustl(c1)))
        end if
     end do
 
@@ -234,7 +236,7 @@ contains
   subroutine DumpOneGridTreeNode(this)
     type(GridTree), pointer :: this
 
-    character(len=8) :: str(10)
+    character(len=8) :: c0, c1, c2, c3
     character(len=*), parameter :: h="**(DumpOneGridTreeNode)**"
 
     if (.not. associated(this)) then
@@ -245,14 +247,14 @@ contains
 
     ! grid id
 
-    write(str(1),"(i8)") this%curr%Id
-    call MsgDump(h//" grid "//trim(adjustl(str(1))), .true.)
+    write(c0,"(i8)") this%curr%Id
+    call MsgDump(h//" grid "//trim(adjustl(c0)), .true.)
 
     ! ancestors
 
     if (associated(this%ancestor)) then
-       write(str(1),"(i8)") this%ancestor%curr%Id
-       call MsgDump(" is nested on grid "//trim(adjustl(str(1))),.true.)
+       write(c0,"(i8)") this%ancestor%curr%Id
+       call MsgDump(" is nested on grid "//trim(adjustl(c0)),.true.)
     else if (this%curr%id == 1) then         
        call MsgDump(" is outermost grid ",.true.)
     else
@@ -262,8 +264,8 @@ contains
     ! sibling
 
     if (associated(this%sibling)) then
-       write(str(1),"(i8)") this%sibling%curr%Id
-       call MsgDump(", has grid "//trim(adjustl(str(1)))//&
+       write(c0,"(i8)") this%sibling%curr%Id
+       call MsgDump(", has grid "//trim(adjustl(c0))//&
             " as first sibling",.true.)
     else
        call MsgDump(", has no sibling",.true.)
@@ -272,8 +274,8 @@ contains
     ! descendent
 
     if (associated(this%descendent)) then
-       write(str(1),"(i8)") this%descendent%curr%Id
-       call MsgDump(" and has grid "//trim(adjustl(str(1)))//&
+       write(c0,"(i8)") this%descendent%curr%Id
+       call MsgDump(" and has grid "//trim(adjustl(c0))//&
             " as first descendent")
     else
        call MsgDump(" and has no descendent")
@@ -331,7 +333,7 @@ contains
 
     type(GridTree), pointer :: OneGridTreeNode
     logical :: found
-    character(len=8) :: str(10)
+    character(len=8) :: c0
     character(len=*), parameter :: h="**(FetchGrid)**"
 
     if (.not. associated(AllGrids)) then
@@ -348,8 +350,8 @@ contains
        end if
     end do
     if (.not. found) then
-       write(str(1),"(i8)") nbr
-       call fatal_error(h//" grid number "//trim(adjustl(str(1)))//" not found")
+       write(c0,"(i8)") nbr
+       call fatal_error(h//" grid number "//trim(adjustl(c0))//" not found")
     end if
     OneGrid => OneGridTreeNode%curr
   end function FetchGrid

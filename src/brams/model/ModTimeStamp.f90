@@ -44,7 +44,7 @@ module ModTimeStamp
 
   private
 
-  include "constants.h"
+  include "i8.h"
   integer              :: count_rate                  ! ticks per second
   integer              :: count_max                   ! measurement overflow
   integer              :: nodes                       ! MPI size
@@ -60,7 +60,7 @@ module ModTimeStamp
   integer, parameter   :: unitDir=59                  ! unit directory file name
   character(len=18)    :: fNameDir                    ! directory file name 
   logical, parameter   :: dumpLocal=.false.           ! module debug (set to .true. for dumping exec info)
-  logical, parameter   :: noInstrumentation=.true.    ! disable instrumentation (if set to true)
+  logical, parameter   :: noInstrumentation=.false.    ! disable instrumentation (if set to true)
 
   public :: CreateTimeStamp
   public :: TimeStamp

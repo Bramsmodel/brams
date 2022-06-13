@@ -39,11 +39,7 @@
       use parkind, only : im => kind_im, rb => kind_rb
       use parrrtm, only : nbndlw, mg, maxxsec, mxmol
       use rrlw_wvn, only: totplnk, totplk16, totplnkderiv, totplk16deriv
-      use rrlw_ref, ONLY: pref,   &
-                          preflog,&
-                          tref,   &
-                          chi_mls
-
+      use rrlw_ref
       use rrlw_vsn, only: hvrset, hnamset
 
       implicit none

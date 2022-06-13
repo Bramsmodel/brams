@@ -7,7 +7,7 @@ module mem_volc_chem1
 !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
   use ModNamelistFile, only: namelistFile
 
-  include "constants.h"
+  include "i8.h"
 !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
 
   type volc_mean_vars   
