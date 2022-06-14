@@ -15,9 +15,8 @@ module mem_scratch
   ! are dimensioned to store the full domain, not the mpi decomposed one
   !
 
-  use mem_aerad,   only: nwave      !intent(in)
-  use mem_radiate, only: ilwrtyp, & !intent(in)
-       iswrtyp                      !intent(in)
+  use grid_dims
+  use node_mod, only: mchnum, master_num
 
   type scratch_vars
      real, pointer :: scr1(:)
@@ -69,6 +68,13 @@ contains
        maxgrds, ngrids, nzg, nzs, npatch, proc_type, maxnxp, maxnyp, maxnzp)
 
     ! FOR CATT
+    use mem_aerad,   only: nwave      !intent(in)
+    use mem_radiate, only: ilwrtyp, & !intent(in)
+         iswrtyp                      !intent(in)
+
+!--(DMK-CCATT-INI)-----------------------------------------------------
+!    use catt_start, only: CATT        ! intent(in)
+!--(DMK-CCATT-FIM)-----------------------------------------------------
 
     implicit none
 

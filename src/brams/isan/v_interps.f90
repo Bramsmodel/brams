@@ -9,17 +9,8 @@
 SUBROUTINE obs_isen (m1,m2,tsnd,psnd,zsnd,rsnd,usndz,vsndz  &
                     ,zsndz,stlt,stln,topsnd,lpst,lzst  &
                     ,obsu,obsv,obsp,obss,obsr,no,chstid)
-use isan_coms, ONLY: maxlev,   &
-                     nisn,     &
-                     nsta,     &
-                     levth
-
-use rconstants, ONLY: cp,    &
-                      cpor,  &
-                      g,     &
-                      p00,   &
-                      p00i,  &
-                      rocp
+use isan_coms
+use rconstants
 
 implicit none
 integer :: m1,m2,no
@@ -207,16 +198,8 @@ end
 SUBROUTINE obs_sigz (m1,m2,tsnd,psnd,zsnd,rsnd,usndz,vsndz  &
                     ,zsndz,stlt,stln,topsnd,lpst,lzst,sndtopg  &
                     ,obsu,obsv,obsp,obst,obsr,no,ztop)
-use isan_coms, ONLY: maxlev,  &
-                     maxsigz, &
-                     nsigz,   &
-                     nsta,    &
-                     sigz
-use rconstants, ONLY:  cp,   &
-                       cpor, &
-                       g,    &
-                       p00,  &
-                       rocp
+use isan_coms
+use rconstants
 
 implicit none
 integer :: m1,m2,no,lpst(m1),lzst(m1)
@@ -463,18 +446,8 @@ end
 
 subroutine vterpp_i (np1,np2,np3,npi3,un,vn,tn,zn,rn,ui2,vi2,pi2,si2,ri2)
      
-use isan_coms, ONLY: nisn,   &
-                     maxpr,  &
-                     nprz,   &
-                     pnpr,   &
-                     levpr,  &
-                     levth
-use rconstants, ONLY: cp,    &
-                      cpor,  &
-                      g,     &
-                      p00,   &
-                      p00k,  &
-                      rocp
+use isan_coms
+use rconstants
 
 implicit none
 integer :: np1,np2,np3,npi3
@@ -635,19 +608,8 @@ end
 subroutine vterpp_s (np1,np2,np3,npi3,un,vn,tn,zn,rn  &
                     ,ui2,vi2,pi2,ti2,ri2,topt,rtgt)
      
-use isan_coms, ONLY: maxpr,  &
-                     maxsigz,&
-                     nprz,   &
-                     pnpr,   &
-                     levpr,  &
-                     sigz
-
-use rconstants, ONLY: cp,    &
-                      cpor,  &
-                      g,     &
-                      p00,   &
-                      rocp
-
+use isan_coms
+use rconstants
 
 implicit none
 integer :: np1,np2,np3,npi3

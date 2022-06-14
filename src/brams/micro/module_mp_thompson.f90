@@ -45,48 +45,7 @@
       MODULE module_mp_thompson
 
 !     USE module_wrf_error
-      USE module_mp_radar, ONLY: rayleigh_soak_wetgraupel, &
-                                 radar_init,             &
-                                 hostinclusionstring_g,  &
-                                 hostinclusionstring_s,  &
-                                 hostmatrixstring_g,     &
-                                 hostmatrixstring_s,     &
-                                 hoststring_g,           &
-                                 hoststring_s,           &
-                                 inclusionstring_g,      &
-                                 inclusionstring_s,      &
-                                 k_w,      &
-                                 lamda4,      &
-                                 lamda_radar,      &
-                                 m_i_0,      &
-                                 m_w_0,      &
-                                 matrixstring_g,      &
-                                 matrixstring_s,      &
-                                 melt_outside_g,      &
-                                 melt_outside_s,      &
-                                 mixingrulestring_g,      &
-                                 mixingrulestring_s,      &
-                                 nrbins,      &
-                                 pi5,      &
-                                 xam_g,      &
-                                 xam_r,      &
-                                 xam_s,      &
-                                 xbm_r,      &
-                                 xbm_s,      &
-                                 xbm_g,      &
-                                 xmu_g,      &
-                                 xmu_r,      &
-                                 xmu_s,      &
-                                 xxds,      &
-                                 xdts,      &
-                                 xxdg,      &
-                                 xdtg,      &
-                                 simpson
-
-
-
-
-
+      USE module_mp_radar
 !#if ( defined( DM_PARALLEL ) && ( ! defined( STUBMPI ) ) )
 !     USE module_dm, ONLY : wrf_dm_max_real
 !#endif
@@ -3627,7 +3586,7 @@
 
       implicit none
 
-      include "constants.h"
+      include "constants.f90"
 !..Local variables
       INTEGER:: i, j, k, m, n, n2
       INTEGER:: km, km_s, km_e
@@ -3821,7 +3780,7 @@
 
       implicit none
 
-      include "constants.h"
+      include "constants.f90"
 !..Local variables
       INTEGER:: i, j, k, m, n, n2
       INTEGER:: km, km_s, km_e
@@ -4117,7 +4076,7 @@
 
       implicit none
 
-      include "constants.h"
+      include "constants.f90"
 !..Local variables
       INTEGER:: i, j, k, m, n, n2
       INTEGER:: km, km_s, km_e

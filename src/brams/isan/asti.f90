@@ -75,8 +75,8 @@ SUBROUTINE ISNSTAGE ()
 
            call soundtopo(ng,nsta,maxsta,up_topg(1,ng)  &
                 ,up_lat,up_lon,up_top  &
-                ,grid_g(ng)%topt,grid_g(ng)%glat  &
-                ,grid_g(ng)%glon &
+                ,grid_g(ng)%topt(1,1),grid_g(ng)%glat(1,1)  &
+                ,grid_g(ng)%glon(1,1) &
                 ,nnxp(ng),nnyp(ng),platn(ng),plonn(ng)  &
                 ,xtn(1,ng),ytn(1,ng),deltaxn(ng),deltayn(ng))
         enddo
@@ -164,105 +164,105 @@ SUBROUTINE ISNSTAGE ()
         
         if(inproj==1) then
            call latlon_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,nprz,1,0  &
-                ,pp_u,pp_sglob,p_ur,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,pp_u,pp_sglob,p_ur,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,idatelin,iglobew,iglobs,iglobn)
            call latlon_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,nprz,1,0  &
-                ,pp_v,pp_sglob,p_vr,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,pp_v,pp_sglob,p_vr,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,idatelin,iglobew,iglobs,iglobn)
            call latlon_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,nprz,1,0  &
-                ,pp_t,pp_sglob,p_t,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,pp_t,pp_sglob,p_t,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,idatelin,iglobew,iglobs,iglobn)
            call latlon_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,nprz,1,0  &
-                ,pp_z,pp_sglob,p_z,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,pp_z,pp_sglob,p_z,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,idatelin,iglobew,iglobs,iglobn)
            call latlon_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,nprz,1,1  &
-                ,pp_r,pp_sglob,p_r,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,pp_r,pp_sglob,p_r,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,idatelin,iglobew,iglobs,iglobn)
            ! Surface fields 
            call latlon_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,1,1,1  &
-                ,rs_slp,pp_sglob,p_slp,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,rs_slp,pp_sglob,p_slp,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,idatelin,iglobew,iglobs,iglobn)
            call latlon_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,1,1,1  &
-                ,rs_sfp,pp_sglob,p_sfp,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,rs_sfp,pp_sglob,p_sfp,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,idatelin,iglobew,iglobs,iglobn)
            call latlon_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,1,1,1  &
-                ,rs_sft,pp_sglob,p_sft,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,rs_sft,pp_sglob,p_sft,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,idatelin,iglobew,iglobs,iglobn)
            call latlon_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,1,1,1  &
-                ,rs_snow,pp_sglob,p_snow,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,rs_snow,pp_sglob,p_snow,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,idatelin,iglobew,iglobs,iglobn)
            call latlon_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,1,1,1  &
-                ,rs_sst,pp_sglob,p_sst,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,rs_sst,pp_sglob,p_sst,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,idatelin,iglobew,iglobs,iglobn)
            rot_type='ll_rps'
            reflat1=0.
            reflon1=0.
         elseif(inproj==2) then
            call lambcon_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,nprz,1,0  &
-                ,pp_u,p_ur,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,pp_u,p_ur,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,cntlat,cntlon)
            call lambcon_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,nprz,1,0  &
-                ,pp_v,p_vr,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,pp_v,p_vr,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,cntlat,cntlon)
            call lambcon_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,nprz,1,0  &
-                ,pp_t,p_t,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,pp_t,p_t,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,cntlat,cntlon)
            call lambcon_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,nprz,1,0  &
-                ,pp_z,p_z,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,pp_z,p_z,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,cntlat,cntlon)
            call lambcon_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,nprz,1,1  &
-                ,pp_r,p_r,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,pp_r,p_r,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,cntlat,cntlon)
            ! Surface fields 
            call lambcon_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,1,1,1  &
-                ,rs_slp,p_slp,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,rs_slp,p_slp,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,cntlat,cntlon)
            call lambcon_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,1,1,1  &
-                ,rs_sfp,p_sfp,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,rs_sfp,p_sfp,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,cntlat,cntlon)
            call lambcon_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,1,1,1  &
-                ,rs_sft,p_sft,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,rs_sft,p_sft,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,cntlat,cntlon)
            call lambcon_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,1,1,1  &
-                ,rs_snow,p_snow,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,rs_snow,p_snow,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,cntlat,cntlon)
            call lambcon_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,1,1,1  &
-                ,rs_sst,p_sst,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,rs_sst,p_sst,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,cntlat,cntlon)
            rot_type='lc_rps'
            reflat1=cntlat
            reflon1=cntlon
         elseif(inproj==3) then
            call trueps60_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,nprz,1,0  &
-                ,pp_u,p_ur,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,pp_u,p_ur,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,cntlat,cntlon)
            call trueps60_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,nprz,1,0  &
-                ,pp_v,p_vr,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,pp_v,p_vr,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,cntlat,cntlon)
            call trueps60_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,nprz,1,0  &
-                ,pp_t,p_t,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,pp_t,p_t,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,cntlat,cntlon)
            call trueps60_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,nprz,1,0  &
-                ,pp_z,p_z,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,pp_z,p_z,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,cntlat,cntlon)
            call trueps60_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,nprz,1,1  &
-                ,pp_r,p_r,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,pp_r,p_r,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,cntlat,cntlon)
            ! Surface fields 
            call trueps60_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,1,1,1  &
-                ,rs_slp,p_slp,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,rs_slp,p_slp,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,cntlat,cntlon)
            call trueps60_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,1,1,1  &
-                ,rs_sfp,p_sfp,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,rs_sfp,p_sfp,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,cntlat,cntlon)
            call trueps60_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,1,1,1  &
-                ,rs_sft,p_sft,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,rs_sft,p_sft,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,cntlat,cntlon)
            call trueps60_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,1,1,1  &
-                ,rs_snow,p_snow,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,rs_snow,p_snow,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,cntlat,cntlon)
            call trueps60_ps(nnxp(ngrid),nnyp(ngrid),nprx,npry,1,1,1  &
-                ,rs_sst,p_sst,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+                ,rs_sst,p_sst,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
                 ,xswlat,xswlon,gdatdx,gdatdy,cntlat,cntlon)
            rot_type='tps_rps'
            reflat1=cntlat
@@ -282,8 +282,8 @@ SUBROUTINE ISNSTAGE ()
         call vterpp_s(nnxp(ngrid),nnyp(ngrid),nprz,nsigz  &
              ,pp_u,pp_v,pp_t,pp_z,pp_r  &
              ,ps_u,ps_v,ps_p,ps_t,ps_r  &
-             ,grid_g(ngrid)%topt  &
-             ,grid_g(ngrid)%rtgt)
+             ,grid_g(ngrid)%topt(1,1)  &
+             ,grid_g(ngrid)%rtgt(1,1))
         
         if(allocated(pp_u)) deallocate(pp_u)
         if(allocated(pp_v)) deallocate(pp_v)
@@ -313,8 +313,8 @@ SUBROUTINE ISNSTAGE ()
   
   if(igridfl==3) then
 
-     call strmfun(nnxp(ngrid),nnyp(ngrid),grid_g(ngrid)%topt  &
-          ,grid_g(ngrid)%rtgt)
+     call strmfun(nnxp(ngrid),nnyp(ngrid),grid_g(ngrid)%topt(1,1)  &
+          ,grid_g(ngrid)%rtgt(1,1))
 
      rs_qual(1:nnxp(ngrid),1:nnyp(ngrid)) = 0.
      
@@ -364,7 +364,7 @@ SUBROUTINE ISNSTAGE ()
           ,upi_u,upi_v,upi_p,upi_s,upi_r,nsta,up_chstid)
      
      call obj_anal('isen',ngrid,nnxp(ngrid),nnyp(ngrid)  &
-          ,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+          ,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
           ,platn(ngrid),plonn(ngrid),xtn(1,ngrid),ytn(1,ngrid)  &
           ,deltaxn(ngrid),deltayn(ngrid))
               
@@ -390,7 +390,7 @@ SUBROUTINE ISNSTAGE ()
        ,ups_u,ups_v,ups_p,ups_t,ups_r,nsta,zmn(nnzp(1)-1,1))
   
   call obj_anal('sigz',ngrid,nnxp(ngrid),nnyp(ngrid)  &
-       ,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+       ,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
        ,platn(ngrid),plonn(ngrid),xtn(1,ngrid),ytn(1,ngrid)  &
        ,deltaxn(ngrid),deltayn(ngrid))
 
@@ -400,22 +400,22 @@ SUBROUTINE ISNSTAGE ()
   !          Find Montgomery streamfunction on isentropic surfaces
   !-----------------------------------------------------------------
   
-  call strmfun(nnxp(ngrid),nnyp(ngrid),grid_g(ngrid)%topt  &
-       ,grid_g(ngrid)%rtgt)
+  call strmfun(nnxp(ngrid),nnyp(ngrid),grid_g(ngrid)%topt(1,1)  &
+       ,grid_g(ngrid)%rtgt(1,1))
   
   !-----------------------------------------------------------------
   !          Perform ground surface objective analysis.
   !-----------------------------------------------------------------
   
   call obj_anal('surf',ngrid,nnxp(ngrid),nnyp(ngrid) &
-       ,grid_g(ngrid)%glat,grid_g(ngrid)%glon  &
+       ,grid_g(ngrid)%glat(1,1),grid_g(ngrid)%glon(1,1)  &
        ,platn(ngrid),plonn(ngrid),xtn(1,ngrid),ytn(1,ngrid)  &
        ,deltaxn(ngrid),deltayn(ngrid))
 
   ! Check if "quality" of surface grid point is good
 
-  call sfcqual(nnxp(ngrid),nnyp(ngrid),grid_g(ngrid)%glat  &
-       ,grid_g(ngrid)%glon  &
+  call sfcqual(nnxp(ngrid),nnyp(ngrid),grid_g(ngrid)%glat(1,1)  &
+       ,grid_g(ngrid)%glon(1,1)  &
        ,rs_qual,sf_lat,sf_lon,sf_p,nssfc,sf_scra)
 
 1200 continue

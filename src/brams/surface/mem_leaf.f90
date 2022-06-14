@@ -9,11 +9,9 @@
 
 Module mem_leaf
 
-  use ModNamelistFile, only: &
-       namelistFile
+  use ModNamelistFile, only: namelistFile
 
-  use grid_dims, only: &
-       nzgmax
+  use grid_dims
 
   Type leaf_vars
 
@@ -298,7 +296,7 @@ Contains
     use var_tables, only: InsertVTab
 
     implicit none
-    include "constants.h"
+    include "i8.h"
     type (leaf_vars) :: leaf,leafm
     integer, intent(in) :: imean,nz,nx,ny,nzg,nzs,np,ng
     integer(kind=i8) :: npts

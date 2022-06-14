@@ -7,7 +7,7 @@ module mem_plume_chem1
 
   USE ModNamelistFile, only: namelistFile
 
-  include "constants.h"
+  include "i8.h"
 
   type plume_vars   
      real, pointer, dimension(:,:)  :: fct     

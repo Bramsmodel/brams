@@ -8,13 +8,7 @@
 
 
 subroutine nud_read(initflag)
-
-  use ModNudAnalysis, only: &
-       varweight, &
-       vfintrpf, &
-       varweight_chem
-  
-  use ModDateUtils
+use ModDateUtils
 use mem_grid
 use mem_varinit
 
@@ -61,13 +55,13 @@ if (initflag == 1) then   ! Initialization
 
    ! Calculate varweights just like var init
    print *,'LFR-DEB->nud_read.f90'
-   call varweight(nnzp(1),nnxp(1),nnyp(1),varinit_g(1)%varwts  &
-       ,grid_g(1)%topt,grid_g(1)%rtgt)
+   call varweight(nnzp(1),nnxp(1),nnyp(1),varinit_g(1)%varwts(1,1,1)  &
+       ,grid_g(1)%topt(1,1),grid_g(1)%rtgt(1,1))
 
 !--(DMK-CCATT-INI)---------------------------------------------------------
    if(chem_assim == 1) &
-     call varweight_chem(nnzp(1),nnxp(1),nnyp(1),varinit_g(1)%varwts_chem  &
-                   ,grid_g(1)%topt,grid_g(1)%rtgt)
+     call varweight_chem(nnzp(1),nnxp(1),nnyp(1),varinit_g(1)%varwts_chem(1,1,1)  &
+                   ,grid_g(1)%topt(1,1),grid_g(1)%rtgt(1,1))
 !--(DMK-CCATT-FIM)---------------------------------------------------------
    
    ! Read and interpolate files to new grid 1. Put stuff in varinit arrays.

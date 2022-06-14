@@ -72,102 +72,228 @@ end subroutine lite_varset
 
 !-------------------------------------------------------------------------
 
+subroutine vtables_scalar(varp,vart,ng,tabstr)
 
-!!$subroutine GetVarFromMem (nxp, nyp, nzp, nzg, nzs, npatch, &
-!!$     varName, itype, ngrd, arrayOut, sizeArray)
-!!$  use var_tables, only: vtab_r, num_var
-!!$
-!!$  implicit none
-!!$  include "constants.h"
-!!$  integer,            intent(in)    :: nxp  ! as at vartable
-!!$  integer,            intent(in)    :: nyp  ! as at vartable
-!!$  integer,            intent(in)    :: nzp  ! as at vartable
-!!$  integer,            intent(in)    :: nzg  ! as at vartable
-!!$  integer,            intent(in)    :: nzs  ! as at vartable
-!!$  integer,            intent(in)    :: npatch  ! as at vartable
-!!$  character(LEN=*),   intent(in)    :: varName
-!!$  integer,            intent(in)    :: ngrd
-!!$  integer,            intent(out)   :: itype
-!!$  integer(kind=i8),   intent(in)    :: sizeArray
-!!$  real,	              intent(inout) :: arrayOut(sizeArray)
-!!$
-!!$  character(len=16) :: c0, c1
-!!$  character(len=*), parameter :: h="**(GetVarFromMem)**"
-!!$  integer(kind=i8) :: ni
-!!$  integer(kind=i8) :: npts
-!!$  logical          :: found
-!!$  character(len=len(varName)) :: varnIn, varnOut
-!!$  real, pointer :: ptr ! points to a field at vartable
-!!$  real :: scr1(sizeArray)
-!!$
-!!$  ! field name changes from vartable to analysis file
-!!$  ! in two cases (PI and HKH); 
-!!$  ! given output file field name, find vartable correspondent
-!!$
-!!$  if (trim(varName) == 'PI') then
-!!$     varnIn = 'PP'
-!!$  else if (trim(varName) == 'HKH') then
-!!$     varnIn = 'HKM'
-!!$  else
-!!$     varnIn = varName
-!!$  end if
-!!$
-!!$  ! search for vartable name at vartable
-!!$  ! store result at array 
-!!$
-!!$  found = .false.
-!!$  do ni = 1, num_var(ngrd)
-!!$     if (trim(vtab_r(ni,ngrd)%name) == trim(varnIn)) then
-!!$        itype = vtab_r(ni,ngrd)%idim_type
-!!$        npts  = vtab_r(ni,ngrd)%npts
-!!$        ptr => vtab_r(ni,ngrd)%var_p
-!!$        if (npts > sizeArray) then
-!!$           write(c0,"(i16)") npts
-!!$           write(c1,"(i16)") sizeArray
-!!$           call fatal_error(h//&
-!!$                " array size for "//trim(varName)//&
-!!$                " is "//trim(adjustl(c1))//&
-!!$                ", smaller than "//trim(adjustl(c0))//" required")
-!!$        end if
-!!$        found = .true.
-!!$        exit
-!!$     end if
-!!$  end do
-!!$
-!!$  ! halts if not there
-!!$
-!!$  if (.not. found) then
-!!$     write(*,"(a)") h//" var "//trim(varnIn)//" not found in vtab_r; will dump vtab_r"
-!!$     call DumpVTab(ngrd)
-!!$     call fatal_error(h//" var "//trim(varnIn)//" not found in vtab_r")
-!!$  end if
-!!$
-!!$  ! convert fields PP, HKM and VKH from vartables to analysis file
-!!$  ! or store field at scr1
-!!$
-!!$  call PreProcForOutput(ngrd, varnIn, npts, ptr, scr1, varnOut)
-!!$
-!!$  ! verify output name
-!!$
-!!$  if (trim(varnOut) /= trim (varName)) then
-!!$     call fatal_error(h//" fails computing "//trim(varName))
-!!$  end if
-!!$
-!!$  ! move verticals from first to third dimension, if required
-!!$
-!!$  if (itype==3 .or. itype==4 .or. itype==5) then
-!!$     call RearrangeForOutput(nxp, nyp, nzp, nzg, nzs, npatch, &
-!!$          itype, scr1, arrayOut)
-!!$  else
-!!$     arrayOut = scr1
-!!$  end if
-!!$end subroutine GetVarFromMem
+  use var_tables
+
+  implicit none
+  real, target :: varp,vart
+  integer, intent(in) :: ng
+  character (len=*), intent(in) :: tabstr
+
+  character (len=80) ::line
+  character (len=1) ::toksep=':'
+  character (len=32) ::tokens(10)
+  character (len=16) :: cname,ctab
+
+  integer :: ntok,nv,isnum,ns
+
+  call tokenize1(tabstr,tokens,ntok,toksep)
+  cname=tokens(1)
+  !   ctab=tokens(2) 
+
+  !    See if this scalar name is already in the table...
+
+  isnum=0
+
+  !   do ns=1,num_scalar(ng)
+  !      if(cname == scalar_tab(ns,ng)%name) then
+  !      	 isnum=ns
+  !      	 exit
+  !      endif
+  !   enddo
+
+  !    Fill in existing table slot or make new scalar slot
+
+  !   if (isnum == 0) then
+  num_scalar(ng)=num_scalar(ng)+1
+  nv=num_scalar(ng)
+  scalar_tab(nv,ng)%name = cname
+  !   else
+  !      nv=isnum
+  !   endif
+
+  scalar_tab(nv,ng)%var_p => varp
+  scalar_tab(nv,ng)%var_t => vart
+
+  !   if(ctab == 'sclp' ) then
+  !      scalar_tab(nv,ng)%varp => varp
+  !   elseif(ctab == 'sclt' ) then
+  !      scalar_tab(nv,ng)%vart => vart
+  !   else
+  !      print*, 'Illegal scalar table specification for var:', cname
+  !      stop 'bad scalar table'
+  !   endif
+
+  return
+end subroutine vtables_scalar
+
+!-------------------------------------------------------------------------
+
+subroutine vtables_scalar_new(varp,vart,ng,tabstr,elements)
+
+  use var_tables
+
+  implicit none
+  integer :: elements !ALF
+  real, target :: varp(elements), vart(elements)
+  integer, intent(in) :: ng
+  character (len=*), intent(in) :: tabstr
+
+  character (len=80) ::line
+  character (len=1) ::toksep=':'
+  character (len=32) ::tokens(10)
+  character (len=16) :: cname,ctab
+
+  integer :: ntok,nv,isnum,ns, i
+
+  call tokenize1(tabstr,tokens,ntok,toksep)
+  cname=tokens(1)
+  !   ctab=tokens(2) 
+
+  !    See if this scalar name is already in the table...
+
+  isnum=0
+
+  !   do ns=1,num_scalar(ng)
+  !      if(cname == scalar_tab(ns,ng)%name) then
+  !      	 isnum=ns
+  !      	 exit
+  !      endif
+  !   enddo
+
+  !    Fill in existing table slot or make new scalar slot
+
+  !   if (isnum == 0) then
+  !num_scalar(ng)=num_scalar(ng)+1
+  nv=num_scalar(ng)
+  !scalar_tab(nv,ng)%name = cname
+  !   else
+  !      nv=isnum
+  !   endif
+
+  !scalar_tab(nv,ng)%var_p => varp
+  !scalar_tab(nv,ng)%var_t => vart
+
+  ! ALF
+  scalar_tab(nv,ng)%a_var_p => varp(:)
+  scalar_tab(nv,ng)%a_var_t => vart(:)
+
+  !
+  !
+
+  !   if(ctab == 'sclp' ) then
+  !      scalar_tab(nv,ng)%varp => varp
+  !   elseif(ctab == 'sclt' ) then
+  !      scalar_tab(nv,ng)%vart => vart
+  !   else
+  !      print*, 'Illegal scalar table specification for var:', cname
+  !      stop 'bad scalar table'
+  !   endif
+
+  return
+end subroutine vtables_scalar_new
+
+
+
+
+
+
+subroutine GetVarFromMem (nxp, nyp, nzp, nzg, nzs, npatch, &
+     varName, itype, ngrd, arrayOut, sizeArray)
+  use var_tables, only: vtab_r, num_var
+
+  implicit none
+  include "i8.h"
+  integer,            intent(in)    :: nxp  ! as at vartable
+  integer,            intent(in)    :: nyp  ! as at vartable
+  integer,            intent(in)    :: nzp  ! as at vartable
+  integer,            intent(in)    :: nzg  ! as at vartable
+  integer,            intent(in)    :: nzs  ! as at vartable
+  integer,            intent(in)    :: npatch  ! as at vartable
+  character(LEN=*),   intent(in)    :: varName
+  integer,            intent(in)    :: ngrd
+  integer,            intent(out)   :: itype
+  integer(kind=i8),   intent(in)    :: sizeArray
+  real,	              intent(inout) :: arrayOut(sizeArray)
+
+  character(len=16) :: c0, c1
+  character(len=*), parameter :: h="**(GetVarFromMem)**"
+  integer(kind=i8) :: ni
+  integer(kind=i8) :: npts
+  logical          :: found
+  character(len=len(varName)) :: varnIn, varnOut
+  real, pointer :: ptr ! points to a field at vartable
+  real :: scr1(sizeArray)
+
+  ! field name changes from vartable to analysis file
+  ! in two cases (PI and HKH); 
+  ! given output file field name, find vartable correspondent
+
+  if (trim(varName) == 'PI') then
+     varnIn = 'PP'
+  else if (trim(varName) == 'HKH') then
+     varnIn = 'HKM'
+  else
+     varnIn = varName
+  end if
+
+  ! search for vartable name at vartable
+  ! store result at array 
+
+  found = .false.
+  do ni = 1, num_var(ngrd)
+     if (trim(vtab_r(ni,ngrd)%name) == trim(varnIn)) then
+        itype = vtab_r(ni,ngrd)%idim_type
+        npts  = vtab_r(ni,ngrd)%npts
+        ptr => vtab_r(ni,ngrd)%var_p
+        if (npts > sizeArray) then
+           write(c0,"(i16)") npts
+           write(c1,"(i16)") sizeArray
+           call fatal_error(h//&
+                " array size for "//trim(varName)//&
+                " is "//trim(adjustl(c1))//&
+                ", smaller than "//trim(adjustl(c0))//" required")
+        end if
+        found = .true.
+        exit
+     end if
+  end do
+
+  ! halts if not there
+
+  if (.not. found) then
+     write(*,"(a)") h//" var "//trim(varnIn)//" not found in vtab_r; will dump vtab_r"
+     call DumpVTab(ngrd)
+     call fatal_error(h//" var "//trim(varnIn)//" not found in vtab_r")
+  end if
+
+  ! convert fields PP, HKM and VKH from vartables to analysis file
+  ! or store field at scr1
+
+  call PreProcForOutput(ngrd, varnIn, npts, ptr, scr1, varnOut)
+
+  ! verify output name
+
+  if (trim(varnOut) /= trim (varName)) then
+     call fatal_error(h//" fails computing "//trim(varName))
+  end if
+
+  ! move verticals from first to third dimension, if required
+
+  if (itype==3 .or. itype==4 .or. itype==5) then
+     call RearrangeForOutput(nxp, nyp, nzp, nzg, nzs, npatch, &
+          itype, scr1, arrayOut)
+  else
+     arrayOut = scr1
+  end if
+end subroutine GetVarFromMem
 
 subroutine DumpVTab(ngrd)
   use var_tables, only: vtab_r, num_var
 
   implicit none
-  include "constants.h"
+  include "i8.h"
   integer, intent(in) :: ngrd
 
   integer :: i

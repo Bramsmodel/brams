@@ -36,22 +36,7 @@
 
 ! ------- Modules -------
       use parkind, only : im => kind_im, rb => kind_rb
-      use rrlw_wvn, ONLY: ixindx,   &
-                          nxmol,    &
-                          rwgt,     &
-                          ngs,      &
-                          ngn,      &
-                          ng,       &
-                          ngm,      &
-                          wt,       &
-                          wavenum1, &
-                          wavenum2, &
-                          delwave , &
-                          nspa    , &
-                          nspb    , &
-                          ngb     , &
-                          ngc
-
+      use rrlw_wvn
       use rrtmg_lw_setcoef, only: lwatmref, lwavplank, lwavplankderiv
 
       implicit none
@@ -218,6 +203,7 @@
       use rrlw_con, only: heatfac, grav, planck, boltz, &
                           clight, avogad, alosmt, gascon, radcn1, radcn2, &
                           sbcnst, secdy 
+      use rrlw_vsn
 
       save 
  

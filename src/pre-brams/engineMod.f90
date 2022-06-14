@@ -36,7 +36,7 @@ module engineMod
 
     implicit none
 
-    include "constants.h"
+    include "constants.f90"
     character(len=*),parameter :: sourceName='engineMod.f90' !Name of source code
     character(len=*),parameter :: procedureName='**engineMod**' !Name of this procedure
     !
@@ -111,7 +111,7 @@ module engineMod
     
         implicit none
     
-        include "constants.h"
+        include "constants.f90"
         character(len=*),parameter :: procedureName='**concatenate**' !Name of this procedure
         !
         !Local Parameters

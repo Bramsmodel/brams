@@ -136,6 +136,7 @@ MODULE Henrys_law_ConstantsMod
 !     of Potential Importance in 
 !     Environmental Chemistry (Version 3) 
 !     http://www.henrys-law.org 
+!     * indica artigos nao encontrados nesse endereço eletronico
   REAL,PARAMETER,DIMENSION(nspecies_HL) :: hstar=(/&
     1.10E-2              ,   & ! O3 - 001
     8.30E+4              ,   & ! H2O2 - 002

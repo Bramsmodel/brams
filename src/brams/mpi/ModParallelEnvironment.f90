@@ -5,8 +5,7 @@ module ModParallelEnvironment
   !                         for each process. Provides procedures for
   !                         dumping a msg at the dump file or at stdout.
 
-  use iso_fortran_env, only: &
-       output_unit
+  use ISO_FORTRAN_ENV
   private
   public :: ParallelEnvironment
   public :: CreateParallelEnvironment
@@ -33,7 +32,8 @@ contains
 
 
 
-  !*** CreateParallelEnvironment: create and fill variable of this type
+  !*** CreateParallelEnvironment: create and fill variable of this type.
+  !                               first call opens dump file for one process
 
 
 
@@ -139,11 +139,11 @@ contains
 
     if (present(noAdvance)) then
        if (noAdvance) then
-          write(output_unit,"(a)",advance="no") trim(str)
+          write(OUTPUT_UNIT,"(a)",advance="no") trim(str)
           return
        end if
     end if
-    write(output_unit,"(a)") trim(str)
+    write(OUTPUT_UNIT,"(a)") trim(str)
   end subroutine MsgOutput
 
 

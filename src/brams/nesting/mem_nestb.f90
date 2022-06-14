@@ -26,10 +26,12 @@ module mem_nestb
 
 contains
 
-  subroutine alloc_nestb(oneScalarTabSize,ng,nx,ny,nz)
+  subroutine alloc_nestb(ng,nx,ny,nz)
+
+    use var_tables
 
     implicit none
-    integer, intent(in) :: oneScalarTabSize
+
     integer :: ng,nx,ny,nz
 
     !  Allocate "b" array components. All grids will be allocated,
@@ -51,9 +53,9 @@ contains
     allocate( nbounds(ng)%bpy(nz,nx,2) )
     allocate( nbounds(ng)%bpz(nx,ny,2) )
 
-    allocate( nbounds(ng)%bsx(nz,ny,2,oneScalarTabSize) )
-    allocate( nbounds(ng)%bsy(nz,nx,2,oneScalarTabSize) )
-    allocate( nbounds(ng)%bsz(nx,ny,2,oneScalarTabSize) )
+    allocate( nbounds(ng)%bsx(nz,ny,2,num_scalar(ng)) )
+    allocate( nbounds(ng)%bsy(nz,nx,2,num_scalar(ng)) )
+    allocate( nbounds(ng)%bsz(nx,ny,2,num_scalar(ng)) )
 
     ! ALF - Putting Zero on all nest variables
 
@@ -78,10 +80,16 @@ contains
     nbounds(ng)%bwy = 0.
     nbounds(ng)%bwz = 0.
 
+!!$    call azero((nz*ny*2), nbounds(ng)%bpx(1,1,1))
+!!$    call azero((nz*nx*2), nbounds(ng)%bpy(1,1,1))
+!!$    call azero((nx*ny*2), nbounds(ng)%bpz(1,1,1))
     nbounds(ng)%bpx = 0.
     nbounds(ng)%bpy = 0.
     nbounds(ng)%bpz = 0.
 
+!!$    call azero((nz*ny*2*num_scalar(ng)), nbounds(ng)%bsx(1,1,1,1))
+!!$    call azero((nz*nx*2*num_scalar(ng)), nbounds(ng)%bsy(1,1,1,1))
+!!$    call azero((nx*ny*2*num_scalar(ng)), nbounds(ng)%bsz(1,1,1,1))
     nbounds(ng)%bsx = 0.
     nbounds(ng)%bsy = 0.
     nbounds(ng)%bsz = 0.
