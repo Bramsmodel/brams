@@ -413,7 +413,8 @@ contains
        ! file opened OK?
 
        if (oneIOFileDS%unit == -1) then
-          call fatal_error(h//" open file for "//trim(oneIOFileDS%fId)//" fails")
+!!$          call fatal_error(h//" open file for "//trim(oneIOFileDS%fId)//" fails")
+          call fatal_error(h//" file "//trim(oneIOFileDS%fName(index))//" not found")
        end if
 
     else
