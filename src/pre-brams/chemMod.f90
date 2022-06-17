@@ -36,7 +36,7 @@ module chemMod
 
     implicit none
 
-    include "constants.f90"
+    include "constants.h"
     character(len=*),parameter :: sourceName='chemMod.f90' !Name of source code
     character(len=*),parameter :: procedureName='**chemMod**' !Name of this procedure
     !
@@ -105,7 +105,7 @@ module chemMod
 
         implicit none
     
-        include "constants.f90"
+        include "constants.h"
         character(len=*),parameter :: procedureName='**createEquivalence**' !Name of this procedure
         !
         !Local Parameters
@@ -211,7 +211,7 @@ module chemMod
 
          implicit none
     
-         include "constants.f90"
+         include "constants.h"
          character(len=*),parameter :: procedureName='**fillChemArrays**' !Name of this procedure
          !
          !Local Parameters

@@ -9,15 +9,16 @@ module mem_chem1aq
 !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
   use ModNamelistFile, only: namelistFile
 
-  include "i8.h"
+  include "constants.h"
 !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
 
   type chem1aq_vars   
-!--- All families
-     real, pointer, dimension(:,:,:)  :: sc_pr,sc_pc ! r:rain, c:cloud
-     real, pointer, dimension(:    )  :: sc_tr,sc_tc
-!-----------
+     real, contiguous, pointer :: sc_pr(:,:,:)
+     real, contiguous, pointer :: sc_pc(:,:,:) 
+     real, contiguous, pointer :: sc_tr(:)
+     real, contiguous, pointer :: sc_tc(:)
   end type chem1aq_vars
+
   type (chem1aq_vars)    , allocatable :: chem1aq_g(:,:) , chem1maq_g(:,:)
   
   integer :: CHEMISTRY_AQ
@@ -95,7 +96,6 @@ contains
 
   subroutine filltab_chem1aq(chem1aq,chem1maq,imean,n1,n2,n3,nspeciesaq,ng)
 
-!    use var_tables
     use chem1aq_list, only: spcaq_name
 
 !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
@@ -217,12 +217,18 @@ subroutine alloc_tend_chem1aq(nmzp,nmxp,nmyp,ngrs,nspeciesaq,proc_type)
    
   !---------------------------------------------------------------
 
-  subroutine filltab_tend_chem1aq(nspeciesaq,ng)
+  subroutine filltab_tend_chem1aq(oneScalarTab, oneScalarTabSize, nspeciesaq, ng)
+    use ModScalarTable, only: &
+         ScalarTable, &
+         InsertAtScalarTab
+    
     use chem1aq_list, only:spcaq_name
     use mem_chem1, only: nspecies_transported ! this is first calculated at chemistry 
                                               ! "filltab_tend_chem1" routine
     implicit none
 
+    type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
+    integer, intent(inout) :: oneScalarTabSize
     integer,intent(in) :: nspeciesaq,ng
     integer ::ispcaq
     integer :: elements
@@ -234,31 +240,21 @@ subroutine alloc_tend_chem1aq(nmzp,nmxp,nmyp,ngrs,nspeciesaq,proc_type)
 
 
       if ( associated(chem1aq_g(ispcaq,ng)%sc_tr)) then
-      	call vtables_scalar (chem1aq_g(ispcaq,ng)%sc_pr(1,1,1),&
-        chem1aq_g(ispcaq,ng)%sc_tr(1),ng,trim(spcaq_name(ispcaq))//'PR')
-        
-	elements = size(chem1aq_g(ispcaq,ng)%sc_tr)
-        
-        call vtables_scalar_new (chem1aq_g(ispcaq,ng)%sc_pr(1,1,1),&
-        chem1aq_g(ispcaq,ng)%sc_tr(1),ng, trim(spcaq_name(ispcaq))//'PR',elements)
+        elements = size(chem1aq_g(ispcaq,ng)%sc_tr)
+        call InsertAtScalarTab(chem1aq_g(ispcaq,ng)%sc_pr, chem1aq_g(ispcaq,ng)%sc_tr, trim(spcaq_name(ispcaq))//'PR',&
+             oneScalarTab, oneScalarTabSize)
 
-	!- total number of transported species (CHEM + CHEM_AQ)
-	nspecies_transported = nspecies_transported + 1 		
-
-
+        !- total number of transported species (CHEM + CHEM_AQ)
+        nspecies_transported = nspecies_transported + 1 
       endif
 !      
       if ( associated(chem1aq_g(ispcaq,ng)%sc_tc)) then
-    	call vtables_scalar (chem1aq_g(ispcaq,ng)%sc_pc(1,1,1),&
-       chem1aq_g(ispcaq,ng)%sc_tc(1),ng,trim(spcaq_name(ispcaq))//'PC')
-       
-	elements = size(chem1aq_g(ispcaq,ng)%sc_tc)
-        
-        call vtables_scalar_new (chem1aq_g(ispcaq,ng)%sc_pc(1,1,1),&
-        chem1aq_g(ispcaq,ng)%sc_tc(1),ng, trim(spcaq_name(ispcaq))//'PC',elements)
+        elements = size(chem1aq_g(ispcaq,ng)%sc_tc)
+        call InsertAtScalarTab(chem1aq_g(ispcaq,ng)%sc_pc, chem1aq_g(ispcaq,ng)%sc_tc, trim(spcaq_name(ispcaq))//'PC',&
+             oneScalarTab, oneScalarTabSize)
 
-	!- total number of transported species (CHEM + CHEM_AQ)
-	nspecies_transported = nspecies_transported + 1 		
+        !- total number of transported species (CHEM + CHEM_AQ)
+        nspecies_transported = nspecies_transported + 1 
 
 
       endif

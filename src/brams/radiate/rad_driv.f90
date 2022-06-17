@@ -1,16 +1,20 @@
 
-MODULE RADIATION
+module RADIATION
 
-CONTAINS
+contains
 
-  SUBROUTINE radiate(mzp, mxp, myp, ia, iz, ja, jz, mynum)
+  
+  subroutine radiate(mzp, mxp, myp, ia, iz, ja, jz, mynum, oneBasicFields)
 
-    USE mem_radiate, only: ilwrtyp, iswrtyp
-    USE rrtm_driv  , only: rrtm_driver
-    USE carma_driv , only: carma_driver
+    use mem_radiate, only: ilwrtyp, iswrtyp
+    use ModRrtmDriver  , only: rrtm_driver
+    use ModCarmaDriver , only: carma_driver
+    use ModBasicFields, only: &
+         BasicFields
 
-    IMPLICIT NONE
-    INTEGER, INTENT(IN) :: mzp, mxp, myp, ia, iz, ja, jz, mynum
+    implicit none
+    integer, intent(IN) :: mzp, mxp, myp, ia, iz, ja, jz, mynum
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
 
     if &
        ((ilwrtyp + iswrtyp)==0) return ! teste
@@ -19,16 +23,16 @@ CONTAINS
       ( ilwrtyp==6 .and. iswrtyp==6) &
       then
 
-       call rrtm_driver(mzp, mxp, myp, ia, iz, ja, jz, mynum)
+       call rrtm_driver(mzp, mxp, myp, ia, iz, ja, jz, mynum, oneBasicFields)
 
     elseif( ilwrtyp==4 .and. iswrtyp==4) then
 
-       call carma_driver(mzp,mxp,myp,ia,iz,ja,jz,mynum) !teste 2
+       call carma_driver(mzp,mxp,myp,ia,iz,ja,jz,mynum, oneBasicFields) !teste 2
 
     else
        stop "unknown radiation scheme"
     endif
 
-  END SUBROUTINE radiate
+  end subroutine radiate
 
-END MODULE RADIATION
+end module RADIATION

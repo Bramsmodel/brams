@@ -24,7 +24,6 @@ module ModBuffering
      module procedure Buffer2FieldSection_4D
   end interface
 
-  logical, parameter :: dumpLocal = .false.
 
 
 contains
@@ -50,6 +49,7 @@ contains
     integer :: i, j, firstBuffer
     character(len=8) :: c0, c1, c2, c3, c4, c5
     character(len=*), parameter :: h="**(FieldSection2Buffer_2D)**"
+    logical, parameter :: dumpLocal = .false.
 
     firstBuffer = lastBuffer + 1
     if(size(field,1)<iStart .or. size(field,2)<jend) print *,'fudeu 2d'
@@ -104,6 +104,7 @@ contains
     integer :: i, j, k, kMax, firstBuffer
     character(len=8) :: c0, c1, c2, c3, c4, c5, c6
     character(len=*), parameter :: h="**(FieldSection2Buffer_3D)**"
+    logical, parameter :: dumpLocal = .false.
 
     firstBuffer = lastBuffer + 1
 
@@ -188,6 +189,7 @@ contains
     integer :: i, j, k, l, kMax, lMax, firstBuffer
     character(len=8) :: c0, c1, c2, c3, c4, c5, c6, c7
     character(len=*), parameter :: h="**(FieldSection2Buffer_4D)**"
+    logical, parameter :: dumpLocal = .false.
 
     firstBuffer = lastBuffer + 1
 
@@ -252,6 +254,7 @@ contains
     integer :: i, j, firstBuffer
     character(len=8) :: c0, c1, c2, c3, c4, c5, c6, c7
     character(len=*), parameter :: h="**(Buffer2FieldSection_2D)**"
+    logical, parameter :: dumpLocal = .false.
 
     firstBuffer = lastBuffer+1
 
@@ -336,6 +339,7 @@ contains
     integer :: i, j, k, kMax, firstBuffer
     character(len=8) :: c0, c1, c2, c3, c4, c5, c6
     character(len=*), parameter :: h="**(Buffer2FieldSection_3D)**"
+    logical, parameter :: dumpLocal = .false.
 
     firstBuffer = lastBuffer + 1
 
@@ -423,6 +427,7 @@ contains
     integer :: i, j, k, l, kMax, lMax, firstBuffer
     character(len=8) :: c0, c1, c2, c3, c4, c5, c6, c7
     character(len=*), parameter :: h="**(Buffer2FieldSection_4D)**"
+    logical, parameter :: dumpLocal = .false.
 
     firstBuffer = lastBuffer + 1
 

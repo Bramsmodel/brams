@@ -27,7 +27,7 @@ program filterOut
 
    implicit none
 
-   include "constants.f90"
+   include "constants.h"
    character(len=*),parameter :: sourceName='filterOut.f90' !Name of this source code
    character(len=*),parameter :: procedureName='**filterOut**' !Name of this procedure
    !

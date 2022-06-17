@@ -17,7 +17,7 @@ real, dimension(*) :: topo_c,topo_i,scr1,scr2
 !    Fill topo_i with interpolated topography from coarser grid
 
 call fillscr(1,maxx,maxy,1,nxc,nyc,1,1,scr1(1),topo_c(1))
-call eintp(scr1(1),scr2(1),1,maxx,maxy,1,nxf,nyf,ifm,2,'t',0,0)
+!!$call eintp(scr1(1),scr2(1),1,maxx,maxy,1,nxf,nyf,ifm,2,'t',0,0)
 call fillvar(1,maxx,maxy,1,nxf,nyf,1,1,scr2(1),topo_i(1))
 
 return
@@ -51,10 +51,10 @@ if (icm >= 1) then
       vctr2(k) = rtref(k,icm) * dnref(k,icm)
    enddo
 
-  call eintp(dnref(1,icm),dnref(1,ifm),n1,1,1,n1  &
-     ,1,1,ifm,1,'t',0,0)
-  call eintp(vctr1,vctr3,n1,1,1,n1,1,1,ifm,1,'t',0,0)
-  call eintp(vctr2,vctr4,n1,1,1,n1,1,1,ifm,1,'t',0,0)
+!!$  call eintp(dnref(1,icm),dnref(1,ifm),n1,1,1,n1  &
+!!$     ,1,1,ifm,1,'t',0,0)
+!!$  call eintp(vctr1,vctr3,n1,1,1,n1,1,1,ifm,1,'t',0,0)
+!!$  call eintp(vctr2,vctr4,n1,1,1,n1,1,1,ifm,1,'t',0,0)
 
    do k = 1,n1
       thref(k,ifm) = vctr3(k) / dnref(k,ifm)
@@ -95,13 +95,13 @@ integer :: i1,j1,i,j,k
 
 if (icm == 0) return
 
-call fmint3(n1c,n2c,n3c,n1f,n2f,n3f,maxiz,maxix,maxiy  &
-     ,ifm,icm,nbot,ntop,jd,1,0,0,'t'  &
-     ,dn0c,dn0f,dn0c,dn0f,scr1,scr2,toptf,vt2da,b(1),b(1),b(1))
-
-call fmint3(n1c,n2c,n3c,n1f,n2f,n3f,maxiz,maxix,maxiy  &
-     ,ifm,icm,nbot,ntop,jd,1,0,0,'t'  &
-     ,th0c,th0f,dn0c,dn0f,scr1,scr2,toptf,vt2da,b(1),b(1),b(1))
+!!$call fmint3(n1c,n2c,n3c,n1f,n2f,n3f,maxiz,maxix,maxiy  &
+!!$     ,ifm,icm,nbot,ntop,jd,1,0,0,'t'  &
+!!$     ,dn0c,dn0f,dn0c,dn0f,scr1,scr2,toptf,vt2da,b(1),b(1),b(1))
+!!$
+!!$call fmint3(n1c,n2c,n3c,n1f,n2f,n3f,maxiz,maxix,maxiy  &
+!!$     ,ifm,icm,nbot,ntop,jd,1,0,0,'t'  &
+!!$     ,th0c,th0f,dn0c,dn0f,scr1,scr2,toptf,vt2da,b(1),b(1),b(1))
 
 c1 = rgas / (cp - rgas)
 c2 = cp * (rgas / p00) ** c1
@@ -110,7 +110,7 @@ pi0f(1:n1f,1:n2f,1:n3f) = c2 * (dn0f(1:n1f,1:n2f,1:n3f)  &
 
 
 call fillscr(1,maxix,maxiy,1,n2c,n3c,1,1,scr1,toptc)
-call eintp(scr1,scr2,1,maxix,maxiy,1,n2f,n3f,ifm,2,'t',0,0)
+!!$call eintp(scr1,scr2,1,maxix,maxiy,1,n2f,n3f,ifm,2,'t',0,0)
 call fillvar(1,maxix,maxiy,1,n2f,n3f,1,1,scr2,scr1)
 
 call rtgintrp_isan(n1f,n2f,n3f,th0f,scr1,toptf,zt,ztop)
@@ -154,7 +154,7 @@ integer :: i,j,i1,j1,k
 if (icm == 0) return
 
 call fillscr(1,maxix,maxiy,1,n2c,n3c,1,1,scr1,toptc)
-call eintp(scr1,scr2,1,maxix,maxiy,1,n2f,n3f,ifm,2,'t',0,0)
+!!$call eintp(scr1,scr2,1,maxix,maxiy,1,n2f,n3f,ifm,2,'t',0,0)
 call fillvar(1,maxix,maxiy,1,n2f,n3f,1,1,scr2,scr1)
 
 call rtgintrp_isan(n1f,n2f,n3f,dn0f,scr1,toptf,zt,ztop)

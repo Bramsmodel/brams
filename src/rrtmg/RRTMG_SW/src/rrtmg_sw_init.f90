@@ -36,7 +36,20 @@
 
 ! ------- Modules -------
       use parkind, only : im => kind_im, rb => kind_rb
-      use rrsw_wvn
+      use rrsw_wvn, ONLY: wavenum1,   &
+                          wavenum2,   &
+                          delwave,    &
+                          rwgt,       &
+                          ngs,        &
+                          ngn,        &
+                          ngm,        &
+                          ng,         &
+                          nspa,       &
+                          nspb,       &
+                          wt,         &
+                          ngb,        &
+                          ngc
+
       use rrtmg_sw_setcoef, only: swatmref
 
       implicit none
@@ -181,7 +194,7 @@
       use rrsw_con, only: heatfac, grav, planck, boltz, &
                           clight, avogad, alosmt, gascon, radcn1, radcn2, &
                           sbcnst, secdy 
-      use rrsw_vsn
+      use rrsw_vsn, ONLY:
 
       save 
  

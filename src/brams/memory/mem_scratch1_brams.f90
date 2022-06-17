@@ -13,12 +13,13 @@ module mem_scratch1
 contains
   !---------------------------------------------------------------
 
-  subroutine alloc_scratch1(nodebounds,maxgrds,ngrids,mmzp,mynum)
+  subroutine alloc_scratch1(oneScalarTabSize, &
+       nodebounds,maxgrds,ngrids,mmzp,mynum)
 
-    use var_tables
 
     implicit none
 
+    integer, intent(in) :: oneScalarTabSize
     integer :: maxgrds, ngrids, mynum, nodebounds(maxgrds,8)
 !!$    integer, dimension (*) :: mmzp
     integer, dimension (maxgrds) :: mmzp
@@ -47,7 +48,7 @@ contains
        mv = ilf * jlc * zlf
        mw = ilf * jlf * zlc
        mp = ilf * jlf * zlf
-       ms = mp * num_scalar(ifm)
+       ms = mp * oneScalarTabSize
        nu = max(nu,mu)
        nv = max(nv,mv)
        nw = max(nw,mw)

@@ -372,6 +372,10 @@ subroutine sfcinit_nofile(n1,n2,n3,mzg,mzs,npat,ifm  &
 
    ,rvv,prsv,piv,vt2da,vt2db,glat,glon,zot,lpw_R)
 
+  use ModLeaf3, only: &
+       vegndvi, &
+       grndvap
+  
 use mem_grid
 use mem_leaf
 use leaf_coms
