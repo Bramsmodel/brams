@@ -14,11 +14,11 @@ module mem_scalar
   ! Added scalar variables and tendencies
 
   type scalar_vars
-     real, contiguous, pointer :: sclp(:,:,:)
-     real, contiguous, pointer :: drydep(:,:)
-     real, contiguous, pointer :: sclt(:)
-     real, contiguous, pointer :: wetdep(:,:)
-     real, contiguous, pointer :: srcsc(:,:,:)
+     real, pointer :: sclp(:,:,:)
+     real, pointer :: drydep(:,:)
+     real, pointer :: sclt(:)
+     real, pointer :: wetdep(:,:)
+     real, pointer :: srcsc(:,:,:)
   end type scalar_vars
 
   ! scal_p allocated by (maxsclr,ngrids)
@@ -115,7 +115,7 @@ contains
     use var_tables, only: InsertVTab
         use io_params, only : ioutput         ! INTENT(IN)
     implicit none
-    include "constants.h"
+    include "i8.h"
     type (scalar_vars) :: scal,scalm
     integer, intent(in) :: imean,n1,n2,n3,ng,na
 

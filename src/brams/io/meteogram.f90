@@ -13,10 +13,7 @@ module meteogram
  tPolygon,                  &
  check2dConvexPolyCollision
 
- use meteogramType, ONLY: polygoncontainer,   &
-                          modelpixelpointer,  &
-                          meteogramoutunit,   &
-                          ncities
+ use meteogramType
  
  use ModNamelistFile, only: namelistFile
 

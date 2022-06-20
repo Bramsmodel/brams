@@ -25,166 +25,45 @@ Module mem_micro
    Type micro_vars
    
       ! Variables to be dimensioned by (nzp,nxp,nyp)
-      real, contiguous, pointer :: rcp(:,:,:)
-      real, contiguous, pointer :: rdp(:,:,:)
-      real, contiguous, pointer :: rrp(:,:,:)
-      real, contiguous, pointer :: rpp(:,:,:)
-      real, contiguous, pointer :: rsp(:,:,:)
-      real, contiguous, pointer :: rap(:,:,:)
-      real, contiguous, pointer :: rgp(:,:,:)
-      real, contiguous, pointer :: rhp(:,:,:)
-      real, contiguous, pointer :: ccp(:,:,:)
-      real, contiguous, pointer :: cdp(:,:,:)
-      real, contiguous, pointer :: crp(:,:,:)
-      real, contiguous, pointer :: cpp(:,:,:)
-      real, contiguous, pointer :: csp(:,:,:)
-      real, contiguous, pointer :: cap(:,:,:)
-      real, contiguous, pointer :: cgp(:,:,:)
-      real, contiguous, pointer :: chp(:,:,:)
-      real, contiguous, pointer :: cccnp(:,:,:)
-      real, contiguous, pointer :: gccnp(:,:,:)
-      real, contiguous, pointer :: cifnp(:,:,:)
-      real, contiguous, pointer :: q2(:,:,:)
-      real, contiguous, pointer :: q6(:,:,:)
-      real, contiguous, pointer :: q7(:,:,:)
-      real, contiguous, pointer :: rei(:,:,:)
-      real, contiguous, pointer :: rel(:,:,:)
-      real, contiguous, pointer :: cldfr(:,:,:)
-      real, contiguous, pointer :: cccmp(:,:,:)
-      real, contiguous, pointer :: gccmp(:,:,:)
-      real, contiguous, pointer :: cnm1p(:,:,:)
-      real, contiguous, pointer :: cnm2p(:,:,:)
-      real, contiguous, pointer :: cnm3p(:,:,:)
-      real, contiguous, pointer :: cnm8p(:,:,:)
-      real, contiguous, pointer :: md1np(:,:,:)
-      real, contiguous, pointer :: md2np(:,:,:)
-      real, contiguous, pointer :: salt_filmp(:,:,:)
-      real, contiguous, pointer :: salt_jetp(:,:,:)
-      real, contiguous, pointer :: salt_spmp(:,:,:)
-      real, contiguous, pointer :: pcpvr(:,:,:)
-      real, contiguous, pointer :: pcpvp(:,:,:)
-      real, contiguous, pointer :: pcpvs(:,:,:)
-      real, contiguous, pointer :: pcpva(:,:,:)
-      real, contiguous, pointer :: pcpvg(:,:,:)
-      real, contiguous, pointer :: pcpvh(:,:,:)
-      real, contiguous, pointer :: pcpvd(:,:,:)
-      real, contiguous, pointer :: nuccldr(:,:,:)
-      real, contiguous, pointer :: nuccldc(:,:,:)
-      real, contiguous, pointer :: nucicer(:,:,:)
-      real, contiguous, pointer :: nucicec(:,:,:)
-      real, contiguous, pointer :: inuchomr(:,:,:)
-      real, contiguous, pointer :: inuchomc(:,:,:)
-      real, contiguous, pointer :: inuccontr(:,:,:)
-      real, contiguous, pointer :: inuccontc(:,:,:)
-      real, contiguous, pointer :: inucifnr(:,:,:)
-      real, contiguous, pointer :: inucifnc(:,:,:)
-      real, contiguous, pointer :: inuchazr(:,:,:)
-      real, contiguous, pointer :: inuchazc(:,:,:)
-      real, contiguous, pointer :: vapliq(:,:,:)
-      real, contiguous, pointer :: vapice(:,:,:)
-      real, contiguous, pointer :: vapcld(:,:,:)
-      real, contiguous, pointer :: vaprain(:,:,:)
-      real, contiguous, pointer :: vappris(:,:,:)
-      real, contiguous, pointer :: vapsnow(:,:,:)
-      real, contiguous, pointer :: vapaggr(:,:,:)
-      real, contiguous, pointer :: vapgrau(:,:,:)
-      real, contiguous, pointer :: vaphail(:,:,:)
-      real, contiguous, pointer :: vapdriz(:,:,:)
-      real, contiguous, pointer :: meltice(:,:,:)
-      real, contiguous, pointer :: meltpris(:,:,:)
-      real, contiguous, pointer :: meltsnow(:,:,:)
-      real, contiguous, pointer :: meltaggr(:,:,:)
-      real, contiguous, pointer :: meltgrau(:,:,:)
-      real, contiguous, pointer :: melthail(:,:,:)
-      real, contiguous, pointer :: cld2rain(:,:,:)
-      real, contiguous, pointer :: rimecld(:,:,:)
-      real, contiguous, pointer :: rimecldsnow(:,:,:)
-      real, contiguous, pointer :: rimecldaggr(:,:,:)
-      real, contiguous, pointer :: rimecldgrau(:,:,:)
-      real, contiguous, pointer :: rimecldhail(:,:,:)
-      real, contiguous, pointer :: rain2ice(:,:,:)
-      real, contiguous, pointer :: rain2pr(:,:,:)
-      real, contiguous, pointer :: rain2sn(:,:,:)
-      real, contiguous, pointer :: rain2ag(:,:,:)
-      real, contiguous, pointer :: rain2gr(:,:,:)
-      real, contiguous, pointer :: rain2ha(:,:,:)
-      real, contiguous, pointer :: rain2ha_xtra(:,:,:)
-      real, contiguous, pointer :: ice2rain(:,:,:)
-      real, contiguous, pointer :: aggregate(:,:,:)
-      real, contiguous, pointer :: aggrselfpris(:,:,:)
-      real, contiguous, pointer :: aggrselfsnow(:,:,:)
-      real, contiguous, pointer :: aggrprissnow(:,:,:)
-      real, contiguous, pointer :: latheatvap(:,:,:)
-      real, contiguous, pointer :: latheatfrz(:,:,:)
-      real, contiguous, pointer :: nuccldrt(:,:,:)
-      real, contiguous, pointer :: nuccldct(:,:,:)
-      real, contiguous, pointer :: nucicert(:,:,:)
-      real, contiguous, pointer :: nucicect(:,:,:)
-      real, contiguous, pointer :: inuchomrt(:,:,:)
-      real, contiguous, pointer :: inuchomct(:,:,:)
-      real, contiguous, pointer :: inuccontrt(:,:,:)
-      real, contiguous, pointer :: inuccontct(:,:,:)
-      real, contiguous, pointer :: inucifnrt(:,:,:)
-      real, contiguous, pointer :: inucifnct(:,:,:)
-      real, contiguous, pointer :: inuchazrt(:,:,:)
-      real, contiguous, pointer :: inuchazct(:,:,:)
-      real, contiguous, pointer :: vapliqt(:,:,:)
-      real, contiguous, pointer :: vapicet(:,:,:)
-      real, contiguous, pointer :: vapcldt(:,:,:)
-      real, contiguous, pointer :: vapraint(:,:,:)
-      real, contiguous, pointer :: vapprist(:,:,:)
-      real, contiguous, pointer :: vapsnowt(:,:,:)
-      real, contiguous, pointer :: vapaggrt(:,:,:)
-      real, contiguous, pointer :: vapgraut(:,:,:)
-      real, contiguous, pointer :: vaphailt(:,:,:)
-      real, contiguous, pointer :: vapdrizt(:,:,:)
-      real, contiguous, pointer :: melticet(:,:,:)
-      real, contiguous, pointer :: meltprist(:,:,:)
-      real, contiguous, pointer :: meltsnowt(:,:,:)
-      real, contiguous, pointer :: meltaggrt(:,:,:)
-      real, contiguous, pointer :: meltgraut(:,:,:)
-      real, contiguous, pointer :: melthailt(:,:,:)
-      real, contiguous, pointer :: cld2raint(:,:,:)
-      real, contiguous, pointer :: rimecldt(:,:,:)
-      real, contiguous, pointer :: rimecldsnowt(:,:,:)
-      real, contiguous, pointer :: rimecldaggrt(:,:,:)
-      real, contiguous, pointer :: rimecldgraut(:,:,:)
-      real, contiguous, pointer :: rimecldhailt(:,:,:)
-      real, contiguous, pointer :: rain2icet(:,:,:)
-      real, contiguous, pointer :: rain2prt(:,:,:)
-      real, contiguous, pointer :: rain2snt(:,:,:)
-      real, contiguous, pointer :: rain2agt(:,:,:)
-      real, contiguous, pointer :: rain2grt(:,:,:)
-      real, contiguous, pointer :: rain2hat(:,:,:)
-      real, contiguous, pointer :: rain2ha_xtrat(:,:,:)
-      real, contiguous, pointer :: ice2raint(:,:,:)
-      real, contiguous, pointer :: aggregatet(:,:,:)
-      real, contiguous, pointer :: aggrselfprist(:,:,:)
-      real, contiguous, pointer :: aggrselfsnowt(:,:,:)
-      real, contiguous, pointer :: aggrprissnowt(:,:,:)
-      real, contiguous, pointer :: latheatvapt(:,:,:)
-      real, contiguous, pointer :: latheatfrzt(:,:,:)
+   real, pointer, dimension(:,:,:) :: &
+                          rcp,rdp,rrp,rpp,rsp,rap,rgp,rhp &
+                         ,ccp,cdp,crp,cpp,csp,cap,cgp,chp &
+                         ,cccnp,gccnp,cifnp,q2,q6,q7 &
+                         ,rei,rel,cldfr                 &
+			                ,cccmp,gccmp,cnm1p,cnm2p,cnm3p,cnm8p &
+                         ,md1np,md2np,salt_filmp,salt_jetp,salt_spmp  &
+                         ,pcpvr,pcpvp,pcpvs,pcpva,pcpvg,pcpvh,pcpvd   &
+           !COMPUTE AND OUTPUT MICRO BUDGET PROCESSES
+           ,nuccldr,nuccldc,nucicer,nucicec,inuchomr                  &
+           ,inuchomc,inuccontr,inuccontc,inucifnr,inucifnc            &
+           ,inuchazr,inuchazc,vapliq,vapice,vapcld                    &
+           ,vaprain,vappris,vapsnow,vapaggr,vapgrau                   &
+           ,vaphail,vapdriz,meltice,meltpris,meltsnow                 &
+           ,meltaggr,meltgrau,melthail,cld2rain,rimecld               &
+           ,rimecldsnow,rimecldaggr,rimecldgrau,rimecldhail,rain2ice  &
+           ,rain2pr,rain2sn,rain2ag,rain2gr,rain2ha                   &
+           ,rain2ha_xtra,ice2rain,aggregate,aggrselfpris,aggrselfsnow &
+           ,aggrprissnow,latheatvap,latheatfrz                        &
+           !COMPUTE AND OUTPUT MICRO BUDGET PROCESSES (totals)
+           ,nuccldrt,nuccldct,nucicert,nucicect,inuchomrt                  &
+           ,inuchomct,inuccontrt,inuccontct,inucifnrt,inucifnct            &
+           ,inuchazrt,inuchazct,vapliqt,vapicet,vapcldt                    &
+           ,vapraint,vapprist,vapsnowt,vapaggrt,vapgraut                   &
+           ,vaphailt,vapdrizt,melticet,meltprist,meltsnowt                 &
+           ,meltaggrt,meltgraut,melthailt,cld2raint,rimecldt               &
+           ,rimecldsnowt,rimecldaggrt,rimecldgraut,rimecldhailt,rain2icet  &
+           ,rain2prt,rain2snt,rain2agt,rain2grt,rain2hat                   &
+           ,rain2ha_xtrat,ice2raint,aggregatet,aggrselfprist,aggrselfsnowt &
+           ,aggrprissnowt,latheatvapt,latheatfrzt
+
 
       ! Variables to be dimensioned by (nnxp,nyp)
-      real, contiguous, pointer :: accpr(:,:)
-      real, contiguous, pointer :: accpp(:,:)
-      real, contiguous, pointer :: accps(:,:)
-      real, contiguous, pointer :: accpa(:,:)
-      real, contiguous, pointer :: accpg(:,:)
-      real, contiguous, pointer :: accph(:,:)
-      real, contiguous, pointer :: accpd(:,:)
-      real, contiguous, pointer :: pcprr(:,:)
-      real, contiguous, pointer :: pcprp(:,:)
-      real, contiguous, pointer :: pcprs(:,:)
-      real, contiguous, pointer :: pcpra(:,:)
-      real, contiguous, pointer :: pcprg(:,:)
-      real, contiguous, pointer :: pcprh(:,:)
-      real, contiguous, pointer :: pcprd(:,:)
-      real, contiguous, pointer :: pcpg(:,:)
-      real, contiguous, pointer :: qpcpg(:,:)
-      real, contiguous, pointer :: dpcpg(:,:)
+   real, pointer, dimension(:,:) :: &
+                          accpr,accpp,accps,accpa,accpg,accph,accpd &
+                         ,pcprr,pcprp,pcprs,pcpra,pcprg,pcprh,pcprd &
+                         ,pcpg,qpcpg,dpcpg 
                           
-   End Type micro_vars
+   End Type               
                           
    type (micro_vars), allocatable :: micro_g(:), microm_g(:)
                           
@@ -843,7 +722,7 @@ subroutine filltab_micro(micro,microm,imean,n1,n2,n3,ng)
    use var_tables, only: InsertVTab
 
    implicit none
-   include "constants.h"
+   include "i8.h"
    type (micro_vars) :: micro,microm
    integer, intent(in) :: imean,n1,n2,n3,ng
    integer(kind=i8) :: npts

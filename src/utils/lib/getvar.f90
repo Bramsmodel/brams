@@ -15,7 +15,7 @@ integer function RAMS_getvar(string, ngrd, a, b, flnm)
   implicit none
 
   include "files.h"
-  include "constants.h"
+  include "i8.h"
 
   ! Arguments:
   character(len=*), intent(in) :: string
@@ -87,7 +87,8 @@ subroutine FindFieldInAnalysisFile(string, ngrd, flnm, flng, npts, fPosition)
 
   implicit none
 
-  include "constants.h"
+  include "i8.h"
+  include "constants.f90"
   ! Arguments:
   character(len=*), intent(in ) :: string
   integer,          intent(in ) :: ngrd
@@ -138,7 +139,7 @@ end subroutine FindFieldInAnalysisFile
 
 subroutine GetFieldInAnalysisFile(flng, npts, fPosition, a, b)
   implicit none
-  include "constants.h"
+  include "i8.h"
   character(len=*),             intent(in   ) :: flng
   integer(kind=i8),             intent(in   ) :: npts
   integer(kind=i8),             intent(in   ) :: fPosition

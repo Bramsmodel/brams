@@ -9,64 +9,7 @@
 subroutine obj_anal (ctype,ng,nxp,nyp,g_lat,g_lon  &
                     ,polelat,polelon,swx,swy,delx,dely)
 
-use isan_coms, only: gobrad,    &
-                     gobsep,    &
-                     igridfl,   &
-                     maxsfc,    &
-                     nisn,      &
-                     nsigz,     &
-                     nssfc,     &
-                     nsta,      &
-                     pi_p,      &
-                     pi_r,      &
-                     pi_s,      &
-                     pi_u,      &
-                     pi_v,      &
-                     ps_p,      &
-                     ps_p,      &
-                     ps_r,      &
-                     ps_t,      &
-                     ps_u,      &
-                     ps_v,      &
-                     rs_p,      &
-                     rs_r,      &
-                     rs_s,      &
-                     rs_sfp,    &
-                     rs_snow,   &
-                     rs_sst,    &
-                     rs_t,      &
-                     rs_top,    &
-                     rs_u,      &
-                     rs_v,      &
-                     sf_lat,    &
-                     sf_lon,    &
-                     sf_p  ,    &
-                     sf_r  ,    &
-                     sf_s  ,    &
-                     sf_top,    &
-                     sf_ur ,    &
-                     sf_vr ,    &
-                     up_lat,    &
-                     up_lon,    &
-                     upi_p ,    &
-                     upi_r ,    &
-                     upi_s ,    &
-                     upi_u ,    &
-                     upi_v ,    &
-                     ups_p ,    &
-                     ups_r ,    &
-                     ups_t ,    &
-                     ups_u ,    &
-                     ups_p ,    &
-                     ups_v ,    &
-                     rs_sft,    &
-                     rs_slp,    &
-                     sf_t,      &
-                     wvlnth,    &
-                     swvlnth,   &
-                     respon,    &
-                     gridwt
-
+use isan_coms
 
 implicit none
 

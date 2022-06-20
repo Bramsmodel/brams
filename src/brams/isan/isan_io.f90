@@ -8,42 +8,10 @@
 
 subroutine isenio (inout,iun,n1,n2)
 
-use isan_coms, only: gobrad,     &
-                     gobsep,     &
-                     idate,      &
-                     igridfl,    &
-                     ihour,      &
-                     imonth,     &
-                     iyear,      &
-                     nisn,       &
-                     pi_scra,    &
-                     pi_scrb,    &
-                     rs_p,       &
-                     rs_qual,    &
-                     rs_r,       &
-                     rs_s,       &
-                     rs_sfp,     &
-                     rs_sft,     &
-                     rs_snow,    &
-                     rs_sst,     &
-                     rs_t,       &
-                     rs_top,     &
-                     rs_u,       &
-                     rs_v,       &
-                     pi_u,       &
-                     pi_v,       &
-                     pi_p,       &
-                     pi_s,       &
-                     pi_r,       &
-                     idd,        &
-                     ihh,        &
-                     imm,        &
-                     iyy,        &
-                     rs_slp,     &
-                     levth
+use isan_coms
 
 implicit none
-include "constants.h"
+include "i8.h"
 integer :: iun,n1,n2
 character(len=*) :: inout
 integer :: nlt,nx3,ny3,ninn,l !npts
@@ -181,27 +149,10 @@ end subroutine isenio
 
 subroutine sigzio (inout,iun,n1,n2)
 
-use isan_coms, only: idate,     &
-                     ihour,     &
-                     imonth,    &
-                     iyear,     &
-                     nsigz,     &
-                     ps_scra,   &
-                     ps_scrb,   &
-                     ps_u,      &
-                     ps_v,      &
-                     ps_p,      &
-                     ps_t,      &
-                     ps_r,      &
-                     idd,       &
-                     ihh,       &
-                     imm,       &
-                     iyy,       &
-                     sigz
-
+use isan_coms
 
 implicit none
-include "constants.h"
+include "i8.h"
 integer :: iun,n1,n2
 character(len=*) :: inout
 
@@ -280,7 +231,7 @@ end
 subroutine vmissw (af,n,as,fm,fx)
 
   implicit none
-  include "constants.h"
+  include "i8.h"
   integer(kind=i8), intent(in) :: n
   real, intent(in)             :: af(n), fm, fx
   real, intent(inout)          :: as(n)
@@ -299,7 +250,7 @@ end subroutine vmissw
 subroutine vmissr (af,n,fm,fx)
 
   implicit none
-  include "constants.h"
+  include "i8.h"
   integer(kind=i8), intent(in) :: n
   real, intent(inout)          :: af(n)
   real, intent(in)             :: fm, fx

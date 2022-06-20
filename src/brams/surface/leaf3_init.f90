@@ -299,10 +299,8 @@ end
 
 subroutine sfcinit_file(n2,n3,mzg,npat,ifm,patch_area,leaf_class,soil_text)
 
-use mem_leaf, only: nslcon,     &
-                    pctlcon,    &
-                    nslcon,     &
-                    nvgcon
+use mem_leaf
+use rconstants
 
 implicit none
 
@@ -374,27 +372,11 @@ subroutine sfcinit_nofile(n1,n2,n3,mzg,mzs,npat,ifm  &
 
    ,rvv,prsv,piv,vt2da,vt2db,glat,glon,zot,lpw_R)
 
-  use ModLeaf3, only: &
-       vegndvi, &
-       grndvap
-  
-use mem_grid, only: time
-use mem_leaf, only: zrough,       &
-                    slmstr,       &
-                    stgoff
-
-use leaf_coms, only: timefac_sst, &
-                     veg_ht,      &
-                     albv_green,  &
-                     soilcp,      &
-                     slcpd,       &
-                     slmsts
-use io_params, only: iupdsst,   &
-                     ssttime1,  &
-                     ssttime2
-use rconstants, only: cpi,   &
-                      cpor,  &
-                      p00
+use mem_grid
+use mem_leaf
+use leaf_coms
+use io_params
+use rconstants
 
 implicit none
 

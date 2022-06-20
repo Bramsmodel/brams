@@ -79,7 +79,7 @@ program pre
 
     implicit none
 
-    include "constants.h"
+    include "constants.f90"
     character(len=*),parameter :: sourceName='pre.f90' !Name of source code
     character(len=*),parameter :: procedureName='**pre**' !Name of this procedure
     !

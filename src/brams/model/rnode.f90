@@ -11,23 +11,7 @@
 
 subroutine node_index()
 
-  use node_mod, ONLY: ia,   &
-                      ia1,  &
-                      ia_1,  &
-                      ibcon,  &
-                      iz,  &
-                      iz1,  &
-                      iz_1,  &
-                      izu,  &
-                      ja,  &
-                      ja1,  &
-                      ja_1,  &
-                      jz,  &
-                      jz1,  &
-                      jz_1,  &
-                      jzv,  &
-                      mxp,  &
-                      myp
+  use node_mod
 
   implicit none
 
@@ -63,7 +47,7 @@ end subroutine node_index
 
 ! ---------------------------------------------------------------------------
 
-subroutine InitFields(oneScalarTabSize, init)
+subroutine InitFields(init)
 
   use ParLib, only: &
        parf_pack_max_size
@@ -89,6 +73,7 @@ subroutine InitFields(oneScalarTabSize, init)
        mynum
 
   use var_tables, only: &
+       num_scalar,      &
        num_var,         &
        vtab_r
 
@@ -106,10 +91,9 @@ subroutine InitFields(oneScalarTabSize, init)
   implicit none
   ! Arguments:
   integer, intent(in) :: init
-  integer, intent(in) :: oneScalarTabSize
   ! Local variables:
 
-  include "constants.h"
+  include "i8.h"
   integer(i8) :: silly_i8
   integer :: ng, nm, itype, i1, j1, i2, j2, memf, npvar, nv
 
@@ -162,7 +146,7 @@ subroutine InitFields(oneScalarTabSize, init)
         j1=ipaths(3,itype,ng,nm)
         j2=ipaths(4,itype,ng,nm)
         memf=(i2-i1+1)*(j2-j1+1)*(nnzp(ng))  &
-             *(4+oneScalarTabSize)
+             *(4+num_scalar(ng))
         nbuff_feed=max(nbuff_feed,memf)
      enddo
   enddo

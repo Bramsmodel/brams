@@ -532,5 +532,5 @@ subroutine gridset(ngra)
 
   enddo
 
-!!$  call cofnest
+  call cofnest
 end subroutine gridset

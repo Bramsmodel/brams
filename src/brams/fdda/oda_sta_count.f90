@@ -8,22 +8,8 @@
 
 subroutine oda_sta_count (plat,plon,ngds)
 
-use mem_oda, only: maxodasta,    &
-                   maxtimes_sfc, &
-                   maxtimes_upa, &
-                   nsfcfiles,    &
-                   num_oda_sfc,  &
-                   num_oda_upa,  &
-                   nupafiles,    &
-                   staid_sfc,    &
-                   ntimes_sfc,   &
-                   fnames_upa,   &
-                   fnames_sfc,   &
-                   staid_upa,    &
-                   ntimes_upa
-use obs_input, only: header,   &
-                     rsfc_obs, &
-                     rupa_obs
+use mem_oda
+use obs_input
 
 implicit none
 
@@ -177,11 +163,7 @@ end
 
 subroutine findgrid (xfx,yfy,ngr)
 
-use mem_grid, only: ngrids,  &
-                    ymn,     &
-                    nnyp,    &
-                    xmn,     &
-                    nnxp
+use mem_grid
 
 ! not set up for Z locations
 

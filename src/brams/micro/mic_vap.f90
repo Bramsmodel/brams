@@ -8,26 +8,8 @@
 
 subroutine thrmstr(m1,k1,k2,lpw,pp,thp,theta,pi0,rtp,rv,i,j)
 
-use rconstants, only: alvi,   &
-                      alvl,   &
-                      cp253i, &
-                      cpi,    &
-                      cpi4,   &
-                      cpor,   &
-                      p00
-use micphys, only: pitot,     &
-                   press,     &
-                   tair,      &
-                   til,       &
-                   rliq,      &
-                   rice,      &
-                   rx,        &
-                   qx,        &
-                   qhydm,     &
-                   rvstr,     &
-                   sa,        &
-                   tairstrc
-
+use rconstants
+use micphys
 
 implicit none
 
@@ -109,40 +91,8 @@ end
 
 subroutine diffprep(m1,lcat,k1,k2,rv,dn0,i,j,mynum)
 
-use micphys, only: pi4dt,   &
-                   jhcat,   &
-                   rx,      &
-                   cdp1,    &
-                   sb,      &
-                   su,      &
-                   se,      &
-                   sf,      &
-                   sa,      &
-                   sg,      &
-                   qr,      &
-                   ss,      &
-                   sw,      &
-                   sd,      &
-                   ttest,   &
-                   sm,      &
-                   sh,      &
-                   sy,      &
-                   sz,      &
-                   sumuy,   &
-                   sumuz,   &
-                   emb,     &
-                   cx,      &
-                   vapdif,  &
-                   thrmcon, &
-                   sl,      &
-                   sj,      &
-                   sc,      &
-                   sk,      &
-                   frefac2, &
-                   frefac1, &
-                   rdynvsci,&
-                   pwmasi,  &
-                   rvsrefp
+use rconstants
+use micphys
 
 implicit none
 
@@ -233,9 +183,7 @@ end
 
 subroutine vapdiff (m1,kf1,kf2,rv,i,j,mynum)
 
-use micphys, only: sumuz,  &
-                   sumuy,  &
-                   rvstr
+use micphys
 
 implicit none
 
@@ -253,31 +201,7 @@ end
 
 subroutine vapflux(m1,lcat,i,j,mynum,k1,k2,dn0,rv)
 
-use micphys, only: rx,    &
-                   tx,    &
-                   sm,    &
-                   sw,    &
-                   vap,   &
-                   sk,    &
-                   qr,    &
-                   qx,    &
-                   sd,    &
-                   sumuy, &
-                   sumuz, &
-                   sy,    &
-                   sz,    &
-                   sc,    &
-                   su,    &
-                   ss,    &
-                   se,    &
-                   sa,    &
-                   sg,    &
-                   sf,    &
-                   sumvr, &
-                   vap,   &
-                   rvstr, &
-                   rvsrefp
-
+use micphys
 
 implicit none
 
@@ -348,24 +272,7 @@ end
 
 subroutine psxfer(m1,k1,k2,dn0,i,j)
 
-use micphys, only: dps,   &
-                   dps2,  &
-                   vap,   &
-                   jhcat, &
-                   cx,    &
-                   pwmasi,&
-                   pwmas, &
-                   rx,    &
-                   qx,    &
-                   dpsmi, &
-                   jhcat, &
-                   cx,    &
-                   dnfac, &
-                   gamn1, &
-                   gnu,   &
-                   gam,   &
-                   qr
-
+use micphys
 
 implicit none
 
@@ -423,16 +330,8 @@ end
 
 subroutine newtemp(m1,kf1,kf2,rv,theta,i,j)
 
-use rconstants, only: cp
-use micphys, only: tairc,   &
-                   rvstr,   &
-                   tair,    &
-                   pitot,   &
-                   rvlsair, &
-                   press,   &
-                   sa,      &
-                   tairstrc,&
-                   rvisair
+use rconstants
+use micphys
 
 implicit none
 

@@ -85,24 +85,7 @@ subroutine cuparth_shal(CCATT,     &
 
   use Phys_const, only: rgas,cp,rm,p00,tcrit,g,cpor,pkdcut,xl
 
-  use mem_scratch2_grell_sh, only: aa0,      &
-                                   xland,    &
-                                   z1,       &
-                                   psur,     &
-                                   po,       &
-                                   us,       &
-                                   vs,       &
-                                   omeg,     &
-                                   t,        &
-                                   q,        &
-                                   tkeg,     &
-                                   rcpg,     &
-                                   tn,       &
-                                   qo,       & 
-                                   p,        & 
-                                   dhdt,     &
-                                   outt,     &
-                                   outq
+  use mem_scratch2_grell_sh
   use mem_varinit, only: nudlat
   use mem_grid, only: nxtnest, initial, jdim
   use node_mod, only: ibcon
