@@ -8,8 +8,56 @@
 
 subroutine pressure_stage(n1,n2,nhem,glat,glon,glat2,glon2)
 
-  use isan_coms
-  use rconstants
+  use isan_coms, only: cntlat,   &
+                       cntlon,   &
+                       gdatdx,   &
+                       gdatdy,   &
+                       idate,    &
+                       idatelin, &
+                       idd,      &
+                       iglobew,  &
+                       iglobn,   &
+                       iglobs,   &
+                       ihh,      &
+                       ihour,    &
+                       imm,      &
+                       imonth,   &
+                       inproj,   &
+                       isversion,&
+                       itinc,    &
+                       iyear,    &
+                       iyy,      &
+                       marker,   &
+                       nprx,     &
+                       npry,     &
+                       nprz,     &
+                       secondlat,&
+                       xnelat,   &
+                       xswlat,   &
+                       xswlon,   &
+                       levpr,    &
+                       pnpr,     &
+                       p_t,      &
+                       pnpr,     &
+                       levpr,    &
+                       p_lat,    &
+                       p_lon,    &
+                       ivertcoord,&
+                       xnelon,   &
+                       innpr,    &
+                       p_u,      &
+                       p_v,      &
+                       p_z,      &
+                       p_r,      &
+                       p_ur,     &
+                       p_vr,     &
+                       p_slp,    &
+                       p_sfp,    &
+                       p_sft,    &
+                       p_snow,   &
+                       p_sst      
+  use rconstants, only: p00,   &
+                        rocp
 
   implicit none
 
@@ -298,7 +346,26 @@ end subroutine pressure_stage
 
 subroutine get_press (iunit)
 
-  use isan_coms
+  use isan_coms, only: idate,    &
+                       ihour,    &
+                       imonth,   &
+                       maxpr,    &
+                       iyear,    &
+                       nprx,     &
+                       npry,     &
+                       nprz,     &
+                       levpr,    &
+                       p_t,      &
+                       p_r,      &
+                       p_u,      &
+                       p_v,      &
+                       p_z,      &
+                       p_slp,    &
+                       p_sfp,    &
+                       p_sft,    &
+                       p_snow,   &
+                       p_sst,    &
+                       pnpr       
 
   implicit none
 

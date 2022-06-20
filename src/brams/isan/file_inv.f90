@@ -7,7 +7,6 @@
 !###########################################################################
 
 subroutine ISAN_file_inv (iyear1,imonth1,idate1,itime1,timmax)
-  use ModDateUtils
   use isan_coms, only: &
        IGRIDFL, &
        IAPR, &

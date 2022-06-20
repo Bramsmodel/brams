@@ -188,7 +188,6 @@ module ModRcio
        cka, &
        ckw
 
-  use leaf_coms
 
   use mem_stilt, only: &
        iexev,          &

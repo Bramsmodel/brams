@@ -30,7 +30,11 @@ module ModSstRead
        nxtnest
 
 
-  use ModDateUtils
+  use ModDateUtils, only: date_abs_secs,   &
+                          date_add_to_big, &
+                          date_make_big,   &
+                          date_abs_secs2
+
 
   use mem_leaf, only: &
        leaf_g

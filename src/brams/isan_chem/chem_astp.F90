@@ -415,8 +415,70 @@ subroutine chem_pressure_stage_grib2(n1,n2,nhem,glat,glon,glat2,glon2)
     !subroutine pressure_stage(n1,n2,nhem,glat,glon,glat2,glon2)
     !--(DMK-CCATT-FIM)----------------------------------------------------------------
 
-    USE isan_coms, ONLY: maxpr,  &
-                         innpr
+  USE chem_isan_coms, ONLY: &
+       p_sc, &
+       nspecies
+  
+  USE rconstants, ONLY: &
+       p00,  &
+       rocp
+  
+    USE isan_coms, ONLY: &
+         maxpr,  &
+         pnpr, &
+         innpr, &
+         slevs, &
+         levpr_grib2, &
+         cntlat, &
+         cntlon, &
+         initial_latitude, &
+         final_latitude, &
+         initial_longitude, &
+         final_longitude, &
+         inproj, &
+         nprx, &
+         npry, &
+         nprz, &
+         nprz_grib2, &
+         nxGrib, &
+         nyGrib, &
+         gdatdx, &
+         gdatdy, &
+         mask, &
+         temperature_varname, &
+         xnelat, &
+         xnelon, &
+         xswlat, &
+         xswlon, &
+         z_max_level, &
+         levpr, &
+         inproj, &
+         p_u, &
+         p_v, &
+         p_t, &
+         p_z, &
+         p_ur, &
+         p_vr, &
+         p_lat, &
+         p_lon, &
+         p_slp, &
+         p_sfp, &
+         p_sft, &
+         p_snow, &
+         p_sst, &
+         p_r, &
+         idate, &
+         ihour, &
+         imonth, &
+         iyear, &
+         idatelin, &
+         idd, &
+         iyy, &
+         imm, &
+         ihh, &
+         iglobew,&
+         iglobn, &
+         iglobs
 
     use ModDateUtils, only: &
         date_add_to
@@ -428,10 +490,11 @@ subroutine chem_pressure_stage_grib2(n1,n2,nhem,glat,glon,glat2,glon2)
     !srf-chem-end
     !--(DMK-CCATT-FIM)----------------------------------------------------------------
 
-    !use dump, only: &
-    !  dumpMessage
 #ifdef GRIB2
-    use wgrib2api
+    use wgrib2api, only: &
+         grb2_mk_inv, &
+         grb2_inq, &
+         grb2_free_file
 #endif
 
     implicit none
@@ -757,13 +820,47 @@ subroutine chem_pressure_stage_grib2(n1,n2,nhem,glat,glon,glat2,glon2)
 end subroutine chem_pressure_stage_grib2
 
 subroutine chem_get_press_grib2()
-    USE isan_coms, ONLY: dlimit,   &
+  USE isan_coms, ONLY: dlimit,   &
+       pnpr, &
+         slevs, &
+         mask, &
+         ccGradsWrite, &
+         geo_varname, &
+         idate, &
+         iyear, &
+         ihour, &
+         imonth, &
+         innpr, &
+         nprz, &
+         nprz_grib2, &
+         nxGrib, &
+         nyGrib, &
+         temperature_varname, &
+         ur_varname, &
+         wind_u_varname, &
+         wind_v_varname, &
+         z_max_level, &
+         scale_factor, &
+         levpr, &
+         levpr_grib2, &
+         p_u, &
+         p_v, &
+         p_t, &
+         p_z, &
+         p_r, &
+         p_slp, &
+         p_sfp, &
+         p_sft, &
+         p_snow, &
+         p_sst, &
+         levpr_grib2, &
                          maxpr,    &
                          nprx,     &
                          npry,     &
                          ulimit
 #ifdef GRIB2
-    use wgrib2api
+    use wgrib2api, only: &
+         grb2_inq
 #endif
     use dump, only: &
         dumpMessage
@@ -2950,9 +3047,6 @@ subroutine chem_get_press (iunit)
                                  nspecies_aer_in, &
                                  p_sc,      &
                                  p_aer_sc
-#ifdef GRIB2
-       use wgrib2api
-#endif
        use dump, only: &
            dumpMessage
 

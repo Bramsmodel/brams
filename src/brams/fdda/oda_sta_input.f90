@@ -7,10 +7,36 @@
 !###########################################################################
 
 subroutine oda_sta_input (plat,plon,ngds)
-  use ModDateUtils
-  use mem_oda
-  use obs_input
-  use mem_grid
+  use ModDateUtils, only: date_abs_secs2
+                          
+  use mem_oda, only: oda_sfc_info,   &
+                     oda_sfc_obs,    &
+                     oda_upa_info,   &
+                     oda_upa_obs,    &
+                     maxtimes_sfc,   &
+                     maxtimes_upa,   &
+                     maxupalevs,     &
+                     nsfcfiles,      &
+                     num_oda_sfc,    &
+                     num_oda_upa,    &
+                     nupafiles,      &
+                     fnames_sfc,     &
+                     staid_sfc,      &
+                     fnames_upa,     &
+                     staid_upa
+  use obs_input, only: rsfc_obs,     &
+                       rupa_obs,     &
+                       header
+  use mem_grid, only: idate1,   &
+                      imonth1,  &
+                      itime1,   &
+                      iyear1,   &
+                      nnxp,     &
+                      nnyp,     &
+                      nnzp,     &
+                      xtn,      &
+                      ytn
+
 
   implicit none
 

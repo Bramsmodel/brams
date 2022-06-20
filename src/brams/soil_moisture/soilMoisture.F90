@@ -70,7 +70,6 @@ contains
     !# @endwarning
     !#
     !#--- ----------------------------------------------------------------------------------------
-    use dump
     use mem_grid, only : runtype,  &          ! intent(in)
          iyear1, imonth1, idate1, itime1, &   ! intent(in)
          nnxp, nnyp, nnzp,                &   ! intent(in)

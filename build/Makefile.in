@@ -170,8 +170,8 @@ endif
 ifeq ($(notdir $(FCOMP)),gfortran)
 JULES_DEFS = $(JULES_DEFS0) GNU_FORTRAN
 #FC_FLAGS=-O3 -ffree-form -ffree-line-length-none -fbacktrace -g -fcheck=bounds -fcheck=all -finit-real=nan # -Wall -ffpe-trap=invalid,zero
-FC_FLAGS=-ffree-form -ffree-line-length-none -fbacktrace -g -fcheck=bounds,pointer
-#FC_FLAGS=-ffree-form -ffree-line-length-none -fbacktrace -g -fno-range-check
+#FC_FLAGS=-ffree-form -ffree-line-length-none -fbacktrace -g -fcheck=bounds,pointer
+FC_FLAGS=-ffree-form -ffree-line-length-none -fbacktrace -g -fno-range-check
 
 ifeq ($(GCC_VER_GTE10),)
      FC_FLAGS +=-fallow-argument-mismatch

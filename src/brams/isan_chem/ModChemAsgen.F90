@@ -13,9 +13,7 @@ module ModChemAsgen
 
   use ModMkSfcTop, only: &
        TopReadStoreOwnChunk
-
-  use ModDateUtils
-
+  use ModDateUtils, only: date_unmake_big
   use grid_dims, only: &
        maxgrds
 
@@ -92,21 +90,74 @@ module ModChemAsgen
 
   use chem1_list, only : chemical_mechanism, & ! intent(in)
        spc_name
-  use chem_isan_coms                        
+  use chem_isan_coms, only: chem_is_grids,  &
+                            aer_is_grids,   &
+                            pi_sc,          &
+                            pi_aer_sc,      &
+                            fdda,           &
+                            nmodes,         &
+                            nspecies,       &
+                            nspecies_aer_in,&
+                            total_nspecies, &
+                            total_speciesaer,&
+                            ps_sc,          &
+                            ps_aer_sc,      &
+                            spc_alloc,      &
+                            spc_alloc_aer
+
   use mem_chem1, only:  CHEM_ASSIM, CHEMISTRY     ! intent(in)
   use aer1_list, only: aer_name
   !srf-chem-end
   !--(DMK-CCATT-FIM)----------------------------------------------------------------
 
-  use mem_grid
-  use io_params
+  use mem_grid, only: &
+       oneGlobalGridData, &
+       grid_g, &
+       ngrids, &
+       nnxp, &
+       nnyp, &
+       nnzp, &
+       deltayn, &
+       deltaxn, &
+       deltazn, &
+       dzmax, &
+       dzrat, &
+       idate1, &
+       if_adap, &
+       iyear1, &
+       imonth1, &
+       idate1, &
+       itime1, &
+       jdim, &
+       platn, &
+       plonn, &
+       nxtnest, &
+       timmax, &
+       ztop, &
+       ztn, &
+       nnstbot, &
+       nnsttop, &
+       nhemgrd2, &
+       alloc_grid, &
+       nullify_grid, &
+       alloc_globalgriddata, &
+       nullify_globalgriddata, &
+       nxyzp, &
+       nxyp
+  
+  use io_params, only: &
+       iclobber
+  
   use node_mod, only:  &
        mynum, &
        mchnum, &
        master_num, &
        nmachs
+
   use mem_aer1, only: aer_assim
-  use dump
+
+  use dump, only: &
+       dumpMessage
 
   implicit none
 
@@ -137,7 +188,7 @@ contains
 !!$  character(len=128) :: fnames(maxisfiles)
 
     integer, dimension(maxgrds) :: itoptn,iglatn,iglonn
-    integer :: ifm,icm,ng,i,k,ifileok
+    integer :: ifm,icm,ng,i,k,ifileok, ngrid
 
     integer :: recordLen,nvar,irec,j
     character(len=256) :: aerFName

@@ -12,9 +12,27 @@ subroutine cond_read(initflag)
        vfintrpf, &
        varweight
   
-use ModDateUtils
-use mem_grid
-use mem_varinit
+use ModDateUtils, only: date_add_to,  &
+                        date_make_big
+use mem_grid, only: grid_g,   &
+                    idate1,   &
+                    imonth1,  &
+                    iyear1,   &
+                    ngrids,   &
+                    runtype,  &
+                    itime1,   &
+                    nnzp,     &
+                    nnxp,     &
+                    nnyp,     &
+                    time
+use mem_varinit, only: varinit_g,    &
+                       cond_hfile,   &
+                       condtime2,    &
+                       ncondfiles,   &
+                       ncondfl,      &
+                       condtime1,    &
+                       cond_times,   &
+                       itotdate_cond
 
 implicit none
 
@@ -97,7 +115,9 @@ end
 
 
 subroutine cond_file_inv (hfilin,iyear1,imonth1,idate1,itime1)
-use ModDateUtils
+use ModDateUtils, only: date_abs_secs2,    &
+                        date_add_to,       &
+                        date_make_big
 use mem_varinit,only: &
     maxnudfiles,      &
     ncondfiles,       &

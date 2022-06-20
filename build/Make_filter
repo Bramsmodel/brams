@@ -4,6 +4,7 @@ PROG = filter
 
 OBJS =  filterOut.o \
 	dump.o \
+	parlibf.o \
 	utilsMod.o
 
 all: $(PROG)

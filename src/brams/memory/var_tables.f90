@@ -468,7 +468,8 @@ contains
 end module var_tables
 
 subroutine vtables2_I(var, varm, ng, npts, imean, tabstr)
-  use var_tables
+  use var_tables, only: vtab_r, &
+                        num_var
   implicit none
   include "constants.h"
   real, target :: var,varm

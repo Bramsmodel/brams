@@ -386,7 +386,9 @@ end
 
 subroutine comp_rhfrac(n1,n2,n3,a,b,c)
 
-use rconstants
+use rconstants, only: cp,    &
+                      cpor,  &
+                      p00
 
 implicit none
 integer :: n1,n2,n3
@@ -410,7 +412,9 @@ end
 
 subroutine comp_press(n1,n2,n3,a)
 
-use rconstants
+use rconstants, only: cp,    &
+                      cpor,  &
+                      p00
 
 implicit none
 integer :: n1,n2,n3
@@ -430,10 +434,22 @@ end
 
 subroutine isan_comp_dn0 (n1,n2,n3,pi0,th0,dn0,dn0u,dn0v,topt,ngrd) 
 
-use isan_coms
-use rconstants
-use mem_grid
-use mem_scratch
+use isan_coms, only:  piref,  &
+                      thref
+use rconstants, only: cp,    &
+                      cpor,  &
+                      g,     &
+                      rgas,  &
+                      p00
+use mem_grid, only: ztop,    &
+                    nnzp,    &
+                    ztn,     &
+                    zmn,     &
+                    dzmn
+use mem_scratch, only: vctr2,  &
+                       vctr11, &
+                       vctr12
+
 
 implicit none
 

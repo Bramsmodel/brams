@@ -491,7 +491,7 @@ contains
          nnacoust,       & ! INTENT(IN)
          sspct,          & ! INTENT(IN)
          dyncore_flag
-    use dump
+    use dump, only: dumpmessage
 
     implicit none
     include "constants.h"

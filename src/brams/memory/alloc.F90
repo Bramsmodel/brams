@@ -51,11 +51,11 @@ subroutine dealloc_all()
        vtab_r
 
 #ifdef JULES
-  use mem_jules
+  use mem_jules, onlY: jules_g, julesm_g, dealloc_jules
 #endif
-  use mem_shcu   ! needed for Shallow Cumulus
+  use mem_shcu, only:  shcu_g, shcum_g, dealloc_shcu  ! needed for Shallow Cumulus
 
-  use mem_opt    ! Needed for optimization - ALF
+  use mem_opt, only: dealloc_opt_scratch
 
   use mem_aerad, only: &
        nwave,          &         !INTENT(IN)

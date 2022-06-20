@@ -696,7 +696,11 @@ contains
     use ModTurbFields, only: &
          TurbFields
     
-    use mem_grid
+    use mem_grid, only: grid_g,    &
+                        nnxp,      &
+                        nnyp,      &
+                        ngrids
+
     use mem_globrad, only: aotMapPath
     use node_mod, only: &
          nodei0, nodej0, & ! INTENT(IN)

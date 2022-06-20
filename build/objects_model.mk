@@ -367,12 +367,8 @@ OBJ_MOD = \
 	actv.o \
 	coag.o \
 	depv.o \
-	diam.o \
-	dicrete.o \
 	solut.o \
 	issoropia.o \
-	isofwd.o \
-	isorev.o \
 	matrix.o \
 	npf.o \
 	quad.o \
@@ -1160,6 +1156,9 @@ MOD_MOD = \
 	gfdl_cloud_microphys_mod.mod \
 	modIau.mod \
 	ModLeaf3OceanOnly.mod 
+
+#	diam.o \
+#	dicrete.o \
 
 ifeq ($(NETCDFFDIR),)
 	MOD_MODEL =  netcdf.mod $(MOD_MOD) 

@@ -22,9 +22,26 @@ contains
     !     This routine calls all the necessary routines to march the model
     !     through the small timesteps.
     !-----------------------------------------------------------------------
-    use mem_grid
-    use mem_scratch
-    use node_mod
+    use mem_grid, only: dtlt,  &
+                        dts,   &
+                        jdim,  &
+                        ngrid, &
+                        nnacoust
+
+    use mem_scratch, only: vctr1,  &
+                           vctr2
+    use node_mod, only: ia,     &
+                        ibcon,  &
+                        iz,     &
+                        izu,    &
+                        ja,     &
+                        jz,     &
+                        jzv,    &
+                        mxp,    &
+                        mynum,  &
+                        myp,    &
+                        mzp
+
     use ModGrid, only: &
          Grid
     use ModMessageSet, only: &
@@ -128,7 +145,10 @@ end module ModAcoust_adap
 subroutine prdctu_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpu  &
      ,up,ut,pp,vt3da,th0,dpdx,dxu,vt3dh,aru,volu,mynum)
 
-  use mem_grid
+  use mem_grid, only: distim,   &
+                      dts,      &
+                      itopo,    &
+                      nstbot
   use ModRbnd, only: botset_adap, &
        rayf_adap        
 
@@ -179,7 +199,12 @@ end subroutine prdctu_adap
 subroutine prdctv_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpv  &
      ,vp,vt,pp,vt3da,th0,dpdy,dyv,vt3dh,arv,volv)
 
-  use mem_grid
+  use mem_grid, only: distim,   &
+                      dts,      &
+                      itopo,    &
+                      jdim,     &
+                      nstbot
+
   use ModRbnd, only: botset_adap
   use ModRbnd, only: rayf_adap        
 
@@ -234,7 +259,8 @@ end subroutine prdctv_adap
 subroutine prdctw1_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpw  &
      ,wp,wt,pp,acoc,a1da2,vt3dh)
 
-  use mem_grid
+  use mem_grid, only: distim,  &
+                      dts
   use ModRbnd, only: rayf_adap        
 
   implicit none
@@ -279,7 +305,8 @@ end subroutine prdctw1_adap
 subroutine  prdctw2_adap(m1,m2,m3,ia,iz,ja,jz,lpw  &
      ,wp,pp,acoc,acof,acog,amof,amog,acoaa,heatfx1)
 
-  use mem_grid
+  use mem_grid, only: impl,   &
+                      nsttop
 
   implicit none
 
@@ -330,7 +357,8 @@ end subroutine prdctw2_adap
 subroutine prdctw3_adap(m1,m2,m3,ia,iz,ja,jz,lpw  &
      ,wp,amog,amoe,amof,acoc,acof,pp)
 
-  use mem_grid
+  use mem_grid, only: impl,   &
+                      nstbot
 
   implicit none
 
@@ -372,8 +400,9 @@ subroutine prdctp1_adap(m1,m2,m3,ia,iz,ja,jz,jd,lpw  &
      ,hfx1,fmapui,fmapvi,dxt,dyt,fmapt,aru,arv,volt,mynum)
 
 
-  use mem_grid
-  use rconstants
+  use mem_grid, only: dts,   &
+                      sspct
+  use rconstants, only: rocv
 
   implicit none
 
@@ -427,7 +456,7 @@ end subroutine prdctp1_adap
 
 subroutine prdctp2_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpw,pp,wp,acof,acog,mynum)
 
-  use mem_grid
+  use mem_grid, only: nstbot
   use ModRbnd, only: botset_adap
 
   implicit none
@@ -459,9 +488,13 @@ subroutine coefz_adap(m1,m2,m3,ia,iz,ja,jz,lpw  &
      ,acoc,acof,acog,dn0,pi0,th0,a1da2,amoe,amof,acoaa,acobb,acocc  &
      ,arw,volt,volw)
 
-  use mem_grid
-  use mem_scratch
-  use rconstants
+  use mem_grid, only:  dts,  &
+                       impl, &
+                       sspct
+  use mem_scratch, only: vctr12,  &
+                         vctr11
+  use rconstants, only: cv,    &
+                        rgas
 
   implicit none
 

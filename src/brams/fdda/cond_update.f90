@@ -24,8 +24,9 @@ subroutine cond_update(iswap, ncond)
      igrid_match,      & 
      varinit_g
      
-  use grid_struct
-  use rconstants
+  use grid_struct, only: grid_def, &
+                         alloc_grid_def, fill_grid_def, compare_grid_def
+
 
   implicit none
   include "constants.h"

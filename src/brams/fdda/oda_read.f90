@@ -7,7 +7,7 @@
 !###########################################################################
 
 subroutine oda_read()
-  use ModDateUtils
+  use ModDateUtils, only: date_add_to
   use mem_oda,only:  &
        fnames_sfc,    &  
        fnames_upa,    &
@@ -18,7 +18,14 @@ subroutine oda_read()
        nupafiles,     &
        oda_sfcprefix, &
        oda_upaprefix
-  use mem_grid
+  use mem_grid, only:  idate1,   &
+                       imonth1,  &
+                       itime1,   &
+                       iyear1,   &
+                       ngrids,   &
+                       timmax,   &
+                       platn,    &
+                       plonn
 
   implicit none
 
@@ -63,7 +70,15 @@ end subroutine oda_read
 
 subroutine oda_obs_alloc ()
 
-  use mem_oda
+  use mem_oda, only: num_oda_sfc,   &
+                     num_oda_upa,   &
+                     oda_sfc_info,  &
+                     oda_upa_info,  &
+                     oda_sfc_obs,   &
+                     oda_upa_obs,   &
+                     maxtimes_sfc,  &
+                     maxupalevs,    &
+                     maxtimes_upa
 
   implicit none
 
@@ -109,7 +124,9 @@ end subroutine oda_obs_alloc
 
 subroutine oda_file_inv (iyear1,imonth1,idate1,itime1  &
      ,iyear2,imonth2,idate2,itime2)
-  use ModDateUtils
+  use ModDateUtils, only: date_make_big,   &
+                          date_add_to
+
   use mem_oda, only: &
        ODA_UPAPREFIX, &
        NUPAFILES, &

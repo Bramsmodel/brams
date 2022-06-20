@@ -107,7 +107,7 @@ CONTAINS
 
   SUBROUTINE filltab_teb(teb,tebm,imean,n1,n2,n3,ng)
 
-    USE var_tables
+    USE var_tables, only: insertvtab
 
     IMPLICIT NONE
     include "constants.h"

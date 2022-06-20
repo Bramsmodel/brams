@@ -7,9 +7,18 @@
 !###########################################################################
 
 SUBROUTINE input_rawi (olat1,olat2,olon1,olon2)
-  use ModDateUtils
-  use isan_coms
-  use rconstants
+  use ModDateUtils, only: date_abs_secs,   &
+                          date_unmake_big, &
+                          date_make_big
+  use isan_coms, only: inrawi,    &
+                       maxlev,    &
+                       idate,     &
+                       ihour,     &
+                       imonth,    &
+                       iobswin,   &
+                       iyear,     &
+                       natime,    &
+                       iproc_dates
 
   implicit none
   real :: olat1,olat2,olon1,olon2
@@ -291,8 +300,35 @@ end SUBROUTINE input_rawi
 
 subroutine sndproc (lp,lz,xlat,xlon,elev,idsta,tp,zp,pp,rp,dz,fz,zz)
 
-  use isan_coms
-  use rconstants
+  use isan_coms, only: maxlev,   &
+                       maxsta,   &
+                       notsta,   &
+                       nprz,     &
+                       notid,    &
+                       nsta,     &
+                       levpr,    &
+                       up_lat,   &
+                       up_lon,   &
+                       up_top,   &
+                       up_lp,    &
+                       up_lz,    &
+                       up_chstid,&
+                       up_t,     &
+                       up_z,     &
+                       up_p,     &
+                       up_r,     &
+                       up_lp,    &
+                       up_uz,    &
+                       up_vz,    &
+                       up_zz,    &
+                       up_lat,   &
+                       up_lon,   &
+                       up_top     
+
+  use rconstants, only: cp,   &
+                        g,    &
+                        p00,  &
+                        rocp
 
   implicit none
 
@@ -524,7 +560,8 @@ end subroutine sndproc
 
 subroutine staprt (nsta,lp,lz,m1,m2,usndz,vsndz,zsndz,psnd,zsnd,rsnd,tsnd)
 
-  use rconstants
+  use rconstants, only: p00,  &
+                        rocp
 
   implicit none
   integer :: nsta,lp,lz,m1,m2
@@ -551,9 +588,16 @@ end subroutine staprt
 !***************************************************************************
 
 SUBROUTINE input_sfc (olat1,olat2,olon1,olon2)
-  use ModDateUtils
-  use isan_coms
-  use rconstants
+  use ModDateUtils, only: &
+                          date_abs_secs,&
+                          date_unmake_big
+  use isan_coms, only: iproc_dates,  &
+                       idate,        &
+                       ihour,        &
+                       imonth,       &
+                       insrfce,      &
+                       iyear,        &
+                       natime
 
   implicit none
 
@@ -771,9 +815,34 @@ end SUBROUTINE input_sfc
 
 subroutine sfcproc (nasecs,jyr,jmo,jdy,jt,idsta,xlat,xlon  &
      ,zx,ddx,ffx,tx,tdx,px)
-  use ModDateUtils
-  use isan_coms
-  use rconstants
+
+  use ModDateUtils, only: date_make_big,  &
+                          date_abs_secs
+  use isan_coms, only: iobswin,     &
+                       maxsfc,      &
+                       maxsname,    &
+                       notsta,      &
+                       notid ,      &
+                       nssfc,       &
+                       stasep,      &
+                       sf_top,      &
+                       sf_lat,      &
+                       sf_lon,      &
+                       sf_u,        &
+                       sf_v,        &
+                       sf_r,        &
+                       sf_s,        &
+                       sf_t,        &
+                       sf_p,        &
+                       sf_chstid,   &
+                       sf_date
+                       
+                       
+  use rconstants, only: cp,   &
+                        g,    &
+                        p00,  &
+                        rgas, &
+                        rocp
 
   implicit none
 

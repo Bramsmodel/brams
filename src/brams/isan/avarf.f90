@@ -8,8 +8,18 @@
 
 subroutine makevarf(ng)
 
-use isan_coms
-use mem_grid
+use isan_coms, only: is_grids,   &
+                     rs_slp,     &
+                     rs_sfp,     &
+                     rs_sft,     &
+                     rs_snow,    &
+                     rs_sst
+use mem_grid, only: grid_g,     &
+                    ztop,       &
+                    ztn ,       &
+                    nnxp,       &
+                    nnyp,       &
+                    nnzp
 
 implicit none
 
@@ -60,8 +70,28 @@ end
 subroutine isnsig(n1,n2,n3,uu,vv,tt,rr,pp  &
      ,topt,zt,ztop)
    
-use isan_coms
-use rconstants
+use isan_coms, only: guess1st,   &
+                     hybbot,     &
+                     hybtop,     &
+                     nisn,       &
+                     nsigz,      &
+                     sigzwt,     &
+                     pi_v,       &
+                     pi_p,       &
+                     pi_u,       &
+                     pi_v,       &
+                     levth,      &
+                     pi_r,       &
+                     ps_u,       &
+                     ps_t,       &
+                     ps_r,       &
+                     ps_p,       &
+                     pi_s,       &
+                     ps_v
+use rconstants, only: cp,    &
+                      g,     &
+                      p00i,  &
+                      rocp
 
 implicit none
 
@@ -167,8 +197,17 @@ end
 
 subroutine visurf(n1,n2,n3,up,vp,thp,rtp,pp,topt,rtgt,zt)
 
-use isan_coms
-use rconstants
+use isan_coms, only: sfcinf,    &
+                     rs_qual,   &
+                     rs_top,    &
+                     rs_u,      &
+                     rs_v,      &
+                     rs_r,      &
+                     rs_t
+use rconstants, only: cp,    &
+                      cpor,  &
+                      g,     &
+                      p00
 
 implicit none
 
@@ -240,8 +279,19 @@ end
 
 subroutine vshyd(n1,n2,n3,pp,tt,rr,topt,rtg,zt)
      
-use isan_coms
-use rconstants
+use isan_coms, only: guess1st,   &
+                     nisn,       &
+                     levth,      &
+                     pi_p,       &
+                     pi_s,       &
+                     pi_r
+
+use rconstants, only: cp,    &
+                      cpor,  &
+                      g,     &
+                      p00,   &
+                      p00i,  &
+                      rocp
 
 implicit none
      
@@ -419,7 +469,9 @@ end
 subroutine varfile_nstfeed(ifm,icm,n1f,n2f,n3f,n1c,n2c,n3c &
                           ,nbot,ntop)
 
-use isan_coms
+use isan_coms, only: is_grids,   &
+                     rr_scr1
+                     
 use ModRbnd, only: topset, botset
 
 implicit none

@@ -13,9 +13,23 @@ subroutine cu_read(initflag)
   !  Read cumulus inversion tendencies
   !------------------------------------------------------
 
-  use mem_cuparm
-  use mem_grid
-  use ModDateUtils
+  use mem_cuparm, only: cutime1,    &
+                        cutime2,    &
+                        ncufiles,   &
+                        ncufl,      &
+                        tcu_beg,    &
+                        cu_times,   &
+                        itotdate_cu
+
+  use mem_grid, only:   idate1,     &
+                        imonth1,    &
+                        itime1,     &
+                        iyear1,     &
+                        runtype,   &
+                        time
+  use ModDateUtils, only: date_add_to,  &
+                          date_make_big
+
 
   implicit none
 
@@ -80,7 +94,9 @@ end subroutine cu_read
 
 subroutine cu_file_inv (iyear1,imonth1,idate1,itime1)
 
-  use ModDateUtils
+  use ModDateUtils, only: date_abs_secs2,   &
+                          date_add_to,      &
+                          date_make_big
 
   use mem_cuparm, only: &
        cu_prefix,        &

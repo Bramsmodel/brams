@@ -61,8 +61,15 @@ CONTAINS
     USE mem_aerad, ONLY: ngas,nwave,iprocopio
     USE mem_leaf          , only: leaf_g
 !srf - new aerosol model
-    use aer1_list,       nspecies_aer   =>nspecies &
-                        ,spc_alloc_aer  =>spc_alloc
+    use aer1_list, only: nspecies_aer   =>nspecies, &
+                         spc_alloc_aer  =>spc_alloc,&
+                         accum,                     &
+                         bburn,                     &
+                         coarse,                    &
+                         on,                        &
+                         transport,                 &
+                         urban                    
+
     use mem_aer1 , only: aer1_g ,AEROSOL
     use ccatt_start, only: ccatt
 
@@ -742,7 +749,8 @@ CONTAINS
 
 
   SUBROUTINE initrad(imonth1,idate1,iyear1,itime1,time_rams,m1,ia,ja,iz,jz)
-    USE ModDateUtils
+    USE ModDateUtils, only: julday
+
     USE mem_aerad, ONLY: is_grp_ice_aerad,r_aerad, &
   			 rup_aerad,rcore_aerad,rcoreup_aerad, &
   			 ptop_aerad,pbot_aerad,u0_aerad, &

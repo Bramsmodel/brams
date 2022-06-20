@@ -432,8 +432,8 @@
 
 SUBROUTINE OPSPEC4
 
-  use mem_grid
-  use isan_coms
+  use mem_grid, only: ngrids 
+  use isan_coms, only: nigrids
 
   implicit none
 

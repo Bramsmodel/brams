@@ -34,7 +34,37 @@ SUBROUTINE LEAF3_TEB_INTERFACE(             &
   use ModGasPart, only: &
        emfactor
   
-  USE teb_vars_const
+  USE teb_vars_const, only: daylight,    &
+                            rushh1,      &
+                            rushh2,      &
+                            xcpd,        &
+                            xrd,         &
+                            xrv,         &
+                            z0_town,     &
+                            bld,         &
+                            bld_height,  &
+                            bld_hl_ratio,&
+                            aroof,       &
+                            eroof,       &
+                            aroad,       &
+                            eroad,       &
+                            awall,       &
+                            htraf,       &
+                            hindu,       &
+                            pletraf,     &
+                            daylight,    &
+                            ewall,       &
+                            hc_roof,     &
+                            hc_road,     &
+                            hc_wall,     &
+                            d_roof,      &
+                            d_road,      &
+                            d_wall,      &
+                            tc_roof,     &
+                            tc_road,     &
+                            tc_wall,     &
+                            pleindu
+
   USE mem_emiss, ONLY: EFSAT, EFSUN, WEEKDAYIN ! INTENT(IN)
 
   

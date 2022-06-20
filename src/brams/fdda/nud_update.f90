@@ -15,7 +15,8 @@ subroutine nud_update(iswap,nnud)
   use ModInitHis, only: &
        hi_interp
   
-use var_tables
+use var_tables, only: vtab_r,   &
+                      num_var
 use mem_varinit,only: &
     fnames_nud,       &
     igrid_match,      &
@@ -24,9 +25,30 @@ use mem_varinit,only: &
 use an_header,only:   &
     head_table,       &
     nvbtab
-use mem_grid
-use grid_struct
-use rconstants
+use mem_grid, only: grid_g,   &
+                    ngrids,   &
+                    ngridsh,  &
+                    nnzp,     &
+                    nnxp,     &
+                    npatch,   &
+                    nzg,      &
+                    nzs,      &
+                    nnyp,     &
+                    platn,    &
+                    plonn,    &
+                    xtn,      &
+                    xmn,      &
+                    ytn,      &
+                    ymn,      &
+                    ztn,      &
+                    zmn
+                   
+use grid_struct, only: grid_def,        &
+                       alloc_grid_def,  &
+                       fill_grid_def,   &
+                       compare_grid_def
+
+use rconstants, only:
 
 ! For use with CATT
 use mem_aerad,   only: nwave      !intent(in)

@@ -36,7 +36,11 @@ module ModNdviRead
        nxtnest
 
 
-  use ModDateUtils
+  use ModDateUtils, only: date_abs_secs2,   &
+                          date_make_big,    &
+                          date_add_to_big,  &
+                          date_abs_secs
+
 
   use mem_leaf, only: &
        leaf_g

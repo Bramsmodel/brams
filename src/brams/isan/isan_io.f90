@@ -8,7 +8,39 @@
 
 subroutine isenio (inout,iun,n1,n2)
 
-use isan_coms
+use isan_coms, only: gobrad,     &
+                     gobsep,     &
+                     idate,      &
+                     igridfl,    &
+                     ihour,      &
+                     imonth,     &
+                     iyear,      &
+                     nisn,       &
+                     pi_scra,    &
+                     pi_scrb,    &
+                     rs_p,       &
+                     rs_qual,    &
+                     rs_r,       &
+                     rs_s,       &
+                     rs_sfp,     &
+                     rs_sft,     &
+                     rs_snow,    &
+                     rs_sst,     &
+                     rs_t,       &
+                     rs_top,     &
+                     rs_u,       &
+                     rs_v,       &
+                     pi_u,       &
+                     pi_v,       &
+                     pi_p,       &
+                     pi_s,       &
+                     pi_r,       &
+                     idd,        &
+                     ihh,        &
+                     imm,        &
+                     iyy,        &
+                     rs_slp,     &
+                     levth
 
 implicit none
 include "constants.h"
@@ -149,7 +181,24 @@ end subroutine isenio
 
 subroutine sigzio (inout,iun,n1,n2)
 
-use isan_coms
+use isan_coms, only: idate,     &
+                     ihour,     &
+                     imonth,    &
+                     iyear,     &
+                     nsigz,     &
+                     ps_scra,   &
+                     ps_scrb,   &
+                     ps_u,      &
+                     ps_v,      &
+                     ps_p,      &
+                     ps_t,      &
+                     ps_r,      &
+                     idd,       &
+                     ihh,       &
+                     imm,       &
+                     iyy,       &
+                     sigz
+
 
 implicit none
 include "constants.h"

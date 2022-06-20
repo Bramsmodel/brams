@@ -14,7 +14,10 @@ module ModVarfFile
        VariableWeightChem, &
        VarfIntrp
   
-  use ModDateUtils
+  use ModDateUtils, only: date_abs_secs2,  &
+                          date_add_to,     &
+                          date_make_big
+
        
   use mem_scratch, only: &
        vctr2

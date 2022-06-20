@@ -14,9 +14,29 @@ subroutine nud_read(initflag)
        vfintrpf, &
        varweight_chem
   
-  use ModDateUtils
-use mem_grid
-use mem_varinit
+  use ModDateUtils, only: date_add_to,   &
+                          date_make_big
+  use mem_grid, only: grid_g,   &
+                      idate1,   &
+                      imonth1,  &
+                      iyear1,   &
+                      itime1,   &
+                      ngrids,   &
+                      runtype,  &
+                      time,     &
+                      nnzp,     &
+                      nnyp,     &
+                      nnxp
+  use mem_varinit, only:  &
+                      htime1,   &
+                      htime2,   &
+                      varinit_g,&
+                      nnudfiles,&
+                      nnudfl,   &
+                      nud_hfile,&
+                      nud_times,&
+                      itotdate_nud
+
 
 !--(DMK-CCATT-INI)-----------------------------------------------------
 use mem_chem1, only: &
@@ -108,7 +128,9 @@ end
 
 
 subroutine nud_file_inv (hfilin,iyear1,imonth1,idate1,itime1)
-use ModDateUtils
+use ModDateUtils, only: date_abs_secs2,  &
+                        date_add_to,     &
+                        date_make_big
 use isan_coms, only: &
        ISAN_INC
 use mem_varinit, only: &

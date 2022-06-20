@@ -10,8 +10,6 @@
 
 module mem_turb_scalar
 
-  use grid_dims
-
   implicit none
 
   type turb_s_vars

@@ -8,8 +8,129 @@
 
 SUBROUTINE ISNSTAGE ()
 
-  use isan_coms
-  use mem_grid
+  use isan_coms, only: cntlat,  &
+                       cntlon,  &
+                       gdatdx,  &
+                       gdatdy,  &
+                       guess1st,&
+                       maxlev,  &
+                       idatelin,&
+                       iglobew, &
+                       iglobn,  &
+                       iglobs,  &
+                       igridfl, &
+                       inproj,  &
+                       inrawi,  &
+                       insrfce, &
+                       maxsta,  &
+                       natime,  &
+                       nisn,    &
+                       nprx,    &
+                       npry,    &
+                       nprz,    &
+                       nsigz,   &
+                       nssfc,   &
+                       nsta,    &
+                       p_r,     &
+                       p_sfp,   &
+                       p_sft,   &
+                       p_snow,  &
+                       p_sst,   &
+                       p_t,     &
+                       p_z,     &
+                       pi_p,    &
+                       pi_r,    &
+                       pi_u,    &
+                       pi_v,    &
+                       pp_r,    &
+                       pp_sglob,&
+                       pp_t,    &
+                       pp_u,    &
+                       pp_v,    &
+                       pp_z,    &
+                       ps_p,    &
+                       ps_r,    &
+                       ps_t,    &
+                       ps_u,    &
+                       ps_v,    &
+                       rs_qual, &
+                       rs_sfp,  &
+                       rs_sft,  &
+                       rs_slp,  &
+                       rs_snow, &
+                       rs_sst,  &
+                       sf_lat,  &
+                       sf_lon,  &
+                       sf_p,    &
+                       sf_scra, &
+                       sf_u,    &
+                       sf_ur,   &
+                       sf_v,    &
+                       sf_vr,   &
+                       up_chstid,&
+                       up_lat,  &
+                       up_lon,  &
+                       up_lp,   &
+                       up_lz,   &
+                       up_p,    &
+                       up_r,    &
+                       up_t,    &
+                       up_top,  &
+                       up_ur,   &
+                       up_uz,   &
+                       up_vr,   &
+                       up_vz,   &
+                       up_z,    &
+                       up_zz,   &
+                       upi_p,   &
+                       upi_r,   &
+                       upi_s,   &
+                       upi_u,   &
+                       upi_v,   &
+                       ups_r,   &
+                       ups_t,   &
+                       ups_u,   &
+                       xswlat,  &
+                       xswlon,  &
+                       maxsfc,  &
+                       nigrids, &
+                       p_slp,   &
+                       pi_s,    &
+                       ups_p,   &
+                       ups_v,   &
+                       iproc_flag,&
+                       iproc_names,&
+                       up_topg, &
+                       iproc_flag,&
+                       p_u,     &
+                       p_v,     &
+                       p_ur,    &
+                       p_vr,    &
+                       p_lat,   &
+                       p_lon,   &
+                       sf_t,    &
+                       sf_s,    &
+                       sf_r,    &
+                       sf_top,  &
+                       sf_chstid,&
+                       sf_date, &
+                       iproc_flag,&
+                       up_topg
+
+
+  use mem_grid, only: grid_g,   &
+                      ngrid,    &
+                      nxtnest,  &
+                      nnxp,     &
+                      nnyp,     &
+                      nnzp,     &
+                      platn,    &
+                      plonn,    &
+                      zmn,      &
+                      xtn,      &
+                      ytn,      &
+                      deltaxn,  &
+                      deltayn
 
   implicit none
   ! Local Variables:
@@ -428,7 +549,7 @@ end SUBROUTINE ISNSTAGE
 subroutine sfcqual (nxp,nyp,glat,glon,quals3  &
                    ,sflt,sfln,pss,nssfc,scra)
 
-use rconstants
+use rconstants, only:
 
 implicit none
 
@@ -478,8 +599,22 @@ end
 
 subroutine strmfun (nxp,nyp,topt,rtgt)
 
-use isan_coms
-use rconstants
+use isan_coms, only: guess1st,  &
+                     maxsigz,   &
+                     nisn,      &
+                     nsigz,     &
+                     levth,     &
+                     pi_p,      &
+                     pi_s,      &
+                     sigz,      &
+                     ps_p,      &
+                     ps_t,      &
+                     ps_r
+use rconstants, only: cp,  &
+                      cpor,&
+                      g,   &
+                      p00, &
+                      rocp
 
 implicit none
 
