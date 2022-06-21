@@ -815,6 +815,7 @@ OBJ_MOD = \
    water_resources_drive.o \
    woodprod.o \
    yomhook.o \
+   sfclyr_jules.o \
    zenith_mod.o 
 
 
@@ -829,7 +830,7 @@ endif
 
 ifeq ($(NETCDFFDIR),)
 #<J3.0> 	OBJ_MODEL =  jules_netcdf_dummy.o $(OBJ_MOD) 
- 	OBJ_MODEL = $(OBJ_MOD) 
+	OBJ_MODEL = $(OBJ_MOD) 
 else
 	OBJ_MODEL = $(OBJ_MOD)
 endif
