@@ -9,23 +9,14 @@
 
 module mem_grid
 
-  use ModNamelistFile, only: &
-       namelistFile
+  use ModNamelistFile, only: namelistFile
 
-  use grid_dims, only: &
-       maxgrds, &
-       nzpmax
-
-  use var_tables, only: &
-       InsertVTab
+  use grid_dims
 
   implicit none
-  private
-  ! every name is public except the contents of constants.h,
-  ! to avoid name clashing propagation
-  include "constants.h"
 
-  public :: grid_vars
+  include "i8.h"
+
   type grid_vars
 
      ! Variables to be dimensioned by (nxp,nyp)
@@ -83,516 +74,499 @@ module mem_grid
   end type grid_vars
 
 
-  type (grid_vars), public, allocatable :: grid_g(:)
-  type (grid_vars), public, allocatable :: gridm_g(:)
+  type (grid_vars), allocatable :: grid_g(:)
+  type (grid_vars), allocatable :: gridm_g(:)
 
   ! data on entire grid (not domain decomposed)
   ! topography on entire grid (not domain decomposed)
 
-  public :: GlobalGridData
   type GlobalGridData
      real, pointer :: global_topta(:,:)
      real, pointer :: global_glat(:,:)      ! set by GridSetup
      real, pointer :: global_glon(:,:)      ! set by GridSetup
   end type GlobalGridData
 
-  type(GlobalGridData), public, allocatable, target :: oneGlobalGridData(:)
+  type(GlobalGridData), allocatable, target :: oneGlobalGridData(:)
 
 
-  character(len=64), public :: expnme            ! experiment name; from RAMSIN
-  integer, public :: ngrids                      ! how many grids; from RAMSIN
-  integer, public :: ngridsh
-  integer, public :: nxtnest(maxgrds)            ! next coarser grid number (0 if grid is not nested); from RAMSIN
+  character(len=64) :: expnme            ! experiment name; from RAMSIN
+  integer :: ngrids                      ! how many grids; from RAMSIN
+  integer :: ngridsh
+  integer :: nxtnest(maxgrds)            ! next coarser grid number (0 if grid is not nested); from RAMSIN
 
-  real, public, allocatable :: dtlongn(:)        ! delta t long
+  real, allocatable :: dtlongn(:)        ! delta t long
 
-  integer, public, target :: nnxp(maxgrds)       ! global grid cells at x direction; from RAMSIN
+  integer, target :: nnxp(maxgrds)       ! global grid cells at x direction; from RAMSIN
 
-  integer, public, allocatable :: nnx(:)         ! nnxp - 1; set by gridinit
-  integer, public, allocatable :: nnx1(:)        ! nnxp - 2; set by gridinit
-  integer, public, allocatable :: nnx2(:)        ! nnxp - 3; set by gridinit
+  integer, allocatable :: nnx(:)         ! nnxp - 1; set by gridinit
+  integer, allocatable :: nnx1(:)        ! nnxp - 2; set by gridinit
+  integer, allocatable :: nnx2(:)        ! nnxp - 3; set by gridinit
 
-  integer, public :: nstratx(maxgrds)            ! nest ratio for next coarser grid; from RAMSIN
+  integer :: nstratx(maxgrds)            ! nest ratio for next coarser grid; from RAMSIN
 
-  real, public, allocatable :: deltaxn(:)        ! delta x; set by gridset(1)
+  real, allocatable :: deltaxn(:)        ! delta x; set by gridset(1)
 
-  integer, public, target :: nnyp(maxgrds)       ! grid cells at y direction; from RAMSIN
+  integer, target :: nnyp(maxgrds)       ! grid cells at y direction; from RAMSIN
 
-  integer, public, allocatable :: nny(:)         ! nnyp - 1; set by gridinit
-  integer, public, allocatable :: nny1(:)        ! nnyp - 2; set by gridinit
-  integer, public, allocatable :: nny2(:)        ! nnyp - 3; set by gridinit
+  integer, allocatable :: nny(:)         ! nnyp - 1; set by gridinit
+  integer, allocatable :: nny1(:)        ! nnyp - 2; set by gridinit
+  integer, allocatable :: nny2(:)        ! nnyp - 3; set by gridinit
 
-  integer, public :: nstraty(maxgrds)            ! nest ratio for next coarser grid; from RAMSIN
+  integer :: nstraty(maxgrds)            ! nest ratio for next coarser grid; from RAMSIN
 
-  real, public, allocatable :: deltayn(:)        ! delta y; set by gridset(1)
+  real, allocatable :: deltayn(:)        ! delta y; set by gridset(1)
 
-  integer, public, target :: nnzp(maxgrds)       ! grid points z direction; from RAMSIN
-  integer, public, allocatable :: nnz(:)         ! nnzp - 1; set by gridinit
-  integer, public, allocatable :: nnz1(:)        ! nnzp - 2; set by gridinit
-  real, public, allocatable    :: deltazn(:)     ! delta z; set by gridset(1)
+  integer, target :: nnzp(maxgrds)       ! grid points z direction; from RAMSIN
+  integer, allocatable :: nnz(:)         ! nnzp - 1; set by gridinit
+  integer, allocatable :: nnz1(:)        ! nnzp - 2; set by gridinit
+  real, allocatable    :: deltazn(:)     ! delta z; set by gridset(1)
 
-  integer, public, allocatable :: nnxyp(:)       ! nnxp*nnyp (grid points at each vertical); set by gridinit
-  integer, public, allocatable :: nnxyzp(:)      ! nnxp*nnyp*nnzp (grid points at the air); set by gridinit
-  integer, public, allocatable :: nnxysp(:)      ! nnxp*nnyp*(nzg+nzs+3)*npatch (grid points beneath ground); set by gridinit
+  integer, allocatable :: nnxyp(:)       ! nnxp*nnyp (grid points at each vertical); set by gridinit
+  integer, allocatable :: nnxyzp(:)      ! nnxp*nnyp*nnzp (grid points at the air); set by gridinit
+  integer, allocatable :: nnxysp(:)      ! nnxp*nnyp*(nzg+nzs+3)*npatch (grid points beneath ground); set by gridinit
 
-  real, public, allocatable :: platn(:)          ! pole latitude (degrees); set by gridset(1)
-  real, public, allocatable :: plonn(:)          ! pole longitude (degrees); set by gridset(1)
+  real, allocatable :: platn(:)          ! pole latitude (degrees); set by gridset(1)
+  real, allocatable :: plonn(:)          ! pole longitude (degrees); set by gridset(1)
 
-  real, public :: centlat(maxgrds)               ! grid center latitude (degrees); from RAMSIN
-  real, public :: centlon(maxgrds)               ! grid center longitude (degrees); from RAMSIN
+  real :: centlat(maxgrds)               ! grid center latitude (degrees); from RAMSIN
+  real :: centlon(maxgrds)               ! grid center longitude (degrees); from RAMSIN
 
   ! global grid cells coordinates and indices; indexed by global grid, not by a domain decomposed grid
 
-  real, public, allocatable, target :: xtn(:,:)          ! x coordinate of cell center on polar stereographic projection; set by gridset
-  real, public, allocatable :: xmn(:,:)          ! x coordinate of higher cell boundary on polar stereographic projection; set by gridset
+  real, allocatable, target :: xtn(:,:)          ! x coordinate of cell center on polar stereographic projection; set by gridset
+  real, allocatable :: xmn(:,:)          ! x coordinate of higher cell boundary on polar stereographic projection; set by gridset
 
-  integer, public :: ninest(maxgrds)             ! index on next coarser grid where this grid starts (lower southwest corner); from RAMSIN or set by gridset(1)
+  integer :: ninest(maxgrds)             ! index on next coarser grid where this grid starts (lower southwest corner); from RAMSIN or set by gridset(1)
   !                                      ! ds to interpolate x direction from coarser to finner grids
 
-  integer, public, allocatable :: ipm(:,:)       ! next coarser grid cell index (icoarser) that contains this finer grid cell; set by gridset
-  real, public, allocatable    :: ei1(:,:)          ! for icoarser-1 on 3 points interpolation; set by cofnest
-  real, public, allocatable    :: ei2(:,:)          ! for icoarser   on 3 points interpolation; set by cofnest
-  real, public, allocatable    :: ei3(:,:)          ! for icoarser+1 on 3 points interpolation; set by cofnest
-  real, public, allocatable    :: ei4(:,:)          ! for icoarser-2 on 4 points interpolation; set by cofnest
-  real, public, allocatable    :: ei5(:,:)          ! for icoarser-1 on 4 points interpolation; set by cofnest
-  real, public, allocatable    :: ei6(:,:)          ! for icoarser   on 4 points interpolation; set by cofnest
-  real, public, allocatable    :: ei7(:,:)          ! for icoarser+1 on 4 points interpolation; set by cofnest
+  integer, allocatable :: ipm(:,:)       ! next coarser grid cell index (icoarser) that contains this finer grid cell; set by gridset
+  real, allocatable    :: ei1(:,:)          ! for icoarser-1 on 3 points interpolation; set by cofnest
+  real, allocatable    :: ei2(:,:)          ! for icoarser   on 3 points interpolation; set by cofnest
+  real, allocatable    :: ei3(:,:)          ! for icoarser+1 on 3 points interpolation; set by cofnest
+  real, allocatable    :: ei4(:,:)          ! for icoarser-2 on 4 points interpolation; set by cofnest
+  real, allocatable    :: ei5(:,:)          ! for icoarser-1 on 4 points interpolation; set by cofnest
+  real, allocatable    :: ei6(:,:)          ! for icoarser   on 4 points interpolation; set by cofnest
+  real, allocatable    :: ei7(:,:)          ! for icoarser+1 on 4 points interpolation; set by cofnest
 
-  real, public, allocatable, target :: ytn(:,:)          ! y coordinate of cell center on polar stereographic projection; set by gridset
-  real, public, allocatable :: ymn(:,:)          ! y coordinate of higher cell boundary on polar stereographic projection; set by gridset
+  real, allocatable, target :: ytn(:,:)          ! y coordinate of cell center on polar stereographic projection; set by gridset
+  real, allocatable :: ymn(:,:)          ! y coordinate of higher cell boundary on polar stereographic projection; set by gridset
 
-  integer, public :: njnest(maxgrds)             ! index on next coarser grid where this grid starts (lower southwest corner)
+  integer :: njnest(maxgrds)             ! index on next coarser grid where this grid starts (lower southwest corner)
   !                                      ! ds to interpolate y direction from coarser to finner grids; from RAMSIN
 
-  integer, public, allocatable :: jpm(:,:)       ! next coarser grid cell index (jcoarser) that contains this finer grid cell; set by gridset
-  real, public, allocatable    :: ej1(:,:)       ! for jcoarser-1 on 3 points interpolation; set by cofnest
-  real, public, allocatable    :: ej2(:,:)       ! for jcoarser   on 3 points interpolation; set by cofnest
-  real, public, allocatable    :: ej3(:,:)       ! for jcoarser+1 on 3 points interpolation; set by cofnest
-  real, public, allocatable    :: ej4(:,:)       ! for jcoarser-2 on 4 points interpolation; set by cofnest
-  real, public, allocatable    :: ej5(:,:)       ! for jcoarser-1 on 4 points interpolation; set by cofnest
-  real, public, allocatable    :: ej6(:,:)       ! for jcoarser   on 4 points interpolation; set by cofnest
-  real, public, allocatable    :: ej7(:,:)       ! for jcoarser+1 on 4 points interpolation; set by cofnest
+  integer, allocatable :: jpm(:,:)       ! next coarser grid cell index (jcoarser) that contains this finer grid cell; set by gridset
+  real, allocatable    :: ej1(:,:)       ! for jcoarser-1 on 3 points interpolation; set by cofnest
+  real, allocatable    :: ej2(:,:)       ! for jcoarser   on 3 points interpolation; set by cofnest
+  real, allocatable    :: ej3(:,:)       ! for jcoarser+1 on 3 points interpolation; set by cofnest
+  real, allocatable    :: ej4(:,:)       ! for jcoarser-2 on 4 points interpolation; set by cofnest
+  real, allocatable    :: ej5(:,:)       ! for jcoarser-1 on 4 points interpolation; set by cofnest
+  real, allocatable    :: ej6(:,:)       ! for jcoarser   on 4 points interpolation; set by cofnest
+  real, allocatable    :: ej7(:,:)       ! for jcoarser+1 on 4 points interpolation; set by cofnest
 
-  real, public, allocatable, target :: ztn(:,:)    ! z coordinate of interval center; set by gridset(1)
-  real, public, allocatable, target :: zmn(:,:)            ! z coordinate of grid point; set by gridset(1)
+  real, allocatable, target :: ztn(:,:)    ! z coordinate of interval center; set by gridset(1)
+  real, allocatable, target :: zmn(:,:)            ! z coordinate of grid point; set by gridset(1)
 
-  integer, public :: nknest(maxgrds)             ! index on next coarser grid where this grid starts (lower level)
+  integer :: nknest(maxgrds)             ! index on next coarser grid where this grid starts (lower level)
   !                                      ! ds to interpolate z direction (kcoarser) from coarser to finner grids; from RAMSIN
 
-  integer, public, allocatable :: kpm(:,:)       ! next coarser grid cell index that contains this finer grid cell; set by gridset
-  real, public, allocatable    :: ek1(:,:)       ! for kcoarser-1 on 3 points interpolation; set by cofnest
-  real, public, allocatable    :: ek2(:,:)       ! for kcoarser   on 3 points interpolation; set by cofnest
-  real, public, allocatable    :: ek3(:,:)       ! for kcoarser+1 on 3 points interpolation; set by cofnest
-  real, public, allocatable    :: ek4(:,:)       ! for kcoarser-2 on 4 points interpolation; set by cofnest
-  real, public, allocatable    :: ek5(:,:)       ! for kcoarser-1 on 4 points interpolation; set by cofnest
-  real, public, allocatable    :: ek6(:,:)       ! for kcoarser   on 4 points interpolation; set by cofnest
-  real, public, allocatable    :: ek7(:,:)       ! for kcoarser+1 on 4 points interpolation; set by cofnest
+  integer, allocatable :: kpm(:,:)       ! next coarser grid cell index that contains this finer grid cell; set by gridset
+  real, allocatable    :: ek1(:,:)       ! for kcoarser-1 on 3 points interpolation; set by cofnest
+  real, allocatable    :: ek2(:,:)       ! for kcoarser   on 3 points interpolation; set by cofnest
+  real, allocatable    :: ek3(:,:)       ! for kcoarser+1 on 3 points interpolation; set by cofnest
+  real, allocatable    :: ek4(:,:)       ! for kcoarser-2 on 4 points interpolation; set by cofnest
+  real, allocatable    :: ek5(:,:)       ! for kcoarser-1 on 4 points interpolation; set by cofnest
+  real, allocatable    :: ek6(:,:)       ! for kcoarser   on 4 points interpolation; set by cofnest
+  real, allocatable    :: ek7(:,:)       ! for kcoarser+1 on 4 points interpolation; set by cofnest
 
-  real, public, allocatable :: htn(:,:)
-  real, public, allocatable :: ht2n(:,:)
-  real, public, allocatable :: ht4n(:,:)
-  real, public, allocatable :: hwn(:,:)
-  real, public, allocatable :: hw2n(:,:)
-  real, public, allocatable :: hw4n(:,:)
-  real, public, allocatable, target :: dztn(:,:) !  set by gridset(1)
-  real, public, allocatable, target :: dzmn(:,:) !  set by gridset(1)
-  real, public, allocatable :: dzt2n(:,:)
-  real, public, allocatable :: dzm2n(:,:)
+  real, allocatable :: htn(:,:)
+  real, allocatable :: ht2n(:,:)
+  real, allocatable :: ht4n(:,:)
+  real, allocatable :: hwn(:,:)
+  real, allocatable :: hw2n(:,:)
+  real, allocatable :: hw4n(:,:)
+  real, allocatable, target :: dztn(:,:) !  set by gridset(1)
+  real, allocatable, target :: dzmn(:,:) !  set by gridset(1)
+  real, allocatable :: dzt2n(:,:)
+  real, allocatable :: dzm2n(:,:)
 
-  integer, public :: nxp
-  integer, public :: nx
-  integer, public :: nx1
-  integer, public :: nx2
-  integer, public :: nyp
-  integer, public :: ny
-  integer, public :: ny1
-  integer, public :: ny2
-  integer, public :: nzp
-  integer, public :: nzpp
-  integer, public :: nz
-  integer, public :: nz1
-  integer(kind=i8), public :: nxyzp
+  integer :: nxp
+  integer :: nx
+  integer :: nx1
+  integer :: nx2
+  integer :: nyp
+  integer :: ny
+  integer :: ny1
+  integer :: ny2
+  integer :: nzp
+  integer :: nzpp
+  integer :: nz
+  integer :: nz1
+  integer(kind=i8) :: nxyzp
 
-  integer(kind=i8), public :: nxyp
+  integer(kind=i8) :: nxyp
 
-  integer(kind=i8), public :: nxysp
-  integer, public :: nscl
-  integer, public :: nsttop
-  integer, public :: nstbot
-  integer, public :: ndtrat
+  integer(kind=i8) :: nxysp
+  integer :: nscl
+  integer :: nsttop
+  integer :: nstbot
+  integer :: ndtrat
 
-  integer, public :: jdim                        ! all horizontal grids are 1D (jdim=0) or 2D (jdim=1); set by gridinit
-  real, public :: deltax ! from RAMSIN
-  real, public :: deltay ! from RAMSIN
-  real, public :: deltaz ! from RAMSIN
+  integer :: jdim                        ! all horizontal grids are 1D (jdim=0) or 2D (jdim=1); set by gridinit
+  real :: deltax ! from RAMSIN
+  real :: deltay ! from RAMSIN
+  real :: deltaz ! from RAMSIN
 
-  real, public, allocatable :: ht(:)
-  real, public, allocatable :: ht2(:)
-  real, public, allocatable :: ht4(:)
-  real, public, allocatable :: hw(:)
-  real, public, allocatable :: hw2(:)
-  real, public, allocatable :: hw4(:)
-  real, public, allocatable :: zt(:)
-  real, public, allocatable :: zm(:)
-  real, public, allocatable :: dzt(:)
-  real, public, allocatable :: dzm(:)
-  real, public, allocatable :: dzt2(:)
-  real, public, allocatable :: dzm2(:)
-  real, public, allocatable :: xt(:)
-  real, public, allocatable :: xm(:)
-  real, public, allocatable :: yt(:)
-  real, public, allocatable :: ym(:)
+  real, allocatable :: ht(:)
+  real, allocatable :: ht2(:)
+  real, allocatable :: ht4(:)
+  real, allocatable :: hw(:)
+  real, allocatable :: hw2(:)
+  real, allocatable :: hw4(:)
+  real, allocatable :: zt(:)
+  real, allocatable :: zm(:)
+  real, allocatable :: dzt(:)
+  real, allocatable :: dzm(:)
+  real, allocatable :: dzt2(:)
+  real, allocatable :: dzm2(:)
+  real, allocatable :: xt(:)
+  real, allocatable :: xm(:)
+  real, allocatable :: yt(:)
+  real, allocatable :: ym(:)
 
-  integer, public :: ngrid                       ! current grid;
-  integer, public :: nzg                         ! soil layers; from RAMSIN
-  integer, public :: nzs                         ! snow layers; from RAMSIN
-  integer, public :: npatch                      ! surface patches per grid cell; from RAMSIN
-  integer, public :: if_adap ! from RAMSIN
-  integer, public :: itopo
-  integer, public :: ihtran ! from RAMSIN
-  integer, public :: ngridc
-  integer, public :: ngrido
-  integer, public :: iscr1
-  integer, public :: iscr2
-  integer, public :: memsize
-  integer, public :: iounit
-  integer, public :: maxpro
-  integer, public :: memscr
-  integer, public :: memind
-  integer, public :: iogrid
-  integer, public :: maxpts
-  integer, public :: maxnzp
-  integer, public :: maxnxp
-  integer, public :: maxnyp
-  integer, public :: i2dvar
-  real, public :: time
-  real, public :: ztop  ! set by gridset(1)
-  real, public :: dzrat ! from RAMSIN
-  real, public :: dzmax ! from RAMSIN
-  integer, public :: fixLevels ! From RAMSIN
-  real, public :: eps
-  integer, public :: impl
-  integer, public :: ideltat ! from RAMSIN
-  integer, public :: iyear1 ! from RAMSIN
-  integer, public :: imonth1 ! from RAMSIN
-  integer, public :: idate1 ! from RAMSIN
-  integer, public :: ihour1
-  integer, public :: itime1 ! from RAMSIN
-  integer, public :: nacoust ! from RAMSIN
-  integer, public :: initial ! from RAMSIN
-  integer, public :: iflag
+  integer :: ngrid                       ! current grid;
+  integer :: nzg                         ! soil layers; from RAMSIN
+  integer :: nzs                         ! snow layers; from RAMSIN
+  integer :: npatch                      ! surface patches per grid cell; from RAMSIN
+  integer :: if_adap ! from RAMSIN
+  integer :: itopo
+  integer :: ihtran ! from RAMSIN
+  integer :: ngridc
+  integer :: ngrido
+  integer :: iscr1
+  integer :: iscr2
+  integer :: memsize
+  integer :: iounit
+  integer :: maxpro
+  integer :: memscr
+  integer :: memind
+  integer :: iogrid
+  integer :: maxpts
+  integer :: maxnzp
+  integer :: maxnxp
+  integer :: maxnyp
+  integer :: i2dvar
+  real :: time
+  real :: ztop  ! set by gridset(1)
+  real :: dzrat ! from RAMSIN
+  real :: dzmax ! from RAMSIN
+  integer :: fixLevels ! From RAMSIN
+  real :: eps
+  integer :: impl
+  integer :: ideltat ! from RAMSIN
+  integer :: iyear1 ! from RAMSIN
+  integer :: imonth1 ! from RAMSIN
+  integer :: idate1 ! from RAMSIN
+  integer :: ihour1
+  integer :: itime1 ! from RAMSIN
+  integer :: nacoust ! from RAMSIN
+  integer :: initial ! from RAMSIN
+  integer :: iflag
 
-  integer, public, allocatable :: nnacoust(:)
+  integer, allocatable :: nnacoust(:)
 
-  real, public, allocatable :: dimove(:)
-  real, public, allocatable :: djmove(:)
+  real, allocatable :: dimove(:)
+  real, allocatable :: djmove(:)
 
-  real, public :: gridu(maxgrds) ! from RAMSIN
-  real, public :: gridv(maxgrds) ! from RAMSIN
-  real, public :: zz(nzpmax) ! from RAMSIN
-  real, public :: dtlong ! from RAMSIN
-  real, public :: sspct
-  real, public :: polelat ! from RAMSIN
-  real, public :: polelon ! from RAMSIN
+  real :: gridu(maxgrds) ! from RAMSIN
+  real :: gridv(maxgrds) ! from RAMSIN
+  real :: zz(nzpmax) ! from RAMSIN
+  real :: dtlong ! from RAMSIN
+  real :: sspct
+  real :: polelat ! from RAMSIN
+  real :: polelon ! from RAMSIN
 
-  real, public, allocatable :: cflxy(:)
-  real, public, allocatable :: cflz(:)
-  !MB: real, public, allocatable :: cfl_max_sum(:)
+  real, allocatable :: cflxy(:)
+  real, allocatable :: cflz(:)
+  !MB: real, allocatable :: cfl_max_sum(:)
 
-  character(len=16), public :: runtype ! from RAMSIN
-  character(len=1), public  :: timeunit ! from RAMSIN
-  integer, public :: isstp
-  integer, public :: istp
-  real, public    :: timmax ! from RAMSIN
-  real, public    :: dts
-  real, public    :: dtlt
-  real, public    :: dtlv
-  integer, public :: nestz1 ! from RAMSIN
-  integer, public :: nestz2 ! from RAMSIN
-  integer, public :: nndtrat(maxgrds)            ! delta t ratio (coarser/nested), indexed by nested; from RAMSIN
+  character(len=16) :: runtype ! from RAMSIN
+  character(len=1)  :: timeunit ! from RAMSIN
+  integer :: isstp
+  integer :: istp
+  real    :: timmax ! from RAMSIN
+  real    :: dts
+  real    :: dtlt
+  real    :: dtlv
+  integer :: nestz1 ! from RAMSIN
+  integer :: nestz2 ! from RAMSIN
+  integer :: nndtrat(maxgrds)            ! delta t ratio (coarser/nested), indexed by nested; from RAMSIN
 
-  integer, public, allocatable :: ngbegun(:)
+  integer, allocatable :: ngbegun(:)
 
-  integer, public :: nnsttop(maxgrds) ! from RAMSIN
-  integer, public :: nnstbot(maxgrds) ! from RAMSIN
-  integer, public :: nstratz1(nzpmax) ! from RAMSIN
-  integer, public :: nstratz2(nzpmax) ! from RAMSIN
-
-
-  integer, public, parameter :: maxsched=2000    ! maximum number of nested timesteps for a dtlong time advance
-  integer, public, parameter :: maxschent=5      ! number of events to be recorded at each nested timestep
-  integer, public :: nsubs                       ! actual number of nested timesteps for a dtlong time advance
-  integer, public :: isched(maxsched,maxschent)  ! nested timestep events (see modsched for detailed description)
+  integer :: nnsttop(maxgrds) ! from RAMSIN
+  integer :: nnstbot(maxgrds) ! from RAMSIN
+  integer :: nstratz1(nzpmax) ! from RAMSIN
+  integer :: nstratz2(nzpmax) ! from RAMSIN
 
 
-  integer, public :: nrzflg
+  integer, parameter :: maxsched=2000    ! maximum number of nested timesteps for a dtlong time advance
+  integer, parameter :: maxschent=5      ! number of events to be recorded at each nested timestep
+  integer :: nsubs                       ! actual number of nested timesteps for a dtlong time advance
+  integer :: isched(maxsched,maxschent)  ! nested timestep events (see modsched for detailed description)
 
-  integer, public, allocatable :: nrz(:,:)         ! set by gridset(1)
-  real, public, allocatable    :: fbcf(:,:,:)         ! set by cofnest
 
-  integer, public :: iadvl
-  integer, public :: iadvf
-  integer, public :: lsflg ! from RAMSIN
-  integer, public :: ibnd ! from RAMSIN
-  integer, public :: jbnd ! from RAMSIN
-  integer, public :: icorflg ! from RAMSIN
-  integer, public :: dyncore_flag          ! =0 or 1: leapfrog, =2: Runge-Kutta dyn. core
-  integer, public :: pd_or_mnt_constraint
-  integer, public :: order_h
-  integer, public :: order_v
+  integer :: nrzflg
 
-  integer, public :: vveldamp ! from RAMSIN
-  integer, public :: nfpt ! from RAMSIN
-  integer, public :: naddsc ! from RAMSIN
-  integer, public :: iversion
-  real, public :: distim  ! from RAMSIN
-  real, public :: cphas ! From RAMSIN
+  integer, allocatable :: nrz(:,:)         ! set by gridset(1)
+  real, allocatable    :: fbcf(:,:,:)         ! set by cofnest
+
+  integer :: iadvl
+  integer :: iadvf
+  integer :: lsflg ! from RAMSIN
+  integer :: ibnd ! from RAMSIN
+  integer :: jbnd ! from RAMSIN
+  integer :: icorflg ! from RAMSIN
+  integer :: dyncore_flag          ! =0 or 1: leapfrog, =2: Runge-Kutta dyn. core
+  integer :: pd_or_mnt_constraint
+  integer :: order_h
+  integer :: order_v
+
+  integer :: vveldamp ! from RAMSIN
+  integer :: nfpt ! from RAMSIN
+  integer :: naddsc ! from RAMSIN
+  integer :: iversion
+  real :: distim  ! from RAMSIN
+  real :: cphas ! From RAMSIN
 
   !**(JP)** this should disapear!!!!
   ! Global simulation parameters
 
-  integer, public :: nhemgrd2                    ! second hemispheric grid (0 if not global simulation); set by gridset(1)
-  integer, public :: nhemt
-  integer, public :: nhemu
-  integer, public :: nhemv
+  integer :: nhemgrd2                    ! second hemispheric grid (0 if not global simulation); set by gridset(1)
+  integer :: nhemt
+  integer :: nhemu
+  integer :: nhemv
 
 
   ! ALF
   ! Flags to set the thermo call on the horizontal boundaries
 
-  logical, public, allocatable :: f_thermo_e(:)
-  logical, public, allocatable :: f_thermo_w(:)
-  logical, public, allocatable :: f_thermo_n(:)
-  logical, public, allocatable :: f_thermo_s(:)
+  logical, allocatable :: f_thermo_e(:)
+  logical, allocatable :: f_thermo_w(:)
+  logical, allocatable :: f_thermo_n(:)
+  logical, allocatable :: f_thermo_s(:)
 
-  public :: akmintype
   type akmintype
      real, pointer :: akmin2d(:,:)
   end type akmintype
 
-  type(akmintype), public, allocatable :: akminvar(:)
+  type(akmintype), allocatable :: akminvar(:)
 
-  !RMF
-  !digital filter
-  real, public :: begtime
+ !RMF
+ !digital filter
+ real :: begtime
 
-  public :: createMemGrid
-  public :: allocAkmin2d
-  public :: destroyMemGrid
-  public :: alloc_grid
-  public :: nullify_grid
-  public :: dealloc_grid
-  public :: filltab_grid
-  public :: alloc_GlobalGridData
-  public :: nullify_GlobalGridData
-  public :: dealloc_GlobalGridData
-  public :: dump_mem_grid
-  public :: GlobalSizes
-  public :: ExtractLocalFromGlobal
-  public :: get_akmin2d
-  public :: StoreNamelistFileAtMem_grid
 contains
 
   ! *********************************************************************
 
-  subroutine createMemGrid(ngrids, nnxp, nnyp, nnzp)
-    implicit none
+  SUBROUTINE createMemGrid(ngrids, nnxp, nnyp, nnzp)
+    IMPLICIT NONE
     ! Arguments:
-    integer, intent(IN) :: ngrids
-    integer, intent(IN) :: nnxp(maxgrds) ! From RAMSIN
-    integer, intent(IN) :: nnyp(maxgrds) ! From RAMSIN
-    integer, intent(IN) :: nnzp(maxgrds) ! From RAMSIN
+    INTEGER, INTENT(IN) :: ngrids
+    INTEGER, INTENT(IN) :: nnxp(maxgrds) ! From RAMSIN
+    INTEGER, INTENT(IN) :: nnyp(maxgrds) ! From RAMSIN
+    INTEGER, INTENT(IN) :: nnzp(maxgrds) ! From RAMSIN
     ! Local variables:
-    integer :: ierr, maxx, maxy, maxz !, maxxyz !ng
+    INTEGER :: ierr, maxx, maxy, maxz !, maxxyz !ng
 
-    allocate(dtlongn(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating dtlongn (createMemGrid)")
+    ALLOCATE(dtlongn(ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating dtlongn (createMemGrid)")
     ! Initiating dtlongn
     dtlongn = 0
 
-    allocate(nnx(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating nnx (createMemGrid)")
-    allocate(nnx1(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating nnx1 (createMemGrid)")
-    allocate(nnx2(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating nnx2 (createMemGrid)")
-    allocate(deltaxn(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating deltaxn (createMemGrid)")
+    ALLOCATE(nnx(ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating nnx (createMemGrid)")
+    ALLOCATE(nnx1(ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating nnx1 (createMemGrid)")
+    ALLOCATE(nnx2(ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating nnx2 (createMemGrid)")
+    ALLOCATE(deltaxn(ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating deltaxn (createMemGrid)")
 
-    allocate(nny(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating nny (createMemGrid)")
-    allocate(nny1(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating nny1 (createMemGrid)")
-    allocate(nny2(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating nny2 (createMemGrid)")
-    allocate(deltayn(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating deltayn (createMemGrid)")
+    ALLOCATE(nny(ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating nny (createMemGrid)")
+    ALLOCATE(nny1(ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating nny1 (createMemGrid)")
+    ALLOCATE(nny2(ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating nny2 (createMemGrid)")
+    ALLOCATE(deltayn(ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating deltayn (createMemGrid)")
 
-    allocate(nnz(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating nnz (createMemGrid)")
-    allocate(nnz1(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating nnz1 (createMemGrid)")
-    allocate(deltazn(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating deltazn (createMemGrid)")
+    ALLOCATE(nnz(ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating nnz (createMemGrid)")
+    ALLOCATE(nnz1(ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating nnz1 (createMemGrid)")
+    ALLOCATE(deltazn(ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating deltazn (createMemGrid)")
 
-    allocate(nnxyp(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating nnxyp (createMemGrid)")
-    allocate(nnxyzp(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating nnxyzp (createMemGrid)")
-    allocate(nnxysp(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating nnxysp (createMemGrid)")
+    ALLOCATE(nnxyp(ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating nnxyp (createMemGrid)")
+    ALLOCATE(nnxyzp(ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating nnxyzp (createMemGrid)")
+    ALLOCATE(nnxysp(ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating nnxysp (createMemGrid)")
 
-    allocate(platn(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating platn (createMemGrid)")
-    allocate(plonn(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating plonn (createMemGrid)")
+    ALLOCATE(platn(ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating platn (createMemGrid)")
+    ALLOCATE(plonn(ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating plonn (createMemGrid)")
 
     maxx = maxval(nnxp(1:ngrids))
-    allocate(xtn(maxx,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating xtn (createMemGrid)")
-    allocate(xmn(maxx,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating xmn (createMemGrid)")
-    allocate(ipm(maxx,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ipm (createMemGrid)")
-    allocate(ei1(maxx,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ei1 (createMemGrid)")
-    allocate(ei2(maxx,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ei2 (createMemGrid)")
-    allocate(ei3(maxx,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ei3 (createMemGrid)")
-    allocate(ei4(maxx,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ei4 (createMemGrid)")
-    allocate(ei5(maxx,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ei5 (createMemGrid)")
-    allocate(ei6(maxx,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ei6 (createMemGrid)")
-    allocate(ei7(maxx,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ei7 (createMemGrid)")
+    ALLOCATE(xtn(maxx,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating xtn (createMemGrid)")
+    ALLOCATE(xmn(maxx,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating xmn (createMemGrid)")
+    ALLOCATE(ipm(maxx,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ipm (createMemGrid)")
+    ALLOCATE(ei1(maxx,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ei1 (createMemGrid)")
+    ALLOCATE(ei2(maxx,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ei2 (createMemGrid)")
+    ALLOCATE(ei3(maxx,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ei3 (createMemGrid)")
+    ALLOCATE(ei4(maxx,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ei4 (createMemGrid)")
+    ALLOCATE(ei5(maxx,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ei5 (createMemGrid)")
+    ALLOCATE(ei6(maxx,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ei6 (createMemGrid)")
+    ALLOCATE(ei7(maxx,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ei7 (createMemGrid)")
 
     maxy = maxval(nnyp(1:ngrids))
-    allocate(ytn(maxy,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ytn (createMemGrid)")
-    allocate(ymn(maxy,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ymn (createMemGrid)")
-    allocate(jpm(maxy,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating jpm (createMemGrid)")
-    allocate(ej1(maxy,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ej1 (createMemGrid)")
-    allocate(ej2(maxy,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ej2 (createMemGrid)")
-    allocate(ej3(maxy,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ej3 (createMemGrid)")
-    allocate(ej4(maxy,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ej4 (createMemGrid)")
-    allocate(ej5(maxy,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ej5 (createMemGrid)")
-    allocate(ej6(maxy,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ej6 (createMemGrid)")
-    allocate(ej7(maxy,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ej7 (createMemGrid)")
+    ALLOCATE(ytn(maxy,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ytn (createMemGrid)")
+    ALLOCATE(ymn(maxy,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ymn (createMemGrid)")
+    ALLOCATE(jpm(maxy,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating jpm (createMemGrid)")
+    ALLOCATE(ej1(maxy,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ej1 (createMemGrid)")
+    ALLOCATE(ej2(maxy,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ej2 (createMemGrid)")
+    ALLOCATE(ej3(maxy,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ej3 (createMemGrid)")
+    ALLOCATE(ej4(maxy,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ej4 (createMemGrid)")
+    ALLOCATE(ej5(maxy,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ej5 (createMemGrid)")
+    ALLOCATE(ej6(maxy,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ej6 (createMemGrid)")
+    ALLOCATE(ej7(maxy,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ej7 (createMemGrid)")
 
     maxz = maxval(nnzp(1:ngrids))
-    allocate(ztn(maxz,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ztn (createMemGrid)")
-    allocate(zmn(maxz,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating zmn (createMemGrid)")
-    allocate(kpm(maxz,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating kpm (createMemGrid)")
-    allocate(ek1(maxz,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ek1 (createMemGrid)")
-    allocate(ek2(maxz,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ek2 (createMemGrid)")
-    allocate(ek3(maxz,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ek3 (createMemGrid)")
-    allocate(ek4(maxz,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ek4 (createMemGrid)")
-    allocate(ek5(maxz,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ek5 (createMemGrid)")
-    allocate(ek6(maxz,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ek6 (createMemGrid)")
-    allocate(ek7(maxz,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ek7 (createMemGrid)")
+    ALLOCATE(ztn(maxz,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ztn (createMemGrid)")
+    ALLOCATE(zmn(maxz,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating zmn (createMemGrid)")
+    ALLOCATE(kpm(maxz,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating kpm (createMemGrid)")
+    ALLOCATE(ek1(maxz,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ek1 (createMemGrid)")
+    ALLOCATE(ek2(maxz,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ek2 (createMemGrid)")
+    ALLOCATE(ek3(maxz,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ek3 (createMemGrid)")
+    ALLOCATE(ek4(maxz,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ek4 (createMemGrid)")
+    ALLOCATE(ek5(maxz,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ek5 (createMemGrid)")
+    ALLOCATE(ek6(maxz,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ek6 (createMemGrid)")
+    ALLOCATE(ek7(maxz,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ek7 (createMemGrid)")
 
-    allocate(htn(maxz,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating htn (createMemGrid)")
-    allocate(ht2n(maxz,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ht2n (createMemGrid)")
-    allocate(ht4n(maxz,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ht4n (createMemGrid)")
-    allocate(hwn(maxz,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating hwn (createMemGrid)")
-    allocate(hw2n(maxz,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating hw2n (createMemGrid)")
-    allocate(hw4n(maxz,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating hw4n (createMemGrid)")
-    allocate(dztn(maxz,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating dztn (createMemGrid)")
-    allocate(dzmn(maxz,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating dzmn (createMemGrid)")
-    allocate(dzt2n(maxz,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating dzt2n (createMemGrid)")
-    allocate(dzm2n(maxz,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating dzm2n (createMemGrid)")
+    ALLOCATE(htn(maxz,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating htn (createMemGrid)")
+    ALLOCATE(ht2n(maxz,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ht2n (createMemGrid)")
+    ALLOCATE(ht4n(maxz,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ht4n (createMemGrid)")
+    ALLOCATE(hwn(maxz,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating hwn (createMemGrid)")
+    ALLOCATE(hw2n(maxz,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating hw2n (createMemGrid)")
+    ALLOCATE(hw4n(maxz,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating hw4n (createMemGrid)")
+    ALLOCATE(dztn(maxz,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating dztn (createMemGrid)")
+    ALLOCATE(dzmn(maxz,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating dzmn (createMemGrid)")
+    ALLOCATE(dzt2n(maxz,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating dzt2n (createMemGrid)")
+    ALLOCATE(dzm2n(maxz,ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating dzm2n (createMemGrid)")
 
-    allocate(ht(maxz), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ht (createMemGrid)")
-    allocate(ht2(maxz), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ht2 (createMemGrid)")
-    allocate(ht4(maxz), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ht4 (createMemGrid)")
-    allocate(hw(maxz), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating hw (createMemGrid)")
-    allocate(hw2(maxz), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating hw2 (createMemGrid)")
-    allocate(hw4(maxz), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating hw4 (createMemGrid)")
-    allocate(zt(maxz), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating zt (createMemGrid)")
-    allocate(zm(maxz), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating zm (createMemGrid)")
-    allocate(dzt(maxz), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating dzt (createMemGrid)")
-    allocate(dzm(maxz), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating dzm (createMemGrid)")
-    allocate(dzt2(maxz), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating dzt2 (createMemGrid)")
-    allocate(dzm2(maxz), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating dzm2 (createMemGrid)")
-    allocate(xt(maxx), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating xt (createMemGrid)")
-    allocate(xm(maxx), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating xm (createMemGrid)")
-    allocate(yt(maxy), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating yt (createMemGrid)")
-    allocate(ym(maxy), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ym (createMemGrid)")
+    ALLOCATE(ht(maxz), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ht (createMemGrid)")
+    ALLOCATE(ht2(maxz), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ht2 (createMemGrid)")
+    ALLOCATE(ht4(maxz), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ht4 (createMemGrid)")
+    ALLOCATE(hw(maxz), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating hw (createMemGrid)")
+    ALLOCATE(hw2(maxz), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating hw2 (createMemGrid)")
+    ALLOCATE(hw4(maxz), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating hw4 (createMemGrid)")
+    ALLOCATE(zt(maxz), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating zt (createMemGrid)")
+    ALLOCATE(zm(maxz), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating zm (createMemGrid)")
+    ALLOCATE(dzt(maxz), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating dzt (createMemGrid)")
+    ALLOCATE(dzm(maxz), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating dzm (createMemGrid)")
+    ALLOCATE(dzt2(maxz), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating dzt2 (createMemGrid)")
+    ALLOCATE(dzm2(maxz), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating dzm2 (createMemGrid)")
+    ALLOCATE(xt(maxx), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating xt (createMemGrid)")
+    ALLOCATE(xm(maxx), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating xm (createMemGrid)")
+    ALLOCATE(yt(maxy), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating yt (createMemGrid)")
+    ALLOCATE(ym(maxy), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ym (createMemGrid)")
 
-    allocate(nnacoust(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating nnacoust (createMemGrid)")
+    ALLOCATE(nnacoust(ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating nnacoust (createMemGrid)")
 
     ! Initializing nnacoust for binary reprodutibility pourpouses
     nnacoust = 0
 
-    allocate(dimove(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating dimove (createMemGrid)")
-    allocate(djmove(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating djmove (createMemGrid)")
+    ALLOCATE(dimove(ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating dimove (createMemGrid)")
+    ALLOCATE(djmove(ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating djmove (createMemGrid)")
 
     ! Initiating dimove and djmove ! Not using it
     ! Given initial values just for binary reprodutibility pourpouses
     dimove = 0
     djmove = 0
 
-    allocate(cflxy(ngrids), STAT=ierr)
+    ALLOCATE(cflxy(ngrids), STAT=ierr)
 
     !--(DMK-LFR NEC-SX6)----------------------------------------------
     cflxy = 0.
     !--(DMK-LFR NEC-SX6)----------------------------------------------
 
-    if (ierr/=0) call fatal_error("ERROR allocating cflxy (createMemGrid)")
+    IF (ierr/=0) CALL fatal_error("ERROR allocating cflxy (createMemGrid)")
 
-    allocate(cflz(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating cflz (createMemGrid)")
+    ALLOCATE(cflz(ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating cflz (createMemGrid)")
 
     !MB: print*, "allocate cfl_max_sum"
     !ALLOCATE(cfl_max_sum(ngrids), STAT=ierr)
@@ -603,264 +577,264 @@ contains
     !MB: cfl_max_sum(:) = 0.0
     !--(DMK-LFR NEC-SX6)----------------------------------------------
 
-    allocate(ngbegun(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating ngbegun (createMemGrid)")
+    ALLOCATE(ngbegun(ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating ngbegun (createMemGrid)")
 
-    allocate(nrz(nzpmax,ngrids), STAT=ierr) !maxz
-    if (ierr/=0) call fatal_error("ERROR allocating nrz (createMemGrid)")
-    allocate(fbcf(maxz,ngrids,4), STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR allocating fbcf (createMemGrid)")
+    ALLOCATE(nrz(nzpmax,ngrids), STAT=ierr) !maxz
+    IF (ierr/=0) CALL fatal_error("ERROR allocating nrz (createMemGrid)")
+    ALLOCATE(fbcf(maxz,ngrids,4), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR allocating fbcf (createMemGrid)")
 
-    allocate(f_thermo_e(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error (&
+    ALLOCATE(f_thermo_e(ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error (&
          "ERROR allocating f_thermo_e (createMemGrid)")
-    allocate(f_thermo_w(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error (&
+    ALLOCATE(f_thermo_w(ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error (&
          "ERROR allocating f_thermo_w (createMemGrid)")
-    allocate(f_thermo_n(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error (&
+    ALLOCATE(f_thermo_n(ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error (&
          "ERROR allocating f_thermo_n (createMemGrid)")
-    allocate(f_thermo_s(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error (&
+    ALLOCATE(f_thermo_s(ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error (&
          "ERROR allocating f_thermo_s (createMemGrid)")
 
-    allocate(akminvar(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error (&
+    ALLOCATE(akminvar(ngrids), STAT=ierr)
+    IF (ierr/=0) CALL fatal_error (&
          "ERROR allocating akminvar (createMemGrid)")
 
-  end subroutine createMemGrid
+  END SUBROUTINE createMemGrid
 
 
 
 
 
-  subroutine allocAkmin2d(ngrids, nodemxp, nodemyp)
-    implicit none
+  SUBROUTINE allocAkmin2d(ngrids, nodemxp, nodemyp)
+    IMPLICIT NONE
     ! Arguments:
-    integer, intent(IN) :: ngrids
-    integer, intent(IN), target ::  nodemxp(ngrids), nodemyp(ngrids)
+    INTEGER, INTENT(IN) :: ngrids
+    INTEGER, INTENT(IN), TARGET ::  nodemxp(ngrids), nodemyp(ngrids)
     ! Local variables:
-    integer :: ifm, ierr
+    INTEGER :: ifm, ierr
 
-    do ifm=1,ngrids
-       allocate(akminvar(ifm)%akmin2d(nodemxp(ifm), nodemyp(ifm)), STAT=ierr)
-       if (ierr/=0) call fatal_error (&
+    DO ifm=1,ngrids
+       ALLOCATE(akminvar(ifm)%akmin2d(nodemxp(ifm), nodemyp(ifm)), STAT=ierr)
+       IF (ierr/=0) CALL fatal_error (&
             "ERROR allocating akmin2d (allocAkmin2d)")
-    enddo
+    ENDDO
 
-  end subroutine allocAkmin2d
+  END SUBROUTINE allocAkmin2d
 
   ! *********************************************************************
 
-  subroutine destroyMemGrid()
-    implicit none
+  SUBROUTINE destroyMemGrid()
+    IMPLICIT NONE
     ! Local variables:
-    integer :: ierr
+    INTEGER :: ierr
 
-    deallocate(dtlongn, STAT=ierr)
-    if (ierr/=0) call fatal_error (&
+    DEALLOCATE(dtlongn, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error (&
          "ERROR deallocating dtlongn (destroyMemGrid)")
 
-    deallocate(nnx, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating nnx (destroyMemGrid)")
-    deallocate(nnx1, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating nnx1 (destroyMemGrid)")
-    deallocate(nnx2, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating nnx2 (destroyMemGrid)")
-    deallocate(deltaxn, STAT=ierr)
-    if (ierr/=0) call fatal_error (&
+    DEALLOCATE(nnx, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating nnx (destroyMemGrid)")
+    DEALLOCATE(nnx1, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating nnx1 (destroyMemGrid)")
+    DEALLOCATE(nnx2, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating nnx2 (destroyMemGrid)")
+    DEALLOCATE(deltaxn, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error (&
          "ERROR deallocating deltaxn (destroyMemGrid)")
 
-    deallocate(nny, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating nny (destroyMemGrid)")
-    deallocate(nny1, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating nny1 (destroyMemGrid)")
-    deallocate(nny2, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating nny2 (destroyMemGrid)")
-    deallocate(deltayn, STAT=ierr)
-    if (ierr/=0) call fatal_error (&
+    DEALLOCATE(nny, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating nny (destroyMemGrid)")
+    DEALLOCATE(nny1, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating nny1 (destroyMemGrid)")
+    DEALLOCATE(nny2, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating nny2 (destroyMemGrid)")
+    DEALLOCATE(deltayn, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error (&
          "ERROR deallocating deltayn (destroyMemGrid)")
 
-    deallocate(nnz, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating nnz (destroyMemGrid)")
-    deallocate(nnz1, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating nnz(destroyMemGrid)")
-    deallocate(deltazn, STAT=ierr)
-    if (ierr/=0) call fatal_error (&
+    DEALLOCATE(nnz, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating nnz (destroyMemGrid)")
+    DEALLOCATE(nnz1, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating nnz(destroyMemGrid)")
+    DEALLOCATE(deltazn, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error (&
          "ERROR deallocating deltazn (destroyMemGrid)")
 
-    deallocate(nnxyp, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating nnxyp (destroyMemGrid)")
-    deallocate(nnxyzp, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating nnxyzp (destroyMemGrid)")
-    deallocate(nnxysp, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating nnxysp (destroyMemGrid)")
+    DEALLOCATE(nnxyp, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating nnxyp (destroyMemGrid)")
+    DEALLOCATE(nnxyzp, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating nnxyzp (destroyMemGrid)")
+    DEALLOCATE(nnxysp, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating nnxysp (destroyMemGrid)")
 
-    deallocate(platn, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating platn (destroyMemGrid)")
-    deallocate(plonn, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating plonn (destroyMemGrid)")
+    DEALLOCATE(platn, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating platn (destroyMemGrid)")
+    DEALLOCATE(plonn, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating plonn (destroyMemGrid)")
 
-    deallocate(xtn, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating xtn (destroyMemGrid)")
-    deallocate(xmn, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating xmn (destroyMemGrid)")
-    deallocate(ipm, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ipm (destroyMemGrid)")
-    deallocate(ei1, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ei1 (destroyMemGrid)")
-    deallocate(ei2, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ei2 (destroyMemGrid)")
-    deallocate(ei3, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ei3 (destroyMemGrid)")
-    deallocate(ei4, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ei4 (destroyMemGrid)")
-    deallocate(ei5, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ei5 (destroyMemGrid)")
-    deallocate(ei6, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ei6 (destroyMemGrid)")
-    deallocate(ei7, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ei7 (destroyMemGrid)")
+    DEALLOCATE(xtn, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating xtn (destroyMemGrid)")
+    DEALLOCATE(xmn, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating xmn (destroyMemGrid)")
+    DEALLOCATE(ipm, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ipm (destroyMemGrid)")
+    DEALLOCATE(ei1, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ei1 (destroyMemGrid)")
+    DEALLOCATE(ei2, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ei2 (destroyMemGrid)")
+    DEALLOCATE(ei3, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ei3 (destroyMemGrid)")
+    DEALLOCATE(ei4, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ei4 (destroyMemGrid)")
+    DEALLOCATE(ei5, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ei5 (destroyMemGrid)")
+    DEALLOCATE(ei6, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ei6 (destroyMemGrid)")
+    DEALLOCATE(ei7, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ei7 (destroyMemGrid)")
 
-    deallocate(ytn, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ytn (destroyMemGrid)")
-    deallocate(ymn, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ymn (destroyMemGrid)")
-    deallocate(jpm, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating jpm (destroyMemGrid)")
-    deallocate(ej1, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ej1 (destroyMemGrid)")
-    deallocate(ej2, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ej2 (destroyMemGrid)")
-    deallocate(ej3, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ej3 (destroyMemGrid)")
-    deallocate(ej4, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ej4 (destroyMemGrid)")
-    deallocate(ej5, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ej5 (destroyMemGrid)")
-    deallocate(ej6, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ej6 (destroyMemGrid)")
-    deallocate(ej7, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ej7 (destroyMemGrid)")
+    DEALLOCATE(ytn, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ytn (destroyMemGrid)")
+    DEALLOCATE(ymn, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ymn (destroyMemGrid)")
+    DEALLOCATE(jpm, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating jpm (destroyMemGrid)")
+    DEALLOCATE(ej1, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ej1 (destroyMemGrid)")
+    DEALLOCATE(ej2, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ej2 (destroyMemGrid)")
+    DEALLOCATE(ej3, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ej3 (destroyMemGrid)")
+    DEALLOCATE(ej4, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ej4 (destroyMemGrid)")
+    DEALLOCATE(ej5, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ej5 (destroyMemGrid)")
+    DEALLOCATE(ej6, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ej6 (destroyMemGrid)")
+    DEALLOCATE(ej7, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ej7 (destroyMemGrid)")
 
-    deallocate(ztn, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ztn (destroyMemGrid)")
-    deallocate(zmn, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating zmn (destroyMemGrid)")
-    deallocate(kpm, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating kpm (destroyMemGrid)")
-    deallocate(ek1, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ek1 (destroyMemGrid)")
-    deallocate(ek2, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ek2 (destroyMemGrid)")
-    deallocate(ek3, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ek3 (destroyMemGrid)")
-    deallocate(ek4, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ek4 (destroyMemGrid)")
-    deallocate(ek5, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ek5 (destroyMemGrid)")
-    deallocate(ek6, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ek6 (destroyMemGrid)")
-    deallocate(ek7, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ek7 (destroyMemGrid)")
+    DEALLOCATE(ztn, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ztn (destroyMemGrid)")
+    DEALLOCATE(zmn, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating zmn (destroyMemGrid)")
+    DEALLOCATE(kpm, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating kpm (destroyMemGrid)")
+    DEALLOCATE(ek1, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ek1 (destroyMemGrid)")
+    DEALLOCATE(ek2, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ek2 (destroyMemGrid)")
+    DEALLOCATE(ek3, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ek3 (destroyMemGrid)")
+    DEALLOCATE(ek4, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ek4 (destroyMemGrid)")
+    DEALLOCATE(ek5, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ek5 (destroyMemGrid)")
+    DEALLOCATE(ek6, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ek6 (destroyMemGrid)")
+    DEALLOCATE(ek7, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ek7 (destroyMemGrid)")
 
-    deallocate(htn, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating htn (destroyMemGrid)")
-    deallocate(ht2n, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ht2n (destroyMemGrid)")
-    deallocate(ht4n, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ht4n (destroyMemGrid)")
-    deallocate(hwn, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating hwn (destroyMemGrid)")
-    deallocate(hw2n, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating hw2n (destroyMemGrid)")
-    deallocate(hw4n, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating hw4n (destroyMemGrid)")
-    deallocate(dztn, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating dztn (destroyMemGrid)")
-    deallocate(dzmn, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating dzmn (destroyMemGrid)")
-    deallocate(dzt2n, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating dzt2n (destroyMemGrid)")
-    deallocate(dzm2n, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating dzm2n (destroyMemGrid)")
+    DEALLOCATE(htn, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating htn (destroyMemGrid)")
+    DEALLOCATE(ht2n, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ht2n (destroyMemGrid)")
+    DEALLOCATE(ht4n, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ht4n (destroyMemGrid)")
+    DEALLOCATE(hwn, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating hwn (destroyMemGrid)")
+    DEALLOCATE(hw2n, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating hw2n (destroyMemGrid)")
+    DEALLOCATE(hw4n, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating hw4n (destroyMemGrid)")
+    DEALLOCATE(dztn, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating dztn (destroyMemGrid)")
+    DEALLOCATE(dzmn, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating dzmn (destroyMemGrid)")
+    DEALLOCATE(dzt2n, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating dzt2n (destroyMemGrid)")
+    DEALLOCATE(dzm2n, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating dzm2n (destroyMemGrid)")
 
-    deallocate(ht, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ht (destroyMemGrid)")
-    deallocate(ht2, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ht2 (destroyMemGrid)")
-    deallocate(ht4, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ht4 (destroyMemGrid)")
-    deallocate(hw, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating hw (destroyMemGrid)")
-    deallocate(hw2, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating hw2 (destroyMemGrid)")
-    deallocate(hw4, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating hw4 (destroyMemGrid)")
-    deallocate(zt, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating zt (destroyMemGrid)")
-    deallocate(zm, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating zm (destroyMemGrid)")
-    deallocate(dzt, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating dzt (destroyMemGrid)")
-    deallocate(dzm, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating dzm (destroyMemGrid)")
-    deallocate(dzt2, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating dzt2 (destroyMemGrid)")
-    deallocate(dzm2, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating dzm2 (destroyMemGrid)")
-    deallocate(xt, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating xt (destroyMemGrid)")
-    deallocate(xm, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating xm (destroyMemGrid)")
-    deallocate(yt, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating yt (destroyMemGrid)")
-    deallocate(ym, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating ym (destroyMemGrid)")
+    DEALLOCATE(ht, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ht (destroyMemGrid)")
+    DEALLOCATE(ht2, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ht2 (destroyMemGrid)")
+    DEALLOCATE(ht4, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ht4 (destroyMemGrid)")
+    DEALLOCATE(hw, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating hw (destroyMemGrid)")
+    DEALLOCATE(hw2, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating hw2 (destroyMemGrid)")
+    DEALLOCATE(hw4, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating hw4 (destroyMemGrid)")
+    DEALLOCATE(zt, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating zt (destroyMemGrid)")
+    DEALLOCATE(zm, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating zm (destroyMemGrid)")
+    DEALLOCATE(dzt, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating dzt (destroyMemGrid)")
+    DEALLOCATE(dzm, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating dzm (destroyMemGrid)")
+    DEALLOCATE(dzt2, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating dzt2 (destroyMemGrid)")
+    DEALLOCATE(dzm2, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating dzm2 (destroyMemGrid)")
+    DEALLOCATE(xt, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating xt (destroyMemGrid)")
+    DEALLOCATE(xm, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating xm (destroyMemGrid)")
+    DEALLOCATE(yt, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating yt (destroyMemGrid)")
+    DEALLOCATE(ym, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating ym (destroyMemGrid)")
 
-    deallocate(nnacoust, STAT=ierr)
-    if (ierr/=0) call fatal_error (&
+    DEALLOCATE(nnacoust, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error (&
          "ERROR deallocating nnacoust (destroyMemGrid)")
-    deallocate(dimove, STAT=ierr)
-    if (ierr/=0) call fatal_error (&
+    DEALLOCATE(dimove, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error (&
          "ERROR deallocating dimove (destroyMemGrid)")
-    deallocate(djmove, STAT=ierr)
-    if (ierr/=0) call fatal_error (&
+    DEALLOCATE(djmove, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error (&
          "ERROR deallocating djmove (destroyMemGrid)")
 
-    deallocate(cflxy, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating cflxy (destroyMemGrid)")
+    DEALLOCATE(cflxy, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating cflxy (destroyMemGrid)")
 
-    deallocate(cflz, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating cflz (destroyMemGrid)")
+    DEALLOCATE(cflz, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating cflz (destroyMemGrid)")
 
     !MB: print*, "deallocate cfl_max_sum"
     !DEALLOCATE(cfl_max_sum, STAT=ierr)
     !IF (ierr/=0) CALL fatal_error("ERROR deallocating cfl_max_sum (destroyMemGrid)")
 
-    deallocate(ngbegun, STAT=ierr)
-    if (ierr/=0) call fatal_error (&
+    DEALLOCATE(ngbegun, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error (&
          "ERROR deallocating ngbegun (destroyMemGrid)")
 
-    deallocate(nrz, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating nrz (destroyMemGrid)")
-    deallocate(fbcf, STAT=ierr)
-    if (ierr/=0) call fatal_error("ERROR deallocating fbcf (destroyMemGrid)")
+    DEALLOCATE(nrz, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating nrz (destroyMemGrid)")
+    DEALLOCATE(fbcf, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error("ERROR deallocating fbcf (destroyMemGrid)")
 
-    deallocate(f_thermo_e, STAT=ierr)
-    if (ierr/=0) call fatal_error (&
+    DEALLOCATE(f_thermo_e, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error (&
          "ERROR deallocating f_thermo_e (destroyMemGrid)")
-    deallocate(f_thermo_w, STAT=ierr)
-    if (ierr/=0) call fatal_error (&
+    DEALLOCATE(f_thermo_w, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error (&
          "ERROR deallocating f_thermo_w (destroyMemGrid)")
-    deallocate(f_thermo_n, STAT=ierr)
-    if (ierr/=0) call fatal_error(&
+    DEALLOCATE(f_thermo_n, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error(&
          "ERROR deallocating f_thermo_n (destroyMemGrid)")
-    deallocate(f_thermo_s, STAT=ierr)
-    if (ierr/=0) call fatal_error(&
+    DEALLOCATE(f_thermo_s, STAT=ierr)
+    IF (ierr/=0) CALL fatal_error(&
          "ERROR deallocating f_thermo_s (destroyMemGrid)")
 
-  end subroutine destroyMemGrid
+  END SUBROUTINE destroyMemGrid
 
 
   ! *********************************************************************
@@ -909,7 +883,7 @@ contains
     allocate (grid%glat(n2,n3))
     allocate (grid%glon(n2,n3))
     allocate (grid%topzo(n2,n3))
-    !TO modify to Xeon-Phi Intel
+!TO modify to Xeon-Phi Intel
     if (if_adap == 1) then
        allocate (grid%aru(n1,n2,n3))
        allocate (grid%arv(n1,n2,n3))
@@ -961,7 +935,7 @@ contains
     grid%glat = 0.
     grid%glon = 0.
     grid%topzo = 0.
-    !TO modify to Xeon-Phi Intel
+!TO modify to Xeon-Phi Intel
     if (if_adap == 1) then
        grid%aru = 0.
        grid%arv = 0.
@@ -1063,6 +1037,9 @@ contains
 
 
   subroutine filltab_grid(grid,gridm,imean,n1,n2,n3,ng)
+
+    use var_tables
+
     implicit none
     type (grid_vars) :: grid,gridm
     integer, intent(in) :: imean,n1,n2,n3,ng
@@ -1227,7 +1204,7 @@ contains
 !!$  subroutine filltabAkmin2d(ngrids, nodemxp, nodemyp)
 !!$
 !!$    implicit none
-!!$    include "constants.h"
+!!$    include "i8.h"
 !!$    integer, intent(IN) :: ngrids, nodemxp(ngrids), nodemyp(ngrids)
 !!$    integer(kind=i8) :: npts
 !!$    integer          :: ifm, imean
@@ -1293,6 +1270,7 @@ contains
 
 
   subroutine dump_mem_grid()
+
     ! dump_mem_grid: dumps mem_grid sizes and mappings for all grids
 
     implicit none
@@ -1575,39 +1553,39 @@ contains
        enddo
     enddo
 
-    !srf- versao 4/11/2013 para filtrar chuva espúria nos andes.
+  !srf- versao 4/11/2013 para filtrar chuva espúria nos andes.
 
 
-    do j=1,n3
+     do j=1,n3
        do i=1,n2
-          !- regiao 1
+!- regiao 1
           if (rlat(i,j)<-15. .and. rlon(i,j)<-60.) then
-             if(topo(i,j) > 500. )then
+              if(topo(i,j) > 500. )then
                 akmin2d(i,j) = 2.
              endif
           endif
-          !- regiao 2
+!- regiao 2
           if (rlat(i,j)<-10. .and. rlat(i,j) >= -15.) then
-             if(rlon(i,j)<-62.) then
-                if(topo(i,j) > 500.) then
-                   akmin2d(i,j) = 2.
-                endif
-             endif
+	    if(rlon(i,j)<-62.) then
+              if(topo(i,j) > 500.) then
+                akmin2d(i,j) = 2.
+              endif
+            endif
           endif
-          !- regiao 3
+!- regiao 3
           if (rlat(i,j)> -10.) then
-             if(rlon(i,j)<-69.) then
-                if(topo(i,j) > 500.) then
-                   akmin2d(i,j) = 2.
-                endif
-             endif
+	    if(rlon(i,j)<-69.) then
+              if(topo(i,j) > 500.) then
+                akmin2d(i,j) = 2.
+              endif
+            endif
           endif
-       enddo
+        enddo
     enddo
 
     return
 
-    !- versao anterior
+!- versao anterior
 
     do j=1,n3
        do i=1,n2

@@ -8,35 +8,9 @@
 
 
 subroutine nud_read(initflag)
-
-  use ModNudAnalysis, only: &
-       varweight, &
-       vfintrpf, &
-       varweight_chem
-  
-  use ModDateUtils, only: date_add_to,   &
-                          date_make_big
-  use mem_grid, only: grid_g,   &
-                      idate1,   &
-                      imonth1,  &
-                      iyear1,   &
-                      itime1,   &
-                      ngrids,   &
-                      runtype,  &
-                      time,     &
-                      nnzp,     &
-                      nnyp,     &
-                      nnxp
-  use mem_varinit, only:  &
-                      htime1,   &
-                      htime2,   &
-                      varinit_g,&
-                      nnudfiles,&
-                      nnudfl,   &
-                      nud_hfile,&
-                      nud_times,&
-                      itotdate_nud
-
+use ModDateUtils
+use mem_grid
+use mem_varinit
 
 !--(DMK-CCATT-INI)-----------------------------------------------------
 use mem_chem1, only: &
@@ -81,13 +55,13 @@ if (initflag == 1) then   ! Initialization
 
    ! Calculate varweights just like var init
    print *,'LFR-DEB->nud_read.f90'
-   call varweight(nnzp(1),nnxp(1),nnyp(1),varinit_g(1)%varwts  &
-       ,grid_g(1)%topt,grid_g(1)%rtgt)
+   call varweight(nnzp(1),nnxp(1),nnyp(1),varinit_g(1)%varwts(1,1,1)  &
+       ,grid_g(1)%topt(1,1),grid_g(1)%rtgt(1,1))
 
 !--(DMK-CCATT-INI)---------------------------------------------------------
    if(chem_assim == 1) &
-     call varweight_chem(nnzp(1),nnxp(1),nnyp(1),varinit_g(1)%varwts_chem  &
-                   ,grid_g(1)%topt,grid_g(1)%rtgt)
+     call varweight_chem(nnzp(1),nnxp(1),nnyp(1),varinit_g(1)%varwts_chem(1,1,1)  &
+                   ,grid_g(1)%topt(1,1),grid_g(1)%rtgt(1,1))
 !--(DMK-CCATT-FIM)---------------------------------------------------------
    
    ! Read and interpolate files to new grid 1. Put stuff in varinit arrays.
@@ -128,9 +102,7 @@ end
 
 
 subroutine nud_file_inv (hfilin,iyear1,imonth1,idate1,itime1)
-use ModDateUtils, only: date_abs_secs2,  &
-                        date_add_to,     &
-                        date_make_big
+use ModDateUtils
 use isan_coms, only: &
        ISAN_INC
 use mem_varinit, only: &

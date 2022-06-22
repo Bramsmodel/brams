@@ -36,7 +36,7 @@ module filesMod
 
     implicit none
 
-    include "constants.h"
+    include "constants.f90"
     character(len=*),parameter :: sourceName='filesMod.f90' !Name of source code
     character(len=*),parameter :: procedureName='**namelist**' !Name of this procedure
     !
@@ -100,7 +100,7 @@ module filesMod
     
         implicit none
     
-        include "constants.h"
+        include "constants.f90"
         character(len=*),parameter :: procedureName='**readNamelist**' !Name of this procedure
         !
         !Local Parameters
@@ -178,7 +178,7 @@ module filesMod
     
         implicit none
     
-        include "constants.h"
+        include "constants.f90"
         character(len=*),parameter :: procedureName='**createGrib2FilesNames**' !Name of this procedure
         !
         !Local Parameters
@@ -278,7 +278,7 @@ module filesMod
     
         implicit none
     
-        include "constants.h"
+        include "constants.f90"
         character(len=*),parameter :: procedureName='**createEra5FilesNames**' !Name of this procedure
         !
         !Local Parameters
@@ -408,7 +408,7 @@ module filesMod
 
         implicit none
     
-        include "constants.h"
+        include "constants.f90"
         character(len=*),parameter :: procedureName='**openatmosGrib2**' 
         !# Name of this procedure
         !
@@ -759,7 +759,7 @@ module filesMod
 
         implicit none
     
-        include "constants.h"
+        include "constants.f90"
         include "netcdf.inc"
 
         character(len=*),parameter :: procedureName='**openatmosEra5**' 
@@ -1162,7 +1162,7 @@ module filesMod
     
         implicit none
     
-        include "constants.h"
+        include "constants.f90"
         character(len=*),parameter :: procedureName='**createCamsFilesNames**' !Name of this procedure
         character(len=71) :: line='+--+-+----------------------------------------------------------------+'
         !
@@ -1260,7 +1260,7 @@ module filesMod
     
         implicit none
     
-        include "constants.h"
+        include "constants.f90"
         include "netcdf.inc"
         character(len=*),parameter :: procedureName='**readCamsFile**' !Name of this procedure
         !
@@ -1586,7 +1586,7 @@ module filesMod
     
         implicit none
     
-        include "constants.h"
+        include "constants.f90"
         character(len=*),parameter :: procedureName='**writeGradsCtlFile**' !Name of this procedure
         !
         !Local Parameters

@@ -54,10 +54,10 @@ CONTAINS
 
   SUBROUTINE filltab_tebc(tebc,tebcm,imean,n1,n2,n3,ng)
 
-    USE var_tables, only: insertvtab 
+    USE var_tables
 
     IMPLICIT NONE
-    include "constants.h"
+    include "i8.h"
     TYPE (teb_common) :: tebc,tebcm
     INTEGER, INTENT(in) :: imean,n1,n2,n3,ng
     INTEGER(kind=i8) :: npts

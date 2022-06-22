@@ -9,53 +9,18 @@
 
 subroutine dealloc_all()
 
-  use mem_cuparm, only: &
-       cuparm_g, &
-       cuparmm_g
-
-  use mem_grid, only: &
-       grid_g, &
-       gridm_g, &
-       naddsc, &
-       ngrids
-
-  use mem_leaf, only: &
-       leaf_g, &
-       leafm_g
-
-  use mem_micro, only: &
-       micro_g, &
-       microm_g
-
-  use mem_oda, only: &
-       oda_g, &
-       odam_g
-
-  use mem_radiate, only: &
-       ilwrtyp, &
-       iswrtyp, &
-       radiate_g, &
-       radiatem_g
-
-  use mem_scalar, only: &
-       scalar_g, &
-       scalarm_g, &
-       dealloc_scalar
-
-  use mem_varinit, only: &
-       varinit_g, &
-       varinitm_g
-
-  use var_tables, only: &
-       num_var, &
-       vtab_r
-
+  use mem_all
 #ifdef JULES
-  use mem_jules, onlY: jules_g, julesm_g, dealloc_jules
+  use mem_jules
 #endif
-  use mem_shcu, only:  shcu_g, shcum_g, dealloc_shcu  ! needed for Shallow Cumulus
+  use mem_shcu   ! needed for Shallow Cumulus
 
-  use mem_opt, only: dealloc_opt_scratch
+  use mem_opt    ! Needed for optimization - ALF
+
+!--(DMK-CCATT-INI)-----------------------------------------------------
+!  use catt_start, only: &
+!       CATT                        ! intent(in)
+!--(DMK-CCATT-FIM)-----------------------------------------------------
 
   use mem_aerad, only: &
        nwave,          &         !INTENT(IN)
@@ -81,33 +46,6 @@ subroutine dealloc_all()
        gaspart_g, gaspartm_g, &
        dealloc_gaspart          ! Subroutine
 
-  use mem_scratch, only: &
-       dealloc_scratch
-
-  use mem_cuparm, only: &
-       dealloc_cuparm
-
-  use mem_grid, only: &
-       dealloc_grid
-
-  use mem_leaf, only: &
-       dealloc_leaf
-
-  use mem_micro, only: &
-       dealloc_micro
-
-  use mem_radiate, only: &
-       dealloc_radiate
-
-
-  use mem_oda, only: &
-       dealloc_oda
-
-  use mem_varinit, only: &
-       dealloc_varinit
-
-  use mem_tend, only: &
-       dealloc_tend
 
   implicit none
 
@@ -115,7 +53,7 @@ subroutine dealloc_all()
 
   integer :: ng
 
-  deallocate(num_var,vtab_r)
+  deallocate(num_var,vtab_r,scalar_tab,num_scalar)
 
   call dealloc_tend(naddsc)
   call dealloc_scratch()
@@ -129,6 +67,8 @@ subroutine dealloc_all()
   endif
 
   do ng=1,ngrids
+     call dealloc_basic(basic_g(ng))
+     call dealloc_basic(basicm_g(ng))
      call dealloc_cuparm(cuparm_g(ng))
      call dealloc_cuparm(cuparmm_g(ng))
      call dealloc_grid(grid_g(ng))
@@ -143,6 +83,8 @@ subroutine dealloc_all()
      call dealloc_micro(microm_g(ng))
      call dealloc_radiate(radiate_g(ng))
      call dealloc_radiate(radiatem_g(ng))
+     call dealloc_turb(turb_g(ng))
+     call dealloc_turb(turbm_g(ng))
      call dealloc_varinit(varinit_g(ng))
      call dealloc_varinit(varinitm_g(ng))
 
@@ -168,7 +110,7 @@ subroutine dealloc_all()
      endif
 
   enddo
-!!$  deallocate(basic_g,basicm_g)
+  deallocate(basic_g,basicm_g)
   deallocate(cuparm_g,cuparmm_g)
   deallocate(grid_g,gridm_g)
   deallocate(leaf_g,leafm_g)
@@ -177,6 +119,7 @@ subroutine dealloc_all()
 #endif
   deallocate(micro_g,microm_g)
   deallocate(radiate_g,radiatem_g)
+  deallocate(turb_g,turbm_g)
   deallocate(varinit_g,varinitm_g)
   deallocate(oda_g,odam_g)
 

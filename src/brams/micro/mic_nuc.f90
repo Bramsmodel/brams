@@ -8,15 +8,7 @@
 
 subroutine cldnuc(m1,k1cnuc,k2cnuc,lpw,rv,wp,i,j)
 
-use micphys, only: jnmb,   &
-                   emb0,   &
-                   rvlsair,&
-                   rx,     &
-                   cx,     &
-                   parm,   &
-                   tairc,  &
-                   cccnx
-
+use micphys
 
 implicit none
 
@@ -222,30 +214,8 @@ end
 
 subroutine icenuc(m1,kc1,kc2,k1pnuc,k2pnuc,lpw,ngr,rv,dn0,dtlt,i,j)
 
-use micphys, only: ddnc,   &
-                   drhhz,  &
-                   dtc,    &
-                   dthz,   &
-                   ipris,  &
-                   ndnc,   &
-                   pwmasi, &
-                   tairc,  &
-                   tair ,  &
-                   fracc,  &
-                   frachz, &
-                   rx,     &
-                   cx,     &
-                   tx,     &
-                   rvlsair,&
-                   rvisair,&
-                   cifnx,  &
-                   dnfac,  &
-                   vap,    &
-                   press,  &
-                   dynvisc,&
-                   thrmcon,&
-                   emb,    &
-                   emb0
+use rconstants
+use micphys
 
 implicit none
 

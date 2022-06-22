@@ -762,15 +762,14 @@ module mem_globrad
 
   ! **************************************************************************
 
-  subroutine master_read_carma_data(mchnum, master_num)
+  subroutine master_read_carma_data()
 
     use mem_radiate, only: ISWRTYP, ILWRTYP ! Intent(in)
+    use node_mod, only: mchnum, master_num ! Intent(in)
     use ParLib, only: parf_bcast ! Subroutine
 
     implicit none
-    integer, intent(in) :: mchnum
-    integer, intent(in) :: master_num
-    include "constants.h"
+    include "i8.h"
     ! Local Variables
     integer, parameter :: input_unit=22
     character(len=*), parameter :: h="**(master_read_carma_data)**"

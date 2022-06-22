@@ -4,7 +4,7 @@ module mem_cutrans
   !Author: Luiz Flavio 	Date: 09-25-2003 	CPTEC/INPE
   !
 
-  use mem_grell_param, only: mgmzp
+  use mem_grell_param
 
   implicit none
 

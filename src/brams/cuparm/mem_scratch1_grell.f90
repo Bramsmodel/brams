@@ -76,7 +76,7 @@ CONTAINS
     use ccatt_start, only: ccatt
     IMPLICIT NONE
 
-    include "constants.h"
+    include "constants.f90"
     character(len=*), parameter :: header='**(alloc_scratch1_grell)**'
 
     !-srf this array must be allocated anyway because it will be used to stor

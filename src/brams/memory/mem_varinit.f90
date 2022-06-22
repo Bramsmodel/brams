@@ -11,9 +11,7 @@ module mem_varinit
 
   use ModNamelistFile, only: namelistFile
 
-  use grid_dims, only: &
-       maxfiles, &
-       maxgrds
+  use grid_dims
 
 !--(DMK-CCATT-INI)-----------------------------------------------------
   use chem1_list, only: &
@@ -220,7 +218,7 @@ contains
   subroutine filltab_varinit(varinit,varinitm,imean,n1,n2,n3,ng)
     use var_tables, only: InsertVTab
     implicit none
-    include "constants.h"
+    include "i8.h"
     type (varinit_vars) :: varinit,varinitm
     integer, intent(in) :: imean,n1,n2,n3,ng
     integer(kind=i8) :: npts

@@ -8,31 +8,9 @@
 
 
 subroutine cond_read(initflag)
-  use ModNudAnalysis, only: &
-       vfintrpf, &
-       varweight
-  
-use ModDateUtils, only: date_add_to,  &
-                        date_make_big
-use mem_grid, only: grid_g,   &
-                    idate1,   &
-                    imonth1,  &
-                    iyear1,   &
-                    ngrids,   &
-                    runtype,  &
-                    itime1,   &
-                    nnzp,     &
-                    nnxp,     &
-                    nnyp,     &
-                    time
-use mem_varinit, only: varinit_g,    &
-                       cond_hfile,   &
-                       condtime2,    &
-                       ncondfiles,   &
-                       ncondfl,      &
-                       condtime1,    &
-                       cond_times,   &
-                       itotdate_cond
+use ModDateUtils
+use mem_grid
+use mem_varinit
 
 implicit none
 
@@ -75,7 +53,7 @@ if (initflag == 1) then   ! Initialization
    ! Calculate varweights just like var init
    !print *,'LFR-DEB->cond_read.f90'
    call varweight(nnzp(1),nnxp(1),nnyp(1)  &
-       ,grid_g(1)%topt,grid_g(1)%rtgt,varinit_g(1)%varwts)
+       ,grid_g(1)%topt(1,1),grid_g(1)%rtgt(1,1),varinit_g(1)%varwts(1,1,1))
    
    ! Read and interpolate files to new grid 1. Put stuff in varinit arrays.
    
@@ -115,9 +93,7 @@ end
 
 
 subroutine cond_file_inv (hfilin,iyear1,imonth1,idate1,itime1)
-use ModDateUtils, only: date_abs_secs2,    &
-                        date_add_to,       &
-                        date_make_big
+use ModDateUtils
 use mem_varinit,only: &
     maxnudfiles,      &
     ncondfiles,       &

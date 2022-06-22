@@ -34,13 +34,9 @@ subroutine hydro(m2,m3,mzg,mzs,np                           &
    ,soil_water,soil_energy,soil_text                        &
    ,sfcwater_mass,sfcwater_energy,patch_area,patch_wetind)
 
-use mem_grid, only: dtlt,    &
-                    time
-use mem_leaf, only: slz
-use leaf_coms, only: nstyp,  &
-                     nzgmax, &
-                     slcpd,  &
-                     slmsts
+use mem_grid
+use mem_leaf
+use leaf_coms
 
 implicit none
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
