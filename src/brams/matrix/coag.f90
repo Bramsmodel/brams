@@ -22,7 +22,44 @@
 !!-------------------------------------------------------------------------------------------------------------------------------------
    MODULE Aero_Coag
    
-   use memMatrix
+     use memMatrix, only: &
+          kij_temp1, &
+          kij_temp2, &
+          kij_temp3, &
+          kij_pres1, &
+          kij_pres2, &
+          kij_pres3, &
+          kij_ndgs, &
+          kij_nsgs, &
+          kij_diameters, &
+          nweights, &
+          write_log, &
+          aunit1, &
+          aunit2, &
+          citable, &
+          k0ij_temp1pres1, &
+          k0ij_temp1pres2, &
+          k0ij_temp1pres3, &
+          k0ij_temp2pres1, &
+          k0ij_temp2pres2, &
+          k0ij_temp2pres3, &
+          k0ij_temp3pres1, &
+          k0ij_temp3pres2, &
+          k0ij_temp3pres3, &
+          k3ij_temp1pres1, &
+          k3ij_temp1pres2, &
+          k3ij_temp1pres3, &
+          k3ij_temp2pres1, &
+          k3ij_temp2pres2, &
+          k3ij_temp2pres3, &
+          k3ij_temp3pres1, &
+          k3ij_temp3pres2, &
+          k3ij_temp3pres3, &
+          kij, &
+          kij_dgmin, &
+          kij_dgmax, &
+          kij_sigmas, &
+          index_sigg
 !LFR>       use Aero_Param,  only: &
 !LFR>                            aunit1,       & !intent()
 !LFR>                            aunit2,       & !intent()

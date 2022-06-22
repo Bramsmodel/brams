@@ -10,8 +10,6 @@
 
 module mem_turb_scalar
 
-  use grid_dims
-
   implicit none
 
   type turb_s_vars
@@ -78,7 +76,7 @@ contains
   subroutine filltab_turb_s(turb_s,turbm_s,imean,n1,n2,n3,ng)
     use var_tables, only: InsertVTab
     implicit none
-    include "i8.h"
+    include "constants.h"
     type (turb_s_vars) :: turb_s,turbm_s
     integer, intent(in) :: n1,n2,n3,ng,imean
     integer(kind=i8) :: npts

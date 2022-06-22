@@ -1,9 +1,19 @@
 module ReadBcst
 
+  use ModControlVars, only: &
+       ControlVars
+
+  use ModTurbFields, only: &
+       TurbFields
+  
+  use ModBasicFields, only: &
+       BasicFields
+
   use mem_grid, only: &
-       ngrids, nnxp, nnyp, nnzp, nzs, nzg, npatch, &
+       ngrids, nzs, nzg, npatch, &
        time, iyear1, imonth1, idate1, itime1, &
-       GlobalSizes
+       GlobalSizes, runtype
+
 
   use node_mod, only:      &
        mchnum, mynum, master_num, &
@@ -18,12 +28,6 @@ module ReadBcst
   use mem_aerad, only: &
        nwave
 
-  use mem_basic, only:  &
-       basic_g
-
-  use mem_turb,  only:   &
-       turb_g, idiffk, xkhkm
-
   use var_tables, only: &
        var_tables_r, &
        num_var,      &
@@ -35,8 +39,8 @@ module ReadBcst
        parf_allreduce_max, &
        parf_GatherAllChunks
 
-
   implicit none
+
 
   private
   public :: ReadStoreOwnChunk
@@ -47,47 +51,39 @@ module ReadBcst
   public :: LocalSizesAndDisp
   public :: PreProcAndGather
   public :: RearrangeAndDump
-  public :: DumpFullField
-  public :: DumpVTabEntry
-  public :: DumpVarTables
   public :: gatherData
-
-!--(DMK-CCATT-INI)-----------------------------------------------------
   public :: storeOwnChunk_3D
-!--(DMK-CCATT-FIM)-----------------------------------------------------
 
 
   interface ReadStoreOwnChunk
      module procedure ReadStoreOwnChunk_2D, ReadStoreOwnChunk_3D
-  end interface
+  end interface ReadStoreOwnChunk
 
   interface Broadcast
      module procedure Broadcast_I, Broadcast_I1D, &
           Broadcast_R, Broadcast_R1D, Broadcast_R2D, &
           Broadcast_C, Broadcast_C1D
-  end interface
+  end interface Broadcast
 
   interface gatherData 
      module procedure gatherData2d, gatherData3d, gatherData4d
-  end interface
+  end interface gatherData
 
   integer, parameter :: idim_type_min=2
   integer, parameter :: idim_type_max=7
   logical, parameter :: dumpLocal=.false.
-  include "i8.h"
+  include "constants.h"
 contains
 
 
 
-  subroutine ReadStoreOwnChunk_2D(grid, fUnit, toStore, fieldName)
-
-    use mem_grid, only:  &
-         runtype
+  subroutine ReadStoreOwnChunk_2D(grid, fUnit, toStore, fieldName, oneControlVars)
 
     integer, intent(in) :: grid
     integer, intent(in) :: fUnit
     real, pointer :: toStore(:,:)
     character(len=*), intent(in) :: fieldName
+    type(ControlVars), pointer, intent(in) :: oneControlVars
 
 
     integer :: ldimx, ldimy, lin
@@ -98,8 +94,8 @@ contains
 
     ! check allocated memory
     if (runtype(1:9)=='MAKEVFILE') then
-       ldimx = nnxp(grid)
-       ldimy = nnyp(grid)
+       ldimx = oneControlVars%nnxp
+       ldimy = oneControlVars%nnyp
     else
        ldimx = nodemxp(mynum,grid)
        ldimy = nodemyp(mynum,grid)
@@ -129,7 +125,7 @@ contains
     ! allocate scratch area for full domain
 
     call AllocReadStoreOwnChunk_2D(fUnit, toStore, fieldName, &
-         nnxp(grid), nnyp(grid), ldimx, ldimy, ia, iz, ja, jz, &
+         oneControlVars%nnxp, oneControlVars%nnyp, ldimx, ldimy, ia, iz, ja, jz, &
          mchnum, master_num, runtype)
 
   end subroutine ReadStoreOwnChunk_2D
@@ -171,14 +167,14 @@ contains
     if (mchnum == master_num) then
        call vfirec(fUnit,fullGrid(1,1),nnxp*nnyp,'LIN')
     end if
-    
+
     ! broadcast full domain scratch; 
     !local chunk is extracted and stored at desired variable
     if (runtype(1:9)/='MAKEVFILE') then
        call parf_bcast(fullGrid, int(nnxp,i8), int(nnyp,i8), &
             master_num)
     endif
-    
+
     call mk_2_buff(fullGrid(1,1), toStore(1,1), &
          nnxp, nnyp, ldimx, ldimy, ia, iz, ja, jz)
 
@@ -190,15 +186,14 @@ contains
   end subroutine AllocReadStoreOwnChunk_2D
 
 
-  subroutine ReadStoreOwnChunk_3D(grid, fUnit, toStore, nz, fieldName)
-    use mem_grid, only:  &
-         runtype
+  subroutine ReadStoreOwnChunk_3D(grid, fUnit, toStore, nz, fieldName, oneControlVars)
 
     integer, intent(in) :: grid
     integer, intent(in) :: fUnit
     integer, intent(in) :: nz
     real, pointer :: toStore(:,:,:)
     character(len=*), intent(in) :: fieldName
+    type(ControlVars), pointer, intent(in) :: oneControlVars
 
 
     integer :: ldimx, ldimy, lin
@@ -241,8 +236,8 @@ contains
     jz = nodej0(mynum,grid)+nodemyp(mynum,grid)
 
     call AllocReadStoreOwnChunk_3D(fUnit, toStore, fieldName, &
-       nz, nnxp(grid), nnyp(grid), ldimx, ldimy, ia, iz, ja, jz, &
-       mchnum, master_num, runtype)
+         nz, oneControlVars%nnxp, oneControlVars%nnyp, ldimx, ldimy, ia, iz, ja, jz, &
+         mchnum, master_num, runtype)
 
     if (dumpLocal) then
        write(*,"(a,i4,a,i4,a,i4,a,i4,a,i4,a,i4,a,i4,a,i4,a)") &
@@ -293,7 +288,7 @@ contains
     call parf_bcast(fullGrid, int(nz,i8), int(nnxp,i8), &
          int(nnyp,i8), master_num)
 
-    call mk_3_buff(fullGrid(1,1,1), toStore(1,1,1), &
+    call mk_3_buff(fullGrid, toStore, &
          nz, nnxp, nnyp, nz, ldimx, ldimy, ia, iz, ja, jz)
 
     if (dumpLocal) then
@@ -304,12 +299,13 @@ contains
   end subroutine AllocReadStoreOwnChunk_3D
 
 
-  subroutine ReadStoreFullFieldAndOwnChunk(grid, fUnit, full, toStore, fieldName)
+  subroutine ReadStoreFullFieldAndOwnChunk(grid, fUnit, full, toStore, fieldName, oneControlVars)
     integer, intent(in) :: grid
     integer, intent(in) :: fUnit
     real, pointer :: full(:,:)
     real, pointer :: toStore(:,:)
     character(len=*), intent(in) :: fieldName
+    type(ControlVars), pointer, intent(in) :: oneControlVars
 
 
     integer :: ldimx, ldimy, lin
@@ -326,7 +322,7 @@ contains
     if (.not. associated(full)) then
        call fatal_error(h//" will store at not associated pointer var "//trim(fieldName))
     end if
-    ldimx = nnxp(grid)
+    ldimx = oneControlVars%nnxp
     lin = size(full,1)
     if (ldimx /= lin) then
        write(c0,"(i8)") ldimx
@@ -334,7 +330,7 @@ contains
        call fatal_error(h//" full field of "//trim(fieldName)//" x dimension ("//trim(adjustl(c1))//&
             ") differs from required ("//trim(adjustl(c0))//")")
     end if
-    ldimy = nnyp(grid)
+    ldimy = oneControlVars%nnyp
     lin = size(full,2)
     if (ldimy /= lin) then
        write(c0,"(i8)") ldimy
@@ -370,19 +366,19 @@ contains
     jz = nodej0(mynum,grid)+nodemyp(mynum,grid)
 
     ! master process opens file and reads first data into full domain
-!print *, 'LFR-DBG->',fieldName,'Reading... vfirec',mchnum 
+    !print *, 'LFR-DBG->',fieldName,'Reading... vfirec',mchnum 
     if (mchnum == master_num) then
-       call vfirec(fUnit,full(1,1),nnxp(grid)*nnyp(grid),'LIN')
+       call vfirec(fUnit,full(1,1),oneControlVars%nnxp*oneControlVars%nnyp,'LIN')
     end if
-!print *,'FieldName, Max e min lido: ',fieldName,maxval(full),minval(full),mchnum,master_num
+    !print *,'FieldName, Max e min lido: ',fieldName,maxval(full),minval(full),mchnum,master_num
     ! broadcast full domain; 
     ! local chunk is extracted and stored at desired variable
 
-    call parf_bcast(full, int(nnxp(grid),i8), int(nnyp(grid),i8), &
+    call parf_bcast(full, int(oneControlVars%nnxp,i8), int(oneControlVars%nnyp,i8), &
          master_num)
 
     call mk_2_buff(full(1,1), toStore(1,1), &
-         nnxp(grid), nnyp(grid), ldimx, ldimy, ia, iz, ja, jz)
+         oneControlVars%nnxp, oneControlVars%nnyp, ldimx, ldimy, ia, iz, ja, jz)
 
     if (dumpLocal) then
        write(*,"(a,i4,a,i4,a,i4,a,i4,a,i4,a,i4,a)") &
@@ -592,7 +588,7 @@ contains
     call parf_minloc(bufin, bufout)
 
     val = bufout(1)
-    rank = NINT(bufout(2))
+    rank = nint(bufout(2))
   end subroutine ProcWithMin
 
 
@@ -669,7 +665,7 @@ contains
   !                      idim_type
 
 
-  subroutine LocalSizesAndDisp (ngrid, il1, ir2, jb1, jt2, localSize, disp)
+  subroutine LocalSizesAndDisp (ngrid, il1, ir2, jb1, jt2, localSize, disp, oneControlVars)
 
     integer, intent(in ) :: ngrid            ! which grid to use
     integer, intent(out) :: il1(nmachs)
@@ -678,6 +674,7 @@ contains
     integer, intent(out) :: jt2(nmachs)
     integer, intent(out) :: localSize(nmachs, idim_type_min:idim_type_max)
     integer, intent(out) :: disp(nmachs, idim_type_min:idim_type_max)
+    type(ControlVars), pointer, intent(in) :: oneControlVars
 
     integer :: proc
     integer :: idim_type
@@ -688,7 +685,7 @@ contains
 
     do proc = 1, nmachs
        localSize(proc,2) = nodemxp(proc,ngrid)*nodemyp(proc,ngrid)
-       localSize(proc,3) = nnzp(ngrid)*nodemxp(proc,ngrid)*nodemyp(proc,ngrid)
+       localSize(proc,3) = oneControlVars%nnzp*nodemxp(proc,ngrid)*nodemyp(proc,ngrid)
        localSize(proc,4) = nzg*nodemxp(proc,ngrid)*nodemyp(proc,ngrid)*npatch
        localSize(proc,5) = nzs*nodemxp(proc,ngrid)*nodemyp(proc,ngrid)*npatch
        localSize(proc,6) = nodemxp(proc,ngrid)*nodemyp(proc,ngrid)*npatch
@@ -743,7 +740,8 @@ contains
 
   subroutine PreProcAndGather(preProc, ngrid, idim_type, varn, &
        il1, ir2, jb1, jt2, localSize, disp, thisChunkSize, LocalChunk, &
-       sizeGathered, gathered, sizeFullField, FullField)
+       sizeGathered, gathered, sizeFullField, FullField, &
+       oneControlVars, oneBasicFields, oneTurbFields)
 
     logical,          intent(in   ) :: preProc
     integer,          intent(in   ) :: ngrid
@@ -761,6 +759,9 @@ contains
     real,             intent(out  ) :: gathered(sizeGathered)    !scratch
     integer,          intent(in   ) :: sizeFullField
     real,             intent(out  ) :: FullField(sizeFullField)
+    type(ControlVars), pointer, intent(in) :: oneControlVars
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
 
     character(len=len(varn)) :: varnOut
     integer :: ierr
@@ -782,10 +783,38 @@ contains
 
        ! pre-process LocalChunk before gathering
 
-       call PreProcForOutput(ngrid, varn, thisChunkSize, LocalChunk, &
-            LocalChunk, varnOut)       
-       varn = varnOut
+       select case (varn)
+       case ('PP')
 
+          ! Output total Exner function
+          
+          call RAMS_aprep_p (thisChunkSize, LocalChunk,  &
+               oneBasicFields%pi0, LocalChunk)
+          varnOut='PI'
+          
+       case ('HKM')
+          
+          ! Convert to HKM to HKH (note that VKH is HKH for Deardorff)
+          
+          call RAMS_aprep_hkh (thisChunkSize, LocalChunk, &
+               oneTurbFields%vkh, oneBasicFields%dn0,  &
+               LocalChunk, oneControlVars%idiffk, &
+               oneControlVars%xkhkm)
+          varnOut='HKH'
+          
+       case ('VKH')
+          
+          ! Un-density weight VKH
+          
+          call RAMS_aprep_vkh (thisChunkSize, LocalChunk, &
+               oneBasicFields%dn0, LocalChunk)
+          varnOut='VKH'
+          
+       case default
+          varnOut=varn
+       end select
+
+       varn = varnOut
 
     end if
 
@@ -793,7 +822,7 @@ contains
 
     call GatherOneFullField(ngrid, idim_type, thisChunkSize, &
          LocalChunk, localSize, disp, il1, ir2, jb1, jt2, &
-         sizeGathered, gathered, sizeFullField, FullField)
+         sizeGathered, gathered, sizeFullField, FullField, oneControlVars)
   end subroutine PreProcAndGather
 
 
@@ -803,7 +832,7 @@ contains
 
   subroutine GatherOneFullField(ngrid, idim_type, thisChunkSize, &
        LocalChunk, localSize, disp, il1, ir2, jb1, jt2, &
-       sizeGathered, gathered, sizeFullField, FullField)
+       sizeGathered, gathered, sizeFullField, FullField, oneControlVars)
     integer, intent(in ) :: ngrid
     integer, intent(in ) :: idim_type
     integer, intent(in ) :: thisChunkSize
@@ -818,6 +847,7 @@ contains
     real,    intent(out) :: gathered(sizeGathered)    !scratch
     integer, intent(in ) :: sizeFullField
     real,    intent(out) :: FullField(sizeFullField)
+    type(ControlVars), pointer, intent(in) :: oneControlVars
 
     integer :: ierr
     character(len=8) :: c0, c1
@@ -843,7 +873,7 @@ contains
           write(*,"(a)") h//" master will RemoveGhost"
        end if
        call RemoveGhost (ngrid, idim_type, sizeGathered, gathered, &
-            il1, ir2, jb1, jt2, disp, localSize, sizeFullField, FullField)
+            il1, ir2, jb1, jt2, disp, localSize, sizeFullField, FullField, oneControlVars)
        if (dumpLocal) then
           write(*,"(a)") h//" done RemoveGhost"
        end if
@@ -895,7 +925,7 @@ contains
 
 
   subroutine RemoveGhost (ngrid, idim_type, sizeGathered, gathered, &
-       il1, ir2, jb1, jt2, disp, localSize, sizeFullField, FullField)
+       il1, ir2, jb1, jt2, disp, localSize, sizeFullField, FullField, oneControlVars)
     integer, intent(in)  :: ngrid
     integer, intent(in)  :: idim_type
     integer, intent(in)  :: sizeGathered
@@ -908,6 +938,7 @@ contains
     integer, intent(in)  :: localSize(nmachs, idim_type_min:idim_type_max)
     integer, intent(in)  :: sizeFullField
     real,    intent(out) :: FullField(sizeFullField)
+    type(ControlVars), pointer, intent(in) :: oneControlVars
 
     integer :: proc
     character(len=8) :: c0
@@ -921,7 +952,7 @@ contains
        do proc = 1, nmachs
           if (localSize(proc,idim_type)/=0) then
              call ex_2_buff(FullField, gathered(disp(proc,idim_type)+1), &
-                  nnxp(ngrid), nnyp(ngrid), &
+                  oneControlVars%nnxp, oneControlVars%nnyp, &
                   nodemxp(proc,ngrid), nodemyp(proc,ngrid), &
                   nodei0(proc,ngrid), nodej0(proc,ngrid), &
                   il1(proc), ir2(proc), jb1(proc), jt2(proc))
@@ -931,8 +962,8 @@ contains
        do proc = 1, nmachs
           if (localSize(proc,idim_type)/=0) then
              call ex_3_buff(FullField, gathered(disp(proc,idim_type)+1), &
-                  nnzp(ngrid), nnxp(ngrid), nnyp(ngrid), &
-                  nnzp(ngrid), nodemxp(proc,ngrid), nodemyp(proc,ngrid), &
+                  oneControlVars%nnzp, oneControlVars%nnxp, oneControlVars%nnyp, &
+                  oneControlVars%nnzp, nodemxp(proc,ngrid), nodemyp(proc,ngrid), &
                   nodei0(proc,ngrid), nodej0(proc,ngrid), &
                   il1(proc), ir2(proc), jb1(proc), jt2(proc))
           end if
@@ -941,7 +972,7 @@ contains
        do proc = 1, nmachs
           if (localSize(proc,idim_type)/=0) then
              call ex_4_buff(FullField, gathered(disp(proc,idim_type)+1), &
-                  nzg, nnxp(ngrid), nnyp(ngrid), npatch, &
+                  nzg, oneControlVars%nnxp, oneControlVars%nnyp, npatch, &
                   nzg, nodemxp(proc,ngrid), nodemyp(proc,ngrid), npatch, &
                   nodei0(proc,ngrid), nodej0(proc,ngrid), &
                   il1(proc), ir2(proc), jb1(proc), jt2(proc))
@@ -951,7 +982,7 @@ contains
        do proc = 1, nmachs
           if (localSize(proc,idim_type)/=0) then
              call ex_4_buff(FullField, gathered(disp(proc,idim_type)+1), &
-                  nzs, nnxp(ngrid), nnyp(ngrid), npatch, &
+                  nzs, oneControlVars%nnxp, oneControlVars%nnyp, npatch, &
                   nzs, nodemxp(proc,ngrid), nodemyp(proc,ngrid), npatch, &
                   nodei0(proc,ngrid), nodej0(proc,ngrid), &
                   il1(proc), ir2(proc), jb1(proc), jt2(proc))
@@ -961,7 +992,7 @@ contains
        do proc = 1, nmachs
           if (localSize(proc,idim_type)/=0) then
              call ex_2p_buff(FullField, gathered(disp(proc,idim_type)+1), &
-                  nnxp(ngrid), nnyp(ngrid), npatch, &
+                  oneControlVars%nnxp, oneControlVars%nnyp, npatch, &
                   nodemxp(proc,ngrid), nodemyp(proc,ngrid), npatch, &
                   nodei0(proc,ngrid), nodej0(proc,ngrid), &
                   il1(proc), ir2(proc), jb1(proc), jt2(proc))
@@ -971,7 +1002,7 @@ contains
        do proc = 1, nmachs
           if (localSize(proc,idim_type)/=0) then
              call ex_buff_carma(FullField, gathered(disp(proc,idim_type)+1), &
-                  nnxp(ngrid), nnyp(ngrid), nwave, &
+                  oneControlVars%nnxp, oneControlVars%nnyp, nwave, &
                   nodemxp(proc,ngrid), nodemyp(proc,ngrid), nwave, &
                   nodei0(proc,ngrid), nodej0(proc,ngrid), &
                   il1(proc), ir2(proc), jb1(proc), jt2(proc))
@@ -994,7 +1025,7 @@ contains
   subroutine RearrangeAndDump (ngrid, rearran, &
        histFlag, instFlag, liteFlag, meanFlag, &
        histFileDS, instFileDS, liteFileDS, meanFileDS, &
-       varn, idim_type, sizeFullField, FullField, Rear)
+       varn, idim_type, sizeFullField, FullField, Rear, oneControlVars)
 
     integer,          intent(in   ) :: ngrid
     logical,          intent(in   ) :: rearran
@@ -1011,6 +1042,7 @@ contains
     integer,          intent(in   ) :: sizeFullField
     real,             intent(in   ) :: FullField(sizeFullField)
     real,             intent(out  ) :: Rear(sizeFullField)
+    type(ControlVars), pointer, intent(in) :: oneControlVars
 
     character(len=*), parameter :: h="**(RearrangeAndDump)**"
 
@@ -1025,7 +1057,7 @@ contains
     ! if field to be rearranged, rearrange and dump
 
     if (rearran) then
-       call RearrangeForOutput(nnxp(ngrid), nnyp(ngrid), nnzp(ngrid), &
+       call RearrangeForOutput(oneControlVars%nnxp, oneControlVars%nnyp, oneControlVars%nnzp, &
             nzg, nzs, npatch, idim_type, FullField, Rear)
 
        ! dump rearranged field
@@ -1071,711 +1103,304 @@ contains
 
 
 
-  ! DumpFullField: master_process gathers all local chunks of a field and dumps
-  !                resulting full field at a file. If dumpGathered is selected,
-  !                also dumps gathered field (that includes all ghost zones,
-  !                excluded on full field)
-
-
-
-
-  subroutine DumpFullField(ngrid, LocalChunk, name, dumpGathered)
-
-    integer,          intent(in) :: ngrid               ! current grid number
-    real,             pointer    :: LocalChunk(:,:,:)   ! field at this process    
-    character(len=*), intent(in) :: name    ! field name (file name is <name>.<grid>.<nmachs>
-    logical,          intent(in) :: dumpGathered        ! dumps gathered field after full field
-
-    integer, parameter :: idim_type=3
-    integer :: il1(nmachs)
-    integer :: ir2(nmachs)
-    integer :: jb1(nmachs)
-    integer :: jt2(nmachs)
-    integer :: localSize(nmachs, idim_type_min:idim_type_max)
-    integer :: disp(nmachs, idim_type_min:idim_type_max)
-    integer :: sizeFullField(idim_type_min:idim_type_max)
-    character(len=4) :: cProcs
-    character(len=256) :: line
-    integer :: proc
-    real, pointer :: var_p
-    character(len=8) :: c0, c1
-    character(len=*), parameter :: h="**(DumpFullField)**"
-
-    if (dumpLocal) then
-       write(c0,"(i8)") ngrid
-       if (dumpGathered) then
-          write(*,"(a)") h//" only dump FullField "//trim(name)//&
-               " for grid "//trim(adjustl(c0))
-       else
-          write(*,"(a)") h//" dump FullField and gathered for field "//trim(name)//&
-               " at grid "//trim(adjustl(c0))
-       end if
-    end if
-
-    call LocalSizesAndDisp (ngrid, il1, ir2, jb1, jt2, localSize, disp)
-
-    if (dumpLocal) then
-       do proc = 1, nmachs
-          write(line, "(5(a6,i8.8),a12,i8.8,a7,i8.8)") &
-               " proc=", proc, &
-               "; il1=", il1(proc), &
-               "; ir2=", ir2(proc), &
-               "; jb1=", jb1(proc), &
-               "; jt2=", jt2(proc), &
-               "; localSize=", localSize(proc,idim_type), &
-               "; disp=", disp(proc,idim_type)
-          write(*,"(a)") h//trim(line)
-       end do
-    end if
-
-    call GlobalSizes(ngrid, nmachs, nwave, sizeFullField)
-
-    var_p => LocalChunk(1,1,1)
-
-    call DumpVTabEntry(ngrid, name, idim_type, var_p, &
-         sizeFullField, il1, ir2, jb1, jt2, localSize, disp, &
-         name, dumpGathered)
-
-  end subroutine DumpFullField
-
-
-
-
-
-  ! DumpVTabEntry: Gather and dump full field of one var_table entry into a file;
-  !                If requested, also dumps all local chunks with ghost zones.
-
-
-
-
-  subroutine DumpVTabEntry(ngrid, name, idim_type, var_p, &
-       sizeFullField, il1, ir2, jb1, jt2, localSize, disp, &
-       fPrefix, dumpGathered, unitOpened)
-
-    
-    integer,          intent(in) :: ngrid
-    character(len=16), intent(in) :: name
-    integer,          intent(in) :: idim_type
-    real, pointer                :: var_p
-    integer,          intent(in) :: sizeFullField(idim_type_min:idim_type_max)
-    integer,          intent(in) :: il1(nmachs)
-    integer,          intent(in) :: ir2(nmachs)
-    integer,          intent(in) :: jb1(nmachs)
-    integer,          intent(in) :: jt2(nmachs)
-    integer,          intent(in) :: localSize(nmachs,idim_type_min:idim_type_max)
-    integer,          intent(in) :: disp(nmachs,idim_type_min:idim_type_max)
-    character(len=*), intent(in) :: fPrefix
-    logical,          intent(in) :: dumpGathered
-    integer, optional, intent(in) :: unitOpened
-
-    character(len=2)            :: cGrid
-    character(len=4)            :: cProc
-    character(len=10)           :: cProcHeader
-    character(len=8)            :: c0, c1, c2
-    character(len=*), parameter :: h="**(DumpVTabEntry)**" 
-
-    integer, parameter :: unitLow=10
-    integer, parameter :: unitHigh=99
-    integer :: sizeGathered
-    integer :: sizeLocalChunk
-    integer :: iunit
-    integer :: ierr
-    integer :: proc
-
-    logical :: op
-
-    real, allocatable :: LocalChunk(:)
-    real, allocatable :: Gathered(:)
-    real, allocatable :: FullField(:)
-
-    ! consistency
-
-    if (idim_type < idim_type_min .or. idim_type > idim_type_max) then
-       write(c0,"(i8)") idim_type
-       call fatal_error(h//" unknown idim_type="//trim(adjustl(c0)))
-    end if
-
-    ! names for dumping
-
-    write(cProc,"(i4.4)")  mchnum
-    cProcHeader = " Proc "//cProc
-    write(cProc,"(i4.4)")  nmachs
-    write(cGrid,"(a1,i1)") "g", ngrid
-
-    ! find available Fortran unit
-
-    if (present(unitOpened)) then
-       iunit = unitOpened
-    else if (mchnum == master_num) then
-       do iunit = unitLow, unitHigh
-          inquire (unit=iunit, opened=op)
-          if (.not. op) exit
-       end do
-       if (iunit > unitHigh) then
-          call fatal_error(h//" Fortran i/o units exausted")
-       end if
-    end if
-
-    ! space to copy vtab entry
-
-    sizeLocalChunk=localSize(mynum,idim_type)
-    allocate(LocalChunk(sizeLocalChunk), stat=ierr)
-    if (ierr /= 0) then
-       write(c0,"(i8)") sizeLocalChunk
-       write(c1,"(i8)") ierr
-       call fatal_error(h//" allocate localSize("// &
-            trim(adjustl(c0))//") failed with stat="// &
-            trim(adjustl(c1)))
-    else if (dumpLocal) then
-       write(c0,"(i8)") sizeLocalChunk
-       write(*,"(a)") h//cProcHeader//" allocated localSize("//trim(adjustl(c0))//")"
-       call flush(6)
-    end if
-
-    ! space for gathered full field
-
-    sizeGathered = disp(nmachs,idim_type) + localSize(nmachs,idim_type)
-    allocate(Gathered(sizeGathered), stat=ierr)
-    if (ierr /= 0) then
-       write(c0,"(i8)") sizeGathered
-       write(c1,"(i8)") ierr
-       call fatal_error(h//" allocate Gathered("// &
-            trim(adjustl(c0))//") failed with stat="// &
-            trim(adjustl(c1)))
-    else if (dumpLocal) then
-       write(c0,"(i8)") sizeGathered
-       write(*,"(a)") h//cProcHeader//" allocated Gathered("//trim(adjustl(c0))//")"
-       call flush(6)
-    end if
-
-    ! space for unpacked field
-
-    allocate(FullField(sizeFullField(idim_type)), stat=ierr)
-    if (ierr /= 0) then
-       write(c0,"(i8)") sizeFullField(idim_type)
-       write(c1,"(i8)") ierr
-       call fatal_error(h//" allocate FullField("// &
-            trim(adjustl(c0))//") failed with stat="// &
-            trim(adjustl(c1)))
-    else if (dumpLocal) then
-       write(c0,"(i8)") sizeFullField(idim_type)
-       write(*,"(a)") h//cProcHeader//" allocated FullField("//trim(adjustl(c0))//")"
-       call flush(6)
-    end if
-
-    ! copy vtab entry into a 1D array
-
-    call CopyLocalChunk(var_p, LocalChunk, sizeLocalChunk)
-
-    ! gather local chunks into a single array at master process (on "Gathered") 
-    ! and eliminate ghost zones of the gathered array (on "FullField")
-
-    call GatherOneFullField(ngrid, idim_type, sizeLocalChunk, &
-         LocalChunk, localSize, disp, il1, ir2, jb1, jt2, &
-         sizeGathered, Gathered, sizeFullField(idim_type), FullField)
-
-    ! only master dumps file
-
-    if (mchnum == master_num) then
-
-       ! open file
-
-       if (.not. present(unitOpened)) then
-          open(iunit, file=fPrefix(1:len_trim(fPrefix))//"."//cGrid//"."//cProc, status="replace", &
-               action="write", form="unformatted", iostat=ierr)
-          if (ierr /= 0) then
-             write(c0,"(i8)") ierr
-             call fatal_error(h//" opening "//trim(fPrefix)//"."//cGrid//"."//cProc//&
-                  " failed with iostat="//trim(adjustl(c0)))
-          end if
-       end if
-
-       ! dump name, idim_type and dimensions
-
-       write(iunit) name
-       write(iunit) idim_type
-       select case (idim_type)
-       case (2)
-          write(iunit) nnxp(ngrid), nnyp(ngrid)
-       case (3)
-          write(iunit) nnzp(ngrid), nnxp(ngrid), nnyp(ngrid)
-       case (4)
-          write(iunit) nzg, nnxp(ngrid), nnyp(ngrid), npatch
-       case (5)
-          write(iunit) nzs, nnxp(ngrid), nnyp(ngrid), npatch
-       case (6)
-          write(iunit) nnxp(ngrid), nnyp(ngrid), npatch
-       case (7)
-          write(iunit) nnxp(ngrid), nnyp(ngrid), nwave
-       case default
-          write(c0,"(i8)") idim_type
-          call fatal_error(h//" unknown idim_type="//trim(adjustl(c0)))
-       end select
-
-       ! dump Full Field
-
-       write(iunit) FullField
-
-       ! dump flag for dumpGathered
-
-       write(iunit) dumpGathered
-
-       ! dump Gathered (include ghost zones)
-
-       if (dumpGathered) then
-          write(iunit) nmachs
-          do proc = 1, nmachs
-             write(iunit) localSize(proc,idim_type), nnzp(ngrid), &
-                  nodemxp(proc,ngrid), nodemyp(proc,ngrid), &
-                  nodei0(proc,ngrid), nodej0(proc,ngrid)
-             write(iunit) Gathered(disp(proc,idim_type)+1:&
-                  disp(proc,idim_type)+localSize(proc,idim_type))
-          end do
-       end if
-
-       ! close file
-
-       if (.not. present(unitOpened)) then
-          close(iunit)
-       end if
-    end if
-
-    ! deallocated space
-
-    deallocate(LocalChunk, stat=ierr)
-    if (ierr /= 0) then
-       write(c1,"(i8)") ierr
-       call fatal_error(h//" deallocate localSize failed with stat="// &
-            trim(adjustl(c1)))
-    end if
-
-    deallocate(Gathered, stat=ierr)
-    if (ierr /= 0) then
-       write(c1,"(i8)") ierr
-       call fatal_error(h//" deallocate Gathered failed with stat="// &
-            trim(adjustl(c1)))
-    end if
-
-    ! maximum space for unpacked field
-
-    deallocate(FullField, stat=ierr)
-    if (ierr /= 0) then
-       write(c1,"(i8)") ierr
-       call fatal_error(h//" deallocate FullField failed with stat="// &
-            trim(adjustl(c1)))
-    end if
-  end subroutine DumpVTabEntry
-
-
-
-  ! DumpVarTables: dump all var_table entries for debugging
-
-
-
-  subroutine DumpVarTables(fPrefix,dumpGathered)
-
-    include "files.h"
-
-    character(len=*), intent(in) :: fPrefix  ! file prefix
-    logical, intent(in) :: dumpGathered
-
-    integer :: ng
-    integer :: nv
-    integer :: global
-    integer :: sizeFullField(idim_type_min:idim_type_max)
-    integer :: il1(nmachs)
-    integer :: ir2(nmachs)
-    integer :: jb1(nmachs)
-    integer :: jt2(nmachs)
-    integer :: localSize(nmachs,idim_type_min:idim_type_max)
-    integer :: disp(nmachs,idim_type_min:idim_type_max)
-
-    integer :: ierr
-    integer :: unitOpened
-    integer, parameter :: unitLow=10
-    integer, parameter :: unitHigh=99
-    logical :: op
-    character(len=2)   :: cGrid
-    character(len=4)   :: cProc
-    character(len=8)   :: c0, c1
-    character(len=*), parameter :: h="**(DumpVarTables)**"
-
-    ! find available Fortran unit
-
-    do unitOpened = unitLow, unitHigh
-       inquire (unit=unitOpened, opened=op)
-       if (.not. op) exit
-    end do
-    if (unitOpened > unitHigh) then
-       call fatal_error(h//" Fortran i/o units exausted")
-    end if
-
-    ! visit all grids
-
-    do ng = 1, ngrids
-
-       call GlobalSizes(ng, nmachs, nwave, sizeFullField)
-       call LocalSizesAndDisp (ng, il1, ir2, jb1, jt2, localSize, disp)
-
-       ! build file name
-
-       write(cProc,"(i4.4)")  nmachs
-       write(cGrid,"(a1,i1)") "g", ng
-
-       ! one process opens file
-
-       if (mchnum == master_num) then
-          open(unitOpened, file=fPrefix(1:len_trim(fPrefix))//"."//cGrid//"."//cProc, status="replace", &
-               action="write", form="unformatted", iostat=ierr)
-          if (ierr /= 0) then
-             write(c0,"(i8)") ierr
-             call fatal_error(h//" opening "//trim(fPrefix)//"."//cGrid//"."//cProc//&
-                  " failed with iostat="//trim(adjustl(c0)))
-          end if
-       end if
-
-       ! visit all vtables entries
-
-       do nv = 1, num_var(ng)
-          call DumpVTabEntry(ng, vtab_r(nv,ng)%name, &
-               vtab_r(nv,ng)%idim_type, vtab_r(nv,ng)%var_p, &
-               sizeFullField, il1, ir2, jb1, jt2, localSize, disp, &
-               fPrefix, dumpGathered, unitOpened)
-       end do
-
-       ! one process closes file
-
-       if (mchnum == master_num) then
-          close(unitOpened)
-       end if
-    end do
-  end subroutine DumpVarTables
-
-
-
   ! Recreating Global Information (Gathering data)
-  SUBROUTINE gatherData2D(idim_type, varn, ifm, nnxp, nnyp, &
+  subroutine gatherData2D(idim_type, varn, ifm, nnxp, nnyp, &
        nmachs, mchnum, mynum, master_num,                   &
-       localData2D, globalData2D)
+       localData2D, globalData2D, &
+       oneControlVars, oneBasicFields, oneTurbFields)
 
-    USE mem_grid, ONLY : &
-         GlobalSizes         ! Subroutine
-
-    USE ParLib, ONLY: &
-         parf_bcast ! Subroutine
-
-    IMPLICIT NONE
-    INCLUDE "i8.h"
+    implicit none
+    include "constants.h"
     ! Arguments:
-    INTEGER, INTENT(IN)           :: idim_type, ifm, nnxp, nnyp, &
+    integer, intent(IN)           :: idim_type, ifm, nnxp, nnyp, &
          nmachs, mchnum, mynum, master_num
-    CHARACTER(LEN=16), INTENT(IN) :: varn
-    REAL, INTENT(IN)              :: localData2D(:,:)
-    REAL, INTENT(OUT)             :: globalData2D(:,:)
+    character(LEN=16), intent(IN) :: varn
+    real, intent(IN)              :: localData2D(:,:)
+    real, intent(OUT)             :: globalData2D(:,:)
+    type(ControlVars), pointer, intent(in) :: oneControlVars
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
+
     ! Local Variables:
-    CHARACTER(LEN=16)  :: localVarn
-    INTEGER            :: ierr
-    INTEGER, PARAMETER :: idim_type_min = 2
-    INTEGER, PARAMETER :: idim_type_max = 7
-    INTEGER            :: il1(nmachs)
-    INTEGER            :: ir2(nmachs)
-    INTEGER            :: jb1(nmachs)
-    INTEGER            :: jt2(nmachs)
-    INTEGER            :: localSize(nmachs,idim_type_min:idim_type_max)
-    INTEGER            :: disp(nmachs,idim_type_min:idim_type_max)
-    INTEGER            :: maxLocalSize
-    INTEGER            :: sizeGathered(idim_type_min:idim_type_max)
-    INTEGER            :: maxSizeGathered
-    INTEGER            :: sizeFullField(idim_type_min:idim_type_max)
-    INTEGER            :: maxsizeFullField
-    INTEGER            :: globalSize(idim_type_min:idim_type_max)
-    REAL, ALLOCATABLE  :: localChunk(:)
-    REAL, ALLOCATABLE  :: gathered(:)
-    REAL, ALLOCATABLE  :: fullField(:)
+    character(LEN=16)  :: localVarn
+    integer            :: ierr
+    integer, parameter :: idim_type_min = 2
+    integer, parameter :: idim_type_max = 7
+    integer            :: il1(nmachs)
+    integer            :: ir2(nmachs)
+    integer            :: jb1(nmachs)
+    integer            :: jt2(nmachs)
+    integer            :: localSize(nmachs,idim_type_min:idim_type_max)
+    integer            :: disp(nmachs,idim_type_min:idim_type_max)
+    integer            :: maxLocalSize
+    integer            :: sizeGathered(idim_type_min:idim_type_max)
+    integer            :: maxSizeGathered
+    integer            :: sizeFullField(idim_type_min:idim_type_max)
+    integer            :: maxsizeFullField
+    integer            :: globalSize(idim_type_min:idim_type_max)
+    real, allocatable  :: localChunk(:)
+    real, allocatable  :: gathered(:)
+    real, allocatable  :: fullField(:)
 
     ! Recreating Global information about Soil Water
     ! grid dependent, field independent constants for gather and unpacking
     ! as a function of idim_type
-    CALL LocalSizesAndDisp(ifm, il1, ir2, jb1, jt2, localSize, disp)
-    maxLocalSize = MAXVAL(localSize(mynum,:))
-    ALLOCATE(localChunk(maxLocalSize), stat=ierr)
-    IF (ierr/=0) THEN
-       CALL fatal_error("Error allocating localChunk (gatherData)")
-    ENDIF
-    CALL CopyLocalChunk(localData2D(1,1), localChunk, &
+    call LocalSizesAndDisp(ifm, il1, ir2, jb1, jt2, localSize, disp, oneControlVars)
+    maxLocalSize = maxval(localSize(mynum,:))
+    allocate(localChunk(maxLocalSize), stat=ierr)
+    if (ierr/=0) then
+       call fatal_error("Error allocating localChunk (gatherData)")
+    endif
+    call CopyLocalChunk(localData2D(1,1), localChunk, &
          LocalSize(mynum,idim_type))
     sizeGathered(:) = disp(nmachs,:) + localSize(nmachs,:)
-    maxSizeGathered = MAXVAL(sizeGathered)
-    ALLOCATE(gathered(maxSizeGathered), stat=ierr)
-    IF (ierr/=0) THEN
-       CALL fatal_error("Error allocating gathered (gatherData)")
-    ENDIF
+    maxSizeGathered = maxval(sizeGathered)
+    allocate(gathered(maxSizeGathered), stat=ierr)
+    if (ierr/=0) then
+       call fatal_error("Error allocating gathered (gatherData)")
+    endif
     ! grid dependent field sizes as a function of idim_type
-    CALL GlobalSizes(ifm, nmachs, nwave, globalSize)
-    IF (mchnum==master_num) THEN
+    call GlobalSizes(ifm, nmachs, nwave, globalSize)
+    if (mchnum==master_num) then
        sizeFullField(:) = globalSize(:)
-    ELSE
+    else
        sizeFullField(:) = 1
-    END IF
-    maxSizeFullField = MAXVAL(sizeFullField)
-    ALLOCATE(fullField(sizeFullField(idim_type)), stat=ierr)
-    IF (ierr/=0) THEN
-       CALL fatal_error("Error allocating fullField (gatherData)")
-    ENDIF
+    end if
+    maxSizeFullField = maxval(sizeFullField)
+    allocate(fullField(sizeFullField(idim_type)), stat=ierr)
+    if (ierr/=0) then
+       call fatal_error("Error allocating fullField (gatherData)")
+    endif
     localVarn = trim(varn)
-    CALL PreProcAndGather(.FALSE., ifm, idim_type, localVarn, &
+    call PreProcAndGather(.false., ifm, idim_type, localVarn, &
          il1, ir2, jb1, jt2, localSize, disp,                 &
          localSize(mynum,idim_type), LocalChunk,              &
          sizeGathered(idim_type), gathered,                   &
-         sizeFullField(idim_type), fullField                  )
-    
-    IF (mchnum==master_num) THEN
-       globalData2D = RESHAPE(fullField, (/nnxp, nnyp/))
-    ENDIF
+         sizeFullField(idim_type), fullField, &
+         oneControlVars, oneBasicFields, oneTurbFields)
+
+    if (mchnum==master_num) then
+       globalData2D = reshape(fullField, (/nnxp, nnyp/))
+    endif
 
     call parf_bcast(globalData2D, int(nnxp,i8), int(nnyp,i8), master_num)
 
-    DEALLOCATE(fullField)
-    DEALLOCATE(gathered)
-    DEALLOCATE(localChunk)
-    
-  END SUBROUTINE gatherData2D
+    deallocate(fullField)
+    deallocate(gathered)
+    deallocate(localChunk)
+
+  end subroutine gatherData2D
 
 
 
   ! Recreating Global Information (Gathering data)
-  SUBROUTINE gatherData3D(idim_type, varn, ifm, nnzp, nnxp, nnyp, &
+  subroutine gatherData3D(idim_type, varn, ifm, nnzp, nnxp, nnyp, &
        nmachs, mchnum, mynum, master_num,                         &
-       localData3D, globalData3D)
+       localData3D, globalData3D, &
+       oneControlVars, oneBasicFields, oneTurbFields)
 
-    USE mem_grid, ONLY : &
-         GlobalSizes         ! Subroutine
-
-    USE ParLib, ONLY: &
-         parf_bcast ! Subroutine
-
-    IMPLICIT NONE
-    INCLUDE "i8.h"
+    implicit none
+    include "constants.h"
     ! Arguments:
-    INTEGER, INTENT(IN)           :: idim_type, ifm, nnzp, nnxp, nnyp, &
+    integer, intent(IN)           :: idim_type, ifm, nnzp, nnxp, nnyp, &
          nmachs, mchnum, mynum, master_num
-    CHARACTER(LEN=16), INTENT(IN) :: varn
-    REAL, INTENT(IN)              :: localData3D(:,:,:)
-    REAL, INTENT(OUT)             :: globalData3D(:,:,:)
+    character(LEN=16), intent(IN) :: varn
+    real, intent(IN)              :: localData3D(:,:,:)
+    real, intent(OUT)             :: globalData3D(:,:,:)
+    type(ControlVars), pointer, intent(in) :: oneControlVars
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
+
     ! Local Variables:
-    CHARACTER(LEN=16)  :: localVarn
-    INTEGER            :: ierr
-    INTEGER, PARAMETER :: idim_type_min = 2
-    INTEGER, PARAMETER :: idim_type_max = 7
-    INTEGER            :: il1(nmachs)
-    INTEGER            :: ir2(nmachs)
-    INTEGER            :: jb1(nmachs)
-    INTEGER            :: jt2(nmachs)
-    INTEGER            :: localSize(nmachs,idim_type_min:idim_type_max)
-    INTEGER            :: disp(nmachs,idim_type_min:idim_type_max)
-    INTEGER            :: maxLocalSize
-    INTEGER            :: sizeGathered(idim_type_min:idim_type_max)
-    INTEGER            :: maxSizeGathered
-    INTEGER            :: sizeFullField(idim_type_min:idim_type_max)
-    INTEGER            :: maxsizeFullField
-    INTEGER            :: globalSize(idim_type_min:idim_type_max)
-    REAL, ALLOCATABLE  :: localChunk(:)
-    REAL, ALLOCATABLE  :: gathered(:)
-    REAL, ALLOCATABLE  :: fullField(:)
+    character(LEN=16)  :: localVarn
+    integer            :: ierr
+    integer, parameter :: idim_type_min = 2
+    integer, parameter :: idim_type_max = 7
+    integer            :: il1(nmachs)
+    integer            :: ir2(nmachs)
+    integer            :: jb1(nmachs)
+    integer            :: jt2(nmachs)
+    integer            :: localSize(nmachs,idim_type_min:idim_type_max)
+    integer            :: disp(nmachs,idim_type_min:idim_type_max)
+    integer            :: maxLocalSize
+    integer            :: sizeGathered(idim_type_min:idim_type_max)
+    integer            :: maxSizeGathered
+    integer            :: sizeFullField(idim_type_min:idim_type_max)
+    integer            :: maxsizeFullField
+    integer            :: globalSize(idim_type_min:idim_type_max)
+    real, allocatable  :: localChunk(:)
+    real, allocatable  :: gathered(:)
+    real, allocatable  :: fullField(:)
 
     ! Recreating Global information about Soil Water
     ! grid dependent, field independent constants for gather and unpacking
     ! as a function of idim_type
-    CALL LocalSizesAndDisp(ifm, il1, ir2, jb1, jt2, localSize, disp)
-    maxLocalSize = MAXVAL(localSize(mynum,:))
-    ALLOCATE(localChunk(maxLocalSize), stat=ierr)
-    IF (ierr/=0) THEN
-       CALL fatal_error("Error allocating localChunk (gatherData)")
-    ENDIF
-    CALL CopyLocalChunk(localData3D(1,1,1), localChunk, &
+    call LocalSizesAndDisp(ifm, il1, ir2, jb1, jt2, localSize, disp, oneControlVars)
+    maxLocalSize = maxval(localSize(mynum,:))
+    allocate(localChunk(maxLocalSize), stat=ierr)
+    if (ierr/=0) then
+       call fatal_error("Error allocating localChunk (gatherData)")
+    endif
+    call CopyLocalChunk(localData3D(1,1,1), localChunk, &
          LocalSize(mynum,idim_type))
     sizeGathered(:) = disp(nmachs,:) + localSize(nmachs,:)
-    maxSizeGathered = MAXVAL(sizeGathered)
-    ALLOCATE(gathered(maxSizeGathered), stat=ierr)
-    IF (ierr/=0) THEN
-       CALL fatal_error("Error allocating gathered (gatherData)")
-    ENDIF
+    maxSizeGathered = maxval(sizeGathered)
+    allocate(gathered(maxSizeGathered), stat=ierr)
+    if (ierr/=0) then
+       call fatal_error("Error allocating gathered (gatherData)")
+    endif
     ! grid dependent field sizes as a function of idim_type
-    CALL GlobalSizes(ifm, nmachs, nwave, globalSize)
-    IF (mchnum==master_num) THEN
+    call GlobalSizes(ifm, nmachs, nwave, globalSize)
+    if (mchnum==master_num) then
        sizeFullField(:) = globalSize(:)
-    ELSE
+    else
        sizeFullField(:) = 1
-    END IF
-    maxSizeFullField = MAXVAL(sizeFullField)
-    ALLOCATE(fullField(sizeFullField(idim_type)), stat=ierr)
-    IF (ierr/=0) THEN
-       CALL fatal_error("Error allocating fullField (gatherData)")
-    ENDIF
+    end if
+    maxSizeFullField = maxval(sizeFullField)
+    allocate(fullField(sizeFullField(idim_type)), stat=ierr)
+    if (ierr/=0) then
+       call fatal_error("Error allocating fullField (gatherData)")
+    endif
     localVarn = trim(varn)
-    CALL PreProcAndGather(.FALSE., ifm, idim_type, localVarn, &
+    call PreProcAndGather(.false., ifm, idim_type, localVarn, &
          il1, ir2, jb1, jt2, localSize, disp,                 &
          localSize(mynum,idim_type), LocalChunk,              &
          sizeGathered(idim_type), gathered,                   &
-         sizeFullField(idim_type), fullField                  )
-    
-    IF (mchnum==master_num) THEN
-       globalData3D = RESHAPE(fullField, (/nnzp, nnxp, nnyp/))
-    ENDIF
+         sizeFullField(idim_type), fullField, &
+         oneControlVars, oneBasicFields, oneTurbFields)
+
+    if (mchnum==master_num) then
+       globalData3D = reshape(fullField, (/nnzp, nnxp, nnyp/))
+    endif
 
     call parf_bcast(globalData3D, &
          int(nnzp,i8), int(nnxp,i8), int(nnyp,i8), master_num)
 
-    DEALLOCATE(fullField)
-    DEALLOCATE(gathered)
-    DEALLOCATE(localChunk)
-    
-  END SUBROUTINE gatherData3D
+    deallocate(fullField)
+    deallocate(gathered)
+    deallocate(localChunk)
+
+  end subroutine gatherData3D
 
 
 
   ! Recreating Global Information (Gathering data)
-  SUBROUTINE gatherData4D(idim_type, varn, ifm, mzg, nnxp, nnyp, npat, &
+  subroutine gatherData4D(idim_type, varn, ifm, mzg, nnxp, nnyp, npat, &
        nmachs, mchnum, mynum, master_num,                              &
-       localData4D, globalData4D)
+       localData4D, globalData4D, &
+       oneControlVars, oneBasicFields, oneTurbFields)
 
-    USE mem_grid, ONLY : &
-         GlobalSizes         ! Subroutine
-
-    USE ParLib, ONLY: &
-         parf_bcast ! Subroutine
-
-    IMPLICIT NONE
-    INCLUDE "i8.h"
+    implicit none
+    include "constants.h"
     ! Arguments:
-    INTEGER, INTENT(IN)           :: idim_type, ifm, mzg, nnxp, nnyp, npat, &
+    integer, intent(IN)           :: idim_type, ifm, mzg, nnxp, nnyp, npat, &
          nmachs, mchnum, mynum, master_num
-    CHARACTER(LEN=16), INTENT(IN) :: varn
-    REAL, INTENT(IN)              :: localData4D(:,:,:,:)
-    REAL, INTENT(OUT)             :: globalData4D(:,:,:,:)
+    character(LEN=16), intent(IN) :: varn
+    real, intent(IN)              :: localData4D(:,:,:,:)
+    real, intent(OUT)             :: globalData4D(:,:,:,:)
+    type(ControlVars), pointer, intent(in) :: oneControlVars
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
+
     ! Local Variables:
-    CHARACTER(LEN=16)  :: localVarn
-    INTEGER            :: ierr
-    INTEGER, PARAMETER :: idim_type_min = 2
-    INTEGER, PARAMETER :: idim_type_max = 7
-    INTEGER            :: il1(nmachs)
-    INTEGER            :: ir2(nmachs)
-    INTEGER            :: jb1(nmachs)
-    INTEGER            :: jt2(nmachs)
-    INTEGER            :: localSize(nmachs,idim_type_min:idim_type_max)
-    INTEGER            :: disp(nmachs,idim_type_min:idim_type_max)
-    INTEGER            :: maxLocalSize
-    INTEGER            :: sizeGathered(idim_type_min:idim_type_max)
-    INTEGER            :: maxSizeGathered
-    INTEGER            :: sizeFullField(idim_type_min:idim_type_max)
-    INTEGER            :: maxsizeFullField
-    INTEGER            :: globalSize(idim_type_min:idim_type_max)
-    REAL, ALLOCATABLE  :: localChunk(:)
-    REAL, ALLOCATABLE  :: gathered(:)
-    REAL, ALLOCATABLE  :: fullField(:)
+    character(LEN=16)  :: localVarn
+    integer            :: ierr
+    integer, parameter :: idim_type_min = 2
+    integer, parameter :: idim_type_max = 7
+    integer            :: il1(nmachs)
+    integer            :: ir2(nmachs)
+    integer            :: jb1(nmachs)
+    integer            :: jt2(nmachs)
+    integer            :: localSize(nmachs,idim_type_min:idim_type_max)
+    integer            :: disp(nmachs,idim_type_min:idim_type_max)
+    integer            :: maxLocalSize
+    integer            :: sizeGathered(idim_type_min:idim_type_max)
+    integer            :: maxSizeGathered
+    integer            :: sizeFullField(idim_type_min:idim_type_max)
+    integer            :: maxsizeFullField
+    integer            :: globalSize(idim_type_min:idim_type_max)
+    real, allocatable  :: localChunk(:)
+    real, allocatable  :: gathered(:)
+    real, allocatable  :: fullField(:)
 
     ! Recreating Global information about Soil Water
     ! grid dependent, field independent constants for gather and unpacking
     ! as a function of idim_type
-    CALL LocalSizesAndDisp(ifm, il1, ir2, jb1, jt2, localSize, disp)
-    maxLocalSize = MAXVAL(localSize(mynum,:))
-    ALLOCATE(localChunk(maxLocalSize), stat=ierr)
-    IF (ierr/=0) THEN
-       CALL fatal_error("Error allocating localChunk (gatherData)")
-    ENDIF
-    CALL CopyLocalChunk(localData4D(1,1,1,1), localChunk, &
+    call LocalSizesAndDisp(ifm, il1, ir2, jb1, jt2, localSize, disp, oneControlVars)
+    maxLocalSize = maxval(localSize(mynum,:))
+    allocate(localChunk(maxLocalSize), stat=ierr)
+    if (ierr/=0) then
+       call fatal_error("Error allocating localChunk (gatherData)")
+    endif
+    call CopyLocalChunk(localData4D(1,1,1,1), localChunk, &
          LocalSize(mynum,idim_type))
     sizeGathered(:) = disp(nmachs,:) + localSize(nmachs,:)
-    maxSizeGathered = MAXVAL(sizeGathered)
-    ALLOCATE(gathered(maxSizeGathered), stat=ierr)
-    IF (ierr/=0) THEN
-       CALL fatal_error("Error allocating gathered (gatherData)")
-    ENDIF
+    maxSizeGathered = maxval(sizeGathered)
+    allocate(gathered(maxSizeGathered), stat=ierr)
+    if (ierr/=0) then
+       call fatal_error("Error allocating gathered (gatherData)")
+    endif
     ! grid dependent field sizes as a function of idim_type
-    CALL GlobalSizes(ifm, nmachs, nwave, globalSize)
-    IF (mchnum==master_num) THEN
+    call GlobalSizes(ifm, nmachs, nwave, globalSize)
+    if (mchnum==master_num) then
        sizeFullField(:) = globalSize(:)
-    ELSE
+    else
        sizeFullField(:) = 1
-    END IF
-    maxSizeFullField = MAXVAL(sizeFullField)
-    ALLOCATE(fullField(sizeFullField(idim_type)), stat=ierr)
-    IF (ierr/=0) THEN
-       CALL fatal_error("Error allocating fullField (gatherData)")
-    ENDIF
+    end if
+    maxSizeFullField = maxval(sizeFullField)
+    allocate(fullField(sizeFullField(idim_type)), stat=ierr)
+    if (ierr/=0) then
+       call fatal_error("Error allocating fullField (gatherData)")
+    endif
     localVarn = trim(varn)
-    CALL PreProcAndGather(.FALSE., ifm, idim_type, localVarn, &
+    call PreProcAndGather(.false., ifm, idim_type, localVarn, &
          il1, ir2, jb1, jt2, localSize, disp,                 &
          localSize(mynum,idim_type), LocalChunk,              &
          sizeGathered(idim_type), gathered,                   &
-         sizeFullField(idim_type), fullField                  )
-    
-    IF (mchnum==master_num) THEN
-       globalData4D = RESHAPE(fullField, (/mzg, nnxp, nnyp, npat/))
-    ENDIF
+         sizeFullField(idim_type), fullField, &
+         oneControlVars, oneBasicFields, oneTurbFields)
+
+    if (mchnum==master_num) then
+       globalData4D = reshape(fullField, (/mzg, nnxp, nnyp, npat/))
+    endif
 
     call parf_bcast(globalData4D, &
          int(mzg,i8), int(nnxp,i8), int(nnyp,i8), int(npat,i8), master_num)
 
-    DEALLOCATE(fullField)
-    DEALLOCATE(gathered)
-    DEALLOCATE(localChunk)
-    
-  END SUBROUTINE gatherData4D
+    deallocate(fullField)
+    deallocate(gathered)
+    deallocate(localChunk)
 
-!--(DMK-CCATT-INI)-----------------------------------------------------
+  end subroutine gatherData4D
+
+  !--(DMK-CCATT-INI)-----------------------------------------------------
   !temporary function 
- subroutine storeOwnChunk_3D(grid, fullGrid, toStore, nz, nx, ny, fieldName)
-   
-   use mem_grid, only:  &
-       runtype
-       
-   use node_mod, only:	&
-       mchnum, 		&
-       mynum, 		&
-       master_num, 	&
-       nmachs, 		&
-       nodemxp, 	&
-       nodemyp, 	&
-       nodeia, 		&
-       nodeiz, 		&
-       nodeja, 		&
-       nodejz, 		&
-       nodeibcon, 	&
-       nodei0, 		&
-       nodej0     
-  
-  use mem_grid, only:   &
-      nnzp,			&
-      nnxp,			&
-      nnyp
- 
-  use ParLib, only: &
-      parf_bcast
- 
-  include "i8.h"
+  subroutine storeOwnChunk_3D(grid, fullGrid, toStore, nz, nx, ny, fieldName, oneControlVars)
 
-  integer, intent(in) 			:: grid
-  integer, intent(in) 			:: nz
-  integer, intent(in)			:: nx
-  integer, intent(in)			:: ny
-  real,  pointer, dimension(:,:,:)	:: toStore
-  real,  dimension(nz,nx,ny)		:: fullGrid
-  character(len=*), intent(in)		:: fieldName
+    include "constants.h"
 
-    integer 		:: ldimx
-    integer		:: ldimy
-    integer		:: lin
-    integer 		:: ia
-    integer		:: iz
-    integer		:: ja
-    integer		:: jz
-    integer		:: ka
-    integer		:: kz
-    integer 		:: ierr
-    character(len=8)	:: c0
-    character(len=8)	:: c1
+    integer, intent(in) :: grid
+    integer, intent(in) :: nz
+    integer, intent(in):: nx
+    integer, intent(in):: ny
+    real,  pointer, dimension(:,:,:):: toStore
+    real,  dimension(nz,nx,ny):: fullGrid
+    character(len=*), intent(in):: fieldName
+    type(ControlVars), pointer, intent(in) :: oneControlVars
     
+    integer :: ldimx
+    integer:: ldimy
+    integer:: lin
+    integer :: ia
+    integer:: iz
+    integer:: ja
+    integer:: jz
+    integer:: ka
+    integer:: kz
+    integer :: ierr
+    character(len=8):: c0
+    character(len=8):: c1
+
     character(len=*), parameter :: h="**(storeOwnChunk_3D)**"
 
     ! check allocated memory
@@ -1783,7 +1408,7 @@ contains
     if (.not. associated(toStore)) then
        call fatal_error(h//" will store at not associated pointer var "//trim(fieldName))
     end if
-    
+
     lin = size(toStore,1)
     if (nz /= lin) then
        write(c0,"(i8)") nz
@@ -1791,7 +1416,7 @@ contains
        call fatal_error(h//trim(fieldName)//" z dimension ("//trim(adjustl(c1))//&
             ") differs from required ("//trim(adjustl(c0))//")")
     end if
-    
+
     ldimx = nodemxp(mynum,grid)
     lin = size(toStore,2)
     if (ldimx /= lin) then
@@ -1800,7 +1425,7 @@ contains
        call fatal_error(h//trim(fieldName)//" x dimension ("//trim(adjustl(c1))//&
             ") differs from required ("//trim(adjustl(c0))//")")
     end if
-    
+
     ldimy = nodemyp(mynum,grid)
     lin = size(toStore,3)
     if (ldimy /= lin) then
@@ -1809,18 +1434,69 @@ contains
        call fatal_error(h//trim(fieldName)//" y dimension ("//trim(adjustl(c1))//&
             ") differs from required ("//trim(adjustl(c0))//")")
     end if
-    
+
     ia = nodei0(mynum,grid)+1
     iz = nodei0(mynum,grid)+nodemxp(mynum,grid)
     ja = nodej0(mynum,grid)+1
     jz = nodej0(mynum,grid)+nodemyp(mynum,grid)
 
-    call mk_3_buff(fullGrid(1,1,1), toStore(1,1,1), &
-                   nz, nnxp, nnyp, nz, ldimx, ldimy, ia, iz, ja, jz)
+    call mk_3_buff(fullGrid, toStore, &
+         nz, oneControlVars%nnxp, oneControlVars%nnyp, nz, ldimx, ldimy, ia, iz, ja, jz)
 
 
 
   end subroutine storeOwnChunk_3D
-!--(DMK-CCATT-FIM)-----------------------------------------------------
+  !--(DMK-CCATT-FIM)-----------------------------------------------------
+
+  subroutine rams_aprep_p (n1,a,b,c)
+    integer :: n1
+    real :: a(*),b(*),c(*)
+
+    integer :: i
+
+    do i=1,n1
+       c(i)=a(i)+b(i)
+    enddo
+
+    return
+  end subroutine rams_aprep_p
+
+
+
+  !******************************************************************************
+
+  subroutine rams_aprep_hkh(n1,hkm,vkh,dn0,scr1,idiffk,xkhkm)
+    integer :: n1,idiffk
+    real :: xkhkm
+    real, dimension(*) :: hkm,vkh,dn0,scr1
+    integer :: ind
+
+    if (idiffk <= 3) then
+       do ind = 1,n1
+          scr1(ind) = hkm(ind) * xkhkm / dn0(ind)
+       enddo
+    elseif (idiffk >= 4) then
+       do ind = 1,n1
+          scr1(ind) = vkh(ind) / dn0(ind)
+       enddo
+    endif
+
+    return
+  end subroutine rams_aprep_hkh
+
+  !******************************************************************************
+
+  subroutine rams_aprep_vkh(n1,vkh,dn0,vt3dd)
+    integer :: n1
+    real :: vkh(*),dn0(*),vt3dd(*)
+    integer :: ind
+
+    do ind = 1,n1
+       vt3dd(ind) = vkh(ind) / dn0(ind)
+    enddo
+
+    return
+  end subroutine rams_aprep_vkh
+
 
 end module ReadBcst

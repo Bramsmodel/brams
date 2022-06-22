@@ -32,7 +32,7 @@ module ModDateUtils
   public :: date_abs_secs
   public :: date_abs_secs2
   public :: date_secs_ymdt
-  include "ranks.h"
+  include "constants.h"
 
 
 contains
@@ -120,7 +120,7 @@ contains
 
     implicit none
 
-    include "constants.f90"
+    include "constants.h"
     ! compute number of seconds past 1 January 1900 12:00 am
     ! from an input string in the form YYYYMMDDHHHHHH
     ! returns a real(kind=r8)
@@ -164,7 +164,7 @@ contains
 
     implicit none
 
-    include "constants.f90"
+    include "constants.h"
     ! compute number of seconds past 1 January 1900 12:00 am
     ! from integers representing year, month, date and hour
     ! returns a real(kind=r8)

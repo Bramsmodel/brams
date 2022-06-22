@@ -3,7 +3,7 @@ module Extras
 
   use ModNamelistFile, only: namelistFile
 
-  include "i8.h"
+  include "constants.h"
 
   ! Used in CCATT
 
@@ -28,7 +28,7 @@ contains
       dumpMessage
 
     implicit none
-    include "constants.f90"
+    include "constants.h"
     ! Arguments:
     type (ext2d), intent(INOUT) :: scal(:,:)
     integer, intent(IN) :: m1,m2 !Dimension of arrays
@@ -55,7 +55,7 @@ contains
       dumpMessage
 
     implicit none
-    include "constants.f90"
+    include "constants.h"
     ! Arguments:
     type (ext3d), intent(INOUT) :: scal(:,:)
     integer, intent(IN) :: m1,m2,m3 !Dimension of arrays
@@ -154,10 +154,10 @@ contains
   !---------------------------------------------------------------
 
   subroutine filltab_extra2d(scal2, scalm2, imean, n1, n2, ng, na)
-    use var_tables
-
+    use var_tables, only: &
+         InsertVtab
     implicit none
-    include "i8.h"
+    include "constants.h"
     ! Arguments:
     type (ext2d), intent(IN) :: scal2, scalm2
     integer, intent(IN) :: imean, n1, n2, ng, na
@@ -180,10 +180,11 @@ contains
 
   !---------------------------------------------------------------
   subroutine filltab_extra3d(scal3, scalm3, imean, n1, n2, n3, ng, na)
-    use var_tables
+    use var_tables, only: &
+         InsertVtab
 
     implicit none
-    include "i8.h"
+    include "constants.h"
     ! Arguments:
     type (ext3d), intent(IN) :: scal3, scalm3
     integer, intent(IN) :: imean, n1, n2, n3, ng, na

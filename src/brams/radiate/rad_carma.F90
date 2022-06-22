@@ -47,7 +47,7 @@ CONTAINS
   			   plonn,	  & !INTENT()
   			   time 	    !INTENT()
 
-    USE mem_scratch, ONLY: nzpmax	    !INTENT()
+    USE grid_dims, ONLY: nzpmax	    !INTENT()
     USE mem_radiate, ONLY: lonrad	    !INTENT()
 
     USE rconstants,  ONLY: cp,  	  & !INTENT()
@@ -61,8 +61,15 @@ CONTAINS
     USE mem_aerad, ONLY: ngas,nwave,iprocopio
     USE mem_leaf          , only: leaf_g
 !srf - new aerosol model
-    use aer1_list,       nspecies_aer   =>nspecies &
-                        ,spc_alloc_aer  =>spc_alloc
+    use aer1_list, only: nspecies_aer   =>nspecies, &
+                         spc_alloc_aer  =>spc_alloc,&
+                         accum,                     &
+                         bburn,                     &
+                         coarse,                    &
+                         on,                        &
+                         transport,                 &
+                         urban                    
+
     use mem_aer1 , only: aer1_g ,AEROSOL
     use ccatt_start, only: ccatt
 
@@ -742,7 +749,8 @@ CONTAINS
 
 
   SUBROUTINE initrad(imonth1,idate1,iyear1,itime1,time_rams,m1,ia,ja,iz,jz)
-    USE ModDateUtils
+    USE ModDateUtils, only: julday
+
     USE mem_aerad, ONLY: is_grp_ice_aerad,r_aerad, &
   			 rup_aerad,rcore_aerad,rcoreup_aerad, &
   			 ptop_aerad,pbot_aerad,u0_aerad, &
@@ -3435,7 +3443,7 @@ CONTAINS
 !--(DMK-CCATT-FIM)----------------------------------------------------------
 
     IMPLICIT NONE
-    include "constants.f90"
+    include "constants.h"
     INTEGER,INTENT(IN) :: ia,iz,ja,jz,m1, &
 
 !--(DMK-CCATT-INI)----------------------------------------------------------
@@ -4632,7 +4640,7 @@ ENDIF
     !  THE STEFAN-BOLTZMANN CONSTANT TIMES T**4.
     IMPLICIT NONE
 
-    include "constants.f90"
+    include "constants.h"
     REAL				     :: e
     REAL, INTENT(IN)			     :: t1
     REAL, INTENT(OUT)			     :: d
@@ -5172,7 +5180,7 @@ ENDIF
 
   SUBROUTINE  radtran_to_rams(m1,m2,m3,fthrl,rlong,fthrs,rshort,aotr,ia,iz,ja,jz,mynum)
 
-    USE mem_grid   , ONLY: nzpmax	  !INTENT(IN)
+    USE grid_dims   , ONLY: nzpmax	  !INTENT(IN)
     USE mem_globrad, ONLY: nwave,ntotal,nprob
 
     IMPLICIT NONE

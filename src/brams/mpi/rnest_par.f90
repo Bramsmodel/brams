@@ -59,42 +59,44 @@ subroutine par_bintp(ac,as,dn0f,n1m,n2m,n3m,m1f  &
   !      if(iand(ibcon,4).ne.0)ja0=1
   !**End of old comments
 
+  use grid_dims, only : &
+       maxgrds, &                   ! maximum number of grids
+       nxpmax,  &                   ! maximum x dimension
+       nypmax,  &                   ! maximum y dimension
+       nzpmax                    ! maximum z dimension
+
   use mem_grid, only : &
-         maxgrds &                   ! maximum number of grids
-        ,nxpmax  &                   ! maximum x dimension
-        ,nypmax  &                   ! maximum y dimension
-        ,nzpmax  &                   ! maximum z dimension
-        ,nxtnest & !(maxgrds)        ! next coarser grid number (0 if grid is not nested)
-        ,nsttop  &                   ! top z boundary control (0 means build)
-        ,nstbot  &                   ! high z boundary control (0 means build)
-        ,nnzp    & !(maxgrds)        ! grid points z direction
-        ,ipm     & !(maxx,ngrids) ! next coarser grid cell index (icoarser) that contains this finer grid cell
-        ,ei1     & !(maxx,ngrids) ! interp. weight for icoarser-1 on 3 points interp
-        ,ei2     & !(maxx,ngrids) ! interp. weight for icoarser   on 3 points interp
-        ,ei3     & !(maxx,ngrids) ! interp. weight for icoarser+1 on 3 points interp
-        ,ei4     & !(maxx,ngrids) ! interp. weight for icoarser-2 on 4 points interp
-        ,ei5     & !(maxx,ngrids) ! interp. weight for icoarser-1 on 4 points interp
-        ,ei6     & !(maxx,ngrids) ! interp. weight for icoarser   on 4 points interp
-        ,ei7     & !(maxx,ngrids) ! interp. weight for icoarser+1 on 4 points interp
-        ,jpm     & !(maxy,ngrids) ! next coarser grid cell index (jcoarser) that contains this finer grid cell
-        ,ej1     & !(maxy,ngrids) ! interp. weight for jcoarser-1 on 3 points interp
-        ,ej2     & !(maxy,ngrids) ! interp. weight for jcoarser   on 3 points interp
-        ,ej3     & !(maxy,ngrids) ! interp. weight for jcoarser+1 on 3 points interp
-        ,ej4     & !(maxy,ngrids) ! interp. weight for jcoarser-2 on 4 points interp
-        ,ej5     & !(maxy,ngrids) ! interp. weight for jcoarser-1 on 4 points interp
-        ,ej6     & !(maxy,ngrids) ! interp. weight for jcoarser   on 4 points interp
-        ,ej7     & !(maxy,ngrids) ! interp. weight for jcoarser+1 on 4 points interp
-        ,kpm     & !(maxz,ngrids) ! next coarser grid cell index that contains this finer grid cell
-        ,ek1     & !(maxz,ngrids) ! interp. weight for kcoarser-1 on 3 points interp
-        ,ek2     & !(maxz,ngrids) ! interp. weight for kcoarser   on 3 points interp
-        ,ek3     & !(maxz,ngrids) ! interp. weight for kcoarser+1 on 3 points interp
-        ,ek4     & !(maxz,ngrids) ! interp. weight for kcoarser-2 on 4 points interp
-        ,ek5     & !(maxz,ngrids) ! interp. weight for kcoarser-1 on 4 points interp
-        ,ek6     & !(maxz,ngrids) ! interp. weight for kcoarser   on 4 points interp
-        ,ek7       !(maxz,ngrids) ! interp. weight for kcoarser+1 on 4 points interp
-     
+       nxtnest & !(maxgrds)        ! next coarser grid number (0 if grid is not nested)
+       ,nsttop  &                   ! top z boundary control (0 means build)
+       ,nstbot  &                   ! high z boundary control (0 means build)
+       ,nnzp    & !(maxgrds)        ! grid points z direction
+       ,ipm     & !(maxx,ngrids) ! next coarser grid cell index (icoarser) that contains this finer grid cell
+       ,ei1     & !(maxx,ngrids) ! interp. weight for icoarser-1 on 3 points interp
+       ,ei2     & !(maxx,ngrids) ! interp. weight for icoarser   on 3 points interp
+       ,ei3     & !(maxx,ngrids) ! interp. weight for icoarser+1 on 3 points interp
+       ,ei4     & !(maxx,ngrids) ! interp. weight for icoarser-2 on 4 points interp
+       ,ei5     & !(maxx,ngrids) ! interp. weight for icoarser-1 on 4 points interp
+       ,ei6     & !(maxx,ngrids) ! interp. weight for icoarser   on 4 points interp
+       ,ei7     & !(maxx,ngrids) ! interp. weight for icoarser+1 on 4 points interp
+       ,jpm     & !(maxy,ngrids) ! next coarser grid cell index (jcoarser) that contains this finer grid cell
+       ,ej1     & !(maxy,ngrids) ! interp. weight for jcoarser-1 on 3 points interp
+       ,ej2     & !(maxy,ngrids) ! interp. weight for jcoarser   on 3 points interp
+       ,ej3     & !(maxy,ngrids) ! interp. weight for jcoarser+1 on 3 points interp
+       ,ej4     & !(maxy,ngrids) ! interp. weight for jcoarser-2 on 4 points interp
+       ,ej5     & !(maxy,ngrids) ! interp. weight for jcoarser-1 on 4 points interp
+       ,ej6     & !(maxy,ngrids) ! interp. weight for jcoarser   on 4 points interp
+       ,ej7     & !(maxy,ngrids) ! interp. weight for jcoarser+1 on 4 points interp
+       ,kpm     & !(maxz,ngrids) ! next coarser grid cell index that contains this finer grid cell
+       ,ek1     & !(maxz,ngrids) ! interp. weight for kcoarser-1 on 3 points interp
+       ,ek2     & !(maxz,ngrids) ! interp. weight for kcoarser   on 3 points interp
+       ,ek3     & !(maxz,ngrids) ! interp. weight for kcoarser+1 on 3 points interp
+       ,ek4     & !(maxz,ngrids) ! interp. weight for kcoarser-2 on 4 points interp
+       ,ek5     & !(maxz,ngrids) ! interp. weight for kcoarser-1 on 4 points interp
+       ,ek6     & !(maxz,ngrids) ! interp. weight for kcoarser   on 4 points interp
+       ,ek7       !(maxz,ngrids) ! interp. weight for kcoarser+1 on 4 points interp
+
   implicit none
-     
+
   integer, intent(in   ) :: n1m                 ! first dimension of ac and as; should accomodate both grids
   integer, intent(in   ) :: n2m                 ! second dimension of ac and as; should accomodate both grids
   integer, intent(in   ) :: n3m                 ! third dimension of ac and as; should accomodate both grids
@@ -161,9 +163,9 @@ subroutine par_bintp(ac,as,dn0f,n1m,n2m,n3m,m1f  &
            ic=ipm(im,ifm)
            do kc=k1,k2
               as(kc,if,jc)=ei4(im,ifm)*ac(kc,ic-2,jc)  &
-                          +ei5(im,ifm)*ac(kc,ic-1,jc)  &
-                          +ei6(im,ifm)*ac(kc,ic  ,jc)  &
-                          +ei7(im,ifm)*ac(kc,ic+1,jc)
+                   +ei5(im,ifm)*ac(kc,ic-1,jc)  &
+                   +ei6(im,ifm)*ac(kc,ic  ,jc)  &
+                   +ei7(im,ifm)*ac(kc,ic+1,jc)
            enddo
         enddo
      enddo
@@ -177,8 +179,8 @@ subroutine par_bintp(ac,as,dn0f,n1m,n2m,n3m,m1f  &
            ic=ipm(im,ifm)
            do kc=k1,k2
               as(kc,if,jc)=ei1(im,ifm)*ac(kc,ic-1,jc)  &
-                          +ei2(im,ifm)*ac(kc,ic  ,jc)  &
-                          +ei3(im,ifm)*ac(kc,ic+1,jc)
+                   +ei2(im,ifm)*ac(kc,ic  ,jc)  &
+                   +ei3(im,ifm)*ac(kc,ic+1,jc)
            enddo
         enddo
      enddo
@@ -199,9 +201,9 @@ subroutine par_bintp(ac,as,dn0f,n1m,n2m,n3m,m1f  &
         do if=ia,iz
            do kc=k1,k2
               ac(kc,if,jf)=ej4(jm,ifm)*as(kc,if,jc-2)  &
-                          +ej5(jm,ifm)*as(kc,if,jc-1)  &
-                          +ej6(jm,ifm)*as(kc,if,jc  )  &
-                          +ej7(jm,ifm)*as(kc,if,jc+1)
+                   +ej5(jm,ifm)*as(kc,if,jc-1)  &
+                   +ej6(jm,ifm)*as(kc,if,jc  )  &
+                   +ej7(jm,ifm)*as(kc,if,jc+1)
            enddo
         enddo
      enddo
@@ -215,8 +217,8 @@ subroutine par_bintp(ac,as,dn0f,n1m,n2m,n3m,m1f  &
         do if=ia,iz
            do kc=k1,k2
               ac(kc,if,jf)=ej1(jm,ifm)*as(kc,if,jc-1)  &
-                          +ej2(jm,ifm)*as(kc,if,jc  )  &
-                          +ej3(jm,ifm)*as(kc,if,jc+1)
+                   +ej2(jm,ifm)*as(kc,if,jc  )  &
+                   +ej3(jm,ifm)*as(kc,if,jc+1)
            enddo
         enddo
      enddo
@@ -236,11 +238,11 @@ subroutine par_bintp(ac,as,dn0f,n1m,n2m,n3m,m1f  &
            do kf=1,m1f-1
               kc=kpm(kf+1,ifm)
               bx(kf,jf,1)=  &
-                  (ek4(kf,ifm)*ac(max(1         ,kc-2),if,jf)  &
-                 + ek5(kf,ifm)*ac(               kc-1 ,if,jf)  &
-                 + ek6(kf,ifm)*ac(               kc   ,if,jf)  &
-                 + ek7(kf,ifm)*ac(min(nnzp(nc)-1,kc+1),if,jf))  &
-                 / (.5 * (dn0f(kf,if,jf) + dn0f(kf+1,if,jf)))
+                   (ek4(kf,ifm)*ac(max(1         ,kc-2),if,jf)  &
+                   + ek5(kf,ifm)*ac(               kc-1 ,if,jf)  &
+                   + ek6(kf,ifm)*ac(               kc   ,if,jf)  &
+                   + ek7(kf,ifm)*ac(min(nnzp(nc)-1,kc+1),if,jf))  &
+                   / (.5 * (dn0f(kf,if,jf) + dn0f(kf+1,if,jf)))
            enddo
         enddo
      endif
@@ -251,11 +253,11 @@ subroutine par_bintp(ac,as,dn0f,n1m,n2m,n3m,m1f  &
            do kf=1,m1f-1
               kc=kpm(kf+1,ifm)
               bx(kf,jf,2)=  &
-                  (ek4(kf,ifm)*ac(max(1         ,kc-2),if,jf)  &
-                 + ek5(kf,ifm)*ac(               kc-1 ,if,jf)  &
-                 + ek6(kf,ifm)*ac(               kc   ,if,jf)  &
-                 + ek7(kf,ifm)*ac(min(nnzp(nc)-1,kc+1),if,jf))  &
-                 / (.5 * (dn0f(kf,if,jf) + dn0f(kf+1,if,jf)))
+                   (ek4(kf,ifm)*ac(max(1         ,kc-2),if,jf)  &
+                   + ek5(kf,ifm)*ac(               kc-1 ,if,jf)  &
+                   + ek6(kf,ifm)*ac(               kc   ,if,jf)  &
+                   + ek7(kf,ifm)*ac(min(nnzp(nc)-1,kc+1),if,jf))  &
+                   / (.5 * (dn0f(kf,if,jf) + dn0f(kf+1,if,jf)))
            enddo
         enddo
      endif
@@ -266,11 +268,11 @@ subroutine par_bintp(ac,as,dn0f,n1m,n2m,n3m,m1f  &
            do kf=1,m1f-1
               kc=kpm(kf+1,ifm)
               by(kf,if,1)=  &
-                  (ek4(kf,ifm)*ac(max(1         ,kc-2),if,jf)  &
-                 + ek5(kf,ifm)*ac(               kc-1 ,if,jf)  &
-                 + ek6(kf,ifm)*ac(               kc   ,if,jf)  &
-                 + ek7(kf,ifm)*ac(min(nnzp(nc)-1,kc+1),if,jf))  &
-                 / (.5 * (dn0f(kf,if,jf) + dn0f(kf+1,if,jf)))
+                   (ek4(kf,ifm)*ac(max(1         ,kc-2),if,jf)  &
+                   + ek5(kf,ifm)*ac(               kc-1 ,if,jf)  &
+                   + ek6(kf,ifm)*ac(               kc   ,if,jf)  &
+                   + ek7(kf,ifm)*ac(min(nnzp(nc)-1,kc+1),if,jf))  &
+                   / (.5 * (dn0f(kf,if,jf) + dn0f(kf+1,if,jf)))
            enddo
         enddo
      endif
@@ -281,11 +283,11 @@ subroutine par_bintp(ac,as,dn0f,n1m,n2m,n3m,m1f  &
            do kf=1,m1f-1
               kc=kpm(kf+1,ifm)
               by(kf,if,2)=  &
-                  (ek4(kf,ifm)*ac(max(1         ,kc-2),if,jf)  &
-                 + ek5(kf,ifm)*ac(               kc-1 ,if,jf)  &
-                 + ek6(kf,ifm)*ac(               kc   ,if,jf)  &
-                 + ek7(kf,ifm)*ac(min(nnzp(nc)-1,kc+1),if,jf))  &
-                 / (.5 * (dn0f(kf,if,jf) + dn0f(kf+1,if,jf)))
+                   (ek4(kf,ifm)*ac(max(1         ,kc-2),if,jf)  &
+                   + ek5(kf,ifm)*ac(               kc-1 ,if,jf)  &
+                   + ek6(kf,ifm)*ac(               kc   ,if,jf)  &
+                   + ek7(kf,ifm)*ac(min(nnzp(nc)-1,kc+1),if,jf))  &
+                   / (.5 * (dn0f(kf,if,jf) + dn0f(kf+1,if,jf)))
            enddo
         enddo
      endif
@@ -296,11 +298,11 @@ subroutine par_bintp(ac,as,dn0f,n1m,n2m,n3m,m1f  &
            do if=ia,iz
               kc=kpm(kf+1,ifm)
               bz(if,jf,1)=  &
-                  (ek4(kf,ifm)*ac(max(1         ,kc-2),if,jf)  &
-                 + ek5(kf,ifm)*ac(               kc-1 ,if,jf)  &
-                 + ek6(kf,ifm)*ac(               kc   ,if,jf)  &
-                 + ek7(kf,ifm)*ac(min(nnzp(nc)-1,kc+1),if,jf))  &
-                 / (.5 * (dn0f(kf,if,jf) + dn0f(kf+1,if,jf)))
+                   (ek4(kf,ifm)*ac(max(1         ,kc-2),if,jf)  &
+                   + ek5(kf,ifm)*ac(               kc-1 ,if,jf)  &
+                   + ek6(kf,ifm)*ac(               kc   ,if,jf)  &
+                   + ek7(kf,ifm)*ac(min(nnzp(nc)-1,kc+1),if,jf))  &
+                   / (.5 * (dn0f(kf,if,jf) + dn0f(kf+1,if,jf)))
            enddo
         enddo
      endif
@@ -311,11 +313,11 @@ subroutine par_bintp(ac,as,dn0f,n1m,n2m,n3m,m1f  &
            do if=ia,iz
               kc=kpm(kf+1,ifm)
               bz(if,jf,2)=  &
-                  (ek4(kf,ifm)*ac(max(1         ,kc-2),if,jf)  &
-                 + ek5(kf,ifm)*ac(               kc-1 ,if,jf)  &
-                 + ek6(kf,ifm)*ac(               kc   ,if,jf)  &
-                 + ek7(kf,ifm)*ac(min(nnzp(nc)-1,kc+1),if,jf))  &
-                 / (.5 * (dn0f(kf,if,jf) + dn0f(kf+1,if,jf)))
+                   (ek4(kf,ifm)*ac(max(1         ,kc-2),if,jf)  &
+                   + ek5(kf,ifm)*ac(               kc-1 ,if,jf)  &
+                   + ek6(kf,ifm)*ac(               kc   ,if,jf)  &
+                   + ek7(kf,ifm)*ac(min(nnzp(nc)-1,kc+1),if,jf))  &
+                   / (.5 * (dn0f(kf,if,jf) + dn0f(kf+1,if,jf)))
            enddo
         enddo
      endif
@@ -329,9 +331,9 @@ subroutine par_bintp(ac,as,dn0f,n1m,n2m,n3m,m1f  &
         do jf=ja,jz
            do kf=1,m1f
               bx(kf,jf,1)=  &
-                  (ek1(kf,ifm)*ac(kpm(kf,ifm)-1,if,jf)  &
-                 + ek2(kf,ifm)*ac(kpm(kf,ifm)  ,if,jf)  &
-                 + ek3(kf,ifm)*ac(kpm(kf,ifm)+1,if,jf))
+                   (ek1(kf,ifm)*ac(kpm(kf,ifm)-1,if,jf)  &
+                   + ek2(kf,ifm)*ac(kpm(kf,ifm)  ,if,jf)  &
+                   + ek3(kf,ifm)*ac(kpm(kf,ifm)+1,if,jf))
            enddo
         enddo
      endif
@@ -341,9 +343,9 @@ subroutine par_bintp(ac,as,dn0f,n1m,n2m,n3m,m1f  &
         do jf=ja,jz
            do kf=1,m1f
               bx(kf,jf,2)=  &
-                  (ek1(kf,ifm)*ac(kpm(kf,ifm)-1,if,jf)  &
-                 + ek2(kf,ifm)*ac(kpm(kf,ifm)  ,if,jf)  &
-                 + ek3(kf,ifm)*ac(kpm(kf,ifm)+1,if,jf))
+                   (ek1(kf,ifm)*ac(kpm(kf,ifm)-1,if,jf)  &
+                   + ek2(kf,ifm)*ac(kpm(kf,ifm)  ,if,jf)  &
+                   + ek3(kf,ifm)*ac(kpm(kf,ifm)+1,if,jf))
            enddo
         enddo
      endif
@@ -353,9 +355,9 @@ subroutine par_bintp(ac,as,dn0f,n1m,n2m,n3m,m1f  &
         do if=ia,iz
            do kf=1,m1f
               by(kf,if,1)=  &
-                  (ek1(kf,ifm)*ac(kpm(kf,ifm)-1,if,jf)  &
-                 + ek2(kf,ifm)*ac(kpm(kf,ifm)  ,if,jf)  &
-                 + ek3(kf,ifm)*ac(kpm(kf,ifm)+1,if,jf))
+                   (ek1(kf,ifm)*ac(kpm(kf,ifm)-1,if,jf)  &
+                   + ek2(kf,ifm)*ac(kpm(kf,ifm)  ,if,jf)  &
+                   + ek3(kf,ifm)*ac(kpm(kf,ifm)+1,if,jf))
            enddo
         enddo
      endif
@@ -365,9 +367,9 @@ subroutine par_bintp(ac,as,dn0f,n1m,n2m,n3m,m1f  &
         do if=ia,iz
            do kf=1,m1f
               by(kf,if,2)=  &
-                  (ek1(kf,ifm)*ac(kpm(kf,ifm)-1,if,jf)  &
-                 + ek2(kf,ifm)*ac(kpm(kf,ifm)  ,if,jf)  &
-                 + ek3(kf,ifm)*ac(kpm(kf,ifm)+1,if,jf))
+                   (ek1(kf,ifm)*ac(kpm(kf,ifm)-1,if,jf)  &
+                   + ek2(kf,ifm)*ac(kpm(kf,ifm)  ,if,jf)  &
+                   + ek3(kf,ifm)*ac(kpm(kf,ifm)+1,if,jf))
            enddo
         enddo
      endif
@@ -377,9 +379,9 @@ subroutine par_bintp(ac,as,dn0f,n1m,n2m,n3m,m1f  &
         do jf=ja,jz
            do if=ia,iz
               bz(if,jf,1)=  &
-                  (ek1(kf,ifm)*ac(kpm(kf,ifm)-1,if,jf)  &
-                 + ek2(kf,ifm)*ac(kpm(kf,ifm)  ,if,jf)  &
-                 + ek3(kf,ifm)*ac(kpm(kf,ifm)+1,if,jf))
+                   (ek1(kf,ifm)*ac(kpm(kf,ifm)-1,if,jf)  &
+                   + ek2(kf,ifm)*ac(kpm(kf,ifm)  ,if,jf)  &
+                   + ek3(kf,ifm)*ac(kpm(kf,ifm)+1,if,jf))
            enddo
         enddo
      endif
@@ -389,9 +391,9 @@ subroutine par_bintp(ac,as,dn0f,n1m,n2m,n3m,m1f  &
         do jf=ja,jz
            do if=ia,iz
               bz(if,jf,2)=  &
-                  (ek1(kf,ifm)*ac(kpm(kf,ifm)-1,if,jf)  &
-                 + ek2(kf,ifm)*ac(kpm(kf,ifm)  ,if,jf)  &
-                 + ek3(kf,ifm)*ac(kpm(kf,ifm)+1,if,jf))
+                   (ek1(kf,ifm)*ac(kpm(kf,ifm)-1,if,jf)  &
+                   + ek2(kf,ifm)*ac(kpm(kf,ifm)  ,if,jf)  &
+                   + ek3(kf,ifm)*ac(kpm(kf,ifm)+1,if,jf))
            enddo
         enddo
      endif
@@ -405,10 +407,10 @@ subroutine par_bintp(ac,as,dn0f,n1m,n2m,n3m,m1f  &
         do jf=ja,jz
            do kf=1,m1f
               bx(kf,jf,1)=  &
-                  (ek1(kf,ifm)*ac(kpm(kf,ifm)-1,if,jf)  &
-                 + ek2(kf,ifm)*ac(kpm(kf,ifm)  ,if,jf)  &
-                 + ek3(kf,ifm)*ac(kpm(kf,ifm)+1,if,jf))  &
-                 / dn0f(kf,if,jf)
+                   (ek1(kf,ifm)*ac(kpm(kf,ifm)-1,if,jf)  &
+                   + ek2(kf,ifm)*ac(kpm(kf,ifm)  ,if,jf)  &
+                   + ek3(kf,ifm)*ac(kpm(kf,ifm)+1,if,jf))  &
+                   / dn0f(kf,if,jf)
            enddo
         enddo
      endif
@@ -418,10 +420,10 @@ subroutine par_bintp(ac,as,dn0f,n1m,n2m,n3m,m1f  &
         do jf=ja,jz
            do kf=1,m1f
               bx(kf,jf,2)=  &
-                  (ek1(kf,ifm)*ac(kpm(kf,ifm)-1,if,jf)  &
-                 + ek2(kf,ifm)*ac(kpm(kf,ifm)  ,if,jf)  &
-                 + ek3(kf,ifm)*ac(kpm(kf,ifm)+1,if,jf))  &
-                 / dn0f(kf,if,jf)
+                   (ek1(kf,ifm)*ac(kpm(kf,ifm)-1,if,jf)  &
+                   + ek2(kf,ifm)*ac(kpm(kf,ifm)  ,if,jf)  &
+                   + ek3(kf,ifm)*ac(kpm(kf,ifm)+1,if,jf))  &
+                   / dn0f(kf,if,jf)
            enddo
         enddo
      endif
@@ -431,10 +433,10 @@ subroutine par_bintp(ac,as,dn0f,n1m,n2m,n3m,m1f  &
         do if=ia,iz
            do kf=1,m1f
               by(kf,if,1)=  &
-                  (ek1(kf,ifm)*ac(kpm(kf,ifm)-1,if,jf)  &
-                 + ek2(kf,ifm)*ac(kpm(kf,ifm)  ,if,jf)  &
-                 + ek3(kf,ifm)*ac(kpm(kf,ifm)+1,if,jf))  &
-                 / dn0f(kf,if,jf)
+                   (ek1(kf,ifm)*ac(kpm(kf,ifm)-1,if,jf)  &
+                   + ek2(kf,ifm)*ac(kpm(kf,ifm)  ,if,jf)  &
+                   + ek3(kf,ifm)*ac(kpm(kf,ifm)+1,if,jf))  &
+                   / dn0f(kf,if,jf)
            enddo
         enddo
      endif
@@ -444,10 +446,10 @@ subroutine par_bintp(ac,as,dn0f,n1m,n2m,n3m,m1f  &
         do if=ia,iz
            do kf=1,m1f
               by(kf,if,2)=  &
-                  (ek1(kf,ifm)*ac(kpm(kf,ifm)-1,if,jf)  &
-                 + ek2(kf,ifm)*ac(kpm(kf,ifm)  ,if,jf)  &
-                 + ek3(kf,ifm)*ac(kpm(kf,ifm)+1,if,jf))  &
-                 / dn0f(kf,if,jf)
+                   (ek1(kf,ifm)*ac(kpm(kf,ifm)-1,if,jf)  &
+                   + ek2(kf,ifm)*ac(kpm(kf,ifm)  ,if,jf)  &
+                   + ek3(kf,ifm)*ac(kpm(kf,ifm)+1,if,jf))  &
+                   / dn0f(kf,if,jf)
            enddo
         enddo
      endif
@@ -457,10 +459,10 @@ subroutine par_bintp(ac,as,dn0f,n1m,n2m,n3m,m1f  &
         do jf=ja,jz
            do if=ia,iz
               bz(if,jf,1)=  &
-                  (ek1(kf,ifm)*ac(kpm(kf,ifm)-1,if,jf)  &
-                 + ek2(kf,ifm)*ac(kpm(kf,ifm)  ,if,jf)  &
-                 + ek3(kf,ifm)*ac(kpm(kf,ifm)+1,if,jf))  &
-                 / dn0f(kf,if,jf)
+                   (ek1(kf,ifm)*ac(kpm(kf,ifm)-1,if,jf)  &
+                   + ek2(kf,ifm)*ac(kpm(kf,ifm)  ,if,jf)  &
+                   + ek3(kf,ifm)*ac(kpm(kf,ifm)+1,if,jf))  &
+                   / dn0f(kf,if,jf)
            enddo
         enddo
      endif
@@ -470,10 +472,10 @@ subroutine par_bintp(ac,as,dn0f,n1m,n2m,n3m,m1f  &
         do jf=ja,jz
            do if=ia,iz
               bz(if,jf,2)=  &
-                  (ek1(kf,ifm)*ac(kpm(kf,ifm)-1,if,jf)  &
-                 + ek2(kf,ifm)*ac(kpm(kf,ifm)  ,if,jf)  &
-                 + ek3(kf,ifm)*ac(kpm(kf,ifm)+1,if,jf))  &
-                 / dn0f(kf,if,jf)
+                   (ek1(kf,ifm)*ac(kpm(kf,ifm)-1,if,jf)  &
+                   + ek2(kf,ifm)*ac(kpm(kf,ifm)  ,if,jf)  &
+                   + ek3(kf,ifm)*ac(kpm(kf,ifm)+1,if,jf))  &
+                   / dn0f(kf,if,jf)
            enddo
         enddo
      endif

@@ -8,6 +8,12 @@
 
 subroutine cond_update(iswap, ncond)
 
+  use ModRcio, only: &
+       cio
+  
+  use ModInitHis, only: &
+       hi_interp
+  
   use var_tables, only: num_var, vtab_r
   use an_header, only: head_table, nvbtab
   use mem_grid, only: ngrids, nnzp, nnxp, nnyp, ngridsh, &
@@ -18,11 +24,12 @@ subroutine cond_update(iswap, ncond)
      igrid_match,      & 
      varinit_g
      
-  use grid_struct
-  use rconstants
+  use grid_struct, only: grid_def, &
+                         alloc_grid_def, fill_grid_def, compare_grid_def
+
 
   implicit none
-  include "i8.h"
+  include "constants.h"
   include "files.h"
 
   ! Arguments:
@@ -38,7 +45,6 @@ subroutine cond_update(iswap, ncond)
 !!$  character (len=80) :: prefix
   character (len=f_name_length) :: hnameinh
   character (len=2) :: cng
-  integer, external :: cio_i, cio_f
   integer, save :: iunhd=11, inhunt=10
   integer :: nv, nvh, i, k, nzpg1, nc, ierr, ng, ng_start
   integer(kind=i8) :: npts, nptsh, maxarr, maxarr2
@@ -74,23 +80,23 @@ subroutine cond_update(iswap, ncond)
   call rams_f_open(iunhd, fnames_cond(ncond)(1:nc), 'FORMATTED', 'OLD', &
        'READ', 0)
 
-  ie = cio_i(iunhd, 1, 'ngrids', ngrids1, 1)
+  ie = cio(iunhd, 1, 'ngrids', ngrids1)
   ngridsh = ngrids1
 
   allocate(nnxp1(ngrids1), nnyp1(ngrids1), nnzp1(ngrids1))
   allocate(platn1(ngrids1), plonn1(ngrids1))
 
-  ie = cio_i(iunhd, 1, 'nnxp', nnxp1, ngrids1)
-  ie = cio_i(iunhd, 1, 'nnyp', nnyp1, ngrids1)
-  ie = cio_i(iunhd, 1, 'nnzp', nnzp1, ngrids1)
-  ie = cio_i(iunhd, 1, 'npatch', npatch1, 1)
-  ie = cio_i(iunhd, 1, 'nzg', nzg1, 1)
-  ie = cio_i(iunhd, 1, 'nzs', nzs1, 1)
-  ie = cio_i(iunhd, 1, 'ioutput', ioutput1, 1)
-  ie = cio_f(iunhd, 1, 'time', time1, 1)
-  ie = cio_f(iunhd, 1, 'ztop', ztop1, 1)
-  ie = cio_f(iunhd, 1, 'platn', platn1, ngrids1)
-  ie = cio_f(iunhd, 1, 'plonn', plonn1, ngrids1)
+  ie = cio(iunhd, 1, 'nnxp', nnxp1(1:ngrids1))
+  ie = cio(iunhd, 1, 'nnyp', nnyp1(1:ngrids1))
+  ie = cio(iunhd, 1, 'nnzp', nnzp1(1:ngrids1))
+  ie = cio(iunhd, 1, 'npatch', npatch1)
+  ie = cio(iunhd, 1, 'nzg', nzg1)
+  ie = cio(iunhd, 1, 'nzs', nzs1)
+  ie = cio(iunhd, 1, 'ioutput', ioutput1)
+  ie = cio(iunhd, 1, 'time', time1)
+  ie = cio(iunhd, 1, 'ztop', ztop1)
+  ie = cio(iunhd, 1, 'platn', platn1(1:ngrids1))
+  ie = cio(iunhd, 1, 'plonn', plonn1(1:ngrids1))
 
   ! Find maximum size of any array on history file. Allocate scratch array of
   ! this size.
@@ -113,12 +119,12 @@ subroutine cond_update(iswap, ncond)
 
   do ngr=1,ngrids1
      write(cng, '(i2.2)') ngr
-     ie = cio_f(iunhd, 1, 'xmn'//cng, xmn1(1,ngr), nnxp1(ngr))
-     ie = cio_f(iunhd, 1, 'xtn'//cng, xtn1(1,ngr), nnxp1(ngr))
-     ie = cio_f(iunhd, 1, 'ymn'//cng, ymn1(1,ngr), nnyp1(ngr))
-     ie = cio_f(iunhd, 1, 'ytn'//cng, ytn1(1,ngr), nnyp1(ngr))
-     ie = cio_f(iunhd, 1, 'zmn'//cng, zmn1(1,ngr), nnzp1(ngr))
-     ie = cio_f(iunhd, 1, 'ztn'//cng, ztn1(1,ngr), nnzp1(ngr))
+     ie = cio(iunhd, 1, 'xmn'//cng, xmn1(1: nnxp1(ngr),ngr))
+     ie = cio(iunhd, 1, 'xtn'//cng, xtn1(1: nnxp1(ngr),ngr))
+     ie = cio(iunhd, 1, 'ymn'//cng, ymn1(1: nnyp1(ngr),ngr))
+     ie = cio(iunhd, 1, 'ytn'//cng, ytn1(1: nnyp1(ngr),ngr))
+     ie = cio(iunhd, 1, 'zmn'//cng, zmn1(1: nnzp1(ngr),ngr))
+     ie = cio(iunhd, 1, 'ztn'//cng, ztn1(1: nnzp1(ngr),ngr))
   enddo
 
   allocate(scr(maxarr), topt1(maxarr2,ngrids1))
@@ -276,7 +282,7 @@ subroutine cond_update(iswap, ncond)
                          platn1(ngr), plonn1(ngr),                     &
                          topt1(1,ngr), ztop1,                          &
                          nnzp(ng), nnxp(ng),nnyp(ng), 1,               &
-                         varinit_g(ng)%varrfh(1,1,1),                  &
+                         varinit_g(ng)%varrfh,                  &
                          ng, ngr, vtab_r(nv,ng)%name, 3)
                  endif
                  cycle grid_loop2

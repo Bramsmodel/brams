@@ -11,29 +11,31 @@ MAINOBJ = rammain.o
 OBJ_MOD = \
 	mem_stilt.o \
 	node_mod.o    \
+	ModNodeDimensions.o \
 	ModVarfFile.o \
 	ModBuffering.o \
 	ModMessageData.o \
-	ModMessagePassing.o \
 	ModMessageSet.o \
 	ModGridDims.o \
 	ModGrid.o \
 	ModGridTree.o \
 	ModNeighbourNodes.o \
+	ModFieldSection.o \
 	ModFieldSectionList.o \
 	ModDomainDecomp.o \
 	ModDateUtils.o \
+	ModMonotonicAdvection.o \
 	ReadBcst.o \
+	ModScalarTable.o \
+	ModBasicFields.o \
 	mpi_io_engine-5d.o \
 	Phys_const.o \
 	alloc.o   \
 	an_header.o \
-	aobj.o \
-	asgen.o \
-	asti.o \
-	asti2.o \
-	astp.o \
-	avarf.o \
+	ModAsGen.o \
+	ModAsTi.o \
+	ModAsTp.o \
+	ModAVarF.o \
 	ccatt_start.o \
 	machine_arq.o \
 	teb_spm_start.o \
@@ -41,7 +43,7 @@ OBJ_MOD = \
 	cond_read.o \
 	cond_update.o \
 	conv_coms.o \
-	coriolis.o \
+	ModCoriolis.o \
 	cu_read.o \
 	cup_dn.o \
 	cup_env.o \
@@ -50,28 +52,23 @@ OBJ_MOD = \
 	cup_grell_catt_shallow.o \
 	cup_output_vars.o \
 	cup_up.o \
-	diffsclr.o \
-	diffuse.o \
-	file_inv.o \
-	first_rams.o \
-	geodat.o \
+	ModDiffSclr.o \
+	ModDiffuse.o \
+	ModGeodat.o \
 	grid_dims.o \
 	grid_struct.o \
-	inithis.o  \
+	ModInitHis.o  \
 	io_params.o \
 	isan_coms.o \
-	isan_io.o \
 	ke_coms.o \
-	landuse_input.o \
-	leaf3.o \
+	ModLanduseInput.o \
+	ModLeaf3.o \
 	leaf3_hyd.o \
 	leaf3_init.o \
 	leaf_coms.o \
 	leaf3_teb.o \
 	mem_aerad.o \
-	mem_all.o \
-	mem_basic.o \
-	carma_driver.o \
+	ModCarmaDriver.o \
 	mem_carma.o \
 	mem_cuparm.o \
 	mem_cutrans.o \
@@ -99,110 +96,101 @@ OBJ_MOD = \
 	mem_shcu.o \
 	mem_tconv.o \
 	mem_tend.o \
-	mem_turb.o \
+	ModTurbFields.o \
 	mem_turb_scalar.o \
 	mem_varinit.o \
 	mem_micro_optij.o \
 	mic_coll.o \
-	mic_driv.o \
-	mic_driv_new.o \
+	ModMicrophysicsDrive.o \
 	mic_gamma.o \
 	mic_init.o \
-	mic_misc.o \
+	ModMicrophysicsMisc.o \
 	mic_nuc.o \
 	mic_tabs.o \
 	mic_vap.o \
 	micphys.o \
-	mksfc_driver.o \
-	mksfc_ndvi.o \
-	mksfc_sfc.o \
-	mksfc_sst.o \
-	mksfc_top.o \
+	ModMkSfcDriver.o \
+	ModMkSfcNdvi.o \
+	ModMkSfcSfc.o \
+	ModMkSfcSst.o \
+	ModMkSfcTop.o \
 	ModTimeStamp.o \
-	modsched.o \
+	ModSched.o \
 	local_proc.o \
 	mpass_dtl.o \
-	mpass_feed.o \
 	mpass_full.o      \
-	mpass_nest.o \
-	ndvi_read.o \
-	nest_drivers.o \
+	ModNdviRead.o \
 	nest_feed.o \
 	nest_filldens.o \
-	nest_geosst.o \
+	ModNestGeoSst.o \
 	nest_intrp.o \
-	nud_analysis.o \
+	ModNudAnalysis.o \
 	nud_read.o \
 	nud_update.o \
 	obs_input.o \
 	oda_krig.o \
-	oda_nudge.o \
+	ModOdaNudge.o \
 	oda_proc_obs.o \
 	oda_read.o \
 	oda_sta_count.o \
 	oda_sta_input.o \
-	opspec.o \
+	ModOpspec.o \
 	domain_decomp.o \
-	para_init.o \
+	ModParaInit.o \
 	Phys_const.o \
-	raco.o \
+	ModAcoust.o \
 	raco_adap.o \
 	rad_carma.o \
 	rad_driv.o \
-	rtm_driver.o \
-	radvc.o \
-	radvc_rk.o \
+	ModRrtmDriver.o \
+	ModRadvc.o \
+	ModRadvcRK.o \
 	radvc_adap.o \
-	radvc_mnt.o \
+	ModMonotonicAdvection.o \
 	mod_GhostBlock.o \
 	mod_GhostBlockPartition.o \
-	mod_advect_kit.o \
-	radvc_new.o \
 	rams_grid.o \
 	gridset.o \
 	adap_init.o \
 	ModOneProc.o \
-	rams_mem_alloc.o   \
-	rams_read_header.o \
-	ranlavg.o \
-	rbnd.o \
-	rbnd_adap.o \
-	rcio.o \
+	ModMemAlloc.o   \
+	ModRamsReadHeader.o \
+	ModRanlavg.o \
+	ModRbnd.o \
+	ModRcio.o \
 	rconstants.o \
-	rconv.o \
-	rconv_grell_catt.o \
-	chem_conv_transp.o \
+	ModRConv.o \
+	ModRConvGrellCatt.o \
+	ModChemConvTransp.o \
 	ModNamelistFile.o  \
+	ModControlVars.o \
 	ModParallelEnvironment.o  \
 	read_ralph.o \
-	recycle.o  \
+	ModRecycle.o  \
 	ref_sounding.o \
-	refstate.o \
-	rgrad.o \
-	rhhi.o  \
-	rinit.o  \
-	rio.o \
+	ModRGrad.o \
+	ModRhhi.o  \
+	ModRinit.o  \
+	ModRio.o \
 	rnest_par.o \
 	rnode.o \
-	rshcupar.o \
-	rthrm.o \
-	rtimh.o \
-	rtimh_rk.o \
-	rtimh_abm.o \
-	rtimi.o \
+	ModRShCuPar.o \
+	ModRThrm.o \
+	ModTimestep.o \
+	ModTimestepRK.o \
+	ModRtimi.o \
 	ruser.o \
 	shcu_vars_const.o \
 	memSoilMoisture.o \
 	soilMoisture.o \
-	sst_read.o \
-	turb_diff.o \
-	turb_diff_adap.o \
-	turb_k.o \
-	turb_k_adap.o \
-	turb_ke.o \
+	ModSstRead.o \
+	ModTurbDiff.o \
+	ModTurbDiffAdap.o \
+	ModTurbK.o \
+	ModTurbKAdap.o \
+	ModTurbKE.o \
 	upcase.o \
-	urban_canopy.o \
-	v_interps.o \
+	ModUrbanCanopy.o \
 	extra.o \
 	aer1_list.o \
 	mem_aer1.o \
@@ -225,19 +213,18 @@ OBJ_MOD = \
 	var_tables.o \
 	varf_update.o \
 	vtab_fill.o \
-	mksfc_fuso.o \
+	ModMkSfcFuso.o \
 	mem_teb.o \
 	mem_teb_common.o \
 	mem_teb_vars_const.o \
 	mem_gaspart.o \
 	mem_emiss.o \
 	urban.o \
-	gaspart.o \
-	ozone.o \
-	mod_ozone.o \
+	ModGasPart.o \
+	ModOzone.o \
 	chem_isan_coms.o \
 	chem_aobj.o \
-	chem_asgen.o \
+	ModChemAsgen.o \
 	chem_asti2.o \
 	chem_asti.o \
 	chem_astp.o \
@@ -270,7 +257,7 @@ OBJ_MOD = \
 	chem_trans_gasaq.o \
 	chem_trans_liq.o \
 	chem_orage.o \
-	chemistry.o \
+	ModChemistryDriver.o \
 	ModPostProcess.o \
 	ModPostOneField.o \
 	ModPostOneField2d.o \
@@ -287,20 +274,13 @@ OBJ_MOD = \
 	module_cu_gf.o \
 	module_cu_gf_v5.1.o \
 	module_cu_gd_fim.o \
-	cup_grell3.o \
-	rexev.o \
-	rstilt.o \
+	ModCuParGrell3.o \
+	ModRexev.o \
+	ModRstilt.o \
 	turb_constants.o \
 	tkenn.o \
 	digitalFilter.o \
-	GridMod.o \
-	MapMod.o \
-	ProcessorMod.o \
-	BoundaryMod.o \
-	errorMod.o \
-	advSendMod.o \
-	InitAdvect.o \
-	seasalt.o  \
+	ModSeaSalt.o  \
 	meteogram.o \
 	meteogramType.o \
 	mcica_random_numbers.o \
@@ -380,12 +360,8 @@ OBJ_MOD = \
 	actv.o \
 	coag.o \
 	depv.o \
-	diam.o \
-	dicrete.o \
 	solut.o \
 	issoropia.o \
-	isofwd.o \
-	isorev.o \
 	matrix.o \
 	npf.o \
 	quad.o \
@@ -393,32 +369,31 @@ OBJ_MOD = \
 	subs.o \
 	thermo_isorr.o \
 	isrpia.o \
-	MatrixDriver.o \
+	ModMatrixDriver.o \
 	ModParticle.o \
 	memMatrix.o\
-	module_rams_microphysics_2M.o\
-	mic_thompson_driver.o\
+	ModRamsMicrophysics2M.o\
+	ModMicThompsonDriver.o\
 	module_mp_thompson.o\
 	module_mp_radar.o \
-	module_wind_farm.o \
+	ModWindFarm.o \
 	module_wind_fitch.o \
-	initComm.o \
 	debugTools.o \
 	ConvPar_GF_GEOS5.o \
 	Henrys_Law_cts.o \
 	MAPL_Constants.o \
-	optical.o        \
-	mic_gfdl_driver.o \
+	ModOptical.o        \
+	ModMicGfdlDriver.o \
 	gfdl_cloud_microphys.o \
 	dam.o \
-	mod_aer.o \
-	initMicThompson.o \
+	ModAerClim.o \
+	ModInitMicThompson.o \
 	ModPostGridNetCDF.o \
 	ModPostOneFieldNetCDF.o \
 	ModPostTypes.o \
 	ModEvaluation.o \
 	modIau.o \
-	leaf3_ocean_only.o \
+	ModLeaf3OceanOnly.o \
 	   CN_utils_mod.o \
    Jin11_osa_mod.o \
    aero.o \
@@ -815,7 +790,6 @@ OBJ_MOD = \
    water_resources_drive.o \
    woodprod.o \
    yomhook.o \
-   sfclyr_jules.o \
    zenith_mod.o 
 
 
@@ -874,7 +848,6 @@ MOD_MOD = \
 	chem1_list.mod \
 	mem_chem1.mod \
 	mem_varinit.mod \
-	mem_basic.mod \
 	mem_turb.mod \
 	mem_precision.mod \
 	mem_globrad.mod \
@@ -1016,7 +989,7 @@ MOD_MOD = \
 	rrtmg_lw_rad.mod \
 	rrtmg_lw_cldprop.mod \
 	rrtmg_sw_cldprop.mod \
-	optical.mod \
+	ModOptical.mod \
 	rrtm_driv.mod \
 	radiation.mod \
 	extras.mod \
@@ -1088,7 +1061,7 @@ MOD_MOD = \
 	module_wind_fitch.mod \
 	wind_farm.mod \
 	aerclimmod.mod \
-	seasalt.mod \
+	ModSeaSalt.mod \
 	memmatrix.mod \
 	aero_setup.mod \
 	aero_subs.mod \
@@ -1133,7 +1106,6 @@ MOD_MOD = \
 	c_0_dg_c.mod \
 	modtimestep.mod \
 	modtimestep_rk.mod \
-	modtimestep_abm.mod \
 	meteogram.mod \
 	dam.mod \
 	initmicthompson.mod \
@@ -1176,7 +1148,10 @@ MOD_MOD = \
 	init_out_map_mod.mod \
 	gfdl_cloud_microphys_mod.mod \
 	modIau.mod \
-	leaf3_ocean_only.mod 
+	ModLeaf3OceanOnly.mod 
+
+#	diam.o \
+#	dicrete.o \
 
 ifeq ($(NETCDFFDIR),)
 	MOD_MODEL =  netcdf.mod $(MOD_MOD) 

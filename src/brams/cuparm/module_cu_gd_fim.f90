@@ -1,5 +1,18 @@
 MODULE module_cu_gd_fim
- USE module_gate
+ USE module_gate, ONLY: cupout,   &
+                        jl    ,   &
+                        ppres,    &
+                        ptemp,    &
+                        pq,    &
+                        pu,    &
+                        pv,    &
+                        pvervel,    &
+                        pgeo,    &
+                        zqr,    &
+                        zadvq,   &
+                        zadvt,   &
+                        use_gate
+
 
  USE Phys_const, only: cp, p00, tcrit, g, cpor ,XLV => XL, r_v =>rm,rgas
  real, parameter:: c1=.002,c1m=.002,c1_shal=.001

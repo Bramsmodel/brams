@@ -107,10 +107,10 @@ CONTAINS
 
   SUBROUTINE filltab_teb(teb,tebm,imean,n1,n2,n3,ng)
 
-    USE var_tables
+    USE var_tables, only: insertvtab
 
     IMPLICIT NONE
-    include "i8.h"
+    include "constants.h"
     TYPE (teb_vars) :: teb,tebm
     INTEGER, INTENT(in) :: imean,n1,n2,n3,ng
     INTEGER(kind=i8) :: npts

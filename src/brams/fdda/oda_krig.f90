@@ -8,7 +8,8 @@
 subroutine krig(n1,n2,n3,x,y,z,ndata,xd,yd,zd,ed,dvar,ngrid  &
   ,nnanzp,topt,var,varkrg,cazmod)
   
-use mem_oda
+use mem_oda, only: cazkrg,  &
+                   rmaxkrg
 
 implicit none
 
@@ -168,7 +169,12 @@ end
 !
 real function gam(hx,hy,hz,ngrid,k,hzg,cazmod)
 
-use mem_oda
+use mem_oda, only: nstkrg,   &
+                   akrg,     &
+                   caxkrg,   &
+                   caykrg,   &
+                   cazkrg,   &
+                   ckrg
 
 implicit none
 

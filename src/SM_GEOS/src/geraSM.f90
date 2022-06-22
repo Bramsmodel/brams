@@ -1,7 +1,7 @@
 program geraSM
 	use smNasa
 	
-	include "constants.f90"
+	include "constants.h"
 	character(len=*),parameter :: cmd1='lats4d.sh -i https://opendap.nccs.nasa.gov/dods/GEOS-5/fp/0.25_deg/fcast/tavg1_2d_lnd_Nx/tavg1_2d_lnd_Nx.'
 	character(len=*),parameter :: cmd2=' -format netcdf4 -gzip 2 -vars gwetroot gwetprof prectot -lon -85 -30 -lat -60 20 -v '
 	

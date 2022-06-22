@@ -8,7 +8,16 @@
 
 subroutine getict(k1,k2,lcat,i,j,mynum)
 
-use micphys
+use micphys, only: rictmax, &
+                   rictmin, &
+                   rx,      &
+                   emb0log, &
+                   emb,     &
+                   dict,    &
+                   ict1,    &
+                   ict2,    &
+                   wct1,    &
+                   wct2
 
 implicit none
 
@@ -36,7 +45,38 @@ end
 
 subroutine auto_accret(m1,k1,k2,dn0,dtlt,i,j)
 
-use micphys
+use micphys, only: d1ecr,   &
+                   d1max,   &
+                   d1min,   &
+                   d2max,   &
+                   d2min,   &
+                   nd1cc,   &
+                   nd1cr,   &
+                   nd2cr,   &
+                   nd2rr,   &
+                   nr2cr,   &
+                   nr2rr,   &
+                   r2ecr,   &
+                   r2err,   &
+                   r2max,   &
+                   r2min,   &
+                   cfmas,   &
+                   pwmas,   &
+                   rx,      &
+                   emb,     &
+                   cx,      &
+                   r1tabcc, &
+                   c1tabcc, &
+                   c2tabcc, &
+                   r1tabcr, &
+                   c1tabcr, &
+                   rxfer,   &
+                   qrxfer,  &
+                   qx,      &
+                   c2tabrr, &
+                   dn0i,    &
+                   enxfer
+
 
 implicit none
 
@@ -226,7 +266,12 @@ end
 
 subroutine effxy(m1,k1,k2,i,j)
 
-use micphys
+use micphys, only: jnmb,    &
+                   eff,     &
+                   emb,     &
+                   rx,      &
+                   tx,      &
+                   qr
 
 implicit none
 
@@ -426,7 +471,19 @@ end
 
 subroutine cols(m1,mx,mc1,k1,k2,i,j)
 
-use micphys
+use micphys, only: rx,     &
+                   jhcat,  &
+                   ict2,   &
+                   ict1,   &
+                   cx,     &
+                   ipairc, &
+                   coltabc,&
+                   eff,    &
+                   wct1,   &
+                   wct2,   &
+                   colfacc,&
+                   enxfer
+
 
 implicit none
 
@@ -453,7 +510,26 @@ end
 
 subroutine col3344(m1,mx,mz,mc1,k1,k2,i,j)
 
-use micphys
+use micphys, only:  rx,       &
+                    jhcat,    &
+                    cx,       &
+                    ict1,     &
+                    ict2,     &
+                    wct1,     &
+                    wct2,     &
+                    rxfer,    &
+                    qrxfer,   &
+                    jnmb,     &
+                    ipairr,   &
+                    ipairc,   &
+                    eff,      &
+                    coltabr,  &
+                    colfacr2, &
+                    coltabc,  &
+                    colfacc2, &
+                    qx,       &
+                    enxfer
+
 
 implicit none
 
@@ -496,7 +572,25 @@ end
 
 subroutine col3443(m1,mx,my,mz,k1,k2,i,j)
 
-use micphys
+use micphys, only: rx,      &
+                   jhcat,   &
+                   ipairr,  &
+                   ipairc,  &
+                   cx,      &
+                   ict1,    &
+                   wct1,    &
+                   ict2,    &
+                   wct2,    &
+                   rxfer,   &
+                   qrxfer,  &
+                   qx,      &
+                   eff,     &
+                   coltabr, &
+                   colfacr, &
+                   coltabc, &
+                   colfacc, &
+                   enxfer
+
 
 implicit none
 
@@ -558,7 +652,26 @@ end
 
 subroutine col1(m1,mx,my,mz,mc4,k1,k2,i,j)
 
-use micphys
+use micphys, only: rx,       &
+                   jhcat,    &
+                   cx,       &
+                   ict1,     &
+                   ict2,     &
+                   wct1,     &
+                   wct2,     &
+                   rxfer,    &
+                   qrxfer,   &
+                   qx,       &
+                   jnmb,     &
+                   colfacc,  &
+                   ipairr,   &
+                   ipairc,   &
+                   eff,      &
+                   colfacr,  &
+                   coltabc,  &
+                   coltabr,  &
+                   enxfer
+                   
 
 implicit none
 
@@ -604,8 +717,33 @@ end
 
 subroutine col2(m1,mx,my,mz,mc2,k1,k2,dn0,dtlt,i,j)
 
-use rconstants
-use micphys
+use micphys, only: rx,       &
+                   jhcat,    &
+                   ipairr,   &
+                   ipairc,   &
+                   cx,       &
+                   eff,      &
+                   ict1,     &
+                   ict2,     &
+                   wct1,     &
+                   wct2,     &
+                   jnmb,     &
+                   colfacc,  &
+                   qx,       &
+                   pwmasi,   &
+                   gamsip13, &
+                   gamsip24, &
+                   emb1,     &
+                   dn0i,     &
+                   enxfer,   &
+                   qrxfer,   &
+                   coltabr,  &
+                   colfacr,  &
+                   coltabc,  &
+                   emb,      &
+                   emb0,     &
+                   sipfac,   &
+                   rxfer
 
 implicit none
 
@@ -754,7 +892,26 @@ end
 
 subroutine col3(m1,mx,my,mz,k1,k2,i,j)
 
-use micphys
+use micphys, only: rx,       &
+                   jhcat,    &
+                   ipairr,   &
+                   cx,       &
+                   ict1,     &
+                   ict2,     &
+                   wct1,     &
+                   wct2,     &
+                   eff,      &
+                   colfacc,  &
+                   qx,       &
+                   rxfer,    &
+                   qrxfer,   &
+                   jnmb,     &
+                   ipairc,   &
+                   colfacr,  &
+                   coltabr,  &
+                   coltabc,  &
+                   enxfer
+
 
 implicit none
 
@@ -870,7 +1027,15 @@ end
 
 subroutine colxfers(m1,k1,k2,i,j,rloss,enloss)
 
-use micphys
+use micphys, only: xcoll,    &
+                   jnmb,     &
+                   rxfer,    &
+                   enxfer,   &
+                   rx,       &
+                   cx,       &
+                   qr,       &
+                   qrxfer
+
 
 implicit none
 

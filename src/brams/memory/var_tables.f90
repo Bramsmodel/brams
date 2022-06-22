@@ -9,6 +9,9 @@
 
 module var_tables
 
+  use ModParallelEnvironment, only: &
+       MsgDump
+  
   implicit none
   private
   public :: maxvars
@@ -16,9 +19,6 @@ module var_tables
   public :: vtab_r
   public :: nvgrids
   public :: num_var
-  public :: scalar_table
-  public :: scalar_tab
-  public :: num_scalar
   public :: InsertVTab
   public :: GetVTabEntry
   public :: GetVTabSectionSize
@@ -26,7 +26,7 @@ module var_tables
   public :: StringIndexing
   public :: ZeroVTab
 
-  include "i8.h"
+  include "constants.h"
 
   ! Maximum number of variables of all types (3d + 2d + leaf)
 
@@ -35,22 +35,17 @@ module var_tables
   ! Define data type for main variable table
 
   type var_tables_r
-
-     ! var_p: scalar pointing to field first position
-
-     real, pointer      :: var_p
-
-     ! var_p: scalar pointing to field average first position
-
      real, pointer      :: var_m
-
-     ! pointing to full field of var_p
-
+     ! var_m: scalar pointing to field average first position
      real, pointer      :: var_p_2D(:,:) => null()
+     ! var_p_2D: pointer to full real 2D field 
      real, pointer      :: var_p_3D(:,:,:) => null()
+     ! var_p_3D: pointer to full real 3D field 
      real, pointer      :: var_p_4D(:,:,:,:) => null()
+     ! var_p_4D: pointer to full real 4D field 
      integer, pointer   :: var_p_2D_I(:,:) => null()
-
+     ! var_p_2D_I: pointer to full integer 2D field 
+     integer            :: idim_type
      ! idim_type codes dimensionality of var_p:
      ! idim_type == 2 means (nmxp, nmyp)
      ! idim_type == 3 means (nmzp, nmxp, nmyp)
@@ -58,13 +53,8 @@ module var_tables
      ! idim_type == 5 means (nzs, nmxp, nmyp, npatch)
      ! idim_type == 6 means (nmxp, nmyp, npatch)
      ! idim_type == 7 means (nmxp, nmyp, nwave)
-
-     integer            :: idim_type
-
-     ! npts is number of elements at field (product of dimensions)
-
      integer(kind=i8)   :: npts
-
+     ! npts is number of elements at field (product of dimensions)
      integer            :: ihist
      integer            :: ianal
      integer            :: imean
@@ -73,14 +63,10 @@ module var_tables
      integer            :: impt1
      integer            :: impt2
      integer            :: impt3     ! communicate for output
-
-     !--(DMK)------------------------------------------
      integer            :: imptd
-     !--(DMK)------------------------------------------
-
      integer            :: irecycle
      character (len=16) :: name
-
+     ! field name
   end type var_tables_r
 
   ! Main variable table allocated to (maxvars,maxgrds)
@@ -95,51 +81,32 @@ module var_tables
 
   integer, allocatable :: num_var(:)
 
-  ! Define data type for scalar variable table
-
-  type scalar_table
-     real, pointer      :: var_p
-     real, pointer      :: var_t
-     character (len=16) :: name
-     real, pointer      :: a_var_p(:)
-     real, pointer      :: a_var_t(:)
-
-  end type scalar_table
-
-  ! Scalar variable table allocated to (maxsclr,maxgrds)
-
-  type(scalar_table), allocatable :: scalar_tab(:,:)
-
-  ! number of scalars for each grid, allocated to "ngrids"
-
-  integer, allocatable :: num_scalar(:)
-
 
   interface InsertVTab
      module procedure InsertVTab_2D
      module procedure InsertVTab_2D_I
      module procedure InsertVTab_3D
      module procedure InsertVTab_4D
-  end interface
+  end interface InsertVTab
 
   interface ZeroVTab
      module procedure zero_vtab_2D
      module procedure zero_vtab_2D_I
      module procedure zero_vtab_3D
      module procedure zero_vtab_4D
-  end interface
+  end interface ZeroVTab
 
-!LFR em 06mai2020 
+  !LFR em 06mai2020 
   interface
-        subroutine vtables2_I(var, varm, ng, npts, imean, tabstr)
-           !use var_tables
-           !implicit none
-           include "i8.h"
-           integer, target :: var,varm
-           integer, intent(in) :: ng,imean !npts
-           integer(kind=i8), intent(in) :: npts
-           character (len=*), intent(in) :: tabstr
-        end subroutine vtables2_I
+     subroutine vtables2_I(var, varm, ng, npts, imean, tabstr)
+       !use var_tables
+       !implicit none
+       include "constants.h"
+       integer, target :: var,varm
+       integer, intent(in) :: ng,imean !npts
+       integer(kind=i8), intent(in) :: npts
+       character (len=*), intent(in) :: tabstr
+     end subroutine vtables2_I
   end interface
 
 contains
@@ -262,7 +229,6 @@ contains
     num_var(ng)=num_var(ng)+1
     nv=num_var(ng)
 
-    vtab_r(nv,ng)%var_p => var
     vtab_r(nv,ng)%var_m => varm
 
 
@@ -323,6 +289,8 @@ contains
 
 
 
+
+  
   integer function GetVTabSectionSize(vTabPtr, &
        iStart, iEnd, jStart, jEnd)
     type(var_tables_r), pointer :: vTabPtr
@@ -499,82 +467,82 @@ contains
 
 end module var_tables
 
-    subroutine vtables2_I(var, varm, ng, npts, imean, tabstr)
-    use var_tables
-    implicit none
-    include "i8.h"
-    real, target :: var,varm
-    integer, intent(in) :: ng,imean !npts
-    integer(kind=i8), intent(in) :: npts
-    character (len=*), intent(in) :: tabstr
+subroutine vtables2_I(var, varm, ng, npts, imean, tabstr)
+  use var_tables, only: vtab_r, &
+                        num_var
+  implicit none
+  include "constants.h"
+  real, target :: var,varm
+  integer, intent(in) :: ng,imean !npts
+  integer(kind=i8), intent(in) :: npts
+  character (len=*), intent(in) :: tabstr
 
-    character (len=80) ::line
-    character (len=1) ::toksep=':', cdimen,ctype
-    character (len=32) ::tokens(10)
-    character (len=8) :: cname,ctab
+  character (len=80) ::line
+  character (len=1) ::toksep=':', cdimen,ctype
+  character (len=32) ::tokens(10)
+  character (len=8) :: cname,ctab
 
-    integer :: ntok,nt,nv
+  integer :: ntok,nt,nv
 
-    call tokenize1(tabstr,tokens,ntok,toksep)
+  call tokenize1(tabstr,tokens,ntok,toksep)
 
-    num_var(ng)=num_var(ng)+1
-    nv=num_var(ng)
+  num_var(ng)=num_var(ng)+1
+  nv=num_var(ng)
 
-    vtab_r(nv,ng)%var_p => var
-    vtab_r(nv,ng)%var_m => varm
+  vtab_r(nv,ng)%var_m => varm
 
 
-    vtab_r(nv,ng)%name=tokens(1)
-    vtab_r(nv,ng)%npts=npts
-    read(tokens(2),*) vtab_r(nv,ng)%idim_type
-    !print*,'tab:',nv,ng,vtab_r(nv,ng)%name ,vtab_r(nv,ng)%npts
+  vtab_r(nv,ng)%name=tokens(1)
+  vtab_r(nv,ng)%npts=npts
+  read(tokens(2),*) vtab_r(nv,ng)%idim_type
+  !print*,'tab:',nv,ng,vtab_r(nv,ng)%name ,vtab_r(nv,ng)%npts
 
-    vtab_r(nv,ng)%ihist=0
-    vtab_r(nv,ng)%ianal=0
-    vtab_r(nv,ng)%imean=imean
-    vtab_r(nv,ng)%ilite=0
-    vtab_r(nv,ng)%impti=0
-    vtab_r(nv,ng)%impt1=0
-    vtab_r(nv,ng)%impt2=0
-    vtab_r(nv,ng)%impt3=0
+  vtab_r(nv,ng)%ihist=0
+  vtab_r(nv,ng)%ianal=0
+  vtab_r(nv,ng)%imean=imean
+  vtab_r(nv,ng)%ilite=0
+  vtab_r(nv,ng)%impti=0
+  vtab_r(nv,ng)%impt1=0
+  vtab_r(nv,ng)%impt2=0
+  vtab_r(nv,ng)%impt3=0
 
-    !--(DMK)------------------------------------------
-    vtab_r(nv,ng)%imptd=0
-    !--(DMK)------------------------------------------
+  !--(DMK)------------------------------------------
+  vtab_r(nv,ng)%imptd=0
+  !--(DMK)------------------------------------------
 
-    vtab_r(nv,ng)%irecycle=0
+  vtab_r(nv,ng)%irecycle=0
 
-    do nt=3,ntok
-       ctab=tokens(nt)
+  do nt=3,ntok
+     ctab=tokens(nt)
 
-       if(ctab == 'hist' ) then
-          vtab_r(nv,ng)%ihist=1
-       elseif(ctab == 'anal' ) then
-          vtab_r(nv,ng)%ianal=1
-       elseif(ctab == 'lite' ) then
-          vtab_r(nv,ng)%ilite=1
-       elseif(ctab == 'mpti' ) then
-          vtab_r(nv,ng)%impti=1
-       elseif(ctab == 'mpt1' ) then
-          vtab_r(nv,ng)%impt1=1
-       elseif(ctab == 'mpt2' ) then
-          vtab_r(nv,ng)%impt2=1
-       elseif(ctab == 'mpt3' ) then
-          vtab_r(nv,ng)%impt3=1
+     if(ctab == 'hist' ) then
+        vtab_r(nv,ng)%ihist=1
+     elseif(ctab == 'anal' ) then
+        vtab_r(nv,ng)%ianal=1
+     elseif(ctab == 'lite' ) then
+        vtab_r(nv,ng)%ilite=1
+     elseif(ctab == 'mpti' ) then
+        vtab_r(nv,ng)%impti=1
+     elseif(ctab == 'mpt1' ) then
+        vtab_r(nv,ng)%impt1=1
+     elseif(ctab == 'mpt2' ) then
+        vtab_r(nv,ng)%impt2=1
+     elseif(ctab == 'mpt3' ) then
+        vtab_r(nv,ng)%impt3=1
 
-          !--(DMK)------------------------------------------
-       elseif(ctab == 'mptd' ) then
-          vtab_r(nv,ng)%imptd=1
-          !--(DMK)------------------------------------------
+        !--(DMK)------------------------------------------
+     elseif(ctab == 'mptd' ) then
+        vtab_r(nv,ng)%imptd=1
+        !--(DMK)------------------------------------------
 
-       elseif(ctab == 'recycle' ) then
-          vtab_r(nv,ng)%irecycle=1
-       else
-          print*, 'Illegal table specification for var:', tokens(1),ctab
-          stop 'bad var table'
-       endif
+     elseif(ctab == 'recycle' ) then
+        vtab_r(nv,ng)%irecycle=1
+     else
+        print*, 'Illegal table specification for var:', tokens(1),ctab
+        stop 'bad var table'
+     endif
 
-    enddo
+  enddo
 
-    return
-  end subroutine vtables2_I
+  return
+end subroutine vtables2_I
