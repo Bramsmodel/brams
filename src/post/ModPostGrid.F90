@@ -1,31 +1,53 @@
 module ModPostGrid
 
+  use ModNamelistFile, only: &
+       NamelistFile
+
+  use ModTurbFields, only: &
+       TurbFields
+
+  use ModBasicFields, only: &
+       BasicFields
+
   use ModParallelEnvironment, only: &
        MsgDump
 
-  use ModNamelistFile, only: namelistFile
+  use ModBramsGrid, only: &
+       BramsGrid
 
-  use ModBramsGrid, only: BramsGrid
+  use ModPostUtils, only: &
+       UpperCase, &
+       DumpFixed, &
+       DumpFloating, &
+       DumpIntegerPairs, &
+       DumpInteger, &
+       ptransvar, &
+       ctransvar
 
-  use ModPostUtils, only: UpperCase, DumpFixed, &
-       DumpFloating, DumpIntegerPairs, DumpInteger, &
-       ptransvar, ctransvar
+  use ModOutputUtils, only: &
+       GetVarFromMemToOutput
 
-  use ModOutputUtils, only: GetVarFromMemToOutput
+  use mem_grid, only: &
+       time
 
-  use mem_grid, only: time
-
-  use ParLib, only: parf_GatherPostSfc
-  use ParLib, only: parf_barrier
+  use ParLib, only: &
+       parf_GatherPostSfc, &
+       parf_barrier
 
   use io_params, only : & ! 
-    IPOS
+       IPOS
+
+  use ModPostTypes, only: &
+       undef, &
+       INT_UNDEF, &
+       PostGrid, &
+       fieldId
+
 #ifdef cdf
   use ModPostOneFieldNetcdf, only: &
-    writeNetCdf2D, &
-    writeNetCdf3D
+       writeNetCdf2D, &
+       writeNetCdf3D
 #endif
-  use ModPostTypes
 
   implicit none
 
@@ -47,11 +69,12 @@ module ModPostGrid
   public :: UpdateVerticals
 
   public :: OutputGradsField
+
   interface OutputGradsField
      module procedure OutputGradsField_2D
      module procedure OutputGradsField_3D
      module procedure OutputGradsField_4D
-  end interface
+  end interface OutputGradsField
 
   logical, parameter :: dumpLocal=.false.
 
@@ -64,11 +87,13 @@ contains
 
 
   subroutine CreatePostGrid(oneNamelistFile, oneBramsGrid, &
-       onePostGrid, currGrid)
+       onePostGrid, currGrid, oneBasicFields, oneTurbFields)
     type(NamelistFile), pointer :: oneNamelistFile
     type(BramsGrid), pointer :: oneBramsGrid
     type(PostGrid), pointer :: onePostGrid
     integer, intent(in) :: currGrid
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
 
     integer :: ierr
     character :: cgrid
@@ -179,7 +204,7 @@ contains
     ! when height is selected: topo
 
     call CreatePostVerticals(oneNamelistFile, oneBramsGrid, &
-         onePostGrid)
+         onePostGrid, oneBasicFields, oneTurbFields)
 
     if (dumpLocal) then
        call DumpPostGrid(onePostGrid)
@@ -229,9 +254,9 @@ contains
                'A', 'g'//cgrid, 'gra')
 
           onePostGrid%unitBinFile = AvailableFileUnit()
-          
+
           ! open binary file
-          
+
           inquire(iolength=recSize) outputRecord
           if (dumpLocal) then
              write(c0,"(i8)") onePostGrid%unitBinFile
@@ -250,7 +275,7 @@ contains
           end if
 
           ! reset record
-          
+
           onePostGrid%lastRec=0
        end if
 
@@ -335,11 +360,11 @@ contains
           onePostGrid%unitCtlFile = AvailableFileUnit()
 
           ! open file
-          
+
           open(onePostGrid%unitCtlFile, &
                file=trim(onePostGrid%ctlFileName), &
                status="replace", action="write")
-          
+
           if (dumpLocal) then
              write(c0,"(i8)") onePostGrid%unitCtlFile
              call MsgDump (h//" opened grads control file "//&
@@ -411,33 +436,33 @@ contains
           write(onePostGrid%unitCtlFile, "(a,e15.7)") "undef ",undef
           write(onePostGrid%unitCtlFile, "(a)") "title "//&
                trim(onePostGrid%title)
-          
+
           ! write axis scales: x
-          
+
           write(onePostGrid%unitCtlFile, "(a,i4,a,2f15.7)") &
                "xdef ", onePostGrid%nLon, &
                " linear ", onePostGrid%firstLon, onePostGrid%delLon
-          
+
           ! write axis scales: y
-          
+
           write(onePostGrid%unitCtlFile, "(a,i4,a,2f15.7)") &
                "ydef ", onePostGrid%nLat, &
                " linear ", onePostGrid%firstLat, onePostGrid%delLat
-          
+
           ! write axis scales: z
-          
+
           write(onePostGrid%unitCtlFile, "(a,i4,a)", advance="no") &
                "zdef ", onePostGrid%nVert," levels "
           do izStart = 1, onePostGrid%nVert, 15
              write(onePostGrid%unitCtlFile, "(15f10.1)") &
                   onePostGrid%vertScaleValues(izStart:min(izStart+14,onePostGrid%nVert))
           end do
-          
+
           ! write axis scales: time
           ! a single time output
           ! extract date and time from bin file name
           ! delta 
-          
+
           lenFName = len_trim(onePostGrid%binFileName)
           cYear = onePostGrid%binFileName(lenFName-afterFirstYear:lenFName-afterLastYear)
           read(onePostGrid%binFileName(lenFName-afterFirstMonth:lenFName-afterLastMonth), "(i2)") iMonth
@@ -446,9 +471,9 @@ contains
           chdate = cHHMMSS(1:2)//":"//cHHMMSS(3:4)//"z"//cDay//cmo(iMonth)//cYear
           write(onePostGrid%unitCtlFile, "(a4,i4,a8,2a15)") &
                "tdef ",1," linear ",chdate, onePostGrid%chstep
-          
+
           ! post variables
-          
+
           call DumpFieldIDList(onePostGrid%unitCtlFile, onePostGrid)
        end if
 
@@ -737,11 +762,11 @@ contains
 
 
     if (onePostGrid%project) then
-       
+
        ! first case: on projection, post grid points are
        ! interpolated from BRAMS grid vicinity points.
        ! Find mapping from BRAMS to POST and interpolation weights
-       
+
        allocate(onePostGrid%xMap &
             (onePostGrid%nLon,onePostGrid%nLat), &
             stat = ierr)
@@ -751,7 +776,7 @@ contains
           call fatal_error(h//" fail allocating xMap("//&
                trim(adjustl(c0))//","//trim(adjustl(c1))//")")
        end if
-       
+
        allocate(onePostGrid%yMap &
             (onePostGrid%nLon,onePostGrid%nLat), &
             stat = ierr)
@@ -761,7 +786,7 @@ contains
           call fatal_error(h//" fail allocating yMap("//&
                trim(adjustl(c0))//","//trim(adjustl(c1))//")")
        end if
-       
+
        allocate(onePostGrid%weight &
             (onePostGrid%nLon,onePostGrid%nLat,4), &
             stat = ierr)
@@ -771,40 +796,40 @@ contains
           call fatal_error(h//" fail allocating weight("//&
                trim(adjustl(c0))//","//trim(adjustl(c1))//",4)")
        end if
-       
+
        ! set default to undef, map at (1,1)
-       
+
        onePostGrid%xMap = 1
        onePostGrid%yMap = 1
        onePostGrid%weight = undef
-       
+
        ! for every post grid point, find corresponding BRAMS grid cell
        ! and compute weight, according to user selected mean_type (at namelist):
 
        ! if user selects mean_type="vmp", take the closes brams grid point
        ! if user selects mean_type="bav", take brams points average
-       
+
        select case (UpperCase(oneNamelistFile%mean_type))
 
        case ("VMP")
 
           do yPost = 1, onePostGrid%nLat
              do xPost = 1, onePostGrid%nLon
-                
+
                 ! project lat-lon post grid point onto BRAMS grid
-                
+
                 call ll_xy(onePostGrid%lat(yPost), onePostGrid%lon(xPost), &
                      oneBramsGrid%polelat, oneBramsGrid%polelon, &
                      x, y)
-                
+
                 xBrams = floor((x-oneBramsGrid%xtn(1))/oneBramsGrid%deltax) + 1
                 yBrams = floor((y-oneBramsGrid%ytn(1))/oneBramsGrid%deltay) + 1
-                
+
                 if ( 1 <= xBrams .and. xBrams < oneBramsGrid%nnxp .and. &
                      1 <= yBrams .and. yBrams < oneBramsGrid%nnyp ) then
                    onePostGrid%xMap(xPost,yPost) = xBrams
                    onePostGrid%yMap(xPost,yPost) = yBrams
-                   
+
                    distXLow = (x - oneBramsGrid%xtn(xBrams))/oneBramsGrid%deltax
                    distYLow = (y - oneBramsGrid%ytn(yBrams))/oneBramsGrid%deltay
                    onePostGrid%weight(xPost,yPost,1) = (1.0-distXLow)*(1.0-distYLow)  !(i  , j  )
@@ -828,22 +853,22 @@ contains
 
           do yPost = 1, onePostGrid%nLat
              do xPost = 1, onePostGrid%nLon
-                
+
                 ! project lat-lon post grid point onto BRAMS grid
-                
+
                 call ll_xy(onePostGrid%lat(yPost), onePostGrid%lon(xPost), &
                      oneBramsGrid%polelat, oneBramsGrid%polelon, &
                      x, y)
-                
+
                 xBrams = floor((x-oneBramsGrid%xtn(1))/oneBramsGrid%deltax) + 1
                 yBrams = floor((y-oneBramsGrid%ytn(1))/oneBramsGrid%deltay) + 1
-                
+
                 if ( 1 <= xBrams .and. xBrams < oneBramsGrid%nnxp .and. &
                      1 <= yBrams .and. yBrams < oneBramsGrid%nnyp ) then
                    onePostGrid%xMap(xPost,yPost) = xBrams
                    onePostGrid%yMap(xPost,yPost) = yBrams
                    onePostGrid%weight(xPost,yPost,:) = 0.0
-                   
+
                    distXLow = (x - oneBramsGrid%xtn(xBrams))/oneBramsGrid%deltax
                    distYLow = (y - oneBramsGrid%ytn(yBrams))/oneBramsGrid%deltay
 
@@ -893,9 +918,9 @@ contains
 
        ! Post borders could be fully undef
        ! the next call eliminates borders that are fully undef
-       
+
        call EliminateUndefBorders(onePostGrid, oneBramsGrid)
-       
+
        if (dumpLocal) then
           write(c0,"(f8.2)") (100.0*count(onePostGrid%weight(:,:,1)==undef))/&
                real(onePostGrid%nLon*onePostGrid%nLat)
@@ -919,9 +944,9 @@ contains
     else if (&
          onePostGrid%nLon == oneBramsGrid%nnxp .and. &
          onePostGrid%nLat == oneBramsGrid%nnyp) then
-       
+
        ! second case: no projection and post grid identical to brams grid
-       
+
        onePostGrid%xStart = 1
        onePostGrid%yStart = 1
        if (dumpLocal) then
@@ -933,21 +958,21 @@ contains
                trim(adjustl(c0))//","//trim(adjustl(c1))//") with size ("//&
                trim(adjustl(c2))//","//trim(adjustl(c3))//")")
        end if
-       
+
     else
-       
+
        ! third case: no projection and post grid is a subgrid of brams grid
        ! find indices of first point, which are easier
        ! to find on the tangent plane due to regularity.
-       
+
        ! project first lat-lon post grid point onto BRAMS grid
 
        call ll_xy(onePostGrid%lat(1), onePostGrid%lon(1), &
             oneBramsGrid%polelat, oneBramsGrid%polelon, &
             x, y)
-       
+
        ! find BRAMS x index corresponding to first and last post x index
-       
+
        onePostGrid%xStart = floor((x-oneBramsGrid%xtn(1))/oneBramsGrid%deltax) + 1
        if ( onePostGrid%xStart < 1 .or. &
             onePostGrid%xStart > oneBramsGrid%nnxp) then
@@ -960,7 +985,7 @@ contains
                trim(adjustl(d0))//" lyes outside BRAMS grid range "//&
                trim(adjustl(d1))//":"//trim(adjustl(d2)))
        end if
-       
+
        xEnd = onePostGrid%xStart + onePostGrid%nLon - 1 
        if (xEnd > oneBramsGrid%nnxp) then
           write(c0,"(i8)") onePostGrid%xStart
@@ -971,9 +996,9 @@ contains
                trim(adjustl(c1))//" points exceeds BRAMS number of points ="//&
                trim(adjustl(c2)))
        end if
-       
+
        ! find BRAMS y index corresponding to first and last post y index
-       
+
        onePostGrid%yStart = floor((x-oneBramsGrid%ytn(1))/oneBramsGrid%deltay) + 1
        if ( onePostGrid%yStart < 1 .or. &
             onePostGrid%yStart > oneBramsGrid%nnyp) then
@@ -986,7 +1011,7 @@ contains
                trim(adjustl(d0))//" lyes outside BRAMS grid range "//&
                trim(adjustl(d1))//":"//trim(adjustl(d2)))
        end if
-       
+
        yEnd = onePostGrid%yStart + onePostGrid%nLat - 1 
        if (yEnd > oneBramsGrid%nnyp) then
           write(c0,"(i8)") onePostGrid%yStart
@@ -997,7 +1022,7 @@ contains
                trim(adjustl(c1))//" points exceeds BRAMS number of points ="//&
                trim(adjustl(c2)))
        end if
-       
+
        if (dumpLocal) then
           write(c0,"(i8)") onePostGrid%xStart
           write(c1,"(i8)") onePostGrid%yStart
@@ -1102,17 +1127,17 @@ contains
        end if
 
        ! save current xMap, yMap, weight
- 
+
        xSaved = onePostGrid%xMap
        ySaved = onePostGrid%yMap
        wSaved = onePostGrid%weight
-       
+
        ! deallocate current xMap, yMap, weight
 
        deallocate(onePostGrid%xMap)
        deallocate(onePostGrid%yMap)
        deallocate(onePostGrid%weight)
-       
+
        ! update nLon, firstLon, lon
 
        onePostGrid%firstLon = onePostGrid%lon(firstX)
@@ -1136,7 +1161,7 @@ contains
        allocate(onePostGrid%xMap(onePostGrid%nLon,onePostGrid%nLat))
        allocate(onePostGrid%yMap(onePostGrid%nLon,onePostGrid%nLat))
        allocate(onePostGrid%weight(onePostGrid%nLon,onePostGrid%nLat,4))
-       
+
        do yPost = 1, onePostGrid%nLat
           do xPost = 1, onePostGrid%nLon
              onePostGrid%xMap(xPost,yPost) = xSaved(xPost+firstX-1,yPost+firstY-1)
@@ -1420,10 +1445,12 @@ contains
 
 
   subroutine CreatePostVerticals(oneNamelistFile, oneBramsGrid, &
-       onePostGrid)
+       onePostGrid, oneBasicFields, oneTurbFields)
     type(NamelistFile), pointer :: oneNamelistFile
     type(BramsGrid), pointer :: oneBramsGrid
     type(PostGrid), pointer :: onePostGrid
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
 
     integer :: iz
     integer :: ierr
@@ -1545,7 +1572,8 @@ contains
                trim(adjustl(c0))//","//&
                trim(adjustl(c1))//") fails")
        end if
-       call GetVarFromMemToOutput('TOPT', oneBramsGrid%currGrid, onePostGrid%topo)
+       call GetVarFromMemToOutput('TOPT', oneBramsGrid%currGrid, onePostGrid%topo, &
+            oneNamelistFile, oneBasicFields, oneTurbFields)
 
        ! reserve area for pi
 
@@ -1555,13 +1583,13 @@ contains
           ! since pi varies with time; pi is fetch by routine "UpdateVerticals",
           ! that should be invoked prior to any call to OutputPostField
 
-	allocate(onePostGrid%pi(&
+          allocate(onePostGrid%pi(&
                oneBramsGrid%mxp,oneBramsGrid%myp,oneBramsGrid%mzp), stat=ierr)
 
 
-        !  allocate(onePostGrid%pi(&
-        !       oneBramsGrid%mxp,oneBramsGrid%myp,onePostGrid%nVert), stat=ierr)
-          
+          !  allocate(onePostGrid%pi(&
+          !       oneBramsGrid%mxp,oneBramsGrid%myp,onePostGrid%nVert), stat=ierr)
+
 	  if (ierr /= 0) then
              write(c0,"(i8)") oneBramsGrid%mxp
              write(c1,"(i8)") oneBramsGrid%myp
@@ -1571,7 +1599,7 @@ contains
                   trim(adjustl(c1))//","//&
                   trim(adjustl(c2))//") fails")
           end if
-          
+
        end if
 
        if (dumpLocal) then
@@ -1597,9 +1625,13 @@ contains
 
 
 
-  subroutine UpdateVerticals(oneBramsGrid, onePostGrid)
+  subroutine UpdateVerticals(oneBramsGrid, onePostGrid, &
+       oneNamelistFile, oneBasicFields, oneTurbFields)
     type(BramsGrid), pointer :: oneBramsGrid
     type(PostGrid), pointer :: onePostGrid
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
 
     character(len=8) :: c0
     character(len=*), parameter :: h="**(UpdateVerticals)**"
@@ -1610,7 +1642,8 @@ contains
     ! procedure OutputGradsField on 3D fields.
 
     if (onePostGrid%vertScaleCode == 1) then
-       call GetVarFromMemToOutput ('PI', oneBramsGrid%currGrid, onePostGrid%pi)
+       call GetVarFromMemToOutput ('PI', oneBramsGrid%currGrid, onePostGrid%pi, &
+            oneNamelistFile, oneBasicFields, oneTurbFields)
     end if
   end subroutine UpdateVerticals
 
@@ -1904,15 +1937,15 @@ contains
     real :: gathered(onePostGrid%nLon*onePostGrid%nLat)
     real :: OutputArray(onePostGrid%nLon*onePostGrid%nLat)
     character(len=8) :: c0, c1, c2
-character(len=16)::d0
-integer :: ix, iy
+    character(len=16)::d0
+    integer :: ix, iy
     character(len=*), parameter :: h="**(OutputGradsField_2D)**"
 
     if (.not. associated(onePostGrid)) then
        call fatal_error(h//" invoked with null onePostGrid")
     end if
 
-   if (dumpLocal) then
+    if (dumpLocal) then
        write(*,"(a)") h//" starts for field "//trim(onePostGrid%fieldName)
     end if
 
@@ -1963,10 +1996,10 @@ integer :: ix, iy
           end do
 
           if(IPOS==2) then
-            write (onePostGrid%unitBinFile, rec=onePostGrid%lastRec) OutputArray
+             write (onePostGrid%unitBinFile, rec=onePostGrid%lastRec) OutputArray
 #ifdef cdf
           elseif(IPOS==3) then
-            call writeNetCdf2D(trim(onePostGrid%fieldName),onePostGrid%nLon,onePostGrid%nLat,OutputArray)
+             call writeNetCdf2D(trim(onePostGrid%fieldName),onePostGrid%nLon,onePostGrid%nLat,OutputArray)
 #endif
           endif
 
@@ -2013,7 +2046,7 @@ integer :: ix, iy
     ! if ivar_type == 2, dumps surface of 3D field;
     ! if ivar_type == 3, dumps selected verticals
     ! if ivar_type == 7, dumps all npatches
-    
+
 
     zSize=size(OutputField,3)
 
@@ -2047,16 +2080,16 @@ integer :: ix, iy
 
        if (oneBramsGrid%mchnum == oneBramsGrid%master_num) then
           onePostGrid%lastRec = onePostGrid%lastRec + 1
-            if(IPOS==2) then
-              write (onePostGrid%unitBinFile, rec=onePostGrid%lastRec) &
+          if(IPOS==2) then
+             write (onePostGrid%unitBinFile, rec=onePostGrid%lastRec) &
                   gathered(onePostGrid%unpackMap(:))
 #ifdef cdf
-            elseif(IPOS==3) then
-               call writeNetCdf2D(trim(onePostGrid%fieldName),onePostGrid%nLon &
-                ,onePostGrid%nLat,gathered(onePostGrid%unpackMap(:)))
+          elseif(IPOS==3) then
+             call writeNetCdf2D(trim(onePostGrid%fieldName),onePostGrid%nLon &
+                  ,onePostGrid%nLat,gathered(onePostGrid%unpackMap(:)))
 #endif
-            endif          
-            if (dumpLocal) then
+          endif
+          if (dumpLocal) then
              write(c0,"(i8)") size(gathered,1)
              write(c1,"(i8)") onePostGrid%lastRec
              call MsgDump (h//" master_proc wrote surface of field with size "//&
@@ -2101,15 +2134,15 @@ integer :: ix, iy
           if (oneBramsGrid%mchnum == oneBramsGrid%master_num) then
              onePostGrid%lastRec = onePostGrid%lastRec + 1
 
-            if(IPOS==2) then
-              write (onePostGrid%unitBinFile, rec=onePostGrid%lastRec) &
-                  gathered(onePostGrid%unpackMap(:))
+             if(IPOS==2) then
+                write (onePostGrid%unitBinFile, rec=onePostGrid%lastRec) &
+                     gathered(onePostGrid%unpackMap(:))
 #ifdef cdf
-            elseif(IPOS==3) then
-              call writeNetCdf3D(trim(onePostGrid%fieldName),onePostGrid%nLon &
-                ,onePostGrid%nLat,k,gathered(onePostGrid%unpackMap(:)))
+             elseif(IPOS==3) then
+                call writeNetCdf3D(trim(onePostGrid%fieldName),onePostGrid%nLon &
+                     ,onePostGrid%nLat,k,gathered(onePostGrid%unpackMap(:)))
 #endif
-            endif
+             endif
 
              if (dumpLocal) then
                 write(c0,"(i8)") size(gathered,1)
@@ -2167,15 +2200,15 @@ integer :: ix, iy
           if (oneBramsGrid%mchnum == oneBramsGrid%master_num) then
              onePostGrid%lastRec = onePostGrid%lastRec + 1
 
-            if(IPOS==2) then
+             if(IPOS==2) then
                 write (onePostGrid%unitBinFile, rec=onePostGrid%lastRec) &
-                  gathered(onePostGrid%unpackMap(:))
+                     gathered(onePostGrid%unpackMap(:))
 #ifdef cdf
-            elseif(IPOS==3) then
-              call writeNetCdf2D(trim(onePostGrid%fieldName),onePostGrid%nLon &
-                ,onePostGrid%nLat,gathered(onePostGrid%unpackMap(:)))
+             elseif(IPOS==3) then
+                call writeNetCdf2D(trim(onePostGrid%fieldName),onePostGrid%nLon &
+                     ,onePostGrid%nLat,gathered(onePostGrid%unpackMap(:)))
 #endif
-            endif
+             endif
 
              if (dumpLocal) then
                 write(c0,"(i8)") size(gathered,1)
@@ -2270,15 +2303,15 @@ integer :: ix, iy
              if (oneBramsGrid%mchnum == oneBramsGrid%master_num) then
                 onePostGrid%lastRec = onePostGrid%lastRec + 1
 
-              if(IPOS==2) then
-                write (onePostGrid%unitBinFile, rec=onePostGrid%lastRec) &
-                     gathered(onePostGrid%unpackMap(:))
+                if(IPOS==2) then
+                   write (onePostGrid%unitBinFile, rec=onePostGrid%lastRec) &
+                        gathered(onePostGrid%unpackMap(:))
 #ifdef cdf
-              elseif(ipos==3) then
-                call writeNetCdf3D(trim(onePostGrid%fieldName),onePostGrid%nLon &
-                ,onePostGrid%nLat,k,gathered(onePostGrid%unpackMap(:)))
+                elseif(ipos==3) then
+                   call writeNetCdf3D(trim(onePostGrid%fieldName),onePostGrid%nLon &
+                        ,onePostGrid%nLat,k,gathered(onePostGrid%unpackMap(:)))
 #endif
-              endif
+                endif
 
 
                 if (dumpLocal) then
@@ -2362,13 +2395,13 @@ integer :: ix, iy
        ! interpolated array
 
        do i= 1, onePostGrid%localSizeThisProc
-       
-       
-             ! output linear combination of indices
-             ! local indices (at this proc)
 
-             xBrams = onePostGrid%packXLocal(i)
-             yBrams = onePostGrid%packYLocal(i)
+
+          ! output linear combination of indices
+          ! local indices (at this proc)
+
+          xBrams = onePostGrid%packXLocal(i)
+          yBrams = onePostGrid%packYLocal(i)
 
           if ( any(onePostGrid%packWeight(i,:) == undef) .or. &
 	       OutputField(xBrams, yBrams) == undef      .or. &
@@ -2399,10 +2432,10 @@ integer :: ix, iy
              ! interpolate and pack
 
    	     localChunk(i) = &
-	     onePostGrid%packWeight(i,1) * OutputField(xBrams  , yBrams  ) + &
-	     onePostGrid%packWeight(i,2) * OutputField(xBrams+1, yBrams  ) + &
-	     onePostGrid%packWeight(i,3) * OutputField(xBrams  , yBrams+1) + &
-	     onePostGrid%packWeight(i,4) * OutputField(xBrams+1, yBrams+1)
+                  onePostGrid%packWeight(i,1) * OutputField(xBrams  , yBrams  ) + &
+                  onePostGrid%packWeight(i,2) * OutputField(xBrams+1, yBrams  ) + &
+                  onePostGrid%packWeight(i,3) * OutputField(xBrams  , yBrams+1) + &
+                  onePostGrid%packWeight(i,4) * OutputField(xBrams+1, yBrams+1)
 
              if (dumpLocal) then
                 write(c0,"(i8)") i
@@ -2442,7 +2475,7 @@ integer :: ix, iy
        end do
 
     else
-	!print*, 'sem projecao'
+       !print*, 'sem projecao'
        ! case no projection, just pack the array
 
        do i= 1, onePostGrid%localSizeThisProc

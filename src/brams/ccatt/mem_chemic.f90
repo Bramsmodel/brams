@@ -24,7 +24,8 @@ contains
                           
   subroutine alloc_chemic(chemic,n1,n2,n3)
 
-    use micphys
+    use micphys, only: irain,   &
+                       level
 
     implicit none          
     type (chemic_vars) :: chemic

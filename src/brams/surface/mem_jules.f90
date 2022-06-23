@@ -161,7 +161,7 @@ Contains
     use var_tables, only: InsertVTab
 
     implicit none
-    include "i8.h"
+    include "constants.h"
     type (jules_vars) :: jules,julesm
     integer, intent(in) :: imean,nz,nx,ny,nzg,nzs,np,ng
     integer(kind=i8) :: npts

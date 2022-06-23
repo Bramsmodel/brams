@@ -435,8 +435,18 @@ end subroutine upa_interp
 
 subroutine sfc_obs_convert(n1,n2,n3,pp,pi0,prs,ng,nobs)
 
-  use mem_oda
-  use rconstants
+  use mem_oda, only: &
+       pkobs, &
+       ikobs, &
+       rkobs, &
+       tkobs, &
+       jkobs
+  
+  use rconstants, only: &
+       cpi, &
+       cpor, &
+       p00, &
+       rocp
 
   implicit none
 

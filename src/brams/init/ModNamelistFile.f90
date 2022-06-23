@@ -8,11 +8,40 @@
 
 module ModNamelistFile
 
-  use grid_dims
-  use dump
+  use grid_dims, only: &
+       maxgrds, &
+       nzpmax, &
+       maxsteb, &
+       maxubtp, &
+       maxlite, &
+       nzgmax
+  use dump, only: &
+       dumpMessage
 
+  use modPrintInitial, only: &
+       bramsHeader, &
+       printGridHeader, &
+       printOneVarGrid, &
+       printOneLineVars, &
+       printGridTail, &
+       printVarHeader, &
+       printVarTail, &
+       printFileHeader, &
+       printFileTail, &
+       printOneFile, &
+       csvHeader, &
+       printOneCsv, &
+       csvTail, &
+       conv2String
+
+  use ParLib, only: parf_bcast
+
+  use ModParallelEnvironment, only: parallelEnvironment
+
+  implicit none
+  
   private
-  public :: namelistFile
+  public :: NamelistFile
   public :: CreateNamelistFile
   public :: DestroyNamelistFile
   public :: GetNamelistFileName
@@ -34,7 +63,7 @@ module ModNamelistFile
   integer, parameter :: nsrc=4   !  number_sources
 !--(DMK-CCATT-FIM)-----------------------------------------------------------
 
-  type namelistFile
+  type NamelistFile
      character(len=f_name_length) :: fileName
 
      ! namelist /MODEL_GRID/
@@ -505,7 +534,7 @@ module ModNamelistFile
      real                         :: meteogramFreq
      character(len=f_name_length) :: meteogramMap
      character(len=f_name_length) :: meteogramDir
-  end type namelistFile
+  end type NamelistFile
 
 contains
 
@@ -514,8 +543,7 @@ contains
 
 
   subroutine CreateNamelistFile(oneNamelistFile)
-    implicit none
-    type(namelistFile), pointer :: oneNamelistFile
+    type(NamelistFile), pointer :: oneNamelistFile
     if (associated(oneNamelistFile)) then
        deallocate(oneNamelistFile)
     end if
@@ -526,8 +554,7 @@ contains
 
 
   subroutine DestroyNamelistFile(oneNamelistFile)
-    implicit none
-    type(namelistFile), pointer :: oneNamelistFile
+    type(NamelistFile), pointer :: oneNamelistFile
     if (associated(oneNamelistFile)) then
        deallocate(oneNamelistFile)
     end if
@@ -537,8 +564,7 @@ contains
 
 
   subroutine GetNamelistFileName(oneNamelistFile)
-    implicit none
-    type(namelistFile), pointer :: oneNamelistFile
+    type(NamelistFile), pointer :: oneNamelistFile
 
     integer :: nargs
     integer :: iarg
@@ -577,9 +603,7 @@ contains
 
 
   subroutine ReadNamelistFile(oneNamelistFile)
-
-    implicit none
-    type(namelistFile), pointer :: oneNamelistFile
+    type(NamelistFile), pointer :: oneNamelistFile
 
     include "files.h"
 
@@ -1139,7 +1163,7 @@ contains
     real                       :: scale_factor(5)
     character(len=256)         :: icGradsPrefix
     integer                    :: ccGradsWrite
-    include "constants.f90"
+    include "constants.h"
 
 
     namelist /ISAN_ISENTROPIC/ &
@@ -2865,678 +2889,6 @@ contains
 
 
 
-!!$  subroutine StoreNamelistFile(oneNamelistFile)
-!!$
-!!$    use io_params, only: frqboth, &
-!!$         afilout,                 &
-!!$         avgtim,                  &
-!!$         frqanl,                  &
-!!$         frqhis,                  &
-!!$         frqlite,                 &
-!!$         frqmean,                 &
-!!$         frqprt,                  &
-!!$         hfilin,                  &
-!!$         hfilout,                 &
-!!$         iclobber,                &
-!!$         ihistdel,                &
-!!$         initfld,                 &
-!!$         prtcputime,              &
-!!$         ioutput,                 &
-!!$         ipastin,                 &
-!!$         iplfld,                  &
-!!$         isbval,                  &
-!!$         isoilflg,                &
-!!$         isoilfn,                 &
-!!$         isstflg,                 &
-!!$         isstfn,                  &
-!!$         itopsflg,                &
-!!$         itoptflg,                &
-!!$         itoptfn,                 &
-!!$         iupdndvi,                &
-!!$         iupdsst,                 &
-!!$         ivegtflg,                &
-!!$         ivegtfn,                 &
-!!$         ixsctn,                  &
-!!$         iz0flg,                  &
-!!$         kwrite,                  &
-!!$         lite_vars,               &
-!!$         ndviflg,                 &
-!!$         ndvifn,                  &
-!!$         ndvifpfx,                &
-!!$         nlite_vars,              &
-!!$         nofilflg,                &
-!!$         nplt,                    &
-!!$         pastfn,                  &
-!!$         sfcfiles,                &
-!!$         sstfpfx,                 &
-!!$         timstr,                  &
-!!$         topfiles,                &
-!!$         toptenh,                 &
-!!$         toptwvl,                 &
-!!$         xlite,                   &
-!!$         ylite,                   &
-!!$         z0fact,                  &
-!!$         z0max,                   &
-!!$         zlite,                   &
-!!$                                ! TEB
-!!$         ifusflg,                 &
-!!$         ifusfn,                  &
-!!$         fusfiles
-!!$    use isan_coms, only: gobrad, &
-!!$         gobsep, &
-!!$         gridwt, &
-!!$         guess1st, &
-!!$         hybbot, &
-!!$         hybtop, &
-!!$         i1st_flg, &
-!!$         iapr, &
-!!$         iarawi, &
-!!$         iasrfce, &
-!!$         igridfl, &
-!!$         iobswin, &
-!!$         ioflgisz, &
-!!$         ioflgvar, &
-!!$         isan_inc, &
-!!$         isfc_flg, &
-!!$         iszstage, &
-!!$         iupa_flg, &
-!!$         ivrstage, &
-!!$         levth, &
-!!$         maxsfc, &
-!!$         maxsta, &
-!!$         nfeedvar, &
-!!$         nigrids, &
-!!$         nisn, &
-!!$         notid, &
-!!$         notsta, &
-!!$         respon, &
-!!$         sfcinf, &
-!!$         sigzwt, &
-!!$         stasep, &
-!!$         swvlnth, &
-!!$         topsigz, &
-!!$         varpfx, &
-!!$         wvlnth
-!!$    use mem_cuparm, only: confrq, &
-!!$         cu_prefix, &
-!!$         cu_tel, &
-!!$         cu_til, &
-!!$         if_cuinv, &
-!!$         nnqparm, &
-!!$         tcu_beg, &
-!!$         tcu_end, &
-!!$         tnudcu, &
-!!$         wcldbs, &
-!!$         wt_cu_grid
-!!$    use mem_globrad, only: raddatfn
-!!$    use mem_grell_param, only: closure_type
-!!$    use mem_grid, only: centlat, &
-!!$         centlon, &
-!!$         cphas, &
-!!$         deltax, &
-!!$         deltay, &
-!!$         deltaz, &
-!!$         distim, &
-!!$         dtlong, &
-!!$         dzmax, &
-!!$         dzrat, &
-!!$         expnme, &
-!!$         gridu, &
-!!$         gridv, &
-!!$         ibnd, &
-!!$         icorflg, &
-!!$         idate1, &
-!!$         ideltat, &
-!!$         if_adap, &
-!!$         ihtran, &
-!!$         imonth1, &
-!!$         initial, &
-!!$         itime1, &
-!!$         iyear1, &
-!!$         jbnd, &
-!!$         lsflg, &
-!!$         nacoust, &
-!!$         naddsc, &
-!!$         nestz1, &
-!!$         nestz2, &
-!!$         nfpt, &
-!!$         ngrids, &
-!!$         ninest, &
-!!$         njnest, &
-!!$         nknest, &
-!!$         nndtrat, &
-!!$         nnstbot, &
-!!$         nnsttop, &
-!!$         nnxp, &
-!!$         nnyp, &
-!!$         nnzp, &
-!!$         npatch, &
-!!$         nstratx, &
-!!$         nstraty, &
-!!$         nstratz1, &
-!!$         nstratz2, &
-!!$         nxtnest, &
-!!$         nzg, &
-!!$         nzs, &
-!!$         polelat, &
-!!$         polelon, &
-!!$         runtype, &
-!!$         timeunit, &
-!!$         timmax, &
-!!$         zz
-!!$    use mem_leaf, only: albedo, &
-!!$         drtcon, &
-!!$         dthcon, &
-!!$         isfcl, &
-!!$         nslcon, &
-!!$         nvegpat, &
-!!$         nvgcon, &
-!!$         pctlcon, &
-!!$         seatmp, &
-!!$         slmstr, &
-!!$         slz, &
-!!$         stgoff, &
-!!$         zrough
-!!$    use mem_oda, only: frqoda, &
-!!$         if_oda, &
-!!$         oda_sfc_tel, &
-!!$         oda_sfc_til, &
-!!$         oda_sfcprefix, &
-!!$         oda_upa_tel, &
-!!$         oda_upa_til, &
-!!$         oda_upaprefix, &
-!!$         roda_hgt, &
-!!$         roda_sfc0, &
-!!$         roda_sfce, &
-!!$         roda_upa0, &
-!!$         roda_upae, &
-!!$         roda_zfact, &
-!!$         tnudoda, &
-!!$         todabeg, &
-!!$         todaend, &
-!!$         wt_oda_grid, &
-!!$         wt_oda_pi, &
-!!$         wt_oda_rt, &
-!!$         wt_oda_th, &
-!!$         wt_oda_uv
-!!$    use mem_radiate, only: ilwrtyp, &
-!!$         iswrtyp, &
-!!$         lonrad, &
-!!$         radfrq
-!!$    use soilMoisture, only: soil_moist, &
-!!$         soil_moist_fail, &
-!!$         usdata_in, &
-!!$         usmodel_in
-!!$    use mem_turb, only: akmin, &
-!!$         csx, &
-!!$         csz, &
-!!$         idiffk, &
-!!$         if_urban_canopy, &
-!!$         ihorgrad, &
-!!$         xkhkm, &
-!!$         zkhkm
-!!$    use mem_varinit, only: cond_hfile, &
-!!$         nud_cond, &
-!!$         nud_hfile, &
-!!$         nud_type, &
-!!$         nudlat, &
-!!$         t_nudge_rc, &
-!!$         tcond_beg, &
-!!$         tcond_end, &
-!!$         tnudcent, &
-!!$         tnudlat, &
-!!$         tnudtop, &
-!!$         varfpfx, &
-!!$         vwait1, &
-!!$         vwaittot, &
-!!$         wt_nudge_grid, &
-!!$         wt_nudge_pi, &
-!!$         wt_nudge_rt, &
-!!$         wt_nudge_th, &
-!!$         wt_nudge_uv, &
-!!$         wt_nudgec_grid, &
-!!$         znudtop
-!!$    use micphys, only: &
-!!$         aparm, &
-!!$         coltabfn, &
-!!$         cparm, &
-!!$         gnu, &
-!!$         gparm, &
-!!$         hparm, &
-!!$         iaggr, &
-!!$         icloud, &
-!!$         igraup, &
-!!$         ihail, &
-!!$         ipris, &
-!!$         irain, &
-!!$         isnow, &
-!!$         level, &
-!!$         mkcoltab, &
-!!$         pparm, &
-!!$         rparm, &
-!!$         sparm
-!!$    use node_mod, only: &
-!!$         load_bal
-!!$    use ref_sounding, only: &
-!!$         hs, &
-!!$         ipsflg, &
-!!$         irtsflg, &
-!!$         itsflg, &
-!!$         iusflg, &
-!!$         ps, &
-!!$         rts, &
-!!$         ts, &
-!!$         us, &
-!!$         vs
-!!$    use shcu_vars_const, only: &
-!!$         nnshcu, &
-!!$         shcufrq
-!!$    use sib_vars, only: &
-!!$         co2_init, &
-!!$         n_co2
-!!$
-!!$    use catt_start, only: &
-!!$         CATT
-!!$
-!!$    use emission_source_map, only: &
-!!$         firemapfn, &
-!!$         plumerise,                           &
-!!$         define_proc
-!!$
-!!$    use plume_utils, only: &
-!!$         prfrq
-!!$
-!!$    use mem_scalar, only: &
-!!$         recycle_tracers
-!!$
-!!$    use teb_spm_start, only: &
-!!$         teb_spm
-!!$
-!!$    use mem_emiss, only : &
-!!$         ichemi,          &
-!!$         ichemi_in,       &
-!!$         chemdata_in,     &
-!!$         isource,         &
-!!$         weekdayin,       &
-!!$         efsat,           &
-!!$         efsun,           &
-!!$         eindno,          &
-!!$         eindno2,         &
-!!$         eindpm,          &
-!!$         eindco,          &
-!!$         eindso2,         &
-!!$         eindvoc,         &
-!!$         eveino,          &
-!!$         eveino2,         &
-!!$         eveipm,          &
-!!$         eveico,          &
-!!$         eveiso2,         &
-!!$         eveivoc
-!!$
-!!$    use teb_vars_const, only : &
-!!$         rushh1,               &
-!!$         rushh2,               &
-!!$         daylight,             &
-!!$         iteb,                 &
-!!$         tminbld,              &
-!!$         nteb,                 &
-!!$         hc_roof,              &
-!!$         tc_roof,              &
-!!$         d_roof,               &
-!!$         hc_road,              &
-!!$         d_road,               &
-!!$         tc_road,              &
-!!$         d_wall,               &
-!!$         tc_wall,              &
-!!$         hc_wall,              &
-!!$         nurbtype,             &
-!!$         ileafcod,             &
-!!$         z0_town,              &
-!!$         bld,                  &
-!!$         bld_height,           &
-!!$         bld_hl_ratio,         &
-!!$         aroof,                &
-!!$         eroof,                &
-!!$         aroad,                &
-!!$         eroad,                &
-!!$         awall,                &
-!!$         ewall,                &
-!!$         htraf,                &
-!!$         hindu,                &
-!!$         pletraf,              &
-!!$         pleindu
-!!$
-!!$    ! Explicit domain decomposition
-!!$    use domain_decomp, only: &
-!!$         domain_fname
-!!$
-!!$    implicit none
-!!$    type(namelistFile), pointer :: oneNamelistFile
-!!$
-!!$
-!!$
-!!$    frqboth = oneNamelistFile%frqboth
-!!$    afilout = oneNamelistFile%afilout
-!!$    avgtim = oneNamelistFile%avgtim
-!!$    frqanl = oneNamelistFile%frqanl
-!!$    frqhis = oneNamelistFile%frqhis
-!!$    frqlite = oneNamelistFile%frqlite
-!!$    frqmean = oneNamelistFile%frqmean
-!!$    frqprt = oneNamelistFile%frqprt
-!!$    hfilin = oneNamelistFile%hfilin
-!!$    hfilout = oneNamelistFile%hfilout
-!!$    iclobber = oneNamelistFile%iclobber
-!!$    ihistdel = oneNamelistFile%ihistdel
-!!$    initfld = oneNamelistFile%initfld
-!!$    prtcputime = oneNamelistFile%prtcputime
-!!$    ioutput = oneNamelistFile%ioutput
-!!$    ipastin = oneNamelistFile%ipastin
-!!$    iplfld = oneNamelistFile%iplfld
-!!$    isbval = oneNamelistFile%isbval
-!!$    isoilflg = oneNamelistFile%isoilflg
-!!$    isoilfn = oneNamelistFile%isoilfn
-!!$    isstflg = oneNamelistFile%isstflg
-!!$    isstfn = oneNamelistFile%isstfn
-!!$    itopsflg = oneNamelistFile%itopsflg
-!!$    itoptflg = oneNamelistFile%itoptflg
-!!$    itoptfn = oneNamelistFile%itoptfn
-!!$    iupdndvi = oneNamelistFile%iupdndvi
-!!$    iupdsst = oneNamelistFile%iupdsst
-!!$    ivegtflg = oneNamelistFile%ivegtflg
-!!$    ivegtfn = oneNamelistFile%ivegtfn
-!!$    ixsctn = oneNamelistFile%ixsctn
-!!$    iz0flg = oneNamelistFile%iz0flg
-!!$    kwrite = oneNamelistFile%kwrite
-!!$    lite_vars = oneNamelistFile%lite_vars
-!!$    ndviflg = oneNamelistFile%ndviflg
-!!$    ndvifn = oneNamelistFile%ndvifn
-!!$    ndvifpfx = oneNamelistFile%ndvifpfx
-!!$    nlite_vars = oneNamelistFile%nlite_vars
-!!$    nofilflg = oneNamelistFile%nofilflg
-!!$    nplt = oneNamelistFile%nplt
-!!$    pastfn = oneNamelistFile%pastfn
-!!$    sfcfiles = oneNamelistFile%sfcfiles
-!!$    sstfpfx = oneNamelistFile%sstfpfx
-!!$    timstr = oneNamelistFile%timstr
-!!$    topfiles = oneNamelistFile%topfiles
-!!$    toptenh = oneNamelistFile%toptenh
-!!$    toptwvl = oneNamelistFile%toptwvl
-!!$    xlite = oneNamelistFile%xlite
-!!$    ylite = oneNamelistFile%ylite
-!!$    z0fact = oneNamelistFile%z0fact
-!!$    z0max = oneNamelistFile%z0max
-!!$    zlite = oneNamelistFile%zlite
-!!$    ifusflg = oneNamelistFile%ifusflg
-!!$    ifusfn = oneNamelistFile%ifusfn
-!!$    fusfiles = oneNamelistFile%fusfiles
-!!$    gobrad = oneNamelistFile%gobrad
-!!$    gobsep = oneNamelistFile%gobsep
-!!$    gridwt = oneNamelistFile%gridwt
-!!$    guess1st = oneNamelistFile%guess1st
-!!$    hybbot = oneNamelistFile%hybbot
-!!$    hybtop = oneNamelistFile%hybtop
-!!$    i1st_flg = oneNamelistFile%i1st_flg
-!!$    iapr = oneNamelistFile%iapr
-!!$    iarawi = oneNamelistFile%iarawi
-!!$    iasrfce = oneNamelistFile%iasrfce
-!!$    igridfl = oneNamelistFile%igridfl
-!!$    iobswin = oneNamelistFile%iobswin
-!!$    ioflgisz = oneNamelistFile%ioflgisz
-!!$    ioflgvar = oneNamelistFile%ioflgvar
-!!$    isan_inc = oneNamelistFile%isan_inc
-!!$    isfc_flg = oneNamelistFile%isfc_flg
-!!$    iszstage = oneNamelistFile%iszstage
-!!$    iupa_flg = oneNamelistFile%iupa_flg
-!!$    ivrstage = oneNamelistFile%ivrstage
-!!$    levth = oneNamelistFile%levth
-!!$    maxsfc = oneNamelistFile%maxsfc
-!!$    maxsta = oneNamelistFile%maxsta
-!!$    nfeedvar = oneNamelistFile%nfeedvar
-!!$    nigrids = oneNamelistFile%nigrids
-!!$    nisn = oneNamelistFile%nisn
-!!$    notid = oneNamelistFile%notid
-!!$    notsta = oneNamelistFile%notsta
-!!$    respon = oneNamelistFile%respon
-!!$    sfcinf = oneNamelistFile%sfcinf
-!!$    sigzwt = oneNamelistFile%sigzwt
-!!$    stasep = oneNamelistFile%stasep
-!!$    swvlnth = oneNamelistFile%swvlnth
-!!$    topsigz = oneNamelistFile%topsigz
-!!$    varpfx = oneNamelistFile%varpfx
-!!$    wvlnth = oneNamelistFile%wvlnth
-!!$    confrq = oneNamelistFile%confrq
-!!$    cu_prefix = oneNamelistFile%cu_prefix
-!!$    cu_tel = oneNamelistFile%cu_tel
-!!$    cu_til = oneNamelistFile%cu_til
-!!$    if_cuinv = oneNamelistFile%if_cuinv
-!!$    nnqparm = oneNamelistFile%nnqparm
-!!$    tcu_beg = oneNamelistFile%tcu_beg
-!!$    tcu_end = oneNamelistFile%tcu_end
-!!$    tnudcu = oneNamelistFile%tnudcu
-!!$    wcldbs = oneNamelistFile%wcldbs
-!!$    wt_cu_grid = oneNamelistFile%wt_cu_grid
-!!$    raddatfn = oneNamelistFile%raddatfn
-!!$    closure_type = oneNamelistFile%closure_type
-!!$    centlat = oneNamelistFile%centlat
-!!$    centlon = oneNamelistFile%centlon
-!!$    cphas = oneNamelistFile%cphas
-!!$    deltax = oneNamelistFile%deltax
-!!$    deltay = oneNamelistFile%deltay
-!!$    deltaz = oneNamelistFile%deltaz
-!!$    distim = oneNamelistFile%distim
-!!$    dtlong = oneNamelistFile%dtlong
-!!$    dzmax = oneNamelistFile%dzmax
-!!$    dzrat = oneNamelistFile%dzrat
-!!$    expnme = oneNamelistFile%expnme
-!!$    gridu = oneNamelistFile%gridu
-!!$    gridv = oneNamelistFile%gridv
-!!$    ibnd = oneNamelistFile%ibnd
-!!$    icorflg = oneNamelistFile%icorflg
-!!$    idate1 = oneNamelistFile%idate1
-!!$    ideltat = oneNamelistFile%ideltat
-!!$    if_adap = oneNamelistFile%if_adap
-!!$    ihtran = oneNamelistFile%ihtran
-!!$    imonth1 = oneNamelistFile%imonth1
-!!$    initial = oneNamelistFile%initial
-!!$    itime1 = oneNamelistFile%itime1
-!!$    iyear1 = oneNamelistFile%iyear1
-!!$    jbnd = oneNamelistFile%jbnd
-!!$    lsflg = oneNamelistFile%lsflg
-!!$    nacoust = oneNamelistFile%nacoust
-!!$    naddsc = oneNamelistFile%naddsc
-!!$    nestz1 = oneNamelistFile%nestz1
-!!$    nestz2 = oneNamelistFile%nestz2
-!!$    nfpt = oneNamelistFile%nfpt
-!!$    ngrids = oneNamelistFile%ngrids
-!!$    ninest = oneNamelistFile%ninest
-!!$    njnest = oneNamelistFile%njnest
-!!$    nknest = oneNamelistFile%nknest
-!!$    nndtrat = oneNamelistFile%nndtrat
-!!$    nnstbot = oneNamelistFile%nnstbot
-!!$    nnsttop = oneNamelistFile%nnsttop
-!!$    nnxp = oneNamelistFile%nnxp
-!!$    nnyp = oneNamelistFile%nnyp
-!!$    nnzp = oneNamelistFile%nnzp
-!!$    npatch = oneNamelistFile%npatch
-!!$    nstratx = oneNamelistFile%nstratx
-!!$    nstraty = oneNamelistFile%nstraty
-!!$    nstratz1 = oneNamelistFile%nstratz1
-!!$    nstratz2 = oneNamelistFile%nstratz2
-!!$    nxtnest = oneNamelistFile%nxtnest
-!!$    nzg = oneNamelistFile%nzg
-!!$    nzs = oneNamelistFile%nzs
-!!$    polelat = oneNamelistFile%polelat
-!!$    polelon = oneNamelistFile%polelon
-!!$    runtype = oneNamelistFile%runtype
-!!$    timeunit = oneNamelistFile%timeunit
-!!$    timmax = oneNamelistFile%timmax
-!!$    zz = oneNamelistFile%zz
-!!$    albedo = oneNamelistFile%albedo
-!!$    drtcon = oneNamelistFile%drtcon
-!!$    dthcon = oneNamelistFile%dthcon
-!!$    isfcl = oneNamelistFile%isfcl
-!!$    nslcon = oneNamelistFile%nslcon
-!!$    nvegpat = oneNamelistFile%nvegpat
-!!$    nvgcon = oneNamelistFile%nvgcon
-!!$    pctlcon = oneNamelistFile%pctlcon
-!!$    seatmp = oneNamelistFile%seatmp
-!!$    slmstr = oneNamelistFile%slmstr
-!!$    slz = oneNamelistFile%slz
-!!$    stgoff = oneNamelistFile%stgoff
-!!$    zrough = oneNamelistFile%zrough
-!!$    frqoda = oneNamelistFile%frqoda
-!!$    if_oda = oneNamelistFile%if_oda
-!!$    oda_sfc_tel = oneNamelistFile%oda_sfc_tel
-!!$    oda_sfc_til = oneNamelistFile%oda_sfc_til
-!!$    oda_sfcprefix = oneNamelistFile%oda_sfcprefix
-!!$    oda_upa_tel = oneNamelistFile%oda_upa_tel
-!!$    oda_upa_til = oneNamelistFile%oda_upa_til
-!!$    oda_upaprefix = oneNamelistFile%oda_upaprefix
-!!$    roda_hgt = oneNamelistFile%roda_hgt
-!!$    roda_sfc0 = oneNamelistFile%roda_sfc0
-!!$    roda_sfce = oneNamelistFile%roda_sfce
-!!$    roda_upa0 = oneNamelistFile%roda_upa0
-!!$    roda_upae = oneNamelistFile%roda_upae
-!!$    roda_zfact = oneNamelistFile%roda_zfact
-!!$    tnudoda = oneNamelistFile%tnudoda
-!!$    todabeg = oneNamelistFile%todabeg
-!!$    todaend = oneNamelistFile%todaend
-!!$    wt_oda_grid = oneNamelistFile%wt_oda_grid
-!!$    wt_oda_pi = oneNamelistFile%wt_oda_pi
-!!$    wt_oda_rt = oneNamelistFile%wt_oda_rt
-!!$    wt_oda_th = oneNamelistFile%wt_oda_th
-!!$    wt_oda_uv = oneNamelistFile%wt_oda_uv
-!!$    ilwrtyp = oneNamelistFile%ilwrtyp
-!!$    iswrtyp = oneNamelistFile%iswrtyp
-!!$    lonrad = oneNamelistFile%lonrad
-!!$    radfrq = oneNamelistFile%radfrq
-!!$    soil_moist = oneNamelistFile%soil_moist
-!!$    soil_moist_fail = oneNamelistFile%soil_moist_fail
-!!$    usdata_in = oneNamelistFile%usdata_in
-!!$    usmodel_in = oneNamelistFile%usmodel_in
-!!$    akmin = oneNamelistFile%akmin
-!!$    csx = oneNamelistFile%csx
-!!$    csz = oneNamelistFile%csz
-!!$    idiffk = oneNamelistFile%idiffk
-!!$    if_urban_canopy = oneNamelistFile%if_urban_canopy
-!!$    ihorgrad = oneNamelistFile%ihorgrad
-!!$    xkhkm = oneNamelistFile%xkhkm
-!!$    zkhkm = oneNamelistFile%zkhkm
-!!$    cond_hfile = oneNamelistFile%cond_hfile
-!!$    nud_cond = oneNamelistFile%nud_cond
-!!$    nud_hfile = oneNamelistFile%nud_hfile
-!!$    nud_type = oneNamelistFile%nud_type
-!!$    nudlat = oneNamelistFile%nudlat
-!!$    t_nudge_rc = oneNamelistFile%t_nudge_rc
-!!$    tcond_beg = oneNamelistFile%tcond_beg
-!!$    tcond_end = oneNamelistFile%tcond_end
-!!$    tnudcent = oneNamelistFile%tnudcent
-!!$    tnudlat = oneNamelistFile%tnudlat
-!!$    tnudtop = oneNamelistFile%tnudtop
-!!$    varfpfx = oneNamelistFile%varfpfx
-!!$    vwait1 = oneNamelistFile%vwait1
-!!$    vwaittot = oneNamelistFile%vwaittot
-!!$    wt_nudge_grid = oneNamelistFile%wt_nudge_grid
-!!$    wt_nudge_pi = oneNamelistFile%wt_nudge_pi
-!!$    wt_nudge_rt = oneNamelistFile%wt_nudge_rt
-!!$    wt_nudge_th = oneNamelistFile%wt_nudge_th
-!!$    wt_nudge_uv = oneNamelistFile%wt_nudge_uv
-!!$    wt_nudgec_grid = oneNamelistFile%wt_nudgec_grid
-!!$    znudtop = oneNamelistFile%znudtop
-!!$    aparm = oneNamelistFile%aparm
-!!$    coltabfn = oneNamelistFile%coltabfn
-!!$    cparm = oneNamelistFile%cparm
-!!$    gnu = oneNamelistFile%gnu
-!!$    gparm = oneNamelistFile%gparm
-!!$    hparm = oneNamelistFile%hparm
-!!$    iaggr = oneNamelistFile%iaggr
-!!$    icloud = oneNamelistFile%icloud
-!!$    igraup = oneNamelistFile%igraup
-!!$    ihail = oneNamelistFile%ihail
-!!$    ipris = oneNamelistFile%ipris
-!!$    irain = oneNamelistFile%irain
-!!$    isnow = oneNamelistFile%isnow
-!!$    level = oneNamelistFile%level
-!!$    mkcoltab = oneNamelistFile%mkcoltab
-!!$    pparm = oneNamelistFile%pparm
-!!$    rparm = oneNamelistFile%rparm
-!!$    sparm = oneNamelistFile%sparm
-!!$    load_bal = oneNamelistFile%load_bal
-!!$    hs = oneNamelistFile%hs
-!!$    ipsflg = oneNamelistFile%ipsflg
-!!$    irtsflg = oneNamelistFile%irtsflg
-!!$    itsflg = oneNamelistFile%itsflg
-!!$    iusflg = oneNamelistFile%iusflg
-!!$    ps = oneNamelistFile%ps
-!!$    rts = oneNamelistFile%rts
-!!$    ts = oneNamelistFile%ts
-!!$    us = oneNamelistFile%us
-!!$    vs = oneNamelistFile%vs
-!!$    nnshcu = oneNamelistFile%nnshcu
-!!$    shcufrq = oneNamelistFile%shcufrq
-!!$    co2_init = oneNamelistFile%co2_init
-!!$    n_co2 = oneNamelistFile%n_co2
-!!$    catt = oneNamelistFile%catt
-!!$    firemapfn = oneNamelistFile%firemapfn
-!!$    plumerise = oneNamelistFile%plumerise
-!!$    define_proc = oneNamelistFile%define_proc
-!!$    prfrq = oneNamelistFile%prfrq
-!!$    recycle_tracers = oneNamelistFile%recycle_tracers
-!!$    teb_spm = oneNamelistFile%teb_spm
-!!$    ichemi = oneNamelistFile%ichemi
-!!$    ichemi_in = oneNamelistFile%ichemi_in
-!!$    chemdata_in = oneNamelistFile%chemdata_in
-!!$    isource = oneNamelistFile%isource
-!!$    weekdayin = oneNamelistFile%weekdayin
-!!$    efsat = oneNamelistFile%efsat
-!!$    efsun = oneNamelistFile%efsun
-!!$    eindno = oneNamelistFile%eindno
-!!$    eindno2 = oneNamelistFile%eindno2
-!!$    eindpm = oneNamelistFile%eindpm
-!!$    eindco = oneNamelistFile%eindco
-!!$    eindso2 = oneNamelistFile%eindso2
-!!$    eindvoc = oneNamelistFile%eindvoc
-!!$    eveino = oneNamelistFile%eveino
-!!$    eveino2 = oneNamelistFile%eveino2
-!!$    eveipm = oneNamelistFile%eveipm
-!!$    eveico = oneNamelistFile%eveico
-!!$    eveiso2 = oneNamelistFile%eveiso2
-!!$    eveivoc = oneNamelistFile%eveivoc
-!!$    rushh1 = oneNamelistFile%rushh1
-!!$    rushh2 = oneNamelistFile%rushh2
-!!$    daylight = oneNamelistFile%daylight
-!!$    iteb = oneNamelistFile%iteb
-!!$    tminbld = oneNamelistFile%tminbld
-!!$    nteb = oneNamelistFile%nteb
-!!$    hc_roof = oneNamelistFile%hc_roof
-!!$    tc_roof = oneNamelistFile%tc_roof
-!!$    d_roof = oneNamelistFile%d_roof
-!!$    hc_road = oneNamelistFile%hc_road
-!!$    d_road = oneNamelistFile%d_road
-!!$    tc_road = oneNamelistFile%tc_road
-!!$    d_wall = oneNamelistFile%d_wall
-!!$    tc_wall = oneNamelistFile%tc_wall
-!!$    hc_wall = oneNamelistFile%hc_wall
-!!$    nurbtype = oneNamelistFile%nurbtype
-!!$    ileafcod = oneNamelistFile%ileafcod
-!!$    z0_town = oneNamelistFile%z0_town
-!!$    bld = oneNamelistFile%bld
-!!$    bld_height = oneNamelistFile%bld_height
-!!$    bld_hl_ratio = oneNamelistFile%bld_hl_ratio
-!!$    aroof = oneNamelistFile%aroof
-!!$    eroof = oneNamelistFile%eroof
-!!$    aroad = oneNamelistFile%aroad
-!!$    eroad = oneNamelistFile%eroad
-!!$    awall = oneNamelistFile%awall
-!!$    ewall = oneNamelistFile%ewall
-!!$    htraf = oneNamelistFile%htraf
-!!$    hindu = oneNamelistFile%hindu
-!!$    pletraf = oneNamelistFile%pletraf
-!!$    pleindu = oneNamelistFile%pleindu
-!!$    domain_fname = oneNamelistFile%domain_fname
-!!$  end subroutine StoreNamelistFile
-
-
   !**********************************************************************
 
 
@@ -3544,13 +2896,10 @@ contains
 
 
   subroutine BroadcastNamelistFile(oneNamelistFile, oneParallelEnvironment)
-    use ParLib, only: parf_bcast
-    use ModParallelEnvironment, only: parallelEnvironment
-    implicit none
-    type(namelistFile), pointer :: oneNamelistFile
+    type(NamelistFile), pointer :: oneNamelistFile
     type(parallelEnvironment), pointer :: oneParallelEnvironment
 
-    include "i8.h"
+    include "constants.h"
 
     ! MODEL_GRIDS
     call parf_bcast(oneNamelistFile%expnme,&
@@ -4619,7 +3968,7 @@ contains
 
 
   subroutine TimeUnitsToSeconds(oneNamelistFile)
-    type(namelistFile), pointer :: oneNamelistFile
+    type(NamelistFile), pointer :: oneNamelistFile
 
     real :: tfact
     character(len=*), parameter :: h="**(TimeUnitsToSeconds)**"
@@ -4648,15 +3997,12 @@ contains
 
 
   subroutine DumpNamelistFile(oneNamelistFile,nmachs,mchnum,master_num)
-    use modPrintInitial
-
-    implicit none
-    type(namelistFile), pointer :: oneNamelistFile
+    type(NamelistFile), pointer :: oneNamelistFile
 
     character(len=*),parameter :: revision='6.0'
     character(len=*),parameter :: license='CC Attribution-ShareAlike 4.0 International'
 
-    include "constants.f90"
+    include "constants.h"
 
     integer, intent(in) :: nmachs,mchnum,master_num
 

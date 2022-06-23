@@ -9,7 +9,8 @@
 
 module io_params
 
-  use ModNamelistFile, only: namelistFile
+  use ModNamelistFile, only: &
+       namelistFile
 
   use grid_dims, only: &
        maxgrds,        &
@@ -17,33 +18,26 @@ module io_params
        maxsstfiles,    &
        maxndvifiles
 
-!--(DMK-CCATT-INI)------------------------------------------------------------------
- ! use mem_chem1, only: &
- !      nsrc,           &
- !      maxsrcfiles,    &
- !      max_ntimes_src
-!--(DMK-CCATT-INI)------------------------------------------------------------------
-
   implicit none
   private
   public :: StoreNamelistFileAtIo_Params
+  public :: createIoData
+  public :: destroyIoData
 
- !io_params have ioutput var 
- !mem_chem1 needs ioutput var in order to output recycle vars on vfm.
- !io_params needs mem_chem1 parameters.
- 
+  !io_params have ioutput var 
+  !mem_chem1 needs ioutput var in order to output recycle vars on vfm.
+  !io_params needs mem_chem1 parameters.
+
   integer, parameter :: nsrc=4  !number_sources - cyclic reference error.
-  INTEGER, PARAMETER :: maxsrcfiles   = 1500 !cyclic reference error.
-    integer, parameter :: max_ntimes_src = 2 !cyclic reference error.
+  integer, parameter :: maxsrcfiles   = 1500 !cyclic reference error.
+  integer, parameter :: max_ntimes_src = 2 !cyclic reference error.
 
 
   include "files.h"
 
   character(len=32), public  :: lite_vars(maxlite) ! from RAMSIN
-
-  character(len=80), public  :: afilin !**(JP)** unused
-
   character(len=f_name_length), public :: hfilout ! from RAMSIN
+  
   character(len=f_name_length), public :: afilout ! from RAMSIN
   character(len=f_name_length), public :: pastfn ! from RAMSIN
   character(len=f_name_length), public :: hfilin ! from RAMSIN
@@ -98,7 +92,6 @@ module io_params
   character(len=f_name_length), public :: sfcfiles ! from RAMSIN
   character(len=f_name_length), public :: topfiles ! from RAMSIN
   character(len=f_name_length), public :: fusfiles ! from RAMSIN
-!!$  character(len=14), public  :: lastdate_sst(maxgrds)
 
   ! sst files data structure
 
@@ -107,19 +100,12 @@ module io_params
   integer, public            :: isstcycdata  ! cyclic (on time) files; set by SstFileInv
   integer, public            :: isstcyclic   ! cyclic files and data will be time updated; set by SstFileInv
 
-!!$  integer, public            :: nsstfiles(maxgrds)                ! number of files for each grid; set by SstFileInv
   integer, allocatable, public :: nsstfiles(:)                ! number of files for each grid; set by SstFileInv
 
-!!$  character(len=256), public :: fnames_sst(maxsstfiles,maxgrds)   ! file names for each grid; set by SstFileInv
   character(len=f_name_length), allocatable, public :: fnames_sst(:,:)   ! file names for each grid; set by SstFileInv
 
-!!$  character(len=14), public  :: itotdate_sst(maxsstfiles,maxgrds) ! file dates for each grid, ordered by increasing date; set by SstFileInv
   character(len=14), allocatable, public  :: itotdate_sst(:,:) ! file dates for each grid, ordered by increasing date; set by SstFileInv
 
-!!$  integer, public            :: isstflp(maxgrds)  ! index of last file prior to (or at) starting date; set by SstFileInv
-!!$  integer, public            :: isstflf(maxgrds)  ! index of first file later than starting date; set by SstFileInv
-!!$  real, public               :: ssttime1(maxgrds)
-!!$  real, public               :: ssttime2(maxgrds)
   integer, allocatable, public            :: isstflp(:)  ! index of last file prior to (or at) starting date; set by SstFileInv
   integer, allocatable, public            :: isstflf(:)  ! index of first file later than starting date; set by SstFileInv
   real, allocatable, public               :: ssttime1(:)
@@ -132,13 +118,6 @@ module io_params
   integer, public            :: indvicyclic ! cyclic (on time) files; set by NdviFileInv
   integer, public            :: indvicycdata ! cyclic files and data will be time updated; set by NdviFileInv
 
-!!$  integer, public            :: nndvifiles(maxgrds)                 ! number of files for each grid; set by NdviFileInv
-!!$  character(len=256), public :: fnames_ndvi(maxndvifiles,maxgrds)   ! file names for each grid; set by NdviFileInv
-!!$  character(len=14), public  :: itotdate_ndvi(maxndvifiles,maxgrds) ! file dates for each grid, ordered by increasing date; set by NdviFileInv
-!!$  integer, public            :: indviflp(maxgrds)  ! index of last file prior to (or at) starting date; set by NdviFileInv
-!!$  integer, public            :: indviflf(maxgrds)  ! index of first file later than starting date; set by NdviFileInv
-!!$  real, public               :: ndvitime1(maxgrds)
-!!$  real, public               :: ndvitime2(maxgrds)
   integer, allocatable, public            :: nndvifiles(:)                 ! number of files for each grid; set by NdviFileInv
   character(len=f_name_length), allocatable, public :: fnames_ndvi(:,:)   ! file names for each grid; set by NdviFileInv
   character(len=14), allocatable, public  :: itotdate_ndvi(:,:) ! file dates for each grid, ordered by increasing date; set by NdviFileInv
@@ -147,27 +126,15 @@ module io_params
   real, allocatable, public               :: ndvitime1(:)
   real, allocatable, public               :: ndvitime2(:)
 
-!!$  character(len=8), public   :: plfmt(50)
-!!$  character(len=8), public   :: pltit(50)
   character(len=16), public  :: iplfld(50) ! from RAMSIN
   integer, public            :: nplt ! from RAMSIN
   integer, public            :: initfld ! from RAMSIN
   integer, public            :: ixsctn(50) ! from RAMSIN
-!!$  integer, public            :: iplvect(50)
   integer, public            :: isbval(50) ! from RAMSIN
-!!$  integer, public            :: iaa(50)
-!!$  integer, public            :: iab(50)
-!!$  integer, public            :: joa(50)
-!!$  integer, public            :: job(50)
-!!$  integer, public            :: naavg(50)
-!!$  integer, public            :: noavg(50)
 
   real, public             :: frqprt ! from RAMSIN
-!!$  real, public             :: plconlo(50)
-!!$  real, public             :: plconhi(50)
-!!$  real, public             :: plconin(50)
 
-!--(DMK-CCATT-INI)------------------------------------------------------------------
+  !--(DMK-CCATT-INI)------------------------------------------------------------------
   ! emission source files data structure
 
   real,                            public :: srctime1=0.
@@ -178,15 +145,12 @@ module io_params
   integer,            allocatable, public :: actual_time_index(:,:)
   integer,            allocatable, public :: nsrcfiles(:)
   integer,            allocatable, public :: next_srcfile(:)
-!--(DMK-CCATT-FIM)------------------------------------------------------------------
+  !--(DMK-CCATT-FIM)------------------------------------------------------------------
 
   ! flag to print wall cpu times for each slave node
 
   integer, public                :: prtcputime ! from RAMSIN
 
-  ! Subroutines:
-  public :: createIoData
-  public :: destroyIoData
 contains
 
   subroutine createIoData(ngrids)
@@ -229,7 +193,7 @@ contains
     allocate(ndvitime2(ngrids), STAT=ierr)
     if (ierr/=0) call fatal_error("ERROR allocating ndvitime2 (createIoData)")
 
-!--(DMK-CCATT-INI)------------------------------------------------------------------
+    !--(DMK-CCATT-INI)------------------------------------------------------------------
     allocate(nsrcfiles(ngrids), STAT=ierr)
     if (ierr/=0) call fatal_error("ERROR allocating nsrcfiles (createIoData)")
     allocate(fnames_src(maxsrcfiles,ngrids), STAT=ierr)
@@ -243,7 +207,7 @@ contains
     if (ierr/=0) call fatal_error("ERROR allocating src_times (createIoData)")
     allocate(actual_time_index(max_ntimes_src,nsrc), STAT=ierr)
     if (ierr/=0) call fatal_error("ERROR allocating actual_time_index (createIoData)")
-!--(DMK-CCATT-FIM)------------------------------------------------------------------
+    !--(DMK-CCATT-FIM)------------------------------------------------------------------
 
   end subroutine createIoData
 
@@ -298,26 +262,26 @@ contains
     if (ierr/=0) call fatal_error&
          ("ERROR deallocating ndvitime2 (destroyIoData)")
 
-!--(DMK-CCATT-INI)------------------------------------------------------------------
-   deallocate(nsrcfiles, STAT=ierr)
+    !--(DMK-CCATT-INI)------------------------------------------------------------------
+    deallocate(nsrcfiles, STAT=ierr)
     if (ierr/=0) call fatal_error&
          ("ERROR deallocating nsrcfiles (destroyIoData)")
-   deallocate(fnames_src, STAT=ierr)
+    deallocate(fnames_src, STAT=ierr)
     if (ierr/=0) call fatal_error&
          ("ERROR deallocating fnames_src (destroyIoData)")
-   deallocate(itotdate_src, STAT=ierr)
+    deallocate(itotdate_src, STAT=ierr)
     if (ierr/=0) call fatal_error&
          ("ERROR deallocating itotdate_src (destroyIoData)")
-   deallocate(next_srcfile, STAT=ierr)
+    deallocate(next_srcfile, STAT=ierr)
     if (ierr/=0) call fatal_error&
          ("ERROR deallocating next_srcfile (destroyIoData)")
-   deallocate(src_times, STAT=ierr)
+    deallocate(src_times, STAT=ierr)
     if (ierr/=0) call fatal_error&
          ("ERROR deallocating src_times (destroyIoData)")
-   deallocate(actual_time_index, STAT=ierr)
+    deallocate(actual_time_index, STAT=ierr)
     if (ierr/=0) call fatal_error&
          ("ERROR deallocating actual_time_index (destroyIoData)")
-!--(DMK-CCATT-FIM)------------------------------------------------------------------
+    !--(DMK-CCATT-FIM)------------------------------------------------------------------
 
   end subroutine destroyIoData
 

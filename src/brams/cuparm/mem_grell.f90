@@ -151,7 +151,7 @@ contains
 
     use var_tables, only: InsertVTab
     implicit none
-    include "i8.h"
+    include "constants.h"
     
     type (cuforc_vars) :: cuforc, cuforcm
     integer, intent(in) :: imean, m1,  m2, m3, ng
@@ -173,7 +173,7 @@ contains
 
     use var_tables, only: InsertVTab
     implicit none
-    include "i8.h"
+    include "constants.h"
 
    
     type (cuforc_vars) :: cuforc, cuforcm
@@ -241,7 +241,7 @@ contains
      use mem_cuparm, only : nnqparm  
 	 use var_tables, only: InsertVTab
     implicit none
-    include "i8.h"
+    include "constants.h"
     ! Arguments:
     type (grell_vars), intent(IN) :: grell, grellm
     integer, intent(IN)           :: imean, m1,  m2, m3, ng
@@ -305,7 +305,7 @@ contains
     USE shcu_vars_const, ONLY: NNSHCU 
 
     implicit none
-    include "i8.h"
+    include "constants.h"
     type (grell_vars) :: grell_sh, grellm_sh
     integer, intent(in) :: imean, m1,  m2, m3, ng
     integer(kind=i8) :: npts

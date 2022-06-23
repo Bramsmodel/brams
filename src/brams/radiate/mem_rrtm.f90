@@ -89,7 +89,7 @@ MODULE mem_rrtm
    
    subroutine initRRTM()
       use mem_chem1 , only: chemistry 
-      USE chem1_list !, ONLY: nspecies,spc_name,O3,CO2,NO2,H2O,CH4,O2      
+      USE chem1_list, ONLY: nspecies,spc_name       
       use node_mod  , only: mxp,myp,mzp
       USE mem_grid  , only: maxnzp
 

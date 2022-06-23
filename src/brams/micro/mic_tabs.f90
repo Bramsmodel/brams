@@ -7,6 +7,8 @@
 !###########################################################################
 
 subroutine haznuc()
+  use  ModMicGamma, only: &
+       gammln
 
   use micphys, only : &
        nthz,          & !INTENT(IN)
@@ -20,7 +22,6 @@ subroutine haznuc()
   ! Local Variables:
   integer :: ithz,irhhz,k
   real :: denccn,gnuccn,dnccn,ddccn,rhhz,c1hz,c2hz,c3hz,bhz,dm,sum,dccn,y,dum,thz
-  real :: gammln
 
   !  Haze nucleation table
 
@@ -63,6 +64,8 @@ end subroutine haznuc
 !******************************************************************************
 
 subroutine homfrzcl(dtlt,ngr)
+  use  ModMicGamma, only: &
+       gammln
 
   use micphys, only: &
        ntc,          & !INTENT(IN)
@@ -80,7 +83,6 @@ subroutine homfrzcl(dtlt,ngr)
   ! Local Variables:
   integer :: itc,k,idnc
   real    :: gnuc,ddc,ajlso,dnc,sum,dc,v1,tc,y
-  real    :: gammln
 
   !  Make table for homogeneous freezing of cloud droplets
   !  Need gnuc = gnu(1) ???
@@ -117,6 +119,10 @@ end subroutine homfrzcl
 subroutine mksedim_tab(m1,m2,m3,ngr,nembfall,maxkfall  &
      ,zm,dzt,pcpfillc,pcpfillr,sfcpcp)
 
+  use  ModMicGamma, only: &
+       gammln, &
+       gammp
+  
   use micphys, only: &
        nhcat,        & !INTENT(IN)
        sedtime0,     & !INTENT(OUT)
@@ -145,7 +151,6 @@ subroutine mksedim_tab(m1,m2,m3,ngr,nembfall,maxkfall  &
   integer :: iembs,lcat,lhcat,k,kkf,ibin,kk,jbin
   real :: dmbodn,diam0,diam1,fac1,fac3,sumc,sumr,diam,fac2,fac4  &
        ,disp,ztopnew,zbotnew,fallin,delzsfc,dispemb,dispmax,dispmx
-  real :: gammln,gammp
   real, dimension(nbin) :: cbin,rbin,reldisp
 
   ! Because timestep may now be variable in time, define sedtime0 and sedtime1
@@ -288,6 +293,8 @@ end subroutine mksedim_tab
 !******************************************************************************
 
 subroutine tabmelt()
+  use  ModMicGamma, only: &
+       gammln
 
   use micphys, only: &
        ncat,         & !INTENT(IN)
@@ -314,7 +321,6 @@ subroutine tabmelt()
 
   real, dimension(nbins) :: db,fmg,pmass,binmass,dqdt,q
   real, dimension(ncat) :: dmean
-  real :: gammln
 
   data dmean/20.e-6,500.e-6,30.e-6,500.e-6,500.e-6,500.e-6,8000.e-6/
   data vk/0.2123e-04/
@@ -425,6 +431,12 @@ end subroutine tabmelt
 
 subroutine mkcoltb
 
+  use  ModMicGamma, only: &
+       gammln, &
+       gammq, &
+       gammp, &
+       avint
+
   use micphys, only: &
        nhcat,        & !INTENT(IN)
        gnu,          & !INTENT(IN)
@@ -447,7 +459,7 @@ subroutine mkcoltb
   integer :: ihx,ix,ihy,iy,iemby,iembx,idx
   real :: gxm,dnminx,dnmaxx,dxlo,dxhi,gyn,gyn1,gyn2,gynp,gynp1,gynp2,gym  &
        ,dnminy,dnmaxy,dny,vny,dnx,ans
-  real :: gammln,xj
+  real :: xj
   real, dimension(ndx) :: dx,fx,gx
 
 
@@ -518,6 +530,10 @@ end subroutine mkcoltb
 
 real function xj(dx,cvx,pvx,cvy,pvy,vny,dnx,dny,xnu,ynu  &
      ,gyn1,gyn2,gynp,gynp1,gynp2)
+  use  ModMicGamma, only: &
+       gammln, &
+       gammq, &
+       gammp
 
   implicit none
 
@@ -526,7 +542,6 @@ real function xj(dx,cvx,pvx,cvy,pvy,vny,dnx,dny,xnu,ynu  &
 
   ! Local Variables:
   real :: dnxi,rdx,vx,dxy,ynup
-  real :: gammln,gammp,gammq
 
 
   dnxi = 1. / dnx
@@ -552,6 +567,10 @@ end function xj
 !******************************************************************************
 
 subroutine make_autotab()
+
+  use  ModMicGamma, only: &
+       gammln, &
+       gammp
 
   use micphys, only: &
        d1min,        & ! INTENT(OUT)
@@ -1041,6 +1060,10 @@ end subroutine data
 subroutine initg(r1,r2,n1,n2,gnu1,gnu2,diam,x,amk,ank  &
      ,ank1,amk1,ank2,amk2,ibins,ithresh)
 
+  use  ModMicGamma, only: &
+       gammln, &
+       gammp
+
   implicit none
 
   ! Arguments:
@@ -1053,7 +1076,6 @@ subroutine initg(r1,r2,n1,n2,gnu1,gnu2,diam,x,amk,ank  &
   integer :: i
   real :: dn1,dn2,trunc,trunc1,fac1,fac2,pi  &
        ,gamp,dmean,sum,sumn,xntot,xr3,ex1
-  real :: gammln,gammp
   
   ! * *
   ! * Initial double gamma distribution: n(D) = n1(D) + n2(D)

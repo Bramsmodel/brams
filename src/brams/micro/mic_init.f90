@@ -36,7 +36,7 @@ subroutine micro_master
   implicit none
 
   include "files.h"
-  include "constants.f90"
+  include "constants.h"
 
   integer :: lhcat,khcat,lcat,nd1,nd2,nip,ilcat,ilhcat,idum
 
@@ -370,6 +370,11 @@ end subroutine jnmbinit
 
 subroutine micinit()
 
+  use ModMicGamma, only: &
+       gammln, &
+       gammp, &
+       gammq
+  
   use micphys, only : &
        parm,          & !INTENT(OUT)
        cparm,         & !INTENT(IN)
@@ -429,7 +434,6 @@ subroutine micinit()
 
   integer :: lhcat,lcat,ia
   real :: cfmasi,c1,glg,glg1,glg2,glgm,glgc,glgmv,flngi,dpsi,embsip,dnsip
-  real :: gammln,gammp,gammq
   real :: aux_loop1, aux_loop2
 
   ! Initialize arrays based on microphysics namelist parameters

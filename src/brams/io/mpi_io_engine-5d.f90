@@ -1,5 +1,8 @@
 module MPI_IO_ENGINE
 
+  use ModParaInit, only:&
+       decomp_par
+  
   implicit none
 
   private
