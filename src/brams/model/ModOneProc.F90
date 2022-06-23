@@ -34,6 +34,12 @@ module ModOneProc
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModNudRead, only: &
+       nud_read
+
+  use ModCondRead, only: &
+       cond_read
+  
   use ModMicInit, only: &
        micro_master, &
        initqin, &

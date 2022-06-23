@@ -40,8 +40,8 @@ OBJ_MOD = \
 	machine_arq.o \
 	teb_spm_start.o \
 	mem_grid_dim_defs.o \
-	cond_read.o \
-	cond_update.o \
+	ModCondRead.o \
+	ModCondUpdate.o \
 	conv_coms.o \
 	ModCoriolis.o \
 	cu_read.o \
@@ -125,7 +125,7 @@ OBJ_MOD = \
 	ModNestGeoSst.o \
 	nest_intrp.o \
 	ModNudAnalysis.o \
-	nud_read.o \
+	ModNudRead.o \
 	nud_update.o \
 	obs_input.o \
 	oda_krig.o \
