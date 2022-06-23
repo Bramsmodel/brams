@@ -34,6 +34,12 @@ module ModOneProc
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModMicInit, only: &
+       micro_master, &
+       initqin, &
+       effective_radius, &
+       jnmbinit
+  
   use ModRecycle, only: &
        recycle
   

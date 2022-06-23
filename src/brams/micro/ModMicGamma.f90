@@ -32,8 +32,6 @@ contains
        call gcf(gammcf,a,x,gln)
        gammp = 1. - gammcf
     endif
-
-    return
   end function gammp
 
   !     *************************************************************
@@ -50,8 +48,6 @@ contains
     else
        call gcf(gammq,a,x,gln)
     endif
-
-    return
   end function gammq
 
   !     ****************************************************************
@@ -59,8 +55,8 @@ contains
   subroutine gcf(gammcf,a,x,gln)
     real, intent(in) :: a
     real, intent(in) :: x
-
-    real :: gammcf,gln
+    real, intent(out) :: gammcf
+    real, intent(out) :: gln
 
     integer, parameter :: itmax=100
     real, parameter :: eps=3.e-7
@@ -97,7 +93,6 @@ contains
     else
        gammcf = 0.
     endif
-    return
   end subroutine gcf
 
   !     ****************************************************************
@@ -105,8 +100,8 @@ contains
   subroutine gser(gamser,a,x,gln)
     real, intent(in) :: a
     real, intent(in) :: x
-
-    real :: gamser,gln
+    real, intent(out) :: gamser
+    real, intent(out) :: gln
 
     integer, parameter :: itmax=100
     real, parameter :: eps=3.e-7
@@ -135,7 +130,6 @@ contains
     else
        gamser = 0.
     endif
-    return
   end subroutine gser
 
   !     ***************************************************************
@@ -160,7 +154,6 @@ contains
        ser=ser+cof(j)/x
     enddo
     gammln=tmp+log(stp*ser)
-    return
   end function gammln
 
   !     ****************************************************************
@@ -168,8 +161,8 @@ contains
   !476
   subroutine avint(x,y,n,xlo,xup,ans)
     integer, intent(in) :: n
-    real, intent(in) :: x(n)
-    real, intent(in) :: y(n)
+    real, intent(in) :: x(:)
+    real, intent(in) :: y(:)
     real, intent(in) :: xlo
     real, intent(in) :: xup
     real, intent(out) :: ans

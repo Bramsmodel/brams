@@ -7,6 +7,21 @@
 !###########################################################################
 module ModMicrophysicsDrive
 
+  use ModMicInit, only: &
+       micinit
+  
+  use ModMicNuc, only: &
+       cldnuc, &
+       icenuc
+  
+  use ModMicTabs, only: &
+       make_autotab, &
+       haznuc, &
+       tabmelt, &
+       tabhab, &
+       mksedim_tab, &
+       homfrzcl
+
   use ModMicColl, only: &
        auto_accret, &
        effxy, &
@@ -429,7 +444,7 @@ contains
     enddo
 
     if (jnmb(1) .ge. 1) then
-       call cldnuc(m1,k1cnuc,k2cnuc,lpw,rv(1),wp(1),i,j)
+       call cldnuc(m1,k1cnuc,k2cnuc,lpw,rv,wp,i,j)
     endif
 
     k1(1) = min(k1(1),k1cnuc)
@@ -441,7 +456,7 @@ contains
     endif
 
     if (jnmb(3) .ge. 1) then
-       call icenuc(m1,k1(1),k2(1),k1pnuc,k2pnuc,lpw,ngr,rv(1),dn0(1),dtlt,i,j)
+       call icenuc(m1,k1(1),k2(1),k1pnuc,k2pnuc,lpw,ngr,rv,dn0,dtlt,i,j)
     endif
 
     k1(3) = min(k1(3),k1pnuc)

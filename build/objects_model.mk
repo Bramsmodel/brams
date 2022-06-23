@@ -103,10 +103,10 @@ OBJ_MOD = \
 	ModMicColl.o \
 	ModMicrophysicsDrive.o \
 	ModMicGamma.o \
-	mic_init.o \
+	ModMicInit.o \
 	ModMicrophysicsMisc.o \
-	mic_nuc.o \
-	mic_tabs.o \
+	ModMicNuc.o \
+	ModMicTabs.o \
 	ModMicVap.o \
 	micphys.o \
 	ModMkSfcDriver.o \
