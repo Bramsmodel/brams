@@ -7,6 +7,9 @@
 !###########################################################################
 module ModNudRead
 
+  use ModNudUpdate, only: &
+       nud_update
+  
   use ModDateUtils, only: &
        date_abs_secs2,  &
        date_add_to,     &

@@ -1,5 +1,9 @@
 module ModVarfFile
 
+  use ModVarfUpdate, only: &
+       varf_adap, &
+       hi_interpInitial4
+  
   use ModRamsReadHeader, only: &
        rams_read_header
   
@@ -1111,10 +1115,10 @@ contains
 
        if(.not. sameGrid)then
 
-          call hi_interpInitial4(nnzp1(ngrid1),nnxp1(ngrid1),nnyp1(ngrid1),scr,  &
-               xmn1,xtn1,ymn1,ytn1,zmn1,ztn1,platn1(ngrid1),plonn1(ngrid1),  &
-               topt1,ztop1,mzp,mxp,myp,  &
-               varinit_g(ngrid1)%varuf, ngrid1,ngrid1,'UP',3)
+          call hi_interpInitial4(nnzp1(ngrid1),nnxp1(ngrid1),nnyp1(ngrid1),&
+               scr,xmn1,xtn1,ymn1,ytn1,zmn1,ztn1,&
+               platn1(ngrid1),plonn1(ngrid1),topt1,ztop1,&
+               mzp,mxp,myp,varinit_g(ngrid1)%varuf, ngrid1,ngrid1,'UP',3)
 
 
        else
@@ -1290,9 +1294,6 @@ contains
 
     if (if_adap == 1) then
 
-       !**(JP)** not converted
-
-       call fatal_error(h//"**(JP)** varf_adap not converted")
        call varf_adap(nnzp(ngrid),nnxp(ngrid),nnyp(ngrid)  &
             ,varinit_g(ngrid)%varuf,varinit_g(ngrid)%varvf  &
             ,varinit_g(ngrid)%varpf,varinit_g(ngrid)%vartf  &

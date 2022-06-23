@@ -7,6 +7,12 @@
 !###########################################################################
 
 subroutine oda_read()
+  use ModOdaStaInput, only: &
+       oda_sta_input
+  
+  use ModOdaStaCount, only:&
+       oda_sta_count
+  
   use ModDateUtils, only: date_add_to
   use mem_oda,only:  &
        fnames_sfc,    &  

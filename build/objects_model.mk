@@ -126,14 +126,14 @@ OBJ_MOD = \
 	nest_intrp.o \
 	ModNudAnalysis.o \
 	ModNudRead.o \
-	nud_update.o \
+	ModNudUpdate.o \
 	obs_input.o \
 	oda_krig.o \
 	ModOdaNudge.o \
 	oda_proc_obs.o \
 	oda_read.o \
-	oda_sta_count.o \
-	oda_sta_input.o \
+	ModOdaStaCount.o \
+	ModOdaStaInput.o \
 	ModOpspec.o \
 	domain_decomp.o \
 	ModParaInit.o \
@@ -165,7 +165,7 @@ OBJ_MOD = \
 	ModNamelistFile.o  \
 	ModControlVars.o \
 	ModParallelEnvironment.o  \
-	read_ralph.o \
+	ModReadRalph.o \
 	ModRecycle.o  \
 	ref_sounding.o \
 	ModRGrad.o \
@@ -211,7 +211,7 @@ OBJ_MOD = \
 	ModTuv2.7.o \
 	ModTuvDriver2.7.o \
 	var_tables.o \
-	varf_update.o \
+	ModVarfUpdate.o \
 	vtab_fill.o \
 	ModMkSfcFuso.o \
 	mem_teb.o \

@@ -34,6 +34,9 @@ module ModOneProc
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModVarfUpdate, only: &
+       PrtOpt
+  
   use ModNudRead, only: &
        nud_read
 
