@@ -34,6 +34,9 @@ module ModOneProc
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModOdaRead, only: &
+       oda_read
+  
   use ModVarfUpdate, only: &
        PrtOpt
   

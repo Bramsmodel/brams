@@ -7,6 +7,12 @@
 !###########################################################################
 module ModOdaNudge
 
+  use ModOdaProcObs, only: &
+       oda_proc_obs
+  
+  use ModOdaKrig, only: &
+       krig
+  
   use mem_oda, only: &
        oda_g, &
        ckrg, &
@@ -153,7 +159,7 @@ contains
              oda_g(ng)%uk(1:nnzp(ng),1:nodemxp(mynum,ng),1:nodemyp(mynum,ng)) = 0.
              oda_g(ng)%ukv(1:nnzp(ng),1:nodemxp(mynum,ng),1:nodemyp(mynum,ng)) = 0.
              call krig(nnzp(ng),nodemxp(mynum,ng),nodemyp(mynum,ng)  &
-                  ,xtn(1+nodei0(mynum,ng),ng),ytn(1+nodej0(mynum,ng),ng),ztn(1,ng)  &
+                  ,xtn(1+nodei0(mynum,ng):,ng),ytn(1+nodej0(mynum,ng):,ng),ztn(:,ng)  &
                   ,nobs,xkobs,ykobs,zkobs,ekobs,ukobs  &
                   ,ng,nnzp(ng),grid_g(ng)%topt  &
                   ,oda_g(ng)%uk,oda_g(ng)%ukv,1.)
@@ -161,7 +167,7 @@ contains
              oda_g(ng)%vk(1:nnzp(ng),1:nodemxp(mynum,ng),1:nodemyp(mynum,ng))=0.
              oda_g(ng)%vkv(1:nnzp(ng),1:nodemxp(mynum,ng),1:nodemyp(mynum,ng))=0.
              call krig(nnzp(ng),nodemxp(mynum,ng),nodemyp(mynum,ng)  &
-                  ,xtn(1+nodei0(mynum,ng),ng),ytn(1+nodej0(mynum,ng),ng),ztn(1,ng)  &
+                  ,xtn(1+nodei0(mynum,ng):,ng),ytn(1+nodej0(mynum,ng):,ng),ztn(:,ng)  &
                   ,nobs,xkobs,ykobs,zkobs,ekobs,vkobs  &
                   ,ng,nnzp(ng),grid_g(ng)%topt  &
                   ,oda_g(ng)%vk,oda_g(ng)%vkv,1.)
@@ -169,7 +175,7 @@ contains
              oda_g(ng)%tk(1:nnzp(ng),1:nodemxp(mynum,ng),1:nodemyp(mynum,ng))=0.
              oda_g(ng)%tkv(1:nnzp(ng),1:nodemxp(mynum,ng),1:nodemyp(mynum,ng))=0.
              call krig(nnzp(ng),nodemxp(mynum,ng),nodemyp(mynum,ng)  &
-                  ,xtn(1+nodei0(mynum,ng),ng),ytn(1+nodej0(mynum,ng),ng),ztn(1,ng)  &
+                  ,xtn(1+nodei0(mynum,ng):,ng),ytn(1+nodej0(mynum,ng):,ng),ztn(:,ng)  &
                   ,nobs,xkobs,ykobs,zkobs,ekobs,tkobs  &
                   ,ng,nnzp(ng),grid_g(ng)%topt  &
                   ,oda_g(ng)%tk,oda_g(ng)%tkv,1.)
@@ -178,7 +184,7 @@ contains
              oda_g(ng)%rk(1:nnzp(ng),1:nodemxp(mynum,ng),1:nodemyp(mynum,ng))=0.
              oda_g(ng)%rkv(1:nnzp(ng),1:nodemxp(mynum,ng),1:nodemyp(mynum,ng))=0.
              call krig(nnzp(ng),nodemxp(mynum,ng),nodemyp(mynum,ng)  &
-                  ,xtn(1+nodei0(mynum,ng),ng),ytn(1+nodej0(mynum,ng),ng),ztn(1,ng)  &
+                  ,xtn(1+nodei0(mynum,ng):,ng),ytn(1+nodej0(mynum,ng):,ng),ztn(:,ng)  &
                   ,nobs,xkobs,ykobs,zkobs,ekobs,rkobs  &
                   ,ng,nnzp(ng),grid_g(ng)%topt  &
                   ,oda_g(ng)%rk,oda_g(ng)%rkv,1.)

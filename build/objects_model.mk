@@ -128,10 +128,10 @@ OBJ_MOD = \
 	ModNudRead.o \
 	ModNudUpdate.o \
 	obs_input.o \
-	oda_krig.o \
+	ModOdaKrig.o \
 	ModOdaNudge.o \
-	oda_proc_obs.o \
-	oda_read.o \
+	ModOdaProcObs.o \
+	ModOdaRead.o \
 	ModOdaStaCount.o \
 	ModOdaStaInput.o \
 	ModOpspec.o \
