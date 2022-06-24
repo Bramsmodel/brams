@@ -7,6 +7,11 @@
 !###########################################################################
 module ModRio
 
+  use ModMPassFull, only: &
+       mk_2_buff, &
+       mk_3_buff, &
+       mk_4_buff
+  
   use ModControlVars, only: &
        ControlVars
   
@@ -394,10 +399,14 @@ contains
                 call parf_bcast(srcRead(hr_table(nvh)%idim_type)%scr, &
                      nzl,nxl,nyl,n4,master_num)
 
-                call mk_4_buff(srcRead(hr_table(nvh)%idim_type)%scr(1,:,:,:), &
+!!$                call mk_4_buff(srcRead(hr_table(nvh)%idim_type)%scr(1,:,:,:), &
+!!$                     vtab_r(nv,ngr)%var_p_3D, &
+!!$                     1,nnxp(ngr), nnyp(ngr),npatch, &
+!!$                     1, m2, m3,npatch, ia, iz, ja, jz)
+                call mk_3_buff(srcRead(hr_table(nvh)%idim_type)%scr(1,:,:,:), &
                      vtab_r(nv,ngr)%var_p_3D, &
-                     1,nnxp(ngr), nnyp(ngr),npatch, &
-                     1, m2, m3,npatch, ia, iz, ja, jz)
+                     nnxp(ngr), nnyp(ngr),npatch, &
+                     m2, m3,npatch, ia, iz, ja, jz)
              case (7)
                 nzl = 1
                 nxl = nnxp(1)
@@ -407,10 +416,14 @@ contains
                      nzl,nxl,nyl,n4,master_num)
 
 
-                call mk_4_buff(srcRead(hr_table(nvh)%idim_type)%scr(1,:,:,:), &
+!!$                call mk_4_buff(srcRead(hr_table(nvh)%idim_type)%scr(1,:,:,:), &
+!!$                     vtab_r(nv,ngr)%var_p_3D, &
+!!$                     1,nnxp(ngr), nnyp(ngr),nwave, &
+!!$                     1, m2, m3,nwave, ia, iz, ja, jz)
+                call mk_3_buff(srcRead(hr_table(nvh)%idim_type)%scr(1,:,:,:), &
                      vtab_r(nv,ngr)%var_p_3D, &
-                     1,nnxp(ngr), nnyp(ngr),nwave, &
-                     1, m2, m3,nwave, ia, iz, ja, jz)
+                     nnxp(ngr), nnyp(ngr),nwave, &
+                     m2, m3,nwave, ia, iz, ja, jz)
              case DEFAULT
                 print *, 'Wrong idim_type: ',hr_table(nv)%idim_type,hr_table(nvh)%string
                 stop 'history_start'

@@ -117,8 +117,8 @@ OBJ_MOD = \
 	ModTimeStamp.o \
 	ModSched.o \
 	local_proc.o \
-	mpass_dtl.o \
-	mpass_full.o      \
+	ModMPassDtl.o \
+	ModMPassFull.o      \
 	ModNdviRead.o \
 	nest_feed.o \
 	nest_filldens.o \
@@ -172,7 +172,6 @@ OBJ_MOD = \
 	ModRhhi.o  \
 	ModRinit.o  \
 	ModRio.o \
-	rnest_par.o \
 	rnode.o \
 	ModRShCuPar.o \
 	ModRThrm.o \

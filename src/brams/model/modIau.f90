@@ -28,6 +28,10 @@ module modIau
     !#######################################################################
     !---
   
+  use ModMPassFull, only: &
+       mk_3_buff, &
+       ex_3_buff
+  
     use dump, only: &
         dumpMessage     !subroutine
       

@@ -648,14 +648,15 @@ contains
     integer, intent(inout) :: oneScalarTabSize
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(micro_vars), intent(in) :: micro 
-    type(TurbFields), intent(in) :: oneTurbFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
     type(scalar_vars), intent(in)  :: scalar(:)
-    type(gaspart_vars), intent(in) :: gaspart
+    type(gaspart_vars), pointer, intent(in) :: gaspart
     integer, intent(in)             :: naddsc, ng
 
     ! Local Variables:
     integer :: nsc
     character (len=7) :: sname
+    character(len=*), parameter :: h="**(filltab_tend)**"
 
     ! Fill pointers to scalar arrays into scalar tables
 
@@ -831,8 +832,11 @@ contains
 
     ! TEB_SPM
     if (TEB_SPM==1) then
+       if (.not. associated(gaspart)) then
+          call fatal_error(h//" gaspart not associated, but TEB_SPM==1")
+       end if
        if(isource==1)then
-
+          
           if (associated(gaspart%pnot)) then
              call InsertAtScalarTab(gaspart%pno,gaspart%pnot, 'PNO', &
                   oneScalarTab, oneScalarTabSize)

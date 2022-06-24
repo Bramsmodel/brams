@@ -7,6 +7,11 @@
 !###########################################################################
 module ModRecycle
 
+  use ModMPassFull, only: &
+       mk_2_buff, &
+       mk_3_buff, &
+       mk_4_buff
+  
   use ModRamsReadHeader, only: &
        rams_read_header
   
@@ -266,19 +271,27 @@ contains
                 nxl = nnxp(1)
                 nyl = nnyp(1)
                 n4 = npatch
-                call mk_4_buff(srcRead(vtab_r(nvars,ng)%idim_type)%scr(1,:,:,:), &
+!!$                call mk_4_buff(srcRead(vtab_r(nvars,ng)%idim_type)%scr(1,:,:,:), &
+!!$                     vtab_r(nvars,ng)%var_p_3D, &
+!!$                     1,nnxp(ng), nnyp(ng),npatch, &
+!!$                     1, m2, m3,npatch, ia, iz, ja, jz)
+                call mk_3_buff(srcRead(vtab_r(nvars,ng)%idim_type)%scr(1,:,:,:), &
                      vtab_r(nvars,ng)%var_p_3D, &
-                     1,nnxp(ng), nnyp(ng),npatch, &
-                     1, m2, m3,npatch, ia, iz, ja, jz)
+                     nnxp(ng), nnyp(ng),npatch, &
+                     m2, m3,npatch, ia, iz, ja, jz)
              case (7)
                 nzl = 1
                 nxl = nnxp(1)
                 nyl = nnyp(1)
                 n4 = nwave
-                call mk_4_buff(srcRead(vtab_r(nvars,ng)%idim_type)%scr(1,:,:,:), &
+!!$                call mk_4_buff(srcRead(vtab_r(nvars,ng)%idim_type)%scr(1,:,:,:), &
+!!$                     vtab_r(nvars,ng)%var_p_3D, &
+!!$                     1,nnxp(ng), nnyp(ng),nwave, &
+!!$                     1, m2, m3,nwave, ia, iz, ja, jz)
+                call mk_3_buff(srcRead(vtab_r(nvars,ng)%idim_type)%scr(1,:,:,:), &
                      vtab_r(nvars,ng)%var_p_3D, &
-                     1,nnxp(ng), nnyp(ng),nwave, &
-                     1, m2, m3,nwave, ia, iz, ja, jz)
+                     nnxp(ng), nnyp(ng),nwave, &
+                     m2, m3,nwave, ia, iz, ja, jz)
              case DEFAULT
                 print *, 'Wrong idim_type: ',vtab_r(nvars,ng)%idim_type
                 stop 'history_start'

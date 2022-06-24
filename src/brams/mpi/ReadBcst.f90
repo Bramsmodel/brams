@@ -1,5 +1,14 @@
 module ReadBcst
 
+  use ModMPassFull, only: &
+       mk_2_buff, &
+       mk_3_buff, &
+       ex_2_buff, &
+       ex_2p_buff, &
+       ex_3_buff, &
+       ex_4_buff, &
+       ex_buff_carma
+  
   use ModControlVars, only: &
        ControlVars
 
@@ -175,7 +184,7 @@ contains
             master_num)
     endif
 
-    call mk_2_buff(fullGrid(1,1), toStore(1,1), &
+    call mk_2_buff(fullGrid, toStore, &
          nnxp, nnyp, ldimx, ldimy, ia, iz, ja, jz)
 
     if (dumpLocal) then
@@ -377,7 +386,7 @@ contains
     call parf_bcast(full, int(oneControlVars%nnxp,i8), int(oneControlVars%nnyp,i8), &
          master_num)
 
-    call mk_2_buff(full(1,1), toStore(1,1), &
+    call mk_2_buff(full, toStore, &
          oneControlVars%nnxp, oneControlVars%nnyp, ldimx, ldimy, ia, iz, ja, jz)
 
     if (dumpLocal) then

@@ -502,7 +502,7 @@ contains
     ! Flag to control new Grell MEmory allocation
     integer :: Alloc_Grell3_Flag
     ! Local variables because of TEB_SPM
-    type(gaspart_vars), pointer :: gaspart_p
+    type(gaspart_vars), pointer :: gaspart_p => null()
     character(len=*), parameter :: h="**(MemAlloc)**"
     integer :: ierr,n
     integer :: ne2d, ne3d, nsa
@@ -1470,7 +1470,6 @@ contains
     do ng=1,ngrids
        !- TEB_SPM
        if (TEB_SPM==1) then
-          nullify(gaspart_p)
           gaspart_p => gaspart_g(ng)
        endif
 

@@ -36,6 +36,9 @@ module ModOptical
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModMPassFull, only: &
+       mk_2_buff
+  
   use ModControlVars, only: &
        ControlVars
   

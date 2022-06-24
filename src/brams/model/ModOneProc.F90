@@ -34,6 +34,11 @@ module ModOneProc
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModMPassDtl, only: &
+       reduce_max_cfl_to_master, &
+       reduce_max_cfl_and_broadcast, &
+       gather_cpu_time_master_print
+       
   use ModOdaRead, only: &
        oda_read
   

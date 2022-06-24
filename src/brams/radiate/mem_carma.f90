@@ -9,6 +9,9 @@
 
 module mem_carma
 
+  use ModMPassFull, only: &
+       mk_2_buff
+  
   use grid_dims, only: &
        nzpmax ! INTENT(IN)
 

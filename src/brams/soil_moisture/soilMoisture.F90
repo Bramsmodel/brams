@@ -8,6 +8,10 @@
 !========================================================================
 module soilMoisture
 
+  use ModMPassFull, only: &
+       mk_3_buff, &
+       mk_4_buff
+  
   use ModControlVars, only: &
        ControlVars
   
@@ -1217,8 +1221,10 @@ contains
     elseif (usdata_in(ipref-10:ipref)=='YYYYMMDD.nc') then  !DSM - Lendo a temperatura e umidade do solo proveniente do JULES
 
        !-- 2) soil temperature (using soil_energy array)
-       call mk_4_buff(globalsoilenergy(:,:,:,2), soil_energy(:,:,:,2), &
-            mzg, nnxp(ifm), nnyp(ifm), npat, mzg, n2, n3, npat, ia, iz, ja, jz)
+!!$       call mk_4_buff(globalsoilenergy(:,:,:,2), soil_energy(:,:,:,2), &
+!!$            mzg, nnxp(ifm), nnyp(ifm), npat, mzg, n2, n3, npat, ia, iz, ja, jz)
+       call mk_3_buff(globalsoilenergy(:,:,:,2), soil_energy(:,:,:,2), &
+            mzg, nnxp(ifm), nnyp(ifm), mzg, n2, n3, ia, iz, ja, jz)
 
        do j=1,n3
           do i=1,n2
