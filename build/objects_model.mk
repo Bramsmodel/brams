@@ -277,7 +277,7 @@ OBJ_MOD = \
 	ModRexev.o \
 	ModRstilt.o \
 	turb_constants.o \
-	tkenn.o \
+	ModTKenn.o \
 	digitalFilter.o \
 	ModSeaSalt.o  \
 	meteogram.o \
@@ -355,18 +355,14 @@ OBJ_MOD = \
 	rrtmg_lw_taumol.o \
 	mem_rrtm.o \
 	isrpia.o \
-	quad.o \
 	actv.o \
 	coag.o \
 	depv.o \
 	solut.o \
 	issoropia.o \
-	matrix.o \
 	npf.o \
-	quad.o \
 	setup.o \
 	subs.o \
-	thermo_isorr.o \
 	isrpia.o \
 	ModMatrixDriver.o \
 	ModParticle.o \

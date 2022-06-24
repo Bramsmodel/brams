@@ -7,6 +7,9 @@
 !###########################################################################
 module ModTurbK
 
+  use ModTKenn, only: &
+       nakanishi
+  
   use ModTurbDiffAdap, only: &
        diffsclr_adap, &
        diffvel_adap
