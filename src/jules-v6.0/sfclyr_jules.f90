@@ -3,6 +3,9 @@
 ! 
 module ModSfcLyrJules
 
+  use ModLeaf3Init, only: &
+       sfcdata
+  
   use ModBasicFields, only: &
        BasicFields
 

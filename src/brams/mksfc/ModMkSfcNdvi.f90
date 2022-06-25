@@ -7,6 +7,9 @@
 !###########################################################################
 module ModMkSfcNdvi
 
+  use ModRUser, only: &
+       ndviinit_user
+  
   use mem_mksfc, only: &
        iyearvn, &
        imonthvn, &

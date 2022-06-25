@@ -8,6 +8,12 @@
 module ModLeaf3
   !---------srf-05052006---------------------------
 
+  use ModLeaf3Teb, only: &
+       leaf3_teb_interface
+  
+  use ModLeaf3Hyd, only: &
+       hydro
+  
   use leaf_coms, only: &
        qwflux, &
        slmsts, &

@@ -63,10 +63,10 @@ OBJ_MOD = \
 	ke_coms.o \
 	ModLanduseInput.o \
 	ModLeaf3.o \
-	leaf3_hyd.o \
-	leaf3_init.o \
+	ModLeaf3Hyd.o \
+	ModLeaf3Init.o \
 	leaf_coms.o \
-	leaf3_teb.o \
+	ModLeaf3Teb.o \
 	mem_aerad.o \
 	ModCarmaDriver.o \
 	mem_carma.o \
@@ -178,7 +178,7 @@ OBJ_MOD = \
 	ModTimestep.o \
 	ModTimestepRK.o \
 	ModRtimi.o \
-	ruser.o \
+	ModRUser.o \
 	shcu_vars_const.o \
 	memSoilMoisture.o \
 	soilMoisture.o \
@@ -218,7 +218,7 @@ OBJ_MOD = \
 	mem_teb_vars_const.o \
 	mem_gaspart.o \
 	mem_emiss.o \
-	urban.o \
+	ModUrban.o \
 	ModGasPart.o \
 	ModOzone.o \
 	chem_isan_coms.o \

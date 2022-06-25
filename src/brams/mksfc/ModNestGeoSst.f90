@@ -7,6 +7,15 @@
 !###########################################################################
 module ModNestGeoSst
 
+  use ModLeaf3Init, only: &
+       sfcinit_nofile, &
+       sfcinit_file
+  
+  use ModRUser, only: &
+       toptinit_user, &
+       sfcinit_file_user, &
+       sfcinit_nofile_user
+       
   use ModLanduseInput, only: &
        landuse_opqr
   
@@ -592,9 +601,7 @@ contains
             ,leaf_g(ifm)%veg_ndvic          &
             ,leaf_g(ifm)%veg_ndvif          &
             ,leaf_g(ifm)%snow_mass, leaf_g(ifm)%snow_depth      &
-            ,scratch%scr1     (1+0*isiz)  ,scratch%scr1       (1+1*isiz)  &
-            ,scratch%scr1     (1+2*isiz)  ,scratch%scr1       (1+3*isiz)  &
-            ,scratch%scr1     (1+4*isiz)  ,grid_g(ifm)%glat          &
+            ,grid_g(ifm)%glat  &
             ,grid_g(ifm)%glon        ,grid_g(ifm)%topzo         &
             ,grid_g(ifm)%lpw        )
 
@@ -878,9 +885,7 @@ contains
             ,leaf_g(ifm)%veg_ndvic         &
             ,leaf_g(ifm)%veg_ndvif         &
             ,leaf_g(ifm)%snow_mass, leaf_g(ifm)%snow_depth      &
-            ,scratch%scr1     (1+0*isiz)  ,scratch%scr1       (1+1*isiz)  &
-            ,scratch%scr1     (1+2*isiz)  ,scratch%scr1       (1+3*isiz)  &
-            ,scratch%scr1     (1+4*isiz)  ,grid_g(ifm)%glat          &
+            ,grid_g(ifm)%glat          &
             ,grid_g(ifm)%glon, grid_g(ifm)%topzo, grid_g(ifm)%lpw)
 
     enddo

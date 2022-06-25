@@ -8,6 +8,10 @@
 !###########################################################################
 module ModLanduseInput
 
+  use ModLeaf3Init, only: &
+       datp_datq, &
+       datp_datsoil
+  
   use mem_mksfc, only: &
        dato, &
        datp, &

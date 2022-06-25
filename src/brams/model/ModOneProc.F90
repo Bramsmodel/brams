@@ -34,6 +34,18 @@ module ModOneProc
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModLeaf3Teb, only: &
+       teb_init, &
+       tebc_init
+  
+  use ModLeaf3Init, only: &
+       snowinit, &
+       sfcdata
+  
+  use ModRUser, only: &
+       change_soil_moisture_init, &
+       eng_params
+  
   use ModMPassDtl, only: &
        reduce_max_cfl_to_master, &
        reduce_max_cfl_and_broadcast, &

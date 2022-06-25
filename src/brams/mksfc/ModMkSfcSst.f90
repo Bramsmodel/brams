@@ -7,6 +7,8 @@
 !###########################################################################
 module ModMkSfcSst
 
+  use ModRUser, only: &
+       sstinit_user
 
   use mem_leaf, only: &
        seatmp
