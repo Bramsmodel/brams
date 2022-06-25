@@ -323,6 +323,12 @@ subroutine CUP_enss_shal(ccatt,ngrid,mynum,m1,m2,m3,i0,j0,ipr,jpr, &
      	  		 upmf,xierr,xktop,xkbcon,xk22,xierr_dp, &
 			 	 dti,tscl_KF,dhdt,trigg,actual_iens,autoconv)
 
+  use ModCupUp, only: &
+       cup_up_he, &
+       cup_up_nms, &
+       cup_up_moisture, &
+       cup_up_aa0
+  
  use mem_scratch3_grell_sh, only: &
        CD, &
        AA0, &

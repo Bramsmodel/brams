@@ -5,7 +5,10 @@
 !  Copyright (C)  1990, 1995, 1999, 2000, 2003 - All Rights Reserved
 !  Regional Atmospheric Modeling System - RAMS
 !###########################################################################
-
+module ModCuRead
+  private
+  public :: cu_read
+  contains
 subroutine cu_read(initflag)
 
 
@@ -315,3 +318,4 @@ subroutine cu_update(iswap,ncu)
 end subroutine cu_update
 
 
+end module ModCuRead

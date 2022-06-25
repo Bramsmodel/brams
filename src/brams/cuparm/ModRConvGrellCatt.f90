@@ -3,6 +3,9 @@
 !--------------------------------------------------------------------------------
 module ModRConvGrellCatt
 
+  use ModCupGrellCattDeep, only: &
+       cuparth_catt
+  
   use ModChemConvTransp, only: &
        trans_conv_mflx
   

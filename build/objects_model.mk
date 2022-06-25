@@ -44,14 +44,14 @@ OBJ_MOD = \
 	ModCondUpdate.o \
 	conv_coms.o \
 	ModCoriolis.o \
-	cu_read.o \
+	ModCuRead.o \
 	cup_dn.o \
 	cup_env.o \
 	cup_env_catt.o \
-	cup_grell_catt_deep.o \
+	ModCupGrellCattDeep.o \
 	cup_grell_catt_shallow.o \
 	cup_output_vars.o \
-	cup_up.o \
+	ModCupUp.o \
 	ModDiffSclr.o \
 	ModDiffuse.o \
 	ModGeodat.o \
@@ -188,7 +188,6 @@ OBJ_MOD = \
 	ModTurbK.o \
 	ModTurbKAdap.o \
 	ModTurbKE.o \
-	upcase.o \
 	ModUrbanCanopy.o \
 	extra.o \
 	aer1_list.o \

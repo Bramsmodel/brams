@@ -34,6 +34,9 @@ module ModOneProc
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModCuRead, only: &
+       cu_read
+  
   use ModLeaf3Teb, only: &
        teb_init, &
        tebc_init
