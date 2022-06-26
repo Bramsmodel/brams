@@ -1,6 +1,22 @@
 !---------------------------GRELL CUMULUS SCHEME---------------------------
 module ModCupGrellCattDeep
 
+  use ModCupDn, only: &
+       cup_dd_he, &
+       cup_dd_nms, &
+       cup_dd_moisture, &
+       cup_dd_edt
+       
+  use ModCupEnvCatt, only: &
+       cup_kbcon_catt
+
+  use ModCupEnv, only: &
+       cup_env, &
+       cup_env_clev, &
+       cup_ktop, &
+       maximi, &
+       minimi
+       
   use Phys_const, only: &
        tcrit, &
        rgas, &

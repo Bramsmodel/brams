@@ -45,9 +45,9 @@ OBJ_MOD = \
 	conv_coms.o \
 	ModCoriolis.o \
 	ModCuRead.o \
-	cup_dn.o \
-	cup_env.o \
-	cup_env_catt.o \
+	ModCupDn.o \
+	ModCupEnv.o \
+	ModCupEnvCatt.o \
 	ModCupGrellCattDeep.o \
 	ModCupGrellCattShallow.o \
 	cup_output_vars.o \

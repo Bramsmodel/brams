@@ -313,6 +313,17 @@ contains
        upmf,xierr,xktop,xkbcon,xk22,xierr_dp, &
        dti,tscl_KF,dhdt,trigg,actual_iens,autoconv)
 
+    use ModCupEnv, only: &
+         cup_env, &
+         cup_env_clev, &
+         cup_ktop, &
+         maximi, &
+         minimi
+
+    use ModCupEnvCatt, only: &
+         cup_kbcon_catt, &
+         get_zi
+
     use ModCupUp, only: &
          cup_up_he, &
          cup_up_nms, &
@@ -444,9 +455,9 @@ contains
     real, intent(in) :: z1(mgmxp)
     real, intent(in) :: aaeq(mgmxp) !**(JP)** unused
     real, intent(in) :: t(mgmxp,mgmzp)
-    real, intent(in) :: q(mgmxp,mgmzp)
+    real, intent(inout) :: q(mgmxp,mgmzp)
     real, intent(in) :: tn(mgmxp,mgmzp)
-    real, intent(in) :: qo(mgmxp,mgmzp)
+    real, intent(inout) :: qo(mgmxp,mgmzp)
     real, intent(in) :: po(mgmxp,mgmzp)
     real, intent(in) :: p(mgmxp,mgmzp)
     real, intent(out) :: outt(mgmxp,mgmzp)
