@@ -49,7 +49,7 @@ OBJ_MOD = \
 	cup_env.o \
 	cup_env_catt.o \
 	ModCupGrellCattDeep.o \
-	cup_grell_catt_shallow.o \
+	ModCupGrellCattShallow.o \
 	cup_output_vars.o \
 	ModCupUp.o \
 	ModDiffSclr.o \
