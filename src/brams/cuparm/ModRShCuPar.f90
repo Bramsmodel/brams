@@ -53,7 +53,7 @@ module ModRShCuPar
        wc,                      &   ! intent(in)
        drdt                         ! intent(IN)
 
-  use conv_coms, only : &
+  use ModConvComs, only : &
        nkp,    &   ! intent(in)  ! parameter
        zc,                      &   ! intent(out)
        ze,                      &   ! intent(out)

@@ -42,7 +42,7 @@ OBJ_MOD = \
 	mem_grid_dim_defs.o \
 	ModCondRead.o \
 	ModCondUpdate.o \
-	conv_coms.o \
+	ModConvComs.o \
 	ModCoriolis.o \
 	ModCuRead.o \
 	ModCupDn.o \
@@ -845,7 +845,7 @@ MOD_MOD = \
 	mem_turb.mod \
 	mem_precision.mod \
 	mem_globrad.mod \
-	conv_coms.mod \
+	ModConvComs.mod \
 	shcu_vars_const.mod \
 	domain_decomp.mod \
 	isan_coms.mod \

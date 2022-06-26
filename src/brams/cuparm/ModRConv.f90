@@ -52,7 +52,7 @@ module ModRConv
        rocp, &
        p00k
 
-  use conv_coms, only: &
+  use ModConvComs, only: &
        frcon, &
        ftcon, &
        prcon, &

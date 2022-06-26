@@ -2,8 +2,8 @@ module shcu_vars_const
 
   use ModNamelistFile, only: namelistFile
 
-  use conv_coms, only : nkp      ! INTENT(IN)
-!  INTEGER, PARAMETER :: nkp=100
+  use ModConvComs, only : &
+       nkp      ! INTENT(IN)
 
   use grid_dims, only : maxgrds  ! INTENT(IN)
 
