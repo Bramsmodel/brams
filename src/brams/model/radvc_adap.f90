@@ -10,6 +10,9 @@ subroutine vel_advectc_adap(m1,m2,m3,ia,iz,ja,jz,izu,jzv,jdim,lpu_R,lpv_R,lpw_R 
    ,uc,vc,wc,ut,vt,wt,dn0,dn0u,dn0v  &
    ,aru,arv,arw,volu,volv,volw,flxu,flxv,flxw,ucb,vcb,wcb,time)
 
+  use ModAdapInit, only: &
+       advected
+  
 implicit none
 
 integer :: m1,m2,m3,ia,iz,ja,jz,izu,jzv,jdim

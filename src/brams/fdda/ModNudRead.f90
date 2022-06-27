@@ -7,6 +7,9 @@
 !###########################################################################
 module ModNudRead
 
+  use ModRamsGrid, only: &
+       newgrid
+  
   use ModNudUpdate, only: &
        nud_update
   

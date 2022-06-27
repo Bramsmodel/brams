@@ -36,6 +36,9 @@ module ModOptical
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModRamsGrid, only: &
+       newgrid
+  
   use ModMPassFull, only: &
        mk_2_buff
   

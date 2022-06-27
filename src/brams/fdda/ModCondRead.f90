@@ -7,6 +7,9 @@
 !###########################################################################
 module ModCondRead
 
+  use ModRamsGrid, only: &
+       newgrid
+  
   use ModCondUpdate, only: &
        cond_update
   

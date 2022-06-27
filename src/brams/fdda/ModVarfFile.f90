@@ -1,5 +1,8 @@
 module ModVarfFile
 
+  use ModRamsGrid, only: &
+       newgrid
+  
   use ModVarfUpdate, only: &
        varf_adap, &
        hi_interpInitial4

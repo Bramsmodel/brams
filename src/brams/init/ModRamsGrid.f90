@@ -6,39 +6,56 @@
 !  Regional Atmospheric Modeling System - RAMS
 !###########################################################################
 module ModRamsGrid
+
+  use dump, only: &
+       dumpMessage
+
+  use mem_grid, only: & ! intent(in)
+       ExtractLocalFromGlobal, alloc_grid, dealloc_grid, deltax, deltaxn, &
+       deltay, deltayn, deltaz, dtlongn, dtlt, dtlv, dump_mem_grid, dzm, &
+       dzm2, dzm2n, dzmn, dzt, dzt2, dzt2n, dztn, grid_g, grid_vars, ht, &
+       ht2, ht2n, ht4, ht4n, htn, hw, hw2, hw2n, hw4, hw4n, hwn, if_adap, &
+       ihtran, itopo, jdim, ngrid, ngrids, nnstbot, nnsttop, nnx, nnx1, &
+       nnx2, nnxp, nnxyp, nnxysp, nnxyzp, nny, nny1, nny2, nnyp, nnz, nnz1, &
+       nnzp, npatch, nstbot, nsttop, nullify_grid, nx, nx1, nx2, nxp, nxyp, &
+       nxysp, nxyzp, ny, ny1, ny2, nyp, nz, nz1, nzg, nzp, nzpp, nzs, &
+       oneGlobalGridData, platn, plonn, xm, xmn, xt, xtn, ym, ymn, yt, ytn, &
+       zm, zmn, zt, ztn, ztop
+
+  use rconstants, only: & ! intent(in)
+       erad
+
+  use node_mod, only: &
+       mxp, nodemxp, myp, nodemyp, mzp, ia, nodeia, &
+       iz, nodeiz, ja, nodeja, nodejz, jz, i0, nodei0, ibcon, nodeibcon, &
+       j0, nodej0, mynum
+
+  use ModGridSet, only: &
+       gridset
+
+  use ModAdapInit, only: &
+       ctrlvols, &
+       lpuvw_init
+
+  implicit none
+
+  include "constants.h"
+
   private
+
   public :: newgrid
   public :: GridSetup
+
+
 contains
+
+
+
   subroutine gridinit
 
     ! gridinit: set up domain sizes for all grids
     !   the user has specified nnxp, nnyp, nnzp, nzg, nzs, and npatch.
     !   fill other arrays that denote sizes and are a function of these.
-
-    use mem_grid, only: &
-         ngrids,        & ! intent(in)
-         nnxp,          & ! intent(in)
-         nnyp,          & ! intent(in)
-         nnzp,          & ! intent(in)
-         nzg,           & ! intent(in)
-         nzs,           & ! intent(in)
-         npatch,        & ! intent(in)
-         ngrid,         & ! intent(out)
-         jdim,          & ! intent(out)
-         nnx,           & ! intent(out)
-         nnx1,          & ! intent(out)
-         nnx2,          & ! intent(out)
-         nny,           & ! intent(out)
-         nny1,          & ! intent(out)
-         nny2,          & ! intent(out)
-         nnz,           & ! intent(out)
-         nnz1,          & ! intent(out)
-         nnxyzp,        & ! intent(out)
-         nnxysp,        & ! intent(out)
-         nnxyp            ! intent(out)
-
-    implicit none
 
     ! 1D or 2D horizontal simulation
 
@@ -77,29 +94,20 @@ contains
 
   subroutine polarst(n2,n3,glat,glon,fmapu,fmapv,fmapt,fmapm  &
        ,fmapui,fmapvi,fmapti,fmapmi)
-
-    use mem_grid, only: & ! intent(in)
-         xm, xt, ym, yt, platn, ngrid, plonn, ihtran
-
-    use rconstants, only: & ! intent(in)
-         erad
-
-    implicit none
-
+    ! Arguments:
     integer, intent(in)  :: n2
     integer, intent(in)  :: n3
-    real,    intent(out) :: glat(n2,n3)
-    real,    intent(out) :: glon(n2,n3)
-    real,    intent(out) :: fmapu(n2,n3)
-    real,    intent(out) :: fmapv(n2,n3)
-    real,    intent(out) :: fmapt(n2,n3)
-    real,    intent(out) :: fmapm(n2,n3)
-    real,    intent(out) :: fmapui(n2,n3)
-    real,    intent(out) :: fmapvi(n2,n3)
-    real,    intent(out) :: fmapti(n2,n3)
-    real,    intent(out) :: fmapmi(n2,n3)
-
-
+    real,    intent(out) :: glat(:,:) ! (n2,n3)
+    real,    intent(out) :: glon(:,:) ! (n2,n3)
+    real,    intent(out) :: fmapu(:,:) ! (n2,n3)
+    real,    intent(out) :: fmapv(:,:) ! (n2,n3)
+    real,    intent(out) :: fmapt(:,:) ! (n2,n3)
+    real,    intent(out) :: fmapm(:,:) ! (n2,n3)
+    real,    intent(out) :: fmapui(:,:) ! (n2,n3)
+    real,    intent(out) :: fmapvi(:,:) ! (n2,n3)
+    real,    intent(out) :: fmapti(:,:) ! (n2,n3)
+    real,    intent(out) :: fmapmi(:,:) ! (n2,n3)
+    ! Local Variables:
     integer :: i,j
     real :: c1,xm2,xt2,ym2,yt2
     !  Calculates map factors and inverse map factors at u,v,t,m-points and
@@ -158,29 +166,22 @@ contains
 
   subroutine grdspc(n2,n3,dxu,dxv,dxt,dxm,dyu,dyv,dyt,dym  &
        ,fmapu,fmapv,fmapt,fmapm)
-
-    use mem_grid, only:      & ! intent(in)
-         xtn, xmn, ytn, ymn, &
-         nxp, nx,  nyp, ny,  &
-         jdim, ngrid, deltayn
-
-    implicit none
     ! Arguments:
     integer, intent(in)  :: n2
     integer, intent(in)  :: n3
-    real,    intent(out) :: dxu(n2,n3)
-    real,    intent(out) :: dxv(n2,n3)
-    real,    intent(out) :: dxt(n2,n3)
-    real,    intent(out) :: dxm(n2,n3)
-    real,    intent(out) :: dyu(n2,n3)
-    real,    intent(out) :: dyv(n2,n3)
-    real,    intent(out) :: dyt(n2,n3)
-    real,    intent(out) :: dym(n2,n3)
-    real,    intent(in)  :: fmapu(n2,n3)
-    real,    intent(in)  :: fmapv(n2,n3)
-    real,    intent(in)  :: fmapt(n2,n3)
-    real,    intent(in)  :: fmapm(n2,n3)
-
+    real,    intent(out) :: dxu(:,:) ! (n2,n3)
+    real,    intent(out) :: dxv(:,:) ! (n2,n3)
+    real,    intent(out) :: dxt(:,:) ! (n2,n3)
+    real,    intent(out) :: dxm(:,:) ! (n2,n3)
+    real,    intent(out) :: dyu(:,:) ! (n2,n3)
+    real,    intent(out) :: dyv(:,:) ! (n2,n3)
+    real,    intent(out) :: dyt(:,:) ! (n2,n3)
+    real,    intent(out) :: dym(:,:) ! (n2,n3)
+    real,    intent(in)  :: fmapu(:,:) ! (n2,n3)
+    real,    intent(in)  :: fmapv(:,:) ! (n2,n3)
+    real,    intent(in)  :: fmapt(:,:) ! (n2,n3)
+    real,    intent(in)  :: fmapm(:,:) ! (n2,n3)
+    ! Local Variables:
     integer :: i,j
 
     do j = 1,n3
@@ -231,22 +232,16 @@ contains
 
 
   subroutine fill_toptuvm(n2,n3,topt,topu,topv,topm,topta,topma)
-
-    use mem_grid, only:        & ! intent(in)
-         xm, xt, ym, yt,       &
-         itopo, jdim, if_adap
-
-    implicit none
     ! Arguments:
     integer, intent(in)  :: n2
     integer, intent(in)  :: n3
-    real,    intent(out) :: topt(n2,n3)
-    real,    intent(out) :: topu(n2,n3)
-    real,    intent(out) :: topv(n2,n3)
-    real,    intent(out) :: topm(n2,n3)
-    real,    intent(in)  :: topta(n2,n3)
-    real,    intent(out) :: topma(n2,n3)
-
+    real,    intent(out) :: topt(:,:) ! (n2,n3)
+    real,    intent(out) :: topu(:,:) ! (n2,n3)
+    real,    intent(out) :: topv(:,:) ! (n2,n3)
+    real,    intent(out) :: topm(:,:) ! (n2,n3)
+    real,    intent(in)  :: topta(:,:) ! (n2,n3)
+    real,    intent(out) :: topma(:,:) ! (n2,n3)
+    ! Local Variables:
     integer :: i,j
     real :: terdev
 
@@ -319,50 +314,34 @@ contains
   subroutine transfm(n2,n3,topt,topu,topv,topm,rtgt,rtgu,rtgv,rtgm  &
        ,f13u,f13v,f13t,f13m,f23u,f23v,f23t,f23m  &
        ,dxu,dxv,dxt,dxm,dyu,dyv,dyt,dym)
-
-    use dump, only: &
-         dumpMessage
-
-    use mem_grid, only: & ! intent(in)
-         zmn, nnzp, nzp, ngrid, zm, &
-         zt, jdim
-
-    use mem_grid, only: & ! intent(out)
-         ztop, &
-         ht, ht2, ht4, htn, ht2n, ht4n, &
-         hw, hw2, hw4, hwn, hw2n, hw4n
-
-
-    implicit none
-    include "constants.h"
+    ! Arguments:
     integer, intent(in)  :: n2
     integer, intent(in)  :: n3
-    real,    intent(in)  :: topt(n2,n3)
-    real,    intent(in)  :: topu(n2,n3)
-    real,    intent(in)  :: topv(n2,n3)
-    real,    intent(in)  :: topm(n2,n3)
-    real,    intent(out) :: rtgt(n2,n3)
-    real,    intent(out) :: rtgu(n2,n3)
-    real,    intent(out) :: rtgv(n2,n3)
-    real,    intent(out) :: rtgm(n2,n3)
-    real,    intent(out) :: f13u(n2,n3)
-    real,    intent(out) :: f13v(n2,n3)
-    real,    intent(out) :: f13t(n2,n3)
-    real,    intent(out) :: f13m(n2,n3)
-    real,    intent(out) :: f23u(n2,n3)
-    real,    intent(out) :: f23v(n2,n3)
-    real,    intent(out) :: f23t(n2,n3)
-    real,    intent(out) :: f23m(n2,n3)
-    real,    intent(in)  :: dxu(n2,n3)
-    real,    intent(in)  :: dxv(n2,n3)
-    real,    intent(in)  :: dxt(n2,n3)
-    real,    intent(in)  :: dxm(n2,n3)
-    real,    intent(in)  :: dyu(n2,n3)
-    real,    intent(in)  :: dyv(n2,n3)
-    real,    intent(in)  :: dyt(n2,n3)
-    real,    intent(in)  :: dym(n2,n3)
-
-
+    real,    intent(in)  :: topt(:,:) ! (n2,n3)
+    real,    intent(in)  :: topu(:,:) ! (n2,n3)
+    real,    intent(in)  :: topv(:,:) ! (n2,n3)
+    real,    intent(in)  :: topm(:,:) ! (n2,n3)
+    real,    intent(out) :: rtgt(:,:) ! (n2,n3)
+    real,    intent(out) :: rtgu(:,:) ! (n2,n3)
+    real,    intent(out) :: rtgv(:,:) ! (n2,n3)
+    real,    intent(out) :: rtgm(:,:) ! (n2,n3)
+    real,    intent(out) :: f13u(:,:) ! (n2,n3)
+    real,    intent(out) :: f13v(:,:) ! (n2,n3)
+    real,    intent(out) :: f13t(:,:) ! (n2,n3)
+    real,    intent(out) :: f13m(:,:) ! (n2,n3)
+    real,    intent(out) :: f23u(:,:) ! (n2,n3)
+    real,    intent(out) :: f23v(:,:) ! (n2,n3)
+    real,    intent(out) :: f23t(:,:) ! (n2,n3)
+    real,    intent(out) :: f23m(:,:) ! (n2,n3)
+    real,    intent(in)  :: dxu(:,:) ! (n2,n3)
+    real,    intent(in)  :: dxv(:,:) ! (n2,n3)
+    real,    intent(in)  :: dxt(:,:) ! (n2,n3)
+    real,    intent(in)  :: dxm(:,:) ! (n2,n3)
+    real,    intent(in)  :: dyu(:,:) ! (n2,n3)
+    real,    intent(in)  :: dyv(:,:) ! (n2,n3)
+    real,    intent(in)  :: dyt(:,:) ! (n2,n3)
+    real,    intent(in)  :: dym(:,:) ! (n2,n3)
+    ! Local Variables:
     integer :: iztflag,i,j,k
     character(len=*), parameter :: h="**(transfm)**"
 
@@ -450,25 +429,9 @@ contains
 
 
   subroutine newgrid(ngr)
-
-    use mem_grid, only: &
-         ngrid, nxp, nnxp, nx, nnx, nx1, nnx1, nx2, nnx2, &
-         nyp, nnyp, ny, nny, ny1, nny1, ny2, nny2, nzp, nnzp, &
-         nzpp, nz, nnz, nz1, nnz1, nxyzp, nnxyzp, &
-         nxysp, nnxysp, nxyp, nnxyp, deltax, deltaxn, xt, xtn,&
-         xm, xmn, deltay, deltayn, yt, ytn, ym, ymn, &
-         deltaz, zmn, zt, ztn, zm, dzm, dzmn, dzt, dztn, dzm2, &
-         dzm2n, dzt2, ht, htn, ht2, ht2n, ht4, ht4n, hw, dzt2n, &
-         hwn, hw2, hw2n, hw4n, hw4n, nsttop, nnsttop, nstbot, &
-         nnstbot, dtlt, dtlongn, dtlv, hw4
-    use node_mod, only: &
-         mxp, nodemxp, myp, nodemyp, mzp, ia, nodeia, &
-         iz, nodeiz, ja, nodeja, nodejz, jz, i0, nodei0, ibcon, nodeibcon, &
-         j0, nodej0, mynum
-
-    implicit none
-    integer :: ngr
-
+    ! Arguments:
+    integer, intent(in) :: ngr
+    ! Local Variables:
     integer :: i,j,k
 
     !     +----------------------------------------------------------------
@@ -578,50 +541,6 @@ contains
     ! if num /= 1, fill the grid_g array with domain decomposed grid
     ! information.
 
-    use ModGridSet, only: &
-         gridset
-
-    use ModAdapInit, only: &
-         ctrlvols, &
-         lpuvw_init
-
-    use dump, only: &
-         dumpMessage
-
-    use mem_grid, only: &
-         if_adap,       &
-         npatch,        &
-         ngrids,        &
-         nnxp,          &
-         nnyp,          &
-         nnzp,          &
-         nzg,           &
-         nnstbot,       &
-         dztn,          &
-         xmn,           &
-         ymn,           &
-         zmn,           &
-         platn,         &
-         plonn,         &
-         grid_g,        &
-         oneGlobalGridData,    &
-         grid_vars,     &
-         alloc_grid,    &
-         dealloc_grid,  &
-         nullify_grid,  &
-         ExtractLocalFromGlobal, &
-         dump_mem_grid
-
-
-    use node_mod, only: &
-         nodemxp,          &
-         nodemyp,          &
-         nodei0,           &
-         nodej0,           &
-         mynum
-
-    implicit none
-    include "constants.h"
     ! Arguments:
     integer, intent(in) :: num
     ! Local Variables:

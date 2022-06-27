@@ -8,6 +8,9 @@
 
 module ModRhhi
 
+  use ModRamsGrid, only: &
+       newgrid
+  
   use ModRinit, only: &
        refs3d
   

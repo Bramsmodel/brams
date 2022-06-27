@@ -9,6 +9,9 @@
 
 module mem_carma
 
+  use ModRamsGrid, only: &
+       newgrid
+  
   use ModMPassFull, only: &
        mk_2_buff
   

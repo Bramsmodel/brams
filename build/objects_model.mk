@@ -149,9 +149,9 @@ OBJ_MOD = \
 	ModMonotonicAdvection.o \
 	mod_GhostBlock.o \
 	mod_GhostBlockPartition.o \
-	rams_grid.o \
-	gridset.o \
-	adap_init.o \
+	ModRamsGrid.o \
+	ModGridSet.o \
+	ModAdapInit.o \
 	ModOneProc.o \
 	ModMemAlloc.o   \
 	ModRamsReadHeader.o \

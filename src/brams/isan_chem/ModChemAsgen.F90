@@ -7,6 +7,10 @@
 !###########################################################################
 module ModChemAsgen
 
+  use ModRamsGrid, only: &
+       GridSetup, &
+       newgrid
+  
   use ModAsGen, only: &
        opspec4
 

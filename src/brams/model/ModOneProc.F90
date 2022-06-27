@@ -34,6 +34,10 @@ module ModOneProc
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModRamsGrid, only: &
+       GridSetup, &
+       newgrid
+  
   use ModCuRead, only: &
        cu_read
   

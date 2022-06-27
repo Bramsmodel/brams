@@ -7,6 +7,9 @@
 !###########################################################################
 module ModInitHis
 
+  use ModRamsGrid, only : &
+       newgrid
+  
   use ModRamsReadHeader, only: &
        rams_read_header
   
