@@ -7,44 +7,24 @@
 !###########################################################################
 module ModMemAlloc
 
-  use ModParallelEnvironment, only: &
-       MsgDump
+  use mem_scratch2_grell, only: &
+       alloc_scratch2_grell
+
+  use mem_scratch3_grell_sh, only: &
+       alloc_scratch3_grell_sh
   
-  use ModGrid, only: &
-       Grid
-
-  use grid_dims, only: &
-       maxmach, &
-       maxsclr, &
-       maxgrds
-
-  use mem_tend, only: &
-       nullify_tend, &
-       alloc_tend, &
-       filltab_tend
-
-  use mem_scratch1, only: &
-       alloc_scratch1, &
-       nullify_scratch1
-
-  use mem_nestb, only: &
-       alloc_nestb
-
-  use mem_scratch, only: &
-       alloc_scratch,    &
-       nullify_scratch,  &
-       createvctr
-
-  use io_params, only: &
-       avgtim, &
-       frqanl
-
-  use var_tables, only: &
-       maxvars, &
-       num_var, &
-       nvgrids, &
-       vtab_r,  &
-       ZeroVTab
+  use mem_cuparm, only: &
+       nnqparm, &
+       cuparm_g_sh, &
+       cuparmm_g_sh, &
+       cuparm_g, &
+       cuparmm_g, &
+       nullify_cuparm, &
+       alloc_cuparm, &
+       alloc_cuparm_sh, &
+       filltab_cuparm, &
+       filltab_cuparm_sh, &
+       dealloc_cuparm
 
   use mem_grid, only: &
        nxtnest, &
@@ -70,33 +50,33 @@ module ModMemAlloc
        dtlong, &
        nndtrat, &
        filltab_grid, &
-       timmax
+       timmax, &
+       dealloc_grid
+
+  use mem_leaf, only: &
+       leaf_g, &
+       leafm_g, &
+       nullify_leaf, &
+       alloc_leaf, &
+       filltab_leaf,&
+       isfcl, &
+       dealloc_leaf
+
+  use mem_micro, only: &
+       micro_g, &
+       microm_g, &
+       nullify_micro, &
+       alloc_micro, &
+       filltab_micro, &
+       dealloc_micro
 
   use mem_oda, only: &
        oda_g, &
        odam_g, &
        nullify_oda, &
        alloc_oda, &
-       filltab_oda
-
-  use mem_cuparm, only: &
-       nnqparm, &
-       cuparm_g_sh, &
-       cuparmm_g_sh, &
-       cuparm_g, &
-       cuparmm_g, &
-       nullify_cuparm, &
-       alloc_cuparm, &
-       alloc_cuparm_sh, &
-       filltab_cuparm, &
-       filltab_cuparm_sh
-
-  use mem_scalar, only: &
-       scalar_g, &
-       scalarm_g, &
-       alloc_scalar, &
-       nullify_scalar, &
-       filltab_scalar
+       filltab_oda, &
+       dealloc_oda
 
   use mem_radiate, only: &
        ilwrtyp, &
@@ -105,22 +85,33 @@ module ModMemAlloc
        radiatem_g, &
        nullify_radiate, &
        alloc_radiate, &
-       filltab_radiate
+       filltab_radiate, &
+       dealloc_radiate
 
-  use mem_micro, only: &
-       micro_g, &
-       microm_g, &
-       nullify_micro, &
-       alloc_micro, &
-       filltab_micro
+  use mem_scalar, only: &
+       scalar_g, &
+       scalarm_g, &
+       alloc_scalar, &
+       nullify_scalar, &
+       filltab_scalar, &
+       dealloc_scalar
 
-  use mem_leaf, only: &
-       leaf_g, &
-       leafm_g, &
-       nullify_leaf, &
-       alloc_leaf, &
-       filltab_leaf,&
-       isfcl
+  use mem_varinit, only: &
+       varinit_g, &
+       varinitm_g, &
+       nullify_varinit, &
+       alloc_varinit, &
+       filltab_varinit, &
+       dealloc_varinit
+
+  use var_tables, only: &
+       num_var, &
+       vtab_r, &
+       maxvars, &
+       num_var, &
+       nvgrids, &
+       vtab_r,  &
+       ZeroVTab
 
 #ifdef JULES
   use mem_jules, only: &
@@ -128,15 +119,100 @@ module ModMemAlloc
        julesm_g, &
        nullify_jules, &
        alloc_jules, &
-       filltab_jules
+       filltab_jules, &
+       dealloc_jules
 #endif
 
-  use mem_varinit, only: &
-       varinit_g, &
-       varinitm_g, &
-       nullify_varinit, &
-       alloc_varinit, &
-       filltab_varinit
+  use mem_shcu, only: &
+       shcu_g,        &
+       shcum_g,       &
+       nullify_shcu,  &
+       alloc_shcu,    &
+       filltab_shcu, &
+       dealloc_shcu
+
+  use mem_opt, only: &
+       nullify_opt_scratch, &
+       alloc_opt_scratch, &
+       dealloc_opt_scratch
+
+  use mem_aerad, only: &
+       nwave,          &         !INTENT(IN)
+       initial_definitions_aerad, & !Subroutine
+       final_definitions_aerad   !Subroutine
+
+  use mem_globaer, only: &
+       initial_definitions_globaer, & !Subroutine
+       final_definitions_globaer !Subroutine
+
+  use mem_globrad, only : &
+       ntotal, &
+       nlayer, &
+       initial_definitions_globrad, & !Subroutine
+       final_definitions_globrad !Subroutine
+
+  use teb_spm_start, only: &
+       TEB_SPM ! INTENT(IN)
+
+  use mem_teb, only: &
+       teb_g,        & ! INTENT(IN)
+       tebm_g,       & ! INTENT(IN)
+       nullify_teb,  & ! Subroutine
+       alloc_teb,    & ! Subroutine
+       filltab_teb, &     ! Subroutine
+       dealloc_teb         ! Subroutine
+
+  use mem_teb_common, only: &
+       tebc_g,              & ! INTENT(IN)
+       tebcm_g,             & ! INTENT(IN)
+       nullify_tebc,        & ! Subroutine
+       alloc_tebc,          & ! Subroutine
+       filltab_tebc, &        ! Subroutine
+       dealloc_tebc            ! Subroutine
+
+  use mem_gaspart, only: &
+       gaspart_g,        & ! INTENT(IN)
+       gaspartm_g,       & ! INTENT(IN)
+       gaspart_vars,     & ! Type
+       nullify_gaspart,  & ! Subroutine
+       alloc_gaspart,    & ! Subroutine
+       zero_gaspart,     & ! Subroutine
+       filltab_gaspart, &     ! Subroutine
+       dealloc_gaspart          ! Subroutine
+
+  use mem_scratch, only: &
+       alloc_scratch,    &
+       nullify_scratch,  &
+       createvctr, &
+       dealloc_scratch
+
+  use mem_tend, only: &
+       nullify_tend, &
+       alloc_tend, &
+       filltab_tend, &
+       dealloc_tend
+
+  use ModParallelEnvironment, only: &
+       MsgDump
+
+  use ModGrid, only: &
+       Grid
+
+  use grid_dims, only: &
+       maxmach, &
+       maxsclr, &
+       maxgrds
+
+  use mem_scratch1, only: &
+       alloc_scratch1, &
+       nullify_scratch1
+
+  use mem_nestb, only: &
+       alloc_nestb
+
+  use io_params, only: &
+       avgtim, &
+       frqanl
 
   use ModBasicFields, only: &
        InsertBasicFieldsAtVarTable
@@ -155,13 +231,6 @@ module ModMemAlloc
        mchnum,         &
        master_num,     &
        mynum
-
-  use mem_shcu, only: &
-       shcu_g,        &
-       shcum_g,       &
-       nullify_shcu,  &
-       alloc_shcu,    &
-       filltab_shcu
 
   use shcu_vars_const, only : &
        nnshcu                           ! INTENT(IN)
@@ -196,15 +265,11 @@ module ModMemAlloc
   use mem_scratch1_grell, only: &
        alloc_scratch1_grell
 
-  use mem_scratch2_grell, only: &
-       alloc_scratch2_grell
+  use mem_scratch2_grell_sh, only: &
+       alloc_scratch2_grell_sh
 
   use mem_scratch3_grell, only: &
        alloc_scratch3_grell
-
-  use mem_opt, only: &
-       nullify_opt_scratch, &
-       alloc_opt_scratch
 
   use mem_carma, only: &
        carma,          &
@@ -218,16 +283,6 @@ module ModMemAlloc
        carma_aotMap, &
        carma_aotMapm,  &
        nullify_aotMap
-
-  use mem_aerad, only: &
-       nwave,          &           !INTENT(IN)
-       initial_definitions_aerad !Subroutine
-
-  use mem_globaer, only: &
-       initial_definitions_globaer !Subroutine
-
-  use mem_globrad, only: &
-       initial_definitions_globrad !Subroutine
 
   use Extras, only: &
        extra2d,     &
@@ -252,52 +307,20 @@ module ModMemAlloc
        alloc_turb_s,   &
        filltab_turb_s
 
-  use mem_scratch2_grell_sh, only: &
-       alloc_scratch2_grell_sh
-
-  use mem_scratch3_grell_sh, only: &
-       alloc_scratch3_grell_sh
-
-
-  ! Data for Optimization for vector machines
   use mem_micro_opt, only: &
        alloc_micro_opt
 
-  ! For specific optimization depending the type of machine
-  use machine_arq, only: machine ! INTENT(IN)
+  use machine_arq, only: &
+       machine ! INTENT(IN)
 
-  ! Global grid dimension definitions
-  use mem_grid_dim_defs, only: define_grid_dim_pointer ! subroutine
+  use mem_grid_dim_defs, only: &
+       define_grid_dim_pointer ! subroutine
 
-  ! TEB_SPM
-  use teb_spm_start, only: TEB_SPM ! INTENT(IN)
+  use mem_emiss, only: &
+       isource ! INTENT(IN)
 
-  use mem_emiss, only: isource ! INTENT(IN)
-
-  use mem_gaspart, only: &
-       gaspart_g,        & ! INTENT(IN)
-       gaspartm_g,       & ! INTENT(IN)
-       gaspart_vars,     & ! Type
-       nullify_gaspart,  & ! Subroutine
-       alloc_gaspart,    & ! Subroutine
-       zero_gaspart,     & ! Subroutine
-       filltab_gaspart     ! Subroutine
-
-  use mem_teb_common, only: &
-       tebc_g,              & ! INTENT(IN)
-       tebcm_g,             & ! INTENT(IN)
-       nullify_tebc,        & ! Subroutine
-       alloc_tebc,          & ! Subroutine
-       filltab_tebc           ! Subroutine
-
-  use teb_vars_const, only: iteb ! INTENT(IN)
-
-  use mem_teb, only: &
-       teb_g,        & ! INTENT(IN)
-       tebm_g,       & ! INTENT(IN)
-       nullify_teb,  & ! Subroutine
-       alloc_teb,    & ! Subroutine
-       filltab_teb     ! Subroutine
+  use teb_vars_const, only: &
+       iteb ! INTENT(IN)
 
   use ModCuParGrell3, only: &
        alloc_grell3, &
@@ -381,7 +404,6 @@ module ModMemAlloc
        aerosol         ,     &
        aer2_g          ,     &
        aer2m_g         ,     &
-                                !-srf including inorganics for matrix aer model
        nullify_aer1_inorg,         & ! Subroutine
        alloc_aer1_inorg,           & ! Subroutine
        filltab_aer1_inorg,         & ! Subroutine
@@ -392,7 +414,6 @@ module ModMemAlloc
        aer1m_inorg_g,              &
        aer2mp_g,                   &
        aer2mpm_g
-
 
   use mem_plume_chem1, only: &
        nullify_plume_chem1,  & ! Subroutine
@@ -447,12 +468,13 @@ module ModMemAlloc
        tuv_biom, &
        nbio
 
-  use mem_globrad, only : ntotal, &
-       nlayer
+  use modtuv, only: &
+       ks, &
+       nw
 
-  use modtuv, only: ks,nw
-
-  use micphys, only : level,mcphys_type
+  use micphys, only : &
+       level, &
+       mcphys_type
 
   use digitalFilter, only:     &
        initDigitalFilter,     & ! subroutine
@@ -466,7 +488,6 @@ module ModMemAlloc
        allocStatistic, &
        timeCount, &
        nTimes
-
 
   use modIau, only : &
        applyIAU         &
@@ -482,6 +503,7 @@ module ModMemAlloc
   private
 
   public :: MemAlloc
+  public :: MemDealloc
 
 contains
 
@@ -530,7 +552,7 @@ contains
        nmzp => nnzp
        nmxp => nodemxp(mynum,:)
        nmyp => nodemyp(mynum,:)
-       call dealloc_all()
+       call MemDealloc()
     endif
 
     ! Call global grid dimension definitions
@@ -1717,4 +1739,102 @@ contains
     timeCount=0
 
   end subroutine MemAlloc
+
+
+
+  subroutine MemDealloc()
+
+    ! deallocate all model memory.  Used on dynamic balance
+
+    integer :: ng
+
+    deallocate(num_var,vtab_r)
+
+    call dealloc_tend(naddsc)
+    call dealloc_scratch()
+
+    call dealloc_opt_scratch() ! For optimization - ALF
+
+    if (ilwrtyp==4 .or. iswrtyp==4) then ! For CARMA
+       call final_definitions_aerad()
+       call final_definitions_globrad()
+       call final_definitions_globaer()
+    endif
+
+    do ng=1,ngrids
+       call dealloc_cuparm(cuparm_g(ng))
+       call dealloc_cuparm(cuparmm_g(ng))
+       call dealloc_grid(grid_g(ng))
+       call dealloc_grid(gridm_g(ng))
+       call dealloc_leaf(leaf_g(ng))
+       call dealloc_leaf(leafm_g(ng))
+#ifdef JULES
+       call dealloc_jules(jules_g(ng))
+       call dealloc_jules(julesm_g(ng))
+#endif
+       call dealloc_micro(micro_g(ng))
+       call dealloc_micro(microm_g(ng))
+       call dealloc_radiate(radiate_g(ng))
+       call dealloc_radiate(radiatem_g(ng))
+       call dealloc_varinit(varinit_g(ng))
+       call dealloc_varinit(varinitm_g(ng))
+
+       call dealloc_oda(oda_g(ng))
+       call dealloc_oda(odam_g(ng))
+
+       call dealloc_shcu(shcu_g(ng))    ! use by shallow cumulus
+       call dealloc_shcu(shcum_g(ng))   ! use by shallow cumulus
+
+       if (TEB_SPM==1) then
+          if(allocated(tebc_g)) then
+             call dealloc_tebc(tebc_g(ng))      !for teb common
+             call dealloc_tebc(tebcm_g(ng))     !for teb common
+          endif
+          if(allocated(teb_g)) then
+             call dealloc_teb(teb_g(ng))      !for teb
+             call dealloc_teb(tebm_g(ng))     !for teb
+          endif
+          if(allocated(gaspart_g)) then
+             call dealloc_gaspart(gaspart_g(ng))      !for gas/paticles
+             call dealloc_gaspart(gaspartm_g(ng))     !for gas/paticles
+          endif
+       endif
+
+    enddo
+!!$  deallocate(basic_g,basicm_g)
+    deallocate(cuparm_g,cuparmm_g)
+    deallocate(grid_g,gridm_g)
+    deallocate(leaf_g,leafm_g)
+#ifdef JULES
+    deallocate(jules_g,julesm_g)
+#endif
+    deallocate(micro_g,microm_g)
+    deallocate(radiate_g,radiatem_g)
+    deallocate(varinit_g,varinitm_g)
+    deallocate(oda_g,odam_g)
+
+    deallocate(shcu_g, shcum_g)         ! use by shallow cumulus
+
+    if (TEB_SPM==1) then
+       if(allocated(teb_g)) then
+          deallocate(teb_g, tebm_g)         ! for urban parameterization
+       endif
+       if(allocated(tebc_g)) then
+          deallocate(tebc_g, tebcm_g)         ! for urban parameterization
+       endif
+       if(allocated(gaspart_g)) then
+          deallocate(gaspart_g, gaspartm_g)         ! for urban parameterization
+       endif
+    endif
+
+    if(allocated(scalar_g)) then
+       do ng=1,ngrids
+          call dealloc_scalar(scalar_g(:,ng),naddsc)
+       enddo
+       deallocate(scalar_g,scalarm_g)
+    endif
+
+    return
+  end subroutine MemDealloc
+
 end module ModMemAlloc

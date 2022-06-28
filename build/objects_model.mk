@@ -30,7 +30,6 @@ OBJ_MOD = \
 	ModBasicFields.o \
 	mpi_io_engine-5d.o \
 	Phys_const.o \
-	alloc.o   \
 	an_header.o \
 	ModAsGen.o \
 	ModAsTi.o \

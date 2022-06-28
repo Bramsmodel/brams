@@ -1,4 +1,5 @@
 module mem_grid_dim_defs
+
   implicit none
 
   public
@@ -42,7 +43,7 @@ module mem_grid_dim_defs
          nmzp => mmzp
          nmxp => mmxp
          nmyp => mmyp
-         call dealloc_all()
+!!$         call MemDealloc()
       endif
 
       ! Defining max grid dimensions
