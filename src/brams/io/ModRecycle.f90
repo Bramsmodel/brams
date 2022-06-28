@@ -7,6 +7,11 @@
 !###########################################################################
 module ModRecycle
 
+  use ModGetVar, only: &
+       FindFieldInAnalysisFile, &
+       GetFieldInAnalysisFile, &
+       RAMS_getvar
+  
   use ModMPassFull, only: &
        mk_2_buff, &
        mk_3_buff, &

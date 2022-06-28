@@ -25,7 +25,7 @@ error_mess.o : $(UTILS_LIB)/error_mess.f90
 	 $(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	 @mv -f $(<F:.f90=.f90) ../doc/src
 
-getvar.o     : $(UTILS_LIB)/getvar.f90  an_header.o dump.o $(UTILS_INCS)/constants.h
+ModGetVar.o     : $(UTILS_LIB)/ModGetVar.f90  an_header.o dump.o $(UTILS_INCS)/constants.h
 	 @cp -f $< $(<F:.f90=.f90)
 	 $(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	 @mv -f $(<F:.f90=.f90) ../doc/src

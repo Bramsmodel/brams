@@ -1,5 +1,8 @@
 module ModVarfFile
 
+  use ModGetVar, only: &
+       RAMS_getvar
+
   use ModRamsGrid, only: &
        newgrid
   
@@ -696,7 +699,6 @@ contains
     character(len=f_name_length)		:: fileName
 
     logical				:: sameGrid
-    integer, external			:: RAMS_getvar
     integer                             :: imode
     integer				:: ngr
     integer				:: ie

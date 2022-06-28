@@ -7,6 +7,9 @@
 !###########################################################################
 module ModInitHis
 
+  use ModGetVar, only: &
+       RAMS_getvar
+
   use ModRamsGrid, only : &
        newgrid
   
@@ -151,8 +154,6 @@ contains
     character (len=3) :: fmt
     character (len=2) :: cng
          
-    integer, external :: RAMS_getvar
-
     integer,save :: iunhd=11,inhunt=10
 
     integer :: nv,nvh,i,k,nzpg1,nc

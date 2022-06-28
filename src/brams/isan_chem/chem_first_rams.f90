@@ -8,6 +8,9 @@
 
 subroutine first_RAMS(np1,np2,np3,ui2,vi2,pi2,ti2,ri2)
 
+  use ModGetVar, only: &
+       RAMS_getvar
+
   use ModRcio, only: &
        cio
   
@@ -71,8 +74,6 @@ subroutine first_RAMS(np1,np2,np3,ui2,vi2,pi2,ti2,ri2)
   character(len=f_name_length) :: flnma
   character(len=1) :: cgrid
   character(len=2) :: cng
-
-  integer, external :: RAMS_getvar
 
   real, allocatable :: plt(:,:)
   real, allocatable :: pltc(:,:)
@@ -171,20 +172,21 @@ subroutine first_RAMS(np1,np2,np3,ui2,vi2,pi2,ti2,ri2)
      print*,'READING from file current grid=',ngrid,nxp,nyp,nzp
      print*,'READING from file current grid=',trim(innpr)
      ! UE_AVG and VE_AVG
-!!$   ierr=RAMS_getvar('UP', 3, ngrid, ui2(1,1,1), rr_scr1(1), innpr(1:lenf))
-!!$   ierr=RAMS_getvar('VP', 3, ngrid, vi2(1,1,1), rr_scr1(1), innpr(1:lenf))
-     ierr=RAMS_getvar('UP', ngrid, ui2(1,1,1), rr_scr1(1), innpr(1:lenf))
-     ierr=RAMS_getvar('VP', ngrid, vi2(1,1,1), rr_scr1(1), innpr(1:lenf))
+!!$   ierr=RAMS_getvar('UP', 3, ngrid, ui2, rr_scr1, innpr(1:lenf))
+!!$   ierr=RAMS_getvar('VP', 3, ngrid, vi2, rr_scr1, innpr(1:lenf))
+     ierr=RAMS_getvar('UP', ngrid, ui2, rr_scr1, innpr(1:lenf))
+     ierr=RAMS_getvar('VP', ngrid, vi2, rr_scr1, innpr(1:lenf))
      call comp_avgu(nnxp(ngrid),nnyp(ngrid),nnzp(ngrid),ui2(1,1,1))
      call comp_avgv(nnxp(ngrid),nnyp(ngrid),nnzp(ngrid),vi2(1,1,1))
      print*,'222'
      ! RELHUM and THETA
-!!$   ierr=RAMS_getvar('RV',3,ngrid,ri2(1,1,1),rr_scr1(1),innpr(1:lenf))
-!!$   ierr=RAMS_getvar('PI',3,ngrid,pi2(1,1,1),rr_scr1(1),innpr(1:lenf))
-!!$   ierr=RAMS_getvar('THETA',3,ngrid,ti2(1,1,1),rr_scr1(1),innpr(1:lenf))
-     ierr=RAMS_getvar('RV', ngrid, ri2(1,1,1), rr_scr1(1), innpr(1:lenf))
-     ierr=RAMS_getvar('PI', ngrid, pi2(1,1,1), rr_scr1(1), innpr(1:lenf))
-     ierr=RAMS_getvar('THETA',3,ngrid,ti2(1,1,1),rr_scr1(1),innpr(1:lenf))
+!!$   ierr=RAMS_getvar('RV',3,ngrid,ri2,rr_scr1,innpr(1:lenf))
+!!$   ierr=RAMS_getvar('PI',3,ngrid,pi2,rr_scr1,innpr(1:lenf))
+!!$   ierr=RAMS_getvar('THETA',3,ngrid,ti2,rr_scr1,innpr(1:lenf))
+     ierr=RAMS_getvar('RV', ngrid, ri2, rr_scr1, innpr(1:lenf))
+     ierr=RAMS_getvar('PI', ngrid, pi2, rr_scr1, innpr(1:lenf))
+!!$     ierr=RAMS_getvar('THETA',3,ngrid,ti2,rr_scr1,innpr(1:lenf))
+     ierr=RAMS_getvar('THETA',ngrid,ti2,rr_scr1,innpr(1:lenf))
      call comp_rhfrac(nnxp(ngrid),nnyp(ngrid),nnzp(ngrid)  &
           ,ri2(1,1,1),pi2(1,1,1),ti2(1,1,1))
      print*,'333'
