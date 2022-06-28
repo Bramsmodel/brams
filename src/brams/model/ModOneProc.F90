@@ -34,6 +34,10 @@ module ModOneProc
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModRnode, only: &
+       node_index, &
+       InitFields
+  
   use ModRamsGrid, only: &
        GridSetup, &
        newgrid

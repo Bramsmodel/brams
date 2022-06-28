@@ -171,7 +171,7 @@ OBJ_MOD = \
 	ModRhhi.o  \
 	ModRinit.o  \
 	ModRio.o \
-	rnode.o \
+	ModRnode.o \
 	ModRShCuPar.o \
 	ModRThrm.o \
 	ModTimestep.o \
