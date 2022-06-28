@@ -6,9 +6,18 @@
 !  Regional Atmospheric Modeling System - RAMS
 !###########################################################################
 module ModRadvc
+
   use iso_fortran_env, only: &
        real64
-  
+
+  use ModRadvcAdap, only: &
+       vel_advectc_adap, &
+       fa_preptc_adap, &
+       fa_xc_adap, &
+       fa_yc_adap, &
+       fa_zc_adap, &
+       advtndc_adap
+       
   use ModBasicFields, only: &
        BasicFields
   

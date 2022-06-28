@@ -144,7 +144,7 @@ OBJ_MOD = \
 	ModRrtmDriver.o \
 	ModRadvc.o \
 	ModRadvcRK.o \
-	radvc_adap.o \
+	ModRadvcAdap.o \
 	ModMonotonicAdvection.o \
 	mod_GhostBlock.o \
 	mod_GhostBlockPartition.o \
