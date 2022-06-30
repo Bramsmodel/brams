@@ -7,6 +7,12 @@
 !###########################################################################
 module ModChemAsgen
 
+  use ModChemFileInv, only: &
+       chem_isan_file_inv
+  
+  use ModChemAsti, only: &
+       chem_isnstage
+  
   use ModChemRefState, only: &
        fmrefs1d_isan, &
        fmrefs3d_isan, &

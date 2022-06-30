@@ -223,14 +223,14 @@ OBJ_MOD = \
 	chem_aobj.o \
 	ModChemAsgen.o \
 	chem_asti2.o \
-	chem_asti.o \
+	ModChemAsti.o \
 	chem_astp.o \
 	chem_avarf.o \
-	chem_file_inv.o \
+	ModChemFileInv.o \
 	chem_first_rams.o \
 	ModChemIsanIo.o \
 	ModChemRefState.o \
-	chem_v_interps.o \
+	ModChemVInterps.o \
 	carma_fastjx.o \
 	chem_fastjx57.o \
 	chem_fastjx_data.o \
