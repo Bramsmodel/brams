@@ -228,8 +228,8 @@ OBJ_MOD = \
 	chem_avarf.o \
 	chem_file_inv.o \
 	chem_first_rams.o \
-	chem_isan_io.o \
-	chem_refstate.o \
+	ModChemIsanIo.o \
+	ModChemRefState.o \
 	chem_v_interps.o \
 	carma_fastjx.o \
 	chem_fastjx57.o \

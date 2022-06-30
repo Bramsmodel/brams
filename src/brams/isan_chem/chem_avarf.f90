@@ -102,7 +102,7 @@ call varuv(nnzp(ng),nnxp(ng),nnyp(ng),is_grids(ng)%rr_u  &
                       ,is_grids(ng)%rr_v)
 
 return
-end
+end subroutine chem_makevarf
 
 
 

@@ -7,6 +7,17 @@
 !###########################################################################
 module ModChemAsgen
 
+  use ModChemRefState, only: &
+       fmrefs1d_isan, &
+       fmrefs3d_isan, &
+       fmdn0_isan, &
+       varfile_refstate
+  
+  use ModChemIsanIo, only: &
+       isenio, &
+       sigzio, &
+       vmissw
+  
   use ModRamsGrid, only: &
        GridSetup, &
        newgrid
@@ -205,6 +216,10 @@ contains
     !srf-chem-end
     !--(DMK-CCATT-FIM)----------------------------------------------------------------
 
+    real, allocatable :: scratch2D(:,:)
+    integer :: ierr
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(chem_isan_driver)**" 
     ! Not necessary because all information is read by Namelist
 
 !!$  ! Read input ISAN namelists
@@ -476,111 +491,13 @@ contains
           allocate(rs_snow(nnxp(ngrid),nnyp(ngrid)))
           allocate(rs_sst(nnxp(ngrid),nnyp(ngrid)))
 
-          ! !LFR Abrindo grads para escrita
-          !            PRINT *,nprx,npry,NPRZ
-
-          !            recordLen=4*nprx*npry
-          !            irec=1
-          !            write(aerFName,fmt='("aer1_",I4.4,I2.2,I2.2,I6.6)') iyear,imonth,idate  &
-          !                 ,ihour*100
-          !            open(unit=33,file=trim(aerFName)//'_bci.gra',&
-          !                   action='WRITE',status='REPLACE',form='UNFORMATTED',access='DIRECT', &
-          !                   recl=recordLen)
-          !           do nspc=1,nspecies_aer_in
-
-          ! !LFR Escrevendo Grads
-          !              do k=1,nprz
-          !               write(33,rec=irec) p_aer_sc(:,:,K,nspc)
-          !               irec=irec+1
-          !               enddo
-          !           enddo
-          !           close(33)
-          !            open(unit=33,file=trim(aerFName)//'_bci.ctl' &
-          !             ,action='WRITE',status='replace',form='FORMATTED')
-
-          !            !writing the name of grads file
-          !            write(33,*) 'dset ^'//trim(aerFName)//'_bci.gra'
-          !            !writing others infos to ctl
-          !            write(33,*) 'undef -0.9990000E+34'
-          !            write(33,*) 'title Aerossols In'
-          !            write(33,*) 'xdef ',nprx,' linear ',oneGlobalGridData(1)%global_glon(1,1) &
-          !              ,oneGlobalGridData(1)%global_glon(2,1)-oneGlobalGridData(1)%global_glon(1,1)
-          !            write(33,*) 'ydef ',npry,' linear ',oneGlobalGridData(1)%global_glat(1,1) &
-          !              ,oneGlobalGridData(1)%global_glat(1,2)-oneGlobalGridData(1)%global_glat(1,1)
-          !            write(33,*) 'zdef ',nprz,'levels',(k,k=1,nprz)
-          !            write(33,*) 'tdef 1 linear 00:00z01jan2018     1mo'
-          !            write(33,*) 'vars ',nspecies_aer_in
-          !            do nvar=1,nspecies_aer_in
-          !              write(33,*) assAerSpecieName(nvar),nprz,'99 ',assAerSpecieName(nvar)
-          !            enddo
-          !            write(33,*) 'endvars'
-
-          !            close(33)
-
-          ! !LFR ---
-
-
           ! Do isentropic and sigma-z analysis
 
           if(iszstage == 1) then
              call chem_isnstage ()   
 
-             ! !LFR Abrindo grads para escrita
-             !            PRINT *,nnxp(ngrid),nnyp(ngrid),nprz,nspecies_aer_in
-             !            print *,size(pp_aer_sc,1),size(pp_aer_sc,2),size(pp_aer_sc,3),size(pp_aer_sc,4)
-
-             !            recordLen=4*nnxp(ngrid)*nnyp(ngrid)
-             !            irec=1
-             !            write(aerFName,fmt='("aer1_",I4.4,I2.2,I2.2,I6.6)') iyear,imonth,idate  &
-             !                 ,ihour*100
-             !            open(unit=33,file=trim(aerFName)//'_aci.gra',&
-             !                   action='WRITE',status='REPLACE',form='UNFORMATTED',access='DIRECT', &
-             !                   recl=recordLen)
-             !           do nspc=1,nspecies_aer_in
-
-             ! !LFR Escrevendo Grads
-             !              do k=1,nprz
-             !                 print *,k,nspc,size(pp_aer_sc,1),size(pp_aer_sc,2),size(pp_aer_sc,3),size(pp_aer_sc,4)
-             !                 ! if(k<=2) then
-             !                 !   do i=1,nnxp(ngrid)
-             !                 !     do j=1,nnyp(ngrid)
-             !                 !       write(44,fmt='(3(I2.2,1X),E18.6)') i,j,k,pp_aer_sc(i,j,K,nspc); call flush(44)
-             !                 !     enddo
-             !                 !   enddo
-             !                 ! endif
-             !                 ! write(33,rec=irec) pp_aer_sc(:,:,K,nspc)
-             !                 irec=irec+1
-             !              enddo
-             !           enddo
-             !           close(33)
-             !            open(unit=33,file=trim(aerFName)//'_aci.ctl' &
-             !             ,action='WRITE',status='replace',form='FORMATTED')
-
-             !            !writing the name of grads file
-             !            write(33,*) 'dset ^'//trim(aerFName)//'_aci.gra'
-             !            !writing others infos to ctl
-             !            write(33,*) 'undef -0.9990000E+34'
-             !            write(33,*) 'title Aerossols In'
-             !            write(33,*) 'xdef ',nnxp(ng),' linear ',oneGlobalGridData(1)%global_glon(1,1) &
-             !              ,oneGlobalGridData(1)%global_glon(2,1)-oneGlobalGridData(1)%global_glon(1,1)
-             !            write(33,*) 'ydef ',nnyp(ng),' linear ',oneGlobalGridData(1)%global_glat(1,1) &
-             !              ,oneGlobalGridData(1)%global_glat(1,2)-oneGlobalGridData(1)%global_glat(1,1)
-             !            write(33,*) 'zdef ',nprz,'levels',(k,k=1,nprz)
-             !            write(33,*) 'tdef 1 linear 00:00z01jan2018     1mo'
-             !            write(33,*) 'vars ',nspecies_aer_in
-             !            do nvar=1,nspecies_aer_in
-             !              write(33,*) assAerSpecieName(nvar),nprz,'99 ',assAerSpecieName(nvar)
-             !            enddo
-             !            write(33,*) 'endvars'
-
-             !            close(33)
-
-             ! !LFR ---
-
-
-
-
              ! Output isentropic file if desired
+
              if(CHEMISTRY >= 0 .and. CHEM_ASSIM == 1 .and. ioflgisz == 1) then
                 print*,'CHEM Assimilation is not for ready isentropic output.'
                 print*,'Please, use ioflgisz=0'
@@ -634,7 +551,7 @@ contains
                   ,is_grids(1)%rr_r,is_grids(1)%rr_dn0  &
                   ,is_grids(1)%rr_dn0u,is_grids(1)%rr_dn0v  &
                   ,grid_g(1)%topt,grid_g(1)%rtgt  &
-                  ,ztn,ztop,piref,thref,dnref,rtref)
+                  ,ztn(:,1),ztop,piref(:,1),thref(:,1),dnref(:,1),rtref(:,1))
              is_grids(1)%rr_p(1:nnzp(1),1:nnxp(1),1:nnyp(1)) =  &
                   is_grids(1)%rr_p  (1:nnzp(1),1:nnxp(1),1:nnyp(1)) &
                   -is_grids(1)%rr_pi0(1:nnzp(1),1:nnxp(1),1:nnyp(1))
@@ -651,14 +568,14 @@ contains
                      ,is_grids(icm)%rr_dn0,is_grids(ifm)%rr_dn0 &
                      ,is_grids(icm)%rr_th0,is_grids(ifm)%rr_th0 &
                      ,is_grids(ifm)%rr_pi0,is_grids(ifm)%rr_dn0u &
-                     ,is_grids(ifm)%rr_dn0v,ztn(1,ifm),ztop )
+                     ,is_grids(ifm)%rr_dn0v,ztn(:,ifm),ztop )
 
                 call fmdn0_isan(ifm,icm,nnzp(ifm),nnxp(ifm),nnyp(ifm) &
                      ,nnzp(icm),nnxp(icm),nnyp(icm),maxiz,maxix,maxiy &
                      ,rr_scr1,rr_scr2  &
                      ,grid_g(ifm)%topt,grid_g(icm)%topt &
                      ,is_grids(ifm)%rr_dn0,is_grids(ifm)%rr_dn0u &
-                     ,is_grids(ifm)%rr_dn0v,ztn(1,ifm),ztop )
+                     ,is_grids(ifm)%rr_dn0v,ztn(:,ifm),ztop )
 
                 is_grids(ifm)%rr_p(1:nnzp(ifm),1:nnxp(ifm),1:nnyp(ifm)) =  &
                      is_grids(ifm)%rr_p  (1:nnzp(ifm),1:nnxp(ifm),1:nnyp(ifm)) &
@@ -687,6 +604,15 @@ contains
 
           if(ioflgvar == 1) then
              do ng=1,nigrids
+                allocate(scratch2D(nnxp(ng),nnyp(ng)), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   write(str(2),"(i8)") nnxp(ng)
+                   write(str(3),"(i8)") nnyp(ng)
+                   call fatal_error(h//" allocate(scratch2d("//&
+                        trim(adjustl(str(2)))//","//trim(adjustl(str(3)))//&
+                        ") fails with ierr="//trim(adjustl(str(1))))
+                end if
                 nxyzp=nnxp(ng)*nnyp(ng)*nnzp(ng)
                 nxyp =nnxp(ng)*nnyp(ng)
                 write(csuff,'(a1,i1)') 'g',ng
@@ -754,27 +680,10 @@ contains
                    enddo
                 endif
                 if(AER_ASSIM == 1 .and. nspecies_aer_in>0) then
-
-
-                   ! !LFR Abrindo grads para escrita
-                   !            recordLen=4*nnxp(ng)*nnyp(ng)
-                   !            irec=1
-                   !            write(aerFName,fmt='("aer1_",I4.4,I2.2,I2.2,I6.6)') iyear,imonth,idate  &
-                   !                 ,ihour*100
-                   !            open(unit=33,file=trim(aerFName)//'.gra',&
-                   !                   action='WRITE',status='REPLACE',form='UNFORMATTED',access='DIRECT', &
-                   !                   recl=recordLen)
-                   ! !LFR ---
                    print*,'-------------------------------------------------'                   
                    write(*,fmt='("Writing aerosol assimilation for ",I3.3," Species.")') nspecies_aer_in                   
                    do nspc=1,nspecies_aer_in
 
-                      ! !LFR Escrevendo Grads
-                      !              do k=1,nnzp(ng)
-                      !               write(33,rec=irec) aer_is_grids(ng)%rr_sc(k,:,:,nspc)
-                      !               irec=irec+1
-                      !              enddo
-                      ! !LFR ---
                       call vforec(2,aer_is_grids(ng)%rr_sc(1,1,1,nspc),nxyzp,18  &
                            ,rr_scr1,'LIN')
 
@@ -787,45 +696,26 @@ contains
                            ,c_fatal,'wrong dpchem file. Maxval < 1.0e-10')        
 
                    enddo
-                   ! close(33)
-
-                   ! !LFR Abrindo ctl
-                   !            open(unit=33,file=trim(aerFName)//'.ctl' &
-                   !             ,action='WRITE',status='replace',form='FORMATTED')
-
-                   !            !writing the name of grads file
-                   !            write(33,*) 'dset ^'//trim(aerFName)//'.gra'
-                   !            !writing others infos to ctl
-                   !            write(33,*) 'undef -0.9990000E+34'
-                   !            write(33,*) 'title Aerossols In'
-                   !            write(33,*) 'xdef ',nnxp(ng),' linear ',oneGlobalGridData(1)%global_glon(1,1) &
-                   !              ,oneGlobalGridData(1)%global_glon(2,1)-oneGlobalGridData(1)%global_glon(1,1)
-                   !            write(33,*) 'ydef ',nnyp(ng),' linear ',oneGlobalGridData(1)%global_glat(1,1) &
-                   !              ,oneGlobalGridData(1)%global_glat(1,2)-oneGlobalGridData(1)%global_glat(1,1)
-                   !            write(33,*) 'zdef ',nnzp(ng),'levels',(k,k=1,nnzp(ng))
-                   !            write(33,*) 'tdef 1 linear 00:00z01jan2018     1mo'
-                   !            write(33,*) 'vars ',nspecies_aer_in
-                   !            do nvar=1,nspecies_aer_in
-                   !              write(33,*) assAerSpecieName(nvar),nnzp(ng),'99 ',assAerSpecieName(nvar)
-                   !            enddo
-                   !            write(33,*) 'endvars'
-
-                   !            close(33)
-                   ! !LFR ---
                 endif
 
-                call vmissw(is_grids(ng)%rr_slp,nxyp,rr_vt2da,1E30,-1.)
-                call vforec(2,rr_vt2da,nxyp,18,rr_scr1,'LIN')
-                call vmissw(is_grids(ng)%rr_sfp,nxyp,rr_vt2da,1E30,-1.)
-                call vforec(2,rr_vt2da,nxyp,18,rr_scr1,'LIN')
-                call vmissw(is_grids(ng)%rr_sft,nxyp,rr_vt2da,1E30,-1.)
-                call vforec(2,rr_vt2da,nxyp,18,rr_scr1,'LIN')
-                call vmissw(is_grids(ng)%rr_snow,nxyp,rr_vt2da,1E30,-1.)
-                call vforec(2,rr_vt2da,nxyp,18,rr_scr1,'LIN')
-                call vmissw(is_grids(ng)%rr_sst,nxyp,rr_vt2da,1E30,-1.)
-                call vforec(2,rr_vt2da,nxyp,18,rr_scr1,'LIN')
+                call vmissw(is_grids(ng)%rr_slp,nxyp,scratch2D,1E30,-1.)
+                call vforec(2,scratch2D,nxyp,18,rr_scr1,'LIN')
+                call vmissw(is_grids(ng)%rr_sfp,nxyp,scratch2D,1E30,-1.)
+                call vforec(2,scratch2D,nxyp,18,rr_scr1,'LIN')
+                call vmissw(is_grids(ng)%rr_sft,nxyp,scratch2D,1E30,-1.)
+                call vforec(2,scratch2D,nxyp,18,rr_scr1,'LIN')
+                call vmissw(is_grids(ng)%rr_snow,nxyp,scratch2D,1E30,-1.)
+                call vforec(2,scratch2D,nxyp,18,rr_scr1,'LIN')
+                call vmissw(is_grids(ng)%rr_sst,nxyp,scratch2D,1E30,-1.)
+                call vforec(2,scratch2D,nxyp,18,rr_scr1,'LIN')
                 close(2)
-             enddo
+                deallocate(scratch2D, stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" deallocate scratch2d"//&
+                        " fails with ierr="//trim(adjustl(str(1))))
+                end if
+             end do
              call makefnam (locfn,varpfx,0,iyear,imonth,idate  &
                   ,ihour*100,'V','$','tag')
              call rams_f_open (2,locfn(1:len_trim(locfn)),'FORMATTED','REPLACE','WRITE',iclobber)
@@ -836,7 +726,7 @@ contains
 
        endif
 
-    enddo
+    end do
 
   end subroutine chem_isan_driver
 end module ModChemAsgen

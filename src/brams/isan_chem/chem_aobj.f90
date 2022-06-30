@@ -222,7 +222,7 @@ else
 endif
 
 return
-end
+end subroutine obj_anal
 
 
 !***************************************************************************
@@ -325,7 +325,7 @@ deallocate(obs_dat,obs_xxx,obs_yyy,obs_swt,obs_scr)
 deallocate(dat_qual)
 
 RETURN
-END
+end subroutine obanl
 
 
 !***************************************************************************
@@ -421,7 +421,7 @@ elseif(igridfl.eq.2) then
 endif
 
 RETURN
-END
+end subroutine prebarn
 
 !***************************************************************************
 
@@ -460,7 +460,7 @@ stop 'bn_parm'
 if(x4k.le.0.)go to 83
 
 return
-end
+end subroutine bn_parm
 !
 !     ******************************************************************
 !
@@ -538,7 +538,7 @@ do j=1,nyy
 enddo
 
 return
-end
+end subroutine bn_pass
 
 !     ******************************************************************
 
@@ -586,7 +586,7 @@ do n=1,nsta
 enddo
 
 return
-end
+end subroutine stainterp
 
 
 !     ******************************************************************
@@ -621,5 +621,5 @@ do n=1,nsta
 enddo
 
 return
-end
+end subroutine bn_qual
 

@@ -8,6 +8,12 @@
 
 subroutine first_RAMS(np1,np2,np3,ui2,vi2,pi2,ti2,ri2)
 
+  use ModChemRefState, only: &
+       nest_interpolated_topo, &
+       fmrefs1d_isan, &
+       fmrefs3d_isan, &
+       fmdn0_isan
+  
   use ModGetVar, only: &
        RAMS_getvar
 
@@ -239,14 +245,14 @@ subroutine first_RAMS(np1,np2,np3,ui2,vi2,pi2,ti2,ri2)
              ,is_grids(icm)%rr_dn0,is_grids(ifm)%rr_dn0 &
              ,is_grids(icm)%rr_th0,is_grids(ifm)%rr_th0 &
              ,is_grids(ifm)%rr_pi0,is_grids(ifm)%rr_dn0u &
-             ,is_grids(ifm)%rr_dn0v,ztn(1,ifm),ztop )
+             ,is_grids(ifm)%rr_dn0v,ztn(:,ifm),ztop )
 
         call fmdn0_isan(ifm,icm,nnzp(ifm),nnxp(ifm),nnyp(ifm) &
              ,nnzp(icm),nnxp(icm),nnyp(icm),maxiz,maxix,maxiy &
              ,rr_scr1,rr_scr2  &
              ,grid_g(ifm)%topt,grid_g(icm)%topt &
              ,is_grids(ifm)%rr_dn0,is_grids(ifm)%rr_dn0u &
-             ,is_grids(ifm)%rr_dn0v,ztn(1,ifm),ztop )
+             ,is_grids(ifm)%rr_dn0v,ztn(:,ifm),ztop )
      endif
 
   else
@@ -279,7 +285,7 @@ subroutine first_RAMS(np1,np2,np3,ui2,vi2,pi2,ti2,ri2)
           ,is_grids(icm)%rr_th0,is_grids(ifm)%rr_th0 &
           ,is_grids(ifm)%rr_pi0,is_grids(ifm)%rr_dn0u &
           ,is_grids(ifm)%rr_dn0v  &
-          ,ztn(1,ifm),ztop )
+          ,ztn(:,ifm),ztop )
 
 
      call fmint4_isan(is_grids(icm)%rr_tg  ,is_grids(ifm)%rr_tg  &
@@ -342,7 +348,7 @@ subroutine first_RAMS(np1,np2,np3,ui2,vi2,pi2,ti2,ri2)
           ,rr_scr1,rr_scr2  &
           ,grid_g(ifm)%topt,grid_g(icm)%topt &
           ,is_grids(ifm)%rr_dn0,is_grids(ifm)%rr_dn0u &
-          ,is_grids(ifm)%rr_dn0v,ztn(1,ifm),ztop )
+          ,is_grids(ifm)%rr_dn0v,ztn(:,ifm),ztop )
   endif
 
 
