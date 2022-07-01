@@ -7,6 +7,9 @@
 !###########################################################################
 module ModChemAvarf
 
+  use ModNestFeed, only: &
+       fdback
+  
   use ModAVarF, only: &
        isnsig, &
        vshyd, &
@@ -159,42 +162,42 @@ contains
 
     !     Feed back the finer mesh to the coarser mesh.
 
-    call fdback(is_grids(icm)%rr_u   (1,1,1),is_grids(ifm)%rr_u   (1,1,1) &
-         ,is_grids(icm)%rr_dn0u(1,1,1),is_grids(ifm)%rr_dn0u(1,1,1) &
-         ,n1c,n2c,n3c,n1f,n2f,n3f,ifm,'u',rr_scr1(1))
+    call fdback(is_grids(icm)%rr_u,is_grids(ifm)%rr_u &
+         ,is_grids(icm)%rr_dn0u,is_grids(ifm)%rr_dn0u &
+         ,n1c,n2c,n3c,n1f,n2f,n3f,ifm,'u',rr_scr1)
 
-    call fdback(is_grids(icm)%rr_v   (1,1,1),is_grids(ifm)%rr_v   (1,1,1) &
-         ,is_grids(icm)%rr_dn0v(1,1,1),is_grids(ifm)%rr_dn0v(1,1,1) &
-         ,n1c,n2c,n3c,n1f,n2f,n3f,ifm,'v',rr_scr1(1))
+    call fdback(is_grids(icm)%rr_v,is_grids(ifm)%rr_v &
+         ,is_grids(icm)%rr_dn0v,is_grids(ifm)%rr_dn0v &
+         ,n1c,n2c,n3c,n1f,n2f,n3f,ifm,'v',rr_scr1)
 
-    call fdback(is_grids(icm)%rr_p  (1,1,1),is_grids(ifm)%rr_p  (1,1,1) &
-         ,is_grids(icm)%rr_dn0(1,1,1),is_grids(ifm)%rr_dn0(1,1,1) &
-         ,n1c,n2c,n3c,n1f,n2f,n3f,ifm,'p',rr_scr1(1))
+    call fdback(is_grids(icm)%rr_p  ,is_grids(ifm)%rr_p   &
+         ,is_grids(icm)%rr_dn0,is_grids(ifm)%rr_dn0 &
+         ,n1c,n2c,n3c,n1f,n2f,n3f,ifm,'p',rr_scr1)
 
-    call fdback(is_grids(icm)%rr_t  (1,1,1),is_grids(ifm)%rr_t  (1,1,1) &
-         ,is_grids(icm)%rr_dn0(1,1,1),is_grids(ifm)%rr_dn0(1,1,1) &
-         ,n1c,n2c,n3c,n1f,n2f,n3f,ifm,'t',rr_scr1(1))
+    call fdback(is_grids(icm)%rr_t  ,is_grids(ifm)%rr_t   &
+         ,is_grids(icm)%rr_dn0,is_grids(ifm)%rr_dn0 &
+         ,n1c,n2c,n3c,n1f,n2f,n3f,ifm,'t',rr_scr1)
 
-    call fdback(is_grids(icm)%rr_r  (1,1,1),is_grids(ifm)%rr_r  (1,1,1) &
-         ,is_grids(icm)%rr_dn0(1,1,1),is_grids(ifm)%rr_dn0(1,1,1) &
-         ,n1c,n2c,n3c,n1f,n2f,n3f,ifm,'t',rr_scr1(1))
+    call fdback(is_grids(icm)%rr_r  ,is_grids(ifm)%rr_r   &
+         ,is_grids(icm)%rr_dn0,is_grids(ifm)%rr_dn0 &
+         ,n1c,n2c,n3c,n1f,n2f,n3f,ifm,'t',rr_scr1)
 
     if(CHEM_ASSIM == 1 .and. nspecies>0 ) then
        do nspc=1,nspecies
           print*,'fdback for spc=',nspc
-          call fdback(chem_is_grids(icm)%rr_sc  (1,1,1,nspc) &
-               ,chem_is_grids(ifm)%rr_sc  (1,1,1,nspc) &
-               ,is_grids(icm)%rr_dn0(1,1,1),is_grids(ifm)%rr_dn0(1,1,1) &
-               ,n1c,n2c,n3c,n1f,n2f,n3f,ifm,'t',rr_scr1(1))
+          call fdback(chem_is_grids(icm)%rr_sc  (:,:,:,nspc) &
+               ,chem_is_grids(ifm)%rr_sc  (:,:,:,nspc) &
+               ,is_grids(icm)%rr_dn0,is_grids(ifm)%rr_dn0 &
+               ,n1c,n2c,n3c,n1f,n2f,n3f,ifm,'t',rr_scr1)
        enddo
     endif
     if(aer_ASSIM == 1 .and. nspecies_aer_in>0 ) then
        do nspc=1,nspecies_aer_in
           print*,'fdback for spc=',nspc
-          call fdback(aer_is_grids(icm)%rr_sc  (1,1,1,nspc) &
-               ,aer_is_grids(ifm)%rr_sc  (1,1,1,nspc) &
-               ,is_grids(icm)%rr_dn0(1,1,1),is_grids(ifm)%rr_dn0(1,1,1) &
-               ,n1c,n2c,n3c,n1f,n2f,n3f,ifm,'t',rr_scr1(1))
+          call fdback(aer_is_grids(icm)%rr_sc  (:,:,:,nspc) &
+               ,aer_is_grids(ifm)%rr_sc  (:,:,:,nspc) &
+               ,is_grids(icm)%rr_dn0,is_grids(ifm)%rr_dn0 &
+               ,n1c,n2c,n3c,n1f,n2f,n3f,ifm,'t',rr_scr1)
        enddo
     endif
 

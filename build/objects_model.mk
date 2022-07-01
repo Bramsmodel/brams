@@ -119,7 +119,7 @@ OBJ_MOD = \
 	ModMPassDtl.o \
 	ModMPassFull.o      \
 	ModNdviRead.o \
-	nest_feed.o \
+	ModNestFeed.o \
 	nest_filldens.o \
 	ModNestGeoSst.o \
 	nest_intrp.o \

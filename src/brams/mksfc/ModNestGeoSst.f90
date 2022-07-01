@@ -7,6 +7,10 @@
 !###########################################################################
 module ModNestGeoSst
 
+  use ModNestFeed, only: &
+       fdback, &
+       fdback
+  
   use ModLeaf3Init, only: &
        sfcinit_nofile, &
        sfcinit_file
