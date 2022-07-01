@@ -7,6 +7,9 @@
 !###########################################################################
 module ModChemAsti
 
+  use ModChemAObj, only: &
+       obj_anal
+  
   use ModChemVInterps, only: &
        vterpp_i, &
        vterpp_s, &

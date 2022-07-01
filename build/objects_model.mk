@@ -220,11 +220,11 @@ OBJ_MOD = \
 	ModGasPart.o \
 	ModOzone.o \
 	chem_isan_coms.o \
-	chem_aobj.o \
+	ModChemAObj.o \
 	ModChemAsgen.o \
 	chem_asti2.o \
 	ModChemAsti.o \
-	chem_astp.o \
+	ModChemAstp.o \
 	chem_avarf.o \
 	ModChemFileInv.o \
 	chem_first_rams.o \

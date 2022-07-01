@@ -7,6 +7,9 @@
 !###########################################################################
 module ModAsTi
 
+  use ModChemAObj, only: &
+       stainterp
+  
   use isan_coms, only: &
        cntlat, cntlon, gdatdx, gdatdy, guess1st, idatelin, iglobew, iglobn, &
        iglobs, igridfl, inproj, inrawi, insrfce, iproc_flag, iproc_names, &
@@ -673,7 +676,7 @@ contains
     do ns=1,nst
        sdat(1)=0.
        call ll_xy(stlt(ns),stln(ns),polat,polon,stx,sty)
-       call stainterp(topt,n1,n2,1,1,1,sdat,stx,sty  &
+       call stainterp(topt,n1,n2,1,1,1,sdat,(/stx/),(/sty/)  &
             ,1,polat,polon,swx,swy,delx,dely,-1.e30)
        topo=-sdat(2)
        if(ngr.eq.1) then

@@ -7,6 +7,12 @@
 !###########################################################################
 module ModChemAsgen
 
+  use ModChemAstp, only: &
+       chem_pressure_stage, &
+       chem_pressure_stage_netcdf, &
+       chem_pressure_stage_grib2, &
+       chem_pressure_stage_grads
+  
   use ModChemFileInv, only: &
        chem_isan_file_inv
   
