@@ -7,6 +7,10 @@
 !###########################################################################
 module ModChemAsgen
 
+  use ModChemAvarf, only: &
+       chem_makevarf, &
+       chem_varfile_nstfeed
+  
   use ModChemAstp, only: &
        chem_pressure_stage, &
        chem_pressure_stage_netcdf, &

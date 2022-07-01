@@ -7,6 +7,13 @@
 !###########################################################################
 module ModChemAsti
 
+  use ModChemFirstRams, only: &
+       first_rams
+  
+  use ModChemAsti2, only: &
+       input_rawi, &
+       input_sfc
+  
   use ModChemAObj, only: &
        obj_anal
   

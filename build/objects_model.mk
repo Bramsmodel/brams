@@ -222,12 +222,12 @@ OBJ_MOD = \
 	chem_isan_coms.o \
 	ModChemAObj.o \
 	ModChemAsgen.o \
-	chem_asti2.o \
+	ModChemAsti2.o \
 	ModChemAsti.o \
 	ModChemAstp.o \
-	chem_avarf.o \
+	ModChemAvarf.o \
 	ModChemFileInv.o \
-	chem_first_rams.o \
+	ModChemFirstRams.o \
 	ModChemIsanIo.o \
 	ModChemRefState.o \
 	ModChemVInterps.o \

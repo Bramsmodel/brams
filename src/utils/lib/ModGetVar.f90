@@ -38,7 +38,7 @@ contains
     ! Arguments:
     character(len=*), intent(in) :: string
     integer, intent(in)          :: ngrd
-    real, intent(inout)          :: a(:)
+    real, intent(out)            :: a(:)
     real, intent(inout)          :: b(:)
     character(len=*), intent(in) :: flnm
     ! Local variables:
@@ -106,7 +106,7 @@ contains
     ! Arguments:
     character(len=*), intent(in) :: string
     integer, intent(in)          :: ngrd
-    real, intent(inout)          :: a(:,:)
+    real, intent(out)            :: a(:,:)
     real, intent(inout)          :: b(:)
     character(len=*), intent(in) :: flnm
     ! Local variables:
@@ -174,7 +174,7 @@ contains
     ! Arguments:
     character(len=*), intent(in) :: string
     integer, intent(in)          :: ngrd
-    real, intent(inout)          :: a(:,:,:)
+    real, intent(out)            :: a(:,:,:)
     real, intent(inout)          :: b(:)
     character(len=*), intent(in) :: flnm
     ! Local variables:
