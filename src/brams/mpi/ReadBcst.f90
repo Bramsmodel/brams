@@ -37,8 +37,7 @@ module ReadBcst
   use mem_aerad, only: &
        nwave
 
-  use var_tables, only: &
-       var_tables_r, &
+  use ModVarTables, only: &
        num_var,      &
        vtab_r
 

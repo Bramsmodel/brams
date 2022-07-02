@@ -21,7 +21,7 @@ module ModBasicFields
   use iso_fortran_env, only: &
        real64
 
-  use var_tables, only: &
+  use ModVarTables, only: &
        InsertVTab
 
   use mem_stilt, only: &

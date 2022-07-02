@@ -295,7 +295,7 @@ Contains
     use teb_spm_start, only: TEB_SPM ! INTENT(IN)
     ! ALF
     use io_params, only: ipastin ! INTENT(IN)
-    use var_tables, only: InsertVTab
+    use ModVarTables, only: InsertVTab
 
     implicit none
     include "constants.h"

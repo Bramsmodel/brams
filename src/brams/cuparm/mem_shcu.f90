@@ -73,7 +73,7 @@ contains
 
 
   subroutine filltab_shcu(shcu,shcum,imean,n1,n2,n3,ng)
-    use var_tables, only: InsertVTab
+    use ModVarTables, only: InsertVTab
     implicit none
     include "constants.h"
     type (shcu_vars) :: shcu, shcum

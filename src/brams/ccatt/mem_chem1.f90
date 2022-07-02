@@ -268,7 +268,7 @@ contains
        ,imean,nvert_src,n1,n2,n3,nspecies,ng,volcanoes)
 
     !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-    use var_tables, only: InsertVTab
+    use ModVarTables, only: InsertVTab
     !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
 
     use chem1_list, only: spc_alloc,spc_name, src, ddp, wdp, fdda, on ,off, transport

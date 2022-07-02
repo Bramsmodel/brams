@@ -69,7 +69,7 @@ contains
     !use mem_chem1, only: chem1_g
 
 !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-    use var_tables, only: InsertVTab
+    use ModVarTables, only: InsertVTab
 !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
 
     implicit none

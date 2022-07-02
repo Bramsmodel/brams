@@ -192,7 +192,7 @@
 
   subroutine filltab_tuv_bio(tuv_bio, tuv_biom, imean, n1, n2, n3, ng)
 
-    use var_tables, only: InsertVTab
+    use ModVarTables, only: InsertVTab
     use mem_stilt, only: iexev
     implicit none
 

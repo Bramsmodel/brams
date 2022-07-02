@@ -7,15 +7,35 @@
 !###########################################################################
 
 
-module var_tables
+module ModVarTables
 
   use ModParallelEnvironment, only: &
        MsgDump
-  
+
+  use io_params, only: &
+       nlite_vars, & ! INTENT(IN)
+       lite_vars     ! INTENT(IN)
+
+  use chem1_list, only:&
+       chem_name=>spc_name,    &
+       chem_alloc=>spc_alloc,  & 
+       chem_on=>on,            &
+       chem_fdda=>fdda,        &
+       chem_transport=>transport, &
+       chem_nspecies=>nspecies 
+
+  use aer1_list, only: aer_name=>spc_name,     &
+       aer_nspecies=>nspecies, &
+       aer_alloc=>spc_alloc,     &
+       aer_fdda=>fdda, &
+       aer_transport=>transport, &
+       aer_on=>on,               &
+       aer_nmodes=>nmodes
+
   implicit none
   private
   public :: maxvars
-  public :: var_tables_r
+  public :: VarTableFields
   public :: vtab_r
   public :: nvgrids
   public :: num_var
@@ -25,6 +45,9 @@ module var_tables
   public :: VerifyVTabEntry
   public :: StringIndexing
   public :: ZeroVTab
+  public :: lite_varset
+  public :: DumpVTab
+  public :: setInitial4Vtable
 
   include "constants.h"
 
@@ -34,7 +57,7 @@ module var_tables
 
   ! Define data type for main variable table
 
-  type var_tables_r
+  type VarTableFields
      real, pointer      :: var_m
      ! var_m: scalar pointing to field average first position
      real, pointer      :: var_p_2D(:,:) => null()
@@ -67,11 +90,11 @@ module var_tables
      integer            :: irecycle
      character (len=16) :: name
      ! field name
-  end type var_tables_r
+  end type VarTableFields
 
   ! Main variable table allocated to (maxvars,maxgrds)
 
-  type(var_tables_r), allocatable, target :: vtab_r(:,:)
+  type(VarTableFields), allocatable, target :: vtab_r(:,:)
 
   ! "nvgrids" is "ngrids", for convenience
 
@@ -99,8 +122,6 @@ module var_tables
   !LFR em 06mai2020 
   interface
      subroutine vtables2_I(var, varm, ng, npts, imean, tabstr)
-       !use var_tables
-       !implicit none
        include "constants.h"
        integer, target :: var,varm
        integer, intent(in) :: ng,imean !npts
@@ -196,7 +217,7 @@ contains
   subroutine GetVTabEntry(tabstr, ng, vtabPtr)
     character (len=*), intent(in) :: tabstr
     integer,           intent(in) :: ng
-    type(var_tables_r), pointer   :: vtabPtr
+    type(VarTableFields), pointer   :: vtabPtr
 
     integer :: ni
 
@@ -290,10 +311,10 @@ contains
 
 
 
-  
+
   integer function GetVTabSectionSize(vTabPtr, &
        iStart, iEnd, jStart, jEnd)
-    type(var_tables_r), pointer :: vTabPtr
+    type(VarTableFields), pointer :: vTabPtr
     integer, intent(in) :: iStart
     integer, intent(in) :: iEnd
     integer, intent(in) :: jStart
@@ -342,7 +363,7 @@ contains
 
 
   subroutine VerifyVTabEntry(vTabPtr)
-    type(var_tables_r), pointer :: vTabPtr
+    type(VarTableFields), pointer :: vTabPtr
     character(len=*), parameter :: h="**(VerifyVTabEntry)**"
 
     if (.not. associated(vTabPtr)) then
@@ -379,7 +400,7 @@ contains
 
   subroutine StringIndexing(vTabPtr, &
        xStart, xEnd, yStart, yEnd, string)
-    type(var_tables_r), pointer :: vTabPtr
+    type(VarTableFields), pointer :: vTabPtr
     integer, intent(in) :: xStart
     integer, intent(in) :: xEnd
     integer, intent(in) :: yStart
@@ -465,11 +486,223 @@ contains
   end subroutine zero_vtab_4D
 
 
-end module var_tables
+
+  subroutine lite_varset(proc_type)
+
+    ! Arguments:
+    integer, intent(in) :: proc_type
+
+    ! Local variables:
+    integer :: nv,ng,nvl,ifound
+
+
+    ! Loop over each variable input in namelist "LITE_VARS" and set
+    !   lite flag in ModVarTables
+
+    do ng = 1,nvgrids   
+       vtab_r(1:num_var(ng),ng)%ilite = 0
+    enddo
+
+    do nvl=1,nlite_vars
+       ifound=0
+
+       do ng=1,nvgrids
+
+          do nv=1,num_var(ng)
+
+             if (vtab_r(nv,ng)%name == lite_vars(nvl) ) then
+                vtab_r(nv,ng)%ilite = 1
+                ifound=1
+             endif
+
+          enddo
+
+       enddo
+
+       if (proc_type==0 .or. proc_type==1) then !Output only in Master Process
+          if(ifound == 0) then
+             print*,'!---------------------------------------------------------'
+             print*,'! LITE_VARS variable does not exist in main variable table'
+             print*,'!    variable name-->',lite_vars(nvl),'<--'
+             print*,'!---------------------------------------------------------'
+          else
+             print*,'!---------------------------------------------------------'
+             print*,'! LITE_VARS variable added--->',trim(lite_vars(nvl))
+             print*,'!---------------------------------------------------------'
+          endif
+       endif
+
+    enddo
+
+    return
+  end subroutine lite_varset
+
+  !-------------------------------------------------------------------------
+
+
+!!$subroutine GetVarFromMem (nxp, nyp, nzp, nzg, nzs, npatch, &
+!!$     varName, itype, ngrd, arrayOut, sizeArray)
+!!$
+!!$  integer,            intent(in)    :: nxp  ! as at vartable
+!!$  integer,            intent(in)    :: nyp  ! as at vartable
+!!$  integer,            intent(in)    :: nzp  ! as at vartable
+!!$  integer,            intent(in)    :: nzg  ! as at vartable
+!!$  integer,            intent(in)    :: nzs  ! as at vartable
+!!$  integer,            intent(in)    :: npatch  ! as at vartable
+!!$  character(LEN=*),   intent(in)    :: varName
+!!$  integer,            intent(in)    :: ngrd
+!!$  integer,            intent(out)   :: itype
+!!$  integer(kind=i8),   intent(in)    :: sizeArray
+!!$  real,	              intent(inout) :: arrayOut(sizeArray)
+!!$
+!!$  character(len=16) :: c0, c1
+!!$  character(len=*), parameter :: h="**(GetVarFromMem)**"
+!!$  integer(kind=i8) :: ni
+!!$  integer(kind=i8) :: npts
+!!$  logical          :: found
+!!$  character(len=len(varName)) :: varnIn, varnOut
+!!$  real, pointer :: ptr ! points to a field at vartable
+!!$  real :: scr1(sizeArray)
+!!$
+!!$  ! field name changes from vartable to analysis file
+!!$  ! in two cases (PI and HKH); 
+!!$  ! given output file field name, find vartable correspondent
+!!$
+!!$  if (trim(varName) == 'PI') then
+!!$     varnIn = 'PP'
+!!$  else if (trim(varName) == 'HKH') then
+!!$     varnIn = 'HKM'
+!!$  else
+!!$     varnIn = varName
+!!$  end if
+!!$
+!!$  ! search for vartable name at vartable
+!!$  ! store result at array 
+!!$
+!!$  found = .false.
+!!$  do ni = 1, num_var(ngrd)
+!!$     if (trim(vtab_r(ni,ngrd)%name) == trim(varnIn)) then
+!!$        itype = vtab_r(ni,ngrd)%idim_type
+!!$        npts  = vtab_r(ni,ngrd)%npts
+!!$        ptr => vtab_r(ni,ngrd)%var_p
+!!$        if (npts > sizeArray) then
+!!$           write(c0,"(i16)") npts
+!!$           write(c1,"(i16)") sizeArray
+!!$           call fatal_error(h//&
+!!$                " array size for "//trim(varName)//&
+!!$                " is "//trim(adjustl(c1))//&
+!!$                ", smaller than "//trim(adjustl(c0))//" required")
+!!$        end if
+!!$        found = .true.
+!!$        exit
+!!$     end if
+!!$  end do
+!!$
+!!$  ! halts if not there
+!!$
+!!$  if (.not. found) then
+!!$     write(*,"(a)") h//" var "//trim(varnIn)//" not found in vtab_r; will dump vtab_r"
+!!$     call DumpVTab(ngrd)
+!!$     call fatal_error(h//" var "//trim(varnIn)//" not found in vtab_r")
+!!$  end if
+!!$
+!!$  ! convert fields PP, HKM and VKH from vartables to analysis file
+!!$  ! or store field at scr1
+!!$
+!!$  call PreProcForOutput(ngrd, varnIn, npts, ptr, scr1, varnOut)
+!!$
+!!$  ! verify output name
+!!$
+!!$  if (trim(varnOut) /= trim (varName)) then
+!!$     call fatal_error(h//" fails computing "//trim(varName))
+!!$  end if
+!!$
+!!$  ! move verticals from first to third dimension, if required
+!!$
+!!$  if (itype==3 .or. itype==4 .or. itype==5) then
+!!$     call RearrangeForOutput(nxp, nyp, nzp, nzg, nzs, npatch, &
+!!$          itype, scr1, arrayOut)
+!!$  else
+!!$     arrayOut = scr1
+!!$  end if
+!!$end subroutine GetVarFromMem
+
+  subroutine DumpVTab(ngrd)
+    integer, intent(in) :: ngrd
+
+    integer :: i
+    character(len=*), parameter :: h="**(DumpVTab)**"
+
+    write(*,"(a,i2)") h//" dump of vtab_r names for grid ",ngrd
+    write(*,"(a)") h//" name            idim_type           npts"
+    do i = 1, num_var(ngrd)
+       write(*,"(1x,a16,1x,i8,1x,i16)") vtab_r(i,ngrd)%name, &
+            vtab_r(i,ngrd)%idim_type, vtab_r(i,ngrd)%npts
+    end do
+  end subroutine DumpVTab
+
+
+
+
+
+  subroutine setInitial4Vtable(ng, chemistry, aerosol)
+    integer, intent(in) :: ng
+    integer, intent(in) :: chemistry
+    integer, intent(in) :: aerosol
+    integer :: ni, nspc, imode
+    character(len=2) :: cmode
+
+    do ni = 1, num_var(ng)
+
+       vtab_r(ni,ng)%ianal=0	
+
+       if (trim(vtab_r(ni,ng)%name) == 'TOPT'  .or. &
+	    trim(vtab_r(ni,ng)%name) == 'UP'    .or. &
+	    trim(vtab_r(ni,ng)%name) == 'VP'    .or. &
+	    trim(vtab_r(ni,ng)%name) == 'THETA' .or. &
+	    trim(vtab_r(ni,ng)%name) == 'PP'    .or. &
+	    trim(vtab_r(ni,ng)%name) == 'RV') then
+          vtab_r(ni,ng)%ianal=1
+          cycle
+       end if
+
+       if(vtab_r(ni,ng)%irecycle == 1) vtab_r(ni,ng)%ianal=1
+
+
+       if(CHEMISTRY >= 0) then 
+          do nspc=1,chem_nspecies
+             !print*, spc_alloc(fdda,nspc), on
+             !print*, trim(vtab_r(ni,ng)%name), '>>', trim(spc_name(nspc))//'P'
+             if(chem_alloc(chem_fdda,nspc) == chem_on .and. &
+                  trim(vtab_r(ni,ng)%name) == trim(chem_name(nspc))//'P') then 
+                vtab_r(ni,ng)%ianal=1
+                cycle
+             end if
+          end do
+       end if
+       if(AEROSOL == 1 .and. CHEMISTRY >= 0) then
+          do nspc=1,aer_nspecies
+             do imode = 1, aer_nmodes
+                write(cmode, '(BN, I2)')imode
+                cmode = adjustl(cmode)
+                !print*, trim(vtab_r(ni,ng)%name), trim(aer_name(nspc))//trim(cmode)//'P'
+                if(aer_alloc(aer_fdda,imode,nspc) == 1  .and. &
+                     trim(vtab_r(ni,ng)%name) == trim(aer_name(nspc))//trim(cmode)//'P') then
+                   vtab_r(ni,ng)%ianal=1
+                   cycle
+                end if
+             end do
+          end do
+       end if
+    end do
+
+  end subroutine setInitial4Vtable
+
+end module ModVarTables
 
 subroutine vtables2_I(var, varm, ng, npts, imean, tabstr)
-  use var_tables, only: vtab_r, &
-                        num_var
+  use ModVarTables, only: vtab_r, &
+       num_var
   implicit none
   include "constants.h"
   real, target :: var,varm
@@ -543,6 +776,4 @@ subroutine vtables2_I(var, varm, ng, npts, imean, tabstr)
      endif
 
   enddo
-
-  return
 end subroutine vtables2_I

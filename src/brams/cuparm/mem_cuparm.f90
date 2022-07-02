@@ -16,7 +16,7 @@ module mem_cuparm
        maxgrds,        & ! INTENT(IN)
        maxfiles          ! INTENT(IN)
 
-!!$  use var_tables
+!!$  use ModVarTables
 
   implicit none
   
@@ -198,7 +198,7 @@ contains
   ! ----------------------------------------------------------------------
 
   subroutine filltab_cuparm_sh(cuparm, cuparmm, imean, n1, n2, n3, ng)
-    use var_tables, only: &
+    use ModVarTables, only: &
          InsertVtab
     include "constants.h"
     ! Arguments:
@@ -223,7 +223,7 @@ contains
   ! ----------------------------------------------------------------------
 
   subroutine filltab_cuparm(cuparm, cuparmm, imean, n1, n2, n3, ng)
-    use var_tables, only: &
+    use ModVarTables, only: &
          InsertVtab
     include "constants.h"
     ! Arguments:

@@ -207,7 +207,7 @@ contains
 
 !!$  subroutine filltab_scratch2_grell()
 !!$
-!!$    use var_tables
+!!$    use ModVarTables
 !!$
 !!$    implicit none
 !!$

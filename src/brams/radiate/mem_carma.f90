@@ -243,7 +243,7 @@ contains
   !---------------------------------------------------------------
 
   subroutine filltab_carma(cv, cvm, ng, imean, n1, n2, n3)
-    use var_tables, only: InsertVTab
+    use ModVarTables, only: InsertVTab
     use mem_scalar, only: RECYCLE_TRACERS ! INTENT(IN)
     use io_params, only : ipastin, ioutput         ! INTENT(IN)
 
@@ -679,7 +679,7 @@ contains
   end subroutine dealloc_aotMap
 
   subroutine filltab_aotMap(imap, imapm, ng, imean, n1, n2)
-    use var_tables, only: InsertVTab
+    use ModVarTables, only: InsertVTab
     include "constants.h"
     integer, intent(in)    :: ng, n1, n2, imean
     integer(kind=i8)       :: npts

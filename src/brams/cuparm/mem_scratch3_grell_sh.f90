@@ -691,7 +691,7 @@ contains
 
 !!$  SUBROUTINE filltab_scratch3_grell(=0.
 !!$
-!!$    USE var_tables
+!!$    USE ModVarTables
 !!$
 !!$    IMPLICIT NONE
 !!$

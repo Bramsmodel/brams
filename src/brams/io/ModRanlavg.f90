@@ -15,7 +15,7 @@ contains
   subroutine anlavg(n1, n2, n3, oneBasic)
 
     use grid_dims, only: maxgrds
-    use var_tables, only: num_var, vtab_r
+    use ModVarTables, only: num_var, vtab_r
     use mem_grid, only: dtlongn, time, jdim, ngrid
     use io_params, only: avgtim, frqmean, frqboth
 

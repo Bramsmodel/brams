@@ -18,11 +18,10 @@ module ModRio
   use grid_dims, only: &
        maxgrds
 
-  use var_tables, only: &
+  use ModVarTables, only: &
        nvgrids, &
        num_var, &
-       vtab_r, &
-       var_tables_r ! TYPE
+       vtab_r
 
   use io_params, only: &
        hfilin, &

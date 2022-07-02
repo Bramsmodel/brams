@@ -13,7 +13,7 @@ module mem_aer1
   use aer1_list, only : spc_alloc,spc_name, src, ddp, wdp, fdda, offline, on ,off &
        ,mode_alloc, transport,aer_name,mode_name, numb_mod_alloc, numb_alloc
 
-  use var_tables, only: InsertVTab
+  use ModVarTables, only: InsertVTab
 
   use io_params, only : ioutput         ! INTENT(IN)
 
@@ -514,7 +514,7 @@ contains
     use aer1_list, only : src, ddp, wdp, fdda, offline, on ,off &
          ,numb_alloc,numb_name
 
-    use var_tables, only: InsertVTab
+    use ModVarTables, only: InsertVTab
 
     use io_params, only : ioutput         ! INTENT(IN)
 
@@ -808,7 +808,7 @@ contains
 
     use aer1_list, only : inorg_alloc,inorg_name, src, ddp, wdp, fdda, offline, on ,off 
 
-    use var_tables, only: InsertVTab
+    use ModVarTables, only: InsertVTab
 
     use io_params, only : ioutput         ! INTENT(IN)
 

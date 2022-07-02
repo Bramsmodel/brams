@@ -185,7 +185,7 @@ contains
   subroutine filltab_gaspart(gaspart, gaspartm, imean, n1, n2, n3, ng)
 
     use mem_emiss, only: ichemi
-    use var_tables, only: &
+    use ModVarTables, only: &
          InsertVtab
 
     implicit none

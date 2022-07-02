@@ -86,8 +86,8 @@ module ModMessageSet
        DeallocateMessageDataBuffer, &
        DestroyMessageData
 
-  use var_tables, only: &
-       var_tables_r, &
+  use ModVarTables, only: &
+       VarTableFields, &
        GetVTabEntry
 
   use ModNamelistFile, only: &
@@ -491,7 +491,7 @@ contains
 
     integer, intent(in) :: myNum
 
-    type(var_tables_r), pointer, intent(in) :: vTabPtr
+    type(VarTableFields), pointer, intent(in) :: vTabPtr
 
     ! nNeigh is number of processes for potential communication
 
@@ -662,7 +662,7 @@ contains
     type(MessageSet), pointer, intent(inout) :: RecvMessageSet
 
 
-    type(var_tables_r), pointer :: vTabPtr => null()
+    type(VarTableFields), pointer :: vTabPtr => null()
 
     character(len=*), parameter :: h="**(InsertFieldSectionAtSendRecvMessageSetFromVTab)**"
 
@@ -1584,7 +1584,7 @@ contains
 
     integer, intent(in) :: gridId
     integer, intent(in) :: num_var(:)
-    type(var_tables_r), target, intent(in) ::  vtab_r(:,:)
+    type(VarTableFields), target, intent(in) ::  vtab_r(:,:)
     type(GridDims), pointer, intent(in) :: GridSize
     type(ParallelEnvironment), pointer, intent(in) :: ParEnv
     type(NeighbourNodes), pointer, intent(in) :: Neigh
@@ -1679,7 +1679,7 @@ contains
          willRecv=willRecv, &
          RecvMessageSet=SelectedGhostZoneRecv)
 
-    ! take all var_tables field that should be communicated
+    ! take all ModVarTables field that should be communicated
 
     do vTabNbr = 1, num_var(gridId)
 
@@ -1732,7 +1732,7 @@ contains
 
     integer, intent(in) :: gridId
     integer, intent(in) :: num_var(:)
-    type(var_tables_r), target, intent(in) ::  vtab_r(:,:)
+    type(VarTableFields), target, intent(in) ::  vtab_r(:,:)
     type(GridDims), pointer, intent(in) :: GridSize
     type(ParallelEnvironment), pointer, intent(in) :: ParEnv
     type(NeighbourNodes), pointer, intent(in) :: Neigh
@@ -1829,7 +1829,7 @@ contains
          willRecv=willRecv, &
          RecvMessageSet=AllGhostZoneRecv)
 
-    ! take all var_tables field that should be communicated
+    ! take all ModVarTables field that should be communicated
 
     do vTabNbr = 1, num_var(gridId)
 

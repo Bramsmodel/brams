@@ -115,7 +115,7 @@ module ModOptical
        grid_g, &
        time
 
-  use var_tables, only: &
+  use ModVarTables, only: &
        InsertVTab
 
   use node_mod, only: &

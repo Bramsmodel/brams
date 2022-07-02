@@ -160,7 +160,7 @@ Contains
 
 
 subroutine filltab_radiate(radiate,radiatem,imean,n1,n2,n3,ng)
-  use var_tables, only: InsertVTab
+  use ModVarTables, only: InsertVTab
    implicit none
    include "constants.h"
    type (radiate_vars) :: radiate,radiatem

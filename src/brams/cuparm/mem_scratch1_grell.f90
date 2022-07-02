@@ -185,7 +185,7 @@ CONTAINS
 
 !!$  SUBROUTINE filltab_scratch1_grell()
 !!$
-!!$    USE var_tables
+!!$    USE ModVarTables
 !!$
 !!$    IMPLICIT NONE
 !!$

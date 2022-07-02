@@ -199,7 +199,7 @@ module ModCuParGrell3
   use mem_chem1, only: &
        chemistry
 
-  use var_tables, only: insertvtab
+  use ModVarTables, only: insertvtab
 
   use grid_dims, only: &
        nzpmax

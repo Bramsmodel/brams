@@ -21,7 +21,7 @@ module ModTurbFields
   use ModParallelEnvironment, only: &
        MsgDump
 
-  use var_tables, only: &
+  use ModVarTables, only: &
        InsertVTab
 
   implicit none

@@ -3,8 +3,8 @@ module ModOutputUtils
   use ModNamelistFile, only: &
        NamelistFile
 
-  use var_tables, only: &
-       var_tables_r, &
+  use ModVarTables, only: &
+       VarTableFields, &
        GetVTabEntry
 
   use ModBasicFields, only: &
@@ -41,7 +41,7 @@ contains
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
 
-    type(var_tables_r), pointer   :: vtabPtr
+    type(VarTableFields), pointer   :: vtabPtr
     character(len=30), parameter :: h="**(GetVarFromMemToOutput_2D)**"
 
 
@@ -74,7 +74,7 @@ contains
     
     integer :: idiffk
     real :: xkhkm
-    type(var_tables_r), pointer   :: vtabPtr
+    type(VarTableFields), pointer   :: vtabPtr
     real :: transposed(size(arrayOut,3),size(arrayOut,1),size(arrayOut,2))
     character(len=len(varName)) :: varnIn, varnOut
     character(len=8) :: c0, c1
@@ -224,7 +224,7 @@ contains
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
 
-    type(var_tables_r), pointer   :: vtabPtr
+    type(VarTableFields), pointer   :: vtabPtr
     integer :: i, j, k, l
     integer :: n1, n2, n3, n4
     real :: transposed(size(arrayOut,3),size(arrayOut,4),size(arrayOut,1),size(arrayOut,2))

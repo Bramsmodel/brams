@@ -207,9 +207,8 @@ OBJ_MOD = \
 	tuvParameter.o \
 	ModTuv2.7.o \
 	ModTuvDriver2.7.o \
-	var_tables.o \
+	ModVarTables.o \
 	ModVarfUpdate.o \
-	vtab_fill.o \
 	ModMkSfcFuso.o \
 	mem_teb.o \
 	mem_teb_common.o \
@@ -818,7 +817,7 @@ MOD_MOD = \
 	modnamelistfile.mod \
 	rconstants.mod \
 	io_params.mod \
-	var_tables.mod \
+	ModVarTables.mod \
 	mem_stilt.mod \
 	mem_grid.mod \
 	modgriddims.mod \

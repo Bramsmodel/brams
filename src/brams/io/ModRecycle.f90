@@ -20,7 +20,7 @@ module ModRecycle
   use ModRamsReadHeader, only: &
        rams_read_header
   
-  use var_tables, only : &
+  use ModVarTables, only : &
        vtab_r, &
        num_var
 
@@ -400,7 +400,7 @@ contains
 
   !     !Use area
   !     use dump
-  !     use var_tables, only : &
+  !     use ModVarTables, only : &
   !         vtab_r, num_var
   !     use node_mod, only: &
   !        mzp, mxp, myp,  & ! INTENT(IN)

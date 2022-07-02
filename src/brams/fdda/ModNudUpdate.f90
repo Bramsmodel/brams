@@ -13,7 +13,7 @@ module ModNudUpdate
   use ModInitHis, only: &
        hi_interp
 
-  use var_tables, only: vtab_r,   &
+  use ModVarTables, only: vtab_r,   &
        num_var
 
   use mem_varinit,only: &

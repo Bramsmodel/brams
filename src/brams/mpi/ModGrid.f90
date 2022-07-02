@@ -79,9 +79,9 @@ module ModGrid
        DestroyControlVars
   
   ! JP: temporariamente usa variaveis globais enquanto
-  !     var_tables nao for inclusa no tipo Grid
+  !     ModVarTables nao for inclusa no tipo Grid
 
-  use var_tables, only: &
+  use ModVarTables, only: &
        num_var, &
        vtab_r
 

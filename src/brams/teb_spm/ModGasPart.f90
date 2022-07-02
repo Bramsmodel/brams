@@ -55,7 +55,7 @@ module ModGasPart
        head_table,     &  ! Type
        nvbtab             ! INTENT(OUT)
   
-  use var_tables, only: &
+  use ModVarTables, only: &
        nvgrids,         & ! INTENT(IN)
        num_var,         & ! INTENT(IN)
        vtab_r             ! INTENT(INOUT)

@@ -154,7 +154,7 @@ contains
   !---------------------------------------------------------------
 
   subroutine filltab_extra2d(scal2, scalm2, imean, n1, n2, ng, na)
-    use var_tables, only: &
+    use ModVarTables, only: &
          InsertVtab
     implicit none
     include "constants.h"
@@ -180,7 +180,7 @@ contains
 
   !---------------------------------------------------------------
   subroutine filltab_extra3d(scal3, scalm3, imean, n1, n2, n3, ng, na)
-    use var_tables, only: &
+    use ModVarTables, only: &
          InsertVtab
 
     implicit none

@@ -104,13 +104,14 @@ module ModMemAlloc
        filltab_varinit, &
        dealloc_varinit
 
-  use var_tables, only: &
+  use ModVarTables, only: &
        num_var, &
        vtab_r, &
        maxvars, &
        num_var, &
        nvgrids, &
        vtab_r,  &
+       lite_varset, &
        ZeroVTab
 
 #ifdef JULES

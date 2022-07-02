@@ -50,7 +50,7 @@ contains
          ibnd,          &
          jbnd
 
-    use var_tables, only: &
+    use ModVarTables, only: &
          num_var,         &
          vtab_r
 

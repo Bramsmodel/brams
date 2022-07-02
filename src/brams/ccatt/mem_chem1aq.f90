@@ -99,7 +99,7 @@ contains
     use chem1aq_list, only: spcaq_name
 
 !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-    use var_tables, only: InsertVTab
+    use ModVarTables, only: InsertVTab
 !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
 
     implicit none

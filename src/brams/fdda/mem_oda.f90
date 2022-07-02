@@ -206,7 +206,7 @@ contains
 
 
   subroutine filltab_oda(oda,odam,imean,n1,n2,n3,ng)
-    use var_tables, only: InsertVTab
+    use ModVarTables, only: InsertVTab
     implicit none
     include "constants.h"
     type (oda_vars) :: oda,odam

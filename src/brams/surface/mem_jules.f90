@@ -158,7 +158,7 @@ Contains
   subroutine filltab_jules(jules,julesm,imean,nz,nx,ny,nzg,nzs,np,ng)
     ! ALF
     use io_params, only: ipastin ! INTENT(IN)
-    use var_tables, only: InsertVTab
+    use ModVarTables, only: InsertVTab
 
     implicit none
     include "constants.h"

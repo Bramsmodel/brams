@@ -197,7 +197,7 @@ contains
     use chem1_list, only: spc_alloc,spc_name,src,on 
     use mem_chem1, only: chem1_g
 
-    use var_tables, only: InsertVTab
+    use ModVarTables, only: InsertVTab
 
     implicit none
 

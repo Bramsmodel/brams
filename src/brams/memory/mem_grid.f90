@@ -16,7 +16,7 @@ module mem_grid
        maxgrds, &
        nzpmax
 
-  use var_tables, only: &
+  use ModVarTables, only: &
        InsertVTab
 
   implicit none

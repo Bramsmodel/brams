@@ -68,8 +68,8 @@ contains
     use mem_grid, only: &
          grid_g
 
-    use var_tables, only: &
-         var_tables_r,    &
+    use ModVarTables, only: &
+         VarTableFields,    &
          GetVTabEntry
 
     type(PolygonContainer), pointer :: meteoPolys
@@ -106,7 +106,7 @@ contains
     real                                      :: dx
     real                                      :: dy
     type t_vtabPtrContainer
-       type(var_tables_r), pointer :: vtabPtr
+       type(VarTableFields), pointer :: vtabPtr
     end type t_vtabPtrContainer
     type(t_vtabPtrContainer), dimension(:), allocatable :: vtabPointers
 

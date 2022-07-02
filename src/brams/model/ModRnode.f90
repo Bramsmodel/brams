@@ -47,7 +47,7 @@ module ModRnode
        mxp,  &
        myp
 
-  use var_tables, only: &
+  use ModVarTables, only: &
        num_var,         &
        vtab_r
 

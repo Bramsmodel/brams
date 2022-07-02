@@ -197,7 +197,8 @@ module ModOneProc
        iteb, &      ! intent(in)
        StoreNamelistFileAtTeb_vars_const
 
-  use var_tables, only: &
+  use ModVarTables, only: &
+       setInitial4Vtable,  &
        num_var,         &
        vtab_r
 
@@ -1006,7 +1007,7 @@ contains
        call MemAlloc(oneGrid, 2)
 
        if(ioutput == 5)then
-          call setInitial4Vtable(1)
+          call setInitial4Vtable(1, chemistry, aerosol)
           ioutput = 2
        end if
 
