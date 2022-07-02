@@ -93,6 +93,7 @@ module ModRinit
   public :: gridloc_prt
   public :: refs3d
   public :: FieldInit
+  public :: fill_dn0uv
 
 contains
 

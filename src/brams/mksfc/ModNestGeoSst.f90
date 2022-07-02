@@ -7,6 +7,10 @@
 !###########################################################################
 module ModNestGeoSst
 
+  use ModNestFillDens, only: &
+       fillscr, &
+       fillvar
+
   use ModNestFeed, only: &
        fdback, &
        fdback

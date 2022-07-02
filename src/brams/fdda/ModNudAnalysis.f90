@@ -7,6 +7,10 @@
 !###########################################################################
 module ModNudAnalysis
 
+  use ModNestFillDens, only: &
+       fillscr, &
+       fillvar
+  
   use mem_tend, only: &
        tend
 

@@ -120,9 +120,9 @@ OBJ_MOD = \
 	ModMPassFull.o      \
 	ModNdviRead.o \
 	ModNestFeed.o \
-	nest_filldens.o \
+	ModNestFillDens.o \
 	ModNestGeoSst.o \
-	nest_intrp.o \
+	ModNestIntrp.o \
 	ModNudAnalysis.o \
 	ModNudRead.o \
 	ModNudUpdate.o \

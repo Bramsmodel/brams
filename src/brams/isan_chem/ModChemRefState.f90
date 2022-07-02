@@ -7,6 +7,10 @@
 !###########################################################################
 module ModChemRefState
 
+  use ModNestFillDens, only: &
+       fillscr, &
+       fillvar
+
   use rconstants, only: &
        g, cp, cpor, p00, rgas
   
@@ -37,7 +41,7 @@ contains
     integer, intent(in) :: maxy
     integer, intent(in) :: ifm
     real, intent(inout) :: topo_c(:,:)
-    real, intent(in) :: topo_i(:)
+    real, intent(inout) :: topo_i(:)
     real, intent(inout) :: scr1(:)
     real, intent(in) :: scr2(:)
     

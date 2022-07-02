@@ -7,6 +7,11 @@
 !###########################################################################
 module ModChemFirstRams
 
+  use ModNestFillDens, only: &
+       fillscr, &
+       fillvar, &
+       dnswt2
+       
   use ModChemRefState, only: &
        nest_interpolated_topo, &
        fmrefs1d_isan, &

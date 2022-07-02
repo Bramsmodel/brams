@@ -7,6 +7,10 @@
 !###########################################################################
 module ModMkSfcSst
 
+  use ModNestFillDens, only: &
+       fillscr, &
+       fillvar
+
   use ModRUser, only: &
        sstinit_user
 
