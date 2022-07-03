@@ -138,7 +138,7 @@ OBJ_MOD = \
 	ModParaInit.o \
 	Phys_const.o \
 	ModAcoust.o \
-	raco_adap.o \
+	ModAcoustAdap.o \
 	rad_carma.o \
 	rad_driv.o \
 	ModRrtmDriver.o \
@@ -180,7 +180,7 @@ OBJ_MOD = \
 	ModRUser.o \
 	shcu_vars_const.o \
 	memSoilMoisture.o \
-	soilMoisture.o \
+	ModSoilMoisture.o \
 	ModSstRead.o \
 	ModTurbDiff.o \
 	ModTurbDiffAdap.o \

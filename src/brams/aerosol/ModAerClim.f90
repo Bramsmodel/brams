@@ -1,5 +1,9 @@
 module ModAerClim
 
+  use ModSoilMoisture, only: &
+       interpolacao, &
+       apiPrlatlon
+
   use dump, only: &
        dumpMessage     !subroutine
 

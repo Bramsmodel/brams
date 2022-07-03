@@ -6,15 +6,15 @@
 ! Parte I: Descricao da metodologia e validacao. Rev. Bras. Meteo.,
 ! volume especial do LBA, 2007.
 !========================================================================
-module soilMoisture
+module ModSoilMoisture
 
   use ModMPassFull, only: &
        mk_3_buff, &
        mk_4_buff
-  
+
   use ModControlVars, only: &
        ControlVars
-  
+
   use ModNamelistFile, only: &
        namelistFile
 
@@ -26,11 +26,55 @@ module soilMoisture
 
   use ModTurbFields, only: &
        TurbFields
-  
+
+  use mem_grid, only : runtype,  &          ! intent(in)
+       iyear1, imonth1, idate1, itime1, &   ! intent(in)
+       nnxp, nnyp, nnzp,                &   ! intent(in)
+       globalsizes                          ! subroutine
+
+  use io_params, only : timstr     ! intent(in)
+
+  use rconstants, only : cpi       ! intent(in)
+
+  use leaf_coms, only : soilcp,  & ! intent(in)
+       slmsts,                   & ! intent(in)
+       slcpd                       ! intent(in)
+
+  use mem_leaf, only : stgoff,   & ! intent(in)
+       slmstr,                   & ! intent(in)
+       slz                         ! intent(in)
+
+  use node_mod, only: &
+       nodei0, nodej0, & ! intent(in)
+       nodemxp, nodemyp, & ! intent(in)
+       nmachs,  & ! intent(in)
+       mynum,  &  ! intent(in)
+       mchnum, &  ! intent(in)
+       master_num ! intent(in)
+
+  use parlib, only: &
+       parf_bcast ! subroutine
+
+  use mem_aerad, only: &
+       nwave ! intent(in)
+
+  use readbcst, only: &
+       gatherdata
+
+!!!!!!DSM {
+#ifdef cdf
+
+  use netcdf, only: nf90_nowrite, nf90_open, nf90_put_att
+
+#endif
+!!!!!!DSM}
+
   implicit none
 
-  public  :: soilMoistureInit
-  public  :: StoreNamelistFileAtSoilMoisture
+  public :: soilMoistureInit
+  public :: StoreNamelistFileAtSoilMoisture
+  public :: apiPrlatlon
+  public :: interpolacao
   real ::  factorsm = 1.0
 
 contains
@@ -74,49 +118,6 @@ contains
     !# @endwarning
     !#
     !#--- ----------------------------------------------------------------------------------------
-    use mem_grid, only : runtype,  &          ! intent(in)
-         iyear1, imonth1, idate1, itime1, &   ! intent(in)
-         nnxp, nnyp, nnzp,                &   ! intent(in)
-         globalsizes                          ! subroutine
-
-    use io_params, only : timstr     ! intent(in)
-
-    use rconstants, only : cpi       ! intent(in)
-
-    use leaf_coms, only : soilcp,  & ! intent(in)
-         slmsts,                   & ! intent(in)
-         slcpd                       ! intent(in)
-
-    use mem_leaf, only : stgoff,   & ! intent(in)
-         slmstr,                   & ! intent(in)
-         slz                         ! intent(in)
-
-    use node_mod, only: &
-         nodei0, nodej0, & ! intent(in)
-         nodemxp, nodemyp, & ! intent(in)
-         nmachs,  & ! intent(in)
-         mynum,  &  ! intent(in)
-         mchnum, &  ! intent(in)
-         master_num ! intent(in)
-
-    use parlib, only: &
-         parf_bcast ! subroutine
-
-    use mem_aerad, only: &
-         nwave ! intent(in)
-
-    use readbcst, only: &
-         gatherdata
-
-!!!!!!DSM {
-#ifdef cdf
-
-    use netcdf, only: nf90_nowrite, nf90_open, nf90_put_att
-
-#endif
-!!!!!!DSM}
-
-    implicit none
 
     character(len=*),parameter :: procedureName="soilmoistureinit"
     character(len=*),parameter :: srcName="soilMoisture.f90"
@@ -140,7 +141,7 @@ contains
     type(ControlVars), pointer, intent(in) :: oneControlVars
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
-    
+
     integer :: lpw(n2,n3)             !(n2,n3)
     ! local variables:
 
@@ -1018,19 +1019,19 @@ contains
             npat, nmachs, mchnum, mynum, master_num,			 &
             soil_energy, globalsoilenergy, &
             oneControlVars, oneBasicFields, oneTurbFields)
-            
+
        varn = 'soil_text'
        call gatherdata(idim_type, varn, ifm, mzg, nnxp(ifm), nnyp(ifm), &
             npat, nmachs, mchnum, mynum, master_num,			 &
             soil_text, globalsoiltext, &
             oneControlVars, oneBasicFields, oneTurbFields)
-            
+
        varn = 'glon'
        call gatherdata(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
             nmachs, mchnum, mynum, master_num, 	    &
             glon, globalglon, &
             oneControlVars, oneBasicFields, oneTurbFields)
-            
+
        varn = 'glat'
        call gatherdata(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
             nmachs, mchnum, mynum, master_num, 	    &
@@ -1259,176 +1260,169 @@ contains
 
 
   subroutine StoreNamelistFileAtSoilMoisture(oneNamelistFile)
-    implicit none
     type(namelistFile), pointer :: oneNamelistFile
     soil_moist = oneNamelistFile%soil_moist
     soil_moist_fail = oneNamelistFile%soil_moist_fail
     usdata_in = oneNamelistFile%usdata_in
     usmodel_in = oneNamelistFile%usmodel_in
   end subroutine StoreNamelistFileAtSoilMoisture
-end module soilMoisture
 
-!
-! prlatlon
-!----------------------------------------------------------------
-! SUB-ROTINA QUE ESTABELECE LATITUDES E LONGITUDES DOS PONTOS DE
-! GRADE DO CAMPO DE PRECIPITACAO
-subroutine apiPrlatlon(nlon, nlat, prlat, prlon, ilatn, ilonn, latni, lonni)
-  implicit none
-  ! Arguments:
-  integer, intent(IN) :: nlon, nlat
-  real, intent(OUT)   :: prlat(nlon,nlat) !(nlon,nlat)
-  real, intent(OUT)   :: prlon(nlon,nlat) !(nlon,nlat)
-  real, intent(IN)    ::  ilatn, ilonn, latni, lonni
-  ! Local Variables:
-  integer :: i, j
-
-  do j=1,nlat
-     do i=1,nlon
-        prlon(i,j) = lonni + (i-1)*ilonn
-        prlat(i,j) = latni + (j-1)*ilatn
-     enddo
-  enddo
-
-end subroutine apiPrlatlon
-
-!----------------------------------------------------------------
-! interpolacao
-!----------------------------------------------------------------
-! SUB-ROTINA QUE REALIZA INTERPOLACAO ENTRE GRADES (RAMS E UMIDADE DO SOLO)
-subroutine interpolacao(glon, glat, nlon, nlat, prlat, prlon, &
-     i1, i2, ic, j1, j2, jc)
-
-  implicit none
-  ! Arguments:
-  integer, intent(OUT) :: i1, i2, ic, j1, j2, jc
-  real, intent(IN)     :: glat, glon
-  integer, intent(IN)  :: nlon, nlat
-  real, intent(IN)     :: prlat(nlon,nlat)
-  real, intent(IN)     :: prlon(nlon,nlat)
-  ! Local Variables
-  real    :: diffx1, diffx2, diffy1, diffy2
-  integer :: i, j
-
-  do i=1,nlon
-     if (glon<=prlon(i,1)) exit
-  enddo
-  i2 = i
-  i1 = i-1
-
-  do j=1,nlat
-     if (glat<=prlat(1,j)) exit
-  enddo
-  j2 = j
-  j1 = j-1
-
-  diffx1 =   glon - prlon(i1,j1)
-  diffx2 = -(glon - prlon(i1,j2))
-  diffy1 =   glat - prlat(i1,j1)
-  diffy2=  -(glat - prlat(i2,j1))
-
-  jc = j1
-  ic = i1
-  if (diffx1>diffx2) ic = i2
-  if (diffy1>diffy2) jc = j2
-
-  if (i1<1 .or. i1>nlon .or. j1<1 .or. j1>nlat) then
-     ic = -9999
-     jc = -9999
-  endif
-
-end subroutine interpolacao
-
-!----------------------------------------------------------------
-
-subroutine changeDay(idate1, imonth1, iyear1, INT_DIF_TIME, &
-     idate2, imonth2, iyear2)
-  implicit none
-  ! Arguments:
-  integer, intent(IN)  :: idate1, imonth1, iyear1, INT_DIF_TIME
-  integer, intent(OUT) :: idate2, imonth2, iyear2
-  ! Local Variables:
-  integer :: i, increm, DMES(12)
-
-  ! Initiate DMES
-  DMES = (/31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31/)
-
-  iyear2  = iyear1
-  imonth2 = imonth1
-  idate2  = idate1
-
-  increm  = 1
-
-  if (INT_DIF_TIME<1) increm = increm*(-1)
-
-  do i=1,abs(INT_DIF_TIME)
-     idate2 = idate2 + increm
-     if (idate2<1) then
-        imonth2 = imonth2 + increm
-        if (imonth2<1) then
-           imonth2 = 12
-           iyear2  = iyear2 - 1
-        endif
-        idate2 = DMES(imonth2)
-     elseif (idate2>DMES(imonth2)) then
-        imonth2 = imonth2 + increm
-        if (imonth2>12) then
-           imonth2 = 1
-           iyear2  = iyear2 + 1
-        endif
-        idate2 = 1
-     endif
-  enddo
-
-end subroutine changeDay
-
-
-!-srf END MODULE soilMoisture
-
-!============================================================================
-
-subroutine Swap32(A, N)
   !
-  !      REVERSE ORDER OF BYTES IN INTEGER*4 WORD, or REAL*4
-  !
-  implicit none
-  ! Arguments:
-  integer, intent(IN)            :: n
-  integer(kind=4), intent(INOUT) :: a(n)
-  ! Local Varaibles:
-  character(LEN=1) :: jtemp(4)
-  character(LEN=1) :: ktemp
-  !
-  ! Local variables
-  integer :: i, itemp
+  ! prlatlon
+  !----------------------------------------------------------------
+  ! SUB-ROTINA QUE ESTABELECE LATITUDES E LONGITUDES DOS PONTOS DE
+  ! GRADE DO CAMPO DE PRECIPITACAO
+  subroutine apiPrlatlon(nlon, nlat, prlat, prlon, ilatn, ilonn, latni, lonni)
+    ! Arguments:
+    integer, intent(IN) :: nlon, nlat
+    real, intent(OUT)   :: prlat(nlon,nlat) !(nlon,nlat)
+    real, intent(OUT)   :: prlon(nlon,nlat) !(nlon,nlat)
+    real, intent(IN)    ::  ilatn, ilonn, latni, lonni
+    ! Local Variables:
+    integer :: i, j
 
-  equivalence (jtemp(1), itemp)
-  !
-  save
-  !
-  do i=1,n
-     itemp    = a(i)
-     ktemp    = jtemp(4)
-     jtemp(4) = jtemp(1)
-     jtemp(1) = ktemp
-     ktemp    = jtemp(3)
-     jtemp(3) = jtemp(2)
-     jtemp(2) = ktemp
-     a(i)     = itemp
-  enddo
+    do j=1,nlat
+       do i=1,nlon
+          prlon(i,j) = lonni + (i-1)*ilonn
+          prlat(i,j) = latni + (j-1)*ilatn
+       enddo
+    enddo
 
-end subroutine Swap32
+  end subroutine apiPrlatlon
 
-!DSM - Para trocar por exempo AAAAMMDD por 20050425 {
-subroutine Replace_Text (s,text,rep,outs)
-  character(*)        :: s,text,rep
-  character(len(s)+100) :: outs     ! provide outs with extra 100 char len
-  integer             :: i, nt, nr
+  !----------------------------------------------------------------
+  ! interpolacao
+  !----------------------------------------------------------------
+  ! SUB-ROTINA QUE REALIZA INTERPOLACAO ENTRE GRADES (RAMS E UMIDADE DO SOLO)
+  subroutine interpolacao(glon, glat, nlon, nlat, prlat, prlon, &
+       i1, i2, ic, j1, j2, jc)
 
-  outs = s ; nt = LEN_trim(text) ; nr = LEN_trim(rep)
-  do
-     i = index(outs,text(:nt)) ; if (i == 0) exit
-     outs = outs(:i-1) // rep(:nr) // outs(i+nt:)
-  end do
-end subroutine Replace_Text
-!DSM }
+    ! Arguments:
+    integer, intent(OUT) :: i1, i2, ic, j1, j2, jc
+    real, intent(IN)     :: glat, glon
+    integer, intent(IN)  :: nlon, nlat
+    real, intent(IN)     :: prlat(nlon,nlat)
+    real, intent(IN)     :: prlon(nlon,nlat)
+    ! Local Variables
+    real    :: diffx1, diffx2, diffy1, diffy2
+    integer :: i, j
+
+    do i=1,nlon
+       if (glon<=prlon(i,1)) exit
+    enddo
+    i2 = i
+    i1 = i-1
+
+    do j=1,nlat
+       if (glat<=prlat(1,j)) exit
+    enddo
+    j2 = j
+    j1 = j-1
+
+    diffx1 =   glon - prlon(i1,j1)
+    diffx2 = -(glon - prlon(i1,j2))
+    diffy1 =   glat - prlat(i1,j1)
+    diffy2=  -(glat - prlat(i2,j1))
+
+    jc = j1
+    ic = i1
+    if (diffx1>diffx2) ic = i2
+    if (diffy1>diffy2) jc = j2
+
+    if (i1<1 .or. i1>nlon .or. j1<1 .or. j1>nlat) then
+       ic = -9999
+       jc = -9999
+    endif
+
+  end subroutine interpolacao
+
+  !----------------------------------------------------------------
+
+  subroutine changeDay(idate1, imonth1, iyear1, INT_DIF_TIME, &
+       idate2, imonth2, iyear2)
+    ! Arguments:
+    integer, intent(IN)  :: idate1, imonth1, iyear1, INT_DIF_TIME
+    integer, intent(OUT) :: idate2, imonth2, iyear2
+    ! Local Variables:
+    integer :: i, increm, DMES(12)
+
+    ! Initiate DMES
+    DMES = (/31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31/)
+
+    iyear2  = iyear1
+    imonth2 = imonth1
+    idate2  = idate1
+
+    increm  = 1
+
+    if (INT_DIF_TIME<1) increm = increm*(-1)
+
+    do i=1,abs(INT_DIF_TIME)
+       idate2 = idate2 + increm
+       if (idate2<1) then
+          imonth2 = imonth2 + increm
+          if (imonth2<1) then
+             imonth2 = 12
+             iyear2  = iyear2 - 1
+          endif
+          idate2 = DMES(imonth2)
+       elseif (idate2>DMES(imonth2)) then
+          imonth2 = imonth2 + increm
+          if (imonth2>12) then
+             imonth2 = 1
+             iyear2  = iyear2 + 1
+          endif
+          idate2 = 1
+       endif
+    enddo
+
+  end subroutine changeDay
+
+
+  !============================================================================
+
+  subroutine Swap32(A, N)
+    !
+    !      REVERSE ORDER OF BYTES IN INTEGER*4 WORD, or REAL*4
+    !
+    ! Arguments:
+    integer, intent(IN)            :: n
+    integer(kind=4), intent(INOUT) :: a(n)
+    ! Local Varaibles:
+    character(LEN=1) :: jtemp(4)
+    character(LEN=1) :: ktemp
+    !
+    ! Local variables
+    integer :: i, itemp
+
+    equivalence (jtemp(1), itemp)
+    !
+    save
+    !
+    do i=1,n
+       itemp    = a(i)
+       ktemp    = jtemp(4)
+       jtemp(4) = jtemp(1)
+       jtemp(1) = ktemp
+       ktemp    = jtemp(3)
+       jtemp(3) = jtemp(2)
+       jtemp(2) = ktemp
+       a(i)     = itemp
+    enddo
+
+  end subroutine Swap32
+
+  !DSM - Para trocar por exempo AAAAMMDD por 20050425 {
+  subroutine Replace_Text (s,text,rep,outs)
+    character(*)        :: s,text,rep
+    character(len(s)+100) :: outs     ! provide outs with extra 100 char len
+    integer             :: i, nt, nr
+
+    outs = s ; nt = LEN_trim(text) ; nr = LEN_trim(rep)
+    do
+       i = index(outs,text(:nt)) ; if (i == 0) exit
+       outs = outs(:i-1) // rep(:nr) // outs(i+nt:)
+    end do
+  end subroutine Replace_Text
+  !DSM }
+end module ModSoilMoisture

@@ -111,7 +111,7 @@ module ModNestGeoSst
   use memSoilMoisture, only: &
        SOIL_MOIST  ! INTENT(IN)
 
-  use soilMoisture, only: &
+  use ModSoilMoisture, only: &
        soilMoistureInit ! Subroutine
 
   use ccatt_start, only: &

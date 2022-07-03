@@ -261,7 +261,7 @@ module ModOneProc
        ilwrtyp, &
        StoreNamelistFileAtMem_radiate
 
-  use SoilMoisture, only: &
+  use ModSoilMoisture, only: &
        soilMoistureInit, &
        StoreNamelistFileAtSoilMoisture
 

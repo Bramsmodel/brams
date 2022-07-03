@@ -78,7 +78,7 @@ module ModAcoust
   use ModGrid, only: &
        Grid
 
-  use ModAcoust_adap, only: &
+  use ModAcoustAdap, only: &
        acoust_adap
 
   use ModParallelEnvironment, only: &

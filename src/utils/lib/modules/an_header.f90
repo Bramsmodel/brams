@@ -649,7 +649,7 @@ contains
 
     ! local variables
 
-    integer          :: ierr
+    integer          :: i, ierr
     integer(kind=i8) :: fieldSize_i8
     character(len=8) :: c0
     character(len=8) :: c1
@@ -677,7 +677,9 @@ contains
        write(c0,"(i8)") oneIOFileDS%unit
        write(*,"(a)") h//" will write field "//varn//" at unit "//trim(adjustl(c0))
     end if
-    call writebin(oneIOFileDS%unit, field, fieldSize_i8)
+
+    write(oneIOFileDS%unit) (field(i),i=1,fieldSize_i8)
+
     oneIOFileDS%fPos = oneIOFileDS%fPos + fieldSize_i8
 
   end subroutine ArrayWriteBinStoreInfo

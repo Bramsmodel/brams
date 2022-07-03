@@ -36,6 +36,10 @@ module ModOptical
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModSoilMoisture, only: &
+       interpolacao, &
+       apiPrlatlon
+  
   use ModRamsGrid, only: &
        newgrid
   
