@@ -54,6 +54,11 @@
 
       use rrtmg_lw_setcoef, only: lwatmref, lwavplank, lwavplankderiv
 
+      use rrtmg_lw_k_g, only: &
+           lw_kgb01, lw_kgb02, lw_kgb03, lw_kgb04, lw_kgb05, &
+           lw_kgb06, lw_kgb07, lw_kgb08, lw_kgb09, lw_kgb10, &
+           lw_kgb11, lw_kgb12, lw_kgb13, lw_kgb14, lw_kgb15, lw_kgb16
+      
       implicit none
 
       contains

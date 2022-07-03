@@ -52,6 +52,11 @@
 
       use rrtmg_sw_setcoef, only: swatmref
 
+      use rrtmg_sw_k_g, only: &
+           sw_kgb16, sw_kgb17, sw_kgb18, sw_kgb19, &
+           sw_kgb20, sw_kgb21, sw_kgb22, sw_kgb23, sw_kgb24, sw_kgb25, &
+           sw_kgb26, sw_kgb27, sw_kgb28, sw_kgb29
+
       implicit none
 
       contains

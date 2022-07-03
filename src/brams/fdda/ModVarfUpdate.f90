@@ -130,196 +130,137 @@ contains
     close(unit=22)
   end subroutine PrtOpt
 
-  !--(DMK-CCATT-INI)-----------------------------------------------------
-  !-----------------------------
+
 
   subroutine hi_interpInitial4(n1,n2,n3,&
        vn,xm1,xt1,ym1,yt1,zm1,zt1,&
        plat1,plon1,topt1,ztop1,&
        m1,m2,m3,vm,ngm,ngr1,vname,idim)
-    integer, intent(in) :: n1
-    integer, intent(in) :: n2
-    integer, intent(in) :: n3
+    integer, intent(in) 				:: n1
+    integer, intent(in) 				:: n2
+    integer, intent(in) 				:: n3
 
-    real, intent(in) :: vn(:)
-    real, intent(in) :: xm1(:,:)
-    real, intent(in) :: xt1(:,:)
-    real, intent(in) :: ym1(:,:)
-    real, intent(in) :: yt1(:,:)
-    real, intent(in) :: zm1(:,:)
-    real, intent(in) :: zt1(:,:)
+    real, dimension(n2,n3,n1), intent(in)		:: vn
+    real, dimension(n2), intent(in)	 	:: xm1
+    real, dimension(n2), intent(in)	 	:: xt1
+    real, dimension(n3), intent(in)	 	:: ym1
+    real, dimension(n3), intent(in)	 	:: yt1
+    real, dimension(n1), intent(in)         	:: zm1
+    real, dimension(n1), intent(in)		:: zt1
 
-    real, intent(in) :: plat1
-    real, intent(in) :: plon1
-    real, intent(in) :: topt1(:,:)
-    real, intent(in) :: ztop1
+    real, intent(in)				:: plat1
+    real, intent(in) 				:: plon1
+    real, dimension(n2,n3), intent(in)      	:: topt1
+    real, intent(in) 				:: ztop1
 
-    integer, intent(in) :: m1
-    integer, intent(in) :: m2
-    integer, intent(in) :: m3
-    real, intent(out) :: vm(:,:,:)
-    integer, intent(in):: ngm
-    integer, intent(in) :: ngr1
-    character (len=*), intent(in):: vname
-    integer, intent(in) :: idim
+    integer, intent(in) 				:: m1
+    integer, intent(in)				:: m2
+    integer, intent(in)				:: m3
+    real, dimension(m1,m2,m3), intent(out)		:: vm
+    integer, intent(in)				:: ngm
+    integer, intent(in) 				:: ngr1
+    character (len=*), intent(in)			:: vname
+    integer, intent(in) 				:: idim
 
-    call Hidden_hi_interpInitial4(n1,n2,n3,&
-         vn,xm1,xt1,ym1,yt1,zm1,zt1,&
-         plat1,plon1,topt1,ztop1,&
-         m1,m2,m3,vm,ngm,ngr1,vname,idim)
+
+
+
+
+
+    integer :: i,j,k,np,ii,jj
+    real :: xxm,yym,fixxm,fiyym,topoh,rtgth
+
+
+
+    !!print*, 'inside hi_interpInitil4', minval(vn), maxval(vn)
+
+
+    do j=1,m3
+       do i=1,m2
+
+
+          ! Find real grid point x,y relative to history file
+          call ll_xy(grid_g(ngm)%glat(i,j),grid_g(ngm)%glon(i,j), plat1, plon1, xxm, yym)
+
+          ! See if point is on this grid.
+          if(xxm < xm1(1) .or. xxm > xm1(n2-1) .or. yym < ym1(1) .or. yym > ym1(n3-1) ) then
+
+             if (ngr1 == 1) then
+
+                ! We are on the input coarse grid and point is not on this grid.
+                !    Stop immediately...
+                print*, grid_g(ngm)%glat(i,j),grid_g(ngm)%glon(i,j),plat1,plon1,xxm,yym
+                print*,xm1(1),xm1(n2-1),xxm
+                print*,ym1(1),ym1(n3-1),yym
+                print*, 'His_init: grid point not on history file grids'
+                stop 'his_init: point OB'
+             else
+                ! Otherwise, go to next point
+                cycle
+             endif
+
+          endif
+          ! We are okay horizontally, now interpolate vertical column from
+          !     field
+
+          ! Find x,y grid point locations on input field.
+          !     Assuming constant spacing and deal with stagger
+
+          if(vname == 'UP' .or. vname == 'UC') then
+             fixxm=1.+(xxm-xm1(1))/(xm1(2)-xm1(1))
+          else
+             fixxm=1.+(xxm-xt1(1))/(xt1(2)-xt1(1))
+          endif
+
+          if(vname == 'VP' .or. vname == 'VC') then
+             fiyym=1.+(yym-ym1(1))/(ym1(2)-ym1(1))
+          else
+             fiyym=1.+(yym-yt1(1))/(yt1(2)-yt1(1))
+          endif
+
+
+          do k=1,n1
+             call gdtost2(vn(1,1,k),n2,n3,fixxm,fiyym,vctr1(k))
+          enddo
+
+          if (idim == 3) then
+             ! Interpolate this column vertically to actual grid if 3d variable
+             call gdtost2(topt1,n2,n3,fixxm,fiyym,topoh)
+
+             rtgth=1.-topoh/ztop1
+
+             do k=1,m1
+                ! Actual grid level heights
+                vctr2(k) = grid_g(ngm)%topt(i,j) + ztn(k,1) * grid_g(ngm)%rtgt(i,j)
+             enddo
+
+             do k=1,n1
+                ! History grid level heights
+                vctr3(k)= topoh + zt1(k) *rtgth
+             enddo
+
+             ! Interpolate vertically
+
+             call htint(n1,vctr1,vctr3,m1,vctr10,vctr2)
+             vm(1:m1,i,j) = vctr10(1:m1)
+
+          elseif (idim == 2) then
+             vm(1,i,j)=vctr1(1)
+          endif
+
+       end do
+    end do
+
+    if(vname == 'UP' .or. vname == 'UC') then
+       !CALL hi_avgu(m1,m2,m3,vm) ! Modif.by Alvaro L.Fazenda
+       call hi_avgu(m1,m2,m3,vm)
+    elseif (vname == 'VP' .or. vname == 'VC') then
+       call hi_avgv(m1,m2,m3,vm)
+    elseif (vname == 'WP' .or. vname == 'WC') then
+       call hi_avgw(m1,m2,m3,vm)
+    endif
+
   end subroutine hi_interpInitial4
 
-
-
 end module ModVarfUpdate
-
-subroutine Hidden_hi_interpInitial4(n1,n2,n3,&
-     vn,xm1,xt1,ym1,yt1,zm1,zt1,&
-     plat1,plon1,topt1,ztop1,&
-     m1,m2,m3,vm,ngm,ngr1,vname,idim)
-
-
-  use mem_grid, only: &
-       grid_g, &
-       ztn
-
-  use mem_scratch, only: &
-       vctr1, &
-       vctr2, &
-       vctr3, &
-       vctr10
-
-  use ModInitHis, only: &
-       hi_avgu, &
-       hi_avgv, &
-       hi_avgw
-
-
-  implicit none
-
-  integer, intent(in) 				:: n1
-  integer, intent(in) 				:: n2
-  integer, intent(in) 				:: n3
-
-  real, dimension(n2,n3,n1), intent(in)		:: vn
-  real, dimension(n2), intent(in)	 	:: xm1
-  real, dimension(n2), intent(in)	 	:: xt1
-  real, dimension(n3), intent(in)	 	:: ym1
-  real, dimension(n3), intent(in)	 	:: yt1
-  real, dimension(n1), intent(in)         	:: zm1
-  real, dimension(n1), intent(in)		:: zt1
-
-  real, intent(in)				:: plat1
-  real, intent(in) 				:: plon1
-  real, dimension(n2,n3), intent(in)      	:: topt1
-  real, intent(in) 				:: ztop1
-
-  integer, intent(in) 				:: m1
-  integer, intent(in)				:: m2
-  integer, intent(in)				:: m3
-  real, dimension(m1,m2,m3), intent(out)		:: vm
-  integer, intent(in)				:: ngm
-  integer, intent(in) 				:: ngr1
-  character (len=*), intent(in)			:: vname
-  integer, intent(in) 				:: idim
-
-
-
-
-
-
-  integer :: i,j,k,np,ii,jj
-  real :: xxm,yym,fixxm,fiyym,topoh,rtgth
-
-
-
-  !!print*, 'inside hi_interpInitil4', minval(vn), maxval(vn)
-
-
-  do j=1,m3
-     do i=1,m2
-
-
-        ! Find real grid point x,y relative to history file
-        call ll_xy(grid_g(ngm)%glat(i,j),grid_g(ngm)%glon(i,j), plat1, plon1, xxm, yym)
-
-        ! See if point is on this grid.
-        if(xxm < xm1(1) .or. xxm > xm1(n2-1) .or. yym < ym1(1) .or. yym > ym1(n3-1) ) then
-
-           if (ngr1 == 1) then
-
-              ! We are on the input coarse grid and point is not on this grid.
-              !    Stop immediately...
-              print*, grid_g(ngm)%glat(i,j),grid_g(ngm)%glon(i,j),plat1,plon1,xxm,yym
-              print*,xm1(1),xm1(n2-1),xxm
-              print*,ym1(1),ym1(n3-1),yym
-              print*, 'His_init: grid point not on history file grids'
-              stop 'his_init: point OB'
-           else
-              ! Otherwise, go to next point
-              cycle
-           endif
-
-        endif
-        ! We are okay horizontally, now interpolate vertical column from
-        !     field
-
-        ! Find x,y grid point locations on input field.
-        !     Assuming constant spacing and deal with stagger
-
-        if(vname == 'UP' .or. vname == 'UC') then
-           fixxm=1.+(xxm-xm1(1))/(xm1(2)-xm1(1))
-        else
-           fixxm=1.+(xxm-xt1(1))/(xt1(2)-xt1(1))
-        endif
-
-        if(vname == 'VP' .or. vname == 'VC') then
-           fiyym=1.+(yym-ym1(1))/(ym1(2)-ym1(1))
-        else
-           fiyym=1.+(yym-yt1(1))/(yt1(2)-yt1(1))
-        endif
-
-
-        do k=1,n1
-           call gdtost2(vn(1,1,k),n2,n3,fixxm,fiyym,vctr1(k))
-        enddo
-
-        if (idim == 3) then
-           ! Interpolate this column vertically to actual grid if 3d variable
-           call gdtost2(topt1,n2,n3,fixxm,fiyym,topoh)
-
-           rtgth=1.-topoh/ztop1
-
-           do k=1,m1
-              ! Actual grid level heights
-              vctr2(k) = grid_g(ngm)%topt(i,j) + ztn(k,1) * grid_g(ngm)%rtgt(i,j)
-           enddo
-
-           do k=1,n1
-              ! History grid level heights
-              vctr3(k)= topoh + zt1(k) *rtgth
-           enddo
-
-           ! Interpolate vertically
-
-           call htint(n1,vctr1,vctr3,m1,vctr10,vctr2)
-           vm(1:m1,i,j) = vctr10(1:m1)
-
-        elseif (idim == 2) then
-           vm(1,i,j)=vctr1(1)
-        endif
-
-     end do
-  end do
-
-  if(vname == 'UP' .or. vname == 'UC') then
-     !CALL hi_avgu(m1,m2,m3,vm) ! Modif.by Alvaro L.Fazenda
-     call hi_avgu(m1,m2,m3,vm)
-  elseif (vname == 'VP' .or. vname == 'VC') then
-     call hi_avgv(m1,m2,m3,vm)
-  elseif (vname == 'WP' .or. vname == 'WC') then
-     call hi_avgw(m1,m2,m3,vm)
-  endif
-
-end subroutine Hidden_hi_interpInitial4
 
