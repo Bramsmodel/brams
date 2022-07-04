@@ -32,11 +32,43 @@ module utilsMod
   !#
 
   !Use area
-  use dump
+  use dump, only: &
+       dumpMessage
+
 
   implicit none
 
   include "constants.h"
+
+  private
+
+  public :: cutLine
+  public :: initAll
+  public :: getUnit
+  public :: releaseUnit
+  public :: bramsHeader
+  public :: to_upper
+  public :: to_lower
+  public :: julday
+  public :: date_make_big
+  public :: date_unmake_big
+  public :: date_abs_secs
+  public :: date_abs_secs2
+  public :: date_secs_ymdt
+  public :: date_add_to_big
+  public :: date_add_to
+  public :: date_add_to_dble
+  public :: fileExist
+  public :: stepsBetweenDates
+  public :: monthsBetweenDates
+  public :: interpolationBilinear
+  public :: outRealSize
+  public :: sortz
+  public :: Copy1DTo3D
+  public :: CopyLocalChunk
+  public :: CopyLocalChunkReverse
+
+
   character(len=*),parameter :: sourceName='utils.f90' !Name of source code
   character(len=*),parameter :: procedureName='**utils**' !Name of this procedure
   !
@@ -45,7 +77,7 @@ module utilsMod
   logical :: fileUnits(20:99)
   logical :: firstTime
 
-Contains
+contains
 
   !=============================================================================================
   character(len=256) function cutLine(line,stringToCut)
@@ -69,12 +101,6 @@ Contains
     !# &copy; <https://creativecommons.org/licenses/by-sa/4.0/>
     !# @endwarning
     !#
-
-    !Use area
-    use dump !Dump contains a lot of functions for debugs and formated printouts
-
-    implicit none
-
     character(len=*),parameter :: procedureName='**cutLine**' !Name of this procedure
     !
     !Local Parameters
@@ -129,12 +155,6 @@ Contains
     !# &copy; <https://creativecommons.org/licenses/GPL/2.0/legalcode.pt>
     !# @endwarning
     !#
-
-    !Use area
-    use dump
-
-    implicit none
-
     character(len=*),parameter :: sourceName='utils.f90' !Name of source code
     character(len=*),parameter :: procedureName='**initAll**' !Name of this procedure
     !
@@ -184,12 +204,6 @@ Contains
     !# &copy; <https://creativecommons.org/licenses/GPL/2.0/legalcode.pt>
     !# @endwarning
     !#
-
-    !Use area
-    use dump
-
-    implicit none
-
     character(len=*),parameter :: sourceName='utils.f90' !Name of source code
     character(len=*),parameter :: procedureName='**getUnit**' !Name of this procedure
     !
@@ -244,12 +258,6 @@ Contains
     !# &copy; <https://creativecommons.org/licenses/GPL/2.0/legalcode.pt>
     !# @endwarning
     !#
-
-    !Use area
-    use dump
-
-    implicit none
-
     character(len=*),parameter :: sourceName='utils.f90' !Name of source code
     character(len=*),parameter :: procedureName='**releaseUnit**' !Name of this procedure
     !
@@ -301,12 +309,6 @@ Contains
     !# &copy; <https://creativecommons.org/licenses/GPL/2.0/legalcode.pt>
     !# @endwarning
     !#
-
-    !Use area
-    use dump
-
-    implicit none
-
     character(len=*),parameter :: sourceName='utils.f90' !Name of source code
     character(len=*),parameter :: procedureName='**bramsHeader**' !Name of this procedure
     !
@@ -364,12 +366,6 @@ Contains
     !# &copy; <https://creativecommons.org/licenses/GPL/2.0/legalcode.pt>
     !# @endwarning
     !#
-
-    !Use area
-    use dump
-
-    implicit none
-
     character(len=*),parameter :: sourceName='utils.f90' !Name of source code
     character(len=*),parameter :: procedureName='**to_upper**' !Name of this procedure
     !
@@ -425,12 +421,6 @@ Contains
     !# &copy; <https://creativecommons.org/licenses/GPL/2.0/legalcode.pt>
     !# @endwarning
     !#
-
-    !Use area
-    use dump
-
-    implicit none
-
     character(len=*),parameter :: sourceName='utils.f90' !Name of source code
     character(len=*),parameter :: procedureName='**to_lower**' !Name of this procedure
     !
@@ -641,11 +631,6 @@ Contains
     !# @endwarning
     !#
 
-    use dump, only: &
-         dumpMessage
-
-    implicit none
-
     ! 
 
     character(len=14), intent(in ) :: indate1
@@ -712,14 +697,6 @@ Contains
     !# &copy; <https://creativecommons.org/licenses/GPL/2.0/legalcode.pt>
     !# @endwarning
     !#
-
-    use dump, only: &
-         dumpMessage
-
-    implicit none
-
-    ! 
-
     integer,       intent(in ) :: year1
     integer,       intent(in ) :: month1
     integer,       intent(in ) :: date1
@@ -1083,12 +1060,6 @@ Contains
     !# &copy; <https://creativecommons.org/licenses/GPL/2.0/legalcode.pt>
     !# @endwarning
     !#
-
-    !Use area
-    use dump
-
-    implicit none
-
     character(len=*),parameter :: sourceName='utils.f90' !Name of source code
     character(len=*),parameter :: procedureName='**fileExist**' !Name of this procedure
     !
@@ -1138,12 +1109,6 @@ Contains
     !# &copy; <https://creativecommons.org/licenses/GPL/2.0/legalcode.pt>
     !# @endwarning
     !#
-
-    !Use area
-    use dump
-
-    implicit none
-
     character(len=*),parameter :: sourceName='utils.f90' !Name of source code
     character(len=*),parameter :: procedureName='**stepsBetweenDates**' !Name of this procedure
     !
@@ -1222,11 +1187,6 @@ Contains
   !     !# @endwarning
   !     !#
 
-  !     !Use area
-  !     use dump
-
-  !     implicit none
-
   !     character(len=*),parameter :: procedureName='**validateDates**' !Name of this procedure
   !     !
   !     !Local Parameters
@@ -1304,12 +1264,6 @@ Contains
     !# &copy; <https://creativecommons.org/licenses/GPL/2.0/legalcode.pt>
     !# @endwarning
     !#
-
-    !Use area
-    use dump
-
-    implicit none
-
     character(len=*),parameter :: procedureName='**monthsBetweenDates**' !Name of this procedure
     !
     !Local Parameters
@@ -1391,12 +1345,6 @@ Contains
     !# &copy; <https://creativecommons.org/licenses/GPL/2.0/legalcode.pt>
     !# @endwarning
     !#
-
-    !Use area
-    use dump
-
-    implicit none
-
     character(len=*),parameter :: procedureName='**interpolationBilinear**' !Name of this procedure
     !
     !Local Parameters
@@ -1598,12 +1546,6 @@ Contains
     !# &copy; <https://creativecommons.org/licenses/GPL/2.0/legalcode.pt>
     !# @endwarning
     !#
-
-    !Use area
-    use dump
-
-    implicit none
-
     character(len=*),parameter :: sourceName='generic.f90' !Name of source code
     character(len=*),parameter :: procedureName='**getOutputByteSize**' !Name of this procedure
     !
@@ -1656,12 +1598,6 @@ Contains
     !# &copy; <https://creativecommons.org/licenses/GPL/2.0/legalcode.pt>
     !# @endwarning
     !#
-
-    !Use area
-    use dump
-
-    implicit none
-
     character(len=*),parameter :: procedureName='**sortz**' !Name of this procedure
     !
     !Local Parameters
@@ -1704,8 +1640,7 @@ Contains
     ! for historical reasons, 3D tendency fields
     ! were declared 1D. This routine copies the 1D
     ! pointer array to a 3D pointer array
-    
-    implicit none
+
     real, pointer, intent(in) :: p1D(:)
     real, pointer, intent(in) :: p3D(:,:,:)
 
@@ -1736,4 +1671,21 @@ Contains
        end do
     end do
   end subroutine Copy1DTo3D
+
+
+  subroutine CopyLocalChunk(field, LocalChunk, LocalSize)
+    ! moved from io/ModRio.f90 to avoid circular dependencies
+    integer, intent(in ) :: LocalSize
+    real,    intent(in ) :: field(LocalSize)
+    real,    intent(out) :: LocalChunk(LocalSize)
+    LocalChunk(:) = field(:)
+  end subroutine CopyLocalChunk
+
+  subroutine CopyLocalChunkReverse(field, LocalChunk, LocalSize)
+    ! moved from io/ModRio.f90 to avoid circular dependencies
+    integer, intent(in ) :: LocalSize
+    real,    intent(out ) :: field(LocalSize)
+    real,    intent(in) :: LocalChunk(LocalSize)
+    field(:) = LocalChunk(:)
+  end subroutine CopyLocalChunkReverse
 end module utilsMod

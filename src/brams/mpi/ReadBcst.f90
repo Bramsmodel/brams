@@ -1,5 +1,8 @@
 module ReadBcst
 
+  use utilsMod, only: &
+       CopyLocalChunk
+  
   use ModMPassFull, only: &
        mk_2_buff, &
        mk_3_buff, &
@@ -1159,7 +1162,7 @@ contains
     if (ierr/=0) then
        call fatal_error("Error allocating localChunk (gatherData)")
     endif
-    call CopyLocalChunk(localData2D(1,1), localChunk, &
+    call CopyLocalChunk(localData2D, localChunk, &
          LocalSize(mynum,idim_type))
     sizeGathered(:) = disp(nmachs,:) + localSize(nmachs,:)
     maxSizeGathered = maxval(sizeGathered)
@@ -1249,7 +1252,7 @@ contains
     if (ierr/=0) then
        call fatal_error("Error allocating localChunk (gatherData)")
     endif
-    call CopyLocalChunk(localData3D(1,1,1), localChunk, &
+    call CopyLocalChunk(localData3D, localChunk, &
          LocalSize(mynum,idim_type))
     sizeGathered(:) = disp(nmachs,:) + localSize(nmachs,:)
     maxSizeGathered = maxval(sizeGathered)
@@ -1340,7 +1343,9 @@ contains
     if (ierr/=0) then
        call fatal_error("Error allocating localChunk (gatherData)")
     endif
-    call CopyLocalChunk(localData4D(1,1,1,1), localChunk, &
+!!$    call CopyLocalChunk(localData4D(1,1,1,1), localChunk, &
+!!$         LocalSize(mynum,idim_type))
+    call CopyLocalChunk(localData4D, localChunk, &
          LocalSize(mynum,idim_type))
     sizeGathered(:) = disp(nmachs,:) + localSize(nmachs,:)
     maxSizeGathered = maxval(sizeGathered)

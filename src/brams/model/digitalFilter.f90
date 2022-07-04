@@ -2,6 +2,10 @@
 
 module digitalFilter
 
+  use utilsMod, only: &
+       CopyLocalChunk, &
+       CopyLocalChunkReverse
+  
   use ModControlVars, only: &
        ControlVars
   

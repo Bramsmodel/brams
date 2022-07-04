@@ -9,6 +9,7 @@ MAINOBJ = rammain.o
 # Define objects.
 
 OBJ_MOD = \
+	utilsMod.o \
 	mem_stilt.o \
 	node_mod.o    \
 	ModNodeDimensions.o \

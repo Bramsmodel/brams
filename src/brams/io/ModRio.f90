@@ -7,6 +7,9 @@
 !###########################################################################
 module ModRio
 
+  use utilsMod, only: &
+       CopyLocalChunk
+
   use ModMPassFull, only: &
        mk_2_buff, &
        mk_3_buff, &
@@ -1172,7 +1175,7 @@ contains
 
              if (thisMeanFlag) then
 
-                call CopyLocalChunk(vtab_r(nv,ng)%var_m, LocalChunk, &
+                call CopyLocalChunk((/vtab_r(nv,ng)%var_m/), LocalChunk, &
                      LocalSize(mynum,idim_type))
                 varn= vtab_r(nv,ng)%name   ! could be changed on prior calls to PreProcAndGather
 
@@ -1420,7 +1423,7 @@ contains
                 end if
                 call nodeWrite(25, LocalChunk, LocalSize(mynum,idim_type))
              elseif (thisMeanFlag) then
-                call CopyLocalChunk(vtab_r(nv,ng)%var_m, LocalChunk, &
+                call CopyLocalChunk((/vtab_r(nv,ng)%var_m/), LocalChunk, &
                      LocalSize(mynum,idim_type))
                 call nodeWrite(25, LocalChunk, LocalSize(mynum,idim_type))
              end if
@@ -1843,32 +1846,3 @@ subroutine RearrangeForOutput(nxp, nyp, nzp, nzg, nzs, npatch, &
   end select
 end subroutine RearrangeForOutput
 
-subroutine CopyLocalChunk(field, LocalChunk, LocalSize)
-  implicit none
-  integer, intent(in ) :: LocalSize
-  real,    intent(in ) :: field(LocalSize)
-  real,    intent(out) :: LocalChunk(LocalSize)
-
-  LocalChunk(:) = field(:)
-end subroutine CopyLocalChunk
-
-subroutine CopyLocalChunkReverse(field, LocalChunk, LocalSize)
-  implicit none
-  integer, intent(in ) :: LocalSize
-  real,    intent(out ) :: field(LocalSize)
-  real,    intent(in) :: LocalChunk(LocalSize)
-  field(:) = LocalChunk(:)
-end subroutine CopyLocalChunkReverse
-
-subroutine writebin(iun,var,npts)
-  implicit none
-  include "constants.h"
-  integer(kind=i8), intent(in) :: npts
-  real, intent(in)             :: var(npts)
-  integer, intent(in)          :: iun
-  integer                      :: i
-
-  write(iun) (var(i),i=1,npts)
-
-  return
-end subroutine writebin

@@ -730,7 +730,7 @@ contains
        write(c0,"(i8)") oneIOFileDS%unit
        write(*,"(a)") h//" will write field "//varn//" at unit "//trim(adjustl(c0))
     end if
-    call writebin(oneIOFileDS%unit, field, fieldSize)
+    call writebin(oneIOFileDS%unit, (/field/), int(fieldSize,i8))
     oneIOFileDS%fPos = oneIOFileDS%fPos + fieldSize
 
   end subroutine PointerWriteBinStoreInfo
@@ -813,4 +813,13 @@ contains
     oneIOFileDS%enable = .false.
     oneIOFileDS%fId = "    "
   end subroutine DestroyIOFileDS
+
+  subroutine WriteBin(iun,var,npts)
+    ! moved from io/ModRio.f90 to avoid circular dependencies
+    integer(kind=i8), intent(in) :: npts
+    real, intent(in)             :: var(npts)
+    integer, intent(in)          :: iun
+    integer                      :: i
+    write(iun) (var(i),i=1,npts)
+  end subroutine WriteBin
 end module an_header
