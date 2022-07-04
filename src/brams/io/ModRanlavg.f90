@@ -45,8 +45,6 @@ contains
     integer, save :: ncall=0,nvars(maxgrds,2),numadd,navg
     real, save :: avgtim1,frq,avgtim2,timem,timecent
 
-    real, pointer :: vm_p
-
     ! This routine averages all of the analysis variables over
     ! ANLAVG. It also accumulates precipitation for all of the
     ! microphysics variables since the last analysis write.
@@ -130,23 +128,42 @@ contains
 
        if (vtab_r(nv,ngrid)%imean == 1) then
 
-          vm_p=> vtab_r(nv,ngrid)%var_m
-
-          if(izero.eq.1) then
-             call azero_l(vtab_r(nv,ngrid)%npts, vm_p)
-          end if
           if (vtab_r(nv,ngrid)%idim_type == 2) then
-             call average(vtab_r(nv,ngrid)%npts,vm_p,vtab_r(nv,ngrid)%var_p_2D,navg)
+             if(izero.eq.1) then
+                call azero_l(vtab_r(nv,ngrid)%npts, vtab_r(nv,ngrid)%var_m_2D)
+             end if
+             call average(vtab_r(nv,ngrid)%npts,vtab_r(nv,ngrid)%var_m_2D,&
+                  vtab_r(nv,ngrid)%var_p_2D,navg)
           else if (vtab_r(nv,ngrid)%idim_type == 3) then
-             call average(vtab_r(nv,ngrid)%npts,vm_p,vtab_r(nv,ngrid)%var_p_3D,navg)
+             if(izero.eq.1) then
+                call azero_l(vtab_r(nv,ngrid)%npts, vtab_r(nv,ngrid)%var_m_3D)
+             end if
+             call average(vtab_r(nv,ngrid)%npts,vtab_r(nv,ngrid)%var_m_3D,&
+                  vtab_r(nv,ngrid)%var_p_3D,navg)
           else if (vtab_r(nv,ngrid)%idim_type == 4) then
-             call average(vtab_r(nv,ngrid)%npts,vm_p,vtab_r(nv,ngrid)%var_p_4D,navg)
+             if(izero.eq.1) then
+                call azero_l(vtab_r(nv,ngrid)%npts, vtab_r(nv,ngrid)%var_m_4D)
+             end if
+             call average(vtab_r(nv,ngrid)%npts,vtab_r(nv,ngrid)%var_m_4D,&
+                  vtab_r(nv,ngrid)%var_p_4D,navg)
           else if (vtab_r(nv,ngrid)%idim_type == 5) then
-             call average(vtab_r(nv,ngrid)%npts,vm_p,vtab_r(nv,ngrid)%var_p_4D,navg)
+             if(izero.eq.1) then
+                call azero_l(vtab_r(nv,ngrid)%npts, vtab_r(nv,ngrid)%var_m_4D)
+             end if
+             call average(vtab_r(nv,ngrid)%npts,vtab_r(nv,ngrid)%var_m_4D,&
+                  vtab_r(nv,ngrid)%var_p_4D,navg)
           else if (vtab_r(nv,ngrid)%idim_type == 6) then
-             call average(vtab_r(nv,ngrid)%npts,vm_p,vtab_r(nv,ngrid)%var_p_3D,navg)
+             if(izero.eq.1) then
+                call azero_l(vtab_r(nv,ngrid)%npts, vtab_r(nv,ngrid)%var_m_3D)
+             end if
+             call average(vtab_r(nv,ngrid)%npts,vtab_r(nv,ngrid)%var_m_3D,&
+                  vtab_r(nv,ngrid)%var_p_3D,navg)
           else if (vtab_r(nv,ngrid)%idim_type == 7) then
-             call average(vtab_r(nv,ngrid)%npts,vm_p,vtab_r(nv,ngrid)%var_p_3D,navg)
+             if(izero.eq.1) then
+                call azero_l(vtab_r(nv,ngrid)%npts, vtab_r(nv,ngrid)%var_m_3D)
+             end if
+             call average(vtab_r(nv,ngrid)%npts,vtab_r(nv,ngrid)%var_m_3D,&
+                  vtab_r(nv,ngrid)%var_p_3D,navg)
           end if
        endif
 

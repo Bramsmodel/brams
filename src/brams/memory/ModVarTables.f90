@@ -58,8 +58,12 @@ module ModVarTables
   ! Define data type for main variable table
 
   type VarTableFields
-     real, pointer      :: var_m
-     ! var_m: scalar pointing to field average first position
+     real, pointer      :: var_m_2D(:,:) => null()
+     ! var_m_2D: pointer to full 2D field average
+     real, pointer      :: var_m_3D(:,:,:) => null()
+     ! var_m_3D: pointer to full 3D field average
+     real, pointer      :: var_m_4D(:,:,:,:) => null()
+     ! var_m_4D: pointer to full 4D field average
      real, pointer      :: var_p_2D(:,:) => null()
      ! var_p_2D: pointer to full real 2D field 
      real, pointer      :: var_p_3D(:,:,:) => null()
@@ -68,6 +72,8 @@ module ModVarTables
      ! var_p_4D: pointer to full real 4D field 
      integer, pointer   :: var_p_2D_I(:,:) => null()
      ! var_p_2D_I: pointer to full integer 2D field 
+     integer, pointer   :: var_m_2D_I(:,:) => null()
+     ! var_p_2D_I: pointer to full integer 2D field average
      integer            :: idim_type
      ! idim_type codes dimensionality of var_p:
      ! idim_type == 2 means (nmxp, nmyp)
@@ -119,16 +125,6 @@ module ModVarTables
      module procedure zero_vtab_4D
   end interface ZeroVTab
 
-  !LFR em 06mai2020 
-  interface
-     subroutine vtables2_I(var, varm, ng, npts, imean, tabstr)
-       include "constants.h"
-       integer, target :: var,varm
-       integer, intent(in) :: ng,imean !npts
-       integer(kind=i8), intent(in) :: npts
-       character (len=*), intent(in) :: tabstr
-     end subroutine vtables2_I
-  end interface
 
 contains
 
@@ -148,9 +144,10 @@ contains
 
     call vtables2(var(1,1), varm(1,1), ng, npts, imean, tabstr)
 
-    ! save full field
+    ! save full field and average field
 
     vtab_r(num_var(ng),ng)%var_p_2D => var
+    vtab_r(num_var(ng),ng)%var_m_2D => varm
   end subroutine InsertVTab_2D
 
 
@@ -163,13 +160,66 @@ contains
     integer,           intent(in) :: imean
     character (len=*), intent(in) :: tabstr
 
-    ! insert the old way
+    character (len=80) :: line
+    character (len=1) :: toksep=':', cdimen,ctype
+    character (len=32) :: tokens(10)
+    character (len=8) :: cname,ctab
+    integer :: ntok,nt,nv
+    
+    ! insert text of vtables2 and adapt to integer fields
 
-    call vtables2_I(var(1,1), varm(1,1), ng, npts, imean, tabstr)
+    call tokenize1(tabstr,tokens,ntok,toksep)
 
-    ! save full field
+    num_var(ng)=num_var(ng)+1
+    nv=num_var(ng)
+
+    vtab_r(nv,ng)%name=tokens(1)
+    vtab_r(nv,ng)%npts=npts
+    read(tokens(2),*) vtab_r(nv,ng)%idim_type
+
+    vtab_r(nv,ng)%ihist=0
+    vtab_r(nv,ng)%ianal=0
+    vtab_r(nv,ng)%imean=imean
+    vtab_r(nv,ng)%ilite=0
+    vtab_r(nv,ng)%impti=0
+    vtab_r(nv,ng)%impt1=0
+    vtab_r(nv,ng)%impt2=0
+    vtab_r(nv,ng)%impt3=0
+    vtab_r(nv,ng)%imptd=0
+    vtab_r(nv,ng)%irecycle=0
+
+    do nt=3,ntok
+       ctab=tokens(nt)
+
+       if(ctab == 'hist' ) then
+          vtab_r(nv,ng)%ihist=1
+       elseif(ctab == 'anal' ) then
+          vtab_r(nv,ng)%ianal=1
+       elseif(ctab == 'lite' ) then
+          vtab_r(nv,ng)%ilite=1
+       elseif(ctab == 'mpti' ) then
+          vtab_r(nv,ng)%impti=1
+       elseif(ctab == 'mpt1' ) then
+          vtab_r(nv,ng)%impt1=1
+       elseif(ctab == 'mpt2' ) then
+          vtab_r(nv,ng)%impt2=1
+       elseif(ctab == 'mpt3' ) then
+          vtab_r(nv,ng)%impt3=1
+       elseif(ctab == 'mptd' ) then
+          vtab_r(nv,ng)%imptd=1
+       elseif(ctab == 'recycle' ) then
+          vtab_r(nv,ng)%irecycle=1
+       else
+          print*, 'Illegal table specification for var:', tokens(1),ctab
+          stop 'bad var table'
+       endif
+
+    enddo
+
+    ! save full field and average field
 
     vtab_r(num_var(ng),ng)%var_p_2D_I => var
+    vtab_r(num_var(ng),ng)%var_m_2D_I => varm
   end subroutine InsertVTab_2D_I
 
 
@@ -187,9 +237,10 @@ contains
 
     call vtables2(var(1,1,1), varm(1,1,1), ng, npts, imean, tabstr)
 
-    ! save full field
+    ! save full field and average field
 
     vtab_r(num_var(ng),ng)%var_p_3D => var
+    vtab_r(num_var(ng),ng)%var_m_3D => varm
   end subroutine InsertVTab_3D
 
 
@@ -206,9 +257,10 @@ contains
 
     call vtables2(var(1,1,1,1), varm(1,1,1,1), ng, npts, imean, tabstr)
 
-    ! save full field
+    ! save full field and average field
 
     vtab_r(num_var(ng),ng)%var_p_4D => var
+    vtab_r(num_var(ng),ng)%var_m_4D => varm
   end subroutine InsertVTab_4D
 
 
@@ -249,9 +301,6 @@ contains
     !print *,'LFR->DBG: vtables2: ',npts,tokens(1); call flush(6)
     num_var(ng)=num_var(ng)+1
     nv=num_var(ng)
-
-    vtab_r(nv,ng)%var_m => varm
-
 
     vtab_r(nv,ng)%name=tokens(1)
     vtab_r(nv,ng)%npts=npts
@@ -700,80 +749,4 @@ contains
 
 end module ModVarTables
 
-subroutine vtables2_I(var, varm, ng, npts, imean, tabstr)
-  use ModVarTables, only: vtab_r, &
-       num_var
-  implicit none
-  include "constants.h"
-  real, target :: var,varm
-  integer, intent(in) :: ng,imean !npts
-  integer(kind=i8), intent(in) :: npts
-  character (len=*), intent(in) :: tabstr
 
-  character (len=80) ::line
-  character (len=1) ::toksep=':', cdimen,ctype
-  character (len=32) ::tokens(10)
-  character (len=8) :: cname,ctab
-
-  integer :: ntok,nt,nv
-
-  call tokenize1(tabstr,tokens,ntok,toksep)
-
-  num_var(ng)=num_var(ng)+1
-  nv=num_var(ng)
-
-  vtab_r(nv,ng)%var_m => varm
-
-
-  vtab_r(nv,ng)%name=tokens(1)
-  vtab_r(nv,ng)%npts=npts
-  read(tokens(2),*) vtab_r(nv,ng)%idim_type
-  !print*,'tab:',nv,ng,vtab_r(nv,ng)%name ,vtab_r(nv,ng)%npts
-
-  vtab_r(nv,ng)%ihist=0
-  vtab_r(nv,ng)%ianal=0
-  vtab_r(nv,ng)%imean=imean
-  vtab_r(nv,ng)%ilite=0
-  vtab_r(nv,ng)%impti=0
-  vtab_r(nv,ng)%impt1=0
-  vtab_r(nv,ng)%impt2=0
-  vtab_r(nv,ng)%impt3=0
-
-  !--(DMK)------------------------------------------
-  vtab_r(nv,ng)%imptd=0
-  !--(DMK)------------------------------------------
-
-  vtab_r(nv,ng)%irecycle=0
-
-  do nt=3,ntok
-     ctab=tokens(nt)
-
-     if(ctab == 'hist' ) then
-        vtab_r(nv,ng)%ihist=1
-     elseif(ctab == 'anal' ) then
-        vtab_r(nv,ng)%ianal=1
-     elseif(ctab == 'lite' ) then
-        vtab_r(nv,ng)%ilite=1
-     elseif(ctab == 'mpti' ) then
-        vtab_r(nv,ng)%impti=1
-     elseif(ctab == 'mpt1' ) then
-        vtab_r(nv,ng)%impt1=1
-     elseif(ctab == 'mpt2' ) then
-        vtab_r(nv,ng)%impt2=1
-     elseif(ctab == 'mpt3' ) then
-        vtab_r(nv,ng)%impt3=1
-
-        !--(DMK)------------------------------------------
-     elseif(ctab == 'mptd' ) then
-        vtab_r(nv,ng)%imptd=1
-        !--(DMK)------------------------------------------
-
-     elseif(ctab == 'recycle' ) then
-        vtab_r(nv,ng)%irecycle=1
-     else
-        print*, 'Illegal table specification for var:', tokens(1),ctab
-        stop 'bad var table'
-     endif
-
-  enddo
-end subroutine vtables2_I

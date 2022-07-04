@@ -2408,22 +2408,22 @@ contains
              if(vtab_r(nv,ngr)%imean == 1) then
                 if (vtab_r(nv,ngr)%idim_type == 2) then
                    call atob_long(vtab_r(nv,ngr)%npts, vtab_r(nv,ngr)%var_p_2D, &
-                        vtab_r(nv,ngr)%var_m)
+                        vtab_r(nv,ngr)%var_m_2D)
                 else if (vtab_r(nv,ngr)%idim_type == 3) then
                    call atob_long(vtab_r(nv,ngr)%npts, vtab_r(nv,ngr)%var_p_3D, &
-                        vtab_r(nv,ngr)%var_m)
+                        vtab_r(nv,ngr)%var_m_3D)
                 else if (vtab_r(nv,ngr)%idim_type == 4) then
                    call atob_long(vtab_r(nv,ngr)%npts, vtab_r(nv,ngr)%var_p_4D, &
-                        vtab_r(nv,ngr)%var_m)
+                        vtab_r(nv,ngr)%var_m_4D)
                 else if (vtab_r(nv,ngr)%idim_type == 5) then
                    call atob_long(vtab_r(nv,ngr)%npts, vtab_r(nv,ngr)%var_p_4D, &
-                        vtab_r(nv,ngr)%var_m)
+                        vtab_r(nv,ngr)%var_m_4D)
                 else if (vtab_r(nv,ngr)%idim_type == 6) then
                    call atob_long(vtab_r(nv,ngr)%npts, vtab_r(nv,ngr)%var_p_3D, &
-                        vtab_r(nv,ngr)%var_m)
+                        vtab_r(nv,ngr)%var_m_3D)
                 else if (vtab_r(nv,ngr)%idim_type == 7) then
                    call atob_long(vtab_r(nv,ngr)%npts, vtab_r(nv,ngr)%var_p_3D, &
-                        vtab_r(nv,ngr)%var_m)
+                        vtab_r(nv,ngr)%var_m_3D)
                 end if
              endif
           enddo

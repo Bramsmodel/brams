@@ -1174,9 +1174,26 @@ contains
              end if
 
              if (thisMeanFlag) then
+                if (vtab_r(nv,ng)%idim_type == 2) then
+                   call CopyLocalChunk(vtab_r(nv,ng)%var_m_2D, LocalChunk, &
+                        LocalSize(mynum,idim_type))
+                else if (vtab_r(nv,ng)%idim_type == 3) then
+                   call CopyLocalChunk(vtab_r(nv,ng)%var_m_3D, LocalChunk, &
+                        LocalSize(mynum,idim_type))
+                else if (vtab_r(nv,ng)%idim_type == 4) then
+                   call CopyLocalChunk(vtab_r(nv,ng)%var_m_4D, LocalChunk, &
+                        LocalSize(mynum,idim_type))
+                else if (vtab_r(nv,ng)%idim_type == 5) then
+                   call CopyLocalChunk(vtab_r(nv,ng)%var_m_4D, LocalChunk, &
+                        LocalSize(mynum,idim_type))
+                else if (vtab_r(nv,ng)%idim_type == 6) then
+                   call CopyLocalChunk(vtab_r(nv,ng)%var_m_3D, LocalChunk, &
+                        LocalSize(mynum,idim_type))
+                else if (vtab_r(nv,ng)%idim_type == 7) then
+                   call CopyLocalChunk(vtab_r(nv,ng)%var_m_3D, LocalChunk, &
+                        LocalSize(mynum,idim_type))
+                end if
 
-                call CopyLocalChunk((/vtab_r(nv,ng)%var_m/), LocalChunk, &
-                     LocalSize(mynum,idim_type))
                 varn= vtab_r(nv,ng)%name   ! could be changed on prior calls to PreProcAndGather
 
                 if (dumpLocal) then
@@ -1423,8 +1440,25 @@ contains
                 end if
                 call nodeWrite(25, LocalChunk, LocalSize(mynum,idim_type))
              elseif (thisMeanFlag) then
-                call CopyLocalChunk((/vtab_r(nv,ng)%var_m/), LocalChunk, &
-                     LocalSize(mynum,idim_type))
+                if (vtab_r(nv,ng)%idim_type == 2) then
+                   call CopyLocalChunk(vtab_r(nv,ng)%var_m_2D, LocalChunk, &
+                        LocalSize(mynum,idim_type))
+                else if (vtab_r(nv,ng)%idim_type == 3) then
+                   call CopyLocalChunk(vtab_r(nv,ng)%var_m_3D, LocalChunk, &
+                        LocalSize(mynum,idim_type))
+                else if (vtab_r(nv,ng)%idim_type == 4) then
+                   call CopyLocalChunk(vtab_r(nv,ng)%var_m_4D, LocalChunk, &
+                        LocalSize(mynum,idim_type))
+                else if (vtab_r(nv,ng)%idim_type == 5) then
+                   call CopyLocalChunk(vtab_r(nv,ng)%var_m_4D, LocalChunk, &
+                        LocalSize(mynum,idim_type))
+                else if (vtab_r(nv,ng)%idim_type == 6) then
+                   call CopyLocalChunk(vtab_r(nv,ng)%var_m_3D, LocalChunk, &
+                        LocalSize(mynum,idim_type))
+                else if (vtab_r(nv,ng)%idim_type == 7) then
+                   call CopyLocalChunk(vtab_r(nv,ng)%var_m_3D, LocalChunk, &
+                        LocalSize(mynum,idim_type))
+                end if
                 call nodeWrite(25, LocalChunk, LocalSize(mynum,idim_type))
              end if
 
