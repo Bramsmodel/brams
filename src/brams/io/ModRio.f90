@@ -1832,7 +1832,6 @@ contains
 
 
 
-end module ModRio
 
 
 
@@ -1880,3 +1879,4 @@ subroutine RearrangeForOutput(nxp, nyp, nzp, nzg, nzs, npatch, &
   end select
 end subroutine RearrangeForOutput
 
+end module ModRio

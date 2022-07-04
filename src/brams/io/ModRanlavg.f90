@@ -7,13 +7,9 @@
 !###########################################################################
 module ModRanlavg
 
-
-contains
-
-
-
-  subroutine anlavg(n1, n2, n3, oneBasic)
-
+  use iso_fortran_env, only: &
+       int64
+  
     use grid_dims, only: maxgrds
     use ModVarTables, only: num_var, vtab_r
     use mem_grid, only: dtlongn, time, jdim, ngrid
@@ -29,13 +25,21 @@ contains
          int64
 
     implicit none
-!!$    include "constants.h"
+
+    private
+
+    public :: anlavg
+    public :: average
+
+contains
+
+
+
+  subroutine anlavg(n1, n2, n3, oneBasic)
     integer, intent(in) :: n1
     integer, intent(in) :: n2
     integer, intent(in) :: n3
     type(BasicFields), pointer, intent(in) :: oneBasic
-
-    include 'interface.h'
 
     integer :: nv,ng
     integer :: n3dadd,n3d,n2dadd,n2d,izero,indvar,indavg
@@ -178,12 +182,8 @@ contains
 
   !subroutine zeromeangrad(a,ifm,n1,n2,n3,ia,ib,ja,jb)
 
-  !implicit none
   !real :: a(*)
   !integer :: ifm,n1,n2,n3,ia,ib,ja,jb
-
-  !include 'rcommons.h'
-  !include 'interface.h'
 
   !integer :: n3d,ithflg,irvflg
 
@@ -210,64 +210,57 @@ contains
 
   !*******************************************************************************
 
-  subroutine rowcolmn(n1,n2,n3,ia,ib,ja,jb,var)
+!!$  subroutine rowcolmn(n1,n2,n3,ia,ib,ja,jb,var)
+!!$
+!!$    integer :: n1,n2,n3,ia,ib,ja,jb
+!!$    real :: var(n1,n2,n3)
+!!$
+!!$    integer :: i,j,k
+!!$
+!!$    if(ia.eq.ib.and.ia.eq.1)then
+!!$       do j=ja,jb
+!!$          do i=ia,ib
+!!$             do k=1,n1
+!!$                var(k,i,j)=var(k,i+1,j)
+!!$             enddo
+!!$          enddo
+!!$       enddo
+!!$    elseif(ia.eq.ib.and.ia.eq.n2)then
+!!$       do j=ja,jb
+!!$          do i=ia,ib
+!!$             do k=1,n1
+!!$                var(k,i,j)=var(k,i-1,j)
+!!$             enddo
+!!$          enddo
+!!$       enddo
+!!$    elseif(ja.eq.jb.and.ja.eq.1)then
+!!$       do j=ja,jb
+!!$          do i=ia,ib
+!!$             do k=1,n1
+!!$                var(k,i,j)=var(k,i,j+1)
+!!$             enddo
+!!$          enddo
+!!$       enddo
+!!$    elseif(ja.eq.jb.and.ja.eq.n3)then
+!!$       do j=ja,jb
+!!$          do i=ia,ib
+!!$             do k=1,n1
+!!$                var(k,i,j)=var(k,i,j-1)
+!!$             enddo
+!!$          enddo
+!!$       enddo
+!!$    endif
+!!$
+!!$    return
+!!$  end subroutine rowcolmn
 
-    implicit none
-    integer :: n1,n2,n3,ia,ib,ja,jb
-    real :: var(n1,n2,n3)
 
-    integer :: i,j,k
-
-    if(ia.eq.ib.and.ia.eq.1)then
-       do j=ja,jb
-          do i=ia,ib
-             do k=1,n1
-                var(k,i,j)=var(k,i+1,j)
-             enddo
-          enddo
-       enddo
-    elseif(ia.eq.ib.and.ia.eq.n2)then
-       do j=ja,jb
-          do i=ia,ib
-             do k=1,n1
-                var(k,i,j)=var(k,i-1,j)
-             enddo
-          enddo
-       enddo
-    elseif(ja.eq.jb.and.ja.eq.1)then
-       do j=ja,jb
-          do i=ia,ib
-             do k=1,n1
-                var(k,i,j)=var(k,i,j+1)
-             enddo
-          enddo
-       enddo
-    elseif(ja.eq.jb.and.ja.eq.n3)then
-       do j=ja,jb
-          do i=ia,ib
-             do k=1,n1
-                var(k,i,j)=var(k,i,j-1)
-             enddo
-          enddo
-       enddo
-    endif
-
-    return
-  end subroutine rowcolmn
-end module ModRanlavg
-
-!**(JP)** moved outside the module due to calls inside the module
-! passing scalar pointer vtab_r to formal argument av
-!**(JP)** could be moved to module interior, local procedure
-! whenever vtab_r is modified to a real field
-subroutine average(m, av, v, navg)
-
-    implicit none
-    include "constants.h"
+  subroutine average(m, av, v, navg)
     integer, intent(in)          :: navg
-    integer(kind=i8), intent(in) :: m
+    integer(kind=int64), intent(in) :: m
     real, intent(inout)          :: av(m)
     real, intent(in)             :: v(m)
 
     av = av + v / float(navg)
   end subroutine average
+end module ModRanlavg
