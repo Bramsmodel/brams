@@ -6,63 +6,63 @@
 !  Regional Atmospheric Modeling System - RAMS
 !###########################################################################
 
-   integer function outRealSize()
-       !# get the output byte size accordingly the machine
-       !#
-       !# @note
-       !# ![](http://brams.cptec.inpe.br/wp-content/uploads/2015/11/logo-brams.navigation.png "")
-       !#
-       !# **Brief**: Return the output real size (1,4,8,etc) accordingly the machine
-       !#
-       !# **Documentation**: <http://brams.cptec.inpe.br/documentation/>
-       !#
-       !# **Author(s)**: Luiz Flavio Rodrigues **&#9993;**<luiz.rodrigues@inpe.br>
-       !#
-       !# **Date**: 28 July 2020 (Tuesday)
-       !# @endnote
-       !#
-       !# @changes
-       !# &#9744; <br/>
-       !# @endchanges
-       !# @bug
-       !#
-       !#@endbug
-       !#
-       !#@todo
-       !#  &#9744; <br/>
-       !# @endtodo
-       !#
-       !# @warning
-       !# Now is under CC-GPL License, please see
-       !# &copy; <https://creativecommons.org/licenses/GPL/2.0/legalcode.pt>
-       !# @endwarning
-       !#
-       
-       !Use area
-       use dump
-   
-       implicit none
-   
-       include "constants.h"
-       character(len=*),parameter :: sourceName='generic.f90' !Name of source code
-       character(len=*),parameter :: procedureName='**getOutputByteSize**' !Name of this procedure
-       !
-       !Local Parameters
-   
-       !Input/Output variables
-   
-       !Local variables
-       integer :: output_byte_size
-       !# output_byte_size
-       real :: bytes_in_float
-       !# bytes_in_float
-   
-       !Code
-       inquire(iolength=output_byte_size) bytes_in_float
-   
-       outRealSize=output_byte_size
-   
-   end function outRealSize 
+integer function outRealSize()
+  !# get the output byte size accordingly the machine
+  !#
+  !# @note
+  !# ![](http://brams.cptec.inpe.br/wp-content/uploads/2015/11/logo-brams.navigation.png "")
+  !#
+  !# **Brief**: Return the output real size (1,4,8,etc) accordingly the machine
+  !#
+  !# **Documentation**: <http://brams.cptec.inpe.br/documentation/>
+  !#
+  !# **Author(s)**: Luiz Flavio Rodrigues **&#9993;**<luiz.rodrigues@inpe.br>
+  !#
+  !# **Date**: 28 July 2020 (Tuesday)
+  !# @endnote
+  !#
+  !# @changes
+  !# &#9744; <br/>
+  !# @endchanges
+  !# @bug
+  !#
+  !#@endbug
+  !#
+  !#@todo
+  !#  &#9744; <br/>
+  !# @endtodo
+  !#
+  !# @warning
+  !# Now is under CC-GPL License, please see
+  !# &copy; <https://creativecommons.org/licenses/GPL/2.0/legalcode.pt>
+  !# @endwarning
+  !#
+
+  !Use area
+  use dump
+
+  implicit none
+
+  include "constants.h"
+  character(len=*),parameter :: sourceName='generic.f90' !Name of source code
+  character(len=*),parameter :: procedureName='**getOutputByteSize**' !Name of this procedure
+  !
+  !Local Parameters
+
+  !Input/Output variables
+
+  !Local variables
+  integer :: output_byte_size
+  !# output_byte_size
+  real :: bytes_in_float
+  !# bytes_in_float
+
+  !Code
+  inquire(iolength=output_byte_size) bytes_in_float
+
+  outRealSize=output_byte_size
+
+end function outRealSize
 
 !***************************************************************************
 
@@ -73,7 +73,7 @@ real function walltime()
   real, save :: adjustOverflow=0.0
   call system_clock(count=ii,count_rate=ir,count_max=im)
   if (ii < previous) then
-    adjustOverflow=adjustOverflow+real(im)/real(ir)
+     adjustOverflow=adjustOverflow+real(im)/real(ir)
   end if
   previous=ii
   walltime=adjustOverflow + real(ii)/real(ir) ! real(ii)/float(ir)
@@ -132,6 +132,67 @@ subroutine unarrange(nzp, nxp, nyp, a, b)
      enddo
   enddo
 end subroutine unarrange
+
+!******************************************************************************
+
+subroutine rearrange_p(n2,n3,n4,n5,a,b)
+  integer :: n2,n3,n4,n5
+  real :: a(n4,n2,n3,n5),b(n2,n3,n4,n5)
+
+  integer :: i,j,k,ip
+
+  do ip = 1,n5
+     do k = 1,n4
+        do j = 1,n3
+           do i = 1,n2
+              b(i,j,k,ip) = a(k,i,j,ip)
+           enddo
+        enddo
+     enddo
+  enddo
+  return
+end subroutine rearrange_p
+
+!******************************************************************************
+
+
+subroutine RearrangeForOutput(nxp, nyp, nzp, nzg, nzs, npatch, &
+     idim_type, InField, OutField)
+  implicit none
+  integer,          intent(in   ) :: nxp
+  integer,          intent(in   ) :: nyp
+  integer,          intent(in   ) :: nzp
+  integer,          intent(in   ) :: nzg
+  integer,          intent(in   ) :: nzs
+  integer,          intent(in   ) :: npatch
+  integer,          intent(in   ) :: idim_type
+  real,             intent(in   ) :: InField(*)
+  real,             intent(out  ) :: OutField(*)
+
+  character(len=*), parameter :: h="**(RearrangeForOutput)**"
+
+  ! if field to be rearranged, rearrange and dump
+
+  select case(idim_type)
+
+  case(3)
+
+     ! Rearrange 3-d variables from (k,i,j) to (i,j,k)
+     call rearrange (nzp, nxp, nyp, InField, OutField)
+
+  case(4)
+
+     ! Rearrange 4-d leaf%soil variables from (k,i,j,ip) to (i,j,k,ip)
+     call rearrange_p (nxp, nyp, nzg, npatch, InField, OutField)
+
+  case (5)
+
+     ! Rearrange 4-d leaf%sfcwater variables from (k,i,j,ip) to (i,j,k,ip)
+     call rearrange_p (nxp, nyp, nzs, npatch, InField, OutField)
+
+  end select
+end subroutine RearrangeForOutput
+
 
 !***************************************************************************
 
@@ -250,7 +311,7 @@ subroutine rams_f_open_u(iunit, filenm, formt, stat, act, pos, iclob)
   ! replaces old jclopen and jclget
   ! files are overwritten unless iclob (ICLOBBER) set to 1
   use dump, only: &
-    dumpMessage
+       dumpMessage
 
   implicit none
 
@@ -286,8 +347,8 @@ subroutine rams_f_open_u(iunit, filenm, formt, stat, act, pos, iclob)
   if (ierr /= 0) then
      write(c0, "(i8)") ierr
      !call fatal_error(h//" open file "//trim(filenm)//", FORM="//formt//&
-    !      ", STATUS="//stat//", ACTION="//act//", POSITION="//pos//&
-    !      " fails with IOSTAT="//trim(adjustl(c0)))
+     !      ", STATUS="//stat//", ACTION="//act//", POSITION="//pos//&
+     !      " fails with IOSTAT="//trim(adjustl(c0)))
      iErrNumber=dumpMessage(c_tty,c_yes,header,modelVersion,c_fatal, &
           " open file "//trim(filenm)//", FORM="//formt//&
           ", STATUS="//stat//", ACTION="//act//", POSITION="//pos//&
@@ -297,7 +358,7 @@ end subroutine rams_f_open_u
 
 integer function AvailableFileUnit()
   use dump, only: &
-    dumpMessage
+       dumpMessage
 
   implicit none
 
@@ -325,3 +386,5 @@ integer function AvailableFileUnit()
      AvailableFileUnit = iunit
   end if
 end function AvailableFileUnit
+
+

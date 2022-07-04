@@ -14,10 +14,10 @@ module ModRio
        mk_2_buff, &
        mk_3_buff, &
        mk_4_buff
-  
+
   use ModControlVars, only: &
        ControlVars
-  
+
   use grid_dims, only: &
        maxgrds
 
@@ -77,7 +77,7 @@ module ModRio
   use ModRcio, only: &
        cio, &
        DumpIOHeadTable
-       
+
   use node_mod, only: &
        mzp, &
        mxp, &
@@ -128,19 +128,18 @@ module ModRio
 
   use ModTurbFields, only: &
        TurbFields
-  
+
   use ModNamelistFile, only: &
        NamelistFile
-  
+
   implicit none
 
   include "files.h"
-  
+
   private
 
   public :: OutputFields
   public :: history_start
-  public :: rearrange_p
 contains
 
   subroutine history_start(name_name)
@@ -448,27 +447,6 @@ contains
 
   !******************************************************************************
 
-  !******************************************************************************
-
-  subroutine rearrange_p(n2,n3,n4,n5,a,b)
-    integer :: n2,n3,n4,n5
-    real :: a(n4,n2,n3,n5),b(n2,n3,n4,n5)
-
-    integer :: i,j,k,ip
-
-    do ip = 1,n5
-       do k = 1,n4
-          do j = 1,n3
-             do i = 1,n2
-                b(i,j,k,ip) = a(k,i,j,ip)
-             enddo
-          enddo
-       enddo
-    enddo
-    return
-  end subroutine rearrange_p
-
-  !******************************************************************************
 
 
 
@@ -612,7 +590,7 @@ contains
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     integer, intent(in) :: gridId
     type(ControlVars), pointer, intent(in) :: oneControlVars
-    
+
     integer :: maxNFields, nvMax, ierr, grid
 
     logical, allocatable :: Willwrite(:,:)
@@ -1823,60 +1801,4 @@ contains
          dd//"-"//hh//"-g"//trim(gg)//"."//sufix
 
   end subroutine DefineNameFileWrite
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-subroutine RearrangeForOutput(nxp, nyp, nzp, nzg, nzs, npatch, &
-     idim_type, InField, OutField)
-  use ModRio, only: &
-       rearrange_p
-  implicit none
-  integer,          intent(in   ) :: nxp
-  integer,          intent(in   ) :: nyp
-  integer,          intent(in   ) :: nzp
-  integer,          intent(in   ) :: nzg
-  integer,          intent(in   ) :: nzs
-  integer,          intent(in   ) :: npatch
-  integer,          intent(in   ) :: idim_type
-  real,             intent(in   ) :: InField(*)
-  real,             intent(out  ) :: OutField(*)
-
-  character(len=*), parameter :: h="**(RearrangeForOutput)**"
-
-  ! if field to be rearranged, rearrange and dump
-
-  select case(idim_type)
-
-  case(3)
-
-     ! Rearrange 3-d variables from (k,i,j) to (i,j,k)
-     call rearrange (nzp, nxp, nyp, InField, OutField)
-
-  case(4)
-
-     ! Rearrange 4-d leaf%soil variables from (k,i,j,ip) to (i,j,k,ip)
-     call rearrange_p (nxp, nyp, nzg, npatch, InField, OutField)
-
-  case (5)
-
-     ! Rearrange 4-d leaf%sfcwater variables from (k,i,j,ip) to (i,j,k,ip)
-     call rearrange_p (nxp, nyp, nzs, npatch, InField, OutField)
-
-  end select
-end subroutine RearrangeForOutput
-
 end module ModRio
