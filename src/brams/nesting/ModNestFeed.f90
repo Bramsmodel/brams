@@ -25,62 +25,129 @@ module ModNestFeed
 
   public :: fdback
 
-  interface fdback
-     module procedure fdback3D
-     module procedure fdback3D1D
-     module procedure fdback2D
-  end interface fdback
 contains
 
 
-
-
-  subroutine fdback3D(ac,af,dc,df,nzc,nxc,nyc,nzf,nxf,nyf,nf,vnam,sumflg)
+  subroutine fdback(ac,af,dc,df,nzc,nxc,nyc,nzf,nxf,nyf,nf,vnam,sumflg)
     ! Arguments:
-    real, intent(inout)          :: ac(:,:,:) ! (nzc,nxc,nyc)      !value at Coarse grid
-    real, intent(in)             :: af(:,:,:) ! (nzf,nxf,nyf)      !value at Fine grid
-    real, intent(in)             :: dc(:,:,:) ! (nzc,nxc,nyc)      !density at Coarse grid
-    real, intent(in)             :: df(:,:,:) ! (nzf,nxf,nyf)      !density at Fine grid
     integer, intent(in)          :: nzc, nxc, nyc, nzf, nxf, nyf, nf
     character(len=*), intent(in) :: vnam
-    real, intent(inout)          :: sumflg(:,:,:) ! (nzc,nxc,nyc)  !Coarse grid
+    real, intent(inout)          :: ac(nzc,nxc,nyc)      !value at Coarse grid
+    real, intent(in)             :: dc(nzc,nxc,nyc)      !density at Coarse grid
+    real, intent(inout)          :: sumflg(nzc,nxc,nyc)  !Coarse grid
+    real, intent(in)             :: af(nzf,nxf,nyf)      !value at Fine grid
+    real, intent(in)             :: df(nzf,nxf,nyf)      !density at Fine grid
 
-    call HiddenFdback(ac,af,dc,df,nzc,nxc,nyc,nzf,nxf,nyf,nf,vnam,sumflg)
-  end subroutine fdback3D
-
-
-
-
-    subroutine fdback3D1D(ac,af,dc,df,nzc,nxc,nyc,nzf,nxf,nyf,nf,vnam,sumflg)
-    ! Arguments:
-    real, intent(inout)          :: ac(:,:,:) ! (nzc,nxc,nyc)      !value at Coarse grid
-    real, intent(in)             :: af(:,:,:) ! (nzf,nxf,nyf)      !value at Fine grid
-    real, intent(in)             :: dc(:,:,:) ! (nzc,nxc,nyc)      !density at Coarse grid
-    real, intent(in)             :: df(:,:,:) ! (nzf,nxf,nyf)      !density at Fine grid
-    integer, intent(in)          :: nzc, nxc, nyc, nzf, nxf, nyf, nf
-    character(len=*), intent(in) :: vnam
-    real, intent(inout)          :: sumflg(:) ! (nzc,nxc,nyc)  !Coarse grid
-
-    call HiddenFdback(ac,af,dc,df,nzc,nxc,nyc,nzf,nxf,nyf,nf,vnam,sumflg)
-  end subroutine fdback3D1D
+    ! Local variables:
+    integer :: ibeg, jbeg, kbeg, iend, jend, kend, i, j, k, nc, iinc, jinc, &
+         kv, ifbcf, ic, jc, kc, if, jf, kf
 
 
+    nc = nxtnest(nf)
+    sumflg = 0.
+    ibeg = 2
+    jbeg = 1 + jdim
+    kbeg = 2
+    iend = nxf - 1
+    jend = nyf - jdim
+    kend = nzf - 1
+    iinc = 1
+    jinc = 1
+    kv = 0
 
+    if (vnam .eq. 'u') then
+       ibeg = 1 + nstratx(nf)
+       iend = nxf - 1 - nstratx(nf)
+       iinc = nstratx(nf)
+       ifbcf = 1
+    elseif (vnam .eq. 'v') then
+       jbeg = 1 + nstraty(nf) * jdim
+       jend = nyf - (1 + nstraty(nf)) * jdim
+       jinc = nstraty(nf)
+       ifbcf = 2
+    elseif (vnam .eq. 'w' .or. vnam .eq. 'terr') then
+       if (vnam .eq. 'w') then
+          kbeg = 1 + nrz(kpm(2,nf),nf)
+          kend = nzf - 1 - nrz(kpm(nzf-1,nf),nf)
+          kv = 1
+       else
+          kbeg = 1
+          kend = 1
+       endif
+       ifbcf = 3
+    else
+       ifbcf = 4
+    endif
 
-  subroutine fdback2D(ac,af,dc,df,nzc,nxc,nyc,nzf,nxf,nyf,nf,vnam,sumflg)
-    ! Arguments:
-    real, intent(inout)          :: ac(:,:) ! (nxc,nyc)      !value at Coarse grid
-    real, intent(in)             :: af(:,:) ! (nxf,nyf)      !value at Fine grid
-!!$    real, intent(in)             :: dc(:,:,:) ! (nzf,nxc,nyc)      !density at Coarse grid
-    real, intent(in)             :: dc(:,:) ! (nzf,nxc,nyc)      !density at Coarse grid
-    real, intent(in)             :: df(:,:) ! (nxf,nyf)      !density at Fine grid
-    integer, intent(in)          :: nzc, nxc, nyc, nzf, nxf, nyf, nf
-    character(len=*), intent(in) :: vnam
-!!$    real, intent(inout)          :: sumflg(:,:,:) ! (nzc,nxc,nyc)  !Coarse grid
-    real, intent(inout)          :: sumflg(:,:) ! (nzc,nxc,nyc)  !Coarse grid
+    !print*,'fdback:',vnam,':',ibeg,iend,ipm(ibeg,nf),ipm(iend,nf)
 
-    call HiddenFdback(ac,af,dc,df,nzc,nxc,nyc,nzf,nxf,nyf,nf,vnam,sumflg)
-  end subroutine fdback2D
+    kf = kbeg
+1   continue
+    kc = kpm(kf,nf)
+    if (vnam .eq. 'terr') kc = 1
+
+    do jf = jbeg,jend,jinc
+       jc = jpm(jf,nf)
+       if (vnam .eq. 'p' .or. vnam .eq. 'terr') then
+          do if = ibeg,iend,iinc
+             ic = ipm(if,nf)
+             ac(kc,ic,jc) = ac(kc,ic,jc) * sumflg(kc,ic,jc)  &
+                  + af(kf,if,jf) * fbcf(kf,nf,ifbcf)
+             sumflg(kc,ic,jc) = 1.
+          enddo
+       elseif (vnam .eq. 'w') then
+          do if = ibeg,iend,iinc
+             ic = ipm(if,nf)
+             ac(kc,ic,jc) = ac(kc,ic,jc) * sumflg(kc,ic,jc)  &
+                  + af(kf,if,jf) * fbcf(kf,nf,ifbcf)  &
+                  * (df(kf,if,jf) + df(kf+kv,if,jf))
+
+             sumflg(kc,ic,jc) = 1.
+          enddo
+       else
+          do if = ibeg,iend,iinc
+             ic = ipm(if,nf)
+             ac(kc,ic,jc) = ac(kc,ic,jc) * sumflg(kc,ic,jc)  &
+                  + af(kf,if,jf) * fbcf(kf,nf,ifbcf) * df(kf,if,jf)
+             ! if(vnam=='u'.and.ic==8.and.jc>=14.and.jc<=18.and.kc==2) then
+             !    print*,vnam,':',ac(kc,ic,jc),sumflg(kc,ic,jc),af(kf,if,jf) &
+             !          ,fbcf(kf,nf,ifbcf),df(kf,if,jf),kf,if,jf
+             ! endif
+             sumflg(kc,ic,jc) = 1.
+          enddo
+       endif
+    enddo
+    kf = kf + 1
+    if (vnam .eq. 'w') kf = kf + nrz(kpm(kf,nf),nf) - 1
+    if (kf .le. kend) go to 1
+
+    !      if(vnam.ne.'w'.and.vnam.ne.'terr')then
+    !         if(nstbot.eq.1)call botset(nzp,nxp,nyp,ac,vnam)
+    !         if(nsttop.eq.1)call topset(nzp,nxp,nyp,ac,ac,vnam)
+    !      endif
+
+    do kc = kpm(kbeg,nf),kpm(kend,nf)
+       do jc = jpm(jbeg,nf),jpm(jend,nf)
+
+          if (vnam .eq. 'w') then
+
+             do ic = ipm(ibeg,nf),ipm(iend,nf)
+                ac(kc,ic,jc) = ac(kc,ic,jc) / (dc(kc,ic,jc) + dc(kc+kv,ic,jc))
+             enddo
+
+          elseif (vnam .ne. 'p' .and. vnam .ne. 'terr') then
+
+             do ic = ipm(ibeg,nf),ipm(iend,nf)
+                ac(kc,ic,jc) = ac(kc,ic,jc) / dc(kc,ic,jc)
+                ! if(vnam=='u'.and.ic==8.and.jc>=14.and.jc<=18.and.kc==2) then
+                !  print*,vnam,':',ac(kc,ic-1,jc),ac(kc,ic,jc),dc(kc,ic,jc),ic,jc
+                ! endif
+             enddo
+
+          endif
+       enddo
+    enddo
+  end subroutine fdback
 
   !******************************************************************************
 
@@ -210,137 +277,3 @@ contains
     return
   end subroutine fdbackp
 end module ModNestFeed
-
-subroutine HiddenFdback(ac,af,dc,df,nzc,nxc,nyc,nzf,nxf,nyf,nf,vnam,sumflg)
-  use mem_grid, only: &
-       nxtnest,       & ! intent(in)
-       jdim,          & ! intent(in)
-       nstratx,       & ! intent(in)
-       nstraty,       & ! intent(in)
-       nrz,           & ! intent(in)
-       kpm,           & ! intent(in)
-       jpm,           & ! intent(in)
-       ipm,           & ! intent(in)
-       fbcf             ! intent(in)
-
-  implicit none
-  ! Arguments:
-  integer, intent(in)          :: nzc, nxc, nyc, nzf, nxf, nyf, nf
-  character(len=*), intent(in) :: vnam
-  real, intent(inout)          :: ac(:,:,:) ! (nzc,nxc,nyc)      !value at Coarse grid
-  real, intent(in)             :: dc(:,:,:) ! (nzc,nxc,nyc)      !density at Coarse grid
-  real, intent(inout)          :: sumflg(:,:,:) ! (nzc,nxc,nyc)  !Coarse grid
-  real, intent(in)             :: af(:,:,:) ! (nzf,nxf,nyf)      !value at Fine grid
-  real, intent(in)             :: df(:,:,:) ! (nzf,nxf,nyf)      !density at Fine grid
-
-  ! Local variables:
-  integer :: ibeg, jbeg, kbeg, iend, jend, kend, i, j, k, nc, iinc, jinc, &
-       kv, ifbcf, ic, jc, kc, if, jf, kf
-
-
-  nc = nxtnest(nf)
-!!$  call azero(nzc*nxc*nyc,sumflg)
-  sumflg = 0.
-  ibeg = 2
-  jbeg = 1 + jdim
-  kbeg = 2
-  iend = nxf - 1
-  jend = nyf - jdim
-  kend = nzf - 1
-  iinc = 1
-  jinc = 1
-  kv = 0
-
-  if (vnam .eq. 'u') then
-     ibeg = 1 + nstratx(nf)
-     iend = nxf - 1 - nstratx(nf)
-     iinc = nstratx(nf)
-     ifbcf = 1
-  elseif (vnam .eq. 'v') then
-     jbeg = 1 + nstraty(nf) * jdim
-     jend = nyf - (1 + nstraty(nf)) * jdim
-     jinc = nstraty(nf)
-     ifbcf = 2
-  elseif (vnam .eq. 'w' .or. vnam .eq. 'terr') then
-     if (vnam .eq. 'w') then
-        kbeg = 1 + nrz(kpm(2,nf),nf)
-        kend = nzf - 1 - nrz(kpm(nzf-1,nf),nf)
-        kv = 1
-     else
-        kbeg = 1
-        kend = 1
-     endif
-     ifbcf = 3
-  else
-     ifbcf = 4
-  endif
-
-  !print*,'fdback:',vnam,':',ibeg,iend,ipm(ibeg,nf),ipm(iend,nf)
-
-  kf = kbeg
-1 continue
-  kc = kpm(kf,nf)
-  if (vnam .eq. 'terr') kc = 1
-
-  do jf = jbeg,jend,jinc
-     jc = jpm(jf,nf)
-     if (vnam .eq. 'p' .or. vnam .eq. 'terr') then
-        do if = ibeg,iend,iinc
-           ic = ipm(if,nf)
-           ac(kc,ic,jc) = ac(kc,ic,jc) * sumflg(kc,ic,jc)  &
-                + af(kf,if,jf) * fbcf(kf,nf,ifbcf)
-           sumflg(kc,ic,jc) = 1.
-        enddo
-     elseif (vnam .eq. 'w') then
-        do if = ibeg,iend,iinc
-           ic = ipm(if,nf)
-           ac(kc,ic,jc) = ac(kc,ic,jc) * sumflg(kc,ic,jc)  &
-                + af(kf,if,jf) * fbcf(kf,nf,ifbcf)  &
-                * (df(kf,if,jf) + df(kf+kv,if,jf))
-
-           sumflg(kc,ic,jc) = 1.
-        enddo
-     else
-        do if = ibeg,iend,iinc
-           ic = ipm(if,nf)
-           ac(kc,ic,jc) = ac(kc,ic,jc) * sumflg(kc,ic,jc)  &
-                + af(kf,if,jf) * fbcf(kf,nf,ifbcf) * df(kf,if,jf)
-           ! if(vnam=='u'.and.ic==8.and.jc>=14.and.jc<=18.and.kc==2) then
-           !    print*,vnam,':',ac(kc,ic,jc),sumflg(kc,ic,jc),af(kf,if,jf) &
-           !          ,fbcf(kf,nf,ifbcf),df(kf,if,jf),kf,if,jf
-           ! endif
-           sumflg(kc,ic,jc) = 1.
-        enddo
-     endif
-  enddo
-  kf = kf + 1
-  if (vnam .eq. 'w') kf = kf + nrz(kpm(kf,nf),nf) - 1
-  if (kf .le. kend) go to 1
-
-  !      if(vnam.ne.'w'.and.vnam.ne.'terr')then
-  !         if(nstbot.eq.1)call botset(nzp,nxp,nyp,ac,vnam)
-  !         if(nsttop.eq.1)call topset(nzp,nxp,nyp,ac,ac,vnam)
-  !      endif
-
-  do kc = kpm(kbeg,nf),kpm(kend,nf)
-     do jc = jpm(jbeg,nf),jpm(jend,nf)
-
-        if (vnam .eq. 'w') then
-
-           do ic = ipm(ibeg,nf),ipm(iend,nf)
-              ac(kc,ic,jc) = ac(kc,ic,jc) / (dc(kc,ic,jc) + dc(kc+kv,ic,jc))
-           enddo
-
-        elseif (vnam .ne. 'p' .and. vnam .ne. 'terr') then
-
-           do ic = ipm(ibeg,nf),ipm(iend,nf)
-              ac(kc,ic,jc) = ac(kc,ic,jc) / dc(kc,ic,jc)
-              ! if(vnam=='u'.and.ic==8.and.jc>=14.and.jc<=18.and.kc==2) then
-              !  print*,vnam,':',ac(kc,ic-1,jc),ac(kc,ic,jc),dc(kc,ic,jc),ic,jc
-              ! endif
-           enddo
-
-        endif
-     enddo
-  enddo
-end subroutine HiddenFdback

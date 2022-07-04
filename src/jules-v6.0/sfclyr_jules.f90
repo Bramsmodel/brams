@@ -542,7 +542,6 @@ contains
     endif
 
   end subroutine sfclyr_jules
-end module ModSfcLyrJules
 
 !{DSM
 !--------------------------------------------------------------------------------------------------
@@ -704,3 +703,4 @@ subroutine brams2jules(veg,ntype)
 end subroutine brams2jules
 
 !DSM}
+end module ModSfcLyrJules
