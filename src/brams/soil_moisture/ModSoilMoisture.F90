@@ -36,7 +36,7 @@ module ModSoilMoisture
 
   use rconstants, only : cpi       ! intent(in)
 
-  use leaf_coms, only : soilcp,  & ! intent(in)
+  use ModLeafComs, only : soilcp,  & ! intent(in)
        slmsts,                   & ! intent(in)
        slcpd                       ! intent(in)
 

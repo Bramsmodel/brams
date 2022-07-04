@@ -160,7 +160,7 @@ module ModRcio
        ps, &
        hs
 
-  use leaf_coms, only: &
+  use ModLeafComs, only: &
        nstyp, &
        nvtyp, &
        nvtyp_teb, &

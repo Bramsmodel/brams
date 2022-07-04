@@ -7,6 +7,9 @@
 !###########################################################################
 module ModMemAlloc
 
+  use ModLeafComs, only: &
+       alloc_leafcol
+
   use mem_scratch2_grell, only: &
        alloc_scratch2_grell
 
@@ -367,7 +370,8 @@ module ModMemAlloc
        chem1m_g,           &
        chem1_src_g,        &
        chem1m_src_g,       &
-       chem1_src_z_dim_g
+       chem1_src_z_dim_g, &
+       define_chem1_src_zdim
 
   use mem_chemic, only: &
        nullify_chemic,  & ! Subroutine
@@ -414,8 +418,9 @@ module ModMemAlloc
        aer1_inorg_g,               &
        aer1m_inorg_g,              &
        aer2mp_g,                   &
-       aer2mpm_g
-
+       aer2mpm_g, &
+       define_aer1_src_zdim
+  
   use mem_plume_chem1, only: &
        nullify_plume_chem1,  & ! Subroutine
        alloc_plume_chem1,    & ! Subroutine

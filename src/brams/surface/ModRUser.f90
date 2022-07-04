@@ -612,7 +612,7 @@ contains
 
     use rconstants, only : cpi       ! INTENT(IN)
 
-    use leaf_coms, only : soilcp,  & ! INTENT(IN)
+    use ModLeafComs, only : soilcp,  & ! INTENT(IN)
          slmsts,                   & ! INTENT(IN)
          slcpd                       ! INTENT(IN)
 

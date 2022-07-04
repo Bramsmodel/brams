@@ -1144,27 +1144,26 @@ contains
   end subroutine dumpAer
 
 
+  !--------------------------------------------------------------------------
+  !--------------------------------------------------------------------------
+  !--------------------------------------------------------------------------
+
+  subroutine define_aer1_src_zdim(aer1_src_z_dim,n1)
+
+    use aer1_list, only: nspecies_aer=> nspecies
+
+    implicit none
+    integer, intent(out) :: aer1_src_z_dim(nspecies_aer)
+    integer, intent(in) :: n1
+
+    !- determination of the dimension of Z-dir of source field array
+    aer1_src_z_dim = n1	     ! 3d
+    !  aer1_src_z_dim(bburn) = n1	     ! 3d
+    !  aer1_src_z_dim(urban) = n1	     ! 2d
+    !  aer1_src_z_dim(bioge) = n1	     ! 3d
+    !  aer1_src_z_dim(marin) = n1	     ! 3d
+    !  aer1_src_z_dim(v_ash) = n1	     ! 3d
+    return
+  end subroutine define_aer1_src_zdim
 end module mem_aer1
 
-!--------------------------------------------------------------------------
-!--------------------------------------------------------------------------
-!--------------------------------------------------------------------------
-
-subroutine define_aer1_src_zdim(aer1_src_z_dim,n1)
-
-  use aer1_list, only: nspecies
-
-  implicit none
-  integer,intent(in) :: n1
-
-  integer,dimension(nspecies)    :: aer1_src_z_dim
-
-  !- determination of the dimension of Z-dir of source field array
-  aer1_src_z_dim = n1	     ! 3d
-  !  aer1_src_z_dim(bburn) = n1	     ! 3d
-  !  aer1_src_z_dim(urban) = n1	     ! 2d
-  !  aer1_src_z_dim(bioge) = n1	     ! 3d
-  !  aer1_src_z_dim(marin) = n1	     ! 3d
-  !  aer1_src_z_dim(v_ash) = n1	     ! 3d
-  return
-end subroutine define_aer1_src_zdim

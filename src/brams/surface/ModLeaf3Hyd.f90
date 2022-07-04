@@ -14,7 +14,7 @@ module ModLeaf3Hyd
   use mem_leaf, only: &
        slz
   
-  use leaf_coms, only: &
+  use ModLeafComs, only: &
        nstyp,  &
        nzgmax, &
        slcpd,  &

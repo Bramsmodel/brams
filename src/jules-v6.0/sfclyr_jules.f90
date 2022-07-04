@@ -18,7 +18,7 @@ module ModSfcLyrJules
   use node_mod, only: &
        MYNUM
 
-  use leaf_coms, only: &
+  use ModLeafComs, only: &
        slcpd, &
        slmsts, &
        gzotheta 

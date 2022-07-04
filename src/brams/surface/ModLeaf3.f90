@@ -14,7 +14,7 @@ module ModLeaf3
   use ModLeaf3Hyd, only: &
        hydro
   
-  use leaf_coms, only: &
+  use ModLeafComs, only: &
        qwflux, &
        slmsts, &
        wflux, &

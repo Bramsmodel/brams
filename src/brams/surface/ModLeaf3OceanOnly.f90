@@ -64,7 +64,7 @@ module ModLeaf3OceanOnly
        ssttime1, &
        ssttime2
 
-  use leaf_coms, only: &
+  use ModLeafComs, only: &
        timefac_sst, &
        niter_leaf, &
        niter_can, &

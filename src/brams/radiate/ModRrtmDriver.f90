@@ -203,7 +203,7 @@ module ModRrtmDriver
        clwup5d, &
        up_massdetr5d
 
-  use leaf_coms, only: &
+  use ModLeafComs, only: &
        rlonga_a, &
        rlonga_gs, &
        rlonggs_v, &

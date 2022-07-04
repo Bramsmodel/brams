@@ -65,7 +65,7 @@ OBJ_MOD = \
 	ModLeaf3.o \
 	ModLeaf3Hyd.o \
 	ModLeaf3Init.o \
-	leaf_coms.o \
+	ModLeafComs.o \
 	ModLeaf3Teb.o \
 	mem_aerad.o \
 	ModCarmaDriver.o \
@@ -887,7 +887,7 @@ MOD_MOD = \
 	mem_scratch2_grell_sh.mod \
 	mem_scratch3_grell_sh.mod \
 	ke_coms.mod \
-	leaf_coms.mod \
+	ModLeafComs.mod \
 	mem_mksfc.mod \
 	carma_fastjx.mod \
 	tuvparameter.mod \

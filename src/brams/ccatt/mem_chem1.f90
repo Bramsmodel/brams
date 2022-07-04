@@ -19,14 +19,14 @@ module mem_chem1
      real, contiguous, pointer :: sc_p(:,:,:)
      real, contiguous, pointer :: sc_pp(:,:,:)
      real, contiguous, pointer :: sc_pf(:,:,:)
-     
+
      real, contiguous, pointer :: sc_dd(:,:)
      real, contiguous, pointer :: sc_wd(:,:)
-     
+
      real, contiguous, pointer :: sc_t(:)
      real, contiguous, pointer :: sc_t_dyn(:)
   end type chem1_vars
-  
+
   type (chem1_vars)    , allocatable :: chem1_g(:,:), chem1m_g(:,:)
 
   integer, parameter :: maxsrcfiles   = 1500 
@@ -44,7 +44,7 @@ module mem_chem1
   integer :: chem1_src_z_dim_g(nsrc,maxgrds)
 
   character(LEN=20),dimension(nsrc),parameter :: src_name= &
-       ! '12345678901234567890'
+                                ! '12345678901234567890'
        (/                      &
        'antro               '&    
        , 'bburn               '&
@@ -366,7 +366,7 @@ contains
           npts = n2 * n3
           if(spc_alloc(ddp,ispc) == on) &
                
-               !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
+                                !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
                call InsertVTab(chem1(ispc)%sc_dd,chem1m(ispc)%sc_dd,   &
                ng, npts, imean,                        &
                trim(spc_name(ispc))//'DD :2:hist:anal:mpti:mpt3')
@@ -378,7 +378,7 @@ contains
           npts = n2 * n3
           if(spc_alloc(wdp,ispc) == on) &
                
-               !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
+                                !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
                call InsertVTab(chem1(ispc)%sc_wd,chem1m(ispc)%sc_wd,  &
                ng, npts, imean,                       &
                trim(spc_name(ispc))//'WD :2:hist:anal:mpti:mpt3')
@@ -543,6 +543,7 @@ contains
 
   !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
   subroutine StoreNamelistFileAtMem_chem1(oneNamelistFile)
+    implicit none
     type(namelistFile), pointer :: oneNamelistFile
     chemistry = oneNamelistFile%chemistry
     split_method = oneNamelistFile%split_method
@@ -554,25 +555,22 @@ contains
   !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
 
 
+
+  !--------------------------------------------------------------------------
+
+  subroutine define_chem1_src_zdim(chem1_src_z_dim,n1)
+    implicit none
+    integer, intent(out) :: chem1_src_z_dim(nsrc)
+    integer, intent(in) :: n1
+
+    !- determination of the dimension of Z-dir of source field array
+    chem1_src_z_dim(antro) = n1     ! 2d 
+    chem1_src_z_dim(bburn) = n1       ! 3d
+    chem1_src_z_dim(bioge) = n1     ! 2d
+    chem1_src_z_dim(geoge) = n1       ! 3d for volcanoes
+    return
+  end subroutine define_chem1_src_zdim
+
+  !--------------------------------------------------------------------------
+
 end module mem_chem1
-
-!--------------------------------------------------------------------------
-
-subroutine define_chem1_src_zdim(chem1_src_z_dim,n1)
-
-  use mem_chem1, only: nsrc,bburn,antro,bioge,geoge
-  implicit none
-  integer,intent(in) :: n1
-
-  integer,dimension(nsrc)    :: chem1_src_z_dim
-
-  !- determination of the dimension of Z-dir of source field array
-  chem1_src_z_dim(antro) = n1     ! 2d 
-  chem1_src_z_dim(bburn) = n1       ! 3d
-  chem1_src_z_dim(bioge) = n1     ! 2d
-  chem1_src_z_dim(geoge) = n1       ! 3d for volcanoes
-  return
-end subroutine define_chem1_src_zdim
-
-!--------------------------------------------------------------------------
-

@@ -7,10 +7,12 @@
 !###########################################################################
 
 
-module leaf_coms
+module ModLeafComs
 
   use grid_dims, only: &
        nzgmax
+
+  implicit none
 
   integer ::       &
        niter_leaf   & ! number of leaf timesteps in model long timestep
@@ -126,56 +128,33 @@ module leaf_coms
   real, dimension(nvtyp+nvtyp_teb,nzgmax) :: root
   !---------srf-root---------------------------
 
+contains
 
+  subroutine alloc_leafcol(nzg,nzs)
+    integer, intent(in) :: nzg,nzs
 
-end module leaf_coms
+    ! Allocate leaf column arrays
+    allocate (dslz         (nzg)        &
+         ,dslzi        (nzg)        &
+         ,dslzidt      (nzg)        &
+         ,slzt         (nzg)        &
+         ,dslzt        (nzg)        &
+         ,dslzti       (nzg)        &
+         ,dslztidt     (nzg)        &
+         
+         ,rshort_s     (nzs)        &
+         ,tempk        (nzg+nzs)    &
+         ,fracliq      (nzg+nzs)    &
+         
+         ,hfluxgsc     (nzg+nzs+1)  &
+         ,psiplusz     (nzg)        &
+         ,half_soilair (nzg)        &
+         ,rfactor      (nzg+nzs)    &
+         ,wflux        (nzg+1)      &
+         ,qwflux       (nzg+1)      &
+         ,soil_liq     (nzg)        )
 
+    return
+  end subroutine alloc_leafcol
 
-subroutine alloc_leafcol(nzg,nzs)
-
-  use leaf_coms, only: dslz,   &
-       dslzi,  &
-       dslzidt,&
-       slzt,   &
-       dslzt,  &
-       dslzti, &
-       dslztidt,&
-       rshort_s,&
-       tempk,   &
-       fracliq, &
-       hfluxgsc,&
-       psiplusz,&
-       half_soilair, &
-       rfactor, &
-       wflux,   &
-       qwflux,  &
-       soil_liq
-
-
-  implicit none
-  integer, intent(in) :: nzg,nzs
-
-  ! Allocate leaf column arrays
-  allocate (dslz         (nzg)        &
-       ,dslzi        (nzg)        &
-       ,dslzidt      (nzg)        &
-       ,slzt         (nzg)        &
-       ,dslzt        (nzg)        &
-       ,dslzti       (nzg)        &
-       ,dslztidt     (nzg)        &
-       
-       ,rshort_s     (nzs)        &
-       ,tempk        (nzg+nzs)    &
-       ,fracliq      (nzg+nzs)    &
-       
-       ,hfluxgsc     (nzg+nzs+1)  &
-       ,psiplusz     (nzg)        &
-       ,half_soilair (nzg)        &
-       ,rfactor      (nzg+nzs)    &
-       ,wflux        (nzg+1)      &
-       ,qwflux       (nzg+1)      &
-       ,soil_liq     (nzg)        )
-
-  return
-end subroutine alloc_leafcol
-
+end module ModLeafComs

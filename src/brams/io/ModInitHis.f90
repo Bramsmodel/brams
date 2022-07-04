@@ -109,7 +109,7 @@ module ModInitHis
        zrough, &
        leaf_g
 
-  use leaf_coms, only: &
+  use ModLeafComs, only: &
        veg_ht
 
   implicit none

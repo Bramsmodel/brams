@@ -29,7 +29,7 @@ module ModLeaf3Init
        nslcon,     &
        nvgcon
 
-  use leaf_coms, only: &
+  use ModLeafComs, only: &
        nstyp, nvtyp, nvtyp_teb, cka, ckw, &
        slpots, slmsts, slbs, slcons, slcpd, slden, sfldcap, &
        emisg, slfc, soilcp, albv_green, albv_brown, emisv, &
