@@ -136,7 +136,13 @@ contains
     integer(kind=i8) :: mxyzp, ind
     integer :: n
     real :: s1,s2,s3
-    real, pointer :: vkh_p,hkh_p
+
+
+!!$    real, pointer :: vkh_p,hkh_p
+    real, pointer :: vkh_p(:)
+    real, pointer :: hkh_p(:)
+
+
     integer :: i,j,k,ksf
     integer :: idiffk
     real :: xkhkm
@@ -426,23 +432,44 @@ contains
              !_STC (S. Trini Castelli)
              !_STC..................................................
 
+!!$             if (oneScalarTab(n)%name == 'TKEP') then
+!!$                vkh_p => scratch%vt3di(1)
+!!$                hkh_p => scr2(1)
+!!$                if (idiffk >= 4) hkh_p => scratch%vt3di(1)
+!!$                ksf = 1   
+!!$             elseif (oneScalarTab(n)%name == 'EPSP') then
+!!$                vkh_p => scratch%vt3di(1)
+!!$                hkh_p => scr2(1)
+!!$                if (idiffk >= 4)  hkh_p => scratch%vt3di(1)
+!!$                ksf = 3
+!!$                ! Convert Ktke to Keps; it will be converted back after use below
+!!$                call ae1t0_l(mxyzp, vkh_p, vkh_p, (ALF_EPS/ALF_TKE))
+!!$                call ae1t0_l(mxyzp, hkh_p, hkh_p, (ALF_EPS/ALF_TKE))
+!!$             else
+!!$                vkh_p => scratch%vt3dh(1)
+!!$                hkh_p => scr2(1)
+!!$                if (idiffk >= 4) hkh_p => scratch%vt3dh(1)
+!!$                ksf = 2
+!!$             endif
+
+
              if (oneScalarTab(n)%name == 'TKEP') then
-                vkh_p => scratch%vt3di(1)
-                hkh_p => scr2(1)
-                if (idiffk >= 4) hkh_p => scratch%vt3di(1)
+                vkh_p => scratch%vt3di
+                hkh_p => scr2
+                if (idiffk >= 4) hkh_p => scratch%vt3di
                 ksf = 1   
              elseif (oneScalarTab(n)%name == 'EPSP') then
-                vkh_p => scratch%vt3di(1)
-                hkh_p => scr2(1)
-                if (idiffk >= 4)  hkh_p => scratch%vt3di(1)
+                vkh_p => scratch%vt3di
+                hkh_p => scr2
+                if (idiffk >= 4)  hkh_p => scratch%vt3di
                 ksf = 3
                 ! Convert Ktke to Keps; it will be converted back after use below
                 call ae1t0_l(mxyzp, vkh_p, vkh_p, (ALF_EPS/ALF_TKE))
                 call ae1t0_l(mxyzp, hkh_p, hkh_p, (ALF_EPS/ALF_TKE))
              else
-                vkh_p => scratch%vt3dh(1)
-                hkh_p => scr2(1)
-                if (idiffk >= 4) hkh_p => scratch%vt3dh(1)
+                vkh_p => scratch%vt3dh
+                hkh_p => scr2
+                if (idiffk >= 4) hkh_p => scratch%vt3dh
                 ksf = 2
              endif
 
