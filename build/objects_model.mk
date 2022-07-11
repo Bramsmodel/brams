@@ -372,7 +372,6 @@ OBJ_MOD = \
 	module_mp_radar.o \
 	ModWindFarm.o \
 	module_wind_fitch.o \
-	debugTools.o \
 	ConvPar_GF_GEOS5.o \
 	Henrys_Law_cts.o \
 	MAPL_Constants.o \
@@ -1118,7 +1117,6 @@ MOD_MOD = \
 	casej.mod \
 	caseg.mod \
 	isorropia_module.mod \
-	debugdata.mod \
 	c_pi.mod \
 	blopt8a.mod \
 	earth_utils.mod \
