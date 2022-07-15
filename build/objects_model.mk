@@ -27,9 +27,11 @@ OBJ_MOD = \
 	ModDomainDecomp.o \
 	ModDateUtils.o \
 	ModMonotonicAdvection.o \
+	ModMicControl.o \
 	ReadBcst.o \
 	ModScalarTable.o \
 	ModBasicFields.o \
+	ModMicroFields.o \
 	mpi_io_engine-5d.o \
 	Phys_const.o \
 	an_header.o \

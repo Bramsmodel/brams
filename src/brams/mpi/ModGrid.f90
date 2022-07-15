@@ -77,6 +77,11 @@ module ModGrid
        ControlVars, &
        CreateControlVars, &
        DestroyControlVars
+
+  use ModMicControl, only: &
+       MicControl, &
+       CreateMicControl
+       
   
   ! JP: temporariamente usa variaveis globais enquanto
   !     ModVarTables nao for inclusa no tipo Grid
@@ -159,6 +164,8 @@ module ModGrid
      type(ScalarTable), pointer :: ScalarTab(:) => null()
      integer :: ScalarTabSize=0
 
+     type(MicControl), pointer :: MicControlVars => null()
+     
      ! AllGhostZoneSend/RecvG3D: Ghost Zone update at PostProcess
      ! type(MessageSet) contains all information required for
      ! ghost zone update. See description at ModMessageSet 
@@ -400,6 +407,9 @@ contains
     oneGrid%ScalarTab => CreateScalarTab()
     oneGrid%ScalarTabSize = 0
 
+    ! this node MicControl
+
+    oneGrid%MicControlVars => CreateMicControl(oneGrid%Ramsin)
     
     if (dumpLocal) then
        call MsgDump(h//" dumping OneGrid at the end")
