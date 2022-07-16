@@ -222,7 +222,7 @@ contains
                ,micro_g(ngr)%pcpg(i,j), micro_g(ngr)%qpcpg(i,j)     &
                ,micro_g(ngr)%dpcpg(i,j), pcp_tab(ngr)%pcpfillc &
                ,pcp_tab(ngr)%pcpfillr, pcp_tab(ngr)%sfcpcp    &
-               ,grid_g(ngr)%glat(i,j), grid_g(ngr)%topt(i,j),if_adap)
+               ,grid_g(ngr)%glat(i,j), grid_g(ngr)%topt(i,j),if_adap, oneMicControl)
 
           call copyback(mzp,k1,k2,k3,grid_g(ngr)%lpw(i,j),i,j,micro_g(ngr))
 
@@ -246,7 +246,7 @@ contains
        ,thp,theta,pp,rtp,rv,wp,dn0,pi0  &
        ,rtgt,lpw_R,pcpg,qpcpg,dpcpg  &
        ,pcpfillc,pcpfillr,sfcpcp  &
-       ,glat,topt,if_adap)
+       ,glat,topt,if_adap, oneMicControl)
     ! Arguments:
     integer, intent(in) :: m1
     integer, intent(in) :: i
@@ -288,6 +288,7 @@ contains
     real, intent(in) :: glat
     real, intent(in) :: topt
     real, intent(in) :: zt(m1)
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     ! Local Variables:
     integer :: lpw
@@ -367,17 +368,17 @@ contains
     do lcat = 1,7
        if (jnmb(lcat) .ge. 1) then
           call enemb(m1,k1(lcat),k2(lcat),lcat,jflag,dn0(1),i,j)
-          call getict(k1(lcat),k2(lcat),lcat,i,j,mynum)
+          call getict(k1(lcat),k2(lcat),lcat,i,j,mynum,oneMicControl)
        endif
     enddo
 
     call newtemp(m1,k1(10),k2(10),rv(1),theta(1),i,j)
 
     if (jnmb(2) .ge. 1) then
-       call auto_accret(m1,k1(1),k2(1),dn0(1),dtlt,i,j)
+       call auto_accret(m1,k1(1),k2(1),dn0(1),dtlt,i,j, oneMicControl)
     endif
 
-    call effxy(m1,k1,k2,i,j)
+    call effxy(m1,k1,k2,i,j, oneMicControl)
 
     ! Self collection of rain, aggregates, graupel, hail:  number change only
 
@@ -386,7 +387,7 @@ contains
        if (lcat .eq. 3 .or. lcat .eq. 4) go to 29
        mc1 = mcats(lcat)
        if (jnmb(lcat) >= 5) then
-          call cols (m1,lcat,mc1,k1(lcat),k2(lcat),i,j)
+          call cols (m1,lcat,mc1,k1(lcat),k2(lcat),i,j, oneMicControl)
        endif
 29     continue
     enddo
@@ -396,14 +397,14 @@ contains
     do lcat = 3,4
        mc1 = mcat33(lcat)
        if (jnmb(lcat) .ge. 1 .and. jnmb(5) .ge. 1) then
-          call col3344 (m1,lcat,5,mc1,k1(lcat),k2(lcat),i,j)
+          call col3344 (m1,lcat,5,mc1,k1(lcat),k2(lcat),i,j, oneMicControl)
        endif
     enddo
 
     ! Collection between pristine ice and snow
 
     if (jnmb(5) .ge. 1) then
-       call col3443 (m1,3,4,5,max(k1(3),k1(4)),min(k2(3),k2(4)),i,j)
+       call col3443 (m1,3,4,5,max(k1(3),k1(4)),min(k2(3),k2(4)),i,j, oneMicControl)
     endif
 
     ! Ice-ice collisions
@@ -416,7 +417,7 @@ contains
 
        if (jnmb(mc1) .ge. 1 .and. jnmb(mc3) .ge. 1) then
           call col1 (m1,mc1,mc2,mc3,mc4,max(k1(mc1),k1(mc2))  &
-               ,min(k2(mc1),k2(mc2)),i,j)
+               ,min(k2(mc1),k2(mc2)),i,j, oneMicControl)
        endif
     enddo
 
@@ -428,7 +429,7 @@ contains
 
        if (jnmb(lcat) .ge. 1 .and. jnmb(mc1) .ge. 1) then
           call col2 (m1,1,lcat,mc1,mc2,max(k1(1),k1(lcat)),min(k2(1),k2(lcat))  &
-               ,dn0(1),dtlt,i,j)
+               ,dn0(1),dtlt,i,j, oneMicControl)
        endif
     enddo
 
@@ -436,11 +437,11 @@ contains
 
     do lcat = 3,7
        if (jnmb(lcat) .ge. 1 .and. jnmb(7) .ge. 1) then
-          call col3 (m1,2,lcat,7,max(k1(2),k1(lcat)),min(k2(2),k2(lcat)),i,j)
+          call col3 (m1,2,lcat,7,max(k1(2),k1(lcat)),min(k2(2),k2(lcat)),i,j, oneMicControl)
        endif
     enddo
 
-    call colxfers(m1,k1,k2,i,j,scrmic1,scrmic2)
+    call colxfers(m1,k1,k2,i,j,scrmic1,scrmic2, oneMicControl)
 
     do mcat = 1,7
        lcat = mix02(mcat)

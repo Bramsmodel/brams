@@ -102,7 +102,6 @@ OBJ_MOD = \
 	ModTurbFields.o \
 	mem_turb_scalar.o \
 	mem_varinit.o \
-	mem_micro_optij.o \
 	ModMicColl.o \
 	ModMicrophysicsDrive.o \
 	ModMicGamma.o \
@@ -902,7 +901,6 @@ MOD_MOD = \
 	mem_grell.mod \
 	mem_tconv.mod \
 	mem_turb_scalar.mod \
-	mem_micro_opt.mod \
 	mem_chemic.mod \
 	chem1aq_list.mod \
 	mem_chem1aq.mod \

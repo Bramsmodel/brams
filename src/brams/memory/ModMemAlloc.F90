@@ -311,9 +311,6 @@ module ModMemAlloc
        alloc_turb_s,   &
        filltab_turb_s
 
-  use mem_micro_opt, only: &
-       alloc_micro_opt
-
   use machine_arq, only: &
        machine ! INTENT(IN)
 
@@ -669,11 +666,6 @@ contains
        call filltab_micro(micro_g(ng), microm_g(ng), imean,  &
             nmzp(ng), nmxp(ng), nmyp(ng), ng)
     enddo
-    ! Allocate Optimized Micro variables
-    ! Only for use with SX-6 specific optimization
-    if (machine==1) then
-       call alloc_micro_opt(nmzp, nmxp, nmyp)
-    endif
     !-------------
 
     !-------------
