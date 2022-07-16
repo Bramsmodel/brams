@@ -480,7 +480,9 @@ module ModMemAlloc
 
   use micphys, only : &
        level, &
-       mcphys_type
+       mcphys_type, &
+       DeepCopyToMicControl, &
+       DeepCopyFromMicControl
 
   use digitalFilter, only:     &
        initDigitalFilter,     & ! subroutine
@@ -653,13 +655,16 @@ contains
     allocate(microm_g(ngrids), STAT=ierr)
     if (ierr/=0) call fatal_error(h//"Allocating microm_g")
     do ng=1,ngrids
-       call nullify_micro(micro_g(ng)); call nullify_micro(microm_g(ng))
-       call alloc_micro(micro_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
+       call nullify_micro(micro_g(ng))
+       call nullify_micro(microm_g(ng))
+       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+       call alloc_micro(micro_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng, oneGrid%MicControlVars)
        if (imean==1) then
-          call alloc_micro(microm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
+          call alloc_micro(microm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng, oneGrid%MicControlVars)
        elseif (imean==0) then
-          call alloc_micro(microm_g(ng),        1,        1,        1, ng)
+          call alloc_micro(microm_g(ng),        1,        1,        1, ng, oneGrid%MicControlVars)
        endif
+       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
 
        call filltab_micro(micro_g(ng), microm_g(ng), imean,  &
             nmzp(ng), nmxp(ng), nmyp(ng), ng)

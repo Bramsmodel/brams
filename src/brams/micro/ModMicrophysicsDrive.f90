@@ -7,6 +7,9 @@
 !###########################################################################
 module ModMicrophysicsDrive
 
+  use ModMicControl, only: &
+       MicControl
+  
   use ModMicInit, only: &
        micinit
   
@@ -141,8 +144,9 @@ contains
 
 
 
-  subroutine micro(oneBasicFields)
+  subroutine micro(oneBasicFields, oneMicControl)
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(MicControl), pointer, intent(in) :: oneMicControl
     
     ! Local Variables:
     integer :: nembfall,maxkfall,ngr,lhcat,i,j
@@ -170,7 +174,7 @@ contains
           allocate (pcp_tab(ngr)%sfcpcp(maxkfall,nembfall,nhcat))
        enddo
 
-       call micinit()
+       call micinit(oneMicControl)
        call make_autotab()
        call haznuc()
        call tabmelt()

@@ -143,6 +143,8 @@ module ModTimestepRK
        if_oda ! INTENT(IN)
 
   use micphys,   only: &
+       DeepCopyToMicControl, &
+       DeepCopyFromMicControl, &
        mcphys_type,  &! INTENT(IN)
        level          ! INTENT(IN)
 
@@ -830,7 +832,9 @@ contains
        call negadj1(mzp,mxp,myp, oneGrid%Basic)
 
     elseif(mcphys_type == 1) then
-       call negadj1_2M_rams60(mzp,mxp,myp, oneGrid%Basic)
+       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+       call negadj1_2M_rams60(mzp,mxp,myp, oneGrid%Basic, oneGrid%MicControlVars)
+       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
     endif
 
 !!$    call SynchronizedTimeStamp(TS_RK_RESTO) ! Exper1.2, 2021_12
@@ -843,13 +847,17 @@ contains
 !!$          call micro_opt()
 !!$       else
        !- original Version used in a Generic IA32 machine
-       call micro(oneGrid%Basic)
+       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+       call micro(oneGrid%Basic, oneGrid%MicControlVars)
+       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
 !!$       endif
     endif
 
     if (mcphys_type == 1 .and. level==3) then
        !- 2M rams microphysics
-       call micro_2M_rams60(oneGrid%Basic)
+       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+       call micro_2M_rams60(oneGrid%Basic,oneGrid%MicControlVars)
+       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
 
     elseif (mcphys_type == 2 .or. mcphys_type == 3 ) then
        !- G. Thompson microphysics

@@ -27,7 +27,7 @@ module ModRamsMicrophysics2M
        gammp, &
        gammq, &
        avint
-  
+
   use ModBasicFields, only: &
        BasicFields
 
@@ -87,40 +87,9 @@ module ModRamsMicrophysics2M
        NZPMAX, &
        maxgrds
 
-  use micphys, only : &
-       mcphys_type ,&
-       aparm       ,&
-       coltabfn    ,&
-       cparm       ,&
-       gnu         ,&
-       gparm       ,&
-       hparm       ,&
-       iaggr       ,&
-       icloud      ,&
-       igraup      ,&
-       ihail       ,&
-       ipris       ,&
-       irain       ,&
-       isnow       ,&
-       level       ,&
-       mkcoltab    ,&
-       pparm       ,&
-       rparm       ,&
-       sparm       ,&
-       idriz       ,&
-       irime       ,&
-       iplaws      ,&
-       idust       ,&
-       isalt       ,&
-       imbudget    ,&
-       imbudtot    ,&
-       iccnlev     ,&
-       dparm, &
-       epsil, &
-       jnmb, &
-       cnparm, &
-       gnparm
-
+  use ModMicControl, only: &
+       MicControl
+  
   implicit none
 
   private
@@ -134,7 +103,7 @@ module ModRamsMicrophysics2M
   public :: initqin4
   public :: initqin5
   public :: micro_master
-  
+
 
   !--------------------------------------------------------------------------
   !     The product [(nthz-1)  * dthz ] must equal 25.0.
@@ -151,8 +120,6 @@ module ModRamsMicrophysics2M
   real, parameter    :: dtc=1.,ddnc=2.e-6 ,dthz=1.,drhhz=.02
   real, parameter    :: budget_scale=1000., budget_scalet=1.
   !--------------------------------------------------------------------------
-  !integer :: mcphys_type,level,icloud,idriz,irain,ipris,isnow,iaggr,igraup,ihail  &
-  !          ,mkcoltab,irime,iplaws,idust,isalt,imbudget,imbudtot
 
   !integer, dimension(ncat)        :: jnmb
   integer, dimension(nhcat,nhcat) :: ipairc,ipairr
@@ -171,7 +138,6 @@ module ModRamsMicrophysics2M
        ,colf,pi4dt,sedtime0,sedtime1                            &
        ,dimin,diminx,dimax,rimin,rimax,dieci,rieci
 
-  !real, dimension(ncat) :: emb0,emb1,gnu,parm,emb0log,emb1log,dict
   real, dimension(ncat)  :: emb0,emb1    ,parm,emb0log,emb1log,dict
   real, dimension(nhcat) :: var_shape,cfmas,pwmas,cfvt,pwvt,dpsmi,cfden,pwden  &
        ,cfemb0,cfen0,pwemb0,pwen0,vtfac,frefac1,frefac2  &
@@ -286,8 +252,10 @@ contains
 
   !###########################################################################
 
-  subroutine micro_2M_rams60(oneBasicFields)
+  subroutine micro_2M_rams60(oneBasicFields, oneMicControl)
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(MicControl), pointer, intent(in) :: oneMicControl
+    
     integer :: nembfall,maxkfall,ngr,lhcat,i,j,k
     integer, dimension(11)  :: k1,k2,k3
     integer, save :: ncall = 0
@@ -303,7 +271,7 @@ contains
 
     type (pcp_tab_type), save :: pcp_tab(maxgrds)
 
-    if (level .ne. 3) return
+    if (oneMicControl%level .ne. 3) return
 
     nembfall = 20
     maxkfall = 4
@@ -318,10 +286,10 @@ contains
           allocate (pcp_tab(ngr)%allpcp(nnzp(ngr),nembfall,nhcat))
        enddo
 
-       call micinit()
-       call make_autotab()
-       call haznuc()
-       call tabmelt()
+       call micinit(oneMicControl)
+       call make_autotab(oneMicControl)
+       call haznuc(oneMicControl)
+       call tabmelt(oneMicControl)
        call tabhab()
 
        do lhcat = 1,nhcat
@@ -361,17 +329,17 @@ contains
 
        call mksedim_tab(mzp,mxp,myp,ngrid,nembfall,maxkfall,zm,dzt  &
             ,pcp_tab(ngrid)%pcpfillc(1:mzp,1,1,1),pcp_tab(ngrid)%pcpfillr(1:mzp,1,1,1)  &
-            ,pcp_tab(ngrid)%sfcpcp(1:maxkfall,1,1),pcp_tab(ngrid)%allpcp(1:mzp,1,1),dtlt)
+            ,pcp_tab(ngrid)%sfcpcp(1:maxkfall,1,1),pcp_tab(ngrid)%allpcp(1:mzp,1,1),dtlt,oneMicControl)
 
        do lhcat = 1,nhcat
           ch2(lhcat,ngrid) = float(nembfall-1) &
                / log10(dispemb1(lhcat,ngrid) / dispemb0(lhcat,ngrid))
        enddo
 
-       call homfrzcl(dtlt,ngrid)
+       call homfrzcl(dtlt,ngrid,oneMicControl)
     endif
 
-    call each_call(mzp,dtlt)
+    call each_call(mzp,dtlt,oneMicControl)
     dtlti = 1. / dtlt
     ngr = ngrid
 
@@ -382,28 +350,28 @@ contains
           do k = 1,mzp
              if( oneBasicFields%rv(k,i,j)<0.0 .or.  &
                   oneBasicFields%rtp(k,i,j)<0.0 .or. &
-                  (jnmb(1)>0 .and. micro_g(ngr)%rcp(k,i,j)<0.0) .or. &
-                  (jnmb(2)>0 .and. micro_g(ngr)%rrp(k,i,j)<0.0) .or. &
-                  (jnmb(3)>0 .and. micro_g(ngr)%rpp(k,i,j)<0.0) .or. &
-                  (jnmb(4)>0 .and. micro_g(ngr)%rsp(k,i,j)<0.0) .or. &
-                  (jnmb(5)>0 .and. micro_g(ngr)%rap(k,i,j)<0.0) .or. &
-                  (jnmb(6)>0 .and. micro_g(ngr)%rgp(k,i,j)<0.0) .or. &
-                  (jnmb(7)>0 .and. micro_g(ngr)%rhp(k,i,j)<0.0) ) then
+                  (oneMicControl%jnmb(1)>0 .and. micro_g(ngr)%rcp(k,i,j)<0.0) .or. &
+                  (oneMicControl%jnmb(2)>0 .and. micro_g(ngr)%rrp(k,i,j)<0.0) .or. &
+                  (oneMicControl%jnmb(3)>0 .and. micro_g(ngr)%rpp(k,i,j)<0.0) .or. &
+                  (oneMicControl%jnmb(4)>0 .and. micro_g(ngr)%rsp(k,i,j)<0.0) .or. &
+                  (oneMicControl%jnmb(5)>0 .and. micro_g(ngr)%rap(k,i,j)<0.0) .or. &
+                  (oneMicControl%jnmb(6)>0 .and. micro_g(ngr)%rgp(k,i,j)<0.0) .or. &
+                  (oneMicControl%jnmb(7)>0 .and. micro_g(ngr)%rhp(k,i,j)<0.0) ) then
                 print*,'Negative Condensate MICRO (ngr,k,i,j):',ngr,k,i,j
                 print*,'vapor:  ',oneBasicFields%rv(k,i,j)
                 print*,'rtp:    ',oneBasicFields%rtp(k,i,j)
-                if(jnmb(1)>0) print*,'cloud:  ',micro_g(ngr)%rcp(k,i,j)
-                if(jnmb(2)>0) print*,'rain:   ',micro_g(ngr)%rrp(k,i,j)
-                if(jnmb(3)>0) print*,'ice:    ',micro_g(ngr)%rpp(k,i,j)
-                if(jnmb(4)>0) print*,'snow:   ',micro_g(ngr)%rsp(k,i,j)
-                if(jnmb(5)>0) print*,'aggr:   ',micro_g(ngr)%rap(k,i,j)
-                if(jnmb(6)>0) print*,'graup:  ',micro_g(ngr)%rgp(k,i,j)
-                if(jnmb(7)>0) print*,'hail:   ',micro_g(ngr)%rhp(k,i,j)
+                if(oneMicControl%jnmb(1)>0) print*,'cloud:  ',micro_g(ngr)%rcp(k,i,j)
+                if(oneMicControl%jnmb(2)>0) print*,'rain:   ',micro_g(ngr)%rrp(k,i,j)
+                if(oneMicControl%jnmb(3)>0) print*,'ice:    ',micro_g(ngr)%rpp(k,i,j)
+                if(oneMicControl%jnmb(4)>0) print*,'snow:   ',micro_g(ngr)%rsp(k,i,j)
+                if(oneMicControl%jnmb(5)>0) print*,'aggr:   ',micro_g(ngr)%rap(k,i,j)
+                if(oneMicControl%jnmb(6)>0) print*,'graup:  ',micro_g(ngr)%rgp(k,i,j)
+                if(oneMicControl%jnmb(7)>0) print*,'hail:   ',micro_g(ngr)%rhp(k,i,j)
                 stop
              endif
           enddo
 
-          call range_check(mzp,k1,k2,k3,i,j,grid_g(ngr)%lpw(i,j),micro_g(ngr))
+          call range_check(mzp,k1,k2,k3,i,j,grid_g(ngr)%lpw(i,j),micro_g(ngr),oneMicControl)
 
 
           call mcphys(&
@@ -510,9 +478,9 @@ contains
                ,micro_g(ngr)%rain2ha_xtrat (:,i,j) ,micro_g(ngr)%ice2raint (:,i,j)     &
                ,micro_g(ngr)%aggregatet (:,i,j)    ,micro_g(ngr)%aggrselfprist (:,i,j) &
                ,micro_g(ngr)%aggrselfsnowt (:,i,j) ,micro_g(ngr)%aggrprissnowt (:,i,j) &
-               ,micro_g(ngr)%latheatvapt (:,i,j)   ,micro_g(ngr)%latheatfrzt (:,i,j))
+               ,micro_g(ngr)%latheatvapt (:,i,j)   ,micro_g(ngr)%latheatfrzt (:,i,j),oneMicControl)
 
-          call copyback(mzp,k1,k2,k3,grid_g(ngr)%lpw(i,j),i,j,micro_g(ngr))
+          call copyback(mzp,k1,k2,k3,grid_g(ngr)%lpw(i,j),i,j,micro_g(ngr),oneMicControl)
 
        enddo
     enddo
@@ -550,7 +518,9 @@ contains
        ,rimecldsnowt,rimecldaggrt,rimecldgraut,rimecldhailt,rain2icet   &
        ,rain2prt,rain2snt,rain2agt,rain2grt,rain2hat                    &
        ,rain2ha_xtrat,ice2raint,aggregatet,aggrselfprist,aggrselfsnowt  &
-       ,aggrprissnowt,latheatvapt,latheatfrzt)
+       ,aggrprissnowt,latheatvapt,latheatfrzt, oneMicControl)
+
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: i,j,k,lcat,jcat,icv,icx,mc1,mc2,mc3,mc4,m1,lpw,if_adap  &
          ,ngr,jdim,nembfall,maxkfall  &
          ,mynum,maxnzp,mcat  &
@@ -634,13 +604,13 @@ contains
     save
 
     !ZERO OUT MICRO BUDGET PROCESSES
-    if(imbudget>=1 .or. imbudtot>=1) then
+    if(oneMicControl%imbudget>=1 .or. oneMicControl%imbudtot>=1) then
        do k = 1,m1
           latheatvap(k) = 0.
           latheatfrz(k) = 0.
        enddo
     endif
-    if(imbudget>=1) then
+    if(oneMicControl%imbudget>=1) then
        do k = 1,m1
           nuccldr(k) = 0.
           nuccldc(k) = 0.
@@ -656,7 +626,7 @@ contains
           rain2ice(k) = 0.
        enddo
     endif
-    if(imbudget==2) then
+    if(oneMicControl%imbudget==2) then
        do k = 1,m1
           inuchomr(k) = 0.
           inuchomc(k) = 0.
@@ -697,7 +667,7 @@ contains
 
     !ZERO OUT MICRO BUDGET PROCESSES (totals)
     if(time .lt. .001) then
-       if(imbudtot>=1) then
+       if(oneMicControl%imbudtot>=1) then
           do k = 1,m1
              nuccldrt(k) = 0.
              nuccldct(k) = 0.
@@ -715,7 +685,7 @@ contains
              latheatfrzt(k) = 0.
           enddo
        endif
-       if(imbudtot==2) then
+       if(oneMicControl%imbudtot==2) then
           do k = 1,m1
              inuchomrt(k) = 0.
              inuchomct(k) = 0.
@@ -762,8 +732,8 @@ contains
     ! Diagnose hydrometeor mean mass emb, and if necessary, number concentration.
 
     do lcat = 1,8
-       if (jnmb(lcat) .ge. 1) then
-          call enemb(m1,k1(lcat),k2(lcat),lcat,dn0(1),i,j)
+       if (oneMicControl%jnmb(lcat) .ge. 1) then
+          call enemb(m1,k1(lcat),k2(lcat),lcat,dn0(1),i,j,oneMicControl)
        endif
     enddo
 
@@ -792,7 +762,7 @@ contains
     qx_lhr = qx
 
     do lcat = 1,8
-       if (jnmb(lcat) .ge. 1) then
+       if (oneMicControl%jnmb(lcat) .ge. 1) then
           call diffprep(m1,lcat,k1(lcat),k2(lcat),rv(1),dn0(1),i,j,mynum)
        endif
     enddo
@@ -804,24 +774,24 @@ contains
     ! Calculate vapor flux in order of species given by (mivap)
     do icv = 1,8
        lcat = mivap(icv)
-       if (jnmb(lcat) .ge. 1) then
+       if (oneMicControl%jnmb(lcat) .ge. 1) then
           call vapflux(m1,lcat,i,j,mynum,k1(lcat),k2(lcat),dn0(1),rv(1) &
                ,vapliq(1),vapice(1),vapcld(1),vaprain(1),vappris(1) &
                ,vapsnow(1),vapaggr(1),vapgrau(1),vaphail(1),vapdriz(1) &
                ,vapliqt(1),vapicet(1),vapcldt(1),vapraint(1),vapprist(1) &
-               ,vapsnowt(1),vapaggrt(1),vapgraut(1),vaphailt(1),vapdrizt(1))
+               ,vapsnowt(1),vapaggrt(1),vapgraut(1),vaphailt(1),vapdrizt(1),oneMicControl)
        endif
     enddo
 
     !**********************************************************************
     ! Pristine ice to snow transfer
-    if (jnmb(4) .ge. 1) then
-       call psxfer (m1,min(k1(3),k1(4)),max(k2(3),k2(4)),dn0(1),i,j)
+    if (oneMicControl%jnmb(4) .ge. 1) then
+       call psxfer (m1,min(k1(3),k1(4)),max(k2(3),k2(4)),dn0(1),i,j,oneMicControl)
     endif
 
     do lcat = 1,8
-       if (jnmb(lcat) .ge. 1) then
-          call enemb(m1,k1(lcat),k2(lcat),lcat,dn0(1),i,j)
+       if (oneMicControl%jnmb(lcat) .ge. 1) then
+          call enemb(m1,k1(lcat),k2(lcat),lcat,dn0(1),i,j,oneMicControl)
           call getict(k1(lcat),k2(lcat),lcat,i,j,mynum)
        endif
     enddo
@@ -830,24 +800,24 @@ contains
     call newtemp(m1,k1(11),k2(11),rv(1),theta(1),i,j)
 
     ! Add call to update LHR theta' after vapor diffusion
-    call calc_lhr_vap(m1,k1,k2,i,j,latheatvap(1),latheatvapt(1))
+    call calc_lhr_vap(m1,k1,k2,i,j,latheatvap(1),latheatvapt(1),oneMicControl)
 
     !***********************************************************************
     ! Auto-accretion considered only for rain
-    if (jnmb(2) .ge. 1) then
+    if (oneMicControl%jnmb(2) .ge. 1) then
        call auto_accret(m1,k1(1),k2(1),k1(8),k2(8),dn0(1),dtlt,i,j &
-            ,cld2rain(1),cld2raint(1))
+            ,cld2rain(1),cld2raint(1),oneMicControl)
     endif
 
     ! Binned riming of cloud species by the ice species
-    if(irime==1)then
+    if(oneMicControl%irime==1)then
        do jcat = 1,8,7
           do lcat = 4,7
-             if (jnmb(jcat) .ge. 1 .and. jnmb(lcat) .ge. 1) then
+             if (oneMicControl%jnmb(jcat) .ge. 1 .and. oneMicControl%jnmb(lcat) .ge. 1) then
                 call auto_accret_ice(m1,jcat,lcat,k1(jcat),k2(jcat),dn0(1),dtlt,i,j &
                      ,rimecld(1),rimecldsnow(1),rimecldaggr(1),rimecldgrau(1),rimecldhail(1) &
                      ,rimecldt(1),rimecldsnowt(1),rimecldaggrt(1),rimecldgraut(1) &
-                     ,rimecldhailt(1))
+                     ,rimecldhailt(1),oneMicControl)
              endif
           enddo
        enddo
@@ -855,14 +825,14 @@ contains
 
     !***********************************************************************
     ! Calculate collision/coalescence efficiencies before collection subroutines
-    call effxy(m1,k1,k2,i,j)
+    call effxy(m1,k1,k2,i,j,oneMicControl)
 
     !***********************************************************************
     ! Self collection of rain, aggregates, graupel, hail:  number change only
     do lcat = 2,7
        if (lcat .eq. 3 .or. lcat .eq. 4) go to 29
        mc1 = mcats(lcat)
-       if (jnmb(lcat) >= 5) then
+       if (oneMicControl%jnmb(lcat) >= 5) then
           call cols (m1,lcat,mc1,k1(lcat),k2(lcat),i,j)
        endif
 29     continue
@@ -871,17 +841,17 @@ contains
     ! Self collection of pristine ice, snow (transfers to aggregates)
     do lcat = 3,4
        mc1 = mcat33(lcat)
-       if (jnmb(lcat) .ge. 1 .and. jnmb(5) .ge. 1) then
+       if (oneMicControl%jnmb(lcat) .ge. 1 .and. oneMicControl%jnmb(5) .ge. 1) then
           call col3344 (m1,lcat,5,mc1,k1(lcat),k2(lcat),i,j,aggregate(1) &
                ,aggrselfpris(1),aggrselfsnow(1),aggregatet(1) &
-               ,aggrselfprist(1),aggrselfsnowt(1))
+               ,aggrselfprist(1),aggrselfsnowt(1),oneMicControl)
        endif
     enddo
 
     ! Collection between pristine ice and snow
-    if (jnmb(5) .ge. 1) then
+    if (oneMicControl%jnmb(5) .ge. 1) then
        call col3443 (m1,3,4,5,max(k1(3),k1(4)),min(k2(3),k2(4)),i,j,aggregate(1) &
-            ,aggrprissnow(1),aggregatet(1),aggrprissnowt(1))
+            ,aggrprissnow(1),aggregatet(1),aggrprissnowt(1),oneMicControl)
     endif
 
     ! Ice-ice collisions
@@ -890,14 +860,14 @@ contains
        mc2 = mcat1(icx,2)
        mc3 = mcat1(icx,3)
        mc4 = mcat1(icx,4)
-       if (jnmb(mc1) .ge. 1 .and. jnmb(mc3) .ge. 1) then
+       if (oneMicControl%jnmb(mc1) .ge. 1 .and. oneMicControl%jnmb(mc3) .ge. 1) then
           call col1 (m1,mc1,mc2,mc3,mc4,max(k1(mc1),k1(mc2))  &
-               ,min(k2(mc1),k2(mc2)),i,j)
+               ,min(k2(mc1),k2(mc2)),i,j,oneMicControl)
        endif
     enddo
 
     ! Ice-cloud collisions
-    if(irime==0) then
+    if(oneMicControl%irime==0) then
        do jcat = 1,8,7
           do lcat = 4,7
              if(jcat==1)then
@@ -908,11 +878,11 @@ contains
                 mc1=mcat22(lcat,1)
                 mc2=mcat22(lcat,2)
              endif
-             if (jnmb(jcat) .ge. 1 .and. jnmb(lcat).ge.1 .and. jnmb(mc1).ge.1) then
+             if (oneMicControl%jnmb(jcat) .ge. 1 .and. oneMicControl%jnmb(lcat).ge.1 .and. oneMicControl%jnmb(mc1).ge.1) then
                 call col2 (m1,jcat,lcat,mc1,mc2 &
                      ,max(k1(jcat),k1(lcat)),min(k2(jcat),k2(lcat)),dn0(1),dtlt,i,j &
                      ,rimecld(1),rimecldsnow(1),rimecldaggr(1),rimecldgrau(1),rimecldhail(1) &
-                     ,rimecldt(1),rimecldsnowt(1),rimecldaggrt(1),rimecldgraut(1),rimecldhailt(1))
+                     ,rimecldt(1),rimecldsnowt(1),rimecldaggrt(1),rimecldgraut(1),rimecldhailt(1),oneMicControl)
              endif
           enddo
        enddo
@@ -920,12 +890,12 @@ contains
 
     ! Ice-rain collisions
     do lcat = 3,7
-       if (jnmb(2) .ge. 1 .and. jnmb(lcat) .ge. 1 .and. jnmb(7) .ge. 1) then
+       if (oneMicControl%jnmb(2) .ge. 1 .and. oneMicControl%jnmb(lcat) .ge. 1 .and. oneMicControl%jnmb(7) .ge. 1) then
           call col3 (m1,2,lcat,7,max(k1(2),k1(lcat)),min(k2(2),k2(lcat)),i,j &
                ,ice2rain(1),rain2ice(1),rain2pr(1),rain2sn(1)         &
                ,rain2ag(1),rain2gr(1),rain2ha(1),rain2ha_xtra(1)      &
                ,ice2raint(1),rain2icet(1),rain2prt(1),rain2snt(1)     &
-               ,rain2agt(1),rain2grt(1),rain2hat(1),rain2ha_xtrat(1))
+               ,rain2agt(1),rain2grt(1),rain2hat(1),rain2ha_xtrat(1),oneMicControl)
        endif
     enddo
 
@@ -935,40 +905,40 @@ contains
     qx_lhr = qx
 
     ! Make hydrometeor transfers due to collision-coalescence
-    call colxfers(m1,k1,k2,i,j,scrmic1,scrmic2)
+    call colxfers(m1,k1,k2,i,j,scrmic1,scrmic2,oneMicControl)
 
     ! Calcs r,q,c for each category considering melting processes
     ! in the order of pristine,cloud,drizzle,snow,agg,graupel,hail,rain
     ! though nothing done for cloud or drizzle in (x02) subroutine
     do mcat = 1,8
        lcat = mix02(mcat)
-       if (jnmb(lcat) .ge. 1) then
+       if (oneMicControl%jnmb(lcat) .ge. 1) then
           call x02(m1,k1,k2,lcat,dn0(1),i,j,meltice(1),meltpris(1),meltsnow(1) &
                ,meltaggr(1),meltgrau(1),melthail(1),melticet(1),meltprist(1) &
-               ,meltsnowt(1),meltaggrt(1),meltgraut(1),melthailt(1))
+               ,meltsnowt(1),meltaggrt(1),meltgraut(1),melthailt(1),oneMicControl)
        endif
     enddo
 
     ! Add call to update LHR theta' after collisions and melting
-    call calc_lhr_collmelt(m1,k1,k2,i,j,latheatfrz(1),latheatfrzt(1))
+    call calc_lhr_collmelt(m1,k1,k2,i,j,latheatfrz(1),latheatfrzt(1),oneMicControl)
 
     ! Save rx and qx before cloud nucleation...
     rx_lhr = rx
     qx_lhr = qx
 
     ! Calcs cloud mix ratio and concentration for cloud nucleation from CCN
-    if (jnmb(1) .ge. 1) then
+    if (oneMicControl%jnmb(1) .ge. 1) then
        call cldnuc(m1,k1cnuc,k2cnuc,k1dnuc,k2dnuc,lpw,rv(1),wp(1),i,j,dn0(1) &
-            ,nuccldr(1),nuccldc(1),nuccldrt(1),nuccldct(1))
+            ,nuccldr(1),nuccldc(1),nuccldrt(1),nuccldct(1),oneMicControl)
     endif
 
-    if(jnmb(1) .ge. 1) then
+    if(oneMicControl%jnmb(1) .ge. 1) then
        !Finds bottom and top layer of cloud water
        k1(1) = min(k1(1),k1cnuc)
        k2(1) = max(k2(1),k2cnuc)
        k3(1) = max(k2(1),k3(1))
     endif
-    if(jnmb(8) .ge. 5) then
+    if(oneMicControl%jnmb(8) .ge. 5) then
        !Finds bottom and top layer of drizzle water
        k1(8) = min(k1(8),k1dnuc)
        k2(8) = max(k2(8),k2dnuc)
@@ -976,28 +946,28 @@ contains
     endif
 
     ! Add call to update LHR theta' after cloud nucleation...
-    call calc_lhr_cldnuc(m1,k1,k2,i,j,latheatvap(1),latheatvapt(1))
+    call calc_lhr_cldnuc(m1,k1,k2,i,j,latheatvap(1),latheatvapt(1),oneMicControl)
 
     ! Calcs mass of cloud water
-    if (jnmb(1) .ge. 1) then
-       call c03(m1,k1(1),k2(1),1,dn0(1),i,j)
+    if (oneMicControl%jnmb(1) .ge. 1) then
+       call c03(m1,k1(1),k2(1),1,dn0(1),i,j,oneMicControl)
     endif
     ! Calcs mass of drizzle water
-    if (jnmb(8) .ge. 5) then
-       call c03(m1,k1(8),k2(8),8,dn0(1),i,j)
+    if (oneMicControl%jnmb(8) .ge. 5) then
+       call c03(m1,k1(8),k2(8),8,dn0(1),i,j,oneMicControl)
     endif
 
     ! Save rx and qx before ice nucleation...
     rx_lhr = rx
     qx_lhr = qx
 
-    if (jnmb(3) .ge. 1) then
+    if (oneMicControl%jnmb(3) .ge. 1) then
        call icenuc(m1,k1(1),k2(1),k1(8),k2(8),k1pnuc,k2pnuc,lpw,ngr,rv(1)  &
             ,dn0(1),dtlt,i,j                                                    &
             ,nucicer(1),nucicec(1),inuchomr(1),inuchomc(1),inuccontr(1)         &
             ,inuccontc(1),inucifnr(1),inucifnc(1),inuchazr(1),inuchazc(1)       &
             ,nucicert(1),nucicect(1),inuchomrt(1),inuchomct(1),inuccontrt(1)    &
-            ,inuccontct(1),inucifnrt(1),inucifnct(1),inuchazrt(1),inuchazct(1))
+            ,inuccontct(1),inucifnrt(1),inucifnct(1),inuchazrt(1),inuchazct(1),oneMicControl)
     endif
 
     ! Finds bottom and top later of pristine ice
@@ -1006,17 +976,17 @@ contains
     k3(3) = max(k2(3),k3(3))
 
     !Update latent heating budgets after ice nucleation
-    call calc_lhr_icenuc(m1,k1,k2,i,j,latheatvap(1),latheatvapt(1))
+    call calc_lhr_icenuc(m1,k1,k2,i,j,latheatvap(1),latheatvapt(1),oneMicControl)
 
     ! Calcs mass of pristine, cloud, and drizzle in order and adjusts fall speed
-    if (jnmb(3) .ge. 1) then
-       call pc03(m1,k1(3),k2(3),3,dn0(1),i,j)
+    if (oneMicControl%jnmb(3) .ge. 1) then
+       call pc03(m1,k1(3),k2(3),3,dn0(1),i,j,oneMicControl)
     endif
-    if (jnmb(1) .ge. 1) then
-       call pc03(m1,k1(1),k2(1),1,dn0(1),i,j)
+    if (oneMicControl%jnmb(1) .ge. 1) then
+       call pc03(m1,k1(1),k2(1),1,dn0(1),i,j,oneMicControl)
     endif
-    if (jnmb(8) .ge. 1) then
-       call pc03(m1,k1(8),k2(8),8,dn0(1),i,j)
+    if (oneMicControl%jnmb(8) .ge. 1) then
+       call pc03(m1,k1(8),k2(8),8,dn0(1),i,j,oneMicControl)
     endif
 
     !  Zero out precip arrays.
@@ -1036,12 +1006,12 @@ contains
     enddo
 
     do lcat = 2,8
-       if (jnmb(lcat) .ge. 1) then
+       if (oneMicControl%jnmb(lcat) .ge. 1) then
           call sedim (m1,lcat,ngr,nembfall,maxkfall  &
                ,k1(lcat),k2(lcat),lpw,i,j  &
                ,rtp(1),thp(1),theta(1),dn0(1),dpcp0(lcat)  &
                ,pcpg,qpcpg,dpcpg,dtlti,scrmic1,scrmic2,scrmic3  &
-               ,pcpfillc,pcpfillr,sfcpcp,allpcp,dzt,if_adap)
+               ,pcpfillc,pcpfillr,sfcpcp,allpcp,dzt,if_adap,oneMicControl)
        endif
     enddo
 
@@ -1052,7 +1022,8 @@ contains
 
   !******************************************************************************
 
-  subroutine copyback(m1,k1,k2,k3,lpw_R,i,j,micro)
+  subroutine copyback(m1,k1,k2,k3,lpw_R,i,j,micro, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     type (micro_vars) :: micro
 
     integer, dimension(11)  :: k1,k2,k3
@@ -1063,89 +1034,89 @@ contains
 
     lpw=int(lpw_R)
 
-    if (jnmb(1) >= 1) then
+    if (oneMicControl%jnmb(1) >= 1) then
        call ae1kmic(lpw,k3(1),micro%rcp(1:m1,i,j),rx(1:m1,1))
-       if (jnmb(1) >= 5) then
+       if (oneMicControl%jnmb(1) >= 5) then
           call ae1kmic(lpw,k3(1),micro%ccp(1:m1,i,j),cx(1:m1,1))
           call ae1kmic(lpw,k3(1),micro%cccnp(1:m1,i,j),cccnx(1:m1))
           call ae1kmic(lpw,k3(1),micro%cccmp(1:m1,i,j),cccmx(1:m1))
-          if(iccnlev >= 2) call ae1kmic(lpw,k3(1),micro%cnm1p(1:m1,i,j),cnmhx(1:m1,1))
+          if(oneMicControl%iccnlev >= 2) call ae1kmic(lpw,k3(1),micro%cnm1p(1:m1,i,j),cnmhx(1:m1,1))
        endif
     endif
 
-    if (jnmb(2) >= 1) then
+    if (oneMicControl%jnmb(2) >= 1) then
        call ae1kmic(lpw,k2(11),micro%rrp(1:m1,i,j),rx(1:m1,2))
        call ae1kmic(lpw,k2(11),micro%q2(1:m1,i,j),qx(1:m1,2))
        micro%accpr(i,j) = micro%accpr(i,j) + accpx(2)
        micro%pcprr(i,j) = pcprx(2)
        call ae1kmic(lpw,k2(11),micro%pcpvr(1:m1,i,j),pcpvx(1:m1,2))
-       if (jnmb(2) >= 5) call ae1kmic(lpw,k2(11),micro%crp(1:m1,i,j),cx(1:m1,2))
-       if (iccnlev >= 2) call ae1kmic(lpw,k2(11),micro%cnm2p(1:m1,i,j),cnmhx(1:m1,2))
+       if (oneMicControl%jnmb(2) >= 5) call ae1kmic(lpw,k2(11),micro%crp(1:m1,i,j),cx(1:m1,2))
+       if (oneMicControl%iccnlev >= 2) call ae1kmic(lpw,k2(11),micro%cnm2p(1:m1,i,j),cnmhx(1:m1,2))
     endif
 
-    if (jnmb(3) >= 1) then
+    if (oneMicControl%jnmb(3) >= 1) then
        call ae1kmic(lpw,k3(3),micro%rpp(1:m1,i,j),rx(1:m1,3))
        micro%accpp(i,j) = micro%accpp(i,j) + accpx(3)
        micro%pcprp(i,j) = pcprx(3)
        call ae1kmic(lpw,k3(3),micro%pcpvp(1:m1,i,j),pcpvx(1:m1,3))
-       if (jnmb(3) >= 5) call ae1kmic(lpw,k3(3),micro%cpp(1:m1,i,j),cx(1:m1,3))
-       if (iccnlev >= 2) call ae1kmic(lpw,k3(3),micro%cnm3p(1:m1,i,j),cnmhx(1:m1,3))
+       if (oneMicControl%jnmb(3) >= 5) call ae1kmic(lpw,k3(3),micro%cpp(1:m1,i,j),cx(1:m1,3))
+       if (oneMicControl%iccnlev >= 2) call ae1kmic(lpw,k3(3),micro%cnm3p(1:m1,i,j),cnmhx(1:m1,3))
     endif
 
-    if (jnmb(4) >= 1) then
+    if (oneMicControl%jnmb(4) >= 1) then
        call ae1kmic(lpw,k2(11),micro%rsp(1:m1,i,j),rx(1:m1,4))
        micro%accps(i,j) = micro%accps(i,j) + accpx(4)
        micro%pcprs(i,j) = pcprx(4)
        call ae1kmic(lpw,k2(11),micro%pcpvs(1:m1,i,j),pcpvx(1:m1,4))
-       if (jnmb(4) >= 5) call ae1kmic(lpw,k2(11),micro%csp(1:m1,i,j),cx(1:m1,4))
+       if (oneMicControl%jnmb(4) >= 5) call ae1kmic(lpw,k2(11),micro%csp(1:m1,i,j),cx(1:m1,4))
     endif
 
-    if (jnmb(5) >= 1) then
+    if (oneMicControl%jnmb(5) >= 1) then
        call ae1kmic(lpw,k2(11),micro%rap(1:m1,i,j),rx(1:m1,5))
        micro%accpa(i,j) = micro%accpa(i,j) + accpx(5)
        micro%pcpra(i,j) = pcprx(5)
        call ae1kmic(lpw,k2(11),micro%pcpva(1:m1,i,j),pcpvx(1:m1,5))
-       if (jnmb(5) >= 5) call ae1kmic(lpw,k2(11),micro%cap(1:m1,i,j),cx(1:m1,5))
+       if (oneMicControl%jnmb(5) >= 5) call ae1kmic(lpw,k2(11),micro%cap(1:m1,i,j),cx(1:m1,5))
     endif
 
-    if (jnmb(6) >= 1) then
+    if (oneMicControl%jnmb(6) >= 1) then
        call ae1kmic(lpw,k2(11),micro%rgp(1:m1,i,j),rx(1:m1,6))
        call ae1kmic(lpw,k2(11),micro%q6(1:m1,i,j),qx(1:m1,6))
        micro%accpg(i,j) = micro%accpg(i,j) + accpx(6)
        micro%pcprg(i,j) = pcprx(6)
        call ae1kmic(lpw,k2(11),micro%pcpvg(1:m1,i,j),pcpvx(1:m1,6))
-       if (jnmb(6) >= 5) call ae1kmic(lpw,k2(11),micro%cgp(1:m1,i,j),cx(1:m1,6))
+       if (oneMicControl%jnmb(6) >= 5) call ae1kmic(lpw,k2(11),micro%cgp(1:m1,i,j),cx(1:m1,6))
     endif
 
-    if (jnmb(7) >= 1) then
+    if (oneMicControl%jnmb(7) >= 1) then
        call ae1kmic(lpw,k2(11),micro%rhp(1:m1,i,j),rx(1:m1,7))
        call ae1kmic(lpw,k2(11),micro%q7(1:m1,i,j),qx(1:m1,7))
        micro%accph(i,j) = micro%accph(i,j) + accpx(7)
        micro%pcprh(i,j) = pcprx(7)
        call ae1kmic(lpw,k2(11),micro%pcpvh(1:m1,i,j),pcpvx(1:m1,7))
-       if (jnmb(7) >= 5) call ae1kmic(lpw,k2(11),micro%chp(1:m1,i,j),cx(1:m1,7))
+       if (oneMicControl%jnmb(7) >= 5) call ae1kmic(lpw,k2(11),micro%chp(1:m1,i,j),cx(1:m1,7))
     endif
 
-    if (jnmb(8) >= 1) then
-       if(jnmb(8) <= 4) k3(8) = k2(11)
+    if (oneMicControl%jnmb(8) >= 1) then
+       if(oneMicControl%jnmb(8) <= 4) k3(8) = k2(11)
        call ae1kmic(lpw,k3(8),micro%rdp(1:m1,i,j),rx(1:m1,8))
        micro%accpd(i,j) = micro%accpd(i,j) + accpx(8)
        micro%pcprd(i,j) = pcprx(8)
        call ae1kmic(lpw,k3(8),micro%pcpvd(1:m1,i,j),pcpvx(1:m1,8))
-       if (jnmb(8) >= 5) then
+       if (oneMicControl%jnmb(8) >= 5) then
           call ae1kmic(lpw,k3(8),micro%cdp(1:m1,i,j),cx(1:m1,8))
           call ae1kmic(lpw,k3(8),micro%gccnp(1:m1,i,j),gccnx(1:m1))
           call ae1kmic(lpw,k3(8),micro%gccmp(1:m1,i,j),gccmx(1:m1))
        endif
-       if (iccnlev >= 2) call ae1kmic(lpw,k3(8),micro%cnm8p(1:m1,i,j),cnmhx(1:m1,8))
+       if (oneMicControl%iccnlev >= 2) call ae1kmic(lpw,k3(8),micro%cnm8p(1:m1,i,j),cnmhx(1:m1,8))
     endif
 
     !Set bottom level with first level above ground
-    if(imbudget>=1 .or. imbudtot>=1) then
+    if(oneMicControl%imbudget>=1 .or. oneMicControl%imbudtot>=1) then
        micro%latheatvap(1,i,j) = micro%latheatvap(2,i,j)
        micro%latheatfrz(1,i,j) = micro%latheatfrz(2,i,j)
     endif
-    if(imbudget>=1) then
+    if(oneMicControl%imbudget>=1) then
        micro%nuccldr(1,i,j)   = micro%nuccldr(2,i,j)
        micro%nuccldc(1,i,j)   = micro%nuccldc(2,i,j)
        micro%cld2rain(1,i,j)  = micro%cld2rain(2,i,j)
@@ -1159,7 +1130,7 @@ contains
        micro%rain2ice(1,i,j)  = micro%rain2ice(2,i,j)
        micro%aggregate(1,i,j) = micro%aggregate(2,i,j)
     endif
-    if(imbudget==2) then
+    if(oneMicControl%imbudget==2) then
        micro%inuchomr(1,i,j)     = micro%inuchomr(2,i,j)
        micro%inuchomc(1,i,j)     = micro%inuchomc(2,i,j)
        micro%inuccontr(1,i,j)    = micro%inuccontr(2,i,j)
@@ -1196,7 +1167,7 @@ contains
        micro%aggrprissnow(1,i,j) = micro%aggrprissnow(2,i,j)
     endif
     !COMPUTE AND OUTPUT MICRO BUDGET PROCESSES (totals)
-    if(imbudtot>=1) then
+    if(oneMicControl%imbudtot>=1) then
        micro%nuccldrt(1,i,j)    = micro%nuccldrt(2,i,j)
        micro%nuccldct(1,i,j)    = micro%nuccldct(2,i,j)
        micro%cld2raint(1,i,j)   = micro%cld2raint(2,i,j)
@@ -1212,7 +1183,7 @@ contains
        micro%latheatvapt(1,i,j) = micro%latheatvapt(2,i,j)
        micro%latheatfrzt(1,i,j) = micro%latheatfrzt(2,i,j)
     endif
-    if(imbudtot==2) then
+    if(oneMicControl%imbudtot==2) then
        micro%inuchomrt(1,i,j)     = micro%inuchomrt(2,i,j)
        micro%inuchomct(1,i,j)     = micro%inuchomct(2,i,j)
        micro%inuccontrt(1,i,j)    = micro%inuccontrt(2,i,j)
@@ -1259,17 +1230,18 @@ contains
   ! predicted. At this time, it does not differentiate between liquid and
   ! ice diffusion, nor does it keep track of condensation vs. evaporation.
 
-  subroutine calc_lhr_vap(m1,k1,k2,i,j,latheatvap,latheatvapt)
+  subroutine calc_lhr_vap(m1,k1,k2,i,j,latheatvap,latheatvapt, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: m1,lcat,k,i,j
     real, dimension(m1) :: latheatvap,latheatvapt
     integer, dimension(11) :: k1,k2
     real :: temp,fracliq1,fracliq2
 
-    if(imbudget>=1 .or. imbudtot>=1)then
+    if(oneMicControl%imbudget>=1 .or. oneMicControl%imbudtot>=1)then
 
        ! For each category, compute the change due to vapor transfer and apply to theta
        do lcat=1,ncat
-          if (jnmb(lcat) .ge. 1) then
+          if (oneMicControl%jnmb(lcat) .ge. 1) then
              do k=k1(lcat),k2(lcat)
 
                 ! Vapor to liquid
@@ -1343,13 +1315,14 @@ contains
   ! melting--it only computes the net effect of all freezing/melting processes
   ! on the potential temperature.
 
-  subroutine calc_lhr_collmelt(m1,k1,k2,i,j,latheatfrz,latheatfrzt)
+  subroutine calc_lhr_collmelt(m1,k1,k2,i,j,latheatfrz,latheatfrzt, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: m1,lcat,k,i,j
     integer, dimension(11) :: k1,k2
     real :: fracliq1, fracliq2, temp
     real, dimension(m1) :: rliq1,rice1,rliq2,rice2,latheatfrz,latheatfrzt
 
-    if(imbudget>=1 .or. imbudtot>=1)then
+    if(oneMicControl%imbudget>=1 .or. oneMicControl%imbudtot>=1)then
 
        ! Compute total liquid and ice amounts before and after collisions/melting
        rliq1 = 0.
@@ -1357,7 +1330,7 @@ contains
        rliq2 = 0.
        rice2 = 0.
        do lcat=1,ncat
-          if (jnmb(lcat) .ge. 1) then
+          if (oneMicControl%jnmb(lcat) .ge. 1) then
              do k=2,m1
                 if (lcat.eq.1 .or. lcat.eq.2 .or. lcat.eq.8) then ! liquid only
                    rliq1(k) = rliq1(k) + rx_lhr(k,lcat)
@@ -1403,16 +1376,17 @@ contains
   ! evaporation--it only computes the net effect of the nucleation processes
   ! on the potential temperature.
 
-  subroutine calc_lhr_cldnuc(m1,k1,k2,i,j,latheatvap,latheatvapt)
+  subroutine calc_lhr_cldnuc(m1,k1,k2,i,j,latheatvap,latheatvapt, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: m1,lcat,k,i,j
     integer, dimension(11) :: k1,k2
     real, dimension(m1) :: latheatvap,latheatvapt
 
-    if(imbudget>=1 .or. imbudtot>=1)then
+    if(oneMicControl%imbudget>=1 .or. oneMicControl%imbudtot>=1)then
 
        ! Cloud nucleation only changes the mixing ratio
        ! (and number concentration) of cloud1 and cloud2
-       if (jnmb(1) .ge. 1) then
+       if (oneMicControl%jnmb(1) .ge. 1) then
           do k=k1(1),k2(1)
              if (lhrtheta) then
                 latheatvap(k) = latheatvap(k) + (alvl/pitot(k))*(rx(k,1)-rx_lhr(k,1))
@@ -1423,7 +1397,7 @@ contains
              endif
           enddo
        endif
-       if (jnmb(8) .ge. 1) then
+       if (oneMicControl%jnmb(8) .ge. 1) then
           do k=k1(8),k2(8)
              if (lhrtheta) then
                 latheatvap(k) = latheatvap(k) + (alvl/pitot(k))*(rx(k,8)-rx_lhr(k,8))
@@ -1448,23 +1422,24 @@ contains
   ! sublimation--it only computes the net effect of the nucleation processes
   ! on the potential temperature.
 
-  subroutine calc_lhr_icenuc(m1,k1,k2,i,j,latheatvap,latheatvapt)
+  subroutine calc_lhr_icenuc(m1,k1,k2,i,j,latheatvap,latheatvapt, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: m1,lcat,k,i,j
     integer, dimension(11) :: k1,k2
     real, dimension(m1) :: latheatvap,latheatvapt
     real, dimension(nzpmax) :: vapdep
 
-    if(imbudget>=1 .or. imbudtot>=1)then
+    if(oneMicControl%imbudget>=1 .or. oneMicControl%imbudtot>=1)then
 
        ! Ice nucleation only changes the mixing ratio
        ! (and number concentration) of pristine ice
-       if (jnmb(3) .ge. 1) then
+       if (oneMicControl%jnmb(3) .ge. 1) then
           ! However, some comes from contact nucleation of cloud1 and cloud2,
           ! and some from vapor deposition...
           ! These need to be treated seperately due to different latent heats...
 
           ! First, changes in cloud1 and cloud2 (contact nucleation)
-          if (jnmb(1) .ge. 1) then
+          if (oneMicControl%jnmb(1) .ge. 1) then
              do k=k1(1),k2(1) ! Loss of cloud1
                 if (lhrtheta) then
                    latheatvap(k) = latheatvap(k) - (alli/pitot(k))*(rx(k,1)-rx_lhr(k,1))
@@ -1475,7 +1450,7 @@ contains
                 endif
              enddo
           endif
-          if (jnmb(8) .ge. 1) then
+          if (oneMicControl%jnmb(8) .ge. 1) then
              do k=k1(8),k2(8) ! Loss of cloud2
                 if (lhrtheta) then
                    latheatvap(k) = latheatvap(k) - (alli/pitot(k))*(rx(k,8)-rx_lhr(k,8))
@@ -1493,8 +1468,8 @@ contains
              ! First, compute total change in pristine ice (should be positive)
              vapdep(k) = (rx(k,3)-rx_lhr(k,3))
              ! Then, subtract off contributions from cloud1 and cloud2
-             if (jnmb(1) .ge. 1) vapdep(k) = vapdep(k) - (rx_lhr(k,1)-rx(k,1))
-             if (jnmb(8) .ge. 1) vapdep(k) = vapdep(k) - (rx_lhr(k,8)-rx(k,8))
+             if (oneMicControl%jnmb(1) .ge. 1) vapdep(k) = vapdep(k) - (rx_lhr(k,1)-rx(k,1))
+             if (oneMicControl%jnmb(8) .ge. 1) vapdep(k) = vapdep(k) - (rx_lhr(k,8)-rx(k,8))
              ! Finally, compute change to theta due to vapor deposition...
              if (lhrtheta) then
                 latheatvap(k) = latheatvap(k) + (alvi/pitot(k)) * vapdep(k)
@@ -8678,7 +8653,8 @@ contains
 
   !###########################################################################
   subroutine cldnuc(m1,k1cnuc,k2cnuc,k1dnuc,k2dnuc,lpw,rv,wp,i,j,dn0 &
-       ,nuccldr,nuccldc,nuccldrt,nuccldct)
+       ,nuccldr,nuccldc,nuccldrt,nuccldct, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: m1,i,j,k,k1cnuc,k2cnuc,k1dnuc,k2dnuc,lpw &
          ,epstab,jw,jconcen,jtemp,rgccn1,ct,ctc,maxct,epsnum
     real :: eps1,eps2,wtw1,wtw2,wtcon1,wtcon2,jrg1,jrg2,rg1,rg2 &
@@ -8691,12 +8667,12 @@ contains
     k1dnuc = lpw
     k2dnuc = 1
     maxct=1
-    if(jnmb(8)>=5) maxct=2
+    if(oneMicControl%jnmb(8)>=5) maxct=2
 
     !*********************************************************
     !***** If NOT pronosing number concentration of cloud1****
     !*********************************************************
-    if (jnmb(1) == 1 .or. jnmb(1) == 4) then
+    if (oneMicControl%jnmb(1) == 1 .or. oneMicControl%jnmb(1) == 4) then
        rnuc = parm(1) * emb0(1)
        do k = lpw,m1-1
           excessrv = rv(k) - 1.0001 * rvlsair(k)
@@ -8715,7 +8691,7 @@ contains
        !*************************************************************************
        !Saleeby(6/3/02) Prognosing number concentration of cloud 1 and/or 2 *****
        !*************************************************************************
-    elseif (jnmb(1) >= 5) then
+    elseif (oneMicControl%jnmb(1) >= 5) then
        do k = lpw,m1-1
           excessrv = rv(k) - 1.0001 * rvlsair(k)
           if (excessrv > 0.) then
@@ -8726,18 +8702,18 @@ contains
              cvap = 0.0
              gvap = 0.0
 
-             if(iccnlev==0) then
-                rg1=cnparm
+             if(oneMicControl%iccnlev==0) then
+                rg1=oneMicControl%cnparm
                 if(cccnx(k) < 1.0) cccnx(k) = 0.0
-                if(jnmb(8)>=5) then
+                if(oneMicControl%jnmb(8)>=5) then
                    if(gccnx(k) < 1.e-7) gccnx(k) = 0.0
                    cvap= (4.0 * 3.14159 * rg1**2) * cccnx(k)
-                   rg2=gnparm
+                   rg2=oneMicControl%gnparm
                    gvap= (4.0 * 3.14159 * rg2**2) * gccnx(k)
                 endif
              endif
 
-             if(iccnlev>=1) then
+             if(oneMicControl%iccnlev>=1) then
                 if(cccnx(k) <= 1.0 .or. cccmx(k) <= 1.e-16) then
                    !Do this in case cccnp is a small number or zero
                    rg1 = 0.0
@@ -8748,7 +8724,7 @@ contains
                    !Use avg solute density (1.967g/cm3) of NH42SO4=1.769,NaCl=2.165
                    rg1=(0.02523*cccmx(k)/cccnx(k))**.3333
                 endif
-                if((gccnx(k) <= 1.e-7 .or. gccmx(k) <= 1.e-16) .and. jnmb(8)>=5) then
+                if((gccnx(k) <= 1.e-7 .or. gccmx(k) <= 1.e-16) .and. oneMicControl%jnmb(8)>=5) then
                    !Do this in case gccnp is a small number or zero
                    rg2 = 0.0
                    gccnx(k) = 0.0
@@ -8761,14 +8737,14 @@ contains
              endif
 
              !*********************CCN TOLERANCES****************************************
-             if(iccnlev>=1 .and. cccnx(k)>0.) then
+             if(oneMicControl%iccnlev>=1 .and. cccnx(k)>0.) then
                 if(rg1 < 0.01e-4) rg1 = 0.010e-4
                 if(rg1 > 0.96e-4) rg1 = 0.960e-4
                 cccmx(k) = (rg1**3)*cccnx(k)/0.02523
                 cvap=(4.0 * 3.14159 * rg1**2) * cccnx(k)
              endif
              !**********************GCCN TOLERANCES**************************************
-             if(iccnlev>=1 .and. gccnx(k)>0. .and. jnmb(8)>=5) then
+             if(oneMicControl%iccnlev>=1 .and. gccnx(k)>0. .and. oneMicControl%jnmb(8)>=5) then
                 if(rg2 <= 0.96e-4) rg2 = 0.96e-4
                 if(rg2 >  5.00e-4) rg2 = 5.00e-4
                 gccmx(k) = (rg2**3)*gccnx(k)/0.02523
@@ -8835,15 +8811,15 @@ contains
                    enddo
                    !********** EPSILON SOLUBILITY FRACTION FOR CCN *****************************
                    !Determine weights for interpolating between epsilon table values
-                   if (epsil < 0.05) then
-                      epsil = 0.05
-                   elseif (epsil > 1.00) then
-                      epsil = 1.00
+                   if (oneMicControl%epsil < 0.05) then
+                      oneMicControl%epsil = 0.05
+                   elseif (oneMicControl%epsil > 1.00) then
+                      oneMicControl%epsil = 1.00
                    endif
                    do epsnum=1,maxeps-1
-                      if((epsil>=epsfrac(epsnum)) .and. (epsil<=epsfrac(epsnum+1))) then
+                      if((oneMicControl%epsil>=epsfrac(epsnum)) .and. (oneMicControl%epsil<=epsfrac(epsnum+1))) then
                          epstab=epsnum
-                         eps2 = (epsil-epsfrac(epsnum)) / (epsfrac(epsnum+1)-epsfrac(epsnum))
+                         eps2 = (oneMicControl%epsil-epsfrac(epsnum)) / (epsfrac(epsnum+1)-epsfrac(epsnum))
                          eps1 = 1. - eps2
                       endif
                    enddo
@@ -8858,7 +8834,7 @@ contains
                    !Get number to nucleate
                    concen_tab = concen_nuc * tab
 
-                   if(jnmb(8) >= 5 .and. (gvap.ne.0. .or. cvap.ne.0.)) then
+                   if(oneMicControl%jnmb(8) >= 5 .and. (gvap.ne.0. .or. cvap.ne.0.)) then
                       grat = gvap / (gvap + cvap*tab)
                       crat = 1.0 - grat
                    endif
@@ -8893,31 +8869,31 @@ contains
                 !*********FOR NUMBER CONCENTRATION PREDICTION OF CLOUD_1*********************
                 !If you're not depleting aerosols then nucleate cloud droplets
                 !only if CCN and/or GCCN concentration > existing cloud concen
-                if((ct==1 .and. iccnlev==0 .and. concen_tab < cx(k,1)) .or. &
-                     (ct==2 .and. iccnlev==0 .and. concen_tab < cx(k,8)) .or. &
+                if((ct==1 .and. oneMicControl%iccnlev==0 .and. concen_tab < cx(k,1)) .or. &
+                     (ct==2 .and. oneMicControl%iccnlev==0 .and. concen_tab < cx(k,8)) .or. &
                      concen_tab <= 0.0) ctc=1
 
                 if(ctc==0) then
 
                    if(ct==1) then
-                      if(iccnlev==0) concen_tab = concen_tab - cx(k,1)
+                      if(oneMicControl%iccnlev==0) concen_tab = concen_tab - cx(k,1)
                       vaprccn = excessrv*crat
                       if(concen_tab > vaprccn / emb0(1)) concen_tab = vaprccn / emb0(1)
                       if(concen_tab < vaprccn / emb1(1)) vaprccn = concen_tab * emb1(1)
                       cx(k,1) = cx(k,1) + concen_tab
                       rx(k,1) = rx(k,1) + vaprccn
-                      if(imbudget >= 1) then
+                      if(oneMicControl%imbudget >= 1) then
                          nuccldr(k) = nuccldr(k) + vaprccn * budget_scale
                          nuccldc(k) = nuccldc(k) + concen_tab * 1.e-6
                       endif
-                      if(imbudtot >= 1) then
+                      if(oneMicControl%imbudtot >= 1) then
                          nuccldrt(k) = nuccldrt(k) + vaprccn * budget_scalet
                          nuccldct(k) = nuccldct(k) + concen_tab * 1.e-6
                       endif
                    endif
 
                    if(ct==2) then
-                      if(iccnlev==0) concen_tab = concen_tab - cx(k,8)
+                      if(oneMicControl%iccnlev==0) concen_tab = concen_tab - cx(k,8)
                       vaprgccn = excessrv*grat
                       if(vaprccn < excessrv*crat) &
                            vaprgccn = vaprgccn + excessrv*crat - vaprccn
@@ -8925,17 +8901,17 @@ contains
                       if(concen_tab < vaprgccn / emb1(8)) vaprgccn = concen_tab * emb1(8)
                       cx(k,8) = cx(k,8) + concen_tab
                       rx(k,8) = rx(k,8) + vaprgccn
-                      if(imbudget >= 1) then
+                      if(oneMicControl%imbudget >= 1) then
                          nuccldr(k) = nuccldr(k) + vaprgccn * budget_scale
                          nuccldc(k) = nuccldc(k) + concen_tab * 1.e-6
                       endif
-                      if(imbudtot >= 1) then
+                      if(oneMicControl%imbudtot >= 1) then
                          nuccldrt(k) = nuccldrt(k) + vaprgccn * budget_scalet
                          nuccldct(k) = nuccldct(k) + concen_tab * 1.e-6
                       endif
                    endif
 
-                   if(iccnlev>=1) then
+                   if(oneMicControl%iccnlev>=1) then
                       ccnnum  = 0.0 !Variable ccnnum is #/cm3
                       ccnmass = 0.0 !Variable ccnmass is g/cm3
                       concen_tab = concen_tab / 1.e6 * dn0(k) !Convert #/kg to #/cm3
@@ -8971,12 +8947,12 @@ contains
                       if(ct==1) then
                          cccnx(k) = cccnx(k) - concen_tab
                          cccmx(k) = cccmx(k) - ccnmass
-                         if(iccnlev>=2) cnmhx(k,1) = cnmhx(k,1) + ccnmass
+                         if(oneMicControl%iccnlev>=2) cnmhx(k,1) = cnmhx(k,1) + ccnmass
                       endif
                       if(ct==2) then
                          gccnx(k) = gccnx(k) - concen_tab
                          gccmx(k) = gccmx(k) - ccnmass
-                         if(iccnlev>=2) cnmhx(k,8) = cnmhx(k,8) + ccnmass
+                         if(oneMicControl%iccnlev>=2) cnmhx(k,8) = cnmhx(k,8) + ccnmass
                       endif
 
                    endif !CCNLEV CHECK
@@ -8987,7 +8963,7 @@ contains
 
           if (rx(k,1) .ge. 1.e-12) k2cnuc = k
           if (k2cnuc .eq. 1 .and. rx(k,1) .lt. 1.e-12) k1cnuc = k + 1
-          if(jnmb(8)>=5) then
+          if(oneMicControl%jnmb(8)>=5) then
              if (rx(k,8) .ge. 1.e-12) k2dnuc = k
              if (k2dnuc .eq. 1 .and. rx(k,8) .lt. 1.e-12) k1dnuc = k + 1
           endif
@@ -9006,7 +8982,8 @@ contains
   subroutine icenuc(m1,kc1,kc2,kd1,kd2,k1pnuc,k2pnuc,lpw,ngr,rv,dn0,dtlt,i,j &
        ,nucicer,nucicec,inuchomr,inuchomc,inuccontr,inuccontc,inucifnr,inucifnc &
        ,inuchazr,inuchazc,nucicert,nucicect,inuchomrt,inuchomct,inuccontrt &
-       ,inuccontct,inucifnrt,inucifnct,inuchazrt,inuchazct)
+       ,inuccontct,inucifnrt,inucifnct,inuchazrt,inuchazct, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: m1,kc1,kc2,kd1,kd2,k1pnuc,k2pnuc,lpw,ngr,i,j,k,idnc,itc,irhhz,ithz
     real :: dn1,fraccld,ridnc,dtlt,ssi0,wdnc2,tc,ritc,wtc2  &
          ,pbvi,ptvi,pdvi,ptotvi,fracifn,cldnuc,cldnucr,rhhz,haznuc  &
@@ -9064,8 +9041,8 @@ contains
           ! probably do not want sink of ccinp here.
           !Saleeby(2009): Need separate homogeneous freezing options for
           !1-moment and 2-moment cloud and drizzle droplet treatments
-          if(jnmb(1) <  5) cldnuc = max(0.,fraccld * cx(k,1) - cx(k,3))
-          if(jnmb(1) >= 5) cldnuc = max(0.,fraccld * cx(k,1))
+          if(oneMicControl%jnmb(1) <  5) cldnuc = max(0.,fraccld * cx(k,1) - cx(k,3))
+          if(oneMicControl%jnmb(1) >= 5) cldnuc = max(0.,fraccld * cx(k,1))
 
           cont_nuc = ptotvi * emb(k,1)
           homo_nuc = fraccld * rx(k,1)
@@ -9079,7 +9056,7 @@ contains
           endif
 
           !Transfering aerosol mass from cloud to pristine ice
-          if(iccnlev>=2 .and. rx(k,1).gt.1.e-10 .and. tairc(k).le.-2.) then
+          if(oneMicControl%iccnlev>=2 .and. rx(k,1).gt.1.e-10 .and. tairc(k).le.-2.) then
              rxferratio = min(1.0,(cont_nuc + homo_nuc) / rx(k,1))
              ccnmass  = cnmhx(k,1) * rxferratio
              cnmhx(k,1) = cnmhx(k,1) - ccnmass
@@ -9091,22 +9068,22 @@ contains
           cx(k,3) = cx(k,3) + min(cx(k,1),cldnuc + ptotvi)
           cx(k,1) = cx(k,1) - min(cx(k,1),cldnuc + ptotvi)
 
-          if(imbudget >= 1) then
+          if(oneMicControl%imbudget >= 1) then
              nucicer(k) = nucicer(k) + (cont_nuc + homo_nuc) * budget_scale
              nucicec(k) = nucicec(k) + cldnuc + ptotvi
           endif
-          if(imbudget == 2) then
+          if(oneMicControl%imbudget == 2) then
              inuchomr(k)  = inuchomr(k)  + homo_nuc * budget_scale
              inuccontr(k) = inuccontr(k) + cont_nuc * budget_scale
              inuchomc(k)  = inuchomc(k)  + cldnuc
              inuccontc(k) = inuccontc(k) + ptotvi
           endif
 
-          if(imbudtot >= 1) then
+          if(oneMicControl%imbudtot >= 1) then
              nucicert(k) = nucicert(k) + (cont_nuc + homo_nuc) * budget_scalet
              nucicect(k) = nucicect(k) + cldnuc + ptotvi
           endif
-          if(imbudtot == 2) then
+          if(oneMicControl%imbudtot == 2) then
              inuchomrt(k)  = inuchomrt(k)  + homo_nuc * budget_scalet
              inuccontrt(k) = inuccontrt(k) + cont_nuc * budget_scalet
              inuchomct(k)  = inuchomct(k)  + cldnuc
@@ -9154,8 +9131,8 @@ contains
           ! probably do not want sink of ccinp here.
           !Saleeby(2009): Need separate homogeneous freezing options for
           !1-moment and 2-moment cloud and drizzle droplet treatments
-          if(jnmb(8) <  5) cldnuc = max(0.,fraccld * cx(k,8) - cx(k,3))
-          if(jnmb(8) >= 5) cldnuc = max(0.,fraccld * cx(k,8))
+          if(oneMicControl%jnmb(8) <  5) cldnuc = max(0.,fraccld * cx(k,8) - cx(k,3))
+          if(oneMicControl%jnmb(8) >= 5) cldnuc = max(0.,fraccld * cx(k,8))
 
           cont_nuc = ptotvi * emb(k,8)
           homo_nuc = fraccld * rx(k,8)
@@ -9169,7 +9146,7 @@ contains
           endif
 
           !Transfering aerosol mass from cloud to pristine ice
-          if(iccnlev>=2 .and. rx(k,8).gt.1.e-10 .and. tairc(k).le.-2.) then
+          if(oneMicControl%iccnlev>=2 .and. rx(k,8).gt.1.e-10 .and. tairc(k).le.-2.) then
              rxferratio = min(1.0,(cont_nuc + homo_nuc) / rx(k,8))
              ccnmass  = cnmhx(k,8) * rxferratio
              cnmhx(k,8) = cnmhx(k,8) - ccnmass
@@ -9181,22 +9158,22 @@ contains
           cx(k,3) = cx(k,3) + min(cx(k,8),cldnuc + ptotvi)
           cx(k,8) = cx(k,8) - min(cx(k,8),cldnuc + ptotvi)
 
-          if(imbudget >= 1) then
+          if(oneMicControl%imbudget >= 1) then
              nucicer(k) = nucicer(k) + (cont_nuc + homo_nuc) * budget_scale
              nucicec(k) = nucicec(k) + cldnuc + ptotvi
           endif
-          if(imbudget == 2) then
+          if(oneMicControl%imbudget == 2) then
              inuchomr(k)  = inuchomr(k)  + homo_nuc * budget_scale
              inuccontr(k) = inuccontr(k) + cont_nuc * budget_scale
              inuchomc(k)  = inuchomc(k)  + cldnuc
              inuccontc(k) = inuccontc(k) + ptotvi
           endif
 
-          if(imbudtot >= 1) then
+          if(oneMicControl%imbudtot >= 1) then
              nucicert(k) = nucicert(k) + (cont_nuc + homo_nuc) * budget_scalet
              nucicect(k) = nucicect(k) + cldnuc + ptotvi
           endif
-          if(imbudtot == 2) then
+          if(oneMicControl%imbudtot == 2) then
              inuchomrt(k)  = inuchomrt(k)  + homo_nuc * budget_scalet
              inuccontrt(k) = inuccontrt(k) + cont_nuc * budget_scalet
              inuchomct(k)  = inuchomct(k)  + cldnuc
@@ -9232,8 +9209,8 @@ contains
           !Saleeby(2009): Haze nuclei can be too plentiful here compared
           ! to reality. For 2-moment cloud droplet prediction I scale the
           ! haze nuclei to the CCN concentration. Need better option here.
-          if(jnmb(1)>=5) haznuc = frachaz * (cccnx(k) * 1.e6 / dn0(k))
-          if(jnmb(1)< 5) haznuc = frachaz * 300.e6
+          if(oneMicControl%jnmb(1)>=5) haznuc = frachaz * (cccnx(k) * 1.e6 / dn0(k))
+          if(oneMicControl%jnmb(1)< 5) haznuc = frachaz * 300.e6
        endif
 
        !  Heterogeneous nucleation by deposition condensation freezing
@@ -9253,7 +9230,7 @@ contains
        endif
 
        ! Diagnose maximum number of IFN to activate (#/kg)
-       if (ipris .ge. 5) then
+       if (oneMicControl%ipris .ge. 5) then
           diagni = fracifn * cifnx(k)
        endif
 
@@ -9286,22 +9263,22 @@ contains
        cx(k,3) = cx(k,3) + vapnuc
 
        pcthaze = haznuc / max(1.e-30,(haznuc + diagni))
-       if(imbudget >= 1) then
+       if(oneMicControl%imbudget >= 1) then
           nucicer(k) = nucicer(k) + vapnucr * budget_scale
           nucicec(k) = nucicec(k) + vapnuc
        endif
-       if(imbudget == 2) then
+       if(oneMicControl%imbudget == 2) then
           inucifnr(k) = vapnucr * (1.0 - pcthaze) * budget_scale
           inucifnc(k) = vapnuc  * (1.0 - pcthaze)
           inuchazr(k) = vapnucr * pcthaze * budget_scale
           inuchazc(k) = vapnuc  * pcthaze
        endif
 
-       if(imbudtot >= 1) then
+       if(oneMicControl%imbudtot >= 1) then
           nucicert(k) = nucicert(k) + vapnucr * budget_scalet
           nucicect(k) = nucicect(k) + vapnuc
        endif
-       if(imbudtot == 2) then
+       if(oneMicControl%imbudtot == 2) then
           inucifnrt(k) = inucifnrt(k) + vapnucr * (1.0 - pcthaze) * budget_scalet
           inucifnct(k) = inucifnct(k) + vapnuc  * (1.0 - pcthaze)
           inuchazrt(k) = inuchazrt(k) + vapnucr * pcthaze * budget_scalet
@@ -9470,7 +9447,8 @@ contains
 
   !******************************************************************************
 
-  subroutine auto_accret(m1,k1,k2,k3,k4,dn0,dtlt,i,j,cld2rain,cld2raint)
+  subroutine auto_accret(m1,k1,k2,k3,k4,dn0,dtlt,i,j,cld2rain,cld2raint, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: m1,i,j,k,k1,k2,k3,k4,kbot,ktop &
          ,id1cc,id2dd,id1cd,id2cd,id1cr,id1crn,id2cr,id2crn &
          ,ir3cr,id3cr,ir3rr,id3rr
@@ -9498,7 +9476,7 @@ contains
     pwmasi2 = 1. / pwmas(16)
     pwmasi3 = 1. / pwmas(2)
 
-    if(jnmb(8) .ne. 0) then
+    if(oneMicControl%jnmb(8) .ne. 0) then
        kbot=min(k1,k3)
        ktop=max(k2,k4)
     else
@@ -9636,7 +9614,7 @@ contains
           !      +                   wr3rr  * c3tabrr(ir3rr+1,id3rr+1))
           !***************************************************************************
 
-          if(jnmb(8) .ne. 0) then
+          if(oneMicControl%jnmb(8) .ne. 0) then
              !***************************************************************************
              !dd-> effect m,n of drizzle and n on rain
              tm2dd =  (1.-wd2dd) * r2tabdd(id2dd) + wd2dd * r2tabdd(id2dd+1)
@@ -9696,7 +9674,7 @@ contains
              un1cr=0.
           endif
 
-          if(jnmb(8) .ne. 0) then
+          if(oneMicControl%jnmb(8) .ne. 0) then
              um2dd = tm2dd * en2cgs_2 * dtlt3
              un2dd = tn2dd * en2cgs_2 * dtlt6
              un3dd = tn3dd * en2cgs_2 * dtlt6
@@ -9722,7 +9700,7 @@ contains
           ! these factors make (dn0i ** 1.5).
 
           !****************** FOR CLOUD1 - CLOUD2 - RAIN TRANSFERS *********************
-          if(jnmb(8) .eq. 0) then
+          if(oneMicControl%jnmb(8) .eq. 0) then
              um12 = min(rx(k,1),(um1cc + um1cr) * dn0i(k))
              un1 = min(cx(k,1)*dn0(k),(un1cc + un1cr))
              rxfer(k,1,2)  =  rxfer(k,1,2) + um12
@@ -9730,11 +9708,11 @@ contains
              enxfer(k,1,1) = enxfer(k,1,1) + un1 - un2cc
              enxfer(k,1,2) = enxfer(k,1,2) + un2cc
 
-             if(imbudget >= 1) cld2rain(k)  = um12 * budget_scale
-             if(imbudtot >= 1) cld2raint(k) = cld2raint(k) + um12 * budget_scalet
+             if(oneMicControl%imbudget >= 1) cld2rain(k)  = um12 * budget_scale
+             if(oneMicControl%imbudtot >= 1) cld2raint(k) = cld2raint(k) + um12 * budget_scalet
           endif
 
-          if(jnmb(8) .ne. 0) then
+          if(oneMicControl%jnmb(8) .ne. 0) then
              if(um2cd <= 0.0) &
                   um12 = min(rx(k,1),(um1cr + um1cd + um2cd) * dn0i(k))
              if(um2cd > 0.0) &
@@ -9764,8 +9742,8 @@ contains
              enxfer(k,8,8) = enxfer(k,8,8) + un8 - un3dd - un2cd
              enxfer(k,8,2) = enxfer(k,8,2) + un3dd + un2cd
 
-             if(imbudget >= 1) cld2rain(k)  = (um12 + um82) * budget_scale
-             if(imbudtot >= 1) cld2raint(k) = cld2raint(k) + (um12 + um82) * budget_scalet
+             if(oneMicControl%imbudget >= 1) cld2rain(k)  = (um12 + um82) * budget_scale
+             if(oneMicControl%imbudtot >= 1) cld2raint(k) = cld2raint(k) + (um12 + um82) * budget_scalet
           endif
 
           !USING CLOUD_2 TRANSFER TO TRANSFER CC2 COLLISION NUMBER TO
@@ -9779,7 +9757,8 @@ contains
   !****************************************************************************
   subroutine auto_accret_ice(m1,jcat,lcat,k1,k2,dn0,dtlt,i,j &
        ,rimecld,rimecldsnow,rimecldaggr,rimecldgrau,rimecldhail &
-       ,rimecldt,rimecldsnowt,rimecldaggrt,rimecldgraut,rimecldhailt)
+       ,rimecldt,rimecldsnowt,rimecldaggrt,rimecldgraut,rimecldhailt, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: m1,i,j,k,k1,k2,id1cr,id1crn,irici,idici &
          ,lcat,jhcaty,mx,it,ccat,jcat
 
@@ -9934,7 +9913,7 @@ contains
              coalliq = rcoal * fracliq
 
              !Secondary Ice Production Based on Hydrometeor Internal Temperature
-             if(tcoal.gt.-8.0.and.tcoal.lt.-3.0 .and. (jnmb(jcat)>=5.or.jnmb(lcat)>=5))then
+             if(tcoal.gt.-8.0.and.tcoal.lt.-3.0 .and. (oneMicControl%jnmb(jcat)>=5.or.oneMicControl%jnmb(lcat)>=5))then
                 jhcaty=jhcat(k,lcat)
                 area = cx(k,lcat) * dn0(k) * sipfac(jhcaty) * emb(k,lcat)  &
                      ** (2.*pwmasi(jhcaty))
@@ -9971,16 +9950,16 @@ contains
              ytoz = rfinlz - xtoz
              ccat=mcatc(lcat)
 
-             if(imbudget >= 1) rimecld(k) = rimecld(k) + umcld * budget_scale
-             if(imbudget == 2) then
+             if(oneMicControl%imbudget >= 1) rimecld(k) = rimecld(k) + umcld * budget_scale
+             if(oneMicControl%imbudget == 2) then
                 if(lcat.eq.4) rimecldsnow(k) = rimecldsnow(k) + umcld * budget_scale
                 if(lcat.eq.5) rimecldaggr(k) = rimecldaggr(k) + umcld * budget_scale
                 if(lcat.eq.6) rimecldgrau(k) = rimecldgrau(k) + umcld * budget_scale
                 if(lcat.eq.7) rimecldhail(k) = rimecldhail(k) + umcld * budget_scale
              endif
 
-             if(imbudtot >= 1) rimecldt(k) = rimecldt(k) + umcld * budget_scalet
-             if(imbudtot == 2) then
+             if(oneMicControl%imbudtot >= 1) rimecldt(k) = rimecldt(k) + umcld * budget_scalet
+             if(oneMicControl%imbudtot == 2) then
                 if(lcat.eq.4) rimecldsnowt(k) = rimecldsnowt(k) + umcld * budget_scalet
                 if(lcat.eq.5) rimecldaggrt(k) = rimecldaggrt(k) + umcld * budget_scalet
                 if(lcat.eq.6) rimecldgraut(k) = rimecldgraut(k) + umcld * budget_scalet
@@ -10008,7 +9987,8 @@ contains
 
   !******************************************************************************
 
-  subroutine effxy(m1,k1,k2,i,j)
+  subroutine effxy(m1,k1,k2,i,j, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: m1,i,j,k,ncall7
     integer, dimension(11) :: k1,k2
     real :: dmr
@@ -10016,7 +9996,7 @@ contains
     save
 
     ! 1 = rp,rs,ra,rg,rh
-    if (ncall7 .eq. 0 .and. jnmb(2) .ge. 1 .and. jnmb(3) .ge. 1) then
+    if (ncall7 .eq. 0 .and. oneMicControl%jnmb(2) .ge. 1 .and. oneMicControl%jnmb(3) .ge. 1) then
        ncall7 = 7
        do k = 2,m1-1
           eff(k,1) = 1.0
@@ -10026,7 +10006,7 @@ contains
     ! 2 = cs,ca
     ! Rough fit from Pruppacher and Klett Fig. 14-14 p. 496:
     ! close to curve for 404 microns.  Replace with auto_accret eventually.
-    if (jnmb(2) .ge. 1 .or. jnmb(3) .ge. 1) then
+    if (oneMicControl%jnmb(2) .ge. 1 .or. oneMicControl%jnmb(3) .ge. 1) then
        do k = k1(1),k2(1)
           if (emb(k,1) .gt. 9.e-13) then
              eff(k,2) = min(1.,30. * (emb(k,1) - 9.e-13) ** .15)
@@ -10037,7 +10017,7 @@ contains
     endif
 
     ! 3 = rr
-    if (jnmb(2) .ge. 1) then
+    if (oneMicControl%jnmb(2) .ge. 1) then
        do k = k1(2),k2(2)
           if (rx(k,2) .ge. 1.e-12) then
              if (emb(k,2) .lt. .113e-6) then
@@ -10052,7 +10032,7 @@ contains
     endif
 
     ! 4 = pp,ps,pa
-    if (jnmb(5) .ge. 1) then
+    if (oneMicControl%jnmb(5) .ge. 1) then
        do k = k1(3),k2(3)
           if (abs(tx(k,3)+14.) .le. 2.) then
              eff(k,4) = 1.4
@@ -10085,7 +10065,7 @@ contains
     endif
 
     ! 7 = pg,sg,ag,gg,gh
-    if (jnmb(6) .ge. 1) then
+    if (oneMicControl%jnmb(6) .ge. 1) then
        do k = k1(6),k2(6)
           if (qr(k,6) .gt. 0.) then
              eff(k,7) = 1.0
@@ -10096,7 +10076,7 @@ contains
     endif
 
     ! 8 = ph,sh,ah,gh
-    if (jnmb(7) .ge. 1) then
+    if (oneMicControl%jnmb(7) .ge. 1) then
        do k = k1(7),k2(7)
           if (rx(k,7) .ge. 1.e-12) then
              if (qr(k,7) .gt. 0.) then
@@ -10111,7 +10091,7 @@ contains
     ! 9 = cg,ch
     ! Rough fit from Pruppacher and Klett Fig. 14-11 p. 485:
     ! close to curves for 142 and 305 microns.  Replace with auto_accret eventually.
-    if (jnmb(2) .ge. 1 .or. jnmb(3) .ge. 1) then
+    if (oneMicControl%jnmb(2) .ge. 1 .or. oneMicControl%jnmb(3) .ge. 1) then
        do k = k1(1),k2(1)
           if (emb(k,1) .gt. 3.4e-14) then
              eff(k,9) = min(1.,1426. * (emb(k,1) - 3.4e-14) ** .28)
@@ -10122,7 +10102,7 @@ contains
     endif
 
     ! 10 = hh (trial)
-    if (jnmb(7) .ge. 1) then
+    if (oneMicControl%jnmb(7) .ge. 1) then
        do k = k1(7),k2(7)
           eff(k,10) = max(0.,.1 + .005 * tx(k,7))
        enddo
@@ -10131,7 +10111,7 @@ contains
     ! 11 = ds,da
     ! Rough fit from Pruppacher and Klett Fig. 14-14 p. 496:
     ! close to curve for 404 microns.  Replace with auto_accret eventually.
-    if (jnmb(2) .ge. 1 .or. jnmb(3) .ge. 1) then
+    if (oneMicControl%jnmb(2) .ge. 1 .or. oneMicControl%jnmb(3) .ge. 1) then
        do k = k1(8),k2(8)
           if (emb(k,8) .gt. 9.e-13) then
              eff(k,11) = min(1.,30. * (emb(k,8) - 9.e-13) ** .15)
@@ -10144,7 +10124,7 @@ contains
     ! 12 = dg,dh
     ! Rough fit from Pruppacher and Klett Fig. 14-11 p. 485:
     ! close to curves for 142 and 305 microns.  Replace with auto_accret eventually.
-    if (jnmb(2) .ge. 1 .or. jnmb(3) .ge. 1) then
+    if (oneMicControl%jnmb(2) .ge. 1 .or. oneMicControl%jnmb(3) .ge. 1) then
        do k = k1(8),k2(8)
           if (emb(k,8) .gt. 3.4e-14) then
              eff(k,12) = min(1.,1426. * (emb(k,8) - 3.4e-14) ** .28)
@@ -10179,7 +10159,8 @@ contains
   !******************************************************************************
 
   subroutine col3344(m1,mx,mz,mc1,k1,k2,i,j,aggregate,aggrselfpris,aggrselfsnow &
-       ,aggregatet,aggrselfprist,aggrselfsnowt)
+       ,aggregatet,aggrselfprist,aggrselfsnowt, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: m1,mx,mz,mc1,k1,k2,i,j,k,ip,ipc
     real :: c1,tabvalx,colamt,tabvaln,colnum
     real, dimension(m1) :: aggregate,aggrselfpris,aggrselfsnow &
@@ -10200,19 +10181,19 @@ contains
           rxfer(k,mx,mz) = rxfer(k,mx,mz) + colamt
           qrxfer(k,mx,mz) = qrxfer(k,mx,mz) + colamt * qx(k,mx)
 
-          if(imbudget >= 1) aggregate(k) = aggregate(k) + colamt*budget_scale
-          if(imbudget == 2) then
+          if(oneMicControl%imbudget >= 1) aggregate(k) = aggregate(k) + colamt*budget_scale
+          if(oneMicControl%imbudget == 2) then
              if(mx.eq.3) aggrselfpris(k) = colamt*budget_scale
              if(mx.eq.4) aggrselfsnow(k) = colamt*budget_scale
           endif
 
-          if(imbudtot >= 1) aggregatet(k) = aggregatet(k) + colamt*budget_scalet
-          if(imbudtot == 2) then
+          if(oneMicControl%imbudtot >= 1) aggregatet(k) = aggregatet(k) + colamt*budget_scalet
+          if(oneMicControl%imbudtot == 2) then
              if(mx.eq.3) aggrselfprist(k) = aggrselfprist(k) + colamt*budget_scalet
              if(mx.eq.4) aggrselfsnowt(k) = aggrselfsnowt(k) + colamt*budget_scalet
           endif
 
-          if (jnmb(mz) >= 5) then
+          if (oneMicControl%jnmb(mz) >= 5) then
 
              tabvaln  &
                   = wct1(k,mx) ** 2               * coltabc(ict1(k,mx),ict1(k,mx),ipc)  &
@@ -10231,7 +10212,8 @@ contains
   !******************************************************************************
 
   subroutine col3443(m1,mx,my,mz,k1,k2,i,j,aggregate,aggrprissnow &
-       ,aggregatet,aggrprissnowt)
+       ,aggregatet,aggrprissnowt, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: m1,mx,my,mz,k1,k2,i,j,k,jhcatx,jhcaty,ipxy,ipyx,ipc
     real :: c1,tabvalx,rcx,tabvaly,rcy,tabvaln,colnum
     real, dimension(m1) :: aggregate,aggrprissnow,aggregatet,aggrprissnowt
@@ -10265,11 +10247,11 @@ contains
           rxfer(k,my,mz) = rxfer(k,my,mz) + rcy
           qrxfer(k,my,mz) = qrxfer(k,my,mz) + rcy * qx(k,my)
 
-          if(imbudget >= 1) aggregate(k) = aggregate(k) + (rcx + rcy)*budget_scale
-          if(imbudget == 2) aggrprissnow(k) = (rcx + rcy)*budget_scale
+          if(oneMicControl%imbudget >= 1) aggregate(k) = aggregate(k) + (rcx + rcy)*budget_scale
+          if(oneMicControl%imbudget == 2) aggrprissnow(k) = (rcx + rcy)*budget_scale
 
-          if(imbudtot >= 1) aggregatet(k) = aggregatet(k) + (rcx + rcy)*budget_scalet
-          if(imbudtot == 2) aggrprissnowt(k) = aggrprissnowt(k) + (rcx + rcy)*budget_scalet
+          if(oneMicControl%imbudtot >= 1) aggregatet(k) = aggregatet(k) + (rcx + rcy)*budget_scalet
+          if(oneMicControl%imbudtot == 2) aggrprissnowt(k) = aggrprissnowt(k) + (rcx + rcy)*budget_scalet
 
           tabvaln  &
                = wct1(k,mx) * wct1(k,my) * coltabc (ict1(k,mx),ict1(k,my),ipc)  &
@@ -10294,7 +10276,8 @@ contains
 
   !******************************************************************************
 
-  subroutine col1(m1,mx,my,mz,mc4,k1,k2,i,j)
+  subroutine col1(m1,mx,my,mz,mc4,k1,k2,i,j, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: m1,mx,my,mz,mc4,k1,k2,i,j,k,ipxy,ipc
     real :: c1,tabvalx,rcx,tabvaln,colnum
 
@@ -10314,7 +10297,7 @@ contains
           rxfer(k,mx,mz) = rxfer(k,mx,mz) + rcx
           qrxfer(k,mx,mz) = qrxfer(k,mx,mz) + rcx * qx(k,mx)
 
-          if (jnmb(mx) >= 5) then
+          if (oneMicControl%jnmb(mx) >= 5) then
              tabvaln  &
                   = wct1(k,mx) * wct1(k,my) * coltabc (ict1(k,mx),ict1(k,my),ipc)  &
                   + wct2(k,mx) * wct1(k,my) * coltabc (ict2(k,mx),ict1(k,my),ipc)  &
@@ -10336,7 +10319,8 @@ contains
 
   subroutine col2(m1,mx,my,mz,mc2,k1,k2,dn0,dtlt,i,j,rimecld &
        ,rimecldsnow,rimecldaggr,rimecldgrau,rimecldhail &
-       ,rimecldt,rimecldsnowt,rimecldaggrt,rimecldgraut,rimecldhailt)
+       ,rimecldt,rimecldsnowt,rimecldaggrt,rimecldgraut,rimecldhailt, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: m1,mx,my,mz,mc2,k1,k2,i,j,k,jhcatx,jhcaty,ipxy,ipyx,ipc,it,mxx
     real :: c1,c2,tabvalx,rcx,tabvaly,rcy,tabvaln,colnum0,colnum,rcoal  &
          ,qrcx,qrcy,qrcoal,qcoal,fracliq,tcoal,coalliq,coalice,area,cn13,cn24  &
@@ -10377,7 +10361,7 @@ contains
 
           rcy = min(rx(k,my),c1 * colfacr(k) * 10. ** (-tabvaly))
 
-          if (jnmb(mx) >= 5 .or. jnmb(my) >= 5) then
+          if (oneMicControl%jnmb(mx) >= 5 .or. oneMicControl%jnmb(my) >= 5) then
 
              tabvaln  &
                   = wct1(k,mx) * wct1(k,my) * coltabc (ict1(k,mx),ict1(k,my),ipc)  &
@@ -10414,7 +10398,7 @@ contains
           ! prognostic for at least one of the two hydromet species involved. This is
           ! specified above in the calculations for "colnum".
 
-          if (tcoal.gt.-8.0 .and. tcoal.lt.-3.0 .and. (jnmb(mx)>=5.or.jnmb(my)>=5)) then
+          if (tcoal.gt.-8.0 .and. tcoal.lt.-3.0 .and. (oneMicControl%jnmb(mx)>=5.or.oneMicControl%jnmb(my)>=5)) then
              if(mx==1) mxx=1 !uses gamsip(1,it) for cloud1 set in mic_init.f90
              if(mx==8) mxx=2 !uses gamsip(2,it) for cloud2 set in mic_init.f90
              area = cx(k,my) * dn0(k) * sipfac(jhcaty) * emb(k,my)  &
@@ -10447,16 +10431,16 @@ contains
 
           xtoz = min(rcx,rfinlz)
 
-          if(imbudget >= 1) rimecld(k) = rimecld(k) + rcx * budget_scale
-          if(imbudget == 2) then
+          if(oneMicControl%imbudget >= 1) rimecld(k) = rimecld(k) + rcx * budget_scale
+          if(oneMicControl%imbudget == 2) then
              if(my.eq.4) rimecldsnow(k) = rimecldsnow(k) + rcx * budget_scale
              if(my.eq.5) rimecldaggr(k) = rimecldaggr(k) + rcx * budget_scale
              if(my.eq.6) rimecldgrau(k) = rimecldgrau(k) + rcx * budget_scale
              if(my.eq.7) rimecldhail(k) = rimecldhail(k) + rcx * budget_scale
           endif
 
-          if(imbudtot >= 1) rimecldt(k) = rimecldt(k) + rcx * budget_scalet
-          if(imbudtot == 2) then
+          if(oneMicControl%imbudtot >= 1) rimecldt(k) = rimecldt(k) + rcx * budget_scalet
+          if(oneMicControl%imbudtot == 2) then
              if(my.eq.4) rimecldsnowt(k) = rimecldsnowt(k) + rcx * budget_scalet
              if(my.eq.5) rimecldaggrt(k) = rimecldaggrt(k) + rcx * budget_scalet
              if(my.eq.6) rimecldgraut(k) = rimecldgraut(k) + rcx * budget_scalet
@@ -10488,7 +10472,8 @@ contains
 
   subroutine col3(m1,mx,my,mz,k1,k2,i,j,ice2rain,rain2ice,rain2pr,rain2sn &
        ,rain2ag,rain2gr,rain2ha,rain2ha_xtra,ice2raint,rain2icet &
-       ,rain2prt,rain2snt,rain2agt,rain2grt,rain2hat,rain2ha_xtrat)
+       ,rain2prt,rain2snt,rain2agt,rain2grt,rain2hat,rain2ha_xtrat, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: m1,mx,my,mz,k1,k2,i,j,k,ipxy,ipyx,ipc,jhcaty
     real :: c1,tabvalx,rcx,tabvaly,rcy,tabvaln,colnum,colnumx,colnumy,coalnum  &
          ,rcoal,qrcx,qrcy,qrcoal,qcoal,fracliq,coalliq,coalice,xtoz  &
@@ -10527,7 +10512,7 @@ contains
 
           rcy = min(rx(k,my),c1 * colfacr(k) * 10. ** (-tabvaly))
 
-          if (jnmb(mx) >= 5) then
+          if (oneMicControl%jnmb(mx) >= 5) then
              tabvaln  &
                   = wct1(k,mx) * wct1(k,my) * coltabc (ict1(k,mx),ict1(k,my),ipc)  &
                   + wct2(k,mx) * wct1(k,my) * coltabc (ict2(k,mx),ict1(k,my),ipc)  &
@@ -10555,11 +10540,11 @@ contains
 
              rxfer(k,my,mx) = rxfer(k,my,mx) + rcy
              qrxfer(k,my,mx) = qrxfer(k,my,mx) + qrcy
-             if (jnmb(mx) >= 5)  &
+             if (oneMicControl%jnmb(mx) >= 5)  &
                   enxfer(k,my,my) = enxfer(k,my,my) + colnumy
 
-             if(imbudget >= 1) ice2rain(k) = ice2rain(k) + rcy * budget_scale
-             if(imbudtot >= 1) ice2raint(k) = ice2raint(k) + rcy * budget_scalet
+             if(oneMicControl%imbudget >= 1) ice2rain(k) = ice2rain(k) + rcy * budget_scale
+             if(oneMicControl%imbudtot >= 1) ice2raint(k) = ice2raint(k) + rcy * budget_scalet
 
           else
 
@@ -10568,8 +10553,8 @@ contains
 
              xtoz = min(rcx,rfinlz)
 
-             if(imbudget >= 1) rain2ice(k) = rain2ice(k) + rcx * budget_scale
-             if(imbudget == 2) then
+             if(oneMicControl%imbudget >= 1) rain2ice(k) = rain2ice(k) + rcx * budget_scale
+             if(oneMicControl%imbudget == 2) then
                 if(my==3) rain2pr(k) = rcx * budget_scale
                 if(my==4) rain2sn(k) = rcx * budget_scale
                 if(my==5) rain2ag(k) = rcx * budget_scale
@@ -10578,8 +10563,8 @@ contains
                 if(my .ne. mz) rain2ha_xtra(k) = rain2ha_xtra(k) + xtoz * budget_scale
              endif
 
-             if(imbudtot >= 1) rain2icet(k) = rain2icet(k) + rcx * budget_scalet
-             if(imbudtot == 2) then
+             if(oneMicControl%imbudtot >= 1) rain2icet(k) = rain2icet(k) + rcx * budget_scalet
+             if(oneMicControl%imbudtot == 2) then
                 if(my==3) rain2prt(k) = rain2prt(k) + rcx * budget_scalet
                 if(my==4) rain2snt(k) = rain2snt(k) + rcx * budget_scalet
                 if(my==5) rain2agt(k) = rain2agt(k) + rcx * budget_scalet
@@ -10600,7 +10585,7 @@ contains
              if (my .ne. mz) qrxfer(k,my,mz) = qrxfer(k,my,mz)  &
                   + qx(k,my) * (rfinlz - xtoz)
 
-             if (jnmb(mx) >= 5) then
+             if (oneMicControl%jnmb(mx) >= 5) then
                 if (my .eq. mz) then
                    enxfer(k,mx,mx) = enxfer(k,mx,mx) + colnumx
                 elseif (colnumy .ge. colnumx) then
@@ -10623,7 +10608,8 @@ contains
 
   !******************************************************************************
 
-  subroutine colxfers(m1,k1,k2,i,j,rloss,enloss)
+  subroutine colxfers(m1,k1,k2,i,j,rloss,enloss, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: m1,i,j,k,lcat,kd1,kd2,jcat
     integer, dimension(11) :: k1,k2
     real, dimension(m1) :: rloss,enloss
@@ -10631,7 +10617,7 @@ contains
     !  All rxfer values are nonnegative.
 
     do lcat = 1,8
-       if (jnmb(lcat) .ge. 1) then
+       if (oneMicControl%jnmb(lcat) .ge. 1) then
           kd1 = k1(lcat)
           kd2 = k2(lcat)
 
@@ -10642,7 +10628,7 @@ contains
 
           do jcat = 1,8
              ! change this to include enxfer of the same categories
-             if (jnmb(jcat) .ge. 1) then
+             if (oneMicControl%jnmb(jcat) .ge. 1) then
                 if (lcat .ne. jcat) then
                    do k = kd1,kd2
                       rloss(k) = rloss(k) + rxfer(k,lcat,jcat)
@@ -10660,7 +10646,7 @@ contains
           enddo
 
           do jcat = 1,8
-             if (jnmb(jcat) .ge. 1) then
+             if (oneMicControl%jnmb(jcat) .ge. 1) then
                 if (lcat .ne. jcat) then
                    do k = kd1,kd2
                       rxfer(k,lcat,jcat) = rxfer(k,lcat,jcat)*rloss(k)
@@ -10677,7 +10663,7 @@ contains
 
     do lcat = 1,8
 
-       if (jnmb(lcat) .ge. 1) then
+       if (oneMicControl%jnmb(lcat) .ge. 1) then
 
           kd1 = k1(lcat)
           kd2 = k2(lcat)
@@ -10685,13 +10671,13 @@ contains
           do jcat = 1,8
 
              !TRANSFER MIXING RATIO AND NUMBER AND CCN MASS BETWEEN CATEGORIES
-             if (jnmb(jcat) .ge. 1 .and. lcat .ne. jcat) then
+             if (oneMicControl%jnmb(jcat) .ge. 1 .and. lcat .ne. jcat) then
                 do k = kd1,kd2
                    if(rxfer(k,lcat,jcat)>rx(k,lcat)) then
                       rxfer(k,lcat,jcat)=rx(k,lcat)
                    endif
                    !Transfer aerosol-in-hydrometeor masses between categories
-                   if(iccnlev>=2 .and. rx(k,lcat)>0.0) then
+                   if(oneMicControl%iccnlev>=2 .and. rx(k,lcat)>0.0) then
                       rxferratio = rxfer(k,lcat,jcat)/rx(k,lcat)
                       if(lcat==1.or.lcat==2.or.lcat==3.or.lcat==8) then
                          ccnmass  = cnmhx(k,lcat) * rxferratio
@@ -10713,7 +10699,7 @@ contains
           enddo
 
           !CHANGE TO ".GE. 5" TO INCLUDE OPTION 6 & 7 FOR CLOUD AND PRIS
-          if (jnmb(lcat) >= 5) then
+          if (oneMicControl%jnmb(lcat) >= 5) then
              do k = kd1,kd2
                 cx(k,lcat) = cx(k,lcat) - enxfer(k,lcat,lcat)
                 if(cx(k,lcat)<0.0) cx(k,lcat)=0.0
@@ -10735,7 +10721,8 @@ contains
   !  collection efficiency for hail too high.  big hail should not
   !  coallesce.
 
-  subroutine each_call(m1,dtlt)
+  subroutine each_call(m1,dtlt, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: m1,lcat,k,lhcat
     real :: dtlt
     integer, dimension(8) :: lcat0
@@ -10762,7 +10749,7 @@ contains
 
     do lcat = 1,8
        lhcat = lcat0(lcat)
-       if (jnmb(lcat) == 2) then
+       if (oneMicControl%jnmb(lcat) == 2) then
           do k = 2,m1-1
              emb(k,lcat) = cfmas(lhcat) * parm(lcat) ** pwmas(lhcat)
           enddo
@@ -10787,7 +10774,8 @@ contains
 
   !******************************************************************************
 
-  subroutine range_check(m1,k1,k2,k3,i,j,lpw_R,micro)
+  subroutine range_check(m1,k1,k2,k3,i,j,lpw_R,micro, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     type (micro_vars) :: micro
 
     real :: lpw_R
@@ -10807,7 +10795,7 @@ contains
           tx(k,lcat) = 0.
        enddo
 
-       if (jnmb(lcat) >= 3) then
+       if (oneMicControl%jnmb(lcat) >= 3) then
           do k = 2,m1-1
              emb(k,lcat) = 0.
           enddo
@@ -10829,26 +10817,26 @@ contains
 
     ! fill scratch arrays for dust and salt modes
     do k = lpw,m1-1
-       if (idust == 1 .or. imd1flg == 1) md1nx(k) = micro%md1np(k,i,j)
-       if (idust == 1 .or. imd2flg == 1) md2nx(k) = micro%md2np(k,i,j)
-       if (isalt == 1) saltfx(k) = micro%salt_filmp(k,i,j)
-       if (isalt == 1) saltjx(k) = micro%salt_jetp(k,i,j)
-       if (isalt == 1) saltsx(k) = micro%salt_spmp(k,i,j)
+       if (oneMicControl%idust == 1 .or. imd1flg == 1) md1nx(k) = micro%md1np(k,i,j)
+       if (oneMicControl%idust == 1 .or. imd2flg == 1) md2nx(k) = micro%md2np(k,i,j)
+       if (oneMicControl%isalt == 1) saltfx(k) = micro%salt_filmp(k,i,j)
+       if (oneMicControl%isalt == 1) saltjx(k) = micro%salt_jetp(k,i,j)
+       if (oneMicControl%isalt == 1) saltsx(k) = micro%salt_spmp(k,i,j)
     enddo
 
     ! fill scratch arrays for cloud water
 
-    if (jnmb(1) >= 1) then
+    if (oneMicControl%jnmb(1) >= 1) then
        do k = lpw,m1-1
           if (micro%rcp(k,i,j) >= 1.e-12) then
              k2(1) = k
              rx(k,1) = micro%rcp(k,i,j)
-             if (jnmb(1) >= 5) cx(k,1) = micro%ccp(k,i,j)
-             if (iccnlev >= 2) cnmhx(k,1) = micro%cnm1p(k,i,j)
+             if (oneMicControl%jnmb(1) >= 5) cx(k,1) = micro%ccp(k,i,j)
+             if (oneMicControl%iccnlev >= 2) cnmhx(k,1) = micro%cnm1p(k,i,j)
           else
              if (k2(1) == 1) k1(1) = k + 1
           endif
-          if (jnmb(1) >= 5) then
+          if (oneMicControl%jnmb(1) >= 5) then
              cccnx(k) = micro%cccnp(k,i,j)
              cccmx(k) = micro%cccmp(k,i,j)
           endif
@@ -10857,15 +10845,15 @@ contains
 
     ! fill scratch arrays for rain
 
-    if (jnmb(2) >= 1) then
+    if (oneMicControl%jnmb(2) >= 1) then
        do k = lpw,m1-1
           if (micro%rrp(k,i,j) >= 1.e-12) then
              k2(2) = k
              rx(k,2) = micro%rrp(k,i,j)
              qx(k,2) = micro%q2(k,i,j)
              qr(k,2) = qx(k,2) * rx(k,2)
-             if (jnmb(2) >= 5) cx(k,2) = micro%crp(k,i,j)
-             if (iccnlev >= 2) cnmhx(k,2) = micro%cnm2p(k,i,j)
+             if (oneMicControl%jnmb(2) >= 5) cx(k,2) = micro%crp(k,i,j)
+             if (oneMicControl%iccnlev >= 2) cnmhx(k,2) = micro%cnm2p(k,i,j)
           else
              if (k2(2) == 1) k1(2) = k + 1
           endif
@@ -10874,28 +10862,28 @@ contains
 
     ! fill scratch arrays for pristine ice
 
-    if (jnmb(3) >= 1) then
+    if (oneMicControl%jnmb(3) >= 1) then
        do k = lpw,m1-1
           if (micro%rpp(k,i,j) >= 1.e-12) then
              k2(3) = k
              rx(k,3) = micro%rpp(k,i,j)
              cx(k,3) = micro%cpp(k,i,j)
-             if (iccnlev >= 2) cnmhx(k,3) = micro%cnm3p(k,i,j)
+             if (oneMicControl%iccnlev >= 2) cnmhx(k,3) = micro%cnm3p(k,i,j)
           else
              if (k2(3) == 1) k1(3) = k + 1
           endif
-          if (jnmb(3) >= 5) cifnx(k) = micro%cifnp(k,i,j)
+          if (oneMicControl%jnmb(3) >= 5) cifnx(k) = micro%cifnp(k,i,j)
        enddo
     endif
 
     ! fill scratch arrays for snow
 
-    if (jnmb(4) >= 1) then
+    if (oneMicControl%jnmb(4) >= 1) then
        do k = lpw,m1-1
           if (micro%rsp(k,i,j) >= 1.e-12) then
              k2(4) = k
              rx(k,4) = micro%rsp(k,i,j)
-             if (jnmb(4) >= 5) cx(k,4) = micro%csp(k,i,j)
+             if (oneMicControl%jnmb(4) >= 5) cx(k,4) = micro%csp(k,i,j)
           else
              if (k2(4) == 1) k1(4) = k + 1
           endif
@@ -10904,12 +10892,12 @@ contains
 
     ! fill scratch arrays for aggregates
 
-    if (jnmb(5) >= 1) then
+    if (oneMicControl%jnmb(5) >= 1) then
        do k = lpw,m1-1
           if (micro%rap(k,i,j) >= 1.e-12) then
              k2(5) = k
              rx(k,5) = micro%rap(k,i,j)
-             if (jnmb(5) >= 5) cx(k,5) = micro%cap(k,i,j)
+             if (oneMicControl%jnmb(5) >= 5) cx(k,5) = micro%cap(k,i,j)
           else
              if (k2(5) == 1) k1(5) = k + 1
           endif
@@ -10918,14 +10906,14 @@ contains
 
     ! fill scratch arrays for graupel
 
-    if (jnmb(6) >= 1) then
+    if (oneMicControl%jnmb(6) >= 1) then
        do k = lpw,m1-1
           if (micro%rgp(k,i,j) >= 1.e-12) then
              k2(6) = k
              rx(k,6) = micro%rgp(k,i,j)
              qx(k,6) = micro%q6(k,i,j)
              qr(k,6) = qx(k,6) * rx(k,6)
-             if (jnmb(6) >= 5) cx(k,6) = micro%cgp(k,i,j)
+             if (oneMicControl%jnmb(6) >= 5) cx(k,6) = micro%cgp(k,i,j)
           else
              if (k2(6) == 1) k1(6) = k + 1
           endif
@@ -10934,14 +10922,14 @@ contains
 
     ! fill scratch arrays for hail
 
-    if (jnmb(7) >= 1) then
+    if (oneMicControl%jnmb(7) >= 1) then
        do k = lpw,m1-1
           if (micro%rhp(k,i,j) >= 1.e-12) then
              k2(7) = k
              rx(k,7) = micro%rhp(k,i,j)
              qx(k,7) = micro%q7(k,i,j)
              qr(k,7) = qx(k,7) * rx(k,7)
-             if (jnmb(7) >= 5) cx(k,7) = micro%chp(k,i,j)
+             if (oneMicControl%jnmb(7) >= 5) cx(k,7) = micro%chp(k,i,j)
           else
              if (k2(7) == 1) k1(7) = k + 1
           endif
@@ -10949,17 +10937,17 @@ contains
     endif
 
     ! fill scratch arrays for drizzle
-    if (jnmb(8) >= 1) then
+    if (oneMicControl%jnmb(8) >= 1) then
        do k = lpw,m1-1
           if (micro%rdp(k,i,j) >= 1.e-12) then
              k2(8) = k
              rx(k,8) = micro%rdp(k,i,j)
-             if (jnmb(8) >= 5) cx(k,8) = micro%cdp(k,i,j)
-             if (iccnlev >= 2) cnmhx(k,8) = micro%cnm8p(k,i,j)
+             if (oneMicControl%jnmb(8) >= 5) cx(k,8) = micro%cdp(k,i,j)
+             if (oneMicControl%iccnlev >= 2) cnmhx(k,8) = micro%cnm8p(k,i,j)
           else
              if (k2(8) == 1) k1(8) = k + 1
           endif
-          if (jnmb(8) >= 5) then
+          if (oneMicControl%jnmb(8) >= 5) then
              gccnx(k) = micro%gccnp(k,i,j)
              gccmx(k) = micro%gccmp(k,i,j)
           endif
@@ -11063,30 +11051,31 @@ contains
 
   !******************************************************************************
 
-  subroutine enemb(m1,k1,k2,lcat,dn0,i,j)
+  subroutine enemb(m1,k1,k2,lcat,dn0,i,j, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: m1,k1,k2,lcat,i,j,k,lhcat
     real :: embi,parmi,embtemp
     real, dimension(m1) :: dn0
 
-    if (jnmb(lcat) == 2) then
+    if (oneMicControl%jnmb(lcat) == 2) then
        embi = 1. / emb(2,lcat)
        do k = k1,k2
           cx(k,lcat) = rx(k,lcat) * embi
        enddo
-    elseif (jnmb(lcat) == 3) then
+    elseif (oneMicControl%jnmb(lcat) == 3) then
        do k = k1,k2
           lhcat = jhcat(k,lcat)
           emb(k,lcat) = cfemb0(lhcat) * (dn0(k) * rx(k,lcat)) ** pwemb0(lhcat)
           cx(k,lcat) = cfen0(lhcat) * dn0i(k)  &
                * (dn0(k) * rx(k,lcat)) ** pwen0(lhcat)
        enddo
-    elseif (jnmb(lcat) == 4) then
+    elseif (oneMicControl%jnmb(lcat) == 4) then
        parmi = 1. / parm(lcat)
        do k = k1,k2
           emb(k,lcat) = max(emb0(lcat),min(emb1(lcat),rx(k,lcat) * parmi))
           cx(k,lcat) = rx(k,lcat) / emb(k,lcat)
        enddo
-    elseif (jnmb(lcat) >= 5) then
+    elseif (oneMicControl%jnmb(lcat) >= 5) then
        do k = k1,k2
           embtemp=rx(k,lcat)/max(1.e-12,cx(k,lcat))
           emb(k,lcat) = max(emb0(lcat),min(emb1(lcat),rx(k,lcat)  &
@@ -11110,7 +11099,8 @@ contains
 
   subroutine x02(m1,k1,k2,lcat,dn0,i,j,meltice,meltpris,meltsnow,meltaggr &
        ,meltgrau,melthail,melticet,meltprist,meltsnowt,meltaggrt &
-       ,meltgraut,melthailt)
+       ,meltgraut,melthailt, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: m1,lcat,i,j,k,lhcat,inc,idns
     integer, dimension(11) :: k1,k2
     real :: rinv,closs,rxinv,rmelt,fracliq,cmelt,tcoal,ricetor6,rshed,rmltshed  &
@@ -11127,7 +11117,7 @@ contains
 
     if ((lcat == 2 .or. lcat >= 4) .and. (lcat .ne. 8)) then
 
-       call enemb(m1,k1(lcat),k2(lcat),lcat,dn0,i,j)
+       call enemb(m1,k1(lcat),k2(lcat),lcat,dn0,i,j,oneMicControl)
 
        do k = k1(lcat),k2(lcat)
 
@@ -11179,11 +11169,11 @@ contains
              cx(k,lcat) = cx(k,lcat) - cmelt
              cx(k,1) = cx(k,1) + cmelt
 
-             if(imbudget >= 1) meltice(k)  = meltice(k) + rmelt * budget_scale
-             if(imbudget == 2) meltpris(k) = rmelt * budget_scale
+             if(oneMicControl%imbudget >= 1) meltice(k)  = meltice(k) + rmelt * budget_scale
+             if(oneMicControl%imbudget == 2) meltpris(k) = rmelt * budget_scale
 
-             if(imbudtot >= 1) melticet(k)  = melticet(k)  + rmelt * budget_scalet
-             if(imbudtot == 2) meltprist(k) = meltprist(k) + rmelt * budget_scalet
+             if(oneMicControl%imbudtot >= 1) melticet(k)  = melticet(k)  + rmelt * budget_scalet
+             if(oneMicControl%imbudtot == 2) meltprist(k) = meltprist(k) + rmelt * budget_scalet
 
           endif
 
@@ -11219,14 +11209,14 @@ contains
                 cx(k,lcat) = cx(k,lcat) - closs
                 cx(k,6) = cx(k,6) + closs
 
-                if(imbudget >= 1) meltice(k) = meltice(k)+(rmelt+ricetor6)*budget_scale
-                if(imbudget == 2) then
+                if(oneMicControl%imbudget >= 1) meltice(k) = meltice(k)+(rmelt+ricetor6)*budget_scale
+                if(oneMicControl%imbudget == 2) then
                    if(lcat==4) meltsnow(k) = (rmelt + ricetor6) * budget_scale
                    if(lcat==5) meltaggr(k) = (rmelt + ricetor6) * budget_scale
                 endif
 
-                if(imbudtot >= 1) melticet(k) = melticet(k)+(rmelt+ricetor6)*budget_scalet
-                if(imbudtot == 2) then
+                if(oneMicControl%imbudtot >= 1) melticet(k) = melticet(k)+(rmelt+ricetor6)*budget_scalet
+                if(oneMicControl%imbudtot == 2) then
                    if(lcat==4) meltsnowt(k) = meltsnowt(k) + (rmelt + ricetor6) * budget_scalet
                    if(lcat==5) meltaggrt(k) = meltaggrt(k) + (rmelt + ricetor6) * budget_scalet
                 endif
@@ -11252,11 +11242,11 @@ contains
                 qr(k,2) = qr(k,2) + rx(k,6) * alli
                 cx(k,2) = cx(k,2) + cx(k,6)
 
-                if(imbudget >= 1) meltice(k)  = meltice(k) + rx(k,6) * budget_scale
-                if(imbudget == 2) meltgrau(k) = rx(k,6) * budget_scale
+                if(oneMicControl%imbudget >= 1) meltice(k)  = meltice(k) + rx(k,6) * budget_scale
+                if(oneMicControl%imbudget == 2) meltgrau(k) = rx(k,6) * budget_scale
 
-                if(imbudtot >= 1) melticet(k)  = melticet(k) + rx(k,6) * budget_scalet
-                if(imbudtot == 2) meltgraut(k) = meltgraut(k) + rx(k,6) * budget_scalet
+                if(oneMicControl%imbudtot >= 1) melticet(k)  = melticet(k) + rx(k,6) * budget_scalet
+                if(oneMicControl%imbudtot == 2) meltgraut(k) = meltgraut(k) + rx(k,6) * budget_scalet
 
                 rx(k,6) = 0.
                 qr(k,6) = 0.
@@ -11284,11 +11274,11 @@ contains
                 qr(k,2) = qr(k,2) + rx(k,7) * alli
                 cx(k,2) = cx(k,2) + cx(k,7)
 
-                if(imbudget >= 1) meltice(k)  = meltice(k) + rx(k,7) * budget_scale
-                if(imbudget == 2) melthail(k) = rx(k,7) * budget_scale
+                if(oneMicControl%imbudget >= 1) meltice(k)  = meltice(k) + rx(k,7) * budget_scale
+                if(oneMicControl%imbudget == 2) melthail(k) = rx(k,7) * budget_scale
 
-                if(imbudtot >= 1) melticet(k)  = melticet(k) + rx(k,7) * budget_scalet
-                if(imbudtot == 2) melthailt(k) = melthailt(k) + rx(k,7) * budget_scalet
+                if(oneMicControl%imbudtot >= 1) melticet(k)  = melticet(k) + rx(k,7) * budget_scalet
+                if(oneMicControl%imbudtot == 2) melthailt(k) = melthailt(k) + rx(k,7) * budget_scalet
 
                 rx(k,7) = 0.
                 qr(k,7) = 0.
@@ -11302,7 +11292,7 @@ contains
                 lhcat = jhcat(k,lcat)
                 inc = nint(200. * fracliq) + 1
                 dn = dnfac(lhcat) * emb(k,lcat) ** pwmasi(lhcat)
-                idns = max(1,nint(1.e3 * dn * gnu(lcat)))
+                idns = max(1,nint(1.e3 * dn * oneMicControl%gnu(lcat)))
                 rshed = rx(k,lcat) * shedtab(inc,idns)
                 rmltshed = rshed
                 qrmltshed = rmltshed * alli
@@ -11315,11 +11305,11 @@ contains
                 qr(k,lcat) = qr(k,lcat) - qrmltshed
                 qx(k,lcat) = qr(k,lcat) * (1./rx(k,lcat))
 
-                if(imbudget >= 1) meltice(k) = meltice(k) + rmltshed * budget_scale
-                if(imbudget == 2) melthail(k) = rmltshed * budget_scale
+                if(oneMicControl%imbudget >= 1) meltice(k) = meltice(k) + rmltshed * budget_scale
+                if(oneMicControl%imbudget == 2) melthail(k) = rmltshed * budget_scale
 
-                if(imbudtot >= 1) melticet(k)  = melticet(k) + rmltshed * budget_scalet
-                if(imbudtot == 2) melthailt(k) = melthailt(k) + rmltshed * budget_scalet
+                if(oneMicControl%imbudtot >= 1) melticet(k)  = melticet(k) + rmltshed * budget_scalet
+                if(oneMicControl%imbudtot == 2) melthailt(k) = melthailt(k) + rmltshed * budget_scalet
 
              endif
 
@@ -11332,20 +11322,22 @@ contains
 
   !******************************************************************************
 
-  subroutine c03(m1,k1,k2,lcat,dn0,i,j)
+  subroutine c03(m1,k1,k2,lcat,dn0,i,j, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: m1,k1,k2,lcat,i,j
     real, dimension(m1) :: dn0
 
-    if (jnmb(lcat) >= 3) call enemb(m1,k1,k2,lcat,dn0,i,j)
+    if (oneMicControl%jnmb(lcat) >= 3) call enemb(m1,k1,k2,lcat,dn0,i,j,oneMicControl)
   end subroutine c03
 
   !******************************************************************************
 
-  subroutine pc03(m1,k1,k2,lcat,dn0,i,j)
+  subroutine pc03(m1,k1,k2,lcat,dn0,i,j, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: m1,k1,k2,lcat,i,j,k,lhcat
     real, dimension(m1) :: dn0
 
-    if (jnmb(lcat) >= 3) call enemb(m1,k1,k2,lcat,dn0,i,j)
+    if (oneMicControl%jnmb(lcat) >= 3) call enemb(m1,k1,k2,lcat,dn0,i,j,oneMicControl)
 
     do k = k1,k2
 
@@ -11364,7 +11356,8 @@ contains
   subroutine sedim(m1,lcat,ngr,nembfall,maxkfall,k1,k2,lpw,i,j  &
        ,rtp,thp,theta,dn0,alphasfc  &
        ,pcpg,qpcpg,dpcpg,dtlti,cnew,rnew,qrnew  &
-       ,pcpfillc,pcpfillr,sfcpcp,allpcp,dzt,if_adap)
+       ,pcpfillc,pcpfillr,sfcpcp,allpcp,dzt,if_adap, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: m1,lcat,ngr,nembfall,maxkfall, if_adap  &
          ,k1,k2,lpw,i,j,k,lhcat,iemb,iemb2,kkf,kk
     real :: colddn0,rolddn0,qrolddn0,dispemb,riemb,wt2,psfc,qpcpg,pcpg,dpcpg  &
@@ -11390,13 +11383,13 @@ contains
           colddn0 = cx(k,lcat) * dn0(k)
           rolddn0 = rx(k,lcat) * dn0(k)
           qrolddn0 = qx(k,lcat) * rolddn0
-          if(iccnlev>=2.and.(lcat==2.or.lcat==3.or.lcat==8)) cnmhddn0 = cnmhx(k,lcat) * dn0(k)
+          if(oneMicControl%iccnlev>=2.and.(lcat==2.or.lcat==3.or.lcat==8)) cnmhddn0 = cnmhx(k,lcat) * dn0(k)
 
           !Here determine which set of powerlaws to use: the original
           ! ones in RAMS or the ones from R.Carver adapted from Mitchell 1996.
           !The Mitchell power laws are not based at sea level so we adjust the
           ! density factor based at 0.7 kg/m3 instead of 1.0 kg/m3.
-          if(iplaws==0) then
+          if(oneMicControl%iplaws==0) then
              dispemb = ch1(lhcat)  &
                   * (emb(k,lcat)/cfmas(lhcat)) ** ch3(lhcat) * sqrt(dn0i(k))
           else
@@ -11422,7 +11415,7 @@ contains
                   +  rolddn0 * dn0i(kk) * pcpfillr(k,kkf,iemb,lhcat)
              qrnew(kk) = qrnew(kk)  &
                   + qrolddn0 * dn0i(kk) * pcpfillr(k,kkf,iemb,lhcat)
-             if(iccnlev>=2.and.(lcat==2.or.lcat==3.or.lcat==8)) then
+             if(oneMicControl%iccnlev>=2.and.(lcat==2.or.lcat==3.or.lcat==8)) then
                 cnmhpnew(kk) = cnmhpnew(kk) &
                      + cnmhddn0 * dn0i(kk) * pcpfillr(k,kkf,iemb,lhcat)
              endif
@@ -11469,7 +11462,7 @@ contains
        !     +          * (rnew(k) - rx(k,lcat)) / (max(tair(k), 253.) * theta(k))
        !         endif
 
-       if(iccnlev>=2.and.(lcat==2.or.lcat==3.or.lcat==8)) cnmhx(k,lcat) = cnmhpnew(k)
+       if(oneMicControl%iccnlev>=2.and.(lcat==2.or.lcat==3.or.lcat==8)) cnmhx(k,lcat) = cnmhpnew(k)
        rx(k,lcat) = rnew(k)
        cx(k,lcat) = cnew(k)
        qx(k,lcat) = qnew
@@ -11486,20 +11479,22 @@ contains
 
   !******************************************************************************
 
-  subroutine negadj1_2M_rams60(m1,m2,m3,oneBasicFields)
+  subroutine negadj1_2M_rams60(m1,m2,m3,oneBasicFields, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     integer :: m1,m2,m3
 
-    if (level == 0) return
+    if (oneMicControl%level == 0) return
 
     call adj1_2M_rams60(m1,m2,m3,grid_g(ngrid)%lpw(1:m1,1),oneBasicFields%rtp(1:m1,1,1)  &
-         ,oneBasicFields%thp(1:m1,1,1),micro_g(ngrid),vctr9)
+         ,oneBasicFields%thp(1:m1,1,1),micro_g(ngrid),vctr9,oneMicControl)
 
   end subroutine negadj1_2M_rams60
 
   !******************************************************************************
 
-  subroutine adj1_2M_rams60(m1,m2,m3,lpw_R,rtp,thp,micro,vctr9)
+  subroutine adj1_2M_rams60(m1,m2,m3,lpw_R,rtp,thp,micro,vctr9, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: m1,m2,m3
     real, dimension(m2,m3) :: lpw_R
 
@@ -11514,7 +11509,7 @@ contains
 
     lpw=int(lpw_R)
 
-    if (level .eq. 0) return
+    if (oneMicControl%level .eq. 0) return
 
     do lcat = 1,ncat
        do k = 1,m1
@@ -11530,25 +11525,25 @@ contains
           ! Do this for all levels, regardless of ADAP
           ka = 1
 
-          if (jnmb(1) > 0) then
+          if (oneMicControl%jnmb(1) > 0) then
              call ae1kmic(ka,m1,rx(1:m1,1),micro%rcp(1:m1,i,j))
-             if(iccnlev >= 2) call ae1kmic(ka,m1,cnmhx(1:m1,1),micro%cnm1p(1:m1,i,j))
+             if(oneMicControl%iccnlev >= 2) call ae1kmic(ka,m1,cnmhx(1:m1,1),micro%cnm1p(1:m1,i,j))
           endif
-          if (jnmb(2) > 0) then
+          if (oneMicControl%jnmb(2) > 0) then
              call ae1kmic(ka,m1,rx(1:m1,2),micro%rrp(1:m1,i,j))
-             if(iccnlev >= 2) call ae1kmic(ka,m1,cnmhx(1:m1,2),micro%cnm2p(1:m1,i,j))
+             if(oneMicControl%iccnlev >= 2) call ae1kmic(ka,m1,cnmhx(1:m1,2),micro%cnm2p(1:m1,i,j))
           endif
-          if (jnmb(3) > 0) then
+          if (oneMicControl%jnmb(3) > 0) then
              call ae1kmic(ka,m1,rx(1:m1,3),micro%rpp(1:m1,i,j))
-             if(iccnlev >= 2) call ae1kmic(ka,m1,cnmhx(1:m1,3),micro%cnm3p(1:m1,i,j))
+             if(oneMicControl%iccnlev >= 2) call ae1kmic(ka,m1,cnmhx(1:m1,3),micro%cnm3p(1:m1,i,j))
           endif
-          if (jnmb(4) > 0) call ae1kmic(ka,m1,rx(1:m1,4),micro%rsp(1:m1,i,j))
-          if (jnmb(5) > 0) call ae1kmic(ka,m1,rx(1:m1,5),micro%rap(1:m1,i,j))
-          if (jnmb(6) > 0) call ae1kmic(ka,m1,rx(1:m1,6),micro%rgp(1:m1,i,j))
-          if (jnmb(7) > 0) call ae1kmic(ka,m1,rx(1:m1,7),micro%rhp(1:m1,i,j))
-          if (jnmb(8) > 0) then
+          if (oneMicControl%jnmb(4) > 0) call ae1kmic(ka,m1,rx(1:m1,4),micro%rsp(1:m1,i,j))
+          if (oneMicControl%jnmb(5) > 0) call ae1kmic(ka,m1,rx(1:m1,5),micro%rap(1:m1,i,j))
+          if (oneMicControl%jnmb(6) > 0) call ae1kmic(ka,m1,rx(1:m1,6),micro%rgp(1:m1,i,j))
+          if (oneMicControl%jnmb(7) > 0) call ae1kmic(ka,m1,rx(1:m1,7),micro%rhp(1:m1,i,j))
+          if (oneMicControl%jnmb(8) > 0) then
              call ae1kmic(ka,m1,rx(1:m1,8),micro%rdp(1:m1,i,j))
-             if(iccnlev >= 2) call ae1kmic(ka,m1,cnmhx(1:m1,8),micro%cnm8p(1:m1,i,j))
+             if(oneMicControl%iccnlev >= 2) call ae1kmic(ka,m1,cnmhx(1:m1,8),micro%cnm8p(1:m1,i,j))
           endif
 
           do lcat = 1,ncat
@@ -11576,49 +11571,49 @@ contains
              endif
           enddo
 
-          if (jnmb(1) > 0) then
+          if (oneMicControl%jnmb(1) > 0) then
              call ae1kmic(ka,m1,micro%rcp(1:m1,i,j),rx(1:m1,1))
-             if(iccnlev >= 2) call ae1kmic(ka,m1,micro%cnm1p(1:m1,i,j),cnmhx(1:m1,1))
+             if(oneMicControl%iccnlev >= 2) call ae1kmic(ka,m1,micro%cnm1p(1:m1,i,j),cnmhx(1:m1,1))
           endif
-          if (jnmb(2) > 0) then
+          if (oneMicControl%jnmb(2) > 0) then
              call ae1kmic(ka,m1,micro%rrp(1:m1,i,j),rx(1:m1,2))
-             if(iccnlev >= 2) call ae1kmic(ka,m1,micro%cnm2p(1:m1,i,j),cnmhx(1:m1,2))
+             if(oneMicControl%iccnlev >= 2) call ae1kmic(ka,m1,micro%cnm2p(1:m1,i,j),cnmhx(1:m1,2))
           endif
-          if (jnmb(3) > 0) then
+          if (oneMicControl%jnmb(3) > 0) then
              call ae1kmic(ka,m1,micro%rpp(1:m1,i,j),rx(1:m1,3))
-             if(iccnlev >= 2) call ae1kmic(ka,m1,micro%cnm3p(1:m1,i,j),cnmhx(1:m1,3))
+             if(oneMicControl%iccnlev >= 2) call ae1kmic(ka,m1,micro%cnm3p(1:m1,i,j),cnmhx(1:m1,3))
           endif
-          if (jnmb(4) > 0) call ae1kmic(ka,m1,micro%rsp(1:m1,i,j),rx(1:m1,4))
-          if (jnmb(5) > 0) call ae1kmic(ka,m1,micro%rap(1:m1,i,j),rx(1:m1,5))
-          if (jnmb(6) > 0) call ae1kmic(ka,m1,micro%rgp(1:m1,i,j),rx(1:m1,6))
-          if (jnmb(7) > 0) call ae1kmic(ka,m1,micro%rhp(1:m1,i,j),rx(1:m1,7))
-          if (jnmb(8) > 0) then
+          if (oneMicControl%jnmb(4) > 0) call ae1kmic(ka,m1,micro%rsp(1:m1,i,j),rx(1:m1,4))
+          if (oneMicControl%jnmb(5) > 0) call ae1kmic(ka,m1,micro%rap(1:m1,i,j),rx(1:m1,5))
+          if (oneMicControl%jnmb(6) > 0) call ae1kmic(ka,m1,micro%rgp(1:m1,i,j),rx(1:m1,6))
+          if (oneMicControl%jnmb(7) > 0) call ae1kmic(ka,m1,micro%rhp(1:m1,i,j),rx(1:m1,7))
+          if (oneMicControl%jnmb(8) > 0) then
              call ae1kmic(ka,m1,micro%rdp(1:m1,i,j),rx(1:m1,8))
-             if(iccnlev >= 2) call ae1kmic(ka,m1,micro%cnm8p(1:m1,i,j),cnmhx(1:m1,8))
+             if(oneMicControl%iccnlev >= 2) call ae1kmic(ka,m1,micro%cnm8p(1:m1,i,j),cnmhx(1:m1,8))
           endif
 
-          if (jnmb(1) >= 5)  &
+          if (oneMicControl%jnmb(1) >= 5)  &
                call ae1mic(ka,m1,micro%ccp(1:m1,i,j),micro%rcp(1:m1,i,j),rx(1,1))
-          if (jnmb(2) >= 5)  &
+          if (oneMicControl%jnmb(2) >= 5)  &
                call ae1mic(ka,m1,micro%crp(1:m1,i,j),micro%rrp(1:m1,i,j),rx(1,2))
-          if (jnmb(3) >= 5)  &
+          if (oneMicControl%jnmb(3) >= 5)  &
                call ae1mic(ka,m1,micro%cpp(1:m1,i,j),micro%rpp(1:m1,i,j),rx(1,3))
-          if (jnmb(4) >= 5)  &
+          if (oneMicControl%jnmb(4) >= 5)  &
                call ae1mic(ka,m1,micro%csp(1:m1,i,j),micro%rsp(1:m1,i,j),rx(1,4))
-          if (jnmb(5) >= 5)  &
+          if (oneMicControl%jnmb(5) >= 5)  &
                call ae1mic(ka,m1,micro%cap(1:m1,i,j),micro%rap(1:m1,i,j),rx(1,5))
-          if (jnmb(6) >= 5)  &
+          if (oneMicControl%jnmb(6) >= 5)  &
                call ae1mic(ka,m1,micro%cgp(1:m1,i,j),micro%rgp(1:m1,i,j),rx(1,6))
-          if (jnmb(7) >= 5)  &
+          if (oneMicControl%jnmb(7) >= 5)  &
                call ae1mic(ka,m1,micro%chp(1:m1,i,j),micro%rhp(1:m1,i,j),rx(1,7))
-          if (jnmb(8) >= 5)  &
+          if (oneMicControl%jnmb(8) >= 5)  &
                call ae1mic(ka,m1,micro%cdp(1:m1,i,j),micro%rdp(1:m1,i,j),rx(1,8))
 
           do k = 1,m1
-             if(imd1flg==1 .or. idust==1) then
+             if(imd1flg==1 .or. oneMicControl%idust==1) then
                 if(micro%md1np(k,i,j) .lt. 0.) micro%md1np(k,i,j) = 0.0
              endif
-             if(imd2flg==1 .or. idust==1) then
+             if(imd2flg==1 .or. oneMicControl%idust==1) then
                 if(micro%md2np(k,i,j) .lt. 0.) micro%md2np(k,i,j) = 0.0
              endif
           enddo
@@ -11666,7 +11661,8 @@ contains
   end subroutine ae1kmic
   !###########################################################################
 
-  subroutine micro_master
+  subroutine micro_master(oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     include "constants.h"
     character(len=*),parameter :: h='**(micro_master)**'
     integer :: lhcat,khcat,lcat,nd1,nd2,nip,ilcat,ilhcat,idum
@@ -11680,9 +11676,9 @@ contains
     data lcat0 /1,2,3,4,5,6,7,16/ ! lcat corressponding to lhcat
 
     data dstprms1/ &
-         !----------------------------------------------------------------------
-         ! shape      cfmas   pwmas      cfvt    pwvt     dmb0      dmb1
-         !----------------------------------------------------------------------
+                                !----------------------------------------------------------------------
+                                ! shape      cfmas   pwmas      cfvt    pwvt     dmb0      dmb1
+                                !----------------------------------------------------------------------
          .5,      524.,     3.,    3173.,     2.,   2.e-6,   50.e-6,  & !cloud
          .5,      524.,     3.,     149.,     .5,   .1e-3,    5.e-3,  & !rain
          .179,     110.8,   2.91,  5.769e5,   1.88,  15.e-6,  125.e-6,  & !pris col
@@ -11701,9 +11697,9 @@ contains
          .5,      524.,     3.,    3173.,     2.,  65.e-6,  100.e-6/    !drizzle
 
     data dstprms2/ &
-         !----------------------------------------------------------------------
-         ! shape      cfmas   pwmas      cfvt    pwvt     dmb0      dmb1
-         !----------------------------------------------------------------------
+                                !----------------------------------------------------------------------
+                                ! shape      cfmas   pwmas      cfvt    pwvt     dmb0      dmb1
+                                !----------------------------------------------------------------------
          .5,      524.,     3.,    3173.,     2.,   2.e-6,   50.e-6,  & !cloud
          .5,      524.,     3.,     144.,   .497,   .1e-3,    5.e-3,  & !rain
          .179,     110.8,   2.91,    1538.,   1.00,  15.e-6,  125.e-6,  & !pris col
@@ -11722,9 +11718,9 @@ contains
          .5,      524.,     3.,   1.26e7,   1.91,  65.e-6,  100.e-6/    !drizzle
 
     data dstprms3/ &
-         !----------------------------------------------------------------------
-         ! shape      cfmas   pwmas      cfvt    pwvt     dmb0      dmb1
-         !----------------------------------------------------------------------
+                                !----------------------------------------------------------------------
+                                ! shape      cfmas   pwmas      cfvt    pwvt     dmb0      dmb1
+                                !----------------------------------------------------------------------
          .5,      524.,     3.,    3173.,     2.,   2.e-6,   50.e-6,  & !cloud
          .5,      524.,     3.,     144.,   .497,   .1e-3,    5.e-3,  & !rain
          .179,     110.8,   2.91,    1538.,   1.00,  15.e-6,  125.e-6,  & !pris col
@@ -11782,7 +11778,7 @@ contains
 
     do lhcat=1,nhcat
        !Using original RAMS 4.3 power laws
-       if(iplaws==0) then
+       if(oneMicControl%iplaws==0) then
           dstprms(1,lhcat) = dstprms1(1,lhcat)
           dstprms(2,lhcat) = dstprms1(2,lhcat)
           dstprms(3,lhcat) = dstprms1(3,lhcat)
@@ -11791,7 +11787,7 @@ contains
           dstprms(6,lhcat) = dstprms1(6,lhcat)
           dstprms(7,lhcat) = dstprms1(7,lhcat)
           !Using Carver/Mitchell 1996 power laws
-       elseif(iplaws==1) then
+       elseif(oneMicControl%iplaws==1) then
           dstprms(1,lhcat) = dstprms2(1,lhcat)
           dstprms(2,lhcat) = dstprms2(2,lhcat)
           dstprms(3,lhcat) = dstprms2(3,lhcat)
@@ -11801,7 +11797,7 @@ contains
           dstprms(7,lhcat) = dstprms2(7,lhcat)
           !Using mix of original and Carver/Mitchell 1996 power laws
           !Faster falling P,G,H but slower S,A
-       elseif(iplaws==2) then
+       elseif(oneMicControl%iplaws==2) then
           dstprms(1,lhcat) = dstprms3(1,lhcat)
           dstprms(2,lhcat) = dstprms3(2,lhcat)
           dstprms(3,lhcat) = dstprms3(3,lhcat)
@@ -11829,25 +11825,25 @@ contains
        emb1 (lcat) = cfmas(lhcat) * dstprms(7,lhcat) ** pwmas(lhcat)
     enddo
 
-    if (level .ne. 3) return
+    if (oneMicControl%level .ne. 3) return
 
-    if(mkcoltab.lt.0.or.mkcoltab.gt.1)then
-       print*, 'mkcoltab set to ',mkcoltab, 'which is out of bounds'
+    if(oneMicControl%mkcoltab.lt.0.or.oneMicControl%mkcoltab.gt.1)then
+       print*, 'mkcoltab set to ',oneMicControl%mkcoltab, 'which is out of bounds'
        stop 'mkcoltab'
     endif
 
-    cname=coltabfn(1:len_trim(coltabfn))
+    cname=oneMicControl%coltabfn(1:len_trim(oneMicControl%coltabfn))
 
-    if(mkcoltab.eq.1)then
+    if(oneMicControl%mkcoltab.eq.1)then
 
        ! Make collection table and write to file
 
-       call mkcoltb
+       call mkcoltb(oneMicControl)
        open(91,file=cname,form='formatted',status='unknown')
        rewind(91)
        write(91,181)
        do lcat = 1,ncat
-          write(91,182)lcat,gnu(lcat),emb0(lcat),emb1(lcat)
+          write(91,182)lcat,oneMicControl%gnu(lcat),emb0(lcat),emb1(lcat)
        enddo
        write(91,180)
        write(91,183)
@@ -11879,7 +11875,7 @@ contains
        open(91,file=cname,form='formatted',status='old')
        read(91,185)dataline
        do ilcat = 1,ncat
-          read(91,182)lcat,gnu(lcat),emb0(lcat),emb1(lcat)
+          read(91,182)lcat,oneMicControl%gnu(lcat),emb0(lcat),emb1(lcat)
        enddo
        read(91,185)dataline
        read(91,185)dataline
@@ -11918,7 +11914,8 @@ contains
   !******************************************************************************
 
 
-  subroutine initqin(n1,n2,n3,q2,q6,q7,pi0,pp,theta,dn0)
+  subroutine initqin(n1,n2,n3,q2,q6,q7,pi0,pp,theta,dn0, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: n1,n2,n3,i,j,k
     real, dimension(n1,n2,n3) :: q2,q6,q7,pi0,pp,theta,dn0
 
@@ -11930,9 +11927,9 @@ contains
              pitot(k) = pi0(k,i,j) + pp(k,i,j)
              tair(k) = theta(k,i,j) * pitot(k) / cp
 
-             if(irain .ge. 1) q2(k,i,j) = tair(k) - 193.16
-             if(igraup .ge. 1) q6(k,i,j) = 0.5 * min(0.,tair(k) - 273.15)
-             if(ihail .ge. 1) q7(k,i,j) = 0.5 * min(0.,tair(k) - 273.15)
+             if(oneMicControl%irain .ge. 1) q2(k,i,j) = tair(k) - 193.16
+             if(oneMicControl%igraup .ge. 1) q6(k,i,j) = 0.5 * min(0.,tair(k) - 273.15)
+             if(oneMicControl%ihail .ge. 1) q7(k,i,j) = 0.5 * min(0.,tair(k) - 273.15)
 
           enddo
        enddo
@@ -11940,7 +11937,8 @@ contains
   end subroutine initqin
   !******************************************************************************
 
-  subroutine initqin2(n1,n2,n3,cccnp,cccmp,dn0)
+  subroutine initqin2(n1,n2,n3,cccnp,cccmp,dn0, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: n1,n2,n3,i,j,k
     real, dimension(n1,n2,n3) :: cccnp,cccmp,dn0
 
@@ -11951,25 +11949,25 @@ contains
           do k = 1,n1
 
              !Set up 3D homogeneous field from RAMSIN (#/cm3)
-             if(icloud.eq. 5) cccnp(k,i,j) = cparm
+             if(oneMicControl%icloud.eq. 5) cccnp(k,i,j) = oneMicControl%cparm
 
              !Set up Vertical profile of CCN (#/cm3)
-             if(icloud.eq.6)then
-                if(k<=2) cccnp(k,i,j)=cparm
-                if(k>2.and.zt(k)<=4000.) cccnp(k,i,j)=max(100.,cparm * (1.-zt(k)/4000.))
+             if(oneMicControl%icloud.eq.6)then
+                if(k<=2) cccnp(k,i,j)=oneMicControl%cparm
+                if(k>2.and.zt(k)<=4000.) cccnp(k,i,j)=max(100.,oneMicControl%cparm * (1.-zt(k)/4000.))
                 if(zt(k)>4000.) cccnp(k,i,j) = 100.
              endif
 
              !Set up 3D Heterogeneously varying field of CCN (#/cm3)
-             if(icloud.eq.7)then
-                cccnp(k,i,j)=cparm
+             if(oneMicControl%icloud.eq.7)then
+                cccnp(k,i,j)=oneMicControl%cparm
                 print*,'You must set up a 3D field of CCN in mic_init.f90'
                 stop
              endif
 
              !Set up 3D Field of CCN mass (g/cm3)
-             if(icloud.ge.5) then
-                rg = cnparm  !CCN median radius in centimeters
+             if(oneMicControl%icloud.ge.5) then
+                rg = oneMicControl%cnparm  !CCN median radius in centimeters
                 rhosol=1.967 !Avg of NH42SO4=1.769 & NaCl=2.165
                 ant=cccnp(k,i,j)
                 if(rg<=0.02e-4) then
@@ -12018,7 +12016,8 @@ contains
 
   !******************************************************************************
 
-  subroutine initqin3(n1,n2,n3,gccnp,gccmp,dn0)
+  subroutine initqin3(n1,n2,n3,gccnp,gccmp,dn0, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: n1,n2,n3,i,j,k
     real, dimension(n1,n2,n3) :: gccnp,gccmp,dn0
 
@@ -12029,25 +12028,25 @@ contains
           do k = 1,n1
 
              !Set up 3D homogeneous field from RAMSIN (#/cm3)
-             if(idriz .eq. 5) gccnp(k,i,j) = dparm
+             if(oneMicControl%idriz .eq. 5) gccnp(k,i,j) = oneMicControl%dparm
 
              !Set up Vertical profile of GCCN (#/cm3)
-             if(idriz .eq.6)then
-                if(k<=4) gccnp(k,i,j)=dparm
-                if(k>4.and.zt(k)<=4000.) gccnp(k,i,j)=max(1.e-5,dparm * (1.-zt(k)/4000.))
+             if(oneMicControl%idriz .eq.6)then
+                if(k<=4) gccnp(k,i,j)=oneMicControl%dparm
+                if(k>4.and.zt(k)<=4000.) gccnp(k,i,j)=max(1.e-5,oneMicControl%dparm * (1.-zt(k)/4000.))
                 if(zt(k)>4000.) gccnp(k,i,j) = 1.e-5
              endif
 
              !Set up 3D Heterogeneously varying field of GCCN (#/cm3)
-             if(idriz .eq.7)then
-                gccnp(k,i,j)=dparm
+             if(oneMicControl%idriz .eq.7)then
+                gccnp(k,i,j)=oneMicControl%dparm
                 print*,'You must set up a 3D field of Giant-CCN in mic_init.f90'
                 stop
              endif
 
              !Set up 3D Field of CCN mass (g/cm3)
-             if(idriz.ge.5) then
-                rg = gnparm  !GCCN median radius in centimeters
+             if(oneMicControl%idriz.ge.5) then
+                rg = oneMicControl%gnparm  !GCCN median radius in centimeters
                 rhosol=1.967 !Avg of NH42SO4=1.769 & NaCl=2.165
                 ant=gccnp(k,i,j)
                 rmsma = 1.0e-14
@@ -12076,7 +12075,8 @@ contains
 
   !******************************************************************************
 
-  subroutine initqin4(n1,n2,n3,cifnp,dn0)
+  subroutine initqin4(n1,n2,n3,cifnp,dn0, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: n1,n2,n3,i,j,k
     real, dimension(n1,n2,n3) :: cifnp,dn0
 
@@ -12085,24 +12085,25 @@ contains
     do j = 1,n3
        do i = 1,n2
           do k = 1,n1
-             if(ipris .ge. 5) cifnp(k,i,j) = pparm * dn0(k,i,j) ** 5.4
+             if(oneMicControl%ipris .ge. 5) cifnp(k,i,j) = oneMicControl%pparm * dn0(k,i,j) ** 5.4
           enddo
        enddo
     enddo
   end subroutine initqin4
 
   !******************************************************************************
-  subroutine initqin5(n1,n2,n3,md1np,md2np)
+  subroutine initqin5(n1,n2,n3,md1np,md2np, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: n1,n2,n3,i,j,k
     real, dimension(n1,n2,n3) :: md1np,md2np
 
-    print*,'idust,imd2flg,imd1flg',idust,imd2flg,imd1flg
+    print*,'idust,imd2flg,imd1flg',oneMicControl%idust,imd2flg,imd1flg
 
     do j = 1,n3
        do i = 1,n2
           do k = 1,n1
              !Set up concentration of Mineral Dust (#/cm3)
-             if(idust .eq. 0) then
+             if(oneMicControl%idust .eq. 0) then
                 !If not using dust source model, initialize background dust
                 if(imd1flg .eq. 1) then
                    if(k<=2) md1np(k,i,j)=1000.
@@ -12112,7 +12113,7 @@ contains
                    if(k<=2) md2np(k,i,j)=100.
                    if(k>2) md2np(k,i,j)=max(2.e-2,100.*(1.-zm(k)/4000.))
                 endif
-             elseif(idust .eq. 1) then
+             elseif(oneMicControl%idust .eq. 1) then
                 !Set dust median radii (cm) based on dust model
                 !These are used in radiation and dust deposition & scavenging
                 d1parm = 0.699e-4 !(weighted in situ mean is 0.699e-4)
@@ -12128,65 +12129,67 @@ contains
 
   !******************************************************************************
 
-  subroutine jnmbinit()
-    if (level /= 3) then
+  subroutine jnmbinit(oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
+    if (oneMicControl%level /= 3) then
 
-       if (level <= 1) then
-          jnmb(1) = 0
+       if (oneMicControl%level <= 1) then
+          oneMicControl%jnmb(1) = 0
        else
-          jnmb(1) = 4
+          oneMicControl%jnmb(1) = 4
        endif
 
-       jnmb(2) = 0
-       jnmb(3) = 0
-       jnmb(4) = 0
-       jnmb(5) = 0
-       jnmb(6) = 0
-       jnmb(7) = 0
-       jnmb(8) = 0
+       oneMicControl%jnmb(2) = 0
+       oneMicControl%jnmb(3) = 0
+       oneMicControl%jnmb(4) = 0
+       oneMicControl%jnmb(5) = 0
+       oneMicControl%jnmb(6) = 0
+       oneMicControl%jnmb(7) = 0
+       oneMicControl%jnmb(8) = 0
 
     else
 
-       jnmb(1) = icloud
-       jnmb(2) = irain
-       jnmb(3) = ipris
-       jnmb(4) = isnow
-       jnmb(5) = iaggr
-       jnmb(6) = igraup
-       jnmb(7) = ihail
-       jnmb(8) = idriz
+       oneMicControl%jnmb(1) = oneMicControl%icloud
+       oneMicControl%jnmb(2) = oneMicControl%irain
+       oneMicControl%jnmb(3) = oneMicControl%ipris
+       oneMicControl%jnmb(4) = oneMicControl%isnow
+       oneMicControl%jnmb(5) = oneMicControl%iaggr
+       oneMicControl%jnmb(6) = oneMicControl%igraup
+       oneMicControl%jnmb(7) = oneMicControl%ihail
+       oneMicControl%jnmb(8) = oneMicControl%idriz
 
-       if (icloud .eq. 1) jnmb(1) = 4
-       if (irain  .eq. 1) jnmb(2) = 2
-       if (ipris  .ge. 1) jnmb(3) = 5
-       if (isnow  .eq. 1) jnmb(4) = 2
-       if (iaggr  .eq. 1) jnmb(5) = 2
-       if (igraup .eq. 1) jnmb(6) = 2
-       if (ihail  .eq. 1) jnmb(7) = 2
-       if (idriz  .eq. 1) jnmb(8) = 4
+       if (oneMicControl%icloud .eq. 1) oneMicControl%jnmb(1) = 4
+       if (oneMicControl%irain  .eq. 1) oneMicControl%jnmb(2) = 2
+       if (oneMicControl%ipris  .ge. 1) oneMicControl%jnmb(3) = 5
+       if (oneMicControl%isnow  .eq. 1) oneMicControl%jnmb(4) = 2
+       if (oneMicControl%iaggr  .eq. 1) oneMicControl%jnmb(5) = 2
+       if (oneMicControl%igraup .eq. 1) oneMicControl%jnmb(6) = 2
+       if (oneMicControl%ihail  .eq. 1) oneMicControl%jnmb(7) = 2
+       if (oneMicControl%idriz  .eq. 1) oneMicControl%jnmb(8) = 4
 
-       if (irain == 5 .or. isnow == 5 .or. iaggr == 5 .or.  &
-            igraup == 5 .or. ihail == 5) then
+       if (oneMicControl%irain == 5 .or. oneMicControl%isnow == 5 .or. oneMicControl%iaggr == 5 .or.  &
+            oneMicControl%igraup == 5 .or. oneMicControl%ihail == 5) then
 
-          if (irain  >= 1) jnmb(2) = 5
-          if (isnow  >= 1) jnmb(4) = 5
-          if (iaggr  >= 1) jnmb(5) = 5
-          if (igraup >= 1) jnmb(6) = 5
-          if (ihail  >= 1) jnmb(7) = 5
+          if (oneMicControl%irain  >= 1) oneMicControl%jnmb(2) = 5
+          if (oneMicControl%isnow  >= 1) oneMicControl%jnmb(4) = 5
+          if (oneMicControl%iaggr  >= 1) oneMicControl%jnmb(5) = 5
+          if (oneMicControl%igraup >= 1) oneMicControl%jnmb(6) = 5
+          if (oneMicControl%ihail  >= 1) oneMicControl%jnmb(7) = 5
 
        endif
 
     endif
     print*," 2M microphysics"
-    print*,'JNMB(1)=',jnmb(1),' JNMB(2)=',jnmb(2),' JNMB(3)=',jnmb(3)
-    print*,'JNMB(4)=',jnmb(4),' JNMB(5)=',jnmb(5),' JNMB(6)=',jnmb(6)
-    print*,'JNMB(7)=',jnmb(7),' JNMB(8)=',jnmb(8)
+    print*,'JNMB(1)=',oneMicControl%jnmb(1),' JNMB(2)=',oneMicControl%jnmb(2),' JNMB(3)=',oneMicControl%jnmb(3)
+    print*,'JNMB(4)=',oneMicControl%jnmb(4),' JNMB(5)=',oneMicControl%jnmb(5),' JNMB(6)=',oneMicControl%jnmb(6)
+    print*,'JNMB(7)=',oneMicControl%jnmb(7),' JNMB(8)=',oneMicControl%jnmb(8)
 
   end subroutine jnmbinit
 
   !******************************************************************************
 
-  subroutine micinit()
+  subroutine micinit(oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: lhcat,lcat,ia
     integer, dimension(16) :: lcat0
     real :: cfmasi,c1,glg,glg1,glg2,glgm,glgc,glgmv,gym,flngi,dpsi,embsip,dnsip
@@ -12195,23 +12198,23 @@ contains
 
     ! Initialize arrays based on microphysics namelist parameters
 
-    parm(1) = cparm
-    parm(2) = rparm
+    parm(1) = oneMicControl%cparm
+    parm(2) = oneMicControl%rparm
     !     parm(3) = pparm   [obsolete]
-    parm(4) = sparm
-    parm(5) = aparm
-    parm(6) = gparm
-    parm(7) = hparm
-    parm(8) = dparm
+    parm(4) = oneMicControl%sparm
+    parm(5) = oneMicControl%aparm
+    parm(6) = oneMicControl%gparm
+    parm(7) = oneMicControl%hparm
+    parm(8) = oneMicControl%dparm
 
-    if (icloud .le. 1) parm(1) = .3e9
-    if (irain  .eq. 1) parm(2) = .1e-2
+    if (oneMicControl%icloud .le. 1) parm(1) = .3e9
+    if (oneMicControl%irain  .eq. 1) parm(2) = .1e-2
     !     if (ipris  .eq. 1) parm(3) = .1e4     [obsolete]
-    if (isnow  .eq. 1) parm(4) = .1e-2
-    if (iaggr  .eq. 1) parm(5) = .1e-2
-    if (igraup .eq. 1) parm(6) = .1e-2
-    if (ihail  .eq. 1) parm(7) = .3e-2
-    if (idriz  .eq. 1) parm(8) = .1e6  ! # per kg ~ m^3
+    if (oneMicControl%isnow  .eq. 1) parm(4) = .1e-2
+    if (oneMicControl%iaggr  .eq. 1) parm(5) = .1e-2
+    if (oneMicControl%igraup .eq. 1) parm(6) = .1e-2
+    if (oneMicControl%ihail  .eq. 1) parm(7) = .3e-2
+    if (oneMicControl%idriz  .eq. 1) parm(8) = .1e6  ! # per kg ~ m^3
     !(mid-range avg from Feingold(99)
 
     dps = 125.e-6
@@ -12236,14 +12239,14 @@ contains
        pwemb0(lhcat) = pwmas(lhcat) / (pwmas(lhcat) + 1.)
        c1 = 1.5 + .5 * pwvt(lhcat)
 
-       glg = gammln(gnu(lcat))
-       glg1 = gammln(gnu(lcat) + 1.)
-       glg2 = gammln(gnu(lcat) + 2.)
-       glgm = gammln(gnu(lcat) + pwmas(lhcat))
-       glgc = gammln(gnu(lcat) + c1)
-       glgmv = gammln(gnu(lcat) + pwmas(lhcat) + pwvt(lhcat))
+       glg = gammln(oneMicControl%gnu(lcat))
+       glg1 = gammln(oneMicControl%gnu(lcat) + 1.)
+       glg2 = gammln(oneMicControl%gnu(lcat) + 2.)
+       glgm = gammln(oneMicControl%gnu(lcat) + pwmas(lhcat))
+       glgc = gammln(oneMicControl%gnu(lcat) + c1)
+       glgmv = gammln(oneMicControl%gnu(lcat) + pwmas(lhcat) + pwvt(lhcat))
 
-       if (jnmb(lcat) .eq. 3) then
+       if (oneMicControl%jnmb(lcat) .eq. 3) then
           cfemb0(lhcat) = cfmas(lhcat) * exp(glgm - glg)  &
                ** pwen0(lhcat) * (1. / parm(lcat)) ** pwemb0(lhcat)
           cfen0(lhcat) = parm(lcat) * (exp(glg - glgm) / parm(lcat))  &
@@ -12266,7 +12269,7 @@ contains
             * (cfmasi * exp(glg - glgm)) ** (2. * pwmasi(lhcat))
 
        cfmasft(lhcat) = cfmas(lhcat) * exp(gammln  &
-            (gnu(lcat) + pwmas(lhcat)) - gammln(gnu(lcat)))
+            (oneMicControl%gnu(lcat) + pwmas(lhcat)) - gammln(oneMicControl%gnu(lcat)))
 
        dict(lcat) = float(nembc-1) / (emb1log(lcat) - emb0log(lcat))
 
@@ -12287,22 +12290,22 @@ contains
     do ia=1,ngam
        dpsi = dps * 1.e6 / float(ia)
 
-       gam(ia,1) = gammq(gnu(3) + 1., dpsi)
-       gam(ia,2) = gammp(gnu(4) + 1., dpsi)
+       gam(ia,1) = gammq(oneMicControl%gnu(3) + 1., dpsi)
+       gam(ia,2) = gammp(oneMicControl%gnu(4) + 1., dpsi)
        gam(ia,3) = exp(-dpsi)
 
-       GAMINC(IA,1)=GAMMQ(GNU(3),dpsi)
-       GAMINC(IA,2)=GAMMP(GNU(4),dpsi)
+       GAMINC(IA,1)=GAMMQ(ONEMICCONTROL%GNU(3),dpsi)
+       GAMINC(IA,2)=GAMMP(ONEMICCONTROL%GNU(4),dpsi)
 
        embsip = emb1(1) * float(ia) * flngi
        dnsip = dnfac(1) * embsip ** pwmasi(1)
-       gamsip13(1,ia) = gammp(gnu(1),13.e-6/dnsip)
-       gamsip24(1,ia) = gammq(gnu(1),24.e-6/dnsip)
+       gamsip13(1,ia) = gammp(oneMicControl%gnu(1),13.e-6/dnsip)
+       gamsip24(1,ia) = gammq(oneMicControl%gnu(1),24.e-6/dnsip)
 
        embsip = emb1(8) * float(ia) * flngi
        dnsip = dnfac(16) * embsip ** pwmasi(16)
-       gamsip13(2,ia)= gammp(gnu(8),13.e-6/dnsip)
-       gamsip24(2,ia)= gammq(gnu(8),24.e-6/dnsip)
+       gamsip13(2,ia)= gammp(oneMicControl%gnu(8),13.e-6/dnsip)
+       gamsip24(2,ia)= gammq(oneMicControl%gnu(8),24.e-6/dnsip)
     enddo
 
     !***********************************************************************
@@ -12339,7 +12342,7 @@ contains
     !to smaller median radii.
     !*****************************************************************************
 
-    if(iccnlev>=1) then
+    if(oneMicControl%iccnlev>=1) then
        do rgb = 1,9
 
           !Set up binned distribution mass and sizes
@@ -12416,7 +12419,8 @@ contains
 
   !###########################################################################
 
-  subroutine haznuc()
+  subroutine haznuc(oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: ithz,irhhz,k
     real :: denccn,gnuccn,dnccn,ddccn,rhhz,c1hz,c2hz,c3hz,bhz,dm,sum  &
          ,dccn,y,dum,thz
@@ -12425,7 +12429,7 @@ contains
 
     denccn = 1.769    !Density of ammonium sulfate
     gnuccn = 2.       !Saleeby(02-21-2007) Originally = 1.
-    dnccn = 2.*cnparm !Saleeby(02-21-2007) Originally = .075e-4
+    dnccn = 2.*oneMicControl%cnparm !Saleeby(02-21-2007) Originally = .075e-4
     ddccn = .005e-4
     do ithz = 1,nthz
        thz = -60. + dthz * float(ithz - 1)
@@ -12452,7 +12456,8 @@ contains
 
   !******************************************************************************
 
-  subroutine homfrzcl(dtlt,ngr)
+  subroutine homfrzcl(dtlt,ngr, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: itc,ngr,k,idnc
     real :: gnuc,ddc,ajlso,dnc,sum,dc,v1,tc,y,dtlt
 
@@ -12475,10 +12480,10 @@ contains
           do k = 1,2000
              dc = dc + ddc
              v1 = 0.523599 * dc ** 3
-             sum = sum + (dc / dnc) ** (gnu(1) - 1.) * exp(-dc / dnc)  &
+             sum = sum + (dc / dnc) ** (oneMicControl%gnu(1) - 1.) * exp(-dc / dnc)  &
                   * (1. - exp(-ajlso * v1 * dtlt))
           enddo
-          fracc(idnc,itc,ngr) = sum * ddc / (exp(gammln(gnu(1))) * dnc)
+          fracc(idnc,itc,ngr) = sum * ddc / (exp(gammln(oneMicControl%gnu(1))) * dnc)
        enddo
 
     enddo
@@ -12492,7 +12497,8 @@ contains
   ! be avoided where sedimentation occurs.
 
   subroutine mksedim_tab(m1,m2,m3,ngr,nembfall,maxkfall  &
-       ,zm,dzt,pcpfillc,pcpfillr,sfcpcp,allpcp,dtsed)
+       ,zm,dzt,pcpfillc,pcpfillr,sfcpcp,allpcp,dtsed, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer, parameter :: nbin=50
     integer :: m1,m2,m3,iembs,lcat,lhcat,k,kkf,ibin,kk,nembfall,maxkfall  &
          ,jbin,ngr
@@ -12547,20 +12553,20 @@ contains
        ! Loop over bins, filling them with fractional number, fractional mass,
        ! and displacement quotient relative to emb.
 
-       dmbodn = (exp(gammln(gnu(lcat) + pwmas(lhcat))  &
-            - gammln(gnu(lcat)))) ** pwmasi(lhcat)
+       dmbodn = (exp(gammln(oneMicControl%gnu(lcat) + pwmas(lhcat))  &
+            - gammln(oneMicControl%gnu(lcat)))) ** pwmasi(lhcat)
        diam0 = 0.06 * dmbodn
        diam1 = 1.0 * dmbodn
-       fac1 = gammp(gnu(lcat),diam0)
-       fac3 = gammp(gnu(lcat) + pwmas(lhcat),diam0)
+       fac1 = gammp(oneMicControl%gnu(lcat),diam0)
+       fac3 = gammp(oneMicControl%gnu(lcat) + pwmas(lhcat),diam0)
        sumc = 0.
        sumr = 0.
 
        do jbin = 1,nbin
 
           diam = diam0 * (diam1 / diam0) ** (float(jbin)/float(nbin))
-          fac2 = gammp(gnu(lcat),diam)
-          fac4 = gammp(gnu(lcat) + pwmas(lhcat),diam)
+          fac2 = gammp(oneMicControl%gnu(lcat),diam)
+          fac4 = gammp(oneMicControl%gnu(lcat) + pwmas(lhcat),diam)
           cbin(jbin) = fac2 - fac1
           rbin(jbin) = fac4 - fac3
           fac1 = fac2
@@ -12656,7 +12662,8 @@ contains
 
   !******************************************************************************
 
-  subroutine tabmelt()
+  subroutine tabmelt(oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer, parameter :: nbins=500
 
     integer :: lhcat,lcat,ndns1,ibin,inc,iter,idns
@@ -12672,8 +12679,8 @@ contains
 
     do lhcat = 1,nhcat
        lcat = lcat0(lhcat)
-       dn = dmean(lcat) / gnu(lcat)
-       gammaa = exp(gammln(gnu(lcat)))
+       dn = dmean(lcat) / oneMicControl%gnu(lcat)
+       gammaa = exp(gammln(oneMicControl%gnu(lcat)))
 
        rmlttab(1,lhcat) = 0.0
        rmlttab(ninc,lhcat) = 1.0
@@ -12687,13 +12694,13 @@ contains
           shedtab(1,idns) = 0.0
           shedtab(ninc,idns) = 0.0
 
-          if (ndns1 .gt. 1) dn = 1.e-3 * float(idns) / gnu(lcat)
+          if (ndns1 .gt. 1) dn = 1.e-3 * float(idns) / oneMicControl%gnu(lcat)
 
           totfmg = 0.
           totmass = 0.
           do ibin = 1,nbins
              db(ibin) = 0.02 * dn * (float(ibin) - 0.5)
-             fmg(ibin) = (db(ibin) / dn) ** (gnu(lcat) - 1.)  &
+             fmg(ibin) = (db(ibin) / dn) ** (oneMicControl%gnu(lcat) - 1.)  &
                   / (dn * gammaa) * exp(-db(ibin) / dn)
              totfmg = totfmg + fmg(ibin)
              q(ibin) = 0.
@@ -12772,7 +12779,8 @@ contains
 
   !******************************************************************************
 
-  subroutine mkcoltb
+  subroutine mkcoltb(oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer, parameter :: ndx=20
     integer :: ihx,ix,ihy,iy,iemby,iembx,idx
     integer, dimension(16) :: ix0,iy0
@@ -12787,7 +12795,7 @@ contains
 
        ix = ix0(ihx)
 
-       gxm = exp(gammln(gnu(ix)) - gammln(gnu(ix) + pwmas(ihx)))
+       gxm = exp(gammln(oneMicControl%gnu(ix)) - gammln(oneMicControl%gnu(ix) + pwmas(ihx)))
        dnminx = ((emb0(ix) / cfmas(ihx)) * gxm) ** (1. / pwmas(ihx))
        dnmaxx = ((emb1(ix) / cfmas(ihx)) * gxm) ** (1. / pwmas(ihx))
        dxlo = .01 * dnminx
@@ -12801,14 +12809,14 @@ contains
           iy = iy0(ihy)
 
           if (ipairc(ihx,ihy) .gt. 0 .or. ipairr(ihx,ihy) .gt. 0) then
-             gyn = exp(gammln(gnu(iy)))
-             gyn1 = exp(gammln(gnu(iy) + 1.)) / gyn
-             gyn2 = exp(gammln(gnu(iy) + 2.)) / gyn
-             gynp = exp(gammln(gnu(iy) + pwvt(ihy))) / gyn
-             gynp1 = exp(gammln(gnu(iy) + pwvt(ihy) + 1.)) / gyn
-             gynp2 = exp(gammln(gnu(iy) + pwvt(ihy) + 2.)) / gyn
+             gyn = exp(gammln(oneMicControl%gnu(iy)))
+             gyn1 = exp(gammln(oneMicControl%gnu(iy) + 1.)) / gyn
+             gyn2 = exp(gammln(oneMicControl%gnu(iy) + 2.)) / gyn
+             gynp = exp(gammln(oneMicControl%gnu(iy) + pwvt(ihy))) / gyn
+             gynp1 = exp(gammln(oneMicControl%gnu(iy) + pwvt(ihy) + 1.)) / gyn
+             gynp2 = exp(gammln(oneMicControl%gnu(iy) + pwvt(ihy) + 2.)) / gyn
 
-             gym = exp(gammln(gnu(iy)) - gammln(gnu(iy) + pwmas(ihy)))
+             gym = exp(gammln(oneMicControl%gnu(iy)) - gammln(oneMicControl%gnu(iy) + pwmas(ihy)))
              dnminy = ((emb0(iy) / cfmas(ihy)) * gym) ** (1. /pwmas(ihy))
              dnmaxy = ((emb1(iy) / cfmas(ihy)) * gym) ** (1. /pwmas(ihy))
 
@@ -12824,7 +12832,7 @@ contains
                       dx(idx) = dxlo * (dxhi / dxlo)  &
                            ** (float(idx-1) / float(ndx-1))
                       fx(idx) = xj(dx(idx),cfvt(ihx),pwvt(ihx),cfvt(ihy)  &
-                           ,pwvt(ihy),vny,dnx,dny,gnu(ix),gnu(iy)  &
+                           ,pwvt(ihy),vny,dnx,dny,oneMicControl%gnu(ix),oneMicControl%gnu(iy)  &
                            ,gyn1,gyn2,gynp,gynp1,gynp2)
                       gx(idx) = fx(idx) * cfmas(ihx)  &
                            * dx(idx) ** pwmas(ihx)
@@ -12876,7 +12884,8 @@ contains
 
   !******************************************************************************
 
-  subroutine make_autotab()
+  subroutine make_autotab(oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer, parameter :: ithresh=14,ithresh1=17,ibins=36,icutoff=15
     integer :: i,k,idcc,id1cd,id2cd,idccr,irrcr,idrcr,irrr,idrr,lcat,cld,maxcld
     real :: r1,r2,r3,ri,en1,en2,en3,enice,en1i,en1i2,d1,d2,d3,di &
@@ -12930,18 +12939,18 @@ contains
     do i=1,ibins
        do k=1,ibins
           !For CLOUD-CLOUD collection for 1 and 2 mode options
-          if(i <  ithresh  .and. k <  ithresh  .and. jnmb(8).gt.0) &
+          if(i <  ithresh  .and. k <  ithresh  .and. oneMicControl%jnmb(8).gt.0) &
                akbarx(i,k,1) = akbar(i,k)
-          if(i <=  icutoff  .and. k <=  icutoff  .and. jnmb(8).eq.0) &
+          if(i <=  icutoff  .and. k <=  icutoff  .and. oneMicControl%jnmb(8).eq.0) &
                akbarx(i,k,1) = akbar(i,k)
 
           !For RAIN-CLOUD collection
-          if(i >  ithresh1 .and. k < ithresh  .and. jnmb(8).gt.0) &
+          if(i >  ithresh1 .and. k < ithresh  .and. oneMicControl%jnmb(8).gt.0) &
                akbarx(i,k,3) = akbar(i,k)
-          if(i >  icutoff  .and. k <= icutoff  .and. jnmb(8).eq.0) &
+          if(i >  icutoff  .and. k <= icutoff  .and. oneMicControl%jnmb(8).eq.0) &
                akbarx(i,k,3) = akbar(i,k)
 
-          if(jnmb(8).gt.0) then  !Dual-cloud mode option only
+          if(oneMicControl%jnmb(8).gt.0) then  !Dual-cloud mode option only
              !For DRIZZLE-CLOUD collection
              if(i >= ithresh  .and. i <= ithresh1 .and. k < ithresh) &
                   akbarx(i,k,2) = akbar(i,k)
@@ -12975,8 +12984,8 @@ contains
     !Diameters in cm (4.e-4 cm = 4 microns)
     !Mixing ratios in g/cm3 (.01e-6g/cm3 ~ 1.e-11kg/kg for dn0=1)
     d1min = 4.e-4
-    if(jnmb(8).eq.0) d1max = 50.e-4
-    if(jnmb(8).gt.0) d1max = 35.e-4
+    if(oneMicControl%jnmb(8).eq.0) d1max = 50.e-4
+    if(oneMicControl%jnmb(8).gt.0) d1max = 35.e-4
     d2min = 65.e-4
     d2max = 100.e-4
     d3min = 1.e-2
@@ -13017,8 +13026,8 @@ contains
        d1 = d1min + (d1max - d1min) * float(idcc-1) / float(ndcc-1)
        r1 = en1 * .5236 * d1 ** 3
 
-       if(jnmb(8).gt.0) then
-          call initg2mode(r1,r2,r3,en1,en2,en3,gnu(1),gnu(8),gnu(2),diam,x &
+       if(oneMicControl%jnmb(8).gt.0) then
+          call initg2mode(r1,r2,r3,en1,en2,en3,oneMicControl%gnu(1),oneMicControl%gnu(8),oneMicControl%gnu(2),diam,x &
                ,amk0,ank0,ank1,amk1,ank2,amk2,ank3,amk3,ithresh,ithresh1,ibins)
           call sumn(ank0,amk0,1,ithresh-1,ibins,sun10,sum10)
           call sumn(ank0,amk0,ithresh,ithresh1,ibins,sun20,sum20)
@@ -13026,8 +13035,8 @@ contains
           call sumn(ank,amk,1,ithresh-1,ibins,sun1,sum1)
           call sumn(ank,amk,ithresh,ithresh1,ibins,sun2,sum2)
        endif
-       if(jnmb(8).eq.0) then
-          call initg1mode(r1,r3,en1,en3,gnu(1),gnu(2),diam,x &
+       if(oneMicControl%jnmb(8).eq.0) then
+          call initg1mode(r1,r3,en1,en3,oneMicControl%gnu(1),oneMicControl%gnu(2),diam,x &
                ,amk0,ank0,ank1,amk1,ank3,amk3,icutoff,ibins,2)
           call sumn(ank0,amk0,1,icutoff,ibins,sun10,sum10)
           call sumn(ank0,amk0,icutoff+1,ibins,ibins,sun20,sum20)
@@ -13069,15 +13078,15 @@ contains
              d3 = d3minx * 10. ** (d3ecr * float(idrcr-1))
              en3 = r3 / (.5236 * d3 ** 3)
 
-             if(jnmb(8).gt.0) then
-                call initg2mode(r1,r2,r3,en1,en2,en3,gnu(1),gnu(8),gnu(2),diam,x &
+             if(oneMicControl%jnmb(8).gt.0) then
+                call initg2mode(r1,r2,r3,en1,en2,en3,oneMicControl%gnu(1),oneMicControl%gnu(8),oneMicControl%gnu(2),diam,x &
                      ,amk0,ank0,ank1,amk1,ank2,amk2,ank3,amk3,ithresh,ithresh1,ibins)
                 call sumn(ank0,amk0,1,ithresh-1,ibins,sun10,sum10)
                 call sxy(x,amk0,ank0,amk,ank,akbarx(1,1,3),collectormass)
                 call sumn(ank,amk,1,ithresh-1,ibins,sun1,sum1)
              endif
-             if(jnmb(8).eq.0) then
-                call initg1mode(r1,r3,en1,en3,gnu(1),gnu(2),diam,x &
+             if(oneMicControl%jnmb(8).eq.0) then
+                call initg1mode(r1,r3,en1,en3,oneMicControl%gnu(1),oneMicControl%gnu(2),diam,x &
                      ,amk0,ank0,ank1,amk1,ank3,amk3,icutoff,ibins,2)
                 call sumn(ank0,amk0,1,icutoff,ibins,sun10,sum10)
                 call sxy(x,amk0,ank0,amk,ank,akbarx(1,1,3),collectormass)
@@ -13094,7 +13103,7 @@ contains
        enddo
     enddo
 
-    if(jnmb(8).gt.0) then
+    if(oneMicControl%jnmb(8).gt.0) then
        !**************************************************************************
        !*************************** DRIZZLE-CLOUD ********************************
        !**************************************************************************
@@ -13108,7 +13117,7 @@ contains
              d2 = d2min + (d2max - d2min) * float(id2cd-1) / float(ndcd-1)
              r2 = en2 * .5236 * d2 ** 3
 
-             call initg2mode(r1,r2,r3,en1,en2,en3,gnu(1),gnu(8),gnu(2),diam,x &
+             call initg2mode(r1,r2,r3,en1,en2,en3,oneMicControl%gnu(1),oneMicControl%gnu(8),oneMicControl%gnu(2),diam,x &
                   ,amk0,ank0,ank1,amk1,ank2,amk2,ank3,amk3,ithresh,ithresh1,ibins)
              call sumn(ank0,amk0,1,ithresh-1,ibins,sun10,sum10)
              call sumn(ank0,amk0,ithresh,ithresh1,ibins,sun20,sum20)
@@ -13150,7 +13159,7 @@ contains
                 d3 = d3minx * 10. ** (d3ecr * float(idrcr-1))
                 en3 = r3 / (.5236 * d3 ** 3)
 
-                call initg2mode(r1,r2,r3,en1,en2,en3,gnu(1),gnu(8),gnu(2),diam,x &
+                call initg2mode(r1,r2,r3,en1,en2,en3,oneMicControl%gnu(1),oneMicControl%gnu(8),oneMicControl%gnu(2),diam,x &
                      ,amk0,ank0,ank1,amk1,ank2,amk2,ank3,amk3,ithresh,ithresh1,ibins)
                 call sumn(ank0,amk0,ithresh,ithresh1,ibins,sun20,sum20)
                 call sxy(x,amk0,ank0,amk,ank,akbarx(1,1,4),collectormass)
@@ -13178,7 +13187,7 @@ contains
           d2 = d2min + (d2max - d2min) * float(idcc-1) / float(ndcc-1)
           r2 = en2 * .5236 * d2 ** 3
 
-          call initg2mode(r1,r2,r3,en1,en2,en3,gnu(1),gnu(8),gnu(2),diam,x &
+          call initg2mode(r1,r2,r3,en1,en2,en3,oneMicControl%gnu(1),oneMicControl%gnu(8),oneMicControl%gnu(2),diam,x &
                ,amk0,ank0,ank1,amk1,ank2,amk2,ank3,amk3,ithresh,ithresh1,ibins)
           call sumn(ank0,amk0,ithresh,ithresh1,ibins,sun20,sum20)
           call sumn(ank0,amk0,ithresh1+1,ibins,ibins,sun30,sum30)
@@ -13228,7 +13237,7 @@ contains
     !*********************** CLOUD1/CLOUD2 ICE SPECIES ***********************
     !*************************************************************************
     maxcld=1
-    if(jnmb(8).gt.0) maxcld=2
+    if(oneMicControl%jnmb(8).gt.0) maxcld=2
 
     do cld=1,maxcld
        do lcat=4,7
@@ -13255,7 +13264,7 @@ contains
                    enice = ri / (1000. * cfmas(lcat) * (di/100.) ** pwmas(lcat))
 
                    if(cld==1) then
-                      call initg1mode(r1,ri,en1,enice,gnu(1),gnu(lcat) &
+                      call initg1mode(r1,ri,en1,enice,oneMicControl%gnu(1),oneMicControl%gnu(lcat) &
                            ,diami(1,lcat-3),xi(1,lcat-3),amk0,ank0,ank1,amk1 &
                            ,ank3,amk3,icutoff,ibins,lcat)
                       call sumn(ank0,amk0,1,icutoff,ibins,sun10,sum10)
@@ -13263,7 +13272,7 @@ contains
                       call sumn(ank,amk,1,icutoff,ibins,sun1,sum1)
                    endif
                    if(cld==2) then
-                      call initg1mode(r2,ri,en2,enice,gnu(8),gnu(lcat) &
+                      call initg1mode(r2,ri,en2,enice,oneMicControl%gnu(8),oneMicControl%gnu(lcat) &
                            ,diami(1,lcat-3),xi(1,lcat-3),amk0,ank0,ank2,amk2 &
                            ,ank3,amk3,ithresh1,ibins,lcat)
                       call sumn(ank0,amk0,1,ithresh1,ibins,sun10,sum10)
@@ -15393,7 +15402,8 @@ contains
        ,vapliq,vapice &
        ,vapcld,vaprain,vappris,vapsnow,vapaggr,vapgrau,vaphail,vapdriz &
        ,vapliqt,vapicet &
-       ,vapcldt,vapraint,vapprist,vapsnowt,vapaggrt,vapgraut,vaphailt,vapdrizt)
+       ,vapcldt,vapraint,vapprist,vapsnowt,vapaggrt,vapgraut,vaphailt,vapdrizt, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: m1,lcat,i,j,k,mynum,k1,k2,if1,if4
     real :: rxx
     real, dimension(m1) :: dn0,rv
@@ -15486,14 +15496,14 @@ contains
        endif !if (full evaporation occurs) or (vapor growth or partial evap)
 
        !Attempt to restore aerosols if conditions are met
-       if(iccnlev>=2 .and. vap(k,lcat)<0.0 .and. rxferratio > .0001) then
+       if(oneMicControl%iccnlev>=2 .and. vap(k,lcat)<0.0 .and. rxferratio > .0001) then
           if(lcat<=2.or.lcat==8) then
              ccnnum  = cxloss / 1.e6 * dn0(k)
              ccnmass = cnmhx(k,lcat) * rxferratio
              cnmhx(k,lcat) = cnmhx(k,lcat) - ccnmass
              !For approximation, test rg based on CCN sulfate constants
              rg=(0.02523*ccnmass/ccnnum)**.3333
-             if(rg>0.96e-4 .and. jnmb(lcat)>=5) then
+             if(rg>0.96e-4 .and. oneMicControl%jnmb(lcat)>=5) then
                 gccmx(k) = gccmx(k) + ccnmass
                 gccnx(k) = gccnx(k) + ccnnum
              else
@@ -15510,13 +15520,13 @@ contains
        endif
 
        !Vapor deposition and evaporation budgets for all species
-       if(imbudget >= 1) then
+       if(oneMicControl%imbudget >= 1) then
           if(lcat.eq.1 .or. lcat.eq.2 .or. lcat.eq.8) &
                vapliq(k) = vapliq(k) + vap(k,lcat)*budget_scale
           if(lcat.ge.3 .and. lcat.le.7) &
                vapice(k) = vapice(k) + vap(k,lcat)*budget_scale
        endif
-       if(imbudget == 2) then
+       if(oneMicControl%imbudget == 2) then
           if(lcat==1) vapcld(k)  = vap(k,lcat)*budget_scale
           if(lcat==2) vaprain(k) = vap(k,lcat)*budget_scale
           if(lcat==3) vappris(k) = vap(k,lcat)*budget_scale
@@ -15526,13 +15536,13 @@ contains
           if(lcat==7) vaphail(k) = vap(k,lcat)*budget_scale
           if(lcat==8) vapdriz(k) = vap(k,lcat)*budget_scale
        endif
-       if(imbudtot >= 1) then
+       if(oneMicControl%imbudtot >= 1) then
           if(lcat.eq.1 .or. lcat.eq.2 .or. lcat.eq.8) &
                vapliqt(k) = vapliqt(k) + vap(k,lcat)*budget_scalet
           if(lcat.ge.3 .and. lcat.le.7) &
                vapicet(k) = vapicet(k) + vap(k,lcat)*budget_scalet
        endif
-       if(imbudtot == 2) then
+       if(oneMicControl%imbudtot == 2) then
           if(lcat==1) vapcldt(k)  = vapcldt(k)  + vap(k,lcat)*budget_scalet
           if(lcat==2) vapraint(k) = vapraint(k) + vap(k,lcat)*budget_scalet
           if(lcat==3) vapprist(k) = vapprist(k) + vap(k,lcat)*budget_scalet
@@ -15550,7 +15560,8 @@ contains
 
   !******************************************************************************
 
-  subroutine psxfer(m1,k1,k2,dn0,i,j)
+  subroutine psxfer(m1,k1,k2,dn0,i,j, oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: m1,k1,k2,i,j,k,lhcat,it
     real :: embx,dn,xlim,dvap,dqr,dnum
     real, dimension(m1) :: dn0
@@ -15566,7 +15577,7 @@ contains
              dn = dnfac(lhcat) * embx ** pwmasi(lhcat)
              it = min(5000,max(1,nint(dn * 1.e6)))
 
-             xlim = gam(it,3) * dps2 * (dps / dn) ** (gnu(3) - 1.)  &
+             xlim = gam(it,3) * dps2 * (dps / dn) ** (oneMicControl%gnu(3) - 1.)  &
                   / (gamn1(3) * pwmas(lhcat) * dn ** 2)
 
              dvap = min(rx(k,3),  &
@@ -15579,7 +15590,7 @@ contains
              dn = dnfac(lhcat) * embx ** pwmasi(lhcat)
              it = min(5000,max(1,nint(dn * 1.e6)))
 
-             xlim = gam(it,3) * dps2 * (dps / dn) ** (gnu(4) - 1.)  &
+             xlim = gam(it,3) * dps2 * (dps / dn) ** (oneMicControl%gnu(4) - 1.)  &
                   / (gamn1(4) * pwmas(lhcat) * dn ** 2)
 
              dvap = max(-rx(k,4),vap(k,4) * xlim)

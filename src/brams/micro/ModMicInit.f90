@@ -24,15 +24,8 @@ module ModMicInit
   use dump, only: &
        dumpMessage
 
-  use micphys, only : &
-       aparm, cfden, cfemb0, cfen0, cfmas, cfmasft, cfvt, coltabc, &
-       coltabfn, coltabr, cparm, dict, dnfac, dps, dps2, dpsmi, emb0, &
-       emb0log, emb1, emb1log, frefac1, frefac2, gam, gaminc, gamm, gamn1, &
-       gamsip13, gamsip24, gnu, gparm, hparm, iaggr, icloud, igraup, ihail, &
-       ipairc, ipairr, ipris, irain, isnow, jnmb, level, mkcoltab, ncat, &
-       nembc, ngam, nhcat, npairc, npairr, parm, pitot, pwden, pwemb0, &
-       pwen0, pwmas, pwmasi, pwvt, rictmax, rictmin, rparm, sipfac, sparm, &
-       tair, var_shape, vtfac
+  use ModMicControl, only: &
+       MicControl
 
   implicit none
 
@@ -40,7 +33,8 @@ module ModMicInit
 
   include "files.h"
   include "constants.h"
-
+  include "MicConstants.h"
+  
   public :: micro_master
   public :: initqin
   public :: effective_radius
@@ -50,7 +44,8 @@ contains
 
 
 
-  subroutine micro_master
+  subroutine micro_master(oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: lhcat,khcat,lcat,nd1,nd2,nip,ilcat,ilhcat,idum
 
     real, dimension(7,15) :: dstprms
@@ -119,27 +114,27 @@ contains
 
     !  Define several parameters from above data list
     do lhcat=1,nhcat
-       var_shape(lhcat) = dstprms(1,lhcat)
-       cfmas(lhcat) = dstprms(2,lhcat)
-       pwmas(lhcat) = dstprms(3,lhcat)
-       cfvt (lhcat) = dstprms(4,lhcat)
-       pwvt (lhcat) = dstprms(5,lhcat)
+       oneMicControl%var_shape(lhcat) = dstprms(1,lhcat)
+       oneMicControl%cfmas(lhcat) = dstprms(2,lhcat)
+       oneMicControl%pwmas(lhcat) = dstprms(3,lhcat)
+       oneMicControl%cfvt (lhcat) = dstprms(4,lhcat)
+       oneMicControl%pwvt (lhcat) = dstprms(5,lhcat)
 
        do khcat=1,nhcat
-          ipairc(lhcat,khcat) = jpairc(lhcat,khcat)
-          ipairr(lhcat,khcat) = jpairr(lhcat,khcat)
+          oneMicControl%ipairc(lhcat,khcat) = jpairc(lhcat,khcat)
+          oneMicControl%ipairr(lhcat,khcat) = jpairr(lhcat,khcat)
        enddo
     enddo
 
     do lcat=1,ncat
-       emb0 (lcat) = cfmas(lcat) * dstprms(6,lcat) ** pwmas(lcat)
-       emb1 (lcat) = cfmas(lcat) * dstprms(7,lcat) ** pwmas(lcat)
+       oneMicControl%emb0 (lcat) = oneMicControl%cfmas(lcat) * dstprms(6,lcat) ** oneMicControl%pwmas(lcat)
+       oneMicControl%emb1 (lcat) = oneMicControl%cfmas(lcat) * dstprms(7,lcat) ** oneMicControl%pwmas(lcat)
     enddo
 
-    if (level .ne. 3) return
+    if (oneMicControl%level .ne. 3) return
 
-    if(mkcoltab.lt.0.or.mkcoltab.gt.1)then
-       write(c0,"(i8)") mkcoltab
+    if(oneMicControl%mkcoltab.lt.0.or.oneMicControl%mkcoltab.gt.1)then
+       write(c0,"(i8)") oneMicControl%mkcoltab
        !call fatal_error(h//'mkcoltab set to '//&
        !      trim(adjustl(c0))//'which is out of bounds')
        iErrNumber=dumpMessage(c_tty,c_yes,h,modelVersion,c_fatal, &
@@ -147,9 +142,9 @@ contains
             trim(adjustl(c0))//'which is out of bounds')
     endif
 
-    cname=coltabfn(1:len_trim(coltabfn))
+    cname=oneMicControl%coltabfn(1:len_trim(oneMicControl%coltabfn))
 
-    if(mkcoltab.eq.1)then
+    if(oneMicControl%mkcoltab.eq.1)then
 
        !**(JP)** not worked yet
 
@@ -163,24 +158,24 @@ contains
        rewind(91)
        write(91,181)
        do lcat = 1,ncat
-          write(91,182)lcat,gnu(lcat),emb0(lcat),emb1(lcat)
+          write(91,182)lcat,oneMicControl%gnu(lcat),oneMicControl%emb0(lcat),oneMicControl%emb1(lcat)
        enddo
        write(91,180)
        write(91,183)
        do lhcat = 1,nhcat
-          write(91,182)lhcat,cfmas(lhcat),pwmas(lhcat)  &
-               ,cfvt(lhcat),pwvt(lhcat)
+          write(91,182)lhcat,oneMicControl%cfmas(lhcat),oneMicControl%pwmas(lhcat)  &
+               ,oneMicControl%cfvt(lhcat),oneMicControl%pwvt(lhcat)
        enddo
        write(91,180)
        do nip=1,npairc
           write(91,186)nip
-          write(91,184)(nd2,(coltabc(nd1,nd2,nip)  &
+          write(91,184)(nd2,(oneMicControl%coltabc(nd1,nd2,nip)  &
                ,nd1=1,nembc),nd2=1,nembc)
        enddo
        write(91,180)
        do nip=1,npairr
           write(91,187)nip
-          write(91,184)(nd2,(coltabr(nd1,nd2,nip)  &
+          write(91,184)(nd2,(oneMicControl%coltabr(nd1,nd2,nip)  &
                ,nd1=1,nembc),nd2=1,nembc)
        enddo
 
@@ -194,30 +189,30 @@ contains
        read(91,185)dataline
        do ilcat = 1,ncat
           read(91,182)lcat,auxGnu,auxEmb0,auxEmb1
-          gnu (lcat)= auxGnu
-          emb0(lcat)= auxEmb0
-          emb1(lcat)= auxEmb1
+          oneMicControl%gnu (lcat)= auxGnu
+          oneMicControl%emb0(lcat)= auxEmb0
+          oneMicControl%emb1(lcat)= auxEmb1
        enddo
        read(91,185)dataline
        read(91,185)dataline
        do ilhcat = 1,nhcat
           read(91,182)lhcat,auxCfmas,auxPwmas &
                ,auxCfvt,auxPwvt
-          cfmas(lhcat) = auxCfmas
-          pwmas(lhcat) = auxPwmas
-          cfvt (lhcat) = auxCfvt
-          pwvt (lhcat) = auxPwvt
+          oneMicControl%cfmas(lhcat) = auxCfmas
+          oneMicControl%pwmas(lhcat) = auxPwmas
+          oneMicControl%cfvt (lhcat) = auxCfvt
+          oneMicControl%pwvt (lhcat) = auxPwvt
        enddo
        read(91,185)dataline
        do nip=1,npairc
           read(91,185)dataline
-          read(91,184)(idum,(coltabc(nd1,nd2,nip)  &
+          read(91,184)(idum,(oneMicControl%coltabc(nd1,nd2,nip)  &
                ,nd1=1,nembc),nd2=1,nembc)
        enddo
        read(91,185)dataline
        do nip=1,npairr
           read(91,185)dataline
-          read(91,184)(idum,(coltabr(nd1,nd2,nip)  &
+          read(91,184)(idum,(oneMicControl%coltabr(nd1,nd2,nip)  &
                ,nd1=1,nembc),nd2=1,nembc)
        enddo
 
@@ -240,7 +235,8 @@ contains
 
   !******************************************************************************
 
-  subroutine initqin(n1,n2,n3,q2,q6,q7,pi0,pp,theta,dn0,cccnp,cifnp)
+  subroutine initqin(n1,n2,n3,q2,q6,q7,pi0,pp,theta,dn0,cccnp,cifnp,oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     ! Arguments
     integer,                   intent(in)  :: n1,n2,n3
     real, dimension(:,:,:), intent(out) :: q2, q6, q7, cifnp
@@ -257,30 +253,30 @@ contains
     do j = 1,n3
        do i = 1,n2
           do k = 1,n1
-             pitot(k) = pi0(k,i,j) + pp(k,i,j)
-             tair(k) = theta(k,i,j) * pitot(k) / cp
+             oneMicControl%pitot(k) = pi0(k,i,j) + pp(k,i,j)
+             oneMicControl%tair(k) = theta(k,i,j) * oneMicControl%pitot(k) / cp
 
-             if(irain  .ge. 1) q2(k,i,j) = tair(k) - 193.16
-             if(igraup .ge. 1) q6(k,i,j) = 0.5 * min(0.,tair(k) - 273.16)
-             if(ihail  .ge. 1) q7(k,i,j) = 0.5 * min(0.,tair(k) - 273.16)
+             if(oneMicControl%irain  .ge. 1) q2(k,i,j) = oneMicControl%tair(k) - 193.16
+             if(oneMicControl%igraup .ge. 1) q6(k,i,j) = 0.5 * min(0.,oneMicControl%tair(k) - 273.16)
+             if(oneMicControl%ihail  .ge. 1) q7(k,i,j) = 0.5 * min(0.,oneMicControl%tair(k) - 273.16)
              !
              !
              !Carrio 2012 -------------------------------------------------
              !
              !---> icloud= 5: CCN is homogeneously initilaized by CPARM
-             if(icloud .eq. 5) cccnp(k,i,j) = cparm
+             if(oneMicControl%icloud .eq. 5) cccnp(k,i,j) = oneMicControl%cparm
              !
              !---> icloud= 6: Same of 5, but decreases above 4km (reasonable!)
-             if(icloud .eq.6)then
-                if(k<=2) cccnp(k,i,j)=cparm
-                if(k>2.and.zt(k)<=4000.) cccnp(k,i,j)=max(100.,cparm * (1.-zt(k)/4000.))
+             if(oneMicControl%icloud .eq.6)then
+                if(k<=2) cccnp(k,i,j)=oneMicControl%cparm
+                if(k>2.and.zt(k)<=4000.) cccnp(k,i,j)=max(100.,oneMicControl%cparm * (1.-zt(k)/4000.))
                 if(zt(k)>4000.) cccnp(k,i,j) = 100.
              endif
              !
-             !---> icloud= 7: YOU HAVE TO HARD-CODE IT HERE !!!!
+             !---> oneMicControl%icloud= 7: YOU HAVE TO HARD-CODE IT HERE !!!!
              !---> to have a 3-D heterogeneous initialization of CCN
-             if(icloud .eq.7)then
-                cccnp(k,i,j)=cparm
+             if(oneMicControl%icloud .eq.7)then
+                cccnp(k,i,j)=oneMicControl%cparm
                 print*,'if you use ICLOUD = 7, you MUST set up a 3D field'
 		print*,'to initialize CCN in mic_init.f90'
 		stop
@@ -288,7 +284,7 @@ contains
              !-------------------------------------------------------------
              !
 
-             if (ipris .eq. 7) cifnp(k,i,j) = 1.e5 * dn0(k,i,j) ** 5.4
+             if (oneMicControl%ipris .eq. 7) cifnp(k,i,j) = 1.e5 * dn0(k,i,j) ** 5.4
 
           enddo
        enddo
@@ -298,48 +294,49 @@ contains
 
   !******************************************************************************
 
-  subroutine jnmbinit()
-    if (level /= 3) then
+  subroutine jnmbinit(oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
+    if (oneMicControl%level /= 3) then
 
-       if (level <= 1) then
-          jnmb(1) = 0
+       if (oneMicControl%level <= 1) then
+          oneMicControl%jnmb(1) = 0
        else
-          jnmb(1) = 4
+          oneMicControl%jnmb(1) = 4
        endif
 
-       jnmb(2) = 0
-       jnmb(3) = 0
-       jnmb(4) = 0
-       jnmb(5) = 0
-       jnmb(6) = 0
-       jnmb(7) = 0
+       oneMicControl%jnmb(2) = 0
+       oneMicControl%jnmb(3) = 0
+       oneMicControl%jnmb(4) = 0
+       oneMicControl%jnmb(5) = 0
+       oneMicControl%jnmb(6) = 0
+       oneMicControl%jnmb(7) = 0
 
     else
 
-       jnmb(1) = icloud
-       jnmb(2) = irain
-       jnmb(3) = ipris
-       jnmb(4) = isnow
-       jnmb(5) = iaggr
-       jnmb(6) = igraup
-       jnmb(7) = ihail
+       oneMicControl%jnmb(1) = oneMicControl%icloud
+       oneMicControl%jnmb(2) = oneMicControl%irain
+       oneMicControl%jnmb(3) = oneMicControl%ipris
+       oneMicControl%jnmb(4) = oneMicControl%isnow
+       oneMicControl%jnmb(5) = oneMicControl%iaggr
+       oneMicControl%jnmb(6) = oneMicControl%igraup
+       oneMicControl%jnmb(7) = oneMicControl%ihail
 
-       if (icloud .eq. 1) jnmb(1) = 4
-       if (irain  .eq. 1) jnmb(2) = 2
-       if (ipris  .ge. 1) jnmb(3) = 5
-       if (isnow  .eq. 1) jnmb(4) = 2
-       if (iaggr  .eq. 1) jnmb(5) = 2
-       if (igraup .eq. 1) jnmb(6) = 2
-       if (ihail  .eq. 1) jnmb(7) = 2
+       if (oneMicControl%icloud .eq. 1) oneMicControl%jnmb(1) = 4
+       if (oneMicControl%irain  .eq. 1) oneMicControl%jnmb(2) = 2
+       if (oneMicControl%ipris  .ge. 1) oneMicControl%jnmb(3) = 5
+       if (oneMicControl%isnow  .eq. 1) oneMicControl%jnmb(4) = 2
+       if (oneMicControl%iaggr  .eq. 1) oneMicControl%jnmb(5) = 2
+       if (oneMicControl%igraup .eq. 1) oneMicControl%jnmb(6) = 2
+       if (oneMicControl%ihail  .eq. 1) oneMicControl%jnmb(7) = 2
 
-       if (irain == 5 .or. isnow == 5 .or. iaggr == 5 .or.  &
-            igraup == 5 .or. ihail == 5) then
+       if (oneMicControl%irain == 5 .or. oneMicControl%isnow == 5 .or. oneMicControl%iaggr == 5 .or.  &
+            oneMicControl%igraup == 5 .or. oneMicControl%ihail == 5) then
 
-          if (irain  >= 1) jnmb(2) = 5
-          if (isnow  >= 1) jnmb(4) = 5
-          if (iaggr  >= 1) jnmb(5) = 5
-          if (igraup >= 1) jnmb(6) = 5
-          if (ihail  >= 1) jnmb(7) = 5
+          if (oneMicControl%irain  >= 1) oneMicControl%jnmb(2) = 5
+          if (oneMicControl%isnow  >= 1) oneMicControl%jnmb(4) = 5
+          if (oneMicControl%iaggr  >= 1) oneMicControl%jnmb(5) = 5
+          if (oneMicControl%igraup >= 1) oneMicControl%jnmb(6) = 5
+          if (oneMicControl%ihail  >= 1) oneMicControl%jnmb(7) = 5
 
        endif
 
@@ -349,7 +346,8 @@ contains
 
   !******************************************************************************
 
-  subroutine micinit()
+  subroutine micinit(oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     !Local Variables:
     integer :: lhcat,lcat,ia
     real :: cfmasi,c1,glg,glg1,glg2,glgm,glgc,glgmv,flngi,dpsi,embsip,dnsip
@@ -357,81 +355,81 @@ contains
 
     ! Initialize arrays based on microphysics namelist parameters
 
-    parm(1) = cparm
-    parm(2) = rparm
+    oneMicControl%parm(1) = oneMicControl%cparm
+    oneMicControl%parm(2) = oneMicControl%rparm
     !     parm(3) = pparm   [obsolete]
-    parm(4) = sparm
-    parm(5) = aparm
-    parm(6) = gparm
-    parm(7) = hparm
+    oneMicControl%parm(4) = oneMicControl%sparm
+    oneMicControl%parm(5) = oneMicControl%aparm
+    oneMicControl%parm(6) = oneMicControl%gparm
+    oneMicControl%parm(7) = oneMicControl%hparm
 
-    if (icloud .le. 1) parm(1) = .3e9
-    if (irain  .eq. 1) parm(2) = .1e-2
+    if (oneMicControl%icloud .le. 1) oneMicControl%parm(1) = .3e9
+    if (oneMicControl%irain  .eq. 1) oneMicControl%parm(2) = .1e-2
     !     if (ipris  .eq. 1) parm(3) = .1e4     [obsolete]
-    if (isnow  .eq. 1) parm(4) = .1e-2
-    if (iaggr  .eq. 1) parm(5) = .1e-2
-    if (igraup .eq. 1) parm(6) = .1e-2
-    if (ihail  .eq. 1) parm(7) = .3e-2
+    if (oneMicControl%isnow  .eq. 1) oneMicControl%parm(4) = .1e-2
+    if (oneMicControl%iaggr  .eq. 1) oneMicControl%parm(5) = .1e-2
+    if (oneMicControl%igraup .eq. 1) oneMicControl%parm(6) = .1e-2
+    if (oneMicControl%ihail  .eq. 1) oneMicControl%parm(7) = .3e-2
 
-    dps = 125.e-6
-    dps2 = dps ** 2
-    rictmin = 1.0001
-    rictmax = 0.9999 * float(nembc)
+    oneMicControl%dps = 125.e-6
+    oneMicControl%dps2 = oneMicControl%dps ** 2
+    oneMicControl%rictmin = 1.0001
+    oneMicControl%rictmax = 0.9999 * float(nembc)
 
     do lhcat = 1,nhcat
        lcat = lhcat + (3 - lhcat) * (lhcat / 8) + lhcat / 12
 
-       cfden(lhcat) = cfmas(lhcat) * 6.0 / 3.14159
-       pwden(lhcat) = pwmas(lhcat) - 3.
-       emb0log(lcat) = log(emb0(lcat))
-       emb1log(lcat) = log(emb1(lcat))
+       oneMicControl%cfden(lhcat) = oneMicControl%cfmas(lhcat) * 6.0 / 3.14159
+       oneMicControl%pwden(lhcat) = oneMicControl%pwmas(lhcat) - 3.
+       oneMicControl%emb0log(lcat) = log(oneMicControl%emb0(lcat))
+       oneMicControl%emb1log(lcat) = log(oneMicControl%emb1(lcat))
 
        ! Define coefficients [vtfac, frefac1, frefac2] used for terminal velocity
        ! and Reynolds number
 
-       cfmasi = 1. / cfmas(lhcat)
-       pwmasi(lhcat) = 1. / pwmas(lhcat)
-       pwen0(lhcat) = 1. / (pwmas(lhcat) + 1.)
-       pwemb0(lhcat) = pwmas(lhcat) / (pwmas(lhcat) + 1.)
-       c1 = 1.5 + .5 * pwvt(lhcat)
+       cfmasi = 1. / oneMicControl%cfmas(lhcat)
+       oneMicControl%pwmasi(lhcat) = 1. / oneMicControl%pwmas(lhcat)
+       oneMicControl%pwen0(lhcat) = 1. / (oneMicControl%pwmas(lhcat) + 1.)
+       oneMicControl%pwemb0(lhcat) = oneMicControl%pwmas(lhcat) / (oneMicControl%pwmas(lhcat) + 1.)
+       c1 = 1.5 + .5 * oneMicControl%pwvt(lhcat)
 
-       glg = gammln(gnu(lcat))
-       glg1 = gammln(gnu(lcat) + 1.)
-       glg2 = gammln(gnu(lcat) + 2.)
-       glgm = gammln(gnu(lcat) + pwmas(lhcat))
-       glgc = gammln(gnu(lcat) + c1)
-       glgmv = gammln(gnu(lcat) + pwmas(lhcat) + pwvt(lhcat))
+       glg = gammln(oneMicControl%gnu(lcat))
+       glg1 = gammln(oneMicControl%gnu(lcat) + 1.)
+       glg2 = gammln(oneMicControl%gnu(lcat) + 2.)
+       glgm = gammln(oneMicControl%gnu(lcat) + oneMicControl%pwmas(lhcat))
+       glgc = gammln(oneMicControl%gnu(lcat) + c1)
+       glgmv = gammln(oneMicControl%gnu(lcat) + oneMicControl%pwmas(lhcat) + oneMicControl%pwvt(lhcat))
 
-       if (jnmb(lcat) .eq. 3) then
-          cfemb0(lhcat) = cfmas(lhcat) * exp(glgm - glg)  &
-               ** pwen0(lhcat) * (1. / parm(lcat)) ** pwemb0(lhcat)
-          cfen0(lhcat) = parm(lcat) * (exp(glg - glgm) / parm(lcat))  &
-               ** pwen0(lhcat)
+       if (oneMicControl%jnmb(lcat) .eq. 3) then
+          oneMicControl%cfemb0(lhcat) = oneMicControl%cfmas(lhcat) * exp(glgm - glg)  &
+               ** oneMicControl%pwen0(lhcat) * (1. / oneMicControl%parm(lcat)) ** oneMicControl%pwemb0(lhcat)
+          oneMicControl%cfen0(lhcat) = oneMicControl%parm(lcat) * (exp(glg - glgm) / oneMicControl%parm(lcat))  &
+               ** oneMicControl%pwen0(lhcat)
        endif
 
-       dnfac(lhcat) = (cfmasi * exp(glg - glgm)) ** pwmasi(lhcat)
+       oneMicControl%dnfac(lhcat) = (cfmasi * exp(glg - glgm)) ** oneMicControl%pwmasi(lhcat)
 
-       vtfac(lhcat) = cfvt(lhcat) * exp(glgmv - glgm)  &
-            * (cfmasi * exp(glg - glgm)) ** (pwvt(lhcat) *pwmasi(lhcat))
+       oneMicControl%vtfac(lhcat) = oneMicControl%cfvt(lhcat) * exp(glgmv - glgm)  &
+            * (cfmasi * exp(glg - glgm)) ** (oneMicControl%pwvt(lhcat) *oneMicControl%pwmasi(lhcat))
 
-       frefac1(lhcat) = var_shape(lhcat) * exp(glg1 - glg)  &
-            * (cfmasi * exp(glg - glgm)) ** pwmasi(lhcat)
+       oneMicControl%frefac1(lhcat) = oneMicControl%var_shape(lhcat) * exp(glg1 - glg)  &
+            * (cfmasi * exp(glg - glgm)) ** oneMicControl%pwmasi(lhcat)
 
-       frefac2(lhcat) = var_shape(lhcat) * 0.229 * sqrt(cfvt(lcat))  &
-            * (cfmasi * exp(glg - glgm)) ** (pwmasi(lhcat) * c1)  &
+       oneMicControl%frefac2(lhcat) = oneMicControl%var_shape(lhcat) * 0.229 * sqrt(oneMicControl%cfvt(lcat))  &
+            * (cfmasi * exp(glg - glgm)) ** (oneMicControl%pwmasi(lhcat) * c1)  &
             * exp(glgc - glg)
 
-       sipfac(lhcat) = .785 * exp(glg2 - glg)  &
-            * (cfmasi * exp(glg - glgm)) ** (2. * pwmasi(lhcat))
+       oneMicControl%sipfac(lhcat) = .785 * exp(glg2 - glg)  &
+            * (cfmasi * exp(glg - glgm)) ** (2. * oneMicControl%pwmasi(lhcat))
 
-       cfmasft(lhcat) = cfmas(lhcat) * exp(gammln  &
-            (gnu(lcat) + pwmas(lhcat)) - gammln(gnu(lcat)))
+       oneMicControl%cfmasft(lhcat) = oneMicControl%cfmas(lhcat) * exp(gammln  &
+            (oneMicControl%gnu(lcat) + oneMicControl%pwmas(lhcat)) - gammln(oneMicControl%gnu(lcat)))
 
-       dict(lcat) = float(nembc-1) / (emb1log(lcat) - emb0log(lcat))
+       oneMicControl%dict(lcat) = float(nembc-1) / (oneMicControl%emb1log(lcat) - oneMicControl%emb0log(lcat))
 
-       dpsmi(lhcat) = 1. / (cfmas(lhcat) * dps ** pwmas(lhcat))
-       if (lhcat .le. 4) gamm(lhcat) = exp(glg)
-       if (lhcat .le. 4) gamn1(lhcat) = exp(glg1)
+       oneMicControl%dpsmi(lhcat) = 1. / (oneMicControl%cfmas(lhcat) * oneMicControl%dps ** oneMicControl%pwmas(lhcat))
+       if (lhcat .le. 4) oneMicControl%gamm(lhcat) = exp(glg)
+       if (lhcat .le. 4) oneMicControl%gamn1(lhcat) = exp(glg1)
 
        ! gam1   :  the integral of the pristine distribution from dps to infty
        ! gam2   :  the integral of the snow dist. from 0 to dps
@@ -442,24 +440,24 @@ contains
     flngi = 1. / float(ngam)
 
     ! ALF
-    aux_loop1 = dps * 1.e6
-    aux_loop2 = emb1(1) * flngi
+    aux_loop1 = oneMicControl%dps * 1.e6
+    aux_loop2 = oneMicControl%emb1(1) * flngi
 
     do ia=1,ngam
        dpsi = aux_loop1 / float(ia)
 
-       gam(ia,1) = gammq(gnu(3) + 1., dpsi)
-       gam(ia,2) = gammp(gnu(4) + 1., dpsi)
-       gam(ia,3) = exp(-dpsi)
+       oneMicControl%gam(ia,1) = gammq(oneMicControl%gnu(3) + 1., dpsi)
+       oneMicControl%gam(ia,2) = gammp(oneMicControl%gnu(4) + 1., dpsi)
+       oneMicControl%gam(ia,3) = exp(-dpsi)
 
-       GAMINC(IA,1)=GAMMQ(GNU(3),dpsi)
-       GAMINC(IA,2)=GAMMP(GNU(4),dpsi)
+       oneMicControl%gaminc(ia,1)=gammq(oneMicControl%gnu(3),dpsi)
+       oneMicControl%gaminc(ia,2)=gammp(oneMicControl%gnu(4),dpsi)
 
        !embsip = emb1(1) * float(ia) * flngi
        embsip = aux_loop2 * float(ia)
-       dnsip = dnfac(1) * embsip ** pwmasi(1)
-       gamsip13(ia) = gammp(gnu(1),13.e-6/dnsip)
-       gamsip24(ia) = gammq(gnu(1),24.e-6/dnsip)
+       dnsip = oneMicControl%dnfac(1) * embsip ** oneMicControl%pwmasi(1)
+       oneMicControl%gamsip13(ia) = gammp(oneMicControl%gnu(1),13.e-6/dnsip)
+       oneMicControl%gamsip24(ia) = gammq(oneMicControl%gnu(1),24.e-6/dnsip)
     enddo
 
     return
