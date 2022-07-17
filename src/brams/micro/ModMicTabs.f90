@@ -13,16 +13,12 @@ module ModMicTabs
        gammp, &
        avint
 
-  use micphys, only: &
-       c1tabcc, c1tabcr, c2tabcc, c2tabrr, cfmas, cfvt, coltabc, coltabr, &
-       d1ecc, d1ecr, d1max, d1min, d2max, d2min, ddnc, dispemb0, dispemb1, &
-       drhhz, dtc, dthz, emb0, emb1, enmlttab, fracc, frachz, gnu, ipairc, &
-       ipairr, jhabtab, ncat, nd1cc, nd1cr, nd2cr, nd2rr, ndnc, ndns, &
-       nembc, nhcat, ninc, nr2cr, nr2rr, nrhhz, ntc, nthz, pwmas, pwmasi, &
-       pwvt, r1tabcc, r1tabcr, r2ecr, r2err, r2max, r2min, rmlttab, &
-       sedtime0, sedtime1, shedtab, var_shape       
+  use ModMicControl, only: &
+       MicControl
 
   implicit none
+
+  include "MicConstants.h"
 
   private
 
@@ -38,7 +34,8 @@ contains
 
 
 
-  subroutine haznuc()
+  subroutine haznuc(oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     ! Local Variables:
     integer :: ithz,irhhz,k
     real :: denccn,gnuccn,dnccn,ddccn,rhhz,c1hz,c2hz,c3hz,bhz,dm,sum,dccn,y,dum,thz
@@ -74,7 +71,7 @@ contains
              endif
              sum = sum + y ** (gnuccn-1.) * exp(-y) * (1. - exp(-dum))
           enddo
-          frachz(irhhz,ithz) = sum*ddccn/(exp(gammln(gnuccn))*dnccn)
+          oneMicControl%frachz(irhhz,ithz) = sum*ddccn/(exp(gammln(gnuccn))*dnccn)
        enddo
     enddo
 
@@ -83,10 +80,11 @@ contains
 
   !******************************************************************************
 
-  subroutine homfrzcl(dtlt,ngr)
+  subroutine homfrzcl(dtlt,ngr, oneMicControl)
     ! Arguments:
     integer, intent(in) :: ngr 
     real, intent(in)    :: dtlt
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     ! Local Variables:
     integer :: itc,k,idnc
@@ -111,7 +109,7 @@ contains
              sum = sum + (dc / dnc) ** (gnuc - 1.) * exp(-dc / dnc)  &
                   * (1. - exp(-ajlso * v1 * dtlt))
           enddo
-          fracc(idnc,itc,ngr) = sum * ddc / (exp(gammln(gnuc)) * dnc)
+          oneMicControl%fracc(idnc,itc,ngr) = sum * ddc / (exp(gammln(gnuc)) * dnc)
        enddo
     enddo
     return
@@ -125,12 +123,13 @@ contains
   ! be avoided where sedimentation occurs.
 
   subroutine mksedim_tab(m1,m2,m3,ngr,nembfall,maxkfall  &
-       ,zm,dzt,pcpfillc,pcpfillr,sfcpcp)
+       ,zm,dzt,pcpfillc,pcpfillr,sfcpcp, oneMicControl)
     ! Arguments:
     integer, intent(in) :: m1,m2,m3,ngr,nembfall,maxkfall
     real, dimension(:), intent(in) :: zm,dzt
     real, dimension(:,:,:,:), intent(out) :: pcpfillc,pcpfillr
     real, dimension(:,:,:), intent(out) :: sfcpcp
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     ! Local Variables:
     integer, parameter :: nbin=50
@@ -146,8 +145,8 @@ contains
     ! seconds) times a factor of 2 for the maximum inverse of rtgt times a factor
     ! of 5 for the largest value of sqrt(dn0i).
 
-    sedtime0 = .1
-    sedtime1 = 3000.
+    oneMicControl%sedtime0 = .1
+    oneMicControl%sedtime1 = 3000.
     dispmax = 500.
 
     ! Loop over hydrometeor categories
@@ -155,40 +154,40 @@ contains
     do lhcat = 1,nhcat
        lcat = lhcat + (3 - lhcat) * (lhcat / 8) + lhcat / 12
 
-       dispemb0(lhcat,ngr) = sedtime0 * cfvt(lhcat)  &
-            * (emb0(lcat) / cfmas(lhcat)) ** (pwvt(lhcat) * pwmasi(lhcat))
+       oneMicControl%dispemb0(lhcat,ngr) = oneMicControl%sedtime0 * oneMicControl%cfvt(lhcat)  &
+            * (oneMicControl%emb0(lcat) / oneMicControl%cfmas(lhcat)) ** (oneMicControl%pwvt(lhcat) * oneMicControl%pwmasi(lhcat))
 
-       dispemb1(lhcat,ngr) = sedtime1 * cfvt(lhcat)  &
-            * (emb1(lcat) / cfmas(lhcat)) ** (pwvt(lhcat) * pwmasi(lhcat))
+       oneMicControl%dispemb1(lhcat,ngr) = oneMicControl%sedtime1 * oneMicControl%cfvt(lhcat)  &
+            * (oneMicControl%emb1(lcat) / oneMicControl%cfmas(lhcat)) ** (oneMicControl%pwvt(lhcat) * oneMicControl%pwmasi(lhcat))
 
        !Bob (10/24/00):  Limit dispemb1 to a maximum of dispmax
 
-       if (dispemb1(lhcat,ngr) .gt. dispmax) dispemb1(lhcat,ngr) = dispmax
+       if (oneMicControl%dispemb1(lhcat,ngr) .gt. dispmax) oneMicControl%dispemb1(lhcat,ngr) = dispmax
 
        ! Loop over bins, filling them with fractional number, fractional mass,
        ! and displacement quotient relative to emb.
 
-       dmbodn = (exp(gammln(gnu(lcat) + pwmas(lhcat))  &
-            - gammln(gnu(lcat)))) ** pwmasi(lhcat)
+       dmbodn = (exp(gammln(oneMicControl%gnu(lcat) + oneMicControl%pwmas(lhcat))  &
+            - gammln(oneMicControl%gnu(lcat)))) ** oneMicControl%pwmasi(lhcat)
        diam0 = 0.06 * dmbodn
        diam1 = 1.0 * dmbodn
-       fac1 = gammp(gnu(lcat),diam0)
-       fac3 = gammp(gnu(lcat) + pwmas(lhcat),diam0)
+       fac1 = gammp(oneMicControl%gnu(lcat),diam0)
+       fac3 = gammp(oneMicControl%gnu(lcat) + oneMicControl%pwmas(lhcat),diam0)
        sumc = 0.
        sumr = 0.
 
        do jbin = 1,nbin
 
           diam = diam0 * (diam1 / diam0) ** (float(jbin)/float(nbin))
-          fac2 = gammp(gnu(lcat),diam)
-          fac4 = gammp(gnu(lcat) + pwmas(lhcat),diam)
+          fac2 = gammp(oneMicControl%gnu(lcat),diam)
+          fac4 = gammp(oneMicControl%gnu(lcat) + oneMicControl%pwmas(lhcat),diam)
           cbin(jbin) = fac2 - fac1
           rbin(jbin) = fac4 - fac3
           fac1 = fac2
           fac3 = fac4
           sumc = sumc + cbin(jbin)
           sumr = sumr + rbin(jbin)
-          reldisp(jbin) = diam ** pwvt(lhcat)
+          reldisp(jbin) = diam ** oneMicControl%pwvt(lhcat)
 
        enddo
 
@@ -200,8 +199,8 @@ contains
        ! Loop over displacement distance for size emb.
 
        do iembs = 1,nembfall
-          dispemb = dispemb0(lhcat,ngr)  &
-               * (dispemb1(lhcat,ngr) / dispemb0(lhcat,ngr))  &
+          dispemb = oneMicControl%dispemb0(lhcat,ngr)  &
+               * (oneMicControl%dispemb1(lhcat,ngr) / oneMicControl%dispemb0(lhcat,ngr))  &
                ** (float(iembs-1) / float(nembfall-1))
 
           ! Zero out concentration and mass fill arrays and surface precip array
@@ -278,7 +277,8 @@ contains
 
   !******************************************************************************
 
-  subroutine tabmelt()
+  subroutine tabmelt(oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     ! Local Variables:
     integer, parameter :: nbins=500
     integer :: lhcat,lcat,ndns1,ibin,inc,iter,idns
@@ -294,38 +294,38 @@ contains
     do lhcat = 1,nhcat
        lcat = lhcat + (3 - lhcat) * (lhcat / 8) + lhcat / 12
 
-       dn = dmean(lcat) / gnu(lcat)
-       gammaa = exp(gammln(gnu(lcat)))
+       dn = dmean(lcat) / oneMicControl%gnu(lcat)
+       gammaa = exp(gammln(oneMicControl%gnu(lcat)))
 
-       rmlttab(1) = 0.0
-       rmlttab(ninc) = 1.0
-       enmlttab(1,lhcat) = 0.0
-       enmlttab(ninc,lhcat) = 1.0
+       oneMicControl%rmlttab(1) = 0.0
+       oneMicControl%rmlttab(ninc) = 1.0
+       oneMicControl%enmlttab(1,lhcat) = 0.0
+       oneMicControl%enmlttab(ninc,lhcat) = 1.0
 
        ndns1 = 1
        if (lcat .eq. 7) ndns1 = ndns
 
        do idns = 1,ndns1
-          shedtab(1,idns) = 0.0
-          shedtab(ninc,idns) = 0.0
+          oneMicControl%shedtab(1,idns) = 0.0
+          oneMicControl%shedtab(ninc,idns) = 0.0
 
-          if (ndns1 .gt. 1) dn = 1.e-3 * float(idns) / gnu(lcat)
+          if (ndns1 .gt. 1) dn = 1.e-3 * float(idns) / oneMicControl%gnu(lcat)
 
           totfmg = 0.
           totmass = 0.
           do ibin = 1,nbins
              db(ibin) = 0.02 * dn * (float(ibin) - 0.5)
-             fmg(ibin) = (db(ibin) / dn) ** (gnu(lcat) - 1.)  &
+             fmg(ibin) = (db(ibin) / dn) ** (oneMicControl%gnu(lcat) - 1.)  &
                   / (dn * gammaa) * exp(-db(ibin) / dn)
              totfmg = totfmg + fmg(ibin)
              q(ibin) = 0.
-             pmass(ibin) = cfmas(lhcat) * db(ibin) ** pwmas(lhcat)
+             pmass(ibin) = oneMicControl%cfmas(lhcat) * db(ibin) ** oneMicControl%pwmas(lhcat)
              binmass(ibin) = pmass(ibin) * fmg(ibin)
              totmass = totmass + binmass(ibin)
-             vtx = cfvt(lhcat) * db(ibin) ** pwvt(lhcat)
+             vtx = oneMicControl%cfvt(lhcat) * db(ibin) ** oneMicControl%pwvt(lhcat)
              fre = (1.0 + 0.229 * sqrt(vtx * db(ibin) / vk))  &
-                  * var_shape(lhcat)
-             dqdt(ibin) = db(ibin) ** (1. - pwmas(lhcat)) * fre
+                  * oneMicControl%var_shape(lhcat)
+             dqdt(ibin) = db(ibin) ** (1. - oneMicControl%pwmas(lhcat)) * fre
           enddo
           totqm = totmass * 80.
 
@@ -352,39 +352,39 @@ contains
              !  bins and compute shedded mixing ratio (shedtab) from partially-melted bins.
 
              if(idns .eq. 7)then
-                rmlttab(inc) = 0.0
+                oneMicControl%rmlttab(inc) = 0.0
                 do ibin = 1,nbins
                    if(q(ibin) .gt. 79.9)then
-                      rmlttab(inc) = rmlttab(inc) + binmass(ibin)
+                      oneMicControl%rmlttab(inc) = oneMicControl%rmlttab(inc) + binmass(ibin)
                    endif
                 enddo
-                rmlttab(inc) = rmlttab(inc) / totmass
+                oneMicControl%rmlttab(inc) = oneMicControl%rmlttab(inc) / totmass
              endif
 
              if(idns .eq. 7 .or. ndns1 .eq. 1)then
-                enmlttab(inc,lhcat) = 0.0
+                oneMicControl%enmlttab(inc,lhcat) = 0.0
                 do ibin = 1,nbins
                    if(q(ibin) .gt. 79.9)then
-                      enmlttab(inc,lhcat) = enmlttab(inc,lhcat)  &
+                      oneMicControl%enmlttab(inc,lhcat) = oneMicControl%enmlttab(inc,lhcat)  &
                            + fmg(ibin)
                    endif
                 enddo
-                enmlttab(inc,lhcat) = enmlttab(inc,lhcat) / totfmg
+                oneMicControl%enmlttab(inc,lhcat) = oneMicControl%enmlttab(inc,lhcat) / totfmg
              endif
 
              if(lcat .eq. 7)then
-                shedtab(inc,idns) = 0.0
+                oneMicControl%shedtab(inc,idns) = 0.0
                 !                  do ibin = kbin,nbins
                 do ibin = 1,nbins
                    if(q(ibin) .le. 79.9)then
                       pliqmass = pmass(ibin) * q(ibin) / 80.
                       picemass = pmass(ibin) - pliqmass
                       critmass = .268e-3 + .1389 * picemass
-                      shedtab(inc,idns) = shedtab(inc,idns)  &
+                      oneMicControl%shedtab(inc,idns) = oneMicControl%shedtab(inc,idns)  &
                            + max(0.0, pliqmass - critmass) * fmg(ibin)
                    endif
                 enddo
-                shedtab(inc,idns) = shedtab(inc,idns) / totmass
+                oneMicControl%shedtab(inc,idns) = oneMicControl%shedtab(inc,idns) / totmass
              endif
 
           enddo
@@ -395,7 +395,8 @@ contains
 
   !******************************************************************************
 
-  subroutine mkcoltb
+  subroutine mkcoltb(oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     ! Local Variables:
     integer, parameter :: ndx=20
     integer :: ihx,ix,ihy,iy,iemby,iembx,idx
@@ -407,9 +408,9 @@ contains
     do ihx = 1,nhcat
        ix = ihx + (3 - ihx) * (ihx / 8) + ihx / 12
 
-       gxm = exp(gammln(gnu(ix)) - gammln(gnu(ix) + pwmas(ihx)))
-       dnminx = ((emb0(ix) / cfmas(ihx)) * gxm) ** (1. / pwmas(ihx))
-       dnmaxx = ((emb1(ix) / cfmas(ihx)) * gxm) ** (1. / pwmas(ihx))
+       gxm = exp(gammln(oneMicControl%gnu(ix)) - gammln(oneMicControl%gnu(ix) + oneMicControl%pwmas(ihx)))
+       dnminx = ((oneMicControl%emb0(ix) / oneMicControl%cfmas(ihx)) * gxm) ** (1. / oneMicControl%pwmas(ihx))
+       dnmaxx = ((oneMicControl%emb1(ix) / oneMicControl%cfmas(ihx)) * gxm) ** (1. / oneMicControl%pwmas(ihx))
        dxlo = .01 * dnminx
        dxhi = 10. * dnmaxx
 
@@ -417,22 +418,22 @@ contains
 
           iy = ihy + (3 - ihy) * (ihy / 8) + ihy / 12
 
-          if (ipairc(ihx,ihy) .gt. 0 .or. ipairr(ihx,ihy) .gt. 0) then
-             gyn = exp(gammln(gnu(iy)))
-             gyn1 = exp(gammln(gnu(iy) + 1.)) / gyn
-             gyn2 = exp(gammln(gnu(iy) + 2.)) / gyn
-             gynp = exp(gammln(gnu(iy) + pwvt(ihy))) / gyn
-             gynp1 = exp(gammln(gnu(iy) + pwvt(ihy) + 1.)) / gyn
-             gynp2 = exp(gammln(gnu(iy) + pwvt(ihy) + 2.)) / gyn
+          if (oneMicControl%ipairc(ihx,ihy) .gt. 0 .or. oneMicControl%ipairr(ihx,ihy) .gt. 0) then
+             gyn = exp(gammln(oneMicControl%gnu(iy)))
+             gyn1 = exp(gammln(oneMicControl%gnu(iy) + 1.)) / gyn
+             gyn2 = exp(gammln(oneMicControl%gnu(iy) + 2.)) / gyn
+             gynp = exp(gammln(oneMicControl%gnu(iy) + oneMicControl%pwvt(ihy))) / gyn
+             gynp1 = exp(gammln(oneMicControl%gnu(iy) + oneMicControl%pwvt(ihy) + 1.)) / gyn
+             gynp2 = exp(gammln(oneMicControl%gnu(iy) + oneMicControl%pwvt(ihy) + 2.)) / gyn
 
-             gym = exp(gammln(gnu(iy)) - gammln(gnu(iy) + pwmas(ihy)))
-             dnminy = ((emb0(iy) / cfmas(ihy)) * gym) ** (1. /pwmas(ihy))
-             dnmaxy = ((emb1(iy) / cfmas(ihy)) * gym) ** (1. /pwmas(ihy))
+             gym = exp(gammln(oneMicControl%gnu(iy)) - gammln(oneMicControl%gnu(iy) + oneMicControl%pwmas(ihy)))
+             dnminy = ((oneMicControl%emb0(iy) / oneMicControl%cfmas(ihy)) * gym) ** (1. /oneMicControl%pwmas(ihy))
+             dnmaxy = ((oneMicControl%emb1(iy) / oneMicControl%cfmas(ihy)) * gym) ** (1. /oneMicControl%pwmas(ihy))
 
              do iemby = 1,nembc
                 dny = dnminy * (dnmaxy / dnminy) ** (float(iemby-1)  &
                      / float(nembc-1))
-                vny = cfvt(ihy) * dny ** pwvt(ihy)
+                vny = oneMicControl%cfvt(ihy) * dny ** oneMicControl%pwvt(ihy)
                 do iembx = 1,nembc
 
                    dnx = dnminx * (dnmaxx / dnminx) ** (float(iembx-1)  &
@@ -440,23 +441,23 @@ contains
                    do idx = 1,ndx
                       dx(idx) = dxlo * (dxhi / dxlo)  &
                            ** (float(idx-1) / float(ndx-1))
-                      fx(idx) = xj(dx(idx),cfvt(ihx),pwvt(ihx),cfvt(ihy)  &
-                           ,pwvt(ihy),vny,dnx,dny,gnu(ix),gnu(iy)  &
+                      fx(idx) = xj(dx(idx),oneMicControl%cfvt(ihx),oneMicControl%pwvt(ihx),oneMicControl%cfvt(ihy)  &
+                           ,oneMicControl%pwvt(ihy),vny,dnx,dny,oneMicControl%gnu(ix),oneMicControl%gnu(iy)  &
                            ,gyn1,gyn2,gynp,gynp1,gynp2)
-                      gx(idx) = fx(idx) * cfmas(ihx)  &
-                           * dx(idx) ** pwmas(ihx)
+                      gx(idx) = fx(idx) * oneMicControl%cfmas(ihx)  &
+                           * dx(idx) ** oneMicControl%pwmas(ihx)
 
                    enddo
-                   if (ipairc(ihx,ihy) .gt. 0) then
+                   if (oneMicControl%ipairc(ihx,ihy) .gt. 0) then
                       call avint(dx,fx,ndx,dxlo,dxhi,ans)
-                      !nonlog10                     coltabc(iembx,iemby,ipairc(ihx,ihy))=max(0.,ans)
-                      coltabc(iembx,iemby,ipairc(ihx,ihy))=  &
+                      !nonlog10   oneMicControl%coltabc(iembx,iemby,oneMicControl%ipairc(ihx,ihy))=max(0.,ans)
+                      oneMicControl%coltabc(iembx,iemby,oneMicControl%ipairc(ihx,ihy))=  &
                            -log10(max(1.e-30,ans))
                    endif
-                   if (ipairr(ihx,ihy) .gt. 0) then
+                   if (oneMicControl%ipairr(ihx,ihy) .gt. 0) then
                       call avint(dx,gx,ndx,dxlo,dxhi,ans)
-                      !nonlog10                     coltabr(iembx,iemby,ipairr(ihx,ihy))=max(0.,ans)
-                      coltabr(iembx,iemby,ipairr(ihx,ihy))=  &
+                      !nonlog10   oneMicControl%coltabr(iembx,iemby,oneMicControl%ipairr(ihx,ihy))=max(0.,ans)
+                      oneMicControl%coltabr(iembx,iemby,oneMicControl%ipairr(ihx,ihy))=  &
                            -log10(max(1.e-30,ans))
                    endif
                 enddo
@@ -500,7 +501,8 @@ contains
 
   !******************************************************************************
 
-  subroutine make_autotab()
+  subroutine make_autotab(oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     ! Local Variables:
     integer, parameter :: ibins=36,ithresh=15
     integer :: i,k,id1cc,id1cr,ir2cr,id2cr,ir2rr,id2rr
@@ -541,18 +543,18 @@ contains
     ! d1min and d1max are equivalent to dmb0 and dmb1, but may have different
     ! values.
 
-    d1min = 4.e-4
-    d1max = 50.e-4
-    d1ecc = log10 (d1max / d1min) / float(nd1cc-1)
-    d1ecr = log10 (d1max / d1min) / float(nd1cr-1)
+    oneMicControl%d1min = 4.e-4
+    oneMicControl%d1max = 50.e-4
+    oneMicControl%d1ecc = log10 (oneMicControl%d1max / oneMicControl%d1min) / float(nd1cc-1)
+    oneMicControl%d1ecr = log10 (oneMicControl%d1max / oneMicControl%d1min) / float(nd1cr-1)
 
-    r2min = .01e-6
-    r2max = 20.e-6
-    r2ecr = log10 (r2max / r2min) / float(nr2cr-1)
-    r2err = log10 (r2max / r2min) / float(nr2rr-1)
+    oneMicControl%r2min = .01e-6
+    oneMicControl%r2max = 20.e-6
+    oneMicControl%r2ecr = log10 (oneMicControl%r2max / oneMicControl%r2min) / float(nr2cr-1)
+    oneMicControl%r2err = log10 (oneMicControl%r2max / oneMicControl%r2min) / float(nr2rr-1)
 
-    d2min = 1.e-2
-    d2max = 1.
+    oneMicControl%d2min = 1.e-2
+    oneMicControl%d2max = 1.
 
     ! Start 1 cc loop for dm1, dn1, and dn2.
 
@@ -564,10 +566,10 @@ contains
 
     do id1cc = 1,nd1cc
 
-       d1 = d1min + (d1max - d1min) * float(id1cc-1) / float(nd1cc-1)
+       d1 = oneMicControl%d1min + (oneMicControl%d1max - oneMicControl%d1min) * float(id1cc-1) / float(nd1cc-1)
        r1 = en1 * .5236 * d1 ** 3
 
-       call initg(r1,r2,en1,en2,gnu(1),gnu(2),diam,x,amk0,ank0  &
+       call initg(r1,r2,en1,en2,oneMicControl%gnu(1),oneMicControl%gnu(2),diam,x,amk0,ank0  &
             ,ank1,amk1,ank2,amk2,ibins,ithresh)
        call sumn(ank0,amk0,1,ithresh,ibins,sun10,sum10)
        call sumn(ank0,amk0,ithresh+1,ibins,ibins,sun20,sum20)
@@ -575,36 +577,36 @@ contains
        call sumn(ank,amk,1,ithresh,ibins,sun1,sum1)
        call sumn(ank,amk,ithresh+1,ibins,ibins,sun2,sum2)
 
-       r1tabcc(id1cc) = max(0.,(sum10-sum1) * en1i2)
-       c1tabcc(id1cc) = max(0.,(sun10-sun1) * en1i2)
-       c2tabcc(id1cc) = max(0.,(sun2-sun20) * en1i2)
+       oneMicControl%r1tabcc(id1cc) = max(0.,(sum10-sum1) * en1i2)
+       oneMicControl%c1tabcc(id1cc) = max(0.,(sun10-sun1) * en1i2)
+       oneMicControl%c2tabcc(id1cc) = max(0.,(sun2-sun20) * en1i2)
 
     enddo
 
     ! Start 3 cr loops for dm1 and dn1.
 
     do id1cr = 1,nd1cr
-       d1 = d1min * 10. ** (d1ecr * float(id1cr-1))
+       d1 = oneMicControl%d1min * 10. ** (oneMicControl%d1ecr * float(id1cr-1))
        r1 = en1 * .5236 * d1 ** 3
 
        do ir2cr = 1,nr2cr
-          r2 = r2min * 10. ** (r2ecr * float(ir2cr-1))
-          d2minx = max(d2min,(r2 / (.1 * .5236)) ** .333333)
-          d2ecr = alog10(d2max / d2minx) / float(nd2cr-1)
+          r2 = oneMicControl%r2min * 10. ** (oneMicControl%r2ecr * float(ir2cr-1))
+          d2minx = max(oneMicControl%d2min,(r2 / (.1 * .5236)) ** .333333)
+          d2ecr = alog10(oneMicControl%d2max / d2minx) / float(nd2cr-1)
 
           do id2cr = 1,nd2cr
              d2 = d2minx * 10. ** (d2ecr * float(id2cr-1))
              en2 = r2 / (.5236 * d2 ** 3)
 
-             call initg(r1,r2,en1,en2,gnu(1),gnu(2),diam,x,amk0,ank0  &
+             call initg(r1,r2,en1,en2,oneMicControl%gnu(1),oneMicControl%gnu(2),diam,x,amk0,ank0  &
                   ,ank1,amk1,ank2,amk2,ibins,ithresh)
              call sumn(ank0,amk0,1,ithresh,ibins,sun10,sum10)
              call sxy(x,amk0,ank0,amk,ank,akbarx(:,:,2))
              call sumn(ank,amk,1,ithresh,ibins,sun1,sum1)
 
-             r1tabcr(id1cr,ir2cr,id2cr)  &
+             oneMicControl%r1tabcr(id1cr,ir2cr,id2cr)  &
                   = alog10(max(1.e-20,(sum10-sum1) * en1i))
-             c1tabcr(id1cr,ir2cr,id2cr)  &
+             oneMicControl%c1tabcr(id1cr,ir2cr,id2cr)  &
                   = alog10(max(1.e-20,(sun10-sun1) * en1i))
 
           enddo
@@ -617,21 +619,21 @@ contains
     r1 = en1 * .5236 * d1 ** 3
 
     do ir2rr = 1,nr2rr
-       r2 = r2min * 10. ** (r2err * float(ir2rr-1))
-       d2minx = max(d2min,(r2 / (.1 * .5236)) ** .333333)
-       d2err = alog10(d2max / d2minx) / float(nd2rr-1)
+       r2 = oneMicControl%r2min * 10. ** (oneMicControl%r2err * float(ir2rr-1))
+       d2minx = max(oneMicControl%d2min,(r2 / (.1 * .5236)) ** .333333)
+       d2err = alog10(oneMicControl%d2max / d2minx) / float(nd2rr-1)
 
        do id2rr = 1,nd2rr
           d2 = d2minx * 10. ** (d2err * float(id2rr-1))
           en2 = r2 / (.5236 * d2 ** 3)
 
-          call initg(r1,r2,en1,en2,gnu(1),gnu(2),diam,x,amk0,ank0  &
+          call initg(r1,r2,en1,en2,oneMicControl%gnu(1),oneMicControl%gnu(2),diam,x,amk0,ank0  &
                ,ank1,amk1,ank2,amk2,ibins,ithresh)
           call sumn(ank0,amk0,ithresh+1,ibins,ibins,sun20,sum20)
           call sxy(x,amk0,ank0,amk,ank,akbarx(:,:,3))
           call sumn(ank,amk,ithresh+1,ibins,ibins,sun2,sum2)
 
-          c2tabrr(ir2rr,id2rr) = alog10(max(1.e-25,sun20-sun2))
+          oneMicControl%c2tabrr(ir2rr,id2rr) = alog10(max(1.e-25,sun20-sun2))
 
        enddo
     enddo
@@ -1080,7 +1082,8 @@ contains
 
   !******************************************************************************
 
-  subroutine tabhab()
+  subroutine tabhab(oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     ! Local Variables:
     integer, parameter :: nhab=0
     integer :: it,is
@@ -1100,65 +1103,65 @@ contains
           if (nhab .eq. 0) then
              if (it .ge. 0 .and. it .le. 2) then
                 if (is .le. 95) then
-                   jhabtab(it,is,1) = 3
-                   jhabtab(it,is,2) = 4
+                   oneMicControl%jhabtab(it,is,1) = 3
+                   oneMicControl%jhabtab(it,is,2) = 4
                 else
-                   jhabtab(it,is,1) = 8
-                   jhabtab(it,is,2) = 12
+                   oneMicControl%jhabtab(it,is,1) = 8
+                   oneMicControl%jhabtab(it,is,2) = 12
                 endif
              else if(it .gt. 2 .and. it .le. 4) then
                 if (is .lt. 90) then
-                   jhabtab(it,is,1) = 3
-                   jhabtab(it,is,2) = 4
+                   oneMicControl%jhabtab(it,is,1) = 3
+                   oneMicControl%jhabtab(it,is,2) = 4
                 else
-                   jhabtab(it,is,1) = 8
-                   jhabtab(it,is,2) = 12
+                   oneMicControl%jhabtab(it,is,1) = 8
+                   oneMicControl%jhabtab(it,is,2) = 12
                 endif
              else if(it .gt. 4 .and. it .le. 6) then
                 if (is .lt. 85) then
-                   jhabtab(it,is,1) = 3
-                   jhabtab(it,is,2) = 4
+                   oneMicControl%jhabtab(it,is,1) = 3
+                   oneMicControl%jhabtab(it,is,2) = 4
                 else
-                   jhabtab(it,is,1) = 10
-                   jhabtab(it,is,2) = 14
+                   oneMicControl%jhabtab(it,is,1) = 10
+                   oneMicControl%jhabtab(it,is,2) = 14
                 endif
              else if(it .gt. 6 .and. it .le. 9) then
                 if (is .lt. 90) then
-                   jhabtab(it,is,1) = 3
-                   jhabtab(it,is,2) = 4
+                   oneMicControl%jhabtab(it,is,1) = 3
+                   oneMicControl%jhabtab(it,is,2) = 4
                 else
-                   jhabtab(it,is,1) = 10
-                   jhabtab(it,is,2) = 14
+                   oneMicControl%jhabtab(it,is,1) = 10
+                   oneMicControl%jhabtab(it,is,2) = 14
                 endif
              else if(it .gt. 9 .and. it .le. 22) then
                 if (is .lt. 90) then
-                   jhabtab(it,is,1) = 8
-                   jhabtab(it,is,2) = 12
+                   oneMicControl%jhabtab(it,is,1) = 8
+                   oneMicControl%jhabtab(it,is,2) = 12
                 else
-                   jhabtab(it,is,1) = 9
-                   jhabtab(it,is,2) = 13
+                   oneMicControl%jhabtab(it,is,1) = 9
+                   oneMicControl%jhabtab(it,is,2) = 13
                 endif
              elseif(it .gt. 22 .and. it .le. 30) then
                 if (is .lt. 80) then
-                   jhabtab(it,is,1) = 3
-                   jhabtab(it,is,2) = 4
+                   oneMicControl%jhabtab(it,is,1) = 3
+                   oneMicControl%jhabtab(it,is,2) = 4
                 else
-                   jhabtab(it,is,1) = 10
-                   jhabtab(it,is,2) = 14
+                   oneMicControl%jhabtab(it,is,1) = 10
+                   oneMicControl%jhabtab(it,is,2) = 14
                 endif
              elseif(it .gt. 30) then
                 if (is .lt. 90) then
-                   jhabtab(it,is,1) = 3
-                   jhabtab(it,is,2) = 4
+                   oneMicControl%jhabtab(it,is,1) = 3
+                   oneMicControl%jhabtab(it,is,2) = 4
                 else
-                   jhabtab(it,is,1) = 11
-                   jhabtab(it,is,2) = 15
+                   oneMicControl%jhabtab(it,is,1) = 11
+                   oneMicControl%jhabtab(it,is,2) = 15
                 endif
              endif
           else
-             jhabtab(it,is,1) = nhab
-             jhabtab(it,is,2) = nhab + 4
-             if (nhab .eq. 3) jhabtab(it,is,2) = 4
+             oneMicControl%jhabtab(it,is,1) = nhab
+             oneMicControl%jhabtab(it,is,2) = nhab + 4
+             if (nhab .eq. 3) oneMicControl%jhabtab(it,is,2) = 4
           endif
        enddo
     enddo

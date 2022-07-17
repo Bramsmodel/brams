@@ -24,6 +24,9 @@ module ModMicThompsonDriver
   use ModBasicFields, only : &
        BasicFields
 
+  use ModMicControl, only: &
+       MicControl
+
   use mem_micro, only:  &
        micro_vars, &
        micro_g
@@ -63,9 +66,6 @@ module ModMicThompsonDriver
   use io_params, only: &
        frqanl !INTENT(IN)
 
-  use micphys, only:  &
-       mcphys_type 
-
   use mem_radiate, only: &
        ilwrtyp, &
        iswrtyp 
@@ -76,16 +76,18 @@ module ModMicThompsonDriver
   implicit none
 
   private
+
   public :: micro_thompson
-  
+
 contains
 
 
 
 
-  subroutine micro_thompson(oneBasicFields)
+  subroutine micro_thompson(oneBasicFields, oneMicControl)
     type(BasicFields), pointer, intent(in) :: oneBasicFields
-    
+    type(MicControl), pointer, intent(in) :: oneMicControl
+
     integer,parameter :: &
          IDS=1, IDE=2, JDS=1, JDE=2, KDS=1, &
          IMS=1, IME=2, JMS=1, JME=2, KMS=1, &
@@ -129,8 +131,7 @@ contains
           !endif
 
           call brams_to_mic_thompson(ia,ja,iz,jz, &
-               mcphys_type &
-               ,ilwrtyp     &
+               ilwrtyp     &
                ,iswrtyp     &
                ,j           &
                ,i           &
@@ -152,8 +153,8 @@ contains
                ,oneBasicFields &
                ,grid_g(ngrid) &
                ,micro_g(ngrid) &
-               ,ocean_fraction &
-               )
+               ,ocean_fraction, &
+               oneMicControl)
 
           !if(mcphys_type == 3) then
           !   micro_g(ngrid)%ccp  (1:mzp,i,j)  = ccp1d  (1:mzp)
@@ -176,8 +177,7 @@ contains
   !=======================================================================================
   !
   subroutine brams_to_mic_thompson(ia,ja,iz,jz, &
-       mcphys_type &
-       ,ilwrtyp     &
+       ilwrtyp     &
        ,iswrtyp     &
        ,j &
        ,i &
@@ -197,16 +197,17 @@ contains
        ,oneBasicFields &
        ,grd &
        ,mic &
-       ,ocean_fraction &
+       ,ocean_fraction, &
+       oneMicControl&
        )
 
     type(BasicFields), pointer, intent(in) ::oneBasicFields
+    type(MicControl), pointer, intent(in) :: oneMicControl
     type(grid_vars)  ::grd
     type(micro_vars) ::mic
 
     integer, intent(IN) ::  &          
-         mcphys_type   &
-         ,ilwrtyp       &
+         ilwrtyp       &
          ,iswrtyp       &
          ,j &
          ,i &
@@ -427,7 +428,7 @@ contains
     crp  (1:m1)= mic%crp    (1:m1,i,j) ! rain        number concentration (#/kg)
     cpp  (1:m1)= mic%cpp    (1:m1,i,j) ! cloud ice   number concentration (#/kg)
 
-    if(mcphys_type == 3) then 
+    if(oneMicControl%mcphys_type == 3) then 
        ccp  (1:m1) = max(mic%ccp  (1:m1,i,j) , 0.) ! cloud water        number concentration (#/kg)
        cccnp(1:m1) = max(mic%cccnp(1:m1,i,j) , 0.) ! water friendly aer number concentration (#/kg)  
        cifnp(1:m1) = max(mic%cifnp(1:m1,i,j) , 0.) ! ice   friendly aer number concentration (#/kg)  
@@ -449,7 +450,7 @@ contains
     !       its=ia  ;ite=iz  ;jts=ja  ;jte=jz  ;kts=2; kte=mzp-1  
 
     ! flags to calculate effec radius
-    if( (ilwrtyp==6 .or. iswrtyp==6) .and. mcphys_type == 2 ) then           
+    if( (ilwrtyp==6 .or. iswrtyp==6) .and. oneMicControl%mcphys_type == 2 ) then           
        has_reqc= 1 ; has_reqi= 1 ; has_reqs= 1 
     else
        has_reqc= 0 ; has_reqi= 0 ; has_reqs= 0 
@@ -518,7 +519,7 @@ contains
 
     !
     if(start_of_simulation) then !.or.restart.or.config_flags%cycling)     &
-       if(mcphys_type == 2 ) then   
+       if(oneMicControl%mcphys_type == 2 ) then   
 
           call thompson_init(HGT,         &
                DX, DY,           &
@@ -528,7 +529,7 @@ contains
                ITS, ITE, JTS, JTE, KTS, KTE)
        endif
 
-       if(mcphys_type == 3 ) then  
+       if(oneMicControl%mcphys_type == 3 ) then  
           if( .not. allocated(NWFA)  ) allocate(NWFA  (ims:ime,kms:kme,jms:jme))
           if( .not. allocated(NIFA)  ) allocate(NIFA  (ims:ime,kms:kme,jms:jme))
           if( .not. allocated(NWFA2D)) allocate(NWFA2D(ims:ime,jms:jme))
@@ -551,7 +552,7 @@ contains
        start_of_simulation =.false.
     endif
 
-    if(mcphys_type == 3) then
+    if(oneMicControl%mcphys_type == 3) then
        ! - CCN and IN fields
        qnwfa_curr(1,:,1)=NWFA(1,:,1) !- CCN
        qnifa_curr(1,:,1)=NIFA(1,:,1) !- IN
@@ -566,7 +567,7 @@ contains
     endif
 
     !- this call cloud water 1-mom/ no aerosol aware scheme
-    if(mcphys_type == 2 ) & 
+    if(oneMicControl%mcphys_type == 2 ) & 
          call mp_gt_driver(                   &
          qv_curr,                   &! QV=qv_curr,     
          qc_curr,                   &! QC=qc_curr,     
@@ -576,7 +577,7 @@ contains
          qg_curr,                   &! QG=qg_curr,     
          qni_curr,                  &! NI=qni_curr,    
          qnr_curr,                  &! NR=qnr_curr,    
-                                !-these are optional arrays (only for mcphys_type == 3)
+                                !-these are optional arrays (only for oneMicControl%mcphys_type == 3)
                                 !                    qnc_curr,                  &! NC=qnc_curr,     
                                 !                    qnwfa_curr,                &! NWFA=qnwfa_curr, 
                                 !                    qnifa_curr,                &! NIFA=qnifa_curr, 
@@ -615,7 +616,7 @@ contains
 
     !- this call cloud water 2-mom / aerosol aware scheme
     !- there are 4 additional arrays in the end of the argument list.
-    if(mcphys_type == 3 ) &        
+    if(oneMicControl%mcphys_type == 3 ) &        
          call mp_gt_driver(                   &
          qv_curr,                   &! QV=qv_curr,     
          qc_curr,                   &! QC=qc_curr,     
@@ -711,7 +712,7 @@ contains
     thp(1)  = thp(2)  
     !
     !
-    if(mcphys_type == 3) then
+    if(oneMicControl%mcphys_type == 3) then
        do k=2,kme
           ccp  (k) = qnc_curr  (1,k,1) 
           cccnp(k) = qnwfa_curr(1,k,1)                                          
@@ -723,7 +724,7 @@ contains
        cifnp(1) = cifnp(2) 
     endif
 
-    if( (ilwrtyp==6 .or. iswrtyp==6) .and. mcphys_type == 2 ) then           
+    if( (ilwrtyp==6 .or. iswrtyp==6) .and. oneMicControl%mcphys_type == 2 ) then           
        do k=2,kme-1
           rel (k) = re_cloud (1,k,1) * 1.e+6 ! RRTM requires in micrometer
           rei (k) = re_ice   (1,k,1) * 1.e+6 ! RRTM requires in micrometer
@@ -752,7 +753,7 @@ contains
     mic%rsp    (1:m1,i,j) =rsp  (1:m1)   
     mic%rgp    (1:m1,i,j) =rgp  (1:m1)  
 
-    if( (ilwrtyp==6 .or. iswrtyp==6) .and. mcphys_type == 2 ) then   
+    if( (ilwrtyp==6 .or. iswrtyp==6) .and. oneMicControl%mcphys_type == 2 ) then   
        mic%rei   (1:m1,i,j) =rei  (1:m1)
        mic%rel   (1:m1,i,j) =rel  (1:m1)
     endif
@@ -760,7 +761,7 @@ contains
     mic%crp    (1:m1,i,j) =crp  (1:m1)
     mic%cpp    (1:m1,i,j) =cpp  (1:m1)
 
-    if(mcphys_type == 3) then
+    if(oneMicControl%mcphys_type == 3) then
        mic%ccp  (1:m1,i,j) = ccp  (1:m1) 
        mic%cccnp(1:m1,i,j) = cccnp(1:m1) 
        mic%cifnp(1:m1,i,j) = cifnp(1:m1) 

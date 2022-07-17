@@ -153,7 +153,7 @@ contains
             " mkcoltab == 1 was not worked yet")
        ! Make collection table and write to file
 
-       call mkcoltb
+       call mkcoltb(oneMicControl)
        open(91,file=cname(1:len_trim(cname)),form='formatted',status='unknown')
        rewind(91)
        write(91,181)

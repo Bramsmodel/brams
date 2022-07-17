@@ -628,7 +628,9 @@ contains
     endif
     if (mcphys_type == 2 .or. mcphys_type == 3 ) then
        ! G. Thompson microphysics
-       call micro_thompson(oneGrid%Basic)
+       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+       call micro_thompson(oneGrid%Basic, oneGrid%MicControlVars)
+       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
     endif
     if (mcphys_type == 4 ) then
        call micro_gfdl(oneGrid%Basic)

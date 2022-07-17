@@ -175,10 +175,10 @@ contains
        enddo
 
        call micinit(oneMicControl)
-       call make_autotab()
-       call haznuc()
-       call tabmelt()
-       call tabhab()
+       call make_autotab(oneMicControl)
+       call haznuc(oneMicControl)
+       call tabmelt(oneMicControl)
+       call tabhab(oneMicControl)
 
        do lhcat = 1,nhcat
           ch3(lhcat) = pwvt(lhcat) * pwmasi(lhcat)
@@ -192,14 +192,14 @@ contains
 
        call mksedim_tab(mzp,mxp,myp,ngrid,nembfall,maxkfall,zm,dzt  &
             ,pcp_tab(ngrid)%pcpfillc,pcp_tab(ngrid)%pcpfillr  &
-            ,pcp_tab(ngrid)%sfcpcp)
+            ,pcp_tab(ngrid)%sfcpcp,oneMicControl)
 
        do lhcat = 1,nhcat
           ch2(lhcat,ngrid) = float(nembfall-1) &
                / log10(dispemb1(lhcat,ngrid) / dispemb0(lhcat,ngrid))
        enddo
 
-       call homfrzcl(dtlt,ngrid)
+       call homfrzcl(dtlt,ngrid,oneMicControl)
     endif
 
     call each_call(mzp,dtlt)
