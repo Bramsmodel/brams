@@ -116,9 +116,6 @@ module ModChemistryDriver
        micro_g,        & ! %rcp(IN)
        micro_vars        ! Type
 
-  use micphys, only: &
-       level           ! (IN)
-
   use grid_dims, only: &
        nzpmax,         &  ! (IN)
        nxpmax,         &  ! (IN)

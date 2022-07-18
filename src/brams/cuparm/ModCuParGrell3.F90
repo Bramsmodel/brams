@@ -95,10 +95,9 @@ module ModCuParGrell3
        leaf_g, &
        isfcl
 
-  use micphys, only: &
-       level, &
-       mcphys_type
-
+  use ModMicControl, only: &
+       MicControl
+  
   use mem_grell_param, only: &
        mgmxp, &
        mgmyp, &
@@ -764,7 +763,7 @@ contains
                ,cuforc_g(ngrid)%lsfrt    & ! forcing for rv deep
                ,cuforc_sh_g(ngrid)%lsfth   & ! forcing for theta shallow
                ,cuforc_sh_g(ngrid)%lsfrt   & ! forcing for rv shallow
-               ,level                      &
+               ,oneGrid%MicControlVars%level                      &
                ,micro_g(ngrid)%rcp         & ! liquid water
                ,micro_g(ngrid)%rrp         & ! pristine
                ,micro_g(ngrid)%rpp         &
@@ -783,7 +782,8 @@ contains
           !
           !
           !- call routine to do the lateral spread, smooths and limiters/fixers
-          call conv_grell_spread3d_brams(mzp,mxp,myp,ia,iz,ja,jz,dtlt,level,cugd_avedx&
+          call conv_grell_spread3d_brams(mzp,mxp,myp,ia,iz,ja,jz,dtlt,&
+               oneGrid%MicControlVars%level,cugd_avedx&
                ,XL    &
                ,CP    &
                ,G    &
@@ -899,7 +899,7 @@ contains
                ,cuforc_g(ngrid)%lsfrt        & !3d *** borda forcing for rv deep
                ,cuforc_sh_g(ngrid)%lsfth       & !3d *** borda forcing for theta shallow
                ,cuforc_sh_g(ngrid)%lsfrt       & !3d *** borda forcing for rv shallow
-               ,level                          &
+               ,oneGrid%MicControlVars%level   &
                ,micro_g(ngrid)%rcp             & !3d ok ! liquid water
                ,micro_g(ngrid)%rrp             & !3d ok ! pristine
                ,micro_g(ngrid)%rpp             & !3d ok
@@ -1029,7 +1029,7 @@ contains
                ,cuforc_g(ngrid)%lsfrt   & ! forcing for rv deep
                ,cuforc_sh_g(ngrid)%lsfth   & ! forcing for theta shallow
                ,cuforc_sh_g(ngrid)%lsfrt  & ! forcing for rv shallow
-               ,level                     &
+               ,oneGrid%MicControlVars%level                     &
                ,micro_g(ngrid)%rcp        & ! liquid water
                ,aot500                    &! aot at 500nm
                ,temp2m                    &! aot at 500nm
@@ -1486,7 +1486,8 @@ contains
             oneGrid%Basic%theta   ,&
             oneGrid%Basic%pp      ,&
             oneGrid%Basic%pi0     ,&
-            oneGrid%Basic%dn0      )
+            oneGrid%Basic%dn0, &
+            oneGrid%MicControlVars)
     else
        !if there is not direct coupling, send cloud/ice source to rtotal tendency
        call accum(int(mxp*myp*mzp,i8), tend%rtt, g3d_g(ngrid)%clsrc)
@@ -2070,23 +2071,24 @@ contains
   end subroutine check
   !------------------------------------------------------------
   subroutine cupar2mcphysics(m1,m2,m3,ia,iz,ja,jz,ngrid,dtlt &
-       ,clsrc  ,theta,pp,pi0,dn0)
+       ,clsrc  ,theta,pp,pi0,dn0,oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer m1,m2,m3,ia,iz,ja,jz,k,i,j,ngrid
     real dtlt
     real, dimension(m1,m2,m3),intent(in) :: theta, pp, pi0,dn0
     real, dimension(m1,m2,m3),intent(in) :: clsrc! liquid/ice tendency from
     ! cumulus parameterization
-    if(level < 2  .and. mcphys_type < 2 ) return
+    if(oneMicControl%level < 2  .and. oneMicControl%mcphys_type < 2 ) return
 
-    if(level == 2 .and. mcphys_type < 2) then
+    if(oneMicControl%level == 2 .and. oneMicControl%mcphys_type < 2) then
        call mcphysics0(m1,m2,m3,ia,iz,ja,jz,dtlt &
             ,clsrc                  &
             ,tend%rct            &
             ,tend%rtt            )
 
-    elseif(level == 3 .and. (mcphys_type >= 0))  then
+    elseif(oneMicControl%level == 3 .and. (oneMicControl%mcphys_type >= 0))  then
 
-       call mcphysics1(mcphys_type,m1,m2,m3,ia,iz,ja,jz,dtlt,cpi  &
+       call mcphysics1(oneMicControl%mcphys_type,m1,m2,m3,ia,iz,ja,jz,dtlt,cpi  &
             ,theta, pp, pi0,dn0 &
             ,clsrc          &! cumulus tendency
             ,tend%rct    &! cloud water mass mix ratio tendency 
@@ -2094,8 +2096,8 @@ contains
             ,tend%rtt    &! total water mass mix ratio tendency
             )
 
-       if(mcphys_type == 2) &
-            call mcphysics2(mcphys_type,m1,m2,m3,ia,iz,ja,jz,dtlt,cpi  &
+       if(oneMicControl%mcphys_type == 2) &
+            call mcphysics2(oneMicControl%mcphys_type,m1,m2,m3,ia,iz,ja,jz,dtlt,cpi  &
             ,theta, pp, pi0,dn0 &
             ,clsrc          &! cumulus tendency
             ,tend%rct    &! cloud water mass mix ratio tendency 
@@ -2104,8 +2106,8 @@ contains
             ,tend%cpt    &! pristine number conc tendency 
             )
 
-       if(mcphys_type == 3) &
-            call mcphysics3(mcphys_type,m1,m2,m3,ia,iz,ja,jz,dtlt,cpi  &
+       if(oneMicControl%mcphys_type == 3) &
+            call mcphysics3(oneMicControl%mcphys_type,m1,m2,m3,ia,iz,ja,jz,dtlt,cpi  &
             ,theta, pp, pi0,dn0,micro_g(ngrid)%ccp &
             ,clsrc          &! cumulus tendency
             ,tend%rct    &! cloud water mass mix ratio tendency 

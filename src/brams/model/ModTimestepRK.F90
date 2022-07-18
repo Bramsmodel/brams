@@ -616,7 +616,9 @@ contains
 
     !- cumulus parameterizations options: G3d - GD-FIM and GF
     if (NNQPARM(ngrid)>=3) then
-       call CUPARM_GRELL3_CATT(oneGrid,1,NNQPARM(ngrid),NNSHCU(ngrid))
+       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+       call cuparm_grell3_catt(onegrid,1,nnqparm(ngrid),nnshcu(ngrid))
+       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
     end if
 
     !------------------------------------------------------------------------------

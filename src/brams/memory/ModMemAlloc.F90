@@ -1468,7 +1468,7 @@ contains
              call alloc_chem1aq(chem1aq_g(:,ng) &
                   ,nmzp(ng),nmxp(ng),nmyp(ng),nspeciesaq_chem)
 
-             call alloc_chemic(chemic_g(ng),nmzp(ng),nmxp(ng),nmyp(ng))
+             call alloc_chemic(chemic_g(ng),nmzp(ng),nmxp(ng),nmyp(ng),oneGrid%MicControlVars)
 
              if (imean == 1) then
                 call alloc_chem1aq(chem1maq_g(:,ng) &

@@ -530,18 +530,24 @@ contains
     !-   Cumulus parameterization options 2->6:
     !                    Deep Convection scheme
     !- call deep first, if there is deep convection , turn off shallow.
-    if (NNQPARM(ngrid)==2) then
+    if (nnqparm(ngrid)==2) then
+       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
        call cuparm_grell_catt(OneGrid, 1)
+       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
     end if
     !
     !                    Shallow Convection scheme
     if (NNSHCU(ngrid)==2 ) then
+       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
        call cuparm_grell_catt(OneGrid, 2)
+       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
     end if
     !
     !- G3d - GD-FIM and GF
     if (NNQPARM(ngrid)>=3) then
-       call CUPARM_GRELL3_CATT(oneGrid,1,NNQPARM(ngrid),NNSHCU(ngrid))
+       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+       call cuparm_grell3_catt(onegrid,1,nnqparm(ngrid),nnshcu(ngrid))
+       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
     end if
 
     !- task 2:  NO production by "eclair"

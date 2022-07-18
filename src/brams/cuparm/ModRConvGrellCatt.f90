@@ -5,13 +5,13 @@ module ModRConvGrellCatt
 
   use ModCupGrellCattDeep, only: &
        cuparth_catt
-  
+
   use ModCupGrellCattShallow, only: &
        cuparth_shal
-  
+
   use ModChemConvTransp, only: &
        trans_conv_mflx
-  
+
   use mem_grid, only: &
        time,    &   ! INTENT(IN)
        initial, &   ! INTENT(IN)
@@ -50,10 +50,10 @@ module ModRConvGrellCatt
 
   use ModGrid, only: &
        Grid
-  
+
   use mem_tend, only: &
        tend
-  
+
   use mem_cuparm, only: &
        confrq, &
        cuparm_g, &
@@ -61,24 +61,24 @@ module ModRConvGrellCatt
 
   use rconstants, only: &
        tkmin
-  
+
   use mem_micro, only: &
        micro_g
-  
+
   use mem_scratch, only: &
        scratch
-  
+
   use mem_scalar, only: &
        scalar_g
 
   use io_params, only: &
        frqanl
-  
+
   use mem_leaf, only: &
        leaf_g
-  
-  use micphys, only: &
-       level
+
+  use ModMicControl, only: &
+       MicControl
 
   use mem_grell_param, only: &
        mgmxp, &
@@ -86,7 +86,7 @@ module ModRConvGrellCatt
        mgmzp, &
        maxiens, &
        ngrids_cp
-  
+
   use mem_scratch1_grell, only: &
        ierr4d, &
        jmin4d, &
@@ -111,7 +111,7 @@ module ModRConvGrellCatt
        prup5d, &
        clwup5d, &
        tup5d
-  
+
   use mem_grell, only: &
        cuforc_g, &
        cuforc_sh_g, &
@@ -141,7 +141,7 @@ contains
   subroutine cuparm_grell_catt(OneGrid, iens)
     integer, intent(IN) :: iens
     type(Grid), pointer, intent(in) :: oneGrid
-    
+
     integer,parameter :: CPTIME = 0. !orig: CPTIME = 7200.
 
     integer,parameter :: i_forcing = 1
@@ -277,7 +277,7 @@ contains
                deltaxn(ngrid)*deltayn(ngrid),&
                leaf_g(ngrid)%patch_area, &
                npatch,                       &
-               level,                        &
+               oneGrid%MicControlVars%level,                        &
                grid_g(ngrid)%glat     , & 
                grid_g(ngrid)%glon     , & !
                OneGrid%Turb%sflux_r  , & ! fluxos a serem usados em trigg_ecmwf
@@ -310,7 +310,8 @@ contains
                OneGrid%Basic%theta,    & 
                OneGrid%Basic%pp,    & 
                OneGrid%Basic%pi0, &
-               OneGrid%Basic%dn0)
+               OneGrid%Basic%dn0, &
+               OneGrid%MicControlVars)
        endif
 
     endif
@@ -420,7 +421,7 @@ contains
                deltaxn(ngrid)*deltayn(ngrid),  &
                leaf_g(ngrid)%patch_area,&
                npatch,                         &
-               level,                          &
+               oneGrid%MicControlVars%level,                          &
                trigg,autoconv )    
 
           !
@@ -452,7 +453,7 @@ contains
 
 
 
-  
+
 !!$  subroutine teste(m1,m2,m3,ia,iz,ja,jz,tht,lsfth,it)
 !!$    real, dimension(m1,m2,m3) :: tht,lsfth
 !!$    ix=0
