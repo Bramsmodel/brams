@@ -151,8 +151,8 @@ module ModVarfFile
   use ModBasicFields, only: &
        BasicFields
 
-  use micphys, only: &
-       level
+  use ModMicControl, only: &
+       MicControl
 
   use chem1_list, only:    &
        nspecies,           &
@@ -1315,7 +1315,7 @@ contains
             ,oneGrid%Basic%dn0u,    oneGrid%Basic%dn0v  &
             ,varinit_g(ngrid)%varuf, varinit_g(ngrid)%varvf  &
             ,grid_g(ngrid)%topt,       grid_g(ngrid)%rtgt  &
-            ,grid_g(ngrid)%topta, level)
+            ,grid_g(ngrid)%topta, oneGrid%MicControlVars%level)
     end if
 
     varinit_g(ngrid)%varpf(:,:,:)=  &

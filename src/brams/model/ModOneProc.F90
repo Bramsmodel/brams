@@ -1708,7 +1708,9 @@ contains
 
           if(initial == 1) then
              print*,'Horizontally-homogeneous-INITIAL start of grid- 1'
-             call inithh(oneGrid%Basic)
+             call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+             call inithh(oneGrid%Basic, oneGrid%MicControlVars)
+             call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
           endif
 
           !If "history" initialization, call INITHIS.
@@ -1743,8 +1745,8 @@ contains
        do ifm=1,ngrids
           call newgrid(ifm)
 
-          call FieldInit(1, oneGrid%Basic, oneGrid%Turb)
           call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+          call FieldInit(1, oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars)
           call negadj1(mzp,mxp,myp, oneGrid%Basic,oneGrid%MicControlVars)
           call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
 

@@ -75,15 +75,9 @@ module ModRinit
   use mem_micro, only: &
        micro_g
 
-  use micphys, only: &
-       icloud, &
-       irain, &
-       ipris, &
-       isnow, &
-       iaggr, &
-       igraup, &
-       ihail
-
+  use ModMicControl, only: &
+       MicControl
+  
   use ModRbnd, only: &
        dumset
 
@@ -373,10 +367,11 @@ contains
 
 
   subroutine FieldInit(initflg, oneBasicFields, &
-       oneTurbFields)
+       oneTurbFields, oneMicControl)
     integer, intent(in) :: initflg
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     character(len=*), parameter :: h="**(FieldInit)**"
     ! finish initializing past time level variables
@@ -389,13 +384,13 @@ contains
        oneBasicFields%pp = oneBasicFields%pc
 
        if(initflg==1) then
-          if(icloud>=1) micro_g(ngrid)%rcp = 0.
-          if(irain>=1)  micro_g(ngrid)%rrp = 0.
-          if(ipris>=1)  micro_g(ngrid)%rpp = 0.
-          if(isnow>=1)  micro_g(ngrid)%rsp = 0.
-          if(iaggr>=1)  micro_g(ngrid)%rap = 0.
-          if(igraup>=1) micro_g(ngrid)%rgp = 0.
-          if(ihail>=1)  micro_g(ngrid)%rhp = 0.
+          if(oneMicControl%icloud>=1) micro_g(ngrid)%rcp = 0.
+          if(oneMicControl%irain>=1)  micro_g(ngrid)%rrp = 0.
+          if(oneMicControl%ipris>=1)  micro_g(ngrid)%rpp = 0.
+          if(oneMicControl%isnow>=1)  micro_g(ngrid)%rsp = 0.
+          if(oneMicControl%iaggr>=1)  micro_g(ngrid)%rap = 0.
+          if(oneMicControl%igraup>=1) micro_g(ngrid)%rgp = 0.
+          if(oneMicControl%ihail>=1)  micro_g(ngrid)%rhp = 0.
           oneBasicFields%wp = 0.
        endif
 
