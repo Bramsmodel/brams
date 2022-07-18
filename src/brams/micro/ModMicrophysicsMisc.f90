@@ -19,83 +19,9 @@ module ModMicrophysicsMisc
        micro_g, &
        micro_vars
 
-  use micphys, only: &
-       nhcat,        & ! INTENT(IN)
-       jhcat,        & ! INTENT(IN)
-       pcprx,        & ! INTENT(IN)
-       rx,           & ! INTENT(INOUT)
-       cx,           & ! INTENT(INOUT)
-       qx,           & ! INTENT(INOUT)
-       ch1,          & ! INTENT(IN)
-       emb,          & ! INTENT(IN)
-       cfmas,        & ! INTENT(IN)
-       ch3,          & ! INTENT(IN)
-       dn0i,         & ! INTENT(IN)
-       ch2,          & ! INTENT(IN)
-       dispemb0,     & ! INTENT(IN)
-       accpx,        & ! INTENT(OUT)
-       tairc,        & ! INTENT(OUT)
-       rsedim,       & ! INTENT(OUT)
-       tair, &            ! INTENT(IN)
-       jnmb,         & ! INTENT(IN)
-       vterm,        & ! INTENT(OUT)
-       vtfac,        & ! INTENT(IN)
-       pwvtmasi,     & ! INTENT(IN)
-       denfac, &          ! INTENT(IN)
-       qr,            & ! INTENT(INOUT)
-       enmlttab,      & ! INTENT(IN)
-       dnfac,         & ! INTENT(IN)
-       pwmasi,        & ! INTENT(IN)
-       gnu,           & ! INTENT(IN)
-       shedtab, &          ! INTENT(IN)
-       cfemb0,        & ! INTENT(IN)
-       pwemb0,        & ! INTENT(IN)
-       cfen0,         & ! INTENT(IN)
-       pwen0,         & ! INTENT(IN)
-       parm,          & ! INTENT(IN)
-       emb0,          & ! INTENT(IN)
-       emb1,          & ! INTENT(IN)
-       vap,           & ! INTENT(IN)
-       rvlsair,          & ! INTENT(OUT)
-       press,            & ! INTENT(IN)
-       rvisair,          & ! INTENT(OUT)
-       tx,               & ! INTENT(OUT)
-       thrmcon,          & ! INTENT(OUT)
-       dynvisc,          & ! INTENT(OUT)
-       jhabtab,          & ! INTENT(IN)
-       vapdif,           & ! INTENT(OUT)
-       rdynvsci,         & ! INTENT(OUT)
-       colfacr,          & ! INTENT(OUT)
-       colf,             & ! INTENT(IN)
-       colfacr2,         & ! INTENT(OUT)
-       colfacc,          & ! INTENT(OUT)
-       colfacc2,         & ! INTENT(OUT)
-       tref,             & ! INTENT(OUT)
-       sa,               & ! INTENT(OUT)
-       tairstrc,         & ! INTENT(IN)
-       rvstr,            & ! INTENT(IN)
-       sumuy,            & ! INTENT(OUT)
-       sumuz,            & ! INTENT(OUT)
-       sumvr,            & ! INTENT(OUT)
-       rvsref,           & ! INTENT(OUT)
-       rvsrefp,          & ! INTENT(OUT)
-       rvs0,             & ! INTENT(OUT)
-       sh, &                  ! INTENT(OUT)
-       ncat,          & ! INTENT(IN)
-       rxfer,         & ! INTENT(OUT)
-       qrxfer,        & ! INTENT(OUT)
-       enxfer,        & ! INTENT(OUT)
-       cccnx,         & ! INTENT(OUT)
-       cifnx, &            ! INTENT(OUT)
-       level,          & ! INTENT(IN)
-       pi4dt,            & ! INTENT(OUT)
-       sl,               & ! INTENT(OUT)
-       sc,               & ! INTENT(OUT)
-       sj,               & ! INTENT(OUT)
-       sk,               & ! INTENT(OUT)
-       pwmas,            & ! INTENT(IN)
-       sm                  ! INTENT(OUT)
-
+  use ModMicControl, only: &
+       MicControl
+  
   use ModBasicFields, only: &
        BasicFields
 
@@ -119,6 +45,8 @@ module ModMicrophysicsMisc
 
   implicit none
 
+  include "MicConstants.h"
+  
   private
   public :: negadj1
   public :: ae1kmic
@@ -133,51 +61,52 @@ module ModMicrophysicsMisc
   
 contains
 
-  subroutine each_call(m1,dtlt)
+  subroutine each_call(m1,dtlt, oneMicControl)
     ! Arguments
     integer, intent(in) :: m1
     real, intent(in)    :: dtlt
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     ! Local Variables
     integer :: lcat, k
 
     ! Initialize constants for vapor diffusion and, for fixed diameter cases, emb.
 
-    colf = .785 * dtlt
-    pi4dt = pi4 * dtlt
-    sl(1) = alvl
-    sl(2) = alvi
-    sc(1) = 4186.
-    sc(2) = 2093.
-    sj(1) = 0
-    sj(2) = 1
-    sj(3) = 0
-    sj(4) = 0
-    sj(5) = 0
-    sj(6) = 1
-    sj(7) = 1
-    sk(1) = alli
-    sk(2) = 0.
+    oneMicControl%colf = .785 * dtlt
+    oneMicControl%pi4dt = pi4 * dtlt
+    oneMicControl%sl(1) = alvl
+    oneMicControl%sl(2) = alvi
+    oneMicControl%sc(1) = 4186.
+    oneMicControl%sc(2) = 2093.
+    oneMicControl%sj(1) = 0
+    oneMicControl%sj(2) = 1
+    oneMicControl%sj(3) = 0
+    oneMicControl%sj(4) = 0
+    oneMicControl%sj(5) = 0
+    oneMicControl%sj(6) = 1
+    oneMicControl%sj(7) = 1
+    oneMicControl%sk(1) = alli
+    oneMicControl%sk(2) = 0.
 
     do lcat = 1,7
-       if (jnmb(lcat) == 2) then
+       if (oneMicControl%jnmb(lcat) == 2) then
           do k = 2,m1-1
-             emb(k,lcat) = cfmas(lcat) * parm(lcat) ** pwmas(lcat)
+             oneMicControl%emb(k,lcat) = oneMicControl%cfmas(lcat) * oneMicControl%parm(lcat) ** oneMicControl%pwmas(lcat)
           enddo
        endif
        do k = 2,m1-1
-          jhcat(k,lcat) = lcat
+          oneMicControl%jhcat(k,lcat) = lcat
        enddo
     enddo
 
     do k = 2,m1-1
-       sh(k,1) = 0.
-       sh(k,2) = 1.
-       sh(k,6) = 1.
-       sh(k,7) = 1.
+       oneMicControl%sh(k,1) = 0.
+       oneMicControl%sh(k,2) = 1.
+       oneMicControl%sh(k,6) = 1.
+       oneMicControl%sh(k,7) = 1.
 
-       sm(k,1) = 1.
-       sm(k,2) = 1.
+       oneMicControl%sm(k,1) = 1.
+       oneMicControl%sm(k,2) = 1.
     enddo
 
     return
@@ -185,12 +114,13 @@ contains
 
   !******************************************************************************
 
-  subroutine range_check(m1,k1,k2,k3,i,j,lpw_R,micro)
+  subroutine range_check(m1,k1,k2,k3,i,j,lpw_R,micro, oneMicControl)
     ! Arguments
     type (micro_vars), intent(in)       :: micro 
     integer, intent(in)                 :: m1, i, j
     integer, dimension(10), intent(out) :: k1, k2, k3
     real, intent(in) :: lpw_R
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     ! Local Variables
     integer                             :: k, lcatt, lcat, l, jcat, lpw
@@ -200,25 +130,25 @@ contains
 
     do lcat = 1,ncat
        do k = 2,m1-1
-          rx(k,lcat) = 0.
-          cx(k,lcat) = 0.
-          qr(k,lcat) = 0.
-          qx(k,lcat) = 0.
-          vap(k,lcat) = 0.
-          tx(k,lcat) = 0.
+          oneMicControl%rx(k,lcat) = 0.
+          oneMicControl%cx(k,lcat) = 0.
+          oneMicControl%qr(k,lcat) = 0.
+          oneMicControl%qx(k,lcat) = 0.
+          oneMicControl%vap(k,lcat) = 0.
+          oneMicControl%tx(k,lcat) = 0.
        enddo
 
-       if (jnmb(lcat) >= 3) then
+       if (oneMicControl%jnmb(lcat) >= 3) then
           do k = 2,m1-1
-             emb(k,lcat) = 0.
+             oneMicControl%emb(k,lcat) = 0.
           enddo
        endif
 
        do jcat = 1,ncat
           do k = 2,m1-1
-             rxfer(k,lcat,jcat) = 0.
-             qrxfer(k,lcat,jcat) = 0.
-             enxfer(k,lcat,jcat) = 0.
+             oneMicControl%rxfer(k,lcat,jcat) = 0.
+             oneMicControl%qrxfer(k,lcat,jcat) = 0.
+             oneMicControl%enxfer(k,lcat,jcat) = 0.
           enddo
        enddo
     enddo
@@ -230,25 +160,25 @@ contains
 
     ! fill scratch arrays for cloud water
 
-    if (jnmb(1) >= 1) then
+    if (oneMicControl%jnmb(1) >= 1) then
        do k = lpw,m1-1
           if (micro%rcp(k,i,j) >= 1.e-9) then
              k2(1) = k
-             rx(k,1) = micro%rcp(k,i,j)
-             if (jnmb(1) >= 5) cx(k,1) = micro%ccp(k,i,j)
+             oneMicControl%rx(k,1) = micro%rcp(k,i,j)
+             if (oneMicControl%jnmb(1) >= 5) oneMicControl%cx(k,1) = micro%ccp(k,i,j)
 
              !
              !Carrio 2012 -------------------------------------------
              ! ALL two moment options require this array!!!
-             if (jnmb(1) >=5) cccnx(k) = micro%cccnp(k,i,j)
+             if (oneMicControl%jnmb(1) >=5) oneMicControl%cccnx(k) = micro%cccnp(k,i,j)
              !-------------------------------------------------------
              !      
 
-             !print*,"xccnp=",cccnx(k), cx(k,1)
+             !print*,"xccnp=",oneMicControl%cccnx(k), oneMicControl%cx(k,1)
 
 
              !--(DMK-CARRIO-OLD)------------------------------------------------------------
-             !           if (jnmb(1) == 7) cccnx(k) = micro%cccnp(k,i,j)
+             !           if (oneMicControl%jnmb(1) == 7) oneMicControl%cccnx(k) = micro%cccnp(k,i,j)
              !--(DMK-CARRIO-INI)------------------------------------------------------------
 
           else
@@ -259,14 +189,14 @@ contains
 
     ! fill scratch arrays for rain
 
-    if (jnmb(2) >= 1) then
+    if (oneMicControl%jnmb(2) >= 1) then
        do k = lpw,m1-1
           if (micro%rrp(k,i,j) >= 1.e-9) then
              k2(2) = k
-             rx(k,2) = micro%rrp(k,i,j)
-             qx(k,2) = micro%q2(k,i,j)
-             qr(k,2) = qx(k,2) * rx(k,2)
-             if (jnmb(2) >= 5) cx(k,2) = micro%crp(k,i,j)
+             oneMicControl%rx(k,2) = micro%rrp(k,i,j)
+             oneMicControl%qx(k,2) = micro%q2(k,i,j)
+             oneMicControl%qr(k,2) = oneMicControl%qx(k,2) * oneMicControl%rx(k,2)
+             if (oneMicControl%jnmb(2) >= 5) oneMicControl%cx(k,2) = micro%crp(k,i,j)
           else
              if (k2(2) == 1) k1(2) = k + 1
           endif
@@ -275,13 +205,13 @@ contains
 
     ! fill scratch arrays for pristine ice
 
-    if (jnmb(3) >= 1) then
+    if (oneMicControl%jnmb(3) >= 1) then
        do k = lpw,m1-1
           if (micro%rpp(k,i,j) >= 1.e-9) then
              k2(3) = k
-             rx(k,3) = micro%rpp(k,i,j)
-             cx(k,3) = micro%cpp(k,i,j)
-             if (jnmb(3) == 7) cifnx(k) = micro%cifnp(k,i,j)
+             oneMicControl%rx(k,3) = micro%rpp(k,i,j)
+             oneMicControl%cx(k,3) = micro%cpp(k,i,j)
+             if (oneMicControl%jnmb(3) == 7) oneMicControl%cifnx(k) = micro%cifnp(k,i,j)
           else
              if (k2(3) == 1) k1(3) = k + 1
           endif
@@ -290,12 +220,12 @@ contains
 
     ! fill scratch arrays for snow
 
-    if (jnmb(4) >= 1) then
+    if (oneMicControl%jnmb(4) >= 1) then
        do k = lpw,m1-1
           if (micro%rsp(k,i,j) >= 1.e-9) then
              k2(4) = k
-             rx(k,4) = micro%rsp(k,i,j)
-             if (jnmb(4) >= 5) cx(k,4) = micro%csp(k,i,j)
+             oneMicControl%rx(k,4) = micro%rsp(k,i,j)
+             if (oneMicControl%jnmb(4) >= 5) oneMicControl%cx(k,4) = micro%csp(k,i,j)
           else
              if (k2(4) == 1) k1(4) = k + 1
           endif
@@ -304,12 +234,12 @@ contains
 
     ! fill scratch arrays for aggregates
 
-    if (jnmb(5) >= 1) then
+    if (oneMicControl%jnmb(5) >= 1) then
        do k = lpw,m1-1
           if (micro%rap(k,i,j) >= 1.e-9) then
              k2(5) = k
-             rx(k,5) = micro%rap(k,i,j)
-             if (jnmb(5) >= 5) cx(k,5) = micro%cap(k,i,j)
+             oneMicControl%rx(k,5) = micro%rap(k,i,j)
+             if (oneMicControl%jnmb(5) >= 5) oneMicControl%cx(k,5) = micro%cap(k,i,j)
           else
              if (k2(5) == 1) k1(5) = k + 1
           endif
@@ -318,14 +248,14 @@ contains
 
     ! fill scratch arrays for graupel
 
-    if (jnmb(6) >= 1) then
+    if (oneMicControl%jnmb(6) >= 1) then
        do k = lpw,m1-1
           if (micro%rgp(k,i,j) >= 1.e-9) then
              k2(6) = k
-             rx(k,6) = micro%rgp(k,i,j)
-             qx(k,6) = micro%q6(k,i,j)
-             qr(k,6) = qx(k,6) * rx(k,6)
-             if (jnmb(6) >= 5) cx(k,6) = micro%cgp(k,i,j)
+             oneMicControl%rx(k,6) = micro%rgp(k,i,j)
+             oneMicControl%qx(k,6) = micro%q6(k,i,j)
+             oneMicControl%qr(k,6) = oneMicControl%qx(k,6) * oneMicControl%rx(k,6)
+             if (oneMicControl%jnmb(6) >= 5) oneMicControl%cx(k,6) = micro%cgp(k,i,j)
           else
              if (k2(6) == 1) k1(6) = k + 1
           endif
@@ -334,14 +264,14 @@ contains
 
     ! fill scratch arrays for hail
 
-    if (jnmb(7) >= 1) then
+    if (oneMicControl%jnmb(7) >= 1) then
        do k = lpw,m1-1
           if (micro%rhp(k,i,j) >= 1.e-9) then
              k2(7) = k
-             rx(k,7) = micro%rhp(k,i,j)
-             qx(k,7) = micro%q7(k,i,j)
-             qr(k,7) = qx(k,7) * rx(k,7)
-             if (jnmb(7) >= 5) cx(k,7) = micro%chp(k,i,j)
+             oneMicControl%rx(k,7) = micro%rhp(k,i,j)
+             oneMicControl%qx(k,7) = micro%q7(k,i,j)
+             oneMicControl%qr(k,7) = oneMicControl%qx(k,7) * oneMicControl%rx(k,7)
+             if (oneMicControl%jnmb(7) >= 5) oneMicControl%cx(k,7) = micro%chp(k,i,j)
           else
              if (k2(7) == 1) k1(7) = k + 1
           endif
@@ -363,13 +293,14 @@ contains
 
   !******************************************************************************
 
-  subroutine each_column(m1,k1,k2,i,j,lpw,rv,dn0)
+  subroutine each_column(m1,k1,k2,i,j,lpw,rv,dn0, oneMicControl)
     ! Arguments
     integer, intent(in)                :: m1
     integer, intent(in)                :: i, j  ! Not used
     integer, intent(in)                :: lpw
     integer, dimension(10), intent(in) :: k1, k2
     real, dimension(m1), intent(in)    :: rv, dn0
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     ! Local Variables
     integer :: k,nt,ns
@@ -380,70 +311,70 @@ contains
     data ck1,ck2,ck3/-4.818544e-3,1.407892e-4,-1.249986e-7/
 
     do k = lpw,m1-1
-       rvlsair(k) = rslf (press(k),tair(k))
-       rvisair(k) = rsif (press(k),tair(k))
-       dn0i(k) = 1. / dn0(k)
-       tairc(k)   = tair(k) - 273.16
-       tx(k,1) = tairc(k)
-       thrmcon(k) = ck1 + (ck2 + ck3 * tair(k)) * tair(k)
-       dynvisc(k) = .1718e-4 + .49e-7 * tairc(k)
+       oneMicControl%rvlsair(k) = rslf (oneMicControl%press(k),oneMicControl%tair(k))
+       oneMicControl%rvisair(k) = rsif (oneMicControl%press(k),oneMicControl%tair(k))
+       oneMicControl%dn0i(k) = 1. / dn0(k)
+       oneMicControl%tairc(k)   = oneMicControl%tair(k) - 273.16
+       oneMicControl%tx(k,1) = oneMicControl%tairc(k)
+       oneMicControl%thrmcon(k) = ck1 + (ck2 + ck3 * oneMicControl%tair(k)) * oneMicControl%tair(k)
+       oneMicControl%dynvisc(k) = .1718e-4 + .49e-7 * oneMicControl%tairc(k)
 
        ! Diagnose habit of pristine ice and snow
 
-       nt = max(1,min(31,-nint(tairc(k))))
-       relhum = min(1.,rv(k) / rvlsair(k))
+       nt = max(1,min(31,-nint(oneMicControl%tairc(k))))
+       relhum = min(1.,rv(k) / oneMicControl%rvlsair(k))
        ns = max(1,nint(100. * relhum))
-       jhcat(k,3) = jhabtab(nt,ns,1)
-       jhcat(k,4) = jhabtab(nt,ns,2)
+       oneMicControl%jhcat(k,3) = oneMicControl%jhabtab(nt,ns,1)
+       oneMicControl%jhcat(k,4) = oneMicControl%jhabtab(nt,ns,2)
 
     enddo
 
     do k = k1(10),k2(10)
-       vapdif(k)     = 2.14 * (tair(k) / 273.15) ** 1.94 / press(k)
-       rdynvsci(k) = sqrt(1. / dynvisc(k))
-       denfac(k) = sqrt(dn0i(k))
+       oneMicControl%vapdif(k)     = 2.14 * (oneMicControl%tair(k) / 273.15) ** 1.94 / oneMicControl%press(k)
+       oneMicControl%rdynvsci(k) = sqrt(1. / oneMicControl%dynvisc(k))
+       oneMicControl%denfac(k) = sqrt(oneMicControl%dn0i(k))
 
-       colfacr(k) = colf * denfac(k) * dn0(k)
-       colfacr2(k) = 2. * colfacr(k)
-       colfacc(k) = colfacr(k) * dn0(k)
-       colfacc2(k) = 2. * colfacc(k)
+       oneMicControl%colfacr(k) = oneMicControl%colf * oneMicControl%denfac(k) * dn0(k)
+       oneMicControl%colfacr2(k) = 2. * oneMicControl%colfacr(k)
+       oneMicControl%colfacc(k) = oneMicControl%colfacr(k) * dn0(k)
+       oneMicControl%colfacc2(k) = 2. * oneMicControl%colfacc(k)
 
-       tref(k,1)   = tairc(k) - min(25.,700. * (rvlsair(k) - rv(k)))
-       sa(k,2) = thrmcon(k) * sa(k,1)
-       sa(k,3) = thrmcon(k) * (tairstrc(k) + sa(k,1) * rvstr(k))
+       oneMicControl%tref(k,1)   = oneMicControl%tairc(k) - min(25.,700. * (oneMicControl%rvlsair(k) - rv(k)))
+       oneMicControl%sa(k,2) = oneMicControl%thrmcon(k) * oneMicControl%sa(k,1)
+       oneMicControl%sa(k,3) = oneMicControl%thrmcon(k) * (oneMicControl%tairstrc(k) + oneMicControl%sa(k,1) * oneMicControl%rvstr(k))
 
-       sumuy(k) = 0.
-       sumuz(k) = 0.
-       sumvr(k) = 0.
+       oneMicControl%sumuy(k) = 0.
+       oneMicControl%sumuz(k) = 0.
+       oneMicControl%sumvr(k) = 0.
     enddo
 
     do k = k1(8),k2(8)
-       elsref       = eslf(tref(k,1))
-       elsrefp      = eslpf(tref(k,1))
-       dplinv       = 1. / (press(k) - elsref)
-       rvsref (k,1) = .622 * elsref * dplinv
-       rvsrefp(k,1) = .622 * elsrefp * dplinv * (1. + elsref * dplinv)
+       elsref       = eslf(oneMicControl%tref(k,1))
+       elsrefp      = eslpf(oneMicControl%tref(k,1))
+       dplinv       = 1. / (oneMicControl%press(k) - elsref)
+       oneMicControl%rvsref (k,1) = .622 * elsref * dplinv
+       oneMicControl%rvsrefp(k,1) = .622 * elsrefp * dplinv * (1. + elsref * dplinv)
 
-       sa(k,4) = rvsrefp(k,1) * tref(k,1) - rvsref(k,1)
-       sa(k,6) = alvl * rvsrefp(k,1)
-       sa(k,8) = alvl * sa(k,4)
+       oneMicControl%sa(k,4) = oneMicControl%rvsrefp(k,1) * oneMicControl%tref(k,1) - oneMicControl%rvsref(k,1)
+       oneMicControl%sa(k,6) = alvl * oneMicControl%rvsrefp(k,1)
+       oneMicControl%sa(k,8) = alvl * oneMicControl%sa(k,4)
     enddo
 
     do k = k1(9),k2(9)
-       tref(k,2)    = min(0.,tref(k,1))
-       eisref       = esif (tref(k,2))
-       eisrefp      = esipf(tref(k,2))
-       dpiinv       = 1. / (press(k) - eisref)
-       rvsref (k,2) = .622 * eisref * dpiinv
-       rvsrefp(k,2) = .622 * eisrefp * dpiinv * (1. + eisref * dpiinv)
-       rvs0(k)      = 379.4 / (press(k) - 610.)
+       oneMicControl%tref(k,2)    = min(0.,oneMicControl%tref(k,1))
+       eisref       = esif (oneMicControl%tref(k,2))
+       eisrefp      = esipf(oneMicControl%tref(k,2))
+       dpiinv       = 1. / (oneMicControl%press(k) - eisref)
+       oneMicControl%rvsref (k,2) = .622 * eisref * dpiinv
+       oneMicControl%rvsrefp(k,2) = .622 * eisrefp * dpiinv * (1. + eisref * dpiinv)
+       oneMicControl%rvs0(k)      = 379.4 / (oneMicControl%press(k) - 610.)
 
-       sa(k,5) = rvsrefp(k,2) * tref(k,2) - rvsref(k,2)
-       sa(k,7) = alvi * rvsrefp(k,2)
-       sa(k,9) = alvi * sa(k,5)
-       sh(k,3) = 0.
-       sh(k,4) = 0.
-       sh(k,5) = 0.
+       oneMicControl%sa(k,5) = oneMicControl%rvsrefp(k,2) * oneMicControl%tref(k,2) - oneMicControl%rvsref(k,2)
+       oneMicControl%sa(k,7) = alvi * oneMicControl%rvsrefp(k,2)
+       oneMicControl%sa(k,9) = alvi * oneMicControl%sa(k,5)
+       oneMicControl%sh(k,3) = 0.
+       oneMicControl%sh(k,4) = 0.
+       oneMicControl%sh(k,5) = 0.
 
     enddo
 
@@ -452,55 +383,56 @@ contains
 
   !******************************************************************************
 
-  subroutine enemb(m1,k1,k2,lcat,jflag,dn0,i,j)
+  subroutine enemb(m1,k1,k2,lcat,jflag,dn0,i,j, oneMicControl)
     ! Arguments
     integer, intent(in)             :: m1, k1, k2, lcat, jflag
     integer, intent(in)             :: i, j ! Not used
     real, dimension(m1), intent(in) :: dn0
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     ! Local Variables
     integer :: k,lhcat
     real :: embi,parmi,fracmass,cxloss
 
 
-    if (jnmb(lcat) == 2) then
-       embi = 1. / emb(2,lcat)
+    if (oneMicControl%jnmb(lcat) == 2) then
+       embi = 1. / oneMicControl%emb(2,lcat)
        do k = k1,k2
-          cx(k,lcat) = rx(k,lcat) * embi
+          oneMicControl%cx(k,lcat) = oneMicControl%rx(k,lcat) * embi
        enddo
-    elseif (jnmb(lcat) == 3) then
+    elseif (oneMicControl%jnmb(lcat) == 3) then
        do k = k1,k2
-          lhcat = jhcat(k,lcat)
-          emb(k,lcat) = cfemb0(lhcat) * (dn0(k) * rx(k,lcat)) ** pwemb0(lhcat)
-          cx(k,lcat) = cfen0(lhcat) * dn0i(k)  &
-               * (dn0(k) * rx(k,lcat)) ** pwen0(lhcat)
+          lhcat = oneMicControl%jhcat(k,lcat)
+          oneMicControl%emb(k,lcat) = oneMicControl%cfemb0(lhcat) * (dn0(k) * oneMicControl%rx(k,lcat)) ** oneMicControl%pwemb0(lhcat)
+          oneMicControl%cx(k,lcat) = oneMicControl%cfen0(lhcat) * oneMicControl%dn0i(k)  &
+               * (dn0(k) * oneMicControl%rx(k,lcat)) ** oneMicControl%pwen0(lhcat)
        enddo
-    elseif (jnmb(lcat) == 4) then
-       parmi = 1. / parm(lcat)
+    elseif (oneMicControl%jnmb(lcat) == 4) then
+       parmi = 1. / oneMicControl%parm(lcat)
        do k = k1,k2
-          emb(k,lcat) = max(emb0(lcat),min(emb1(lcat),rx(k,lcat) * parmi))
-          cx(k,lcat) = rx(k,lcat) / emb(k,lcat)
+          oneMicControl%emb(k,lcat) = max(oneMicControl%emb0(lcat),min(oneMicControl%emb1(lcat),oneMicControl%rx(k,lcat) * parmi))
+          oneMicControl%cx(k,lcat) = oneMicControl%rx(k,lcat) / oneMicControl%emb(k,lcat)
        enddo
-    elseif (jnmb(lcat) >= 5 .and. jflag == 1) then
+    elseif (oneMicControl%jnmb(lcat) >= 5 .and. jflag == 1) then
        do k = k1,k2
-          emb(k,lcat) = max(emb0(lcat),min(emb1(lcat),rx(k,lcat)  &
-               / max(1.e-9,cx(k,lcat))))
-          cx(k,lcat) = rx(k,lcat) / emb(k,lcat)
+          oneMicControl%emb(k,lcat) = max(oneMicControl%emb0(lcat),min(oneMicControl%emb1(lcat),oneMicControl%rx(k,lcat)  &
+               / max(1.e-9,oneMicControl%cx(k,lcat))))
+          oneMicControl%cx(k,lcat) = oneMicControl%rx(k,lcat) / oneMicControl%emb(k,lcat)
        enddo
-    elseif (jnmb(lcat) >= 5 .and. jflag == 2) then
+    elseif (oneMicControl%jnmb(lcat) >= 5 .and. jflag == 2) then
        do k = k1,k2
 
-          if (rx(k,lcat) >= 1.e-9) then
+          if (oneMicControl%rx(k,lcat) >= 1.e-9) then
 
-             if (vap(k,lcat) < 0.) then
-                fracmass = min(1.,-vap(k,lcat) / rx(k,lcat))
-                cxloss = cx(k,lcat) * enmlttab(int(200. * fracmass) + 1  &
-                     ,jhcat(k,lcat))
-                cx(k,lcat) = cx(k,lcat) - cxloss
+             if (oneMicControl%vap(k,lcat) < 0.) then
+                fracmass = min(1.,-oneMicControl%vap(k,lcat) / oneMicControl%rx(k,lcat))
+                cxloss = oneMicControl%cx(k,lcat) * oneMicControl%enmlttab(int(200. * fracmass) + 1  &
+                     ,oneMicControl%jhcat(k,lcat))
+                oneMicControl%cx(k,lcat) = oneMicControl%cx(k,lcat) - cxloss
              endif
-             emb(k,lcat) = max(emb0(lcat),min(emb1(lcat),rx(k,lcat)  &
-                  / max(1.e-9,cx(k,lcat))))
-             cx(k,lcat) = rx(k,lcat) / emb(k,lcat)
+             oneMicControl%emb(k,lcat) = max(oneMicControl%emb0(lcat),min(oneMicControl%emb1(lcat),oneMicControl%rx(k,lcat)  &
+                  / max(1.e-9,oneMicControl%cx(k,lcat))))
+             oneMicControl%cx(k,lcat) = oneMicControl%rx(k,lcat) / oneMicControl%emb(k,lcat)
 
           endif
 
@@ -512,12 +444,13 @@ contains
 
   !******************************************************************************
 
-  subroutine x02(m1,k1,k2,lcat,dn0,i,j)
+  subroutine x02(m1,k1,k2,lcat,dn0,i,j, oneMicControl)
     ! Arguments
     integer, intent(in)                :: m1, lcat
     integer, intent(in)                :: i, j  ! Not Used
     integer, dimension(10),intent(inout) :: k1, k2
     real, dimension(m1), intent(in)    :: dn0
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     ! Local Variables
     integer :: k,jflag,lhcat,inc,idns
@@ -528,22 +461,22 @@ contains
     k1(lcat) = k1(10)
     k2(lcat) = 1
     do k = k1(10),k2(10)
-       if (rx(k,lcat) >= 1.e-9) k2(lcat) = k
-       if (k2(lcat) == 1 .and. rx(k,lcat) < 1.e-9) k1(lcat) = k + 1
+       if (oneMicControl%rx(k,lcat) >= 1.e-9) k2(lcat) = k
+       if (k2(lcat) == 1 .and. oneMicControl%rx(k,lcat) < 1.e-9) k1(lcat) = k + 1
     enddo
 
     if (lcat == 2 .or. lcat >= 4) then
        jflag = 1
 
-       call enemb(m1,k1(lcat),k2(lcat),lcat,jflag,dn0,i,j)
+       call enemb(m1,k1(lcat),k2(lcat),lcat,jflag,dn0,i,j, oneMicControl)
 
        do k = k1(lcat),k2(lcat)
 
-          if (rx(k,lcat) >= 1.e-9) then
+          if (oneMicControl%rx(k,lcat) >= 1.e-9) then
 
-             lhcat = jhcat(k,lcat)
-             vterm(k,lcat) = -vtfac(lhcat) * emb(k,lcat) ** pwvtmasi(lhcat) &
-                  * denfac(k)
+             lhcat = oneMicControl%jhcat(k,lcat)
+             oneMicControl%vterm(k,lcat) = -oneMicControl%vtfac(lhcat) * oneMicControl%emb(k,lcat) ** oneMicControl%pwvtmasi(lhcat) &
+                  * oneMicControl%denfac(k)
 
           endif
 
@@ -554,12 +487,12 @@ contains
 
        do k = k1(lcat),k2(lcat)
 
-          if (rx(k,lcat) >= 1.e-9) then
+          if (oneMicControl%rx(k,lcat) >= 1.e-9) then
 
-             rxinv = 1. / rx(k,lcat)
-             qx(k,lcat) = qr(k,lcat) * rxinv
+             rxinv = 1. / oneMicControl%rx(k,lcat)
+             oneMicControl%qx(k,lcat) = oneMicControl%qr(k,lcat) * rxinv
              ! limit rain to under 48C and over -80C
-             qx(k,lcat) = max(0.,min(1.6*alli,qx(k,lcat)))
+             oneMicControl%qx(k,lcat) = max(0.,min(1.6*alli,oneMicControl%qx(k,lcat)))
 
           endif
 
@@ -569,21 +502,21 @@ contains
 
        do k = k1(lcat),k2(lcat)
 
-          if (rx(k,lcat) >= 1.e-9) then
+          if (oneMicControl%rx(k,lcat) >= 1.e-9) then
 
 
-             rinv = 1. / rx(k,lcat)
-             qx(k,lcat) = qr(k,lcat) * rinv
+             rinv = 1. / oneMicControl%rx(k,lcat)
+             oneMicControl%qx(k,lcat) = oneMicControl%qr(k,lcat) * rinv
 
-             call qtc(qx(k,lcat),tcoal,fracliq)
+             call qtc(oneMicControl%qx(k,lcat),tcoal,fracliq)
 
-             rmelt = rx(k,lcat) * fracliq
-             cmelt = cx(k,lcat) * fracliq
+             rmelt = oneMicControl%rx(k,lcat) * fracliq
+             cmelt = oneMicControl%cx(k,lcat) * fracliq
 
-             rx(k,lcat) = rx(k,lcat) - rmelt
-             rx(k,1) = rx(k,1) + rmelt
-             cx(k,lcat) = cx(k,lcat) - cmelt
-             cx(k,1) = cx(k,1) + cmelt
+             oneMicControl%rx(k,lcat) = oneMicControl%rx(k,lcat) - rmelt
+             oneMicControl%rx(k,1) = oneMicControl%rx(k,1) + rmelt
+             oneMicControl%cx(k,lcat) = oneMicControl%cx(k,lcat) - cmelt
+             oneMicControl%cx(k,1) = oneMicControl%cx(k,1) + cmelt
 
 
           endif
@@ -596,30 +529,30 @@ contains
 
        do k = k1(lcat),k2(lcat)
 
-          if (rx(k,lcat) >= 1.e-9) then
+          if (oneMicControl%rx(k,lcat) >= 1.e-9) then
 
-             rinv = 1. / rx(k,lcat)
-             qx(k,lcat) = qr(k,lcat) * rinv
-             call qtc(qx(k,lcat),tcoal,fracliq)
+             rinv = 1. / oneMicControl%rx(k,lcat)
+             oneMicControl%qx(k,lcat) = oneMicControl%qr(k,lcat) * rinv
+             call qtc(oneMicControl%qx(k,lcat),tcoal,fracliq)
 
              if (fracliq > 1.e-6) then
-                rmelt = rx(k,lcat) * fracliq
+                rmelt = oneMicControl%rx(k,lcat) * fracliq
 
                 ! change this??? move to rain instead ??? look at melting decisions in col2
 
-                ricetor6 = min(rx(k,lcat) - rmelt,rmelt)
-                rx(k,lcat) = rx(k,lcat) - rmelt - ricetor6
-                rx(k,6) = rx(k,6) + rmelt + ricetor6
-                qr(k,6) = qr(k,6) + rmelt * alli
-                qx(k,lcat) = 0.
+                ricetor6 = min(oneMicControl%rx(k,lcat) - rmelt,rmelt)
+                oneMicControl%rx(k,lcat) = oneMicControl%rx(k,lcat) - rmelt - ricetor6
+                oneMicControl%rx(k,6) = oneMicControl%rx(k,6) + rmelt + ricetor6
+                oneMicControl%qr(k,6) = oneMicControl%qr(k,6) + rmelt * alli
+                oneMicControl%qx(k,lcat) = 0.
 
                 ! keep the above the same with ricetor6
                 ! meyers - use sa melt table here? yes
                 !
                 fracmloss = (rmelt + ricetor6) * rinv
-                closs = enmlttab(int(200. * fracmloss) + 1,jhcat(k,lcat)) * cx(k,lcat)
-                cx(k,lcat) = cx(k,lcat) - closs
-                cx(k,6) = cx(k,6) + closs
+                closs = oneMicControl%enmlttab(int(200. * fracmloss) + 1,oneMicControl%jhcat(k,lcat)) * oneMicControl%cx(k,lcat)
+                oneMicControl%cx(k,lcat) = oneMicControl%cx(k,lcat) - closs
+                oneMicControl%cx(k,6) = oneMicControl%cx(k,6) + closs
              endif
 
 
@@ -632,19 +565,19 @@ contains
 
        do k = k1(lcat),k2(lcat)
 
-          if (rx(k,lcat) >= 1.e-9) then
+          if (oneMicControl%rx(k,lcat) >= 1.e-9) then
 
-             rxinv = 1. / rx(k,lcat)
-             qx(k,lcat) = qr(k,lcat) * rxinv
-             call qtc(qx(k,lcat),tcoal,fracliq)
+             rxinv = 1. / oneMicControl%rx(k,lcat)
+             oneMicControl%qx(k,lcat) = oneMicControl%qr(k,lcat) * rxinv
+             call qtc(oneMicControl%qx(k,lcat),tcoal,fracliq)
 
              if (fracliq > 0.95) then
-                rx(k,2) = rx(k,2) + rx(k,6)
-                qr(k,2) = qr(k,2) + rx(k,6) * alli
-                cx(k,2) = cx(k,2) + cx(k,6)
-                rx(k,6) = 0.
-                qr(k,6) = 0.
-                cx(k,6) = 0.
+                oneMicControl%rx(k,2) = oneMicControl%rx(k,2) + oneMicControl%rx(k,6)
+                oneMicControl%qr(k,2) = oneMicControl%qr(k,2) + oneMicControl%rx(k,6) * alli
+                oneMicControl%cx(k,2) = oneMicControl%cx(k,2) + oneMicControl%cx(k,6)
+                oneMicControl%rx(k,6) = 0.
+                oneMicControl%qr(k,6) = 0.
+                oneMicControl%cx(k,6) = 0.
              endif
 
           endif
@@ -656,43 +589,43 @@ contains
        shedmass = 5.236e-7
        do k = k1(lcat),k2(lcat)
 
-          if (rx(k,lcat) >= 1.e-9) then
+          if (oneMicControl%rx(k,lcat) >= 1.e-9) then
 
-             rxinv = 1. / rx(k,lcat)
-             qx(k,lcat) = qr(k,lcat) * rxinv
-             !c          qx(k,lcat) = max(-50.,qx(k,lcat))
-             call qtc(qx(k,lcat),tcoal,fracliq)
+             rxinv = 1. / oneMicControl%rx(k,lcat)
+             oneMicControl%qx(k,lcat) = oneMicControl%qr(k,lcat) * rxinv
+             !c          oneMicControl%qx(k,lcat) = max(-50.,oneMicControl%qx(k,lcat))
+             call qtc(oneMicControl%qx(k,lcat),tcoal,fracliq)
 
              if (fracliq > 0.95) then
-                rx(k,2) = rx(k,2) + rx(k,7)
-                qr(k,2) = qr(k,2) + rx(k,7) * alli
-                cx(k,2) = cx(k,2) + cx(k,7)
-                rx(k,7) = 0.
-                qr(k,7) = 0.
-                cx(k,7) = 0.
+                oneMicControl%rx(k,2) = oneMicControl%rx(k,2) + oneMicControl%rx(k,7)
+                oneMicControl%qr(k,2) = oneMicControl%qr(k,2) + oneMicControl%rx(k,7) * alli
+                oneMicControl%cx(k,2) = oneMicControl%cx(k,2) + oneMicControl%cx(k,7)
+                oneMicControl%rx(k,7) = 0.
+                oneMicControl%qr(k,7) = 0.
+                oneMicControl%cx(k,7) = 0.
                 !
                 !  take out following IF statement?
                 !
 
              elseif (fracliq > 0.3) then
 
-                lhcat = jhcat(k,lcat)
+                lhcat = oneMicControl%jhcat(k,lcat)
                 inc = nint(200. * fracliq) + 1
-                dn = dnfac(lhcat) * emb(k,lcat) ** pwmasi(lhcat)
-                idns = max(1,nint(1.e3 * dn * gnu(lcat)))
-                rshed = rx(k,lcat) * shedtab(inc,idns)
-                !cc               rmltshed = rx(k,lcat) * rmlttab(inc) + rshed
+                dn = oneMicControl%dnfac(lhcat) * oneMicControl%emb(k,lcat) ** oneMicControl%pwmasi(lhcat)
+                idns = max(1,nint(1.e3 * dn * oneMicControl%gnu(lcat)))
+                rshed = oneMicControl%rx(k,lcat) * oneMicControl%shedtab(inc,idns)
+                !cc               rmltshed = oneMicControl%rx(k,lcat) * rmlttab(inc) + rshed
                 rmltshed = rshed
                 qrmltshed = rmltshed * alli
 
-                rx(k,2) = rx(k,2) + rmltshed
-                qr(k,2) = qr(k,2) + qrmltshed
-                rx(k,lcat) = rx(k,lcat) - rmltshed
-                qr(k,lcat) = qr(k,lcat) - qrmltshed
-                !               closs = cx(k,lcat) * enmlttab(inc,lhcat)
-                !               cx(k,lcat) = cx(k,lcat) - closs
-                !               cx(k,2) = cx(k,2) + closs + rshed / shedmass
-                cx(k,2) = cx(k,2) + rshed / shedmass
+                oneMicControl%rx(k,2) = oneMicControl%rx(k,2) + rmltshed
+                oneMicControl%qr(k,2) = oneMicControl%qr(k,2) + qrmltshed
+                oneMicControl%rx(k,lcat) = oneMicControl%rx(k,lcat) - rmltshed
+                oneMicControl%qr(k,lcat) = oneMicControl%qr(k,lcat) - qrmltshed
+                !               closs = oneMicControl%cx(k,lcat) * oneMicControl%enmlttab(inc,lhcat)
+                !               oneMicControl%cx(k,lcat) = oneMicControl%cx(k,lcat) - closs
+                !               oneMicControl%cx(k,2) = oneMicControl%cx(k,2) + closs + rshed / shedmass
+                oneMicControl%cx(k,2) = oneMicControl%cx(k,2) + rshed / shedmass
              endif
 
           endif
@@ -705,39 +638,41 @@ contains
 
   !******************************************************************************
 
-  subroutine c03(m1,k1,k2,lcat,dn0,i,j)
+  subroutine c03(m1,k1,k2,lcat,dn0,i,j, oneMicControl)
     ! Arguments
     integer, intent(in)             :: m1, k1, k2, lcat, i, j
     real, dimension(m1), intent(in) :: dn0
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     ! Local Variables
     integer :: jflag
 
     jflag = 1
-    if (jnmb(lcat) >= 3) call enemb(m1,k1,k2,lcat,jflag,dn0,i,j)
+    if (oneMicControl%jnmb(lcat) >= 3) call enemb(m1,k1,k2,lcat,jflag,dn0,i,j, oneMicControl)
 
     return
   end subroutine c03
 
   !******************************************************************************
 
-  subroutine pc03(m1,k1,k2,lcat,dn0,i,j)
+  subroutine pc03(m1,k1,k2,lcat,dn0,i,j, oneMicControl)
     ! Arguments
     integer, intent(in)             :: m1, k1, k2, lcat, i, j
     real, dimension(m1), intent(in) :: dn0
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     ! Local Variables
     integer :: k, lhcat, jflag
 
     jflag = 1
-    if (jnmb(lcat) >= 3) call enemb(m1,k1,k2,lcat,jflag,dn0,i,j)
+    if (oneMicControl%jnmb(lcat) >= 3) call enemb(m1,k1,k2,lcat,jflag,dn0,i,j, oneMicControl)
 
     do k = k1,k2
 
-       if (rx(k,lcat) >= 1.e-9) then
+       if (oneMicControl%rx(k,lcat) >= 1.e-9) then
 
-          lhcat = jhcat(k,lcat)
-          vterm(k,lcat) = -vtfac(lhcat) * emb(k,lcat) ** pwvtmasi(lhcat) * denfac(k)
+          lhcat = oneMicControl%jhcat(k,lcat)
+          oneMicControl%vterm(k,lcat) = -oneMicControl%vtfac(lhcat) * oneMicControl%emb(k,lcat) ** oneMicControl%pwvtmasi(lhcat) * oneMicControl%denfac(k)
 
        endif
 
@@ -751,7 +686,7 @@ contains
   subroutine sedim(m1,lcat,ngr,nembfall,maxkfall,k1,k2,lpw,i,j  &
        ,rtp,thp,theta,dn0,alphasfc  &
        ,pcpg,qpcpg,dpcpg,dtlti,cnew,rnew,qrnew,pcpfillc,pcpfillr,sfcpcp, &
-       dzt, if_adap)
+       dzt, if_adap, oneMicControl)
     ! Arguments
     integer, intent(in) :: m1, lcat, ngr, nembfall, maxkfall, k1, k2, lpw, i, j
     real, dimension(m1), intent(inout) :: rtp
@@ -763,12 +698,13 @@ contains
     real, dimension(maxkfall,nembfall,nhcat), intent(in) :: sfcpcp
     real, dimension(m1), intent(in) :: dzt          ! From RAMS 6.0
     integer, intent(in) :: if_adap                  ! From RAMS 6.0
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     ! Local Variables
     integer :: k,lhcat,iemb,iemb2,kkf,kk
     real :: colddn0,rolddn0,qrolddn0,dispemb,riemb,wt2,psfc,qnew
 
-    pcprx(lcat) = 0.
+    oneMicControl%pcprx(lcat) = 0.
 
     !--(DMK-CARRIO-INI)-----------------------------------------------------
     do k = 2,k2  ! Old way
@@ -785,22 +721,22 @@ contains
     !--(DMK-CARRIO-INI)-----------------------------------------------------
     !change_MP for chem
     do k =1,m1
-       rsedim(k) = 0.
+       oneMicControl%rsedim(k) = 0.
     enddo
     !end change_MP
     !--(DMK-CARRIO-FIM)-----------------------------------------------------
 
     do k = k1,k2
-       lhcat = jhcat(k,lcat)
+       lhcat = oneMicControl%jhcat(k,lcat)
 
-       if (rx(k,lcat) > 1.e-9) then
-          colddn0 = cx(k,lcat) * dn0(k)
-          rolddn0 = rx(k,lcat) * dn0(k)
-          qrolddn0 = qx(k,lcat) * rolddn0
+       if (oneMicControl%rx(k,lcat) > 1.e-9) then
+          colddn0 = oneMicControl%cx(k,lcat) * dn0(k)
+          rolddn0 = oneMicControl%rx(k,lcat) * dn0(k)
+          qrolddn0 = oneMicControl%qx(k,lcat) * rolddn0
 
-          dispemb = ch1(lhcat)  &
-               * (emb(k,lcat)/cfmas(lhcat)) ** ch3(lhcat) * sqrt(dn0i(k))
-          riemb = 1. + ch2(lhcat,ngr) * log10(dispemb / dispemb0(lhcat,ngr))
+          dispemb = oneMicControl%ch1(lhcat)  &
+               * (oneMicControl%emb(k,lcat)/oneMicControl%cfmas(lhcat)) ** oneMicControl%ch3(lhcat) * sqrt(oneMicControl%dn0i(k))
+          riemb = 1. + oneMicControl%ch2(lhcat,ngr) * log10(dispemb / oneMicControl%dispemb0(lhcat,ngr))
 
           !Bob (10/24/00):  Now, limiting iemb to max of nembfall
 
@@ -814,11 +750,11 @@ contains
              kk = k + 1 - kkf
 
              cnew(kk)  = cnew(kk)   &
-                  +  colddn0 * dn0i(kk) * pcpfillc(k,kkf,iemb,lhcat)
+                  +  colddn0 * oneMicControl%dn0i(kk) * pcpfillc(k,kkf,iemb,lhcat)
              rnew(kk)  = rnew(kk)   &
-                  +  rolddn0 * dn0i(kk) * pcpfillr(k,kkf,iemb,lhcat)
+                  +  rolddn0 * oneMicControl%dn0i(kk) * pcpfillr(k,kkf,iemb,lhcat)
              qrnew(kk) = qrnew(kk)  &
-                  + qrolddn0 * dn0i(kk) * pcpfillr(k,kkf,iemb,lhcat)
+                  + qrolddn0 * oneMicControl%dn0i(kk) * pcpfillr(k,kkf,iemb,lhcat)
 
              !---------------------------------------------------------------
              ! adjustment for underground and partial grid cells for ada grid
@@ -833,8 +769,8 @@ contains
           enddo
 
           if (k <= maxkfall) then
-             qpcpg = qpcpg + psfc * qx(k,lcat)
-             pcprx(lcat) = pcprx(lcat) + psfc
+             qpcpg = qpcpg + psfc * oneMicControl%qx(k,lcat)
+             oneMicControl%pcprx(lcat) = oneMicControl%pcprx(lcat) + psfc
           endif
 
        endif
@@ -843,7 +779,7 @@ contains
     ! From RAMS 6.0
     if (if_adap == 1) then
        do k = 2,lpw-1
-          pcprx(lcat) = pcprx(lcat) + rnew(k) * dn0(k) / dzt(k)
+          oneMicControl%pcprx(lcat) = oneMicControl%pcprx(lcat) + rnew(k) * dn0(k) / dzt(k)
           qpcpg = qpcpg + qrnew(k) * dn0(k) / dzt(k)
 
           cnew(k) = 0.
@@ -852,42 +788,42 @@ contains
        enddo
     endif
 
-    pcpg = pcpg + pcprx(lcat)
-    accpx(lcat) = pcprx(lcat)
-    dpcpg = dpcpg + pcprx(lcat) * alphasfc
-    pcprx(lcat) = pcprx(lcat) * dtlti
+    pcpg = pcpg + oneMicControl%pcprx(lcat)
+    oneMicControl%accpx(lcat) = oneMicControl%pcprx(lcat)
+    dpcpg = dpcpg + oneMicControl%pcprx(lcat) * alphasfc
+    oneMicControl%pcprx(lcat) = oneMicControl%pcprx(lcat) * dtlti
 
     !do k = 2,k2
     do k =lpw,k2 ! From RAMS 6.0
-       rtp(k) = rtp(k) + rnew(k) - rx(k,lcat)
+       rtp(k) = rtp(k) + rnew(k) - oneMicControl%rx(k,lcat)
        qnew = qrnew(k) / max(1.e-20, rnew(k))
 
        !         if (iqflag == 1) then
-       tairc(k) = tairc(k) - thp(k) * thp(k)  &
-            * (2820. * (rnew(k) - rx(k,lcat))  &
-            - cpi * (qrnew(k) - qx(k,lcat) * rx(k,lcat)))  &
-            / (max(tair(k), 253.) * theta(k))
+       oneMicControl%tairc(k) = oneMicControl%tairc(k) - thp(k) * thp(k)  &
+            * (2820. * (rnew(k) - oneMicControl%rx(k,lcat))  &
+            - cpi * (qrnew(k) - oneMicControl%qx(k,lcat) * oneMicControl%rx(k,lcat)))  &
+            / (max(oneMicControl%tair(k), 253.) * theta(k))
        !         else
-       !            tairc(k) = tairc(k) - thp(k) * thp(k) * 2820.
-       !     +          * (rnew(k) - rx(k,lcat)) / (max(tair(k), 253.) * theta(k))
+       !            oneMicControl%tairc(k) = oneMicControl%tairc(k) - thp(k) * thp(k) * 2820.
+       !     +          * (rnew(k) - oneMicControl%rx(k,lcat)) / (max(oneMicControl%tair(k), 253.) * theta(k))
        !         endif
 
        !--(DMK-CARRIO-INI)------------------------------------------------------------------
        !change_MP rsedim is the fraction of rain removed or added by sedimentation
-       if(lcat.eq.2 .and. rx(k,2).gt.1.e-9)then
-          rsedim(k)=-(rnew(k)-rx(k,lcat))/rx(k,lcat)
+       if(lcat.eq.2 .and. oneMicControl%rx(k,2).gt.1.e-9)then
+          oneMicControl%rsedim(k)=-(rnew(k)-oneMicControl%rx(k,lcat))/oneMicControl%rx(k,lcat)
        endif
        !end change_MP
        !--(DMK-CARRIO-FIM)------------------------------------------------------------------
 
-       rx(k,lcat) = rnew(k)
-       cx(k,lcat) = cnew(k)
-       qx(k,lcat) = qnew
+       oneMicControl%rx(k,lcat) = rnew(k)
+       oneMicControl%cx(k,lcat) = cnew(k)
+       oneMicControl%qx(k,lcat) = qnew
 
-       if (rx(k,lcat) < 1.e-9) then
-          rx(k,lcat) = 0.
-          cx(k,lcat) = 0.
-          qx(k,lcat) = 0.
+       if (oneMicControl%rx(k,lcat) < 1.e-9) then
+          oneMicControl%rx(k,lcat) = 0.
+          oneMicControl%cx(k,lcat) = 0.
+          oneMicControl%qx(k,lcat) = 0.
        endif
 
     enddo
@@ -896,28 +832,30 @@ contains
 
   !******************************************************************************
 
-  subroutine negadj1(m1,m2,m3,oneBasicFields)
+  subroutine negadj1(m1,m2,m3,oneBasicFields, oneMicControl)
     ! Arguments
     integer, intent(in) :: m1, m2, m3
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
-    if (level == 0) return
+    if (oneMicControl%level == 0) return
 
     call adj1(m1,m2,m3,grid_g(ngrid)%lpw,oneBasicFields%rtp  &
-         ,oneBasicFields%thp,micro_g(ngrid),vctr9)
+         ,oneBasicFields%thp,micro_g(ngrid),vctr9,oneMicControl)
 
     return
   end subroutine negadj1
 
   !******************************************************************************
 
-  subroutine adj1(m1,m2,m3,lpw_R,rtp,thp,micro,vctr9)
+  subroutine adj1(m1,m2,m3,lpw_R,rtp,thp,micro,vctr9, oneMicControl)
     ! Arguments
     integer, intent(in)                      :: m1, m2, m3
     real, dimension(m2,m3), intent(in)    :: lpw_R
     type (micro_vars), intent(inout)         :: micro
     real, dimension(m1,m2,m3), intent(inout) :: rtp, thp
     real, dimension(m1), intent(out)         :: vctr9
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     ! Local Variables
     integer :: i,j,k,lcat,ka
@@ -926,12 +864,12 @@ contains
 
     lpw=int(lpw_R)
 
-    if (level .eq. 0) return
+    if (oneMicControl%level .eq. 0) return
 
     do lcat = 1,ncat
        do k = 1,m1
-          rx(k,lcat) = 0.
-          cx(k,lcat) = 0.
+          oneMicControl%rx(k,lcat) = 0.
+          oneMicControl%cx(k,lcat) = 0.
        enddo
     enddo
 
@@ -947,57 +885,57 @@ contains
           !--(DMK-CARRIO-END)-----------------------------------------------------
 
 
-          if (jnmb(1) > 0) call ae1kmic(ka,m1,rx(:,1),micro%rcp(:,i,j))
-          if (jnmb(2) > 0) call ae1kmic(ka,m1,rx(:,2),micro%rrp(:,i,j))
-          if (jnmb(3) > 0) call ae1kmic(ka,m1,rx(:,3),micro%rpp(:,i,j))
-          if (jnmb(4) > 0) call ae1kmic(ka,m1,rx(:,4),micro%rsp(:,i,j))
-          if (jnmb(5) > 0) call ae1kmic(ka,m1,rx(:,5),micro%rap(:,i,j))
-          if (jnmb(6) > 0) call ae1kmic(ka,m1,rx(:,6),micro%rgp(:,i,j))
-          if (jnmb(7) > 0) call ae1kmic(ka,m1,rx(:,7),micro%rhp(:,i,j))
+          if (oneMicControl%jnmb(1) > 0) call ae1kmic(ka,m1,oneMicControl%rx(:,1),micro%rcp(:,i,j))
+          if (oneMicControl%jnmb(2) > 0) call ae1kmic(ka,m1,oneMicControl%rx(:,2),micro%rrp(:,i,j))
+          if (oneMicControl%jnmb(3) > 0) call ae1kmic(ka,m1,oneMicControl%rx(:,3),micro%rpp(:,i,j))
+          if (oneMicControl%jnmb(4) > 0) call ae1kmic(ka,m1,oneMicControl%rx(:,4),micro%rsp(:,i,j))
+          if (oneMicControl%jnmb(5) > 0) call ae1kmic(ka,m1,oneMicControl%rx(:,5),micro%rap(:,i,j))
+          if (oneMicControl%jnmb(6) > 0) call ae1kmic(ka,m1,oneMicControl%rx(:,6),micro%rgp(:,i,j))
+          if (oneMicControl%jnmb(7) > 0) call ae1kmic(ka,m1,oneMicControl%rx(:,7),micro%rhp(:,i,j))
 
           do lcat = 1,ncat
              do k = ka,m1
-                if (rx(k,lcat) < 1.e-9) rx(k,lcat) = 0.
+                if (oneMicControl%rx(k,lcat) < 1.e-9) oneMicControl%rx(k,lcat) = 0.
              enddo
           enddo
 
           do k = ka,m1
              rtp(k,i,j) = max(0.,rtp(k,i,j))
-             vctr9(k) = 1.001 * (rx(k,1)+ rx(k,2) + rx(k,3)  &
-                  + rx(k,4) + rx(k,5) + rx(k,6) + rx(k,7))
+             vctr9(k) = 1.001 * (oneMicControl%rx(k,1)+ oneMicControl%rx(k,2) + oneMicControl%rx(k,3)  &
+                  + oneMicControl%rx(k,4) + oneMicControl%rx(k,5) + oneMicControl%rx(k,6) + oneMicControl%rx(k,7))
           enddo
 
           do k = ka,m1
              if (vctr9(k) > rtp(k,i,j)) then
                 frac = rtp(k,i,j) / (1.e-9 + vctr9(k))
                 do lcat = 1,ncat
-                   rx(k,lcat) = rx(k,lcat) * frac
+                   oneMicControl%rx(k,lcat) = oneMicControl%rx(k,lcat) * frac
                 enddo
              endif
           enddo
 
-          if (jnmb(1) > 0) call ae1kmic(ka,m1,micro%rcp(:,i,j),rx(:,1))
-          if (jnmb(2) > 0) call ae1kmic(ka,m1,micro%rrp(:,i,j),rx(:,2))
-          if (jnmb(3) > 0) call ae1kmic(ka,m1,micro%rpp(:,i,j),rx(:,3))
-          if (jnmb(4) > 0) call ae1kmic(ka,m1,micro%rsp(:,i,j),rx(:,4))
-          if (jnmb(5) > 0) call ae1kmic(ka,m1,micro%rap(:,i,j),rx(:,5))
-          if (jnmb(6) > 0) call ae1kmic(ka,m1,micro%rgp(:,i,j),rx(:,6))
-          if (jnmb(7) > 0) call ae1kmic(ka,m1,micro%rhp(:,i,j),rx(:,7))
+          if (oneMicControl%jnmb(1) > 0) call ae1kmic(ka,m1,micro%rcp(:,i,j),oneMicControl%rx(:,1))
+          if (oneMicControl%jnmb(2) > 0) call ae1kmic(ka,m1,micro%rrp(:,i,j),oneMicControl%rx(:,2))
+          if (oneMicControl%jnmb(3) > 0) call ae1kmic(ka,m1,micro%rpp(:,i,j),oneMicControl%rx(:,3))
+          if (oneMicControl%jnmb(4) > 0) call ae1kmic(ka,m1,micro%rsp(:,i,j),oneMicControl%rx(:,4))
+          if (oneMicControl%jnmb(5) > 0) call ae1kmic(ka,m1,micro%rap(:,i,j),oneMicControl%rx(:,5))
+          if (oneMicControl%jnmb(6) > 0) call ae1kmic(ka,m1,micro%rgp(:,i,j),oneMicControl%rx(:,6))
+          if (oneMicControl%jnmb(7) > 0) call ae1kmic(ka,m1,micro%rhp(:,i,j),oneMicControl%rx(:,7))
 
-          if (jnmb(1) >= 5)  &
-               call ae1mic(ka,m1,micro%ccp(:,i,j),micro%rcp(:,i,j),rx(1,1))
-          if (jnmb(2) >= 5)  &
-               call ae1mic(ka,m1,micro%crp(:,i,j),micro%rrp(:,i,j),rx(1,2))
-          if (jnmb(3) >= 5)  &
-               call ae1mic(ka,m1,micro%cpp(:,i,j),micro%rpp(:,i,j),rx(1,3))
-          if (jnmb(4) >= 5)  &
-               call ae1mic(ka,m1,micro%csp(:,i,j),micro%rsp(:,i,j),rx(1,4))
-          if (jnmb(5) >= 5)  &
-               call ae1mic(ka,m1,micro%cap(:,i,j),micro%rap(:,i,j),rx(1,5))
-          if (jnmb(6) >= 5)  &
-               call ae1mic(ka,m1,micro%cgp(:,i,j),micro%rgp(:,i,j),rx(1,6))
-          if (jnmb(7) >= 5)  &
-               call ae1mic(ka,m1,micro%chp(:,i,j),micro%rhp(:,i,j),rx(1,7))
+          if (oneMicControl%jnmb(1) >= 5)  &
+               call ae1mic(ka,m1,micro%ccp(:,i,j),micro%rcp(:,i,j),oneMicControl%rx(1,1))
+          if (oneMicControl%jnmb(2) >= 5)  &
+               call ae1mic(ka,m1,micro%crp(:,i,j),micro%rrp(:,i,j),oneMicControl%rx(1,2))
+          if (oneMicControl%jnmb(3) >= 5)  &
+               call ae1mic(ka,m1,micro%cpp(:,i,j),micro%rpp(:,i,j),oneMicControl%rx(1,3))
+          if (oneMicControl%jnmb(4) >= 5)  &
+               call ae1mic(ka,m1,micro%csp(:,i,j),micro%rsp(:,i,j),oneMicControl%rx(1,4))
+          if (oneMicControl%jnmb(5) >= 5)  &
+               call ae1mic(ka,m1,micro%cap(:,i,j),micro%rap(:,i,j),oneMicControl%rx(1,5))
+          if (oneMicControl%jnmb(6) >= 5)  &
+               call ae1mic(ka,m1,micro%cgp(:,i,j),micro%rgp(:,i,j),oneMicControl%rx(1,6))
+          if (oneMicControl%jnmb(7) >= 5)  &
+               call ae1mic(ka,m1,micro%chp(:,i,j),micro%rhp(:,i,j),oneMicControl%rx(1,7))
 
           !
           !  Think about how thp should change here - should it be due to a change in

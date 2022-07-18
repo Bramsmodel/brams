@@ -60,34 +60,9 @@ module ModMicrophysicsDrive
        micro_g, &
        micro_vars        ! INTENT(IN) ! Only a type structure
 
-  use micphys, only:   &
-       jnmb,           & ! INTENT(IN)
-       rx,             & ! INTENT(IN)
-       cx,             & ! INTENT(IN)
-       qx,             & ! INTENT(IN)
-       accpx,          & ! INTENT(IN)
-       pcprx,           &  ! INTENT(IN)
-       xcoll,           &  ! 
-       rsedim, &
-       nhcat,            & ! INTENT(IN)
-       ncat,             & ! INTENT(IN)
-       scrmic1,          & ! INTENT(INOUT)
-       scrmic2,          & ! INTENT(INOUT)
-       scrmic3, &          ! INTENT(OUT)
-       tairc,            & ! INTENT(OUT)
-       ch1,              & ! INTENT(OUT)
-       ch2,             & ! INTENT(OUT)
-       ch3,             & ! INTENT(OUT)
-       cfvt,             & ! INTENT(IN)
-       maxgrds,         & ! INTENT(IN)
-       level,           & ! INTENT(IN)
-       pwvt,            & ! INTENT(IN)
-       pwmasi,          & ! INTENT(IN)
-       cdp1,            & ! INTENT(OUT)
-       pwvtmasi,        & ! INTENT(OUT)
-       dispemb1,        & ! INTENT(IN)
-       dispemb0           ! INTENT(IN)
-
+  use grid_dims, only: &
+       maxgrds
+  
   use mem_chemic, only: &
        chemic_vars, &        ! INTENT(IN) ! Only a type structure
        chemic_g
@@ -135,6 +110,8 @@ module ModMicrophysicsDrive
 
   implicit none
 
+  include "MicConstants.h"
+  
   private
   public :: micro
   
@@ -160,7 +137,7 @@ contains
     end type pcp_tab_type
     type (pcp_tab_type), save :: pcp_tab(maxgrds)
 
-    if (level .ne. 3) return
+    if (oneMicControl%level .ne. 3) return
 
     nembfall = 20
     maxkfall = 4
@@ -181,9 +158,9 @@ contains
        call tabhab(oneMicControl)
 
        do lhcat = 1,nhcat
-          ch3(lhcat) = pwvt(lhcat) * pwmasi(lhcat)
-          cdp1(lhcat) = pwmasi(lhcat) * (1.5 + .5 * pwvt(lhcat))
-          pwvtmasi(lhcat) = pwvt(lhcat) * pwmasi(lhcat)
+          oneMicControl%ch3(lhcat) = oneMicControl%pwvt(lhcat) * oneMicControl%pwmasi(lhcat)
+          oneMicControl%cdp1(lhcat) = oneMicControl%pwmasi(lhcat) * (1.5 + .5 * oneMicControl%pwvt(lhcat))
+          oneMicControl%pwvtmasi(lhcat) = oneMicControl%pwvt(lhcat) * oneMicControl%pwmasi(lhcat)
        enddo
     endif
 
@@ -195,21 +172,21 @@ contains
             ,pcp_tab(ngrid)%sfcpcp,oneMicControl)
 
        do lhcat = 1,nhcat
-          ch2(lhcat,ngrid) = float(nembfall-1) &
-               / log10(dispemb1(lhcat,ngrid) / dispemb0(lhcat,ngrid))
+          oneMicControl%ch2(lhcat,ngrid) = float(nembfall-1) &
+               / log10(oneMicControl%dispemb1(lhcat,ngrid) / oneMicControl%dispemb0(lhcat,ngrid))
        enddo
 
        call homfrzcl(dtlt,ngrid,oneMicControl)
     endif
 
-    call each_call(mzp,dtlt)
+    call each_call(mzp,dtlt,oneMicControl)
     dtlti = 1. / dtlt
     ngr = ngrid
 
     do j = ja,jz
        do i = ia,iz
 
-          call range_check(mzp,k1,k2,k3,i,j,grid_g(ngr)%lpw(i,j),micro_g(ngr))
+          call range_check(mzp,k1,k2,k3,i,j,grid_g(ngr)%lpw(i,j),micro_g(ngr),oneMicControl)
 
           call mcphys(mzp,k1,k2,k3,i,j,ngrid,jdim,maxnzp             &
                ,nembfall,maxkfall,mynum,dtlt,dtlti,time,zm,dzt                 &
@@ -224,11 +201,11 @@ contains
                ,pcp_tab(ngr)%pcpfillr, pcp_tab(ngr)%sfcpcp    &
                ,grid_g(ngr)%glat(i,j), grid_g(ngr)%topt(i,j),if_adap, oneMicControl)
 
-          call copyback(mzp,k1,k2,k3,grid_g(ngr)%lpw(i,j),i,j,micro_g(ngr))
+          call copyback(mzp,k1,k2,k3,grid_g(ngr)%lpw(i,j),i,j,micro_g(ngr), oneMicControl)
 
           !change_MP for chem
           if(chemistry > 0 .and. chemistry_aq >= 1)then
-             call copy2(mzp,k1,k2,k3,grid_g(ngr)%lpw(i,j),i,j,chemic_g(ngr))
+             call copy2(mzp,k1,k2,k3,grid_g(ngr)%lpw(i,j),i,j,chemic_g(ngr), oneMicControl)
           endif
           !end change_MP
 
@@ -314,17 +291,17 @@ contains
     save
 
     lpw=int(lpw_R)
-    call thrmstr(m1,k1,k2,lpw,pp(1),thp(1),theta(1),pi0(1),rtp(1),rv(1),i,j)
+    call thrmstr(m1,k1,k2,lpw,pp(1),thp(1),theta(1),pi0(1),rtp(1),rv(1),i,j,oneMicControl)
 
-    call each_column(m1,k1,k2,i,j,lpw,rv(1),dn0(1))
+    call each_column(m1,k1,k2,i,j,lpw,rv(1),dn0(1),oneMicControl)
 
     ! Diagnose hydrometeor mean mass emb, and if necessary, number concentration.
 
     jflag = 1
 
     do lcat = 1,7
-       if (jnmb(lcat) .ge. 1) then
-          call enemb(m1,k1(lcat),k2(lcat),lcat,jflag,dn0(1),i,j)
+       if (oneMicControl%jnmb(lcat) .ge. 1) then
+          call enemb(m1,k1(lcat),k2(lcat),lcat,jflag,dn0(1),i,j,oneMicControl)
        endif
     enddo
 
@@ -345,36 +322,36 @@ contains
     !  endif
 
     do lcat = 1,7
-       if (jnmb(lcat) .ge. 1) then
-          call diffprep(m1,lcat,k1(lcat),k2(lcat),rv(1),dn0(1),i,j,mynum)
+       if (oneMicControl%jnmb(lcat) .ge. 1) then
+          call diffprep(m1,lcat,k1(lcat),k2(lcat),rv(1),dn0(1),i,j,mynum,oneMicControl)
        endif
     enddo
 
-    call vapdiff(m1,k1(10),k2(10),rv(1),i,j,mynum)
+    call vapdiff(m1,k1(10),k2(10),rv(1),i,j,mynum,oneMicControl)
 
     do icv = 1,7
        lcat = mivap(icv)
 
-       if (jnmb(lcat) .ge. 1) then
-          call vapflux(m1,lcat,i,j,mynum,k1(lcat),k2(lcat),dn0(1),rv(1))
+       if (oneMicControl%jnmb(lcat) .ge. 1) then
+          call vapflux(m1,lcat,i,j,mynum,k1(lcat),k2(lcat),dn0(1),rv(1),oneMicControl)
        endif
     enddo
 
-    if (jnmb(4) .ge. 1) then
-       call psxfer (m1,min(k1(3),k1(4)),max(k2(3),k2(4)),dn0(1),i,j)
+    if (oneMicControl%jnmb(4) .ge. 1) then
+       call psxfer (m1,min(k1(3),k1(4)),max(k2(3),k2(4)),dn0(1),i,j,oneMicControl)
     endif
 
     jflag = 2
     do lcat = 1,7
-       if (jnmb(lcat) .ge. 1) then
-          call enemb(m1,k1(lcat),k2(lcat),lcat,jflag,dn0(1),i,j)
+       if (oneMicControl%jnmb(lcat) .ge. 1) then
+          call enemb(m1,k1(lcat),k2(lcat),lcat,jflag,dn0(1),i,j,oneMicControl)
           call getict(k1(lcat),k2(lcat),lcat,i,j,mynum,oneMicControl)
        endif
     enddo
 
-    call newtemp(m1,k1(10),k2(10),rv(1),theta(1),i,j)
+    call newtemp(m1,k1(10),k2(10),rv(1),theta(1),i,j,oneMicControl)
 
-    if (jnmb(2) .ge. 1) then
+    if (oneMicControl%jnmb(2) .ge. 1) then
        call auto_accret(m1,k1(1),k2(1),dn0(1),dtlt,i,j, oneMicControl)
     endif
 
@@ -386,7 +363,7 @@ contains
 
        if (lcat .eq. 3 .or. lcat .eq. 4) go to 29
        mc1 = mcats(lcat)
-       if (jnmb(lcat) >= 5) then
+       if (oneMicControl%jnmb(lcat) >= 5) then
           call cols (m1,lcat,mc1,k1(lcat),k2(lcat),i,j, oneMicControl)
        endif
 29     continue
@@ -396,14 +373,14 @@ contains
 
     do lcat = 3,4
        mc1 = mcat33(lcat)
-       if (jnmb(lcat) .ge. 1 .and. jnmb(5) .ge. 1) then
+       if (oneMicControl%jnmb(lcat) .ge. 1 .and. oneMicControl%jnmb(5) .ge. 1) then
           call col3344 (m1,lcat,5,mc1,k1(lcat),k2(lcat),i,j, oneMicControl)
        endif
     enddo
 
     ! Collection between pristine ice and snow
 
-    if (jnmb(5) .ge. 1) then
+    if (oneMicControl%jnmb(5) .ge. 1) then
        call col3443 (m1,3,4,5,max(k1(3),k1(4)),min(k2(3),k2(4)),i,j, oneMicControl)
     endif
 
@@ -415,7 +392,7 @@ contains
        mc3 = mcat1(icx,3)
        mc4 = mcat1(icx,4)
 
-       if (jnmb(mc1) .ge. 1 .and. jnmb(mc3) .ge. 1) then
+       if (oneMicControl%jnmb(mc1) .ge. 1 .and. oneMicControl%jnmb(mc3) .ge. 1) then
           call col1 (m1,mc1,mc2,mc3,mc4,max(k1(mc1),k1(mc2))  &
                ,min(k2(mc1),k2(mc2)),i,j, oneMicControl)
        endif
@@ -427,7 +404,7 @@ contains
        mc1 = mcat2(lcat,1)
        mc2 = mcat2(lcat,2)
 
-       if (jnmb(lcat) .ge. 1 .and. jnmb(mc1) .ge. 1) then
+       if (oneMicControl%jnmb(lcat) .ge. 1 .and. oneMicControl%jnmb(mc1) .ge. 1) then
           call col2 (m1,1,lcat,mc1,mc2,max(k1(1),k1(lcat)),min(k2(1),k2(lcat))  &
                ,dn0(1),dtlt,i,j, oneMicControl)
        endif
@@ -436,32 +413,32 @@ contains
     ! Ice-rain collisions
 
     do lcat = 3,7
-       if (jnmb(lcat) .ge. 1 .and. jnmb(7) .ge. 1) then
+       if (oneMicControl%jnmb(lcat) .ge. 1 .and. oneMicControl%jnmb(7) .ge. 1) then
           call col3 (m1,2,lcat,7,max(k1(2),k1(lcat)),min(k2(2),k2(lcat)),i,j, oneMicControl)
        endif
     enddo
 
-    call colxfers(m1,k1,k2,i,j,scrmic1,scrmic2, oneMicControl)
+    call colxfers(m1,k1,k2,i,j,oneMicControl%scrmic1,oneMicControl%scrmic2, oneMicControl)
 
     do mcat = 1,7
        lcat = mix02(mcat)
-       if (jnmb(lcat) .ge. 1) call x02(m1,k1,k2,lcat,dn0(1),i,j)
+       if (oneMicControl%jnmb(lcat) .ge. 1) call x02(m1,k1,k2,lcat,dn0(1),i,j,oneMicControl)
     enddo
 
-    if (jnmb(1) .ge. 1) then
-       call cldnuc(m1,k1cnuc,k2cnuc,lpw,rv,wp,i,j)
+    if (oneMicControl%jnmb(1) .ge. 1) then
+       call cldnuc(m1,k1cnuc,k2cnuc,lpw,rv,wp,i,j,oneMicControl)
     endif
 
     k1(1) = min(k1(1),k1cnuc)
     k2(1) = max(k2(1),k2cnuc)
     k3(1) = max(k2(1),k3(1))
 
-    if (jnmb(1) .ge. 1) then
-       call c03(m1,k1(1),k2(1),1,dn0(1),i,j)
+    if (oneMicControl%jnmb(1) .ge. 1) then
+       call c03(m1,k1(1),k2(1),1,dn0(1),i,j,oneMicControl)
     endif
 
-    if (jnmb(3) .ge. 1) then
-       call icenuc(m1,k1(1),k2(1),k1pnuc,k2pnuc,lpw,ngr,rv,dn0,dtlt,i,j)
+    if (oneMicControl%jnmb(3) .ge. 1) then
+       call icenuc(m1,k1(1),k2(1),k1pnuc,k2pnuc,lpw,ngr,rv,dn0,dtlt,i,j,oneMicControl)
     endif
 
     k1(3) = min(k1(3),k1pnuc)
@@ -469,8 +446,8 @@ contains
     k3(3) = max(k2(3),k3(3))
 
     do lcat = 3,1,-2
-       if (jnmb(lcat) .ge. 1) then
-          call pc03(m1,k1(lcat),k2(lcat),lcat,dn0(1),i,j)
+       if (oneMicControl%jnmb(lcat) .ge. 1) then
+          call pc03(m1,k1(lcat),k2(lcat),lcat,dn0(1),i,j,oneMicControl)
        endif
     enddo
 
@@ -483,26 +460,29 @@ contains
     ! tairc is used here to accumulate changes to thp from sedim
 
     do k = lpw,m1
-       tairc(k) = 0.
+       oneMicControl%tairc(k) = 0.
     enddo
 
     do lhcat = 2,nhcat
-       ch1(lhcat) = dtlt * cfvt(lhcat) / rtgt
+       oneMicControl%ch1(lhcat) = dtlt * oneMicControl%cfvt(lhcat) / rtgt
     enddo
 
     do lcat = 2,7
-       if (jnmb(lcat) .ge. 1) then
+       if (oneMicControl%jnmb(lcat) .ge. 1) then
           ! New subroutine from RAMS 6.0
           !        call sedim (m1,lcat,ngr,nembfall,maxkfall  &
           !             ,k1(lcat),k2(lcat),lpw,i,j  &
           !             ,rtp(1),thp(1),theta(1),dn0(1),dpcp0(lcat)  &
-          !             ,pcpg,qpcpg,dpcpg,dtlti,scrmic1,scrmic2,scrmic3  &
+          !             ,pcpg,qpcpg,dpcpg,dtlti,oneMicControl%scrmic1,oneMicControl%scrmic2,oneMicControl%scrmic3  &
           !             ,pcpfillc,pcpfillr,sfcpcp,dzt,if_adap)
           call sedim (m1,lcat,ngr,nembfall,maxkfall  &
                ,k1(lcat),k2(lcat),lpw,i,j  &
                ,rtp,thp,theta,dn0,dpcp0(lcat)  &
-               ,pcpg,qpcpg,dpcpg,dtlti,scrmic1(1:m1),scrmic2(1:m1),scrmic3(1:m1)  &
-               ,pcpfillc,pcpfillr,sfcpcp,dzt,if_adap)
+               ,pcpg,qpcpg,dpcpg,dtlti,&
+               oneMicControl%scrmic1(1:m1),&
+               oneMicControl%scrmic2(1:m1),&
+               oneMicControl%scrmic3(1:m1)  &
+               ,pcpfillc,pcpfillr,sfcpcp,dzt,if_adap,oneMicControl)
           !sedim            (m1,lcat,ngr,nembfall,maxkfall,
           !             k1,k2,lpw,i,j  &
           !             ,rtp,thp,theta,dn0,alphasfc  &
@@ -514,7 +494,7 @@ contains
     enddo
 
     do k = lpw,m1
-       thp(k) = thp(k) + tairc(k)
+       thp(k) = thp(k) + oneMicControl%tairc(k)
     enddo
 
     return
@@ -522,7 +502,7 @@ contains
 
   !******************************************************************************
 
-  subroutine copyback(m1,k1,k2,k3,lpw_R,i,j,micro)
+  subroutine copyback(m1,k1,k2,k3,lpw_R,i,j,micro, oneMicControl)
     ! Arguments:
     integer, intent(in) :: m1
     type (micro_vars), intent(inout) :: micro
@@ -532,59 +512,60 @@ contains
     integer, intent(in) :: i
     integer, intent(in) :: j
     real, intent(in) :: lpw_R
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     integer :: lpw
     lpw=int(lpw_R)
 
 
-    if (jnmb(1) >= 1) then
-       call ae1kmic(lpw,k3(1),micro%rcp(:,i,j),rx(:,1))
-       if (jnmb(1) >= 5) call ae1kmic(lpw,k3(1),micro%ccp(:,i,j),cx(:,1))
+    if (oneMicControl%jnmb(1) >= 1) then
+       call ae1kmic(lpw,k3(1),micro%rcp(:,i,j),oneMicControl%rx(:,1))
+       if (oneMicControl%jnmb(1) >= 5) call ae1kmic(lpw,k3(1),micro%ccp(:,i,j),oneMicControl%cx(:,1))
     endif
 
-    if (jnmb(2) >= 1) then
-       call ae1kmic(lpw,k2(10),micro%rrp(:,i,j),rx(:,2))
-       call ae1kmic(lpw,k2(10),micro%q2(:,i,j),qx(:,2))
-       micro%accpr(i,j) = micro%accpr(i,j) + accpx(2)
-       micro%pcprr(i,j) = pcprx(2)
-       if (jnmb(2) >= 5) call ae1kmic(lpw,k3(1),micro%crp(:,i,j),cx(:,2))
+    if (oneMicControl%jnmb(2) >= 1) then
+       call ae1kmic(lpw,k2(10),micro%rrp(:,i,j),oneMicControl%rx(:,2))
+       call ae1kmic(lpw,k2(10),micro%q2(:,i,j),oneMicControl%qx(:,2))
+       micro%accpr(i,j) = micro%accpr(i,j) + oneMicControl%accpx(2)
+       micro%pcprr(i,j) = oneMicControl%pcprx(2)
+       if (oneMicControl%jnmb(2) >= 5) call ae1kmic(lpw,k3(1),micro%crp(:,i,j),oneMicControl%cx(:,2))
     endif
 
-    if (jnmb(3) >= 1) then
-       call ae1kmic(lpw,k3(3),micro%rpp(:,i,j),rx(:,3))
-       micro%accpp(i,j) = micro%accpp(i,j) + accpx(3)
-       micro%pcprp(i,j) = pcprx(3)
-       if (jnmb(3) >= 5) call ae1kmic(lpw,k3(3),micro%cpp(:,i,j),cx(:,3))
+    if (oneMicControl%jnmb(3) >= 1) then
+       call ae1kmic(lpw,k3(3),micro%rpp(:,i,j),oneMicControl%rx(:,3))
+       micro%accpp(i,j) = micro%accpp(i,j) + oneMicControl%accpx(3)
+       micro%pcprp(i,j) = oneMicControl%pcprx(3)
+       if (oneMicControl%jnmb(3) >= 5) call ae1kmic(lpw,k3(3),micro%cpp(:,i,j),oneMicControl%cx(:,3))
     endif
 
-    if (jnmb(4) >= 1) then
-       call ae1kmic(lpw,k2(10),micro%rsp(:,i,j),rx(:,4))
-       micro%accps(i,j) = micro%accps(i,j) + accpx(4)
-       micro%pcprs(i,j) = pcprx(4)
-       if (jnmb(4) >= 5) call ae1kmic(lpw,k2(10),micro%csp(:,i,j),cx(:,4))
+    if (oneMicControl%jnmb(4) >= 1) then
+       call ae1kmic(lpw,k2(10),micro%rsp(:,i,j),oneMicControl%rx(:,4))
+       micro%accps(i,j) = micro%accps(i,j) + oneMicControl%accpx(4)
+       micro%pcprs(i,j) = oneMicControl%pcprx(4)
+       if (oneMicControl%jnmb(4) >= 5) call ae1kmic(lpw,k2(10),micro%csp(:,i,j),oneMicControl%cx(:,4))
     endif
 
-    if (jnmb(5) >= 1) then
-       call ae1kmic(lpw,k2(10),micro%rap(:,i,j),rx(:,5))
-       micro%accpa(i,j) = micro%accpa(i,j) + accpx(5)
-       micro%pcpra(i,j) = pcprx(5)
-       if (jnmb(5) >= 5) call ae1kmic(lpw,k2(10),micro%cap(:,i,j),cx(:,5))
+    if (oneMicControl%jnmb(5) >= 1) then
+       call ae1kmic(lpw,k2(10),micro%rap(:,i,j),oneMicControl%rx(:,5))
+       micro%accpa(i,j) = micro%accpa(i,j) + oneMicControl%accpx(5)
+       micro%pcpra(i,j) = oneMicControl%pcprx(5)
+       if (oneMicControl%jnmb(5) >= 5) call ae1kmic(lpw,k2(10),micro%cap(:,i,j),oneMicControl%cx(:,5))
     endif
 
-    if (jnmb(6) >= 1) then
-       call ae1kmic(lpw,k2(10),micro%rgp(:,i,j),rx(:,6))
-       call ae1kmic(lpw,k2(10),micro%q6(:,i,j),qx(:,6))
-       micro%accpg(i,j) = micro%accpg(i,j) + accpx(6)
-       micro%pcprg(i,j) = pcprx(6)
-       if (jnmb(6) >= 5) call ae1kmic(lpw,k2(10),micro%cgp(:,i,j),cx(:,6))
+    if (oneMicControl%jnmb(6) >= 1) then
+       call ae1kmic(lpw,k2(10),micro%rgp(:,i,j),oneMicControl%rx(:,6))
+       call ae1kmic(lpw,k2(10),micro%q6(:,i,j),oneMicControl%qx(:,6))
+       micro%accpg(i,j) = micro%accpg(i,j) + oneMicControl%accpx(6)
+       micro%pcprg(i,j) = oneMicControl%pcprx(6)
+       if (oneMicControl%jnmb(6) >= 5) call ae1kmic(lpw,k2(10),micro%cgp(:,i,j),oneMicControl%cx(:,6))
     endif
 
-    if (jnmb(7) >= 1) then
-       call ae1kmic(lpw,k2(10),micro%rhp(:,i,j),rx(:,7))
-       call ae1kmic(lpw,k2(10),micro%q7(:,i,j),qx(:,7))
-       micro%accph(i,j) = micro%accph(i,j) + accpx(7)
-       micro%pcprh(i,j) = pcprx(7)
-       if (jnmb(7) >= 5) call ae1kmic(lpw,k2(10),micro%chp(:,i,j),cx(:,7))
+    if (oneMicControl%jnmb(7) >= 1) then
+       call ae1kmic(lpw,k2(10),micro%rhp(:,i,j),oneMicControl%rx(:,7))
+       call ae1kmic(lpw,k2(10),micro%q7(:,i,j),oneMicControl%qx(:,7))
+       micro%accph(i,j) = micro%accph(i,j) + oneMicControl%accpx(7)
+       micro%pcprh(i,j) = oneMicControl%pcprx(7)
+       if (oneMicControl%jnmb(7) >= 5) call ae1kmic(lpw,k2(10),micro%chp(:,i,j),oneMicControl%cx(:,7))
     endif
 
     return
@@ -595,20 +576,22 @@ contains
   !******************************************************************************
   !change_MP
   !
-  subroutine copy2(m1,k1,k2,k3,lpw_R,i,j,chemic)
+  subroutine copy2(m1,k1,k2,k3,lpw_R,i,j,chemic, oneMicControl)
     ! Arguments:
     integer, intent(in)              :: m1
     type (chemic_vars), intent(inout) :: chemic 
     integer, dimension(10), intent(in) :: k1, k2, k3
     integer, intent(in) :: i,j
     real, intent(in) :: lpw_R
+    type(MicControl), pointer, intent(in) :: oneMicControl
+    
     integer :: lpw
 
     lpw=int(lpw_R)
 
-    if (jnmb(2) >= 1) then
-       call ae1kmic(lpw,k2(10),chemic%coll(:,i,j),xcoll)
-       call ae1kmic(lpw,k2(10),chemic%sedimr(:,i,j),rsedim)
+    if (oneMicControl%jnmb(2) >= 1) then
+       call ae1kmic(lpw,k2(10),chemic%coll(:,i,j),oneMicControl%xcoll)
+       call ae1kmic(lpw,k2(10),chemic%sedimr(:,i,j),oneMicControl%rsedim)
     endif
 
     return

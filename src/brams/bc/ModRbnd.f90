@@ -9,6 +9,9 @@ module ModRbnd
   use ModMicrophysicsMisc, only: &
        negadj1
 
+  use ModMicControl, only: &
+       MicControl
+  
   use mem_grid, only: dtlt, &
        dtlv, &
        ibnd, &
@@ -1359,11 +1362,12 @@ contains
   end subroutine rayf
 
   subroutine trsets(oneScalarTab, oneScalarTabSize, oneBasicFields, &
-       oneTurbFields)
+       oneTurbFields, oneMicControl)
     type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
     integer, intent(inout) :: oneScalarTabSize
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
+    type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: n, mxyzp
     character(len=*), parameter :: h="**(trsets)**"
 
@@ -1399,7 +1403,7 @@ contains
 
     call tkeinit(mzp,mxp,myp, oneTurbFields)
 
-    call negadj1(mzp,mxp,myp, oneBasicFields)
+    call negadj1(mzp,mxp,myp, oneBasicFields, oneMicControl)
 
     !--(DMK-CCATT-INI)-----------------------------------------------------
     !-srf for chem - aerosol quantities

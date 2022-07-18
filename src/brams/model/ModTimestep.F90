@@ -595,7 +595,9 @@ contains
     !  Moisture variables positive definite
     !----------------------------------------
     if    (mcphys_type == 0) then
-       call negadj1(mzp,mxp,myp, oneGrid%Basic)
+       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+       call negadj1(mzp,mxp,myp, oneGrid%Basic, oneGrid%MicControlVars)
+       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
 
 
     elseif(mcphys_type == 1) then
@@ -667,8 +669,10 @@ contains
 
     !  Apply scalar b.c.'s
     !----------------------------------------
+    call DeepCopyToMicControl(oneGrid%MicControlVars,h)
     call trsets(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic,&
-         oneGrid%Turb)
+         oneGrid%Turb,oneGrid%MicControlVars)
+    call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
 
     !  Lateral velocity boundaries - radiative
     !-------------------------------------------

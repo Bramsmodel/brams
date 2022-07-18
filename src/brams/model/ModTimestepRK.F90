@@ -829,7 +829,9 @@ contains
     !  Moisture variables positive definite
     !----------------------------------------
     if     (mcphys_type == 0) then
-       call negadj1(mzp,mxp,myp, oneGrid%Basic)
+       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+       call negadj1(mzp,mxp,myp, oneGrid%Basic,oneGrid%MicControlVars)
+       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
 
     elseif(mcphys_type == 1) then
        call DeepCopyToMicControl(oneGrid%MicControlVars,h)
@@ -879,8 +881,10 @@ contains
 
     !  Apply scalar b.c.'s (THP is changed here)
     !----------------------------------------
+    call DeepCopyToMicControl(oneGrid%MicControlVars,h)
     call trsets(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, &
-         oneGrid%Turb)
+         oneGrid%Turb,oneGrid%MicControlVars)
+    call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
 
     !---> THC must be changed to THP to include microphysics/trsets changes
     !---> for the next timestep

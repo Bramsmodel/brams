@@ -7,13 +7,13 @@
 !###########################################################################
 module ModMicNuc
 
-  use micphys, only: &
-       cccnx, cifnx, cx, ddnc, dnfac, drhhz, dtc, dthz, dynvisc, emb, emb0, &
-       fracc, frachz, ipris, jnmb, ndnc, parm, press, pwmasi, rvisair, &
-       rvlsair, rx, tair, tairc, thrmcon, tx, vap
-
+  use ModMicControl, only: &
+       MicControl
+  
   implicit none
 
+  include "MicConstants.h"
+  
   private
 
   public :: cldnuc
@@ -22,7 +22,7 @@ module ModMicNuc
 contains
 
   
-  subroutine cldnuc(m1,k1cnuc,k2cnuc,lpw,rv,wp,i,j)
+  subroutine cldnuc(m1,k1cnuc,k2cnuc,lpw,rv,wp,i,j,oneMicControl)
     integer, intent(in) :: m1
     integer, intent(out) :: k1cnuc
     integer, intent(out) :: k2cnuc
@@ -31,6 +31,7 @@ contains
     integer, intent(in) :: lpw
     real, intent(inout) :: rv(:)
     real, intent(in) :: wp(:)
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     integer :: k,jtemp,jw,jconcen,iw,iconc
     real :: rnuc,excessrv,rcnew,tab,concen_tab,cxadd  &
@@ -103,36 +104,36 @@ contains
     k1cnuc = lpw
     k2cnuc = 1
 
-    if (jnmb(1) == 1 .or. jnmb(1) == 4) then
+    if (oneMicControl%jnmb(1) == 1 .or. oneMicControl%jnmb(1) == 4) then
 
-       ! cloud number specified in parm(1)   
+       ! cloud number specified in oneMicControl%parm(1)   
 
-       rnuc = parm(1) * emb0(1)
+       rnuc = oneMicControl%parm(1) * oneMicControl%emb0(1)
 
        do k = lpw,m1-1
-          excessrv = rv(k) - 1.0001 * rvlsair(k)
+          excessrv = rv(k) - 1.0001 * oneMicControl%rvlsair(k)
           rcnew = 0.
           if (excessrv > 0.) then
              rcnew = min(rnuc,.5*excessrv)
-             rx(k,1) = rx(k,1) + rcnew
+             oneMicControl%rx(k,1) = oneMicControl%rx(k,1) + rcnew
              rv(k) = rv(k) - rcnew
              k2cnuc = k
-             cx(k,1) = min(parm(1),rx(k,1) / emb0(1))
+             oneMicControl%cx(k,1) = min(oneMicControl%parm(1),oneMicControl%rx(k,1) / oneMicControl%emb0(1))
           elseif (k2cnuc == 1) then
              k1cnuc = k + 1
           endif
        enddo
 
-    elseif (jnmb(1) >= 5) then
+    elseif (oneMicControl%jnmb(1) >= 5) then
 
        ! cloud number predicted from ccn field
 
        do k = lpw,m1-1
-          excessrv = rv(k) - 1.0001 * rvlsair(k)
+          excessrv = rv(k) - 1.0001 * oneMicControl%rvlsair(k)
 
           if (excessrv > 0.) then
 
-             tairc_nuc = tairc(k)
+             tairc_nuc = oneMicControl%tairc(k)
              if (tairc_nuc < -30.) then
                 tairc_nuc = -30.
              elseif (tairc_nuc > 30.) then
@@ -157,16 +158,16 @@ contains
              ! ALWAYS concen_nuc = ccn concen predicted in cccnp !!!! 
              ! (note here icloud >=5)
              !
-             concen_nuc = cccnx(k)
+             concen_nuc = oneMicControl%cccnx(k)
              !-------------------------------------------------------------
              !
              !--(DMK-CARRIO-OLD)------------------------------------------------------------
-             !          if (jnmb(1) == 5) then
+             !          if (oneMicControl%jnmb(1) == 5) then
              !             concen_nuc = cparm     ! ccn concen const value specified in cparm
-             !          elseif (jnmb(1) == 6) then
+             !          elseif (oneMicControl%jnmb(1) == 6) then
              !            ! concen_nuc = prof(k)   ! ccn concen specified vertical profile
-             !          elseif (jnmb(1) == 7) then
-             !             concen_nuc = cccnx(k)  ! ccn concen predicted in cccnp
+             !          elseif (oneMicControl%jnmb(1) == 7) then
+             !             concen_nuc = oneMicControl%cccnx(k)  ! ccn concen predicted in cccnp
              !          else
              !             print*, 'icloud set to value greater than 7: ',icloud
              !             print*, 'stopping model '
@@ -193,19 +194,19 @@ contains
 
              ! Nucleate cloud droplets only if concen_tab > existing cloud concentration
 
-             if (concen_tab > cx(k,1)) then
-                cxadd = concen_tab - cx(k,1)
-                if (cxadd > excessrv / emb0(1)) cxadd = excessrv / emb0(1)
-                cx(k,1) = cx(k,1) + cxadd
-                rx(k,1) = rx(k,1) + excessrv
+             if (concen_tab > oneMicControl%cx(k,1)) then
+                cxadd = concen_tab - oneMicControl%cx(k,1)
+                if (cxadd > excessrv / oneMicControl%emb0(1)) cxadd = excessrv / oneMicControl%emb0(1)
+                oneMicControl%cx(k,1) = oneMicControl%cx(k,1) + cxadd
+                oneMicControl%rx(k,1) = oneMicControl%rx(k,1) + excessrv
                 k2cnuc = k
 
                 !--(DMK-CARRIO-INI)------------------------------------------------------------     
                 !Carrio 2012 -------------------------------------------------
-                ! I added here a sink for cccnp (returns through cccnx)
+                ! I added here a sink for cccnp (returns through oneMicControl%cccnx)
                 ! The sink is naturally the source of ccp
                 !
-                cccnx(k)=cccnx(k)-cxadd
+                oneMicControl%cccnx(k)=oneMicControl%cccnx(k)-cxadd
                 !
                 !Carrio 2012 -------------------------------------------------
                 !--(DMK-CARRIO-FIM)------------------------------------------------------------
@@ -229,7 +230,7 @@ contains
 
   !******************************************************************************
 
-  subroutine icenuc(m1,kc1,kc2,k1pnuc,k2pnuc,lpw,ngr,rv,dn0,dtlt,i,j)
+  subroutine icenuc(m1,kc1,kc2,k1pnuc,k2pnuc,lpw,ngr,rv,dn0,dtlt,i,j,oneMicControl)
     integer, intent(in) :: m1
     integer, intent(in) :: kc1
     integer, intent(in) :: kc2
@@ -242,6 +243,7 @@ contains
     real, intent(in) :: dtlt
     real, intent(in) :: rv(:)
     real, intent(in) :: dn0(:)
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     integer :: k,idnc,itc,irhhz,ithz
     real :: dn1,fraccld,ridnc,ssi0,wdnc2,tc,ritc,wtc2  &
@@ -265,17 +267,17 @@ contains
 
        ! define dn locally from emb
 
-       dn1 = dnfac(1) * emb(k,1) ** pwmasi(1)
+       dn1 = oneMicControl%dnfac(1) * oneMicControl%emb(k,1) ** oneMicControl%pwmasi(1)
 
        fraccld = 0.
 
-       if (rx(k,1) .gt. 1.e-10 .and. tairc(k) .le. -30.01) then
+       if (oneMicControl%rx(k,1) .gt. 1.e-10 .and. oneMicControl%tairc(k) .le. -30.01) then
 
           ridnc = max(1.,min(float(ndnc-1),dn1 / ddnc))
           idnc = int(ridnc)
           wdnc2 = ridnc - float(idnc)
 
-          tc = max(-49.99,tairc(k))
+          tc = max(-49.99,oneMicControl%tairc(k))
           ritc = (tc + 50.00) / dtc + 1.0
 
 !!$      if (ritc<1) then
@@ -285,18 +287,18 @@ contains
 
           itc = int(ritc)
           wtc2 = ritc - float(itc)
-          fraccld = (1.-wdnc2) * (1.-wtc2) * fracc(idnc  ,itc  ,ngr)  &
-               +     wdnc2  * (1.-wtc2) * fracc(idnc+1,itc  ,ngr)  &
-               + (1.-wdnc2) *     wtc2  * fracc(idnc  ,itc+1,ngr)  &
-               +     wdnc2  *     wtc2  * fracc(idnc+1,itc+1,ngr)
+          fraccld = (1.-wdnc2) * (1.-wtc2) * oneMicControl%fracc(idnc  ,itc  ,ngr)  &
+               +     wdnc2  * (1.-wtc2) * oneMicControl%fracc(idnc+1,itc  ,ngr)  &
+               + (1.-wdnc2) *     wtc2  * oneMicControl%fracc(idnc  ,itc+1,ngr)  &
+               +     wdnc2  *     wtc2  * oneMicControl%fracc(idnc+1,itc+1,ngr)
 
        endif
 
        !  Heterogeneous contact ice nucleation of cloud droplets by diffusio-
        !  phoresis, thermophoresis, and Brownian motion (transport of IN)
 
-       call contnuc (rx(k,1),cx(k,1),tx(k,1),vap(k,1),press(k)  &
-            ,dynvisc(k),thrmcon(k),tair(k),tairc(k)  &
+       call contnuc (oneMicControl%rx(k,1),oneMicControl%cx(k,1),oneMicControl%tx(k,1),oneMicControl%vap(k,1),oneMicControl%press(k)  &
+            ,oneMicControl%dynvisc(k),oneMicControl%thrmcon(k),oneMicControl%tair(k),oneMicControl%tairc(k)  &
             ,pbvi,ptvi,pdvi,ptotvi,dn1,dtlt,i,k)
 
        ! progIFN: Scale ptotvi returned from contnuc by prognosed IFN fraction
@@ -306,14 +308,14 @@ contains
        ! MIKE ADDED THIS COMMENTED ccinp(k)=ccinp(k)-ptotvi, but
        ! probably do not want sink of ccinp here.
 
-       cldnuc = ptotvi + max(0.,fraccld * cx(k,1) - cx(k,3))
-       !         cldnucr = cldnuc * emb(k,1)
-       cldnucr = min(rx(k,1),ptotvi * emb(k,1) + fraccld * rx(k,1))
+       cldnuc = ptotvi + max(0.,fraccld * oneMicControl%cx(k,1) - oneMicControl%cx(k,3))
+       !         cldnucr = cldnuc * oneMicControl%emb(k,1)
+       cldnucr = min(oneMicControl%rx(k,1),ptotvi * oneMicControl%emb(k,1) + fraccld * oneMicControl%rx(k,1))
 
-       rx(k,3) = rx(k,3) + cldnucr
-       rx(k,1) = rx(k,1) - cldnucr
-       cx(k,3) = cx(k,3) + cldnuc
-       cx(k,1) = cx(k,1) - cldnuc
+       oneMicControl%rx(k,3) = oneMicControl%rx(k,3) + cldnucr
+       oneMicControl%rx(k,1) = oneMicControl%rx(k,1) - cldnucr
+       oneMicControl%cx(k,3) = oneMicControl%cx(k,3) + cldnuc
+       oneMicControl%cx(k,1) = oneMicControl%cx(k,1) - cldnuc
 
     enddo
 
@@ -325,20 +327,20 @@ contains
     k2pnuc = 1
 
     do k = lpw,m1-1
-       rhhz = rv(k) / rvlsair(k)
+       rhhz = rv(k) / oneMicControl%rvlsair(k)
        haznuc = 0.
-       if (rhhz .gt. 0.82 .and. tairc(k) .le. -35.01) then
+       if (rhhz .gt. 0.82 .and. oneMicControl%tairc(k) .le. -35.01) then
           rirhhz = min(0.1799,rhhz-0.82) / drhhz + 1.0
           irhhz = int(rirhhz)
           wrhhz2 = rirhhz - float(irhhz)
-          thz = max(-59.99,tairc(k))
+          thz = max(-59.99,oneMicControl%tairc(k))
           rithz = (thz + 60.00) / dthz + 1.0
           ithz = int(rithz)
           wthz2 = rithz - float(ithz)
-          frachaz = (1.-wrhhz2) * (1.-wthz2) * frachz(irhhz  ,ithz  )  &
-               +     wrhhz2  * (1.-wthz2) * frachz(irhhz+1,ithz  )  &
-               + (1.-wrhhz2) *     wthz2  * frachz(irhhz  ,ithz+1)  &
-               +     wrhhz2  *     wthz2  * frachz(irhhz+1,ithz+1)
+          frachaz = (1.-wrhhz2) * (1.-wthz2) * oneMicControl%frachz(irhhz  ,ithz  )  &
+               +     wrhhz2  * (1.-wthz2) * oneMicControl%frachz(irhhz+1,ithz  )  &
+               + (1.-wrhhz2) *     wthz2  * oneMicControl%frachz(irhhz  ,ithz+1)  &
+               +     wrhhz2  *     wthz2  * oneMicControl%frachz(irhhz+1,ithz+1)
           frachaz = 1. - exp(-frachaz * dtlt)
           ! OPTION 1
           haznuc = frachaz * 300.e6
@@ -351,9 +353,9 @@ contains
        !  Heterogeneous nucleation by deposition condensation freezing
        !  with deposition nuclei.  In 4.3 and beyond, assume that it gives #/kg.
 
-       ssi = min(ssi0,rv(k) / rvisair(k) - 1.)
+       ssi = min(ssi0,rv(k) / oneMicControl%rvisair(k) - 1.)
 
-       if (ssi .gt. 0. .and. tairc(k) .le. -5.) then
+       if (ssi .gt. 0. .and. oneMicControl%tairc(k) .le. -5.) then
           fracifn = exp(12.96 * (ssi - ssi0))
        else
           fracifn = 0.
@@ -361,12 +363,12 @@ contains
 
        ! Diagnose maximum number of IFN to activate based on ipris
 
-       if (ipris .eq. 5) then
+       if (oneMicControl%ipris .eq. 5) then
           diagni = fracifn * 1.e5
-       elseif (ipris .eq. 6) then
+       elseif (oneMicControl%ipris .eq. 6) then
           diagni = fracifn * dn0(k) ** 5.4 * 1.e5
-       elseif (ipris .eq. 7) then
-          diagni = fracifn * cifnx(k)
+       elseif (oneMicControl%ipris .eq. 7) then
+          diagni = fracifn * oneMicControl%cifnx(k)
        endif
 
        ! orig Meyers formula:     +      diagni = exp(6.269 + 12.96 * ssi)
@@ -377,21 +379,21 @@ contains
        ! BEGIN MIKE'S SECTION FOR LIMITING NUMBER OF CRYSTALS NUCLEATED
        ! BY NUMBER OF ICE CRYSTALS PRESENT ALREADY
 
-       vapnuc = max(0.,haznuc + diagni - cx(k,3))
-       vapnucr = vapnuc * emb0(3)
+       vapnuc = max(0.,haznuc + diagni - oneMicControl%cx(k,3))
+       vapnucr = vapnuc * oneMicControl%emb0(3)
        if (vapnucr .gt. 0.) then
-          availvap = .5 * (rv(k) - rvisair(k))
+          availvap = .5 * (rv(k) - oneMicControl%rvisair(k))
           if (vapnucr .gt. availvap) then
              vapnucr = min(vapnucr, max(0.,availvap))
           endif
        endif
-       vapnuc = vapnucr / emb0(3)
+       vapnuc = vapnucr / oneMicControl%emb0(3)
 
-       rx(k,3) = rx(k,3) + vapnucr
-       cx(k,3) = cx(k,3) + vapnuc
+       oneMicControl%rx(k,3) = oneMicControl%rx(k,3) + vapnucr
+       oneMicControl%cx(k,3) = oneMicControl%cx(k,3) + vapnuc
 
-       if (rx(k,3) .gt. 1.e-9) k2pnuc = k
-       if (k2pnuc .eq. 1 .and. rx(k,3) .lt. 1.e-9) k1pnuc = k + 1
+       if (oneMicControl%rx(k,3) .gt. 1.e-9) k2pnuc = k
+       if (k2pnuc .eq. 1 .and. oneMicControl%rx(k,3) .lt. 1.e-9) k1pnuc = k + 1
 
     enddo
 
