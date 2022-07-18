@@ -594,13 +594,17 @@ contains
 
     !  Sub-grid diffusion terms
     !----------------------------------------
+    call DeepCopyToMicControl(oneGrid%MicControlVars,h)
     if ((if_adap==0) .and. (OneGrid%Ramsin%ihorgrad==2)) then
        call diffuse_brams31(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
-            oneGrid%Basic, oneGrid%Ramsin, oneGrid%Turb, oneGrid%Id)
+            oneGrid%Basic, oneGrid%Ramsin, oneGrid%Turb, oneGrid%Id, &
+            oneGrid%MicControlVars)
     else
        call diffuse(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, &
-            oneGrid%Turb, oneGrid%Ramsin, oneGrid%Id)
+            oneGrid%Turb, oneGrid%Ramsin, oneGrid%Id, &
+            oneGrid%MicControlVars)
     endif
+    call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
 
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
 
@@ -943,7 +947,10 @@ contains
        !- call Matrix Aerosol Model
        !- using symmetric/sequential spliting operator
        if(AEROSOL==2) then
-          call MatrixDriver(ia,iz,ja,jz,mzp,mxp,myp, oneGrid%Basic, oneGrid%Turb)
+          call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+          call MatrixDriver(ia,iz,ja,jz,mzp,mxp,myp, oneGrid%Basic, oneGrid%Turb, &
+               oneGrid%MicControlVars)
+          call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
        endif
     endif
     if (ccatt==1 .and. aerosol == 1) then

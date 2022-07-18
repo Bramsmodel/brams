@@ -92,8 +92,6 @@ module ModDiffuse
        alf_eps,   &
        alf_tke
 
-  use micphys, only:      &
-       level                !INTENT(IN)
 
   use mem_opt, only:      &      ! For optmization
        jstep,   &
@@ -102,6 +100,9 @@ module ModDiffuse
 
   use ModNamelistFile, only: &
        NamelistFile
+
+  use ModMicControl, only: &
+       MicControl
 
   implicit none
   
@@ -113,7 +114,7 @@ contains
 
 
   subroutine diffuse_brams31(oneScalarTab, oneScalarTabSize, oneBasicFields, &
-       oneNamelistFile, oneTurbFields, gridId)
+       oneNamelistFile, oneTurbFields, gridId, oneMicControl)
 
     ! +-----------------------------------------------------------------+
     ! \     this routine is the subdriver to compute tendencies due to  \
@@ -130,6 +131,7 @@ contains
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     integer, intent(in) :: gridId
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     include "constants.h"
 
@@ -175,10 +177,10 @@ contains
          ,scratch%vt3dn     ,scr2           &
          ,idiffk)
 
-    if (level<=1) &
+    if (oneMicControl%level<=1) &
          scratch%vt3dp = 0.
 
-    if (level>=2) &
+    if (oneMicControl%level>=2) &
          call ae1_l(mxyzp, scratch%vt3dp, micro_g(ngrid)%rcp)
 
 
@@ -187,7 +189,8 @@ contains
          ,oneBasicFields%rv    ,scratch%vt3dp       &
          ,oneBasicFields%pp    ,oneBasicFields%pi0  &
          ,scratch%vt3dj        ,grid_g(ngrid)%rtgt  &
-         ,grid_g(ngrid)%lpw    )
+         ,grid_g(ngrid)%lpw, &
+         oneMicControl)
 
     if (idiffk <= 3) then
        call mxdefm(mzp,mxp,myp,ia,iz,ja,jz,ibcon,jdim            &

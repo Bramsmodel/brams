@@ -1008,7 +1008,9 @@ contains
 
        ! Allocate memory for this process sub-domain only
        !**(JP)** This should allocate memory for all modules (to be certified!!!)
+       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
        call MemAlloc(oneGrid, 2)
+       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
 
        if(ioutput == 5)then
           call setInitial4Vtable(1, chemistry, aerosol)

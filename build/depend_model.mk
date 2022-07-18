@@ -14,7 +14,7 @@ aer1_list.o : $(AEROSOL)/aer1_list_$(AERLEVEL).f90
 	rm -f $(<F:.f90=.f90)
 	@ln -fs aer1_list_$(AERLEVEL).o aer1_list.o
 
-utils_f.o : $(UTILS_LIB)/utils_f.f90 dump.o ModDateUtils.o $(UTILS_INCS)/files.h \
+utils_f.o : $(UTILS_LIB)/utils_f.f90 ModDateUtils.o dump.o $(UTILS_INCS)/files.h \
 	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
@@ -26,23 +26,23 @@ an_header.o : $(UTILS_MODS)/an_header.f90 $(UTILS_INCS)/files.h \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModAsGen.o : $(ISAN)/ModAsGen.f90 mem_grid.o isan_coms.o 
+ModAsGen.o : $(ISAN)/ModAsGen.f90 isan_coms.o mem_grid.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModAsTi.o : $(ISAN)/ModAsTi.f90 rconstants.o mem_grid.o isan_coms.o \
-	ModChemAObj.o 
+ModAsTi.o : $(ISAN)/ModAsTi.f90 isan_coms.o mem_grid.o ModChemAObj.o \
+	rconstants.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModAsTp.o : $(ISAN)/ModAsTp.f90 rconstants.o isan_coms.o 
+ModAsTp.o : $(ISAN)/ModAsTp.f90 isan_coms.o rconstants.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModAVarF.o : $(ISAN)/ModAVarF.f90 rconstants.o mem_grid.o isan_coms.o ModRbnd.o 
+ModAVarF.o : $(ISAN)/ModAVarF.f90 isan_coms.o mem_grid.o ModRbnd.o rconstants.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -72,35 +72,34 @@ ModChemAObj.o : $(ISAN_CHEM)/ModChemAObj.f90 isan_coms.o
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModChemAsti.o : $(ISAN_CHEM)/ModChemAsti.f90 mem_chem1.o chem_isan_coms.o \
-	ModAsTi.o mem_grid.o mem_aer1.o ModChemFirstRams.o isan_coms.o ModChemAsti2.o \
-	ModChemAObj.o ModChemVInterps.o 
+ModChemAsti.o : $(ISAN_CHEM)/ModChemAsti.f90 isan_coms.o mem_grid.o \
+	ModChemAsti2.o ModAsTi.o mem_chem1.o ModChemFirstRams.o chem_isan_coms.o \
+	ModChemVInterps.o ModChemAObj.o mem_aer1.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModChemAsti2.o : $(ISAN_CHEM)/ModChemAsti2.f90 ModDateUtils.o isan_coms.o \
-	rconstants.o 
+ModChemAsti2.o : $(ISAN_CHEM)/ModChemAsti2.f90 ModDateUtils.o rconstants.o \
+	isan_coms.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModChemAstp.o : $(ISAN_CHEM)/ModChemAstp.F90 chem1_list.o mem_chem1.o ModAsTp.o \
-	chem_isan_coms.o dump.o rconstants.o ModDateUtils.o mem_varinit.o isan_coms.o \
+ModChemAstp.o : $(ISAN_CHEM)/ModChemAstp.F90 mem_varinit.o isan_coms.o ModAsTp.o \
+	chem1_list.o mem_chem1.o chem_isan_coms.o ModDateUtils.o rconstants.o dump.o \
 	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModChemAvarf.o : $(ISAN_CHEM)/ModChemAvarf.f90 mem_chem1.o chem_isan_coms.o \
-	mem_grid.o mem_aer1.o ModNestFeed.o rconstants.o isan_coms.o ModRbnd.o \
-	ModAVarF.o 
+ModChemAvarf.o : $(ISAN_CHEM)/ModChemAvarf.f90 isan_coms.o ModAVarF.o mem_grid.o \
+	ModNestFeed.o mem_chem1.o chem_isan_coms.o ModRbnd.o rconstants.o mem_aer1.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-chem_dry_dep.o : $(MODEL_CHEM)/chem_dry_dep.f90 chem1_list.o mem_chem1.o \
-	aer1_list.o mem_aer1.o ModDateUtils.o extra.o 
+chem_dry_dep.o : $(MODEL_CHEM)/chem_dry_dep.f90 aer1_list.o extra.o chem1_list.o \
+	mem_chem1.o ModDateUtils.o mem_aer1.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -115,28 +114,27 @@ chem_fastjx_data.o : $(CCATT)/chem_fastjx_data.f90
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-chem_fastjx_driv.o : $(CCATT)/chem_fastjx_driv.f90 chem1_list.o \
-	chem_fastjx_data.o chem_fastjx57.o rconstants.o 
+chem_fastjx_driv.o : $(CCATT)/chem_fastjx_driv.f90 chem1_list.o chem_fastjx57.o \
+	rconstants.o chem_fastjx_data.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
 ModChemFileInv.o : $(ISAN_CHEM)/ModChemFileInv.f90 ModDateUtils.o mem_grid.o \
-	isan_coms.o dump.o $(UTILS_INCS)/files.h $(UTILS_INCS)/constants.h 
+	dump.o isan_coms.o $(UTILS_INCS)/files.h $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModChemFirstRams.o : $(ISAN_CHEM)/ModChemFirstRams.f90 ModNestFillDens.o \
-	ModRcio.o mem_grid.o ModChemRefState.o rconstants.o mem_scratch.o isan_coms.o \
-	an_header.o grid_dims.o ModGetVar.o $(UTILS_INCS)/files.h \
-	$(UTILS_INCS)/constants.h 
+ModChemFirstRams.o : $(ISAN_CHEM)/ModChemFirstRams.f90 isan_coms.o mem_grid.o \
+	ModNestFillDens.o ModGetVar.o ModRcio.o grid_dims.o an_header.o rconstants.o \
+	ModChemRefState.o mem_scratch.o $(UTILS_INCS)/files.h $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-chem_isan_coms.o : $(ISAN_CHEM)/chem_isan_coms.f90 chem1_list.o isan_coms.o \
-	aer1_list.o 
+chem_isan_coms.o : $(ISAN_CHEM)/chem_isan_coms.f90 isan_coms.o aer1_list.o \
+	chem1_list.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -152,21 +150,21 @@ chem_orage.o : $(CCATT)/chem_orage.f90 mem_scratch1_grell.o
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-chem_plumerise_scalar.o : $(CCATT)/chem_plumerise_scalar.f90 node_mod.o \
-	mem_chem1.o mem_aer1.o mem_plume_chem1.o 
+chem_plumerise_scalar.o : $(CCATT)/chem_plumerise_scalar.f90 mem_aer1.o \
+	mem_chem1.o mem_plume_chem1.o node_mod.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModChemRefState.o : $(ISAN_CHEM)/ModChemRefState.f90 rconstants.o ccatt_start.o \
-	ModNestFillDens.o 
+ModChemRefState.o : $(ISAN_CHEM)/ModChemRefState.f90 ModNestFillDens.o \
+	ccatt_start.o rconstants.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-chem_sources.o : $(CCATT)/chem_sources.f90 ReadBcst.o mem_chem1.o \
-	ModNamelistFile.o aer1_list.o mem_plume_chem1.o mem_grid.o mem_aer1.o \
-	ModControlVars.o ModDateUtils.o mem_volc_chem1.o io_params.o parlibf.o \
+chem_sources.o : $(CCATT)/chem_sources.f90 ReadBcst.o mem_grid.o aer1_list.o \
+	ModControlVars.o mem_chem1.o mem_plume_chem1.o parlibf.o mem_volc_chem1.o \
+	ModNamelistFile.o ModDateUtils.o io_params.o mem_aer1.o \
 	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
@@ -208,9 +206,9 @@ chem_spack_lu.o : $(CCATT)/chem_spack_lu.f90
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-chem_spack_qssa.o : $(CCATT)/chem_spack_qssa.f90 mem_chem1.o \
-	chem_spack_fexprod.o chem_spack_rates.o chem_spack_kinetic.o \
-	chem_spack_fexloss.o chem_spack_dratedc.o 
+chem_spack_qssa.o : $(CCATT)/chem_spack_qssa.f90 chem_spack_dratedc.o \
+	chem_spack_fexprod.o mem_chem1.o chem_spack_rates.o chem_spack_fexloss.o \
+	chem_spack_kinetic.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -220,23 +218,23 @@ chem_spack_rates.o : $(MODEL_CHEM)/chem_spack_rates.f90
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-chem_spack_rodas3_dyndt.o : $(CCATT)/chem_spack_rodas3_dyndt.f90 mem_chem1.o \
-	chem_spack_ros.o mem_grid.o mem_spack.o chem_spack_fexchem.o extra.o \
-	chem_spack_kinetic.o chem_spack_jacdchemdc.o 
+chem_spack_rodas3_dyndt.o : $(CCATT)/chem_spack_rodas3_dyndt.f90 mem_grid.o \
+	extra.o mem_spack.o mem_chem1.o chem_spack_ros.o chem_spack_jacdchemdc.o \
+	chem_spack_fexchem.o chem_spack_kinetic.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-chem_spack_ros.o : $(CCATT)/chem_spack_ros.f90 mem_chem1.o mem_spack.o \
-	chem_spack_fexchem.o chem_spack_kinetic.o chem_spack_solve_sparse.o \
-	chem_spack_jacdchemdc.o 
+chem_spack_ros.o : $(CCATT)/chem_spack_ros.f90 mem_spack.o \
+	chem_spack_solve_sparse.o mem_chem1.o chem_spack_jacdchemdc.o \
+	chem_spack_fexchem.o chem_spack_kinetic.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-chem_spack_ros_dyndt.o : $(CCATT)/chem_spack_ros_dyndt.f90 mem_chem1.o \
-	chem_spack_ros.o mem_spack.o chem_spack_fexchem.o chem_spack_kinetic.o \
-	chem_spack_solve_sparse.o chem_spack_jacdchemdc.o 
+chem_spack_ros_dyndt.o : $(CCATT)/chem_spack_ros_dyndt.f90 mem_spack.o \
+	chem_spack_solve_sparse.o mem_chem1.o chem_spack_ros.o chem_spack_jacdchemdc.o \
+	chem_spack_fexchem.o chem_spack_kinetic.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -266,23 +264,23 @@ chem_uv_att.o : $(CCATT)/chem_uv_att.f90
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModChemVInterps.o : $(ISAN_CHEM)/ModChemVInterps.f90 rconstants.o isan_coms.o \
-	dump.o $(UTILS_INCS)/constants.h 
+ModChemVInterps.o : $(ISAN_CHEM)/ModChemVInterps.f90 isan_coms.o dump.o \
+	rconstants.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ChemDryDepDriver.o : $(MODEL_CHEM)/ChemDryDepDriver.f90 mem_chem1.o \
-	ModMicControl.o ModBasicFields.o mem_grid.o mem_aer1.o mem_radiate.o \
-	mem_cuparm.o rconstants.o ModTurbFields.o mem_leaf.o grid_dims.o chem_dry_dep.o \
-	mem_micro.o 
+ChemDryDepDriver.o : $(MODEL_CHEM)/ChemDryDepDriver.f90 ModMicControl.o \
+	mem_leaf.o mem_grid.o mem_micro.o mem_chem1.o ModTurbFields.o grid_dims.o \
+	mem_cuparm.o ModBasicFields.o rconstants.o chem_dry_dep.o mem_radiate.o \
+	mem_aer1.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ChemSourcesDriver.o : $(CCATT)/ChemSourcesDriver.f90 chem1_list.o mem_chem1.o \
-	mem_plume_chem1.o aer1_list.o chem_sources.o mem_aer1.o chem_plumerise_scalar.o \
-	mem_volc_chem1.o io_params.o mem_leaf.o mem_stilt.o 
+ChemSourcesDriver.o : $(CCATT)/ChemSourcesDriver.f90 mem_leaf.o aer1_list.o \
+	mem_stilt.o chem_sources.o chem1_list.o mem_chem1.o mem_plume_chem1.o \
+	chem_plumerise_scalar.o mem_volc_chem1.o io_params.o mem_aer1.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -292,16 +290,16 @@ coag.o : $(MATRIX)/coag.f90 memMatrix.o setup.o
 	$(F_COMMAND) $(<F:.f90=.f90)
 	rm -f $(<F:.f90=.f90)
 
-ModCondRead.o : $(FDDA)/ModCondRead.f90 mem_grid.o ModNudAnalysis.o \
-	ModDateUtils.o ModCondUpdate.o mem_varinit.o isan_coms.o ModRamsGrid.o \
+ModCondRead.o : $(FDDA)/ModCondRead.f90 mem_varinit.o isan_coms.o mem_grid.o \
+	ModCondUpdate.o ModRamsGrid.o ModDateUtils.o ModNudAnalysis.o \
 	$(UTILS_INCS)/files.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModCondUpdate.o : $(FDDA)/ModCondUpdate.f90 ModRcio.o mem_grid.o ModVarTables.o \
-	ModInitHis.o mem_varinit.o an_header.o grid_struct.o $(UTILS_INCS)/files.h \
-	$(UTILS_INCS)/constants.h 
+ModCondUpdate.o : $(FDDA)/ModCondUpdate.f90 mem_varinit.o mem_grid.o \
+	ModInitHis.o ModRcio.o an_header.o grid_struct.o ModVarTables.o \
+	$(UTILS_INCS)/files.h $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -311,14 +309,14 @@ ModConvComs.o : $(CUPARM)/ModConvComs.f90
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ConvPar_GF_GEOS5.o : $(CUPARM)/ConvPar_GF_GEOS5.F90 Henrys_Law_cts.o \
-	MAPL_Constants.o module_gate.o 
+ConvPar_GF_GEOS5.o : $(CUPARM)/ConvPar_GF_GEOS5.F90 MAPL_Constants.o \
+	module_gate.o Henrys_Law_cts.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModCuRead.o : $(CUPARM)/ModCuRead.f90 ModDateUtils.o mem_grid.o isan_coms.o \
-	mem_cuparm.o $(UTILS_INCS)/files.h $(UTILS_INCS)/constants.h 
+ModCuRead.o : $(CUPARM)/ModCuRead.f90 ModDateUtils.o mem_grid.o mem_cuparm.o \
+	isan_coms.o $(UTILS_INCS)/files.h $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -338,18 +336,18 @@ ModCupEnvCatt.o : $(CUPARM)/ModCupEnvCatt.f90
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModCupGrellCattDeep.o : $(CUPARM)/ModCupGrellCattDeep.f90 mem_grell_param2.o \
-	mem_grid.o mem_carma.o cup_output_vars.o ModCupUp.o mem_varinit.o Phys_const.o \
-	mem_scratch3_grell.o ModCupDn.o node_mod.o mem_scratch2_grell.o ccatt_start.o \
-	ModCupEnvCatt.o kbcon_ecmwf.o ModCupEnv.o 
+ModCupGrellCattDeep.o : $(CUPARM)/ModCupGrellCattDeep.f90 mem_varinit.o \
+	mem_grid.o mem_carma.o mem_grell_param2.o ccatt_start.o mem_scratch2_grell.o \
+	kbcon_ecmwf.o mem_scratch3_grell.o ModCupDn.o Phys_const.o ModCupEnv.o \
+	ModCupEnvCatt.o ModCupUp.o node_mod.o cup_output_vars.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModCupGrellCattShallow.o : $(CUPARM)/ModCupGrellCattShallow.f90 \
-	mem_grell_param2.o mem_grid.o mem_scratch2_grell_sh.o cup_output_vars.o \
-	mem_scratch3_grell_sh.o mem_varinit.o Phys_const.o node_mod.o ModCupUp.o \
-	ModCupEnvCatt.o ModCupEnv.o 
+ModCupGrellCattShallow.o : $(CUPARM)/ModCupGrellCattShallow.f90 mem_varinit.o \
+	mem_grid.o mem_scratch2_grell_sh.o mem_grell_param2.o mem_scratch3_grell_sh.o \
+	Phys_const.o node_mod.o ModCupEnvCatt.o ModCupEnv.o ModCupUp.o \
+	cup_output_vars.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -364,7 +362,7 @@ ModCupUp.o : $(CUPARM)/ModCupUp.f90
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-dam.o : $(ENERGY)/dam.f90 dump.o mem_grid.o ModDateUtils.o ModNamelistFile.o \
+dam.o : $(ENERGY)/dam.f90 ModNamelistFile.o mem_grid.o dump.o ModDateUtils.o \
 	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
@@ -375,9 +373,9 @@ depv.o : $(MATRIX)/depv.f90 memMatrix.o
 	$(F_COMMAND) $(<F:.f90=.f90)
 	rm -f $(<F:.f90=.f90)
 
-digitalFilter.o : $(MODEL)/digitalFilter.f90 ReadBcst.o ModNamelistFile.o \
-	ModBasicFields.o mem_grid.o ModVarTables.o ModControlVars.o ModDateUtils.o \
-	utilsMod.o io_params.o grid_dims.o node_mod.o $(UTILS_INCS)/files.h 
+digitalFilter.o : $(MODEL)/digitalFilter.f90 utilsMod.o ReadBcst.o mem_grid.o \
+	ModControlVars.o grid_dims.o ModNamelistFile.o ModDateUtils.o node_mod.o \
+	ModBasicFields.o io_params.o ModVarTables.o $(UTILS_INCS)/files.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -388,7 +386,7 @@ domain_decomp.o : $(INIT)/domain_decomp.f90 ModNamelistFile.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-extra.o : $(MEMORY)/extra.f90 dump.o ModVarTables.o ModNamelistFile.o \
+extra.o : $(MEMORY)/extra.f90 ModNamelistFile.o dump.o ModVarTables.o \
 	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
@@ -400,8 +398,8 @@ ModGetVar.o : $(UTILS_LIB)/ModGetVar.f90 dump.o an_header.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-gfdl_cloud_microphys.o : $(MICRO)/gfdl_cloud_microphys.F90 node_mod.o \
-	module_mp_radar.o 
+gfdl_cloud_microphys.o : $(MICRO)/gfdl_cloud_microphys.F90 module_mp_radar.o \
+	node_mod.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -416,7 +414,7 @@ grid_struct.o : $(MEMORY)/grid_struct.f90
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModGridSet.o : $(INIT)/ModGridSet.f90 rconstants.o mem_grid.o grid_dims.o 
+ModGridSet.o : $(INIT)/ModGridSet.f90 grid_dims.o mem_grid.o rconstants.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -464,13 +462,13 @@ ModLeaf3Hyd.o : $(SURFACE)/ModLeaf3Hyd.f90 ModLeafComs.o mem_grid.o mem_leaf.o
 	rm -f $(<F:.f90=.f90)
 
 ModLeaf3Init.o : $(SURFACE)/ModLeaf3Init.f90 ModLeafComs.o mem_grid.o \
-	rconstants.o io_params.o mem_leaf.o grid_dims.o teb_spm_start.o ModLeaf3.o 
+	teb_spm_start.o grid_dims.o rconstants.o ModLeaf3.o io_params.o mem_leaf.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND_LIGHT) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModLeaf3Teb.o : $(SURFACE)/ModLeaf3Teb.f90 mem_teb_vars_const.o mem_emiss.o \
-	ModUrban.o ModGasPart.o 
+ModLeaf3Teb.o : $(SURFACE)/ModLeaf3Teb.f90 ModUrban.o mem_emiss.o \
+	mem_teb_vars_const.o ModGasPart.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND_LIGHT) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -480,8 +478,8 @@ ModLeafComs.o : $(SURFACE)/ModLeafComs.f90 grid_dims.o
 	$(F_COMMAND_LIGHT) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-local_proc.o : $(MODEL)/local_proc.F90 ReadBcst.o dump.o mem_grid.o rconstants.o \
-	io_params.o grid_dims.o node_mod.o mem_stilt.o ref_sounding.o \
+local_proc.o : $(MODEL)/local_proc.F90 ReadBcst.o mem_grid.o mem_stilt.o \
+	ref_sounding.o grid_dims.o node_mod.o rconstants.o io_params.o dump.o \
 	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
@@ -502,21 +500,21 @@ mcica_random_numbers.o : $(RRTMG_SW_SRC)/mcica_random_numbers.f90 parkind.o
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mcica_subcol_gen_lw.o : $(RRTMG_LW_SRC)/mcica_subcol_gen_lw.f90 \
-	mcica_random_numbers.o rrlw_con.o parrrtm.o rrlw_wvn.o parkind.o 
+mcica_subcol_gen_lw.o : $(RRTMG_LW_SRC)/mcica_subcol_gen_lw.f90 parkind.o \
+	mcica_random_numbers.o rrlw_con.o parrrtm.o rrlw_wvn.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mcica_subcol_gen_sw.o : $(RRTMG_SW_SRC)/mcica_subcol_gen_sw.f90 parrrsw.o \
-	mcica_random_numbers.o rrsw_wvn.o rrsw_con.o parkind.o rrsw_vsn.o 
+mcica_subcol_gen_sw.o : $(RRTMG_SW_SRC)/mcica_subcol_gen_sw.f90 parkind.o \
+	mcica_random_numbers.o rrsw_wvn.o rrsw_vsn.o parrrsw.o rrsw_con.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mem_aer1.o : $(CCATT)/mem_aer1.f90 mem_chem1.o ModNamelistFile.o aer1_list.o \
-	dump.o mem_grid.o ModVarTables.o ModScalarTable.o io_params.o grid_dims.o \
-	node_mod.o $(UTILS_INCS)/constants.h 
+mem_aer1.o : $(CCATT)/mem_aer1.f90 aer1_list.o mem_grid.o mem_chem1.o \
+	ModNamelistFile.o grid_dims.o ModScalarTable.o node_mod.o io_params.o dump.o \
+	ModVarTables.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -526,24 +524,23 @@ mem_aerad.o : $(RADIATE)/mem_aerad.f90 mem_grid_dim_defs.o
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mem_carma.o : $(RADIATE)/mem_carma.f90 ReadBcst.o ModSoilMoisture.o \
-	ModRamsGrid.o ModNamelistFile.o ModBasicFields.o mem_grid.o ModVarTables.o \
-	ModControlVars.o mem_scalar.o ModMPassFull.o mem_aerad.o ModTurbFields.o \
-	io_params.o mem_globrad.o grid_dims.o node_mod.o parlibf.o \
+mem_carma.o : $(RADIATE)/mem_carma.f90 ReadBcst.o mem_grid.o mem_globrad.o \
+	mem_aerad.o ModControlVars.o mem_scalar.o ModTurbFields.o parlibf.o \
+	ModRamsGrid.o ModNamelistFile.o grid_dims.o ModMPassFull.o node_mod.o \
+	ModBasicFields.o io_params.o ModSoilMoisture.o ModVarTables.o \
 	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mem_chem1.o : $(CCATT)/mem_chem1.f90 chem1_list.o ModNamelistFile.o \
-	ModVarTables.o ModScalarTable.o io_params.o grid_dims.o \
-	$(UTILS_INCS)/constants.h 
+mem_chem1.o : $(CCATT)/mem_chem1.f90 chem1_list.o ModNamelistFile.o grid_dims.o \
+	ModScalarTable.o io_params.o ModVarTables.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mem_chem1aq.o : $(CCATT)/mem_chem1aq.f90 mem_chem1.o chem1aq_list.o \
-	ModNamelistFile.o ModVarTables.o ModScalarTable.o grid_dims.o \
+mem_chem1aq.o : $(CCATT)/mem_chem1aq.f90 chem1aq_list.o mem_chem1.o \
+	ModNamelistFile.o grid_dims.o ModScalarTable.o ModVarTables.o \
 	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
@@ -554,8 +551,8 @@ mem_chemic.o : $(CCATT)/mem_chemic.f90 ModMicControl.o
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mem_cuparm.o : $(CUPARM)/mem_cuparm.f90 ModVarTables.o ModNamelistFile.o \
-	grid_dims.o $(UTILS_INCS)/files.h $(UTILS_INCS)/constants.h 
+mem_cuparm.o : $(CUPARM)/mem_cuparm.f90 ModNamelistFile.o grid_dims.o \
+	ModVarTables.o $(UTILS_INCS)/files.h $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -581,15 +578,15 @@ mem_globaer.o : $(RADIATE)/mem_globaer.f90 mem_precision.o mem_aerad.o
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mem_globrad.o : $(RADIATE)/mem_globrad.f90 ModNamelistFile.o mem_radiate.o \
-	mem_aerad.o mem_precision.o parlibf.o $(UTILS_INCS)/files.h \
+mem_globrad.o : $(RADIATE)/mem_globrad.f90 mem_aerad.o parlibf.o \
+	ModNamelistFile.o mem_precision.o mem_radiate.o $(UTILS_INCS)/files.h \
 	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mem_grell.o : $(CUPARM)/mem_grell.f90 ModVarTables.o shcu_vars_const.o \
-	mem_cuparm.o $(UTILS_INCS)/constants.h 
+mem_grell.o : $(CUPARM)/mem_grell.f90 shcu_vars_const.o mem_cuparm.o \
+	ModVarTables.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -599,7 +596,7 @@ mem_grell_param2.o : $(CUPARM)/mem_grell_param2.f90 ModNamelistFile.o
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mem_grid.o : $(MEMORY)/mem_grid.f90 ModVarTables.o ModNamelistFile.o grid_dims.o \
+mem_grid.o : $(MEMORY)/mem_grid.f90 ModNamelistFile.o grid_dims.o ModVarTables.o \
 	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
@@ -610,20 +607,20 @@ mem_grid_dim_defs.o : $(MEMORY)/mem_grid_dim_defs.f90
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mem_jules.o : $(SURFACE)/mem_jules.f90 ModVarTables.o io_params.o \
-	ModNamelistFile.o grid_dims.o $(UTILS_INCS)/constants.h 
+mem_jules.o : $(SURFACE)/mem_jules.f90 io_params.o ModNamelistFile.o grid_dims.o \
+	ModVarTables.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mem_leaf.o : $(SURFACE)/mem_leaf.f90 ModNamelistFile.o ModVarTables.o \
-	io_params.o grid_dims.o teb_spm_start.o $(UTILS_INCS)/constants.h 
+mem_leaf.o : $(SURFACE)/mem_leaf.f90 teb_spm_start.o ModNamelistFile.o \
+	grid_dims.o io_params.o ModVarTables.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mem_micro.o : $(MICRO)/mem_micro.f90 ModVarTables.o mem_radiate.o mem_cuparm.o \
-	ModMicControl.o $(UTILS_INCS)/constants.h 
+mem_micro.o : $(MICRO)/mem_micro.f90 ModMicControl.o mem_radiate.o mem_cuparm.o \
+	ModVarTables.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -643,7 +640,7 @@ mem_nestb.o : $(NESTING)/mem_nestb.f90
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mem_oda.o : $(FDDA)/mem_oda.f90 ModVarTables.o ModNamelistFile.o grid_dims.o \
+mem_oda.o : $(FDDA)/mem_oda.f90 ModNamelistFile.o grid_dims.o ModVarTables.o \
 	$(UTILS_INCS)/files.h $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
@@ -654,8 +651,8 @@ mem_opt_scratch.o : $(TURB)/mem_opt_scratch.f90 $(UTILS_INCS)/constants.h
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mem_plume_chem1.o : $(CCATT)/mem_plume_chem1.f90 chem1_list.o mem_chem1.o \
-	ModVarTables.o ModNamelistFile.o $(UTILS_INCS)/constants.h 
+mem_plume_chem1.o : $(CCATT)/mem_plume_chem1.f90 ModNamelistFile.o chem1_list.o \
+	mem_chem1.o ModVarTables.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -665,21 +662,21 @@ mem_precision.o : $(RADIATE)/mem_precision.f90
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mem_radiate.o : $(RADIATE)/mem_radiate.f90 ModVarTables.o ModNamelistFile.o \
+mem_radiate.o : $(RADIATE)/mem_radiate.f90 ModNamelistFile.o ModVarTables.o \
 	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mem_rrtm.o : $(RADIATE)/mem_rrtm.f90 chem1_list.o mem_chem1.o parrrsw.o \
-	mem_grid.o rconstants.o rrtmg_sw_init.o rrtmg_lw_init.o parrrtm.o node_mod.o \
-	parkind.o 
+mem_rrtm.o : $(RADIATE)/mem_rrtm.f90 parkind.o mem_grid.o rrtmg_sw_init.o \
+	chem1_list.o mem_chem1.o parrrtm.o rrtmg_lw_init.o node_mod.o parrrsw.o \
+	rconstants.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mem_scalar.o : $(MEMORY)/mem_scalar.f90 ModVarTables.o io_params.o \
-	ModNamelistFile.o $(UTILS_INCS)/constants.h 
+mem_scalar.o : $(MEMORY)/mem_scalar.f90 io_params.o ModNamelistFile.o \
+	ModVarTables.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -694,8 +691,8 @@ mem_scratch1_brams.o : $(MEMORY)/mem_scratch1_brams.f90
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mem_scratch1_grell.o : $(CUPARM)/mem_scratch1_grell.f90 dump.o ccatt_start.o \
-	mem_grell_param2.o $(UTILS_INCS)/constants.h 
+mem_scratch1_grell.o : $(CUPARM)/mem_scratch1_grell.f90 dump.o \
+	mem_grell_param2.o ccatt_start.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -727,18 +724,18 @@ mem_shcu.o : $(CUPARM)/mem_shcu.f90 ModVarTables.o $(UTILS_INCS)/constants.h
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mem_spack.o : $(CCATT)/mem_spack.f90 chem_spack_utils.o chem1_list.o 
+mem_spack.o : $(CCATT)/mem_spack.f90 chem1_list.o chem_spack_utils.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mem_stilt.o : $(STILT)/mem_stilt.f90 ModNamelistFile.o ModVarTables.o \
-	rconstants.o io_params.o grid_dims.o $(UTILS_INCS)/constants.h 
+mem_stilt.o : $(STILT)/mem_stilt.f90 ModNamelistFile.o grid_dims.o rconstants.o \
+	io_params.o ModVarTables.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mem_tconv.o : $(CCATT)/mem_tconv.f90 chem1_list.o mem_aer1.o aer1_list.o 
+mem_tconv.o : $(CCATT)/mem_tconv.f90 chem1_list.o aer1_list.o mem_aer1.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -760,9 +757,9 @@ mem_teb_vars_const.o : $(TEB_SPM)/mem_teb_vars_const.f90 ModNamelistFile.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mem_tend.o : $(MEMORY)/mem_tend.f90 ModNamelistFile.o ModBasicFields.o \
-	mem_grid.o ModScalarTable.o mem_scalar.o ModTurbFields.o mem_emiss.o \
-	mem_gaspart.o mem_micro.o teb_spm_start.o 
+mem_tend.o : $(MEMORY)/mem_tend.f90 mem_grid.o mem_micro.o mem_scalar.o \
+	mem_emiss.o ModTurbFields.o teb_spm_start.o ModNamelistFile.o mem_gaspart.o \
+	ModBasicFields.o ModScalarTable.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -773,20 +770,20 @@ mem_turb_scalar.o : $(TURB)/mem_turb_scalar.f90 ModVarTables.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mem_tuv.o : $(TUV)/mem_tuv.f90 mem_stilt.o ModTuv2.7.o ModVarTables.o \
-	mem_globrad.o 
+mem_tuv.o : $(TUV)/mem_tuv.f90 mem_stilt.o mem_globrad.o ModTuv2.7.o \
+	ModVarTables.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90)
 	rm -f $(<F:.f90=.f90)
 
 mem_varinit.o : $(MEMORY)/mem_varinit.f90 chem1_list.o mem_chem1.o \
-	ModNamelistFile.o ModVarTables.o grid_dims.o $(UTILS_INCS)/files.h \
+	ModNamelistFile.o grid_dims.o ModVarTables.o $(UTILS_INCS)/files.h \
 	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-mem_volc_chem1.o : $(CCATT)/mem_volc_chem1.f90 ModVarTables.o ModNamelistFile.o \
+mem_volc_chem1.o : $(CCATT)/mem_volc_chem1.f90 ModNamelistFile.o ModVarTables.o \
 	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
@@ -802,8 +799,8 @@ memSoilMoisture.o : $(SOIL_MOISTURE)/memSoilMoisture.f90 $(UTILS_INCS)/files.h
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-meteogram.o : $(IO)/meteogram.f90 satPolyColision.o ModNamelistFile.o mem_grid.o \
-	ModVarTables.o meteogramType.o node_mod.o ModMPassDtl.o ModPostUtils.o \
+meteogram.o : $(IO)/meteogram.f90 mem_grid.o ModMPassDtl.o ModNamelistFile.o \
+	ModPostUtils.o satPolyColision.o node_mod.o meteogramType.o ModVarTables.o \
 	$(UTILS_INCS)/files.h $(POST_INCS)/post_rconstants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
@@ -824,9 +821,9 @@ ModMicGamma.o : $(MICRO)/ModMicGamma.f90
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModMicInit.o : $(MICRO)/ModMicInit.f90 ModMicTabs.o ModMicControl.o dump.o \
-	mem_grid.o ModMicGamma.o rconstants.o $(MICRO)/MicConstants.h \
-	$(UTILS_INCS)/files.h $(UTILS_INCS)/constants.h 
+ModMicInit.o : $(MICRO)/ModMicInit.f90 ModMicControl.o mem_grid.o ModMicGamma.o \
+	ModMicTabs.o rconstants.o dump.o $(UTILS_INCS)/files.h \
+	$(UTILS_INCS)/constants.h $(MICRO)/MicConstants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -836,19 +833,19 @@ ModMicNuc.o : $(MICRO)/ModMicNuc.f90 ModMicControl.o $(MICRO)/MicConstants.h
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModMicTabs.o : $(MICRO)/ModMicTabs.f90 ModMicGamma.o ModMicControl.o \
+ModMicTabs.o : $(MICRO)/ModMicTabs.f90 ModMicControl.o ModMicGamma.o \
 	$(MICRO)/MicConstants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModMicVap.o : $(MICRO)/ModMicVap.f90 rconstants.o ModMicControl.o 
+ModMicVap.o : $(MICRO)/ModMicVap.f90 ModMicControl.o rconstants.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
 ModMicControl.o : $(MICRO)/ModMicControl.f90 ModNamelistFile.o grid_dims.o \
-	$(MICRO)/MicConstants.h $(UTILS_INCS)/files.h 
+	$(UTILS_INCS)/files.h $(MICRO)/MicConstants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -869,30 +866,30 @@ mod_GhostBlockPartition.o : $(MODEL)/mod_GhostBlockPartition.f90
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModAcoust.o : $(MODEL)/ModAcoust.f90 ModGrid.o micphys.o ModMessageSet.o \
-	ModBasicFields.o ModParallelEnvironment.o mem_grid.o ModAcoustAdap.o \
-	rconstants.o mem_scratch.o node_mod.o mem_tend.o ref_sounding.o \
-	$(UTILS_INCS)/constants.h $(UTILS_INCS)/tsNames.h 
+ModAcoust.o : $(MODEL)/ModAcoust.f90 mem_grid.o ModParallelEnvironment.o \
+	ModGrid.o micphys.o ref_sounding.o mem_tend.o ModAcoustAdap.o node_mod.o \
+	rconstants.o ModBasicFields.o mem_scratch.o ModMessageSet.o \
+	$(UTILS_INCS)/tsNames.h $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModAerClim.o : $(AERCLIM)/ModAerClim.f90 ReadBcst.o ModSoilMoisture.o dump.o \
-	ModBasicFields.o mem_grid.o ModControlVars.o ModTurbFields.o node_mod.o \
-	parlibf.o $(UTILS_INCS)/constants.h 
+ModAerClim.o : $(AERCLIM)/ModAerClim.f90 ReadBcst.o mem_grid.o ModControlVars.o \
+	ModTurbFields.o parlibf.o node_mod.o ModBasicFields.o ModSoilMoisture.o dump.o \
+	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModBasicFields.o : $(MEMORY)/ModBasicFields.f90 ModNamelistFile.o \
-	ModParallelEnvironment.o ModVarTables.o mem_stilt.o ModNodeDimensions.o 
+ModBasicFields.o : $(MEMORY)/ModBasicFields.f90 mem_stilt.o ModNodeDimensions.o \
+	ModParallelEnvironment.o ModNamelistFile.o ModVarTables.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModBramsGrid.o : $(POST_SRC)/ModBramsGrid.f90 ModNamelistFile.o \
-	ModParallelEnvironment.o mem_grid.o ref_sounding.o mem_aerad.o node_mod.o \
-	ModPostUtils.o 
+ModBramsGrid.o : $(POST_SRC)/ModBramsGrid.f90 mem_grid.o \
+	ModParallelEnvironment.o mem_aerad.o ref_sounding.o ModNamelistFile.o \
+	ModPostUtils.o node_mod.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -902,40 +899,40 @@ ModBuffering.o : $(MPI)/ModBuffering.f90 ModParallelEnvironment.o
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModCarmaDriver.o : $(RADIATE)/ModCarmaDriver.f90 rad_carma.o micphys.o \
-	ModBasicFields.o mem_grid.o mem_carma.o mem_radiate.o mem_cuparm.o \
-	ModDateUtils.o mem_teb_common.o rconstants.o mem_scratch1_grell.o mem_leaf.o \
-	grid_dims.o node_mod.o mem_tend.o mem_micro.o teb_spm_start.o ModLeaf3.o 
+ModCarmaDriver.o : $(RADIATE)/ModCarmaDriver.f90 mem_scratch1_grell.o \
+	mem_carma.o mem_grid.o mem_micro.o micphys.o ModLeaf3.o mem_tend.o \
+	teb_spm_start.o ModDateUtils.o mem_teb_common.o grid_dims.o node_mod.o \
+	mem_cuparm.o ModBasicFields.o rconstants.o rad_carma.o mem_radiate.o mem_leaf.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModChemAsgen.o : $(ISAN_CHEM)/ModChemAsgen.F90 ModAsGen.o mem_chem1.o dump.o \
-	ModDateUtils.o isan_coms.o node_mod.o ModChemAsti.o chem1_list.o mem_aer1.o \
-	ModRamsGrid.o ModMkSfcTop.o chem_isan_coms.o aer1_list.o ModChemAvarf.o \
-	ModChemAstp.o io_params.o grid_dims.o ModChemFileInv.o mem_grid.o \
+ModChemAsgen.o : $(ISAN_CHEM)/ModChemAsgen.F90 ModChemFileInv.o ModChemAsti.o \
+	mem_chem1.o ModDateUtils.o grid_dims.o node_mod.o isan_coms.o chem1_list.o \
+	chem_isan_coms.o ModAsGen.o ModChemAstp.o ModChemAvarf.o ModRamsGrid.o \
+	io_params.o dump.o mem_aer1.o ModMkSfcTop.o aer1_list.o mem_grid.o \
 	ModControlVars.o ModChemRefState.o ModChemIsanIo.o $(UTILS_INCS)/files.h \
 	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModChemConvTransp.o : $(CCATT)/ModChemConvTransp.f90 chem1_list.o mem_chem1.o \
-	aer1_list.o mem_grell_param2.o mem_grid.o mem_aer1.o mem_cuparm.o mem_scratch.o \
-	Phys_const.o mem_tconv.o mem_scratch1_grell.o node_mod.o 
+ModChemConvTransp.o : $(CCATT)/ModChemConvTransp.f90 mem_scratch1_grell.o \
+	mem_grid.o aer1_list.o mem_grell_param2.o chem1_list.o mem_chem1.o node_mod.o \
+	Phys_const.o mem_cuparm.o mem_aer1.o mem_scratch.o mem_tconv.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModChemistryDriver.o : $(CCATT)/ModChemistryDriver.f90 mem_chem1.o \
-	chem_spack_ros.o ModTuvDriver2.7.o mem_spack.o chem_spack_rodas3_dyndt.o \
-	mem_scratch.o mem_rrtm.o mem_scratch1_grell.o mem_globrad.o node_mod.o \
-	chem_spack_solve_sparse.o chem_fastjx_driv.o chem1_list.o ModBasicFields.o \
-	mem_grell_param2.o chem_uv_att.o carma_fastjx.o mem_radiate.o mem_aer1.o \
-	rconstants.o mem_stilt.o mem_micro.o chem_spack_qssa.o aer1_list.o mem_carma.o \
-	mem_chemic.o mem_cuparm.o mem_aerad.o extra.o parrrtm.o grid_dims.o \
-	chem_spack_ros_dyndt.o chem_trans_gasaq.o chem1aq_list.o chem_spack_utils.o \
-	mem_grid.o mem_chem1aq.o chem_orage.o chem_trans_liq.o 
+ModChemistryDriver.o : $(CCATT)/ModChemistryDriver.f90 mem_carma.o \
+	chem1aq_list.o mem_globrad.o chem_fastjx_driv.o mem_micro.o extra.o mem_chem1.o \
+	parrrtm.o grid_dims.o mem_chemic.o node_mod.o rconstants.o mem_scratch1_grell.o \
+	ModTuvDriver2.7.o chem1_list.o mem_spack.o carma_fastjx.o chem_uv_att.o \
+	ModBasicFields.o chem_spack_utils.o mem_aerad.o chem_spack_ros.o \
+	chem_spack_rodas3_dyndt.o chem_spack_ros_dyndt.o chem_trans_liq.o mem_rrtm.o \
+	mem_chem1aq.o mem_aer1.o mem_scratch.o mem_grid.o chem_trans_gasaq.o \
+	mem_grell_param2.o mem_stilt.o aer1_list.o chem_spack_solve_sparse.o \
+	chem_orage.o chem_spack_qssa.o mem_cuparm.o mem_radiate.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -946,21 +943,21 @@ ModControlVars.o : $(INIT)/ModControlVars.f90 ModNamelistFile.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModCoriolis.o : $(MODEL)/ModCoriolis.f90 ModBasicFields.o mem_grid.o \
-	ModBuffering.o rconstants.o mem_scratch.o node_mod.o mem_tend.o parlibf.o \
-	ref_sounding.o $(UTILS_INCS)/constants.h 
+ModCoriolis.o : $(MODEL)/ModCoriolis.f90 mem_grid.o ModBuffering.o \
+	ref_sounding.o parlibf.o mem_tend.o node_mod.o rconstants.o ModBasicFields.o \
+	mem_scratch.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModCuParGrell3.o : $(CUPARM)/ModCuParGrell3.F90 module_cu_g3.o mem_chem1.o \
-	mem_jules.o ModVarTables.o module_cu_gf.o mem_scratch.o module_cu_gf_v5.1.o \
-	mem_scratch1_grell.o node_mod.o mem_tend.o ModGrid.o ModRadvc.o \
-	ModNamelistFile.o ConvPar_GF_GEOS5.o mem_grell_param2.o ModBasicFields.o \
-	mem_radiate.o rconstants.o mem_stilt.o ccatt_start.o mem_micro.o mem_grell.o \
-	ModMicControl.o ModMessageSet.o ModRstilt.o mem_carma.o mem_cuparm.o \
-	mem_varinit.o Phys_const.o io_params.o mem_leaf.o grid_dims.o \
-	ModChemConvTransp.o mem_grid.o $(UTILS_INCS)/constants.h 
+ModCuParGrell3.o : $(CUPARM)/ModCuParGrell3.F90 mem_carma.o ccatt_start.o \
+	mem_micro.o ModGrid.o mem_chem1.o mem_grell.o grid_dims.o node_mod.o \
+	rconstants.o mem_varinit.o ModMicControl.o mem_scratch1_grell.o \
+	ConvPar_GF_GEOS5.o mem_jules.o mem_tend.o Phys_const.o ModBasicFields.o \
+	ModChemConvTransp.o ModVarTables.o module_cu_g3.o ModRadvc.o ModNamelistFile.o \
+	module_cu_gf.o io_params.o mem_leaf.o mem_scratch.o ModMessageSet.o mem_grid.o \
+	mem_stilt.o mem_grell_param2.o module_cu_gf_v5.1.o ModRstilt.o mem_cuparm.o \
+	mem_radiate.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.F90=.F90)
 	$(F_COMMAND) -D$(AER) $(<F:.F90=.F90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -970,15 +967,15 @@ ModDateUtils.o : $(UTILS_MODS)/ModDateUtils.f90 dump.o $(UTILS_INCS)/constants.h
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModDiffSclr.o : $(TURB)/ModDiffSclr.f90 mem_scratch.o mem_grid.o ModTurbDiff.o 
+ModDiffSclr.o : $(TURB)/ModDiffSclr.f90 mem_grid.o mem_scratch.o ModTurbDiff.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModDiffuse.o : $(TURB)/ModDiffuse.f90 ModTurbKE.o micphys.o ModNamelistFile.o \
-	ModBasicFields.o mem_grid.o ModScalarTable.o ke_coms.o mem_opt_scratch.o \
-	ModTurbFields.o mem_scratch.o ModDiffSclr.o ModTurbK.o mem_leaf.o ModTurbDiff.o \
-	node_mod.o mem_tend.o mem_micro.o $(UTILS_INCS)/constants.h 
+ModDiffuse.o : $(TURB)/ModDiffuse.f90 ModMicControl.o mem_leaf.o ModDiffSclr.o \
+	ModTurbK.o mem_grid.o ModTurbDiff.o ModTurbKE.o mem_micro.o ModTurbFields.o \
+	mem_tend.o ModNamelistFile.o mem_opt_scratch.o node_mod.o ke_coms.o \
+	ModBasicFields.o ModScalarTable.o mem_scratch.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -989,8 +986,8 @@ ModDomainDecomp.o : $(MPI)/ModDomainDecomp.f90 ModGridDims.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModEvaluation.o : $(EVAL)/ModEvaluation.f90 node_mod.o mem_grid.o parlibf.o \
-	ModNamelistFile.o 
+ModEvaluation.o : $(EVAL)/ModEvaluation.f90 ModNamelistFile.o mem_grid.o \
+	node_mod.o parlibf.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1006,9 +1003,9 @@ ModFieldSectionList.o : $(MPI)/ModFieldSectionList.f90 ModFieldSection.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModGasPart.o : $(TEB_SPM)/ModGasPart.f90 ModBasicFields.o ModRcio.o mem_grid.o \
-	ModVarTables.o mem_teb_vars_const.o mem_emiss.o mem_gaspart.o an_header.o \
-	grid_dims.o node_mod.o mem_leaf.o parlibf.o $(UTILS_INCS)/files.h \
+ModGasPart.o : $(TEB_SPM)/ModGasPart.f90 mem_grid.o mem_emiss.o parlibf.o \
+	ModRcio.o grid_dims.o mem_gaspart.o node_mod.o ModBasicFields.o an_header.o \
+	mem_teb_vars_const.o mem_leaf.o ModVarTables.o $(UTILS_INCS)/files.h \
 	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
@@ -1020,10 +1017,10 @@ ModGeodat.o : $(MKSFC)/ModGeodat.f90 io_params.o mem_grid.o teb_spm_start.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModGrid.o : $(MPI)/ModGrid.f90 ModNamelistFile.o ModMessageSet.o ModGridDims.o \
-	ModDomainDecomp.o ModParallelEnvironment.o ModBasicFields.o ModScalarTable.o \
-	ModControlVars.o ModMicControl.o ModVarTables.o ModTurbFields.o meteogramType.o \
-	ModNeighbourNodes.o mem_tend.o ModNodeDimensions.o 
+ModGrid.o : $(MPI)/ModGrid.f90 ModMicControl.o ModBasicFields.o \
+	ModParallelEnvironment.o ModNodeDimensions.o ModControlVars.o ModTurbFields.o \
+	mem_tend.o ModNeighbourNodes.o ModNamelistFile.o ModGridDims.o meteogramType.o \
+	ModScalarTable.o ModDomainDecomp.o ModVarTables.o ModMessageSet.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1034,31 +1031,31 @@ ModGridDims.o : $(MPI)/ModGridDims.f90 ModNamelistFile.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModGridTree.o : $(MPI)/ModGridTree.f90 ModGrid.o ModNamelistFile.o \
+ModGridTree.o : $(MPI)/ModGridTree.f90 ModNamelistFile.o ModGrid.o \
 	ModParallelEnvironment.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-modIau.o : $(MODEL)/modIau.f90 ReadBcst.o ModNamelistFile.o dump.o mem_grid.o \
-	ModMPassFull.o mem_varinit.o node_mod.o mem_tend.o parlibf.o \
+modIau.o : $(MODEL)/modIau.f90 mem_varinit.o ReadBcst.o mem_grid.o parlibf.o \
+	mem_tend.o ModNamelistFile.o ModMPassFull.o node_mod.o dump.o \
 	$(UTILS_INCS)/files.h $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.F90=.F90)
 	$(F_COMMAND) $(<F:.F90=.F90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModInitHis.o : $(IO)/ModInitHis.f90 mem_chem1.o ModVarTables.o mem_scratch.o \
-	chem1_list.o ModLeafComs.o ModBasicFields.o ModRamsReadHeader.o rconstants.o \
-	ModRamsGrid.o ModMicControl.o ModRinit.o mem_aerad.o mem_varinit.o io_params.o \
-	mem_leaf.o ref_sounding.o ModLeaf3.o ModGetVar.o ModRcio.o mem_grid.o \
-	an_header.o $(UTILS_INCS)/files.h $(UTILS_INCS)/constants.h 
+ModInitHis.o : $(IO)/ModInitHis.f90 ModRinit.o mem_chem1.o rconstants.o \
+	ModLeaf3.o ModMicControl.o mem_varinit.o chem1_list.o ref_sounding.o \
+	ModGetVar.o ModBasicFields.o ModVarTables.o mem_aerad.o ModRcio.o ModRamsGrid.o \
+	an_header.o io_params.o mem_scratch.o mem_leaf.o ModLeafComs.o mem_grid.o \
+	ModRamsReadHeader.o $(UTILS_INCS)/files.h $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModInitMicThompson.o : $(MICRO)/ModInitMicThompson.f90 ReadBcst.o dump.o \
-	ModBasicFields.o mem_grid.o generic.o ModDateUtils.o node_mod.o mem_micro.o \
-	parlibf.o $(UTILS_INCS)/constants.h 
+ModInitMicThompson.o : $(MICRO)/ModInitMicThompson.f90 ReadBcst.o mem_grid.o \
+	generic.o mem_micro.o parlibf.o ModDateUtils.o node_mod.o ModBasicFields.o \
+	dump.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1069,45 +1066,45 @@ ModLanduseInput.o : $(MKSFC)/ModLanduseInput.f90 mem_mksfc.o ModLeaf3Init.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModLeaf3.o : $(SURFACE)/ModLeaf3.f90 ModLeafComs.o micphys.o ModLeaf3Hyd.o \
-	ModBasicFields.o mem_grid.o mem_radiate.o mem_cuparm.o rconstants.o \
-	mem_scratch.o ModTurbFields.o mem_teb.o mem_teb_common.o io_params.o mem_leaf.o \
-	ccatt_start.o node_mod.o mem_micro.o teb_spm_start.o ModLeaf3Teb.o 
+ModLeaf3.o : $(SURFACE)/ModLeaf3.f90 mem_leaf.o ModLeafComs.o mem_grid.o \
+	ccatt_start.o ModLeaf3Hyd.o mem_micro.o ModLeaf3Teb.o micphys.o mem_teb.o \
+	ModTurbFields.o teb_spm_start.o mem_teb_common.o node_mod.o rconstants.o \
+	ModBasicFields.o io_params.o mem_cuparm.o mem_radiate.o mem_scratch.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND_LIGHT) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModLeaf3OceanOnly.o : $(SURFACE)/ModLeaf3OceanOnly.f90 ModLeafComs.o micphys.o \
-	ConvPar_GF_GEOS5.o ModBasicFields.o mem_grid.o mem_radiate.o mem_micro.o \
-	mem_cuparm.o rconstants.o ModTurbFields.o io_params.o mem_leaf.o node_mod.o \
-	ccatt_start.o ModLeaf3.o ModCuParGrell3.o 
+ModLeaf3OceanOnly.o : $(SURFACE)/ModLeaf3OceanOnly.f90 ModLeafComs.o \
+	ConvPar_GF_GEOS5.o mem_grid.o ccatt_start.o ModBasicFields.o mem_micro.o \
+	micphys.o ModCuParGrell3.o ModTurbFields.o node_mod.o mem_cuparm.o ModLeaf3.o \
+	io_params.o rconstants.o mem_radiate.o mem_leaf.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND_LIGHT) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModMatrixDriver.o : $(MATRIX)/ModMatrixDriver.F90 chem1_list.o mem_chem1.o \
-	coag.o micphys.o aer1_list.o ModBasicFields.o mem_grid.o mem_aer1.o memMatrix.o \
-	mem_radiate.o setup.o subs.o rconstants.o ModTurbFields.o isrpia.o mem_leaf.o \
-	npf.o node_mod.o ModParticle.o mem_micro.o 
+ModMatrixDriver.o : $(MATRIX)/ModMatrixDriver.F90 ModMicControl.o subs.o \
+	aer1_list.o mem_grid.o mem_micro.o chem1_list.o mem_chem1.o ModTurbFields.o \
+	setup.o npf.o coag.o isrpia.o ModParticle.o node_mod.o rconstants.o \
+	ModBasicFields.o memMatrix.o mem_radiate.o mem_leaf.o mem_aer1.o 
 	@cp -f $< $(<F:.F90=.F90)
 	$(F_COMMAND) -D$(AER) $(<F:.F90=.F90)
 	rm -f $(<F:.F90=.F90)
 
-ModMemAlloc.o : $(MEMORY)/ModMemAlloc.F90 mem_chem1.o mem_jules.o ModVarTables.o \
-	mem_globaer.o mem_opt_scratch.o mem_scratch.o mem_turb_scalar.o \
-	mem_teb_vars_const.o mem_scratch1_grell.o mem_globrad.o mem_scratch1_brams.o \
-	node_mod.o mem_tend.o ModOptical.o chem1_list.o ModLeafComs.o ModGrid.o \
-	ModEvaluation.o ModParallelEnvironment.o ModBasicFields.o mem_grell_param2.o \
-	mem_scratch2_grell_sh.o mem_radiate.o mem_aer1.o mem_scratch3_grell_sh.o \
-	carma_fastjx.o mem_teb_common.o digitalFilter.o mem_teb.o mem_oda.o \
-	mem_gaspart.o mem_scratch3_grell.o chem_dry_dep.o mem_stilt.o mem_micro.o \
-	ccatt_start.o mem_grell.o mem_shcu.o aer1_list.o mem_carma.o mem_chemic.o \
-	modIau.o mem_cuparm.o mem_scalar.o mem_grid_dim_defs.o mem_varinit.o \
-	mem_aerad.o extra.o ModTuv2.7.o io_params.o mem_leaf.o grid_dims.o \
-	teb_spm_start.o mem_tuv.o micphys.o shcu_vars_const.o chem1aq_list.o \
-	mem_plume_chem1.o parrrsw.o chem_sources.o mem_grid.o mem_nestb.o \
-	ModTurbFields.o mem_emiss.o mem_chem1aq.o machine_arq.o mem_volc_chem1.o \
-	mem_scratch2_grell.o ModCuParGrell3.o 
+ModMemAlloc.o : $(MEMORY)/ModMemAlloc.F90 mem_carma.o mem_oda.o mem_globrad.o \
+	ModParallelEnvironment.o mem_micro.o extra.o ModGrid.o machine_arq.o \
+	mem_scratch1_brams.o mem_grell.o mem_scratch3_grell.o ModCuParGrell3.o \
+	mem_chem1.o ModTuv2.7.o grid_dims.o mem_chemic.o mem_opt_scratch.o \
+	mem_gaspart.o node_mod.o mem_shcu.o mem_teb_vars_const.o mem_varinit.o \
+	mem_scratch1_grell.o mem_tuv.o mem_globaer.o mem_scratch2_grell.o mem_jules.o \
+	chem1_list.o mem_tend.o ccatt_start.o carma_fastjx.o ModBasicFields.o \
+	ModOptical.o ModVarTables.o chem1aq_list.o modIau.o mem_aerad.o mem_emiss.o \
+	mem_plume_chem1.o parrrsw.o io_params.o chem_dry_dep.o mem_leaf.o mem_scratch.o \
+	mem_chem1aq.o mem_aer1.o ModLeafComs.o mem_scratch3_grell_sh.o mem_grid.o \
+	mem_grell_param2.o mem_scratch2_grell_sh.o aer1_list.o chem_sources.o \
+	mem_stilt.o digitalFilter.o mem_scalar.o ModEvaluation.o mem_teb.o \
+	ModTurbFields.o mem_volc_chem1.o teb_spm_start.o mem_teb_common.o \
+	mem_turb_scalar.o mem_cuparm.o mem_grid_dim_defs.o shcu_vars_const.o \
+	mem_radiate.o mem_nestb.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1123,202 +1120,202 @@ ModMessageData.o : $(MPI)/ModMessageData.f90 ModFieldSection.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModMessageSet.o : $(MPI)/ModMessageSet.f90 ModNamelistFile.o ModGridDims.o \
-	ModParallelEnvironment.o ModDomainDecomp.o mem_grid.o ModFieldSection.o \
-	ModVarTables.o ModMessageData.o ModNeighbourNodes.o ModFieldSectionList.o \
-	ModNodeDimensions.o parlibf.o 
+ModMessageSet.o : $(MPI)/ModMessageSet.f90 mem_grid.o ModParallelEnvironment.o \
+	ModNodeDimensions.o ModFieldSection.o ModMessageData.o ModFieldSectionList.o \
+	parlibf.o ModNeighbourNodes.o ModNamelistFile.o ModGridDims.o ModDomainDecomp.o \
+	ModVarTables.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModMicGfdlDriver.o : $(MICRO)/ModMicGfdlDriver.f90 ModBasicFields.o mem_grid.o \
-	gfdl_cloud_microphys.o mem_radiate.o rconstants.o io_params.o mem_leaf.o \
-	node_mod.o mem_micro.o 
+ModMicGfdlDriver.o : $(MICRO)/ModMicGfdlDriver.f90 mem_grid.o mem_micro.o \
+	gfdl_cloud_microphys.o node_mod.o rconstants.o ModBasicFields.o io_params.o \
+	mem_radiate.o mem_leaf.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModMicrophysicsDrive.o : $(MICRO)/ModMicrophysicsDrive.f90 mem_chem1.o \
-	ModMicrophysicsMisc.o ModMicTabs.o ModMicControl.o ModBasicFields.o mem_grid.o \
-	mem_chemic.o mem_radiate.o ModMicColl.o ModMicVap.o ModMicNuc.o mem_chem1aq.o \
-	grid_dims.o node_mod.o mem_micro.o ModMicInit.o $(MICRO)/MicConstants.h 
+ModMicrophysicsDrive.o : $(MICRO)/ModMicrophysicsDrive.f90 ModMicControl.o \
+	mem_grid.o ModMicrophysicsMisc.o mem_micro.o ModMicNuc.o ModMicColl.o \
+	mem_chem1.o ModMicInit.o grid_dims.o ModMicVap.o mem_chemic.o ModMicTabs.o \
+	node_mod.o ModBasicFields.o mem_radiate.o mem_chem1aq.o $(MICRO)/MicConstants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
 ModMicrophysicsMisc.o : $(MICRO)/ModMicrophysicsMisc.f90 ModMicControl.o \
-	ModBasicFields.o mem_grid.o rconstants.o mem_scratch.o mem_micro.o \
+	mem_grid.o mem_micro.o rconstants.o ModBasicFields.o mem_scratch.o \
 	$(MICRO)/MicConstants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
 ModMicThompsonDriver.o : $(MICRO)/ModMicThompsonDriver.f90 ModMicControl.o \
-	ModBasicFields.o mem_grid.o mem_radiate.o module_mp_thompson.o rconstants.o \
-	io_params.o mem_leaf.o node_mod.o mem_micro.o 
+	mem_grid.o mem_micro.o module_mp_thompson.o node_mod.o rconstants.o \
+	ModBasicFields.o io_params.o mem_radiate.o mem_leaf.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModMkSfcDriver.o : $(MKSFC)/ModMkSfcDriver.f90 ReadBcst.o ModNdviRead.o \
-	ModMkSfcSfc.o ModMkSfcFuso.o ModMkSfcNdvi.o ModNestGeoSst.o mem_mksfc.o \
-	mem_grid.o ModControlVars.o ModLanduseInput.o ModMkSfcSst.o io_params.o \
-	grid_dims.o node_mod.o ModMkSfcTop.o teb_spm_start.o ModSstRead.o 
+ModMkSfcDriver.o : $(MKSFC)/ModMkSfcDriver.f90 ReadBcst.o ModMkSfcFuso.o \
+	ModMkSfcTop.o mem_grid.o ModNdviRead.o ModMkSfcSst.o ModLanduseInput.o \
+	ModMkSfcNdvi.o ModControlVars.o teb_spm_start.o ModNestGeoSst.o grid_dims.o \
+	mem_mksfc.o node_mod.o io_params.o ModSstRead.o ModMkSfcSfc.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModMkSfcFuso.o : $(MKSFC)/ModMkSfcFuso.f90 ReadBcst.o mem_mksfc.o mem_grid.o \
-	ModControlVars.o mem_teb_vars_const.o mem_emiss.o mem_teb.o io_params.o \
-	mem_gaspart.o node_mod.o $(UTILS_INCS)/files.h 
+ModMkSfcFuso.o : $(MKSFC)/ModMkSfcFuso.f90 ReadBcst.o mem_grid.o \
+	ModControlVars.o mem_emiss.o mem_teb.o mem_mksfc.o mem_gaspart.o node_mod.o \
+	io_params.o mem_teb_vars_const.o $(UTILS_INCS)/files.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModMkSfcNdvi.o : $(MKSFC)/ModMkSfcNdvi.f90 ModRUser.o dump.o mem_grid.o \
-	mem_mksfc.o ModLanduseInput.o io_params.o mem_leaf.o $(UTILS_INCS)/files.h \
+ModMkSfcNdvi.o : $(MKSFC)/ModMkSfcNdvi.f90 mem_grid.o ModLanduseInput.o \
+	mem_mksfc.o ModRUser.o io_params.o dump.o mem_leaf.o $(UTILS_INCS)/files.h \
 	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModMkSfcSfc.o : $(MKSFC)/ModMkSfcSfc.f90 ReadBcst.o dump.o mem_mksfc.o \
-	mem_grid.o ModControlVars.o io_params.o mem_leaf.o node_mod.o \
-	$(UTILS_INCS)/files.h $(UTILS_INCS)/constants.h 
+ModMkSfcSfc.o : $(MKSFC)/ModMkSfcSfc.f90 ReadBcst.o mem_grid.o ModControlVars.o \
+	mem_mksfc.o node_mod.o io_params.o dump.o mem_leaf.o $(UTILS_INCS)/files.h \
+	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModMkSfcSst.o : $(MKSFC)/ModMkSfcSst.f90 ModRUser.o ModNestFillDens.o mem_grid.o \
-	mem_mksfc.o ModGeodat.o io_params.o mem_leaf.o grid_dims.o \
+ModMkSfcSst.o : $(MKSFC)/ModMkSfcSst.f90 mem_grid.o ModGeodat.o \
+	ModNestFillDens.o grid_dims.o mem_mksfc.o ModRUser.o io_params.o mem_leaf.o \
 	$(UTILS_INCS)/files.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModMkSfcTop.o : $(MKSFC)/ModMkSfcTop.f90 ReadBcst.o dump.o mem_mksfc.o \
-	mem_grid.o ModControlVars.o io_params.o node_mod.o $(UTILS_INCS)/files.h \
+ModMkSfcTop.o : $(MKSFC)/ModMkSfcTop.f90 ReadBcst.o mem_grid.o ModControlVars.o \
+	mem_mksfc.o node_mod.o io_params.o dump.o $(UTILS_INCS)/files.h \
 	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModMonotonicAdvection.o : $(MODEL)/ModMonotonicAdvection.f90 ModGrid.o \
-	mem_chem1.o micphys.o ModNamelistFile.o ModMessageSet.o \
-	ModParallelEnvironment.o ModDomainDecomp.o mem_grid.o mem_aer1.o rconstants.o \
-	chem_dry_dep.o ccatt_start.o 
+ModMonotonicAdvection.o : $(MODEL)/ModMonotonicAdvection.f90 mem_grid.o \
+	ccatt_start.o ModParallelEnvironment.o ModGrid.o micphys.o mem_chem1.o \
+	ModDomainDecomp.o ModNamelistFile.o rconstants.o chem_dry_dep.o mem_aer1.o \
+	ModMessageSet.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModNamelistFile.o : $(INIT)/ModNamelistFile.f90 ModParallelEnvironment.o dump.o \
-	modPrintInitial.o grid_dims.o parlibf.o $(UTILS_INCS)/files.h \
+ModNamelistFile.o : $(INIT)/ModNamelistFile.f90 ModParallelEnvironment.o \
+	modPrintInitial.o parlibf.o grid_dims.o dump.o $(UTILS_INCS)/files.h \
 	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModNdviRead.o : $(MKSFC)/ModNdviRead.f90 ReadBcst.o ModMkSfcNdvi.o mem_grid.o \
-	mem_mksfc.o ModControlVars.o ModDateUtils.o io_params.o mem_leaf.o grid_dims.o \
-	node_mod.o $(UTILS_INCS)/files.h $(UTILS_INCS)/constants.h 
+ModNdviRead.o : $(MKSFC)/ModNdviRead.f90 ReadBcst.o mem_grid.o ModControlVars.o \
+	ModMkSfcNdvi.o ModDateUtils.o grid_dims.o mem_mksfc.o node_mod.o io_params.o \
+	mem_leaf.o $(UTILS_INCS)/files.h $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModNeighbourNodes.o : $(MPI)/ModNeighbourNodes.f90 ModDomainDecomp.o \
-	ModGridDims.o ModParallelEnvironment.o 
+ModNeighbourNodes.o : $(MPI)/ModNeighbourNodes.f90 ModGridDims.o \
+	ModDomainDecomp.o ModParallelEnvironment.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModNestGeoSst.o : $(MKSFC)/ModNestGeoSst.f90 ModRUser.o dump.o ModLanduseInput.o \
-	mem_scratch.o node_mod.o ModBasicFields.o ModLeaf3Init.o ccatt_start.o \
-	ModMkSfcTop.o ModSoilMoisture.o mem_mksfc.o memSoilMoisture.o ModNestFeed.o \
-	ModGeodat.o io_params.o mem_leaf.o grid_dims.o ModNestFillDens.o mem_grid.o \
-	ModControlVars.o ModInitHis.o ModTurbFields.o $(UTILS_INCS)/constants.h 
-	@cp -f $< $(<F:.f90=.f90)
-	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-	rm -f $(<F:.f90=.f90)
-
-ModNodeDimensions.o : $(MPI)/ModNodeDimensions.f90 ModDomainDecomp.o \
-	ModGridDims.o ModParallelEnvironment.o 
-	@cp -f $< $(<F:.f90=.f90)
-	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-	rm -f $(<F:.f90=.f90)
-
-ModNudAnalysis.o : $(FDDA)/ModNudAnalysis.f90 chem1_list.o mem_chem1.o \
-	ModEvaluation.o ModNestFillDens.o ModBasicFields.o dump.o mem_grid.o modIau.o \
-	mem_varinit.o mem_scratch.o node_mod.o mem_tend.o $(UTILS_INCS)/constants.h 
-	@cp -f $< $(<F:.f90=.f90)
-	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-	rm -f $(<F:.f90=.f90)
-
-ModOdaNudge.o : $(FDDA)/ModOdaNudge.f90 ModBasicFields.o mem_grid.o \
-	ModOdaProcObs.o ModOdaKrig.o mem_scratch.o mem_oda.o io_params.o node_mod.o \
-	mem_tend.o 
-	@cp -f $< $(<F:.f90=.f90)
-	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-	rm -f $(<F:.f90=.f90)
-
-ModOneProc.o : $(MODEL)/ModOneProc.F90 mem_chem1.o ModRUser.o \
-	mem_teb_vars_const.o isan_coms.o ModNestGeoSst.o ModMonotonicAdvection.o \
-	chem1_list.o ModInitMicThompson.o ModNamelistFile.o ModCoriolis.o ModAerClim.o \
-	ModOdaRead.o ModGridTree.o ModNudRead.o ModMemAlloc.o mem_stilt.o local_proc.o \
-	ModGasPart.o ModDomainDecomp.o memSoilMoisture.o ModRinit.o ModTuv2.7.o \
-	grid_dims.o ModMkSfcDriver.o micphys.o shcu_vars_const.o ModInitHis.o \
-	ModPostProcess.o machine_arq.o ModCuParGrell3.o ModRThrm.o ModVarfUpdate.o \
-	dump.o ModRhhi.o tuvParameter.o ModSstRead.o ModRecycle.o ModGrid.o \
-	ModTimestep.o ModBasicFields.o ModTimestepRK.o mem_teb.o chem_dry_dep.o \
-	ModMPassDtl.o ModRanlavg.o ModRamsGrid.o mem_micro.o ModMkSfcTop.o \
-	ModVarfFile.o ModMkSfcSfc.o ModChemistryDriver.o modIau.o mem_cuparm.o \
-	mem_varinit.o io_params.o ModOpspec.o mem_volc_chem1.o ModVarTables.o \
-	mem_scratch.o mem_globrad.o node_mod.o ModParallelEnvironment.o ModChemAsgen.o \
-	ModLeaf3Init.o mem_oda.o ModSched.o ccatt_start.o parlibf.o ModUrbanCanopy.o \
-	ModNdviRead.o aer1_list.o mem_carma.o ModTimeStamp.o ModLeaf3Teb.o \
-	ModRamsMicrophysics2M.o ModMkSfcFuso.o ModRio.o mem_plume_chem1.o ModWindFarm.o \
-	mem_emiss.o dam.o ReadBcst.o ModTuvDriver2.7.o domain_decomp.o ModEvaluation.o \
-	mem_grell_param2.o ModCuRead.o mem_aer1.o mem_radiate.o digitalFilter.o \
-	ModCondRead.o mem_teb_common.o mem_gaspart.o ModNestIntrp.o ModSoilMoisture.o \
-	ModMicrophysicsMisc.o ModPostGridNetCDF.o mem_scalar.o extra.o mem_leaf.o \
-	teb_spm_start.o ref_sounding.o ModMicInit.o chem_sources.o mem_grid.o \
-	mem_chem1aq.o ModParaInit.o meteogram.o ModRnode.o $(UTILS_INCS)/files.h \
-	$(UTILS_INCS)/constants.h $(UTILS_INCS)/tsNames.h 
-	@cp -f $< $(<F:.f90=.f90)
-	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-	rm -f $(<F:.f90=.f90)
-
-ModOpspec.o : $(IO)/ModOpspec.f90 mem_chem1.o mem_globrad.o chem1_list.o \
-	ModNamelistFile.o mem_grell_param2.o mem_aer1.o mem_radiate.o mem_stilt.o \
-	ccatt_start.o ModMicControl.o aer1_list.o modIau.o mem_cuparm.o mem_varinit.o \
-	io_params.o mem_leaf.o grid_dims.o teb_spm_start.o chem1aq_list.o \
-	shcu_vars_const.o chem_sources.o mem_grid.o mem_emiss.o mem_chem1aq.o 
-	@cp -f $< $(<F:.f90=.f90)
-	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-	rm -f $(<F:.f90=.f90)
-
-ModOptical.o : $(RADIATE)/ModOptical.f90 ReadBcst.o ModSoilMoisture.o \
-	ModRamsGrid.o ModNamelistFile.o aer1_list.o dump.o ModBasicFields.o mem_grid.o \
-	mem_aer1.o ModControlVars.o mem_radiate.o ModVarTables.o ModMPassFull.o \
-	ModTurbFields.o mem_leaf.o node_mod.o ccatt_start.o parlibf.o \
+ModNestGeoSst.o : $(MKSFC)/ModNestGeoSst.f90 ccatt_start.o ModInitHis.o \
+	ModLanduseInput.o grid_dims.o ModRUser.o node_mod.o ModNestFeed.o \
+	ModNestFillDens.o ModBasicFields.o ModGeodat.o ModLeaf3Init.o io_params.o \
+	ModSoilMoisture.o dump.o mem_leaf.o mem_scratch.o ModMkSfcTop.o mem_grid.o \
+	ModControlVars.o memSoilMoisture.o ModTurbFields.o mem_mksfc.o \
 	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModOutputUtils.o : $(IO)/ModOutputUtils.f90 ModNamelistFile.o ModBasicFields.o \
-	dump.o ModVarTables.o ModTurbFields.o $(UTILS_INCS)/constants.h 
+ModNodeDimensions.o : $(MPI)/ModNodeDimensions.f90 ModGridDims.o \
+	ModDomainDecomp.o ModParallelEnvironment.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModOzone.o : $(TEB_SPM)/ModOzone.f90 ModBasicFields.o mem_grid.o mem_radiate.o \
-	rconstants.o mem_gaspart.o 
+ModNudAnalysis.o : $(FDDA)/ModNudAnalysis.f90 mem_varinit.o mem_grid.o modIau.o \
+	chem1_list.o ModNestFillDens.o mem_chem1.o ModEvaluation.o mem_tend.o \
+	node_mod.o ModBasicFields.o dump.o mem_scratch.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModParaInit.o : $(MPI)/ModParaInit.f90 dump.o mem_grid.o ModVarTables.o \
-	ModScalarTable.o grid_dims.o node_mod.o $(UTILS_INCS)/constants.h 
+ModOdaNudge.o : $(FDDA)/ModOdaNudge.f90 mem_grid.o mem_oda.o ModOdaProcObs.o \
+	mem_tend.o node_mod.o ModOdaKrig.o ModBasicFields.o io_params.o mem_scratch.o 
+	@cp -f $< $(<F:.f90=.f90)
+	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
+	rm -f $(<F:.f90=.f90)
+
+ModOneProc.o : $(MODEL)/ModOneProc.F90 ModRinit.o mem_globrad.o ModMPassDtl.o \
+	machine_arq.o ModCuParGrell3.o ModGasPart.o grid_dims.o mem_gaspart.o \
+	mem_teb_vars_const.o ModParaInit.o ModMemAlloc.o ModBasicFields.o ModRnode.o \
+	mem_emiss.o ModNudRead.o ModSched.o ModSoilMoisture.o chem_dry_dep.o ModRhhi.o \
+	mem_grid.o mem_grell_param2.o ModOdaRead.o ModInitMicThompson.o mem_scalar.o \
+	mem_volc_chem1.o teb_spm_start.o mem_cuparm.o ModInitHis.o mem_micro.o \
+	ModGrid.o mem_chem1.o ModVarfFile.o ModTuv2.7.o ModSstRead.o ModWindFarm.o \
+	ReadBcst.o ModLeaf3Teb.o ModNdviRead.o chem1_list.o ModCuRead.o \
+	ModPostGridNetCDF.o modIau.o ModChemistryDriver.o dam.o io_params.o mem_aer1.o \
+	mem_chem1aq.o mem_scratch.o ModMkSfcTop.o ModPostProcess.o mem_stilt.o \
+	ModTimestepRK.o digitalFilter.o mem_teb_common.o ModNestIntrp.o ModCoriolis.o \
+	ModCondRead.o ModMkSfcFuso.o mem_oda.o ccatt_start.o ModParallelEnvironment.o \
+	extra.o ModMkSfcDriver.o ModMicInit.o parlibf.o ModRUser.o ModUrbanCanopy.o \
+	mem_varinit.o isan_coms.o ModTuvDriver2.7.o meteogram.o ModDomainDecomp.o \
+	local_proc.o ModRamsGrid.o ModRThrm.o ModNamelistFile.o memSoilMoisture.o \
+	ModRio.o shcu_vars_const.o ModRamsMicrophysics2M.o ModMkSfcSfc.o mem_radiate.o \
+	mem_carma.o ModMonotonicAdvection.o ModAerClim.o node_mod.o ModRecycle.o \
+	ModVarfUpdate.o ref_sounding.o ModGridTree.o ModNestGeoSst.o ModOpspec.o \
+	ModTimeStamp.o ModVarTables.o domain_decomp.o ModMicrophysicsMisc.o micphys.o \
+	mem_plume_chem1.o ModLeaf3Init.o ModChemAsgen.o ModRanlavg.o dump.o mem_leaf.o \
+	tuvParameter.o aer1_list.o chem_sources.o ModEvaluation.o mem_teb.o \
+	ModTimestep.o $(UTILS_INCS)/files.h $(UTILS_INCS)/tsNames.h \
+	$(UTILS_INCS)/constants.h 
+	@cp -f $< $(<F:.f90=.f90)
+	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
+	rm -f $(<F:.f90=.f90)
+
+ModOpspec.o : $(IO)/ModOpspec.f90 mem_globrad.o ccatt_start.o chem1aq_list.o \
+	mem_chem1.o grid_dims.o ModMicControl.o mem_varinit.o chem1_list.o modIau.o \
+	mem_emiss.o ModNamelistFile.o io_params.o mem_leaf.o mem_chem1aq.o mem_aer1.o \
+	mem_grid.o aer1_list.o mem_grell_param2.o mem_stilt.o chem_sources.o \
+	teb_spm_start.o mem_cuparm.o shcu_vars_const.o mem_radiate.o 
+	@cp -f $< $(<F:.f90=.f90)
+	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
+	rm -f $(<F:.f90=.f90)
+
+ModOptical.o : $(RADIATE)/ModOptical.f90 mem_leaf.o ReadBcst.o aer1_list.o \
+	mem_grid.o ccatt_start.o ModControlVars.o ModTurbFields.o parlibf.o \
+	ModRamsGrid.o ModNamelistFile.o ModMPassFull.o node_mod.o ModBasicFields.o \
+	ModSoilMoisture.o dump.o mem_radiate.o mem_aer1.o ModVarTables.o \
+	$(UTILS_INCS)/constants.h 
+	@cp -f $< $(<F:.f90=.f90)
+	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
+	rm -f $(<F:.f90=.f90)
+
+ModOutputUtils.o : $(IO)/ModOutputUtils.f90 ModTurbFields.o ModNamelistFile.o \
+	ModBasicFields.o dump.o ModVarTables.o $(UTILS_INCS)/constants.h 
+	@cp -f $< $(<F:.f90=.f90)
+	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
+	rm -f $(<F:.f90=.f90)
+
+ModOzone.o : $(TEB_SPM)/ModOzone.f90 mem_grid.o mem_gaspart.o rconstants.o \
+	ModBasicFields.o mem_radiate.o 
+	@cp -f $< $(<F:.f90=.f90)
+	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
+	rm -f $(<F:.f90=.f90)
+
+ModParaInit.o : $(MPI)/ModParaInit.f90 mem_grid.o grid_dims.o node_mod.o \
+	ModScalarTable.o dump.o ModVarTables.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1333,56 +1330,57 @@ ModParticle.o : $(MATRIX)/ModParticle.f90
 	$(F_COMMAND) $(<F:.f90=.f90)
 	rm -f $(<F:.f90=.f90)
 
-ModPostGrid.o : $(POST_SRC)/ModPostGrid.F90 ModOutputUtils.o ModBramsGrid.o \
-	ModNamelistFile.o ModParallelEnvironment.o ModBasicFields.o mem_grid.o \
-	ModPostOneFieldNetCDF.o ModTurbFields.o io_params.o ModPostTypes.o parlibf.o \
-	ModPostUtils.o 
+ModPostGrid.o : $(POST_SRC)/ModPostGrid.F90 ModPostTypes.o mem_grid.o \
+	ModBramsGrid.o ModParallelEnvironment.o ModPostOneFieldNetCDF.o \
+	ModOutputUtils.o ModTurbFields.o parlibf.o ModNamelistFile.o ModPostUtils.o \
+	ModBasicFields.o io_params.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModPostGridNetCDF.o : $(POST_SRC)/ModPostGridNetCDF.F90 ModBramsGrid.o \
-	ModNamelistFile.o dump.o mem_grid.o ModDateUtils.o io_params.o ModPostTypes.o \
-	ModPostUtils.o $(UTILS_INCS)/constants.h 
+ModPostGridNetCDF.o : $(POST_SRC)/ModPostGridNetCDF.F90 ModPostTypes.o \
+	mem_grid.o ModBramsGrid.o ModNamelistFile.o ModPostUtils.o ModDateUtils.o \
+	io_params.o dump.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModPostOneField.o : $(POST_SRC)/ModPostOneField.f90 ModPostOneField8d.o \
-	ModPostOneFieldUtils.o ModBramsGrid.o ModNamelistFile.o ModPostOneField3d.o \
-	ModBasicFields.o dump.o ModTurbFields.o ModPostOneField2d.o ModPostOneField7d.o \
-	node_mod.o ModPostTypes.o ModPostUtils.o $(UTILS_INCS)/constants.h 
-	@cp -f $< $(<F:.f90=.f90)
-	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-	rm -f $(<F:.f90=.f90)
-
-ModPostOneField2d.o : $(POST_SRC)/ModPostOneField2d.f90 ModOutputUtils.o \
-	ModPostOneFieldUtils.o micphys.o ModBramsGrid.o ModNamelistFile.o \
-	ModBasicFields.o dump.o mem_grid.o mem_radiate.o mem_cuparm.o ModTurbFields.o \
-	mem_aerad.o io_params.o ModPostGrid.o node_mod.o ModPostTypes.o ModPostUtils.o \
+ModPostOneField.o : $(POST_SRC)/ModPostOneField.f90 ModPostTypes.o \
+	ModPostOneField3d.o ModPostOneField7d.o ModPostOneField2d.o \
+	ModPostOneFieldUtils.o ModPostOneField8d.o ModTurbFields.o ModNamelistFile.o \
+	ModPostUtils.o node_mod.o ModBasicFields.o ModBramsGrid.o dump.o \
 	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModPostOneField3d.o : $(POST_SRC)/ModPostOneField3d.f90 ModOutputUtils.o \
-	ModPostOneFieldUtils.o micphys.o ModBramsGrid.o ModNamelistFile.o \
-	ModBasicFields.o mem_grid.o ModTurbFields.o mem_varinit.o ModPostGrid.o \
-	node_mod.o ModPostTypes.o ModPostUtils.o 
+ModPostOneField2d.o : $(POST_SRC)/ModPostOneField2d.f90 ModPostTypes.o \
+	mem_grid.o ModPostOneFieldUtils.o mem_aerad.o micphys.o ModOutputUtils.o \
+	ModTurbFields.o io_params.o ModNamelistFile.o ModPostGrid.o ModPostUtils.o \
+	node_mod.o mem_cuparm.o ModBasicFields.o ModBramsGrid.o dump.o mem_radiate.o \
+	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModPostOneField7d.o : $(POST_SRC)/ModPostOneField7d.f90 ModOutputUtils.o \
-	ModPostOneFieldUtils.o ModBramsGrid.o ModNamelistFile.o ModBasicFields.o \
-	ModTurbFields.o ModPostTypes.o ModPostUtils.o 
+ModPostOneField3d.o : $(POST_SRC)/ModPostOneField3d.f90 mem_varinit.o \
+	ModPostTypes.o mem_grid.o ModPostOneFieldUtils.o micphys.o ModOutputUtils.o \
+	ModTurbFields.o ModNamelistFile.o ModPostGrid.o ModPostUtils.o node_mod.o \
+	ModBasicFields.o ModBramsGrid.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModPostOneField8d.o : $(POST_SRC)/ModPostOneField8d.f90 ModOutputUtils.o \
-	ModPostOneFieldUtils.o ModBramsGrid.o ModNamelistFile.o ModBasicFields.o \
-	ModTurbFields.o ModPostTypes.o ModPostUtils.o 
+ModPostOneField7d.o : $(POST_SRC)/ModPostOneField7d.f90 ModPostTypes.o \
+	ModPostOneFieldUtils.o ModOutputUtils.o ModTurbFields.o ModNamelistFile.o \
+	ModPostUtils.o ModBasicFields.o ModBramsGrid.o 
+	@cp -f $< $(<F:.f90=.f90)
+	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
+	rm -f $(<F:.f90=.f90)
+
+ModPostOneField8d.o : $(POST_SRC)/ModPostOneField8d.f90 ModPostTypes.o \
+	ModPostOneFieldUtils.o ModOutputUtils.o ModTurbFields.o ModNamelistFile.o \
+	ModPostUtils.o ModBasicFields.o ModBramsGrid.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1393,16 +1391,17 @@ ModPostOneFieldNetCDF.o : $(POST_SRC)/ModPostOneFieldNetCDF.F90 \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModPostOneFieldUtils.o : $(POST_SRC)/ModPostOneFieldUtils.f90 ModPostTypes.o \
-	ModBramsGrid.o ModPostGrid.o 
+ModPostOneFieldUtils.o : $(POST_SRC)/ModPostOneFieldUtils.f90 ModBramsGrid.o \
+	ModPostGrid.o ModPostTypes.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModPostProcess.o : $(POST_SRC)/ModPostProcess.F90 ModGrid.o ModBramsGrid.o \
-	ModNamelistFile.o ModParallelEnvironment.o ModBasicFields.o ModPostGridNetCDF.o \
-	ModMessageSet.o ModGridTree.o ModTurbFields.o ModPostOneField.o io_params.o \
-	ModPostGrid.o ModPostTypes.o $(UTILS_INCS)/constants.h $(UTILS_INCS)/tsNames.h 
+ModPostProcess.o : $(POST_SRC)/ModPostProcess.F90 ModPostTypes.o ModBramsGrid.o \
+	ModParallelEnvironment.o ModGrid.o ModTurbFields.o ModGridTree.o \
+	ModNamelistFile.o ModPostOneField.o ModPostGrid.o ModPostGridNetCDF.o \
+	ModBasicFields.o io_params.o ModMessageSet.o $(UTILS_INCS)/tsNames.h \
+	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1413,8 +1412,8 @@ ModPostTypes.o : $(POST_SRC)/ModPostTypes.f90 $(UTILS_INCS)/files.h
 	rm -f $(<F:.f90=.f90)
 
 ModPostUtils.o : $(POST_SRC)/ModPostUtils.f90 dump.o mem_leaf.o \
-	ModParallelEnvironment.o $(UTILS_INCS)/files.h $(POST_INCS)/post_rconstants.h \
-	$(POST_INCS)/post_rconfig.h $(UTILS_INCS)/constants.h 
+	ModParallelEnvironment.o $(UTILS_INCS)/files.h $(UTILS_INCS)/constants.h \
+	$(POST_INCS)/post_rconfig.h $(POST_INCS)/post_rconstants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1424,24 +1423,24 @@ modPrintInitial.o : $(INIT)/modPrintInitial.F90 $(UTILS_INCS)/constants.h
 	$(F_COMMAND) $(<F:.F90=.F90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModRadvc.o : $(MODEL)/ModRadvc.f90 mem_chem1.o ModRadvcAdap.o ModNamelistFile.o \
-	ModBasicFields.o ModParallelEnvironment.o mem_grid.o mem_aer1.o \
-	ModScalarTable.o mem_tend.o mem_scratch.o grid_dims.o ModMonotonicAdvection.o \
-	chem_dry_dep.o ccatt_start.o 
+ModRadvc.o : $(MODEL)/ModRadvc.f90 mem_grid.o ModMonotonicAdvection.o \
+	ccatt_start.o ModParallelEnvironment.o mem_chem1.o mem_tend.o ModNamelistFile.o \
+	ModRadvcAdap.o grid_dims.o ModBasicFields.o ModScalarTable.o chem_dry_dep.o \
+	mem_scratch.o mem_aer1.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModRadvcRK.o : $(MODEL)/ModRadvcRK.f90 mem_chem1.o ModGrid.o ModMessageSet.o \
-	ModParallelEnvironment.o mem_grid.o mem_tend.o grid_dims.o node_mod.o \
-	mem_stilt.o ModRexev.o $(UTILS_INCS)/constants.h 
+ModRadvcRK.o : $(MODEL)/ModRadvcRK.f90 mem_grid.o mem_stilt.o \
+	ModParallelEnvironment.o ModRexev.o ModGrid.o mem_chem1.o mem_tend.o \
+	grid_dims.o node_mod.o ModMessageSet.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
 ModRamsMicrophysics2M.o : $(MICRO)/ModRamsMicrophysics2M.f90 ModMicControl.o \
-	ModBasicFields.o dump.o mem_grid.o ModMicGamma.o rconstants.o mem_scratch.o \
-	mem_leaf.o grid_dims.o node_mod.o mem_micro.o $(UTILS_INCS)/constants.h 
+	mem_grid.o mem_micro.o mem_scratch.o grid_dims.o ModMicGamma.o node_mod.o \
+	rconstants.o ModBasicFields.o dump.o mem_leaf.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1452,121 +1451,122 @@ ModRamsReadHeader.o : $(IO)/ModRamsReadHeader.f90 an_header.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModRanlavg.o : $(IO)/ModRanlavg.f90 ModRThrm.o ModBasicFields.o mem_grid.o \
-	ModVarTables.o io_params.o grid_dims.o 
+ModRanlavg.o : $(IO)/ModRanlavg.f90 mem_grid.o ModRThrm.o grid_dims.o \
+	ModBasicFields.o io_params.o ModVarTables.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModRbnd.o : $(BC)/ModRbnd.f90 ModTurbKE.o mem_chem1.o ModMicrophysicsMisc.o \
-	ModMicControl.o ModBasicFields.o mem_grid.o ModScalarTable.o ModTurbFields.o \
-	mem_scratch.o node_mod.o mem_tend.o ccatt_start.o ref_sounding.o \
+ModRbnd.o : $(BC)/ModRbnd.f90 ModMicControl.o mem_grid.o ccatt_start.o \
+	ModMicrophysicsMisc.o ModTurbKE.o mem_chem1.o ref_sounding.o ModTurbFields.o \
+	mem_tend.o node_mod.o ModBasicFields.o ModScalarTable.o mem_scratch.o \
 	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModRcio.o : $(IO)/ModRcio.f90 ModLeafComs.o ModNamelistFile.o ModMicControl.o \
-	ModParallelEnvironment.o mem_grid.o mem_radiate.o mem_cuparm.o io_params.o \
-	mem_leaf.o grid_dims.o an_header.o mem_stilt.o ref_sounding.o \
+ModRcio.o : $(IO)/ModRcio.f90 ModMicControl.o ModLeafComs.o mem_grid.o \
+	mem_stilt.o ModParallelEnvironment.o ref_sounding.o grid_dims.o \
+	ModNamelistFile.o an_header.o mem_cuparm.o io_params.o mem_radiate.o mem_leaf.o \
 	$(MICRO)/MicConstants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModRConv.o : $(CUPARM)/ModRConv.f90 ModBasicFields.o ModConvComs.o mem_grid.o \
-	mem_cuparm.o rconstants.o mem_scratch.o node_mod.o mem_tend.o \
+ModRConv.o : $(CUPARM)/ModRConv.f90 mem_grid.o mem_tend.o node_mod.o \
+	mem_cuparm.o ModBasicFields.o rconstants.o mem_scratch.o ModConvComs.o \
 	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModRConvGrellCatt.o : $(CUPARM)/ModRConvGrellCatt.f90 ModCupGrellCattDeep.o \
-	mem_scratch.o mem_scratch1_grell.o node_mod.o mem_tend.o ModGrid.o \
-	mem_grell_param2.o mem_radiate.o rconstants.o mem_stilt.o ccatt_start.o \
-	mem_micro.o mem_grell.o ModMicControl.o ModRstilt.o mem_cuparm.o mem_scalar.o \
-	ModCupGrellCattShallow.o io_params.o mem_leaf.o ModChemConvTransp.o mem_grid.o \
-	ModCuParGrell3.o $(UTILS_INCS)/constants.h 
+ModRConvGrellCatt.o : $(CUPARM)/ModRConvGrellCatt.f90 ccatt_start.o mem_micro.o \
+	ModGrid.o ModCuParGrell3.o mem_grell.o ModCupGrellCattShallow.o node_mod.o \
+	rconstants.o ModMicControl.o mem_scratch1_grell.o mem_tend.o \
+	ModChemConvTransp.o ModCupGrellCattDeep.o io_params.o mem_leaf.o mem_scratch.o \
+	mem_grid.o mem_grell_param2.o mem_stilt.o mem_scalar.o ModRstilt.o mem_cuparm.o \
+	mem_radiate.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModRecycle.o : $(IO)/ModRecycle.f90 chem1_list.o mem_chem1.o ReadBcst.o \
-	aer1_list.o dump.o ModRamsReadHeader.o ModVarTables.o mem_grid.o mem_aer1.o \
-	ModMPassFull.o ModDateUtils.o mem_aerad.o io_params.o an_header.o node_mod.o \
-	ModGetVar.o $(UTILS_INCS)/files.h $(UTILS_INCS)/constants.h 
+ModRecycle.o : $(IO)/ModRecycle.f90 ReadBcst.o mem_grid.o aer1_list.o \
+	mem_aerad.o chem1_list.o mem_chem1.o ModGetVar.o ModRamsReadHeader.o \
+	ModDateUtils.o ModMPassFull.o node_mod.o an_header.o io_params.o dump.o \
+	mem_aer1.o ModVarTables.o $(UTILS_INCS)/files.h $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModRexev.o : $(STILT)/ModRexev.f90 ModRadvc.o micphys.o ModBasicFields.o \
-	mem_grid.o mem_stilt.o rconstants.o mem_scratch.o mem_tend.o mem_micro.o 
+ModRexev.o : $(STILT)/ModRexev.f90 mem_grid.o mem_stilt.o mem_micro.o ModRadvc.o \
+	micphys.o mem_tend.o rconstants.o ModBasicFields.o mem_scratch.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModRGrad.o : $(TURB)/ModRGrad.f90 mem_scratch.o mem_grid.o 
+ModRGrad.o : $(TURB)/ModRGrad.f90 mem_grid.o mem_scratch.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModRhhi.o : $(INIT)/ModRhhi.f90 ModMicControl.o ModBasicFields.o mem_grid.o \
-	ModRinit.o mem_scratch.o rconstants.o grid_dims.o ModRamsGrid.o ref_sounding.o 
+ModRhhi.o : $(INIT)/ModRhhi.f90 ModMicControl.o ModRinit.o mem_grid.o \
+	ref_sounding.o ModRamsGrid.o grid_dims.o rconstants.o ModBasicFields.o \
+	mem_scratch.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModRinit.o : $(INIT)/ModRinit.f90 ModTurbKE.o ModMicControl.o ModBasicFields.o \
-	mem_grid.o rconstants.o ModTurbFields.o mem_varinit.o mem_scratch.o io_params.o \
-	ModRbnd.o node_mod.o mem_micro.o ref_sounding.o $(UTILS_INCS)/constants.h 
+ModRinit.o : $(INIT)/ModRinit.f90 mem_varinit.o ModMicControl.o mem_grid.o \
+	ModTurbKE.o mem_micro.o ref_sounding.o ModTurbFields.o node_mod.o rconstants.o \
+	ModBasicFields.o io_params.o ModRbnd.o mem_scratch.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModRio.o : $(IO)/ModRio.f90 ReadBcst.o mem_chem1.o ModVarTables.o ModDateUtils.o \
-	utilsMod.o node_mod.o ModNamelistFile.o ModParallelEnvironment.o \
-	ModBasicFields.o ModMPassFull.o parlibf.o mpi_io_engine-5d.o ModMicControl.o \
-	mem_aerad.o io_params.o grid_dims.o ref_sounding.o ModRcio.o mem_grid.o \
-	ModControlVars.o ModTurbFields.o an_header.o $(UTILS_INCS)/files.h \
-	$(UTILS_INCS)/constants.h $(UTILS_INCS)/interface.h 
+ModRio.o : $(IO)/ModRio.f90 ModParallelEnvironment.o mem_chem1.o parlibf.o \
+	grid_dims.o ModDateUtils.o node_mod.o ModMicControl.o utilsMod.o ReadBcst.o \
+	ref_sounding.o ModMPassFull.o ModBasicFields.o ModVarTables.o mem_aerad.o \
+	ModRcio.o ModNamelistFile.o an_header.o io_params.o mem_grid.o ModControlVars.o \
+	mpi_io_engine-5d.o ModTurbFields.o $(UTILS_INCS)/files.h \
+	$(UTILS_INCS)/interface.h $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModRrtmDriver.o : $(RADIATE)/ModRrtmDriver.f90 mem_chem1.o rrtmg_sw_rad.o \
-	ModDateUtils.o mem_rrtm.o mem_scratch1_grell.o node_mod.o mem_tend.o \
-	ModOptical.o rrtmg_lw_cldprop.o ModLeafComs.o mcica_subcol_gen_lw.o \
-	ModBasicFields.o mem_grell_param2.o mem_radiate.o rrtmg_lw_rad.o rconstants.o \
-	mcica_subcol_gen_sw.o ccatt_start.o mem_micro.o mem_carma.o mem_cuparm.o \
-	parrrtm.o mem_leaf.o grid_dims.o ref_sounding.o teb_spm_start.o mem_tuv.o \
-	micphys.o parrrsw.o mem_grid.o parkind.o rrtmg_sw_cldprop.o \
+ModRrtmDriver.o : $(RADIATE)/ModRrtmDriver.f90 parkind.o mem_carma.o \
+	ccatt_start.o mem_micro.o rrtmg_lw_cldprop.o mem_chem1.o parrrtm.o \
+	rrtmg_lw_rad.o grid_dims.o ModDateUtils.o node_mod.o rconstants.o \
+	rrtmg_sw_cldprop.o mem_scratch1_grell.o mem_tuv.o ref_sounding.o mem_tend.o \
+	ModBasicFields.o ModOptical.o mcica_subcol_gen_lw.o rrtmg_sw_rad.o micphys.o \
+	parrrsw.o mcica_subcol_gen_sw.o mem_rrtm.o mem_leaf.o ModLeafComs.o mem_grid.o \
+	mem_grell_param2.o teb_spm_start.o mem_cuparm.o mem_radiate.o \
 	$(UTILS_INCS)/aerosol_setup.f90 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModRShCuPar.o : $(CUPARM)/ModRShCuPar.f90 mem_shcu.o ModRConv.o \
-	shcu_vars_const.o ModBasicFields.o mem_grid.o ModConvComs.o ModTurbFields.o \
-	mem_scratch.o node_mod.o mem_tend.o mem_micro.o $(UTILS_INCS)/constants.h 
+ModRShCuPar.o : $(CUPARM)/ModRShCuPar.f90 mem_grid.o ModBasicFields.o \
+	mem_micro.o ModTurbFields.o mem_tend.o node_mod.o ModRConv.o shcu_vars_const.o \
+	mem_shcu.o mem_scratch.o ModConvComs.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModRstilt.o : $(STILT)/ModRstilt.f90 ModBasicFields.o mem_grid.o mem_cuparm.o \
-	mem_scratch.o ModTurbFields.o mem_scratch1_grell.o grid_dims.o mem_stilt.o \
-	ModMonotonicAdvection.o $(UTILS_INCS)/constants.h 
+ModRstilt.o : $(STILT)/ModRstilt.f90 mem_scratch1_grell.o mem_grid.o \
+	ModMonotonicAdvection.o mem_stilt.o ModTurbFields.o grid_dims.o mem_cuparm.o \
+	ModBasicFields.o mem_scratch.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModRThrm.o : $(MODEL)/ModRThrm.f90 micphys.o ModBasicFields.o mem_grid.o \
-	rconstants.o mem_scratch.o mem_micro.o 
+ModRThrm.o : $(MODEL)/ModRThrm.f90 mem_grid.o mem_micro.o micphys.o rconstants.o \
+	ModBasicFields.o mem_scratch.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModRtimi.o : $(MODEL)/ModRtimi.f90 shcu_vars_const.o ModBasicFields.o mem_grid.o \
-	ModScalarTable.o mem_cuparm.o mem_scratch.o node_mod.o mem_tend.o mem_grell.o 
+ModRtimi.o : $(MODEL)/ModRtimi.f90 mem_grid.o mem_grell.o mem_tend.o node_mod.o \
+	mem_cuparm.o ModBasicFields.o ModScalarTable.o shcu_vars_const.o mem_scratch.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1577,24 +1577,24 @@ ModScalarTable.o : $(MEMORY)/ModScalarTable.f90 ModParallelEnvironment.o \
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModSched.o : $(MODEL)/ModSched.f90 ReadBcst.o local_proc.o shcu_vars_const.o \
-	ModNamelistFile.o dump.o ModBasicFields.o mem_grid.o mem_radiate.o mem_cuparm.o \
-	mem_varinit.o isan_coms.o io_params.o node_mod.o parlibf.o ref_sounding.o \
-	$(UTILS_INCS)/constants.h 
+ModSched.o : $(MODEL)/ModSched.f90 mem_varinit.o ReadBcst.o mem_grid.o \
+	isan_coms.o local_proc.o ref_sounding.o parlibf.o ModNamelistFile.o node_mod.o \
+	mem_cuparm.o ModBasicFields.o io_params.o shcu_vars_const.o dump.o \
+	mem_radiate.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModSeaSalt.o : $(CCATT)/ModSeaSalt.f90 mem_chem1.o aer1_list.o ModBasicFields.o \
-	mem_grid.o mem_aer1.o ModAerClim.o io_params.o mem_leaf.o node_mod.o \
-	ccatt_start.o 
+ModSeaSalt.o : $(CCATT)/ModSeaSalt.f90 ModAerClim.o mem_grid.o aer1_list.o \
+	ccatt_start.o mem_chem1.o node_mod.o ModBasicFields.o io_params.o mem_leaf.o \
+	mem_aer1.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModSstRead.o : $(MKSFC)/ModSstRead.f90 ReadBcst.o mem_grid.o mem_mksfc.o \
-	ModControlVars.o ModDateUtils.o io_params.o ModMkSfcSst.o mem_leaf.o node_mod.o \
-	grid_dims.o $(UTILS_INCS)/files.h 
+ModSstRead.o : $(MKSFC)/ModSstRead.f90 ReadBcst.o mem_grid.o ModControlVars.o \
+	ModMkSfcSst.o ModDateUtils.o grid_dims.o mem_mksfc.o node_mod.o io_params.o \
+	mem_leaf.o $(UTILS_INCS)/files.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1604,66 +1604,66 @@ ModTimeStamp.o : $(MODEL)/ModTimeStamp.f90 $(UTILS_INCS)/constants.h
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModTimestep.o : $(MODEL)/ModTimestep.F90 mem_chem1.o ModRThrm.o ModRConv.o \
-	ModMicGfdlDriver.o sfclyr_jules.o ModMatrixDriver.o ModMicThompsonDriver.o \
-	mem_scratch.o ModSeaSalt.o node_mod.o ModDiffuse.o mem_tend.o \
-	ModMonotonicAdvection.o ModOptical.o ModGrid.o ModRadvc.o ModCoriolis.o \
-	ModBasicFields.o mem_aer1.o mem_radiate.o digitalFilter.o ChemSourcesDriver.o \
-	ModRConvGrellCatt.o rconstants.o ModTurbK.o mem_oda.o ModAcoust.o mem_stilt.o \
-	ccatt_start.o rad_driv.o ModUrbanCanopy.o ModMicrophysicsMisc.o ModGasPart.o \
-	ModRstilt.o ModMessageSet.o ModChemistryDriver.o mem_cuparm.o mem_scalar.o \
-	mem_varinit.o ModTimeStamp.o ModMicrophysicsDrive.o ChemDryDepDriver.o \
-	mem_leaf.o grid_dims.o teb_spm_start.o ModRexev.o ModLeaf3.o \
-	ModRamsMicrophysics2M.o micphys.o shcu_vars_const.o mem_plume_chem1.o \
-	ModOzone.o chem_sources.o mem_grid.o ModNudAnalysis.o ModRtimi.o ModWindFarm.o \
-	mem_emiss.o machine_arq.o ModRbnd.o ModRShCuPar.o ModOdaNudge.o \
-	ModCuParGrell3.o $(UTILS_INCS)/tsNames.h 
-	@cp -f $< $(<F:.f90=.f90)
-	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
-	rm -f $(<F:.f90=.f90)
-
-ModTimestepRK.o : $(MODEL)/ModTimestepRK.F90 mem_chem1.o ModRThrm.o ModRConv.o \
-	ModMicGfdlDriver.o sfclyr_jules.o ModMatrixDriver.o ModMicThompsonDriver.o \
-	mem_scratch.o utilsMod.o ModSeaSalt.o ModRadvcRK.o node_mod.o ModDiffuse.o \
-	mem_tend.o ModMonotonicAdvection.o ModOptical.o ModGrid.o ModTimestep.o \
-	ModRadvc.o ModCoriolis.o ModParallelEnvironment.o mem_aer1.o mem_radiate.o \
-	digitalFilter.o ModAerClim.o ChemSourcesDriver.o rconstants.o ModTurbK.o \
-	mem_oda.o ModAcoust.o mem_stilt.o ccatt_start.o rad_driv.o ModUrbanCanopy.o \
-	ModMicrophysicsMisc.o ModGasPart.o ModRstilt.o ModMessageSet.o \
-	ModChemistryDriver.o modIau.o mem_cuparm.o mem_scalar.o mem_varinit.o \
-	ModTimeStamp.o ModMicrophysicsDrive.o ChemDryDepDriver.o mem_leaf.o grid_dims.o \
-	teb_spm_start.o ModRexev.o ModLeaf3.o ModRamsMicrophysics2M.o micphys.o \
-	shcu_vars_const.o mem_plume_chem1.o ModOzone.o chem_sources.o mem_grid.o \
-	ModNudAnalysis.o ModRtimi.o ModWindFarm.o mem_emiss.o machine_arq.o ModRbnd.o \
-	ModLeaf3OceanOnly.o ModRShCuPar.o ModOdaNudge.o ModCuParGrell3.o \
+ModTimestep.o : $(MODEL)/ModTimestep.F90 mem_oda.o ModMonotonicAdvection.o \
+	ccatt_start.o machine_arq.o ModRexev.o ModGrid.o mem_chem1.o ModCuParGrell3.o \
+	ModMicrophysicsDrive.o ModGasPart.o grid_dims.o rad_driv.o node_mod.o \
+	rconstants.o ModLeaf3.o ModUrbanCanopy.o ModMatrixDriver.o ModOzone.o \
+	sfclyr_jules.o ModRShCuPar.o mem_varinit.o ModWindFarm.o ModTurbK.o mem_tend.o \
+	ChemDryDepDriver.o ModCoriolis.o ModSeaSalt.o ModRConv.o ModBasicFields.o \
+	ModTimeStamp.o ModOptical.o ModMicrophysicsMisc.o ModChemistryDriver.o \
+	ModDiffuse.o ModRadvc.o micphys.o ModAcoust.o mem_emiss.o mem_plume_chem1.o \
+	ModRThrm.o ModRConvGrellCatt.o ModNudAnalysis.o ChemSourcesDriver.o \
+	ModMicThompsonDriver.o mem_leaf.o ModMessageSet.o mem_aer1.o mem_scratch.o \
+	mem_grid.o ModOdaNudge.o mem_stilt.o chem_sources.o digitalFilter.o \
+	mem_scalar.o teb_spm_start.o ModRstilt.o ModRtimi.o mem_cuparm.o ModRbnd.o \
+	shcu_vars_const.o ModRamsMicrophysics2M.o mem_radiate.o ModMicGfdlDriver.o \
 	$(UTILS_INCS)/tsNames.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModTurbDiff.o : $(TURB)/ModTurbDiff.f90 ModRGrad.o mem_grid.o mem_cuparm.o \
-	mem_opt_scratch.o mem_scratch.o 
+ModTimestepRK.o : $(MODEL)/ModTimestepRK.F90 ModAerClim.o mem_oda.o \
+	ModMonotonicAdvection.o ccatt_start.o ModParallelEnvironment.o ModRexev.o \
+	machine_arq.o ModGrid.o mem_chem1.o ModCuParGrell3.o ModRadvcRK.o \
+	ModMicrophysicsDrive.o ModGasPart.o grid_dims.o rad_driv.o ModTimestep.o \
+	node_mod.o rconstants.o ModLeaf3.o ModUrbanCanopy.o ModMatrixDriver.o \
+	ModOzone.o ModLeaf3OceanOnly.o sfclyr_jules.o ModRShCuPar.o mem_varinit.o \
+	utilsMod.o ModTurbK.o ModWindFarm.o mem_tend.o ChemDryDepDriver.o ModCoriolis.o \
+	ModSeaSalt.o ModRConv.o ModTimeStamp.o ModOptical.o modIau.o \
+	ModMicrophysicsMisc.o ModChemistryDriver.o ModDiffuse.o ModRadvc.o micphys.o \
+	ModAcoust.o mem_emiss.o mem_plume_chem1.o ModRThrm.o ModNudAnalysis.o \
+	ChemSourcesDriver.o ModMicThompsonDriver.o mem_leaf.o ModMessageSet.o \
+	mem_aer1.o mem_scratch.o mem_grid.o ModOdaNudge.o mem_stilt.o chem_sources.o \
+	digitalFilter.o mem_scalar.o teb_spm_start.o ModRstilt.o ModRtimi.o ModRbnd.o \
+	mem_cuparm.o shcu_vars_const.o ModRamsMicrophysics2M.o mem_radiate.o \
+	ModMicGfdlDriver.o $(UTILS_INCS)/tsNames.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModTurbDiffAdap.o : $(TURB)/ModTurbDiffAdap.f90 mem_scratch.o mem_grid.o 
+ModTurbDiff.o : $(TURB)/ModTurbDiff.f90 mem_grid.o ModRGrad.o mem_opt_scratch.o \
+	mem_cuparm.o mem_scratch.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModTurbFields.o : $(TURB)/ModTurbFields.f90 ModNamelistFile.o \
-	ModParallelEnvironment.o ModVarTables.o ModNodeDimensions.o 
+ModTurbDiffAdap.o : $(TURB)/ModTurbDiffAdap.f90 mem_grid.o mem_scratch.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModTurbK.o : $(TURB)/ModTurbK.f90 mem_chem1.o mem_turb_scalar.o mem_scratch.o \
-	node_mod.o mem_tend.o ModMonotonicAdvection.o ModTKenn.o ModNamelistFile.o \
-	ModBasicFields.o ModScalarTable.o ke_coms.o rconstants.o mem_stilt.o \
-	mem_micro.o ccatt_start.o mem_grell.o ModTurbKE.o ModRGrad.o ModRstilt.o \
-	mem_cuparm.o ModTurbKAdap.o mem_leaf.o grid_dims.o ModTurbDiff.o \
-	ModTurbDiffAdap.o micphys.o mem_grid.o ModTurbFields.o \
+ModTurbFields.o : $(TURB)/ModTurbFields.f90 ModParallelEnvironment.o \
+	ModNodeDimensions.o ModNamelistFile.o ModVarTables.o 
+	@cp -f $< $(<F:.f90=.f90)
+	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
+	rm -f $(<F:.f90=.f90)
+
+ModTurbK.o : $(TURB)/ModTurbK.f90 ModMonotonicAdvection.o ccatt_start.o \
+	ModTurbKE.o mem_micro.o mem_chem1.o mem_grell.o grid_dims.o node_mod.o \
+	rconstants.o ModTurbDiff.o ModTKenn.o ModMicControl.o ModTurbKAdap.o mem_tend.o \
+	ModBasicFields.o ModRGrad.o ModNamelistFile.o ModScalarTable.o \
+	ModTurbDiffAdap.o mem_leaf.o mem_scratch.o mem_grid.o mem_stilt.o \
+	ModTurbFields.o mem_turb_scalar.o ModRstilt.o ke_coms.o mem_cuparm.o \
 	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
@@ -1674,8 +1674,8 @@ ModTurbKAdap.o : $(TURB)/ModTurbKAdap.f90
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModTurbKE.o : $(TURB)/ModTurbKE.f90 mem_grid.o ke_coms.o rconstants.o \
-	mem_scratch.o ModTurbFields.o 
+ModTurbKE.o : $(TURB)/ModTurbKE.f90 mem_grid.o ModTurbFields.o rconstants.o \
+	ke_coms.o mem_scratch.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1685,10 +1685,10 @@ ModTuv2.7.o : $(TUV)/ModTuv2.7.f90
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModTuvDriver2.7.o : $(TUV)/ModTuvDriver2.7.f90 chem1_list.o mem_chem1.o \
-	mem_tuv.o ModBasicFields.o mem_grid.o mem_carma.o mem_radiate.o rconstants.o \
-	mem_aerad.o ModTuv2.7.o mem_rrtm.o extra.o mem_globrad.o tuvParameter.o \
-	node_mod.o mem_leaf.o chem_fastjx_driv.o ref_sounding.o 
+ModTuvDriver2.7.o : $(TUV)/ModTuvDriver2.7.f90 tuvParameter.o mem_grid.o \
+	mem_tuv.o mem_carma.o mem_globrad.o chem_fastjx_driv.o extra.o mem_aerad.o \
+	chem1_list.o mem_chem1.o ref_sounding.o ModTuv2.7.o node_mod.o rconstants.o \
+	ModBasicFields.o mem_rrtm.o mem_radiate.o mem_leaf.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1718,8 +1718,8 @@ module_mp_radar.o : $(MICRO)/module_mp_radar.f90
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-module_mp_thompson.o : $(MICRO)/module_mp_thompson.f90 node_mod.o \
-	module_mp_radar.o $(UTILS_INCS)/constants.h 
+module_mp_thompson.o : $(MICRO)/module_mp_thompson.f90 module_mp_radar.o \
+	node_mod.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1729,26 +1729,26 @@ module_wind_fitch.o : $(WIND_FARM)/module_wind_fitch.f90
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModUrbanCanopy.o : $(SURFACE)/ModUrbanCanopy.f90 ModBasicFields.o mem_grid.o \
-	ModTurbFields.o node_mod.o mem_tend.o $(UTILS_INCS)/files.h 
+ModUrbanCanopy.o : $(SURFACE)/ModUrbanCanopy.f90 mem_grid.o ModTurbFields.o \
+	mem_tend.o node_mod.o ModBasicFields.o $(UTILS_INCS)/files.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModVarfFile.o : $(FDDA)/ModVarfFile.f90 ReadBcst.o mem_chem1.o ModVarfUpdate.o \
-	ModDateUtils.o mem_scratch.o isan_coms.o node_mod.o chem1_list.o ModGrid.o \
-	ModBasicFields.o ModRamsReadHeader.o mem_aer1.o ModGridTree.o rconstants.o \
-	ModRamsGrid.o parlibf.o ModMicControl.o ModMessageSet.o aer1_list.o \
-	mem_varinit.o mem_leaf.o ref_sounding.o ModGetVar.o ModRcio.o mem_grid.o \
-	ModControlVars.o ModNudAnalysis.o $(UTILS_INCS)/files.h \
+ModVarfFile.o : $(FDDA)/ModVarfFile.f90 ModGrid.o mem_chem1.o parlibf.o \
+	ModDateUtils.o node_mod.o rconstants.o ModVarfUpdate.o mem_varinit.o ReadBcst.o \
+	isan_coms.o ModMicControl.o chem1_list.o ref_sounding.o ModGetVar.o \
+	ModGridTree.o ModBasicFields.o ModRcio.o ModRamsGrid.o ModNudAnalysis.o \
+	mem_scratch.o mem_leaf.o ModMessageSet.o mem_aer1.o mem_grid.o aer1_list.o \
+	ModControlVars.o ModRamsReadHeader.o $(UTILS_INCS)/files.h \
 	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModWindFarm.o : $(WIND_FARM)/ModWindFarm.f90 ModNamelistFile.o ModBasicFields.o \
-	mem_grid.o module_wind_fitch.o rconstants.o ModTurbFields.o ModDateUtils.o \
-	io_params.o node_mod.o mem_tend.o $(UTILS_INCS)/files.h 
+ModWindFarm.o : $(WIND_FARM)/ModWindFarm.f90 mem_grid.o module_wind_fitch.o \
+	ModTurbFields.o mem_tend.o ModDateUtils.o ModNamelistFile.o node_mod.o \
+	rconstants.o ModBasicFields.o io_params.o $(UTILS_INCS)/files.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1778,9 +1778,9 @@ ModNestFillDens.o : $(NESTING)/ModNestFillDens.f90
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModNestIntrp.o : $(NESTING)/ModNestIntrp.f90 ModNestFillDens.o ModBasicFields.o \
-	mem_grid.o mem_nestb.o ModRinit.o mem_scratch.o rconstants.o grid_dims.o \
-	ref_sounding.o 
+ModNestIntrp.o : $(NESTING)/ModNestIntrp.f90 ModRinit.o mem_grid.o \
+	ModNestFillDens.o ref_sounding.o grid_dims.o rconstants.o ModBasicFields.o \
+	mem_scratch.o mem_nestb.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1795,16 +1795,16 @@ npf.o : $(MATRIX)/npf.f90 memMatrix.o
 	$(F_COMMAND) $(<F:.f90=.f90)
 	rm -f $(<F:.f90=.f90)
 
-ModNudRead.o : $(FDDA)/ModNudRead.f90 mem_chem1.o ModNudUpdate.o mem_grid.o \
-	ModNudAnalysis.o ModDateUtils.o mem_varinit.o isan_coms.o ModRamsGrid.o \
+ModNudRead.o : $(FDDA)/ModNudRead.f90 mem_varinit.o isan_coms.o mem_grid.o \
+	mem_chem1.o ModRamsGrid.o ModDateUtils.o ModNudAnalysis.o ModNudUpdate.o \
 	$(UTILS_INCS)/files.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModNudUpdate.o : $(FDDA)/ModNudUpdate.f90 chem1_list.o mem_chem1.o ModRcio.o \
-	mem_grid.o ModVarTables.o ModInitHis.o mem_varinit.o mem_aerad.o an_header.o \
-	grid_struct.o $(UTILS_INCS)/files.h 
+ModNudUpdate.o : $(FDDA)/ModNudUpdate.f90 mem_varinit.o mem_grid.o ModInitHis.o \
+	mem_aerad.o chem1_list.o mem_chem1.o ModRcio.o an_header.o grid_struct.o \
+	ModVarTables.o $(UTILS_INCS)/files.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1819,25 +1819,25 @@ ModOdaKrig.o : $(FDDA)/ModOdaKrig.f90 mem_oda.o
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModOdaProcObs.o : $(FDDA)/ModOdaProcObs.f90 rconstants.o mem_grid.o mem_oda.o 
+ModOdaProcObs.o : $(FDDA)/ModOdaProcObs.f90 mem_grid.o mem_oda.o rconstants.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModOdaRead.o : $(FDDA)/ModOdaRead.f90 ModOdaStaInput.o mem_grid.o ModDateUtils.o \
-	isan_coms.o mem_oda.o ModOdaStaCount.o $(UTILS_INCS)/files.h 
+ModOdaRead.o : $(FDDA)/ModOdaRead.f90 isan_coms.o mem_grid.o mem_oda.o \
+	ModDateUtils.o ModOdaStaInput.o ModOdaStaCount.o $(UTILS_INCS)/files.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModOdaStaCount.o : $(FDDA)/ModOdaStaCount.f90 obs_input.o mem_grid.o \
-	ModReadRalph.o mem_oda.o 
+ModOdaStaCount.o : $(FDDA)/ModOdaStaCount.f90 obs_input.o mem_grid.o mem_oda.o \
+	ModReadRalph.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModOdaStaInput.o : $(FDDA)/ModOdaStaInput.f90 obs_input.o ModReadRalph.o \
-	mem_grid.o ModDateUtils.o mem_oda.o ModOdaStaCount.o 
+ModOdaStaInput.o : $(FDDA)/ModOdaStaInput.f90 mem_grid.o mem_oda.o \
+	ModReadRalph.o ModDateUtils.o obs_input.o ModOdaStaCount.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1862,23 +1862,23 @@ Phys_const.o : $(CUPARM)/Phys_const.f90
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModAcoustAdap.o : $(MODEL)/ModAcoustAdap.f90 ModGrid.o ModMessageSet.o \
-	mem_grid.o rconstants.o mem_scratch.o ModRbnd.o node_mod.o 
+ModAcoustAdap.o : $(MODEL)/ModAcoustAdap.f90 mem_grid.o ModGrid.o node_mod.o \
+	rconstants.o ModRbnd.o mem_scratch.o ModMessageSet.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rad_carma.o : $(RADIATE)/rad_carma.F90 chem1_list.o mem_chem1.o mem_tuv.o \
-	aer1_list.o mem_carma.o mem_grid.o mem_radiate.o mem_aer1.o mem_globaer.o \
-	carma_fastjx.o rconstants.o mem_aerad.o ModDateUtils.o machine_arq.o \
-	mem_globrad.o grid_dims.o node_mod.o mem_leaf.o ccatt_start.o \
+rad_carma.o : $(RADIATE)/rad_carma.F90 mem_leaf.o mem_carma.o mem_grid.o \
+	aer1_list.o ccatt_start.o mem_globrad.o mem_globaer.o mem_tuv.o mem_aerad.o \
+	chem1_list.o mem_chem1.o machine_arq.o grid_dims.o ModDateUtils.o \
+	carma_fastjx.o node_mod.o rconstants.o mem_radiate.o mem_aer1.o \
 	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.F90=.F90)
 	$(F_COMMAND) -D$(AER) $(<F:.F90=.F90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rad_driv.o : $(RADIATE)/rad_driv.f90 ModBasicFields.o ModCarmaDriver.o \
-	mem_radiate.o ModRrtmDriver.o 
+rad_driv.o : $(RADIATE)/rad_driv.f90 ModCarmaDriver.o ModRrtmDriver.o \
+	mem_radiate.o ModBasicFields.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1888,8 +1888,8 @@ ModRadvcAdap.o : $(MODEL)/ModRadvcAdap.f90 ModAdapInit.o
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModRamsGrid.o : $(INIT)/ModRamsGrid.f90 dump.o ModGridSet.o mem_grid.o \
-	rconstants.o ModAdapInit.o node_mod.o $(UTILS_INCS)/constants.h 
+ModRamsGrid.o : $(INIT)/ModRamsGrid.f90 mem_grid.o ModGridSet.o ModAdapInit.o \
+	node_mod.o rconstants.o dump.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1899,14 +1899,14 @@ rconstants.o : $(MEMORY)/rconstants.f90
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModReadRalph.o : $(FDDA)/ModReadRalph.f90 rconstants.o obs_input.o 
+ModReadRalph.o : $(FDDA)/ModReadRalph.f90 obs_input.o rconstants.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ReadBcst.o : $(MPI)/ReadBcst.f90 ModBasicFields.o mem_grid.o ModVarTables.o \
-	ModControlVars.o ModMPassFull.o ModTurbFields.o utilsMod.o mem_aerad.o \
-	an_header.o node_mod.o parlibf.o $(UTILS_INCS)/constants.h 
+ReadBcst.o : $(MPI)/ReadBcst.f90 utilsMod.o mem_grid.o mem_aerad.o \
+	ModControlVars.o ModTurbFields.o parlibf.o ModMPassFull.o node_mod.o \
+	an_header.o ModBasicFields.o ModVarTables.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1916,8 +1916,8 @@ ref_sounding.o : $(MODEL)/ref_sounding.f90 ModNamelistFile.o grid_dims.o
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModRnode.o : $(MODEL)/ModRnode.f90 mem_grid.o ModVarTables.o mem_leaf.o \
-	grid_dims.o node_mod.o parlibf.o $(UTILS_INCS)/constants.h 
+ModRnode.o : $(MODEL)/ModRnode.f90 mem_grid.o parlibf.o grid_dims.o node_mod.o \
+	mem_leaf.o ModVarTables.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -2142,141 +2142,141 @@ rrsw_wvn.o : $(RRTMG_SW_MOD)/rrsw_wvn.f90 parkind.o parrrsw.o
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rrtmg_lw_cldprmc.o : $(RRTMG_LW_SRC)/rrtmg_lw_cldprmc.f90 rrlw_vsn.o rrlw_cld.o \
-	parrrtm.o rrlw_wvn.o parkind.o 
+rrtmg_lw_cldprmc.o : $(RRTMG_LW_SRC)/rrtmg_lw_cldprmc.f90 parkind.o rrlw_cld.o \
+	parrrtm.o rrlw_vsn.o rrlw_wvn.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rrtmg_lw_cldprop.o : $(RRTMG_LW_SRC)/rrtmg_lw_cldprop.f90 parkind.o parrrtm.o \
-	rrlw_vsn.o rrlw_cld.o 
+rrtmg_lw_cldprop.o : $(RRTMG_LW_SRC)/rrtmg_lw_cldprop.f90 parrrtm.o parkind.o \
+	rrlw_cld.o rrlw_vsn.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rrtmg_lw_init.o : $(RRTMG_LW_SRC)/rrtmg_lw_init.f90 rrlw_kg12.o rrlw_kg04.o \
-	rrlw_kg13.o rrlw_kg09.o rrlw_kg08.o rrlw_tbl.o rrlw_kg06.o rrlw_kg02.o \
-	rrlw_cld.o rrlw_kg11.o rrtmg_lw_k_g.o rrlw_kg05.o rrlw_kg10.o rrlw_kg01.o \
-	rrlw_kg07.o rrlw_kg14.o rrtmg_lw_setcoef.o rrlw_con.o parrrtm.o rrlw_wvn.o \
-	rrlw_kg03.o rrlw_vsn.o rrlw_kg15.o parkind.o rrlw_kg16.o 
+rrtmg_lw_init.o : $(RRTMG_LW_SRC)/rrtmg_lw_init.f90 parkind.o rrlw_kg07.o \
+	rrlw_kg02.o rrlw_kg09.o rrlw_kg08.o rrlw_kg14.o parrrtm.o rrlw_kg12.o \
+	rrlw_tbl.o rrtmg_lw_setcoef.o rrlw_cld.o rrlw_kg10.o rrlw_wvn.o rrlw_kg11.o \
+	rrlw_con.o rrlw_kg15.o rrlw_kg13.o rrtmg_lw_k_g.o rrlw_kg03.o rrlw_vsn.o \
+	rrlw_kg06.o rrlw_kg04.o rrlw_kg16.o rrlw_kg01.o rrlw_kg05.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rrtmg_lw_k_g.o : $(RRTMG_LW_SRC)/rrtmg_lw_k_g.f90 rrlw_kg12.o rrlw_kg14.o \
-	rrlw_vsn.o rrlw_kg02.o rrlw_kg06.o rrlw_kg15.o rrlw_kg11.o rrlw_kg04.o \
-	rrlw_kg05.o rrlw_kg10.o rrlw_kg03.o rrlw_kg01.o rrlw_kg13.o rrlw_kg09.o \
-	rrlw_kg07.o parkind.o rrlw_kg08.o rrlw_kg16.o 
+rrtmg_lw_k_g.o : $(RRTMG_LW_SRC)/rrtmg_lw_k_g.f90 parkind.o rrlw_kg07.o \
+	rrlw_kg02.o rrlw_kg09.o rrlw_kg03.o rrlw_kg08.o rrlw_kg11.o rrlw_kg14.o \
+	rrlw_kg15.o rrlw_vsn.o rrlw_kg12.o rrlw_kg01.o rrlw_kg06.o rrlw_kg04.o \
+	rrlw_kg10.o rrlw_kg16.o rrlw_kg13.o rrlw_kg05.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND_LIGHT) $(<F:.f90=.f90)
 	rm -f $(<F:.f90=.f90)
 
-rrtmg_lw_rad.o : $(RRTMG_LW_SRC)/rrtmg_lw_rad.f90 rrtmg_lw_rtrnmc.o \
-	mcica_subcol_gen_lw.o rrtmg_lw_setcoef.o rrtmg_lw_taumol.o rrtmg_lw_cldprmc.o \
-	rrlw_con.o parrrtm.o rrlw_wvn.o parkind.o 
+rrtmg_lw_rad.o : $(RRTMG_LW_SRC)/rrtmg_lw_rad.f90 parkind.o rrtmg_lw_setcoef.o \
+	rrlw_con.o parrrtm.o rrtmg_lw_rtrnmc.o rrtmg_lw_taumol.o rrlw_wvn.o \
+	rrtmg_lw_cldprmc.o mcica_subcol_gen_lw.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rrtmg_lw_rtrn.o : $(RRTMG_LW_SRC)/rrtmg_lw_rtrn.f90 rrlw_tbl.o rrlw_vsn.o \
-	rrlw_con.o parrrtm.o rrlw_wvn.o parkind.o 
+rrtmg_lw_rtrn.o : $(RRTMG_LW_SRC)/rrtmg_lw_rtrn.f90 parkind.o rrlw_con.o \
+	parrrtm.o rrlw_vsn.o rrlw_wvn.o rrlw_tbl.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rrtmg_lw_rtrnmc.o : $(RRTMG_LW_SRC)/rrtmg_lw_rtrnmc.f90 rrlw_tbl.o rrlw_vsn.o \
-	rrlw_con.o parrrtm.o rrlw_wvn.o parkind.o 
+rrtmg_lw_rtrnmc.o : $(RRTMG_LW_SRC)/rrtmg_lw_rtrnmc.f90 parkind.o rrlw_con.o \
+	parrrtm.o rrlw_vsn.o rrlw_wvn.o rrlw_tbl.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rrtmg_lw_rtrnmr.o : $(RRTMG_LW_SRC)/rrtmg_lw_rtrnmr.f90 rrlw_tbl.o rrlw_vsn.o \
-	rrlw_con.o parrrtm.o rrlw_wvn.o parkind.o 
+rrtmg_lw_rtrnmr.o : $(RRTMG_LW_SRC)/rrtmg_lw_rtrnmr.f90 parkind.o rrlw_con.o \
+	parrrtm.o rrlw_vsn.o rrlw_wvn.o rrlw_tbl.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rrtmg_lw_setcoef.o : $(RRTMG_LW_SRC)/rrtmg_lw_setcoef.f90 rrlw_ref.o rrlw_vsn.o \
-	parrrtm.o rrlw_wvn.o parkind.o 
+rrtmg_lw_setcoef.o : $(RRTMG_LW_SRC)/rrtmg_lw_setcoef.f90 parkind.o parrrtm.o \
+	rrlw_vsn.o rrlw_wvn.o rrlw_ref.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rrtmg_lw_taumol.o : $(RRTMG_LW_SRC)/rrtmg_lw_taumol.f90 rrlw_kg12.o rrlw_kg04.o \
-	rrlw_kg13.o rrlw_kg09.o rrlw_kg08.o rrlw_ref.o rrlw_kg06.o rrlw_kg02.o \
-	rrlw_kg11.o rrlw_kg05.o rrlw_kg10.o rrlw_kg01.o rrlw_kg07.o rrlw_kg14.o \
-	rrlw_con.o rrlw_wvn.o parrrtm.o rrlw_kg03.o rrlw_vsn.o rrlw_kg15.o parkind.o \
-	rrlw_kg16.o 
+rrtmg_lw_taumol.o : $(RRTMG_LW_SRC)/rrtmg_lw_taumol.f90 parkind.o rrlw_kg07.o \
+	rrlw_kg02.o rrlw_kg09.o rrlw_kg08.o rrlw_kg14.o parrrtm.o rrlw_kg12.o \
+	rrlw_kg01.o rrlw_kg10.o rrlw_wvn.o rrlw_kg11.o rrlw_con.o rrlw_kg15.o \
+	rrlw_kg13.o rrlw_kg03.o rrlw_vsn.o rrlw_kg06.o rrlw_kg04.o rrlw_kg16.o \
+	rrlw_ref.o rrlw_kg05.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND_LIGHT) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rrtmg_sw_cldprmc.o : $(RRTMG_SW_SRC)/rrtmg_sw_cldprmc.f90 parrrsw.o rrsw_wvn.o \
-	rrsw_cld.o parkind.o rrsw_vsn.o 
+rrtmg_sw_cldprmc.o : $(RRTMG_SW_SRC)/rrtmg_sw_cldprmc.f90 parkind.o rrsw_wvn.o \
+	rrsw_cld.o rrsw_vsn.o parrrsw.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rrtmg_sw_cldprop.o : $(RRTMG_SW_SRC)/rrtmg_sw_cldprop.f90 parrrsw.o rrsw_wvn.o \
-	rrsw_cld.o parkind.o rrsw_vsn.o 
+rrtmg_sw_cldprop.o : $(RRTMG_SW_SRC)/rrtmg_sw_cldprop.f90 parkind.o rrsw_wvn.o \
+	rrsw_cld.o rrsw_vsn.o parrrsw.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rrtmg_sw_init.o : $(RRTMG_SW_SRC)/rrtmg_sw_init.f90 rrsw_kg25.o rrsw_kg20.o \
-	rrsw_kg22.o rrsw_kg23.o rrsw_vsn.o rrsw_kg21.o rrtmg_sw_k_g.o rrsw_kg17.o \
-	rrsw_wvn.o rrsw_kg16.o rrsw_cld.o rrsw_kg24.o rrsw_kg27.o rrsw_kg19.o \
-	rrsw_aer.o rrsw_con.o rrtmg_sw_setcoef.o rrsw_tbl.o rrsw_kg18.o parrrsw.o \
-	rrsw_kg28.o rrsw_kg29.o parkind.o rrsw_kg26.o 
+rrtmg_sw_init.o : $(RRTMG_SW_SRC)/rrtmg_sw_init.f90 rrsw_tbl.o parkind.o \
+	rrsw_wvn.o rrsw_vsn.o rrtmg_sw_k_g.o rrsw_kg16.o rrsw_kg26.o rrsw_cld.o \
+	rrsw_kg17.o rrsw_kg20.o rrsw_kg24.o rrsw_kg28.o rrsw_kg21.o rrsw_kg29.o \
+	rrsw_kg18.o rrsw_kg19.o rrsw_kg23.o parrrsw.o rrsw_kg22.o rrtmg_sw_setcoef.o \
+	rrsw_aer.o rrsw_kg27.o rrsw_kg25.o rrsw_con.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rrtmg_sw_k_g.o : $(RRTMG_SW_SRC)/rrtmg_sw_k_g.f90 rrsw_kg25.o rrsw_kg18.o \
-	rrsw_vsn.o rrsw_kg28.o rrsw_kg16.o rrsw_kg20.o rrsw_kg17.o rrsw_kg24.o \
-	rrsw_kg29.o parkind.o rrsw_kg22.o rrsw_kg23.o rrsw_kg27.o rrsw_kg26.o \
-	rrsw_kg21.o rrsw_kg19.o 
+rrtmg_sw_k_g.o : $(RRTMG_SW_SRC)/rrtmg_sw_k_g.f90 parkind.o rrsw_kg16.o \
+	rrsw_kg29.o rrsw_kg18.o rrsw_kg19.o rrsw_kg21.o rrsw_kg26.o rrsw_kg25.o \
+	rrsw_vsn.o rrsw_kg23.o rrsw_kg17.o rrsw_kg22.o rrsw_kg27.o rrsw_kg20.o \
+	rrsw_kg24.o rrsw_kg28.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND_LIGHT) $(<F:.f90=.f90)
 	rm -f $(<F:.f90=.f90)
 
-rrtmg_sw_rad.o : $(RRTMG_SW_SRC)/rrtmg_sw_rad.f90 rrsw_aer.o parrrsw.o \
-	rrsw_wvn.o rrsw_con.o parkind.o rrtmg_sw_setcoef.o rrtmg_sw_spcvmc.o \
-	mcica_subcol_gen_sw.o rrtmg_sw_cldprmc.o 
+rrtmg_sw_rad.o : $(RRTMG_SW_SRC)/rrtmg_sw_rad.f90 parkind.o rrtmg_sw_setcoef.o \
+	rrsw_wvn.o rrtmg_sw_spcvmc.o rrtmg_sw_cldprmc.o parrrsw.o mcica_subcol_gen_sw.o \
+	rrsw_aer.o rrsw_con.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rrtmg_sw_reftra.o : $(RRTMG_SW_SRC)/rrtmg_sw_reftra.f90 parkind.o rrsw_vsn.o \
-	rrsw_tbl.o 
+rrtmg_sw_reftra.o : $(RRTMG_SW_SRC)/rrtmg_sw_reftra.f90 rrsw_tbl.o parkind.o \
+	rrsw_vsn.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rrtmg_sw_setcoef.o : $(RRTMG_SW_SRC)/rrtmg_sw_setcoef.f90 parkind.o parrrsw.o \
-	rrsw_vsn.o rrsw_ref.o 
+rrtmg_sw_setcoef.o : $(RRTMG_SW_SRC)/rrtmg_sw_setcoef.f90 rrsw_vsn.o parkind.o \
+	rrsw_ref.o parrrsw.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rrtmg_sw_spcvmc.o : $(RRTMG_SW_SRC)/rrtmg_sw_spcvmc.f90 parrrsw.o \
-	rrtmg_sw_vrtqdr.o rrsw_wvn.o rrtmg_sw_reftra.o rrtmg_sw_taumol.o parkind.o \
-	rrsw_vsn.o rrsw_tbl.o 
+rrtmg_sw_spcvmc.o : $(RRTMG_SW_SRC)/rrtmg_sw_spcvmc.f90 rrsw_tbl.o parkind.o \
+	rrsw_wvn.o rrtmg_sw_taumol.o rrsw_vsn.o rrtmg_sw_vrtqdr.o rrtmg_sw_reftra.o \
+	parrrsw.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rrtmg_sw_spcvrt.o : $(RRTMG_SW_SRC)/rrtmg_sw_spcvrt.f90 parrrsw.o \
-	rrtmg_sw_vrtqdr.o rrsw_wvn.o rrtmg_sw_reftra.o rrtmg_sw_taumol.o parkind.o \
-	rrsw_vsn.o rrsw_tbl.o 
+rrtmg_sw_spcvrt.o : $(RRTMG_SW_SRC)/rrtmg_sw_spcvrt.f90 rrsw_tbl.o parkind.o \
+	rrsw_wvn.o rrtmg_sw_taumol.o rrsw_vsn.o rrtmg_sw_vrtqdr.o rrtmg_sw_reftra.o \
+	parrrsw.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-rrtmg_sw_taumol.o : $(RRTMG_SW_SRC)/rrtmg_sw_taumol.f90 rrsw_kg25.o rrsw_kg18.o \
-	rrsw_vsn.o rrsw_kg28.o parrrsw.o rrsw_wvn.o rrsw_kg16.o rrsw_kg20.o rrsw_con.o \
-	rrsw_kg17.o rrsw_kg24.o rrsw_kg29.o parkind.o rrsw_kg22.o rrsw_kg23.o \
-	rrsw_kg27.o rrsw_kg26.o rrsw_kg21.o rrsw_kg19.o 
+rrtmg_sw_taumol.o : $(RRTMG_SW_SRC)/rrtmg_sw_taumol.f90 parkind.o rrsw_kg16.o \
+	rrsw_wvn.o rrsw_kg29.o rrsw_kg18.o rrsw_kg19.o rrsw_kg21.o rrsw_kg26.o \
+	rrsw_kg25.o rrsw_vsn.o rrsw_kg23.o rrsw_kg20.o parrrsw.o rrsw_kg22.o \
+	rrsw_kg17.o rrsw_kg27.o rrsw_kg24.o rrsw_con.o rrsw_kg28.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND_LIGHT) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -2286,8 +2286,8 @@ rrtmg_sw_vrtqdr.o : $(RRTMG_SW_SRC)/rrtmg_sw_vrtqdr.f90 parkind.o
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModRUser.o : $(SURFACE)/ModRUser.f90 ModLeafComs.o mem_grid.o memSoilMoisture.o \
-	rconstants.o io_params.o mem_leaf.o node_mod.o ccatt_start.o 
+ModRUser.o : $(SURFACE)/ModRUser.f90 ModLeafComs.o mem_grid.o ccatt_start.o \
+	memSoilMoisture.o node_mod.o rconstants.o io_params.o mem_leaf.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -2297,27 +2297,26 @@ setup.o : $(MATRIX)/setup.f90 memMatrix.o
 	$(F_COMMAND) $(<F:.f90=.f90)
 	rm -f $(<F:.f90=.f90)
 
-sfclyr_jules.o : $(JULES_DIR)/sfclyr_jules.f90 mem_chem1.o datetime_mod.o \
-	mem_jules.o mem_brams_jules.o node_mod.o chem1_list.o ModLeafComs.o fluxes.o \
-	ModBasicFields.o mem_radiate.o ModLeaf3Init.o rconstants.o jules_fields_mod.o \
-	mem_micro.o mem_cuparm.o io_constants.o io_params.o mem_leaf.o \
-	gridmean_fluxes.o sf_diags_mod.o micphys.o gridbox_mean_mod.o \
-	jules_surface_types_mod.o model_time_mod.o mem_grid.o ModTurbFields.o \
-	csigma_mod.o ancil_info.o 
+sfclyr_jules.o : $(JULES_DIR)/sfclyr_jules.f90 mem_micro.o gridmean_fluxes.o \
+	mem_chem1.o node_mod.o rconstants.o io_constants.o mem_jules.o chem1_list.o \
+	jules_fields_mod.o ModBasicFields.o model_time_mod.o fluxes.o micphys.o \
+	ModLeaf3Init.o io_params.o mem_leaf.o jules_surface_types_mod.o sf_diags_mod.o \
+	ModLeafComs.o mem_grid.o ancil_info.o datetime_mod.o ModTurbFields.o \
+	mem_brams_jules.o mem_cuparm.o gridbox_mean_mod.o mem_radiate.o csigma_mod.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-shcu_vars_const.o : $(CUPARM)/shcu_vars_const.f90 ModConvComs.o \
-	ModNamelistFile.o grid_dims.o 
+shcu_vars_const.o : $(CUPARM)/shcu_vars_const.f90 ModNamelistFile.o \
+	ModConvComs.o grid_dims.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModSoilMoisture.o : $(SOIL_MOISTURE)/ModSoilMoisture.F90 ReadBcst.o \
-	ModLeafComs.o ModNamelistFile.o ModBasicFields.o mem_grid.o ModControlVars.o \
-	memSoilMoisture.o ModMPassFull.o rconstants.o ModTurbFields.o mem_aerad.o \
-	io_params.o mem_leaf.o node_mod.o parlibf.o $(UTILS_INCS)/files.h \
+ModSoilMoisture.o : $(SOIL_MOISTURE)/ModSoilMoisture.F90 ModLeafComs.o \
+	mem_grid.o ReadBcst.o mem_aerad.o ModControlVars.o memSoilMoisture.o \
+	ModTurbFields.o parlibf.o ModNamelistFile.o ModMPassFull.o node_mod.o \
+	rconstants.o ModBasicFields.o io_params.o mem_leaf.o $(UTILS_INCS)/files.h \
 	$(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
@@ -2338,8 +2337,8 @@ teb_spm_start.o : $(TEB_SPM)/teb_spm_start.f90 ModNamelistFile.o
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModTKenn.o : $(STILT)/ModTKenn.f90 mem_grid.o rconstants.o mem_scratch.o \
-	mem_stilt.o turb_constants.o 
+ModTKenn.o : $(STILT)/ModTKenn.f90 mem_grid.o mem_stilt.o turb_constants.o \
+	rconstants.o mem_scratch.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -2359,14 +2358,14 @@ ModUrban.o : $(SURFACE)/ModUrban.f90 mem_teb_vars_const.o
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModVarTables.o : $(MEMORY)/ModVarTables.f90 chem1_list.o \
-	ModParallelEnvironment.o io_params.o aer1_list.o $(UTILS_INCS)/constants.h 
+ModVarTables.o : $(MEMORY)/ModVarTables.f90 io_params.o chem1_list.o aer1_list.o \
+	ModParallelEnvironment.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
 
-ModVarfUpdate.o : $(FDDA)/ModVarfUpdate.f90 mem_grid.o ModInitHis.o rconstants.o \
-	mem_scratch.o ref_sounding.o $(UTILS_INCS)/constants.h 
+ModVarfUpdate.o : $(FDDA)/ModVarfUpdate.f90 mem_grid.o ModInitHis.o \
+	ref_sounding.o rconstants.o mem_scratch.o $(UTILS_INCS)/constants.h 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

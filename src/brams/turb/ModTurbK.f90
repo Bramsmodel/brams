@@ -46,14 +46,9 @@ module ModTurbK
        vctr3,     &     !INTENT(INOUT)
        vctr4            !INTENT(INOUT)
 
-  use micphys, only: &
-       level,     &     !INTENT(in)
-       ipris,     &     !INTENT(in)
-       isnow,     &     !INTENT(in)
-       igraup,    &     !INTENT(in)
-       iaggr,     &     !INTENT(in)
-       ihail            !INTENT(in)
-
+  use ModMicControl, only: &
+       MicControl
+  
   use grid_dims, only: &
        nzpmax           !INTENT(in)
 
@@ -180,7 +175,7 @@ contains
 
 
   subroutine diffuse(oneScalarTab, oneScalarTabSize, oneBasicFields, &
-       oneTurbFields, oneNamelistFile, gridId)
+       oneTurbFields, oneNamelistFile, gridId, oneMicControl)
 
     ! +-----------------------------------------------------------------+
     ! \this routine is the subdriver to compute tendencies due to    \
@@ -193,6 +188,7 @@ contains
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     integer, intent(in) :: gridId
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     include "constants.h"
 
@@ -242,10 +238,10 @@ contains
     scratch%vt3dg = 0. !LFR - Avoiding overflow in strain
     !-srf - opt turb_k com nakanishi
     !-srf passando rv e rtp em vez de vt3dp e vt3dq
-    !if(level == 0) then
+    !if(oneMicControl%level == 0) then
     !   scratch%vt3dp= 0.
     !   scratch%vt3dq= 0.
-    !elseif (level > 0) then
+    !elseif (oneMicControl%level > 0) then
     !   call atob(mxyzp,oneBasicFields%rv,scratch%vt3dp)
     !   call atob(mxyzp,oneBasicFields%rtp,scratch%vt3dq)
     !end if
@@ -284,10 +280,10 @@ contains
 
     endif
 
-    if (level<=1) &
+    if (oneMicControl%level<=1) &
          scratch%vt3dp = 0.
 
-    if (level>=2) &
+    if (oneMicControl%level>=2) &
          call ae1_l(int(mxyzp,i8), scratch%vt3dp(:), micro_g(ngrid)%rcp(:,:,:))
 
     !-srf 29/12/2008 adapted from OLAM
@@ -296,7 +292,7 @@ contains
          oneBasicFields%rv,    scratch%vt3dp,          &
          oneBasicFields%pp,    oneBasicFields%pi0, &
          scratch%vt3dj,            grid_g(ngrid)%rtgt,   &
-         grid_g(ngrid)%lpw)
+         grid_g(ngrid)%lpw, oneMicControl)
 
     !ml/srf- for new turn scheme
     if (idiffk <= 3 .or. idiffk == 7.or. idiffk == 8) then
@@ -880,7 +876,7 @@ contains
   !     *****************************************************************
 
   subroutine bruvais(m1, m2, m3, ia, iz, ja, jz, theta, rtp, rv, rcp, &
-       pp, pi0, en2, rtgt, lpw_R)
+       pp, pi0, en2, rtgt, lpw_R, oneMicControl)
 
     ! Arguments:
     integer, intent(IN) :: m1, m2, m3, ia, iz, ja, jz
@@ -889,6 +885,7 @@ contains
     real, intent(INOUT) :: en2(m1,m2,m3)
     real, intent(IN)    :: rtgt(m2,m3)
     real, intent(IN) :: lpw_R(m2,m3)
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     !local variables
     integer :: lpw(m2,m3)
@@ -914,11 +911,15 @@ contains
     ci3 = alvi/cp
 
     ! **(JP)** fatora expressoes logicas para fora dos lacos
-    log1 = level>=1
-    log2 = level>=2 .and. iweten==1
-    log3 = (ipris>=1 .or. isnow>=1 .or. igraup>=1 .or. iaggr>=1 .or. ihail>=1) &
-         .and. level==3
-    log4 = level==3
+    log1 = oneMicControl%level>=1
+    log2 = oneMicControl%level>=2 .and. iweten==1
+    log3 = (oneMicControl%ipris>=1 .or. &
+         oneMicControl%isnow>=1 .or. &
+         oneMicControl%igraup>=1 .or. &
+         oneMicControl%iaggr>=1 .or. &
+         oneMicControl%ihail>=1) &
+         .and. oneMicControl%level==3
+    log4 = oneMicControl%level==3
     ! **(JP)** fim modificacao
 
     !     calculate potential temperature profile
@@ -1338,7 +1339,7 @@ contains
   !srf - OLAM
 
   subroutine bruvais_OLAM(m1, m2, m3, ia, iz, ja, jz, theta, rtp, rv, rcp, &
-       pp, pi0, en2, rtgt, lpw_R)
+       pp, pi0, en2, rtgt, lpw_R, oneMicControl)
 
 
     ! Arguments:
@@ -1348,6 +1349,8 @@ contains
     real, intent(INOUT) :: en2(m1,m2,m3)
     real, intent(IN)    :: rtgt(m2,m3)
     real, intent(IN) :: lpw_R(m2,m3)
+    type(MicControl), pointer, intent(in) :: oneMicControl
+    
     !local variables
     integer :: i, j, k, iweten, iwdiffk, ki, k2, k1
     real :: c1, c2, c3, ci1, ci2, ci3, rvlsi, rvii
@@ -1373,11 +1376,11 @@ contains
     !ci3 = alvi / cp
 
     ! **(JP)** fatora expressoes logicas para fora dos lacos
-    log1 = level>=1
+    log1 = oneMicControl%level>=1
     !  log2 = level .ge. 2 .and. iweten .eq. 1
-    !  log3 = (ipris  .ge. 1 .or. isnow .ge. 1 .or.  &
-    !       igraup .ge. 1 .or. iaggr .ge. 1 .or.  &
-    !       ihail  .ge. 1) .and. level .eq. 3
+    !  log3 = (oneMicControl%ipris  .ge. 1 .or. oneMicControl%isnow .ge. 1 .or.  &
+    !       oneMicControl%igraup .ge. 1 .or. oneMicControl%iaggr .ge. 1 .or.  &
+    !       oneMicControl%ihail  .ge. 1) .and. level .eq. 3
     !  log4 = level .eq. 3
     ! **(JP)** fim modificacao
 

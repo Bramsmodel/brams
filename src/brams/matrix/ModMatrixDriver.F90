@@ -82,10 +82,9 @@ module ModMatrixDriver
   use mem_micro, only: &
        micro_g
 
-  use micphys, only: &
-       level, &
-       mcphys_type
-
+  use ModMicControl, only: &
+       MicControl
+  
   use Aero_setup, only: &
        Setup_Config, & !Create and setup species in Matrix
        Setup_Species_Maps, &
@@ -136,7 +135,8 @@ contains
   !! @todo aqso4rate is fixed using the box value, must be changed
   !! @todo emis_map is fixed to zero. Must be changed to real values
   !!
-  subroutine MatrixDriver(ia,iz,ja,jz,m1,m2,m3, oneBasicFields, oneTurbFields)
+  subroutine MatrixDriver(ia,iz,ja,jz,m1,m2,m3, oneBasicFields, oneTurbFields, &
+       oneMicControl)
 
     !ngases     = 3      ! number of gas-phase species
     !nmass_spcs = 5      ! total number of mass species
@@ -153,6 +153,7 @@ contains
     integer, intent(IN) :: m3 !< j size               
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
+    type(MicControl), pointer, intent(in) :: oneMicControl
     
     character(LEN=20):: aer_split_method ="PARALLEL"
     !CHARACTER(LEN=20):: aer_split_method ="SYMMETRIC"
@@ -445,7 +446,7 @@ contains
     endif
 
     !-kml/srf - for microphysics activation
-    if(mcphys_type == 3) then
+    if(oneMicControl%mcphys_type == 3) then
        do i=ia,iz
           do j=ja,jz
              noc=nColumn(i,j)
@@ -608,6 +609,9 @@ contains
   use ModTurbFields, only: &
        TurbFields
 
+  use ModMicControl, only: &
+       MicControl
+  
   implicit none
 
   private
@@ -625,7 +629,8 @@ contains
   !! @todo aqso4rate is fixed using the box value, must be changed
   !! @todo emis_map is fixed to zero. Must be changed to real values
   !!
-  subroutine MatrixDriver(ia,iz,ja,jz,m1,m2,m3, oneBasicFields, oneTurbFields)
+  subroutine MatrixDriver(ia,iz,ja,jz,m1,m2,m3, oneBasicFields, oneTurbFields, &
+       oneMicControl)
 
     !ngases     = 3      ! number of gas-phase species
     !nmass_spcs = 5      ! total number of mass species
@@ -642,6 +647,7 @@ contains
     integer, intent(IN) :: m3 !< j size               
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     call fatal_error("**(MatrixDriver)** Matrix only works with AER=MATRIX and CHEM=RELACS_MX; "//&
          "Please run config and compile the code from scratch")

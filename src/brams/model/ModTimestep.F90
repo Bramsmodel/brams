@@ -407,7 +407,10 @@ contains
        !- call Matrix Aerosol Model
        !----------------------------------------
        if(AEROSOL==2) then
-          call MatrixDriver(ia,iz,ja,jz,mzp,mxp,myp, oneGrid%Basic, oneGrid%Turb)
+          call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+          call MatrixDriver(ia,iz,ja,jz,mzp,mxp,myp, oneGrid%Basic, oneGrid%Turb, &
+               oneGrid%MicControlVars)
+          call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
        endif
 
     endif
@@ -487,13 +490,17 @@ contains
 
     !  Sub-grid diffusion terms
     !----------------------------------------
+    call DeepCopyToMicControl(oneGrid%MicControlVars,h)
     if ((if_adap==0) .and. (OneGrid%Ramsin%ihorgrad==2)) then
        call diffuse_brams31(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
-            oneGrid%Basic, oneGrid%Ramsin, oneGrid%Turb, oneGrid%Id)
+            oneGrid%Basic, oneGrid%Ramsin, oneGrid%Turb, oneGrid%Id, &
+            oneGrid%MicControlVars)
     else
        call diffuse(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, &
-            oneGrid%Turb, oneGrid%Ramsin, oneGrid%Id)
+            oneGrid%Turb, oneGrid%Ramsin, oneGrid%Id, &
+            oneGrid%MicControlVars)
     endif
+    call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
 
 !!!!!  IF( NNQPARM(ngrid) >=2 .OR. NNSHCU(ngrid)>=2 ) CALL prepare_lsf_OLD(NNQPARM(ngrid), NNSHCU(ngrid),3)
 

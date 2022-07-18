@@ -475,12 +475,6 @@ module ModMemAlloc
        ks, &
        nw
 
-  use micphys, only : &
-       level, &
-       mcphys_type, &
-       DeepCopyToMicControl, &
-       DeepCopyFromMicControl
-
   use digitalFilter, only:     &
        initDigitalFilter,     & ! subroutine
        dfVars,                & ! intent(out) - initializing
@@ -654,14 +648,12 @@ contains
     do ng=1,ngrids
        call nullify_micro(micro_g(ng))
        call nullify_micro(microm_g(ng))
-       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
        call alloc_micro(micro_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng, oneGrid%MicControlVars)
        if (imean==1) then
           call alloc_micro(microm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng, oneGrid%MicControlVars)
        elseif (imean==0) then
           call alloc_micro(microm_g(ng),        1,        1,        1, ng, oneGrid%MicControlVars)
        endif
-       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
 
        call filltab_micro(micro_g(ng), microm_g(ng), imean,  &
             nmzp(ng), nmxp(ng), nmyp(ng), ng)
@@ -1389,7 +1381,7 @@ contains
 
              !--- allocation for aerosol to microphysics arrays
              !--- for now only for microphysics type 3 (GT aerosol aware)
-             if(mcphys_type == 3) &
+             if(oneGrid%MicControlVars%mcphys_type == 3) &
                   allocate(aer2mp_g(1,ngrids),aer2mpm_g(1,ngrids))
              !
              do ng=1,ngrids
@@ -1397,28 +1389,30 @@ contains
                 !-for now, the vertical dimentions of the source array will be nz
                 aer2_src_z_dim_g(:,ng)=nmzp(ng)
 
-                call nullify_aer2(aer2_g (:,ng),nmodes,1,aer2mp_g (:,ng),mcphys_type)
-                call nullify_aer2(aer2m_g(:,ng),nmodes,1,aer2mpm_g(:,ng),mcphys_type)
+                call nullify_aer2(aer2_g (:,ng),nmodes,1,aer2mp_g (:,ng),&
+                     oneGrid%MicControlVars%mcphys_type)
+                call nullify_aer2(aer2m_g(:,ng),nmodes,1,aer2mpm_g(:,ng),&
+                     oneGrid%MicControlVars%mcphys_type)
 
                 call alloc_aer2(aer2_g(:,ng),aer2_src_z_dim_g(:,ng) &
                      ,nmzp(ng),nmxp(ng),nmyp(ng),nmodes   &
-                     ,1,aer2mp_g(:,ng),mcphys_type)
+                     ,1,aer2mp_g(:,ng),oneGrid%MicControlVars%mcphys_type)
 
                 if (imean == 1) then
                    call alloc_aer2(aer2m_g(:,ng),aer2_src_z_dim_g(:,ng) &
                         ,nmzp(ng),nmxp(ng),nmyp(ng),nmodes    &
-                        ,1,aer2mpm_g(:,ng),mcphys_type)
+                        ,1,aer2mpm_g(:,ng),oneGrid%MicControlVars%mcphys_type)
 
                 elseif (imean == 0) then
                    call alloc_aer2(aer2m_g(:,ng),aer2_src_z_dim_g(:,ng) &
                         ,1,1,1,nmodes                         &
-                        ,1,aer2mpm_g(:,ng),mcphys_type)
+                        ,1,aer2mpm_g(:,ng),oneGrid%MicControlVars%mcphys_type)
                 endif
 
                 call filltab_aer2(aer2_g(:,ng),aer2m_g(:,ng) &
                      ,imean ,aer2_src_z_dim_g(:,ng) &
                      ,nmzp(ng),nmxp(ng),nmyp(ng),nmodes,ng &
-                     ,1,aer2mp_g(:,ng),aer2mpm_g(:,ng),mcphys_type)
+                     ,1,aer2mp_g(:,ng),aer2mpm_g(:,ng),oneGrid%MicControlVars%mcphys_type)
              enddo
 
              call nullify_tend_aer2(nmodes)
