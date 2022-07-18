@@ -21,8 +21,8 @@ module ChemDryDepDriver
        iyear1,        &
        ngrid
 
-  use micphys, only: &
-       level
+  use ModMicControl, only: &
+       MicControl
 
   use mem_cuparm, only: &
        cuparm_g,        &
@@ -71,7 +71,7 @@ contains
 
   !========================================================================
   subroutine drydep_driver(m1,m2,m3,ia,iz,ja,jz, &
-       oneBasicFields, oneTurbFields)
+       oneBasicFields, oneTurbFields, oneMicControl)
 
     integer,              intent(IN)    :: m1
     integer,              intent(IN)    :: m2
@@ -82,6 +82,7 @@ contains
     integer,              intent(IN)    :: jz
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
 
     return

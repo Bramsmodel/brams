@@ -402,7 +402,7 @@ contains
 
        !- call dry deposition and sedimentation routines
        call drydep_driver(mzp,mxp,myp,ia,iz,ja,jz, &
-            oneGrid%Basic, oneGrid%Turb)
+            oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars)
 
        !- call Matrix Aerosol Model
        !----------------------------------------

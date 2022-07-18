@@ -63,7 +63,6 @@ module ModRbnd
        nodemxp, &
        nodemyp
 
-  use micphys, only: level
   use ref_sounding, only: u01dn, &
        v01dn
 
