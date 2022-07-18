@@ -78,9 +78,9 @@ module ModInitHis
        vctr4, &
        vctr10
 
-  use micphys, only: &
-       level
-
+  use ModMicControl, only: &
+       MicControl
+  
   use mem_aerad, only: &
        nwave
 
@@ -134,8 +134,10 @@ contains
 
 
   
-  subroutine initHis(oneBasicFields)
+  subroutine initHis(oneBasicFields, oneMicControl)
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(MicControl), pointer, intent(in) :: oneMicControl
+    
     integer :: ngrids1,ioutput1,nzg1,nzs1,npatch1
     real :: time1,ztop1
     integer, allocatable, dimension(:) :: nnxp1,nnyp1,nnzp1
@@ -683,7 +685,7 @@ contains
     call htint(nzpg1,u01dn1,ztn1(1,1) ,nnzp(1),u01dn(1,1),ztn(1,1))
     call htint(nzpg1,v01dn1,ztn1(1,1) ,nnzp(1),v01dn(1,1),ztn(1,1))
 
-    if (level .ge. 1) then
+    if (oneMicControl%level .ge. 1) then
        call htint(nzpg1,rt01dn1,ztn1(1,1),nnzp(1),rt01dn(1,1),ztn(1,1))
     else
        rt01dn(1:nnzp(ngrid),1) = 0.

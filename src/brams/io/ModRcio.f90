@@ -120,26 +120,8 @@ module ModRcio
        iswrtyp, &
        radfrq
 
-  use micphys, only: &
-       nhcat, &
-       mcphys_type, &
-       level, &
-       irain, &
-       ipris, &
-       isnow, &
-       iaggr, &
-       igraup, &
-       icloud, &
-       ihail, &
-       rparm, &
-       pparm, &
-       sparm, &
-       aparm, &
-       gparm, &
-       cparm, &
-       hparm, &
-       cfmas, &
-       pwmas
+  use ModMicControl, only: &
+       MicControl
 
   use ref_sounding, only: &
        maxsndg, &
@@ -201,6 +183,8 @@ module ModRcio
 
   implicit none
 
+  include "MicConstants.h"
+  
   private
 
   public :: DumpIOHeadTable
@@ -464,9 +448,10 @@ contains
 
 
 
-  subroutine DumpIOHeadTable(oneIOFileDS, oneNamelistFile)
+  subroutine DumpIOHeadTable(oneIOFileDS, oneNamelistFile, oneMicControl)
     type(IOFileDS), intent(inout) :: oneIOFileDS
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     integer, parameter :: unitLow=10
     integer, parameter :: unitHigh=99
@@ -513,7 +498,7 @@ contains
             oneIOFileDS%ht%f(nv)%nvalues
     end do
 
-    call commio(oneIOFileDS%fId,'WRITE',oneIOFileDS%unit, oneNamelistFile)
+    call commio(oneIOFileDS%fId,'WRITE',oneIOFileDS%unit, oneNamelistFile, oneMicControl)
     close(oneIOFileDS%unit)
     if (dumpLocal) then
        write(c0,"(i8)") oneIOFileDS%unit
@@ -527,11 +512,12 @@ contains
 
 
 
-  subroutine commio (cfile,io,iun,oneNamelistFile)
+  subroutine commio (cfile,io,iun,oneNamelistFile,oneMicControl)
     character(len=*) :: cfile !**(JP)** not used
     character(len=*), intent(in) :: io
     integer, intent(in) :: iun
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
 
     !     This routine reads or writes the history and analysis file common blocks.
@@ -673,15 +659,15 @@ contains
     ie=cio(iun,irw,'isfcl',isfcl)
     ie=cio(iun,irw,'npatch',npatch)
     ie=cio(iun,irw,'nvegpat',nvegpat)
-    ie=cio(iun,irw,'mcphys_type',mcphys_type)
-    ie=cio(iun,irw,'level',level)
-    ie=cio(iun,irw,'irain',irain)
-    ie=cio(iun,irw,'ipris',ipris)
-    ie=cio(iun,irw,'isnow',isnow)
-    ie=cio(iun,irw,'iaggr',iaggr)
-    ie=cio(iun,irw,'igraup',igraup)
-    ie=cio(iun,irw,'icloud',icloud)
-    ie=cio(iun,irw,'ihail',ihail)
+    ie=cio(iun,irw,'mcphys_type',oneMicControl%mcphys_type)
+    ie=cio(iun,irw,'level',oneMicControl%level)
+    ie=cio(iun,irw,'irain',oneMicControl%irain)
+    ie=cio(iun,irw,'ipris',oneMicControl%ipris)
+    ie=cio(iun,irw,'isnow',oneMicControl%isnow)
+    ie=cio(iun,irw,'iaggr',oneMicControl%iaggr)
+    ie=cio(iun,irw,'igraup',oneMicControl%igraup)
+    ie=cio(iun,irw,'icloud',oneMicControl%icloud)
+    ie=cio(iun,irw,'ihail',oneMicControl%ihail)
 
     ie=cio(iun,irw,'brunt',brunt)
     ie=cio(iun,irw,'wcldbs',wcldbs)
@@ -698,16 +684,16 @@ contains
     ie=cio(iun,irw,'cphas',cphas)
     ie=cio(iun,irw,'topref',topref)
     ie=cio(iun,irw,'sspct',sspct)
-    ie=cio(iun,irw,'rparm',rparm)
-    ie=cio(iun,irw,'pparm',pparm)
-    ie=cio(iun,irw,'sparm',sparm)
-    ie=cio(iun,irw,'aparm',aparm)
-    ie=cio(iun,irw,'gparm',gparm)
-    ie=cio(iun,irw,'cparm',cparm)
-    ie=cio(iun,irw,'hparm',hparm)
+    ie=cio(iun,irw,'rparm',oneMicControl%rparm)
+    ie=cio(iun,irw,'pparm',oneMicControl%pparm)
+    ie=cio(iun,irw,'sparm',oneMicControl%sparm)
+    ie=cio(iun,irw,'aparm',oneMicControl%aparm)
+    ie=cio(iun,irw,'gparm',oneMicControl%gparm)
+    ie=cio(iun,irw,'cparm',oneMicControl%cparm)
+    ie=cio(iun,irw,'hparm',oneMicControl%hparm)
 
-    ie=cio(iun,irw,'cfmas',cfmas(1:nhcat))
-    ie=cio(iun,irw,'pwmas',pwmas(1:nhcat))
+    ie=cio(iun,irw,'cfmas',oneMicControl%cfmas(1:nhcat))
+    ie=cio(iun,irw,'pwmas',oneMicControl%pwmas(1:nhcat))
 
     ie=cio(iun,irw,'us',us(1:maxsndg))
     ie=cio(iun,irw,'vs',vs(1:maxsndg))

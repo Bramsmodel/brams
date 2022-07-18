@@ -63,31 +63,8 @@ module ModOpspec
        order_h, &
        order_v
 
-
-  use micphys, only: &
-       aparm, &
-       cparm, &
-       dparm, &
-       gparm, &
-       hparm, &
-       pparm, &
-       rparm, &
-       sparm, &
-       mcphys_type,  &
-       level,        &
-       icloud,       &
-       idriz,        &
-       irain,        &
-       ipris,        &
-       isnow,        &
-       iaggr,        &
-       igraup,       &
-       ihail,        &
-       irime,iplaws,idust,isalt,imbudget,imbudtot,        &
-       iccnlev,        &
-       imd1flg,        &
-       imd2flg,        &
-       epsil
+  use ModMicControl, only: &
+       MicControl
 
   use ccatt_start, only: &
        ccatt
@@ -185,7 +162,7 @@ module ModOpspec
 
 contains
 
-  subroutine opspec1(MPISize, mchnum, master_num)
+  subroutine opspec1(MPISize, mchnum, master_num, oneMicControl)
 
     ! this routine checks the option specifications in the $model_grids
     !   namelist for consistency, and overrides settings of icloud,
@@ -196,6 +173,8 @@ contains
     integer, intent(in) :: MPISize
     integer, intent(in) :: mchnum
     integer, intent(in) :: master_num
+    type(MicControl), pointer, intent(in) :: oneMicControl
+    
     ! local Variables:
     integer :: ierr
     integer :: ifm
@@ -462,90 +441,90 @@ contains
        ifaterr=ifaterr+1
     endif
 
-    if(mcphys_type .le. 1) then
+    if(oneMicControl%mcphys_type .le. 1) then
        ! if level is less than 3, set microphysics parameters to zero.
        ! if level equals 3, check for values of microphysics parameters
        ! that are out of bounds.  if level is equal to 4, set microphysics
        ! parameters other than icloud to zero.
 
-       if (level .le. 2) then
+       if (oneMicControl%level .le. 2) then
 
-          icloud = 0
-          irain = 0
-          ipris = 0
-          isnow = 0
-          iaggr = 0
-          igraup = 0
-          ihail = 0
+          oneMicControl%icloud = 0
+          oneMicControl%irain = 0
+          oneMicControl%ipris = 0
+          oneMicControl%isnow = 0
+          oneMicControl%iaggr = 0
+          oneMicControl%igraup = 0
+          oneMicControl%ihail = 0
           !Glauber 2014
-          idriz = 0
-          iccnlev = 0
-          imbudget = 0
-          imbudtot = 0
+          oneMicControl%idriz = 0
+          oneMicControl%iccnlev = 0
+          oneMicControl%imbudget = 0
+          oneMicControl%imbudtot = 0
           !Glauber 2014
 
-       elseif (level .eq. 3) then
+       elseif (oneMicControl%level .eq. 3) then
 
-          if (icloud .lt. 0 .or. icloud .gt. 7) then
+          if (oneMicControl%icloud .lt. 0 .or. oneMicControl%icloud .gt. 7) then
              print*,'fatal - icloud out of range'
              ifaterr = ifaterr + 1
           endif
-          if (irain .lt. 0 .or. irain .gt. 5) then
+          if (oneMicControl%irain .lt. 0 .or. oneMicControl%irain .gt. 5) then
              print*,'fatal - irain out of range'
              ifaterr = ifaterr + 1
           endif
-          if (ipris .lt. 0 .or. ipris .gt. 7) then
+          if (oneMicControl%ipris .lt. 0 .or. oneMicControl%ipris .gt. 7) then
              print*,'fatal - ipris out of range'
              ifaterr = ifaterr + 1
           endif
-          if (isnow .lt. 0 .or. isnow .gt. 5) then
+          if (oneMicControl%isnow .lt. 0 .or. oneMicControl%isnow .gt. 5) then
              print*,'fatal - isnow out of range'
              ifaterr = ifaterr + 1
           endif
-          if (iaggr .lt. 0 .or. iaggr .gt. 5) then
+          if (oneMicControl%iaggr .lt. 0 .or. oneMicControl%iaggr .gt. 5) then
              print*,'fatal - iaggr out of range'
              ifaterr = ifaterr + 1
           endif
-          if (igraup .lt. 0 .or. igraup .gt. 5) then
+          if (oneMicControl%igraup .lt. 0 .or. oneMicControl%igraup .gt. 5) then
              print*,'fatal - igraup out of range'
              ifaterr = ifaterr + 1
           endif
-          if (ihail .lt. 0 .or. ihail .gt. 5) then
+          if (oneMicControl%ihail .lt. 0 .or. oneMicControl%ihail .gt. 5) then
              print*,'fatal - ihail out of range'
              ifaterr = ifaterr + 1
           endif
           !Glauber 2014
-          if (idriz .lt. 0 .or. idriz .gt. 7) then
+          if (oneMicControl%idriz .lt. 0 .or. oneMicControl%idriz .gt. 7) then
              print*,'FATAL - IDRIZ OUT OF RANGE'
              IFATERR = IFATERR + 1
           endif
-          if (iccnlev .lt. 0 .or. iccnlev .gt. 2) then
+          if (oneMicControl%iccnlev .lt. 0 .or. oneMicControl%iccnlev .gt. 2) then
              print*,'FATAL - ICCNLEV OUT OF RANGE: MUST BE 0-2'
              IFATERR = IFATERR + 1
           endif
-          if (imbudget .lt. 0 .or. imbudget .gt. 2) then
+          if (oneMicControl%imbudget .lt. 0 .or. oneMicControl%imbudget .gt. 2) then
              print*,'FATAL - IMBUDGET OUT OF RANGE'
              IFATERR = IFATERR + 1
           endif
-          if (imbudtot .lt. 0 .or. imbudtot .gt. 2) then
+          if (oneMicControl%imbudtot .lt. 0 .or. oneMicControl%imbudtot .gt. 2) then
              print*,'FATAL - IMBUDTOT OUT OF RANGE'
              IFATERR = IFATERR + 1
           endif
-          if (epsil .lt. 0.05 .or. epsil .gt. 1.0) then
+          if (oneMicControl%epsil .lt. 0.05 .or. oneMicControl%epsil .gt. 1.0) then
              print*,'FATAL - EPSIL OUT OF RANGE (0.05 to 1.0)'
              IFATERR = IFATERR + 1
           endif
           !Glauber 2014
 
-       elseif (level .eq. 4) then
+       elseif (oneMicControl%level .eq. 4) then
 
-          ipris = 0
-          isnow = 0
-          iaggr = 0
-          igraup = 0
-          ihail = 0
+          oneMicControl%ipris = 0
+          oneMicControl%isnow = 0
+          oneMicControl%iaggr = 0
+          oneMicControl%igraup = 0
+          oneMicControl%ihail = 0
           !Glauber 2014
-          idriz = 0
+          oneMicControl%idriz = 0
           !Glauber 2014
 
        endif
@@ -553,9 +532,9 @@ contains
        ! if level is 4, make sure that naddsc is large enough for number
        !   of bins specified in icloud.
 
-       if (level .eq. 4) then
-          if (irain .eq. 0) then
-             lev4bins = 2 * icloud + 1
+       if (oneMicControl%level .eq. 4) then
+          if (oneMicControl%irain .eq. 0) then
+             lev4bins = 2 * oneMicControl%icloud + 1
              if (naddsc .lt. lev4bins) then
                 print*, 'fatal - naddsc is not large enough for icloud'
                 print*, 'value with level = 4.'
@@ -563,7 +542,7 @@ contains
                 ifaterr = ifaterr + 1
              endif
           else
-             lev4bins = 2 * icloud + 1 + 67
+             lev4bins = 2 * oneMicControl%icloud + 1 + 67
              if (naddsc .lt. lev4bins) then
                 print*, 'fatal - naddsc is not large enough for icloud'
                 print*, 'value with level = 4 and irain = 1.'
@@ -576,9 +555,10 @@ contains
        ! if level is 5, make sure that naddsc is large enough for number
        !   of bins specified in icloud.
 
-       if (level .eq. 5) then
-          if (irain .eq. 0) then
-             lev5bins = 2 * (icloud + ipris + iaggr + igraup) + 5
+       if (oneMicControl%level .eq. 5) then
+          if (oneMicControl%irain .eq. 0) then
+             lev5bins = 2 * (oneMicControl%icloud + oneMicControl%ipris + &
+                  oneMicControl%iaggr + oneMicControl%igraup) + 5
              if (naddsc .lt. lev5bins) then
                 print*, 'fatal - naddsc is not large enough for icloud,'
                 print*, 'ipris, iaggr, and igraup values with level = 5.'
@@ -586,7 +566,8 @@ contains
                 ifaterr = ifaterr + 1
              endif
           else
-             lev5bins = 2 * (icloud + ipris + iaggr + igraup) + 5 + 67
+             lev5bins = 2 * (oneMicControl%icloud + oneMicControl%ipris + &
+                  oneMicControl%iaggr + oneMicControl%igraup) + 5 + 67
              if (naddsc .lt. lev5bins) then
                 print*, 'fatal - naddsc is not large enough for icloud,'
                 print*, 'ipris, iaggr, and igraup values with level = 5'
@@ -815,9 +796,10 @@ contains
 
   ! ********************************************************************
 
-  subroutine opspec3(oneNamelistFile, gridId)
+  subroutine opspec3(oneNamelistFile, gridId, oneMicControl)
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     integer, intent(in) :: gridId
+    type(MicControl), pointer, intent(in) :: oneMicControl
     
     integer :: ip,k,ifaterr,iwarerr,infoerr,ng,ngr
     character(len=*), parameter :: h="**(opspec3)**"
@@ -871,7 +853,7 @@ contains
     ! check that moisture is turned on if radiation is used.
     !   (severity - f)
 
-    if(ilwrtyp+iswrtyp.gt.0.and.level.eq.0)then
+    if(ilwrtyp+iswrtyp.gt.0.and.oneMicControl%level.eq.0)then
        print*,' fatal  - radiation scheme must be run with moisture.'
        ifaterr=ifaterr+1
     endif
@@ -891,81 +873,51 @@ contains
 
     ! microphysics flags and parameter settings
 
-    !  if((irain.ge.2.and.irain.le.4.and.rparm.le.0.)  &
-    !       .or.(icloud.ge.2.and.icloud.le.5.and.cparm.le.0.)  &
-    !       .or.(ipris.ge.2.and.ipris.le.4.and.pparm.le.0.)  &
-    !       .or.(isnow.ge.2.and.isnow.le.4.and.sparm.le.0.)  &
-    !       .or.(igraup.ge.2.and.igraup.le.4.and.gparm.le.0.)  &
-    !       .or.(iaggr.ge.2.and.iaggr.le.4.and.aparm.le.0.)  &
-    !       .or.(ihail.ge.2.and.ihail.le.4.and.hparm.le.0.)) then
-    !     print 26,ng,rparm,pparm,sparm,gparm,aparm,hparm
-    !26   format (' fatal - microphysics - xparm must be positive'  &
-    !          ,' if micro flags are set to 2, 3, or 4,'  &
-    !          ,' or up to 5 for icloud. ',i3,5f10.7)
-    !     ifaterr=ifaterr+1
-    !  endif
-    !Glauber 2014 ---------------------------
-    !  if((irain.ge.2.and.irain.le.4.and.rparm.le.0.)  &
-    !       .or.(icloud.ge.2.and.icloud.le.5.and.cparm.le.0.)  &
-    !       .or.(ipris.ge.2.and.ipris.le.4.and.pparm.le.0.)  &
-    !       .or.(isnow.ge.2.and.isnow.le.4.and.sparm.le.0.)  &
-    !       .or.(igraup.ge.2.and.igraup.le.4.and.gparm.le.0.)  &
-    !       .or.(iaggr.ge.2.and.iaggr.le.4.and.aparm.le.0.)  &
-    !       .or.(ihail.ge.2.and.ihail.le.4.and.hparm.le.0.)) then
-    !     print 26,ng,rparm,pparm,sparm,gparm,aparm,hparm
-    !26   format (' fatal - microphysics - xparm must be positive'  &
-    !          ,' if micro flags are set to 2, 3, or 4,'  &
-    !          ,' or up to 5 for icloud. ',i3,5f10.7)
-    !     ifaterr=ifaterr+1
-    !  endif
-    !print*,cparm,dparm,rparm,pparm,Sparm,gparm,Aparm,hparm
-    if(  (icloud .ge. 2 .and. icloud .le. 7 .and. cparm .le. 0.)  &
-         .or.(idriz  .ge. 2 .and. idriz  .le. 7 .and. dparm .le. 0.)  &
-         .or.(irain  .ge. 2 .and. irain  .le. 4 .and. rparm .le. 0.)  &
-         .or.(ipris  .ge. 2 .and. ipris  .le. 7 .and. pparm .le. 0.)  &
-         .or.(isnow  .ge. 2 .and. isnow  .le. 4 .and. Sparm .le. 0.)  &
-         .or.(igraup .ge. 2 .and. igraup .le. 4 .and. gparm .le. 0.)  &
-         .or.(iaggr  .ge. 2 .and. iaggr  .le. 4 .and. Aparm .le. 0.)  &
-         .or.(ihail  .ge. 2 .and. ihail  .le. 4 .and. hparm .le. 0.)) then
-       print 26,ng,cparm,dparm,rparm,pparm,sparm,gparm,aparm,hparm
+    if(  (oneMicControl%icloud .ge. 2 .and. &
+         oneMicControl%icloud .le. 7 .and. &
+         oneMicControl%cparm .le. 0.)  &
+         .or.(oneMicControl%idriz  .ge. 2 .and. &
+         oneMicControl%idriz  .le. 7 .and. &
+         oneMicControl%dparm .le. 0.)  &
+         .or.(oneMicControl%irain  .ge. 2 .and. &
+         oneMicControl%irain  .le. 4 .and. &
+         oneMicControl%rparm .le. 0.)  &
+         .or.(oneMicControl%ipris  .ge. 2 .and. &
+         oneMicControl%ipris  .le. 7 .and. &
+         oneMicControl%pparm .le. 0.)  &
+         .or.(oneMicControl%isnow  .ge. 2 .and. &
+         oneMicControl%isnow  .le. 4 .and. &
+         oneMicControl%sparm .le. 0.)  &
+         .or.(oneMicControl%igraup .ge. 2 .and. &
+         oneMicControl%igraup .le. 4 .and. &
+         oneMicControl%gparm .le. 0.)  &
+         .or.(oneMicControl%iaggr  .ge. 2 .and. &
+         oneMicControl%iaggr  .le. 4 .and. &
+         oneMicControl%aparm .le. 0.)  &
+         .or.(oneMicControl%ihail  .ge. 2 .and. &
+         oneMicControl%ihail  .le. 4 .and. &
+         oneMicControl%hparm .le. 0.)) then
+       print 26,ng,oneMicControl%cparm,oneMicControl%dparm,&
+            oneMicControl%rparm,oneMicControl%pparm,oneMicControl%sparm,&
+            oneMicControl%gparm,oneMicControl%aparm,oneMicControl%hparm
 26     format (' FATAL - Microphysics - xPARM must be positive'  &
             ,' if micro flags are set to 2, 3, or 4,'  &
             ,' or up to 5 for icloud. ',i3,5f10.7)
        IFATERR=IFATERR+1
     endif
-    if(idriz.ge.5 .and. icloud.lt.5) then
+    if(oneMicControl%idriz.ge.5 .and. oneMicControl%icloud.lt.5) then
        print*,' FATAL - Microphysics - ICLOUD must be >= 5 if IDRIZ >= 5'
        IFATERR=IFATERR+1
     endif
-    if(iccnlev.gt.0 .and. icloud.lt.5) then
+    if(oneMicControl%iccnlev.gt.0 .and. oneMicControl%icloud.lt.5) then
        print*,' FATAL - Microphysics - ICCNLEV must be 0 if ICLOUD < 5'
        IFATERR=IFATERR+1
     endif
-    !IF(level.lt.3 .and. IDUST.EQ.1) then
-    !   PRINT*,' FATAL - DustModel - Dust source model requires Level=3 Micro'
-    !   IFATERR=IFATERR+1
-    !ENDIF
-    !IF(level.lt.3 .and. ISALT.EQ.1) then
-    !   PRINT*,' FATAL - Sea-Salt Model - Salt source model requires Level=3 Micro'
-    !   IFATERR=IFATERR+1
-    !ENDIF
-    !IF(level.lt.3 .and. (IAMSFLG.EQ.1 .or. ISS1FLG.EQ.1 .or. ISS2FLG.EQ.1 &
-    !    .or. IMD1FLG.EQ.1 .or. IMD2FLG.EQ.1)) then
-    !   PRINT*,' FATAL - Aerosol - Radiative aerosol requires Level=3 Micro'
-    !   IFATERR=IFATERR+1
-    !ENDIF
-
-    !IF(ibubble.lt.0 .and. ibubble.gt.2) then
-    !   PRINT*,' FATAL - IBUBBLE must be 0, 1, or 2'
-    !   PRINT*,'         0 = off, 1 = RAMSIN set bubble, 2 = Random bubble in ruser'
-    !   IFATERR=IFATERR+1
-    !ENDIF
-    !Glauber 2014 ---------------------------
 
     ! convective parameterization flags and parameter settings
 
     do ng=1,ngrids
-       if (nnqparm(ng)/=0 .and. level==0) then
+       if (nnqparm(ng)/=0 .and. oneMicControl%level==0) then
           print 27
 27        format (' fatal - level must be at least'  &
                ,' 1 for the cumulus parameterization')
@@ -1003,7 +955,7 @@ contains
        IFATERR=IFATERR+1
     endif
     !srf
-    if (IEXEV .eq. 2 .and. level .eq. 0) then
+    if (IEXEV .eq. 2 .and. oneMicControl%level .eq. 0) then
        call fatal_error('IEXEV cannot be set to 2 with microphyics level = 0 ')
        IFATERR=IFATERR+1
     endif
@@ -1089,7 +1041,7 @@ contains
           ifaterr=ifaterr+1
        endif
        !srf-opt
-       if(level.lt.1.and.idiffk.eq.7)then
+       if(oneMicControl%level.lt.1.and.idiffk.eq.7)then
           print*,' fatal - idiffk 7 cannot be used with microphysics level 0'
           ifaterr=ifaterr+1
        endif
@@ -1271,18 +1223,18 @@ contains
        enddo
     enddo
 
-    !if( (mcphys_type == 2 .or. mcphys_type == 3) .and. (isfcl<=2 .and. isfcl >=1)) then
+    !if( (oneMicControl%mcphys_type == 2 .or. oneMicControl%mcphys_type == 3) .and. (isfcl<=2 .and. isfcl >=1)) then
     !    print*,' FATAL - cannot use LEAF-3 scheme with GT microphysics'
     !    print*," FATAL - arrays qpcpg and dpcpg are not avalaible in this scheme"
     !    IFATERR=IFATERR+1
     !endif
 
     do ngr=1,ngrids
-       !   if( (mcphys_type == 2 .or. mcphys_type == 3) .and. nnshcu(NGR) ==2) then
+       !   if( (oneMicControl%mcphys_type == 2 .or. oneMicControl%mcphys_type == 3) .and. nnshcu(NGR) ==2) then
        !    print*,' FATAL - cannot use nnhscu = 2 scheme with GT microphysics'
        !    IFATERR=IFATERR+1
        !   endif
-       if( (mcphys_type >= 2 ) .and. nnqparm(NGR) ==2) then
+       if( (oneMicControl%mcphys_type >= 2 ) .and. nnqparm(NGR) ==2) then
           print*,' FATAL - cannot use nnqparm = 2 scheme with  microphysics >= 2'
           IFATERR=IFATERR+1
        endif
@@ -1434,7 +1386,7 @@ contains
     !  endif
     do ng=1,ngrids
        if (ISWRTYP==6 .or. ILWRTYP==6) then
-          if( mcphys_type <= 1 .and. icloud < 5 )    then
+          if( oneMicControl%mcphys_type <= 1 .and. oneMicControl%icloud < 5 )    then
              ifaterr=ifaterr+1
              print *,'FATAL ERROR: RRTM radiation requires ICLOUD >=5'
              !print*,"values=",icloud

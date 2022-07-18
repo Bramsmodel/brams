@@ -7,6 +7,9 @@
 !###########################################################################
 module ModRio
 
+  use ModMicControl, only: &
+       MicControl
+  
   use utilsMod, only: &
        CopyLocalChunk
 
@@ -18,6 +21,9 @@ module ModRio
   use ModControlVars, only: &
        ControlVars
 
+  use ModMicControl, only: &
+       MicControl
+  
   use grid_dims, only: &
        maxgrds
 
@@ -574,7 +580,8 @@ contains
 
 
   subroutine OutputFields(histFlag, instFlag, liteFlag, meanFlag, &
-       oneNamelistFile, oneBasicFields, oneTurbFields, gridId, oneControlVars)
+       oneNamelistFile, oneBasicFields, oneTurbFields, gridId, &
+       oneControlVars, oneMicControl)
 
     ! OutputFields: Define the fields to write and select the output
     !               method: parallel HDF5, VFM, parallel MPI-IO,
@@ -590,6 +597,7 @@ contains
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     integer, intent(in) :: gridId
     type(ControlVars), pointer, intent(in) :: oneControlVars
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     integer :: maxNFields, nvMax, ierr, grid
 
@@ -661,7 +669,7 @@ contains
        end if
        call saveVFM(histFlag, .true., liteFlag, meanFlag, nvMax, ngrids, &
             willwrite, maxNFields, oneNamelistFile, oneBasicFields, oneTurbFields, &
-            gridId, oneControlVars)
+            gridId, oneControlVars, oneMicControl)
     endif
 
     if (dumpLocal) then
@@ -681,7 +689,7 @@ contains
        case (2)
           call saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
                willwrite, maxNFields, oneNamelistFile, oneBasicFields, &
-               oneTurbFields, gridId, oneControlVars)
+               oneTurbFields, gridId, oneControlVars, oneMicControl)
 
        case (3)
           call saveBinMPIIO(histFlag, instFlag, liteFlag, meanFlag, nvMax, &
@@ -778,7 +786,8 @@ contains
   !====
 
   subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
-       willwrite, maxNFields, oneNamelistFile, oneBasicFields, oneTurbFields, gridId, oneControlVars)
+       willwrite, maxNFields, oneNamelistFile, oneBasicFields, oneTurbFields, &
+       gridId, oneControlVars, oneMicControl)
 
     ! saveVFM: Master process gathers fields that are domain decomposed
     !          over slaves and builds selected output files. 
@@ -800,6 +809,7 @@ contains
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     integer, intent(in) :: gridId
     type(ControlVars), pointer, intent(in) :: oneControlVars
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     type(IOFileDS) :: histFileDS
     type(IOFileDS) :: instFileDS
@@ -1265,16 +1275,16 @@ contains
 
        if (mchnum == master_num) then
           if (histFlag) then
-             call DumpIOHeadTable(histFileDS, oneNamelistFile)
+             call DumpIOHeadTable(histFileDS, oneNamelistFile, oneMicControl)
           end if
           if (instFlag) then
-             call DumpIOHeadTable(instFileDS, oneNamelistFile)
+             call DumpIOHeadTable(instFileDS, oneNamelistFile, oneMicControl)
           end if
           if (liteFlag) then
-             call DumpIOHeadTable(liteFileDS, oneNamelistFile)
+             call DumpIOHeadTable(liteFileDS, oneNamelistFile, oneMicControl)
           end if
           if (meanFlag) then
-             call DumpIOHeadTable(meanFileDS, oneNamelistFile)
+             call DumpIOHeadTable(meanFileDS, oneNamelistFile, oneMicControl)
           end if
        end if
 

@@ -899,7 +899,9 @@ contains
 
     ! First check of options, mainly for numbers of grid points
 
-    call opspec1(nmachs, mchnum, master_num)
+    call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+    call opspec1(nmachs, mchnum, master_num, oneGrid%MicControlVars)
+    call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
 
     ! Basic grid coordinate setup for statically allocated data structures:
     ! number of grid points, deltas, coordinate and nesting coefficients,
@@ -1445,8 +1447,11 @@ contains
                   iflag==1
           end if
 
+          call DeepCopyToMicControl(oneGrid%MicControlVars,h)
           call OutputFields(histFlag, instFlag, liteFlag, meanFlag, &
-               oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id, oneGrid%Control)
+               oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id, &
+               oneGrid%Control, oneGrid%MicControlVars)
+          call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
 
           ! Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
           ! call SynchronizedTimeStamp(TS_OUTPUT)
@@ -1639,7 +1644,9 @@ contains
     iopunt=6
 
 
-    call opspec3(oneGrid%Ramsin, oneGrid%Id)
+    call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+    call opspec3(oneGrid%Ramsin, oneGrid%Id, oneGrid%MicControlVars)
+    call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
 
     if (runtype(1:7) == 'INITIAL') then
 
@@ -1719,7 +1726,9 @@ contains
 
           if (initial == 3) then
              print*,'History-INITIAL start of grid- 1'
-             call inithis(oneGrid%Basic)
+             call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+             call inithis(oneGrid%Basic,oneGrid%MicControlVars)
+             call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
           endif
 
           !  On all fine grids, initialize the surface layer characteristics,
@@ -2280,13 +2289,13 @@ contains
 
     call newgrid(1)
 
-       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+    call DeepCopyToMicControl(oneGrid%MicControlVars,h)
     if     (mcphys_type == 0) then
        call micro_master(oneGrid%MicControlVars)
     elseif (mcphys_type == 1) then
        call micro_master_2M(oneGrid%MicControlVars)
     endif
-       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
+    call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
 
     !       Fill latitude-longitude, map factor, and Coriolis arrays.
 
@@ -2420,8 +2429,11 @@ contains
     !--(DMK-CCATT-FIM)--------------------------------------------------------
     !srf
 
+    call DeepCopyToMicControl(oneGrid%MicControlVars,h)
     call OutputFields(histFlag, instFlag, liteFlag, meanFlag, &
-         oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id, oneGrid%Control)
+         oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id, &
+         oneGrid%Control,oneGrid%MicControlVars)
+    call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
 
     ! Save initial fields into the averaged arrays
 
