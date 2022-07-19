@@ -6,6 +6,9 @@ module ModPostOneField
   use ModBasicFields, only: &
        BasicFields
 
+  use ModMicControl, only: &
+       MicControl
+  
   use ModBramsGrid, only: &
        BramsGrid
 
@@ -87,7 +90,7 @@ contains
   
 
   subroutine PostOneField(varName, oneBramsGrid, onePostGrid, &
-       oneNamelistFile, oneBasicFields, oneTurbFields)
+       oneNamelistFile, oneBasicFields, oneTurbFields, oneMicControl)
     include "constants.h"
     character(len = *), intent(in) :: varName
     type(BramsGrid), pointer :: oneBramsGrid
@@ -95,6 +98,7 @@ contains
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     type(PostVarType) :: one_post_variable
     character(len = 16) :: varNameUpper
@@ -112,10 +116,10 @@ contains
        select case (one_post_variable%ivar_type)
        case (2)
           call Brams2Post_2d(one_post_variable, oneBramsGrid, onePostGrid, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, oneMicControl)
        case (3)
           call Brams2Post_3d(one_post_variable, oneBramsGrid, onePostGrid, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, oneMicControl)
        case (7)
           call Brams2Post_7d(one_post_variable, oneBramsGrid, onePostGrid, &
                oneNamelistFile, oneBasicFields, oneTurbFields)

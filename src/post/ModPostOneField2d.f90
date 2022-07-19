@@ -9,15 +9,14 @@ module ModPostOneField2d
   use ModBasicFields, only: &
        BasicFields
 
+  use ModMicControl, only: &
+       MicControl
+  
   use mem_grid, only: &
        time   ! INTENT(IN)  !DSM
 
   use io_params, only: &
        frqanl
-
-  use micphys, only: &
-       mcphys_type, &! INTENT(IN)
-       level          ! INTENT(IN)
 
   use ModOutputUtils, only: &
        GetVarFromMemToOutput
@@ -103,7 +102,7 @@ contains
 
 
   subroutine Brams2Post_2d (one_post_variable, oneBramsGrid, onePostGrid, &
-       oneNamelistFile, oneBasicFields, oneTurbFields)
+       oneNamelistFile, oneBasicFields, oneTurbFields, oneMicControl)
     include "constants.h"
     type(PostVarType) :: one_post_variable
     type(BramsGrid), pointer :: oneBramsGrid
@@ -111,6 +110,7 @@ contains
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     real :: OutputField(oneBramsGrid%mxp, oneBramsGrid%myp)
     real :: OutputField3d(oneBramsGrid%mxp, oneBramsGrid%myp, oneBramsGrid%mzp) ! for use in a special case
@@ -157,7 +157,7 @@ contains
     select case (one_post_variable%fieldName)
     case ('TOTPCP')
        call getAccComponents(oneBramsGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, oneMicControl)
        OutputField = max(OutputField, 0.0)
     case ('ACCCON')
        OutputField = getAconpr(oneBramsGrid, oneNamelistFile, oneBasicFields,&
@@ -230,14 +230,14 @@ contains
             oneNamelistFile, oneBasicFields, oneTurbFields)
     case ('PRECIP')
        call getAccComponents(oneBramsGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, oneMicControl)
        ScrT2N01 = getAconpr(oneBramsGrid, oneNamelistFile, oneBasicFields,&
             oneTurbFields)
        OutputField = OutputField + ScrT2N01
        OutputField = max(OutputField, 0.0)
     case ('TOTPREC')
        call getAccComponents(oneBramsGrid, ScrT2N02, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, oneMicControl)
        ScrT2N01 = getAconpr(oneBramsGrid, oneNamelistFile, oneBasicFields,&
             oneTurbFields)
        OutputField = ScrT2N02 + ScrT2N01 - TotPrec
@@ -346,7 +346,7 @@ contains
             oneNamelistFile, oneBasicFields, oneTurbFields)
        ScrT3N05 = ScrT3N05 + ScrT3N04
        !-For GThompson microphysics micphys_type>1 : RAP does not exist
-       if(mcphys_type .le. 1) then
+       if(oneMicControl%mcphys_type .le. 1) then
           call GetVarFromMemToOutput ('RAP', oneBramsGrid%currGrid, ScrT3N04, &
                oneNamelistFile, oneBasicFields, oneTurbFields)
           ScrT3N05 = ScrT3N05 + ScrT3N04
@@ -1212,12 +1212,13 @@ contains
 
   
   subroutine getAccComponents(oneBramsGrid, OutputField, &
-       oneNamelistFile, oneBasicFields, oneTurbFields)
+       oneNamelistFile, oneBasicFields, oneTurbFields, oneMicControl)
     type(BramsGrid), pointer :: oneBramsGrid
     real, intent(inout) :: OutputField(oneBramsGrid%mxp, oneBramsGrid%myp)
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     real :: ScrT2N01(oneBramsGrid%mxp, oneBramsGrid%myp)
     ! OutputField <- 0.0
@@ -1240,7 +1241,7 @@ contains
          oneNamelistFile, oneBasicFields, oneTurbFields)
     OutputField = OutputField + ScrT2N01
     !-For GThompson microphysics micphys_type>1 : ACCPR is already the total precip
-    if(mcphys_type .le. 1) then
+    if(oneMicControl%mcphys_type .le. 1) then
        call GetVarFromMemToOutput ('ACCPP', oneBramsGrid%currGrid, ScrT2N01, &
             oneNamelistFile, oneBasicFields, oneTurbFields)
        OutputField = OutputField + ScrT2N01

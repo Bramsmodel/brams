@@ -275,8 +275,8 @@ module ModOneProc
 
   use Micphys, only: &
        DeepCopyToMicControl, &
-       DeepCopyFromMicControl, &
-       StoreNamelistFileAtMicphys
+       DeepCopyFromMicControl!, &
+!       StoreNamelistFileAtMicphys
 
   use Shcu_vars_const, only: StoreNamelistFileAtShcu_vars_const
 
@@ -804,7 +804,7 @@ contains
     call StoreNamelistFileAtMem_radiate(oneNamelistFile)
     call StoreNamelistFileAtSoilMoisture(oneNamelistFile)
     call StoreNamelistFileAtMem_varinit(oneNamelistFile)
-    call StoreNamelistFileAtMicphys(oneNamelistFile)
+!!$    call StoreNamelistFileAtMicphys(oneNamelistFile)
     call StoreNamelistFileAtNode_mod(oneNamelistFile%load_bal)
     call StoreNamelistFileAtRef_sounding(oneNamelistFile)
     call StoreNamelistFileAtShcu_vars_const(oneNamelistFile)

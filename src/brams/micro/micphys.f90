@@ -317,6 +317,7 @@ contains
 
     character(len=*), parameter :: h="**(DeepCopyFromMicControl)**"
 
+    return
     if (lastCopyTo == "") then
        call fatal_error(h//" wrong order, invoked by "//&
             trim(adjustl(proc))//"; last CopyFrom by "//lastCopyFrom)
@@ -516,6 +517,7 @@ contains
 
     character(len=*), parameter :: h="**(DeepCopyToMicControl)**"
 
+    return
     if (lastCopyFrom == "") then
        call fatal_error(h//" wrong order, invoked by "//&
             trim(adjustl(proc))//"; last CopyTo by "//lastCopyTo)

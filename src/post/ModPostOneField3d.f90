@@ -9,9 +9,9 @@ module ModPostOneField3d
   use ModBasicFields, only: &
        BasicFields
 
-  use micphys, only: &
-       mcphys_type
-
+  use ModMicControl, only: &
+       MicControl
+  
   use mem_grid, only: &
        time           ! INTENT(IN)
 
@@ -65,13 +65,14 @@ contains
 
 
   subroutine Brams2Post_3d (one_post_variable, oneBramsGrid, onePostGrid, &
-       oneNamelistFile, oneBasicFields, oneTurbFields)
+       oneNamelistFile, oneBasicFields, oneTurbFields, oneMicControl)
     type(PostVarType) :: one_post_variable
     type(BramsGrid), pointer :: oneBramsGrid
     type(PostGrid), pointer :: onePostGrid
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
 
     real :: OutputField(oneBramsGrid%mxp, oneBramsGrid%myp, oneBramsGrid%mzp)
@@ -268,7 +269,7 @@ contains
        OutputField = ScrT3N01 +(ScrT3N02-ScrT3N01 )*tfact
     case ('AGGREGATES')
        !-For GThompson microphysics micphys_type>1 : RAP does not exist
-       if(mcphys_type .le. 1) then
+       if(oneMicControl%mcphys_type .le. 1) then
           call GetVarFromMemToOutput ('RAP', oneBramsGrid%currGrid, OutputField, &
                oneNamelistFile, oneBasicFields, oneTurbFields)
        else
@@ -287,7 +288,7 @@ contains
        OutputField = OutputField * 1.e3
        OutputField = max(OutputField, 0.0)
     case ('HAIL')
-       if(mcphys_type .le. 1) then
+       if(oneMicControl%mcphys_type .le. 1) then
           call GetVarFromMemToOutput ('RHP', oneBramsGrid%currGrid, OutputField, &
                oneNamelistFile, oneBasicFields, oneTurbFields)
        else
@@ -309,7 +310,7 @@ contains
             oneNamelistFile, oneBasicFields, oneTurbFields)
        OutputField = OutputField + ScrT3N01
 
-       if(mcphys_type .le. 1) then
+       if(oneMicControl%mcphys_type .le. 1) then
           call GetVarFromMemToOutput ('RGP', oneBramsGrid%currGrid, ScrT3N01, &
                oneNamelistFile, oneBasicFields, oneTurbFields)
           call GetVarFromMemToOutput ('Q6', oneBramsGrid%currGrid, ScrT3N02, &
@@ -347,7 +348,7 @@ contains
             oneNamelistFile, oneBasicFields, oneTurbFields)
        OutputField = OutputField + ScrT3N01
        !-For GThompson microphysics micphys_type>1 : RAP does not exist
-       if(mcphys_type .le. 1) then
+       if(oneMicControl%mcphys_type .le. 1) then
           call GetVarFromMemToOutput ('RAP', oneBramsGrid%currGrid, ScrT3N01, &
                oneNamelistFile, oneBasicFields, oneTurbFields)
           OutputField = OutputField + ScrT3N01
@@ -355,7 +356,7 @@ contains
        call GetVarFromMemToOutput ('RGP', oneBramsGrid%currGrid, ScrT3N01, &
             oneNamelistFile, oneBasicFields, oneTurbFields)
 
-       if(mcphys_type .le. 1) then
+       if(oneMicControl%mcphys_type .le. 1) then
           call GetVarFromMemToOutput ('Q6', oneBramsGrid%currGrid, ScrT3N02, &
                oneNamelistFile, oneBasicFields, oneTurbFields)
 
@@ -366,7 +367,7 @@ contains
        endif
        OutputField = OutputField + ScrT3N01
 
-       if(mcphys_type .le. 1) then
+       if(oneMicControl%mcphys_type .le. 1) then
           call GetVarFromMemToOutput ('RHP', oneBramsGrid%currGrid, ScrT3N01, &
                oneNamelistFile, oneBasicFields, oneTurbFields)
           call GetVarFromMemToOutput ('Q7', oneBramsGrid%currGrid, ScrT3N02, &
@@ -409,7 +410,7 @@ contains
             oneNamelistFile, oneBasicFields, oneTurbFields)
        OutputField = OutputField + ScrT3N01
        !-For GThompson microphysics micphys_type>1 : RAP does not exist
-       if(mcphys_type .le. 1) then
+       if(oneMicControl%mcphys_type .le. 1) then
           call GetVarFromMemToOutput ('RAP', oneBramsGrid%currGrid, ScrT3N01, &
                oneNamelistFile, oneBasicFields, oneTurbFields)
           OutputField = OutputField + ScrT3N01
@@ -417,7 +418,7 @@ contains
        call GetVarFromMemToOutput ('RGP', oneBramsGrid%currGrid, ScrT3N01, &
             oneNamelistFile, oneBasicFields, oneTurbFields)
        OutputField = OutputField + ScrT3N01
-       if(mcphys_type .le. 1) then
+       if(oneMicControl%mcphys_type .le. 1) then
           call GetVarFromMemToOutput ('RHP', oneBramsGrid%currGrid, ScrT3N01, &
                oneNamelistFile, oneBasicFields, oneTurbFields)
           OutputField = OutputField + ScrT3N01

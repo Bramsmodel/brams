@@ -9,6 +9,9 @@ module ModSfcLyrJules
   use ModBasicFields, only: &
        BasicFields
 
+  use ModMicControl, only: &
+       MicControl
+
   use io_params, only : &
        frqanl, &
        afilout, &
@@ -64,9 +67,6 @@ module ModSfcLyrJules
   use mem_cuparm, only: &
        cuparm_g, &
        nnqparm
-
-  use micphys, only: &
-       level
 
   use mem_micro, only: &
        micro_g
@@ -167,7 +167,7 @@ contains
 
 
   subroutine sfclyr_jules(mzp,mxp,myp,iaI,izI,jaI,jzI,jdim,julesFile,&
-       oneBasicFields, oneTurbFields)
+       oneBasicFields, oneTurbFields, oneMicControl)
 
     !--- Modulos do BRAMS ---
 
@@ -182,7 +182,8 @@ contains
     character(len=*), intent(in) :: julesFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
-
+    type(MicControl), pointer, intent(in) :: oneMicControl
+    
     integer               :: nsoil, fase,ia,iz,ja,jz,hh,mm
     integer, parameter :: fat_dtlong=1  ! > 1 para nao executar o JULES em todos os timestep do BRAMS
 
@@ -240,9 +241,9 @@ contains
 
     !--- Precipitacao total ---
     pcpgl(:,:)=0.
-    if (nnqparm(ng) > 0 .and. level >= 3) then
+    if (nnqparm(ng) > 0 .and. oneMicControl%level >= 3) then
        pcpgl(:,:)=cuparm_g(ng)%conprr(:,:) + micro_g(ng)%pcpg(:,:)
-    elseif(nnqparm(ng) == 0 .and. level >= 3) then
+    elseif(nnqparm(ng) == 0 .and. oneMicControl%level >= 3) then
        pcpgl(:,:)=micro_g(ng)%pcpg(:,:)
     endif
 

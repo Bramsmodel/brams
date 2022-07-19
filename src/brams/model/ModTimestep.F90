@@ -358,7 +358,7 @@ contains
                oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars)
        end if
        call sfclyr_jules(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile, &
-            oneGrid%Basic, oneGrid%Turb)
+            oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars)
 #endif
     endif
     call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
