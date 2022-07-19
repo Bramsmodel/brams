@@ -9,37 +9,54 @@ module ModRanlavg
 
   use iso_fortran_env, only: &
        int64
-  
-    use grid_dims, only: maxgrds
-    use ModVarTables, only: num_var, vtab_r
-    use mem_grid, only: dtlongn, time, jdim, ngrid
-    use io_params, only: avgtim, frqmean, frqboth
 
-    use ModRThrm, only: &
-         thermo
+  use grid_dims, only: &
+       maxgrds
 
-    use ModBasicFields, only: &
-         BasicFields
+  use ModVarTables, only: &
+       num_var, &
+       vtab_r
 
-    use iso_fortran_env, only: &
-         int64
+  use mem_grid, only: &
+       dtlongn, &
+       time, &
+       jdim, &
+       ngrid
 
-    implicit none
+  use io_params, only: &
+       avgtim, &
+       frqmean, &
+       frqboth
 
-    private
+  use ModRThrm, only: &
+       thermo
 
-    public :: anlavg
-    public :: average
+  use ModBasicFields, only: &
+       BasicFields
+
+  use ModMicControl, only: &
+       MicControl
+
+  use iso_fortran_env, only: &
+       int64
+
+  implicit none
+
+  private
+
+  public :: anlavg
+  public :: average
 
 contains
 
 
 
-  subroutine anlavg(n1, n2, n3, oneBasic)
+  subroutine anlavg(n1, n2, n3, oneBasic, oneMicControl)
     integer, intent(in) :: n1
     integer, intent(in) :: n2
     integer, intent(in) :: n3
     type(BasicFields), pointer, intent(in) :: oneBasic
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     integer :: nv,ng
     integer :: n3dadd,n3d,n2dadd,n2d,izero,indvar,indavg
@@ -119,11 +136,15 @@ contains
     !      Implement THERMO call for THETA and RV so matches code in rdriv.f
     !         Note that theta is changed, BUT never used on boundary points
 
-    call thermo(n1,n2,n3,1,1,1,n3,oneBasic)
-    call thermo(n1,n2,n3,n2,n2,1,n3,oneBasic)
+    call thermo(n1,n2,n3,1,1,1,n3,&
+         oneBasic, oneMicControl)
+    call thermo(n1,n2,n3,n2,n2,1,n3,&
+         oneBasic, oneMicControl)
     if (jdim .eq. 1) then
-       call thermo(n1,n2,n3,1,n2,1,1,oneBasic)
-       call thermo(n1,n2,n3,1,n2,n3,n3,oneBasic)
+       call thermo(n1,n2,n3,1,n2,1,1,&
+            oneBasic, oneMicControl)
+       call thermo(n1,n2,n3,1,n2,n3,n3,&
+            oneBasic, oneMicControl)
     endif
 
     ! Loop through the main variable table

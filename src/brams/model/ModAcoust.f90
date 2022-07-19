@@ -11,6 +11,10 @@
 
 
 module ModAcoust
+
+  use ModMicControl, only: &
+       MicControl
+
   use ModBasicFields, only: &
        BasicFields
 
@@ -56,9 +60,6 @@ module ModAcoust
        ja, &
        jz, &
        mynum
-
-  use micphys , only: &
-       level
 
   use mem_tend, only :&
        tend
@@ -1698,7 +1699,7 @@ contains
 
   !******************************************************************************
 
-  subroutine buoyancy (wt, oneBasicFields)
+  subroutine buoyancy (wt, oneBasicFields, oneMicControl)
     !> @brief: buoyancy
     !! @author:  unknow
     !! @date:  18/Nov/2015
@@ -1709,8 +1710,9 @@ contains
     !! Please, read @link https://creativecommons.org/licenses/GPL/2.0/legalcode.pt
     real, intent(inout) :: wt( mzp, mxp, myp )
     type(BasicFields), pointer, intent(in) :: oneBasicFields 
-
-    call boyanc(mzp,mxp,myp,ia,iz,ja,jz,level   &
+    type(MicControl), pointer, intent(in) :: oneMicControl
+    
+    call boyanc(mzp,mxp,myp,ia,iz,ja,jz,oneMicControl%level   &
          ,wt                                       &
          ,oneBasicFields%theta ,oneBasicFields%rtp  &
          ,oneBasicFields%rv    ,oneBasicFields%th0  &

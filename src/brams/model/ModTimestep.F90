@@ -131,9 +131,7 @@ module ModTimestep
 
   use micphys,   only: &
        DeepCopyToMicControl, &
-       DeepCopyFromMicControl, &
-       mcphys_type,  &! INTENT(IN)
-       level          ! INTENT(IN)
+       DeepCopyFromMicControl
 
   use mem_grid, only: &
        ht,         & ! intent(in)
@@ -323,8 +321,11 @@ contains
 
     !  Thermodynamic diagnosis
     !--------------------------------
-    if (mcphys_type <= 1 .and. level/=3) then
-       call thermo(mzp, mxp, myp, ia, iz, ja, jz, oneGrid%Basic)
+    if (oneGrid%MicControlVars%mcphys_type <= 1 .and. oneGrid%MicControlVars%level/=3) then
+       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+       call thermo(mzp, mxp, myp, ia, iz, ja, jz, &
+            oneGrid%Basic, oneGrid%MicControlVars)
+       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
     endif
 
     if (iexev == 2) then
@@ -479,7 +480,7 @@ contains
 
     !  Rayleigh friction for theta
     !----------------------------------------
-    call rayft(mxp,myp,mzp,mynum,ngrid,nnzp,if_adap,level,nodemyp,nodemxp,&
+    call rayft(mxp,myp,mzp,mynum,ngrid,nnzp,if_adap,oneGrid%MicControlVars%level,nodemyp,nodemxp,&
          scratch%vt3da,oneGrid%Basic)
 
     !  Get the overlap region between parallel nodes
@@ -511,8 +512,10 @@ contains
     !----------------------------------------
     if(advmnt >= 1) then
        !-srf monotonic advection scheme
+       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
        call advmnt_driver(oneGrid, 'T',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,&
-            i0,j0,nodemxp,nodemyp,nodemzp,mynum)
+            i0,j0,nodemxp,nodemyp,nodemzp,mynum, oneGrid%MicControlVars)
+       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
        if(advmnt >= 2) &
             call advectc(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, &
             'T',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
@@ -610,13 +613,13 @@ contains
     !
     !  Moisture variables positive definite
     !----------------------------------------
-    if    (mcphys_type == 0) then
+    if    (oneGrid%MicControlVars%mcphys_type == 0) then
        call DeepCopyToMicControl(oneGrid%MicControlVars,h)
        call negadj1(mzp,mxp,myp, oneGrid%Basic, oneGrid%MicControlVars)
        call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
 
 
-    elseif(mcphys_type == 1) then
+    elseif(oneGrid%MicControlVars%mcphys_type == 1) then
        call DeepCopyToMicControl(oneGrid%MicControlVars,h)
        call negadj1_2M_rams60(mzp,mxp,myp, oneGrid%Basic, oneGrid%MicControlVars)
        call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
@@ -627,7 +630,7 @@ contains
 
     !  Microphysics
     !----------------------------------------
-    if (mcphys_type == 0 .and. level==3) then
+    if (oneGrid%MicControlVars%mcphys_type == 0 .and. oneGrid%MicControlVars%level==3) then
 !!$       if (machine==1 .and. TEB_SPM==0) then
 !!$          ! Optimized version only for SX-6
 !!$          call micro_opt()
@@ -638,19 +641,19 @@ contains
        call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
 !!$       endif
     endif
-    if (mcphys_type == 1 .and. level==3) then
+    if (oneGrid%MicControlVars%mcphys_type == 1 .and. oneGrid%MicControlVars%level==3) then
        ! 2M rams microphysics
        call DeepCopyToMicControl(oneGrid%MicControlVars,h)
        call micro_2M_rams60(oneGrid%Basic,oneGrid%MicControlVars)
        call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
     endif
-    if (mcphys_type == 2 .or. mcphys_type == 3 ) then
+    if (oneGrid%MicControlVars%mcphys_type == 2 .or. oneGrid%MicControlVars%mcphys_type == 3 ) then
        ! G. Thompson microphysics
        call DeepCopyToMicControl(oneGrid%MicControlVars,h)
        call micro_thompson(oneGrid%Basic, oneGrid%MicControlVars)
        call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
     endif
-    if (mcphys_type == 4 ) then
+    if (oneGrid%MicControlVars%mcphys_type == 4 ) then
        call micro_gfdl(oneGrid%Basic)
     endif
 
@@ -668,8 +671,11 @@ contains
     !
     !  Thermodynamic diagnosis
     !----------------------------------------
-    if (mcphys_type <= 1 .and. level==3)  then
-       call thermo(mzp,mxp,myp,1,mxp,1,myp, oneGrid%Basic)
+    if (oneGrid%MicControlVars%mcphys_type <= 1 .and. oneGrid%MicControlVars%level==3)  then
+       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+       call thermo(mzp,mxp,myp,1,mxp,1,myp, &
+            oneGrid%Basic, oneGrid%MicControlVars)
+       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
     endif
 
     if (iexev == 2) then
@@ -723,7 +729,9 @@ contains
     call hadvance(1, oneGrid%Basic)
     !  Buoyancy term for w equation
     !----------------------------------------
-    call buoyancy(tend%wt, oneGrid%Basic)
+    call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+    call buoyancy(tend%wt, oneGrid%Basic, oneGrid%MicControlVars)
+    call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
 
     !  Acoustic small timesteps
     !----------------------------------------
@@ -759,18 +767,18 @@ contains
          grid_g(ngrid)%lpu,grid_g(ngrid)%lpv,grid_g(ngrid)%lpw, &
          oneGrid%Basic)
 
+    call DeepCopyToMicControl(oneGrid%MicControlVars,h)
     if (iexev == 2) then
-       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
        call get_true_air_density(mzp,mxp,myp,ia,iz,ja,jz,&
             oneGrid%Basic,oneGrid%MicControlVars)
-       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
     end if
 
     ! Call thermo on the boundaries
     call thermo_boundary_driver((time+dtlongn(ngrid)), dtlong, &
          f_thermo_e(ngrid), f_thermo_w(ngrid), &
          f_thermo_s(ngrid), f_thermo_n(ngrid), &
-         nzp, mxp, myp, jdim, oneGrid%Basic)
+         nzp, mxp, myp, jdim, oneGrid%Basic, oneGrid%MicControlVars)
+    call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
 
     !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
     !  call SynchronizedTimeStamp(TS_DYNAMICS)

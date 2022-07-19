@@ -276,10 +276,7 @@ module ModOneProc
   use Micphys, only: &
        DeepCopyToMicControl, &
        DeepCopyFromMicControl, &
-       level, &
-       StoreNamelistFileAtMicphys, &
-       mcphys_type, &
-       icloud,idriz,ipris,idust,imd1flg,imd2flg
+       StoreNamelistFileAtMicphys
 
   use Shcu_vars_const, only: StoreNamelistFileAtShcu_vars_const
 
@@ -899,9 +896,9 @@ contains
 
     ! First check of options, mainly for numbers of grid points
 
-    call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+    call DeepCopyToMicControl(oneGrid%MicControlVars,h//"_1")
     call opspec1(nmachs, mchnum, master_num, oneGrid%MicControlVars)
-    call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
+    call DeepCopyFromMicControl(oneGrid%MicControlVars,h//"_1")
 
     ! Basic grid coordinate setup for statically allocated data structures:
     ! number of grid points, deltas, coordinate and nesting coefficients,
@@ -998,19 +995,19 @@ contains
           call InitTuvDriver()
        endif
 
-       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
-       if(mcphys_type==0) then
+       call DeepCopyToMicControl(oneGrid%MicControlVars,h//"_2")
+       if(oneGrid%MicControlVars%mcphys_type==0) then
           call jnmbinit(oneGrid%MicControlVars)
-       elseif(mcphys_type==1) then
+       elseif(oneGrid%MicControlVars%mcphys_type==1) then
           call jnmbinit_2M(oneGrid%MicControlVars)
        endif
-       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
+       call DeepCopyFromMicControl(oneGrid%MicControlVars,h//"_2")
 
        ! Allocate memory for this process sub-domain only
        !**(JP)** This should allocate memory for all modules (to be certified!!!)
-       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+       call DeepCopyToMicControl(oneGrid%MicControlVars,h//"_3")
        call MemAlloc(oneGrid, 2)
-       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
+       call DeepCopyFromMicControl(oneGrid%MicControlVars,h//"_3")
 
        if(ioutput == 5)then
           call setInitial4Vtable(1, chemistry, aerosol)
@@ -1136,7 +1133,7 @@ contains
                ,grid_g(1)%glat,grid_g(1)%glon,mchnum,master_num)
        endif
 
-       if(mcphys_type==3) call readDataFriendly()
+       if(oneGrid%MicControlVars%mcphys_type==3) call readDataFriendly()
 
        if (aerosol==-1 .and. .not. (CCATT==1 .and. chemistry >= 1)) then
           call gradsRead('./tables/aerClim/','aerosols.gra',&
@@ -1331,7 +1328,7 @@ contains
                 ! advance current grid forward by corresponding deltat
 
                 time = begtime + (isched(npass,5)-1)*dtlt
-                if (mcphys_type==3) then
+                if (oneGrid%MicControlVars%mcphys_type==3) then
                    call adjustFriendlyForMonth(time,oneGrid%Basic)
                 end if
 
@@ -1384,8 +1381,12 @@ contains
 
           do ngrid=1,ngrids
              call newgrid(ngrid)
-             if ((avgtim/=0.) .and. (frqmean/=0. .or. frqboth/=0.))  &
-                  call anlavg(mzp, mxp, myp, oneGrid%Basic)
+             if ((avgtim/=0.) .and. (frqmean/=0. .or. frqboth/=0.))  then
+                call DeepCopyToMicControl(oneGrid%MicControlVars,h//"_4")
+                call anlavg(mzp, mxp, myp, &
+                     oneGrid%Basic, oneGrid%MicControlVars)
+                call DeepCopyFromMicControl(oneGrid%MicControlVars,h//"_4")
+             end if
              call cfl(mzp, mxp, myp, nodei0(mynum,ngrid), nodej0(mynum,ngrid), &
                   oneGrid%Basic, oneGrid%Ramsin, oneGrid%Id)
           end do
@@ -1449,11 +1450,11 @@ contains
                   iflag==1
           end if
 
-          call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+          call DeepCopyToMicControl(oneGrid%MicControlVars,h//"_5")
           call OutputFields(histFlag, instFlag, liteFlag, meanFlag, &
                oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id, &
                oneGrid%Control, oneGrid%MicControlVars)
-          call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
+          call DeepCopyFromMicControl(oneGrid%MicControlVars,h//"_5")
 
           ! Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
           ! call SynchronizedTimeStamp(TS_OUTPUT)
@@ -1463,7 +1464,7 @@ contains
           if (posFlag) then
              if(damModule==1) then
                 call acumPrecipInDam(nodemxp(mynum,1),nodemyp(mynum,1) &
-                     ,ia,iz,ja,jz,mcphys_type &
+                     ,ia,iz,ja,jz,oneGrid%MicControlVars%mcphys_type &
                      ,cuparm_g(1)%aconpr &
                      ,micro_g(1)%accpr &
                      ,micro_g(1)%accpp &
@@ -1646,9 +1647,9 @@ contains
     iopunt=6
 
 
-    call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+    call DeepCopyToMicControl(oneGrid%MicControlVars,h//"_6")
     call opspec3(oneGrid%Ramsin, oneGrid%Id, oneGrid%MicControlVars)
-    call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
+    call DeepCopyFromMicControl(oneGrid%MicControlVars,h//"_6")
 
     if (runtype(1:7) == 'INITIAL') then
 
@@ -1717,9 +1718,9 @@ contains
 
           if(initial == 1) then
              print*,'Horizontally-homogeneous-INITIAL start of grid- 1'
-             call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+             call DeepCopyToMicControl(oneGrid%MicControlVars,h//"_7")
              call inithh(oneGrid%Basic, oneGrid%MicControlVars)
-             call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
+             call DeepCopyFromMicControl(oneGrid%MicControlVars,h//"_7")
           endif
 
           !If "history" initialization, call INITHIS.
@@ -1728,9 +1729,9 @@ contains
 
           if (initial == 3) then
              print*,'History-INITIAL start of grid- 1'
-             call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+             call DeepCopyToMicControl(oneGrid%MicControlVars,h//"_8")
              call inithis(oneGrid%Basic,oneGrid%MicControlVars)
-             call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
+             call DeepCopyFromMicControl(oneGrid%MicControlVars,h//"_8")
           endif
 
           !  On all fine grids, initialize the surface layer characteristics,
@@ -1756,25 +1757,26 @@ contains
        do ifm=1,ngrids
           call newgrid(ifm)
 
-          call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+          call DeepCopyToMicControl(oneGrid%MicControlVars,h//"_9")
           call FieldInit(1, oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars)
           call negadj1(mzp,mxp,myp, oneGrid%Basic,oneGrid%MicControlVars)
-          call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
 
-          call thermo(mzp, mxp, myp, 1, mxp, 1, myp, oneGrid%Basic)
+          call thermo(mzp, mxp, myp, 1, mxp, 1, myp, &
+               oneGrid%Basic, oneGrid%MicControlVars)
+          call DeepCopyFromMicControl(oneGrid%MicControlVars,h//"_9")
 
           if(ilwrtyp==6 .or. iswrtyp==6 ) then
-             if (level  ==  3) &
+             if (oneGrid%MicControlVars%level  ==  3) &
                   call effective_radius(mzp,mxp,myp &
                   ,micro_g(ifm)%rei             &
                   ,micro_g(ifm)%rel)
           endif
 
-          if (mcphys_type == 0) then
-             if (level  ==  3) then
+          if (oneGrid%MicControlVars%mcphys_type == 0) then
+             if (oneGrid%MicControlVars%level  ==  3) then
 
 
-                call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+                call DeepCopyToMicControl(oneGrid%MicControlVars,h//"_10")
                 call initqin(mzp,mxp,myp        &
                      ,micro_g(ifm)%q2      &
                      ,micro_g(ifm)%q6      &
@@ -1786,18 +1788,18 @@ contains
                      ,micro_g(ifm)%cccnp   &
                      ,micro_g(ifm)%cifnp,&
                      oneGrid%MicControlVars)
-                call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
+                call DeepCopyFromMicControl(oneGrid%MicControlVars,h//"_10")
 
 
 
              endif
 
-          elseif(mcphys_type == 1) then
+          elseif(oneGrid%MicControlVars%mcphys_type == 1) then
 
-             if (level  ==  3) then
+             if (oneGrid%MicControlVars%level  ==  3) then
 
 
-       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+       call DeepCopyToMicControl(oneGrid%MicControlVars,h//"_11")
                 call initqin_2M(mzp,mxp,myp        &
                      ,micro_g(ifm)%q2   &
                      ,micro_g(ifm)%q6      &
@@ -1807,59 +1809,61 @@ contains
                      ,oneGrid%Basic%theta   &
                      ,oneGrid%Basic%dn0, &
                      oneGrid%MicControlVars )
-       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
+       call DeepCopyFromMicControl(oneGrid%MicControlVars,h//"_11")
 
 
 
 
-                if(icloud >= 5) then
+                if(oneGrid%MicControlVars%icloud >= 5) then
 
 
-       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+       call DeepCopyToMicControl(oneGrid%MicControlVars,h//"_12")
                    call initqin2_2M(mzp,mxp,myp        &
                         ,micro_g(ifm)%cccnp   &
                         ,micro_g(ifm)%cccmp   &
                         ,oneGrid%Basic%dn0, &
                         oneGrid%MicControlVars   )
-       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
+       call DeepCopyFromMicControl(oneGrid%MicControlVars,h//"_12")
 
 
                 end if
 
-                if(idriz  >= 5) then
+                if(oneGrid%MicControlVars%idriz  >= 5) then
 
 
-       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+       call DeepCopyToMicControl(oneGrid%MicControlVars,h//"_13")
                    call initqin3_2M(mzp,mxp,myp        &
                         ,micro_g(ifm)%gccnp   &
                         ,micro_g(ifm)%gccmp   &
                         ,oneGrid%Basic%dn0, &
                      oneGrid%MicControlVars   )
-       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
+       call DeepCopyFromMicControl(oneGrid%MicControlVars,h//"_13")
 
 
                 end if
 
-                if(ipris  >= 5) then
+                if(oneGrid%MicControlVars%ipris  >= 5) then
 
 
-       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+       call DeepCopyToMicControl(oneGrid%MicControlVars,h//"_14")
                    call initqin4_2M(mzp,mxp,myp        &
                         ,micro_g(ifm)%cifnp   &
                         ,oneGrid%Basic%dn0, &
                      oneGrid%MicControlVars   )
-       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
+       call DeepCopyFromMicControl(oneGrid%MicControlVars,h//"_14")
 
 
                 end if
 
-                if(idust > 0 .or. imd1flg > 0 .or. imd2flg > 0)  then
+                if(oneGrid%MicControlVars%idust > 0 .or. &
+                     oneGrid%MicControlVars%imd1flg > 0 .or. &
+                     oneGrid%MicControlVars%imd2flg > 0)  then
        call DeepCopyToMicControl(oneGrid%MicControlVars,h)
                    call initqin5_2M(mzp,mxp,myp    &
                         ,micro_g(ifm)%md1np   &
                         ,micro_g(ifm)%md2np, &
                      oneGrid%MicControlVars )
-       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
+       call DeepCopyFromMicControl(oneGrid%MicControlVars,h//"_15")
                 end if
              endif
           endif
@@ -2205,7 +2209,7 @@ contains
           if (icm  >  0) call fmrefs3d(ifm, oneGrid%Basic, oneGrid%Basic)
           call DeepCopyToMicControl(oneGrid%MicControlVars,h)
           call negadj1(mzp,mxp,myp, oneGrid%Basic,oneGrid%MicControlVars)
-          call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
+          call DeepCopyFromMicControl(oneGrid%MicControlVars,h//"_15")
        enddo
 
        ! ALF - For use with SiB
@@ -2292,12 +2296,12 @@ contains
     call newgrid(1)
 
     call DeepCopyToMicControl(oneGrid%MicControlVars,h)
-    if     (mcphys_type == 0) then
+    if     (oneGrid%MicControlVars%mcphys_type == 0) then
        call micro_master(oneGrid%MicControlVars)
-    elseif (mcphys_type == 1) then
+    elseif (oneGrid%MicControlVars%mcphys_type == 1) then
        call micro_master_2M(oneGrid%MicControlVars)
     endif
-    call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
+    call DeepCopyFromMicControl(oneGrid%MicControlVars,h//"_16")
 
     !       Fill latitude-longitude, map factor, and Coriolis arrays.
 
@@ -2435,7 +2439,7 @@ contains
     call OutputFields(histFlag, instFlag, liteFlag, meanFlag, &
          oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id, &
          oneGrid%Control,oneGrid%MicControlVars)
-    call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
+    call DeepCopyFromMicControl(oneGrid%MicControlVars,h//"_16")
 
     ! Save initial fields into the averaged arrays
 

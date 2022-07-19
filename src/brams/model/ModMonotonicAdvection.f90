@@ -28,6 +28,9 @@ module ModMonotonicAdvection
   use ModNamelistFile, only: &
        NamelistFile
 
+  use ModMicControl, only: &
+       MicControl
+  
   use mem_grid, only:        &
        dtlt,   & !intent(in)
        time,   &
@@ -38,9 +41,6 @@ module ModMonotonicAdvection
        hw4   , & !intent(in)
        if_adap,& !intent(in)
        dyncore_flag  !intent(in)
-
-  use micphys, only: &
-       level !intent(in)
 
   use rconstants, only: &
        cp,p00,cv,rgas,cpi   !intent(in)
@@ -409,7 +409,7 @@ contains
 
   subroutine advmnt_driver(oneGrid, varn, &
        m1 ,m2 ,m3 ,ia,iz,ja,jz,izu,jzv,&
-       i0,j0,nodemyp,nodemxp,nodemzp,mynum)
+       i0,j0,nodemyp,nodemxp,nodemzp,mynum, oneMicControl)
 
     type(Grid), pointer, intent(in) :: oneGrid
     integer , intent(in) :: m1
@@ -428,6 +428,7 @@ contains
     integer, intent(in) :: nodemzp(:,:)
     integer , intent(in) :: mynum
     character(len=*),intent(in) :: varn
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     !--- local vars
     integer :: n
@@ -600,7 +601,7 @@ contains
             mzp, mxp, myp, mxpAdvMnt, mypAdvMnt, &
             iOffset, i1ExternAtAdvMnt,  iMxpExternAtAdvMnt,  &
             jOffset, j1ExternAtAdvMnt,  jMypExternAtAdvMnt,  &
-            level,&
+            oneMicControl%level,&
             oneGrid%Basic%rtp, &
             oneGrid%Basic%rv, &
             oneGrid%Basic%pp, &
