@@ -129,10 +129,6 @@ module ModTimestep
   use mem_oda,   only: &
        if_oda ! INTENT(IN)
 
-  use micphys,   only: &
-       DeepCopyToMicControl, &
-       DeepCopyFromMicControl
-
   use mem_grid, only: &
        ht,         & ! intent(in)
        ngrids,     & ! INTENT(IN)
@@ -322,10 +318,8 @@ contains
     !  Thermodynamic diagnosis
     !--------------------------------
     if (oneGrid%MicControlVars%mcphys_type <= 1 .and. oneGrid%MicControlVars%level/=3) then
-       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
        call thermo(mzp, mxp, myp, ia, iz, ja, jz, &
             oneGrid%Basic, oneGrid%MicControlVars)
-       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
     endif
 
     if (iexev == 2) then
@@ -342,7 +336,6 @@ contains
 
     !  Radiation parameterization
     !--------------------------------
-    call DeepCopyToMicControl(oneGrid%MicControlVars,h)
     call radiate(mzp,mxp,myp,ia,iz,ja,jz,mynum, &
          oneGrid%Basic, oneGrid%MicControlVars)
 
@@ -361,7 +354,6 @@ contains
             oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars)
 #endif
     endif
-    call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
 
     !-LFR Sea salt Aerossol inline source
     call SeaSaltDriver(ia,iz,ja,jz,ngrid,mxp,myp, oneGrid%Basic)
@@ -411,10 +403,8 @@ contains
        !- call Matrix Aerosol Model
        !----------------------------------------
        if(AEROSOL==2) then
-          call DeepCopyToMicControl(oneGrid%MicControlVars,h)
           call MatrixDriver(ia,iz,ja,jz,mzp,mxp,myp, oneGrid%Basic, oneGrid%Turb, &
                oneGrid%MicControlVars)
-          call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
        endif
 
     endif
@@ -494,7 +484,6 @@ contains
 
     !  Sub-grid diffusion terms
     !----------------------------------------
-    call DeepCopyToMicControl(oneGrid%MicControlVars,h)
     if ((if_adap==0) .and. (OneGrid%Ramsin%ihorgrad==2)) then
        call diffuse_brams31(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
             oneGrid%Basic, oneGrid%Ramsin, oneGrid%Turb, oneGrid%Id, &
@@ -504,7 +493,6 @@ contains
             oneGrid%Turb, oneGrid%Ramsin, oneGrid%Id, &
             oneGrid%MicControlVars)
     endif
-    call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
 
 !!!!!  IF( NNQPARM(ngrid) >=2 .OR. NNSHCU(ngrid)>=2 ) CALL prepare_lsf_OLD(NNQPARM(ngrid), NNSHCU(ngrid),3)
 
@@ -512,10 +500,8 @@ contains
     !----------------------------------------
     if(advmnt >= 1) then
        !-srf monotonic advection scheme
-       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
        call advmnt_driver(oneGrid, 'T',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,&
             i0,j0,nodemxp,nodemyp,nodemzp,mynum, oneGrid%MicControlVars)
-       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
        if(advmnt >= 2) &
             call advectc(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, &
             'T',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
@@ -544,23 +530,17 @@ contains
     !                    Deep Convection scheme
     !- call deep first, if there is deep convection , turn off shallow.
     if (nnqparm(ngrid)==2) then
-       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
        call cuparm_grell_catt(OneGrid, 1)
-       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
     end if
     !
     !                    Shallow Convection scheme
     if (NNSHCU(ngrid)==2 ) then
-       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
        call cuparm_grell_catt(OneGrid, 2)
-       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
     end if
     !
     !- G3d - GD-FIM and GF
     if (NNQPARM(ngrid)>=3) then
-       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
        call cuparm_grell3_catt(onegrid,1,nnqparm(ngrid),nnshcu(ngrid))
-       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
     end if
 
     !- task 2:  NO production by "eclair"
@@ -614,15 +594,11 @@ contains
     !  Moisture variables positive definite
     !----------------------------------------
     if    (oneGrid%MicControlVars%mcphys_type == 0) then
-       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
        call negadj1(mzp,mxp,myp, oneGrid%Basic, oneGrid%MicControlVars)
-       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
 
 
     elseif(oneGrid%MicControlVars%mcphys_type == 1) then
-       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
        call negadj1_2M_rams60(mzp,mxp,myp, oneGrid%Basic, oneGrid%MicControlVars)
-       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
     endif
 
     !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
@@ -631,27 +607,16 @@ contains
     !  Microphysics
     !----------------------------------------
     if (oneGrid%MicControlVars%mcphys_type == 0 .and. oneGrid%MicControlVars%level==3) then
-!!$       if (machine==1 .and. TEB_SPM==0) then
-!!$          ! Optimized version only for SX-6
-!!$          call micro_opt()
-!!$       else
        ! Original Version used in a Generic IA32 machine
-       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
        call micro(oneGrid%Basic, oneGrid%MicControlVars)
-       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
-!!$       endif
     endif
     if (oneGrid%MicControlVars%mcphys_type == 1 .and. oneGrid%MicControlVars%level==3) then
        ! 2M rams microphysics
-       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
        call micro_2M_rams60(oneGrid%Basic,oneGrid%MicControlVars)
-       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
     endif
     if (oneGrid%MicControlVars%mcphys_type == 2 .or. oneGrid%MicControlVars%mcphys_type == 3 ) then
        ! G. Thompson microphysics
-       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
        call micro_thompson(oneGrid%Basic, oneGrid%MicControlVars)
-       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
     endif
     if (oneGrid%MicControlVars%mcphys_type == 4 ) then
        call micro_gfdl(oneGrid%Basic)
@@ -672,10 +637,8 @@ contains
     !  Thermodynamic diagnosis
     !----------------------------------------
     if (oneGrid%MicControlVars%mcphys_type <= 1 .and. oneGrid%MicControlVars%level==3)  then
-       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
        call thermo(mzp,mxp,myp,1,mxp,1,myp, &
             oneGrid%Basic, oneGrid%MicControlVars)
-       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
     endif
 
     if (iexev == 2) then
@@ -691,10 +654,8 @@ contains
 
     !  Apply scalar b.c.'s
     !----------------------------------------
-    call DeepCopyToMicControl(oneGrid%MicControlVars,h)
     call trsets(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic,&
          oneGrid%Turb,oneGrid%MicControlVars)
-    call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
 
     !  Lateral velocity boundaries - radiative
     !-------------------------------------------
@@ -729,9 +690,7 @@ contains
     call hadvance(1, oneGrid%Basic)
     !  Buoyancy term for w equation
     !----------------------------------------
-    call DeepCopyToMicControl(oneGrid%MicControlVars,h)
     call buoyancy(tend%wt, oneGrid%Basic, oneGrid%MicControlVars)
-    call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
 
     !  Acoustic small timesteps
     !----------------------------------------
@@ -767,7 +726,6 @@ contains
          grid_g(ngrid)%lpu,grid_g(ngrid)%lpv,grid_g(ngrid)%lpw, &
          oneGrid%Basic)
 
-    call DeepCopyToMicControl(oneGrid%MicControlVars,h)
     if (iexev == 2) then
        call get_true_air_density(mzp,mxp,myp,ia,iz,ja,jz,&
             oneGrid%Basic,oneGrid%MicControlVars)
@@ -778,7 +736,6 @@ contains
          f_thermo_e(ngrid), f_thermo_w(ngrid), &
          f_thermo_s(ngrid), f_thermo_n(ngrid), &
          nzp, mxp, myp, jdim, oneGrid%Basic, oneGrid%MicControlVars)
-    call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
 
     !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
     !  call SynchronizedTimeStamp(TS_DYNAMICS)

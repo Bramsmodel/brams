@@ -1,9 +1,5 @@
 module ModPostProcess
 
-  use micphys, only: &
-       DeepCopyToMicControl, &
-       DeepCopyFromMicControl
-  
   use ModTurbFields, only: &
        TurbFields
   
@@ -217,14 +213,12 @@ contains
              call MsgDump (h // " variable " // &
                   trim(OneGrid%Ramsin%vp(ivp)))
           end if
-          call DeepCopyToMicControl(OneGrid%MicControlVars, h)
           call PostOneField(trim(OneGrid%Ramsin%vp(ivp)), &
                oneAllPostTypes%allGrids(igrid)%bg, &
                oneAllPostTypes%allGrids(igrid)%pg, &
                OneGrid%Ramsin, &
                OneGrid%Basic,&
                OneGrid%Turb, OneGrid%MicControlVars)
-          call DeepCopyFromMicControl(OneGrid%MicControlVars, h)
        end do
        call finalize_post_variables()
        ! control file contents

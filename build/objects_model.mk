@@ -110,7 +110,6 @@ OBJ_MOD = \
 	ModMicNuc.o \
 	ModMicTabs.o \
 	ModMicVap.o \
-	micphys.o \
 	ModMkSfcDriver.o \
 	ModMkSfcNdvi.o \
 	ModMkSfcSfc.o \
