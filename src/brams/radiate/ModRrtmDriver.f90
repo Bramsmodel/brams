@@ -10,6 +10,9 @@ module ModRrtmDriver
   use ModBasicFields, only: &
        BasicFields
 
+  use ModMicControl, only: &
+       MicControl
+  
   use mem_grid    , only: &
        ngrid, &
        time, &
@@ -110,18 +113,6 @@ module ModRrtmDriver
 
   use grid_dims, only: &
        nzpmax
-
-  use micphys, only: &
-       gnu, &
-       level, &
-       icloud, &
-       irain, &
-       ipris, &
-       isnow, &
-       iaggr, &
-       igraup, &
-       ihail, &
-       mcphys_type         ! intent(in)
 
   use mem_cuparm, only: &
        cuparm_g, &
@@ -244,11 +235,13 @@ module ModRrtmDriver
 contains
 
 
-  subroutine rrtm_driver(mzp, mxp, myp, ia, iz, ja, jz, mynum, oneBasicFields)
+  subroutine rrtm_driver(mzp, mxp, myp, ia, iz, ja, jz, mynum, &
+       oneBasicFields, oneMicControl)
 
     integer, intent(in) :: mzp, mxp, myp, ia, iz, ja, jz, mynum
     type(BasicFields), pointer, intent(in) :: oneBasicFields
-    !
+    type(MicControl), pointer, intent(in) :: oneMicControl
+
     real,dimension(mzp,mxp,myp) :: lwl,iwl
     real,dimension(mxp,myp) :: rain
     real :: patch_area,can_temp,veg_temp,leaf_class,veg_height
@@ -290,7 +283,7 @@ contains
             ,rain  &
             ,lwl  &
             ,iwl,  &
-            oneBasicFields)
+            oneBasicFields, oneMicControl)
 
        !-srf tuning section for cloud fraction and other parameters for radiation
        if(radtun /= 1.0) then
@@ -1579,11 +1572,12 @@ contains
        , rain            &
        , lwl             &
        , iwl,            &
-       oneBasicFields)
+       oneBasicFields, oneMicControl)
 
     integer, intent(in) :: m1,m2,m3,ia,iz,ja,jz
     type(BasicFields), pointer, intent(in) :: oneBasicFields
-
+    type(MicControl), pointer, intent(in) :: oneMicControl
+    
     real, intent(out), dimension(m1,m2,m3) :: cloud_fraction !cloud_fraction
     real, intent(out), dimension(m2,m3   ) :: rain !total rain water
     real, intent(out), dimension(m1,m2,m3) :: lwl !total cloud liquid water (kg/kg for carma and g/m2 for rrtm)
@@ -1830,14 +1824,14 @@ contains
 
     dummy_vec = 0.0
     ! if level == 1 do nothing
-    if (level==2) then
+    if (oneMicControl%level==2) then
        lwl(1:m1,ia:iz,ja:jz) = micro_g(ngrid)%rcp(1:m1,ia:iz,ja:jz)
 
        if (nnqparm(ngrid)/=0) then
           rain(ia:iz,ja:jz)= cuparm_g(ngrid)%conprr(ia:iz,ja:jz)* 3600.
        endif
 
-    elseif (level>=3) then
+    elseif (oneMicControl%level>=3) then
        if (nnqparm(ngrid)/=0) then
           rain(ia:iz,ja:jz) = cuparm_g(ngrid)%conprr(ia:iz,ja:jz) + &
                micro_g(ngrid)%pcpg(ia:iz,ja:jz)
@@ -1846,9 +1840,11 @@ contains
        endif
        rain(ia:iz,ja:jz) = rain(ia:iz,ja:jz)*3600.
 
-       if (icloud>0) lwl(1:m1,ia:iz,ja:jz) = lwl(1:m1,ia:iz,ja:jz) + micro_g(ngrid)%rcp(1:m1,ia:iz,ja:jz)
-       if (igraup>0) then
-          if(mcphys_type <= 1) then
+       if (oneMicControl%icloud>0) then
+          lwl(1:m1,ia:iz,ja:jz) = lwl(1:m1,ia:iz,ja:jz) + micro_g(ngrid)%rcp(1:m1,ia:iz,ja:jz)
+       end if
+       if (oneMicControl%igraup>0) then
+          if(oneMicControl%mcphys_type <= 1) then
              do k=1,m1
                 do i=ia,iz
                    do j=ja,jz
@@ -1856,7 +1852,7 @@ contains
                    enddo
                 enddo
              enddo
-          elseif(mcphys_type == 2 .or. mcphys_type ==3 .or. mcphys_type == 4) then  !srf -gthompson/gfdl microphysics - graupel only in ice phase
+          elseif(oneMicControl%mcphys_type == 2 .or. oneMicControl%mcphys_type ==3 .or. oneMicControl%mcphys_type == 4) then  !srf -gthompson/gfdl microphysics - graupel only in ice phase
              dummy_vec=0.0
           endif
           lwl(1:m1,ia:iz,ja:jz) = dummy_vec(1:m1,ia:iz,ja:jz)*micro_g(ngrid)%rgp(1:m1,ia:iz,ja:jz) &
@@ -1865,7 +1861,7 @@ contains
           iwl(1:m1,ia:iz,ja:jz) = dummy_vec(1:m1,ia:iz,ja:jz)*micro_g(ngrid)%rgp(1:m1,ia:iz,ja:jz) &
                + iwl(1:m1,ia:iz,ja:jz) !kg/kg
        endif
-       if (ihail>0) then
+       if (oneMicControl%ihail>0) then
           dummy_vec = 0.
           do k=1,m1
              do i=ia,iz
@@ -1883,13 +1879,13 @@ contains
           iwl(1:m1,ia:iz,ja:jz) = dummy_vec(1:m1,ia:iz,ja:jz)*micro_g(ngrid)%rhp(1:m1,ia:iz,ja:jz) &
                + iwl(1:m1,ia:iz,ja:jz)   !kg/kg
        endif
-       if (iaggr>0) &
+       if (oneMicControl%iaggr>0) &
             iwl(1:m1,ia:iz,ja:jz) = iwl(1:m1,ia:iz,ja:jz) + micro_g(ngrid)%rap(1:m1,ia:iz,ja:jz)   !kg/kg
 
-       if (isnow>0) &
+       if (oneMicControl%isnow>0) &
             iwl(1:m1,ia:iz,ja:jz) = iwl(1:m1,ia:iz,ja:jz) + micro_g(ngrid)%rsp(1:m1,ia:iz,ja:jz)   !kg/kg
 
-       if (ipris>0) &
+       if (oneMicControl%ipris>0) &
             iwl(1:m1,ia:iz,ja:jz) = iwl(1:m1,ia:iz,ja:jz) + micro_g(ngrid)%rpp(1:m1,ia:iz,ja:jz)  !kg/kg
     endif
     !- making direct couplig between liq/ice water from cupar to radiation
@@ -1927,7 +1923,7 @@ contains
 
     if (ilwrtyp==6 .or. iswrtyp==6) then
 
-       if(mcphys_type == 2 .or. mcphys_type == 4 ) then
+       if(oneMicControl%mcphys_type == 2 .or. oneMicControl%mcphys_type == 4 ) then
           !- rei and rel are calculated by gt microphysics (no-aer option)
 
           do j=ja,jz

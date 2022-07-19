@@ -8,6 +8,9 @@
 module ModLeaf3
   !---------srf-05052006---------------------------
 
+  use ModMicControl, only: &
+       MicControl
+  
   use ModLeaf3Teb, only: &
        leaf3_teb_interface
   
@@ -143,10 +146,6 @@ module ModLeaf3
        nnqparm, &
        cuparm_g
 
-  use micphys, only: &
-       level, &
-       mcphys_type ! INTENT(IN)
-
   use node_mod, only: &
        mynum ! INTENT(IN)
 
@@ -230,11 +229,13 @@ contains
 
 
 
-  subroutine sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, oneBasicFields, oneTurbFields)
+  subroutine sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, oneBasicFields, oneTurbFields, &
+       oneMicControl)
     !Arguments:
     integer, intent(in) :: mzp,mxp,myp,ia,iz,ja,jz,ibcon
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     !Local Variables
     real :: rslif
@@ -279,10 +280,8 @@ contains
          ,l_ths2, l_rvs2, l_pis2                   &
          ,l_dens2,l_ups2, l_vps2                   &
          ,l_zts2                                             &
-                                ! For TEB
-         ,p_teb_g, p_tebc_g                                       &
-                                !
-         )
+         ,p_teb_g, p_tebc_g, oneMicControl)
+
 
     if (isfcl == 2) then
        call hydro(mxp,myp,nzg,nzs,npatch         &
@@ -323,8 +322,7 @@ contains
   subroutine leaf3(m1,m2,m3,mzg,mzs,np,ia,iz,ja,jz  &
        ,leaf,oneBasicFields,oneTurbFields,radiate,grid,cuparm,micro     &
        ,ths2,rvs2,pis2,dens2,ups2,vps2,zts2           &
-       ,pteb,ptebc                                    &
-       )
+       ,pteb,ptebc, oneMicControl)
     ! Arguments:
     integer, intent(in) :: m1,m2,m3,mzg,mzs,np,ia,iz,ja,jz
     type (leaf_vars)    :: leaf
@@ -338,6 +336,7 @@ contains
     type (teb_vars), pointer   :: pteb
     type (teb_common), pointer :: ptebc
     real, dimension(m2,m3), intent(out) :: ths2,rvs2,pis2,dens2,ups2,vps2,zts2
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     ! Local variables:
     integer :: i,j,ip,iter_leaf
@@ -435,7 +434,8 @@ contains
 
           ! Fill surface precipitation arrays for input to leaf
 
-          call sfc_pcp(nnqparm(ngrid),level,i,j,cuparm,micro)
+          call sfc_pcp(nnqparm(ngrid),oneMicControl%level,i,j,cuparm,micro,&
+               oneMicControl)
 
           ! Zero out albedo, upward surface longwave, and momentum, heat, and moisture
           ! flux arrays before summing over patches
@@ -2040,10 +2040,11 @@ contains
 
   !****************************************************************************
 
-  subroutine sfc_pcp(nqparm,level,i,j,cuparm,micro)
+  subroutine sfc_pcp(nqparm,level,i,j,cuparm,micro,oneMicControl)
     integer :: nqparm,level,i,j
     type (cuparm_vars)  cuparm
     type (micro_vars)   micro
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     if (nqparm>0) then
 
@@ -2063,7 +2064,9 @@ contains
 
     endif
 
-    if(mcphys_type == 2 .or. mcphys_type == 3 .or. mcphys_type == 4) then
+    if(oneMicControl%mcphys_type == 2 .or. &
+         oneMicControl%mcphys_type == 3 .or. &
+         oneMicControl%mcphys_type == 4) then
 
        pcpgl  = pcpgl  + dtll_factor * micro%pcpg(i,j)
        qpcpgl = qpcpgl + dtll_factor * micro%pcpg(i,j)*4186. * (ths * pis - 193.36)

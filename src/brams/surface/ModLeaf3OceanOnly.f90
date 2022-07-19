@@ -56,9 +56,6 @@ module ModLeaf3OceanOnly
        iswrtyp, &
        radiate_g
 
-  use micphys, only: &
-       level
-
   use io_params, only: &
        iupdsst, &
        ssttime1, &

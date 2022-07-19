@@ -410,18 +410,20 @@ contains
 
     !  Radiation parameterization
     !--------------------------------
-    call radiate(mzp,mxp,myp,ia,iz,ja,jz,mynum, oneGrid%Basic)
+    call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+    call radiate(mzp,mxp,myp,ia,iz,ja,jz,mynum, &
+         oneGrid%Basic, oneGrid%MicControlVars)
 
     !  Surface layer, soil and veggie model
     !----------------------------------------
     if (isfcl<=2) then
        call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
-            oneGrid%Basic, oneGrid%Turb)
+            oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars)
 #ifdef JULES
     elseif (isfcl == 5) then
        if (time==0.) then
           call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
-               oneGrid%Basic, oneGrid%Turb)
+               oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars)
        end if
        call sfclyr_jules(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile, &
             oneGrid%Basic, oneGrid%Turb)
@@ -432,6 +434,7 @@ contains
        end if
 #endif
     endif
+    call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
 
     !- Sea salt Aerossol inline source
     call SeaSaltDriver(ia,iz,ja,jz,ngrid,mxp,myp, oneGrid%Basic)
@@ -918,7 +921,10 @@ contains
          nzp, mxp, myp, jdim, oneGrid%Basic)
 
     if (iexev == 2) then
-       call get_true_air_density(mzp,mxp,myp,ia,iz,ja,jz,oneGrid%Basic)
+       call DeepCopyToMicControl(oneGrid%MicControlVars,h)
+       call get_true_air_density(mzp,mxp,myp,ia,iz,ja,jz,&
+            oneGrid%Basic,oneGrid%MicControlVars)
+       call DeepCopyFromMicControl(oneGrid%MicControlVars,h)
     end if
 
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12

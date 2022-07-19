@@ -36,6 +36,9 @@ module ModRexev
   
   use ModBasicFields, only: &
        BasicFields
+
+  use ModMicControl, only: &
+       MicControl
   
   use mem_grid, only: &
        dzm,  &
@@ -63,9 +66,6 @@ module ModRexev
   use mem_micro, only: &
        micro_g
   
-  use micphys, only: &
-       level
-
   use mem_tend, only: &
        tend
 
@@ -707,16 +707,19 @@ contains
 
   !-----------------------------------------------------------------------
   !srf-
-  subroutine get_true_air_density(mzp,mxp,myp,ia,iz,ja,jz,oneBasicFields)
+  subroutine get_true_air_density(mzp,mxp,myp,ia,iz,ja,jz,oneBasicFields, &
+       oneMicControl)
     integer, intent(in) :: mzp,mxp,myp,ia,iz,ja,jz
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(MicControl), pointer, intent(in) :: oneMicControl
+    
     real, parameter :: c1 = cv/rgas, c2 = p00/rgas !c2 = p00*(cpi**c1)/rgas
     real, dimension(mzp,mxp,myp) :: b
     real c3
     !real :: c3 = c2 * (cpi**c1)
     c3 = c2 * (cpi**c1)
 
-    if( level == 0 ) then
+    if( oneMicControl%level == 0 ) then
        b(:,:,:) = 1.
     else
        ! b      = (1 + rtp)/(1+1.61*rv)
