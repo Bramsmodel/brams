@@ -203,8 +203,10 @@ module ModOneProc
        vtab_r
 
   use mem_micro, only: &
-       micro_g
-
+       micro_g, &
+       DeepCopyToMicroFields, &
+       DeepCopyFromMicroFields
+  
   use ModTimestep, only: &
        timestep
 
@@ -1221,6 +1223,10 @@ contains
              call MsgDump(" ")
           end if
 
+!!$ LIXO
+          call DeepCopyToMicroFields(oneGrid%Micro, h)
+          call DeepCopyFromMicroFields(oneGrid%Micro, h)
+!!$ END LIXO
 
           ! if input time, get new fields from master
 

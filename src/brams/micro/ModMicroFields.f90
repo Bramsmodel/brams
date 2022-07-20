@@ -22,13 +22,31 @@
 
 module ModMicroFields
 
+  use mem_radiate, only: &
+       ilwrtyp, &
+       iswrtyp
+
+  use mem_cuparm , only: &
+       nnqparm 
+
+  use ModNodeDimensions, only: &
+       NodeDimensions
+
+  use ModMicControl, only: &
+       MicControl
+
+  use ModParallelEnvironment, only: &
+       MsgDump
+  
   implicit none
 
   private
 
   public :: MicroFields
+  public :: CreateMicroFields
+  public :: DestroyMicroFields
+  public :: DumpMicroFields
 
-  
   type MicroFields
 
      ! Variables to be dimensioned by (nzp,nxp,nyp)
@@ -198,896 +216,1438 @@ contains
 
 
 
+  function CreateMicroFields(gridId, oneNodeDims, oneMicControl) result(res)
+    integer, intent(in) :: gridId
+    type(NodeDimensions), pointer, intent(in) :: oneNodeDims
+    type(MicControl), pointer, intent(in) :: oneMicControl
+    type(MicroFields), pointer :: res
+
+    integer :: ierr
+    integer :: mzp
+    integer :: mxp
+    integer :: myp
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(CreateMicroFields)**"
+    logical, parameter :: dumpLocal=.false.
+
+    if (.not. associated(oneNodeDims)) then
+       call fatal_error(h//" oneNodeDims not associated")
+    else if (.not. associated(oneMicControl)) then
+       call fatal_error(h//" oneMicControl not associated")
+    end if
+    
+    mzp=oneNodeDims%mzp
+    mxp=oneNodeDims%mxp
+    myp=oneNodeDims%myp
+
+    allocate(res, stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" allocate res fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
+
+    ! Allocate arrays based on options (if necessary)
+
+    if(oneMicControl%mcphys_type == 2 .or. &
+         oneMicControl%mcphys_type == 3 .or. &
+         oneMicControl%mcphys_type == 4) then ! gthompson microphysics
+
+       oneMicControl%level = 3
+       oneMicControl%idriz = 0
+       oneMicControl%icloud = 1
+       oneMicControl%irain = 1
+       oneMicControl%ipris  = 1 
+       oneMicControl%isnow = 1
+       oneMicControl%igraup = 1
+       oneMicControl%ihail = 0
+       oneMicControl%iaggr  = 0
+       oneMicControl%jnmb(1) = 1 !cloud
+       oneMicControl%jnmb(2) = 1 !rain
+       oneMicControl%jnmb(3) = 1 !pristine
+       oneMicControl%jnmb(4) = 1 !snow
+       oneMicControl%jnmb(5) = 0 !agg
+       oneMicControl%jnmb(6) = 1 !graupel
+       oneMicControl%jnmb(7) = 0 !ihail
+       oneMicControl%jnmb(8) = 0 !idriz
+
+       !- cloud liq water
+       allocate (res%rcp(mzp,mxp,myp), stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" allocate rcp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+       res%rcp  =0.0
+
+       !- rain
+       allocate (res%rrp  (mzp,mxp,myp), stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" allocate rrp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+       res%rrp  =0.0
+       !- for this scheme, the rain rate below will
+       !- account for rain+ice+snow+graupel
+       allocate (res%accpr(mxp,myp), stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" allocate accpr fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+       res%accpr=0.0
+       allocate (res%pcprr(mxp,myp), stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" allocate pcprr fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+       res%pcprr=0.0
+
+       !- ice
+       allocate (res%rpp  (mzp,mxp,myp), stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" allocate rpp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+       res%rpp  =0.0
+       !- don t need to be allocated, see coments above
+
+       !- snow
+       allocate (res%rsp  (mzp,mxp,myp), stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" allocate rsp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+       res%rsp=0.0
+       !- the rates bellow will account for snow and ice
+       allocate (res%accps(mxp,myp), stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" allocate accps fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+       res%accps =0.0
+       allocate (res%pcprs(mxp,myp), stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" allocate pcprs fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+       res%pcprs =0.0
+
+       !- graupel
+       allocate (res%rgp  (mzp,mxp,myp), stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" allocate rgp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+       res%rgp  =0.0
+       !- the rates bellow will account for only graupel
+       allocate (res%accpg(mxp,myp), stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" allocate accpg fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+       res%accpg=0.0
+       allocate (res%pcprg(mxp,myp), stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" allocate pcprg fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+       res%pcprg=0.0
+
+       if(oneMicControl%mcphys_type  == 2 .or. oneMicControl%mcphys_type  == 3) then ! only for double-moment and 
+          !- number concentration for cloud/rain/ice
+          !- obs : ccp don t need to be allocated for the single-moment
+          !- cloud water scheme (the same for CCN and IFN).
+          allocate (res%crp  (mzp,mxp,myp), stat=ierr)
+          if (ierr /= 0) then
+             write(str(1),"(i8)") ierr
+             call fatal_error(h//" allocate crp fails with stat="//&
+                  trim(adjustl(str(1))))
+          end if
+          res%crp  =0.0 
+          allocate (res%cpp  (mzp,mxp,myp), stat=ierr)
+          if (ierr /= 0) then
+             write(str(1),"(i8)") ierr
+             call fatal_error(h//" allocate cpp fails with stat="//&
+                  trim(adjustl(str(1))))
+          end if
+          res%cpp  =0.0 
+          !---these should not be allocated for oneMicControl%mcphys_type  == 2 because
+          !---they are not used for this option
+          !            !ST
+          !          allocate(res%ccp  (mzp,mxp,myp)) ;res%ccp  =0.0 
+          !            allocate(res%cccnp(mzp,mxp,myp)) ;res%cccnp=0.0 !;endif 
+          !            allocate(res%cifnp(mzp,mxp,myp)) ;res%cifnp=0.0 !;endif 
+          !            !ST
+       endif
+       !- only for cloud water double-moment and aerosol aware microphysics         
+       if(oneMicControl%mcphys_type  == 3) then ! only for double-moment and 
+          allocate (res%ccp  (mzp,mxp,myp), stat=ierr)
+          if (ierr /= 0) then
+             write(str(1),"(i8)") ierr
+             call fatal_error(h//" allocate ccp fails with stat="//&
+                  trim(adjustl(str(1))))
+          end if
+          res%ccp  =0.0 
+          allocate (res%cccnp(mzp,mxp,myp), stat=ierr)
+          if (ierr /= 0) then
+             write(str(1),"(i8)") ierr
+             call fatal_error(h//" allocate cccnp fails with stat="//&
+                  trim(adjustl(str(1))))
+          end if
+          res%cccnp=0.0 !;endif 
+          allocate (res%cifnp(mzp,mxp,myp), stat=ierr)
+          if (ierr /= 0) then
+             write(str(1),"(i8)") ierr
+             call fatal_error(h//" allocate cifnp fails with stat="//&
+                  trim(adjustl(str(1))))
+          end if
+          res%cifnp=0.0 !;endif 
+       endif
+
+       !- 3D cloud fraction from GFDL cloud microphysics and GF convection
+       if(oneMicControl%mcphys_type  == 4 .or. nnqparm(gridId) == 8) then 
+          allocate (res%cldfr  (mzp,mxp,myp), stat=ierr)
+          if (ierr /= 0) then
+             write(str(1),"(i8)") ierr
+             call fatal_error(h//" allocate cldfr fails with stat="//&
+                  trim(adjustl(str(1))))
+          end if
+          res%cldfr  =0.0 
+       endif
+
+       !- for consistency with the other parts of BRAMS
+       !- pgcp will be the total precipitation rate
+       allocate (res%pcpg (mxp,myp), stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" allocate pcpg fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+       res%pcpg =0.0
+       !-the allocations below are tmp for leaf-3
+       allocate (res%qpcpg(mxp,myp), stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" allocate qpcpg fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+       res%qpcpg=0.0         
+       allocate (res%dpcpg(mxp,myp), stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" allocate dpcpg fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+       res%dpcpg=0.0
+
+       !- allocation of memory for effective radius for RRTMG
+       if(ilwrtyp==6 .or. iswrtyp==6 ) then
+          allocate (res%rei  (mzp,mxp,myp), stat=ierr)
+          if (ierr /= 0) then
+             write(str(1),"(i8)") ierr
+             call fatal_error(h//" allocate rei fails with stat="//&
+                  trim(adjustl(str(1))))
+          end if
+          res%rei  =0.0  
+          allocate (res%rel  (mzp,mxp,myp), stat=ierr)
+          if (ierr /= 0) then
+             write(str(1),"(i8)") ierr
+             call fatal_error(h//" allocate rel fails with stat="//&
+                  trim(adjustl(str(1))))
+          end if
+          res%rel  =0.0
+       endif
+
+    else  ! for the traditional RAMS microphysics
+
+       if (oneMicControl%level >= 2 ) then
+          allocate (res%rcp(mzp,mxp,myp), stat=ierr)
+          if (ierr /= 0) then
+             write(str(1),"(i8)") ierr
+             call fatal_error(h//" allocate rcp fails with stat="//&
+                  trim(adjustl(str(1))))
+          end if
+          res%rcp    =0.0
+       endif
+       if (oneMicControl%level >= 3) then         
+          if(oneMicControl%irain >= 1)  then
+             allocate (res%rrp  (mzp,mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate rrp fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%rrp  =0.0
+             allocate (res%accpr(mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate accpr fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%accpr=0.0
+             allocate (res%pcprr(mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate pcprr fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%pcprr=0.0
+             allocate (res%pcpvr(mzp,mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate pcpvr fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%pcpvr=0.0
+             allocate (res%q2   (mzp,mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate q2 fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%q2   =0.0
+          endif
+          if(oneMicControl%ipris >= 1)  then
+             allocate (res%rpp  (mzp,mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate rpp fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%rpp  =0.0
+             allocate (res%accpp(mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate accpp fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%accpp=0.0
+             allocate (res%pcprp(mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate pcprp fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%pcprp=0.0
+             allocate (res%pcpvp(mzp,mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate pcpvp fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%pcpvp=0.0
+          endif
+          if(oneMicControl%isnow >= 1)  then
+             allocate (res%rsp  (mzp,mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate rsp fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%rsp   =0.0
+             allocate (res%accps(mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate accps fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%accps =0.0
+             allocate (res%pcprs(mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate pcprs fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%pcprs =0.0
+             allocate (res%pcpvs(mzp,mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate pcpvs fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%pcpvs =0.0
+          endif
+          if(oneMicControl%iaggr >= 1)  then
+             allocate (res%rap  (mzp,mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate rap fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%rap  =0.0
+             allocate (res%accpa(mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate accpa fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%accpa=0.0
+             allocate (res%pcpra(mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate pcpra fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%pcpra=0.0
+             allocate (res%pcpva(mzp,mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate pcpva fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%pcpva=0.0
+          endif
+          if(oneMicControl%igraup >= 1) then
+             allocate (res%rgp  (mzp,mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate rgp fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%rgp  =0.0
+             allocate (res%accpg(mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate accpg fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%accpg=0.0
+             allocate (res%pcprg(mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate pcprg fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%pcprg=0.0
+             allocate (res%pcpvg(mzp,mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate pcpvg fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%pcpvg=0.0
+             allocate (res%q6   (mzp,mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate q6 fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%q6   =0.0
+          endif
+          if(oneMicControl%ihail >= 1)  then
+             allocate (res%rhp  (mzp,mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate rhp fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%rhp  =0.0
+             allocate (res%accph(mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate accph fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%accph=0.0
+             allocate (res%pcprh(mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate pcprh fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%pcprh=0.0
+             allocate (res%pcpvh(mzp,mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate pcpvh fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%pcpvh=0.0
+             allocate (res%q7   (mzp,mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate q7 fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%q7   =0.0
+          endif
+          if(oneMicControl%jnmb(1) >= 5)  then
+             allocate (res%ccp  (mzp,mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate ccp fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%ccp  =0.0
+          endif
+          if(oneMicControl%jnmb(2) == 5)  then
+             allocate (res%crp  (mzp,mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate crp fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%crp  =0.0
+          endif
+          if(oneMicControl%jnmb(3) >= 5)  then
+             allocate (res%cpp  (mzp,mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate cpp fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%cpp  =0.0
+          endif
+          if(oneMicControl%jnmb(4) == 5)  then
+             allocate (res%csp  (mzp,mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate csp fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%csp  =0.0
+          endif
+          if(oneMicControl%jnmb(5) == 5)  then
+             allocate (res%cap  (mzp,mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate cap fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%cap  =0.0
+          endif
+          if(oneMicControl%jnmb(6) == 5)  then
+             allocate (res%cgp  (mzp,mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate cgp fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%cgp  =0.0
+          endif
+          if(oneMicControl%jnmb(7) == 5)  then
+             allocate (res%chp  (mzp,mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate chp fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%chp  =0.0
+          endif
+          if(oneMicControl%icloud  >= 5)  then
+             allocate (res%cccnp(mzp,mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate cccnp fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%cccnp=0.0
+          endif
+          if(oneMicControl%ipris   >= 5)  then
+             allocate (res%cifnp(mzp,mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate cifnp fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%cifnp=0.0
+          endif
+
+          if(oneMicControl%icloud >= 5)   then
+             allocate (res%cccmp(mzp,mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate cccmp fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%cccmp=0.0
+          endif
+
+          allocate (res%pcpg (mxp,myp), stat=ierr)
+          if (ierr /= 0) then
+             write(str(1),"(i8)") ierr
+             call fatal_error(h//" allocate pcpg fails with stat="//&
+                  trim(adjustl(str(1))))
+          end if
+          res%pcpg =0.0
+          allocate (res%qpcpg(mxp,myp), stat=ierr)
+          if (ierr /= 0) then
+             write(str(1),"(i8)") ierr
+             call fatal_error(h//" allocate qpcpg fails with stat="//&
+                  trim(adjustl(str(1))))
+          end if
+          res%qpcpg=0.0
+          allocate (res%dpcpg(mxp,myp), stat=ierr)
+          if (ierr /= 0) then
+             write(str(1),"(i8)") ierr
+             call fatal_error(h//" allocate dpcpg fails with stat="//&
+                  trim(adjustl(str(1))))
+          end if
+          res%dpcpg=0.0
+
+          !- only for 2M microphysics
+          if(oneMicControl%mcphys_type == 1)  then
+             if(oneMicControl%idriz >= 1 )  then
+                allocate (res%rdp  (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate rdp fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%rdp  =0.0
+                allocate (res%accpd(mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate accpd fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%accpd=0.0
+                allocate (res%pcprd(mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate pcprd fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%pcprd=0.0
+                allocate (res%pcpvd(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate pcpvd fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%pcpvd=0.0
+             endif
+
+             if(oneMicControl%jnmb(8) >= 5)  then
+                allocate (res%cdp  (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate cdp fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%cdp  =0.0
+             endif
+             if(oneMicControl%idriz>= 5)  then
+                allocate (res%gccnp(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate gccnp fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%gccnp=0.0
+             endif
+             if(oneMicControl%idriz   >= 5)  then
+                allocate (res%gccmp(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate gccmp fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%gccmp=0.0
+             endif
+
+             if(oneMicControl%iccnlev >= 2 .and. oneMicControl%jnmb(1) >= 5)  then
+                allocate (res%cnm1p(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate cnm1p fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%cnm1p=0.0
+             endif
+             if(oneMicControl%iccnlev >= 2 .and. oneMicControl%jnmb(2) >= 1)  then
+                allocate (res%cnm2p(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate cnm2p fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%cnm2p=0.0
+             endif
+             if(oneMicControl%iccnlev >= 2 .and. oneMicControl%jnmb(3) >= 1)  then
+                allocate (res%cnm3p(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate cnm3p fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%cnm3p=0.0
+             endif
+             if(oneMicControl%iccnlev >= 2 .and. oneMicControl%jnmb(8) >= 1)  then
+                allocate (res%cnm8p(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate cnm8p fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%cnm8p=0.0
+             endif
+
+             if(oneMicControl%idust == 1 .or. oneMicControl%imd1flg == 1)  then
+                allocate (res%md1np(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate md1np fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%md1np=0.0
+             endif
+             if(oneMicControl%idust == 1 .or. oneMicControl%imd2flg == 1)  then
+                allocate (res%md2np(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate md2np fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%md2np=0.0
+             endif
+             if(oneMicControl%isalt == 1) then
+                allocate (res%salt_filmp(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate salt fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%salt_filmp =0.0
+             endif
+             if(oneMicControl%isalt == 1) then
+                allocate (res%salt_jetp (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate salt fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%salt_jetp  =0.0
+             endif
+             if(oneMicControl%isalt == 1) then
+                allocate (res%salt_spmp (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate salt fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%salt_spmp  =0.0
+             endif
+
+
+             !COMPUTE AND OUTPUT MICRO BUDGET PROCESSES
+             if(oneMicControl%imbudget>=1 .or. oneMicControl%imbudtot>=1) then
+                allocate (res%latheatvap(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate latheatvap fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%latheatvap=0.0
+                allocate (res%latheatfrz(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate latheatfrz fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%latheatfrz=0.0
+             endif
+             if(oneMicControl%imbudget>=1) then
+                allocate (res%nuccldr  (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate nuccldr fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%nuccldr  =0.0
+                allocate (res%nuccldc  (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate nuccldc fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%nuccldc  =0.0
+                allocate (res%cld2rain (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate cld2rain fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%cld2rain =0.0
+                allocate (res%ice2rain (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate ice2rain fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%ice2rain =0.0
+                allocate (res%nucicer  (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate nucicer fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%nucicer  =0.0
+                allocate (res%nucicec  (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate nucicec fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%nucicec  =0.0
+                allocate (res%vapliq(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate vapliq fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%vapliq   =0.0   
+                allocate (res%vapice(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate vapice fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%vapice   =0.0
+                allocate (res%meltice  (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate meltice fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%meltice  =0.0
+                allocate (res%rimecld  (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate rimecld fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%rimecld  =0.0
+                allocate (res%rain2ice (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate rain2ice fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%rain2ice =0.0
+                allocate (res%aggregate(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate aggregate fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%aggregate=0.0
+             endif
+             if(oneMicControl%imbudget==2) then
+                allocate (res%inuchomr    (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate inuchomr fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%inuchomr    =0.0 
+                allocate (res%inuchomc    (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate inuchomc fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%inuchomc    =0.0
+                allocate (res%inuccontr   (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate inuccontr fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%inuccontr   =0.0
+                allocate (res%inuccontc   (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate inuccontc fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%inuccontc   =0.0
+                allocate (res%inucifnr    (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate inucifnr fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%inucifnr    =0.0
+                allocate (res%inucifnc    (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate inucifnc fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%inucifnc    =0.0
+                allocate (res%inuchazr    (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate inuchazr fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%inuchazr    =0.0
+                allocate (res%inuchazc    (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate inuchazc fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%inuchazc    =0.0
+                allocate (res%vapcld   (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate vapcld fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%vapcld  =0.0
+                allocate (res%vaprain     (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate vaprain fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%vaprain  =0.0
+                allocate (res%vappris     (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate vappris fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%vappris  =0.0
+                allocate (res%vapsnow     (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate vapsnow fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%vapsnow  =0.0   
+                allocate (res%vapaggr     (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate vapaggr fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%vapaggr  =0.0
+                allocate (res%vapgrau     (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate vapgrau fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%vapgrau  =0.0
+                allocate (res%vaphail     (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate vaphail fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%vaphail  =0.0
+                allocate (res%vapdriz     (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate vapdriz fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%vapdriz  =0.0
+                allocate (res%meltpris    (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate meltpris fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%meltpris    =0.0
+                allocate (res%meltsnow    (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate meltsnow fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%meltsnow    =0.0
+                allocate (res%meltaggr    (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate meltaggr fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%meltaggr    =0.0
+                allocate (res%meltgrau    (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate meltgrau fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%meltgrau    =0.0
+                allocate (res%melthail    (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate melthail fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%melthail    =0.0
+                allocate (res%rimecldsnow (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate rimecldsnow fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%rimecldsnow =0.0
+                allocate (res%rimecldaggr (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate rimecldaggr fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%rimecldaggr =0.0
+                allocate (res%rimecldgrau (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate rimecldgrau fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%rimecldgrau =0.0
+                allocate (res%rimecldhail (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate rimecldhail fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%rimecldhail =0.0
+                allocate (res%rain2pr     (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate rain2pr fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%rain2pr  =0.0
+                allocate (res%rain2sn     (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate rain2sn fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%rain2sn  =0.0
+                allocate (res%rain2ag     (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate rain2ag fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%rain2ag  =0.0
+                allocate (res%rain2gr     (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate rain2gr fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%rain2gr  =0.0
+                allocate (res%rain2ha     (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate rain2ha fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%rain2ha  =0.0
+                allocate (res%rain2ha_xtra(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate rain2ha fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%rain2ha_xtra=0.0
+                allocate (res%aggrselfpris(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate aggrselfpris fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%aggrselfpris=0.0
+                allocate (res%aggrselfsnow(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate aggrselfsnow fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%aggrselfsnow=0.0
+                allocate (res%aggrprissnow(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate aggrprissnow fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%aggrprissnow=0.0
+             endif
+             !COMPUTE AND OUTPUT MICRO BUDGET PROCESSES (totals)
+             if(oneMicControl%imbudtot>=1) then
+                allocate (res%nuccldrt   (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate nuccldrt fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%nuccldrt=0.0
+                allocate (res%nuccldct   (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate nuccldct fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%nuccldct=0.0
+                allocate (res%cld2raint  (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate cld2raint fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%cld2raint  =0.0
+                allocate (res%ice2raint  (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate ice2raint fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%ice2raint  =0.0
+                allocate (res%nucicert   (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate nucicert fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%nucicert=0.0
+                allocate (res%nucicect   (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate nucicect fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%nucicect=0.0
+                allocate (res%vapliqt    (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate vapliqt fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%vapliqt=0.0
+                allocate (res%vapicet    (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate vapicet fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%vapicet=0.0
+                allocate (res%melticet   (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate melticet fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%melticet=0.0
+                allocate (res%rimecldt   (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate rimecldt fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%rimecldt=0.0
+                allocate (res%rain2icet  (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate rain2icet fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%rain2icet  =0.0
+                allocate (res%aggregatet (mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate aggregatet fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%aggregatet =0.0
+                allocate (res%latheatvapt(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate latheatvapt fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%latheatvapt=0.0
+                allocate (res%latheatfrzt(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate latheatfrzt fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%latheatfrzt=0.0
+             endif
+             if(oneMicControl%imbudtot==2) then
+                allocate (res%inuchomrt(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate inuchomrt fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%inuchomrt    =0.0
+                allocate (res%inuchomct(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate inuchomct fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%inuchomct    =0.0
+                allocate (res%inuccontrt(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate inuccontrt fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%inuccontrt   =0.0
+                allocate (res%inuccontct(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate inuccontct fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%inuccontct   =0.0
+                allocate (res%inucifnrt(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate inucifnrt fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%inucifnrt    =0.0
+                allocate (res%inucifnct(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate inucifnct fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%inucifnct    =0.0
+                allocate (res%inuchazrt(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate inuchazrt fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%inuchazrt    =0.0
+                allocate (res%inuchazct(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate inuchazct fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%inuchazct    =0.0
+                allocate (res%vapcldt(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate vapcldt fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%vapcldt      =0.0
+                allocate (res%vapraint(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate vapraint fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%vapraint     =0.0
+                allocate (res%vapprist(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate vapprist fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%vapprist     =0.0
+                allocate (res%vapsnowt(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate vapsnowt fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%vapsnowt     =0.0
+                allocate (res%vapaggrt(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate vapaggrt fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%vapaggrt     =0.0
+                allocate (res%vapgraut(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate vapgraut fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%vapgraut     =0.0
+                allocate (res%vaphailt(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate vaphailt fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%vaphailt     =0.0
+                allocate (res%vapdrizt(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate vapdrizt fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%vapdrizt     =0.0
+                allocate (res%meltprist(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate meltprist fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%meltprist    =0.0
+                allocate (res%meltsnowt(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate meltsnowt fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%meltsnowt    =0.0
+                allocate (res%meltaggrt(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate meltaggrt fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%meltaggrt    =0.0
+                allocate (res%meltgraut(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate meltgraut fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%meltgraut    =0.0
+                allocate (res%melthailt(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate melthailt fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%melthailt    =0.0
+                allocate (res%rimecldsnowt(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate rimecldsnowt fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%rimecldsnowt =0.0
+                allocate (res%rimecldaggrt(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate rimecldaggrt fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%rimecldaggrt =0.0
+                allocate (res%rimecldgraut(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate rimecldgraut fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%rimecldgraut =0.0
+                allocate (res%rimecldhailt(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate rimecldhailt fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%rimecldhailt =0.0
+                allocate (res%rain2prt(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate rain2prt fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%rain2prt     =0.0
+                allocate (res%rain2snt(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate rain2snt fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%rain2snt     =0.0
+                allocate (res%rain2agt(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate rain2agt fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%rain2agt     =0.0
+                allocate (res%rain2grt(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate rain2grt fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%rain2grt     =0.0
+                allocate (res%rain2hat(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate rain2hat fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%rain2hat     =0.0
+                allocate (res%rain2ha_xtrat(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate rain2ha fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%rain2ha_xtrat=0.0
+                allocate (res%aggrselfprist(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate aggrselfprist fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%aggrselfprist=0.0
+                allocate (res%aggrselfsnowt(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate aggrselfsnowt fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%aggrselfsnowt=0.0
+                allocate (res%aggrprissnowt(mzp,mxp,myp), stat=ierr)
+                if (ierr /= 0) then
+                   write(str(1),"(i8)") ierr
+                   call fatal_error(h//" allocate aggrprissnowt fails with stat="//&
+                        trim(adjustl(str(1))))
+                end if
+                res%aggrprissnowt=0.0
+             endif
+          endif! oneMicControl%mcphys_type=1     
+          !- allocation of memory for effective radius for RRTMG
+          if(ilwrtyp==6 .or. iswrtyp==6 ) then
+             allocate (res%rei  (mzp,mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate rei fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%rei  =0.0  
+             allocate (res%rel  (mzp,mxp,myp), stat=ierr)
+             if (ierr /= 0) then
+                write(str(1),"(i8)") ierr
+                call fatal_error(h//" allocate rel fails with stat="//&
+                     trim(adjustl(str(1))))
+             end if
+             res%rel  =0.0
+          endif
+       endif ! oneMicControl%level >=3 
+    endif
+  end function CreateMicroFields
 
 
 
-!!$  function CreateMicroFields(oneNodeDims, oneNamelistFile) result(res)
-!!$    type(NodeDimensions), pointer, intent(in) :: oneNodeDims
-!!$    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
-!!$    type(MicroFields), pointer :: res
-!!$
-!!$    integer :: ierr
-!!$    integer :: mzp
-!!$    integer :: mxp
-!!$    integer :: myp
-!!$    character(len=8) :: str(10)
-!!$    character(len=*), parameter :: h="**(CreateMicroFields)**"
-!!$    logical, parameter :: dumpLocal=.false.
-
-  
-!!$  subroutine alloc_micro(micro,n1,n2,n3,ng)
-!!$
-!!$    use micphys, only : level,idriz,irain,ipris,isnow,igraup,ihail,jnmb,&
-!!$         icloud,iccnlev,idust,imd1flg,imd2flg, isalt,&
-!!$         imbudget,imbudtot,iaggr,mcphys_type
-!!$    use mem_radiate, only: ilwrtyp, iswrtyp       ! INTENT(IN)
-!!$    use mem_cuparm , only: nnqparm                ! INTENT(IN)
-!!$
-!!$    implicit none          
-!!$    type (MicroFields) :: micro
-!!$    integer, intent(in) :: n1,n2,n3,ng
-!!$
-!!$    ! Allocate arrays based on options (if necessary)
-!!$
-!!$
-!!$    if(mcphys_type == 2 .or. mcphys_type == 3 .or. mcphys_type == 4) then ! gthompson microphysics
-!!$
-!!$       level = 3
-!!$       idriz = 0
-!!$       icloud = 1
-!!$       irain = 1
-!!$       ipris  = 1 
-!!$       isnow = 1
-!!$       igraup = 1
-!!$       ihail = 0
-!!$       iaggr  = 0
-!!$       jnmb(1) = 1 !cloud
-!!$       jnmb(2) = 1 !rain
-!!$       jnmb(3) = 1 !pristine
-!!$       jnmb(4) = 1 !snow
-!!$       jnmb(5) = 0 !agg
-!!$       jnmb(6) = 1 !graupel
-!!$       jnmb(7) = 0 !ihail
-!!$       jnmb(8) = 0 !idriz
-!!$
-!!$       !- cloud liq water
-!!$       allocate (micro%rcp(n1,n2,n3))
-!!$       micro%rcp  =0.0
-!!$
-!!$       !- rain
-!!$       allocate (micro%rrp  (n1,n2,n3))
-!!$       micro%rrp  =0.0
-!!$       !- for this scheme, the rain rate below will
-!!$       !- account for rain+ice+snow+graupel
-!!$       allocate (micro%accpr(n2,n3))
-!!$       micro%accpr=0.0
-!!$       allocate (micro%pcprr(n2,n3))
-!!$       micro%pcprr=0.0
-!!$
-!!$       !- ice
-!!$       allocate (micro%rpp  (n1,n2,n3))
-!!$       micro%rpp  =0.0
-!!$       !- don t need to be allocated, see coments above
-!!$       !allocate (micro%accpp(n2,n3)) ;   micro%accpp=0.0
-!!$       !allocate (micro%pcprp(n2,n3)) ;   micro%pcprp=0.0
-!!$
-!!$       !- snow
-!!$       allocate (micro%rsp  (n1,n2,n3))
-!!$       micro%rsp=0.0
-!!$       !- the rates bellow will account for snow and ice
-!!$       allocate (micro%accps(n2,n3))
-!!$       micro%accps =0.0
-!!$       allocate (micro%pcprs(n2,n3))
-!!$       micro%pcprs =0.0
-!!$
-!!$       !- graupel
-!!$       allocate (micro%rgp  (n1,n2,n3))
-!!$       micro%rgp  =0.0
-!!$       !- the rates bellow will account for only graupel
-!!$       allocate (micro%accpg(n2,n3))
-!!$       micro%accpg=0.0
-!!$       allocate (micro%pcprg(n2,n3))
-!!$       micro%pcprg=0.0
-!!$
-!!$       if(mcphys_type  == 2 .or. mcphys_type  == 3) then ! only for double-moment and 
-!!$          !- number concentration for cloud/rain/ice
-!!$          !- obs : ccp don t need to be allocated for the single-moment
-!!$          !- cloud water scheme (the same for CCN and IFN).
-!!$          allocate(micro%crp  (n1,n2,n3))
-!!$          micro%crp  =0.0 
-!!$          allocate(micro%cpp  (n1,n2,n3))
-!!$          micro%cpp  =0.0 
-!!$          !---these should not be allocated for mcphys_type  == 2 because
-!!$          !---they are not used for this option
-!!$          !            !ST
-!!$          !          allocate(micro%ccp  (n1,n2,n3)) ;micro%ccp  =0.0 
-!!$          !            allocate(micro%cccnp(n1,n2,n3)) ;micro%cccnp=0.0 !;endif 
-!!$          !            allocate(micro%cifnp(n1,n2,n3)) ;micro%cifnp=0.0 !;endif 
-!!$          !            !ST
-!!$       endif
-!!$       !- only for cloud water double-moment and aerosol aware microphysics         
-!!$       if(mcphys_type  == 3) then ! only for double-moment and 
-!!$          allocate(micro%ccp  (n1,n2,n3))
-!!$          micro%ccp  =0.0 
-!!$          allocate(micro%cccnp(n1,n2,n3))
-!!$          micro%cccnp=0.0 !;endif 
-!!$          allocate(micro%cifnp(n1,n2,n3))
-!!$          micro%cifnp=0.0 !;endif 
-!!$       endif
-!!$
-!!$       !- 3D cloud fraction from GFDL cloud microphysics and GF convection
-!!$       if(mcphys_type  == 4 .or. nnqparm(ng) == 8) then 
-!!$          allocate(micro%cldfr  (n1,n2,n3))
-!!$          micro%cldfr  =0.0 
-!!$       endif
-!!$
-!!$       !- for consistency with the other parts of BRAMS
-!!$       !- pgcp will be the total precipitation rate
-!!$       allocate (micro%pcpg (n2,n3))
-!!$       micro%pcpg =0.0
-!!$       !-the allocations below are tmp for leaf-3
-!!$       allocate (micro%qpcpg(n2,n3))
-!!$       micro%qpcpg=0.0         
-!!$       allocate (micro%dpcpg(n2,n3))
-!!$       micro%dpcpg=0.0
-!!$
-!!$       !- allocation of memory for effective radius for RRTMG
-!!$       if(ilwrtyp==6 .or. iswrtyp==6 ) then
-!!$          allocate (micro%rei  (n1,n2,n3))
-!!$          micro%rei  =0.0  
-!!$          allocate (micro%rel  (n1,n2,n3))
-!!$          micro%rel  =0.0
-!!$       endif
-!!$
-!!$    else  ! for the traditional RAMS microphysics
-!!$
-!!$       if (level >= 2 ) then
-!!$          allocate (micro%rcp(n1,n2,n3))
-!!$          micro%rcp    =0.0
-!!$       endif
-!!$       if (level >= 3) then         
-!!$          if(irain >= 1)  then
-!!$             allocate (micro%rrp  (n1,n2,n3))
-!!$             micro%rrp  =0.0
-!!$             allocate (micro%accpr(n2,n3))
-!!$             micro%accpr=0.0
-!!$             allocate (micro%pcprr(n2,n3))
-!!$             micro%pcprr=0.0
-!!$             allocate (micro%pcpvr(n1,n2,n3))
-!!$             micro%pcpvr=0.0
-!!$             allocate (micro%q2   (n1,n2,n3))
-!!$             micro%q2   =0.0
-!!$          endif
-!!$          if(ipris >= 1)  then
-!!$             allocate (micro%rpp  (n1,n2,n3))
-!!$             micro%rpp  =0.0
-!!$             allocate (micro%accpp(n2,n3))
-!!$             micro%accpp=0.0
-!!$             allocate (micro%pcprp(n2,n3))
-!!$             micro%pcprp=0.0
-!!$             allocate (micro%pcpvp(n1,n2,n3))
-!!$             micro%pcpvp=0.0
-!!$          endif
-!!$          if(isnow >= 1)  then
-!!$             allocate (micro%rsp  (n1,n2,n3))
-!!$             micro%rsp   =0.0
-!!$             allocate (micro%accps(n2,n3))
-!!$             micro%accps =0.0
-!!$             allocate (micro%pcprs(n2,n3))
-!!$             micro%pcprs =0.0
-!!$             allocate (micro%pcpvs(n1,n2,n3))
-!!$             micro%pcpvs =0.0
-!!$          endif
-!!$          if(iaggr >= 1)  then
-!!$             allocate (micro%rap  (n1,n2,n3))
-!!$             micro%rap  =0.0
-!!$             allocate (micro%accpa(n2,n3))
-!!$             micro%accpa=0.0
-!!$             allocate (micro%pcpra(n2,n3))
-!!$             micro%pcpra=0.0
-!!$             allocate (micro%pcpva(n1,n2,n3))
-!!$             micro%pcpva=0.0
-!!$          endif
-!!$          if(igraup >= 1) then
-!!$             allocate (micro%rgp  (n1,n2,n3))
-!!$             micro%rgp  =0.0
-!!$             allocate (micro%accpg(n2,n3))
-!!$             micro%accpg=0.0
-!!$             allocate (micro%pcprg(n2,n3))
-!!$             micro%pcprg=0.0
-!!$             allocate (micro%pcpvg(n1,n2,n3))
-!!$             micro%pcpvg=0.0
-!!$             allocate (micro%q6   (n1,n2,n3))
-!!$             micro%q6   =0.0
-!!$          endif
-!!$          if(ihail >= 1)  then
-!!$             allocate (micro%rhp  (n1,n2,n3))
-!!$             micro%rhp  =0.0
-!!$             allocate (micro%accph(n2,n3))
-!!$             micro%accph=0.0
-!!$             allocate (micro%pcprh(n2,n3))
-!!$             micro%pcprh=0.0
-!!$             allocate (micro%pcpvh(n1,n2,n3))
-!!$             micro%pcpvh=0.0
-!!$             allocate (micro%q7   (n1,n2,n3))
-!!$             micro%q7   =0.0
-!!$          endif
-!!$          if(jnmb(1) >= 5)  then
-!!$             allocate(micro%ccp  (n1,n2,n3))
-!!$             micro%ccp  =0.0
-!!$          endif
-!!$          if(jnmb(2) == 5)  then
-!!$             allocate(micro%crp  (n1,n2,n3))
-!!$             micro%crp  =0.0
-!!$          endif
-!!$          if(jnmb(3) >= 5)  then
-!!$             allocate(micro%cpp  (n1,n2,n3))
-!!$             micro%cpp  =0.0
-!!$          endif
-!!$          if(jnmb(4) == 5)  then
-!!$             allocate(micro%csp  (n1,n2,n3))
-!!$             micro%csp  =0.0
-!!$          endif
-!!$          if(jnmb(5) == 5)  then
-!!$             allocate(micro%cap  (n1,n2,n3))
-!!$             micro%cap  =0.0
-!!$          endif
-!!$          if(jnmb(6) == 5)  then
-!!$             allocate(micro%cgp  (n1,n2,n3))
-!!$             micro%cgp  =0.0
-!!$          endif
-!!$          if(jnmb(7) == 5)  then
-!!$             allocate(micro%chp  (n1,n2,n3))
-!!$             micro%chp  =0.0
-!!$          endif
-!!$          if(icloud  >= 5)  then
-!!$             allocate(micro%cccnp(n1,n2,n3))
-!!$             micro%cccnp=0.0
-!!$          endif
-!!$          if(ipris   >= 5)  then
-!!$             allocate(micro%cifnp(n1,n2,n3))
-!!$             micro%cifnp=0.0
-!!$          endif
-!!$
-!!$          if(icloud >= 5)   then
-!!$             allocate(micro%cccmp(n1,n2,n3))
-!!$             micro%cccmp=0.0
-!!$          endif
-!!$
-!!$          allocate (micro%pcpg (n2,n3))
-!!$          micro%pcpg =0.0
-!!$          allocate (micro%qpcpg(n2,n3))
-!!$          micro%qpcpg=0.0
-!!$          allocate (micro%dpcpg(n2,n3))
-!!$          micro%dpcpg=0.0
-!!$
-!!$          !- only for 2M microphysics
-!!$          if(mcphys_type == 1)  then
-!!$             if(idriz >= 1 )  then
-!!$                allocate (micro%rdp  (n1,n2,n3))
-!!$                micro%rdp  =0.0
-!!$                allocate (micro%accpd(n2,n3))
-!!$                micro%accpd=0.0
-!!$                allocate (micro%pcprd(n2,n3))
-!!$                micro%pcprd=0.0
-!!$                allocate (micro%pcpvd(n1,n2,n3))
-!!$                micro%pcpvd=0.0
-!!$             endif
-!!$
-!!$             if(jnmb(8) >= 5)  then
-!!$                allocate(micro%cdp  (n1,n2,n3))
-!!$                micro%cdp  =0.0
-!!$             endif
-!!$             if(idriz>= 5)  then
-!!$                allocate(micro%gccnp(n1,n2,n3))
-!!$                micro%gccnp=0.0
-!!$             endif
-!!$             if(idriz   >= 5)  then
-!!$                allocate(micro%gccmp(n1,n2,n3))
-!!$                micro%gccmp=0.0
-!!$             endif
-!!$
-!!$             if(iccnlev >= 2 .and. jnmb(1) >= 5)  then
-!!$                allocate(micro%cnm1p(n1,n2,n3))
-!!$                micro%cnm1p=0.0
-!!$             endif
-!!$             if(iccnlev >= 2 .and. jnmb(2) >= 1)  then
-!!$                allocate(micro%cnm2p(n1,n2,n3))
-!!$                micro%cnm2p=0.0
-!!$             endif
-!!$             if(iccnlev >= 2 .and. jnmb(3) >= 1)  then
-!!$                allocate(micro%cnm3p(n1,n2,n3))
-!!$                micro%cnm3p=0.0
-!!$             endif
-!!$             if(iccnlev >= 2 .and. jnmb(8) >= 1)  then
-!!$                allocate(micro%cnm8p(n1,n2,n3))
-!!$                micro%cnm8p=0.0
-!!$             endif
-!!$
-!!$             if(idust == 1 .or. imd1flg == 1)  then
-!!$                allocate(micro%md1np(n1,n2,n3))
-!!$                micro%md1np=0.0
-!!$             endif
-!!$             if(idust == 1 .or. imd2flg == 1)  then
-!!$                allocate(micro%md2np(n1,n2,n3))
-!!$                micro%md2np=0.0
-!!$             endif
-!!$             if(isalt == 1) then
-!!$                allocate(micro%salt_filmp(n1,n2,n3))
-!!$                micro%salt_filmp =0.0
-!!$             endif
-!!$             if(isalt == 1) then
-!!$                allocate(micro%salt_jetp (n1,n2,n3))
-!!$                micro%salt_jetp  =0.0
-!!$             endif
-!!$             if(isalt == 1) then
-!!$                allocate(micro%salt_spmp (n1,n2,n3))
-!!$                micro%salt_spmp  =0.0
-!!$             endif
-!!$
-!!$
-!!$             !COMPUTE AND OUTPUT MICRO BUDGET PROCESSES
-!!$             if(imbudget>=1 .or. imbudtot>=1) then
-!!$                allocate (micro%latheatvap(n1,n2,n3))
-!!$                micro%latheatvap=0.0
-!!$                allocate (micro%latheatfrz(n1,n2,n3))
-!!$                micro%latheatfrz=0.0
-!!$             endif
-!!$             if(imbudget>=1) then
-!!$                allocate (micro%nuccldr  (n1,n2,n3))
-!!$                micro%nuccldr  =0.0
-!!$                allocate (micro%nuccldc  (n1,n2,n3))
-!!$                micro%nuccldc  =0.0
-!!$                allocate (micro%cld2rain (n1,n2,n3))
-!!$                micro%cld2rain =0.0
-!!$                allocate (micro%ice2rain (n1,n2,n3))
-!!$                micro%ice2rain =0.0
-!!$                allocate (micro%nucicer  (n1,n2,n3))
-!!$                micro%nucicer  =0.0
-!!$                allocate (micro%nucicec  (n1,n2,n3))
-!!$                micro%nucicec  =0.0
-!!$                allocate (micro%vapliq(n1,n2,n3))
-!!$                micro%vapliq   =0.0   
-!!$                allocate (micro%vapice(n1,n2,n3))
-!!$                micro%vapice   =0.0
-!!$                allocate (micro%meltice  (n1,n2,n3))
-!!$                micro%meltice  =0.0
-!!$                allocate (micro%rimecld  (n1,n2,n3))
-!!$                micro%rimecld  =0.0
-!!$                allocate (micro%rain2ice (n1,n2,n3))
-!!$                micro%rain2ice =0.0
-!!$                allocate (micro%aggregate(n1,n2,n3))
-!!$                micro%aggregate=0.0
-!!$             endif
-!!$             if(imbudget==2) then
-!!$                allocate (micro%inuchomr    (n1,n2,n3))
-!!$                micro%inuchomr    =0.0 
-!!$                allocate (micro%inuchomc    (n1,n2,n3))
-!!$                micro%inuchomc    =0.0
-!!$                allocate (micro%inuccontr   (n1,n2,n3))
-!!$                micro%inuccontr   =0.0
-!!$                allocate (micro%inuccontc   (n1,n2,n3))
-!!$                micro%inuccontc   =0.0
-!!$                allocate (micro%inucifnr    (n1,n2,n3))
-!!$                micro%inucifnr    =0.0
-!!$                allocate (micro%inucifnc    (n1,n2,n3))
-!!$                micro%inucifnc    =0.0
-!!$                allocate (micro%inuchazr    (n1,n2,n3))
-!!$                micro%inuchazr    =0.0
-!!$                allocate (micro%inuchazc    (n1,n2,n3))
-!!$                micro%inuchazc    =0.0
-!!$                allocate (micro%vapcld   (n1,n2,n3))
-!!$                micro%vapcld  =0.0
-!!$                allocate (micro%vaprain     (n1,n2,n3))
-!!$                micro%vaprain  =0.0
-!!$                allocate (micro%vappris     (n1,n2,n3))
-!!$                micro%vappris  =0.0
-!!$                allocate (micro%vapsnow     (n1,n2,n3))
-!!$                micro%vapsnow  =0.0   
-!!$                allocate (micro%vapaggr     (n1,n2,n3))
-!!$                micro%vapaggr  =0.0
-!!$                allocate (micro%vapgrau     (n1,n2,n3))
-!!$                micro%vapgrau  =0.0
-!!$                allocate (micro%vaphail     (n1,n2,n3))
-!!$                micro%vaphail  =0.0
-!!$                allocate (micro%vapdriz     (n1,n2,n3))
-!!$                micro%vapdriz  =0.0
-!!$                allocate (micro%meltpris    (n1,n2,n3))
-!!$                micro%meltpris    =0.0
-!!$                allocate (micro%meltsnow    (n1,n2,n3))
-!!$                micro%meltsnow    =0.0
-!!$                allocate (micro%meltaggr    (n1,n2,n3))
-!!$                micro%meltaggr    =0.0
-!!$                allocate (micro%meltgrau    (n1,n2,n3))
-!!$                micro%meltgrau    =0.0
-!!$                allocate (micro%melthail    (n1,n2,n3))
-!!$                micro%melthail    =0.0
-!!$                allocate (micro%rimecldsnow (n1,n2,n3))
-!!$                micro%rimecldsnow =0.0
-!!$                allocate (micro%rimecldaggr (n1,n2,n3))
-!!$                micro%rimecldaggr =0.0
-!!$                allocate (micro%rimecldgrau (n1,n2,n3))
-!!$                micro%rimecldgrau =0.0
-!!$                allocate (micro%rimecldhail (n1,n2,n3))
-!!$                micro%rimecldhail =0.0
-!!$                allocate (micro%rain2pr     (n1,n2,n3))
-!!$                micro%rain2pr  =0.0
-!!$                allocate (micro%rain2sn     (n1,n2,n3))
-!!$                micro%rain2sn  =0.0
-!!$                allocate (micro%rain2ag     (n1,n2,n3))
-!!$                micro%rain2ag  =0.0
-!!$                allocate (micro%rain2gr     (n1,n2,n3))
-!!$                micro%rain2gr  =0.0
-!!$                allocate (micro%rain2ha     (n1,n2,n3))
-!!$                micro%rain2ha  =0.0
-!!$                allocate (micro%rain2ha_xtra(n1,n2,n3))
-!!$                micro%rain2ha_xtra=0.0
-!!$                allocate (micro%aggrselfpris(n1,n2,n3))
-!!$                micro%aggrselfpris=0.0
-!!$                allocate (micro%aggrselfsnow(n1,n2,n3))
-!!$                micro%aggrselfsnow=0.0
-!!$                allocate (micro%aggrprissnow(n1,n2,n3))
-!!$                micro%aggrprissnow=0.0
-!!$             endif
-!!$             !COMPUTE AND OUTPUT MICRO BUDGET PROCESSES (totals)
-!!$             if(imbudtot>=1) then
-!!$                allocate (micro%nuccldrt   (n1,n2,n3))
-!!$                micro%nuccldrt=0.0
-!!$                allocate (micro%nuccldct   (n1,n2,n3))
-!!$                micro%nuccldct=0.0
-!!$                allocate (micro%cld2raint  (n1,n2,n3))
-!!$                micro%cld2raint  =0.0
-!!$                allocate (micro%ice2raint  (n1,n2,n3))
-!!$                micro%ice2raint  =0.0
-!!$                allocate (micro%nucicert   (n1,n2,n3))
-!!$                micro%nucicert=0.0
-!!$                allocate (micro%nucicect   (n1,n2,n3))
-!!$                micro%nucicect=0.0
-!!$                allocate (micro%vapliqt    (n1,n2,n3))
-!!$                micro%vapliqt=0.0
-!!$                allocate (micro%vapicet    (n1,n2,n3))
-!!$                micro%vapicet=0.0
-!!$                allocate (micro%melticet   (n1,n2,n3))
-!!$                micro%melticet=0.0
-!!$                allocate (micro%rimecldt   (n1,n2,n3))
-!!$                micro%rimecldt=0.0
-!!$                allocate (micro%rain2icet  (n1,n2,n3))
-!!$                micro%rain2icet  =0.0
-!!$                allocate (micro%aggregatet (n1,n2,n3))
-!!$                micro%aggregatet =0.0
-!!$                allocate (micro%latheatvapt(n1,n2,n3))
-!!$                micro%latheatvapt=0.0
-!!$                allocate (micro%latheatfrzt(n1,n2,n3))
-!!$                micro%latheatfrzt=0.0
-!!$             endif
-!!$             if(imbudtot==2) then
-!!$                allocate (micro%inuchomrt(n1,n2,n3))
-!!$                micro%inuchomrt    =0.0
-!!$                allocate (micro%inuchomct(n1,n2,n3))
-!!$                micro%inuchomct    =0.0
-!!$                allocate (micro%inuccontrt(n1,n2,n3))
-!!$                micro%inuccontrt   =0.0
-!!$                allocate (micro%inuccontct(n1,n2,n3))
-!!$                micro%inuccontct   =0.0
-!!$                allocate (micro%inucifnrt(n1,n2,n3))
-!!$                micro%inucifnrt    =0.0
-!!$                allocate (micro%inucifnct(n1,n2,n3))
-!!$                micro%inucifnct    =0.0
-!!$                allocate (micro%inuchazrt(n1,n2,n3))
-!!$                micro%inuchazrt    =0.0
-!!$                allocate (micro%inuchazct(n1,n2,n3))
-!!$                micro%inuchazct    =0.0
-!!$                allocate (micro%vapcldt(n1,n2,n3))
-!!$                micro%vapcldt      =0.0
-!!$                allocate (micro%vapraint(n1,n2,n3))
-!!$                micro%vapraint     =0.0
-!!$                allocate (micro%vapprist(n1,n2,n3))
-!!$                micro%vapprist     =0.0
-!!$                allocate (micro%vapsnowt(n1,n2,n3))
-!!$                micro%vapsnowt     =0.0
-!!$                allocate (micro%vapaggrt(n1,n2,n3))
-!!$                micro%vapaggrt     =0.0
-!!$                allocate (micro%vapgraut(n1,n2,n3))
-!!$                micro%vapgraut     =0.0
-!!$                allocate (micro%vaphailt(n1,n2,n3))
-!!$                micro%vaphailt     =0.0
-!!$                allocate (micro%vapdrizt(n1,n2,n3))
-!!$                micro%vapdrizt     =0.0
-!!$                allocate (micro%meltprist(n1,n2,n3))
-!!$                micro%meltprist    =0.0
-!!$                allocate (micro%meltsnowt(n1,n2,n3))
-!!$                micro%meltsnowt    =0.0
-!!$                allocate (micro%meltaggrt(n1,n2,n3))
-!!$                micro%meltaggrt    =0.0
-!!$                allocate (micro%meltgraut(n1,n2,n3))
-!!$                micro%meltgraut    =0.0
-!!$                allocate (micro%melthailt(n1,n2,n3))
-!!$                micro%melthailt    =0.0
-!!$                allocate (micro%rimecldsnowt(n1,n2,n3))
-!!$                micro%rimecldsnowt =0.0
-!!$                allocate (micro%rimecldaggrt(n1,n2,n3))
-!!$                micro%rimecldaggrt =0.0
-!!$                allocate (micro%rimecldgraut(n1,n2,n3))
-!!$                micro%rimecldgraut =0.0
-!!$                allocate (micro%rimecldhailt(n1,n2,n3))
-!!$                micro%rimecldhailt =0.0
-!!$                allocate (micro%rain2prt(n1,n2,n3))
-!!$                micro%rain2prt     =0.0
-!!$                allocate (micro%rain2snt(n1,n2,n3))
-!!$                micro%rain2snt     =0.0
-!!$                allocate (micro%rain2agt(n1,n2,n3))
-!!$                micro%rain2agt     =0.0
-!!$                allocate (micro%rain2grt(n1,n2,n3))
-!!$                micro%rain2grt     =0.0
-!!$                allocate (micro%rain2hat(n1,n2,n3))
-!!$                micro%rain2hat     =0.0
-!!$                allocate (micro%rain2ha_xtrat(n1,n2,n3))
-!!$                micro%rain2ha_xtrat=0.0
-!!$                allocate (micro%aggrselfprist(n1,n2,n3))
-!!$                micro%aggrselfprist=0.0
-!!$                allocate (micro%aggrselfsnowt(n1,n2,n3))
-!!$                micro%aggrselfsnowt=0.0
-!!$                allocate (micro%aggrprissnowt(n1,n2,n3))
-!!$                micro%aggrprissnowt=0.0
-!!$             endif
-!!$          endif! mcphys_type=1     
-!!$          !- allocation of memory for effective radius for RRTMG
-!!$          if(ilwrtyp==6 .or. iswrtyp==6 ) then
-!!$             allocate (micro%rei  (n1,n2,n3))
-!!$             micro%rei  =0.0  
-!!$             allocate (micro%rel  (n1,n2,n3))
-!!$             micro%rel  =0.0
-!!$          endif
-!!$       endif ! level >=3 
-!!$    endif
-!!$    return 
-!!$  end subroutine alloc_micro
-!!$
-!!$
-!!$  subroutine nullify_micro(micro) 
-!!$
-!!$    implicit none
-!!$    type (MicroFields) :: micro
-!!$
-!!$    if (associated(micro%rcp))     nullify (micro%rcp)
-!!$    if (associated(micro%rdp))     nullify (micro%rdp)
-!!$    if (associated(micro%rrp))     nullify (micro%rrp)
-!!$    if (associated(micro%rpp))     nullify (micro%rpp)
-!!$    if (associated(micro%rsp))     nullify (micro%rsp)
-!!$    if (associated(micro%rap))     nullify (micro%rap)
-!!$    if (associated(micro%rgp))     nullify (micro%rgp)
-!!$    if (associated(micro%rhp))     nullify (micro%rhp)
-!!$    if (associated(micro%ccp))     nullify (micro%ccp)
-!!$    if (associated(micro%cdp))     nullify (micro%cdp)
-!!$    if (associated(micro%crp))     nullify (micro%crp)
-!!$    if (associated(micro%cpp))     nullify (micro%cpp)
-!!$    if (associated(micro%csp))     nullify (micro%csp)
-!!$    if (associated(micro%cap))     nullify (micro%cap)
-!!$    if (associated(micro%cgp))     nullify (micro%cgp)
-!!$    if (associated(micro%chp))     nullify (micro%chp)
-!!$    if (associated(micro%cccnp))   nullify (micro%cccnp)
-!!$    if (associated(micro%gccnp))   nullify (micro%gccnp)
-!!$    if (associated(micro%cifnp))   nullify (micro%cifnp)
-!!$    if (associated(micro%q2))      nullify (micro%q2)
-!!$    if (associated(micro%q6))      nullify (micro%q6)
-!!$    if (associated(micro%q7))      nullify (micro%q7)
-!!$
-!!$    if (associated(micro%cccmp))   nullify (micro%cccmp)
-!!$    if (associated(micro%gccmp))   nullify (micro%gccmp)
-!!$    if (associated(micro%cnm1p))   nullify (micro%cnm1p)
-!!$    if (associated(micro%cnm2p))   nullify (micro%cnm2p)
-!!$    if (associated(micro%cnm3p))   nullify (micro%cnm3p)
-!!$    if (associated(micro%cnm8p))   nullify (micro%cnm8p)
-!!$    if (associated(micro%md1np))   nullify (micro%md1np)
-!!$    if (associated(micro%md2np))   nullify (micro%md2np)
-!!$    if (associated(micro%salt_filmp)) nullify (micro%salt_filmp)
-!!$    if (associated(micro%salt_jetp))  nullify (micro%salt_jetp)
-!!$    if (associated(micro%salt_spmp))  nullify (micro%salt_spmp)
-!!$    if (associated(micro%pcpvr))   nullify (micro%pcpvr)
-!!$    if (associated(micro%pcpvp))   nullify (micro%pcpvp)
-!!$    if (associated(micro%pcpvs))   nullify (micro%pcpvs)
-!!$    if (associated(micro%pcpva))   nullify (micro%pcpva)
-!!$    if (associated(micro%pcpvg))   nullify (micro%pcpvg)
-!!$    if (associated(micro%pcpvh))   nullify (micro%pcpvh)
-!!$    if (associated(micro%pcpvd))   nullify (micro%pcpvd)
-!!$
-!!$    if (associated(micro%accpr))   nullify (micro%accpr)
-!!$    if (associated(micro%accpp))   nullify (micro%accpp)
-!!$    if (associated(micro%accps))   nullify (micro%accps)
-!!$    if (associated(micro%accpa))   nullify (micro%accpa)
-!!$    if (associated(micro%accpg))   nullify (micro%accpg)
-!!$    if (associated(micro%accph))   nullify (micro%accph)
-!!$    if (associated(micro%accpd))   nullify (micro%accpd)
-!!$    if (associated(micro%pcprr))   nullify (micro%pcprr)
-!!$    if (associated(micro%pcprp))   nullify (micro%pcprp)
-!!$    if (associated(micro%pcprs))   nullify (micro%pcprs)
-!!$    if (associated(micro%pcpra))   nullify (micro%pcpra)
-!!$    if (associated(micro%pcprg))   nullify (micro%pcprg)
-!!$    if (associated(micro%pcprh))   nullify (micro%pcprh)
-!!$    if (associated(micro%pcprd))   nullify (micro%pcprd)
-!!$    if (associated(micro%pcpg))    nullify (micro%pcpg)
-!!$    if (associated(micro%qpcpg))   nullify (micro%qpcpg)
-!!$    if (associated(micro%dpcpg))   nullify (micro%dpcpg)
-!!$
-!!$    !COMPUTE AND OUTPUT MICRO BUDGET PROCESSES
-!!$    if (associated(micro%nuccldr))      nullify (micro%nuccldr)
-!!$    if (associated(micro%nuccldc))      nullify (micro%nuccldc)
-!!$    if (associated(micro%nucicer))      nullify (micro%nucicer)
-!!$    if (associated(micro%nucicec))      nullify (micro%nucicec)
-!!$    if (associated(micro%inuchomr))     nullify (micro%inuchomr)
-!!$    if (associated(micro%inuchomc))     nullify (micro%inuchomc)
-!!$    if (associated(micro%inuccontr))    nullify (micro%inuccontr)
-!!$    if (associated(micro%inuccontc))    nullify (micro%inuccontc)
-!!$    if (associated(micro%inucifnr))     nullify (micro%inucifnr)
-!!$    if (associated(micro%inucifnc))     nullify (micro%inucifnc)
-!!$    if (associated(micro%inuchazr))     nullify (micro%inuchazr)
-!!$    if (associated(micro%inuchazc))     nullify (micro%inuchazc)
-!!$    if (associated(micro%vapliq))       nullify (micro%vapliq)
-!!$    if (associated(micro%vapice))       nullify (micro%vapice)
-!!$    if (associated(micro%vapcld))       nullify (micro%vapcld)
-!!$    if (associated(micro%vaprain))      nullify (micro%vaprain)
-!!$    if (associated(micro%vappris))      nullify (micro%vappris)
-!!$    if (associated(micro%vapsnow))      nullify (micro%vapsnow)
-!!$    if (associated(micro%vapaggr))      nullify (micro%vapaggr)
-!!$    if (associated(micro%vapgrau))      nullify (micro%vapgrau)
-!!$    if (associated(micro%vaphail))      nullify (micro%vaphail)
-!!$    if (associated(micro%vapdriz))      nullify (micro%vapdriz)
-!!$    if (associated(micro%meltice))      nullify (micro%meltice)
-!!$    if (associated(micro%meltpris))     nullify (micro%meltpris)
-!!$    if (associated(micro%meltsnow))     nullify (micro%meltsnow)
-!!$    if (associated(micro%meltaggr))     nullify (micro%meltaggr)
-!!$    if (associated(micro%meltgrau))     nullify (micro%meltgrau)
-!!$    if (associated(micro%melthail))     nullify (micro%melthail)
-!!$    if (associated(micro%cld2rain))     nullify (micro%cld2rain)
-!!$    if (associated(micro%rimecld))      nullify (micro%rimecld)
-!!$    if (associated(micro%rimecldsnow))  nullify (micro%rimecldsnow)
-!!$    if (associated(micro%rimecldaggr))  nullify (micro%rimecldaggr)
-!!$    if (associated(micro%rimecldgrau))  nullify (micro%rimecldgrau)
-!!$    if (associated(micro%rimecldhail))  nullify (micro%rimecldhail)
-!!$    if (associated(micro%rain2ice))     nullify (micro%rain2ice)
-!!$    if (associated(micro%rain2pr))      nullify (micro%rain2pr)
-!!$    if (associated(micro%rain2sn))      nullify (micro%rain2sn)
-!!$    if (associated(micro%rain2ag))      nullify (micro%rain2ag)
-!!$    if (associated(micro%rain2gr))      nullify (micro%rain2gr)
-!!$    if (associated(micro%rain2ha))      nullify (micro%rain2ha)
-!!$    if (associated(micro%rain2ha_xtra)) nullify (micro%rain2ha_xtra)
-!!$    if (associated(micro%ice2rain))     nullify (micro%ice2rain)
-!!$    if (associated(micro%aggregate))    nullify (micro%aggregate)
-!!$    if (associated(micro%aggrselfpris)) nullify (micro%aggrselfpris)
-!!$    if (associated(micro%aggrselfsnow)) nullify (micro%aggrselfsnow)
-!!$    if (associated(micro%aggrprissnow)) nullify (micro%aggrprissnow)
-!!$    if (associated(micro%latheatvap))   nullify (micro%latheatvap)
-!!$    if (associated(micro%latheatfrz))   nullify (micro%latheatfrz)
-!!$
-!!$    !COMPUTE AND OUTPUT MICRO BUDGET PROCESSES (totals)
-!!$    if (associated(micro%nuccldrt))      nullify (micro%nuccldrt)
-!!$    if (associated(micro%nuccldct))      nullify (micro%nuccldct)
-!!$    if (associated(micro%nucicert))      nullify (micro%nucicert)
-!!$    if (associated(micro%nucicect))      nullify (micro%nucicect)
-!!$    if (associated(micro%inuchomrt))     nullify (micro%inuchomrt)
-!!$    if (associated(micro%inuchomct))     nullify (micro%inuchomct)
-!!$    if (associated(micro%inuccontrt))    nullify (micro%inuccontrt)
-!!$    if (associated(micro%inuccontct))    nullify (micro%inuccontct)
-!!$    if (associated(micro%inucifnrt))     nullify (micro%inucifnrt)
-!!$    if (associated(micro%inucifnct))     nullify (micro%inucifnct)
-!!$    if (associated(micro%inuchazrt))     nullify (micro%inuchazrt)
-!!$    if (associated(micro%inuchazct))     nullify (micro%inuchazct)
-!!$    if (associated(micro%vapliqt))       nullify (micro%vapliqt)
-!!$    if (associated(micro%vapicet))       nullify (micro%vapicet)
-!!$    if (associated(micro%vapcldt))       nullify (micro%vapcldt)
-!!$    if (associated(micro%vapraint))      nullify (micro%vapraint)
-!!$    if (associated(micro%vapprist))      nullify (micro%vapprist)
-!!$    if (associated(micro%vapsnowt))      nullify (micro%vapsnowt)
-!!$    if (associated(micro%vapaggrt))      nullify (micro%vapaggrt)
-!!$    if (associated(micro%vapgraut))      nullify (micro%vapgraut)
-!!$    if (associated(micro%vaphailt))      nullify (micro%vaphailt)
-!!$    if (associated(micro%vapdrizt))      nullify (micro%vapdrizt)
-!!$    if (associated(micro%melticet))      nullify (micro%melticet)
-!!$    if (associated(micro%meltprist))     nullify (micro%meltprist)
-!!$    if (associated(micro%meltsnowt))     nullify (micro%meltsnowt)
-!!$    if (associated(micro%meltaggrt))     nullify (micro%meltaggrt)
-!!$    if (associated(micro%meltgraut))     nullify (micro%meltgraut)
-!!$    if (associated(micro%melthailt))     nullify (micro%melthailt)
-!!$    if (associated(micro%cld2raint))     nullify (micro%cld2raint)
-!!$    if (associated(micro%rimecldt))      nullify (micro%rimecldt)
-!!$    if (associated(micro%rimecldsnowt))  nullify (micro%rimecldsnowt)
-!!$    if (associated(micro%rimecldaggrt))  nullify (micro%rimecldaggrt)
-!!$    if (associated(micro%rimecldgraut))  nullify (micro%rimecldgraut)
-!!$    if (associated(micro%rimecldhailt))  nullify (micro%rimecldhailt)
-!!$    if (associated(micro%rain2icet))     nullify (micro%rain2icet)
-!!$    if (associated(micro%rain2prt))      nullify (micro%rain2prt)
-!!$    if (associated(micro%rain2snt))      nullify (micro%rain2snt)
-!!$    if (associated(micro%rain2agt))      nullify (micro%rain2agt)
-!!$    if (associated(micro%rain2grt))      nullify (micro%rain2grt)
-!!$    if (associated(micro%rain2hat))      nullify (micro%rain2hat)
-!!$    if (associated(micro%rain2ha_xtrat)) nullify (micro%rain2ha_xtrat)
-!!$    if (associated(micro%ice2raint))     nullify (micro%ice2raint)
-!!$    if (associated(micro%aggregatet))    nullify (micro%aggregatet)
-!!$    if (associated(micro%aggrselfprist)) nullify (micro%aggrselfprist)
-!!$    if (associated(micro%aggrselfsnowt)) nullify (micro%aggrselfsnowt)
-!!$    if (associated(micro%aggrprissnowt)) nullify (micro%aggrprissnowt)
-!!$    if (associated(micro%latheatvapt))   nullify (micro%latheatvapt)
-!!$    if (associated(micro%latheatfrzt))   nullify (micro%latheatfrzt)
-!!$
-!!$    if (associated(micro%rei))     nullify (micro%rei)
-!!$    if (associated(micro%rel))     nullify (micro%rel)
-!!$    if (associated(micro%cldfr))   nullify (micro%cldfr)
-!!$    return
-!!$  end subroutine nullify_micro
-!!$
-!!$  subroutine dealloc_micro(micro)
-!!$
-!!$    implicit none
-!!$    type (MicroFields) :: micro
-!!$
-!!$    if (associated(micro%rcp))     deallocate (micro%rcp)
-!!$    if (associated(micro%rdp))     deallocate (micro%rdp)
-!!$    if (associated(micro%rrp))     deallocate (micro%rrp)
-!!$    if (associated(micro%rpp))     deallocate (micro%rpp)
-!!$    if (associated(micro%rsp))     deallocate (micro%rsp)
-!!$    if (associated(micro%rap))     deallocate (micro%rap)
-!!$    if (associated(micro%rgp))     deallocate (micro%rgp)
-!!$    if (associated(micro%rhp))     deallocate (micro%rhp)
-!!$    if (associated(micro%ccp))     deallocate (micro%ccp)
-!!$    if (associated(micro%cdp))     deallocate (micro%cdp)
-!!$    if (associated(micro%crp))     deallocate (micro%crp)
-!!$    if (associated(micro%cpp))     deallocate (micro%cpp)
-!!$    if (associated(micro%csp))     deallocate (micro%csp)
-!!$    if (associated(micro%cap))     deallocate (micro%cap)
-!!$    if (associated(micro%cgp))     deallocate (micro%cgp)
-!!$    if (associated(micro%chp))     deallocate (micro%chp)
-!!$    if (associated(micro%cccnp))   deallocate (micro%cccnp)
-!!$    if (associated(micro%gccnp))   deallocate (micro%gccnp)
-!!$    if (associated(micro%cifnp))   deallocate (micro%cifnp)
-!!$    if (associated(micro%q2))      deallocate (micro%q2)
-!!$    if (associated(micro%q6))      deallocate (micro%q6)
-!!$    if (associated(micro%q7))      deallocate (micro%q7)
-!!$
-!!$    if (associated(micro%cccmp))   deallocate (micro%cccmp)
-!!$    if (associated(micro%gccmp))   deallocate (micro%gccmp)
-!!$    if (associated(micro%cnm1p))   deallocate (micro%cnm1p)
-!!$    if (associated(micro%cnm2p))   deallocate (micro%cnm2p)
-!!$    if (associated(micro%cnm3p))   deallocate (micro%cnm3p)
-!!$    if (associated(micro%cnm8p))   deallocate (micro%cnm8p)
-!!$    if (associated(micro%md1np))   deallocate (micro%md1np)
-!!$    if (associated(micro%md2np))   deallocate (micro%md2np)
-!!$    if (associated(micro%salt_filmp)) deallocate (micro%salt_filmp)
-!!$    if (associated(micro%salt_jetp))  deallocate (micro%salt_jetp)
-!!$    if (associated(micro%salt_spmp))  deallocate (micro%salt_spmp)
-!!$    if (associated(micro%pcpvr))   deallocate (micro%pcpvr)
-!!$    if (associated(micro%pcpvp))   deallocate (micro%pcpvp)
-!!$    if (associated(micro%pcpvs))   deallocate (micro%pcpvs)
-!!$    if (associated(micro%pcpva))   deallocate (micro%pcpva)
-!!$    if (associated(micro%pcpvg))   deallocate (micro%pcpvg)
-!!$    if (associated(micro%pcpvh))   deallocate (micro%pcpvh)
-!!$    if (associated(micro%pcpvd))   deallocate (micro%pcpvd)
-!!$
-!!$    if (associated(micro%accpr))   deallocate (micro%accpr)
-!!$    if (associated(micro%accpp))   deallocate (micro%accpp)
-!!$    if (associated(micro%accps))   deallocate (micro%accps)
-!!$    if (associated(micro%accpa))   deallocate (micro%accpa)
-!!$    if (associated(micro%accpg))   deallocate (micro%accpg)
-!!$    if (associated(micro%accph))   deallocate (micro%accph)
-!!$    if (associated(micro%accpd))   deallocate (micro%accpd)
-!!$    if (associated(micro%pcprr))   deallocate (micro%pcprr)
-!!$    if (associated(micro%pcprp))   deallocate (micro%pcprp)
-!!$    if (associated(micro%pcprs))   deallocate (micro%pcprs)
-!!$    if (associated(micro%pcpra))   deallocate (micro%pcpra)
-!!$    if (associated(micro%pcprg))   deallocate (micro%pcprg)
-!!$    if (associated(micro%pcprh))   deallocate (micro%pcprh)
-!!$    if (associated(micro%pcprd))   deallocate (micro%pcprd)
-!!$    if (associated(micro%pcpg))    deallocate (micro%pcpg)
-!!$    if (associated(micro%qpcpg))   deallocate (micro%qpcpg)
-!!$    if (associated(micro%dpcpg))   deallocate (micro%dpcpg)
-!!$
-!!$    !COMPUTE AND OUTPUT MICRO BUDGET PROCESSES
-!!$    if (associated(micro%nuccldr))      deallocate (micro%nuccldr)
-!!$    if (associated(micro%nuccldc))      deallocate (micro%nuccldc)
-!!$    if (associated(micro%nucicer))      deallocate (micro%nucicer)
-!!$    if (associated(micro%nucicec))      deallocate (micro%nucicec)
-!!$    if (associated(micro%inuchomr))     deallocate (micro%inuchomr)     
-!!$    if (associated(micro%inuchomc))     deallocate (micro%inuchomc) 
-!!$    if (associated(micro%inuccontr))    deallocate (micro%inuccontr)     
-!!$    if (associated(micro%inuccontc))    deallocate (micro%inuccontc)
-!!$    if (associated(micro%inucifnr))     deallocate (micro%inucifnr)     
-!!$    if (associated(micro%inucifnc))     deallocate (micro%inucifnc) 
-!!$    if (associated(micro%inuchazr))     deallocate (micro%inuchazr)     
-!!$    if (associated(micro%inuchazc))     deallocate (micro%inuchazc)
-!!$    if (associated(micro%vapliq))       deallocate (micro%vapliq)
-!!$    if (associated(micro%vapice))       deallocate (micro%vapice)
-!!$    if (associated(micro%vapcld))       deallocate (micro%vapcld)
-!!$    if (associated(micro%vaprain))      deallocate (micro%vaprain)
-!!$    if (associated(micro%vappris))      deallocate (micro%vappris)
-!!$    if (associated(micro%vapsnow))      deallocate (micro%vapsnow)
-!!$    if (associated(micro%vapaggr))      deallocate (micro%vapaggr)
-!!$    if (associated(micro%vapgrau))      deallocate (micro%vapgrau)
-!!$    if (associated(micro%vaphail))      deallocate (micro%vaphail)
-!!$    if (associated(micro%vapdriz))      deallocate (micro%vapdriz)      
-!!$    if (associated(micro%meltice))      deallocate (micro%meltice) 
-!!$    if (associated(micro%meltpris))     deallocate (micro%meltpris) 
-!!$    if (associated(micro%meltsnow))     deallocate (micro%meltsnow) 
-!!$    if (associated(micro%meltaggr))     deallocate (micro%meltaggr)
-!!$    if (associated(micro%meltgrau))     deallocate (micro%meltgrau) 
-!!$    if (associated(micro%melthail))     deallocate (micro%melthail) 
-!!$    if (associated(micro%cld2rain))     deallocate (micro%cld2rain)
-!!$    if (associated(micro%rimecld))      deallocate (micro%rimecld)
-!!$    if (associated(micro%rimecldsnow))  deallocate (micro%rimecldsnow)
-!!$    if (associated(micro%rimecldaggr))  deallocate (micro%rimecldaggr)
-!!$    if (associated(micro%rimecldgrau))  deallocate (micro%rimecldgrau)
-!!$    if (associated(micro%rimecldhail))  deallocate (micro%rimecldhail)
-!!$    if (associated(micro%rain2ice))     deallocate (micro%rain2ice)
-!!$    if (associated(micro%rain2pr))      deallocate (micro%rain2pr) 
-!!$    if (associated(micro%rain2sn))      deallocate (micro%rain2sn) 
-!!$    if (associated(micro%rain2ag))      deallocate (micro%rain2ag) 
-!!$    if (associated(micro%rain2gr))      deallocate (micro%rain2gr) 
-!!$    if (associated(micro%rain2ha))      deallocate (micro%rain2ha)
-!!$    if (associated(micro%rain2ha_xtra)) deallocate (micro%rain2ha_xtra)
-!!$    if (associated(micro%ice2rain))     deallocate (micro%ice2rain)
-!!$    if (associated(micro%aggregate))    deallocate (micro%aggregate) 
-!!$    if (associated(micro%aggrselfpris)) deallocate (micro%aggrselfpris)
-!!$    if (associated(micro%aggrselfsnow)) deallocate (micro%aggrselfsnow)
-!!$    if (associated(micro%aggrprissnow)) deallocate (micro%aggrprissnow)
-!!$    if (associated(micro%latheatvap))   deallocate (micro%latheatvap)
-!!$    if (associated(micro%latheatfrz))   deallocate (micro%latheatfrz)
-!!$
-!!$    !COMPUTE AND OUTPUT MICRO BUDGET PROCESSES (totals)
-!!$    if (associated(micro%nuccldrt))      deallocate (micro%nuccldrt)
-!!$    if (associated(micro%nuccldct))      deallocate (micro%nuccldct)
-!!$    if (associated(micro%nucicert))      deallocate (micro%nucicert)
-!!$    if (associated(micro%nucicect))      deallocate (micro%nucicect)
-!!$    if (associated(micro%inuchomrt))     deallocate (micro%inuchomrt)     
-!!$    if (associated(micro%inuchomct))     deallocate (micro%inuchomct) 
-!!$    if (associated(micro%inuccontrt))    deallocate (micro%inuccontrt)     
-!!$    if (associated(micro%inuccontct))    deallocate (micro%inuccontct)
-!!$    if (associated(micro%inucifnrt))     deallocate (micro%inucifnrt)     
-!!$    if (associated(micro%inucifnct))     deallocate (micro%inucifnct) 
-!!$    if (associated(micro%inuchazrt))     deallocate (micro%inuchazrt)     
-!!$    if (associated(micro%inuchazct))     deallocate (micro%inuchazct)
-!!$    if (associated(micro%vapliqt))       deallocate (micro%vapliqt)
-!!$    if (associated(micro%vapicet))       deallocate (micro%vapicet)
-!!$    if (associated(micro%vapcldt))       deallocate (micro%vapcldt)
-!!$    if (associated(micro%vapraint))      deallocate (micro%vapraint)
-!!$    if (associated(micro%vapprist))      deallocate (micro%vapprist)
-!!$    if (associated(micro%vapsnowt))      deallocate (micro%vapsnowt)
-!!$    if (associated(micro%vapaggrt))      deallocate (micro%vapaggrt)
-!!$    if (associated(micro%vapgraut))      deallocate (micro%vapgraut)
-!!$    if (associated(micro%vaphailt))      deallocate (micro%vaphailt)
-!!$    if (associated(micro%vapdrizt))      deallocate (micro%vapdrizt)      
-!!$    if (associated(micro%melticet))      deallocate (micro%melticet) 
-!!$    if (associated(micro%meltprist))     deallocate (micro%meltprist) 
-!!$    if (associated(micro%meltsnowt))     deallocate (micro%meltsnowt) 
-!!$    if (associated(micro%meltaggrt))     deallocate (micro%meltaggrt)
-!!$    if (associated(micro%meltgraut))     deallocate (micro%meltgraut) 
-!!$    if (associated(micro%melthailt))     deallocate (micro%melthailt) 
-!!$    if (associated(micro%cld2raint))     deallocate (micro%cld2raint)
-!!$    if (associated(micro%rimecldt))      deallocate (micro%rimecldt)
-!!$    if (associated(micro%rimecldsnowt))  deallocate (micro%rimecldsnowt)
-!!$    if (associated(micro%rimecldaggrt))  deallocate (micro%rimecldaggrt)
-!!$    if (associated(micro%rimecldgraut))  deallocate (micro%rimecldgraut)
-!!$    if (associated(micro%rimecldhailt))  deallocate (micro%rimecldhailt)
-!!$    if (associated(micro%rain2icet))     deallocate (micro%rain2icet)
-!!$    if (associated(micro%rain2prt))      deallocate (micro%rain2prt) 
-!!$    if (associated(micro%rain2snt))      deallocate (micro%rain2snt) 
-!!$    if (associated(micro%rain2agt))      deallocate (micro%rain2agt) 
-!!$    if (associated(micro%rain2grt))      deallocate (micro%rain2grt) 
-!!$    if (associated(micro%rain2hat))      deallocate (micro%rain2hat)
-!!$    if (associated(micro%rain2ha_xtrat)) deallocate (micro%rain2ha_xtrat)
-!!$    if (associated(micro%ice2raint))     deallocate (micro%ice2raint)
-!!$    if (associated(micro%aggregatet))    deallocate (micro%aggregatet) 
-!!$    if (associated(micro%aggrselfprist)) deallocate (micro%aggrselfprist)
-!!$    if (associated(micro%aggrselfsnowt)) deallocate (micro%aggrselfsnowt)
-!!$    if (associated(micro%aggrprissnowt)) deallocate (micro%aggrprissnowt)
-!!$    if (associated(micro%latheatvapt))   deallocate (micro%latheatvapt)
-!!$    if (associated(micro%latheatfrzt))   deallocate (micro%latheatfrzt)
-!!$
-!!$    if (associated(micro%rei))     deallocate (micro%rei)
-!!$    if (associated(micro%rel))     deallocate (micro%rel)
-!!$    if (associated(micro%cldfr))   deallocate (micro%cldfr)
-!!$
-!!$    return
-!!$  end subroutine dealloc_micro
-!!$
-!!$
 !!$  subroutine filltab_micro(micro,microm,imean,n1,n2,n3,ng)
 !!$
 !!$    use ModVarTables, only: InsertVTab
@@ -1757,4 +2317,1286 @@ contains
 !!$    return
 !!$  end subroutine filltab_micro
 
+  subroutine DestroyMicroFields(oneMicroFields)
+    type(MicroFields), pointer, intent(inout) :: oneMicroFields
+
+    integer :: ierr
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(DestroyMicroFields)**"
+
+    if (.not. associated(oneMicroFields)) then
+       return
+    end if
+    
+    if (associated(oneMicroFields%rcp)) then
+       deallocate(oneMicroFields%rcp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rcp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rdp)) then
+       deallocate(oneMicroFields%rdp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rdp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rrp)) then
+       deallocate(oneMicroFields%rrp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rrp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rpp)) then
+       deallocate(oneMicroFields%rpp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rpp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rsp)) then
+       deallocate(oneMicroFields%rsp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rsp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rap)) then
+       deallocate(oneMicroFields%rap, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rap fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rgp)) then
+       deallocate(oneMicroFields%rgp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rgp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rhp)) then
+       deallocate(oneMicroFields%rhp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rhp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%ccp)) then
+       deallocate(oneMicroFields%ccp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate ccp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%cdp)) then
+       deallocate(oneMicroFields%cdp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate cdp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%crp)) then
+       deallocate(oneMicroFields%crp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate crp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%cpp)) then
+       deallocate(oneMicroFields%cpp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate cpp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%csp)) then
+       deallocate(oneMicroFields%csp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate csp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%cap)) then
+       deallocate(oneMicroFields%cap, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate cap fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%cgp)) then
+       deallocate(oneMicroFields%cgp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate cgp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%chp)) then
+       deallocate(oneMicroFields%chp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate chp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%cccnp)) then
+       deallocate(oneMicroFields%cccnp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate cccnp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%gccnp)) then
+       deallocate(oneMicroFields%gccnp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate gccnp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%cifnp)) then
+       deallocate(oneMicroFields%cifnp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate cifnp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%q2)) then
+       deallocate(oneMicroFields%q2, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate q2 fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%q6)) then
+       deallocate(oneMicroFields%q6, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate q6 fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%q7)) then
+       deallocate(oneMicroFields%q7, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate q7 fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rei)) then
+       deallocate(oneMicroFields%rei, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rei fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rel)) then
+       deallocate(oneMicroFields%rel, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rel fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%cldfr)) then
+       deallocate(oneMicroFields%cldfr, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate cldfr fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%cccmp)) then
+       deallocate(oneMicroFields%cccmp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate cccmp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%gccmp)) then
+       deallocate(oneMicroFields%gccmp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate gccmp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%cnm1p)) then
+       deallocate(oneMicroFields%cnm1p, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate cnm1p fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%cnm2p)) then
+       deallocate(oneMicroFields%cnm2p, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate cnm2p fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%cnm3p)) then
+       deallocate(oneMicroFields%cnm3p, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate cnm3p fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%cnm8p)) then
+       deallocate(oneMicroFields%cnm8p, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate cnm8p fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%md1np)) then
+       deallocate(oneMicroFields%md1np, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate md1np fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%md2np)) then
+       deallocate(oneMicroFields%md2np, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate md2np fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%salt_filmp)) then
+       deallocate(oneMicroFields%salt_filmp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate salt_filmp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%salt_jetp)) then
+       deallocate(oneMicroFields%salt_jetp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate salt_jetp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%salt_spmp)) then
+       deallocate(oneMicroFields%salt_spmp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate salt_spmp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%pcpvr)) then
+       deallocate(oneMicroFields%pcpvr, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate pcpvr fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%pcpvp)) then
+       deallocate(oneMicroFields%pcpvp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate pcpvp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%pcpvs)) then
+       deallocate(oneMicroFields%pcpvs, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate pcpvs fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%pcpva)) then
+       deallocate(oneMicroFields%pcpva, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate pcpva fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%pcpvg)) then
+       deallocate(oneMicroFields%pcpvg, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate pcpvg fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%pcpvh)) then
+       deallocate(oneMicroFields%pcpvh, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate pcpvh fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%pcpvd)) then
+       deallocate(oneMicroFields%pcpvd, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate pcpvd fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%nuccldr)) then
+       deallocate(oneMicroFields%nuccldr, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate nuccldr fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%nuccldc)) then
+       deallocate(oneMicroFields%nuccldc, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate nuccldc fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%nucicer)) then
+       deallocate(oneMicroFields%nucicer, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate nucicer fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%nucicec)) then
+       deallocate(oneMicroFields%nucicec, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate nucicec fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%inuchomr)) then
+       deallocate(oneMicroFields%inuchomr, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate inuchomr fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%inuchomc)) then
+       deallocate(oneMicroFields%inuchomc, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate inuchomc fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%inuccontr)) then
+       deallocate(oneMicroFields%inuccontr, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate inuccontr fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%inuccontc)) then
+       deallocate(oneMicroFields%inuccontc, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate inuccontc fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%inucifnr)) then
+       deallocate(oneMicroFields%inucifnr, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate inucifnr fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%inucifnc)) then
+       deallocate(oneMicroFields%inucifnc, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate inucifnc fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%inuchazr)) then
+       deallocate(oneMicroFields%inuchazr, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate inuchazr fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%inuchazc)) then
+       deallocate(oneMicroFields%inuchazc, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate inuchazc fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%vapliq)) then
+       deallocate(oneMicroFields%vapliq, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate vapliq fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%vapice)) then
+       deallocate(oneMicroFields%vapice, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate vapice fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%vapcld)) then
+       deallocate(oneMicroFields%vapcld, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate vapcld fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%vaprain)) then
+       deallocate(oneMicroFields%vaprain, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate vaprain fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%vappris)) then
+       deallocate(oneMicroFields%vappris, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate vappris fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%vapsnow)) then
+       deallocate(oneMicroFields%vapsnow, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate vapsnow fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%vapaggr)) then
+       deallocate(oneMicroFields%vapaggr, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate vapaggr fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%vapgrau)) then
+       deallocate(oneMicroFields%vapgrau, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate vapgrau fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%vaphail)) then
+       deallocate(oneMicroFields%vaphail, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate vaphail fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%vapdriz)) then
+       deallocate(oneMicroFields%vapdriz, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate vapdriz fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%meltice)) then
+       deallocate(oneMicroFields%meltice, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate meltice fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%meltpris)) then
+       deallocate(oneMicroFields%meltpris, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate meltpris fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%meltsnow)) then
+       deallocate(oneMicroFields%meltsnow, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate meltsnow fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%meltaggr)) then
+       deallocate(oneMicroFields%meltaggr, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate meltaggr fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%meltgrau)) then
+       deallocate(oneMicroFields%meltgrau, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate meltgrau fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%melthail)) then
+       deallocate(oneMicroFields%melthail, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate melthail fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%cld2rain)) then
+       deallocate(oneMicroFields%cld2rain, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate cld2rain fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rimecld)) then
+       deallocate(oneMicroFields%rimecld, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rimecld fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rimecldsnow)) then
+       deallocate(oneMicroFields%rimecldsnow, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rimecldsnow fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rimecldaggr)) then
+       deallocate(oneMicroFields%rimecldaggr, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rimecldaggr fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rimecldgrau)) then
+       deallocate(oneMicroFields%rimecldgrau, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rimecldgrau fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rimecldhail)) then
+       deallocate(oneMicroFields%rimecldhail, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rimecldhail fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rain2ice)) then
+       deallocate(oneMicroFields%rain2ice, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rain2ice fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rain2pr)) then
+       deallocate(oneMicroFields%rain2pr, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rain2pr fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rain2sn)) then
+       deallocate(oneMicroFields%rain2sn, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rain2sn fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rain2ag)) then
+       deallocate(oneMicroFields%rain2ag, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rain2ag fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rain2gr)) then
+       deallocate(oneMicroFields%rain2gr, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rain2gr fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rain2ha)) then
+       deallocate(oneMicroFields%rain2ha, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rain2ha fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rain2ha_xtra)) then
+       deallocate(oneMicroFields%rain2ha_xtra, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rain2ha_xtra fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%ice2rain)) then
+       deallocate(oneMicroFields%ice2rain, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate ice2rain fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%aggregate)) then
+       deallocate(oneMicroFields%aggregate, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate aggregate fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%aggrselfpris)) then
+       deallocate(oneMicroFields%aggrselfpris, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate aggrselfpris fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%aggrselfsnow)) then
+       deallocate(oneMicroFields%aggrselfsnow, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate aggrselfsnow fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%aggrprissnow)) then
+       deallocate(oneMicroFields%aggrprissnow, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate aggrprissnow fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%latheatvap)) then
+       deallocate(oneMicroFields%latheatvap, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate latheatvap fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%latheatfrz)) then
+       deallocate(oneMicroFields%latheatfrz, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate latheatfrz fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%nuccldrt)) then
+       deallocate(oneMicroFields%nuccldrt, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate nuccldrt fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%nuccldct)) then
+       deallocate(oneMicroFields%nuccldct, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate nuccldct fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%nucicert)) then
+       deallocate(oneMicroFields%nucicert, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate nucicert fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%nucicect)) then
+       deallocate(oneMicroFields%nucicect, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate nucicect fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%inuchomrt)) then
+       deallocate(oneMicroFields%inuchomrt, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate inuchomrt fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%inuchomct)) then
+       deallocate(oneMicroFields%inuchomct, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate inuchomct fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%inuccontrt)) then
+       deallocate(oneMicroFields%inuccontrt, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate inuccontrt fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%inuccontct)) then
+       deallocate(oneMicroFields%inuccontct, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate inuccontct fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%inucifnrt)) then
+       deallocate(oneMicroFields%inucifnrt, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate inucifnrt fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%inucifnct)) then
+       deallocate(oneMicroFields%inucifnct, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate inucifnct fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%inuchazrt)) then
+       deallocate(oneMicroFields%inuchazrt, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate inuchazrt fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%inuchazct)) then
+       deallocate(oneMicroFields%inuchazct, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate inuchazct fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%vapliqt)) then
+       deallocate(oneMicroFields%vapliqt, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate vapliqt fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%vapicet)) then
+       deallocate(oneMicroFields%vapicet, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate vapicet fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%vapcldt)) then
+       deallocate(oneMicroFields%vapcldt, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate vapcldt fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%vapraint)) then
+       deallocate(oneMicroFields%vapraint, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate vapraint fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%vapprist)) then
+       deallocate(oneMicroFields%vapprist, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate vapprist fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%vapsnowt)) then
+       deallocate(oneMicroFields%vapsnowt, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate vapsnowt fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%vapaggrt)) then
+       deallocate(oneMicroFields%vapaggrt, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate vapaggrt fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%vapgraut)) then
+       deallocate(oneMicroFields%vapgraut, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate vapgraut fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%vaphailt)) then
+       deallocate(oneMicroFields%vaphailt, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate vaphailt fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%vapdrizt)) then
+       deallocate(oneMicroFields%vapdrizt, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate vapdrizt fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%melticet)) then
+       deallocate(oneMicroFields%melticet, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate melticet fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%meltprist)) then
+       deallocate(oneMicroFields%meltprist, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate meltprist fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%meltsnowt)) then
+       deallocate(oneMicroFields%meltsnowt, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate meltsnowt fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%meltaggrt)) then
+       deallocate(oneMicroFields%meltaggrt, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate meltaggrt fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%meltgraut)) then
+       deallocate(oneMicroFields%meltgraut, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate meltgraut fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%melthailt)) then
+       deallocate(oneMicroFields%melthailt, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate melthailt fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%cld2raint)) then
+       deallocate(oneMicroFields%cld2raint, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate cld2raint fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rimecldt)) then
+       deallocate(oneMicroFields%rimecldt, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rimecldt fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rimecldsnowt)) then
+       deallocate(oneMicroFields%rimecldsnowt, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rimecldsnowt fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rimecldaggrt)) then
+       deallocate(oneMicroFields%rimecldaggrt, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rimecldaggrt fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rimecldgraut)) then
+       deallocate(oneMicroFields%rimecldgraut, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rimecldgraut fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rimecldhailt)) then
+       deallocate(oneMicroFields%rimecldhailt, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rimecldhailt fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rain2icet)) then
+       deallocate(oneMicroFields%rain2icet, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rain2icet fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rain2prt)) then
+       deallocate(oneMicroFields%rain2prt, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rain2prt fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rain2snt)) then
+       deallocate(oneMicroFields%rain2snt, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rain2snt fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rain2agt)) then
+       deallocate(oneMicroFields%rain2agt, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rain2agt fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rain2grt)) then
+       deallocate(oneMicroFields%rain2grt, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rain2grt fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rain2hat)) then
+       deallocate(oneMicroFields%rain2hat, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rain2hat fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%rain2ha_xtrat)) then
+       deallocate(oneMicroFields%rain2ha_xtrat, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rain2ha_xtrat fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%ice2raint)) then
+       deallocate(oneMicroFields%ice2raint, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate ice2raint fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%aggregatet)) then
+       deallocate(oneMicroFields%aggregatet, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate aggregatet fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%aggrselfprist)) then
+       deallocate(oneMicroFields%aggrselfprist, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate aggrselfprist fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%aggrselfsnowt)) then
+       deallocate(oneMicroFields%aggrselfsnowt, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate aggrselfsnowt fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%aggrprissnowt)) then
+       deallocate(oneMicroFields%aggrprissnowt, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate aggrprissnowt fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%latheatvapt)) then
+       deallocate(oneMicroFields%latheatvapt, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate latheatvapt fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%latheatfrzt)) then
+       deallocate(oneMicroFields%latheatfrzt, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate latheatfrzt fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%accpr)) then
+       deallocate(oneMicroFields%accpr, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate accpr fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%accpp)) then
+       deallocate(oneMicroFields%accpp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate accpp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%accps)) then
+       deallocate(oneMicroFields%accps, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate accps fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%accpa)) then
+       deallocate(oneMicroFields%accpa, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate accpa fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%accpg)) then
+       deallocate(oneMicroFields%accpg, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate accpg fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%accph)) then
+       deallocate(oneMicroFields%accph, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate accph fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%accpd)) then
+       deallocate(oneMicroFields%accpd, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate accpd fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%pcprr)) then
+       deallocate(oneMicroFields%pcprr, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate pcprr fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%pcprp)) then
+       deallocate(oneMicroFields%pcprp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate pcprp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%pcprs)) then
+       deallocate(oneMicroFields%pcprs, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate pcprs fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%pcpra)) then
+       deallocate(oneMicroFields%pcpra, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate pcpra fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%pcprg)) then
+       deallocate(oneMicroFields%pcprg, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate pcprg fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%pcprh)) then
+       deallocate(oneMicroFields%pcprh, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate pcprh fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%pcprd)) then
+       deallocate(oneMicroFields%pcprd, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate pcprd fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%pcpg)) then
+       deallocate(oneMicroFields%pcpg, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate pcpg fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%qpcpg)) then
+       deallocate(oneMicroFields%qpcpg, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate qpcpg fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+    if (associated(oneMicroFields%dpcpg)) then
+       deallocate(oneMicroFields%dpcpg, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate dpcpg fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
+
+    deallocate(oneMicroFields, stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" deallocate oneMicroFields fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
+    nullify(oneMicroFields)
+  end subroutine DestroyMicroFields
+
+
+  subroutine DumpMicroFields(oneMicroFields, name)
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
+    character(len=*), intent(in) :: name
+
+    character(len=*), parameter :: h="**(DumpMicroFields)**"
+
+    if (associated(oneMicroFields)) then
+       call MsgDump(h//" "//name//" associated")
+    else
+       call MsgDump(h//" "//name//" not associated")
+    end if
+  end subroutine DumpMicroFields
 end module ModMicroFields

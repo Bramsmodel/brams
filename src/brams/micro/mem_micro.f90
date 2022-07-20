@@ -35,10 +35,15 @@ module mem_micro
   use ModMicControl, only: &
        MicControl
 
+  use ModMicroFields, only: &
+       MicroFields
+
   implicit none
 
   include "constants.h"
 
+  character(len=32) :: copyTo=""
+  character(len=32) :: copyFrom=""
   private
 
   public :: micro_vars
@@ -48,6 +53,8 @@ module mem_micro
   public :: nullify_micro
   public :: dealloc_micro
   public :: filltab_micro
+  public :: DeepCopyToMicroFields
+  public :: DeepCopyFromMicroFields
 
   type micro_vars
 
@@ -215,7 +222,27 @@ module mem_micro
 
   type (micro_vars), allocatable :: micro_g(:), microm_g(:)
 
+
+  interface ToCopy
+     module procedure ToCopy_2D
+     module procedure ToCopy_3D
+  end interface ToCopy
+
 contains                  
+
+  subroutine ToCopy_2D(src, dest)
+    real, pointer, intent(in) :: src(:,:)
+    real, pointer, intent(in) :: dest(:,:)
+    dest=src
+  end subroutine ToCopy_2D
+
+
+  subroutine ToCopy_3D(src, dest)
+    real, pointer, intent(in) :: src(:,:,:)
+    real, pointer, intent(in) :: dest(:,:,:)
+    dest=src
+  end subroutine ToCopy_3D
+
 
   subroutine alloc_micro(micro,n1,n2,n3,ng,oneMicControl)
     type(MicControl), pointer, intent(in) :: oneMicControl
@@ -1747,5 +1774,3162 @@ contains
 
     return
   end subroutine filltab_micro
+
+
+
+
+  subroutine DeepCopyToMicroFields(oneMicroFields, from)
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
+    character(len=*), intent(in) :: from
+
+    logical :: assOld, assNew
+    character(len=*), parameter :: h="**(DeepCopyToMicroFields)**"
+
+    if (copyTo /= "") then
+       call fatal_error(h//" invoked from "//trim(adjustl(from))//&
+            " just after invoked from "//trim(adjustl(copyTo)))
+    end if
+
+    copyTo=from
+    copyFrom=""
+
+    assOld=associated(micro_g(1)%rcp)
+    assNew=associated(oneMicroFields%rcp)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rcp, oneMicroFields%rcp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rcp associated but oneMicroFields%rcp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rcp not associated and oneMicroFields%rcp associated")
+    end if
+
+    assOld=associated(micro_g(1)%rdp)
+    assNew=associated(oneMicroFields%rdp)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rdp, oneMicroFields%rdp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rdp associated but oneMicroFields%rdp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rdp not associated and oneMicroFields%rdp associated")
+    end if
+
+    assOld=associated(micro_g(1)%rrp)
+    assNew=associated(oneMicroFields%rrp)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rrp, oneMicroFields%rrp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rrp associated but oneMicroFields%rrp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rrp not associated and oneMicroFields%rrp associated")
+    end if
+
+    assOld=associated(micro_g(1)%rpp)
+    assNew=associated(oneMicroFields%rpp)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rpp, oneMicroFields%rpp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rpp associated but oneMicroFields%rpp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rpp not associated and oneMicroFields%rpp associated")
+    end if
+
+    assOld=associated(micro_g(1)%rsp)
+    assNew=associated(oneMicroFields%rsp)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rsp, oneMicroFields%rsp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rsp associated but oneMicroFields%rsp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rsp not associated and oneMicroFields%rsp associated")
+    end if
+    assOld=associated(micro_g(1)%rap)
+    assNew=associated(oneMicroFields%rap)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rap, oneMicroFields%rap)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rap associated but oneMicroFields%rap not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rap not associated and oneMicroFields%rap associated")
+    end if
+
+    assOld=associated(micro_g(1)%rgp)
+    assNew=associated(oneMicroFields%rgp)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rgp, oneMicroFields%rgp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rgp associated but oneMicroFields%rgp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rgp not associated and oneMicroFields%rgp associated")
+    end if
+
+    assOld=associated(micro_g(1)%rhp)
+    assNew=associated(oneMicroFields%rhp)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rhp, oneMicroFields%rhp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rhp associated but oneMicroFields%rhp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rhp not associated and oneMicroFields%rhp associated")
+    end if
+
+    assOld=associated(micro_g(1)%ccp)
+    assNew=associated(oneMicroFields%ccp)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%ccp, oneMicroFields%ccp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%ccp associated but oneMicroFields%ccp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%ccp not associated and oneMicroFields%ccp associated")
+    end if
+
+    assOld=associated(micro_g(1)%cdp)
+    assNew=associated(oneMicroFields%cdp)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%cdp, oneMicroFields%cdp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%cdp associated but oneMicroFields%cdp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%cdp not associated and oneMicroFields%cdp associated")
+    end if
+
+    assOld=associated(micro_g(1)%crp)
+    assNew=associated(oneMicroFields%crp)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%crp, oneMicroFields%crp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%crp associated but oneMicroFields%crp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%crp not associated and oneMicroFields%crp associated")
+    end if
+
+    assOld=associated(micro_g(1)%cpp)
+    assNew=associated(oneMicroFields%cpp)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%cpp, oneMicroFields%cpp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%cpp associated but oneMicroFields%cpp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%cpp not associated and oneMicroFields%cpp associated")
+    end if
+
+    assOld=associated(micro_g(1)%csp)
+    assNew=associated(oneMicroFields%csp)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%csp, oneMicroFields%csp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%csp associated but oneMicroFields%csp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%csp not associated and oneMicroFields%csp associated")
+    end if
+
+    assOld=associated(micro_g(1)%cap)
+    assNew=associated(oneMicroFields%cap)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%cap, oneMicroFields%cap)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%cap associated but oneMicroFields%cap not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%cap not associated and oneMicroFields%cap associated")
+    end if
+
+    assOld=associated(micro_g(1)%cgp)
+    assNew=associated(oneMicroFields%cgp)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%cgp, oneMicroFields%cgp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%cgp associated but oneMicroFields%cgp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%cgp not associated and oneMicroFields%cgp associated")
+    end if
+
+    assOld=associated(micro_g(1)%chp)
+    assNew=associated(oneMicroFields%chp)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%chp, oneMicroFields%chp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%chp associated but oneMicroFields%chp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%chp not associated and oneMicroFields%chp associated")
+    end if
+
+    assOld=associated(micro_g(1)%cccnp)
+    assNew=associated(oneMicroFields%cccnp)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%cccnp, oneMicroFields%cccnp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%cccnp associated but oneMicroFields%cccnp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%cccnp not associated and oneMicroFields%cccnp associated")
+    end if
+
+    assOld=associated(micro_g(1)%gccnp)
+    assNew=associated(oneMicroFields%gccnp)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%gccnp, oneMicroFields%gccnp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%gccnp associated but oneMicroFields%gccnp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%gccnp not associated and oneMicroFields%gccnp associated")
+    end if
+
+    assOld=associated(micro_g(1)%cifnp)
+    assNew=associated(oneMicroFields%cifnp)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%cifnp, oneMicroFields%cifnp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%cifnp associated but oneMicroFields%cifnp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%cifnp not associated and oneMicroFields%cifnp associated")
+    end if
+
+    assOld=associated(micro_g(1)%q2)
+    assNew=associated(oneMicroFields%q2)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%q2, oneMicroFields%q2)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%q2 associated but oneMicroFields%q2 not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%q2 not associated and oneMicroFields%q2 associated")
+    end if
+
+    assOld=associated(micro_g(1)%q6)
+    assNew=associated(oneMicroFields%q6)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%q6, oneMicroFields%q6)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%q6 associated but oneMicroFields%q6 not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%q6 not associated and oneMicroFields%q6 associated")
+    end if
+
+    assOld=associated(micro_g(1)%q7)
+    assNew=associated(oneMicroFields%q7)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%q7, oneMicroFields%q7)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%q7 associated but oneMicroFields%q7 not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%q7 not associated and oneMicroFields%q7 associated")
+    end if
+
+    assOld=associated(micro_g(1)%rei)
+    assNew=associated(oneMicroFields%rei)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rei, oneMicroFields%rei)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rei associated but oneMicroFields%rei not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rei not associated and oneMicroFields%rei associated")
+    end if
+
+    assOld=associated(micro_g(1)%rel)
+    assNew=associated(oneMicroFields%rel)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rel, oneMicroFields%rel)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rel associated but oneMicroFields%rel not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rel not associated and oneMicroFields%rel associated")
+    end if
+
+    assOld=associated(micro_g(1)%cldfr)
+    assNew=associated(oneMicroFields%cldfr)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%cldfr, oneMicroFields%cldfr)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%cldfr associated but oneMicroFields%cldfr not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%cldfr not associated and oneMicroFields%cldfr associated")
+    end if
+
+    assOld=associated(micro_g(1)%cccmp)
+    assNew=associated(oneMicroFields%cccmp)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%cccmp, oneMicroFields%cccmp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%cccmp associated but oneMicroFields%cccmp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%cccmp not associated and oneMicroFields%cccmp associated")
+    end if
+
+    assOld=associated(micro_g(1)%gccmp)
+    assNew=associated(oneMicroFields%gccmp)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%gccmp, oneMicroFields%gccmp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%gccmp associated but oneMicroFields%gccmp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%gccmp not associated and oneMicroFields%gccmp associated")
+    end if
+
+    assOld=associated(micro_g(1)%cnm1p)
+    assNew=associated(oneMicroFields%cnm1p)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%cnm1p, oneMicroFields%cnm1p)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%cnm1p associated but oneMicroFields%cnm1p not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%cnm1p not associated and oneMicroFields%cnm1p associated")
+    end if
+
+    assOld=associated(micro_g(1)%cnm2p)
+    assNew=associated(oneMicroFields%cnm2p)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%cnm2p, oneMicroFields%cnm2p)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%cnm2p associated but oneMicroFields%cnm2p not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%cnm2p not associated and oneMicroFields%cnm2p associated")
+    end if
+
+    assOld=associated(micro_g(1)%cnm3p)
+    assNew=associated(oneMicroFields%cnm3p)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%cnm3p, oneMicroFields%cnm3p)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%cnm3p associated but oneMicroFields%cnm3p not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%cnm3p not associated and oneMicroFields%cnm3p associated")
+    end if
+
+    assOld=associated(micro_g(1)%cnm8p)
+    assNew=associated(oneMicroFields%cnm8p)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%cnm8p, oneMicroFields%cnm8p)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%cnm8p associated but oneMicroFields%cnm8p not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%cnm8p not associated and oneMicroFields%cnm8p associated")
+    end if
+
+    assOld=associated(micro_g(1)%md1np)
+    assNew=associated(oneMicroFields%md1np)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%md1np, oneMicroFields%md1np)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%md1np associated but oneMicroFields%md1np not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%md1np not associated and oneMicroFields%md1np associated")
+    end if
+
+    assOld=associated(micro_g(1)%md2np)
+    assNew=associated(oneMicroFields%md2np)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%md2np, oneMicroFields%md2np)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%md2np associated but oneMicroFields%md2np not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%md2np not associated and oneMicroFields%md2np associated")
+    end if
+
+    assOld=associated(micro_g(1)%salt_filmp)
+    assNew=associated(oneMicroFields%salt_filmp)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%salt_filmp, oneMicroFields%salt_filmp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%salt_filmp associated but oneMicroFields%salt_filmp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%salt_filmp not associated and oneMicroFields%salt_filmp associated")
+    end if
+
+    assOld=associated(micro_g(1)%salt_jetp)
+    assNew=associated(oneMicroFields%salt_jetp)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%salt_jetp, oneMicroFields%salt_jetp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%salt_jetp associated but oneMicroFields%salt_jetp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%salt_jetp not associated and oneMicroFields%salt_jetp associated")
+    end if
+
+    assOld=associated(micro_g(1)%salt_spmp)
+    assNew=associated(oneMicroFields%salt_spmp)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%salt_spmp, oneMicroFields%salt_spmp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%salt_spmp associated but oneMicroFields%salt_spmp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%salt_spmp not associated and oneMicroFields%salt_spmp associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcpvr)
+    assNew=associated(oneMicroFields%pcpvr)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%pcpvr, oneMicroFields%pcpvr)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcpvr associated but oneMicroFields%pcpvr not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcpvr not associated and oneMicroFields%pcpvr associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcpvp)
+    assNew=associated(oneMicroFields%pcpvp)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%pcpvp, oneMicroFields%pcpvp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcpvp associated but oneMicroFields%pcpvp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcpvp not associated and oneMicroFields%pcpvp associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcpvs)
+    assNew=associated(oneMicroFields%pcpvs)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%pcpvs, oneMicroFields%pcpvs)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcpvs associated but oneMicroFields%pcpvs not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcpvs not associated and oneMicroFields%pcpvs associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcpva)
+    assNew=associated(oneMicroFields%pcpva)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%pcpva, oneMicroFields%pcpva)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcpva associated but oneMicroFields%pcpva not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcpva not associated and oneMicroFields%pcpva associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcpvg)
+    assNew=associated(oneMicroFields%pcpvg)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%pcpvg, oneMicroFields%pcpvg)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcpvg associated but oneMicroFields%pcpvg not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcpvg not associated and oneMicroFields%pcpvg associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcpvh)
+    assNew=associated(oneMicroFields%pcpvh)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%pcpvh, oneMicroFields%pcpvh)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcpvh associated but oneMicroFields%pcpvh not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcpvh not associated and oneMicroFields%pcpvh associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcpvd)
+    assNew=associated(oneMicroFields%pcpvd)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%pcpvd, oneMicroFields%pcpvd)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcpvd associated but oneMicroFields%pcpvd not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcpvd not associated and oneMicroFields%pcpvd associated")
+    end if
+
+    assOld=associated(micro_g(1)%nuccldr)
+    assNew=associated(oneMicroFields%nuccldr)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%nuccldr, oneMicroFields%nuccldr)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%nuccldr associated but oneMicroFields%nuccldr not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%nuccldr not associated and oneMicroFields%nuccldr associated")
+    end if
+
+    assOld=associated(micro_g(1)%nuccldc)
+    assNew=associated(oneMicroFields%nuccldc)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%nuccldc, oneMicroFields%nuccldc)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%nuccldc associated but oneMicroFields%nuccldc not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%nuccldc not associated and oneMicroFields%nuccldc associated")
+    end if
+
+    assOld=associated(micro_g(1)%nucicer)
+    assNew=associated(oneMicroFields%nucicer)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%nucicer, oneMicroFields%nucicer)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%nucicer associated but oneMicroFields%nucicer not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%nucicer not associated and oneMicroFields%nucicer associated")
+    end if
+
+    assOld=associated(micro_g(1)%nucicec)
+    assNew=associated(oneMicroFields%nucicec)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%nucicec, oneMicroFields%nucicec)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%nucicec associated but oneMicroFields%nucicec not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%nucicec not associated and oneMicroFields%nucicec associated")
+    end if
+
+    assOld=associated(micro_g(1)%inuchomr)
+    assNew=associated(oneMicroFields%inuchomr)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%inuchomr, oneMicroFields%inuchomr)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inuchomr associated but oneMicroFields%inuchomr not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inuchomr not associated and oneMicroFields%inuchomr associated")
+    end if
+
+    assOld=associated(micro_g(1)%inuchomc)
+    assNew=associated(oneMicroFields%inuchomc)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%inuchomc, oneMicroFields%inuchomc)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inuchomc associated but oneMicroFields%inuchomc not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inuchomc not associated and oneMicroFields%inuchomc associated")
+    end if
+
+    assOld=associated(micro_g(1)%inuccontr)
+    assNew=associated(oneMicroFields%inuccontr)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%inuccontr, oneMicroFields%inuccontr)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inuccontr associated but oneMicroFields%inuccontr not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inuccontr not associated and oneMicroFields%inuccontr associated")
+    end if
+
+    assOld=associated(micro_g(1)%inuccontc)
+    assNew=associated(oneMicroFields%inuccontc)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%inuccontc, oneMicroFields%inuccontc)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inuccontc associated but oneMicroFields%inuccontc not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inuccontc not associated and oneMicroFields%inuccontc associated")
+    end if
+
+    assOld=associated(micro_g(1)%inucifnr)
+    assNew=associated(oneMicroFields%inucifnr)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%inucifnr, oneMicroFields%inucifnr)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inucifnr associated but oneMicroFields%inucifnr not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inucifnr not associated and oneMicroFields%inucifnr associated")
+    end if
+
+    assOld=associated(micro_g(1)%inucifnc)
+    assNew=associated(oneMicroFields%inucifnc)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%inucifnc, oneMicroFields%inucifnc)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inucifnc associated but oneMicroFields%inucifnc not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inucifnc not associated and oneMicroFields%inucifnc associated")
+    end if
+
+    assOld=associated(micro_g(1)%inuchazr)
+    assNew=associated(oneMicroFields%inuchazr)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%inuchazr, oneMicroFields%inuchazr)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inuchazr associated but oneMicroFields%inuchazr not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inuchazr not associated and oneMicroFields%inuchazr associated")
+    end if
+
+    assOld=associated(micro_g(1)%inuchazc)
+    assNew=associated(oneMicroFields%inuchazc)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%inuchazc, oneMicroFields%inuchazc)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inuchazc associated but oneMicroFields%inuchazc not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inuchazc not associated and oneMicroFields%inuchazc associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapliq)
+    assNew=associated(oneMicroFields%vapliq)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%vapliq, oneMicroFields%vapliq)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapliq associated but oneMicroFields%vapliq not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapliq not associated and oneMicroFields%vapliq associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapice)
+    assNew=associated(oneMicroFields%vapice)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%vapice, oneMicroFields%vapice)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapice associated but oneMicroFields%vapice not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapice not associated and oneMicroFields%vapice associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapcld)
+    assNew=associated(oneMicroFields%vapcld)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%vapcld, oneMicroFields%vapcld)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapcld associated but oneMicroFields%vapcld not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapcld not associated and oneMicroFields%vapcld associated")
+    end if
+
+    assOld=associated(micro_g(1)%vaprain)
+    assNew=associated(oneMicroFields%vaprain)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%vaprain, oneMicroFields%vaprain)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vaprain associated but oneMicroFields%vaprain not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vaprain not associated and oneMicroFields%vaprain associated")
+    end if
+
+    assOld=associated(micro_g(1)%vappris)
+    assNew=associated(oneMicroFields%vappris)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%vappris, oneMicroFields%vappris)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vappris associated but oneMicroFields%vappris not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vappris not associated and oneMicroFields%vappris associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapsnow)
+    assNew=associated(oneMicroFields%vapsnow)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%vapsnow, oneMicroFields%vapsnow)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapsnow associated but oneMicroFields%vapsnow not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapsnow not associated and oneMicroFields%vapsnow associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapaggr)
+    assNew=associated(oneMicroFields%vapaggr)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%vapaggr, oneMicroFields%vapaggr)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapaggr associated but oneMicroFields%vapaggr not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapaggr not associated and oneMicroFields%vapaggr associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapgrau)
+    assNew=associated(oneMicroFields%vapgrau)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%vapgrau, oneMicroFields%vapgrau)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapgrau associated but oneMicroFields%vapgrau not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapgrau not associated and oneMicroFields%vapgrau associated")
+    end if
+
+    assOld=associated(micro_g(1)%vaphail)
+    assNew=associated(oneMicroFields%vaphail)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%vaphail, oneMicroFields%vaphail)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vaphail associated but oneMicroFields%vaphail not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vaphail not associated and oneMicroFields%vaphail associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapdriz)
+    assNew=associated(oneMicroFields%vapdriz)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%vapdriz, oneMicroFields%vapdriz)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapdriz associated but oneMicroFields%vapdriz not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapdriz not associated and oneMicroFields%vapdriz associated")
+    end if
+
+    assOld=associated(micro_g(1)%meltice)
+    assNew=associated(oneMicroFields%meltice)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%meltice, oneMicroFields%meltice)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%meltice associated but oneMicroFields%meltice not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%meltice not associated and oneMicroFields%meltice associated")
+    end if
+
+    assOld=associated(micro_g(1)%meltpris)
+    assNew=associated(oneMicroFields%meltpris)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%meltpris, oneMicroFields%meltpris)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%meltpris associated but oneMicroFields%meltpris not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%meltpris not associated and oneMicroFields%meltpris associated")
+    end if
+
+    assOld=associated(micro_g(1)%meltsnow)
+    assNew=associated(oneMicroFields%meltsnow)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%meltsnow, oneMicroFields%meltsnow)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%meltsnow associated but oneMicroFields%meltsnow not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%meltsnow not associated and oneMicroFields%meltsnow associated")
+    end if
+
+    assOld=associated(micro_g(1)%meltaggr)
+    assNew=associated(oneMicroFields%meltaggr)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%meltaggr, oneMicroFields%meltaggr)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%meltaggr associated but oneMicroFields%meltaggr not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%meltaggr not associated and oneMicroFields%meltaggr associated")
+    end if
+
+    assOld=associated(micro_g(1)%meltgrau)
+    assNew=associated(oneMicroFields%meltgrau)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%meltgrau, oneMicroFields%meltgrau)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%meltgrau associated but oneMicroFields%meltgrau not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%meltgrau not associated and oneMicroFields%meltgrau associated")
+    end if
+
+    assOld=associated(micro_g(1)%melthail)
+    assNew=associated(oneMicroFields%melthail)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%melthail, oneMicroFields%melthail)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%melthail associated but oneMicroFields%melthail not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%melthail not associated and oneMicroFields%melthail associated")
+    end if
+
+    assOld=associated(micro_g(1)%cld2rain)
+    assNew=associated(oneMicroFields%cld2rain)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%cld2rain, oneMicroFields%cld2rain)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%cld2rain associated but oneMicroFields%cld2rain not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%cld2rain not associated and oneMicroFields%cld2rain associated")
+    end if
+
+    assOld=associated(micro_g(1)%rimecld)
+    assNew=associated(oneMicroFields%rimecld)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rimecld, oneMicroFields%rimecld)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rimecld associated but oneMicroFields%rimecld not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rimecld not associated and oneMicroFields%rimecld associated")
+    end if
+
+    assOld=associated(micro_g(1)%rimecldsnow)
+    assNew=associated(oneMicroFields%rimecldsnow)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rimecldsnow, oneMicroFields%rimecldsnow)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rimecldsnow associated but oneMicroFields%rimecldsnow not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rimecldsnow not associated and oneMicroFields%rimecldsnow associated")
+    end if
+
+    assOld=associated(micro_g(1)%rimecldaggr)
+    assNew=associated(oneMicroFields%rimecldaggr)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rimecldaggr, oneMicroFields%rimecldaggr)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rimecldaggr associated but oneMicroFields%rimecldaggr not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rimecldaggr not associated and oneMicroFields%rimecldaggr associated")
+    end if
+
+    assOld=associated(micro_g(1)%rimecldgrau)
+    assNew=associated(oneMicroFields%rimecldgrau)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rimecldgrau, oneMicroFields%rimecldgrau)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rimecldgrau associated but oneMicroFields%rimecldgrau not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rimecldgrau not associated and oneMicroFields%rimecldgrau associated")
+    end if
+
+    assOld=associated(micro_g(1)%rimecldhail)
+    assNew=associated(oneMicroFields%rimecldhail)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rimecldhail, oneMicroFields%rimecldhail)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rimecldhail associated but oneMicroFields%rimecldhail not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rimecldhail not associated and oneMicroFields%rimecldhail associated")
+    end if
+
+    assOld=associated(micro_g(1)%rain2ice)
+    assNew=associated(oneMicroFields%rain2ice)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rain2ice, oneMicroFields%rain2ice)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rain2ice associated but oneMicroFields%rain2ice not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rain2ice not associated and oneMicroFields%rain2ice associated")
+    end if
+
+    assOld=associated(micro_g(1)%rain2pr)
+    assNew=associated(oneMicroFields%rain2pr)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rain2pr, oneMicroFields%rain2pr)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rain2pr associated but oneMicroFields%rain2pr not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rain2pr not associated and oneMicroFields%rain2pr associated")
+    end if
+
+    assOld=associated(micro_g(1)%rain2sn)
+    assNew=associated(oneMicroFields%rain2sn)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rain2sn, oneMicroFields%rain2sn)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rain2sn associated but oneMicroFields%rain2sn not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rain2sn not associated and oneMicroFields%rain2sn associated")
+    end if
+
+    assOld=associated(micro_g(1)%rain2ag)
+    assNew=associated(oneMicroFields%rain2ag)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rain2ag, oneMicroFields%rain2ag)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rain2ag associated but oneMicroFields%rain2ag not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rain2ag not associated and oneMicroFields%rain2ag associated")
+    end if
+
+    assOld=associated(micro_g(1)%rain2gr)
+    assNew=associated(oneMicroFields%rain2gr)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rain2gr, oneMicroFields%rain2gr)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rain2gr associated but oneMicroFields%rain2gr not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rain2gr not associated and oneMicroFields%rain2gr associated")
+    end if
+
+    assOld=associated(micro_g(1)%rain2ha)
+    assNew=associated(oneMicroFields%rain2ha)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rain2ha, oneMicroFields%rain2ha)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rain2ha associated but oneMicroFields%rain2ha not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rain2ha not associated and oneMicroFields%rain2ha associated")
+    end if
+
+    assOld=associated(micro_g(1)%rain2ha_xtra)
+    assNew=associated(oneMicroFields%rain2ha_xtra)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rain2ha_xtra, oneMicroFields%rain2ha_xtra)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rain2ha_xtra associated but oneMicroFields%rain2ha_xtra not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rain2ha_xtra not associated and oneMicroFields%rain2ha_xtra associated")
+    end if
+
+    assOld=associated(micro_g(1)%ice2rain)
+    assNew=associated(oneMicroFields%ice2rain)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%ice2rain, oneMicroFields%ice2rain)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%ice2rain associated but oneMicroFields%ice2rain not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%ice2rain not associated and oneMicroFields%ice2rain associated")
+    end if
+
+    assOld=associated(micro_g(1)%aggregate)
+    assNew=associated(oneMicroFields%aggregate)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%aggregate, oneMicroFields%aggregate)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%aggregate associated but oneMicroFields%aggregate not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%aggregate not associated and oneMicroFields%aggregate associated")
+    end if
+
+    assOld=associated(micro_g(1)%aggrselfpris)
+    assNew=associated(oneMicroFields%aggrselfpris)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%aggrselfpris, oneMicroFields%aggrselfpris)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%aggrselfpris associated but oneMicroFields%aggrselfpris not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%aggrselfpris not associated and oneMicroFields%aggrselfpris associated")
+    end if
+
+    assOld=associated(micro_g(1)%aggrselfsnow)
+    assNew=associated(oneMicroFields%aggrselfsnow)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%aggrselfsnow, oneMicroFields%aggrselfsnow)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%aggrselfsnow associated but oneMicroFields%aggrselfsnow not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%aggrselfsnow not associated and oneMicroFields%aggrselfsnow associated")
+    end if
+
+    assOld=associated(micro_g(1)%aggrprissnow)
+    assNew=associated(oneMicroFields%aggrprissnow)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%aggrprissnow, oneMicroFields%aggrprissnow)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%aggrprissnow associated but oneMicroFields%aggrprissnow not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%aggrprissnow not associated and oneMicroFields%aggrprissnow associated")
+    end if
+
+    assOld=associated(micro_g(1)%latheatvap)
+    assNew=associated(oneMicroFields%latheatvap)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%latheatvap, oneMicroFields%latheatvap)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%latheatvap associated but oneMicroFields%latheatvap not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%latheatvap not associated and oneMicroFields%latheatvap associated")
+    end if
+
+    assOld=associated(micro_g(1)%latheatfrz)
+    assNew=associated(oneMicroFields%latheatfrz)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%latheatfrz, oneMicroFields%latheatfrz)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%latheatfrz associated but oneMicroFields%latheatfrz not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%latheatfrz not associated and oneMicroFields%latheatfrz associated")
+    end if
+
+    assOld=associated(micro_g(1)%nuccldrt)
+    assNew=associated(oneMicroFields%nuccldrt)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%nuccldrt, oneMicroFields%nuccldrt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%nuccldrt associated but oneMicroFields%nuccldrt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%nuccldrt not associated and oneMicroFields%nuccldrt associated")
+    end if
+
+    assOld=associated(micro_g(1)%nuccldct)
+    assNew=associated(oneMicroFields%nuccldct)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%nuccldct, oneMicroFields%nuccldct)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%nuccldct associated but oneMicroFields%nuccldct not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%nuccldct not associated and oneMicroFields%nuccldct associated")
+    end if
+
+    assOld=associated(micro_g(1)%nucicert)
+    assNew=associated(oneMicroFields%nucicert)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%nucicert, oneMicroFields%nucicert)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%nucicert associated but oneMicroFields%nucicert not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%nucicert not associated and oneMicroFields%nucicert associated")
+    end if
+
+    assOld=associated(micro_g(1)%nucicect)
+    assNew=associated(oneMicroFields%nucicect)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%nucicect, oneMicroFields%nucicect)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%nucicect associated but oneMicroFields%nucicect not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%nucicect not associated and oneMicroFields%nucicect associated")
+    end if
+
+    assOld=associated(micro_g(1)%inuchomrt)
+    assNew=associated(oneMicroFields%inuchomrt)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%inuchomrt, oneMicroFields%inuchomrt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inuchomrt associated but oneMicroFields%inuchomrt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inuchomrt not associated and oneMicroFields%inuchomrt associated")
+    end if
+
+    assOld=associated(micro_g(1)%inuchomct)
+    assNew=associated(oneMicroFields%inuchomct)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%inuchomct, oneMicroFields%inuchomct)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inuchomct associated but oneMicroFields%inuchomct not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inuchomct not associated and oneMicroFields%inuchomct associated")
+    end if
+
+    assOld=associated(micro_g(1)%inuccontrt)
+    assNew=associated(oneMicroFields%inuccontrt)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%inuccontrt, oneMicroFields%inuccontrt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inuccontrt associated but oneMicroFields%inuccontrt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inuccontrt not associated and oneMicroFields%inuccontrt associated")
+    end if
+
+    assOld=associated(micro_g(1)%inuccontct)
+    assNew=associated(oneMicroFields%inuccontct)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%inuccontct, oneMicroFields%inuccontct)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inuccontct associated but oneMicroFields%inuccontct not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inuccontct not associated and oneMicroFields%inuccontct associated")
+    end if
+
+    assOld=associated(micro_g(1)%inucifnrt)
+    assNew=associated(oneMicroFields%inucifnrt)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%inucifnrt, oneMicroFields%inucifnrt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inucifnrt associated but oneMicroFields%inucifnrt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inucifnrt not associated and oneMicroFields%inucifnrt associated")
+    end if
+
+    assOld=associated(micro_g(1)%inucifnct)
+    assNew=associated(oneMicroFields%inucifnct)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%inucifnct, oneMicroFields%inucifnct)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inucifnct associated but oneMicroFields%inucifnct not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inucifnct not associated and oneMicroFields%inucifnct associated")
+    end if
+
+    assOld=associated(micro_g(1)%inuchazrt)
+    assNew=associated(oneMicroFields%inuchazrt)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%inuchazrt, oneMicroFields%inuchazrt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inuchazrt associated but oneMicroFields%inuchazrt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inuchazrt not associated and oneMicroFields%inuchazrt associated")
+    end if
+
+    assOld=associated(micro_g(1)%inuchazct)
+    assNew=associated(oneMicroFields%inuchazct)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%inuchazct, oneMicroFields%inuchazct)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inuchazct associated but oneMicroFields%inuchazct not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inuchazct not associated and oneMicroFields%inuchazct associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapliqt)
+    assNew=associated(oneMicroFields%vapliqt)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%vapliqt, oneMicroFields%vapliqt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapliqt associated but oneMicroFields%vapliqt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapliqt not associated and oneMicroFields%vapliqt associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapicet)
+    assNew=associated(oneMicroFields%vapicet)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%vapicet, oneMicroFields%vapicet)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapicet associated but oneMicroFields%vapicet not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapicet not associated and oneMicroFields%vapicet associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapcldt)
+    assNew=associated(oneMicroFields%vapcldt)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%vapcldt, oneMicroFields%vapcldt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapcldt associated but oneMicroFields%vapcldt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapcldt not associated and oneMicroFields%vapcldt associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapraint)
+    assNew=associated(oneMicroFields%vapraint)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%vapraint, oneMicroFields%vapraint)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapraint associated but oneMicroFields%vapraint not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapraint not associated and oneMicroFields%vapraint associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapprist)
+    assNew=associated(oneMicroFields%vapprist)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%vapprist, oneMicroFields%vapprist)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapprist associated but oneMicroFields%vapprist not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapprist not associated and oneMicroFields%vapprist associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapsnowt)
+    assNew=associated(oneMicroFields%vapsnowt)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%vapsnowt, oneMicroFields%vapsnowt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapsnowt associated but oneMicroFields%vapsnowt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapsnowt not associated and oneMicroFields%vapsnowt associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapaggrt)
+    assNew=associated(oneMicroFields%vapaggrt)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%vapaggrt, oneMicroFields%vapaggrt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapaggrt associated but oneMicroFields%vapaggrt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapaggrt not associated and oneMicroFields%vapaggrt associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapgraut)
+    assNew=associated(oneMicroFields%vapgraut)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%vapgraut, oneMicroFields%vapgraut)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapgraut associated but oneMicroFields%vapgraut not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapgraut not associated and oneMicroFields%vapgraut associated")
+    end if
+
+    assOld=associated(micro_g(1)%vaphailt)
+    assNew=associated(oneMicroFields%vaphailt)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%vaphailt, oneMicroFields%vaphailt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vaphailt associated but oneMicroFields%vaphailt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vaphailt not associated and oneMicroFields%vaphailt associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapdrizt)
+    assNew=associated(oneMicroFields%vapdrizt)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%vapdrizt, oneMicroFields%vapdrizt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapdrizt associated but oneMicroFields%vapdrizt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapdrizt not associated and oneMicroFields%vapdrizt associated")
+    end if
+
+    assOld=associated(micro_g(1)%melticet)
+    assNew=associated(oneMicroFields%melticet)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%melticet, oneMicroFields%melticet)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%melticet associated but oneMicroFields%melticet not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%melticet not associated and oneMicroFields%melticet associated")
+    end if
+
+    assOld=associated(micro_g(1)%meltprist)
+    assNew=associated(oneMicroFields%meltprist)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%meltprist, oneMicroFields%meltprist)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%meltprist associated but oneMicroFields%meltprist not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%meltprist not associated and oneMicroFields%meltprist associated")
+    end if
+
+    assOld=associated(micro_g(1)%meltsnowt)
+    assNew=associated(oneMicroFields%meltsnowt)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%meltsnowt, oneMicroFields%meltsnowt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%meltsnowt associated but oneMicroFields%meltsnowt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%meltsnowt not associated and oneMicroFields%meltsnowt associated")
+    end if
+
+    assOld=associated(micro_g(1)%meltaggrt)
+    assNew=associated(oneMicroFields%meltaggrt)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%meltaggrt, oneMicroFields%meltaggrt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%meltaggrt associated but oneMicroFields%meltaggrt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%meltaggrt not associated and oneMicroFields%meltaggrt associated")
+    end if
+
+    assOld=associated(micro_g(1)%meltgraut)
+    assNew=associated(oneMicroFields%meltgraut)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%meltgraut, oneMicroFields%meltgraut)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%meltgraut associated but oneMicroFields%meltgraut not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%meltgraut not associated and oneMicroFields%meltgraut associated")
+    end if
+
+    assOld=associated(micro_g(1)%melthailt)
+    assNew=associated(oneMicroFields%melthailt)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%melthailt, oneMicroFields%melthailt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%melthailt associated but oneMicroFields%melthailt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%melthailt not associated and oneMicroFields%melthailt associated")
+    end if
+
+    assOld=associated(micro_g(1)%cld2raint)
+    assNew=associated(oneMicroFields%cld2raint)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%cld2raint, oneMicroFields%cld2raint)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%cld2raint associated but oneMicroFields%cld2raint not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%cld2raint not associated and oneMicroFields%cld2raint associated")
+    end if
+
+    assOld=associated(micro_g(1)%rimecldt)
+    assNew=associated(oneMicroFields%rimecldt)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rimecldt, oneMicroFields%rimecldt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rimecldt associated but oneMicroFields%rimecldt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rimecldt not associated and oneMicroFields%rimecldt associated")
+    end if
+
+    assOld=associated(micro_g(1)%rimecldsnowt)
+    assNew=associated(oneMicroFields%rimecldsnowt)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rimecldsnowt, oneMicroFields%rimecldsnowt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rimecldsnowt associated but oneMicroFields%rimecldsnowt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rimecldsnowt not associated and oneMicroFields%rimecldsnowt associated")
+    end if
+
+    assOld=associated(micro_g(1)%rimecldaggrt)
+    assNew=associated(oneMicroFields%rimecldaggrt)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rimecldaggrt, oneMicroFields%rimecldaggrt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rimecldaggrt associated but oneMicroFields%rimecldaggrt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rimecldaggrt not associated and oneMicroFields%rimecldaggrt associated")
+    end if
+
+    assOld=associated(micro_g(1)%rimecldgraut)
+    assNew=associated(oneMicroFields%rimecldgraut)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rimecldgraut, oneMicroFields%rimecldgraut)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rimecldgraut associated but oneMicroFields%rimecldgraut not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rimecldgraut not associated and oneMicroFields%rimecldgraut associated")
+    end if
+
+    assOld=associated(micro_g(1)%rimecldhailt)
+    assNew=associated(oneMicroFields%rimecldhailt)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rimecldhailt, oneMicroFields%rimecldhailt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rimecldhailt associated but oneMicroFields%rimecldhailt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rimecldhailt not associated and oneMicroFields%rimecldhailt associated")
+    end if
+
+    assOld=associated(micro_g(1)%rain2icet)
+    assNew=associated(oneMicroFields%rain2icet)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rain2icet, oneMicroFields%rain2icet)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rain2icet associated but oneMicroFields%rain2icet not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rain2icet not associated and oneMicroFields%rain2icet associated")
+    end if
+
+    assOld=associated(micro_g(1)%rain2prt)
+    assNew=associated(oneMicroFields%rain2prt)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rain2prt, oneMicroFields%rain2prt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rain2prt associated but oneMicroFields%rain2prt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rain2prt not associated and oneMicroFields%rain2prt associated")
+    end if
+
+    assOld=associated(micro_g(1)%rain2snt)
+    assNew=associated(oneMicroFields%rain2snt)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rain2snt, oneMicroFields%rain2snt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rain2snt associated but oneMicroFields%rain2snt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rain2snt not associated and oneMicroFields%rain2snt associated")
+    end if
+
+    assOld=associated(micro_g(1)%rain2agt)
+    assNew=associated(oneMicroFields%rain2agt)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rain2agt, oneMicroFields%rain2agt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rain2agt associated but oneMicroFields%rain2agt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rain2agt not associated and oneMicroFields%rain2agt associated")
+    end if
+
+    assOld=associated(micro_g(1)%rain2grt)
+    assNew=associated(oneMicroFields%rain2grt)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rain2grt, oneMicroFields%rain2grt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rain2grt associated but oneMicroFields%rain2grt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rain2grt not associated and oneMicroFields%rain2grt associated")
+    end if
+
+    assOld=associated(micro_g(1)%rain2hat)
+    assNew=associated(oneMicroFields%rain2hat)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rain2hat, oneMicroFields%rain2hat)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rain2hat associated but oneMicroFields%rain2hat not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rain2hat not associated and oneMicroFields%rain2hat associated")
+    end if
+
+    assOld=associated(micro_g(1)%rain2ha_xtrat)
+    assNew=associated(oneMicroFields%rain2ha_xtrat)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%rain2ha_xtrat, oneMicroFields%rain2ha_xtrat)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rain2ha_xtrat associated but oneMicroFields%rain2ha_xtrat not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rain2ha_xtrat not associated and oneMicroFields%rain2ha_xtrat associated")
+    end if
+
+    assOld=associated(micro_g(1)%ice2raint)
+    assNew=associated(oneMicroFields%ice2raint)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%ice2raint, oneMicroFields%ice2raint)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%ice2raint associated but oneMicroFields%ice2raint not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%ice2raint not associated and oneMicroFields%ice2raint associated")
+    end if
+
+    assOld=associated(micro_g(1)%aggregatet)
+    assNew=associated(oneMicroFields%aggregatet)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%aggregatet, oneMicroFields%aggregatet)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%aggregatet associated but oneMicroFields%aggregatet not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%aggregatet not associated and oneMicroFields%aggregatet associated")
+    end if
+
+    assOld=associated(micro_g(1)%aggrselfprist)
+    assNew=associated(oneMicroFields%aggrselfprist)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%aggrselfprist, oneMicroFields%aggrselfprist)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%aggrselfprist associated but oneMicroFields%aggrselfprist not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%aggrselfprist not associated and oneMicroFields%aggrselfprist associated")
+    end if
+
+    assOld=associated(micro_g(1)%aggrselfsnowt)
+    assNew=associated(oneMicroFields%aggrselfsnowt)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%aggrselfsnowt, oneMicroFields%aggrselfsnowt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%aggrselfsnowt associated but oneMicroFields%aggrselfsnowt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%aggrselfsnowt not associated and oneMicroFields%aggrselfsnowt associated")
+    end if
+
+    assOld=associated(micro_g(1)%aggrprissnowt)
+    assNew=associated(oneMicroFields%aggrprissnowt)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%aggrprissnowt, oneMicroFields%aggrprissnowt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%aggrprissnowt associated but oneMicroFields%aggrprissnowt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%aggrprissnowt not associated and oneMicroFields%aggrprissnowt associated")
+    end if
+
+    assOld=associated(micro_g(1)%latheatvapt)
+    assNew=associated(oneMicroFields%latheatvapt)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%latheatvapt, oneMicroFields%latheatvapt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%latheatvapt associated but oneMicroFields%latheatvapt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%latheatvapt not associated and oneMicroFields%latheatvapt associated")
+    end if
+
+    assOld=associated(micro_g(1)%latheatfrzt)
+    assNew=associated(oneMicroFields%latheatfrzt)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%latheatfrzt, oneMicroFields%latheatfrzt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%latheatfrzt associated but oneMicroFields%latheatfrzt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%latheatfrzt not associated and oneMicroFields%latheatfrzt associated")
+    end if
+
+    assOld=associated(micro_g(1)%accpr)
+    assNew=associated(oneMicroFields%accpr)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%accpr, oneMicroFields%accpr)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%accpr associated but oneMicroFields%accpr not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%accpr not associated and oneMicroFields%accpr associated")
+    end if
+
+    assOld=associated(micro_g(1)%accpp)
+    assNew=associated(oneMicroFields%accpp)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%accpp, oneMicroFields%accpp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%accpp associated but oneMicroFields%accpp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%accpp not associated and oneMicroFields%accpp associated")
+    end if
+
+    assOld=associated(micro_g(1)%accps)
+    assNew=associated(oneMicroFields%accps)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%accps, oneMicroFields%accps)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%accps associated but oneMicroFields%accps not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%accps not associated and oneMicroFields%accps associated")
+    end if
+
+    assOld=associated(micro_g(1)%accpa)
+    assNew=associated(oneMicroFields%accpa)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%accpa, oneMicroFields%accpa)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%accpa associated but oneMicroFields%accpa not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%accpa not associated and oneMicroFields%accpa associated")
+    end if
+
+    assOld=associated(micro_g(1)%accpg)
+    assNew=associated(oneMicroFields%accpg)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%accpg, oneMicroFields%accpg)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%accpg associated but oneMicroFields%accpg not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%accpg not associated and oneMicroFields%accpg associated")
+    end if
+
+    assOld=associated(micro_g(1)%accph)
+    assNew=associated(oneMicroFields%accph)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%accph, oneMicroFields%accph)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%accph associated but oneMicroFields%accph not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%accph not associated and oneMicroFields%accph associated")
+    end if
+
+    assOld=associated(micro_g(1)%accpd)
+    assNew=associated(oneMicroFields%accpd)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%accpd, oneMicroFields%accpd)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%accpd associated but oneMicroFields%accpd not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%accpd not associated and oneMicroFields%accpd associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcprr)
+    assNew=associated(oneMicroFields%pcprr)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%pcprr, oneMicroFields%pcprr)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcprr associated but oneMicroFields%pcprr not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcprr not associated and oneMicroFields%pcprr associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcprp)
+    assNew=associated(oneMicroFields%pcprp)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%pcprp, oneMicroFields%pcprp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcprp associated but oneMicroFields%pcprp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcprp not associated and oneMicroFields%pcprp associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcprs)
+    assNew=associated(oneMicroFields%pcprs)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%pcprs, oneMicroFields%pcprs)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcprs associated but oneMicroFields%pcprs not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcprs not associated and oneMicroFields%pcprs associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcpra)
+    assNew=associated(oneMicroFields%pcpra)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%pcpra, oneMicroFields%pcpra)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcpra associated but oneMicroFields%pcpra not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcpra not associated and oneMicroFields%pcpra associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcprg)
+    assNew=associated(oneMicroFields%pcprg)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%pcprg, oneMicroFields%pcprg)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcprg associated but oneMicroFields%pcprg not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcprg not associated and oneMicroFields%pcprg associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcprh)
+    assNew=associated(oneMicroFields%pcprh)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%pcprh, oneMicroFields%pcprh)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcprh associated but oneMicroFields%pcprh not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcprh not associated and oneMicroFields%pcprh associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcprd)
+    assNew=associated(oneMicroFields%pcprd)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%pcprd, oneMicroFields%pcprd)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcprd associated but oneMicroFields%pcprd not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcprd not associated and oneMicroFields%pcprd associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcpg)
+    assNew=associated(oneMicroFields%pcpg)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%pcpg, oneMicroFields%pcpg)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcpg associated but oneMicroFields%pcpg not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcpg not associated and oneMicroFields%pcpg associated")
+    end if
+
+    assOld=associated(micro_g(1)%qpcpg)
+    assNew=associated(oneMicroFields%qpcpg)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%qpcpg, oneMicroFields%qpcpg)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%qpcpg associated but oneMicroFields%qpcpg not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%qpcpg not associated and oneMicroFields%qpcpg associated")
+    end if
+
+    assOld=associated(micro_g(1)%dpcpg)
+    assNew=associated(oneMicroFields%dpcpg)
+    if (assOld .and. assNew) then
+       call ToCopy(micro_g(1)%dpcpg, oneMicroFields%dpcpg)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%dpcpg associated but oneMicroFields%dpcpg not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%dpcpg not associated and oneMicroFields%dpcpg associated")
+    end if
+
+  end subroutine DeepCopyToMicroFields
+
+
+
+
+  subroutine DeepCopyFromMicroFields(oneMicroFields, from)
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
+    character(len=*), intent(in) :: from
+
+    logical :: assOld, assNew
+    character(len=*), parameter :: h="**(DeepCopyFromMicroFields)**"
+
+    if (copyFrom /= "") then
+       call fatal_error(h//" invoked from "//trim(adjustl(from))//&
+            " just after invoked from "//trim(adjustl(copyFrom)))
+    end if
+
+    copyTo=""
+    copyFrom=from
+
+    assOld=associated(micro_g(1)%rcp)
+    assNew=associated(oneMicroFields%rcp)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rcp, micro_g(1)%rcp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rcp associated but oneMicroFields%rcp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rcp not associated and oneMicroFields%rcp associated")
+    end if
+
+    assOld=associated(micro_g(1)%rdp)
+    assNew=associated(oneMicroFields%rdp)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rdp, micro_g(1)%rdp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rdp associated but oneMicroFields%rdp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rdp not associated and oneMicroFields%rdp associated")
+    end if
+
+    assOld=associated(micro_g(1)%rrp)
+    assNew=associated(oneMicroFields%rrp)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rrp, micro_g(1)%rrp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rrp associated but oneMicroFields%rrp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rrp not associated and oneMicroFields%rrp associated")
+    end if
+
+    assOld=associated(micro_g(1)%rpp)
+    assNew=associated(oneMicroFields%rpp)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rpp, micro_g(1)%rpp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rpp associated but oneMicroFields%rpp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rpp not associated and oneMicroFields%rpp associated")
+    end if
+
+    assOld=associated(micro_g(1)%rsp)
+    assNew=associated(oneMicroFields%rsp)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rsp, micro_g(1)%rsp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rsp associated but oneMicroFields%rsp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rsp not associated and oneMicroFields%rsp associated")
+    end if
+    assOld=associated(micro_g(1)%rap)
+    assNew=associated(oneMicroFields%rap)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rap, micro_g(1)%rap)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rap associated but oneMicroFields%rap not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rap not associated and oneMicroFields%rap associated")
+    end if
+
+    assOld=associated(micro_g(1)%rgp)
+    assNew=associated(oneMicroFields%rgp)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rgp, micro_g(1)%rgp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rgp associated but oneMicroFields%rgp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rgp not associated and oneMicroFields%rgp associated")
+    end if
+
+    assOld=associated(micro_g(1)%rhp)
+    assNew=associated(oneMicroFields%rhp)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rhp, micro_g(1)%rhp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rhp associated but oneMicroFields%rhp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rhp not associated and oneMicroFields%rhp associated")
+    end if
+
+    assOld=associated(micro_g(1)%ccp)
+    assNew=associated(oneMicroFields%ccp)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%ccp, micro_g(1)%ccp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%ccp associated but oneMicroFields%ccp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%ccp not associated and oneMicroFields%ccp associated")
+    end if
+
+    assOld=associated(micro_g(1)%cdp)
+    assNew=associated(oneMicroFields%cdp)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%cdp, micro_g(1)%cdp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%cdp associated but oneMicroFields%cdp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%cdp not associated and oneMicroFields%cdp associated")
+    end if
+
+    assOld=associated(micro_g(1)%crp)
+    assNew=associated(oneMicroFields%crp)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%crp, micro_g(1)%crp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%crp associated but oneMicroFields%crp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%crp not associated and oneMicroFields%crp associated")
+    end if
+
+    assOld=associated(micro_g(1)%cpp)
+    assNew=associated(oneMicroFields%cpp)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%cpp, micro_g(1)%cpp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%cpp associated but oneMicroFields%cpp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%cpp not associated and oneMicroFields%cpp associated")
+    end if
+
+    assOld=associated(micro_g(1)%csp)
+    assNew=associated(oneMicroFields%csp)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%csp, micro_g(1)%csp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%csp associated but oneMicroFields%csp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%csp not associated and oneMicroFields%csp associated")
+    end if
+
+    assOld=associated(micro_g(1)%cap)
+    assNew=associated(oneMicroFields%cap)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%cap, micro_g(1)%cap)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%cap associated but oneMicroFields%cap not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%cap not associated and oneMicroFields%cap associated")
+    end if
+
+    assOld=associated(micro_g(1)%cgp)
+    assNew=associated(oneMicroFields%cgp)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%cgp, micro_g(1)%cgp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%cgp associated but oneMicroFields%cgp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%cgp not associated and oneMicroFields%cgp associated")
+    end if
+
+    assOld=associated(micro_g(1)%chp)
+    assNew=associated(oneMicroFields%chp)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%chp, micro_g(1)%chp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%chp associated but oneMicroFields%chp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%chp not associated and oneMicroFields%chp associated")
+    end if
+
+    assOld=associated(micro_g(1)%cccnp)
+    assNew=associated(oneMicroFields%cccnp)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%cccnp, micro_g(1)%cccnp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%cccnp associated but oneMicroFields%cccnp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%cccnp not associated and oneMicroFields%cccnp associated")
+    end if
+
+    assOld=associated(micro_g(1)%gccnp)
+    assNew=associated(oneMicroFields%gccnp)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%gccnp, micro_g(1)%gccnp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%gccnp associated but oneMicroFields%gccnp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%gccnp not associated and oneMicroFields%gccnp associated")
+    end if
+
+    assOld=associated(micro_g(1)%cifnp)
+    assNew=associated(oneMicroFields%cifnp)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%cifnp, micro_g(1)%cifnp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%cifnp associated but oneMicroFields%cifnp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%cifnp not associated and oneMicroFields%cifnp associated")
+    end if
+
+    assOld=associated(micro_g(1)%q2)
+    assNew=associated(oneMicroFields%q2)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%q2, micro_g(1)%q2)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%q2 associated but oneMicroFields%q2 not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%q2 not associated and oneMicroFields%q2 associated")
+    end if
+
+    assOld=associated(micro_g(1)%q6)
+    assNew=associated(oneMicroFields%q6)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%q6, micro_g(1)%q6)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%q6 associated but oneMicroFields%q6 not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%q6 not associated and oneMicroFields%q6 associated")
+    end if
+
+    assOld=associated(micro_g(1)%q7)
+    assNew=associated(oneMicroFields%q7)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%q7, micro_g(1)%q7)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%q7 associated but oneMicroFields%q7 not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%q7 not associated and oneMicroFields%q7 associated")
+    end if
+
+    assOld=associated(micro_g(1)%rei)
+    assNew=associated(oneMicroFields%rei)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rei, micro_g(1)%rei)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rei associated but oneMicroFields%rei not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rei not associated and oneMicroFields%rei associated")
+    end if
+
+    assOld=associated(micro_g(1)%rel)
+    assNew=associated(oneMicroFields%rel)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rel, micro_g(1)%rel)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rel associated but oneMicroFields%rel not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rel not associated and oneMicroFields%rel associated")
+    end if
+
+    assOld=associated(micro_g(1)%cldfr)
+    assNew=associated(oneMicroFields%cldfr)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%cldfr, micro_g(1)%cldfr)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%cldfr associated but oneMicroFields%cldfr not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%cldfr not associated and oneMicroFields%cldfr associated")
+    end if
+
+    assOld=associated(micro_g(1)%cccmp)
+    assNew=associated(oneMicroFields%cccmp)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%cccmp, micro_g(1)%cccmp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%cccmp associated but oneMicroFields%cccmp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%cccmp not associated and oneMicroFields%cccmp associated")
+    end if
+
+    assOld=associated(micro_g(1)%gccmp)
+    assNew=associated(oneMicroFields%gccmp)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%gccmp, micro_g(1)%gccmp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%gccmp associated but oneMicroFields%gccmp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%gccmp not associated and oneMicroFields%gccmp associated")
+    end if
+
+    assOld=associated(micro_g(1)%cnm1p)
+    assNew=associated(oneMicroFields%cnm1p)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%cnm1p, micro_g(1)%cnm1p)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%cnm1p associated but oneMicroFields%cnm1p not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%cnm1p not associated and oneMicroFields%cnm1p associated")
+    end if
+
+    assOld=associated(micro_g(1)%cnm2p)
+    assNew=associated(oneMicroFields%cnm2p)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%cnm2p, micro_g(1)%cnm2p)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%cnm2p associated but oneMicroFields%cnm2p not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%cnm2p not associated and oneMicroFields%cnm2p associated")
+    end if
+
+    assOld=associated(micro_g(1)%cnm3p)
+    assNew=associated(oneMicroFields%cnm3p)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%cnm3p, micro_g(1)%cnm3p)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%cnm3p associated but oneMicroFields%cnm3p not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%cnm3p not associated and oneMicroFields%cnm3p associated")
+    end if
+
+    assOld=associated(micro_g(1)%cnm8p)
+    assNew=associated(oneMicroFields%cnm8p)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%cnm8p, micro_g(1)%cnm8p)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%cnm8p associated but oneMicroFields%cnm8p not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%cnm8p not associated and oneMicroFields%cnm8p associated")
+    end if
+
+    assOld=associated(micro_g(1)%md1np)
+    assNew=associated(oneMicroFields%md1np)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%md1np, micro_g(1)%md1np)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%md1np associated but oneMicroFields%md1np not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%md1np not associated and oneMicroFields%md1np associated")
+    end if
+
+    assOld=associated(micro_g(1)%md2np)
+    assNew=associated(oneMicroFields%md2np)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%md2np, micro_g(1)%md2np)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%md2np associated but oneMicroFields%md2np not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%md2np not associated and oneMicroFields%md2np associated")
+    end if
+
+    assOld=associated(micro_g(1)%salt_filmp)
+    assNew=associated(oneMicroFields%salt_filmp)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%salt_filmp, micro_g(1)%salt_filmp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%salt_filmp associated but oneMicroFields%salt_filmp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%salt_filmp not associated and oneMicroFields%salt_filmp associated")
+    end if
+
+    assOld=associated(micro_g(1)%salt_jetp)
+    assNew=associated(oneMicroFields%salt_jetp)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%salt_jetp, micro_g(1)%salt_jetp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%salt_jetp associated but oneMicroFields%salt_jetp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%salt_jetp not associated and oneMicroFields%salt_jetp associated")
+    end if
+
+    assOld=associated(micro_g(1)%salt_spmp)
+    assNew=associated(oneMicroFields%salt_spmp)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%salt_spmp, micro_g(1)%salt_spmp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%salt_spmp associated but oneMicroFields%salt_spmp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%salt_spmp not associated and oneMicroFields%salt_spmp associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcpvr)
+    assNew=associated(oneMicroFields%pcpvr)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%pcpvr, micro_g(1)%pcpvr)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcpvr associated but oneMicroFields%pcpvr not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcpvr not associated and oneMicroFields%pcpvr associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcpvp)
+    assNew=associated(oneMicroFields%pcpvp)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%pcpvp, micro_g(1)%pcpvp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcpvp associated but oneMicroFields%pcpvp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcpvp not associated and oneMicroFields%pcpvp associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcpvs)
+    assNew=associated(oneMicroFields%pcpvs)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%pcpvs, micro_g(1)%pcpvs)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcpvs associated but oneMicroFields%pcpvs not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcpvs not associated and oneMicroFields%pcpvs associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcpva)
+    assNew=associated(oneMicroFields%pcpva)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%pcpva, micro_g(1)%pcpva)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcpva associated but oneMicroFields%pcpva not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcpva not associated and oneMicroFields%pcpva associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcpvg)
+    assNew=associated(oneMicroFields%pcpvg)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%pcpvg, micro_g(1)%pcpvg)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcpvg associated but oneMicroFields%pcpvg not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcpvg not associated and oneMicroFields%pcpvg associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcpvh)
+    assNew=associated(oneMicroFields%pcpvh)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%pcpvh, micro_g(1)%pcpvh)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcpvh associated but oneMicroFields%pcpvh not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcpvh not associated and oneMicroFields%pcpvh associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcpvd)
+    assNew=associated(oneMicroFields%pcpvd)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%pcpvd, micro_g(1)%pcpvd)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcpvd associated but oneMicroFields%pcpvd not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcpvd not associated and oneMicroFields%pcpvd associated")
+    end if
+
+    assOld=associated(micro_g(1)%nuccldr)
+    assNew=associated(oneMicroFields%nuccldr)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%nuccldr, micro_g(1)%nuccldr)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%nuccldr associated but oneMicroFields%nuccldr not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%nuccldr not associated and oneMicroFields%nuccldr associated")
+    end if
+
+    assOld=associated(micro_g(1)%nuccldc)
+    assNew=associated(oneMicroFields%nuccldc)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%nuccldc, micro_g(1)%nuccldc)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%nuccldc associated but oneMicroFields%nuccldc not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%nuccldc not associated and oneMicroFields%nuccldc associated")
+    end if
+
+    assOld=associated(micro_g(1)%nucicer)
+    assNew=associated(oneMicroFields%nucicer)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%nucicer, micro_g(1)%nucicer)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%nucicer associated but oneMicroFields%nucicer not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%nucicer not associated and oneMicroFields%nucicer associated")
+    end if
+
+    assOld=associated(micro_g(1)%nucicec)
+    assNew=associated(oneMicroFields%nucicec)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%nucicec, micro_g(1)%nucicec)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%nucicec associated but oneMicroFields%nucicec not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%nucicec not associated and oneMicroFields%nucicec associated")
+    end if
+
+    assOld=associated(micro_g(1)%inuchomr)
+    assNew=associated(oneMicroFields%inuchomr)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%inuchomr, micro_g(1)%inuchomr)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inuchomr associated but oneMicroFields%inuchomr not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inuchomr not associated and oneMicroFields%inuchomr associated")
+    end if
+
+    assOld=associated(micro_g(1)%inuchomc)
+    assNew=associated(oneMicroFields%inuchomc)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%inuchomc, micro_g(1)%inuchomc)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inuchomc associated but oneMicroFields%inuchomc not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inuchomc not associated and oneMicroFields%inuchomc associated")
+    end if
+
+    assOld=associated(micro_g(1)%inuccontr)
+    assNew=associated(oneMicroFields%inuccontr)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%inuccontr, micro_g(1)%inuccontr)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inuccontr associated but oneMicroFields%inuccontr not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inuccontr not associated and oneMicroFields%inuccontr associated")
+    end if
+
+    assOld=associated(micro_g(1)%inuccontc)
+    assNew=associated(oneMicroFields%inuccontc)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%inuccontc, micro_g(1)%inuccontc)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inuccontc associated but oneMicroFields%inuccontc not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inuccontc not associated and oneMicroFields%inuccontc associated")
+    end if
+
+    assOld=associated(micro_g(1)%inucifnr)
+    assNew=associated(oneMicroFields%inucifnr)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%inucifnr, micro_g(1)%inucifnr)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inucifnr associated but oneMicroFields%inucifnr not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inucifnr not associated and oneMicroFields%inucifnr associated")
+    end if
+
+    assOld=associated(micro_g(1)%inucifnc)
+    assNew=associated(oneMicroFields%inucifnc)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%inucifnc, micro_g(1)%inucifnc)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inucifnc associated but oneMicroFields%inucifnc not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inucifnc not associated and oneMicroFields%inucifnc associated")
+    end if
+
+    assOld=associated(micro_g(1)%inuchazr)
+    assNew=associated(oneMicroFields%inuchazr)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%inuchazr, micro_g(1)%inuchazr)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inuchazr associated but oneMicroFields%inuchazr not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inuchazr not associated and oneMicroFields%inuchazr associated")
+    end if
+
+    assOld=associated(micro_g(1)%inuchazc)
+    assNew=associated(oneMicroFields%inuchazc)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%inuchazc, micro_g(1)%inuchazc)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inuchazc associated but oneMicroFields%inuchazc not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inuchazc not associated and oneMicroFields%inuchazc associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapliq)
+    assNew=associated(oneMicroFields%vapliq)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%vapliq, micro_g(1)%vapliq)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapliq associated but oneMicroFields%vapliq not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapliq not associated and oneMicroFields%vapliq associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapice)
+    assNew=associated(oneMicroFields%vapice)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%vapice, micro_g(1)%vapice)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapice associated but oneMicroFields%vapice not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapice not associated and oneMicroFields%vapice associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapcld)
+    assNew=associated(oneMicroFields%vapcld)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%vapcld, micro_g(1)%vapcld)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapcld associated but oneMicroFields%vapcld not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapcld not associated and oneMicroFields%vapcld associated")
+    end if
+
+    assOld=associated(micro_g(1)%vaprain)
+    assNew=associated(oneMicroFields%vaprain)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%vaprain, micro_g(1)%vaprain)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vaprain associated but oneMicroFields%vaprain not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vaprain not associated and oneMicroFields%vaprain associated")
+    end if
+
+    assOld=associated(micro_g(1)%vappris)
+    assNew=associated(oneMicroFields%vappris)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%vappris, micro_g(1)%vappris)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vappris associated but oneMicroFields%vappris not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vappris not associated and oneMicroFields%vappris associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapsnow)
+    assNew=associated(oneMicroFields%vapsnow)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%vapsnow, micro_g(1)%vapsnow)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapsnow associated but oneMicroFields%vapsnow not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapsnow not associated and oneMicroFields%vapsnow associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapaggr)
+    assNew=associated(oneMicroFields%vapaggr)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%vapaggr, micro_g(1)%vapaggr)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapaggr associated but oneMicroFields%vapaggr not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapaggr not associated and oneMicroFields%vapaggr associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapgrau)
+    assNew=associated(oneMicroFields%vapgrau)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%vapgrau, micro_g(1)%vapgrau)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapgrau associated but oneMicroFields%vapgrau not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapgrau not associated and oneMicroFields%vapgrau associated")
+    end if
+
+    assOld=associated(micro_g(1)%vaphail)
+    assNew=associated(oneMicroFields%vaphail)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%vaphail, micro_g(1)%vaphail)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vaphail associated but oneMicroFields%vaphail not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vaphail not associated and oneMicroFields%vaphail associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapdriz)
+    assNew=associated(oneMicroFields%vapdriz)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%vapdriz, micro_g(1)%vapdriz)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapdriz associated but oneMicroFields%vapdriz not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapdriz not associated and oneMicroFields%vapdriz associated")
+    end if
+
+    assOld=associated(micro_g(1)%meltice)
+    assNew=associated(oneMicroFields%meltice)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%meltice, micro_g(1)%meltice)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%meltice associated but oneMicroFields%meltice not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%meltice not associated and oneMicroFields%meltice associated")
+    end if
+
+    assOld=associated(micro_g(1)%meltpris)
+    assNew=associated(oneMicroFields%meltpris)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%meltpris, micro_g(1)%meltpris)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%meltpris associated but oneMicroFields%meltpris not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%meltpris not associated and oneMicroFields%meltpris associated")
+    end if
+
+    assOld=associated(micro_g(1)%meltsnow)
+    assNew=associated(oneMicroFields%meltsnow)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%meltsnow, micro_g(1)%meltsnow)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%meltsnow associated but oneMicroFields%meltsnow not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%meltsnow not associated and oneMicroFields%meltsnow associated")
+    end if
+
+    assOld=associated(micro_g(1)%meltaggr)
+    assNew=associated(oneMicroFields%meltaggr)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%meltaggr, micro_g(1)%meltaggr)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%meltaggr associated but oneMicroFields%meltaggr not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%meltaggr not associated and oneMicroFields%meltaggr associated")
+    end if
+
+    assOld=associated(micro_g(1)%meltgrau)
+    assNew=associated(oneMicroFields%meltgrau)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%meltgrau, micro_g(1)%meltgrau)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%meltgrau associated but oneMicroFields%meltgrau not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%meltgrau not associated and oneMicroFields%meltgrau associated")
+    end if
+
+    assOld=associated(micro_g(1)%melthail)
+    assNew=associated(oneMicroFields%melthail)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%melthail, micro_g(1)%melthail)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%melthail associated but oneMicroFields%melthail not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%melthail not associated and oneMicroFields%melthail associated")
+    end if
+
+    assOld=associated(micro_g(1)%cld2rain)
+    assNew=associated(oneMicroFields%cld2rain)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%cld2rain, micro_g(1)%cld2rain)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%cld2rain associated but oneMicroFields%cld2rain not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%cld2rain not associated and oneMicroFields%cld2rain associated")
+    end if
+
+    assOld=associated(micro_g(1)%rimecld)
+    assNew=associated(oneMicroFields%rimecld)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rimecld, micro_g(1)%rimecld)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rimecld associated but oneMicroFields%rimecld not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rimecld not associated and oneMicroFields%rimecld associated")
+    end if
+
+    assOld=associated(micro_g(1)%rimecldsnow)
+    assNew=associated(oneMicroFields%rimecldsnow)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rimecldsnow, micro_g(1)%rimecldsnow)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rimecldsnow associated but oneMicroFields%rimecldsnow not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rimecldsnow not associated and oneMicroFields%rimecldsnow associated")
+    end if
+
+    assOld=associated(micro_g(1)%rimecldaggr)
+    assNew=associated(oneMicroFields%rimecldaggr)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rimecldaggr, micro_g(1)%rimecldaggr)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rimecldaggr associated but oneMicroFields%rimecldaggr not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rimecldaggr not associated and oneMicroFields%rimecldaggr associated")
+    end if
+
+    assOld=associated(micro_g(1)%rimecldgrau)
+    assNew=associated(oneMicroFields%rimecldgrau)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rimecldgrau, micro_g(1)%rimecldgrau)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rimecldgrau associated but oneMicroFields%rimecldgrau not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rimecldgrau not associated and oneMicroFields%rimecldgrau associated")
+    end if
+
+    assOld=associated(micro_g(1)%rimecldhail)
+    assNew=associated(oneMicroFields%rimecldhail)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rimecldhail, micro_g(1)%rimecldhail)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rimecldhail associated but oneMicroFields%rimecldhail not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rimecldhail not associated and oneMicroFields%rimecldhail associated")
+    end if
+
+    assOld=associated(micro_g(1)%rain2ice)
+    assNew=associated(oneMicroFields%rain2ice)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rain2ice, micro_g(1)%rain2ice)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rain2ice associated but oneMicroFields%rain2ice not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rain2ice not associated and oneMicroFields%rain2ice associated")
+    end if
+
+    assOld=associated(micro_g(1)%rain2pr)
+    assNew=associated(oneMicroFields%rain2pr)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rain2pr, micro_g(1)%rain2pr)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rain2pr associated but oneMicroFields%rain2pr not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rain2pr not associated and oneMicroFields%rain2pr associated")
+    end if
+
+    assOld=associated(micro_g(1)%rain2sn)
+    assNew=associated(oneMicroFields%rain2sn)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rain2sn, micro_g(1)%rain2sn)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rain2sn associated but oneMicroFields%rain2sn not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rain2sn not associated and oneMicroFields%rain2sn associated")
+    end if
+
+    assOld=associated(micro_g(1)%rain2ag)
+    assNew=associated(oneMicroFields%rain2ag)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rain2ag, micro_g(1)%rain2ag)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rain2ag associated but oneMicroFields%rain2ag not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rain2ag not associated and oneMicroFields%rain2ag associated")
+    end if
+
+    assOld=associated(micro_g(1)%rain2gr)
+    assNew=associated(oneMicroFields%rain2gr)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rain2gr, micro_g(1)%rain2gr)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rain2gr associated but oneMicroFields%rain2gr not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rain2gr not associated and oneMicroFields%rain2gr associated")
+    end if
+
+    assOld=associated(micro_g(1)%rain2ha)
+    assNew=associated(oneMicroFields%rain2ha)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rain2ha, micro_g(1)%rain2ha)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rain2ha associated but oneMicroFields%rain2ha not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rain2ha not associated and oneMicroFields%rain2ha associated")
+    end if
+
+    assOld=associated(micro_g(1)%rain2ha_xtra)
+    assNew=associated(oneMicroFields%rain2ha_xtra)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rain2ha_xtra, micro_g(1)%rain2ha_xtra)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rain2ha_xtra associated but oneMicroFields%rain2ha_xtra not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rain2ha_xtra not associated and oneMicroFields%rain2ha_xtra associated")
+    end if
+
+    assOld=associated(micro_g(1)%ice2rain)
+    assNew=associated(oneMicroFields%ice2rain)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%ice2rain, micro_g(1)%ice2rain)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%ice2rain associated but oneMicroFields%ice2rain not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%ice2rain not associated and oneMicroFields%ice2rain associated")
+    end if
+
+    assOld=associated(micro_g(1)%aggregate)
+    assNew=associated(oneMicroFields%aggregate)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%aggregate, micro_g(1)%aggregate)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%aggregate associated but oneMicroFields%aggregate not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%aggregate not associated and oneMicroFields%aggregate associated")
+    end if
+
+    assOld=associated(micro_g(1)%aggrselfpris)
+    assNew=associated(oneMicroFields%aggrselfpris)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%aggrselfpris, micro_g(1)%aggrselfpris)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%aggrselfpris associated but oneMicroFields%aggrselfpris not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%aggrselfpris not associated and oneMicroFields%aggrselfpris associated")
+    end if
+
+    assOld=associated(micro_g(1)%aggrselfsnow)
+    assNew=associated(oneMicroFields%aggrselfsnow)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%aggrselfsnow, micro_g(1)%aggrselfsnow)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%aggrselfsnow associated but oneMicroFields%aggrselfsnow not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%aggrselfsnow not associated and oneMicroFields%aggrselfsnow associated")
+    end if
+
+    assOld=associated(micro_g(1)%aggrprissnow)
+    assNew=associated(oneMicroFields%aggrprissnow)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%aggrprissnow, micro_g(1)%aggrprissnow)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%aggrprissnow associated but oneMicroFields%aggrprissnow not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%aggrprissnow not associated and oneMicroFields%aggrprissnow associated")
+    end if
+
+    assOld=associated(micro_g(1)%latheatvap)
+    assNew=associated(oneMicroFields%latheatvap)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%latheatvap, micro_g(1)%latheatvap)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%latheatvap associated but oneMicroFields%latheatvap not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%latheatvap not associated and oneMicroFields%latheatvap associated")
+    end if
+
+    assOld=associated(micro_g(1)%latheatfrz)
+    assNew=associated(oneMicroFields%latheatfrz)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%latheatfrz, micro_g(1)%latheatfrz)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%latheatfrz associated but oneMicroFields%latheatfrz not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%latheatfrz not associated and oneMicroFields%latheatfrz associated")
+    end if
+
+    assOld=associated(micro_g(1)%nuccldrt)
+    assNew=associated(oneMicroFields%nuccldrt)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%nuccldrt, micro_g(1)%nuccldrt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%nuccldrt associated but oneMicroFields%nuccldrt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%nuccldrt not associated and oneMicroFields%nuccldrt associated")
+    end if
+
+    assOld=associated(micro_g(1)%nuccldct)
+    assNew=associated(oneMicroFields%nuccldct)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%nuccldct, micro_g(1)%nuccldct)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%nuccldct associated but oneMicroFields%nuccldct not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%nuccldct not associated and oneMicroFields%nuccldct associated")
+    end if
+
+    assOld=associated(micro_g(1)%nucicert)
+    assNew=associated(oneMicroFields%nucicert)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%nucicert, micro_g(1)%nucicert)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%nucicert associated but oneMicroFields%nucicert not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%nucicert not associated and oneMicroFields%nucicert associated")
+    end if
+
+    assOld=associated(micro_g(1)%nucicect)
+    assNew=associated(oneMicroFields%nucicect)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%nucicect, micro_g(1)%nucicect)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%nucicect associated but oneMicroFields%nucicect not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%nucicect not associated and oneMicroFields%nucicect associated")
+    end if
+
+    assOld=associated(micro_g(1)%inuchomrt)
+    assNew=associated(oneMicroFields%inuchomrt)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%inuchomrt, micro_g(1)%inuchomrt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inuchomrt associated but oneMicroFields%inuchomrt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inuchomrt not associated and oneMicroFields%inuchomrt associated")
+    end if
+
+    assOld=associated(micro_g(1)%inuchomct)
+    assNew=associated(oneMicroFields%inuchomct)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%inuchomct, micro_g(1)%inuchomct)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inuchomct associated but oneMicroFields%inuchomct not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inuchomct not associated and oneMicroFields%inuchomct associated")
+    end if
+
+    assOld=associated(micro_g(1)%inuccontrt)
+    assNew=associated(oneMicroFields%inuccontrt)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%inuccontrt, micro_g(1)%inuccontrt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inuccontrt associated but oneMicroFields%inuccontrt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inuccontrt not associated and oneMicroFields%inuccontrt associated")
+    end if
+
+    assOld=associated(micro_g(1)%inuccontct)
+    assNew=associated(oneMicroFields%inuccontct)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%inuccontct, micro_g(1)%inuccontct)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inuccontct associated but oneMicroFields%inuccontct not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inuccontct not associated and oneMicroFields%inuccontct associated")
+    end if
+
+    assOld=associated(micro_g(1)%inucifnrt)
+    assNew=associated(oneMicroFields%inucifnrt)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%inucifnrt, micro_g(1)%inucifnrt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inucifnrt associated but oneMicroFields%inucifnrt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inucifnrt not associated and oneMicroFields%inucifnrt associated")
+    end if
+
+    assOld=associated(micro_g(1)%inucifnct)
+    assNew=associated(oneMicroFields%inucifnct)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%inucifnct, micro_g(1)%inucifnct)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inucifnct associated but oneMicroFields%inucifnct not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inucifnct not associated and oneMicroFields%inucifnct associated")
+    end if
+
+    assOld=associated(micro_g(1)%inuchazrt)
+    assNew=associated(oneMicroFields%inuchazrt)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%inuchazrt, micro_g(1)%inuchazrt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inuchazrt associated but oneMicroFields%inuchazrt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inuchazrt not associated and oneMicroFields%inuchazrt associated")
+    end if
+
+    assOld=associated(micro_g(1)%inuchazct)
+    assNew=associated(oneMicroFields%inuchazct)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%inuchazct, micro_g(1)%inuchazct)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%inuchazct associated but oneMicroFields%inuchazct not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%inuchazct not associated and oneMicroFields%inuchazct associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapliqt)
+    assNew=associated(oneMicroFields%vapliqt)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%vapliqt, micro_g(1)%vapliqt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapliqt associated but oneMicroFields%vapliqt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapliqt not associated and oneMicroFields%vapliqt associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapicet)
+    assNew=associated(oneMicroFields%vapicet)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%vapicet, micro_g(1)%vapicet)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapicet associated but oneMicroFields%vapicet not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapicet not associated and oneMicroFields%vapicet associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapcldt)
+    assNew=associated(oneMicroFields%vapcldt)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%vapcldt, micro_g(1)%vapcldt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapcldt associated but oneMicroFields%vapcldt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapcldt not associated and oneMicroFields%vapcldt associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapraint)
+    assNew=associated(oneMicroFields%vapraint)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%vapraint, micro_g(1)%vapraint)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapraint associated but oneMicroFields%vapraint not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapraint not associated and oneMicroFields%vapraint associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapprist)
+    assNew=associated(oneMicroFields%vapprist)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%vapprist, micro_g(1)%vapprist)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapprist associated but oneMicroFields%vapprist not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapprist not associated and oneMicroFields%vapprist associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapsnowt)
+    assNew=associated(oneMicroFields%vapsnowt)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%vapsnowt, micro_g(1)%vapsnowt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapsnowt associated but oneMicroFields%vapsnowt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapsnowt not associated and oneMicroFields%vapsnowt associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapaggrt)
+    assNew=associated(oneMicroFields%vapaggrt)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%vapaggrt, micro_g(1)%vapaggrt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapaggrt associated but oneMicroFields%vapaggrt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapaggrt not associated and oneMicroFields%vapaggrt associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapgraut)
+    assNew=associated(oneMicroFields%vapgraut)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%vapgraut, micro_g(1)%vapgraut)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapgraut associated but oneMicroFields%vapgraut not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapgraut not associated and oneMicroFields%vapgraut associated")
+    end if
+
+    assOld=associated(micro_g(1)%vaphailt)
+    assNew=associated(oneMicroFields%vaphailt)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%vaphailt, micro_g(1)%vaphailt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vaphailt associated but oneMicroFields%vaphailt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vaphailt not associated and oneMicroFields%vaphailt associated")
+    end if
+
+    assOld=associated(micro_g(1)%vapdrizt)
+    assNew=associated(oneMicroFields%vapdrizt)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%vapdrizt, micro_g(1)%vapdrizt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%vapdrizt associated but oneMicroFields%vapdrizt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%vapdrizt not associated and oneMicroFields%vapdrizt associated")
+    end if
+
+    assOld=associated(micro_g(1)%melticet)
+    assNew=associated(oneMicroFields%melticet)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%melticet, micro_g(1)%melticet)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%melticet associated but oneMicroFields%melticet not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%melticet not associated and oneMicroFields%melticet associated")
+    end if
+
+    assOld=associated(micro_g(1)%meltprist)
+    assNew=associated(oneMicroFields%meltprist)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%meltprist, micro_g(1)%meltprist)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%meltprist associated but oneMicroFields%meltprist not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%meltprist not associated and oneMicroFields%meltprist associated")
+    end if
+
+    assOld=associated(micro_g(1)%meltsnowt)
+    assNew=associated(oneMicroFields%meltsnowt)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%meltsnowt, micro_g(1)%meltsnowt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%meltsnowt associated but oneMicroFields%meltsnowt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%meltsnowt not associated and oneMicroFields%meltsnowt associated")
+    end if
+
+    assOld=associated(micro_g(1)%meltaggrt)
+    assNew=associated(oneMicroFields%meltaggrt)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%meltaggrt, micro_g(1)%meltaggrt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%meltaggrt associated but oneMicroFields%meltaggrt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%meltaggrt not associated and oneMicroFields%meltaggrt associated")
+    end if
+
+    assOld=associated(micro_g(1)%meltgraut)
+    assNew=associated(oneMicroFields%meltgraut)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%meltgraut, micro_g(1)%meltgraut)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%meltgraut associated but oneMicroFields%meltgraut not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%meltgraut not associated and oneMicroFields%meltgraut associated")
+    end if
+
+    assOld=associated(micro_g(1)%melthailt)
+    assNew=associated(oneMicroFields%melthailt)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%melthailt, micro_g(1)%melthailt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%melthailt associated but oneMicroFields%melthailt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%melthailt not associated and oneMicroFields%melthailt associated")
+    end if
+
+    assOld=associated(micro_g(1)%cld2raint)
+    assNew=associated(oneMicroFields%cld2raint)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%cld2raint, micro_g(1)%cld2raint)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%cld2raint associated but oneMicroFields%cld2raint not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%cld2raint not associated and oneMicroFields%cld2raint associated")
+    end if
+
+    assOld=associated(micro_g(1)%rimecldt)
+    assNew=associated(oneMicroFields%rimecldt)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rimecldt, micro_g(1)%rimecldt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rimecldt associated but oneMicroFields%rimecldt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rimecldt not associated and oneMicroFields%rimecldt associated")
+    end if
+
+    assOld=associated(micro_g(1)%rimecldsnowt)
+    assNew=associated(oneMicroFields%rimecldsnowt)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rimecldsnowt, micro_g(1)%rimecldsnowt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rimecldsnowt associated but oneMicroFields%rimecldsnowt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rimecldsnowt not associated and oneMicroFields%rimecldsnowt associated")
+    end if
+
+    assOld=associated(micro_g(1)%rimecldaggrt)
+    assNew=associated(oneMicroFields%rimecldaggrt)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rimecldaggrt, micro_g(1)%rimecldaggrt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rimecldaggrt associated but oneMicroFields%rimecldaggrt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rimecldaggrt not associated and oneMicroFields%rimecldaggrt associated")
+    end if
+
+    assOld=associated(micro_g(1)%rimecldgraut)
+    assNew=associated(oneMicroFields%rimecldgraut)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rimecldgraut, micro_g(1)%rimecldgraut)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rimecldgraut associated but oneMicroFields%rimecldgraut not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rimecldgraut not associated and oneMicroFields%rimecldgraut associated")
+    end if
+
+    assOld=associated(micro_g(1)%rimecldhailt)
+    assNew=associated(oneMicroFields%rimecldhailt)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rimecldhailt, micro_g(1)%rimecldhailt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rimecldhailt associated but oneMicroFields%rimecldhailt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rimecldhailt not associated and oneMicroFields%rimecldhailt associated")
+    end if
+
+    assOld=associated(micro_g(1)%rain2icet)
+    assNew=associated(oneMicroFields%rain2icet)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rain2icet, micro_g(1)%rain2icet)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rain2icet associated but oneMicroFields%rain2icet not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rain2icet not associated and oneMicroFields%rain2icet associated")
+    end if
+
+    assOld=associated(micro_g(1)%rain2prt)
+    assNew=associated(oneMicroFields%rain2prt)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rain2prt, micro_g(1)%rain2prt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rain2prt associated but oneMicroFields%rain2prt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rain2prt not associated and oneMicroFields%rain2prt associated")
+    end if
+
+    assOld=associated(micro_g(1)%rain2snt)
+    assNew=associated(oneMicroFields%rain2snt)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rain2snt, micro_g(1)%rain2snt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rain2snt associated but oneMicroFields%rain2snt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rain2snt not associated and oneMicroFields%rain2snt associated")
+    end if
+
+    assOld=associated(micro_g(1)%rain2agt)
+    assNew=associated(oneMicroFields%rain2agt)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rain2agt, micro_g(1)%rain2agt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rain2agt associated but oneMicroFields%rain2agt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rain2agt not associated and oneMicroFields%rain2agt associated")
+    end if
+
+    assOld=associated(micro_g(1)%rain2grt)
+    assNew=associated(oneMicroFields%rain2grt)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rain2grt, micro_g(1)%rain2grt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rain2grt associated but oneMicroFields%rain2grt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rain2grt not associated and oneMicroFields%rain2grt associated")
+    end if
+
+    assOld=associated(micro_g(1)%rain2hat)
+    assNew=associated(oneMicroFields%rain2hat)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rain2hat, micro_g(1)%rain2hat)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rain2hat associated but oneMicroFields%rain2hat not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rain2hat not associated and oneMicroFields%rain2hat associated")
+    end if
+
+    assOld=associated(micro_g(1)%rain2ha_xtrat)
+    assNew=associated(oneMicroFields%rain2ha_xtrat)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%rain2ha_xtrat, micro_g(1)%rain2ha_xtrat)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%rain2ha_xtrat associated but oneMicroFields%rain2ha_xtrat not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%rain2ha_xtrat not associated and oneMicroFields%rain2ha_xtrat associated")
+    end if
+
+    assOld=associated(micro_g(1)%ice2raint)
+    assNew=associated(oneMicroFields%ice2raint)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%ice2raint, micro_g(1)%ice2raint)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%ice2raint associated but oneMicroFields%ice2raint not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%ice2raint not associated and oneMicroFields%ice2raint associated")
+    end if
+
+    assOld=associated(micro_g(1)%aggregatet)
+    assNew=associated(oneMicroFields%aggregatet)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%aggregatet, micro_g(1)%aggregatet)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%aggregatet associated but oneMicroFields%aggregatet not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%aggregatet not associated and oneMicroFields%aggregatet associated")
+    end if
+
+    assOld=associated(micro_g(1)%aggrselfprist)
+    assNew=associated(oneMicroFields%aggrselfprist)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%aggrselfprist, micro_g(1)%aggrselfprist)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%aggrselfprist associated but oneMicroFields%aggrselfprist not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%aggrselfprist not associated and oneMicroFields%aggrselfprist associated")
+    end if
+
+    assOld=associated(micro_g(1)%aggrselfsnowt)
+    assNew=associated(oneMicroFields%aggrselfsnowt)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%aggrselfsnowt, micro_g(1)%aggrselfsnowt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%aggrselfsnowt associated but oneMicroFields%aggrselfsnowt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%aggrselfsnowt not associated and oneMicroFields%aggrselfsnowt associated")
+    end if
+
+    assOld=associated(micro_g(1)%aggrprissnowt)
+    assNew=associated(oneMicroFields%aggrprissnowt)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%aggrprissnowt, micro_g(1)%aggrprissnowt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%aggrprissnowt associated but oneMicroFields%aggrprissnowt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%aggrprissnowt not associated and oneMicroFields%aggrprissnowt associated")
+    end if
+
+    assOld=associated(micro_g(1)%latheatvapt)
+    assNew=associated(oneMicroFields%latheatvapt)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%latheatvapt, micro_g(1)%latheatvapt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%latheatvapt associated but oneMicroFields%latheatvapt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%latheatvapt not associated and oneMicroFields%latheatvapt associated")
+    end if
+
+    assOld=associated(micro_g(1)%latheatfrzt)
+    assNew=associated(oneMicroFields%latheatfrzt)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%latheatfrzt, micro_g(1)%latheatfrzt)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%latheatfrzt associated but oneMicroFields%latheatfrzt not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%latheatfrzt not associated and oneMicroFields%latheatfrzt associated")
+    end if
+
+    assOld=associated(micro_g(1)%accpr)
+    assNew=associated(oneMicroFields%accpr)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%accpr, micro_g(1)%accpr)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%accpr associated but oneMicroFields%accpr not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%accpr not associated and oneMicroFields%accpr associated")
+    end if
+
+    assOld=associated(micro_g(1)%accpp)
+    assNew=associated(oneMicroFields%accpp)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%accpp, micro_g(1)%accpp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%accpp associated but oneMicroFields%accpp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%accpp not associated and oneMicroFields%accpp associated")
+    end if
+
+    assOld=associated(micro_g(1)%accps)
+    assNew=associated(oneMicroFields%accps)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%accps, micro_g(1)%accps)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%accps associated but oneMicroFields%accps not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%accps not associated and oneMicroFields%accps associated")
+    end if
+
+    assOld=associated(micro_g(1)%accpa)
+    assNew=associated(oneMicroFields%accpa)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%accpa, micro_g(1)%accpa)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%accpa associated but oneMicroFields%accpa not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%accpa not associated and oneMicroFields%accpa associated")
+    end if
+
+    assOld=associated(micro_g(1)%accpg)
+    assNew=associated(oneMicroFields%accpg)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%accpg, micro_g(1)%accpg)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%accpg associated but oneMicroFields%accpg not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%accpg not associated and oneMicroFields%accpg associated")
+    end if
+
+    assOld=associated(micro_g(1)%accph)
+    assNew=associated(oneMicroFields%accph)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%accph, micro_g(1)%accph)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%accph associated but oneMicroFields%accph not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%accph not associated and oneMicroFields%accph associated")
+    end if
+
+    assOld=associated(micro_g(1)%accpd)
+    assNew=associated(oneMicroFields%accpd)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%accpd, micro_g(1)%accpd)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%accpd associated but oneMicroFields%accpd not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%accpd not associated and oneMicroFields%accpd associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcprr)
+    assNew=associated(oneMicroFields%pcprr)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%pcprr, micro_g(1)%pcprr)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcprr associated but oneMicroFields%pcprr not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcprr not associated and oneMicroFields%pcprr associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcprp)
+    assNew=associated(oneMicroFields%pcprp)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%pcprp, micro_g(1)%pcprp)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcprp associated but oneMicroFields%pcprp not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcprp not associated and oneMicroFields%pcprp associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcprs)
+    assNew=associated(oneMicroFields%pcprs)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%pcprs, micro_g(1)%pcprs)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcprs associated but oneMicroFields%pcprs not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcprs not associated and oneMicroFields%pcprs associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcpra)
+    assNew=associated(oneMicroFields%pcpra)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%pcpra, micro_g(1)%pcpra)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcpra associated but oneMicroFields%pcpra not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcpra not associated and oneMicroFields%pcpra associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcprg)
+    assNew=associated(oneMicroFields%pcprg)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%pcprg, micro_g(1)%pcprg)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcprg associated but oneMicroFields%pcprg not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcprg not associated and oneMicroFields%pcprg associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcprh)
+    assNew=associated(oneMicroFields%pcprh)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%pcprh, micro_g(1)%pcprh)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcprh associated but oneMicroFields%pcprh not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcprh not associated and oneMicroFields%pcprh associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcprd)
+    assNew=associated(oneMicroFields%pcprd)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%pcprd, micro_g(1)%pcprd)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcprd associated but oneMicroFields%pcprd not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcprd not associated and oneMicroFields%pcprd associated")
+    end if
+
+    assOld=associated(micro_g(1)%pcpg)
+    assNew=associated(oneMicroFields%pcpg)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%pcpg, micro_g(1)%pcpg)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%pcpg associated but oneMicroFields%pcpg not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%pcpg not associated and oneMicroFields%pcpg associated")
+    end if
+
+    assOld=associated(micro_g(1)%qpcpg)
+    assNew=associated(oneMicroFields%qpcpg)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%qpcpg, micro_g(1)%qpcpg)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%qpcpg associated but oneMicroFields%qpcpg not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%qpcpg not associated and oneMicroFields%qpcpg associated")
+    end if
+
+    assOld=associated(micro_g(1)%dpcpg)
+    assNew=associated(oneMicroFields%dpcpg)
+    if (assOld .and. assNew) then
+       call ToCopy(oneMicroFields%dpcpg, micro_g(1)%dpcpg)
+    else if (assOld .and. (.not. assNew)) then
+       call fatal_error(h//" micro_g(1)%dpcpg associated but oneMicroFields%dpcpg not associated")
+    else if ((.not. assOld) .and. assNew) then
+       call fatal_error(h//" micro_g(1)%dpcpg not associated and oneMicroFields%dpcpg associated")
+    end if
+  end subroutine DeepCopyFromMicroFields
 
 end module mem_micro

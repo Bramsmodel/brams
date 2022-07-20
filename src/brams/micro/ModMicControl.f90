@@ -9,7 +9,11 @@
 
 module ModMicControl
 
-  use ModNamelistFile, only: namelistFile
+  use ModNamelistFile, only: &
+       namelistFile
+
+  use ModParallelEnvironment, only: &
+       MsgDump
 
   use grid_dims, only: &
        NZPMAX, maxgrds
@@ -23,6 +27,8 @@ module ModMicControl
 
   public :: MicControl
   public :: CreateMicControl
+  public :: DestroyMicControl
+  public :: DumpMicControl
   
   type MicControl
      !for rams 2M microphysics
@@ -219,6 +225,9 @@ contains
 
 
   function CreateMicControl(oneNamelistFile) result(res)
+    ! Allocate a MicControl variable
+    ! Initialize components originated by namelist file
+    ! Remaining components should be initialized elsewhere
     type(namelistFile), pointer, intent(in) :: oneNamelistFile
     type(MicControl), pointer :: res
 
@@ -279,4 +288,42 @@ contains
     res%imd2flg =0! Mineral Dust (large mode)
     !-
   end function CreateMicControl
+
+
+
+
+  subroutine DestroyMicControl(oneMicControl)
+    type(MicControl), pointer, intent(inout) :: oneMicControl
+
+    integer :: ierr
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(DestroyMicControl)**"
+
+    if (associated(oneMicControl)) then
+       deallocate(oneMicControl, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate oneMicControl fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+       nullify(oneMicControl)
+    end if
+  end subroutine DestroyMicControl
+
+
+
+
+  subroutine DumpMicControl(oneMicControl)
+    type(MicControl), pointer, intent(in) :: oneMicControl
+
+    integer :: ierr
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(DumpMicControl)**"
+
+    if (associated(oneMicControl)) then
+       call MsgDump(h//" oneMicControl allocated")
+    else
+       call MsgDump(h//" oneMicControl deallocated")
+    end if
+  end subroutine DumpMicControl
 end module ModMicControl

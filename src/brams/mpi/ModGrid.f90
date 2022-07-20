@@ -80,8 +80,18 @@ module ModGrid
 
   use ModMicControl, only: &
        MicControl, &
-       CreateMicControl
-       
+       CreateMicControl, &
+       DestroyMicControl, &
+       DumpMicControl
+
+
+  use ModMicroFields, only: &
+       MicroFields, &
+       CreateMicroFields, &
+       DestroyMicroFields, &
+       DumpMicroFields
+  
+  
   
   ! JP: temporariamente usa variaveis globais enquanto
   !     ModVarTables nao for inclusa no tipo Grid
@@ -160,6 +170,9 @@ module ModGrid
 
      type(TurbFields), pointer :: Turb => null()
      type(TurbFields), pointer :: AveTurb => null()
+
+     type(MicroFields), pointer :: Micro => null()
+     type(MicroFields), pointer :: AveMicro => null()
 
      type(ScalarTable), pointer :: ScalarTab(:) => null()
      integer :: ScalarTabSize=0
@@ -402,14 +415,21 @@ contains
     ! AveTurb fields allocated with size (1,1,1) if avgtim null at Ramsin
     oneGrid%AveTurb => CreateTurbFields(oneGrid%NodeDims, oneGrid%Ramsin, gridId, .true.)
 
+    ! this node MicControl
+
+    oneGrid%MicControlVars => CreateMicControl(oneGrid%Ramsin)
+
+    ! this node Micro Fields
+
+    oneGrid%Micro => CreateMicroFields(oneGrid%Id, oneGrid%NodeDims, &
+         oneGrid%MicControlVars)
+    oneGrid%AveMicro => CreateMicroFields(oneGrid%Id, oneGrid%NodeDims, &
+         oneGrid%MicControlVars)
+
     ! this node Scalar Table
 
     oneGrid%ScalarTab => CreateScalarTab()
     oneGrid%ScalarTabSize = 0
-
-    ! this node MicControl
-
-    oneGrid%MicControlVars => CreateMicControl(oneGrid%Ramsin)
     
     if (dumpLocal) then
        call MsgDump(h//" dumping OneGrid at the end")
@@ -577,8 +597,11 @@ contains
        call DestroyBasicFields(oneGrid%AveBasic)
        call DestroyTurbFields(oneGrid%Turb)
        call DestroyTurbFields(oneGrid%AveTurb)
+       call DestroyMicroFields(oneGrid%Micro)
+       call DestroyMicroFields(oneGrid%AveMicro)
        call DestroyScalarTab(oneGrid%ScalarTab)
        oneGrid%ScalarTabSize=0
+       call DestroyMicControl(oneGrid%MicControlVars)
        call DestroyAcousticMessageSet(&
             oneGrid%AcouSendU, oneGrid%AcouRecvU, &
             oneGrid%AcouSendV, oneGrid%AcouRecvV, &
@@ -769,8 +792,12 @@ contains
     call DumpBasicFields(oneGrid%AveBasic, "oneGrid%AveBasic")
     call DumpTurbFields(oneGrid%Turb, "oneGrid%Turb")
     call DumpTurbFields(oneGrid%AveTurb, "oneGrid%AveTurb")
+    call DumpMicroFields(oneGrid%Micro, "oneGrid%Micro")
+    call DumpMicroFields(oneGrid%AveMicro, "oneGrid%AveMicro")
     call MsgDump(h//" dumping Scalar Table")
     call DumpScalarTab(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
+    call MsgDump(h//" dumping MicControl")
+    call DumpMicControl(oneGrid%MicControlVars)
     call MsgDump(h//" finishes")
   end subroutine DumpGrid
 end module ModGrid
