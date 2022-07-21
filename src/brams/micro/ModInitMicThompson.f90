@@ -53,9 +53,9 @@ module ModInitMicThompson
   use ModBasicFields, only: &
        BasicFields
 
-  use mem_micro, only: &
-       micro_g
-
+  use ModMicroFields, only: &
+       MicroFields
+  
   use ModDateUtils, only: &
        date_add_to
 
@@ -551,7 +551,7 @@ contains
 
 
   
-  subroutine adjustFriendlyForMonth(time, oneBasicFields)
+  subroutine adjustFriendlyForMonth(time, oneBasicFields, oneMicroFields)
     !# Adjust aerosol data friendly for month and pressures
     !#
     !# @note
@@ -594,6 +594,7 @@ contains
     ! Input/Output variables
     real   ,intent(in)    :: time
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
     !# current time
 
     !Local variables
@@ -620,8 +621,8 @@ contains
     ldimx=nodemxp(mynum,ifm)
     ldimy=nodemyp(mynum,ifm)
 
-    micro_g(ifm)%cccnp=0.0
-    micro_g(ifm)%cifnp=0.0
+    oneMicroFields%cccnp=0.0
+    oneMicroFields%cifnp=0.0
 
     do j=1,myp
        do i=1,mxp
@@ -634,12 +635,12 @@ contains
                 if(kk<1 .or. kk>zdef) cycle
                 dist=pressBrams(k,i,j)-qPress(omn,kk,i,j)
                 peso=1.0/dist**2
-                micro_g(ifm)%cccnp(k,i,j)=micro_g(ifm)%cccnp(k,i,j)+qnwfa(omn,kk,i,j)*peso
-                micro_g(ifm)%cifnp(k,i,j)=micro_g(ifm)%cifnp(k,i,j)+qnifa(omn,kk,i,j)*peso
+                oneMicroFields%cccnp(k,i,j)=oneMicroFields%cccnp(k,i,j)+qnwfa(omn,kk,i,j)*peso
+                oneMicroFields%cifnp(k,i,j)=oneMicroFields%cifnp(k,i,j)+qnifa(omn,kk,i,j)*peso
                 dens=dens+peso
              enddo
-             micro_g(ifm)%cccnp(k,i,j)=micro_g(ifm)%cccnp(k,i,j)/dens
-             micro_g(ifm)%cifnp(k,i,j)=micro_g(ifm)%cifnp(k,i,j)/dens
+             oneMicroFields%cccnp(k,i,j)=oneMicroFields%cccnp(k,i,j)/dens
+             oneMicroFields%cifnp(k,i,j)=oneMicroFields%cifnp(k,i,j)/dens
           enddo
        enddo
     enddo
@@ -674,11 +675,11 @@ contains
        !# writing grads binary and fill variables
        irec=1
        do k=1,mzp
-          write (funit,rec=irec) micro_g(ifm)%cccnp(k,:,:)
+          write (funit,rec=irec) oneMicroFields%cccnp(k,:,:)
           irec=irec+1
        enddo
        do k=1,mzp
-          write (funit,rec=irec) micro_g(ifm)%cifnp(k,:,:)
+          write (funit,rec=irec) oneMicroFields%cifnp(k,:,:)
           irec=irec+1
        enddo
        close(funit)

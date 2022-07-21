@@ -130,6 +130,10 @@ module ModTimestepRK
        nodemxp,  &  !intent(in)
        nodemzp      !intent(in)
 
+  use mem_micro, only: &
+       DeepCopyToMicroFields, &
+       DeepCopyFromMicroFields
+       
   use mem_cuparm, only: &
        NNQPARM, & ! INTENT(IN)
        IF_CUINV   ! INTENT(IN)
@@ -850,7 +854,9 @@ contains
        call micro_thompson(oneGrid%Basic, oneGrid%MicControlVars)
 
     elseif(oneGrid%MicControlVars%mcphys_type == 4 ) then
-       call micro_gfdl(oneGrid%Basic)
+       call DeepCopyToMicroFields(oneGrid%Micro, h)
+       call micro_gfdl(oneGrid%Basic, oneGrid%Micro)
+       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     endif
     !----------------------------------------
 

@@ -22,13 +22,9 @@
 
 module ModMicroFields
 
-  use mem_radiate, only: &
-       ilwrtyp, &
-       iswrtyp
-
-  use mem_cuparm , only: &
-       nnqparm 
-
+  use ModNamelistFile, only: &
+       NamelistFile
+  
   use ModNodeDimensions, only: &
        NodeDimensions
 
@@ -216,8 +212,9 @@ contains
 
 
 
-  function CreateMicroFields(gridId, oneNodeDims, oneMicControl) result(res)
+  function CreateMicroFields(gridId, oneNamelistFile, oneNodeDims, oneMicControl) result(res)
     integer, intent(in) :: gridId
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(NodeDimensions), pointer, intent(in) :: oneNodeDims
     type(MicControl), pointer, intent(in) :: oneMicControl
     type(MicroFields), pointer :: res
@@ -415,7 +412,7 @@ contains
        endif
 
        !- 3D cloud fraction from GFDL cloud microphysics and GF convection
-       if(oneMicControl%mcphys_type  == 4 .or. nnqparm(gridId) == 8) then 
+       if(oneMicControl%mcphys_type  == 4 .or. oneNamelistFile%nnqparm(gridId) == 8) then 
           allocate (res%cldfr  (mzp,mxp,myp), stat=ierr)
           if (ierr /= 0) then
              write(str(1),"(i8)") ierr
@@ -451,7 +448,7 @@ contains
        res%dpcpg=0.0
 
        !- allocation of memory for effective radius for RRTMG
-       if(ilwrtyp==6 .or. iswrtyp==6 ) then
+       if(oneNamelistFile%ilwrtyp==6 .or. oneNamelistFile%iswrtyp==6 ) then
           allocate (res%rei  (mzp,mxp,myp), stat=ierr)
           if (ierr /= 0) then
              write(str(1),"(i8)") ierr
@@ -1626,7 +1623,7 @@ contains
              endif
           endif! oneMicControl%mcphys_type=1     
           !- allocation of memory for effective radius for RRTMG
-          if(ilwrtyp==6 .or. iswrtyp==6 ) then
+          if(oneNamelistFile%ilwrtyp==6 .or. oneNamelistFile%iswrtyp==6 ) then
              allocate (res%rei  (mzp,mxp,myp), stat=ierr)
              if (ierr /= 0) then
                 write(str(1),"(i8)") ierr

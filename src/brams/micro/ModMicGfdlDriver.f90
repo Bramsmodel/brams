@@ -7,10 +7,9 @@ module ModMicGfdlDriver
   use ModBasicFields, only: &
        BasicFields
 
-  use mem_micro, only:  &
-       micro_vars, &
-       micro_g            ! INTENT(INOUT)
-
+  use ModMicroFields, only: &
+       MicroFields
+  
   use mem_grid, only:   &
        grid_vars, &
        ngrids,          & ! INTENT(IN)
@@ -81,8 +80,9 @@ contains
 
 
 
-  subroutine micro_gfdl(oneBasicFields)
+  subroutine micro_gfdl(oneBasicFields, oneMicroFields)
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
     
     integer :: ims, ime, jms, jme, kms, kme  
 
@@ -109,13 +109,13 @@ contains
          ,zt  &
          ,oneBasicFields &
          ,grid_g (ngrid) &
-         ,micro_g(ngrid) &
+         ,oneMicroFields &
                                 !
          )
 
     !- for consistency with surface and radiation schemes, the total
     !- precip will be also stored in the pcpg array
-    micro_g(ngrid)%pcpg(:,:)=micro_g(ngrid)%pcprr(:,:)
+    oneMicroFields%pcpg(:,:)=oneMicroFields%pcprr(:,:)
 
   end subroutine micro_gfdl
 
@@ -139,12 +139,12 @@ contains
        ,zt    &
        ,oneBasicFields &
        ,grd &
-       ,mic &
+       ,oneMicroFields &
        )
 
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(grid_vars)  ::grd
-    type(micro_vars) ::mic
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
 
     integer, intent(IN) ::  &          
          ilwrtyp       &
@@ -287,14 +287,13 @@ contains
           cnv_fraction(i,j) = 0.1
 
           do k=1,kme
-             !if(mynum==1 .and. j==jms .and. i==ims) print*,">>AA=",k,flip(k);call flush(6)
-             qc_curr (i,j,k)= max(0.0,mic%rcp(flip(k),i,j))      ! QC     
-             qr_curr (i,j,k)= max(0.0,mic%rrp(flip(k),i,j))      ! QR   
-             qi_curr (i,j,k)= max(0.0,mic%rpp(flip(k),i,j))      ! QI   
-             qs_curr (i,j,k)= max(0.0,mic%rsp(flip(k),i,j))      ! QS   
-             qg_curr (i,j,k)= max(0.0,mic%rgp(flip(k),i,j))      ! QG   
+             qc_curr (i,j,k)= max(0.0,oneMicroFields%rcp(flip(k),i,j))      ! QC     
+             qr_curr (i,j,k)= max(0.0,oneMicroFields%rrp(flip(k),i,j))      ! QR   
+             qi_curr (i,j,k)= max(0.0,oneMicroFields%rpp(flip(k),i,j))      ! QI   
+             qs_curr (i,j,k)= max(0.0,oneMicroFields%rsp(flip(k),i,j))      ! QS   
+             qg_curr (i,j,k)= max(0.0,oneMicroFields%rgp(flip(k),i,j))      ! QG   
 
-             rad_cf  (i,j,k)= max(0.0,mic%cldfr(flip(k),i,j))      ! cloud fraction
+             rad_cf  (i,j,k)= max(0.0,oneMicroFields%cldfr(flip(k),i,j))      ! cloud fraction
 
              rcond = qc_curr (i,j,k) + qr_curr (i,j,k) + &
                   qi_curr (i,j,k) + qs_curr (i,j,k) + qg_curr (i,j,k)
@@ -328,8 +327,8 @@ contains
           !--special treatment for CCN/ICN numbers conce
           do k=1,kme             
              NACTLI (i,j,k)= 3.e+2 !cm-2 !???????????????
-             !qni_curr(i,j,k)= max(0.0,mic%cpp(flip(k),i,j))      ! NI  !??????????????? 
-             !qnr_curr(i,j,k)= max(0.0,mic%crp(flip(k),i,j))      ! NR  !???????????????
+             !qni_curr(i,j,k)= max(0.0,oneMicroFields%cpp(flip(k),i,j))      ! NI  !??????????????? 
+             !qnr_curr(i,j,k)= max(0.0,oneMicroFields%crp(flip(k),i,j))      ! NR  !???????????????
           enddo
           !
           !- get  temperature (temp) from theta_il (thp) and condensates
@@ -407,40 +406,40 @@ contains
 
           !- surface precipitation (units are kg/m^2 = mm and mm/s)
           !- accpr,pcprr   kg/m2 - rain+ice+snow+graupel ! p = for each dt  (or per time step)
-          mic%pcprr(i,j) = dt_moist*(PRCP_RAIN(i,j) + PRCP_SNOW   (i,j) + &
+          oneMicroFields%pcprr(i,j) = dt_moist*(PRCP_RAIN(i,j) + PRCP_SNOW   (i,j) + &
                PRCP_ICE (i,j) + PRCP_GRAUPEL(i,j)) / 86400. 
 
-          mic%accpr(i,j) = mic%accpr(i,j) + mic%pcprr(i,j)  
+          oneMicroFields%accpr(i,j) = oneMicroFields%accpr(i,j) + oneMicroFields%pcprr(i,j)  
 
           !- accps,pcprs  kg/m2 - ice+snow
-          mic%pcprs(i,j) = dt_moist*(PRCP_SNOW(i,j) + PRCP_ICE(i,j))/ 86400.    
-          mic%accps(i,j) = mic%accps(i,j) + mic%pcprs(i,j)
+          oneMicroFields%pcprs(i,j) = dt_moist*(PRCP_SNOW(i,j) + PRCP_ICE(i,j))/ 86400.    
+          oneMicroFields%accps(i,j) = oneMicroFields%accps(i,j) + oneMicroFields%pcprs(i,j)
 
           !- accpg, pcprg  &! kg/m2 - graupel
-          mic%pcprg(i,j) = dt_moist* PRCP_GRAUPEL(i,j)/ 86400.
-          mic%accpg(i,j) = mic%accpg(i,j) + mic%pcprg(i,j)
+          oneMicroFields%pcprg(i,j) = dt_moist* PRCP_GRAUPEL(i,j)/ 86400.
+          oneMicroFields%accpg(i,j) = oneMicroFields%accpg(i,j) + oneMicroFields%pcprg(i,j)
 
 
           do k=kme,1,-1
              !-srf    
-             !if(i==89 .and. j==22 .and. minval(mic%rcp(:,i,j))< 0.)  then
-             !      print*,'rrp',k, mic%rcp(flip(k),i,j), qi_curr(i,j,k) , qi_curr(i,j,k) + DQIDT_micro(i,j,k) * DT_MOIST
+             !if(i==89 .and. j==22 .and. minval(oneMicroFields%rcp(:,i,j))< 0.)  then
+             !      print*,'rrp',k, oneMicroFields%rcp(flip(k),i,j), qi_curr(i,j,k) , qi_curr(i,j,k) + DQIDT_micro(i,j,k) * DT_MOIST
              !      print*,'rv ',k, oneBasicFields%rv(flip(k),i,j), qv_curr(i,j,k), qv_curr(i,j,k) + DQVDT_micro(i,j,k) * DT_MOIST
              !call flush(6)
              !endif
              !-srf 
-             mic%rcp(flip(k),i,j)= max(0., qc_curr(i,j,k) + DQLDT_micro(i,j,k) * DT_MOIST)
-             mic%rrp(flip(k),i,j)= max(0., qr_curr(i,j,k) + DQRDT_micro(i,j,k) * DT_MOIST)
-             mic%rpp(flip(k),i,j)= max(0., qi_curr(i,j,k) + DQIDT_micro(i,j,k) * DT_MOIST)
-             mic%rsp(flip(k),i,j)= max(0., qs_curr(i,j,k) + DQSDT_micro(i,j,k) * DT_MOIST)
-             mic%rgp(flip(k),i,j)= max(0., qg_curr(i,j,k) + DQGDT_micro(i,j,k) * DT_MOIST)
+             oneMicroFields%rcp(flip(k),i,j)= max(0., qc_curr(i,j,k) + DQLDT_micro(i,j,k) * DT_MOIST)
+             oneMicroFields%rrp(flip(k),i,j)= max(0., qr_curr(i,j,k) + DQRDT_micro(i,j,k) * DT_MOIST)
+             oneMicroFields%rpp(flip(k),i,j)= max(0., qi_curr(i,j,k) + DQIDT_micro(i,j,k) * DT_MOIST)
+             oneMicroFields%rsp(flip(k),i,j)= max(0., qs_curr(i,j,k) + DQSDT_micro(i,j,k) * DT_MOIST)
+             oneMicroFields%rgp(flip(k),i,j)= max(0., qg_curr(i,j,k) + DQGDT_micro(i,j,k) * DT_MOIST)
 
-             mic%cldfr(flip(k),i,j) = max(0., rad_cf(i,j,k) + DQADT_micro(i,j,k) * DT_MOIST)
+             oneMicroFields%cldfr(flip(k),i,j) = max(0., rad_cf(i,j,k) + DQADT_micro(i,j,k) * DT_MOIST)
 
              !- cloud ice and liq effective radius,  RRTMG requires in micrometer
-             mic%rei (flip(k),i,j)= re_ice  (i,j,k)  
-             mic%rel (flip(k),i,j)= re_cloud(i,j,k)
-             !mic%snow(flip(k),i,j)= re_snow (i,j,k)  !-- srf check this latter.
+             oneMicroFields%rei (flip(k),i,j)= re_ice  (i,j,k)  
+             oneMicroFields%rel (flip(k),i,j)= re_cloud(i,j,k)
+             !oneMicroFields%snow(flip(k),i,j)= re_snow (i,j,k)  !-- srf check this latter.
 
 
              oneBasicFields%rv(flip(k),i,j)= max(1.e-12, qv_curr(i,j,k) + DQVDT_micro(i,j,k) * DT_MOIST)
@@ -453,8 +452,8 @@ contains
 
           do k=2,kme
              !- update liq-ice potential temperature THP in Kelvin including microphysics processes
-             rliq     = mic%rcp(k,i,j) + mic%rrp(k,i,j)   
-             rice     = mic%rpp(k,i,j) + mic%rsp(k,i,j) + mic%rgp(k,i,j)  
+             rliq     = oneMicroFields%rcp(k,i,j) + oneMicroFields%rrp(k,i,j)   
+             rice     = oneMicroFields%rpp(k,i,j) + oneMicroFields%rsp(k,i,j) + oneMicroFields%rgp(k,i,j)  
 
              tempK    = oneBasicFields%theta(k,i,j) * exner(k,i,j)
 
@@ -475,31 +474,31 @@ contains
 
           !- definition for k=1
           oneBasicFields%rtp(1,i,j)  = oneBasicFields%rtp(2,i,j)  
-          mic%rcp  (1,i,j)  = mic%rcp  (2,i,j)  
-          mic%rrp  (1,i,j)  = mic%rrp  (2,i,j)  
-          mic%rpp  (1,i,j)  = mic%rpp  (2,i,j)  
-          mic%rsp  (1,i,j)  = mic%rsp  (2,i,j)  
-          mic%rgp  (1,i,j)  = mic%rgp  (2,i,j)  
-          mic%cldfr(1,i,j)  = mic%cldfr(2,i,j)
+          oneMicroFields%rcp  (1,i,j)  = oneMicroFields%rcp  (2,i,j)  
+          oneMicroFields%rrp  (1,i,j)  = oneMicroFields%rrp  (2,i,j)  
+          oneMicroFields%rpp  (1,i,j)  = oneMicroFields%rpp  (2,i,j)  
+          oneMicroFields%rsp  (1,i,j)  = oneMicroFields%rsp  (2,i,j)  
+          oneMicroFields%rgp  (1,i,j)  = oneMicroFields%rgp  (2,i,j)  
+          oneMicroFields%cldfr(1,i,j)  = oneMicroFields%cldfr(2,i,j)
 
           oneBasicFields%rv   (1,i,j) = oneBasicFields%rv   (2,i,j)  
           oneBasicFields%theta(1,i,j) = oneBasicFields%theta(2,i,j)
           oneBasicFields%thp  (1,i,j) = oneBasicFields%thp  (2,i,j)
 
           !- cloud ice and liq effective radius 
-          mic%rei(1,i,j)= mic%rei(2,i,j) 
-          mic%rel(1,i,j)= mic%rel(2,i,j)
-          !mic%snow(1,i,j)=mic%snow(2,i,j)
+          oneMicroFields%rei(1,i,j)= oneMicroFields%rei(2,i,j) 
+          oneMicroFields%rel(1,i,j)= oneMicroFields%rel(2,i,j)
+          !oneMicroFields%snow(1,i,j)=oneMicroFields%snow(2,i,j)
 
           !temporary 
-          !mic%rei   (1:m1,i,j) =5.01E-6 * 1.e+6 ! RRTM requires in micrometer
-          !mic%rel   (1:m1,i,j) =2.51E-6 * 1.e+6 ! RRTM requires in micromete
+          !oneMicroFields%rei   (1:m1,i,j) =5.01E-6 * 1.e+6 ! RRTM requires in micrometer
+          !oneMicroFields%rel   (1:m1,i,j) =2.51E-6 * 1.e+6 ! RRTM requires in micromete
 
 
           !reserved
-          !  mic%cpp (1,i,j)  = mic%cpp (2,i,j)  
-          !  mic%crp (1,i,j)  = mic%crp (2,i,j)  
-          !  mic%ccp (1,i,j)  = mic%ccp (2,i,j) 
+          !  oneMicroFields%cpp (1,i,j)  = oneMicroFields%cpp (2,i,j)  
+          !  oneMicroFields%crp (1,i,j)  = oneMicroFields%crp (2,i,j)  
+          !  oneMicroFields%ccp (1,i,j)  = oneMicroFields%ccp (2,i,j) 
 
        enddo
     enddo

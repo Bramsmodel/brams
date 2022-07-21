@@ -1223,11 +1223,6 @@ contains
              call MsgDump(" ")
           end if
 
-!!$ LIXO
-          call DeepCopyToMicroFields(oneGrid%Micro, h)
-          call DeepCopyFromMicroFields(oneGrid%Micro, h)
-!!$ END LIXO
-
           ! if input time, get new fields from master
 
           if (isendbackflg==1) then
@@ -1323,7 +1318,9 @@ contains
 
                 time = begtime + (isched(npass,5)-1)*dtlt
                 if (oneGrid%MicControlVars%mcphys_type==3) then
-                   call adjustFriendlyForMonth(time,oneGrid%Basic)
+                   call DeepCopyToMicroFields(oneGrid%Micro, h)
+                   call adjustFriendlyForMonth(time,oneGrid%Basic, oneGrid%Micro)
+                   call DeepCopyFromMicroFields(oneGrid%Micro, h)
                 end if
 
                 ! timestep routine

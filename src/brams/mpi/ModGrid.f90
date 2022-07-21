@@ -421,9 +421,9 @@ contains
 
     ! this node Micro Fields
 
-    oneGrid%Micro => CreateMicroFields(oneGrid%Id, oneGrid%NodeDims, &
+    oneGrid%Micro => CreateMicroFields(oneGrid%Id, oneGrid%Ramsin, oneGrid%NodeDims, &
          oneGrid%MicControlVars)
-    oneGrid%AveMicro => CreateMicroFields(oneGrid%Id, oneGrid%NodeDims, &
+    oneGrid%AveMicro => CreateMicroFields(oneGrid%Id, oneGrid%Ramsin, oneGrid%NodeDims, &
          oneGrid%MicControlVars)
 
     ! this node Scalar Table
