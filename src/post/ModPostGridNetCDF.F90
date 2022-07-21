@@ -34,7 +34,9 @@ Module ModPostgridNetCDF
 contains
 
 subroutine OpenNetCDFBinaryFile(oneNamelistFile, onePostGrid, oneBramsGrid, igrid) 
-    use netCDF, ONLY: nf90_create
+    use netCDF, ONLY: nf90_create,&
+                      nf90_write
+    IMPLICIT NONE
     type(NamelistFile), pointer :: oneNamelistFile
     type(PostGrid), pointer :: onePostGrid
     type(BramsGrid), pointer :: oneBramsGrid  
@@ -69,9 +71,13 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
                       nf90_redef,   &
                       nf90_put_att, &
                       nf90_enddef,  &
-                      nf90_put_var
+                      nf90_put_var, &
+                      nf90_noerr,   &
+                      nf90_float
+
     use dump, only: dumpMessage
     use ModDateUtils, ONLY: date_abs_secs2
+    IMPLICIT NONE
 
     type(NamelistFile), pointer :: oneNamelistFile
     type(PostGrid), pointer :: onePostGrid

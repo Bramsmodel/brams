@@ -145,6 +145,8 @@ contains
     integer, intent(in) :: m3
     !# number of points in y direction
 
+    integer :: ierr
+    
     if(ngrids > 1) stop "alloc_ocean_only routine is prepared only for 1 grid" 
 
     allocate(can_temp(m2,m3,1), can_rvap(m2,m3,1), ustar  (m2,m3,1)  &
