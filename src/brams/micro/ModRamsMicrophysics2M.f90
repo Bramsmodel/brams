@@ -33,9 +33,7 @@ module ModRamsMicrophysics2M
 
   use mem_micro, only: &
        DeepCopyToMicroFields, &
-       DeepCopyFromMicroFields, &
-       micro_vars, &
-       micro_g ! INTENT(OUT)
+       DeepCopyFromMicroFields
 
   use mem_grid, only: &
        grid_g,         & ! INTENT(IN)
@@ -314,9 +312,9 @@ contains
     !    ,leaf_g(ngrid)%leaf_class  ,grid_g(ngrid)%rtgm           &
     !    ,leaf_g(ngrid)%patch_area                                &
     !    ,basic_g(ngrid)%up         ,basic_g(ngrid)%vp            &
-    !    ,micro_g(ngrid)%cccnp      ,micro_g(ngrid)%gccnp         &
-    !    ,micro_g(ngrid)%cccmp      ,micro_g(ngrid)%gccmp         &
-    !    ,micro_g(ngrid)%md1np      ,micro_g(ngrid)%md2np         &
+    !    ,oneMicroFields%cccnp      ,oneMicroFields%gccnp         &
+    !    ,oneMicroFields%cccmp      ,oneMicroFields%gccmp         &
+    !    ,oneMicroFields%md1np      ,oneMicroFields%md2np         &
     !    ,leaf_g(ngrid)%soil_water  ,leaf_g(ngrid)%soil_text)
     !endif
     !if(isalt==1) then
@@ -324,10 +322,10 @@ contains
     !    ,leaf_g(ngrid)%leaf_class  ,grid_g(ngrid)%rtgm           &
     !    ,leaf_g(ngrid)%patch_area                                &
     !    ,basic_g(ngrid)%up         ,basic_g(ngrid)%vp            &
-    !    ,micro_g(ngrid)%cccnp      ,micro_g(ngrid)%gccnp         &
-    !    ,micro_g(ngrid)%cccmp      ,micro_g(ngrid)%gccmp         &
-    !    ,micro_g(ngrid)%salt_filmp ,micro_g(ngrid)%salt_jetp     &
-    !    ,micro_g(ngrid)%salt_spmp)
+    !    ,oneMicroFields%cccnp      ,oneMicroFields%gccnp         &
+    !    ,oneMicroFields%cccmp      ,oneMicroFields%gccmp         &
+    !    ,oneMicroFields%salt_filmp ,oneMicroFields%salt_jetp     &
+    !    ,oneMicroFields%salt_spmp)
     !endif
     !-srf 2015------------------ not included in BRAMS
 
@@ -357,31 +355,28 @@ contains
           do k = 1,mzp
              if( oneBasicFields%rv(k,i,j)<0.0 .or.  &
                   oneBasicFields%rtp(k,i,j)<0.0 .or. &
-                  (oneMicControl%jnmb(1)>0 .and. micro_g(ngr)%rcp(k,i,j)<0.0) .or. &
-                  (oneMicControl%jnmb(2)>0 .and. micro_g(ngr)%rrp(k,i,j)<0.0) .or. &
-                  (oneMicControl%jnmb(3)>0 .and. micro_g(ngr)%rpp(k,i,j)<0.0) .or. &
-                  (oneMicControl%jnmb(4)>0 .and. micro_g(ngr)%rsp(k,i,j)<0.0) .or. &
-                  (oneMicControl%jnmb(5)>0 .and. micro_g(ngr)%rap(k,i,j)<0.0) .or. &
-                  (oneMicControl%jnmb(6)>0 .and. micro_g(ngr)%rgp(k,i,j)<0.0) .or. &
-                  (oneMicControl%jnmb(7)>0 .and. micro_g(ngr)%rhp(k,i,j)<0.0) ) then
+                  (oneMicControl%jnmb(1)>0 .and. oneMicroFields%rcp(k,i,j)<0.0) .or. &
+                  (oneMicControl%jnmb(2)>0 .and. oneMicroFields%rrp(k,i,j)<0.0) .or. &
+                  (oneMicControl%jnmb(3)>0 .and. oneMicroFields%rpp(k,i,j)<0.0) .or. &
+                  (oneMicControl%jnmb(4)>0 .and. oneMicroFields%rsp(k,i,j)<0.0) .or. &
+                  (oneMicControl%jnmb(5)>0 .and. oneMicroFields%rap(k,i,j)<0.0) .or. &
+                  (oneMicControl%jnmb(6)>0 .and. oneMicroFields%rgp(k,i,j)<0.0) .or. &
+                  (oneMicControl%jnmb(7)>0 .and. oneMicroFields%rhp(k,i,j)<0.0) ) then
                 print*,'Negative Condensate MICRO (ngr,k,i,j):',ngr,k,i,j
                 print*,'vapor:  ',oneBasicFields%rv(k,i,j)
                 print*,'rtp:    ',oneBasicFields%rtp(k,i,j)
-                if(oneMicControl%jnmb(1)>0) print*,'cloud:  ',micro_g(ngr)%rcp(k,i,j)
-                if(oneMicControl%jnmb(2)>0) print*,'rain:   ',micro_g(ngr)%rrp(k,i,j)
-                if(oneMicControl%jnmb(3)>0) print*,'ice:    ',micro_g(ngr)%rpp(k,i,j)
-                if(oneMicControl%jnmb(4)>0) print*,'snow:   ',micro_g(ngr)%rsp(k,i,j)
-                if(oneMicControl%jnmb(5)>0) print*,'aggr:   ',micro_g(ngr)%rap(k,i,j)
-                if(oneMicControl%jnmb(6)>0) print*,'graup:  ',micro_g(ngr)%rgp(k,i,j)
-                if(oneMicControl%jnmb(7)>0) print*,'hail:   ',micro_g(ngr)%rhp(k,i,j)
+                if(oneMicControl%jnmb(1)>0) print*,'cloud:  ',oneMicroFields%rcp(k,i,j)
+                if(oneMicControl%jnmb(2)>0) print*,'rain:   ',oneMicroFields%rrp(k,i,j)
+                if(oneMicControl%jnmb(3)>0) print*,'ice:    ',oneMicroFields%rpp(k,i,j)
+                if(oneMicControl%jnmb(4)>0) print*,'snow:   ',oneMicroFields%rsp(k,i,j)
+                if(oneMicControl%jnmb(5)>0) print*,'aggr:   ',oneMicroFields%rap(k,i,j)
+                if(oneMicControl%jnmb(6)>0) print*,'graup:  ',oneMicroFields%rgp(k,i,j)
+                if(oneMicControl%jnmb(7)>0) print*,'hail:   ',oneMicroFields%rhp(k,i,j)
                 stop
              endif
           enddo
 
-          call DeepCopyToMicroFields(oneMicroFields,h)
           call range_check(mzp,k1,k2,k3,i,j,grid_g(ngr)%lpw(i,j),oneMicroFields,oneMicControl)
-          call DeepCopyFromMicroFields(oneMicroFields,h)
-
 
           call mcphys(&
                mzp&
@@ -415,9 +410,9 @@ contains
                ,oneBasicFields%pi0     (1:mzp,i,j)   &
                ,grid_g(ngr)%rtgt     (i,j)     &
                ,grid_g(ngr)%lpw      (i,j)     &
-               ,micro_g(ngr)%pcpg    (i,j)     &
-               ,micro_g(ngr)%qpcpg   (i,j)     & !31
-               ,micro_g(ngr)%dpcpg   (i,j)     &
+               ,oneMicroFields%pcpg    (i,j)     &
+               ,oneMicroFields%qpcpg   (i,j)     & !31
+               ,oneMicroFields%dpcpg   (i,j)     &
                ,pcp_tab(ngr)%pcpfillc(1:mzp,1,1,1) &
                ,pcp_tab(ngr)%pcpfillr(1:mzp,1,1,1) &
                ,pcp_tab(ngr)%sfcpcp  (1:maxkfall,1,1)   &
@@ -433,63 +428,63 @@ contains
                ,oneBasicFields%up(1:mzp,i,j)               &
                ,oneBasicFields%vp(1:mzp,i,j)               &
                                 !---------------------------------------------------------
-               ,micro_g(ngr)%md1np(:,i,j)    &
-               ,micro_g(ngr)%md2np(:,i,j)    &
-               ,micro_g(ngr)%salt_filmp(:,i,j)    &
-               ,micro_g(ngr)%salt_jetp(:,i,j)    &
-               ,micro_g(ngr)%salt_spmp(:,i,j)    &
+               ,oneMicroFields%md1np(:,i,j)    &
+               ,oneMicroFields%md2np(:,i,j)    &
+               ,oneMicroFields%salt_filmp(:,i,j)    &
+               ,oneMicroFields%salt_jetp(:,i,j)    &
+               ,oneMicroFields%salt_spmp(:,i,j)    &
                                 !COMPUTE AND OUTPUT MICRO BUDGET PROCESSES
-               ,micro_g(ngr)%nuccldr (:,i,j)      ,micro_g(ngr)%nuccldc (:,i,j)      &
-               ,micro_g(ngr)%nucicer (:,i,j)      ,micro_g(ngr)%nucicec (:,i,j)      &
-               ,micro_g(ngr)%inuchomr (:,i,j)     ,micro_g(ngr)%inuchomc (:,i,j)     &
-               ,micro_g(ngr)%inuccontr (:,i,j)    ,micro_g(ngr)%inuccontc (:,i,j)    &
-               ,micro_g(ngr)%inucifnr (:,i,j)     ,micro_g(ngr)%inucifnc (:,i,j)     &
-               ,micro_g(ngr)%inuchazr (:,i,j)     ,micro_g(ngr)%inuchazc (:,i,j)     &
-               ,micro_g(ngr)%vapliq (:,i,j)       ,micro_g(ngr)%vapice (:,i,j)       &
-               ,micro_g(ngr)%vapcld (:,i,j)       ,micro_g(ngr)%vaprain (:,i,j)      &
-               ,micro_g(ngr)%vappris (:,i,j)      ,micro_g(ngr)%vapsnow (:,i,j)      &
-               ,micro_g(ngr)%vapaggr (:,i,j)      ,micro_g(ngr)%vapgrau (:,i,j)      &
-               ,micro_g(ngr)%vaphail (:,i,j)      ,micro_g(ngr)%vapdriz (:,i,j)      &
-               ,micro_g(ngr)%meltice (:,i,j)      ,micro_g(ngr)%meltpris (:,i,j)     &
-               ,micro_g(ngr)%meltsnow (:,i,j)     ,micro_g(ngr)%meltaggr (:,i,j)     &
-               ,micro_g(ngr)%meltgrau (:,i,j)     ,micro_g(ngr)%melthail (:,i,j)     &
-               ,micro_g(ngr)%cld2rain (:,i,j)     ,micro_g(ngr)%rimecld (:,i,j)      &
-               ,micro_g(ngr)%rimecldsnow (:,i,j)  ,micro_g(ngr)%rimecldaggr (:,i,j)  &
-               ,micro_g(ngr)%rimecldgrau (:,i,j)  ,micro_g(ngr)%rimecldhail (:,i,j)  &
-               ,micro_g(ngr)%rain2ice (:,i,j)     ,micro_g(ngr)%rain2pr (:,i,j)      &
-               ,micro_g(ngr)%rain2sn (:,i,j)      ,micro_g(ngr)%rain2ag (:,i,j)      &
-               ,micro_g(ngr)%rain2gr (:,i,j)      ,micro_g(ngr)%rain2ha (:,i,j)      &
-               ,micro_g(ngr)%rain2ha_xtra (:,i,j) ,micro_g(ngr)%ice2rain (:,i,j)     &
-               ,micro_g(ngr)%aggregate (:,i,j)    ,micro_g(ngr)%aggrselfpris (:,i,j) &
-               ,micro_g(ngr)%aggrselfsnow (:,i,j) ,micro_g(ngr)%aggrprissnow (:,i,j) &
-               ,micro_g(ngr)%latheatvap (:,i,j)   ,micro_g(ngr)%latheatfrz (:,i,j)   &
+               ,oneMicroFields%nuccldr (:,i,j)      ,oneMicroFields%nuccldc (:,i,j)      &
+               ,oneMicroFields%nucicer (:,i,j)      ,oneMicroFields%nucicec (:,i,j)      &
+               ,oneMicroFields%inuchomr (:,i,j)     ,oneMicroFields%inuchomc (:,i,j)     &
+               ,oneMicroFields%inuccontr (:,i,j)    ,oneMicroFields%inuccontc (:,i,j)    &
+               ,oneMicroFields%inucifnr (:,i,j)     ,oneMicroFields%inucifnc (:,i,j)     &
+               ,oneMicroFields%inuchazr (:,i,j)     ,oneMicroFields%inuchazc (:,i,j)     &
+               ,oneMicroFields%vapliq (:,i,j)       ,oneMicroFields%vapice (:,i,j)       &
+               ,oneMicroFields%vapcld (:,i,j)       ,oneMicroFields%vaprain (:,i,j)      &
+               ,oneMicroFields%vappris (:,i,j)      ,oneMicroFields%vapsnow (:,i,j)      &
+               ,oneMicroFields%vapaggr (:,i,j)      ,oneMicroFields%vapgrau (:,i,j)      &
+               ,oneMicroFields%vaphail (:,i,j)      ,oneMicroFields%vapdriz (:,i,j)      &
+               ,oneMicroFields%meltice (:,i,j)      ,oneMicroFields%meltpris (:,i,j)     &
+               ,oneMicroFields%meltsnow (:,i,j)     ,oneMicroFields%meltaggr (:,i,j)     &
+               ,oneMicroFields%meltgrau (:,i,j)     ,oneMicroFields%melthail (:,i,j)     &
+               ,oneMicroFields%cld2rain (:,i,j)     ,oneMicroFields%rimecld (:,i,j)      &
+               ,oneMicroFields%rimecldsnow (:,i,j)  ,oneMicroFields%rimecldaggr (:,i,j)  &
+               ,oneMicroFields%rimecldgrau (:,i,j)  ,oneMicroFields%rimecldhail (:,i,j)  &
+               ,oneMicroFields%rain2ice (:,i,j)     ,oneMicroFields%rain2pr (:,i,j)      &
+               ,oneMicroFields%rain2sn (:,i,j)      ,oneMicroFields%rain2ag (:,i,j)      &
+               ,oneMicroFields%rain2gr (:,i,j)      ,oneMicroFields%rain2ha (:,i,j)      &
+               ,oneMicroFields%rain2ha_xtra (:,i,j) ,oneMicroFields%ice2rain (:,i,j)     &
+               ,oneMicroFields%aggregate (:,i,j)    ,oneMicroFields%aggrselfpris (:,i,j) &
+               ,oneMicroFields%aggrselfsnow (:,i,j) ,oneMicroFields%aggrprissnow (:,i,j) &
+               ,oneMicroFields%latheatvap (:,i,j)   ,oneMicroFields%latheatfrz (:,i,j)   &
                                 !COMPUTE AND OUTPUT MICRO BUDGET PROCESSES (totals)
-               ,micro_g(ngr)%nuccldrt (:,i,j)      ,micro_g(ngr)%nuccldct (:,i,j)      &
-               ,micro_g(ngr)%nucicert (:,i,j)      ,micro_g(ngr)%nucicect (:,i,j)      &
-               ,micro_g(ngr)%inuchomrt (:,i,j)     ,micro_g(ngr)%inuchomct (:,i,j)     &
-               ,micro_g(ngr)%inuccontrt (:,i,j)    ,micro_g(ngr)%inuccontct (:,i,j)    &
-               ,micro_g(ngr)%inucifnrt (:,i,j)     ,micro_g(ngr)%inucifnct (:,i,j)     &
-               ,micro_g(ngr)%inuchazrt (:,i,j)     ,micro_g(ngr)%inuchazct (:,i,j)     &
-               ,micro_g(ngr)%vapliqt (:,i,j)       ,micro_g(ngr)%vapicet (:,i,j)       &
-               ,micro_g(ngr)%vapcldt (:,i,j)       ,micro_g(ngr)%vapraint (:,i,j)      &
-               ,micro_g(ngr)%vapprist (:,i,j)      ,micro_g(ngr)%vapsnowt (:,i,j)      &
-               ,micro_g(ngr)%vapaggrt (:,i,j)      ,micro_g(ngr)%vapgraut (:,i,j)      &
-               ,micro_g(ngr)%vaphailt (:,i,j)      ,micro_g(ngr)%vapdrizt (:,i,j)      &
-               ,micro_g(ngr)%melticet (:,i,j)      ,micro_g(ngr)%meltprist (:,i,j)     &
-               ,micro_g(ngr)%meltsnowt (:,i,j)     ,micro_g(ngr)%meltaggrt (:,i,j)     &
-               ,micro_g(ngr)%meltgraut (:,i,j)     ,micro_g(ngr)%melthailt (:,i,j)     &
-               ,micro_g(ngr)%cld2raint (:,i,j)     ,micro_g(ngr)%rimecldt (:,i,j)      &
-               ,micro_g(ngr)%rimecldsnowt (:,i,j)  ,micro_g(ngr)%rimecldaggrt (:,i,j)  &
-               ,micro_g(ngr)%rimecldgraut (:,i,j)  ,micro_g(ngr)%rimecldhailt (:,i,j)  &
-               ,micro_g(ngr)%rain2icet (:,i,j)     ,micro_g(ngr)%rain2prt (:,i,j)      &
-               ,micro_g(ngr)%rain2snt (:,i,j)      ,micro_g(ngr)%rain2agt (:,i,j)      &
-               ,micro_g(ngr)%rain2grt (:,i,j)      ,micro_g(ngr)%rain2hat (:,i,j)      &
-               ,micro_g(ngr)%rain2ha_xtrat (:,i,j) ,micro_g(ngr)%ice2raint (:,i,j)     &
-               ,micro_g(ngr)%aggregatet (:,i,j)    ,micro_g(ngr)%aggrselfprist (:,i,j) &
-               ,micro_g(ngr)%aggrselfsnowt (:,i,j) ,micro_g(ngr)%aggrprissnowt (:,i,j) &
-               ,micro_g(ngr)%latheatvapt (:,i,j)   ,micro_g(ngr)%latheatfrzt (:,i,j),oneMicControl)
+               ,oneMicroFields%nuccldrt (:,i,j)      ,oneMicroFields%nuccldct (:,i,j)      &
+               ,oneMicroFields%nucicert (:,i,j)      ,oneMicroFields%nucicect (:,i,j)      &
+               ,oneMicroFields%inuchomrt (:,i,j)     ,oneMicroFields%inuchomct (:,i,j)     &
+               ,oneMicroFields%inuccontrt (:,i,j)    ,oneMicroFields%inuccontct (:,i,j)    &
+               ,oneMicroFields%inucifnrt (:,i,j)     ,oneMicroFields%inucifnct (:,i,j)     &
+               ,oneMicroFields%inuchazrt (:,i,j)     ,oneMicroFields%inuchazct (:,i,j)     &
+               ,oneMicroFields%vapliqt (:,i,j)       ,oneMicroFields%vapicet (:,i,j)       &
+               ,oneMicroFields%vapcldt (:,i,j)       ,oneMicroFields%vapraint (:,i,j)      &
+               ,oneMicroFields%vapprist (:,i,j)      ,oneMicroFields%vapsnowt (:,i,j)      &
+               ,oneMicroFields%vapaggrt (:,i,j)      ,oneMicroFields%vapgraut (:,i,j)      &
+               ,oneMicroFields%vaphailt (:,i,j)      ,oneMicroFields%vapdrizt (:,i,j)      &
+               ,oneMicroFields%melticet (:,i,j)      ,oneMicroFields%meltprist (:,i,j)     &
+               ,oneMicroFields%meltsnowt (:,i,j)     ,oneMicroFields%meltaggrt (:,i,j)     &
+               ,oneMicroFields%meltgraut (:,i,j)     ,oneMicroFields%melthailt (:,i,j)     &
+               ,oneMicroFields%cld2raint (:,i,j)     ,oneMicroFields%rimecldt (:,i,j)      &
+               ,oneMicroFields%rimecldsnowt (:,i,j)  ,oneMicroFields%rimecldaggrt (:,i,j)  &
+               ,oneMicroFields%rimecldgraut (:,i,j)  ,oneMicroFields%rimecldhailt (:,i,j)  &
+               ,oneMicroFields%rain2icet (:,i,j)     ,oneMicroFields%rain2prt (:,i,j)      &
+               ,oneMicroFields%rain2snt (:,i,j)      ,oneMicroFields%rain2agt (:,i,j)      &
+               ,oneMicroFields%rain2grt (:,i,j)      ,oneMicroFields%rain2hat (:,i,j)      &
+               ,oneMicroFields%rain2ha_xtrat (:,i,j) ,oneMicroFields%ice2raint (:,i,j)     &
+               ,oneMicroFields%aggregatet (:,i,j)    ,oneMicroFields%aggrselfprist (:,i,j) &
+               ,oneMicroFields%aggrselfsnowt (:,i,j) ,oneMicroFields%aggrprissnowt (:,i,j) &
+               ,oneMicroFields%latheatvapt (:,i,j)   ,oneMicroFields%latheatfrzt (:,i,j),oneMicControl)
 
-          call copyback(mzp,k1,k2,k3,grid_g(ngr)%lpw(i,j),i,j,micro_g(ngr),oneMicControl)
+          call copyback(mzp,k1,k2,k3,grid_g(ngr)%lpw(i,j),i,j,oneMicroFields,oneMicControl)
 
        enddo
     enddo
@@ -1031,9 +1026,9 @@ contains
 
   !******************************************************************************
 
-  subroutine copyback(m1,k1,k2,k3,lpw_R,i,j,micro, oneMicControl)
+  subroutine copyback(m1,k1,k2,k3,lpw_R,i,j,oneMicroFields, oneMicControl)
     type(MicControl), pointer, intent(in) :: oneMicControl
-    type (micro_vars) :: micro
+    type(MicroFields) :: oneMicroFields
 
     integer, dimension(11)  :: k1,k2,k3
     real :: lpw_R
@@ -1044,189 +1039,189 @@ contains
     lpw=int(lpw_R)
 
     if (oneMicControl%jnmb(1) >= 1) then
-       call ae1kmic(lpw,k3(1),micro%rcp(1:m1,i,j),rx(1:m1,1))
+       call ae1kmic(lpw,k3(1),oneMicroFields%rcp(1:m1,i,j),rx(1:m1,1))
        if (oneMicControl%jnmb(1) >= 5) then
-          call ae1kmic(lpw,k3(1),micro%ccp(1:m1,i,j),cx(1:m1,1))
-          call ae1kmic(lpw,k3(1),micro%cccnp(1:m1,i,j),cccnx(1:m1))
-          call ae1kmic(lpw,k3(1),micro%cccmp(1:m1,i,j),cccmx(1:m1))
-          if(oneMicControl%iccnlev >= 2) call ae1kmic(lpw,k3(1),micro%cnm1p(1:m1,i,j),cnmhx(1:m1,1))
+          call ae1kmic(lpw,k3(1),oneMicroFields%ccp(1:m1,i,j),cx(1:m1,1))
+          call ae1kmic(lpw,k3(1),oneMicroFields%cccnp(1:m1,i,j),cccnx(1:m1))
+          call ae1kmic(lpw,k3(1),oneMicroFields%cccmp(1:m1,i,j),cccmx(1:m1))
+          if(oneMicControl%iccnlev >= 2) call ae1kmic(lpw,k3(1),oneMicroFields%cnm1p(1:m1,i,j),cnmhx(1:m1,1))
        endif
     endif
 
     if (oneMicControl%jnmb(2) >= 1) then
-       call ae1kmic(lpw,k2(11),micro%rrp(1:m1,i,j),rx(1:m1,2))
-       call ae1kmic(lpw,k2(11),micro%q2(1:m1,i,j),qx(1:m1,2))
-       micro%accpr(i,j) = micro%accpr(i,j) + accpx(2)
-       micro%pcprr(i,j) = pcprx(2)
-       call ae1kmic(lpw,k2(11),micro%pcpvr(1:m1,i,j),pcpvx(1:m1,2))
-       if (oneMicControl%jnmb(2) >= 5) call ae1kmic(lpw,k2(11),micro%crp(1:m1,i,j),cx(1:m1,2))
-       if (oneMicControl%iccnlev >= 2) call ae1kmic(lpw,k2(11),micro%cnm2p(1:m1,i,j),cnmhx(1:m1,2))
+       call ae1kmic(lpw,k2(11),oneMicroFields%rrp(1:m1,i,j),rx(1:m1,2))
+       call ae1kmic(lpw,k2(11),oneMicroFields%q2(1:m1,i,j),qx(1:m1,2))
+       oneMicroFields%accpr(i,j) = oneMicroFields%accpr(i,j) + accpx(2)
+       oneMicroFields%pcprr(i,j) = pcprx(2)
+       call ae1kmic(lpw,k2(11),oneMicroFields%pcpvr(1:m1,i,j),pcpvx(1:m1,2))
+       if (oneMicControl%jnmb(2) >= 5) call ae1kmic(lpw,k2(11),oneMicroFields%crp(1:m1,i,j),cx(1:m1,2))
+       if (oneMicControl%iccnlev >= 2) call ae1kmic(lpw,k2(11),oneMicroFields%cnm2p(1:m1,i,j),cnmhx(1:m1,2))
     endif
 
     if (oneMicControl%jnmb(3) >= 1) then
-       call ae1kmic(lpw,k3(3),micro%rpp(1:m1,i,j),rx(1:m1,3))
-       micro%accpp(i,j) = micro%accpp(i,j) + accpx(3)
-       micro%pcprp(i,j) = pcprx(3)
-       call ae1kmic(lpw,k3(3),micro%pcpvp(1:m1,i,j),pcpvx(1:m1,3))
-       if (oneMicControl%jnmb(3) >= 5) call ae1kmic(lpw,k3(3),micro%cpp(1:m1,i,j),cx(1:m1,3))
-       if (oneMicControl%iccnlev >= 2) call ae1kmic(lpw,k3(3),micro%cnm3p(1:m1,i,j),cnmhx(1:m1,3))
+       call ae1kmic(lpw,k3(3),oneMicroFields%rpp(1:m1,i,j),rx(1:m1,3))
+       oneMicroFields%accpp(i,j) = oneMicroFields%accpp(i,j) + accpx(3)
+       oneMicroFields%pcprp(i,j) = pcprx(3)
+       call ae1kmic(lpw,k3(3),oneMicroFields%pcpvp(1:m1,i,j),pcpvx(1:m1,3))
+       if (oneMicControl%jnmb(3) >= 5) call ae1kmic(lpw,k3(3),oneMicroFields%cpp(1:m1,i,j),cx(1:m1,3))
+       if (oneMicControl%iccnlev >= 2) call ae1kmic(lpw,k3(3),oneMicroFields%cnm3p(1:m1,i,j),cnmhx(1:m1,3))
     endif
 
     if (oneMicControl%jnmb(4) >= 1) then
-       call ae1kmic(lpw,k2(11),micro%rsp(1:m1,i,j),rx(1:m1,4))
-       micro%accps(i,j) = micro%accps(i,j) + accpx(4)
-       micro%pcprs(i,j) = pcprx(4)
-       call ae1kmic(lpw,k2(11),micro%pcpvs(1:m1,i,j),pcpvx(1:m1,4))
-       if (oneMicControl%jnmb(4) >= 5) call ae1kmic(lpw,k2(11),micro%csp(1:m1,i,j),cx(1:m1,4))
+       call ae1kmic(lpw,k2(11),oneMicroFields%rsp(1:m1,i,j),rx(1:m1,4))
+       oneMicroFields%accps(i,j) = oneMicroFields%accps(i,j) + accpx(4)
+       oneMicroFields%pcprs(i,j) = pcprx(4)
+       call ae1kmic(lpw,k2(11),oneMicroFields%pcpvs(1:m1,i,j),pcpvx(1:m1,4))
+       if (oneMicControl%jnmb(4) >= 5) call ae1kmic(lpw,k2(11),oneMicroFields%csp(1:m1,i,j),cx(1:m1,4))
     endif
 
     if (oneMicControl%jnmb(5) >= 1) then
-       call ae1kmic(lpw,k2(11),micro%rap(1:m1,i,j),rx(1:m1,5))
-       micro%accpa(i,j) = micro%accpa(i,j) + accpx(5)
-       micro%pcpra(i,j) = pcprx(5)
-       call ae1kmic(lpw,k2(11),micro%pcpva(1:m1,i,j),pcpvx(1:m1,5))
-       if (oneMicControl%jnmb(5) >= 5) call ae1kmic(lpw,k2(11),micro%cap(1:m1,i,j),cx(1:m1,5))
+       call ae1kmic(lpw,k2(11),oneMicroFields%rap(1:m1,i,j),rx(1:m1,5))
+       oneMicroFields%accpa(i,j) = oneMicroFields%accpa(i,j) + accpx(5)
+       oneMicroFields%pcpra(i,j) = pcprx(5)
+       call ae1kmic(lpw,k2(11),oneMicroFields%pcpva(1:m1,i,j),pcpvx(1:m1,5))
+       if (oneMicControl%jnmb(5) >= 5) call ae1kmic(lpw,k2(11),oneMicroFields%cap(1:m1,i,j),cx(1:m1,5))
     endif
 
     if (oneMicControl%jnmb(6) >= 1) then
-       call ae1kmic(lpw,k2(11),micro%rgp(1:m1,i,j),rx(1:m1,6))
-       call ae1kmic(lpw,k2(11),micro%q6(1:m1,i,j),qx(1:m1,6))
-       micro%accpg(i,j) = micro%accpg(i,j) + accpx(6)
-       micro%pcprg(i,j) = pcprx(6)
-       call ae1kmic(lpw,k2(11),micro%pcpvg(1:m1,i,j),pcpvx(1:m1,6))
-       if (oneMicControl%jnmb(6) >= 5) call ae1kmic(lpw,k2(11),micro%cgp(1:m1,i,j),cx(1:m1,6))
+       call ae1kmic(lpw,k2(11),oneMicroFields%rgp(1:m1,i,j),rx(1:m1,6))
+       call ae1kmic(lpw,k2(11),oneMicroFields%q6(1:m1,i,j),qx(1:m1,6))
+       oneMicroFields%accpg(i,j) = oneMicroFields%accpg(i,j) + accpx(6)
+       oneMicroFields%pcprg(i,j) = pcprx(6)
+       call ae1kmic(lpw,k2(11),oneMicroFields%pcpvg(1:m1,i,j),pcpvx(1:m1,6))
+       if (oneMicControl%jnmb(6) >= 5) call ae1kmic(lpw,k2(11),oneMicroFields%cgp(1:m1,i,j),cx(1:m1,6))
     endif
 
     if (oneMicControl%jnmb(7) >= 1) then
-       call ae1kmic(lpw,k2(11),micro%rhp(1:m1,i,j),rx(1:m1,7))
-       call ae1kmic(lpw,k2(11),micro%q7(1:m1,i,j),qx(1:m1,7))
-       micro%accph(i,j) = micro%accph(i,j) + accpx(7)
-       micro%pcprh(i,j) = pcprx(7)
-       call ae1kmic(lpw,k2(11),micro%pcpvh(1:m1,i,j),pcpvx(1:m1,7))
-       if (oneMicControl%jnmb(7) >= 5) call ae1kmic(lpw,k2(11),micro%chp(1:m1,i,j),cx(1:m1,7))
+       call ae1kmic(lpw,k2(11),oneMicroFields%rhp(1:m1,i,j),rx(1:m1,7))
+       call ae1kmic(lpw,k2(11),oneMicroFields%q7(1:m1,i,j),qx(1:m1,7))
+       oneMicroFields%accph(i,j) = oneMicroFields%accph(i,j) + accpx(7)
+       oneMicroFields%pcprh(i,j) = pcprx(7)
+       call ae1kmic(lpw,k2(11),oneMicroFields%pcpvh(1:m1,i,j),pcpvx(1:m1,7))
+       if (oneMicControl%jnmb(7) >= 5) call ae1kmic(lpw,k2(11),oneMicroFields%chp(1:m1,i,j),cx(1:m1,7))
     endif
 
     if (oneMicControl%jnmb(8) >= 1) then
        if(oneMicControl%jnmb(8) <= 4) k3(8) = k2(11)
-       call ae1kmic(lpw,k3(8),micro%rdp(1:m1,i,j),rx(1:m1,8))
-       micro%accpd(i,j) = micro%accpd(i,j) + accpx(8)
-       micro%pcprd(i,j) = pcprx(8)
-       call ae1kmic(lpw,k3(8),micro%pcpvd(1:m1,i,j),pcpvx(1:m1,8))
+       call ae1kmic(lpw,k3(8),oneMicroFields%rdp(1:m1,i,j),rx(1:m1,8))
+       oneMicroFields%accpd(i,j) = oneMicroFields%accpd(i,j) + accpx(8)
+       oneMicroFields%pcprd(i,j) = pcprx(8)
+       call ae1kmic(lpw,k3(8),oneMicroFields%pcpvd(1:m1,i,j),pcpvx(1:m1,8))
        if (oneMicControl%jnmb(8) >= 5) then
-          call ae1kmic(lpw,k3(8),micro%cdp(1:m1,i,j),cx(1:m1,8))
-          call ae1kmic(lpw,k3(8),micro%gccnp(1:m1,i,j),gccnx(1:m1))
-          call ae1kmic(lpw,k3(8),micro%gccmp(1:m1,i,j),gccmx(1:m1))
+          call ae1kmic(lpw,k3(8),oneMicroFields%cdp(1:m1,i,j),cx(1:m1,8))
+          call ae1kmic(lpw,k3(8),oneMicroFields%gccnp(1:m1,i,j),gccnx(1:m1))
+          call ae1kmic(lpw,k3(8),oneMicroFields%gccmp(1:m1,i,j),gccmx(1:m1))
        endif
-       if (oneMicControl%iccnlev >= 2) call ae1kmic(lpw,k3(8),micro%cnm8p(1:m1,i,j),cnmhx(1:m1,8))
+       if (oneMicControl%iccnlev >= 2) call ae1kmic(lpw,k3(8),oneMicroFields%cnm8p(1:m1,i,j),cnmhx(1:m1,8))
     endif
 
     !Set bottom level with first level above ground
     if(oneMicControl%imbudget>=1 .or. oneMicControl%imbudtot>=1) then
-       micro%latheatvap(1,i,j) = micro%latheatvap(2,i,j)
-       micro%latheatfrz(1,i,j) = micro%latheatfrz(2,i,j)
+       oneMicroFields%latheatvap(1,i,j) = oneMicroFields%latheatvap(2,i,j)
+       oneMicroFields%latheatfrz(1,i,j) = oneMicroFields%latheatfrz(2,i,j)
     endif
     if(oneMicControl%imbudget>=1) then
-       micro%nuccldr(1,i,j)   = micro%nuccldr(2,i,j)
-       micro%nuccldc(1,i,j)   = micro%nuccldc(2,i,j)
-       micro%cld2rain(1,i,j)  = micro%cld2rain(2,i,j)
-       micro%ice2rain(1,i,j)  = micro%ice2rain(2,i,j)
-       micro%nucicer(1,i,j)   = micro%nucicer(2,i,j)
-       micro%nucicec(1,i,j)   = micro%nucicec(2,i,j)
-       micro%vapliq(1,i,j)    = micro%vapliq(2,i,j)
-       micro%vapice(1,i,j)    = micro%vapice(2,i,j)
-       micro%meltice(1,i,j)   = micro%meltice(2,i,j)
-       micro%rimecld(1,i,j)   = micro%rimecld(2,i,j)
-       micro%rain2ice(1,i,j)  = micro%rain2ice(2,i,j)
-       micro%aggregate(1,i,j) = micro%aggregate(2,i,j)
+       oneMicroFields%nuccldr(1,i,j)   = oneMicroFields%nuccldr(2,i,j)
+       oneMicroFields%nuccldc(1,i,j)   = oneMicroFields%nuccldc(2,i,j)
+       oneMicroFields%cld2rain(1,i,j)  = oneMicroFields%cld2rain(2,i,j)
+       oneMicroFields%ice2rain(1,i,j)  = oneMicroFields%ice2rain(2,i,j)
+       oneMicroFields%nucicer(1,i,j)   = oneMicroFields%nucicer(2,i,j)
+       oneMicroFields%nucicec(1,i,j)   = oneMicroFields%nucicec(2,i,j)
+       oneMicroFields%vapliq(1,i,j)    = oneMicroFields%vapliq(2,i,j)
+       oneMicroFields%vapice(1,i,j)    = oneMicroFields%vapice(2,i,j)
+       oneMicroFields%meltice(1,i,j)   = oneMicroFields%meltice(2,i,j)
+       oneMicroFields%rimecld(1,i,j)   = oneMicroFields%rimecld(2,i,j)
+       oneMicroFields%rain2ice(1,i,j)  = oneMicroFields%rain2ice(2,i,j)
+       oneMicroFields%aggregate(1,i,j) = oneMicroFields%aggregate(2,i,j)
     endif
     if(oneMicControl%imbudget==2) then
-       micro%inuchomr(1,i,j)     = micro%inuchomr(2,i,j)
-       micro%inuchomc(1,i,j)     = micro%inuchomc(2,i,j)
-       micro%inuccontr(1,i,j)    = micro%inuccontr(2,i,j)
-       micro%inuccontc(1,i,j)    = micro%inuccontc(2,i,j)
-       micro%inucifnr(1,i,j)     = micro%inucifnr(2,i,j)
-       micro%inucifnc(1,i,j)     = micro%inucifnc(2,i,j)
-       micro%inuchazr(1,i,j)     = micro%inuchazr(2,i,j)
-       micro%inuchazc(1,i,j)     = micro%inuchazc(2,i,j)
-       micro%vapcld(1,i,j)       = micro%vapcld(2,i,j)
-       micro%vaprain(1,i,j)      = micro%vaprain(2,i,j)
-       micro%vappris(1,i,j)      = micro%vappris(2,i,j)
-       micro%vapsnow(1,i,j)      = micro%vapsnow(2,i,j)
-       micro%vapaggr(1,i,j)      = micro%vapaggr(2,i,j)
-       micro%vapgrau(1,i,j)      = micro%vapgrau(2,i,j)
-       micro%vaphail(1,i,j)      = micro%vaphail(2,i,j)
-       micro%vapdriz(1,i,j)      = micro%vapdriz(2,i,j)
-       micro%meltpris(1,i,j)     = micro%meltpris(2,i,j)
-       micro%meltsnow(1,i,j)     = micro%meltsnow(2,i,j)
-       micro%meltaggr(1,i,j)     = micro%meltaggr(2,i,j)
-       micro%meltgrau(1,i,j)     = micro%meltgrau(2,i,j)
-       micro%melthail(1,i,j)     = micro%melthail(2,i,j)
-       micro%rimecldsnow(1,i,j)  = micro%rimecldsnow(2,i,j)
-       micro%rimecldaggr(1,i,j)  = micro%rimecldaggr(2,i,j)
-       micro%rimecldgrau(1,i,j)  = micro%rimecldgrau(2,i,j)
-       micro%rimecldhail(1,i,j)  = micro%rimecldhail(2,i,j)
-       micro%rain2pr(1,i,j)      = micro%rain2pr(2,i,j)
-       micro%rain2sn(1,i,j)      = micro%rain2sn(2,i,j)
-       micro%rain2ag(1,i,j)      = micro%rain2ag(2,i,j)
-       micro%rain2gr(1,i,j)      = micro%rain2gr(2,i,j)
-       micro%rain2ha(1,i,j)      = micro%rain2ha(2,i,j)
-       micro%rain2ha_xtra(1,i,j) = micro%rain2ha_xtra(2,i,j)
-       micro%aggrselfpris(1,i,j) = micro%aggrselfpris(2,i,j)
-       micro%aggrselfsnow(1,i,j) = micro%aggrselfsnow(2,i,j)
-       micro%aggrprissnow(1,i,j) = micro%aggrprissnow(2,i,j)
+       oneMicroFields%inuchomr(1,i,j)     = oneMicroFields%inuchomr(2,i,j)
+       oneMicroFields%inuchomc(1,i,j)     = oneMicroFields%inuchomc(2,i,j)
+       oneMicroFields%inuccontr(1,i,j)    = oneMicroFields%inuccontr(2,i,j)
+       oneMicroFields%inuccontc(1,i,j)    = oneMicroFields%inuccontc(2,i,j)
+       oneMicroFields%inucifnr(1,i,j)     = oneMicroFields%inucifnr(2,i,j)
+       oneMicroFields%inucifnc(1,i,j)     = oneMicroFields%inucifnc(2,i,j)
+       oneMicroFields%inuchazr(1,i,j)     = oneMicroFields%inuchazr(2,i,j)
+       oneMicroFields%inuchazc(1,i,j)     = oneMicroFields%inuchazc(2,i,j)
+       oneMicroFields%vapcld(1,i,j)       = oneMicroFields%vapcld(2,i,j)
+       oneMicroFields%vaprain(1,i,j)      = oneMicroFields%vaprain(2,i,j)
+       oneMicroFields%vappris(1,i,j)      = oneMicroFields%vappris(2,i,j)
+       oneMicroFields%vapsnow(1,i,j)      = oneMicroFields%vapsnow(2,i,j)
+       oneMicroFields%vapaggr(1,i,j)      = oneMicroFields%vapaggr(2,i,j)
+       oneMicroFields%vapgrau(1,i,j)      = oneMicroFields%vapgrau(2,i,j)
+       oneMicroFields%vaphail(1,i,j)      = oneMicroFields%vaphail(2,i,j)
+       oneMicroFields%vapdriz(1,i,j)      = oneMicroFields%vapdriz(2,i,j)
+       oneMicroFields%meltpris(1,i,j)     = oneMicroFields%meltpris(2,i,j)
+       oneMicroFields%meltsnow(1,i,j)     = oneMicroFields%meltsnow(2,i,j)
+       oneMicroFields%meltaggr(1,i,j)     = oneMicroFields%meltaggr(2,i,j)
+       oneMicroFields%meltgrau(1,i,j)     = oneMicroFields%meltgrau(2,i,j)
+       oneMicroFields%melthail(1,i,j)     = oneMicroFields%melthail(2,i,j)
+       oneMicroFields%rimecldsnow(1,i,j)  = oneMicroFields%rimecldsnow(2,i,j)
+       oneMicroFields%rimecldaggr(1,i,j)  = oneMicroFields%rimecldaggr(2,i,j)
+       oneMicroFields%rimecldgrau(1,i,j)  = oneMicroFields%rimecldgrau(2,i,j)
+       oneMicroFields%rimecldhail(1,i,j)  = oneMicroFields%rimecldhail(2,i,j)
+       oneMicroFields%rain2pr(1,i,j)      = oneMicroFields%rain2pr(2,i,j)
+       oneMicroFields%rain2sn(1,i,j)      = oneMicroFields%rain2sn(2,i,j)
+       oneMicroFields%rain2ag(1,i,j)      = oneMicroFields%rain2ag(2,i,j)
+       oneMicroFields%rain2gr(1,i,j)      = oneMicroFields%rain2gr(2,i,j)
+       oneMicroFields%rain2ha(1,i,j)      = oneMicroFields%rain2ha(2,i,j)
+       oneMicroFields%rain2ha_xtra(1,i,j) = oneMicroFields%rain2ha_xtra(2,i,j)
+       oneMicroFields%aggrselfpris(1,i,j) = oneMicroFields%aggrselfpris(2,i,j)
+       oneMicroFields%aggrselfsnow(1,i,j) = oneMicroFields%aggrselfsnow(2,i,j)
+       oneMicroFields%aggrprissnow(1,i,j) = oneMicroFields%aggrprissnow(2,i,j)
     endif
     !COMPUTE AND OUTPUT MICRO BUDGET PROCESSES (totals)
     if(oneMicControl%imbudtot>=1) then
-       micro%nuccldrt(1,i,j)    = micro%nuccldrt(2,i,j)
-       micro%nuccldct(1,i,j)    = micro%nuccldct(2,i,j)
-       micro%cld2raint(1,i,j)   = micro%cld2raint(2,i,j)
-       micro%ice2raint(1,i,j)   = micro%ice2raint(2,i,j)
-       micro%nucicert(1,i,j)    = micro%nucicert(2,i,j)
-       micro%nucicect(1,i,j)    = micro%nucicect(2,i,j)
-       micro%vapliqt(1,i,j)     = micro%vapliqt(2,i,j)
-       micro%vapicet(1,i,j)     = micro%vapicet(2,i,j)
-       micro%melticet(1,i,j)    = micro%melticet(2,i,j)
-       micro%rimecldt(1,i,j)    = micro%rimecldt(2,i,j)
-       micro%rain2icet(1,i,j)   = micro%rain2icet(2,i,j)
-       micro%aggregatet(1,i,j)  = micro%aggregatet(2,i,j)
-       micro%latheatvapt(1,i,j) = micro%latheatvapt(2,i,j)
-       micro%latheatfrzt(1,i,j) = micro%latheatfrzt(2,i,j)
+       oneMicroFields%nuccldrt(1,i,j)    = oneMicroFields%nuccldrt(2,i,j)
+       oneMicroFields%nuccldct(1,i,j)    = oneMicroFields%nuccldct(2,i,j)
+       oneMicroFields%cld2raint(1,i,j)   = oneMicroFields%cld2raint(2,i,j)
+       oneMicroFields%ice2raint(1,i,j)   = oneMicroFields%ice2raint(2,i,j)
+       oneMicroFields%nucicert(1,i,j)    = oneMicroFields%nucicert(2,i,j)
+       oneMicroFields%nucicect(1,i,j)    = oneMicroFields%nucicect(2,i,j)
+       oneMicroFields%vapliqt(1,i,j)     = oneMicroFields%vapliqt(2,i,j)
+       oneMicroFields%vapicet(1,i,j)     = oneMicroFields%vapicet(2,i,j)
+       oneMicroFields%melticet(1,i,j)    = oneMicroFields%melticet(2,i,j)
+       oneMicroFields%rimecldt(1,i,j)    = oneMicroFields%rimecldt(2,i,j)
+       oneMicroFields%rain2icet(1,i,j)   = oneMicroFields%rain2icet(2,i,j)
+       oneMicroFields%aggregatet(1,i,j)  = oneMicroFields%aggregatet(2,i,j)
+       oneMicroFields%latheatvapt(1,i,j) = oneMicroFields%latheatvapt(2,i,j)
+       oneMicroFields%latheatfrzt(1,i,j) = oneMicroFields%latheatfrzt(2,i,j)
     endif
     if(oneMicControl%imbudtot==2) then
-       micro%inuchomrt(1,i,j)     = micro%inuchomrt(2,i,j)
-       micro%inuchomct(1,i,j)     = micro%inuchomct(2,i,j)
-       micro%inuccontrt(1,i,j)    = micro%inuccontrt(2,i,j)
-       micro%inuccontct(1,i,j)    = micro%inuccontct(2,i,j)
-       micro%inucifnrt(1,i,j)     = micro%inucifnrt(2,i,j)
-       micro%inucifnct(1,i,j)     = micro%inucifnct(2,i,j)
-       micro%inuchazrt(1,i,j)     = micro%inuchazrt(2,i,j)
-       micro%inuchazct(1,i,j)     = micro%inuchazct(2,i,j)
-       micro%vapcldt(1,i,j)       = micro%vapcldt(2,i,j)
-       micro%vapraint(1,i,j)      = micro%vapraint(2,i,j)
-       micro%vapprist(1,i,j)      = micro%vapprist(2,i,j)
-       micro%vapsnowt(1,i,j)      = micro%vapsnowt(2,i,j)
-       micro%vapaggrt(1,i,j)      = micro%vapaggrt(2,i,j)
-       micro%vapgraut(1,i,j)      = micro%vapgraut(2,i,j)
-       micro%vaphailt(1,i,j)      = micro%vaphailt(2,i,j)
-       micro%vapdrizt(1,i,j)      = micro%vapdrizt(2,i,j)
-       micro%meltprist(1,i,j)     = micro%meltprist(2,i,j)
-       micro%meltsnowt(1,i,j)     = micro%meltsnowt(2,i,j)
-       micro%meltaggrt(1,i,j)     = micro%meltaggrt(2,i,j)
-       micro%meltgraut(1,i,j)     = micro%meltgraut(2,i,j)
-       micro%melthailt(1,i,j)     = micro%melthailt(2,i,j)
-       micro%rimecldsnowt(1,i,j)  = micro%rimecldsnowt(2,i,j)
-       micro%rimecldaggrt(1,i,j)  = micro%rimecldaggrt(2,i,j)
-       micro%rimecldgraut(1,i,j)  = micro%rimecldgraut(2,i,j)
-       micro%rimecldhailt(1,i,j)  = micro%rimecldhailt(2,i,j)
-       micro%rain2prt(1,i,j)      = micro%rain2prt(2,i,j)
-       micro%rain2snt(1,i,j)      = micro%rain2snt(2,i,j)
-       micro%rain2agt(1,i,j)      = micro%rain2agt(2,i,j)
-       micro%rain2grt(1,i,j)      = micro%rain2grt(2,i,j)
-       micro%rain2hat(1,i,j)      = micro%rain2hat(2,i,j)
-       micro%rain2ha_xtrat(1,i,j) = micro%rain2ha_xtrat(2,i,j)
-       micro%aggrselfprist(1,i,j) = micro%aggrselfprist(2,i,j)
-       micro%aggrselfsnowt(1,i,j) = micro%aggrselfsnowt(2,i,j)
-       micro%aggrprissnowt(1,i,j) = micro%aggrprissnowt(2,i,j)
+       oneMicroFields%inuchomrt(1,i,j)     = oneMicroFields%inuchomrt(2,i,j)
+       oneMicroFields%inuchomct(1,i,j)     = oneMicroFields%inuchomct(2,i,j)
+       oneMicroFields%inuccontrt(1,i,j)    = oneMicroFields%inuccontrt(2,i,j)
+       oneMicroFields%inuccontct(1,i,j)    = oneMicroFields%inuccontct(2,i,j)
+       oneMicroFields%inucifnrt(1,i,j)     = oneMicroFields%inucifnrt(2,i,j)
+       oneMicroFields%inucifnct(1,i,j)     = oneMicroFields%inucifnct(2,i,j)
+       oneMicroFields%inuchazrt(1,i,j)     = oneMicroFields%inuchazrt(2,i,j)
+       oneMicroFields%inuchazct(1,i,j)     = oneMicroFields%inuchazct(2,i,j)
+       oneMicroFields%vapcldt(1,i,j)       = oneMicroFields%vapcldt(2,i,j)
+       oneMicroFields%vapraint(1,i,j)      = oneMicroFields%vapraint(2,i,j)
+       oneMicroFields%vapprist(1,i,j)      = oneMicroFields%vapprist(2,i,j)
+       oneMicroFields%vapsnowt(1,i,j)      = oneMicroFields%vapsnowt(2,i,j)
+       oneMicroFields%vapaggrt(1,i,j)      = oneMicroFields%vapaggrt(2,i,j)
+       oneMicroFields%vapgraut(1,i,j)      = oneMicroFields%vapgraut(2,i,j)
+       oneMicroFields%vaphailt(1,i,j)      = oneMicroFields%vaphailt(2,i,j)
+       oneMicroFields%vapdrizt(1,i,j)      = oneMicroFields%vapdrizt(2,i,j)
+       oneMicroFields%meltprist(1,i,j)     = oneMicroFields%meltprist(2,i,j)
+       oneMicroFields%meltsnowt(1,i,j)     = oneMicroFields%meltsnowt(2,i,j)
+       oneMicroFields%meltaggrt(1,i,j)     = oneMicroFields%meltaggrt(2,i,j)
+       oneMicroFields%meltgraut(1,i,j)     = oneMicroFields%meltgraut(2,i,j)
+       oneMicroFields%melthailt(1,i,j)     = oneMicroFields%melthailt(2,i,j)
+       oneMicroFields%rimecldsnowt(1,i,j)  = oneMicroFields%rimecldsnowt(2,i,j)
+       oneMicroFields%rimecldaggrt(1,i,j)  = oneMicroFields%rimecldaggrt(2,i,j)
+       oneMicroFields%rimecldgraut(1,i,j)  = oneMicroFields%rimecldgraut(2,i,j)
+       oneMicroFields%rimecldhailt(1,i,j)  = oneMicroFields%rimecldhailt(2,i,j)
+       oneMicroFields%rain2prt(1,i,j)      = oneMicroFields%rain2prt(2,i,j)
+       oneMicroFields%rain2snt(1,i,j)      = oneMicroFields%rain2snt(2,i,j)
+       oneMicroFields%rain2agt(1,i,j)      = oneMicroFields%rain2agt(2,i,j)
+       oneMicroFields%rain2grt(1,i,j)      = oneMicroFields%rain2grt(2,i,j)
+       oneMicroFields%rain2hat(1,i,j)      = oneMicroFields%rain2hat(2,i,j)
+       oneMicroFields%rain2ha_xtrat(1,i,j) = oneMicroFields%rain2ha_xtrat(2,i,j)
+       oneMicroFields%aggrselfprist(1,i,j) = oneMicroFields%aggrselfprist(2,i,j)
+       oneMicroFields%aggrselfsnowt(1,i,j) = oneMicroFields%aggrselfsnowt(2,i,j)
+       oneMicroFields%aggrprissnowt(1,i,j) = oneMicroFields%aggrprissnowt(2,i,j)
     endif
   end subroutine copyback
 
@@ -11488,26 +11483,27 @@ contains
 
   !******************************************************************************
 
-  subroutine negadj1_2M_rams60(m1,m2,m3,oneBasicFields, oneMicControl)
+  subroutine negadj1_2M_rams60(m1,m2,m3,oneBasicFields, oneMicControl, oneMicroFields)
     type(MicControl), pointer, intent(in) :: oneMicControl
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
     integer :: m1,m2,m3
 
     if (oneMicControl%level == 0) return
 
     call adj1_2M_rams60(m1,m2,m3,grid_g(ngrid)%lpw(1:m1,1),oneBasicFields%rtp(1:m1,1,1)  &
-         ,oneBasicFields%thp(1:m1,1,1),micro_g(ngrid),vctr9,oneMicControl)
+         ,oneBasicFields%thp(1:m1,1,1),oneMicroFields,vctr9,oneMicControl)
 
   end subroutine negadj1_2M_rams60
 
   !******************************************************************************
 
-  subroutine adj1_2M_rams60(m1,m2,m3,lpw_R,rtp,thp,micro,vctr9, oneMicControl)
+  subroutine adj1_2M_rams60(m1,m2,m3,lpw_R,rtp,thp,oneMicroFields,vctr9, oneMicControl)
     type(MicControl), pointer, intent(in) :: oneMicControl
     integer :: m1,m2,m3
     real, dimension(m2,m3) :: lpw_R
 
-    type (micro_vars) :: micro
+    type(MicroFields) :: oneMicroFields
 
     integer :: i,j,k,lcat,ka
     real :: frac
@@ -11535,24 +11531,24 @@ contains
           ka = 1
 
           if (oneMicControl%jnmb(1) > 0) then
-             call ae1kmic(ka,m1,rx(1:m1,1),micro%rcp(1:m1,i,j))
-             if(oneMicControl%iccnlev >= 2) call ae1kmic(ka,m1,cnmhx(1:m1,1),micro%cnm1p(1:m1,i,j))
+             call ae1kmic(ka,m1,rx(1:m1,1),oneMicroFields%rcp(1:m1,i,j))
+             if(oneMicControl%iccnlev >= 2) call ae1kmic(ka,m1,cnmhx(1:m1,1),oneMicroFields%cnm1p(1:m1,i,j))
           endif
           if (oneMicControl%jnmb(2) > 0) then
-             call ae1kmic(ka,m1,rx(1:m1,2),micro%rrp(1:m1,i,j))
-             if(oneMicControl%iccnlev >= 2) call ae1kmic(ka,m1,cnmhx(1:m1,2),micro%cnm2p(1:m1,i,j))
+             call ae1kmic(ka,m1,rx(1:m1,2),oneMicroFields%rrp(1:m1,i,j))
+             if(oneMicControl%iccnlev >= 2) call ae1kmic(ka,m1,cnmhx(1:m1,2),oneMicroFields%cnm2p(1:m1,i,j))
           endif
           if (oneMicControl%jnmb(3) > 0) then
-             call ae1kmic(ka,m1,rx(1:m1,3),micro%rpp(1:m1,i,j))
-             if(oneMicControl%iccnlev >= 2) call ae1kmic(ka,m1,cnmhx(1:m1,3),micro%cnm3p(1:m1,i,j))
+             call ae1kmic(ka,m1,rx(1:m1,3),oneMicroFields%rpp(1:m1,i,j))
+             if(oneMicControl%iccnlev >= 2) call ae1kmic(ka,m1,cnmhx(1:m1,3),oneMicroFields%cnm3p(1:m1,i,j))
           endif
-          if (oneMicControl%jnmb(4) > 0) call ae1kmic(ka,m1,rx(1:m1,4),micro%rsp(1:m1,i,j))
-          if (oneMicControl%jnmb(5) > 0) call ae1kmic(ka,m1,rx(1:m1,5),micro%rap(1:m1,i,j))
-          if (oneMicControl%jnmb(6) > 0) call ae1kmic(ka,m1,rx(1:m1,6),micro%rgp(1:m1,i,j))
-          if (oneMicControl%jnmb(7) > 0) call ae1kmic(ka,m1,rx(1:m1,7),micro%rhp(1:m1,i,j))
+          if (oneMicControl%jnmb(4) > 0) call ae1kmic(ka,m1,rx(1:m1,4),oneMicroFields%rsp(1:m1,i,j))
+          if (oneMicControl%jnmb(5) > 0) call ae1kmic(ka,m1,rx(1:m1,5),oneMicroFields%rap(1:m1,i,j))
+          if (oneMicControl%jnmb(6) > 0) call ae1kmic(ka,m1,rx(1:m1,6),oneMicroFields%rgp(1:m1,i,j))
+          if (oneMicControl%jnmb(7) > 0) call ae1kmic(ka,m1,rx(1:m1,7),oneMicroFields%rhp(1:m1,i,j))
           if (oneMicControl%jnmb(8) > 0) then
-             call ae1kmic(ka,m1,rx(1:m1,8),micro%rdp(1:m1,i,j))
-             if(oneMicControl%iccnlev >= 2) call ae1kmic(ka,m1,cnmhx(1:m1,8),micro%cnm8p(1:m1,i,j))
+             call ae1kmic(ka,m1,rx(1:m1,8),oneMicroFields%rdp(1:m1,i,j))
+             if(oneMicControl%iccnlev >= 2) call ae1kmic(ka,m1,cnmhx(1:m1,8),oneMicroFields%cnm8p(1:m1,i,j))
           endif
 
           do lcat = 1,ncat
@@ -11581,49 +11577,49 @@ contains
           enddo
 
           if (oneMicControl%jnmb(1) > 0) then
-             call ae1kmic(ka,m1,micro%rcp(1:m1,i,j),rx(1:m1,1))
-             if(oneMicControl%iccnlev >= 2) call ae1kmic(ka,m1,micro%cnm1p(1:m1,i,j),cnmhx(1:m1,1))
+             call ae1kmic(ka,m1,oneMicroFields%rcp(1:m1,i,j),rx(1:m1,1))
+             if(oneMicControl%iccnlev >= 2) call ae1kmic(ka,m1,oneMicroFields%cnm1p(1:m1,i,j),cnmhx(1:m1,1))
           endif
           if (oneMicControl%jnmb(2) > 0) then
-             call ae1kmic(ka,m1,micro%rrp(1:m1,i,j),rx(1:m1,2))
-             if(oneMicControl%iccnlev >= 2) call ae1kmic(ka,m1,micro%cnm2p(1:m1,i,j),cnmhx(1:m1,2))
+             call ae1kmic(ka,m1,oneMicroFields%rrp(1:m1,i,j),rx(1:m1,2))
+             if(oneMicControl%iccnlev >= 2) call ae1kmic(ka,m1,oneMicroFields%cnm2p(1:m1,i,j),cnmhx(1:m1,2))
           endif
           if (oneMicControl%jnmb(3) > 0) then
-             call ae1kmic(ka,m1,micro%rpp(1:m1,i,j),rx(1:m1,3))
-             if(oneMicControl%iccnlev >= 2) call ae1kmic(ka,m1,micro%cnm3p(1:m1,i,j),cnmhx(1:m1,3))
+             call ae1kmic(ka,m1,oneMicroFields%rpp(1:m1,i,j),rx(1:m1,3))
+             if(oneMicControl%iccnlev >= 2) call ae1kmic(ka,m1,oneMicroFields%cnm3p(1:m1,i,j),cnmhx(1:m1,3))
           endif
-          if (oneMicControl%jnmb(4) > 0) call ae1kmic(ka,m1,micro%rsp(1:m1,i,j),rx(1:m1,4))
-          if (oneMicControl%jnmb(5) > 0) call ae1kmic(ka,m1,micro%rap(1:m1,i,j),rx(1:m1,5))
-          if (oneMicControl%jnmb(6) > 0) call ae1kmic(ka,m1,micro%rgp(1:m1,i,j),rx(1:m1,6))
-          if (oneMicControl%jnmb(7) > 0) call ae1kmic(ka,m1,micro%rhp(1:m1,i,j),rx(1:m1,7))
+          if (oneMicControl%jnmb(4) > 0) call ae1kmic(ka,m1,oneMicroFields%rsp(1:m1,i,j),rx(1:m1,4))
+          if (oneMicControl%jnmb(5) > 0) call ae1kmic(ka,m1,oneMicroFields%rap(1:m1,i,j),rx(1:m1,5))
+          if (oneMicControl%jnmb(6) > 0) call ae1kmic(ka,m1,oneMicroFields%rgp(1:m1,i,j),rx(1:m1,6))
+          if (oneMicControl%jnmb(7) > 0) call ae1kmic(ka,m1,oneMicroFields%rhp(1:m1,i,j),rx(1:m1,7))
           if (oneMicControl%jnmb(8) > 0) then
-             call ae1kmic(ka,m1,micro%rdp(1:m1,i,j),rx(1:m1,8))
-             if(oneMicControl%iccnlev >= 2) call ae1kmic(ka,m1,micro%cnm8p(1:m1,i,j),cnmhx(1:m1,8))
+             call ae1kmic(ka,m1,oneMicroFields%rdp(1:m1,i,j),rx(1:m1,8))
+             if(oneMicControl%iccnlev >= 2) call ae1kmic(ka,m1,oneMicroFields%cnm8p(1:m1,i,j),cnmhx(1:m1,8))
           endif
 
           if (oneMicControl%jnmb(1) >= 5)  &
-               call ae1mic(ka,m1,micro%ccp(1:m1,i,j),micro%rcp(1:m1,i,j),rx(1,1))
+               call ae1mic(ka,m1,oneMicroFields%ccp(1:m1,i,j),oneMicroFields%rcp(1:m1,i,j),rx(1,1))
           if (oneMicControl%jnmb(2) >= 5)  &
-               call ae1mic(ka,m1,micro%crp(1:m1,i,j),micro%rrp(1:m1,i,j),rx(1,2))
+               call ae1mic(ka,m1,oneMicroFields%crp(1:m1,i,j),oneMicroFields%rrp(1:m1,i,j),rx(1,2))
           if (oneMicControl%jnmb(3) >= 5)  &
-               call ae1mic(ka,m1,micro%cpp(1:m1,i,j),micro%rpp(1:m1,i,j),rx(1,3))
+               call ae1mic(ka,m1,oneMicroFields%cpp(1:m1,i,j),oneMicroFields%rpp(1:m1,i,j),rx(1,3))
           if (oneMicControl%jnmb(4) >= 5)  &
-               call ae1mic(ka,m1,micro%csp(1:m1,i,j),micro%rsp(1:m1,i,j),rx(1,4))
+               call ae1mic(ka,m1,oneMicroFields%csp(1:m1,i,j),oneMicroFields%rsp(1:m1,i,j),rx(1,4))
           if (oneMicControl%jnmb(5) >= 5)  &
-               call ae1mic(ka,m1,micro%cap(1:m1,i,j),micro%rap(1:m1,i,j),rx(1,5))
+               call ae1mic(ka,m1,oneMicroFields%cap(1:m1,i,j),oneMicroFields%rap(1:m1,i,j),rx(1,5))
           if (oneMicControl%jnmb(6) >= 5)  &
-               call ae1mic(ka,m1,micro%cgp(1:m1,i,j),micro%rgp(1:m1,i,j),rx(1,6))
+               call ae1mic(ka,m1,oneMicroFields%cgp(1:m1,i,j),oneMicroFields%rgp(1:m1,i,j),rx(1,6))
           if (oneMicControl%jnmb(7) >= 5)  &
-               call ae1mic(ka,m1,micro%chp(1:m1,i,j),micro%rhp(1:m1,i,j),rx(1,7))
+               call ae1mic(ka,m1,oneMicroFields%chp(1:m1,i,j),oneMicroFields%rhp(1:m1,i,j),rx(1,7))
           if (oneMicControl%jnmb(8) >= 5)  &
-               call ae1mic(ka,m1,micro%cdp(1:m1,i,j),micro%rdp(1:m1,i,j),rx(1,8))
+               call ae1mic(ka,m1,oneMicroFields%cdp(1:m1,i,j),oneMicroFields%rdp(1:m1,i,j),rx(1,8))
 
           do k = 1,m1
              if(imd1flg==1 .or. oneMicControl%idust==1) then
-                if(micro%md1np(k,i,j) .lt. 0.) micro%md1np(k,i,j) = 0.0
+                if(oneMicroFields%md1np(k,i,j) .lt. 0.) oneMicroFields%md1np(k,i,j) = 0.0
              endif
              if(imd2flg==1 .or. oneMicControl%idust==1) then
-                if(micro%md2np(k,i,j) .lt. 0.) micro%md2np(k,i,j) = 0.0
+                if(oneMicroFields%md2np(k,i,j) .lt. 0.) oneMicroFields%md2np(k,i,j) = 0.0
              endif
           enddo
 

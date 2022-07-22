@@ -835,7 +835,9 @@ contains
        call DeepCopyFromMicroFields(oneGrid%Micro,h)
 
     elseif(oneGrid%MicControlVars%mcphys_type == 1) then
-       call negadj1_2M_rams60(mzp,mxp,myp, oneGrid%Basic, oneGrid%MicControlVars)
+       call DeepCopyToMicroFields(oneGrid%Micro, h)
+       call negadj1_2M_rams60(mzp,mxp,myp, oneGrid%Basic, oneGrid%MicControlVars, oneGrid%Micro)
+       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     endif
 
 !!$    call SynchronizedTimeStamp(TS_RK_RESTO) ! Exper1.2, 2021_12

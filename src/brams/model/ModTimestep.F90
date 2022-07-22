@@ -602,7 +602,9 @@ contains
 
 
     elseif(oneGrid%MicControlVars%mcphys_type == 1) then
-       call negadj1_2M_rams60(mzp,mxp,myp, oneGrid%Basic, oneGrid%MicControlVars)
+       call DeepCopyToMicroFields(oneGrid%Micro, h)
+       call negadj1_2M_rams60(mzp,mxp,myp, oneGrid%Basic, oneGrid%MicControlVars, oneGrid%Micro)
+       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     endif
 
     !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
