@@ -489,13 +489,17 @@ contains
     !  Sub-grid diffusion terms
     !----------------------------------------
     if ((if_adap==0) .and. (OneGrid%Ramsin%ihorgrad==2)) then
+       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call diffuse_brams31(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
             oneGrid%Basic, oneGrid%Ramsin, oneGrid%Turb, oneGrid%Id, &
-            oneGrid%MicControlVars)
+            oneGrid%MicControlVars, oneGrid%Micro)
+       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     else
+       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call diffuse(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, &
             oneGrid%Turb, oneGrid%Ramsin, oneGrid%Id, &
-            oneGrid%MicControlVars)
+            oneGrid%MicControlVars, oneGrid%Micro)
+       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     endif
 
 !!!!!  IF( NNQPARM(ngrid) >=2 .OR. NNSHCU(ngrid)>=2 ) CALL prepare_lsf_OLD(NNQPARM(ngrid), NNSHCU(ngrid),3)

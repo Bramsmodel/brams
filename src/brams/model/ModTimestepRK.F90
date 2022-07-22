@@ -594,13 +594,17 @@ contains
     !  Sub-grid diffusion terms
     !----------------------------------------
     if ((if_adap==0) .and. (OneGrid%Ramsin%ihorgrad==2)) then
+       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call diffuse_brams31(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
             oneGrid%Basic, oneGrid%Ramsin, oneGrid%Turb, oneGrid%Id, &
-            oneGrid%MicControlVars)
+            oneGrid%MicControlVars, oneGrid%Micro)
+       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     else
+       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call diffuse(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, &
             oneGrid%Turb, oneGrid%Ramsin, oneGrid%Id, &
-            oneGrid%MicControlVars)
+            oneGrid%MicControlVars, oneGrid%Micro)
+       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     endif
 
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12

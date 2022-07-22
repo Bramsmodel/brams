@@ -31,10 +31,6 @@ module ModRamsMicrophysics2M
   use ModBasicFields, only: &
        BasicFields
 
-  use mem_micro, only: &
-       DeepCopyToMicroFields, &
-       DeepCopyFromMicroFields
-
   use mem_grid, only: &
        grid_g,         & ! INTENT(IN)
        ngrid, &          ! INTENT(IN)

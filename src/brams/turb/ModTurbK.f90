@@ -97,8 +97,8 @@ module ModTurbK
   use mem_leaf, only:     &
        leaf_g                  !INTENT(IN)
 
-  use mem_micro, only:    &
-       micro_g                 !%rcp
+  use ModMicroFields, only:    &
+       MicroFields
 
   use node_mod, only:     &
        mxp,               &  !INTENT(IN)
@@ -175,7 +175,7 @@ contains
 
 
   subroutine diffuse(oneScalarTab, oneScalarTabSize, oneBasicFields, &
-       oneTurbFields, oneNamelistFile, gridId, oneMicControl)
+       oneTurbFields, oneNamelistFile, gridId, oneMicControl, oneMicroFields)
 
     ! +-----------------------------------------------------------------+
     ! \this routine is the subdriver to compute tendencies due to    \
@@ -189,6 +189,7 @@ contains
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     integer, intent(in) :: gridId
     type(MicControl), pointer, intent(in) :: oneMicControl
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
 
     include "constants.h"
 
@@ -284,7 +285,7 @@ contains
          scratch%vt3dp = 0.
 
     if (oneMicControl%level>=2) &
-         call ae1_l(int(mxyzp,i8), scratch%vt3dp(:), micro_g(ngrid)%rcp(:,:,:))
+         call ae1_l(int(mxyzp,i8), scratch%vt3dp(:), oneMicroFields%rcp(:,:,:))
 
     !-srf 29/12/2008 adapted from OLAM
     call bruvais_OLAM(mzp, mxp, myp, ia, iz, ja, jz,                  &

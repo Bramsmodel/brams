@@ -43,10 +43,8 @@ module ModDiffuse
   use mem_leaf, only:     &
        leaf_g                 ! %ustar, %patch_area
 
-
-  use mem_micro, only:    &
-       micro_g                ! %rcp
-
+  use ModMicroFields, only:    &
+       MicroFields
 
   use mem_scratch, only:  &
        scratch,           &   ! %vt3da, %vt3db, %vt3dc, %vt3dd, %vt3de, 
@@ -114,7 +112,7 @@ contains
 
 
   subroutine diffuse_brams31(oneScalarTab, oneScalarTabSize, oneBasicFields, &
-       oneNamelistFile, oneTurbFields, gridId, oneMicControl)
+       oneNamelistFile, oneTurbFields, gridId, oneMicControl, oneMicroFields)
 
     ! +-----------------------------------------------------------------+
     ! \     this routine is the subdriver to compute tendencies due to  \
@@ -132,7 +130,8 @@ contains
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     integer, intent(in) :: gridId
     type(MicControl), pointer, intent(in) :: oneMicControl
-
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
+    
     include "constants.h"
 
     integer(kind=i8) :: mxyzp, ind
@@ -181,7 +180,7 @@ contains
          scratch%vt3dp = 0.
 
     if (oneMicControl%level>=2) &
-         call ae1_l(mxyzp, scratch%vt3dp, micro_g(ngrid)%rcp)
+         call ae1_l(mxyzp, scratch%vt3dp, oneMicroFields%rcp)
 
 
     call bruvais(mzp,mxp,myp,ia,iz,ja,jz                          &
