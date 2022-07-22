@@ -851,7 +851,9 @@ contains
 
     if (oneGrid%MicControlVars%mcphys_type == 1 .and. oneGrid%MicControlVars%level==3) then
        !- 2M rams microphysics
+       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call micro_2M_rams60(oneGrid%Basic,oneGrid%MicControlVars,oneGrid%Micro)
+       call DeepCopyFromMicroFields(oneGrid%Micro, h)
 
     elseif (oneGrid%MicControlVars%mcphys_type == 2 .or. oneGrid%MicControlVars%mcphys_type == 3 ) then
        !- G. Thompson microphysics

@@ -614,7 +614,9 @@ contains
     !----------------------------------------
     if (oneGrid%MicControlVars%mcphys_type == 0 .and. oneGrid%MicControlVars%level==3) then
        ! Original Version used in a Generic IA32 machine
+       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call micro(oneGrid%Basic, oneGrid%MicControlVars, oneGrid%Micro)
+       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     endif
     if (oneGrid%MicControlVars%mcphys_type == 1 .and. oneGrid%MicControlVars%level==3) then
        ! 2M rams microphysics
