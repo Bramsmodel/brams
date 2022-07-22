@@ -16,6 +16,9 @@ module radiation
   use ModMicControl, only: &
        MicControl
 
+  use ModMicroFields, only: &
+       MicroFields
+  
   implicit none
 
   private
@@ -26,11 +29,12 @@ contains
 
 
   subroutine radiate(mzp, mxp, myp, ia, iz, ja, jz, mynum, &
-       oneBasicFields, oneMicControl)
+       oneBasicFields, oneMicControl, oneMicroFields)
 
     integer, intent(IN) :: mzp, mxp, myp, ia, iz, ja, jz, mynum
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(MicControl), pointer, intent(in) :: oneMicControl
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
 
     if &
          ((ilwrtyp + iswrtyp)==0) return ! teste
@@ -40,12 +44,12 @@ contains
          then
 
        call rrtm_driver(mzp, mxp, myp, ia, iz, ja, jz, mynum, &
-            oneBasicFields, oneMicControl)
+            oneBasicFields, oneMicControl, oneMicroFields)
 
     elseif( ilwrtyp==4 .and. iswrtyp==4) then
 
        call carma_driver(mzp,mxp,myp,ia,iz,ja,jz,mynum, &
-            oneBasicFields, oneMicControl) !teste 2
+            oneBasicFields, oneMicControl, oneMicroFields) !teste 2
 
     else
        stop "unknown radiation scheme"

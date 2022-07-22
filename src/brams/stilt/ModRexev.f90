@@ -63,9 +63,6 @@ module ModRexev
        virtt, &
        stilt_g
   
-  use mem_micro, only: &
-       micro_g
-  
   use mem_tend, only: &
        tend
 

@@ -119,9 +119,8 @@ module ModRrtmDriver
        cuparm_vars, &
        nnqparm  ! intent(in)
 
-  use mem_micro   , only: &
-       micro_g, &
-       micro_vars ! intent(inout)
+  use ModMicroFields, only: &
+       MicroFields
 
   use mem_radiate, only:        &
        ilwrtyp, &
@@ -236,11 +235,12 @@ contains
 
 
   subroutine rrtm_driver(mzp, mxp, myp, ia, iz, ja, jz, mynum, &
-       oneBasicFields, oneMicControl)
+       oneBasicFields, oneMicControl, oneMicroFields)
 
     integer, intent(in) :: mzp, mxp, myp, ia, iz, ja, jz, mynum
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(MicControl), pointer, intent(in) :: oneMicControl
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
 
     real,dimension(mzp,mxp,myp) :: lwl,iwl
     real,dimension(mxp,myp) :: rain
@@ -283,7 +283,7 @@ contains
             ,rain  &
             ,lwl  &
             ,iwl,  &
-            oneBasicFields, oneMicControl)
+            oneBasicFields, oneMicControl, oneMicroFields)
 
        !-srf tuning section for cloud fraction and other parameters for radiation
        if(radtun /= 1.0) then
@@ -365,7 +365,7 @@ contains
             ,iwl                    &
             ,icount                 &
             ,ngpt,                  &
-            oneBasicFields)
+            oneBasicFields, oneMicroFields)
     endif
     !--- apply radiative tendencies to model tendencies
     call tend_accum_rtm(mzp, mxp, myp, ia, iz, ja, jz)
@@ -670,7 +670,7 @@ contains
        ,iwl                      &
        ,icount                   &
        ,ngpt,                    &
-       oneBasicFields)
+       oneBasicFields, oneMicroFields)
     integer, intent(in) :: ia,iz,ja,jz
     integer, intent(in) :: icount
     integer, intent(in) :: ngpt
@@ -681,6 +681,7 @@ contains
     real, intent(in), dimension(mzp,mxp,myp) :: lwl !total cloud liquid water (kg/kg for carma and g/m2 for rrtm)
     real, intent(in), dimension(mzp,mxp,myp) :: iwl !total cloud ice water (kg/kg for carma and g/m2 for rrtm)
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
 
     integer,allocatable,dimension(:) :: ipos,jpos
     integer (kind=int64),allocatable,dimension(:)  :: imask
@@ -1122,19 +1123,19 @@ contains
              clwp(noc,k-1)=lwl(k,i,j)            !total cloud liquid water (kg/kg for carma and g/m2 for rrtm)
              ciwp(noc,k-1)=iwl(k,i,j)            !total cloud ice water (kg/kg for carma and g/m2 for rrtm)
 
-             relq(noc,k-1)=micro_g(ngrid)%rel(k,i,j) ! effective radius liquid
+             relq(noc,k-1)=oneMicroFields%rel(k,i,j) ! effective radius liquid
 
              if(iceflgsw == 1) then
 
-                reic(noc,k-1)=min(130.0,max(13.0,micro_g(ngrid)%rei(k,i,j))) !effective radius ice
+                reic(noc,k-1)=min(130.0,max(13.0,oneMicroFields%rei(k,i,j))) !effective radius ice
 
              elseif(iceflgsw == 2) then 
 
-                reic(noc,k-1)=min(131.0,max(5.0,micro_g(ngrid)%rei(k,i,j))) !effective radius ice
+                reic(noc,k-1)=min(131.0,max(5.0,oneMicroFields%rei(k,i,j))) !effective radius ice
 
              elseif(iceflgsw == 3) then 
 
-                reic(noc,k-1)=min(140.0,max(5.0,0.9021*micro_g(ngrid)%rei(k,i,j)-7.0365)) ! generalized effective radius ice
+                reic(noc,k-1)=min(140.0,max(5.0,0.9021*oneMicroFields%rei(k,i,j)-7.0365)) ! generalized effective radius ice
 
              endif
 
@@ -1572,11 +1573,12 @@ contains
        , rain            &
        , lwl             &
        , iwl,            &
-       oneBasicFields, oneMicControl)
+       oneBasicFields, oneMicControl, oneMicroFields)
 
     integer, intent(in) :: m1,m2,m3,ia,iz,ja,jz
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(MicControl), pointer, intent(in) :: oneMicControl
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
     
     real, intent(out), dimension(m1,m2,m3) :: cloud_fraction !cloud_fraction
     real, intent(out), dimension(m2,m3   ) :: rain !total rain water
@@ -1825,7 +1827,7 @@ contains
     dummy_vec = 0.0
     ! if level == 1 do nothing
     if (oneMicControl%level==2) then
-       lwl(1:m1,ia:iz,ja:jz) = micro_g(ngrid)%rcp(1:m1,ia:iz,ja:jz)
+       lwl(1:m1,ia:iz,ja:jz) = oneMicroFields%rcp(1:m1,ia:iz,ja:jz)
 
        if (nnqparm(ngrid)/=0) then
           rain(ia:iz,ja:jz)= cuparm_g(ngrid)%conprr(ia:iz,ja:jz)* 3600.
@@ -1834,31 +1836,31 @@ contains
     elseif (oneMicControl%level>=3) then
        if (nnqparm(ngrid)/=0) then
           rain(ia:iz,ja:jz) = cuparm_g(ngrid)%conprr(ia:iz,ja:jz) + &
-               micro_g(ngrid)%pcpg(ia:iz,ja:jz)
+               oneMicroFields%pcpg(ia:iz,ja:jz)
        else
-          rain(ia:iz,ja:jz) = micro_g(ngrid)%pcpg(ia:iz,ja:jz)
+          rain(ia:iz,ja:jz) = oneMicroFields%pcpg(ia:iz,ja:jz)
        endif
        rain(ia:iz,ja:jz) = rain(ia:iz,ja:jz)*3600.
 
        if (oneMicControl%icloud>0) then
-          lwl(1:m1,ia:iz,ja:jz) = lwl(1:m1,ia:iz,ja:jz) + micro_g(ngrid)%rcp(1:m1,ia:iz,ja:jz)
+          lwl(1:m1,ia:iz,ja:jz) = lwl(1:m1,ia:iz,ja:jz) + oneMicroFields%rcp(1:m1,ia:iz,ja:jz)
        end if
        if (oneMicControl%igraup>0) then
           if(oneMicControl%mcphys_type <= 1) then
              do k=1,m1
                 do i=ia,iz
                    do j=ja,jz
-                      call qtc(micro_g(ngrid)%q6(k,i,j), dummy,dummy_vec(k,i,j))
+                      call qtc(oneMicroFields%q6(k,i,j), dummy,dummy_vec(k,i,j))
                    enddo
                 enddo
              enddo
           elseif(oneMicControl%mcphys_type == 2 .or. oneMicControl%mcphys_type ==3 .or. oneMicControl%mcphys_type == 4) then  !srf -gthompson/gfdl microphysics - graupel only in ice phase
              dummy_vec=0.0
           endif
-          lwl(1:m1,ia:iz,ja:jz) = dummy_vec(1:m1,ia:iz,ja:jz)*micro_g(ngrid)%rgp(1:m1,ia:iz,ja:jz) &
+          lwl(1:m1,ia:iz,ja:jz) = dummy_vec(1:m1,ia:iz,ja:jz)*oneMicroFields%rgp(1:m1,ia:iz,ja:jz) &
                + lwl(1:m1,ia:iz,ja:jz) !kg/kg
           dummy_vec(:,:,:)      = 1. - dummy_vec(:,:,:)
-          iwl(1:m1,ia:iz,ja:jz) = dummy_vec(1:m1,ia:iz,ja:jz)*micro_g(ngrid)%rgp(1:m1,ia:iz,ja:jz) &
+          iwl(1:m1,ia:iz,ja:jz) = dummy_vec(1:m1,ia:iz,ja:jz)*oneMicroFields%rgp(1:m1,ia:iz,ja:jz) &
                + iwl(1:m1,ia:iz,ja:jz) !kg/kg
        endif
        if (oneMicControl%ihail>0) then
@@ -1866,27 +1868,27 @@ contains
           do k=1,m1
              do i=ia,iz
                 do j=ja,jz
-                   call qtc(micro_g(ngrid)%q7(k,i,j), dummy, dummy_vec(k,i,j))
+                   call qtc(oneMicroFields%q7(k,i,j), dummy, dummy_vec(k,i,j))
                 enddo
              enddo
           enddo
 
-          lwl(1:m1,ia:iz,ja:jz) = dummy_vec(1:m1,ia:iz,ja:jz)*micro_g(ngrid)%rhp(1:m1,ia:iz,ja:jz)&
+          lwl(1:m1,ia:iz,ja:jz) = dummy_vec(1:m1,ia:iz,ja:jz)*oneMicroFields%rhp(1:m1,ia:iz,ja:jz)&
                + lwl(1:m1,ia:iz,ja:jz)
 
           dummy_vec(:,:,:) = 1.0 - dummy_vec(:,:,:)
 
-          iwl(1:m1,ia:iz,ja:jz) = dummy_vec(1:m1,ia:iz,ja:jz)*micro_g(ngrid)%rhp(1:m1,ia:iz,ja:jz) &
+          iwl(1:m1,ia:iz,ja:jz) = dummy_vec(1:m1,ia:iz,ja:jz)*oneMicroFields%rhp(1:m1,ia:iz,ja:jz) &
                + iwl(1:m1,ia:iz,ja:jz)   !kg/kg
        endif
        if (oneMicControl%iaggr>0) &
-            iwl(1:m1,ia:iz,ja:jz) = iwl(1:m1,ia:iz,ja:jz) + micro_g(ngrid)%rap(1:m1,ia:iz,ja:jz)   !kg/kg
+            iwl(1:m1,ia:iz,ja:jz) = iwl(1:m1,ia:iz,ja:jz) + oneMicroFields%rap(1:m1,ia:iz,ja:jz)   !kg/kg
 
        if (oneMicControl%isnow>0) &
-            iwl(1:m1,ia:iz,ja:jz) = iwl(1:m1,ia:iz,ja:jz) + micro_g(ngrid)%rsp(1:m1,ia:iz,ja:jz)   !kg/kg
+            iwl(1:m1,ia:iz,ja:jz) = iwl(1:m1,ia:iz,ja:jz) + oneMicroFields%rsp(1:m1,ia:iz,ja:jz)   !kg/kg
 
        if (oneMicControl%ipris>0) &
-            iwl(1:m1,ia:iz,ja:jz) = iwl(1:m1,ia:iz,ja:jz) + micro_g(ngrid)%rpp(1:m1,ia:iz,ja:jz)  !kg/kg
+            iwl(1:m1,ia:iz,ja:jz) = iwl(1:m1,ia:iz,ja:jz) + oneMicroFields%rpp(1:m1,ia:iz,ja:jz)  !kg/kg
     endif
     !- making direct couplig between liq/ice water from cupar to radiation
     if(coupl_rad_cupar == 1 ) then
@@ -1955,7 +1957,7 @@ contains
                    !- liquid cloud effective radius -----
                    !- [liu&daum, 2000 and 2005. liu et al 2008]
                    !- cloud drop number concentration
-                   dummy_vec(k,i,j) = micro_g(ngrid)%ccp(k,i,j) * oneBasicFields%dn0(k,i,j) * 1.e-6  ! #/cm3
+                   dummy_vec(k,i,j) = oneMicroFields%ccp(k,i,j) * oneBasicFields%dn0(k,i,j) * 1.e-6  ! #/cm3
                    dummy_vec(k,i,j) = max(150.,dummy_vec(k,i,j))
 
                    !
@@ -1966,18 +1968,18 @@ contains
 
                    !- u[lwl] = g/m3 , u[dummy_vec]= #/cm^3
                    !- the cte bx with the units above, provides rel in 10^-6 meter
-                   !  micro_g(ngrid)%rel(k,i,j)= bx *  ( lwl(k,i,j) /dummy_vec(k,i,j))**r13 &
+                   !  oneMicroFields%rel(k,i,j)= bx *  ( lwl(k,i,j) /dummy_vec(k,i,j))**r13 &
                    !- the factor below is adimensional e provides correction
                    !- for dispersion of the cloud spectrum:
                    !- prefactor of liu et al (2008) - lwl must be in g/cm^3
                    !          *abeta*(1.e-6*lwl(k,i,j) /dummy_vec(k,i,j))**bbeta
                    !- expression to avoid nan when lwl = 0. in prefactor
-                   micro_g(ngrid)%rel(k,i,j)= bx *  ( lwl(k,i,j) /dummy_vec(k,i,j))**r13bbeta &
+                   oneMicroFields%rel(k,i,j)= bx *  ( lwl(k,i,j) /dummy_vec(k,i,j))**r13bbeta &
                         *abeta*6.92 !6.92=(1.e-6)**bbeta
 
                    ! rel is limited between 2.5 and 60 micrometers as
                    ! required by rrtm parameterization
-                   micro_g(ngrid)%rel(k,i,j) = max(2.5, min( 60.0, micro_g(ngrid)%rel(k,i,j) ) )
+                   oneMicroFields%rel(k,i,j) = max(2.5, min( 60.0, oneMicroFields%rel(k,i,j) ) )
 
                    !------ice cloud effective radius ----- [klaus wyser, 1998]
 
@@ -1986,11 +1988,11 @@ contains
                    temp = oneBasicFields%theta(k,i,j) * picpi
                    dztri= grid_g(ngrid)%rtgt(i,j)/dzt(k)
                    if(iwl(k,i,j)<1.0e-6 .or. temp>273.0) then
-                      micro_g(ngrid)%rei(k,i,j)=5.0
+                      oneMicroFields%rei(k,i,j)=5.0
                       iwl(k,i,j)=0.0
                    else
                       bb = -2. + log10(iwl(k,i,j)/50.)*(1.e-3*(273.15-max(210.15,temp))**1.5)
-                      micro_g(ngrid)%rei(k,i,j) =377.4 + 203.3 * bb+ 37.91 * bb **2 + 2.3696 * bb **3
+                      oneMicroFields%rei(k,i,j) =377.4 + 203.3 * bb+ 37.91 * bb **2 + 2.3696 * bb **3
                    endif
                    lwl(k,i,j) = lwl(k,i,j)* dztri  !g/m2
                    iwl(k,i,j) = iwl(k,i,j)* dztri  !g/m2
@@ -2006,8 +2008,8 @@ contains
     print*,"max-min     rain:  ",maxval(rain(ia:iz,ja:jz)),minval(rain(ia:iz,ja:jz)) !total rain water
     print*,"max-min lwl: ",maxval(lwl(2:m1,ia:iz,ja:jz)),minval(lwl(2:m1,ia:iz,ja:jz)) !total cloud liquid water (kg/kg for carma and g/m2 for rrtm)
     print*,"max-min iwl: ",maxval(iwl(2:m1,ia:iz,ja:jz)),minval(iwl(2:m1,ia:iz,ja:jz))     !total cloud ice water (kg/kg for carma and g/m2 for rrtm)
-    print*,"max-min micro_g(ngrid)%rel: ",maxval(micro_g(ngrid)%rel(2:m1,ia:iz,ja:jz)),minval(micro_g(ngrid)%rel(2:m1,ia:iz,ja:jz))  !total cloud liquid water
-    print*,"max-min rei: ",maxval(micro_g(ngrid)%rei(2:m1,ia:iz,ja:jz)),minval(micro_g(ngrid)%rei(2:m1,ia:iz,ja:jz))  !total cloud ice water
+    print*,"max-min oneMicroFields%rel: ",maxval(oneMicroFields%rel(2:m1,ia:iz,ja:jz)),minval(oneMicroFields%rel(2:m1,ia:iz,ja:jz))  !total cloud liquid water
+    print*,"max-min rei: ",maxval(oneMicroFields%rei(2:m1,ia:iz,ja:jz)),minval(oneMicroFields%rei(2:m1,ia:iz,ja:jz))  !total cloud ice water
 
     call flush(6)
 

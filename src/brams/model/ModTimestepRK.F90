@@ -408,8 +408,10 @@ contains
 
     !  Radiation parameterization
     !--------------------------------
+    call DeepCopyToMicroFields(oneGrid%Micro, h)
     call radiate(mzp,mxp,myp,ia,iz,ja,jz,mynum, &
-         oneGrid%Basic, oneGrid%MicControlVars)
+         oneGrid%Basic, oneGrid%MicControlVars, oneGrid%Micro)
+    call DeepCopyFromMicroFields(oneGrid%Micro, h)
 
     !  Surface layer, soil and veggie model
     !----------------------------------------
