@@ -9,8 +9,8 @@ module ModRShCuPar
   use ModBasicFields, only : &
        BasicFields
 
-  use mem_micro, only : &
-       micro_g
+  use ModMicroFields, only : &
+       MicroFields
 
   use mem_grid, only : &
        time,    &   ! INTENT(IN)
@@ -150,9 +150,10 @@ module ModRShCuPar
 contains
 
   
-  subroutine shcupa(oneBasicFields, oneTurbFields)
+  subroutine shcupa(oneBasicFields, oneTurbFields, oneMicroFields)
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
 
 
     real    :: cptime = 0. !7200.
@@ -177,7 +178,7 @@ contains
             oneTurbFields%sflux_t,                              & 
             oneTurbFields%sflux_r,                              &
             oneTurbFields%vkh,                                &
-            micro_g(ngrid)%rcp)
+            oneMicroFields%rcp)
 
     endif
 

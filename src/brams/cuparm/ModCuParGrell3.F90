@@ -85,8 +85,8 @@ module ModCuParGrell3
        tkmin, &
        cpi
 
-  use mem_micro, only: &
-       micro_g
+  use ModMicroFields, only: &
+       MicroFields
 
   use io_params, only: &
        frqanl
@@ -534,9 +534,9 @@ contains
   end subroutine filltab_grell3
   !-------------------------------------------------------------
 
-  subroutine CUPARM_GRELL3_CATT(OneGrid, iens,iinqparm,iinshcu)
+  subroutine CUPARM_GRELL3_CATT(oneGrid, iens,iinqparm,iinshcu)
     integer, intent(IN) :: iens,iinqparm,iinshcu
-    type(Grid), pointer :: OneGrid ! intent(in)
+    type(Grid), pointer :: oneGrid ! intent(in)
     integer :: i,j,k
     real :: grid_length,theta2temp
 
@@ -625,9 +625,9 @@ contains
     !if(initial.eq.2.and.time.lt.cptime) return
     !if(initial.eq.2.and.time.lt.dtlt) return
 
-    gridId=OneGrid%Id
-    idiffk=OneGrid%Ramsin%idiffk(gridId)
-    akmin=OneGrid%Ramsin%akmin(gridId)
+    gridId=oneGrid%Id
+    idiffk=oneGrid%Ramsin%idiffk(gridId)
+    akmin=oneGrid%Ramsin%akmin(gridId)
 
     if(mod(time,confrq) < dtlt  .or. time < 0.01 .or. abs(time-cptime) < 0.01) then
 
@@ -764,20 +764,20 @@ contains
                ,cuforc_sh_g(ngrid)%lsfth   & ! forcing for theta shallow
                ,cuforc_sh_g(ngrid)%lsfrt   & ! forcing for rv shallow
                ,oneGrid%MicControlVars%level                      &
-               ,micro_g(ngrid)%rcp         & ! liquid water
-               ,micro_g(ngrid)%rrp         & ! pristine
-               ,micro_g(ngrid)%rpp         &
-               ,micro_g(ngrid)%rsp         &
-               ,micro_g(ngrid)%rap         &
-               ,micro_g(ngrid)%rgp         &
-               ,micro_g(ngrid)%rhp         &
+               ,oneGrid%Micro%rcp         & ! liquid water
+               ,oneGrid%Micro%rrp         & ! pristine
+               ,oneGrid%Micro%rpp         &
+               ,oneGrid%Micro%rsp         &
+               ,oneGrid%Micro%rap         &
+               ,oneGrid%Micro%rgp         &
+               ,oneGrid%Micro%rhp         &
                ,aot500                     & ! aot at 500nm
                )
           !
           !- exchange border information for parallel run
           if( g3d_spread == 1 .or. g3d_smoothh == 1) then
-             call PostSendRecvMsgs(OneGrid%SendG3D, OneGrid%RecvG3D)
-             call WaitSendRecvMsgs    (OneGrid%SendG3D, OneGrid%RecvG3D)
+             call PostSendRecvMsgs(oneGrid%SendG3D, oneGrid%RecvG3D)
+             call WaitSendRecvMsgs    (oneGrid%SendG3D, oneGrid%RecvG3D)
           endif
           !
           !
@@ -797,13 +797,13 @@ contains
                ,oneGrid%Basic%pi0           &
                ,oneGrid%Basic%rv            &
                ,tend%PT                      &
-               ,micro_g(ngrid)%rcp           & ! liquid water
-               ,micro_g(ngrid)%rrp           & ! pristine
-               ,micro_g(ngrid)%rpp           &
-               ,micro_g(ngrid)%rsp           &
-               ,micro_g(ngrid)%rap           &
-               ,micro_g(ngrid)%rgp           &
-               ,micro_g(ngrid)%rhp           &
+               ,oneGrid%Micro%rcp           & ! liquid water
+               ,oneGrid%Micro%rrp           & ! pristine
+               ,oneGrid%Micro%rpp           &
+               ,oneGrid%Micro%rsp           &
+               ,oneGrid%Micro%rap           &
+               ,oneGrid%Micro%rgp           &
+               ,oneGrid%Micro%rhp           &
                                 !      
                ,g3d_g(ngrid)%THSRC           & ! temp tendency
                ,g3d_g(ngrid)%RTSRC           & ! rv tendency
@@ -900,15 +900,15 @@ contains
                ,cuforc_sh_g(ngrid)%lsfth       & !3d *** borda forcing for theta shallow
                ,cuforc_sh_g(ngrid)%lsfrt       & !3d *** borda forcing for rv shallow
                ,oneGrid%MicControlVars%level   &
-               ,micro_g(ngrid)%rcp             & !3d ok ! liquid water
-               ,micro_g(ngrid)%rrp             & !3d ok ! pristine
-               ,micro_g(ngrid)%rpp             & !3d ok
-               ,micro_g(ngrid)%rsp             & !3d ok
-               ,micro_g(ngrid)%rgp             & !3d ok
+               ,oneGrid%Micro%rcp             & !3d ok ! liquid water
+               ,oneGrid%Micro%rrp             & !3d ok ! pristine
+               ,oneGrid%Micro%rpp             & !3d ok
+               ,oneGrid%Micro%rsp             & !3d ok
+               ,oneGrid%Micro%rgp             & !3d ok
                ,aot500                         &! aot at 500nm
-               ,OneGrid%Turb%sflux_r          & !2d *** borda
-               ,OneGrid%Turb%sflux_t          & !2d *** borda
-               ,OneGrid%Turb%tkep             & !3d ok
+               ,oneGrid%Turb%sflux_r          & !2d *** borda
+               ,oneGrid%Turb%sflux_t          & !2d *** borda
+               ,oneGrid%Turb%tkep             & !3d ok
                ,TKMIN                          &
                ,akmin                   &
                                 !- for convective transport-start
@@ -1030,12 +1030,12 @@ contains
                ,cuforc_sh_g(ngrid)%lsfth   & ! forcing for theta shallow
                ,cuforc_sh_g(ngrid)%lsfrt  & ! forcing for rv shallow
                ,oneGrid%MicControlVars%level                     &
-               ,micro_g(ngrid)%rcp        & ! liquid water
+               ,oneGrid%Micro%rcp        & ! liquid water
                ,aot500                    &! aot at 500nm
                ,temp2m                    &! aot at 500nm
-               ,OneGrid%Turb%sflux_r     &
-               ,OneGrid%Turb%sflux_t     &
-               ,OneGrid%Turb%tkep        &
+               ,oneGrid%Turb%sflux_r     &
+               ,oneGrid%Turb%sflux_t     &
+               ,oneGrid%Turb%tkep        &
                ,TKMIN                     &
                ,akmin              &
                ,do_cupar_mcphys_coupling  &
@@ -1117,11 +1117,11 @@ contains
           enddo
           if( idiffk /= 2 .and. idiffk /= 3) then 
              if(idiffk == 7 ) then          
-                kpbl (:,:) = nint(OneGrid%Turb%kpbl(:,:))
+                kpbl (:,:) = nint(oneGrid%Turb%kpbl(:,:))
              else
                 do j=1,myp
                    do i=1,mxp
-                      call get_zi_gf2018(mzp,tkmin,OneGrid%Turb%tkep(:,i,j),zmn(:,ngrid) &
+                      call get_zi_gf2018(mzp,tkmin,oneGrid%Turb%tkep(:,i,j),zmn(:,ngrid) &
                            ,grid_g(ngrid)%rtgt(i,j)                          &
                            ,grid_g(ngrid)%topt(i,j),kpbl(i,j) )
                       kpbl (i,j) = max(1,min(kpbl (i,j),mzp-1))
@@ -1223,8 +1223,8 @@ contains
                ,lats        &
                ,aot500      &
                ,temp2m      &
-               ,OneGrid%Turb%sflux_r &
-               ,OneGrid%Turb%sflux_t &
+               ,oneGrid%Turb%sflux_r &
+               ,oneGrid%Turb%sflux_t &
                ,grid_g(ngrid)%topt    &
                ,xland                 &
                ,sfc_press   &
@@ -1487,7 +1487,8 @@ contains
             oneGrid%Basic%pp      ,&
             oneGrid%Basic%pi0     ,&
             oneGrid%Basic%dn0, &
-            oneGrid%MicControlVars)
+            oneGrid%MicControlVars,&
+            oneGrid%Micro)
     else
        !if there is not direct coupling, send cloud/ice source to rtotal tendency
        call accum(int(mxp*myp*mzp,i8), tend%rtt, g3d_g(ngrid)%clsrc)
@@ -2071,8 +2072,9 @@ contains
   end subroutine check
   !------------------------------------------------------------
   subroutine cupar2mcphysics(m1,m2,m3,ia,iz,ja,jz,ngrid,dtlt &
-       ,clsrc  ,theta,pp,pi0,dn0,oneMicControl)
+       ,clsrc  ,theta,pp,pi0,dn0,oneMicControl,oneMicroFields)
     type(MicControl), pointer, intent(in) :: oneMicControl
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
     integer m1,m2,m3,ia,iz,ja,jz,k,i,j,ngrid
     real dtlt
     real, dimension(m1,m2,m3),intent(in) :: theta, pp, pi0,dn0
@@ -2108,7 +2110,7 @@ contains
 
        if(oneMicControl%mcphys_type == 3) &
             call mcphysics3(oneMicControl%mcphys_type,m1,m2,m3,ia,iz,ja,jz,dtlt,cpi  &
-            ,theta, pp, pi0,dn0,micro_g(ngrid)%ccp &
+            ,theta, pp, pi0,dn0,oneMicroFields%ccp &
             ,clsrc          &! cumulus tendency
             ,tend%rct    &! cloud water mass mix ratio tendency 
             ,tend%rpt    &! pristine mass mix ratio tendency 

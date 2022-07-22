@@ -544,17 +544,23 @@ contains
     !                    Deep Convection scheme
     !- call deep first, if there is deep convection , turn off shallow.
     if (nnqparm(ngrid)==2) then
+       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call cuparm_grell_catt(OneGrid, 1)
+       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     end if
     !
     !                    Shallow Convection scheme
     if (NNSHCU(ngrid)==2 ) then
+       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call cuparm_grell_catt(OneGrid, 2)
+       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     end if
     !
     !- G3d - GD-FIM and GF
     if (NNQPARM(ngrid)>=3) then
+       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call cuparm_grell3_catt(onegrid,1,nnqparm(ngrid),nnshcu(ngrid))
+       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     end if
 
     !- task 2:  NO production by "eclair"
@@ -580,7 +586,9 @@ contains
     !---------------------------------------------------
     ! Shallow  cumulus parameterization by Souza
     if (NNSHCU(ngrid)==1) then
-       call shcupa(oneGrid%Basic, oneGrid%Turb)
+       call DeepCopyToMicroFields(oneGrid%Micro, h)
+       call shcupa(oneGrid%Basic, oneGrid%Turb, oneGrid%Micro)
+       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     end if
     !---------------------------------------------------
 

@@ -62,9 +62,6 @@ module ModRConvGrellCatt
   use rconstants, only: &
        tkmin
 
-  use mem_micro, only: &
-       micro_g
-
   use mem_scratch, only: &
        scratch
 
@@ -214,13 +211,13 @@ contains
                OneGrid%Basic%rv   ,  & !28
                OneGrid%Turb%tkep  ,  & !29
                tkmin,                        & !30
-               micro_g(ngrid)%rcp,    &! liquid water
-               micro_g(ngrid)%rrp,    &! pristine
-               micro_g(ngrid)%rpp,    &
-               micro_g(ngrid)%rsp,    &
-               micro_g(ngrid)%rap,    &
-               micro_g(ngrid)%rgp,    &
-               micro_g(ngrid)%rhp,    &
+               oneGrid%Micro%rcp,    &! liquid water
+               oneGrid%Micro%rrp,    &! pristine
+               oneGrid%Micro%rpp,    &
+               oneGrid%Micro%rsp,    &
+               oneGrid%Micro%rap,    &
+               oneGrid%Micro%rgp,    &
+               oneGrid%Micro%rhp,    &
                                 !
                grid_g(ngrid)%topt  ,    & !29
                grid_g(ngrid)%RTGT  ,    & !30
@@ -311,7 +308,8 @@ contains
                OneGrid%Basic%pp,    & 
                OneGrid%Basic%pi0, &
                OneGrid%Basic%dn0, &
-               OneGrid%MicControlVars)
+               OneGrid%MicControlVars, &
+               oneGrid%Micro)
        endif
 
     endif
@@ -372,7 +370,7 @@ contains
                OneGrid%Turb%tkep  ,    &   
                                 !
                tkmin,                          &   
-               micro_g(ngrid)%rcp,      &! liquid water
+               oneGrid%Micro%rcp,      &! liquid water
                                 !
                grid_g(ngrid)%topt     ,   &   
                grid_g(ngrid)%RTGT     ,   &   
