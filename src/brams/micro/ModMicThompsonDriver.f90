@@ -27,10 +27,9 @@ module ModMicThompsonDriver
   use ModMicControl, only: &
        MicControl
 
-  use mem_micro, only:  &
-       micro_vars, &
-       micro_g
-
+  use ModMicroFields, only: &
+       MicroFields
+  
   use mem_grid, only:   &
        grid_vars, &
        ngrids,          & ! INTENT(IN)
@@ -84,9 +83,10 @@ contains
 
 
 
-  subroutine micro_thompson(oneBasicFields, oneMicControl)
+  subroutine micro_thompson(oneBasicFields, oneMicControl, oneMicroFields)
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(MicControl), pointer, intent(in) :: oneMicControl
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
 
     integer,parameter :: &
          IDS=1, IDE=2, JDS=1, JDE=2, KDS=1, &
@@ -124,9 +124,9 @@ contains
           ocean_fraction = leaf_g(ngrid)%patch_area(i,j,1)
 
           !if(mcphys_type == 3) then
-          !  ccp1d  (1:mzp)   = max(micro_g(ngrid)%ccp  (1:mzp,i,j) , 0.) 
-          !  cccnp1d(1:mzp)   = max(micro_g(ngrid)%cccnp(1:mzp,i,j) , 0.)   
-          !  cifnp1d(1:mzp)   = max(micro_g(ngrid)%cifnp(1:mzp,i,j) , 0.) 
+          !  ccp1d  (1:mzp)   = max(oneMicroFields%ccp  (1:mzp,i,j) , 0.) 
+          !  cccnp1d(1:mzp)   = max(oneMicroFields%cccnp(1:mzp,i,j) , 0.)   
+          !  cifnp1d(1:mzp)   = max(oneMicroFields%cifnp(1:mzp,i,j) , 0.) 
           ! print*,"mic1:",maxval(  ccp1d)
           !endif
 
@@ -152,22 +152,22 @@ contains
                ,zt       &
                ,oneBasicFields &
                ,grid_g(ngrid) &
-               ,micro_g(ngrid) &
+               ,oneMicroFields &
                ,ocean_fraction, &
                oneMicControl)
 
           !if(mcphys_type == 3) then
-          !   micro_g(ngrid)%ccp  (1:mzp,i,j)  = ccp1d  (1:mzp)
+          !   oneMicroFields%ccp  (1:mzp,i,j)  = ccp1d  (1:mzp)
           !  !- commented out for now
-          !  !micro_g(ngrid)%cccnp(1:mzp,i,j)  = cccnp1d(1:mzp)!checar necessidade pois sera um array nao         
-          !  !micro_g(ngrid)%cifnp(1:mzp,i,j)  = cifnp1d(1:mzp)!checar necessidade pois sera um array nao         
+          !  !oneMicroFields%cccnp(1:mzp,i,j)  = cccnp1d(1:mzp)!checar necessidade pois sera um array nao         
+          !  !oneMicroFields%cifnp(1:mzp,i,j)  = cifnp1d(1:mzp)!checar necessidade pois sera um array nao         
           !endif
 
        enddo
     enddo
     !- for consistency with surface and radiation schemes, the total
     !- precip will be also stored in the pcpg array
-    micro_g(ngrid)%pcpg(:,:)=micro_g(ngrid)%pcprr(:,:)
+    oneMicroFields%pcpg(:,:)=oneMicroFields%pcprr(:,:)
 
 
   end subroutine micro_thompson
@@ -196,15 +196,15 @@ contains
        ,zt    &
        ,oneBasicFields &
        ,grd &
-       ,mic &
+       ,oneMicroFields &
        ,ocean_fraction, &
        oneMicControl&
        )
 
     type(BasicFields), pointer, intent(in) ::oneBasicFields
     type(MicControl), pointer, intent(in) :: oneMicControl
-    type(grid_vars)  ::grd
-    type(micro_vars) ::mic
+    type(grid_vars)  :: grd
+    type(MicroFields) :: oneMicroFields
 
     integer, intent(IN) ::  &          
          ilwrtyp       &
@@ -378,7 +378,7 @@ contains
     character (len=40),dimension(100,2) :: gradsname
     integer :: k,jl,jk,nvar3d,nvar2d,nvar,nvx,nrec,gate
     !_____________________________________________________________
-    !if(i==iz .and. j==jz .and. maxval( mic%rrp  )>1.e-6) then
+    !if(i==iz .and. j==jz .and. maxval( oneMicroFields%rrp  )>1.e-6) then
     !if(mynum == 72 .and. maxval( oneBasicFields%wp)>10.) then
     ! print*,"1THP=" ,maxval(oneBasicFields%thp),minval(oneBasicFields%thp),i,j
     ! print*,"1theta",maxval( oneBasicFields%theta),minval( oneBasicFields%theta),mynum
@@ -389,18 +389,18 @@ contains
     ! !print*,"1dn0"  ,maxval( oneBasicFields%dn0  ),minval( oneBasicFields%dn0  ),mynum
     ! !print*,"1pi0"  ,maxval( oneBasicFields%pi0  ),minval( oneBasicFields%pi0  ),mynum
     !
-    ! print*,"1rcp " ,maxval( mic%rcp  )  ,minval( mic%rcp  ),mynum
-    ! print*,"1rrp " ,maxval( mic%rrp  )  ,minval( mic%rrp  ),mynum
-    ! print*,"1rpp " ,maxval( mic%rpp  )  ,minval( mic%rpp  ),mynum
-    ! print*,"1rsp " ,maxval(mic%rsp  )   ,minval(mic%rsp  ),mynum
-    ! print*,"1rgp " ,maxval(mic%rgp  )   ,minval(mic%rgp  ),mynum
+    ! print*,"1rcp " ,maxval( oneMicroFields%rcp  )  ,minval( oneMicroFields%rcp  ),mynum
+    ! print*,"1rrp " ,maxval( oneMicroFields%rrp  )  ,minval( oneMicroFields%rrp  ),mynum
+    ! print*,"1rpp " ,maxval( oneMicroFields%rpp  )  ,minval( oneMicroFields%rpp  ),mynum
+    ! print*,"1rsp " ,maxval(oneMicroFields%rsp  )   ,minval(oneMicroFields%rsp  ),mynum
+    ! print*,"1rgp " ,maxval(oneMicroFields%rgp  )   ,minval(oneMicroFields%rgp  ),mynum
     !     
-    ! print*,"1crp"  ,maxval(mic%crp )    ,minval(mic%crp ),mynum
-    ! print*,"1cpp"  ,maxval(mic%cpp )    ,minval(mic%cpp ),mynum
+    ! print*,"1crp"  ,maxval(oneMicroFields%crp )    ,minval(oneMicroFields%crp ),mynum
+    ! print*,"1cpp"  ,maxval(oneMicroFields%cpp )    ,minval(oneMicroFields%cpp ),mynum
     !call flush(6)
     !endif
-    !if( minval(mic%cpp(:,i,j)) < 0.) then
-    !     print*,"cpp1=",minval(mic%cpp(:,i,j)),i,j,mynum,it
+    !if( minval(oneMicroFields%cpp(:,i,j)) < 0.) then
+    !     print*,"cpp1=",minval(oneMicroFields%cpp(:,i,j)),i,j,mynum,it
     !     call flush(6)
     !endif    
     !________________________________________________________
@@ -418,30 +418,30 @@ contains
     dn0  (1:m1)= oneBasicFields%dn0  (1:m1,i,j)
     pi0  (1:m1)= oneBasicFields%pi0  (1:m1,i,j)
     !--- mass mixing ratio
-    rcp  (1:m1)= mic%rcp    (1:m1,i,j)
-    rrp  (1:m1)= mic%rrp    (1:m1,i,j)
-    rpp  (1:m1)= mic%rpp    (1:m1,i,j)
-    rsp  (1:m1)= mic%rsp    (1:m1,i,j)
-    rgp  (1:m1)= mic%rgp    (1:m1,i,j)
+    rcp  (1:m1)= oneMicroFields%rcp    (1:m1,i,j)
+    rrp  (1:m1)= oneMicroFields%rrp    (1:m1,i,j)
+    rpp  (1:m1)= oneMicroFields%rpp    (1:m1,i,j)
+    rsp  (1:m1)= oneMicroFields%rsp    (1:m1,i,j)
+    rgp  (1:m1)= oneMicroFields%rgp    (1:m1,i,j)
 
     !--- number concentration
-    crp  (1:m1)= mic%crp    (1:m1,i,j) ! rain        number concentration (#/kg)
-    cpp  (1:m1)= mic%cpp    (1:m1,i,j) ! cloud ice   number concentration (#/kg)
+    crp  (1:m1)= oneMicroFields%crp    (1:m1,i,j) ! rain        number concentration (#/kg)
+    cpp  (1:m1)= oneMicroFields%cpp    (1:m1,i,j) ! cloud ice   number concentration (#/kg)
 
     if(oneMicControl%mcphys_type == 3) then 
-       ccp  (1:m1) = max(mic%ccp  (1:m1,i,j) , 0.) ! cloud water        number concentration (#/kg)
-       cccnp(1:m1) = max(mic%cccnp(1:m1,i,j) , 0.) ! water friendly aer number concentration (#/kg)  
-       cifnp(1:m1) = max(mic%cifnp(1:m1,i,j) , 0.) ! ice   friendly aer number concentration (#/kg)  
+       ccp  (1:m1) = max(oneMicroFields%ccp  (1:m1,i,j) , 0.) ! cloud water        number concentration (#/kg)
+       cccnp(1:m1) = max(oneMicroFields%cccnp(1:m1,i,j) , 0.) ! water friendly aer number concentration (#/kg)  
+       cifnp(1:m1) = max(oneMicroFields%cifnp(1:m1,i,j) , 0.) ! ice   friendly aer number concentration (#/kg)  
     endif
 
     !- surface quantities
     rtgt = grd%rtgt(i,j)
-    accpr= mic%accpr(i,j)
-    pcprr= mic%pcprr(i,j)
-    accps= mic%accps(i,j)
-    pcprs= mic%pcprs(i,j)
-    accpg= mic%accpg(i,j)
-    pcprg= mic%pcprg(i,j)
+    accpr= oneMicroFields%accpr(i,j)
+    pcprr= oneMicroFields%pcprr(i,j)
+    accps= oneMicroFields%accps(i,j)
+    pcprs= oneMicroFields%pcprs(i,j)
+    accpg= oneMicroFields%accpg(i,j)
+    pcprg= oneMicroFields%pcprg(i,j)
 
     !- for coupling with brams
     !       !- converting WRF setting to BRAMS
@@ -747,35 +747,35 @@ contains
     oneBasicFields%rtp  (1:m1,i,j) =rtp  (1:m1)
     oneBasicFields%rv   (1:m1,i,j) =rv   (1:m1)  
 
-    mic%rcp    (1:m1,i,j) =rcp  (1:m1)   
-    mic%rrp    (1:m1,i,j) =rrp  (1:m1)   
-    mic%rpp    (1:m1,i,j) =rpp  (1:m1)   
-    mic%rsp    (1:m1,i,j) =rsp  (1:m1)   
-    mic%rgp    (1:m1,i,j) =rgp  (1:m1)  
+    oneMicroFields%rcp    (1:m1,i,j) =rcp  (1:m1)   
+    oneMicroFields%rrp    (1:m1,i,j) =rrp  (1:m1)   
+    oneMicroFields%rpp    (1:m1,i,j) =rpp  (1:m1)   
+    oneMicroFields%rsp    (1:m1,i,j) =rsp  (1:m1)   
+    oneMicroFields%rgp    (1:m1,i,j) =rgp  (1:m1)  
 
     if( (ilwrtyp==6 .or. iswrtyp==6) .and. oneMicControl%mcphys_type == 2 ) then   
-       mic%rei   (1:m1,i,j) =rei  (1:m1)
-       mic%rel   (1:m1,i,j) =rel  (1:m1)
+       oneMicroFields%rei   (1:m1,i,j) =rei  (1:m1)
+       oneMicroFields%rel   (1:m1,i,j) =rel  (1:m1)
     endif
 
-    mic%crp    (1:m1,i,j) =crp  (1:m1)
-    mic%cpp    (1:m1,i,j) =cpp  (1:m1)
+    oneMicroFields%crp    (1:m1,i,j) =crp  (1:m1)
+    oneMicroFields%cpp    (1:m1,i,j) =cpp  (1:m1)
 
     if(oneMicControl%mcphys_type == 3) then
-       mic%ccp  (1:m1,i,j) = ccp  (1:m1) 
-       mic%cccnp(1:m1,i,j) = cccnp(1:m1) 
-       mic%cifnp(1:m1,i,j) = cifnp(1:m1) 
+       oneMicroFields%ccp  (1:m1,i,j) = ccp  (1:m1) 
+       oneMicroFields%cccnp(1:m1,i,j) = cccnp(1:m1) 
+       oneMicroFields%cifnp(1:m1,i,j) = cifnp(1:m1) 
     endif
 
     !- surface quantities
-    mic%accpr(i,j) = accpr
-    mic%pcprr(i,j) = pcprr
-    mic%accps(i,j) = accps
-    mic%pcprs(i,j) = pcprs
-    mic%accpg(i,j) = accpg
-    mic%pcprg(i,j) = pcprg
+    oneMicroFields%accpr(i,j) = accpr
+    oneMicroFields%pcprr(i,j) = pcprr
+    oneMicroFields%accps(i,j) = accps
+    oneMicroFields%pcprs(i,j) = pcprs
+    oneMicroFields%accpg(i,j) = accpg
+    oneMicroFields%pcprg(i,j) = pcprg
 
-    !if(i==iz .and. j==jz .and. maxval( mic%rrp  )>1.e-6) then
+    !if(i==iz .and. j==jz .and. maxval( oneMicroFields%rrp  )>1.e-6) then
     !if(mynum == 72 .and. maxval( oneBasicFields%wp)>10.)then
     ! print*,"2THP=" ,maxval(oneBasicFields%thp),minval(oneBasicFields%thp),i,j
     ! print*,"2theta",maxval( oneBasicFields%theta),minval( oneBasicFields%theta),mynum
@@ -786,18 +786,18 @@ contains
     ! !print*,"2dn0"  ,maxval( oneBasicFields%dn0  ),minval( oneBasicFields%dn0  ),mynum
     ! !print*,"2pi0"  ,maxval( oneBasicFields%pi0  ),minval( oneBasicFields%pi0  ),mynum
     !
-    ! print*,"2rcp " ,maxval( mic%rcp  )  ,minval( mic%rcp  ),mynum
-    ! print*,"2rrp " ,maxval( mic%rrp  )  ,minval( mic%rrp  ),mynum
-    ! print*,"2rpp " ,maxval( mic%rpp  )  ,minval( mic%rpp  ),mynum
-    ! print*,"2rsp " ,maxval(mic%rsp  )   ,minval(mic%rsp  ),mynum
-    ! print*,"2rgp " ,maxval(mic%rgp  )   ,minval(mic%rgp  ),mynum
+    ! print*,"2rcp " ,maxval( oneMicroFields%rcp  )  ,minval( oneMicroFields%rcp  ),mynum
+    ! print*,"2rrp " ,maxval( oneMicroFields%rrp  )  ,minval( oneMicroFields%rrp  ),mynum
+    ! print*,"2rpp " ,maxval( oneMicroFields%rpp  )  ,minval( oneMicroFields%rpp  ),mynum
+    ! print*,"2rsp " ,maxval(oneMicroFields%rsp  )   ,minval(oneMicroFields%rsp  ),mynum
+    ! print*,"2rgp " ,maxval(oneMicroFields%rgp  )   ,minval(oneMicroFields%rgp  ),mynum
     !     
-    ! print*,"2crp"  ,maxval(mic%crp )    ,minval(mic%crp ),mynum
-    ! print*,"2cpp"  ,maxval(mic%cpp )    ,minval(mic%cpp ),mynum
+    ! print*,"2crp"  ,maxval(oneMicroFields%crp )    ,minval(oneMicroFields%crp ),mynum
+    ! print*,"2cpp"  ,maxval(oneMicroFields%cpp )    ,minval(oneMicroFields%cpp ),mynum
     !call flush(6)
     !endif
-    !if(  minval(mic%cpp(:,i,j)) < 0.) then
-    !     print*,"cpp2=",minval(mic%cpp(:,i,j)),i,j,mynum
+    !if(  minval(oneMicroFields%cpp(:,i,j)) < 0.) then
+    !     print*,"cpp2=",minval(oneMicroFields%cpp(:,i,j)),i,j,mynum
     !     call flush(6)
     !endif    
     !if(i==iz .and. j==jz ) it=it+1

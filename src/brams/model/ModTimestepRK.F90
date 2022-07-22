@@ -855,8 +855,9 @@ contains
 
     elseif (oneGrid%MicControlVars%mcphys_type == 2 .or. oneGrid%MicControlVars%mcphys_type == 3 ) then
        !- G. Thompson microphysics
-       call micro_thompson(oneGrid%Basic, oneGrid%MicControlVars)
-
+       call DeepCopyToMicroFields(oneGrid%Micro, h)
+       call micro_thompson(oneGrid%Basic, oneGrid%MicControlVars, oneGrid%Micro)
+       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     elseif(oneGrid%MicControlVars%mcphys_type == 4 ) then
        call DeepCopyToMicroFields(oneGrid%Micro, h)
        call micro_gfdl(oneGrid%Basic, oneGrid%Micro)
