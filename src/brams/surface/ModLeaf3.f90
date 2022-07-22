@@ -137,9 +137,8 @@ module ModLeaf3
   use ModBasicFields, only: &
        BasicFields
 
-  use mem_micro, only: &
-       micro_vars, &
-       micro_g
+  use ModMicroFields, only: &
+       MicroFields
 
   use mem_cuparm, only: &
        cuparm_vars, &
@@ -230,12 +229,13 @@ contains
 
 
   subroutine sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, oneBasicFields, oneTurbFields, &
-       oneMicControl)
+       oneMicControl, oneMicroFields)
     !Arguments:
     integer, intent(in) :: mzp,mxp,myp,ia,iz,ja,jz,ibcon
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     type(MicControl), pointer, intent(in) :: oneMicControl
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
 
     !Local Variables
     real :: rslif
@@ -276,7 +276,7 @@ contains
 
     call leaf3(mzp,mxp,myp,nzg,nzs,npatch,ia,iz,ja,jz             &
          ,leaf_g (ng), oneBasicFields, oneTurbFields, radiate_g(ng)   &
-         ,grid_g (ng), cuparm_g(ng), micro_g(ng)                  &
+         ,grid_g (ng), cuparm_g(ng), oneMicroFields                  &
          ,l_ths2, l_rvs2, l_pis2                   &
          ,l_dens2,l_ups2, l_vps2                   &
          ,l_zts2                                             &
@@ -320,7 +320,7 @@ contains
   !*****************************************************************************
 
   subroutine leaf3(m1,m2,m3,mzg,mzs,np,ia,iz,ja,jz  &
-       ,leaf,oneBasicFields,oneTurbFields,radiate,grid,cuparm,micro     &
+       ,leaf,oneBasicFields,oneTurbFields,radiate,grid,cuparm,oneMicroFields     &
        ,ths2,rvs2,pis2,dens2,ups2,vps2,zts2           &
        ,pteb,ptebc, oneMicControl)
     ! Arguments:
@@ -331,7 +331,7 @@ contains
     type (radiate_vars) :: radiate
     type (grid_vars)    :: grid
     type (cuparm_vars)  :: cuparm
-    type (micro_vars)   :: micro
+    type (MicroFields)   :: oneMicroFields
     ! For TEB
     type (teb_vars), pointer   :: pteb
     type (teb_common), pointer :: ptebc
@@ -434,7 +434,7 @@ contains
 
           ! Fill surface precipitation arrays for input to leaf
 
-          call sfc_pcp(nnqparm(ngrid),oneMicControl%level,i,j,cuparm,micro,&
+          call sfc_pcp(nnqparm(ngrid),oneMicControl%level,i,j,cuparm,oneMicroFields,&
                oneMicControl)
 
           ! Zero out albedo, upward surface longwave, and momentum, heat, and moisture
@@ -2040,10 +2040,10 @@ contains
 
   !****************************************************************************
 
-  subroutine sfc_pcp(nqparm,level,i,j,cuparm,micro,oneMicControl)
+  subroutine sfc_pcp(nqparm,level,i,j,cuparm,oneMicroFields,oneMicControl)
     integer :: nqparm,level,i,j
     type (cuparm_vars)  cuparm
-    type (micro_vars)   micro
+    type (MicroFields)   oneMicroFields
     type(MicControl), pointer, intent(in) :: oneMicControl
 
     if (nqparm>0) then
@@ -2068,19 +2068,19 @@ contains
          oneMicControl%mcphys_type == 3 .or. &
          oneMicControl%mcphys_type == 4) then
 
-       pcpgl  = pcpgl  + dtll_factor * micro%pcpg(i,j)
-       qpcpgl = qpcpgl + dtll_factor * micro%pcpg(i,j)*4186. * (ths * pis - 193.36)
-       dpcpgl = dpcpgl + dtll_factor * micro%pcpg(i,j) * .001
-       pcpgc  = pcpgc  + dtlc_factor * dtll_factor * micro%pcpg(i,j)
-       qpcpgc = qpcpgc + dtlc_factor * dtll_factor * micro%pcpg(i,j)*4186. * (ths * pis - 193.36)
+       pcpgl  = pcpgl  + dtll_factor * oneMicroFields%pcpg(i,j)
+       qpcpgl = qpcpgl + dtll_factor * oneMicroFields%pcpg(i,j)*4186. * (ths * pis - 193.36)
+       dpcpgl = dpcpgl + dtll_factor * oneMicroFields%pcpg(i,j) * .001
+       pcpgc  = pcpgc  + dtlc_factor * dtll_factor * oneMicroFields%pcpg(i,j)
+       qpcpgc = qpcpgc + dtlc_factor * dtll_factor * oneMicroFields%pcpg(i,j)*4186. * (ths * pis - 193.36)
 
     else
        if (level >= 3) then
-          pcpgl  = pcpgl  + dtll_factor * micro%pcpg(i,j)
-          qpcpgl = qpcpgl + dtll_factor * micro%qpcpg(i,j)
-          dpcpgl = dpcpgl + dtll_factor * micro%dpcpg(i,j)
-          pcpgc  = pcpgc  + dtlc_factor * dtll_factor * micro%pcpg(i,j)
-          qpcpgc = qpcpgc + dtlc_factor * dtll_factor * micro%qpcpg(i,j)
+          pcpgl  = pcpgl  + dtll_factor * oneMicroFields%pcpg(i,j)
+          qpcpgl = qpcpgl + dtll_factor * oneMicroFields%qpcpg(i,j)
+          dpcpgl = dpcpgl + dtll_factor * oneMicroFields%dpcpg(i,j)
+          pcpgc  = pcpgc  + dtlc_factor * dtll_factor * oneMicroFields%pcpg(i,j)
+          qpcpgc = qpcpgc + dtlc_factor * dtll_factor * oneMicroFields%qpcpg(i,j)
        endif
     endif
 

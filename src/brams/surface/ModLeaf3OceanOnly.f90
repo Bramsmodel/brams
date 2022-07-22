@@ -43,10 +43,6 @@ module ModLeaf3OceanOnly
        nnqparm, &
        cuparm_g
 
-  use mem_micro, only: &
-       micro_vars, &
-       micro_g
-
   use ModTurbFields, only: &
        TurbFields
 
@@ -184,7 +180,7 @@ contains
 
     call sub_leaf3_ocean_only(mzp,mxp,myp,nzg,nzs,npatch,ia,iz,ja,jz             &
          ,leaf_g (ng), oneBasicFields, oneTurbFields, radiate_g(ng)   &
-         ,grid_g (ng), cuparm_g(ng), micro_g(ng)                  &
+         ,grid_g (ng), cuparm_g(ng) &
          ,l_ths2, l_rvs2, l_pis2                   &
          ,l_dens2,l_ups2, l_vps2                   &
          ,l_zts2                                             &
@@ -217,7 +213,7 @@ contains
   !*****************************************************************************
 
   subroutine sub_leaf3_ocean_only(m1,m2,m3,mzg,mzs,np,ia,iz,ja,jz  &
-       ,leaf,oneBasicFields,oneTurbFields,radiate,grid,cuparm,micro     &
+       ,leaf,oneBasicFields,oneTurbFields,radiate,grid,cuparm &
        ,ths2,rvs2,pis2,dens2,ups2,vps2,zts2           &
        )
 
@@ -232,7 +228,6 @@ contains
     type (radiate_vars) :: radiate
     type (grid_vars)    :: grid
     type (cuparm_vars)  :: cuparm
-    type (micro_vars)   :: micro
     real, dimension(m2,m3), intent(out) :: ths2,rvs2,pis2,dens2,ups2,vps2,zts2
 
     ! Local variables:

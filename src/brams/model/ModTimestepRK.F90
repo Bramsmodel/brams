@@ -414,13 +414,17 @@ contains
     !  Surface layer, soil and veggie model
     !----------------------------------------
     if (isfcl<=2) then
+       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
-            oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars)
+            oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars, oneGrid%Micro)
+       call DeepCopyFromMicroFields(oneGrid%Micro, h)
 #ifdef JULES
     elseif (isfcl == 5) then
        if (time==0.) then
+          call DeepCopyToMicroFields(oneGrid%Micro, h)
           call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
-               oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars)
+               oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars, oneGrid%Micro)
+          call DeepCopyFromMicroFields(oneGrid%Micro, h)
        end if
        call sfclyr_jules(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile, &
             oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars)
