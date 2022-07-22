@@ -112,9 +112,8 @@ module ModChemistryDriver
        j0,             & ! (IN)
        ibcon             ! (IN)
 
-  use mem_micro, only: &
-       micro_g,        & ! %rcp(IN)
-       micro_vars        ! Type
+  use ModMicroFields, only: &
+       MicroFields
 
   use grid_dims, only: &
        nzpmax,         &  ! (IN)
@@ -250,7 +249,7 @@ contains
 
   !------------------------------------------------------------------
   subroutine chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,task,nt, &
-       oneBasicFields)
+       oneBasicFields, oneMicroFields)
 
     integer , intent(IN) :: mzp
     integer , intent(IN) :: mxp
@@ -262,7 +261,8 @@ contains
     integer , intent(IN) :: task
     integer , intent(IN) :: nt
     type(BasicFields), pointer, intent(in) :: oneBasicFields
-
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
+    
     integer, dimension(ngrids) :: itchim
     integer, dimension(ngrids) :: ncycle
 
@@ -405,7 +405,7 @@ contains
 
                 call chem_ros(mzp,mxp,myp,dtlt,oneBasicFields%pp,oneBasicFields%pi0, &
                      oneBasicFields%theta,oneBasicFields%rv,oneBasicFields%dn0, &
-                     radiate_g(ngrid)%cosz,micro_g(ngrid)%rcp,nspecies,nr,nr_photo,weight, &
+                     radiate_g(ngrid)%cosz,oneMicroFields%rcp,nspecies,nr,nr_photo,weight, &
                      PhotojMethod,fast_JX_g(ngrid)%jphoto,maxnspecies,nspecies_chem_transported, &
                      nspecies_chem_no_transported,transp_chem_index,no_transp_chem_index, &
                      chem1_g(:,ngrid),nob(ngrid),maxblock_size, &
@@ -419,7 +419,7 @@ contains
 
                 call chem_ros_dyndt(mzp,mxp,myp,dtlt,oneBasicFields%pp,oneBasicFields%pi0, &
                      oneBasicFields%theta,oneBasicFields%rv,oneBasicFields%dn0, &
-                     radiate_g(ngrid)%cosz,micro_g(ngrid)%rcp,nspecies,nr,nr_photo,weight, &
+                     radiate_g(ngrid)%cosz,oneMicroFields%rcp,nspecies,nr,nr_photo,weight, &
                      PhotojMethod,maxnspecies,nspecies_chem_transported, &
                      nspecies_chem_no_transported,transp_chem_index,no_transp_chem_index, &
                      chem1_g(:,ngrid),nob(ngrid),maxblock_size, &
@@ -432,7 +432,7 @@ contains
 
                 call chem_rodas3_dyndt(mzp,mxp,myp,dtlt,oneBasicFields%pp,oneBasicFields%pi0, &
                      oneBasicFields%theta,oneBasicFields%rv,oneBasicFields%dn0, &
-                     radiate_g(ngrid)%cosz,micro_g(ngrid)%rcp,nspecies,nr,nr_photo,weight, &
+                     radiate_g(ngrid)%cosz,oneMicroFields%rcp,nspecies,nr,nr_photo,weight, &
                      PhotojMethod,maxnspecies,nspecies_chem_transported, &
                      nspecies_chem_no_transported,transp_chem_index,no_transp_chem_index, &
                      chem1_g(:,ngrid),nob(ngrid),maxblock_size, &
@@ -459,7 +459,7 @@ contains
     elseif(task == 5  .and. CHEMISTRY  >= 1 .and. CHEMISTRY_AQ >= 1 ) then
        call trans_liq(mzp,mxp,myp,ia,iz,ja,jz,chem1_g(:,ngrid),chem1aq_g(:,ngrid), &
             nspeciesaq,ind_gas,chemic_g(ngrid)%coll,chemic_g(ngrid)%sedimr, &
-            micro_g(ngrid)%rcp,micro_g(ngrid)%rrp)
+            oneMicroFields%rcp,oneMicroFields%rrp)
        ! change MP 11/02/08 - end
 
     endif

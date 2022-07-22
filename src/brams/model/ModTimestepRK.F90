@@ -251,9 +251,11 @@ module ModTimestepRK
        emiss_cycle_alloc,      &
        srcmapfn                   ! (IN)
 
-  use ChemSourcesDriver, only:  sources_driver            ! Subroutine
+  use ChemSourcesDriver, only: &
+       sources_driver            ! Subroutine
 
-  use ChemDryDepDriver , only:  drydep_driver             ! Subroutine
+  use ChemDryDepDriver , only: &
+       drydep_driver             ! Subroutine
 
   use ModChemistryDriver, only: &
        chemistry_driver, &
@@ -481,8 +483,11 @@ contains
 
 
        !- call dry deposition and sedimentation routines
+       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call drydep_driver(mzp,mxp,myp,ia,iz,ja,jz, &
-            oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars)
+            oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars,&
+            oneGrid%Micro)
+       call DeepCopyToMicroFields(oneGrid%Micro, h)
     endif
 
 !!$    call SynchronizedTimeStamp(TS_PHYSICS) ! Exper1.2, 2021_12
@@ -552,8 +557,10 @@ contains
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
 
     if (ccatt == 1) then
+       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,2,50,&
-            oneGrid%Basic)
+            oneGrid%Basic, oneGrid%Micro)
+       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     end if
 
     !- CATT & Chemistry == CCATT
@@ -561,13 +568,17 @@ contains
     if (ccatt==1 .and. split_method== 'PARALLEL' .and. n_dyn_chem==1) then
        ! task 3 : production/loss by chemical processes and inclusion of the
        ! chemistry tendency at the total tendency
+       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,3,50,&
-            oneGrid%Basic)
+            oneGrid%Basic, oneGrid%Micro)
+       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     endif
     if (ccatt==1 ) then
        ! task 4 : mass transfer between gas and liquid
+       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,4,50,&
-            oneGrid%Basic)
+            oneGrid%Basic, oneGrid%Micro)
+       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     endif
 
     !---------------------------------------------------
@@ -930,8 +941,10 @@ contains
     !- chemistry - microphysics tranfers - sedimentation and tranfer from clouds to rain
     if (ccatt==1) then
        ! task 5 : sedimentation and mass transfer between clouds and rain
+       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,5,50,&
-            oneGrid%Basic)
+            oneGrid%Basic, oneGrid%Micro)
+       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     endif
 
     !----------------------------------------
@@ -943,8 +956,10 @@ contains
 
           ! task 3 : production/loss by chemical processes and final updated
           !  of each specie
+          call DeepCopyToMicroFields(oneGrid%Micro, h)
           call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,3,50,&
-               oneGrid%Basic)
+               oneGrid%Basic, oneGrid%Micro)
+          call DeepCopyFromMicroFields(oneGrid%Micro, h)
        endif
 
        !- call Matrix Aerosol Model
