@@ -15,9 +15,8 @@
 !  coallesce.
 module ModMicrophysicsMisc
 
-  use mem_micro, only: &
-       micro_g, &
-       micro_vars
+  use ModMicroFields, only: &
+       MicroFields
 
   use ModMicControl, only: &
        MicControl
@@ -114,12 +113,12 @@ contains
 
   !******************************************************************************
 
-  subroutine range_check(m1,k1,k2,k3,i,j,lpw_R,micro, oneMicControl)
+  subroutine range_check(m1,k1,k2,k3,i,j,lpw_R, oneMicroFields, oneMicControl)
     ! Arguments
-    type (micro_vars), intent(in)       :: micro 
     integer, intent(in)                 :: m1, i, j
     integer, dimension(10), intent(out) :: k1, k2, k3
     real, intent(in) :: lpw_R
+    type(MicroFields), pointer, intent(in)       :: oneMicroFields 
     type(MicControl), pointer, intent(in) :: oneMicControl
 
     ! Local Variables
@@ -162,15 +161,15 @@ contains
 
     if (oneMicControl%jnmb(1) >= 1) then
        do k = lpw,m1-1
-          if (micro%rcp(k,i,j) >= 1.e-9) then
+          if (oneMicroFields%rcp(k,i,j) >= 1.e-9) then
              k2(1) = k
-             oneMicControl%rx(k,1) = micro%rcp(k,i,j)
-             if (oneMicControl%jnmb(1) >= 5) oneMicControl%cx(k,1) = micro%ccp(k,i,j)
+             oneMicControl%rx(k,1) = oneMicroFields%rcp(k,i,j)
+             if (oneMicControl%jnmb(1) >= 5) oneMicControl%cx(k,1) = oneMicroFields%ccp(k,i,j)
 
              !
              !Carrio 2012 -------------------------------------------
              ! ALL two moment options require this array!!!
-             if (oneMicControl%jnmb(1) >=5) oneMicControl%cccnx(k) = micro%cccnp(k,i,j)
+             if (oneMicControl%jnmb(1) >=5) oneMicControl%cccnx(k) = oneMicroFields%cccnp(k,i,j)
              !-------------------------------------------------------
              !      
 
@@ -178,7 +177,7 @@ contains
 
 
              !--(DMK-CARRIO-OLD)------------------------------------------------------------
-             !           if (oneMicControl%jnmb(1) == 7) oneMicControl%cccnx(k) = micro%cccnp(k,i,j)
+             !           if (oneMicControl%jnmb(1) == 7) oneMicControl%cccnx(k) = oneMicroFields%cccnp(k,i,j)
              !--(DMK-CARRIO-INI)------------------------------------------------------------
 
           else
@@ -191,12 +190,12 @@ contains
 
     if (oneMicControl%jnmb(2) >= 1) then
        do k = lpw,m1-1
-          if (micro%rrp(k,i,j) >= 1.e-9) then
+          if (oneMicroFields%rrp(k,i,j) >= 1.e-9) then
              k2(2) = k
-             oneMicControl%rx(k,2) = micro%rrp(k,i,j)
-             oneMicControl%qx(k,2) = micro%q2(k,i,j)
+             oneMicControl%rx(k,2) = oneMicroFields%rrp(k,i,j)
+             oneMicControl%qx(k,2) = oneMicroFields%q2(k,i,j)
              oneMicControl%qr(k,2) = oneMicControl%qx(k,2) * oneMicControl%rx(k,2)
-             if (oneMicControl%jnmb(2) >= 5) oneMicControl%cx(k,2) = micro%crp(k,i,j)
+             if (oneMicControl%jnmb(2) >= 5) oneMicControl%cx(k,2) = oneMicroFields%crp(k,i,j)
           else
              if (k2(2) == 1) k1(2) = k + 1
           endif
@@ -207,11 +206,11 @@ contains
 
     if (oneMicControl%jnmb(3) >= 1) then
        do k = lpw,m1-1
-          if (micro%rpp(k,i,j) >= 1.e-9) then
+          if (oneMicroFields%rpp(k,i,j) >= 1.e-9) then
              k2(3) = k
-             oneMicControl%rx(k,3) = micro%rpp(k,i,j)
-             oneMicControl%cx(k,3) = micro%cpp(k,i,j)
-             if (oneMicControl%jnmb(3) == 7) oneMicControl%cifnx(k) = micro%cifnp(k,i,j)
+             oneMicControl%rx(k,3) = oneMicroFields%rpp(k,i,j)
+             oneMicControl%cx(k,3) = oneMicroFields%cpp(k,i,j)
+             if (oneMicControl%jnmb(3) == 7) oneMicControl%cifnx(k) = oneMicroFields%cifnp(k,i,j)
           else
              if (k2(3) == 1) k1(3) = k + 1
           endif
@@ -222,10 +221,10 @@ contains
 
     if (oneMicControl%jnmb(4) >= 1) then
        do k = lpw,m1-1
-          if (micro%rsp(k,i,j) >= 1.e-9) then
+          if (oneMicroFields%rsp(k,i,j) >= 1.e-9) then
              k2(4) = k
-             oneMicControl%rx(k,4) = micro%rsp(k,i,j)
-             if (oneMicControl%jnmb(4) >= 5) oneMicControl%cx(k,4) = micro%csp(k,i,j)
+             oneMicControl%rx(k,4) = oneMicroFields%rsp(k,i,j)
+             if (oneMicControl%jnmb(4) >= 5) oneMicControl%cx(k,4) = oneMicroFields%csp(k,i,j)
           else
              if (k2(4) == 1) k1(4) = k + 1
           endif
@@ -236,10 +235,10 @@ contains
 
     if (oneMicControl%jnmb(5) >= 1) then
        do k = lpw,m1-1
-          if (micro%rap(k,i,j) >= 1.e-9) then
+          if (oneMicroFields%rap(k,i,j) >= 1.e-9) then
              k2(5) = k
-             oneMicControl%rx(k,5) = micro%rap(k,i,j)
-             if (oneMicControl%jnmb(5) >= 5) oneMicControl%cx(k,5) = micro%cap(k,i,j)
+             oneMicControl%rx(k,5) = oneMicroFields%rap(k,i,j)
+             if (oneMicControl%jnmb(5) >= 5) oneMicControl%cx(k,5) = oneMicroFields%cap(k,i,j)
           else
              if (k2(5) == 1) k1(5) = k + 1
           endif
@@ -250,12 +249,12 @@ contains
 
     if (oneMicControl%jnmb(6) >= 1) then
        do k = lpw,m1-1
-          if (micro%rgp(k,i,j) >= 1.e-9) then
+          if (oneMicroFields%rgp(k,i,j) >= 1.e-9) then
              k2(6) = k
-             oneMicControl%rx(k,6) = micro%rgp(k,i,j)
-             oneMicControl%qx(k,6) = micro%q6(k,i,j)
+             oneMicControl%rx(k,6) = oneMicroFields%rgp(k,i,j)
+             oneMicControl%qx(k,6) = oneMicroFields%q6(k,i,j)
              oneMicControl%qr(k,6) = oneMicControl%qx(k,6) * oneMicControl%rx(k,6)
-             if (oneMicControl%jnmb(6) >= 5) oneMicControl%cx(k,6) = micro%cgp(k,i,j)
+             if (oneMicControl%jnmb(6) >= 5) oneMicControl%cx(k,6) = oneMicroFields%cgp(k,i,j)
           else
              if (k2(6) == 1) k1(6) = k + 1
           endif
@@ -266,12 +265,12 @@ contains
 
     if (oneMicControl%jnmb(7) >= 1) then
        do k = lpw,m1-1
-          if (micro%rhp(k,i,j) >= 1.e-9) then
+          if (oneMicroFields%rhp(k,i,j) >= 1.e-9) then
              k2(7) = k
-             oneMicControl%rx(k,7) = micro%rhp(k,i,j)
-             oneMicControl%qx(k,7) = micro%q7(k,i,j)
+             oneMicControl%rx(k,7) = oneMicroFields%rhp(k,i,j)
+             oneMicControl%qx(k,7) = oneMicroFields%q7(k,i,j)
              oneMicControl%qr(k,7) = oneMicControl%qx(k,7) * oneMicControl%rx(k,7)
-             if (oneMicControl%jnmb(7) >= 5) oneMicControl%cx(k,7) = micro%chp(k,i,j)
+             if (oneMicControl%jnmb(7) >= 5) oneMicControl%cx(k,7) = oneMicroFields%chp(k,i,j)
           else
              if (k2(7) == 1) k1(7) = k + 1
           endif
@@ -832,27 +831,28 @@ contains
 
   !******************************************************************************
 
-  subroutine negadj1(m1,m2,m3,oneBasicFields, oneMicControl)
+  subroutine negadj1(m1,m2,m3,oneBasicFields, oneMicControl, oneMicroFields)
     ! Arguments
     integer, intent(in) :: m1, m2, m3
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(MicControl), pointer, intent(in) :: oneMicControl
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
 
     if (oneMicControl%level == 0) return
 
     call adj1(m1,m2,m3,grid_g(ngrid)%lpw,oneBasicFields%rtp  &
-         ,oneBasicFields%thp,micro_g(ngrid),vctr9,oneMicControl)
+         ,oneBasicFields%thp,oneMicroFields,vctr9,oneMicControl)
 
     return
   end subroutine negadj1
 
   !******************************************************************************
 
-  subroutine adj1(m1,m2,m3,lpw_R,rtp,thp,micro,vctr9, oneMicControl)
+  subroutine adj1(m1,m2,m3,lpw_R,rtp,thp,oneMicroFields,vctr9, oneMicControl)
     ! Arguments
     integer, intent(in)                      :: m1, m2, m3
     real, dimension(m2,m3), intent(in)    :: lpw_R
-    type (micro_vars), intent(inout)         :: micro
+    type(MicroFields), pointer, intent(in)         :: oneMicroFields
     real, dimension(m1,m2,m3), intent(inout) :: rtp, thp
     real, dimension(m1), intent(out)         :: vctr9
     type(MicControl), pointer, intent(in) :: oneMicControl
@@ -885,13 +885,13 @@ contains
           !--(DMK-CARRIO-END)-----------------------------------------------------
 
 
-          if (oneMicControl%jnmb(1) > 0) call ae1kmic(ka,m1,oneMicControl%rx(:,1),micro%rcp(:,i,j))
-          if (oneMicControl%jnmb(2) > 0) call ae1kmic(ka,m1,oneMicControl%rx(:,2),micro%rrp(:,i,j))
-          if (oneMicControl%jnmb(3) > 0) call ae1kmic(ka,m1,oneMicControl%rx(:,3),micro%rpp(:,i,j))
-          if (oneMicControl%jnmb(4) > 0) call ae1kmic(ka,m1,oneMicControl%rx(:,4),micro%rsp(:,i,j))
-          if (oneMicControl%jnmb(5) > 0) call ae1kmic(ka,m1,oneMicControl%rx(:,5),micro%rap(:,i,j))
-          if (oneMicControl%jnmb(6) > 0) call ae1kmic(ka,m1,oneMicControl%rx(:,6),micro%rgp(:,i,j))
-          if (oneMicControl%jnmb(7) > 0) call ae1kmic(ka,m1,oneMicControl%rx(:,7),micro%rhp(:,i,j))
+          if (oneMicControl%jnmb(1) > 0) call ae1kmic(ka,m1,oneMicControl%rx(:,1),oneMicroFields%rcp(:,i,j))
+          if (oneMicControl%jnmb(2) > 0) call ae1kmic(ka,m1,oneMicControl%rx(:,2),oneMicroFields%rrp(:,i,j))
+          if (oneMicControl%jnmb(3) > 0) call ae1kmic(ka,m1,oneMicControl%rx(:,3),oneMicroFields%rpp(:,i,j))
+          if (oneMicControl%jnmb(4) > 0) call ae1kmic(ka,m1,oneMicControl%rx(:,4),oneMicroFields%rsp(:,i,j))
+          if (oneMicControl%jnmb(5) > 0) call ae1kmic(ka,m1,oneMicControl%rx(:,5),oneMicroFields%rap(:,i,j))
+          if (oneMicControl%jnmb(6) > 0) call ae1kmic(ka,m1,oneMicControl%rx(:,6),oneMicroFields%rgp(:,i,j))
+          if (oneMicControl%jnmb(7) > 0) call ae1kmic(ka,m1,oneMicControl%rx(:,7),oneMicroFields%rhp(:,i,j))
 
           do lcat = 1,ncat
              do k = ka,m1
@@ -914,28 +914,28 @@ contains
              endif
           enddo
 
-          if (oneMicControl%jnmb(1) > 0) call ae1kmic(ka,m1,micro%rcp(:,i,j),oneMicControl%rx(:,1))
-          if (oneMicControl%jnmb(2) > 0) call ae1kmic(ka,m1,micro%rrp(:,i,j),oneMicControl%rx(:,2))
-          if (oneMicControl%jnmb(3) > 0) call ae1kmic(ka,m1,micro%rpp(:,i,j),oneMicControl%rx(:,3))
-          if (oneMicControl%jnmb(4) > 0) call ae1kmic(ka,m1,micro%rsp(:,i,j),oneMicControl%rx(:,4))
-          if (oneMicControl%jnmb(5) > 0) call ae1kmic(ka,m1,micro%rap(:,i,j),oneMicControl%rx(:,5))
-          if (oneMicControl%jnmb(6) > 0) call ae1kmic(ka,m1,micro%rgp(:,i,j),oneMicControl%rx(:,6))
-          if (oneMicControl%jnmb(7) > 0) call ae1kmic(ka,m1,micro%rhp(:,i,j),oneMicControl%rx(:,7))
+          if (oneMicControl%jnmb(1) > 0) call ae1kmic(ka,m1,oneMicroFields%rcp(:,i,j),oneMicControl%rx(:,1))
+          if (oneMicControl%jnmb(2) > 0) call ae1kmic(ka,m1,oneMicroFields%rrp(:,i,j),oneMicControl%rx(:,2))
+          if (oneMicControl%jnmb(3) > 0) call ae1kmic(ka,m1,oneMicroFields%rpp(:,i,j),oneMicControl%rx(:,3))
+          if (oneMicControl%jnmb(4) > 0) call ae1kmic(ka,m1,oneMicroFields%rsp(:,i,j),oneMicControl%rx(:,4))
+          if (oneMicControl%jnmb(5) > 0) call ae1kmic(ka,m1,oneMicroFields%rap(:,i,j),oneMicControl%rx(:,5))
+          if (oneMicControl%jnmb(6) > 0) call ae1kmic(ka,m1,oneMicroFields%rgp(:,i,j),oneMicControl%rx(:,6))
+          if (oneMicControl%jnmb(7) > 0) call ae1kmic(ka,m1,oneMicroFields%rhp(:,i,j),oneMicControl%rx(:,7))
 
           if (oneMicControl%jnmb(1) >= 5)  &
-               call ae1mic(ka,m1,micro%ccp(:,i,j),micro%rcp(:,i,j),oneMicControl%rx(1,1))
+               call ae1mic(ka,m1,oneMicroFields%ccp(:,i,j),oneMicroFields%rcp(:,i,j),oneMicControl%rx(1,1))
           if (oneMicControl%jnmb(2) >= 5)  &
-               call ae1mic(ka,m1,micro%crp(:,i,j),micro%rrp(:,i,j),oneMicControl%rx(1,2))
+               call ae1mic(ka,m1,oneMicroFields%crp(:,i,j),oneMicroFields%rrp(:,i,j),oneMicControl%rx(1,2))
           if (oneMicControl%jnmb(3) >= 5)  &
-               call ae1mic(ka,m1,micro%cpp(:,i,j),micro%rpp(:,i,j),oneMicControl%rx(1,3))
+               call ae1mic(ka,m1,oneMicroFields%cpp(:,i,j),oneMicroFields%rpp(:,i,j),oneMicControl%rx(1,3))
           if (oneMicControl%jnmb(4) >= 5)  &
-               call ae1mic(ka,m1,micro%csp(:,i,j),micro%rsp(:,i,j),oneMicControl%rx(1,4))
+               call ae1mic(ka,m1,oneMicroFields%csp(:,i,j),oneMicroFields%rsp(:,i,j),oneMicControl%rx(1,4))
           if (oneMicControl%jnmb(5) >= 5)  &
-               call ae1mic(ka,m1,micro%cap(:,i,j),micro%rap(:,i,j),oneMicControl%rx(1,5))
+               call ae1mic(ka,m1,oneMicroFields%cap(:,i,j),oneMicroFields%rap(:,i,j),oneMicControl%rx(1,5))
           if (oneMicControl%jnmb(6) >= 5)  &
-               call ae1mic(ka,m1,micro%cgp(:,i,j),micro%rgp(:,i,j),oneMicControl%rx(1,6))
+               call ae1mic(ka,m1,oneMicroFields%cgp(:,i,j),oneMicroFields%rgp(:,i,j),oneMicControl%rx(1,6))
           if (oneMicControl%jnmb(7) >= 5)  &
-               call ae1mic(ka,m1,micro%chp(:,i,j),micro%rhp(:,i,j),oneMicControl%rx(1,7))
+               call ae1mic(ka,m1,oneMicroFields%chp(:,i,j),oneMicroFields%rhp(:,i,j),oneMicControl%rx(1,7))
 
           !
           !  Think about how thp should change here - should it be due to a change in

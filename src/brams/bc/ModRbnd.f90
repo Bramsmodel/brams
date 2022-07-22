@@ -1,5 +1,12 @@
 module ModRbnd
 
+  use mem_micro, only: &
+       DeepCopyToMicroFields, &
+       DeepCopyFromMicroFields
+
+  use ModMicroFields, only: &
+       MicroFields
+  
   use ModTurbFields, only: &
        TurbFields
   
@@ -1361,12 +1368,13 @@ contains
   end subroutine rayf
 
   subroutine trsets(oneScalarTab, oneScalarTabSize, oneBasicFields, &
-       oneTurbFields, oneMicControl)
+       oneTurbFields, oneMicControl, oneMicroFields)
     type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
     integer, intent(inout) :: oneScalarTabSize
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     type(MicControl), pointer, intent(in) :: oneMicControl
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
     integer :: n, mxyzp
     character(len=*), parameter :: h="**(trsets)**"
 
@@ -1402,7 +1410,9 @@ contains
 
     call tkeinit(mzp,mxp,myp, oneTurbFields)
 
-    call negadj1(mzp,mxp,myp, oneBasicFields, oneMicControl)
+    call DeepCopyToMicroFields(oneMicroFields, h)
+    call negadj1(mzp,mxp,myp, oneBasicFields, oneMicControl, oneMicroFields)
+    call DeepCopyFromMicroFields(oneMicroFields, h)
 
     !--(DMK-CCATT-INI)-----------------------------------------------------
     !-srf for chem - aerosol quantities

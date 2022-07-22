@@ -55,8 +55,13 @@ module ModMicrophysicsDrive
        psxfer, &
        newtemp, &
        diffprep
-       
+
+  use ModMicroFields, only: &
+       MicroFields
+  
   use mem_micro, only:  &
+       DeepCopyToMicroFields, &
+       DeepCopyFromMicroFields, &
        micro_g, &
        micro_vars        ! INTENT(IN) ! Only a type structure
 
@@ -121,9 +126,10 @@ contains
 
 
 
-  subroutine micro(oneBasicFields, oneMicControl)
+  subroutine micro(oneBasicFields, oneMicControl, oneMicroFields)
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(MicControl), pointer, intent(in) :: oneMicControl
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
     
     ! Local Variables:
     integer :: nembfall,maxkfall,ngr,lhcat,i,j
@@ -137,6 +143,8 @@ contains
     end type pcp_tab_type
     type (pcp_tab_type), save :: pcp_tab(maxgrds)
 
+    character(len=*), parameter :: h="**(micro)**"
+    
     if (oneMicControl%level .ne. 3) return
 
     nembfall = 20
@@ -186,7 +194,9 @@ contains
     do j = ja,jz
        do i = ia,iz
 
-          call range_check(mzp,k1,k2,k3,i,j,grid_g(ngr)%lpw(i,j),micro_g(ngr),oneMicControl)
+          call DeepCopyToMicroFields(oneMicroFields, h)
+          call range_check(mzp,k1,k2,k3,i,j,grid_g(ngr)%lpw(i,j),oneMicroFields,oneMicControl)
+          call DeepCopyFromMicroFields(oneMicroFields, h)
 
           call mcphys(mzp,k1,k2,k3,i,j,ngrid,jdim,maxnzp             &
                ,nembfall,maxkfall,mynum,dtlt,dtlti,time,zm,dzt                 &

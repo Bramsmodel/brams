@@ -598,7 +598,7 @@ contains
     !  Moisture variables positive definite
     !----------------------------------------
     if    (oneGrid%MicControlVars%mcphys_type == 0) then
-       call negadj1(mzp,mxp,myp, oneGrid%Basic, oneGrid%MicControlVars)
+       call negadj1(mzp,mxp,myp, oneGrid%Basic, oneGrid%MicControlVars, oneGrid%Micro)
 
 
     elseif(oneGrid%MicControlVars%mcphys_type == 1) then
@@ -612,11 +612,11 @@ contains
     !----------------------------------------
     if (oneGrid%MicControlVars%mcphys_type == 0 .and. oneGrid%MicControlVars%level==3) then
        ! Original Version used in a Generic IA32 machine
-       call micro(oneGrid%Basic, oneGrid%MicControlVars)
+       call micro(oneGrid%Basic, oneGrid%MicControlVars, oneGrid%Micro)
     endif
     if (oneGrid%MicControlVars%mcphys_type == 1 .and. oneGrid%MicControlVars%level==3) then
        ! 2M rams microphysics
-       call micro_2M_rams60(oneGrid%Basic,oneGrid%MicControlVars)
+       call micro_2M_rams60(oneGrid%Basic,oneGrid%MicControlVars, oneGrid%Micro)
     endif
     if (oneGrid%MicControlVars%mcphys_type == 2 .or. oneGrid%MicControlVars%mcphys_type == 3 ) then
        ! G. Thompson microphysics
@@ -660,8 +660,10 @@ contains
 
     !  Apply scalar b.c.'s
     !----------------------------------------
+    call DeepCopyToMicroFields(oneGrid%Micro,h)
     call trsets(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic,&
-         oneGrid%Turb,oneGrid%MicControlVars)
+         oneGrid%Turb,oneGrid%MicControlVars,oneGrid%Micro)
+    call DeepCopyFromMicroFields(oneGrid%Micro,h)
 
     !  Lateral velocity boundaries - radiative
     !-------------------------------------------

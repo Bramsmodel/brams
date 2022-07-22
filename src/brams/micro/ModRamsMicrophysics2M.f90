@@ -32,6 +32,8 @@ module ModRamsMicrophysics2M
        BasicFields
 
   use mem_micro, only: &
+       DeepCopyToMicroFields, &
+       DeepCopyFromMicroFields, &
        micro_vars, &
        micro_g ! INTENT(OUT)
 
@@ -89,6 +91,9 @@ module ModRamsMicrophysics2M
 
   use ModMicControl, only: &
        MicControl
+
+  use ModMicroFields, only: &
+       MicroFields
   
   implicit none
 
@@ -252,9 +257,10 @@ contains
 
   !###########################################################################
 
-  subroutine micro_2M_rams60(oneBasicFields, oneMicControl)
+  subroutine micro_2M_rams60(oneBasicFields, oneMicControl, oneMicroFields)
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(MicControl), pointer, intent(in) :: oneMicControl
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
     
     integer :: nembfall,maxkfall,ngr,lhcat,i,j,k
     integer, dimension(11)  :: k1,k2,k3
@@ -271,6 +277,7 @@ contains
 
     type (pcp_tab_type), save :: pcp_tab(maxgrds)
 
+    character(len=*), parameter :: h="**(micro_2M_rams60)**" 
     if (oneMicControl%level .ne. 3) return
 
     nembfall = 20
@@ -371,7 +378,9 @@ contains
              endif
           enddo
 
-          call range_check(mzp,k1,k2,k3,i,j,grid_g(ngr)%lpw(i,j),micro_g(ngr),oneMicControl)
+          call DeepCopyToMicroFields(oneMicroFields,h)
+          call range_check(mzp,k1,k2,k3,i,j,grid_g(ngr)%lpw(i,j),oneMicroFields,oneMicControl)
+          call DeepCopyFromMicroFields(oneMicroFields,h)
 
 
           call mcphys(&
@@ -10774,9 +10783,9 @@ contains
 
   !******************************************************************************
 
-  subroutine range_check(m1,k1,k2,k3,i,j,lpw_R,micro, oneMicControl)
+  subroutine range_check(m1,k1,k2,k3,i,j,lpw_R, oneMicroFields, oneMicControl)
     type(MicControl), pointer, intent(in) :: oneMicControl
-    type (micro_vars) :: micro
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
 
     real :: lpw_R
     integer :: m1,i,j,k,lcatt,lcat,l,jcat,lpw
@@ -10817,28 +10826,28 @@ contains
 
     ! fill scratch arrays for dust and salt modes
     do k = lpw,m1-1
-       if (oneMicControl%idust == 1 .or. imd1flg == 1) md1nx(k) = micro%md1np(k,i,j)
-       if (oneMicControl%idust == 1 .or. imd2flg == 1) md2nx(k) = micro%md2np(k,i,j)
-       if (oneMicControl%isalt == 1) saltfx(k) = micro%salt_filmp(k,i,j)
-       if (oneMicControl%isalt == 1) saltjx(k) = micro%salt_jetp(k,i,j)
-       if (oneMicControl%isalt == 1) saltsx(k) = micro%salt_spmp(k,i,j)
+       if (oneMicControl%idust == 1 .or. imd1flg == 1) md1nx(k) = oneMicroFields%md1np(k,i,j)
+       if (oneMicControl%idust == 1 .or. imd2flg == 1) md2nx(k) = oneMicroFields%md2np(k,i,j)
+       if (oneMicControl%isalt == 1) saltfx(k) = oneMicroFields%salt_filmp(k,i,j)
+       if (oneMicControl%isalt == 1) saltjx(k) = oneMicroFields%salt_jetp(k,i,j)
+       if (oneMicControl%isalt == 1) saltsx(k) = oneMicroFields%salt_spmp(k,i,j)
     enddo
 
     ! fill scratch arrays for cloud water
 
     if (oneMicControl%jnmb(1) >= 1) then
        do k = lpw,m1-1
-          if (micro%rcp(k,i,j) >= 1.e-12) then
+          if (oneMicroFields%rcp(k,i,j) >= 1.e-12) then
              k2(1) = k
-             rx(k,1) = micro%rcp(k,i,j)
-             if (oneMicControl%jnmb(1) >= 5) cx(k,1) = micro%ccp(k,i,j)
-             if (oneMicControl%iccnlev >= 2) cnmhx(k,1) = micro%cnm1p(k,i,j)
+             rx(k,1) = oneMicroFields%rcp(k,i,j)
+             if (oneMicControl%jnmb(1) >= 5) cx(k,1) = oneMicroFields%ccp(k,i,j)
+             if (oneMicControl%iccnlev >= 2) cnmhx(k,1) = oneMicroFields%cnm1p(k,i,j)
           else
              if (k2(1) == 1) k1(1) = k + 1
           endif
           if (oneMicControl%jnmb(1) >= 5) then
-             cccnx(k) = micro%cccnp(k,i,j)
-             cccmx(k) = micro%cccmp(k,i,j)
+             cccnx(k) = oneMicroFields%cccnp(k,i,j)
+             cccmx(k) = oneMicroFields%cccmp(k,i,j)
           endif
        enddo
     endif
@@ -10847,13 +10856,13 @@ contains
 
     if (oneMicControl%jnmb(2) >= 1) then
        do k = lpw,m1-1
-          if (micro%rrp(k,i,j) >= 1.e-12) then
+          if (oneMicroFields%rrp(k,i,j) >= 1.e-12) then
              k2(2) = k
-             rx(k,2) = micro%rrp(k,i,j)
-             qx(k,2) = micro%q2(k,i,j)
+             rx(k,2) = oneMicroFields%rrp(k,i,j)
+             qx(k,2) = oneMicroFields%q2(k,i,j)
              qr(k,2) = qx(k,2) * rx(k,2)
-             if (oneMicControl%jnmb(2) >= 5) cx(k,2) = micro%crp(k,i,j)
-             if (oneMicControl%iccnlev >= 2) cnmhx(k,2) = micro%cnm2p(k,i,j)
+             if (oneMicControl%jnmb(2) >= 5) cx(k,2) = oneMicroFields%crp(k,i,j)
+             if (oneMicControl%iccnlev >= 2) cnmhx(k,2) = oneMicroFields%cnm2p(k,i,j)
           else
              if (k2(2) == 1) k1(2) = k + 1
           endif
@@ -10864,15 +10873,15 @@ contains
 
     if (oneMicControl%jnmb(3) >= 1) then
        do k = lpw,m1-1
-          if (micro%rpp(k,i,j) >= 1.e-12) then
+          if (oneMicroFields%rpp(k,i,j) >= 1.e-12) then
              k2(3) = k
-             rx(k,3) = micro%rpp(k,i,j)
-             cx(k,3) = micro%cpp(k,i,j)
-             if (oneMicControl%iccnlev >= 2) cnmhx(k,3) = micro%cnm3p(k,i,j)
+             rx(k,3) = oneMicroFields%rpp(k,i,j)
+             cx(k,3) = oneMicroFields%cpp(k,i,j)
+             if (oneMicControl%iccnlev >= 2) cnmhx(k,3) = oneMicroFields%cnm3p(k,i,j)
           else
              if (k2(3) == 1) k1(3) = k + 1
           endif
-          if (oneMicControl%jnmb(3) >= 5) cifnx(k) = micro%cifnp(k,i,j)
+          if (oneMicControl%jnmb(3) >= 5) cifnx(k) = oneMicroFields%cifnp(k,i,j)
        enddo
     endif
 
@@ -10880,10 +10889,10 @@ contains
 
     if (oneMicControl%jnmb(4) >= 1) then
        do k = lpw,m1-1
-          if (micro%rsp(k,i,j) >= 1.e-12) then
+          if (oneMicroFields%rsp(k,i,j) >= 1.e-12) then
              k2(4) = k
-             rx(k,4) = micro%rsp(k,i,j)
-             if (oneMicControl%jnmb(4) >= 5) cx(k,4) = micro%csp(k,i,j)
+             rx(k,4) = oneMicroFields%rsp(k,i,j)
+             if (oneMicControl%jnmb(4) >= 5) cx(k,4) = oneMicroFields%csp(k,i,j)
           else
              if (k2(4) == 1) k1(4) = k + 1
           endif
@@ -10894,10 +10903,10 @@ contains
 
     if (oneMicControl%jnmb(5) >= 1) then
        do k = lpw,m1-1
-          if (micro%rap(k,i,j) >= 1.e-12) then
+          if (oneMicroFields%rap(k,i,j) >= 1.e-12) then
              k2(5) = k
-             rx(k,5) = micro%rap(k,i,j)
-             if (oneMicControl%jnmb(5) >= 5) cx(k,5) = micro%cap(k,i,j)
+             rx(k,5) = oneMicroFields%rap(k,i,j)
+             if (oneMicControl%jnmb(5) >= 5) cx(k,5) = oneMicroFields%cap(k,i,j)
           else
              if (k2(5) == 1) k1(5) = k + 1
           endif
@@ -10908,12 +10917,12 @@ contains
 
     if (oneMicControl%jnmb(6) >= 1) then
        do k = lpw,m1-1
-          if (micro%rgp(k,i,j) >= 1.e-12) then
+          if (oneMicroFields%rgp(k,i,j) >= 1.e-12) then
              k2(6) = k
-             rx(k,6) = micro%rgp(k,i,j)
-             qx(k,6) = micro%q6(k,i,j)
+             rx(k,6) = oneMicroFields%rgp(k,i,j)
+             qx(k,6) = oneMicroFields%q6(k,i,j)
              qr(k,6) = qx(k,6) * rx(k,6)
-             if (oneMicControl%jnmb(6) >= 5) cx(k,6) = micro%cgp(k,i,j)
+             if (oneMicControl%jnmb(6) >= 5) cx(k,6) = oneMicroFields%cgp(k,i,j)
           else
              if (k2(6) == 1) k1(6) = k + 1
           endif
@@ -10924,12 +10933,12 @@ contains
 
     if (oneMicControl%jnmb(7) >= 1) then
        do k = lpw,m1-1
-          if (micro%rhp(k,i,j) >= 1.e-12) then
+          if (oneMicroFields%rhp(k,i,j) >= 1.e-12) then
              k2(7) = k
-             rx(k,7) = micro%rhp(k,i,j)
-             qx(k,7) = micro%q7(k,i,j)
+             rx(k,7) = oneMicroFields%rhp(k,i,j)
+             qx(k,7) = oneMicroFields%q7(k,i,j)
              qr(k,7) = qx(k,7) * rx(k,7)
-             if (oneMicControl%jnmb(7) >= 5) cx(k,7) = micro%chp(k,i,j)
+             if (oneMicControl%jnmb(7) >= 5) cx(k,7) = oneMicroFields%chp(k,i,j)
           else
              if (k2(7) == 1) k1(7) = k + 1
           endif
@@ -10939,17 +10948,17 @@ contains
     ! fill scratch arrays for drizzle
     if (oneMicControl%jnmb(8) >= 1) then
        do k = lpw,m1-1
-          if (micro%rdp(k,i,j) >= 1.e-12) then
+          if (oneMicroFields%rdp(k,i,j) >= 1.e-12) then
              k2(8) = k
-             rx(k,8) = micro%rdp(k,i,j)
-             if (oneMicControl%jnmb(8) >= 5) cx(k,8) = micro%cdp(k,i,j)
-             if (oneMicControl%iccnlev >= 2) cnmhx(k,8) = micro%cnm8p(k,i,j)
+             rx(k,8) = oneMicroFields%rdp(k,i,j)
+             if (oneMicControl%jnmb(8) >= 5) cx(k,8) = oneMicroFields%cdp(k,i,j)
+             if (oneMicControl%iccnlev >= 2) cnmhx(k,8) = oneMicroFields%cnm8p(k,i,j)
           else
              if (k2(8) == 1) k1(8) = k + 1
           endif
           if (oneMicControl%jnmb(8) >= 5) then
-             gccnx(k) = micro%gccnp(k,i,j)
-             gccmx(k) = micro%gccmp(k,i,j)
+             gccnx(k) = oneMicroFields%gccnp(k,i,j)
+             gccmx(k) = oneMicroFields%gccmp(k,i,j)
           endif
        enddo
     endif

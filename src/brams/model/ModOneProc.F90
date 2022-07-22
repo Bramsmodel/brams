@@ -1739,7 +1739,10 @@ contains
           call newgrid(ifm)
 
           call FieldInit(1, oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars)
-          call negadj1(mzp,mxp,myp, oneGrid%Basic,oneGrid%MicControlVars)
+
+          call DeepCopyToMicroFields(oneGrid%Micro, h)
+          call negadj1(mzp,mxp,myp, oneGrid%Basic,oneGrid%MicControlVars,oneGrid%Micro)
+          call DeepCopyFromMicroFields(oneGrid%Micro, h)
 
           call thermo(mzp, mxp, myp, 1, mxp, 1, myp, &
                oneGrid%Basic, oneGrid%MicControlVars)
@@ -2174,7 +2177,9 @@ contains
        do ifm = 1,min(ngrids,ngridsh)
           icm = nxtnest(ifm)
           if (icm  >  0) call fmrefs3d(ifm, oneGrid%Basic, oneGrid%Basic)
-          call negadj1(mzp,mxp,myp, oneGrid%Basic,oneGrid%MicControlVars)
+          call DeepCopyToMicroFields(oneGrid%Micro, h)
+          call negadj1(mzp,mxp,myp, oneGrid%Basic,oneGrid%MicControlVars,oneGrid%Micro)
+          call DeepCopyFromMicroFields(oneGrid%Micro, h)
        enddo
 
        ! ALF - For use with SiB
