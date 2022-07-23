@@ -965,8 +965,10 @@ contains
        !- call Matrix Aerosol Model
        !- using symmetric/sequential spliting operator
        if(AEROSOL==2) then
+          call DeepCopyToMicroFields(oneGrid%Micro, h)
           call MatrixDriver(ia,iz,ja,jz,mzp,mxp,myp, oneGrid%Basic, oneGrid%Turb, &
-               oneGrid%MicControlVars)
+               oneGrid%MicControlVars, oneGrid%Micro)
+          call DeepCopyFromMicroFields(oneGrid%Micro, h)
        endif
     endif
     if (ccatt==1 .and. aerosol == 1) then

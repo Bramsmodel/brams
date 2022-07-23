@@ -79,8 +79,8 @@ module ModMatrixDriver
   use ModTurbFields, only: &
        TurbFields
   
-  use mem_micro, only: &
-       micro_g
+  use ModMicroFields, only: &
+       MicroFields
 
   use ModMicControl, only: &
        MicControl
@@ -136,7 +136,7 @@ contains
   !! @todo emis_map is fixed to zero. Must be changed to real values
   !!
   subroutine MatrixDriver(ia,iz,ja,jz,m1,m2,m3, oneBasicFields, oneTurbFields, &
-       oneMicControl)
+       oneMicControl, oneMicroFields)
 
     !ngases     = 3      ! number of gas-phase species
     !nmass_spcs = 5      ! total number of mass species
@@ -154,6 +154,7 @@ contains
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     type(MicControl), pointer, intent(in) :: oneMicControl
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
     
     character(LEN=20):: aer_split_method ="PARALLEL"
     !CHARACTER(LEN=20):: aer_split_method ="SYMMETRIC"
@@ -253,7 +254,7 @@ contains
              pblht=zt(2)*grid_g(ngrid)%rtgt(i,j) 
              do k=2,m1-1
                 pblht=zt(k)*grid_g(ngrid)%rtgt(i,j) 
-                if( micro_g(ngrid)%rcp(k,i,j) .gt. rcmin     ) exit ! dry convective layer
+                if( oneMicroFields%rcp(k,i,j) .gt. rcmin     ) exit ! dry convective layer
                 if( oneTurbFields%tkep(k,i,j) .le. tkethrsh  ) exit 
              enddo
              matrixVar(noc)%Zi=pblht
@@ -611,6 +612,9 @@ contains
 
   use ModMicControl, only: &
        MicControl
+
+  use ModMicroFields, only: &
+       MicroFields
   
   implicit none
 
@@ -630,7 +634,7 @@ contains
   !! @todo emis_map is fixed to zero. Must be changed to real values
   !!
   subroutine MatrixDriver(ia,iz,ja,jz,m1,m2,m3, oneBasicFields, oneTurbFields, &
-       oneMicControl)
+       oneMicControl, oneMicroFields)
 
     !ngases     = 3      ! number of gas-phase species
     !nmass_spcs = 5      ! total number of mass species
@@ -648,6 +652,7 @@ contains
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     type(MicControl), pointer, intent(in) :: oneMicControl
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
 
     call fatal_error("**(MatrixDriver)** Matrix only works with AER=MATRIX and CHEM=RELACS_MX; "//&
          "Please run config and compile the code from scratch")
