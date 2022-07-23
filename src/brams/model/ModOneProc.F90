@@ -1738,7 +1738,7 @@ contains
        do ifm=1,ngrids
           call newgrid(ifm)
 
-          call FieldInit(1, oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars)
+          call FieldInit(1, oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars, oneGrid%Micro)
 
           call DeepCopyToMicroFields(oneGrid%Micro, h)
           call negadj1(mzp,mxp,myp, oneGrid%Basic,oneGrid%MicControlVars,oneGrid%Micro)
