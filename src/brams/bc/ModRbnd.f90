@@ -1,9 +1,5 @@
 module ModRbnd
 
-!!$  use mem_micro, only: &
-!!$       DeepCopyToMicroFields, &
-!!$       DeepCopyFromMicroFields
-
   use ModMicroFields, only: &
        MicroFields
   
@@ -1410,9 +1406,7 @@ contains
 
     call tkeinit(mzp,mxp,myp, oneTurbFields)
 
-!!$    call DeepCopyToMicroFields(oneMicroFields, h)
     call negadj1(mzp,mxp,myp, oneBasicFields, oneMicControl, oneMicroFields)
-!!$    call DeepCopyFromMicroFields(oneMicroFields, h)
 
     !--(DMK-CCATT-INI)-----------------------------------------------------
     !-srf for chem - aerosol quantities

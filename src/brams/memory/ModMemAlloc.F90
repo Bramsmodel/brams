@@ -68,10 +68,6 @@ module ModMemAlloc
   use ModMicroFields, only: &
        InsertMicroFieldsAtVarTable
   
-!!$  use mem_micro, only: &
-!!$       DeepCopyToMicroFields, &
-!!$       DeepCopyFromMicroFields
-
   use mem_oda, only: &
        oda_g, &
        odam_g, &
@@ -642,23 +638,6 @@ contains
     ! Allocate Micro variables data type
     call InsertMicroFieldsAtVarTable(oneGrid%Micro, oneGrid%AveMicro, &
        oneGrid%Ramsin, oneGrid%Id)
-!!$    allocate(micro_g(ngrids), STAT=ierr)
-!!$    if (ierr/=0) call fatal_error(h//"Allocating micro_g")
-!!$    allocate(microm_g(ngrids), STAT=ierr)
-!!$    if (ierr/=0) call fatal_error(h//"Allocating microm_g")
-!!$    do ng=1,ngrids
-!!$       call nullify_micro(micro_g(ng))
-!!$       call nullify_micro(microm_g(ng))
-!!$       call alloc_micro(micro_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng, oneGrid%MicControlVars)
-!!$       if (imean==1) then
-!!$          call alloc_micro(microm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng, oneGrid%MicControlVars)
-!!$       elseif (imean==0) then
-!!$          call alloc_micro(microm_g(ng),        1,        1,        1, ng, oneGrid%MicControlVars)
-!!$       endif
-!!$
-!!$       call filltab_micro(micro_g(ng), microm_g(ng), imean,  &
-!!$            nmzp(ng), nmxp(ng), nmyp(ng), ng)
-!!$    enddo
     !-------------
 
     !-------------
@@ -1195,10 +1174,8 @@ contains
 
     call nullify_tend(naddsc)
 
-!!$    call DeepCopyToMicroFields(oneGrid%Micro, h)
     call alloc_tend(nmzp, nmxp, nmyp, ngrids, naddsc, proc_type, &
          oneGrid%Basic, oneGrid%Turb, oneGrid%Micro)
-!!$    call DeepCopyFromMicroFields(oneGrid%Micro, h)
     !-------------
 
     !-------------
@@ -1495,13 +1472,11 @@ contains
           gaspart_p => gaspart_g(ng)
        endif
 
-!!$       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call filltab_tend(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
             oneGrid%Basic, oneGrid%Micro, oneGrid%Turb,  &
             scalar_g(:,ng),                                     &
             gaspart_p,                                          &
             naddsc, ng)
-!!$       call DeepCopyFromMicroFields(oneGrid%Micro, h)
 
        if (ccatt == 1  .and. chemistry >= 0)  then
 
@@ -1774,8 +1749,6 @@ contains
        call dealloc_jules(jules_g(ng))
        call dealloc_jules(julesm_g(ng))
 #endif
-!!$       call dealloc_micro(micro_g(ng))
-!!$       call dealloc_micro(microm_g(ng))
        call dealloc_radiate(radiate_g(ng))
        call dealloc_radiate(radiatem_g(ng))
        call dealloc_varinit(varinit_g(ng))
@@ -1803,14 +1776,12 @@ contains
        endif
 
     enddo
-!!$  deallocate(basic_g,basicm_g)
     deallocate(cuparm_g,cuparmm_g)
     deallocate(grid_g,gridm_g)
     deallocate(leaf_g,leafm_g)
 #ifdef JULES
     deallocate(jules_g,julesm_g)
 #endif
-!!$    deallocate(micro_g,microm_g)
     deallocate(radiate_g,radiatem_g)
     deallocate(varinit_g,varinitm_g)
     deallocate(oda_g,odam_g)

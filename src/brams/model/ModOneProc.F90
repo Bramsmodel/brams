@@ -202,10 +202,6 @@ module ModOneProc
        num_var,         &
        vtab_r
 
-!!$  use mem_micro, only: &
-!!$       DeepCopyToMicroFields, &
-!!$       DeepCopyFromMicroFields
-  
   use ModTimestep, only: &
        timestep
 
@@ -1317,9 +1313,7 @@ contains
 
                 time = begtime + (isched(npass,5)-1)*dtlt
                 if (oneGrid%MicControlVars%mcphys_type==3) then
-!!$                   call DeepCopyToMicroFields(oneGrid%Micro, h)
                    call adjustFriendlyForMonth(time,oneGrid%Basic, oneGrid%Micro)
-!!$                   call DeepCopyFromMicroFields(oneGrid%Micro, h)
                 end if
 
                 ! timestep routine
@@ -1739,9 +1733,7 @@ contains
 
           call FieldInit(1, oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars, oneGrid%Micro)
 
-!!$          call DeepCopyToMicroFields(oneGrid%Micro, h)
           call negadj1(mzp,mxp,myp, oneGrid%Basic,oneGrid%MicControlVars,oneGrid%Micro)
-!!$          call DeepCopyFromMicroFields(oneGrid%Micro, h)
 
           call thermo(mzp, mxp, myp, 1, mxp, 1, myp, &
                oneGrid%Basic, oneGrid%MicControlVars, oneGrid%Micro)
@@ -2176,9 +2168,7 @@ contains
        do ifm = 1,min(ngrids,ngridsh)
           icm = nxtnest(ifm)
           if (icm  >  0) call fmrefs3d(ifm, oneGrid%Basic, oneGrid%Basic)
-!!$          call DeepCopyToMicroFields(oneGrid%Micro, h)
           call negadj1(mzp,mxp,myp, oneGrid%Basic,oneGrid%MicControlVars,oneGrid%Micro)
-!!$          call DeepCopyFromMicroFields(oneGrid%Micro, h)
        enddo
 
        ! ALF - For use with SiB
