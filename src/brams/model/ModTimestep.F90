@@ -119,9 +119,9 @@ module ModTimestep
        nodemzp      !intent(in)
 
 
-  use mem_micro, only: &
-       DeepCopyToMicroFields, &
-       DeepCopyFromMicroFields
+!!$  use mem_micro, only: &
+!!$       DeepCopyToMicroFields, &
+!!$       DeepCopyFromMicroFields
        
   use mem_cuparm, only: &
        NNQPARM, & ! INTENT(IN)
@@ -325,7 +325,7 @@ contains
     !--------------------------------
     if (oneGrid%MicControlVars%mcphys_type <= 1 .and. oneGrid%MicControlVars%level/=3) then
        call thermo(mzp, mxp, myp, ia, iz, ja, jz, &
-            oneGrid%Basic, oneGrid%MicControlVars)
+            oneGrid%Basic, oneGrid%MicControlVars, oneGrid%Micro)
     endif
 
     if (iexev == 2) then
@@ -342,28 +342,28 @@ contains
 
     !  Radiation parameterization
     !--------------------------------
-    call DeepCopyToMicroFields(oneGrid%Micro, h)
+!!$    call DeepCopyToMicroFields(oneGrid%Micro, h)
     call radiate(mzp,mxp,myp,ia,iz,ja,jz,mynum, &
          oneGrid%Basic, oneGrid%MicControlVars, oneGrid%Micro)
-    call DeepCopyFromMicroFields(oneGrid%Micro, h)
+!!$    call DeepCopyFromMicroFields(oneGrid%Micro, h)
 
     !  Surface layer, soil and veggie model
     !----------------------------------------
     if (isfcl<=2) then
-       call DeepCopyToMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
             oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars, oneGrid%Micro)
-       call DeepCopyFromMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyFromMicroFields(oneGrid%Micro, h)
 #ifdef JULES
     elseif (isfcl == 5) then
        if (time==0.) then
-          call DeepCopyToMicroFields(oneGrid%Micro, h)
+!!$          call DeepCopyToMicroFields(oneGrid%Micro, h)
           call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
                oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars, oneGrid%Micro)
-          call DeepCopyFromMicroFields(oneGrid%Micro, h)
+!!$          call DeepCopyFromMicroFields(oneGrid%Micro, h)
        end if
        call sfclyr_jules(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile, &
-            oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars)
+            oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars, oneGrid%Micro)
 #endif
     endif
 
@@ -409,19 +409,19 @@ contains
 
 
        !- call dry deposition and sedimentation routines
-       call DeepCopyToMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call drydep_driver(mzp,mxp,myp,ia,iz,ja,jz, &
             oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars, &
             oneGrid%Micro)
-       call DeepCopyFromMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyFromMicroFields(oneGrid%Micro, h)
 
        !- call Matrix Aerosol Model
        !----------------------------------------
        if(AEROSOL==2) then
-          call DeepCopyToMicroFields(oneGrid%Micro, h)
+!!$          call DeepCopyToMicroFields(oneGrid%Micro, h)
           call MatrixDriver(ia,iz,ja,jz,mzp,mxp,myp, oneGrid%Basic, oneGrid%Turb, &
                oneGrid%MicControlVars, oneGrid%Micro)
-          call DeepCopyFromMicroFields(oneGrid%Micro, h)
+!!$          call DeepCopyFromMicroFields(oneGrid%Micro, h)
        endif
 
     endif
@@ -502,17 +502,17 @@ contains
     !  Sub-grid diffusion terms
     !----------------------------------------
     if ((if_adap==0) .and. (OneGrid%Ramsin%ihorgrad==2)) then
-       call DeepCopyToMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call diffuse_brams31(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
             oneGrid%Basic, oneGrid%Ramsin, oneGrid%Turb, oneGrid%Id, &
             oneGrid%MicControlVars, oneGrid%Micro)
-       call DeepCopyFromMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     else
-       call DeepCopyToMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call diffuse(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, &
             oneGrid%Turb, oneGrid%Ramsin, oneGrid%Id, &
             oneGrid%MicControlVars, oneGrid%Micro)
-       call DeepCopyFromMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     endif
 
 !!!!!  IF( NNQPARM(ngrid) >=2 .OR. NNSHCU(ngrid)>=2 ) CALL prepare_lsf_OLD(NNQPARM(ngrid), NNSHCU(ngrid),3)
@@ -551,31 +551,31 @@ contains
     !                    Deep Convection scheme
     !- call deep first, if there is deep convection , turn off shallow.
     if (nnqparm(ngrid)==2) then
-       call DeepCopyToMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call cuparm_grell_catt(OneGrid, 1)
-       call DeepCopyFromMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     end if
     !
     !                    Shallow Convection scheme
     if (NNSHCU(ngrid)==2 ) then
-       call DeepCopyToMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call cuparm_grell_catt(OneGrid, 2)
-       call DeepCopyFromMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     end if
     !
     !- G3d - GD-FIM and GF
     if (NNQPARM(ngrid)>=3) then
-       call DeepCopyToMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call cuparm_grell3_catt(onegrid,1,nnqparm(ngrid),nnshcu(ngrid))
-       call DeepCopyFromMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     end if
 
     !- task 2:  NO production by "eclair"
     if (ccatt == 1) then
-       call DeepCopyToMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,2,50,&
             oneGrid%Basic, oneGrid%Micro)
-       call DeepCopyFromMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     end if
 
     !- CATT & Chemistry == CCATT
@@ -583,25 +583,25 @@ contains
     if (ccatt==1 .and. split_method== 'PARALLEL' .and. n_dyn_chem==1) then
        ! task 3 : production/loss by chemical processes and inclusion of the
        ! chemistry tendency at the total tendency
-       call DeepCopyToMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,3,50,&
             oneGrid%Basic, oneGrid%Micro)
-       call DeepCopyFromMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     endif
     if (ccatt==1 ) then
        ! task 4 : mass transfer between gas and liquid
-       call DeepCopyToMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,4,50,&
             oneGrid%Basic, oneGrid%Micro)
-       call DeepCopyFromMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     endif
 
     !---------------------------------------------------
     ! Shallow  cumulus parameterization by Souza
     if (NNSHCU(ngrid)==1) then
-       call DeepCopyToMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call shcupa(oneGrid%Basic, oneGrid%Turb, oneGrid%Micro)
-       call DeepCopyFromMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     end if
     !---------------------------------------------------
 
@@ -633,9 +633,9 @@ contains
 
 
     elseif(oneGrid%MicControlVars%mcphys_type == 1) then
-       call DeepCopyToMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call negadj1_2M_rams60(mzp,mxp,myp, oneGrid%Basic, oneGrid%MicControlVars, oneGrid%Micro)
-       call DeepCopyFromMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     endif
 
     !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
@@ -645,9 +645,9 @@ contains
     !----------------------------------------
     if (oneGrid%MicControlVars%mcphys_type == 0 .and. oneGrid%MicControlVars%level==3) then
        ! Original Version used in a Generic IA32 machine
-       call DeepCopyToMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call micro(oneGrid%Basic, oneGrid%MicControlVars, oneGrid%Micro)
-       call DeepCopyFromMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     endif
     if (oneGrid%MicControlVars%mcphys_type == 1 .and. oneGrid%MicControlVars%level==3) then
        ! 2M rams microphysics
@@ -655,24 +655,24 @@ contains
     endif
     if (oneGrid%MicControlVars%mcphys_type == 2 .or. oneGrid%MicControlVars%mcphys_type == 3 ) then
        ! G. Thompson microphysics
-       call DeepCopyToMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call micro_thompson(oneGrid%Basic, oneGrid%MicControlVars, oneGrid%Micro)
-       call DeepCopyFromMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     endif
     if (oneGrid%MicControlVars%mcphys_type == 4 ) then
-       call DeepCopyToMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call micro_gfdl(oneGrid%Basic, oneGrid%Micro)
-       call DeepCopyFromMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     endif
 
     !----------------------------------------
     !- chemistry - microphysics tranfers - sedimentation and tranfer from clouds to rain
     if (ccatt==1) then
        ! task 5 : sedimentation and mass transfer between clouds and rain
-       call DeepCopyToMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyToMicroFields(oneGrid%Micro, h)
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,5,50,&
             oneGrid%Basic, oneGrid%Micro)
-       call DeepCopyFromMicroFields(oneGrid%Micro, h)
+!!$       call DeepCopyFromMicroFields(oneGrid%Micro, h)
     endif
 
     !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
@@ -683,7 +683,7 @@ contains
     !----------------------------------------
     if (oneGrid%MicControlVars%mcphys_type <= 1 .and. oneGrid%MicControlVars%level==3)  then
        call thermo(mzp,mxp,myp,1,mxp,1,myp, &
-            oneGrid%Basic, oneGrid%MicControlVars)
+            oneGrid%Basic, oneGrid%MicControlVars, oneGrid%Micro)
     endif
 
     if (iexev == 2) then
@@ -699,10 +699,10 @@ contains
 
     !  Apply scalar b.c.'s
     !----------------------------------------
-    call DeepCopyToMicroFields(oneGrid%Micro,h)
+!!$    call DeepCopyToMicroFields(oneGrid%Micro,h)
     call trsets(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic,&
          oneGrid%Turb,oneGrid%MicControlVars,oneGrid%Micro)
-    call DeepCopyFromMicroFields(oneGrid%Micro,h)
+!!$    call DeepCopyFromMicroFields(oneGrid%Micro,h)
 
     !  Lateral velocity boundaries - radiative
     !-------------------------------------------
@@ -782,7 +782,7 @@ contains
     call thermo_boundary_driver((time+dtlongn(ngrid)), dtlong, &
          f_thermo_e(ngrid), f_thermo_w(ngrid), &
          f_thermo_s(ngrid), f_thermo_n(ngrid), &
-         nzp, mxp, myp, jdim, oneGrid%Basic, oneGrid%MicControlVars)
+         nzp, mxp, myp, jdim, oneGrid%Basic, oneGrid%MicControlVars, oneGrid%Micro)
 
     !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
     !  call SynchronizedTimeStamp(TS_DYNAMICS)
@@ -797,10 +797,10 @@ contains
 
           ! task 3 : production/loss by chemical processes and final updated
           !  of each specie
-          call DeepCopyToMicroFields(oneGrid%Micro, h)
+!!$          call DeepCopyToMicroFields(oneGrid%Micro, h)
           call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,3,50,&
                oneGrid%Basic, oneGrid%Micro)
-          call DeepCopyFromMicroFields(oneGrid%Micro, h)
+!!$          call DeepCopyFromMicroFields(oneGrid%Micro, h)
        endif
 
        !- call Matrix Aerosol Model

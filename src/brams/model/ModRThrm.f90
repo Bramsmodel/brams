@@ -16,8 +16,8 @@ module ModRThrm
   use mem_grid, only: &
        ngrid !INTENT(IN)
 
-  use mem_micro, only: &
-       micro_g
+  use ModMicroFields, only: &
+       MicroFields
 
   use mem_scratch, only: &
        scratch, &
@@ -50,7 +50,7 @@ contains
 
 
   subroutine thermo(mzp, mxp, myp, ia, iz, ja, jz, &
-       oneBasic, oneMicControl)
+       oneBasic, oneMicControl, oneMicroFields)
     integer, intent(in) :: mzp
     integer, intent(in) :: mxp
     integer, intent(in) :: myp
@@ -60,6 +60,7 @@ contains
     integer, intent(in) :: jz
     type(BasicFields), pointer, intent(in) :: oneBasic
     type(MicControl), pointer, intent(in) :: oneMicControl
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
 
     character(len=*), parameter :: h="**(thermo)**"
 
@@ -77,7 +78,7 @@ contains
             ,oneBasic%thp ,oneBasic%theta &
             ,scratch%vt3db      ,oneBasic%pi0   &
             ,oneBasic%rtp ,oneBasic%rv    &
-            ,micro_g(ngrid)%rcp )
+            ,oneMicroFields%rcp )
 
     elseif (oneMicControl%level .eq. 3) then
 
@@ -87,11 +88,11 @@ contains
                ,oneBasic%pi0 ,oneBasic%pp     &
                ,oneBasic%thp ,oneBasic%theta  &
                ,oneBasic%rtp ,oneBasic%rv     &
-               ,micro_g(ngrid)%rcp ,micro_g(ngrid)%rrp    &
-               ,micro_g(ngrid)%rpp ,micro_g(ngrid)%rsp    &
-               ,micro_g(ngrid)%rap ,micro_g(ngrid)%rgp    &
-               ,micro_g(ngrid)%rhp ,micro_g(ngrid)%q6     &
-               ,micro_g(ngrid)%q7 &
+               ,oneMicroFields%rcp ,oneMicroFields%rrp    &
+               ,oneMicroFields%rpp ,oneMicroFields%rsp    &
+               ,oneMicroFields%rap ,oneMicroFields%rgp    &
+               ,oneMicroFields%rhp ,oneMicroFields%q6     &
+               ,oneMicroFields%q7 &
                ,vctr1,vctr2,vctr3,vctr4,vctr5,vctr6,ngrid,oneMicControl%mcphys_type)
 
        elseif(oneMicControl%mcphys_type >= 2 .or. oneMicControl%mcphys_type == 3 .or. oneMicControl%mcphys_type == 4) then
@@ -101,9 +102,9 @@ contains
                ,oneBasic%pi0 ,oneBasic%pp     &
                ,oneBasic%thp ,oneBasic%theta  &
                ,oneBasic%rtp ,oneBasic%rv     &
-               ,micro_g(ngrid)%rcp ,micro_g(ngrid)%rrp    &
-               ,micro_g(ngrid)%rpp ,micro_g(ngrid)%rsp    &
-               ,micro_g(ngrid)%rgp    &
+               ,oneMicroFields%rcp ,oneMicroFields%rrp    &
+               ,oneMicroFields%rpp ,oneMicroFields%rsp    &
+               ,oneMicroFields%rgp    &
                ,ngrid,oneMicControl%mcphys_type)
        endif
 
@@ -121,7 +122,7 @@ contains
 
   subroutine thermo_boundary_driver(time, dtlong, f_thermo_e, f_thermo_w, f_thermo_s, &
        f_thermo_n, mzp, mxp, myp, jdim, &
-       oneBasic, oneMicControl)
+       oneBasic, oneMicControl, oneMicroFields)
 
     ! Arguments
     real, intent(in) :: time
@@ -136,6 +137,7 @@ contains
     integer, intent(in) :: jdim
     type(BasicFields), pointer, intent(in) :: oneBasic
     type(MicControl), pointer, intent(in) :: oneMicControl
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
     
     ! Local Variables
     ! real, parameter :: frq_thermo_bd = 100. !in seconds
@@ -148,24 +150,24 @@ contains
 
     if (f_thermo_e) then
        call thermo(mzp, mxp, myp, 1,   1,   1, myp, &
-            oneBasic, oneMicControl)
+            oneBasic, oneMicControl, oneMicroFields)
     end if
 
     if (f_thermo_w) then
        call thermo(mzp, mxp, myp, mxp, mxp, 1, myp, &
-            oneBasic, oneMicControl)
+            oneBasic, oneMicControl, oneMicroFields)
     end if
 
     if (jdim==1) then
 
        if (f_thermo_s) then
           call thermo(mzp, mxp, myp, 1, mxp, 1, 1, &
-               oneBasic, oneMicControl)
+               oneBasic, oneMicControl, oneMicroFields)
        end if
 
        if (f_thermo_n) then
           call thermo(mzp, mxp, myp, 1, mxp, myp, myp, &
-               oneBasic, oneMicControl)
+               oneBasic, oneMicControl, oneMicroFields)
        end if
     endif
 
@@ -448,7 +450,7 @@ contains
 
   
   subroutine theta_thp_rk(mzp,mxp,myp,ia,iz,ja,jz,action, &
-       oneBasic, oneMicControl)
+       oneBasic, oneMicControl, oneMicroFields)
     !-this is only for RK scheme (uses thc and pc)
     ! Arguments:
     integer, intent(in) :: mzp
@@ -461,6 +463,7 @@ contains
     character(len=*), intent(in) :: action
     type(BasicFields), pointer, intent(in) :: oneBasic
     type(MicControl), pointer, intent(in) :: oneMicControl
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
 
     character(len=*), parameter :: h="**(theta_thp_rk)**"
     
@@ -489,7 +492,7 @@ contains
             ,oneBasic%thc ,oneBasic%theta &
             ,scratch%vt3db          ,oneBasic%pi0   &
             ,oneBasic%rtp ,oneBasic%rv    &
-            ,micro_g(ngrid)%rcp )
+            ,oneMicroFields%rcp )
 
     else if (oneMicControl%level .eq. 3) then
 
@@ -503,11 +506,11 @@ contains
                ,oneBasic%pi0 ,oneBasic%pc     &
                ,oneBasic%thc ,oneBasic%theta  &
                ,oneBasic%rtp ,oneBasic%rv     &
-               ,micro_g(ngrid)%rcp ,micro_g(ngrid)%rrp    &
-               ,micro_g(ngrid)%rpp ,micro_g(ngrid)%rsp    &
-               ,micro_g(ngrid)%rap ,micro_g(ngrid)%rgp    &
-               ,micro_g(ngrid)%rhp ,micro_g(ngrid)%q6     &
-               ,micro_g(ngrid)%q7 &
+               ,oneMicroFields%rcp ,oneMicroFields%rrp    &
+               ,oneMicroFields%rpp ,oneMicroFields%rsp    &
+               ,oneMicroFields%rap ,oneMicroFields%rgp    &
+               ,oneMicroFields%rhp ,oneMicroFields%q6     &
+               ,oneMicroFields%q7 &
                ,vctr1,vctr2,vctr3,vctr4,vctr5,vctr6,ngrid,oneMicControl%mcphys_type)
 
        else if(oneMicControl%mcphys_type == 2 .or. oneMicControl%mcphys_type == 3.or. oneMicControl%mcphys_type == 4) then
@@ -517,9 +520,9 @@ contains
                ,oneBasic%pi0 ,oneBasic%pc     &
                ,oneBasic%thc ,oneBasic%theta  &
                ,oneBasic%rtp ,oneBasic%rv     &
-               ,micro_g(ngrid)%rcp ,micro_g(ngrid)%rrp    &
-               ,micro_g(ngrid)%rpp ,micro_g(ngrid)%rsp    &
-               ,micro_g(ngrid)%rgp    &
+               ,oneMicroFields%rcp ,oneMicroFields%rrp    &
+               ,oneMicroFields%rpp ,oneMicroFields%rsp    &
+               ,oneMicroFields%rgp    &
                ,ngrid,oneMicControl%mcphys_type,action)
        endif
 

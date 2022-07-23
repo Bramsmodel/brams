@@ -37,6 +37,9 @@ module ModRanlavg
   use ModMicControl, only: &
        MicControl
 
+  use ModMicroFields, only: &
+       MicroFields
+  
   use iso_fortran_env, only: &
        int64
 
@@ -51,12 +54,13 @@ contains
 
 
 
-  subroutine anlavg(n1, n2, n3, oneBasic, oneMicControl)
+  subroutine anlavg(n1, n2, n3, oneBasic, oneMicControl, oneMicroFields)
     integer, intent(in) :: n1
     integer, intent(in) :: n2
     integer, intent(in) :: n3
     type(BasicFields), pointer, intent(in) :: oneBasic
     type(MicControl), pointer, intent(in) :: oneMicControl
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
 
     integer :: nv,ng
     integer :: n3dadd,n3d,n2dadd,n2d,izero,indvar,indavg
@@ -137,14 +141,14 @@ contains
     !         Note that theta is changed, BUT never used on boundary points
 
     call thermo(n1,n2,n3,1,1,1,n3,&
-         oneBasic, oneMicControl)
+         oneBasic, oneMicControl, oneMicroFields)
     call thermo(n1,n2,n3,n2,n2,1,n3,&
-         oneBasic, oneMicControl)
+         oneBasic, oneMicControl, oneMicroFields)
     if (jdim .eq. 1) then
        call thermo(n1,n2,n3,1,n2,1,1,&
-            oneBasic, oneMicControl)
+            oneBasic, oneMicControl, oneMicroFields)
        call thermo(n1,n2,n3,1,n2,n3,n3,&
-            oneBasic, oneMicControl)
+            oneBasic, oneMicControl, oneMicroFields)
     endif
 
     ! Loop through the main variable table

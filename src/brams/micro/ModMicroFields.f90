@@ -22,6 +22,9 @@
 
 module ModMicroFields
 
+  use iso_fortran_env, only: &
+       int64
+  
   use ModNamelistFile, only: &
        NamelistFile
   
@@ -34,6 +37,9 @@ module ModMicroFields
   use ModParallelEnvironment, only: &
        MsgDump
   
+  use ModVarTables, only: &
+       InsertVTab
+  
   implicit none
 
   private
@@ -42,6 +48,7 @@ module ModMicroFields
   public :: CreateMicroFields
   public :: DestroyMicroFields
   public :: DumpMicroFields
+  public :: InsertMicroFieldsAtVarTable
 
   type MicroFields
 
@@ -3596,4 +3603,1001 @@ contains
        call MsgDump(h//" "//name//" not associated")
     end if
   end subroutine DumpMicroFields
+
+
+
+  subroutine InsertMicroFieldsAtVarTable(oneMicroFields, oneAveMicroFields, &
+       oneNamelistFile, gridId)
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
+    type(MicroFields), pointer, intent(in) :: oneAveMicroFields
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
+    integer, intent(in) :: gridId
+
+    integer :: imean
+    integer(kind=int64) :: npts
+    character(len=*), parameter :: h="**(InsertMicroFieldsAtVarTable)**"
+
+    if (.not. associated(oneMicroFields)) then
+       call fatal_error(h//" oneMicroFields not associated")
+    else if (.not. associated(oneAveMicroFields)) then
+       call fatal_error(h//" oneAveMicroFields not associated")
+    else if (.not. associated(oneNamelistFile)) then
+       call fatal_error(h//" oneNamelistFile not associated")
+    end if
+
+    ! Should average fields be stored at variable tables?
+
+    if (oneNamelistFile%avgtim == 0) then
+       imean=0 ! do not store
+    else
+       imean=1 ! store
+    end if
+
+    ! Fill pointers to arrays into variable tables
+
+    if (associated(oneMicroFields%rcp)) then   
+       npts=size(oneMicroFields%rcp)
+       call InsertVTab (oneMicroFields%rcp,oneAveMicroFields%rcp  &
+            ,gridId, npts, imean,  &
+            'RCP :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+    if (associated(oneMicroFields%rdp)) then   
+       npts=size(oneMicroFields%rdp)
+       call InsertVTab (oneMicroFields%rdp,oneAveMicroFields%rdp  &
+            ,gridId, npts, imean,  &
+            'RDP :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+    if (associated(oneMicroFields%rrp)) then   
+       npts=size(oneMicroFields%rrp)
+       call InsertVTab (oneMicroFields%rrp,oneAveMicroFields%rrp  &
+            ,gridId, npts, imean,  &
+            'RRP :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+    if (associated(oneMicroFields%rpp)) then   
+       npts=size(oneMicroFields%rpp)
+       call InsertVTab (oneMicroFields%rpp,oneAveMicroFields%rpp  &
+            ,gridId, npts, imean,  &
+            'RPP :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+    if (associated(oneMicroFields%rsp)) then   
+       npts=size(oneMicroFields%rsp)
+       call InsertVTab (oneMicroFields%rsp,oneAveMicroFields%rsp  &
+            ,gridId, npts, imean,  &
+            'RSP :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+    if (associated(oneMicroFields%rap)) then   
+       npts=size(oneMicroFields%rap)
+       call InsertVTab (oneMicroFields%rap,oneAveMicroFields%rap  &
+            ,gridId, npts, imean,  &
+            'RAP :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+    if (associated(oneMicroFields%rgp)) then   
+       npts=size(oneMicroFields%rgp)
+       call InsertVTab (oneMicroFields%rgp,oneAveMicroFields%rgp  &
+            ,gridId, npts, imean,  &
+            'RGP :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+    if (associated(oneMicroFields%rhp)) then   
+       npts=size(oneMicroFields%rhp)
+       call InsertVTab (oneMicroFields%rhp,oneAveMicroFields%rhp  &
+            ,gridId, npts, imean,  &
+            'RHP :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+    if (associated(oneMicroFields%ccp)) then   
+       npts=size(oneMicroFields%ccp)
+       call InsertVTab (oneMicroFields%ccp,oneAveMicroFields%ccp  &
+            ,gridId, npts, imean,  &
+            'CCP :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+    if (associated(oneMicroFields%cdp)) then   
+       npts=size(oneMicroFields%cdp)
+       call InsertVTab (oneMicroFields%cdp,oneAveMicroFields%cdp  &
+            ,gridId, npts, imean,  &
+            'CDP :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+    if (associated(oneMicroFields%crp)) then   
+       npts=size(oneMicroFields%crp)
+       call InsertVTab (oneMicroFields%crp,oneAveMicroFields%crp  &
+            ,gridId, npts, imean,  &
+            'CRP :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+    if (associated(oneMicroFields%cpp)) then   
+       npts=size(oneMicroFields%cpp)
+       call InsertVTab (oneMicroFields%cpp,oneAveMicroFields%cpp  &
+            ,gridId, npts, imean,  &
+            'CPP :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+    if (associated(oneMicroFields%csp)) then   
+       npts=size(oneMicroFields%csp)
+       call InsertVTab (oneMicroFields%csp,oneAveMicroFields%csp  &
+            ,gridId, npts, imean,  &
+            'CSP :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+    if (associated(oneMicroFields%cap)) then   
+       npts=size(oneMicroFields%cap)
+       call InsertVTab (oneMicroFields%cap,oneAveMicroFields%cap  &
+            ,gridId, npts, imean,  &
+            'CAP :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+    if (associated(oneMicroFields%cgp)) then   
+       npts=size(oneMicroFields%cgp)
+       call InsertVTab (oneMicroFields%cgp,oneAveMicroFields%cgp  &
+            ,gridId, npts, imean,  &
+            'CGP :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+    if (associated(oneMicroFields%chp)) then   
+       npts=size(oneMicroFields%chp)
+       call InsertVTab (oneMicroFields%chp,oneAveMicroFields%chp  &
+            ,gridId, npts, imean,  &
+            'CHP :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+    if (associated(oneMicroFields%cccnp)) then 
+       npts=size(oneMicroFields%cccnp)
+       call InsertVTab (oneMicroFields%cccnp,oneAveMicroFields%cccnp  &
+            ,gridId, npts, imean,  &
+            'CCCNP :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+    if (associated(oneMicroFields%gccnp)) then 
+       npts=size(oneMicroFields%gccnp)
+       call InsertVTab (oneMicroFields%gccnp,oneAveMicroFields%gccnp  &
+            ,gridId, npts, imean,  &
+            'GCCNP :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+    if (associated(oneMicroFields%cifnp)) then 
+       npts=size(oneMicroFields%cifnp)
+       call InsertVTab (oneMicroFields%cifnp,oneAveMicroFields%cifnp  &
+            ,gridId, npts, imean,  &
+            'CIFNP :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+
+    if (associated(oneMicroFields%q2)) then   
+       npts=size(oneMicroFields%q2)
+       call InsertVTab (oneMicroFields%q2,oneAveMicroFields%q2  &
+            ,gridId, npts, imean,  &
+            'Q2 :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%q6)) then 
+       npts=size(oneMicroFields%q6)
+       call InsertVTab (oneMicroFields%q6,oneAveMicroFields%q6  &
+            ,gridId, npts, imean,  &
+            'Q6 :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%q7)) then 
+       npts=size(oneMicroFields%q7)
+       call InsertVTab (oneMicroFields%q7,oneAveMicroFields%q7  &
+            ,gridId, npts, imean,  &
+            'Q7 :3:hist:anal:mpti:mpt3')
+    end if
+
+    if (associated(oneMicroFields%cccmp)) then 
+       npts=size(oneMicroFields%cccmp)
+       call InsertVTab (oneMicroFields%cccmp,oneAveMicroFields%cccmp  &
+            ,gridId, npts, imean,  &
+            'CCCMP :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+    if (associated(oneMicroFields%gccmp)) then 
+       npts=size(oneMicroFields%gccmp)
+       call InsertVTab (oneMicroFields%gccmp,oneAveMicroFields%gccmp  &
+            ,gridId, npts, imean,  &
+            'GCCMP :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+    if (associated(oneMicroFields%cnm1p)) then 
+       npts=size(oneMicroFields%cnm1p)
+       call InsertVTab (oneMicroFields%cnm1p,oneAveMicroFields%cnm1p  &
+            ,gridId, npts, imean,  &
+            'CNM1P :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+    if (associated(oneMicroFields%cnm2p)) then 
+       npts=size(oneMicroFields%cnm2p)
+       call InsertVTab (oneMicroFields%cnm2p,oneAveMicroFields%cnm2p  &
+            ,gridId, npts, imean,  &
+            'CNM2P :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+    if (associated(oneMicroFields%cnm3p)) then 
+       npts=size(oneMicroFields%cnm3p)
+       call InsertVTab (oneMicroFields%cnm3p,oneAveMicroFields%cnm3p  &
+            ,gridId, npts, imean,  &
+            'CNM3P :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+    if (associated(oneMicroFields%cnm8p)) then 
+       npts=size(oneMicroFields%cnm8p)
+       call InsertVTab (oneMicroFields%cnm8p,oneAveMicroFields%cnm8p  &
+            ,gridId, npts, imean,  &
+            'CNM8P :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+    if (associated(oneMicroFields%md1np)) then 
+       npts=size(oneMicroFields%md1np)
+       call InsertVTab (oneMicroFields%md1np,oneAveMicroFields%md1np  &
+            ,gridId, npts, imean,  &
+            'MD1NP :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+    if (associated(oneMicroFields%md2np)) then 
+       npts=size(oneMicroFields%md2np)
+       call InsertVTab (oneMicroFields%md2np,oneAveMicroFields%md2np  &
+            ,gridId, npts, imean,  &
+            'MD2NP :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+    if (associated(oneMicroFields%salt_filmp)) then 
+       npts=size(oneMicroFields%salt_filmp)
+       call InsertVTab (oneMicroFields%salt_filmp,oneAveMicroFields%salt_filmp  &
+            ,gridId, npts, imean,  &
+            'SALT_FILMP :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+    if (associated(oneMicroFields%salt_jetp)) then 
+       npts=size(oneMicroFields%salt_jetp)
+       call InsertVTab (oneMicroFields%salt_jetp,oneAveMicroFields%salt_jetp  &
+            ,gridId, npts, imean,  &
+            'SALT_JETP :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+    if (associated(oneMicroFields%salt_spmp)) then 
+       npts=size(oneMicroFields%salt_spmp)
+       call InsertVTab (oneMicroFields%salt_spmp,oneAveMicroFields%salt_spmp  &
+            ,gridId, npts, imean,  &
+            'SALT_SPMP :3:hist:anal:mpti:mpt3:mpt1')
+    end if
+    if (associated(oneMicroFields%rei)) then   
+       npts=size(oneMicroFields%rei)
+       call InsertVTab (oneMicroFields%rei,oneAveMicroFields%rei  &
+            ,gridId, npts, imean,  &
+            'REI :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%rel)) then   
+       npts=size(oneMicroFields%rel)
+       call InsertVTab (oneMicroFields%rel,oneAveMicroFields%rel  &
+            ,gridId, npts, imean,  &
+            'REL :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%cldfr)) then   
+       npts=size(oneMicroFields%cldfr)
+       call InsertVTab (oneMicroFields%cldfr,oneAveMicroFields%cldfr  &
+            ,gridId, npts, imean,  &
+            'CLDFR :3:hist:anal:mpti:mpt3')
+    end if
+
+
+    !VERTICAL PRECIPITATION RATES
+    if (associated(oneMicroFields%pcpvr)) then 
+       npts=size(oneMicroFields%pcpvr)
+       call InsertVTab (oneMicroFields%pcpvr,oneAveMicroFields%pcpvr  &
+            ,gridId, npts, imean,  &
+            'PCPVR :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%pcpvp)) then 
+       npts=size(oneMicroFields%pcpvp)
+       call InsertVTab (oneMicroFields%pcpvp,oneAveMicroFields%pcpvp  &
+            ,gridId, npts, imean,  &
+            'PCPVP :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%pcpvs)) then 
+       npts=size(oneMicroFields%pcpvs)
+       call InsertVTab (oneMicroFields%pcpvs,oneAveMicroFields%pcpvs  &
+            ,gridId, npts, imean,  &
+            'PCPVS :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%pcpva)) then 
+       npts=size(oneMicroFields%pcpva)
+       call InsertVTab (oneMicroFields%pcpva,oneAveMicroFields%pcpva  &
+            ,gridId, npts, imean,  &
+            'PCPVA :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%pcpvg)) then 
+       npts=size(oneMicroFields%pcpvg)
+       call InsertVTab (oneMicroFields%pcpvg,oneAveMicroFields%pcpvg  &
+            ,gridId, npts, imean,  &
+            'PCPVG :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%pcpvh)) then 
+       npts=size(oneMicroFields%pcpvh)
+       call InsertVTab (oneMicroFields%pcpvh,oneAveMicroFields%pcpvh  &
+            ,gridId, npts, imean,  &
+            'PCPVH :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%pcpvd)) then 
+       npts=size(oneMicroFields%pcpvd)
+       call InsertVTab (oneMicroFields%pcpvd,oneAveMicroFields%pcpvd  &
+            ,gridId, npts, imean,  &
+            'PCPVD :3:hist:anal:mpti:mpt3')
+    end if
+
+    !COMPUTE AND OUTPUT MICRO BUDGET PROCESSES (instantaneous)
+    if (associated(oneMicroFields%nuccldr)) then 
+       npts=size(oneMicroFields%nuccldr)
+       call InsertVTab (oneMicroFields%nuccldr,oneAveMicroFields%nuccldr  &
+            ,gridId, npts, imean,  &
+            'NUCCLDR :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%nuccldc)) then 
+       npts=size(oneMicroFields%nuccldc)
+       call InsertVTab (oneMicroFields%nuccldc,oneAveMicroFields%nuccldc  &
+            ,gridId, npts, imean,  &
+            'NUCCLDC :3:hist:anal:mpt3')
+    end if
+
+    if (associated(oneMicroFields%nucicer)) then 
+       npts=size(oneMicroFields%nucicer)
+       call InsertVTab (oneMicroFields%nucicer,oneAveMicroFields%nucicer  &
+            ,gridId, npts, imean,  &
+            'NUCICER :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%nucicec)) then 
+       npts=size(oneMicroFields%nucicec)
+       call InsertVTab (oneMicroFields%nucicec,oneAveMicroFields%nucicec  &
+            ,gridId, npts, imean,  &
+            'NUCICEC :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%inuchomr)) then 
+       npts=size(oneMicroFields%inuchomr)
+       call InsertVTab (oneMicroFields%inuchomr,oneAveMicroFields%inuchomr  &
+            ,gridId, npts, imean,  &
+            'INUCHOMR :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%inuchomc)) then 
+       npts=size(oneMicroFields%inuchomc)
+       call InsertVTab (oneMicroFields%inuchomc,oneAveMicroFields%inuchomc  &
+            ,gridId, npts, imean,  &
+            'INUCHOMC :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%inuccontr)) then 
+       npts=size(oneMicroFields%inuccontr)
+       call InsertVTab (oneMicroFields%inuccontr,oneAveMicroFields%inuccontr  &
+            ,gridId, npts, imean,  &
+            'INUCCONTR :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%inuccontc)) then 
+       npts=size(oneMicroFields%inuccontc)
+       call InsertVTab (oneMicroFields%inuccontc,oneAveMicroFields%inuccontc  &
+            ,gridId, npts, imean,  &
+            'INUCCONTC :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%inucifnr)) then 
+       npts=size(oneMicroFields%inucifnr)
+       call InsertVTab (oneMicroFields%inucifnr,oneAveMicroFields%inucifnr  &
+            ,gridId, npts, imean,  &
+            'INUCIFNR :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%inucifnc)) then 
+       npts=size(oneMicroFields%inucifnc)
+       call InsertVTab (oneMicroFields%inucifnc,oneAveMicroFields%inucifnc  &
+            ,gridId, npts, imean,  &
+            'INUCIFNC :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%inuchazr)) then 
+       npts=size(oneMicroFields%inuchazr)
+       call InsertVTab (oneMicroFields%inuchazr,oneAveMicroFields%inuchazr  &
+            ,gridId, npts, imean,  &
+            'INUCHAZR :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%inuchazc)) then 
+       npts=size(oneMicroFields%inuchazc)
+       call InsertVTab (oneMicroFields%inuchazc,oneAveMicroFields%inuchazc  &
+            ,gridId, npts, imean,  &
+            'INUCHAZC :3:hist:anal:mpt3')
+    end if
+
+    if (associated(oneMicroFields%vapliq)) then 
+       npts=size(oneMicroFields%vapliq)
+       call InsertVTab (oneMicroFields%vapliq,oneAveMicroFields%vapliq  &
+            ,gridId, npts, imean,  &
+            'VAPLIQ :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%vapice)) then 
+       npts=size(oneMicroFields%vapice)
+       call InsertVTab (oneMicroFields%vapice,oneAveMicroFields%vapice  &
+            ,gridId, npts, imean,  &
+            'VAPICE :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%vapcld)) then 
+       npts=size(oneMicroFields%vapcld)
+       call InsertVTab (oneMicroFields%vapcld,oneAveMicroFields%vapcld  &
+            ,gridId, npts, imean,  &
+            'VAPCLD :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%vaprain)) then 
+       npts=size(oneMicroFields%vaprain)
+       call InsertVTab (oneMicroFields%vaprain,oneAveMicroFields%vaprain  &
+            ,gridId, npts, imean,  &
+            'VAPRAIN :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%vappris)) then 
+       npts=size(oneMicroFields%vappris)
+       call InsertVTab (oneMicroFields%vappris,oneAveMicroFields%vappris  &
+            ,gridId, npts, imean,  &
+            'VAPPRIS :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%vapsnow)) then 
+       npts=size(oneMicroFields%vapsnow)
+       call InsertVTab (oneMicroFields%vapsnow,oneAveMicroFields%vapsnow  &
+            ,gridId, npts, imean,  &
+            'VAPSNOW :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%vapaggr)) then 
+       npts=size(oneMicroFields%vapaggr)
+       call InsertVTab (oneMicroFields%vapaggr,oneAveMicroFields%vapaggr  &
+            ,gridId, npts, imean,  &
+            'VAPAGGR :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%vapgrau)) then 
+       npts=size(oneMicroFields%vapgrau)
+       call InsertVTab (oneMicroFields%vapgrau,oneAveMicroFields%vapgrau  &
+            ,gridId, npts, imean,  &
+            'VAPGRAU :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%vaphail)) then 
+       npts=size(oneMicroFields%vaphail)
+       call InsertVTab (oneMicroFields%vaphail,oneAveMicroFields%vaphail  &
+            ,gridId, npts, imean,  &
+            'VAPHAIL :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%vapdriz)) then 
+       npts=size(oneMicroFields%vapdriz)
+       call InsertVTab (oneMicroFields%vapdriz,oneAveMicroFields%vapdriz  &
+            ,gridId, npts, imean,  &
+            'VAPDRIZ :3:hist:anal:mpt3')
+    end if
+
+    if (associated(oneMicroFields%meltice)) then 
+       npts=size(oneMicroFields%meltice)
+       call InsertVTab (oneMicroFields%meltice,oneAveMicroFields%meltice  &
+            ,gridId, npts, imean,  &
+            'MELTICE :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%meltpris)) then 
+       npts=size(oneMicroFields%meltpris)
+       call InsertVTab (oneMicroFields%meltpris,oneAveMicroFields%meltpris  &
+            ,gridId, npts, imean,  &
+            'MELTPRIS :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%meltsnow)) then 
+       npts=size(oneMicroFields%meltsnow)
+       call InsertVTab (oneMicroFields%meltsnow,oneAveMicroFields%meltsnow  &
+            ,gridId, npts, imean,  &
+            'MELTSNOW :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%meltaggr)) then 
+       npts=size(oneMicroFields%meltaggr)
+       call InsertVTab (oneMicroFields%meltaggr,oneAveMicroFields%meltaggr  &
+            ,gridId, npts, imean,  &
+            'MELTAGGR :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%meltgrau)) then 
+       npts=size(oneMicroFields%meltgrau)
+       call InsertVTab (oneMicroFields%meltgrau,oneAveMicroFields%meltgrau  &
+            ,gridId, npts, imean,  &
+            'MELTGRAU :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%melthail)) then 
+       npts=size(oneMicroFields%melthail)
+       call InsertVTab (oneMicroFields%melthail,oneAveMicroFields%melthail  &
+            ,gridId, npts, imean,  &
+            'MELTHAIL :3:hist:anal:mpt3')
+    end if
+
+    if (associated(oneMicroFields%cld2rain)) then 
+       npts=size(oneMicroFields%cld2rain)
+       call InsertVTab (oneMicroFields%cld2rain,oneAveMicroFields%cld2rain  &
+            ,gridId, npts, imean,  &
+            'CLD2RAIN :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%rimecld)) then 
+       npts=size(oneMicroFields%rimecld)
+       call InsertVTab (oneMicroFields%rimecld,oneAveMicroFields%rimecld  &
+            ,gridId, npts, imean,  &
+            'RIMECLD :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%rimecldsnow)) then 
+       npts=size(oneMicroFields%rimecldsnow)
+       call InsertVTab (oneMicroFields%rimecldsnow,oneAveMicroFields%rimecldsnow  &
+            ,gridId, npts, imean,  &
+            'RIMECLDSNOW :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%rimecldaggr)) then 
+       npts=size(oneMicroFields%rimecldaggr)
+       call InsertVTab (oneMicroFields%rimecldaggr,oneAveMicroFields%rimecldaggr  &
+            ,gridId, npts, imean,  &
+            'RIMECLDAGGR :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%rimecldgrau)) then 
+       npts=size(oneMicroFields%rimecldgrau)
+       call InsertVTab (oneMicroFields%rimecldgrau,oneAveMicroFields%rimecldgrau  &
+            ,gridId, npts, imean,  &
+            'RIMECLDGRAU :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%rimecldhail)) then 
+       npts=size(oneMicroFields%rimecldhail)
+       call InsertVTab (oneMicroFields%rimecldhail,oneAveMicroFields%rimecldhail  &
+            ,gridId, npts, imean,  &
+            'RIMECLDHAIL :3:hist:anal:mpt3')
+    end if
+
+    if (associated(oneMicroFields%rain2ice)) then 
+       npts=size(oneMicroFields%rain2ice)
+       call InsertVTab (oneMicroFields%rain2ice,oneAveMicroFields%rain2ice  &
+            ,gridId, npts, imean,  &
+            'RAIN2ICE :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%rain2pr)) then 
+       npts=size(oneMicroFields%rain2pr)
+       call InsertVTab (oneMicroFields%rain2pr,oneAveMicroFields%rain2pr  &
+            ,gridId, npts, imean,  &
+            'RAIN2PR :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%rain2sn)) then 
+       npts=size(oneMicroFields%rain2sn)
+       call InsertVTab (oneMicroFields%rain2sn,oneAveMicroFields%rain2sn  &
+            ,gridId, npts, imean,  &
+            'RAIN2SN :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%rain2ag)) then 
+       npts=size(oneMicroFields%rain2ag)
+       call InsertVTab (oneMicroFields%rain2ag,oneAveMicroFields%rain2ag  &
+            ,gridId, npts, imean,  &
+            'RAIN2AG :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%rain2gr)) then 
+       npts=size(oneMicroFields%rain2gr)
+       call InsertVTab (oneMicroFields%rain2gr,oneAveMicroFields%rain2gr  &
+            ,gridId, npts, imean,  &
+            'RAIN2GR :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%rain2ha)) then 
+       npts=size(oneMicroFields%rain2ha)
+       call InsertVTab (oneMicroFields%rain2ha,oneAveMicroFields%rain2ha  &
+            ,gridId, npts, imean,  &
+            'RAIN2HA :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%rain2ha_xtra)) then 
+       npts=size(oneMicroFields%rain2ha_xtra)
+       call InsertVTab (oneMicroFields%rain2ha_xtra,oneAveMicroFields%rain2ha_xtra  &
+            ,gridId, npts, imean,  &
+            'RAIN2HA_XTRA :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%ice2rain)) then 
+       npts=size(oneMicroFields%ice2rain)
+       call InsertVTab (oneMicroFields%ice2rain,oneAveMicroFields%ice2rain  &
+            ,gridId, npts, imean,  &
+            'ICE2RAIN :3:hist:anal:mpt3')
+    end if
+
+    if (associated(oneMicroFields%aggregate)) then 
+       npts=size(oneMicroFields%aggregate)
+       call InsertVTab (oneMicroFields%aggregate,oneAveMicroFields%aggregate  &
+            ,gridId, npts, imean,  &
+            'AGGREGATE :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%aggrselfpris)) then 
+       npts=size(oneMicroFields%aggrselfpris)
+       call InsertVTab (oneMicroFields%aggrselfpris,oneAveMicroFields%aggrselfpris  &
+            ,gridId, npts, imean,  &
+            'AGGRSELFPRIS :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%aggrselfsnow)) then 
+       npts=size(oneMicroFields%aggrselfsnow)
+       call InsertVTab (oneMicroFields%aggrselfsnow,oneAveMicroFields%aggrselfsnow  &
+            ,gridId, npts, imean,  &
+            'AGGRSELFSNOW :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%aggrprissnow)) then 
+       npts=size(oneMicroFields%aggrprissnow)
+       call InsertVTab (oneMicroFields%aggrprissnow,oneAveMicroFields%aggrprissnow  &
+            ,gridId, npts, imean,  &
+            'AGGRPRISSNOW :3:hist:anal:mpt3')
+    end if
+
+    if (associated(oneMicroFields%latheatvap)) then 
+       npts=size(oneMicroFields%latheatvap)
+       call InsertVTab (oneMicroFields%latheatvap,oneAveMicroFields%latheatvap  &
+            ,gridId, npts, imean,  &
+            'LATHEATVAP :3:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%latheatfrz)) then 
+       npts=size(oneMicroFields%latheatfrz)
+       call InsertVTab (oneMicroFields%latheatfrz,oneAveMicroFields%latheatfrz  &
+            ,gridId, npts, imean,  &
+            'LATHEATFRZ :3:hist:anal:mpt3')
+    end if
+    !END MICRO BUDGET PROCESSES (instantaneous)
+
+    !COMPUTE AND OUTPUT MICRO BUDGET PROCESSES (totals)
+    if (associated(oneMicroFields%nuccldrt)) then 
+       npts=size(oneMicroFields%nuccldrt)
+       call InsertVTab (oneMicroFields%nuccldrt,oneAveMicroFields%nuccldrt  &
+            ,gridId, npts, imean,  &
+            'NUCCLDRT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%nuccldct)) then 
+       npts=size(oneMicroFields%nuccldct)
+       call InsertVTab (oneMicroFields%nuccldct,oneAveMicroFields%nuccldct  &
+            ,gridId, npts, imean,  &
+            'NUCCLDCT :3:hist:anal:mpti:mpt3')
+    end if
+
+    if (associated(oneMicroFields%nucicert)) then 
+       npts=size(oneMicroFields%nucicert)
+       call InsertVTab (oneMicroFields%nucicert,oneAveMicroFields%nucicert  &
+            ,gridId, npts, imean,  &
+            'NUCICERT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%nucicect)) then 
+       npts=size(oneMicroFields%nucicect)
+       call InsertVTab (oneMicroFields%nucicect,oneAveMicroFields%nucicect  &
+            ,gridId, npts, imean,  &
+            'NUCICECT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%inuchomrt)) then 
+       npts=size(oneMicroFields%inuchomrt)
+       call InsertVTab (oneMicroFields%inuchomrt,oneAveMicroFields%inuchomrt  &
+            ,gridId, npts, imean,  &
+            'INUCHOMRT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%inuchomct)) then 
+       npts=size(oneMicroFields%inuchomct)
+       call InsertVTab (oneMicroFields%inuchomct,oneAveMicroFields%inuchomct  &
+            ,gridId, npts, imean,  &
+            'INUCHOMCT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%inuccontrt)) then 
+       npts=size(oneMicroFields%inuccontrt)
+       call InsertVTab (oneMicroFields%inuccontrt,oneAveMicroFields%inuccontrt  &
+            ,gridId, npts, imean,  &
+            'INUCCONTRT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%inuccontct)) then 
+       npts=size(oneMicroFields%inuccontct)
+       call InsertVTab (oneMicroFields%inuccontct,oneAveMicroFields%inuccontct  &
+            ,gridId, npts, imean,  &
+            'INUCCONTCT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%inucifnrt)) then 
+       npts=size(oneMicroFields%inucifnrt)
+       call InsertVTab (oneMicroFields%inucifnrt,oneAveMicroFields%inucifnrt  &
+            ,gridId, npts, imean,  &
+            'INUCIFNRT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%inucifnct)) then 
+       npts=size(oneMicroFields%inucifnct)
+       call InsertVTab (oneMicroFields%inucifnct,oneAveMicroFields%inucifnct  &
+            ,gridId, npts, imean,  &
+            'INUCIFNCT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%inuchazrt)) then 
+       npts=size(oneMicroFields%inuchazrt)
+       call InsertVTab (oneMicroFields%inuchazrt,oneAveMicroFields%inuchazrt  &
+            ,gridId, npts, imean,  &
+            'INUCHAZRT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%inuchazct)) then 
+       npts=size(oneMicroFields%inuchazct)
+       call InsertVTab (oneMicroFields%inuchazct,oneAveMicroFields%inuchazct  &
+            ,gridId, npts, imean,  &
+            'INUCHAZCT :3:hist:anal:mpti:mpt3')
+    end if
+
+    if (associated(oneMicroFields%vapliqt)) then 
+       npts=size(oneMicroFields%vapliqt)
+       call InsertVTab (oneMicroFields%vapliqt,oneAveMicroFields%vapliqt  &
+            ,gridId, npts, imean,  &
+            'VAPLIQT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%vapicet)) then 
+       npts=size(oneMicroFields%vapicet)
+       call InsertVTab (oneMicroFields%vapicet,oneAveMicroFields%vapicet  &
+            ,gridId, npts, imean,  &
+            'VAPICET :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%vapcldt)) then 
+       npts=size(oneMicroFields%vapcldt)
+       call InsertVTab (oneMicroFields%vapcldt,oneAveMicroFields%vapcldt  &
+            ,gridId, npts, imean,  &
+            'VAPCLDT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%vapraint)) then 
+       npts=size(oneMicroFields%vapraint)
+       call InsertVTab (oneMicroFields%vapraint,oneAveMicroFields%vapraint  &
+            ,gridId, npts, imean,  &
+            'VAPRAINT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%vapprist)) then 
+       npts=size(oneMicroFields%vapprist)
+       call InsertVTab (oneMicroFields%vapprist,oneAveMicroFields%vapprist  &
+            ,gridId, npts, imean,  &
+            'VAPPRIST :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%vapsnowt)) then 
+       npts=size(oneMicroFields%vapsnowt)
+       call InsertVTab (oneMicroFields%vapsnowt,oneAveMicroFields%vapsnowt  &
+            ,gridId, npts, imean,  &
+            'VAPSNOWT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%vapaggrt)) then 
+       npts=size(oneMicroFields%vapaggrt)
+       call InsertVTab (oneMicroFields%vapaggrt,oneAveMicroFields%vapaggrt  &
+            ,gridId, npts, imean,  &
+            'VAPAGGRT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%vapgraut)) then 
+       npts=size(oneMicroFields%vapgraut)
+       call InsertVTab (oneMicroFields%vapgraut,oneAveMicroFields%vapgraut  &
+            ,gridId, npts, imean,  &
+            'VAPGRAUT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%vaphailt)) then 
+       npts=size(oneMicroFields%vaphailt)
+       call InsertVTab (oneMicroFields%vaphailt,oneAveMicroFields%vaphailt  &
+            ,gridId, npts, imean,  &
+            'VAPHAILT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%vapdrizt)) then 
+       npts=size(oneMicroFields%vapdrizt)
+       call InsertVTab (oneMicroFields%vapdrizt,oneAveMicroFields%vapdrizt  &
+            ,gridId, npts, imean,  &
+            'VAPDRIZT :3:hist:anal:mpti:mpt3')
+    end if
+
+    if (associated(oneMicroFields%melticet)) then 
+       npts=size(oneMicroFields%melticet)
+       call InsertVTab (oneMicroFields%melticet,oneAveMicroFields%melticet  &
+            ,gridId, npts, imean,  &
+            'MELTICET :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%meltprist)) then 
+       npts=size(oneMicroFields%meltprist)
+       call InsertVTab (oneMicroFields%meltprist,oneAveMicroFields%meltprist  &
+            ,gridId, npts, imean,  &
+            'MELTPRIST :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%meltsnowt)) then 
+       npts=size(oneMicroFields%meltsnowt)
+       call InsertVTab (oneMicroFields%meltsnowt,oneAveMicroFields%meltsnowt  &
+            ,gridId, npts, imean,  &
+            'MELTSNOWT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%meltaggrt)) then 
+       npts=size(oneMicroFields%meltaggrt)
+       call InsertVTab (oneMicroFields%meltaggrt,oneAveMicroFields%meltaggrt  &
+            ,gridId, npts, imean,  &
+            'MELTAGGRT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%meltgraut)) then 
+       npts=size(oneMicroFields%meltgraut)
+       call InsertVTab (oneMicroFields%meltgraut,oneAveMicroFields%meltgraut  &
+            ,gridId, npts, imean,  &
+            'MELTGRAUT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%melthailt)) then 
+       npts=size(oneMicroFields%melthailt)
+       call InsertVTab (oneMicroFields%melthailt,oneAveMicroFields%melthailt  &
+            ,gridId, npts, imean,  &
+            'MELTHAILT :3:hist:anal:mpti:mpt3')
+    end if
+
+    if (associated(oneMicroFields%cld2raint)) then 
+       npts=size(oneMicroFields%cld2raint)
+       call InsertVTab (oneMicroFields%cld2raint,oneAveMicroFields%cld2raint  &
+            ,gridId, npts, imean,  &
+            'CLD2RAINT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%rimecldt)) then 
+       npts=size(oneMicroFields%rimecldt)
+       call InsertVTab (oneMicroFields%rimecldt,oneAveMicroFields%rimecldt  &
+            ,gridId, npts, imean,  &
+            'RIMECLDT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%rimecldsnowt)) then 
+       npts=size(oneMicroFields%rimecldsnowt)
+       call InsertVTab (oneMicroFields%rimecldsnowt,oneAveMicroFields%rimecldsnowt  &
+            ,gridId, npts, imean,  &
+            'RIMECLDSNOWT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%rimecldaggrt)) then 
+       npts=size(oneMicroFields%rimecldaggrt)
+       call InsertVTab (oneMicroFields%rimecldaggrt,oneAveMicroFields%rimecldaggrt  &
+            ,gridId, npts, imean,  &
+            'RIMECLDAGGRT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%rimecldgraut)) then 
+       npts=size(oneMicroFields%rimecldgraut)
+       call InsertVTab (oneMicroFields%rimecldgraut,oneAveMicroFields%rimecldgraut  &
+            ,gridId, npts, imean,  &
+            'RIMECLDGRAUT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%rimecldhailt)) then 
+       npts=size(oneMicroFields%rimecldhailt)
+       call InsertVTab (oneMicroFields%rimecldhailt,oneAveMicroFields%rimecldhailt  &
+            ,gridId, npts, imean,  &
+            'RIMECLDHAILT :3:hist:anal:mpti:mpt3')
+    end if
+
+    if (associated(oneMicroFields%rain2icet)) then 
+       npts=size(oneMicroFields%rain2icet)
+       call InsertVTab (oneMicroFields%rain2icet,oneAveMicroFields%rain2icet  &
+            ,gridId, npts, imean,  &
+            'RAIN2ICET :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%rain2prt)) then 
+       npts=size(oneMicroFields%rain2prt)
+       call InsertVTab (oneMicroFields%rain2prt,oneAveMicroFields%rain2prt  &
+            ,gridId, npts, imean,  &
+            'RAIN2PRT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%rain2snt)) then 
+       npts=size(oneMicroFields%rain2snt)
+       call InsertVTab (oneMicroFields%rain2snt,oneAveMicroFields%rain2snt  &
+            ,gridId, npts, imean,  &
+            'RAIN2SNT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%rain2agt)) then 
+       npts=size(oneMicroFields%rain2agt)
+       call InsertVTab (oneMicroFields%rain2agt,oneAveMicroFields%rain2agt  &
+            ,gridId, npts, imean,  &
+            'RAIN2AGT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%rain2grt)) then 
+       npts=size(oneMicroFields%rain2grt)
+       call InsertVTab (oneMicroFields%rain2grt,oneAveMicroFields%rain2grt  &
+            ,gridId, npts, imean,  &
+            'RAIN2GRT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%rain2hat)) then 
+       npts=size(oneMicroFields%rain2hat)
+       call InsertVTab (oneMicroFields%rain2hat,oneAveMicroFields%rain2hat  &
+            ,gridId, npts, imean,  &
+            'RAIN2HAT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%rain2ha_xtrat)) then 
+       npts=size(oneMicroFields%rain2ha_xtrat)
+       call InsertVTab (oneMicroFields%rain2ha_xtrat,oneAveMicroFields%rain2ha_xtrat  &
+            ,gridId, npts, imean,  &
+            'RAIN2HA_XTRAT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%ice2raint)) then 
+       npts=size(oneMicroFields%ice2raint)
+       call InsertVTab (oneMicroFields%ice2raint,oneAveMicroFields%ice2raint  &
+            ,gridId, npts, imean,  &
+            'ICE2RAINT :3:hist:anal:mpti:mpt3')
+    end if
+
+    if (associated(oneMicroFields%aggregatet)) then 
+       npts=size(oneMicroFields%aggregatet)
+       call InsertVTab (oneMicroFields%aggregatet,oneAveMicroFields%aggregatet  &
+            ,gridId, npts, imean,  &
+            'AGGREGATET :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%aggrselfprist)) then 
+       npts=size(oneMicroFields%aggrselfprist)
+       call InsertVTab (oneMicroFields%aggrselfprist,oneAveMicroFields%aggrselfprist  &
+            ,gridId, npts, imean,  &
+            'AGGRSELFPRIST :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%aggrselfsnowt)) then 
+       npts=size(oneMicroFields%aggrselfsnowt)
+       call InsertVTab (oneMicroFields%aggrselfsnowt,oneAveMicroFields%aggrselfsnowt  &
+            ,gridId, npts, imean,  &
+            'AGGRSELFSNOWT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%aggrprissnowt)) then 
+       npts=size(oneMicroFields%aggrprissnowt)
+       call InsertVTab (oneMicroFields%aggrprissnowt,oneAveMicroFields%aggrprissnowt  &
+            ,gridId, npts, imean,  &
+            'AGGRPRISSNOWT :3:hist:anal:mpti:mpt3')
+    end if
+
+    if (associated(oneMicroFields%latheatvapt)) then 
+       npts=size(oneMicroFields%latheatvapt)
+       call InsertVTab (oneMicroFields%latheatvapt,oneAveMicroFields%latheatvapt  &
+            ,gridId, npts, imean,  &
+            'LATHEATVAPT :3:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%latheatfrzt)) then 
+       npts=size(oneMicroFields%latheatfrzt)
+       call InsertVTab (oneMicroFields%latheatfrzt,oneAveMicroFields%latheatfrzt  &
+            ,gridId, npts, imean,  &
+            'LATHEATFRZT :3:hist:anal:mpti:mpt3')
+    end if
+    !END MICRO BUDGET PROCECCES (totals)
+
+    if (associated(oneMicroFields%accpr)) then 
+       npts=size(oneMicroFields%accpr)
+       call InsertVTab (oneMicroFields%accpr,oneAveMicroFields%accpr  &
+            ,gridId, npts, imean,  &
+            'ACCPR :2:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%accpp)) then 
+       npts=size(oneMicroFields%accpp)
+       call InsertVTab (oneMicroFields%accpp,oneAveMicroFields%accpp  &
+            ,gridId, npts, imean,  &
+            'ACCPP :2:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%accps)) then 
+       npts=size(oneMicroFields%accps)
+       call InsertVTab (oneMicroFields%accps,oneAveMicroFields%accps  &
+            ,gridId, npts, imean,  &
+            'ACCPS :2:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%accpa)) then 
+       npts=size(oneMicroFields%accpa)
+       call InsertVTab (oneMicroFields%accpa,oneAveMicroFields%accpa  &
+            ,gridId, npts, imean,  &
+            'ACCPA :2:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%accpg)) then 
+       npts=size(oneMicroFields%accpg)
+       call InsertVTab (oneMicroFields%accpg,oneAveMicroFields%accpg  &
+            ,gridId, npts, imean,  &
+            'ACCPG :2:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%accph)) then 
+       npts=size(oneMicroFields%accph)
+       call InsertVTab (oneMicroFields%accph,oneAveMicroFields%accph  &
+            ,gridId, npts, imean,  &
+            'ACCPH :2:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%accpd)) then 
+       npts=size(oneMicroFields%accpd)
+       call InsertVTab (oneMicroFields%accpd,oneAveMicroFields%accpd  &
+            ,gridId, npts, imean,  &
+            'ACCPD :2:hist:anal:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%pcprr)) then 
+       npts=size(oneMicroFields%pcprr)
+       call InsertVTab (oneMicroFields%pcprr,oneAveMicroFields%pcprr  &
+            ,gridId, npts, imean,  &
+            'PCPRR :2:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%pcprp)) then 
+       npts=size(oneMicroFields%pcprp)
+       call InsertVTab (oneMicroFields%pcprp,oneAveMicroFields%pcprp  &
+            ,gridId, npts, imean,  &
+            'PCPRP :2:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%pcprs)) then 
+       npts=size(oneMicroFields%pcprs)
+       call InsertVTab (oneMicroFields%pcprs,oneAveMicroFields%pcprs  &
+            ,gridId, npts, imean,  &
+            'PCPRS :2:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%pcpra)) then 
+       npts=size(oneMicroFields%pcpra)
+       call InsertVTab (oneMicroFields%pcpra,oneAveMicroFields%pcpra  &
+            ,gridId, npts, imean,  &
+            'PCPRA :2:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%pcprg)) then 
+       npts=size(oneMicroFields%pcprg)
+       call InsertVTab (oneMicroFields%pcprg,oneAveMicroFields%pcprg  &
+            ,gridId, npts, imean,  &
+            'PCPRG :2:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%pcprh)) then 
+       npts=size(oneMicroFields%pcprh)
+       call InsertVTab (oneMicroFields%pcprh,oneAveMicroFields%pcprh  &
+            ,gridId, npts, imean,  &
+            'PCPRH :2:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%pcprd)) then 
+       npts=size(oneMicroFields%pcprd)
+       call InsertVTab (oneMicroFields%pcprd,oneAveMicroFields%pcprd  &
+            ,gridId, npts, imean,  &
+            'PCPRD :2:hist:anal:mpt3')
+    end if
+    if (associated(oneMicroFields%pcpg)) then 
+       npts=size(oneMicroFields%pcpg)
+       call InsertVTab (oneMicroFields%pcpg,oneAveMicroFields%pcpg  &
+            ,gridId, npts, imean,  &
+            'PCPG :2:hist:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%qpcpg)) then 
+       npts=size(oneMicroFields%qpcpg)
+       call InsertVTab (oneMicroFields%qpcpg,oneAveMicroFields%qpcpg  &
+            ,gridId, npts, imean,  &
+            'QPCPG :2:hist:mpti:mpt3')
+    end if
+    if (associated(oneMicroFields%dpcpg)) then 
+       npts=size(oneMicroFields%dpcpg)
+       call InsertVTab (oneMicroFields%dpcpg,oneAveMicroFields%dpcpg  &
+            ,gridId, npts, imean,  &
+            'DPCPG :2:hist:mpti:mpt3')
+    end if
+
+  end subroutine InsertMicroFieldsAtVarTable
+
 end module ModMicroFields

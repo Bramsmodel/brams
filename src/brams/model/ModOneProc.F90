@@ -202,10 +202,9 @@ module ModOneProc
        num_var,         &
        vtab_r
 
-  use mem_micro, only: &
-       micro_g, &
-       DeepCopyToMicroFields, &
-       DeepCopyFromMicroFields
+!!$  use mem_micro, only: &
+!!$       DeepCopyToMicroFields, &
+!!$       DeepCopyFromMicroFields
   
   use ModTimestep, only: &
        timestep
@@ -1318,9 +1317,9 @@ contains
 
                 time = begtime + (isched(npass,5)-1)*dtlt
                 if (oneGrid%MicControlVars%mcphys_type==3) then
-                   call DeepCopyToMicroFields(oneGrid%Micro, h)
+!!$                   call DeepCopyToMicroFields(oneGrid%Micro, h)
                    call adjustFriendlyForMonth(time,oneGrid%Basic, oneGrid%Micro)
-                   call DeepCopyFromMicroFields(oneGrid%Micro, h)
+!!$                   call DeepCopyFromMicroFields(oneGrid%Micro, h)
                 end if
 
                 ! timestep routine
@@ -1374,7 +1373,7 @@ contains
              call newgrid(ngrid)
              if ((avgtim/=0.) .and. (frqmean/=0. .or. frqboth/=0.))  then
                 call anlavg(mzp, mxp, myp, &
-                     oneGrid%Basic, oneGrid%MicControlVars)
+                     oneGrid%Basic, oneGrid%MicControlVars, oneGrid%Micro)
              end if
              call cfl(mzp, mxp, myp, nodei0(mynum,ngrid), nodej0(mynum,ngrid), &
                   oneGrid%Basic, oneGrid%Ramsin, oneGrid%Id)
@@ -1453,12 +1452,12 @@ contains
                 call acumPrecipInDam(nodemxp(mynum,1),nodemyp(mynum,1) &
                      ,ia,iz,ja,jz,oneGrid%MicControlVars%mcphys_type &
                      ,cuparm_g(1)%aconpr &
-                     ,micro_g(1)%accpr &
-                     ,micro_g(1)%accpp &
-                     ,micro_g(1)%accps &
-                     ,micro_g(1)%accpa &
-                     ,micro_g(1)%accpg &
-                     ,micro_g(1)%accph)
+                     ,oneGrid%Micro%accpr &
+                     ,oneGrid%Micro%accpp &
+                     ,oneGrid%Micro%accps &
+                     ,oneGrid%Micro%accpa &
+                     ,oneGrid%Micro%accpg &
+                     ,oneGrid%Micro%accph)
 
                 call outputDamPrecip(time,dtlongn(1),timmax,mchnum,master_num)
              endif
@@ -1740,18 +1739,18 @@ contains
 
           call FieldInit(1, oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars, oneGrid%Micro)
 
-          call DeepCopyToMicroFields(oneGrid%Micro, h)
+!!$          call DeepCopyToMicroFields(oneGrid%Micro, h)
           call negadj1(mzp,mxp,myp, oneGrid%Basic,oneGrid%MicControlVars,oneGrid%Micro)
-          call DeepCopyFromMicroFields(oneGrid%Micro, h)
+!!$          call DeepCopyFromMicroFields(oneGrid%Micro, h)
 
           call thermo(mzp, mxp, myp, 1, mxp, 1, myp, &
-               oneGrid%Basic, oneGrid%MicControlVars)
+               oneGrid%Basic, oneGrid%MicControlVars, oneGrid%Micro)
 
           if(ilwrtyp==6 .or. iswrtyp==6 ) then
              if (oneGrid%MicControlVars%level  ==  3) &
                   call effective_radius(mzp,mxp,myp &
-                  ,micro_g(ifm)%rei             &
-                  ,micro_g(ifm)%rel)
+                  ,oneGrid%Micro%rei             &
+                  ,oneGrid%Micro%rel)
           endif
 
           if (oneGrid%MicControlVars%mcphys_type == 0) then
@@ -1759,15 +1758,15 @@ contains
 
 
                 call initqin(mzp,mxp,myp        &
-                     ,micro_g(ifm)%q2      &
-                     ,micro_g(ifm)%q6      &
-                     ,micro_g(ifm)%q7      &
+                     ,oneGrid%Micro%q2      &
+                     ,oneGrid%Micro%q6      &
+                     ,oneGrid%Micro%q7      &
                      ,oneGrid%Basic%pi0     &
                      ,oneGrid%Basic%pp      &
                      ,oneGrid%Basic%theta   &
                      ,oneGrid%Basic%dn0     &
-                     ,micro_g(ifm)%cccnp   &
-                     ,micro_g(ifm)%cifnp,&
+                     ,oneGrid%Micro%cccnp   &
+                     ,oneGrid%Micro%cifnp,&
                      oneGrid%MicControlVars)
 
 
@@ -1780,9 +1779,9 @@ contains
 
 
                 call initqin_2M(mzp,mxp,myp        &
-                     ,micro_g(ifm)%q2   &
-                     ,micro_g(ifm)%q6      &
-                     ,micro_g(ifm)%q7      &
+                     ,oneGrid%Micro%q2   &
+                     ,oneGrid%Micro%q6      &
+                     ,oneGrid%Micro%q7      &
                      ,oneGrid%Basic%pi0     &
                      ,oneGrid%Basic%pp      &
                      ,oneGrid%Basic%theta   &
@@ -1796,8 +1795,8 @@ contains
 
 
                    call initqin2_2M(mzp,mxp,myp        &
-                        ,micro_g(ifm)%cccnp   &
-                        ,micro_g(ifm)%cccmp   &
+                        ,oneGrid%Micro%cccnp   &
+                        ,oneGrid%Micro%cccmp   &
                         ,oneGrid%Basic%dn0, &
                         oneGrid%MicControlVars   )
 
@@ -1808,8 +1807,8 @@ contains
 
 
                    call initqin3_2M(mzp,mxp,myp        &
-                        ,micro_g(ifm)%gccnp   &
-                        ,micro_g(ifm)%gccmp   &
+                        ,oneGrid%Micro%gccnp   &
+                        ,oneGrid%Micro%gccmp   &
                         ,oneGrid%Basic%dn0, &
                      oneGrid%MicControlVars   )
 
@@ -1820,7 +1819,7 @@ contains
 
 
                    call initqin4_2M(mzp,mxp,myp        &
-                        ,micro_g(ifm)%cifnp   &
+                        ,oneGrid%Micro%cifnp   &
                         ,oneGrid%Basic%dn0, &
                      oneGrid%MicControlVars   )
 
@@ -1831,8 +1830,8 @@ contains
                      oneGrid%MicControlVars%imd1flg > 0 .or. &
                      oneGrid%MicControlVars%imd2flg > 0)  then
                    call initqin5_2M(mzp,mxp,myp    &
-                        ,micro_g(ifm)%md1np   &
-                        ,micro_g(ifm)%md2np, &
+                        ,oneGrid%Micro%md1np   &
+                        ,oneGrid%Micro%md2np, &
                      oneGrid%MicControlVars )
                 end if
              endif
@@ -2177,9 +2176,9 @@ contains
        do ifm = 1,min(ngrids,ngridsh)
           icm = nxtnest(ifm)
           if (icm  >  0) call fmrefs3d(ifm, oneGrid%Basic, oneGrid%Basic)
-          call DeepCopyToMicroFields(oneGrid%Micro, h)
+!!$          call DeepCopyToMicroFields(oneGrid%Micro, h)
           call negadj1(mzp,mxp,myp, oneGrid%Basic,oneGrid%MicControlVars,oneGrid%Micro)
-          call DeepCopyFromMicroFields(oneGrid%Micro, h)
+!!$          call DeepCopyFromMicroFields(oneGrid%Micro, h)
        enddo
 
        ! ALF - For use with SiB

@@ -14,9 +14,8 @@ module mem_tend
     use ModBasicFields, only: &
          BasicFields
     
-    use mem_micro, only: &
-         micro_vars, &
-         micro_g
+    use ModMicroFields, only: &
+         MicroFields
     
     use ModTurbFields, only: &
          TurbFields
@@ -114,12 +113,13 @@ contains
   !---------------------------------------------------------------
 
   subroutine alloc_tend(nmzp,nmxp,nmyp,ngrs,naddsc,proc_type,&
-       oneBasicFields, oneTurbFields)
+       oneBasicFields, oneTurbFields, oneMicroFields)
     ! Arguments:
     integer, intent(in) :: nmzp(:), nmxp(:), nmyp(:)
     integer, intent(in) :: ngrs, proc_type, naddsc
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
 
     ! Local Variables:
     integer :: ng, ntpts, nsc
@@ -207,71 +207,71 @@ contains
        allocate (tend%rtt(ntpts))
        tend%rtt = 0.
     endif
-    if (associated(micro_g(1)%rcp))     then
+    if (associated(oneMicroFields%rcp))     then
        allocate (tend%rct(ntpts))
        tend%rct = 0.
     endif
-    if (associated(micro_g(1)%rrp))     then
+    if (associated(oneMicroFields%rrp))     then
        allocate (tend%rrt(ntpts))
        tend%rrt = 0.
     endif
-    if (associated(micro_g(1)%rpp))     then
+    if (associated(oneMicroFields%rpp))     then
        allocate (tend%rpt(ntpts))
        tend%rpt = 0.
     endif
-    if (associated(micro_g(1)%rsp))     then
+    if (associated(oneMicroFields%rsp))     then
        allocate (tend%rst(ntpts))
        tend%rst = 0.
     endif
-    if (associated(micro_g(1)%rap))     then
+    if (associated(oneMicroFields%rap))     then
        allocate (tend%rat(ntpts))
        tend%rat = 0.
     endif
-    if (associated(micro_g(1)%rgp))     then
+    if (associated(oneMicroFields%rgp))     then
        allocate (tend%rgt(ntpts))
        tend%rgt = 0.
     endif
-    if (associated(micro_g(1)%rhp))     then
+    if (associated(oneMicroFields%rhp))     then
        allocate (tend%rht(ntpts))
        tend%rht = 0.
     endif
-    if (associated(micro_g(1)%ccp))     then
+    if (associated(oneMicroFields%ccp))     then
        allocate (tend%cct(ntpts))
        tend%cct = 0.
     endif
-    if (associated(micro_g(1)%crp))     then
+    if (associated(oneMicroFields%crp))     then
        allocate (tend%crt(ntpts))
        tend%crt = 0.
     endif
-    if (associated(micro_g(1)%cpp))     then
+    if (associated(oneMicroFields%cpp))     then
        allocate (tend%cpt(ntpts))
        tend%cpt = 0.
     endif
-    if (associated(micro_g(1)%csp))     then
+    if (associated(oneMicroFields%csp))     then
        allocate (tend%cst(ntpts))
        tend%cst = 0.
     endif
-    if (associated(micro_g(1)%cap))     then
+    if (associated(oneMicroFields%cap))     then
        allocate (tend%cat(ntpts))
        tend%cat = 0.
     endif
-    if (associated(micro_g(1)%cgp))     then
+    if (associated(oneMicroFields%cgp))     then
        allocate (tend%cgt(ntpts))
        tend%cgt = 0.
     endif
-    if (associated(micro_g(1)%chp))     then
+    if (associated(oneMicroFields%chp))     then
        allocate (tend%cht(ntpts))
        tend%cht = 0.
     endif
-    if (associated(micro_g(1)%cccnp))   then
+    if (associated(oneMicroFields%cccnp))   then
        allocate (tend%cccnt(ntpts))
        tend%cccnt = 0.
     endif
-    if (associated(micro_g(1)%cifnp))   then
+    if (associated(oneMicroFields%cifnp))   then
        allocate (tend%cifnt(ntpts))
        tend%cifnt = 0.
     endif
-    if (associated(micro_g(1)%cldfr))   then
+    if (associated(oneMicroFields%cldfr))   then
        allocate (tend%cldfrt(ntpts))
        tend%cldfrt = 0.
     endif
@@ -285,57 +285,57 @@ contains
     endif
     !
     !-2015- for 2M microphysics (from G. Camponogara)
-    if (associated(micro_g(1)%rdp))     then
+    if (associated(oneMicroFields%rdp))     then
        allocate (tend%rdt(ntpts))  ;tend%rdt=0.0
     endif
 
-    if (associated(micro_g(1)%cdp))     then
+    if (associated(oneMicroFields%cdp))     then
        allocate (tend%cdt(ntpts))  ;tend%cdt=0.0
     endif
 
-    if (associated(micro_g(1)%gccnp))   then
+    if (associated(oneMicroFields%gccnp))   then
        allocate (tend%gccnt(ntpts))  ;tend%gccnt=0.0
     endif
 
-    if (associated(micro_g(1)%cccmp))   then
+    if (associated(oneMicroFields%cccmp))   then
        allocate (tend%cccmt(ntpts))  ;tend%cccmt=0.0
     endif
 
-    if (associated(micro_g(1)%gccmp))   then
+    if (associated(oneMicroFields%gccmp))   then
        allocate (tend%gccmt(ntpts))  ;tend%gccmt=0.0
     endif
 
-    if (associated(micro_g(1)%cnm1p))   then
+    if (associated(oneMicroFields%cnm1p))   then
        allocate (tend%cnm1t(ntpts))  ;tend%cnm1t=0.0
     endif
 
-    if (associated(micro_g(1)%cnm2p))   then
+    if (associated(oneMicroFields%cnm2p))   then
        allocate (tend%cnm2t(ntpts))  ;tend%cnm2t=0.0
     endif
-    if (associated(micro_g(1)%cnm3p))   then
+    if (associated(oneMicroFields%cnm3p))   then
        allocate (tend%cnm3t(ntpts))  ;tend%cnm3t=0.0
     endif
 
-    if (associated(micro_g(1)%cnm8p))   then
+    if (associated(oneMicroFields%cnm8p))   then
        allocate (tend%cnm8t(ntpts))  ;tend%cnm8t=0.0
     endif
 
-    if (associated(micro_g(1)%md1np))   then
+    if (associated(oneMicroFields%md1np))   then
        allocate (tend%md1nt(ntpts))  ;tend%md1nt=0.0
     endif
 
-    if (associated(micro_g(1)%md2np))   then
+    if (associated(oneMicroFields%md2np))   then
        allocate (tend%md2nt(ntpts))  ;tend%md2nt=0.0
     endif
 
-    if (associated(micro_g(1)%salt_filmp)) then
+    if (associated(oneMicroFields%salt_filmp)) then
        allocate (tend%salt_filmt(ntpts))  ;tend%salt_filmt=0.0
     endif
-    if (associated(micro_g(1)%salt_jetp))  then
+    if (associated(oneMicroFields%salt_jetp))  then
        allocate (tend%salt_jett(ntpts))  ;tend%salt_jett=0.0
     endif
 
-    if (associated(micro_g(1)%salt_spmp))  then
+    if (associated(oneMicroFields%salt_spmp))  then
        allocate (tend%salt_spmt(ntpts))  ;tend%salt_spmt=0.0
     endif
     !GC - 2M microphysics
@@ -641,13 +641,13 @@ contains
   !---------------------------------------------------------------
 
   subroutine filltab_tend(oneScalarTab, oneScalarTabSize, &
-       oneBasicFields, micro, oneTurbFields, scalar, gaspart, &
+       oneBasicFields, oneMicroFields, oneTurbFields, scalar, gaspart, &
        naddsc, ng)
     ! Arguments:
     type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
     integer, intent(inout) :: oneScalarTabSize
     type(BasicFields), pointer, intent(in) :: oneBasicFields
-    type(micro_vars), intent(in) :: micro 
+    type(MicroFields), intent(in) :: oneMicroFields 
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     type(scalar_vars), intent(in)  :: scalar(:)
     type(gaspart_vars), pointer, intent(in) :: gaspart
@@ -674,87 +674,87 @@ contains
     endif
 
     if (associated(tend%rct)) then
-       call InsertAtScalarTab(micro%rcp,tend%rct, 'RCP', &
+       call InsertAtScalarTab(oneMicroFields%rcp,tend%rct, 'RCP', &
             oneScalarTab, oneScalarTabSize)
     endif
 
     if (associated(tend%rrt)) then
-       call InsertAtScalarTab(micro%rrp,tend%rrt, 'RRP', &
+       call InsertAtScalarTab(oneMicroFields%rrp,tend%rrt, 'RRP', &
             oneScalarTab, oneScalarTabSize)
     endif
 
     if (associated(tend%rpt)) then
-       call InsertAtScalarTab(micro%rpp,tend%rpt, 'RPP', &
+       call InsertAtScalarTab(oneMicroFields%rpp,tend%rpt, 'RPP', &
             oneScalarTab, oneScalarTabSize)
     endif
 
     if (associated(tend%rst)) then
-       call InsertAtScalarTab(micro%rsp,tend%rst, 'RSP', &
+       call InsertAtScalarTab(oneMicroFields%rsp,tend%rst, 'RSP', &
             oneScalarTab, oneScalarTabSize)
     endif
 
     if (associated(tend%rat)) then
-       call InsertAtScalarTab(micro%rap,tend%rat, 'RAP', &
+       call InsertAtScalarTab(oneMicroFields%rap,tend%rat, 'RAP', &
             oneScalarTab, oneScalarTabSize)
     endif
 
     if (associated(tend%rgt)) then
-       call InsertAtScalarTab(micro%rgp,tend%rgt, 'RGP', &
+       call InsertAtScalarTab(oneMicroFields%rgp,tend%rgt, 'RGP', &
             oneScalarTab, oneScalarTabSize)
     endif
 
     if (associated(tend%rht)) then
-       call InsertAtScalarTab(micro%rhp,tend%rht, 'RHP', &
+       call InsertAtScalarTab(oneMicroFields%rhp,tend%rht, 'RHP', &
             oneScalarTab, oneScalarTabSize)
     endif
 
     if (associated(tend%cct)) then
-       call InsertAtScalarTab(micro%ccp,tend%cct, 'CCP', &
+       call InsertAtScalarTab(oneMicroFields%ccp,tend%cct, 'CCP', &
             oneScalarTab, oneScalarTabSize)
     endif
 
     if (associated(tend%crt)) then
-       call InsertAtScalarTab(micro%crp,tend%crt, 'CRP', &
+       call InsertAtScalarTab(oneMicroFields%crp,tend%crt, 'CRP', &
             oneScalarTab, oneScalarTabSize)
     endif
 
     if (associated(tend%cpt)) then
-       call InsertAtScalarTab(micro%cpp,tend%cpt, 'CPP', &
+       call InsertAtScalarTab(oneMicroFields%cpp,tend%cpt, 'CPP', &
             oneScalarTab, oneScalarTabSize)
     endif
 
     if (associated(tend%cst)) then
-       call InsertAtScalarTab(micro%csp,tend%cst, 'CSP', &
+       call InsertAtScalarTab(oneMicroFields%csp,tend%cst, 'CSP', &
             oneScalarTab, oneScalarTabSize)
     endif
 
     if (associated(tend%cat)) then
-       call InsertAtScalarTab(micro%cap,tend%cat, 'CAP', &
+       call InsertAtScalarTab(oneMicroFields%cap,tend%cat, 'CAP', &
             oneScalarTab, oneScalarTabSize)
     endif
 
     if (associated(tend%cgt)) then
-       call InsertAtScalarTab(micro%cgp,tend%cgt, 'CGP', &
+       call InsertAtScalarTab(oneMicroFields%cgp,tend%cgt, 'CGP', &
             oneScalarTab, oneScalarTabSize)
     endif
 
     if (associated(tend%cht)) then
-       call InsertAtScalarTab(micro%chp,tend%cht, 'CHP', &
+       call InsertAtScalarTab(oneMicroFields%chp,tend%cht, 'CHP', &
             oneScalarTab, oneScalarTabSize)
     endif
 
     if (associated(tend%cccnt)) then
-       call InsertAtScalarTab(micro%cccnp,tend%cccnt, 'CCCNP', &
+       call InsertAtScalarTab(oneMicroFields%cccnp,tend%cccnt, 'CCCNP', &
             oneScalarTab, oneScalarTabSize)
     endif
 
     if (associated(tend%cifnt)) then
-       call InsertAtScalarTab(micro%cifnp,tend%cifnt, 'CIFNP', &
+       call InsertAtScalarTab(oneMicroFields%cifnp,tend%cifnt, 'CIFNP', &
             oneScalarTab, oneScalarTabSize)
     endif
 
     if (associated(tend%cldfrt)) then
-       call InsertAtScalarTab(micro%cldfr,tend%cldfrt, 'CLDFR', &
+       call InsertAtScalarTab(oneMicroFields%cldfr,tend%cldfrt, 'CLDFR', &
             oneScalarTab, oneScalarTabSize)
     endif
 
@@ -772,59 +772,59 @@ contains
 
     !-2015- for 2M microphysics (from G. Camponogara)
     if (associated(tend%rdt  )) then
-       call InsertAtScalarTab(micro%rdp,tend%rdt, 'RDP', &
+       call InsertAtScalarTab(oneMicroFields%rdp,tend%rdt, 'RDP', &
             oneScalarTab, oneScalarTabSize)
     endif
     if (associated(tend%cdt  )) then
-       call InsertAtScalarTab(micro%cdp,tend%cdt, 'CDP', &
+       call InsertAtScalarTab(oneMicroFields%cdp,tend%cdt, 'CDP', &
             oneScalarTab, oneScalarTabSize)
     endif
     if (associated(tend%gccnt)) then
-       call InsertAtScalarTab(micro%gccnp,tend%gccnt, 'GCCNP', &
+       call InsertAtScalarTab(oneMicroFields%gccnp,tend%gccnt, 'GCCNP', &
             oneScalarTab, oneScalarTabSize)
     endif
     if (associated(tend%cccmt))  then
-       call InsertAtScalarTab(micro%cccmp,tend%cccmt, 'CCCMP', &
+       call InsertAtScalarTab(oneMicroFields%cccmp,tend%cccmt, 'CCCMP', &
             oneScalarTab, oneScalarTabSize)
     endif
     if (associated(tend%gccmt))  then
-       call InsertAtScalarTab(micro%gccmp,tend%gccmt, 'GCCMP', &
+       call InsertAtScalarTab(oneMicroFields%gccmp,tend%gccmt, 'GCCMP', &
             oneScalarTab, oneScalarTabSize)
     endif
     if (associated(tend%cnm1t))  then
-       call InsertAtScalarTab(micro%cnm1p,tend%cnm1t, 'CNM1P', &
+       call InsertAtScalarTab(oneMicroFields%cnm1p,tend%cnm1t, 'CNM1P', &
             oneScalarTab, oneScalarTabSize)
     endif
     if (associated(tend%cnm2t))  then
-       call InsertAtScalarTab(micro%cnm2p,tend%cnm2t, 'CNM2P', &
+       call InsertAtScalarTab(oneMicroFields%cnm2p,tend%cnm2t, 'CNM2P', &
             oneScalarTab, oneScalarTabSize)
     endif
     if (associated(tend%cnm3t))  then
-       call InsertAtScalarTab(micro%cnm3p,tend%cnm3t, 'CNM3P', &
+       call InsertAtScalarTab(oneMicroFields%cnm3p,tend%cnm3t, 'CNM3P', &
             oneScalarTab, oneScalarTabSize)
     endif
     if (associated(tend%cnm8t))  then
-       call InsertAtScalarTab(micro%cnm8p,tend%cnm8t, 'CNM8P', &
+       call InsertAtScalarTab(oneMicroFields%cnm8p,tend%cnm8t, 'CNM8P', &
             oneScalarTab, oneScalarTabSize)
     endif
     if (associated(tend%md1nt))  then
-       call InsertAtScalarTab(micro%md1np,tend%md1nt, 'MD1NP', &
+       call InsertAtScalarTab(oneMicroFields%md1np,tend%md1nt, 'MD1NP', &
             oneScalarTab, oneScalarTabSize)
     endif
     if (associated(tend%md2nt))  then
-       call InsertAtScalarTab(micro%md2np,tend%md2nt, 'MD2NP', &
+       call InsertAtScalarTab(oneMicroFields%md2np,tend%md2nt, 'MD2NP', &
             oneScalarTab, oneScalarTabSize)
     endif
     if (associated(tend%salt_filmt))  then
-       call InsertAtScalarTab(micro%salt_filmp,tend%salt_filmt, 'SALT_FILMP', &
+       call InsertAtScalarTab(oneMicroFields%salt_filmp,tend%salt_filmt, 'SALT_FILMP', &
             oneScalarTab, oneScalarTabSize)
     endif
     if (associated(tend%salt_jett))  then
-       call InsertAtScalarTab(micro%salt_jetp,tend%salt_jett, 'SALT_JETP', &
+       call InsertAtScalarTab(oneMicroFields%salt_jetp,tend%salt_jett, 'SALT_JETP', &
             oneScalarTab, oneScalarTabSize)
     endif
     if (associated(tend%salt_spmt))  then
-       call InsertAtScalarTab(micro%salt_spmp,tend%salt_spmt, 'SALT_SPMP', &
+       call InsertAtScalarTab(oneMicroFields%salt_spmp,tend%salt_spmt, 'SALT_SPMP', &
             oneScalarTab, oneScalarTabSize)
     endif
     !-2015- for 2M microphysics (from G. Camponogara)

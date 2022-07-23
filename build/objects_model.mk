@@ -81,7 +81,6 @@ OBJ_MOD = \
 	mem_grell_param2.o \
 	mem_grid.o \
 	mem_leaf.o \
-	mem_micro.o \
 	mem_mksfc.o \
 	mem_nestb.o \
 	mem_oda.o \
