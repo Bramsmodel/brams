@@ -4,7 +4,7 @@ module ModTKenn
 
   use mem_scratch, only:  &
        vctr1, vctr5, vctr9,vctr19,vctr20,vctr21,vctr22,vctr23,vctr24  &
-       ,vctr29,vctr30,vctr31,vctr32,vctr33,vctr38,vctr35,vctr36,vctr37
+       ,vctr29,vctr30,vctr31,vctr32,vctr33,vctr35,vctr36,vctr37
 
   use rconstants, only: &
        abslmomin,abswltlmin,cp,grav,ltscalemax,sigwmin,vonk,lturbmin &
@@ -147,6 +147,7 @@ contains
     real                                           :: dzloc1up,dzloc1dn,dzloc2,dq3dz
     real                                           :: dlsmdz,d2q3dz2,janjc,janjd,janjg
     real                                           :: janjh,janji,janjp1,janjt1
+    real :: vctr38(m1)
     logical                                        :: stable,neutral
     !----- Constants -----------------------------------------------------------------------!
     real, parameter                                :: ustarmin=0.1

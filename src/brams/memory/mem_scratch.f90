@@ -37,9 +37,7 @@ module mem_scratch
      real, pointer :: vt3dn(:)
      real, pointer :: vt3do(:)
      real, pointer :: vt3dp(:)
-!--(DMK-CCATT-INI)----------------------------------------------------------------
      real, pointer :: vt3dq(:)
-!--(DMK-CCATT-FIM)----------------------------------------------------------------
      real, pointer :: vt2da(:)
      real, pointer :: vt2db(:)
      real, pointer :: vt2dc(:)
@@ -51,15 +49,43 @@ module mem_scratch
   type (scratch_vars) :: scratch
 
   !-------------------------------------------------------------------
-  REAL, ALLOCATABLE :: vctr1(:), vctr2(:), vctr3(:),          &
-       vctr4(:),  vctr5(:),  vctr6(:),  vctr7(:),  vctr8(:),  &
-       vctr9(:),  vctr10(:), vctr11(:), vctr12(:), vctr13(:), &
-       vctr14(:), vctr15(:), vctr16(:), vctr17(:), vctr18(:), &
-       vctr19(:), vctr20(:), vctr21(:), vctr22(:), vctr23(:), &
-       vctr24(:), vctr25(:), vctr26(:), vctr27(:), vctr28(:), &
-       vctr29(:), vctr30(:), vctr31(:), vctr32(:), vctr33(:), &
-       vctr34(:), vctr35(:), vctr36(:), vctr37(:), vctr38(:), &
-       vctr39(:), vctr40(:), vctr41(:)
+  real, allocatable :: vctr1(:)
+  real, allocatable :: vctr2(:)
+  real, allocatable :: vctr3(:)
+  real, allocatable :: vctr4(:)
+  real, allocatable :: vctr5(:)
+  real, allocatable :: vctr6(:)
+  real, allocatable :: vctr7(:)
+  real, allocatable :: vctr8(:)
+  real, allocatable :: vctr9(:)
+  real, allocatable :: vctr10(:)
+  real, allocatable :: vctr11(:)
+  real, allocatable :: vctr12(:)
+  real, allocatable :: vctr13(:)
+  real, allocatable :: vctr14(:)
+  real, allocatable :: vctr15(:)
+  real, allocatable :: vctr16(:)
+  real, allocatable :: vctr17(:)
+  real, allocatable :: vctr18(:)
+  real, allocatable :: vctr19(:)
+  real, allocatable :: vctr20(:)
+  real, allocatable :: vctr21(:)
+  real, allocatable :: vctr22(:)
+  real, allocatable :: vctr23(:)
+  real, allocatable :: vctr24(:)
+  real, allocatable :: vctr25(:)
+  real, allocatable :: vctr26(:)
+  real, allocatable :: vctr27(:)
+  real, allocatable :: vctr28(:)
+  real, allocatable :: vctr29(:)
+  real, allocatable :: vctr30(:)
+  real, allocatable :: vctr31(:)
+  real, allocatable :: vctr32(:)
+  real, allocatable :: vctr33(:)
+  real, allocatable :: vctr34(:)
+  real, allocatable :: vctr35(:)
+  real, allocatable :: vctr36(:)
+  real, allocatable :: vctr37(:)
 
   !---------------------------------------------------------------
 
@@ -367,14 +393,6 @@ contains
     IF (ierr/=0) CALL fatal_error("ERROR allocating vctr36 (createVctr)")
     ALLOCATE(vctr37(maxxyz), STAT=ierr)
     IF (ierr/=0) CALL fatal_error("ERROR allocating vctr37 (createVctr)")
-    ALLOCATE(vctr38(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr38 (createVctr)")
-    ALLOCATE(vctr39(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr39 (createVctr)")
-    ALLOCATE(vctr40(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr40 (createVctr)")
-    ALLOCATE(vctr41(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr41 (createVctr)")
 
 !!$    ALLOCATE(ivctr(maxxyz), STAT=ierr)
 !!$    IF (ierr/=0) CALL fatal_error("ERROR allocating ivctr (createVctr)")
@@ -415,11 +433,6 @@ contains
     vctr35 = 0. 
     vctr36 = 0.
     vctr37 = 0.
-    vctr38 = 0.
-    vctr39 = 0.
-    vctr40 = 0.
-    vctr41 = 0.
-!--(DMK-LFR NEC-SX6)----------------------------------------------
 
 
 
@@ -506,14 +519,6 @@ contains
     IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr36 (destroyVctr)")
     DEALLOCATE(vctr37, STAT=ierr)
     IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr37 (destroyVctr)")
-    DEALLOCATE(vctr38, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr38 (destroyVctr)")
-    DEALLOCATE(vctr39, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr39 (destroyVctr)")
-    DEALLOCATE(vctr40, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr40 (destroyVctr)")
-    DEALLOCATE(vctr41, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr41 (destroyVctr)")
 
   END SUBROUTINE destroyVctr
 
