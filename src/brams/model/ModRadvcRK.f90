@@ -153,10 +153,10 @@ contains
     
     call PostSendRecvMsgs(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv)
 
-    borderNorth=OneGrid%NodeDims%borderNorth
-    borderSouth=OneGrid%NodeDims%borderSouth
-    borderEast=OneGrid%NodeDims%borderEast
-    borderWest=OneGrid%NodeDims%borderWest
+    borderNorth=OneGrid%oneNodeDimensions%borderNorth
+    borderSouth=OneGrid%oneNodeDimensions%borderSouth
+    borderEast=OneGrid%oneNodeDimensions%borderEast
+    borderWest=OneGrid%oneNodeDimensions%borderWest
 
     mzpp3=mzp+3; mxpp3=mxp+3; mypp3=myp+3
     mzppks=mzp+ks; mxppis=mxp+is; myppjs=myp+js
@@ -379,10 +379,10 @@ contains
 
     call PostSendRecvMsgs(OneGrid%WideGhostZoneSend, OneGrid%WideGhostZoneRecv)
 
-    borderNorth=OneGrid%NodeDims%borderNorth
-    borderSouth=OneGrid%NodeDims%borderSouth
-    borderEast=OneGrid%NodeDims%borderEast
-    borderWest=OneGrid%NodeDims%borderWest
+    borderNorth=OneGrid%oneNodeDimensions%borderNorth
+    borderSouth=OneGrid%oneNodeDimensions%borderSouth
+    borderEast=OneGrid%oneNodeDimensions%borderEast
+    borderWest=OneGrid%oneNodeDimensions%borderWest
 
     mzpp3=mzp+3; mxpp3=mxp+3; mypp3=myp+3
     mzppks=mzp+ks; mxppis=mxp+is; myppjs=myp+js
@@ -646,8 +646,8 @@ contains
        ks=0
 
        call mf_wind(mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,itopo,hw4,jdim,dzt,dzm  &
-            ,oneGrid%Basic%uc,oneGrid%Basic%vc,oneGrid%Basic%wc              &
-            ,oneGrid%Basic%dn0,oneGrid%Basic%dn0u,oneGrid%Basic%dn0v&
+            ,oneGrid%oneBasicFields%uc,oneGrid%oneBasicFields%vc,oneGrid%oneBasicFields%wc              &
+            ,oneGrid%oneBasicFields%dn0,oneGrid%oneBasicFields%dn0u,oneGrid%oneBasicFields%dn0v&
             ,grid_g(ngrid)%dxt,grid_g(ngrid)%dxu,grid_g(ngrid)%dxv     &
             ,grid_g(ngrid)%dyt,grid_g(ngrid)%dyu,grid_g(ngrid)%dyv     &
             ,grid_g(ngrid)%rtgt,grid_g(ngrid)%rtgu,grid_g(ngrid)%rtgv  &
@@ -661,7 +661,7 @@ contains
        end if
 
        call advect_ws_pointer_rank1(oneGrid,mzp,mxp,myp,ia,iz,ja,jz &
-            ,oneGrid%Basic%uc &! field being advected
+            ,oneGrid%oneBasicFields%uc &! field being advected
             ,vt3da    & ! uc*dn0u*fmapui*rtgu = rhou*U
             ,vt3db    & ! similar for v
             ,vt3dc    & ! similar for sigma_dot
@@ -682,8 +682,8 @@ contains
        ks=0
 
        call mf_wind(mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,itopo,hw4,jdim,dzt,dzm  &
-            ,oneGrid%Basic%uc,oneGrid%Basic%vc,oneGrid%Basic%wc              &
-            ,oneGrid%Basic%dn0,oneGrid%Basic%dn0u,oneGrid%Basic%dn0v&
+            ,oneGrid%oneBasicFields%uc,oneGrid%oneBasicFields%vc,oneGrid%oneBasicFields%wc              &
+            ,oneGrid%oneBasicFields%dn0,oneGrid%oneBasicFields%dn0u,oneGrid%oneBasicFields%dn0v&
             ,grid_g(ngrid)%dxt,grid_g(ngrid)%dxu,grid_g(ngrid)%dxv     &
             ,grid_g(ngrid)%dyt,grid_g(ngrid)%dyu,grid_g(ngrid)%dyv     &
             ,grid_g(ngrid)%rtgt,grid_g(ngrid)%rtgu,grid_g(ngrid)%rtgv  &
@@ -697,7 +697,7 @@ contains
        end if
 
        call advect_ws_pointer_rank1(oneGrid,mzp,mxp,myp,ia,iz,ja,jz,&
-            oneGrid%Basic%vc &
+            oneGrid%oneBasicFields%vc &
             ,vt3da    & ! uc*dn0u*fmapui*rtgu = rhou*V
             ,vt3db    & ! similar for v
             ,vt3dc    & ! similar for sigma_dot
@@ -719,8 +719,8 @@ contains
        ks=1
 
        call mf_wind(mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,itopo,hw4,jdim,dzt,dzm  &
-            ,oneGrid%Basic%uc,oneGrid%Basic%vc,oneGrid%Basic%wc              &
-            ,oneGrid%Basic%dn0,oneGrid%Basic%dn0u,oneGrid%Basic%dn0v&
+            ,oneGrid%oneBasicFields%uc,oneGrid%oneBasicFields%vc,oneGrid%oneBasicFields%wc              &
+            ,oneGrid%oneBasicFields%dn0,oneGrid%oneBasicFields%dn0u,oneGrid%oneBasicFields%dn0v&
             ,grid_g(ngrid)%dxt,grid_g(ngrid)%dxu,grid_g(ngrid)%dxv     &
             ,grid_g(ngrid)%dyt,grid_g(ngrid)%dyu,grid_g(ngrid)%dyv     &
             ,grid_g(ngrid)%rtgt,grid_g(ngrid)%rtgu,grid_g(ngrid)%rtgv  &
@@ -734,7 +734,7 @@ contains
        end if
 
        call advect_ws_pointer_rank1(oneGrid,mzp,mxp,myp,ia,iz,ja,jz,&
-            oneGrid%Basic%wc &
+            oneGrid%oneBasicFields%wc &
             ,vt3da    & ! uc*dn0u*fmapui*rtgu = rhou*W
             ,vt3db    & ! similar for v
             ,vt3dc    & ! similar for sigma_dot
@@ -759,20 +759,20 @@ contains
 
        ! input: basic_g%up,%uc,%vp,%vc,%wp,%wc,%dn0,%dn0u,%dn0v
        !        grid_g%rtgt,%rtgu,%rtgv,%fmapt,%fmapui,%fmapvi,%f13t,%f23t,%dxu,%dyv,%dxt,%dyt
-       !        ScalarTab%var_p, %var_t
-       ! output: ScalarTab%var_t
+       !        oneScalarTable%var_p, %var_t
+       ! output: oneScalarTable%var_t
 
        if (trim(varn) .eq. 'T' .or. trim(varn) .eq. 'SCALAR' ) then
           !- combine the 2-time levels wind fields for tracers
           do j = 1,myp
              do i = 1,mxp
                 do k = 1,mzp
-                   vt3da(k,i,j) = (oneGrid%Basic%up(k,i,j)  &
-                        + oneGrid%Basic%uc(k,i,j)) * 0.5
-                   vt3db(k,i,j) = (oneGrid%Basic%vp(k,i,j)  &
-                        + oneGrid%Basic%vc(k,i,j)) * 0.5
-                   vt3dc(k,i,j) = (oneGrid%Basic%wp(k,i,j)  &
-                        + oneGrid%Basic%wc(k,i,j)) * 0.5
+                   vt3da(k,i,j) = (oneGrid%oneBasicFields%up(k,i,j)  &
+                        + oneGrid%oneBasicFields%uc(k,i,j)) * 0.5
+                   vt3db(k,i,j) = (oneGrid%oneBasicFields%vp(k,i,j)  &
+                        + oneGrid%oneBasicFields%vc(k,i,j)) * 0.5
+                   vt3dc(k,i,j) = (oneGrid%oneBasicFields%wp(k,i,j)  &
+                        + oneGrid%oneBasicFields%wc(k,i,j)) * 0.5
                 end do
              end do
           end do
@@ -780,9 +780,9 @@ contains
           do j = 1,myp
              do i = 1,mxp
                 do k = 1,mzp
-                   vt3da(k,i,j) = oneGrid%Basic%uc(k,i,j)
-                   vt3db(k,i,j) = oneGrid%Basic%vc(k,i,j)
-                   vt3dc(k,i,j) = oneGrid%Basic%wc(k,i,j)
+                   vt3da(k,i,j) = oneGrid%oneBasicFields%uc(k,i,j)
+                   vt3db(k,i,j) = oneGrid%oneBasicFields%vc(k,i,j)
+                   vt3dc(k,i,j) = oneGrid%oneBasicFields%wc(k,i,j)
                 end do
              end do
           end do
@@ -795,7 +795,7 @@ contains
        !
        call fa_preptc_rk(mzp,mxp,myp    &
             ,vt3da,vt3db,vt3dc,vt3dh,vt3dj,vt3dk,vctr1,vctr2              &
-            ,oneGrid%Basic%dn0,oneGrid%Basic%dn0u,oneGrid%Basic%dn0v   &
+            ,oneGrid%oneBasicFields%dn0,oneGrid%oneBasicFields%dn0u,oneGrid%oneBasicFields%dn0v   &
             ,grid_g(ngrid)%rtgt,grid_g(ngrid)%rtgu,grid_g(ngrid)%rtgv     &
             ,grid_g(ngrid)%fmapt,grid_g(ngrid)%fmapui,grid_g(ngrid)%fmapvi&
             ,grid_g(ngrid)%f13t,grid_g(ngrid)%f23t                        &
@@ -809,7 +809,7 @@ contains
           end if
 
           call advect_ws_pointer_rank1(oneGrid,mzp,mxp,myp,ia,iz,ja,jz,&
-               oneGrid%Basic%thc &
+               oneGrid%oneBasicFields%thc &
                ,vt3da & ! uc*dn0u*fmapui*rtgu = rhou*U
                ,vt3db & ! similar for v
                ,vt3dc & ! similar for sigma_dot
@@ -831,9 +831,9 @@ contains
        if ( trim(varn) .eq. "THA" .and. iexev == 2) then
           !-get log(thetav)
           call prep_lnthetv(mzp,mxp,myp,ia,iz,ja,jz&
-               ,oneGrid%Basic%theta &
-               ,oneGrid%Basic%rtp   &
-               ,oneGrid%Basic%rv    &
+               ,oneGrid%oneBasicFields%theta &
+               ,oneGrid%oneBasicFields%rtp   &
+               ,oneGrid%oneBasicFields%rv    &
                ,stilt_g(ngrid)%lnthetav)
 
           if (dumpLocal) then
@@ -868,7 +868,7 @@ contains
           end if
 
           call advect_ws_pointer_rank1(oneGrid,mzp,mxp,myp,ia,iz,ja,jz&
-               ,oneGrid%Basic%pc & !advected field
+               ,oneGrid%oneBasicFields%pc & !advected field
                ,vt3da & ! uc*dn0u*fmapui*rtgu = rhou*U
                ,vt3db & ! similar for v
                ,vt3dc & ! similar for sigma_dot
@@ -889,35 +889,35 @@ contains
 
        if (trim(varn) .eq. 'T' .or. trim(varn) .eq. 'SCALAR') then
 
-          i_scl=oneGrid%ScalarTabSize  !- all scalars
+          i_scl=oneGrid%oneScalarTableSize  !- all scalars
 
           do n=1,i_scl
              !
              !- if RK or ABM3 schemes, THP/THC are not transported here
-             if (oneGrid%ScalarTab(n)%name == 'THC' .or. &
-                  oneGrid%ScalarTab(n)%name == 'THP') cycle
+             if (oneGrid%oneScalarTable(n)%name == 'THC' .or. &
+                  oneGrid%oneScalarTable(n)%name == 'THP') cycle
 
              ! input: scalarp3d, scalart1d, dtlt
              ! output: scalart1d
 
              if (dumpLocal) then
-                call MsgDump(h//" advect "//trim(adjustl(oneGrid%ScalarTab(n)%name)))
+                call MsgDump(h//" advect "//trim(adjustl(oneGrid%oneScalarTable(n)%name)))
              end if
              
              call advect_ws_pointer_rank1(oneGrid,mzp,mxp,myp,ia,iz,ja,jz &
-                  ,oneGrid%ScalarTab(n)%var_p_3d & !scalar being advected 
+                  ,oneGrid%oneScalarTable(n)%var_p_3d & !scalar being advected 
                   ,vt3da   & ! 0.5(up+uc)*dn0u*fmapui*rtgu = rhou*U
                   ,vt3db   & ! similar for v
                   ,vt3dc   & ! similar for sigma_dot
                   ,vt3dh   & ! fmapt*rtgti*dxt/dn0 = 1(rho dx)
                   ,vt3dj   & ! similar for v
                   ,vt3dk   & ! similar for sigma_dot
-                  ,oneGrid%ScalarTab(n)%var_t_1d &
+                  ,oneGrid%oneScalarTable(n)%var_t_1d &
                   ,is,js,ks    & !scalar tendency
                   ,pd_or_mnt_constraint& ! 
                   ,order_h,order_v     & !order horiz/vert 
                   ,dtlt                & !timestep
-                  ,oneGrid%ScalarTab(n)%name & ! scalar name
+                  ,oneGrid%oneScalarTable(n)%name & ! scalar name
                   )
 
           end do

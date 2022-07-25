@@ -887,7 +887,7 @@ contains
 
     ! First check of options, mainly for numbers of grid points
 
-    call opspec1(nmachs, mchnum, master_num, oneGrid%MicControlVars)
+    call opspec1(nmachs, mchnum, master_num, oneGrid%oneMicVars)
 
     ! Basic grid coordinate setup for statically allocated data structures:
     ! number of grid points, deltas, coordinate and nesting coefficients,
@@ -915,7 +915,7 @@ contains
 
     ! Check sfc,sst,ndvi files; remake if needed
 
-    call MakeSfcfiles(oneGrid%Control)
+    call MakeSfcfiles(oneGrid%oneControlVars)
 
 
     ! Behave accordingly to run typ
@@ -947,7 +947,7 @@ contains
 
        ! on a "MAKEVFILE" run, call ISAN, then exit.
 
-       call chem_isan_driver(namelistFileName, oneGrid%Control)
+       call chem_isan_driver(namelistFileName, oneGrid%oneControlVars)
        if(ccatt==1 .and. chem_assim==1 .and. chemistry >= 0)then
           iErrNumber=dumpMessage(c_tty,c_yes,header,version,c_notice," CHEM_ISAN complete ")
        else
@@ -984,10 +984,10 @@ contains
           call InitTuvDriver()
        endif
 
-       if(oneGrid%MicControlVars%mcphys_type==0) then
-          call jnmbinit(oneGrid%MicControlVars)
-       elseif(oneGrid%MicControlVars%mcphys_type==1) then
-          call jnmbinit_2M(oneGrid%MicControlVars)
+       if(oneGrid%oneMicVars%mcphys_type==0) then
+          call jnmbinit(oneGrid%oneMicVars)
+       elseif(oneGrid%oneMicVars%mcphys_type==1) then
+          call jnmbinit_2M(oneGrid%oneMicVars)
        endif
 
        ! Allocate memory for this process sub-domain only
@@ -1003,7 +1003,7 @@ contains
 
        AKMIN_ALLOC = .false.
        do ifm=1,ngrids
-          if (OneGrid%Ramsin%akmin(ifm)<0.) AKMIN_ALLOC = .true.
+          if (OneGrid%oneNamelistFile%akmin(ifm)<0.) AKMIN_ALLOC = .true.
        end do
        if (AKMIN_ALLOC) then
           call allocAkmin2d(ngrids, nodemxp(mynum,1:ngrids), nodemyp(mynum,1:ngrids))
@@ -1011,7 +1011,7 @@ contains
 
        ! Communication paths, sizes and buffers
 
-       call NodePathsBuffAlloc(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
+       call NodePathsBuffAlloc(oneGrid%oneScalarTable, oneGrid%oneScalarTableSize)
 
        ! Build message passing data structure for all grids,
        ! since this is an INITIAL run.
@@ -1028,7 +1028,7 @@ contains
        ! was antecipated to allow message passing during initialization, required
        ! for binary reproducibility (see subroutine FilDn0uv)
 
-       call InitFields(oneGrid%ScalarTabSize, 1)
+       call InitFields(oneGrid%oneScalarTableSize, 1)
 
        ! initialization driver
 
@@ -1038,7 +1038,7 @@ contains
 
        do ifm=1,ngrids
           call newgrid(ifm)
-          call cfl(mzp, mxp, myp, 0, 0, oneGrid%Basic, oneGrid%Ramsin, oneGrid%Id)
+          call cfl(mzp, mxp, myp, 0, 0, oneGrid%oneBasicFields, oneGrid%oneNamelistFile, oneGrid%Id)
        enddo
        call MaxCFLOverall(cflxy, cflz)
 
@@ -1118,12 +1118,12 @@ contains
                ,grid_g(1)%glat,grid_g(1)%glon,mchnum,master_num)
        endif
 
-       if(oneGrid%MicControlVars%mcphys_type==3) call readDataFriendly()
+       if(oneGrid%oneMicVars%mcphys_type==3) call readDataFriendly()
 
        if (aerosol==-1 .and. .not. (CCATT==1 .and. chemistry >= 1)) then
           call gradsRead('./tables/aerClim/','aerosols.gra',&
                grid_g(1)%glat,grid_g(1)%glon, &
-               oneGrid%Control, oneGrid%Basic, oneGrid%Turb, oneGrid%ID)
+               oneGrid%oneControlVars, oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%ID)
        end if
 
        ! Checking if the actual node have to run thermo on the boundaries
@@ -1145,7 +1145,7 @@ contains
           ! create post processing
           oneAllPostTypes => null()
           call CreatePostProcess(oneNamelistFile, oneAllPostTypes, &
-               oneGrid%Basic, oneGrid%Turb)
+               oneGrid%oneBasicFields, oneGrid%oneTurbFields)
        endif
 
        select case (IPOS)
@@ -1222,16 +1222,16 @@ contains
 
           if (isendbackflg==1) then
              if (isendiv==1) then
-                call VarfReadStoreOwnChunk(AllGrids, 2, nud_type, oneGrid%Basic)
+                call VarfReadStoreOwnChunk(AllGrids, 2, nud_type, oneGrid%oneBasicFields)
              endif
              if (isendsst==1) then
                 do ifm=1,ngrids
-                   call SstReadStoreOwnChunk(3,ifm,ierr, oneGrid%Control)
+                   call SstReadStoreOwnChunk(3,ifm,ierr, oneGrid%oneControlVars)
                 enddo
              endif
              if (isendndvi==1) then
                 do ifm=1,ngrids
-                   call NdviReadStoreOwnChunk(3,ifm,ierr, oneGrid%Control)
+                   call NdviReadStoreOwnChunk(3,ifm,ierr, oneGrid%oneControlVars)
                 enddo
              endif
              if (isendsrc==1) then
@@ -1247,9 +1247,9 @@ contains
                         src_name,chemistry,ntimes_src,aer1_g,nmodes,aerosol,plumerise,   &
                         nveg_agreg,plume_mean_g,nzpmax,dzt,grid_g(ifm)%rtgt,grid_g(ifm)%topt, &
                         transport,plume_g,tropical_forest,boreal_forest,savannah,         &
-                        grassland,diur_cycle,volcanoes,volc_mean_g,oneGrid%Basic%dn0,zt,zm,&
+                        grassland,diur_cycle,volcanoes,volc_mean_g,oneGrid%oneBasicFields%dn0,zt,zm,&
                         mchnum, master_num,mass_bin_dist,CO2,ISFCL,aerosol_mechanism,     &
-                        plume_fre_g,emiss_ajust_aer, oneGrid%Control)
+                        plume_fre_g,emiss_ajust_aer, oneGrid%oneControlVars)
                 enddo
 
 
@@ -1312,8 +1312,8 @@ contains
                 ! advance current grid forward by corresponding deltat
 
                 time = begtime + (isched(npass,5)-1)*dtlt
-                if (oneGrid%MicControlVars%mcphys_type==3) then
-                   call adjustFriendlyForMonth(time,oneGrid%Basic, oneGrid%Micro)
+                if (oneGrid%oneMicVars%mcphys_type==3) then
+                   call adjustFriendlyForMonth(time,oneGrid%oneBasicFields, oneGrid%oneMicroFields)
                 end if
 
                 ! timestep routine
@@ -1367,10 +1367,10 @@ contains
              call newgrid(ngrid)
              if ((avgtim/=0.) .and. (frqmean/=0. .or. frqboth/=0.))  then
                 call anlavg(mzp, mxp, myp, &
-                     oneGrid%Basic, oneGrid%MicControlVars, oneGrid%Micro)
+                     oneGrid%oneBasicFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
              end if
              call cfl(mzp, mxp, myp, nodei0(mynum,ngrid), nodej0(mynum,ngrid), &
-                  oneGrid%Basic, oneGrid%Ramsin, oneGrid%Id)
+                  oneGrid%oneBasicFields, oneGrid%oneNamelistFile, oneGrid%Id)
           end do
 
           ! get max CFL from all processes to probe numerical stability
@@ -1433,8 +1433,8 @@ contains
           end if
 
           call OutputFields(histFlag, instFlag, liteFlag, meanFlag, &
-               oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id, &
-               oneGrid%Control, oneGrid%MicControlVars)
+               oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%Id, &
+               oneGrid%oneControlVars, oneGrid%oneMicVars)
 
           ! Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
           ! call SynchronizedTimeStamp(TS_OUTPUT)
@@ -1444,14 +1444,14 @@ contains
           if (posFlag) then
              if(damModule==1) then
                 call acumPrecipInDam(nodemxp(mynum,1),nodemyp(mynum,1) &
-                     ,ia,iz,ja,jz,oneGrid%MicControlVars%mcphys_type &
+                     ,ia,iz,ja,jz,oneGrid%oneMicVars%mcphys_type &
                      ,cuparm_g(1)%aconpr &
-                     ,oneGrid%Micro%accpr &
-                     ,oneGrid%Micro%accpp &
-                     ,oneGrid%Micro%accps &
-                     ,oneGrid%Micro%accpa &
-                     ,oneGrid%Micro%accpg &
-                     ,oneGrid%Micro%accph)
+                     ,oneGrid%oneMicroFields%accpr &
+                     ,oneGrid%oneMicroFields%accpp &
+                     ,oneGrid%oneMicroFields%accps &
+                     ,oneGrid%oneMicroFields%accpa &
+                     ,oneGrid%oneMicroFields%accpg &
+                     ,oneGrid%oneMicroFields%accph)
 
                 call outputDamPrecip(time,dtlongn(1),timmax,mchnum,master_num)
              endif
@@ -1627,7 +1627,7 @@ contains
     iopunt=6
 
 
-    call opspec3(oneGrid%Ramsin, oneGrid%Id, oneGrid%MicControlVars)
+    call opspec3(oneGrid%oneNamelistFile, oneGrid%Id, oneGrid%oneMicVars)
 
     if (runtype(1:7) == 'INITIAL') then
 
@@ -1646,12 +1646,12 @@ contains
        do ifm = 1,ngrids
 
           !--(DMK-LFR NEC-SX6)----------------------------------------------
-          call TRSFFieldAndOwnChunk(ifm, oneGrid%Control)
+          call TRSFFieldAndOwnChunk(ifm, oneGrid%oneControlVars)
           !--(DMK-LFR NEC-SX6)----------------------------------------------
 
        enddo
        do ifm = 1,ngrids
-          call SfcReadStoreOwnChunk(ifm, oneGrid%Control)
+          call SfcReadStoreOwnChunk(ifm, oneGrid%oneControlVars)
        enddo
        !     Define grid topography, transform, latitude-longitude,
        !        and map factor arrays.
@@ -1661,12 +1661,12 @@ contains
 
        ! read SST files
        do ifm = 1,ngrids
-          call SstReadStoreOwnChunk(1,ifm,ierr, oneGrid%Control)
+          call SstReadStoreOwnChunk(1,ifm,ierr, oneGrid%oneControlVars)
        enddo
 
        ! read NDVI files
        do ifm = 1,ngrids
-          call NdviReadStoreOwnChunk(1,ifm,ierr, oneGrid%Control)
+          call NdviReadStoreOwnChunk(1,ifm,ierr, oneGrid%oneControlVars)
        enddo
 
        ! Initialize snowcover arrays
@@ -1679,7 +1679,7 @@ contains
        if (TEB_SPM==1) then
           ! read FUSO (Local Time) files
           do ifm = 1,ngrids
-             call FusoReadStoreOwnChunk(ifm, oneGrid%Control)
+             call FusoReadStoreOwnChunk(ifm, oneGrid%oneControlVars)
           enddo
        endif
 
@@ -1696,7 +1696,7 @@ contains
 
           if(initial == 1) then
              print*,'Horizontally-homogeneous-INITIAL start of grid- 1'
-             call inithh(oneGrid%Basic, oneGrid%MicControlVars)
+             call inithh(oneGrid%oneBasicFields, oneGrid%oneMicVars)
           endif
 
           !If "history" initialization, call INITHIS.
@@ -1705,7 +1705,7 @@ contains
 
           if (initial == 3) then
              print*,'History-INITIAL start of grid- 1'
-             call inithis(oneGrid%Basic,oneGrid%MicControlVars)
+             call inithis(oneGrid%oneBasicFields,oneGrid%oneMicVars)
           endif
 
           !  On all fine grids, initialize the surface layer characteristics,
@@ -1721,7 +1721,7 @@ contains
           ! If "variable initialization", do it all here
 
           !--(DMK-CCATT-INI)-----------------------------------------------------
-          call VarfReadStoreOwnChunk(AllGrids, 0, initial, oneGrid%Basic)
+          call VarfReadStoreOwnChunk(AllGrids, 0, initial, oneGrid%oneBasicFields)
           !--(DMK-CCATT-FIM)-----------------------------------------------------
        endif
 
@@ -1731,100 +1731,100 @@ contains
        do ifm=1,ngrids
           call newgrid(ifm)
 
-          call FieldInit(1, oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars, oneGrid%Micro)
+          call FieldInit(1, oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
 
-          call negadj1(mzp,mxp,myp, oneGrid%Basic,oneGrid%MicControlVars,oneGrid%Micro)
+          call negadj1(mzp,mxp,myp, oneGrid%oneBasicFields,oneGrid%oneMicVars,oneGrid%oneMicroFields)
 
           call thermo(mzp, mxp, myp, 1, mxp, 1, myp, &
-               oneGrid%Basic, oneGrid%MicControlVars, oneGrid%Micro)
+               oneGrid%oneBasicFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
 
           if(ilwrtyp==6 .or. iswrtyp==6 ) then
-             if (oneGrid%MicControlVars%level  ==  3) &
+             if (oneGrid%oneMicVars%level  ==  3) &
                   call effective_radius(mzp,mxp,myp &
-                  ,oneGrid%Micro%rei             &
-                  ,oneGrid%Micro%rel)
+                  ,oneGrid%oneMicroFields%rei             &
+                  ,oneGrid%oneMicroFields%rel)
           endif
 
-          if (oneGrid%MicControlVars%mcphys_type == 0) then
-             if (oneGrid%MicControlVars%level  ==  3) then
+          if (oneGrid%oneMicVars%mcphys_type == 0) then
+             if (oneGrid%oneMicVars%level  ==  3) then
 
 
                 call initqin(mzp,mxp,myp        &
-                     ,oneGrid%Micro%q2      &
-                     ,oneGrid%Micro%q6      &
-                     ,oneGrid%Micro%q7      &
-                     ,oneGrid%Basic%pi0     &
-                     ,oneGrid%Basic%pp      &
-                     ,oneGrid%Basic%theta   &
-                     ,oneGrid%Basic%dn0     &
-                     ,oneGrid%Micro%cccnp   &
-                     ,oneGrid%Micro%cifnp,&
-                     oneGrid%MicControlVars)
+                     ,oneGrid%oneMicroFields%q2      &
+                     ,oneGrid%oneMicroFields%q6      &
+                     ,oneGrid%oneMicroFields%q7      &
+                     ,oneGrid%oneBasicFields%pi0     &
+                     ,oneGrid%oneBasicFields%pp      &
+                     ,oneGrid%oneBasicFields%theta   &
+                     ,oneGrid%oneBasicFields%dn0     &
+                     ,oneGrid%oneMicroFields%cccnp   &
+                     ,oneGrid%oneMicroFields%cifnp,&
+                     oneGrid%oneMicVars)
 
 
 
              endif
 
-          elseif(oneGrid%MicControlVars%mcphys_type == 1) then
+          elseif(oneGrid%oneMicVars%mcphys_type == 1) then
 
-             if (oneGrid%MicControlVars%level  ==  3) then
+             if (oneGrid%oneMicVars%level  ==  3) then
 
 
                 call initqin_2M(mzp,mxp,myp        &
-                     ,oneGrid%Micro%q2   &
-                     ,oneGrid%Micro%q6      &
-                     ,oneGrid%Micro%q7      &
-                     ,oneGrid%Basic%pi0     &
-                     ,oneGrid%Basic%pp      &
-                     ,oneGrid%Basic%theta   &
-                     ,oneGrid%Basic%dn0, &
-                     oneGrid%MicControlVars )
+                     ,oneGrid%oneMicroFields%q2   &
+                     ,oneGrid%oneMicroFields%q6      &
+                     ,oneGrid%oneMicroFields%q7      &
+                     ,oneGrid%oneBasicFields%pi0     &
+                     ,oneGrid%oneBasicFields%pp      &
+                     ,oneGrid%oneBasicFields%theta   &
+                     ,oneGrid%oneBasicFields%dn0, &
+                     oneGrid%oneMicVars )
 
 
 
 
-                if(oneGrid%MicControlVars%icloud >= 5) then
+                if(oneGrid%oneMicVars%icloud >= 5) then
 
 
                    call initqin2_2M(mzp,mxp,myp        &
-                        ,oneGrid%Micro%cccnp   &
-                        ,oneGrid%Micro%cccmp   &
-                        ,oneGrid%Basic%dn0, &
-                        oneGrid%MicControlVars   )
+                        ,oneGrid%oneMicroFields%cccnp   &
+                        ,oneGrid%oneMicroFields%cccmp   &
+                        ,oneGrid%oneBasicFields%dn0, &
+                        oneGrid%oneMicVars   )
 
 
                 end if
 
-                if(oneGrid%MicControlVars%idriz  >= 5) then
+                if(oneGrid%oneMicVars%idriz  >= 5) then
 
 
                    call initqin3_2M(mzp,mxp,myp        &
-                        ,oneGrid%Micro%gccnp   &
-                        ,oneGrid%Micro%gccmp   &
-                        ,oneGrid%Basic%dn0, &
-                     oneGrid%MicControlVars   )
+                        ,oneGrid%oneMicroFields%gccnp   &
+                        ,oneGrid%oneMicroFields%gccmp   &
+                        ,oneGrid%oneBasicFields%dn0, &
+                     oneGrid%oneMicVars   )
 
 
                 end if
 
-                if(oneGrid%MicControlVars%ipris  >= 5) then
+                if(oneGrid%oneMicVars%ipris  >= 5) then
 
 
                    call initqin4_2M(mzp,mxp,myp        &
-                        ,oneGrid%Micro%cifnp   &
-                        ,oneGrid%Basic%dn0, &
-                     oneGrid%MicControlVars   )
+                        ,oneGrid%oneMicroFields%cifnp   &
+                        ,oneGrid%oneBasicFields%dn0, &
+                     oneGrid%oneMicVars   )
 
 
                 end if
 
-                if(oneGrid%MicControlVars%idust > 0 .or. &
-                     oneGrid%MicControlVars%imd1flg > 0 .or. &
-                     oneGrid%MicControlVars%imd2flg > 0)  then
+                if(oneGrid%oneMicVars%idust > 0 .or. &
+                     oneGrid%oneMicVars%imd1flg > 0 .or. &
+                     oneGrid%oneMicVars%imd2flg > 0)  then
                    call initqin5_2M(mzp,mxp,myp    &
-                        ,oneGrid%Micro%md1np   &
-                        ,oneGrid%Micro%md2np, &
-                     oneGrid%MicControlVars )
+                        ,oneGrid%oneMicroFields%md1np   &
+                        ,oneGrid%oneMicroFields%md2np, &
+                     oneGrid%oneMicVars )
                 end if
              endif
           endif
@@ -1833,7 +1833,7 @@ contains
           if(DYNCORE_FLAG==2) then
 
 
-             oneGrid%Basic%thc(:,:,:)=oneGrid%Basic%thp(:,:,:)
+             oneGrid%oneBasicFields%thc(:,:,:)=oneGrid%oneBasicFields%thp(:,:,:)
 
           endif
 
@@ -1875,7 +1875,7 @@ contains
 
        if (ipastin == 0) then
           call GeonestNoFile(1,ngrids,&
-               oneGrid%Control, oneGrid%Basic, oneGrid%Turb)
+               oneGrid%oneControlVars, oneGrid%oneBasicFields, oneGrid%oneTurbFields)
        end if
 
 
@@ -1887,9 +1887,9 @@ contains
           do ifm=1,ngrids
              call change_soil_moisture_init(nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm)    &
                   ,nzg,nzs,npatch,ifm &
-                  ,oneGrid%Basic%theta  &
-                  ,oneGrid%Basic%pi0    &
-                  ,oneGrid%Basic%pp     &
+                  ,oneGrid%oneBasicFields%theta  &
+                  ,oneGrid%oneBasicFields%pi0    &
+                  ,oneGrid%oneBasicFields%pp     &
                   ,leaf_g(ifm)%soil_water  &
                   ,leaf_g(ifm)%soil_energy        &
                   ,leaf_g(ifm)%soil_text  &
@@ -1936,10 +1936,10 @@ contains
                      nodemyp(mynum,ifm),            &
                      npatch,                        &
                      leaf_g(ifm)%leaf_class, &
-                     oneGrid%Basic%theta    , &
-                     oneGrid%Basic%rv       , &
-                     oneGrid%Basic%pi0      , &
-                     oneGrid%Basic%pp       , &
+                     oneGrid%oneBasicFields%theta    , &
+                     oneGrid%oneBasicFields%rv       , &
+                     oneGrid%oneBasicFields%pi0      , &
+                     oneGrid%oneBasicFields%pp       , &
                      teb_g(ifm)%T_ROOF     , &
                      teb_g(ifm)%T_ROAD     , &
                      teb_g(ifm)%T_WALL     , &
@@ -2020,7 +2020,7 @@ contains
 
           do ifm=1,ngrids
              call newgrid(ifm)
-             stilt_g(ifm)%dnp(:,:,:)= oneGrid%Basic%dn0(:,:,:)
+             stilt_g(ifm)%dnp(:,:,:)= oneGrid%oneBasicFields%dn0(:,:,:)
           enddo
 
 
@@ -2048,9 +2048,9 @@ contains
                   src_name,chemistry,ntimes_src,aer1_g,nmodes,aerosol,plumerise,   &
                   nveg_agreg,plume_mean_g,nzpmax,dzt,grid_g(ifm)%rtgt,grid_g(ifm)%topt, &
                   transport,plume_g,tropical_forest,boreal_forest,savannah,    &
-                  grassland,diur_cycle,volcanoes,volc_mean_g,oneGrid%Basic%dn0,zt,zm,&
+                  grassland,diur_cycle,volcanoes,volc_mean_g,oneGrid%oneBasicFields%dn0,zt,zm,&
                   mchnum, master_num,mass_bin_dist,CO2,ISFCL,aerosol_mechanism     ,&
-                  plume_fre_g,emiss_ajust_aer, oneGrid%Control)
+                  plume_fre_g,emiss_ajust_aer, oneGrid%oneControlVars)
 
              call aer_background(ifm,nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm),&
                   1,nodemxp(mynum,ifm),1,nodemyp(mynum,ifm))
@@ -2062,17 +2062,17 @@ contains
        ! Read Radiation Parameters if CARMA or RRTMG Radiation is selected
        if (ilwrtyp==4 .or. iswrtyp==4 .or. ilwrtyp==6 .or. iswrtyp==6 ) then
           call master_read_carma_data(mchnum, master_num)
-          call read_aotMap(oneGrid%Id, oneGrid%Control, oneGrid%Basic, oneGrid%Turb)
+          call read_aotMap(oneGrid%Id, oneGrid%oneControlVars, oneGrid%oneBasicFields, oneGrid%oneTurbFields)
        endif
 
        ! AKMIN variable:
        do ifm=1,ngrids
           !srf- initialize akmin = f(x,y)
-          if (OneGrid%Ramsin%akmin(ifm)<0.) then
+          if (OneGrid%oneNamelistFile%akmin(ifm)<0.) then
              call newgrid(ifm)
              call get_akmin2d(ifm, nodemxp(mynum,ifm), nodemyp(mynum,ifm), &
                   akminvar(ifm)%akmin2d, mynum, nodei0, nodej0, &
-                  OneGrid%Ramsin%akmin(ifm),grid_g(ifm)%topt)
+                  OneGrid%oneNamelistFile%akmin(ifm),grid_g(ifm)%topt)
           endif
        enddo
        !--(DMK-CCATT-FIM)-----------------------------------------------------
@@ -2093,7 +2093,7 @@ contains
           !call fatal_error(h//"**(JP)** sfcinit_hstart was not worked yet")
           iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
                "**(JP)** sfcinit_hstart was not worked yet")
-          call sfcinit_hstart(oneGrid%Basic)
+          call sfcinit_hstart(oneGrid%oneBasicFields)
        end if
 
 
@@ -2111,19 +2111,19 @@ contains
        call gridSetup(1)
 
        ! Check surface,topo,sst,ndvi files. Remake if necessary.
-       call MakeSfcFiles(oneGrid%Control)
+       call MakeSfcFiles(oneGrid%oneControlVars)
 
        ! Read surface and topo files for any added grids
        !       do ifm = ngridsh+1,ngrids
        !       do ifm = ngridsh+1,ngrids
        do ifm = 1,ngrids
-          call SfcReadStoreOwnChunk(ifm, oneGrid%Control)
+          call SfcReadStoreOwnChunk(ifm, oneGrid%oneControlVars)
        enddo
        !       do ifm = ngridsh+1,ngrids
        do ifm = 1,ngrids
           !--(DMK-LFR NEC-SX6)----------------------------------------------
           !        call TopReadStoreFullFieldAndOwnChunk(ifm)
-          call TRSFFieldAndOwnChunk(ifm, oneGrid%Control)
+          call TRSFFieldAndOwnChunk(ifm, oneGrid%oneControlVars)
           !--(DMK-LFR NEC-SX6)----------------------------------------------
 
        enddo
@@ -2133,11 +2133,11 @@ contains
 
        ! Read in sst and ndvi files for all grids
        do ifm = 1,ngrids
-          call SstReadStoreOwnChunk(1, ifm, ierr, oneGrid%Control)
+          call SstReadStoreOwnChunk(1, ifm, ierr, oneGrid%oneControlVars)
        enddo
 
        do ifm = 1,ngrids
-          call NdviReadStoreOwnChunk(1, ifm, ierr, oneGrid%Control)
+          call NdviReadStoreOwnChunk(1, ifm, ierr, oneGrid%oneControlVars)
        enddo
 
        ! TEB
@@ -2145,7 +2145,7 @@ contains
        if (TEB_SPM==1) then
           ! Read FUSO (Local Time) files for any added grids
           do ifm = ngridsh+1,ngrids
-             call FusoReadStoreOwnChunk(ifm, oneGrid%Control)
+             call FusoReadStoreOwnChunk(ifm, oneGrid%oneControlVars)
           enddo
        endif
 
@@ -2156,9 +2156,9 @@ contains
           if (icm  ==  0) then
              call newgrid(ifm)
              call refs3d (mzp,mxp,myp  &
-                  ,oneGrid%Basic%pi0  ,oneGrid%Basic%dn0    &
-                  ,oneGrid%Basic%dn0u ,oneGrid%Basic%dn0v   &
-                  ,oneGrid%Basic%th0  ,grid_g(ifm)%topt    &
+                  ,oneGrid%oneBasicFields%pi0  ,oneGrid%oneBasicFields%dn0    &
+                  ,oneGrid%oneBasicFields%dn0u ,oneGrid%oneBasicFields%dn0v   &
+                  ,oneGrid%oneBasicFields%th0  ,grid_g(ifm)%topt    &
                   ,grid_g(ifm)%rtgt  )
           endif
        enddo
@@ -2167,8 +2167,8 @@ contains
        !**(JP)** should be revised for nesting; last argument of fmrefs3d is wrong
        do ifm = 1,min(ngrids,ngridsh)
           icm = nxtnest(ifm)
-          if (icm  >  0) call fmrefs3d(ifm, oneGrid%Basic, oneGrid%Basic)
-          call negadj1(mzp,mxp,myp, oneGrid%Basic,oneGrid%MicControlVars,oneGrid%Micro)
+          if (icm  >  0) call fmrefs3d(ifm, oneGrid%oneBasicFields, oneGrid%oneBasicFields)
+          call negadj1(mzp,mxp,myp, oneGrid%oneBasicFields,oneGrid%oneMicVars,oneGrid%oneMicroFields)
        enddo
 
        ! ALF - For use with SiB
@@ -2189,12 +2189,12 @@ contains
              call newgrid(ifm)
              call soilMoistureInit(nnzp(ifm), nodemxp(mynum,ifm),         &
                   nodemyp(mynum,ifm), nzg, nzs, npatch, ifm,              &
-                  oneGrid%Basic%theta, oneGrid%Basic%pi0, oneGrid%Basic%pp,  &
+                  oneGrid%oneBasicFields%theta, oneGrid%oneBasicFields%pi0, oneGrid%oneBasicFields%pp,  &
                   leaf_g(ifm)%soil_water, leaf_g(ifm)%soil_energy,        &
                   leaf_g(ifm)%soil_text,                                  &
                   grid_g(ifm)%glat, grid_g(ifm)%glon, grid_g(ifm)%lpw     &
                   ,leaf_g(ifm)%seatp, leaf_g(ifm)%seatf, &
-                  oneGrid%Control, oneGrid%Basic, oneGrid%Turb)
+                  oneGrid%oneControlVars, oneGrid%oneBasicFields, oneGrid%oneTurbFields)
           enddo
 
 
@@ -2210,7 +2210,7 @@ contains
        ! Read Radiation Parameters if CARMA or RRTMG Radiation is selected
        if (ilwrtyp==4 .or. iswrtyp==4 .or. ilwrtyp==6 .or. iswrtyp==6 ) then
           call master_read_carma_data(mchnum, master_num)
-          call read_aotMap(oneGrid%Id, oneGrid%Control, oneGrid%Basic, oneGrid%Turb)
+          call read_aotMap(oneGrid%Id, oneGrid%oneControlVars, oneGrid%oneBasicFields, oneGrid%oneTurbFields)
        endif
 
        !--(DMK-CCATT-INI)-----------------------------------------------------
@@ -2235,9 +2235,9 @@ contains
                   src_name,chemistry,ntimes_src,aer1_g,nmodes,aerosol,plumerise,   &
                   nveg_agreg,plume_mean_g,nzpmax,dzt,grid_g(ifm)%rtgt,grid_g(ifm)%topt, &
                   transport,plume_g,tropical_forest,boreal_forest,savannah,    &
-                  grassland,diur_cycle,volcanoes,volc_mean_g,oneGrid%Basic%dn0,zt,zm,&
+                  grassland,diur_cycle,volcanoes,volc_mean_g,oneGrid%oneBasicFields%dn0,zt,zm,&
                   mchnum, master_num,mass_bin_dist,CO2,ISFCL,aerosol_mechanism,&
-                  plume_fre_g,emiss_ajust_aer, oneGrid%Control)
+                  plume_fre_g,emiss_ajust_aer, oneGrid%oneControlVars)
 
           enddo
 
@@ -2254,10 +2254,10 @@ contains
 
     call newgrid(1)
 
-    if     (oneGrid%MicControlVars%mcphys_type == 0) then
-       call micro_master(oneGrid%MicControlVars)
-    elseif (oneGrid%MicControlVars%mcphys_type == 1) then
-       call micro_master_2M(oneGrid%MicControlVars)
+    if     (oneGrid%oneMicVars%mcphys_type == 0) then
+       call micro_master(oneGrid%oneMicVars)
+    elseif (oneGrid%oneMicVars%mcphys_type == 1) then
+       call micro_master_2M(oneGrid%oneMicVars)
     endif
 
     !       Fill latitude-longitude, map factor, and Coriolis arrays.
@@ -2266,8 +2266,8 @@ contains
     do ifm = 1,ngrids
        call newgrid(ifm)
        call fcorio(mxp,myp           &
-            ,oneGrid%Basic%fcoru   &
-            ,oneGrid%Basic%fcorv   &
+            ,oneGrid%oneBasicFields%fcoru   &
+            ,oneGrid%oneBasicFields%fcorv   &
             ,grid_g(ifm)%glat     )
     enddo
 
@@ -2293,7 +2293,7 @@ contains
        !--(DMK-CCATT-FIM)-----------------------------------------------------
 
        !--(DMK-CCATT-INI)-----------------------------------------------------
-       call VarfReadStoreOwnChunk(AllGrids, 1, nud_type, oneGrid%Basic)
+       call VarfReadStoreOwnChunk(AllGrids, 1, nud_type, oneGrid%oneBasicFields)
        !--(DMK-CCATT-FIM)-----------------------------------------------------
 
     endif
@@ -2337,13 +2337,13 @@ contains
 
     ! Initialize urban canopy drag coefficients
 
-    if (OneGrid%Ramsin%if_urban_canopy == 1) then
+    if (OneGrid%oneNamelistFile%if_urban_canopy == 1) then
 
        !**(JP)** not worked yet
        !call fatal_error(h//"**(JP)** if_urban_canopy==1 was not worked yet")
        iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
             "**(JP)** if_urban_canopy==1 was not worked yet")
-       call urb_drag_init(oneGrid%Turb)
+       call urb_drag_init(oneGrid%oneTurbFields)
     end if
 
     ! one process prints locations of all grids
@@ -2393,8 +2393,8 @@ contains
     !srf
 
     call OutputFields(histFlag, instFlag, liteFlag, meanFlag, &
-         oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id, &
-         oneGrid%Control,oneGrid%MicControlVars)
+         oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%Id, &
+         oneGrid%oneControlVars,oneGrid%oneMicVars)
 
     ! Save initial fields into the averaged arrays
 
@@ -2643,7 +2643,7 @@ contains
     do while (associated(oneGridTree))
        gridId = oneGridTree%curr%Id
        GlobalOwn => oneGridTree%curr%GlobalOwn
-       do node = 1, oneGridTree%curr%ParEnv%nmachs
+       do node = 1, oneGridTree%curr%oneParallelEnvironment%nmachs
           ixb(node,gridId) = GlobalOwn%xb(node)
           ixe(node,gridId) = GlobalOwn%xe(node)
           iyb(node,gridId) = GlobalOwn%yb(node)

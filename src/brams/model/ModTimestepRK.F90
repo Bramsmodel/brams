@@ -363,7 +363,7 @@ contains
     end if
 
     singleProcRun = nmachs == 1
-    julesFile=oneGrid%Ramsin%julesin
+    julesFile=oneGrid%oneNamelistFile%julesin
 
 !!$    call SynchronizedTimeStamp(TS_RESTO) ! Exper1.2, 2021_12
 
@@ -374,7 +374,7 @@ contains
     !
     !  Zero out all tendency arrays.
     !--------------------------------
-    call tend0(oneGrid%ScalarTab, oneGrid%ScalarTabSize)  
+    call tend0(oneGrid%oneScalarTable, oneGrid%oneScalarTableSize)  
 
     ! Implements the Incremental Analysis Update procedure -
     ! phase 2: add the IAU tendencies
@@ -386,52 +386,52 @@ contains
 
     !  Thermodynamic diagnosis
     !--------------------------------
-    if (oneGrid%MicControlVars%mcphys_type <= 1 .and. oneGrid%MicControlVars%level/=3) then
+    if (oneGrid%oneMicVars%mcphys_type <= 1 .and. oneGrid%oneMicVars%level/=3) then
        call thermo(mzp, mxp, myp, ia, iz, ja, jz, &
-            oneGrid%Basic, oneGrid%MicControlVars, oneGrid%Micro)
+            oneGrid%oneBasicFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
     endif
 
     ! evolution of the Exner pressure: compression term
     if (iexev == 2) then
        call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'ADV', &
-            oneGrid%Basic)
+            oneGrid%oneBasicFields)
     end if
 
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
 
     if (CCATT==1 .and. chemistry >= 0) then
        call aodDriver(mzp,mxp,myp,ia,iz,ja,jz,ngrids,&
-            oneGrid%Ramsin, oneGrid%Basic, oneGrid%Turb, oneGrid%Id, oneGrid%Control)
+            oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%Id, oneGrid%oneControlVars)
     end if
 
     !  Radiation parameterization
     !--------------------------------
     call radiate(mzp,mxp,myp,ia,iz,ja,jz,mynum, &
-         oneGrid%Basic, oneGrid%MicControlVars, oneGrid%Micro)
+         oneGrid%oneBasicFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
 
     !  Surface layer, soil and veggie model
     !----------------------------------------
     if (isfcl<=2) then
        call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
-            oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars, oneGrid%Micro)
+            oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
 #ifdef JULES
     elseif (isfcl == 5) then
        if (time==0.) then
           call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
-               oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars, oneGrid%Micro)
+               oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
        end if
        call sfclyr_jules(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile, &
-            oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars, oneGrid%Micro)
+            oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
        !--- this combines the JULES land + LEAF ocean models.
        if (isfcl_ocean == 1) then
           call sfclyr_ocean_only  (mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
-               oneGrid%Basic, oneGrid%Turb)
+               oneGrid%oneBasicFields, oneGrid%oneTurbFields)
        end if
 #endif
     endif
 
     !- Sea salt Aerossol inline source
-    call SeaSaltDriver(ia,iz,ja,jz,ngrid,mxp,myp, oneGrid%Basic)
+    call SeaSaltDriver(ia,iz,ja,jz,ngrid,mxp,myp, oneGrid%oneBasicFields)
 
     !-- emission/deposition for CCATT chemistry models
     if (CCATT==1 .and. chemistry >= 0) then
@@ -454,9 +454,9 @@ contains
        !the same for the others var
        call sources_driver(ngrid, mzp,mxp,myp,ia,iz,ja,jz,                          &
             g,cp,cpor,p00,rgas,pi180,                                &
-            radiate_g(ngrid)%cosz,oneGrid%Basic%theta,              &
-            oneGrid%Basic%pp,oneGrid%Basic%pi0,oneGrid%Basic%rv,  &
-            oneGrid%Basic%dn0,oneGrid%Basic%up,oneGrid%Basic%vp,  &
+            radiate_g(ngrid)%cosz,oneGrid%oneBasicFields%theta,              &
+            oneGrid%oneBasicFields%pp,oneGrid%oneBasicFields%pi0,oneGrid%oneBasicFields%rv,  &
+            oneGrid%oneBasicFields%dn0,oneGrid%oneBasicFields%up,oneGrid%oneBasicFields%vp,  &
             time,iyear1,imonth1,idate1,itime1,dtlt,                  &
             grid_g(ngrid)%rtgt,grid_g(ngrid)%lpw,grid_g(ngrid)%glat, &
             grid_g(ngrid)%glon,zt,zm,dzt,nzpmax,                     &
@@ -474,8 +474,8 @@ contains
 
        !- call dry deposition and sedimentation routines
        call drydep_driver(mzp,mxp,myp,ia,iz,ja,jz, &
-            oneGrid%Basic, oneGrid%Turb, oneGrid%MicControlVars,&
-            oneGrid%Micro)
+            oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicVars,&
+            oneGrid%oneMicroFields)
     endif
 
 !!$    call SynchronizedTimeStamp(TS_PHYSICS) ! Exper1.2, 2021_12
@@ -488,7 +488,7 @@ contains
     !  ----------------------------------------
     if ( .not. flag_Coriolis_in_every_RK_step ) then
        call corlos(mzp, mxp, myp, i0, j0, ia, iz, ja, jz, izu, jzv, &
-            tend%ut, tend%vt, oneGrid%Basic)
+            tend%ut, tend%vt, oneGrid%oneBasicFields)
     end if
 
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
@@ -496,25 +496,25 @@ contains
     !  Cumulus parameterization version 1
     !----------------------------------------
     if (NNQPARM(ngrid)==1 .or. IF_CUINV==1) then
-       call cuparm(oneGrid%Basic)
+       call cuparm(oneGrid%oneBasicFields)
     end if
 
     !  Urban canopy parameterization
     !----------------------------------------
-    if (OneGrid%Ramsin%if_urban_canopy==1) then
-       call urban_canopy(oneGrid%Basic, oneGrid%Turb)
+    if (OneGrid%oneNamelistFile%if_urban_canopy==1) then
+       call urban_canopy(oneGrid%oneBasicFields, oneGrid%oneTurbFields)
     end if
 
     !  Analysis nudging and boundary condition
     !------------------------------------------
     if (NUD_TYPE>0) then
-       call datassim(oneGrid%Basic)
+       call datassim(oneGrid%oneBasicFields)
     end if
 
     !  Observation data assimilation
     !----------------------------------------
     if (IF_ODA==1) then
-       call oda_nudge(oneGrid%Basic)
+       call oda_nudge(oneGrid%oneBasicFields)
     end if
 
     !  Nested grid boundaries
@@ -525,8 +525,8 @@ contains
 
     !  Rayleigh friction for theta
     !----------------------------------------
-    call rayft(mxp,myp,mzp,mynum,ngrid,nnzp,if_adap,oneGrid%MicControlVars%level,nodemyp,nodemxp,&
-         scratch%vt3da,oneGrid%Basic)
+    call rayft(mxp,myp,mzp,mynum,ngrid,nnzp,if_adap,oneGrid%oneMicVars%level,nodemyp,nodemxp,&
+         scratch%vt3da,oneGrid%oneBasicFields)
 
     !  Get the overlap region between parallel nodes
     !---------------------------------------------------
@@ -537,7 +537,7 @@ contains
 
     if (iexev == 2) then
        call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'THA', &
-            oneGrid%Basic)
+            oneGrid%oneBasicFields)
     end if
 
     !- task 2:  NO production by "eclair"
@@ -546,7 +546,7 @@ contains
 
     if (ccatt == 1) then
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,2,50,&
-            oneGrid%Basic, oneGrid%Micro)
+            oneGrid%oneBasicFields, oneGrid%oneMicroFields)
     end if
 
     !- CATT & Chemistry == CCATT
@@ -555,18 +555,18 @@ contains
        ! task 3 : production/loss by chemical processes and inclusion of the
        ! chemistry tendency at the total tendency
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,3,50,&
-            oneGrid%Basic, oneGrid%Micro)
+            oneGrid%oneBasicFields, oneGrid%oneMicroFields)
     endif
     if (ccatt==1 ) then
        ! task 4 : mass transfer between gas and liquid
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,4,50,&
-            oneGrid%Basic, oneGrid%Micro)
+            oneGrid%oneBasicFields, oneGrid%oneMicroFields)
     endif
 
     !---------------------------------------------------
     ! Shallow  cumulus parameterization by Souza
     if (NNSHCU(ngrid)==1) then
-       call shcupa(oneGrid%Basic, oneGrid%Turb, oneGrid%Micro)
+       call shcupa(oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicroFields)
     end if
     !---------------------------------------------------
 
@@ -579,7 +579,7 @@ contains
        !  Update chemistry
        !----------------------------------------
        if (ichemi==1) then
-          call ozone(mzp, mxp, myp, ia, iz, ja, jz, ngrid, dtlt, oneGrid%Basic)
+          call ozone(mzp, mxp, myp, ia, iz, ja, jz, ngrid, dtlt, oneGrid%oneBasicFields)
        endif
     endif
 
@@ -587,31 +587,31 @@ contains
 
     if (iexev == 2) then
        call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'THS', &
-            oneGrid%Basic)
+            oneGrid%oneBasicFields)
     end if
 
     !  Sub-grid diffusion terms
     !----------------------------------------
-    if ((if_adap==0) .and. (OneGrid%Ramsin%ihorgrad==2)) then
-       call diffuse_brams31(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
-            oneGrid%Basic, oneGrid%Ramsin, oneGrid%Turb, oneGrid%Id, &
-            oneGrid%MicControlVars, oneGrid%Micro)
+    if ((if_adap==0) .and. (OneGrid%oneNamelistFile%ihorgrad==2)) then
+       call diffuse_brams31(oneGrid%oneScalarTable, oneGrid%oneScalarTableSize, &
+            oneGrid%oneBasicFields, oneGrid%oneNamelistFile, oneGrid%oneTurbFields, oneGrid%Id, &
+            oneGrid%oneMicVars, oneGrid%oneMicroFields)
     else
-       call diffuse(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, &
-            oneGrid%Turb, oneGrid%Ramsin, oneGrid%Id, &
-            oneGrid%MicControlVars, oneGrid%Micro)
+       call diffuse(oneGrid%oneScalarTable, oneGrid%oneScalarTableSize, oneGrid%oneBasicFields, &
+            oneGrid%oneTurbFields, oneGrid%oneNamelistFile, oneGrid%Id, &
+            oneGrid%oneMicVars, oneGrid%oneMicroFields)
     endif
 
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
 
     !- STILT-BRAMS coupling (ML)
     if (imassflx == 1) then
-       call prep_advflx_to_stilt(mzp,mxp,myp,ia,iz,ja,jz,ngrid, oneGrid%Basic)
+       call prep_advflx_to_stilt(mzp,mxp,myp,ia,iz,ja,jz,ngrid, oneGrid%oneBasicFields)
     end if
 
     !- large and subgrid scale forcing for shallow and deep cumulus
     if( NNQPARM(ngrid) >=2  ) then
-       call prepare_lsf(NNQPARM(ngrid), NNSHCU(ngrid),1, oneGrid%Basic)
+       call prepare_lsf(NNQPARM(ngrid), NNSHCU(ngrid),1, oneGrid%oneBasicFields)
     end if
 
     !- cumulus parameterizations options: G3d - GD-FIM and GF
@@ -686,8 +686,8 @@ contains
     !  Lateral velocity boundaries - radiative
     !-------------------------------------------
     call latbnd(mzp,mxp,myp,ia,iz,ja,jz,ibcon,nxtnest,ngrid,ibnd,jbnd, &
-         grid_g(ngrid)%lpu,grid_g(ngrid)%lpv,oneGrid%Basic%up,&
-         oneGrid%Basic%uc,tend%ut,oneGrid%Basic%vp,oneGrid%Basic%vc,&
+         grid_g(ngrid)%lpu,grid_g(ngrid)%lpv,oneGrid%oneBasicFields%up,&
+         oneGrid%oneBasicFields%uc,tend%ut,oneGrid%oneBasicFields%vp,oneGrid%oneBasicFields%vc,&
          tend%vt,grid_g(ngrid)%dxt,grid_g(ngrid)%dyt)
 
 !!$    call SynchronizedTimeStamp(TS_RK_RESTO) ! Exper1.2, 2021_12
@@ -728,12 +728,12 @@ contains
 
        if ( flag_Coriolis_in_every_RK_step ) then
           call corlos(mzp, mxp, myp, i0, j0, ia, iz, ja, jz, izu, jzv, &
-               tend%ut_rk, tend%vt_rk, oneGrid%Basic)
+               tend%ut_rk, tend%vt_rk, oneGrid%oneBasicFields)
        end if
 
        !  Buoyancy term for w equation
        !----------------------------------------
-       call buoyancy(tend%wt_rk, oneGrid%Basic, oneGrid%MicControlVars)
+       call buoyancy(tend%wt_rk, oneGrid%oneBasicFields, oneGrid%oneMicVars)
 
        if (dumpLocal) then
           call MsgDump(h//" starts exchanging borders of tend%tht_rk")
@@ -742,11 +742,11 @@ contains
 
        if ( l_rk > 1 ) then
           ! (not necessary in the first RK substep)
-          oneGrid%Basic%uc (:,:,:) = oneGrid%Basic%up (:,:,:)
-          oneGrid%Basic%vc (:,:,:) = oneGrid%Basic%vp (:,:,:)
-          oneGrid%Basic%wc (:,:,:) = oneGrid%Basic%wp (:,:,:)
-          oneGrid%Basic%pc (:,:,:) = oneGrid%Basic%pp (:,:,:)
-          oneGrid%Basic%thc(:,:,:) = oneGrid%Basic%thp(:,:,:)
+          oneGrid%oneBasicFields%uc (:,:,:) = oneGrid%oneBasicFields%up (:,:,:)
+          oneGrid%oneBasicFields%vc (:,:,:) = oneGrid%oneBasicFields%vp (:,:,:)
+          oneGrid%oneBasicFields%wc (:,:,:) = oneGrid%oneBasicFields%wp (:,:,:)
+          oneGrid%oneBasicFields%pc (:,:,:) = oneGrid%oneBasicFields%pp (:,:,:)
+          oneGrid%oneBasicFields%thc(:,:,:) = oneGrid%oneBasicFields%thp(:,:,:)
        end if
 
        !-  Acoustic small timesteps
@@ -759,18 +759,18 @@ contains
        call WaitSendRecvMsgs(oneGrid%AcoustNewThtSend, oneGrid%AcoustNewThtRecv)
 
        call update_long_rk(int(mxp*myp*mzp,int64),dtlt,rk_beta(l_rk) &
-            ,oneGrid%Basic%thc,oneGrid%Basic%thp  &
+            ,oneGrid%oneBasicFields%thc,oneGrid%oneBasicFields%thp  &
             ,tend%tht_rk)
 
        !- determine theta (dry potential temp.) for the buoyancy term:
        call theta_thp_rk(mzp,mxp,myp,ia,iz,ja,jz,"get_theta", &
-            oneGrid%Basic, oneGrid%MicControlVars, oneGrid%Micro)
+            oneGrid%oneBasicFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
 
        !-damping on vertical velocity to keep stability
        !MB: does this act on wc???
        if (vveldamp == 1) then
           call w_damping(mzp,mxp,myp,ia,iz,ja,jz,mynum, &
-               oneGrid%Basic)
+               oneGrid%oneBasicFields)
        end if
 !!$       call SynchronizedTimeStamp(TS_RK_RESTO) ! Exper1.2, 2021_12
 
@@ -796,10 +796,10 @@ contains
     if(advmnt == 1) then
        !- monotonic advection scheme
        call advmnt_driver(oneGrid, 'SCALAR',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,&
-            i0,j0,nodemxp,nodemyp,nodemzp,mynum, oneGrid%MicControlVars)
+            i0,j0,nodemxp,nodemyp,nodemzp,mynum, oneGrid%oneMicVars)
     elseif(advmnt == 0) then
        !- using the 2nd order forward upstream
-       call advectc(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, &
+       call advectc(oneGrid%oneScalarTable, oneGrid%oneScalarTableSize, oneGrid%oneBasicFields, &
             'SCALAR',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)
     elseif(advmnt == 3) then
        !- using the WS advection
@@ -811,67 +811,67 @@ contains
 
     !  Update scalars (water species, tke and tracers)
     !----------------------------------------
-    call predtr(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
+    call predtr(oneGrid%oneScalarTable, oneGrid%oneScalarTableSize)
 
     !-  copy current time into past time (u,v,w,pi,thetail)
     !---> thp   must be changed to THC for microphysics/bc/theta update
     !---> pp    must be changed to PC  for microphysics
     !---> wp    must be changed to WC  for microphysics
     !---> up,vp must be changed to UC,VC for output
-    oneGrid%Basic%up (:,:,:) = oneGrid%Basic%uc (:,:,:)
-    oneGrid%Basic%vp (:,:,:) = oneGrid%Basic%vc (:,:,:)
-    oneGrid%Basic%wp (:,:,:) = oneGrid%Basic%wc (:,:,:)
-    oneGrid%Basic%pp (:,:,:) = oneGrid%Basic%pc (:,:,:)
-    oneGrid%Basic%thp(:,:,:) = oneGrid%Basic%thc(:,:,:)
+    oneGrid%oneBasicFields%up (:,:,:) = oneGrid%oneBasicFields%uc (:,:,:)
+    oneGrid%oneBasicFields%vp (:,:,:) = oneGrid%oneBasicFields%vc (:,:,:)
+    oneGrid%oneBasicFields%wp (:,:,:) = oneGrid%oneBasicFields%wc (:,:,:)
+    oneGrid%oneBasicFields%pp (:,:,:) = oneGrid%oneBasicFields%pc (:,:,:)
+    oneGrid%oneBasicFields%thp(:,:,:) = oneGrid%oneBasicFields%thc(:,:,:)
     !---->
     !---->
     !
     !  Moisture variables positive definite
     !----------------------------------------
-    if     (oneGrid%MicControlVars%mcphys_type == 0) then
-       call negadj1(mzp,mxp,myp, oneGrid%Basic,oneGrid%MicControlVars,oneGrid%Micro)
+    if     (oneGrid%oneMicVars%mcphys_type == 0) then
+       call negadj1(mzp,mxp,myp, oneGrid%oneBasicFields,oneGrid%oneMicVars,oneGrid%oneMicroFields)
 
-    elseif(oneGrid%MicControlVars%mcphys_type == 1) then
-       call negadj1_2M_rams60(mzp,mxp,myp, oneGrid%Basic, oneGrid%MicControlVars, oneGrid%Micro)
+    elseif(oneGrid%oneMicVars%mcphys_type == 1) then
+       call negadj1_2M_rams60(mzp,mxp,myp, oneGrid%oneBasicFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
     endif
 
 !!$    call SynchronizedTimeStamp(TS_RK_RESTO) ! Exper1.2, 2021_12
 
     !  Microphysics (applied on THP, just updated)
     !----------------------------------------
-    if (oneGrid%MicControlVars%mcphys_type == 0 .and. oneGrid%MicControlVars%level==3) then
+    if (oneGrid%oneMicVars%mcphys_type == 0 .and. oneGrid%oneMicVars%level==3) then
        !- original Version used in a Generic IA32 machine
-       call micro(oneGrid%Basic, oneGrid%MicControlVars, oneGrid%Micro)
+       call micro(oneGrid%oneBasicFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
     endif
 
-    if (oneGrid%MicControlVars%mcphys_type == 1 .and. oneGrid%MicControlVars%level==3) then
+    if (oneGrid%oneMicVars%mcphys_type == 1 .and. oneGrid%oneMicVars%level==3) then
        !- 2M rams microphysics
-       call micro_2M_rams60(oneGrid%Basic,oneGrid%MicControlVars,oneGrid%Micro)
+       call micro_2M_rams60(oneGrid%oneBasicFields,oneGrid%oneMicVars,oneGrid%oneMicroFields)
 
-    elseif (oneGrid%MicControlVars%mcphys_type == 2 .or. oneGrid%MicControlVars%mcphys_type == 3 ) then
+    elseif (oneGrid%oneMicVars%mcphys_type == 2 .or. oneGrid%oneMicVars%mcphys_type == 3 ) then
        !- G. Thompson microphysics
-       call micro_thompson(oneGrid%Basic, oneGrid%MicControlVars, oneGrid%Micro)
-    elseif(oneGrid%MicControlVars%mcphys_type == 4 ) then
-       call micro_gfdl(oneGrid%Basic, oneGrid%Micro)
+       call micro_thompson(oneGrid%oneBasicFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
+    elseif(oneGrid%oneMicVars%mcphys_type == 4 ) then
+       call micro_gfdl(oneGrid%oneBasicFields, oneGrid%oneMicroFields)
     endif
     !----------------------------------------
 
 !!$    call SynchronizedTimeStamp(TS_PHYSICS) ! Exper1.2, 2021_12
 
     !- Thermodynamic diagnosis
-    if (oneGrid%MicControlVars%mcphys_type <= 1 .and. oneGrid%MicControlVars%level==3)  then
+    if (oneGrid%oneMicVars%mcphys_type <= 1 .and. oneGrid%oneMicVars%level==3)  then
        call thermo(mzp, mxp, myp, 1, mxp, 1, myp, &
-            oneGrid%Basic, oneGrid%MicControlVars, oneGrid%Micro)
+            oneGrid%oneBasicFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
     endif
 
     !  Apply scalar b.c.'s (THP is changed here)
     !----------------------------------------
-    call trsets(oneGrid%ScalarTab, oneGrid%ScalarTabSize, oneGrid%Basic, &
-         oneGrid%Turb,oneGrid%MicControlVars, oneGrid%Micro)
+    call trsets(oneGrid%oneScalarTable, oneGrid%oneScalarTableSize, oneGrid%oneBasicFields, &
+         oneGrid%oneTurbFields,oneGrid%oneMicVars, oneGrid%oneMicroFields)
 
     !---> THC must be changed to THP to include microphysics/trsets changes
     !---> for the next timestep
-    oneGrid%Basic%thc(:,:,:) = oneGrid%Basic%thp(:,:,:)
+    oneGrid%oneBasicFields%thc(:,:,:) = oneGrid%oneBasicFields%thp(:,:,:)
     !--->
 
     !  Lateral velocity boundaries - radiative
@@ -881,22 +881,22 @@ contains
     !  Velocity/pressure boundary conditions
     !----------------------------------------
     call vpsets(mzp,mxp,myp,ia,iz,ja,jz,ibcon,nstbot, &
-         oneGrid%Basic%up,oneGrid%Basic%vp,oneGrid%Basic%wp,&
-         oneGrid%Basic%pp,oneGrid%Basic%uc,oneGrid%Basic%vc,&
-         oneGrid%Basic%wc,oneGrid%Basic%pc,grid_g(ngrid)%dxu,&
+         oneGrid%oneBasicFields%up,oneGrid%oneBasicFields%vp,oneGrid%oneBasicFields%wp,&
+         oneGrid%oneBasicFields%pp,oneGrid%oneBasicFields%uc,oneGrid%oneBasicFields%vc,&
+         oneGrid%oneBasicFields%wc,oneGrid%oneBasicFields%pc,grid_g(ngrid)%dxu,&
          grid_g(ngrid)%dxm,grid_g(ngrid)%dyv,grid_g(ngrid)%dym,&
          grid_g(ngrid)%lpu,grid_g(ngrid)%lpv,grid_g(ngrid)%lpw, &
-         oneGrid%Basic)
+         oneGrid%oneBasicFields)
 
     !- call THERMO on the boundaries
     call thermo_boundary_driver((time+dtlongn(ngrid)), dtlong, &
          f_thermo_e(ngrid), f_thermo_w(ngrid), &
          f_thermo_s(ngrid), f_thermo_n(ngrid), &
-         nzp, mxp, myp, jdim, oneGrid%Basic, oneGrid%MicControlVars, oneGrid%Micro)
+         nzp, mxp, myp, jdim, oneGrid%oneBasicFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
 
     if (iexev == 2) then
        call get_true_air_density(mzp,mxp,myp,ia,iz,ja,jz,&
-            oneGrid%Basic,oneGrid%MicControlVars)
+            oneGrid%oneBasicFields,oneGrid%oneMicVars)
     end if
 
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
@@ -906,7 +906,7 @@ contains
     if (ccatt==1) then
        ! task 5 : sedimentation and mass transfer between clouds and rain
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,5,50,&
-            oneGrid%Basic, oneGrid%Micro)
+            oneGrid%oneBasicFields, oneGrid%oneMicroFields)
     endif
 
     !----------------------------------------
@@ -919,14 +919,14 @@ contains
           ! task 3 : production/loss by chemical processes and final updated
           !  of each specie
           call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,3,50,&
-               oneGrid%Basic, oneGrid%Micro)
+               oneGrid%oneBasicFields, oneGrid%oneMicroFields)
        endif
 
        !- call Matrix Aerosol Model
        !- using symmetric/sequential spliting operator
        if(AEROSOL==2) then
-          call MatrixDriver(ia,iz,ja,jz,mzp,mxp,myp, oneGrid%Basic, oneGrid%Turb, &
-               oneGrid%MicControlVars, oneGrid%Micro)
+          call MatrixDriver(ia,iz,ja,jz,mzp,mxp,myp, oneGrid%oneBasicFields, oneGrid%oneTurbFields, &
+               oneGrid%oneMicVars, oneGrid%oneMicroFields)
        endif
     endif
     if (ccatt==1 .and. aerosol == 1) then
@@ -940,7 +940,7 @@ contains
           ! Apply only for last finner grid
           if (ngrid==ngrids) then
              call le_fontes(ngrid, mzp, mxp, myp, &
-                  npatch, ia, iz, ja, jz, (time+dtlongn(1)), oneGrid%Basic)
+                  npatch, ia, iz, ja, jz, (time+dtlongn(1)), oneGrid%oneBasicFields)
           endif
        endif
        !EDF
@@ -948,11 +948,11 @@ contains
 
     !- windfarm
     call wind_farm_driver(ngrid,mzp,mxp,myp,ia,iz,ja,jz, &
-         oneGrid%Basic, oneGrid%Turb)
+         oneGrid%oneBasicFields, oneGrid%oneTurbFields)
 
     !- apply digital filter
     if (applyDF) then
-       call applyDigitalFilter(fileNameDF, dfVars, oneGrid%Basic, oneGrid%Control)
+       call applyDigitalFilter(fileNameDF, dfVars, oneGrid%oneBasicFields, oneGrid%oneControlVars)
     end if
 
 
@@ -975,9 +975,9 @@ contains
             ,varinit_g(ngrid)%varpf(:,:,:),varinit_g(ngrid)%vartf(:,:,:)  &
             ,varinit_g(ngrid)%varrf(:,:,:)                                &
             
-            ,oneGrid%Basic%up     (:,:,:)   ,oneGrid%Basic%vp  (:,:,:)  &
-            ,oneGrid%Basic%theta  (:,:,:)   ,oneGrid%Basic%rtp (:,:,:)  &
-            ,oneGrid%Basic%pp     (:,:,:)                                )
+            ,oneGrid%oneBasicFields%up     (:,:,:)   ,oneGrid%oneBasicFields%vp  (:,:,:)  &
+            ,oneGrid%oneBasicFields%theta  (:,:,:)   ,oneGrid%oneBasicFields%rtp (:,:,:)  &
+            ,oneGrid%oneBasicFields%pp     (:,:,:)                                )
     endif
 
 !!$    call SynchronizedTimeStamp(TS_PHYSICS) ! Exper1.2, 2021_12

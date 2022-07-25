@@ -265,26 +265,26 @@ contains
 
 
 
-  subroutine DumpNeighbourNodes(OneNeighbourNodes, varName)
-    type(NeighbourNodes), pointer :: OneNeighbourNodes
+  subroutine DumpNeighbourNodes(oneNeighbourNodes, varName)
+    type(NeighbourNodes), pointer :: oneNeighbourNodes
     character(len=*), intent(in) :: varName
     
     integer :: neigh
     character(len=8) :: c0
     character(len=*), parameter :: h="**(DumpNeighbourNodes)**"
 
-    if (.not. associated(OneNeighbourNodes)) then
+    if (.not. associated(oneNeighbourNodes)) then
        call MsgDump(h//" variable "//trim(varName)//" is not associated")
     else
-       write(c0,"(i8)") OneNeighbourNodes%nNeigh
+       write(c0,"(i8)") oneNeighbourNodes%nNeigh
        call MsgDump(h//" for variable "//trim(varName)//&
             " this node has "//trim(adjustl(c0))//&
             " neighbour MPI ranks:", .true.)
-       do neigh = 1, OneNeighbourNodes%nNeigh-1
-          write(c0,"(i8)") Brams2MpiProcNbr(OneNeighbourNodes%neigh(neigh))
+       do neigh = 1, oneNeighbourNodes%nNeigh-1
+          write(c0,"(i8)") Brams2MpiProcNbr(oneNeighbourNodes%neigh(neigh))
           call MsgDump(" "//trim(adjustl(c0))//",",.true.)
        end do
-       write(c0,"(i8)") Brams2MpiProcNbr(OneNeighbourNodes%neigh(neigh))
+       write(c0,"(i8)") Brams2MpiProcNbr(oneNeighbourNodes%neigh(neigh))
        call MsgDump(" "//trim(adjustl(c0)))
     end if
   end subroutine DumpNeighbourNodes
@@ -295,28 +295,28 @@ contains
 
 
 
-  subroutine DestroyNeighbourNodes(OneNeighbourNodes)
-    type(NeighbourNodes), pointer, intent(inout) :: OneNeighbourNodes
+  subroutine DestroyNeighbourNodes(oneNeighbourNodes)
+    type(NeighbourNodes), pointer, intent(inout) :: oneNeighbourNodes
 
     integer :: ierr
     character(len=8) :: c0
     character(len=*), parameter :: h="**(DestroyNeighbourNodes)**"
     
-    if (associated(OneNeighbourNodes)) then
-       deallocate(OneNeighbourNodes%neigh, stat=ierr)
+    if (associated(oneNeighbourNodes)) then
+       deallocate(oneNeighbourNodes%neigh, stat=ierr)
        if (ierr /= 0) then
           write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate OneNeighbourNodes%neigh fails with stat="//&
+          call fatal_error(h//" deallocate oneNeighbourNodes%neigh fails with stat="//&
                trim(adjustl(c0)))
        end if
-       deallocate(OneNeighbourNodes, stat=ierr)
+       deallocate(oneNeighbourNodes, stat=ierr)
        if (ierr /= 0) then
           write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate OneNeighbourNodes fails with stat="//&
+          call fatal_error(h//" deallocate oneNeighbourNodes fails with stat="//&
                trim(adjustl(c0)))
        end if
     end if
-    nullify(OneNeighbourNodes)
+    nullify(oneNeighbourNodes)
   end subroutine DestroyNeighbourNodes
 
 
@@ -324,7 +324,7 @@ contains
 
 
 
-  subroutine NodesToSendRecvMessages(thisNode, Neigh, GlobalOwn, &
+  subroutine NodesToSendRecvMessages(thisNode, oneNeighbourNodes, GlobalOwn, &
        xbToUpdate, xeToUpdate, ybToUpdate, yeToUpdate, &
        xbSend, xeSend, ybSend, yeSend, willSend, &
        xbRecv, xeRecv, ybRecv, yeRecv, willRecv, &
@@ -341,7 +341,7 @@ contains
     
     integer, intent(in) :: thisNode
     ! this rank BRAMS process number
-    type(NeighbourNodes), pointer, intent(in) :: Neigh
+    type(NeighbourNodes), pointer, intent(in) :: oneNeighbourNodes
     ! ranks that are neighbour to this rank
     type(DomainDecomp), pointer, intent(in)  :: GlobalOwn
     ! rectangular grid point regions owned by each rank
@@ -404,7 +404,7 @@ contains
 
     ! no messages if no neighbours
 
-    if (.not. associated(Neigh)) then
+    if (.not. associated(oneNeighbourNodes)) then
        if (dumpLocal) then
           call MsgDump(h//" no neighbour for "//trim(adjustl(varName)))
        end if
@@ -413,7 +413,7 @@ contains
 
     ! auxiliar variables
 
-    nNeigh = Neigh%nNeigh
+    nNeigh = oneNeighbourNodes%nNeigh
 
     ! this node will send messages to other node
     ! if the region of the other node to be updated
@@ -422,7 +422,7 @@ contains
     ! and the global indices that this node will send
 
     do i = 1, nNeigh
-       otherNode = Neigh%neigh(i)
+       otherNode = oneNeighbourNodes%neigh(i)
        if (dumpLocal) then
           write(c0,"(i8)") Brams2MpiProcNbr(otherNode)
           write(c1,"(i8)") Brams2MpiProcNbr(thisNode)
@@ -468,7 +468,7 @@ contains
     ! and the global indices to be received from each neighbour
 
     do i = 1, nNeigh
-       otherNode = Neigh%neigh(i)
+       otherNode = oneNeighbourNodes%neigh(i)
        call Inter(&
             xbToUpdate(thisNode), &
             xeToUpdate(thisNode), &
@@ -507,19 +507,19 @@ contains
 
 
 
-  subroutine IncludeDomainBoundaries(Neigh, GridSize, GlobalOwn, &
+  subroutine IncludeDomainBoundaries(oneNeighbourNodes, GridSize, GlobalOwn, &
        xbComm, xeComm, ybComm, yeComm, willComm, &
        varName)
 
-    type(NeighbourNodes), pointer, intent(in) :: Neigh
+    type(NeighbourNodes), pointer, intent(in) :: oneNeighbourNodes
     type(GridDims), pointer, intent(in) :: GridSize
     type(DomainDecomp), pointer, intent(in) :: GlobalOwn
 
-    integer, intent(inout) :: xbComm(:)          ! global index, dimensioned Neigh%nNeigh
-    integer, intent(inout) :: xeComm(:)          ! global index, dimensioned Neigh%nNeigh
-    integer, intent(inout) :: ybComm(:)          ! global index, dimensioned Neigh%nNeigh
-    integer, intent(inout) :: yeComm(:)          ! global index, dimensioned Neigh%nNeigh
-    logical, intent(inout) :: willComm(:)        ! global index, dimensioned Neigh%nNeigh
+    integer, intent(inout) :: xbComm(:)          ! global index, dimensioned oneNeighbourNodes%nNeigh
+    integer, intent(inout) :: xeComm(:)          ! global index, dimensioned oneNeighbourNodes%nNeigh
+    integer, intent(inout) :: ybComm(:)          ! global index, dimensioned oneNeighbourNodes%nNeigh
+    integer, intent(inout) :: yeComm(:)          ! global index, dimensioned oneNeighbourNodes%nNeigh
+    logical, intent(inout) :: willComm(:)        ! global index, dimensioned oneNeighbourNodes%nNeigh
 
     ! communication exchange name (variable of type message set)
 
@@ -538,14 +538,14 @@ contains
        call fatal_error(h//" starts with null GlobalOwn")
     end if
 
-    if (.not. associated(Neigh)) then
+    if (.not. associated(oneNeighbourNodes)) then
        return
     end if
 
-    do indNeigh = 1, Neigh%nNeigh
+    do indNeigh = 1, oneNeighbourNodes%nNeigh
        if (willComm(indNeigh)) then
           extend=.false.
-          proc = Neigh%neigh(indNeigh)
+          proc = oneNeighbourNodes%neigh(indNeigh)
           if (xbComm(indNeigh) == 2) then
              xbComm(indNeigh) = 1
              extend=.true.
@@ -583,16 +583,16 @@ contains
 
 
 
-  integer function GetNumberOfNeighbours(OneNeighbourNodes)
-    type(NeighbourNodes), pointer, intent(in) :: OneNeighbourNodes
+  integer function GetNumberOfNeighbours(oneNeighbourNodes)
+    type(NeighbourNodes), pointer, intent(in) :: oneNeighbourNodes
     integer :: neigh
     character(len=8) :: c0
     character(len=*), parameter :: h="**(GetNumberOfNeighbours)**"
 
-    if (.not. associated(OneNeighbourNodes)) then
+    if (.not. associated(oneNeighbourNodes)) then
        call MsgDump(h//" empty")
     else
-       GetNumberOfNeighbours = OneNeighbourNodes%nNeigh
+       GetNumberOfNeighbours = oneNeighbourNodes%nNeigh
     end if
   end function GetNumberOfNeighbours
 end module ModNeighbourNodes

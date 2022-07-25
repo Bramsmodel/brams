@@ -626,8 +626,8 @@ contains
     !if(initial.eq.2.and.time.lt.dtlt) return
 
     gridId=oneGrid%Id
-    idiffk=oneGrid%Ramsin%idiffk(gridId)
-    akmin=oneGrid%Ramsin%akmin(gridId)
+    idiffk=oneGrid%oneNamelistFile%idiffk(gridId)
+    akmin=oneGrid%oneNamelistFile%akmin(gridId)
 
     if(mod(time,confrq) < dtlt  .or. time < 0.01 .or. abs(time-cptime) < 0.01) then
 
@@ -706,16 +706,16 @@ contains
                ,grid_length                  & !
                ,autoconv                     & !
                ,aerovap                      & !
-               ,oneGrid%Basic%dn0           & !
+               ,oneGrid%oneBasicFields%dn0           & !
                ,cuparm_g(ngrid)%CONPRR       & !
-               ,oneGrid%Basic%up            & !
-               ,oneGrid%Basic%vp            & !
-               ,oneGrid%Basic%theta         & !
-               ,oneGrid%Basic%thp           & !
-               ,oneGrid%Basic%pp            & !
-               ,oneGrid%Basic%pi0           & !
-               ,oneGrid%Basic%wp            & !
-               ,oneGrid%Basic%rv            & !
+               ,oneGrid%oneBasicFields%up            & !
+               ,oneGrid%oneBasicFields%vp            & !
+               ,oneGrid%oneBasicFields%theta         & !
+               ,oneGrid%oneBasicFields%thp           & !
+               ,oneGrid%oneBasicFields%pp            & !
+               ,oneGrid%oneBasicFields%pi0           & !
+               ,oneGrid%oneBasicFields%wp            & !
+               ,oneGrid%oneBasicFields%rv            & !
                ,grid_g(ngrid)%RTGT           & !
                ,tend%PT                      & !
                ,XL                    & !
@@ -763,14 +763,14 @@ contains
                ,cuforc_g(ngrid)%lsfrt    & ! forcing for rv deep
                ,cuforc_sh_g(ngrid)%lsfth   & ! forcing for theta shallow
                ,cuforc_sh_g(ngrid)%lsfrt   & ! forcing for rv shallow
-               ,oneGrid%MicControlVars%level                      &
-               ,oneGrid%Micro%rcp         & ! liquid water
-               ,oneGrid%Micro%rrp         & ! pristine
-               ,oneGrid%Micro%rpp         &
-               ,oneGrid%Micro%rsp         &
-               ,oneGrid%Micro%rap         &
-               ,oneGrid%Micro%rgp         &
-               ,oneGrid%Micro%rhp         &
+               ,oneGrid%oneMicVars%level                      &
+               ,oneGrid%oneMicroFields%rcp         & ! liquid water
+               ,oneGrid%oneMicroFields%rrp         & ! pristine
+               ,oneGrid%oneMicroFields%rpp         &
+               ,oneGrid%oneMicroFields%rsp         &
+               ,oneGrid%oneMicroFields%rap         &
+               ,oneGrid%oneMicroFields%rgp         &
+               ,oneGrid%oneMicroFields%rhp         &
                ,aot500                     & ! aot at 500nm
                )
           !
@@ -783,7 +783,7 @@ contains
           !
           !- call routine to do the lateral spread, smooths and limiters/fixers
           call conv_grell_spread3d_brams(mzp,mxp,myp,ia,iz,ja,jz,dtlt,&
-               oneGrid%MicControlVars%level,cugd_avedx&
+               oneGrid%oneMicVars%level,cugd_avedx&
                ,XL    &
                ,CP    &
                ,G    &
@@ -791,19 +791,19 @@ contains
                ,p00                          &
                ,cpor                         &
                ,cuparm_g(ngrid)%CONPRR       &!preci rate
-               ,oneGrid%Basic%theta         &
-               ,oneGrid%Basic%thp           &
-               ,oneGrid%Basic%pp            &
-               ,oneGrid%Basic%pi0           &
-               ,oneGrid%Basic%rv            &
+               ,oneGrid%oneBasicFields%theta         &
+               ,oneGrid%oneBasicFields%thp           &
+               ,oneGrid%oneBasicFields%pp            &
+               ,oneGrid%oneBasicFields%pi0           &
+               ,oneGrid%oneBasicFields%rv            &
                ,tend%PT                      &
-               ,oneGrid%Micro%rcp           & ! liquid water
-               ,oneGrid%Micro%rrp           & ! pristine
-               ,oneGrid%Micro%rpp           &
-               ,oneGrid%Micro%rsp           &
-               ,oneGrid%Micro%rap           &
-               ,oneGrid%Micro%rgp           &
-               ,oneGrid%Micro%rhp           &
+               ,oneGrid%oneMicroFields%rcp           & ! liquid water
+               ,oneGrid%oneMicroFields%rrp           & ! pristine
+               ,oneGrid%oneMicroFields%rpp           &
+               ,oneGrid%oneMicroFields%rsp           &
+               ,oneGrid%oneMicroFields%rap           &
+               ,oneGrid%oneMicroFields%rgp           &
+               ,oneGrid%oneMicroFields%rhp           &
                                 !      
                ,g3d_g(ngrid)%THSRC           & ! temp tendency
                ,g3d_g(ngrid)%RTSRC           & ! rv tendency
@@ -837,17 +837,17 @@ contains
                ,grid_length                    & !
                ,autoconv                       & ! Const
                ,aerovap                        & ! Const
-               ,oneGrid%Basic%dn0             & !3d ok
+               ,oneGrid%oneBasicFields%dn0             & !3d ok
                ,cuparm_g(ngrid)%CONPRR         & !2d ok
-               ,oneGrid%Basic%up              & !3d ok
-               ,oneGrid%Basic%vp              & !3d ok
-               ,oneGrid%Basic%theta           & !3d ok
-               ,oneGrid%Basic%thp             & !3d ok
-               ,oneGrid%Basic%pp              & !3d ok
-               ,oneGrid%Basic%pi0             & !3d ok
-               ,oneGrid%Basic%wp              & !3d ok
-               ,oneGrid%Basic%rv              & !3d ok
-               ,oneGrid%Basic%rtp             & !3d ok
+               ,oneGrid%oneBasicFields%up              & !3d ok
+               ,oneGrid%oneBasicFields%vp              & !3d ok
+               ,oneGrid%oneBasicFields%theta           & !3d ok
+               ,oneGrid%oneBasicFields%thp             & !3d ok
+               ,oneGrid%oneBasicFields%pp              & !3d ok
+               ,oneGrid%oneBasicFields%pi0             & !3d ok
+               ,oneGrid%oneBasicFields%wp              & !3d ok
+               ,oneGrid%oneBasicFields%rv              & !3d ok
+               ,oneGrid%oneBasicFields%rtp             & !3d ok
                ,grid_g(ngrid)%rtgt             & !2d ok
                ,tend%pt                        & !3d !*** borda
                ,xl                             & ! Const
@@ -899,16 +899,16 @@ contains
                ,cuforc_g(ngrid)%lsfrt        & !3d *** borda forcing for rv deep
                ,cuforc_sh_g(ngrid)%lsfth       & !3d *** borda forcing for theta shallow
                ,cuforc_sh_g(ngrid)%lsfrt       & !3d *** borda forcing for rv shallow
-               ,oneGrid%MicControlVars%level   &
-               ,oneGrid%Micro%rcp             & !3d ok ! liquid water
-               ,oneGrid%Micro%rrp             & !3d ok ! pristine
-               ,oneGrid%Micro%rpp             & !3d ok
-               ,oneGrid%Micro%rsp             & !3d ok
-               ,oneGrid%Micro%rgp             & !3d ok
+               ,oneGrid%oneMicVars%level   &
+               ,oneGrid%oneMicroFields%rcp             & !3d ok ! liquid water
+               ,oneGrid%oneMicroFields%rrp             & !3d ok ! pristine
+               ,oneGrid%oneMicroFields%rpp             & !3d ok
+               ,oneGrid%oneMicroFields%rsp             & !3d ok
+               ,oneGrid%oneMicroFields%rgp             & !3d ok
                ,aot500                         &! aot at 500nm
-               ,oneGrid%Turb%sflux_r          & !2d *** borda
-               ,oneGrid%Turb%sflux_t          & !2d *** borda
-               ,oneGrid%Turb%tkep             & !3d ok
+               ,oneGrid%oneTurbFields%sflux_r          & !2d *** borda
+               ,oneGrid%oneTurbFields%sflux_t          & !2d *** borda
+               ,oneGrid%oneTurbFields%tkep             & !3d ok
                ,TKMIN                          &
                ,akmin                   &
                                 !- for convective transport-start
@@ -957,10 +957,10 @@ contains
           if(isfcl == 5) then
              temp2m(:,:) = jules_g(ngrid)%t2mj(:,:)
           else
-             temp2m(:,:) =0.5*( oneGrid%Basic%theta(1,:,:)* &
-                  (oneGrid%Basic%pp(1,:,:)+oneGrid%Basic%pi0(1,:,:))/cp + &
-                  oneGrid%Basic%theta(2,:,:)*&
-                  (oneGrid%Basic%pp(2,:,:)+oneGrid%Basic%pi0(2,:,:))/cp )
+             temp2m(:,:) =0.5*( oneGrid%oneBasicFields%theta(1,:,:)* &
+                  (oneGrid%oneBasicFields%pp(1,:,:)+oneGrid%oneBasicFields%pi0(1,:,:))/cp + &
+                  oneGrid%oneBasicFields%theta(2,:,:)*&
+                  (oneGrid%oneBasicFields%pp(2,:,:)+oneGrid%oneBasicFields%pi0(2,:,:))/cp )
           endif
 
           if(iinshcu == 3) ishallow_g3=1
@@ -971,17 +971,17 @@ contains
                ,grid_length                  & !
                ,autoconv                     & !
                ,aerovap                      & !
-               ,oneGrid%Basic%dn0           & !
+               ,oneGrid%oneBasicFields%dn0           & !
                ,cuparm_g(ngrid)%CONPRR       & !
-               ,oneGrid%Basic%up            & !
-               ,oneGrid%Basic%vp            & !
-               ,oneGrid%Basic%theta         & !
-               ,oneGrid%Basic%thp           & !
-               ,oneGrid%Basic%pp            & !
-               ,oneGrid%Basic%pi0           & !
-               ,oneGrid%Basic%wp            & !
-               ,oneGrid%Basic%rv            & !
-               ,oneGrid%Basic%rtp           & !
+               ,oneGrid%oneBasicFields%up            & !
+               ,oneGrid%oneBasicFields%vp            & !
+               ,oneGrid%oneBasicFields%theta         & !
+               ,oneGrid%oneBasicFields%thp           & !
+               ,oneGrid%oneBasicFields%pp            & !
+               ,oneGrid%oneBasicFields%pi0           & !
+               ,oneGrid%oneBasicFields%wp            & !
+               ,oneGrid%oneBasicFields%rv            & !
+               ,oneGrid%oneBasicFields%rtp           & !
                ,grid_g(ngrid)%RTGT           & !
                ,tend%PT                      & !
                ,XL                    & !
@@ -1029,13 +1029,13 @@ contains
                ,cuforc_g(ngrid)%lsfrt   & ! forcing for rv deep
                ,cuforc_sh_g(ngrid)%lsfth   & ! forcing for theta shallow
                ,cuforc_sh_g(ngrid)%lsfrt  & ! forcing for rv shallow
-               ,oneGrid%MicControlVars%level                     &
-               ,oneGrid%Micro%rcp        & ! liquid water
+               ,oneGrid%oneMicVars%level                     &
+               ,oneGrid%oneMicroFields%rcp        & ! liquid water
                ,aot500                    &! aot at 500nm
                ,temp2m                    &! aot at 500nm
-               ,oneGrid%Turb%sflux_r     &
-               ,oneGrid%Turb%sflux_t     &
-               ,oneGrid%Turb%tkep        &
+               ,oneGrid%oneTurbFields%sflux_r     &
+               ,oneGrid%oneTurbFields%sflux_t     &
+               ,oneGrid%oneTurbFields%tkep        &
                ,TKMIN                     &
                ,akmin              &
                ,do_cupar_mcphys_coupling  &
@@ -1117,11 +1117,11 @@ contains
           enddo
           if( idiffk /= 2 .and. idiffk /= 3) then 
              if(idiffk == 7 ) then          
-                kpbl (:,:) = nint(oneGrid%Turb%kpbl(:,:))
+                kpbl (:,:) = nint(oneGrid%oneTurbFields%kpbl(:,:))
              else
                 do j=1,myp
                    do i=1,mxp
-                      call get_zi_gf2018(mzp,tkmin,oneGrid%Turb%tkep(:,i,j),zmn(:,ngrid) &
+                      call get_zi_gf2018(mzp,tkmin,oneGrid%oneTurbFields%tkep(:,i,j),zmn(:,ngrid) &
                            ,grid_g(ngrid)%rtgt(i,j)                          &
                            ,grid_g(ngrid)%topt(i,j),kpbl(i,j) )
                       kpbl (i,j) = max(1,min(kpbl (i,j),mzp-1))
@@ -1140,15 +1140,15 @@ contains
                    kr=k+1
                    zm3d   (k,i,j) = zmn(kr,ngrid)*grid_g(ngrid)%rtgt(i,j) !m - height above local terrain
                    zt3d   (k,i,j) = ztn(kr,ngrid)*grid_g(ngrid)%rtgt(i,j) !m
-                   dm3d   (k,i,j) = oneGrid%Basic%dn0  (kr,i,j) !kg/m3
-                   rvap   (k,i,j) = oneGrid%Basic%rv   (kr,i,j) !kg/kg
+                   dm3d   (k,i,j) = oneGrid%oneBasicFields%dn0  (kr,i,j) !kg/m3
+                   rvap   (k,i,j) = oneGrid%oneBasicFields%rv   (kr,i,j) !kg/kg
 
-                   theta2temp     = (oneGrid%Basic%pp(kr,i,j)+oneGrid%Basic%pi0(kr,i,j))/cp   !K
-                   temp   (k,i,j) = oneGrid%Basic%theta(kr,i,j)* theta2temp
-                   press  (k,i,j) = ((oneGrid%Basic%pp(kr,i,j)+oneGrid%Basic%pi0(kr,i,j))/cp)**cpor*p00 !Pa
-                   up     (k,i,j) = oneGrid%Basic%up(kr,i,j) !m/s
-                   vp     (k,i,j) = oneGrid%Basic%vp(kr,i,j) !m/s
-                   wp     (k,i,j) = oneGrid%Basic%wp(kr,i,j)*(-g*oneGrid%Basic%dn0(kr,i,j)) ! omega Pa/s
+                   theta2temp     = (oneGrid%oneBasicFields%pp(kr,i,j)+oneGrid%oneBasicFields%pi0(kr,i,j))/cp   !K
+                   temp   (k,i,j) = oneGrid%oneBasicFields%theta(kr,i,j)* theta2temp
+                   press  (k,i,j) = ((oneGrid%oneBasicFields%pp(kr,i,j)+oneGrid%oneBasicFields%pi0(kr,i,j))/cp)**cpor*p00 !Pa
+                   up     (k,i,j) = oneGrid%oneBasicFields%up(kr,i,j) !m/s
+                   vp     (k,i,j) = oneGrid%oneBasicFields%vp(kr,i,j) !m/s
+                   wp     (k,i,j) = oneGrid%oneBasicFields%wp(kr,i,j)*(-g*oneGrid%oneBasicFields%dn0(kr,i,j)) ! omega Pa/s
 
                    gsf_t (k,i,j) = (cuforc_g   (ngrid)%lsfth(kr,i,j) + radiate_g(ngrid)%fthrd(kr,i,j))* theta2temp ! Adv+Rad, K/s
                    gsf_q (k,i,j) =  cuforc_g   (ngrid)%lsfrt(kr,i,j)              !kg/kg/s  Adv only
@@ -1177,8 +1177,8 @@ contains
 
           do j=1,myp
              do i=1,mxp
-                sfc_press(i,j) = 0.5*( ((oneGrid%Basic%pp(1,i,j)+oneGrid%Basic%pi0(1,i,j))/cp)**cpor*p00 +  &
-                     ((oneGrid%Basic%pp(2,i,j)+oneGrid%Basic%pi0(2,i,j))/cp)**cpor*p00 ) !Pa
+                sfc_press(i,j) = 0.5*( ((oneGrid%oneBasicFields%pp(1,i,j)+oneGrid%oneBasicFields%pi0(1,i,j))/cp)**cpor*p00 +  &
+                     ((oneGrid%oneBasicFields%pp(2,i,j)+oneGrid%oneBasicFields%pi0(2,i,j))/cp)**cpor*p00 ) !Pa
 
                 xland(i,j) = leaf_g(ngrid)%patch_area(i,j,1) ! water = 1, land < 1
                 lons (i,j) = grid_g(ngrid)%glon(i,j)
@@ -1199,10 +1199,10 @@ contains
           if(isfcl == 5 .and.  time > dtlt ) then
              temp2m(:,:) = jules_g(ngrid)%t2mj(:,:) !K
           else
-             temp2m(:,:) =0.5*(oneGrid%Basic%theta(1,:,:)* &
-                  (oneGrid%Basic%pp(1,:,:)+oneGrid%Basic%pi0(1,:,:))/cp + &
-                  oneGrid%Basic%theta(2,:,:)*&
-                  (oneGrid%Basic%pp(2,:,:)+oneGrid%Basic%pi0(2,:,:))/cp ) !Kelvin
+             temp2m(:,:) =0.5*(oneGrid%oneBasicFields%theta(1,:,:)* &
+                  (oneGrid%oneBasicFields%pp(1,:,:)+oneGrid%oneBasicFields%pi0(1,:,:))/cp + &
+                  oneGrid%oneBasicFields%theta(2,:,:)*&
+                  (oneGrid%oneBasicFields%pp(2,:,:)+oneGrid%oneBasicFields%pi0(2,:,:))/cp ) !Kelvin
           endif
 
           !- call the driver routine to apply the parameterization
@@ -1223,8 +1223,8 @@ contains
                ,lats        &
                ,aot500      &
                ,temp2m      &
-               ,oneGrid%Turb%sflux_r &
-               ,oneGrid%Turb%sflux_t &
+               ,oneGrid%oneTurbFields%sflux_r &
+               ,oneGrid%oneTurbFields%sflux_t &
                ,grid_g(ngrid)%topt    &
                ,xland                 &
                ,sfc_press   &
@@ -1338,7 +1338,7 @@ contains
           endif
 
           !-- converting Dtemp/Dt to Dtheta/ Dt (temp = cp * theta/exner function) 
-          g3d_g(ngrid)%THSRC = g3d_g(ngrid)%THSRC * cp / (oneGrid%Basic%pp + oneGrid%Basic%pi0)
+          g3d_g(ngrid)%THSRC = g3d_g(ngrid)%THSRC * cp / (oneGrid%oneBasicFields%pp + oneGrid%oneBasicFields%pi0)
 
           if( icumulus_gf(deep) == 1) then 
              do j=1,myp
@@ -1483,12 +1483,12 @@ contains
     if(do_cupar_mcphys_coupling) then
        call cupar2mcphysics(mzp,mxp,myp,ia,iz,ja,jz,ngrid,dtlt,&
             g3d_g  (ngrid)%clsrc   ,&
-            oneGrid%Basic%theta   ,&
-            oneGrid%Basic%pp      ,&
-            oneGrid%Basic%pi0     ,&
-            oneGrid%Basic%dn0, &
-            oneGrid%MicControlVars,&
-            oneGrid%Micro)
+            oneGrid%oneBasicFields%theta   ,&
+            oneGrid%oneBasicFields%pp      ,&
+            oneGrid%oneBasicFields%pi0     ,&
+            oneGrid%oneBasicFields%dn0, &
+            oneGrid%oneMicVars,&
+            oneGrid%oneMicroFields)
     else
        !if there is not direct coupling, send cloud/ice source to rtotal tendency
        call accum(int(mxp*myp*mzp,i8), tend%rtt, g3d_g(ngrid)%clsrc)

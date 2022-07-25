@@ -102,11 +102,11 @@ module ModCarmaDriver
 contains
 
   subroutine carma_driver(mzp, mxp, myp, ia, iz, ja, jz, mynum, &
-       oneBasicFields, oneMicControl, oneMicroFields)
+       oneBasicFields, oneMicVars, oneMicroFields)
     ! arguments:
     integer, intent(in) :: mzp, mxp, myp, ia, iz, ja, jz, mynum
     type(BasicFields), pointer, intent(in) :: oneBasicFields
-    type(MicControl), pointer, intent(in) :: oneMicControl
+    type(MicControl), pointer, intent(in) :: oneMicVars
     type(MicroFields), pointer, intent(in) :: oneMicroFields
     
     ! local variables:
@@ -234,7 +234,7 @@ contains
          ,lwl  &
          ,iwl  &
          ,ice_frac,  &
-         oneBasicFields, oneMicControl, oneMicroFields)
+         oneBasicFields, oneMicVars, oneMicroFields)
 
     !- CARMA Radiation
 
@@ -548,10 +548,10 @@ contains
        , lwl             &
        , iwl             &
        , ice_frac,      &
-       oneBasicFields, oneMicControl, oneMicroFields)
+       oneBasicFields, oneMicVars, oneMicroFields)
     integer, intent(in) :: m1,m2,m3,ia,iz,ja,jz
     type(BasicFields), pointer, intent(in) :: oneBasicFields
-    type(MicControl), pointer, intent(in) :: oneMicControl
+    type(MicControl), pointer, intent(in) :: oneMicVars
     type(MicroFields), pointer, intent(in) :: oneMicroFields
     
     real, intent(out), dimension(m1,m2,m3) :: cloud_fraction !cloud_fraction
@@ -804,14 +804,14 @@ contains
 
     dummy_vec = 0.0
     ! if level == 1 do nothing
-    if (oneMicControl%level==2) then
+    if (oneMicVars%level==2) then
        lwl(1:m1,ia:iz,ja:jz) = oneMicroFields%rcp(1:m1,ia:iz,ja:jz)
 
        if (nnqparm(ngrid)/=0) then
           rain(ia:iz,ja:jz)= cuparm_g(ngrid)%conprr(ia:iz,ja:jz)* 3600.    
        endif
 
-    elseif (oneMicControl%level>=3) then
+    elseif (oneMicVars%level>=3) then
 
        if (nnqparm(ngrid)/=0) then
           rain(ia:iz,ja:jz) = cuparm_g(ngrid)%conprr(ia:iz,ja:jz) + &
@@ -821,9 +821,9 @@ contains
        endif
        rain(ia:iz,ja:jz) = rain(ia:iz,ja:jz)*3600.
 
-       if (oneMicControl%icloud>0) lwl(1:m1,ia:iz,ja:jz) = lwl(1:m1,ia:iz,ja:jz) + oneMicroFields%rcp(1:m1,ia:iz,ja:jz)
-       if (oneMicControl%igraup>0) then
-          if(oneMicControl%mcphys_type <= 1) then
+       if (oneMicVars%icloud>0) lwl(1:m1,ia:iz,ja:jz) = lwl(1:m1,ia:iz,ja:jz) + oneMicroFields%rcp(1:m1,ia:iz,ja:jz)
+       if (oneMicVars%igraup>0) then
+          if(oneMicVars%mcphys_type <= 1) then
              do k=1,m1
                 do i=ia,iz
                    do j=ja,jz
@@ -831,9 +831,9 @@ contains
                    enddo
                 enddo
              enddo
-          elseif(oneMicControl%mcphys_type == 2 .or. &
-               oneMicControl%mcphys_type ==3 .or. &
-               oneMicControl%mcphys_type ==4) then  !srf -gthompson microphysics/gfdl - graupel only in ice phase
+          elseif(oneMicVars%mcphys_type == 2 .or. &
+               oneMicVars%mcphys_type ==3 .or. &
+               oneMicVars%mcphys_type ==4) then  !srf -gthompson microphysics/gfdl - graupel only in ice phase
              dummy_vec=0.0
           endif
           lwl(1:m1,ia:iz,ja:jz) = dummy_vec(1:m1,ia:iz,ja:jz)*oneMicroFields%rgp(1:m1,ia:iz,ja:jz) &
@@ -842,7 +842,7 @@ contains
           iwl(1:m1,ia:iz,ja:jz) = dummy_vec(1:m1,ia:iz,ja:jz)*oneMicroFields%rgp(1:m1,ia:iz,ja:jz) &
                + iwl(1:m1,ia:iz,ja:jz) !kg/kg
        endif
-       if (oneMicControl%ihail>0) then
+       if (oneMicVars%ihail>0) then
           dummy_vec = 0.
           do k=1,m1
              do i=ia,iz
@@ -860,13 +860,13 @@ contains
           iwl(1:m1,ia:iz,ja:jz) = dummy_vec(1:m1,ia:iz,ja:jz)*oneMicroFields%rhp(1:m1,ia:iz,ja:jz) &
                + iwl(1:m1,ia:iz,ja:jz)   !kg/kg
        endif
-       if (oneMicControl%iaggr>0) &
+       if (oneMicVars%iaggr>0) &
             iwl(1:m1,ia:iz,ja:jz) = iwl(1:m1,ia:iz,ja:jz) + oneMicroFields%rap(1:m1,ia:iz,ja:jz)   !kg/kg
 
-       if (oneMicControl%isnow>0) &
+       if (oneMicVars%isnow>0) &
             iwl(1:m1,ia:iz,ja:jz) = iwl(1:m1,ia:iz,ja:jz) + oneMicroFields%rsp(1:m1,ia:iz,ja:jz)   !kg/kg
 
-       if (oneMicControl%ipris>0) &
+       if (oneMicVars%ipris>0) &
             iwl(1:m1,ia:iz,ja:jz) = iwl(1:m1,ia:iz,ja:jz) + oneMicroFields%rpp(1:m1,ia:iz,ja:jz)  !kg/kg
     endif
     !- making direct couplig between liq/ice water from cupar to radiation

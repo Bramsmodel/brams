@@ -162,16 +162,16 @@ contains
 
        ! open grads files
        if(IPOS==2) then
-          call OpenGradsBinaryFile(OneGrid%Ramsin, &
+          call OpenGradsBinaryFile(OneGrid%oneNamelistFile, &
                oneAllPostTypes%allGrids(igrid)%pg, &
                oneAllPostTypes%allGrids(igrid)%bg, igrid)
-          call OpenGradsControlFile(OneGrid%Ramsin, &
+          call OpenGradsControlFile(OneGrid%oneNamelistFile, &
                oneAllPostTypes%allGrids(igrid)%pg, &
                oneAllPostTypes%allGrids(igrid)%bg, igrid)
        endif
 #ifdef cdf
        if(IPOS==3) then
-          call OpenNetCDFBinaryFile(OneGrid%Ramsin, &
+          call OpenNetCDFBinaryFile(OneGrid%oneNamelistFile, &
                oneAllPostTypes%allGrids(igrid)%pg, &
                oneAllPostTypes%allGrids(igrid)%bg, igrid)
        endif
@@ -195,30 +195,30 @@ contains
        call UpdateVerticals(&
             oneAllPostTypes%allGrids(igrid)%bg, &
             oneAllPostTypes%allGrids(igrid)%pg, &
-            OneGrid%Ramsin, &
-            OneGrid%Basic, &
-            OneGrid%Turb)
+            OneGrid%oneNamelistFile, &
+            OneGrid%oneBasicFields, &
+            OneGrid%oneTurbFields)
        ! post process each desired field and
        ! write resulting field to grads binary file
-       call initialize_post_variables(OneGrid%Ramsin)
+       call initialize_post_variables(OneGrid%oneNamelistFile)
 #ifdef cdf
        if(IPOS==3) then
-          call FillNetcdfVarControlFile(OneGrid%Ramsin, &
+          call FillNetcdfVarControlFile(OneGrid%oneNamelistFile, &
                oneAllPostTypes%allGrids(igrid)%pg, &
                oneAllPostTypes%allGrids(igrid)%bg)
        endif
 #endif
-       do ivp = 1, OneGrid%Ramsin%nvp
+       do ivp = 1, OneGrid%oneNamelistFile%nvp
           if (dumpLocal) then
              call MsgDump (h // " variable " // &
-                  trim(OneGrid%Ramsin%vp(ivp)))
+                  trim(OneGrid%oneNamelistFile%vp(ivp)))
           end if
-          call PostOneField(trim(OneGrid%Ramsin%vp(ivp)), &
+          call PostOneField(trim(OneGrid%oneNamelistFile%vp(ivp)), &
                oneAllPostTypes%allGrids(igrid)%bg, &
                oneAllPostTypes%allGrids(igrid)%pg, &
-               OneGrid%Ramsin, &
-               OneGrid%Basic,&
-               OneGrid%Turb, OneGrid%MicControlVars)
+               OneGrid%oneNamelistFile, &
+               OneGrid%oneBasicFields,&
+               OneGrid%oneTurbFields, OneGrid%oneMicVars)
        end do
        call finalize_post_variables()
        ! control file contents

@@ -63,9 +63,9 @@ contains
 
 
 
-  function CreateTurbFields(oneNodeDims, oneNamelistFile, gridId, createAverage) result(res)
+  function CreateTurbFields(oneNodeDimensions, oneNamelistFile, gridId, createAverage) result(res)
     ! createAverage iff creating average fields
-    type(NodeDimensions), pointer, intent(in) :: oneNodeDims
+    type(NodeDimensions), pointer, intent(in) :: oneNodeDimensions
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     integer, intent(in) :: gridId
     logical, intent(in) :: createAverage
@@ -80,9 +80,9 @@ contains
     character(len=*), parameter :: h="**(CreateTurbFields)**"
     logical, parameter :: dumpLocal=.false.
 
-    mzp=oneNodeDims%mzp
-    mxp=oneNodeDims%mxp
-    myp=oneNodeDims%myp
+    mzp=oneNodeDimensions%mzp
+    mxp=oneNodeDimensions%mxp
+    myp=oneNodeDimensions%myp
 
     ! whenever creating average fields, allocate full size fields
     ! only when average fields will be output

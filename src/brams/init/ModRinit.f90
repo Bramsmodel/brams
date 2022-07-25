@@ -367,11 +367,11 @@ contains
 
 
   subroutine FieldInit(initflg, oneBasicFields, &
-       oneTurbFields, oneMicControl, oneMicroFields)
+       oneTurbFields, oneMicVars, oneMicroFields)
     integer, intent(in) :: initflg
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
-    type(MicControl), pointer, intent(in) :: oneMicControl
+    type(MicControl), pointer, intent(in) :: oneMicVars
     type(MicroFields), pointer, intent(in) :: oneMicroFields
 
     character(len=*), parameter :: h="**(FieldInit)**"
@@ -385,13 +385,13 @@ contains
        oneBasicFields%pp = oneBasicFields%pc
 
        if(initflg==1) then
-          if(oneMicControl%icloud>=1) oneMicroFields%rcp = 0.
-          if(oneMicControl%irain>=1)  oneMicroFields%rrp = 0.
-          if(oneMicControl%ipris>=1)  oneMicroFields%rpp = 0.
-          if(oneMicControl%isnow>=1)  oneMicroFields%rsp = 0.
-          if(oneMicControl%iaggr>=1)  oneMicroFields%rap = 0.
-          if(oneMicControl%igraup>=1) oneMicroFields%rgp = 0.
-          if(oneMicControl%ihail>=1)  oneMicroFields%rhp = 0.
+          if(oneMicVars%icloud>=1) oneMicroFields%rcp = 0.
+          if(oneMicVars%irain>=1)  oneMicroFields%rrp = 0.
+          if(oneMicVars%ipris>=1)  oneMicroFields%rpp = 0.
+          if(oneMicVars%isnow>=1)  oneMicroFields%rsp = 0.
+          if(oneMicVars%iaggr>=1)  oneMicroFields%rap = 0.
+          if(oneMicVars%igraup>=1) oneMicroFields%rgp = 0.
+          if(oneMicVars%ihail>=1)  oneMicroFields%rhp = 0.
           oneBasicFields%wp = 0.
        endif
 

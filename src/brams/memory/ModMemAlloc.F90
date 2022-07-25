@@ -574,8 +574,8 @@ contains
     !-------------
     ! insert Basic Field variables at var_table
     do ng=1,ngrids
-       call InsertBasicFieldsAtVarTable(oneGrid%Basic, oneGrid%AveBasic, &
-            oneGrid%Ramsin, oneGrid%Id)
+       call InsertBasicFieldsAtVarTable(oneGrid%oneBasicFields, oneGrid%oneAveBasicFields, &
+            oneGrid%oneNamelistFile, oneGrid%Id)
     enddo
     !
     !Allocate and prepare optical properties memory
@@ -636,15 +636,15 @@ contains
 
     !-------------
     ! Allocate Micro variables data type
-    call InsertMicroFieldsAtVarTable(oneGrid%Micro, oneGrid%AveMicro, &
-       oneGrid%Ramsin, oneGrid%Id)
+    call InsertMicroFieldsAtVarTable(oneGrid%oneMicroFields, oneGrid%oneAveMicroFields, &
+       oneGrid%oneNamelistFile, oneGrid%Id)
     !-------------
 
     !-------------
     ! insert Turb Field variables at var_table
     do ng=1,ngrids
-       call InsertTurbFieldsAtVarTable(oneGrid%Turb, oneGrid%AveTurb, &
-            oneGrid%Ramsin, oneGrid%Id)
+       call InsertTurbFieldsAtVarTable(oneGrid%oneTurbFields, oneGrid%oneAveTurbFields, &
+            oneGrid%oneNamelistFile, oneGrid%Id)
     enddo
 
     if (CCATT==1 .and. chemistry >= 0) then
@@ -1175,7 +1175,7 @@ contains
     call nullify_tend(naddsc)
 
     call alloc_tend(nmzp, nmxp, nmyp, ngrids, naddsc, proc_type, &
-         oneGrid%Basic, oneGrid%Turb, oneGrid%Micro)
+         oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicroFields)
     !-------------
 
     !-------------
@@ -1361,7 +1361,7 @@ contains
 
              !--- allocation for aerosol to microphysics arrays
              !--- for now only for microphysics type 3 (GT aerosol aware)
-             if(oneGrid%MicControlVars%mcphys_type == 3) &
+             if(oneGrid%oneMicVars%mcphys_type == 3) &
                   allocate(aer2mp_g(1,ngrids),aer2mpm_g(1,ngrids))
              !
              do ng=1,ngrids
@@ -1370,29 +1370,29 @@ contains
                 aer2_src_z_dim_g(:,ng)=nmzp(ng)
 
                 call nullify_aer2(aer2_g (:,ng),nmodes,1,aer2mp_g (:,ng),&
-                     oneGrid%MicControlVars%mcphys_type)
+                     oneGrid%oneMicVars%mcphys_type)
                 call nullify_aer2(aer2m_g(:,ng),nmodes,1,aer2mpm_g(:,ng),&
-                     oneGrid%MicControlVars%mcphys_type)
+                     oneGrid%oneMicVars%mcphys_type)
 
                 call alloc_aer2(aer2_g(:,ng),aer2_src_z_dim_g(:,ng) &
                      ,nmzp(ng),nmxp(ng),nmyp(ng),nmodes   &
-                     ,1,aer2mp_g(:,ng),oneGrid%MicControlVars%mcphys_type)
+                     ,1,aer2mp_g(:,ng),oneGrid%oneMicVars%mcphys_type)
 
                 if (imean == 1) then
                    call alloc_aer2(aer2m_g(:,ng),aer2_src_z_dim_g(:,ng) &
                         ,nmzp(ng),nmxp(ng),nmyp(ng),nmodes    &
-                        ,1,aer2mpm_g(:,ng),oneGrid%MicControlVars%mcphys_type)
+                        ,1,aer2mpm_g(:,ng),oneGrid%oneMicVars%mcphys_type)
 
                 elseif (imean == 0) then
                    call alloc_aer2(aer2m_g(:,ng),aer2_src_z_dim_g(:,ng) &
                         ,1,1,1,nmodes                         &
-                        ,1,aer2mpm_g(:,ng),oneGrid%MicControlVars%mcphys_type)
+                        ,1,aer2mpm_g(:,ng),oneGrid%oneMicVars%mcphys_type)
                 endif
 
                 call filltab_aer2(aer2_g(:,ng),aer2m_g(:,ng) &
                      ,imean ,aer2_src_z_dim_g(:,ng) &
                      ,nmzp(ng),nmxp(ng),nmyp(ng),nmodes,ng &
-                     ,1,aer2mp_g(:,ng),aer2mpm_g(:,ng),oneGrid%MicControlVars%mcphys_type)
+                     ,1,aer2mp_g(:,ng),aer2mpm_g(:,ng),oneGrid%oneMicVars%mcphys_type)
              enddo
 
              call nullify_tend_aer2(nmodes)
@@ -1442,7 +1442,7 @@ contains
              call alloc_chem1aq(chem1aq_g(:,ng) &
                   ,nmzp(ng),nmxp(ng),nmyp(ng),nspeciesaq_chem)
 
-             call alloc_chemic(chemic_g(ng),nmzp(ng),nmxp(ng),nmyp(ng),oneGrid%MicControlVars)
+             call alloc_chemic(chemic_g(ng),nmzp(ng),nmxp(ng),nmyp(ng),oneGrid%oneMicVars)
 
              if (imean == 1) then
                 call alloc_chem1aq(chem1maq_g(:,ng) &
@@ -1472,30 +1472,30 @@ contains
           gaspart_p => gaspart_g(ng)
        endif
 
-       call filltab_tend(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
-            oneGrid%Basic, oneGrid%Micro, oneGrid%Turb,  &
+       call filltab_tend(oneGrid%oneScalarTable, oneGrid%oneScalarTableSize, &
+            oneGrid%oneBasicFields, oneGrid%oneMicroFields, oneGrid%oneTurbFields,  &
             scalar_g(:,ng),                                     &
             gaspart_p,                                          &
             naddsc, ng)
 
        if (ccatt == 1  .and. chemistry >= 0)  then
 
-          call filltab_tend_chem1(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
+          call filltab_tend_chem1(oneGrid%oneScalarTable, oneGrid%oneScalarTableSize, &
                nspecies_chem, ng)
 
           !change MP ---chem1aq
-          if(chemistry_aq >= 1) call filltab_tend_chem1aq(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
+          if(chemistry_aq >= 1) call filltab_tend_chem1aq(oneGrid%oneScalarTable, oneGrid%oneScalarTableSize, &
                nspeciesaq_chem, ng)
           !end change MP --chem1aq- END
 
           if (aerosol >= 1)  then
-             call filltab_tend_aer1(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
+             call filltab_tend_aer1(oneGrid%oneScalarTable, oneGrid%oneScalarTableSize, &
                   nmodes,nspecies_aer,ng)
           end if
           if (aerosol == 2)  then
-             call filltab_tend_aer1_inorg(oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
+             call filltab_tend_aer1_inorg(oneGrid%oneScalarTable, oneGrid%oneScalarTableSize, &
                   ninorg,ng)
-             call filltab_tend_aer2      (oneGrid%ScalarTab, oneGrid%ScalarTabSize, &
+             call filltab_tend_aer2      (oneGrid%oneScalarTable, oneGrid%oneScalarTableSize, &
                   nmodes,ng)
           endif
 
@@ -1515,11 +1515,11 @@ contains
          nzg, nzs, npatch, proc_type, maxnxp, maxnyp, maxnzp)
     ! Reproducibility - Saulo Barros
     call nullify_scratch1()
-    call alloc_scratch1(oneGrid%ScalarTabSize, &
+    call alloc_scratch1(oneGrid%oneScalarTableSize, &
          nodebounds, maxgrds, ngrids, nnzp, mynum)
     ! For optmization - ALF
     call nullify_opt_scratch()
-    if ((if_adap==0) .and. (OneGrid%Ramsin%ihorgrad==2)) &
+    if ((if_adap==0) .and. (OneGrid%oneNamelistFile%ihorgrad==2)) &
          call alloc_opt_scratch(proc_type, ngrids, nnzp, nnxp, nnyp, 1000, 1000)
 
     ! Allocate nested boundary interpolation arrays. All grids will be allocated.
@@ -1529,9 +1529,9 @@ contains
     if (proc_type==0 .or. proc_type==2 .or. proc_type==1) then
        do ng=1,ngrids
           if (nxtnest(ng)==0 ) then
-             call alloc_nestb(oneGrid%ScalarTabSize, ng,        1,        1,        1)
+             call alloc_nestb(oneGrid%oneScalarTableSize, ng,        1,        1,        1)
           else
-             call alloc_nestb(oneGrid%ScalarTabSize, ng, nnxp(ng), nnyp(ng), nnzp(ng))
+             call alloc_nestb(oneGrid%oneScalarTableSize, ng, nnxp(ng), nnyp(ng), nnzp(ng))
           endif
        enddo
     endif
@@ -1541,7 +1541,7 @@ contains
     !Allocate stilt variables data type
     allocate(stilt_g(ngrids), stiltm_g(ngrids))
     do ng=1, ngrids
-       idiffk = OneGrid%Ramsin%idiffk(ng)
+       idiffk = OneGrid%oneNamelistFile%idiffk(ng)
        call nullify_stilt(stilt_g(ng)); call nullify_stilt(stiltm_g(ng))
        call alloc_stilt(idiffk,stilt_g(ng),nmzp(ng),nmxp(ng),nmyp(ng),ng)
        if (imean == 1) then

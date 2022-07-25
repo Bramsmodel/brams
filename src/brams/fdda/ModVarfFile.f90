@@ -919,11 +919,11 @@ contains
 
        ! deals with varfile fields into the "future" varinit arrays,
        ! to be swapped to the past arrays when needed.
-       call ReadStoreOwnChunk(ngrid, iun, varinit_g(ngrid)%varuf, nzp, "varuf", oneGrid%Control)
-       call ReadStoreOwnChunk(ngrid, iun, varinit_g(ngrid)%varvf, nzp, "varvf", oneGrid%Control)
-       call ReadStoreOwnChunk(ngrid, iun, varinit_g(ngrid)%varpf, nzp, "varpf", oneGrid%Control)
-       call ReadStoreOwnChunk(ngrid, iun, varinit_g(ngrid)%vartf, nzp, "vartf", oneGrid%Control)
-       call ReadStoreOwnChunk(ngrid, iun, varinit_g(ngrid)%varrf, nzp, "varrf", oneGrid%Control)
+       call ReadStoreOwnChunk(ngrid, iun, varinit_g(ngrid)%varuf, nzp, "varuf", oneGrid%oneControlVars)
+       call ReadStoreOwnChunk(ngrid, iun, varinit_g(ngrid)%varvf, nzp, "varvf", oneGrid%oneControlVars)
+       call ReadStoreOwnChunk(ngrid, iun, varinit_g(ngrid)%varpf, nzp, "varpf", oneGrid%oneControlVars)
+       call ReadStoreOwnChunk(ngrid, iun, varinit_g(ngrid)%vartf, nzp, "vartf", oneGrid%oneControlVars)
+       call ReadStoreOwnChunk(ngrid, iun, varinit_g(ngrid)%varrf, nzp, "varrf", oneGrid%oneControlVars)
 
        varinit_g(ngrid)%varrf(:,:,:) =  max(1.e-8,varinit_g(ngrid)%varrf(:,:,:) )
 
@@ -937,7 +937,7 @@ contains
           do nspc=1,nspecies
              if(spc_alloc(fdda,nspc) == 1) then
 
-                call ReadStoreOwnChunk(ngrid, iun, chem1_g(nspc,ngrid)%sc_pf, nzp, "sc_pf", oneGrid%Control)
+                call ReadStoreOwnChunk(ngrid, iun, chem1_g(nspc,ngrid)%sc_pf, nzp, "sc_pf", oneGrid%oneControlVars)
 
                 !no futuro cheque o limite inferior (e-23)
                 chem1_g(nspc,ngrid)%sc_pf(:,:,:)= init_ajust(nspc)*max(1.e-23,chem1_g(nspc,ngrid)%sc_pf(:,:,:))
@@ -949,7 +949,7 @@ contains
              do nm=1,aer_nmodes
                 if(aer_alloc(aer_fdda,nm,nspc) == 1) then
 
-                   call ReadStoreOwnChunk(ngrid, iun, aer1_g(nm,nspc,ngrid)%sc_pf, nzp, "sc_pf", oneGrid%Control)
+                   call ReadStoreOwnChunk(ngrid, iun, aer1_g(nm,nspc,ngrid)%sc_pf, nzp, "sc_pf", oneGrid%oneControlVars)
 
                    !no futuro cheque o limite inferior (e-23)
                    aer1_g(nm,nspc,ngrid)%sc_pf(:,:,:)= init_ajust(nspc)*max(1.e-23,aer1_g(nm,nspc,ngrid)%sc_pf(:,:,:))
@@ -971,7 +971,7 @@ contains
              call vfirec(iun,scratch,nxyp,'LIN')
              call vfirec(iun,scratch,nxyp,'LIN')
           end if
-          call ReadStoreOwnChunk(ngrid, iun, leaf_g(ngrid)%snow_mass, "snow_mass", oneGrid%Control)
+          call ReadStoreOwnChunk(ngrid, iun, leaf_g(ngrid)%snow_mass, "snow_mass", oneGrid%oneControlVars)
 
           if (mchnum == master_num) then
              call vfirec(iun,scratch,nxyp,'LIN')
@@ -1130,7 +1130,7 @@ contains
           !!write(*,*) 'LFR - DEBUG: ','VarfUpdate - 1089'
           call unarrange(nnzp1(ngrid1), nnxp1(ngrid1), nnyp1(ngrid1), scr, scr3)
           call storeOwnChunk_3D(ngrid1, scr3, varinit_g(ngrid1)%varuf, nnzp(1), nnxp(1), nnyp(1), &
-               'UP', oneGrid%Control)
+               'UP', oneGrid%oneControlVars)
        end if
        ! ##### VP
 
@@ -1152,7 +1152,7 @@ contains
 
           call unarrange(nnzp1(ngrid1), nnxp1(ngrid1), nnyp1(ngrid1), scr, scr3)
           call storeOwnChunk_3D(ngrid1, scr3, varinit_g(ngrid1)%varvf, nnzp(1), nnxp(1), nnyp(1), &
-               'VP', oneGrid%Control)
+               'VP', oneGrid%oneControlVars)
        end if
 
        ! ##### THETA
@@ -1175,7 +1175,7 @@ contains
 
           call unarrange(nnzp1(ngrid1), nnxp1(ngrid1), nnyp1(ngrid1), scr, scr3)
           call storeOwnChunk_3D(ngrid1, scr3, varinit_g(ngrid1)%vartf, nnzp(1), nnxp(1), nnyp(1), &
-               'THETA', oneGrid%Control)
+               'THETA', oneGrid%oneControlVars)
        end if
 
        ! ##### PI
@@ -1198,7 +1198,7 @@ contains
           !!  write(*,*) 'LFR - DEBUG: ','VarfUpdate - 1154'
           call unarrange(nnzp1(ngrid1), nnxp1(ngrid1), nnyp1(ngrid1), scr, scr3)
           call storeOwnChunk_3D(ngrid1, scr3, varinit_g(ngrid1)%varpf, nnzp(1), nnxp(1), nnyp(1), &
-               'PI', oneGrid%Control)
+               'PI', oneGrid%oneControlVars)
        end if
 
 
@@ -1221,7 +1221,7 @@ contains
 
           call unarrange(nnzp1(ngrid1), nnxp1(ngrid1), nnyp1(ngrid1), scr, scr3)
           call storeOwnChunk_3D(ngrid1, scr3, varinit_g(ngrid1)%varrf, nnzp(1), nnxp(1), nnyp(1), &
-               'RV', oneGrid%Control)
+               'RV', oneGrid%oneControlVars)
        end if
 
        varinit_g(ngrid)%varrf(:,:,:) =  max(1.e-8,varinit_g(ngrid)%varrf(:,:,:) )
@@ -1248,7 +1248,7 @@ contains
 
                    call unarrange(nnzp1(ngrid1), nnxp1(ngrid1), nnyp1(ngrid1), scr, scr3)
                    call storeOwnChunk_3D(ngrid1, scr3, chem1_g(nspc,ngrid1)%sc_pf, &
-                        nnzp(1), nnxp(1), nnyp(1), trim(spc_name(nspc))//'P', oneGrid%Control)
+                        nnzp(1), nnxp(1), nnyp(1), trim(spc_name(nspc))//'P', oneGrid%oneControlVars)
                 end if
 
                 chem1_g(nspc,ngrid1)%sc_pf(:,:,:) =  max(1.e-23,chem1_g(nspc,ngrid1)%sc_pf(:,:,:) )
@@ -1282,7 +1282,7 @@ contains
 
                       call unarrange(nnzp1(ngrid1), nnxp1(ngrid1), nnyp1(ngrid1), scr, scr3)
                       call storeOwnChunk_3D(ngrid1, scr3, aer1_g(imode,nspc,ngrid1)%sc_pf, nnzp(1), &
-                           nnxp(1), nnyp(1), trim(aer_name(nspc))//trim(cmode)//'P', oneGrid%Control)
+                           nnxp(1), nnyp(1), trim(aer_name(nspc))//trim(cmode)//'P', oneGrid%oneControlVars)
                    end if
 
                    aer1_g(imode, nspc,ngrid1)%sc_pf(:,:,:) = max(1.e-23,aer1_g(imode, nspc,ngrid1)%sc_pf(:,:,:) )
@@ -1310,25 +1310,25 @@ contains
     if(initflag == 1 .and. ngrid == 1) then
        call RefVar(OneGrid, mzp,mxp,myp &
             ,varinit_g(ngrid)%vartf ,varinit_g(ngrid)%varpf  &
-            ,oneGrid%Basic%pi0,     oneGrid%Basic%th0  &
-            ,varinit_g(ngrid)%varrf, oneGrid%Basic%dn0  &
-            ,oneGrid%Basic%dn0u,    oneGrid%Basic%dn0v  &
+            ,oneGrid%oneBasicFields%pi0,     oneGrid%oneBasicFields%th0  &
+            ,varinit_g(ngrid)%varrf, oneGrid%oneBasicFields%dn0  &
+            ,oneGrid%oneBasicFields%dn0u,    oneGrid%oneBasicFields%dn0v  &
             ,varinit_g(ngrid)%varuf, varinit_g(ngrid)%varvf  &
             ,grid_g(ngrid)%topt,       grid_g(ngrid)%rtgt  &
-            ,grid_g(ngrid)%topta, oneGrid%MicControlVars%level)
+            ,grid_g(ngrid)%topta, oneGrid%oneMicVars%level)
     end if
 
     varinit_g(ngrid)%varpf(:,:,:)=  &
-         varinit_g(ngrid)%varpf(:,:,:) - oneGrid%Basic%pi0(:,:,:)
+         varinit_g(ngrid)%varpf(:,:,:) - oneGrid%oneBasicFields%pi0(:,:,:)
 
     ! If this is an initialization, put data into regular arrays
 
     if(initflag == 1 ) then
-       oneGrid%Basic%uc(:,:,:)=varinit_g(ngrid)%varuf(:,:,:)
-       oneGrid%Basic%vc(:,:,:)=varinit_g(ngrid)%varvf(:,:,:)
-       oneGrid%Basic%pc(:,:,:)=varinit_g(ngrid)%varpf(:,:,:)
-       oneGrid%Basic%thp(:,:,:)=varinit_g(ngrid)%vartf(:,:,:)
-       oneGrid%Basic%rtp(:,:,:)=varinit_g(ngrid)%varrf(:,:,:)
+       oneGrid%oneBasicFields%uc(:,:,:)=varinit_g(ngrid)%varuf(:,:,:)
+       oneGrid%oneBasicFields%vc(:,:,:)=varinit_g(ngrid)%varvf(:,:,:)
+       oneGrid%oneBasicFields%pc(:,:,:)=varinit_g(ngrid)%varpf(:,:,:)
+       oneGrid%oneBasicFields%thp(:,:,:)=varinit_g(ngrid)%vartf(:,:,:)
+       oneGrid%oneBasicFields%rtp(:,:,:)=varinit_g(ngrid)%varrf(:,:,:)
 
        !--(DMK-CCATT-INI)------------------------------------------------------
        if(chem_assim == 1 .and. chemistry >= 0) then
@@ -1421,7 +1421,7 @@ contains
     call gatherData(3, varn, 1, nnzp(1), nnxp(1), nnyp(1), &
          nmachs, mchnum, mynum, master_num,                &
          thp, global_data, &
-         oneGrid%Control, oneGrid%Basic, oneGrid%Turb)
+         oneGrid%oneControlVars, oneGrid%oneBasicFields, oneGrid%oneTurbFields)
     if (mchnum==master_num) then
        do k=1,n1
           thp_ref(k) = sum(global_data(k,:,:))/real(nxyp)
@@ -1435,7 +1435,7 @@ contains
     call gatherData(3, varn, 1, nnzp(1), nnxp(1), nnyp(1), &
          nmachs, mchnum, mynum, master_num,                &
          uc, global_data, &
-         oneGrid%Control, oneGrid%Basic, oneGrid%Turb)
+         oneGrid%oneControlVars, oneGrid%oneBasicFields, oneGrid%oneTurbFields)
     if (mchnum==master_num) then
        do k=1,n1
           uc_ref(k) = sum(global_data(k,:,:))/real(nxyp)
@@ -1449,7 +1449,7 @@ contains
     call gatherData(3, varn, 1, nnzp(1), nnxp(1), nnyp(1), &
          nmachs, mchnum, mynum, master_num,                &
          vc, global_data, &
-         oneGrid%Control, oneGrid%Basic, oneGrid%Turb)
+         oneGrid%oneControlVars, oneGrid%oneBasicFields, oneGrid%oneTurbFields)
     if (mchnum==master_num) then
        do k=1,n1
           vc_ref(k) = sum(global_data(k,:,:))/real(nxyp)
@@ -1463,7 +1463,7 @@ contains
     call gatherData(3, varn, 1, nnzp(1), nnxp(1), nnyp(1), &
          nmachs, mchnum, mynum, master_num,                &
          rtp, global_data, &
-         oneGrid%Control, oneGrid%Basic, oneGrid%Turb)
+         oneGrid%oneControlVars, oneGrid%oneBasicFields, oneGrid%oneTurbFields)
     if (mchnum==master_num) then
        do k=1,n1
           rtp_ref(k) = sum(global_data(k,:,:))/real(nxyp)
@@ -1477,7 +1477,7 @@ contains
     call gatherData(3, varn, 1, nnzp(1), nnxp(1), nnyp(1), &
          nmachs, mchnum, mynum, master_num,                &
          pc, global_data, &
-         oneGrid%Control, oneGrid%Basic, oneGrid%Turb)
+         oneGrid%oneControlVars, oneGrid%oneBasicFields, oneGrid%oneTurbFields)
     if (mchnum==master_num) then
        do k=1,n1
           pc_ref(k) = sum(global_data(k,:,:))/real(nxyp)
@@ -1491,7 +1491,7 @@ contains
     call gatherData(2, varn, 1, nnxp(1), nnyp(1), &
          nmachs, mchnum, mynum, master_num,                &
          topta, global_data2d, &
-         oneGrid%Control, oneGrid%Basic, oneGrid%Turb)
+         oneGrid%oneControlVars, oneGrid%oneBasicFields, oneGrid%oneTurbFields)
     if (mchnum==master_num) then
        top_ref = sum(global_data2d(:,:))/real(nxyp)
     end if

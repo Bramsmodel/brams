@@ -75,8 +75,8 @@ contains
 
 
 
-  function CreateBasicFields(oneNodeDims, oneNamelistFile) result(res)
-    type(NodeDimensions), pointer, intent(in) :: oneNodeDims
+  function CreateBasicFields(oneNodeDimensions, oneNamelistFile) result(res)
+    type(NodeDimensions), pointer, intent(in) :: oneNodeDimensions
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer :: res
 
@@ -88,9 +88,9 @@ contains
     character(len=*), parameter :: h="**(CreateBasicFields)**"
     logical, parameter :: dumpLocal=.false.
 
-    mzp=oneNodeDims%mzp
-    mxp=oneNodeDims%mxp
-    myp=oneNodeDims%myp
+    mzp=oneNodeDimensions%mzp
+    mxp=oneNodeDimensions%mxp
+    myp=oneNodeDimensions%myp
 
     if (dumpLocal) then
        write(str(1),"(i8)") mzp

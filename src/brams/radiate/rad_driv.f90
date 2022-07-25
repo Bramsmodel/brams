@@ -29,11 +29,11 @@ contains
 
 
   subroutine radiate(mzp, mxp, myp, ia, iz, ja, jz, mynum, &
-       oneBasicFields, oneMicControl, oneMicroFields)
+       oneBasicFields, oneMicVars, oneMicroFields)
 
     integer, intent(IN) :: mzp, mxp, myp, ia, iz, ja, jz, mynum
     type(BasicFields), pointer, intent(in) :: oneBasicFields
-    type(MicControl), pointer, intent(in) :: oneMicControl
+    type(MicControl), pointer, intent(in) :: oneMicVars
     type(MicroFields), pointer, intent(in) :: oneMicroFields
 
     if &
@@ -44,12 +44,12 @@ contains
          then
 
        call rrtm_driver(mzp, mxp, myp, ia, iz, ja, jz, mynum, &
-            oneBasicFields, oneMicControl, oneMicroFields)
+            oneBasicFields, oneMicVars, oneMicroFields)
 
     elseif( ilwrtyp==4 .and. iswrtyp==4) then
 
        call carma_driver(mzp,mxp,myp,ia,iz,ja,jz,mynum, &
-            oneBasicFields, oneMicControl, oneMicroFields) !teste 2
+            oneBasicFields, oneMicVars, oneMicroFields) !teste 2
 
     else
        stop "unknown radiation scheme"

@@ -50,7 +50,7 @@ contains
 
 
   subroutine thermo(mzp, mxp, myp, ia, iz, ja, jz, &
-       oneBasic, oneMicControl, oneMicroFields)
+       oneBasic, oneMicVars, oneMicroFields)
     integer, intent(in) :: mzp
     integer, intent(in) :: mxp
     integer, intent(in) :: myp
@@ -59,19 +59,19 @@ contains
     integer, intent(in) :: ja
     integer, intent(in) :: jz
     type(BasicFields), pointer, intent(in) :: oneBasic
-    type(MicControl), pointer, intent(in) :: oneMicControl
+    type(MicControl), pointer, intent(in) :: oneMicVars
     type(MicroFields), pointer, intent(in) :: oneMicroFields
 
     character(len=*), parameter :: h="**(thermo)**"
 
     
-    if (oneMicControl%level .le. 1) then
+    if (oneMicVars%level .le. 1) then
 
        call drythrm(mzp,mxp,myp,ia,iz,ja,jz  &
             ,oneBasic%thp ,oneBasic%theta   &
-            ,oneBasic%rtp ,oneBasic%rv,oneMicControl%level)
+            ,oneBasic%rtp ,oneBasic%rv,oneMicVars%level)
 
-    elseif (oneMicControl%level .eq. 2) then
+    elseif (oneMicVars%level .eq. 2) then
 
        call satadjst(mzp,mxp,myp,ia,iz,ja,jz  &
             ,oneBasic%pp  ,scratch%scr1             &
@@ -80,11 +80,11 @@ contains
             ,oneBasic%rtp ,oneBasic%rv    &
             ,oneMicroFields%rcp )
 
-    elseif (oneMicControl%level .eq. 3) then
+    elseif (oneMicVars%level .eq. 3) then
 
-       if(oneMicControl%mcphys_type .le. 1) then
+       if(oneMicVars%mcphys_type .le. 1) then
 
-          call wetthrm3(mzp,mxp,myp,ia,iz,ja,jz,oneMicControl%jnmb  &
+          call wetthrm3(mzp,mxp,myp,ia,iz,ja,jz,oneMicVars%jnmb  &
                ,oneBasic%pi0 ,oneBasic%pp     &
                ,oneBasic%thp ,oneBasic%theta  &
                ,oneBasic%rtp ,oneBasic%rv     &
@@ -93,19 +93,19 @@ contains
                ,oneMicroFields%rap ,oneMicroFields%rgp    &
                ,oneMicroFields%rhp ,oneMicroFields%q6     &
                ,oneMicroFields%q7 &
-               ,vctr1,vctr2,vctr3,vctr4,vctr5,vctr6,ngrid,oneMicControl%mcphys_type)
+               ,vctr1,vctr2,vctr3,vctr4,vctr5,vctr6,ngrid,oneMicVars%mcphys_type)
 
-       elseif(oneMicControl%mcphys_type >= 2 .or. oneMicControl%mcphys_type == 3 .or. oneMicControl%mcphys_type == 4) then
+       elseif(oneMicVars%mcphys_type >= 2 .or. oneMicVars%mcphys_type == 3 .or. oneMicVars%mcphys_type == 4) then
 
           !-srf for GThompson/GFDL uphysics
-          call wetthrm3_GT(mzp,mxp,myp,ia,iz,ja,jz,oneMicControl%jnmb  &
+          call wetthrm3_GT(mzp,mxp,myp,ia,iz,ja,jz,oneMicVars%jnmb  &
                ,oneBasic%pi0 ,oneBasic%pp     &
                ,oneBasic%thp ,oneBasic%theta  &
                ,oneBasic%rtp ,oneBasic%rv     &
                ,oneMicroFields%rcp ,oneMicroFields%rrp    &
                ,oneMicroFields%rpp ,oneMicroFields%rsp    &
                ,oneMicroFields%rgp    &
-               ,ngrid,oneMicControl%mcphys_type)
+               ,ngrid,oneMicVars%mcphys_type)
        endif
 
 
@@ -122,7 +122,7 @@ contains
 
   subroutine thermo_boundary_driver(time, dtlong, f_thermo_e, f_thermo_w, f_thermo_s, &
        f_thermo_n, mzp, mxp, myp, jdim, &
-       oneBasic, oneMicControl, oneMicroFields)
+       oneBasic, oneMicVars, oneMicroFields)
 
     ! Arguments
     real, intent(in) :: time
@@ -136,7 +136,7 @@ contains
     integer, intent(in) :: myp
     integer, intent(in) :: jdim
     type(BasicFields), pointer, intent(in) :: oneBasic
-    type(MicControl), pointer, intent(in) :: oneMicControl
+    type(MicControl), pointer, intent(in) :: oneMicVars
     type(MicroFields), pointer, intent(in) :: oneMicroFields
     
     ! Local Variables
@@ -150,24 +150,24 @@ contains
 
     if (f_thermo_e) then
        call thermo(mzp, mxp, myp, 1,   1,   1, myp, &
-            oneBasic, oneMicControl, oneMicroFields)
+            oneBasic, oneMicVars, oneMicroFields)
     end if
 
     if (f_thermo_w) then
        call thermo(mzp, mxp, myp, mxp, mxp, 1, myp, &
-            oneBasic, oneMicControl, oneMicroFields)
+            oneBasic, oneMicVars, oneMicroFields)
     end if
 
     if (jdim==1) then
 
        if (f_thermo_s) then
           call thermo(mzp, mxp, myp, 1, mxp, 1, 1, &
-               oneBasic, oneMicControl, oneMicroFields)
+               oneBasic, oneMicVars, oneMicroFields)
        end if
 
        if (f_thermo_n) then
           call thermo(mzp, mxp, myp, 1, mxp, myp, myp, &
-               oneBasic, oneMicControl, oneMicroFields)
+               oneBasic, oneMicVars, oneMicroFields)
        end if
     endif
 
@@ -450,7 +450,7 @@ contains
 
   
   subroutine theta_thp_rk(mzp,mxp,myp,ia,iz,ja,jz,action, &
-       oneBasic, oneMicControl, oneMicroFields)
+       oneBasic, oneMicVars, oneMicroFields)
     !-this is only for RK scheme (uses thc and pc)
     ! Arguments:
     integer, intent(in) :: mzp
@@ -462,7 +462,7 @@ contains
     integer, intent(in) :: jz
     character(len=*), intent(in) :: action
     type(BasicFields), pointer, intent(in) :: oneBasic
-    type(MicControl), pointer, intent(in) :: oneMicControl
+    type(MicControl), pointer, intent(in) :: oneMicVars
     type(MicroFields), pointer, intent(in) :: oneMicroFields
 
     character(len=*), parameter :: h="**(theta_thp_rk)**"
@@ -472,16 +472,16 @@ contains
        call fatal_error(h//" unknow action at theta_thp_rk routine")
     end if
 
-    if (oneMicControl%level .le. 1) then
+    if (oneMicVars%level .le. 1) then
        if (trim(action)=="get_thetail") then
           call fatal_error(h//" not ready for option get_thetail")
        end if
 
        call drythrm(mzp,mxp,myp,ia,iz,ja,jz  &
             ,oneBasic%thc ,oneBasic%theta   &
-            ,oneBasic%rtp ,oneBasic%rv,oneMicControl%level)
+            ,oneBasic%rtp ,oneBasic%rv,oneMicVars%level)
 
-    else if (oneMicControl%level .eq. 2) then
+    else if (oneMicVars%level .eq. 2) then
 
        if (trim(action)=="get_thetail") then
           call fatal_error(h//" not ready for option get_thetail")
@@ -494,15 +494,15 @@ contains
             ,oneBasic%rtp ,oneBasic%rv    &
             ,oneMicroFields%rcp )
 
-    else if (oneMicControl%level .eq. 3) then
+    else if (oneMicVars%level .eq. 3) then
 
-       if(oneMicControl%mcphys_type .le. 1) then
+       if(oneMicVars%mcphys_type .le. 1) then
 
           if (trim(action)=="get_thetail") then
              call fatal_error(h//" not ready for option get_thetail")
           end if
 
-          call wetthrm3(mzp,mxp,myp,ia,iz,ja,jz,oneMicControl%jnmb  &
+          call wetthrm3(mzp,mxp,myp,ia,iz,ja,jz,oneMicVars%jnmb  &
                ,oneBasic%pi0 ,oneBasic%pc     &
                ,oneBasic%thc ,oneBasic%theta  &
                ,oneBasic%rtp ,oneBasic%rv     &
@@ -511,19 +511,19 @@ contains
                ,oneMicroFields%rap ,oneMicroFields%rgp    &
                ,oneMicroFields%rhp ,oneMicroFields%q6     &
                ,oneMicroFields%q7 &
-               ,vctr1,vctr2,vctr3,vctr4,vctr5,vctr6,ngrid,oneMicControl%mcphys_type)
+               ,vctr1,vctr2,vctr3,vctr4,vctr5,vctr6,ngrid,oneMicVars%mcphys_type)
 
-       else if(oneMicControl%mcphys_type == 2 .or. oneMicControl%mcphys_type == 3.or. oneMicControl%mcphys_type == 4) then
+       else if(oneMicVars%mcphys_type == 2 .or. oneMicVars%mcphys_type == 3.or. oneMicVars%mcphys_type == 4) then
 
           !-srf for GThompson uphysics
-          call theta_thp_GT(mzp,mxp,myp,ia,iz,ja,jz,oneMicControl%jnmb  &
+          call theta_thp_GT(mzp,mxp,myp,ia,iz,ja,jz,oneMicVars%jnmb  &
                ,oneBasic%pi0 ,oneBasic%pc     &
                ,oneBasic%thc ,oneBasic%theta  &
                ,oneBasic%rtp ,oneBasic%rv     &
                ,oneMicroFields%rcp ,oneMicroFields%rrp    &
                ,oneMicroFields%rpp ,oneMicroFields%rsp    &
                ,oneMicroFields%rgp    &
-               ,ngrid,oneMicControl%mcphys_type,action)
+               ,ngrid,oneMicVars%mcphys_type,action)
        endif
 
 

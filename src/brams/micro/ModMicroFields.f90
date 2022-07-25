@@ -219,10 +219,10 @@ contains
 
 
 
-  function CreateMicroFields(gridId, oneNamelistFile, oneNodeDims, oneMicControl) result(res)
+  function CreateMicroFields(gridId, oneNamelistFile, oneNodeDimensions, oneMicControl) result(res)
     integer, intent(in) :: gridId
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
-    type(NodeDimensions), pointer, intent(in) :: oneNodeDims
+    type(NodeDimensions), pointer, intent(in) :: oneNodeDimensions
     type(MicControl), pointer, intent(in) :: oneMicControl
     type(MicroFields), pointer :: res
 
@@ -234,15 +234,15 @@ contains
     character(len=*), parameter :: h="**(CreateMicroFields)**"
     logical, parameter :: dumpLocal=.false.
 
-    if (.not. associated(oneNodeDims)) then
-       call fatal_error(h//" oneNodeDims not associated")
+    if (.not. associated(oneNodeDimensions)) then
+       call fatal_error(h//" oneNodeDimensions not associated")
     else if (.not. associated(oneMicControl)) then
        call fatal_error(h//" oneMicControl not associated")
     end if
     
-    mzp=oneNodeDims%mzp
-    mxp=oneNodeDims%mxp
-    myp=oneNodeDims%myp
+    mzp=oneNodeDimensions%mzp
+    mxp=oneNodeDimensions%mxp
+    myp=oneNodeDimensions%myp
 
     allocate(res, stat=ierr)
     if (ierr /= 0) then

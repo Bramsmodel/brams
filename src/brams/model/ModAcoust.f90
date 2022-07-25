@@ -908,15 +908,15 @@ contains
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(acoustic_new)**"
 
-    ia = OneGrid%NodeDims%ia
-    iz = OneGrid%NodeDims%iz
-    ja = OneGrid%NodeDims%ja
-    jz = OneGrid%NodeDims%jz
-    izu = OneGrid%NodeDims%izu
-    jzv = OneGrid%NodeDims%jzv
-    mxp = OneGrid%NodeDims%mxp
-    myp = OneGrid%NodeDims%myp
-    mzp = OneGrid%NodeDims%mzp
+    ia = OneGrid%oneNodeDimensions%ia
+    iz = OneGrid%oneNodeDimensions%iz
+    ja = OneGrid%oneNodeDimensions%ja
+    jz = OneGrid%oneNodeDimensions%jz
+    izu = OneGrid%oneNodeDimensions%izu
+    jzv = OneGrid%oneNodeDimensions%jzv
+    mxp = OneGrid%oneNodeDimensions%mxp
+    myp = OneGrid%oneNodeDimensions%myp
+    mzp = OneGrid%oneNodeDimensions%mzp
 
 
     allocate(scr2(mzp*mxp*myp), stat=ierr)
@@ -936,10 +936,10 @@ contains
                mzp,mxp,myp, &
                ia, iz, izu, ja, jz, jzv,               &
                nnacoust_loc,  &
-               oneGrid%Basic%dn0,oneGrid%Basic%pi0,  &
-               oneGrid%Basic%th0,oneGrid%Basic%up,  &
-               oneGrid%Basic%vp,oneGrid%Basic%wp,  &
-               oneGrid%Basic%pp,  &
+               oneGrid%oneBasicFields%dn0,oneGrid%oneBasicFields%pi0,  &
+               oneGrid%oneBasicFields%th0,oneGrid%oneBasicFields%up,  &
+               oneGrid%oneBasicFields%vp,oneGrid%oneBasicFields%wp,  &
+               oneGrid%oneBasicFields%pp,  &
                tend%ut,tend%vt,tend%wt,tend%pt,  &
                grid_g(ngrid)%topt,grid_g(ngrid)%topu,  &
                grid_g(ngrid)%topv,grid_g(ngrid)%rtgt,  &
@@ -962,10 +962,10 @@ contains
                ,scratch%vt3dd        ,scratch%vt3de       &
                ,scratch%vt3df        ,scratch%vt3dg       &
                ,scratch%vt3dh        ,scratch%vt2da       &
-               ,oneGrid%Basic%dn0   ,oneGrid%Basic%pi0  &
-               ,oneGrid%Basic%th0   ,oneGrid%Basic%up   &
-               ,oneGrid%Basic%vp    ,oneGrid%Basic%wp   &
-               ,oneGrid%Basic%pp    ,tend%ut       &
+               ,oneGrid%oneBasicFields%dn0   ,oneGrid%oneBasicFields%pi0  &
+               ,oneGrid%oneBasicFields%th0   ,oneGrid%oneBasicFields%up   &
+               ,oneGrid%oneBasicFields%vp    ,oneGrid%oneBasicFields%wp   &
+               ,oneGrid%oneBasicFields%pp    ,tend%ut       &
                ,tend%vt              ,tend%wt       &
                ,tend%pt              ,grid_g(ngrid)%dxu   &
                ,grid_g(ngrid)%dyv    ,grid_g(ngrid)%fmapu &
@@ -987,10 +987,10 @@ contains
             mzp,mxp,myp, &
             ia, iz, izu, ja, jz, jzv,               &
             nnacoust_loc,   &
-            oneGrid%Basic%dn0, oneGrid%Basic%pi0,  &
-            oneGrid%Basic%th0,                      &
-            oneGrid%Basic%uc, oneGrid%Basic%vc,    &
-            oneGrid%Basic%wc, oneGrid%Basic%pc,    &
+            oneGrid%oneBasicFields%dn0, oneGrid%oneBasicFields%pi0,  &
+            oneGrid%oneBasicFields%th0,                      &
+            oneGrid%oneBasicFields%uc, oneGrid%oneBasicFields%vc,    &
+            oneGrid%oneBasicFields%wc, oneGrid%oneBasicFields%pc,    &
             tend%ut_rk, tend%vt_rk,            &
             tend%wt_rk, tend%pt_rk,            &
             grid_g(ngrid)%topt, grid_g(ngrid)%topu,  &
@@ -1442,15 +1442,15 @@ contains
     character(len=*), parameter :: h="**(init_div_damping_coeff)**"
     logical, parameter :: dumpLocal=.false.
 
-    ia = OneGrid%NodeDims%ia
-    iz = OneGrid%NodeDims%iz
-    ja = OneGrid%NodeDims%ja
-    jz = OneGrid%NodeDims%jz
-    izu = OneGrid%NodeDims%izu
-    jzv = OneGrid%NodeDims%jzv
-    mxp = OneGrid%NodeDims%mxp
-    myp = OneGrid%NodeDims%myp
-    mzp = OneGrid%NodeDims%mzp
+    ia = OneGrid%oneNodeDimensions%ia
+    iz = OneGrid%oneNodeDimensions%iz
+    ja = OneGrid%oneNodeDimensions%ja
+    jz = OneGrid%oneNodeDimensions%jz
+    izu = OneGrid%oneNodeDimensions%izu
+    jzv = OneGrid%oneNodeDimensions%jzv
+    mxp = OneGrid%oneNodeDimensions%mxp
+    myp = OneGrid%oneNodeDimensions%myp
+    mzp = OneGrid%oneNodeDimensions%mzp
 
     allocate(delta_h_x_at_u(mxp, myp), stat=ierr)
     if (ierr /= 0) then
@@ -1699,7 +1699,7 @@ contains
 
   !******************************************************************************
 
-  subroutine buoyancy (wt, oneBasicFields, oneMicControl)
+  subroutine buoyancy (wt, oneBasicFields, oneMicVars)
     !> @brief: buoyancy
     !! @author:  unknow
     !! @date:  18/Nov/2015
@@ -1710,9 +1710,9 @@ contains
     !! Please, read @link https://creativecommons.org/licenses/GPL/2.0/legalcode.pt
     real, intent(inout) :: wt( mzp, mxp, myp )
     type(BasicFields), pointer, intent(in) :: oneBasicFields 
-    type(MicControl), pointer, intent(in) :: oneMicControl
+    type(MicControl), pointer, intent(in) :: oneMicVars
     
-    call boyanc(mzp,mxp,myp,ia,iz,ja,jz,oneMicControl%level   &
+    call boyanc(mzp,mxp,myp,ia,iz,ja,jz,oneMicVars%level   &
          ,wt                                       &
          ,oneBasicFields%theta ,oneBasicFields%rtp  &
          ,oneBasicFields%rv    ,oneBasicFields%th0  &

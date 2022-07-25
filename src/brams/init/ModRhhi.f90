@@ -98,13 +98,13 @@ contains
 
 
 
-  subroutine inithh(oneBasicFields, oneMicControl)
+  subroutine inithh(oneBasicFields, oneMicVars)
     ! +--------------------------------------------------------+
     ! _  Initialization of model grid, topography, and fields  _
     ! _    for horizontally homogeneous fields.                _
     ! +--------------------------------------------------------+
     type(BasicFields), pointer, intent(in) :: oneBasicFields
-    type(MicControl), pointer, intent(in) :: oneMicControl
+    type(MicControl), pointer, intent(in) :: oneMicVars
     integer :: ifm,icm
 
     !     Arrange the input sounding.
@@ -122,7 +122,7 @@ contains
        if (icm .eq. 0) then
 
           call newgrid(ifm)
-          call refs1d(oneMicControl)
+          call refs1d(oneMicVars)
 
           call refs3d(nzp,nxp,nyp  &
                ,oneBasicFields%pi0    ,oneBasicFields%dn0    &
@@ -140,7 +140,7 @@ contains
                   ,grid_g(ifm)%topt   ,grid_g(ifm)%topu     &
                   ,grid_g(ifm)%topv   ,grid_g(ifm)%rtgt     &
                   ,grid_g(ifm)%rtgu   ,grid_g(ifm)%rtgv,&
-                  oneMicControl)
+                  oneMicVars)
 
           else
 
@@ -150,7 +150,7 @@ contains
                   ,oneBasicFields%pi0   ,oneBasicFields%theta   &
                   ,oneBasicFields%thp   ,oneBasicFields%rtp     &
                   ,oneBasicFields%pc    ,oneBasicFields%rv, &
-                  oneMicControl)
+                  oneMicVars)
 
           endif
 
@@ -318,8 +318,8 @@ contains
 
   !     ******************************************************************
 
-  subroutine refs1d(oneMicControl)
-    type(MicControl), pointer, intent(in) :: oneMicControl
+  subroutine refs1d(oneMicVars)
+    type(MicControl), pointer, intent(in) :: oneMicVars
     
     ! +---------------------------------------------------------------------
     ! \   This routine computes the reference state sounding on the model
@@ -339,7 +339,7 @@ contains
     call htint(nsndg,us,hs,nnzp(ngrid),u01dn(1,ngrid),ztn(1,ngrid))
     call htint(nsndg,vs,hs,nnzp(ngrid),v01dn(1,ngrid),ztn(1,ngrid))
 
-    if (oneMicControl%level .ge. 1) then
+    if (oneMicVars%level .ge. 1) then
        call htint(nsndg,rts,hs,nnzp(ngrid),rt01dn(1,ngrid),ztn(1,ngrid))
     else
        do k = 1,nnzp(ngrid)
@@ -373,8 +373,8 @@ contains
   !     ******************************************************************
 
   subroutine flds3d(n1,n2,n3,uc,vc,pi0,theta,thp,rtp,pc,rv  &
-       ,topt,topu,topv,rtgt,rtgu,rtgv, oneMicControl)
-    type(MicControl), pointer, intent(in) :: oneMicControl
+       ,topt,topu,topv,rtgt,rtgu,rtgv, oneMicVars)
+    type(MicControl), pointer, intent(in) :: oneMicVars
     integer :: n1,n2,n3
     real :: pi0(n1,n2,n3),thp(n1,n2,n3),theta(n1,n2,n3)  &
          ,rtp(n1,n2,n3),pc(n1,n2,n3),rv(n1,n2,n3)  &
@@ -402,7 +402,7 @@ contains
           call htint(nzp, u01dn(1,ngrid),zt,nzp,vctr5,vctr12)
           call htint(nzp, v01dn(1,ngrid),zt,nzp,vctr6,vctr13)
           call htint(nzp,th01dn(1,ngrid),zt,nzp,vctr3,vctr11)
-          if(oneMicControl%level.ge.1)  &
+          if(oneMicVars%level.ge.1)  &
                call htint(nzp,rt01dn(1,ngrid),zt,nzp,rtp(1,i,j),vctr11)
 
           ! If sounding winds are to be interpreted as eastward (U) and
@@ -429,7 +429,7 @@ contains
              enddo
           endif
 
-          if(oneMicControl%level.ge.1)then
+          if(oneMicVars%level.ge.1)then
              do k=1,nzp
                 thp(k,i,j)=vctr3(k)/(1.+.61*rtp(k,i,j))
              enddo
@@ -443,13 +443,13 @@ contains
              pc(k,i,j)=0.
           enddo
 
-          if(oneMicControl%level.eq.1)then
+          if(oneMicVars%level.eq.1)then
              do k=1,nzp
                 rv(k,i,j)=rtp(k,i,j)
              enddo
           endif
 
-          if(oneMicControl%level.ge.2)then
+          if(oneMicVars%level.ge.2)then
              do k=1,nzp
                 p0(k)=(pi0(k,i,j)/cp)**cpor*p00
                 temp(k)=pi0(k,i,j)*thp(k,i,j)/cp
@@ -470,8 +470,8 @@ contains
   ! ***************************************************************
 
   subroutine flds3d_adap(n1,n2,n3,lpu_R,lpv_R,lpw_R  &
-       ,uc,vc,pi0,theta,thp,rtp,pc,rv,oneMicControl)
-    type(MicControl), pointer, intent(in) :: oneMicControl
+       ,uc,vc,pi0,theta,thp,rtp,pc,rv,oneMicVars)
+    type(MicControl), pointer, intent(in) :: oneMicVars
     integer :: n1,n2,n3
     real, dimension(n2,n3) :: lpu_R,lpv_R,lpw_R
     real, dimension(n1,n2,n3) :: uc,vc,pi0,thp,theta,rtp,pc,rv
@@ -522,7 +522,7 @@ contains
 
           endif
 
-          if (oneMicControl%level >= 1) then
+          if (oneMicVars%level >= 1) then
              do k = 1,n1
                 rtp(k,i,j) = rt01dn(k,ngrid)
                 thp(k,i,j) = th01dn(k,ngrid) / (1.+.61*rtp(k,i,j))
@@ -538,13 +538,13 @@ contains
              pc(k,i,j) = 0.
           enddo
 
-          if (oneMicControl%level == 1) then
+          if (oneMicVars%level == 1) then
              do k = 1,n1
                 rv(k,i,j) = rtp(k,i,j)
              enddo
           endif
 
-          if (oneMicControl%level >= 2) then
+          if (oneMicVars%level >= 2) then
              do k = 1,n1
                 p0(k) = (pi0(k,i,j)/cp) ** cpor * p00
                 temp(k) = pi0(k,i,j) * thp(k,i,j) / cp

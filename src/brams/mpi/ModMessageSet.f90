@@ -2048,7 +2048,7 @@ contains
 
     call NodesToSendRecvMessages( &
          thisNode=myNum, &
-         Neigh=Neigh, &
+         oneNeighbourNodes=Neigh, &
          GlobalOwn=GlobalOwnWithBC, &
          xbToUpdate=GlobalOwnWithBC%xb, &
          xeToUpdate=GlobalOwnWithBC%xe, &
@@ -2074,7 +2074,7 @@ contains
 
     call NodesToSendRecvMessages( &
          thisNode=myNum, &
-         Neigh=Neigh, &
+         oneNeighbourNodes=Neigh, &
          GlobalOwn=GlobalOwnWithBC, &
          xbToUpdate=GlobalOwnWithBC%xb, &
          xeToUpdate=GlobalOwnWithBC%xe, &
@@ -2100,7 +2100,7 @@ contains
 
     call NodesToSendRecvMessages( &
          thisNode=myNum, &
-         Neigh=Neigh, &
+         oneNeighbourNodes=Neigh, &
          GlobalOwn=GlobalOwnWithBC, &
          xbToUpdate=GlobalOwnWithBC%xe+1, &
          xeToUpdate=GlobalOwnWithBC%xe+ghostZoneWidth, &
@@ -2126,7 +2126,7 @@ contains
 
     call NodesToSendRecvMessages( &
          thisNode=myNum, &
-         Neigh=Neigh, &
+         oneNeighbourNodes=Neigh, &
          GlobalOwn=GlobalOwnWithBC, &
          xbToUpdate=GlobalOwnWithBC%xb-ghostZoneWidth, &
          xeToUpdate=GlobalOwnWithBC%xb-1, &
@@ -3486,7 +3486,7 @@ contains
 
     call NodesToSendRecvMessages( &
          thisNode=myNum, &
-         Neigh=Neigh, &
+         oneNeighbourNodes=Neigh, &
          GlobalOwn=GlobalOwnWithBC, &
          xbToUpdate=GlobalOwnWithBC%xb, &
          xeToUpdate=GlobalOwnWithBC%xe, &
@@ -3567,7 +3567,7 @@ contains
 
     call NodesToSendRecvMessages( &
          thisNode=myNum, &
-         Neigh=Neigh, &
+         oneNeighbourNodes=Neigh, &
          GlobalOwn=GlobalOwnWithBC, &
          xbToUpdate=GlobalOwnWithBC%xb, &
          xeToUpdate=GlobalOwnWithBC%xe, &
@@ -3648,7 +3648,7 @@ contains
 
     call NodesToSendRecvMessages( &
          thisNode=myNum, &
-         Neigh=Neigh, &
+         oneNeighbourNodes=Neigh, &
          GlobalOwn=GlobalOwnWithBC, &
          xbToUpdate=GlobalOwnWithBC%xe+1, &
          xeToUpdate=GlobalOwnWithBC%xe+ghostZoneWidth, &
@@ -3729,7 +3729,7 @@ contains
 
     call NodesToSendRecvMessages( &
          thisNode=myNum, &
-         Neigh=Neigh, &
+         oneNeighbourNodes=Neigh, &
          GlobalOwn=GlobalOwnWithBC, &
          xbToUpdate=GlobalOwnWithBC%xb-ghostZoneWidth, &
          xeToUpdate=GlobalOwnWithBC%xb-1, &
@@ -4354,7 +4354,7 @@ contains
 
     call NodesToSendRecvMessages( &
          thisNode=myNum, &
-         Neigh=Neigh, &
+         oneNeighbourNodes=Neigh, &
          GlobalOwn=GlobalOwn, &
          xbToUpdate=GlobalWithGhost%xb, &
          xeToUpdate=GlobalWithGhost%xe, &

@@ -118,18 +118,18 @@ module ModGrid
   type Grid
      integer :: Id
      ! Id: grid number on Namelist
-     type(NamelistFile), pointer :: Ramsin => null()
-     ! Ramsin: full namelist file
-     type(ControlVars), pointer :: Control => null()
-     ! Control: all variables used to control flow; include all Ramsin
+     type(NamelistFile), pointer :: oneNamelistFile => null()
+     ! oneNamelistFile: full namelist file
+     type(ControlVars), pointer :: oneControlVars => null()
+     ! oneControlVars: all variables used to control flow; include all oneNamelistFile
      !          variables, replacing arrays indexed by grid number by
      !          scalars for this grid number, avoiding grid number
      !          reference; include all other variables spreaded by
      !          the code that control if statements
-     type(ParallelEnvironment), pointer :: ParEnv => null()
-     ! ParEnv: mpi size, rank and communicator for this run
-     type(GridDims), pointer :: GridSize => null()
-     ! GridSize: this grid dimensions as defined by namelist
+     type(ParallelEnvironment), pointer :: oneParallelEnvironment => null()
+     ! oneParallelEnvironment: mpi size, rank and communicator for this run
+     type(GridDims), pointer :: oneGridDims => null()
+     ! oneGridDims: this grid dimensions as defined by namelist
      type(DomainDecomp), pointer :: GlobalOwn => null()
      ! GlobalOwn: global indices of this grid domain
      !            decomposition (domain partition) owned by
@@ -159,33 +159,33 @@ module ModGrid
      !                 decomposition owned by each rank,
      !                 use at MonotonicAdvection.
      !                 Convertion of GlobalWithGhostAdvMnt to local indices
-     type(NodeDimensions), pointer :: NodeDims => null()
-     ! NodeDims: indices and dimensions of this process
+     type(NodeDimensions), pointer :: oneNodeDimensions => null()
+     ! oneNodeDimensions: indices and dimensions of this process
      ! domain decomposed sub-domain
-     type(NodeDimensions), pointer :: NodeDimsAdvMnt => null()
-     ! NodeDimsAdvMnt: indices and dimensions of this process
+     type(NodeDimensions), pointer :: oneNodeDimensionsAdvMnt => null()
+     ! oneNodeDimensionsAdvMnt: indices and dimensions of this process
      ! domain decomposed sub-domain for use inside MonotonicAdvection
-     type(BasicFields), pointer :: Basic => null()
-     type(BasicFields), pointer :: AveBasic => null()
+     type(BasicFields), pointer :: oneBasicFields => null()
+     type(BasicFields), pointer :: oneAveBasicFields => null()
 
-     type(TurbFields), pointer :: Turb => null()
-     type(TurbFields), pointer :: AveTurb => null()
+     type(TurbFields), pointer :: oneTurbFields => null()
+     type(TurbFields), pointer :: oneAveTurbFields => null()
 
-     type(MicroFields), pointer :: Micro => null()
-     type(MicroFields), pointer :: AveMicro => null()
+     type(MicroFields), pointer :: oneMicroFields => null()
+     type(MicroFields), pointer :: oneAveMicroFields => null()
 
-     type(ScalarTable), pointer :: ScalarTab(:) => null()
-     integer :: ScalarTabSize=0
+     type(ScalarTable), pointer :: oneScalarTable(:) => null()
+     integer :: oneScalarTableSize=0
 
-     type(MicControl), pointer :: MicControlVars => null()
+     type(MicControl), pointer :: oneMicVars => null()
      
      ! AllGhostZoneSend/RecvG3D: Ghost Zone update at PostProcess
      ! type(MessageSet) contains all information required for
      ! ghost zone update. See description at ModMessageSet 
      type(PolygonContainer), pointer :: meteoPolygons => null()
 
-     type(NeighbourNodes), pointer :: Neigh => null()
-     ! Neigh: list of BRAMS process numbers that are neighbours
+     type(NeighbourNodes), pointer :: oneNeighbourNodes => null()
+     ! oneNeighbourNodes: list of BRAMS process numbers that are neighbours
      !        of this node for usual ghost zone update operations
      type(MessageSet), pointer :: AcouSendU => null()
      type(MessageSet), pointer :: AcouRecvU => null()
@@ -301,82 +301,82 @@ contains
     ! stores input arguments
 
     oneGrid%id = gridId
-    oneGrid%Ramsin => oneNamelistFile
-    oneGrid%ParEnv => oneParallelEnvironment
+    oneGrid%oneNamelistFile => oneNamelistFile
+    oneGrid%oneParallelEnvironment => oneParallelEnvironment
 
     ! store GridDims extracted from OneNamelistFile 
 
-    oneGrid%GridSize => CreateGridDims(gridId, &
+    oneGrid%oneGridDims => CreateGridDims(gridId, &
          oneNamelistFile)
 
-    oneGrid%Control => CreateControlVars(&
-         oneGrid%Ramsin, gridId)
+    oneGrid%oneControlVars => CreateControlVars(&
+         oneGrid%oneNamelistFile, gridId)
     
     ! compute domain decomposition, obtaining
     ! cells owned by each rank and store at GlobalOwn
 
     oneGrid%GlobalOwn => CreateGlobalOwn(&
-         GridSize=oneGrid%GridSize, &
-         ParEnv=oneGrid%ParEnv, &
-         varName="GlobalOwn" &
+         oneGrid%oneGridDims, &
+         oneGrid%oneParallelEnvironment, &
+         "GlobalOwn" &
          )
 
     ! include boundary conditions (no ghost zone)
 
     oneGrid%GlobalOwnWithBC => CreateGlobalOwnWithBC(&
-         GridSize=oneGrid%GridSize, &
-         ParEnv=oneGrid%ParEnv, &
-         GlobalOwn=oneGrid%GlobalOwn &
+         oneGrid%oneGridDims, &
+         oneGrid%oneParallelEnvironment, &
+         oneGrid%GlobalOwn &
          )
 
     ! insert original ghost zone of widht 1
     ! at GlobalOwn and store at GlobalWithGhost
 
     oneGrid%GlobalWithGhost => CreateGlobalWithGhost(&
-         GridSize=oneGrid%GridSize, &
-         ParEnv=oneGrid%ParEnv, &
-         GlobalOwn=oneGrid%GlobalOwn, &
-         GhostZoneWidth=1, &
-         varName="GlobalWithGhost" &
+         oneGrid%oneGridDims, &
+         oneGrid%oneParallelEnvironment, &
+         oneGrid%GlobalOwn, &
+         1, &
+         "GlobalWithGhost" &
          )
 
     ! convert global indices from GlobalWithGhost
     ! into local indices stored at LocalOwn
 
     oneGrid%LocalOwn => CreateLocalOwn(&
-         ParEnv=oneGrid%ParEnv, &
-         GlobalWithGhost=oneGrid%GlobalWithGhost, &
-         GlobalOwn=oneGrid%GlobalOwn, &
-         varName="LocalOwn" &
+         oneGrid%oneParallelEnvironment, &
+         oneGrid%GlobalWithGhost, &
+         oneGrid%GlobalOwn, &
+         "LocalOwn" &
          )
 
     ! neighbour nodes for original ghost zone update operations
 
-    oneGrid%Neigh => CreateNeighbourNodes(&
-         ParEnv=oneGrid%ParEnv, &
+    oneGrid%oneNeighbourNodes => CreateNeighbourNodes(&
+         ParEnv=oneGrid%oneParallelEnvironment, &
          GlobalOwn=oneGrid%GlobalOwn, &
          GlobalWithGhost=oneGrid%GlobalWithGhost, &
-         varName="oneGrid%Neigh" &
+         varName="oneGrid%oneNeighbourNodes" &
          )
 
     ! this node dimensions and indexing limits
 
-    oneGrid%NodeDims => CreateNodeDimensions(&
-         GridSize=oneGrid%GridSize, &
-         ParEnv=oneGrid%ParEnv, &
+    oneGrid%oneNodeDimensions => CreateNodeDimensions(&
+         GridSize=oneGrid%oneGridDims, &
+         ParEnv=oneGrid%oneParallelEnvironment, &
          LocalOwn=oneGrid%LocalOwn, &
          GlobalOwn=oneGrid%GlobalOwn, &
          verticalGhostZoneWidth=0, &
          surfaceGhostZoneWidth=1, &
-         varName="NodeDims" &
+         varName="oneNodeDimensions" &
          )
 
     ! for MonotonicAdvection, insert ghost zone of parametrized widht
     ! at GlobalOwn and store at GlobalWithGhostAdvMnt
 
     oneGrid%GlobalWithGhostAdvMnt => CreateGlobalWithGhost(&
-         GridSize=oneGrid%GridSize, &
-         ParEnv=oneGrid%ParEnv, &
+         GridSize=oneGrid%oneGridDims, &
+         ParEnv=oneGrid%oneParallelEnvironment, &
          GlobalOwn=oneGrid%GlobalOwn, &
          GhostZoneWidth=oneNamelistFile%ghostzonelength, &
          varName="GlobalWithGhostAdvMnt" &
@@ -386,7 +386,7 @@ contains
     ! into local indices stored at LocalOwnAdvMnt
 
     oneGrid%LocalOwnAdvMnt => CreateLocalOwn(&
-         ParEnv=oneGrid%ParEnv, &
+         ParEnv=oneGrid%oneParallelEnvironment, &
          GlobalWithGhost=oneGrid%GlobalWithGhostAdvMnt, &
          GlobalOwn=oneGrid%GlobalOwn, &
          varName="LocalOwnAdvMnt" &
@@ -394,42 +394,42 @@ contains
 
     ! this node dimensions and indexing limits
 
-    oneGrid%NodeDimsAdvMnt => CreateNodeDimensions(&
-         GridSize=oneGrid%GridSize, &
-         ParEnv=oneGrid%ParEnv, &
+    oneGrid%oneNodeDimensionsAdvMnt => CreateNodeDimensions(&
+         GridSize=oneGrid%oneGridDims, &
+         ParEnv=oneGrid%oneParallelEnvironment, &
          LocalOwn=oneGrid%LocalOwnAdvMnt, &
          GlobalOwn=oneGrid%GlobalOwn, &
          verticalGhostZoneWidth=0, &
          surfaceGhostZoneWidth=oneNamelistFile%ghostzonelength, &
-         varName="NodeDimsAdvMnt" &
+         varName="oneNodeDimensionsAdvMnt" &
          )
 
     ! this node Basic Fields
 
-    oneGrid%Basic => CreateBasicFields(oneGrid%NodeDims, oneGrid%Ramsin)
-    oneGrid%AveBasic => CreateBasicFields(oneGrid%NodeDims, oneGrid%Ramsin)
+    oneGrid%oneBasicFields => CreateBasicFields(oneGrid%oneNodeDimensions, oneGrid%oneNamelistFile)
+    oneGrid%oneAveBasicFields => CreateBasicFields(oneGrid%oneNodeDimensions, oneGrid%oneNamelistFile)
 
     ! this node Turb Fields
 
-    oneGrid%Turb => CreateTurbFields(oneGrid%NodeDims, oneGrid%Ramsin, gridId, .false.)
-    ! AveTurb fields allocated with size (1,1,1) if avgtim null at Ramsin
-    oneGrid%AveTurb => CreateTurbFields(oneGrid%NodeDims, oneGrid%Ramsin, gridId, .true.)
+    oneGrid%oneTurbFields => CreateTurbFields(oneGrid%oneNodeDimensions, oneGrid%oneNamelistFile, gridId, .false.)
+    ! AveTurb fields allocated with size (1,1,1) if avgtim null at oneNamelistFile
+    oneGrid%oneAveTurbFields => CreateTurbFields(oneGrid%oneNodeDimensions, oneGrid%oneNamelistFile, gridId, .true.)
 
     ! this node MicControl
 
-    oneGrid%MicControlVars => CreateMicControl(oneGrid%Ramsin)
+    oneGrid%oneMicVars => CreateMicControl(oneGrid%oneNamelistFile)
 
     ! this node Micro Fields
 
-    oneGrid%Micro => CreateMicroFields(oneGrid%Id, oneGrid%Ramsin, oneGrid%NodeDims, &
-         oneGrid%MicControlVars)
-    oneGrid%AveMicro => CreateMicroFields(oneGrid%Id, oneGrid%Ramsin, oneGrid%NodeDims, &
-         oneGrid%MicControlVars)
+    oneGrid%oneMicroFields => CreateMicroFields(oneGrid%Id, oneGrid%oneNamelistFile, oneGrid%oneNodeDimensions, &
+         oneGrid%oneMicVars)
+    oneGrid%oneAveMicroFields => CreateMicroFields(oneGrid%Id, oneGrid%oneNamelistFile, oneGrid%oneNodeDimensions, &
+         oneGrid%oneMicVars)
 
     ! this node Scalar Table
 
-    oneGrid%ScalarTab => CreateScalarTab()
-    oneGrid%ScalarTabSize = 0
+    oneGrid%oneScalarTable => CreateScalarTab()
+    oneGrid%oneScalarTableSize = 0
     
     if (dumpLocal) then
        call MsgDump(h//" dumping OneGrid at the end")
@@ -485,7 +485,7 @@ contains
     end if
 
     call CreateAcousticMessageSet(oneGrid%Id, &
-         oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
+         oneGrid%oneGridDims, oneGrid%oneParallelEnvironment, oneGrid%oneNeighbourNodes, &
          oneGrid%GlobalOwn, &
          oneGrid%GlobalOwnWithBC, &
          oneGrid%GlobalWithGhost, &
@@ -497,15 +497,15 @@ contains
          oneGrid%AcouSendWP, oneGrid%AcouRecvWP, TagWP)
 
     call CreateDn0MessageSet(oneGrid%Id, &
-         oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
+         oneGrid%oneGridDims, oneGrid%oneParallelEnvironment, oneGrid%oneNeighbourNodes, &
          oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
          oneGrid%SendDn0u, oneGrid%RecvDn0u, TagDn0u, &
          oneGrid%SendDn0v, oneGrid%RecvDn0v, TagDn0v)
 
     call CreateG3DMessageSet(oneGrid%Id, &
-         oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
+         oneGrid%oneGridDims, oneGrid%oneParallelEnvironment, oneGrid%oneNeighbourNodes, &
          oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhost, &
-         oneGrid%Ramsin, &
+         oneGrid%oneNamelistFile, &
          oneGrid%SendG3D, oneGrid%RecvG3D, TagG3D)
 
     ! temporariamente, num_var e vtab_r sao variaveis globais,
@@ -513,7 +513,7 @@ contains
 
     call CreateSelectedGhostZoneMessageSet(&
          oneGrid%Id, num_var, vtab_r, &
-         oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
+         oneGrid%oneGridDims, oneGrid%oneParallelEnvironment, oneGrid%oneNeighbourNodes, &
          oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhost, &
          oneGrid%SelectedGhostZoneSend, &
          oneGrid%SelectedGhostZoneRecv, &
@@ -521,7 +521,7 @@ contains
 
     call CreateAllGhostZoneMessageSet(&
          oneGrid%Id, num_var, vtab_r, &
-         oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
+         oneGrid%oneGridDims, oneGrid%oneParallelEnvironment, oneGrid%oneNeighbourNodes, &
          oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhost, &
          oneGrid%AllGhostZoneSend, &
          oneGrid%AllGhostZoneRecv, &
@@ -532,8 +532,8 @@ contains
     ! prior to use the Message Sets
 
     call CreateAcoustNewMessageSet(&
-         oneGrid%GridSize, oneGrid%ParEnv, oneGrid%Neigh, &
-         oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, oneGrid%NodeDims, &
+         oneGrid%oneGridDims, oneGrid%oneParallelEnvironment, oneGrid%oneNeighbourNodes, &
+         oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, oneGrid%oneNodeDimensions, &
          TagAcoustNewDiv, oneGrid%AcoustNewDivSend, oneGrid%AcoustNewDivRecv, &
          TagAcoustNewPP, oneGrid%AcoustNewPPSend, oneGrid%AcoustNewPPRecv, &
          TagAcoustNewAlpha, oneGrid%AcoustNewAlphaSend, oneGrid%AcoustNewAlphaRecv, &
@@ -542,15 +542,15 @@ contains
 
 
     call CreateWideGhostZoneMessageSet(&
-         oneGrid%ParEnv, oneGrid%Neigh, &
-         oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhost, oneGrid%NodeDims, &
-         1, oneGrid%NodeDims%mzp, &
+         oneGrid%oneParallelEnvironment, oneGrid%oneNeighbourNodes, &
+         oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhost, oneGrid%oneNodeDimensions, &
+         1, oneGrid%oneNodeDimensions%mzp, &
          TagWideGhostZone, oneGrid%WideGhostZoneSend, oneGrid%WideGhostZoneRecv)
 
     call CreateAdvMntMessageSet(&
-         oneGrid%ParEnv, oneGrid%Neigh, &
+         oneGrid%oneParallelEnvironment, oneGrid%oneNeighbourNodes, &
          oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhostAdvMnt, &
-         oneGrid%NodeDims, oneGrid%NodeDimsAdvMnt, &
+         oneGrid%oneNodeDimensions, oneGrid%oneNodeDimensionsAdvMnt, &
          TagAdvMntUVX, oneGrid%AdvMntUVSendX, oneGrid%AdvMntUVRecvX, &
          TagAdvMntUVY, oneGrid%AdvMntUVSendY, oneGrid%AdvMntUVRecvY, &
          TagAdvMntDxDyX, oneGrid%AdvMntDxDySendX, oneGrid%AdvMntDxDyRecvX, &
@@ -582,26 +582,26 @@ contains
     character(len=*), parameter :: h="**(DestroyGrid)**"
 
     if (associated(oneGrid)) then
-       call DestroyGridDims(oneGrid%GridSize)
-       call DestroyControlVars(oneGrid%Control)
+       call DestroyGridDims(oneGrid%oneGridDims)
+       call DestroyControlVars(oneGrid%oneControlVars)
        call DestroyDomainDecomp(oneGrid%GlobalOwn)
        call DestroyDomainDecomp(oneGrid%GlobalOwnWithBC)
        call DestroyDomainDecomp(oneGrid%GlobalWithGhost)
        call DestroyDomainDecomp(oneGrid%LocalOwn)
-       call DestroyNeighbourNodes(oneGrid%Neigh)
-       call DestroyNodeDimensions(oneGrid%NodeDims)
+       call DestroyNeighbourNodes(oneGrid%oneNeighbourNodes)
+       call DestroyNodeDimensions(oneGrid%oneNodeDimensions)
        call DestroyDomainDecomp(oneGrid%GlobalWithGhostAdvMnt)
        call DestroyDomainDecomp(oneGrid%LocalOwnAdvMnt)
-       call DestroyNodeDimensions(oneGrid%NodeDimsAdvMnt)
-       call DestroyBasicFields(oneGrid%Basic)
-       call DestroyBasicFields(oneGrid%AveBasic)
-       call DestroyTurbFields(oneGrid%Turb)
-       call DestroyTurbFields(oneGrid%AveTurb)
-       call DestroyMicroFields(oneGrid%Micro)
-       call DestroyMicroFields(oneGrid%AveMicro)
-       call DestroyScalarTab(oneGrid%ScalarTab)
-       oneGrid%ScalarTabSize=0
-       call DestroyMicControl(oneGrid%MicControlVars)
+       call DestroyNodeDimensions(oneGrid%oneNodeDimensionsAdvMnt)
+       call DestroyBasicFields(oneGrid%oneBasicFields)
+       call DestroyBasicFields(oneGrid%oneAveBasicFields)
+       call DestroyTurbFields(oneGrid%oneTurbFields)
+       call DestroyTurbFields(oneGrid%oneAveTurbFields)
+       call DestroyMicroFields(oneGrid%oneMicroFields)
+       call DestroyMicroFields(oneGrid%oneAveMicroFields)
+       call DestroyScalarTab(oneGrid%oneScalarTable)
+       oneGrid%oneScalarTableSize=0
+       call DestroyMicControl(oneGrid%oneMicVars)
        call DestroyAcousticMessageSet(&
             oneGrid%AcouSendU, oneGrid%AcouRecvU, &
             oneGrid%AcouSendV, oneGrid%AcouRecvV, &
@@ -656,17 +656,17 @@ contains
 
     if (.not. associated(oneGrid)) then
        call fatal_error(h//" invoked with null oneGrid")
-    else if (.not. associated(oneGrid%Ramsin)) then
-       call fatal_error(h//" invoked with null oneGrid%Ramsin")
-    else if (.not. associated(oneGrid%ParEnv)) then
-       call fatal_error(h//" invoked with null oneGrid%ParEnv")
+    else if (.not. associated(oneGrid%oneNamelistFile)) then
+       call fatal_error(h//" invoked with null oneGrid%oneNamelistFile")
+    else if (.not. associated(oneGrid%oneParallelEnvironment)) then
+       call fatal_error(h//" invoked with null oneGrid%oneParallelEnvironment")
     end if
 
     write(str(1),"(i8)") oneGrid%Id
     call MsgDump(h//" for grid "//trim(adjustl(str(1))))
 
-    call MsgDump(h//" dumping component GridSize")
-    call DumpGridDims(oneGrid%GridSize)
+    call MsgDump(h//" dumping component oneGridDims")
+    call DumpGridDims(oneGrid%oneGridDims)
 
     call MsgDump(h//" dumping domain decomposed components")
     call DumpDomainDecomp(oneGrid%GlobalOwn, "GlobalOwn")
@@ -677,7 +677,7 @@ contains
     call DumpDomainDecomp(oneGrid%LocalOwnAdvMnt, "LocalOwnAdvMnt")
     
     call MsgDump(h//" dumping neighborhood components")
-    call DumpNeighbourNodes(oneGrid%Neigh,"oneGrid%Neigh")
+    call DumpNeighbourNodes(oneGrid%oneNeighbourNodes,"oneGrid%oneNeighbourNodes")
 
     call MsgDump(h//" dumping message set components")
     call MsgDump(h//" dumping AcouSendU")
@@ -744,8 +744,8 @@ contains
     call DumpMessageSet(oneGrid%WideGhostZoneSend)
     call MsgDump(h//" dumping WideGhostZoneRecv")
     call DumpMessageSet(oneGrid%WideGhostZoneRecv)
-    call DumpNodeDimensions(oneGrid%NodeDims, "NodeDims")
-    call DumpNodeDimensions(oneGrid%NodeDimsAdvMnt, "NodeDimsAdvMnt")
+    call DumpNodeDimensions(oneGrid%oneNodeDimensions, "oneNodeDimensions")
+    call DumpNodeDimensions(oneGrid%oneNodeDimensionsAdvMnt, "oneNodeDimensionsAdvMnt")
     call MsgDump(h//" dumping AdvMntUVSendX")
     call DumpMessageSet(oneGrid%AdvMntUVSendX)
     call MsgDump(h//" dumping AdvMntUVRecvX")
@@ -788,16 +788,16 @@ contains
     call DumpMessageSet(oneGrid%AdvMntScaRecvY)
 
 
-    call DumpBasicFields(oneGrid%Basic, "oneGrid%Basic")
-    call DumpBasicFields(oneGrid%AveBasic, "oneGrid%AveBasic")
-    call DumpTurbFields(oneGrid%Turb, "oneGrid%Turb")
-    call DumpTurbFields(oneGrid%AveTurb, "oneGrid%AveTurb")
-    call DumpMicroFields(oneGrid%Micro, "oneGrid%Micro")
-    call DumpMicroFields(oneGrid%AveMicro, "oneGrid%AveMicro")
+    call DumpBasicFields(oneGrid%oneBasicFields, "oneGrid%oneBasicFields")
+    call DumpBasicFields(oneGrid%oneAveBasicFields, "oneGrid%oneAveBasicFields")
+    call DumpTurbFields(oneGrid%oneTurbFields, "oneGrid%oneTurbFields")
+    call DumpTurbFields(oneGrid%oneAveTurbFields, "oneGrid%oneAveTurbFields")
+    call DumpMicroFields(oneGrid%oneMicroFields, "oneGrid%oneMicroFields")
+    call DumpMicroFields(oneGrid%oneAveMicroFields, "oneGrid%oneAveMicroFields")
     call MsgDump(h//" dumping Scalar Table")
-    call DumpScalarTab(oneGrid%ScalarTab, oneGrid%ScalarTabSize)
+    call DumpScalarTab(oneGrid%oneScalarTable, oneGrid%oneScalarTableSize)
     call MsgDump(h//" dumping MicControl")
-    call DumpMicControl(oneGrid%MicControlVars)
+    call DumpMicControl(oneGrid%oneMicVars)
     call MsgDump(h//" finishes")
   end subroutine DumpGrid
 end module ModGrid

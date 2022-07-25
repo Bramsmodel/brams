@@ -127,13 +127,13 @@ contains
     if (.not. associated(oneGrid)) then
        call fatal_error(h//" oneGrid not associated")
     end if
-    if (.not. associated(oneGrid%NodeDimsAdvMnt)) then
-       call fatal_error(h//" oneGrid%NodeDimsAdvMnt not associated")
+    if (.not. associated(oneGrid%oneNodeDimensionsAdvMnt)) then
+       call fatal_error(h//" oneGrid%oneNodeDimensionsAdvMnt not associated")
     end if
 
-    mzpAdvMnt = oneGrid%NodeDimsAdvMnt%mzp
-    mxpAdvMnt = oneGrid%NodeDimsAdvMnt%mxp
-    mypAdvMnt = oneGrid%NodeDimsAdvMnt%myp
+    mzpAdvMnt = oneGrid%oneNodeDimensionsAdvMnt%mzp
+    mxpAdvMnt = oneGrid%oneNodeDimensionsAdvMnt%mxp
+    mypAdvMnt = oneGrid%oneNodeDimensionsAdvMnt%myp
 
     allocate(oneAdvMnt, stat=ierr)
     if (ierr /= 0) then
@@ -409,7 +409,7 @@ contains
 
   subroutine advmnt_driver(oneGrid, varn, &
        m1 ,m2 ,m3 ,ia,iz,ja,jz,izu,jzv,&
-       i0,j0,nodemyp,nodemxp,nodemzp,mynum, oneMicControl)
+       i0,j0,nodemyp,nodemxp,nodemzp,mynum, oneMicVars)
 
     type(Grid), pointer, intent(in) :: oneGrid
     integer , intent(in) :: m1
@@ -428,7 +428,7 @@ contains
     integer, intent(in) :: nodemzp(:,:)
     integer , intent(in) :: mynum
     character(len=*),intent(in) :: varn
-    type(MicControl), pointer, intent(in) :: oneMicControl
+    type(MicControl), pointer, intent(in) :: oneMicVars
 
     !--- local vars
     integer :: n
@@ -490,21 +490,21 @@ contains
 
     ! dimension of external fields (regular ghost zone width)
 
-    mzp=oneGrid%NodeDims%mzp
-    mxp=oneGrid%NodeDims%mxp
-    myp=oneGrid%NodeDims%myp
+    mzp=oneGrid%oneNodeDimensions%mzp
+    mxp=oneGrid%oneNodeDimensions%mxp
+    myp=oneGrid%oneNodeDimensions%myp
 
     ! dimension of Monotonic Advection fields (wide ghost zone width)
 
-    mxpAdvMnt=oneGrid%NodeDimsAdvMnt%mxp
-    mypAdvMnt=oneGrid%NodeDimsAdvMnt%myp
+    mxpAdvMnt=oneGrid%oneNodeDimensionsAdvMnt%mxp
+    mypAdvMnt=oneGrid%oneNodeDimensionsAdvMnt%myp
 
     ! index external = index Monotonic Advection + offset
 
-    iOffset = oneGrid%NodeDimsAdvMnt%i0 - oneGrid%NodeDims%i0 
+    iOffset = oneGrid%oneNodeDimensionsAdvMnt%i0 - oneGrid%oneNodeDimensions%i0 
     i1ExternAtAdvMnt = 1 - iOffset
     iMxpExternAtAdvMnt = mxp - iOffset
-    jOffset = oneGrid%NodeDimsAdvMnt%j0 - oneGrid%NodeDims%j0 
+    jOffset = oneGrid%oneNodeDimensionsAdvMnt%j0 - oneGrid%oneNodeDimensions%j0 
     j1ExternAtAdvMnt = 1 - jOffset
     jMypExternAtAdvMnt = myp - jOffset
 
@@ -548,7 +548,7 @@ contains
             mxpAdvMnt, mypAdvMnt, &
             iOffset, i1ExternAtAdvMnt, iMxpExternAtAdvMnt,  &
             jOffset, j1ExternAtAdvMnt, jMypExternAtAdvMnt,  &
-            oneGrid%Basic%dn0, oneGrid%Basic%dn0u, oneGrid%Basic%dn0v, &
+            oneGrid%oneBasicFields%dn0, oneGrid%oneBasicFields%dn0u, oneGrid%oneBasicFields%dn0v, &
             oneAdvMnt%dd0_3d, oneAdvMnt%dd0_3du, &
             oneAdvMnt%dd0_3dv, oneAdvMnt%dd0_3dw)
     end if
@@ -601,12 +601,12 @@ contains
             mzp, mxp, myp, mxpAdvMnt, mypAdvMnt, &
             iOffset, i1ExternAtAdvMnt,  iMxpExternAtAdvMnt,  &
             jOffset, j1ExternAtAdvMnt,  jMypExternAtAdvMnt,  &
-            oneMicControl%level,&
-            oneGrid%Basic%rtp, &
-            oneGrid%Basic%rv, &
-            oneGrid%Basic%pp, &
-            oneGrid%Basic%pi0, &
-            oneGrid%Basic%theta, &
+            oneMicVars%level,&
+            oneGrid%oneBasicFields%rtp, &
+            oneGrid%oneBasicFields%rv, &
+            oneGrid%oneBasicFields%pp, &
+            oneGrid%oneBasicFields%pi0, &
+            oneGrid%oneBasicFields%theta, &
             oneAdvMnt%dd0_3d, &
             oneAdvMnt%dd0_3du, &
             oneAdvMnt%dd0_3dv, &
@@ -625,9 +625,9 @@ contains
          iOffset, i1ExternAtAdvMnt,  iMxpExternAtAdvMnt,  &
          jOffset, j1ExternAtAdvMnt,  jMypExternAtAdvMnt,  &
          dtlt, &
-         oneGrid%Basic%uc, oneGrid%Basic%up, &
-         oneGrid%Basic%vc, oneGrid%Basic%vp, &
-         oneGrid%Basic%wc, oneGrid%Basic%wp, &
+         oneGrid%oneBasicFields%uc, oneGrid%oneBasicFields%up, &
+         oneGrid%oneBasicFields%vc, oneGrid%oneBasicFields%vp, &
+         oneGrid%oneBasicFields%wc, oneGrid%oneBasicFields%wp, &
          grid_g(ng)%fmapui, grid_g(ng)%fmapvi, &
          grid_g(ng)%rtgt, grid_g(ng)%rtgu, grid_g(ng)%rtgv, &
          grid_g(ng)%f13t, grid_g(ng)%f23t, &
@@ -687,19 +687,19 @@ contains
     if(advmnt == 1) then
        i_scl=1                                            !- all scalars
     else if(advmnt == 2) then
-       i_scl=oneGrid%ScalarTabSize - NSPECIES_TRANSPORTED +1  !- only chemical + aer species
+       i_scl=oneGrid%oneScalarTableSize - NSPECIES_TRANSPORTED +1  !- only chemical + aer species
     else if(advmnt == 3) then
        i_scl=2                                            !- all scalars, but not theta_il
     end if
 
-    !srf- do n=1,oneGrid%ScalarTabSize     ! original
-    do n=i_scl,oneGrid%ScalarTabSize
+    !srf- do n=1,oneGrid%oneScalarTableSize     ! original
+    do n=i_scl,oneGrid%oneScalarTableSize
 
        !- if RK or ABM3 scheme, THP/THC are not transported here
 
        if (dyncore_flag == 2) then
-          if (oneGrid%ScalarTab(n)%name == 'THC' .or. &
-               oneGrid%ScalarTab(n)%name == 'THP') cycle
+          if (oneGrid%oneScalarTable(n)%name == 'THC' .or. &
+               oneGrid%oneScalarTable(n)%name == 'THP') cycle
        end if
 
        !- Aerosol sedimentation
@@ -717,7 +717,7 @@ contains
 
        end if
 
-       if (associated(oneGrid%ScalarTab(n)%var_p_3D)) then
+       if (associated(oneGrid%oneScalarTable(n)%var_p_3D)) then
 
           ! set oneAdvMnt%vc3d_in north border to zero
           do j = 1, j1ExternAtAdvMnt-1
@@ -740,7 +740,7 @@ contains
              do i = i1ExternAtAdvMnt, iMxpExternAtAdvMnt
                 iExtern = i + iOffset
                 do k = 1, mzp
-                   oneAdvMnt%vc3d_in(k,i,j) = oneGrid%ScalarTab(n)%var_p_3D(k,iExtern,jExtern)
+                   oneAdvMnt%vc3d_in(k,i,j) = oneGrid%oneScalarTable(n)%var_p_3D(k,iExtern,jExtern)
                 end do
              end do
              ! set oneAdvMnt%vc3d_in east border to zero
@@ -768,9 +768,9 @@ contains
           call AdvectTendency(mzp, mxp, &
                iOffset, jOffset, &
                ia, iz, ja, jz, dtlt, &
-               scalarp3D=oneGrid%ScalarTab(n)%var_p_3D, &
+               scalarp3D=oneGrid%oneScalarTable(n)%var_p_3D, &
                AdvMntField=oneAdvMnt%vc3d_out, &
-               scalart1D=oneGrid%ScalarTab(n)%var_t_1D)
+               scalart1D=oneGrid%oneScalarTable(n)%var_t_1D)
 
        end if
 
@@ -1688,10 +1688,10 @@ contains
     character(len=*), parameter :: h="**(AdvectMnt)**"
     character(len=8) :: str(10)
 
-    iBegin = oneGrid%NodeDimsAdvMnt%ia-1
-    iEnd   = oneGrid%NodeDimsAdvMnt%iz+1
-    jBegin = oneGrid%NodeDimsAdvMnt%ja-1
-    jEnd   = oneGrid%NodeDimsAdvMnt%jz+1
+    iBegin = oneGrid%oneNodeDimensionsAdvMnt%ia-1
+    iEnd   = oneGrid%oneNodeDimensionsAdvMnt%iz+1
+    jBegin = oneGrid%oneNodeDimensionsAdvMnt%ja-1
+    jEnd   = oneGrid%oneNodeDimensionsAdvMnt%jz+1
 
     !--- update X borders preparing X advection
     if (dumpLocal) then
@@ -1709,10 +1709,10 @@ contains
 
     ! do X-advection on Y border exchange regions
     
-    yStartSouth = oneGrid%NodeDimsAdvMnt%ja
-    yEndSouth = yStartSouth + oneGrid%NodeDimsAdvMnt%GhostZoneWidth - 1
-    yEndNorth = oneGrid%NodeDimsAdvMnt%jz
-    yStartNorth = yEndNorth - oneGrid%NodeDimsAdvMnt%GhostZoneWidth + 1
+    yStartSouth = oneGrid%oneNodeDimensionsAdvMnt%ja
+    yEndSouth = yStartSouth + oneGrid%oneNodeDimensionsAdvMnt%GhostZoneWidth - 1
+    yEndNorth = oneGrid%oneNodeDimensionsAdvMnt%jz
+    yStartNorth = yEndNorth - oneGrid%oneNodeDimensionsAdvMnt%GhostZoneWidth + 1
 
     call Advec3DX(mzp, mxpAdvMnt, mypAdvMnt, &
          yStart=yStartSouth, &

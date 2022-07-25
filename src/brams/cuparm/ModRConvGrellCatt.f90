@@ -200,24 +200,24 @@ contains
                ngrids_cp,                    & !18
                DTLT,                         & !19
                time,                         & !20
-               OneGrid%Basic%up   ,  & !21
-               OneGrid%Basic%vp   ,  & !22
-               OneGrid%Basic%wp   ,  & !23
-               OneGrid%Basic%theta,  & !24
-               OneGrid%Basic%thp  ,  & !24
-               OneGrid%Basic%pp   ,  & !25
-               OneGrid%Basic%pi0  ,  & !26
-               OneGrid%Basic%dn0  ,  & !27
-               OneGrid%Basic%rv   ,  & !28
-               OneGrid%Turb%tkep  ,  & !29
+               OneGrid%oneBasicFields%up   ,  & !21
+               OneGrid%oneBasicFields%vp   ,  & !22
+               OneGrid%oneBasicFields%wp   ,  & !23
+               OneGrid%oneBasicFields%theta,  & !24
+               OneGrid%oneBasicFields%thp  ,  & !24
+               OneGrid%oneBasicFields%pp   ,  & !25
+               OneGrid%oneBasicFields%pi0  ,  & !26
+               OneGrid%oneBasicFields%dn0  ,  & !27
+               OneGrid%oneBasicFields%rv   ,  & !28
+               OneGrid%oneTurbFields%tkep  ,  & !29
                tkmin,                        & !30
-               oneGrid%Micro%rcp,    &! liquid water
-               oneGrid%Micro%rrp,    &! pristine
-               oneGrid%Micro%rpp,    &
-               oneGrid%Micro%rsp,    &
-               oneGrid%Micro%rap,    &
-               oneGrid%Micro%rgp,    &
-               oneGrid%Micro%rhp,    &
+               oneGrid%oneMicroFields%rcp,    &! liquid water
+               oneGrid%oneMicroFields%rrp,    &! pristine
+               oneGrid%oneMicroFields%rpp,    &
+               oneGrid%oneMicroFields%rsp,    &
+               oneGrid%oneMicroFields%rap,    &
+               oneGrid%oneMicroFields%rgp,    &
+               oneGrid%oneMicroFields%rhp,    &
                                 !
                grid_g(ngrid)%topt  ,    & !29
                grid_g(ngrid)%RTGT  ,    & !30
@@ -274,11 +274,11 @@ contains
                deltaxn(ngrid)*deltayn(ngrid),&
                leaf_g(ngrid)%patch_area, &
                npatch,                       &
-               oneGrid%MicControlVars%level,                        &
+               oneGrid%oneMicVars%level,                        &
                grid_g(ngrid)%glat     , & 
                grid_g(ngrid)%glon     , & !
-               OneGrid%Turb%sflux_r  , & ! fluxos a serem usados em trigg_ecmwf
-               OneGrid%Turb%sflux_t  , &
+               OneGrid%oneTurbFields%sflux_r  , & ! fluxos a serem usados em trigg_ecmwf
+               OneGrid%oneTurbFields%sflux_t  , &
                trigg,autoconv )           
 
           !--(DMK-CCATT-INI)------------------------------------------------------------
@@ -304,12 +304,12 @@ contains
        if(do_cupar_mcphys_coupling == 1) then
           call cupar2mcphysics(mzp,mxp,myp,ia,iz,ja,jz,ngrid,dtlt,& 
                cuparm_g(ngrid)%clsrc,    &
-               OneGrid%Basic%theta,    & 
-               OneGrid%Basic%pp,    & 
-               OneGrid%Basic%pi0, &
-               OneGrid%Basic%dn0, &
-               OneGrid%MicControlVars, &
-               oneGrid%Micro)
+               OneGrid%oneBasicFields%theta,    & 
+               OneGrid%oneBasicFields%pp,    & 
+               OneGrid%oneBasicFields%pi0, &
+               OneGrid%oneBasicFields%dn0, &
+               OneGrid%oneMicVars, &
+               oneGrid%oneMicroFields)
        endif
 
     endif
@@ -358,19 +358,19 @@ contains
                dtlt,              &   
                time,              &   
                                 !
-               OneGrid%Basic%up   ,    &   
-               OneGrid%Basic%vp   ,    &   
-               OneGrid%Basic%wp   ,    &   
-               OneGrid%Basic%theta,    &   
-               OneGrid%Basic%thp  ,    &   
-               OneGrid%Basic%pp   ,    &   
-               OneGrid%Basic%pi0  ,    &   
-               OneGrid%Basic%dn0  ,    &   
-               OneGrid%Basic%rv   ,    &   
-               OneGrid%Turb%tkep  ,    &   
+               OneGrid%oneBasicFields%up   ,    &   
+               OneGrid%oneBasicFields%vp   ,    &   
+               OneGrid%oneBasicFields%wp   ,    &   
+               OneGrid%oneBasicFields%theta,    &   
+               OneGrid%oneBasicFields%thp  ,    &   
+               OneGrid%oneBasicFields%pp   ,    &   
+               OneGrid%oneBasicFields%pi0  ,    &   
+               OneGrid%oneBasicFields%dn0  ,    &   
+               OneGrid%oneBasicFields%rv   ,    &   
+               OneGrid%oneTurbFields%tkep  ,    &   
                                 !
                tkmin,                          &   
-               oneGrid%Micro%rcp,      &! liquid water
+               oneGrid%oneMicroFields%rcp,      &! liquid water
                                 !
                grid_g(ngrid)%topt     ,   &   
                grid_g(ngrid)%RTGT     ,   &   
@@ -419,7 +419,7 @@ contains
                deltaxn(ngrid)*deltayn(ngrid),  &
                leaf_g(ngrid)%patch_area,&
                npatch,                         &
-               oneGrid%MicControlVars%level,                          &
+               oneGrid%oneMicVars%level,                          &
                trigg,autoconv )    
 
           !
@@ -444,7 +444,7 @@ contains
     !--------- Convective Transport based on mass flux scheme ------------------------------------
     if(CCATT == 1 .and. iruncon == 1) then
        scratch%scr1(:)=0.
-       call trans_conv_mflx(iens,scratch%scr1,OneGrid%Basic%dn0)
+       call trans_conv_mflx(iens,scratch%scr1,OneGrid%oneBasicFields%dn0)
     end if
 
   end subroutine cuparm_grell_catt
