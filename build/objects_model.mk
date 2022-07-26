@@ -32,6 +32,7 @@ OBJ_MOD = \
 	ModScalarTable.o \
 	ModBasicFields.o \
 	ModMicroFields.o \
+	JulesFields.o \
 	mpi_io_engine-5d.o \
 	Phys_const.o \
 	an_header.o \

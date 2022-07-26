@@ -64,6 +64,9 @@ contains
     integer, parameter :: GhostZoneLength=1
     integer :: gridId
     type(GridTree), pointer :: oneGridNode, ancestor, brother, root
+
+    integer :: ierr
+    logical, parameter :: dumpLocal=.false.
     character(len=16) :: str(10)
     character(len=*), parameter :: h="**(CreateGridTree)**"
 
@@ -79,14 +82,34 @@ contains
             "should be >= 1 but is"//trim(adjustl(str(1))))
     end if
 
+    allocate(AllGridNodes(oneNamelistFile%ngrids), stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       write(str(2),"(i8)") ngrids
+       call fatal_error(h//" allocate AllGridNodes for "//&
+            trim(adjustl(str(2)))//" grids fails with stat "//&
+            trim(adjustl(str(1))))
+    end if
+    
     ! copy namelist file values into array of GridTrees pointers
 
-    allocate(AllGridNodes(oneNamelistFile%ngrids))
     do gridId = 1, oneNamelistFile%ngrids
 
        ! create and fill a grid node
 
-       allocate(AllGridNodes(gridId)%this)
+       if (dumpLocal) then
+          write(str(1),"(i8)") gridId
+          call MsgDump(h//" will create grid #"//trim(adjustl(str(1))))
+       end if
+       
+       allocate(AllGridNodes(gridId)%this, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          write(str(2),"(i8)") gridId
+          call fatal_error(h//" allocate this for gridId #"//&
+               trim(adjustl(str(2)))//" fails with stat "//&
+               trim(adjustl(str(1))))
+       end if
        AllGridNodes(gridId)%this%curr => null()
        AllGridNodes(gridId)%this%ancestor => null()
        AllGridNodes(gridId)%this%sibling => null()

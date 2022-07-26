@@ -90,8 +90,17 @@ module ModGrid
        CreateMicroFields, &
        DestroyMicroFields, &
        DumpMicroFields
-  
-  
+
+  use meteogramType, only: &
+       PolygonContainer
+
+#ifdef JULES
+  use ModJulesFields, only: &
+       JulesFields, &
+       CreateJulesFields, &
+       DestroyJulesFields, &
+       DumpJulesFields
+#endif  
   
   ! JP: temporariamente usa variaveis globais enquanto
   !     ModVarTables nao for inclusa no tipo Grid
@@ -102,9 +111,6 @@ module ModGrid
 
   use mem_tend, only: &
        tend
-
-  use meteogramType, only: &
-       PolygonContainer
 
   implicit none
 
@@ -177,6 +183,11 @@ module ModGrid
      type(ScalarTable), pointer :: oneScalarTable(:) => null()
      integer :: oneScalarTableSize=0
 
+#ifdef JULES
+     type(JulesFields), pointer :: oneJulesFields => null()
+     type(JulesFields), pointer :: oneAveJulesFields => null()
+#endif
+     
      type(MicControl), pointer :: oneMicVars => null()
      
      ! AllGhostZoneSend/RecvG3D: Ghost Zone update at PostProcess
@@ -281,6 +292,8 @@ contains
     type(ParallelEnvironment), pointer, intent(in) :: oneParallelEnvironment
     type(Grid), pointer :: oneGrid
 
+    integer :: ierr
+    character(len=8) :: str(10)
     character(len=*), parameter :: h="**(CreateGrid)**"
     logical, parameter :: dumpLocal=.false.
 
@@ -290,13 +303,15 @@ contains
        call fatal_error(h//" invoked with null oneNamelistFile")
     else if (.not. associated(oneParallelEnvironment)) then
        call fatal_error(h//" invoked with null oneParallelEnvironment")
-    else if (associated(oneGrid)) then
-       call fatal_error(h//" invoked with already associated oneGrid")
     end if
 
     ! create a variable of type grid and fill entries
 
-    allocate(oneGrid)
+    allocate(oneGrid, stat=ierr)
+    if (ierr /= 0) then
+       call fatal_error(h//" allocate oneGrid fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
 
     ! stores input arguments
 
@@ -412,7 +427,6 @@ contains
     ! this node Turb Fields
 
     oneGrid%oneTurbFields => CreateTurbFields(oneGrid%oneNodeDimensions, oneGrid%oneNamelistFile, gridId, .false.)
-    ! AveTurb fields allocated with size (1,1,1) if avgtim null at oneNamelistFile
     oneGrid%oneAveTurbFields => CreateTurbFields(oneGrid%oneNodeDimensions, oneGrid%oneNamelistFile, gridId, .true.)
 
     ! this node MicControl
@@ -430,9 +444,21 @@ contains
 
     oneGrid%oneScalarTable => CreateScalarTab()
     oneGrid%oneScalarTableSize = 0
+
+    ! this node Jules Fields
+
+#ifdef JULES
+    if (oneGrid%oneNamelistFile%isfcl == 5) then
+       oneGrid%oneJulesFields => CreateJulesFields(oneGrid%oneNodeDimensions, &
+            oneGrid%oneNamelistFile)
+
+       oneGrid%oneAveJulesFields => CreateJulesFields(oneGrid%oneNodeDimensions, &
+            oneGrid%oneNamelistFile)
+    end if
+#endif
     
     if (dumpLocal) then
-       call MsgDump(h//" dumping OneGrid at the end")
+       call MsgDump(h//" dumping OneGrid at the end of CreateGrid")
        call DumpGrid(OneGrid)
     end if
   end function CreateGrid
@@ -564,9 +590,8 @@ contains
 
 
     if (dumpLocal) then
-       call MsgDump(h//" dumping oneGrid")
+       call MsgDump(h//" dumping oneGrid at the end of InsertMessageSetAtOneGrid")
        call DumpGrid(OneGrid)
-       call MsgDump(h//" done dumping oneGrid")
     end if
   end subroutine InsertMessageSetAtOneGrid
 
@@ -602,6 +627,10 @@ contains
        call DestroyScalarTab(oneGrid%oneScalarTable)
        oneGrid%oneScalarTableSize=0
        call DestroyMicControl(oneGrid%oneMicVars)
+#ifdef JULES
+       call DestroyJulesFields(oneGrid%oneJulesFields)
+       call DestroyJulesFields(oneGrid%oneAveJulesFields)
+#endif
        call DestroyAcousticMessageSet(&
             oneGrid%AcouSendU, oneGrid%AcouRecvU, &
             oneGrid%AcouSendV, oneGrid%AcouRecvV, &
@@ -798,6 +827,10 @@ contains
     call DumpScalarTab(oneGrid%oneScalarTable, oneGrid%oneScalarTableSize)
     call MsgDump(h//" dumping MicControl")
     call DumpMicControl(oneGrid%oneMicVars)
+#ifdef JULES
+    call DumpJulesFields(oneGrid%oneJulesFields, "oneGrid%oneJulesFields")
+    call DumpJulesFields(oneGrid%oneAveJulesFields, "oneGrid%oneAveJulesFields")
+#endif
     call MsgDump(h//" finishes")
   end subroutine DumpGrid
 end module ModGrid
