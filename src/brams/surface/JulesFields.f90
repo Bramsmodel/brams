@@ -423,7 +423,9 @@ contains
     integer, intent(in) :: gridId
 
     integer :: imean
-    integer(kind=int64) :: npts
+    integer(kind=int64) :: nptsXY
+    integer(kind=int64) :: nptsXYZ
+    integer(kind=int64) :: nptsXYP
     character(len=8) :: str_recycle
     character(len=*), parameter :: h="**(InsertJulesFieldsAtVarTable)**" 
 
@@ -451,163 +453,88 @@ contains
 
     ! Fill pointers to arrays into variable tables
 
+    nptsXY=int(size(oneJulesFields%gpp,1),int64)* &
+         int(size(oneJulesFields%gpp,2),int64)
 
-    npts=int(size(oneJulesFields%gpp,1),int64)*int(size(oneJulesFields%gpp,2),int64)
-    if (associated(oneJulesFields%gpp)) then
-       call InsertVTab (oneJulesFields%gpp,oneAveJulesFields%gpp  &           
-            ,gridId, npts, imean, 'GPP :2:anal:mpti:mpt3')
-    end if
+    call InsertVTab (oneJulesFields%gpp,oneAveJulesFields%gpp  &           
+         ,gridId, nptsXY, imean, 'GPP :2:anal:mpti:mpt3')  
+	 
+    call InsertVTab (oneJulesFields%resp_s,oneAveJulesFields%resp_s  &    
+         ,gridId, nptsXY, imean, 'RESP_S :2:anal:mpti:mpt3') 
+	 
+    call InsertVTab (oneJulesFields%resp_p,oneAveJulesFields%resp_p  &     
+         ,gridId, nptsXY, imean, 'RESP_P :2:anal:mpti:mpt3') 
+	 
+    call InsertVTab (oneJulesFields%npp,oneAveJulesFields%npp  &           
+         ,gridId, nptsXY, imean, 'NPP :2:anal:mpti:mpt3')    
 
-    npts=int(size(oneJulesFields%resp_s,1),int64)*int(size(oneJulesFields%resp_s,2),int64)
-    if (associated(oneJulesFields%resp_s)) then
-       call InsertVTab (oneJulesFields%resp_s,oneAveJulesFields%resp_s  &    
-            ,gridId, npts, imean, 'RESP_S :2:anal:mpti:mpt3')
-    end if
+    call InsertVTab (oneJulesFields%u10mj,oneAveJulesFields%u10mj  &
+         ,gridId, nptsXY, imean, 'U10MJ :2:anal:mpti:mpt3')
 
-    npts=int(size(oneJulesFields%resp_p,1),int64)*int(size(oneJulesFields%resp_p,2),int64)
-    if (associated(oneJulesFields%resp_p)) then
-       call InsertVTab (oneJulesFields%resp_p,oneAveJulesFields%resp_p  &     
-            ,gridId, npts, imean, 'RESP_P :2:anal:mpti:mpt3')
-    end if
+    call InsertVTab (oneJulesFields%v10mj,oneAveJulesFields%v10mj  &
+         ,gridId, nptsXY, imean, 'V10MJ :2:anal:mpti:mpt3')
 
-    npts=int(size(oneJulesFields%npp,1),int64)*int(size(oneJulesFields%npp,2),int64)
-    if (associated(oneJulesFields%npp)) then
-       call InsertVTab (oneJulesFields%npp,oneAveJulesFields%npp  &           
-            ,gridId, npts, imean, 'NPP :2:anal:mpti:mpt3')
-    end if
+    call InsertVTab (oneJulesFields%t2mj,oneAveJulesFields%t2mj  &
+         ,gridId, nptsXY, imean, 'T2MJ :2:anal:mpti:mpt3')
 
-    npts=int(size(oneJulesFields%u10mj,1),int64)*int(size(oneJulesFields%u10mj,2),int64)
-    if (associated(oneJulesFields%u10mj)) then
-       call InsertVTab (oneJulesFields%u10mj,oneAveJulesFields%u10mj  &
-            ,gridId, npts, imean, 'U10MJ :2:anal:mpti:mpt3')
-    end if
+    call InsertVTab (oneJulesFields%t2mj_max,oneAveJulesFields%t2mj_max  &
+         ,gridId, nptsXY, imean, 'T2MJ_MAX :2:anal:mpti:mpt3')
 
-    npts=int(size(oneJulesFields%v10mj,1),int64)*int(size(oneJulesFields%v10mj,2),int64)
-    if (associated(oneJulesFields%v10mj)) then
-       call InsertVTab (oneJulesFields%v10mj,oneAveJulesFields%v10mj  &
-            ,gridId, npts, imean, 'V10MJ :2:anal:mpti:mpt3')
-    end if
+    call InsertVTab (oneJulesFields%t2mj_min,oneAveJulesFields%t2mj_min  &
+         ,gridId, nptsXY, imean, 'T2MJ_MIN :2:anal:mpti:mpt3')
 
-    npts=int(size(oneJulesFields%u10mj1hr,1),int64)* &
+    call InsertVTab (oneJulesFields%rv2mj,oneAveJulesFields%rv2mj  &
+         ,gridId, nptsXY, imean, 'RV2MJ :2:anal:mpti:mpt3')
+
+    call InsertVTab (oneJulesFields%csj,oneAveJulesFields%csj  &
+         ,gridId, nptsXY, imean, 'CSJ :2:anal:mpti:mpt3')
+
+    call InsertVTab (oneJulesFields%ht_fluxj,oneAveJulesFields%ht_fluxj  &
+         ,gridId, nptsXY, imean, 'ht_fluxj :2:anal:mpti:mpt3')
+
+    call InsertVTab (oneJulesFields%temp_surfj,oneAveJulesFields%temp_surfj  &
+         ,gridId, nptsXY, imean, 'temp_surfj :2:anal:mpti:mpt3')
+
+    nptsXYZ=int(size(oneJulesFields%u10mj1hr,1),int64)* &
          int(size(oneJulesFields%u10mj1hr,2),int64)* &
          int(size(oneJulesFields%u10mj1hr,3),int64)
-    if (associated(oneJulesFields%u10mj1hr)) then
-       call InsertVTab (oneJulesFields%u10mj1hr,oneAveJulesFields%u10mj1hr  &
-            ,gridId, npts, imean, 'U10MJ1hr :3:hist:anal:mpti:mpt3:mpt2')
-    end if
 
-    npts=int(size(oneJulesFields%v10mj1hr,1),int64)* &
-         int(size(oneJulesFields%v10mj1hr,2),int64)* &
-         int(size(oneJulesFields%v10mj1hr,3),int64)
-    if (associated(oneJulesFields%v10mj1hr)) then
-       call InsertVTab (oneJulesFields%v10mj1hr,oneAveJulesFields%v10mj1hr  &
-            ,gridId, npts, imean, 'V10MJ1hr :3:hist:anal:mpti:mpt3:mpt2')
-    end if
+    call InsertVTab (oneJulesFields%u10mj1hr,oneAveJulesFields%u10mj1hr  &
+         ,gridId, nptsXYZ, imean, 'U10MJ1hr :3:hist:anal:mpti:mpt3:mpt2')
 
-    npts=int(size(oneJulesFields%fracj,1),int64)* &
-         int(size(oneJulesFields%fracj,2),int64)* &
-         int(size(oneJulesFields%fracj,3),int64)
-    if (associated(oneJulesFields%fracj)) then
-       call InsertVTab (oneJulesFields%fracj,oneAveJulesFields%fracj &
-            ,gridId, npts, imean, 'fracj :3:hist:anal:mpti:mpt3:mpt2')
-    end if
+    call InsertVTab (oneJulesFields%v10mj1hr,oneAveJulesFields%v10mj1hr  &
+         ,gridId, nptsXYZ, imean, 'V10MJ1hr :3:hist:anal:mpti:mpt3:mpt2')
 
-    npts=int(size(oneJulesFields%t2mj,1),int64)*int(size(oneJulesFields%t2mj,2),int64)
-    if (associated(oneJulesFields%t2mj)) then
-       call InsertVTab (oneJulesFields%t2mj,oneAveJulesFields%t2mj  &
-            ,gridId, npts, imean, 'T2MJ :2:anal:mpti:mpt3')
-    end if
+    call InsertVTab (oneJulesFields%fracj,oneAveJulesFields%fracj  &
+         ,gridId, nptsXYZ, imean, 'fracj :3:hist:anal:mpti:mpt3:mpt2')
 
-    npts=int(size(oneJulesFields%t2mj_max,1),int64)*int(size(oneJulesFields%t2mj_max,2),int64)
-    if (associated(oneJulesFields%t2mj_max)) then
-       call InsertVTab (oneJulesFields%t2mj_max,oneAveJulesFields%t2mj_max  &
-            ,gridId, npts, imean, 'T2MJ_MAX :2:anal:mpti:mpt3')
-    end if
-
-    npts=int(size(oneJulesFields%t2mj_min,1),int64)*int(size(oneJulesFields%t2mj_min,2),int64)
-    if (associated(oneJulesFields%t2mj_min)) then
-       call InsertVTab (oneJulesFields%t2mj_min,oneAveJulesFields%t2mj_min  &
-            ,gridId, npts, imean, 'T2MJ_MIN :2:anal:mpti:mpt3')
-    end if
-
-    npts=int(size(oneJulesFields%rv2mj,1),int64)*int(size(oneJulesFields%rv2mj,2),int64)
-    if (associated(oneJulesFields%rv2mj)) then
-       call InsertVTab (oneJulesFields%rv2mj,oneAveJulesFields%rv2mj  &
-            ,gridId, npts, imean, 'RV2MJ :2:anal:mpti:mpt3')
-    end if
-
-    npts=int(size(oneJulesFields%csj,1),int64)*int(size(oneJulesFields%csj,2),int64)
-    if (associated(oneJulesFields%csj)) then
-       call InsertVTab (oneJulesFields%csj,oneAveJulesFields%csj  &
-            ,gridId, npts, imean, 'CSJ :2:anal:mpti:mpt3')
-    end if
-
-    npts=int(size(oneJulesFields%anthrop_heatj,1),int64)*&
+    nptsXYP=int(size(oneJulesFields%anthrop_heatj,1),int64)* &
          int(size(oneJulesFields%anthrop_heatj,2),int64)* &
          int(size(oneJulesFields%anthrop_heatj,3),int64)
-    if (associated(oneJulesFields%anthrop_heatj)) then
-       call InsertVTab (oneJulesFields%anthrop_heatj,oneAveJulesFields%anthrop_heatj  &
-            ,gridId, npts, imean, &
-            'anthrop_heatj :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
 
-    npts=int(size(oneJulesFields%radnet_tilej,1),int64)*&
-         int(size(oneJulesFields%radnet_tilej,2),int64)* &
-         int(size(oneJulesFields%radnet_tilej,3),int64)
-    if (associated(oneJulesFields%radnet_tilej)) then
-       call InsertVTab (oneJulesFields%radnet_tilej,oneAveJulesFields%radnet_tilej  &
-            ,gridId, npts, imean, &
-            'radnet_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
-    
-    npts=int(size(oneJulesFields%ftl_tilej,1),int64)*&
-         int(size(oneJulesFields%ftl_tilej,2),int64)* &
-         int(size(oneJulesFields%ftl_tilej,3),int64)
-    if (associated(oneJulesFields%ftl_tilej)) then
-       call InsertVTab (oneJulesFields%ftl_tilej,oneAveJulesFields%ftl_tilej  &
-            ,gridId, npts, imean, &
-            'ftl_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVTab (oneJulesFields%anthrop_heatj,oneAveJulesFields%anthrop_heatj  &
+         ,gridId, nptsXYP, imean,  &
+         'anthrop_heatj :6:hist:anal:mpti:mpt3'//trim(str_recycle))
 
-    npts=int(size(oneJulesFields%le_tilej,1),int64)*&
-         int(size(oneJulesFields%le_tilej,2),int64)* &
-         int(size(oneJulesFields%le_tilej,3),int64)
-    if (associated(oneJulesFields%le_tilej)) then
-       call InsertVTab (oneJulesFields%le_tilej,oneAveJulesFields%le_tilej  &
-            ,gridId, npts, imean, &
-            'le_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVTab (oneJulesFields%radnet_tilej,oneAveJulesFields%radnet_tilej  &
+         ,gridId, nptsXYP, imean,  &
+         'radnet_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle))
 
-    npts=int(size(oneJulesFields%htf_tilej,1),int64)*&
-         int(size(oneJulesFields%htf_tilej,2),int64)* &
-         int(size(oneJulesFields%htf_tilej,3),int64)
-    if (associated(oneJulesFields%htf_tilej)) then
-       call InsertVTab (oneJulesFields%htf_tilej,oneAveJulesFields%htf_tilej  &
-            ,gridId, npts, imean, &
-            'htf_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVTab (oneJulesFields%ftl_tilej,oneAveJulesFields%ftl_tilej  &
+         ,gridId, nptsXYP, imean,  &
+         'ftl_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle))
 
-    npts=int(size(oneJulesFields%snowdepthj,1),int64)*&
-         int(size(oneJulesFields%snowdepthj,2),int64)* &
-         int(size(oneJulesFields%snowdepthj,3),int64)
-    if (associated(oneJulesFields%snowdepthj)) then
-       call InsertVTab (oneJulesFields%snowdepthj,oneAveJulesFields%snowdepthj  &
-            ,gridId, npts, imean, &
-            'snowdepthj :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVTab (oneJulesFields%le_tilej,oneAveJulesFields%le_tilej  &
+         ,gridId, nptsXYP, imean,  &
+         'le_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle))
 
-    npts=int(size(oneJulesFields%ht_fluxj,1),int64)*int(size(oneJulesFields%ht_fluxj,2),int64)
-    if (associated(oneJulesFields%ht_fluxj)) then
-       call InsertVTab (oneJulesFields%ht_fluxj,oneAveJulesFields%ht_fluxj  &
-            ,gridId, npts, imean, 'ht_fluxj :2:anal:mpti:mpt3')
-    end if
+    call InsertVTab (oneJulesFields%htf_tilej,oneAveJulesFields%htf_tilej  &
+         ,gridId, nptsXYP, imean,  &
+         'htf_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle))
 
-    npts=int(size(oneJulesFields%temp_surfj,1),int64)*int(size(oneJulesFields%temp_surfj,2),int64)
-    if (associated(oneJulesFields%temp_surfj)) then
-       call InsertVTab (oneJulesFields%temp_surfj,oneAveJulesFields%temp_surfj  &
-            ,gridId, npts, imean, 'temp_surfj :2:anal:mpti:mpt3')
-    end if
-
+    call InsertVTab (oneJulesFields%snowdepthj,oneAveJulesFields%snowdepthj  &
+         ,gridId, nptsXYP, imean,  &
+         'snowdepthj :6:hist:anal:mpti:mpt3'//trim(str_recycle))
 
   end subroutine InsertJulesFieldsAtVarTable
 

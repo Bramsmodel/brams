@@ -113,13 +113,8 @@ module ModMemAlloc
        ZeroVTab
 
 #ifdef JULES
-  use mem_jules, only: &
-       jules_g, &
-       julesm_g, &
-       nullify_jules, &
-       alloc_jules, &
-       filltab_jules, &
-       dealloc_jules
+  use ModJulesFields, only: &
+       InsertJulesFieldsAtVarTable
 #endif
 
   use mem_shcu, only: &
@@ -610,27 +605,11 @@ contains
     ! Allocate JULES surface scheme type
 #ifdef JULES
     ! Allocate Jules type
-    allocate(jules_g(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error(h//"Allocating jules_g")
-    allocate(julesm_g(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error(h//"Allocating julesm_g")
-    do ng=1,ngrids
-       call nullify_jules(jules_g(ng)); call nullify_jules(julesm_g(ng))
-
-       if(ISFCL == 5) then
-          call alloc_jules(jules_g(ng), nmzp(ng), nmxp(ng), nmyp(ng),  &
-               nzg, nzs, npatch, ng)
-          if (imean==1) then
-             call alloc_jules(julesm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng),  &
-                  nzg, nzs, npatch, ng)
-          elseif (imean==0) then
-             call alloc_jules(julesm_g(ng),     1,   1,  1, 1, 1, 1, 1)
-          endif
-
-          call filltab_jules(jules_g(ng), julesm_g(ng), imean,  &
-               nmzp(ng), nmxp(ng), nmyp(ng), nzg, nzs, npatch, ng)
-       endif
-    enddo
+    call InsertJulesFieldsAtVarTable(&
+         oneGrid%oneJulesFields, &
+         oneGrid%oneAveJulesFields, &
+         oneGrid%oneNamelistFile, &
+         oneGrid%Id)
 #endif
     !-------------
 
@@ -1746,8 +1725,8 @@ contains
        call dealloc_leaf(leaf_g(ng))
        call dealloc_leaf(leafm_g(ng))
 #ifdef JULES
-       call dealloc_jules(jules_g(ng))
-       call dealloc_jules(julesm_g(ng))
+!!$       call dealloc_jules(jules_g(ng))
+!!$       call dealloc_jules(julesm_g(ng))
 #endif
        call dealloc_radiate(radiate_g(ng))
        call dealloc_radiate(radiatem_g(ng))
@@ -1780,7 +1759,7 @@ contains
     deallocate(grid_g,gridm_g)
     deallocate(leaf_g,leafm_g)
 #ifdef JULES
-    deallocate(jules_g,julesm_g)
+!!$    deallocate(jules_g,julesm_g)
 #endif
     deallocate(radiate_g,radiatem_g)
     deallocate(varinit_g,varinitm_g)

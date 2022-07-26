@@ -353,7 +353,8 @@ contains
                oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
        end if
        call sfclyr_jules(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile, &
-            oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
+            oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicVars, &
+            oneGrid%oneMicroFields, oneGrid%oneJulesFields)
 #endif
     endif
 

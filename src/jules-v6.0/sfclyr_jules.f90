@@ -30,8 +30,8 @@ module ModSfcLyrJules
        slz, &
        leaf_g
 
-  use mem_jules, only: &
-       jules_g
+  use ModJulesFields, only: &
+       JulesFields
 
   use mem_grid, only: &
        npatch, &
@@ -167,7 +167,8 @@ contains
 
 
   subroutine sfclyr_jules(mzp,mxp,myp,iaI,izI,jaI,jzI,jdim,julesFile,&
-       oneBasicFields, oneTurbFields, oneMicControl, oneMicroFields)
+       oneBasicFields, oneTurbFields, oneMicControl, oneMicroFields, &
+       oneJulesFields)
 
     !--- Modulos do BRAMS ---
 
@@ -184,6 +185,7 @@ contains
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     type(MicControl), pointer, intent(in) :: oneMicControl
     type(MicroFields), pointer, intent(in) :: oneMicroFields
+    type(JulesFields), pointer, intent(in) :: oneJulesFields
     
     integer               :: nsoil, fase,ia,iz,ja,jz,hh,mm
     integer, parameter :: fat_dtlong=1  ! > 1 para nao executar o JULES em todos os timestep do BRAMS
@@ -507,10 +509,10 @@ contains
     !-------------------------------------}
 
     !--- ESCREVENDO AS VARIAVEIS DO JULES NO OUTPUT DO BRAMS ---{
-    jules_g(ng)%u10mj(ia:iz,ja:jz)=sf_diag%u10m(:,:)
-    jules_g(ng)%v10mj(ia:iz,ja:jz)=sf_diag%v10m(:,:)
-    jules_g(ng)%t2mj(ia:iz,ja:jz)=sf_diag%t1p5m(:,:)
-    jules_g(ng)%rv2mj(ia:iz,ja:jz)=sf_diag%q1p5m(:,:)/(1-sf_diag%q1p5m(:,:))
+    oneJulesFields%u10mj(ia:iz,ja:jz)=sf_diag%u10m(:,:)
+    oneJulesFields%v10mj(ia:iz,ja:jz)=sf_diag%v10m(:,:)
+    oneJulesFields%t2mj(ia:iz,ja:jz)=sf_diag%t1p5m(:,:)
+    oneJulesFields%rv2mj(ia:iz,ja:jz)=sf_diag%q1p5m(:,:)/(1-sf_diag%q1p5m(:,:))
 
 
     do l=1,land_pts
@@ -523,10 +525,10 @@ contains
           stop
        endif
 
-       jules_g(ng)%gpp(i+ia-1,j+ja-1)=trifctltype%gpp_gb(l)
-       jules_g(ng)%resp_p(i+ia-1,j+ja-1)=trifctltype%resp_p_gb(l)
-       jules_g(ng)%npp(i+ia-1,j+ja-1)=trifctltype%npp_gb(l)
-       jules_g(ng)%resp_s(i+ia-1,j+ja-1)=sum(sum(trifctltype%resp_s_soilt(l,1,:,:), 2), 1)
+       oneJulesFields%gpp(i+ia-1,j+ja-1)=trifctltype%gpp_gb(l)
+       oneJulesFields%resp_p(i+ia-1,j+ja-1)=trifctltype%resp_p_gb(l)
+       oneJulesFields%npp(i+ia-1,j+ja-1)=trifctltype%npp_gb(l)
+       oneJulesFields%resp_s(i+ia-1,j+ja-1)=sum(sum(trifctltype%resp_s_soilt(l,1,:,:), 2), 1)
     enddo
     !-----------------------------------------------------------}
 

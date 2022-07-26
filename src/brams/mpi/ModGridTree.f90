@@ -85,7 +85,7 @@ contains
     allocate(AllGridNodes(oneNamelistFile%ngrids), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
-       write(str(2),"(i8)") ngrids
+       write(str(2),"(i8)") oneNamelistFile%ngrids
        call fatal_error(h//" allocate AllGridNodes for "//&
             trim(adjustl(str(2)))//" grids fails with stat "//&
             trim(adjustl(str(1))))

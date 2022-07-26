@@ -421,7 +421,9 @@ contains
                oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
        end if
        call sfclyr_jules(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile, &
-            oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
+            oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicVars, &
+            oneGrid%oneMicroFields, oneGrid%oneJulesFields)
+       
        !--- this combines the JULES land + LEAF ocean models.
        if (isfcl_ocean == 1) then
           call sfclyr_ocean_only  (mzp,mxp,myp,ia,iz,ja,jz,ibcon, &

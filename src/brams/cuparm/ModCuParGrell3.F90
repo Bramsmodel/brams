@@ -19,8 +19,6 @@ module ModCuParGrell3
   use mem_stilt, only: &
        imassflx
 
-  use mem_jules, only: jules_g
-
   use ModRstilt, only: &
        prep_convflx_to_stilt
 
@@ -537,6 +535,7 @@ contains
   subroutine CUPARM_GRELL3_CATT(oneGrid, iens,iinqparm,iinshcu)
     integer, intent(IN) :: iens,iinqparm,iinshcu
     type(Grid), pointer :: oneGrid ! intent(in)
+    
     integer :: i,j,k
     real :: grid_length,theta2temp
 
@@ -955,7 +954,7 @@ contains
           endif
 
           if(isfcl == 5) then
-             temp2m(:,:) = jules_g(ngrid)%t2mj(:,:)
+             temp2m(:,:) = oneGrid%oneJulesFields%t2mj(:,:)
           else
              temp2m(:,:) =0.5*( oneGrid%oneBasicFields%theta(1,:,:)* &
                   (oneGrid%oneBasicFields%pp(1,:,:)+oneGrid%oneBasicFields%pi0(1,:,:))/cp + &
@@ -1197,7 +1196,7 @@ contains
           endif
 
           if(isfcl == 5 .and.  time > dtlt ) then
-             temp2m(:,:) = jules_g(ngrid)%t2mj(:,:) !K
+             temp2m(:,:) = oneGrid%oneJulesFields%t2mj(:,:) !K
           else
              temp2m(:,:) =0.5*(oneGrid%oneBasicFields%theta(1,:,:)* &
                   (oneGrid%oneBasicFields%pp(1,:,:)+oneGrid%oneBasicFields%pi0(1,:,:))/cp + &

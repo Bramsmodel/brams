@@ -787,7 +787,7 @@ OBJ_MOD = \
 
 
 	JULES_OBJ_SFCLYR = sfclyr_jules.o
-	JULES_OBJ_MEM    = mem_jules.o
+	JULES_OBJ_MEM    = JulesFields.o
 #<J3.0> 	JULES_OBJ_FLX   = fluxes.o
 ifeq ($(ENABLEJULES),false)
 	JULES_OBJ_SFCLYR =
