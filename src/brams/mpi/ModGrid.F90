@@ -91,6 +91,12 @@ module ModGrid
        DestroyMicroFields, &
        DumpMicroFields
 
+  use ModShcuFields, only: &
+       ShcuFields, &
+       CreateShcuFields, &
+       DestroyShcuFields, &
+       DumpShcuFields
+  
   use meteogramType, only: &
        PolygonContainer
 
@@ -187,7 +193,10 @@ module ModGrid
      type(JulesFields), pointer :: oneJulesFields => null()
      type(JulesFields), pointer :: oneAveJulesFields => null()
 #endif
-     
+
+     type(ShcuFields), pointer :: oneShcuFields => null()
+     type(ShcuFields), pointer :: oneAveShcuFields => null()
+
      type(MicControl), pointer :: oneMicVars => null()
      
      ! AllGhostZoneSend/RecvG3D: Ghost Zone update at PostProcess
@@ -456,11 +465,16 @@ contains
             oneGrid%oneNamelistFile)
     end if
 #endif
+
+    ! this node Shcu Fields
+
+    oneGrid%oneShcuFields => CreateShcuFields(oneGrid%oneNodeDimensions, oneGrid%oneControlVars)
+    oneGrid%oneAveShcuFields => CreateShcuFields(oneGrid%oneNodeDimensions, oneGrid%oneControlVars)
     
-    if (dumpLocal) then
+!!$    if (dumpLocal) then
        call MsgDump(h//" dumping OneGrid at the end of CreateGrid")
        call DumpGrid(OneGrid)
-    end if
+!!$    end if
   end function CreateGrid
 
 
@@ -631,6 +645,8 @@ contains
        call DestroyJulesFields(oneGrid%oneJulesFields)
        call DestroyJulesFields(oneGrid%oneAveJulesFields)
 #endif
+       call DestroyShcuFields(oneGrid%oneShcuFields)
+       call DestroyShcuFields(oneGrid%oneAveShcuFields)
        call DestroyAcousticMessageSet(&
             oneGrid%AcouSendU, oneGrid%AcouRecvU, &
             oneGrid%AcouSendV, oneGrid%AcouRecvV, &
@@ -831,6 +847,8 @@ contains
     call DumpJulesFields(oneGrid%oneJulesFields, "oneGrid%oneJulesFields")
     call DumpJulesFields(oneGrid%oneAveJulesFields, "oneGrid%oneAveJulesFields")
 #endif
+    call DumpShcuFields(oneGrid%oneShcuFields, "oneGrid%oneShcuFields")
+    call DumpShcuFields(oneGrid%oneAveShcuFields, "oneGrid%oneAveShcuFields")
     call MsgDump(h//" finishes")
   end subroutine DumpGrid
 end module ModGrid

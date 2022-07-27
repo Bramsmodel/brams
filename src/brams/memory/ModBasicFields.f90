@@ -19,7 +19,7 @@ module ModBasicFields
        MsgDump
 
   use iso_fortran_env, only: &
-       real64
+       int64
 
   use ModVarTables, only: &
        InsertVTab
@@ -500,7 +500,7 @@ contains
     integer, intent(in) :: gridId
 
     integer :: imean
-    integer(kind=real64) :: npts
+    integer(kind=int64) :: npts
     character(len=*), parameter :: h="**(InsertBasicFieldsAtVarTable)**" 
 
     if (.not. associated(oneBasicFields)) then

@@ -97,6 +97,7 @@ OBJ_MOD = \
 	mem_scratch3_grell.o \
 	mem_scratch3_grell_sh.o \
 	mem_shcu.o \
+	ShcuFields.o \
 	mem_tconv.o \
 	mem_tend.o \
 	ModTurbFields.o \
