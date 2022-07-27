@@ -96,7 +96,6 @@ OBJ_MOD = \
 	mem_scratch2_grell_sh.o \
 	mem_scratch3_grell.o \
 	mem_scratch3_grell_sh.o \
-	mem_shcu.o \
 	ShcuFields.o \
 	mem_tconv.o \
 	mem_tend.o \
@@ -217,6 +216,7 @@ OBJ_MOD = \
 	mem_teb_common.o \
 	mem_teb_vars_const.o \
 	mem_gaspart.o \
+	GaspartFields.o \
 	mem_emiss.o \
 	ModUrban.o \
 	ModGasPart.o \

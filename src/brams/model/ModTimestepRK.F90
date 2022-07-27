@@ -568,7 +568,8 @@ contains
     !---------------------------------------------------
     ! Shallow  cumulus parameterization by Souza
     if (NNSHCU(ngrid)==1) then
-       call shcupa(oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicroFields)
+       call shcupa(oneGrid%oneBasicFields, oneGrid%oneTurbFields, &
+            oneGrid%oneMicroFields, oneGrid%oneShcuFields)
     end if
     !---------------------------------------------------
 

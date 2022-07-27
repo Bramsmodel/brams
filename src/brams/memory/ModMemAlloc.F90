@@ -117,13 +117,8 @@ module ModMemAlloc
        InsertJulesFieldsAtVarTable
 #endif
 
-  use mem_shcu, only: &
-       shcu_g,        &
-       shcum_g,       &
-       nullify_shcu,  &
-       alloc_shcu,    &
-       filltab_shcu, &
-       dealloc_shcu
+  use ModShcuFields, only: &
+       InsertShcuFieldsAtVarTable
 
   use mem_opt, only: &
        nullify_opt_scratch, &
@@ -866,30 +861,15 @@ contains
 
     enddo
     !--------------------------------------------------------------------------
-    ! Allocate data for Shallow Cumulus version 1
-    ! Verifying if the allocation is necessary in any grids
+    ! insert Shallow Cumulus at var table
     do ng=1, ngrids
-       if (NNSHCU(ng)==1) Alloc_ShCu_Flag = 1
-    enddo
-    if (Alloc_ShCu_Flag==1) then
-       allocate(shcu_g(ngrids), STAT=ierr)
-       if (ierr/=0) call fatal_error(h//"Allocating shcu_g")
-       allocate(shcum_g(ngrids), STAT=ierr)
-       if (ierr/=0) call fatal_error(h//"Allocating shcum_g")
-       do ng=1,ngrids
-          call nullify_shcu(shcu_g(ng))
-          call nullify_shcu(shcum_g(ng))
-          call alloc_shcu(shcu_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
-          if (imean==1) then
-             call alloc_shcu(shcum_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
-          elseif (imean==0) then
-             call alloc_shcu(shcum_g(ng),        1,        1,        1, ng)
-          endif
-
-          call filltab_shcu(shcu_g(ng), shcum_g(ng), imean,  &
-               nmzp(ng), nmxp(ng), nmyp(ng), ng)
-       enddo
-    endif
+       if (nnshcu(ng)==1) then
+          call InsertShcuFieldsAtVarTable(&
+               oneGrid%oneShcuFields, oneGrid%oneAveShcuFields, &
+               oneGrid%oneControlVars, oneGrid%oneNamelistFile, &
+               oneGrid%Id)
+       end if
+    end do
     !--------------------------------------------------------------------------
     ! Allocate data for Shallow/Deep Cumulus options 2 and above
     !
@@ -1736,9 +1716,6 @@ contains
        call dealloc_oda(oda_g(ng))
        call dealloc_oda(odam_g(ng))
 
-       call dealloc_shcu(shcu_g(ng))    ! use by shallow cumulus
-       call dealloc_shcu(shcum_g(ng))   ! use by shallow cumulus
-
        if (TEB_SPM==1) then
           if(allocated(tebc_g)) then
              call dealloc_tebc(tebc_g(ng))      !for teb common
@@ -1764,8 +1741,6 @@ contains
     deallocate(radiate_g,radiatem_g)
     deallocate(varinit_g,varinitm_g)
     deallocate(oda_g,odam_g)
-
-    deallocate(shcu_g, shcum_g)         ! use by shallow cumulus
 
     if (TEB_SPM==1) then
        if(allocated(teb_g)) then

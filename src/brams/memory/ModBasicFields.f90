@@ -88,6 +88,12 @@ contains
     character(len=*), parameter :: h="**(CreateBasicFields)**"
     logical, parameter :: dumpLocal=.false.
 
+    if (.not. associated(oneNodeDimensions)) then
+       call fatal_error(h//" oneNodeDimensions not associated")
+    else if (.not. associated(oneNamelistFile)) then
+       call fatal_error(h//" oneNamelistFile not associated")
+    end if
+       
     mzp=oneNodeDimensions%mzp
     mxp=oneNodeDimensions%mxp
     myp=oneNodeDimensions%myp

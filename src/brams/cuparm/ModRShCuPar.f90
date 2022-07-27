@@ -12,6 +12,9 @@ module ModRShCuPar
   use ModMicroFields, only : &
        MicroFields
 
+  use ModShcuFields, only: &
+       ShcuFields
+  
   use mem_grid, only : &
        time,    &   ! INTENT(IN)
        zt,      &   !INTENT(IN)
@@ -38,9 +41,6 @@ module ModRShCuPar
        jz,                    &   ! intent(in)
        i0,                    &   ! intent(in)
        j0                         ! intent(in)
-
-  use mem_shcu, only: &
-       shcu_g
 
   use shcu_vars_const, only : &
        shcufrq, &       ! intent(in)
@@ -150,10 +150,11 @@ module ModRShCuPar
 contains
 
   
-  subroutine shcupa(oneBasicFields, oneTurbFields, oneMicroFields)
+  subroutine shcupa(oneBasicFields, oneTurbFields, oneMicroFields, oneShcuFields)
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     type(MicroFields), pointer, intent(in) :: oneMicroFields
+    type(ShcuFields), pointer, intent(in) :: oneShcuFields
 
 
     real    :: cptime = 0. !7200.
@@ -164,17 +165,17 @@ contains
 
     if(mod(time+dtlt+.001,shcufrq).le.DTLT.or.time.lt..01)then
 
-       shcu_g(ngrid)%THSRCSH = 0.
-       shcu_g(ngrid)%RTSRCSH = 0.
-       shcu_g(ngrid)%SHMF    = 0.
+       oneShcuFields%THSRCSH = 0.
+       oneShcuFields%RTSRCSH = 0.
+       oneShcuFields%SHMF    = 0.
 
        call SHCUPAR(mzp,mxp,myp,ia,iz,ja,jz,i0,j0,                   &
             oneBasicFields%wp, oneBasicFields%theta,   &
             oneBasicFields%pp, oneBasicFields%pi0,     &
             oneBasicFields%dn0, oneBasicFields%rv,     &
-            shcu_g(ngrid)%THSRCSH,                            &
-            shcu_g(ngrid)%RTSRCSH,                            & 
-            shcu_g(ngrid)%SHMF, grid_g(ngrid)%rtgt,        &
+            oneShcuFields%THSRCSH,                            &
+            oneShcuFields%RTSRCSH,                            & 
+            oneShcuFields%SHMF, grid_g(ngrid)%rtgt,        &
             oneTurbFields%sflux_t,                              & 
             oneTurbFields%sflux_r,                              &
             oneTurbFields%vkh,                                &
@@ -182,8 +183,8 @@ contains
 
     endif
 
-    call ACCUM(int(mxp*myp*mzp,i8), tend%tht, shcu_g(ngrid)%THSRCSH)
-    call ACCUM(int(mxp*myp*mzp,i8), tend%rtt, shcu_g(ngrid)%RTSRCSH)
+    call ACCUM(int(mxp*myp*mzp,i8), tend%tht, oneShcuFields%THSRCSH)
+    call ACCUM(int(mxp*myp*mzp,i8), tend%rtt, oneShcuFields%RTSRCSH)
 
     return
   end subroutine SHCUPA
