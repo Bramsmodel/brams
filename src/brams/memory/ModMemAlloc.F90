@@ -159,16 +159,9 @@ module ModMemAlloc
        filltab_tebc, &        ! Subroutine
        dealloc_tebc            ! Subroutine
 
-  use mem_gaspart, only: &
-       gaspart_g,        & ! INTENT(IN)
-       gaspartm_g,       & ! INTENT(IN)
-       gaspart_vars,     & ! Type
-       nullify_gaspart,  & ! Subroutine
-       alloc_gaspart,    & ! Subroutine
-       zero_gaspart,     & ! Subroutine
-       filltab_gaspart, &     ! Subroutine
-       dealloc_gaspart          ! Subroutine
-
+  use ModGaspartFields, only: &
+       InsertGaspartFieldsAtVarTable
+  
   use mem_scratch, only: &
        alloc_scratch,    &
        nullify_scratch,  &
@@ -508,7 +501,6 @@ contains
     ! Flag to control new Grell MEmory allocation
     integer :: Alloc_Grell3_Flag
     ! Local variables because of TEB_SPM
-    type(gaspart_vars), pointer :: gaspart_p => null()
     character(len=*), parameter :: h="**(MemAlloc)**"
     integer :: ierr,n
     integer :: ne2d, ne3d, nsa
@@ -596,10 +588,8 @@ contains
     call alloc_leafcol(nzg, nzs)
     !-------------
     !
-    !-------------
-    ! Allocate JULES surface scheme type
 #ifdef JULES
-    ! Allocate Jules type
+    ! insert Jules Fields variables at var_table
     call InsertJulesFieldsAtVarTable(&
          oneGrid%oneJulesFields, &
          oneGrid%oneAveJulesFields, &
@@ -609,7 +599,7 @@ contains
     !-------------
 
     !-------------
-    ! Allocate Micro variables data type
+    ! insert Micro Fields variables at var_table
     call InsertMicroFieldsAtVarTable(oneGrid%oneMicroFields, oneGrid%oneAveMicroFields, &
        oneGrid%oneNamelistFile, oneGrid%Id)
     !-------------
@@ -1142,26 +1132,12 @@ contains
     if (TEB_SPM==1) then
        if (isource==1) then
           !-----------------------------------------------------------------------
-          ! Allocate  gaspart vars for emission
-          !
-          ! Defining pointers
-          allocate(gaspart_g(ngrids), STAT=ierr)
-          if (ierr/=0) call fatal_error(h//"Allocating gaspart_g")
-          allocate(gaspartm_g(ngrids), STAT=ierr)
-          if (ierr/=0) call fatal_error(h//"Allocating gaspartm_g")
-          do ng=1,ngrids
-             call nullify_gaspart(gaspart_g(ng))
-             call nullify_gaspart(gaspartm_g(ng))
-             call alloc_gaspart(gaspart_g(ng), nmzp(ng), nmxp(ng), nmyp(ng))
-             if (imean==1) then
-                call alloc_gaspart(gaspartm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng))
-             elseif (imean==0) then
-                call alloc_gaspart(gaspartm_g(ng), 1,        1,        1)
-             endif
-             call zero_gaspart(gaspart_g(ng), nmzp(ng), nmxp(ng), nmyp(ng))
-             call filltab_gaspart(gaspart_g(ng), gaspartm_g(ng), imean,  &
-                  nmzp(ng), nmxp(ng), nmyp(ng), ng)
-          enddo
+          ! insert Gaspart Field variables at var_table
+          call InsertGaspartFieldsAtVarTable(&
+               oneGrid%oneGaspartFields, &
+               oneGrid%oneAveGaspartFields, &
+               oneGrid%oneNamelistFile, &
+               oneGrid%Id)
        endif
     endif
     !-------------
@@ -1427,15 +1403,10 @@ contains
     ! filltab tendencies for TEB and CCATT submodels
     do ng=1,ngrids
        !- TEB_SPM
-       if (TEB_SPM==1) then
-          gaspart_p => gaspart_g(ng)
-       endif
 
        call filltab_tend(oneGrid%oneScalarTable, oneGrid%oneScalarTableSize, &
             oneGrid%oneBasicFields, oneGrid%oneMicroFields, oneGrid%oneTurbFields,  &
-            scalar_g(:,ng),                                     &
-            gaspart_p,                                          &
-            naddsc, ng)
+            scalar_g(:,ng), oneGrid%oneGaspartFields, naddsc, ng)
 
        if (ccatt == 1  .and. chemistry >= 0)  then
 
@@ -1725,10 +1696,6 @@ contains
              call dealloc_teb(teb_g(ng))      !for teb
              call dealloc_teb(tebm_g(ng))     !for teb
           endif
-          if(allocated(gaspart_g)) then
-             call dealloc_gaspart(gaspart_g(ng))      !for gas/paticles
-             call dealloc_gaspart(gaspartm_g(ng))     !for gas/paticles
-          endif
        endif
 
     enddo
@@ -1748,9 +1715,6 @@ contains
        endif
        if(allocated(tebc_g)) then
           deallocate(tebc_g, tebcm_g)         ! for urban parameterization
-       endif
-       if(allocated(gaspart_g)) then
-          deallocate(gaspart_g, gaspartm_g)         ! for urban parameterization
        endif
     endif
 

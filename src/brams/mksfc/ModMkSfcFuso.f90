@@ -32,8 +32,8 @@ module ModMkSfcFuso
   use mem_teb, only: &
        teb_g
 
-  use mem_gaspart, only: &
-       gaspart_g
+  use ModGaspartFields, only: &
+       GaspartFields
 
   use teb_vars_const, only: &
        iteb
@@ -194,9 +194,10 @@ contains
   !============================================================
 
 
-  subroutine FusoReadStoreOwnChunk(ifm, oneControlVars)
+  subroutine FusoReadStoreOwnChunk(ifm, oneControlVars, oneGaspartFields)
     integer, intent(in) :: ifm
     type(ControlVars), pointer, intent(in) :: oneControlVars
+    type(GaspartFields), pointer, intent(in) :: oneGaspartFields
 
     integer :: i,j
     character(len=f_name_length) :: flnm
@@ -238,7 +239,7 @@ contains
     end if
 
     if (isource==1) then
-       gaspart_g(ifm)%fusog(1,1)=teb_g(ifm)%fuso(1,1)
+       oneGaspartFields%fusog(1,1)=teb_g(ifm)%fuso(1,1)
     end if
 
     if (mchnum == master_num) then

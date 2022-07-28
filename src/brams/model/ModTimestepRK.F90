@@ -577,12 +577,14 @@ contains
        ! Update urban emissions
        !----------------------------------------
        if (isource==1) then
-          call sources_teb(mzp, mxp, myp, ia, iz, ja, jz, ngrid, ngrids)
+          call sources_teb(mzp, mxp, myp, ia, iz, ja, jz, ngrid, ngrids, &
+               oneGrid%oneGaspartFields)
        endif
        !  Update chemistry
        !----------------------------------------
        if (ichemi==1) then
-          call ozone(mzp, mxp, myp, ia, iz, ja, jz, ngrid, dtlt, oneGrid%oneBasicFields)
+          call ozone(mzp, mxp, myp, ia, iz, ja, jz, ngrid, dtlt, &
+               oneGrid%oneBasicFields, oneGrid%oneGaspartFields)
        endif
     endif
 
@@ -943,7 +945,8 @@ contains
           ! Apply only for last finner grid
           if (ngrid==ngrids) then
              call le_fontes(ngrid, mzp, mxp, myp, &
-                  npatch, ia, iz, ja, jz, (time+dtlongn(1)), oneGrid%oneBasicFields)
+                  npatch, ia, iz, ja, jz, (time+dtlongn(1)), &
+                  oneGrid%oneBasicFields, oneGrid%oneGaspartFields)
           endif
        endif
        !EDF

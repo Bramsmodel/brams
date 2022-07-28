@@ -84,7 +84,6 @@ module ModGrid
        DestroyMicControl, &
        DumpMicControl
 
-
   use ModMicroFields, only: &
        MicroFields, &
        CreateMicroFields, &
@@ -96,6 +95,12 @@ module ModGrid
        CreateShcuFields, &
        DestroyShcuFields, &
        DumpShcuFields
+
+  use ModGaspartFields, only: &
+       GaspartFields, &
+       CreateGaspartFields, &
+       DestroyGaspartFields, &
+       DumpGaspartFields
   
   use meteogramType, only: &
        PolygonContainer
@@ -196,6 +201,9 @@ module ModGrid
 
      type(ShcuFields), pointer :: oneShcuFields => null()
      type(ShcuFields), pointer :: oneAveShcuFields => null()
+
+     type(GaspartFields), pointer :: oneGaspartFields => null()
+     type(GaspartFields), pointer :: oneAveGaspartFields => null()
 
      type(MicControl), pointer :: oneMicVars => null()
      
@@ -470,6 +478,11 @@ contains
 
     oneGrid%oneShcuFields => CreateShcuFields(oneGrid%oneNodeDimensions, oneGrid%oneControlVars)
     oneGrid%oneAveShcuFields => CreateShcuFields(oneGrid%oneNodeDimensions, oneGrid%oneControlVars)
+
+    ! this node Gaspart Fields
+
+    oneGrid%oneGaspartFields => CreateGaspartFields(oneGrid%oneNodeDimensions, oneGrid%oneNamelistFile)
+    oneGrid%oneAveGaspartFields => CreateGaspartFields(oneGrid%oneNodeDimensions, oneGrid%oneNamelistFile)
     
 !!$    if (dumpLocal) then
        call MsgDump(h//" dumping OneGrid at the end of CreateGrid")
@@ -647,6 +660,8 @@ contains
 #endif
        call DestroyShcuFields(oneGrid%oneShcuFields)
        call DestroyShcuFields(oneGrid%oneAveShcuFields)
+       call DestroyGaspartFields(oneGrid%oneGaspartFields)
+       call DestroyGaspartFields(oneGrid%oneAveGaspartFields)
        call DestroyAcousticMessageSet(&
             oneGrid%AcouSendU, oneGrid%AcouRecvU, &
             oneGrid%AcouSendV, oneGrid%AcouRecvV, &
@@ -849,6 +864,8 @@ contains
 #endif
     call DumpShcuFields(oneGrid%oneShcuFields, "oneGrid%oneShcuFields")
     call DumpShcuFields(oneGrid%oneAveShcuFields, "oneGrid%oneAveShcuFields")
+    call DumpGaspartFields(oneGrid%oneGaspartFields, "oneGrid%oneGaspartFields")
+    call DumpGaspartFields(oneGrid%oneAveGaspartFields, "oneGrid%oneAveGaspartFields")
     call MsgDump(h//" finishes")
   end subroutine DumpGrid
 end module ModGrid

@@ -30,9 +30,8 @@ module mem_tend
     use mem_grid,   only: &
          dyncore_flag
 
-    use mem_gaspart, only: &
-         gaspart_g, &
-         gaspart_vars
+    use ModGaspartFields, only: &
+         GaspartFields
     
     use teb_spm_start, only: &
          TEB_SPM
@@ -124,6 +123,7 @@ contains
     ! Local Variables:
     integer :: ng, ntpts, nsc
 
+    character(len=*), parameter :: h="**(alloc_tend)**"
     !         Find the maximum number of grid points needed for any grid.
 
     if(proc_type==1) then
@@ -345,89 +345,91 @@ contains
     ! TEB_SPM
     if (TEB_SPM==1) then
        if(isource==1)then
-          if (associated(gaspart_g(1)%pno).and.  &
-               (.not.associated(gaspart_g(1)%pnot)))  &
-               allocate (gaspart_g(1)%pnot(ntpts))
-
-          if (associated(gaspart_g(1)%pno2).and.  &
-               (.not.associated(gaspart_g(1)%pno2t)))  &
-               allocate (gaspart_g(1)%pno2t(ntpts))
-
-          if (associated(gaspart_g(1)%ppm25).and.  &
-               (.not.associated(gaspart_g(1)%ppm25t)))  &
-               allocate (gaspart_g(1)%ppm25t(ntpts))
-
-          if (associated(gaspart_g(1)%pco).and.  &
-               (.not.associated(gaspart_g(1)%pcot)))  &
-               allocate (gaspart_g(1)%pcot(ntpts))
-
-          if (associated(gaspart_g(1)%pso2).and.  &
-               (.not.associated(gaspart_g(1)%pso2t)))  &
-               allocate (gaspart_g(1)%pso2t(ntpts))
-
-          if (associated(gaspart_g(1)%pso4).and.  &
-               (.not.associated(gaspart_g(1)%pso4t)))  &
-               allocate (gaspart_g(1)%pso4t(ntpts))
-
-          if (associated(gaspart_g(1)%paer).and.  &
-               (.not.associated(gaspart_g(1)%paert)))  &
-               allocate (gaspart_g(1)%paert(ntpts))
-
-          if (associated(gaspart_g(1)%pvoc).and.  &
-               (.not.associated(gaspart_g(1)%pvoct)))  &
-               allocate (gaspart_g(1)%pvoct(ntpts))
-
-          if(ichemi==1)then
-
-             if (associated(gaspart_g(1)%po3).and.  &
-                  (.not.associated(gaspart_g(1)%po3t)))  &
-                  allocate (gaspart_g(1)%po3t(ntpts))
-
-             if (associated(gaspart_g(1)%prhco).and.  &
-                  (.not.associated(gaspart_g(1)%prhcot)))  &
-                  allocate (gaspart_g(1)%prhcot(ntpts))
-
-             if (associated(gaspart_g(1)%pho2).and.  &
-                  (.not.associated(gaspart_g(1)%pho2t)))  &
-                  allocate (gaspart_g(1)%pho2t(ntpts))
-
-             if (associated(gaspart_g(1)%po3p).and.  &
-                  (.not.associated(gaspart_g(1)%po3pt)))  &
-                  allocate (gaspart_g(1)%po3pt(ntpts))
-
-             if (associated(gaspart_g(1)%po1d).and.  &
-                  (.not.associated(gaspart_g(1)%po1dt)))  &
-                  allocate (gaspart_g(1)%po1dt(ntpts))
-
-             if (associated(gaspart_g(1)%pho).and.  &
-                  (.not.associated(gaspart_g(1)%phot)))  &
-                  allocate (gaspart_g(1)%phot(ntpts))
-
-             if (associated(gaspart_g(1)%proo).and.  &
-                  (.not.associated(gaspart_g(1)%proot)))  &
-                  allocate (gaspart_g(1)%proot(ntpts))
-          endif
-
-          do ng=2,ngrs
-             gaspart_g(ng)%pnot   => gaspart_g(1)%pnot
-             gaspart_g(ng)%pno2t  => gaspart_g(1)%pno2t
-             gaspart_g(ng)%ppm25t => gaspart_g(1)%ppm25t
-             gaspart_g(ng)%pcot   => gaspart_g(1)%pcot
-             gaspart_g(ng)%pso2t  => gaspart_g(1)%pso2t
-             gaspart_g(ng)%pso4t  => gaspart_g(1)%pso4t
-             gaspart_g(ng)%paert  => gaspart_g(1)%paert
-             gaspart_g(ng)%pvoct  => gaspart_g(1)%pvoct
-             if(ichemi==1)then
-                gaspart_g(ng)%po3t   => gaspart_g(1)%po3t
-                gaspart_g(ng)%prhcot => gaspart_g(1)%prhcot
-                gaspart_g(ng)%pho2t  => gaspart_g(1)%pho2t
-                gaspart_g(ng)%po3pt  => gaspart_g(1)%po3pt
-                gaspart_g(ng)%po1dt  => gaspart_g(1)%po1dt
-                gaspart_g(ng)%phot   => gaspart_g(1)%phot
-                gaspart_g(ng)%proot  => gaspart_g(1)%proot
-             endif
-          enddo
-
+          call fatal_error(h//" allocation of gaspart not converted; "//&
+               "seems wrong whenever TEB_SPM and isource are both 1")
+!!$          if (associated(gaspart_g(1)%pno).and.  &
+!!$               (.not.associated(gaspart_g(1)%pnot)))  &
+!!$               allocate (gaspart_g(1)%pnot(ntpts))
+!!$
+!!$          if (associated(gaspart_g(1)%pno2).and.  &
+!!$               (.not.associated(gaspart_g(1)%pno2t)))  &
+!!$               allocate (gaspart_g(1)%pno2t(ntpts))
+!!$
+!!$          if (associated(gaspart_g(1)%ppm25).and.  &
+!!$               (.not.associated(gaspart_g(1)%ppm25t)))  &
+!!$               allocate (gaspart_g(1)%ppm25t(ntpts))
+!!$
+!!$          if (associated(gaspart_g(1)%pco).and.  &
+!!$               (.not.associated(gaspart_g(1)%pcot)))  &
+!!$               allocate (gaspart_g(1)%pcot(ntpts))
+!!$
+!!$          if (associated(gaspart_g(1)%pso2).and.  &
+!!$               (.not.associated(gaspart_g(1)%pso2t)))  &
+!!$               allocate (gaspart_g(1)%pso2t(ntpts))
+!!$
+!!$          if (associated(gaspart_g(1)%pso4).and.  &
+!!$               (.not.associated(gaspart_g(1)%pso4t)))  &
+!!$               allocate (gaspart_g(1)%pso4t(ntpts))
+!!$
+!!$          if (associated(gaspart_g(1)%paer).and.  &
+!!$               (.not.associated(gaspart_g(1)%paert)))  &
+!!$               allocate (gaspart_g(1)%paert(ntpts))
+!!$
+!!$          if (associated(gaspart_g(1)%pvoc).and.  &
+!!$               (.not.associated(gaspart_g(1)%pvoct)))  &
+!!$               allocate (gaspart_g(1)%pvoct(ntpts))
+!!$
+!!$          if(ichemi==1)then
+!!$
+!!$             if (associated(gaspart_g(1)%po3).and.  &
+!!$                  (.not.associated(gaspart_g(1)%po3t)))  &
+!!$                  allocate (gaspart_g(1)%po3t(ntpts))
+!!$
+!!$             if (associated(gaspart_g(1)%prhco).and.  &
+!!$                  (.not.associated(gaspart_g(1)%prhcot)))  &
+!!$                  allocate (gaspart_g(1)%prhcot(ntpts))
+!!$
+!!$             if (associated(gaspart_g(1)%pho2).and.  &
+!!$                  (.not.associated(gaspart_g(1)%pho2t)))  &
+!!$                  allocate (gaspart_g(1)%pho2t(ntpts))
+!!$
+!!$             if (associated(gaspart_g(1)%po3p).and.  &
+!!$                  (.not.associated(gaspart_g(1)%po3pt)))  &
+!!$                  allocate (gaspart_g(1)%po3pt(ntpts))
+!!$
+!!$             if (associated(gaspart_g(1)%po1d).and.  &
+!!$                  (.not.associated(gaspart_g(1)%po1dt)))  &
+!!$                  allocate (gaspart_g(1)%po1dt(ntpts))
+!!$
+!!$             if (associated(gaspart_g(1)%pho).and.  &
+!!$                  (.not.associated(gaspart_g(1)%phot)))  &
+!!$                  allocate (gaspart_g(1)%phot(ntpts))
+!!$
+!!$             if (associated(gaspart_g(1)%proo).and.  &
+!!$                  (.not.associated(gaspart_g(1)%proot)))  &
+!!$                  allocate (gaspart_g(1)%proot(ntpts))
+!!$          endif
+!!$
+!!$          do ng=2,ngrs
+!!$             gaspart_g(ng)%pnot   => gaspart_g(1)%pnot
+!!$             gaspart_g(ng)%pno2t  => gaspart_g(1)%pno2t
+!!$             gaspart_g(ng)%ppm25t => gaspart_g(1)%ppm25t
+!!$             gaspart_g(ng)%pcot   => gaspart_g(1)%pcot
+!!$             gaspart_g(ng)%pso2t  => gaspart_g(1)%pso2t
+!!$             gaspart_g(ng)%pso4t  => gaspart_g(1)%pso4t
+!!$             gaspart_g(ng)%paert  => gaspart_g(1)%paert
+!!$             gaspart_g(ng)%pvoct  => gaspart_g(1)%pvoct
+!!$             if(ichemi==1)then
+!!$                gaspart_g(ng)%po3t   => gaspart_g(1)%po3t
+!!$                gaspart_g(ng)%prhcot => gaspart_g(1)%prhcot
+!!$                gaspart_g(ng)%pho2t  => gaspart_g(1)%pho2t
+!!$                gaspart_g(ng)%po3pt  => gaspart_g(1)%po3pt
+!!$                gaspart_g(ng)%po1dt  => gaspart_g(1)%po1dt
+!!$                gaspart_g(ng)%phot   => gaspart_g(1)%phot
+!!$                gaspart_g(ng)%proot  => gaspart_g(1)%proot
+!!$             endif
+!!$          enddo
+!!$
        endif
 
     endif
@@ -452,6 +454,7 @@ contains
 
     ! Local Variables:
     integer :: nsc
+    character(len=*), parameter :: h="**(nullify_tend)**"
 
     ! Deallocate all tendency arrays
 
@@ -513,24 +516,26 @@ contains
     ! TEB_SPM
     if (TEB_SPM==1) then
        if(isource==1)then
-          if (associated(gaspart_g(1)%pnot  )) nullify (gaspart_g(1)%pnot  )
-          if (associated(gaspart_g(1)%pno2t )) nullify (gaspart_g(1)%pno2t )
-          if (associated(gaspart_g(1)%ppm25t)) nullify (gaspart_g(1)%ppm25t)
-          if (associated(gaspart_g(1)%pcot  )) nullify (gaspart_g(1)%pcot  )
-          if (associated(gaspart_g(1)%pso2t )) nullify (gaspart_g(1)%pso2t )
-          if (associated(gaspart_g(1)%pso4t )) nullify (gaspart_g(1)%pso4t )
-          if (associated(gaspart_g(1)%paert )) nullify (gaspart_g(1)%paert )
-          if (associated(gaspart_g(1)%pvoct )) nullify (gaspart_g(1)%pvoct )
-
-          if(ichemi==1)then
-             if (associated(gaspart_g(1)%po3t  )) nullify (gaspart_g(1)%po3t  )
-             if (associated(gaspart_g(1)%prhcot)) nullify (gaspart_g(1)%prhcot)
-             if (associated(gaspart_g(1)%pho2t )) nullify (gaspart_g(1)%pho2t )
-             if (associated(gaspart_g(1)%po3pt )) nullify (gaspart_g(1)%po3pt )
-             if (associated(gaspart_g(1)%po1dt )) nullify (gaspart_g(1)%po1dt )
-             if (associated(gaspart_g(1)%phot  )) nullify (gaspart_g(1)%phot  )
-             if (associated(gaspart_g(1)%proot )) nullify (gaspart_g(1)%proot )
-          endif
+          call fatal_error(h//" nullify gaspart not converted; "//&
+               "seems wrong whenever TEB_SPM and isource are both 1")
+!!$          if (associated(gaspart_g(1)%pnot  )) nullify (gaspart_g(1)%pnot  )
+!!$          if (associated(gaspart_g(1)%pno2t )) nullify (gaspart_g(1)%pno2t )
+!!$          if (associated(gaspart_g(1)%ppm25t)) nullify (gaspart_g(1)%ppm25t)
+!!$          if (associated(gaspart_g(1)%pcot  )) nullify (gaspart_g(1)%pcot  )
+!!$          if (associated(gaspart_g(1)%pso2t )) nullify (gaspart_g(1)%pso2t )
+!!$          if (associated(gaspart_g(1)%pso4t )) nullify (gaspart_g(1)%pso4t )
+!!$          if (associated(gaspart_g(1)%paert )) nullify (gaspart_g(1)%paert )
+!!$          if (associated(gaspart_g(1)%pvoct )) nullify (gaspart_g(1)%pvoct )
+!!$
+!!$          if(ichemi==1)then
+!!$             if (associated(gaspart_g(1)%po3t  )) nullify (gaspart_g(1)%po3t  )
+!!$             if (associated(gaspart_g(1)%prhcot)) nullify (gaspart_g(1)%prhcot)
+!!$             if (associated(gaspart_g(1)%pho2t )) nullify (gaspart_g(1)%pho2t )
+!!$             if (associated(gaspart_g(1)%po3pt )) nullify (gaspart_g(1)%po3pt )
+!!$             if (associated(gaspart_g(1)%po1dt )) nullify (gaspart_g(1)%po1dt )
+!!$             if (associated(gaspart_g(1)%phot  )) nullify (gaspart_g(1)%phot  )
+!!$             if (associated(gaspart_g(1)%proot )) nullify (gaspart_g(1)%proot )
+!!$          endif
        endif
     endif
     !
@@ -549,7 +554,8 @@ contains
 
     ! Local Variables:
     integer :: nsc
-
+    character(len=*), parameter :: h="**(dealloc_tend)**"
+    
     ! Deallocate all tendency arrays
 
     if (associated(tend%ut))   deallocate (tend%ut)
@@ -598,24 +604,26 @@ contains
     ! TEB_SPM
     if (TEB_SPM==1) then
        if(isource==1)then
-          if (associated(gaspart_g(1)%pnot  )) deallocate (gaspart_g(1)%pnot  )
-          if (associated(gaspart_g(1)%pno2t )) deallocate (gaspart_g(1)%pno2t )
-          if (associated(gaspart_g(1)%ppm25t)) deallocate (gaspart_g(1)%ppm25t)
-          if (associated(gaspart_g(1)%pcot  )) deallocate (gaspart_g(1)%pcot  )
-          if (associated(gaspart_g(1)%pso2t )) deallocate (gaspart_g(1)%pso2t )
-          if (associated(gaspart_g(1)%pso4t )) deallocate (gaspart_g(1)%pso4t )
-          if (associated(gaspart_g(1)%paert )) deallocate (gaspart_g(1)%paert )
-          if (associated(gaspart_g(1)%pvoct )) deallocate (gaspart_g(1)%pvoct )
-
-          if(ichemi==1)then
-             if (associated(gaspart_g(1)%po3t  )) deallocate (gaspart_g(1)%po3t)
-             if (associated(gaspart_g(1)%prhcot)) deallocate (gaspart_g(1)%prhcot)
-             if (associated(gaspart_g(1)%pho2t )) deallocate (gaspart_g(1)%pho2t)
-             if (associated(gaspart_g(1)%po3pt )) deallocate (gaspart_g(1)%po3pt)
-             if (associated(gaspart_g(1)%po1dt )) deallocate (gaspart_g(1)%po1dt)
-             if (associated(gaspart_g(1)%phot  )) deallocate (gaspart_g(1)%phot)
-             if (associated(gaspart_g(1)%proot )) deallocate (gaspart_g(1)%proot)
-          endif
+          call fatal_error(h//" deallocation of gaspart not converted; "//&
+               "seems wrong whenever TEB_SPM and isource are both 1")
+!!$          if (associated(gaspart_g(1)%pnot  )) deallocate (gaspart_g(1)%pnot  )
+!!$          if (associated(gaspart_g(1)%pno2t )) deallocate (gaspart_g(1)%pno2t )
+!!$          if (associated(gaspart_g(1)%ppm25t)) deallocate (gaspart_g(1)%ppm25t)
+!!$          if (associated(gaspart_g(1)%pcot  )) deallocate (gaspart_g(1)%pcot  )
+!!$          if (associated(gaspart_g(1)%pso2t )) deallocate (gaspart_g(1)%pso2t )
+!!$          if (associated(gaspart_g(1)%pso4t )) deallocate (gaspart_g(1)%pso4t )
+!!$          if (associated(gaspart_g(1)%paert )) deallocate (gaspart_g(1)%paert )
+!!$          if (associated(gaspart_g(1)%pvoct )) deallocate (gaspart_g(1)%pvoct )
+!!$
+!!$          if(ichemi==1)then
+!!$             if (associated(gaspart_g(1)%po3t  )) deallocate (gaspart_g(1)%po3t)
+!!$             if (associated(gaspart_g(1)%prhcot)) deallocate (gaspart_g(1)%prhcot)
+!!$             if (associated(gaspart_g(1)%pho2t )) deallocate (gaspart_g(1)%pho2t)
+!!$             if (associated(gaspart_g(1)%po3pt )) deallocate (gaspart_g(1)%po3pt)
+!!$             if (associated(gaspart_g(1)%po1dt )) deallocate (gaspart_g(1)%po1dt)
+!!$             if (associated(gaspart_g(1)%phot  )) deallocate (gaspart_g(1)%phot)
+!!$             if (associated(gaspart_g(1)%proot )) deallocate (gaspart_g(1)%proot)
+!!$          endif
 
        endif
     endif
@@ -641,7 +649,7 @@ contains
   !---------------------------------------------------------------
 
   subroutine filltab_tend(oneScalarTab, oneScalarTabSize, &
-       oneBasicFields, oneMicroFields, oneTurbFields, scalar, gaspart, &
+       oneBasicFields, oneMicroFields, oneTurbFields, scalar, oneGaspartFields, &
        naddsc, ng)
     ! Arguments:
     type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
@@ -650,7 +658,7 @@ contains
     type(MicroFields), intent(in) :: oneMicroFields 
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     type(scalar_vars), intent(in)  :: scalar(:)
-    type(gaspart_vars), pointer, intent(in) :: gaspart
+    type(GaspartFields), pointer, intent(in) :: oneGaspartFields
     integer, intent(in)             :: naddsc, ng
 
     ! Local Variables:
@@ -832,84 +840,84 @@ contains
 
     ! TEB_SPM
     if (TEB_SPM==1) then
-       if (.not. associated(gaspart)) then
-          call fatal_error(h//" gaspart not associated, but TEB_SPM==1")
+       if (.not. associated(oneGaspartFields)) then
+          call fatal_error(h//" oneGaspartFields not associated, but TEB_SPM==1")
        end if
        if(isource==1)then
           
-          if (associated(gaspart%pnot)) then
-             call InsertAtScalarTab(gaspart%pno,gaspart%pnot, 'PNO', &
+          if (associated(oneGaspartFields%pnot)) then
+             call InsertAtScalarTab(oneGaspartFields%pno,oneGaspartFields%pnot, 'PNO', &
                   oneScalarTab, oneScalarTabSize)
           endif
 
-          if (associated(gaspart%pno2t)) then
-             call InsertAtScalarTab(gaspart%pno2,gaspart%pno2t, 'PNO2', &
+          if (associated(oneGaspartFields%pno2t)) then
+             call InsertAtScalarTab(oneGaspartFields%pno2,oneGaspartFields%pno2t, 'PNO2', &
                   oneScalarTab, oneScalarTabSize)
           endif
 
-          if (associated(gaspart%ppm25t)) then
-             call InsertAtScalarTab(gaspart%ppm25,gaspart%ppm25t, 'PM25', &
+          if (associated(oneGaspartFields%ppm25t)) then
+             call InsertAtScalarTab(oneGaspartFields%ppm25,oneGaspartFields%ppm25t, 'PM25', &
                   oneScalarTab, oneScalarTabSize)
           endif
 
-          if (associated(gaspart%pcot)) then
-             call InsertAtScalarTab(gaspart%pco,gaspart%pcot, 'PCO', &
+          if (associated(oneGaspartFields%pcot)) then
+             call InsertAtScalarTab(oneGaspartFields%pco,oneGaspartFields%pcot, 'PCO', &
                   oneScalarTab, oneScalarTabSize)
           endif
 
-          if (associated(gaspart%pso2t)) then
-             call InsertAtScalarTab(gaspart%pso2,gaspart%pso2t, 'PSO2', &
+          if (associated(oneGaspartFields%pso2t)) then
+             call InsertAtScalarTab(oneGaspartFields%pso2,oneGaspartFields%pso2t, 'PSO2', &
                   oneScalarTab, oneScalarTabSize)
           endif
 
-          if (associated(gaspart%pso4t)) then
-             call InsertAtScalarTab(gaspart%pso4,gaspart%pso4t, 'PSO4', &
+          if (associated(oneGaspartFields%pso4t)) then
+             call InsertAtScalarTab(oneGaspartFields%pso4,oneGaspartFields%pso4t, 'PSO4', &
                   oneScalarTab, oneScalarTabSize)
           endif
 
-          if (associated(gaspart%paert)) then
-             call InsertAtScalarTab(gaspart%paer,gaspart%paert, 'PAER', &
+          if (associated(oneGaspartFields%paert)) then
+             call InsertAtScalarTab(oneGaspartFields%paer,oneGaspartFields%paert, 'PAER', &
                   oneScalarTab, oneScalarTabSize)
           endif
 
-          if (associated(gaspart%pvoct)) then
-             call InsertAtScalarTab(gaspart%pvoc,gaspart%pvoct, 'PVOC', &
+          if (associated(oneGaspartFields%pvoct)) then
+             call InsertAtScalarTab(oneGaspartFields%pvoc,oneGaspartFields%pvoct, 'PVOC', &
                   oneScalarTab, oneScalarTabSize)
           endif
 
           if(ichemi==1) then
-             if (associated(gaspart%po3t)) then
-                call InsertAtScalarTab(gaspart%po3,gaspart%po3t, 'PO3', &
+             if (associated(oneGaspartFields%po3t)) then
+                call InsertAtScalarTab(oneGaspartFields%po3,oneGaspartFields%po3t, 'PO3', &
                      oneScalarTab, oneScalarTabSize)
              endif
 
-             if (associated(gaspart%prhcot)) then
-                call InsertAtScalarTab(gaspart%prhco,gaspart%prhcot, 'PRHCO', &
+             if (associated(oneGaspartFields%prhcot)) then
+                call InsertAtScalarTab(oneGaspartFields%prhco,oneGaspartFields%prhcot, 'PRHCO', &
                      oneScalarTab, oneScalarTabSize)
              endif
 
-             if (associated(gaspart%pho2t)) then
-                call InsertAtScalarTab(gaspart%pho2,gaspart%pho2t, 'PHO2', &
+             if (associated(oneGaspartFields%pho2t)) then
+                call InsertAtScalarTab(oneGaspartFields%pho2,oneGaspartFields%pho2t, 'PHO2', &
                      oneScalarTab, oneScalarTabSize)
              endif
 
-             if (associated(gaspart%po3pt)) then
-                call InsertAtScalarTab(gaspart%po3p,gaspart%po3pt, 'PO3P', &
+             if (associated(oneGaspartFields%po3pt)) then
+                call InsertAtScalarTab(oneGaspartFields%po3p,oneGaspartFields%po3pt, 'PO3P', &
                      oneScalarTab, oneScalarTabSize)
              endif
 
-             if (associated(gaspart%po1dt)) then
-                call InsertAtScalarTab(gaspart%po1d,gaspart%po1dt, 'PO1D', &
+             if (associated(oneGaspartFields%po1dt)) then
+                call InsertAtScalarTab(oneGaspartFields%po1d,oneGaspartFields%po1dt, 'PO1D', &
                      oneScalarTab, oneScalarTabSize)
              endif
 
-             if (associated(gaspart%phot)) then
-                call InsertAtScalarTab(gaspart%pho,gaspart%phot, 'PHO', &
+             if (associated(oneGaspartFields%phot)) then
+                call InsertAtScalarTab(oneGaspartFields%pho,oneGaspartFields%phot, 'PHO', &
                      oneScalarTab, oneScalarTabSize)
              endif
 
-             if (associated(gaspart%proot)) then
-                call InsertAtScalarTab(gaspart%proo,gaspart%proot, 'PROO', &
+             if (associated(oneGaspartFields%proot)) then
+                call InsertAtScalarTab(oneGaspartFields%proo,oneGaspartFields%proot, 'PROO', &
                      oneScalarTab, oneScalarTabSize)
              endif
           endif

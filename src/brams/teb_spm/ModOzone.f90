@@ -13,8 +13,8 @@ module ModOzone
   use ModBasicFields, only: &
        BasicFields
 
-  use mem_gaspart, only: &
-       gaspart_g
+  use ModGaspartFields, only: &
+       GaspartFields
 
   use mem_radiate, only: &
        radiate_g
@@ -68,33 +68,35 @@ contains
 
 
 
-  subroutine ozone(mzp, mxp, myp, ia, iz, ja, jz, ng, deltat, oneBasicFields)
+  subroutine ozone(mzp, mxp, myp, ia, iz, ja, jz, ng, deltat, &
+       oneBasicFields, oneGaspartFields)
     ! Arguments:
     integer, intent(in) :: mzp, mxp, myp, ia, iz, ja, jz, ng
     real, intent(in)    :: deltat
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(GaspartFields), pointer, intent(in) :: oneGaspartFields
 
     call chemistry (mzp, mxp, myp, ia, iz, ja, jz,              &
-         gaspart_g(ng)%pno,   gaspart_g(ng)%pno2, &
-         gaspart_g(ng)%pco,   gaspart_g(ng)%pvoc, &
-         gaspart_g(ng)%po3,   gaspart_g(ng)%pso2, &
-         gaspart_g(ng)%pso4,                             &
-         gaspart_g(ng)%prhco, gaspart_g(ng)%pho2, &
-         gaspart_g(ng)%po3p,  gaspart_g(ng)%po1d, &
-         gaspart_g(ng)%pho,   gaspart_g(ng)%proo, &
+         oneGaspartFields%pno,   oneGaspartFields%pno2, &
+         oneGaspartFields%pco,   oneGaspartFields%pvoc, &
+         oneGaspartFields%po3,   oneGaspartFields%pso2, &
+         oneGaspartFields%pso4,                             &
+         oneGaspartFields%prhco, oneGaspartFields%pho2, &
+         oneGaspartFields%po3p,  oneGaspartFields%po1d, &
+         oneGaspartFields%pho,   oneGaspartFields%proo, &
          oneBasicFields%theta,   oneBasicFields%dn0,    &
          oneBasicFields%pi0,     oneBasicFields%pp,     &
          oneBasicFields%rv,                                 &
          radiate_g(ng)%cosz,   &
          grid_g(ng)%rtgt,       grid_g(ng)%topma ,    &
          deltat, cpi, cpor, p00, zt,                            &
-         gaspart_g(ng)%pnot,      gaspart_g(ng)%pno2t,    &
-         gaspart_g(ng)%pcot,      gaspart_g(ng)%pvoct,    &
-         gaspart_g(ng)%po3t,                                 &
-         gaspart_g(ng)%pso4t,                                &
-         gaspart_g(ng)%prhcot,    gaspart_g(ng)%pho2t,    &
-         gaspart_g(ng)%po3pt,     gaspart_g(ng)%po1dt,    &
-         gaspart_g(ng)%phot,      gaspart_g(ng)%proot     )
+         oneGaspartFields%pnot,      oneGaspartFields%pno2t,    &
+         oneGaspartFields%pcot,      oneGaspartFields%pvoct,    &
+         oneGaspartFields%po3t,                                 &
+         oneGaspartFields%pso4t,                                &
+         oneGaspartFields%prhcot,    oneGaspartFields%pho2t,    &
+         oneGaspartFields%po3pt,     oneGaspartFields%po1dt,    &
+         oneGaspartFields%phot,      oneGaspartFields%proot     )
 
 
     !endif

@@ -10,11 +10,10 @@ module ModGasPart
 
   use ModRcio, only: &
        cio
-  
-  use mem_gaspart, only : &
-       gaspart_g, &
-       gaspart_vars ! Type
 
+  use ModGaspartFields, only: &
+       GaspartFields
+  
   use node_mod, only: &
        mchnum,        & ! INTENT(IN)
        master_num, &    ! INTENT(IN)
@@ -85,11 +84,13 @@ contains
 
 
 
-  subroutine le_fontes(ng, n1, n2, n3, np, ia, iz, ja, jz, time, oneBasicFields)
+  subroutine le_fontes(ng, n1, n2, n3, np, ia, iz, ja, jz, time, &
+       oneBasicFields, oneGaspartFields)
     ! Arguments:
     integer, intent(in) :: ng, n1, n2, n3, np, ia, iz, ja, jz
     real, intent(in)    :: time
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(GaspartFields), pointer, intent(in) :: oneGaspartFields
     
     ! Local Variables:
     integer :: ig, kl, i, j
@@ -118,11 +119,11 @@ contains
     if (ng/=ngrids) return
 
     !Allocate memory in DUM1 vector for sources:
-    ! first kl 3D vector gaspart_g(ng)%gasr(1,1,1) levels are left for
+    ! first kl 3D vector oneGaspartFields%gasr(1,1,1) levels are left for
     ! emission sources calculation
     kl = 3*ngases 
 
-    gaspart_g(ng)%gasr(:,:,:) = 0.
+    oneGaspartFields%gasr(:,:,:) = 0.
 
     do ig=1,ngases
 
@@ -133,15 +134,15 @@ contains
        len1   = LEN_trim(tracer) + 1
 
        call read_sources_teb(ng, n1, n2, n3, np, ia, iz, ja, jz, &
-            gaspart_g(ng)%gasr, gaspart_g(ng)%fusog, &
+            oneGaspartFields%gasr, oneGaspartFields%fusog, &
             tracer(1:len1), kgas(ig), leaf_g(ng)%G_URBAN, &
             grid_g(ng)%dxt, grid_g(ng)%dyt, time       )
 
        call reorganize_sources_teb(ng, n1, n2, n3, ia, iz, ja, jz, &
-            gaspart_g(ng)%gasr, kgas(ig)                )
+            oneGaspartFields%gasr, kgas(ig)                )
 
        call convert_to_misture_ratio_teb(ng, n1, n2, n3, ia, iz, ja, jz,     &
-            kgas(ig), gaspart_g(ng)%gasr,                             &
+            kgas(ig), oneGaspartFields%gasr,                             &
             oneBasicFields%dn0, grid_g(ng)%rtgt,                    &
             grid_g(ng)%dxt, grid_g(ng)%dyt, dzt                    )
 
@@ -399,29 +400,32 @@ contains
 
   !------------------------------------------------------------
 
-  subroutine sources_teb(n1, n2, n3, ia, iz, ja, jz, ig, ngrids)
+  subroutine sources_teb(n1, n2, n3, ia, iz, ja, jz, ig, ngrids,&
+       oneGaspartFields)
     ! Arguments:
     integer, intent(in) :: n1, n2, n3, ia, iz, ja, jz, ig, ngrids
+    type(GaspartFields), pointer, intent(in) :: oneGaspartFields
 
     if (ig==ngrids) then
-       call EMISSAO(n1, n2, n3, ia, iz, ja, jz, gaspart_g(ig))
+       call EMISSAO(n1, n2, n3, ia, iz, ja, jz, oneGaspartFields)
     endif
 
   end subroutine sources_teb
 
   !------------------------------------------------------------
 
-  subroutine EMISSAO(n1, n2, n3, ia, iz, ja, jz, gaspart)
+  subroutine EMISSAO(n1, n2, n3, ia, iz, ja, jz, &
+       oneGaspartFields)
     ! Arguments:
     integer, intent(in)               :: n1, n2, n3, ia, iz, ja, jz
-    type(gaspart_vars), intent(inout) :: gaspart
+    type(GaspartFields), pointer, intent(in) :: oneGaspartFields
 
-    call tendgas(n1,n2,n3,ia,iz,ja,jz,gaspart%pnot  ,gaspart%gasr,2)
-    call tendgas(n1,n2,n3,ia,iz,ja,jz,gaspart%pno2t ,gaspart%gasr,5)
-    call tendgas(n1,n2,n3,ia,iz,ja,jz,gaspart%ppm25t,gaspart%gasr,8)
-    call tendgas(n1,n2,n3,ia,iz,ja,jz,gaspart%pcot  ,gaspart%gasr,11)
-    call tendgas(n1,n2,n3,ia,iz,ja,jz,gaspart%pso2t ,gaspart%gasr,14)
-    call tendgas(n1,n2,n3,ia,iz,ja,jz,gaspart%pvoct ,gaspart%gasr,17)
+    call tendgas(n1,n2,n3,ia,iz,ja,jz,oneGaspartFields%pnot  ,oneGaspartFields%gasr,2)
+    call tendgas(n1,n2,n3,ia,iz,ja,jz,oneGaspartFields%pno2t ,oneGaspartFields%gasr,5)
+    call tendgas(n1,n2,n3,ia,iz,ja,jz,oneGaspartFields%ppm25t,oneGaspartFields%gasr,8)
+    call tendgas(n1,n2,n3,ia,iz,ja,jz,oneGaspartFields%pcot  ,oneGaspartFields%gasr,11)
+    call tendgas(n1,n2,n3,ia,iz,ja,jz,oneGaspartFields%pso2t ,oneGaspartFields%gasr,14)
+    call tendgas(n1,n2,n3,ia,iz,ja,jz,oneGaspartFields%pvoct ,oneGaspartFields%gasr,17)
 
   end subroutine EMISSAO
 

@@ -215,7 +215,6 @@ OBJ_MOD = \
 	mem_teb.o \
 	mem_teb_common.o \
 	mem_teb_vars_const.o \
-	mem_gaspart.o \
 	GaspartFields.o \
 	mem_emiss.o \
 	ModUrban.o \

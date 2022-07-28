@@ -184,9 +184,6 @@ module ModOneProc
   use memSoilMoisture, only : &
        SOIL_MOIST ! INTENT(IN)
 
-  use mem_gaspart, only   : &
-       gaspart_g ! intent(inout)
-
   use mem_teb, only       : &
        teb_g     ! intent(inout)
 
@@ -1679,7 +1676,8 @@ contains
        if (TEB_SPM==1) then
           ! read FUSO (Local Time) files
           do ifm = 1,ngrids
-             call FusoReadStoreOwnChunk(ifm, oneGrid%oneControlVars)
+             call FusoReadStoreOwnChunk(ifm, oneGrid%oneControlVars, &
+                  oneGrid%oneGaspartFields)
           enddo
        endif
 
@@ -1976,14 +1974,14 @@ contains
                      nodemyp(mynum,ifm),          &
                      npatch,                      &
                      leaf_g(ifm)%G_URBAN , &
-                     gaspart_g(ifm)%pno  , &
-                     gaspart_g(ifm)%pno2 , &
-                     gaspart_g(ifm)%ppm25, &
-                     gaspart_g(ifm)%pco  , &
-                     gaspart_g(ifm)%pvoc , &
-                     gaspart_g(ifm)%pso2 , &
-                     gaspart_g(ifm)%pso4 , &
-                     gaspart_g(ifm)%paer , &
+                     oneGrid%oneGaspartFields%pno  , &
+                     oneGrid%oneGaspartFields%pno2 , &
+                     oneGrid%oneGaspartFields%ppm25, &
+                     oneGrid%oneGaspartFields%pco  , &
+                     oneGrid%oneGaspartFields%pvoc , &
+                     oneGrid%oneGaspartFields%pso2 , &
+                     oneGrid%oneGaspartFields%pso4 , &
+                     oneGrid%oneGaspartFields%paer , &
                      zt                           )
 
                 if (ichemi==1) then  !calling more added scalars for chemistry
@@ -1996,13 +1994,13 @@ contains
                            nodemyp(mynum,ifm),          &
                            npatch,                      &
                            leaf_g(ifm)%G_URBAN,  &
-                           gaspart_g(ifm)%po3,   &
-                           gaspart_g(ifm)%prhco, &
-                           gaspart_g(ifm)%pho2,  &
-                           gaspart_g(ifm)%po3p,  &
-                           gaspart_g(ifm)%po1d,  &
-                           gaspart_g(ifm)%pho,   &
-                           gaspart_g(ifm)%proo,  &
+                           oneGrid%oneGaspartFields%po3,   &
+                           oneGrid%oneGaspartFields%prhco, &
+                           oneGrid%oneGaspartFields%pho2,  &
+                           oneGrid%oneGaspartFields%po3p,  &
+                           oneGrid%oneGaspartFields%po1d,  &
+                           oneGrid%oneGaspartFields%pho,   &
+                           oneGrid%oneGaspartFields%proo,  &
                            zt                           )
                    endif
                 endif
@@ -2145,7 +2143,8 @@ contains
        if (TEB_SPM==1) then
           ! Read FUSO (Local Time) files for any added grids
           do ifm = ngridsh+1,ngrids
-             call FusoReadStoreOwnChunk(ifm, oneGrid%oneControlVars)
+             call FusoReadStoreOwnChunk(ifm, oneGrid%oneControlVars, &
+                  oneGrid%oneGaspartFields)
           enddo
        endif
 
