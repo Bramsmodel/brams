@@ -1159,7 +1159,7 @@ contains
 
        call define_n_dyn_chem(ngrids,dtlong,nndtrat,mynum)
 
-       allocate(chem1_g    (     nspecies_chem,ngrids),chem1m_g    (     nspecies_chem,ngrids))
+       allocate(chem1_g(nspecies_chem,ngrids), chem1m_g(nspecies_chem,ngrids))
        allocate(chem1_src_g (max_ntimes_src,nsrc,nspecies_chem,ngrids),&
             chem1m_src_g(max_ntimes_src,nsrc,nspecies_chem,ngrids))
 
@@ -1176,15 +1176,18 @@ contains
              call alloc_chem1(chem1m_g(:,ng),chem1m_src_g(:,:,:,ng),chem1_src_z_dim_g(:,ng) &
                   ,nmzp(ng),nmxp(ng),nmyp(ng),nspecies_chem, ng,volcanoes)
 
-          elseif (imean == 0) then
-             call alloc_chem1(chem1m_g(:,ng),chem1m_src_g(:,:,:,ng),chem1_src_z_dim_g(:,ng) &
-                  ,1,1,1,nspecies_chem, ng,volcanoes)
+!!$          elseif (imean == 0) then
+!!$             call alloc_chem1(chem1m_g(:,ng),chem1m_src_g(:,:,:,ng),chem1_src_z_dim_g(:,ng) &
+!!$                  ,1,1,1,nspecies_chem, ng,volcanoes)
           endif
 
-          call filltab_chem1(chem1_g     (:,ng) ,chem1m_g    (:,ng)  &
-               ,chem1_src_g (:,:,:,ng),chem1m_src_g(:,:,:,ng)  &
-               ,imean ,chem1_src_z_dim_g(:,ng) &
-               ,nmzp(ng),nmxp(ng),nmyp(ng),nspecies_chem,ng,volcanoes)
+          call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
+          call filltab_chem1(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+               chem1_g(:,ng) ,chem1m_g(:,ng),  &
+               chem1_src_g (:,:,:,ng),chem1m_src_g(:,:,:,ng),  &
+               chem1_src_z_dim_g(:,ng), &
+               nmzp(ng),nspecies_chem,volcanoes)
+          call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
        end do
 
        call nullify_tend_chem1(nspecies_chem)

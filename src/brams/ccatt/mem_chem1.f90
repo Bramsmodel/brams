@@ -264,32 +264,43 @@ contains
 
   !---------------------------------------------------------------
 
-  subroutine filltab_chem1(chem1,chem1m,chem1_src,chem1m_src&
-       ,imean,nvert_src,n1,n2,n3,nspecies,ng,volcanoes)
 
-    !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-    use ModVarTables, only: InsertVTab
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
+  subroutine filltab_chem1(oneVarTable, oneVarTableSize, &
+       chem1, chem1m, chem1_src, chem1m_src, &
+       nvert_src,mzp,nspecies,volcanoes)
 
-    use chem1_list, only: spc_alloc,spc_name, src, ddp, wdp, fdda, on ,off, transport
+    use ModVarTable, only: &
+         VarTable, &
+         InsertAtVarTable
 
-    use io_params, only : ioutput         ! INTENT(IN)
+    use chem1_list, only: &
+         spc_alloc, &
+         spc_name, &
+         src, &
+         ddp, &
+         wdp, &
+         fdda, &
+         on, &
+         off, &
+         transport
+
+    use io_params, only : &
+         ioutput
 
     implicit none
 
-    integer, intent(in) :: imean,n1,n2,n3,nspecies,ng,volcanoes
-    type (chem1_vars)    ,dimension(     nspecies) :: chem1,chem1m
-    type (chem1_src_vars),dimension(max_ntimes_src,nsrc,nspecies) :: chem1_src,chem1m_src
-    integer,dimension(nsrc)    :: nvert_src
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
+    type(chem1_vars), intent(in) :: chem1(nspecies)
+    type(chem1_vars), intent(in) :: chem1m(nspecies)
+    type(chem1_src_vars), intent(in) :: chem1_src(max_ntimes_src,nsrc,nspecies)
+    type(chem1_src_vars), intent(in) :: chem1m_src(max_ntimes_src,nsrc,nspecies)
+    integer, intent(in) :: nvert_src(nsrc)
+    integer, intent(in) :: mzp
+    integer, intent(in) :: nspecies
+    integer, intent(in) :: volcanoes
 
     integer :: ispc,isrc,itime  
-
-    !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-    integer(kind=i8) :: npts
-    !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-    !   integer :: npts
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
-
 
     character(len=8) :: str_recycle
     character(len=25) :: str_output
@@ -304,117 +315,104 @@ contains
     do ispc=1,nspecies
 
        if (associated(chem1(ispc)%sc_p)) then !--- tracer mixing ratio (dimension 3d)
-          npts = n1 * n2 * n3
           if(spc_alloc(transport,ispc) == on) then 
-
-             !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-             call InsertVTab(chem1(ispc)%sc_p,chem1m(ispc)%sc_p,  &
-                  ng, npts, imean,                     &
-                  trim(spc_name(ispc))//'P :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle))
-             !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-             !        call vtables2 (chem1(ispc)%sc_p(1,1,1),chem1m(ispc)%sc_p(1,1,1)  &
-             !             ,ng, npts, imean, trim(spc_name(ispc))//'P :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle))
-             !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
-
-          endif
+             if (associated(chem1m(ispc)%sc_p)) then
+                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                     chem1(ispc)%sc_p, &
+                     trim(spc_name(ispc))//'P :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle), &
+                     chem1m(ispc)%sc_p)
+             else
+                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                     chem1(ispc)%sc_p, &
+                     trim(spc_name(ispc))//'P :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle))
+             end if
+          end if
 
           !--- sources (3 and 2 dimension)
-          !- old way
-          ! npts=n1*n2*n3
-          ! if(spc_alloc(1,ispc) == 1) &
-          ! call vtables2 (chem1(ispc)%sc_s(1,1,1),chem1m(ispc)%sc_s(1,1,1)  &
-          !      ,ng, npts, imean, trim(spc_name(ispc))//'S :3:hist:anal:mpti:mpt3:mpt1')
-          !- new way
           if(spc_alloc(src,ispc) == on) then
              do isrc=1,nsrc
-
                 !- only alloc geoge emissions if volcanoes is ON.
                 if(isrc==geoge .and. volcanoes == off) cycle
 
-                npts= nvert_src(isrc)  * n2 * n3 * ntimes_src(isrc)
                 if(nvert_src(isrc) ==  1) str_src_dim = '2'  ! for 2d sources
-                if(nvert_src(isrc) == n1) str_src_dim = '3'  ! for 3d sources
+                if(nvert_src(isrc) == mzp) str_src_dim = '3'  ! for 3d sources
 
                 do itime=1,ntimes_src(isrc)
-
                    if(itime > 1) write(str_src_num,'(i1)')itime
-                   !        print *,'LFR: ',trim(spc_name(ispc))//'_'//trim(src_name(isrc))//  &
-                   !        '_SRC'//trim(str_src_num)//' :'//trim(str_src_dim) &
-                   !        //':hist:anal:mpti:mpt3:mpt1'
-                   !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-                   call InsertVTab(chem1_src(itime,isrc,ispc)%sc_src,                 &
-                        chem1m_src(itime,isrc,ispc)%sc_src,                &
-                        ng, npts, imean,                                   &
-                        trim(spc_name(ispc))//'_'//trim(src_name(isrc))//  &
-                        '_SRC'//trim(str_src_num)//' :'//trim(str_src_dim) &
-                        //':hist:anal:mpti:mpt3:mpt1')
-                   !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-                   !        call vtables2 ( chem1_src(itime,isrc,ispc)%sc_src(1,1,1)  &
-                   !              ,chem1m_src(itime,isrc,ispc)%sc_src(1,1,1)  &
-                   !                              ,ng, npts, imean, trim(spc_name(ispc))      &
-                   !      //'_'//trim(src_name(isrc))//               &
-                   !      '_SRC'//trim(str_src_num)//' :'//trim(str_src_dim)&
-                   !      //':hist:anal:mpti:mpt3:mpt1')
-                   !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
-
-                enddo
-                !print*,'src alloc=', trim(spc_name(ispc))//'_'//trim(src_name(isrc)),' npts=',npts
-             enddo
-          endif
+                   if (associated(chem1m_src(itime,isrc,ispc)%sc_src)) then
+                      call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                           chem1_src(itime,isrc,ispc)%sc_src, &
+                           trim(spc_name(ispc))//'_'//trim(src_name(isrc))//  &
+                           '_SRC'//trim(str_src_num)//' :'//trim(str_src_dim) &
+                           //':hist:anal:mpti:mpt3:mpt1', &
+                           chem1m_src(itime,isrc,ispc)%sc_src)
+                   else
+                      call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                           chem1_src(itime,isrc,ispc)%sc_src, &
+                           trim(spc_name(ispc))//'_'//trim(src_name(isrc))//  &
+                           '_SRC'//trim(str_src_num)//' :'//trim(str_src_dim) &
+                           //':hist:anal:mpti:mpt3:mpt1')
+                   end if
+                end do
+             end do
+          end if
 
           !--- dry and wet deposition (dimension 2d)
-          npts = n2 * n3
-          if(spc_alloc(ddp,ispc) == on) &
-               
-                                !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-               call InsertVTab(chem1(ispc)%sc_dd,chem1m(ispc)%sc_dd,   &
-               ng, npts, imean,                        &
-               trim(spc_name(ispc))//'DD :2:hist:anal:mpti:mpt3')
-          !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-          !       call vtables2 (chem1(ispc)%sc_dd(1,1),chem1m(ispc)%sc_dd (1,1)  &
-          !            ,ng, npts, imean, trim(spc_name(ispc))//'DD :2:hist:anal:mpti:mpt3')
-          !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
-
-          npts = n2 * n3
-          if(spc_alloc(wdp,ispc) == on) &
-               
-                                !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-               call InsertVTab(chem1(ispc)%sc_wd,chem1m(ispc)%sc_wd,  &
-               ng, npts, imean,                       &
-               trim(spc_name(ispc))//'WD :2:hist:anal:mpti:mpt3')
-          !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-          !       call vtables2 (chem1(ispc)%sc_wd(1,1),chem1m(ispc)%sc_wd(1,1)  &
-          !           ,ng, npts, imean, trim(spc_name(ispc))//'WD :2:hist:anal:mpti:mpt3')
-          !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
-
-
+          if(spc_alloc(ddp,ispc) == on) then
+             if (associated(chem1m(ispc)%sc_dd)) then
+                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                     chem1(ispc)%sc_dd, &
+                     trim(spc_name(ispc))//'DD :2:hist:anal:mpti:mpt3', &
+                     chem1m(ispc)%sc_dd)
+             else
+                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                     chem1(ispc)%sc_dd, &
+                     trim(spc_name(ispc))//'DD :2:hist:anal:mpti:mpt3')
+             end if
+          end if
+          if(spc_alloc(wdp,ispc) == on) then
+             if (associated(chem1m(ispc)%sc_wd)) then
+                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                     chem1(ispc)%sc_wd,&
+                     trim(spc_name(ispc))//'WD :2:hist:anal:mpti:mpt3', &
+                     chem1m(ispc)%sc_wd)
+             else
+                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                     chem1(ispc)%sc_wd,&
+                     trim(spc_name(ispc))//'WD :2:hist:anal:mpti:mpt3')
+             end if
+          end if
           !---  data assimilation (dimension 3d)
           if(chem_assim == on) then
-             npts = n1 * n2 * n3
              if(spc_alloc(fdda,ispc) == on) then
-
-                !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-                call InsertVTab(chem1(ispc)%sc_pp,chem1m(ispc)%sc_pp,  &
-                     ng, npts, imean,                       &
-                     trim(spc_name(ispc))//'PP :3:mpti')
-                call InsertVTab(chem1(ispc)%sc_pf,chem1m(ispc)%sc_pf,  &
-                     ng, npts, imean,                       &
-                     trim(spc_name(ispc))//'PF :3:mpti')
-                !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-                !             call vtables2 (chem1(ispc)%sc_pp(1,1,1),chem1m(ispc)%sc_pp(1,1,1)  &
-                !              ,ng, npts, imean, trim(spc_name(ispc))//'PP :3:mpti')
-                !             call vtables2 (chem1(ispc)%sc_pf(1,1,1),chem1m(ispc)%sc_pf(1,1,1)  &
-                !              ,ng, npts, imean, trim(spc_name(ispc))//'PF :3:mpti')
-                !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
-
-             endif
-          endif
-
-       endif
-
-    enddo
+                if (associated(chem1m(ispc)%sc_pp)) then
+                   call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                        chem1(ispc)%sc_pp,&
+                        trim(spc_name(ispc))//'PP :3:mpti', &
+                        chem1m(ispc)%sc_pp)
+                else
+                   call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                        chem1(ispc)%sc_pp,&
+                        trim(spc_name(ispc))//'PP :3:mpti')
+                end if
+                if (associated(chem1m(ispc)%sc_pf)) then
+                   call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                        chem1(ispc)%sc_pf, &
+                        trim(spc_name(ispc))//'PF :3:mpti', &
+                        chem1m(ispc)%sc_pf)
+                else
+                   call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                        chem1(ispc)%sc_pf, &
+                        trim(spc_name(ispc))//'PF :3:mpti')
+                end if
+             end if
+          end if
+       end if
+    end do
   end subroutine filltab_chem1
 
+
+  
   !---------------------------------------------------------------
 
   subroutine alloc_tend_chem1(nmzp,nmxp,nmyp,ngrs,nspecies,proc_type)
