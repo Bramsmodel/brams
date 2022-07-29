@@ -210,6 +210,7 @@ OBJ_MOD = \
 	ModTuv2.7.o \
 	ModTuvDriver2.7.o \
 	ModVarTables.o \
+	VarTable.o \
 	ModVarfUpdate.o \
 	ModMkSfcFuso.o \
 	mem_teb.o \

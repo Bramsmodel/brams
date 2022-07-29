@@ -176,354 +176,369 @@ contains
     return
   end subroutine dealloc_stilt
 
-  subroutine filltab_stilt(stilt,stiltm,imean,n1,n2,n3,ng)
+  subroutine filltab_stilt(oneVarTable, oneVarTableSize, stilt, stiltm)
 
-    !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-    use ModVarTables, only: InsertVTab
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
+    use ModVarTable, only: &
+         VarTable, &
+         InsertAtVarTable
 
     implicit none
-    type (stilt_vars)   :: stilt,stiltm
-    integer             :: imean, n1, n2, n3, ng
-    real, pointer       :: var, varm
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
+    type (stilt_vars) :: stilt
+    type (stilt_vars), optional :: stiltm
+    
+    if (associated(stilt%thvlast)) then
+       if (present(stiltm)) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%thvlast, &
+               'THVLAST :3:hist:mpti:mpt3:mpt1', &
+               stiltm%thvlast)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%thvlast, &
+               'THVLAST :3:hist:mpti:mpt3:mpt1')
+       end if
+    end if
 
-    !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-    integer(kind=i8) :: npts
-    !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-    !   integer :: npts
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
+    if (associated(stilt%lnthvadv)) then
+       if (present(stiltm)) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%lnthvadv, &
+               'LNTHVADV :3:hist:mpti:mpt3:mpt1', &
+               stiltm%lnthvadv)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%lnthvadv, &
+               'LNTHVADV :3:hist:mpti:mpt3:mpt1')
+       end if
+    end if
 
-    npts=n1*n2*n3
+    if (associated(stilt%lnthetav)) then
+       if (present(stiltm)) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%lnthetav, &
+               'LNTHETAV :3:hist:mpti:mpt3:mpt1', &
+               stiltm%lnthetav)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%lnthetav, &
+               'LNTHETAV :3:hist:mpti:mpt3:mpt1')
+       end if
+    end if
 
-    if (associated(stilt%thvlast)) &
-         
-         !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-         call InsertVTab (stilt%thvlast,stiltm%thvlast &
-         ,ng, npts, imean, &
-         'THVLAST :3:hist:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-    !      call vtables2 (stilt%thvlast(1,1,1),stiltm%thvlast(1,1,1) &
-    !                 ,ng, npts, imean, &
-    !                 'THVLAST :3:hist:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
-
-    if (associated(stilt%lnthvadv)) &
-         
-         !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-         call InsertVTab (stilt%lnthvadv,stiltm%lnthvadv &
-         ,ng, npts, imean, &
-         'LNTHVADV :3:hist:mpti:mpt3:mpt1') 
-    !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-    !      call vtables2 (stilt%lnthvadv(1,1,1),stiltm%lnthvadv(1,1,1) &
-    !                 ,ng, npts, imean, &
-    !                 'LNTHVADV :3:hist:mpti:mpt3:mpt1') 
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
-
-    if (associated(stilt%lnthetav)) &
-         
-         !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-         call InsertVTab (stilt%lnthetav,stiltm%lnthetav &
-         ,ng, npts, imean, &
-         'LNTHETAV :3:hist:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-    !      call vtables2 (stilt%lnthetav(1,1,1),stiltm%lnthetav(1,1,1) &
-    !                 ,ng, npts, imean, &
-    !                 'LNTHETAV :3:hist:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
-
-    if (associated(stilt%lnthvtend)) &
-         
-         !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-         call InsertVTab (stilt%lnthvtend,stiltm%lnthvtend &
-         ,ng, npts, imean, &
-         'LNTHVTEND :3:hist:mpti:mpt3:mpt1') 
-    !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-    !      call vtables2 (stilt%lnthvtend(1,1,1),stiltm%lnthvtend(1,1,1) &
-    !                 ,ng, npts, imean, &
-    !                 'LNTHVTEND :3:hist:mpti:mpt3:mpt1') 
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
+    if (associated(stilt%lnthvtend)) then
+       if (present(stiltm)) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%lnthvtend, &
+               'LNTHVTEND :3:hist:mpti:mpt3:mpt1', &
+               stiltm%lnthvtend)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%lnthvtend, &
+               'LNTHVTEND :3:hist:mpti:mpt3:mpt1')
+       end if
+    end if
 
     !-srf : for the true air density
-    if (associated(stilt%dnp)) &
-         
-         !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-         call InsertVTab (stilt%dnp,stiltm%dnp &
-         ,ng, npts, imean, &
-         !srf             'DNP :3:hist:anal:mpti:mpt3:mpt1')
-         'DNP :3:hist:anal:mpti:mpt3')
+    if (associated(stilt%dnp)) then
+       if (present(stiltm)) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%dnp, &
+               'DNP :3:hist:anal:mpti:mpt3', &
+               stiltm%dnp)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%dnp, &
+               'DNP :3:hist:anal:mpti:mpt3')
+       end if
+    end if
 
-    !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-    !      call vtables2 (stilt%dnp(1,1,1),stiltm%dnp(1,1,1) &
-    !                 ,ng, npts, imean, &
-    !                 'DNP :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
+    if (associated(stilt%ltscale)) then
+       if (present(stiltm)) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%ltscale, &
+               'TL :3:hist:anal:mpti:mpt3:mpt1', &
+               stiltm%ltscale)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%ltscale, &
+               'TL :3:hist:anal:mpti:mpt3:mpt1')
+       end if
+    end if
+    
+    if (associated(stilt%sigw)) then
+       if (present(stiltm)) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%sigw, &
+               'SIGW :3:hist:anal:mpti:mpt3:mpt1', &
+               stiltm%sigw)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%sigw, &
+               'SIGW :3:hist:anal:mpti:mpt3:mpt1')
+       end if
+    end if
+    
+    if (associated(stilt%afxu)) then
+       if (present(stiltm)) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%afxu, &
+               'AFXU :3:hist:anal:mpti:mpt3:mpt1', &
+               stiltm%afxu)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%afxu, &
+               'AFXU :3:hist:anal:mpti:mpt3:mpt1')
+       end if
+    end if
+       
+    if (associated(stilt%afxv)) then
+       if (present(stiltm)) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%afxv, &
+               'AFXV :3:hist:anal:mpti:mpt3:mpt1', &
+               stiltm%afxv)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%afxv, &
+               'AFXV :3:hist:anal:mpti:mpt3:mpt1')
+       end if
+    end if
+    
+    if (associated(stilt%afxw)) then
+       if (present(stiltm)) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%afxw, &
+               'AFXW :3:hist:anal:mpti:mpt3:mpt1', &
+               stiltm%afxw)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%afxw, &
+               'AFXW :3:hist:anal:mpti:mpt3:mpt1')
+       end if
+    end if
+    
+    if (associated(stilt%ltscaleb)) then
+       if (present(stiltm)) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%ltscaleb, &
+               'TLB :3:hist:anal:mpti:mpt3:mpt1', &
+               stiltm%ltscaleb)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%ltscaleb, &
+               'TLB :3:hist:anal:mpti:mpt3:mpt1')
+       end if
+    end if
+    
+    if (associated(stilt%sigwb)) then
+       if (present(stiltm)) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%sigwb, &
+               'SIGWB :3:hist:anal:mpti:mpt3:mpt1', &
+               stiltm%sigwb)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%sigwb, &
+               'SIGWB :3:hist:anal:mpti:mpt3:mpt1')
+       end if
+    end if
 
-    if (associated(stilt%ltscale)) &
-         
-         !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-         call InsertVTab (stilt%ltscale,stiltm%ltscale &
-         ,ng, npts, imean, &
-         'TL :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-    !      call vtables2 (stilt%ltscale(1,1,1),stiltm%ltscale(1,1,1) &
-    !                 ,ng, npts, imean, &
-    !                 'TL :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
+    if (associated(stilt%tkepb)) then
+       if (present(stiltm)) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%tkepb, &
+               'TKEPB :3:hist:anal:mpti:mpt3:mpt1', &
+               stiltm%tkepb)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%tkepb, &
+               'TKEPB :3:hist:anal:mpti:mpt3:mpt1')
+       end if
+    end if
+       
+    if (associated(stilt%afxub)) then
+       if (present(stiltm)) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%afxub, &
+               'AFXUB :3:hist:anal:mpti:mpt3:mpt1', &
+               stiltm%afxub)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%afxub, &
+               'AFXUB :3:hist:anal:mpti:mpt3:mpt1')
+       end if
+    end if
+    
+    if (associated(stilt%afxvb)) then
+       if (present(stiltm)) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%afxvb, &
+               'AFXVB :3:hist:anal:mpti:mpt3:mpt1', &
+               stiltm%afxvb)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%afxvb, &
+               'AFXVB :3:hist:anal:mpti:mpt3:mpt1')
+       end if
+    end if
+    
+    if (associated(stilt%afxwb)) then
+       if (present(stiltm)) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%afxwb, &
+               'AFXWB :3:hist:anal:mpti:mpt3:mpt1', &
+               stiltm%afxwb)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%afxwb, &
+               'AFXWB :3:hist:anal:mpti:mpt3:mpt1')
+       end if
+    end if
+       
+    if (associated(stilt%cfxup1)) then
+       if (present(stiltm)) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%cfxup1, &
+               'CFXUP1 :3:hist:anal:mpti:mpt3:mpt1', &
+               stiltm%cfxup1)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%cfxup1, &
+               'CFXUP1 :3:hist:anal:mpti:mpt3:mpt1')
+       end if
+    end if
 
-    if (associated(stilt%sigw)) &
-         
-         !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-         call InsertVTab (stilt%sigw,stiltm%sigw &
-         ,ng, npts, imean, &
-         'SIGW :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-    !      call vtables2 (stilt%sigw(1,1,1),stiltm%sigw(1,1,1) &
-    !                 ,ng, npts, imean, &
-    !                 'SIGW :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
+    if (associated(stilt%cfxdn1)) then
+       if (present(stiltm)) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%cfxdn1, &
+               'CFXDN1 :3:hist:anal:mpti:mpt3:mpt1', &
+               stiltm%cfxdn1)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%cfxdn1, &
+               'CFXDN1 :3:hist:anal:mpti:mpt3:mpt1')
+       end if
+    end if
 
-    if (associated(stilt%afxu)) &
-         
-         !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-         call InsertVTab (stilt%afxu,stiltm%afxu &
-         ,ng, npts, imean, &
-         'AFXU :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-    !      call vtables2 (stilt%afxu(1,1,1),stiltm%afxu(1,1,1) &
-    !                 ,ng, npts, imean, &
-    !                 'AFXU :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
+    if (associated(stilt%dfxup1)) then
+       if (present(stiltm)) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%dfxup1, &
+               'DFXUP1 :3:hist:anal:mpti:mpt3:mpt1', &
+               stiltm%dfxup1)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%dfxup1, &
+               'DFXUP1 :3:hist:anal:mpti:mpt3:mpt1')
+       end if
+    end if
 
-    if (associated(stilt%afxv)) &
-         
-         !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-         call InsertVTab (stilt%afxv,stiltm%afxv &
-         ,ng, npts, imean, &
-         'AFXV :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-    !      call vtables2 (stilt%afxv(1,1,1),stiltm%afxv(1,1,1) &
-    !                 ,ng, npts, imean, &
-    !                 'AFXV :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
+    if (associated(stilt%efxup1)) then
+       if (present(stiltm)) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%efxup1, &
+               'EFXUP1 :3:hist:anal:mpti:mpt3:mpt1', &
+               stiltm%efxup1)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%efxup1, &
+               'EFXUP1 :3:hist:anal:mpti:mpt3:mpt1')
+       end if
+    end if
 
-    if (associated(stilt%afxw)) &
-         
-         !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-         call InsertVTab (stilt%afxw,stiltm%afxw &
-         ,ng, npts, imean, &
-         'AFXW :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-    !      call vtables2 (stilt%afxw(1,1,1),stiltm%afxw(1,1,1) &
-    !                 ,ng, npts, imean, &
-    !                 'AFXW :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
+    if (associated(stilt%dfxdn1)) then
+       if (present(stiltm)) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%dfxdn1, &
+               'DFXDN1 :3:hist:anal:mpti:mpt3:mpt1', &
+               stiltm%dfxdn1)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%dfxdn1, &
+               'DFXDN1 :3:hist:anal:mpti:mpt3:mpt1')
+       end if
+    end if
 
-    if (associated(stilt%ltscaleb)) &
-         
-         !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-         call InsertVTab (stilt%ltscaleb,stiltm%ltscaleb &
-         ,ng, npts, imean, &
-         'TLB :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-    !      call vtables2 (stilt%ltscaleb(1,1,1),stiltm%ltscaleb(1,1,1) &
-    !                 ,ng, npts, imean, &
-    !                 'TLB :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
+    if (associated(stilt%efxdn1)) then
+       if (present(stiltm)) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%efxdn1, &
+               'EFXDN1 :3:hist:anal:mpti:mpt3:mpt1', &
+               stiltm%efxdn1)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%efxdn1, &
+               'EFXDN1 :3:hist:anal:mpti:mpt3:mpt1')
+       end if
+    end if
 
-    if (associated(stilt%sigwb)) &
-         
-         !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-         call InsertVTab (stilt%sigwb,stiltm%sigwb &
-         ,ng, npts, imean, &
-         'SIGWB :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-    !      call vtables2 (stilt%sigwb(1,1,1),stiltm%sigwb(1,1,1) &
-    !                 ,ng, npts, imean, &
-    !                 'SIGWB :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
+    if (associated(stilt%cfxup2)) then
+       if (present(stiltm)) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%cfxup2, &
+               'CFXUP2 :3:hist:anal:mpti:mpt3:mpt1', &
+               stiltm%cfxup2)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%cfxup2, &
+               'CFXUP2 :3:hist:anal:mpti:mpt3:mpt1')
+       end if
+    end if
 
-    if (associated(stilt%tkepb)) &
-         
-         !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-         call InsertVTab (stilt%tkepb,stiltm%tkepb &
-         ,ng, npts, imean, &
-         'TKEPB :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-    !      call vtables2 (stilt%tkepb(1,1,1),stiltm%tkepb(1,1,1) &
-    !                 ,ng, npts, imean, &
-    !                 'TKEPB :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
+    if (associated(stilt%dfxup2)) then
+       if (present(stiltm)) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%dfxup2, &
+               'DFXUP2 :3:hist:anal:mpti:mpt3:mpt1', &
+               stiltm%dfxup2)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%dfxup2, &
+               'DFXUP2 :3:hist:anal:mpti:mpt3:mpt1')
+       end if
+    end if
 
-    if (associated(stilt%afxub)) &
-         
-         !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-         call InsertVTab (stilt%afxub,stiltm%afxub &
-         ,ng, npts, imean, &
-         'AFXUB :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-    !      call vtables2 (stilt%afxub(1,1,1),stiltm%afxub(1,1,1) &
-    !                 ,ng, npts, imean, &
-    !                 'AFXUB :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
+    if (associated(stilt%efxup2)) then
+       if (present(stiltm)) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%efxup2, &
+               'EFXUP2 :3:hist:anal:mpti:mpt3:mpt1', &
+               stiltm%efxup2)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%efxup2, &
+               'EFXUP2 :3:hist:anal:mpti:mpt3:mpt1')
+       end if
+    end if
 
-    if (associated(stilt%afxvb)) &
-         
-         !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-         call InsertVTab (stilt%afxvb,stiltm%afxvb &
-         ,ng, npts, imean, &
-         'AFXVB :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-    !      call vtables2 (stilt%afxvb(1,1,1),stiltm%afxvb(1,1,1) &
-    !                 ,ng, npts, imean, &
-    !                 'AFXVB :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
+    if (associated(stilt%pblhgt)) then
+       if (present(stiltm)) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%pblhgt, &
+               'PBLHGT :2:hist:anal:mpti:mpt3:mpt1', &
+               stiltm%pblhgt)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%pblhgt, &
+               'PBLHGT :2:hist:anal:mpti:mpt3:mpt1')
+       end if
+    end if
 
-    if (associated(stilt%afxwb)) &
-         
-         !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-         call InsertVTab (stilt%afxwb,stiltm%afxwb &
-         ,ng, npts, imean, &
-         'AFXWB :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-    !      call vtables2 (stilt%afxwb(1,1,1),stiltm%afxwb(1,1,1) &
-    !                 ,ng, npts, imean, &
-    !                 'AFXWB :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
-
-    if (associated(stilt%cfxup1)) &
-         
-         !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-         call InsertVTab (stilt%cfxup1,stiltm%cfxup1 &
-         ,ng, npts, imean, &
-         'CFXUP1 :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-    !      call vtables2 (stilt%cfxup1(1,1,1),stiltm%cfxup1(1,1,1) &
-    !                 ,ng, npts, imean, &
-    !                 'CFXUP1 :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
-
-    if (associated(stilt%cfxdn1)) &
-         
-         !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-         call InsertVTab (stilt%cfxdn1,stiltm%cfxdn1 &
-         ,ng, npts, imean, &
-         'CFXDN1 :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-    !      call vtables2 (stilt%cfxdn1(1,1,1),stiltm%cfxdn1(1,1,1) &
-    !                 ,ng, npts, imean, &
-    !                 'CFXDN1 :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
-
-    if (associated(stilt%dfxup1)) &
-         
-         !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-         call InsertVTab (stilt%dfxup1,stiltm%dfxup1 &
-         ,ng, npts, imean, &
-         'DFXUP1 :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-    !      call vtables2 (stilt%dfxup1(1,1,1),stiltm%dfxup1(1,1,1) &
-    !                 ,ng, npts, imean, &
-    !                 'DFXUP1 :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
-
-    if (associated(stilt%efxup1)) &
-         
-         !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-         call InsertVTab (stilt%efxup1,stiltm%efxup1 &
-         ,ng, npts, imean, &
-         'EFXUP1 :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-    !      call vtables2 (stilt%efxup1(1,1,1),stiltm%efxup1(1,1,1) &
-    !                 ,ng, npts, imean, &
-    !                 'EFXUP1 :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
-
-    if (associated(stilt%dfxdn1)) &
-         
-         !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-         call InsertVTab (stilt%dfxdn1,stiltm%dfxdn1 &
-         ,ng, npts, imean, &
-         'DFXDN1 :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-    !      call vtables2 (stilt%dfxdn1(1,1,1),stiltm%dfxdn1(1,1,1) &
-    !                 ,ng, npts, imean, &
-    !                 'DFXDN1 :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
-
-    if (associated(stilt%efxdn1)) &
-         
-         !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-         call InsertVTab (stilt%efxdn1,stiltm%efxdn1 &
-         ,ng, npts, imean, &
-         'EFXDN1 :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-    !      call vtables2 (stilt%efxdn1(1,1,1),stiltm%efxdn1(1,1,1) &
-    !                 ,ng, npts, imean, &
-    !                 'EFXDN1 :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
-
-    if (associated(stilt%cfxup2)) &
-         
-         !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-         call InsertVTab (stilt%cfxup2,stiltm%cfxup2 &
-         ,ng, npts, imean, &
-         'CFXUP2 :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-    !      call vtables2 (stilt%cfxup2(1,1,1),stiltm%cfxup2(1,1,1) &
-    !                 ,ng, npts, imean, &
-    !                 'CFXUP2 :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
-
-    if (associated(stilt%dfxup2)) &
-         
-         !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-         call InsertVTab (stilt%dfxup2,stiltm%dfxup2 &
-         ,ng, npts, imean, &
-         'DFXUP2 :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-    !      call vtables2 (stilt%dfxup2(1,1,1),stiltm%dfxup2(1,1,1) &
-    !                 ,ng, npts, imean, &
-    !                 'DFXUP2 :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
-
-    if (associated(stilt%efxup2)) &
-         
-         !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-         call InsertVTab (stilt%efxup2,stiltm%efxup2 &
-         ,ng, npts, imean, &
-         'EFXUP2 :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-    !      call vtables2 (stilt%efxup2(1,1,1),stiltm%efxup2(1,1,1) &
-    !                 ,ng, npts, imean, &
-    !                 'EFXUP2 :3:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
-
-    npts=n2*n3
-    if (associated(stilt%pblhgt)) &
-         
-         !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-         call InsertVTab (stilt%pblhgt,stiltm%pblhgt &
-         ,ng, npts, imean, &
-         'PBLHGT :2:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-    !      call vtables2 (stilt%pblhgt(1,1),stiltm%pblhgt(1,1) &
-    !                 ,ng, npts, imean, &
-    !                 'PBLHGT :2:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
-
-    if (associated(stilt%lmo)) &
-         
-         !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-         call InsertVTab (stilt%lmo,stiltm%lmo &
-         ,ng, npts, imean, &
-         'LMO    :2:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-    !      call vtables2 (stilt%lmo(1,1),stiltm%lmo(1,1) &
-    !                 ,ng, npts, imean, &
-    !                 'LMO    :2:hist:anal:mpti:mpt3:mpt1')
-    !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
-
-    return
+    if (associated(stilt%lmo)) then
+       if (present(stiltm)) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%lmo, &
+               'LMO    :2:hist:anal:mpti:mpt3:mpt1', &
+               stiltm%lmo)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               stilt%lmo, &
+               'LMO    :2:hist:anal:mpti:mpt3:mpt1')
+       end if
+    end if
   end subroutine filltab_stilt
 
   !=======================================================================================!

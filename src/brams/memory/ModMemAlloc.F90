@@ -110,7 +110,9 @@ module ModMemAlloc
        nvgrids, &
        vtab_r,  &
        lite_varset, &
-       ZeroVTab
+       ZeroVTab, &
+       DeepCopyToVarTable, &
+       DeepCopyFromVarTable
 
 #ifdef JULES
   use ModJulesFields, only: &
@@ -1479,8 +1481,16 @@ contains
        else if (imean == 0) then
           call alloc_stilt(idiffk,stiltm_g(ng),1,1,1,ng)
        endif
-       call filltab_stilt(stilt_g(ng),stiltm_g(ng),imean, &
-            nmzp(ng),nmxp(ng),nmyp(ng),ng)
+
+       call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
+       if (oneGrid%oneNamelistFile%avgtim /= 0) then
+          call filltab_stilt(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+               stilt_g(ng), stiltm_g(ng))
+       else
+          call filltab_stilt(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+               stilt_g(ng))
+       end if
+       call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
     end do
     !--------------
 

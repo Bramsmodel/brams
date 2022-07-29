@@ -61,6 +61,12 @@ module ModGrid
        DestroyScalarTab, &
        DumpScalarTab
 
+  use ModVarTable, only: &
+       VarTable, &
+       CreateVarTable, &
+       DestroyVarTable, &
+       DumpVarTable
+  
   use ModBasicFields, only: &
        BasicFields, &
        CreateBasicFields, &
@@ -113,9 +119,6 @@ module ModGrid
        DumpJulesFields
 #endif  
   
-  ! JP: temporariamente usa variaveis globais enquanto
-  !     ModVarTables nao for inclusa no tipo Grid
-
   use ModVarTables, only: &
        num_var, &
        vtab_r
@@ -194,6 +197,9 @@ module ModGrid
      type(ScalarTable), pointer :: oneScalarTable(:) => null()
      integer :: oneScalarTableSize=0
 
+     type(VarTable), pointer :: oneVarTable(:) => null()
+     integer :: oneVarTableSize=0
+     
 #ifdef JULES
      type(JulesFields), pointer :: oneJulesFields => null()
      type(JulesFields), pointer :: oneAveJulesFields => null()
@@ -462,6 +468,11 @@ contains
     oneGrid%oneScalarTable => CreateScalarTab()
     oneGrid%oneScalarTableSize = 0
 
+    ! this node Var Table
+
+    oneGrid%oneVarTable => CreateVarTable()
+    oneGrid%oneVarTableSize = 0
+
     ! this node Jules Fields
 
 #ifdef JULES
@@ -653,6 +664,8 @@ contains
        call DestroyMicroFields(oneGrid%oneAveMicroFields)
        call DestroyScalarTab(oneGrid%oneScalarTable)
        oneGrid%oneScalarTableSize=0
+       call DestroyVarTable(oneGrid%oneVarTable)
+       oneGrid%oneVarTableSize=0
        call DestroyMicControl(oneGrid%oneMicVars)
 #ifdef JULES
        call DestroyJulesFields(oneGrid%oneJulesFields)
@@ -854,8 +867,7 @@ contains
     call DumpTurbFields(oneGrid%oneAveTurbFields, "oneGrid%oneAveTurbFields")
     call DumpMicroFields(oneGrid%oneMicroFields, "oneGrid%oneMicroFields")
     call DumpMicroFields(oneGrid%oneAveMicroFields, "oneGrid%oneAveMicroFields")
-    call MsgDump(h//" dumping Scalar Table")
-    call DumpScalarTab(oneGrid%oneScalarTable, oneGrid%oneScalarTableSize)
+    call DumpVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, "oneGrid%oneVarTable")
     call MsgDump(h//" dumping MicControl")
     call DumpMicControl(oneGrid%oneMicVars)
 #ifdef JULES

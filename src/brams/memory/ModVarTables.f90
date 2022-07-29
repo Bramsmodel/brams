@@ -32,6 +32,9 @@ module ModVarTables
        aer_on=>on,               &
        aer_nmodes=>nmodes
 
+  use ModVarTable, only: &
+       VarTable
+  
   implicit none
   private
   public :: maxvars
@@ -48,8 +51,13 @@ module ModVarTables
   public :: lite_varset
   public :: DumpVTab
   public :: setInitial4Vtable
+  public :: DeepCopyToVarTable
+  public :: DeepCopyFromVarTable
 
   include "constants.h"
+
+  character(len=32) :: nameTo=""
+  character(len=32) :: nameFrom=""
 
   ! Maximum number of variables of all types (3d + 2d + leaf)
 
@@ -747,6 +755,96 @@ contains
 
   end subroutine setInitial4Vtable
 
+  subroutine DeepCopyToVarTable(oneVarTable, oneVarTableSize, name)
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(out) :: oneVarTableSize
+    character(len=*), intent(in) :: name
+
+    integer :: i
+    character(len=*), parameter :: h="**(DeepCopyToVarTable)**"
+
+    if (nameTo /= "") then
+       call fatal_error(h//" consecutive calls; this one from "//trim(adjustl(name))//&
+            " and previous one from "//trim(adjustl(nameTo)))
+    else
+       nameTo=name
+       nameFrom=""
+    end if
+    
+    do i = 1, num_var(1)
+       oneVarTable(i)%var_p_2D => vtab_r(i,1)%var_p_2D
+       oneVarTable(i)%var_p_2D_I => vtab_r(i,1)%var_p_2D_I
+       oneVarTable(i)%var_p_3D => vtab_r(i,1)%var_p_3D
+       oneVarTable(i)%var_p_4D => vtab_r(i,1)%var_p_4D
+       oneVarTable(i)%var_m_2D => vtab_r(i,1)%var_m_2D
+       oneVarTable(i)%var_m_2D_I => vtab_r(i,1)%var_m_2D_I
+       oneVarTable(i)%var_m_3D => vtab_r(i,1)%var_m_3D
+       oneVarTable(i)%var_m_4D => vtab_r(i,1)%var_m_4D
+       oneVarTable(i)%idim_type = vtab_r(i,1)%idim_type
+       oneVarTable(i)%npts = vtab_r(i,1)%npts
+       oneVarTable(i)%ihist = vtab_r(i,1)%ihist
+       oneVarTable(i)%ianal = vtab_r(i,1)%ianal
+       oneVarTable(i)%imean = vtab_r(i,1)%imean
+       oneVarTable(i)%ilite = vtab_r(i,1)%ilite
+       oneVarTable(i)%impti = vtab_r(i,1)%impti
+       oneVarTable(i)%impt1 = vtab_r(i,1)%impt1
+       oneVarTable(i)%impt2 = vtab_r(i,1)%impt2
+       oneVarTable(i)%impt3 = vtab_r(i,1)%impt3
+       oneVarTable(i)%imptd = vtab_r(i,1)%imptd
+       oneVarTable(i)%irecycle = vtab_r(i,1)%irecycle
+       oneVarTable(i)%name = vtab_r(i,1)%name
+       call MsgDump(h//" copyed "//trim(adjustl(oneVarTable(i)%name)))
+    end do
+    oneVarTableSize = num_var(1)
+  end subroutine DeepCopyToVarTable
+
+
+
+
+
+  subroutine DeepCopyFromVarTable(oneVarTable, oneVarTableSize, name)
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(out) :: oneVarTableSize
+    character(len=*), intent(in) :: name
+
+    integer :: i
+    character(len=*), parameter :: h="**(DeepCopyFromVarTable)**"
+
+    if (nameFrom /= "") then
+       call fatal_error(h//" consecutive calls; this one from "//trim(adjustl(name))//&
+            " and previous one from "//trim(adjustl(nameFrom)))
+    else
+       nameFrom=name
+       nameTo=""
+    end if
+    
+    do i = 1, oneVarTableSize
+       vtab_r(i,1)%var_p_2D => oneVarTable(i)%var_p_2D  
+       vtab_r(i,1)%var_p_2D_I => oneVarTable(i)%var_p_2D_I  
+       vtab_r(i,1)%var_p_3D => oneVarTable(i)%var_p_3D  
+       vtab_r(i,1)%var_p_4D => oneVarTable(i)%var_p_4D  
+       vtab_r(i,1)%var_m_2D => oneVarTable(i)%var_m_2D  
+       vtab_r(i,1)%var_m_2D_I => oneVarTable(i)%var_m_2D_I  
+       vtab_r(i,1)%var_m_3D => oneVarTable(i)%var_m_3D  
+       vtab_r(i,1)%var_m_4D => oneVarTable(i)%var_m_4D  
+       vtab_r(i,1)%idim_type = oneVarTable(i)%idim_type  
+       vtab_r(i,1)%npts = oneVarTable(i)%npts  
+       vtab_r(i,1)%ihist = oneVarTable(i)%ihist  
+       vtab_r(i,1)%ianal = oneVarTable(i)%ianal  
+       vtab_r(i,1)%imean = oneVarTable(i)%imean  
+       vtab_r(i,1)%ilite = oneVarTable(i)%ilite  
+       vtab_r(i,1)%impti = oneVarTable(i)%impti  
+       vtab_r(i,1)%impt1 = oneVarTable(i)%impt1  
+       vtab_r(i,1)%impt2 = oneVarTable(i)%impt2  
+       vtab_r(i,1)%impt3 = oneVarTable(i)%impt3  
+       vtab_r(i,1)%imptd = oneVarTable(i)%imptd  
+       vtab_r(i,1)%irecycle = oneVarTable(i)%irecycle  
+       vtab_r(i,1)%name = oneVarTable(i)%name  
+       call MsgDump(h//" copyed "//trim(adjustl(vtab_r(i,1)%name)))
+    end do
+    num_var(1) = oneVarTableSize
+  end subroutine DeepCopyFromVarTable  
 end module ModVarTables
+     
 
 
