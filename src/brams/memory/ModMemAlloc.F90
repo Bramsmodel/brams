@@ -846,10 +846,18 @@ contains
           if (nnshcu(ng) > 1) call alloc_cuparm_sh(cuparmm_g_sh(ng), 1, 1, 1, ng)
        endif
 
-       call filltab_cuparm(cuparm_g(ng),cuparmm_g(ng),imean,nmzp(ng),nmxp(ng),nmyp(ng),ng)
+       call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
+       call filltab_cuparm(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+            cuparm_g(ng),cuparmm_g(ng))
+       call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
 
        !-srf-feb2012: for shallow cumulus
-       if (nnshcu(ng) == 2) call filltab_cuparm_sh(cuparm_g_sh(ng), cuparmm_g_sh(ng), imean, nmzp(ng), nmxp(ng), nmyp(ng), ng)
+       if (nnshcu(ng) == 2) then
+          call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
+          call filltab_cuparm_sh(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+               cuparm_g_sh(ng), cuparmm_g_sh(ng))
+          call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
+       end if
 
     enddo
     !--------------------------------------------------------------------------
