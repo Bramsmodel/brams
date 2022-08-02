@@ -1,32 +1,39 @@
 # BRAMS 6.0 - INSTALL GUIDE
 
-Before You install the model BRAMS-6.0  You must have the prerequisites installed. See the document  [BRAMS_6.0_-_INSTALL_PREREQUISITES](http://ftp.cptec.inpe.br/pesquisa/bramsrd/BRAMS-6.0/docs/BRAMS_6.0_-_INSTALL_PREREQUISITES.html) (extension md or html) to see how to install the requisites. **Even You believe the system are ready, please, read the prerequisites document.**
+Before you install the model BRAMS-6.0  you must have the prerequisites installed. See the document  [BRAMS_6.0_-_INSTALL_PREREQUISITES](http://ftp.cptec.inpe.br/pesquisa/bramsrd/BRAMS-6.0/docs/BRAMS_6.0_-_INSTALL_PREREQUISITES.html) (extension md or html) to see how to install the requisites. **Even you believe the system are ready, please, read the prerequisites document.**
 
-1. Building PATHS and linking compilers.
+_Minimum system requirement for Brams install and run small test case:_
+
+* Hard Disk - 16GB
+* Memory - 8GB
+* GNU Linux system
+
+
+## 1. Building PATHS and linking compilers.
    
-   In order to compiler the BRAMS code using the compilers and libraries You install in prerequisites make the commands bellow.
+   In order to compiler the BRAMS code using the compilers and libraries you install in prerequisites make the commands below.
    
-   ```batch
+   ```bash
    export PATH={YOUR_DIR}/bin:$PATH
    export LD_LIBRARY_PATH={YOUR_DIR}/lib:$LD_LIBRARY_PATH
-   sudo ln -s /usr/bin/gfortran {YOUR_DIR}/bin/gfortran
-   sudo ln -s /usr/bin/gcc {YOUR_DIR}/bin/gcc
+   ln -s /usr/bin/gfortran {YOUR_DIR}/bin/gfortran
+   ln -s /usr/bin/gcc {YOUR_DIR}/bin/gcc
    ```
    
-   > Notice: See the prerequisites document to use the correct {YOUR_DIR} . <mark>Pay attention in correct compiler You are using!!!!</mark>
+   > Notice: See the prerequisites document to use the correct {YOUR_DIR}. <mark> Pay attention in correct compiler you are using, and use full address! </mark>
    
-   Please, check if Your path have in first part **{YOUR_DIR}** and if the correct library is in first part of LD_LIBRARY_PATH.  
+   Please, check if your path have in first part **{YOUR_DIR}** and if the correct library is in first part of LD_LIBRARY_PATH.  
    
-   If You have doubt please, read the prerequisites' doc and use the alias You build (see 9. in prerequisites)
+   If you have doubt please, read the prerequisites' doc and use the alias you build (see 9. in prerequisites)
    
-   ```batch
+   ```bash
    echo $PATH
    echo $LD_LIBRARY_PATH
    ```
    
    Please check if Fortran and C version is the correct. (The example is only for Gnu. You must change if use another compiler) 
    
-   ```
+   ```bash
    gfortran --version
    gcc --version
    ```
@@ -46,49 +53,61 @@ Before You install the model BRAMS-6.0  You must have the prerequisites installe
    warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
    ```
 
-2. ## Configure the model
+## 2. Download and configure the model
+
+   You can download BRAMS in the directory **{INSTALL_DIR}** from GitHub.
+
+   ```bash
+   cd {INSTALL_DIR}
+   wget https://github.com/luflarois/brams/archive/refs/heads/master.zip
+   unzip master.zip
+   ```
    
-   Now You must configure the model passing all libreries You will be use. The **{YOUR_BIN_AREA}** is the folder you want to put the binary and namelists of model. 
+   Now you must configure the model passing all libraries you will be use. The **{YOUR_DIR}/bin**  or {YOUR_BIN_AREA} is the folder you want to put the binary and namelists of model. The folder **{YOUR_DIR}** used to put the libraries, includes and executables it contains the repositories: bin/, lib/, include/ and share they are filled by make install command,  see item 3 below. The **{INSTALL_DIR}** is  BRAMS and prerequisites source directory.
    
    ```bash
-   ./configure --program-prefix=BRAMS_6.0 --prefix={YOUR_BIN_AREA} --enable-jules    --with-chem=RELACS_TUV --with-aer=SIMPLE --with-fpcomp={YOUR_DIR}/bin/mpif90    --with-cpcomp={YOUR_DIR}/bin/mpicc --with-fcomp={your_ortran_compiler} --with-ccomp={your_C_compiler} --with-netcdff={YOUR_DIR} --with-netcdfc={YOUR_DIR} --with-wgrib2={YOUR_DIR}
+   cd {INSTALL_DIR}/brams-master/build
+   ./configure --program-prefix=BRAMS_6.0 --prefix={YOUR_DIR} --enable-jules --with-chem=RELACS_TUV --with-aer=SIMPLE --with-fpcomp={YOUR_DIR}/bin/mpif90 --with-cpcomp={YOUR_DIR}/bin/mpicc --with-fcomp={YOUR_DIR}/bin/{your_fortran_compiler} --with-ccomp={YOUR_DIR}/bin/{your_C_compiler} --with-netcdff={YOUR_DIR} --with-netcdfc={YOUR_DIR} --with-wgrib2={YOUR_DIR}
    ```
 
-Bellow an example of use using Gnu, where {YOUR_BIN_AREA} is /home/oscar.
-
-```bash
-./configure --program-prefix=BRAMS_6.0 --prefix=/home/oscar --enable-jules    --with-chem=RELACS_TUV --with-aer=SIMPLE --with-fpcomp=/opt/gnu8/bin/mpif90    --with-cpcomp=/opt/gnu8/bin/mpicc --with-fcomp=gfortran --with-ccomp=gcc --with-netcdff=/opt/gnu8 --with-netcdfc=/opt/gnu8 --with-wgrib2=/opt/gnu8
-```
-
-3. ## Make and Make install
+   Below an example using Gnu, where {YOUR_DIR} as /opt/apps and {Install_DIR} as /home/oscar.
    
-   The make command will create the brams-6.0 executable. After creation it is necessary to run the make install command so that the basic files for the run are copied to the area set in {YOUR_BIN_AREA}
+   ```bash
+   cd /home/oscar/brams-master/build ./configure --program-prefix=BRAMS_6.0 --prefix=/opt/apps --enable-jules --with-chem=RELACS_TUV --with-aer=SIMPLE --with-fpcomp=/opt/apps/bin/mpif90 --with-cpcomp=/opt/apps/bin/mpicc --with-fcomp=/opt/apps/bin/gfortran --with-ccomp=/opt/apps/bin/gcc --with-netcdff=/opt/apps --with-netcdfc=/opt/apps --with-wgrib2=/opt/apps
+   ```
+   > Notice: In the example above compilers have full addresses, it is usefull when you intall Brams with scripts. 
+   >
+   > Notice: BRAMS can work without the GRIB2 (Wgrib2) library configuring without option --with-wgrib2, however some template startup features may be unavailable. For initial tests with pre-generated data this library is not required."
+
+## 3. Make and make install
+   
+   The make command will create the brams-6.0 executable. After creation it is necessary to run the make install command so that the basic files for the run are copied to the area set in {YOUR_DIR}.
    
    ```bash
    make
    make install
    ```
    
-   The output of BRAMS's model is presented with colors in terminal. If You save the output log (by ">&" use) may be a problem if You want to edit the file. Is possibles to make a filter to extract all special symbols used to color the output. To make the filter just
+   The output of BRAMS's model is presented with colors in terminal. If you save the output log (by ">&" use) may be a problem if you want to edit the file. Is possibles to make a filter to extract all special symbols used to color the output. To make the filter just.
    
    ```bash
    make filter
    make install-filter
    ```
    
-   BRAM's models needs a lot of input files. One of them is the Initial and boundary conditions (IC). This files is created from a global model data. Two diferents data input must be created, from NCEP model GFS or from ERA5 data. To create the IC data You must create the PRE-BRAMS utility.
+   BRAM's models needs a lot of input files. One of them is the Initial and boundary conditions (IC). This files is created from a global model data. Two diferents data input must be created, from NCEP model GFS or from ERA5 data. To create the IC data you must create the PRE-BRAMS utility.
    
    ```bash
    make pre-brams
    make install-pre-brams
    ```
 
-4. ## Download tables, fixed files an a test case
+## 4. Download tables, fixed files and a test case
    
    A series of fixed files and tables are required to run the model. You can get them by downloading the compressed file available in the ftp area. This file has 16GB and may take a while to download. It depends on your network speed. We advise you to check the checksum of the file to make sure that the download has not broken it.
    
    ```bash
-   cd {YOUR_BIN_AREA}
+   cd {YOUR_DIR}/bin
    cd ..
    wget http://ftp.cptec.inpe.br/pesquisa/bramsrd/BRAMS-6.0/test_set_data/MD5SUM
    wget http://ftp.cptec.inpe.br/pesquisa/bramsrd/BRAMS-6.0/test_set_data/brams6.0_test_bin.tar.xz
@@ -97,38 +116,38 @@ Bellow an example of use using Gnu, where {YOUR_BIN_AREA} is /home/oscar.
    tar -xvf brams6.0_test_bin.tar.xz
    ```
 
-5. ## Running a small meteorological case
+## 5. Running a small meteorological case
    
-   The BRAMS Model is a limited area model and therefore requires input data from outputs from a global model. In the test case presented here, these data are already ready and available. For "expert" cases a new document shows how to get this data and generate it. The BRAMS model runs in 3 distinct phases:
+   The BRAMS Model is a limited area model and therefore requires input data from outputs from a global model. In the test case presented here, these data are already ready and available. For "expert" cases a new document shows how to get this data and generate it. The BRAMS model runs in 3 distinct phases, using the same namelist named RAMSIN:
    
-   i) **MAKESFC** - Creates the surface files using the input files that contain global them and adjusts them to the specifications chosen by the user and arranged in the input namelist. The BRAMS namelist is called RAMSIN.
+   **i) MAKESFC** - Creates the surface files using the input files that contain global them and adjusts them to the specifications chosen by the user and arranged in the input namelist named RAMSIN.
 
 ```mermaid
-graph TD;
-    NDVI[(ndvi)]-- datafix_model/NDVI_MODIS_GRADS -->BRAMS;
-    TOPOGRAPHY[(topography)]-- datafix_model/topo1km -->BRAMS;
-    SST[(sst)]-- datafix_model/sst_week -->BRAMS;
-    VEGETATION[(vegetation)]-- datafix_model/GL_OGE_INPE -->BRAMS;
-SOIL[(soil)]-- datafix_model/GL_FAO_INPE -->BRAMS
-RAMSIN(RAMSIN_SFC)-.->BRAMS
-style RAMSIN fill:#f9f,stroke:#333,stroke-width:4px
-BRAMS-- dataout/SFC -->TOPFILES[(top_OQ3g)]
-BRAMS-- dataout/SFC -->SFCFILES[(sfc_OQ3g)]
-BRAMS-- dataout/SFC -->SSTFPFX[(sst_OQ3g)]
-BRAMS-- dataout/SFC -->NDVIFPFX[(ndv_OQ3g)]
+   graph TD;
+   NDVI[(ndvi)]-- datafix_model/NDVI_MODIS_GRADS -->BRAMS;
+   TOPOGRAPHY[(topography)]-- datafix_model/topo1km -->BRAMS;
+   SST[(sst)]-- datafix_model/sst_week -->BRAMS;
+   VEGETATION[(vegetation)]-- datafix_model/GL_OGE_INPE -->BRAMS;
+   SOIL[(soil)]-- datafix_model/GL_FAO_INPE -->BRAMS
+   RAMSIN(RAMSIN_SFC)-.->BRAMS
+   style RAMSIN fill:#f9f,stroke:#333,stroke-width:4px
+   BRAMS-- dataout/SFC -->TOPFILES[(top_OQ3g)]
+   BRAMS-- dataout/SFC -->SFCFILES[(sfc_OQ3g)]
+   BRAMS-- dataout/SFC -->SSTFPFX[(sst_OQ3g)]
+   BRAMS-- dataout/SFC -->NDVIFPFX[(ndv_OQ3g)]
 ```
 
-   ii) **MAKEVFILE** - From the global data the phase creates the files with the boundary conditions and initial conditions interpolating them to the specifications chosen by the user and arranged in THE RAMSIN.
+   **ii) MAKEVFILE** - From the global data the phase creates the files with the boundary conditions and initial conditions interpolating them to the specifications chosen by the user and arranged in the RAMSIN.
 
 ```mermaid
 graph TD;
     IC[(IC)]-- datain/GRADS -->BRAMS;
     RAMSIN(RAMSIN_VFL)-.->BRAMS
-style RAMSIN fill:#f9f,stroke:#333,stroke-width:4px
-BRAMS-- dataout/IVAR -->IVAR[(ivar)]
+    style RAMSIN fill:#f9f,stroke:#333,stroke-width:4px
+    BRAMS-- dataout/IVAR -->IVAR[(ivar)]
 ```
 
-   iii) **INITIAL** - This is the phase of model time integration where prediction data will be produced as specified in RAMSIN. 
+   **iii) INITIAL** - This is the phase of model time integration where prediction data will be produced as specified in the RAMSIN. 
 
 ```mermaid
 graph TD;
@@ -149,7 +168,7 @@ graph TD;
     BRAMS-- dataout/ANL -->ANA[(analisys)]
 ```
 
-> WARNING: The first two phases (i and ii) should only be rotated with 1 processor!
+> WARNING: The first two phases (i and ii) should only be executed with 1 processor!
 
    The test case is small enough to run on a laptop or desktop with 3 processors and with 8GB memory. It covers an area as shown in the figure below.
 
@@ -157,7 +176,7 @@ graph TD;
 
    This area is configured in RAMSIN with 60x60x45 points (x,y,z), 20 km of horizontal resolution (surface) and is centered at 22.6S, 45.2W. The test only allows it to run for 24 hours of forecast. After the end of the round, one can verify the behavior of the model by comparing the results that were produced and are in {YOUR_BIN_AREA}/dataout/POST with those stored in the {YOUR_BIN_AREA}/dataout/POST_COMPARE area. To look at the outputs (GRADS/CTL format) you need to know how to use grads software   
 
-> WARNING: Make sure your environment is tuned to use the packages installed in the pre-requirements (PATH and LD_LIBRARY_PATH) To look at the outputs (GRADS/CTL format) you need to know how to use grads software..
+> WARNING: Make sure your environment is tuned to use the packages installed in the pre-requirements (PATH and LD_LIBRARY_PATH). To look at the outputs (GRADS/CTL format) you need to know how to use grads software.
 
 ```bash
 cd {YOUR_BIN_AREA}
@@ -170,28 +189,28 @@ A series of logs will be shown on the screen in each of the 3 phases. Be aware o
 
 ![](http://ftp.cptec.inpe.br/pesquisa/bramsrd/BRAMS-6.0/docs/fig2.png)
 
-6. ## How to see the data outputs
+## 6. How to see the data outputs
    
-   The output of model as You read above is in GRADS file. May be used another formats but we will show how in expert users guide. If You are using Ubuntu Linux or some Debia derivated Linux You can install grads in a simple way, using apt-get command
+   The output of model as you read above is in GRADS file. May be used another formats but we will show how in expert users guide. If you are using Ubuntu Linux or some Debian derivated Linux you can install grads in a simple way, using apt-get command:
    
    ```bash
    sudo apt-get install grads
    ```
    
-   To install grads right from source, please, see the information on site [GrADS Downloads](http://cola.gmu.edu/grads/downloads.php). Pay attention on the necessary libraries explained on [GrADS Supplibs](http://cola.gmu.edu/grads/gadoc/supplibs2.html)
+   To install grads right from source, please, see the information on site [GrADS Downloads](http://cola.gmu.edu/grads/downloads.php). Pay attention on the necessary libraries explained on [GrADS Supplibs](http://cola.gmu.edu/grads/gadoc/supplibs2.html).
    
    To learn about grads we recommend to read the document [Grads Manual from NCEP](https://www.cpc.ncep.noaa.gov/products/international/grads/Advanced_GrADS_Manual.pdf).
 
-7. ## How to filter the log output
+## 7. How to filter the log output
    
-   Supposed You run the model and put the output in a file. See example:
+   Supposed you run the model and put the output in a file. See example:
    
    ```bash
    cd {YOUR_BIN_AREA}
    mpirun -np 3 brams-6.0 -f RAMSIN_INI_MID >& output.txt
    ```
    
-     If You open the file output.txt using a specific editor (for example: vi) You will see all escape characters used for color the output. Example bellow ( a small peace of output log read by vi editor):
+   If you open the file output.txt using a specific editor (for example: vi) you will see all escape characters used for color the output. Example below (a small peace of output log read by vi editor):
    
    ```
    +--------------+--------------+
@@ -205,13 +224,13 @@ A series of logs will be shown on the screen in each of the 3 phases. Be aware o
    ^[[0m|NSTRATY       |          0001|^[[0m
    ```
    
-   This may appear a little bit confused. To solve the problema You must only run the filter (created in item 3 above) that comes with BRAMS model. Try
+   This may appear a little bit confused. To solve the problema you must only run the filter (created in item 3 above) that comes with BRAMS model. Try:
    
    ```bash
    filter output.txt
    ```
    
-   And then, You can see the same file with this look
+   And then, you can see the same file with this look:
 
 ```
 +--------------+--------------+
@@ -225,9 +244,9 @@ A series of logs will be shown on the screen in each of the 3 phases. Be aware o
 |NSTRATY       |          0001|
 ```
 
-8. ## How to generate Initial and Boundary conditions (IC) from global data
+## 8. How to generate Initial and Boundary conditions (IC) from global data
    
-   The program "pre" created in item 3 above is the program that get data from global input files and converted them to IC for BRAMS. First of all You must edit a namelist file named **pre.nm**l. See the example bellow
+   The program "pre" created in item 3 above is the program that get data from global input files and converted them to IC for BRAMS. First of all you must edit a namelist file named **pre.nml**. See the example below:
    
    ```
    $ARGS_INPUT
@@ -273,13 +292,13 @@ A series of logs will be shown on the screen in each of the 3 phases. Be aware o
    $END
    ```
    
-   The namelist is prepared for test case You have downloaded in item 4.  After You edit it You must run the pre.
+   The namelist is prepared for test case you have downloaded in item 4.  After you edit it you must run the pre.
    
    ```bash
    ./pre
    ```
    
-   A lot of information will be show in screen and some files with IC will be write in the **out_dir** You fill in namelist._
+   A lot of information will be show in screen and some files with IC will be write in the **out_dir** you fill in namelist.
    
    ```
      $ls datain/GRADS -latr
@@ -296,11 +315,11 @@ A series of logs will be shown on the screen in each of the 3 phases. Be aware o
      rw-r--r--   1   lufla   lufla    297 MiB   Wed Oct  6 10:15:54 2021    IC2020081900.gra
    ```
    
-   This files will be used as inut for BRAMS´Model.
+   This files will be used as input for BRAMS´Model.
 
-9. ## Download GFS Data for model
+## 9. Download GFS Data for model
    
-   The BRAMS comes with a script in bash that get data from GFS from NCEP site. To get the data just run the script passing yera, month, day and output folder
+   The BRAMS comes with a script in bash that get data from GFS from NCEP site. To get the data just run the script passing year, month, day and output folder.
    
    ```bash
    ./getGFS.sh 2021 10 02 ./datain/GFS/
@@ -310,4 +329,4 @@ A series of logs will be shown on the screen in each of the 3 phases. Be aware o
 
 ------
 
-**<mark>Have Fun with BRAMS-6.0!</mark>**
+**<mark>Have fun with BRAMS-6.0!</mark>**
