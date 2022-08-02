@@ -693,8 +693,10 @@ contains
           call alloc_radiate(radiatem_g(ng),        1,        1,        1, ng)
        endif
 
-       call filltab_radiate(radiate_g(ng), radiatem_g(ng), imean,  &
-            nmzp(ng), nmxp(ng), nmyp(ng), ng)
+       call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
+       call filltab_radiate(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+            radiate_g(ng), radiatem_g(ng))
+       call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
     enddo
     !- only for CARMA/RRTM Radiations schems
     if (ilwrtyp==4 .or. iswrtyp==4 .or. ilwrtyp==6 .or. iswrtyp==6 ) then

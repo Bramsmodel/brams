@@ -44,10 +44,6 @@ module ModVarTable
   public :: DestroyVarTable
   public :: DumpVarTable
   public :: InsertAtVarTable
-  public :: InsertAtVarTable_2D
-  public :: InsertAtVarTable_2D_I
-  public :: InsertAtVarTable_3D
-  public :: InsertAtVarTable_4D
 !!$  public :: GetVTabEntry
 !!$  public :: GetVTabSectionSize
 !!$  public :: VerifyVTabEntry
