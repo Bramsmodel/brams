@@ -582,8 +582,10 @@ contains
           call alloc_leaf(leafm_g(ng),        1,        1,        1, 1, 1, 1, 1)
        endif
 
-       call filltab_leaf(leaf_g(ng), leafm_g(ng), imean,  &
-            nmzp(ng), nmxp(ng), nmyp(ng), nzg, nzs, npatch, ng)
+       call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
+       call filltab_leaf(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+            leaf_g(ng), leafm_g(ng))
+       call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
     enddo
     ! Bob (1/10/2002) added the following line.  Is this the right place for
     ! the long term??
