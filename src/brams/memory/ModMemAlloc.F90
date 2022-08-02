@@ -1145,11 +1145,13 @@ contains
        if (isource==1) then
           !-----------------------------------------------------------------------
           ! insert Gaspart Field variables at var_table
+          call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
           call InsertGaspartFieldsAtVarTable(&
+               oneGrid%oneVarTable, &
+               oneGrid%oneVarTableSize, &
                oneGrid%oneGaspartFields, &
-               oneGrid%oneAveGaspartFields, &
-               oneGrid%oneNamelistFile, &
-               oneGrid%Id)
+               oneGrid%oneAveGaspartFields)
+          call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
        endif
     endif
     !-------------

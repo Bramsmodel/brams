@@ -2,9 +2,12 @@ module ModGaspartFields
 
   use iso_fortran_env, only: &
        int64
-  
-  use ModVarTables, only: &
-       InsertVtab
+
+  use ModVarTable, only: &
+       VarTable, &
+       InsertAtVarTable
+!!$  use ModVarTables, only: &
+!!$       InsertVtab
 
   use ModParallelEnvironment, only: &
        MsgDump
@@ -461,195 +464,366 @@ contains
   
 
 
-  subroutine InsertGaspartFieldsAtVarTable(oneGaspartFields, oneAveGaspartFields, &
-       oneNamelistFile, gridId)
+  subroutine InsertGaspartFieldsAtVarTable(oneVarTable, oneVarTableSize, &
+       oneGaspartFields, oneAveGaspartFields)
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
     type(GaspartFields), pointer, intent(in) :: oneGaspartFields
     type(GaspartFields), pointer, intent(in) :: oneAveGaspartFields
-    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
-    integer, intent(in) :: gridId
 
-    integer :: imean
-    integer(kind=int64) :: npts
+    logical :: aveAssoc
     character(len=*), parameter :: h="**(InsertGaspartFieldsAtVarTable)**" 
 
-    if (.not. associated(oneGaspartFields)) then
+    if (.not. associated(oneVarTable)) then
+       call fatal_error(h//" oneVarTable not associated")
+    else if (.not. associated(oneGaspartFields)) then
        call fatal_error(h//" oneGaspartFields not associated")
-    else if (.not. associated(oneNamelistFile)) then
-       call fatal_error(h//" oneNamelistFile not associated")
     end if
 
-    ! Should average fields be stored at variable tables?
-
-    if (oneNamelistFile%avgtim == 0) then
-       imean=0 ! do not store
-    else
-       imean=1 ! store
-    end if
+    aveAssoc = associated(oneAveGaspartFields)
     
     ! Fill pointers to arrays into variable tables
 
-
     if (associated(oneGaspartFields%fusog)) then
-       npts=int(size(oneGaspartFields%fusog,1),int64) * &
-            int(size(oneGaspartFields%fusog,2),int64)
-       call InsertVTab (oneGaspartFields%FUSOG,oneGaspartFields%FUSOG &
-            ,gridId, npts, imean,  &
-            'FUSOG:2:hist:anal:mpti:mpt3:mpt1')
+       if (aveAssoc) then
+          if (associated(oneAveGaspartFields%fusog)) then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%fusog, &
+                  'FUSOG:2:hist:anal:mpti:mpt3:mpt1', &
+                  oneGaspartFields%fusog)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%fusog, &
+                  'FUSOG:2:hist:anal:mpti:mpt3:mpt1')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneGaspartFields%fusog, &
+               'FUSOG:2:hist:anal:mpti:mpt3:mpt1')
+       end if
     end if
 
-
     if (associated(oneGaspartFields%pco))  then
-       npts=int(size(oneGaspartFields%pco,1),int64) * &
-            int(size(oneGaspartFields%pco,2),int64) * &
-            int(size(oneGaspartFields%pco,3),int64)
-       call InsertVTab (oneGaspartFields%PCO,oneGaspartFields%PCO&
-            ,gridId, npts, imean,  &
-            'PCO:3:hist:anal:mpti:mpt3:mpt1')
+       if (aveAssoc) then
+          if (associated(oneAveGaspartFields%pco))  then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%pco, &
+                  'PCO:3:hist:anal:mpti:mpt3:mpt1', &
+                  oneGaspartFields%pco)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%pco, &
+                  'PCO:3:hist:anal:mpti:mpt3:mpt1')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneGaspartFields%pco, &
+               'PCO:3:hist:anal:mpti:mpt3:mpt1')
+       end if
     end if
     
     if (associated(oneGaspartFields%pno))  then
-       npts=int(size(oneGaspartFields%pno,1),int64) * &
-            int(size(oneGaspartFields%pno,2),int64) * &
-            int(size(oneGaspartFields%pno,3),int64)
-       call InsertVTab (oneGaspartFields%PNO,oneGaspartFields%PNO&
-            ,gridId, npts, imean,  &
-            'PNO:3:hist:anal:mpti:mpt3:mpt1')
+       if (aveAssoc) then
+          if (associated(oneAveGaspartFields%pno))  then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%pno, &
+                  'PNO:3:hist:anal:mpti:mpt3:mpt1', &
+                  oneGaspartFields%pno)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%pno, &
+                  'PNO:3:hist:anal:mpti:mpt3:mpt1')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneGaspartFields%pno, &
+               'PNO:3:hist:anal:mpti:mpt3:mpt1')
+       end if
     end if
     
     if (associated(oneGaspartFields%pno2))  then
-       npts=int(size(oneGaspartFields%pno2,1),int64) * &
-            int(size(oneGaspartFields%pno2,2),int64) * &
-            int(size(oneGaspartFields%pno2,3),int64)
-       call InsertVTab (oneGaspartFields%PNO2,oneGaspartFields%PNO2&
-            ,gridId, npts, imean,  &
-            'PNO2:3:hist:anal:mpti:mpt3:mpt1')
+       if (aveAssoc) then
+          if (associated(oneAveGaspartFields%pno2))  then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%pno2, &
+                  'PNO2:3:hist:anal:mpti:mpt3:mpt1', &
+                  oneGaspartFields%pno2)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%pno2, &
+                  'PNO2:3:hist:anal:mpti:mpt3:mpt1')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneGaspartFields%pno2, &
+               'PNO2:3:hist:anal:mpti:mpt3:mpt1')
+       end if
     end if
     
     if (associated(oneGaspartFields%ppm25))  then
-       npts=int(size(oneGaspartFields%ppm25,1),int64) * &
-            int(size(oneGaspartFields%ppm25,2),int64) * &
-            int(size(oneGaspartFields%ppm25,3),int64)
-       call InsertVTab (oneGaspartFields%PPM25,oneGaspartFields%PPM25&
-            ,gridId, npts, imean,  &
-            'PPM25:3:hist:anal:mpti:mpt3:mpt1')
+       if (aveAssoc) then
+          if (associated(oneAveGaspartFields%ppm25))  then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%ppm25, &
+                  'PPM25:3:hist:anal:mpti:mpt3:mpt1', &
+                  oneGaspartFields%ppm25)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%ppm25, &
+                  'PPM25:3:hist:anal:mpti:mpt3:mpt1')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneGaspartFields%ppm25, &
+               'PPM25:3:hist:anal:mpti:mpt3:mpt1')
+       end if
     end if
     
     if (associated(oneGaspartFields%pvoc))  then
-       npts=int(size(oneGaspartFields%pvoc,1),int64) * &
-            int(size(oneGaspartFields%pvoc,2),int64) * &
-            int(size(oneGaspartFields%pvoc,3),int64)
-       call InsertVTab (oneGaspartFields%PVOC,oneGaspartFields%PVOC&
-            ,gridId, npts, imean,  &
-            'PVOC:3:hist:anal:mpti:mpt3:mpt1')
+       if (aveAssoc) then
+          if (associated(oneAveGaspartFields%pvoc))  then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%pvoc, &
+                  'PVOC:3:hist:anal:mpti:mpt3:mpt1', &
+                  oneGaspartFields%pvoc)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%pvoc, &
+                  'PVOC:3:hist:anal:mpti:mpt3:mpt1')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneGaspartFields%pvoc, &
+               'PVOC:3:hist:anal:mpti:mpt3:mpt1')
+       end if
     end if
     
     if (associated(oneGaspartFields%pso2))  then
-       npts=int(size(oneGaspartFields%pso2,1),int64) * &
-            int(size(oneGaspartFields%pso2,2),int64) * &
-            int(size(oneGaspartFields%pso2,3),int64)
-       call InsertVTab (oneGaspartFields%PSO2,oneGaspartFields%PSO2&
-            ,gridId, npts, imean,  &
-            'PSO2:3:hist:anal:mpti:mpt3:mpt1')
+       if (aveAssoc) then
+          if (associated(oneAveGaspartFields%pso2))  then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%pso2, &
+                  'PSO2:3:hist:anal:mpti:mpt3:mpt1', &
+                  oneGaspartFields%pso2)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%pso2, &
+                  'PSO2:3:hist:anal:mpti:mpt3:mpt1')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneGaspartFields%pso2, &
+               'PSO2:3:hist:anal:mpti:mpt3:mpt1')
+       end if
     end if
     
     if (associated(oneGaspartFields%pso4))  then
-       npts=int(size(oneGaspartFields%pso4,1),int64) * &
-            int(size(oneGaspartFields%pso4,2),int64) * &
-            int(size(oneGaspartFields%pso4,3),int64)
-       call InsertVTab (oneGaspartFields%PSO4,oneGaspartFields%PSO4&
-            ,gridId, npts, imean,  &
-            'PSO4:3:hist:anal:mpti:mpt3:mpt1')
+       if (aveAssoc) then
+          if (associated(oneAveGaspartFields%pso4))  then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%pso4, &
+                  'PSO4:3:hist:anal:mpti:mpt3:mpt1', &
+                  oneGaspartFields%pso4)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%pso4, &
+                  'PSO4:3:hist:anal:mpti:mpt3:mpt1')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneGaspartFields%pso4, &
+               'PSO4:3:hist:anal:mpti:mpt3:mpt1')
+       end if
     end if
     
     if (associated(oneGaspartFields%paer))  then
-       npts=int(size(oneGaspartFields%paer,1),int64) * &
-            int(size(oneGaspartFields%paer,2),int64) * &
-            int(size(oneGaspartFields%paer,3),int64)
-       call InsertVTab (oneGaspartFields%PAER,oneGaspartFields%PAER&
-            ,gridId, npts, imean,  &
-            'PAER:3:hist:anal:mpti:mpt3:mpt1')
+       if (aveAssoc) then
+          if (associated(oneAveGaspartFields%paer))  then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%paer, &
+                  'PAER:3:hist:anal:mpti:mpt3:mpt1', &
+                  oneGaspartFields%paer)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%paer, &
+                  'PAER:3:hist:anal:mpti:mpt3:mpt1')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneGaspartFields%paer, &
+               'PAER:3:hist:anal:mpti:mpt3:mpt1')
+       end if
     end if
     
-    if (associated(oneGaspartFields%PEOXID))  then
-       npts=int(size(oneGaspartFields%PEOXID,1),int64) * &
-            int(size(oneGaspartFields%PEOXID,2),int64) * &
-            int(size(oneGaspartFields%PEOXID,3),int64)
-       call InsertVTab (oneGaspartFields%PEOXID,oneGaspartFields%PEOXID&
-            ,gridId, npts, imean,  &
-            'PEOXID:3:hist:anal:mpti:mpt3:mpt1')
+    if (associated(oneGaspartFields%peoxid))  then
+       if (aveAssoc) then
+          if (associated(oneAveGaspartFields%peoxid))  then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%peoxid, &
+                  'PEOXID:3:hist:anal:mpti:mpt3:mpt1', &
+                  oneGaspartFields%peoxid)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%peoxid, &
+                  'PEOXID:3:hist:anal:mpti:mpt3:mpt1')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneGaspartFields%peoxid, &
+               'PEOXID:3:hist:anal:mpti:mpt3:mpt1')
+       end if
     end if
     
     if (associated(oneGaspartFields%gasr))  then
-       npts=int(size(oneGaspartFields%gasr,1),int64) * &
-            int(size(oneGaspartFields%gasr,2),int64) * &
-            int(size(oneGaspartFields%gasr,3),int64)
-       call InsertVTab (oneGaspartFields%GASR,oneGaspartFields%GASR&
-            ,gridId, npts, imean,  &
-            'GASR:3:mpti:mpt3:mpt1')
+       if (aveAssoc) then
+          if (associated(oneAveGaspartFields%gasr))  then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%gasr, &
+                  'GASR:3:mpti:mpt3:mpt1', &
+                  oneGaspartFields%gasr)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%gasr, &
+                  'GASR:3:mpti:mpt3:mpt1')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneGaspartFields%gasr, &
+               'GASR:3:mpti:mpt3:mpt1')
+       end if
     end if
-    
 
     if (associated(oneGaspartFields%po3))  then
-       npts=int(size(oneGaspartFields%po3,1),int64) * &
-            int(size(oneGaspartFields%po3,2),int64) * &
-            int(size(oneGaspartFields%po3,3),int64)
-       call InsertVTab (oneGaspartFields%PO3,oneGaspartFields%PO3&
-            ,gridId, npts, imean,  &
-            'PO3:3:hist:anal:mpti:mpt3:mpt1')
+       if (aveAssoc) then
+          if (associated(oneAveGaspartFields%po3))  then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%po3, &
+                  'PO3:3:hist:anal:mpti:mpt3:mpt1', &
+                  oneGaspartFields%po3)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%po3, &
+                  'PO3:3:hist:anal:mpti:mpt3:mpt1')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneGaspartFields%po3, &
+               'PO3:3:hist:anal:mpti:mpt3:mpt1')
+       end if
     end if
     
     if (associated(oneGaspartFields%prhco))  then
-       npts=int(size(oneGaspartFields%prhco,1),int64) * &
-            int(size(oneGaspartFields%prhco,2),int64) * &
-            int(size(oneGaspartFields%prhco,3),int64)
-       call InsertVTab (oneGaspartFields%PRHCO,oneGaspartFields%PRHCO&
-            ,gridId, npts, imean,  &
-            'PRHCO:3:hist:anal:mpti:mpt3:mpt1')
+       if (aveAssoc) then
+          if (associated(oneAveGaspartFields%prhco))  then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%prhco, &
+                  'PRHCO:3:hist:anal:mpti:mpt3:mpt1', &
+                  oneGaspartFields%prhco)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%prhco, &
+                  'PRHCO:3:hist:anal:mpti:mpt3:mpt1')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneGaspartFields%prhco, &
+               'PRHCO:3:hist:anal:mpti:mpt3:mpt1')
+       end if
     end if
     
     if (associated(oneGaspartFields%pho2))  then
-       npts=int(size(oneGaspartFields%pho2,1),int64) * &
-            int(size(oneGaspartFields%pho2,2),int64) * &
-            int(size(oneGaspartFields%pho2,3),int64)
-       call InsertVTab (oneGaspartFields%PHO2,oneGaspartFields%PHO2&
-            ,gridId, npts, imean,  &
-            'PHO2:3:hist:anal:mpti:mpt3:mpt1')
+       if (aveAssoc) then
+          if (associated(oneAveGaspartFields%pho2))  then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%pho2, &
+                  'PHO2:3:hist:anal:mpti:mpt3:mpt1', &
+                  oneGaspartFields%pho2)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%pho2, &
+                  'PHO2:3:hist:anal:mpti:mpt3:mpt1')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneGaspartFields%pho2, &
+               'PHO2:3:hist:anal:mpti:mpt3:mpt1')
+       end if
     end if
        
     if (associated(oneGaspartFields%po3p))  then
-       npts=int(size(oneGaspartFields%po3p,1),int64) * &
-            int(size(oneGaspartFields%po3p,2),int64) * &
-            int(size(oneGaspartFields%po3p,3),int64)
-       call InsertVTab (oneGaspartFields%PO3P,oneGaspartFields%PO3P&
-            ,gridId, npts, imean,  &
-            'PO3P:3:hist:anal:mpti:mpt3:mpt1')
+       if (aveAssoc) then
+          if (associated(oneAveGaspartFields%po3p))  then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%po3p, &
+                  'PO3P:3:hist:anal:mpti:mpt3:mpt1', &
+                  oneGaspartFields%po3p)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%po3p, &
+                  'PO3P:3:hist:anal:mpti:mpt3:mpt1')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneGaspartFields%po3p, &
+               'PO3P:3:hist:anal:mpti:mpt3:mpt1')
+       end if
     end if
     
     if (associated(oneGaspartFields%po1d))  then
-       npts=int(size(oneGaspartFields%po1d,1),int64) * &
-            int(size(oneGaspartFields%po1d,2),int64) * &
-            int(size(oneGaspartFields%po1d,3),int64)
-       call InsertVTab (oneGaspartFields%PO1D,oneGaspartFields%PO1D&
-            ,gridId, npts, imean,  &
-            'PO1D:3:hist:anal:mpti:mpt3:mpt1')
+       if (aveAssoc) then
+          if (associated(oneAveGaspartFields%po1d))  then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%po1d, &
+                  'PO1D:3:hist:anal:mpti:mpt3:mpt1', &
+                  oneGaspartFields%po1d)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%po1d, &
+                  'PO1D:3:hist:anal:mpti:mpt3:mpt1')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneGaspartFields%po1d, &
+               'PO1D:3:hist:anal:mpti:mpt3:mpt1')
+       end if
     end if
     
     if (associated(oneGaspartFields%pho))  then
-       npts=int(size(oneGaspartFields%pho,1),int64) * &
-            int(size(oneGaspartFields%pho,2),int64) * &
-            int(size(oneGaspartFields%pho,3),int64)
-       call InsertVTab (oneGaspartFields%PHO,oneGaspartFields%PHO&
-            ,gridId, npts, imean,  &
-            'PHO:3:hist:anal:mpti:mpt3:mpt1')
+       if (aveAssoc) then
+          if (associated(oneAveGaspartFields%pho))  then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%pho, &
+                  'PHO:3:hist:anal:mpti:mpt3:mpt1', &
+                  oneGaspartFields%pho)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%pho, &
+                  'PHO:3:hist:anal:mpti:mpt3:mpt1')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneGaspartFields%pho, &
+               'PHO:3:hist:anal:mpti:mpt3:mpt1')
+       end if
     end if
     
     if (associated(oneGaspartFields%proo))  then
-       npts=int(size(oneGaspartFields%proo,1),int64) * &
-            int(size(oneGaspartFields%proo,2),int64) * &
-            int(size(oneGaspartFields%proo,3),int64)
-       call InsertVTab (oneGaspartFields%PROO,oneGaspartFields%PROO&
-            ,gridId, npts, imean,  &
-            'PROO:3:hist:anal:mpti:mpt3:mpt1')
+       if (aveAssoc) then
+          if (associated(oneAveGaspartFields%proo))  then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%proo, &
+                  'PROO:3:hist:anal:mpti:mpt3:mpt1', &
+                  oneGaspartFields%proo)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneGaspartFields%proo, &
+                  'PROO:3:hist:anal:mpti:mpt3:mpt1')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneGaspartFields%proo, &
+               'PROO:3:hist:anal:mpti:mpt3:mpt1')
+       end if
     end if
     
   end subroutine InsertGaspartFieldsAtVarTable
