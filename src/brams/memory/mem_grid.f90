@@ -16,8 +16,12 @@ module mem_grid
        maxgrds, &
        nzpmax
 
-  use ModVarTables, only: &
-       InsertVTab
+  use ModVarTable, only: &
+       VarTable, &
+       InsertAtVarTable
+
+!!$  use ModVarTables, only: &
+!!$       InsertVTab
 
   implicit none
   private
@@ -30,73 +34,73 @@ module mem_grid
 
      ! Variables to be dimensioned by (nxp,nyp)
 
-     real, pointer :: topt(:,:)
-     real, pointer :: topu(:,:)
-     real, pointer :: topv(:,:)
-     real, pointer :: topm(:,:)
-     real, pointer :: topma(:,:)
-     real, pointer :: topta(:,:)
-     real, pointer :: rtgt(:,:)
-     real, pointer :: rtgu(:,:)
-     real, pointer :: rtgv(:,:)
-     real, pointer :: rtgm(:,:)
-     real, pointer :: f13t(:,:)
-     real, pointer :: f13u(:,:)
-     real, pointer :: f13v(:,:)
-     real, pointer :: f13m(:,:)
-     real, pointer :: f23t(:,:)
-     real, pointer :: f23u(:,:)
-     real, pointer :: f23v(:,:)
-     real, pointer :: f23m(:,:)
-     real, pointer :: dxt(:,:)
-     real, pointer :: dxu(:,:)
-     real, pointer :: dxv(:,:)
-     real, pointer :: dxm(:,:)
-     real, pointer :: dyt(:,:)
-     real, pointer :: dyu(:,:)
-     real, pointer :: dyv(:,:)
-     real, pointer :: dym(:,:)
-     real, pointer :: fmapt(:,:)
-     real, pointer :: fmapu(:,:)
-     real, pointer :: fmapv(:,:)
-     real, pointer :: fmapm(:,:)
-     real, pointer :: fmapti(:,:)
-     real, pointer :: fmapui(:,:)
-     real, pointer :: fmapvi(:,:)
-     real, pointer :: fmapmi(:,:)
-     real, pointer :: glat(:,:)
-     real, pointer :: glon(:,:)
-     real, pointer :: topzo(:,:)
+     real, pointer, contiguous :: topt(:,:)
+     real, pointer, contiguous :: topu(:,:)
+     real, pointer, contiguous :: topv(:,:)
+     real, pointer, contiguous :: topm(:,:)
+     real, pointer, contiguous :: topma(:,:)
+     real, pointer, contiguous :: topta(:,:)
+     real, pointer, contiguous :: rtgt(:,:)
+     real, pointer, contiguous :: rtgu(:,:)
+     real, pointer, contiguous :: rtgv(:,:)
+     real, pointer, contiguous :: rtgm(:,:)
+     real, pointer, contiguous :: f13t(:,:)
+     real, pointer, contiguous :: f13u(:,:)
+     real, pointer, contiguous :: f13v(:,:)
+     real, pointer, contiguous :: f13m(:,:)
+     real, pointer, contiguous :: f23t(:,:)
+     real, pointer, contiguous :: f23u(:,:)
+     real, pointer, contiguous :: f23v(:,:)
+     real, pointer, contiguous :: f23m(:,:)
+     real, pointer, contiguous :: dxt(:,:)
+     real, pointer, contiguous :: dxu(:,:)
+     real, pointer, contiguous :: dxv(:,:)
+     real, pointer, contiguous :: dxm(:,:)
+     real, pointer, contiguous :: dyt(:,:)
+     real, pointer, contiguous :: dyu(:,:)
+     real, pointer, contiguous :: dyv(:,:)
+     real, pointer, contiguous :: dym(:,:)
+     real, pointer, contiguous :: fmapt(:,:)
+     real, pointer, contiguous :: fmapu(:,:)
+     real, pointer, contiguous :: fmapv(:,:)
+     real, pointer, contiguous :: fmapm(:,:)
+     real, pointer, contiguous :: fmapti(:,:)
+     real, pointer, contiguous :: fmapui(:,:)
+     real, pointer, contiguous :: fmapvi(:,:)
+     real, pointer, contiguous :: fmapmi(:,:)
+     real, pointer, contiguous :: glat(:,:)
+     real, pointer, contiguous :: glon(:,:)
+     real, pointer, contiguous :: topzo(:,:)
 
      !  Variables for the ADAP coordinate
 
-     real, pointer :: aru(:,:,:)
-     real, pointer :: arv(:,:,:)
-     real, pointer :: arw(:,:,:)
-     real, pointer :: volu(:,:,:)
-     real, pointer :: volv(:,:,:)
-     real, pointer :: volw(:,:,:)
-     real, pointer :: volt(:,:,:)
-     real, pointer :: lpu(:,:)
-     real, pointer :: lpv(:,:)
-     real, pointer :: lpw(:,:)
+     real, pointer, contiguous :: aru(:,:,:)
+     real, pointer, contiguous :: arv(:,:,:)
+     real, pointer, contiguous :: arw(:,:,:)
+     real, pointer, contiguous :: volu(:,:,:)
+     real, pointer, contiguous :: volv(:,:,:)
+     real, pointer, contiguous :: volw(:,:,:)
+     real, pointer, contiguous :: volt(:,:,:)
+     real, pointer, contiguous :: lpu(:,:)
+     real, pointer, contiguous :: lpv(:,:)
+     real, pointer, contiguous :: lpw(:,:)
   end type grid_vars
 
 
-  type (grid_vars), public, allocatable :: grid_g(:)
-  type (grid_vars), public, allocatable :: gridm_g(:)
+  type (grid_vars), public, pointer :: grid_g(:)
+  type (grid_vars), public, pointer :: gridm_g(:)
 
   ! data on entire grid (not domain decomposed)
   ! topography on entire grid (not domain decomposed)
 
   public :: GlobalGridData
   type GlobalGridData
-     real, pointer :: global_topta(:,:)
-     real, pointer :: global_glat(:,:)      ! set by GridSetup
-     real, pointer :: global_glon(:,:)      ! set by GridSetup
+     real, pointer, contiguous :: global_topta(:,:)
+     real, pointer, contiguous :: global_glat(:,:)      ! set by GridSetup
+     real, pointer, contiguous :: global_glon(:,:)      ! set by GridSetup
   end type GlobalGridData
 
-  type(GlobalGridData), public, allocatable, target :: oneGlobalGridData(:)
+  type(GlobalGridData), public, pointer :: oneGlobalGridData(:)
 
 
   character(len=64), public :: expnme            ! experiment name; from RAMSIN
@@ -367,7 +371,7 @@ module mem_grid
 
   public :: akmintype
   type akmintype
-     real, pointer :: akmin2d(:,:)
+     real, pointer, contiguous :: akmin2d(:,:)
   end type akmintype
 
   type(akmintype), public, allocatable :: akminvar(:)
@@ -1062,163 +1066,912 @@ contains
 
 
 
-  subroutine filltab_grid(grid,gridm,imean,n1,n2,n3,ng)
+  subroutine filltab_grid(oneVarTable, oneVarTableSize, grid, gridm)
     implicit none
-    type (grid_vars) :: grid,gridm
-    integer, intent(in) :: imean,n1,n2,n3,ng
-    integer(kind=i8) :: npts
-    real, pointer :: var,varm
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
+    type (grid_vars), pointer, intent(in) :: grid
+    type (grid_vars), pointer, intent(in) :: gridm
+
 
     ! Fill pointers to arrays into variable tables
 
-    npts=n2*n3
-    if (associated(grid%topt)) &
-         call InsertVTab (grid%topt,gridm%topt,ng,npts,imean,  &
-         'TOPT :2:hist:anal:mpti')
-    if (associated(grid%topu)) &
-         call InsertVTab (grid%topu,gridm%topu,ng, npts, imean,  &
-         'TOPU :2:mpti')
-    if (associated(grid%topv)) &
-         call InsertVTab (grid%topv,gridm%topv,ng, npts, imean,  &
-         'TOPV :2:mpti')
-    if (associated(grid%topm)) &
-         call InsertVTab (grid%topm,gridm%topm,ng, npts, imean,  &
-         'TOPM :2:mpti')
-    if (associated(grid%topma)) &
-         call InsertVTab (grid%topma,gridm%topma,ng, npts, imean,  &
-         'TOPMA :2:hist:anal:mpti')
-    if (associated(grid%topta)) &
-         call InsertVTab (grid%topta,gridm%topta,ng, npts, imean,  &
-         'TOPTA :2:hist:anal:mpti')
-    if (associated(grid%rtgt)) &
-         call InsertVTab (grid%rtgt,gridm%rtgt,ng, npts, imean,  &
-         'RTGT :2:mpti')
-    if (associated(grid%rtgu)) &
-         call InsertVTab (grid%rtgu,gridm%rtgu,ng, npts, imean,  &
-         'RTGU :2:mpti')
-    if (associated(grid%rtgv)) &
-         call InsertVTab (grid%rtgv,gridm%rtgv,ng, npts, imean,  &
-         'RTGV :2:mpti')
-    if (associated(grid%rtgm)) &
-         call InsertVTab (grid%rtgm,gridm%rtgm,ng, npts, imean,  &
-         'RTGM :2:mpti')
-    if (associated(grid%f13t)) &
-         call InsertVTab (grid%f13t,gridm%f13t,ng, npts, imean,  &
-         'F13T :2:mpti')
-    if (associated(grid%f13u)) &
-         call InsertVTab (grid%f13u,gridm%f13u,ng, npts, imean,  &
-         'F13U :2:mpti')
-    if (associated(grid%f13v)) &
-         call InsertVTab (grid%f13v,gridm%f13v,ng, npts, imean,  &
-         'F13V :2:mpti')
-    if (associated(grid%f13m)) &
-         call InsertVTab (grid%f13m,gridm%f13m,ng, npts, imean,  &
-         'F13M :2:mpti')
-    if (associated(grid%f23t)) &
-         call InsertVTab (grid%f23t,gridm%f23t,ng, npts, imean,  &
-         'F23T :2:mpti')
-    if (associated(grid%f23u)) &
-         call InsertVTab (grid%f23u,gridm%f23u,ng, npts, imean,  &
-         'F23U :2:mpti')
-    if (associated(grid%f23v)) &
-         call InsertVTab (grid%f23v,gridm%f23v,ng, npts, imean,  &
-         'F23V :2:mpti')
-    if (associated(grid%f23m)) &
-         call InsertVTab (grid%f23m,gridm%f23m,ng, npts, imean,  &
-         'F23M :2:mpti')
-    if (associated(grid%dxt)) &
-         call InsertVTab (grid%dxt,gridm%dxt,ng, npts, imean,  &
-         'DXT :2:mpti')
-    if (associated(grid%dxu)) &
-         call InsertVTab (grid%dxu,gridm%dxu,ng, npts, imean,  &
-         'DXU :2:mpti')
-    if (associated(grid%dxv)) &
-         call InsertVTab (grid%dxv,gridm%dxv,ng, npts, imean,  &
-         'DXV :2:mpti')
-    if (associated(grid%dxm)) &
-         call InsertVTab (grid%dxm,gridm%dxm,ng, npts, imean,  &
-         'DXM :2:mpti')
-    if (associated(grid%dyt)) &
-         call InsertVTab (grid%dyt,gridm%dyt,ng, npts, imean,  &
-         'DYT :2:mpti')
-    if (associated(grid%dyu)) &
-         call InsertVTab (grid%dyu,gridm%dyu,ng, npts, imean,  &
-         'DYU :2:mpti')
-    if (associated(grid%dyv)) &
-         call InsertVTab (grid%dyv,gridm%dyv,ng, npts, imean,  &
-         'DYV :2:mpti')
-    if (associated(grid%dym)) &
-         call InsertVTab (grid%dym,gridm%dym,ng, npts, imean,  &
-         'DYM :2:mpti')
-    if (associated(grid%fmapt)) &
-         call InsertVTab (grid%fmapt,gridm%fmapt,ng, npts, imean,  &
-         'FMAPT :2:mpti')
-    if (associated(grid%fmapu)) &
-         call InsertVTab (grid%fmapu,gridm%fmapu,ng, npts, imean,  &
-         'FMAPU :2:mpti')
-    if (associated(grid%fmapv)) &
-         call InsertVTab (grid%fmapv,gridm%fmapv,ng, npts, imean,  &
-         'FMAPV :2:mpti')
-    if (associated(grid%fmapm)) &
-         call InsertVTab (grid%fmapm,gridm%fmapm,ng, npts, imean,  &
-         'FMAPM :2:mpti')
-    if (associated(grid%fmapti)) &
-         call InsertVTab (grid%fmapti,gridm%fmapti,ng, npts, imean,  &
-         'FMAPTI :2:mpti')
-    if (associated(grid%fmapui)) &
-         call InsertVTab (grid%fmapui,gridm%fmapui,ng, npts, imean,  &
-         'FMAPUI :2:mpti')
-    if (associated(grid%fmapvi)) &
-         call InsertVTab (grid%fmapvi,gridm%fmapvi,ng, npts, imean,  &
-         'FMAPVI :2:mpti')
-    if (associated(grid%fmapmi)) &
-         call InsertVTab (grid%fmapmi,gridm%fmapmi,ng, npts, imean,  &
-         'FMAPMI :2:mpti')
-    if (associated(grid%glat)) &
-         call InsertVTab (grid%glat,gridm%glat,ng, npts, imean,  &
-         'GLAT :2:mpti:anal')
-    if (associated(grid%glon)) &
-         call InsertVTab (grid%glon,gridm%glon,ng, npts, imean,  &
-         'GLON :2:mpti:anal')
-    if (associated(grid%topzo)) &
-         call InsertVTab (grid%topzo,gridm%topzo,ng, npts, imean,  &
-         'TOPZO :2:mpti')
+    if (associated(grid%topt)) then
+       if (associated(gridm)) then
+          if (associated(gridm%topt)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%topt, &
+                  'TOPT :2:hist:anal:mpti', &
+                  gridm%topt)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%topt, &
+                  'TOPT :2:hist:anal:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%topt, &
+               'TOPT :2:hist:anal:mpti')
+       end if
+    end if
 
-    npts=n2*n3
-    if (associated(grid%lpu)) &
-         call InsertVTab (grid%lpu,gridm%lpu,ng,npts,imean,  &
-         'LPU :2:mpti')
-    if (associated(grid%lpv)) &
-         call InsertVTab (grid%lpv,gridm%lpv,ng,npts,imean,  &
-         'LPV :2:mpti')
-    if (associated(grid%lpw)) &
-         call InsertVTab (grid%lpw,gridm%lpw,ng,npts,imean,  &
-         'LPW :2:mpti')
+    if (associated(grid%topu)) then
+       if (associated(gridm)) then
+          if (associated(gridm%topu)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%topu, &
+                  'TOPU :2:mpti', &
+                  gridm%topu)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%topu, &
+                  'TOPU :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%topu, &
+               'TOPU :2:mpti')
+       end if
+    end if
 
-    npts=n1*n2*n3
-    if (associated(grid%aru)) &
-         call InsertVTab (grid%aru,gridm%aru,ng,npts,imean,  &
-         'ARU :3:mpti')
-    if (associated(grid%arv)) &
-         call InsertVTab (grid%arv,gridm%arv,ng,npts,imean,  &
-         'ARV :3:mpti')
-    if (associated(grid%arw)) &
-         call InsertVTab (grid%arw,gridm%arw,ng,npts,imean,  &
-         'ARW :3:mpti')
+    if (associated(grid%topv)) then
+       if (associated(gridm)) then
+          if (associated(gridm%topv)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%topv, &
+                  'TOPV :2:mpti', &
+                  gridm%topv)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%topv, &
+                  'TOPV :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%topv, &
+               'TOPV :2:mpti')
+       end if
+    end if
 
-    if (associated(grid%volu)) &
-         call InsertVTab (grid%volu,gridm%volu,ng,npts,imean,  &
-         'VOLU :3:mpti')
-    if (associated(grid%volv)) &
-         call InsertVTab (grid%volv,gridm%volv,ng,npts,imean,  &
-         'VOLV :3:mpti')
-    if (associated(grid%volw)) &
-         call InsertVTab (grid%volw,gridm%volw,ng,npts,imean,  &
-         'VOLW :3:mpti')
-    if (associated(grid%volt)) &
-         call InsertVTab (grid%volt,gridm%volt,ng,npts,imean,  &
-         'VOLT :3:anal:mpti')
+    if (associated(grid%topm)) then
+       if (associated(gridm)) then
+          if (associated(gridm%topm)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%topm, &
+                  'TOPM :2:mpti', &
+                  gridm%topm)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%topm, &
+                  'TOPM :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%topm, &
+               'TOPM :2:mpti')
+       end if
+    end if
 
+    if (associated(grid%topma)) then
+       if (associated(gridm)) then
+          if (associated(gridm%topma)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%topma, &
+                  'TOPMA :2:hist:anal:mpti', &
+                  gridm%topma)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%topma, &
+                  'TOPMA :2:hist:anal:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%topma, &
+               'TOPMA :2:hist:anal:mpti')
+       end if
+    end if
+
+
+    if (associated(grid%topta)) then
+       if (associated(gridm)) then
+          if (associated(gridm%topta)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%topta, &
+                  'TOPTA :2:hist:anal:mpti', &
+                  gridm%topta)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%topta, &
+                  'TOPTA :2:hist:anal:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%topta, &
+               'TOPTA :2:hist:anal:mpti')
+       end if
+    end if
+
+    if (associated(grid%rtgt)) then
+       if (associated(gridm)) then
+          if (associated(gridm%rtgt)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%rtgt, &
+                  'RTGT :2:mpti', &
+                  gridm%rtgt)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%rtgt, &
+                  'RTGT :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%rtgt, &
+               'RTGT :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%rtgu)) then
+       if (associated(gridm)) then
+          if (associated(gridm%rtgu)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%rtgu, &
+                  'RTGU :2:mpti', &
+                  gridm%rtgu)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%rtgu, &
+                  'RTGU :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%rtgu, &
+               'RTGU :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%rtgv)) then
+       if (associated(gridm)) then
+          if (associated(gridm%rtgv)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%rtgv, &
+                  'RTGV :2:mpti', &
+                  gridm%rtgv)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%rtgv, &
+                  'RTGV :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%rtgv, &
+               'RTGV :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%rtgm)) then
+       if (associated(gridm)) then
+          if (associated(gridm%rtgm)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%rtgm, &
+                  'RTGM :2:mpti', &
+                  gridm%rtgm)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%rtgm, &
+                  'RTGM :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%rtgm, &
+               'RTGM :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%f13t)) then
+       if (associated(gridm)) then
+          if (associated(gridm%f13t)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%f13t, &
+                  'F13T :2:mpti', &
+                  gridm%f13t)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%f13t, &
+                  'F13T :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%f13t, &
+               'F13T :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%f13u)) then
+       if (associated(gridm)) then
+          if (associated(gridm%f13u)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%f13u, &
+                  'F13U :2:mpti', &
+                  gridm%f13u)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%f13u, &
+                  'F13U :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%f13u, &
+               'F13U :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%f13v)) then
+       if (associated(gridm)) then
+          if (associated(gridm%f13v)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%f13v, &
+                  'F13V :2:mpti', &
+                  gridm%f13v)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%f13v, &
+                  'F13V :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%f13v, &
+               'F13V :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%f13m)) then
+       if (associated(gridm)) then
+          if (associated(gridm%f13m)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%f13m, &
+                  'F13M :2:mpti', &
+                  gridm%f13m)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%f13m, &
+                  'F13M :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%f13m, &
+               'F13M :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%f23t)) then
+       if (associated(gridm)) then
+          if (associated(gridm%f23t)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%f23t, &
+                  'F23T :2:mpti', &
+                  gridm%f23t)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%f23t, &
+                  'F23T :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%f23t, &
+               'F23T :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%f23u)) then
+       if (associated(gridm)) then
+          if (associated(gridm%f23u)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%f23u, &
+                  'F23U :2:mpti', &
+                  gridm%f23u)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%f23u, &
+                  'F23U :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%f23u, &
+               'F23U :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%f23v)) then
+       if (associated(gridm)) then
+          if (associated(gridm%f23v)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%f23v, &
+                  'F23V :2:mpti', &
+                  gridm%f23v)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%f23v, &
+                  'F23V :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%f23v, &
+               'F23V :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%f23m)) then
+       if (associated(gridm)) then
+          if (associated(gridm%f23m)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%f23m, &
+                  'F23M :2:mpti', &
+                  gridm%f23m)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%f23m, &
+                  'F23M :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%f23m, &
+               'F23M :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%dxt)) then
+       if (associated(gridm)) then
+          if (associated(gridm%dxt)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%dxt, &
+                  'DXT :2:mpti', &
+                  gridm%dxt)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%dxt, &
+                  'DXT :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%dxt, &
+               'DXT :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%dxu)) then
+       if (associated(gridm)) then
+          if (associated(gridm%dxu)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%dxu, &
+                  'DXU :2:mpti', &
+                  gridm%dxu)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%dxu, &
+                  'DXU :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%dxu, &
+               'DXU :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%dxv)) then
+       if (associated(gridm)) then
+          if (associated(gridm%dxv)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%dxv, &
+                  'DXV :2:mpti', &
+                  gridm%dxv)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%dxv, &
+                  'DXV :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%dxv, &
+               'DXV :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%dxm)) then
+       if (associated(gridm)) then
+          if (associated(gridm%dxm)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%dxm, &
+                  'DXM :2:mpti', &
+                  gridm%dxm)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%dxm, &
+                  'DXM :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%dxm, &
+               'DXM :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%dyt)) then
+       if (associated(gridm)) then
+          if (associated(gridm%dyt)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%dyt, &
+                  'DYT :2:mpti', &
+                  gridm%dyt)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%dyt, &
+                  'DYT :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%dyt, &
+               'DYT :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%dyu)) then
+       if (associated(gridm)) then
+          if (associated(gridm%dyu)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%dyu, &
+                  'DYU :2:mpti', &
+                  gridm%dyu)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%dyu, &
+                  'DYU :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%dyu, &
+               'DYU :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%dyv)) then
+       if (associated(gridm)) then
+          if (associated(gridm%dyv)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%dyv, &
+                  'DYV :2:mpti', &
+                  gridm%dyv)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%dyv, &
+                  'DYV :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%dyv, &
+               'DYV :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%dym)) then
+       if (associated(gridm)) then
+          if (associated(gridm%dym)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%dym, &
+                  'DYM :2:mpti', &
+                  gridm%dym)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%dym, &
+                  'DYM :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%dym, &
+               'DYM :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%fmapt)) then
+       if (associated(gridm)) then
+          if (associated(gridm%fmapt)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%fmapt, &
+                  'FMAPT :2:mpti', &
+                  gridm%fmapt)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%fmapt, &
+                  'FMAPT :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%fmapt, &
+               'FMAPT :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%fmapu)) then
+       if (associated(gridm)) then
+          if (associated(gridm%fmapu)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%fmapu, &
+                  'FMAPU :2:mpti', &
+                  gridm%fmapu)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%fmapu, &
+                  'FMAPU :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%fmapu, &
+               'FMAPU :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%fmapv)) then
+       if (associated(gridm)) then
+          if (associated(gridm%fmapv)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%fmapv, &
+                  'FMAPV :2:mpti', &
+                  gridm%fmapv)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%fmapv, &
+                  'FMAPV :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%fmapv, &
+               'FMAPV :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%fmapm)) then
+       if (associated(gridm)) then
+          if (associated(gridm%fmapm)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%fmapm, &
+                  'FMAPM :2:mpti', &
+                  gridm%fmapm)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%fmapm, &
+                  'FMAPM :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%fmapm, &
+               'FMAPM :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%fmapti)) then
+       if (associated(gridm)) then
+          if (associated(gridm%fmapti)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%fmapti, &
+                  'FMAPTI :2:mpti', &
+                  gridm%fmapti)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%fmapti, &
+                  'FMAPTI :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%fmapti, &
+               'FMAPTI :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%fmapui)) then
+       if (associated(gridm)) then
+          if (associated(gridm%fmapui)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%fmapui, &
+                  'FMAPUI :2:mpti', &
+                  gridm%fmapui)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%fmapui, &
+                  'FMAPUI :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%fmapui, &
+               'FMAPUI :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%fmapvi)) then
+       if (associated(gridm)) then
+          if (associated(gridm%fmapvi)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%fmapvi, &
+                  'FMAPVI :2:mpti', &
+                  gridm%fmapvi)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%fmapvi, &
+                  'FMAPVI :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%fmapvi, &
+               'FMAPVI :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%fmapmi)) then
+       if (associated(gridm)) then
+          if (associated(gridm%fmapmi)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%fmapmi, &
+                  'FMAPMI :2:mpti', &
+                  gridm%fmapmi)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%fmapmi, &
+                  'FMAPMI :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%fmapmi, &
+               'FMAPMI :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%glat)) then
+       if (associated(gridm)) then
+          if (associated(gridm%glat)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%glat, &
+                  'GLAT :2:mpti:anal', &
+                  gridm%glat)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%glat, &
+                  'GLAT :2:mpti:anal')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%glat, &
+               'GLAT :2:mpti:anal')
+       end if
+    end if
+
+    if (associated(grid%glon)) then
+       if (associated(gridm)) then
+          if (associated(gridm%glon)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%glon, &
+                  'GLON :2:mpti:anal', &
+                  gridm%glon)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%glon, &
+                  'GLON :2:mpti:anal')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%glon, &
+               'GLON :2:mpti:anal')
+       end if
+    end if
+
+    if (associated(grid%topzo)) then
+       if (associated(gridm)) then
+          if (associated(gridm%topzo)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%topzo, &
+                  'TOPZO :2:mpti', &
+                  gridm%topzo)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%topzo, &
+                  'TOPZO :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%topzo, &
+               'TOPZO :2:mpti')
+       end if
+    end if
+
+
+    if (associated(grid%lpu)) then
+       if (associated(gridm)) then
+          if (associated(gridm%lpu)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%lpu, &
+                  'LPU :2:mpti', &
+                  gridm%lpu)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%lpu, &
+                  'LPU :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%lpu, &
+               'LPU :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%lpv)) then
+       if (associated(gridm)) then
+          if (associated(gridm%lpv)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%lpv, &
+                  'LPV :2:mpti', &
+                  gridm%lpv)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%lpv, &
+                  'LPV :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%lpv, &
+               'LPV :2:mpti')
+       end if
+    end if
+
+    if (associated(grid%lpw)) then
+       if (associated(gridm)) then
+          if (associated(gridm%lpw)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%lpw, &
+                  'LPW :2:mpti', &
+                  gridm%lpw)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%lpw, &
+                  'LPW :2:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%lpw, &
+               'LPW :2:mpti')
+       end if
+    end if
+
+
+    if (associated(grid%aru)) then
+       if (associated(gridm)) then
+          if (associated(gridm%aru)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%aru, &
+                  'ARU :3:mpti', &
+                  gridm%aru)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%aru, &
+                  'ARU :3:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%aru, &
+               'ARU :3:mpti')
+       end if
+    end if
+
+    if (associated(grid%arv)) then
+       if (associated(gridm)) then
+          if (associated(gridm%arv)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%arv, &
+                  'ARV :3:mpti', &
+                  gridm%arv)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%arv, &
+                  'ARV :3:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%arv, &
+               'ARV :3:mpti')
+       end if
+    end if
+
+    if (associated(grid%arw)) then
+       if (associated(gridm)) then
+          if (associated(gridm%arw)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%arw, &
+                  'ARW :3:mpti', &
+                  gridm%arw)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%arw, &
+                  'ARW :3:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%arw, &
+               'ARW :3:mpti')
+       end if
+    end if
+
+
+    if (associated(grid%volu)) then
+       if (associated(gridm)) then
+          if (associated(gridm%volu)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%volu, &
+                  'VOLU :3:mpti', &
+                  gridm%volu)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%volu, &
+                  'VOLU :3:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%volu, &
+               'VOLU :3:mpti')
+       end if
+    end if
+
+    if (associated(grid%volv)) then
+       if (associated(gridm)) then
+          if (associated(gridm%volv)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%volv, &
+                  'VOLV :3:mpti', &
+                  gridm%volv)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%volv, &
+                  'VOLV :3:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%volv, &
+               'VOLV :3:mpti')
+       end if
+    end if
+
+    if (associated(grid%volw)) then
+       if (associated(gridm)) then
+          if (associated(gridm%volw)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%volw, &
+                  'VOLW :3:mpti', &
+                  gridm%volw)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%volw, &
+                  'VOLW :3:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%volw, &
+               'VOLW :3:mpti')
+       end if
+    end if
+
+    if (associated(grid%volt)) then
+       if (associated(gridm)) then
+          if (associated(gridm%volt)) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%volt, &
+                  'VOLT :3:anal:mpti', &
+                  gridm%volt)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  grid%volt, &
+                  'VOLT :3:anal:mpti')
+          end if
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               grid%volt, &
+               'VOLT :3:anal:mpti')
+       end if
+    end if
   end subroutine filltab_grid
 
 

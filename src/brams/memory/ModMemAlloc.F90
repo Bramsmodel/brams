@@ -661,8 +661,10 @@ contains
        call alloc_grid(grid_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng, if_adap)
        call alloc_grid(gridm_g(ng),       1,        1,        1, ng, if_adap)
 
-       call filltab_grid(grid_g(ng), gridm_g(ng), 0,  &
-            nmzp(ng), nmxp(ng), nmyp(ng), ng)
+       call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
+       call filltab_grid(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+            grid_g(ng), gridm_g(ng))
+       call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
     enddo
     !-------------
 
