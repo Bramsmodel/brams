@@ -604,8 +604,10 @@ contains
 
     !-------------
     ! insert Micro Fields variables at var_table
-    call InsertMicroFieldsAtVarTable(oneGrid%oneMicroFields, oneGrid%oneAveMicroFields, &
-       oneGrid%oneNamelistFile, oneGrid%Id)
+    call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
+    call InsertMicroFieldsAtVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+         oneGrid%oneMicroFields, oneGrid%oneAveMicroFields)
+    call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h) 
     !-------------
 
     !-------------
