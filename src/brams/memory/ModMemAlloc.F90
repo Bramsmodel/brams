@@ -1272,10 +1272,8 @@ contains
                      ,1,1,1,nmodes,nspecies_aer)
              endif
 
-             call filltab_aer1(aer1_g(:,:,ng),aer1m_g(:,:,ng)       &
-                  ,imean ,aer1_src_z_dim_g(:,ng) &
-                  ,nmzp(ng),nmxp(ng),nmyp(ng),nmodes,nspecies_aer,ng)
-
+             call filltab_aer1(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+                  aer1_g(:,:,ng), aer1m_g(:,:,ng), aer1_src_z_dim_g(:,ng))
           enddo
 
           call nullify_tend_aer1(nmodes,nspecies_aer)
