@@ -647,8 +647,8 @@ contains
        call alloc_varinit(varinitm_g(ng),       1,        1,        1, ng)
 
        ! These do not need "mean" type ever.
-       call filltab_varinit(varinit_g(ng), varinitm_g(ng), 0,  &
-            nmzp(ng), nmxp(ng), nmyp(ng), ng)
+       call filltab_varinit(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+            varinit_g(ng), varinitm_g(ng))
     enddo
     !-------------
 

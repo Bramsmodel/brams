@@ -15,33 +15,36 @@ module mem_varinit
        maxfiles, &
        maxgrds
 
-!--(DMK-CCATT-INI)-----------------------------------------------------
   use chem1_list, only: &
        nspecies
 
   use mem_chem1, only: &
        chem_assim
-!--(DMK-CCATT-FIM)-----------------------------------------------------
 
   ! Memory for varfile, history, and condensate nudging
 
   type varinit_vars
-
      ! Variables to be dimensioned by (nzp,nxp,nyp)
-     real, pointer, dimension(:,:,:) :: &
-           varup,varvp,varpp,vartp,varrp  &
-          ,varuf,varvf,varpf,vartf,varrf  &
-          ,varwts &
-
-!--(DMK-CCATT-INI)-----------------------------------------------------
-          ,varwts_chem &
-!--(DMK-CCATT-FIM)-----------------------------------------------------
-	  
-          ,varrph,varrfh,varcph,varcfh
-
+     real, pointer, contiguous :: varup(:,:,:)
+     real, pointer, contiguous :: varvp(:,:,:)
+     real, pointer, contiguous :: varpp(:,:,:)
+     real, pointer, contiguous :: vartp(:,:,:)
+     real, pointer, contiguous :: varrp(:,:,:)
+     real, pointer, contiguous :: varuf(:,:,:)
+     real, pointer, contiguous :: varvf(:,:,:)
+     real, pointer, contiguous :: varpf(:,:,:)
+     real, pointer, contiguous :: vartf(:,:,:)
+     real, pointer, contiguous :: varrf(:,:,:)
+     real, pointer, contiguous :: varwts(:,:,:)
+     real, pointer, contiguous :: varwts_chem(:,:,:)
+     real, pointer, contiguous :: varrph(:,:,:)
+     real, pointer, contiguous :: varrfh(:,:,:)
+     real, pointer, contiguous :: varcph(:,:,:)
+     real, pointer, contiguous :: varcfh(:,:,:)
   end type varinit_vars
 
-  type (varinit_vars), allocatable :: varinit_g(:), varinitm_g(:)
+  type (varinit_vars), pointer :: varinit_g(:) => null()
+  type (varinit_vars), pointer :: varinitm_g(:) => null()
 
 
   integer, parameter :: maxnudfiles=maxfiles !500
@@ -217,91 +220,331 @@ contains
   end subroutine dealloc_varinit
 
 
-  subroutine filltab_varinit(varinit,varinitm,imean,n1,n2,n3,ng)
-    use ModVarTables, only: InsertVTab
-    implicit none
-    include "constants.h"
-    type (varinit_vars) :: varinit,varinitm
-    integer, intent(in) :: imean,n1,n2,n3,ng
-    integer(kind=i8) :: npts
-    real, pointer :: var,varm
+  subroutine filltab_varinit(oneVarTable, oneVarTableSize, &
+       varinit, varinitm)
 
+    use ModVarTable, only: &
+         VarTable, &
+         InsertAtVarTable
+    
+    implicit none
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
+    type(varinit_vars), pointer, intent(in) :: varinit
+    type(varinit_vars), pointer, intent(in) :: varinitm
+
+    logical :: assAve
+    
     ! Fill pointers to arrays into variable tables
 
-    npts=n1*n2*n3
+    assAve=associated(varinitm)
 
-    if (associated(varinit%varup))  &
-         call InsertVTab (varinit%varup,varinitm%varup  &
-         ,ng, npts, imean,  &
-         'VARUP :3:mpti')
-    if (associated(varinit%varvp))  &
-         call InsertVTab (varinit%varvp,varinitm%varvp  &
-         ,ng, npts, imean,  &
-         'VARVP :3:mpti')
-    if (associated(varinit%varpp))  &
-         call InsertVTab (varinit%varpp,varinitm%varpp  &
-         ,ng, npts, imean,  &
-         'VARPP :3:mpti')
-    if (associated(varinit%vartp))  &
-         call InsertVTab (varinit%vartp,varinitm%vartp  &
-         ,ng, npts, imean,  &
-         'VARTP :3:mpti')
-    if (associated(varinit%varrp))  &
-         call InsertVTab (varinit%varrp,varinitm%varrp  &
-         ,ng, npts, imean,  &
-         'VARRP :3:mpti')
-    if (associated(varinit%varuf))  &
-         call InsertVTab (varinit%varuf,varinitm%varuf  &
-         ,ng, npts, imean,  &
-         'VARUF :3:mpti')
-    if (associated(varinit%varvf))  &
-         call InsertVTab (varinit%varvf,varinitm%varvf  &
-         ,ng, npts, imean,  &
-         'VARVF :3:mpti')
-    if (associated(varinit%varpf))  &
-         call InsertVTab (varinit%varpf,varinitm%varpf  &
-         ,ng, npts, imean,  &
-         'VARPF :3:mpti')
-    if (associated(varinit%vartf))  &
-         call InsertVTab (varinit%vartf,varinitm%vartf  &
-         ,ng, npts, imean,  &
-         'VARTF :3:mpti')
-    if (associated(varinit%varrf))  &
-         call InsertVTab (varinit%varrf,varinitm%varrf  &
-         ,ng, npts, imean,  &
-         'VARRF :3:mpti')
-    if (associated(varinit%varwts))  &
-         call InsertVTab (varinit%varwts,varinitm%varwts  &
-         ,ng, npts, imean,  &
-         'VARWTS :3:mpti')
+    if (associated(varinit%varup))  then
+       if (assAve) then
+          if (associated(varinitm%varup)) then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  varinit%varup, &
+                  'VARUP :3:mpti', &
+                  varinitm%varup)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  varinit%varup, &
+                  'VARUP :3:mpti')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               varinit%varup, &
+               'VARUP :3:mpti')
+       end if
+    end if
+    
+    if (associated(varinit%varvp))  then
+       if (assAve) then
+          if (associated(varinitm%varvp)) then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  varinit%varvp, &
+                  'VARVP :3:mpti', &
+                  varinitm%varvp)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  varinit%varvp, &
+                  'VARVP :3:mpti')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               varinit%varvp, &
+               'VARVP :3:mpti')
+       end if
+    end if
+    
+    if (associated(varinit%varpp))  then
+       if (assAve) then
+          if (associated(varinitm%varpp)) then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  varinit%varpp, &
+                  'VARPP :3:mpti', &
+                  varinitm%varpp)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  varinit%varpp, &
+                  'VARPP :3:mpti')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               varinit%varpp, &
+               'VARPP :3:mpti')
+       end if
+    end if
+    
+    if (associated(varinit%vartp))  then
+       if (assAve) then
+          if (associated(varinitm%vartp)) then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  varinit%vartp, &
+                  'VARTP :3:mpti', &
+                  varinitm%vartp)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  varinit%vartp, &
+                  'VARTP :3:mpti')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               varinit%vartp, &
+               'VARTP :3:mpti')
+       end if
+    end if
+    
+    if (associated(varinit%varrp))  then
+       if (assAve) then
+          if (associated(varinitm%varrp)) then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  varinit%varrp, &
+                  'VARRP :3:mpti', &
+                  varinitm%varrp)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  varinit%varrp, &
+                  'VARRP :3:mpti')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               varinit%varrp, &
+               'VARRP :3:mpti')
+       end if
+    end if
+    
+    if (associated(varinit%varuf))  then
+       if (assAve) then
+          if (associated(varinitm%varuf)) then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  varinit%varuf, &
+                  'VARUF :3:mpti', &
+                  varinitm%varuf)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  varinit%varuf, &
+                  'VARUF :3:mpti')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               varinit%varuf, &
+               'VARUF :3:mpti')
+       end if
+    end if
+    
+    if (associated(varinit%varvf))  then
+       if (assAve) then
+          if (associated(varinitm%varvf)) then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  varinit%varvf, &
+                  'VARVF :3:mpti', &
+                  varinitm%varvf)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  varinit%varvf, &
+                  'VARVF :3:mpti')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               varinit%varvf, &
+               'VARVF :3:mpti')
+       end if
+    end if
+    
+    if (associated(varinit%varpf))  then
+       if (assAve) then
+          if (associated(varinitm%varpf)) then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  varinit%varpf, &
+                  'VARPF :3:mpti', &
+                  varinitm%varpf)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  varinit%varpf, &
+                  'VARPF :3:mpti')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               varinit%varpf, &
+               'VARPF :3:mpti')
+       end if
+    end if
+    
+    if (associated(varinit%vartf))  then
+       if (assAve) then
+          if (associated(varinitm%vartf)) then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  varinit%vartf, &
+                  'VARTF :3:mpti', &
+                  varinitm%vartf)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  varinit%vartf, &
+                  'VARTF :3:mpti')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               varinit%vartf, &
+               'VARTF :3:mpti')
+       end if
+    end if
+    
+    if (associated(varinit%varrf))  then
+       if (assAve) then
+          if (associated(varinitm%varrf)) then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  varinit%varrf, &
+                  'VARRF :3:mpti', &
+                  varinitm%varrf)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  varinit%varrf, &
+                  'VARRF :3:mpti')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               varinit%varrf, &
+               'VARRF :3:mpti')
+       end if
+    end if
+    
+    if (associated(varinit%varwts))  then
+       if (assAve) then
+          if (associated(varinitm%varwts)) then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  varinit%varwts, &
+                  'VARWTS :3:mpti', &
+                  varinitm%varwts)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  varinit%varwts, &
+                  'VARWTS :3:mpti')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               varinit%varwts, &
+               'VARWTS :3:mpti')
+       end if
+    end if
+    
+    if(chem_assim == 1 .and. associated(varinit%varwts_chem)) then
+       if (assAve) then
+          if (associated(varinitm%varwts_chem)) then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  varinit%varwts_chem, &
+                  'VARWTS_CHEM :3:mpti', &
+                  varinitm%varwts_chem)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  varinit%varwts_chem, &
+                  'VARWTS_CHEM :3:mpti')
+          end if
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               varinit%varwts_chem, &
+               'VARWTS_CHEM :3:mpti')
+       end if
+    end if
 
-!--(DMK-CCATT-INI)-----------------------------------------------------
-    if(chem_assim == 1 .and. associated(varinit%varwts_chem)) &
-         call InsertVTab (varinit%varwts_chem,varinitm%varwts_chem  &
-         ,ng, npts, imean,  &
-         'VARWTS_CHEM :3:mpti')
-!--(DMK-CCATT-FIM)-----------------------------------------------------
-
-    if (nud_cond == 1) then               ! Inc. by ALF
-       if (associated(varinit%varcph))  &
-            call InsertVTab (varinit%varcph,varinitm%varcph  &
-            ,ng, npts, imean,  &
-            'VARCPH :3:mpti')
-       if (associated(varinit%varcfh))  &
-            call InsertVTab (varinit%varcfh,varinitm%varcfh  &
-            ,ng, npts, imean,  &
-            'VARCFH :3:mpti')
-       if (associated(varinit%varrph))  &
-            call InsertVTab (varinit%varrph,varinitm%varrph  &
-            ,ng, npts, imean,  &
-            'VARRPH :3:mpti')
-       if (associated(varinit%varrfh))  &
-            call InsertVTab (varinit%varrfh,varinitm%varrfh  &
-            ,ng, npts, imean,  &
-            'VARRFH :3:mpti')
+    
+    if (nud_cond == 1) then
+       if (associated(varinit%varcph))  then
+          if (assAve) then
+             if (associated(varinitm%varcph)) then
+                call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                     varinit%varcph, &
+                     'VARCPH :3:mpti', &
+                     varinitm%varcph)
+             else
+                call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                     varinit%varcph, &
+                     'VARCPH :3:mpti')
+             end if
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  varinit%varcph, &
+                  'VARCPH :3:mpti')
+          end if
+       end if
+       
+       if (associated(varinit%varcfh))  then
+          if (assAve) then
+             if (associated(varinitm%varcfh)) then
+                call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                     varinit%varcfh, &
+                     'VARCFH :3:mpti', &
+                     varinitm%varcfh)
+             else
+                call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                     varinit%varcfh, &
+                     'VARCFH :3:mpti')
+             end if
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  varinit%varcfh, &
+                  'VARCFH :3:mpti')
+          end if
+       end if
+       
+       if (associated(varinit%varrph))  then
+          if (assAve) then
+             if (associated(varinitm%varrph)) then
+                call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                     varinit%varrph, &
+                     'VARRPH :3:mpti', &
+                     varinitm%varrph)
+             else
+                call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                     varinit%varrph, &
+                     'VARRPH :3:mpti')
+             end if
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  varinit%varrph, &
+                  'VARRPH :3:mpti')
+          end if
+       end if
+       
+       if (associated(varinit%varrfh))  then
+          if (assAve) then
+             if (associated(varinitm%varrfh)) then
+                call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                     varinit%varrfh, &
+                     'VARRFH :3:mpti', &
+                     varinitm%varrfh)
+             else
+                call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                     varinit%varrfh, &
+                     'VARRFH :3:mpti')
+             end if
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  varinit%varrfh, &
+                  'VARRFH :3:mpti')
+          end if
+       end if
     endif
-
-    return
   end subroutine filltab_varinit
 
 
