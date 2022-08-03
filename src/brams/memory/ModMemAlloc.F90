@@ -1272,8 +1272,10 @@ contains
                      ,1,1,1,nmodes,nspecies_aer)
              endif
 
+             call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
              call filltab_aer1(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
                   aer1_g(:,:,ng), aer1m_g(:,:,ng), aer1_src_z_dim_g(:,ng))
+             call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
           enddo
 
           call nullify_tend_aer1(nmodes,nspecies_aer)
@@ -1347,10 +1349,11 @@ contains
                         ,1,aer2mpm_g(:,ng),oneGrid%oneMicVars%mcphys_type)
                 endif
 
-                call filltab_aer2(aer2_g(:,ng),aer2m_g(:,ng) &
-                     ,imean ,aer2_src_z_dim_g(:,ng) &
-                     ,nmzp(ng),nmxp(ng),nmyp(ng),nmodes,ng &
-                     ,1,aer2mp_g(:,ng),aer2mpm_g(:,ng),oneGrid%oneMicVars%mcphys_type)
+                call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
+                call filltab_aer2(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+                     aer2_g(:,ng), aer2m_g(:,ng), aer2_src_z_dim_g(:,ng), &
+                     aer2mp_g(:,ng), aer2mpm_g(:,ng), oneGrid%oneMicVars%mcphys_type)
+                call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
              enddo
 
              call nullify_tend_aer2(nmodes)

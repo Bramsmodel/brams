@@ -583,105 +583,228 @@ contains
 
   !---------------------------------------------------------------
 
-  subroutine filltab_aer2(aer2,aer2m,imean,nvert_src,n1,n2,n3,nmodes,ng&
-       ,n,aer2mp,aer2mpm,mcphys_type)
-!!$  subroutine filltab_aer2(oneVarTable, oneVarTableSize, &
-!!$       aer2,aer2m,imean,nvert_src,n1,n2,n3,nmodes,ng&
-!!$       ,n,aer2mp,aer2mpm,mcphys_type)
+  subroutine filltab_aer2(oneVarTable, oneVarTableSize, &
+       aer2, aer2m, nvert_src, aer2mp, aer2mpm, mcphys_type)
 
     use aer1_list, only : src, ddp, wdp, fdda, offline, on ,off &
          ,numb_alloc,numb_name
 
     use io_params, only : ioutput         ! INTENT(IN)
 
-    use ModVarTables, only: InsertVTab
     implicit none
-!!$    type(VarTable), pointer, intent(in) :: oneVarTable(:)
-!!$    integer, intent(inout) :: oneVarTableSize
-    integer, intent(in) :: imean,n1,n2,n3,nmodes,ng,n,mcphys_type
-    type (aer1_vars)    ,dimension(nmodes) :: aer2,aer2m
-    type (aero2mcphys)  ,dimension(n) :: aer2mp,aer2mpm
-    integer,dimension(nmodes)    :: nvert_src
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
+    type(aer1_vars), pointer, intent(in) :: aer2(:)
+    type(aer1_vars), pointer, intent(in) :: aer2m(:)
+    integer, intent(in) :: nvert_src(:)
+    type(aero2mcphys), pointer, intent(in) :: aer2mp(:)
+    type(aero2mcphys), pointer, intent(in) :: aer2mpm(:)
+    integer, intent(in) :: mcphys_type
 
+    logical :: assAve
+    logical :: assThis
     integer :: imode,i
-    integer(kind=i8) :: npts
 
     character(len=8) :: str_recycle
     character(len=1) :: str_src_dim
     str_recycle = ''; str_src_dim = ''
     if (RECYCLE_TRACERS == 1 .or. ioutput == 5) then
        str_recycle = ':recycle'
-    endif
+    end if
+
+    assAve=associated(aer2m)
 
     !- Fill pointers to arrays into variable tables
-    do imode=1,nmodes
+    do imode = 1, size(nvert_src)
        if (associated(aer2(imode)%sc_p)) then
+
           !---- number concentration (dimension 3d)
-          call InsertVTab(aer2(imode)%sc_p,aer2m(imode)%sc_p,  &
-               ng, npts, imean,trim(numb_name(imode))              &
-               //'P :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle))
-
+          if (assAve) then
+             assThis=associated(aer2m(imode)%sc_p)
+          else
+             assThis=.false.
+          end if
+          if (assThis) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  aer2(imode)%sc_p, &
+                  trim(numb_name(imode))//'P :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle), &
+                  aer2m(imode)%sc_p)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  aer2(imode)%sc_p, &
+                  trim(numb_name(imode))//'P :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle))
+          end if
+          
           if(numb_alloc(src,imode) == on) then
-
              !- for now we are using allways 3-d
              str_src_dim = '3' 
-
-             call InsertVTab(aer2 (imode)%sc_src,       &
-                  aer2m(imode)%sc_src,      &
-                  ng, npts, imean,                               &
-                  trim(numb_name(imode))// &
-                  '_SRC :'//trim(str_src_dim)//':hist:anal:mpti:mpt3:mpt1')
-
+             if (assAve) then
+                assThis=associated(aer2m(imode)%sc_src)
+             else
+                assThis=.false.
+             end if
+             if (assThis) then
+                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                     aer2 (imode)%sc_src, &
+                     trim(numb_name(imode))//'_SRC :'//trim(str_src_dim)//':hist:anal:mpti:mpt3:mpt1', &
+                     aer2m(imode)%sc_src)
+             else
+                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                     aer2 (imode)%sc_src, &
+                     trim(numb_name(imode))//'_SRC :'//trim(str_src_dim)//':hist:anal:mpti:mpt3:mpt1')
+             end if
           endif
+
           !---- dry and wet deposition (dimension 2d)
-          if(numb_alloc(ddp,imode) == on) &
-               
-               call InsertVTab(aer2(imode)%sc_dd,aer2m(imode)%sc_dd, &
-               ng, npts, imean,                                &
-               trim(numb_name(imode))//'DD :2:hist:anal:mpti:mpt3')
-          if(numb_alloc(wdp,imode) == on) &
-               
-               call InsertVTab(aer2(imode)%sc_wd,aer2m(imode)%sc_wd,  &
-               ng, npts, imean,                                 &
-               trim(numb_name(imode))//'WD :2:hist:anal:mpti:mpt3')
+          if(numb_alloc(ddp,imode) == on) then
+             if (assAve) then
+                assThis=associated(aer2m(imode)%sc_dd)
+             else
+                assThis=.false.
+             end if
+             if (assThis) then
+                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                     aer2(imode)%sc_dd, &
+                     trim(numb_name(imode))//'DD :2:hist:anal:mpti:mpt3', &
+                     aer2m(imode)%sc_dd)
+             else
+                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                     aer2(imode)%sc_dd, &
+                     trim(numb_name(imode))//'DD :2:hist:anal:mpti:mpt3')
+             end if
+          end if
+
+          if(numb_alloc(wdp,imode) == on) then
+             if (assAve) then
+                assThis=associated(aer2m(imode)%sc_wd)
+             else
+                assThis=.false.
+             end if
+             if (assThis) then
+                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                     aer2(imode)%sc_wd, &
+                     trim(numb_name(imode))//'WD :2:hist:anal:mpti:mpt3', &
+                     aer2m(imode)%sc_wd)
+             else
+                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                     aer2(imode)%sc_wd, &
+                     trim(numb_name(imode))//'WD :2:hist:anal:mpti:mpt3')
+             end if
+          end if
           !----  data assimilation (dimension 3d)
           if(chem_assim == on) then
              if(numb_alloc(fdda,imode) == on) then
+                if (assAve) then
+                   assThis=associated(aer2m(imode)%sc_pp)
+                else
+                   assThis=.false.
+                end if
+                if (assThis) then
+                   call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                        aer2(imode)%sc_pp, &
+                        trim(numb_name(imode))//'PP :3:mpti', &
+                        aer2m(imode)%sc_pp)
+                else
+                   call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                        aer2(imode)%sc_pp, &
+                        trim(numb_name(imode))//'PP :3:mpti')
+                end if
 
-                call InsertVTab(aer2(imode)%sc_pp,aer2m(imode)%sc_pp, &
-                     ng, npts, imean,                                &
-                     trim(numb_name(imode))//'PP :3:mpti')
-                call InsertVTab(aer2(imode)%sc_pf,aer2m(imode)%sc_pf, &
-                     ng, npts, imean,                                &
-                     trim(numb_name(imode))//'PF :3:mpti')
-             endif
-          endif
-       endif
-    enddo
+                if (assAve) then
+                   assThis=associated(aer2m(imode)%sc_pf)
+                else
+                   assThis=.false.
+                end if
+                if (assThis) then
+                   call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                        aer2(imode)%sc_pf, &
+                        trim(numb_name(imode))//'PF :3:mpti', &
+                        aer2m(imode)%sc_pf)
+                else
+                   call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                        aer2(imode)%sc_pf, &
+                        trim(numb_name(imode))//'PF :3:mpti')
+                end if
+             end if
+          end if
+       end if
+    end do
     !-kml/srf - for microphysics activation
     if(mcphys_type == 3) then
-       do i=1,n
-          if (associated(aer2mp(i)%kappa_eff)) &
-               call InsertVTab(aer2mp(i)%kappa_eff,aer2mpm(i)%kappa_eff,  &
-               ng, npts, imean,              &
-               'KAPPA :3:hist:anal:mpti:mpt3')
+       do i=1,size(aer2mp)
+          if (associated(aer2mp(i)%kappa_eff)) then
+             if (assAve) then
+                assThis=associated(aer2mpm(i)%kappa_eff)
+             else
+                assThis=.false.
+             end if
+             if (assThis) then
+                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                     aer2mp(i)%kappa_eff, &
+                     'KAPPA :3:hist:anal:mpti:mpt3', &
+                     aer2mpm(i)%kappa_eff)
+             else
+                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                     aer2mp(i)%kappa_eff, &
+                     'KAPPA :3:hist:anal:mpti:mpt3')
+             end if
+          end if
 
-          if (associated(aer2mp(i)%diam_eff)) &
-               call InsertVTab(aer2mp(i)%diam_eff,aer2mpm(i)%diam_eff,  &
-               ng, npts, imean,              &
-               'DIAMT_AER :3:hist:anal:mpti:mpt3')
-
-          if (associated(aer2mp(i)%numb_water)) &
-               call InsertVTab(aer2mp(i)%numb_water,aer2mpm(i)%numb_water,  &
-               ng, npts, imean,              &
-               'WATER_FAER :3:hist:anal:mpti:mpt3')
-
-          if (associated(aer2mp(i)%numb_ice)) &
-               call InsertVTab(aer2mp(i)%numb_ice,aer2mpm(i)%numb_ice,  &
-               ng, npts, imean,              &
-               'ICE_FAER :3:hist:anal:mpti:mpt3')
-       enddo
-    endif
+          if (associated(aer2mp(i)%diam_eff)) then
+             if (assAve) then
+                assThis=associated(aer2mpm(i)%diam_eff)
+             else
+                assThis=.false.
+             end if
+             if (assThis) then
+                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                     aer2mp(i)%diam_eff, &
+                     'DIAMT_AER :3:hist:anal:mpti:mpt3', &
+                     aer2mpm(i)%diam_eff)
+             else
+                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                     aer2mp(i)%diam_eff, &
+                     'DIAMT_AER :3:hist:anal:mpti:mpt3')
+             end if
+          end if
+          
+          if (associated(aer2mp(i)%numb_water)) then
+             if (assAve) then
+                assThis=associated(aer2mpm(i)%numb_water)
+             else
+                assThis=.false.
+             end if
+             if (assThis) then
+                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                     aer2mp(i)%numb_water, &
+                     'WATER_FAER :3:hist:anal:mpti:mpt3', &
+                     aer2mpm(i)%numb_water)
+             else
+                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                     aer2mp(i)%numb_water, &
+                     'WATER_FAER :3:hist:anal:mpti:mpt3')
+             end if
+          end if
+          
+          if (associated(aer2mp(i)%numb_ice)) then
+             if (assAve) then
+                assThis=associated(aer2mpm(i)%numb_ice)
+             else
+                assThis=.false.
+             end if
+             if (assThis) then
+                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                     aer2mp(i)%numb_ice, &
+                     'ICE_FAER :3:hist:anal:mpti:mpt3', &
+                     aer2mpm(i)%numb_ice)
+             else
+                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                     aer2mp(i)%numb_ice, &
+                     'ICE_FAER :3:hist:anal:mpti:mpt3')
+             end if
+          end if
+       end do
+    end if
 
   end subroutine filltab_aer2
 
