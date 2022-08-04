@@ -558,8 +558,10 @@ contains
     !-------------
     ! insert Basic Field variables at var_table
     do ng=1,ngrids
-       call InsertBasicFieldsAtVarTable(oneGrid%oneBasicFields, oneGrid%oneAveBasicFields, &
-            oneGrid%oneNamelistFile, oneGrid%Id)
+       call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
+       call InsertBasicFieldsAtVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+            oneGrid%oneBasicFields, oneGrid%oneAveBasicFields)
+       call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
     enddo
     !
     !Allocate and prepare optical properties memory

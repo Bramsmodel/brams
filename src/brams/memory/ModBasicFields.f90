@@ -21,8 +21,9 @@ module ModBasicFields
   use iso_fortran_env, only: &
        int64
 
-  use ModVarTables, only: &
-       InsertVTab
+  use ModVarTable, only: &
+       VarTable, &
+       InsertAtVarTable
 
   use mem_stilt, only: &
        iexev
@@ -498,184 +499,452 @@ contains
   
 
 
-  subroutine InsertBasicFieldsAtVarTable(oneBasicFields, oneAveBasicFields, &
-       oneNamelistFile, gridId)
+  subroutine InsertBasicFieldsAtVarTable(oneVarTable, oneVarTableSize, &
+       oneBasicFields, oneAveBasicFields)
+
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(BasicFields), pointer, intent(in) :: oneAveBasicFields
-    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
-    integer, intent(in) :: gridId
 
-    integer :: imean
-    integer(kind=int64) :: npts
+    logical :: assAve
+    logical :: assThis
     character(len=*), parameter :: h="**(InsertBasicFieldsAtVarTable)**" 
 
     if (.not. associated(oneBasicFields)) then
        call fatal_error(h//" oneBasicFields not associated")
-    else if (.not. associated(oneAveBasicFields)) then
-       call fatal_error(h//" oneAveBasicFields not associated")
-    else if (.not. associated(oneNamelistFile)) then
-       call fatal_error(h//" oneNamelistFile not associated")
+    else if (.not. associated(oneVarTable)) then
+       call fatal_error(h//" oneVarTable not associated")
     end if
 
-    ! Should average fields be stored at variable tables?
-
-    if (oneNamelistFile%avgtim == 0) then
-       imean=0 ! do not store
-    else
-       imean=1 ! store
-    end if
+    assAve=associated(oneAveBasicFields)
     
     ! Fill pointers to arrays into variable tables
 
     if (associated(oneBasicFields%up)) then
-       npts=size(oneBasicFields%up)
-       call InsertVTab (oneBasicFields%up,oneAveBasicFields%up  &
-            ,gridId, npts, imean,  &
-            'UP :3:hist:anal:mpti:mpt3:mpt2')
+       if (assAve) then
+          assThis=associated(oneAveBasicFields%up)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%up, &
+               'UP :3:hist:anal:mpti:mpt3:mpt2', &
+               oneAveBasicFields%up)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%up, &
+               'UP :3:hist:anal:mpti:mpt3:mpt2')
+       end if
     else
        call fatal_error(h//" oneBasicFields%up not associated")
     end if
 
     if (associated(oneBasicFields%vp))  then
-       call InsertVTab (oneBasicFields%vp,oneAveBasicFields%vp  &
-            ,gridId, npts, imean,  &
-            'VP :3:hist:anal:mpti:mpt3:mpt2')
+       if (assAve) then
+          assThis=associated(oneAveBasicFields%vp)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%vp, &
+               'VP :3:hist:anal:mpti:mpt3:mpt2', &
+               oneAveBasicFields%vp)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%vp, &
+               'VP :3:hist:anal:mpti:mpt3:mpt2')
+       end if
     end if
+               
 
     if (associated(oneBasicFields%wp))  then
-       call InsertVTab (oneBasicFields%wp,oneAveBasicFields%wp  &
-            ,gridId, npts, imean,  &
-            'WP :3:hist:anal:mpti:mpt3:mpt2')
+       if (assAve) then
+          assThis=associated(oneAveBasicFields%wp)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%wp, &
+               'WP :3:hist:anal:mpti:mpt3:mpt2', &
+               oneAveBasicFields%wp)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%wp, &
+               'WP :3:hist:anal:mpti:mpt3:mpt2')
+       end if
     end if
 
     if (associated(oneBasicFields%pp))  then
-       call InsertVTab (oneBasicFields%pp,oneAveBasicFields%pp  &
-            ,gridId, npts, imean,  &
-            'PP :3:hist:anal:mpti:mpt3:mpt2')
+       if (assAve) then
+          assThis=associated(oneAveBasicFields%pp)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%pp, &
+               'PP :3:hist:anal:mpti:mpt3:mpt2', &
+               oneAveBasicFields%pp)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%pp, &
+               'PP :3:hist:anal:mpti:mpt3:mpt2')
+       end if
     end if
 
     if (associated(oneBasicFields%uc))  then
-       call InsertVTab (oneBasicFields%uc,oneAveBasicFields%uc  &
-            ,gridId, npts, imean,  &
-            'UC :3:hist:mpti:mpt3:mpt2')
+       if (assAve) then
+          assThis=associated(oneAveBasicFields%uc)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%uc, &
+               'UC :3:hist:mpti:mpt3:mpt2', &
+               oneAveBasicFields%uc)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%uc, &
+               'UC :3:hist:mpti:mpt3:mpt2')
+       end if
     end if
 
     if (associated(oneBasicFields%vc))  then
-       call InsertVTab (oneBasicFields%vc,oneAveBasicFields%vc  &
-            ,gridId, npts, imean,  &
-            'VC :3:hist:mpti:mpt3:mpt2')
+       if (assAve) then
+          assThis=associated(oneAveBasicFields%vc)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%vc, &
+               'VC :3:hist:mpti:mpt3:mpt2', &
+               oneAveBasicFields%vc)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%vc, &
+               'VC :3:hist:mpti:mpt3:mpt2')
+       end if
     end if
 
     if (associated(oneBasicFields%wc))  then
-       call InsertVTab (oneBasicFields%wc,oneAveBasicFields%wc  &
-            ,gridId, npts, imean,  &
-            'WC :3:hist:mpti:mpt3:mpt2')
+       if (assAve) then
+          assThis=associated(oneAveBasicFields%wc)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%wc, &
+               'WC :3:hist:mpti:mpt3:mpt2', &
+               oneAveBasicFields%wc)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%wc, &
+               'WC :3:hist:mpti:mpt3:mpt2')
+       end if
     end if
 
     if (associated(oneBasicFields%pc))  then
-       call InsertVTab (oneBasicFields%pc,oneAveBasicFields%pc  &
-            ,gridId, npts, imean,  &
-            'PC :3:hist:mpti:mpt3:mpt2')
+       if (assAve) then
+          assThis=associated(oneAveBasicFields%pc)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%pc, &
+               'PC :3:hist:mpti:mpt3:mpt2', &
+               oneAveBasicFields%pc)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%pc, &
+               'PC :3:hist:mpti:mpt3:mpt2')
+       end if
     end if
 
 
     if (associated(oneBasicFields%thp)) then
-       call InsertVTab (oneBasicFields%thp,oneAveBasicFields%thp  &
-            ,gridId, npts, imean,  &
-            'THP :3:hist:mpti:mpt3:mpt1')
+       if (assAve) then
+          assThis=associated(oneAveBasicFields%thp)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%thp, &
+               'THP :3:hist:mpti:mpt3:mpt1', &
+               oneAveBasicFields%thp)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%thp, &
+               'THP :3:hist:mpti:mpt3:mpt1')
+       end if
     end if
 
     if (associated(oneBasicFields%rtp)) then
-       call InsertVTab (oneBasicFields%rtp,oneAveBasicFields%rtp  &
-            ,gridId, npts, imean,  &
-            'RTP :3:hist:mpti:mpt3:mpt1')
+       if (assAve) then
+          assThis=associated(oneAveBasicFields%rtp)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%rtp, &
+               'RTP :3:hist:mpti:mpt3:mpt1', &
+               oneAveBasicFields%rtp)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%rtp, &
+               'RTP :3:hist:mpti:mpt3:mpt1')
+       end if
     end if
 
 
     if(iexev == 2) then
        if (associated(oneBasicFields%theta)) then
-          call InsertVTab (oneBasicFields%theta,oneAveBasicFields%theta  &
-               ,gridId, npts, imean,  &
-               'THETA :3:hist:anal:mpti:mpt3:mpt1')
+          if (assAve) then
+             assThis=associated(oneAveBasicFields%theta)
+          else
+             assThis=.false.
+          end if
+          if (assThis) then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneBasicFields%theta, &
+                  'THETA :3:hist:anal:mpti:mpt3:mpt1', &
+                  oneAveBasicFields%theta)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneBasicFields%theta, &
+                  'THETA :3:hist:anal:mpti:mpt3:mpt1')
+          end if
        end if
     else
        if (associated(oneBasicFields%theta)) then
-          call InsertVTab (oneBasicFields%theta,oneAveBasicFields%theta  &
-               ,gridId, npts, imean,  &
-               'THETA :3:hist:anal:mpti:mpt3')
+          if (assAve) then
+             assThis=associated(oneAveBasicFields%theta)
+          else
+             assThis=.false.
+          end if
+          if (assThis) then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneBasicFields%theta, &
+                  'THETA :3:hist:anal:mpti:mpt3', &
+                  oneAveBasicFields%theta)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneBasicFields%theta, &
+                  'THETA :3:hist:anal:mpti:mpt3')
+          end if
        end if
     endif
 
     if (associated(oneBasicFields%thc)) then
-       call InsertVTab (oneBasicFields%thc,oneAveBasicFields%thc  &
-            ,gridId, npts, imean,  &
-            'THC :3:hist:mpti:mpt3:mpt1')
+       if (assAve) then
+          assThis=associated(oneAveBasicFields%thc)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%thc, &
+               'THC :3:hist:mpti:mpt3:mpt1', &
+               oneAveBasicFields%thc)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%thc, &
+               'THC :3:hist:mpti:mpt3:mpt1')
+       end if
     end if
 
     if(iexev == 2) then
        if (associated(oneBasicFields%rv)) then
-          call InsertVTab (oneBasicFields%rv,oneAveBasicFields%rv  &
-               ,gridId, npts, imean,  &
-               'RV :3:hist:anal:mpti:mpt3:mpt1')
+          if (assAve) then
+             assThis=associated(oneAveBasicFields%rv)
+          else
+             assThis=.false.
+          end if
+          if (assThis) then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneBasicFields%rv, &
+                  'RV :3:hist:anal:mpti:mpt3:mpt1', &
+                  oneAveBasicFields%rv)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneBasicFields%rv, &
+                  'RV :3:hist:anal:mpti:mpt3:mpt1')
+          end if
        end if
     else
        if (associated(oneBasicFields%rv)) then
-          call InsertVTab (oneBasicFields%rv,oneAveBasicFields%rv  &
-               ,gridId, npts, imean,  &
-               'RV :3:hist:anal:mpti:mpt3')
+          if (assAve) then
+             assThis=associated(oneAveBasicFields%rv)
+          else
+             assThis=.false.
+          end if
+          if (assThis) then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneBasicFields%rv, &
+                  'RV :3:hist:anal:mpti:mpt3', &
+                  oneAveBasicFields%rv)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  oneBasicFields%rv, &
+                  'RV :3:hist:anal:mpti:mpt3')
+          end if
        end if
     endif
 
     if (associated(oneBasicFields%pi0)) then
-       call InsertVTab (oneBasicFields%pi0,oneAveBasicFields%pi0  &
-            ,gridId, npts, imean,  &
-            'PI0 :3:mpti')
+       if (assAve) then
+          assThis=associated(oneAveBasicFields%pi0)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%pi0, &
+               'PI0 :3:mpti', &
+               oneAveBasicFields%pi0)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%pi0, &
+               'PI0 :3:mpti')
+       end if
     end if
 
     if (associated(oneBasicFields%th0)) then
-       call InsertVTab (oneBasicFields%th0,oneAveBasicFields%th0  &
-            ,gridId, npts, imean,  &
-            'TH0 :3:mpti')
+       if (assAve) then
+          assThis=associated(oneAveBasicFields%th0)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%th0, &
+               'TH0 :3:mpti', &
+               oneAveBasicFields%th0)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%th0, &
+               'TH0 :3:mpti')
+       end if
     end if
 
     if (associated(oneBasicFields%dn0)) then
-       call InsertVTab (oneBasicFields%dn0,oneAveBasicFields%dn0  &
-            ,gridId, npts, imean,  &
-            'DN0 :3:mpti')
+       if (assAve) then
+          assThis=associated(oneAveBasicFields%dn0)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%dn0, &
+               'DN0 :3:mpti', &
+               oneAveBasicFields%dn0)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%dn0, &
+               'DN0 :3:mpti')
+       end if
     end if
 
     if (associated(oneBasicFields%dn0u)) then
-       call InsertVTab (oneBasicFields%dn0u,oneAveBasicFields%dn0u  &
-            ,gridId, npts, imean,  &
-            'DN0U :3:mpti')
+       if (assAve) then
+          assThis=associated(oneAveBasicFields%dn0u)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%dn0u, &
+               'DN0U :3:mpti', &
+               oneAveBasicFields%dn0u)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%dn0u, &
+               'DN0U :3:mpti')
+       end if
     end if
 
     if (associated(oneBasicFields%dn0v)) then
-       call InsertVTab (oneBasicFields%dn0v,oneAveBasicFields%dn0v  &
-            ,gridId, npts, imean,  &
-            'DN0V :3:mpti')
+       if (assAve) then
+          assThis=associated(oneAveBasicFields%dn0v)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%dn0v, &
+               'DN0V :3:mpti', &
+               oneAveBasicFields%dn0v)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%dn0v, &
+               'DN0V :3:mpti')
+       end if
     end if
 
 
     if (associated(oneBasicFields%fcoru)) then
-       npts = size(oneBasicFields%fcoru)
-       call InsertVTab (oneBasicFields%fcoru,oneAveBasicFields%fcoru  &
-            ,gridId, npts, imean,  &
-            'FCORU :2:mpti')
+       if (assAve) then
+          assThis=associated(oneAveBasicFields%fcoru)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%fcoru, &
+               'FCORU :2:mpti', &
+               oneAveBasicFields%fcoru)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%fcoru, &
+               'FCORU :2:mpti')
+       end if
     else
        call fatal_error(h//" oneBasicFields%fcoru not associated")
     end if
 
     if (associated(oneBasicFields%fcorv)) then
-       call InsertVTab (oneBasicFields%fcorv,oneAveBasicFields%fcorv  &
-            ,gridId, npts, imean,  &
-            'FCORV :2:mpti')
+       if (assAve) then
+          assThis=associated(oneAveBasicFields%fcorv)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%fcorv, &
+               'FCORV :2:mpti', &
+               oneAveBasicFields%fcorv)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%fcorv, &
+               'FCORV :2:mpti')
+       end if
     end if
 
     if (associated(oneBasicFields%cputime)) then
-       call InsertVTab (oneBasicFields%cputime,oneAveBasicFields%cputime  &
-            ,gridId, npts, imean,  &
-            'CPUTIME :2:anal:mpti:mpt3')
+       if (assAve) then
+          assThis=associated(oneAveBasicFields%cputime)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%cputime, &
+               'CPUTIME :2:anal:mpti:mpt3', &
+               oneAveBasicFields%cputime)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%cputime, &
+               'CPUTIME :2:anal:mpti:mpt3')
+       end if
     end if
   end subroutine InsertBasicFieldsAtVarTable
 end module ModBasicFields
