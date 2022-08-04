@@ -876,10 +876,11 @@ contains
     ! insert Shallow Cumulus at var table
     do ng=1, ngrids
        if (nnshcu(ng)==1) then
+          call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
           call InsertShcuFieldsAtVarTable(&
-               oneGrid%oneShcuFields, oneGrid%oneAveShcuFields, &
-               oneGrid%oneControlVars, oneGrid%oneNamelistFile, &
-               oneGrid%Id)
+               oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+               oneGrid%oneShcuFields, oneGrid%oneAveShcuFields)
+          call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
        end if
     end do
     !--------------------------------------------------------------------------
