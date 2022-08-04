@@ -1127,12 +1127,14 @@ contains
           endif
 
        enddo
+       call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
        do ng=1,ngrids
           do na=1,naddsc ! For CATT
              call filltab_scalar(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
                   scalar_g(na,ng), scalarm_g(na,ng), na)
           end do
        enddo
+       call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
 
 
 
@@ -1562,16 +1564,27 @@ contains
           call zero_extra3d(extra3dm, na_extra3d, ng)
        end if
     end do
+
+    call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
     do ng=1,ngrids
        do na=1,na_extra2d
-          call filltab_extra2d(extra2d(na,ng), extra2dm(na,ng), imean, &
-               nmxp(ng), nmyp(ng), ng, na)
+          call filltab_extra2d(&
+               oneGrid%oneVarTable, &
+               oneGrid%oneVarTableSize, &
+               extra2d(na,ng), &
+               extra2dm(na,ng), &
+               na)
        end do
        do na=1,na_extra3d
-          call filltab_extra3d(extra3d(na,ng), extra3dm(na,ng), imean, &
-               nmzp(ng), nmxp(ng), nmyp(ng), ng, na)
+          call filltab_extra3d(&
+               oneGrid%oneVarTable, &
+               oneGrid%oneVarTableSize, &
+               extra3d(na,ng), &
+               extra3dm(na,ng), &
+               na)
        end do
     end do
+    call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
     !--------------
 
     !--------------

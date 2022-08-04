@@ -10,16 +10,18 @@ module Extras
   integer :: na_extra2d, na_extra3d
 
   type ext2d
-     real, pointer :: d2(:,:)
+     real, pointer, contiguous :: d2(:,:)
   end type ext2d
 
   type ext3d
-     real, pointer :: d3(:,:,:)
+     real, pointer, contiguous :: d3(:,:,:)
   end type ext3d
 
-  type(ext2d), allocatable :: extra2d(:,:), extra2dm(:,:)
-  ! extrad3d(indice,ngrid)
-  type(ext3d), allocatable :: extra3d(:,:), extra3dm(:,:)
+  type(ext2d), allocatable, target :: extra2d(:,:)
+  type(ext2d), allocatable, target :: extra2dm(:,:)
+
+  type(ext3d), allocatable, target :: extra3d(:,:)
+  type(ext3d), allocatable, target :: extra3dm(:,:)
 
 contains
 
@@ -153,56 +155,106 @@ contains
 
   !---------------------------------------------------------------
 
-  subroutine filltab_extra2d(scal2, scalm2, imean, n1, n2, ng, na)
-    use ModVarTables, only: &
-         InsertVtab
-    implicit none
-    include "constants.h"
-    ! Arguments:
-    type (ext2d), intent(IN) :: scal2, scalm2
-    integer, intent(IN) :: imean, n1, n2, ng, na
-    ! Local Variables:
-    integer(kind=i8)  :: npts
-    character (len=7) :: sname
+  subroutine filltab_extra2d(oneVarTable, oneVarTableSize, &
+       scal2, scal2m, na)
 
+    use ModVarTable, only: &
+         VarTable, &
+         InsertAtVarTable
+    
+    implicit none
+    ! Arguments:
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
+    type(ext2d), pointer, intent(in) :: scal2
+    type(ext2d), pointer, intent(in) :: scal2m
+    integer, intent(in) :: na
+
+    ! Local Variables:
+    logical :: assAve
+    logical :: assThis
+    character(len=7) :: sname
+    character(len=*), parameter :: h="**(filltab_extra2d)**"
+
+    if (.not. associated(oneVarTable)) then
+       call fatal_error(h//" oneVarTable not associated")
+    else if (.not. associated(scal2)) then
+       call fatal_error(h//" scal2 not associated")
+    end if
+    
     ! Fill pointers to arrays into variable tables
 
+    assAve=associated(scal2m)
     if (associated(scal2%d2)) then
-       npts = n1*n2
+       if (assAve) then
+          assThis=associated(scal2m%d2)
+       else
+          assThis=.false.
+       end if
        write(sname, '(a2,i3.3)') 'd2', na
-       call InsertVTab(scal2%d2, scalm2%d2,  &
-            ng, npts, imean,  &
-            trim(sname)//' :2:hist:anal:mpti:mpt3') ! Default - Column oriented Proc.
-
+       if (assThis) then
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               scal2%d2, &
+               trim(sname)//' :2:hist:anal:mpti:mpt3', &
+               scal2m%d2)
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               scal2%d2, &
+               trim(sname)//' :2:hist:anal:mpti:mpt3')
+       end if
     endif
-
   end subroutine filltab_extra2d
 
   !---------------------------------------------------------------
-  subroutine filltab_extra3d(scal3, scalm3, imean, n1, n2, n3, ng, na)
-    use ModVarTables, only: &
-         InsertVtab
+  subroutine filltab_extra3d(oneVarTable, oneVarTableSize, &
+       scal3, scal3m, na)
 
+    use ModVarTable, only: &
+         VarTable, &
+         InsertAtVarTable
+    
     implicit none
-    include "constants.h"
-    ! Arguments:
-    type (ext3d), intent(IN) :: scal3, scalm3
-    integer, intent(IN) :: imean, n1, n2, n3, ng, na
-    ! Local Variables:
-    integer(kind=i8)  :: npts
-    character (len=7) :: sname
 
+    ! Arguments:
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
+    type(ext3d), pointer, intent(in) :: scal3
+    type(ext3d), pointer, intent(in) :: scal3m
+    integer, intent(in) :: na
+
+    ! Local Variables:
+    logical :: assAve
+    logical :: assThis
+    character(len=7) :: sname
+    character(len=*), parameter :: h="**(filltab_extra3d)**"
+
+    if (.not. associated(oneVarTable)) then
+       call fatal_error(h//" oneVarTable not associated")
+    else if (.not. associated(scal3)) then
+       call fatal_error(h//" scal3 not associated")
+    end if
+    
     ! Fill pointers to arrays into variable tables
 
+    assAve=associated(scal3m)
     if (associated(scal3%d3)) then
-       npts = n1*n2*n3
+       if (assAve) then
+          assThis=associated(scal3m%d3)
+       else
+          assThis=.false.
+       end if
        write(sname, '(a2,i3.3)') 'd3', na
-       call InsertVTab(scal3%d3, scalm3%d3,  &
-            ng, npts, imean,  &
-            trim(sname)//' :3:hist:anal:mpti:mpt3') ! Default - Column oriented Proc.
-
+       if (assThis) then
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               scal3%d3, &
+               trim(sname)//' :3:hist:anal:mpti:mpt3', &
+               scal3m%d3)
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               scal3%d3, &
+               trim(sname)//' :3:hist:anal:mpti:mpt3')
+       end if
     endif
-
   end subroutine filltab_extra3d
 
   !-----------------------------------------------------------------
