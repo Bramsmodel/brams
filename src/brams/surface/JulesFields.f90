@@ -23,8 +23,9 @@ module ModJulesFields
   use ModNodeDimensions, only: &
        NodeDimensions
 
-  use ModVarTables, only: &
-       InsertVTab
+  use ModVarTable, only: &
+       VarTable, &
+       InsertAtVarTable
   
   implicit none
 
@@ -415,35 +416,29 @@ contains
   
 
 
-  subroutine InsertJulesFieldsAtVarTable(oneJulesFields, oneAveJulesFields, &
-       oneNamelistFile, gridId)
+  subroutine InsertJulesFieldsAtVarTable(oneVarTable, oneVarTableSize, &
+       oneJulesFields, oneAveJulesFields, oneNamelistFile)
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
     type(JulesFields), pointer, intent(in) :: oneJulesFields
     type(JulesFields), pointer, intent(in) :: oneAveJulesFields
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
-    integer, intent(in) :: gridId
 
-    integer :: imean
-    integer(kind=int64) :: nptsXY
-    integer(kind=int64) :: nptsXYZ
-    integer(kind=int64) :: nptsXYP
+    logical :: assAve
+    logical :: assThis
     character(len=8) :: str_recycle
     character(len=*), parameter :: h="**(InsertJulesFieldsAtVarTable)**" 
 
     if (.not. associated(oneJulesFields)) then
        call fatal_error(h//" oneJulesFields not associated")
-    else if (.not. associated(oneAveJulesFields)) then
-       call fatal_error(h//" oneAveJulesFields not associated")
+    else if (.not. associated(oneVarTable)) then
+       call fatal_error(h//" oneVarTable not associated")
     else if (.not. associated(oneNamelistFile)) then
        call fatal_error(h//" oneNamelistFile not associated")
     end if
 
-    ! Should average fields be stored at variable tables?
 
-    if (oneNamelistFile%avgtim == 0) then
-       imean=0 ! do not store
-    else
-       imean=1 ! store
-    end if
+    assAve=associated(oneAveJulesFields)
 
     if (oneNamelistFile%ipastin == 1) then
        str_recycle = ':recycle'
@@ -453,88 +448,423 @@ contains
 
     ! Fill pointers to arrays into variable tables
 
-    nptsXY=int(size(oneJulesFields%gpp,1),int64)* &
-         int(size(oneJulesFields%gpp,2),int64)
+    if (associated(oneJulesFields%gpp)) then
+       if (assAve) then
+          assThis=associated(oneAveJulesFields%gpp)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%gpp, &
+               'GPP :2:anal:mpti:mpt3', &  
+               oneAveJulesFields%gpp)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%gpp, &
+               'GPP :2:anal:mpti:mpt3')
+       end if
+    end if
+          
 
-    call InsertVTab (oneJulesFields%gpp,oneAveJulesFields%gpp  &           
-         ,gridId, nptsXY, imean, 'GPP :2:anal:mpti:mpt3')  
-	 
-    call InsertVTab (oneJulesFields%resp_s,oneAveJulesFields%resp_s  &    
-         ,gridId, nptsXY, imean, 'RESP_S :2:anal:mpti:mpt3') 
-	 
-    call InsertVTab (oneJulesFields%resp_p,oneAveJulesFields%resp_p  &     
-         ,gridId, nptsXY, imean, 'RESP_P :2:anal:mpti:mpt3') 
-	 
-    call InsertVTab (oneJulesFields%npp,oneAveJulesFields%npp  &           
-         ,gridId, nptsXY, imean, 'NPP :2:anal:mpti:mpt3')    
+    if (associated(oneJulesFields%resp_s)) then
+       if (assAve) then
+          assThis=associated(oneAveJulesFields%resp_s)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%resp_s, &
+               'RESP_S :2:anal:mpti:mpt3', & 
+               oneAveJulesFields%resp_s)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%resp_s, &
+               'RESP_S :2:anal:mpti:mpt3')
+       end if
+    end if
+          
 
-    call InsertVTab (oneJulesFields%u10mj,oneAveJulesFields%u10mj  &
-         ,gridId, nptsXY, imean, 'U10MJ :2:anal:mpti:mpt3')
+    if (associated(oneJulesFields%resp_p)) then
+       if (assAve) then
+          assThis=associated(oneAveJulesFields%resp_p)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%resp_p, &
+               'RESP_P :2:anal:mpti:mpt3', & 
+               oneAveJulesFields%resp_p)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%resp_p, &
+               'RESP_P :2:anal:mpti:mpt3')
+       end if
+    end if
+          
 
-    call InsertVTab (oneJulesFields%v10mj,oneAveJulesFields%v10mj  &
-         ,gridId, nptsXY, imean, 'V10MJ :2:anal:mpti:mpt3')
+    if (associated(oneJulesFields%npp)) then
+       if (assAve) then
+          assThis=associated(oneAveJulesFields%npp)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%npp, &
+               'NPP :2:anal:mpti:mpt3', &    
+               oneAveJulesFields%npp)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%npp, &
+               'NPP :2:anal:mpti:mpt3')
+       end if
+    end if
+          
 
-    call InsertVTab (oneJulesFields%t2mj,oneAveJulesFields%t2mj  &
-         ,gridId, nptsXY, imean, 'T2MJ :2:anal:mpti:mpt3')
+    if (associated(oneJulesFields%u10mj)) then
+       if (assAve) then
+          assThis=associated(oneAveJulesFields%u10mj)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%u10mj, &
+               'U10MJ :2:anal:mpti:mpt3', &
+               oneAveJulesFields%u10mj)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%u10mj, &
+               'U10MJ :2:anal:mpti:mpt3')
+       end if
+    end if
+          
 
-    call InsertVTab (oneJulesFields%t2mj_max,oneAveJulesFields%t2mj_max  &
-         ,gridId, nptsXY, imean, 'T2MJ_MAX :2:anal:mpti:mpt3')
+    if (associated(oneJulesFields%v10mj)) then
+       if (assAve) then
+          assThis=associated(oneAveJulesFields%v10mj)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%v10mj, &
+               'V10MJ :2:anal:mpti:mpt3', &
+               oneAveJulesFields%v10mj)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%v10mj, &
+               'V10MJ :2:anal:mpti:mpt3')
+       end if
+    end if
+          
 
-    call InsertVTab (oneJulesFields%t2mj_min,oneAveJulesFields%t2mj_min  &
-         ,gridId, nptsXY, imean, 'T2MJ_MIN :2:anal:mpti:mpt3')
+    if (associated(oneJulesFields%t2mj)) then
+       if (assAve) then
+          assThis=associated(oneAveJulesFields%t2mj)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%t2mj, &
+               'T2MJ :2:anal:mpti:mpt3', &
+               oneAveJulesFields%t2mj)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%t2mj, &
+               'T2MJ :2:anal:mpti:mpt3')
+       end if
+    end if
+          
 
-    call InsertVTab (oneJulesFields%rv2mj,oneAveJulesFields%rv2mj  &
-         ,gridId, nptsXY, imean, 'RV2MJ :2:anal:mpti:mpt3')
+    if (associated(oneJulesFields%t2mj_max)) then
+       if (assAve) then
+          assThis=associated(oneAveJulesFields%t2mj_max)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%t2mj_max, &
+               'T2MJ_MAX :2:anal:mpti:mpt3', &
+               oneAveJulesFields%t2mj_max)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%t2mj_max, &
+               'T2MJ_MAX :2:anal:mpti:mpt3')
+       end if
+    end if
+          
 
-    call InsertVTab (oneJulesFields%csj,oneAveJulesFields%csj  &
-         ,gridId, nptsXY, imean, 'CSJ :2:anal:mpti:mpt3')
+    if (associated(oneJulesFields%t2mj_min)) then
+       if (assAve) then
+          assThis=associated(oneAveJulesFields%t2mj_min)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%t2mj_min, &
+               'T2MJ_MIN :2:anal:mpti:mpt3', &
+               oneAveJulesFields%t2mj_min)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%t2mj_min, &
+               'T2MJ_MIN :2:anal:mpti:mpt3')
+       end if
+    end if
+          
 
-    call InsertVTab (oneJulesFields%ht_fluxj,oneAveJulesFields%ht_fluxj  &
-         ,gridId, nptsXY, imean, 'ht_fluxj :2:anal:mpti:mpt3')
+    if (associated(oneJulesFields%rv2mj)) then
+       if (assAve) then
+          assThis=associated(oneAveJulesFields%rv2mj)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%rv2mj, &
+               'RV2MJ :2:anal:mpti:mpt3', &
+               oneAveJulesFields%rv2mj)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%rv2mj, &
+               'RV2MJ :2:anal:mpti:mpt3')
+       end if
+    end if
+          
 
-    call InsertVTab (oneJulesFields%temp_surfj,oneAveJulesFields%temp_surfj  &
-         ,gridId, nptsXY, imean, 'temp_surfj :2:anal:mpti:mpt3')
+    if (associated(oneJulesFields%csj)) then
+       if (assAve) then
+          assThis=associated(oneAveJulesFields%csj)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%csj, &
+               'CSJ :2:anal:mpti:mpt3', &
+               oneAveJulesFields%csj)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%csj, &
+               'CSJ :2:anal:mpti:mpt3')
+       end if
+    end if
+          
 
-    nptsXYZ=int(size(oneJulesFields%u10mj1hr,1),int64)* &
-         int(size(oneJulesFields%u10mj1hr,2),int64)* &
-         int(size(oneJulesFields%u10mj1hr,3),int64)
+    if (associated(oneJulesFields%ht_fluxj)) then
+       if (assAve) then
+          assThis=associated(oneAveJulesFields%ht_fluxj)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%ht_fluxj, &
+               'ht_fluxj :2:anal:mpti:mpt3', &
+               oneAveJulesFields%ht_fluxj)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%ht_fluxj, &
+               'ht_fluxj :2:anal:mpti:mpt3')
+       end if
+    end if
+          
 
-    call InsertVTab (oneJulesFields%u10mj1hr,oneAveJulesFields%u10mj1hr  &
-         ,gridId, nptsXYZ, imean, 'U10MJ1hr :3:hist:anal:mpti:mpt3:mpt2')
+    if (associated(oneJulesFields%temp_surfj)) then
+       if (assAve) then
+          assThis=associated(oneAveJulesFields%temp_surfj)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%temp_surfj, &
+               'temp_surfj :2:anal:mpti:mpt3', &
+               oneAveJulesFields%temp_surfj)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%temp_surfj, &
+               'temp_surfj :2:anal:mpti:mpt3')
+       end if
+    end if
+          
 
-    call InsertVTab (oneJulesFields%v10mj1hr,oneAveJulesFields%v10mj1hr  &
-         ,gridId, nptsXYZ, imean, 'V10MJ1hr :3:hist:anal:mpti:mpt3:mpt2')
+    if (associated(oneJulesFields%u10mj1hr)) then
+       if (assAve) then
+          assThis=associated(oneAveJulesFields%u10mj1hr)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%u10mj1hr, &
+               'U10MJ1hr :3:hist:anal:mpti:mpt3:mpt2', &
+               oneAveJulesFields%u10mj1hr)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%u10mj1hr, &
+               'U10MJ1hr :3:hist:anal:mpti:mpt3:mpt2')
+       end if
+    end if
+          
 
-    call InsertVTab (oneJulesFields%fracj,oneAveJulesFields%fracj  &
-         ,gridId, nptsXYZ, imean, 'fracj :3:hist:anal:mpti:mpt3:mpt2')
+    if (associated(oneJulesFields%v10mj1hr)) then
+       if (assAve) then
+          assThis=associated(oneAveJulesFields%v10mj1hr)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%v10mj1hr, &
+               'V10MJ1hr :3:hist:anal:mpti:mpt3:mpt2', &
+               oneAveJulesFields%v10mj1hr)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%v10mj1hr, &
+               'V10MJ1hr :3:hist:anal:mpti:mpt3:mpt2')
+       end if
+    end if
+          
 
-    nptsXYP=int(size(oneJulesFields%anthrop_heatj,1),int64)* &
-         int(size(oneJulesFields%anthrop_heatj,2),int64)* &
-         int(size(oneJulesFields%anthrop_heatj,3),int64)
+    if (associated(oneJulesFields%fracj)) then
+       if (assAve) then
+          assThis=associated(oneAveJulesFields%fracj)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%fracj, &
+               'fracj :3:hist:anal:mpti:mpt3:mpt2', &
+               oneAveJulesFields%fracj)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%fracj, &
+               'fracj :3:hist:anal:mpti:mpt3:mpt2')
+       end if
+    end if
+          
 
-    call InsertVTab (oneJulesFields%anthrop_heatj,oneAveJulesFields%anthrop_heatj  &
-         ,gridId, nptsXYP, imean,  &
-         'anthrop_heatj :6:hist:anal:mpti:mpt3'//trim(str_recycle))
+    if (associated(oneJulesFields%anthrop_heatj)) then
+       if (assAve) then
+          assThis=associated(oneAveJulesFields%anthrop_heatj)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%anthrop_heatj, &
+               'anthrop_heatj :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+               oneAveJulesFields%anthrop_heatj)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%anthrop_heatj, &
+               'anthrop_heatj :6:hist:anal:mpti:mpt3'//trim(str_recycle))
+       end if
+    end if
+          
 
-    call InsertVTab (oneJulesFields%radnet_tilej,oneAveJulesFields%radnet_tilej  &
-         ,gridId, nptsXYP, imean,  &
-         'radnet_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle))
+    if (associated(oneJulesFields%radnet_tilej)) then
+       if (assAve) then
+          assThis=associated(oneAveJulesFields%radnet_tilej)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%radnet_tilej, &
+               'radnet_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+               oneAveJulesFields%radnet_tilej)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%radnet_tilej, &
+               'radnet_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle))
+       end if
+    end if
+          
 
-    call InsertVTab (oneJulesFields%ftl_tilej,oneAveJulesFields%ftl_tilej  &
-         ,gridId, nptsXYP, imean,  &
-         'ftl_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle))
+    if (associated(oneJulesFields%ftl_tilej)) then
+       if (assAve) then
+          assThis=associated(oneAveJulesFields%ftl_tilej)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%ftl_tilej, &
+               'ftl_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+               oneAveJulesFields%ftl_tilej)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%ftl_tilej, &
+               'ftl_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle))
+       end if
+    end if
+          
 
-    call InsertVTab (oneJulesFields%le_tilej,oneAveJulesFields%le_tilej  &
-         ,gridId, nptsXYP, imean,  &
-         'le_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle))
+    if (associated(oneJulesFields%le_tilej)) then
+       if (assAve) then
+          assThis=associated(oneAveJulesFields%le_tilej)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%le_tilej, &
+               'le_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+               oneAveJulesFields%le_tilej)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%le_tilej, &
+               'le_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle))
+       end if
+    end if
+          
 
-    call InsertVTab (oneJulesFields%htf_tilej,oneAveJulesFields%htf_tilej  &
-         ,gridId, nptsXYP, imean,  &
-         'htf_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle))
+    if (associated(oneJulesFields%htf_tilej)) then
+       if (assAve) then
+          assThis=associated(oneAveJulesFields%htf_tilej)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%htf_tilej, &
+               'htf_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+               oneAveJulesFields%htf_tilej)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%htf_tilej, &
+               'htf_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle))
+       end if
+    end if
+          
 
-    call InsertVTab (oneJulesFields%snowdepthj,oneAveJulesFields%snowdepthj  &
-         ,gridId, nptsXYP, imean,  &
-         'snowdepthj :6:hist:anal:mpti:mpt3'//trim(str_recycle))
+    if (associated(oneJulesFields%snowdepthj)) then
+       if (assAve) then
+          assThis=associated(oneAveJulesFields%snowdepthj)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%snowdepthj, &
+               'snowdepthj :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+               oneAveJulesFields%snowdepthj)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               oneJulesFields%snowdepthj, &
+               'snowdepthj :6:hist:anal:mpti:mpt3'//trim(str_recycle))
+       end if
+    end if
+          
 
   end subroutine InsertJulesFieldsAtVarTable
 

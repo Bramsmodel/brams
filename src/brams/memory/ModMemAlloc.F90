@@ -596,11 +596,14 @@ contains
     !
 #ifdef JULES
     ! insert Jules Fields variables at var_table
+    call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
     call InsertJulesFieldsAtVarTable(&
+         oneGrid%oneVarTable, &
+         oneGrid%oneVarTableSize, &
          oneGrid%oneJulesFields, &
          oneGrid%oneAveJulesFields, &
-         oneGrid%oneNamelistFile, &
-         oneGrid%Id)
+         oneGrid%oneNamelistFile)
+    call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
 #endif
     !-------------
 
