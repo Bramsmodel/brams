@@ -1302,8 +1302,10 @@ contains
                    call alloc_aer1_inorg(aer1m_inorg_g(:,ng),1,1,1,ninorg)
                 endif
 
-                call filltab_aer1_inorg(aer1_inorg_g(:,ng),aer1m_inorg_g(:,ng) &
-                     ,imean,nmzp(ng),nmxp(ng),nmyp(ng),ninorg,ng)
+                call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
+                call filltab_aer1_inorg(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+                     aer1_inorg_g(:,ng),aer1m_inorg_g(:,ng))
+                call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
 
              enddo
 

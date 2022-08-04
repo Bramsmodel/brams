@@ -995,23 +995,27 @@ contains
 
   !---------------------------------------------------------------
 
-  subroutine filltab_aer1_inorg(aer1,aer1m,imean,n1,n2,n3,ninorg,ng)
+  subroutine filltab_aer1_inorg(oneVarTable, oneVarTableSize, &
+       aer1, aer1m)
 
     use aer1_list, only : inorg_alloc,inorg_name, src, ddp, wdp, fdda, offline, on ,off 
 
-    use ModVarTables, only: InsertVTab
+    use ModVarTable, only: &
+         VarTable, &
+         InsertAtVarTable
 
     use io_params, only : ioutput         ! INTENT(IN)
 
     implicit none
-
-    integer, intent(in) :: imean,n1,n2,n3,ninorg,ng
-    type (aer1_vars)    ,dimension(ninorg) :: aer1,aer1m
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
+    type(aer1_vars), pointer, intent(in) :: aer1(:)
+    type(aer1_vars), pointer, intent(in) :: aer1m(:)
 
 
     integer :: ispc,imode
-    integer(kind=i8) :: npts
-
+    logical :: assAve
+    logical :: assThis
     character(len=8) :: str_recycle
     character(len=1) :: str_src_dim
 
@@ -1020,72 +1024,124 @@ contains
        str_recycle = ':recycle'
     endif
 
+    assAve=associated(aer1m)
+
     !- Fill pointers to arrays into variable tables
-    do ispc=1,ninorg
-       !  write (77,fmt='(A,I1.1,1X,1X,A)') 'aeri: ',ispc,inorg_name(ispc)
+    do ispc = 1, size(aer1)
 
        if (associated(aer1(ispc)%sc_p)) then
-          npts = n1 * n2 * n3
 
           !---- tracer mixing ratio (dimension 3d)
-          call InsertVTab(aer1(ispc)%sc_p,aer1m(ispc)%sc_p,  &
-               ng, npts, imean,                                          &
-               trim(inorg_name(ispc))             &
-               //'P :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle))
-
+          if (assAve) then
+             assThis=associated(aer1m(ispc)%sc_p)
+          else
+             assThis=.false.
+          end if
+          if (assThis) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  aer1(ispc)%sc_p, &
+                  trim(inorg_name(ispc))//'P :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle), &
+                  aer1m(ispc)%sc_p)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  aer1(ispc)%sc_p, &
+                  trim(inorg_name(ispc))//'P :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle))
+          end if
+          
           !---- sources (3 and 2 dimension)
-          !- old way
-          ! npts=n1*n2*n3
-          ! if(spc_alloc(1,ispc) == 1) &
-          ! call vtables2 (aer1(ispc)%sc_s(1,1,1),aer1m(ispc)%sc_s(1,1,1)  &
-          ! ,ng, npts, imean, trim(spc_name(ispc))//'S :3:hist:anal:mpti:mpt3:mpt1')
-          !- new way
           if(inorg_alloc(src,ispc) == on) then
-
-
-             npts= n1 * n2 * n3
              str_src_dim = '3'  ! for 3d sources
-
-             call InsertVTab(aer1(ispc)%sc_src,                       &
-                  aer1m(ispc)%sc_src,                      &
-                  ng, npts, imean,                               &
-                  trim(inorg_name(ispc))// &
-                  '_SRC :'//trim(str_src_dim)//':hist:anal:mpti:mpt3:mpt1')
-
-             !print*,'src alloc=', trim(spc_name(ispc))//'_'//trim(src_name(isrc)),' npts=',npts
+             if (assAve) then
+                assThis=associated(aer1m(ispc)%sc_src)
+             else
+                assThis=.false.
+             end if
+             if (assThis) then
+                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                     aer1(ispc)%sc_src, &
+                     trim(inorg_name(ispc))//'_SRC :'//trim(str_src_dim)//':hist:anal:mpti:mpt3:mpt1', &
+                     aer1m(ispc)%sc_src)
+             else
+                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                     aer1(ispc)%sc_src, &
+                     trim(inorg_name(ispc))//'_SRC :'//trim(str_src_dim)//':hist:anal:mpti:mpt3:mpt1')
+             end if
           endif
 
           !---- dry and wet deposition (dimension 2d)
-          npts = n2 * n3
-          if(inorg_alloc(ddp,ispc) == on) &
-               
-               call InsertVTab(aer1(ispc)%sc_dd,aer1m(ispc)%sc_dd, &
-               ng, npts, imean,                                &
-               trim(inorg_name(ispc))//'DD :2:hist:anal:mpti:mpt3')
-          npts = n2 * n3
-          if(inorg_alloc(wdp,ispc) == on) &
-               
-               call InsertVTab(aer1(ispc)%sc_wd,aer1m(ispc)%sc_wd,  &
-               ng, npts, imean,                                 &
-               trim(inorg_name(ispc))//'WD :2:hist:anal:mpti:mpt3')
+          if(inorg_alloc(ddp,ispc) == on) then
+             if (assAve) then
+                assThis=associated(aer1m(ispc)%sc_dd)
+             else
+                assThis=.false.
+             end if
+             if (assThis) then
+                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                     aer1(ispc)%sc_dd, &
+                     trim(inorg_name(ispc))//'DD :2:hist:anal:mpti:mpt3', &
+                     aer1m(ispc)%sc_dd)
+             else
+                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                     aer1(ispc)%sc_dd, &
+                     trim(inorg_name(ispc))//'DD :2:hist:anal:mpti:mpt3')
+             end if
+          end if
+
+          if(inorg_alloc(wdp,ispc) == on) then
+             if (assAve) then
+                assThis=associated(aer1m(ispc)%sc_wd)
+             else
+                assThis=.false.
+             end if
+             if (assThis) then
+                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                     aer1(ispc)%sc_wd, &
+                     trim(inorg_name(ispc))//'WD :2:hist:anal:mpti:mpt3', &
+                     aer1m(ispc)%sc_wd)
+             else
+                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                     aer1(ispc)%sc_wd, &
+                     trim(inorg_name(ispc))//'WD :2:hist:anal:mpti:mpt3')
+             end if
+          end if
 
           !----  data assimilation (dimension 3d)
           if(chem_assim == on) then
-             npts = n1 * n2 * n3
              if(inorg_alloc(fdda,ispc) == on) then
-
-                call InsertVTab(aer1(ispc)%sc_pp,aer1m(ispc)%sc_pp, &
-                     ng, npts, imean,                                &
-                     trim(inorg_name(ispc))//'PP :3:mpti')
-                call InsertVTab(aer1(ispc)%sc_pf,aer1m(ispc)%sc_pf, &
-                     ng, npts, imean,                                &
-                     trim(inorg_name(ispc))//'PF :3:mpti')
-             endif
-          endif
-
-       endif
-
-    enddo
+                if (assAve) then
+                   assThis=associated(aer1m(ispc)%sc_pp)
+                else
+                   assThis=.false.
+                end if
+                if (assThis) then
+                   call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                        aer1(ispc)%sc_pp, &
+                        trim(inorg_name(ispc))//'PP :3:mpti', &
+                        aer1m(ispc)%sc_pp)
+                else
+                   call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                        aer1(ispc)%sc_pp, &
+                        trim(inorg_name(ispc))//'PP :3:mpti')
+                end if
+                if (assAve) then
+                   assThis=associated(aer1m(ispc)%sc_pf)
+                else
+                   assThis=.false.
+                end if
+                if (assThis) then
+                   call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                        aer1(ispc)%sc_pf, &
+                        trim(inorg_name(ispc))//'PF :3:mpti', &
+                        aer1m(ispc)%sc_pf)
+                else
+                   call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                        aer1(ispc)%sc_pf, &
+                        trim(inorg_name(ispc))//'PF :3:mpti')
+                end if
+             end if
+          end if
+       end if
+    end do
   end subroutine filltab_aer1_inorg
 
 
