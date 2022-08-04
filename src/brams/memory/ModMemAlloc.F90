@@ -1125,8 +1125,8 @@ contains
        enddo
        do ng=1,ngrids
           do na=1,naddsc ! For CATT
-             call filltab_scalar(scalar_g(na,ng), scalarm_g(na,ng), imean,  &
-                  nmzp(ng), nmxp(ng), nmyp(ng), ng, na)
+             call filltab_scalar(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+                  scalar_g(na,ng), scalarm_g(na,ng), na)
           end do
        enddo
 
@@ -1756,7 +1756,7 @@ contains
        endif
     endif
 
-    if(allocated(scalar_g)) then
+    if(associated(scalar_g)) then
        do ng=1,ngrids
           call dealloc_scalar(scalar_g(:,ng),naddsc)
        enddo

@@ -23,8 +23,8 @@ module mem_scalar
 
   ! scal_p allocated by (maxsclr,ngrids)
 
-  type (scalar_vars), allocatable :: scalar_g(:,:)
-  type (scalar_vars), allocatable :: scalarm_g(:,:)
+  type (scalar_vars), pointer :: scalar_g(:,:)
+  type (scalar_vars), pointer :: scalarm_g(:,:)
 
   integer :: recycle_tracers ! from RAMSIN
 
@@ -111,55 +111,118 @@ contains
 
   !---------------------------------------------------------------
 
-  subroutine filltab_scalar(scal,scalm,imean,n1,n2,n3,ng,na)
-    use ModVarTables, only: InsertVTab
-        use io_params, only : ioutput         ! INTENT(IN)
+  subroutine filltab_scalar(oneVarTable, oneVarTableSize, &
+       scal, scalm, na)
+
+    use ModVarTable, only: &
+         VarTable, &
+         InsertAtVarTable
+    
+    use io_params, only : ioutput         ! INTENT(IN)
+
     implicit none
-    include "constants.h"
-    type (scalar_vars) :: scal,scalm
-    integer, intent(in) :: imean,n1,n2,n3,ng,na
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
+    type(scalar_vars), pointer, intent(in) :: scal
+    type(scalar_vars), pointer, intent(in) :: scalm
+    integer, intent(in) :: na
 
-    integer(kind=i8) :: npts  !,nsc,nptg
-    character (len=15) :: sname
-
-    ! ALF
+    logical :: assAve
+    logical :: assThis
+    character(len=15) :: sname
     character(len=8) :: str_recycle
+    character(len=*), parameter :: h="**(filltab_scalar)**" 
 
-    ! ALF
+    if (.not. associated(oneVarTable)) then
+       call fatal_error(h//" oneVarTable not associated")
+    else if (.not. associated(scal)) then
+       call fatal_error(h//" scal not associated")
+    end if
+    
     str_recycle = ''
     if (RECYCLE_TRACERS == 1 .or. ioutput == 5) then
        str_recycle = ':recycle'
     endif
 
+    assAve=associated(scalm)
+    
     ! Fill pointers to arrays into variable tables
 
     if (associated(scal%sclp)) then
-       npts=n1*n2*n3
-
        write(sname,'(a4,i3.3)') 'SCLP',na
-       call InsertVTab (scal%sclp,scalm%sclp  &
-            ,ng, npts, imean,  &
-            trim(sname)//' :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle))
-
-       npts=n2*n3
-
+       if (assAve) then
+          assThis=associated(scalm%sclp)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               scal%sclp, &
+               trim(sname)//' :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle), &
+               scalm%sclp)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               scal%sclp, &
+               trim(sname)//' :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle))
+       end if
+    end if
+    
+    if (associated(scal%drydep)) then
        write(sname,'(a4,i3.3)') 'SCDD',na
-       call InsertVTab (scal%drydep,scalm%drydep  &
-            ,ng, npts, imean,  &
-            trim(sname)//' :2:hist:anal:mpti:mpt3:mpt1')
-
+       if (assAve) then
+          assThis=associated(scalm%drydep)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               scal%drydep, &
+               trim(sname)//' :2:hist:anal:mpti:mpt3:mpt1', &
+               scalm%drydep)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               scal%drydep, &
+               trim(sname)//' :2:hist:anal:mpti:mpt3:mpt1')
+       end if
+    end if
+    
+    if (associated(scal%wetdep)) then
        write(sname,'(a6,i3.3)') 'wetdep',na
-       call InsertVTab (scal%wetdep,scalm%wetdep  &
-            ,ng, npts, imean,  &
-            trim(sname)//' :2:hist:anal:mpti:mpt3:mpt1')
-
-       npts=n1*n2*n3
-
+       if (assAve) then
+          assThis=associated(scalm%wetdep)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               scal%wetdep, &
+               trim(sname)//' :2:hist:anal:mpti:mpt3:mpt1', &
+               scalm%wetdep)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               scal%wetdep, &
+               trim(sname)//' :2:hist:anal:mpti:mpt3:mpt1')
+       end if
+    end if
+    
+    if (associated(scal%srcsc)) then
        write(sname,'(a5,i3.3)') 'scrsc',na
-       call InsertVTab (scal%srcsc,scalm%srcsc  &
-            ,ng, npts, imean,  &
-            trim(sname)//' :3:hist:anal:mpti:mpt3:mpt1')
-    endif
+       if (assAve) then
+          assThis=associated(scalm%srcsc)
+       else
+          assThis=.false.
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               scal%srcsc, &
+               trim(sname)//' :3:hist:anal:mpti:mpt3:mpt1', &
+               scalm%srcsc)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               scal%srcsc, &
+               trim(sname)//' :3:hist:anal:mpti:mpt3:mpt1')
+       endif
+    end if
 
   end subroutine filltab_scalar
 
