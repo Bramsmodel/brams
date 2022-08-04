@@ -1615,8 +1615,13 @@ contains
                 call alloc_teb(tebm_g(ng),        1,        1,        1, ng)
              endif
 
-             call filltab_teb(teb_g(ng), tebm_g(ng), imean,  &
-                  nmzp(ng), nmxp(ng), nmyp(ng), ng)
+             call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
+             call filltab_teb(&
+                  oneGrid%oneVarTable, &
+                  oneGrid%oneVarTableSize, &
+                  teb_g(ng), &
+                  tebm_g(ng))
+             call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
           enddo
        endif
     endif
