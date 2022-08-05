@@ -1405,8 +1405,10 @@ contains
                 call alloc_volc_chem1(volc_meanm_g(ng),1,1,1)
              endif
 
-             call filltab_volc_chem1(volc_mean_g(ng),volc_meanm_g(ng)&
-                  ,imean,nmzp(ng),nmxp(ng),nmyp(ng),ng)
+             call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
+             call filltab_volc_chem1(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+                  volc_mean_g(ng), volc_meanm_g(ng))
+             call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
           enddo
        endif
        !- end of volcanoes section ---
