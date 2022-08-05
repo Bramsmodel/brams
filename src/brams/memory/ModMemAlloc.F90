@@ -933,11 +933,13 @@ contains
 
           endif
 
-          call filltab_cuforc_sh(cuforc_sh_g(ng),cuforcm_sh_g(ng),imean  &
-               ,nmzp(ng),nmxp(ng),nmyp(ng),ng)
+          call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
+          call filltab_cuforc_sh(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+               cuforc_sh_g(ng), cuforcm_sh_g(ng))
 
-          call filltab_cuforc   (cuforc_g(ng),cuforcm_g(ng),imean  &
-               ,nmzp(ng),nmxp(ng),nmyp(ng),ng)
+          call filltab_cuforc(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+               cuforc_g(ng), cuforcm_g(ng))
+          call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
        enddo
     endif
 
@@ -968,8 +970,8 @@ contains
 
              endif
 
-             call filltab_grell_sh(grell_g_sh(ng),grellm_g_sh(ng),imean  &
-                  ,nmzp(ng),nmxp(ng),nmyp(ng),ng)
+             call filltab_grell_sh(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+                  grell_g_sh(ng), grellm_g_sh(ng), nnshcu(ng))
           endif
        enddo
     endif
@@ -1001,8 +1003,8 @@ contains
                 call alloc_grell(grellm_g(ng),1,1,1,ng)
              endif
 
-             call filltab_grell(grell_g(ng),grellm_g(ng),imean  &
-                  ,nmzp(ng),nmxp(ng),nmyp(ng),ng)
+             call filltab_grell(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+                  grell_g(ng), grellm_g(ng), nnqparm(ng))
              ng_cp = ng_cp + 1
           endif
        enddo
@@ -1145,11 +1147,6 @@ contains
           end do
        enddo
        call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
-
-
-
-
-
     endif
     !-------------
 
