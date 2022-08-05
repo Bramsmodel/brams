@@ -638,8 +638,13 @@ contains
           elseif (imean==0) then
              call alloc_turb_s(turbm_s(ng), 1,1,1, ng)
           endif
-          call filltab_turb_s(turb_s(ng), turbm_s(ng), imean,  &
-               nmzp(ng), nmxp(ng), nmyp(ng), ng)
+          call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
+          call filltab_turb_s(&
+               oneGrid%oneVarTable, &
+               oneGrid%oneVarTableSize, &
+               turb_s(ng), &
+               turbm_s(ng))
+          call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
        enddo
     endif
     !-------------

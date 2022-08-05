@@ -13,13 +13,11 @@ module mem_turb_scalar
   implicit none
 
   type turb_s_vars
-
-     real, pointer, dimension(:,:,:) :: &
-          hksc
-
+     real, pointer, contiguous ::  hksc(:,:,:) => null()
   end type turb_s_vars
 
-  type (turb_s_vars), allocatable :: turb_s(:),turbm_s(:)
+  type (turb_s_vars), allocatable, target :: turb_s(:)
+  type (turb_s_vars), allocatable, target :: turbm_s(:)
 
 
 contains
@@ -73,24 +71,47 @@ contains
 
   !---------------------------------------------------------------
 
-  subroutine filltab_turb_s(turb_s,turbm_s,imean,n1,n2,n3,ng)
-    use ModVarTables, only: InsertVTab
-    implicit none
-    include "constants.h"
-    type (turb_s_vars) :: turb_s,turbm_s
-    integer, intent(in) :: n1,n2,n3,ng,imean
-    integer(kind=i8) :: npts
+  subroutine filltab_turb_s(oneVarTable, oneVarTableSize, &
+       turb_s, turbm_s)
 
+    use ModVarTable, only: &
+         VarTable, &
+         InsertAtVarTable
+    
+    implicit none
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
+    type(turb_s_vars), pointer, intent(in) :: turb_s
+    type(turb_s_vars), pointer, intent(in) :: turbm_s
+
+    logical :: assThis
+    character(len=*), parameter :: h="**(filltab_turb_s)**"
+
+    if (.not. associated(oneVarTable)) then
+       call fatal_error(h//" oneVarTable not associated")
+    else if (.not. associated(turb_s)) then
+       call fatal_error(h//" turb_s not associated")
+    end if
+    
     ! Fill pointers to arrays into variable tables
 
-    npts=n1*n2*n3
-
-    if (associated(turb_s%hksc))  &
-         call InsertVTab (turb_s%hksc,turbm_s%hksc  &
-         ,ng, npts, imean,  &
-         'HKSC :3:hist:anal:mpti:mpt3:mpt1')
-
-    return
+    if (associated(turb_s%hksc)) then
+       if (.not. associated(turbm_s)) then
+          assThis=.false.
+       else
+          assThis=associated(turbm_s%hksc)
+       end if
+       if (assThis) then
+          call InsertAtVarTable (OneVarTable, oneVarTableSize, &
+               turb_s%hksc, &
+               'HKSC :3:hist:anal:mpti:mpt3:mpt1', &
+               turbm_s%hksc)
+       else
+          call InsertAtVarTable (OneVarTable, oneVarTableSize, &
+               turb_s%hksc, &
+               'HKSC :3:hist:anal:mpti:mpt3:mpt1')
+       end if
+    end if
   end subroutine filltab_turb_s
 
 end module mem_turb_scalar
