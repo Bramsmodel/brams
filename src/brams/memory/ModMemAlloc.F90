@@ -771,7 +771,10 @@ contains
           call nullify_aotMap(carma_aotMapm,ng)
           call alloc_aotMap(carma_aotMap(ng),nmxp(ng), nmyp(ng))
           call alloc_aotMap(carma_aotMapm(ng),nmxp(ng), nmyp(ng))
-          call filltab_aotMap(carma_aotMap(ng), carma_aotMapm(ng), ng, imean,nmxp(ng), nmyp(ng) )
+          call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
+          call filltab_aotMap(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+               carma_aotMap(ng), carma_aotMapm(ng))
+          call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
        end do
 
        !-only CARMA
@@ -796,8 +799,10 @@ contains
                 call zero_carma(carma_m, ng)
              end if
 
-             call filltab_carma(carma(ng), carma_m(ng), ng, imean,  &
-                  nmxp(ng), nmyp(ng), nwave)
+             call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
+             call filltab_carma(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+                  carma(ng), carma_m(ng))
+             call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
           end do
           ! else !Case rtmg
           !   do ng=1,ngrids

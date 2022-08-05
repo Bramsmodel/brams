@@ -31,22 +31,19 @@ module mem_carma
   implicit none
 
   type carma_v
-
-     real, pointer :: aot(:,:,:)
-
+     real, pointer, contiguous :: aot(:,:,:) => null()
   end type carma_v
 
-  !RMF
+
   type aotMap_t
      real, pointer, dimension(:,:) :: aotMap
   end type aotMap_t
 
-  type(aotMap_t), allocatable, dimension(:) :: carma_aotMap, &
+  type(aotMap_t), allocatable, target, dimension(:) :: carma_aotMap, &
        carma_aotMapm
-  !RMF
 
-
-  type(carma_v), allocatable :: carma(:), carma_m(:)
+  type(carma_v), allocatable, target :: carma(:)
+  type(carma_v), allocatable, target :: carma_m(:)
 
   !Used in radcomp_carma (radcom) - radriv
 
@@ -246,46 +243,61 @@ contains
 
   !---------------------------------------------------------------
 
-  subroutine filltab_carma(cv, cvm, ng, imean, n1, n2, n3)
-    use ModVarTables, only: InsertVTab
+  subroutine filltab_carma(oneVarTable, oneVarTableSize, &
+       cv, cvm)
+
+    use ModVarTable, only: &
+         VarTable, &
+         InsertAtVarTable
+    
     use mem_scalar, only: RECYCLE_TRACERS ! INTENT(IN)
     use io_params, only : ipastin, ioutput         ! INTENT(IN)
 
     implicit none
-
-    !--(DMK-LFR NEC-SX6)----------------------------------------------
-    include 'constants.h'
-    !--(DMK-LFR NEC-SX6)----------------------------------------------
-
     ! Arguments:
-    integer, intent(in) :: ng, n1, n2, n3, imean
-    type(carma_v), intent(in) :: cv, cvm
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
+    type(carma_v), pointer, intent(in) :: cv
+    type(carma_v), pointer, intent(in) :: cvm
+
     ! Local Variables:
-
-    !--(DMK-LFR NEC-SX6)----------------------------------------------
-    !    integer          :: npts
-    integer(kind=i8) :: npts
-    !--(DMK-LFR NEC-SX6)----------------------------------------------
-
+    logical :: assThis
     character(len=7) :: sname
-    ! ALF
     character(len=8) :: str_recycle
+    character(len=*), parameter :: h="**(filltab_carma)**"
 
-    ! ALF
+    if (.not. associated(oneVarTable)) then
+       call fatal_error(h//" oneVarTable not associated")
+    else if (.not. associated(cv)) then
+       call fatal_error(h//" cv not associated")
+    end if
+    
     str_recycle = ''
     if (RECYCLE_TRACERS==1 .or. ipastin==1 .or. ioutput==5) then
        str_recycle = ':recycle'
     endif
 
     if (associated(cv%aot)) then
-       npts = n1*n2*n3
+       if (.not. associated(cvm)) then
+          assThis=.false.
+       else
+          assThis=associated(cvm%aot)
+       end if
        write(sname,'(a4)') 'AOT'
-       call InsertVTab (cv%aot, cvm%aot, ng, &
-            npts, imean,sname//' :7:hist:anal:mpti:mpt3'//trim(str_recycle))
-       ! Not necessary MPT1 - Comunication NODE to NODE on DTLONG
-       ! Radiation is a Column oriented process
-    endif
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               cv%aot, &
+               sname//' :7:hist:anal:mpti:mpt3'//trim(str_recycle), &
+               cvm%aot)
+          ! Not necessary MPT1 - Comunication NODE to NODE on DTLONG
+          ! Radiation is a Column oriented process
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               cv%aot, &
+               sname//' :7:hist:anal:mpti:mpt3'//trim(str_recycle))
 
+       endif
+    end if
   end subroutine filltab_carma
 
   !---------------------------------------------------------------
@@ -682,19 +694,44 @@ contains
 
   end subroutine dealloc_aotMap
 
-  subroutine filltab_aotMap(imap, imapm, ng, imean, n1, n2)
-    use ModVarTables, only: InsertVTab
-    include "constants.h"
-    integer, intent(in)    :: ng, n1, n2, imean
-    integer(kind=i8)       :: npts
-    type(aotMap_t) :: imap, imapm
+  subroutine filltab_aotMap(oneVarTable, oneVarTableSize, &
+       imap, imapm)
 
-    if(associated(imap%aotMap))then
-       npts = n1*n2
-       call InsertVTab(imap%aotMap, imapm%aotMap, ng, npts, imean, &
-            'AOTMAP :2:hist:anal:mpti')
+    use ModVarTable, only: &
+         VarTable, &
+         InsertAtVarTable
+    
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
+    type(aotMap_t), pointer, intent(in):: imap
+    type(aotMap_t), pointer, intent(in):: imapm
+
+    logical :: assThis
+    character(len=*), parameter :: h="**(filltab_aotMap)**"
+
+    if (.not. associated(oneVarTable)) then
+       call fatal_error(h//" oneVarTable not associated")
+    else if (.not. associated(imap)) then
+       call fatal_error(h//" imap not associated")
     end if
-
+    
+    if(associated(imap%aotMap))then
+       if (.not. associated(imapm)) then
+          assThis=.false.
+       else
+          assThis=associated(imapm%aotMap)
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               imap%aotMap, &
+               'AOTMAP :2:hist:anal:mpti', &
+               imapm%aotMap)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               imap%aotMap, &
+               'AOTMAP :2:hist:anal:mpti')
+       end if
+    end if
   end subroutine filltab_aotMap
 
 
