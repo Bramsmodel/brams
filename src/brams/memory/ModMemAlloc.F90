@@ -759,9 +759,12 @@ contains
              call alloc_carma_tuv(carma_tuv(ng),ntotal,nlayer,nmxp(ng), nmyp(ng), ng)
              call alloc_carma_tuv(carma_tuvm(ng),ntotal,nlayer,nmxp(ng), nmyp(ng), ng)
              !
+             call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
              do n=1,nbio
-                call filltab_tuv_bio(tuv_bio(ng,n), tuv_bio(ng,n), imean, nbio, nmxp(ng), nmyp(ng), ng)
+                call filltab_tuv_bio(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+                     tuv_bio(ng,n), tuv_bio(ng,n), n)
              end do
+             call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
           end do
        endif
 
