@@ -1255,10 +1255,12 @@ contains
                      ,1,1,1,nspecies_chem)
              endif
 
-             call filltab_plume_chem1(plume_g     (:,:,ng),plumem_g     (:,:,ng)  &
-                  ,plume_mean_g(:,ng)  ,plume_meanm_g(:,ng)    &
-                  ,plume_fre_g (:,ng)  ,plumem_fre_g (:,ng)    &
-                  ,imean,nmzp(ng),nmxp(ng),nmyp(ng),nspecies_chem,ng)
+             call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
+             call filltab_plume_chem1(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+                  plume_g(:,:,ng), plumem_g(:,:,ng),  &
+                  plume_mean_g(:,ng), plume_meanm_g(:,ng),    &
+                  plume_fre_g(:,ng), plumem_fre_g(:,ng), nspecies_chem, ng)
+             call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
           enddo
        endif
        !-- aerosol section----------------------------------
