@@ -55,7 +55,6 @@ module ModVarTables
   public :: DeepCopyFromVarTable
 
   include "constants.h"
-
   character(len=32) :: nameTo=""
   character(len=32) :: nameFrom=""
 

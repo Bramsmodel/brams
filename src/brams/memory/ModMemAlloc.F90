@@ -1101,8 +1101,8 @@ contains
     !     call alloc_oda(oda_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng, proc_type)
     !     call alloc_oda(odam_g(ng),       1,        1,        1, ng, proc_type)
     !
-    !     call filltab_oda(oda_g(ng), odam_g(ng), 0,  &
-    !          nmzp(ng), nmxp(ng), nmyp(ng), ng)
+    !     call filltab_oda(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+    !          oda_g(ng), odam_g(ng))
     !
     !  enddo
     !-srf tmp
@@ -1434,8 +1434,13 @@ contains
                      ,1,1,1,nspeciesaq_chem)
              endif
 
-             call filltab_chem1aq(chem1aq_g(:,ng)    ,chem1maq_g(:,ng)    &
-                  ,imean,nmzp(ng),nmxp(ng),nmyp(ng),nspeciesaq_chem,ng)
+             call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
+             call filltab_chem1aq(&
+                  oneGrid%oneVarTable, &
+                  oneGrid%oneVarTableSize, &
+                  chem1aq_g(:,ng), &
+                  chem1maq_g(:,ng))
+             call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
           enddo
 
           call nullify_tend_chem1aq(nspeciesaq_chem)

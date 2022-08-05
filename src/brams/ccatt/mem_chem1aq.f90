@@ -19,7 +19,8 @@ module mem_chem1aq
      real, contiguous, pointer :: sc_tc(:)
   end type chem1aq_vars
 
-  type (chem1aq_vars)    , allocatable :: chem1aq_g(:,:) , chem1maq_g(:,:)
+  type(chem1aq_vars), allocatable, target :: chem1aq_g(:,:)
+  type(chem1aq_vars), allocatable, target :: chem1maq_g(:,:)
   
   integer :: CHEMISTRY_AQ
 
@@ -94,63 +95,69 @@ contains
 
   !---------------------------------------------------------------
 
-  subroutine filltab_chem1aq(chem1aq,chem1maq,imean,n1,n2,n3,nspeciesaq,ng)
-
+  subroutine filltab_chem1aq(oneVarTable, oneVarTableSize, &
+       chem1aq, chem1maq)
+    
     use chem1aq_list, only: spcaq_name
 
-!--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-    use ModVarTables, only: InsertVTab
-!--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
-
-    implicit none
-
-    integer, intent(in) :: imean,n1,n2,n3,nspeciesaq,ng
-    type (chem1aq_vars)  ,dimension(   nspeciesaq) :: chem1aq,chem1maq
-
-    integer :: ispcaq  
-
-!--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-    integer(kind=i8) :: npts
-!--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
+    use ModVarTable, only: &
+         VarTable, &
+         InsertAtVarTable
     
-    character(len=8) :: str_recycle
-   
-    str_recycle = ''
+    implicit none
+    
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
+    type(chem1aq_vars), pointer, intent(in) :: chem1aq(:)
+    type(chem1aq_vars), pointer, intent(in) :: chem1maq(:)
+    
+    logical :: assAve
+    logical :: assThis
+    integer :: ispcaq  
+    integer :: nspeciesaq
+
+    nspeciesaq=size(chem1aq,1)
+
+    assAve=associated(chem1maq)
 
     !- Fill pointers to arrays into variable tables
     do ispcaq=1,nspeciesaq
+       if (associated(chem1aq(ispcaq)%sc_pr)) then
+          if (.not. assAve) then 
+             assThis=.false.
+          else
+             assThis=associated(chem1maq(ispcaq)%sc_pr)
+          end if
+          if (assThis) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  chem1aq(ispcaq)%sc_pr, &
+                  trim(spcaq_name(ispcaq)) //'PR :3:hist:anal:mpti:mpt3:mpt1', &
+                  chem1maq(ispcaq)%sc_pr)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  chem1aq(ispcaq)%sc_pr, &
+                  trim(spcaq_name(ispcaq)) //'PR :3:hist:anal:mpti:mpt3:mpt1')
+          end if
+       end if
 
-     if (associated(chem1aq(ispcaq)%sc_pr)) then
-!--- tracer mixing ratio (dimension 3d)
-       npts = n1 * n2 * n3
-
-!--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-        call InsertVTab(chem1aq(ispcaq)%sc_pr, chem1maq(ispcaq)%sc_pr,  &
-                        ng, npts, imean,                                &
-                        trim(spcaq_name(ispcaq)) //'PR :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle))
-!--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-!        call vtables2 (chem1aq(ispcaq)%sc_pr(1,1,1), chem1maq(ispcaq)%sc_pr(1,1,1)  &
-!         ,ng, npts, imean, trim(spcaq_name(ispcaq)) //'PR :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle))
-!--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
-
-     end if
-!     
-     if (associated(chem1aq(ispcaq)%sc_pc)) then
-!--- tracer mixing ratio (dimension 3d)
-       npts = n1 * n2 * n3
-
-!--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
-        call InsertVTab(chem1aq(ispcaq)%sc_pc, chem1maq(ispcaq)%sc_pc,  &
-                        ng, npts, imean,                                &
-                        trim(spcaq_name(ispcaq)) //'PC :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle))
-!--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
-!        call vtables2 (chem1aq(ispcaq)%sc_pc(1,1,1), chem1maq(ispcaq)%sc_pc(1,1,1)  &
-!         ,ng, npts, imean, trim(spcaq_name(ispcaq)) //'PC :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle))
-!--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
-
-     end if
-
-    enddo
+       if (associated(chem1aq(ispcaq)%sc_pc)) then
+          if (.not. assAve) then 
+             assThis=.false.
+          else
+             assThis=associated(chem1maq(ispcaq)%sc_pc)
+          end if
+          if (assThis) then
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  chem1aq(ispcaq)%sc_pc, &
+                  trim(spcaq_name(ispcaq)) //'PC :3:hist:anal:mpti:mpt3:mpt1', &
+                  chem1maq(ispcaq)%sc_pc)
+          else
+             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+                  chem1aq(ispcaq)%sc_pc, &
+                  trim(spcaq_name(ispcaq)) //'PC :3:hist:anal:mpti:mpt3:mpt1')
+          end if
+       end if
+    end do
   end subroutine filltab_chem1aq
 
 
