@@ -42,7 +42,7 @@ module ModVarTables
   public :: vtab_r
   public :: nvgrids
   public :: num_var
-  public :: InsertVTab
+!!$  public :: InsertVTab
   public :: GetVTabEntry
   public :: GetVTabSectionSize
   public :: VerifyVTabEntry
@@ -118,12 +118,12 @@ module ModVarTables
   integer, allocatable :: num_var(:)
 
 
-  interface InsertVTab
-     module procedure InsertVTab_2D
-     module procedure InsertVTab_2D_I
-     module procedure InsertVTab_3D
-     module procedure InsertVTab_4D
-  end interface InsertVTab
+!!$  interface InsertVTab
+!!$     module procedure InsertVTab_2D
+!!$     module procedure InsertVTab_2D_I
+!!$     module procedure InsertVTab_3D
+!!$     module procedure InsertVTab_4D
+!!$  end interface InsertVTab
 
   interface ZeroVTab
      module procedure zero_vtab_2D
@@ -139,136 +139,136 @@ contains
   ! insert a variable into vtab_r
 
 
-  subroutine InsertVTab_2D(var, varm, ng, npts, imean, tabstr)
-    real, target,      intent(in) :: var(:,:)
-    real, target,      intent(in) :: varm(:,:)
-    integer,           intent(in) :: ng
-    integer(kind=i8),  intent(in) :: npts
-    integer,           intent(in) :: imean
-    character (len=*), intent(in) :: tabstr
-
-    ! insert the old way
-
-    call vtables2(var(1,1), varm(1,1), ng, npts, imean, tabstr)
-
-    ! save full field and average field
-
-    vtab_r(num_var(ng),ng)%var_p_2D => var
-    vtab_r(num_var(ng),ng)%var_m_2D => varm
-  end subroutine InsertVTab_2D
-
-
-
-  subroutine InsertVTab_2D_I(var, varm, ng, npts, imean, tabstr)
-    integer, target,   intent(in) :: var(:,:)
-    integer, target,   intent(in) :: varm(:,:)
-    integer,           intent(in) :: ng
-    integer(kind=i8),  intent(in) :: npts
-    integer,           intent(in) :: imean
-    character (len=*), intent(in) :: tabstr
-
-    character (len=80) :: line
-    character (len=1) :: toksep=':', cdimen,ctype
-    character (len=32) :: tokens(10)
-    character (len=8) :: cname,ctab
-    integer :: ntok,nt,nv
-    
-    ! insert text of vtables2 and adapt to integer fields
-
-    call tokenize1(tabstr,tokens,ntok,toksep)
-
-    num_var(ng)=num_var(ng)+1
-    nv=num_var(ng)
-
-    vtab_r(nv,ng)%name=tokens(1)
-    vtab_r(nv,ng)%npts=npts
-    read(tokens(2),*) vtab_r(nv,ng)%idim_type
-
-    vtab_r(nv,ng)%ihist=0
-    vtab_r(nv,ng)%ianal=0
-    vtab_r(nv,ng)%imean=imean
-    vtab_r(nv,ng)%ilite=0
-    vtab_r(nv,ng)%impti=0
-    vtab_r(nv,ng)%impt1=0
-    vtab_r(nv,ng)%impt2=0
-    vtab_r(nv,ng)%impt3=0
-    vtab_r(nv,ng)%imptd=0
-    vtab_r(nv,ng)%irecycle=0
-
-    do nt=3,ntok
-       ctab=tokens(nt)
-
-       if(ctab == 'hist' ) then
-          vtab_r(nv,ng)%ihist=1
-       elseif(ctab == 'anal' ) then
-          vtab_r(nv,ng)%ianal=1
-       elseif(ctab == 'lite' ) then
-          vtab_r(nv,ng)%ilite=1
-       elseif(ctab == 'mpti' ) then
-          vtab_r(nv,ng)%impti=1
-       elseif(ctab == 'mpt1' ) then
-          vtab_r(nv,ng)%impt1=1
-       elseif(ctab == 'mpt2' ) then
-          vtab_r(nv,ng)%impt2=1
-       elseif(ctab == 'mpt3' ) then
-          vtab_r(nv,ng)%impt3=1
-       elseif(ctab == 'mptd' ) then
-          vtab_r(nv,ng)%imptd=1
-       elseif(ctab == 'recycle' ) then
-          vtab_r(nv,ng)%irecycle=1
-       else
-          print*, 'Illegal table specification for var:', tokens(1),ctab
-          stop 'bad var table'
-       endif
-
-    enddo
-
-    ! save full field and average field
-
-    vtab_r(num_var(ng),ng)%var_p_2D_I => var
-    vtab_r(num_var(ng),ng)%var_m_2D_I => varm
-  end subroutine InsertVTab_2D_I
-
-
-
-  subroutine InsertVTab_3D(var, varm, ng, npts, imean, tabstr)
-    real, target,      intent(in) :: var(:,:,:)
-    real, target,      intent(in) :: varm(:,:,:)
-    integer,           intent(in) :: ng
-    integer(kind=i8),  intent(in) :: npts
-    integer,           intent(in) :: imean
-    character (len=*), intent(in) :: tabstr
-    !write(*,*) 'LFR-DEBUG: 3D: ',tabstr
-
-    ! insert the old way
-
-    call vtables2(var(1,1,1), varm(1,1,1), ng, npts, imean, tabstr)
-
-    ! save full field and average field
-
-    vtab_r(num_var(ng),ng)%var_p_3D => var
-    vtab_r(num_var(ng),ng)%var_m_3D => varm
-  end subroutine InsertVTab_3D
-
-
-
-  subroutine InsertVTab_4D(var, varm, ng, npts, imean, tabstr)
-    real, target,      intent(in) :: var(:,:,:,:)
-    real, target,      intent(in) :: varm(:,:,:,:)
-    integer,           intent(in) :: ng
-    integer(kind=i8),  intent(in) :: npts
-    integer,           intent(in) :: imean
-    character (len=*), intent(in) :: tabstr
-
-    ! insert the old way
-
-    call vtables2(var(1,1,1,1), varm(1,1,1,1), ng, npts, imean, tabstr)
-
-    ! save full field and average field
-
-    vtab_r(num_var(ng),ng)%var_p_4D => var
-    vtab_r(num_var(ng),ng)%var_m_4D => varm
-  end subroutine InsertVTab_4D
+!!$  subroutine InsertTab_2D(var, varm, ng, npts, imean, tabstr)
+!!$    real, target,      intent(in) :: var(:,:)
+!!$    real, target,      intent(in) :: varm(:,:)
+!!$    integer,           intent(in) :: ng
+!!$    integer(kind=i8),  intent(in) :: npts
+!!$    integer,           intent(in) :: imean
+!!$    character (len=*), intent(in) :: tabstr
+!!$
+!!$    ! insert the old way
+!!$
+!!$    call vtables2(var(1,1), varm(1,1), ng, npts, imean, tabstr)
+!!$
+!!$    ! save full field and average field
+!!$
+!!$    vtab_r(num_var(ng),ng)%var_p_2D => var
+!!$    vtab_r(num_var(ng),ng)%var_m_2D => varm
+!!$  end subroutine InsertVTab_2D
+!!$
+!!$
+!!$
+!!$  subroutine InsertVTab_2D_I(var, varm, ng, npts, imean, tabstr)
+!!$    integer, target,   intent(in) :: var(:,:)
+!!$    integer, target,   intent(in) :: varm(:,:)
+!!$    integer,           intent(in) :: ng
+!!$    integer(kind=i8),  intent(in) :: npts
+!!$    integer,           intent(in) :: imean
+!!$    character (len=*), intent(in) :: tabstr
+!!$
+!!$    character (len=80) :: line
+!!$    character (len=1) :: toksep=':', cdimen,ctype
+!!$    character (len=32) :: tokens(10)
+!!$    character (len=8) :: cname,ctab
+!!$    integer :: ntok,nt,nv
+!!$    
+!!$    ! insert text of vtables2 and adapt to integer fields
+!!$
+!!$    call tokenize1(tabstr,tokens,ntok,toksep)
+!!$
+!!$    num_var(ng)=num_var(ng)+1
+!!$    nv=num_var(ng)
+!!$
+!!$    vtab_r(nv,ng)%name=tokens(1)
+!!$    vtab_r(nv,ng)%npts=npts
+!!$    read(tokens(2),*) vtab_r(nv,ng)%idim_type
+!!$
+!!$    vtab_r(nv,ng)%ihist=0
+!!$    vtab_r(nv,ng)%ianal=0
+!!$    vtab_r(nv,ng)%imean=imean
+!!$    vtab_r(nv,ng)%ilite=0
+!!$    vtab_r(nv,ng)%impti=0
+!!$    vtab_r(nv,ng)%impt1=0
+!!$    vtab_r(nv,ng)%impt2=0
+!!$    vtab_r(nv,ng)%impt3=0
+!!$    vtab_r(nv,ng)%imptd=0
+!!$    vtab_r(nv,ng)%irecycle=0
+!!$
+!!$    do nt=3,ntok
+!!$       ctab=tokens(nt)
+!!$
+!!$       if(ctab == 'hist' ) then
+!!$          vtab_r(nv,ng)%ihist=1
+!!$       elseif(ctab == 'anal' ) then
+!!$          vtab_r(nv,ng)%ianal=1
+!!$       elseif(ctab == 'lite' ) then
+!!$          vtab_r(nv,ng)%ilite=1
+!!$       elseif(ctab == 'mpti' ) then
+!!$          vtab_r(nv,ng)%impti=1
+!!$       elseif(ctab == 'mpt1' ) then
+!!$          vtab_r(nv,ng)%impt1=1
+!!$       elseif(ctab == 'mpt2' ) then
+!!$          vtab_r(nv,ng)%impt2=1
+!!$       elseif(ctab == 'mpt3' ) then
+!!$          vtab_r(nv,ng)%impt3=1
+!!$       elseif(ctab == 'mptd' ) then
+!!$          vtab_r(nv,ng)%imptd=1
+!!$       elseif(ctab == 'recycle' ) then
+!!$          vtab_r(nv,ng)%irecycle=1
+!!$       else
+!!$          print*, 'Illegal table specification for var:', tokens(1),ctab
+!!$          stop 'bad var table'
+!!$       endif
+!!$
+!!$    enddo
+!!$
+!!$    ! save full field and average field
+!!$
+!!$    vtab_r(num_var(ng),ng)%var_p_2D_I => var
+!!$    vtab_r(num_var(ng),ng)%var_m_2D_I => varm
+!!$  end subroutine InsertVTab_2D_I
+!!$
+!!$
+!!$
+!!$  subroutine InsertVTab_3D(var, varm, ng, npts, imean, tabstr)
+!!$    real, target,      intent(in) :: var(:,:,:)
+!!$    real, target,      intent(in) :: varm(:,:,:)
+!!$    integer,           intent(in) :: ng
+!!$    integer(kind=i8),  intent(in) :: npts
+!!$    integer,           intent(in) :: imean
+!!$    character (len=*), intent(in) :: tabstr
+!!$    !write(*,*) 'LFR-DEBUG: 3D: ',tabstr
+!!$
+!!$    ! insert the old way
+!!$
+!!$    call vtables2(var(1,1,1), varm(1,1,1), ng, npts, imean, tabstr)
+!!$
+!!$    ! save full field and average field
+!!$
+!!$    vtab_r(num_var(ng),ng)%var_p_3D => var
+!!$    vtab_r(num_var(ng),ng)%var_m_3D => varm
+!!$  end subroutine InsertVTab_3D
+!!$
+!!$
+!!$
+!!$  subroutine InsertVTab_4D(var, varm, ng, npts, imean, tabstr)
+!!$    real, target,      intent(in) :: var(:,:,:,:)
+!!$    real, target,      intent(in) :: varm(:,:,:,:)
+!!$    integer,           intent(in) :: ng
+!!$    integer(kind=i8),  intent(in) :: npts
+!!$    integer,           intent(in) :: imean
+!!$    character (len=*), intent(in) :: tabstr
+!!$
+!!$    ! insert the old way
+!!$
+!!$    call vtables2(var(1,1,1,1), varm(1,1,1,1), ng, npts, imean, tabstr)
+!!$
+!!$    ! save full field and average field
+!!$
+!!$    vtab_r(num_var(ng),ng)%var_p_4D => var
+!!$    vtab_r(num_var(ng),ng)%var_m_4D => varm
+!!$  end subroutine InsertVTab_4D
 
 
 
