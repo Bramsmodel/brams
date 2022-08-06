@@ -1062,8 +1062,16 @@ contains
                 call alloc_grell3(g3d_ensm_g(:,ng_cp),g3dm_g(ng_cp),1,1,1,ng,train_dim)
              endif
 
-             call filltab_grell3(g3d_ens_g(:,ng_cp),g3d_g(ng_cp),g3d_ensm_g(:,ng_cp), &
-                  g3dm_g(ng_cp),imean,nmzp(ng),nmxp(ng),nmyp(ng),ng,train_dim)
+             call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
+             call filltab_grell3(&
+                  oneGrid%oneVarTable, &
+                  oneGrid%oneVarTableSize, &
+                  g3d_ens_g(:,ng_cp), &
+                  g3d_g(ng_cp),&
+                  g3d_ensm_g(:,ng_cp), &
+                  g3dm_g(ng_cp),&
+                  train_dim, nnqparm(ng))
+             call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
 
              ng_cp = ng_cp + 1
              if  (CLOSURE_TYPE == 'EN') then

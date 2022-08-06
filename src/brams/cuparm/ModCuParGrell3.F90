@@ -196,7 +196,9 @@ module ModCuParGrell3
   use mem_chem1, only: &
        chemistry
 
-  use ModVarTables, only: insertvtab
+  use ModVarTable, only: &
+       VarTable, &
+       InsertAtVarTable
 
   use grid_dims, only: &
        nzpmax
@@ -236,33 +238,35 @@ module ModCuParGrell3
   public :: train_dim
   
   type g3d_ens_vars
-     real, pointer, dimension(:,:)  ::apr
-     real, pointer, dimension(:,:)  ::accapr
-     real, pointer, dimension(:,:)  ::weight
-     !-----------
+     real, pointer, contiguous :: apr(:,:) => null()
+     real, pointer, contiguous :: accapr(:,:) => null()
+     real, pointer, contiguous :: weight(:,:) => null()
   end type g3d_ens_vars
-  type (g3d_ens_vars)    , allocatable :: g3d_ens_g(:,:), g3d_ensm_g(:,:)
+
+  type(g3d_ens_vars), allocatable, target :: g3d_ens_g(:,:)
+  type(g3d_ens_vars), allocatable, target :: g3d_ensm_g(:,:)
 
   type g3d_vars
-     real, pointer, dimension(:,:  )  ::xmb_deep
-     real, pointer, dimension(:,:  )  ::xmb_deep_dd
-     real, pointer, dimension(:,:  )  ::err_deep
-     real, pointer, dimension(:,:  )  ::xmb_shallow
-     real, pointer, dimension(:,:,:)  ::cugd_ttens
-     real, pointer, dimension(:,:,:)  ::cugd_qvtens
-     real, pointer, dimension(:,:,:)  ::thsrc
-     real, pointer, dimension(:,:,:)  ::rtsrc
-     real, pointer, dimension(:,:,:)  ::clsrc
-     real, pointer, dimension(:,:,:)  ::nlsrc
-     real, pointer, dimension(:,:,:)  ::nisrc
-     real, pointer, dimension(:,:,:)  ::usrc
-     real, pointer, dimension(:,:,:)  ::vsrc
-     real, pointer, dimension(:,:,:)  ::mup
-     real, pointer, dimension(:,:,:)  ::mdd
-     real, pointer, dimension(:,:,:)  ::mupsh
+     real, pointer, contiguous :: xmb_deep(:,:) => null()
+     real, pointer, contiguous :: xmb_deep_dd(:,:) => null()
+     real, pointer, contiguous :: err_deep(:,:) => null()
+     real, pointer, contiguous :: xmb_shallow(:,:) => null()
+     real, pointer, contiguous :: cugd_ttens(:,:,:) => null()
+     real, pointer, contiguous :: cugd_qvtens(:,:,:) => null()
+     real, pointer, contiguous :: thsrc(:,:,:) => null()
+     real, pointer, contiguous :: rtsrc(:,:,:) => null()
+     real, pointer, contiguous :: clsrc(:,:,:) => null()
+     real, pointer, contiguous :: nlsrc(:,:,:) => null()
+     real, pointer, contiguous :: nisrc(:,:,:) => null()
+     real, pointer, contiguous :: usrc(:,:,:) => null()
+     real, pointer, contiguous :: vsrc(:,:,:) => null()
+     real, pointer, contiguous :: mup(:,:,:) => null()
+     real, pointer, contiguous :: mdd(:,:,:) => null()
+     real, pointer, contiguous :: mupsh(:,:,:) => null()
   end type g3d_vars
 
-  type (g3d_vars)       , allocatable :: g3d_g(:),g3dm_g(:)
+  type(g3d_vars), allocatable, target :: g3d_g(:)
+  type(g3d_vars), allocatable, target :: g3dm_g(:)
 
   integer ::    ids,ide, jds,jde, kds,kde            &
        ,ims,ime, jms,jme, kms,kme            &
@@ -413,121 +417,389 @@ contains
   end subroutine alloc_grell3
 
   !-----------------------------------------
-  subroutine filltab_grell3(g3d_ens,g3d,g3d_ensm,g3dm,imean, m1, m2, m3, ng,ndim_train)
-    type (g3d_ens_vars),dimension(ndim_train) :: g3d_ens,g3d_ensm
-    type (g3d_vars) :: g3d,g3dm
-    integer, intent(in) :: imean, m1, m2, m3, ng,ndim_train
-    integer(kind=i8) :: npts
+  subroutine filltab_grell3(oneVarTable, oneVarTableSize, &
+       g3d_ens, g3d, g3d_ensm, g3dm, ndim_train, nnqparm)
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
+    type(g3d_ens_vars), pointer, intent(in) :: g3d_ens(:)
+    type(g3d_ens_vars), pointer, intent(in) :: g3d_ensm(:)
+    type(g3d_vars), pointer, intent(in) :: g3d
+    type(g3d_vars), pointer, intent(in) :: g3dm
+    integer, intent(in) :: ndim_train
+    integer, intent(in) :: nnqparm
+    
     integer :: i
+    logical :: assThis
     character (len=4) :: arrprop
+    character(len=*), parameter :: h="**(filltab_grell3)**"
+
+    if (.not. associated(oneVarTable)) then
+       call fatal_error(h//" oneVarTable not associated")
+    else if (.not. associated(g3d)) then
+       call fatal_error(h//" g3d not associated")
+    else if (.not. associated(g3d_ens)) then
+       call fatal_error(h//" g3d_ens not associated")
+    end if
+    
     ! Fill pointers to arrays into variable tables
 
-    npts=m2*m3
     do i=1,ndim_train
-       if (associated(g3d_ens(i)%apr))  &
-            call InsertVTab (g3d_ens(i)%apr   ,g3d_ensm(i)%apr    &
-            ,ng, npts, imean,  &
-            trim(pre_name(i))//' :2:hist:mpti:mpt3')
+       if (associated(g3d_ens(i)%apr)) then
+          if (.not. associated(g3d_ensm)) then
+             assThis=.false.
+          else
+             assThis=associated(g3d_ensm(i)%apr)
+          end if
+          if (assThis) then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  g3d_ens(i)%apr, &
+                  trim(pre_name(i))//' :2:hist:mpti:mpt3', &
+                  g3d_ensm(i)%apr)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  g3d_ens(i)%apr, &
+                  trim(pre_name(i))//' :2:hist:mpti:mpt3')
+          end if
+       end if
 
-       if (associated(g3d_ens(i)%accapr))  &
-            call InsertVTab (g3d_ens(i)%accapr   ,g3d_ensm(i)%accapr    &
-            ,ng, npts, imean,  &
-            'acc'//trim(pre_name(i)(2:len_trim(pre_name(i))))//' :2:hist:anal:mpti:mpt3')
-    enddo
+       if (associated(g3d_ens(i)%accapr)) then
+          if (.not. associated(g3d_ensm)) then
+             assThis=.false.
+          else
+             assThis=associated(g3d_ensm(i)%accapr)
+          end if
+          if (assThis) then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  g3d_ens(i)%accapr, &
+                  'acc'//trim(pre_name(i)(2:len_trim(pre_name(i))))//' :2:hist:anal:mpti:mpt3', &
+                  g3d_ensm(i)%accapr)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  g3d_ens(i)%accapr, &
+                  'acc'//trim(pre_name(i)(2:len_trim(pre_name(i))))//' :2:hist:anal:mpti:mpt3')
+          end if
+       end if
+    end do
 
     do i=1,ndim_train
-       if (associated(g3d_ens(i)%weight))  &
-            call InsertVTab (g3d_ens(i)%weight   ,g3d_ensm(i)%weight    &
-            ,ng, npts, imean,  &
-            'weight'//trim(pre_name(i)(4:len_trim(pre_name(i))))//' :2:hist:anal:mpti:mpt3')
+       if (associated(g3d_ens(i)%weight)) then
+          if (.not. associated(g3d_ensm)) then
+             assThis=.false.
+          else
+             assThis=associated(g3d_ensm(i)%weight)
+          end if
+          if (assThis) then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  g3d_ens(i)%weight, &
+                  'weight'//trim(pre_name(i)(4:len_trim(pre_name(i))))//' :2:hist:anal:mpti:mpt3', &
+                  g3d_ensm(i)%weight)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  g3d_ens(i)%weight, &
+                  'weight'//trim(pre_name(i)(4:len_trim(pre_name(i))))//' :2:hist:anal:mpti:mpt3')
+          end if
+       end if
+    end do
 
-    enddo
+    if (associated(g3d%xmb_deep)) then
+       if (.not. associated(g3dm)) then
+          assThis=.false.
+       else
+          assThis=associated(g3dm%xmb_deep)
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               g3d%xmb_deep, &
+               'MFUP :2:hist:anal:mpti:mpt3', &
+               g3dm%xmb_deep)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               g3d%xmb_deep, &
+               'MFUP :2:hist:anal:mpti:mpt3')
+       end if
+    end if
 
-    if (associated(g3d%xmb_deep))  &
-         call InsertVTab (g3d%xmb_deep   ,g3dm%xmb_deep    &
-         ,ng, npts, imean,  &
-         'MFUP :2:hist:anal:mpti:mpt3')
-    if (associated(g3d%xmb_deep_dd))  &
-         call InsertVTab (g3d%xmb_deep_dd   ,g3dm%xmb_deep_dd    &
-         ,ng, npts, imean,  &
-         'MFDD :2:hist:anal:mpti:mpt3')
-    if (associated(g3d%err_deep))  &
-         call InsertVTab (g3d%err_deep   ,g3dm%err_deep    &
-         ,ng, npts, imean,  &
-         'XIERR :2:hist:anal:mpti:mpt3')
-    if (associated(g3d%xmb_shallow))  &
-         call InsertVTab (g3d%xmb_shallow   ,g3dm%xmb_shallow    &
-         ,ng, npts, imean,  &
-         'MFSH :2:hist:anal:mpti:mpt3')
+    if (associated(g3d%xmb_deep_dd)) then
+       if (.not. associated(g3dm)) then
+          assThis=.false.
+       else
+          assThis=associated(g3dm%xmb_deep_dd)
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               g3d%xmb_deep_dd, &
+               'MFDD :2:hist:anal:mpti:mpt3', &
+               g3dm%xmb_deep_dd)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               g3d%xmb_deep_dd, &
+               'MFDD :2:hist:anal:mpti:mpt3')
+       end if
+    end if
+
+    if (associated(g3d%err_deep)) then
+       if (.not. associated(g3dm)) then
+          assThis=.false.
+       else
+          assThis=associated(g3dm%err_deep)
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               g3d%err_deep, &
+               'XIERR :2:hist:anal:mpti:mpt3', &
+               g3dm%err_deep)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               g3d%err_deep, &
+               'XIERR :2:hist:anal:mpti:mpt3')
+       end if
+    end if
+
+    if (associated(g3d%xmb_shallow)) then
+       if (.not. associated(g3dm)) then
+          assThis=.false.
+       else
+          assThis=associated(g3dm%xmb_shallow)
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               g3d%xmb_shallow, &
+               'MFSH :2:hist:anal:mpti:mpt3', &
+               g3dm%xmb_shallow)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               g3d%xmb_shallow, &
+               'MFSH :2:hist:anal:mpti:mpt3')
+       end if
+    end if
 
 
     !- 3D Arrays
-    npts=m1*m2*m3
 
     !- define if the arrays will exchange 1 row x 1 line (not in use anymore)
     arrprop=''
 
-    if (associated(g3d%cugd_ttens))  &
-         call InsertVTab (g3d%cugd_ttens     ,g3dm%cugd_ttens      &
-         ,ng, npts, imean,  &
-         'TTENS :3:hist:anal:mpti:mpt3'//trim(arrprop))
+    if (associated(g3d%cugd_ttens)) then
+       if (.not. associated(g3dm)) then
+          assThis=.false.
+       else
+          assThis=associated(g3dm%cugd_ttens)
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               g3d%cugd_ttens, &
+               'TTENS :3:hist:anal:mpti:mpt3'//trim(arrprop), &
+               g3dm%cugd_ttens)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               g3d%cugd_ttens, &
+               'TTENS :3:hist:anal:mpti:mpt3'//trim(arrprop))
+       end if
+    end if
 
-    if (associated(g3d%cugd_qvtens))  &
-         call InsertVTab (g3d%cugd_qvtens    ,g3dm%cugd_qvtens     &
-         ,ng, npts, imean,  &
-         'QVTTENS :3:hist:anal:mpti:mpt3'//trim(arrprop))
+    if (associated(g3d%cugd_qvtens)) then
+       if (.not. associated(g3dm)) then
+          assThis=.false.
+       else
+          assThis=associated(g3dm%cugd_qvtens)
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               g3d%cugd_qvtens , &
+               'QVTTENS :3:hist:anal:mpti:mpt3'//trim(arrprop), &
+               g3dm%cugd_qvtens)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               g3d%cugd_qvtens , &
+               'QVTTENS :3:hist:anal:mpti:mpt3'//trim(arrprop))
+       end if
+    end if
 
-    if (associated(g3d%thsrc))  &
-         call InsertVTab (g3d%thsrc     ,g3dm%thsrc      &
-         ,ng, npts, imean,  &
-         'THSRC :3:hist:anal:mpti:mpt3'//trim(arrprop))
+    if (associated(g3d%thsrc)) then
+       if (.not. associated(g3dm)) then
+          assThis=.false.
+       else
+          assThis=associated(g3dm%thsrc)
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               g3d%thsrc, &
+               'THSRC :3:hist:anal:mpti:mpt3'//trim(arrprop), &
+               g3dm%thsrc)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               g3d%thsrc, &
+               'THSRC :3:hist:anal:mpti:mpt3'//trim(arrprop))
+       end if
+    end if
 
-    if (associated(g3d%rtsrc))  &
-         call InsertVTab (g3d%rtsrc     ,g3dm%rtsrc     &
-         ,ng, npts, imean,  &
-         'RTSRC :3:hist:anal:mpti:mpt3'//trim(arrprop))
+    if (associated(g3d%rtsrc)) then
+       if (.not. associated(g3dm)) then
+          assThis=.false.
+       else
+          assThis=associated(g3dm%rtsrc)
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               g3d%rtsrc, &
+               'RTSRC :3:hist:anal:mpti:mpt3'//trim(arrprop), &
+               g3dm%rtsrc)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               g3d%rtsrc, &
+               'RTSRC :3:hist:anal:mpti:mpt3'//trim(arrprop))
+       end if
+    end if
 
     !- this array does not need to be parallelized (only column)
-    if (associated(g3d%clsrc))  &
-         call InsertVTab (g3d%clsrc     ,g3dm%clsrc     &
-         ,ng, npts, imean,  &
-         'CLSRC :3:hist:anal:mpti:mpt3')
+    if (associated(g3d%clsrc)) then
+       if (.not. associated(g3dm)) then
+          assThis=.false.
+       else
+          assThis=associated(g3dm%clsrc)
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               g3d%clsrc, &
+               'CLSRC :3:hist:anal:mpti:mpt3', &
+               g3dm%clsrc)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               g3d%clsrc, &
+               'CLSRC :3:hist:anal:mpti:mpt3')
+       end if
+    end if
 
-    if (associated(g3d%nlsrc))  &
-         call InsertVTab (g3d%nlsrc     ,g3dm%nlsrc     &
-         ,ng, npts, imean,  &
-         'NLSRC :3:hist:anal:mpti:mpt3')
-    if (associated(g3d%nisrc))  &
-         call InsertVTab (g3d%nisrc     ,g3dm%nisrc     &
-         ,ng, npts, imean,  &
-         'NISRC :3:hist:anal:mpti:mpt3')
+    if (associated(g3d%nlsrc)) then
+       if (.not. associated(g3dm)) then
+          assThis=.false.
+       else
+          assThis=associated(g3dm%nlsrc)
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               g3d%nlsrc, &
+               'NLSRC :3:hist:anal:mpti:mpt3', &
+               g3dm%nlsrc)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               g3d%nlsrc, &
+               'NLSRC :3:hist:anal:mpti:mpt3')
+       end if
+    end if
+
+    if (associated(g3d%nisrc)) then
+       if (.not. associated(g3dm)) then
+          assThis=.false.
+       else
+          assThis=associated(g3dm%nisrc)
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               g3d%nisrc, &
+               'NISRC :3:hist:anal:mpti:mpt3', &
+               g3dm%nisrc)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               g3d%nisrc, &
+               'NISRC :3:hist:anal:mpti:mpt3')
+       end if
+    end if
 
 
-    if(imomentum==1 .and. nnqparm(ng) >= 4) then
+    if(imomentum==1 .and. nnqparm >= 4) then
        !- these arrays does not need to be parallelized (only column)
-       if (associated(g3d%usrc))  &
-            call InsertVTab (g3d%usrc     ,g3dm%usrc     &
-            ,ng, npts, imean,  &
-            'USRC :3:hist:anal:mpti:mpt3')
-       if (associated(g3d%vsrc))  &
-            call InsertVTab (g3d%vsrc     ,g3dm%vsrc     &
-            ,ng, npts, imean,  &
-            'VSRC :3:hist:anal:mpti:mpt3')
+       if (associated(g3d%usrc)) then
+          if (.not. associated(g3dm)) then
+             assThis=.false.
+          else
+             assThis=associated(g3dm%usrc)
+          end if
+          if (assThis) then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  g3d%usrc, &
+                  'USRC :3:hist:anal:mpti:mpt3', &
+                  g3dm%usrc)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  g3d%usrc, &
+                  'USRC :3:hist:anal:mpti:mpt3')
+          end if
+       end if
+
+       if (associated(g3d%vsrc)) then
+          if (.not. associated(g3dm)) then
+             assThis=.false.
+          else
+             assThis=associated(g3dm%vsrc)
+          end if
+          if (assThis) then
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  g3d%vsrc, &
+                  'VSRC :3:hist:anal:mpti:mpt3', &
+                  g3dm%vsrc)
+          else
+             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+                  g3d%vsrc, &
+                  'VSRC :3:hist:anal:mpti:mpt3')
+          end if
+       end if
 
     endif
-    if (associated(g3d%mupsh))  &
-         call InsertVTab (g3d%mupsh    ,g3dm%mupsh     &
-         ,ng, npts, imean,  &
-         'ZMFSH :3:hist:anal:mpti:mpt3')
-    if (associated(g3d%mup))  &
-         call InsertVTab (g3d%mup    ,g3dm%mup     &
-         ,ng, npts, imean,  &
-         'ZMFUP :3:hist:anal:mpti:mpt3')
-    if (associated(g3d%mdd))  &
-         call InsertVTab (g3d%mdd    ,g3dm%mdd    &
-         ,ng, npts, imean,  &
-         'ZMFDD :3:hist:anal:mpti:mpt3')
 
+    if (associated(g3d%mupsh)) then
+       if (.not. associated(g3dm)) then
+          assThis=.false.
+       else
+          assThis=associated(g3dm%mupsh)
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               g3d%mupsh, &
+               'ZMFSH :3:hist:anal:mpti:mpt3', &
+               g3dm%mupsh)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               g3d%mupsh, &
+               'ZMFSH :3:hist:anal:mpti:mpt3')
+       end if
+    end if
+
+    if (associated(g3d%mup)) then
+       if (.not. associated(g3dm)) then
+          assThis=.false.
+       else
+          assThis=associated(g3dm%mup)
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               g3d%mup, &
+               'ZMFUP :3:hist:anal:mpti:mpt3', &
+               g3dm%mup)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               g3d%mup, &
+               'ZMFUP :3:hist:anal:mpti:mpt3')
+       end if
+    end if
+
+    if (associated(g3d%mdd)) then
+       if (.not. associated(g3dm)) then
+          assThis=.false.
+       else
+          assThis=associated(g3dm%mdd)
+       end if
+       if (assThis) then
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               g3d%mdd, &
+               'ZMFDD :3:hist:anal:mpti:mpt3', &
+               g3dm%mdd)
+       else
+          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+               g3d%mdd, &
+               'ZMFDD :3:hist:anal:mpti:mpt3')
+       end if
+    end if
 
   end subroutine filltab_grell3
   !-------------------------------------------------------------
