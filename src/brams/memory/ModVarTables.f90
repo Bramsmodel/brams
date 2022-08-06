@@ -47,7 +47,7 @@ module ModVarTables
   public :: GetVTabSectionSize
   public :: VerifyVTabEntry
   public :: StringIndexing
-  public :: ZeroVTab
+!!$  public :: ZeroVTab
   public :: lite_varset
   public :: DumpVTab
   public :: setInitial4Vtable
@@ -125,12 +125,12 @@ module ModVarTables
 !!$     module procedure InsertVTab_4D
 !!$  end interface InsertVTab
 
-  interface ZeroVTab
-     module procedure zero_vtab_2D
-     module procedure zero_vtab_2D_I
-     module procedure zero_vtab_3D
-     module procedure zero_vtab_4D
-  end interface ZeroVTab
+!!$  interface ZeroVTab
+!!$     module procedure zero_vtab_2D
+!!$     module procedure zero_vtab_2D_I
+!!$     module procedure zero_vtab_3D
+!!$     module procedure zero_vtab_4D
+!!$  end interface ZeroVTab
 
 
 contains
@@ -509,37 +509,37 @@ contains
   end subroutine StringIndexing
 
 
-  subroutine zero_vtab_2D(var,nx,ny)
-    integer, intent(in) :: nx,ny
-    real, intent(inout) :: var(nx,ny)
-
-    var=0.0
-
-  end subroutine zero_vtab_2D
-
-  subroutine zero_vtab_2D_I(var,nx,ny)
-    integer, intent(in) :: nx,ny
-    integer, intent(inout) :: var(nx,ny)
-
-    var=0.0
-
-  end subroutine zero_vtab_2D_I
-
-  subroutine zero_vtab_3D(var,nx,ny,nz)
-    integer,intent(in) :: nx,ny,nz
-    real, intent(inout) :: var(nx,ny,nz)
-
-    var=0.0
-
-  end subroutine zero_vtab_3D
-
-  subroutine zero_vtab_4D(var,nx,ny,nz,nk)
-    integer,intent(in) :: nx,ny,nz,nk
-    real, intent(inout) :: var(nx,ny,nz,nk)
-
-    var=0.0
-
-  end subroutine zero_vtab_4D
+!!$  subroutine zero_vtab_2D(var,nx,ny)
+!!$    integer, intent(in) :: nx,ny
+!!$    real, intent(inout) :: var(nx,ny)
+!!$
+!!$    var=0.0
+!!$
+!!$  end subroutine zero_vtab_2D
+!!$
+!!$  subroutine zero_vtab_2D_I(var,nx,ny)
+!!$    integer, intent(in) :: nx,ny
+!!$    integer, intent(inout) :: var(nx,ny)
+!!$
+!!$    var=0.0
+!!$
+!!$  end subroutine zero_vtab_2D_I
+!!$
+!!$  subroutine zero_vtab_3D(var,nx,ny,nz)
+!!$    integer,intent(in) :: nx,ny,nz
+!!$    real, intent(inout) :: var(nx,ny,nz)
+!!$
+!!$    var=0.0
+!!$
+!!$  end subroutine zero_vtab_3D
+!!$
+!!$  subroutine zero_vtab_4D(var,nx,ny,nz,nk)
+!!$    integer,intent(in) :: nx,ny,nz,nk
+!!$    real, intent(inout) :: var(nx,ny,nz,nk)
+!!$
+!!$    var=0.0
+!!$
+!!$  end subroutine zero_vtab_4D
 
 
 

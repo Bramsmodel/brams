@@ -110,7 +110,6 @@ module ModMemAlloc
        nvgrids, &
        vtab_r,  &
        lite_varset, &
-       ZeroVTab, &
        DeepCopyToVarTable, &
        DeepCopyFromVarTable
 
@@ -1694,44 +1693,6 @@ contains
        call lite_varset(proc_type)
     endif
 
-    !-------------
-    ! Set ALL variables in the vtab_r variable table to zero by default. These
-    !  are variables processed in the filltab_* routines with a call to vtables2.
-    !  This does NOT include scratch arrays, tendencies, or mean arrays.
-    do ng=1,ngrids
-       do nv=1,num_var(ng)
-          !-orig
-          !call azero_l(vtab_r(nv,ng)%npts, vtab_r(nv,ng)%var_p)
-          !
-          select case (vtab_r(nv,ng)%idim_type)
-
-          case (2)
-             call zeroVtab(vtab_r(nv,ng)%var_p_2D,nmxp(ng),nmyp(ng))
-             !print *, size(vtab_r(nv,ng)%var_p_2D,1),size(vtab_r(nv,ng)%var_p_2D,2),nmxp(ng),nmyp(ng)
-          case (3)
-             call zeroVtab(vtab_r(nv,ng)%var_p_3D,nmzp(ng), nmxp(ng), nmyp(ng))
-             !print *, size(vtab_r(nv,ng)%var_p_3D,1),size(vtab_r(nv,ng)%var_p_3D,2), &
-             !              size(vtab_r(nv,ng)%var_p_3D,3),nmzp(ng),nmxp(ng),nmyp(ng)
-          case (6)
-             call zeroVtab(vtab_r(nv,ng)%var_p_3D,nmxp(ng), nmyp(ng), npatch)
-             !print *, size(vtab_r(nv,ng)%var_p_3D,1),size(vtab_r(nv,ng)%var_p_3D,2), &
-             !              size(vtab_r(nv,ng)%var_p_3D,3),nmxp(ng),nmyp(ng),npatch
-          case (7)
-             call zeroVtab(vtab_r(nv,ng)%var_p_3D,nmxp(ng), nmyp(ng), nwave)
-             !print *, size(vtab_r(nv,ng)%var_p_3D,1),size(vtab_r(nv,ng)%var_p_3D,2), &
-             !size(vtab_r(nv,ng)%var_p_3D,3),nmxp(ng),nmyp(ng),nwave
-          case (4)
-             call zeroVtab(vtab_r(nv,ng)%var_p_4D,nzg, nmxp(ng), nmyp(ng), npatch)
-             !print *, size(vtab_r(nv,ng)%var_p_4D,1),size(vtab_r(nv,ng)%var_p_4D,2), &
-             !size(vtab_r(nv,ng)%var_p_4D,3),size(vtab_r(nv,ng)%var_p_4D,4),nzg,nmxp(ng),nmyp(ng),npatch
-          case (5)
-             call zeroVtab(vtab_r(nv,ng)%var_p_4D,nzs, nmxp(ng), nmyp(ng), npatch)
-             !print *, size(vtab_r(nv,ng)%var_p_4D,1),size(vtab_r(nv,ng)%var_p_4D,2), &
-             !size(vtab_r(nv,ng)%var_p_4D,3),size(vtab_r(nv,ng)%var_p_4D,4),nzs,nmxp(ng),nmyp(ng),npatch
-          end select
-
-       enddo
-    enddo
 
     !Calling the statistic for allocate the amount of timesteps
     nTimes=int(timmax/dtlong)

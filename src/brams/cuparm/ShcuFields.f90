@@ -81,6 +81,7 @@ contains
        call fatal_error(h//" allocate thsrcsh fails with stat="// &
             trim(adjustl(str(1))))
     end if
+    res%thsrcsh = 0.0
     
     allocate(res%rtsrcsh(mzp,mxp,myp), stat=ierr)
     if (ierr /= 0) then
@@ -88,6 +89,7 @@ contains
        call fatal_error(h//" allocate rtsrcsh fails with stat="// &
             trim(adjustl(str(1))))
     end if
+    res%rtsrcsh = 0.0
     
     allocate(res%shmf(mxp,myp), stat=ierr)
     if (ierr /= 0) then
@@ -95,6 +97,8 @@ contains
        call fatal_error(h//" allocate shmf fails with stat="// &
             trim(adjustl(str(1))))
     end if
+    res%shmf = 0.0
+    
   end function CreateShcuFields
     
 

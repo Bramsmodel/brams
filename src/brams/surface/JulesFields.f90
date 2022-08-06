@@ -111,133 +111,176 @@ contains
        call fatal_error(h//" allocate gpp fails with stat="//&
             trim(adjustl(str(1))))
     end if
+    res%gpp = 0.0
+    
     allocate (res%resp_s(mxp,myp), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" allocate resp_s fails with stat="//&
             trim(adjustl(str(1))))
     end if
+    res%resp_s = 0.0
+    
     allocate (res%resp_p(mxp,myp), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" allocate resp_p fails with stat="//&
             trim(adjustl(str(1))))
     end if
+    res%resp_p = 0.0
+    
     allocate (res%npp(mxp,myp), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" allocate npp fails with stat="//&
             trim(adjustl(str(1))))
     end if
+    res%npp = 0.0
+    
     allocate (res%u10mj(mxp,myp), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" allocate u10mj fails with stat="//&
             trim(adjustl(str(1))))
     end if
+    res%u10mj = 0.0
+    
     allocate (res%v10mj(mxp,myp), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" allocate v10mj fails with stat="//&
             trim(adjustl(str(1))))
     end if
+    res%v10mj = 0.0
+    
     allocate (res%u10mj1hr(mzp,mxp,myp), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" allocate u10mj1hr fails with stat="//&
             trim(adjustl(str(1))))
     end if
+    res%u10mj1hr = 0.0
+    
     allocate (res%v10mj1hr(mzp,mxp,myp), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" allocate v10mj1hr fails with stat="//&
             trim(adjustl(str(1))))
     end if
+    res%v10mj1hr = 0.0
+    
     allocate (res%fracj(mzp,mxp,myp), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" allocate fracj fails with stat="//&
             trim(adjustl(str(1))))
     end if
+    res%fracj = 0.0
+    
     allocate (res%t2mj(mxp,myp), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" allocate t2mj fails with stat="//&
             trim(adjustl(str(1))))
     end if
+    res%t2mj = 0.0
+    
     allocate (res%t2mj_max(mxp,myp), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" allocate t2mj_max fails with stat="//&
             trim(adjustl(str(1))))
     end if
+    res%t2mj_max = 0.0
+    
     allocate (res%t2mj_min(mxp,myp), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" allocate t2mj_min fails with stat="//&
             trim(adjustl(str(1))))
     end if
+    res%t2mj_min = 0.0
+    
     allocate (res%rv2mj(mxp,myp), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" allocate rv2mj fails with stat="//&
             trim(adjustl(str(1))))
     end if
+    res%rv2mj = 0.0
+    
     allocate (res%csj(mxp,myp), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" allocate csj fails with stat="//&
             trim(adjustl(str(1))))
     end if
+    res%csj = 0.0
+    
     allocate (res%anthrop_heatj(mxp,myp,npatch), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" allocate anthrop_heatj fails with stat="//&
             trim(adjustl(str(1))))
     end if
+    res%anthrop_heatj = 0.0
+    
     allocate (res%radnet_tilej(mxp,myp,npatch), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" allocate radnet_tilej fails with stat="//&
             trim(adjustl(str(1))))
     end if
+    res%radnet_tilej = 0.0
+    
     allocate (res%ftl_tilej(mxp,myp,npatch), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" allocate ftl_tilej fails with stat="//&
             trim(adjustl(str(1))))
     end if
+    res%ftl_tilej = 0.0
+    
     allocate (res%le_tilej(mxp,myp,npatch), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" allocate le_tilej fails with stat="//&
             trim(adjustl(str(1))))
     end if
+    res%le_tilej = 0.0
+    
     allocate (res%htf_tilej(mxp,myp,npatch), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" allocate htf_tilej fails with stat="//&
             trim(adjustl(str(1))))
     end if
+    res%htf_tilej = 0.0
+    
     allocate (res%snowdepthj(mxp,myp,npatch), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" allocate snowdepthj fails with stat="//&
             trim(adjustl(str(1))))
     end if
+    res%snowdepthj = 0.0
+    
     allocate (res%ht_fluxj(mxp,myp), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" allocate ht_fluxj fails with stat="//&
             trim(adjustl(str(1))))
     end if
+    res%ht_fluxj = 0.0
+    
     allocate (res%temp_surfj(mxp,myp), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" allocate temp_surfj fails with stat="//&
             trim(adjustl(str(1))))
     end if
-
+    res%temp_surfj = 0.0
+    
   end function CreateJulesFields
 
 
