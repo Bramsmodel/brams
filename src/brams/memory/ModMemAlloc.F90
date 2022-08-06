@@ -565,7 +565,12 @@ contains
     enddo
     !
     !Allocate and prepare optical properties memory
-    if(iswrtyp==6) call setOptMemory(ngrids,imean,nmzp,nmxp,nmyp)
+    if (iswrtyp==6) then
+       call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
+       call setOptMemory(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+            ngrids,imean,nmzp,nmxp,nmyp)
+       call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
+    end if
 
     !-------------
     ! Allocate Leaf surface scheme type

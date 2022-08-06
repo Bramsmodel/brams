@@ -119,8 +119,9 @@ module ModOptical
        grid_g, &
        time
 
-  use ModVarTables, only: &
-       InsertVTab
+  use ModVarTable, only: &
+       VarTable, &
+       InsertAtVarTable
 
   use node_mod, only: &
        nodei0, &
@@ -201,16 +202,17 @@ module ModOptical
   real :: cases(nsitesaot)
 
   type aotMap_t
-     real, pointer, dimension(:,:)    :: aotMap
-     integer, pointer, dimension(:,:) :: currSite
-     real, pointer, dimension(:,:,:)  :: extCoef
-     real, pointer, dimension(:,:)  :: r0
-     real, pointer, dimension(:,:)  :: pdens
-     real, pointer, dimension(:,:)  :: rsig
+     real, pointer, contiguous    :: aotMap(:,:) => null()
+     integer, pointer, contiguous :: currSite(:,:) => null()
+     real, pointer, contiguous    :: extCoef(:,:,:) => null()
+     real, pointer, contiguous    :: r0(:,:) => null()
+     real, pointer, contiguous    :: pdens(:,:) => null()
+     real, pointer, contiguous    :: rsig(:,:)
      !# geometric standard deviation
   end type aotMap_t
-  type(aotmap_t), allocatable, dimension(:) :: opt_aotmap, &
-       opt_aotMapm
+  
+  type(aotmap_t), allocatable, target :: opt_aotmap(:)
+  type(aotmap_t), allocatable, target :: opt_aotMapm(:)
 
   type aod_t
      real, pointer, dimension(:,:,:) :: tauaer
@@ -876,7 +878,8 @@ contains
 
   end subroutine setupraddata
 
-  subroutine setOptMemory(ngrids,imean,nmzp,nmxp,nmyp)
+  subroutine setOptMemory(oneVarTable, oneVarTableSize, &
+       ngrids,imean,nmzp,nmxp,nmyp)
     !# Allocate and set aotMapvariables in memory
     !#
     !# @note
@@ -912,6 +915,8 @@ contains
     !#
     !#--- ----------------------------------------------------------------------------------------
     !
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
     integer, intent(in) :: ngrids
     !# Total of grids
     integer, intent(in) :: imean
@@ -944,7 +949,8 @@ contains
        call opt_nullify_aotMap(opt_aotMapm,ng)
        call opt_alloc_aotMap  (opt_aotMap(ng),nmxp(ng), nmyp(ng))
        call opt_alloc_aotMap  (opt_aotMapm(ng),nmxp(ng), nmyp(ng))
-       call opt_filltab_aotMap(opt_aotMap(ng), opt_aotMapm(ng), ng, imean,nmxp(ng), nmyp(ng) )
+       call opt_filltab_aotMap(oneVarTable, oneVarTableSize, &
+            opt_aotMap(ng), opt_aotMapm(ng))
        !
        !KML
        !      do band=1,nbndsw
@@ -1237,7 +1243,8 @@ contains
 
   end subroutine opt_dealloc_aotMap
 
-  subroutine opt_filltab_aotMap(imap, imapm, ng, imean, n1, n2)
+  subroutine opt_filltab_aotMap(oneVarTable, oneVarTableSize, &
+       imap, imapm)
     !# Fill the  aotMap variable in var tables of model
     !#
     !# @note
@@ -1249,7 +1256,8 @@ contains
     !#
     !# **Author**: Rodrigues, L.F. **&#9993;**<mailto:luiz.rodrigues@inpe.br>
     !#             Longo, K.M. **&#9993;**<mailto:karla.longo@inpe.br>
-    !#             Rosario, N. E. **&#9993;**<niltoncvbr@gmail.com>      !# **Author**: Rodrigues, L.F. **&#9993;**<mailto:luiz.rodrigues@inpe.br>
+    !#             Rosario, N. E. **&#9993;**<niltoncvbr@gmail.com>
+    !# **Author**: Rodrigues, L.F. **&#9993;**<mailto:luiz.rodrigues@inpe.br>
     !#
     !# **Date**: 2018Aug
     !# @endnote
@@ -1273,26 +1281,36 @@ contains
     !#
     !#--- ----------------------------------------------------------------------------------------
     !
-    integer, intent(in) :: ng
-    !# grid
-    integer, intent(in) :: n1
-    !# Lon number of points
-    integer, intent(in) :: n2
-    !# Lat number of points
-    integer, intent(in) :: imean
-    !# Mean of variable
-    type(aotMap_t) :: imap
-    !# Var to be inserted
-    type(aotMap_t) :: imapm
-    !# Var to be inserted (m)
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
+    type(aotMap_t), pointer, intent(in) :: imap
+    type(aotMap_t), pointer, intent(in) :: imapm
 
-    integer(kind=int64)       :: npts
-    !# Total of points 1D
+    logical :: assThis
+    character(len=*), parameter :: h="**(opt_filltab_aotMap)**"
 
+    if (.not. associated(oneVarTable)) then
+       call fatal_error(h//" oneVarTable not associated")
+    else if (.not. associated(imap)) then
+       call fatal_error(h//" imap not associated")
+    end if
+    
     if(associated(imap%aotMap))then
-       npts = n1*n2
-       call InsertVTab(imap%aotMap, imapm%aotMap, ng, npts, imean, &
-            'AOTMAP :2:hist:anal:mpti')
+       if (.not. associated(imapm)) then
+          assThis=.false.
+       else
+          assThis=associated(imapm%aotMap)
+       end if
+       if (assThis) then
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               imap%aotMap, & 
+               'AOTMAP :2:hist:anal:mpti', &
+               imapm%aotMap)
+       else
+          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+               imap%aotMap, & 
+               'AOTMAP :2:hist:anal:mpti')
+       end if
     end if
 
   end subroutine opt_filltab_aotMap
