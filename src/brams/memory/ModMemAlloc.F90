@@ -102,6 +102,9 @@ module ModMemAlloc
        filltab_varinit, &
        dealloc_varinit
 
+  use ModVarTable, only: &
+       MarkLiteVarsAtVarTable
+  
   use ModVarTables, only: &
        num_var, &
        vtab_r, &
@@ -109,7 +112,6 @@ module ModMemAlloc
        num_var, &
        nvgrids, &
        vtab_r,  &
-       lite_varset, &
        DeepCopyToVarTable, &
        DeepCopyFromVarTable
 
@@ -1689,9 +1691,9 @@ contains
     endif
     !-------------
     ! Set "Lite" variable flags according to namelist input LITE_VARS.
-    if (proc_type==0 .or. proc_type==2 .or. proc_type==1) then
-       call lite_varset(proc_type)
-    endif
+    call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
+    call MarkLiteVarsAtVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize)
+    call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
 
 
     !Calling the statistic for allocate the amount of timesteps

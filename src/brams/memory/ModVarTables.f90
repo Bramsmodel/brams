@@ -48,7 +48,7 @@ module ModVarTables
   public :: VerifyVTabEntry
   public :: StringIndexing
 !!$  public :: ZeroVTab
-  public :: lite_varset
+!!$  public :: lite_varset
 !!$  public :: DumpVTab
 !!$  public :: setInitial4Vtable
   public :: DeepCopyToVarTable
@@ -543,55 +543,55 @@ contains
 
 
 
-  subroutine lite_varset(proc_type)
-
-    ! Arguments:
-    integer, intent(in) :: proc_type
-
-    ! Local variables:
-    integer :: nv,ng,nvl,ifound
-
-
-    ! Loop over each variable input in namelist "LITE_VARS" and set
-    !   lite flag in ModVarTables
-
-    do ng = 1,nvgrids   
-       vtab_r(1:num_var(ng),ng)%ilite = 0
-    enddo
-
-    do nvl=1,nlite_vars
-       ifound=0
-
-       do ng=1,nvgrids
-
-          do nv=1,num_var(ng)
-
-             if (vtab_r(nv,ng)%name == lite_vars(nvl) ) then
-                vtab_r(nv,ng)%ilite = 1
-                ifound=1
-             endif
-
-          enddo
-
-       enddo
-
-       if (proc_type==0 .or. proc_type==1) then !Output only in Master Process
-          if(ifound == 0) then
-             print*,'!---------------------------------------------------------'
-             print*,'! LITE_VARS variable does not exist in main variable table'
-             print*,'!    variable name-->',lite_vars(nvl),'<--'
-             print*,'!---------------------------------------------------------'
-          else
-             print*,'!---------------------------------------------------------'
-             print*,'! LITE_VARS variable added--->',trim(lite_vars(nvl))
-             print*,'!---------------------------------------------------------'
-          endif
-       endif
-
-    enddo
-
-    return
-  end subroutine lite_varset
+!!$  subroutine lite_varset(proc_type)
+!!$
+!!$    ! Arguments:
+!!$    integer, intent(in) :: proc_type
+!!$
+!!$    ! Local variables:
+!!$    integer :: nv,ng,nvl,ifound
+!!$
+!!$
+!!$    ! Loop over each variable input in namelist "LITE_VARS" and set
+!!$    !   lite flag in ModVarTables
+!!$
+!!$    do ng = 1,nvgrids   
+!!$       vtab_r(1:num_var(ng),ng)%ilite = 0
+!!$    enddo
+!!$
+!!$    do nvl=1,nlite_vars
+!!$       ifound=0
+!!$
+!!$       do ng=1,nvgrids
+!!$
+!!$          do nv=1,num_var(ng)
+!!$
+!!$             if (vtab_r(nv,ng)%name == lite_vars(nvl) ) then
+!!$                vtab_r(nv,ng)%ilite = 1
+!!$                ifound=1
+!!$             endif
+!!$
+!!$          enddo
+!!$
+!!$       enddo
+!!$
+!!$       if (proc_type==0 .or. proc_type==1) then !Output only in Master Process
+!!$          if(ifound == 0) then
+!!$             print*,'!---------------------------------------------------------'
+!!$             print*,'! LITE_VARS variable does not exist in main variable table'
+!!$             print*,'!    variable name-->',lite_vars(nvl),'<--'
+!!$             print*,'!---------------------------------------------------------'
+!!$          else
+!!$             print*,'!---------------------------------------------------------'
+!!$             print*,'! LITE_VARS variable added--->',trim(lite_vars(nvl))
+!!$             print*,'!---------------------------------------------------------'
+!!$          endif
+!!$       endif
+!!$
+!!$    enddo
+!!$
+!!$    return
+!!$  end subroutine lite_varset
 
   !-------------------------------------------------------------------------
 
