@@ -4,15 +4,24 @@
 
 
 module mem_aer1
-  use grid_dims, only : maxgrds,maxsclr
-  use aer1_list, only : nspecies_aer=> nspecies,nmodes
-  use ModNamelistFile, only: namelistFile
+
+  use grid_dims, only : &
+       maxgrds, &
+       maxsclr
+
+  use ModNamelistFile, only: &
+       namelistFile
+  
   use ModScalarTable, only: &
        ScalarTable, &
        InsertAtScalarTab
   
-  use aer1_list, only : spc_alloc,spc_name, src, ddp, wdp, fdda, offline, on ,off &
-       ,mode_alloc, transport,aer_name,mode_name, numb_mod_alloc, numb_alloc
+  use aer1_list, only : &
+       nspecies_aer=> nspecies, &
+       nmodes, spc_alloc, spc_name, src, ddp, wdp, fdda, offline, on ,off, &
+       mode_alloc, transport, aer_name, mode_name, numb_mod_alloc, numb_alloc, &
+       numb_name, inorg_spc_name, inorg_alloc, inorg_mod_alloc 
+
 
   use ModVarTable, only: &
        VarTable, &
@@ -23,6 +32,13 @@ module mem_aer1
   use mem_chem1, only: chem_assim,RECYCLE_TRACERS,&
        nspecies_transported ! this is first calculated at chemistry
   ! "filltab_tend_chem1" routine
+
+  use chem1_list, only: &
+       chem_name=>spc_name,    &
+       chem_alloc=>spc_alloc,  & 
+       chem_on=>on,            &
+       chem_fdda=>fdda,        &
+       chem_nspecies=>nspecies
 
   include "constants.h"
 
@@ -586,9 +602,6 @@ contains
   subroutine filltab_aer2(oneVarTable, oneVarTableSize, &
        aer2, aer2m, nvert_src, aer2mp, aer2mpm, mcphys_type)
 
-    use aer1_list, only : src, ddp, wdp, fdda, offline, on ,off &
-         ,numb_alloc,numb_name
-
     use io_params, only : ioutput         ! INTENT(IN)
 
     implicit none
@@ -811,7 +824,6 @@ contains
   !---------------------------------------------------------------
 
   subroutine alloc_tend_aer2(nmzp,nmxp,nmyp,ngrs,nmodes,proc_type)
-    use  aer1_list, only :  numb_mod_alloc
     implicit none
     integer,intent(in)                   :: ngrs,proc_type,nmodes
     integer,intent(in), dimension (ngrs) :: nmzp,nmxp,nmyp
@@ -864,7 +876,6 @@ contains
 
   subroutine filltab_tend_aer2(oneScalarTab, oneScalarTabSize, &
        nmodes,ng)
-    use aer1_list , only: numb_name
     use mem_chem1 , only: nspecies_transported ! this is first calculated at chemistry
     ! "filltab_tend_chem1" routine
     implicit none
@@ -893,9 +904,6 @@ contains
   !--------------------------------------------------------------------------
 
   subroutine alloc_aer1_inorg(aer1,n1,n2,n3,ninorg)
-
-    use aer1_list, only : src, ddp, wdp, fdda, offline, on ,off &
-         ,inorg_spc_name,inorg_alloc 
 
     implicit none
 
@@ -998,8 +1006,6 @@ contains
   subroutine filltab_aer1_inorg(oneVarTable, oneVarTableSize, &
        aer1, aer1m)
 
-    use aer1_list, only : inorg_alloc,inorg_name, src, ddp, wdp, fdda, offline, on ,off 
-
     use ModVarTable, only: &
          VarTable, &
          InsertAtVarTable
@@ -1040,12 +1046,12 @@ contains
           if (assThis) then
              call InsertAtVarTable(oneVarTable, oneVarTableSize, &
                   aer1(ispc)%sc_p, &
-                  trim(inorg_name(ispc))//'P :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle), &
+                  trim(inorg_spc_name(ispc))//'P :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle), &
                   aer1m(ispc)%sc_p)
           else
              call InsertAtVarTable(oneVarTable, oneVarTableSize, &
                   aer1(ispc)%sc_p, &
-                  trim(inorg_name(ispc))//'P :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle))
+                  trim(inorg_spc_name(ispc))//'P :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle))
           end if
           
           !---- sources (3 and 2 dimension)
@@ -1059,12 +1065,12 @@ contains
              if (assThis) then
                 call InsertAtVarTable(oneVarTable, oneVarTableSize, &
                      aer1(ispc)%sc_src, &
-                     trim(inorg_name(ispc))//'_SRC :'//trim(str_src_dim)//':hist:anal:mpti:mpt3:mpt1', &
+                     trim(inorg_spc_name(ispc))//'_SRC :'//trim(str_src_dim)//':hist:anal:mpti:mpt3:mpt1', &
                      aer1m(ispc)%sc_src)
              else
                 call InsertAtVarTable(oneVarTable, oneVarTableSize, &
                      aer1(ispc)%sc_src, &
-                     trim(inorg_name(ispc))//'_SRC :'//trim(str_src_dim)//':hist:anal:mpti:mpt3:mpt1')
+                     trim(inorg_spc_name(ispc))//'_SRC :'//trim(str_src_dim)//':hist:anal:mpti:mpt3:mpt1')
              end if
           endif
 
@@ -1078,12 +1084,12 @@ contains
              if (assThis) then
                 call InsertAtVarTable(oneVarTable, oneVarTableSize, &
                      aer1(ispc)%sc_dd, &
-                     trim(inorg_name(ispc))//'DD :2:hist:anal:mpti:mpt3', &
+                     trim(inorg_spc_name(ispc))//'DD :2:hist:anal:mpti:mpt3', &
                      aer1m(ispc)%sc_dd)
              else
                 call InsertAtVarTable(oneVarTable, oneVarTableSize, &
                      aer1(ispc)%sc_dd, &
-                     trim(inorg_name(ispc))//'DD :2:hist:anal:mpti:mpt3')
+                     trim(inorg_spc_name(ispc))//'DD :2:hist:anal:mpti:mpt3')
              end if
           end if
 
@@ -1096,12 +1102,12 @@ contains
              if (assThis) then
                 call InsertAtVarTable(oneVarTable, oneVarTableSize, &
                      aer1(ispc)%sc_wd, &
-                     trim(inorg_name(ispc))//'WD :2:hist:anal:mpti:mpt3', &
+                     trim(inorg_spc_name(ispc))//'WD :2:hist:anal:mpti:mpt3', &
                      aer1m(ispc)%sc_wd)
              else
                 call InsertAtVarTable(oneVarTable, oneVarTableSize, &
                      aer1(ispc)%sc_wd, &
-                     trim(inorg_name(ispc))//'WD :2:hist:anal:mpti:mpt3')
+                     trim(inorg_spc_name(ispc))//'WD :2:hist:anal:mpti:mpt3')
              end if
           end if
 
@@ -1116,12 +1122,12 @@ contains
                 if (assThis) then
                    call InsertAtVarTable(oneVarTable, oneVarTableSize, &
                         aer1(ispc)%sc_pp, &
-                        trim(inorg_name(ispc))//'PP :3:mpti', &
+                        trim(inorg_spc_name(ispc))//'PP :3:mpti', &
                         aer1m(ispc)%sc_pp)
                 else
                    call InsertAtVarTable(oneVarTable, oneVarTableSize, &
                         aer1(ispc)%sc_pp, &
-                        trim(inorg_name(ispc))//'PP :3:mpti')
+                        trim(inorg_spc_name(ispc))//'PP :3:mpti')
                 end if
                 if (assAve) then
                    assThis=associated(aer1m(ispc)%sc_pf)
@@ -1131,12 +1137,12 @@ contains
                 if (assThis) then
                    call InsertAtVarTable(oneVarTable, oneVarTableSize, &
                         aer1(ispc)%sc_pf, &
-                        trim(inorg_name(ispc))//'PF :3:mpti', &
+                        trim(inorg_spc_name(ispc))//'PF :3:mpti', &
                         aer1m(ispc)%sc_pf)
                 else
                    call InsertAtVarTable(oneVarTable, oneVarTableSize, &
                         aer1(ispc)%sc_pf, &
-                        trim(inorg_name(ispc))//'PF :3:mpti')
+                        trim(inorg_spc_name(ispc))//'PF :3:mpti')
                 end if
              end if
           end if
@@ -1148,7 +1154,6 @@ contains
   !---------------------------------------------------------------
 
   subroutine alloc_tend_aer1_inorg(nmzp,nmxp,nmyp,ngrs,ninorg,proc_type)
-    use  aer1_list, only :  inorg_mod_alloc
     implicit none
     integer,intent(in)                   :: ngrs,proc_type,ninorg
     integer,intent(in), dimension (ngrs) :: nmzp,nmxp,nmyp
@@ -1215,7 +1220,6 @@ contains
 
   subroutine filltab_tend_aer1_inorg(oneScalarTab, oneScalarTabSize, &
        ninorg,ng)
-    use aer1_list, only:INORG_name,mode_name
     use mem_chem1, only: nspecies_transported ! this is first calculated at chemistry
     ! "filltab_tend_chem1" routine
     implicit none
@@ -1231,7 +1235,10 @@ contains
 
        if (associated(aer1_inorg_g(ispc,ng)%sc_t)) then
           elements = size(aer1_inorg_g(ispc,ng)%sc_t)
-          call InsertAtScalarTab(aer1_inorg_g(ispc,ng)%sc_p, aer1_inorg_g(ispc,ng)%sc_t, trim(INORG_name(ispc))//'P',&
+          call InsertAtScalarTab(&
+               aer1_inorg_g(ispc,ng)%sc_p, &
+               aer1_inorg_g(ispc,ng)%sc_t, &
+               trim(inorg_spc_name(ispc))//'P',&
                oneScalarTab, oneScalarTabSize)
           !- total number of transported species (CHEM + AER)
           nspecies_transported = nspecies_transported + 1
@@ -1300,13 +1307,6 @@ contains
          oneGlobalGridData, &
          iyear1,imonth1,idate1,ihour1,itime1 ! from RAMSIN
 
-    use aer1_list, only: &
-         nspecies_aer=>nspecies, &
-         nmodes, &
-         mode_alloc_aer=>mode_alloc, &
-         aer_name
-
-
     implicit none
 
     include "constants.h"
@@ -1338,7 +1338,7 @@ contains
          ,form='UNFORMATTED',access='DIRECT',recl=recordLen)
     do ispc=1,nspecies_aer
        do nm=1,nmodes
-          if(mode_alloc_aer(nm,ispc) /= 1) cycle
+          if(mode_alloc(nm,ispc) /= 1) cycle
           nspc=nspc+1
           do k=1,mzp
              write(33,rec=irec) aer1_g(nm,ispc,1)%sc_p(k,:,:)
@@ -1348,7 +1348,7 @@ contains
     enddo
     do ispc=1,nspecies_aer
        do nm=1,nmodes
-          if(mode_alloc_aer(nm,ispc) /= 1) cycle
+          if(mode_alloc(nm,ispc) /= 1) cycle
           nspc=nspc+1
           do k=1,mzp
              write(33,rec=irec) aer1_g(nm,ispc,1)%sc_pf(k,:,:)
@@ -1375,13 +1375,13 @@ contains
     write(33,*) 'vars ',nspc*2
     do ispc=1,nspecies_aer
        do nm=1,nmodes
-          if(mode_alloc_aer(nm,ispc) /= 1) cycle
+          if(mode_alloc(nm,ispc) /= 1) cycle
           write(33,*) trim(aer_name(nm,ispc)),mzp,'99 ',trim(aer_name(nm,ispc))
        enddo
     enddo
     do ispc=1,nspecies_aer
        do nm=1,nmodes
-          if(mode_alloc_aer(nm,ispc) /= 1) cycle
+          if(mode_alloc(nm,ispc) /= 1) cycle
           write(33,*) trim(aer_name(nm,ispc))//'_pf',mzp,'99 ',trim(aer_name(nm,ispc))//'_pf'
        enddo
     enddo
@@ -1397,8 +1397,6 @@ contains
 
   subroutine define_aer1_src_zdim(aer1_src_z_dim,n1)
 
-    use aer1_list, only: nspecies_aer=> nspecies
-
     implicit none
     integer, intent(out) :: aer1_src_z_dim(nspecies_aer)
     integer, intent(in) :: n1
@@ -1412,5 +1410,55 @@ contains
     !  aer1_src_z_dim(v_ash) = n1     ! 3d
     return
   end subroutine define_aer1_src_zdim
+
+  
+
+  subroutine FixChemAerVarTableForIOUTPUT5(oneVarTable, oneVarTableSize, chemistry, aerosol)
+    implicit none
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(in) :: oneVarTableSize
+    integer, intent(in) :: chemistry
+    integer, intent(in) :: aerosol
+    integer :: ni, nspc, imode
+    character(len=2) :: cmode
+
+    do ni = 1, oneVarTableSize
+
+       if (trim(oneVarTable(ni)%name) == 'TOPT'  .or. &
+	    trim(oneVarTable(ni)%name) == 'UP'    .or. &
+	    trim(oneVarTable(ni)%name) == 'VP'    .or. &
+	    trim(oneVarTable(ni)%name) == 'THETA' .or. &
+	    trim(oneVarTable(ni)%name) == 'PP'    .or. &
+	    trim(oneVarTable(ni)%name) == 'RV') then
+          cycle
+       end if
+
+
+       if(chemistry >= 0) then 
+          do nspc=1,chem_nspecies
+             if(chem_alloc(chem_fdda,nspc) == chem_on .and. &
+                  trim(oneVarTable(ni)%name) == trim(chem_name(nspc))//'P') then 
+                oneVarTable(ni)%ianal=1
+                cycle
+             end if
+          end do
+       end if
+
+       if(aerosol == 1 .and. chemistry >= 0) then
+          do nspc=1, nspecies_aer
+             do imode = 1, nmodes
+                write(cmode, '(BN, I2)')imode
+                cmode = adjustl(cmode)
+                if(spc_alloc(fdda,imode,nspc) == 1  .and. &
+                     trim(oneVarTable(ni)%name) == trim(aer_name(imode,nspc))//trim(cmode)//'P') then
+                   oneVarTable(ni)%ianal=1
+                   cycle
+                end if
+             end do
+          end do
+       end if
+    end do
+  end subroutine FixChemAerVarTableForIOUTPUT5
+  
 end module mem_aer1
 

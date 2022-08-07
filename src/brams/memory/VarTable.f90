@@ -44,6 +44,7 @@ module ModVarTable
   public :: DestroyVarTable
   public :: DumpVarTable
   public :: InsertAtVarTable
+  public :: FixVarTableForIOUTPUT5
 !!$  public :: GetVTabEntry
 !!$  public :: GetVTabSectionSize
 !!$  public :: VerifyVTabEntry
@@ -776,55 +777,59 @@ contains
 !!$            vtab_r(i,ngrd)%idim_type, vtab_r(i,ngrd)%npts
 !!$    end do
 !!$  end subroutine DumpVTab
-!!$
-!!$
-!!$
-!!$
-!!$
-!!$  subroutine setInitial4Vtable(ng, chemistry, aerosol)
-!!$    integer, intent(in) :: ng
+
+
+
+
+
+!!$  subroutine InitVarTableGeneralAnal(oneVarTable, oneVarTableSize, chemistry, aerosol)
+!!$    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+!!$    integer, intent(in) :: oneVarTableSize
 !!$    integer, intent(in) :: chemistry
 !!$    integer, intent(in) :: aerosol
-!!$    integer :: ni, nspc, imode
+!!$
+!!$    integer :: ni
+!!$    integer :: nspc
+!!$    integer :: imode
 !!$    character(len=2) :: cmode
+!!$    character(len=*), parameter :: h="**(InitVarTableGeneralAnal)**"
 !!$
-!!$    do ni = 1, num_var(ng)
+!!$    do ni = 1, oneVarTableSize
 !!$
-!!$       vtab_r(ni,ng)%ianal=0	
+!!$       oneVarTable(ni)%ianal=0	
 !!$
-!!$       if (trim(vtab_r(ni,ng)%name) == 'TOPT'  .or. &
-!!$	    trim(vtab_r(ni,ng)%name) == 'UP'    .or. &
-!!$	    trim(vtab_r(ni,ng)%name) == 'VP'    .or. &
-!!$	    trim(vtab_r(ni,ng)%name) == 'THETA' .or. &
-!!$	    trim(vtab_r(ni,ng)%name) == 'PP'    .or. &
-!!$	    trim(vtab_r(ni,ng)%name) == 'RV') then
-!!$          vtab_r(ni,ng)%ianal=1
+!!$       if (trim(oneVarTable(ni)%name) == 'TOPT'  .or. &
+!!$	    trim(oneVarTable(ni)%name) == 'UP'    .or. &
+!!$	    trim(oneVarTable(ni)%name) == 'VP'    .or. &
+!!$	    trim(oneVarTable(ni)%name) == 'THETA' .or. &
+!!$	    trim(oneVarTable(ni)%name) == 'PP'    .or. &
+!!$	    trim(oneVarTable(ni)%name) == 'RV') then
+!!$          oneVarTable(ni)%ianal=1
 !!$          cycle
 !!$       end if
 !!$
-!!$       if(vtab_r(ni,ng)%irecycle == 1) vtab_r(ni,ng)%ianal=1
+!!$       if (oneVarTable(ni)%irecycle == 1) then
+!!$          oneVarTable(ni)%ianal=1
+!!$       end if
 !!$
 !!$
-!!$       if(CHEMISTRY >= 0) then 
+!!$       if(chemistry >= 0) then 
 !!$          do nspc=1,chem_nspecies
-!!$             !print*, spc_alloc(fdda,nspc), on
-!!$             !print*, trim(vtab_r(ni,ng)%name), '>>', trim(spc_name(nspc))//'P'
 !!$             if(chem_alloc(chem_fdda,nspc) == chem_on .and. &
-!!$                  trim(vtab_r(ni,ng)%name) == trim(chem_name(nspc))//'P') then 
-!!$                vtab_r(ni,ng)%ianal=1
+!!$                  trim(oneVarTable(ni)%name) == trim(chem_name(nspc))//'P') then 
+!!$                oneVarTable(ni)%ianal=1
 !!$                cycle
 !!$             end if
 !!$          end do
 !!$       end if
-!!$       if(AEROSOL == 1 .and. CHEMISTRY >= 0) then
+!!$       if(aerosol == 1 .and. chemistry >= 0) then
 !!$          do nspc=1,aer_nspecies
 !!$             do imode = 1, aer_nmodes
 !!$                write(cmode, '(BN, I2)')imode
 !!$                cmode = adjustl(cmode)
-!!$                !print*, trim(vtab_r(ni,ng)%name), trim(aer_name(nspc))//trim(cmode)//'P'
 !!$                if(aer_alloc(aer_fdda,imode,nspc) == 1  .and. &
-!!$                     trim(vtab_r(ni,ng)%name) == trim(aer_name(nspc))//trim(cmode)//'P') then
-!!$                   vtab_r(ni,ng)%ianal=1
+!!$                     trim(oneVarTable(ni)%name) == trim(aer_name(nspc))//trim(cmode)//'P') then
+!!$                   oneVarTable(ni)%ianal=1
 !!$                   cycle
 !!$                end if
 !!$             end do
@@ -832,6 +837,37 @@ contains
 !!$       end if
 !!$    end do
 !!$
-!!$  end subroutine setInitial4Vtable
-!!$
+!!$  end subroutine InitVarTableGeneralAnal
+
+
+  subroutine FixVarTableForIOUTPUT5(oneVarTable, oneVarTableSize)
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(in) :: oneVarTableSize
+
+    integer :: ni
+    integer :: nspc
+    integer :: imode
+    character(len=2) :: cmode
+    character(len=*), parameter :: h="**(FixVarTableForIOUTPUT5)**"
+
+    do ni = 1, oneVarTableSize
+
+       oneVarTable(ni)%ianal=0	
+
+       if (trim(oneVarTable(ni)%name) == 'TOPT'  .or. &
+	    trim(oneVarTable(ni)%name) == 'UP'    .or. &
+	    trim(oneVarTable(ni)%name) == 'VP'    .or. &
+	    trim(oneVarTable(ni)%name) == 'THETA' .or. &
+	    trim(oneVarTable(ni)%name) == 'PP'    .or. &
+	    trim(oneVarTable(ni)%name) == 'RV') then
+          oneVarTable(ni)%ianal=1
+          cycle
+       end if
+
+       if (oneVarTable(ni)%irecycle == 1) then
+          oneVarTable(ni)%ianal=1
+       end if
+
+    end do
+  end subroutine FixVarTableForIOUTPUT5
 end module ModVarTable

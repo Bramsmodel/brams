@@ -16,21 +16,21 @@ module ModVarTables
        nlite_vars, & ! INTENT(IN)
        lite_vars     ! INTENT(IN)
 
-  use chem1_list, only:&
-       chem_name=>spc_name,    &
-       chem_alloc=>spc_alloc,  & 
-       chem_on=>on,            &
-       chem_fdda=>fdda,        &
-       chem_transport=>transport, &
-       chem_nspecies=>nspecies 
+!!$  use chem1_list, only:&
+!!$       chem_name=>spc_name,    &
+!!$       chem_alloc=>spc_alloc,  & 
+!!$       chem_on=>on,            &
+!!$       chem_fdda=>fdda,        &
+!!$       chem_transport=>transport, &
+!!$       chem_nspecies=>nspecies 
 
-  use aer1_list, only: aer_name=>spc_name,     &
-       aer_nspecies=>nspecies, &
-       aer_alloc=>spc_alloc,     &
-       aer_fdda=>fdda, &
-       aer_transport=>transport, &
-       aer_on=>on,               &
-       aer_nmodes=>nmodes
+!!$  use aer1_list, only: aer_name=>spc_name,     &
+!!$       aer_nspecies=>nspecies, &
+!!$       aer_alloc=>spc_alloc,     &
+!!$       aer_fdda=>fdda, &
+!!$       aer_transport=>transport, &
+!!$       aer_on=>on,               &
+!!$       aer_nmodes=>nmodes
 
   use ModVarTable, only: &
        VarTable
@@ -49,8 +49,8 @@ module ModVarTables
   public :: StringIndexing
 !!$  public :: ZeroVTab
   public :: lite_varset
-  public :: DumpVTab
-  public :: setInitial4Vtable
+!!$  public :: DumpVTab
+!!$  public :: setInitial4Vtable
   public :: DeepCopyToVarTable
   public :: DeepCopyFromVarTable
 
@@ -682,77 +682,77 @@ contains
 !!$     arrayOut = scr1
 !!$  end if
 !!$end subroutine GetVarFromMem
-
-  subroutine DumpVTab(ngrd)
-    integer, intent(in) :: ngrd
-
-    integer :: i
-    character(len=*), parameter :: h="**(DumpVTab)**"
-
-    write(*,"(a,i2)") h//" dump of vtab_r names for grid ",ngrd
-    write(*,"(a)") h//" name            idim_type           npts"
-    do i = 1, num_var(ngrd)
-       write(*,"(1x,a16,1x,i8,1x,i16)") vtab_r(i,ngrd)%name, &
-            vtab_r(i,ngrd)%idim_type, vtab_r(i,ngrd)%npts
-    end do
-  end subroutine DumpVTab
-
-
+!!$
+!!$  subroutine DumpVTab(ngrd)
+!!$    integer, intent(in) :: ngrd
+!!$
+!!$    integer :: i
+!!$    character(len=*), parameter :: h="**(DumpVTab)**"
+!!$
+!!$    write(*,"(a,i2)") h//" dump of vtab_r names for grid ",ngrd
+!!$    write(*,"(a)") h//" name            idim_type           npts"
+!!$    do i = 1, num_var(ngrd)
+!!$       write(*,"(1x,a16,1x,i8,1x,i16)") vtab_r(i,ngrd)%name, &
+!!$            vtab_r(i,ngrd)%idim_type, vtab_r(i,ngrd)%npts
+!!$    end do
+!!$  end subroutine DumpVTab
 
 
 
-  subroutine setInitial4Vtable(ng, chemistry, aerosol)
-    integer, intent(in) :: ng
-    integer, intent(in) :: chemistry
-    integer, intent(in) :: aerosol
-    integer :: ni, nspc, imode
-    character(len=2) :: cmode
-
-    do ni = 1, num_var(ng)
-
-       vtab_r(ni,ng)%ianal=0	
-
-       if (trim(vtab_r(ni,ng)%name) == 'TOPT'  .or. &
-	    trim(vtab_r(ni,ng)%name) == 'UP'    .or. &
-	    trim(vtab_r(ni,ng)%name) == 'VP'    .or. &
-	    trim(vtab_r(ni,ng)%name) == 'THETA' .or. &
-	    trim(vtab_r(ni,ng)%name) == 'PP'    .or. &
-	    trim(vtab_r(ni,ng)%name) == 'RV') then
-          vtab_r(ni,ng)%ianal=1
-          cycle
-       end if
-
-       if(vtab_r(ni,ng)%irecycle == 1) vtab_r(ni,ng)%ianal=1
 
 
-       if(CHEMISTRY >= 0) then 
-          do nspc=1,chem_nspecies
-             !print*, spc_alloc(fdda,nspc), on
-             !print*, trim(vtab_r(ni,ng)%name), '>>', trim(spc_name(nspc))//'P'
-             if(chem_alloc(chem_fdda,nspc) == chem_on .and. &
-                  trim(vtab_r(ni,ng)%name) == trim(chem_name(nspc))//'P') then 
-                vtab_r(ni,ng)%ianal=1
-                cycle
-             end if
-          end do
-       end if
-       if(AEROSOL == 1 .and. CHEMISTRY >= 0) then
-          do nspc=1,aer_nspecies
-             do imode = 1, aer_nmodes
-                write(cmode, '(BN, I2)')imode
-                cmode = adjustl(cmode)
-                !print*, trim(vtab_r(ni,ng)%name), trim(aer_name(nspc))//trim(cmode)//'P'
-                if(aer_alloc(aer_fdda,imode,nspc) == 1  .and. &
-                     trim(vtab_r(ni,ng)%name) == trim(aer_name(nspc))//trim(cmode)//'P') then
-                   vtab_r(ni,ng)%ianal=1
-                   cycle
-                end if
-             end do
-          end do
-       end if
-    end do
-
-  end subroutine setInitial4Vtable
+!!$  subroutine setInitial4Vtable(ng, chemistry, aerosol)
+!!$    integer, intent(in) :: ng
+!!$    integer, intent(in) :: chemistry
+!!$    integer, intent(in) :: aerosol
+!!$    integer :: ni, nspc, imode
+!!$    character(len=2) :: cmode
+!!$
+!!$    do ni = 1, num_var(ng)
+!!$
+!!$       vtab_r(ni,ng)%ianal=0	
+!!$
+!!$       if (trim(vtab_r(ni,ng)%name) == 'TOPT'  .or. &
+!!$	    trim(vtab_r(ni,ng)%name) == 'UP'    .or. &
+!!$	    trim(vtab_r(ni,ng)%name) == 'VP'    .or. &
+!!$	    trim(vtab_r(ni,ng)%name) == 'THETA' .or. &
+!!$	    trim(vtab_r(ni,ng)%name) == 'PP'    .or. &
+!!$	    trim(vtab_r(ni,ng)%name) == 'RV') then
+!!$          vtab_r(ni,ng)%ianal=1
+!!$          cycle
+!!$       end if
+!!$
+!!$       if(vtab_r(ni,ng)%irecycle == 1) vtab_r(ni,ng)%ianal=1
+!!$
+!!$
+!!$       if(CHEMISTRY >= 0) then 
+!!$          do nspc=1,chem_nspecies
+!!$             !print*, spc_alloc(fdda,nspc), on
+!!$             !print*, trim(vtab_r(ni,ng)%name), '>>', trim(spc_name(nspc))//'P'
+!!$             if(chem_alloc(chem_fdda,nspc) == chem_on .and. &
+!!$                  trim(vtab_r(ni,ng)%name) == trim(chem_name(nspc))//'P') then 
+!!$                vtab_r(ni,ng)%ianal=1
+!!$                cycle
+!!$             end if
+!!$          end do
+!!$       end if
+!!$       if(AEROSOL == 1 .and. CHEMISTRY >= 0) then
+!!$          do nspc=1,aer_nspecies
+!!$             do imode = 1, aer_nmodes
+!!$                write(cmode, '(BN, I2)')imode
+!!$                cmode = adjustl(cmode)
+!!$                !print*, trim(vtab_r(ni,ng)%name), trim(aer_name(nspc))//trim(cmode)//'P'
+!!$                if(aer_alloc(aer_fdda,imode,nspc) == 1  .and. &
+!!$                     trim(vtab_r(ni,ng)%name) == trim(aer_name(nspc))//trim(cmode)//'P') then
+!!$                   vtab_r(ni,ng)%ianal=1
+!!$                   cycle
+!!$                end if
+!!$             end do
+!!$          end do
+!!$       end if
+!!$    end do
+!!$
+!!$  end subroutine setInitial4Vtable
 
   subroutine DeepCopyToVarTable(oneVarTable, oneVarTableSize, name)
     type(VarTable), pointer, intent(in) :: oneVarTable(:)

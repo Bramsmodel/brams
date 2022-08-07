@@ -195,10 +195,13 @@ module ModOneProc
        StoreNamelistFileAtTeb_vars_const
 
   use ModVarTables, only: &
-       setInitial4Vtable,  &
+!!$       setInitial4Vtable,  &
        num_var,         &
        vtab_r
 
+  use ModVarTable, only: &
+       FixVarTableForIOUTPUT5
+  
   use ModTimestep, only: &
        timestep
 
@@ -318,7 +321,11 @@ module ModOneProc
        chemistry, &
        chem_assim
 
-  use mem_aer1, only: aerosol, StoreNamelistFileAtMem_aer1
+  use mem_aer1, only: &
+       aerosol, &
+       FixChemAerVarTableForIOUTPUT5, &
+       StoreNamelistFileAtMem_aer1
+  
   use mem_chem1aq, only: StoreNamelistFileAtMem_chem1aq
   use mem_plume_chem1, only: StoreNamelistFileAtMem_plumeChem1
   use mem_volc_chem1, only: StoreNamelistFileAtMem_volcChem1
@@ -991,8 +998,10 @@ contains
        !**(JP)** This should allocate memory for all modules (to be certified!!!)
        call MemAlloc(oneGrid, 2)
 
-       if(ioutput == 5)then
-          call setInitial4Vtable(1, chemistry, aerosol)
+       if (ioutput == 5) then
+          call FixVarTableForIOUTPUT5(oneGrid%oneVarTable, oneGrid%oneVarTableSize)          
+          call FixChemAerVarTableForIOUTPUT5(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+               chemistry, aerosol)
           ioutput = 2
        end if
 
