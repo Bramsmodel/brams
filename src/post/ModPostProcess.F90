@@ -9,6 +9,9 @@ module ModPostProcess
   use ModParallelEnvironment, only : &
        MsgDump
 
+  use ModVarTable, only: &
+       VarTable
+  
   use ModPostOneField, only: &
        PostOneField, &
        initialize_post_variables, &
@@ -82,11 +85,13 @@ contains
 
 
   subroutine CreatePostProcess(oneNamelistFile, oneAllPostTypes, &
-       oneBasicFields, oneTurbFields)
+       oneBasicFields, oneTurbFields, oneVarTable, oneVarTableSize)
     type(namelistFile), pointer :: oneNamelistFile
     type(AllPostTypes), pointer :: oneAllPostTypes
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
 
     integer :: igrid
     integer :: ierr
@@ -123,7 +128,8 @@ contains
        call CreatePostGrid(oneNamelistFile, &
             oneAllPostTypes%allGrids(igrid)%bg, &
             oneAllPostTypes%allGrids(igrid)%pg, &
-            igrid, oneBasicFields, oneTurbFields)
+            igrid, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     end do
 
   end subroutine CreatePostProcess
@@ -137,8 +143,8 @@ contains
 
     integer :: igrid, ivp, ierr
     character(len = 8) :: c0, c1
-    type(GridTree), pointer :: OneGridTreeNode => null ()
-    type(Grid), pointer :: OneGrid => null()
+    type(GridTree), pointer :: oneGridTreeNode => null ()
+    type(Grid), pointer :: oneGrid => null()
     character(len = *), parameter :: h = "**(PostProcess)**"
     if (.not. associated(oneAllPostTypes)) then
        call fatal_error(h // " invoked with null oneAllPostTypes")
@@ -148,30 +154,30 @@ contains
 
     ! for each grid
 
-    OneGridTreeNode => GridTreeRoot(AllGrids)
-    do while (associated(OneGridTreeNode))
+    oneGridTreeNode => GridTreeRoot(AllGrids)
+    do while (associated(oneGridTreeNode))
 
-       OneGrid => OneGridTreeNode%curr
+       oneGrid => oneGridTreeNode%curr
 
        ! update Ghost Zone of all vartables variables part 1:
        ! post receives and send messages
        call PostSendRecvMsgs(&
-            OneGrid%AllGhostZoneSend, &
-            OneGrid%AllGhostZoneRecv)
-       igrid = OneGrid%Id
+            oneGrid%AllGhostZoneSend, &
+            oneGrid%AllGhostZoneRecv)
+       igrid = oneGrid%Id
 
        ! open grads files
        if(IPOS==2) then
-          call OpenGradsBinaryFile(OneGrid%oneNamelistFile, &
+          call OpenGradsBinaryFile(oneGrid%oneNamelistFile, &
                oneAllPostTypes%allGrids(igrid)%pg, &
                oneAllPostTypes%allGrids(igrid)%bg, igrid)
-          call OpenGradsControlFile(OneGrid%oneNamelistFile, &
+          call OpenGradsControlFile(oneGrid%oneNamelistFile, &
                oneAllPostTypes%allGrids(igrid)%pg, &
                oneAllPostTypes%allGrids(igrid)%bg, igrid)
        endif
 #ifdef cdf
        if(IPOS==3) then
-          call OpenNetCDFBinaryFile(OneGrid%oneNamelistFile, &
+          call OpenNetCDFBinaryFile(oneGrid%oneNamelistFile, &
                oneAllPostTypes%allGrids(igrid)%pg, &
                oneAllPostTypes%allGrids(igrid)%bg, igrid)
        endif
@@ -187,38 +193,40 @@ contains
        ! receive messages and wait on sends
 
        call WaitSendRecvMsgs(&
-            OneGrid%AllGhostZoneSend, &
-            OneGrid%AllGhostZoneRecv)
+            oneGrid%AllGhostZoneSend, &
+            oneGrid%AllGhostZoneRecv)
 
        ! update verticals according to namelist options
 
        call UpdateVerticals(&
             oneAllPostTypes%allGrids(igrid)%bg, &
             oneAllPostTypes%allGrids(igrid)%pg, &
-            OneGrid%oneNamelistFile, &
-            OneGrid%oneBasicFields, &
-            OneGrid%oneTurbFields)
+            oneGrid%oneNamelistFile, &
+            oneGrid%oneBasicFields, &
+            oneGrid%oneTurbFields, &
+            oneGrid%oneVarTable, oneGrid%oneVarTableSize)
        ! post process each desired field and
        ! write resulting field to grads binary file
-       call initialize_post_variables(OneGrid%oneNamelistFile)
+       call initialize_post_variables(oneGrid%oneNamelistFile)
 #ifdef cdf
        if(IPOS==3) then
-          call FillNetcdfVarControlFile(OneGrid%oneNamelistFile, &
+          call FillNetcdfVarControlFile(oneGrid%oneNamelistFile, &
                oneAllPostTypes%allGrids(igrid)%pg, &
                oneAllPostTypes%allGrids(igrid)%bg)
        endif
 #endif
-       do ivp = 1, OneGrid%oneNamelistFile%nvp
+       do ivp = 1, oneGrid%oneNamelistFile%nvp
           if (dumpLocal) then
              call MsgDump (h // " variable " // &
-                  trim(OneGrid%oneNamelistFile%vp(ivp)))
+                  trim(oneGrid%oneNamelistFile%vp(ivp)))
           end if
-          call PostOneField(trim(OneGrid%oneNamelistFile%vp(ivp)), &
+          call PostOneField(trim(oneGrid%oneNamelistFile%vp(ivp)), &
                oneAllPostTypes%allGrids(igrid)%bg, &
                oneAllPostTypes%allGrids(igrid)%pg, &
-               OneGrid%oneNamelistFile, &
-               OneGrid%oneBasicFields,&
-               OneGrid%oneTurbFields, OneGrid%oneMicVars)
+               oneGrid%oneNamelistFile, &
+               oneGrid%oneBasicFields,&
+               oneGrid%oneTurbFields, oneGrid%oneMicVars, &
+               oneGrid%oneVarTable, oneGrid%oneVarTableSize)
        end do
        call finalize_post_variables()
        ! control file contents
@@ -239,7 +247,7 @@ contains
        if(IPOS==3) ierr=nf90_close(ncid)
 #endif         
 
-       OneGridTreeNode => NextOnGridTree(OneGridTreeNode)
+       oneGridTreeNode => NextOnGridTree(oneGridTreeNode)
 
 
     end do

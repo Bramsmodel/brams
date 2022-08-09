@@ -12,6 +12,9 @@ module ModPostOneField8d
   use ModOutputUtils, only: &
        GetVarFromMemToOutput
 
+  use ModVarTable, only: &
+       VarTable
+  
   use ModBramsGrid, only: &
        BramsGrid
 
@@ -37,13 +40,16 @@ contains
 
 
   subroutine Brams2Post_8d (one_post_variable, oneBramsGrid, onePostGrid, &
-       oneNamelistFile, oneBasicFields, oneTurbFields)
+       oneNamelistFile, oneBasicFields, oneTurbFields, &
+       oneVarTable, oneVarTableSize)
     type(PostVarType) :: one_post_variable
     type(BramsGrid), pointer :: oneBramsGrid
     type(PostGrid), pointer :: onePostGrid
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
 
     real :: ScrT4N01(oneBramsGrid%mxp, oneBramsGrid%myp, oneBramsGrid%nzg, oneBramsGrid%npatch)
     real :: OutputField(oneBramsGrid%mxp, oneBramsGrid%myp, oneBramsGrid%nzg, oneBramsGrid%npatch)
@@ -51,15 +57,18 @@ contains
     select case (one_post_variable%fieldName)
     case ('SMOIST')
        call GetVarFromMemToOutput ('SOIL_WATER', oneBramsGrid%currGrid, ScrT4N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call get_leaf_soil (ScrT4N01, OutputField)
     case ('SENERGY')
        call GetVarFromMemToOutput ('SOIL_ENERGY', oneBramsGrid%currGrid, ScrT4N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call get_leaf_soil (ScrT4N01, OutputField)
     case ('SLTEX_P')
        call GetVarFromMemToOutput ('SOIL_TEXT', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case default
        write(*, "(a)") "**(OnePostField)** Post field 8d" // one_post_variable%fieldName // " not implemented!"
        stop

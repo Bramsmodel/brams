@@ -11,6 +11,9 @@ module ModPostOneField2d
 
   use ModMicControl, only: &
        MicControl
+
+  use ModVarTable, only: &
+       VarTable
   
   use mem_grid, only: &
        time   ! INTENT(IN)  !DSM
@@ -102,7 +105,8 @@ contains
 
 
   subroutine Brams2Post_2d (one_post_variable, oneBramsGrid, onePostGrid, &
-       oneNamelistFile, oneBasicFields, oneTurbFields, oneMicControl)
+       oneNamelistFile, oneBasicFields, oneTurbFields, oneMicControl, &
+       oneVarTable, oneVarTableSize)
     include "constants.h"
     type(PostVarType) :: one_post_variable
     type(BramsGrid), pointer :: oneBramsGrid
@@ -111,6 +115,8 @@ contains
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     type(MicControl), pointer, intent(in) :: oneMicControl
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
 
     real :: OutputField(oneBramsGrid%mxp, oneBramsGrid%myp)
     real :: OutputField3d(oneBramsGrid%mxp, oneBramsGrid%myp, oneBramsGrid%mzp) ! for use in a special case
@@ -157,89 +163,115 @@ contains
     select case (one_post_variable%fieldName)
     case ('TOTPCP')
        call getAccComponents(oneBramsGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields, oneMicControl)
+            oneNamelistFile, oneBasicFields, oneTurbFields, oneMicControl, &
+            oneVarTable, oneVarTableSize)
        OutputField = max(OutputField, 0.0)
     case ('ACCCON')
        OutputField = getAconpr(oneBramsGrid, oneNamelistFile, oneBasicFields,&
-            oneTurbFields)
+            oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        OutputField = max(OutputField, 0.0)
     case ('CONVPREC')
        OutputField = getAconpr(oneBramsGrid, oneNamelistFile, oneBasicFields,&
-            oneTurbFields)-convprec
+            oneTurbFields, oneVarTable, oneVarTableSize)-convprec
        convprec    = getAconpr(oneBramsGrid, oneNamelistFile, oneBasicFields,&
-            oneTurbFields) ! save for the next step
+            oneTurbFields, & ! save for the next step
+            oneVarTable, oneVarTableSize)
        !--- output mm/hour
        OutputField = max(OutputField, 0.0)/(frqanl/3600.)
 
     case ('RSHORT')
        call GetVarFromMemToOutput ('RSHORT', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('RLONG')
        call GetVarFromMemToOutput ('RLONG', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('SEA_PRESS')
        call GetVarFromMemToOutput ('TOPT', oneBramsGrid%currGrid, ScrT2N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('PI', oneBramsGrid%currGrid, ScrT3N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('THETA', oneBramsGrid%currGrid, ScrT3N02, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('RV', oneBramsGrid%currGrid, ScrT3N03, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call rams_comp_thetv (ScrT3N02, ScrT3N03)
        OutputField = ScrT3N03(:, :, 1)
        call rams_comp_slpmm5 (ScrT3N02, ScrT3N01, ScrT2N01, OutputField)
     case ('CAPE')
        call GetVarFromMemToOutput ('RV', oneBramsGrid%currGrid, ScrT3N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('PI', oneBramsGrid%currGrid, ScrT3N02, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('THETA', oneBramsGrid%currGrid, ScrT3N03, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call rams_comp_rh (ScrT3N01, ScrT3N02, ScrT3N03)
        ScrT3N01 = max(ScrT3N01, 0.0)
        call GetVarFromMemToOutput ('THETA', oneBramsGrid%currGrid, ScrT3N03, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('PI', oneBramsGrid%currGrid, ScrT3N02, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call rams_comp_tempk (ScrT3N03, ScrT3N02)
        call GetVarFromMemToOutput ('PI', oneBramsGrid%currGrid, ScrT3N02, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call rams_comp_press(ScrT3N02)
        call cape_cine (ScrT3N02, ScrT3N03, ScrT3N01, OutputField, 'cape')
     case ('CINE')
        call GetVarFromMemToOutput ('RV', oneBramsGrid%currGrid, ScrT3N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('PI', oneBramsGrid%currGrid, ScrT3N02, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('THETA', oneBramsGrid%currGrid, ScrT3N03, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call rams_comp_rh (ScrT3N01, ScrT3N02, ScrT3N03)
        ScrT3N01 = max(ScrT3N01, 0.0)
        call GetVarFromMemToOutput ('THETA', oneBramsGrid%currGrid, ScrT3N03, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('PI', oneBramsGrid%currGrid, ScrT3N02, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call rams_comp_tempk (ScrT3N03, ScrT3N02)
        call GetVarFromMemToOutput ('PI', oneBramsGrid%currGrid, ScrT3N02, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call rams_comp_press(ScrT3N02)
        call cape_cine (ScrT3N02, ScrT3N03, ScrT3N01, OutputField, 'cine')
     case ('TOPO')
        call GetVarFromMemToOutput ('TOPT', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('PRECIP')
        call getAccComponents(oneBramsGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields, oneMicControl)
+            oneNamelistFile, oneBasicFields, oneTurbFields, oneMicControl, &
+            oneVarTable, oneVarTableSize)
        ScrT2N01 = getAconpr(oneBramsGrid, oneNamelistFile, oneBasicFields,&
-            oneTurbFields)
+            oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        OutputField = OutputField + ScrT2N01
        OutputField = max(OutputField, 0.0)
     case ('TOTPREC')
        call getAccComponents(oneBramsGrid, ScrT2N02, &
-            oneNamelistFile, oneBasicFields, oneTurbFields, oneMicControl)
+            oneNamelistFile, oneBasicFields, oneTurbFields, oneMicControl, &
+            oneVarTable, oneVarTableSize)
        ScrT2N01 = getAconpr(oneBramsGrid, oneNamelistFile, oneBasicFields,&
-            oneTurbFields)
+            oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        OutputField = ScrT2N02 + ScrT2N01 - TotPrec
        TotPrec= ScrT2N02 + ScrT2N01  ! save for the next step
 
@@ -247,9 +279,11 @@ contains
        OutputField = max(OutputField, 0.0)/(frqanl/3600.)
     case ('LE')
        call GetVarFromMemToOutput ('SFLUX_R', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('TOPT', oneBramsGrid%currGrid, ScrT2N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call rams_comp_dn0 (ScrT3N01, ScrT3N02, ScrT3N03, ScrT2N01, oneBramsGrid%pi01dn, &
             oneBramsGrid%th01dn, oneBramsGrid%ztn, oneBramsGrid%ztop, oneBramsGrid%dzmn)
        call rams_get_surface(ScrT2N01, ScrT3N03)
@@ -257,9 +291,11 @@ contains
        OutputField = OutputField * 2.5e6
     case ('H')
        call GetVarFromMemToOutput ('SFLUX_T', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('TOPT', oneBramsGrid%currGrid, ScrT2N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call rams_comp_dn0 (ScrT3N01, ScrT3N02, ScrT3N03, ScrT2N01, oneBramsGrid%pi01dn, &
             oneBramsGrid%th01dn, oneBramsGrid%ztn, oneBramsGrid%ztop, oneBramsGrid%dzmn)
        call rams_get_surface(ScrT2N01, ScrT3N03)
@@ -267,32 +303,44 @@ contains
        OutputField = OutputField * 1004.
     case ('RLONGUP')
        call GetVarFromMemToOutput ('RLONGUP', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('ALBEDT')
        call GetVarFromMemToOutput ('ALBEDT', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('TEMPC2M')
        call GetVarFromMemToOutput ('UP', oneBramsGrid%currGrid, ScrT3N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('VP', oneBramsGrid%currGrid, ScrT3N02, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call rams_comp_speed (ScrT3N01, ScrT3N02)
        call GetVarFromMemToOutput ('THETA', oneBramsGrid%currGrid, ScrT3N02, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('PI', oneBramsGrid%currGrid, ScrT3N03, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('TOPT', oneBramsGrid%currGrid, ScrT2N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('USTAR', oneBramsGrid%currGrid, ScrT6N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('PATCH_ROUGH', oneBramsGrid%currGrid, ScrT6N02, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('CAN_TEMP', oneBramsGrid%currGrid, ScrT6N03, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('PATCH_AREA', oneBramsGrid%currGrid, ScrT6N04, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('TSTAR', oneBramsGrid%currGrid, ScrT6N05, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call rams_reduced_temp (OutputField, ScrT3N01, ScrT6N01, ScrT6N05, 2., oneBramsGrid%ztn(2), &
             ScrT6N02, ScrT6N04, ScrT6N03, ScrT3N02, ScrT3N03, ScrT2N01, oneBramsGrid%ztop)
        call rams_get_surface(ScrT2N01, ScrT3N03)
@@ -304,12 +352,15 @@ contains
        call checkUsingJules(one_post_variable%fieldName)
        !real :: OutputField(oneBramsGrid%mxp, oneBramsGrid%myp)
        call GetVarFromMemToOutput ('RV2MJ', oneBramsGrid%currGrid, ScrT2N02, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        ScrT2N02 = ScrT2N02 * 1.e3
        call GetVarFromMemToOutput ('T2MJ', oneBramsGrid%currGrid, ScrT2N03, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('PI', oneBramsGrid%currGrid, ScrT3N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        ScrT2N03 = (ScrT3N01(:, :, 1) + ScrT3N01(:, :, 2)) * 0.5
        call RAMS_comp_dewK_2m(ScrT2N02, ScrT2N03, ScrT2N03)
        do j = 1, size(ScrT2N02, 2)
@@ -322,44 +373,55 @@ contains
        OutputField = max(OutputField, 0.0)
     case ('SST')
        call GetVarFromMemToOutput ('SOIL_ENERGY', oneBramsGrid%currGrid, ScrT4N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call rams_fill_sst (oneBramsGrid%nzg, OutputField, ScrT4N01)
     case ('LAND')
        call GetVarFromMemToOutput ('PATCH_AREA', oneBramsGrid%currGrid, ScrT6N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call rams_comp_1minus(OutputField, ScrT6N01)
     case ('PWT')
        ScrT3N05 = 0.0
        call GetVarFromMemToOutput ('RV', oneBramsGrid%currGrid, ScrT3N04, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        ScrT3N05 = ScrT3N05 + ScrT3N04
        call GetVarFromMemToOutput ('RCP', oneBramsGrid%currGrid, ScrT3N04, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        ScrT3N05 = ScrT3N05 + ScrT3N04
        call GetVarFromMemToOutput ('RRP', oneBramsGrid%currGrid, ScrT3N04, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        ScrT3N05 = ScrT3N05 + ScrT3N04
        call GetVarFromMemToOutput ('RPP', oneBramsGrid%currGrid, ScrT3N04, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        ScrT3N05 = ScrT3N05 + ScrT3N04
        call GetVarFromMemToOutput ('RSP', oneBramsGrid%currGrid, ScrT3N04, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        ScrT3N05 = ScrT3N05 + ScrT3N04
        !-For GThompson microphysics micphys_type>1 : RAP does not exist
        if(oneMicControl%mcphys_type .le. 1) then
           call GetVarFromMemToOutput ('RAP', oneBramsGrid%currGrid, ScrT3N04, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           ScrT3N05 = ScrT3N05 + ScrT3N04
           call GetVarFromMemToOutput ('RHP', oneBramsGrid%currGrid, ScrT3N04, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           ScrT3N05 = ScrT3N05 + ScrT3N04
        endif
        call GetVarFromMemToOutput ('RGP', oneBramsGrid%currGrid, ScrT3N04, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        ScrT3N05 = ScrT3N05 + ScrT3N04
        ScrT3N05 = max(ScrT3N05, 0.0)
        call GetVarFromMemToOutput ('TOPT', oneBramsGrid%currGrid, ScrT2N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call rams_comp_dn0 (ScrT3N01, ScrT3N02, ScrT3N03, ScrT2N01, oneBramsGrid%pi01dn, &
             oneBramsGrid%th01dn, oneBramsGrid%ztn, oneBramsGrid%ztop, oneBramsGrid%dzmn)
        ScrT3N05 = ScrT3N05 * ScrT3N03
@@ -368,51 +430,69 @@ contains
        OutputField = OutputField * 0.1
     case ('SLP_METAR')
        call GetVarFromMemToOutput ('TOPT', oneBramsGrid%currGrid, ScrT2N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('PI', oneBramsGrid%currGrid, ScrT3N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call RAMS_comp_press(ScrT3N01)
        call GetVarFromMemToOutput ('THETA', oneBramsGrid%currGrid, ScrT3N02, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call rams_comp_tempk(ScrT3N02, ScrT3N01)
        call comp_slp_metar(OutputField, ScrT3N01, ScrT2N01, ScrT3N02, oneBramsGrid%ztn)
     case ('TD2M')
        call GetVarFromMemToOutput ('UP', oneBramsGrid%currGrid, ScrT3N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('VP', oneBramsGrid%currGrid, ScrT3N02, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call rams_comp_speed (ScrT3N01, ScrT3N02)
        call GetVarFromMemToOutput ('RV', oneBramsGrid%currGrid, ScrT3N02, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('PI', oneBramsGrid%currGrid, ScrT3N03, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('THETA', oneBramsGrid%currGrid, ScrT3N04, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('TOPT', oneBramsGrid%currGrid, ScrT2N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('USTAR', oneBramsGrid%currGrid, ScrT6N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('PATCH_ROUGH', oneBramsGrid%currGrid, ScrT6N02, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('CAN_RVAP', oneBramsGrid%currGrid, ScrT6N03, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('PATCH_AREA', oneBramsGrid%currGrid, ScrT6N04, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('RSTAR', oneBramsGrid%currGrid, ScrT6N05, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('CAN_TEMP', oneBramsGrid%currGrid, ScrT6N06, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call rams_reduced_rv (OutputField, ScrT3N01, ScrT6N01, ScrT6N05, 2., oneBramsGrid%ztn(2), &
             ScrT6N02, ScrT6N04, ScrT6N03, ScrT3N02, ScrT3N03, ScrT2N01, &
             oneBramsGrid%ztop, ScrT6N06, ScrT3N04)
        OutputField = OutputField * 1.e3
        OutputField = max(OutputField, 0.0)
        call GetVarFromMemToOutput ('THETA', oneBramsGrid%currGrid, ScrT3N02, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('CAN_TEMP', oneBramsGrid%currGrid, ScrT6N03, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('TSTAR', oneBramsGrid%currGrid, ScrT6N05, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call rams_reduced_temp (ScrT2N02, ScrT3N01, ScrT6N01, ScrT6N05, 2., oneBramsGrid%ztn(2), &
             ScrT6N02, ScrT6N04, ScrT6N03, ScrT3N02, ScrT3N03, ScrT2N01, &
             oneBramsGrid%ztop)
@@ -422,27 +502,33 @@ contains
        call RAMS_comp_tempC (OutputField)
     case ('U10M')
        call getWinds10m(oneBramsGrid, 'U', OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('V10M')
        call getWinds10m(oneBramsGrid, 'V', OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('U10MJ')
        call checkUsingJules(one_post_variable%fieldName)
        if (time==0.) then
           call getWinds10m(oneBramsGrid, 'U', OutputField, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
        else
           call GetVarFromMemToOutput ('U10MJ', oneBramsGrid%currGrid, OutputField, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
        endif
     case ('V10MJ')
        call checkUsingJules(one_post_variable%fieldName)
        if (time==0.) then
           call getWinds10m(oneBramsGrid, 'V', OutputField, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
        else
           call GetVarFromMemToOutput ('V10MJ', oneBramsGrid%currGrid, OutputField, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
        endif
     case ('U10MJ1HR')
        call checkUsingJules(one_post_variable%fieldName)
@@ -450,7 +536,8 @@ contains
        onePostGrid%fieldUnits = one_post_variable%fieldUnits
 
        call GetVarFromMemToOutput ('U10MJ1hr', oneBramsGrid%currGrid, ScrT3N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        ! output binary field
        onePostGrid%fieldName = 'U10M_6HR_A'
        onePostGrid%fieldDescription = 'Zonal Wind at 10m - 6 hours ago'
@@ -519,26 +606,36 @@ contains
        onePostGrid%fieldUnits = one_post_variable%fieldUnits
        if (time==0.) then
           call GetVarFromMemToOutput ('UP', oneBramsGrid%currGrid, ScrT3N01, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('VP', oneBramsGrid%currGrid, ScrT3N02, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call rams_comp_speed (ScrT3N01, ScrT3N02)
           call GetVarFromMemToOutput ('THETA', oneBramsGrid%currGrid, ScrT3N02, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('PI', oneBramsGrid%currGrid, ScrT3N03, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('TOPT', oneBramsGrid%currGrid, ScrT2N01, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('USTAR', oneBramsGrid%currGrid, ScrT6N01, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('PATCH_ROUGH', oneBramsGrid%currGrid, ScrT6N02, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('CAN_TEMP', oneBramsGrid%currGrid, ScrT6N03, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('PATCH_AREA', oneBramsGrid%currGrid, ScrT6N04, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('TSTAR', oneBramsGrid%currGrid, ScrT6N05, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call rams_reduced_temp (OutputField, ScrT3N01, ScrT6N01, ScrT6N05, 2., oneBramsGrid%ztn(2), &
                ScrT6N02, ScrT6N04, ScrT6N03, ScrT3N02, ScrT3N03, ScrT2N01, oneBramsGrid%ztop)
           call rams_get_surface(ScrT2N01, ScrT3N03)
@@ -547,7 +644,8 @@ contains
           onePostGrid%fieldDescription = 'temp - 2m AGL;'
        else
           call GetVarFromMemToOutput ('T2MJ', oneBramsGrid%currGrid, OutputField, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           OutputField = OutputField - 273.16
           where (OutputField<-70.) OutputField = undef
           onePostGrid%fieldDescription = 'Temperature at 2m - from JULES'
@@ -561,26 +659,36 @@ contains
        onePostGrid%fieldUnits = one_post_variable%fieldUnits
        if (time==0.) then
           call GetVarFromMemToOutput ('UP', oneBramsGrid%currGrid, ScrT3N01, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('VP', oneBramsGrid%currGrid, ScrT3N02, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call rams_comp_speed (ScrT3N01, ScrT3N02)
           call GetVarFromMemToOutput ('THETA', oneBramsGrid%currGrid, ScrT3N02, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('PI', oneBramsGrid%currGrid, ScrT3N03, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('TOPT', oneBramsGrid%currGrid, ScrT2N01, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('USTAR', oneBramsGrid%currGrid, ScrT6N01, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('PATCH_ROUGH', oneBramsGrid%currGrid, ScrT6N02, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('CAN_TEMP', oneBramsGrid%currGrid, ScrT6N03, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('PATCH_AREA', oneBramsGrid%currGrid, ScrT6N04, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('TSTAR', oneBramsGrid%currGrid, ScrT6N05, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call rams_reduced_temp (OutputField, ScrT3N01, ScrT6N01, ScrT6N05, 2., oneBramsGrid%ztn(2), &
                ScrT6N02, ScrT6N04, ScrT6N03, ScrT3N02, ScrT3N03, ScrT2N01, oneBramsGrid%ztop)
           call rams_get_surface(ScrT2N01, ScrT3N03)
@@ -589,7 +697,8 @@ contains
           onePostGrid%fieldDescription = 'temp - 2m AGL;'
        else
           call GetVarFromMemToOutput ('T2MJ_MAX', oneBramsGrid%currGrid, OutputField, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           OutputField = OutputField - 273.16
           where (OutputField<-70.) OutputField = undef
           onePostGrid%fieldDescription = 'Max Temp at 2m - from JULES'
@@ -603,26 +712,36 @@ contains
        onePostGrid%fieldUnits = one_post_variable%fieldUnits
        if (time==0.) then
           call GetVarFromMemToOutput ('UP', oneBramsGrid%currGrid, ScrT3N01, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('VP', oneBramsGrid%currGrid, ScrT3N02, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call rams_comp_speed (ScrT3N01, ScrT3N02)
           call GetVarFromMemToOutput ('THETA', oneBramsGrid%currGrid, ScrT3N02, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('PI', oneBramsGrid%currGrid, ScrT3N03, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('TOPT', oneBramsGrid%currGrid, ScrT2N01, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('USTAR', oneBramsGrid%currGrid, ScrT6N01, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('PATCH_ROUGH', oneBramsGrid%currGrid, ScrT6N02, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('CAN_TEMP', oneBramsGrid%currGrid, ScrT6N03, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('PATCH_AREA', oneBramsGrid%currGrid, ScrT6N04, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('TSTAR', oneBramsGrid%currGrid, ScrT6N05, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call rams_reduced_temp (OutputField, ScrT3N01, ScrT6N01, ScrT6N05, 2., oneBramsGrid%ztn(2), &
                ScrT6N02, ScrT6N04, ScrT6N03, ScrT3N02, ScrT3N03, ScrT2N01, oneBramsGrid%ztop)
           call rams_get_surface(ScrT2N01, ScrT3N03)
@@ -631,7 +750,8 @@ contains
           onePostGrid%fieldDescription = 'temp - 2m AGL;'
        else
           call GetVarFromMemToOutput ('T2MJ_MIN', oneBramsGrid%currGrid, OutputField, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           OutputField = OutputField - 273.16
           where (OutputField<-70.) OutputField = undef
           onePostGrid%fieldDescription = 'Min Temp at 2m - from JULES'
@@ -642,42 +762,55 @@ contains
        ! because is 3d in a 2d variable definition, need to set onePostGrid and call OutputGradsField
        call PrepareGradsField (one_post_variable, onePostGrid)
        call GetVarFromMemToOutput ('TKEP', oneBramsGrid%currGrid, OutputField3d, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        OutputField3d = max(OutputField3d, 0.0)
        call GetVarFromMemToOutput ('TOPT', oneBramsGrid%currGrid, ScrT2N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call rams_comp_pbl (OutputField3d, ScrT2N01, oneBramsGrid%ztn, oneBramsGrid%ztop)
        call OutputGradsField (oneBramsGrid, onePostGrid, OutputField3d)
        return
     case ('HT_FLUXJ')
        call GetVarFromMemToOutput ('ht_fluxj', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('CSJ')
        call checkUsingJules(one_post_variable%fieldName)
        onePostGrid%fieldName = one_post_variable%fieldName
        onePostGrid%ivar_type = one_post_variable%ivar_type
        if (time==0.) then
           call GetVarFromMemToOutput ('UP', oneBramsGrid%currGrid, ScrT3N01, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('VP', oneBramsGrid%currGrid, ScrT3N02, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call rams_comp_speed (ScrT3N01, ScrT3N02)
           call GetVarFromMemToOutput ('THETA', oneBramsGrid%currGrid, ScrT3N02, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('PI', oneBramsGrid%currGrid, ScrT3N03, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('TOPT', oneBramsGrid%currGrid, ScrT2N01, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('USTAR', oneBramsGrid%currGrid, ScrT6N01, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('PATCH_ROUGH', oneBramsGrid%currGrid, ScrT6N02, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('CAN_TEMP', oneBramsGrid%currGrid, ScrT6N03, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('PATCH_AREA', oneBramsGrid%currGrid, ScrT6N04, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('TSTAR', oneBramsGrid%currGrid, ScrT6N05, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call rams_reduced_temp (OutputField, ScrT3N01, ScrT6N01, ScrT6N05, 2., oneBramsGrid%ztn(2), &
                ScrT6N02, ScrT6N04, ScrT6N03, ScrT3N02, ScrT3N03, ScrT2N01, oneBramsGrid%ztop)
           call rams_get_surface(ScrT2N01, ScrT3N03)
@@ -687,7 +820,8 @@ contains
           onePostGrid%fieldUnits = 'C'
        else
           call GetVarFromMemToOutput ('CSJ', oneBramsGrid%currGrid, OutputField, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           onePostGrid%fieldDescription = 'Soil Carbon - from JULES'
           onePostGrid%fieldUnits = 'kg/m2'
        endif
@@ -701,7 +835,8 @@ contains
           ! because is 3d in a 2d variable definition, need to set onePostGrid and call OutputGradsField
 
           call GetVarFromMemToOutput ('RV', oneBramsGrid%currGrid, OutputField3d, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           Outputfield(:, :) = OutputField3d(:, :, 2) * 1.e3
           OutputField = max(OutputField, 0.0)
           onePostGrid%ivar_type = 2
@@ -709,7 +844,8 @@ contains
           call OutputGradsField (oneBramsGrid, onePostGrid, OutputField)
        else
           call GetVarFromMemToOutput ('RV2MJ', oneBramsGrid%currGrid, OutputField, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           OutputField = OutputField * 1000.
           onePostGrid%ivar_type = 2
           onePostGrid%fieldDescription = 'Mixing rate at 2m - from JULES'
@@ -718,40 +854,51 @@ contains
        return
     case ('ZITHETA')
        call GetVarFromMemToOutput ('THETA', oneBramsGrid%currGrid, ScrT3N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('RCP', oneBramsGrid%currGrid, ScrT3N02, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call get_ZItheta(OutputField, ScrT3N01, ScrT3N02, oneBramsGrid%ztn)
     case ('GPP')
        call GetVarFromMemToOutput ('GPP', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('RESP_S')
        call GetVarFromMemToOutput ('RESP_S', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('RESP_P')
        call GetVarFromMemToOutput ('RESP_P', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('NPP')
        call GetVarFromMemToOutput ('NPP', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('SFC_PRESS')
        call GetVarFromMemToOutput ('PI', oneBramsGrid%currGrid, ScrT3N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call rams_comp_sfc_press (OutputField, ScrT3N01)
     case ('AOT500')
        call GetVarFromMemToOutput ('AOT', oneBramsGrid%currGrid, ScrT7N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        Outputfield(:, :) = ScrT7N01(:, :, 11)
     case ('AOT550')
        call GetVarFromMemToOutput ('AOT', oneBramsGrid%currGrid, ScrT7N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        Outputfield(:, :) = ScrT7N01(:, :, 10)
     case ('LMO')
        call GetVarFromMemToOutput ('LMO', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('PBLHGT')
        call GetVarFromMemToOutput ('PBLHGT', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('TD2MJ')
        call checkUsingJules(one_post_variable%fieldName)
        onePostGrid%fieldName = one_post_variable%fieldName
@@ -759,41 +906,56 @@ contains
        onePostGrid%ivar_type = 2
        if (time==0.) then
           call GetVarFromMemToOutput ('UP', oneBramsGrid%currGrid, ScrT3N01, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('VP', oneBramsGrid%currGrid, ScrT3N02, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call rams_comp_speed (ScrT3N01, ScrT3N02)
           call GetVarFromMemToOutput ('RV', oneBramsGrid%currGrid, ScrT3N02, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('PI', oneBramsGrid%currGrid, ScrT3N03, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('THETA', oneBramsGrid%currGrid, ScrT3N04, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('TOPT', oneBramsGrid%currGrid, ScrT2N01, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('USTAR', oneBramsGrid%currGrid, ScrT6N01, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('PATCH_ROUGH', oneBramsGrid%currGrid, ScrT6N02, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('CAN_RVAP', oneBramsGrid%currGrid, ScrT6N03, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('PATCH_AREA', oneBramsGrid%currGrid, ScrT6N04, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('RSTAR', oneBramsGrid%currGrid, ScrT6N05, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('CAN_TEMP', oneBramsGrid%currGrid, ScrT6N06, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call rams_reduced_rv (OutputField, ScrT3N01, ScrT6N01, ScrT6N05, 2., oneBramsGrid%ztn(2), &
                ScrT6N02, ScrT6N04, ScrT6N03, ScrT3N02, ScrT3N03, ScrT2N01, &
                oneBramsGrid%ztop, ScrT6N06, ScrT3N04)
           OutputField = OutputField * 1.e3
           OutputField = max(OutputField, 0.0)
           call GetVarFromMemToOutput ('THETA', oneBramsGrid%currGrid, ScrT3N02, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('CAN_TEMP', oneBramsGrid%currGrid, ScrT6N03, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('TSTAR', oneBramsGrid%currGrid, ScrT6N05, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call rams_reduced_temp (ScrT2N02, ScrT3N01, ScrT6N01, ScrT6N05, 2., oneBramsGrid%ztn(2), &
                ScrT6N02, ScrT6N04, ScrT6N03, ScrT3N02, ScrT3N03, ScrT2N01, &
                oneBramsGrid%ztop)
@@ -804,12 +966,15 @@ contains
           onePostGrid%fieldDescription = 'Dewpoint temp in 2m'
        else
           call GetVarFromMemToOutput ('RV2MJ', oneBramsGrid%currGrid, OutputField, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           OutputField = OutputField * 1.e3
           call GetVarFromMemToOutput ('T2MJ', oneBramsGrid%currGrid, ScrT2N01, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           call GetVarFromMemToOutput ('PI', oneBramsGrid%currGrid, ScrT3N01, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
           ScrT2N03 = (ScrT3N01(:, :, 1) + ScrT3N01(:, :, 2)) * 0.5
           call RAMS_comp_dewK_2m(OutputField, ScrT2N03, ScrT2N01)
           OutputField = OutputField - 273.16
@@ -821,53 +986,62 @@ contains
     case ('CO_SFC')
        call PrepareGradsField (one_post_variable, onePostGrid)
        call GetVarFromMemToOutput ('COP', oneBramsGrid%currGrid, OutputField3d, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        Outputfield(:, :) = OutputField3d(:, :, 2)
        OutputField = max(OutputField, 0.0)
        OutputField = OutputField * (28.96 / 28.)
     case ('O3_SFC')
        call PrepareGradsField (one_post_variable, onePostGrid)
        call GetVarFromMemToOutput ('O3P', oneBramsGrid%currGrid, OutputField3d, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        Outputfield(:, :) = OutputField3d(:, :, 2)
        OutputField = max(OutputField, 0.0)
        OutputField = OutputField * (28.96 / 48.)
     case ('NO_SFC')
        call PrepareGradsField (one_post_variable, onePostGrid)
        call GetVarFromMemToOutput ('NOP', oneBramsGrid%currGrid, OutputField3d, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        Outputfield(:, :) = OutputField3d(:, :, 2)
        OutputField = max(OutputField, 0.0)
        OutputField = OutputField * (28.96 / 30.)
     case ('HNO3_SFC')
        call PrepareGradsField (one_post_variable, onePostGrid)
        call GetVarFromMemToOutput ('HNO3P', oneBramsGrid%currGrid, OutputField3d, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        Outputfield(:, :) = OutputField3d(:, :, 2)
        OutputField = max(OutputField, 0.0)
        OutputField = OutputField * (28.96 / 63.)
     case ('NO2_SFC')
        call PrepareGradsField (one_post_variable, onePostGrid)
        call GetVarFromMemToOutput ('NO2P', oneBramsGrid%currGrid, OutputField3d, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        Outputfield(:, :) = OutputField3d(:, :, 2)
        OutputField = max(OutputField, 0.0)
        OutputField = OutputField * (28.96 / 46.)
     case ('PM25_SFC')
        call PrepareGradsField (one_post_variable, onePostGrid)
        call GetVarFromMemToOutput ('bburn2P', oneBramsGrid%currGrid, OutputField3d, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('urban2P', oneBramsGrid%currGrid, ScrT3N04, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('urban3P', oneBramsGrid%currGrid, ScrT3N05, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        ! call RAMS_comp_noneg(n1,n2,n3,a)
        OutputField = max(OutputField3d(:,:,2) + ScrT3N04(:,:,2) + ScrT3N05(:,:,2), 0.0)
        ! call RAMS_comp_mults(n1,n2,n3,a,1.e-9)  ! converte de 1e-9 kg/kg para 1 kg/kg
        OutputField = OutputField * 1.e-9
        ! ierr= RAMS_getvar('TOPT',idim_type,ngrd,e,b,flnm)
        call GetVarFromMemToOutput ('TOPT', oneBramsGrid%currGrid, ScrT2N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        ! call RAMS_comp_dn0(n1,n2,n3,b,c,d,e,ngrd)
        call rams_comp_dn0 (ScrT3N01, ScrT3N02, ScrT3N03, ScrT2N01, oneBramsGrid%pi01dn, &
             oneBramsGrid%th01dn, oneBramsGrid%ztn, oneBramsGrid%ztop, oneBramsGrid%dzmn)
@@ -880,9 +1054,11 @@ contains
        ! because is 3d in a 2d variable definition, need to set onePostGrid and call OutputGradsField
        call PrepareGradsField (one_post_variable, onePostGrid)
        call GetVarFromMemToOutput ('TOPT', oneBramsGrid%currGrid, ScrT2N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('CO2_bburn_SRC', oneBramsGrid%currGrid, OutputField3d, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        OutputField3d(:, :, 2) = OutputField3d(:, :, 1) * (1. - ScrT2N01(:, :) / oneBramsGrid%ztop) &
             / oneBramsGrid%dztn(2) / 86400. * 1.e-3  ! convertendo de kg/m3/dia para mg/m2/s
        call OutputGradsField (oneBramsGrid, onePostGrid, OutputField3d)
@@ -891,25 +1067,30 @@ contains
        ! because is 3d in a 2d variable definition, need to set onePostGrid and call OutputGradsField
        call PrepareGradsField (one_post_variable, onePostGrid)
        call GetVarFromMemToOutput ('TOPT', oneBramsGrid%currGrid, ScrT2N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('CO2_bioge_SRC', oneBramsGrid%currGrid, OutputField3d, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        OutputField3d(:, :, 2) = OutputField3d(:, :, 1) * (1. - ScrT2N01(:, :) / oneBramsGrid%ztop) &
             / oneBramsGrid%dztn(2) * 1.e-3  ! convertendo de kg/m3/dia para mg/m2/s
        call OutputGradsField (oneBramsGrid, onePostGrid, OutputField3d)
        return
     case ('CO2_TOTAL')
        call GetVarFromMemToOutput ('CO2P', oneBramsGrid%currGrid, ScrT3N04, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        ! call RAMS_comp_noneg(n1,n2,n3,a)
        ScrT3N04 = max(ScrT3N04, 0.0)
        call GetVarFromMemToOutput ('TOPT', oneBramsGrid%currGrid, ScrT2N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call rams_comp_dn0 (ScrT3N01, ScrT3N02, ScrT3N03, ScrT2N01, oneBramsGrid%pi01dn, &
             oneBramsGrid%th01dn, oneBramsGrid%ztn, oneBramsGrid%ztop, oneBramsGrid%dzmn)
        ScrT3N04 = ScrT3N04 * ScrT3N03
        call GetVarFromMemToOutput ('PI', oneBramsGrid%currGrid, ScrT3N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call rams_comp_press(ScrT3N01)
        !Ate aqui acho que esta OK
        call comp_vertint_press (ScrT2N02, ScrT3N04, ScrT3N01, ScrT2N01, oneBramsGrid%ztop, oneBramsGrid%zmn)
@@ -917,7 +1098,8 @@ contains
     case ('PM25WD')
        ! ierr= RAMS_getvar('bburn2WD',idim_type,ngrd,a,b,flnm)
        call GetVarFromMemToOutput ('bburn2WD', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        ! call RAMS_comp_mults(n1,n2,n3,a,1.e-9)  ! converte de 1e-9 kg/kg para 1 kg/kg
        OutputField = OutputField * 1.e-9
     case ('PMINT')
@@ -925,17 +1107,21 @@ contains
        call PrepareGradsField (one_post_variable, onePostGrid)
        ! ierr= RAMS_getvar('bburn2P',idim_type,ngrd,a,b,flnm)
        call GetVarFromMemToOutput ('bburn2P', oneBramsGrid%currGrid, OutputField3d, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('urban2P', oneBramsGrid%currGrid, ScrT3N04, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('urban3P', oneBramsGrid%currGrid, ScrT3N05, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        ! call RAMS_comp_noneg(n1,n2,n3,a)
        !OutputField3d = max(OutputField3d, 0.0)
        OutputField3d = max(OutputField3d + ScrT3N04 + ScrT3N05, 0.0)
        ! ierr= RAMS_getvar('TOPT',idim_type,ngrd,e,b,flnm)
        call GetVarFromMemToOutput ('TOPT', oneBramsGrid%currGrid, ScrT2N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        ! call RAMS_comp_dn0(n1,n2,n3,b,c,d,e,ngrd)
        call rams_comp_dn0 (ScrT3N01, ScrT3N02, ScrT3N03, ScrT2N01, oneBramsGrid%pi01dn, &
             oneBramsGrid%th01dn, oneBramsGrid%ztn, oneBramsGrid%ztop, oneBramsGrid%dzmn)
@@ -949,36 +1135,44 @@ contains
        return
     case ('APRGR')
        call GetVarFromMemToOutput ('accpr_gr', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        OutputField = max(OutputField, 0.0)
     case ('APRST')
        call GetVarFromMemToOutput ('accpr_st', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        OutputField = max(OutputField, 0.0)
     case ('APRMC')
        call GetVarFromMemToOutput ('accpr_mc', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        OutputField = max(OutputField, 0.0)
     case ('APRW')
        call GetVarFromMemToOutput ('accpr_w', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        OutputField = max(OutputField, 0.0)
     case ('APRAS')
        call GetVarFromMemToOutput ('accpr_as', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        OutputField = max(OutputField, 0.0)
     case ('PODA')
        call checkUsingJules(one_post_variable%fieldName)
        !--- rv_2.0m ---
        call GetVarFromMemToOutput ('RV2MJ', oneBramsGrid%currGrid, ScrT2N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        ScrT2N01 = ScrT2N01 * 1.e3
        !--- tempk2m ---
        call GetVarFromMemToOutput ('T2MJ', oneBramsGrid%currGrid, ScrT2N02, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        !--- PI ---
        call GetVarFromMemToOutput ('PI', oneBramsGrid%currGrid, ScrT3N03, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        ScrT2N03 = (ScrT3N03(:, :, 1) + ScrT3N03(:, :, 2)) * 0.5
        call RAMS_comp_dewK_2m(ScrT2N01, ScrT2N03, ScrT2N02)
        !call undef (n1,n2,n3,a,1,-80.0+273,80.0+273.)
@@ -987,11 +1181,14 @@ contains
 
        !-compute slp (hPa)
        call GetVarFromMemToOutput ('TOPT', oneBramsGrid%currGrid, ScrT2N04, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('THETA', oneBramsGrid%currGrid, ScrT3N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('RV', oneBramsGrid%currGrid, ScrT3N02, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
 
        call RAMS_comp_thetv(ScrT3N01, ScrT3N02)
        ScrT2N05 = ScrT3N02(:, :, 1)
@@ -1008,93 +1205,122 @@ contains
 
     case ('P47UM')
        call GetVarFromMemToOutput ('P47UM', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('EXD14')
        call GetVarFromMemToOutput ('EXD14', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('DNADV')
        call GetVarFromMemToOutput ('DNADV', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('SCUPM')
        call GetVarFromMemToOutput ('SCUPM', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('SCUPH')
        call GetVarFromMemToOutput ('SCUPH', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('CIEHE')
        call GetVarFromMemToOutput ('CIEHE', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('UVIND')
        call GetVarFromMemToOutput ('UVIND', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('ERYTH')
        call GetVarFromMemToOutput ('ERYTH', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('OCTLV')
        call GetVarFromMemToOutput ('OCTLV', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('PHYTO')
        call GetVarFromMemToOutput ('PHYTO', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('PHYPH')
        call GetVarFromMemToOutput ('PHYPH', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('PHYPR')
        call GetVarFromMemToOutput ('PHYPR', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('CAPIG')
        call GetVarFromMemToOutput ('CAPIG', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('PLDCW')
        call GetVarFromMemToOutput ('PLDCW', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('PLDFL')
        call GetVarFromMemToOutput ('PLDFL', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('MFUP')
        call GetVarFromMemToOutput ('MFUP', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('MFDD')
        call GetVarFromMemToOutput ('MFDD', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('MFSH')
        call GetVarFromMemToOutput ('MFSH', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
 
     case ('AA0')
        call GetVarFromMemToOutput ('accpr_gr', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('AA1')
        call GetVarFromMemToOutput ('accpr_w', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('AA2')
        call GetVarFromMemToOutput ('accpr_mc', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('AA3')
        call GetVarFromMemToOutput ('accpr_st', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('AA1_BL')
        call GetVarFromMemToOutput ('accpr_as', oneBramsGrid%currGrid, OutputField, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     case ('L_CLD_FRAC')
        call GetVarFromMemToOutput ('CLOUD_FRACTION', oneBramsGrid%currGrid, ScrT3N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('PI', oneBramsGrid%currGrid, ScrT3N02, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call rams_comp_press(ScrT3N02) 
        call cloudFract(ScrT3N02,ScrT3N01,680.0,1000.0,Outputfield)
     case ('M_CLD_FRAC')
        call GetVarFromMemToOutput ('CLOUD_FRACTION', oneBramsGrid%currGrid, ScrT3N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('PI', oneBramsGrid%currGrid, ScrT3N02, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call rams_comp_press(ScrT3N02) 
        call cloudFract(ScrT3N02,ScrT3N01,440.0,680.0,Outputfield)
     case ('H_CLD_FRAC')
        call GetVarFromMemToOutput ('CLOUD_FRACTION', oneBramsGrid%currGrid, ScrT3N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call GetVarFromMemToOutput ('PI', oneBramsGrid%currGrid, ScrT3N02, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        call rams_comp_press(ScrT3N02) 
        call cloudFract(ScrT3N02,ScrT3N01,0.0,440.0,Outputfield)
     case default
@@ -1192,17 +1418,21 @@ contains
 
 
   function getAconpr(oneBramsGrid, &
-       oneNamelistFile, oneBasicFields, oneTurbFields) result(aconpr)
+       oneNamelistFile, oneBasicFields, oneTurbFields, &
+       oneVarTable, oneVarTableSize) result(aconpr)
     type(BramsGrid), intent(in), pointer :: oneBramsGrid
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
 
     real :: aconpr(oneBramsGrid%mxp, oneBramsGrid%myp)
 
     if(hasAconpr(oneBramsGrid%currGrid)) then
        call GetVarFromMemToOutput ('ACONPR', oneBramsGrid%currGrid, aconpr, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     else
        aconpr = 0
     end if
@@ -1212,13 +1442,16 @@ contains
 
   
   subroutine getAccComponents(oneBramsGrid, OutputField, &
-       oneNamelistFile, oneBasicFields, oneTurbFields, oneMicControl)
+       oneNamelistFile, oneBasicFields, oneTurbFields, oneMicControl, &
+       oneVarTable, oneVarTableSize)
     type(BramsGrid), pointer :: oneBramsGrid
     real, intent(inout) :: OutputField(oneBramsGrid%mxp, oneBramsGrid%myp)
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     type(MicControl), pointer, intent(in) :: oneMicControl
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
 
     real :: ScrT2N01(oneBramsGrid%mxp, oneBramsGrid%myp)
     ! OutputField <- 0.0
@@ -1238,24 +1471,30 @@ contains
 
     OutputField = 0.0
     call GetVarFromMemToOutput ('ACCPR', oneBramsGrid%currGrid, ScrT2N01, &
-         oneNamelistFile, oneBasicFields, oneTurbFields)
+         oneNamelistFile, oneBasicFields, oneTurbFields, &
+         oneVarTable, oneVarTableSize)
     OutputField = OutputField + ScrT2N01
     !-For GThompson microphysics micphys_type>1 : ACCPR is already the total precip
     if(oneMicControl%mcphys_type .le. 1) then
        call GetVarFromMemToOutput ('ACCPP', oneBramsGrid%currGrid, ScrT2N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        OutputField = OutputField + ScrT2N01
        call GetVarFromMemToOutput ('ACCPS', oneBramsGrid%currGrid, ScrT2N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        OutputField = OutputField + ScrT2N01
        call GetVarFromMemToOutput ('ACCPA', oneBramsGrid%currGrid, ScrT2N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        OutputField = OutputField + ScrT2N01
        call GetVarFromMemToOutput ('ACCPG', oneBramsGrid%currGrid, ScrT2N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        OutputField = OutputField + ScrT2N01
        call GetVarFromMemToOutput ('ACCPH', oneBramsGrid%currGrid, ScrT2N01, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
        OutputField = OutputField + ScrT2N01
     endif
 
@@ -1263,13 +1502,16 @@ contains
 
 
   subroutine getWinds10m(oneBramsGrid, u_or_v, OutputField, &
-       oneNamelistFile, oneBasicFields, oneTurbFields)
+       oneNamelistFile, oneBasicFields, oneTurbFields, &
+       oneVarTable, oneVarTableSize)
     type(BramsGrid), pointer :: oneBramsGrid
     character(len = *), intent(in) :: u_or_v
     real, intent(out) :: OutputField(oneBramsGrid%mxp, oneBramsGrid%myp)
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
 
     integer :: firstX, lastX, firstY, lastY
 
@@ -1284,30 +1526,41 @@ contains
     real :: ScrT6N04(oneBramsGrid%mxp, oneBramsGrid%myp, oneBramsGrid%npatch)
 
     call GetVarFromMemToOutput ('UP', oneBramsGrid%currGrid, ScrT3N01, &
-         oneNamelistFile, oneBasicFields, oneTurbFields)
+         oneNamelistFile, oneBasicFields, oneTurbFields, &
+         oneVarTable, oneVarTableSize)
     call GetVarFromMemToOutput ('VP', oneBramsGrid%currGrid, ScrT3N02, &
-         oneNamelistFile, oneBasicFields, oneTurbFields)
+         oneNamelistFile, oneBasicFields, oneTurbFields, &
+         oneVarTable, oneVarTableSize)
     call rams_comp_speed (ScrT3N01, ScrT3N02)
     call GetVarFromMemToOutput ('THETA', oneBramsGrid%currGrid, ScrT3N02, &
-         oneNamelistFile, oneBasicFields, oneTurbFields)
+         oneNamelistFile, oneBasicFields, oneTurbFields, &
+         oneVarTable, oneVarTableSize)
     call GetVarFromMemToOutput ('PI', oneBramsGrid%currGrid, ScrT3N03, &
-         oneNamelistFile, oneBasicFields, oneTurbFields)
+         oneNamelistFile, oneBasicFields, oneTurbFields, &
+         oneVarTable, oneVarTableSize)
     call GetVarFromMemToOutput ('TOPT', oneBramsGrid%currGrid, ScrT2N01, &
-         oneNamelistFile, oneBasicFields, oneTurbFields)
+         oneNamelistFile, oneBasicFields, oneTurbFields, &
+         oneVarTable, oneVarTableSize)
     call GetVarFromMemToOutput ('USTAR', oneBramsGrid%currGrid, ScrT6N01, &
-         oneNamelistFile, oneBasicFields, oneTurbFields)
+         oneNamelistFile, oneBasicFields, oneTurbFields, &
+         oneVarTable, oneVarTableSize)
     call GetVarFromMemToOutput ('PATCH_ROUGH', oneBramsGrid%currGrid, ScrT6N02, &
-         oneNamelistFile, oneBasicFields, oneTurbFields)
+         oneNamelistFile, oneBasicFields, oneTurbFields, &
+         oneVarTable, oneVarTableSize)
     call GetVarFromMemToOutput ('CAN_TEMP', oneBramsGrid%currGrid, ScrT6N03, &
-         oneNamelistFile, oneBasicFields, oneTurbFields)
+         oneNamelistFile, oneBasicFields, oneTurbFields, &
+         oneVarTable, oneVarTableSize)
     call GetVarFromMemToOutput ('PATCH_AREA', oneBramsGrid%currGrid, ScrT6N04, &
-         oneNamelistFile, oneBasicFields, oneTurbFields)
+         oneNamelistFile, oneBasicFields, oneTurbFields, &
+         oneVarTable, oneVarTableSize)
     call rams_reduced_wind (OutputField, ScrT3N01, ScrT6N01, 10., oneBramsGrid%ztn(2), ScrT6N02, ScrT6N04, &
          ScrT6N03, ScrT3N02, ScrT3N03, ScrT2N01, oneBramsGrid%ztop)
     call GetVarFromMemToOutput ('UP', oneBramsGrid%currGrid, ScrT3N01, &
-         oneNamelistFile, oneBasicFields, oneTurbFields)
+         oneNamelistFile, oneBasicFields, oneTurbFields, &
+         oneVarTable, oneVarTableSize)
     call GetVarFromMemToOutput ('VP', oneBramsGrid%currGrid, ScrT3N02, &
-         oneNamelistFile, oneBasicFields, oneTurbFields)
+         oneNamelistFile, oneBasicFields, oneTurbFields, &
+         oneVarTable, oneVarTableSize)
     firstX = oneBramsGrid%nodei0(oneBramsGrid%mynum) + 1
     lastX = oneBramsGrid%nodei0(oneBramsGrid%mynum) + oneBramsGrid%mxp
     firstY = oneBramsGrid%nodej0(oneBramsGrid%mynum) + 1

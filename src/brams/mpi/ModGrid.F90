@@ -495,10 +495,10 @@ contains
     oneGrid%oneGaspartFields => CreateGaspartFields(oneGrid%oneNodeDimensions, oneGrid%oneNamelistFile)
     oneGrid%oneAveGaspartFields => CreateGaspartFields(oneGrid%oneNodeDimensions, oneGrid%oneNamelistFile)
     
-!!$    if (dumpLocal) then
+    if (dumpLocal) then
        call MsgDump(h//" dumping OneGrid at the end of CreateGrid")
        call DumpGrid(OneGrid)
-!!$    end if
+    end if
   end function CreateGrid
 
 

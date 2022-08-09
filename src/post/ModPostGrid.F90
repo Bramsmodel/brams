@@ -27,6 +27,9 @@ module ModPostGrid
   use ModOutputUtils, only: &
        GetVarFromMemToOutput
 
+  use ModVarTable, only: &
+       VarTable
+  
   use mem_grid, only: &
        time
 
@@ -87,13 +90,16 @@ contains
 
 
   subroutine CreatePostGrid(oneNamelistFile, oneBramsGrid, &
-       onePostGrid, currGrid, oneBasicFields, oneTurbFields)
+       onePostGrid, currGrid, oneBasicFields, oneTurbFields, &
+       oneVarTable, oneVarTableSize)
     type(NamelistFile), pointer :: oneNamelistFile
     type(BramsGrid), pointer :: oneBramsGrid
     type(PostGrid), pointer :: onePostGrid
     integer, intent(in) :: currGrid
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
 
     integer :: ierr
     character :: cgrid
@@ -204,7 +210,8 @@ contains
     ! when height is selected: topo
 
     call CreatePostVerticals(oneNamelistFile, oneBramsGrid, &
-         onePostGrid, oneBasicFields, oneTurbFields)
+         onePostGrid, oneBasicFields, oneTurbFields, &
+         oneVarTable, oneVarTableSize)
 
     if (dumpLocal) then
        call DumpPostGrid(onePostGrid)
@@ -1445,12 +1452,15 @@ contains
 
 
   subroutine CreatePostVerticals(oneNamelistFile, oneBramsGrid, &
-       onePostGrid, oneBasicFields, oneTurbFields)
+       onePostGrid, oneBasicFields, oneTurbFields, &
+       oneVarTable, oneVarTableSize)
     type(NamelistFile), pointer :: oneNamelistFile
     type(BramsGrid), pointer :: oneBramsGrid
     type(PostGrid), pointer :: onePostGrid
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
 
     integer :: iz
     integer :: ierr
@@ -1573,7 +1583,8 @@ contains
                trim(adjustl(c1))//") fails")
        end if
        call GetVarFromMemToOutput('TOPT', oneBramsGrid%currGrid, onePostGrid%topo, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
 
        ! reserve area for pi
 
@@ -1626,12 +1637,15 @@ contains
 
 
   subroutine UpdateVerticals(oneBramsGrid, onePostGrid, &
-       oneNamelistFile, oneBasicFields, oneTurbFields)
+       oneNamelistFile, oneBasicFields, oneTurbFields, &
+       oneVarTable, oneVarTableSize)
     type(BramsGrid), pointer :: oneBramsGrid
     type(PostGrid), pointer :: onePostGrid
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
 
     character(len=8) :: c0
     character(len=*), parameter :: h="**(UpdateVerticals)**"
@@ -1643,7 +1657,8 @@ contains
 
     if (onePostGrid%vertScaleCode == 1) then
        call GetVarFromMemToOutput ('PI', oneBramsGrid%currGrid, onePostGrid%pi, &
-            oneNamelistFile, oneBasicFields, oneTurbFields)
+            oneNamelistFile, oneBasicFields, oneTurbFields, &
+            oneVarTable, oneVarTableSize)
     end if
   end subroutine UpdateVerticals
 

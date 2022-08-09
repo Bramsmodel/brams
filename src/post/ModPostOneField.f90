@@ -8,6 +8,9 @@ module ModPostOneField
 
   use ModMicControl, only: &
        MicControl
+
+  use ModVarTable, only: &
+       VarTable
   
   use ModBramsGrid, only: &
        BramsGrid
@@ -90,7 +93,8 @@ contains
   
 
   subroutine PostOneField(varName, oneBramsGrid, onePostGrid, &
-       oneNamelistFile, oneBasicFields, oneTurbFields, oneMicControl)
+       oneNamelistFile, oneBasicFields, oneTurbFields, oneMicControl, &
+       oneVarTable, oneVarTableSize)
     include "constants.h"
     character(len = *), intent(in) :: varName
     type(BramsGrid), pointer :: oneBramsGrid
@@ -99,6 +103,8 @@ contains
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     type(MicControl), pointer, intent(in) :: oneMicControl
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
 
     type(PostVarType) :: one_post_variable
     character(len = 16) :: varNameUpper
@@ -116,16 +122,20 @@ contains
        select case (one_post_variable%ivar_type)
        case (2)
           call Brams2Post_2d(one_post_variable, oneBramsGrid, onePostGrid, &
-               oneNamelistFile, oneBasicFields, oneTurbFields, oneMicControl)
+               oneNamelistFile, oneBasicFields, oneTurbFields, oneMicControl, &
+               oneVarTable, oneVarTableSize)
        case (3)
           call Brams2Post_3d(one_post_variable, oneBramsGrid, onePostGrid, &
-               oneNamelistFile, oneBasicFields, oneTurbFields, oneMicControl)
+               oneNamelistFile, oneBasicFields, oneTurbFields, oneMicControl, &
+               oneVarTable, oneVarTableSize)
        case (7)
           call Brams2Post_7d(one_post_variable, oneBramsGrid, onePostGrid, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
        case (8)
           call Brams2Post_8d(one_post_variable, oneBramsGrid, onePostGrid, &
-               oneNamelistFile, oneBasicFields, oneTurbFields)
+               oneNamelistFile, oneBasicFields, oneTurbFields, &
+               oneVarTable, oneVarTableSize)
        case default
           write(str(1),"(i8)") one_post_variable%ivar_type
           call fatal_error(h//" unknown ivar_type="//trim(adjustl(str(1))))

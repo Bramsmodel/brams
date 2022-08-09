@@ -43,7 +43,7 @@ module ModVarTables
   public :: nvgrids
   public :: num_var
 !!$  public :: InsertVTab
-  public :: GetVTabEntry
+!  public :: GetVTabEntry
   public :: GetVTabSectionSize
   public :: VerifyVTabEntry
   public :: StringIndexing
@@ -760,6 +760,7 @@ contains
     character(len=*), intent(in) :: name
 
     integer :: i
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(DeepCopyToVarTable)**"
 
     if (nameTo /= "") then
@@ -792,7 +793,9 @@ contains
        oneVarTable(i)%imptd = vtab_r(i,1)%imptd
        oneVarTable(i)%irecycle = vtab_r(i,1)%irecycle
        oneVarTable(i)%name = vtab_r(i,1)%name
-       call MsgDump(h//" copyed "//trim(adjustl(oneVarTable(i)%name)))
+       if (dumpLocal) then
+          call MsgDump(h//" copyed "//trim(adjustl(oneVarTable(i)%name)))
+       end if
     end do
     oneVarTableSize = num_var(1)
   end subroutine DeepCopyToVarTable
@@ -807,6 +810,7 @@ contains
     character(len=*), intent(in) :: name
 
     integer :: i
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(DeepCopyFromVarTable)**"
 
     if (nameFrom /= "") then
@@ -839,7 +843,9 @@ contains
        vtab_r(i,1)%imptd = oneVarTable(i)%imptd  
        vtab_r(i,1)%irecycle = oneVarTable(i)%irecycle  
        vtab_r(i,1)%name = oneVarTable(i)%name  
-       call MsgDump(h//" copyed "//trim(adjustl(vtab_r(i,1)%name)))
+       if (dumpLocal) then
+          call MsgDump(h//" copyed "//trim(adjustl(vtab_r(i,1)%name)))
+       end if
     end do
     num_var(1) = oneVarTableSize
   end subroutine DeepCopyFromVarTable  

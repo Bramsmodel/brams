@@ -1155,7 +1155,8 @@ contains
           ! create post processing
           oneAllPostTypes => null()
           call CreatePostProcess(oneNamelistFile, oneAllPostTypes, &
-               oneGrid%oneBasicFields, oneGrid%oneTurbFields)
+               oneGrid%oneBasicFields, oneGrid%oneTurbFields, &
+               oneGrid%oneVarTable, oneGrid%oneVarTableSize)
        endif
 
        select case (IPOS)
