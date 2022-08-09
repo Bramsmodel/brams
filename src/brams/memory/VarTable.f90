@@ -19,22 +19,6 @@ module ModVarTable
        nlite_vars, & ! INTENT(IN)
        lite_vars     ! INTENT(IN)
 
-!!$  use chem1_list, only:&
-!!$       chem_name=>spc_name,    &
-!!$       chem_alloc=>spc_alloc,  & 
-!!$       chem_on=>on,            &
-!!$       chem_fdda=>fdda,        &
-!!$       chem_transport=>transport, &
-!!$       chem_nspecies=>nspecies 
-!!$
-!!$  use aer1_list, only: aer_name=>spc_name,     &
-!!$       aer_nspecies=>nspecies, &
-!!$       aer_alloc=>spc_alloc,     &
-!!$       aer_fdda=>fdda, &
-!!$       aer_transport=>transport, &
-!!$       aer_on=>on,               &
-!!$       aer_nmodes=>nmodes
-
   implicit none
 
   private
@@ -47,12 +31,6 @@ module ModVarTable
   public :: FixVarTableForIOUTPUT5
   public :: MarkLiteVarsAtVarTable
   public :: Name2VarTableEntry
-!!$  public :: GetVTabEntry
-!!$  public :: GetVTabSectionSize
-!!$  public :: VerifyVTabEntry
-!!$  public :: StringIndexing
-!!$  public :: DumpVTab
-!!$  public :: setInitial4Vtable
 
   ! Maximum number of variables of all types (3d + 2d + leaf)
 
@@ -425,26 +403,6 @@ contains
        endif
     enddo
   end subroutine NewVarTableEntry
-!!$
-!!$
-!!$
-!!$
-!!$
-!!$  subroutine GetVTabEntry(tabstr, ng, vtabPtr)
-!!$    character (len=*), intent(in) :: tabstr
-!!$    integer,           intent(in) :: ng
-!!$    type(VarTable), pointer, intent(in)   :: vtabPtr
-!!$
-!!$    integer :: ni
-!!$
-!!$    vtabPtr => null()
-!!$    do ni = 1, num_var(ng)
-!!$       if (trim(vtab_r(ni,ng)%name) == trim(tabstr)) then
-!!$          vtabPtr => vtab_r(ni,ng)
-!!$          exit
-!!$       end if
-!!$    end do
-!!$  end subroutine GetVTabEntry
 !!$
 !!$
 !!$

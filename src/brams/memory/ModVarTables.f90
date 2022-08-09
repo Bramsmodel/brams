@@ -43,7 +43,7 @@ module ModVarTables
   public :: nvgrids
   public :: num_var
 !!$  public :: InsertVTab
-!  public :: GetVTabEntry
+!!$  public :: GetVTabEntry
   public :: GetVTabSectionSize
   public :: VerifyVTabEntry
   public :: StringIndexing
@@ -273,21 +273,21 @@ contains
 
 
 
-  subroutine GetVTabEntry(tabstr, ng, vtabPtr)
-    character (len=*), intent(in) :: tabstr
-    integer,           intent(in) :: ng
-    type(VarTableFields), pointer   :: vtabPtr
-
-    integer :: ni
-
-    vtabPtr => null()
-    do ni = 1, num_var(ng)
-       if (trim(vtab_r(ni,ng)%name) == trim(tabstr)) then
-          vtabPtr => vtab_r(ni,ng)
-          exit
-       end if
-    end do
-  end subroutine GetVTabEntry
+!!$  subroutine GetVTabEntry(tabstr, ng, vtabPtr)
+!!$    character (len=*), intent(in) :: tabstr
+!!$    integer,           intent(in) :: ng
+!!$    type(VarTableFields), pointer   :: vtabPtr
+!!$
+!!$    integer :: ni
+!!$
+!!$    vtabPtr => null()
+!!$    do ni = 1, num_var(ng)
+!!$       if (trim(vtab_r(ni,ng)%name) == trim(tabstr)) then
+!!$          vtabPtr => vtab_r(ni,ng)
+!!$          exit
+!!$       end if
+!!$    end do
+!!$  end subroutine GetVTabEntry
 
 
 
