@@ -59,7 +59,8 @@ contains
   !# 
   !# this subroutine uses fixed values of polygons representing cities to create pixels lists. 
   !# Each proccess execute it and some can have no list of pixels to work in. 
-  subroutine InitMeteogram(meteoPolys, nGrid, filename)
+  subroutine InitMeteogram(oneVarTable, oneVarTableSize, &
+       meteoPolys, nGrid, filename)
     use node_mod, only: &
          mchnum,        &
          master_num,    &
@@ -68,16 +69,24 @@ contains
     use mem_grid, only: &
          grid_g
 
+    use ModVarTable, only: &
+         VarTable, &
+         Name2VarTableEntry
+    
     use ModVarTables, only: &
-         VarTableFields,    &
-         GetVTabEntry
+         VarTableFields, &
+         DeepCopyToVarTable, &
+         DeepCopyFromVarTable
 
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
     type(PolygonContainer), pointer :: meteoPolys
     integer, intent(in)             :: nGrid
     character(len=*), intent(in)    :: filename
 
     integer, external :: AvailableFileUnit
-
+    character(len=*), parameter :: h="**(InitMeteogram)**"
+    
     ! pixel list 
     type t_pixelList
        integer                    :: i
@@ -106,7 +115,8 @@ contains
     real                                      :: dx
     real                                      :: dy
     type t_vtabPtrContainer
-       type(VarTableFields), pointer :: vtabPtr
+!!$       type(VarTableFields), pointer :: vtabPtr
+       type(VarTable), pointer :: vtabPtr
     end type t_vtabPtrContainer
     type(t_vtabPtrContainer), dimension(:), allocatable :: vtabPointers
 
@@ -121,12 +131,15 @@ contains
     nCities = 0          
     ! saving variable address from vtables.
     allocate(vtabPointers(nVarTables), stat=allocStat)  
+
+    call DeepCopyToVarTable(oneVarTable, oneVarTableSize, h)
     do nv = 1, nVarTables
-       call GetVTabEntry(varNamesInput(nv), nGrid, vtabPointers(nv)%vtabPtr)
+       vtabPointers(nv)%vtabPtr => Name2VarTableEntry(oneVarTable, oneVarTableSize, varNamesInput(nv))
        if(.not. associated(vtabPointers(nv)%vtabPtr)) then
           if(mchnum .eq. master_num) print*, '**meteogram warning** variable:', varNamesInput(nv), 'not found!'
        endif
     end do
+    call DeepCopyFromVarTable(oneVarTable, oneVarTableSize, h)
 
     ! initializing user polygons.
     meteogramOutUnit = AvailableFileUnit() + mchnum  

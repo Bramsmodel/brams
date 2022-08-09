@@ -1200,7 +1200,10 @@ contains
        endif
 
 
-       if(applyMeteogram) call InitMeteogram(oneGrid%meteoPolygons, oneGrid%id, trim(meteogramMap))
+       if (applyMeteogram) then
+          call InitMeteogram(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+               oneGrid%meteoPolygons, oneGrid%id, trim(meteogramMap))
+       end if
 
        !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
        ! call SynchronizedTimeStamp(TS_INIT) ! timestamp before: initialization
