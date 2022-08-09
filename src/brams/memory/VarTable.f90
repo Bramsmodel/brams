@@ -46,6 +46,7 @@ module ModVarTable
   public :: InsertAtVarTable
   public :: FixVarTableForIOUTPUT5
   public :: MarkLiteVarsAtVarTable
+  public :: Name2VarTableEntry
 !!$  public :: GetVTabEntry
 !!$  public :: GetVTabSectionSize
 !!$  public :: VerifyVTabEntry
@@ -859,4 +860,24 @@ contains
 
     end do
   end subroutine FixVarTableForIOUTPUT5
+
+
+
+  function Name2VarTableEntry(oneVarTable, oneVarTableSize, name) result(vtabPtr)
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(in) :: oneVarTableSize
+    character (len=*), intent(in) :: name
+    type(VarTable), pointer   :: vtabPtr
+
+    integer :: ni
+
+    vtabPtr => null()
+    do ni = 1, oneVarTableSize
+       if (trim(oneVarTable(ni)%name) == trim(name)) then
+          vtabPtr => oneVarTable(ni)
+          exit
+       end if
+    end do
+  end function Name2VarTableEntry
+
 end module ModVarTable

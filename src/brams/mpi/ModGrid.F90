@@ -548,7 +548,9 @@ contains
        call fatal_error(h//" invoked with null grid")
     end if
 
-    call CreateAcousticMessageSet(oneGrid%Id, &
+    call CreateAcousticMessageSet(&
+         oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+         oneGrid%Id, &
          oneGrid%oneGridDims, oneGrid%oneParallelEnvironment, oneGrid%oneNeighbourNodes, &
          oneGrid%GlobalOwn, &
          oneGrid%GlobalOwnWithBC, &
@@ -560,13 +562,17 @@ contains
          oneGrid%AcouSendUV, oneGrid%AcouRecvUV, TagUV, &
          oneGrid%AcouSendWP, oneGrid%AcouRecvWP, TagWP)
 
-    call CreateDn0MessageSet(oneGrid%Id, &
+    call CreateDn0MessageSet(&
+         oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+         oneGrid%Id, &
          oneGrid%oneGridDims, oneGrid%oneParallelEnvironment, oneGrid%oneNeighbourNodes, &
          oneGrid%GlobalOwn, oneGrid%GlobalWithGhost, &
          oneGrid%SendDn0u, oneGrid%RecvDn0u, TagDn0u, &
          oneGrid%SendDn0v, oneGrid%RecvDn0v, TagDn0v)
 
-    call CreateG3DMessageSet(oneGrid%Id, &
+    call CreateG3DMessageSet(&
+         oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+         oneGrid%Id, &
          oneGrid%oneGridDims, oneGrid%oneParallelEnvironment, oneGrid%oneNeighbourNodes, &
          oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhost, &
          oneGrid%oneNamelistFile, &
@@ -576,6 +582,7 @@ contains
     ! enquanto nao inclusas no tipo Grid
 
     call CreateSelectedGhostZoneMessageSet(&
+         oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
          oneGrid%Id, num_var, vtab_r, &
          oneGrid%oneGridDims, oneGrid%oneParallelEnvironment, oneGrid%oneNeighbourNodes, &
          oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhost, &
@@ -584,6 +591,7 @@ contains
          TagSelectedGhostZone)
 
     call CreateAllGhostZoneMessageSet(&
+         oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
          oneGrid%Id, num_var, vtab_r, &
          oneGrid%oneGridDims, oneGrid%oneParallelEnvironment, oneGrid%oneNeighbourNodes, &
          oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhost, &

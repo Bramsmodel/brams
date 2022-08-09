@@ -86,9 +86,14 @@ module ModMessageSet
        DeallocateMessageDataBuffer, &
        DestroyMessageData
 
+  use ModVarTable, only: &
+       VarTable, &
+       Name2VarTableEntry
+
   use ModVarTables, only: &
        VarTableFields, &
-       GetVTabEntry
+       DeepCopyToVarTable, &
+       DeepCopyFromVarTable
 
   use ModNamelistFile, only: &
        NamelistFile
@@ -491,7 +496,7 @@ contains
 
     integer, intent(in) :: myNum
 
-    type(VarTableFields), pointer, intent(in) :: vTabPtr
+    type(VarTable), pointer, intent(in) :: vTabPtr
 
     ! nNeigh is number of processes for potential communication
 
@@ -610,12 +615,16 @@ contains
 
 
   subroutine InsertFieldSectionAtSendRecvMessageSetFromVTab(&
+       oneVarTable, oneVarTableSize, &
        varName, myNum, nNeigh, gridId, GlobalWithGhost, &
        xbSend, xeSend, ybSend, yeSend, willSend, SendMessageSet, &
        xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvMessageSet)
 
     ! Inserts a section of a field to be communicated
     ! on a MessageSet variable
+
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
 
     character(len=*), intent(in) :: varName
 
@@ -662,7 +671,7 @@ contains
     type(MessageSet), pointer, intent(inout) :: RecvMessageSet
 
 
-    type(VarTableFields), pointer :: vTabPtr => null()
+    type(VarTable), pointer :: vTabPtr => null()
 
     character(len=*), parameter :: h="**(InsertFieldSectionAtSendRecvMessageSetFromVTab)**"
 
@@ -672,7 +681,10 @@ contains
        call fatal_error(h//" GlobalWithGhost not associated")
     end if
 
-    call GetVTabEntry(trim(varName), gridId, vTabPtr)
+
+    call DeepCopyToVarTable(oneVarTable, oneVarTableSize, h)
+    vTabPtr => Name2VarTableEntry(oneVarTable, oneVarTableSize, trim(varName))
+    call DeepCopyFromVarTable(oneVarTable, oneVarTableSize, h)
 
     ! include vTab field on field sections to be sent and received
 
@@ -689,6 +701,7 @@ contains
 
 
   subroutine CreateAcousticMessageSet(&
+       oneVarTable, oneVarTableSize, &
        gridId, GridSize, ParEnv, Neigh, &
        GlobalOwn, &
        GlobalOwnWithBC, &
@@ -699,6 +712,9 @@ contains
        AcouSendPEast, AcouRecvPEast, TagPEast, &
        AcouSendUV, AcouRecvUV, TagUV, &
        AcouSendWP, AcouRecvWP, TagWP)
+
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
 
     integer, intent(in) :: gridId
     type(GridDims), pointer, intent(in) :: GridSize
@@ -844,6 +860,7 @@ contains
     endif
 
     call InsertFieldSectionAtSendRecvMessageSetFromVTab(&
+         oneVarTable, oneVarTableSize, &
          tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
          xbSend, xeSend, ybSend, yeSend, willSend, AcouSendU, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvU)
@@ -894,6 +911,7 @@ contains
     endif
 
     call InsertFieldSectionAtSendRecvMessageSetFromVTab(&
+         oneVarTable, oneVarTableSize, &
          tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
          xbSend, xeSend, ybSend, yeSend, willSend, AcouSendV, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvV)
@@ -944,6 +962,7 @@ contains
     endif
 
     call InsertFieldSectionAtSendRecvMessageSetFromVTab(&
+         oneVarTable, oneVarTableSize, &
          tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
          xbSend, xeSend, ybSend, yeSend, willSend, AcouSendPNorth, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvPNorth)
@@ -994,6 +1013,7 @@ contains
     endif
 
     call InsertFieldSectionAtSendRecvMessageSetFromVTab(&
+         oneVarTable, oneVarTableSize, &
          tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
          xbSend, xeSend, ybSend, yeSend, willSend, AcouSendPEast, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvPEast)
@@ -1044,6 +1064,7 @@ contains
     endif
 
     call InsertFieldSectionAtSendRecvMessageSetFromVTab(&
+         oneVarTable, oneVarTableSize, &
          tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
          xbSend, xeSend, ybSend, yeSend, willSend, AcouSendUV, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvUV)
@@ -1057,6 +1078,7 @@ contains
     endif
 
     call InsertFieldSectionAtSendRecvMessageSetFromVTab(&
+         oneVarTable, oneVarTableSize, &
          tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
          xbSend, xeSend, ybSend, yeSend, willSend, AcouSendUV, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvUV)
@@ -1107,6 +1129,7 @@ contains
     endif
 
     call InsertFieldSectionAtSendRecvMessageSetFromVTab(&
+         oneVarTable, oneVarTableSize, &
          tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
          xbSend, xeSend, ybSend, yeSend, willSend, AcouSendWP, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvWP)
@@ -1120,6 +1143,7 @@ contains
     endif
 
     call InsertFieldSectionAtSendRecvMessageSetFromVTab(&
+         oneVarTable, oneVarTableSize, &
          tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
          xbSend, xeSend, ybSend, yeSend, willSend, AcouSendWP, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvWP)
@@ -1191,10 +1215,14 @@ contains
 
 
   subroutine CreateDn0MessageSet(&
+       oneVarTable, oneVarTableSize, &
        gridId, GridSize, ParEnv, Neigh, &
        GlobalOwn, GlobalWithGhost, &
        SendDn0u, RecvDn0u, TagDn0u, &
        SendDn0v, RecvDn0v, TagDn0v)
+
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
 
     integer, intent(in) :: gridId
     type(GridDims), pointer, intent(in) :: GridSize
@@ -1302,6 +1330,7 @@ contains
     tmp_name='DN0U'
 
     call InsertFieldSectionAtSendRecvMessageSetFromVTab(&
+         oneVarTable, oneVarTableSize, &
          tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
          xbSend, xeSend, ybSend, yeSend, willSend, SendDn0u, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvDn0u)
@@ -1347,6 +1376,7 @@ contains
     tmp_name='DN0V'
 
     call InsertFieldSectionAtSendRecvMessageSetFromVTab(&
+         oneVarTable, oneVarTableSize, &
          tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
          xbSend, xeSend, ybSend, yeSend, willSend, SendDn0v, &
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvDn0v)
@@ -1390,10 +1420,14 @@ contains
 
 
   subroutine CreateG3DMessageSet(&
+       oneVarTable, oneVarTableSize, &
        gridId, GridSize, ParEnv, Neigh, &
        GlobalOwnWithBC, GlobalWithGhost, &
        Ramsin, &
        SendG3D, RecvG3D, TagG3D)
+
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
 
     integer, intent(in) :: gridId
     type(GridDims), pointer, intent(in) :: GridSize
@@ -1511,6 +1545,7 @@ contains
           tmp_name='TTENS'
 
           call InsertFieldSectionAtSendRecvMessageSetFromVTab(&
+               oneVarTable, oneVarTableSize, &
                tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
                xbSend, xeSend, ybSend, yeSend, willSend, SendG3D, &
                xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvG3D)
@@ -1518,6 +1553,7 @@ contains
           tmp_name='QVTTENS'
 
           call InsertFieldSectionAtSendRecvMessageSetFromVTab(&
+               oneVarTable, oneVarTableSize, &
                tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
                xbSend, xeSend, ybSend, yeSend, willSend, SendG3D, &
                xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvG3D)
@@ -1530,6 +1566,7 @@ contains
           tmp_name='THSRC'
 
           call InsertFieldSectionAtSendRecvMessageSetFromVTab(&
+               oneVarTable, oneVarTableSize, &
                tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
                xbSend, xeSend, ybSend, yeSend, willSend, SendG3D, &
                xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvG3D)
@@ -1537,6 +1574,7 @@ contains
           tmp_name='RTSRC'
 
           call InsertFieldSectionAtSendRecvMessageSetFromVTab(&
+               oneVarTable, oneVarTableSize, &
                tmp_name, myNum, nNeigh, gridId, GlobalWithGhost, &
                xbSend, xeSend, ybSend, yeSend, willSend, SendG3D, &
                xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvG3D)
@@ -1577,10 +1615,14 @@ contains
 
 
   subroutine CreateSelectedGhostZoneMessageSet(&
+       oneVarTable, oneVarTableSize, &
        gridId, num_var, vtab_r, &
        GridSize, ParEnv, Neigh, &
        GlobalOwnWithBC, GlobalWithGhost, &
        SelectedGhostZoneSend, SelectedGhostZoneRecv, TagSelectedGhostZone)
+
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
 
     integer, intent(in) :: gridId
     integer, intent(in) :: num_var(:)
@@ -1686,6 +1728,7 @@ contains
        if (vtab_r(vTabNbr,gridId)%impt1 == 1) then
 
           call InsertFieldSectionAtSendRecvMessageSetFromVTab(&
+               oneVarTable, oneVarTableSize, &
                vtab_r(vTabNbr,gridId)%name, myNum, nNeigh, gridId, GlobalWithGhost, &
                xbSend, xeSend, ybSend, yeSend, willSend, SelectedGhostZoneSend, &
                xbRecv, xeRecv, ybRecv, yeRecv, willRecv, SelectedGhostZoneRecv)
@@ -1725,10 +1768,15 @@ contains
 
 
   subroutine CreateAllGhostZoneMessageSet(&
+       oneVarTable, oneVarTableSize, &
        gridId, num_var, vtab_r, &
        GridSize, ParEnv, Neigh, &
        GlobalOwnWithBC, GlobalWithGhost, &
        AllGhostZoneSend, AllGhostZoneRecv, TagAllGhostZone)
+
+
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
 
     integer, intent(in) :: gridId
     integer, intent(in) :: num_var(:)
@@ -1841,6 +1889,7 @@ contains
             trim(adjustl(vTabName)) /= "LPW" ) then
 
           call InsertFieldSectionAtSendRecvMessageSetFromVTab(&
+               oneVarTable, oneVarTableSize, &
                vTabName, myNum, nNeigh, gridId, GlobalWithGhost, &
                xbSend, xeSend, ybSend, yeSend, willSend, AllGhostZoneSend, &
                xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AllGhostZoneRecv)
@@ -2001,7 +2050,7 @@ contains
        WideGhostZoneRecv => null()
        return
     end if
-    
+
     nMachs=ParEnv%nmachs
     myNum=ParEnv%mynum
     nNeigh=Neigh%nNeigh
@@ -3444,7 +3493,7 @@ contains
        AdvMntScaRecvY => null()
        return
     end if
-    
+
     nMachs=ParEnv%nmachs
     myNum=ParEnv%mynum
     nNeigh=Neigh%nNeigh
@@ -4246,7 +4295,7 @@ contains
 
 
 
-  
+
   subroutine CreateAcoustNewMessageSet(&
        GridSize, ParEnv, Neigh, &
        GlobalOwn, GlobalWithGhost, NodeDims, &
@@ -4548,7 +4597,7 @@ contains
 
 
 
-  
+
   subroutine UpdateFieldAdressAtAcoustNew(&
        AcoustNewSend, &
        AcoustNewRecv, &
@@ -4582,7 +4631,7 @@ contains
 
 
 
-  
+
 
   subroutine UpdateFieldAdressAtAdvMnt(&
        AdvMntUVSendX, AdvMntUVRecvX, &
@@ -4691,7 +4740,7 @@ contains
           call UpdateFieldAdress(fsnode%entry, dytW, "DYTW")
        end do
     end if
-       
+
     if (associated(AdvMntDxDySendY)) then
        do iMsg = 1, AdvMntDxDySendY%nMsgs
           fsnode => AdvMntDxDySendY%msgData(iMsg)%list%head
@@ -4700,7 +4749,7 @@ contains
           call UpdateFieldAdress(fsnode%entry, dytW, "DYTW")
        end do
     end if
-       
+
     if (associated(AdvMntDxDyRecvY)) then
        do iMsg = 1, AdvMntDxDyRecvY%nMsgs
           fsnode => AdvMntDxDyRecvY%msgData(iMsg)%list%head
@@ -4735,7 +4784,7 @@ contains
           call UpdateFieldAdress(fsnode%entry, dd0_3dw, "DD0_3DW")
        end do
     end if
-       
+
     if (associated(AdvMntDd0SendY)) then
        do iMsg = 1, AdvMntDd0SendY%nMsgs
           fsnode => AdvMntDd0SendY%msgData(iMsg)%list%head
