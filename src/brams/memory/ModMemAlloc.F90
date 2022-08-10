@@ -108,9 +108,7 @@ module ModMemAlloc
   use ModVarTables, only: &
        num_var, &
        vtab_r, &
-       maxvars, &
        num_var, &
-       nvgrids, &
        vtab_r,  &
        DeepCopyToVarTable, &
        DeepCopyFromVarTable
@@ -510,6 +508,7 @@ contains
     integer :: idiffk
     real, pointer :: v_p
 
+    integer, parameter :: maxvars=1000
 
     call alloc_paths(ngrids, nmachs)
 
@@ -551,7 +550,6 @@ contains
     allocate (vtab_r(maxvars,ngrids), STAT=ierr)
     if (ierr/=0) call fatal_error(h//"Allocating vtab_r")
     num_var(:) = 0
-    nvgrids    = ngrids
     !-------------
 
     !-------------

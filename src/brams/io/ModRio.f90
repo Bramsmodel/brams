@@ -28,7 +28,6 @@ module ModRio
        maxgrds
 
   use ModVarTables, only: &
-       nvgrids, &
        num_var, &
        vtab_r
 
@@ -337,7 +336,7 @@ contains
 
        !  See if this variable is active in the current run
        ngr=hr_table(nvh)%ngrid
-       if(ngr > nvgrids) cycle
+       if(ngr > ngrids) cycle
 
        do nv = 1,num_var(ngr)
           npts=vtab_r(nv,ngr)%npts

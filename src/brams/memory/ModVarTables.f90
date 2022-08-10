@@ -37,16 +37,16 @@ module ModVarTables
   
   implicit none
   private
-  public :: maxvars
+!!$  public :: maxvars
   public :: VarTableFields
   public :: vtab_r
-  public :: nvgrids
+!!$  public :: nvgrids
   public :: num_var
 !!$  public :: InsertVTab
 !!$  public :: GetVTabEntry
-  public :: GetVTabSectionSize
-  public :: VerifyVTabEntry
-  public :: StringIndexing
+!!$  public :: GetVTabSectionSize
+!!$  public :: VerifyVTabEntry
+!!$  public :: StringIndexing
 !!$  public :: ZeroVTab
 !!$  public :: lite_varset
 !!$  public :: DumpVTab
@@ -60,7 +60,7 @@ module ModVarTables
 
   ! Maximum number of variables of all types (3d + 2d + leaf)
 
-  integer, parameter :: maxvars=1000
+!!$  integer, parameter :: maxvars=1000
 
   ! Define data type for main variable table
 
@@ -111,7 +111,7 @@ module ModVarTables
 
   ! "nvgrids" is "ngrids", for convenience
 
-  integer :: nvgrids
+!  integer :: nvgrids
 
   ! number of variables for each grid, allocated to "ngrids"
 
@@ -291,222 +291,222 @@ contains
 
 
 
-  subroutine vtables2(var, varm, ng, npts, imean, tabstr)
-    real, target :: var,varm
-    integer, intent(in) :: ng,imean !npts
-    integer(kind=i8), intent(in) :: npts
-    character (len=*), intent(in) :: tabstr
-
-    character (len=80) ::line
-    character (len=1) ::toksep=':', cdimen,ctype
-    character (len=32) ::tokens(10)
-    character (len=8) :: cname,ctab
-
-    integer :: ntok,nt,nv
-
-    call tokenize1(tabstr,tokens,ntok,toksep)
-    !print *,'LFR->DBG: vtables2: ',npts,tokens(1); call flush(6)
-    num_var(ng)=num_var(ng)+1
-    nv=num_var(ng)
-
-    vtab_r(nv,ng)%name=tokens(1)
-    vtab_r(nv,ng)%npts=npts
-    read(tokens(2),*) vtab_r(nv,ng)%idim_type
-    !print*,'tab:',nv,ng,vtab_r(nv,ng)%name ,vtab_r(nv,ng)%npts
-
-    vtab_r(nv,ng)%ihist=0
-    vtab_r(nv,ng)%ianal=0
-    vtab_r(nv,ng)%imean=imean
-    vtab_r(nv,ng)%ilite=0
-    vtab_r(nv,ng)%impti=0
-    vtab_r(nv,ng)%impt1=0
-    vtab_r(nv,ng)%impt2=0
-    vtab_r(nv,ng)%impt3=0
-
-    !--(DMK)------------------------------------------
-    vtab_r(nv,ng)%imptd=0
-    !--(DMK)------------------------------------------
-
-    vtab_r(nv,ng)%irecycle=0
-
-    do nt=3,ntok
-       ctab=tokens(nt)
-
-       if(ctab == 'hist' ) then
-          vtab_r(nv,ng)%ihist=1
-       elseif(ctab == 'anal' ) then
-          vtab_r(nv,ng)%ianal=1
-       elseif(ctab == 'lite' ) then
-          vtab_r(nv,ng)%ilite=1
-       elseif(ctab == 'mpti' ) then
-          vtab_r(nv,ng)%impti=1
-       elseif(ctab == 'mpt1' ) then
-          vtab_r(nv,ng)%impt1=1
-       elseif(ctab == 'mpt2' ) then
-          vtab_r(nv,ng)%impt2=1
-       elseif(ctab == 'mpt3' ) then
-          vtab_r(nv,ng)%impt3=1
-
-          !--(DMK)------------------------------------------
-       elseif(ctab == 'mptd' ) then
-          vtab_r(nv,ng)%imptd=1
-          !--(DMK)------------------------------------------
-
-       elseif(ctab == 'recycle' ) then
-          vtab_r(nv,ng)%irecycle=1
-       else
-          print*, 'Illegal table specification for var:', tokens(1),ctab
-          stop 'bad var table'
-       endif
-
-    enddo
-
-    return
-  end subroutine vtables2
-
-
-
-
-
-  integer function GetVTabSectionSize(vTabPtr, &
-       iStart, iEnd, jStart, jEnd)
-    type(VarTableFields), pointer :: vTabPtr
-    integer, intent(in) :: iStart
-    integer, intent(in) :: iEnd
-    integer, intent(in) :: jStart
-    integer, intent(in) :: jEnd
-
-    character(len=8) :: c0
-    character(len=*), parameter :: h="**(GetVTabSectionSize)**"
-
-    if (.not. associated(vTabPtr)) then
-       call fatal_error(h//" vTabPtr not associated")
-    else
-       GetVTabSectionSize=(iEnd-iStart+1)*(jEnd-jStart+1)
-       select case (vTabPtr%idim_type)
-       case(2)
-          ! idim_type == 2 means (nmxp, nmyp)
-       case(3)
-          ! idim_type == 3 means (nmzp, nmxp, nmyp)
-          GetVTabSectionSize=GetVTabSectionSize*&
-               size(vTabPtr%var_p_3D,1)
-       case(4)
-          ! idim_type == 4 means (nzg, nmxp, nmyp, npatch)
-          GetVTabSectionSize=GetVTabSectionSize*&
-               size(vTabPtr%var_p_4D,1)*&
-               size(vTabPtr%var_p_4D,4)
-       case(5)
-          ! idim_type == 5 means (nzs, nmxp, nmyp, npatch)
-          GetVTabSectionSize=GetVTabSectionSize*&
-               size(vTabPtr%var_p_4D,1)*&
-               size(vTabPtr%var_p_4D,4)
-       case(6)
-          ! idim_type == 6 means (nmxp, nmyp, npatch)
-          GetVTabSectionSize=GetVTabSectionSize*&
-               size(vTabPtr%var_p_3D,3)
-       case(7)
-          ! idim_type == 7 means (nmxp, nmyp, nwave)
-          GetVTabSectionSize=GetVTabSectionSize*&
-               size(vTabPtr%var_p_3D,3)
-       case default
-          write(c0,"(i8)") vTabPtr%idim_type
-          call fatal_error(h//" unknown idim_type="//trim(adjustl(c0)))
-       end select
-    end if
-  end function GetVTabSectionSize
+!!$  subroutine vtables2(var, varm, ng, npts, imean, tabstr)
+!!$    real, target :: var,varm
+!!$    integer, intent(in) :: ng,imean !npts
+!!$    integer(kind=i8), intent(in) :: npts
+!!$    character (len=*), intent(in) :: tabstr
+!!$
+!!$    character (len=80) ::line
+!!$    character (len=1) ::toksep=':', cdimen,ctype
+!!$    character (len=32) ::tokens(10)
+!!$    character (len=8) :: cname,ctab
+!!$
+!!$    integer :: ntok,nt,nv
+!!$
+!!$    call tokenize1(tabstr,tokens,ntok,toksep)
+!!$    !print *,'LFR->DBG: vtables2: ',npts,tokens(1); call flush(6)
+!!$    num_var(ng)=num_var(ng)+1
+!!$    nv=num_var(ng)
+!!$
+!!$    vtab_r(nv,ng)%name=tokens(1)
+!!$    vtab_r(nv,ng)%npts=npts
+!!$    read(tokens(2),*) vtab_r(nv,ng)%idim_type
+!!$    !print*,'tab:',nv,ng,vtab_r(nv,ng)%name ,vtab_r(nv,ng)%npts
+!!$
+!!$    vtab_r(nv,ng)%ihist=0
+!!$    vtab_r(nv,ng)%ianal=0
+!!$    vtab_r(nv,ng)%imean=imean
+!!$    vtab_r(nv,ng)%ilite=0
+!!$    vtab_r(nv,ng)%impti=0
+!!$    vtab_r(nv,ng)%impt1=0
+!!$    vtab_r(nv,ng)%impt2=0
+!!$    vtab_r(nv,ng)%impt3=0
+!!$
+!!$    !--(DMK)------------------------------------------
+!!$    vtab_r(nv,ng)%imptd=0
+!!$    !--(DMK)------------------------------------------
+!!$
+!!$    vtab_r(nv,ng)%irecycle=0
+!!$
+!!$    do nt=3,ntok
+!!$       ctab=tokens(nt)
+!!$
+!!$       if(ctab == 'hist' ) then
+!!$          vtab_r(nv,ng)%ihist=1
+!!$       elseif(ctab == 'anal' ) then
+!!$          vtab_r(nv,ng)%ianal=1
+!!$       elseif(ctab == 'lite' ) then
+!!$          vtab_r(nv,ng)%ilite=1
+!!$       elseif(ctab == 'mpti' ) then
+!!$          vtab_r(nv,ng)%impti=1
+!!$       elseif(ctab == 'mpt1' ) then
+!!$          vtab_r(nv,ng)%impt1=1
+!!$       elseif(ctab == 'mpt2' ) then
+!!$          vtab_r(nv,ng)%impt2=1
+!!$       elseif(ctab == 'mpt3' ) then
+!!$          vtab_r(nv,ng)%impt3=1
+!!$
+!!$          !--(DMK)------------------------------------------
+!!$       elseif(ctab == 'mptd' ) then
+!!$          vtab_r(nv,ng)%imptd=1
+!!$          !--(DMK)------------------------------------------
+!!$
+!!$       elseif(ctab == 'recycle' ) then
+!!$          vtab_r(nv,ng)%irecycle=1
+!!$       else
+!!$          print*, 'Illegal table specification for var:', tokens(1),ctab
+!!$          stop 'bad var table'
+!!$       endif
+!!$
+!!$    enddo
+!!$
+!!$    return
+!!$  end subroutine vtables2
 
 
 
 
-  subroutine VerifyVTabEntry(vTabPtr)
-    type(VarTableFields), pointer :: vTabPtr
-    character(len=*), parameter :: h="**(VerifyVTabEntry)**"
 
-    if (.not. associated(vTabPtr)) then
-       call fatal_error(h//" null vTabPtr")
-    else
-       select case (vTabPtr%idim_type)
-       case (2)
-          if (.not. associated(vTabPtr%var_p_2D)) then
-             call fatal_error(h//" vTabPtr%var_p_2D of field "//&
-                  trim(adjustl(vTabPtr%name))//" is not associated")
-          end if
-       case (3)
-          if (.not. associated(vTabPtr%var_p_3D)) then
-             call fatal_error(h//" vTabPtr%var_p_3D of field "//&
-                  trim(adjustl(vTabPtr%name))//" is not associated")
-          end if
-       case (4:5)
-          if (.not. associated(vTabPtr%var_p_4D)) then
-             call fatal_error(h//" vTabPtr%var_p_4D of field "//&
-                  trim(adjustl(vTabPtr%name))//" is not associated")
-          end if
-       case (6:7)
-          if (.not. associated(vTabPtr%var_p_3D)) then
-             call fatal_error(h//" vTabPtr%var_p_3D of field "//&
-                  trim(adjustl(vTabPtr%name))//" is not associated")
-          end if
-       case default
-          call fatal_error(h//" vTabPtr%idim_type of field "//&
-               trim(adjustl(vTabPtr%name))//" is outside range [2:7]")
-       end select
-    end if
-  end subroutine VerifyVTabEntry
+!!$  integer function GetVTabSectionSize(vTabPtr, &
+!!$       iStart, iEnd, jStart, jEnd)
+!!$    type(VarTableFields), pointer :: vTabPtr
+!!$    integer, intent(in) :: iStart
+!!$    integer, intent(in) :: iEnd
+!!$    integer, intent(in) :: jStart
+!!$    integer, intent(in) :: jEnd
+!!$
+!!$    character(len=8) :: c0
+!!$    character(len=*), parameter :: h="**(GetVTabSectionSize)**"
+!!$
+!!$    if (.not. associated(vTabPtr)) then
+!!$       call fatal_error(h//" vTabPtr not associated")
+!!$    else
+!!$       GetVTabSectionSize=(iEnd-iStart+1)*(jEnd-jStart+1)
+!!$       select case (vTabPtr%idim_type)
+!!$       case(2)
+!!$          ! idim_type == 2 means (nmxp, nmyp)
+!!$       case(3)
+!!$          ! idim_type == 3 means (nmzp, nmxp, nmyp)
+!!$          GetVTabSectionSize=GetVTabSectionSize*&
+!!$               size(vTabPtr%var_p_3D,1)
+!!$       case(4)
+!!$          ! idim_type == 4 means (nzg, nmxp, nmyp, npatch)
+!!$          GetVTabSectionSize=GetVTabSectionSize*&
+!!$               size(vTabPtr%var_p_4D,1)*&
+!!$               size(vTabPtr%var_p_4D,4)
+!!$       case(5)
+!!$          ! idim_type == 5 means (nzs, nmxp, nmyp, npatch)
+!!$          GetVTabSectionSize=GetVTabSectionSize*&
+!!$               size(vTabPtr%var_p_4D,1)*&
+!!$               size(vTabPtr%var_p_4D,4)
+!!$       case(6)
+!!$          ! idim_type == 6 means (nmxp, nmyp, npatch)
+!!$          GetVTabSectionSize=GetVTabSectionSize*&
+!!$               size(vTabPtr%var_p_3D,3)
+!!$       case(7)
+!!$          ! idim_type == 7 means (nmxp, nmyp, nwave)
+!!$          GetVTabSectionSize=GetVTabSectionSize*&
+!!$               size(vTabPtr%var_p_3D,3)
+!!$       case default
+!!$          write(c0,"(i8)") vTabPtr%idim_type
+!!$          call fatal_error(h//" unknown idim_type="//trim(adjustl(c0)))
+!!$       end select
+!!$    end if
+!!$  end function GetVTabSectionSize
 
 
-  subroutine StringIndexing(vTabPtr, &
-       xStart, xEnd, yStart, yEnd, string)
-    type(VarTableFields), pointer :: vTabPtr
-    integer, intent(in) :: xStart
-    integer, intent(in) :: xEnd
-    integer, intent(in) :: yStart
-    integer, intent(in) :: yEnd
-    character(len=*), intent(out) :: string
-
-    character(len=8) :: c0, c1, c2, c3, c4, c5
-    character(len=*), parameter :: h="**(StringIndexing)**"
 
 
-    if (.not. associated(vTabPtr)) then
-       call fatal_error(h//" null vTabPtr")
-    end if
+!!$  subroutine VerifyVTabEntry(vTabPtr)
+!!$    type(VarTableFields), pointer :: vTabPtr
+!!$    character(len=*), parameter :: h="**(VerifyVTabEntry)**"
+!!$
+!!$    if (.not. associated(vTabPtr)) then
+!!$       call fatal_error(h//" null vTabPtr")
+!!$    else
+!!$       select case (vTabPtr%idim_type)
+!!$       case (2)
+!!$          if (.not. associated(vTabPtr%var_p_2D)) then
+!!$             call fatal_error(h//" vTabPtr%var_p_2D of field "//&
+!!$                  trim(adjustl(vTabPtr%name))//" is not associated")
+!!$          end if
+!!$       case (3)
+!!$          if (.not. associated(vTabPtr%var_p_3D)) then
+!!$             call fatal_error(h//" vTabPtr%var_p_3D of field "//&
+!!$                  trim(adjustl(vTabPtr%name))//" is not associated")
+!!$          end if
+!!$       case (4:5)
+!!$          if (.not. associated(vTabPtr%var_p_4D)) then
+!!$             call fatal_error(h//" vTabPtr%var_p_4D of field "//&
+!!$                  trim(adjustl(vTabPtr%name))//" is not associated")
+!!$          end if
+!!$       case (6:7)
+!!$          if (.not. associated(vTabPtr%var_p_3D)) then
+!!$             call fatal_error(h//" vTabPtr%var_p_3D of field "//&
+!!$                  trim(adjustl(vTabPtr%name))//" is not associated")
+!!$          end if
+!!$       case default
+!!$          call fatal_error(h//" vTabPtr%idim_type of field "//&
+!!$               trim(adjustl(vTabPtr%name))//" is outside range [2:7]")
+!!$       end select
+!!$    end if
+!!$  end subroutine VerifyVTabEntry
 
-    write(c0,"(i8)") xStart
-    write(c1,"(i8)") xEnd
-    write(c2,"(i8)") yStart
-    write(c3,"(i8)") yEnd
 
-    select case (vTabPtr%idim_type)
-    case(2)
-       string="("//&
-            trim(adjustl(c0))//":"//trim(adjustl(c1))//","//&
-            trim(adjustl(c2))//":"//trim(adjustl(c3))//")"
-    case(3)
-       write(c4,"(i8)") size(vTabPtr%var_p_3D,1)
-       string="(1:"//trim(adjustl(c4))//","//&
-            trim(adjustl(c0))//":"//trim(adjustl(c1))//","//&
-            trim(adjustl(c2))//":"//trim(adjustl(c3))//")"
-    case(4:5)
-       write(c4,"(i8)") size(vTabPtr%var_p_4D,1)
-       write(c5,"(i8)") size(vTabPtr%var_p_4D,4)
-       string="(1:"//trim(adjustl(c4))//","//&
-            trim(adjustl(c0))//":"//trim(adjustl(c1))//","//&
-            trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
-            "1:"//trim(adjustl(c5))//")"
-
-    case(6:7)
-       write(c4,"(i8)") size(vTabPtr%var_p_3D,3)
-       string="("//&
-            trim(adjustl(c0))//":"//trim(adjustl(c1))//","//&
-            trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
-            "1:"//trim(adjustl(c4))//")"
-
-    case default
-       write(c0,"(i8)") vTabPtr%idim_type
-       call fatal_error(h//" field section "//trim(vTabPtr%name)//&
-            " with unknown idim_type="//trim(adjustl(c0)))
-    end select
-  end subroutine StringIndexing
+!!$  subroutine StringIndexing(vTabPtr, &
+!!$       xStart, xEnd, yStart, yEnd, string)
+!!$    type(VarTableFields), pointer :: vTabPtr
+!!$    integer, intent(in) :: xStart
+!!$    integer, intent(in) :: xEnd
+!!$    integer, intent(in) :: yStart
+!!$    integer, intent(in) :: yEnd
+!!$    character(len=*), intent(out) :: string
+!!$
+!!$    character(len=8) :: c0, c1, c2, c3, c4, c5
+!!$    character(len=*), parameter :: h="**(StringIndexing)**"
+!!$
+!!$
+!!$    if (.not. associated(vTabPtr)) then
+!!$       call fatal_error(h//" null vTabPtr")
+!!$    end if
+!!$
+!!$    write(c0,"(i8)") xStart
+!!$    write(c1,"(i8)") xEnd
+!!$    write(c2,"(i8)") yStart
+!!$    write(c3,"(i8)") yEnd
+!!$
+!!$    select case (vTabPtr%idim_type)
+!!$    case(2)
+!!$       string="("//&
+!!$            trim(adjustl(c0))//":"//trim(adjustl(c1))//","//&
+!!$            trim(adjustl(c2))//":"//trim(adjustl(c3))//")"
+!!$    case(3)
+!!$       write(c4,"(i8)") size(vTabPtr%var_p_3D,1)
+!!$       string="(1:"//trim(adjustl(c4))//","//&
+!!$            trim(adjustl(c0))//":"//trim(adjustl(c1))//","//&
+!!$            trim(adjustl(c2))//":"//trim(adjustl(c3))//")"
+!!$    case(4:5)
+!!$       write(c4,"(i8)") size(vTabPtr%var_p_4D,1)
+!!$       write(c5,"(i8)") size(vTabPtr%var_p_4D,4)
+!!$       string="(1:"//trim(adjustl(c4))//","//&
+!!$            trim(adjustl(c0))//":"//trim(adjustl(c1))//","//&
+!!$            trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
+!!$            "1:"//trim(adjustl(c5))//")"
+!!$
+!!$    case(6:7)
+!!$       write(c4,"(i8)") size(vTabPtr%var_p_3D,3)
+!!$       string="("//&
+!!$            trim(adjustl(c0))//":"//trim(adjustl(c1))//","//&
+!!$            trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
+!!$            "1:"//trim(adjustl(c4))//")"
+!!$
+!!$    case default
+!!$       write(c0,"(i8)") vTabPtr%idim_type
+!!$       call fatal_error(h//" field section "//trim(vTabPtr%name)//&
+!!$            " with unknown idim_type="//trim(adjustl(c0)))
+!!$    end select
+!!$  end subroutine StringIndexing
 
 
 !!$  subroutine zero_vtab_2D(var,nx,ny)

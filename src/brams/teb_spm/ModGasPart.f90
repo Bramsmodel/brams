@@ -55,7 +55,6 @@ module ModGasPart
        nvbtab             ! INTENT(OUT)
   
   use ModVarTables, only: &
-       nvgrids,         & ! INTENT(IN)
        num_var,         & ! INTENT(IN)
        vtab_r             ! INTENT(INOUT)
 
@@ -871,6 +870,7 @@ contains
     integer, intent(in)           :: maxarr
     character(len=f_name_length), intent(in) :: hnamein
     integer, intent(in)           :: iunhd
+
     ! Local variables:
     integer            :: ngr, npts, nptsh, nv, nvh, i
     real, allocatable  :: scr(:)
@@ -914,7 +914,7 @@ contains
 
           !  See if this variable is active in the current run
           ngr = hr_table(nvh)%ngrid
-          if (ngr>nvgrids) cycle
+          if (ngr>ngrids) cycle
 
           do nv=1,num_var(ngr)
              npts = vtab_r(nv,ngr)%npts
