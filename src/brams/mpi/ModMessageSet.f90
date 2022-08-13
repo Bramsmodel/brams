@@ -91,7 +91,6 @@ module ModMessageSet
        Name2VarTableEntry
 
   use ModVarTables, only: &
-       VarTableFields, &
        DeepCopyToVarTable, &
        DeepCopyFromVarTable
 
@@ -1615,8 +1614,7 @@ contains
 
 
   subroutine CreateSelectedGhostZoneMessageSet(&
-       oneVarTable, oneVarTableSize, &
-       gridId, num_var, vtab_r, &
+       oneVarTable, oneVarTableSize, gridId, &
        GridSize, ParEnv, Neigh, &
        GlobalOwnWithBC, GlobalWithGhost, &
        SelectedGhostZoneSend, SelectedGhostZoneRecv, TagSelectedGhostZone)
@@ -1625,8 +1623,6 @@ contains
     integer, intent(inout) :: oneVarTableSize
 
     integer, intent(in) :: gridId
-    integer, intent(in) :: num_var(:)
-    type(VarTableFields), target, intent(in) ::  vtab_r(:,:)
     type(GridDims), pointer, intent(in) :: GridSize
     type(ParallelEnvironment), pointer, intent(in) :: ParEnv
     type(NeighbourNodes), pointer, intent(in) :: Neigh
@@ -1723,13 +1719,13 @@ contains
 
     ! take all ModVarTables field that should be communicated
 
-    do vTabNbr = 1, num_var(gridId)
+    do vTabNbr = 1, oneVarTableSize
 
-       if (vtab_r(vTabNbr,gridId)%impt1 == 1) then
+       if (oneVarTable(vTabNbr)%impt1 == 1) then
 
           call InsertFieldSectionAtSendRecvMessageSetFromVTab(&
                oneVarTable, oneVarTableSize, &
-               vtab_r(vTabNbr,gridId)%name, myNum, nNeigh, gridId, GlobalWithGhost, &
+               oneVarTable(vTabNbr)%name, myNum, nNeigh, gridId, GlobalWithGhost, &
                xbSend, xeSend, ybSend, yeSend, willSend, SelectedGhostZoneSend, &
                xbRecv, xeRecv, ybRecv, yeRecv, willRecv, SelectedGhostZoneRecv)
        end if
@@ -1768,8 +1764,7 @@ contains
 
 
   subroutine CreateAllGhostZoneMessageSet(&
-       oneVarTable, oneVarTableSize, &
-       gridId, num_var, vtab_r, &
+       oneVarTable, oneVarTableSize, gridId, &
        GridSize, ParEnv, Neigh, &
        GlobalOwnWithBC, GlobalWithGhost, &
        AllGhostZoneSend, AllGhostZoneRecv, TagAllGhostZone)
@@ -1779,8 +1774,6 @@ contains
     integer, intent(inout) :: oneVarTableSize
 
     integer, intent(in) :: gridId
-    integer, intent(in) :: num_var(:)
-    type(VarTableFields), target, intent(in) ::  vtab_r(:,:)
     type(GridDims), pointer, intent(in) :: GridSize
     type(ParallelEnvironment), pointer, intent(in) :: ParEnv
     type(NeighbourNodes), pointer, intent(in) :: Neigh
@@ -1879,9 +1872,9 @@ contains
 
     ! take all ModVarTables field that should be communicated
 
-    do vTabNbr = 1, num_var(gridId)
+    do vTabNbr = 1, oneVarTableSize
 
-       vTabName = vtab_r(vTabNbr,gridId)%name
+       vTabName = oneVarTable(vTabNbr)%name
 
        if (&
             trim(adjustl(vTabName)) /= "LPU" .and. &

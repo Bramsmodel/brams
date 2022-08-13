@@ -119,10 +119,6 @@ module ModGrid
        DumpJulesFields
 #endif  
   
-  use ModVarTables, only: &
-       num_var, &
-       vtab_r
-
   use mem_tend, only: &
        tend
 
@@ -578,12 +574,10 @@ contains
          oneGrid%oneNamelistFile, &
          oneGrid%SendG3D, oneGrid%RecvG3D, TagG3D)
 
-    ! temporariamente, num_var e vtab_r sao variaveis globais,
-    ! enquanto nao inclusas no tipo Grid
 
     call CreateSelectedGhostZoneMessageSet(&
          oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-         oneGrid%Id, num_var, vtab_r, &
+         oneGrid%Id, &
          oneGrid%oneGridDims, oneGrid%oneParallelEnvironment, oneGrid%oneNeighbourNodes, &
          oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhost, &
          oneGrid%SelectedGhostZoneSend, &
@@ -592,7 +586,7 @@ contains
 
     call CreateAllGhostZoneMessageSet(&
          oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-         oneGrid%Id, num_var, vtab_r, &
+         oneGrid%Id, &
          oneGrid%oneGridDims, oneGrid%oneParallelEnvironment, oneGrid%oneNeighbourNodes, &
          oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhost, &
          oneGrid%AllGhostZoneSend, &
