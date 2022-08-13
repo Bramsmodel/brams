@@ -2003,7 +2003,7 @@ contains
 
                 if (ichemi==1) then  !calling more added scalars for chemistry
                    if (ichemi_in==1) then !reading init.values from previous run
-                      call init_conc_prev()
+                      call init_conc_prev(oneGrid%oneVarTable, oneGrid%oneVarTableSize)
                    else
                       call init_conc2(1, ifm,           &
                            nnzp(ifm),                   &

@@ -54,9 +54,8 @@ module ModGasPart
        head_table,     &  ! Type
        nvbtab             ! INTENT(OUT)
   
-  use ModVarTables, only: &
-       num_var,         & ! INTENT(IN)
-       vtab_r             ! INTENT(INOUT)
+  use ModVarTable, only: &
+       VarTable
 
   use teb_vars_const, only : &
        RUSHH1,               & !INTENT(IN)
@@ -786,11 +785,13 @@ contains
 
   !###########################################################################
 
-  subroutine init_conc_prev()
+  subroutine init_conc_prev(oneVarTable, oneVarTableSize)
 
     ! This routine initializes gas variables from a previous (day-1) history file
     include "constants.h"
     include "files.h"
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(in) :: oneVarTableSize
 
     ! Local variables:
     integer :: ngrids1, ioutput1,  &
@@ -849,7 +850,8 @@ contains
 
     ! read stuff here
 
-    call hist_pol_read(maxarr, hnameinh(1:len_trim(hnameinh)), iunhd)
+    call hist_pol_read(maxarr, hnameinh(1:len_trim(hnameinh)), iunhd, &
+         oneVarTable, oneVarTableSize)
 
     if (mchnum==master_num) then !io-process only
        print*, 'back from read'
@@ -862,7 +864,7 @@ contains
 
   !******************************************************************************
 
-  subroutine hist_pol_read(maxarr, hnamein, iunhd)
+  subroutine hist_pol_read(maxarr, hnamein, iunhd, oneVarTable, oneVarTableSize)
     include "constants.h"
     include "files.h"
 
@@ -870,6 +872,8 @@ contains
     integer, intent(in)           :: maxarr
     character(len=f_name_length), intent(in) :: hnamein
     integer, intent(in)           :: iunhd
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(in) :: oneVarTableSize
 
     ! Local variables:
     integer            :: ngr, npts, nptsh, nv, nvh, i
@@ -916,38 +920,38 @@ contains
           ngr = hr_table(nvh)%ngrid
           if (ngr>ngrids) cycle
 
-          do nv=1,num_var(ngr)
-             npts = vtab_r(nv,ngr)%npts
-             if (hr_table(nvh)%string==vtab_r(nv,ngr)%name) then
+          do nv=1,oneVarTableSize
+             npts = oneVarTable(nv)%npts
+             if (hr_table(nvh)%string==oneVarTable(nv)%name) then
                 if (nptsh/=npts) then
                    print*, 'Grid point number mismatch on history field:',  &
-                        vtab_r(nv,ngr)%name,npts,nptsh
+                        oneVarTable(nv)%name,npts,nptsh
                    call fatal_error('History read number points error')
                 endif
 
                 iCopyFlg = 0
 
-                if(  vtab_r(nv,ngr)%name=='PNO'   .or. &
-                     vtab_r(nv,ngr)%name=='PNO2'  .or. &
-                     vtab_r(nv,ngr)%name=='PPM25' .or. &
-                     vtab_r(nv,ngr)%name=='PCO'   .or. &
-                     vtab_r(nv,ngr)%name=='PVOC'  .or. &
-                     vtab_r(nv,ngr)%name=='PSO2'  .or. &
-                     vtab_r(nv,ngr)%name=='PSO4'  .or. &
-                     vtab_r(nv,ngr)%name=='PAER'  .or. &
-                     vtab_r(nv,ngr)%name=='PVOC'  .or. &
-                     vtab_r(nv,ngr)%name=='PSO2'  .or. &
-                     vtab_r(nv,ngr)%name=='PO3'   .or. &
-                     vtab_r(nv,ngr)%name=='PRHCO' .or. &
-                     vtab_r(nv,ngr)%name=='PHO2'  .or. &
-                     vtab_r(nv,ngr)%name=='PO3P'  .or. &
-                     vtab_r(nv,ngr)%name=='PO1D'  .or. &
-                     vtab_r(nv,ngr)%name=='PHO'   .or. &
-                     vtab_r(nv,ngr)%name=='PROO'       ) then
+                if(  oneVarTable(nv)%name=='PNO'   .or. &
+                     oneVarTable(nv)%name=='PNO2'  .or. &
+                     oneVarTable(nv)%name=='PPM25' .or. &
+                     oneVarTable(nv)%name=='PCO'   .or. &
+                     oneVarTable(nv)%name=='PVOC'  .or. &
+                     oneVarTable(nv)%name=='PSO2'  .or. &
+                     oneVarTable(nv)%name=='PSO4'  .or. &
+                     oneVarTable(nv)%name=='PAER'  .or. &
+                     oneVarTable(nv)%name=='PVOC'  .or. &
+                     oneVarTable(nv)%name=='PSO2'  .or. &
+                     oneVarTable(nv)%name=='PO3'   .or. &
+                     oneVarTable(nv)%name=='PRHCO' .or. &
+                     oneVarTable(nv)%name=='PHO2'  .or. &
+                     oneVarTable(nv)%name=='PO3P'  .or. &
+                     oneVarTable(nv)%name=='PO1D'  .or. &
+                     oneVarTable(nv)%name=='PHO'   .or. &
+                     oneVarTable(nv)%name=='PROO'       ) then
 
                    write (UNIT=6, FMT='(a25,2i5,3x,a18,i10)') &
                         'Polutants History filling grid: ',   &
-                        ngr, nv, vtab_r(nv,ngr)%name, npts
+                        ngr, nv, oneVarTable(nv)%name, npts
                    iCopyFlg = 1
                    exit
                 endif
@@ -964,18 +968,18 @@ contains
           call parf_bcast(npts, master_num)
           call parf_bcast(scr, int(npts, i8), master_num)
 
-          if (vtab_r(nv,ngr)%idim_type == 2) then
-             call atob(npts, scr, vtab_r(nv,ngr)%var_p_2D)
-          else if (vtab_r(nv,ngr)%idim_type == 3) then
-             call atob(npts, scr, vtab_r(nv,ngr)%var_p_3D)
-          else if (vtab_r(nv,ngr)%idim_type == 4) then
-             call atob(npts, scr, vtab_r(nv,ngr)%var_p_4D)
-          else if (vtab_r(nv,ngr)%idim_type == 5) then
-             call atob(npts, scr, vtab_r(nv,ngr)%var_p_4D)
-          else if (vtab_r(nv,ngr)%idim_type == 6) then
-             call atob(npts, scr, vtab_r(nv,ngr)%var_p_3D)
-          else if (vtab_r(nv,ngr)%idim_type == 7) then
-             call atob(npts, scr, vtab_r(nv,ngr)%var_p_3D)
+          if (oneVarTable(nv)%idim_type == 2) then
+             call atob(npts, scr, oneVarTable(nv)%var_p_2D)
+          else if (oneVarTable(nv)%idim_type == 3) then
+             call atob(npts, scr, oneVarTable(nv)%var_p_3D)
+          else if (oneVarTable(nv)%idim_type == 4) then
+             call atob(npts, scr, oneVarTable(nv)%var_p_4D)
+          else if (oneVarTable(nv)%idim_type == 5) then
+             call atob(npts, scr, oneVarTable(nv)%var_p_4D)
+          else if (oneVarTable(nv)%idim_type == 6) then
+             call atob(npts, scr, oneVarTable(nv)%var_p_3D)
+          else if (oneVarTable(nv)%idim_type == 7) then
+             call atob(npts, scr, oneVarTable(nv)%var_p_3D)
           end if
        endif
 
