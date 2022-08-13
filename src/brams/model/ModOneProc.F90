@@ -1720,7 +1720,8 @@ contains
 
           if (initial == 3) then
              print*,'History-INITIAL start of grid- 1'
-             call inithis(oneGrid%oneBasicFields,oneGrid%oneMicVars)
+             call inithis(oneGrid%oneBasicFields,oneGrid%oneMicVars, &
+                  oneGrid%oneVarTable, oneGrid%oneVarTableSize)
           endif
 
           !  On all fine grids, initialize the surface layer characteristics,

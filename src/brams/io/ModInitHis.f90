@@ -19,9 +19,8 @@ module ModInitHis
   use ModRinit, only: &
        refs3d
 
-  use ModVarTables, only: &
-       num_var, &
-       vtab_r
+  use ModVarTable, only: &
+       VarTable
 
   use an_header, only: &
        nvbtab, &
@@ -134,9 +133,11 @@ contains
 
 
   
-  subroutine initHis(oneBasicFields, oneMicControl)
+  subroutine initHis(oneBasicFields, oneMicControl, oneVarTable, oneVarTableSize)
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(MicControl), pointer, intent(in) :: oneMicControl
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(in) :: oneVarTableSize
     
     integer :: ngrids1,ioutput1,nzg1,nzs1,npatch1
     real :: time1,ztop1
@@ -332,14 +333,14 @@ contains
           print*,'inithis: start: ' &
                ,nvh,ngr,hr_table(nvh)%string,hr_table(nvh)%idim_type,nptsh
 
-          do nv = 1,num_var(1)
-             npts=vtab_r(nv,1)%npts
-             if(hr_table(nvh)%string == vtab_r(nv,1)%name) then
+          do nv = 1,oneVarTableSize
+             npts=oneVarTable(nv)%npts
+             if(hr_table(nvh)%string == oneVarTable(nv)%name) then
 
                 print*,'inithis: interpolating: ',ngr,' '  &
-                     ,nv,1,vtab_r(nv,1)%name,npts,vtab_r(nv,1)%idim_type
+                     ,nv,1,oneVarTable(nv)%name,npts,oneVarTable(nv)%idim_type
 
-                if (vtab_r(nv,1)%idim_type == 2 .and.  &
+                if (oneVarTable(nv)%idim_type == 2 .and.  &
                      hr_table(nvh)%string /= 'TOPT' .and.   &
                      hr_table(nvh)%string /= 'TOPTA' .and.   &
                      hr_table(nvh)%string /= 'TOPMA' ) then
@@ -350,10 +351,10 @@ contains
                         ,platn1(ngr),plonn1(ngr)  &
                         ,topt1(1,ngr),ztop1  &
                         ,1,nnxp(1),nnyp(1),1  &
-                        ,vtab_r(nv,1)%var_p_2D  &
-                        ,1,ngr,vtab_r(nv,1)%name,2)
+                        ,oneVarTable(nv)%var_p_2D  &
+                        ,1,ngr,oneVarTable(nv)%name,2)
 
-                elseif (vtab_r(nv,1)%idim_type == 3) then
+                elseif (oneVarTable(nv)%idim_type == 3) then
                    call hi_interp(nnzp1(ngr),nnxp1(ngr),nnyp1(ngr),1,scr(1)  &
                         ,xmn1(1,ngr),xtn1(1,ngr)  &
                         ,ymn1(1,ngr),ytn1(1,ngr)  &
@@ -361,10 +362,10 @@ contains
                         ,platn1(ngr),plonn1(ngr)  &
                         ,topt1(1,ngr),ztop1  &
                         ,nnzp(1),nnxp(1),nnyp(1),1  &
-                        ,vtab_r(nv,1)%var_p_3D  &
-                        ,1,ngr,vtab_r(nv,1)%name,3)
+                        ,oneVarTable(nv)%var_p_3D  &
+                        ,1,ngr,oneVarTable(nv)%name,3)
 
-                elseif (vtab_r(nv,1)%idim_type == 4 .and.  &
+                elseif (oneVarTable(nv)%idim_type == 4 .and.  &
                      hr_table(nvh)%string /= 'SOIL_TEXT' ) then
 
                    ! First, interpolate patch 1.
@@ -375,8 +376,8 @@ contains
                         ,platn1(ngr),plonn1(ngr)  &
                         ,topt1(1,ngr),ztop1  &
                         ,nzg,nnxp(1),nnyp(1),1  &
-                        ,vtab_r(nv,1)%var_p_4D  &
-                        ,1,ngr,vtab_r(nv,1)%name,4)
+                        ,oneVarTable(nv)%var_p_4D  &
+                        ,1,ngr,oneVarTable(nv)%name,4)
 
                    ! Copy grid 1, patch 2 to scr3 - Irrelevant if this is the coarsest
                    !   grid on the history file, this will contain the land average
@@ -384,7 +385,7 @@ contains
                    !   We will overwrite points as we interpolate from finer grids.
 
                    call patch_land_copy2(nzg,nnxp(1),nnyp(1),npatch  &
-                        ,vtab_r(nv,1)%var_p_4D,scr3(1))
+                        ,oneVarTable(nv)%var_p_4D,scr3(1))
 
                    ! Then average over history grid patches and interpolate
                    call patch_land_average(nzg1,nnxp1(ngr),nnyp1(ngr),npatch1  &
@@ -397,12 +398,12 @@ contains
                         ,topt1(1,ngr),ztop1  &
                         ,nzg,nnxp(1),nnyp(1),1  &
                         ,scr3(1)  &
-                        ,1,ngr,vtab_r(nv,ngr)%name,4)
+                        ,1,ngr,oneVarTable(nv)%name,4)
                    call patch_land_unaverage(nzg,nnxp(ngr),nnyp(ngr),npatch  &
-                        ,scr3(1),vtab_r(nv,1)%var_p_4D)
+                        ,scr3(1),oneVarTable(nv)%var_p_4D)
 
 
-                elseif (vtab_r(nv,1)%idim_type == 5 ) then
+                elseif (oneVarTable(nv)%idim_type == 5 ) then
 
                    call hi_interp(nzs1,nnxp1(ngr),nnyp1(ngr),1,scr(1)  &
                         ,xmn1(1,ngr),xtn1(1,ngr)  &
@@ -411,12 +412,12 @@ contains
                         ,platn1(ngr),plonn1(ngr)  &
                         ,topt1(1,ngr),ztop1  &
                         ,nzs,nnxp(1),nnyp(1),1  &
-                        ,vtab_r(nv,1)%var_p_4D  &
-                        ,1,ngr,vtab_r(nv,1)%name,5)
+                        ,oneVarTable(nv)%var_p_4D  &
+                        ,1,ngr,oneVarTable(nv)%name,5)
 
                    ! Copy patch 2 to scr3 - This will contain the land average
                    call patch_land_copy2(nzs,nnxp(1),nnyp(1),npatch  &
-                        ,vtab_r(nv,1)%var_p_4D,scr3(1))
+                        ,oneVarTable(nv)%var_p_4D,scr3(1))
                    call patch_land_average(nzs1,nnxp1(ngr),nnyp1(ngr),npatch1  &
                         ,parea(1,ngr),scr(1),scr2(1))
                    call hi_interp(nzs1,nnxp1(ngr),nnyp1(ngr),1,scr2(1)  &
@@ -427,11 +428,11 @@ contains
                         ,topt1(1,ngr),ztop1  &
                         ,nzs,nnxp(1),nnyp(1),1  &
                         ,scr3(1)  &
-                        ,1,ngr,vtab_r(nv,1)%name,5)
+                        ,1,ngr,oneVarTable(nv)%name,5)
                    call patch_land_unaverage(nzs,nnxp(1),nnyp(1),npatch  &
-                        ,scr3(1),vtab_r(nv,1)%var_p_4D)
+                        ,scr3(1),oneVarTable(nv)%var_p_4D)
 
-                elseif (vtab_r(nv,1)%idim_type == 6 .and.  &
+                elseif (oneVarTable(nv)%idim_type == 6 .and.  &
                      hr_table(nvh)%string /= 'LEAF_CLASS' .and.   &
                      hr_table(nvh)%string /= 'PATCH_AREA' ) then
 
@@ -442,12 +443,12 @@ contains
                         ,platn1(ngr),plonn1(ngr)  &
                         ,topt1(1,ngr),ztop1  &
                         ,1,nnxp(1),nnyp(1),1  &
-                        ,vtab_r(nv,1)%var_p_3D  &
-                        ,1,ngr,vtab_r(nv,1)%name,6)
+                        ,oneVarTable(nv)%var_p_3D  &
+                        ,1,ngr,oneVarTable(nv)%name,6)
 
                    ! Copy patch 2 to scr3 - This will contain the land average
                    call patch_land_copy2(1,nnxp(1),nnyp(1),npatch  &
-                        ,vtab_r(nv,1)%var_p_3D,scr3(1))
+                        ,oneVarTable(nv)%var_p_3D,scr3(1))
 
                    call patch_land_average(1,nnxp1(ngr),nnyp1(ngr),npatch1  &
                         ,parea(1,ngr),scr(1),scr2(1))
@@ -459,9 +460,9 @@ contains
                         ,topt1(1,ngr),ztop1  &
                         ,1,nnxp(1),nnyp(1),1  &
                         ,scr3(1)  &
-                        ,1,ngr,vtab_r(nv,1)%name,6)
+                        ,1,ngr,oneVarTable(nv)%name,6)
                    call patch_land_unaverage(1,nnxp(1),nnyp(1),npatch  &
-                        ,scr3(1),vtab_r(nv,1)%var_p_3D)
+                        ,scr3(1),oneVarTable(nv)%var_p_3D)
                 endif
                 exit         
              endif
