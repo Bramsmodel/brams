@@ -1021,7 +1021,8 @@ contains
 
        ! Communication paths, sizes and buffers
 
-       call NodePathsBuffAlloc(oneGrid%oneScalarTable, oneGrid%oneScalarTableSize)
+       call NodePathsBuffAlloc(oneGrid%oneScalarTable, oneGrid%oneScalarTableSize, &
+            oneGrid%oneVarTable, oneGrid%oneVarTableSize)
 
        ! Build message passing data structure for all grids,
        ! since this is an INITIAL run.

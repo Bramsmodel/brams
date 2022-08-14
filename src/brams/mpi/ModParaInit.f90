@@ -28,7 +28,8 @@ contains
   end subroutine decomp_node
 
 
-  subroutine NodePathsBuffAlloc(oneScalarTab, oneScalarTabSize)
+  subroutine NodePathsBuffAlloc(oneScalarTab, oneScalarTabSize, &
+       oneVarTable, oneVarTableSize)
 
     use ModScalarTable, only: &
          ScalarTable
@@ -50,9 +51,8 @@ contains
          ibnd,          &
          jbnd
 
-    use ModVarTables, only: &
-         num_var,         &
-         vtab_r
+    use ModVarTable, only: &
+         VarTable
 
     use node_mod, only: &
          mynum,         &
@@ -71,6 +71,8 @@ contains
     implicit none
     type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
     integer, intent(inout) :: oneScalarTabSize
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(in) :: oneVarTableSize
 
 
     integer :: idn
@@ -139,10 +141,10 @@ contains
 
        !  Find number of lbc variables to be communicated.
        npvar3=0 ; npvar2=0
-       do nv = 1,num_var(ng)
-          if(vtab_r(nv,ng)%impt1 == 1 ) then
-             if (vtab_r(nv,ng)%idim_type==2) npvar2=npvar2+1
-             if (vtab_r(nv,ng)%idim_type==3) npvar3=npvar3+1
+       do nv = 1,oneVarTableSize
+          if(oneVarTable(nv)%impt1 == 1 ) then
+             if (oneVarTable(nv)%idim_type==2) npvar2=npvar2+1
+             if (oneVarTable(nv)%idim_type==3) npvar3=npvar3+1
           endif
        enddo
 
