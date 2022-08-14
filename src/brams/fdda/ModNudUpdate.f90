@@ -13,8 +13,8 @@ module ModNudUpdate
   use ModInitHis, only: &
        hi_interp
 
-  use ModVarTables, only: vtab_r,   &
-       num_var
+  use ModVarTable, only: &
+       VarTable
 
   use mem_varinit,only: &
        fnames_nud,       &
@@ -79,9 +79,11 @@ contains
 
 
 
-  subroutine nud_update(iswap,nnud)
+  subroutine nud_update(iswap,nnud, oneVarTable, oneVarTableSize)
     integer, intent(in) :: iswap
     integer, intent(in) :: nnud
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(in) :: oneVarTableSize
 
     integer :: ngrids1,ioutput1,nzg1,nzs1,npatch1
     real :: time1,ztop1
@@ -340,24 +342,24 @@ contains
 
              ! Find which is the corresponding variable in the current run
 
-             do nv = 1,num_var(ng)
-                npts=vtab_r(nv,ng)%npts
+             do nv = 1,oneVarTableSize
+                npts=oneVarTable(nv)%npts
 
                 !  See if this variable is active in the current run,
                 !      but only interpolate if UP,VP,THP,RTP,PP
-                if(hr_table(nvh)%string == vtab_r(nv,ng)%name) then
+                if(hr_table(nvh)%string == oneVarTable(nv)%name) then
 
-                   if (vtab_r(nv,ng)%name == 'UP') then
+                   if (oneVarTable(nv)%name == 'UP') then
                       ! If we have a match, simply fill history field into array
                       if ( igrid_match(ngr) == ng ) then
                          print 33,'nud_update: filling: ',ngr &
-                              ,ng,vtab_r(nv,ngr)%name,npts
+                              ,ng,oneVarTable(nv)%name,npts
 33                       format(a30,2i5,3x,a8,i8)
                          call atob_long(nptsh, scr, varinit_g(ng)%varuf)
                       else
                          ! Otherwise, interpolate...
                          print 33,'nud_update: interpolating: ',ngr &
-                              ,ng,vtab_r(nv,ng)%name,npts
+                              ,ng,oneVarTable(nv)%name,npts
                          t1=cputime(w1)
                          call hi_interp(nnzp1(ngr),nnxp1(ngr),nnyp1(ngr),1,scr  &
                               ,xmn1(1,ngr),xtn1(1,ngr)  &
@@ -367,18 +369,18 @@ contains
                               ,topt1(1,ngr),ztop1  &
                               ,nnzp(ng),nnxp(ng),nnyp(ng),1  &
                               ,varinit_g(ng)%varuf  &
-                              ,ng,ngr,vtab_r(nv,ng)%name,3)
+                              ,ng,ngr,oneVarTable(nv)%name,3)
                       endif
                       cycle grid_loop
 
-                   elseif (vtab_r(nv,ng)%name == 'VP') then
+                   elseif (oneVarTable(nv)%name == 'VP') then
                       if ( igrid_match(ngr) == ng ) then
                          print 33,'nud_update: filling: ',ngr &
-                              ,ng,vtab_r(nv,ng)%name,npts
+                              ,ng,oneVarTable(nv)%name,npts
                          call atob_long(nptsh, scr, varinit_g(ng)%varvf)
                       else
                          print 33,'nud_update: interpolating: ',ngr &
-                              ,ng,vtab_r(nv,ng)%name,npts
+                              ,ng,oneVarTable(nv)%name,npts
                          call hi_interp(nnzp1(ngr),nnxp1(ngr),nnyp1(ngr),1,scr  &
                               ,xmn1(1,ngr),xtn1(1,ngr)  &
                               ,ymn1(1,ngr),ytn1(1,ngr)  &
@@ -387,18 +389,18 @@ contains
                               ,topt1(1,ngr),ztop1  &
                               ,nnzp(ng),nnxp(ng),nnyp(ng),1  &
                               ,varinit_g(ng)%varvf  &
-                              ,ng,ngr,vtab_r(nv,ngr)%name,3)
+                              ,ng,ngr,oneVarTable(nv)%name,3)
                       endif
                       cycle grid_loop
 
-                   elseif (vtab_r(nv,ng)%name == 'THP') then
+                   elseif (oneVarTable(nv)%name == 'THP') then
                       if ( igrid_match(ngr) == ng ) then
                          print 33,'nud_update: filling: ',ngr &
-                              ,ng,vtab_r(nv,ng)%name,npts
+                              ,ng,oneVarTable(nv)%name,npts
                          call atob_long(nptsh, scr, varinit_g(ng)%vartf)
                       else
                          print 33,'nud_update: interpolating: ',ngr &
-                              ,ng,vtab_r(nv,ng)%name,npts
+                              ,ng,oneVarTable(nv)%name,npts
                          call hi_interp(nnzp1(ngr),nnxp1(ngr),nnyp1(ngr),1,scr  &
                               ,xmn1(1,ngr),xtn1(1,ngr)  &
                               ,ymn1(1,ngr),ytn1(1,ngr)  &
@@ -407,18 +409,18 @@ contains
                               ,topt1(1,ngr),ztop1  &
                               ,nnzp(ng),nnxp(ng),nnyp(ng),1  &
                               ,varinit_g(ng)%vartf  &
-                              ,ng,ngr,vtab_r(nv,ng)%name,3)
+                              ,ng,ngr,oneVarTable(nv)%name,3)
                       endif
                       cycle grid_loop
 
-                   elseif (vtab_r(nv,ng)%name == 'RTP') then
+                   elseif (oneVarTable(nv)%name == 'RTP') then
                       if ( igrid_match(ngr) == ng ) then
                          print 33,'nud_update: filling: ',ngr &
-                              ,ng,vtab_r(nv,ng)%name,npts
+                              ,ng,oneVarTable(nv)%name,npts
                          call atob_long(nptsh, scr, varinit_g(ng)%varrf)
                       else
                          print 33,'nud_update: interpolating: ',ngr &
-                              ,ng,vtab_r(nv,ng)%name,npts
+                              ,ng,oneVarTable(nv)%name,npts
                          call hi_interp(nnzp1(ngr),nnxp1(ngr),nnyp1(ngr),1,scr  &
                               ,xmn1(1,ngr),xtn1(1,ngr)  &
                               ,ymn1(1,ngr),ytn1(1,ngr)  &
@@ -427,18 +429,18 @@ contains
                               ,topt1(1,ngr),ztop1  &
                               ,nnzp(ng),nnxp(ng),nnyp(ng),1  &
                               ,varinit_g(ng)%varrf  &
-                              ,ng,ngr,vtab_r(nv,ng)%name,3)
+                              ,ng,ngr,oneVarTable(nv)%name,3)
                       endif
                       cycle grid_loop
 
-                   elseif (vtab_r(nv,ng)%name == 'PP') then
+                   elseif (oneVarTable(nv)%name == 'PP') then
                       if ( igrid_match(ngr) == ng ) then
                          print 33,'nud_update: filling: ',ngr &
-                              ,ng,vtab_r(nv,ng)%name,npts
+                              ,ng,oneVarTable(nv)%name,npts
                          call atob_long(nptsh, scr, varinit_g(ng)%varpf)
                       else
                          print 33,'nud_update: interpolating: ',ngr &
-                              ,ng,vtab_r(nv,ng)%name,npts
+                              ,ng,oneVarTable(nv)%name,npts
                          call hi_interp(nnzp1(ngr),nnxp1(ngr),nnyp1(ngr),1,scr  &
                               ,xmn1(1,ngr),xtn1(1,ngr)  &
                               ,ymn1(1,ngr),ytn1(1,ngr)  &
@@ -447,7 +449,7 @@ contains
                               ,topt1(1,ngr),ztop1  &
                               ,nnzp(ng),nnxp(ng),nnyp(ng),1  &
                               ,varinit_g(ng)%varpf  &
-                              ,ng,ngr,vtab_r(nv,ngr)%name,3)
+                              ,ng,ngr,oneVarTable(nv)%name,3)
                       endif
                       cycle grid_loop
 

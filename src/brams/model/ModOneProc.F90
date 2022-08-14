@@ -2304,7 +2304,7 @@ contains
        !call fatal_error(h//"**(JP)** nud_type==1 was not worked yet")
        iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
             "**(JP)** nud_type==1 was not worked yet")
-       call nud_read(1)
+       call nud_read(1, oneGrid%oneVarTable, oneGrid%oneVarTableSize)
 
        !--(DMK-CCATT-INI)-----------------------------------------------------
     elseif(nud_type == 2 .or. nud_type == 4) then

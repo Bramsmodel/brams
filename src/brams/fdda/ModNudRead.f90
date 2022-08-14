@@ -18,6 +18,9 @@ module ModNudRead
        date_add_to,     &
        date_make_big
 
+  use ModVarTable, only: &
+       VarTable
+  
   use isan_coms, only: &
        ISAN_INC
 
@@ -67,8 +70,11 @@ contains
 
 
 
-  subroutine nud_read(initflag)
+  subroutine nud_read(initflag, oneVarTable, oneVarTableSize)
     integer, intent(in) :: initflag
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(in) :: oneVarTableSize
+    
 
     character(len=14)  :: itotdate_start
     integer :: iyears,imonths,idates,ihours,nf,ifm
@@ -115,7 +121,7 @@ contains
 
        ! Read and interpolate files to new grid 1. Put stuff in varinit arrays.
 
-       call nud_update(0,nnudfl)
+       call nud_update(0,nnudfl, oneVarTable, oneVarTableSize)
 
        do ifm = 2,ngrids     
           call newgrid(ifm)
@@ -131,7 +137,7 @@ contains
 
     ! Read and interpolate files to new grid 1.
 
-    call nud_update(1,nnudfl+1)
+    call nud_update(1,nnudfl+1, oneVarTable, oneVarTableSize)
 
     ! Fill nested grid nudging arrays for grids we didn't fill directly
 
