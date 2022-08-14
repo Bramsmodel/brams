@@ -13,9 +13,8 @@ module ModCondUpdate
   use ModInitHis, only: &
        hi_interp
 
-  use ModVarTables, only: &
-       num_var, &
-       vtab_r
+  use ModVarTable, only: &
+       VarTable
 
   use an_header, only: &
        head_table, &
@@ -48,9 +47,11 @@ module ModCondUpdate
 
 contains
 
-  subroutine cond_update(iswap, ncond)
+  subroutine cond_update(iswap, ncond, oneVarTable, oneVarTableSize)
     ! Arguments:
     integer, intent(in) :: iswap, ncond
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(in) :: oneVarTableSize
     ! Local Variables:
     integer :: ngrids1, ioutput1, nzg1, nzs1, npatch1
     real :: time1, ztop1
@@ -274,22 +275,22 @@ contains
 
        grid_loop2:   do ng = ng_start, ngrids
 
-          do nv=1,num_var(ngr)
+          do nv=1, oneVarTableSize
 
-             npts = vtab_r(nv,ng)%npts
+             npts = oneVarTable(nv)%npts
 
              !  See if this variable is active in the current run,
              !      but only interpolate if water-related
-             if (hr_table(nvh)%string==vtab_r(nv,ng)%name) then
+             if (hr_table(nvh)%string==oneVarTable(nv)%name) then
 
-                if (vtab_r(nv,ng)%name=='RTP') then
+                if (oneVarTable(nv)%name=='RTP') then
                    if (igrid_match(ngr)==ng) then
                       print 33, 'cond_update: filling: ', ngr, &
-                           ng, vtab_r(nv,ng)%name, npts
+                           ng, oneVarTable(nv)%name, npts
                       call atob_long(nptsh, scr(1), varinit_g(ng)%varrfh(1,1,1))
                    else
                       print 33, 'cond_update: interpolating: ', ngr, &
-                           ng, vtab_r(nv,ng)%name, npts
+                           ng, oneVarTable(nv)%name, npts
                       call hi_interp(nnzp1(ngr), nnxp1(ngr), nnyp1(ngr), &
                            1, scr(1),                                    &
                            xmn1(1,ngr), xtn1(1,ngr),                     &
@@ -299,25 +300,25 @@ contains
                            topt1(1,ngr), ztop1,                          &
                            nnzp(ng), nnxp(ng),nnyp(ng), 1,               &
                            varinit_g(ng)%varrfh,                  &
-                           ng, ngr, vtab_r(nv,ng)%name, 3)
+                           ng, ngr, oneVarTable(nv)%name, 3)
                    endif
                    cycle grid_loop2
 
-                elseif (vtab_r(nv,ngr)%name=='RCP' .or.  &
-                     vtab_r(nv,ngr)%name=='RRP'    .or.  &
-                     vtab_r(nv,ngr)%name=='RPP'    .or.  &
-                     vtab_r(nv,ngr)%name=='RAP'    .or.  &
-                     vtab_r(nv,ngr)%name=='RSP'    .or.  &
-                     vtab_r(nv,ngr)%name=='RGP'    .or.  &
-                     vtab_r(nv,ngr)%name=='RHP'          ) then
+                elseif (oneVarTable(nv)%name=='RCP' .or.  &
+                     oneVarTable(nv)%name=='RRP'    .or.  &
+                     oneVarTable(nv)%name=='RPP'    .or.  &
+                     oneVarTable(nv)%name=='RAP'    .or.  &
+                     oneVarTable(nv)%name=='RSP'    .or.  &
+                     oneVarTable(nv)%name=='RGP'    .or.  &
+                     oneVarTable(nv)%name=='RHP'          ) then
                    if (igrid_match(ngr)==ng) then
                       print 33, 'cond_update: filling: ', ngr, &
-                           ng, vtab_r(nv,ng)%name, npts
+                           ng, oneVarTable(nv)%name, npts
                       call nud_cond_accum(nnzp(ng), nnxp(ng), nnyp(ng),  &
                            varinit_g(ng)%varcfh, scr )
                    else
                       print 33, 'cond_update: interpolating: ', ngr, &
-                           ng, vtab_r(nv,ng)%name, npts
+                           ng, oneVarTable(nv)%name, npts
                       call hi_interp(nnzp1(ngr), nnxp1(ngr), nnyp1(ngr), &
                            1, scr(1),  &
                            xmn1(1,ngr), xtn1(1,ngr),  &
@@ -327,7 +328,7 @@ contains
                            topt1(1,ngr), ztop1, &
                            nnzp(ng), nnxp(ng), nnyp(ng), 1, &
                            scr2(1),  &
-                           ng, ngr, vtab_r(nv,ng)%name, 3)
+                           ng, ngr, oneVarTable(nv)%name, 3)
                       call nud_cond_accum(nnzp(ng), nnxp(ng), nnyp(ng),  &
                            varinit_g(ng)%varcfh, scr2)
                    endif
@@ -351,7 +352,6 @@ contains
     deallocate(scr, scr2, hr_table)
     deallocate(xmn1, xtn1, ymn1, ytn1, zmn1, ztn1)
 
-    return
   end subroutine cond_update
 
   !-----------------------------------------------

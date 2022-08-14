@@ -2324,7 +2324,7 @@ contains
        !call fatal_error(h//"**(JP)** nud_cond==1 was not worked yet")
        iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
             "**(JP)** nud_cond==1 was not worked yet")
-       call cond_read(1)
+       call cond_read(1, oneGrid%oneVarTable, oneGrid%oneVarTableSize)
 
     end if
 

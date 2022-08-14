@@ -9,6 +9,9 @@ module ModCondRead
 
   use ModRamsGrid, only: &
        newgrid
+
+  use ModVarTable, only: &
+       VarTable
   
   use ModCondUpdate, only: &
        cond_update
@@ -62,8 +65,10 @@ contains
 
 
 
-  subroutine cond_read(initflag)
+  subroutine cond_read(initflag, oneVarTable, oneVarTableSize)
     integer, intent(in):: initflag
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(in) :: oneVarTableSize
 
     character(len=14)  :: itotdate_start
     integer :: iyears,imonths,idates,ihours,nf,ifm
@@ -105,7 +110,7 @@ contains
 
        ! Read and interpolate files to new grid 1. Put stuff in varinit arrays.
 
-       call cond_update(0,ncondfl)
+       call cond_update(0,ncondfl, oneVarTable, oneVarTableSize)
 
        do ifm = 2,ngrids     
           call newgrid(ifm)
@@ -121,7 +126,7 @@ contains
 
     ! Read and interpolate files to new grid 1.
 
-    call cond_update(1,ncondfl+1)
+    call cond_update(1,ncondfl+1, oneVarTable, oneVarTableSize)
 
     ! Fill nested grid nudging arrays for grids we didn't fill directly
 
