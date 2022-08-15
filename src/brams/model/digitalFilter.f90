@@ -32,9 +32,8 @@ module digitalFilter
   use grid_dims, only: &
        maxgrds
 
-  use ModVarTables, only: &
-       num_var, &
-       vtab_r
+  use ModVarTable, only: &
+       VarTable
 
   use ReadBcst, only: &
        LocalSizesAndDisp
@@ -192,13 +191,16 @@ contains
 
   !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-  subroutine applyDigitalFilter(fileName, dfVars, oneBasicFields, oneControlVars)
+  subroutine applyDigitalFilter(fileName, dfVars, oneBasicFields, oneControlVars, &
+       oneVarTable, oneVarTableSize)
 
     ! # parameter.
     character(len=*), intent(inout) :: fileName
     type(df_vars), dimension(:), pointer, intent(inout):: dfVars
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(ControlVars), pointer, intent(in) :: oneControlVars
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(in) :: oneVarTableSize
     
     ! # local.
     integer:: ng
@@ -301,12 +303,14 @@ contains
           print*,'================================================================'
        endif
 
-       call saveNodeFields_digFilt(fileName, oneControlVars)
+       call saveNodeFields_digFilt(fileName, oneControlVars, &
+            oneVarTable, oneVarTableSize)
     end if
 
     if(time .ne. 0.0 .and. mod(begtime, timeWindowDF) .lt. dtlongn(1) .and. writeTimeDF .ne. 0)then
 
-       call loadNodeFields_digFilt(fileName, oneControlVars)
+       call loadNodeFields_digFilt(fileName, oneControlVars, &
+            oneVarTable, oneVarTableSize)
        if(MYNUM==1)then
           ng=1
           print*,'================================================================'
@@ -352,10 +356,13 @@ contains
   !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
   !--(DMK)-------------------------------------------------------------------
 
-  subroutine saveNodeFields_digFilt(fileName, oneControlVars)
+  subroutine saveNodeFields_digFilt(fileName, oneControlVars, &
+       oneVarTable, oneVarTableSize)
 
     character(len=*), intent(out) :: fileName
     type(ControlVars), pointer, intent(in) :: oneControlVars
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(in) :: oneVarTableSize
 
     integer :: idim_type
 
@@ -418,10 +425,10 @@ contains
           write(*, "(4(a,l1))") h//cProc//" File Open for IOUTPUT=3"
        endif
 
-       do nv = 1, num_var(ng)
+       do nv = 1, oneVarTableSize
 
           ! dimensionality
-          idim_type = vtab_r(nv,ng)%idim_type
+          idim_type = oneVarTable(nv)%idim_type
           if (idim_type < idim_type_min .or. idim_type > idim_type_max) then
              write(c0,"(i8)") idim_type
              call fatal_error(h//" unknown idim_type="//trim(adjustl(c0)))
@@ -430,17 +437,17 @@ contains
           ! case 1: output current field values (for hist, inst and lite output files)
 
           if (idim_type == 2) then
-             call CopyLocalChunk(vtab_r(nv,ng)%var_p_2D, LocalChunk, LocalSize(mynum,idim_type))
+             call CopyLocalChunk(oneVarTable(nv)%var_p_2D, LocalChunk, LocalSize(mynum,idim_type))
           else if (idim_type == 3) then
-             call CopyLocalChunk(vtab_r(nv,ng)%var_p_3D, LocalChunk, LocalSize(mynum,idim_type))
+             call CopyLocalChunk(oneVarTable(nv)%var_p_3D, LocalChunk, LocalSize(mynum,idim_type))
           else if (idim_type == 4) then
-             call CopyLocalChunk(vtab_r(nv,ng)%var_p_4D, LocalChunk, LocalSize(mynum,idim_type))
+             call CopyLocalChunk(oneVarTable(nv)%var_p_4D, LocalChunk, LocalSize(mynum,idim_type))
           else if (idim_type == 5) then
-             call CopyLocalChunk(vtab_r(nv,ng)%var_p_4D, LocalChunk, LocalSize(mynum,idim_type))
+             call CopyLocalChunk(oneVarTable(nv)%var_p_4D, LocalChunk, LocalSize(mynum,idim_type))
           else if (idim_type == 6) then
-             call CopyLocalChunk(vtab_r(nv,ng)%var_p_3D, LocalChunk, LocalSize(mynum,idim_type))
+             call CopyLocalChunk(oneVarTable(nv)%var_p_3D, LocalChunk, LocalSize(mynum,idim_type))
           else if (idim_type == 7) then
-             call CopyLocalChunk(vtab_r(nv,ng)%var_p_3D, LocalChunk, LocalSize(mynum,idim_type))
+             call CopyLocalChunk(oneVarTable(nv)%var_p_3D, LocalChunk, LocalSize(mynum,idim_type))
           end if
           call nodeWrite_digFilt(259, LocalChunk, LocalSize(mynum,idim_type))
        enddo
@@ -457,10 +464,13 @@ contains
 
   end subroutine saveNodeFields_digFilt
   !--(DMK)-------------------------------------------------------------------
-  subroutine loadNodeFields_digFilt(fileName, oneControlVars)
+  subroutine loadNodeFields_digFilt(fileName, oneControlVars, & 
+       oneVarTable, oneVarTableSize)
 
     character(len=*), intent(in) :: fileName
     type(ControlVars), pointer, intent(in) :: oneControlVars
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(in) :: oneVarTableSize
 
     integer :: idim_type
 
@@ -523,10 +533,10 @@ contains
           write(*, "(4(a,l1))") h//cProc//" File Open for IOUTPUT=3"
        endif
 
-       do nv = 1, num_var(ng)
+       do nv = 1, oneVarTableSize
 
           ! dimensionality
-          idim_type = vtab_r(nv,ng)%idim_type
+          idim_type = oneVarTable(nv)%idim_type
           if (idim_type < idim_type_min .or. idim_type > idim_type_max) then
              write(c0,"(i8)") idim_type
              call fatal_error(h//" unknown idim_type="//trim(adjustl(c0)))
@@ -537,17 +547,17 @@ contains
           call nodeRead_digFilt(259, LocalChunk)
 
           if (idim_type == 2) then
-             call CopyLocalChunkReverse(vtab_r(nv,ng)%var_p_2D, LocalChunk, LocalSize(mynum,idim_type))
+             call CopyLocalChunkReverse(oneVarTable(nv)%var_p_2D, LocalChunk, LocalSize(mynum,idim_type))
           else if (idim_type == 3) then
-             call CopyLocalChunkReverse(vtab_r(nv,ng)%var_p_3D, LocalChunk, LocalSize(mynum,idim_type))
+             call CopyLocalChunkReverse(oneVarTable(nv)%var_p_3D, LocalChunk, LocalSize(mynum,idim_type))
           else if (idim_type == 4) then
-             call CopyLocalChunkReverse(vtab_r(nv,ng)%var_p_4D, LocalChunk, LocalSize(mynum,idim_type))
+             call CopyLocalChunkReverse(oneVarTable(nv)%var_p_4D, LocalChunk, LocalSize(mynum,idim_type))
           else if (idim_type == 5) then
-             call CopyLocalChunkReverse(vtab_r(nv,ng)%var_p_4D, LocalChunk, LocalSize(mynum,idim_type))
+             call CopyLocalChunkReverse(oneVarTable(nv)%var_p_4D, LocalChunk, LocalSize(mynum,idim_type))
           else if (idim_type == 6) then
-             call CopyLocalChunkReverse(vtab_r(nv,ng)%var_p_3D, LocalChunk, LocalSize(mynum,idim_type))
+             call CopyLocalChunkReverse(oneVarTable(nv)%var_p_3D, LocalChunk, LocalSize(mynum,idim_type))
           else if (idim_type == 7) then
-             call CopyLocalChunkReverse(vtab_r(nv,ng)%var_p_3D, LocalChunk, LocalSize(mynum,idim_type))
+             call CopyLocalChunkReverse(oneVarTable(nv)%var_p_3D, LocalChunk, LocalSize(mynum,idim_type))
           end if
        enddo
 

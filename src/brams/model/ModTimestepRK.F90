@@ -958,7 +958,9 @@ contains
 
     !- apply digital filter
     if (applyDF) then
-       call applyDigitalFilter(fileNameDF, dfVars, oneGrid%oneBasicFields, oneGrid%oneControlVars)
+       call applyDigitalFilter(fileNameDF, dfVars, &
+            oneGrid%oneBasicFields, oneGrid%oneControlVars, &
+            oneGrid%oneVarTable, oneGrid%oneVarTableSize)
     end if
 
 
