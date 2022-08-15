@@ -1865,9 +1865,7 @@ contains
        !--(DMK-CCATT-INI)------------------------------------------------------------------
        if ((ipastin == 1) .or. (CCATT==1 .and. RECYCLE_TRACERS==1)) then
 
-!!$        !**(JP)** not worked yet
-!!$        call fatal_error(h//"**(JP)** ipastin==1 or (CATT==1 .and. RECYCLE_TRACERS==1) was not worked yet")
-          call recycle()
+          call recycle(oneGrid%oneVarTable, oneGrid%oneVarTableSize)
 
        endif
 

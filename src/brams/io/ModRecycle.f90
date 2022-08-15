@@ -20,9 +20,8 @@ module ModRecycle
   use ModRamsReadHeader, only: &
        rams_read_header
   
-  use ModVarTables, only : &
-       vtab_r, &
-       num_var
+  use ModVarTable, only : &
+       VarTable
 
   use node_mod, only: &
        mzp, &
@@ -112,7 +111,10 @@ contains
 
 
 
-  subroutine recycle()
+  subroutine recycle(oneVarTable, oneVarTableSize)
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(in) :: oneVarTableSize
+    
     integer, parameter :: i64 = selected_int_kind(14) !Kind for 64-bits Integer Numbers
 
     character(len=f_name_length) :: flnm
@@ -173,18 +175,18 @@ contains
 
     do ng=1,ngrids
 
-       do nvars=1,num_var(ng)
+       do nvars=1,oneVarTableSize
 
-          if(vtab_r(nvars,ng)%irecycle == 1) then
+          if(oneVarTable(nvars)%irecycle == 1) then
 
              if(mchnum==master_num) &
-                  write (*,*) 'Reading assimilation field (from vtab):', vtab_r(nvars,ng)%name &
+                  write (*,*) 'Reading assimilation field (from vtab):', oneVarTable(nvars)%name &
                   , ' for grid:', ng                                     &
-                  , ' dim:', vtab_r(nvars,ng)%idim_type                  &
-                  , ' npts:', vtab_r(nvars,ng)%npts
+                  , ' dim:', oneVarTable(nvars)%idim_type                  &
+                  , ' npts:', oneVarTable(nvars)%npts
 
              if(mchnum==master_num) then
-                call FindFieldInAnalysisFile(vtab_r(nvars,ng)%name, ng,   &
+                call FindFieldInAnalysisFile(oneVarTable(nvars)%name, ng,   &
                      flnm(1:len_trim(flnm)), flng, npts, fPosition)
                 npoints=npts
              endif
@@ -204,44 +206,44 @@ contains
 
              call Broadcast(scr1, master_num, "scr1")
 
-             if(vtab_r(nvars,ng)%idim_type == 4) then
+             if(oneVarTable(nvars)%idim_type == 4) then
 
                 call unarrange_p(nnxp(ng),nnyp(ng),nzg,npatch  &
                      ,scr1(1),srcRead(4)%scr)
 
-             elseif(vtab_r(nvars,ng)%idim_type == 5) then
+             elseif(oneVarTable(nvars)%idim_type == 5) then
                 call unarrange_p(nnxp(ng),nnyp(ng),nzs,npatch  &
                      ,scr1(1),srcRead(5)%scr)
                 !srf
                 !use this for 3d atmospheric fields
-             elseif(vtab_r(nvars,ng)%idim_type == 3) then
+             elseif(oneVarTable(nvars)%idim_type == 3) then
                 call unarrange(nnzp(ng),nnxp(ng),nnyp(ng)  &
                      ,scr1(1),srcRead(3)%scr(:,:,:,1))
 
-             elseif(vtab_r(nvars,ng)%idim_type == 6) then
+             elseif(oneVarTable(nvars)%idim_type == 6) then
                 call rearrange_aot(npatch,nnxp(ng),nnyp(ng)  &
                      ,scr1(1),srcRead(6)%scr(1,:,:,:))
                 !srf
                 !use this for 3d (NX,NY,NWAVE) CARMA AOT fields
-             elseif(vtab_r(nvars,ng)%idim_type == 7) then
+             elseif(oneVarTable(nvars)%idim_type == 7) then
                 call rearrange_aot(nwave,nnxp(ng),nnyp(ng)  &
                      ,scr1(1),srcRead(7)%scr(1,:,:,:))
 
                 !use this for 2 dim:
              else
-                call atob(vtab_r(nvars,ng)%npts,  &
+                call atob(oneVarTable(nvars)%npts,  &
                      scr1(1),srcRead(2)%scr(1,:,:,1) )
 
              endif
 
-             select case (vtab_r(nvars,ng)%idim_type)
+             select case (oneVarTable(nvars)%idim_type)
              case (2)
                 nzl = 1
                 nxl = nnxp(1)
                 nyl = nnyp(1)
                 n4 = 1
-                call mk_2_buff(srcRead(vtab_r(nvars,ng)%idim_type)%scr(1,:,:,1), &
-                     vtab_r(nvars,ng)%var_p_2D, &
+                call mk_2_buff(srcRead(oneVarTable(nvars)%idim_type)%scr(1,:,:,1), &
+                     oneVarTable(nvars)%var_p_2D, &
                      nnxp(ng), nnyp(ng), &
                      m2, m3, ia, iz, ja, jz)
              case (3)
@@ -249,8 +251,8 @@ contains
                 nxl = nnxp(1)
                 nyl = nnyp(1)
                 n4 = 1
-                call mk_3_buff(srcRead(vtab_r(nvars,ng)%idim_type)%scr(:,:,:,1), &
-                     vtab_r(nvars,ng)%var_p_3D, &
+                call mk_3_buff(srcRead(oneVarTable(nvars)%idim_type)%scr(:,:,:,1), &
+                     oneVarTable(nvars)%var_p_3D, &
                      nnzp(ng),nnxp(ng), nnyp(ng), &
                      m1, m2, m3, ia, iz, ja, jz)
              case (4)
@@ -258,8 +260,8 @@ contains
                 nxl = nnxp(1)
                 nyl = nnyp(1)
                 n4 = npatch
-                call mk_4_buff(srcRead(vtab_r(nvars,ng)%idim_type)%scr, &
-                     vtab_r(nvars,ng)%var_p_4D, &
+                call mk_4_buff(srcRead(oneVarTable(nvars)%idim_type)%scr, &
+                     oneVarTable(nvars)%var_p_4D, &
                      nzg,nnxp(ng), nnyp(ng),npatch, &
                      nzg, m2, m3,npatch, ia, iz, ja, jz)
              case (5)
@@ -267,8 +269,8 @@ contains
                 nxl = nnxp(1)
                 nyl = nnyp(1)
                 n4 = npatch
-                call mk_4_buff(srcRead(vtab_r(nvars,ng)%idim_type)%scr, &
-                     vtab_r(nvars,ng)%var_p_4D, &
+                call mk_4_buff(srcRead(oneVarTable(nvars)%idim_type)%scr, &
+                     oneVarTable(nvars)%var_p_4D, &
                      nzs,nnxp(ng), nnyp(ng),npatch, &
                      nzs, m2, m3,npatch, ia, iz, ja, jz)
              case (6)
@@ -276,12 +278,12 @@ contains
                 nxl = nnxp(1)
                 nyl = nnyp(1)
                 n4 = npatch
-!!$                call mk_4_buff(srcRead(vtab_r(nvars,ng)%idim_type)%scr(1,:,:,:), &
-!!$                     vtab_r(nvars,ng)%var_p_3D, &
+!!$                call mk_4_buff(srcRead(oneVarTable(nvars)%idim_type)%scr(1,:,:,:), &
+!!$                     oneVarTable(nvars)%var_p_3D, &
 !!$                     1,nnxp(ng), nnyp(ng),npatch, &
 !!$                     1, m2, m3,npatch, ia, iz, ja, jz)
-                call mk_3_buff(srcRead(vtab_r(nvars,ng)%idim_type)%scr(1,:,:,:), &
-                     vtab_r(nvars,ng)%var_p_3D, &
+                call mk_3_buff(srcRead(oneVarTable(nvars)%idim_type)%scr(1,:,:,:), &
+                     oneVarTable(nvars)%var_p_3D, &
                      nnxp(ng), nnyp(ng),npatch, &
                      m2, m3,npatch, ia, iz, ja, jz)
              case (7)
@@ -289,16 +291,16 @@ contains
                 nxl = nnxp(1)
                 nyl = nnyp(1)
                 n4 = nwave
-!!$                call mk_4_buff(srcRead(vtab_r(nvars,ng)%idim_type)%scr(1,:,:,:), &
-!!$                     vtab_r(nvars,ng)%var_p_3D, &
+!!$                call mk_4_buff(srcRead(oneVarTable(nvars)%idim_type)%scr(1,:,:,:), &
+!!$                     oneVarTable(nvars)%var_p_3D, &
 !!$                     1,nnxp(ng), nnyp(ng),nwave, &
 !!$                     1, m2, m3,nwave, ia, iz, ja, jz)
-                call mk_3_buff(srcRead(vtab_r(nvars,ng)%idim_type)%scr(1,:,:,:), &
-                     vtab_r(nvars,ng)%var_p_3D, &
+                call mk_3_buff(srcRead(oneVarTable(nvars)%idim_type)%scr(1,:,:,:), &
+                     oneVarTable(nvars)%var_p_3D, &
                      nnxp(ng), nnyp(ng),nwave, &
                      m2, m3,nwave, ia, iz, ja, jz)
              case DEFAULT
-                print *, 'Wrong idim_type: ',vtab_r(nvars,ng)%idim_type
+                print *, 'Wrong idim_type: ',oneVarTable(nvars)%idim_type
                 stop 'history_start'
              end select
 
