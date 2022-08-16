@@ -7,10 +7,6 @@ module ModOutputUtils
        VarTable, &
        Name2VarTableEntry
 
-  use ModVarTables, only: &
-       DeepCopyToVarTable, &
-       DeepCopyFromVarTable
-
   use ModBasicFields, only: &
        BasicFields
 
@@ -54,7 +50,6 @@ contains
 
     ! get vtab_r entry that points to the field; stop if not there
 
-    call DeepCopyToVarTable(oneVarTable, oneVarTableSize, h)
     vtabPtr => Name2VarTableEntry(oneVarTable, oneVarTableSize, varName)
     if (.not. associated(vtabPtr)) then
        iErrNumber=dumpMessage(c_tty,c_yes,sourceName,h &
@@ -64,7 +59,6 @@ contains
     ! copy the field
 
     arrayOut = vtabPtr%var_p_2D
-    call DeepCopyFromVarTable(oneVarTable, oneVarTableSize, h)
   end subroutine GetVarFromMemToOutput_2D
 
 
@@ -117,7 +111,6 @@ contains
        varnIn = varName
     end if
 
-    call DeepCopyToVarTable(oneVarTable, oneVarTableSize, h)
     vtabPtr => Name2VarTableEntry(oneVarTable, oneVarTableSize, varnIn)
     if (.not. associated(vtabPtr)) then
        iErrNumber=dumpMessage(c_tty,c_yes,sourceName,h &
@@ -220,7 +213,6 @@ contains
           end do
        end do
     end select
-    call DeepCopyFromVarTable(oneVarTable, oneVarTableSize, h)
   end subroutine GetVarFromMemToOutput_3D
 
 
@@ -256,7 +248,6 @@ contains
 
     ! get vtab_r entry that points to the field; stop if not there
 
-    call DeepCopyToVarTable(oneVarTable, oneVarTableSize, h)
     vtabPtr => Name2VarTableEntry(oneVarTable, oneVarTableSize, varName)
     if (.not. associated(vtabPtr)) then
        iErrNumber=dumpMessage(c_tty,c_yes,sourceName,h &
@@ -297,6 +288,5 @@ contains
           end do
        end do
     end do
-    call DeepCopyFromVarTable(oneVarTable, oneVarTableSize, h)
   end subroutine GetVarFromMemToOutput_4D
 end module ModOutputUtils

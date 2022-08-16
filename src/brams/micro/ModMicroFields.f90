@@ -1655,8 +1655,6 @@ contains
 
 !!$  subroutine filltab_micro(micro,microm,imean,n1,n2,n3,ng)
 !!$
-!!$    use ModVarTables, only: InsertVTab
-!!$
 !!$    implicit none
 !!$    include "constants.h"
 !!$    type (MicroFields) :: micro,microm

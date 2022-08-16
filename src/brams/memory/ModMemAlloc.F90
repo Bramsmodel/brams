@@ -105,14 +105,6 @@ module ModMemAlloc
   use ModVarTable, only: &
        MarkLiteVarsAtVarTable
   
-!!$  use ModVarTables, only: &
-!!$       num_var, &
-!!$       vtab_r, &
-!!$       num_var, &
-!!$       vtab_r,  &
-!!$       DeepCopyToVarTable, &
-!!$       DeepCopyFromVarTable
-
 #ifdef JULES
   use ModJulesFields, only: &
        InsertJulesFieldsAtVarTable
@@ -557,18 +549,14 @@ contains
     !-------------
     ! insert Basic Field variables at var_table
     do ng=1,ngrids
-!!$       call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
        call InsertBasicFieldsAtVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
             oneGrid%oneBasicFields, oneGrid%oneAveBasicFields)
-!!$       call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
     enddo
     !
     !Allocate and prepare optical properties memory
     if (iswrtyp==6) then
-!!$       call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
        call setOptMemory(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
             ngrids,imean,nmzp,nmxp,nmyp)
-!!$       call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
     end if
 
     !-------------
@@ -588,10 +576,8 @@ contains
           call alloc_leaf(leafm_g(ng),        1,        1,        1, 1, 1, 1, 1)
        endif
 
-!!$       call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
        call filltab_leaf(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
             leaf_g(ng), leafm_g(ng))
-!!$       call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
     enddo
     ! Bob (1/10/2002) added the following line.  Is this the right place for
     ! the long term??
@@ -600,32 +586,26 @@ contains
     !
 #ifdef JULES
     ! insert Jules Fields variables at var_table
-!!$    call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
     call InsertJulesFieldsAtVarTable(&
          oneGrid%oneVarTable, &
          oneGrid%oneVarTableSize, &
          oneGrid%oneJulesFields, &
          oneGrid%oneAveJulesFields, &
          oneGrid%oneNamelistFile)
-!!$    call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
 #endif
     !-------------
 
     !-------------
     ! insert Micro Fields variables at var_table
-!!$    call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
     call InsertMicroFieldsAtVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
          oneGrid%oneMicroFields, oneGrid%oneAveMicroFields)
-!!$    call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h) 
     !-------------
 
     !-------------
     ! insert Turb Field variables at var_table
     do ng=1,ngrids
-!!$       call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
        call InsertTurbFieldsAtVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
             oneGrid%oneTurbFields, oneGrid%oneAveTurbFields)
-!!$       call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
     enddo
 
     if (CCATT==1 .and. chemistry >= 0) then
@@ -642,13 +622,11 @@ contains
           elseif (imean==0) then
              call alloc_turb_s(turbm_s(ng), 1,1,1, ng)
           endif
-!!$          call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
           call filltab_turb_s(&
                oneGrid%oneVarTable, &
                oneGrid%oneVarTableSize, &
                turb_s(ng), &
                turbm_s(ng))
-!!$          call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
        enddo
     endif
     !-------------
@@ -681,10 +659,8 @@ contains
        call alloc_grid(grid_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng, if_adap)
        call alloc_grid(gridm_g(ng),       1,        1,        1, ng, if_adap)
 
-!!$       call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
        call filltab_grid(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
             grid_g(ng), gridm_g(ng))
-!!$       call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
     enddo
     !-------------
 
@@ -713,10 +689,8 @@ contains
           call alloc_radiate(radiatem_g(ng),        1,        1,        1, ng)
        endif
 
-!!$       call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
        call filltab_radiate(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
             radiate_g(ng), radiatem_g(ng))
-!!$       call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
     enddo
     !- only for CARMA/RRTM Radiations schems
     if (ilwrtyp==4 .or. iswrtyp==4 .or. ilwrtyp==6 .or. iswrtyp==6 ) then
@@ -763,12 +737,10 @@ contains
              call alloc_carma_tuv(carma_tuv(ng),ntotal,nlayer,nmxp(ng), nmyp(ng), ng)
              call alloc_carma_tuv(carma_tuvm(ng),ntotal,nlayer,nmxp(ng), nmyp(ng), ng)
              !
-!!$             call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
              do n=1,nbio
                 call filltab_tuv_bio(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
                      tuv_bio(ng,n), tuv_bio(ng,n), n)
              end do
-!!$             call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
           end do
        endif
 
@@ -783,10 +755,8 @@ contains
           call nullify_aotMap(carma_aotMapm,ng)
           call alloc_aotMap(carma_aotMap(ng),nmxp(ng), nmyp(ng))
           call alloc_aotMap(carma_aotMapm(ng),nmxp(ng), nmyp(ng))
-!!$          call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
           call filltab_aotMap(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
                carma_aotMap(ng), carma_aotMapm(ng))
-!!$          call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
        end do
 
        !-only CARMA
@@ -811,10 +781,8 @@ contains
                 call zero_carma(carma_m, ng)
              end if
 
-!!$             call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
              call filltab_carma(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
                   carma(ng), carma_m(ng))
-!!$             call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
           end do
           ! else !Case rtmg
           !   do ng=1,ngrids
@@ -878,17 +846,13 @@ contains
           if (nnshcu(ng) > 1) call alloc_cuparm_sh(cuparmm_g_sh(ng), 1, 1, 1, ng)
        endif
 
-!!$       call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
        call filltab_cuparm(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
             cuparm_g(ng),cuparmm_g(ng))
-!!$       call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
 
        !-srf-feb2012: for shallow cumulus
        if (nnshcu(ng) == 2) then
-!!$          call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
           call filltab_cuparm_sh(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
                cuparm_g_sh(ng), cuparmm_g_sh(ng))
-!!$          call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
        end if
 
     enddo
@@ -896,11 +860,9 @@ contains
     ! insert Shallow Cumulus at var table
     do ng=1, ngrids
        if (nnshcu(ng)==1) then
-!!$          call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
           call InsertShcuFieldsAtVarTable(&
                oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
                oneGrid%oneShcuFields, oneGrid%oneAveShcuFields)
-!!$          call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
        end if
     end do
     !--------------------------------------------------------------------------
@@ -940,13 +902,11 @@ contains
 
           endif
 
-!!$          call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
           call filltab_cuforc_sh(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
                cuforc_sh_g(ng), cuforcm_sh_g(ng))
 
           call filltab_cuforc(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
                cuforc_g(ng), cuforcm_g(ng))
-!!$          call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
        enddo
     endif
 
@@ -1061,7 +1021,6 @@ contains
                 call alloc_grell3(g3d_ensm_g(:,ng_cp),g3dm_g(ng_cp),1,1,1,ng,train_dim)
              endif
 
-!!$             call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
              call filltab_grell3(&
                   oneGrid%oneVarTable, &
                   oneGrid%oneVarTableSize, &
@@ -1070,7 +1029,6 @@ contains
                   g3d_ensm_g(:,ng_cp), &
                   g3dm_g(ng_cp),&
                   train_dim, nnqparm(ng))
-!!$             call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
 
              ng_cp = ng_cp + 1
              if  (CLOSURE_TYPE == 'EN') then
@@ -1154,14 +1112,12 @@ contains
           endif
 
        enddo
-!!$       call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
        do ng=1,ngrids
           do na=1,naddsc ! For CATT
              call filltab_scalar(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
                   scalar_g(na,ng), scalarm_g(na,ng), na)
           end do
        enddo
-!!$       call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
     endif
     !-------------
 
@@ -1183,13 +1139,11 @@ contains
        if (isource==1) then
           !-----------------------------------------------------------------------
           ! insert Gaspart Field variables at var_table
-!!$          call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
           call InsertGaspartFieldsAtVarTable(&
                oneGrid%oneVarTable, &
                oneGrid%oneVarTableSize, &
                oneGrid%oneGaspartFields, &
                oneGrid%oneAveGaspartFields)
-!!$          call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
        endif
     endif
     !-------------
@@ -1231,13 +1185,11 @@ contains
 !!$                  ,1,1,1,nspecies_chem, ng,volcanoes)
           endif
 
-!!$          call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
           call filltab_chem1(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
                chem1_g(:,ng) ,chem1m_g(:,ng),  &
                chem1_src_g (:,:,:,ng),chem1m_src_g(:,:,:,ng),  &
                chem1_src_z_dim_g(:,ng), &
                nmzp(ng),nspecies_chem,volcanoes)
-!!$          call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
        end do
 
        call nullify_tend_chem1(nspecies_chem)
@@ -1267,12 +1219,10 @@ contains
                      ,1,1,1,nspecies_chem)
              endif
 
-!!$             call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
              call filltab_plume_chem1(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
                   plume_g(:,:,ng), plumem_g(:,:,ng),  &
                   plume_mean_g(:,ng), plume_meanm_g(:,ng),    &
                   plume_fre_g(:,ng), plumem_fre_g(:,ng), nspecies_chem, ng)
-!!$             call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
           enddo
        endif
        !-- aerosol section----------------------------------
@@ -1304,10 +1254,8 @@ contains
                      ,1,1,1,nmodes,nspecies_aer)
              endif
 
-!!$             call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
              call filltab_aer1(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
                   aer1_g(:,:,ng), aer1m_g(:,:,ng), aer1_src_z_dim_g(:,ng))
-!!$             call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
           enddo
 
           call nullify_tend_aer1(nmodes,nspecies_aer)
@@ -1334,10 +1282,8 @@ contains
                    call alloc_aer1_inorg(aer1m_inorg_g(:,ng),1,1,1,ninorg)
                 endif
 
-!!$                call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
                 call filltab_aer1_inorg(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
                      aer1_inorg_g(:,ng),aer1m_inorg_g(:,ng))
-!!$                call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
 
              enddo
 
@@ -1383,11 +1329,9 @@ contains
                         ,1,aer2mpm_g(:,ng),oneGrid%oneMicVars%mcphys_type)
                 endif
 
-!!$                call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
                 call filltab_aer2(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
                      aer2_g(:,ng), aer2m_g(:,ng), aer2_src_z_dim_g(:,ng), &
                      aer2mp_g(:,ng), aer2mpm_g(:,ng), oneGrid%oneMicVars%mcphys_type)
-!!$                call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
              enddo
 
              call nullify_tend_aer2(nmodes)
@@ -1417,10 +1361,8 @@ contains
                 call alloc_volc_chem1(volc_meanm_g(ng),1,1,1)
              endif
 
-!!$             call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
              call filltab_volc_chem1(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
                   volc_mean_g(ng), volc_meanm_g(ng))
-!!$             call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
           enddo
        endif
        !- end of volcanoes section ---
@@ -1450,13 +1392,11 @@ contains
                      ,1,1,1,nspeciesaq_chem)
              endif
 
-!!$             call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
              call filltab_chem1aq(&
                   oneGrid%oneVarTable, &
                   oneGrid%oneVarTableSize, &
                   chem1aq_g(:,ng), &
                   chem1maq_g(:,ng))
-!!$             call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
           enddo
 
           call nullify_tend_chem1aq(nspeciesaq_chem)
@@ -1547,7 +1487,6 @@ contains
           call alloc_stilt(idiffk,stiltm_g(ng),1,1,1,ng)
        endif
 
-!!$       call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
        if (oneGrid%oneNamelistFile%avgtim /= 0) then
           call filltab_stilt(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
                stilt_g(ng), stiltm_g(ng))
@@ -1555,7 +1494,6 @@ contains
           call filltab_stilt(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
                stilt_g(ng))
        end if
-!!$       call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
     end do
     !--------------
 
@@ -1596,7 +1534,6 @@ contains
        end if
     end do
 
-!!$    call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
     do ng=1,ngrids
        do na=1,na_extra2d
           call filltab_extra2d(&
@@ -1615,7 +1552,6 @@ contains
                na)
        end do
     end do
-!!$    call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
     !--------------
 
     !--------------
@@ -1636,10 +1572,8 @@ contains
              call alloc_tebc(tebcm_g(ng),        1,        1,        1, ng)
           endif
 
-!!$          call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
           call filltab_tebc(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
                tebc_g(ng), tebcm_g(ng))
-!!$          call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
        enddo
 
        !---------------------------------------------------------------------
@@ -1659,13 +1593,11 @@ contains
                 call alloc_teb(tebm_g(ng),        1,        1,        1, ng)
              endif
 
-!!$             call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
              call filltab_teb(&
                   oneGrid%oneVarTable, &
                   oneGrid%oneVarTableSize, &
                   teb_g(ng), &
                   tebm_g(ng))
-!!$             call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
           enddo
        endif
     endif
@@ -1689,9 +1621,7 @@ contains
     endif
     !-------------
     ! Set "Lite" variable flags according to namelist input LITE_VARS.
-!!$    call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
     call MarkLiteVarsAtVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize)
-!!$    call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
 
 
     !Calling the statistic for allocate the amount of timesteps

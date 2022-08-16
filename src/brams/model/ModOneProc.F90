@@ -194,10 +194,6 @@ module ModOneProc
        iteb, &      ! intent(in)
        StoreNamelistFileAtTeb_vars_const
 
-  use ModVarTables, only: &
-       DeepCopyToVarTable, &
-       DeepCopyFromVarTable
-
   use ModVarTable, only: &
        FixVarTableForIOUTPUT5
   
@@ -998,12 +994,10 @@ contains
        call MemAlloc(oneGrid, 2)
 
        if (ioutput == 5) then
-          call DeepCopyToVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
           call FixVarTableForIOUTPUT5(oneGrid%oneVarTable, oneGrid%oneVarTableSize)          
           call FixChemAerVarTableForIOUTPUT5(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
                chemistry, aerosol)
           ioutput = 2
-          call DeepCopyFromVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, h)
        end if
 
        ! Allocate AKMIN2D if necessary

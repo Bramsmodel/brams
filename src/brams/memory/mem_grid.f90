@@ -20,9 +20,6 @@ module mem_grid
        VarTable, &
        InsertAtVarTable
 
-!!$  use ModVarTables, only: &
-!!$       InsertVTab
-
   implicit none
   private
   ! every name is public except the contents of constants.h,

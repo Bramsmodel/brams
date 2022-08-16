@@ -40,10 +40,6 @@ module ReadBcst
   use mem_aerad, only: &
        nwave
 
-!!$  use ModVarTables, only: &
-!!$       num_var,      &
-!!$       vtab_r
-
   use ParLib, only: &
        parf_bcast, &
        parf_minloc, &

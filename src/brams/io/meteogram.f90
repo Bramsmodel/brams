@@ -73,10 +73,6 @@ contains
          VarTable, &
          Name2VarTableEntry
     
-    use ModVarTables, only: &
-         DeepCopyToVarTable, &
-         DeepCopyFromVarTable
-
     type(VarTable), pointer, intent(in) :: oneVarTable(:)
     integer, intent(inout) :: oneVarTableSize
     type(PolygonContainer), pointer :: meteoPolys
@@ -130,14 +126,12 @@ contains
     ! saving variable address from vtables.
     allocate(vtabPointers(nVarTables), stat=allocStat)  
 
-    call DeepCopyToVarTable(oneVarTable, oneVarTableSize, h)
     do nv = 1, nVarTables
        vtabPointers(nv)%vtabPtr => Name2VarTableEntry(oneVarTable, oneVarTableSize, varNamesInput(nv))
        if(.not. associated(vtabPointers(nv)%vtabPtr)) then
           if(mchnum .eq. master_num) print*, '**meteogram warning** variable:', varNamesInput(nv), 'not found!'
        endif
     end do
-    call DeepCopyFromVarTable(oneVarTable, oneVarTableSize, h)
 
     ! initializing user polygons.
     meteogramOutUnit = AvailableFileUnit() + mchnum  

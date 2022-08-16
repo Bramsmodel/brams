@@ -90,10 +90,6 @@ module ModMessageSet
        VarTable, &
        Name2VarTableEntry
 
-  use ModVarTables, only: &
-       DeepCopyToVarTable, &
-       DeepCopyFromVarTable
-
   use ModNamelistFile, only: &
        NamelistFile
 
@@ -681,9 +677,7 @@ contains
     end if
 
 
-    call DeepCopyToVarTable(oneVarTable, oneVarTableSize, h)
     vTabPtr => Name2VarTableEntry(oneVarTable, oneVarTableSize, trim(varName))
-    call DeepCopyFromVarTable(oneVarTable, oneVarTableSize, h)
 
     ! include vTab field on field sections to be sent and received
 

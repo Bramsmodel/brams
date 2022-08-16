@@ -402,8 +402,6 @@ contains
 
   !     !Use area
   !     use dump
-  !     use ModVarTables, only : &
-  !         vtab_r, num_var
   !     use node_mod, only: &
   !        mzp, mxp, myp,  & ! INTENT(IN)
   !        izu, jzv,       & ! INTENT(IN)

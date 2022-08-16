@@ -183,17 +183,6 @@ CONTAINS
     DEALLOCATE (prdn5d)
   END SUBROUTINE dealloc_scratch1_grell
 
-!!$  SUBROUTINE filltab_scratch1_grell()
-!!$
-!!$    USE ModVarTables
-!!$
-!!$    IMPLICIT NONE
-!!$
-!!$    ! Can't think of anything to do here...
-!!$
-!!$    RETURN
-!!$  END SUBROUTINE filltab_scratch1_grell
-
 ! subroutine zero_scratch1_grell()
 !
 !   implicit none

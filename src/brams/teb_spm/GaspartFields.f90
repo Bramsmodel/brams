@@ -6,9 +6,6 @@ module ModGaspartFields
   use ModVarTable, only: &
        VarTable, &
        InsertAtVarTable
-!!$  use ModVarTables, only: &
-!!$       InsertVtab
-
   use ModParallelEnvironment, only: &
        MsgDump
 

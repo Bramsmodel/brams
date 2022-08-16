@@ -205,15 +205,4 @@ contains
 !
 !  end subroutine zero_scratch2_grell_sh
 
-!!$  subroutine filltab_scratch2_grell()
-!!$
-!!$    use ModVarTables
-!!$
-!!$    implicit none
-!!$
-!!$    ! can't think of anything to do here...
-!!$
-!!$    return
-!!$  end subroutine filltab_scratch2_grell
-
 end module mem_scratch2_grell_sh
