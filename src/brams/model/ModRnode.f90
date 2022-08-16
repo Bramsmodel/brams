@@ -47,9 +47,8 @@ module ModRnode
        mxp,  &
        myp
 
-  use ModVarTables, only: &
-       num_var,         &
-       vtab_r
+  use ModVarTable, only: &
+       VarTable
 
   use mem_leaf, only : &
        ISFCL ! For SiB
@@ -97,9 +96,12 @@ contains
 
   ! ---------------------------------------------------------------------------
 
-  subroutine InitFields(oneScalarTabSize, init)
+  subroutine InitFields(init, oneScalarTabSize, oneVarTable, oneVarTableSize)
     integer, intent(in) :: init
     integer, intent(in) :: oneScalarTabSize
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(in) :: oneVarTableSize
+    
     ! Local variables:
 
     include "constants.h"
@@ -166,8 +168,8 @@ contains
 
     !  Find number of lbc variables to be communicated.
     npvar=0
-    do nv = 1,num_var(1)
-       if(vtab_r(nv,1)%impt1 == 1 ) then
+    do nv = 1, oneVarTableSize
+       if(oneVarTable(nv)%impt1 == 1 ) then
           npvar=npvar+1
        endif
     enddo

@@ -13,9 +13,8 @@ module ModRanlavg
   use grid_dims, only: &
        maxgrds
 
-  use ModVarTables, only: &
-       num_var, &
-       vtab_r
+  use ModVarTable, only: &
+       VarTable
 
   use mem_grid, only: &
        dtlongn, &
@@ -54,13 +53,16 @@ contains
 
 
 
-  subroutine anlavg(n1, n2, n3, oneBasic, oneMicControl, oneMicroFields)
+  subroutine anlavg(n1, n2, n3, oneBasic, oneMicControl, oneMicroFields, &
+       oneVarTable, oneVarTableSize)
     integer, intent(in) :: n1
     integer, intent(in) :: n2
     integer, intent(in) :: n3
     type(BasicFields), pointer, intent(in) :: oneBasic
     type(MicControl), pointer, intent(in) :: oneMicControl
     type(MicroFields), pointer, intent(in) :: oneMicroFields
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(in) :: oneVarTableSize
 
     integer :: nv,ng
     integer :: n3dadd,n3d,n2dadd,n2d,izero,indvar,indavg
@@ -153,46 +155,46 @@ contains
 
     ! Loop through the main variable table
 
-    do nv = 1,num_var(ngrid)
+    do nv = 1, oneVarTableSize
 
-       if (vtab_r(nv,ngrid)%imean == 1) then
+       if (oneVarTable(nv)%imean == 1) then
 
-          if (vtab_r(nv,ngrid)%idim_type == 2) then
+          if (oneVarTable(nv)%idim_type == 2) then
              if(izero.eq.1) then
-                call azero_l(vtab_r(nv,ngrid)%npts, vtab_r(nv,ngrid)%var_m_2D)
+                call azero_l(oneVarTable(nv)%npts, oneVarTable(nv)%var_m_2D)
              end if
-             call average(vtab_r(nv,ngrid)%npts,vtab_r(nv,ngrid)%var_m_2D,&
-                  vtab_r(nv,ngrid)%var_p_2D,navg)
-          else if (vtab_r(nv,ngrid)%idim_type == 3) then
+             call average(oneVarTable(nv)%npts,oneVarTable(nv)%var_m_2D,&
+                  oneVarTable(nv)%var_p_2D,navg)
+          else if (oneVarTable(nv)%idim_type == 3) then
              if(izero.eq.1) then
-                call azero_l(vtab_r(nv,ngrid)%npts, vtab_r(nv,ngrid)%var_m_3D)
+                call azero_l(oneVarTable(nv)%npts, oneVarTable(nv)%var_m_3D)
              end if
-             call average(vtab_r(nv,ngrid)%npts,vtab_r(nv,ngrid)%var_m_3D,&
-                  vtab_r(nv,ngrid)%var_p_3D,navg)
-          else if (vtab_r(nv,ngrid)%idim_type == 4) then
+             call average(oneVarTable(nv)%npts,oneVarTable(nv)%var_m_3D,&
+                  oneVarTable(nv)%var_p_3D,navg)
+          else if (oneVarTable(nv)%idim_type == 4) then
              if(izero.eq.1) then
-                call azero_l(vtab_r(nv,ngrid)%npts, vtab_r(nv,ngrid)%var_m_4D)
+                call azero_l(oneVarTable(nv)%npts, oneVarTable(nv)%var_m_4D)
              end if
-             call average(vtab_r(nv,ngrid)%npts,vtab_r(nv,ngrid)%var_m_4D,&
-                  vtab_r(nv,ngrid)%var_p_4D,navg)
-          else if (vtab_r(nv,ngrid)%idim_type == 5) then
+             call average(oneVarTable(nv)%npts,oneVarTable(nv)%var_m_4D,&
+                  oneVarTable(nv)%var_p_4D,navg)
+          else if (oneVarTable(nv)%idim_type == 5) then
              if(izero.eq.1) then
-                call azero_l(vtab_r(nv,ngrid)%npts, vtab_r(nv,ngrid)%var_m_4D)
+                call azero_l(oneVarTable(nv)%npts, oneVarTable(nv)%var_m_4D)
              end if
-             call average(vtab_r(nv,ngrid)%npts,vtab_r(nv,ngrid)%var_m_4D,&
-                  vtab_r(nv,ngrid)%var_p_4D,navg)
-          else if (vtab_r(nv,ngrid)%idim_type == 6) then
+             call average(oneVarTable(nv)%npts,oneVarTable(nv)%var_m_4D,&
+                  oneVarTable(nv)%var_p_4D,navg)
+          else if (oneVarTable(nv)%idim_type == 6) then
              if(izero.eq.1) then
-                call azero_l(vtab_r(nv,ngrid)%npts, vtab_r(nv,ngrid)%var_m_3D)
+                call azero_l(oneVarTable(nv)%npts, oneVarTable(nv)%var_m_3D)
              end if
-             call average(vtab_r(nv,ngrid)%npts,vtab_r(nv,ngrid)%var_m_3D,&
-                  vtab_r(nv,ngrid)%var_p_3D,navg)
-          else if (vtab_r(nv,ngrid)%idim_type == 7) then
+             call average(oneVarTable(nv)%npts,oneVarTable(nv)%var_m_3D,&
+                  oneVarTable(nv)%var_p_3D,navg)
+          else if (oneVarTable(nv)%idim_type == 7) then
              if(izero.eq.1) then
-                call azero_l(vtab_r(nv,ngrid)%npts, vtab_r(nv,ngrid)%var_m_3D)
+                call azero_l(oneVarTable(nv)%npts, oneVarTable(nv)%var_m_3D)
              end if
-             call average(vtab_r(nv,ngrid)%npts,vtab_r(nv,ngrid)%var_m_3D,&
-                  vtab_r(nv,ngrid)%var_p_3D,navg)
+             call average(oneVarTable(nv)%npts,oneVarTable(nv)%var_m_3D,&
+                  oneVarTable(nv)%var_p_3D,navg)
           end if
        endif
 

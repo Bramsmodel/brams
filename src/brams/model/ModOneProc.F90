@@ -1039,7 +1039,8 @@ contains
        ! was antecipated to allow message passing during initialization, required
        ! for binary reproducibility (see subroutine FilDn0uv)
 
-       call InitFields(oneGrid%oneScalarTableSize, 1)
+       call InitFields(1, oneGrid%oneScalarTableSize, &
+            oneGrid%oneVarTable, oneGrid%oneVarTableSize)
 
        ! initialization driver
 
@@ -1382,7 +1383,8 @@ contains
              call newgrid(ngrid)
              if ((avgtim/=0.) .and. (frqmean/=0. .or. frqboth/=0.))  then
                 call anlavg(mzp, mxp, myp, &
-                     oneGrid%oneBasicFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
+                     oneGrid%oneBasicFields, oneGrid%oneMicVars, oneGrid%oneMicroFields, &
+                     oneGrid%oneVarTable, oneGrid%oneVarTableSize)
              end if
              call cfl(mzp, mxp, myp, nodei0(mynum,ngrid), nodej0(mynum,ngrid), &
                   oneGrid%oneBasicFields, oneGrid%oneNamelistFile, oneGrid%Id)
@@ -1449,7 +1451,7 @@ contains
 
           call OutputFields(histFlag, instFlag, liteFlag, meanFlag, &
                oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%Id, &
-               oneGrid%oneControlVars, oneGrid%oneMicVars)
+               oneGrid%oneControlVars, oneGrid%oneMicVars, oneGrid%oneVarTable, oneGrid%oneVarTableSize)
 
           ! Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
           ! call SynchronizedTimeStamp(TS_OUTPUT)
@@ -2120,7 +2122,7 @@ contains
 
        !                  History file start
 
-       call history_start(name_name)
+       call history_start(name_name, oneGrid%oneVarTable, oneGrid%oneVarTableSize)
 
        ! Checking latter if possible to change "grid_setup" by "gridSetup"
        call gridSetup(1)
@@ -2410,7 +2412,7 @@ contains
 
     call OutputFields(histFlag, instFlag, liteFlag, meanFlag, &
          oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%Id, &
-         oneGrid%oneControlVars,oneGrid%oneMicVars)
+         oneGrid%oneControlVars,oneGrid%oneMicVars, oneGrid%oneVarTable, oneGrid%oneVarTableSize)
 
     ! Save initial fields into the averaged arrays
 

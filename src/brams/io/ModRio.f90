@@ -27,9 +27,8 @@ module ModRio
   use grid_dims, only: &
        maxgrds
 
-  use ModVarTables, only: &
-       num_var, &
-       vtab_r
+  use ModVarTable, only: &
+       VarTable
 
   use io_params, only: &
        hfilin, &
@@ -147,7 +146,7 @@ module ModRio
   public :: history_start
 contains
 
-  subroutine history_start(name_name)
+  subroutine history_start(name_name, oneVarTable, oneVarTableSize)
 
     ! This routine initializes the model from the history file
 
@@ -157,6 +156,8 @@ contains
     include "files.h"
 
     character (len=*), intent(IN) :: name_name
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(in) :: oneVarTableSize
 
     integer :: ngrids1,ioutput1  &
          ,nnxp1(maxgrds),nnyp1(maxgrds),nnzp1(maxgrds),nzg1,nzs1,npatch1
@@ -227,7 +228,7 @@ contains
 
     ! read stuff here
 
-    call hist_read_start(maxarr,hnameinh,iunhd)
+    call hist_read_start(maxarr,hnameinh,iunhd, oneVarTable, oneVarTableSize)
 
     !print*,'back from read'
     close(iunhd)
@@ -236,7 +237,7 @@ contains
 
   !******************************************************************************
 
-  subroutine hist_read_start(maxarr, hnamein, iunhd)
+  subroutine hist_read_start(maxarr, hnamein, iunhd, oneVarTable, oneVarTableSize)
 
 
     include 'interface.h'
@@ -244,6 +245,8 @@ contains
     integer, parameter :: i64 = selected_int_kind(14) !Kind for 64-bits Integer Numbers
     integer, intent(IN) :: maxarr, iunhd
     character(len=f_name_length), intent(IN) :: hnamein
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(in) :: oneVarTableSize
 
     integer :: ngr,nv,nvh,i
     integer(kind=i64) :: npts, nptsh
@@ -338,15 +341,15 @@ contains
        ngr=hr_table(nvh)%ngrid
        if(ngr > ngrids) cycle
 
-       do nv = 1,num_var(ngr)
-          npts=vtab_r(nv,ngr)%npts
-          if(hr_table(nvh)%string == vtab_r(nv,ngr)%name) then
+       do nv = 1,oneVarTableSize
+          npts=oneVarTable(nv)%npts
+          if(hr_table(nvh)%string == oneVarTable(nv)%name) then
              !           if(nptsh /= npts) then
              !              print*,'Grid point number mismatch on history field:',  &
-             !                   vtab_r(nv,ngr)%name,npts,nptsh
+             !                   oneVarTable(nv)%name,npts,nptsh
              !              stop 'History read number points error'
              !           endif
-             if (mchnum==master_num)  print 33,'History filling grid: ',ngr,nv,vtab_r(nv,ngr)%name,npts
+             if (mchnum==master_num)  print 33,'History filling grid: ',ngr,nv,oneVarTable(nv)%name,npts
 33           format(a25,2i5,3x,a18,i10)
 
 
@@ -359,7 +362,7 @@ contains
                 call parf_bcast(srcRead(hr_table(nvh)%idim_type)%scr, &
                      nzl,nxl,nyl,n4,master_num)
                 call mk_2_buff(srcRead(hr_table(nvh)%idim_type)%scr(1,:,:,1), &
-                     vtab_r(nv,ngr)%var_p_2D, &
+                     oneVarTable(nv)%var_p_2D, &
                      nnxp(ngr), nnyp(ngr), &
                      m2, m3, ia, iz, ja, jz)
              case (3)
@@ -370,7 +373,7 @@ contains
                 call parf_bcast(srcRead(hr_table(nvh)%idim_type)%scr, &
                      nzl,nxl,nyl,n4,master_num)
                 call mk_3_buff(srcRead(hr_table(nvh)%idim_type)%scr(:,:,:,1), &
-                     vtab_r(nv,ngr)%var_p_3D, &
+                     oneVarTable(nv)%var_p_3D, &
                      nnzp(ngr),nnxp(ngr), nnyp(ngr), &
                      m1, m2, m3, ia, iz, ja, jz)
              case (4)               
@@ -382,7 +385,7 @@ contains
                      nzl,nxl,nyl,n4,master_num)
 
                 call mk_4_buff(srcRead(hr_table(nvh)%idim_type)%scr, &
-                     vtab_r(nv,ngr)%var_p_4D, &
+                     oneVarTable(nv)%var_p_4D, &
                      nzg,nnxp(ngr), nnyp(ngr),npatch, &
                      nzg, m2, m3,npatch, ia, iz, ja, jz)            
              case (5)
@@ -394,7 +397,7 @@ contains
                      nzl,nxl,nyl,n4,master_num)
 
                 call mk_4_buff(srcRead(hr_table(nvh)%idim_type)%scr, &
-                     vtab_r(nv,ngr)%var_p_4D, &
+                     oneVarTable(nv)%var_p_4D, &
                      nzs,nnxp(ngr), nnyp(ngr),npatch, &
                      nzs, m2, m3,npatch, ia, iz, ja, jz)            
              case (6)
@@ -406,11 +409,11 @@ contains
                      nzl,nxl,nyl,n4,master_num)
 
 !!$                call mk_4_buff(srcRead(hr_table(nvh)%idim_type)%scr(1,:,:,:), &
-!!$                     vtab_r(nv,ngr)%var_p_3D, &
+!!$                     oneVarTable(nv)%var_p_3D, &
 !!$                     1,nnxp(ngr), nnyp(ngr),npatch, &
 !!$                     1, m2, m3,npatch, ia, iz, ja, jz)
                 call mk_3_buff(srcRead(hr_table(nvh)%idim_type)%scr(1,:,:,:), &
-                     vtab_r(nv,ngr)%var_p_3D, &
+                     oneVarTable(nv)%var_p_3D, &
                      nnxp(ngr), nnyp(ngr),npatch, &
                      m2, m3,npatch, ia, iz, ja, jz)
              case (7)
@@ -423,11 +426,11 @@ contains
 
 
 !!$                call mk_4_buff(srcRead(hr_table(nvh)%idim_type)%scr(1,:,:,:), &
-!!$                     vtab_r(nv,ngr)%var_p_3D, &
+!!$                     oneVarTable(nv)%var_p_3D, &
 !!$                     1,nnxp(ngr), nnyp(ngr),nwave, &
 !!$                     1, m2, m3,nwave, ia, iz, ja, jz)
                 call mk_3_buff(srcRead(hr_table(nvh)%idim_type)%scr(1,:,:,:), &
-                     vtab_r(nv,ngr)%var_p_3D, &
+                     oneVarTable(nv)%var_p_3D, &
                      nnxp(ngr), nnyp(ngr),nwave, &
                      m2, m3,nwave, ia, iz, ja, jz)
              case DEFAULT
@@ -435,9 +438,9 @@ contains
                 stop 'history_start'
              end select
 
-             !            IF(trim(vtab_r(nv,ngr)%name)=='THETA') THEN
-             !               print *,'***',trim(vtab_r(nv,ngr)%name)
-             !               CALL printAux(vtab_r(nv,ngr)%var_p,m1,m2,m3)
+             !            IF(trim(oneVarTable(nv)%name)=='THETA') THEN
+             !               print *,'***',trim(oneVarTable(nv)%name)
+             !               CALL printAux(oneVarTable(nv)%var_p,m1,m2,m3)
              !            END IF
              exit
           endif
@@ -580,7 +583,7 @@ contains
 
   subroutine OutputFields(histFlag, instFlag, liteFlag, meanFlag, &
        oneNamelistFile, oneBasicFields, oneTurbFields, gridId, &
-       oneControlVars, oneMicControl)
+       oneControlVars, oneMicControl, oneVarTable, oneVarTableSize)
 
     ! OutputFields: Define the fields to write and select the output
     !               method: parallel HDF5, VFM, parallel MPI-IO,
@@ -597,6 +600,8 @@ contains
     integer, intent(in) :: gridId
     type(ControlVars), pointer, intent(in) :: oneControlVars
     type(MicControl), pointer, intent(in) :: oneMicControl
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(in) :: oneVarTableSize
 
     integer :: maxNFields, nvMax, ierr, grid
 
@@ -634,7 +639,8 @@ contains
             ", meanFlag="//trim(adjustl(str(4))))
     end if
 
-    nvMax = maxval(num_var(1:ngrids))
+    !**(JP)** originaly nvMax is the largest var table over all grids; requires recoding!!!    
+    nvMax = oneVarTableSize 
 
     allocate(Willwrite(nvMax,ngrids), stat=ierr)
     if (ierr /= 0) then
@@ -647,7 +653,7 @@ contains
 
     ! required fields for selected outputs:
     ! Willwrite stores if field is required or not
-    call fieldWrite(nvMax, ngrids, Willwrite, maxNFields)
+    call fieldWrite(nvMax, ngrids, Willwrite, maxNFields, oneVarTable, oneVarTableSize)
     if (dumpLocal) then
        do grid = 1, ngrids
           write(str(1),"(i8)") count(WillWrite(:,grid))
@@ -668,7 +674,7 @@ contains
        end if
        call saveVFM(histFlag, .true., liteFlag, meanFlag, nvMax, ngrids, &
             willwrite, maxNFields, oneNamelistFile, oneBasicFields, oneTurbFields, &
-            gridId, oneControlVars, oneMicControl)
+            gridId, oneControlVars, oneMicControl, oneVarTable, oneVarTableSize)
     endif
 
     if (dumpLocal) then
@@ -688,15 +694,16 @@ contains
        case (2)
           call saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
                willwrite, maxNFields, oneNamelistFile, oneBasicFields, &
-               oneTurbFields, gridId, oneControlVars, oneMicControl)
+               oneTurbFields, gridId, oneControlVars, oneMicControl, &
+               oneVarTable, oneVarTableSize)
 
        case (3)
           call saveBinMPIIO(histFlag, instFlag, liteFlag, meanFlag, nvMax, &
-               ngrids, willwrite, maxNFields)
+               ngrids, willwrite, maxNFields, oneVarTable, oneVarTableSize)
 
        case (4)
           call saveNodeFields(histFlag, instFlag, liteFlag, meanFlag, nvMax, &
-               ngrids, willwrite, maxNFields, oneControlVars)
+               ngrids, willwrite, maxNFields, oneControlVars, oneVarTable, oneVarTableSize)
 
        end select
 
@@ -736,12 +743,15 @@ contains
   end function checkTimeIO
 
 
-  subroutine fieldWrite(nvMax, ngrids, Willwrite, maxNFields)
+  subroutine fieldWrite(nvMax, ngrids, Willwrite, maxNFields, &
+       oneVarTable, oneVarTableSize)
 
     integer, intent(in)    :: nvMax
     integer, intent(in)    :: ngrids
     logical, intent(inout) :: Willwrite(nvMax,ngrids)
     integer, intent(out)   :: maxNFields
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(in) :: oneVarTableSize
 
     integer                     :: ierr
     integer                     :: ng, nv
@@ -755,19 +765,19 @@ contains
 
     if (dumpLocal) then
        write(*, "(a)") h//cProc//" initiates "
-       write(c0, "(i8)") num_var(1)
-       write(*, "(a)") h//cProc//" num_var(1)="//trim(adjustl(c0))
+       write(c0, "(i8)") oneVarTableSize
+       write(*, "(a)") h//cProc//" oneVarTableSize="//trim(adjustl(c0))
     end if
 
     do ng = 1, ngrids
-       do nv = 1, num_var(ng)
+       do nv = 1, oneVarTableSize
           Willwrite(nv,ng) = &
-               (vtab_r(nv,ng)%ihist==1) .or. &
-               (vtab_r(nv,ng)%ianal==1) .or. &
-               (vtab_r(nv,ng)%ilite==1) .or. &
-               (vtab_r(nv,ng)%imean==1)
+               (oneVarTable(nv)%ihist==1) .or. &
+               (oneVarTable(nv)%ianal==1) .or. &
+               (oneVarTable(nv)%ilite==1) .or. &
+               (oneVarTable(nv)%imean==1)
        end do
-       do nv = num_var(ng)+1, nvMax
+       do nv = oneVarTableSize+1, nvMax
           Willwrite(nv,ng)=.false.
        end do
     end do
@@ -786,7 +796,7 @@ contains
 
   subroutine saveVFM(histFlag, instFlag, liteFlag, meanFlag, nvMax, ngrids, &
        willwrite, maxNFields, oneNamelistFile, oneBasicFields, oneTurbFields, &
-       gridId, oneControlVars, oneMicControl)
+       gridId, oneControlVars, oneMicControl, oneVarTable, oneVarTableSize)
 
     ! saveVFM: Master process gathers fields that are domain decomposed
     !          over slaves and builds selected output files. 
@@ -809,6 +819,8 @@ contains
     integer, intent(in) :: gridId
     type(ControlVars), pointer, intent(in) :: oneControlVars
     type(MicControl), pointer, intent(in) :: oneMicControl
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(in) :: oneVarTableSize
 
     type(IOFileDS) :: histFileDS
     type(IOFileDS) :: instFileDS
@@ -1027,7 +1039,7 @@ contains
           end if
        end if
 
-       do nv = 1, num_var(ng)
+       do nv = 1, oneVarTableSize
 
           ! field to gather
 
@@ -1035,15 +1047,15 @@ contains
 
              ! specific flags for this field
 
-             thisHistFlag = vtab_r(nv,ng)%ihist==1 .and. histFlag
-             thisInstFlag = vtab_r(nv,ng)%ianal==1 .and. instFlag
-             thisLiteFlag = vtab_r(nv,ng)%ilite==1 .and. liteFlag
-             thisMeanFlag = vtab_r(nv,ng)%imean==1 .and. meanFlag
+             thisHistFlag = oneVarTable(nv)%ihist==1 .and. histFlag
+             thisInstFlag = oneVarTable(nv)%ianal==1 .and. instFlag
+             thisLiteFlag = oneVarTable(nv)%ilite==1 .and. liteFlag
+             thisMeanFlag = oneVarTable(nv)%imean==1 .and. meanFlag
 
              ! field name and dimensionality
 
-             varn = vtab_r(nv,ng)%name
-             idim_type = vtab_r(nv,ng)%idim_type
+             varn = oneVarTable(nv)%name
+             idim_type = oneVarTable(nv)%idim_type
              if (idim_type < idim_type_min .or. idim_type > idim_type_max) then
                 write(c0,"(i8)") idim_type
                 call fatal_error(h//" unknown idim_type="//trim(adjustl(c0)))
@@ -1070,23 +1082,23 @@ contains
 
              ! case 1: output current field values (for hist, inst and lite output files)
 
-             if (vtab_r(nv,ng)%idim_type == 2) then
-                call CopyLocalChunk(vtab_r(nv,ng)%var_p_2D, LocalChunk, &
+             if (oneVarTable(nv)%idim_type == 2) then
+                call CopyLocalChunk(oneVarTable(nv)%var_p_2D, LocalChunk, &
                      LocalSize(mynum,idim_type))
-             else if (vtab_r(nv,ng)%idim_type == 3) then
-                call CopyLocalChunk(vtab_r(nv,ng)%var_p_3D, LocalChunk, &
+             else if (oneVarTable(nv)%idim_type == 3) then
+                call CopyLocalChunk(oneVarTable(nv)%var_p_3D, LocalChunk, &
                      LocalSize(mynum,idim_type))
-             else if (vtab_r(nv,ng)%idim_type == 4) then
-                call CopyLocalChunk(vtab_r(nv,ng)%var_p_4D, LocalChunk, &
+             else if (oneVarTable(nv)%idim_type == 4) then
+                call CopyLocalChunk(oneVarTable(nv)%var_p_4D, LocalChunk, &
                      LocalSize(mynum,idim_type))
-             else if (vtab_r(nv,ng)%idim_type == 5) then
-                call CopyLocalChunk(vtab_r(nv,ng)%var_p_4D, LocalChunk, &
+             else if (oneVarTable(nv)%idim_type == 5) then
+                call CopyLocalChunk(oneVarTable(nv)%var_p_4D, LocalChunk, &
                      LocalSize(mynum,idim_type))
-             else if (vtab_r(nv,ng)%idim_type == 6) then
-                call CopyLocalChunk(vtab_r(nv,ng)%var_p_3D, LocalChunk, &
+             else if (oneVarTable(nv)%idim_type == 6) then
+                call CopyLocalChunk(oneVarTable(nv)%var_p_3D, LocalChunk, &
                      LocalSize(mynum,idim_type))
-             else if (vtab_r(nv,ng)%idim_type == 7) then
-                call CopyLocalChunk(vtab_r(nv,ng)%var_p_3D, LocalChunk, &
+             else if (oneVarTable(nv)%idim_type == 7) then
+                call CopyLocalChunk(oneVarTable(nv)%var_p_3D, LocalChunk, &
                      LocalSize(mynum,idim_type))
              end if
 
@@ -1161,27 +1173,27 @@ contains
              end if
 
              if (thisMeanFlag) then
-                if (vtab_r(nv,ng)%idim_type == 2) then
-                   call CopyLocalChunk(vtab_r(nv,ng)%var_m_2D, LocalChunk, &
+                if (oneVarTable(nv)%idim_type == 2) then
+                   call CopyLocalChunk(oneVarTable(nv)%var_m_2D, LocalChunk, &
                         LocalSize(mynum,idim_type))
-                else if (vtab_r(nv,ng)%idim_type == 3) then
-                   call CopyLocalChunk(vtab_r(nv,ng)%var_m_3D, LocalChunk, &
+                else if (oneVarTable(nv)%idim_type == 3) then
+                   call CopyLocalChunk(oneVarTable(nv)%var_m_3D, LocalChunk, &
                         LocalSize(mynum,idim_type))
-                else if (vtab_r(nv,ng)%idim_type == 4) then
-                   call CopyLocalChunk(vtab_r(nv,ng)%var_m_4D, LocalChunk, &
+                else if (oneVarTable(nv)%idim_type == 4) then
+                   call CopyLocalChunk(oneVarTable(nv)%var_m_4D, LocalChunk, &
                         LocalSize(mynum,idim_type))
-                else if (vtab_r(nv,ng)%idim_type == 5) then
-                   call CopyLocalChunk(vtab_r(nv,ng)%var_m_4D, LocalChunk, &
+                else if (oneVarTable(nv)%idim_type == 5) then
+                   call CopyLocalChunk(oneVarTable(nv)%var_m_4D, LocalChunk, &
                         LocalSize(mynum,idim_type))
-                else if (vtab_r(nv,ng)%idim_type == 6) then
-                   call CopyLocalChunk(vtab_r(nv,ng)%var_m_3D, LocalChunk, &
+                else if (oneVarTable(nv)%idim_type == 6) then
+                   call CopyLocalChunk(oneVarTable(nv)%var_m_3D, LocalChunk, &
                         LocalSize(mynum,idim_type))
-                else if (vtab_r(nv,ng)%idim_type == 7) then
-                   call CopyLocalChunk(vtab_r(nv,ng)%var_m_3D, LocalChunk, &
+                else if (oneVarTable(nv)%idim_type == 7) then
+                   call CopyLocalChunk(oneVarTable(nv)%var_m_3D, LocalChunk, &
                         LocalSize(mynum,idim_type))
                 end if
 
-                varn= vtab_r(nv,ng)%name   ! could be changed on prior calls to PreProcAndGather
+                varn= oneVarTable(nv)%name   ! could be changed on prior calls to PreProcAndGather
 
                 if (dumpLocal) then
                    write(str(1),"(l)") preProc
@@ -1300,7 +1312,7 @@ contains
 
   !====
   subroutine saveNodeFields(histFlag, instFlag, liteFlag, meanFlag, nvMax, &
-       ngrids, willwrite, maxNFields, oneControlVars)
+       ngrids, willwrite, maxNFields, oneControlVars, oneVarTable, oneVarTableSize)
 
     logical, intent(in) :: histFlag       ! true iff history output requested
     logical, intent(in) :: instFlag       ! true iff instant output requested
@@ -1311,6 +1323,8 @@ contains
     logical, intent(in) :: Willwrite(nvMax, ngrids)
     integer, intent(in) :: maxNFields
     type(ControlVars), pointer, intent(in) :: oneControlVars
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(in) :: oneVarTableSize
 
     logical :: thisHistFlag   ! true iff history output requested and current field applies
     logical :: thisInstFlag   ! true iff instant output requested and current field applies
@@ -1378,19 +1392,19 @@ contains
           write(*, "(4(a,l1))") h//cProc//" File Open for IOUTPUT=3"
        endif
 
-       do nv = 1, num_var(ng)
+       do nv = 1, oneVarTableSize
 
           ! field to gather
           if (Willwrite(nv,ng)) then
 
              ! specific flags for this field
-             thisHistFlag = vtab_r(nv,ng)%ihist==1 .and. histFlag
-             thisInstFlag = vtab_r(nv,ng)%ianal==1 .and. instFlag
-             thisLiteFlag = vtab_r(nv,ng)%ilite==1 .and. liteFlag
-             thisMeanFlag = vtab_r(nv,ng)%imean==1 .and. meanFlag
+             thisHistFlag = oneVarTable(nv)%ihist==1 .and. histFlag
+             thisInstFlag = oneVarTable(nv)%ianal==1 .and. instFlag
+             thisLiteFlag = oneVarTable(nv)%ilite==1 .and. liteFlag
+             thisMeanFlag = oneVarTable(nv)%imean==1 .and. meanFlag
 
              ! dimensionality
-             idim_type = vtab_r(nv,ng)%idim_type
+             idim_type = oneVarTable(nv)%idim_type
              if (idim_type < idim_type_min .or. idim_type > idim_type_max) then
                 write(c0,"(i8)") idim_type
                 call fatal_error(h//" unknown idim_type="//trim(adjustl(c0)))
@@ -1398,7 +1412,7 @@ contains
 
              if (dumpLocal) then
                 write(*,"(2(a,l1))") h//cProc//" on var_p field "//&
-                     vtab_r(nv,ng)%name//"; thisHistFlag =",&
+                     oneVarTable(nv)%name//"; thisHistFlag =",&
                      thisHistFlag, ", thisInstFlag=", thisInstFlag
                 call flush(6)
              end if
@@ -1406,44 +1420,44 @@ contains
              ! case 1: output current field values (for hist, inst and lite output files)
 
              if (.not.thisMeanFlag) then
-                if (vtab_r(nv,ng)%idim_type == 2) then
-                   call CopyLocalChunk(vtab_r(nv,ng)%var_p_2D, LocalChunk, &
+                if (oneVarTable(nv)%idim_type == 2) then
+                   call CopyLocalChunk(oneVarTable(nv)%var_p_2D, LocalChunk, &
                         LocalSize(mynum,idim_type))
-                else if (vtab_r(nv,ng)%idim_type == 3) then
-                   call CopyLocalChunk(vtab_r(nv,ng)%var_p_3D, LocalChunk, &
+                else if (oneVarTable(nv)%idim_type == 3) then
+                   call CopyLocalChunk(oneVarTable(nv)%var_p_3D, LocalChunk, &
                         LocalSize(mynum,idim_type))
-                else if (vtab_r(nv,ng)%idim_type == 4) then
-                   call CopyLocalChunk(vtab_r(nv,ng)%var_p_4D, LocalChunk, &
+                else if (oneVarTable(nv)%idim_type == 4) then
+                   call CopyLocalChunk(oneVarTable(nv)%var_p_4D, LocalChunk, &
                         LocalSize(mynum,idim_type))
-                else if (vtab_r(nv,ng)%idim_type == 5) then
-                   call CopyLocalChunk(vtab_r(nv,ng)%var_p_4D, LocalChunk, &
+                else if (oneVarTable(nv)%idim_type == 5) then
+                   call CopyLocalChunk(oneVarTable(nv)%var_p_4D, LocalChunk, &
                         LocalSize(mynum,idim_type))
-                else if (vtab_r(nv,ng)%idim_type == 6) then
-                   call CopyLocalChunk(vtab_r(nv,ng)%var_p_3D, LocalChunk, &
+                else if (oneVarTable(nv)%idim_type == 6) then
+                   call CopyLocalChunk(oneVarTable(nv)%var_p_3D, LocalChunk, &
                         LocalSize(mynum,idim_type))
-                else if (vtab_r(nv,ng)%idim_type == 7) then
-                   call CopyLocalChunk(vtab_r(nv,ng)%var_p_3D, LocalChunk, &
+                else if (oneVarTable(nv)%idim_type == 7) then
+                   call CopyLocalChunk(oneVarTable(nv)%var_p_3D, LocalChunk, &
                         LocalSize(mynum,idim_type))
                 end if
                 call nodeWrite(25, LocalChunk, LocalSize(mynum,idim_type))
              elseif (thisMeanFlag) then
-                if (vtab_r(nv,ng)%idim_type == 2) then
-                   call CopyLocalChunk(vtab_r(nv,ng)%var_m_2D, LocalChunk, &
+                if (oneVarTable(nv)%idim_type == 2) then
+                   call CopyLocalChunk(oneVarTable(nv)%var_m_2D, LocalChunk, &
                         LocalSize(mynum,idim_type))
-                else if (vtab_r(nv,ng)%idim_type == 3) then
-                   call CopyLocalChunk(vtab_r(nv,ng)%var_m_3D, LocalChunk, &
+                else if (oneVarTable(nv)%idim_type == 3) then
+                   call CopyLocalChunk(oneVarTable(nv)%var_m_3D, LocalChunk, &
                         LocalSize(mynum,idim_type))
-                else if (vtab_r(nv,ng)%idim_type == 4) then
-                   call CopyLocalChunk(vtab_r(nv,ng)%var_m_4D, LocalChunk, &
+                else if (oneVarTable(nv)%idim_type == 4) then
+                   call CopyLocalChunk(oneVarTable(nv)%var_m_4D, LocalChunk, &
                         LocalSize(mynum,idim_type))
-                else if (vtab_r(nv,ng)%idim_type == 5) then
-                   call CopyLocalChunk(vtab_r(nv,ng)%var_m_4D, LocalChunk, &
+                else if (oneVarTable(nv)%idim_type == 5) then
+                   call CopyLocalChunk(oneVarTable(nv)%var_m_4D, LocalChunk, &
                         LocalSize(mynum,idim_type))
-                else if (vtab_r(nv,ng)%idim_type == 6) then
-                   call CopyLocalChunk(vtab_r(nv,ng)%var_m_3D, LocalChunk, &
+                else if (oneVarTable(nv)%idim_type == 6) then
+                   call CopyLocalChunk(oneVarTable(nv)%var_m_3D, LocalChunk, &
                         LocalSize(mynum,idim_type))
-                else if (vtab_r(nv,ng)%idim_type == 7) then
-                   call CopyLocalChunk(vtab_r(nv,ng)%var_m_3D, LocalChunk, &
+                else if (oneVarTable(nv)%idim_type == 7) then
+                   call CopyLocalChunk(oneVarTable(nv)%var_m_3D, LocalChunk, &
                         LocalSize(mynum,idim_type))
                 end if
                 call nodeWrite(25, LocalChunk, LocalSize(mynum,idim_type))
@@ -1468,7 +1482,7 @@ contains
 
 
   subroutine saveBinMPIIO(histFlag, instFlag, liteFlag, meanFlag, nvMax, &
-       ngrids, willwrite, maxNFields)
+       ngrids, willwrite, maxNFields, oneVarTable, oneVarTableSize)
 
     include "constants.h"
 
@@ -1480,6 +1494,8 @@ contains
     integer, intent(in) :: ngrids
     logical, intent(in) :: Willwrite(nvMax,ngrids)
     integer, intent(in) :: maxNFields
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(in) :: oneVarTableSize
 
     character(len=7)            :: cProc
     character(len=16)           :: varn
@@ -1553,14 +1569,14 @@ contains
        call OPEN_FILE_WRITE(saida)
 
        ! for all fields on this grid
-       do nv = 1, num_var(ng)
+       do nv = 1, oneVarTableSize
 
           ! field to gather
           if (Willwrite(nv,ng)) then
-             if (vtab_r(nv,ng)%imean/=1) then
+             if (oneVarTable(nv)%imean/=1) then
                 if (dumpLocal) then
                    write(*,*) h//cProc//" MPI-IO on var_p field "//varn//&
-                        "; idim_type=", vtab_r(nv,ng)%idim_type, &
+                        "; idim_type=", oneVarTable(nv)%idim_type, &
                         ", nnzp(ng), nnxp(ng), nnyp(ng), nzg, nzs, npatch, nwave=", &
                         nnzp(ng), nnxp(ng), nnyp(ng), nzg, nzs, npatch, nwave, &
                         "mchnum,rankplus1,ng,ixb,ixe,iyb,iye=", mchnum, &
@@ -1569,37 +1585,37 @@ contains
                         iyb(rankplus1,ng), iye(rankplus1,ng)
                    call flush(6)
                 end if
-                if (vtab_r(nv,ng)%idim_type==2) then
+                if (oneVarTable(nv)%idim_type==2) then
                    nz = 1
                    nx = nnxp(ng)
                    ny = nnyp(ng)
                    n4 = 1
                    n5 = 1
-                elseif (vtab_r(nv,ng)%idim_type==3) then
+                elseif (oneVarTable(nv)%idim_type==3) then
                    nz = nnzp(ng)
                    nx = nnxp(ng)
                    ny = nnyp(ng)
                    n4 = 1
                    n5 = 1
-                elseif (vtab_r(nv,ng)%idim_type==4) then
+                elseif (oneVarTable(nv)%idim_type==4) then
                    nz = nzg
                    nx = nnxp(ng)
                    ny = nnyp(ng)
                    n4 = npatch
                    n5 = 1
-                elseif (vtab_r(nv,ng)%idim_type==5) then
+                elseif (oneVarTable(nv)%idim_type==5) then
                    nz = nzs
                    nx = nnxp(ng)
                    ny = nnyp(ng)
                    n4 = npatch
                    n5 = 1
-                elseif (vtab_r(nv,ng)%idim_type==6) then
+                elseif (oneVarTable(nv)%idim_type==6) then
                    nz = 1
                    nx = nnxp(ng)
                    ny = nnyp(ng)
                    n4 = npatch
                    n5 = 1
-                elseif (vtab_r(nv,ng)%idim_type==7) then
+                elseif (oneVarTable(nv)%idim_type==7) then
                    nz = 1
                    nx = nnxp(ng)
                    ny = nnyp(ng)
@@ -1618,27 +1634,27 @@ contains
                      gSizes, subSizesRead, subSizesWrite, &
                      startRead, startWrite, startWriteGlobal, &
                      fileTypeRead, fileTypeWrite, fileTypeWriteGlobal)
-                if (vtab_r(nv,ng)%idim_type==2) then
+                if (oneVarTable(nv)%idim_type==2) then
 
-                   call WRITE_BRAMS_DATA(vtab_r(nv,ng)%var_p_2D(:,:), &
+                   call WRITE_BRAMS_DATA(oneVarTable(nv)%var_p_2D(:,:), &
                         fileTypeWrite, fileTypeWriteGlobal)
 
-                elseif (vtab_r(nv,ng)%idim_type==3 .or. &
-                     vtab_r(nv,ng)%idim_type==6 .or. &
-                     vtab_r(nv,ng)%idim_type==7) then
+                elseif (oneVarTable(nv)%idim_type==3 .or. &
+                     oneVarTable(nv)%idim_type==6 .or. &
+                     oneVarTable(nv)%idim_type==7) then
 
-                   call WRITE_BRAMS_DATA(vtab_r(nv,ng)%var_p_3d(:,:,:), &
+                   call WRITE_BRAMS_DATA(oneVarTable(nv)%var_p_3d(:,:,:), &
                         fileTypeWrite, fileTypeWriteGlobal)
 
-                elseif (vtab_r(nv,ng)%idim_type==4 .or. &
-                     vtab_r(nv,ng)%idim_type==5) then
+                elseif (oneVarTable(nv)%idim_type==4 .or. &
+                     oneVarTable(nv)%idim_type==5) then
 
-                   call WRITE_BRAMS_DATA(vtab_r(nv,ng)%var_p_4d(:,:,:,:), &
+                   call WRITE_BRAMS_DATA(oneVarTable(nv)%var_p_4d(:,:,:,:), &
                         fileTypeWrite, fileTypeWriteGlobal)
 
                 endif
 
-             elseif (vtab_r(nv,ng)%imean==1) then       ! case 2: output average field values (for mean output files)
+             elseif (oneVarTable(nv)%imean==1) then       ! case 2: output average field values (for mean output files)
 
              end if
 
