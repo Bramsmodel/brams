@@ -74,7 +74,6 @@ contains
          Name2VarTableEntry
     
     use ModVarTables, only: &
-         VarTableFields, &
          DeepCopyToVarTable, &
          DeepCopyFromVarTable
 
@@ -115,7 +114,6 @@ contains
     real                                      :: dx
     real                                      :: dy
     type t_vtabPtrContainer
-!!$       type(VarTableFields), pointer :: vtabPtr
        type(VarTable), pointer :: vtabPtr
     end type t_vtabPtrContainer
     type(t_vtabPtrContainer), dimension(:), allocatable :: vtabPointers

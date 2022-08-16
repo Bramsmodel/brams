@@ -8,7 +8,6 @@ module ModOutputUtils
        Name2VarTableEntry
 
   use ModVarTables, only: &
-       VarTableFields, &
        DeepCopyToVarTable, &
        DeepCopyFromVarTable
 

@@ -196,10 +196,7 @@ module ModOneProc
 
   use ModVarTables, only: &
        DeepCopyToVarTable, &
-       DeepCopyFromVarTable, &
-!!$       setInitial4Vtable,  &
-       num_var,         &
-       vtab_r
+       DeepCopyFromVarTable
 
   use ModVarTable, only: &
        FixVarTableForIOUTPUT5
@@ -2424,26 +2421,26 @@ contains
             "**(JP)** avgtim/=0 was not worked yet")
 
        do ngr=1,ngrids
-          do nv=1,num_var(ngr)
-             if(vtab_r(nv,ngr)%imean == 1) then
-                if (vtab_r(nv,ngr)%idim_type == 2) then
-                   call atob_long(vtab_r(nv,ngr)%npts, vtab_r(nv,ngr)%var_p_2D, &
-                        vtab_r(nv,ngr)%var_m_2D)
-                else if (vtab_r(nv,ngr)%idim_type == 3) then
-                   call atob_long(vtab_r(nv,ngr)%npts, vtab_r(nv,ngr)%var_p_3D, &
-                        vtab_r(nv,ngr)%var_m_3D)
-                else if (vtab_r(nv,ngr)%idim_type == 4) then
-                   call atob_long(vtab_r(nv,ngr)%npts, vtab_r(nv,ngr)%var_p_4D, &
-                        vtab_r(nv,ngr)%var_m_4D)
-                else if (vtab_r(nv,ngr)%idim_type == 5) then
-                   call atob_long(vtab_r(nv,ngr)%npts, vtab_r(nv,ngr)%var_p_4D, &
-                        vtab_r(nv,ngr)%var_m_4D)
-                else if (vtab_r(nv,ngr)%idim_type == 6) then
-                   call atob_long(vtab_r(nv,ngr)%npts, vtab_r(nv,ngr)%var_p_3D, &
-                        vtab_r(nv,ngr)%var_m_3D)
-                else if (vtab_r(nv,ngr)%idim_type == 7) then
-                   call atob_long(vtab_r(nv,ngr)%npts, vtab_r(nv,ngr)%var_p_3D, &
-                        vtab_r(nv,ngr)%var_m_3D)
+          do nv=1,oneGrid%oneVarTableSize
+             if(oneGrid%oneVarTable(nv)%imean == 1) then
+                if (oneGrid%oneVarTable(nv)%idim_type == 2) then
+                   call atob_long(oneGrid%oneVarTable(nv)%npts, oneGrid%oneVarTable(nv)%var_p_2D, &
+                        oneGrid%oneVarTable(nv)%var_m_2D)
+                else if (oneGrid%oneVarTable(nv)%idim_type == 3) then
+                   call atob_long(oneGrid%oneVarTable(nv)%npts, oneGrid%oneVarTable(nv)%var_p_3D, &
+                        oneGrid%oneVarTable(nv)%var_m_3D)
+                else if (oneGrid%oneVarTable(nv)%idim_type == 4) then
+                   call atob_long(oneGrid%oneVarTable(nv)%npts, oneGrid%oneVarTable(nv)%var_p_4D, &
+                        oneGrid%oneVarTable(nv)%var_m_4D)
+                else if (oneGrid%oneVarTable(nv)%idim_type == 5) then
+                   call atob_long(oneGrid%oneVarTable(nv)%npts, oneGrid%oneVarTable(nv)%var_p_4D, &
+                        oneGrid%oneVarTable(nv)%var_m_4D)
+                else if (oneGrid%oneVarTable(nv)%idim_type == 6) then
+                   call atob_long(oneGrid%oneVarTable(nv)%npts, oneGrid%oneVarTable(nv)%var_p_3D, &
+                        oneGrid%oneVarTable(nv)%var_m_3D)
+                else if (oneGrid%oneVarTable(nv)%idim_type == 7) then
+                   call atob_long(oneGrid%oneVarTable(nv)%npts, oneGrid%oneVarTable(nv)%var_p_3D, &
+                        oneGrid%oneVarTable(nv)%var_m_3D)
                 end if
              endif
           enddo

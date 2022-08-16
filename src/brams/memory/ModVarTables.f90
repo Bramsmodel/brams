@@ -38,10 +38,10 @@ module ModVarTables
   implicit none
   private
 !!$  public :: maxvars
-  public :: VarTableFields
-  public :: vtab_r
+!!$  public :: VarTableFields
+!!$  public :: vtab_r
 !!$  public :: nvgrids
-  public :: num_var
+!!$  public :: num_var
 !!$  public :: InsertVTab
 !!$  public :: GetVTabEntry
 !!$  public :: GetVTabSectionSize
@@ -763,6 +763,7 @@ contains
     logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(DeepCopyToVarTable)**"
 
+    return
     if (nameTo /= "") then
        call fatal_error(h//" consecutive calls; this one from "//trim(adjustl(name))//&
             " and previous one from "//trim(adjustl(nameTo)))
@@ -813,6 +814,7 @@ contains
     logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(DeepCopyFromVarTable)**"
 
+    return
     if (nameFrom /= "") then
        call fatal_error(h//" consecutive calls; this one from "//trim(adjustl(name))//&
             " and previous one from "//trim(adjustl(nameFrom)))
