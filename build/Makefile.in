@@ -242,6 +242,9 @@ endif
 # for MicConstants.h @ $(MICRO)
 INCLUDES += -I$(MICRO)
 
+# for Chem1Constants.h @ $(CCATT)
+INCLUDES += -I$(CCATT)
+
 ## Define fancy Make  ###
 ifndef V
 	VERBOSE_FC = @printf '%b ' $(BOLD_BLUE)$(FC)$(NO_COLOUR) \

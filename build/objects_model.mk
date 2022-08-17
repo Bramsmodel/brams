@@ -197,6 +197,7 @@ OBJ_MOD = \
 	chem1aq_list.o \
 	mem_chem1aq.o \
 	mem_chem1.o \
+	Chem1Vars.o \
 	mem_chemic.o \
 	mem_plume_chem1.o \
 	mem_volc_chem1.o \

@@ -118,6 +118,12 @@ module ModGrid
        DestroyJulesFields, &
        DumpJulesFields
 #endif  
+
+  use ModChem1Vars, only: &
+       Chem1Vars, &
+       CreateChem1Vars, &
+       DestroyChem1Vars, &
+       DumpChem1Vars
   
   use mem_tend, only: &
        tend
@@ -208,6 +214,8 @@ module ModGrid
      type(GaspartFields), pointer :: oneAveGaspartFields => null()
 
      type(MicControl), pointer :: oneMicVars => null()
+
+     type(Chem1Vars), pointer :: oneChem1Vars => null()
      
      ! AllGhostZoneSend/RecvG3D: Ghost Zone update at PostProcess
      ! type(MessageSet) contains all information required for
@@ -490,6 +498,12 @@ contains
 
     oneGrid%oneGaspartFields => CreateGaspartFields(oneGrid%oneNodeDimensions, oneGrid%oneNamelistFile)
     oneGrid%oneAveGaspartFields => CreateGaspartFields(oneGrid%oneNodeDimensions, oneGrid%oneNamelistFile)
+    ! this node Chem1Vars
+    if (oneGrid%oneNamelistFile%ccatt == 1  .and. oneGrid%oneNamelistFile%chemistry >= 0) then
+       oneGrid%oneChem1Vars => CreateChem1Vars(oneGrid%oneParallelEnvironment, &
+            oneGrid%oneNamelistFile, &
+            oneGrid%oneControlVars, oneGrid%oneGridDims, oneGrid%Id)
+    end if
     
     if (dumpLocal) then
        call MsgDump(h//" dumping OneGrid at the end of CreateGrid")
@@ -677,6 +691,7 @@ contains
        call DestroyShcuFields(oneGrid%oneAveShcuFields)
        call DestroyGaspartFields(oneGrid%oneGaspartFields)
        call DestroyGaspartFields(oneGrid%oneAveGaspartFields)
+       call DestroyChem1Vars(oneGrid%oneChem1Vars)
        call DestroyAcousticMessageSet(&
             oneGrid%AcouSendU, oneGrid%AcouRecvU, &
             oneGrid%AcouSendV, oneGrid%AcouRecvV, &
@@ -880,6 +895,7 @@ contains
     call DumpShcuFields(oneGrid%oneAveShcuFields, "oneGrid%oneAveShcuFields")
     call DumpGaspartFields(oneGrid%oneGaspartFields, "oneGrid%oneGaspartFields")
     call DumpGaspartFields(oneGrid%oneAveGaspartFields, "oneGrid%oneAveGaspartFields")
+    call DumpChem1Vars(oneGrid%oneChem1Vars, "oneGrid%oneChem1Vars")
     call MsgDump(h//" finishes")
   end subroutine DumpGrid
 end module ModGrid
