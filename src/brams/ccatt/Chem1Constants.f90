@@ -1,3 +1,5 @@
+module ModChem1Constants
+  implicit none
   integer, parameter :: maxsrcfiles   = 1500 
   integer, parameter :: nsrc=4  !number_sources
   character(len=20), parameter :: src_name(nsrc)= (/&
@@ -12,4 +14,4 @@
   integer, parameter :: geoge = 04 ! geogenic/volc sources ! must be equal to "nsrc"
 
   integer, parameter :: max_ntimes_src = 2  !- number maximum of src files for linterp.
-  
+end module ModChem1Constants

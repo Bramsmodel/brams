@@ -68,16 +68,18 @@ CONTAINS
   USE mem_chem1, ONLY:              &
        chem1_vars,                  & ! Type
        chem1_src_vars,              & ! Type
-       nsrc,                        & ! (IN)
-       max_ntimes_src,              & ! (IN)
-       nsrc,                        & ! (IN)
-       bburn,                       & ! (IN)
-       antro,                       & ! (IN)
-       bioge,                       & ! (IN)
-       geoge,                       & ! (IN)
        CHEMISTRY,                   & ! (IN)
        ntimes_src,                  & ! (IN)
        diur_cycle                     ! (IN)
+
+  use ModChem1Constants, only: &
+       nsrc,                        & ! (IN)
+       max_ntimes_src,              & ! (IN)
+       bburn,                       & ! (IN)
+       antro,                       & ! (IN)
+       bioge,                       & ! (IN)
+       geoge
+
   USE mem_aer1, ONLY:               &
        aerosol, &
        aer1_vars                 

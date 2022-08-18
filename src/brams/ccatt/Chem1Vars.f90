@@ -16,10 +16,16 @@ module ModChem1Vars
   use chem1_list, only : &
        maxnspecies
 
+  use ModChem1Constants, only: &
+       antro, &
+       bburn, &
+       bioge, &
+       geoge, &
+       max_ntimes_src, &
+       nsrc
+  
   implicit none
 
-  include "Chem1Constants.h"
-  
   private
   public :: Chem1Vars
   public :: CreateChem1Vars

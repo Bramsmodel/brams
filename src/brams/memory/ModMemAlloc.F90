@@ -331,8 +331,6 @@ module ModMemAlloc
        nullify_tend_chem1, & ! Subroutine
        alloc_tend_chem1,   & ! Subroutine
        filltab_tend_chem1, & ! Subroutine
-       nsrc,               & ! INTENT(IN)
-       max_ntimes_src,     & ! INTENT(IN)
        chemistry,          & ! CHEM_RAMSIN
        chem1_g,            &
        chem1m_g,           &
@@ -341,6 +339,10 @@ module ModMemAlloc
        chem1_src_z_dim_g, &
        define_chem1_src_zdim
 
+  use ModChem1Constants, only: &
+       nsrc,               & ! INTENT(IN)
+       max_ntimes_src
+       
   use mem_chemic, only: &
        nullify_chemic,  & ! Subroutine
        alloc_chemic,    & ! Subroutine

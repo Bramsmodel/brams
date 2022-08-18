@@ -74,11 +74,12 @@ module ModOpspec
        chem_assim,     &
        split_method,   &
        chem_timestep,  &
-       nsrc,           &
-       diur_cycle,     &
-       bburn,          &
-       src_name  ! intent(in)
+       diur_cycle
 
+  use ModChem1Constants, only: &
+       bburn,          &
+       nsrc,           &
+       src_name
 
   use mem_varinit, only: &
        vwaittot, &
