@@ -63,19 +63,19 @@ module ModVarTable
      ! idim_type == 5 means (nzs, nmxp, nmyp, npatch)
      ! idim_type == 6 means (nmxp, nmyp, npatch)
      ! idim_type == 7 means (nmxp, nmyp, nwave)
-     integer(kind=int64)   :: npts
+     integer(kind=int64)   :: npts ! number of grid cells
      ! npts is number of elements at field (product of dimensions)
-     integer :: ihist
-     integer :: ianal
-     integer :: imean
-     integer :: ilite
-     integer :: impti     ! commmunicate during initialization
-     integer :: impt1
-     integer :: impt2
-     integer :: impt3     ! communicate for output
-     integer :: imptd
-     integer :: irecycle
-     character (len=16) :: name
+     integer :: ihist ! history write flag (=1 means to write)
+     integer :: ianal ! analysis write flag (=1 means to write)
+     integer :: imean ! mean value field  (=1 means is an average field)
+     integer :: ilite ! lite write flat (=1 means to write on lite output)
+     integer :: impti ! commmunicate during initialization
+     integer :: impt1 ! ghost zone update demanded by timestep procedure
+     integer :: impt2 ! unused at BRAMS6
+     integer :: impt3 ! unused at BRAMS6
+     integer :: imptd ! unused at BRAMS6
+     integer :: irecycle ! recycle from previous run during initialization 
+     character (len=16) :: name ! field name
   end type VarTable
 
   interface InsertAtVarTable
@@ -344,6 +344,8 @@ contains
     character (len=32) :: tokens(10)
     character (len=8) :: ctab
     character(len=8) :: str(10)
+    character(len=256) :: strOut
+    logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(NewVarTableEntry)**"
 
     ! get new entry
@@ -366,6 +368,10 @@ contains
     oneVarTable(oneVarTableSize)%npts=npts
     read(tokens(2),*) oneVarTable(oneVarTableSize)%idim_type
 
+    if (dumpLocal) then
+       strOut=tokens(1)
+    end if
+
     ! further tokens; set defaults and correct
 
     oneVarTable(oneVarTableSize)%ihist=0
@@ -382,26 +388,38 @@ contains
        ctab=tokens(nt)
        if(ctab == 'hist' ) then
           oneVarTable(oneVarTableSize)%ihist=1
+          if (dumpLocal) strOut=trim(adjustl(strOut))//"; HIST"
        elseif(ctab == 'anal' ) then
           oneVarTable(oneVarTableSize)%ianal=1
+          if (dumpLocal) strOut=trim(adjustl(strOut))//"; ANAL"
        elseif(ctab == 'lite' ) then
           oneVarTable(oneVarTableSize)%ilite=1
+          if (dumpLocal) strOut=trim(adjustl(strOut))//"; LITE"
        elseif(ctab == 'mpti' ) then
           oneVarTable(oneVarTableSize)%impti=1
+          if (dumpLocal) strOut=trim(adjustl(strOut))//"; MPTI"
        elseif(ctab == 'mpt1' ) then
           oneVarTable(oneVarTableSize)%impt1=1
+          if (dumpLocal) strOut=trim(adjustl(strOut))//"; MPT1"
        elseif(ctab == 'mpt2' ) then
           oneVarTable(oneVarTableSize)%impt2=1
+          if (dumpLocal) strOut=trim(adjustl(strOut))//"; MPT2"
        elseif(ctab == 'mpt3' ) then
           oneVarTable(oneVarTableSize)%impt3=1
+          if (dumpLocal) strOut=trim(adjustl(strOut))//"; MPT3"
        elseif(ctab == 'mptd' ) then
           oneVarTable(oneVarTableSize)%imptd=1
+          if (dumpLocal) strOut=trim(adjustl(strOut))//"; MPTD"
        elseif(ctab == 'recycle' ) then
+          if (dumpLocal) strOut=trim(adjustl(strOut))//"; RECICLE"
           oneVarTable(oneVarTableSize)%irecycle=1
        else
           call fatal_error(h//" unknown token "//trim(adjustl(ctab)))
        endif
-    enddo
+    end do
+    if (dumpLocal) then
+       call MsgDump(h//" "//trim(adjustl(strOut)))
+    end if
   end subroutine NewVarTableEntry
 !!$
 !!$
