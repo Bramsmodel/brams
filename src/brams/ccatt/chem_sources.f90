@@ -7,12 +7,10 @@ module chem_sources
        ControlVars
   
   use mem_chem1, only:       &
+       maxsrcfiles,          & ! Parameter
        chem1_vars,           & ! Type
        chem1_src_vars          ! Type
 
-  use ModChem1Constants, only: &
-       maxsrcfiles
-  
   use mem_aer1, only:        &
        aer1_vars
 

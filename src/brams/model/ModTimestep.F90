@@ -200,15 +200,13 @@ module ModTimestep
   use mem_chem1, only: &
        nvert_src=>chem1_src_z_dim_g, & ! (IN)
        chem1_g,                      & ! (INOUT)
+       nsrc,                         & ! (IN)
        chem1_src_g,                  & ! %sc_src(INOUT)
        chemistry,                    & ! (IN)
        split_method,                 & ! (IN)
        n_dyn_chem,                   &
        ntimes_src
 
-  use ModChem1Constants, only: &
-       nsrc
-  
   use mem_aer1, only:                  &
        aerosol,                        &! (IN)
        aer1_g,                         &! %sc_src(INOUT)

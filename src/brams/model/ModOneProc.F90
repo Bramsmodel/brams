@@ -306,18 +306,16 @@ module ModOneProc
        chem1_src_g,                  & ! (INOUT) read_sourcemaps()
        chemistry,                    & ! (IN) initOneProc(), (IN) read_sourcemaps()
        recycle_tracers,              & ! (IN) initOneProc() (conflito com 'use mem_scalar')
+       nsrc,                         & ! (IN) read_sourcemaps()
        nvert_src=>chem1_src_z_dim_g, & ! (IN) read_sourcemaps()
+       bburn, antro, bioge,  geoge,  & ! (IN) read_sourcemaps()
+       src_name,                     & ! (IN) read_sourcemaps()
        ntimes_src,                   & ! (IN) read_sourcemaps()
        diur_cycle, &                   ! (IN) read_sourcemaps()
        StoreNamelistFileAtMem_chem1, &
        chemistry, &
        chem_assim
 
-  use ModChem1Constants, only: &
-       nsrc,                         & ! (IN) read_sourcemaps()
-       bburn, antro, bioge,  geoge,  & ! (IN) read_sourcemaps()
-       src_name
-  
   use mem_aer1, only: &
        aerosol, &
        FixChemAerVarTableForIOUTPUT5, &

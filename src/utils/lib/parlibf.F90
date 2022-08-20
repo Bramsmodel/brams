@@ -1,11 +1,5 @@
 module ParLib
   implicit none
-#if defined (RAMS_MPI)
-  !**(JP)** use mpi is better than include mpif.h
-  !**(JP)** but it flags errors; to be corrected later
-  include 'mpif.h'
-!!$  use mpi
-#endif
   private
   public :: parf_init_mpi
   public :: parf_exit_mpi
@@ -106,6 +100,9 @@ module ParLib
   end interface
 
   include "constants.h"
+#if defined (RAMS_MPI)
+  include 'mpif.h'
+#endif
 
 contains
 

@@ -29,9 +29,9 @@ module mem_chem1
 
   type (chem1_vars)    , allocatable :: chem1_g(:,:), chem1m_g(:,:)
 
-!!$  integer, parameter :: maxsrcfiles   = 1500 
-!!$
-!!$  integer, parameter :: nsrc=4  !number_sources
+  integer, parameter :: maxsrcfiles   = 1500 
+
+  integer, parameter :: nsrc=4  !number_sources
 
   type chem1_src_vars   
      real, pointer, dimension(:,:,:)  :: sc_src
@@ -41,34 +41,31 @@ module mem_chem1
   type (chem1_src_vars), allocatable :: chem1_src_g(:,:,:,:),chem1m_src_g(:,:,:,:)
 
   !- dimension of sources arrays (=1 for 2dim, =m1 for 3dim)
-!!$  integer :: chem1_src_z_dim_g(nsrc,maxgrds)
-  integer :: chem1_src_z_dim_g(4,maxgrds)
+  integer :: chem1_src_z_dim_g(nsrc,maxgrds)
 
-!!$  character(LEN=20),dimension(nsrc),parameter :: src_name= &
-!!$                                ! '12345678901234567890'
-!!$       (/                      &
-!!$       'antro               '&    
-!!$       , 'bburn               '&
-!!$       , 'bioge               '&
-!!$       , 'geoge               '/)
-!!$
-!!$  integer, parameter     :: &
-!!$       antro   = 01, & ! anthropogenic sources
-!!$       bburn   = 02, & ! biomass burning sources 
-!!$       bioge   = 03, & ! biogenic sources 
-!!$       geoge   = 04    ! geogenic/volc sources ! must be equal to "nsrc"
+  character(LEN=20),dimension(nsrc),parameter :: src_name= &
+                                ! '12345678901234567890'
+       (/                      &
+       'antro               '&    
+       , 'bburn               '&
+       , 'bioge               '&
+       , 'geoge               '/)
+
+  integer, parameter     :: &
+       antro   = 01, & ! anthropogenic sources
+       bburn   = 02, & ! biomass burning sources 
+       bioge   = 03, & ! biogenic sources 
+       geoge   = 04    ! geogenic/volc sources ! must be equal to "nsrc"
 
   !- use of the prescribed diurnal cycle or linear interpolation for the instantaneous
   !- emission rate
   !- for biomass burning, the diur_cycle must be always 1 (the 2nd element of diur_cycle array)
   !- 1=on, 0=off (=> will use linterp.)
-!!$  integer, dimension(nsrc) :: diur_cycle !diur_cycle(1)== antro; diur_cycle(2) == bburn
-  integer, dimension(4) :: diur_cycle !diur_cycle(1)== antro; diur_cycle(2) == bburn
+  integer, dimension(nsrc) :: diur_cycle !diur_cycle(1)== antro; diur_cycle(2) == bburn
   !diur_cycle(3)== bioge; diur_cycle(4) == geoge
 
-!!$  integer, parameter :: max_ntimes_src = 2  !- number maximum of src files for linterp.
-!!$  integer, dimension(nsrc) :: ntimes_src    !- actual number used
-  integer, dimension(4) :: ntimes_src    !- actual number used
+  integer, parameter :: max_ntimes_src = 2  !- number maximum of src files for linterp.
+  integer, dimension(nsrc) :: ntimes_src    !- actual number used
 
   integer :: RECYCLE_TRACERS, NSPECIES_TRANSPORTED,NSPECIES_CHEM_TRANSPORTED &
        ,NSPECIES_CHEM_NO_TRANSPORTED
@@ -123,12 +120,6 @@ contains
     use chem1_list, only : spc_alloc,spc_name, src, ddp, wdp, fdda, on ,off,&
          transport
 
-    use ModChem1Constants, only: &
-         nsrc, &
-         max_ntimes_src, &
-         bburn, &
-         geoge
-    
     implicit none
 
     integer,intent(in) :: n1,n2,n3,nspecies,ng,volcanoes
@@ -214,10 +205,6 @@ contains
 
   subroutine dealloc_chem1(chem1,chem1_src,nspecies)
 
-    use ModChem1Constants, only: &
-         nsrc, &
-         max_ntimes_src
-
     implicit none
 
     integer,intent(in) :: nspecies
@@ -248,10 +235,6 @@ contains
   !---------------------------------------------------------------
 
   subroutine nullify_chem1(chem1,chem1_src,nspecies)
-
-    use ModChem1Constants, only: &
-         nsrc, &
-         max_ntimes_src
 
     implicit none
 
@@ -303,12 +286,6 @@ contains
 
     use io_params, only : &
          ioutput
-
-    use ModChem1Constants, only: &
-         nsrc, &
-         max_ntimes_src, &
-         geoge, &
-         src_name
 
     implicit none
 
@@ -580,13 +557,6 @@ contains
   !--------------------------------------------------------------------------
 
   subroutine define_chem1_src_zdim(chem1_src_z_dim,n1)
-    use ModChem1Constants, only: &
-         nsrc, &
-         antro, &
-         bburn, &
-         bioge, &
-         geoge
-        
     implicit none
     integer, intent(out) :: chem1_src_z_dim(nsrc)
     integer, intent(in) :: n1

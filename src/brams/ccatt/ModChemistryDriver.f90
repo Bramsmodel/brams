@@ -61,6 +61,12 @@ module ModChemistryDriver
        nspecies_chem_no_transported, & ! (IN)
        transp_chem_index,            & ! (IN)
        no_transp_chem_index,         & ! (IN)
+       nsrc,                         & ! (IN)
+       src_name,                     & ! (IN)
+       antro,                        & ! (IN)
+       bburn,                        & ! (IN)
+       bioge,                        & ! (IN)
+       geoge,                        & ! (IN)
        chem1_src_z_dim_g,            & ! (IN)
        chem1_g,                      & ! %sc_t(INOUT), %sc_p(INOUT)
        chem1_src_g,                  & ! %sc_src(INOUT)
@@ -70,14 +76,7 @@ module ModChemistryDriver
        N_DYN_CHEM,                   & ! (INOUT)
        split_method,                 & ! (IN)
        isplit                          ! (IN)
-  
-  use ModChem1Constants, only: &
-       nsrc,                         & ! (IN)
-       src_name,                     & ! (IN)
-       antro,                        & ! (IN)
-       bburn,                        & ! (IN)
-       bioge,                        & ! (IN)
-       geoge
+
 
   use mem_chem1aq, only: &
        chem1aq_g, &
