@@ -312,6 +312,7 @@ contains
     type(Grid), pointer :: oneGrid
 
     integer :: ierr
+    logical :: createAve
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(CreateGrid)**"
     logical, parameter :: dumpLocal=.false.
@@ -324,6 +325,13 @@ contains
        call fatal_error(h//" invoked with null oneParallelEnvironment")
     end if
 
+    ! define if average fields should be created or not,
+    ! according to namelist
+
+    createAve = oneNamelistFile%avgtim > 0.0 .and. &
+         (oneNamelistFile%frqmean /= 0.0 .or. &
+         oneNamelistFile%frqboth /= 0.0)
+    
     ! create a variable of type grid and fill entries
 
     allocate(oneGrid, stat=ierr)
@@ -440,13 +448,29 @@ contains
 
     ! this node Basic Fields
 
-    oneGrid%oneBasicFields => CreateBasicFields(oneGrid%oneNodeDimensions, oneGrid%oneNamelistFile)
-    oneGrid%oneAveBasicFields => CreateBasicFields(oneGrid%oneNodeDimensions, oneGrid%oneNamelistFile)
+    oneGrid%oneBasicFields => CreateBasicFields(&
+         oneGrid%oneNodeDimensions, &
+         oneGrid%oneNamelistFile)
+    if (createAve) then
+       oneGrid%oneAveBasicFields => CreateBasicFields(&
+            oneGrid%oneNodeDimensions, &
+            oneGrid%oneNamelistFile)
+    end if
 
     ! this node Turb Fields
 
-    oneGrid%oneTurbFields => CreateTurbFields(oneGrid%oneNodeDimensions, oneGrid%oneNamelistFile, gridId, .false.)
-    oneGrid%oneAveTurbFields => CreateTurbFields(oneGrid%oneNodeDimensions, oneGrid%oneNamelistFile, gridId, .true.)
+    oneGrid%oneTurbFields => CreateTurbFields(&
+         oneGrid%oneNodeDimensions, &
+         oneGrid%oneNamelistFile, &
+         gridId, &
+         .false.)
+    if (createAve) then
+       oneGrid%oneAveTurbFields => CreateTurbFields(&
+            oneGrid%oneNodeDimensions, &
+            oneGrid%oneNamelistFile, &
+            gridId, &
+            .true.)
+    end if
 
     ! this node MicControl
 
@@ -454,10 +478,18 @@ contains
 
     ! this node Micro Fields
 
-    oneGrid%oneMicroFields => CreateMicroFields(oneGrid%Id, oneGrid%oneNamelistFile, oneGrid%oneNodeDimensions, &
+    oneGrid%oneMicroFields => CreateMicroFields(&
+         oneGrid%Id, &
+         oneGrid%oneNamelistFile, &
+         oneGrid%oneNodeDimensions, &
          oneGrid%oneMicVars)
-    oneGrid%oneAveMicroFields => CreateMicroFields(oneGrid%Id, oneGrid%oneNamelistFile, oneGrid%oneNodeDimensions, &
-         oneGrid%oneMicVars)
+    if (createAve) then
+       oneGrid%oneAveMicroFields => CreateMicroFields(&
+            oneGrid%Id, &
+            oneGrid%oneNamelistFile, &
+            oneGrid%oneNodeDimensions, &
+            oneGrid%oneMicVars)
+    end if
 
     ! this node Scalar Table
 
@@ -473,23 +505,38 @@ contains
 
 #ifdef JULES
     if (oneGrid%oneNamelistFile%isfcl == 5) then
-       oneGrid%oneJulesFields => CreateJulesFields(oneGrid%oneNodeDimensions, &
+       oneGrid%oneJulesFields => CreateJulesFields(&
+            oneGrid%oneNodeDimensions, &
             oneGrid%oneNamelistFile)
-
-       oneGrid%oneAveJulesFields => CreateJulesFields(oneGrid%oneNodeDimensions, &
-            oneGrid%oneNamelistFile)
+       if (createAve) then
+          oneGrid%oneAveJulesFields => CreateJulesFields(&
+               oneGrid%oneNodeDimensions, &
+               oneGrid%oneNamelistFile)
+       end if
     end if
 #endif
 
     ! this node Shcu Fields
-
-    oneGrid%oneShcuFields => CreateShcuFields(oneGrid%oneNodeDimensions, oneGrid%oneControlVars)
-    oneGrid%oneAveShcuFields => CreateShcuFields(oneGrid%oneNodeDimensions, oneGrid%oneControlVars)
+    
+    oneGrid%oneShcuFields => CreateShcuFields(&
+         oneGrid%oneNodeDimensions, &
+         oneGrid%oneControlVars)
+    if (createAve) then
+       oneGrid%oneAveShcuFields => CreateShcuFields(&
+            oneGrid%oneNodeDimensions, &
+            oneGrid%oneControlVars)
+    end if
 
     ! this node Gaspart Fields
 
-    oneGrid%oneGaspartFields => CreateGaspartFields(oneGrid%oneNodeDimensions, oneGrid%oneNamelistFile)
-    oneGrid%oneAveGaspartFields => CreateGaspartFields(oneGrid%oneNodeDimensions, oneGrid%oneNamelistFile)
+    oneGrid%oneGaspartFields => CreateGaspartFields(&
+         oneGrid%oneNodeDimensions, &
+         oneGrid%oneNamelistFile)
+    if (createAve) then
+       oneGrid%oneAveGaspartFields => CreateGaspartFields(&
+            oneGrid%oneNodeDimensions, &
+            oneGrid%oneNamelistFile)
+    end if
     
     if (dumpLocal) then
        call MsgDump(h//" dumping OneGrid at the end of CreateGrid")
