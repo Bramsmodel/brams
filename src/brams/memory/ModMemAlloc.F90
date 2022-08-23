@@ -633,18 +633,17 @@ contains
 
     !-------------
     ! Allocate varinit variables data type.
+    ! These do not need "mean" type ever; that's why varinitm_g(ng) is not allocated
     allocate(varinit_g(ngrids), STAT=ierr)
     if (ierr/=0) call fatal_error(h//"Allocating varinit_g")
     allocate(varinitm_g(ngrids), STAT=ierr)
     if (ierr/=0) call fatal_error(h//"Allocating varinitm_g")
     do ng=1,ngrids
-       call nullify_varinit(varinit_g(ng)); call nullify_varinit(varinitm_g(ng))
-       call alloc_varinit(varinit_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
-       call alloc_varinit(varinitm_g(ng),       1,        1,        1, ng)
-
-       ! These do not need "mean" type ever.
+       call nullify_varinit(varinit_g(ng))
+       call alloc_varinit(varinit_g(ng), nmzp(ng), nmxp(ng), nmyp(ng))
+       call nullify_varinit(varinitm_g(ng))
        call filltab_varinit(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-            varinit_g(ng), varinitm_g(ng))
+            varinit_g, varinitm_g, imean, ng)
     enddo
     !-------------
 
@@ -655,12 +654,15 @@ contains
     allocate(gridm_g(ngrids), STAT=ierr)
     if (ierr/=0) call fatal_error(h//"Allocating gridm_g")
     do ng=1,ngrids
-       call nullify_grid(grid_g(ng)); call nullify_grid(gridm_g(ng))
+       call nullify_grid(grid_g(ng))
        call alloc_grid(grid_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng, if_adap)
-       call alloc_grid(gridm_g(ng),       1,        1,        1, ng, if_adap)
+       call nullify_grid(gridm_g(ng))
+       if (imean == 1) then
+          call alloc_grid(gridm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng, if_adap)
+       end if
 
        call filltab_grid(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-            grid_g(ng), gridm_g(ng))
+            grid_g(ng), gridm_g(ng), imean)
     enddo
     !-------------
 

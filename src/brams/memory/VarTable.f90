@@ -28,6 +28,7 @@ module ModVarTable
   public :: DestroyVarTable
   public :: DumpVarTable
   public :: InsertAtVarTable
+  public :: InsertVarTable
   public :: FixVarTableForIOUTPUT5
   public :: MarkLiteVarsAtVarTable
   public :: Name2VarTableEntry
@@ -84,6 +85,13 @@ module ModVarTable
      module procedure InsertAtVarTable_3D
      module procedure InsertAtVarTable_4D
   end interface InsertAtVarTable
+
+  interface InsertVarTable
+     module procedure InsertVarTable_2D
+     module procedure InsertVarTable_2D_I
+     module procedure InsertVarTable_3D
+     module procedure InsertVarTable_4D
+  end interface InsertVarTable
 
 
 contains
@@ -423,95 +431,6 @@ contains
   end subroutine NewVarTableEntry
 !!$
 !!$
-!!$
-!!$
-!!$
-!!$  integer function GetVTabSectionSize(vTabPtr, &
-!!$       iStart, iEnd, jStart, jEnd)
-!!$    type(VarTableFields), pointer :: vTabPtr
-!!$    integer, intent(in) :: iStart
-!!$    integer, intent(in) :: iEnd
-!!$    integer, intent(in) :: jStart
-!!$    integer, intent(in) :: jEnd
-!!$
-!!$    character(len=8) :: c0
-!!$    character(len=*), parameter :: h="**(GetVTabSectionSize)**"
-!!$
-!!$    if (.not. associated(vTabPtr)) then
-!!$       call fatal_error(h//" vTabPtr not associated")
-!!$    else
-!!$       GetVTabSectionSize=(iEnd-iStart+1)*(jEnd-jStart+1)
-!!$       select case (vTabPtr%idim_type)
-!!$       case(2)
-!!$          ! idim_type == 2 means (nmxp, nmyp)
-!!$       case(3)
-!!$          ! idim_type == 3 means (nmzp, nmxp, nmyp)
-!!$          GetVTabSectionSize=GetVTabSectionSize*&
-!!$               size(vTabPtr%var_p_3D,1)
-!!$       case(4)
-!!$          ! idim_type == 4 means (nzg, nmxp, nmyp, npatch)
-!!$          GetVTabSectionSize=GetVTabSectionSize*&
-!!$               size(vTabPtr%var_p_4D,1)*&
-!!$               size(vTabPtr%var_p_4D,4)
-!!$       case(5)
-!!$          ! idim_type == 5 means (nzs, nmxp, nmyp, npatch)
-!!$          GetVTabSectionSize=GetVTabSectionSize*&
-!!$               size(vTabPtr%var_p_4D,1)*&
-!!$               size(vTabPtr%var_p_4D,4)
-!!$       case(6)
-!!$          ! idim_type == 6 means (nmxp, nmyp, npatch)
-!!$          GetVTabSectionSize=GetVTabSectionSize*&
-!!$               size(vTabPtr%var_p_3D,3)
-!!$       case(7)
-!!$          ! idim_type == 7 means (nmxp, nmyp, nwave)
-!!$          GetVTabSectionSize=GetVTabSectionSize*&
-!!$               size(vTabPtr%var_p_3D,3)
-!!$       case default
-!!$          write(c0,"(i8)") vTabPtr%idim_type
-!!$          call fatal_error(h//" unknown idim_type="//trim(adjustl(c0)))
-!!$       end select
-!!$    end if
-!!$  end function GetVTabSectionSize
-!!$
-!!$
-!!$
-!!$
-!!$  subroutine VerifyVTabEntry(vTabPtr)
-!!$    type(VarTableFields), pointer :: vTabPtr
-!!$    character(len=*), parameter :: h="**(VerifyVTabEntry)**"
-!!$
-!!$    if (.not. associated(vTabPtr)) then
-!!$       call fatal_error(h//" null vTabPtr")
-!!$    else
-!!$       select case (vTabPtr%idim_type)
-!!$       case (2)
-!!$          if (.not. associated(vTabPtr%var_p_2D)) then
-!!$             call fatal_error(h//" vTabPtr%var_p_2D of field "//&
-!!$                  trim(adjustl(vTabPtr%name))//" is not associated")
-!!$          end if
-!!$       case (3)
-!!$          if (.not. associated(vTabPtr%var_p_3D)) then
-!!$             call fatal_error(h//" vTabPtr%var_p_3D of field "//&
-!!$                  trim(adjustl(vTabPtr%name))//" is not associated")
-!!$          end if
-!!$       case (4:5)
-!!$          if (.not. associated(vTabPtr%var_p_4D)) then
-!!$             call fatal_error(h//" vTabPtr%var_p_4D of field "//&
-!!$                  trim(adjustl(vTabPtr%name))//" is not associated")
-!!$          end if
-!!$       case (6:7)
-!!$          if (.not. associated(vTabPtr%var_p_3D)) then
-!!$             call fatal_error(h//" vTabPtr%var_p_3D of field "//&
-!!$                  trim(adjustl(vTabPtr%name))//" is not associated")
-!!$          end if
-!!$       case default
-!!$          call fatal_error(h//" vTabPtr%idim_type of field "//&
-!!$               trim(adjustl(vTabPtr%name))//" is outside range [2:7]")
-!!$       end select
-!!$    end if
-!!$  end subroutine VerifyVTabEntry
-!!$
-!!$
 !!$  subroutine StringIndexing(vTabPtr, &
 !!$       xStart, xEnd, yStart, yEnd, string)
 !!$    type(VarTableFields), pointer :: vTabPtr
@@ -565,39 +484,6 @@ contains
 !!$            " with unknown idim_type="//trim(adjustl(c0)))
 !!$    end select
 !!$  end subroutine StringIndexing
-!!$
-!!$
-!!$  subroutine zero_vtab_2D(var,nx,ny)
-!!$    integer, intent(in) :: nx,ny
-!!$    real, intent(inout) :: var(nx,ny)
-!!$
-!!$    var=0.0
-!!$
-!!$  end subroutine zero_vtab_2D
-!!$
-!!$  subroutine zero_vtab_2D_I(var,nx,ny)
-!!$    integer, intent(in) :: nx,ny
-!!$    integer, intent(inout) :: var(nx,ny)
-!!$
-!!$    var=0.0
-!!$
-!!$  end subroutine zero_vtab_2D_I
-!!$
-!!$  subroutine zero_vtab_3D(var,nx,ny,nz)
-!!$    integer,intent(in) :: nx,ny,nz
-!!$    real, intent(inout) :: var(nx,ny,nz)
-!!$
-!!$    var=0.0
-!!$
-!!$  end subroutine zero_vtab_3D
-!!$
-!!$  subroutine zero_vtab_4D(var,nx,ny,nz,nk)
-!!$    integer,intent(in) :: nx,ny,nz,nk
-!!$    real, intent(inout) :: var(nx,ny,nz,nk)
-!!$
-!!$    var=0.0
-!!$
-!!$  end subroutine zero_vtab_4D
 
 
 
@@ -639,97 +525,8 @@ contains
     end if
     
   end subroutine MarkLiteVarsAtVarTable
-!!$
-!!$
-!!$
-!!$
-!!$  subroutine GetVarFromMem (nxp, nyp, nzp, nzg, nzs, npatch, &
-!!$       varName, itype, ngrd, arrayOut, sizeArray)
-!!$
-!!$    integer,            intent(in)    :: nxp  ! as at vartable
-!!$    integer,            intent(in)    :: nyp  ! as at vartable
-!!$    integer,            intent(in)    :: nzp  ! as at vartable
-!!$    integer,            intent(in)    :: nzg  ! as at vartable
-!!$    integer,            intent(in)    :: nzs  ! as at vartable
-!!$    integer,            intent(in)    :: npatch  ! as at vartable
-!!$    character(LEN=*),   intent(in)    :: varName
-!!$    integer,            intent(in)    :: ngrd
-!!$    integer,            intent(out)   :: itype
-!!$    integer(kind=int64),   intent(in)    :: sizeArray
-!!$    real,	              intent(inout) :: arrayOut(sizeArray)
-!!$
-!!$    character(len=16) :: c0, c1
-!!$    character(len=*), parameter :: h="**(GetVarFromMem)**"
-!!$    integer(kind=int64) :: ni
-!!$    integer(kind=int64) :: npts
-!!$    logical          :: found
-!!$    character(len=len(varName)) :: varnIn, varnOut
-!!$    real, pointer :: ptr ! points to a field at vartable
-!!$    real :: scr1(sizeArray)
-!!$
-!!$    ! field name changes from vartable to analysis file
-!!$    ! in two cases (PI and HKH); 
-!!$    ! given output file field name, find vartable correspondent
-!!$
-!!$    if (trim(varName) == 'PI') then
-!!$       varnIn = 'PP'
-!!$    else if (trim(varName) == 'HKH') then
-!!$       varnIn = 'HKM'
-!!$    else
-!!$       varnIn = varName
-!!$    end if
-!!$
-!!$    ! search for vartable name at vartable
-!!$    ! store result at array 
-!!$
-!!$    found = .false.
-!!$    do ni = 1, num_var(ngrd)
-!!$       if (trim(vtab_r(ni,ngrd)%name) == trim(varnIn)) then
-!!$          itype = vtab_r(ni,ngrd)%idim_type
-!!$          npts  = vtab_r(ni,ngrd)%npts
-!!$          ptr => vtab_r(ni,ngrd)%var_p
-!!$          if (npts > sizeArray) then
-!!$             write(c0,"(i16)") npts
-!!$             write(c1,"(i16)") sizeArray
-!!$             call fatal_error(h//&
-!!$                  " array size for "//trim(varName)//&
-!!$                  " is "//trim(adjustl(c1))//&
-!!$                  ", smaller than "//trim(adjustl(c0))//" required")
-!!$          end if
-!!$          found = .true.
-!!$          exit
-!!$       end if
-!!$    end do
-!!$
-!!$    ! halts if not there
-!!$
-!!$    if (.not. found) then
-!!$       write(*,"(a)") h//" var "//trim(varnIn)//" not found in vtab_r; will dump vtab_r"
-!!$       call DumpVTab(ngrd)
-!!$       call fatal_error(h//" var "//trim(varnIn)//" not found in vtab_r")
-!!$    end if
-!!$
-!!$    ! convert fields PP, HKM and VKH from vartables to analysis file
-!!$    ! or store field at scr1
-!!$
-!!$    call PreProcForOutput(ngrd, varnIn, npts, ptr, scr1, varnOut)
-!!$
-!!$    ! verify output name
-!!$
-!!$    if (trim(varnOut) /= trim (varName)) then
-!!$       call fatal_error(h//" fails computing "//trim(varName))
-!!$    end if
-!!$
-!!$    ! move verticals from first to third dimension, if required
-!!$
-!!$    if (itype==3 .or. itype==4 .or. itype==5) then
-!!$       call RearrangeForOutput(nxp, nyp, nzp, nzg, nzs, npatch, &
-!!$            itype, scr1, arrayOut)
-!!$    else
-!!$       arrayOut = scr1
-!!$    end if
-!!$  end subroutine GetVarFromMem
-!!$
+
+
 !!$  subroutine DumpVTab(ngrd)
 !!$    integer, intent(in) :: ngrd
 !!$
@@ -745,65 +542,6 @@ contains
 !!$  end subroutine DumpVTab
 
 
-
-
-
-!!$  subroutine InitVarTableGeneralAnal(oneVarTable, oneVarTableSize, chemistry, aerosol)
-!!$    type(VarTable), pointer, intent(in) :: oneVarTable(:)
-!!$    integer, intent(in) :: oneVarTableSize
-!!$    integer, intent(in) :: chemistry
-!!$    integer, intent(in) :: aerosol
-!!$
-!!$    integer :: ni
-!!$    integer :: nspc
-!!$    integer :: imode
-!!$    character(len=2) :: cmode
-!!$    character(len=*), parameter :: h="**(InitVarTableGeneralAnal)**"
-!!$
-!!$    do ni = 1, oneVarTableSize
-!!$
-!!$       oneVarTable(ni)%ianal=0	
-!!$
-!!$       if (trim(oneVarTable(ni)%name) == 'TOPT'  .or. &
-!!$	    trim(oneVarTable(ni)%name) == 'UP'    .or. &
-!!$	    trim(oneVarTable(ni)%name) == 'VP'    .or. &
-!!$	    trim(oneVarTable(ni)%name) == 'THETA' .or. &
-!!$	    trim(oneVarTable(ni)%name) == 'PP'    .or. &
-!!$	    trim(oneVarTable(ni)%name) == 'RV') then
-!!$          oneVarTable(ni)%ianal=1
-!!$          cycle
-!!$       end if
-!!$
-!!$       if (oneVarTable(ni)%irecycle == 1) then
-!!$          oneVarTable(ni)%ianal=1
-!!$       end if
-!!$
-!!$
-!!$       if(chemistry >= 0) then 
-!!$          do nspc=1,chem_nspecies
-!!$             if(chem_alloc(chem_fdda,nspc) == chem_on .and. &
-!!$                  trim(oneVarTable(ni)%name) == trim(chem_name(nspc))//'P') then 
-!!$                oneVarTable(ni)%ianal=1
-!!$                cycle
-!!$             end if
-!!$          end do
-!!$       end if
-!!$       if(aerosol == 1 .and. chemistry >= 0) then
-!!$          do nspc=1,aer_nspecies
-!!$             do imode = 1, aer_nmodes
-!!$                write(cmode, '(BN, I2)')imode
-!!$                cmode = adjustl(cmode)
-!!$                if(aer_alloc(aer_fdda,imode,nspc) == 1  .and. &
-!!$                     trim(oneVarTable(ni)%name) == trim(aer_name(nspc))//trim(cmode)//'P') then
-!!$                   oneVarTable(ni)%ianal=1
-!!$                   cycle
-!!$                end if
-!!$             end do
-!!$          end do
-!!$       end if
-!!$    end do
-!!$
-!!$  end subroutine InitVarTableGeneralAnal
 
 
   subroutine FixVarTableForIOUTPUT5(oneVarTable, oneVarTableSize)
@@ -837,6 +575,7 @@ contains
     end do
   end subroutine FixVarTableForIOUTPUT5
 
+  
 
 
   function Name2VarTableEntry(oneVarTable, oneVarTableSize, name) result(vtabPtr)
@@ -856,4 +595,328 @@ contains
     end do
   end function Name2VarTableEntry
 
+
+
+
+  
+  subroutine InsertVarTable_2D_I(oneVarTable, oneVarTableSize, var, tabstr, varm, imean)
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
+    integer, pointer, intent(in) :: var(:,:)
+    character (len=*), intent(in) :: tabstr
+    integer, pointer, intent(in) :: varm(:,:)
+    integer, intent(in) :: imean
+
+    integer(kind=int64) :: sizeVar
+    integer(kind=int64) :: sizeVarm
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(InsertVarTable_2D_I)**"
+
+    ! field size
+
+    sizeVar=int(size(var,1),int64) * &
+         int(size(var,2),int64) 
+
+    ! get new entry and fill VarTable token dependent integer components
+
+    call NewVarTableEntry(oneVarTable, oneVarTableSize, sizeVar, imean, tabstr)
+
+    ! imean and varm compatibility
+    ! if imean==1, then varm should be allocated with the same size of var;
+    ! if imean==0, then varm should not be allocated
+
+    if (imean == 1) then
+       if (.not. associated(varm)) then
+          call fatal_error(h//" invoked for field "//&
+               trim(adjustl(oneVarTable(oneVarTableSize)%name))//&
+               " to use unassociated average field")
+       else
+          sizeVarm=int(size(varm,1),int64) * &
+               int(size(varm,2),int64)
+          if (sizeVar /= sizeVarm) then
+             write(str(1),"(i8)") size(var,1)
+             write(str(2),"(i8)") size(var,2)
+             write(str(5),"(i8)") size(varm,1)
+             write(str(6),"(i8)") size(varm,2)
+             call fatal_error(h//" invoked for field "//&
+                  trim(adjustl(oneVarTable(oneVarTableSize)%name))//&
+                  " to use varm("//&
+                  trim(adjustl(str(5)))//":"//&
+                  trim(adjustl(str(6)))//")"//&
+                  " with size incompatible to var("//&
+                  trim(adjustl(str(1)))//":"//&
+                  trim(adjustl(str(2)))//")")
+          end if
+       end if
+    else if (imean == 0) then
+       if (associated(varm)) then
+          call fatal_error(h//" invoked for current field "//&
+               trim(adjustl(oneVarTable(oneVarTableSize)%name))//&
+               " but average field is associated")
+       end if
+    else
+       write(str(1),"(i8)") imean
+       call fatal_error(h//" invoked for field "//&
+            trim(adjustl(oneVarTable(oneVarTableSize)%name))//&
+            " with unknown imean="//trim(adjustl(str(1))))
+    end if
+    
+    ! store full field
+
+    oneVarTable(oneVarTableSize)%var_p_2D_I => var
+
+    ! store average field if desired
+
+    if (imean == 1) then
+       oneVarTable(oneVarTableSize)%var_m_2D_I => varm
+    end if
+  end subroutine InsertVarTable_2D_I
+  
+
+
+  
+
+  
+  subroutine InsertVarTable_2D(oneVarTable, oneVarTableSize, var, tabstr, varm, imean)
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
+    real, pointer, intent(in) :: var(:,:)
+    character (len=*), intent(in) :: tabstr
+    real, pointer, intent(in) :: varm(:,:)
+    integer, intent(in) :: imean
+
+    integer(kind=int64) :: sizeVar
+    integer(kind=int64) :: sizeVarm
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(InsertVarTable_2D)**"
+
+    ! field size
+
+    sizeVar=int(size(var,1),int64) * &
+         int(size(var,2),int64) 
+
+    ! get new entry and fill VarTable token dependent integer components
+
+    call NewVarTableEntry(oneVarTable, oneVarTableSize, sizeVar, imean, tabstr)
+
+    ! imean and varm compatibility
+    ! if imean==1, then varm should be allocated with the same size of var;
+    ! if imean==0, then varm should not be allocated
+
+    if (imean == 1) then
+       if (.not. associated(varm)) then
+          call fatal_error(h//" invoked for field "//&
+               trim(adjustl(oneVarTable(oneVarTableSize)%name))//&
+               " to use unassociated average field")
+       else
+          sizeVarm=int(size(varm,1),int64) * &
+               int(size(varm,2),int64)
+          if (sizeVar /= sizeVarm) then
+             write(str(1),"(i8)") size(var,1)
+             write(str(2),"(i8)") size(var,2)
+             write(str(5),"(i8)") size(varm,1)
+             write(str(6),"(i8)") size(varm,2)
+             call fatal_error(h//" invoked for field "//&
+                  trim(adjustl(oneVarTable(oneVarTableSize)%name))//&
+                  " to use varm("//&
+                  trim(adjustl(str(5)))//":"//&
+                  trim(adjustl(str(6)))//")"//&
+                  " with size incompatible to var("//&
+                  trim(adjustl(str(1)))//":"//&
+                  trim(adjustl(str(2)))//")")
+          end if
+       end if
+    else if (imean == 0) then
+       if (associated(varm)) then
+          call fatal_error(h//" invoked for current field "//&
+               trim(adjustl(oneVarTable(oneVarTableSize)%name))//&
+               " but average field is associated")
+       end if
+    else
+       write(str(1),"(i8)") imean
+       call fatal_error(h//" invoked for field "//&
+            trim(adjustl(oneVarTable(oneVarTableSize)%name))//&
+            " with unknown imean="//trim(adjustl(str(1))))
+    end if
+    
+    ! store full field
+
+    oneVarTable(oneVarTableSize)%var_p_2D => var
+
+    ! store average field if desired
+
+    if (imean == 1) then
+       oneVarTable(oneVarTableSize)%var_m_2D => varm
+    end if
+  end subroutine InsertVarTable_2D
+  
+  
+
+  subroutine InsertVarTable_3D(oneVarTable, oneVarTableSize, var, tabstr, varm, imean)
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
+    real, pointer, intent(in) :: var(:,:,:)
+    character (len=*), intent(in) :: tabstr
+    real, pointer, intent(in) :: varm(:,:,:)
+    integer, intent(in) :: imean
+
+    integer(kind=int64) :: sizeVar
+    integer(kind=int64) :: sizeVarm
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(InsertVarTable_3D)**"
+
+    ! field size
+
+    sizeVar=int(size(var,1),int64) * &
+         int(size(var,2),int64) * &
+         int(size(var,3),int64)
+
+    ! get new entry and fill VarTable token dependent integer components
+
+    call NewVarTableEntry(oneVarTable, oneVarTableSize, sizeVar, imean, tabstr)
+
+    ! imean and varm compatibility
+    ! if imean==1, then varm should be allocated with the same size of var;
+    ! if imean==0, then varm should not be allocated
+
+    if (imean == 1) then
+       if (.not. associated(varm)) then
+          call fatal_error(h//" invoked for field "//&
+               trim(adjustl(oneVarTable(oneVarTableSize)%name))//&
+               " to use unassociated average field")
+       else
+          sizeVarm=int(size(varm,1),int64) * &
+               int(size(varm,2),int64) * &
+               int(size(varm,3),int64)
+          if (sizeVar /= sizeVarm) then
+             write(str(1),"(i8)") size(var,1)
+             write(str(2),"(i8)") size(var,2)
+             write(str(3),"(i8)") size(var,3)
+             write(str(4),"(i8)") size(varm,1)
+             write(str(5),"(i8)") size(varm,2)
+             write(str(6),"(i8)") size(varm,3)
+             call fatal_error(h//" invoked for field "//&
+                  trim(adjustl(oneVarTable(oneVarTableSize)%name))//&
+                  " to use varm("//&
+                  trim(adjustl(str(4)))//":"//&
+                  trim(adjustl(str(5)))//":"//&
+                  trim(adjustl(str(6)))//")"//&
+                  " with size incompatible to var("//&
+                  trim(adjustl(str(1)))//":"//&
+                  trim(adjustl(str(2)))//":"//&
+                  trim(adjustl(str(3)))//")")
+          end if
+       end if
+    else if (imean == 0) then
+       if (associated(varm)) then
+          call fatal_error(h//" invoked for current field "//&
+               trim(adjustl(oneVarTable(oneVarTableSize)%name))//&
+               " but average field is associated")
+       end if
+    else
+       write(str(1),"(i8)") imean
+       call fatal_error(h//" invoked for field "//&
+            trim(adjustl(oneVarTable(oneVarTableSize)%name))//&
+            " with unknown imean="//trim(adjustl(str(1))))
+    end if
+    
+    ! store full field
+
+    oneVarTable(oneVarTableSize)%var_p_3D => var
+
+    ! store average field if desired
+
+    if (imean == 1) then
+       oneVarTable(oneVarTableSize)%var_m_3D => varm
+    end if
+  end subroutine InsertVarTable_3D
+  
+
+
+  subroutine InsertVarTable_4D(oneVarTable, oneVarTableSize, var, tabstr, varm, imean)
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
+    real, pointer, intent(in) :: var(:,:,:,:)
+    character (len=*), intent(in) :: tabstr
+    real, pointer, intent(in) :: varm(:,:,:,:)
+    integer, intent(in) :: imean
+
+    integer(kind=int64) :: sizeVar
+    integer(kind=int64) :: sizeVarm
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(InsertVarTable_4D)**"
+
+    ! field size
+
+    sizeVar=int(size(var,1),int64) * &
+         int(size(var,2),int64) * &
+         int(size(var,3),int64) * &
+         int(size(var,4),int64)
+
+    ! get new entry and fill VarTable token dependent integer components
+
+    call NewVarTableEntry(oneVarTable, oneVarTableSize, sizeVar, imean, tabstr)
+
+    ! imean and varm compatibility
+    ! if imean==1, then varm should be allocated with the same size of var;
+    ! if imean==0, then varm should not be allocated
+
+    if (imean == 1) then
+       if (.not. associated(varm)) then
+          call fatal_error(h//" invoked for field "//&
+               trim(adjustl(oneVarTable(oneVarTableSize)%name))//&
+               " to use unassociated average field")
+       else
+          sizeVarm=int(size(varm,1),int64) * &
+               int(size(varm,2),int64) * &
+               int(size(varm,3),int64) * &
+               int(size(varm,4),int64)
+          if (sizeVar /= sizeVarm) then
+             write(str(1),"(i8)") size(var,1)
+             write(str(2),"(i8)") size(var,2)
+             write(str(3),"(i8)") size(var,3)
+             write(str(4),"(i8)") size(var,4)
+             write(str(5),"(i8)") size(varm,1)
+             write(str(6),"(i8)") size(varm,2)
+             write(str(7),"(i8)") size(varm,3)
+             write(str(8),"(i8)") size(varm,4)
+             call fatal_error(h//" invoked for field "//&
+                  trim(adjustl(oneVarTable(oneVarTableSize)%name))//&
+                  " to use varm("//&
+                  trim(adjustl(str(5)))//":"//&
+                  trim(adjustl(str(6)))//":"//&
+                  trim(adjustl(str(7)))//":"//&
+                  trim(adjustl(str(8)))//")"//&
+                  " with size incompatible to var("//&
+                  trim(adjustl(str(1)))//":"//&
+                  trim(adjustl(str(2)))//":"//&
+                  trim(adjustl(str(3)))//":"//&
+                  trim(adjustl(str(4)))//")")
+          end if
+       end if
+    else if (imean == 0) then
+       if (associated(varm)) then
+          call fatal_error(h//" invoked for current field "//&
+               trim(adjustl(oneVarTable(oneVarTableSize)%name))//&
+               " but average field is associated")
+       end if
+    else
+       write(str(1),"(i8)") imean
+       call fatal_error(h//" invoked for field "//&
+            trim(adjustl(oneVarTable(oneVarTableSize)%name))//&
+            " with unknown imean="//trim(adjustl(str(1))))
+    end if
+    
+    ! store full field
+
+    oneVarTable(oneVarTableSize)%var_p_4D => var
+
+    ! store average field if desired
+
+    if (imean == 1) then
+       oneVarTable(oneVarTableSize)%var_m_4D => varm
+    end if
+  end subroutine InsertVarTable_4D
+  
+  
 end module ModVarTable

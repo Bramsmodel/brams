@@ -18,7 +18,7 @@ module mem_grid
 
   use ModVarTable, only: &
        VarTable, &
-       InsertAtVarTable
+       InsertVarTable
 
   implicit none
   private
@@ -1063,911 +1063,348 @@ contains
 
 
 
-  subroutine filltab_grid(oneVarTable, oneVarTableSize, grid, gridm)
+  subroutine filltab_grid(oneVarTable, oneVarTableSize, grid, gridm, imean)
+
+    ! Build VarTable entry with grid_vars components
+
     implicit none
     type(VarTable), pointer, intent(in) :: oneVarTable(:)
     integer, intent(inout) :: oneVarTableSize
     type (grid_vars), pointer, intent(in) :: grid
     type (grid_vars), pointer, intent(in) :: gridm
-
-
-    ! Fill pointers to arrays into variable tables
+    integer, intent(in) :: imean
 
     if (associated(grid%topt)) then
-       if (associated(gridm)) then
-          if (associated(gridm%topt)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%topt, &
-                  'TOPT :2:hist:anal:mpti', &
-                  gridm%topt)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%topt, &
-                  'TOPT :2:hist:anal:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%topt, &
-               'TOPT :2:hist:anal:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%topt, &
+            'TOPT :2:hist:anal:mpti', &
+            gridm%topt, imean)
     end if
 
     if (associated(grid%topu)) then
-       if (associated(gridm)) then
-          if (associated(gridm%topu)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%topu, &
-                  'TOPU :2:mpti', &
-                  gridm%topu)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%topu, &
-                  'TOPU :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%topu, &
-               'TOPU :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%topu, &
+            'TOPU :2:mpti', &
+            gridm%topu, imean)
     end if
 
     if (associated(grid%topv)) then
-       if (associated(gridm)) then
-          if (associated(gridm%topv)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%topv, &
-                  'TOPV :2:mpti', &
-                  gridm%topv)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%topv, &
-                  'TOPV :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%topv, &
-               'TOPV :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%topv, &
+            'TOPV :2:mpti', &
+            gridm%topv, imean)
     end if
 
     if (associated(grid%topm)) then
-       if (associated(gridm)) then
-          if (associated(gridm%topm)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%topm, &
-                  'TOPM :2:mpti', &
-                  gridm%topm)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%topm, &
-                  'TOPM :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%topm, &
-               'TOPM :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%topm, &
+            'TOPM :2:mpti', &
+            gridm%topm, imean)
     end if
 
     if (associated(grid%topma)) then
-       if (associated(gridm)) then
-          if (associated(gridm%topma)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%topma, &
-                  'TOPMA :2:hist:anal:mpti', &
-                  gridm%topma)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%topma, &
-                  'TOPMA :2:hist:anal:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%topma, &
-               'TOPMA :2:hist:anal:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%topma, &
+            'TOPMA :2:hist:anal:mpti', &
+            gridm%topma, imean)
     end if
 
 
     if (associated(grid%topta)) then
-       if (associated(gridm)) then
-          if (associated(gridm%topta)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%topta, &
-                  'TOPTA :2:hist:anal:mpti', &
-                  gridm%topta)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%topta, &
-                  'TOPTA :2:hist:anal:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%topta, &
-               'TOPTA :2:hist:anal:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%topta, &
+            'TOPTA :2:hist:anal:mpti', &
+            gridm%topta, imean)
     end if
 
     if (associated(grid%rtgt)) then
-       if (associated(gridm)) then
-          if (associated(gridm%rtgt)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%rtgt, &
-                  'RTGT :2:mpti', &
-                  gridm%rtgt)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%rtgt, &
-                  'RTGT :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%rtgt, &
-               'RTGT :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%rtgt, &
+            'RTGT :2:mpti', &
+            gridm%rtgt, imean)
     end if
 
     if (associated(grid%rtgu)) then
-       if (associated(gridm)) then
-          if (associated(gridm%rtgu)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%rtgu, &
-                  'RTGU :2:mpti', &
-                  gridm%rtgu)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%rtgu, &
-                  'RTGU :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%rtgu, &
-               'RTGU :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%rtgu, &
+            'RTGU :2:mpti', &
+            gridm%rtgu, imean)
     end if
 
     if (associated(grid%rtgv)) then
-       if (associated(gridm)) then
-          if (associated(gridm%rtgv)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%rtgv, &
-                  'RTGV :2:mpti', &
-                  gridm%rtgv)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%rtgv, &
-                  'RTGV :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%rtgv, &
-               'RTGV :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%rtgv, &
+            'RTGV :2:mpti', &
+            gridm%rtgv, imean)
     end if
 
     if (associated(grid%rtgm)) then
-       if (associated(gridm)) then
-          if (associated(gridm%rtgm)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%rtgm, &
-                  'RTGM :2:mpti', &
-                  gridm%rtgm)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%rtgm, &
-                  'RTGM :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%rtgm, &
-               'RTGM :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%rtgm, &
+            'RTGM :2:mpti', &
+            gridm%rtgm, imean)
     end if
 
     if (associated(grid%f13t)) then
-       if (associated(gridm)) then
-          if (associated(gridm%f13t)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%f13t, &
-                  'F13T :2:mpti', &
-                  gridm%f13t)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%f13t, &
-                  'F13T :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%f13t, &
-               'F13T :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%f13t, &
+            'F13T :2:mpti', &
+            gridm%f13t, imean)
     end if
 
     if (associated(grid%f13u)) then
-       if (associated(gridm)) then
-          if (associated(gridm%f13u)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%f13u, &
-                  'F13U :2:mpti', &
-                  gridm%f13u)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%f13u, &
-                  'F13U :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%f13u, &
-               'F13U :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%f13u, &
+            'F13U :2:mpti', &
+            gridm%f13u, imean)
     end if
 
     if (associated(grid%f13v)) then
-       if (associated(gridm)) then
-          if (associated(gridm%f13v)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%f13v, &
-                  'F13V :2:mpti', &
-                  gridm%f13v)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%f13v, &
-                  'F13V :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%f13v, &
-               'F13V :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%f13v, &
+            'F13V :2:mpti', &
+            gridm%f13v, imean)
     end if
 
     if (associated(grid%f13m)) then
-       if (associated(gridm)) then
-          if (associated(gridm%f13m)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%f13m, &
-                  'F13M :2:mpti', &
-                  gridm%f13m)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%f13m, &
-                  'F13M :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%f13m, &
-               'F13M :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%f13m, &
+            'F13M :2:mpti', &
+            gridm%f13m, imean)
     end if
 
     if (associated(grid%f23t)) then
-       if (associated(gridm)) then
-          if (associated(gridm%f23t)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%f23t, &
-                  'F23T :2:mpti', &
-                  gridm%f23t)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%f23t, &
-                  'F23T :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%f23t, &
-               'F23T :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%f23t, &
+            'F23T :2:mpti', &
+            gridm%f23t, imean)
     end if
 
     if (associated(grid%f23u)) then
-       if (associated(gridm)) then
-          if (associated(gridm%f23u)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%f23u, &
-                  'F23U :2:mpti', &
-                  gridm%f23u)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%f23u, &
-                  'F23U :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%f23u, &
-               'F23U :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%f23u, &
+            'F23U :2:mpti', &
+            gridm%f23u, imean)
     end if
 
     if (associated(grid%f23v)) then
-       if (associated(gridm)) then
-          if (associated(gridm%f23v)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%f23v, &
-                  'F23V :2:mpti', &
-                  gridm%f23v)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%f23v, &
-                  'F23V :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%f23v, &
-               'F23V :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%f23v, &
+            'F23V :2:mpti', &
+            gridm%f23v, imean)
     end if
 
     if (associated(grid%f23m)) then
-       if (associated(gridm)) then
-          if (associated(gridm%f23m)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%f23m, &
-                  'F23M :2:mpti', &
-                  gridm%f23m)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%f23m, &
-                  'F23M :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%f23m, &
-               'F23M :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%f23m, &
+            'F23M :2:mpti', &
+            gridm%f23m, imean)
     end if
 
     if (associated(grid%dxt)) then
-       if (associated(gridm)) then
-          if (associated(gridm%dxt)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%dxt, &
-                  'DXT :2:mpti', &
-                  gridm%dxt)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%dxt, &
-                  'DXT :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%dxt, &
-               'DXT :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%dxt, &
+            'DXT :2:mpti', &
+            gridm%dxt, imean)
     end if
 
     if (associated(grid%dxu)) then
-       if (associated(gridm)) then
-          if (associated(gridm%dxu)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%dxu, &
-                  'DXU :2:mpti', &
-                  gridm%dxu)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%dxu, &
-                  'DXU :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%dxu, &
-               'DXU :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%dxu, &
+            'DXU :2:mpti', &
+            gridm%dxu, imean)
     end if
 
     if (associated(grid%dxv)) then
-       if (associated(gridm)) then
-          if (associated(gridm%dxv)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%dxv, &
-                  'DXV :2:mpti', &
-                  gridm%dxv)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%dxv, &
-                  'DXV :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%dxv, &
-               'DXV :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%dxv, &
+            'DXV :2:mpti', &
+            gridm%dxv, imean)
     end if
 
     if (associated(grid%dxm)) then
-       if (associated(gridm)) then
-          if (associated(gridm%dxm)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%dxm, &
-                  'DXM :2:mpti', &
-                  gridm%dxm)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%dxm, &
-                  'DXM :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%dxm, &
-               'DXM :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%dxm, &
+            'DXM :2:mpti', &
+            gridm%dxm, imean)
     end if
 
     if (associated(grid%dyt)) then
-       if (associated(gridm)) then
-          if (associated(gridm%dyt)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%dyt, &
-                  'DYT :2:mpti', &
-                  gridm%dyt)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%dyt, &
-                  'DYT :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%dyt, &
-               'DYT :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%dyt, &
+            'DYT :2:mpti', &
+            gridm%dyt, imean)
     end if
 
     if (associated(grid%dyu)) then
-       if (associated(gridm)) then
-          if (associated(gridm%dyu)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%dyu, &
-                  'DYU :2:mpti', &
-                  gridm%dyu)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%dyu, &
-                  'DYU :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%dyu, &
-               'DYU :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%dyu, &
+            'DYU :2:mpti', &
+            gridm%dyu, imean)
     end if
 
     if (associated(grid%dyv)) then
-       if (associated(gridm)) then
-          if (associated(gridm%dyv)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%dyv, &
-                  'DYV :2:mpti', &
-                  gridm%dyv)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%dyv, &
-                  'DYV :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%dyv, &
-               'DYV :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%dyv, &
+            'DYV :2:mpti', &
+            gridm%dyv, imean)
     end if
 
     if (associated(grid%dym)) then
-       if (associated(gridm)) then
-          if (associated(gridm%dym)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%dym, &
-                  'DYM :2:mpti', &
-                  gridm%dym)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%dym, &
-                  'DYM :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%dym, &
-               'DYM :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%dym, &
+            'DYM :2:mpti', &
+            gridm%dym, imean)
     end if
 
     if (associated(grid%fmapt)) then
-       if (associated(gridm)) then
-          if (associated(gridm%fmapt)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%fmapt, &
-                  'FMAPT :2:mpti', &
-                  gridm%fmapt)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%fmapt, &
-                  'FMAPT :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%fmapt, &
-               'FMAPT :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%fmapt, &
+            'FMAPT :2:mpti', &
+            gridm%fmapt, imean)
     end if
 
     if (associated(grid%fmapu)) then
-       if (associated(gridm)) then
-          if (associated(gridm%fmapu)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%fmapu, &
-                  'FMAPU :2:mpti', &
-                  gridm%fmapu)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%fmapu, &
-                  'FMAPU :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%fmapu, &
-               'FMAPU :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%fmapu, &
+            'FMAPU :2:mpti', &
+            gridm%fmapu, imean)
     end if
 
     if (associated(grid%fmapv)) then
-       if (associated(gridm)) then
-          if (associated(gridm%fmapv)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%fmapv, &
-                  'FMAPV :2:mpti', &
-                  gridm%fmapv)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%fmapv, &
-                  'FMAPV :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%fmapv, &
-               'FMAPV :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%fmapv, &
+            'FMAPV :2:mpti', &
+            gridm%fmapv, imean)
     end if
 
     if (associated(grid%fmapm)) then
-       if (associated(gridm)) then
-          if (associated(gridm%fmapm)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%fmapm, &
-                  'FMAPM :2:mpti', &
-                  gridm%fmapm)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%fmapm, &
-                  'FMAPM :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%fmapm, &
-               'FMAPM :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%fmapm, &
+            'FMAPM :2:mpti', &
+            gridm%fmapm, imean)
     end if
 
     if (associated(grid%fmapti)) then
-       if (associated(gridm)) then
-          if (associated(gridm%fmapti)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%fmapti, &
-                  'FMAPTI :2:mpti', &
-                  gridm%fmapti)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%fmapti, &
-                  'FMAPTI :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%fmapti, &
-               'FMAPTI :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%fmapti, &
+            'FMAPTI :2:mpti', &
+            gridm%fmapti, imean)
     end if
 
     if (associated(grid%fmapui)) then
-       if (associated(gridm)) then
-          if (associated(gridm%fmapui)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%fmapui, &
-                  'FMAPUI :2:mpti', &
-                  gridm%fmapui)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%fmapui, &
-                  'FMAPUI :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%fmapui, &
-               'FMAPUI :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%fmapui, &
+            'FMAPUI :2:mpti', &
+            gridm%fmapui, imean)
     end if
 
     if (associated(grid%fmapvi)) then
-       if (associated(gridm)) then
-          if (associated(gridm%fmapvi)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%fmapvi, &
-                  'FMAPVI :2:mpti', &
-                  gridm%fmapvi)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%fmapvi, &
-                  'FMAPVI :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%fmapvi, &
-               'FMAPVI :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%fmapvi, &
+            'FMAPVI :2:mpti', &
+            gridm%fmapvi, imean)
     end if
 
     if (associated(grid%fmapmi)) then
-       if (associated(gridm)) then
-          if (associated(gridm%fmapmi)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%fmapmi, &
-                  'FMAPMI :2:mpti', &
-                  gridm%fmapmi)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%fmapmi, &
-                  'FMAPMI :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%fmapmi, &
-               'FMAPMI :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%fmapmi, &
+            'FMAPMI :2:mpti', &
+            gridm%fmapmi, imean)
     end if
 
     if (associated(grid%glat)) then
-       if (associated(gridm)) then
-          if (associated(gridm%glat)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%glat, &
-                  'GLAT :2:mpti:anal', &
-                  gridm%glat)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%glat, &
-                  'GLAT :2:mpti:anal')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%glat, &
-               'GLAT :2:mpti:anal')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%glat, &
+            'GLAT :2:mpti:anal', &
+            gridm%glat, imean)
     end if
 
     if (associated(grid%glon)) then
-       if (associated(gridm)) then
-          if (associated(gridm%glon)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%glon, &
-                  'GLON :2:mpti:anal', &
-                  gridm%glon)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%glon, &
-                  'GLON :2:mpti:anal')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%glon, &
-               'GLON :2:mpti:anal')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%glon, &
+            'GLON :2:mpti:anal', &
+            gridm%glon, imean)
     end if
 
     if (associated(grid%topzo)) then
-       if (associated(gridm)) then
-          if (associated(gridm%topzo)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%topzo, &
-                  'TOPZO :2:mpti', &
-                  gridm%topzo)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%topzo, &
-                  'TOPZO :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%topzo, &
-               'TOPZO :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%topzo, &
+            'TOPZO :2:mpti', &
+            gridm%topzo, imean)
     end if
 
 
     if (associated(grid%lpu)) then
-       if (associated(gridm)) then
-          if (associated(gridm%lpu)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%lpu, &
-                  'LPU :2:mpti', &
-                  gridm%lpu)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%lpu, &
-                  'LPU :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%lpu, &
-               'LPU :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%lpu, &
+            'LPU :2:mpti', &
+            gridm%lpu, imean)
     end if
 
     if (associated(grid%lpv)) then
-       if (associated(gridm)) then
-          if (associated(gridm%lpv)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%lpv, &
-                  'LPV :2:mpti', &
-                  gridm%lpv)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%lpv, &
-                  'LPV :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%lpv, &
-               'LPV :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%lpv, &
+            'LPV :2:mpti', &
+            gridm%lpv, imean)
     end if
 
     if (associated(grid%lpw)) then
-       if (associated(gridm)) then
-          if (associated(gridm%lpw)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%lpw, &
-                  'LPW :2:mpti', &
-                  gridm%lpw)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%lpw, &
-                  'LPW :2:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%lpw, &
-               'LPW :2:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%lpw, &
+            'LPW :2:mpti', &
+            gridm%lpw, imean)
     end if
 
 
     if (associated(grid%aru)) then
-       if (associated(gridm)) then
-          if (associated(gridm%aru)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%aru, &
-                  'ARU :3:mpti', &
-                  gridm%aru)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%aru, &
-                  'ARU :3:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%aru, &
-               'ARU :3:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%aru, &
+            'ARU :3:mpti', &
+            gridm%aru, imean)
     end if
 
     if (associated(grid%arv)) then
-       if (associated(gridm)) then
-          if (associated(gridm%arv)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%arv, &
-                  'ARV :3:mpti', &
-                  gridm%arv)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%arv, &
-                  'ARV :3:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%arv, &
-               'ARV :3:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%arv, &
+            'ARV :3:mpti', &
+            gridm%arv, imean)
     end if
 
     if (associated(grid%arw)) then
-       if (associated(gridm)) then
-          if (associated(gridm%arw)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%arw, &
-                  'ARW :3:mpti', &
-                  gridm%arw)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%arw, &
-                  'ARW :3:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%arw, &
-               'ARW :3:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%arw, &
+            'ARW :3:mpti', &
+            gridm%arw, imean)
     end if
 
 
     if (associated(grid%volu)) then
-       if (associated(gridm)) then
-          if (associated(gridm%volu)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%volu, &
-                  'VOLU :3:mpti', &
-                  gridm%volu)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%volu, &
-                  'VOLU :3:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%volu, &
-               'VOLU :3:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%volu, &
+            'VOLU :3:mpti', &
+            gridm%volu, imean)
     end if
 
     if (associated(grid%volv)) then
-       if (associated(gridm)) then
-          if (associated(gridm%volv)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%volv, &
-                  'VOLV :3:mpti', &
-                  gridm%volv)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%volv, &
-                  'VOLV :3:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%volv, &
-               'VOLV :3:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%volv, &
+            'VOLV :3:mpti', &
+            gridm%volv, imean)
     end if
 
     if (associated(grid%volw)) then
-       if (associated(gridm)) then
-          if (associated(gridm%volw)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%volw, &
-                  'VOLW :3:mpti', &
-                  gridm%volw)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%volw, &
-                  'VOLW :3:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%volw, &
-               'VOLW :3:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%volw, &
+            'VOLW :3:mpti', &
+            gridm%volw, imean)
     end if
 
     if (associated(grid%volt)) then
-       if (associated(gridm)) then
-          if (associated(gridm%volt)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%volt, &
-                  'VOLT :3:anal:mpti', &
-                  gridm%volt)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grid%volt, &
-                  'VOLT :3:anal:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               grid%volt, &
-               'VOLT :3:anal:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            grid%volt, &
+            'VOLT :3:anal:mpti', &
+            gridm%volt, imean)
     end if
   end subroutine filltab_grid
 

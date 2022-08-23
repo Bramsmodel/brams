@@ -716,7 +716,7 @@ contains
     type(Grid), pointer :: oneGrid => null()
     type(AllPostTypes), pointer :: oneAllPostTypes => null()
 
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     logical :: dirExist
     character(len=255) :: tmpdir
@@ -1602,15 +1602,17 @@ contains
 
 
   subroutine initOneProc (AllGrids, name_name)
+
+    ! Driver of all initialization packages
+
+
     include "constants.h"
     type(GridTree), pointer :: AllGrids
     character(len=*), intent(in) :: name_name
-    character(len=*), parameter :: h="**(initOneProc)**"
-    character(len=*), parameter :: header="**(initOneProc)**"
 
-    !---------------------------------------------------------------------
-    !     *** This routine is the driver of all initialization packages
-    !---------------------------------------------------------------------
+    logical, parameter :: dumpLocal=.true.
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(initOneProc)**"
 
     character(len=8) :: rest
     integer :: ifm,icm,ihm,ngr,nv,ierr
@@ -1697,7 +1699,7 @@ contains
 
           !**(JP)** not worked yet
           !call fatal_error(h//"**(JP)** initial==1 or initial==3 was not worked yet")
-          iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
+          iErrNumber=dumpMessage(c_tty,c_yes,h,c_modelVersion,c_fatal, &
                "**(JP)** initial==1 or initial==3 was not worked yet")
           ! If horizontally homogeneous initialization,
           !    subroutine INITHH loops through all grids and initializes
@@ -1875,7 +1877,7 @@ contains
 
           !**(JP)** not worked yet
           !call fatal_error(h//"**(JP)** isfcl==3 was not worked yet")
-          iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
+          iErrNumber=dumpMessage(c_tty,c_yes,h,c_modelVersion,c_fatal, &
                "**(JP)**isfcl==3 was not worked yet")
        endif
 
@@ -2099,7 +2101,7 @@ contains
 
           !**(JP)** not worked yet
           !call fatal_error(h//"**(JP)** sfcinit_hstart was not worked yet")
-          iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
+          iErrNumber=dumpMessage(c_tty,c_yes,h,c_modelVersion,c_fatal, &
                "**(JP)** sfcinit_hstart was not worked yet")
           call sfcinit_hstart(oneGrid%oneBasicFields)
        end if
@@ -2255,7 +2257,7 @@ contains
 
     else
        !call fatal_error(h//" wrong runtype")
-       iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
+       iErrNumber=dumpMessage(c_tty,c_yes,h,c_modelVersion,c_fatal, &
             "wrong runtype")
     endif
 
@@ -2293,7 +2295,7 @@ contains
 
        !**(JP)** not worked yet
        !call fatal_error(h//"**(JP)** nud_type==1 was not worked yet")
-       iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
+       iErrNumber=dumpMessage(c_tty,c_yes,h,c_modelVersion,c_fatal, &
             "**(JP)** nud_type==1 was not worked yet")
        call nud_read(1, oneGrid%oneVarTable, oneGrid%oneVarTableSize)
 
@@ -2313,7 +2315,7 @@ contains
 
        !**(JP)** not worked yet
        !call fatal_error(h//"**(JP)** nud_cond==1 was not worked yet")
-       iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
+       iErrNumber=dumpMessage(c_tty,c_yes,h,c_modelVersion,c_fatal, &
             "**(JP)** nud_cond==1 was not worked yet")
        call cond_read(1, oneGrid%oneVarTable, oneGrid%oneVarTableSize)
 
@@ -2325,7 +2327,7 @@ contains
 
        !**(JP)** not worked yet
        !call fatal_error(h//"**(JP)** if_oda==1 was not worked yet")
-       iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
+       iErrNumber=dumpMessage(c_tty,c_yes,h,c_modelVersion,c_fatal, &
             "**(JP)** if_oda==1 was not worked yet")
        call oda_read()
 
@@ -2338,7 +2340,7 @@ contains
 
        !**(JP)** not worked yet
        !call fatal_error(h//"**(JP)** if_cuinv==1 was not worked yet")
-       iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
+       iErrNumber=dumpMessage(c_tty,c_yes,h,c_modelVersion,c_fatal, &
             "**(JP)** if_cuinv==1 was not worked yet")
        call cu_read(1)
 
@@ -2350,7 +2352,7 @@ contains
 
        !**(JP)** not worked yet
        !call fatal_error(h//"**(JP)** if_urban_canopy==1 was not worked yet")
-       iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
+       iErrNumber=dumpMessage(c_tty,c_yes,h,c_modelVersion,c_fatal, &
             "**(JP)** if_urban_canopy==1 was not worked yet")
        call urb_drag_init(oneGrid%oneTurbFields)
     end if
@@ -2411,28 +2413,76 @@ contains
 
        !**(JP)** not converted yet
        !call fatal_error(h//" avgtim /= 0 was not converted yet")
-!!$       iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
+!!$       iErrNumber=dumpMessage(c_tty,c_yes,h,c_modelVersion,c_fatal, &
 !!$            "**(JP)** avgtim/=0 was not worked yet")
 
        do ngr=1,ngrids
           do nv=1,oneGrid%oneVarTableSize
              if(oneGrid%oneVarTable(nv)%imean == 1) then
                 if (oneGrid%oneVarTable(nv)%idim_type == 2) then
+                   if (dumpLocal) then
+                      write(str(1),"(i8)") size(oneGrid%oneVarTable(nv)%var_m_2D)
+                      write(str(2),"(i8)") size(oneGrid%oneVarTable(nv)%var_p_2D)
+                      call MsgDump(h//" VarTable entry "//&
+                           trim(adjustl(oneGrid%oneVarTable(nv)%name))//&
+                           " var_m_2D(1:"//trim(adjustl(str(1)))//") = "//&
+                           " var_p_2D(1:"//trim(adjustl(str(2)))//")")
+                   end if
                    oneGrid%oneVarTable(nv)%var_m_2D(:,:)=oneGrid%oneVarTable(nv)%var_p_2D(:,:)
                         
                 else if (oneGrid%oneVarTable(nv)%idim_type == 3) then
+                   if (dumpLocal) then
+                      write(str(1),"(i8)") size(oneGrid%oneVarTable(nv)%var_m_3D)
+                      write(str(2),"(i8)") size(oneGrid%oneVarTable(nv)%var_p_3D)
+                      call MsgDump(h//" VarTable entry "//&
+                           trim(adjustl(oneGrid%oneVarTable(nv)%name))//&
+                           " var_m_3D(1:"//trim(adjustl(str(1)))//") = "//&
+                           " var_p_3D(1:"//trim(adjustl(str(2)))//")")
+                   end if
                    oneGrid%oneVarTable(nv)%var_m_3D(:,:,:)=oneGrid%oneVarTable(nv)%var_p_3D(:,:,:)
                         
                 else if (oneGrid%oneVarTable(nv)%idim_type == 4) then
+                   if (dumpLocal) then
+                      write(str(1),"(i8)") size(oneGrid%oneVarTable(nv)%var_m_4D)
+                      write(str(2),"(i8)") size(oneGrid%oneVarTable(nv)%var_p_4D)
+                      call MsgDump(h//" VarTable entry "//&
+                           trim(adjustl(oneGrid%oneVarTable(nv)%name))//&
+                           " var_m_4D(1:"//trim(adjustl(str(1)))//") = "//&
+                           " var_p_4D(1:"//trim(adjustl(str(2)))//")")
+                   end if
                    oneGrid%oneVarTable(nv)%var_m_4D(:,:,:,:)=oneGrid%oneVarTable(nv)%var_p_4D(:,:,:,:)
                         
                 else if (oneGrid%oneVarTable(nv)%idim_type == 5) then
+                   if (dumpLocal) then
+                      write(str(1),"(i8)") size(oneGrid%oneVarTable(nv)%var_m_4D)
+                      write(str(2),"(i8)") size(oneGrid%oneVarTable(nv)%var_p_4D)
+                      call MsgDump(h//" VarTable entry "//&
+                           trim(adjustl(oneGrid%oneVarTable(nv)%name))//&
+                           " var_m_4D(1:"//trim(adjustl(str(1)))//") = "//&
+                           " var_p_4D(1:"//trim(adjustl(str(2)))//")")
+                   end if
                    oneGrid%oneVarTable(nv)%var_m_4D(:,:,:,:)=oneGrid%oneVarTable(nv)%var_p_4D(:,:,:,:)
                         
                 else if (oneGrid%oneVarTable(nv)%idim_type == 6) then
+                   if (dumpLocal) then
+                      write(str(1),"(i8)") size(oneGrid%oneVarTable(nv)%var_m_3D)
+                      write(str(2),"(i8)") size(oneGrid%oneVarTable(nv)%var_p_3D)
+                      call MsgDump(h//" VarTable entry "//&
+                           trim(adjustl(oneGrid%oneVarTable(nv)%name))//&
+                           " var_m_3D(1:"//trim(adjustl(str(1)))//") = "//&
+                           " var_p_3D(1:"//trim(adjustl(str(2)))//")")
+                   end if
                    oneGrid%oneVarTable(nv)%var_m_3D(:,:,:)=oneGrid%oneVarTable(nv)%var_p_3D(:,:,:)
                         
                 else if (oneGrid%oneVarTable(nv)%idim_type == 7) then
+                   if (dumpLocal) then
+                      write(str(1),"(i8)") size(oneGrid%oneVarTable(nv)%var_m_3D)
+                      write(str(2),"(i8)") size(oneGrid%oneVarTable(nv)%var_p_3D)
+                      call MsgDump(h//" VarTable entry "//&
+                           trim(adjustl(oneGrid%oneVarTable(nv)%name))//&
+                           " var_m_3D(1:"//trim(adjustl(str(1)))//") = "//&
+                           " var_p_3D(1:"//trim(adjustl(str(2)))//")")
+                   end if
                    oneGrid%oneVarTable(nv)%var_m_3D(:,:,:)=oneGrid%oneVarTable(nv)%var_p_3D(:,:,:)
                         
                 end if
@@ -2441,7 +2491,7 @@ contains
        enddo
     endif
 
-    ! Print the header information and initial fields
+    ! Print the h information and initial fields
     if (mchnum == master_num) then
        call PrtOpt()
     end if
