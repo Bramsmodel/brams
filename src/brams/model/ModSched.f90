@@ -31,6 +31,9 @@ module ModSched
   !# @endwarning
   !#
 
+  use ModParallelEnvironment, only: &
+       MsgDump
+  
   use dump, only: &
        dumpMessage
 
@@ -642,6 +645,22 @@ contains
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     integer, intent(in) :: gridId
 
+    character(len=16) :: str(10)
+    character(len=*), parameter :: h="**(cfl)**"
+
+    if (.not. associated(oneBasicFields)) then
+       call fatal_error(h//" oneBasicFields not associated")
+    else if (.not. associated(oneNamelistFile)) then
+       call fatal_error(h//" oneNamelistFile not associated")
+    else if (.not. associated(grid_g)) then
+       call fatal_error(h//" grid_g not associated")
+    else if (size(grid_g) < ngrid) then
+       write(str(1),"(i8)") ngrid
+       write(str(2),"(i8)") size(grid_g)
+       call fatal_error(h//" size of grid_g is "//trim(adjustl(str(2)))//&
+            " but is referenced with index "//trim(adjustl(str(1))))
+    end if
+
     call cfll(n1,n2,n3,i0,j0  &
          ,oneBasicFields%up     ,oneBasicFields%vp     &
          ,oneBasicFields%wp     ,grid_g(ngrid)%rtgt    &
@@ -655,20 +674,19 @@ contains
 
   subroutine cfll(n1,n2,n3,i0,j0,up,vp,wp,rtgt,f13t,f23t,dxt,dyt,&
        oneBasicFields, oneNamelistFile, gridId)
-    character(len=*),parameter :: h='**(cfll)**'
     integer, intent(in) :: n1
     integer, intent(in) :: n2
     integer, intent(in) :: n3
     integer, intent(in) :: i0
     integer, intent(in) :: j0
-    real,    intent(in) :: up(n1,n2,n3)
-    real,    intent(in) :: vp(n1,n2,n3)
-    real,    intent(in) :: wp(n1,n2,n3)
-    real,    intent(in) :: rtgt(n2,n3)
-    real,    intent(in) :: f13t(n2,n3)
-    real,    intent(in) :: f23t(n2,n3)
-    real,    intent(in) :: dxt(n2,n3)
-    real,    intent(in) :: dyt(n2,n3)
+    real, pointer, intent(in) :: up(:,:,:)
+    real, pointer, intent(in) :: vp(:,:,:)
+    real, pointer, intent(in) :: wp(:,:,:)
+    real, pointer, intent(in) :: rtgt(:,:)
+    real, pointer, intent(in) :: f13t(:,:)
+    real, pointer, intent(in) :: f23t(:,:)
+    real, pointer, intent(in) :: dxt(:,:)
+    real, pointer, intent(in) :: dyt(:,:)
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     integer, intent(in) :: gridId
@@ -683,6 +701,11 @@ contains
     real :: vctr3(n1)
     character(len=5) :: cproc
 
+    integer :: ierr
+    logical, parameter :: dumpLocal=.true.
+    character(len=16) :: str(10)
+    character(len=*), parameter :: h="**(cfll)**"
+
     !     This routine returns flags the model to bring itself down when the CFL
     !     linear stability criteria on advection is exceeded.
     !     (Actually check on 90% of CFL)
@@ -692,7 +715,6 @@ contains
     cflxy(ngrid) = 0.
     cflz(ngrid) = 0.
     cfl_max_sum = 0.0
-
 
     ! Let's try a new thing... if we have a grid point that is on a
     !   coarse grid, but it is under a nested grid, we will ignore it
@@ -737,7 +759,14 @@ contains
              c1z = maxval(abs(vctr3(2:n1-1)))
              cfl_sum = c1x + c1y + c1z
              akminvar(ngrid)%akmin2d(i,j)=1.0+max(0.,atan(cfl_sum-0.1)**3.)/0.310
-             if(cfl_sum>1.6) print*,"cfl_sum=",cfl_sum,max(0.,atan(cfl_sum-0.1)**3.)/0.310,maxval(vctr3(2:n1-1)),mynum;call flush(6)
+             if(cfl_sum>1.6) then
+                print*,"cfl_sum=",&
+                     cfl_sum,&
+                     max(0.,atan(cfl_sum-0.1)**3.)/0.310,&
+                     maxval(vctr3(2:n1-1)),&
+                     mynum
+                call flush(6)
+             end if
           endif
 
           do k = 2,n1-1
@@ -812,8 +841,6 @@ contains
        stop "ERROR in cfl1: false value for dyncore_flag!"
     end if
 
-
-    return
   end subroutine cfll
 
 

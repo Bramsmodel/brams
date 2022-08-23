@@ -2411,30 +2411,30 @@ contains
 
        !**(JP)** not converted yet
        !call fatal_error(h//" avgtim /= 0 was not converted yet")
-       iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
-            "**(JP)** avgtim/=0 was not worked yet")
+!!$       iErrNumber=dumpMessage(c_tty,c_yes,header,c_modelVersion,c_fatal, &
+!!$            "**(JP)** avgtim/=0 was not worked yet")
 
        do ngr=1,ngrids
           do nv=1,oneGrid%oneVarTableSize
              if(oneGrid%oneVarTable(nv)%imean == 1) then
                 if (oneGrid%oneVarTable(nv)%idim_type == 2) then
-                   call atob_long(oneGrid%oneVarTable(nv)%npts, oneGrid%oneVarTable(nv)%var_p_2D, &
-                        oneGrid%oneVarTable(nv)%var_m_2D)
+                   oneGrid%oneVarTable(nv)%var_m_2D(:,:)=oneGrid%oneVarTable(nv)%var_p_2D(:,:)
+                        
                 else if (oneGrid%oneVarTable(nv)%idim_type == 3) then
-                   call atob_long(oneGrid%oneVarTable(nv)%npts, oneGrid%oneVarTable(nv)%var_p_3D, &
-                        oneGrid%oneVarTable(nv)%var_m_3D)
+                   oneGrid%oneVarTable(nv)%var_m_3D(:,:,:)=oneGrid%oneVarTable(nv)%var_p_3D(:,:,:)
+                        
                 else if (oneGrid%oneVarTable(nv)%idim_type == 4) then
-                   call atob_long(oneGrid%oneVarTable(nv)%npts, oneGrid%oneVarTable(nv)%var_p_4D, &
-                        oneGrid%oneVarTable(nv)%var_m_4D)
+                   oneGrid%oneVarTable(nv)%var_m_4D(:,:,:,:)=oneGrid%oneVarTable(nv)%var_p_4D(:,:,:,:)
+                        
                 else if (oneGrid%oneVarTable(nv)%idim_type == 5) then
-                   call atob_long(oneGrid%oneVarTable(nv)%npts, oneGrid%oneVarTable(nv)%var_p_4D, &
-                        oneGrid%oneVarTable(nv)%var_m_4D)
+                   oneGrid%oneVarTable(nv)%var_m_4D(:,:,:,:)=oneGrid%oneVarTable(nv)%var_p_4D(:,:,:,:)
+                        
                 else if (oneGrid%oneVarTable(nv)%idim_type == 6) then
-                   call atob_long(oneGrid%oneVarTable(nv)%npts, oneGrid%oneVarTable(nv)%var_p_3D, &
-                        oneGrid%oneVarTable(nv)%var_m_3D)
+                   oneGrid%oneVarTable(nv)%var_m_3D(:,:,:)=oneGrid%oneVarTable(nv)%var_p_3D(:,:,:)
+                        
                 else if (oneGrid%oneVarTable(nv)%idim_type == 7) then
-                   call atob_long(oneGrid%oneVarTable(nv)%npts, oneGrid%oneVarTable(nv)%var_p_3D, &
-                        oneGrid%oneVarTable(nv)%var_m_3D)
+                   oneGrid%oneVarTable(nv)%var_m_3D(:,:,:)=oneGrid%oneVarTable(nv)%var_p_3D(:,:,:)
+                        
                 end if
              endif
           enddo
