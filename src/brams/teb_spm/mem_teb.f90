@@ -114,366 +114,158 @@ contains
 
 
   subroutine filltab_teb(oneVarTable, oneVarTableSize, &
-       teb, tebm)
+       teb, tebm, imean)
+
+    ! Build VarTable entry with teb_vars components
 
     use ModVarTable, only: &
          VarTable, &
-         InsertAtVarTable
+         InsertVarTable
 
     implicit none
     type(VarTable), pointer, intent(in) :: oneVarTable(:)
     integer, intent(inout) :: oneVarTableSize
     type(teb_vars), pointer, intent(in) :: teb
     type(teb_vars), pointer, intent(in) :: tebm
+    integer, intent(in) :: imean
 
-    logical :: assAve
-    logical :: assThis
     character(len=*), parameter :: h="**(filltab_ted)**"
 
-    assAve=associated(tebm)
-    
-    ! Fill pointers to arrays into variable tables
+    if (.not. associated(oneVarTable)) then
+       call fatal_error(h//" oneVarTable not associated")
+    end if
 
     if (associated(teb%T_ROOF)) then
-       if (assAve) then
-          assThis=associated(tebm%T_ROOF)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%T_ROOF, & 
-               'T_ROOF :3:hist:anal:lite:mpti:mpt3:mpt1', &
-               tebm%T_ROOF)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%T_ROOF, & 
-               'T_ROOF :3:hist:anal:lite:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            teb%T_ROOF, & 
+            'T_ROOF :3:hist:anal:lite:mpti:mpt3:mpt1', &
+            tebm%T_ROOF, imean)
     end if
 
     if (associated(teb%T_ROAD)) then
-       if (assAve) then
-          assThis=associated(tebm%T_ROAD)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%T_ROAD, & 
-               'T_ROAD :3:hist:anal:lite:mpti:mpt3:mpt1', &
-               tebm%T_ROAD)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%T_ROAD, & 
-               'T_ROAD :3:hist:anal:lite:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            teb%T_ROAD, & 
+            'T_ROAD :3:hist:anal:lite:mpti:mpt3:mpt1', &
+            tebm%T_ROAD, imean)
     end if
 
     if (associated(teb%T_WALL)) then
-       if (assAve) then
-          assThis=associated(tebm%T_WALL)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%T_WALL, & 
-               'T_WALL :3:hist:anal:lite:mpti:mpt3:mpt1', &
-               tebm%T_WALL)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%T_WALL, & 
-               'T_WALL :3:hist:anal:lite:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            teb%T_WALL, & 
+            'T_WALL :3:hist:anal:lite:mpti:mpt3:mpt1', &
+            tebm%T_WALL, imean)
     end if
 
     if (associated(teb%T_CANYON)) then
-       if (assAve) then
-          assThis=associated(tebm%T_CANYON)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%T_CANYON, & 
-               'T_CANYON :2:hist:anal:lite:mpti:mpt3:mpt1', &
-               tebm%T_CANYON)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%T_CANYON, & 
-               'T_CANYON :2:hist:anal:lite:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            teb%T_CANYON, & 
+            'T_CANYON :2:hist:anal:lite:mpti:mpt3:mpt1', &
+            tebm%T_CANYON, imean)
     end if
 
     if (associated(teb%R_CANYON)) then
-       if (assAve) then
-          assThis=associated(tebm%R_CANYON)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%R_CANYON, & 
-               'R_CANYON :2:hist:anal:lite:mpti:mpt3:mpt1', &
-               tebm%R_CANYON)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%R_CANYON, & 
-               'R_CANYON :2:hist:anal:lite:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            teb%R_CANYON, & 
+            'R_CANYON :2:hist:anal:lite:mpti:mpt3:mpt1', &
+            tebm%R_CANYON, imean)
     end if
 
     if (associated(teb%TS_ROOF)) then
-       if (assAve) then
-          assThis=associated(tebm%TS_ROOF)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%TS_ROOF, & 
-               'TS_ROOF :2:hist:anal:lite:mpti:mpt3:mpt1', &
-               tebm%TS_ROOF)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%TS_ROOF, & 
-               'TS_ROOF :2:hist:anal:lite:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            teb%TS_ROOF, & 
+            'TS_ROOF :2:hist:anal:lite:mpti:mpt3:mpt1', &
+            tebm%TS_ROOF, imean)
     end if
 
     if (associated(teb%TS_ROAD)) then
-       if (assAve) then
-          assThis=associated(tebm%TS_ROAD)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%TS_ROAD, & 
-               'TS_ROAD :2:hist:anal:lite:mpti:mpt3:mpt1', &
-               tebm%TS_ROAD)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%TS_ROAD, & 
-               'TS_ROAD :2:hist:anal:lite:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            teb%TS_ROAD, & 
+            'TS_ROAD :2:hist:anal:lite:mpti:mpt3:mpt1', &
+            tebm%TS_ROAD, imean)
     end if
 
     if (associated(teb%TS_WALL)) then
-       if (assAve) then
-          assThis=associated(tebm%TS_WALL)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%TS_WALL, & 
-               'TS_WALL :2:hist:anal:lite:mpti:mpt3:mpt1', &
-               tebm%TS_WALL)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%TS_WALL, & 
-               'TS_WALL :2:hist:anal:lite:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            teb%TS_WALL, & 
+            'TS_WALL :2:hist:anal:lite:mpti:mpt3:mpt1', &
+            tebm%TS_WALL, imean)
     end if
 
     if (associated(teb%TI_ROAD)) then
-       if (assAve) then
-          assThis=associated(tebm%TI_ROAD)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%TI_ROAD, & 
-               'TI_ROAD :2:hist:anal:lite:mpti:mpt3:mpt1', &
-               tebm%TI_ROAD)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%TI_ROAD, & 
-               'TI_ROAD :2:hist:anal:lite:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            teb%TI_ROAD, & 
+            'TI_ROAD :2:hist:anal:lite:mpti:mpt3:mpt1', &
+            tebm%TI_ROAD, imean)
     end if
 
     if (associated(teb%WS_ROOF)) then
-       if (assAve) then
-          assThis=associated(tebm%WS_ROOF)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%WS_ROOF, & 
-               'WS_ROOF :2:hist:anal:lite:mpti:mpt3:mpt1', &
-               tebm%WS_ROOF)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%WS_ROOF, & 
-               'WS_ROOF :2:hist:anal:lite:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            teb%WS_ROOF, & 
+            'WS_ROOF :2:hist:anal:lite:mpti:mpt3:mpt1', &
+            tebm%WS_ROOF, imean)
     end if
 
     if (associated(teb%WS_ROAD)) then
-       if (assAve) then
-          assThis=associated(tebm%WS_ROAD)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%WS_ROAD, & 
-               'WS_ROAD :2:hist:anal:lite:mpti:mpt3:mpt1', &
-               tebm%WS_ROAD)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%WS_ROAD, & 
-               'WS_ROAD :2:hist:anal:lite:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            teb%WS_ROAD, & 
+            'WS_ROAD :2:hist:anal:lite:mpti:mpt3:mpt1', &
+            tebm%WS_ROAD, imean)
     end if
 
     if (associated(teb%TI_BLD)) then
-       if (assAve) then
-          assThis=associated(tebm%TI_BLD)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%TI_BLD, & 
-               'TI_BLD :2:hist:anal:lite:mpti:mpt3:mpt1', &
-               tebm%TI_BLD)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%TI_BLD, & 
-               'TI_BLD :2:hist:anal:lite:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            teb%TI_BLD, & 
+            'TI_BLD :2:hist:anal:lite:mpti:mpt3:mpt1', &
+            tebm%TI_BLD, imean)
     end if
 
     if (associated(teb%LE_TRAFFIC)) then
-       if (assAve) then
-          assThis=associated(tebm%LE_TRAFFIC)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%LE_TRAFFIC, & 
-               'LE_TRAFFIC :2:hist:anal:lite:mpti:mpt3:mpt1', &
-               tebm%LE_TRAFFIC)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%LE_TRAFFIC, & 
-               'LE_TRAFFIC :2:hist:anal:lite:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            teb%LE_TRAFFIC, & 
+            'LE_TRAFFIC :2:hist:anal:lite:mpti:mpt3:mpt1', &
+            tebm%LE_TRAFFIC, imean)
     end if
 
     if (associated(teb%H_TRAFFIC)) then
-       if (assAve) then
-          assThis=associated(tebm%H_TRAFFIC)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%H_TRAFFIC, & 
-               'H_TRAFFIC :2:hist:anal:lite:mpti:mpt3:mpt1', &
-               tebm%H_TRAFFIC)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%H_TRAFFIC, & 
-               'H_TRAFFIC :2:hist:anal:lite:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            teb%H_TRAFFIC, & 
+            'H_TRAFFIC :2:hist:anal:lite:mpti:mpt3:mpt1', &
+            tebm%H_TRAFFIC, imean)
     end if
 
     if (associated(teb%LE_INDUSTRY)) then
-       if (assAve) then
-          assThis=associated(tebm%LE_INDUSTRY)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%LE_INDUSTRY, & 
-               'LE_INDUSTRY :2:hist:anal:lite:mpti:mpt3:mpt1', &
-               tebm%LE_INDUSTRY)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%LE_INDUSTRY, & 
-               'LE_INDUSTRY :2:hist:anal:lite:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            teb%LE_INDUSTRY, & 
+            'LE_INDUSTRY :2:hist:anal:lite:mpti:mpt3:mpt1', &
+            tebm%LE_INDUSTRY, imean)
     end if
 
     if (associated(teb%H_INDUSTRY)) then
-       if (assAve) then
-          assThis=associated(tebm%H_INDUSTRY)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%H_INDUSTRY, & 
-               'H_INDUSTRY :2:hist:anal:lite:mpti:mpt3:mpt1', &
-               tebm%H_INDUSTRY)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%H_INDUSTRY, & 
-               'H_INDUSTRY :2:hist:anal:lite:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            teb%H_INDUSTRY, & 
+            'H_INDUSTRY :2:hist:anal:lite:mpti:mpt3:mpt1', &
+            tebm%H_INDUSTRY, imean)
     end if
 
     if (associated(teb%T2M_TOWN)) then
-       if (assAve) then
-          assThis=associated(tebm%T2M_TOWN)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%T2M_TOWN, & 
-               'T2M_TOWN :2:hist:anal:lite:mpti:mpt3:mpt1', &
-               tebm%T2M_TOWN)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%T2M_TOWN, & 
-               'T2M_TOWN :2:hist:anal:lite:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            teb%T2M_TOWN, & 
+            'T2M_TOWN :2:hist:anal:lite:mpti:mpt3:mpt1', &
+            tebm%T2M_TOWN, imean)
     end if
 
     if (associated(teb%R2M_TOWN)) then
-       if (assAve) then
-          assThis=associated(tebm%R2M_TOWN)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%R2M_TOWN, & 
-               'R2M_TOWN :2:hist:anal:lite:mpti:mpt3:mpt1', &
-               tebm%R2M_TOWN)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%R2M_TOWN, & 
-               'R2M_TOWN :2:hist:anal:lite:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            teb%R2M_TOWN, & 
+            'R2M_TOWN :2:hist:anal:lite:mpti:mpt3:mpt1', &
+            tebm%R2M_TOWN, imean)
     end if
 
     if (associated(teb%fuso)) then
-       if (assAve) then
-          assThis=associated(tebm%fuso)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%fuso, & 
-               'FUSO :2:hist:anal:lite:mpti:mpt3:mpt1', &
-               tebm%fuso)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               teb%fuso, & 
-               'FUSO :2:hist:anal:lite:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            teb%fuso, & 
+            'FUSO :2:hist:anal:lite:mpti:mpt3:mpt1', &
+            tebm%fuso, imean)
     end if
   end subroutine filltab_teb
 

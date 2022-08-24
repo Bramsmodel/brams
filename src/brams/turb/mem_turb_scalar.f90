@@ -73,7 +73,7 @@ contains
   subroutine filltab_turb_s(oneVarTable, oneVarTableSize, &
        turb_s, turbm_s, imean)
 
-    ! Build VarTable entry with varinit_vars components
+    ! Build VarTable entry with turb_s_vars components
 
     use ModVarTable, only: &
          VarTable, &

@@ -542,6 +542,14 @@ contains
        oneGrid%oneAveGaspartFields => CreateGaspartFields(&
             oneGrid%oneNodeDimensions, &
             oneGrid%oneNamelistFile)
+    else
+       ! oneAveGaspartFields is created with null components
+       allocate(oneGrid%oneAveGaspartFields, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" allocate oneGrid%oneAveGaspartFields fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
     
     if (dumpLocal) then

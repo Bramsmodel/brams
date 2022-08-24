@@ -1143,6 +1143,10 @@ contains
                oneGrid%oneVarTableSize, &
                oneGrid%oneGaspartFields, &
                oneGrid%oneAveGaspartFields)
+!!$          call InsertGaspartFieldsAtVarTable(&
+!!$               oneGrid%oneVarTable, &
+!!$               oneGrid%oneVarTableSize, &
+!!$               oneGrid%oneGaspartFields)
        endif
     endif
     !-------------
@@ -1567,12 +1571,10 @@ contains
           call alloc_tebc(tebc_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
           if (imean==1) then
              call alloc_tebc(tebcm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
-          elseif (imean==0) then
-             call alloc_tebc(tebcm_g(ng),        1,        1,        1, ng)
           endif
 
           call filltab_tebc(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-               tebc_g(ng), tebcm_g(ng))
+               tebc_g(ng), tebcm_g(ng), imean)
        enddo
 
        !---------------------------------------------------------------------
@@ -1588,15 +1590,13 @@ contains
              call alloc_teb(teb_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
              if (imean==1) then
                 call alloc_teb(tebm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
-             elseif (imean==0) then
-                call alloc_teb(tebm_g(ng),        1,        1,        1, ng)
              endif
 
              call filltab_teb(&
                   oneGrid%oneVarTable, &
                   oneGrid%oneVarTableSize, &
                   teb_g(ng), &
-                  tebm_g(ng))
+                  tebm_g(ng), imean)
           enddo
        endif
     endif

@@ -29,6 +29,7 @@ module ModVarTable
   public :: DumpVarTable
   public :: InsertAtVarTable
   public :: InsertVarTable
+  public :: InsertVarTable_2D
   public :: FixVarTableForIOUTPUT5
   public :: MarkLiteVarsAtVarTable
   public :: Name2VarTableEntry

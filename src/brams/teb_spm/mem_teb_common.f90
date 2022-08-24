@@ -54,11 +54,11 @@ contains
 
 
   subroutine filltab_tebc (oneVarTable, oneVarTableSize, &
-       tebc, tebcm)
+       tebc, tebcm, imean)
 
     use ModVarTable, only: &
          VarTable, &
-         InsertAtVarTable
+         InsertVarTable
 
     implicit none
 
@@ -66,8 +66,8 @@ contains
     integer, intent(inout) :: oneVarTableSize
     type(teb_common), intent(in) :: tebc
     type(teb_common), intent(in) :: tebcm
+    integer, intent(in) :: imean
 
-    logical :: assThis
     character(len=*), parameter :: h="**(filltab_tebc)**"
 
 
@@ -78,45 +78,27 @@ contains
     ! Fill pointers to arrays into variable tables
 
     if (associated(tebc%EMIS_TOWN)) then
-       assThis=associated(tebcm%EMIS_TOWN)
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               tebc%EMIS_TOWN, &
-               'EMIS_TOWN :2:hist:anal:lite:mpti:mpt3:mpt1', &
-               tebcm%EMIS_TOWN)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               tebc%EMIS_TOWN, &
-               'EMIS_TOWN :2:hist:anal:lite:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            tebc%EMIS_TOWN, &
+            'EMIS_TOWN :2:hist:anal:lite:mpti:mpt3:mpt1', &
+            tebcm%EMIS_TOWN, &
+            imean)
     end if
     
     if (associated(tebc%ALB_TOWN)) then
-       assThis=associated(tebcm%ALB_TOWN)
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               tebc%ALB_TOWN, &
-               'ALB_TOWN :2:hist:anal:lite:mpti:mpt3:mpt1', &
-               tebcm%ALB_TOWN)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               tebc%ALB_TOWN, &
-               'ALB_TOWN :2:hist:anal:lite:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            tebc%ALB_TOWN, &
+            'ALB_TOWN :2:hist:anal:lite:mpti:mpt3:mpt1', &
+            tebcm%ALB_TOWN, &
+            imean)
     end if
     
     if (associated(tebc%TS_TOWN)) then
-       assThis=associated(tebcm%TS_TOWN)
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               tebc%TS_TOWN, &
-               'TS_TOWN :2:hist:anal:lite:mpti:mpt3:mpt1', &
-               tebcm%TS_TOWN)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               tebc%TS_TOWN, &
-               'TS_TOWN :2:hist:anal:lite:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            tebc%TS_TOWN, &
+            'TS_TOWN :2:hist:anal:lite:mpti:mpt3:mpt1', &
+            tebcm%TS_TOWN, &
+            imean)
     end if
   end subroutine filltab_tebc
 
