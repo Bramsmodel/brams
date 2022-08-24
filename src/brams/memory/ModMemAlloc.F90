@@ -605,7 +605,7 @@ contains
     ! insert Turb Field variables at var_table
     do ng=1,ngrids
        call InsertTurbFieldsAtVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-            oneGrid%oneTurbFields, oneGrid%oneAveTurbFields)
+            oneGrid%oneTurbFields, oneGrid%oneAveTurbFields, imean)
     enddo
 
     if (CCATT==1 .and. chemistry >= 0) then
@@ -615,18 +615,15 @@ contains
        if (ierr/=0) call fatal_error(h//"Allocating turbm_s")
        do ng=1,ngrids
           call nullify_turb_s(turb_s (ng))
-          call nullify_turb_s(turbm_s(ng))
-          call alloc_turb_s(turb_s(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
+          call alloc_turb_s(turb_s(ng), nmzp(ng), nmxp(ng), nmyp(ng))
           if (imean==1) then
-             call alloc_turb_s(turbm_s(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
-          elseif (imean==0) then
-             call alloc_turb_s(turbm_s(ng), 1,1,1, ng)
+             call alloc_turb_s(turbm_s(ng), nmzp(ng), nmxp(ng), nmyp(ng))
           endif
           call filltab_turb_s(&
                oneGrid%oneVarTable, &
                oneGrid%oneVarTableSize, &
                turb_s(ng), &
-               turbm_s(ng))
+               turbm_s(ng), imean)
        enddo
     endif
     !-------------

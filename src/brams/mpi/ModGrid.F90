@@ -462,14 +462,20 @@ contains
     oneGrid%oneTurbFields => CreateTurbFields(&
          oneGrid%oneNodeDimensions, &
          oneGrid%oneNamelistFile, &
-         gridId, &
-         .false.)
+         gridId)
     if (createAve) then
        oneGrid%oneAveTurbFields => CreateTurbFields(&
             oneGrid%oneNodeDimensions, &
             oneGrid%oneNamelistFile, &
-            gridId, &
-            .true.)
+            gridId)
+    else
+       ! oneAveTurbFields is created with null components
+       allocate(oneGrid%oneAveTurbFields, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" allocate oneGrid%oneAveTurbFields fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
 
     ! this node MicControl

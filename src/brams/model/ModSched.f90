@@ -702,7 +702,7 @@ contains
     character(len=5) :: cproc
 
     integer :: ierr
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=16) :: str(10)
     character(len=*), parameter :: h="**(cfll)**"
 

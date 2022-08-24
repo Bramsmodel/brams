@@ -716,7 +716,7 @@ contains
     type(Grid), pointer :: oneGrid => null()
     type(AllPostTypes), pointer :: oneAllPostTypes => null()
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     logical :: dirExist
     character(len=255) :: tmpdir
@@ -1610,7 +1610,7 @@ contains
     type(GridTree), pointer :: AllGrids
     character(len=*), intent(in) :: name_name
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(initOneProc)**"
 

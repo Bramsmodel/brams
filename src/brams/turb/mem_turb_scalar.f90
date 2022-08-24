@@ -22,16 +22,15 @@ module mem_turb_scalar
 
 contains
 
-  subroutine alloc_turb_s(turb_s_local, n1, n2, n3, ng)
+  subroutine alloc_turb_s(turb_s_local, n1, n2, n3)
 
     implicit none
 
     type (turb_s_vars)  :: turb_s_local
-    integer, intent(in) :: n1,n2,n3,ng
+    integer, intent(in) :: n1,n2,n3
 
-    !print*, 'enter alloc_turb_s',n1,n2,n3
-
-    allocate (turb_s_local%hksc(n1,n2,n3));turb_s_local%hksc=0.0
+    allocate (turb_s_local%hksc(n1,n2,n3))
+    turb_s_local%hksc=0.0
 
     return
   end subroutine alloc_turb_s
@@ -72,19 +71,21 @@ contains
   !---------------------------------------------------------------
 
   subroutine filltab_turb_s(oneVarTable, oneVarTableSize, &
-       turb_s, turbm_s)
+       turb_s, turbm_s, imean)
+
+    ! Build VarTable entry with varinit_vars components
 
     use ModVarTable, only: &
          VarTable, &
-         InsertAtVarTable
+         InsertVarTable
     
     implicit none
     type(VarTable), pointer, intent(in) :: oneVarTable(:)
     integer, intent(inout) :: oneVarTableSize
     type(turb_s_vars), pointer, intent(in) :: turb_s
     type(turb_s_vars), pointer, intent(in) :: turbm_s
+    integer, intent(in) :: imean
 
-    logical :: assThis
     character(len=*), parameter :: h="**(filltab_turb_s)**"
 
     if (.not. associated(oneVarTable)) then
@@ -93,24 +94,11 @@ contains
        call fatal_error(h//" turb_s not associated")
     end if
     
-    ! Fill pointers to arrays into variable tables
-
     if (associated(turb_s%hksc)) then
-       if (.not. associated(turbm_s)) then
-          assThis=.false.
-       else
-          assThis=associated(turbm_s%hksc)
-       end if
-       if (assThis) then
-          call InsertAtVarTable (OneVarTable, oneVarTableSize, &
-               turb_s%hksc, &
-               'HKSC :3:hist:anal:mpti:mpt3:mpt1', &
-               turbm_s%hksc)
-       else
-          call InsertAtVarTable (OneVarTable, oneVarTableSize, &
-               turb_s%hksc, &
-               'HKSC :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (OneVarTable, oneVarTableSize, &
+            turb_s%hksc, &
+            'HKSC :3:hist:anal:mpti:mpt3:mpt1', &
+            turbm_s%hksc, imean)
     end if
   end subroutine filltab_turb_s
 

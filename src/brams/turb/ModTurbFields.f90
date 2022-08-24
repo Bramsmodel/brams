@@ -23,7 +23,7 @@ module ModTurbFields
 
   use ModVarTable, only: &
        VarTable, &
-       InsertAtVarTable
+       InsertVarTable
 
   implicit none
 
@@ -64,12 +64,11 @@ contains
 
 
 
-  function CreateTurbFields(oneNodeDimensions, oneNamelistFile, gridId, createAverage) result(res)
-    ! createAverage iff creating average fields
+  function CreateTurbFields(oneNodeDimensions, oneNamelistFile, gridId) result(res)
+
     type(NodeDimensions), pointer, intent(in) :: oneNodeDimensions
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     integer, intent(in) :: gridId
-    logical, intent(in) :: createAverage
     type(TurbFields), pointer :: res
 
     integer :: ierr
@@ -85,13 +84,6 @@ contains
     mxp=oneNodeDimensions%mxp
     myp=oneNodeDimensions%myp
 
-    ! whenever creating average fields, allocate full size fields
-    ! only when average fields will be output
-    if (createAverage .and. oneNamelistFile%avgtim == 0.0) then
-       mzp=1
-       mxp=1
-       myp=1
-    end if
     
     if (dumpLocal) then
        write(str(1),"(i8)") mzp
@@ -504,11 +496,12 @@ contains
 
 
   subroutine InsertTurbFieldsAtVarTable(oneVarTable, oneVarTableSize, &
-       oneTurbFields, oneAveTurbFields)
+       oneTurbFields, oneAveTurbFields, imean)
     type(VarTable), pointer, intent(in) :: oneVarTable(:)
     integer, intent(inout) :: oneVarTableSize
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     type(TurbFields), pointer, intent(in) :: oneAveTurbFields
+    integer, intent(in) :: imean
 
     ! Local Variables:
     logical :: assAve
@@ -525,231 +518,87 @@ contains
     ! Fill pointers to arrays into variable tables
 
     if (associated(oneTurbFields%tkep)) then
-       if (assAve) then
-          if (associated(oneAveTurbFields%tkep)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  oneTurbFields%tkep, &
-                  'TKEP :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveTurbFields%tkep)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  oneTurbFields%tkep, &
-                  'TKEP :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               oneTurbFields%tkep, &
-               'TKEP :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            oneTurbFields%tkep, &
+            'TKEP :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveTurbFields%tkep, imean)
     end if
 
     if (associated(oneTurbFields%epsp)) then
-       if (assAve) then
-          if (associated(oneAveTurbFields%epsp)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  oneTurbFields%epsp, &
-                  'EPSP :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveTurbFields%epsp)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  oneTurbFields%epsp, &
-                  'EPSP :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               oneTurbFields%epsp, &
-               'EPSP :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            oneTurbFields%epsp, &
+            'EPSP :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveTurbFields%epsp, imean)
     end if
 
     if (associated(oneTurbFields%hkm)) then
-       if (assAve) then
-          if (associated(oneAveTurbFields%hkm)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  oneTurbFields%hkm, &
-                  'HKM :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveTurbFields%hkm)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  oneTurbFields%hkm, &
-                  'HKM :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               oneTurbFields%hkm, &
-               'HKM :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            oneTurbFields%hkm, &
+            'HKM :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveTurbFields%hkm, imean)
     end if
 
     if (associated(oneTurbFields%vkm)) then
-       if (assAve) then
-          if (associated(oneAveTurbFields%vkm)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  oneTurbFields%vkm, &
-                  'VKM :3:hist:mpti:mpt3:mpt1', &
-                  oneAveTurbFields%vkm)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  oneTurbFields%vkm, &
-                  'VKM :3:hist:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               oneTurbFields%vkm, &
-               'VKM :3:hist:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            oneTurbFields%vkm, &
+            'VKM :3:hist:mpti:mpt3:mpt1', &
+            oneAveTurbFields%vkm, imean)
     end if
 
     if (associated(oneTurbFields%vkh)) then
-       if (assAve) then
-          if (associated(oneAveTurbFields%vkh)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  oneTurbFields%vkh, &
-                  'VKH :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveTurbFields%vkh)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  oneTurbFields%vkh, &
-                  'VKH :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               oneTurbFields%vkh, &
-               'VKH :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            oneTurbFields%vkh, &
+            'VKH :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveTurbFields%vkh, imean)
     end if
 
     if (associated(oneTurbFields%cdrag)) then
-       if (assAve) then
-          if (associated(oneAveTurbFields%cdrag)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  oneTurbFields%cdrag, &
-                  'CDRAG :3:hist:anal:mpti', &
-                  oneAveTurbFields%cdrag)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  oneTurbFields%cdrag, &
-                  'CDRAG :3:hist:anal:mpti')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               oneTurbFields%cdrag, &
-               'CDRAG :3:hist:anal:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            oneTurbFields%cdrag, &
+            'CDRAG :3:hist:anal:mpti', &
+            oneAveTurbFields%cdrag, imean)
     end if
 
     if (associated(oneTurbFields%sflux_u)) then
-       if (assAve) then
-          if (associated(oneAveTurbFields%sflux_u)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  oneTurbFields%sflux_u, &
-                  'SFLUX_U :2:anal:mpt3:mpt1', &
-                  oneAveTurbFields%sflux_u)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  oneTurbFields%sflux_u, &
-                  'SFLUX_U :2:anal:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               oneTurbFields%sflux_u, &
-               'SFLUX_U :2:anal:mpt3:mpt1')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            oneTurbFields%sflux_u, &
+            'SFLUX_U :2:anal:mpt3:mpt1', &
+            oneAveTurbFields%sflux_u, imean)
     end if
 
     if (associated(oneTurbFields%sflux_v)) then
-       if (assAve) then
-          if (associated(oneAveTurbFields%sflux_v)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  oneTurbFields%sflux_v, &
-                  'SFLUX_V :2:anal:mpt3:mpt1', &
-                  oneAveTurbFields%sflux_v)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  oneTurbFields%sflux_v, &
-                  'SFLUX_V :2:anal:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               oneTurbFields%sflux_v, &
-               'SFLUX_V :2:anal:mpt3:mpt1')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            oneTurbFields%sflux_v, &
+            'SFLUX_V :2:anal:mpt3:mpt1', &
+            oneAveTurbFields%sflux_v, imean)
     end if
 
     if (associated(oneTurbFields%sflux_w)) then
-       if (assAve) then
-          if (associated(oneAveTurbFields%sflux_w)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  oneTurbFields%sflux_w, &
-                  'SFLUX_W :2:anal:mpt3', &
-                  oneAveTurbFields%sflux_w)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  oneTurbFields%sflux_w, &
-                  'SFLUX_W :2:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               oneTurbFields%sflux_w, &
-               'SFLUX_W :2:anal:mpt3')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            oneTurbFields%sflux_w, &
+            'SFLUX_W :2:anal:mpt3', &
+            oneAveTurbFields%sflux_w, imean)
     end if
 
     if (associated(oneTurbFields%sflux_t)) then
-       if (assAve) then
-          if (associated(oneAveTurbFields%sflux_t)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  oneTurbFields%sflux_t, &
-                  'SFLUX_T :2:anal:mpt3', &
-                  oneAveTurbFields%sflux_t)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  oneTurbFields%sflux_t, &
-                  'SFLUX_T :2:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               oneTurbFields%sflux_t, &
-               'SFLUX_T :2:anal:mpt3')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            oneTurbFields%sflux_t, &
+            'SFLUX_T :2:anal:mpt3', &
+            oneAveTurbFields%sflux_t, imean)
     end if
 
     if (associated(oneTurbFields%sflux_r)) then
-       if (assAve) then
-          if (associated(oneAveTurbFields%sflux_r)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  oneTurbFields%sflux_r, &
-                  'SFLUX_R :2:anal:mpt3', &
-                  oneAveTurbFields%sflux_r)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  oneTurbFields%sflux_r, &
-                  'SFLUX_R :2:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               oneTurbFields%sflux_r, &
-               'SFLUX_R :2:anal:mpt3')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            oneTurbFields%sflux_r, &
+            'SFLUX_R :2:anal:mpt3', &
+            oneAveTurbFields%sflux_r, imean)
     end if
 
     if (associated(oneTurbFields%kpbl)) then
-       if (assAve) then
-          if (associated(oneAveTurbFields%kpbl)) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  oneTurbFields%kpbl, &
-                  'KPBL :2:anal:mpt3', &
-                  oneAveTurbFields%kpbl)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  oneTurbFields%kpbl, &
-                  'KPBL :2:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               oneTurbFields%kpbl, &
-               'KPBL :2:anal:mpt3')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            oneTurbFields%kpbl, &
+            'KPBL :2:anal:mpt3', &
+            oneAveTurbFields%kpbl, imean)
     end if
 
   end subroutine InsertTurbFieldsAtVarTable
