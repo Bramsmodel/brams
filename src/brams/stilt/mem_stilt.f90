@@ -20,20 +20,38 @@ module mem_stilt
   !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
 
   type stilt_vars
-     real, pointer, dimension(:,:,:) :: &
-          thvlast,lnthvadv, lnthetav, lnthvtend, afxu, afxv, afxw &
-          ,ltscale, sigw, ltscaleb, sigwb &
-          ,tkepb, afxub, afxvb, afxwb &
-          ,cfxup1, cfxdn1, dfxup1, efxup1 &
-          ,dfxdn1, efxdn1, cfxup2, dfxup2 &
-          ,efxup2                         & 
-          !-srf : for the true air density
-          ,dnp
-
-     real, pointer, dimension(:,:) :: pblhgt,lmo
+     real, pointer, contiguous :: thvlast(:,:,:) => null()
+     real, pointer, contiguous :: lnthvadv(:,:,:) => null()
+     real, pointer, contiguous :: lnthetav(:,:,:) => null()
+     real, pointer, contiguous :: lnthvtend(:,:,:) => null()
+     real, pointer, contiguous :: afxu(:,:,:) => null()
+     real, pointer, contiguous :: afxv(:,:,:) => null()
+     real, pointer, contiguous :: afxw (:,:,:) => null()
+     real, pointer, contiguous :: ltscale(:,:,:) => null()
+     real, pointer, contiguous :: sigw(:,:,:) => null()
+     real, pointer, contiguous :: ltscaleb(:,:,:) => null()
+     real, pointer, contiguous :: sigwb(:,:,:) => null()
+     real, pointer, contiguous :: tkepb(:,:,:) => null()
+     real, pointer, contiguous :: afxub(:,:,:) => null()
+     real, pointer, contiguous :: afxvb(:,:,:) => null()
+     real, pointer, contiguous :: afxwb(:,:,:) => null()
+     real, pointer, contiguous :: cfxup1(:,:,:) => null()
+     real, pointer, contiguous :: cfxdn1(:,:,:) => null()
+     real, pointer, contiguous :: dfxup1(:,:,:) => null()
+     real, pointer, contiguous :: efxup1(:,:,:) => null()
+     real, pointer, contiguous :: dfxdn1(:,:,:) => null()
+     real, pointer, contiguous :: efxdn1(:,:,:) => null()
+     real, pointer, contiguous :: cfxup2(:,:,:) => null()
+     real, pointer, contiguous :: dfxup2(:,:,:) => null()
+     real, pointer, contiguous :: efxup2(:,:,:) => null()
+     real, pointer, contiguous :: dnp(:,:,:) => null()
+     real, pointer, contiguous :: pblhgt(:,:) => null()
+     real, pointer, contiguous :: lmo(:,:) => null()
   end type stilt_vars
 
-  type (stilt_vars), allocatable :: stilt_g(:), stiltm_g(:)
+  type (stilt_vars), pointer, contiguous :: stilt_g(:) => null()
+  type (stilt_vars), pointer, contiguous :: stiltm_g(:) => null()
+  
   integer                        :: iexev,imassflx   
 
   real                          :: frqmassave
@@ -176,368 +194,209 @@ contains
     return
   end subroutine dealloc_stilt
 
-  subroutine filltab_stilt(oneVarTable, oneVarTableSize, stilt, stiltm)
+  subroutine filltab_stilt(oneVarTable, oneVarTableSize, stilt, stiltm, imean)
 
     use ModVarTable, only: &
          VarTable, &
-         InsertAtVarTable
+         InsertVarTable
 
     implicit none
     type(VarTable), pointer, intent(in) :: oneVarTable(:)
     integer, intent(inout) :: oneVarTableSize
-    type (stilt_vars) :: stilt
-    type (stilt_vars), optional :: stiltm
-    
+    type (stilt_vars), intent(in) :: stilt
+    type (stilt_vars), intent(in) :: stiltm
+    integer, intent(in) :: imean
+
+    character(len=*), parameter :: h="**(filltab_stilt)**"
+
     if (associated(stilt%thvlast)) then
-       if (present(stiltm)) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%thvlast, &
-               'THVLAST :3:hist:mpti:mpt3:mpt1', &
-               stiltm%thvlast)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%thvlast, &
-               'THVLAST :3:hist:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            stilt%thvlast, &
+            'THVLAST :3:hist:mpti:mpt3:mpt1', &
+            stiltm%thvlast, imean)
     end if
 
     if (associated(stilt%lnthvadv)) then
-       if (present(stiltm)) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%lnthvadv, &
-               'LNTHVADV :3:hist:mpti:mpt3:mpt1', &
-               stiltm%lnthvadv)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%lnthvadv, &
-               'LNTHVADV :3:hist:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            stilt%lnthvadv, &
+            'LNTHVADV :3:hist:mpti:mpt3:mpt1', &
+            stiltm%lnthvadv, imean)
     end if
 
     if (associated(stilt%lnthetav)) then
-       if (present(stiltm)) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%lnthetav, &
-               'LNTHETAV :3:hist:mpti:mpt3:mpt1', &
-               stiltm%lnthetav)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%lnthetav, &
-               'LNTHETAV :3:hist:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            stilt%lnthetav, &
+            'LNTHETAV :3:hist:mpti:mpt3:mpt1', &
+            stiltm%lnthetav, imean)
     end if
 
     if (associated(stilt%lnthvtend)) then
-       if (present(stiltm)) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%lnthvtend, &
-               'LNTHVTEND :3:hist:mpti:mpt3:mpt1', &
-               stiltm%lnthvtend)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%lnthvtend, &
-               'LNTHVTEND :3:hist:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            stilt%lnthvtend, &
+            'LNTHVTEND :3:hist:mpti:mpt3:mpt1', &
+            stiltm%lnthvtend, imean)
     end if
 
     !-srf : for the true air density
     if (associated(stilt%dnp)) then
-       if (present(stiltm)) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%dnp, &
-               'DNP :3:hist:anal:mpti:mpt3', &
-               stiltm%dnp)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%dnp, &
-               'DNP :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            stilt%dnp, &
+            'DNP :3:hist:anal:mpti:mpt3', &
+            stiltm%dnp, imean)
     end if
 
     if (associated(stilt%ltscale)) then
-       if (present(stiltm)) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%ltscale, &
-               'TL :3:hist:anal:mpti:mpt3:mpt1', &
-               stiltm%ltscale)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%ltscale, &
-               'TL :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            stilt%ltscale, &
+            'TL :3:hist:anal:mpti:mpt3:mpt1', &
+            stiltm%ltscale, imean)
     end if
-    
+
     if (associated(stilt%sigw)) then
-       if (present(stiltm)) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%sigw, &
-               'SIGW :3:hist:anal:mpti:mpt3:mpt1', &
-               stiltm%sigw)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%sigw, &
-               'SIGW :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            stilt%sigw, &
+            'SIGW :3:hist:anal:mpti:mpt3:mpt1', &
+            stiltm%sigw, imean)
     end if
-    
+
     if (associated(stilt%afxu)) then
-       if (present(stiltm)) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%afxu, &
-               'AFXU :3:hist:anal:mpti:mpt3:mpt1', &
-               stiltm%afxu)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%afxu, &
-               'AFXU :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            stilt%afxu, &
+            'AFXU :3:hist:anal:mpti:mpt3:mpt1', &
+            stiltm%afxu, imean)
     end if
-       
+
     if (associated(stilt%afxv)) then
-       if (present(stiltm)) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%afxv, &
-               'AFXV :3:hist:anal:mpti:mpt3:mpt1', &
-               stiltm%afxv)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%afxv, &
-               'AFXV :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            stilt%afxv, &
+            'AFXV :3:hist:anal:mpti:mpt3:mpt1', &
+            stiltm%afxv, imean)
     end if
-    
+
     if (associated(stilt%afxw)) then
-       if (present(stiltm)) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%afxw, &
-               'AFXW :3:hist:anal:mpti:mpt3:mpt1', &
-               stiltm%afxw)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%afxw, &
-               'AFXW :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            stilt%afxw, &
+            'AFXW :3:hist:anal:mpti:mpt3:mpt1', &
+            stiltm%afxw, imean)
     end if
-    
+
     if (associated(stilt%ltscaleb)) then
-       if (present(stiltm)) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%ltscaleb, &
-               'TLB :3:hist:anal:mpti:mpt3:mpt1', &
-               stiltm%ltscaleb)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%ltscaleb, &
-               'TLB :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            stilt%ltscaleb, &
+            'TLB :3:hist:anal:mpti:mpt3:mpt1', &
+            stiltm%ltscaleb, imean)
     end if
-    
+
     if (associated(stilt%sigwb)) then
-       if (present(stiltm)) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%sigwb, &
-               'SIGWB :3:hist:anal:mpti:mpt3:mpt1', &
-               stiltm%sigwb)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%sigwb, &
-               'SIGWB :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            stilt%sigwb, &
+            'SIGWB :3:hist:anal:mpti:mpt3:mpt1', &
+            stiltm%sigwb, imean)
     end if
 
     if (associated(stilt%tkepb)) then
-       if (present(stiltm)) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%tkepb, &
-               'TKEPB :3:hist:anal:mpti:mpt3:mpt1', &
-               stiltm%tkepb)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%tkepb, &
-               'TKEPB :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            stilt%tkepb, &
+            'TKEPB :3:hist:anal:mpti:mpt3:mpt1', &
+            stiltm%tkepb, imean)
     end if
-       
+
     if (associated(stilt%afxub)) then
-       if (present(stiltm)) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%afxub, &
-               'AFXUB :3:hist:anal:mpti:mpt3:mpt1', &
-               stiltm%afxub)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%afxub, &
-               'AFXUB :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            stilt%afxub, &
+            'AFXUB :3:hist:anal:mpti:mpt3:mpt1', &
+            stiltm%afxub, imean)
     end if
-    
+
     if (associated(stilt%afxvb)) then
-       if (present(stiltm)) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%afxvb, &
-               'AFXVB :3:hist:anal:mpti:mpt3:mpt1', &
-               stiltm%afxvb)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%afxvb, &
-               'AFXVB :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            stilt%afxvb, &
+            'AFXVB :3:hist:anal:mpti:mpt3:mpt1', &
+            stiltm%afxvb, imean)
     end if
-    
+
     if (associated(stilt%afxwb)) then
-       if (present(stiltm)) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%afxwb, &
-               'AFXWB :3:hist:anal:mpti:mpt3:mpt1', &
-               stiltm%afxwb)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%afxwb, &
-               'AFXWB :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            stilt%afxwb, &
+            'AFXWB :3:hist:anal:mpti:mpt3:mpt1', &
+            stiltm%afxwb, imean)
     end if
-       
+
     if (associated(stilt%cfxup1)) then
-       if (present(stiltm)) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%cfxup1, &
-               'CFXUP1 :3:hist:anal:mpti:mpt3:mpt1', &
-               stiltm%cfxup1)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%cfxup1, &
-               'CFXUP1 :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            stilt%cfxup1, &
+            'CFXUP1 :3:hist:anal:mpti:mpt3:mpt1', &
+            stiltm%cfxup1, imean)
     end if
 
     if (associated(stilt%cfxdn1)) then
-       if (present(stiltm)) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%cfxdn1, &
-               'CFXDN1 :3:hist:anal:mpti:mpt3:mpt1', &
-               stiltm%cfxdn1)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%cfxdn1, &
-               'CFXDN1 :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            stilt%cfxdn1, &
+            'CFXDN1 :3:hist:anal:mpti:mpt3:mpt1', &
+            stiltm%cfxdn1, imean)
     end if
 
     if (associated(stilt%dfxup1)) then
-       if (present(stiltm)) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%dfxup1, &
-               'DFXUP1 :3:hist:anal:mpti:mpt3:mpt1', &
-               stiltm%dfxup1)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%dfxup1, &
-               'DFXUP1 :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            stilt%dfxup1, &
+            'DFXUP1 :3:hist:anal:mpti:mpt3:mpt1', &
+            stiltm%dfxup1, imean)
     end if
 
     if (associated(stilt%efxup1)) then
-       if (present(stiltm)) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%efxup1, &
-               'EFXUP1 :3:hist:anal:mpti:mpt3:mpt1', &
-               stiltm%efxup1)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%efxup1, &
-               'EFXUP1 :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            stilt%efxup1, &
+            'EFXUP1 :3:hist:anal:mpti:mpt3:mpt1', &
+            stiltm%efxup1, imean)
     end if
 
     if (associated(stilt%dfxdn1)) then
-       if (present(stiltm)) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%dfxdn1, &
-               'DFXDN1 :3:hist:anal:mpti:mpt3:mpt1', &
-               stiltm%dfxdn1)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%dfxdn1, &
-               'DFXDN1 :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            stilt%dfxdn1, &
+            'DFXDN1 :3:hist:anal:mpti:mpt3:mpt1', &
+            stiltm%dfxdn1, imean)
     end if
 
     if (associated(stilt%efxdn1)) then
-       if (present(stiltm)) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%efxdn1, &
-               'EFXDN1 :3:hist:anal:mpti:mpt3:mpt1', &
-               stiltm%efxdn1)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%efxdn1, &
-               'EFXDN1 :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            stilt%efxdn1, &
+            'EFXDN1 :3:hist:anal:mpti:mpt3:mpt1', &
+            stiltm%efxdn1, imean)
     end if
 
     if (associated(stilt%cfxup2)) then
-       if (present(stiltm)) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%cfxup2, &
-               'CFXUP2 :3:hist:anal:mpti:mpt3:mpt1', &
-               stiltm%cfxup2)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%cfxup2, &
-               'CFXUP2 :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            stilt%cfxup2, &
+            'CFXUP2 :3:hist:anal:mpti:mpt3:mpt1', &
+            stiltm%cfxup2, imean)
     end if
 
     if (associated(stilt%dfxup2)) then
-       if (present(stiltm)) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%dfxup2, &
-               'DFXUP2 :3:hist:anal:mpti:mpt3:mpt1', &
-               stiltm%dfxup2)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%dfxup2, &
-               'DFXUP2 :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            stilt%dfxup2, &
+            'DFXUP2 :3:hist:anal:mpti:mpt3:mpt1', &
+            stiltm%dfxup2, imean)
     end if
 
     if (associated(stilt%efxup2)) then
-       if (present(stiltm)) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%efxup2, &
-               'EFXUP2 :3:hist:anal:mpti:mpt3:mpt1', &
-               stiltm%efxup2)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%efxup2, &
-               'EFXUP2 :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            stilt%efxup2, &
+            'EFXUP2 :3:hist:anal:mpti:mpt3:mpt1', &
+            stiltm%efxup2, imean)
     end if
 
     if (associated(stilt%pblhgt)) then
-       if (present(stiltm)) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%pblhgt, &
-               'PBLHGT :2:hist:anal:mpti:mpt3:mpt1', &
-               stiltm%pblhgt)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%pblhgt, &
-               'PBLHGT :2:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            stilt%pblhgt, &
+            'PBLHGT :2:hist:anal:mpti:mpt3:mpt1', &
+            stiltm%pblhgt, imean)
     end if
 
     if (associated(stilt%lmo)) then
-       if (present(stiltm)) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%lmo, &
-               'LMO    :2:hist:anal:mpti:mpt3:mpt1', &
-               stiltm%lmo)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               stilt%lmo, &
-               'LMO    :2:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            stilt%lmo, &
+            'LMO    :2:hist:anal:mpti:mpt3:mpt1', &
+            stiltm%lmo, imean)
     end if
   end subroutine filltab_stilt
 

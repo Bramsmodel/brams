@@ -1475,21 +1475,16 @@ contains
     allocate(stilt_g(ngrids), stiltm_g(ngrids))
     do ng=1, ngrids
        idiffk = OneGrid%oneNamelistFile%idiffk(ng)
-       call nullify_stilt(stilt_g(ng)); call nullify_stilt(stiltm_g(ng))
+       call nullify_stilt(stilt_g(ng))
        call alloc_stilt(idiffk,stilt_g(ng),nmzp(ng),nmxp(ng),nmyp(ng),ng)
+
+       call nullify_stilt(stiltm_g(ng))       
        if (imean == 1) then
           call alloc_stilt(idiffk,stiltm_g(ng),nmzp(ng),nmxp(ng),nmyp(ng),ng)
-       else if (imean == 0) then
-          call alloc_stilt(idiffk,stiltm_g(ng),1,1,1,ng)
        endif
 
-       if (oneGrid%oneNamelistFile%avgtim /= 0) then
-          call filltab_stilt(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-               stilt_g(ng), stiltm_g(ng))
-       else
-          call filltab_stilt(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-               stilt_g(ng))
-       end if
+       call filltab_stilt(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+            stilt_g(ng), stiltm_g(ng), imean)
     end do
     !--------------
 
@@ -1613,7 +1608,8 @@ contains
     endif
     !-------------
     ! Set "Lite" variable flags according to namelist input LITE_VARS.
-    call MarkLiteVarsAtVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize)
+    call MarkLiteVarsAtVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+         oneGrid%oneParallelEnvironment)
 
 
     !Calling the statistic for allocate the amount of timesteps
