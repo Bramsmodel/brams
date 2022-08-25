@@ -96,7 +96,6 @@ module ModMemAlloc
 
   use mem_varinit, only: &
        varinit_g, &
-       varinitm_g, &
        nullify_varinit, &
        alloc_varinit, &
        filltab_varinit, &
@@ -630,17 +629,14 @@ contains
 
     !-------------
     ! Allocate varinit variables data type.
-    ! These do not need "mean" type ever; that's why varinitm_g(ng) is not allocated
+    ! These do not need "mean" type ever; that's why varinitm_g(ng) does not exist
     allocate(varinit_g(ngrids), STAT=ierr)
     if (ierr/=0) call fatal_error(h//"Allocating varinit_g")
-    allocate(varinitm_g(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error(h//"Allocating varinitm_g")
     do ng=1,ngrids
        call nullify_varinit(varinit_g(ng))
        call alloc_varinit(varinit_g(ng), nmzp(ng), nmxp(ng), nmyp(ng))
-       call nullify_varinit(varinitm_g(ng))
        call filltab_varinit(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-            varinit_g, varinitm_g, imean, ng)
+            varinit_g, imean, ng)
     enddo
     !-------------
 
@@ -1142,11 +1138,8 @@ contains
                oneGrid%oneVarTable, &
                oneGrid%oneVarTableSize, &
                oneGrid%oneGaspartFields, &
-               oneGrid%oneAveGaspartFields)
-!!$          call InsertGaspartFieldsAtVarTable(&
-!!$               oneGrid%oneVarTable, &
-!!$               oneGrid%oneVarTableSize, &
-!!$               oneGrid%oneGaspartFields)
+               oneGrid%oneAveGaspartFields, &
+               imean)
        endif
     endif
     !-------------
@@ -1666,7 +1659,6 @@ contains
        call dealloc_radiate(radiate_g(ng))
        call dealloc_radiate(radiatem_g(ng))
        call dealloc_varinit(varinit_g(ng))
-       call dealloc_varinit(varinitm_g(ng))
 
        call dealloc_oda(oda_g(ng))
        call dealloc_oda(odam_g(ng))
@@ -1690,7 +1682,7 @@ contains
 !!$    deallocate(jules_g,julesm_g)
 #endif
     deallocate(radiate_g,radiatem_g)
-    deallocate(varinit_g,varinitm_g)
+    deallocate(varinit_g)
     deallocate(oda_g,odam_g)
 
     if (TEB_SPM==1) then

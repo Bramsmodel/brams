@@ -464,7 +464,7 @@ contains
 
 
   subroutine InsertGaspartFieldsAtVarTable(oneVarTable, oneVarTableSize, &
-       oneGaspartFields, oneAveGaspartFields)
+       oneGaspartFields, oneAveGaspartFields, imean)
 
     ! Build VarTable entry with GaspartFields components
 
@@ -472,8 +472,8 @@ contains
     integer, intent(inout) :: oneVarTableSize
     type(GaspartFields), pointer, intent(in) :: oneGaspartFields
     type(GaspartFields), pointer, intent(in) :: oneAveGaspartFields
+    integer, intent(in) :: imean
 
-    integer, parameter :: notImean=0
     character(len=*), parameter :: h="**(InsertGaspartFieldsAtVarTable)**" 
 
     if (.not. associated(oneVarTable)) then
@@ -483,316 +483,148 @@ contains
     end if
 
     if (associated(oneGaspartFields%fusog)) then
-             call InsertVarTable (oneVarTable, oneVarTableSize, &
-                  oneGaspartFields%fusog, &
-                  'FUSOG:2:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveGaspartFields%fusog, &
-                  notImean)
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneGaspartFields%fusog, &
+            'FUSOG:2:hist:anal:mpti:mpt3:mpt1', &
+            oneAveGaspartFields%fusog, &
+            imean)
     end if
 
     if (associated(oneGaspartFields%pco))  then
-             call InsertVarTable (oneVarTable, oneVarTableSize, &
-                  oneGaspartFields%pco, &
-                  'PCO:3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveGaspartFields%pco, &
-                  notImean)
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneGaspartFields%pco, &
+            'PCO:3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveGaspartFields%pco, &
+            imean)
     end if
-    
+
     if (associated(oneGaspartFields%pno))  then
-             call InsertVarTable (oneVarTable, oneVarTableSize, &
-                  oneGaspartFields%pno, &
-                  'PNO:3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveGaspartFields%pno, &
-                  notImean)
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneGaspartFields%pno, &
+            'PNO:3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveGaspartFields%pno, &
+            imean)
     end if
-    
+
     if (associated(oneGaspartFields%pno2))  then
-             call InsertVarTable (oneVarTable, oneVarTableSize, &
-                  oneGaspartFields%pno2, &
-                  'PNO2:3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveGaspartFields%pno2, &
-                  notImean)
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneGaspartFields%pno2, &
+            'PNO2:3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveGaspartFields%pno2, &
+            imean)
     end if
-    
+
     if (associated(oneGaspartFields%ppm25))  then
-             call InsertVarTable (oneVarTable, oneVarTableSize, &
-                  oneGaspartFields%ppm25, &
-                  'PPM25:3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveGaspartFields%ppm25, &
-                  notImean)
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneGaspartFields%ppm25, &
+            'PPM25:3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveGaspartFields%ppm25, &
+            imean)
     end if
-    
+
     if (associated(oneGaspartFields%pvoc))  then
-             call InsertVarTable (oneVarTable, oneVarTableSize, &
-                  oneGaspartFields%pvoc, &
-                  'PVOC:3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveGaspartFields%pvoc, &
-                  notImean)
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneGaspartFields%pvoc, &
+            'PVOC:3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveGaspartFields%pvoc, &
+            imean)
     end if
-    
+
     if (associated(oneGaspartFields%pso2))  then
-             call InsertVarTable (oneVarTable, oneVarTableSize, &
-                  oneGaspartFields%pso2, &
-                  'PSO2:3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveGaspartFields%pso2, &
-                  notImean)
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneGaspartFields%pso2, &
+            'PSO2:3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveGaspartFields%pso2, &
+            imean)
     end if
-    
+
     if (associated(oneGaspartFields%pso4))  then
-             call InsertVarTable (oneVarTable, oneVarTableSize, &
-                  oneGaspartFields%pso4, &
-                  'PSO4:3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveGaspartFields%pso4, &
-                  notImean)
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneGaspartFields%pso4, &
+            'PSO4:3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveGaspartFields%pso4, &
+            imean)
     end if
-    
+
     if (associated(oneGaspartFields%paer))  then
-             call InsertVarTable (oneVarTable, oneVarTableSize, &
-                  oneGaspartFields%paer, &
-                  'PAER:3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveGaspartFields%paer, &
-                  notImean)
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneGaspartFields%paer, &
+            'PAER:3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveGaspartFields%paer, &
+            imean)
     end if
-    
+
     if (associated(oneGaspartFields%peoxid))  then
-             call InsertVarTable (oneVarTable, oneVarTableSize, &
-                  oneGaspartFields%peoxid, &
-                  'PEOXID:3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveGaspartFields%peoxid, &
-                  notImean)
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneGaspartFields%peoxid, &
+            'PEOXID:3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveGaspartFields%peoxid, &
+            imean)
     end if
-    
+
     if (associated(oneGaspartFields%gasr))  then
-             call InsertVarTable (oneVarTable, oneVarTableSize, &
-                  oneGaspartFields%gasr, &
-                  'GASR:3:mpti:mpt3:mpt1', &
-                  oneAveGaspartFields%gasr, &
-                  notImean)
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneGaspartFields%gasr, &
+            'GASR:3:mpti:mpt3:mpt1', &
+            oneAveGaspartFields%gasr, &
+            imean)
     end if
 
     if (associated(oneGaspartFields%po3))  then
-             call InsertVarTable (oneVarTable, oneVarTableSize, &
-                  oneGaspartFields%po3, &
-                  'PO3:3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveGaspartFields%po3, &
-                  notImean)
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneGaspartFields%po3, &
+            'PO3:3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveGaspartFields%po3, &
+            imean)
     end if
-    
+
     if (associated(oneGaspartFields%prhco))  then
-             call InsertVarTable (oneVarTable, oneVarTableSize, &
-                  oneGaspartFields%prhco, &
-                  'PRHCO:3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveGaspartFields%prhco, &
-                  notImean)
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneGaspartFields%prhco, &
+            'PRHCO:3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveGaspartFields%prhco, &
+            imean)
     end if
-    
+
     if (associated(oneGaspartFields%pho2))  then
-             call InsertVarTable (oneVarTable, oneVarTableSize, &
-                  oneGaspartFields%pho2, &
-                  'PHO2:3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveGaspartFields%pho2, &
-                  notImean)
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneGaspartFields%pho2, &
+            'PHO2:3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveGaspartFields%pho2, &
+            imean)
     end if
-       
+
     if (associated(oneGaspartFields%po3p))  then
-             call InsertVarTable (oneVarTable, oneVarTableSize, &
-                  oneGaspartFields%po3p, &
-                  'PO3P:3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveGaspartFields%po3p, &
-                  notImean)
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneGaspartFields%po3p, &
+            'PO3P:3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveGaspartFields%po3p, &
+            imean)
     end if
-    
+
     if (associated(oneGaspartFields%po1d))  then
-             call InsertVarTable (oneVarTable, oneVarTableSize, &
-                  oneGaspartFields%po1d, &
-                  'PO1D:3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveGaspartFields%po1d, &
-                  notImean)
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneGaspartFields%po1d, &
+            'PO1D:3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveGaspartFields%po1d, &
+            imean)
     end if
-    
+
     if (associated(oneGaspartFields%pho))  then
-             call InsertVarTable (oneVarTable, oneVarTableSize, &
-                  oneGaspartFields%pho, &
-                  'PHO:3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveGaspartFields%pho, &
-                  notImean)
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneGaspartFields%pho, &
+            'PHO:3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveGaspartFields%pho, &
+            imean)
     end if
-    
+
     if (associated(oneGaspartFields%proo))  then
-             call InsertVarTable (oneVarTable, oneVarTableSize, &
-                  oneGaspartFields%proo, &
-                  'PROO:3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveGaspartFields%proo, &
-                  notImean)
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneGaspartFields%proo, &
+            'PROO:3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveGaspartFields%proo, &
+            imean)
     end if
-    
+
   end subroutine InsertGaspartFieldsAtVarTable
-
-
-!!$  subroutine InsertGaspartFieldsAtVarTable(oneVarTable, oneVarTableSize, &
-!!$       oneGaspartFields)
-!!$
-!!$    ! Build VarTable entry with GaspartFields components
-!!$
-!!$    type(VarTable), pointer, intent(in) :: oneVarTable(:)
-!!$    integer, intent(inout) :: oneVarTableSize
-!!$    type(GaspartFields), pointer, intent(in) :: oneGaspartFields
-!!$
-!!$    type(GaspartFields), contiguous, pointer :: noField_2D(:,:)
-!!$    integer, parameter :: notImean=0
-!!$    character(len=*), parameter :: h="**(InsertGaspartFieldsAtVarTable)**" 
-!!$
-!!$    if (.not. associated(oneVarTable)) then
-!!$       call fatal_error(h//" oneVarTable not associated")
-!!$    else if (.not. associated(oneGaspartFields)) then
-!!$       call fatal_error(h//" oneGaspartFields not associated")
-!!$    end if
-!!$
-!!$    nullify(noField_2D)
-!!$    
-!!$    if (associated(oneGaspartFields%fusog)) then
-!!$             call InsertVarTable (oneVarTable, oneVarTableSize, &
-!!$                  oneGaspartFields%fusog, &
-!!$                  'FUSOG:2:hist:anal:mpti:mpt3:mpt1', &
-!!$                  noField_2D, &
-!!$                  notImean)
-!!$    end if
-!!$
-!!$    if (associated(oneGaspartFields%pco))  then
-!!$             call InsertVarTable (oneVarTable, oneVarTableSize, &
-!!$                  oneGaspartFields%pco, &
-!!$                  'PCO:3:hist:anal:mpti:mpt3:mpt1', &
-!!$                  null(), &
-!!$                  notImean)
-!!$    end if
-!!$    
-!!$    if (associated(oneGaspartFields%pno))  then
-!!$             call InsertVarTable (oneVarTable, oneVarTableSize, &
-!!$                  oneGaspartFields%pno, &
-!!$                  'PNO:3:hist:anal:mpti:mpt3:mpt1', &
-!!$                  null(), &
-!!$                  notImean)
-!!$    end if
-!!$    
-!!$    if (associated(oneGaspartFields%pno2))  then
-!!$             call InsertVarTable (oneVarTable, oneVarTableSize, &
-!!$                  oneGaspartFields%pno2, &
-!!$                  'PNO2:3:hist:anal:mpti:mpt3:mpt1', &
-!!$                  null(), &
-!!$                  notImean)
-!!$    end if
-!!$    
-!!$    if (associated(oneGaspartFields%ppm25))  then
-!!$             call InsertVarTable (oneVarTable, oneVarTableSize, &
-!!$                  oneGaspartFields%ppm25, &
-!!$                  'PPM25:3:hist:anal:mpti:mpt3:mpt1', &
-!!$                  null(), &
-!!$                  notImean)
-!!$    end if
-!!$    
-!!$    if (associated(oneGaspartFields%pvoc))  then
-!!$             call InsertVarTable (oneVarTable, oneVarTableSize, &
-!!$                  oneGaspartFields%pvoc, &
-!!$                  'PVOC:3:hist:anal:mpti:mpt3:mpt1', &
-!!$                  null(), &
-!!$                  notImean)
-!!$    end if
-!!$    
-!!$    if (associated(oneGaspartFields%pso2))  then
-!!$             call InsertVarTable (oneVarTable, oneVarTableSize, &
-!!$                  oneGaspartFields%pso2, &
-!!$                  'PSO2:3:hist:anal:mpti:mpt3:mpt1', &
-!!$                  null(), &
-!!$                  notImean)
-!!$    end if
-!!$    
-!!$    if (associated(oneGaspartFields%pso4))  then
-!!$             call InsertVarTable (oneVarTable, oneVarTableSize, &
-!!$                  oneGaspartFields%pso4, &
-!!$                  'PSO4:3:hist:anal:mpti:mpt3:mpt1', &
-!!$                  null(), &
-!!$                  notImean)
-!!$    end if
-!!$    
-!!$    if (associated(oneGaspartFields%paer))  then
-!!$             call InsertVarTable (oneVarTable, oneVarTableSize, &
-!!$                  oneGaspartFields%paer, &
-!!$                  'PAER:3:hist:anal:mpti:mpt3:mpt1', &
-!!$                  null(), &
-!!$                  notImean)
-!!$    end if
-!!$    
-!!$    if (associated(oneGaspartFields%peoxid))  then
-!!$             call InsertVarTable (oneVarTable, oneVarTableSize, &
-!!$                  oneGaspartFields%peoxid, &
-!!$                  'PEOXID:3:hist:anal:mpti:mpt3:mpt1', &
-!!$                  null(), &
-!!$                  notImean)
-!!$    end if
-!!$    
-!!$    if (associated(oneGaspartFields%gasr))  then
-!!$             call InsertVarTable (oneVarTable, oneVarTableSize, &
-!!$                  oneGaspartFields%gasr, &
-!!$                  'GASR:3:mpti:mpt3:mpt1', &
-!!$                  null(), &
-!!$                  notImean)
-!!$    end if
-!!$
-!!$    if (associated(oneGaspartFields%po3))  then
-!!$             call InsertVarTable (oneVarTable, oneVarTableSize, &
-!!$                  oneGaspartFields%po3, &
-!!$                  'PO3:3:hist:anal:mpti:mpt3:mpt1', &
-!!$                  null(), &
-!!$                  notImean)
-!!$    end if
-!!$    
-!!$    if (associated(oneGaspartFields%prhco))  then
-!!$             call InsertVarTable (oneVarTable, oneVarTableSize, &
-!!$                  oneGaspartFields%prhco, &
-!!$                  'PRHCO:3:hist:anal:mpti:mpt3:mpt1', &
-!!$                  null(), &
-!!$                  notImean)
-!!$    end if
-!!$    
-!!$    if (associated(oneGaspartFields%pho2))  then
-!!$             call InsertVarTable (oneVarTable, oneVarTableSize, &
-!!$                  oneGaspartFields%pho2, &
-!!$                  'PHO2:3:hist:anal:mpti:mpt3:mpt1', &
-!!$                  null(), &
-!!$                  notImean)
-!!$    end if
-!!$       
-!!$    if (associated(oneGaspartFields%po3p))  then
-!!$             call InsertVarTable (oneVarTable, oneVarTableSize, &
-!!$                  oneGaspartFields%po3p, &
-!!$                  'PO3P:3:hist:anal:mpti:mpt3:mpt1', &
-!!$                  null(), &
-!!$                  notImean)
-!!$    end if
-!!$    
-!!$    if (associated(oneGaspartFields%po1d))  then
-!!$             call InsertVarTable (oneVarTable, oneVarTableSize, &
-!!$                  oneGaspartFields%po1d, &
-!!$                  'PO1D:3:hist:anal:mpti:mpt3:mpt1', &
-!!$                  null(), &
-!!$                  notImean)
-!!$    end if
-!!$    
-!!$    if (associated(oneGaspartFields%pho))  then
-!!$             call InsertVarTable (oneVarTable, oneVarTableSize, &
-!!$                  oneGaspartFields%pho, &
-!!$                  'PHO:3:hist:anal:mpti:mpt3:mpt1', &
-!!$                  null(), &
-!!$                  notImean)
-!!$    end if
-!!$    
-!!$    if (associated(oneGaspartFields%proo))  then
-!!$             call InsertVarTable (oneVarTable, oneVarTableSize, &
-!!$                  oneGaspartFields%proo, &
-!!$                  'PROO:3:hist:anal:mpti:mpt3:mpt1', &
-!!$                  null(), &
-!!$                  notImean)
-!!$    end if
-!!$    
-!!$  end subroutine InsertGaspartFieldsAtVarTable  
 end module ModGaspartFields

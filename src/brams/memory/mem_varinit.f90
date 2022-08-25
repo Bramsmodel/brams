@@ -45,7 +45,6 @@ module mem_varinit
   end type varinit_vars
 
   type (varinit_vars), pointer :: varinit_g(:) => null()
-  type (varinit_vars), pointer :: varinitm_g(:) => null()
 
 
   integer, parameter :: maxnudfiles=maxfiles !500
@@ -210,7 +209,7 @@ contains
 
 
   subroutine filltab_varinit(oneVarTable, oneVarTableSize, &
-       varinit, varinitm, imean, ng)
+       varinit, imean, ng)
 
     ! Build VarTable entry with varinit_vars components
 
@@ -222,11 +221,11 @@ contains
     type(VarTable), pointer, intent(in) :: oneVarTable(:)
     integer, intent(inout) :: oneVarTableSize
     type(varinit_vars), pointer, intent(in) :: varinit(:)
-    type(varinit_vars), pointer, intent(in) :: varinitm(:)
     integer, intent(in) :: imean
     integer, intent(in) :: ng
 
     integer, parameter :: notIMean=0
+    real, pointer, contiguous :: null3D(:,:,:) => null()
     character(len=*), parameter :: h="**(filltab_varinit)**"
 
     ! Fill pointers to arrays into variable tables
@@ -241,7 +240,7 @@ contains
        call InsertVarTable (oneVarTable, oneVarTableSize, &
             varinit(ng)%varup, &
             'VARUP :3:mpti', &
-            varinitm(ng)%varup, &
+            null3D, &
             notIMean)
     end if
 
@@ -249,7 +248,7 @@ contains
        call InsertVarTable (oneVarTable, oneVarTableSize, &
             varinit(ng)%varvp, &
             'VARVP :3:mpti', &
-            varinitm(ng)%varvp, &
+            null3D, &
             notIMean)
     end if
 
@@ -257,7 +256,7 @@ contains
        call InsertVarTable (oneVarTable, oneVarTableSize, &
             varinit(ng)%varpp, &
             'VARPP :3:mpti', &
-            varinitm(ng)%varpp, &
+            null3D, &
             notIMean)
     end if
 
@@ -265,7 +264,7 @@ contains
        call InsertVarTable (oneVarTable, oneVarTableSize, &
             varinit(ng)%vartp, &
             'VARTP :3:mpti', &
-            varinitm(ng)%vartp, &
+            null3D, &
             notIMean)
     end if
 
@@ -273,7 +272,7 @@ contains
        call InsertVarTable (oneVarTable, oneVarTableSize, &
             varinit(ng)%varrp, &
             'VARRP :3:mpti', &
-            varinitm(ng)%varrp, &
+            null3D, &
             notIMean)
     end if
 
@@ -281,7 +280,7 @@ contains
        call InsertVarTable (oneVarTable, oneVarTableSize, &
             varinit(ng)%varuf, &
             'VARUF :3:mpti', &
-            varinitm(ng)%varuf, &
+            null3D, &
             notIMean)
     end if
 
@@ -289,7 +288,7 @@ contains
        call InsertVarTable (oneVarTable, oneVarTableSize, &
             varinit(ng)%varvf, &
             'VARVF :3:mpti', &
-            varinitm(ng)%varvf, &
+            null3D, &
             notIMean)
     end if
 
@@ -297,7 +296,7 @@ contains
        call InsertVarTable (oneVarTable, oneVarTableSize, &
             varinit(ng)%varpf, &
             'VARPF :3:mpti', &
-            varinitm(ng)%varpf, &
+            null3D, &
             notIMean)
     end if
 
@@ -305,7 +304,7 @@ contains
        call InsertVarTable (oneVarTable, oneVarTableSize, &
             varinit(ng)%vartf, &
             'VARTF :3:mpti', &
-            varinitm(ng)%vartf, &
+            null3D, &
             notIMean)
     end if
 
@@ -313,7 +312,7 @@ contains
        call InsertVarTable (oneVarTable, oneVarTableSize, &
             varinit(ng)%varrf, &
             'VARRF :3:mpti', &
-            varinitm(ng)%varrf, &
+            null3D, &
             notIMean)
     end if
 
@@ -321,7 +320,7 @@ contains
        call InsertVarTable (oneVarTable, oneVarTableSize, &
             varinit(ng)%varwts, &
             'VARWTS :3:mpti', &
-            varinitm(ng)%varwts, &
+            null3D, &
             notIMean)
     end if
 
@@ -329,7 +328,7 @@ contains
        call InsertVarTable (oneVarTable, oneVarTableSize, &
             varinit(ng)%varwts_chem, &
             'VARWTS_CHEM :3:mpti', &
-            varinitm(ng)%varwts_chem, &
+            null3D, &
             notIMean)
     end if
 
@@ -339,7 +338,7 @@ contains
           call InsertVarTable (oneVarTable, oneVarTableSize, &
                varinit(ng)%varcph, &
                'VARCPH :3:mpti', &
-               varinitm(ng)%varcph, &
+               null3D, &
                notIMean)
        end if
 
@@ -347,7 +346,7 @@ contains
           call InsertVarTable (oneVarTable, oneVarTableSize, &
                varinit(ng)%varcfh, &
                'VARCFH :3:mpti', &
-               varinitm(ng)%varcfh, &
+               null3D, &
                notIMean)
        end if
 
@@ -355,7 +354,7 @@ contains
           call InsertVarTable (oneVarTable, oneVarTableSize, &
                varinit(ng)%varrph, &
                'VARRPH :3:mpti', &
-               varinitm(ng)%varrph, &
+               null3D, &
                notIMean)
        end if
 
@@ -363,7 +362,7 @@ contains
           call InsertVarTable (oneVarTable, oneVarTableSize, &
                varinit(ng)%varrfh, &
                'VARRFH :3:mpti', &
-               varinitm(ng)%varrfh, &
+               null3D, &
                notIMean)
        end if
     endif
