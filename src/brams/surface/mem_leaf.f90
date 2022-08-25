@@ -292,7 +292,7 @@ Contains
   ! ********************************************************************
 
   subroutine filltab_leaf(oneVarTable, oneVarTableSize, &
-       leaf, leafm)
+       leaf, leafm, imean)
 
     use teb_spm_start, only: &
          TEB_SPM
@@ -302,18 +302,16 @@ Contains
 
     use ModVarTable, only: &
          VarTable, &
-         InsertAtVarTable
+         InsertVarTable
 
     implicit none
     type(VarTable), pointer, intent(in) :: oneVarTable(:) 
     integer, intent(inout) :: oneVarTableSize
     type (leaf_vars), pointer, intent(in) :: leaf
     type (leaf_vars), pointer, intent(in) :: leafm
+    integer, intent(in) :: imean
 
-    logical :: assAve
     character(len=8) :: str_recycle
-
-    assAve=associated(leafm)
 
     str_recycle = ''
     if (ipastin == 1) then
@@ -322,415 +320,193 @@ Contains
 
     ! Fill pointers to arrays into variable tables
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%soil_water, &
-            'SOIL_WATER :4:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%soil_water)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%soil_water, &
-            'SOIL_WATER :4:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%soil_water, &
+         'SOIL_WATER :4:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%soil_water, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%soil_energy, &
-            'SOIL_ENERGY :4:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%soil_energy)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%soil_energy, &
-            'SOIL_ENERGY :4:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%soil_energy, &
+         'SOIL_ENERGY :4:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%soil_energy, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%soil_text, &
-            'SOIL_TEXT :4:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%soil_text)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%soil_text, &
-            'SOIL_TEXT :4:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%soil_text, &
+         'SOIL_TEXT :4:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%soil_text, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%sfcwater_mass, &
-            'SFCWATER_MASS :5:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%sfcwater_mass)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%sfcwater_mass, &
-            'SFCWATER_MASS :5:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%sfcwater_mass, &
+         'SFCWATER_MASS :5:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%sfcwater_mass, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%sfcwater_energy,  &
-            'SFCWATER_ENERGY :5:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%sfcwater_energy)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%sfcwater_energy,  &
-            'SFCWATER_ENERGY :5:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%sfcwater_energy,  &
+         'SFCWATER_ENERGY :5:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%sfcwater_energy, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%sfcwater_depth, &
-            'SFCWATER_DEPTH :5:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%sfcwater_depth)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%sfcwater_depth, &
-            'SFCWATER_DEPTH :5:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%sfcwater_depth, &
+         'SFCWATER_DEPTH :5:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%sfcwater_depth, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%ustar, &
-            'USTAR :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%ustar)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%ustar, &
-            'USTAR :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%ustar, &
+         'USTAR :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%ustar, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%tstar, &
-            'TSTAR :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%tstar)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%tstar, &
-            'TSTAR :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%tstar, &
+         'TSTAR :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%tstar, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%rstar, &
-            'RSTAR :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%rstar)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%rstar, &
-            'RSTAR :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%rstar, &
+         'RSTAR :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%rstar, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%veg_fracarea, &
-            'VEG_FRACAREA :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%veg_fracarea)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%veg_fracarea, &
-            'VEG_FRACAREA :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%veg_fracarea, &
+         'VEG_FRACAREA :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%veg_fracarea, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%veg_lai, &
-            'VEG_LAI :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%veg_lai)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%veg_lai, &
-            'VEG_LAI :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%veg_lai, &
+         'VEG_LAI :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%veg_lai, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%veg_rough, &
-            'VEG_ROUGH :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%veg_rough)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%veg_rough, &
-            'VEG_ROUGH :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%veg_rough, &
+         'VEG_ROUGH :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%veg_rough, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%veg_height, &
-            'VEG_HEIGHT :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%veg_height)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%veg_height, &
-            'VEG_HEIGHT :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%veg_height, &
+         'VEG_HEIGHT :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%veg_height, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%veg_albedo, &
-            'VEG_ALBEDO :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%veg_albedo)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%veg_albedo, &
-            'VEG_ALBEDO :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%veg_albedo, &
+         'VEG_ALBEDO :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%veg_albedo, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%veg_tai, &
-            'VEG_TAI :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%veg_tai)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%veg_tai, &
-            'VEG_TAI :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%veg_tai, &
+         'VEG_TAI :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%veg_tai, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%patch_area, &
-            'PATCH_AREA :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%patch_area)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%patch_area, &
-            'PATCH_AREA :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%patch_area, &
+         'PATCH_AREA :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%patch_area, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%patch_rough, &
-            'PATCH_ROUGH :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%patch_rough)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%patch_rough, &
-            'PATCH_ROUGH :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%patch_rough, &
+         'PATCH_ROUGH :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%patch_rough, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%patch_wetind, &
-            'PATCH_WETIND :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%patch_wetind)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%patch_wetind, &
-            'PATCH_WETIND :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%patch_wetind, &
+         'PATCH_WETIND :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%patch_wetind, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%leaf_class, &
-            'LEAF_CLASS :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%leaf_class)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%leaf_class, &
-            'LEAF_CLASS :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%leaf_class, &
+         'LEAF_CLASS :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%leaf_class, imean)
 
     ! TEB_SPM
     if (TEB_SPM==1) then
-       if (assAve) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               leaf%G_URBAN, &
-               'G_URBAN :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-               leafm%G_URBAN)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               leaf%G_URBAN, &
-               'G_URBAN :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            leaf%G_URBAN, &
+            'G_URBAN :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+            leafm%G_URBAN, imean)
     end if
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%soil_rough, &
-            'SOIL_ROUGH :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%soil_rough)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%soil_rough, &
-            'SOIL_ROUGH :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%soil_rough, &
+         'SOIL_ROUGH :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%soil_rough, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%sfcwater_nlev, &
-            'SFCWATER_NLEV :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%sfcwater_nlev)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%sfcwater_nlev, &
-            'SFCWATER_NLEV :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%sfcwater_nlev, &
+         'SFCWATER_NLEV :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%sfcwater_nlev, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%stom_resist, &
-            'STOM_RESIST :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%stom_resist)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%stom_resist, &
-            'STOM_RESIST :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%stom_resist, &
+         'STOM_RESIST :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%stom_resist, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%ground_rsat, &
-            'GROUND_RSAT :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%ground_rsat)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%ground_rsat, &
-            'GROUND_RSAT :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%ground_rsat, &
+         'GROUND_RSAT :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%ground_rsat, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%ground_rvap, &
-            'GROUND_RVAP :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%ground_rvap)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%ground_rvap, &
-            'GROUND_RVAP :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%ground_rvap, &
+         'GROUND_RVAP :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%ground_rvap, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%veg_water, &
-            'VEG_WATER :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%veg_water)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%veg_water, &
-            'VEG_WATER :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%veg_water, &
+         'VEG_WATER :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%veg_water, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%veg_temp, &
-            'VEG_TEMP :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%veg_temp)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%veg_temp, &
-            'VEG_TEMP :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%veg_temp, &
+         'VEG_TEMP :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%veg_temp, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%can_rvap, &
-            'CAN_RVAP :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%can_rvap)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%can_rvap, &
-            'CAN_RVAP :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%can_rvap, &
+         'CAN_RVAP :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%can_rvap, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%can_temp, &
-            'CAN_TEMP :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%can_temp)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%can_temp, &
-            'CAN_TEMP :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%can_temp, &
+         'CAN_TEMP :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%can_temp, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%veg_ndvip, &
-            'VEG_NDVIP :6:hist:mpti', &
-            leafm%veg_ndvip)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%veg_ndvip, &
-            'VEG_NDVIP :6:hist:mpti')
-    end if
-       
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%veg_ndvic, &
-            'VEG_NDVIC :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%veg_ndvic)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%veg_ndvic, &
-            'VEG_NDVIC :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%veg_ndvip, &
+         'VEG_NDVIP :6:hist:mpti', &
+         leafm%veg_ndvip, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%veg_ndvif,  &
-            'VEG_NDVIF :6:hist:mpti', &
-            leafm%veg_ndvif)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%veg_ndvif,  &
-            'VEG_NDVIF :6:hist:mpti')
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%veg_ndvic, &
+         'VEG_NDVIC :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%veg_ndvic, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%R_aer, &
-            'R_aer :6:hist:mpti', &
-            leafm%R_aer)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%R_aer, &
-            'R_aer :6:hist:mpti')
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%veg_ndvif,  &
+         'VEG_NDVIF :6:hist:mpti', &
+         leafm%veg_ndvif, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%snow_mass, &
-            'SNOW_MASS :2:mpti', &
-            leafm%snow_mass)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%snow_mass, &
-            'SNOW_MASS :2:mpti')
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%R_aer, &
+         'R_aer :6:hist:mpti', &
+         leafm%R_aer, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%snow_depth, &
-            'SNOW_DEPTH :2:mpti', &
-            leafm%snow_depth)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%snow_depth, &
-            'SNOW_DEPTH :2:mpti')
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%snow_mass, &
+         'SNOW_MASS :2:mpti', &
+         leafm%snow_mass, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%seatp, &
-            'SEATP :2:mpti', &
-            leafm%seatp)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%seatp, &
-            'SEATP :2:mpti')
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%snow_depth, &
+         'SNOW_DEPTH :2:mpti', &
+         leafm%snow_depth, imean)
 
-    if (assAve) then
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%seatf, &
-            'SEATF :2:mpti', &
-            leafm%seatf)
-    else
-       call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-            leaf%seatf, &
-            'SEATF :2:mpti')
-    end if
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%seatp, &
+         'SEATP :2:mpti', &
+         leafm%seatp, imean)
+
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%seatf, &
+         'SEATF :2:mpti', &
+         leafm%seatf, imean)
 
   end subroutine filltab_leaf
 

@@ -13,6 +13,7 @@ module ModVarTable
        int64
 
   use ModParallelEnvironment, only: &
+       ParallelEnvironment, &
        MsgDump
 
   use io_params, only: &
@@ -488,11 +489,12 @@ contains
 
 
 
-  subroutine MarkLiteVarsAtVarTable(oneVarTable, oneVarTableSize)
+  subroutine MarkLiteVarsAtVarTable(oneVarTable, oneVarTableSize, oneParallelEnvironment)
 
     ! Arguments:
     type(VarTable), pointer, intent(in) :: oneVarTable(:)
     integer, intent(in) :: oneVarTableSize
+    type(ParallelEnvironment), pointer, intent(in) :: oneParallelEnvironment
 
     ! Local variables:
     integer :: nv
@@ -510,9 +512,9 @@ contains
              if (oneVarTable(nv)%name == lite_vars(nvl) ) then
                 oneVarTable(nv)%ilite = 1
                 found=.true.
-                print*,'!---------------------------------------------------------'
-                print*,'! LITE_VARS variable added--->',trim(lite_vars(nvl))
-                print*,'!---------------------------------------------------------'
+                if (oneParallelEnvironment%mchnum == oneParallelEnvironment%master_num) then 
+                   print*,'! LITE_VARS variable added--->',trim(lite_vars(nvl))
+                end if
                 exit
              end if
           end do

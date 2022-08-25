@@ -518,6 +518,14 @@ contains
           oneGrid%oneAveJulesFields => CreateJulesFields(&
                oneGrid%oneNodeDimensions, &
                oneGrid%oneNamelistFile)
+       else
+          ! oneAveJulesFields is created with null components
+          allocate(oneGrid%oneAveJulesFields, stat=ierr)
+          if (ierr /= 0) then
+             write(str(1),"(i8)") ierr
+             call fatal_error(h//" allocate oneGrid%oneAveJulesFields fails with stat="//&
+                  trim(adjustl(str(1))))
+          end if
        end if
     end if
 #endif

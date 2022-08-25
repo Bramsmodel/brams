@@ -25,7 +25,7 @@ module ModJulesFields
 
   use ModVarTable, only: &
        VarTable, &
-       InsertAtVarTable
+       InsertVarTable
   
   implicit none
 
@@ -297,144 +297,213 @@ contains
        return
     end if
 
-    deallocate(oneJulesFields%gpp, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate gpp fails with stat="//&
-            trim(adjustl(str(1))))
+    if (associated(oneJulesFields%gpp)) then
+       deallocate(oneJulesFields%gpp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate gpp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
-    deallocate(oneJulesFields%resp_s, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate resp_s fails with stat="//&
-            trim(adjustl(str(1))))
+    
+    if (associated(oneJulesFields%resp_s)) then
+       deallocate(oneJulesFields%resp_s, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate resp_s fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
-    deallocate(oneJulesFields%resp_p, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate resp_p fails with stat="//&
-            trim(adjustl(str(1))))
+    
+    if (associated(oneJulesFields%resp_p)) then
+       deallocate(oneJulesFields%resp_p, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate resp_p fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
-    deallocate(oneJulesFields%npp, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate npp fails with stat="//&
-            trim(adjustl(str(1))))
+    
+    if (associated(oneJulesFields%npp)) then
+       deallocate(oneJulesFields%npp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate npp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
-    deallocate(oneJulesFields%u10mj, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate u10mj fails with stat="//&
-            trim(adjustl(str(1))))
+    
+    if (associated(oneJulesFields%u10mj)) then
+       deallocate(oneJulesFields%u10mj, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate u10mj fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
-    deallocate(oneJulesFields%v10mj, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate v10mj fails with stat="//&
-            trim(adjustl(str(1))))
+    
+    if (associated(oneJulesFields%v10mj)) then
+       deallocate(oneJulesFields%v10mj, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate v10mj fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
-    deallocate(oneJulesFields%u10mj1hr, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate u10mj1hr fails with stat="//&
-            trim(adjustl(str(1))))
+    
+    if (associated(oneJulesFields%u10mj1hr)) then
+       deallocate(oneJulesFields%u10mj1hr, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate u10mj1hr fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
-    deallocate(oneJulesFields%v10mj1hr, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate v10mj1hr fails with stat="//&
-            trim(adjustl(str(1))))
+    
+    if (associated(oneJulesFields%v10mj1hr)) then
+       deallocate(oneJulesFields%v10mj1hr, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate v10mj1hr fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
-    deallocate(oneJulesFields%fracj, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate fracj fails with stat="//&
-            trim(adjustl(str(1))))
+    
+    if (associated(oneJulesFields%fracj)) then
+       deallocate(oneJulesFields%fracj, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate fracj fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
-    deallocate(oneJulesFields%t2mj, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate t2mj fails with stat="//&
-            trim(adjustl(str(1))))
+    
+    if (associated(oneJulesFields%t2mj)) then
+       deallocate(oneJulesFields%t2mj, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate t2mj fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
-    deallocate(oneJulesFields%t2mj_max, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate t2mj_max fails with stat="//&
-            trim(adjustl(str(1))))
+    
+    if (associated(oneJulesFields%t2mj_max)) then
+       deallocate(oneJulesFields%t2mj_max, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate t2mj_max fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
-    deallocate(oneJulesFields%t2mj_min, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate t2mj_min fails with stat="//&
-            trim(adjustl(str(1))))
+    
+    if (associated(oneJulesFields%t2mj_min)) then
+       deallocate(oneJulesFields%t2mj_min, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate t2mj_min fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
-    deallocate(oneJulesFields%rv2mj, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate rv2mj fails with stat="//&
-            trim(adjustl(str(1))))
+    
+    if (associated(oneJulesFields%rv2mj)) then
+       deallocate(oneJulesFields%rv2mj, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rv2mj fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
-    deallocate(oneJulesFields%csj, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate csj fails with stat="//&
-            trim(adjustl(str(1))))
+    
+    if (associated(oneJulesFields%csj)) then
+       deallocate(oneJulesFields%csj, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate csj fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
-    deallocate(oneJulesFields%anthrop_heatj, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate anthrop_heatj fails with stat="//&
-            trim(adjustl(str(1))))
+    
+    if (associated(oneJulesFields%anthrop_heatj)) then
+       deallocate(oneJulesFields%anthrop_heatj, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate anthrop_heatj fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
-    deallocate(oneJulesFields%radnet_tilej, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate radnet_tilej fails with stat="//&
-            trim(adjustl(str(1))))
+    
+    if (associated(oneJulesFields%radnet_tilej)) then
+       deallocate(oneJulesFields%radnet_tilej, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate radnet_tilej fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
-    deallocate(oneJulesFields%ftl_tilej, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate ftl_tilej fails with stat="//&
-            trim(adjustl(str(1))))
+    
+    if (associated(oneJulesFields%ftl_tilej)) then
+       deallocate(oneJulesFields%ftl_tilej, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate ftl_tilej fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
-    deallocate(oneJulesFields%le_tilej, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate le_tilej fails with stat="//&
-            trim(adjustl(str(1))))
+    
+    if (associated(oneJulesFields%le_tilej)) then
+       deallocate(oneJulesFields%le_tilej, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate le_tilej fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
-    deallocate(oneJulesFields%htf_tilej, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate htf_tilej fails with stat="//&
-            trim(adjustl(str(1))))
+    
+    if (associated(oneJulesFields%htf_tilej)) then
+       deallocate(oneJulesFields%htf_tilej, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate htf_tilej fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
-    deallocate(oneJulesFields%snowdepthj, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate snowdepthj fails with stat="//&
-            trim(adjustl(str(1))))
+    
+    if (associated(oneJulesFields%snowdepthj)) then
+       deallocate(oneJulesFields%snowdepthj, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate snowdepthj fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
-    deallocate(oneJulesFields%ht_fluxj, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate ht_fluxj fails with stat="//&
-            trim(adjustl(str(1))))
+    
+    if (associated(oneJulesFields%ht_fluxj)) then
+       deallocate(oneJulesFields%ht_fluxj, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate ht_fluxj fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
-    deallocate(oneJulesFields%temp_surfj, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate temp_surfj fails with stat="//&
-            trim(adjustl(str(1))))
+    
+    if (associated(oneJulesFields%temp_surfj)) then
+       deallocate(oneJulesFields%temp_surfj, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate temp_surfj fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
-    deallocate(oneJulesFields, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate oneJulesFields fails with stat="//&
-            trim(adjustl(str(1))))
+    
+    if (associated(oneJulesFields)) then
+       deallocate(oneJulesFields, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate oneJulesFields fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
+    
     nullify(oneJulesFields)
   end subroutine DestroyJulesFields
 
@@ -460,15 +529,14 @@ contains
 
 
   subroutine InsertJulesFieldsAtVarTable(oneVarTable, oneVarTableSize, &
-       oneJulesFields, oneAveJulesFields, oneNamelistFile)
+       oneJulesFields, oneAveJulesFields, oneNamelistFile, imean)
     type(VarTable), pointer, intent(in) :: oneVarTable(:)
     integer, intent(inout) :: oneVarTableSize
     type(JulesFields), pointer, intent(in) :: oneJulesFields
     type(JulesFields), pointer, intent(in) :: oneAveJulesFields
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
+    integer, intent(in) :: imean
 
-    logical :: assAve
-    logical :: assThis
     character(len=8) :: str_recycle
     character(len=*), parameter :: h="**(InsertJulesFieldsAtVarTable)**" 
 
@@ -481,8 +549,6 @@ contains
     end if
 
 
-    assAve=associated(oneAveJulesFields)
-
     if (oneNamelistFile%ipastin == 1) then
        str_recycle = ':recycle'
     else
@@ -492,422 +558,180 @@ contains
     ! Fill pointers to arrays into variable tables
 
     if (associated(oneJulesFields%gpp)) then
-       if (assAve) then
-          assThis=associated(oneAveJulesFields%gpp)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%gpp, &
-               'GPP :2:anal:mpti:mpt3', &  
-               oneAveJulesFields%gpp)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%gpp, &
-               'GPP :2:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneJulesFields%gpp, &
+            'GPP :2:anal:mpti:mpt3', &  
+            oneAveJulesFields%gpp, imean)
     end if
-          
+
 
     if (associated(oneJulesFields%resp_s)) then
-       if (assAve) then
-          assThis=associated(oneAveJulesFields%resp_s)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%resp_s, &
-               'RESP_S :2:anal:mpti:mpt3', & 
-               oneAveJulesFields%resp_s)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%resp_s, &
-               'RESP_S :2:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneJulesFields%resp_s, &
+            'RESP_S :2:anal:mpti:mpt3', & 
+            oneAveJulesFields%resp_s, imean)
     end if
-          
+
 
     if (associated(oneJulesFields%resp_p)) then
-       if (assAve) then
-          assThis=associated(oneAveJulesFields%resp_p)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%resp_p, &
-               'RESP_P :2:anal:mpti:mpt3', & 
-               oneAveJulesFields%resp_p)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%resp_p, &
-               'RESP_P :2:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneJulesFields%resp_p, &
+            'RESP_P :2:anal:mpti:mpt3', & 
+            oneAveJulesFields%resp_p, imean)
     end if
-          
+
 
     if (associated(oneJulesFields%npp)) then
-       if (assAve) then
-          assThis=associated(oneAveJulesFields%npp)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%npp, &
-               'NPP :2:anal:mpti:mpt3', &    
-               oneAveJulesFields%npp)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%npp, &
-               'NPP :2:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneJulesFields%npp, &
+            'NPP :2:anal:mpti:mpt3', &    
+            oneAveJulesFields%npp, imean)
     end if
-          
+
 
     if (associated(oneJulesFields%u10mj)) then
-       if (assAve) then
-          assThis=associated(oneAveJulesFields%u10mj)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%u10mj, &
-               'U10MJ :2:anal:mpti:mpt3', &
-               oneAveJulesFields%u10mj)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%u10mj, &
-               'U10MJ :2:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneJulesFields%u10mj, &
+            'U10MJ :2:anal:mpti:mpt3', &
+            oneAveJulesFields%u10mj, imean)
     end if
-          
+
 
     if (associated(oneJulesFields%v10mj)) then
-       if (assAve) then
-          assThis=associated(oneAveJulesFields%v10mj)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%v10mj, &
-               'V10MJ :2:anal:mpti:mpt3', &
-               oneAveJulesFields%v10mj)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%v10mj, &
-               'V10MJ :2:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneJulesFields%v10mj, &
+            'V10MJ :2:anal:mpti:mpt3', &
+            oneAveJulesFields%v10mj, imean)
     end if
-          
+
 
     if (associated(oneJulesFields%t2mj)) then
-       if (assAve) then
-          assThis=associated(oneAveJulesFields%t2mj)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%t2mj, &
-               'T2MJ :2:anal:mpti:mpt3', &
-               oneAveJulesFields%t2mj)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%t2mj, &
-               'T2MJ :2:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneJulesFields%t2mj, &
+            'T2MJ :2:anal:mpti:mpt3', &
+            oneAveJulesFields%t2mj, imean)
     end if
-          
+
 
     if (associated(oneJulesFields%t2mj_max)) then
-       if (assAve) then
-          assThis=associated(oneAveJulesFields%t2mj_max)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%t2mj_max, &
-               'T2MJ_MAX :2:anal:mpti:mpt3', &
-               oneAveJulesFields%t2mj_max)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%t2mj_max, &
-               'T2MJ_MAX :2:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneJulesFields%t2mj_max, &
+            'T2MJ_MAX :2:anal:mpti:mpt3', &
+            oneAveJulesFields%t2mj_max, imean)
     end if
-          
+
 
     if (associated(oneJulesFields%t2mj_min)) then
-       if (assAve) then
-          assThis=associated(oneAveJulesFields%t2mj_min)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%t2mj_min, &
-               'T2MJ_MIN :2:anal:mpti:mpt3', &
-               oneAveJulesFields%t2mj_min)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%t2mj_min, &
-               'T2MJ_MIN :2:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneJulesFields%t2mj_min, &
+            'T2MJ_MIN :2:anal:mpti:mpt3', &
+            oneAveJulesFields%t2mj_min, imean)
     end if
-          
+
 
     if (associated(oneJulesFields%rv2mj)) then
-       if (assAve) then
-          assThis=associated(oneAveJulesFields%rv2mj)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%rv2mj, &
-               'RV2MJ :2:anal:mpti:mpt3', &
-               oneAveJulesFields%rv2mj)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%rv2mj, &
-               'RV2MJ :2:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneJulesFields%rv2mj, &
+            'RV2MJ :2:anal:mpti:mpt3', &
+            oneAveJulesFields%rv2mj, imean)
     end if
-          
+
 
     if (associated(oneJulesFields%csj)) then
-       if (assAve) then
-          assThis=associated(oneAveJulesFields%csj)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%csj, &
-               'CSJ :2:anal:mpti:mpt3', &
-               oneAveJulesFields%csj)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%csj, &
-               'CSJ :2:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneJulesFields%csj, &
+            'CSJ :2:anal:mpti:mpt3', &
+            oneAveJulesFields%csj, imean)
     end if
-          
+
 
     if (associated(oneJulesFields%ht_fluxj)) then
-       if (assAve) then
-          assThis=associated(oneAveJulesFields%ht_fluxj)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%ht_fluxj, &
-               'ht_fluxj :2:anal:mpti:mpt3', &
-               oneAveJulesFields%ht_fluxj)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%ht_fluxj, &
-               'ht_fluxj :2:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneJulesFields%ht_fluxj, &
+            'ht_fluxj :2:anal:mpti:mpt3', &
+            oneAveJulesFields%ht_fluxj, imean)
     end if
-          
+
 
     if (associated(oneJulesFields%temp_surfj)) then
-       if (assAve) then
-          assThis=associated(oneAveJulesFields%temp_surfj)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%temp_surfj, &
-               'temp_surfj :2:anal:mpti:mpt3', &
-               oneAveJulesFields%temp_surfj)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%temp_surfj, &
-               'temp_surfj :2:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneJulesFields%temp_surfj, &
+            'temp_surfj :2:anal:mpti:mpt3', &
+            oneAveJulesFields%temp_surfj, imean)
     end if
-          
+
 
     if (associated(oneJulesFields%u10mj1hr)) then
-       if (assAve) then
-          assThis=associated(oneAveJulesFields%u10mj1hr)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%u10mj1hr, &
-               'U10MJ1hr :3:hist:anal:mpti:mpt3:mpt2', &
-               oneAveJulesFields%u10mj1hr)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%u10mj1hr, &
-               'U10MJ1hr :3:hist:anal:mpti:mpt3:mpt2')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneJulesFields%u10mj1hr, &
+            'U10MJ1hr :3:hist:anal:mpti:mpt3:mpt2', &
+            oneAveJulesFields%u10mj1hr, imean)
     end if
-          
+
 
     if (associated(oneJulesFields%v10mj1hr)) then
-       if (assAve) then
-          assThis=associated(oneAveJulesFields%v10mj1hr)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%v10mj1hr, &
-               'V10MJ1hr :3:hist:anal:mpti:mpt3:mpt2', &
-               oneAveJulesFields%v10mj1hr)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%v10mj1hr, &
-               'V10MJ1hr :3:hist:anal:mpti:mpt3:mpt2')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneJulesFields%v10mj1hr, &
+            'V10MJ1hr :3:hist:anal:mpti:mpt3:mpt2', &
+            oneAveJulesFields%v10mj1hr, imean)
     end if
-          
+
 
     if (associated(oneJulesFields%fracj)) then
-       if (assAve) then
-          assThis=associated(oneAveJulesFields%fracj)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%fracj, &
-               'fracj :3:hist:anal:mpti:mpt3:mpt2', &
-               oneAveJulesFields%fracj)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%fracj, &
-               'fracj :3:hist:anal:mpti:mpt3:mpt2')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneJulesFields%fracj, &
+            'fracj :3:hist:anal:mpti:mpt3:mpt2', &
+            oneAveJulesFields%fracj, imean)
     end if
-          
+
 
     if (associated(oneJulesFields%anthrop_heatj)) then
-       if (assAve) then
-          assThis=associated(oneAveJulesFields%anthrop_heatj)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%anthrop_heatj, &
-               'anthrop_heatj :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-               oneAveJulesFields%anthrop_heatj)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%anthrop_heatj, &
-               'anthrop_heatj :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneJulesFields%anthrop_heatj, &
+            'anthrop_heatj :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+            oneAveJulesFields%anthrop_heatj, imean)
     end if
-          
+
 
     if (associated(oneJulesFields%radnet_tilej)) then
-       if (assAve) then
-          assThis=associated(oneAveJulesFields%radnet_tilej)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%radnet_tilej, &
-               'radnet_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-               oneAveJulesFields%radnet_tilej)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%radnet_tilej, &
-               'radnet_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneJulesFields%radnet_tilej, &
+            'radnet_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+            oneAveJulesFields%radnet_tilej, imean)
     end if
-          
+
 
     if (associated(oneJulesFields%ftl_tilej)) then
-       if (assAve) then
-          assThis=associated(oneAveJulesFields%ftl_tilej)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%ftl_tilej, &
-               'ftl_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-               oneAveJulesFields%ftl_tilej)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%ftl_tilej, &
-               'ftl_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneJulesFields%ftl_tilej, &
+            'ftl_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+            oneAveJulesFields%ftl_tilej, imean)
     end if
-          
+
 
     if (associated(oneJulesFields%le_tilej)) then
-       if (assAve) then
-          assThis=associated(oneAveJulesFields%le_tilej)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%le_tilej, &
-               'le_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-               oneAveJulesFields%le_tilej)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%le_tilej, &
-               'le_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneJulesFields%le_tilej, &
+            'le_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+            oneAveJulesFields%le_tilej, imean)
     end if
-          
+
 
     if (associated(oneJulesFields%htf_tilej)) then
-       if (assAve) then
-          assThis=associated(oneAveJulesFields%htf_tilej)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%htf_tilej, &
-               'htf_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-               oneAveJulesFields%htf_tilej)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%htf_tilej, &
-               'htf_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneJulesFields%htf_tilej, &
+            'htf_tilej :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+            oneAveJulesFields%htf_tilej, imean)
     end if
-          
+
 
     if (associated(oneJulesFields%snowdepthj)) then
-       if (assAve) then
-          assThis=associated(oneAveJulesFields%snowdepthj)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%snowdepthj, &
-               'snowdepthj :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-               oneAveJulesFields%snowdepthj)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneJulesFields%snowdepthj, &
-               'snowdepthj :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneJulesFields%snowdepthj, &
+            'snowdepthj :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+            oneAveJulesFields%snowdepthj, imean)
     end if
-          
+
 
   end subroutine InsertJulesFieldsAtVarTable
 

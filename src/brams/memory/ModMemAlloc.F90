@@ -565,18 +565,17 @@ contains
     allocate(leafm_g(ngrids), STAT=ierr)
     if (ierr/=0) call fatal_error(h//"Allocating leafm_g")
     do ng=1,ngrids
-       call nullify_leaf(leaf_g(ng)); call nullify_leaf(leafm_g(ng))
+       call nullify_leaf(leaf_g(ng))
        call alloc_leaf(leaf_g(ng), nmzp(ng), nmxp(ng), nmyp(ng),  &
             nzg, nzs, npatch, ng)
+       call nullify_leaf(leafm_g(ng))
        if (imean==1) then
           call alloc_leaf(leafm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng),  &
                nzg, nzs, npatch, ng)
-       elseif (imean==0) then
-          call alloc_leaf(leafm_g(ng),        1,        1,        1, 1, 1, 1, 1)
        endif
 
        call filltab_leaf(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-            leaf_g(ng), leafm_g(ng))
+            leaf_g(ng), leafm_g(ng), imean)
     enddo
     ! Bob (1/10/2002) added the following line.  Is this the right place for
     ! the long term??
@@ -590,7 +589,8 @@ contains
          oneGrid%oneVarTableSize, &
          oneGrid%oneJulesFields, &
          oneGrid%oneAveJulesFields, &
-         oneGrid%oneNamelistFile)
+         oneGrid%oneNamelistFile, &
+         imean)
 #endif
     !-------------
 
