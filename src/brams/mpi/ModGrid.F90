@@ -503,6 +503,14 @@ contains
             oneGrid%oneNamelistFile, &
             oneGrid%oneNodeDimensions, &
             oneGrid%oneMicVars)
+    else
+       ! oneAveMicroFields is created with null components
+       allocate(oneGrid%oneAveMicroFields, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" allocate oneGrid%oneAveMicroFields fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
 
     ! this node Scalar Table

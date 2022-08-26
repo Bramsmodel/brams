@@ -597,7 +597,7 @@ contains
     !-------------
     ! insert Micro Fields variables at var_table
     call InsertMicroFieldsAtVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-         oneGrid%oneMicroFields, oneGrid%oneAveMicroFields)
+         oneGrid%oneMicroFields, oneGrid%oneAveMicroFields, imean)
     !-------------
 
     !-------------

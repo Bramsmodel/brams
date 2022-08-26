@@ -39,7 +39,7 @@ module ModMicroFields
   
   use ModVarTable, only: &
        VarTable, &
-       InsertAtVarTable
+       InsertVarTable
   
   implicit none
 
@@ -3606,3006 +3606,1134 @@ contains
 
  
   subroutine InsertMicroFieldsAtVarTable(oneVarTable, oneVarTableSize, &
-       oneMicroFields, oneAveMicroFields)
+       oneMicroFields, oneAveMicroFields, imean)
     type(VarTable), pointer, intent(in) :: oneVarTable(:)
     integer, intent(inout) :: oneVarTableSize
     type(MicroFields), pointer, intent(in) :: oneMicroFields
     type(MicroFields), pointer, intent(in) :: oneAveMicroFields
+    integer, intent(in) :: imean
 
-    logical :: assAve
     character(len=*), parameter :: h="**(InsertMicroFieldsAtVarTable)**"
 
     if (.not. associated(oneMicroFields)) then
        call fatal_error(h//" oneMicroFields not associated")
+    else if (.not. associated(oneAveMicroFields)) then
+       call fatal_error(h//" oneAveMicroFields not associated")
     else if (.not. associated(oneVarTable)) then
        call fatal_error(h//" oneVarTable not associated")
     end if
 
-    assAve=associated(oneAveMicroFields)
-
     ! Fill pointers to arrays into variable tables
 
     if (associated(oneMicroFields%rcp)) then   
-       if (assAve) then
-          if (associated(oneAveMicroFields%rcp)) then
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rcp, &
-                  'RCP :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%rcp)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rcp, &
-                  'RCP :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rcp, &
-               'RCP :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rcp, &
+            'RCP :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%rcp, imean)
     end if
 
     if (associated(oneMicroFields%rdp)) then   
-       if (assAve) then
-          if (associated(oneAveMicroFields%rdp)) then   
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rdp, &
-                  'RDP :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%rdp  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rdp, &
-                  'RDP :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rdp, &
-               'RDP :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rdp, &
+            'RDP :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%rdp, imean)
     end if
 
     if (associated(oneMicroFields%rrp)) then   
-       if (assAve) then
-          if (associated(oneAveMicroFields%rrp)) then   
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rrp, &
-                  'RRP :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%rrp)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rrp, &
-                  'RRP :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rrp, &
-               'RRP :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rrp, &
+            'RRP :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%rrp, imean)
     end if
 
     if (associated(oneMicroFields%rpp)) then   
-       if (assAve) then
-          if (associated(oneAveMicroFields%rpp)) then   
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rpp, &
-                  'RPP :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%rpp  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rpp, &
-                  'RPP :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rpp, &
-               'RPP :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rpp, &
+            'RPP :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%rpp, imean)
     end if
 
     if (associated(oneMicroFields%rsp)) then   
-       if (assAve) then
-          if (associated(oneAveMicroFields%rsp)) then   
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rsp, &
-                  'RSP :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%rsp)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rsp, &
-                  'RSP :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rsp, &
-               'RSP :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rsp, &
+            'RSP :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%rsp, imean)
     end if
 
     if (associated(oneMicroFields%rap)) then   
-       if (assAve) then
-          if (associated(oneAveMicroFields%rap)) then   
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rap, &
-                  'RAP :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%rap  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rap, &
-                  'RAP :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rap, &
-               'RAP :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rap, &
+            'RAP :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%rap, imean)
     end if
 
     if (associated(oneMicroFields%rgp)) then   
-       if (assAve) then
-          if (associated(oneAveMicroFields%rgp)) then   
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rgp, &
-                  'RGP :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%rgp)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rgp, &
-                  'RGP :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rgp, &
-               'RGP :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rgp, &
+            'RGP :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%rgp, imean)
     end if
 
     if (associated(oneMicroFields%rhp)) then   
-       if (assAve) then
-          if (associated(oneAveMicroFields%rhp)) then   
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rhp, &
-                  'RHP :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%rhp  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rhp, &
-                  'RHP :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rhp, &
-               'RHP :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rhp, &
+            'RHP :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%rhp, imean)
     end if
 
     if (associated(oneMicroFields%ccp)) then   
-       if (assAve) then
-          if (associated(oneAveMicroFields%ccp)) then   
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%ccp, &
-                  'CCP :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%ccp)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%ccp, &
-                  'CCP :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%ccp, &
-               'CCP :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%ccp, &
+            'CCP :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%ccp, imean)
     end if
 
     if (associated(oneMicroFields%cdp)) then   
-       if (assAve) then
-          if (associated(oneAveMicroFields%cdp)) then   
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%cdp, &
-                  'CDP :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%cdp  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%cdp, &
-                  'CDP :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%cdp, &
-               'CDP :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%cdp, &
+            'CDP :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%cdp, imean)
     end if
 
     if (associated(oneMicroFields%crp)) then   
-       if (assAve) then
-          if (associated(oneAveMicroFields%crp)) then   
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%crp, &
-                  'CRP :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%crp  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%crp, &
-                  'CRP :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%crp, &
-               'CRP :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%crp, &
+            'CRP :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%crp, imean)
     end if
 
     if (associated(oneMicroFields%cpp)) then   
-       if (assAve) then
-          if (associated(oneAveMicroFields%cpp)) then   
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%cpp, &
-                  'CPP :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%cpp  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%cpp, &
-                  'CPP :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%cpp, &
-               'CPP :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%cpp, &
+            'CPP :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%cpp, imean)
     end if
 
     if (associated(oneMicroFields%csp)) then   
-       if (assAve) then
-          if (associated(oneAveMicroFields%csp)) then   
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%csp, &
-                  'CSP :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%csp  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%csp, &
-                  'CSP :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%csp, &
-               'CSP :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%csp, &
+            'CSP :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%csp, imean)
     end if
 
     if (associated(oneMicroFields%cap)) then   
-       if (assAve) then
-          if (associated(oneAveMicroFields%cap)) then   
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%cap, &
-                  'CAP :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%cap  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%cap, &
-                  'CAP :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%cap, &
-               'CAP :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%cap, &
+            'CAP :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%cap, imean)
     end if
 
     if (associated(oneMicroFields%cgp)) then   
-       if (assAve) then
-          if (associated(oneAveMicroFields%cgp)) then   
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%cgp, &
-                  'CGP :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%cgp  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%cgp, &
-                  'CGP :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%cgp, &
-               'CGP :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%cgp, &
+            'CGP :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%cgp, imean)
     end if
 
     if (associated(oneMicroFields%chp)) then   
-       if (assAve) then
-          if (associated(oneAveMicroFields%chp)) then   
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%chp, &
-                  'CHP :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%chp  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%chp, &
-                  'CHP :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%chp, &
-               'CHP :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%chp, &
+            'CHP :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%chp, imean)
     end if
 
     if (associated(oneMicroFields%cccnp)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%cccnp)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%cccnp, &
-                  'CCCNP :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%cccnp  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%cccnp, &
-                  'CCCNP :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%cccnp, &
-               'CCCNP :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%cccnp, &
+            'CCCNP :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%cccnp, imean)
     end if
 
     if (associated(oneMicroFields%gccnp)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%gccnp)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%gccnp, &
-                  'GCCNP :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%gccnp  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%gccnp, &
-                  'GCCNP :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%gccnp, &
-               'GCCNP :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%gccnp, &
+            'GCCNP :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%gccnp, imean)
     end if
 
     if (associated(oneMicroFields%cifnp)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%cifnp)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%cifnp, &
-                  'CIFNP :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%cifnp  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%cifnp, &
-                  'CIFNP :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%cifnp, &
-               'CIFNP :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%cifnp, &
+            'CIFNP :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%cifnp, imean)
     end if
 
 
     if (associated(oneMicroFields%q2)) then   
-       if (assAve) then
-          if (associated(oneAveMicroFields%q2)) then   
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%q2, &
-                  'Q2 :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%q2  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%q2, &
-                  'Q2 :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%q2, &
-               'Q2 :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%q2, &
+            'Q2 :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%q2, imean)
     end if
 
     if (associated(oneMicroFields%q6)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%q6)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%q6, &
-                  'Q6 :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%q6  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%q6, &
-                  'Q6 :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%q6, &
-               'Q6 :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%q6, &
+            'Q6 :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%q6, imean)
     end if
 
     if (associated(oneMicroFields%q7)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%q7)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%q7, &
-                  'Q7 :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%q7  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%q7, &
-                  'Q7 :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%q7, &
-               'Q7 :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%q7, &
+            'Q7 :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%q7, imean)
     end if
 
     if (associated(oneMicroFields%cccmp)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%cccmp)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%cccmp, &
-                  'CCCMP :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%cccmp  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%cccmp, &
-                  'CCCMP :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%cccmp, &
-               'CCCMP :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%cccmp, &
+            'CCCMP :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%cccmp, imean)
     end if
 
     if (associated(oneMicroFields%gccmp)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%gccmp)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%gccmp, &
-                  'GCCMP :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%gccmp  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%gccmp, &
-                  'GCCMP :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%gccmp, &
-               'GCCMP :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%gccmp, &
+            'GCCMP :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%gccmp, imean)
     end if
 
     if (associated(oneMicroFields%cnm1p)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%cnm1p)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%cnm1p, &
-                  'CNM1P :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%cnm1p  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%cnm1p, &
-                  'CNM1P :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%cnm1p, &
-               'CNM1P :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%cnm1p, &
+            'CNM1P :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%cnm1p, imean)
     end if
 
     if (associated(oneMicroFields%cnm2p)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%cnm2p)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%cnm2p, &
-                  'CNM2P :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%cnm2p  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%cnm2p, &
-                  'CNM2P :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%cnm2p, &
-               'CNM2P :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%cnm2p, &
+            'CNM2P :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%cnm2p, imean)
     end if
 
     if (associated(oneMicroFields%cnm3p)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%cnm3p)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%cnm3p, &
-                  'CNM3P :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%cnm3p  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%cnm3p, &
-                  'CNM3P :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%cnm3p, &
-               'CNM3P :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%cnm3p, &
+            'CNM3P :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%cnm3p, imean)
     end if
 
     if (associated(oneMicroFields%cnm8p)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%cnm8p)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%cnm8p, &
-                  'CNM8P :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%cnm8p  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%cnm8p, &
-                  'CNM8P :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%cnm8p, &
-               'CNM8P :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%cnm8p, &
+            'CNM8P :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%cnm8p, imean)
     end if
 
     if (associated(oneMicroFields%md1np)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%md1np)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%md1np, &
-                  'MD1NP :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%md1np  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%md1np, &
-                  'MD1NP :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%md1np, &
-               'MD1NP :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%md1np, &
+            'MD1NP :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%md1np, imean)
     end if
 
     if (associated(oneMicroFields%md2np)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%md2np)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%md2np, &
-                  'MD2NP :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%md2np  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%md2np, &
-                  'MD2NP :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%md2np, &
-               'MD2NP :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%md2np, &
+            'MD2NP :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%md2np, imean)
     end if
 
     if (associated(oneMicroFields%salt_filmp)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%salt_filmp)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%salt_filmp, &
-                  'SALT_FILMP :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%salt_filmp  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%salt_filmp, &
-                  'SALT_FILMP :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%salt_filmp, &
-               'SALT_FILMP :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%salt_filmp, &
+            'SALT_FILMP :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%salt_filmp, imean)
     end if
 
     if (associated(oneMicroFields%salt_jetp)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%salt_jetp)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%salt_jetp, &
-                  'SALT_JETP :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%salt_jetp  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%salt_jetp, &
-                  'SALT_JETP :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%salt_jetp, &
-               'SALT_JETP :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%salt_jetp, &
+            'SALT_JETP :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%salt_jetp, imean)
     end if
 
     if (associated(oneMicroFields%salt_spmp)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%salt_spmp)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%salt_spmp, &
-                  'SALT_SPMP :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveMicroFields%salt_spmp  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%salt_spmp, &
-                  'SALT_SPMP :3:hist:anal:mpti:mpt3:mpt1')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%salt_spmp, &
-               'SALT_SPMP :3:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%salt_spmp, &
+            'SALT_SPMP :3:hist:anal:mpti:mpt3:mpt1', &
+            oneAveMicroFields%salt_spmp, imean)
     end if
 
     if (associated(oneMicroFields%rei)) then   
-       if (assAve) then
-          if (associated(oneAveMicroFields%rei)) then   
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rei, &
-                  'REI :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%rei  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rei, &
-                  'REI :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rei, &
-               'REI :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rei, &
+            'REI :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%rei, imean)
     end if
 
     if (associated(oneMicroFields%rel)) then   
-       if (assAve) then
-          if (associated(oneAveMicroFields%rel)) then   
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rel, &
-                  'REL :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%rel  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rel, &
-                  'REL :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rel, &
-               'REL :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rel, &
+            'REL :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%rel, imean)
     end if
 
     if (associated(oneMicroFields%cldfr)) then   
-       if (assAve) then
-          if (associated(oneAveMicroFields%cldfr)) then   
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%cldfr, &
-                  'CLDFR :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%cldfr  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%cldfr, &
-                  'CLDFR :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%cldfr, &
-               'CLDFR :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%cldfr, &
+            'CLDFR :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%cldfr, imean)
     end if
 
     !VERTICAL PRECIPITATION RATES
     if (associated(oneMicroFields%pcpvr)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%pcpvr)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcpvr, &
-                  'PCPVR :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%pcpvr  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcpvr, &
-                  'PCPVR :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%pcpvr, &
-               'PCPVR :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%pcpvr, &
+            'PCPVR :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%pcpvr, imean)
     end if
 
     if (associated(oneMicroFields%pcpvp)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%pcpvp)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcpvp, &
-                  'PCPVP :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%pcpvp  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcpvp, &
-                  'PCPVP :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%pcpvp, &
-               'PCPVP :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%pcpvp, &
+            'PCPVP :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%pcpvp, imean)
     end if
 
     if (associated(oneMicroFields%pcpvs)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%pcpvs)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcpvs, &
-                  'PCPVS :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%pcpvs  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcpvs, &
-                  'PCPVS :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%pcpvs, &
-               'PCPVS :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%pcpvs, &
+            'PCPVS :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%pcpvs, imean)
     end if
 
     if (associated(oneMicroFields%pcpva)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%pcpva)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcpva, &
-                  'PCPVA :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%pcpva  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcpva, &
-                  'PCPVA :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%pcpva, &
-               'PCPVA :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%pcpva, &
+            'PCPVA :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%pcpva, imean)
     end if
 
     if (associated(oneMicroFields%pcpvg)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%pcpvg)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcpvg, &
-                  'PCPVG :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%pcpvg  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcpvg, &
-                  'PCPVG :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%pcpvg, &
-               'PCPVG :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%pcpvg, &
+            'PCPVG :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%pcpvg, imean)
     end if
 
     if (associated(oneMicroFields%pcpvh)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%pcpvh)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcpvh, &
-                  'PCPVH :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%pcpvh  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcpvh, &
-                  'PCPVH :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%pcpvh, &
-               'PCPVH :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%pcpvh, &
+            'PCPVH :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%pcpvh, imean)
     end if
 
     if (associated(oneMicroFields%pcpvd)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%pcpvd)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcpvd, &
-                  'PCPVD :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%pcpvd  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcpvd, &
-                  'PCPVD :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%pcpvd, &
-               'PCPVD :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%pcpvd, &
+            'PCPVD :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%pcpvd, imean)
     end if
 
 
     !COMPUTE AND OUTPUT MICRO BUDGET PROCESSES (instantaneous)
     if (associated(oneMicroFields%nuccldr)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%nuccldr)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%nuccldr, &
-                  'NUCCLDR :3:hist:anal:mpt3', &
-                  oneAveMicroFields%nuccldr  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%nuccldr, &
-                  'NUCCLDR :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%nuccldr, &
-               'NUCCLDR :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%nuccldr, &
+            'NUCCLDR :3:hist:anal:mpt3', &
+            oneAveMicroFields%nuccldr, imean)
     end if
 
     if (associated(oneMicroFields%nuccldc)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%nuccldc)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%nuccldc, &
-                  'NUCCLDC :3:hist:anal:mpt3', &
-                  oneAveMicroFields%nuccldc  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%nuccldc, &
-                  'NUCCLDC :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%nuccldc, &
-               'NUCCLDC :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%nuccldc, &
+            'NUCCLDC :3:hist:anal:mpt3', &
+            oneAveMicroFields%nuccldc, imean)
     end if
 
     if (associated(oneMicroFields%nucicer)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%nucicer)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%nucicer, &
-                  'NUCICER :3:hist:anal:mpt3', &
-                  oneAveMicroFields%nucicer  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%nucicer, &
-                  'NUCICER :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%nucicer, &
-               'NUCICER :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%nucicer, &
+            'NUCICER :3:hist:anal:mpt3', &
+            oneAveMicroFields%nucicer, imean)
     end if
 
     if (associated(oneMicroFields%nucicec)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%nucicec)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%nucicec, &
-                  'NUCICEC :3:hist:anal:mpt3', &
-                  oneAveMicroFields%nucicec  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%nucicec, &
-                  'NUCICEC :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%nucicec, &
-               'NUCICEC :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%nucicec, &
+            'NUCICEC :3:hist:anal:mpt3', &
+            oneAveMicroFields%nucicec, imean)
     end if
 
     if (associated(oneMicroFields%inuchomr)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%inuchomr)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inuchomr, &
-                  'INUCHOMR :3:hist:anal:mpt3', &
-                  oneAveMicroFields%inuchomr  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inuchomr, &
-                  'INUCHOMR :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%inuchomr, &
-               'INUCHOMR :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%inuchomr, &
+            'INUCHOMR :3:hist:anal:mpt3', &
+            oneAveMicroFields%inuchomr, imean)
     end if
 
     if (associated(oneMicroFields%inuchomc)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%inuchomc)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inuchomc, &
-                  'INUCHOMC :3:hist:anal:mpt3', &
-                  oneAveMicroFields%inuchomc  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inuchomc, &
-                  'INUCHOMC :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%inuchomc, &
-               'INUCHOMC :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%inuchomc, &
+            'INUCHOMC :3:hist:anal:mpt3', &
+            oneAveMicroFields%inuchomc, imean)
     end if
 
     if (associated(oneMicroFields%inuccontr)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%inuccontr)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inuccontr, &
-                  'INUCCONTR :3:hist:anal:mpt3', &
-                  oneAveMicroFields%inuccontr  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inuccontr, &
-                  'INUCCONTR :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%inuccontr, &
-               'INUCCONTR :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%inuccontr, &
+            'INUCCONTR :3:hist:anal:mpt3', &
+            oneAveMicroFields%inuccontr, imean)
     end if
 
     if (associated(oneMicroFields%inuccontc)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%inuccontc)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inuccontc, &
-                  'INUCCONTC :3:hist:anal:mpt3', &
-                  oneAveMicroFields%inuccontc  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inuccontc, &
-                  'INUCCONTC :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%inuccontc, &
-               'INUCCONTC :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%inuccontc, &
+            'INUCCONTC :3:hist:anal:mpt3', &
+            oneAveMicroFields%inuccontc, imean)
     end if
 
     if (associated(oneMicroFields%inucifnr)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%inucifnr)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inucifnr, &
-                  'INUCIFNR :3:hist:anal:mpt3', &
-                  oneAveMicroFields%inucifnr  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inucifnr, &
-                  'INUCIFNR :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%inucifnr, &
-               'INUCIFNR :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%inucifnr, &
+            'INUCIFNR :3:hist:anal:mpt3', &
+            oneAveMicroFields%inucifnr, imean)
     end if
 
     if (associated(oneMicroFields%inucifnc)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%inucifnc)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inucifnc, &
-                  'INUCIFNC :3:hist:anal:mpt3', &
-                  oneAveMicroFields%inucifnc  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inucifnc, &
-                  'INUCIFNC :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%inucifnc, &
-               'INUCIFNC :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%inucifnc, &
+            'INUCIFNC :3:hist:anal:mpt3', &
+            oneAveMicroFields%inucifnc, imean)
     end if
 
     if (associated(oneMicroFields%inuchazr)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%inuchazr)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inuchazr, &
-                  'INUCHAZR :3:hist:anal:mpt3', &
-                  oneAveMicroFields%inuchazr  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inuchazr, &
-                  'INUCHAZR :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%inuchazr, &
-               'INUCHAZR :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%inuchazr, &
+            'INUCHAZR :3:hist:anal:mpt3', &
+            oneAveMicroFields%inuchazr, imean)
     end if
 
     if (associated(oneMicroFields%inuchazc)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%inuchazc)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inuchazc, &
-                  'INUCHAZC :3:hist:anal:mpt3', &
-                  oneAveMicroFields%inuchazc  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inuchazc, &
-                  'INUCHAZC :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%inuchazc, &
-               'INUCHAZC :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%inuchazc, &
+            'INUCHAZC :3:hist:anal:mpt3', &
+            oneAveMicroFields%inuchazc, imean)
     end if
 
     if (associated(oneMicroFields%vapliq)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%vapliq)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapliq, &
-                  'VAPLIQ :3:hist:anal:mpt3', &
-                  oneAveMicroFields%vapliq  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapliq, &
-                  'VAPLIQ :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%vapliq, &
-               'VAPLIQ :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%vapliq, &
+            'VAPLIQ :3:hist:anal:mpt3', &
+            oneAveMicroFields%vapliq, imean)
     end if
 
     if (associated(oneMicroFields%vapice)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%vapice)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapice, &
-                  'VAPICE :3:hist:anal:mpt3', &
-                  oneAveMicroFields%vapice  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapice, &
-                  'VAPICE :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%vapice, &
-               'VAPICE :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%vapice, &
+            'VAPICE :3:hist:anal:mpt3', &
+            oneAveMicroFields%vapice, imean)
     end if
 
     if (associated(oneMicroFields%vapcld)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%vapcld)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapcld, &
-                  'VAPCLD :3:hist:anal:mpt3', &
-                  oneAveMicroFields%vapcld  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapcld, &
-                  'VAPCLD :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%vapcld, &
-               'VAPCLD :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%vapcld, &
+            'VAPCLD :3:hist:anal:mpt3', &
+            oneAveMicroFields%vapcld, imean)
     end if
 
     if (associated(oneMicroFields%vaprain)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%vaprain)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vaprain, &
-                  'VAPRAIN :3:hist:anal:mpt3', &
-                  oneAveMicroFields%vaprain  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vaprain, &
-                  'VAPRAIN :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%vaprain, &
-               'VAPRAIN :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%vaprain, &
+            'VAPRAIN :3:hist:anal:mpt3', &
+            oneAveMicroFields%vaprain, imean)
     end if
 
     if (associated(oneMicroFields%vappris)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%vappris)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vappris, &
-                  'VAPPRIS :3:hist:anal:mpt3', &
-                  oneAveMicroFields%vappris  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vappris, &
-                  'VAPPRIS :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%vappris, &
-               'VAPPRIS :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%vappris, &
+            'VAPPRIS :3:hist:anal:mpt3', &
+            oneAveMicroFields%vappris, imean)
     end if
 
     if (associated(oneMicroFields%vapsnow)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%vapsnow)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapsnow, &
-                  'VAPSNOW :3:hist:anal:mpt3', &
-                  oneAveMicroFields%vapsnow  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapsnow, &
-                  'VAPSNOW :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%vapsnow, &
-               'VAPSNOW :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%vapsnow, &
+            'VAPSNOW :3:hist:anal:mpt3', &
+            oneAveMicroFields%vapsnow, imean)
     end if
 
     if (associated(oneMicroFields%vapaggr)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%vapaggr)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapaggr, &
-                  'VAPAGGR :3:hist:anal:mpt3', &
-                  oneAveMicroFields%vapaggr  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapaggr, &
-                  'VAPAGGR :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%vapaggr, &
-               'VAPAGGR :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%vapaggr, &
+            'VAPAGGR :3:hist:anal:mpt3', &
+            oneAveMicroFields%vapaggr, imean)
     end if
 
     if (associated(oneMicroFields%vapgrau)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%vapgrau)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapgrau, &
-                  'VAPGRAU :3:hist:anal:mpt3', &
-                  oneAveMicroFields%vapgrau  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapgrau, &
-                  'VAPGRAU :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%vapgrau, &
-               'VAPGRAU :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%vapgrau, &
+            'VAPGRAU :3:hist:anal:mpt3', &
+            oneAveMicroFields%vapgrau, imean)
     end if
 
     if (associated(oneMicroFields%vaphail)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%vaphail)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vaphail, &
-                  'VAPHAIL :3:hist:anal:mpt3', &
-                  oneAveMicroFields%vaphail  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vaphail, &
-                  'VAPHAIL :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%vaphail, &
-               'VAPHAIL :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%vaphail, &
+            'VAPHAIL :3:hist:anal:mpt3', &
+            oneAveMicroFields%vaphail, imean)
     end if
 
     if (associated(oneMicroFields%vapdriz)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%vapdriz)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapdriz, &
-                  'VAPDRIZ :3:hist:anal:mpt3', &
-                  oneAveMicroFields%vapdriz  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapdriz, &
-                  'VAPDRIZ :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%vapdriz, &
-               'VAPDRIZ :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%vapdriz, &
+            'VAPDRIZ :3:hist:anal:mpt3', &
+            oneAveMicroFields%vapdriz, imean)
     end if
 
 
     if (associated(oneMicroFields%meltice)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%meltice)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%meltice, &
-                  'MELTICE :3:hist:anal:mpt3', &
-                  oneAveMicroFields%meltice  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%meltice, &
-                  'MELTICE :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%meltice, &
-               'MELTICE :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%meltice, &
+            'MELTICE :3:hist:anal:mpt3', &
+            oneAveMicroFields%meltice, imean)
     end if
 
     if (associated(oneMicroFields%meltpris)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%meltpris)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%meltpris, &
-                  'MELTPRIS :3:hist:anal:mpt3', &
-                  oneAveMicroFields%meltpris  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%meltpris, &
-                  'MELTPRIS :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%meltpris, &
-               'MELTPRIS :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%meltpris, &
+            'MELTPRIS :3:hist:anal:mpt3', &
+            oneAveMicroFields%meltpris, imean)
     end if
 
     if (associated(oneMicroFields%meltsnow)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%meltsnow)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%meltsnow, &
-                  'MELTSNOW :3:hist:anal:mpt3', &
-                  oneAveMicroFields%meltsnow  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%meltsnow, &
-                  'MELTSNOW :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%meltsnow, &
-               'MELTSNOW :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%meltsnow, &
+            'MELTSNOW :3:hist:anal:mpt3', &
+            oneAveMicroFields%meltsnow, imean)
     end if
 
     if (associated(oneMicroFields%meltaggr)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%meltaggr)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%meltaggr, &
-                  'MELTAGGR :3:hist:anal:mpt3', &
-                  oneAveMicroFields%meltaggr  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%meltaggr, &
-                  'MELTAGGR :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%meltaggr, &
-               'MELTAGGR :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%meltaggr, &
+            'MELTAGGR :3:hist:anal:mpt3', &
+            oneAveMicroFields%meltaggr, imean)
     end if
 
     if (associated(oneMicroFields%meltgrau)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%meltgrau)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%meltgrau, &
-                  'MELTGRAU :3:hist:anal:mpt3', &
-                  oneAveMicroFields%meltgrau  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%meltgrau, &
-                  'MELTGRAU :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%meltgrau, &
-               'MELTGRAU :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%meltgrau, &
+            'MELTGRAU :3:hist:anal:mpt3', &
+            oneAveMicroFields%meltgrau, imean)
     end if
 
     if (associated(oneMicroFields%melthail)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%melthail)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%melthail, &
-                  'MELTHAIL :3:hist:anal:mpt3', &
-                  oneAveMicroFields%melthail  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%melthail, &
-                  'MELTHAIL :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%melthail, &
-               'MELTHAIL :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%melthail, &
+            'MELTHAIL :3:hist:anal:mpt3', &
+            oneAveMicroFields%melthail, imean)
     end if
 
 
     if (associated(oneMicroFields%cld2rain)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%cld2rain)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%cld2rain, &
-                  'CLD2RAIN :3:hist:anal:mpt3', &
-                  oneAveMicroFields%cld2rain  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%cld2rain, &
-                  'CLD2RAIN :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%cld2rain, &
-               'CLD2RAIN :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%cld2rain, &
+            'CLD2RAIN :3:hist:anal:mpt3', &
+            oneAveMicroFields%cld2rain, imean)
     end if
 
     if (associated(oneMicroFields%rimecld)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%rimecld)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rimecld, &
-                  'RIMECLD :3:hist:anal:mpt3', &
-                  oneAveMicroFields%rimecld  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rimecld, &
-                  'RIMECLD :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rimecld, &
-               'RIMECLD :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rimecld, &
+            'RIMECLD :3:hist:anal:mpt3', &
+            oneAveMicroFields%rimecld, imean)
     end if
 
     if (associated(oneMicroFields%rimecldsnow)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%rimecldsnow)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rimecldsnow, &
-                  'RIMECLDSNOW :3:hist:anal:mpt3', &
-                  oneAveMicroFields%rimecldsnow  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rimecldsnow, &
-                  'RIMECLDSNOW :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rimecldsnow, &
-               'RIMECLDSNOW :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rimecldsnow, &
+            'RIMECLDSNOW :3:hist:anal:mpt3', &
+            oneAveMicroFields%rimecldsnow, imean)
     end if
 
     if (associated(oneMicroFields%rimecldaggr)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%rimecldaggr)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rimecldaggr, &
-                  'RIMECLDAGGR :3:hist:anal:mpt3', &
-                  oneAveMicroFields%rimecldaggr  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rimecldaggr, &
-                  'RIMECLDAGGR :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rimecldaggr, &
-               'RIMECLDAGGR :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rimecldaggr, &
+            'RIMECLDAGGR :3:hist:anal:mpt3', &
+            oneAveMicroFields%rimecldaggr, imean)
     end if
 
     if (associated(oneMicroFields%rimecldgrau)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%rimecldgrau)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rimecldgrau, &
-                  'RIMECLDGRAU :3:hist:anal:mpt3', &
-                  oneAveMicroFields%rimecldgrau  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rimecldgrau, &
-                  'RIMECLDGRAU :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rimecldgrau, &
-               'RIMECLDGRAU :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rimecldgrau, &
+            'RIMECLDGRAU :3:hist:anal:mpt3', &
+            oneAveMicroFields%rimecldgrau, imean)
     end if
 
     if (associated(oneMicroFields%rimecldhail)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%rimecldhail)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rimecldhail, &
-                  'RIMECLDHAIL :3:hist:anal:mpt3', &
-                  oneAveMicroFields%rimecldhail  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rimecldhail, &
-                  'RIMECLDHAIL :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rimecldhail, &
-               'RIMECLDHAIL :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rimecldhail, &
+            'RIMECLDHAIL :3:hist:anal:mpt3', &
+            oneAveMicroFields%rimecldhail, imean)
     end if
 
 
     if (associated(oneMicroFields%rain2ice)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%rain2ice)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rain2ice, &
-                  'RAIN2ICE :3:hist:anal:mpt3', &
-                  oneAveMicroFields%rain2ice  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rain2ice, &
-                  'RAIN2ICE :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rain2ice, &
-               'RAIN2ICE :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rain2ice, &
+            'RAIN2ICE :3:hist:anal:mpt3', &
+            oneAveMicroFields%rain2ice, imean)
     end if
 
     if (associated(oneMicroFields%rain2pr)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%rain2pr)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rain2pr, &
-                  'RAIN2PR :3:hist:anal:mpt3', &
-                  oneAveMicroFields%rain2pr  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rain2pr, &
-                  'RAIN2PR :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rain2pr, &
-               'RAIN2PR :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rain2pr, &
+            'RAIN2PR :3:hist:anal:mpt3', &
+            oneAveMicroFields%rain2pr, imean)
     end if
 
     if (associated(oneMicroFields%rain2sn)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%rain2sn)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rain2sn, &
-                  'RAIN2SN :3:hist:anal:mpt3', &
-                  oneAveMicroFields%rain2sn  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rain2sn, &
-                  'RAIN2SN :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rain2sn, &
-               'RAIN2SN :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rain2sn, &
+            'RAIN2SN :3:hist:anal:mpt3', &
+            oneAveMicroFields%rain2sn, imean)
     end if
 
     if (associated(oneMicroFields%rain2ag)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%rain2ag)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rain2ag, &
-                  'RAIN2AG :3:hist:anal:mpt3', &
-                  oneAveMicroFields%rain2ag  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rain2ag, &
-                  'RAIN2AG :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rain2ag, &
-               'RAIN2AG :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rain2ag, &
+            'RAIN2AG :3:hist:anal:mpt3', &
+            oneAveMicroFields%rain2ag, imean)
     end if
 
     if (associated(oneMicroFields%rain2gr)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%rain2gr)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rain2gr, &
-                  'RAIN2GR :3:hist:anal:mpt3', &
-                  oneAveMicroFields%rain2gr  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rain2gr, &
-                  'RAIN2GR :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rain2gr, &
-               'RAIN2GR :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rain2gr, &
+            'RAIN2GR :3:hist:anal:mpt3', &
+            oneAveMicroFields%rain2gr, imean)
     end if
 
     if (associated(oneMicroFields%rain2ha)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%rain2ha)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rain2ha, &
-                  'RAIN2HA :3:hist:anal:mpt3', &
-                  oneAveMicroFields%rain2ha  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rain2ha, &
-                  'RAIN2HA :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rain2ha, &
-               'RAIN2HA :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rain2ha, &
+            'RAIN2HA :3:hist:anal:mpt3', &
+            oneAveMicroFields%rain2ha, imean)
     end if
 
     if (associated(oneMicroFields%rain2ha_xtra)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%rain2ha_xtra)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rain2ha_xtra, &
-                  'RAIN2HA_XTRA :3:hist:anal:mpt3', &
-                  oneAveMicroFields%rain2ha_xtra  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rain2ha_xtra, &
-                  'RAIN2HA_XTRA :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rain2ha_xtra, &
-               'RAIN2HA_XTRA :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rain2ha_xtra, &
+            'RAIN2HA_XTRA :3:hist:anal:mpt3', &
+            oneAveMicroFields%rain2ha_xtra, imean)
     end if
 
     if (associated(oneMicroFields%ice2rain)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%ice2rain)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%ice2rain, &
-                  'ICE2RAIN :3:hist:anal:mpt3', &
-                  oneAveMicroFields%ice2rain  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%ice2rain, &
-                  'ICE2RAIN :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%ice2rain, &
-               'ICE2RAIN :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%ice2rain, &
+            'ICE2RAIN :3:hist:anal:mpt3', &
+            oneAveMicroFields%ice2rain, imean)
     end if
 
     if (associated(oneMicroFields%aggregate)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%aggregate)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%aggregate, &
-                  'AGGREGATE :3:hist:anal:mpt3', &
-                  oneAveMicroFields%aggregate  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%aggregate, &
-                  'AGGREGATE :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%aggregate, &
-               'AGGREGATE :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%aggregate, &
+            'AGGREGATE :3:hist:anal:mpt3', &
+            oneAveMicroFields%aggregate, imean)
     end if
 
     if (associated(oneMicroFields%aggrselfpris)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%aggrselfpris)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%aggrselfpris, &
-                  'AGGRSELFPRIS :3:hist:anal:mpt3', &
-                  oneAveMicroFields%aggrselfpris  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%aggrselfpris, &
-                  'AGGRSELFPRIS :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%aggrselfpris, &
-               'AGGRSELFPRIS :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%aggrselfpris, &
+            'AGGRSELFPRIS :3:hist:anal:mpt3', &
+            oneAveMicroFields%aggrselfpris, imean)
     end if
 
     if (associated(oneMicroFields%aggrselfsnow)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%aggrselfsnow)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%aggrselfsnow, &
-                  'AGGRSELFSNOW :3:hist:anal:mpt3', &
-                  oneAveMicroFields%aggrselfsnow  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%aggrselfsnow, &
-                  'AGGRSELFSNOW :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%aggrselfsnow, &
-               'AGGRSELFSNOW :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%aggrselfsnow, &
+            'AGGRSELFSNOW :3:hist:anal:mpt3', &
+            oneAveMicroFields%aggrselfsnow, imean)
     end if
 
     if (associated(oneMicroFields%aggrprissnow)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%aggrprissnow)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%aggrprissnow, &
-                  'AGGRPRISSNOW :3:hist:anal:mpt3', &
-                  oneAveMicroFields%aggrprissnow  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%aggrprissnow, &
-                  'AGGRPRISSNOW :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%aggrprissnow, &
-               'AGGRPRISSNOW :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%aggrprissnow, &
+            'AGGRPRISSNOW :3:hist:anal:mpt3', &
+            oneAveMicroFields%aggrprissnow, imean)
     end if
 
 
     if (associated(oneMicroFields%latheatvap)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%latheatvap)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%latheatvap, &
-                  'LATHEATVAP :3:hist:anal:mpt3', &
-                  oneAveMicroFields%latheatvap  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%latheatvap, &
-                  'LATHEATVAP :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%latheatvap, &
-               'LATHEATVAP :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%latheatvap, &
+            'LATHEATVAP :3:hist:anal:mpt3', &
+            oneAveMicroFields%latheatvap, imean)
     end if
 
     if (associated(oneMicroFields%latheatfrz)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%latheatfrz)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%latheatfrz, &
-                  'LATHEATFRZ :3:hist:anal:mpt3', &
-                  oneAveMicroFields%latheatfrz  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%latheatfrz, &
-                  'LATHEATFRZ :3:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%latheatfrz, &
-               'LATHEATFRZ :3:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%latheatfrz, &
+            'LATHEATFRZ :3:hist:anal:mpt3', &
+            oneAveMicroFields%latheatfrz, imean)
     end if
 
     !END MICRO BUDGET PROCESSES (instantaneous)
 
     !COMPUTE AND OUTPUT MICRO BUDGET PROCESSES (totals)
     if (associated(oneMicroFields%nuccldrt)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%nuccldrt)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%nuccldrt, &
-                  'NUCCLDRT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%nuccldrt  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%nuccldrt, &
-                  'NUCCLDRT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%nuccldrt, &
-               'NUCCLDRT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%nuccldrt, &
+            'NUCCLDRT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%nuccldrt, imean)
     end if
 
     if (associated(oneMicroFields%nuccldct)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%nuccldct)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%nuccldct, &
-                  'NUCCLDCT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%nuccldct  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%nuccldct, &
-                  'NUCCLDCT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%nuccldct, &
-               'NUCCLDCT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%nuccldct, &
+            'NUCCLDCT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%nuccldct, imean)
     end if
 
     if (associated(oneMicroFields%nucicert)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%nucicert)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%nucicert, &
-                  'NUCICERT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%nucicert  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%nucicert, &
-                  'NUCICERT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%nucicert, &
-               'NUCICERT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%nucicert, &
+            'NUCICERT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%nucicert, imean)
     end if
 
     if (associated(oneMicroFields%nucicect)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%nucicect)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%nucicect, &
-                  'NUCICECT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%nucicect  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%nucicect, &
-                  'NUCICECT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%nucicect, &
-               'NUCICECT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%nucicect, &
+            'NUCICECT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%nucicect, imean)
     end if
 
     if (associated(oneMicroFields%inuchomrt)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%inuchomrt)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inuchomrt, &
-                  'INUCHOMRT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%inuchomrt  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inuchomrt, &
-                  'INUCHOMRT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%inuchomrt, &
-               'INUCHOMRT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%inuchomrt, &
+            'INUCHOMRT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%inuchomrt, imean)
     end if
 
     if (associated(oneMicroFields%inuchomct)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%inuchomct)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inuchomct, &
-                  'INUCHOMCT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%inuchomct  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inuchomct, &
-                  'INUCHOMCT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%inuchomct, &
-               'INUCHOMCT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%inuchomct, &
+            'INUCHOMCT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%inuchomct, imean)
     end if
 
     if (associated(oneMicroFields%inuccontrt)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%inuccontrt)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inuccontrt, &
-                  'INUCCONTRT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%inuccontrt  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inuccontrt, &
-                  'INUCCONTRT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%inuccontrt, &
-               'INUCCONTRT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%inuccontrt, &
+            'INUCCONTRT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%inuccontrt, imean)
     end if
 
     if (associated(oneMicroFields%inuccontct)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%inuccontct)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inuccontct, &
-                  'INUCCONTCT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%inuccontct  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inuccontct, &
-                  'INUCCONTCT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%inuccontct, &
-               'INUCCONTCT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%inuccontct, &
+            'INUCCONTCT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%inuccontct, imean)
     end if
 
     if (associated(oneMicroFields%inucifnrt)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%inucifnrt)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inucifnrt, &
-                  'INUCIFNRT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%inucifnrt  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inucifnrt, &
-                  'INUCIFNRT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%inucifnrt, &
-               'INUCIFNRT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%inucifnrt, &
+            'INUCIFNRT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%inucifnrt, imean)
     end if
 
     if (associated(oneMicroFields%inucifnct)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%inucifnct)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inucifnct, &
-                  'INUCIFNCT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%inucifnct  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inucifnct, &
-                  'INUCIFNCT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%inucifnct, &
-               'INUCIFNCT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%inucifnct, &
+            'INUCIFNCT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%inucifnct, imean)
     end if
 
     if (associated(oneMicroFields%inuchazrt)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%inuchazrt)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inuchazrt, &
-                  'INUCHAZRT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%inuchazrt  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inuchazrt, &
-                  'INUCHAZRT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%inuchazrt, &
-               'INUCHAZRT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%inuchazrt, &
+            'INUCHAZRT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%inuchazrt, imean)
     end if
 
     if (associated(oneMicroFields%inuchazct)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%inuchazct)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inuchazct, &
-                  'INUCHAZCT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%inuchazct  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%inuchazct, &
-                  'INUCHAZCT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%inuchazct, &
-               'INUCHAZCT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%inuchazct, &
+            'INUCHAZCT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%inuchazct, imean)
     end if
 
 
     if (associated(oneMicroFields%vapliqt)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%vapliqt)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapliqt, &
-                  'VAPLIQT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%vapliqt  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapliqt, &
-                  'VAPLIQT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%vapliqt, &
-               'VAPLIQT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%vapliqt, &
+            'VAPLIQT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%vapliqt, imean)
     end if
 
     if (associated(oneMicroFields%vapicet)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%vapicet)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapicet, &
-                  'VAPICET :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%vapicet  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapicet, &
-                  'VAPICET :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%vapicet, &
-               'VAPICET :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%vapicet, &
+            'VAPICET :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%vapicet, imean)
     end if
 
     if (associated(oneMicroFields%vapcldt)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%vapcldt)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapcldt, &
-                  'VAPCLDT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%vapcldt  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapcldt, &
-                  'VAPCLDT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%vapcldt, &
-               'VAPCLDT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%vapcldt, &
+            'VAPCLDT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%vapcldt, imean)
     end if
 
     if (associated(oneMicroFields%vapraint)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%vapraint)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapraint, &
-                  'VAPRAINT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%vapraint  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapraint, &
-                  'VAPRAINT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%vapraint, &
-               'VAPRAINT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%vapraint, &
+            'VAPRAINT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%vapraint, imean)
     end if
 
     if (associated(oneMicroFields%vapprist)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%vapprist)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapprist, &
-                  'VAPPRIST :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%vapprist  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapprist, &
-                  'VAPPRIST :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%vapprist, &
-               'VAPPRIST :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%vapprist, &
+            'VAPPRIST :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%vapprist, imean)
     end if
 
     if (associated(oneMicroFields%vapsnowt)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%vapsnowt)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapsnowt, &
-                  'VAPSNOWT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%vapsnowt  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapsnowt, &
-                  'VAPSNOWT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%vapsnowt, &
-               'VAPSNOWT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%vapsnowt, &
+            'VAPSNOWT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%vapsnowt, imean)
     end if
 
     if (associated(oneMicroFields%vapaggrt)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%vapaggrt)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapaggrt, &
-                  'VAPAGGRT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%vapaggrt  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapaggrt, &
-                  'VAPAGGRT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%vapaggrt, &
-               'VAPAGGRT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%vapaggrt, &
+            'VAPAGGRT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%vapaggrt, imean)
     end if
 
     if (associated(oneMicroFields%vapgraut)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%vapgraut)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapgraut, &
-                  'VAPGRAUT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%vapgraut  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapgraut, &
-                  'VAPGRAUT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%vapgraut, &
-               'VAPGRAUT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%vapgraut, &
+            'VAPGRAUT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%vapgraut, imean)
     end if
 
     if (associated(oneMicroFields%vaphailt)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%vaphailt)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vaphailt, &
-                  'VAPHAILT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%vaphailt  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vaphailt, &
-                  'VAPHAILT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%vaphailt, &
-               'VAPHAILT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%vaphailt, &
+            'VAPHAILT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%vaphailt, imean)
     end if
 
     if (associated(oneMicroFields%vapdrizt)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%vapdrizt)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapdrizt, &
-                  'VAPDRIZT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%vapdrizt  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%vapdrizt, &
-                  'VAPDRIZT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%vapdrizt, &
-               'VAPDRIZT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%vapdrizt, &
+            'VAPDRIZT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%vapdrizt, imean)
     end if
 
 
     if (associated(oneMicroFields%melticet)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%melticet)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%melticet, &
-                  'MELTICET :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%melticet  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%melticet, &
-                  'MELTICET :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%melticet, &
-               'MELTICET :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%melticet, &
+            'MELTICET :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%melticet, imean)
     end if
 
     if (associated(oneMicroFields%meltprist)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%meltprist)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%meltprist, &
-                  'MELTPRIST :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%meltprist  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%meltprist, &
-                  'MELTPRIST :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%meltprist, &
-               'MELTPRIST :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%meltprist, &
+            'MELTPRIST :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%meltprist, imean)
     end if
 
     if (associated(oneMicroFields%meltsnowt)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%meltsnowt)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%meltsnowt, &
-                  'MELTSNOWT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%meltsnowt  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%meltsnowt, &
-                  'MELTSNOWT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%meltsnowt, &
-               'MELTSNOWT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%meltsnowt, &
+            'MELTSNOWT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%meltsnowt, imean)
     end if
 
     if (associated(oneMicroFields%meltaggrt)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%meltaggrt)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%meltaggrt, &
-                  'MELTAGGRT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%meltaggrt  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%meltaggrt, &
-                  'MELTAGGRT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%meltaggrt, &
-               'MELTAGGRT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%meltaggrt, &
+            'MELTAGGRT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%meltaggrt, imean)
     end if
 
     if (associated(oneMicroFields%meltgraut)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%meltgraut)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%meltgraut, &
-                  'MELTGRAUT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%meltgraut  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%meltgraut, &
-                  'MELTGRAUT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%meltgraut, &
-               'MELTGRAUT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%meltgraut, &
+            'MELTGRAUT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%meltgraut, imean)
     end if
 
     if (associated(oneMicroFields%melthailt)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%melthailt)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%melthailt, &
-                  'MELTHAILT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%melthailt  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%melthailt, &
-                  'MELTHAILT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%melthailt, &
-               'MELTHAILT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%melthailt, &
+            'MELTHAILT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%melthailt, imean)
     end if
 
 
     if (associated(oneMicroFields%cld2raint)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%cld2raint)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%cld2raint, &
-                  'CLD2RAINT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%cld2raint  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%cld2raint, &
-                  'CLD2RAINT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%cld2raint, &
-               'CLD2RAINT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%cld2raint, &
+            'CLD2RAINT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%cld2raint, imean)
     end if
 
     if (associated(oneMicroFields%rimecldt)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%rimecldt)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rimecldt, &
-                  'RIMECLDT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%rimecldt  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rimecldt, &
-                  'RIMECLDT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rimecldt, &
-               'RIMECLDT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rimecldt, &
+            'RIMECLDT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%rimecldt, imean)
     end if
 
     if (associated(oneMicroFields%rimecldsnowt)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%rimecldsnowt)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rimecldsnowt, &
-                  'RIMECLDSNOWT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%rimecldsnowt  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rimecldsnowt, &
-                  'RIMECLDSNOWT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rimecldsnowt, &
-               'RIMECLDSNOWT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rimecldsnowt, &
+            'RIMECLDSNOWT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%rimecldsnowt, imean)
     end if
 
     if (associated(oneMicroFields%rimecldaggrt)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%rimecldaggrt)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rimecldaggrt, &
-                  'RIMECLDAGGRT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%rimecldaggrt  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rimecldaggrt, &
-                  'RIMECLDAGGRT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rimecldaggrt, &
-               'RIMECLDAGGRT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rimecldaggrt, &
+            'RIMECLDAGGRT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%rimecldaggrt, imean)
     end if
 
     if (associated(oneMicroFields%rimecldgraut)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%rimecldgraut)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rimecldgraut, &
-                  'RIMECLDGRAUT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%rimecldgraut  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rimecldgraut, &
-                  'RIMECLDGRAUT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rimecldgraut, &
-               'RIMECLDGRAUT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rimecldgraut, &
+            'RIMECLDGRAUT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%rimecldgraut, imean)
     end if
 
     if (associated(oneMicroFields%rimecldhailt)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%rimecldhailt)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rimecldhailt, &
-                  'RIMECLDHAILT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%rimecldhailt  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rimecldhailt, &
-                  'RIMECLDHAILT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rimecldhailt, &
-               'RIMECLDHAILT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rimecldhailt, &
+            'RIMECLDHAILT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%rimecldhailt, imean)
     end if
 
 
     if (associated(oneMicroFields%rain2icet)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%rain2icet)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rain2icet, &
-                  'RAIN2ICET :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%rain2icet  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rain2icet, &
-                  'RAIN2ICET :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rain2icet, &
-               'RAIN2ICET :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rain2icet, &
+            'RAIN2ICET :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%rain2icet, imean)
     end if
 
     if (associated(oneMicroFields%rain2prt)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%rain2prt)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rain2prt, &
-                  'RAIN2PRT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%rain2prt  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rain2prt, &
-                  'RAIN2PRT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rain2prt, &
-               'RAIN2PRT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rain2prt, &
+            'RAIN2PRT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%rain2prt, imean)
     end if
 
     if (associated(oneMicroFields%rain2snt)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%rain2snt)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rain2snt, &
-                  'RAIN2SNT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%rain2snt  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rain2snt, &
-                  'RAIN2SNT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rain2snt, &
-               'RAIN2SNT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rain2snt, &
+            'RAIN2SNT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%rain2snt, imean)
     end if
 
     if (associated(oneMicroFields%rain2agt)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%rain2agt)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rain2agt, &
-                  'RAIN2AGT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%rain2agt  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rain2agt, &
-                  'RAIN2AGT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rain2agt, &
-               'RAIN2AGT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rain2agt, &
+            'RAIN2AGT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%rain2agt, imean)
     end if
 
     if (associated(oneMicroFields%rain2grt)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%rain2grt)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rain2grt, &
-                  'RAIN2GRT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%rain2grt  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rain2grt, &
-                  'RAIN2GRT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rain2grt, &
-               'RAIN2GRT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rain2grt, &
+            'RAIN2GRT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%rain2grt, imean)
     end if
 
     if (associated(oneMicroFields%rain2hat)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%rain2hat)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rain2hat, &
-                  'RAIN2HAT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%rain2hat  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rain2hat, &
-                  'RAIN2HAT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rain2hat, &
-               'RAIN2HAT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rain2hat, &
+            'RAIN2HAT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%rain2hat, imean)
     end if
 
     if (associated(oneMicroFields%rain2ha_xtrat)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%rain2ha_xtrat)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rain2ha_xtrat, &
-                  'RAIN2HA_XTRAT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%rain2ha_xtrat  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%rain2ha_xtrat, &
-                  'RAIN2HA_XTRAT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%rain2ha_xtrat, &
-               'RAIN2HA_XTRAT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%rain2ha_xtrat, &
+            'RAIN2HA_XTRAT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%rain2ha_xtrat, imean)
     end if
 
     if (associated(oneMicroFields%ice2raint)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%ice2raint)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%ice2raint, &
-                  'ICE2RAINT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%ice2raint  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%ice2raint, &
-                  'ICE2RAINT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%ice2raint, &
-               'ICE2RAINT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%ice2raint, &
+            'ICE2RAINT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%ice2raint, imean)
     end if
 
 
     if (associated(oneMicroFields%aggregatet)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%aggregatet)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%aggregatet, &
-                  'AGGREGATET :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%aggregatet  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%aggregatet, &
-                  'AGGREGATET :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%aggregatet, &
-               'AGGREGATET :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%aggregatet, &
+            'AGGREGATET :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%aggregatet, imean)
     end if
 
     if (associated(oneMicroFields%aggrselfprist)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%aggrselfprist)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%aggrselfprist, &
-                  'AGGRSELFPRIST :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%aggrselfprist  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%aggrselfprist, &
-                  'AGGRSELFPRIST :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%aggrselfprist, &
-               'AGGRSELFPRIST :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%aggrselfprist, &
+            'AGGRSELFPRIST :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%aggrselfprist, imean)
     end if
 
     if (associated(oneMicroFields%aggrselfsnowt)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%aggrselfsnowt)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%aggrselfsnowt, &
-                  'AGGRSELFSNOWT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%aggrselfsnowt  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%aggrselfsnowt, &
-                  'AGGRSELFSNOWT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%aggrselfsnowt, &
-               'AGGRSELFSNOWT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%aggrselfsnowt, &
+            'AGGRSELFSNOWT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%aggrselfsnowt, imean)
     end if
 
     if (associated(oneMicroFields%aggrprissnowt)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%aggrprissnowt)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%aggrprissnowt, &
-                  'AGGRPRISSNOWT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%aggrprissnowt  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%aggrprissnowt, &
-                  'AGGRPRISSNOWT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%aggrprissnowt, &
-               'AGGRPRISSNOWT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%aggrprissnowt, &
+            'AGGRPRISSNOWT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%aggrprissnowt, imean)
     end if
 
 
     if (associated(oneMicroFields%latheatvapt)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%latheatvapt)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%latheatvapt, &
-                  'LATHEATVAPT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%latheatvapt  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%latheatvapt, &
-                  'LATHEATVAPT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%latheatvapt, &
-               'LATHEATVAPT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%latheatvapt, &
+            'LATHEATVAPT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%latheatvapt, imean)
     end if
 
     if (associated(oneMicroFields%latheatfrzt)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%latheatfrzt)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%latheatfrzt, &
-                  'LATHEATFRZT :3:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%latheatfrzt  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%latheatfrzt, &
-                  'LATHEATFRZT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%latheatfrzt, &
-               'LATHEATFRZT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%latheatfrzt, &
+            'LATHEATFRZT :3:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%latheatfrzt, imean)
     end if
 
     !END MICRO BUDGET PROCECCES (totals)
 
     if (associated(oneMicroFields%accpr)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%accpr)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%accpr, &
-                  'ACCPR :2:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%accpr  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%accpr, &
-                  'ACCPR :2:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%accpr, &
-               'ACCPR :2:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%accpr, &
+            'ACCPR :2:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%accpr, imean)
     end if
 
     if (associated(oneMicroFields%accpp)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%accpp)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%accpp, &
-                  'ACCPP :2:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%accpp  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%accpp, &
-                  'ACCPP :2:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%accpp, &
-               'ACCPP :2:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%accpp, &
+            'ACCPP :2:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%accpp, imean)
     end if
 
     if (associated(oneMicroFields%accps)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%accps)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%accps, &
-                  'ACCPS :2:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%accps  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%accps, &
-                  'ACCPS :2:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%accps, &
-               'ACCPS :2:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%accps, &
+            'ACCPS :2:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%accps, imean)
     end if
 
     if (associated(oneMicroFields%accpa)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%accpa)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%accpa, &
-                  'ACCPA :2:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%accpa  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%accpa, &
-                  'ACCPA :2:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%accpa, &
-               'ACCPA :2:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%accpa, &
+            'ACCPA :2:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%accpa, imean)
     end if
 
     if (associated(oneMicroFields%accpg)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%accpg)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%accpg, &
-                  'ACCPG :2:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%accpg  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%accpg, &
-                  'ACCPG :2:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%accpg, &
-               'ACCPG :2:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%accpg, &
+            'ACCPG :2:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%accpg, imean)
     end if
 
     if (associated(oneMicroFields%accph)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%accph)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%accph, &
-                  'ACCPH :2:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%accph  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%accph, &
-                  'ACCPH :2:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%accph, &
-               'ACCPH :2:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%accph, &
+            'ACCPH :2:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%accph, imean)
     end if
 
     if (associated(oneMicroFields%accpd)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%accpd)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%accpd, &
-                  'ACCPD :2:hist:anal:mpti:mpt3', &
-                  oneAveMicroFields%accpd  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%accpd, &
-                  'ACCPD :2:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%accpd, &
-               'ACCPD :2:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%accpd, &
+            'ACCPD :2:hist:anal:mpti:mpt3', &
+            oneAveMicroFields%accpd, imean)
     end if
 
     if (associated(oneMicroFields%pcprr)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%pcprr)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcprr, &
-                  'PCPRR :2:hist:anal:mpt3', &
-                  oneAveMicroFields%pcprr  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcprr, &
-                  'PCPRR :2:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%pcprr, &
-               'PCPRR :2:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%pcprr, &
+            'PCPRR :2:hist:anal:mpt3', &
+            oneAveMicroFields%pcprr, imean)
     end if
 
     if (associated(oneMicroFields%pcprp)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%pcprp)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcprp, &
-                  'PCPRP :2:hist:anal:mpt3', &
-                  oneAveMicroFields%pcprp  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcprp, &
-                  'PCPRP :2:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%pcprp, &
-               'PCPRP :2:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%pcprp, &
+            'PCPRP :2:hist:anal:mpt3', &
+            oneAveMicroFields%pcprp, imean)
     end if
 
     if (associated(oneMicroFields%pcprs)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%pcprs)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcprs, &
-                  'PCPRS :2:hist:anal:mpt3', &
-                  oneAveMicroFields%pcprs  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcprs, &
-                  'PCPRS :2:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%pcprs, &
-               'PCPRS :2:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%pcprs, &
+            'PCPRS :2:hist:anal:mpt3', &
+            oneAveMicroFields%pcprs, imean)
     end if
 
     if (associated(oneMicroFields%pcpra)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%pcpra)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcpra, &
-                  'PCPRA :2:hist:anal:mpt3', &
-                  oneAveMicroFields%pcpra  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcpra, &
-                  'PCPRA :2:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%pcpra, &
-               'PCPRA :2:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%pcpra, &
+            'PCPRA :2:hist:anal:mpt3', &
+            oneAveMicroFields%pcpra, imean)
     end if
 
     if (associated(oneMicroFields%pcprg)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%pcprg)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcprg, &
-                  'PCPRG :2:hist:anal:mpt3', &
-                  oneAveMicroFields%pcprg  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcprg, &
-                  'PCPRG :2:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%pcprg, &
-               'PCPRG :2:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%pcprg, &
+            'PCPRG :2:hist:anal:mpt3', &
+            oneAveMicroFields%pcprg, imean)
     end if
 
     if (associated(oneMicroFields%pcprh)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%pcprh)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcprh, &
-                  'PCPRH :2:hist:anal:mpt3', &
-                  oneAveMicroFields%pcprh  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcprh, &
-                  'PCPRH :2:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%pcprh, &
-               'PCPRH :2:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%pcprh, &
+            'PCPRH :2:hist:anal:mpt3', &
+            oneAveMicroFields%pcprh, imean)
     end if
 
     if (associated(oneMicroFields%pcprd)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%pcprd)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcprd, &
-                  'PCPRD :2:hist:anal:mpt3', &
-                  oneAveMicroFields%pcprd  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcprd, &
-                  'PCPRD :2:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%pcprd, &
-               'PCPRD :2:hist:anal:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%pcprd, &
+            'PCPRD :2:hist:anal:mpt3', &
+            oneAveMicroFields%pcprd, imean)
     end if
 
     if (associated(oneMicroFields%pcpg)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%pcpg)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcpg, &
-                  'PCPG :2:hist:mpti:mpt3', &
-                  oneAveMicroFields%pcpg  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%pcpg, &
-                  'PCPG :2:hist:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%pcpg, &
-               'PCPG :2:hist:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%pcpg, &
+            'PCPG :2:hist:mpti:mpt3', &
+            oneAveMicroFields%pcpg, imean)
     end if
 
     if (associated(oneMicroFields%qpcpg)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%qpcpg)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%qpcpg, &
-                  'QPCPG :2:hist:mpti:mpt3', &
-                  oneAveMicroFields%qpcpg  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%qpcpg, &
-                  'QPCPG :2:hist:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%qpcpg, &
-               'QPCPG :2:hist:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%qpcpg, &
+            'QPCPG :2:hist:mpti:mpt3', &
+            oneAveMicroFields%qpcpg, imean)
     end if
 
     if (associated(oneMicroFields%dpcpg)) then 
-       if (assAve) then
-          if (associated(oneAveMicroFields%dpcpg)) then 
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%dpcpg, &
-                  'DPCPG :2:hist:mpti:mpt3', &
-                  oneAveMicroFields%dpcpg  )
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneMicroFields%dpcpg, &
-                  'DPCPG :2:hist:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneMicroFields%dpcpg, &
-               'DPCPG :2:hist:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneMicroFields%dpcpg, &
+            'DPCPG :2:hist:mpti:mpt3', &
+            oneAveMicroFields%dpcpg, imean)
     end if
 
   end subroutine InsertMicroFieldsAtVarTable
