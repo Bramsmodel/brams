@@ -213,168 +213,86 @@ contains
 
 
   subroutine filltab_oda(oneVarTable, oneVarTableSize, &
-       oda, odam)
-    
+       oda, odam, imean)
+
     use ModVarTable, only: &
          VarTable, &
-         InsertAtVarTable
-    
+         InsertVarTable
+
     implicit none
     type(VarTable), pointer, intent(in) :: oneVarTable(:)
     integer, intent(inout) :: oneVarTableSize
     type(oda_vars), pointer, intent(in) :: oda
     type(oda_vars), pointer, intent(in) :: odam
+    integer, intent(in) :: imean
 
-    logical :: assAve
-    logical :: assThis
     character(len=*), parameter :: h="**(filltab_oda)**"
-    
+
+    if (.not. associated(oda)) then
+       call fatal_error(h//" invoked with unassociated oda")
+    else if (.not. associated(odam)) then
+       call fatal_error(h//" invoked with unassociated odam")
+    else if (.not. associated(oneVarTable)) then
+       call fatal_error(h//" invoked with unasociated oneVarTable")
+    end if
+
     ! Fill pointers to arrays into variable tables
 
-    assAve=associated(odam)
-    
+
     if (associated(oda%uk)) then
-       if (assAve) then
-          assThis=associated(odam%uk)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oda%uk, &
-               'UKODA :3:', &
-               odam%uk)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oda%uk, &
-               'UKODA :3:')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oda%uk, &
+            'UKODA :3:', &
+            odam%uk, imean)
     end if
-    
+
     if (associated(oda%vk)) then
-       if (assAve) then
-          assThis=associated(odam%vk)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oda%vk, &
-               'VKODA :3:', &
-               odam%vk)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oda%vk, &
-               'VKODA :3:')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oda%vk, &
+            'VKODA :3:', &
+            odam%vk, imean)
     end if
-    
+
     if (associated(oda%tk)) then
-       if (assAve) then
-          assThis=associated(odam%tk)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oda%tk, &
-               'TKODA :3:', &
-               odam%tk)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oda%tk, &
-               'TKODA :3:')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oda%tk, &
+            'TKODA :3:', &
+            odam%tk, imean)
     end if
-    
+
     if (associated(oda%rk)) then
-       if (assAve) then
-          assThis=associated(odam%rk)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oda%rk, &
-               'RKODA :3:', &
-               odam%rk)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oda%rk, &
-               'RKODA :3:')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oda%rk, &
+            'RKODA :3:', &
+            odam%rk, imean)
     end if
-    
+
     if (associated(oda%ukv)) then
-       if (assAve) then
-          assThis=associated(odam%ukv)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oda%ukv, &
-               'UVODA :3:', &
-               odam%ukv)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oda%ukv, &
-               'UVODA :3:')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oda%ukv, &
+            'UVODA :3:', &
+            odam%ukv, imean)
     end if
-    
+
     if (associated(oda%vkv)) then
-       if (assAve) then
-          assThis=associated(odam%vkv)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oda%vkv, &
-               'VVODA :3:', &
-               odam%vkv)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oda%vkv, &
-               'VVODA :3:')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oda%vkv, &
+            'VVODA :3:', &
+            odam%vkv, imean)
     end if
-    
+
     if (associated(oda%tkv)) then
-       if (assAve) then
-          assThis=associated(odam%tkv)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oda%tkv, &
-               'TVODA :3:', &
-               odam%tkv)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oda%tkv, &
-               'TVODA :3:')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oda%tkv, &
+            'TVODA :3:', &
+            odam%tkv, imean)
     end if
-    
+
     if (associated(oda%rkv)) then
-       if (assAve) then
-          assThis=associated(odam%rkv)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oda%rkv, &
-               'RVODA :3:', &
-               odam%rkv)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oda%rkv, &
-               'RVODA :3:')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oda%rkv, &
+            'RVODA :3:', &
+            odam%rkv, imean)
     end if
 
   end subroutine filltab_oda
