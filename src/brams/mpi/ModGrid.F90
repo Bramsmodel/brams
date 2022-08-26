@@ -455,6 +455,14 @@ contains
        oneGrid%oneAveBasicFields => CreateBasicFields(&
             oneGrid%oneNodeDimensions, &
             oneGrid%oneNamelistFile)
+    else
+       ! oneAveBasicFields is created with null components
+       allocate(oneGrid%oneAveBasicFields, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" allocate oneGrid%oneAveBasicFields fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
 
     ! this node Turb Fields

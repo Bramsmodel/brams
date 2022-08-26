@@ -549,7 +549,7 @@ contains
     ! insert Basic Field variables at var_table
     do ng=1,ngrids
        call InsertBasicFieldsAtVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-            oneGrid%oneBasicFields, oneGrid%oneAveBasicFields)
+            oneGrid%oneBasicFields, oneGrid%oneAveBasicFields, imean)
     enddo
     !
     !Allocate and prepare optical properties memory

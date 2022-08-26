@@ -23,7 +23,7 @@ module ModBasicFields
 
   use ModVarTable, only: &
        VarTable, &
-       InsertAtVarTable
+       InsertVarTable
 
   use mem_stilt, only: &
        iexev
@@ -314,81 +314,104 @@ contains
        call MsgDump(h//" starts")
     end if
 
-    deallocate(oneBasicFields%up, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate up fails with stat="//&
-            trim(adjustl(str(1))))
+    if (associated(oneBasicFields%up)) then
+       deallocate(oneBasicFields%up, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate up fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
 
-    deallocate(oneBasicFields%uc, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate uc fails with stat="//&
-            trim(adjustl(str(1))))
+    if (associated(oneBasicFields%uc)) then
+       deallocate(oneBasicFields%uc, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate uc fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
 
-    deallocate(oneBasicFields%vp, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate vp fails with stat="//&
-            trim(adjustl(str(1))))
+    if (associated(oneBasicFields%vp)) then
+       deallocate(oneBasicFields%vp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate vp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
 
-    deallocate(oneBasicFields%vc, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate vc fails with stat="//&
-            trim(adjustl(str(1))))
+    if (associated(oneBasicFields%vc)) then
+       deallocate(oneBasicFields%vc, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate vc fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
 
-    deallocate(oneBasicFields%wp, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate wp fails with stat="//&
-            trim(adjustl(str(1))))
+    if (associated(oneBasicFields%wp)) then
+       deallocate(oneBasicFields%wp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate wp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
 
-    deallocate(oneBasicFields%wc, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate wc fails with stat="//&
-            trim(adjustl(str(1))))
+    if (associated(oneBasicFields%wc)) then
+       deallocate(oneBasicFields%wc, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate wc fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
 
-    deallocate(oneBasicFields%pp, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate pp fails with stat="//&
-            trim(adjustl(str(1))))
+    if (associated(oneBasicFields%pp)) then
+       deallocate(oneBasicFields%pp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate pp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
 
-    deallocate(oneBasicFields%pc, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate pc fails with stat="//&
-            trim(adjustl(str(1))))
+    if (associated(oneBasicFields%pc)) then
+       deallocate(oneBasicFields%pc, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate pc fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
 
-    deallocate(oneBasicFields%rv, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate rv fails with stat="//&
-            trim(adjustl(str(1))))
+    if (associated(oneBasicFields%rv)) then
+       deallocate(oneBasicFields%rv, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rv fails with stat="//&
+               trim(adjustl(str(1))))
+
+       end if
     end if
 
-    deallocate(oneBasicFields%theta, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate theta fails with stat="//&
-            trim(adjustl(str(1))))
+    if (associated(oneBasicFields%theta)) then
+       deallocate(oneBasicFields%theta, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate theta fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
 
-    deallocate(oneBasicFields%thp, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate thp fails with stat="//&
-            trim(adjustl(str(1))))
+    if (associated(oneBasicFields%thp)) then
+       deallocate(oneBasicFields%thp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate thp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
 
     if (associated(oneBasicFields%thc)) then
@@ -400,74 +423,94 @@ contains
        end if
     end if
 
-    deallocate(oneBasicFields%rtp, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate rtp fails with stat="//&
-            trim(adjustl(str(1))))
+    if (associated(oneBasicFields%rtp)) then
+       deallocate(oneBasicFields%rtp, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate rtp fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
 
-    deallocate(oneBasicFields%pi0, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate pi0 fails with stat="//&
-            trim(adjustl(str(1))))
+    if (associated(oneBasicFields%pi0)) then
+       deallocate(oneBasicFields%pi0, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate pi0 fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
 
-    deallocate(oneBasicFields%th0, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate th0 fails with stat="//&
-            trim(adjustl(str(1))))
+    if (associated(oneBasicFields%th0)) then
+       deallocate(oneBasicFields%th0, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate th0 fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
 
-    deallocate(oneBasicFields%dn0, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate dn0 fails with stat="//&
-            trim(adjustl(str(1))))
+    if (associated(oneBasicFields%dn0)) then
+       deallocate(oneBasicFields%dn0, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate dn0 fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
 
-    deallocate(oneBasicFields%dn0u, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate dn0u fails with stat="//&
-            trim(adjustl(str(1))))
+    if (associated(oneBasicFields%dn0u)) then
+       deallocate(oneBasicFields%dn0u, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate dn0u fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
 
-    deallocate(oneBasicFields%dn0v, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate dn0v fails with stat="//&
-            trim(adjustl(str(1))))
+    if (associated(oneBasicFields%dn0v)) then
+       deallocate(oneBasicFields%dn0v, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate dn0v fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
 
-    deallocate(oneBasicFields%fcoru, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate fcoru fails with stat="//&
-            trim(adjustl(str(1))))
+    if (associated(oneBasicFields%fcoru)) then
+       deallocate(oneBasicFields%fcoru, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate fcoru fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
 
-    deallocate(oneBasicFields%fcorv, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate fcorv fails with stat="//&
-            trim(adjustl(str(1))))
+    if (associated(oneBasicFields%fcorv)) then
+       deallocate(oneBasicFields%fcorv, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate fcorv fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
 
-    deallocate(oneBasicFields%cputime, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate cputime fails with stat="//&
-            trim(adjustl(str(1))))
+    if (associated(oneBasicFields%cputime)) then
+       deallocate(oneBasicFields%cputime, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate cputime fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
 
-    deallocate(oneBasicFields, stat=ierr)
-    if (ierr /= 0) then
-       write(str(1),"(i8)") ierr
-       call fatal_error(h//" deallocate oneBasicFields fails with stat="//&
-            trim(adjustl(str(1))))
+    if (associated(oneBasicFields)) then
+       deallocate(oneBasicFields, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" deallocate oneBasicFields fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
     end if
 
     nullify(oneBasicFields)
@@ -500,15 +543,14 @@ contains
 
 
   subroutine InsertBasicFieldsAtVarTable(oneVarTable, oneVarTableSize, &
-       oneBasicFields, oneAveBasicFields)
+       oneBasicFields, oneAveBasicFields, imean)
 
     type(VarTable), pointer, intent(in) :: oneVarTable(:)
     integer, intent(inout) :: oneVarTableSize
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(BasicFields), pointer, intent(in) :: oneAveBasicFields
+    integer, intent(in) :: imean
 
-    logical :: assAve
-    logical :: assThis
     character(len=*), parameter :: h="**(InsertBasicFieldsAtVarTable)**" 
 
     if (.not. associated(oneBasicFields)) then
@@ -517,434 +559,177 @@ contains
        call fatal_error(h//" oneVarTable not associated")
     end if
 
-    assAve=associated(oneAveBasicFields)
-    
     ! Fill pointers to arrays into variable tables
 
     if (associated(oneBasicFields%up)) then
-       if (assAve) then
-          assThis=associated(oneAveBasicFields%up)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%up, &
-               'UP :3:hist:anal:mpti:mpt3:mpt2', &
-               oneAveBasicFields%up)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%up, &
-               'UP :3:hist:anal:mpti:mpt3:mpt2')
-       end if
-    else
-       call fatal_error(h//" oneBasicFields%up not associated")
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneBasicFields%up, &
+            'UP :3:hist:anal:mpti:mpt3:mpt2', &
+            oneAveBasicFields%up, imean)
     end if
 
     if (associated(oneBasicFields%vp))  then
-       if (assAve) then
-          assThis=associated(oneAveBasicFields%vp)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%vp, &
-               'VP :3:hist:anal:mpti:mpt3:mpt2', &
-               oneAveBasicFields%vp)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%vp, &
-               'VP :3:hist:anal:mpti:mpt3:mpt2')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneBasicFields%vp, &
+            'VP :3:hist:anal:mpti:mpt3:mpt2', &
+            oneAveBasicFields%vp, imean)
     end if
-               
+
 
     if (associated(oneBasicFields%wp))  then
-       if (assAve) then
-          assThis=associated(oneAveBasicFields%wp)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%wp, &
-               'WP :3:hist:anal:mpti:mpt3:mpt2', &
-               oneAveBasicFields%wp)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%wp, &
-               'WP :3:hist:anal:mpti:mpt3:mpt2')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneBasicFields%wp, &
+            'WP :3:hist:anal:mpti:mpt3:mpt2', &
+            oneAveBasicFields%wp, imean)
     end if
 
     if (associated(oneBasicFields%pp))  then
-       if (assAve) then
-          assThis=associated(oneAveBasicFields%pp)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%pp, &
-               'PP :3:hist:anal:mpti:mpt3:mpt2', &
-               oneAveBasicFields%pp)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%pp, &
-               'PP :3:hist:anal:mpti:mpt3:mpt2')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneBasicFields%pp, &
+            'PP :3:hist:anal:mpti:mpt3:mpt2', &
+            oneAveBasicFields%pp, imean)
     end if
 
     if (associated(oneBasicFields%uc))  then
-       if (assAve) then
-          assThis=associated(oneAveBasicFields%uc)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%uc, &
-               'UC :3:hist:mpti:mpt3:mpt2', &
-               oneAveBasicFields%uc)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%uc, &
-               'UC :3:hist:mpti:mpt3:mpt2')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneBasicFields%uc, &
+            'UC :3:hist:mpti:mpt3:mpt2', &
+            oneAveBasicFields%uc, imean)
     end if
 
     if (associated(oneBasicFields%vc))  then
-       if (assAve) then
-          assThis=associated(oneAveBasicFields%vc)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%vc, &
-               'VC :3:hist:mpti:mpt3:mpt2', &
-               oneAveBasicFields%vc)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%vc, &
-               'VC :3:hist:mpti:mpt3:mpt2')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneBasicFields%vc, &
+            'VC :3:hist:mpti:mpt3:mpt2', &
+            oneAveBasicFields%vc, imean)
     end if
 
     if (associated(oneBasicFields%wc))  then
-       if (assAve) then
-          assThis=associated(oneAveBasicFields%wc)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%wc, &
-               'WC :3:hist:mpti:mpt3:mpt2', &
-               oneAveBasicFields%wc)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%wc, &
-               'WC :3:hist:mpti:mpt3:mpt2')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneBasicFields%wc, &
+            'WC :3:hist:mpti:mpt3:mpt2', &
+            oneAveBasicFields%wc, imean)
     end if
 
     if (associated(oneBasicFields%pc))  then
-       if (assAve) then
-          assThis=associated(oneAveBasicFields%pc)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%pc, &
-               'PC :3:hist:mpti:mpt3:mpt2', &
-               oneAveBasicFields%pc)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%pc, &
-               'PC :3:hist:mpti:mpt3:mpt2')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneBasicFields%pc, &
+            'PC :3:hist:mpti:mpt3:mpt2', &
+            oneAveBasicFields%pc, imean)
     end if
 
 
     if (associated(oneBasicFields%thp)) then
-       if (assAve) then
-          assThis=associated(oneAveBasicFields%thp)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%thp, &
-               'THP :3:hist:mpti:mpt3:mpt1', &
-               oneAveBasicFields%thp)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%thp, &
-               'THP :3:hist:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneBasicFields%thp, &
+            'THP :3:hist:mpti:mpt3:mpt1', &
+            oneAveBasicFields%thp, imean)
     end if
 
     if (associated(oneBasicFields%rtp)) then
-       if (assAve) then
-          assThis=associated(oneAveBasicFields%rtp)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%rtp, &
-               'RTP :3:hist:mpti:mpt3:mpt1', &
-               oneAveBasicFields%rtp)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%rtp, &
-               'RTP :3:hist:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneBasicFields%rtp, &
+            'RTP :3:hist:mpti:mpt3:mpt1', &
+            oneAveBasicFields%rtp, imean)
     end if
 
 
     if(iexev == 2) then
        if (associated(oneBasicFields%theta)) then
-          if (assAve) then
-             assThis=associated(oneAveBasicFields%theta)
-          else
-             assThis=.false.
-          end if
-          if (assThis) then
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneBasicFields%theta, &
-                  'THETA :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveBasicFields%theta)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneBasicFields%theta, &
-                  'THETA :3:hist:anal:mpti:mpt3:mpt1')
-          end if
+          call InsertVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%theta, &
+               'THETA :3:hist:anal:mpti:mpt3:mpt1', &
+               oneAveBasicFields%theta, imean)
        end if
     else
        if (associated(oneBasicFields%theta)) then
-          if (assAve) then
-             assThis=associated(oneAveBasicFields%theta)
-          else
-             assThis=.false.
-          end if
-          if (assThis) then
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneBasicFields%theta, &
-                  'THETA :3:hist:anal:mpti:mpt3', &
-                  oneAveBasicFields%theta)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneBasicFields%theta, &
-                  'THETA :3:hist:anal:mpti:mpt3')
-          end if
+          call InsertVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%theta, &
+               'THETA :3:hist:anal:mpti:mpt3', &
+               oneAveBasicFields%theta, imean)
        end if
     endif
 
     if (associated(oneBasicFields%thc)) then
-       if (assAve) then
-          assThis=associated(oneAveBasicFields%thc)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%thc, &
-               'THC :3:hist:mpti:mpt3:mpt1', &
-               oneAveBasicFields%thc)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%thc, &
-               'THC :3:hist:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneBasicFields%thc, &
+            'THC :3:hist:mpti:mpt3:mpt1', &
+            oneAveBasicFields%thc, imean)
     end if
 
     if(iexev == 2) then
        if (associated(oneBasicFields%rv)) then
-          if (assAve) then
-             assThis=associated(oneAveBasicFields%rv)
-          else
-             assThis=.false.
-          end if
-          if (assThis) then
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneBasicFields%rv, &
-                  'RV :3:hist:anal:mpti:mpt3:mpt1', &
-                  oneAveBasicFields%rv)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneBasicFields%rv, &
-                  'RV :3:hist:anal:mpti:mpt3:mpt1')
-          end if
+          call InsertVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%rv, &
+               'RV :3:hist:anal:mpti:mpt3:mpt1', &
+               oneAveBasicFields%rv, imean)
        end if
     else
        if (associated(oneBasicFields%rv)) then
-          if (assAve) then
-             assThis=associated(oneAveBasicFields%rv)
-          else
-             assThis=.false.
-          end if
-          if (assThis) then
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneBasicFields%rv, &
-                  'RV :3:hist:anal:mpti:mpt3', &
-                  oneAveBasicFields%rv)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  oneBasicFields%rv, &
-                  'RV :3:hist:anal:mpti:mpt3')
-          end if
+          call InsertVarTable (oneVarTable, oneVarTableSize, &
+               oneBasicFields%rv, &
+               'RV :3:hist:anal:mpti:mpt3', &
+               oneAveBasicFields%rv, imean)
        end if
     endif
 
     if (associated(oneBasicFields%pi0)) then
-       if (assAve) then
-          assThis=associated(oneAveBasicFields%pi0)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%pi0, &
-               'PI0 :3:mpti', &
-               oneAveBasicFields%pi0)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%pi0, &
-               'PI0 :3:mpti')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneBasicFields%pi0, &
+            'PI0 :3:mpti', &
+            oneAveBasicFields%pi0, imean)
     end if
 
     if (associated(oneBasicFields%th0)) then
-       if (assAve) then
-          assThis=associated(oneAveBasicFields%th0)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%th0, &
-               'TH0 :3:mpti', &
-               oneAveBasicFields%th0)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%th0, &
-               'TH0 :3:mpti')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneBasicFields%th0, &
+            'TH0 :3:mpti', &
+            oneAveBasicFields%th0, imean)
     end if
 
     if (associated(oneBasicFields%dn0)) then
-       if (assAve) then
-          assThis=associated(oneAveBasicFields%dn0)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%dn0, &
-               'DN0 :3:mpti', &
-               oneAveBasicFields%dn0)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%dn0, &
-               'DN0 :3:mpti')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneBasicFields%dn0, &
+            'DN0 :3:mpti', &
+            oneAveBasicFields%dn0, imean)
     end if
 
     if (associated(oneBasicFields%dn0u)) then
-       if (assAve) then
-          assThis=associated(oneAveBasicFields%dn0u)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%dn0u, &
-               'DN0U :3:mpti', &
-               oneAveBasicFields%dn0u)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%dn0u, &
-               'DN0U :3:mpti')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneBasicFields%dn0u, &
+            'DN0U :3:mpti', &
+            oneAveBasicFields%dn0u, imean)
     end if
 
     if (associated(oneBasicFields%dn0v)) then
-       if (assAve) then
-          assThis=associated(oneAveBasicFields%dn0v)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%dn0v, &
-               'DN0V :3:mpti', &
-               oneAveBasicFields%dn0v)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%dn0v, &
-               'DN0V :3:mpti')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneBasicFields%dn0v, &
+            'DN0V :3:mpti', &
+            oneAveBasicFields%dn0v, imean)
     end if
 
 
     if (associated(oneBasicFields%fcoru)) then
-       if (assAve) then
-          assThis=associated(oneAveBasicFields%fcoru)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%fcoru, &
-               'FCORU :2:mpti', &
-               oneAveBasicFields%fcoru)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%fcoru, &
-               'FCORU :2:mpti')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneBasicFields%fcoru, &
+            'FCORU :2:mpti', &
+            oneAveBasicFields%fcoru, imean)
     else
        call fatal_error(h//" oneBasicFields%fcoru not associated")
     end if
 
     if (associated(oneBasicFields%fcorv)) then
-       if (assAve) then
-          assThis=associated(oneAveBasicFields%fcorv)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%fcorv, &
-               'FCORV :2:mpti', &
-               oneAveBasicFields%fcorv)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%fcorv, &
-               'FCORV :2:mpti')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneBasicFields%fcorv, &
+            'FCORV :2:mpti', &
+            oneAveBasicFields%fcorv, imean)
     end if
 
     if (associated(oneBasicFields%cputime)) then
-       if (assAve) then
-          assThis=associated(oneAveBasicFields%cputime)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%cputime, &
-               'CPUTIME :2:anal:mpti:mpt3', &
-               oneAveBasicFields%cputime)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneBasicFields%cputime, &
-               'CPUTIME :2:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneBasicFields%cputime, &
+            'CPUTIME :2:anal:mpti:mpt3', &
+            oneAveBasicFields%cputime, imean)
     end if
   end subroutine InsertBasicFieldsAtVarTable
 end module ModBasicFields
