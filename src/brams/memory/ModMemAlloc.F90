@@ -676,17 +676,17 @@ contains
     allocate(radiatem_g(ngrids), STAT=ierr)
     if (ierr/=0) call fatal_error(h//"Allocating radiatem_g")
     do ng=1,ngrids
-       call nullify_radiate(radiate_g(ng)); call nullify_radiate(radiatem_g(ng))
+       call nullify_radiate(radiate_g(ng))
        call alloc_radiate(radiate_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
+       call nullify_radiate(radiatem_g(ng))
        if (imean==1) then
           call alloc_radiate(radiatem_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
-       elseif (imean==0) then
-          call alloc_radiate(radiatem_g(ng),        1,        1,        1, ng)
        endif
 
        call filltab_radiate(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-            radiate_g(ng), radiatem_g(ng))
+            radiate_g, radiatem_g, ng, imean)
     enddo
+
     !- only for CARMA/RRTM Radiations schems
     if (ilwrtyp==4 .or. iswrtyp==4 .or. ilwrtyp==6 .or. iswrtyp==6 ) then
        call initial_definitions_aerad()
@@ -749,9 +749,12 @@ contains
           call nullify_aotMap(carma_aotMap,ng)
           call nullify_aotMap(carma_aotMapm,ng)
           call alloc_aotMap(carma_aotMap(ng),nmxp(ng), nmyp(ng))
-          call alloc_aotMap(carma_aotMapm(ng),nmxp(ng), nmyp(ng))
+          if (imean == 1) then
+             call alloc_aotMap(carma_aotMapm(ng),nmxp(ng), nmyp(ng))
+          end if
+          
           call filltab_aotMap(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-               carma_aotMap(ng), carma_aotMapm(ng))
+               carma_aotMap, carma_aotMapm, ng, imean)
        end do
 
        !-only CARMA
@@ -771,13 +774,10 @@ contains
              if(imean==1) then
                 call alloc_carma(carma_m, ng, nmxp(ng), nmyp(ng), nwave)
                 call zero_carma(carma_m, ng)
-             elseif (imean==0) then
-                call alloc_carma(carma_m, ng,        1,        1, nwave)
-                call zero_carma(carma_m, ng)
              end if
 
              call filltab_carma(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-                  carma(ng), carma_m(ng))
+                  carma, carma_m, ng, imean)
           end do
           ! else !Case rtmg
           !   do ng=1,ngrids

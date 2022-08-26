@@ -14,24 +14,25 @@ module mem_radiate
 
   type radiate_vars
      ! Variables to be dimensioned by (nzp,nxp,nyp)
-     real, pointer, contiguous :: fthrd(:,:,:)
-     real, pointer, contiguous :: cldamnt(:,:,:)
-     real, pointer, contiguous :: cluamnt(:,:,:)
-     real, pointer, contiguous :: fthrd_sw(:,:,:)
-     real, pointer, contiguous :: fthrd_lw(:,:,:)
-     real, pointer, contiguous :: cloud_fraction(:,:,:)
+     real, pointer, contiguous :: fthrd(:,:,:) => null()
+     real, pointer, contiguous :: cldamnt(:,:,:) => null()
+     real, pointer, contiguous :: cluamnt(:,:,:) => null()
+     real, pointer, contiguous :: fthrd_sw(:,:,:) => null()
+     real, pointer, contiguous :: fthrd_lw(:,:,:) => null()
+     real, pointer, contiguous :: cloud_fraction(:,:,:) => null()
      ! Variables to be dimensioned by (nxp,nyp)
-     real, pointer, contiguous :: rshort(:,:)
-     real, pointer, contiguous :: rlong(:,:)
-     real, pointer, contiguous :: rlongup(:,:)
-     real, pointer, contiguous :: albedt(:,:)
-     real, pointer, contiguous :: cosz(:,:)
-     real, pointer, contiguous :: rshortdif(:,:)
-     real, pointer, contiguous :: sw_up_toa(:,:)
-     real, pointer, contiguous :: lw_up_toa(:,:)
+     real, pointer, contiguous :: rshort(:,:) => null()
+     real, pointer, contiguous :: rlong(:,:) => null()
+     real, pointer, contiguous :: rlongup(:,:) => null()
+     real, pointer, contiguous :: albedt(:,:) => null()
+     real, pointer, contiguous :: cosz(:,:) => null()
+     real, pointer, contiguous :: rshortdif(:,:) => null()
+     real, pointer, contiguous :: sw_up_toa(:,:) => null()
+     real, pointer, contiguous :: lw_up_toa(:,:) => null()
   end type radiate_vars
 
-  type (radiate_vars), pointer :: radiate_g(:), radiatem_g(:)
+  type (radiate_vars), pointer, contiguous :: radiate_g(:)
+  type (radiate_vars), pointer, contiguous :: radiatem_g(:)
 
   integer :: lonrad ! from RAMSIN
   integer :: ilwrtyp ! from RAMSIN
@@ -158,288 +159,129 @@ contains
 
 
   subroutine filltab_radiate(oneVarTable, oneVarTableSize, &
-       radiate, radiatem)
+       radiate, radiatem, ng, imean)
 
     use ModVarTable, only: &
          VarTable, &
-         InsertAtVarTable
-    
+         InsertVarTable
+
     implicit none
     type(VarTable), pointer, intent(in) :: oneVarTable(:)
     integer, intent(inout) :: oneVarTableSize
-    type(radiate_vars), pointer, intent(in) :: radiate
-    type(radiate_vars), pointer, intent(in) :: radiatem
+    type(radiate_vars), pointer, intent(in) :: radiate(:)
+    type(radiate_vars), pointer, intent(in) :: radiatem(:)
+    integer, intent(in) :: ng
+    integer, intent(in) :: imean
 
-    logical :: assAve
+    character(len=*), parameter :: h="**(filltab_radiate)**"
 
-    assAve=associated(radiatem)
 
     ! Fill pointers to arrays into variable tables
 
-    if (associated(radiate%cloud_fraction))  then
-       if (assAve) then
-          if (associated(radiatem%cloud_fraction)) then
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  radiate%cloud_fraction, &
-                  'CLOUD_FRACTION :3:anal:mpti:mpt3', &
-                  radiatem%cloud_fraction)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  radiate%cloud_fraction, &
-                  'CLOUD_FRACTION :3:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               radiate%cloud_fraction, &
-               'CLOUD_FRACTION :3:anal:mpti:mpt3')
-       end if
-    end if
-         
-    if (associated(radiate%fthrd))  then
-       if (assAve) then
-          if (associated(radiatem%fthrd)) then
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  radiate%fthrd, &
-                  'FTHRD :3:hist:anal:mpti:mpt3', &
-                  radiatem%fthrd)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  radiate%fthrd, &
-                  'FTHRD :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               radiate%fthrd, &
-               'FTHRD :3:hist:anal:mpti:mpt3')
-       end if
-    end if
-         
-    if (associated(radiate%cldamnt))  then
-       if (assAve) then
-          if (associated(radiatem%cldamnt)) then
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  radiate%cldamnt, &
-                  'CLDAMNT :3:hist:anal:mpti:mpt3', &
-                  radiatem%cldamnt)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  radiate%cldamnt, &
-                  'CLDAMNT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               radiate%cldamnt, &
-               'CLDAMNT :3:hist:anal:mpti:mpt3')
-       end if
-    end if
-         
-    if (associated(radiate%fthrd_sw))  then
-       if (assAve) then
-          if (associated(radiatem%fthrd_sw)) then
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  radiate%fthrd_sw, &
-                  'FTHRD_SW :3:hist:anal:mpti:mpt3', &
-                  radiatem%fthrd_sw)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  radiate%fthrd_sw, &
-                  'FTHRD_SW :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               radiate%fthrd_sw, &
-               'FTHRD_SW :3:hist:anal:mpti:mpt3')
-       end if
-    end if
-         
-    if (associated(radiate%fthrd_lw))  then
-       if (assAve) then
-          if (associated(radiatem%fthrd_lw)) then
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  radiate%fthrd_lw, &
-                  'FTHRD_LW :3:hist:anal:mpti:mpt3', &
-                  radiatem%fthrd_lw)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  radiate%fthrd_lw, &
-                  'FTHRD_LW :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               radiate%fthrd_lw, &
-               'FTHRD_LW :3:hist:anal:mpti:mpt3')
-       end if
-    end if
-         
-    if (associated(radiate%cluamnt))  then
-       if (assAve) then
-          if (associated(radiatem%cluamnt)) then
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  radiate%cluamnt, &
-                  'CLUAMNT :3:hist:anal:mpti:mpt3', &
-                  radiatem%cluamnt)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  radiate%cluamnt, &
-                  'CLUAMNT :3:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               radiate%cluamnt, &
-               'CLUAMNT :3:hist:anal:mpti:mpt3')
-       end if
-    end if
-         
-    if (associated(radiate%rshort))  then
-       if (assAve) then
-          if (associated(radiatem%rshort)) then
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  radiate%rshort, &
-                  'RSHORT :2:hist:anal:mpti:mpt3', &
-                  radiatem%rshort)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  radiate%rshort, &
-                  'RSHORT :2:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               radiate%rshort, &
-               'RSHORT :2:hist:anal:mpti:mpt3')
-       end if
+    if (.not. associated(oneVarTable)) then
+       call fatal_error(h//" oneVarTable not associated")
+    else if (.not. associated(radiate)) then
+       call fatal_error(h//" radiate not associated")
+    else if (.not. associated(radiatem)) then
+       call fatal_error(h//" radiatem not associated")
     end if
 
-    if (associated(radiate%rlong))  then
-       if (assAve) then
-          if (associated(radiatem%rlong)) then
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  radiate%rlong, &
-                  'RLONG :2:hist:anal:mpti:mpt3', &
-                  radiatem%rlong)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  radiate%rlong, &
-                  'RLONG :2:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               radiate%rlong, &
-               'RLONG :2:hist:anal:mpti:mpt3')
-       end if
+    if (associated(radiate(ng)%cloud_fraction))  then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            radiate(ng)%cloud_fraction, &
+            'CLOUD_FRACTION :3:anal:mpti:mpt3', &
+            radiatem(ng)%cloud_fraction, imean)
     end if
 
-    if (associated(radiate%rlongup))  then
-       if (assAve) then
-          if (associated(radiatem%rlongup)) then
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  radiate%rlongup, &
-                  'RLONGUP :2:hist:anal:mpti:mpt3', &
-                  radiatem%rlongup)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  radiate%rlongup, &
-                  'RLONGUP :2:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               radiate%rlongup, &
-               'RLONGUP :2:hist:anal:mpti:mpt3')
-       end if
+    if (associated(radiate(ng)%fthrd))  then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            radiate(ng)%fthrd, &
+            'FTHRD :3:hist:anal:mpti:mpt3', &
+            radiatem(ng)%fthrd, imean)
     end if
 
-    if (associated(radiate%albedt))  then
-       if (assAve) then
-          if (associated(radiatem%albedt)) then
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  radiate%albedt, &
-                  'ALBEDT :2:hist:anal:mpti:mpt3', &
-                  radiatem%albedt)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  radiate%albedt, &
-                  'ALBEDT :2:hist:anal:mpti:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               radiate%albedt, &
-               'ALBEDT :2:hist:anal:mpti:mpt3')
-       end if
+    if (associated(radiate(ng)%cldamnt))  then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            radiate(ng)%cldamnt, &
+            'CLDAMNT :3:hist:anal:mpti:mpt3', &
+            radiatem(ng)%cldamnt, imean)
     end if
 
-    if (associated(radiate%cosz))  then
-       if (assAve) then
-          if (associated(radiatem%cosz)) then
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  radiate%cosz, &
-                  'COSZ :2:hist:anal:mpt3', &
-                  radiatem%cosz)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  radiate%cosz, &
-                  'COSZ :2:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               radiate%cosz, &
-               'COSZ :2:hist:anal:mpt3')
-       end if
+    if (associated(radiate(ng)%fthrd_sw))  then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            radiate(ng)%fthrd_sw, &
+            'FTHRD_SW :3:hist:anal:mpti:mpt3', &
+            radiatem(ng)%fthrd_sw, imean)
     end if
-         
-    if (associated(radiate%rshortdif))  then
-       if (assAve) then
-          if (associated(radiatem%rshortdif)) then
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  radiate%rshortdif, &
-                  'RSHORTDIF :2:hist:anal:mpt3', &
-                  radiatem%rshortdif)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  radiate%rshortdif, &
-                  'RSHORTDIF :2:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               radiate%rshortdif, &
-               'RSHORTDIF :2:hist:anal:mpt3')
-       end if
+
+    if (associated(radiate(ng)%fthrd_lw))  then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            radiate(ng)%fthrd_lw, &
+            'FTHRD_LW :3:hist:anal:mpti:mpt3', &
+            radiatem(ng)%fthrd_lw, imean)
     end if
-         
-    if (associated(radiate%sw_up_toa))  then
-       if (assAve) then
-          if (associated(radiatem%sw_up_toa)) then
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  radiate%sw_up_toa, &
-                  'SW_UP_TOA :2:hist:anal:mpt3', &
-                  radiatem%sw_up_toa)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  radiate%sw_up_toa, &
-                  'SW_UP_TOA :2:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               radiate%sw_up_toa, &
-               'SW_UP_TOA :2:hist:anal:mpt3')
-       end if
+
+    if (associated(radiate(ng)%cluamnt))  then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            radiate(ng)%cluamnt, &
+            'CLUAMNT :3:hist:anal:mpti:mpt3', &
+            radiatem(ng)%cluamnt, imean)
     end if
-         
-    if (associated(radiate%lw_up_toa))  then
-       if (assAve) then
-          if (associated(radiatem%lw_up_toa)) then
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  radiate%lw_up_toa, &
-                  'LW_UP_TOA :2:hist:anal:mpt3', &
-                  radiatem%lw_up_toa)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  radiate%lw_up_toa, &
-                  'LW_UP_TOA :2:hist:anal:mpt3')
-          end if
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               radiate%lw_up_toa, &
-               'LW_UP_TOA :2:hist:anal:mpt3')
-       end if
+
+    if (associated(radiate(ng)%rshort))  then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            radiate(ng)%rshort, &
+            'RSHORT :2:hist:anal:mpti:mpt3', &
+            radiatem(ng)%rshort, imean)
+    end if
+
+    if (associated(radiate(ng)%rlong))  then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            radiate(ng)%rlong, &
+            'RLONG :2:hist:anal:mpti:mpt3', &
+            radiatem(ng)%rlong, imean)
+    end if
+
+    if (associated(radiate(ng)%rlongup))  then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            radiate(ng)%rlongup, &
+            'RLONGUP :2:hist:anal:mpti:mpt3', &
+            radiatem(ng)%rlongup, imean)
+    end if
+
+    if (associated(radiate(ng)%albedt))  then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            radiate(ng)%albedt, &
+            'ALBEDT :2:hist:anal:mpti:mpt3', &
+            radiatem(ng)%albedt, imean)
+    end if
+
+    if (associated(radiate(ng)%cosz))  then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            radiate(ng)%cosz, &
+            'COSZ :2:hist:anal:mpt3', &
+            radiatem(ng)%cosz, imean)
+    end if
+
+    if (associated(radiate(ng)%rshortdif))  then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            radiate(ng)%rshortdif, &
+            'RSHORTDIF :2:hist:anal:mpt3', &
+            radiatem(ng)%rshortdif, imean)
+    end if
+
+    if (associated(radiate(ng)%sw_up_toa))  then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            radiate(ng)%sw_up_toa, &
+            'SW_UP_TOA :2:hist:anal:mpt3', &
+            radiatem(ng)%sw_up_toa, imean)
+    end if
+
+    if (associated(radiate(ng)%lw_up_toa))  then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            radiate(ng)%lw_up_toa, &
+            'LW_UP_TOA :2:hist:anal:mpt3', &
+            radiatem(ng)%lw_up_toa, imean)
     end if
 
   end subroutine filltab_radiate

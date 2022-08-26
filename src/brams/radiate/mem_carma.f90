@@ -42,8 +42,8 @@ module mem_carma
   type(aotMap_t), allocatable, target, dimension(:) :: carma_aotMap, &
        carma_aotMapm
 
-  type(carma_v), allocatable, target :: carma(:)
-  type(carma_v), allocatable, target :: carma_m(:)
+  type(carma_v), pointer, contiguous :: carma(:) => null()
+  type(carma_v), pointer, contiguous :: carma_m(:) => null()
 
   !Used in radcomp_carma (radcom) - radriv
 
@@ -244,11 +244,11 @@ contains
   !---------------------------------------------------------------
 
   subroutine filltab_carma(oneVarTable, oneVarTableSize, &
-       cv, cvm)
+       cv, cvm, ng, imean)
 
     use ModVarTable, only: &
          VarTable, &
-         InsertAtVarTable
+         InsertVarTable
     
     use mem_scalar, only: RECYCLE_TRACERS ! INTENT(IN)
     use io_params, only : ipastin, ioutput         ! INTENT(IN)
@@ -257,8 +257,10 @@ contains
     ! Arguments:
     type(VarTable), pointer, intent(in) :: oneVarTable(:)
     integer, intent(inout) :: oneVarTableSize
-    type(carma_v), pointer, intent(in) :: cv
-    type(carma_v), pointer, intent(in) :: cvm
+    type(carma_v), pointer, intent(in) :: cv(:)
+    type(carma_v), pointer, intent(in) :: cvm(:)
+    integer, intent(in) :: ng
+    integer, intent(in) :: imean
 
     ! Local Variables:
     logical :: assThis
@@ -270,6 +272,8 @@ contains
        call fatal_error(h//" oneVarTable not associated")
     else if (.not. associated(cv)) then
        call fatal_error(h//" cv not associated")
+    else if (.not. associated(cvm)) then
+       call fatal_error(h//" cvm not associated")
     end if
     
     str_recycle = ''
@@ -277,26 +281,12 @@ contains
        str_recycle = ':recycle'
     endif
 
-    if (associated(cv%aot)) then
-       if (.not. associated(cvm)) then
-          assThis=.false.
-       else
-          assThis=associated(cvm%aot)
-       end if
+    if (associated(cv(ng)%aot)) then
        write(sname,'(a4)') 'AOT'
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               cv%aot, &
-               sname//' :7:hist:anal:mpti:mpt3'//trim(str_recycle), &
-               cvm%aot)
-          ! Not necessary MPT1 - Comunication NODE to NODE on DTLONG
-          ! Radiation is a Column oriented process
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               cv%aot, &
-               sname//' :7:hist:anal:mpti:mpt3'//trim(str_recycle))
-
-       endif
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            cv(ng)%aot, &
+            sname//' :7:hist:anal:mpti:mpt3'//trim(str_recycle), &
+            cvm(ng)%aot, imean)
     end if
   end subroutine filltab_carma
 
@@ -695,42 +685,34 @@ contains
   end subroutine dealloc_aotMap
 
   subroutine filltab_aotMap(oneVarTable, oneVarTableSize, &
-       imap, imapm)
+       imap, imapm, ng, imean)
 
     use ModVarTable, only: &
          VarTable, &
-         InsertAtVarTable
+         InsertVarTable
     
     type(VarTable), pointer, intent(in) :: oneVarTable(:)
     integer, intent(inout) :: oneVarTableSize
-    type(aotMap_t), pointer, intent(in):: imap
-    type(aotMap_t), pointer, intent(in):: imapm
+    type(aotMap_t), pointer, intent(in):: imap(:)
+    type(aotMap_t), pointer, intent(in):: imapm(:)
+    integer, intent(in) :: ng
+    integer, intent(in) :: imean
 
-    logical :: assThis
     character(len=*), parameter :: h="**(filltab_aotMap)**"
 
     if (.not. associated(oneVarTable)) then
        call fatal_error(h//" oneVarTable not associated")
     else if (.not. associated(imap)) then
        call fatal_error(h//" imap not associated")
+    else if (.not. associated(imapm)) then
+       call fatal_error(h//" imapm not associated")
     end if
     
-    if(associated(imap%aotMap))then
-       if (.not. associated(imapm)) then
-          assThis=.false.
-       else
-          assThis=associated(imapm%aotMap)
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               imap%aotMap, &
-               'AOTMAP :2:hist:anal:mpti', &
-               imapm%aotMap)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               imap%aotMap, &
-               'AOTMAP :2:hist:anal:mpti')
-       end if
+    if(associated(imap(ng)%aotMap))then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            imap(ng)%aotMap, &
+            'AOTMAP :2:hist:anal:mpti', &
+            imapm(ng)%aotMap, imean)
     end if
   end subroutine filltab_aotMap
 
