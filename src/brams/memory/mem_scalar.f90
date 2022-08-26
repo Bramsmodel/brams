@@ -14,17 +14,17 @@ module mem_scalar
   ! Added scalar variables and tendencies
 
   type scalar_vars
-     real, contiguous, pointer :: sclp(:,:,:)
-     real, contiguous, pointer :: drydep(:,:)
-     real, contiguous, pointer :: sclt(:)
-     real, contiguous, pointer :: wetdep(:,:)
-     real, contiguous, pointer :: srcsc(:,:,:)
+     real, contiguous, pointer :: sclp(:,:,:) => null()
+     real, contiguous, pointer :: drydep(:,:) => null()
+     real, contiguous, pointer :: sclt(:) => null()
+     real, contiguous, pointer :: wetdep(:,:) => null()
+     real, contiguous, pointer :: srcsc(:,:,:) => null()
   end type scalar_vars
 
   ! scal_p allocated by (maxsclr,ngrids)
 
-  type (scalar_vars), pointer :: scalar_g(:,:)
-  type (scalar_vars), pointer :: scalarm_g(:,:)
+  type (scalar_vars), pointer :: scalar_g(:,:) => null()
+  type (scalar_vars), pointer :: scalarm_g(:,:) => null()
 
   integer :: recycle_tracers ! from RAMSIN
 
@@ -36,7 +36,7 @@ contains
     implicit none
 
     integer,intent(in) :: naddsc
-    type (scalar_vars),dimension(naddsc) :: scal
+    type(scalar_vars), intent(inout) :: scal(:)
     integer,intent(in) :: n1,n2,n3
 
     integer :: nsc
@@ -64,25 +64,30 @@ contains
 
   !---------------------------------------------------------------
 
-  subroutine dealloc_scalar(scal,naddsc)
+  subroutine dealloc_scalar(scal)
 
     implicit none
 
-    type (scalar_vars) :: scal(naddsc)
-    integer :: naddsc
+    type(scalar_vars), pointer, intent(inout) :: scal(:,:)
+    
     integer :: nsc
+    integer :: ng
 
     !  Deallocate arrays
 
-    do nsc=1,naddsc
-       if (associated(scal(nsc)%sclp))   deallocate (scal(nsc)%sclp)
-       if (associated(scal(nsc)%drydep)) deallocate (scal(nsc)%drydep)
-       ! For CATT
-       if (associated(scal(nsc)%wetdep)) deallocate (scal(nsc)%wetdep)
-       if (associated(scal(nsc)%srcsc)) deallocate (scal(nsc)%srcsc)
-    enddo
-
-    return
+    if (associated(scal)) then
+       do ng=1,size(scal,2)
+          do nsc=1,size(scal,1)
+             if (associated(scal(nsc,ng)%sclp))   deallocate (scal(nsc,ng)%sclp)
+             if (associated(scal(nsc,ng)%drydep)) deallocate (scal(nsc,ng)%drydep)
+             ! For CATT
+             if (associated(scal(nsc,ng)%wetdep)) deallocate (scal(nsc,ng)%wetdep)
+             if (associated(scal(nsc,ng)%srcsc)) deallocate (scal(nsc,ng)%srcsc)
+          end do
+       end do
+       deallocate(scal)
+       nullify(scal)
+    end if
   end subroutine dealloc_scalar
 
   !---------------------------------------------------------------
@@ -112,12 +117,12 @@ contains
   !---------------------------------------------------------------
 
   subroutine filltab_scalar(oneVarTable, oneVarTableSize, &
-       scal, scalm, na)
+       scal, scalm, na, imean)
 
     use ModVarTable, only: &
          VarTable, &
-         InsertAtVarTable
-    
+         InsertVarTable
+
     use io_params, only : ioutput         ! INTENT(IN)
 
     implicit none
@@ -126,9 +131,8 @@ contains
     type(scalar_vars), pointer, intent(in) :: scal
     type(scalar_vars), pointer, intent(in) :: scalm
     integer, intent(in) :: na
-
-    logical :: assAve
-    logical :: assThis
+    integer, intent(in) :: imean
+    
     character(len=15) :: sname
     character(len=8) :: str_recycle
     character(len=*), parameter :: h="**(filltab_scalar)**" 
@@ -138,90 +142,44 @@ contains
     else if (.not. associated(scal)) then
        call fatal_error(h//" scal not associated")
     end if
-    
+
     str_recycle = ''
     if (RECYCLE_TRACERS == 1 .or. ioutput == 5) then
        str_recycle = ':recycle'
     endif
 
-    assAve=associated(scalm)
-    
     ! Fill pointers to arrays into variable tables
 
     if (associated(scal%sclp)) then
        write(sname,'(a4,i3.3)') 'SCLP',na
-       if (assAve) then
-          assThis=associated(scalm%sclp)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               scal%sclp, &
-               trim(sname)//' :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle), &
-               scalm%sclp)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               scal%sclp, &
-               trim(sname)//' :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle))
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            scal%sclp, &
+            trim(sname)//' :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle), &
+            scalm%sclp, imean)
     end if
-    
+
     if (associated(scal%drydep)) then
        write(sname,'(a4,i3.3)') 'SCDD',na
-       if (assAve) then
-          assThis=associated(scalm%drydep)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               scal%drydep, &
-               trim(sname)//' :2:hist:anal:mpti:mpt3:mpt1', &
-               scalm%drydep)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               scal%drydep, &
-               trim(sname)//' :2:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            scal%drydep, &
+            trim(sname)//' :2:hist:anal:mpti:mpt3:mpt1', &
+            scalm%drydep, imean)
     end if
-    
+
     if (associated(scal%wetdep)) then
        write(sname,'(a6,i3.3)') 'wetdep',na
-       if (assAve) then
-          assThis=associated(scalm%wetdep)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               scal%wetdep, &
-               trim(sname)//' :2:hist:anal:mpti:mpt3:mpt1', &
-               scalm%wetdep)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               scal%wetdep, &
-               trim(sname)//' :2:hist:anal:mpti:mpt3:mpt1')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            scal%wetdep, &
+            trim(sname)//' :2:hist:anal:mpti:mpt3:mpt1', &
+            scalm%wetdep, imean)
     end if
-    
+
     if (associated(scal%srcsc)) then
        write(sname,'(a5,i3.3)') 'scrsc',na
-       if (assAve) then
-          assThis=associated(scalm%srcsc)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               scal%srcsc, &
-               trim(sname)//' :3:hist:anal:mpti:mpt3:mpt1', &
-               scalm%srcsc)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               scal%srcsc, &
-               trim(sname)//' :3:hist:anal:mpti:mpt3:mpt1')
-       endif
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            scal%srcsc, &
+            trim(sname)//' :3:hist:anal:mpti:mpt3:mpt1', &
+            scalm%srcsc, imean)
     end if
 
   end subroutine filltab_scalar

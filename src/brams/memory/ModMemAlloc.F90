@@ -1096,21 +1096,17 @@ contains
        if (ierr/=0) call fatal_error(h//"Allocating scalarm_g")
        do ng=1,ngrids
           call nullify_scalar(scalar_g(:,ng),  naddsc)
-          call nullify_scalar(scalarm_g(:,ng), naddsc)
           call alloc_scalar(scalar_g(:,ng), nmzp(ng), nmxp(ng), nmyp(ng), naddsc)
+          call nullify_scalar(scalarm_g(:,ng), naddsc)
           if (imean==1) then
              call alloc_scalar(scalarm_g(:,ng), nmzp(ng), nmxp(ng), nmyp(ng), &
                   naddsc)
-          elseif (imean==0) then
-             call alloc_scalar(scalarm_g(:,ng),        1,        1,        1, &
-                  naddsc)
-          endif
-
+          end if
        enddo
        do ng=1,ngrids
           do na=1,naddsc ! For CATT
              call filltab_scalar(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-                  scalar_g(na,ng), scalarm_g(na,ng), na)
+                  scalar_g(na,ng), scalarm_g(na,ng), na, imean)
           end do
        enddo
     endif
@@ -1509,18 +1505,12 @@ contains
        if (imean==1) then
           call alloc_extra2d(extra2dm, nmxp(ng), nmyp(ng), na_extra2d, ng)
           call zero_extra2d(extra2dm, na_extra2d, ng)
-       elseif (imean==0) then
-          call alloc_extra2d(extra2dm, 1, 1, na_extra2d, ng)
-          call zero_extra2d(extra2dm, na_extra2d, ng)
        end if
        call alloc_extra3d(extra3d, nmzp(ng), nmxp(ng), nmyp(ng), na_extra3d, ng)
        call zero_extra3d(extra3d, na_extra3d, ng)
        if (imean==1) then
           call alloc_extra3d(extra3dm,  &
                nmzp(ng), nmxp(ng), nmyp(ng), na_extra3d, ng)
-          call zero_extra3d(extra3dm, na_extra3d, ng)
-       elseif (imean==0) then
-          call alloc_extra3d(extra3dm, 1, 1, 1, na_extra3d, ng)
           call zero_extra3d(extra3dm, na_extra3d, ng)
        end if
     end do
@@ -1532,7 +1522,7 @@ contains
                oneGrid%oneVarTableSize, &
                extra2d(na,ng), &
                extra2dm(na,ng), &
-               na)
+               na, imean)
        end do
        do na=1,na_extra3d
           call filltab_extra3d(&
@@ -1540,7 +1530,7 @@ contains
                oneGrid%oneVarTableSize, &
                extra3d(na,ng), &
                extra3dm(na,ng), &
-               na)
+               na, imean)
        end do
     end do
     !--------------
@@ -1691,10 +1681,11 @@ contains
     endif
 
     if(associated(scalar_g)) then
-       do ng=1,ngrids
-          call dealloc_scalar(scalar_g(:,ng),naddsc)
-       enddo
-       deallocate(scalar_g,scalarm_g)
+       call dealloc_scalar(scalar_g)
+    endif
+    
+    if(associated(scalarm_g)) then
+       call dealloc_scalar(scalarm_g)
     endif
 
     return

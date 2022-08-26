@@ -17,11 +17,11 @@ module Extras
      real, pointer, contiguous :: d3(:,:,:)
   end type ext3d
 
-  type(ext2d), allocatable, target :: extra2d(:,:)
-  type(ext2d), allocatable, target :: extra2dm(:,:)
+  type(ext2d), pointer, contiguous :: extra2d(:,:) => null()
+  type(ext2d), pointer, contiguous :: extra2dm(:,:) => null()
 
-  type(ext3d), allocatable, target :: extra3d(:,:)
-  type(ext3d), allocatable, target :: extra3dm(:,:)
+  type(ext3d), pointer, contiguous :: extra3d(:,:) => null()
+  type(ext3d), pointer, contiguous :: extra3dm(:,:) => null()
 
 contains
 
@@ -32,7 +32,7 @@ contains
     implicit none
     include "constants.h"
     ! Arguments:
-    type (ext2d), intent(INOUT) :: scal(:,:)
+    type (ext2d), pointer, intent(inout) :: scal(:,:)
     integer, intent(IN) :: m1,m2 !Dimension of arrays
     integer, intent(IN) :: na2d ! number of 2d extras arrays without ngrid
     integer, intent(IN) :: ngrid
@@ -59,7 +59,7 @@ contains
     implicit none
     include "constants.h"
     ! Arguments:
-    type (ext3d), intent(INOUT) :: scal(:,:)
+    type (ext3d), pointer, intent(inout) :: scal(:,:)
     integer, intent(IN) :: m1,m2,m3 !Dimension of arrays
     integer, intent(IN) :: na3d ! number of 2d extras arrays without ngrid
     integer, intent(IN) :: ngrid
@@ -83,16 +83,19 @@ contains
 
     implicit none
     ! Arguments:
-    type (ext2d), intent(INOUT) :: scal(:,:)
+    type (ext2d), pointer, intent(inout) :: scal(:,:)
     integer, intent(in) :: ngrid, na2d
     ! Local Variables:
     integer :: nsc, nd
 
-    do nd=1,na2d
-       do nsc=1,ngrid
-          if (associated(scal(nd,nsc)%d2))   deallocate (scal(nd,nsc)%d2)
-       enddo
-    end do
+    if (associated(scal)) then
+       do nd=1,na2d
+          do nsc=1,ngrid
+             if (associated(scal(nd,nsc)%d2))   deallocate (scal(nd,nsc)%d2)
+          enddo
+       end do
+       nullify(scal)
+    end if
 
   end subroutine dealloc_extra2d
 
@@ -102,16 +105,19 @@ contains
 
     implicit none
     ! Arguments:
-    type (ext3d), intent(INOUT) :: scal(:,:)
+    type (ext3d), pointer, intent(inout) :: scal(:,:)
     integer, intent(in) :: ngrid, na3d
     ! Local Variables:
     integer :: nsc, nd
 
-    do nd=1,na3d
-       do nsc=1,ngrid
-          if (associated(scal(nd,nsc)%d3))   deallocate (scal(nd,nsc)%d3)
-       enddo
-    end do
+    if (associated(scal)) then
+       do nd=1,na3d
+          do nsc=1,ngrid
+             if (associated(scal(nd,nsc)%d3))   deallocate (scal(nd,nsc)%d3)
+          end do
+       end do
+       nullify(scal)
+    end if
 
   end subroutine dealloc_extra3d
 
@@ -156,11 +162,11 @@ contains
   !---------------------------------------------------------------
 
   subroutine filltab_extra2d(oneVarTable, oneVarTableSize, &
-       scal2, scal2m, na)
+       scal2, scal2m, na, imean)
 
     use ModVarTable, only: &
          VarTable, &
-         InsertAtVarTable
+         InsertVarTable
     
     implicit none
     ! Arguments:
@@ -169,10 +175,9 @@ contains
     type(ext2d), pointer, intent(in) :: scal2
     type(ext2d), pointer, intent(in) :: scal2m
     integer, intent(in) :: na
+    integer, intent(in) :: imean
 
     ! Local Variables:
-    logical :: assAve
-    logical :: assThis
     character(len=7) :: sname
     character(len=*), parameter :: h="**(filltab_extra2d)**"
 
@@ -184,34 +189,22 @@ contains
     
     ! Fill pointers to arrays into variable tables
 
-    assAve=associated(scal2m)
     if (associated(scal2%d2)) then
-       if (assAve) then
-          assThis=associated(scal2m%d2)
-       else
-          assThis=.false.
-       end if
        write(sname, '(a2,i3.3)') 'd2', na
-       if (assThis) then
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               scal2%d2, &
-               trim(sname)//' :2:hist:anal:mpti:mpt3', &
-               scal2m%d2)
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               scal2%d2, &
-               trim(sname)//' :2:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            scal2%d2, &
+            trim(sname)//' :2:hist:anal:mpti:mpt3', &
+            scal2m%d2, imean)
     endif
   end subroutine filltab_extra2d
 
   !---------------------------------------------------------------
   subroutine filltab_extra3d(oneVarTable, oneVarTableSize, &
-       scal3, scal3m, na)
+       scal3, scal3m, na, imean)
 
     use ModVarTable, only: &
          VarTable, &
-         InsertAtVarTable
+         InsertVarTable
     
     implicit none
 
@@ -221,10 +214,9 @@ contains
     type(ext3d), pointer, intent(in) :: scal3
     type(ext3d), pointer, intent(in) :: scal3m
     integer, intent(in) :: na
+    integer, intent(in) :: imean
 
     ! Local Variables:
-    logical :: assAve
-    logical :: assThis
     character(len=7) :: sname
     character(len=*), parameter :: h="**(filltab_extra3d)**"
 
@@ -236,24 +228,12 @@ contains
     
     ! Fill pointers to arrays into variable tables
 
-    assAve=associated(scal3m)
     if (associated(scal3%d3)) then
-       if (assAve) then
-          assThis=associated(scal3m%d3)
-       else
-          assThis=.false.
-       end if
        write(sname, '(a2,i3.3)') 'd3', na
-       if (assThis) then
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               scal3%d3, &
-               trim(sname)//' :3:hist:anal:mpti:mpt3', &
-               scal3m%d3)
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               scal3%d3, &
-               trim(sname)//' :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            scal3%d3, &
+            trim(sname)//' :3:hist:anal:mpti:mpt3', &
+            scal3m%d3, imean)
     endif
   end subroutine filltab_extra3d
 

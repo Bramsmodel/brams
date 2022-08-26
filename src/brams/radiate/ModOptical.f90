@@ -121,7 +121,7 @@ module ModOptical
 
   use ModVarTable, only: &
        VarTable, &
-       InsertAtVarTable
+       InsertVarTable
 
   use node_mod, only: &
        nodei0, &
@@ -207,7 +207,7 @@ module ModOptical
      real, pointer, contiguous    :: extCoef(:,:,:) => null()
      real, pointer, contiguous    :: r0(:,:) => null()
      real, pointer, contiguous    :: pdens(:,:) => null()
-     real, pointer, contiguous    :: rsig(:,:)
+     real, pointer, contiguous    :: rsig(:,:) => null()
      !# geometric standard deviation
   end type aotMap_t
   
@@ -946,11 +946,13 @@ contains
     if (ierr/=0) call fatal_error(h//"Error llocating aod in optical")
     do ng=1,ngrids
        call opt_nullify_aotMap(opt_aotMap,ng)
-       call opt_nullify_aotMap(opt_aotMapm,ng)
        call opt_alloc_aotMap  (opt_aotMap(ng),nmxp(ng), nmyp(ng))
-       call opt_alloc_aotMap  (opt_aotMapm(ng),nmxp(ng), nmyp(ng))
+       call opt_nullify_aotMap(opt_aotMapm,ng)
+       if (imean==1) then
+          call opt_alloc_aotMap  (opt_aotMapm(ng),nmxp(ng), nmyp(ng))
+       end if
        call opt_filltab_aotMap(oneVarTable, oneVarTableSize, &
-            opt_aotMap(ng), opt_aotMapm(ng))
+            opt_aotMap(ng), opt_aotMapm(ng), imean)
        !
        !KML
        !      do band=1,nbndsw
@@ -1244,7 +1246,7 @@ contains
   end subroutine opt_dealloc_aotMap
 
   subroutine opt_filltab_aotMap(oneVarTable, oneVarTableSize, &
-       imap, imapm)
+       imap, imapm, imean)
     !# Fill the  aotMap variable in var tables of model
     !#
     !# @note
@@ -1285,8 +1287,8 @@ contains
     integer, intent(inout) :: oneVarTableSize
     type(aotMap_t), pointer, intent(in) :: imap
     type(aotMap_t), pointer, intent(in) :: imapm
+    integer, intent(in) :: imean
 
-    logical :: assThis
     character(len=*), parameter :: h="**(opt_filltab_aotMap)**"
 
     if (.not. associated(oneVarTable)) then
@@ -1296,21 +1298,10 @@ contains
     end if
     
     if(associated(imap%aotMap))then
-       if (.not. associated(imapm)) then
-          assThis=.false.
-       else
-          assThis=associated(imapm%aotMap)
-       end if
-       if (assThis) then
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               imap%aotMap, & 
-               'AOTMAP :2:hist:anal:mpti', &
-               imapm%aotMap)
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               imap%aotMap, & 
-               'AOTMAP :2:hist:anal:mpti')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            imap%aotMap, & 
+            'AOTMAP :2:hist:anal:mpti', &
+            imapm%aotMap, imean)
     end if
 
   end subroutine opt_filltab_aotMap
