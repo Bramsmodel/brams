@@ -5,16 +5,16 @@ module mem_grell
   type grell_vars
 
      ! Variables to be dimensioned by (m2,m3)
-     real, pointer, contiguous :: UPMF(:,:)
-     real, pointer, contiguous :: DNMF(:,:)
-     real, pointer, contiguous :: XIACT_C(:,:)
-     real, pointer, contiguous :: XIACT_P(:,:)
-     real, pointer, contiguous :: XIERR(:,:)
-     real, pointer, contiguous :: XKDT(:,:)
-     real, pointer, contiguous :: XKTOP(:,:)
-     real, pointer, contiguous :: XKBCON(:,:)
-     real, pointer, contiguous :: XJMIN(:,:)
-     real, pointer, contiguous :: XK22(:,:)
+     real, pointer, contiguous :: UPMF(:,:) => null()
+     real, pointer, contiguous :: DNMF(:,:) => null()
+     real, pointer, contiguous :: XIACT_C(:,:) => null()
+     real, pointer, contiguous :: XIACT_P(:,:) => null()
+     real, pointer, contiguous :: XIERR(:,:) => null()
+     real, pointer, contiguous :: XKDT(:,:) => null()
+     real, pointer, contiguous :: XKTOP(:,:) => null()
+     real, pointer, contiguous :: XKBCON(:,:) => null()
+     real, pointer, contiguous :: XJMIN(:,:) => null()
+     real, pointer, contiguous :: XK22(:,:) => null()
 
      ! Variables to be dimensioned by (m1,m2,m3)
      !real, pointer, dimension(:,:,:) :: &
@@ -23,21 +23,21 @@ module mem_grell
 
   end type grell_vars
 
-  type (grell_vars), allocatable, target :: grell_g(:)
-  type (grell_vars), allocatable, target :: grellm_g(:)
-  type (grell_vars), allocatable, target :: grell_g_sh(:)
-  type (grell_vars), allocatable, target :: grellm_g_sh(:)
+  type (grell_vars), pointer, contiguous :: grell_g(:) => null()
+  type (grell_vars), pointer, contiguous :: grellm_g(:) => null()
+  type (grell_vars), pointer, contiguous :: grell_g_sh(:) => null()
+  type (grell_vars), pointer, contiguous :: grellm_g_sh(:) => null()
 
 
   type cuforc_vars
-     real, pointer, contiguous :: lsfth(:,:,:)
-     real, pointer, contiguous :: lsfrt(:,:,:)
+     real, pointer, contiguous :: lsfth(:,:,:) => null()
+     real, pointer, contiguous :: lsfrt(:,:,:) => null()
   end type cuforc_vars
 
-  type (cuforc_vars), allocatable, target :: cuforc_g(:)
-  type (cuforc_vars), allocatable, target :: cuforcm_g(:)
-  type (cuforc_vars), allocatable, target :: cuforc_sh_g(:)
-  type (cuforc_vars), allocatable, target :: cuforcm_sh_g(:)
+  type (cuforc_vars), pointer, contiguous :: cuforc_g(:) => null()
+  type (cuforc_vars), pointer, contiguous :: cuforcm_g(:) => null()
+  type (cuforc_vars), pointer, contiguous :: cuforc_sh_g(:) => null()
+  type (cuforc_vars), pointer, contiguous :: cuforcm_sh_g(:) => null()
 
 
 

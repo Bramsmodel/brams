@@ -9,6 +9,9 @@
 
 module mem_scalar
 
+  use ModScalarFields, only: &
+       ScalarFields
+  
   use ModNamelistFile, only: namelistFile
 
   ! Added scalar variables and tendencies
@@ -28,6 +31,11 @@ module mem_scalar
 
   integer :: recycle_tracers ! from RAMSIN
 
+  character(len=128) :: toScalar=""
+  character(len=128) :: fromScalar=""
+
+
+  
 contains
   !---------------------------------------------------------------
 
@@ -189,4 +197,78 @@ contains
     type(namelistFile), pointer :: oneNamelistFile
     recycle_tracers = oneNamelistFile%recycle_tracers
   end subroutine StoreNamelistFileAtMem_scalar
+
+
+
+  subroutine DeepCopyToScalarFields(oneScalarFields, name)
+    type(ScalarFields), pointer, intent(in) :: oneScalarFields(:)
+    character(len=*), intent(in) :: name
+
+    integer :: iSca
+    character(len=*), parameter :: h="**(DeepCopyToScalarFields)**"
+
+    if (toScalar /= "") then
+       call fatal_error(h//" invoked from "//trim(name)//" just after invoked from "//&
+            trim(adjustl(toScalar))//"; last inverse copy by "//trim(adjustl(fromScalar)))
+    end if
+
+    toScalar=name
+    fromScalar=""
+
+    do iSca=1,size(oneScalarFields)
+       if (associated(oneScalarFields(iSca)%sclp)) then
+          oneScalarFields(iSca)%sclp = scalar_g(iSca,1)%sclp
+       end if
+       if (associated(oneScalarFields(iSca)%drydep)) then
+          oneScalarFields(iSca)%drydep = scalar_g(iSca,1)%drydep
+       end if
+       if (associated(oneScalarFields(iSca)%sclt)) then
+          oneScalarFields(iSca)%sclt = scalar_g(iSca,1)%sclt
+       end if
+       if (associated(oneScalarFields(iSca)%wetdep)) then
+          oneScalarFields(iSca)%wetdep = scalar_g(iSca,1)%wetdep
+       end if
+       if (associated(oneScalarFields(iSca)%srcsc)) then
+          oneScalarFields(iSca)%srcsc = scalar_g(iSca,1)%srcsc
+       end if
+    end do
+  end subroutine DeepCopyToScalarFields
+    
+
+  subroutine DeepCopyFromScalarFields(oneScalarFields, name)
+    type(ScalarFields), pointer, intent(in) :: oneScalarFields(:)
+    character(len=*), intent(in) :: name
+
+    integer :: iSca
+    character(len=*), parameter :: h="**(DeepCopyFromScalarFields)**"
+
+    if (fromScalar /= "") then
+       call fatal_error(h//" invoked from "//trim(name)//" just after invoked from "//&
+            trim(adjustl(fromScalar))//"; last inverse copy by "//trim(adjustl(toScalar)))
+    end if
+
+    toScalar=""
+    fromScalar=name
+
+    do iSca=1,size(oneScalarFields)
+       if (associated(oneScalarFields(iSca)%sclp)) then
+          scalar_g(iSca,1)%sclp = oneScalarFields(iSca)%sclp 
+       end if
+       if (associated(oneScalarFields(iSca)%drydep)) then
+          scalar_g(iSca,1)%drydep = oneScalarFields(iSca)%drydep 
+       end if
+       if (associated(oneScalarFields(iSca)%sclt)) then
+          scalar_g(iSca,1)%sclt = oneScalarFields(iSca)%sclt 
+       end if
+       if (associated(oneScalarFields(iSca)%wetdep)) then
+          scalar_g(iSca,1)%wetdep = oneScalarFields(iSca)%wetdep 
+       end if
+       if (associated(oneScalarFields(iSca)%srcsc)) then
+          scalar_g(iSca,1)%srcsc = oneScalarFields(iSca)%srcsc 
+       end if
+    end do
+  end subroutine DeepCopyFromScalarFields
+    
+
+
 end module mem_scalar

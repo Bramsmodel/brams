@@ -829,25 +829,22 @@ contains
        if (nnshcu(ng) > 1) then
           call nullify_cuparm(cuparm_g_sh(ng))
           call nullify_cuparm(cuparmm_g_sh(ng))
-          call alloc_cuparm_sh(cuparm_g_sh(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
+          if (imean == 1) then
+             call alloc_cuparm_sh(cuparm_g_sh(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
+          end if
        endif
 
        if (imean==1) then
           call alloc_cuparm(cuparmm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
-          !-srf-feb2012: for shallow cumulus
-          if (nnshcu(ng) > 1) call alloc_cuparm_sh(cuparmm_g_sh(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
-       elseif (imean==0) then
-          call alloc_cuparm(cuparmm_g(ng), 1, 1, 1, ng)
-          if (nnshcu(ng) > 1) call alloc_cuparm_sh(cuparmm_g_sh(ng), 1, 1, 1, ng)
        endif
 
        call filltab_cuparm(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-            cuparm_g(ng),cuparmm_g(ng))
+            cuparm_g,cuparmm_g, ng, imean)
 
        !-srf-feb2012: for shallow cumulus
        if (nnshcu(ng) == 2) then
           call filltab_cuparm_sh(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-               cuparm_g_sh(ng), cuparmm_g_sh(ng))
+               cuparm_g_sh, cuparmm_g_sh, ng, imean)
        end if
 
     enddo
@@ -995,8 +992,10 @@ contains
     endif
     !- Allocate data for Grell Cumulus version 3d,GD-FIM and GF schemes
     if (Alloc_Grell3_Flag == 1) then
-       allocate(g3d_ens_g(train_dim,ngrids_cp),g3d_ensm_g(train_dim,ngrids_cp))
-       allocate(g3d_g(ngrids_cp),g3dm_g(ngrids_cp))
+       allocate(g3d_ens_g(train_dim,ngrids_cp))
+       allocate(g3d_ensm_g(train_dim,ngrids_cp))
+       allocate(g3d_g(ngrids_cp))
+       allocate(g3dm_g(ngrids_cp))
 
        ng_cp = 1
        do ng=1,ngrids
@@ -1010,20 +1009,16 @@ contains
 
              if (imean == 1) then
                 call alloc_grell3(g3d_ensm_g(:,ng_cp),g3dm_g(ng_cp),nmzp(ng),nmxp(ng),nmyp(ng),ng,train_dim)
-
-             elseif (imean == 0) then
-
-                call alloc_grell3(g3d_ensm_g(:,ng_cp),g3dm_g(ng_cp),1,1,1,ng,train_dim)
              endif
 
              call filltab_grell3(&
                   oneGrid%oneVarTable, &
                   oneGrid%oneVarTableSize, &
-                  g3d_ens_g(:,ng_cp), &
-                  g3d_g(ng_cp),&
-                  g3d_ensm_g(:,ng_cp), &
-                  g3dm_g(ng_cp),&
-                  train_dim, nnqparm(ng))
+                  g3d_ens_g, &
+                  g3d_g,&
+                  g3d_ensm_g, &
+                  g3dm_g,&
+                  train_dim, nnqparm(ng), ng_cp, imean)
 
              ng_cp = ng_cp + 1
              if  (CLOSURE_TYPE == 'EN') then
@@ -1631,9 +1626,12 @@ contains
        call final_definitions_globaer()
     endif
 
+    call dealloc_cuparm(cuparm_g)
+    call dealloc_cuparm(cuparmm_g)
+    call dealloc_cuparm(cuparm_g_sh)
+    call dealloc_cuparm(cuparmm_g_sh)
+    
     do ng=1,ngrids
-       call dealloc_cuparm(cuparm_g(ng))
-       call dealloc_cuparm(cuparmm_g(ng))
        call dealloc_grid(grid_g(ng))
        call dealloc_grid(gridm_g(ng))
        call dealloc_leaf(leaf_g(ng))

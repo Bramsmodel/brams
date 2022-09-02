@@ -198,7 +198,7 @@ module ModCuParGrell3
 
   use ModVarTable, only: &
        VarTable, &
-       InsertAtVarTable
+       InsertVarTable
 
   use grid_dims, only: &
        nzpmax
@@ -243,8 +243,8 @@ module ModCuParGrell3
      real, pointer, contiguous :: weight(:,:) => null()
   end type g3d_ens_vars
 
-  type(g3d_ens_vars), allocatable, target :: g3d_ens_g(:,:)
-  type(g3d_ens_vars), allocatable, target :: g3d_ensm_g(:,:)
+  type(g3d_ens_vars), pointer, contiguous :: g3d_ens_g(:,:)
+  type(g3d_ens_vars), pointer, contiguous :: g3d_ensm_g(:,:)
 
   type g3d_vars
      real, pointer, contiguous :: xmb_deep(:,:) => null()
@@ -265,8 +265,8 @@ module ModCuParGrell3
      real, pointer, contiguous :: mupsh(:,:,:) => null()
   end type g3d_vars
 
-  type(g3d_vars), allocatable, target :: g3d_g(:)
-  type(g3d_vars), allocatable, target :: g3dm_g(:)
+  type(g3d_vars), pointer, contiguous :: g3d_g(:)
+  type(g3d_vars), pointer, contiguous :: g3dm_g(:)
 
   integer ::    ids,ide, jds,jde, kds,kde            &
        ,ims,ime, jms,jme, kms,kme            &
@@ -418,18 +418,20 @@ contains
 
   !-----------------------------------------
   subroutine filltab_grell3(oneVarTable, oneVarTableSize, &
-       g3d_ens, g3d, g3d_ensm, g3dm, ndim_train, nnqparm)
+       g3d_ens, g3d, g3d_ensm, g3dm, ndim_train, nnqparm, &
+       ng_cp, imean)
     type(VarTable), pointer, intent(in) :: oneVarTable(:)
     integer, intent(inout) :: oneVarTableSize
-    type(g3d_ens_vars), pointer, intent(in) :: g3d_ens(:)
-    type(g3d_ens_vars), pointer, intent(in) :: g3d_ensm(:)
-    type(g3d_vars), pointer, intent(in) :: g3d
-    type(g3d_vars), pointer, intent(in) :: g3dm
+    type(g3d_ens_vars), pointer, intent(in) :: g3d_ens(:,:)
+    type(g3d_ens_vars), pointer, intent(in) :: g3d_ensm(:,:)
+    type(g3d_vars), pointer, intent(in) :: g3d(:)
+    type(g3d_vars), pointer, intent(in) :: g3dm(:)
     integer, intent(in) :: ndim_train
     integer, intent(in) :: nnqparm
+    integer, intent(in) :: ng_cp
+    integer, intent(in) :: imean
     
     integer :: i
-    logical :: assThis
     character (len=4) :: arrprop
     character(len=*), parameter :: h="**(filltab_grell3)**"
 
@@ -437,140 +439,67 @@ contains
        call fatal_error(h//" oneVarTable not associated")
     else if (.not. associated(g3d)) then
        call fatal_error(h//" g3d not associated")
+    else if (.not. associated(g3dm)) then
+       call fatal_error(h//" g3dm not associated")
     else if (.not. associated(g3d_ens)) then
        call fatal_error(h//" g3d_ens not associated")
+    else if (.not. associated(g3d_ensm)) then
+       call fatal_error(h//" g3d_ensm not associated")
     end if
     
     ! Fill pointers to arrays into variable tables
 
     do i=1,ndim_train
-       if (associated(g3d_ens(i)%apr)) then
-          if (.not. associated(g3d_ensm)) then
-             assThis=.false.
-          else
-             assThis=associated(g3d_ensm(i)%apr)
-          end if
-          if (assThis) then
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  g3d_ens(i)%apr, &
+       if (associated(g3d_ens(i,ng_cp)%apr)) then
+             call InsertVarTable (oneVarTable, oneVarTableSize, &
+                  g3d_ens(i,ng_cp)%apr, &
                   trim(pre_name(i))//' :2:hist:mpti:mpt3', &
-                  g3d_ensm(i)%apr)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  g3d_ens(i)%apr, &
-                  trim(pre_name(i))//' :2:hist:mpti:mpt3')
-          end if
+                  g3d_ensm(i,ng_cp)%apr, imean)
        end if
 
-       if (associated(g3d_ens(i)%accapr)) then
-          if (.not. associated(g3d_ensm)) then
-             assThis=.false.
-          else
-             assThis=associated(g3d_ensm(i)%accapr)
-          end if
-          if (assThis) then
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  g3d_ens(i)%accapr, &
+       if (associated(g3d_ens(i,ng_cp)%accapr)) then
+             call InsertVarTable (oneVarTable, oneVarTableSize, &
+                  g3d_ens(i,ng_cp)%accapr, &
                   'acc'//trim(pre_name(i)(2:len_trim(pre_name(i))))//' :2:hist:anal:mpti:mpt3', &
-                  g3d_ensm(i)%accapr)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  g3d_ens(i)%accapr, &
-                  'acc'//trim(pre_name(i)(2:len_trim(pre_name(i))))//' :2:hist:anal:mpti:mpt3')
-          end if
+                  g3d_ensm(i,ng_cp)%accapr, imean)
        end if
     end do
 
     do i=1,ndim_train
-       if (associated(g3d_ens(i)%weight)) then
-          if (.not. associated(g3d_ensm)) then
-             assThis=.false.
-          else
-             assThis=associated(g3d_ensm(i)%weight)
-          end if
-          if (assThis) then
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  g3d_ens(i)%weight, &
+       if (associated(g3d_ens(i,ng_cp)%weight)) then
+             call InsertVarTable (oneVarTable, oneVarTableSize, &
+                  g3d_ens(i,ng_cp)%weight, &
                   'weight'//trim(pre_name(i)(4:len_trim(pre_name(i))))//' :2:hist:anal:mpti:mpt3', &
-                  g3d_ensm(i)%weight)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  g3d_ens(i)%weight, &
-                  'weight'//trim(pre_name(i)(4:len_trim(pre_name(i))))//' :2:hist:anal:mpti:mpt3')
-          end if
+                  g3d_ensm(i,ng_cp)%weight, imean)
        end if
     end do
 
-    if (associated(g3d%xmb_deep)) then
-       if (.not. associated(g3dm)) then
-          assThis=.false.
-       else
-          assThis=associated(g3dm%xmb_deep)
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               g3d%xmb_deep, &
+    if (associated(g3d(ng_cp)%xmb_deep)) then
+          call InsertVarTable (oneVarTable, oneVarTableSize, &
+               g3d(ng_cp)%xmb_deep, &
                'MFUP :2:hist:anal:mpti:mpt3', &
-               g3dm%xmb_deep)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               g3d%xmb_deep, &
-               'MFUP :2:hist:anal:mpti:mpt3')
-       end if
+               g3dm(ng_cp)%xmb_deep, imean)
     end if
 
-    if (associated(g3d%xmb_deep_dd)) then
-       if (.not. associated(g3dm)) then
-          assThis=.false.
-       else
-          assThis=associated(g3dm%xmb_deep_dd)
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               g3d%xmb_deep_dd, &
+    if (associated(g3d(ng_cp)%xmb_deep_dd)) then
+          call InsertVarTable (oneVarTable, oneVarTableSize, &
+               g3d(ng_cp)%xmb_deep_dd, &
                'MFDD :2:hist:anal:mpti:mpt3', &
-               g3dm%xmb_deep_dd)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               g3d%xmb_deep_dd, &
-               'MFDD :2:hist:anal:mpti:mpt3')
-       end if
+               g3dm(ng_cp)%xmb_deep_dd, imean)
     end if
 
-    if (associated(g3d%err_deep)) then
-       if (.not. associated(g3dm)) then
-          assThis=.false.
-       else
-          assThis=associated(g3dm%err_deep)
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               g3d%err_deep, &
+    if (associated(g3d(ng_cp)%err_deep)) then
+          call InsertVarTable (oneVarTable, oneVarTableSize, &
+               g3d(ng_cp)%err_deep, &
                'XIERR :2:hist:anal:mpti:mpt3', &
-               g3dm%err_deep)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               g3d%err_deep, &
-               'XIERR :2:hist:anal:mpti:mpt3')
-       end if
+               g3dm(ng_cp)%err_deep, imean)
     end if
 
-    if (associated(g3d%xmb_shallow)) then
-       if (.not. associated(g3dm)) then
-          assThis=.false.
-       else
-          assThis=associated(g3dm%xmb_shallow)
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               g3d%xmb_shallow, &
+    if (associated(g3d(ng_cp)%xmb_shallow)) then
+          call InsertVarTable (oneVarTable, oneVarTableSize, &
+               g3d(ng_cp)%xmb_shallow, &
                'MFSH :2:hist:anal:mpti:mpt3', &
-               g3dm%xmb_shallow)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               g3d%xmb_shallow, &
-               'MFSH :2:hist:anal:mpti:mpt3')
-       end if
+               g3dm(ng_cp)%xmb_shallow, imean)
     end if
 
 
@@ -579,226 +508,94 @@ contains
     !- define if the arrays will exchange 1 row x 1 line (not in use anymore)
     arrprop=''
 
-    if (associated(g3d%cugd_ttens)) then
-       if (.not. associated(g3dm)) then
-          assThis=.false.
-       else
-          assThis=associated(g3dm%cugd_ttens)
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               g3d%cugd_ttens, &
+    if (associated(g3d(ng_cp)%cugd_ttens)) then
+          call InsertVarTable (oneVarTable, oneVarTableSize, &
+               g3d(ng_cp)%cugd_ttens, &
                'TTENS :3:hist:anal:mpti:mpt3'//trim(arrprop), &
-               g3dm%cugd_ttens)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               g3d%cugd_ttens, &
-               'TTENS :3:hist:anal:mpti:mpt3'//trim(arrprop))
-       end if
+               g3dm(ng_cp)%cugd_ttens, imean)
     end if
 
-    if (associated(g3d%cugd_qvtens)) then
-       if (.not. associated(g3dm)) then
-          assThis=.false.
-       else
-          assThis=associated(g3dm%cugd_qvtens)
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               g3d%cugd_qvtens , &
+    if (associated(g3d(ng_cp)%cugd_qvtens)) then
+          call InsertVarTable (oneVarTable, oneVarTableSize, &
+               g3d(ng_cp)%cugd_qvtens , &
                'QVTTENS :3:hist:anal:mpti:mpt3'//trim(arrprop), &
-               g3dm%cugd_qvtens)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               g3d%cugd_qvtens , &
-               'QVTTENS :3:hist:anal:mpti:mpt3'//trim(arrprop))
-       end if
+               g3dm(ng_cp)%cugd_qvtens, imean)
     end if
 
-    if (associated(g3d%thsrc)) then
-       if (.not. associated(g3dm)) then
-          assThis=.false.
-       else
-          assThis=associated(g3dm%thsrc)
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               g3d%thsrc, &
+    if (associated(g3d(ng_cp)%thsrc)) then
+          call InsertVarTable (oneVarTable, oneVarTableSize, &
+               g3d(ng_cp)%thsrc, &
                'THSRC :3:hist:anal:mpti:mpt3'//trim(arrprop), &
-               g3dm%thsrc)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               g3d%thsrc, &
-               'THSRC :3:hist:anal:mpti:mpt3'//trim(arrprop))
-       end if
+               g3dm(ng_cp)%thsrc, imean)
     end if
 
-    if (associated(g3d%rtsrc)) then
-       if (.not. associated(g3dm)) then
-          assThis=.false.
-       else
-          assThis=associated(g3dm%rtsrc)
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               g3d%rtsrc, &
+    if (associated(g3d(ng_cp)%rtsrc)) then
+          call InsertVarTable (oneVarTable, oneVarTableSize, &
+               g3d(ng_cp)%rtsrc, &
                'RTSRC :3:hist:anal:mpti:mpt3'//trim(arrprop), &
-               g3dm%rtsrc)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               g3d%rtsrc, &
-               'RTSRC :3:hist:anal:mpti:mpt3'//trim(arrprop))
-       end if
+               g3dm(ng_cp)%rtsrc, imean)
     end if
 
     !- this array does not need to be parallelized (only column)
-    if (associated(g3d%clsrc)) then
-       if (.not. associated(g3dm)) then
-          assThis=.false.
-       else
-          assThis=associated(g3dm%clsrc)
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               g3d%clsrc, &
+    if (associated(g3d(ng_cp)%clsrc)) then
+          call InsertVarTable (oneVarTable, oneVarTableSize, &
+               g3d(ng_cp)%clsrc, &
                'CLSRC :3:hist:anal:mpti:mpt3', &
-               g3dm%clsrc)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               g3d%clsrc, &
-               'CLSRC :3:hist:anal:mpti:mpt3')
-       end if
+               g3dm(ng_cp)%clsrc, imean)
     end if
 
-    if (associated(g3d%nlsrc)) then
-       if (.not. associated(g3dm)) then
-          assThis=.false.
-       else
-          assThis=associated(g3dm%nlsrc)
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               g3d%nlsrc, &
+    if (associated(g3d(ng_cp)%nlsrc)) then
+          call InsertVarTable (oneVarTable, oneVarTableSize, &
+               g3d(ng_cp)%nlsrc, &
                'NLSRC :3:hist:anal:mpti:mpt3', &
-               g3dm%nlsrc)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               g3d%nlsrc, &
-               'NLSRC :3:hist:anal:mpti:mpt3')
-       end if
+               g3dm(ng_cp)%nlsrc, imean)
     end if
 
-    if (associated(g3d%nisrc)) then
-       if (.not. associated(g3dm)) then
-          assThis=.false.
-       else
-          assThis=associated(g3dm%nisrc)
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               g3d%nisrc, &
+    if (associated(g3d(ng_cp)%nisrc)) then
+          call InsertVarTable (oneVarTable, oneVarTableSize, &
+               g3d(ng_cp)%nisrc, &
                'NISRC :3:hist:anal:mpti:mpt3', &
-               g3dm%nisrc)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               g3d%nisrc, &
-               'NISRC :3:hist:anal:mpti:mpt3')
-       end if
+               g3dm(ng_cp)%nisrc, imean)
     end if
 
 
     if(imomentum==1 .and. nnqparm >= 4) then
        !- these arrays does not need to be parallelized (only column)
-       if (associated(g3d%usrc)) then
-          if (.not. associated(g3dm)) then
-             assThis=.false.
-          else
-             assThis=associated(g3dm%usrc)
-          end if
-          if (assThis) then
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  g3d%usrc, &
+       if (associated(g3d(ng_cp)%usrc)) then
+             call InsertVarTable (oneVarTable, oneVarTableSize, &
+                  g3d(ng_cp)%usrc, &
                   'USRC :3:hist:anal:mpti:mpt3', &
-                  g3dm%usrc)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  g3d%usrc, &
-                  'USRC :3:hist:anal:mpti:mpt3')
-          end if
+                  g3dm(ng_cp)%usrc, imean)
        end if
 
-       if (associated(g3d%vsrc)) then
-          if (.not. associated(g3dm)) then
-             assThis=.false.
-          else
-             assThis=associated(g3dm%vsrc)
-          end if
-          if (assThis) then
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  g3d%vsrc, &
+       if (associated(g3d(ng_cp)%vsrc)) then
+             call InsertVarTable (oneVarTable, oneVarTableSize, &
+                  g3d(ng_cp)%vsrc, &
                   'VSRC :3:hist:anal:mpti:mpt3', &
-                  g3dm%vsrc)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  g3d%vsrc, &
-                  'VSRC :3:hist:anal:mpti:mpt3')
-          end if
+                  g3dm(ng_cp)%vsrc, imean)
        end if
 
     endif
 
-    if (associated(g3d%mupsh)) then
-       if (.not. associated(g3dm)) then
-          assThis=.false.
-       else
-          assThis=associated(g3dm%mupsh)
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               g3d%mupsh, &
+    if (associated(g3d(ng_cp)%mupsh)) then
+          call InsertVarTable (oneVarTable, oneVarTableSize, &
+               g3d(ng_cp)%mupsh, &
                'ZMFSH :3:hist:anal:mpti:mpt3', &
-               g3dm%mupsh)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               g3d%mupsh, &
-               'ZMFSH :3:hist:anal:mpti:mpt3')
-       end if
+               g3dm(ng_cp)%mupsh, imean)
     end if
 
-    if (associated(g3d%mup)) then
-       if (.not. associated(g3dm)) then
-          assThis=.false.
-       else
-          assThis=associated(g3dm%mup)
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               g3d%mup, &
+    if (associated(g3d(ng_cp)%mup)) then
+          call InsertVarTable (oneVarTable, oneVarTableSize, &
+               g3d(ng_cp)%mup, &
                'ZMFUP :3:hist:anal:mpti:mpt3', &
-               g3dm%mup)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               g3d%mup, &
-               'ZMFUP :3:hist:anal:mpti:mpt3')
-       end if
+               g3dm(ng_cp)%mup, imean)
     end if
 
-    if (associated(g3d%mdd)) then
-       if (.not. associated(g3dm)) then
-          assThis=.false.
-       else
-          assThis=associated(g3dm%mdd)
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               g3d%mdd, &
+    if (associated(g3d(ng_cp)%mdd)) then
+          call InsertVarTable (oneVarTable, oneVarTableSize, &
+               g3d(ng_cp)%mdd, &
                'ZMFDD :3:hist:anal:mpti:mpt3', &
-               g3dm%mdd)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               g3d%mdd, &
-               'ZMFDD :3:hist:anal:mpti:mpt3')
-       end if
+               g3dm(ng_cp)%mdd, imean)
     end if
 
   end subroutine filltab_grell3

@@ -107,7 +107,13 @@ module ModGrid
        CreateGaspartFields, &
        DestroyGaspartFields, &
        DumpGaspartFields
-  
+
+  use ModScalarFields, only: &
+       ScalarFields, &
+       CreateScalarFields, &
+       DestroyScalarFields, &
+       DumpScalarFields
+
   use meteogramType, only: &
        PolygonContainer
 
@@ -206,6 +212,9 @@ module ModGrid
 
      type(GaspartFields), pointer :: oneGaspartFields => null()
      type(GaspartFields), pointer :: oneAveGaspartFields => null()
+
+     type(ScalarFields), pointer :: oneScalarFields(:) => null()
+     type(ScalarFields), pointer :: oneAveScalarFields(:) => null()
 
      type(MicControl), pointer :: oneMicVars => null()
      
@@ -575,6 +584,25 @@ contains
                trim(adjustl(str(1))))
        end if
     end if
+
+    ! this node Scalar Fields
+
+    oneGrid%oneScalarFields => CreateScalarFields(&
+         oneGrid%oneNodeDimensions, &
+         oneGrid%oneNamelistFile)
+    if (createAve) then
+       oneGrid%oneAveScalarFields => CreateScalarFields(&
+            oneGrid%oneNodeDimensions, &
+            oneGrid%oneNamelistFile)
+    else
+       ! oneAveScalarFields is created with null components
+       allocate(oneGrid%oneAveScalarFields(oneGrid%oneNamelistFile%naddsc), stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" allocate oneGrid%oneAveScalarFields fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+    end if
     
     if (dumpLocal) then
        call MsgDump(h//" dumping OneGrid at the end of CreateGrid")
@@ -762,6 +790,8 @@ contains
        call DestroyShcuFields(oneGrid%oneAveShcuFields)
        call DestroyGaspartFields(oneGrid%oneGaspartFields)
        call DestroyGaspartFields(oneGrid%oneAveGaspartFields)
+       call DestroyScalarFields(oneGrid%oneScalarFields)
+       call DestroyScalarFields(oneGrid%oneAveScalarFields)
        call DestroyAcousticMessageSet(&
             oneGrid%AcouSendU, oneGrid%AcouRecvU, &
             oneGrid%AcouSendV, oneGrid%AcouRecvV, &
@@ -965,6 +995,8 @@ contains
     call DumpShcuFields(oneGrid%oneAveShcuFields, "oneGrid%oneAveShcuFields")
     call DumpGaspartFields(oneGrid%oneGaspartFields, "oneGrid%oneGaspartFields")
     call DumpGaspartFields(oneGrid%oneAveGaspartFields, "oneGrid%oneAveGaspartFields")
+    call DumpScalarFields(oneGrid%oneScalarFields, "oneGrid%oneScalarFields")
+    call DumpScalarFields(oneGrid%oneAveScalarFields, "oneGrid%oneAveScalarFields")
     call MsgDump(h//" finishes")
   end subroutine DumpGrid
 end module ModGrid

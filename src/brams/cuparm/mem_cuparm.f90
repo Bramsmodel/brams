@@ -162,7 +162,7 @@ contains
 
   subroutine nullify_cuparm(cuparm)
     ! Arguments:
-    type (cuparm_vars), intent(INOUT) :: cuparm
+    type (cuparm_vars), intent(inout) :: cuparm
 
     if (associated(cuparm%thsrc))    nullify (cuparm%thsrc)
     if (associated(cuparm%rtsrc))    nullify (cuparm%rtsrc)
@@ -182,202 +182,171 @@ contains
 
   subroutine dealloc_cuparm(cuparm)
     ! Arguments:
-    type (cuparm_vars), intent(INOUT) :: cuparm
+    type (cuparm_vars), pointer, intent(inout) :: cuparm(:)
 
-    if (associated(cuparm%thsrc))    deallocate (cuparm%thsrc)
-    if (associated(cuparm%rtsrc))    deallocate (cuparm%rtsrc)
-    if (associated(cuparm%clsrc))    deallocate (cuparm%clsrc)
-    if (associated(cuparm%thsrcp))    deallocate (cuparm%thsrcp)
-    if (associated(cuparm%rtsrcp))    deallocate (cuparm%rtsrcp)
-    if (associated(cuparm%thsrcf))    deallocate (cuparm%thsrcf)
-    if (associated(cuparm%rtsrcf))    deallocate (cuparm%rtsrcf)
-    if (associated(cuparm%aconpr))   deallocate (cuparm%aconpr)
-    if (associated(cuparm%conprr))   deallocate (cuparm%conprr)
-    if (associated(cuparm%conprrp))   deallocate (cuparm%conprrp)
-    if (associated(cuparm%conprrf))   deallocate (cuparm%conprrf)
+    integer :: igrid
+    
+    if (associated(cuparm)) then
+       do igrid=1,size(cuparm)
+          if (associated(cuparm(igrid)%thsrc))    deallocate (cuparm(igrid)%thsrc)
+          if (associated(cuparm(igrid)%rtsrc))    deallocate (cuparm(igrid)%rtsrc)
+          if (associated(cuparm(igrid)%clsrc))    deallocate (cuparm(igrid)%clsrc)
+          if (associated(cuparm(igrid)%thsrcp))    deallocate (cuparm(igrid)%thsrcp)
+          if (associated(cuparm(igrid)%rtsrcp))    deallocate (cuparm(igrid)%rtsrcp)
+          if (associated(cuparm(igrid)%thsrcf))    deallocate (cuparm(igrid)%thsrcf)
+          if (associated(cuparm(igrid)%rtsrcf))    deallocate (cuparm(igrid)%rtsrcf)
+          if (associated(cuparm(igrid)%aconpr))   deallocate (cuparm(igrid)%aconpr)
+          if (associated(cuparm(igrid)%conprr))   deallocate (cuparm(igrid)%conprr)
+          if (associated(cuparm(igrid)%conprrp))   deallocate (cuparm(igrid)%conprrp)
+          if (associated(cuparm(igrid)%conprrf))   deallocate (cuparm(igrid)%conprrf)
+       end do
+       nullify(cuparm)
+    end if
 
   end subroutine dealloc_cuparm
 
   ! ----------------------------------------------------------------------
 
-  subroutine filltab_cuparm_sh(oneVarTable, oneVarTableSize, cuparm, cuparmm)
+  subroutine filltab_cuparm_sh(oneVarTable, oneVarTableSize, cuparm, cuparmm, &
+       ng, imean)
 
     use iso_fortran_env, only: &
          int64
-    
+
     use ModVarTable, only: &
          VarTable, &
-         InsertAtVarTable
+         InsertVarTable
 
     ! Arguments:
     type(VarTable), pointer, intent(in) :: oneVarTable(:)
     integer, intent(inout) :: oneVarTableSize
-    type (cuparm_vars), pointer, intent(in) :: cuparm, cuparmm
+    type (cuparm_vars), pointer, intent(in) :: cuparm(:)
+    type (cuparm_vars), pointer, intent(in) :: cuparmm(:)
+    integer, intent(in) :: ng
+    integer, intent(in) :: imean
 
+    character(len=*), parameter :: h="**(filltab_cuparm_sh)**"
+
+    if (.not. associated(cuparm)) then
+       call fatal_error(h//" invoked with unasociated cuparm")
+    else if (.not. associated(cuparmm)) then
+       call fatal_error(h//" invoked with unasociated cuparmm")
+    else if (.not. associated(oneVarTable)) then
+       call fatal_error(h//" invoked with unasociated oneVarTable")
+    end if
 
     ! Fill pointers to arrays into variable tables
 
-    if (associated(cuparm%thsrc)) then
-       if (associated(cuparmm)) then
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuparm%thsrc, 'THSRC_SH :3:hist:anal:mpti:mpt3', &
-               cuparmm%thsrc)
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuparm%thsrc, 'THSRC_SH :3:hist:anal:mpti:mpt3')
-       end if
+    if (associated(cuparm(ng)%thsrc)) then
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            cuparm(ng)%thsrc, 'THSRC_SH :3:hist:anal:mpti:mpt3', &
+            cuparmm(ng)%thsrc, imean)
     end if
 
-    if (associated(cuparm%rtsrc)) then
-       if (associated(cuparmm)) then
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuparm%rtsrc, 'RTSRC_SH :3:hist:anal:mpti:mpt3', &
-               cuparmm%rtsrc)
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuparm%rtsrc, 'RTSRC_SH :3:hist:anal:mpti:mpt3')
-       end if
+    if (associated(cuparm(ng)%rtsrc)) then
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            cuparm(ng)%rtsrc, 'RTSRC_SH :3:hist:anal:mpti:mpt3', &
+            cuparmm(ng)%rtsrc, imean)
     end if
 
   end subroutine filltab_cuparm_sh
 
   ! ----------------------------------------------------------------------
 
-  subroutine filltab_cuparm(oneVarTable, oneVarTableSize, cuparm, cuparmm)
+  subroutine filltab_cuparm(oneVarTable, oneVarTableSize, cuparm, cuparmm, &
+       ng, imean)
 
     use iso_fortran_env, only: &
          int64
-    
+
     use ModVarTable, only: &
          VarTable, &
-         InsertAtVarTable
+         InsertVarTable
 
     ! Arguments:
     type(VarTable), pointer, intent(in) :: oneVarTable(:)
     integer, intent(inout) :: oneVarTableSize
-    type (cuparm_vars), pointer, intent(in) :: cuparm, cuparmm
+    type (cuparm_vars), pointer, intent(in) :: cuparm(:)
+    type (cuparm_vars), pointer, intent(in) :: cuparmm(:)
+    integer, intent(in) :: ng
+    integer, intent(in) :: imean
+
+    character(len=*), parameter :: h="**(filltab_cuparm)**"
+
+    if (.not. associated(cuparm)) then
+       call fatal_error(h//" invoked with unasociated cuparm")
+    else if (.not. associated(cuparmm)) then
+       call fatal_error(h//" invoked with unasociated cuparmm")
+    else if (.not. associated(oneVarTable)) then
+       call fatal_error(h//" invoked with unasociated oneVarTable")
+    end if
 
     ! Fill pointers to arrays into variable tables
 
-    if (associated(cuparm%thsrc)) then
-       if (associated(cuparmm)) then
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuparm%thsrc, 'THSRC :3:hist:anal:mpti:mpt3', &
-               cuparmm%thsrc)
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuparm%thsrc, 'THSRC :3:hist:anal:mpti:mpt3')
-       end if
+    if (associated(cuparm(ng)%thsrc)) then
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            cuparm(ng)%thsrc, 'THSRC :3:hist:anal:mpti:mpt3', &
+            cuparmm(ng)%thsrc, imean)
     end if
 
-    if (associated(cuparm%rtsrc)) then
-       if (associated(cuparmm)) then
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuparm%rtsrc, 'RTSRC :3:hist:anal:mpti:mpt3', &
-               cuparmm%rtsrc)
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuparm%rtsrc, 'RTSRC :3:hist:anal:mpti:mpt3')
-       end if
+    if (associated(cuparm(ng)%rtsrc)) then
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            cuparm(ng)%rtsrc, 'RTSRC :3:hist:anal:mpti:mpt3', &
+            cuparmm(ng)%rtsrc, imean)
     end if
 
-    if (associated(cuparm%clsrc)) then
-       if (associated(cuparmm)) then
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuparm%clsrc, 'CLSRC :3:hist:anal:mpti:mpt3', &
-               cuparmm%clsrc)
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuparm%clsrc, 'CLSRC :3:hist:anal:mpti:mpt3')
-       end if
+    if (associated(cuparm(ng)%clsrc)) then
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            cuparm(ng)%clsrc, 'CLSRC :3:hist:anal:mpti:mpt3', &
+            cuparmm(ng)%clsrc, imean)
     end if
 
-    if (associated(cuparm%thsrcp)) then
-       if (associated(cuparmm)) then
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuparm%thsrcp, 'THSRCP :3:mpti:', &
-               cuparmm%thsrcp)
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuparm%thsrcp, 'THSRCP :3:mpti:')
-       end if
+    if (associated(cuparm(ng)%thsrcp)) then
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            cuparm(ng)%thsrcp, 'THSRCP :3:mpti:', &
+            cuparmm(ng)%thsrcp, imean)
     end if
 
-    if (associated(cuparm%rtsrcp)) then
-       if (associated(cuparmm)) then
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuparm%rtsrcp, 'RTSRCP :3:mpti:', &
-               cuparmm%rtsrcp)
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuparm%rtsrcp, 'RTSRCP :3:mpti:')
-       end if
+    if (associated(cuparm(ng)%rtsrcp)) then
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            cuparm(ng)%rtsrcp, 'RTSRCP :3:mpti:', &
+            cuparmm(ng)%rtsrcp, imean)
     end if
 
-    if (associated(cuparm%thsrcf)) then
-       if (associated(cuparmm)) then
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuparm%thsrcf, 'THSRCF :3:mpti:', &
-               cuparmm%thsrcf)
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuparm%thsrcf, 'THSRCF :3:mpti:')
-       end if
+    if (associated(cuparm(ng)%thsrcf)) then
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            cuparm(ng)%thsrcf, 'THSRCF :3:mpti:', &
+            cuparmm(ng)%thsrcf, imean)
     end if
 
-    if (associated(cuparm%rtsrcf)) then
-       if (associated(cuparmm)) then
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuparm%rtsrcf, 'RTSRCF :3:mpti:', &
-               cuparmm%rtsrcf)
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuparm%rtsrcf, 'RTSRCF :3:mpti:')
-       end if
+    if (associated(cuparm(ng)%rtsrcf)) then
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            cuparm(ng)%rtsrcf, 'RTSRCF :3:mpti:', &
+            cuparmm(ng)%rtsrcf, imean)
     end if
 
-    if (associated(cuparm%aconpr)) then
-       if (associated(cuparmm)) then
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuparm%aconpr, 'ACONPR :2:hist:anal:mpti:mpt3', &
-               cuparmm%aconpr)
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuparm%aconpr, 'ACONPR :2:hist:anal:mpti:mpt3')
-       end if
+    if (associated(cuparm(ng)%aconpr)) then
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            cuparm(ng)%aconpr, 'ACONPR :2:hist:anal:mpti:mpt3', &
+            cuparmm(ng)%aconpr, imean)
     end if
 
-    if (associated(cuparm%conprr)) then
-       if (associated(cuparmm)) then
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuparm%conprr, 'CONPRR :2:hist:anal:mpt3', &
-               cuparmm%conprr)
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuparm%conprr, 'CONPRR :2:hist:anal:mpt3')
-       end if
+    if (associated(cuparm(ng)%conprr)) then
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            cuparm(ng)%conprr, 'CONPRR :2:hist:anal:mpt3', &
+            cuparmm(ng)%conprr, imean)
     end if
 
-    if (associated(cuparm%conprrp)) then
-       if (associated(cuparmm)) then
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuparm%conprrp, 'CONPRRP :2:mpti', &
-               cuparmm%conprrp)
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuparm%conprrp, 'CONPRRP :2:mpti')
-       end if
+    if (associated(cuparm(ng)%conprrp)) then
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            cuparm(ng)%conprrp, 'CONPRRP :2:mpti', &
+            cuparmm(ng)%conprrp, imean)
     end if
 
-    if (associated(cuparm%conprrf)) then
-       if (associated(cuparmm)) then
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuparm%conprrf, 'CONPRRF :2:mpti', &
-               cuparmm%conprrf)
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuparm%conprrf, 'CONPRRF :2:mpti')
-       end if
+    if (associated(cuparm(ng)%conprrf)) then
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            cuparm(ng)%conprrf, 'CONPRRF :2:mpti', &
+            cuparmm(ng)%conprrf, imean)
     end if
 
   end subroutine filltab_cuparm
