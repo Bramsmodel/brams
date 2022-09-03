@@ -267,10 +267,6 @@ module ModOneProc
 
   use Shcu_vars_const, only: StoreNamelistFileAtShcu_vars_const
 
-  use Mem_scalar, only: &
-       scalar_g, &
-       StoreNamelistFileAtMem_scalar
-
   use Teb_spm_start, only: &
        TEB_SPM, &
        StoreNamelistFileAtTeb_spm_start
@@ -305,7 +301,7 @@ module ModOneProc
   use mem_chem1, only: &
        chem1_src_g,                  & ! (INOUT) read_sourcemaps()
        chemistry,                    & ! (IN) initOneProc(), (IN) read_sourcemaps()
-       recycle_tracers,              & ! (IN) initOneProc() (conflito com 'use mem_scalar')
+       recycle_tracers,              & ! (IN) initOneProc() 
        nsrc,                         & ! (IN) read_sourcemaps()
        nvert_src=>chem1_src_z_dim_g, & ! (IN) read_sourcemaps()
        bburn, antro, bioge,  geoge,  & ! (IN) read_sourcemaps()
@@ -798,7 +794,6 @@ contains
     call StoreNamelistFileAtNode_mod(oneNamelistFile%load_bal)
     call StoreNamelistFileAtRef_sounding(oneNamelistFile)
     call StoreNamelistFileAtShcu_vars_const(oneNamelistFile)
-    call StoreNamelistFileAtMem_scalar(oneNamelistFile)
     call StoreNamelistFileAtExtras(oneNamelistFile)
     call StoreNamelistFileAtCCatt_start(oneNamelistFile)
     call StoreNamelistFileAtMem_chem1(oneNamelistFile)

@@ -29,6 +29,7 @@ module ModScalarFields
   private
   public :: ScalarFields
   public :: CreateScalarFields
+  public :: CreateEmptyScalarFields
   public :: DestroyScalarFields
   public :: DumpScalarFields
   public :: InsertScalarFieldsAtVarTable 
@@ -45,10 +46,13 @@ module ModScalarFields
 contains
 
 
-  function CreateScalarFields(oneNodeDimensions, oneNamelistFile) result(res)
+
+  
+  function CreateScalarFields(oneNodeDimensions, oneNamelistFile, gridId) result(res)
     type(NodeDimensions), pointer, intent(in) :: oneNodeDimensions
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
-    type(ScalarFields), pointer :: res(:) 
+    type(ScalarFields), pointer :: res(:)
+    integer, intent(in) :: gridId
 
     integer :: ierr
     integer :: nsc
@@ -109,6 +113,32 @@ contains
                " fails with stat="//trim(adjustl(str(1))))
        end if
        res(nsc)%drydep=0.0
+
+       ! single tendency for all grids
+       
+       if (gridId == 1) then
+          allocate (res(nsc)%sclt(mzp*mxp*myp), stat=ierr)
+          if (ierr /= 0) then
+             write(str(1),"(i8)") ierr
+             write(str(2),"(i8)") mzp
+             write(str(3),"(i8)") mxp
+             write(str(4),"(i8)") myp
+             call fatal_error(h//" allocate sclt("//&
+                  trim(adjustl(str(2)))//"*"//&
+                  trim(adjustl(str(3)))//"*"//&
+                  trim(adjustl(str(4)))//")"//&
+                  " fails with stat="//trim(adjustl(str(1))))
+          end if
+          res(nsc)%sclt=0.0
+       else
+          call fatal_error(h//" tendencies (sclt) for multiple grids "//&
+               "share the first grid area; not implemented")
+!!$          do nsc=1,naddsc
+!!$             do ng=2,ngrs
+!!$                scalar_g(nsc,ng)%sclt => scalar_g(nsc,1)%sclt
+!!$             enddo
+!!$          enddo
+       end if
        
        allocate (res(nsc)%wetdep(mxp,myp), stat=ierr)
        if (ierr /= 0) then
@@ -139,6 +169,46 @@ contains
     end do
   end function CreateScalarFields
 
+
+
+
+
+  function CreateEmptyScalarFields(oneNamelistFile) result(res)
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
+    type(ScalarFields), pointer :: res(:)
+
+    integer :: ierr
+    integer :: nsc
+    integer :: naddsc
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(CreateEmptyScalarFields)**" 
+
+    if (.not. associated(oneNamelistFile)) then
+       call fatal_error(h//" oneNamelistFile not associated")
+    end if
+
+    naddsc = oneNamelistFile%naddsc
+    if (naddsc == 0) then
+       nullify(res)
+       return
+    end if
+
+    allocate(res(naddsc), stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       write(str(2),"(i8)") naddsc
+       call fatal_error(h//" allocate res("//trim(adjustl(str(2)))//&
+            " fails with stat="//trim(adjustl(str(1))))
+    end if
+    
+    do nsc=1,naddsc
+       nullify (res(nsc)%sclp)
+       nullify (res(nsc)%drydep)
+       nullify (res(nsc)%sclt)
+       nullify (res(nsc)%wetdep)
+       nullify (res(nsc)%srcsc)
+    end do
+  end function CreateEmptyScalarFields
 
 
 
@@ -220,8 +290,7 @@ contains
 
 
   subroutine InsertScalarFieldsAtVarTable(oneVarTable, oneVarTableSize, &
-       oneScalarFields, oneAveScalarFields, oneNamelistFile, &
-       scaNbr, imean)
+       oneScalarFields, oneAveScalarFields, oneNamelistFile, imean)
 
     ! Fill pointers to arrays into variable tables
 
@@ -230,7 +299,6 @@ contains
     type(ScalarFields), pointer, intent(in) :: oneScalarFields(:)
     type(ScalarFields), pointer, intent(in) :: oneAveScalarFields(:)
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
-    integer, intent(in) :: scaNbr
     integer, intent(in) :: imean
 
     integer :: iSca
@@ -254,7 +322,7 @@ contains
 
     do iSca=1,size(oneScalarFields)
        if (associated(oneScalarFields(iSca)%sclp)) then
-          write(sname,'(a4,i3.3)') 'SCLP',scaNbr
+          write(sname,'(a4,i3.3)') 'SCLP',iSca
           call InsertVarTable (oneVarTable, oneVarTableSize, &
                oneScalarFields(iSca)%sclp, &
                trim(sname)//' :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle), &
@@ -262,7 +330,7 @@ contains
        end if
 
        if (associated(oneScalarFields(iSca)%drydep)) then
-          write(sname,'(a4,i3.3)') 'SCDD',scaNbr
+          write(sname,'(a4,i3.3)') 'SCDD',iSca
           call InsertVarTable (oneVarTable, oneVarTableSize, &
                oneScalarFields(iSca)%drydep, &
                trim(sname)//' :2:hist:anal:mpti:mpt3:mpt1', &
@@ -270,7 +338,7 @@ contains
        end if
 
        if (associated(oneScalarFields(iSca)%wetdep)) then
-          write(sname,'(a6,i3.3)') 'wetdep',scaNbr
+          write(sname,'(a6,i3.3)') 'wetdep',iSca
           call InsertVarTable (oneVarTable, oneVarTableSize, &
                oneScalarFields(iSca)%wetdep, &
                trim(sname)//' :2:hist:anal:mpti:mpt3:mpt1', &
@@ -278,7 +346,7 @@ contains
        end if
 
        if (associated(oneScalarFields(iSca)%srcsc)) then
-          write(sname,'(a5,i3.3)') 'scrsc',scaNbr
+          write(sname,'(a5,i3.3)') 'scrsc',iSca
           call InsertVarTable (oneVarTable, oneVarTableSize, &
                oneScalarFields(iSca)%srcsc, &
                trim(sname)//' :3:hist:anal:mpti:mpt3:mpt1', &

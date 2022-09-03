@@ -65,9 +65,6 @@ module ModRConvGrellCatt
   use mem_scratch, only: &
        scratch
 
-  use mem_scalar, only: &
-       scalar_g
-
   use io_params, only: &
        frqanl
 

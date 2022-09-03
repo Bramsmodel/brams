@@ -88,7 +88,6 @@ OBJ_MOD = \
 	mem_opt_scratch.o \
 	mem_precision.o \
 	mem_radiate.o \
-	mem_scalar.o \
 	ScalarFields.o \
 	mem_scratch.o \
 	mem_scratch1_brams.o \

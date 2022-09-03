@@ -125,8 +125,6 @@ contains
 
     do ig=1,ngases
 
-       !Call dum1_zero(n1,n2,n3,ia,iz,ja,jz,kl,scalar_g(ig,ng)%dum1(1,1,1))  
-
        tracer = gas(ig)
 
        len1   = LEN_trim(tracer) + 1

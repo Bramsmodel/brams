@@ -22,10 +22,9 @@ module mem_tend
 
     use ModTurbFields, only: &
          TurbFields
-    
-    use mem_scalar, only: &
-         scalar_g, &
-         scalar_vars
+
+    use ModScalarFields, only: &
+         ScalarFields
     
     use mem_grid,   only: &
          dyncore_flag
@@ -435,14 +434,14 @@ contains
     endif
     !
 
-    do nsc=1,naddsc
-       if (associated(scalar_g(nsc,1)%sclp).and.  &
-            (.not.associated(scalar_g(nsc,1)%sclt)))  &
-            allocate (scalar_g(nsc,1)%sclt(ntpts))
-       do ng=2,ngrs
-          scalar_g(nsc,ng)%sclt => scalar_g(nsc,1)%sclt
-       enddo
-    enddo
+!!$    do nsc=1,naddsc
+!!$       if (associated(scalar_g(nsc,1)%sclp).and.  &
+!!$            (.not.associated(scalar_g(nsc,1)%sclt)))  &
+!!$            allocate (scalar_g(nsc,1)%sclt(ntpts))
+!!$       do ng=2,ngrs
+!!$          scalar_g(nsc,ng)%sclt => scalar_g(nsc,1)%sclt
+!!$       enddo
+!!$    enddo
 
   end subroutine alloc_tend
 
@@ -540,9 +539,9 @@ contains
     endif
     !
 
-    do nsc=1,naddsc
-       if (associated(scalar_g(nsc,1)%sclt)) nullify (scalar_g(nsc,1)%sclt)
-    enddo
+!!$    do nsc=1,naddsc
+!!$       if (associated(scalar_g(nsc,1)%sclt)) nullify (scalar_g(nsc,1)%sclt)
+!!$    enddo
 
     return
   end subroutine nullify_tend
@@ -628,9 +627,9 @@ contains
        endif
     endif
 
-    do nsc=1,naddsc
-       if (associated(scalar_g(nsc,1)%sclt)) deallocate (scalar_g(nsc,1)%sclt)
-    enddo
+!!$    do nsc=1,naddsc
+!!$       if (associated(scalar_g(nsc,1)%sclt)) deallocate (scalar_g(nsc,1)%sclt)
+!!$    enddo
     if (associated(tend%ut_rk))   deallocate (tend%ut_rk)
     if (associated(tend%vt_rk))   deallocate (tend%vt_rk)
     if (associated(tend%wt_rk))   deallocate (tend%wt_rk)
@@ -649,16 +648,16 @@ contains
   !---------------------------------------------------------------
 
   subroutine filltab_tend(oneScalarTab, oneScalarTabSize, &
-       oneBasicFields, oneMicroFields, oneTurbFields, scalar, oneGaspartFields, &
-       naddsc, ng)
+       oneBasicFields, oneMicroFields, oneTurbFields, oneGaspartFields, &
+       oneScalarFields, naddsc, ng)
     ! Arguments:
     type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
     integer, intent(inout) :: oneScalarTabSize
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(MicroFields), intent(in) :: oneMicroFields 
     type(TurbFields), pointer, intent(in) :: oneTurbFields
-    type(scalar_vars), intent(in)  :: scalar(:)
     type(GaspartFields), pointer, intent(in) :: oneGaspartFields
+    type(ScalarFields), pointer, intent(in) :: oneScalarFields(:)
     integer, intent(in)             :: naddsc, ng
 
     ! Local Variables:
@@ -929,8 +928,8 @@ contains
 
     do nsc=1,naddsc
        write(sname,'(a4,i3.3)') 'SCLP',nsc
-       if (associated(scalar(nsc)%sclt)) then
-          call InsertAtScalarTab(scalar(nsc)%sclp,scalar(nsc)%sclt, sname, &
+       if (associated(oneScalarFields(nsc)%sclt)) then
+          call InsertAtScalarTab(oneScalarFields(nsc)%sclp,oneScalarFields(nsc)%sclt, sname, &
                oneScalarTab, oneScalarTabSize)
        endif
     enddo

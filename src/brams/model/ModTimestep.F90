@@ -166,9 +166,6 @@ module ModTimestep
   use shcu_vars_const, only: & ! For Shallow Cumulus Paramet.
        NNSHCU ! INTENT(IN)
 
-  use mem_scalar, only: & ! For SiB
-       scalar_g ! INTENT(IN)
-
   use mem_leaf, only: & ! For SiB
        ISFCL ! INTENT(IN)
 

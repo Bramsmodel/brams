@@ -86,13 +86,8 @@ module ModMemAlloc
        filltab_radiate, &
        dealloc_radiate
 
-  use mem_scalar, only: &
-       scalar_g, &
-       scalarm_g, &
-       alloc_scalar, &
-       nullify_scalar, &
-       filltab_scalar, &
-       dealloc_scalar
+  use ModScalarFields, only: &
+       InsertScalarFieldsAtVarTable 
 
   use mem_varinit, only: &
        varinit_g, &
@@ -777,6 +772,7 @@ contains
              end if
 
              call filltab_carma(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+                  oneGrid%oneNamelistFile, &
                   carma, carma_m, ng, imean)
           end do
           ! else !Case rtmg
@@ -1074,37 +1070,12 @@ contains
     ! Allocate any added Scalar types
     ! NOT ALLOWING DIFFERENT NUMBERS OF SCALARS ON DIFFERENT NESTS
     !   Allocate length 1 of these datatypes by default
-    allocate(scalar_g(1,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error(h//"Allocating scalar_g")
-    allocate(scalarm_g(1,ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error(h//"Allocating scalarm_g")
-
     if (naddsc>0) then
-       ! deallocate datatypes, then re-alloc to correct length
-       deallocate(scalar_g, STAT=ierr)
-       if (ierr/=0) call fatal_error(h//"Deallocating scalar_g")
-       deallocate(scalarm_g, STAT=ierr)
-       if (ierr/=0) call fatal_error(h//"Deallocating scalarm_g")
-       allocate(scalar_g(naddsc,ngrids), STAT=ierr)
-       if (ierr/=0) call fatal_error(h//"Allocating scalar_g")
-       allocate(scalarm_g(naddsc,ngrids), STAT=ierr)
-       if (ierr/=0) call fatal_error(h//"Allocating scalarm_g")
-       do ng=1,ngrids
-          call nullify_scalar(scalar_g(:,ng),  naddsc)
-          call alloc_scalar(scalar_g(:,ng), nmzp(ng), nmxp(ng), nmyp(ng), naddsc)
-          call nullify_scalar(scalarm_g(:,ng), naddsc)
-          if (imean==1) then
-             call alloc_scalar(scalarm_g(:,ng), nmzp(ng), nmxp(ng), nmyp(ng), &
-                  naddsc)
-          end if
-       enddo
-       do ng=1,ngrids
-          do na=1,naddsc ! For CATT
-             call filltab_scalar(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-                  scalar_g(na,ng), scalarm_g(na,ng), na, imean)
-          end do
-       enddo
-    endif
+       call InsertScalarFieldsAtVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+            oneGrid%oneScalarFields, oneGrid%oneAveScalarFields, &
+            oneGrid%oneNamelistFile, imean)
+    end if
+    
     !-------------
 
     !-------------
@@ -1400,7 +1371,7 @@ contains
 
        call filltab_tend(oneGrid%oneScalarTable, oneGrid%oneScalarTableSize, &
             oneGrid%oneBasicFields, oneGrid%oneMicroFields, oneGrid%oneTurbFields,  &
-            scalar_g(:,ng), oneGrid%oneGaspartFields, naddsc, ng)
+            oneGrid%oneGaspartFields, oneGrid%oneScalarFields, naddsc, ng)
 
        if (ccatt == 1  .and. chemistry >= 0)  then
 
@@ -1676,14 +1647,6 @@ contains
        if(allocated(tebc_g)) then
           deallocate(tebc_g, tebcm_g)         ! for urban parameterization
        endif
-    endif
-
-    if(associated(scalar_g)) then
-       call dealloc_scalar(scalar_g)
-    endif
-    
-    if(associated(scalarm_g)) then
-       call dealloc_scalar(scalarm_g)
     endif
 
     return

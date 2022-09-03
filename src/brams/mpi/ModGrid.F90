@@ -111,6 +111,7 @@ module ModGrid
   use ModScalarFields, only: &
        ScalarFields, &
        CreateScalarFields, &
+       CreateEmptyScalarFields, &
        DestroyScalarFields, &
        DumpScalarFields
 
@@ -589,19 +590,15 @@ contains
 
     oneGrid%oneScalarFields => CreateScalarFields(&
          oneGrid%oneNodeDimensions, &
-         oneGrid%oneNamelistFile)
+         oneGrid%oneNamelistFile, oneGrid%Id)
     if (createAve) then
        oneGrid%oneAveScalarFields => CreateScalarFields(&
             oneGrid%oneNodeDimensions, &
-            oneGrid%oneNamelistFile)
+            oneGrid%oneNamelistFile, oneGrid%Id)
     else
        ! oneAveScalarFields is created with null components
-       allocate(oneGrid%oneAveScalarFields(oneGrid%oneNamelistFile%naddsc), stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" allocate oneGrid%oneAveScalarFields fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
+       oneGrid%oneAveScalarFields => CreateEmptyScalarFields(&
+            oneGrid%oneNamelistFile)
     end if
     
     if (dumpLocal) then

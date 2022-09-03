@@ -243,20 +243,23 @@ contains
 
   !---------------------------------------------------------------
 
-  subroutine filltab_carma(oneVarTable, oneVarTableSize, &
+  subroutine filltab_carma(oneVarTable, oneVarTableSize, oneNamelistFile, &
        cv, cvm, ng, imean)
 
+    use ModNamelistFile, only: &
+         NamelistFile
+    
     use ModVarTable, only: &
          VarTable, &
          InsertVarTable
     
-    use mem_scalar, only: RECYCLE_TRACERS ! INTENT(IN)
     use io_params, only : ipastin, ioutput         ! INTENT(IN)
 
     implicit none
     ! Arguments:
     type(VarTable), pointer, intent(in) :: oneVarTable(:)
     integer, intent(inout) :: oneVarTableSize
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(carma_v), pointer, intent(in) :: cv(:)
     type(carma_v), pointer, intent(in) :: cvm(:)
     integer, intent(in) :: ng
@@ -277,7 +280,7 @@ contains
     end if
     
     str_recycle = ''
-    if (RECYCLE_TRACERS==1 .or. ipastin==1 .or. ioutput==5) then
+    if (oneNamelistFile%recycle_tracers==1 .or. ipastin==1 .or. ioutput==5) then
        str_recycle = ':recycle'
     endif
 
