@@ -99,6 +99,7 @@ module ModGrid
   use ModShcuFields, only: &
        ShcuFields, &
        CreateShcuFields, &
+       CreateEmptyShcuFields, &
        DestroyShcuFields, &
        DumpShcuFields
 
@@ -564,6 +565,9 @@ contains
     if (createAve) then
        oneGrid%oneAveShcuFields => CreateShcuFields(&
             oneGrid%oneNodeDimensions, &
+            oneGrid%oneControlVars)
+    else
+       oneGrid%oneAveShcuFields => CreateEmptyShcuFields(&
             oneGrid%oneControlVars)
     end if
 

@@ -19,13 +19,14 @@ module ModShcuFields
   
   use ModVarTable, only: &
        VarTable, &
-       InsertAtVarTable
+       InsertVarTable
   
   implicit none
 
   private
   public :: ShcuFields
   public :: CreateShcuFields
+  public :: CreateEmptyShcuFields
   public :: DestroyShcuFields
   public :: DumpShcuFields
   public :: InsertShcuFieldsAtVarTable 
@@ -100,6 +101,40 @@ contains
     res%shmf = 0.0
     
   end function CreateShcuFields
+
+
+
+
+  function CreateEmptyShcuFields(oneControlVars) result(res)
+    type(ControlVars), pointer, intent(in) :: oneControlVars
+    type(ShcuFields), pointer :: res
+
+    integer :: ierr
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(CreateEmptyShcuFields)**"
+
+    if (.not. associated(oneControlVars)) then
+       call fatal_error(h//" oneControlVars not associated")
+    end if
+       
+
+    if (oneControlVars%nnshcu /= 1) then
+       nullify(res)
+
+    else    
+
+       allocate(res, stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          call fatal_error(h//" allocate res fails with stat="//&
+               trim(adjustl(str(1))))
+       end if
+
+       nullify(res%thsrcsh)
+       nullify(res%rtsrcsh)
+       nullify(res%shmf)
+    end if
+  end function CreateEmptyShcuFields
     
 
 
@@ -168,14 +203,13 @@ contains
 
 
   subroutine InsertShcuFieldsAtVarTable(oneVarTable, oneVarTableSize, &
-       oneShcuFields, oneAveShcuFields)
+       oneShcuFields, oneAveShcuFields, imean)
     type(VarTable), pointer, intent(in) :: oneVarTable(:)
     integer, intent(inout) :: oneVarTableSize
     type(ShcuFields), pointer, intent(in) :: oneShcuFields
     type(ShcuFields), pointer, intent(in) :: oneAveShcuFields
+    integer, intent(in) :: imean
 
-    logical :: assAve
-    logical :: assThis
     character(len=*), parameter :: h="**(InsertShcuFieldsAtVarTable)**" 
 
     if (.not. associated(oneVarTable)) then
@@ -183,64 +217,28 @@ contains
     else if (.not. associated(oneShcuFields)) then
        call fatal_error(h//" oneShcuFields not associated")
     end if
-    
 
     ! Fill pointers to arrays into variable tables
 
-    assAve=associated(oneAveShcuFields)
-    
     if (associated(oneShcuFields%thsrcsh)) then
-       if (assAve) then
-          assThis=associated(oneAveShcuFields%thsrcsh)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneShcuFields%thsrcsh, &
-               'THSRCSH :3:hist:anal:mpti:mpt3', &
-               oneAveShcuFields%thsrcsh)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneShcuFields%thsrcsh, &
-               'THSRCSH :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneShcuFields%thsrcsh, &
+            'THSRCSH :3:hist:anal:mpti:mpt3', &
+            oneAveShcuFields%thsrcsh, imean)
     end if
-    
+
     if (associated(oneShcuFields%rtsrcsh)) then
-       if (assAve) then
-          assThis=associated(oneAveShcuFields%rtsrcsh)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneShcuFields%rtsrcsh, &
-               'RTSRCSH :3:hist:anal:mpti:mpt3', &
-               oneAveShcuFields%rtsrcsh)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneShcuFields%rtsrcsh, &
-               'RTSRCSH :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneShcuFields%rtsrcsh, &
+            'RTSRCSH :3:hist:anal:mpti:mpt3', &
+            oneAveShcuFields%rtsrcsh, imean)
     end if
 
     if (associated(oneShcuFields%shmf)) then
-       if (assAve) then
-          assThis=associated(oneAveShcuFields%shmf)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneShcuFields%shmf, &
-               'SHMF :2:hist:anal:mpti:mpt3', &
-               oneAveShcuFields%shmf)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               oneShcuFields%shmf, &
-               'SHMF :2:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            oneShcuFields%shmf, &
+            'SHMF :2:hist:anal:mpti:mpt3', &
+            oneAveShcuFields%shmf, imean)
     end if
   end subroutine InsertShcuFieldsAtVarTable
 

@@ -150,19 +150,19 @@ contains
   !---------------------------------------------------------------
 
   subroutine filltab_cuforc_sh(oneVarTable, oneVarTableSize, &
-       cuforc, cuforcm)
+       cuforc, cuforcm, imean)
 
     use ModVarTable, only: &
          VarTable, &
-         InsertAtVarTable
-    
+         InsertVarTable
+
     implicit none
     type(VarTable), pointer, intent(in) :: oneVarTable(:)
     integer, intent(inout) :: oneVarTableSize
     type(cuforc_vars), pointer, intent(in) :: cuforc
     type(cuforc_vars), pointer, intent(in) :: cuforcm
+    integer, intent(in) :: imean
 
-    logical :: assThis
     character(len=*), parameter :: h="**(filltab_cuforc_sh)**"
 
     if (.not. associated(oneVarTable)) then
@@ -170,41 +170,19 @@ contains
     else if (.not. associated(cuforc)) then
        call fatal_error(h//" cuforc not associated")
     end if
-    
+
     if (associated(cuforc%lsfth)) then
-       if (.not. associated(cuforcm)) then
-          assThis=.false.
-       else
-          assThis=associated(cuforcm%lsfth)
-       end if
-       if (assThis) then
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuforc%lsfth, &
-               'LSFTH_SH :3:hist:anal:mpti:mpt3', &
-               cuforcm%lsfth)
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuforc%lsfth, &
-               'LSFTH_SH :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            cuforc%lsfth, &
+            'LSFTH_SH :3:hist:anal:mpti:mpt3', &
+            cuforcm%lsfth, imean)
     end if
 
     if (associated(cuforc%lsfrt)) then
-       if (.not. associated(cuforcm)) then
-          assThis=.false.
-       else
-          assThis=associated(cuforcm%lsfrt)
-       end if
-       if (assThis) then
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuforc%lsfrt, &
-               'LSFRT_SH :3:hist:anal:mpti:mpt3', &
-               cuforcm%lsfrt)
-       else
-          call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-               cuforc%lsfrt, &
-               'LSFRT_SH :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable(oneVarTable, oneVarTableSize, &
+            cuforc%lsfrt, &
+            'LSFRT_SH :3:hist:anal:mpti:mpt3', &
+            cuforcm%lsfrt, imean)
     end if
   end subroutine filltab_cuforc_sh
 
@@ -212,19 +190,19 @@ contains
   !---------------------------------------------------------------
 
   subroutine filltab_cuforc(oneVarTable, oneVarTableSize, &
-       cuforc, cuforcm)
+       cuforc, cuforcm, imean)
 
     use ModVarTable, only: &
          VarTable, &
-         InsertAtVarTable
+         InsertVarTable
 
     implicit none
     type(VarTable), pointer, intent(in) :: oneVarTable(:)
     integer, intent(inout) :: oneVarTableSize
     type(cuforc_vars), pointer, intent(in) :: cuforc
     type(cuforc_vars), pointer, intent(in) :: cuforcm
+    integer, intent(in) :: imean
 
-    logical :: assThis
     character(len=*), parameter :: h="**(filltab_cuforc)**"
 
     if (.not. associated(oneVarTable)) then
@@ -232,41 +210,19 @@ contains
     else if (.not. associated(cuforc)) then
        call fatal_error(h//" cuforc not associated")
     end if
-    
+
     if (associated(cuforc%lsfth)) then
-       if (.not. associated(cuforcm)) then
-          assThis=.false.
-       else
-          assThis=associated(cuforcm%lsfth)
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               cuforc%lsfth, &
-               'LSFTH :3:hist:anal:mpti:mpt3', &
-               cuforcm%lsfth)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               cuforc%lsfth, &
-               'LSFTH :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            cuforc%lsfth, &
+            'LSFTH :3:hist:anal:mpti:mpt3', &
+            cuforcm%lsfth, imean)
     end if
 
     if (associated(cuforc%lsfrt)) then
-       if (.not. associated(cuforcm)) then
-          assThis=.false.
-       else
-          assThis=associated(cuforcm%lsfrt)
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               cuforc%lsfrt, &
-               'LSFRT :3:hist:anal:mpti:mpt3', &
-               cuforcm%lsfrt)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               cuforc%lsfrt, &
-               'LSFRT :3:hist:anal:mpti:mpt3')
-       end if
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            cuforc%lsfrt, &
+            'LSFRT :3:hist:anal:mpti:mpt3', &
+            cuforcm%lsfrt, imean)
     end if
   end subroutine filltab_cuforc
 
@@ -315,22 +271,22 @@ contains
   ! *************************************************************************
 
   subroutine filltab_grell(oneVarTable, oneVarTableSize, &
-       grell, grellm, nnqparm)
+       grell, grellm, nnqparm, imean)
 
     use ModVarTable, only: &
          VarTable, &
-         InsertAtVarTable
-    
+         InsertVarTable
+
     implicit none
     type(VarTable), pointer, intent(in) :: oneVarTable(:)
     integer, intent(inout) :: oneVarTableSize
     type(grell_vars), pointer, intent(in) :: grell
     type(grell_vars), pointer, intent(in) :: grellm
     integer, intent(in) :: nnqparm
+    integer, intent(in) :: imean
+    logical :: assThis
 
     ! Local Variables:
-    logical :: assAve
-    logical :: assThis
     character(len=*), parameter :: h="**(filltab_grell)**"
 
     if (.not. associated(oneVarTable)) then
@@ -338,190 +294,79 @@ contains
     else if (.not. associated(grell)) then
        call fatal_error(h//" grell not associated")
     end if
-    
+
     ! Fill pointers to arrays into variable tables
 
     if (nnqparm == 2 )  then
-       assAve=associated(grellm)
 
-       if (assAve) then
-          assThis=associated(grellm%UPMF)
-       else
-          assThis=.false.
-       end if
        if (associated(grell%UPMF)) then
-          if (assThis) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grell%UPMF, &
-                  'UPMF :2:hist:anal:mpti:mpt3', &
-                  grellm%UPMF)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grell%UPMF, &
-                  'UPMF :2:hist:anal:mpti:mpt3')
-          end if
+          call InsertVarTable(oneVarTable, oneVarTableSize, &
+               grell%UPMF, &
+               'UPMF :2:hist:anal:mpti:mpt3', &
+               grellm%UPMF, imean)
        end if
 
-       if (assAve) then
-          assThis=associated(grellm%DNMF)
-       else
-          assThis=.false.
-       end if
        if (associated(grell%DNMF)) then
-          if (assThis) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grell%DNMF, &
-                  'DNMF :2:hist:anal:mpti:mpt3', &
-                  grellm%DNMF)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grell%DNMF, &
-                  'DNMF :2:hist:anal:mpti:mpt3')
-          end if
+          call InsertVarTable(oneVarTable, oneVarTableSize, &
+               grell%DNMF, &
+               'DNMF :2:hist:anal:mpti:mpt3', &
+               grellm%DNMF, imean)
        end if
 
-       if (assAve) then
-          assThis=associated(grellm%XIACT_C)
-       else
-          assThis=.false.
-       end if
        if (associated(grell%XIACT_C)) then
-          if (assThis) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grell%XIACT_C, &
-                  'XIACT_C :2:hist:anal:mpti:mpt3', &
-                  grellm%XIACT_C)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grell%XIACT_C, &
-                  'XIACT_C :2:hist:anal:mpti:mpt3')
-          end if
+          call InsertVarTable(oneVarTable, oneVarTableSize, &
+               grell%XIACT_C, &
+               'XIACT_C :2:hist:anal:mpti:mpt3', &
+               grellm%XIACT_C, imean)
        end if
 
-       if (assAve) then
-          assThis=associated(grellm%XIACT_P)
-       else
-          assThis=.false.
-       end if
        if (associated(grell%XIACT_P)) then
-          if (assThis) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grell%XIACT_P, &
-                  'XIACT_P :2:hist:anal:mpti:mpt3', &
-                  grellm%XIACT_P)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grell%XIACT_P, &
-                  'XIACT_P :2:hist:anal:mpti:mpt3')
-          end if
+          call InsertVarTable(oneVarTable, oneVarTableSize, &
+               grell%XIACT_P, &
+               'XIACT_P :2:hist:anal:mpti:mpt3', &
+               grellm%XIACT_P, imean)
        end if
 
-       if (assAve) then
-          assThis=associated(grellm%XIERR)
-       else
-          assThis=.false.
-       end if
        if (associated(grell%XIERR)) then
-          if (assThis) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grell%XIERR, &
-                  'XIERR :2:hist:anal:mpti:mpt3', &
-                  grellm%XIERR)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grell%XIERR, &
-                  'XIERR :2:hist:anal:mpti:mpt3')
-          end if
+          call InsertVarTable(oneVarTable, oneVarTableSize, &
+               grell%XIERR, &
+               'XIERR :2:hist:anal:mpti:mpt3', &
+               grellm%XIERR, imean)
        end if
 
-       if (assAve) then
-          assThis=associated(grellm%XKDT)
-       else
-          assThis=.false.
-       end if
        if (associated(grell%XKDT)) then
-          if (assThis) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grell%XKDT, &
-                  'XKDT :2:hist:anal:mpti:mpt3', &
-                  grellm%XKDT)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grell%XKDT, &
-                  'XKDT :2:hist:anal:mpti:mpt3')
-          end if
+          call InsertVarTable(oneVarTable, oneVarTableSize, &
+               grell%XKDT, &
+               'XKDT :2:hist:anal:mpti:mpt3', &
+               grellm%XKDT, imean)
        end if
 
-       if (assAve) then
-          assThis=associated(grellm%XKTOP)
-       else
-          assThis=.false.
-       end if
        if (associated(grell%XKTOP)) then
-          if (assThis) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grell%XKTOP, &
-                  'XKTOP :2:hist:anal:mpti:mpt3', &
-                  grellm%XKTOP)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grell%XKTOP, &
-                  'XKTOP :2:hist:anal:mpti:mpt3')
-          end if
+          call InsertVarTable(oneVarTable, oneVarTableSize, &
+               grell%XKTOP, &
+               'XKTOP :2:hist:anal:mpti:mpt3', &
+               grellm%XKTOP, imean)
        end if
 
-       if (assAve) then
-          assThis=associated(grellm%XKBCON)
-       else
-          assThis=.false.
-       end if
        if (associated(grell%XKBCON)) then
-          if (assThis) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grell%XKBCON, &
-                  'XKBCON :2:hist:anal:mpti:mpt3', &
-                  grellm%XKBCON)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grell%XKBCON, &
-                  'XKBCON :2:hist:anal:mpti:mpt3')
-          end if
+          call InsertVarTable(oneVarTable, oneVarTableSize, &
+               grell%XKBCON, &
+               'XKBCON :2:hist:anal:mpti:mpt3', &
+               grellm%XKBCON, imean)
        end if
 
-       if (assAve) then
-          assThis=associated(grellm%XJMIN)
-       else
-          assThis=.false.
-       end if
        if (associated(grell%XJMIN)) then
-          if (assThis) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grell%XJMIN, &
-                  'XJMIN :2:hist:anal:mpti:mpt3', &
-                  grellm%XJMIN)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grell%XJMIN, &
-                  'XJMIN :2:hist:anal:mpti:mpt3')
-          end if
+          call InsertVarTable(oneVarTable, oneVarTableSize, &
+               grell%XJMIN, &
+               'XJMIN :2:hist:anal:mpti:mpt3', &
+               grellm%XJMIN, imean)
        end if
 
-       if (assAve) then
-          assThis=associated(grellm%XK22)
-       else
-          assThis=.false.
-       end if
        if (associated(grell%XK22)) then
-          if (assThis) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grell%XK22, &
-                  'XK22 :2:hist:anal:mpti:mpt3', &
-                  grellm%XK22)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grell%XK22, &
-                  'XK22 :2:hist:anal:mpti:mpt3')
-          end if
+          call InsertVarTable(oneVarTable, oneVarTableSize, &
+               grell%XK22, &
+               'XK22 :2:hist:anal:mpti:mpt3', &
+               grellm%XK22, imean)
        end if
     endif
 
@@ -530,22 +375,21 @@ contains
   !---------------------------------------------------------------
   !---------------------------------------------------------------
   subroutine filltab_grell_sh(oneVarTable, oneVarTableSize, &
-       grell_sh, grellm_sh, nnshcu)
+       grell_sh, grellm_sh, nnshcu, imean)
 
     use ModVarTable, only: &
          VarTable, &
-         InsertAtVarTable
-    
+         InsertVarTable
+
     implicit none
     type(VarTable), pointer, intent(in) :: oneVarTable(:)
     integer, intent(inout) :: oneVarTableSize
     type(grell_vars), pointer, intent(in) :: grell_sh
     type(grell_vars), pointer, intent(in) :: grellm_sh
     integer, intent(in) :: nnshcu
+    integer, intent(in) :: imean
 
     ! Local Variables:
-    logical :: assAve
-    logical :: assThis
     character(len=*), parameter :: h="**(filltab_grell_sh)**"
 
     if (.not. associated(oneVarTable)) then
@@ -553,100 +397,44 @@ contains
     else if (.not. associated(grell_sh)) then
        call fatal_error(h//" grell_sh not associated")
     end if
-    
+
     ! Fill pointers to arrays into variable tables
 
     if (nnshcu==1 .or. nnshcu==2) then
-       assAve=associated(grellm_sh)
-       
+
        if (associated(grell_sh%UPMF)) then
-          if (assAve) then
-             assThis=associated(grellm_sh%UPMF)
-          else
-             assThis=.false.
-          end if
-          if (assThis) then
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  grell_sh%UPMF, &
-                  'UPMFSH :2:hist:anal:mpti:mpt3', &
-                  grellm_sh%UPMF)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  grell_sh%UPMF, &
-                  'UPMFSH :2:hist:anal:mpti:mpt3')
-          end if
+          call InsertVarTable (oneVarTable, oneVarTableSize, &
+               grell_sh%UPMF, &
+               'UPMFSH :2:hist:anal:mpti:mpt3', &
+               grellm_sh%UPMF, imean)
        end if
-       
+
        if (associated(grell_sh%XIERR)) then
-          if (assAve) then
-             assThis=associated(grellm_sh%XIERR)
-          else
-             assThis=.false.
-          end if
-          if (assThis) then
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  grell_sh%XIERR, &
-                  'XIERRSH :2:hist:anal:mpti:mpt3', &
-                  grellm_sh%XIERR)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  grell_sh%XIERR, &
-                  'XIERRSH :2:hist:anal:mpti:mpt3')
-          end if
+          call InsertVarTable (oneVarTable, oneVarTableSize, &
+               grell_sh%XIERR, &
+               'XIERRSH :2:hist:anal:mpti:mpt3', &
+               grellm_sh%XIERR, imean)
        end if
-       
+
        if (associated(grell_sh%XKTOP)) then
-          if (assAve) then
-             assThis=associated(grellm_sh%XKTOP)
-          else
-             assThis=.false.
-          end if
-          if (assThis) then
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  grell_sh%XKTOP, &
-                  'XKTOPSH :2:hist:anal:mpti:mpt3', &
-                  grellm_sh%XKTOP)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  grell_sh%XKTOP, &
-                  'XKTOPSH :2:hist:anal:mpti:mpt3')
-          end if
+          call InsertVarTable (oneVarTable, oneVarTableSize, &
+               grell_sh%XKTOP, &
+               'XKTOPSH :2:hist:anal:mpti:mpt3', &
+               grellm_sh%XKTOP, imean)
        end if
 
        if (associated(grell_sh%XKBCON)) then
-          if (assAve) then
-             assThis=associated(grellm_sh%XKBCON)
-          else
-             assThis=.false.
-          end if
-          if (assThis) then
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  grell_sh%XKBCON, &
-                  'XKBCONSH :2:hist:mpti:mpt3', &
-                  grellm_sh%XKBCON)
-          else
-             call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-                  grell_sh%XKBCON, &
-                  'XKBCONSH :2:hist:mpti:mpt3')
-          end if
+          call InsertVarTable (oneVarTable, oneVarTableSize, &
+               grell_sh%XKBCON, &
+               'XKBCONSH :2:hist:mpti:mpt3', &
+               grellm_sh%XKBCON, imean)
        end if
 
        if (associated(grell_sh%XK22)) then
-          if (assAve) then
-             assThis=associated(grellm_sh%XK22)
-          else
-             assThis=.false.
-          end if
-          if (assThis) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grell_sh%XK22, &
-                  'XK22SH :2:hist:mpti:mpt3', &
-                  grellm_sh%XK22)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  grell_sh%XK22, &
-                  'XK22SH :2:hist:mpti:mpt3')
-          end if
+          call InsertVarTable(oneVarTable, oneVarTableSize, &
+               grell_sh%XK22, &
+               'XK22SH :2:hist:mpti:mpt3', &
+               grellm_sh%XK22, imean)
        end if
 
     endif

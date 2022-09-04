@@ -487,7 +487,8 @@ contains
     integer :: ng_cp
     ! Flag to control new Grell MEmory allocation
     integer :: Alloc_Grell3_Flag
-    ! Local variables because of TEB_SPM
+
+    character(len=8) :: str(10)
     character(len=*), parameter :: h="**(MemAlloc)**"
     integer :: ierr,n
     integer :: ne2d, ne3d, nsa
@@ -610,6 +611,7 @@ contains
        do ng=1,ngrids
           call nullify_turb_s(turb_s (ng))
           call alloc_turb_s(turb_s(ng), nmzp(ng), nmxp(ng), nmyp(ng))
+          call nullify_turb_s(turbm_s (ng))
           if (imean==1) then
              call alloc_turb_s(turbm_s(ng), nmzp(ng), nmxp(ng), nmyp(ng))
           endif
@@ -850,7 +852,7 @@ contains
        if (nnshcu(ng)==1) then
           call InsertShcuFieldsAtVarTable(&
                oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-               oneGrid%oneShcuFields, oneGrid%oneAveShcuFields)
+               oneGrid%oneShcuFields, oneGrid%oneAveShcuFields, imean)
        end if
     end do
     !--------------------------------------------------------------------------
@@ -871,30 +873,59 @@ contains
        ! Allocating data for scratch data
        call alloc_scratch1_grell()
 
-       allocate(cuforc_g   (ngrids_cp),cuforcm_g   (ngrids_cp)) !usar ierr do allocate
-       allocate(cuforc_sh_g(ngrids_cp),cuforcm_sh_g(ngrids_cp))
+       allocate(cuforc_g(ngrids_cp), stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          write(str(2),"(i8)") ngrids_cp
+          call fatal_error(h//" allocate cuforc_g("//&
+               trim(adjustl(str(2)))//") "//&
+               "fails with stat="//trim(adjustl(str(1))))
+       end if
+
+       allocate(cuforcm_g(ngrids_cp), stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          write(str(2),"(i8)") ngrids_cp
+          call fatal_error(h//" allocate cuforcm_g("//&
+               trim(adjustl(str(2)))//") "//&
+               "fails with stat="//trim(adjustl(str(1))))
+       end if
+       
+       allocate(cuforc_sh_g(ngrids_cp), stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          write(str(2),"(i8)") ngrids_cp
+          call fatal_error(h//" allocate cuforc_sh_g("//&
+               trim(adjustl(str(2)))//") "//&
+               "fails with stat="//trim(adjustl(str(1))))
+       end if
+
+       allocate(cuforcm_sh_g(ngrids_cp), stat=ierr)
+       if (ierr /= 0) then
+          write(str(1),"(i8)") ierr
+          write(str(2),"(i8)") ngrids_cp
+          call fatal_error(h//" allocate cuforcm_sh_g("//&
+               trim(adjustl(str(2)))//") "//&
+               "fails with stat="//trim(adjustl(str(1))))
+       end if
+
        do ng=1,ngrids_cp
-          call nullify_cuforc(cuforc_g    (ng))
-          call nullify_cuforc(cuforcm_g   (ng))
-          call nullify_cuforc(cuforc_sh_g (ng))
+          call nullify_cuforc(cuforc_g(ng))
+          call nullify_cuforc(cuforcm_g(ng))
+          call nullify_cuforc(cuforc_sh_g(ng))
           call nullify_cuforc(cuforcm_sh_g(ng))
-          call alloc_cu_forcings(cuforc_g   (ng),nmzp(ng),nmxp(ng),nmyp(ng),ng)
+          call alloc_cu_forcings(cuforc_g(ng),nmzp(ng),nmxp(ng),nmyp(ng),ng)
           call alloc_cu_forcings(cuforc_sh_g(ng),nmzp(ng),nmxp(ng),nmyp(ng),ng)
           if (imean == 1) then
-             call alloc_cu_forcings(cuforcm_g   (ng),nmzp(ng),nmxp(ng),nmyp(ng),ng)
+             call alloc_cu_forcings(cuforcm_g(ng),nmzp(ng),nmxp(ng),nmyp(ng),ng)
              call alloc_cu_forcings(cuforcm_sh_g(ng),nmzp(ng),nmxp(ng),nmyp(ng),ng)
-
-          elseif (imean == 0) then
-             call alloc_cu_forcings(cuforcm_g   (ng),1,1,1,ng)
-             call alloc_cu_forcings(cuforcm_sh_g(ng),1,1,1,ng)
-
           endif
 
           call filltab_cuforc_sh(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-               cuforc_sh_g(ng), cuforcm_sh_g(ng))
+               cuforc_sh_g(ng), cuforcm_sh_g(ng), imean)
 
           call filltab_cuforc(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-               cuforc_g(ng), cuforcm_g(ng))
+               cuforc_g(ng), cuforcm_g(ng), imean)
        enddo
     endif
 
@@ -919,14 +950,10 @@ contains
 
              if (imean == 1) then
                 call alloc_grell_sh(grellm_g_sh(ng),nmzp(ng),nmxp(ng),nmyp(ng),ng)
-
-             elseif (imean == 0) then
-                call alloc_grell_sh(grellm_g_sh(ng),1,1,1,ng)
-
              endif
 
              call filltab_grell_sh(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-                  grell_g_sh(ng), grellm_g_sh(ng), nnshcu(ng))
+                  grell_g_sh(ng), grellm_g_sh(ng), nnshcu(ng), imean)
           endif
        enddo
     endif
@@ -954,12 +981,10 @@ contains
 
              if (imean == 1) then
                 call alloc_grell(grellm_g(ng),nmzp(ng),nmxp(ng),nmyp(ng),ng)
-             elseif (imean == 0) then
-                call alloc_grell(grellm_g(ng),1,1,1,ng)
              endif
 
              call filltab_grell(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-                  grell_g(ng), grellm_g(ng), nnqparm(ng))
+                  grell_g(ng), grellm_g(ng), nnqparm(ng), imean)
              ng_cp = ng_cp + 1
           endif
        enddo
