@@ -197,20 +197,21 @@ contains
   !---------------------------------------------------------------
 
   subroutine filltab_plume_chem1(oneVarTable, oneVarTableSize, &
-       plume, plumem, plume_mean, plume_meanm, plume_fre, plumem_fre, nspecies, ng)
+       plume, plumem, plume_mean, plume_meanm, plume_fre, plumem_fre, &
+       nspecies, ng, imean)
 
     use chem1_list, only: &
          spc_alloc, &
          spc_name, &
          src, &
          on
-    
+
     use mem_chem1, only: &
          chem1_g
 
     use ModVarTable, only: &
          VarTable, &
-         InsertAtVarTable
+         InsertVarTable
 
     implicit none
 
@@ -224,6 +225,7 @@ contains
     type(plume_fre_vars), pointer, intent(in) :: plumem_fre(:)
     integer, intent(in) :: nspecies
     integer, intent(in) :: ng
+    integer, intent(in) :: imean
 
     logical :: assThis
     integer :: ispc,iv  
@@ -252,23 +254,11 @@ contains
                            "imean_plume/=on and chem1_g as well as spc_alloc are associated")
                    end if
                    do iv=1,nveg_agreg
-                      if (.not. associated(plumem)) then
-                         assThis=.false.
-                      else
-                         assThis=associated(plumem(iv,ispc)%fct)
-                      end if
-                      if (assThis) then
-                         call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                              plume(iv,ispc)%fct,       &
-                              trim(spc_name(ispc))//'_'//trim(spc_suf(iv))//&
-                              ' :2:hist:anal:mpti:mpt3:mpt1', &
-                              plumem(iv,ispc)%fct)
-                      else
-                         call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                              plume(iv,ispc)%fct,       &
-                              trim(spc_name(ispc))//'_'//trim(spc_suf(iv))//&
-                              ' :2:hist:anal:mpti:mpt3:mpt1')
-                      end if
+                      call InsertVarTable(oneVarTable, oneVarTableSize, &
+                           plume(iv,ispc)%fct,       &
+                           trim(spc_name(ispc))//'_'//trim(spc_suf(iv))//&
+                           ' :2:hist:anal:mpti:mpt3:mpt1', &
+                           plumem(iv,ispc)%fct, imean)
                    end do
                 end if
              end if
@@ -279,23 +269,11 @@ contains
           end if
           !---  flam frac mean
           do iv=1,nveg_agreg
-             if (.not. associated(plume_meanm)) then
-                assThis=.false.
-             else
-                assThis=associated(plume_meanm(iv)%flam_frac)
-             end if
-             if (assThis) then
-                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                     plume_mean(iv)%flam_frac,  &
-                     'flam_frac'//'_'//trim(spc_suf(iv))//&
-                     ' :2:hist:anal:mpti:mpt3:mpt1', &
-                     plume_meanm(iv)%flam_frac)
-             else
-                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                     plume_mean(iv)%flam_frac,  &
-                     'flam_frac'//'_'//trim(spc_suf(iv))//&
-                     ' :2:hist:anal:mpti:mpt3:mpt1')
-             end if
+             call InsertVarTable(oneVarTable, oneVarTableSize, &
+                  plume_mean(iv)%flam_frac,  &
+                  'flam_frac'//'_'//trim(spc_suf(iv))//&
+                  ' :2:hist:anal:mpti:mpt3:mpt1', &
+                  plume_meanm(iv)%flam_frac, imean)
           enddo
        endif
        !--- fire size   
@@ -303,44 +281,21 @@ contains
           call fatal_error(h//" plume_mean not associated but plumerise=1")
        end if
        do iv=1,nveg_agreg
-          if (.not. associated(plume_meanm)) then
-             assThis=.false.
-          else
-             assThis=associated(plume_meanm(iv)%fire_size)
-          end if
-          if (assThis) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  plume_mean(iv)%fire_size,  &
-                  'firesize'//'_'//trim(spc_suf(iv))//&
-                  ' :2:hist:anal:mpti:mpt3:mpt1', &
-                  plume_meanm(iv)%fire_size)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  plume_mean(iv)%fire_size,  &
-                  'firesize'//'_'//trim(spc_suf(iv))//&
-                  ' :2:hist:anal:mpti:mpt3:mpt1')
-          end if
+          call InsertVarTable(oneVarTable, oneVarTableSize, &
+               plume_mean(iv)%fire_size,  &
+               'firesize'//'_'//trim(spc_suf(iv))//&
+               ' :2:hist:anal:mpti:mpt3:mpt1', &
+               plume_meanm(iv)%fire_size, imean)
        end do
     else if(PLUMERISE == 2)then
        if (.not. associated(plume_fre)) then
           call fatal_error(h//" plume_fre not associated but plumerise=2")
        end if
        do iv=1,5
-          if (.not. associated(plumem_fre)) then
-             assThis=.false.
-          else
-             assThis=associated(plumem_fre(iv)%pvar)
-          end if
-          if (assThis) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  plume_fre(iv)%pvar, &
-                  fre_var_name(iv)//' :2:hist:anal:mpti:mpt3:mpt1', &
-                  plumem_fre(iv)%pvar)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  plume_fre(iv)%pvar, &
-                  fre_var_name(iv)//' :2:hist:anal:mpti:mpt3:mpt1')
-          end if
+          call InsertVarTable(oneVarTable, oneVarTableSize, &
+               plume_fre(iv)%pvar, &
+               fre_var_name(iv)//' :2:hist:anal:mpti:mpt3:mpt1', &
+               plumem_fre(iv)%pvar, imean)
        end do
     end if
   end subroutine filltab_plume_chem1

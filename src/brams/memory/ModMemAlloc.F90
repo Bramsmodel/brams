@@ -1196,16 +1196,12 @@ contains
              if (imean == 1) then
                 call alloc_plume_chem1(plumem_g(:,:,ng),plume_meanm_g (:,ng),plumem_fre_g  (:,ng)&
                      ,nmzp(ng),nmxp(ng),nmyp(ng),nspecies_chem)
-
-             elseif (imean == 0) then
-                call alloc_plume_chem1(plumem_g(:,:,ng),plume_meanm_g (:,ng),plumem_fre_g (:,ng)&
-                     ,1,1,1,nspecies_chem)
              endif
 
              call filltab_plume_chem1(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
                   plume_g(:,:,ng), plumem_g(:,:,ng),  &
                   plume_mean_g(:,ng), plume_meanm_g(:,ng),    &
-                  plume_fre_g(:,ng), plumem_fre_g(:,ng), nspecies_chem, ng)
+                  plume_fre_g(:,ng), plumem_fre_g(:,ng), nspecies_chem, ng, imean)
           enddo
        endif
        !-- aerosol section----------------------------------
@@ -1340,12 +1336,10 @@ contains
 
              if (imean == 1) then
                 call alloc_volc_chem1(volc_meanm_g(ng),nmzp(ng),nmxp(ng),nmyp(ng))
-             elseif (imean == 0) then
-                call alloc_volc_chem1(volc_meanm_g(ng),1,1,1)
              endif
 
              call filltab_volc_chem1(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-                  volc_mean_g(ng), volc_meanm_g(ng))
+                  volc_mean_g(ng), volc_meanm_g(ng), imean)
           enddo
        endif
        !- end of volcanoes section ---

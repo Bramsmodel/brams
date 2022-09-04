@@ -64,19 +64,19 @@ contains
   !---------------------------------------------------------------
 
   subroutine filltab_volc_chem1(oneVarTable, oneVarTableSize, &
-       volc_mean, volc_meanm)
+       volc_mean, volc_meanm, imean)
 
     use ModVarTable, only: &
          VarTable, &
-         InsertAtVarTable
+         InsertVarTable
 
     implicit none
     type(VarTable), pointer, intent(in) :: oneVarTable(:)
     integer, intent(inout) :: oneVarTableSize
     type(volc_mean_vars), pointer, intent(in) :: volc_mean
     type(volc_mean_vars), pointer, intent(in) :: volc_meanm
+    integer, intent(in) :: imean
 
-    logical :: assThis
     character(len=*), parameter :: h="**(filltab_volc_chem1)**"
 
     if (.not. associated(oneVarTable)) then
@@ -84,67 +84,34 @@ contains
     else if (.not. associated(volc_mean)) then
        call fatal_error(h//" volc_mean not associated")
     end if
-    
+
     ! Fill pointers to arrays into variable tables
     ! 2d var
 
-    if (.not. associated(volc_meanm)) then
-       assThis=.false.
-    else
-       assThis=associated(volc_meanm%plum_heigth)
-    end if
-    if (assThis) then
-       call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-            volc_mean%plum_heigth, &
-            'plum_heigth_volc :2:hist:anal:mpti:mpt3:mpt1', &
-            volc_meanm%plum_heigth)
-    else
-       call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-            volc_mean%plum_heigth, &
-            'plum_heigth_volc :2:hist:anal:mpti:mpt3:mpt1')
-    end if
-    
-    if (.not. associated(volc_meanm)) then
-       assThis=.false.
-    else
-       assThis=associated(volc_meanm%vent_elev)
-    end if
-    if (assThis) then
-       call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-            volc_mean%vent_elev, &
-            'vent_elev_volc :2:hist:anal:mpti:mpt3:mpt1', &
-            volc_meanm%vent_elev)
-    else
-       call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-            volc_mean%vent_elev, &
-            'vent_elev_volc :2:hist:anal:mpti:mpt3:mpt1')
-    end if
-    
-    if (.not. associated(volc_meanm)) then
-       assThis=.false.
-    else
-       assThis=associated(volc_meanm%duration)
-    end if
-    if (assThis) then
-       call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-            volc_mean%duration, &
-            'duration_volc :2:hist:anal:mpti:mpt3:mpt1', &
-            volc_meanm%duration)
-    else
-       call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-            volc_mean%duration, &
-            'duration_volc :2:hist:anal:mpti:mpt3:mpt1')
-    end if
+    call InsertVarTable(oneVarTable, oneVarTableSize, &
+         volc_mean%plum_heigth, &
+         'plum_heigth_volc :2:hist:anal:mpti:mpt3:mpt1', &
+         volc_meanm%plum_heigth, imean)
+
+    call InsertVarTable(oneVarTable, oneVarTableSize, &
+         volc_mean%vent_elev, &
+         'vent_elev_volc :2:hist:anal:mpti:mpt3:mpt1', &
+         volc_meanm%vent_elev, imean)
+
+    call InsertVarTable(oneVarTable, oneVarTableSize, &
+         volc_mean%duration, &
+         'duration_volc :2:hist:anal:mpti:mpt3:mpt1', &
+         volc_meanm%duration, imean)
   end subroutine filltab_volc_chem1
   !---------------------------------------------------------------
 
 
-!--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
+  !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
   subroutine StoreNamelistFileAtMem_volcChem1(oneNamelistFile)
     type(namelistFile), pointer :: oneNamelistFile
     volcanoes = oneNamelistFile%volcanoes
   end subroutine StoreNamelistFileAtMem_volcChem1
-!--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
+  !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
 
 
 end module mem_volc_chem1
