@@ -1162,17 +1162,13 @@ contains
           if (imean == 1) then
              call alloc_chem1(chem1m_g(:,ng),chem1m_src_g(:,:,:,ng),chem1_src_z_dim_g(:,ng) &
                   ,nmzp(ng),nmxp(ng),nmyp(ng),nspecies_chem, ng,volcanoes)
-
-!!$          elseif (imean == 0) then
-!!$             call alloc_chem1(chem1m_g(:,ng),chem1m_src_g(:,:,:,ng),chem1_src_z_dim_g(:,ng) &
-!!$                  ,1,1,1,nspecies_chem, ng,volcanoes)
           endif
 
           call filltab_chem1(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
                chem1_g(:,ng) ,chem1m_g(:,ng),  &
                chem1_src_g (:,:,:,ng),chem1m_src_g(:,:,:,ng),  &
                chem1_src_z_dim_g(:,ng), &
-               nmzp(ng),nspecies_chem,volcanoes)
+               nmzp(ng),nspecies_chem,volcanoes, imean)
        end do
 
        call nullify_tend_chem1(nspecies_chem)

@@ -267,11 +267,11 @@ contains
 
   subroutine filltab_chem1(oneVarTable, oneVarTableSize, &
        chem1, chem1m, chem1_src, chem1m_src, &
-       nvert_src,mzp,nspecies,volcanoes)
+       nvert_src,mzp,nspecies,volcanoes, imean)
 
     use ModVarTable, only: &
          VarTable, &
-         InsertAtVarTable
+         InsertVarTable
 
     use chem1_list, only: &
          spc_alloc, &
@@ -299,6 +299,7 @@ contains
     integer, intent(in) :: mzp
     integer, intent(in) :: nspecies
     integer, intent(in) :: volcanoes
+    integer, intent(in) :: imean
 
     integer :: ispc,isrc,itime  
 
@@ -316,16 +317,10 @@ contains
 
        if (associated(chem1(ispc)%sc_p)) then !--- tracer mixing ratio (dimension 3d)
           if(spc_alloc(transport,ispc) == on) then 
-             if (associated(chem1m(ispc)%sc_p)) then
-                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                     chem1(ispc)%sc_p, &
-                     trim(spc_name(ispc))//'P :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle), &
-                     chem1m(ispc)%sc_p)
-             else
-                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                     chem1(ispc)%sc_p, &
-                     trim(spc_name(ispc))//'P :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle))
-             end if
+             call InsertVarTable(oneVarTable, oneVarTableSize, &
+                  chem1(ispc)%sc_p, &
+                  trim(spc_name(ispc))//'P :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle), &
+                  chem1m(ispc)%sc_p, imean)
           end if
 
           !--- sources (3 and 2 dimension)
@@ -339,72 +334,40 @@ contains
 
                 do itime=1,ntimes_src(isrc)
                    if(itime > 1) write(str_src_num,'(i1)')itime
-                   if (associated(chem1m_src(itime,isrc,ispc)%sc_src)) then
-                      call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                           chem1_src(itime,isrc,ispc)%sc_src, &
-                           trim(spc_name(ispc))//'_'//trim(src_name(isrc))//  &
-                           '_SRC'//trim(str_src_num)//' :'//trim(str_src_dim) &
-                           //':hist:anal:mpti:mpt3:mpt1', &
-                           chem1m_src(itime,isrc,ispc)%sc_src)
-                   else
-                      call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                           chem1_src(itime,isrc,ispc)%sc_src, &
-                           trim(spc_name(ispc))//'_'//trim(src_name(isrc))//  &
-                           '_SRC'//trim(str_src_num)//' :'//trim(str_src_dim) &
-                           //':hist:anal:mpti:mpt3:mpt1')
-                   end if
+                   call InsertVarTable(oneVarTable, oneVarTableSize, &
+                        chem1_src(itime,isrc,ispc)%sc_src, &
+                        trim(spc_name(ispc))//'_'//trim(src_name(isrc))//  &
+                        '_SRC'//trim(str_src_num)//' :'//trim(str_src_dim) &
+                        //':hist:anal:mpti:mpt3:mpt1', &
+                        chem1m_src(itime,isrc,ispc)%sc_src, imean)
                 end do
              end do
           end if
 
           !--- dry and wet deposition (dimension 2d)
           if(spc_alloc(ddp,ispc) == on) then
-             if (associated(chem1m(ispc)%sc_dd)) then
-                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                     chem1(ispc)%sc_dd, &
-                     trim(spc_name(ispc))//'DD :2:hist:anal:mpti:mpt3', &
-                     chem1m(ispc)%sc_dd)
-             else
-                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                     chem1(ispc)%sc_dd, &
-                     trim(spc_name(ispc))//'DD :2:hist:anal:mpti:mpt3')
-             end if
+             call InsertVarTable(oneVarTable, oneVarTableSize, &
+                  chem1(ispc)%sc_dd, &
+                  trim(spc_name(ispc))//'DD :2:hist:anal:mpti:mpt3', &
+                  chem1m(ispc)%sc_dd, imean)
           end if
           if(spc_alloc(wdp,ispc) == on) then
-             if (associated(chem1m(ispc)%sc_wd)) then
-                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                     chem1(ispc)%sc_wd,&
-                     trim(spc_name(ispc))//'WD :2:hist:anal:mpti:mpt3', &
-                     chem1m(ispc)%sc_wd)
-             else
-                call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                     chem1(ispc)%sc_wd,&
-                     trim(spc_name(ispc))//'WD :2:hist:anal:mpti:mpt3')
-             end if
+             call InsertVarTable(oneVarTable, oneVarTableSize, &
+                  chem1(ispc)%sc_wd,&
+                  trim(spc_name(ispc))//'WD :2:hist:anal:mpti:mpt3', &
+                  chem1m(ispc)%sc_wd, imean)
           end if
           !---  data assimilation (dimension 3d)
           if(chem_assim == on) then
              if(spc_alloc(fdda,ispc) == on) then
-                if (associated(chem1m(ispc)%sc_pp)) then
-                   call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                        chem1(ispc)%sc_pp,&
-                        trim(spc_name(ispc))//'PP :3:mpti', &
-                        chem1m(ispc)%sc_pp)
-                else
-                   call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                        chem1(ispc)%sc_pp,&
-                        trim(spc_name(ispc))//'PP :3:mpti')
-                end if
-                if (associated(chem1m(ispc)%sc_pf)) then
-                   call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                        chem1(ispc)%sc_pf, &
-                        trim(spc_name(ispc))//'PF :3:mpti', &
-                        chem1m(ispc)%sc_pf)
-                else
-                   call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                        chem1(ispc)%sc_pf, &
-                        trim(spc_name(ispc))//'PF :3:mpti')
-                end if
+                call InsertVarTable(oneVarTable, oneVarTableSize, &
+                     chem1(ispc)%sc_pp,&
+                     trim(spc_name(ispc))//'PP :3:mpti', &
+                     chem1m(ispc)%sc_pp, imean)
+                call InsertVarTable(oneVarTable, oneVarTableSize, &
+                     chem1(ispc)%sc_pf, &
+                     trim(spc_name(ispc))//'PF :3:mpti', &
+                     chem1m(ispc)%sc_pf, imean)
              end if
           end if
        end if
