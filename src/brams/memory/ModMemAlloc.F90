@@ -15,7 +15,7 @@ module ModMemAlloc
 
   use mem_scratch3_grell_sh, only: &
        alloc_scratch3_grell_sh
-  
+
   use mem_cuparm, only: &
        nnqparm, &
        cuparm_g_sh, &
@@ -67,7 +67,7 @@ module ModMemAlloc
 
   use ModMicroFields, only: &
        InsertMicroFieldsAtVarTable
-  
+
   use mem_oda, only: &
        oda_g, &
        odam_g, &
@@ -98,7 +98,7 @@ module ModMemAlloc
 
   use ModVarTable, only: &
        MarkLiteVarsAtVarTable
-  
+
 #ifdef JULES
   use ModJulesFields, only: &
        InsertJulesFieldsAtVarTable
@@ -148,7 +148,7 @@ module ModMemAlloc
 
   use ModGaspartFields, only: &
        InsertGaspartFieldsAtVarTable
-  
+
   use mem_scratch, only: &
        alloc_scratch,    &
        nullify_scratch,  &
@@ -382,7 +382,7 @@ module ModMemAlloc
        aer2mp_g,                   &
        aer2mpm_g, &
        define_aer1_src_zdim
-  
+
   use mem_plume_chem1, only: &
        nullify_plume_chem1,  & ! Subroutine
        alloc_plume_chem1,    & ! Subroutine
@@ -723,7 +723,9 @@ contains
              !
              do n=1,nbio
                 call alloc_tuv_bio(tuv_bio(ng,n),nmxp(ng), nmyp(ng))
-                call alloc_tuv_bio(tuv_biom(ng,n),nmxp(ng), nmyp(ng))
+                if (imean == 1) then
+                   call alloc_tuv_bio(tuv_biom(ng,n),nmxp(ng), nmyp(ng))
+                end if
              end do
              !
              call alloc_carma_tuv(carma_tuv(ng),ntotal,nlayer,nmxp(ng), nmyp(ng), ng)
@@ -731,7 +733,7 @@ contains
              !
              do n=1,nbio
                 call filltab_tuv_bio(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-                     tuv_bio(ng,n), tuv_bio(ng,n), n)
+                     tuv_bio(ng,n), tuv_bio(ng,n), n, imean)
              end do
           end do
        endif
@@ -749,7 +751,7 @@ contains
           if (imean == 1) then
              call alloc_aotMap(carma_aotMapm(ng),nmxp(ng), nmyp(ng))
           end if
-          
+
           call filltab_aotMap(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
                carma_aotMap, carma_aotMapm, ng, imean)
        end do
@@ -890,7 +892,7 @@ contains
                trim(adjustl(str(2)))//") "//&
                "fails with stat="//trim(adjustl(str(1))))
        end if
-       
+
        allocate(cuforc_sh_g(ngrids_cp), stat=ierr)
        if (ierr /= 0) then
           write(str(1),"(i8)") ierr
@@ -1100,7 +1102,7 @@ contains
             oneGrid%oneScalarFields, oneGrid%oneAveScalarFields, &
             oneGrid%oneNamelistFile, imean)
     end if
-    
+
     !-------------
 
     !-------------
@@ -1223,14 +1225,10 @@ contains
              if (imean == 1) then
                 call alloc_aer1(aer1m_g(:,:,ng),aer1_src_z_dim_g(:,ng) &
                      ,nmzp(ng),nmxp(ng),nmyp(ng),nmodes,nspecies_aer)
-
-             elseif (imean == 0) then
-                call alloc_aer1(aer1m_g(:,:,ng),aer1_src_z_dim_g(:,ng) &
-                     ,1,1,1,nmodes,nspecies_aer)
              endif
 
              call filltab_aer1(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-                  aer1_g(:,:,ng), aer1m_g(:,:,ng), aer1_src_z_dim_g(:,ng))
+                  aer1_g(:,:,ng), aer1m_g(:,:,ng), aer1_src_z_dim_g(:,ng), imean)
           enddo
 
           call nullify_tend_aer1(nmodes,nspecies_aer)
@@ -1253,12 +1251,10 @@ contains
 
                 if (imean == 1) then
                    call alloc_aer1_inorg(aer1m_inorg_g(:,ng),nmzp(ng),nmxp(ng),nmyp(ng),ninorg)
-                elseif (imean == 0) then
-                   call alloc_aer1_inorg(aer1m_inorg_g(:,ng),1,1,1,ninorg)
                 endif
 
                 call filltab_aer1_inorg(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-                     aer1_inorg_g(:,ng),aer1m_inorg_g(:,ng))
+                     aer1_inorg_g(:,ng),aer1m_inorg_g(:,ng), imean)
 
              enddo
 
@@ -1297,16 +1293,11 @@ contains
                    call alloc_aer2(aer2m_g(:,ng),aer2_src_z_dim_g(:,ng) &
                         ,nmzp(ng),nmxp(ng),nmyp(ng),nmodes    &
                         ,1,aer2mpm_g(:,ng),oneGrid%oneMicVars%mcphys_type)
-
-                elseif (imean == 0) then
-                   call alloc_aer2(aer2m_g(:,ng),aer2_src_z_dim_g(:,ng) &
-                        ,1,1,1,nmodes                         &
-                        ,1,aer2mpm_g(:,ng),oneGrid%oneMicVars%mcphys_type)
                 endif
 
                 call filltab_aer2(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
                      aer2_g(:,ng), aer2m_g(:,ng), aer2_src_z_dim_g(:,ng), &
-                     aer2mp_g(:,ng), aer2mpm_g(:,ng), oneGrid%oneMicVars%mcphys_type)
+                     aer2mp_g(:,ng), aer2mpm_g(:,ng), oneGrid%oneMicVars%mcphys_type, imean)
              enddo
 
              call nullify_tend_aer2(nmodes)
@@ -1359,17 +1350,13 @@ contains
              if (imean == 1) then
                 call alloc_chem1aq(chem1maq_g(:,ng) &
                      ,nmzp(ng),nmxp(ng),nmyp(ng),nspeciesaq_chem)
-
-             elseif (imean == 0) then
-                call alloc_chem1aq(chem1maq_g(:,ng) &
-                     ,1,1,1,nspeciesaq_chem)
              endif
 
              call filltab_chem1aq(&
                   oneGrid%oneVarTable, &
                   oneGrid%oneVarTableSize, &
                   chem1aq_g(:,ng), &
-                  chem1maq_g(:,ng))
+                  chem1maq_g(:,ng), imean)
           enddo
 
           call nullify_tend_chem1aq(nspeciesaq_chem)
@@ -1616,7 +1603,7 @@ contains
     call dealloc_cuparm(cuparmm_g)
     call dealloc_cuparm(cuparm_g_sh)
     call dealloc_cuparm(cuparmm_g_sh)
-    
+
     do ng=1,ngrids
        call dealloc_grid(grid_g(ng))
        call dealloc_grid(gridm_g(ng))

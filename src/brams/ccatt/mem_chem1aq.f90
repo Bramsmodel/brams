@@ -96,13 +96,13 @@ contains
   !---------------------------------------------------------------
 
   subroutine filltab_chem1aq(oneVarTable, oneVarTableSize, &
-       chem1aq, chem1maq)
+       chem1aq, chem1maq, imean)
     
     use chem1aq_list, only: spcaq_name
 
     use ModVarTable, only: &
          VarTable, &
-         InsertAtVarTable
+         InsertVarTable
     
     implicit none
     
@@ -110,52 +110,27 @@ contains
     integer, intent(inout) :: oneVarTableSize
     type(chem1aq_vars), pointer, intent(in) :: chem1aq(:)
     type(chem1aq_vars), pointer, intent(in) :: chem1maq(:)
+    integer, intent(in) :: imean
     
-    logical :: assAve
-    logical :: assThis
     integer :: ispcaq  
     integer :: nspeciesaq
 
     nspeciesaq=size(chem1aq,1)
 
-    assAve=associated(chem1maq)
-
     !- Fill pointers to arrays into variable tables
     do ispcaq=1,nspeciesaq
        if (associated(chem1aq(ispcaq)%sc_pr)) then
-          if (.not. assAve) then 
-             assThis=.false.
-          else
-             assThis=associated(chem1maq(ispcaq)%sc_pr)
-          end if
-          if (assThis) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+             call InsertVarTable(oneVarTable, oneVarTableSize, &
                   chem1aq(ispcaq)%sc_pr, &
                   trim(spcaq_name(ispcaq)) //'PR :3:hist:anal:mpti:mpt3:mpt1', &
-                  chem1maq(ispcaq)%sc_pr)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  chem1aq(ispcaq)%sc_pr, &
-                  trim(spcaq_name(ispcaq)) //'PR :3:hist:anal:mpti:mpt3:mpt1')
-          end if
+                  chem1maq(ispcaq)%sc_pr, imean)
        end if
 
        if (associated(chem1aq(ispcaq)%sc_pc)) then
-          if (.not. assAve) then 
-             assThis=.false.
-          else
-             assThis=associated(chem1maq(ispcaq)%sc_pc)
-          end if
-          if (assThis) then
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
+             call InsertVarTable(oneVarTable, oneVarTableSize, &
                   chem1aq(ispcaq)%sc_pc, &
                   trim(spcaq_name(ispcaq)) //'PC :3:hist:anal:mpti:mpt3:mpt1', &
-                  chem1maq(ispcaq)%sc_pc)
-          else
-             call InsertAtVarTable(oneVarTable, oneVarTableSize, &
-                  chem1aq(ispcaq)%sc_pc, &
-                  trim(spcaq_name(ispcaq)) //'PC :3:hist:anal:mpti:mpt3:mpt1')
-          end if
+                  chem1maq(ispcaq)%sc_pc, imean)
        end if
     end do
   end subroutine filltab_chem1aq

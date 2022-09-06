@@ -5,7 +5,6 @@ module ModGaspartFields
 
   use ModVarTable, only: &
        VarTable, &
-       InsertVarTable_2D, &
        InsertVarTable
   
   use ModParallelEnvironment, only: &

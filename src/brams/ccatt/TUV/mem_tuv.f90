@@ -195,11 +195,11 @@
   end subroutine nullify_carma_tuv
 
   subroutine filltab_tuv_bio(oneVarTable, oneVarTableSize, &
-       tuv_bio, tuv_biom, nbio)
+       tuv_bio, tuv_biom, nbio, imean)
 
     use ModVarTable, only: &
          VarTable, &
-         InsertAtVarTable
+         InsertVarTable
 
     implicit none
 
@@ -208,8 +208,8 @@
     type(tuvbio), pointer, intent(in) :: tuv_bio
     type(tuvbio), pointer, intent(in) :: tuv_biom
     integer, intent(in) :: nbio
+    integer, intent(in) :: imean
     
-    logical :: assThis
     character(len=*), parameter :: h="**(filltab_tuv_bio)**"
 
     if (.not. associated(oneVarTable)) then
@@ -221,21 +221,10 @@
     ! Fill pointers to arrays into variable tables
 
     if (associated(tuv_bio%rateUV)) then
-       if (associated(tuv_biom)) then
-          assThis=associated(tuv_biom%rateUV)
-       else
-          assThis=.false.
-       end if
-       if (assThis) then
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
+          call InsertVarTable (oneVarTable, oneVarTableSize, &
                tuv_bio%rateUV, &
                nameVar(nbio)//' :2:hist:anal:mpti:mpt3:mpt2', &
-               tuv_biom%rateUV)
-       else
-          call InsertAtVarTable (oneVarTable, oneVarTableSize, &
-               tuv_bio%rateUV, &
-               nameVar(nbio)//' :2:hist:anal:mpti:mpt3:mpt2')
-       end if
+               tuv_biom%rateUV, imean)
     end if
 
   end subroutine filltab_tuv_bio

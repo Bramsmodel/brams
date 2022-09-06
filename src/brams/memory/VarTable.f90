@@ -28,9 +28,7 @@ module ModVarTable
   public :: CreateVarTable
   public :: DestroyVarTable
   public :: DumpVarTable
-  public :: InsertAtVarTable
   public :: InsertVarTable
-  public :: InsertVarTable_2D
   public :: FixVarTableForIOUTPUT5
   public :: MarkLiteVarsAtVarTable
   public :: Name2VarTableEntry
@@ -80,13 +78,6 @@ module ModVarTable
      integer :: irecycle ! recycle from previous run during initialization 
      character (len=16) :: name ! field name
   end type VarTable
-
-  interface InsertAtVarTable
-     module procedure InsertAtVarTable_2D
-     module procedure InsertAtVarTable_2D_I
-     module procedure InsertAtVarTable_3D
-     module procedure InsertAtVarTable_4D
-  end interface InsertAtVarTable
 
   interface InsertVarTable
      module procedure InsertVarTable_2D
@@ -160,181 +151,6 @@ contains
        call MsgDump(h//" "//trim(adjustl(name))//" is not associated")
     end if
   end subroutine DumpVarTable
-
-
-  ! insert a real 2D field into a VarTable
-
-
-  subroutine InsertAtVarTable_2D(oneVarTable, oneVarTableSize, var, tabstr, varm)
-    type(VarTable), pointer, intent(in) :: oneVarTable(:)
-    integer, intent(inout) :: oneVarTableSize
-    real, pointer, intent(in) :: var(:,:)
-    character (len=*), intent(in) :: tabstr
-    real, pointer, optional, intent(in) :: varm(:,:)
-
-    integer(kind=int64) :: npts
-    integer :: imean
-    character(len=*), parameter :: h="**(InsertAtVarTable_2D)**"
-
-    ! field size
-
-    npts=int(size(var,1),int64) * &
-         int(size(var,2),int64)
-
-    ! average field is present?
-
-    if (present(varm)) then
-       imean=1
-    else
-       imean=0
-    end if
-
-    ! get new entry and fill char components
-
-    call NewVarTableEntry(oneVarTable, oneVarTableSize, npts, imean, tabstr)
-
-    ! save full field
-
-    oneVarTable(oneVarTableSize)%var_p_2D => var
-
-    ! if present, save average field
-
-    if (present(varm)) then
-       oneVarTable(oneVarTableSize)%var_m_2D => varm
-    end if
-  end subroutine InsertAtVarTable_2D
-
-
-  ! insert an integer 2D field into a VarTable
-
-
-  subroutine InsertAtVarTable_2D_I(oneVarTable, oneVarTableSize, var, tabstr, varm)
-    type(VarTable), pointer, intent(in) :: oneVarTable(:)
-    integer, intent(inout) :: oneVarTableSize
-    integer, pointer, intent(in) :: var(:,:)
-    character (len=*), intent(in) :: tabstr
-    integer, pointer, optional, intent(in) :: varm(:,:)
-
-    integer(kind=int64) :: npts
-    integer :: imean
-    character(len=*), parameter :: h="**(InsertAtVarTable_2D_I)**"
-
-    ! field size
-
-    npts=int(size(var,1),int64) * &
-         int(size(var,2),int64)
-
-    ! average field is present?
-
-    if (present(varm)) then
-       imean=1
-    else
-       imean=0
-    end if
-
-    ! get new entry and fill char components
-
-    call NewVarTableEntry(oneVarTable, oneVarTableSize, npts, imean, tabstr)
-
-    ! save full field
-
-    oneVarTable(oneVarTableSize)%var_p_2D_I => var
-
-    ! if present, save average field
-
-    if (present(varm)) then
-       oneVarTable(oneVarTableSize)%var_m_2D_I => varm
-    end if
-  end subroutine InsertAtVarTable_2D_I
-
-
-  ! insert a real 3D field into a VarTable
-
-
-  subroutine InsertAtVarTable_3D(oneVarTable, oneVarTableSize, var, tabstr, varm)
-    type(VarTable), pointer, intent(in) :: oneVarTable(:)
-    integer, intent(inout) :: oneVarTableSize
-    real, pointer, intent(in) :: var(:,:,:)
-    character (len=*), intent(in) :: tabstr
-    real, pointer, optional, intent(in) :: varm(:,:,:)
-
-    integer(kind=int64) :: npts
-    integer :: imean
-    character(len=*), parameter :: h="**(InsertAtVarTable_3D)**"
-
-    ! field size
-
-    npts=int(size(var,1),int64) * &
-         int(size(var,2),int64) * &
-         int(size(var,3),int64)
-
-    ! average field is present?
-
-    if (present(varm)) then
-       imean=1
-    else
-       imean=0
-    end if
-
-    ! get new entry and fill char components
-
-    call NewVarTableEntry(oneVarTable, oneVarTableSize, npts, imean, tabstr)
-
-    ! save full field
-
-    oneVarTable(oneVarTableSize)%var_p_3D => var
-
-    ! if present, save average field
-
-    if (present(varm)) then
-       oneVarTable(oneVarTableSize)%var_m_3D => varm
-    end if
-  end subroutine InsertAtVarTable_3D
-
-
-  ! insert a real 4D field into a VarTable
-
-
-  subroutine InsertAtVarTable_4D(oneVarTable, oneVarTableSize, var, tabstr, varm)
-    type(VarTable), pointer, intent(in) :: oneVarTable(:)
-    integer, intent(inout) :: oneVarTableSize
-    real, pointer, intent(in) :: var(:,:,:,:)
-    character (len=*), intent(in) :: tabstr
-    real, pointer, optional, intent(in) :: varm(:,:,:,:)
-
-    integer(kind=int64) :: npts
-    integer :: imean
-    character(len=*), parameter :: h="**(InsertAtVarTable_4D)**"
-
-    ! field size
-
-    npts=int(size(var,1),int64) * &
-         int(size(var,2),int64) * &
-         int(size(var,3),int64) * &
-         int(size(var,4),int64) 
-
-    ! average field is present?
-
-    if (present(varm)) then
-       imean=1
-    else
-       imean=0
-    end if
-
-    ! get new entry and fill char components
-
-    call NewVarTableEntry(oneVarTable, oneVarTableSize, npts, imean, tabstr)
-
-    ! save full field
-
-    oneVarTable(oneVarTableSize)%var_p_4D => var
-
-    ! if present, save average field
-
-    if (present(varm)) then
-       oneVarTable(oneVarTableSize)%var_m_4D => varm
-    end if
-  end subroutine InsertAtVarTable_4D
 
 
 
@@ -431,61 +247,6 @@ contains
        call MsgDump(h//" "//trim(adjustl(strOut)))
     end if
   end subroutine NewVarTableEntry
-!!$
-!!$
-!!$  subroutine StringIndexing(vTabPtr, &
-!!$       xStart, xEnd, yStart, yEnd, string)
-!!$    type(VarTableFields), pointer :: vTabPtr
-!!$    integer, intent(in) :: xStart
-!!$    integer, intent(in) :: xEnd
-!!$    integer, intent(in) :: yStart
-!!$    integer, intent(in) :: yEnd
-!!$    character(len=*), intent(out) :: string
-!!$
-!!$    character(len=8) :: c0, c1, c2, c3, c4, c5
-!!$    character(len=*), parameter :: h="**(StringIndexing)**"
-!!$
-!!$
-!!$    if (.not. associated(vTabPtr)) then
-!!$       call fatal_error(h//" null vTabPtr")
-!!$    end if
-!!$
-!!$    write(c0,"(i8)") xStart
-!!$    write(c1,"(i8)") xEnd
-!!$    write(c2,"(i8)") yStart
-!!$    write(c3,"(i8)") yEnd
-!!$
-!!$    select case (vTabPtr%idim_type)
-!!$    case(2)
-!!$       string="("//&
-!!$            trim(adjustl(c0))//":"//trim(adjustl(c1))//","//&
-!!$            trim(adjustl(c2))//":"//trim(adjustl(c3))//")"
-!!$    case(3)
-!!$       write(c4,"(i8)") size(vTabPtr%var_p_3D,1)
-!!$       string="(1:"//trim(adjustl(c4))//","//&
-!!$            trim(adjustl(c0))//":"//trim(adjustl(c1))//","//&
-!!$            trim(adjustl(c2))//":"//trim(adjustl(c3))//")"
-!!$    case(4:5)
-!!$       write(c4,"(i8)") size(vTabPtr%var_p_4D,1)
-!!$       write(c5,"(i8)") size(vTabPtr%var_p_4D,4)
-!!$       string="(1:"//trim(adjustl(c4))//","//&
-!!$            trim(adjustl(c0))//":"//trim(adjustl(c1))//","//&
-!!$            trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
-!!$            "1:"//trim(adjustl(c5))//")"
-!!$
-!!$    case(6:7)
-!!$       write(c4,"(i8)") size(vTabPtr%var_p_3D,3)
-!!$       string="("//&
-!!$            trim(adjustl(c0))//":"//trim(adjustl(c1))//","//&
-!!$            trim(adjustl(c2))//":"//trim(adjustl(c3))//","//&
-!!$            "1:"//trim(adjustl(c4))//")"
-!!$
-!!$    case default
-!!$       write(c0,"(i8)") vTabPtr%idim_type
-!!$       call fatal_error(h//" field section "//trim(vTabPtr%name)//&
-!!$            " with unknown idim_type="//trim(adjustl(c0)))
-!!$    end select
-!!$  end subroutine StringIndexing
 
 
 
