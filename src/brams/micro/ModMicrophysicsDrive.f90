@@ -131,11 +131,11 @@ contains
     integer, save :: ncall = 0
     integer, save, dimension(15)  :: ncall2g = 0
     real :: dtlti ! rshort, cosz, rlongup, rlong, albedt ! Not used
-    type pcp_tab_type
+    type pcp_tab_drive
        real, pointer, dimension(:,:,:,:) :: pcpfillc,pcpfillr
        real, pointer, dimension(:,:,:)   :: sfcpcp
-    end type pcp_tab_type
-    type (pcp_tab_type), save :: pcp_tab(maxgrds)
+    end type pcp_tab_drive
+    type (pcp_tab_drive), save :: pcp_tab(maxgrds)
 
     character(len=*), parameter :: h="**(micro)**"
     

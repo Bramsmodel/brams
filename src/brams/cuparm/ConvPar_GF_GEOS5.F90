@@ -51,7 +51,7 @@ module ConvPar_GF_GEOS5
   implicit none
   private
   public  gf_geos5_interface, maxiens, icumulus_gf, closure_choice, deep, shal, mid &
-       ,use_scale_dep,dicycle,tau_deep,tau_mid,hcts                       &
+       ,use_scale_dep,dicycle,tau_deep,tau_mid                       &
        ,use_tracer_transp, use_tracer_scaven,use_memory,convection_tracer &
        ,use_flux_form,use_tracer_evap,downdraft,use_fct                   &
        ,use_rebcb, vert_discr, satur_calc, clev_grid, apply_sub_mp, alp1  &
@@ -287,10 +287,10 @@ module ConvPar_GF_GEOS5
   integer           ,dimension(MAX_NSPEC)    ::  CHEM_NAME_MASK,CHEM_NAME_MASK_EVAP
   real              ,dimension(MAX_NSPEC)    ::  CHEM_ADJ_AUTOC
   integer :: ispc_CO
-  type Hcts_vars
+  type hcts_vars_goes5
      real :: hstar,dhr,ak0,dak
-  end type Hcts_vars
-  type (Hcts_vars), allocatable :: Hcts(:)
+  end type hcts_vars_goes5
+  type (hcts_vars_goes5), allocatable :: Hcts(:)
 
   integer :: whoami_all, JCOL
 

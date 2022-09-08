@@ -201,7 +201,7 @@ module ModOptical
   real :: cased(nsitesaot)
   real :: cases(nsitesaot)
 
-  type aotMap_t
+  type aotmap_optical
      real, pointer, contiguous    :: aotMap(:,:) => null()
      integer, pointer, contiguous :: currSite(:,:) => null()
      real, pointer, contiguous    :: extCoef(:,:,:) => null()
@@ -209,10 +209,10 @@ module ModOptical
      real, pointer, contiguous    :: pdens(:,:) => null()
      real, pointer, contiguous    :: rsig(:,:) => null()
      !# geometric standard deviation
-  end type aotMap_t
+  end type aotmap_optical
   
-  type(aotmap_t), allocatable, target :: opt_aotmap(:)
-  type(aotmap_t), allocatable, target :: opt_aotMapm(:)
+  type(aotmap_optical), allocatable, target :: opt_aotmap(:)
+  type(aotmap_optical), allocatable, target :: opt_aotMapm(:)
 
   type aod_t
      real, pointer, dimension(:,:,:) :: tauaer
@@ -1107,7 +1107,7 @@ contains
     !#
     !#--- ----------------------------------------------------------------------------------------
     !
-    type(aotMap_t) :: c_aotMap
+    type(aotmap_optical) :: c_aotMap
     !# Variable to be allocated Map of AOT
     integer, intent(in) :: nx
     !# Number of lats
@@ -1168,7 +1168,7 @@ contains
     !#
     !#--- ----------------------------------------------------------------------------------------
     !
-    type(aotMap_t), intent(inout) :: aot(:)
+    type(aotmap_optical), intent(inout) :: aot(:)
     !# Type to be nullified
     integer, intent(in)          :: ng
     !# Grid
@@ -1285,8 +1285,8 @@ contains
     !
     type(VarTable), pointer, intent(in) :: oneVarTable(:)
     integer, intent(inout) :: oneVarTableSize
-    type(aotMap_t), pointer, intent(in) :: imap
-    type(aotMap_t), pointer, intent(in) :: imapm
+    type(aotmap_optical), pointer, intent(in) :: imap
+    type(aotmap_optical), pointer, intent(in) :: imapm
     integer, intent(in) :: imean
 
     character(len=*), parameter :: h="**(opt_filltab_aotMap)**"

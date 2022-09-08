@@ -128,10 +128,10 @@ contains
     integer(kind=i8)             :: fPosition
     character(len=*), parameter :: h="**(recycle)**"
     integer :: npoints,i
-    type scridim
+    type scridim_recycle
        real, allocatable :: scr(:,:,:,:)
-    end type scridim
-    type (scridim), dimension(7) :: srcRead
+    end type scridim_recycle
+    type (scridim_recycle), dimension(7) :: srcRead
     integer :: ia,iz,ja,jz
     integer :: m1,m2,m3
     integer(kind=i64)  :: nzl,nxl,nyl,n4,j,k
