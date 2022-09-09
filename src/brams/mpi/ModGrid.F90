@@ -126,10 +126,21 @@ module ModGrid
        DestroyJulesFields, &
        DumpJulesFields
 #endif  
-  
+
+  use ModAero2McphysFields, only: &
+       Aero2McPhysFields, &
+       CreateAero2McphysFields, &
+       CreateEmptyAero2McphysFields, &
+       DestroyAero2McphysFields, &
+       DumpAero2McphysFields
+       
   use mem_tend, only: &
        tend
 
+  use aer1_list, only: &
+       aerosol_mechanism, &
+       nmodes
+  
   implicit none
 
   private
@@ -225,6 +236,9 @@ module ModGrid
      ! ghost zone update. See description at ModMessageSet 
      type(PolygonContainer), pointer :: meteoPolygons => null()
 
+     type(Aero2McphysFields), pointer, contiguous :: oneAero2McphysFields(:) => null()
+     type(Aero2McphysFields), pointer, contiguous :: oneAveAero2McphysFields(:) => null()
+     
      type(NeighbourNodes), pointer :: oneNeighbourNodes => null()
      ! oneNeighbourNodes: list of BRAMS process numbers that are neighbours
      !        of this node for usual ghost zone update operations
@@ -605,6 +619,29 @@ contains
             oneGrid%oneNamelistFile)
     end if
     
+    ! this node Aero2McphysFields
+
+    if (oneGrid%oneNamelistFile%ccatt == 1  .and. &
+         oneGrid%oneNamelistFile%chemistry >= 0 .and. &
+         oneGrid%oneNamelistFile%aerosol==2 .and. &
+         aerosol_mechanism(1:6)=='MATRIX') then
+    
+       oneGrid%oneAero2McphysFields => CreateAero2McphysFields(&
+            oneGrid%oneNodeDimensions, &
+            nmodes, &
+            oneGrid%oneMicVars%mcphys_type)
+       if (createAve) then
+          oneGrid%oneAveAero2McphysFields => CreateAero2McphysFields(&
+               oneGrid%oneNodeDimensions, &
+               nmodes, &
+               oneGrid%oneMicVars%mcphys_type)
+       else
+          oneGrid%oneAveAero2McphysFields => CreateEmptyAero2McphysFields(&
+               nmodes, &
+               oneGrid%oneMicVars%mcphys_type)
+       end if
+    end if
+    
     if (dumpLocal) then
        call MsgDump(h//" dumping OneGrid at the end of CreateGrid")
        call DumpGrid(OneGrid)
@@ -793,6 +830,8 @@ contains
        call DestroyGaspartFields(oneGrid%oneAveGaspartFields)
        call DestroyScalarFields(oneGrid%oneScalarFields)
        call DestroyScalarFields(oneGrid%oneAveScalarFields)
+       call DestroyAero2McphysFields(oneGrid%oneAero2McphysFields)
+       call DestroyAero2McphysFields(oneGrid%oneAveAero2McphysFields)
        call DestroyAcousticMessageSet(&
             oneGrid%AcouSendU, oneGrid%AcouRecvU, &
             oneGrid%AcouSendV, oneGrid%AcouRecvV, &
@@ -998,6 +1037,8 @@ contains
     call DumpGaspartFields(oneGrid%oneAveGaspartFields, "oneGrid%oneAveGaspartFields")
     call DumpScalarFields(oneGrid%oneScalarFields, "oneGrid%oneScalarFields")
     call DumpScalarFields(oneGrid%oneAveScalarFields, "oneGrid%oneAveScalarFields")
+    call DumpAero2McphysFields(oneGrid%oneAero2McphysFields, "oneGrid%oneAero2McphysFields")
+    call DumpAero2McphysFields(oneGrid%oneAveAero2McphysFields, "oneGrid%oneAveAero2McphysFields")
     call MsgDump(h//" finishes")
   end subroutine DumpGrid
 end module ModGrid

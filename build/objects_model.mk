@@ -193,6 +193,7 @@ OBJ_MOD = \
 	extra.o \
 	aer1_list.o \
 	mem_aer1.o \
+	Aero2McphysFields.o \
 	chem1_list.o \
 	chem1aq_list.o \
 	mem_chem1aq.o \
