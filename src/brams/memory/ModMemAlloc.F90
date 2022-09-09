@@ -354,13 +354,10 @@ module ModMemAlloc
   use mem_aer1, only:        &
        nullify_aer1,         & ! Subroutine
        nullify_aer2,         & !
-       nullify_aero2,         & !
        alloc_aer1,           & ! Subroutine
        alloc_aer2,           & ! Subroutine
-       alloc_aero2,           & ! Subroutine
        filltab_aer1,         & ! Subroutine
        filltab_aer2,         & ! Subroutine
-       filltab_aero2,         & ! Subroutine
        nullify_tend_aer1,    & ! Subroutine
        nullify_tend_aer2,    & ! Subroutine
        alloc_tend_aer1,      & ! Subroutine
@@ -382,8 +379,6 @@ module ModMemAlloc
        filltab_tend_aer1_inorg,    & ! Subroutine
        aer1_inorg_g,               &
        aer1m_inorg_g,              &
-!!$       aer2mp_g,                   &
-!!$       aer2mpm_g, &
        define_aer1_src_zdim
 
   use mem_plume_chem1, only: &

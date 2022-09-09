@@ -62,19 +62,6 @@ module mem_aer1
   type (aer1_vars), pointer :: aer1m_inorg_g(:,:) => null() !mass inorg
 
 
-  !-kml/srf - for microphysics activation
-  TYPE aero2mcphys
-     !Inputs to matrix
-     real, pointer, contiguous :: kappa_eff(:,:,:) => null()
-     real, pointer, contiguous :: diam_eff(:,:,:) => null()
-     real, pointer, contiguous :: numb_water(:,:,:) => null()
-     real, pointer, contiguous :: numb_ice(:,:,:) => null()
-  END TYPE aero2mcphys
-
-!!$  type(aero2mcphys), pointer :: aer2mp_g(:,:) => null()
-!!$  type(aero2mcphys), pointer :: aer2mpm_g(:,:) => null()
-
-
   !- dimension of sources arrays (=1 for 2dim, =m1 for 3dim)
   integer :: aer1_src_z_dim_g(nspecies_aer*nmodes,maxgrds)
   integer :: aer2_src_z_dim_g(nmodes,maxgrds)
@@ -477,24 +464,7 @@ contains
   end subroutine alloc_aer2
 
 
-  subroutine alloc_aero2(aer2mp,n1,n2,n3,n,mcphys_type)
 
-    implicit none
-
-    integer,intent(in) :: n1,n2,n3,n,mcphys_type
-    integer :: i
-    type (aero2mcphys)  ,dimension(n) :: aer2mp
-
-    if(mcphys_type == 3) then
-       do i=1,n
-          allocate(aer2mp(i)%kappa_eff (n1,n2,n3));  aer2mp(i)%kappa_eff  = 0.
-          allocate(aer2mp(i)%diam_eff  (n1,n2,n3));  aer2mp(i)%diam_eff   = 0.
-          allocate(aer2mp(i)%numb_water(n1,n2,n3));  aer2mp(i)%numb_water = 0.
-          allocate(aer2mp(i)%numb_ice  (n1,n2,n3));  aer2mp(i)%numb_ice   = 0.
-       enddo
-    endif
-
-  end subroutine alloc_aero2
 
   !--------------------------------------------------------------------------
 
@@ -529,41 +499,6 @@ contains
   end subroutine nullify_aer2
 
 
-  subroutine nullify_aero2(aer2mp,n,mcphys_type)
-
-    implicit none
-
-    integer,intent(in) :: n,mcphys_type
-    type (aero2mcphys),dimension(n) :: aer2mp
-    integer :: i
-
-    if(mcphys_type == 3) then
-       do i=1,n
-          if (associated(aer2mp(i)%kappa_eff ) )    nullify (aer2mp(i)%kappa_eff   )
-          if (associated(aer2mp(i)%diam_eff  ) )    nullify (aer2mp(i)%diam_eff    )
-          if (associated(aer2mp(i)%numb_water) )    nullify (aer2mp(i)%numb_water  )
-          if (associated(aer2mp(i)%numb_ice  ) )    nullify (aer2mp(i)%numb_ice    )
-       enddo
-    endif
-  end subroutine nullify_aero2  
-
-  !---------------------------------------------------------------
-
-!!$  subroutine filltab_aer2(oneVarTable, oneVarTableSize, &
-!!$       aer2, aer2m, nvert_src, aer2mp, aer2mpm, mcphys_type, imean)
-!!$
-!!$    use io_params, only : ioutput         ! INTENT(IN)
-!!$
-!!$    implicit none
-!!$    type(VarTable), pointer, intent(in) :: oneVarTable(:)
-!!$    integer, intent(inout) :: oneVarTableSize
-!!$    type(aer1_vars), pointer, intent(in) :: aer2(:)
-!!$    type(aer1_vars), pointer, intent(in) :: aer2m(:)
-!!$    integer, intent(in) :: nvert_src(:)
-!!$    type(aero2mcphys), pointer, intent(in) :: aer2mp(:)
-!!$    type(aero2mcphys), pointer, intent(in) :: aer2mpm(:)
-!!$    integer, intent(in) :: mcphys_type
-!!$    integer, intent(in) :: imean
 
 
   subroutine filltab_aer2(oneVarTable, oneVarTableSize, &
@@ -640,64 +575,7 @@ contains
 
 
 
-  subroutine filltab_aero2(oneVarTable, oneVarTableSize, &
-       aer2mp, aer2mpm, mcphys_type, imean)
 
-    use io_params, only : ioutput         ! INTENT(IN)
-
-    implicit none
-    type(VarTable), pointer, intent(in) :: oneVarTable(:)
-    integer, intent(inout) :: oneVarTableSize
-    type(aero2mcphys), pointer, intent(in) :: aer2mp(:)
-    type(aero2mcphys), pointer, intent(in) :: aer2mpm(:)
-    integer, intent(in) :: mcphys_type
-    integer, intent(in) :: imean
-
-    integer :: imode,i
-
-    character(len=8) :: str_recycle
-    character(len=1) :: str_src_dim
-    str_recycle = ''; str_src_dim = ''
-    if (RECYCLE_TRACERS == 1 .or. ioutput == 5) then
-       str_recycle = ':recycle'
-    end if
-
-    !- Fill pointers to arrays into variable tables
-
-    !-kml/srf - for microphysics activation
-    if(mcphys_type == 3) then
-       do i=1,size(aer2mp)
-          if (associated(aer2mp(i)%kappa_eff)) then
-             call InsertVarTable(oneVarTable, oneVarTableSize, &
-                  aer2mp(i)%kappa_eff, &
-                  'KAPPA :3:hist:anal:mpti:mpt3', &
-                  aer2mpm(i)%kappa_eff, imean)
-          end if
-
-          if (associated(aer2mp(i)%diam_eff)) then
-             call InsertVarTable(oneVarTable, oneVarTableSize, &
-                  aer2mp(i)%diam_eff, &
-                  'DIAMT_AER :3:hist:anal:mpti:mpt3', &
-                  aer2mpm(i)%diam_eff, imean)
-          end if
-
-          if (associated(aer2mp(i)%numb_water)) then
-             call InsertVarTable(oneVarTable, oneVarTableSize, &
-                  aer2mp(i)%numb_water, &
-                  'WATER_FAER :3:hist:anal:mpti:mpt3', &
-                  aer2mpm(i)%numb_water, imean)
-          end if
-
-          if (associated(aer2mp(i)%numb_ice)) then
-             call InsertVarTable(oneVarTable, oneVarTableSize, &
-                  aer2mp(i)%numb_ice, &
-                  'ICE_FAER :3:hist:anal:mpti:mpt3', &
-                  aer2mpm(i)%numb_ice, imean)
-          end if
-       end do
-    end if
-
-  end subroutine filltab_aero2  
 
   !---------------------------------------------------------------
 
