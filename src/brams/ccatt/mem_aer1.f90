@@ -71,8 +71,8 @@ module mem_aer1
      real, pointer, contiguous :: numb_ice(:,:,:) => null()
   END TYPE aero2mcphys
 
-  type(aero2mcphys), pointer :: aer2mp_g(:,:) => null()
-  type(aero2mcphys), pointer :: aer2mpm_g(:,:) => null()
+!!$  type(aero2mcphys), pointer :: aer2mp_g(:,:) => null()
+!!$  type(aero2mcphys), pointer :: aer2mpm_g(:,:) => null()
 
 
   !- dimension of sources arrays (=1 for 2dim, =m1 for 3dim)
@@ -436,16 +436,14 @@ contains
   !--------------------------------------------------------------------------
   !--------------------------------------------------------------------------
   !--------------------------------------------------------------------------
-  subroutine alloc_aer2(aer2,nvert_src,n1,n2,n3,nmodes,n,aer2mp,mcphys_type)
+  subroutine alloc_aer2(aer2,n1,n2,n3,nmodes)
 
     implicit none
 
-    integer,intent(in) :: n1,n2,n3,nmodes,n,mcphys_type
-    integer :: ispc,isrc,imode,i
-    integer,dimension(nmodes)    :: nvert_src
+    integer,intent(in) :: n1,n2,n3,nmodes
+    integer :: imode
 
     type (aer1_vars)    ,dimension(nmodes) :: aer2
-    type (aero2mcphys)  ,dimension(n) :: aer2mp
 
     do imode=1,nmodes
        !1st test: if the mode does not exist, cycle
@@ -476,6 +474,16 @@ contains
           aer2(imode)%sc_src = 0.
        endif
     enddo
+  end subroutine alloc_aer2
+
+
+  subroutine alloc_aero2(aer2mp,n1,n2,n3,n,mcphys_type)
+
+    implicit none
+
+    integer,intent(in) :: n1,n2,n3,n,mcphys_type
+    integer :: i
+    type (aero2mcphys)  ,dimension(n) :: aer2mp
 
     if(mcphys_type == 3) then
        do i=1,n
@@ -486,7 +494,7 @@ contains
        enddo
     endif
 
-  end subroutine alloc_aer2
+  end subroutine alloc_aero2
 
   !--------------------------------------------------------------------------
 
@@ -502,14 +510,13 @@ contains
   !---------------------------------------------------------------
   !---------------------------------------------------------------
 
-  subroutine nullify_aer2(aer2,nmodes,n,aer2mp,mcphys_type)
+  subroutine nullify_aer2(aer2,nmodes)
 
     implicit none
 
-    integer,intent(in) ::nmodes,n,mcphys_type
+    integer,intent(in) :: nmodes
     type (aer1_vars),dimension(nmodes) :: aer2
-    type (aero2mcphys),dimension(n) :: aer2mp
-    integer :: ispc,i
+    integer :: ispc
 
     do ispc=1,nmodes
        if (associated(aer2(ispc)%sc_p ) )    nullify (aer2(ispc)%sc_p  )
@@ -519,6 +526,17 @@ contains
        if (associated(aer2(ispc)%sc_pp) )    nullify (aer2(ispc)%sc_pp )
        if (associated(aer2(ispc)%sc_pf) )    nullify (aer2(ispc)%sc_pf )
     enddo
+  end subroutine nullify_aer2
+
+
+  subroutine nullify_aero2(aer2mp,n,mcphys_type)
+
+    implicit none
+
+    integer,intent(in) :: n,mcphys_type
+    type (aero2mcphys),dimension(n) :: aer2mp
+    integer :: i
+
     if(mcphys_type == 3) then
        do i=1,n
           if (associated(aer2mp(i)%kappa_eff ) )    nullify (aer2mp(i)%kappa_eff   )
@@ -527,12 +545,29 @@ contains
           if (associated(aer2mp(i)%numb_ice  ) )    nullify (aer2mp(i)%numb_ice    )
        enddo
     endif
-  end subroutine nullify_aer2
+  end subroutine nullify_aero2  
 
   !---------------------------------------------------------------
 
+!!$  subroutine filltab_aer2(oneVarTable, oneVarTableSize, &
+!!$       aer2, aer2m, nvert_src, aer2mp, aer2mpm, mcphys_type, imean)
+!!$
+!!$    use io_params, only : ioutput         ! INTENT(IN)
+!!$
+!!$    implicit none
+!!$    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+!!$    integer, intent(inout) :: oneVarTableSize
+!!$    type(aer1_vars), pointer, intent(in) :: aer2(:)
+!!$    type(aer1_vars), pointer, intent(in) :: aer2m(:)
+!!$    integer, intent(in) :: nvert_src(:)
+!!$    type(aero2mcphys), pointer, intent(in) :: aer2mp(:)
+!!$    type(aero2mcphys), pointer, intent(in) :: aer2mpm(:)
+!!$    integer, intent(in) :: mcphys_type
+!!$    integer, intent(in) :: imean
+
+
   subroutine filltab_aer2(oneVarTable, oneVarTableSize, &
-       aer2, aer2m, nvert_src, aer2mp, aer2mpm, mcphys_type, imean)
+       aer2, aer2m, nvert_src, imean)
 
     use io_params, only : ioutput         ! INTENT(IN)
 
@@ -542,9 +577,6 @@ contains
     type(aer1_vars), pointer, intent(in) :: aer2(:)
     type(aer1_vars), pointer, intent(in) :: aer2m(:)
     integer, intent(in) :: nvert_src(:)
-    type(aero2mcphys), pointer, intent(in) :: aer2mp(:)
-    type(aero2mcphys), pointer, intent(in) :: aer2mpm(:)
-    integer, intent(in) :: mcphys_type
     integer, intent(in) :: imean
 
     integer :: imode,i
@@ -604,6 +636,34 @@ contains
           end if
        end if
     end do
+  end subroutine filltab_aer2
+
+
+
+  subroutine filltab_aero2(oneVarTable, oneVarTableSize, &
+       aer2mp, aer2mpm, mcphys_type, imean)
+
+    use io_params, only : ioutput         ! INTENT(IN)
+
+    implicit none
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
+    type(aero2mcphys), pointer, intent(in) :: aer2mp(:)
+    type(aero2mcphys), pointer, intent(in) :: aer2mpm(:)
+    integer, intent(in) :: mcphys_type
+    integer, intent(in) :: imean
+
+    integer :: imode,i
+
+    character(len=8) :: str_recycle
+    character(len=1) :: str_src_dim
+    str_recycle = ''; str_src_dim = ''
+    if (RECYCLE_TRACERS == 1 .or. ioutput == 5) then
+       str_recycle = ':recycle'
+    end if
+
+    !- Fill pointers to arrays into variable tables
+
     !-kml/srf - for microphysics activation
     if(mcphys_type == 3) then
        do i=1,size(aer2mp)
@@ -637,7 +697,7 @@ contains
        end do
     end if
 
-  end subroutine filltab_aer2
+  end subroutine filltab_aero2  
 
   !---------------------------------------------------------------
 

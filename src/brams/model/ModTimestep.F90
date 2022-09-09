@@ -405,7 +405,7 @@ contains
        !----------------------------------------
        if(AEROSOL==2) then
           call MatrixDriver(ia,iz,ja,jz,mzp,mxp,myp, oneGrid%oneBasicFields, oneGrid%oneTurbFields, &
-               oneGrid%oneMicVars, oneGrid%oneMicroFields)
+               oneGrid%oneMicVars, oneGrid%oneMicroFields, oneGrid%oneAero2McPhysFields)
        endif
 
     endif

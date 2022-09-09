@@ -30,9 +30,11 @@ module ModMatrixDriver
        aer1_g,       &
        aer1_inorg_g, &
        aer2_g,       &
-       aer2mp_g,     &
        aer_timestep
 
+  use ModAero2McPhysFields, only: &
+       Aero2McPhysFields
+  
   use mem_chem1, only: &
        CHEMISTRY,chem1_g,chem1_src_g
 
@@ -136,7 +138,7 @@ contains
   !! @todo emis_map is fixed to zero. Must be changed to real values
   !!
   subroutine MatrixDriver(ia,iz,ja,jz,m1,m2,m3, oneBasicFields, oneTurbFields, &
-       oneMicControl, oneMicroFields)
+       oneMicControl, oneMicroFields, oneAero2McPhysFields)
 
     !ngases     = 3      ! number of gas-phase species
     !nmass_spcs = 5      ! total number of mass species
@@ -155,6 +157,7 @@ contains
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     type(MicControl), pointer, intent(in) :: oneMicControl
     type(MicroFields), pointer, intent(in) :: oneMicroFields
+    type(Aero2McPhysFields), pointer, intent(in) :: oneAero2McPhysFields(:)
     
     character(LEN=20):: aer_split_method ="PARALLEL"
     !CHARACTER(LEN=20):: aer_split_method ="SYMMETRIC"
@@ -452,10 +455,10 @@ contains
           do j=ja,jz
              noc=nColumn(i,j)
              do k = 1,m1
-                aer2mp_g(1,ngrid)%kappa_eff (k,i,j)=matrixVar(noc)%aer2mp_eff(k,1)
-                aer2mp_g(1,ngrid)%diam_eff  (k,i,j)=matrixVar(noc)%aer2mp_eff(k,2)
-                aer2mp_g(1,ngrid)%numb_water(k,i,j)=matrixVar(noc)%aer2mp_eff(k,3)
-                aer2mp_g(1,ngrid)%numb_ice  (k,i,j)=matrixVar(noc)%aer2mp_eff(k,4)
+                oneAero2McPhysFields(1)%kappa_eff (k,i,j)=matrixVar(noc)%aer2mp_eff(k,1)
+                oneAero2McPhysFields(1)%diam_eff  (k,i,j)=matrixVar(noc)%aer2mp_eff(k,2)
+                oneAero2McPhysFields(1)%numb_water(k,i,j)=matrixVar(noc)%aer2mp_eff(k,3)
+                oneAero2McPhysFields(1)%numb_ice  (k,i,j)=matrixVar(noc)%aer2mp_eff(k,4)
              end do
           end do
        end do
@@ -616,6 +619,9 @@ contains
   use ModMicroFields, only: &
        MicroFields
   
+  use ModAero2McPhysFields, only: &
+       Aero2McPhysFields
+  
   implicit none
 
   private
@@ -634,7 +640,7 @@ contains
   !! @todo emis_map is fixed to zero. Must be changed to real values
   !!
   subroutine MatrixDriver(ia,iz,ja,jz,m1,m2,m3, oneBasicFields, oneTurbFields, &
-       oneMicControl, oneMicroFields)
+       oneMicControl, oneMicroFields, oneAero2McPhysFields)
 
     !ngases     = 3      ! number of gas-phase species
     !nmass_spcs = 5      ! total number of mass species
@@ -653,6 +659,7 @@ contains
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     type(MicControl), pointer, intent(in) :: oneMicControl
     type(MicroFields), pointer, intent(in) :: oneMicroFields
+    type(Aero2McPhysFields), pointer, intent(in) :: oneAero2McPhysFields(:)
 
     call fatal_error("**(MatrixDriver)** Matrix only works with AER=MATRIX and CHEM=RELACS_MX; "//&
          "Please run config and compile the code from scratch")

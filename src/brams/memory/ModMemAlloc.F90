@@ -354,10 +354,13 @@ module ModMemAlloc
   use mem_aer1, only:        &
        nullify_aer1,         & ! Subroutine
        nullify_aer2,         & !
+       nullify_aero2,         & !
        alloc_aer1,           & ! Subroutine
        alloc_aer2,           & ! Subroutine
+       alloc_aero2,           & ! Subroutine
        filltab_aer1,         & ! Subroutine
        filltab_aer2,         & ! Subroutine
+       filltab_aero2,         & ! Subroutine
        nullify_tend_aer1,    & ! Subroutine
        nullify_tend_aer2,    & ! Subroutine
        alloc_tend_aer1,      & ! Subroutine
@@ -379,8 +382,8 @@ module ModMemAlloc
        filltab_tend_aer1_inorg,    & ! Subroutine
        aer1_inorg_g,               &
        aer1m_inorg_g,              &
-       aer2mp_g,                   &
-       aer2mpm_g, &
+!!$       aer2mp_g,                   &
+!!$       aer2mpm_g, &
        define_aer1_src_zdim
 
   use mem_plume_chem1, only: &
@@ -459,6 +462,9 @@ module ModMemAlloc
        ,nullifyIAU       &
        ,allocIau
 
+  use ModAero2McphysFields, only: &
+       InsertAero2McphysFieldsAtVarTable
+  
   use parrrsw, only : &
        nbndsw
 
@@ -1271,33 +1277,29 @@ contains
              !                           nmodes,numb_alloc,on,nmzp,nmxp,nmyp)
 
              !--- allocation for aerosol to microphysics arrays
-             !--- for now only for microphysics type 3 (GT aerosol aware)
-             if(oneGrid%oneMicVars%mcphys_type == 3) &
-                  allocate(aer2mp_g(1,ngrids),aer2mpm_g(1,ngrids))
              !
              do ng=1,ngrids
 
                 !-for now, the vertical dimentions of the source array will be nz
                 aer2_src_z_dim_g(:,ng)=nmzp(ng)
 
-                call nullify_aer2(aer2_g (:,ng),nmodes,1,aer2mp_g (:,ng),&
-                     oneGrid%oneMicVars%mcphys_type)
-                call nullify_aer2(aer2m_g(:,ng),nmodes,1,aer2mpm_g(:,ng),&
-                     oneGrid%oneMicVars%mcphys_type)
+                call nullify_aer2(aer2_g(:,ng),nmodes)
 
-                call alloc_aer2(aer2_g(:,ng),aer2_src_z_dim_g(:,ng) &
-                     ,nmzp(ng),nmxp(ng),nmyp(ng),nmodes   &
-                     ,1,aer2mp_g(:,ng),oneGrid%oneMicVars%mcphys_type)
+                call alloc_aer2(aer2_g(:,ng),nmzp(ng),nmxp(ng),nmyp(ng),nmodes)
+
+                call nullify_aer2(aer2m_g(:,ng),nmodes)
 
                 if (imean == 1) then
-                   call alloc_aer2(aer2m_g(:,ng),aer2_src_z_dim_g(:,ng) &
-                        ,nmzp(ng),nmxp(ng),nmyp(ng),nmodes    &
-                        ,1,aer2mpm_g(:,ng),oneGrid%oneMicVars%mcphys_type)
+                   call alloc_aer2(aer2m_g(:,ng),nmzp(ng),nmxp(ng),nmyp(ng),nmodes)
                 endif
 
                 call filltab_aer2(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-                     aer2_g(:,ng), aer2m_g(:,ng), aer2_src_z_dim_g(:,ng), &
-                     aer2mp_g(:,ng), aer2mpm_g(:,ng), oneGrid%oneMicVars%mcphys_type, imean)
+                     aer2_g(:,ng), aer2m_g(:,ng), aer2_src_z_dim_g(:,ng), imean)
+
+                call InsertAero2McphysFieldsAtVarTable(&
+                     oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+                     oneGrid%oneAero2McphysFields, &
+                     oneGrid%oneAveAero2McphysFields, imean)
              enddo
 
              call nullify_tend_aer2(nmodes)
