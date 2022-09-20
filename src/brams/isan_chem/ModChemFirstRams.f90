@@ -81,9 +81,7 @@ module ModChemFirstRams
        nxtnest
 
   use mem_scratch, only: &
-       vctr2, &
-       vctr11, &
-       vctr12
+       vctr2
 
   implicit none
 
@@ -492,6 +490,8 @@ contains
 
     integer :: i,j,k, nmax
     real :: c1,c2,c3
+    real :: vctr11(n1)
+    real :: vctr12(n1)
 
     ztop = zmn(nnzp(1)-1,1)
     !print*,'ngrd,topt(10,10),ztop,ztn(10,ngrd)=',ngrd,topt(10,10),ztop,ztn(10,ngrd)

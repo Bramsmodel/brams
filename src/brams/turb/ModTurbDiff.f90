@@ -27,11 +27,7 @@ module ModTurbDiff
   use mem_scratch, only: &
        vctr1,    &     !INTENT(OUT)
        vctr2,    &     !INTENT(OUT)
-       vctr3,    &     !INTENT(OUT)
-       vctr4,    &     !INTENT(OUT)
-       vctr5,    &     !INTENT(OUT)
-       vctr6,    &     !INTENT(OUT)
-       vctr7           !INTENT(OUT)
+       vctr3     !INTENT(OUT)
 
   use mem_cuparm, only : &
        nnqparm       ! intent(in)
@@ -120,7 +116,10 @@ contains
     integer :: i,j,k
 
     real :: akn,ako,akp,cross,c1,c2,dtlvi
-
+    real :: vctr4(m1)
+    real :: vctr5(m1)
+    real :: vctr6(m1)
+    real :: vctr7(m1)
 
     !          compute fluxes with k's and previous strains
 
@@ -520,6 +519,10 @@ contains
     real :: c1(m2,m3)
     ! **(JP)** fim de modificacao
     real :: dtlti
+    real :: vctr4(m1)
+    real :: vctr5(m1)
+    real :: vctr6(m1)
+    real :: vctr7(m1)
 
     !          compute vertical diffusion matrix coefficients for scalars
 

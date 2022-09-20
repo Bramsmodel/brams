@@ -23,8 +23,7 @@ module ModVarfUpdate
        ngrid
 
   use mem_scratch, only: &
-       vctr1, vctr2, vctr2, vctr3, vctr4, vctr10, &
-       vctr11, vctr12, vctr13, vctr14, vctr15, vctr16
+       vctr1, vctr2, vctr2, vctr3
 
   use rconstants, only: &
        p00, cp, cpor, g
@@ -51,6 +50,14 @@ contains
     real, dimension(:,:) :: topta
 
     integer :: i,j,k
+    real :: vctr4(n1)
+    real :: vctr10(n1)
+    real :: vctr11(n1)
+    real :: vctr12(n1)
+    real :: vctr13(n1)
+    real :: vctr14(n1)
+    real :: vctr15(n1)
+    real :: vctr16(n1)
 
     ! Interpolate from sigma-z varfile vertical coords to ADAP grid
 
@@ -162,14 +169,9 @@ contains
     character (len=*), intent(in)			:: vname
     integer, intent(in) 				:: idim
 
-
-
-
-
-
     integer :: i,j,k,np,ii,jj
     real :: xxm,yym,fixxm,fiyym,topoh,rtgth
-
+    real :: vctr10(m1)
 
 
     !!print*, 'inside hi_interpInitil4', minval(vn), maxval(vn)

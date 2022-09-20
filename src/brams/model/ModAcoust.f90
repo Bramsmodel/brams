@@ -67,10 +67,7 @@ module ModAcoust
 
   use mem_scratch, only : &
        scratch, &
-       vctr11, &
-       vctr12, &
-       vctr2, &
-       vctr5
+       vctr2
 
   use ref_sounding, only : &
        u01dn, &
@@ -148,12 +145,12 @@ contains
     real, intent(out) :: amof(mzp,mxp,myp)
     real, intent(out) :: acoaa(mzp,mxp,myp)
 
-
-
     integer :: i,j,k
     real :: dt2al2,rdto2cv,dt2al2r,rdtr
     real :: acobb(mzp)
     real :: acocc(mzp)
+    real :: vctr11(mzp)
+    real :: vctr12(mzp)
 
     !acof=0.0 !LFR because acof(k+1,:,:) isn't made
     if (impl .eq. 1) then
@@ -239,6 +236,7 @@ contains
 
     real :: zmkf,c1,c2
     integer :: kf,i,j,k
+    real :: vctr5(mzp)
 
     !
 
@@ -375,6 +373,7 @@ contains
 
     real :: zmkf,c1,c2
     integer :: kf,i,j,k
+    real :: vctr5(mzp)
 
     if (nfpt /= 0 .and. distim > 0 .and. (jdim /= 0 .or. icorflg /= 0)) then
        kf = nnz(1) - nfpt

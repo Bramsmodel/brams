@@ -224,13 +224,6 @@ module ModChemistryDriver
   use parrrtm, only : &
        nbndlw
 
-  use mem_scratch, only: &
-       vctr17, &
-       vctr18
-
-
-
-
   use aer1_list, only: &
        coarse, &
        urban, &
@@ -585,6 +578,8 @@ contains
     real, dimension(m1,m2,m3) :: ap,uc,vc
     real, dimension(m2,m3) :: dxu,dxm,dyv,dym
     !character(len=*) :: vnam
+    real :: vctr17(m1)
+    real :: vctr18(m1)
 
     if (iand(ibcon,1) .gt. 0) lbw = ia - 1
     if (iand(ibcon,2) .gt. 0) lbe = iz + 1

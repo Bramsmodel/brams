@@ -32,7 +32,7 @@ module ModNestIntrp
 
   use mem_scratch, only: &
        scratch, &
-       vctr1, vctr2, vctr3, vctr4, vctr5, vctr6, vctr7, vctr8
+       vctr1, vctr2, vctr3
 
   use mem_nestb, only: &
        nbounds
@@ -60,6 +60,12 @@ contains
 
     integer :: ifm,icm,k
     real :: c1,c2
+    
+    real :: vctr4(ngend)
+    real :: vctr5(ngend)
+    real :: vctr6(ngend)
+    real :: vctr7(ngend)
+    real :: vctr8(ngend)
 
     !     Interpolate the fine mesh 1-d reference state variables.
 

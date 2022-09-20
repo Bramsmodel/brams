@@ -748,7 +748,7 @@ contains
 
     real :: dfact
     real, dimension(m1,m2,m3) :: scp,scr1,vt3dc,vt3df,vt3dg,vt3dk
-    real, dimension(*) :: vctr1,vctr2
+    real, dimension(m1) :: vctr1,vctr2
 
     dfact = .5
     do j = ja,jz

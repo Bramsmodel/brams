@@ -44,13 +44,7 @@ module ModRhhi
 
   use mem_scratch, only: &
        vctr1, &
-       vctr3, &
-       vctr4, &
-       vctr5, &
-       vctr6, &
-       vctr11, &
-       vctr12, &
-       vctr13
+       vctr3
 
   use ref_sounding, only: &
        ps, &
@@ -163,7 +157,8 @@ contains
   subroutine arrsnd
     integer :: nnns,k,kk,kkk
     real :: toffset,dir,spd,zold1,zold2,tavg,rtss,wt
-
+    
+    real :: vctr4(maxsndg)
     !     Arrange the input sounding
 
     if (ps(1) .eq. 0.) then
@@ -327,6 +322,7 @@ contains
     ! +---------------------------------------------------------------------
 
     integer :: k
+    real :: vctr4(nnzp(ngrid))
 
     if (ztn(nnzp(ngrid),ngrid) .gt. hs(nsndg)) then
        print*,' !!! Input sounding is not high enough !!!'
@@ -384,6 +380,11 @@ contains
     integer :: i,j,k
     real :: qlatu,qlonu,qlatv,qlonv,dummy
     real, dimension(nzpmax) :: p0,temp,rvls,rc
+    real :: vctr5(n1)
+    real :: vctr6(n1)
+    real :: vctr11(n1)
+    real :: vctr12(n1)
+    real :: vctr13(n1)
 
     ! +---------------------------------------------------------------------
     ! _    This routine initializes the 3-D velocity and thermodynamic

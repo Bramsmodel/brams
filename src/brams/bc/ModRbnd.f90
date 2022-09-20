@@ -43,11 +43,9 @@ module ModRbnd
        zt,     &
        naddsc
 
-  use mem_scratch, only: vctr17, &
-       vctr18, &
+  use mem_scratch, only:  &
        scratch,&
-       vctr2,  &
-       vctr5 
+       vctr2
 
   use mem_tend, only: tend       !tend%ut
 
@@ -128,7 +126,9 @@ contains
 
     integer :: i,j,k,lbw,lbe,lbs,lbn
     real :: thresh,dtlx,c1,dxr,dyr
-
+    real ::vctr17(m1)
+    real ::vctr18(m1)
+    
     character(len=*), parameter :: h="**(LatSetScalar)**"
 
     if (.not. associated(ap)) then
@@ -860,6 +860,8 @@ contains
 
     integer :: i,j,k,lbw,lbe,lbs,lbn
     real :: thresh,dtlx,c1,dxr,dyr
+    real :: vctr17(m1)
+    real :: vctr18(m1)
 
     if (iand(ibcon,1) .gt. 0) lbw = ia - 1
     if (iand(ibcon,2) .gt. 0) lbe = iz + 1
@@ -1280,6 +1282,7 @@ contains
 
     real :: zmkf,c1,c2
     integer :: kf,i,j,k
+    real :: vctr5(m1)
 
     !     This routine calculates rayleigh friction terms velocity and theta_il
 

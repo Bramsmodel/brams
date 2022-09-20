@@ -36,15 +36,9 @@ module ModTurbK
   
   use mem_scratch, only: &
        scratch,           &
-       vctr11,    &     !INTENT(INOUT)
-       vctr12,    &     !INTENT(INOUT)
-       vctr30,    &     !INTENT(INOUT)
-       vctr32,    &     !INTENT(INOUT)
-       vctr34, &
        vctr1,     &     !INTENT(INOUT)
        vctr2,     &     !INTENT(INOUT)
-       vctr3,     &     !INTENT(INOUT)
-       vctr4            !INTENT(INOUT)
+       vctr3            !INTENT(INOUT)
 
   use ModMicControl, only: &
        MicControl
@@ -211,6 +205,8 @@ contains
     real, target :: scr2(mxp*myp*mzp)
 
     character(len=*), parameter :: h="**(diffuse)**" 
+    real :: vctr34(mzp)
+
     !interface
     !   subroutine PBLforcing(ngrid, m1, m2, m3, ia, iz, ja, jz, &
     !        vt3df, scp, lsfcupar, nsc)
@@ -896,6 +892,11 @@ contains
     ! **(JP)** fatora expressoes logicas para fora dos lacos
     logical :: log1, log2, log3, log4
 
+    real :: vctr4(m1)
+    real :: vctr11(m1)
+    real :: vctr12(m1)
+    real :: vctr32(m1)
+
     !lfr: Solving a  problem with integer inside vtables
     lpw=int(lpw_R)
 
@@ -1359,6 +1360,8 @@ contains
     ! **(JP)** fatora expressoes logicas para fora dos lacos
     logical :: log1, log2, log3, log4
     integer :: lpw(m2,m3)
+    real :: vctr11(m1)
+    real :: vctr12(m1)
 
     lpw=int(lpw_R)
     !-------------------------------------------------
@@ -1571,6 +1574,7 @@ contains
     integer :: i,j,k,k2,kzi,lpw
     integer,dimension(m2,m3) :: kzi_2d
     real :: sbf, zl, wstar, ustar, h
+    real :: vctr30(m1)
 
 
     do j=ja,jz

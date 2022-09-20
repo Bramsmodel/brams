@@ -21,17 +21,7 @@ module ModTurbKE
        nstbot      !INTENT(IN)
 
   use mem_scratch, only: &
-       vctr1, &    !INTENT(OUT)
-       vctr5, &    !INTENT(OUT)
-       vctr9, &    !INTENT(OUT)
-       vctr30, &   !INTENT(OUT)
-       vctr31, &   !INTENT(OUT)
-       vctr33, &   !INTENT(OUT)
-       vctr32, &   !INTENT(OUT)
-       vctr25, &   !INTENT(OUT)
-       vctr26, &       !INTENT(OUT)
-       vctr27, &   !INTENT(OUT)
-       vctr28      !INTENT(OUT)                
+       vctr1      !INTENT(OUT)
 
   use ke_coms, only: &
        c_eps, &       !INTENT(IN)
@@ -132,11 +122,19 @@ contains
     real :: al0,al0_zil,scl,sumtkz,sumtk,tkep_k2,dzloc,dpsi2dz,scl_max
 !!$real, external :: ssum
     integer :: k,i,j,np,k2
+    real :: vctr25(m1)
+    real :: vctr27(m1)
+    real :: vctr28(m1)
+    real :: vctr30(m1)
+    real :: vctr31(m1)
+    real :: vctr32(m1)
+    real :: vctr33(m1)
 
     !lfr: Solving a  problem with integer inside vtables
     lpw=int(lpw_R)
 
     coef2= 1./(c_eps**(2./3.))
+    vctr33= 0.0
 
     !_STC.................................................................
     !STC
@@ -390,6 +388,9 @@ contains
     real :: epsp_k2,tkep_k2
     real :: coef1,coef_km_sqr
     integer, dimension(m2,m3) :: lpw
+    real :: vctr25(m1)
+    real :: vctr27(m1)
+    real :: vctr28(m1)
 
     lpw=int(lpw_R)
     coef_km_sqr = sqrt(coef_km)
@@ -542,6 +543,10 @@ contains
     integer, dimension(m2,m3)      :: lpw
 
     real :: sqrttkep,tket2,c1,sclu,scl
+    real :: vctr25(m1)
+    real :: vctr26(m1)
+    real :: vctr27(m1)
+    real :: vctr28(m1)
 
     lpw=int(lpw_R)
 
@@ -635,7 +640,12 @@ contains
     real :: a1,a2,b1,b2,c1,aux1,aux2,rf1,rf2,rf3,rf4,wght1,wght3,sumtkz,sumtk  &
          ,al0,tket2,ri,rf,shr,smr,tker,qq,ssmf,shf,sh0,ssm,aux,gm,gh,sm1,sm2  &
          ,sh1,sh2,dzloc !,ssum
-
+    real :: vctr5(m1)
+    real :: vctr9(m1)
+    real :: vctr30(m1)
+    real :: vctr31(m1)
+    real :: vctr32(m1)
+    real :: vctr33(m1)
 
     data a1,a2,b1,b2,c1/0.92,0.74,16.6,10.1,0.08/
     data aux1,aux2/0.758964199,2.58286747/
@@ -643,6 +653,7 @@ contains
 
     !lfr: Solving a  problem with integer inside vtables
     lpu=int(lpu_r);lpv=int(lpv_r);lpw=int(lpw_r)
+    vctr33= 0.0
 
     !        7 - mellor and yamada (after andre et al, 1978)
 

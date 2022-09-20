@@ -23,10 +23,7 @@ module ModRThrm
        scratch, &
        vctr1,   &
        vctr2,   &
-       vctr3,   &
-       vctr4,   &
-       vctr5,   &
-       vctr6
+       vctr3
 
   use rconstants, only: &
        cpi,  & ! INTENT(IN)
@@ -63,7 +60,9 @@ contains
     type(MicroFields), pointer, intent(in) :: oneMicroFields
 
     character(len=*), parameter :: h="**(thermo)**"
-
+    real :: vctr4(mzp)
+    real :: vctr5(mzp)
+    real :: vctr6(mzp)
     
     if (oneMicVars%level .le. 1) then
 
@@ -272,7 +271,7 @@ contains
          ,rtp(m1,m2,m3), rcp(m1,m2,m3), rrp(m1,m2,m3), rpp(m1,m2,m3),   &
          rsp(m1,m2,m3), rap(m1,m2,m3), rgp(m1,m2,m3), rhp(m1,m2,m3),    &
          q6(m1,m2,m3), q7(m1,m2,m3)
-    real , intent(inout) :: picpi(*), tair(*), til(*), rliq(*), rice(*), &
+    real , intent(inout) :: picpi(*), tair(*), til(*), rliq(m1), rice(*), &
          qhydm(*), rv(m1,m2,m3), theta(m1,m2,m3)
 
     ! Local Variables:
@@ -466,7 +465,9 @@ contains
     type(MicroFields), pointer, intent(in) :: oneMicroFields
 
     character(len=*), parameter :: h="**(theta_thp_rk)**"
-    
+    real :: vctr4(mzp) 
+    real :: vctr5(mzp) 
+    real :: vctr6(mzp) 
     
     if (trim(action).ne. "get_thetail" .and. trim(action).ne."get_theta") then
        call fatal_error(h//" unknow action at theta_thp_rk routine")

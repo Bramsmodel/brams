@@ -48,9 +48,6 @@ module ModRamsMicrophysics2M
        npatch, &
        imonth1
 
-  use mem_scratch, only: &
-       vctr9 ! INTENT(OUT)
-
   use node_mod, only :  &
        mzp,             & ! INTENT(IN)
        mxp,             & ! INTENT(IN)
@@ -11484,7 +11481,7 @@ contains
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(MicroFields), pointer, intent(in) :: oneMicroFields
     integer :: m1,m2,m3
-
+    real :: vctr9(m1)
     if (oneMicControl%level == 0) return
 
     call adj1_2M_rams60(m1,m2,m3,grid_g(ngrid)%lpw(1:m1,1),oneBasicFields%rtp(1:m1,1,1)  &

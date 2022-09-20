@@ -120,10 +120,6 @@ module ModRConv
        rhoe, &
        picon
 
-  use mem_scratch, only: &
-       vctr5, &
-       vctr6
-
 
   implicit none
 
@@ -1021,6 +1017,9 @@ contains
 
     integer :: k
     real :: tftc, tftm, tfrc, tfrm, ftres, frres
+    real :: vctr5(k2)
+    real :: vctr6(k2)
+
 
     !        Compute integrated heating and moistening tendencies
 

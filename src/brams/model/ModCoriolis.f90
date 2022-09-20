@@ -41,8 +41,7 @@ module ModCoriolis
 
   use mem_scratch, only: &
        scratch, &
-       vctr2, &
-       vctr5
+       vctr2
 
   use ref_sounding, only: &
        u01dn, &
@@ -210,6 +209,7 @@ contains
 
     integer :: i,j,k
     real :: c1
+    real :: vctr5(m1)
 
     do j=ja,jz
        do i=ia,iz
@@ -280,6 +280,7 @@ contains
 
     integer :: i,j,k
     real :: c1
+    real :: vctr5(m1)
 
     do j = ja,jz
        do i = ia,iz

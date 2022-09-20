@@ -28,9 +28,6 @@ module ModMicrophysicsMisc
        grid_g,         & ! INTENT(IN)
        ngrid             ! INTENT(IN)
 
-  use mem_scratch, only: &
-       vctr9 ! INTENT(OUT)
-
   use rconstants, only : &
        cpi, &
        alvl,             & ! INTENT(IN)
@@ -837,6 +834,7 @@ contains
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(MicControl), pointer, intent(in) :: oneMicControl
     type(MicroFields), pointer, intent(in) :: oneMicroFields
+    real :: vctr9(m1)
 
     if (oneMicControl%level == 0) return
 

@@ -185,12 +185,6 @@ module ModLeaf3
        pctlcon, &
        leaf_g
 
-  use mem_scratch, only: &
-       vctr14, &
-       vctr16, &
-       vctr18, &
-       vctr32
-
   use ModTurbFields, only: &
        TurbFields
 
@@ -209,7 +203,8 @@ module ModLeaf3
   use mem_teb_common, only: &
        tebc_g,              & !Data Type
        teb_common             !Type
-
+  
+  !use mem_scratch, only: vctr32
   implicit none
 
   private
@@ -811,7 +806,9 @@ contains
     real fswp_equiv
     !---------srf-05052006--------------------------- root profiles
 
-
+    real :: vctr14(mzg)
+    real :: vctr16(mzg)
+    real :: vctr18(mzg)
 
 
     do k = 1,mzg
@@ -2227,6 +2224,8 @@ contains
     integer :: k, nsoil, nveg, ksn
     real :: alb, vfc, fcpct, alg, rad, als, fractrans, absg, algs, emv, emgs, &
          gslong, vlong, alv
+
+     real :: vctr32(nint(sfcwater_nlev)+10)
 
     ! This routine is called by the radiation parameterization and by leaf.
     ! It computes net surface albedo plus radiative exchange between the

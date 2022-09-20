@@ -16,11 +16,7 @@ module ModDiffSclr
   use mem_scratch, only :   &
        vctr1,   &   !INTENT(INOUT)
        vctr2,   &   !INTENT(INOUT)
-       vctr3,   &   !INTENT(INOUT)
-       vctr4,   &   !INTENT(INOUT)
-       vctr5,   &   !INTENT(INOUT)
-       vctr6,   &   !INTENT(INOUT)
-       vctr7        !INTENT(INOUT)
+       vctr3   !INTENT(INOUT)
 
   implicit none
 
@@ -87,7 +83,10 @@ contains
 
     !! For optimization
     integer      :: htint_i, htint_j
-
+    real :: vctr4(m1)
+    real :: vctr5(m1)
+    real :: vctr6(m1)
+    real :: vctr7(m1)
 
     ! compute vertical diffusion matrix coefficients for scalars
 

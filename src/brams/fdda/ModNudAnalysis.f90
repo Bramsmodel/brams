@@ -96,14 +96,7 @@ module ModNudAnalysis
        vctr1, &
        vctr2, &
        vctr3, &
-       scratch, &
-       vctr4, &
-       vctr14, &
-       vctr5, &
-       vctr10, &
-       vctr11, &
-       vctr12, &
-       vctr13
+       scratch
 
   use ModEvaluation, only: &
        comunicateStatistic, &
@@ -211,6 +204,13 @@ contains
     integer :: i,j,k,iCount,v
     real :: tfact, wt_uv, wt_th, wt_pi, wt_rt
     real :: rmse(m1,5),bias(m1,5),soma(m1,5),somaQ(m1,5),centFact
+    real :: vctr4(m1)
+    real :: vctr5(m1)
+    real :: vctr10(m1)
+    real :: vctr11(m1)
+    real :: vctr12(m1)
+    real :: vctr13(m1)
+    real :: vctr14(m1)
 
     !srf - special weights for pressure and/or UV (only for operations) 
     real, dimension(m1,m2,m3) :: varwts_for_operations_only
@@ -622,7 +622,8 @@ contains
 
     integer :: i,j,k
     real :: tfact,  wt_chem
-
+    real :: vctr4(m1)
+    real :: vctr14(m1)
 
     !return
 

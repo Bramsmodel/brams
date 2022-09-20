@@ -52,40 +52,6 @@ module mem_scratch
   real, allocatable :: vctr1(:)
   real, allocatable :: vctr2(:)
   real, allocatable :: vctr3(:)
-  real, allocatable :: vctr4(:)
-  real, allocatable :: vctr5(:)
-  real, allocatable :: vctr6(:)
-  real, allocatable :: vctr7(:)
-  real, allocatable :: vctr8(:)
-  real, allocatable :: vctr9(:)
-  real, allocatable :: vctr10(:)
-  real, allocatable :: vctr11(:)
-  real, allocatable :: vctr12(:)
-  real, allocatable :: vctr13(:)
-  real, allocatable :: vctr14(:)
-  real, allocatable :: vctr15(:)
-  real, allocatable :: vctr16(:)
-  real, allocatable :: vctr17(:)
-  real, allocatable :: vctr18(:)
-  real, allocatable :: vctr19(:)
-  real, allocatable :: vctr20(:)
-  real, allocatable :: vctr21(:)
-  real, allocatable :: vctr22(:)
-  real, allocatable :: vctr23(:)
-  real, allocatable :: vctr24(:)
-  real, allocatable :: vctr25(:)
-  real, allocatable :: vctr26(:)
-  real, allocatable :: vctr27(:)
-  real, allocatable :: vctr28(:)
-  real, allocatable :: vctr29(:)
-  real, allocatable :: vctr30(:)
-  real, allocatable :: vctr31(:)
-  real, allocatable :: vctr32(:)
-  real, allocatable :: vctr33(:)
-  real, allocatable :: vctr34(:)
-  real, allocatable :: vctr35(:)
-  real, allocatable :: vctr36(:)
-  real, allocatable :: vctr37(:)
 
   !---------------------------------------------------------------
 
@@ -325,74 +291,6 @@ contains
     IF (ierr/=0) CALL fatal_error("ERROR allocating vctr2 (createVctr)")
     ALLOCATE(vctr3(maxxyz), STAT=ierr)
     IF (ierr/=0) CALL fatal_error("ERROR allocating vctr3 (createVctr)")
-    ALLOCATE(vctr4(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr4 (createVctr)")
-    ALLOCATE(vctr5(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr5 (createVctr)")
-    ALLOCATE(vctr6(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr6 (createVctr)")
-    ALLOCATE(vctr7(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr7 (createVctr)")
-    ALLOCATE(vctr8(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr8 (createVctr)")
-    ALLOCATE(vctr9(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr9 (createVctr)")
-    ALLOCATE(vctr10(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr10 (createVctr)")
-    ALLOCATE(vctr11(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr11 (createVctr)")
-    ALLOCATE(vctr12(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr12 (createVctr)")
-    ALLOCATE(vctr13(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr13 (createVctr)")
-    ALLOCATE(vctr14(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr14 (createVctr)")
-    ALLOCATE(vctr15(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr15 (createVctr)")
-    ALLOCATE(vctr16(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr16 (createVctr)")
-    ALLOCATE(vctr17(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr17 (createVctr)")
-    ALLOCATE(vctr18(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr18 (createVctr)")
-    ALLOCATE(vctr19(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr19 (createVctr)")
-    ALLOCATE(vctr20(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr20 (createVctr)")
-    ALLOCATE(vctr21(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr21 (createVctr)")
-    ALLOCATE(vctr22(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr22 (createVctr)")
-    ALLOCATE(vctr23(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr23 (createVctr)")
-    ALLOCATE(vctr24(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr24 (createVctr)")
-    ALLOCATE(vctr25(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr25 (createVctr)")
-    ALLOCATE(vctr26(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr26 (createVctr)")
-    ALLOCATE(vctr27(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr27 (createVctr)")
-    ALLOCATE(vctr28(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr28 (createVctr)")
-    ALLOCATE(vctr29(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr29 (createVctr)")
-    ALLOCATE(vctr30(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr30 (createVctr)")
-    ALLOCATE(vctr31(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr31 (createVctr)")
-    ALLOCATE(vctr32(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr32 (createVctr)")
-    ALLOCATE(vctr33(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr33 (createVctr)")
-    ALLOCATE(vctr34(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr34 (createVctr)")
-    ALLOCATE(vctr35(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr35 (createVctr)")
-    ALLOCATE(vctr36(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr36 (createVctr)")
-    ALLOCATE(vctr37(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr37 (createVctr)")
 
 !!$    ALLOCATE(ivctr(maxxyz), STAT=ierr)
 !!$    IF (ierr/=0) CALL fatal_error("ERROR allocating ivctr (createVctr)")
@@ -401,38 +299,6 @@ contains
     vctr1  = 0.
     vctr2  = 0.
     vctr3  = 0.
-    vctr4  = 0.
-    vctr5  = 0.
-    vctr6  = 0.
-    vctr7  = 0.     
-    vctr9  = 0.
-    vctr10 = 0.
-    vctr11 = 0.
-    vctr12 = 0.
-    vctr13 = 0.
-    vctr14 = 0.
-    vctr15 = 0.
-    vctr16 = 0.
-    vctr17 = 0.
-    vctr19 = 0.
-    vctr20 = 0.
-    vctr21 = 0.
-    vctr22 = 0.
-    vctr23 = 0.
-    vctr24 = 0.
-    vctr25 = 0.
-    vctr26 = 0.
-    vctr27 = 0.
-    vctr28 = 0.
-    vctr29 = 0.
-    vctr30 = 0.
-    vctr31 = 0.
-    vctr32 = 0.
-    vctr33 = 0.
-    vctr34 = 0.
-    vctr35 = 0. 
-    vctr36 = 0.
-    vctr37 = 0.
 
 
 
@@ -451,74 +317,6 @@ contains
     IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr2 (destroyVctr)")
     DEALLOCATE(vctr3, STAT=ierr)
     IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr3 (destroyVctr)")
-    DEALLOCATE(vctr4, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr4 (destroyVctr)")
-    DEALLOCATE(vctr5, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr5 (destroyVctr)")
-    DEALLOCATE(vctr6, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr6 (destroyVctr)")
-    DEALLOCATE(vctr7, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr7 (destroyVctr)")
-    DEALLOCATE(vctr8, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr8 (destroyVctr)")
-    DEALLOCATE(vctr9, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr9 (destroyVctr)")
-    DEALLOCATE(vctr10, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr10 (destroyVctr)")
-    DEALLOCATE(vctr11, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr11 (destroyVctr)")
-    DEALLOCATE(vctr12, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr12 (destroyVctr)")
-    DEALLOCATE(vctr13, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr13 (destroyVctr)")
-    DEALLOCATE(vctr14, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr14 (destroyVctr)")
-    DEALLOCATE(vctr15, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr15 (destroyVctr)")
-    DEALLOCATE(vctr16, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr16 (destroyVctr)")
-    DEALLOCATE(vctr17, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr17 (destroyVctr)")
-    DEALLOCATE(vctr18, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr18 (destroyVctr)")
-    DEALLOCATE(vctr19, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr19 (destroyVctr)")
-    DEALLOCATE(vctr20, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr20 (destroyVctr)")
-    DEALLOCATE(vctr21, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr21 (destroyVctr)")
-    DEALLOCATE(vctr22, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr22 (destroyVctr)")
-    DEALLOCATE(vctr23, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr23 (destroyVctr)")
-    DEALLOCATE(vctr24, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr24 (destroyVctr)")
-    DEALLOCATE(vctr25, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr25 (destroyVctr)")
-    DEALLOCATE(vctr26, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr26 (destroyVctr)")
-    DEALLOCATE(vctr27, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr27 (destroyVctr)")
-    DEALLOCATE(vctr28, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr28 (destroyVctr)")
-    DEALLOCATE(vctr29, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr29 (destroyVctr)")
-    DEALLOCATE(vctr30, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr30 (destroyVctr)")
-    DEALLOCATE(vctr31, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr31 (destroyVctr)")
-    DEALLOCATE(vctr32, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr32 (destroyVctr)")
-    DEALLOCATE(vctr33, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr33 (destroyVctr)")
-    DEALLOCATE(vctr34, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr34 (destroyVctr)")
-    DEALLOCATE(vctr35, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr35 (destroyVctr)")
-    DEALLOCATE(vctr36, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr36 (destroyVctr)")
-    DEALLOCATE(vctr37, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr37 (destroyVctr)")
 
   END SUBROUTINE destroyVctr
 

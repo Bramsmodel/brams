@@ -23,9 +23,7 @@ module ModAcoustAdap
 
   use mem_scratch, only: &
        vctr1,  &
-       vctr2, &
-       vctr12,  &
-       vctr11
+       vctr2
   
   use node_mod, only: &
        ia,     &
@@ -473,6 +471,8 @@ contains
     integer, dimension(m2,m3) :: lpw
     real, dimension(*) :: acobb,acocc
     integer :: ka
+    real :: vctr11(m1)
+    real :: vctr12(m1)
 
     ! +--------------------------------------------------------------------+
     ! \   Calculate coefficients for the vertical pressure gradient        \

@@ -136,10 +136,6 @@ module ModRShCuPar
        kzi,                     &   ! intent(out) ! maybe local var.?
        akvde                        ! intent(in/out)
 
-  use mem_scratch, only : &
-       vctr5,  & ! intent(in/out)
-       vctr6                        ! intent(in/out)
-
   implicit none
 
   include "constants.h"
@@ -563,6 +559,8 @@ contains
     ! Local variables
     integer :: K
     real :: TFTC, TFRC, TFTM, TFRM, FTRES, FRRES
+    real :: vctr5(m1)
+    real :: vctr6(m1)
 
 !!$  ! External Function to Sum a array
 !!$  real, external :: ssum

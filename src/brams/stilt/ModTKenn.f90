@@ -3,8 +3,8 @@ module ModTKenn
        nstbot,zm,zt
 
   use mem_scratch, only:  &
-       vctr1, vctr5, vctr9,vctr19,vctr20,vctr21,vctr22,vctr23,vctr24  &
-       ,vctr29,vctr30,vctr31,vctr32,vctr33,vctr35,vctr36,vctr37
+       vctr1 
+       
 
   use rconstants, only: &
        abslmomin,abswltlmin,cp,grav,ltscalemax,sigwmin,vonk,lturbmin &
@@ -153,6 +153,22 @@ contains
     real, parameter                                :: ustarmin=0.1
     !---------------------------------------------------------------------------------------!
     integer  , dimension(m2,m3)    :: flpu,flpv,flpw
+    real :: vctr5(m1)
+    real :: vctr9(m1)
+    real :: vctr19(m1)
+    real :: vctr20(m1)
+    real :: vctr21(m1)
+    real :: vctr22(m1)
+    real :: vctr23(m1)
+    real :: vctr24(m1)
+    real :: vctr29(m1)
+    real :: vctr30(m1)
+    real :: vctr31(m1)
+    real :: vctr32(m1)
+    real :: vctr33(m1)
+    real :: vctr35(m1)
+    real :: vctr36(m1)
+    real :: vctr37(m1)
     !---------------------------------------------------------------------------------------!
     !   Big loops on horizontal.                                                            !
     !---------------------------------------------------------------------------------------!
