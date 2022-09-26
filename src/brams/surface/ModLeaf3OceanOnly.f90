@@ -8,6 +8,9 @@
 
 module ModLeaf3OceanOnly
 
+  use ModNamelistFile, only: &
+       NamelistFile
+  
   use ModBasicFields, only: &
        BasicFields
 
@@ -46,12 +49,9 @@ module ModLeaf3OceanOnly
   use ModTurbFields, only: &
        TurbFields
 
-  use mem_radiate, only: &
-       radiate_vars, &
-       ilwrtyp, &
-       iswrtyp, &
-       radiate_g
-
+  use ModRadiateFields, only: &
+       RadiateFields
+  
   use io_params, only: &
        iupdsst, &
        ssttime1, &
@@ -157,13 +157,15 @@ contains
   !*****************************************************************************
 
   subroutine sfclyr_ocean_only(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
-       oneBasicFields, oneTurbFields)
+       oneNamelistFile, oneBasicFields, oneTurbFields, oneRadiateFields)
     implicit none
 
     !Arguments:
     integer, intent(in) :: mzp,mxp,myp,ia,iz,ja,jz,ibcon
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
+    type(RadiateFields), pointer, intent(in) :: oneRadiateFields
 
     !Local Variables
     real :: rslif
@@ -179,7 +181,7 @@ contains
 
 
     call sub_leaf3_ocean_only(mzp,mxp,myp,nzg,nzs,npatch,ia,iz,ja,jz             &
-         ,leaf_g (ng), oneBasicFields, oneTurbFields, radiate_g(ng)   &
+         ,leaf_g (ng), oneNamelistFile, oneBasicFields, oneTurbFields, oneRadiateFields   &
          ,grid_g (ng), cuparm_g(ng) &
          ,l_ths2, l_rvs2, l_pis2                   &
          ,l_dens2,l_ups2, l_vps2                   &
@@ -213,7 +215,7 @@ contains
   !*****************************************************************************
 
   subroutine sub_leaf3_ocean_only(m1,m2,m3,mzg,mzs,np,ia,iz,ja,jz  &
-       ,leaf,oneBasicFields,oneTurbFields,radiate,grid,cuparm &
+       ,leaf,oneNamelistFile,oneBasicFields,oneTurbFields,oneRadiateFields,grid,cuparm &
        ,ths2,rvs2,pis2,dens2,ups2,vps2,zts2           &
        )
 
@@ -223,9 +225,10 @@ contains
     ! Arguments:
     integer, intent(in) :: m1,m2,m3,mzg,mzs,np,ia,iz,ja,jz
     type (leaf_vars)    :: leaf
+    type (NamelistFile), pointer, intent(in) :: oneNamelistFile
     type (BasicFields), pointer, intent(in) :: oneBasicFields
     type (TurbFields)    :: oneTurbFields
-    type (radiate_vars) :: radiate
+    type (RadiateFields), pointer, intent(in) :: oneRadiateFields
     type (grid_vars)    :: grid
     type (cuparm_vars)  :: cuparm
     real, dimension(m2,m3), intent(out) :: ths2,rvs2,pis2,dens2,ups2,vps2,zts2
@@ -375,7 +378,7 @@ contains
                 ! the atmosphere.  Fill tempk array with soil and snow temperature (C) and
                 ! fracliq array with liquid fraction of water content in soil and snow.
                 ! Other snowcover properties are also computed here.
-                cosz       = radiate%cosz  (i,j)  
+                cosz       = oneRadiateFields%cosz  (i,j)  
                 patch_area = leaf%patch_area(i,j,ip) 
                 l_area     = 1.-patch_area
                 alb        = 0.
@@ -466,7 +469,7 @@ contains
        enddo
     enddo
 
-    if (ilwrtyp > 0 .or. iswrtyp > 0) then
+    if (oneNamelistFile%ilwrtyp > 0 .or. oneNamelistFile%iswrtyp > 0) then
        do j = ja,jz
           do i = ia,iz
              O_albedt (i,j) = O_albedt (i,j) * dtll_factor
@@ -479,8 +482,8 @@ contains
              if(leaf%patch_area(i,j,1) < min_ocean) cycle 
              patch_area = leaf%patch_area(i,j,1)
              l_area     = 1.-patch_area
-             radiate%albedt (i,j) = l_area*radiate%albedt (i,j)  + patch_area * O_albedt (i,j) 
-             radiate%rlongup(i,j) = l_area*radiate%rlongup(i,j)  + patch_area * O_rlongup(i,j)
+             oneRadiateFields%albedt (i,j) = l_area*oneRadiateFields%albedt (i,j)  + patch_area * O_albedt (i,j) 
+             oneRadiateFields%rlongup(i,j) = l_area*oneRadiateFields%rlongup(i,j)  + patch_area * O_rlongup(i,j)
           enddo
        enddo
     endif

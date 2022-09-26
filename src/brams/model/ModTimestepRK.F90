@@ -412,13 +412,19 @@ contains
     !  Surface layer, soil and veggie model
     !----------------------------------------
     if (isfcl<=2) then
+       call DeepCopyToRadiateFields(oneGrid%oneRadiateFields, h)
        call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
-            oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
+            oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, &
+            oneGrid%oneMicVars, oneGrid%oneMicroFields, oneGrid%oneRadiateFields)
+       call DeepCopyFromRadiateFields(oneGrid%oneRadiateFields, h)
 #ifdef JULES
     elseif (isfcl == 5) then
        if (time==0.) then
+          call DeepCopyToRadiateFields(oneGrid%oneRadiateFields, h)
           call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
-               oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
+               oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, &
+               oneGrid%oneMicVars, oneGrid%oneMicroFields, oneGrid%oneRadiateFields)
+          call DeepCopyFromRadiateFields(oneGrid%oneRadiateFields, h)
        end if
        call sfclyr_jules(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile, &
             oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicVars, &
@@ -426,8 +432,11 @@ contains
        
        !--- this combines the JULES land + LEAF ocean models.
        if (isfcl_ocean == 1) then
+          call DeepCopyToRadiateFields(oneGrid%oneRadiateFields, h)
           call sfclyr_ocean_only  (mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
-               oneGrid%oneBasicFields, oneGrid%oneTurbFields)
+               oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, &
+               oneGrid%oneRadiateFields)
+          call DeepCopyFromRadiateFields(oneGrid%oneRadiateFields, h)
        end if
 #endif
     endif

@@ -8,6 +8,9 @@
 module ModLeaf3
   !---------srf-05052006---------------------------
 
+  use ModNamelistFile, only: &
+       NamelistFile
+  
   use ModMicControl, only: &
        MicControl
   
@@ -188,12 +191,8 @@ module ModLeaf3
   use ModTurbFields, only: &
        TurbFields
 
-  use mem_radiate, only: &
-       radiate_vars, &
-       ilwrtyp, &
-       iswrtyp, &
-       radiate_g
-
+  use ModRadiateFields, only: &
+       RadiateFields
 
   use mem_teb, only: &
        teb_g,        &        !Data type
@@ -223,14 +222,17 @@ contains
 
 
 
-  subroutine sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, oneBasicFields, oneTurbFields, &
-       oneMicControl, oneMicroFields)
+  subroutine sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
+       oneNamelistFile, oneBasicFields, oneTurbFields, &
+       oneMicControl, oneMicroFields, oneRadiateFields)
     !Arguments:
     integer, intent(in) :: mzp,mxp,myp,ia,iz,ja,jz,ibcon
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     type(MicControl), pointer, intent(in) :: oneMicControl
     type(MicroFields), pointer, intent(in) :: oneMicroFields
+    type(RadiateFields), pointer, intent(in) :: oneRadiateFields
 
     !Local Variables
     real :: rslif
@@ -270,7 +272,8 @@ contains
     endif
 
     call leaf3(mzp,mxp,myp,nzg,nzs,npatch,ia,iz,ja,jz             &
-         ,leaf_g (ng), oneBasicFields, oneTurbFields, radiate_g(ng)   &
+         ,leaf_g (ng), oneNamelistFile, &
+         oneBasicFields, oneTurbFields, oneRadiateFields   &
          ,grid_g (ng), cuparm_g(ng), oneMicroFields                  &
          ,l_ths2, l_rvs2, l_pis2                   &
          ,l_dens2,l_ups2, l_vps2                   &
@@ -314,16 +317,18 @@ contains
 
   !*****************************************************************************
 
-  subroutine leaf3(m1,m2,m3,mzg,mzs,np,ia,iz,ja,jz  &
-       ,leaf,oneBasicFields,oneTurbFields,radiate,grid,cuparm,oneMicroFields     &
-       ,ths2,rvs2,pis2,dens2,ups2,vps2,zts2           &
-       ,pteb,ptebc, oneMicControl)
+  subroutine leaf3(m1,m2,m3,mzg,mzs,np,ia,iz,ja,jz,  &
+       leaf,oneNamelistFile, &
+       oneBasicFields,oneTurbFields,oneRadiateFields,grid,cuparm,oneMicroFields, &
+       ths2,rvs2,pis2,dens2,ups2,vps2,zts2,  &
+       pteb,ptebc, oneMicControl)
     ! Arguments:
     integer, intent(in) :: m1,m2,m3,mzg,mzs,np,ia,iz,ja,jz
     type (leaf_vars)    :: leaf
-    type (BasicFields), pointer, intent(in)   :: oneBasicFields
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
+    type (BasicFields), pointer, intent(in) :: oneBasicFields
     type (TurbFields)    :: oneTurbFields
-    type (radiate_vars) :: radiate
+    type (RadiateFields) :: oneRadiateFields
     type (grid_vars)    :: grid
     type (cuparm_vars)  :: cuparm
     type (MicroFields)   :: oneMicroFields
@@ -435,9 +440,9 @@ contains
           ! Zero out albedo, upward surface longwave, and momentum, heat, and moisture
           ! flux arrays before summing over patches
 
-          if (ilwrtyp > 0 .or. iswrtyp > 0) then
-             radiate%albedt(i,j) = 0.
-             radiate%rlongup(i,j) = 0.
+          if (oneNamelistFile%ilwrtyp > 0 .or. oneNamelistFile%iswrtyp > 0) then
+             oneRadiateFields%albedt(i,j) = 0.
+             oneRadiateFields%rlongup(i,j) = 0.
           endif
 
           oneTurbFields%sflux_u(i,j) = 0.
@@ -480,7 +485,7 @@ contains
                 ! fracliq array with liquid fraction of water content in soil and snow.
                 ! Other snowcover properties are also computed here.
 
-                if (iswrtyp > 0 .or. ilwrtyp > 0) then
+                if (oneNamelistFile%iswrtyp > 0 .or. oneNamelistFile%ilwrtyp > 0) then
 
                    if (ip == 1 .or. leaf%patch_area(i,j,ip) >= .009) then
 
@@ -502,9 +507,9 @@ contains
                               leaf%veg_fracarea(i,j,ip),                        &
                               leaf%veg_albedo(i,j,ip),                          &
                               leaf%sfcwater_nlev(i,j,ip),                       &
-                              radiate%rshort(i,j), radiate%rlong(i,j),          &
-                              radiate%albedt(i,j), radiate%rlongup(i,j),        &
-                              radiate%cosz(i,j),                                &
+                              oneRadiateFields%rshort(i,j), oneRadiateFields%rlong(i,j),          &
+                              oneRadiateFields%albedt(i,j), oneRadiateFields%rlongup(i,j),        &
+                              oneRadiateFields%cosz(i,j),                                &
                                 ! For TEB
                               G_URBAN, EMIS_TOWN, ALB_TOWN, TS_TOWN             &
                                 !
@@ -522,9 +527,9 @@ contains
                               leaf%veg_fracarea(i,j,ip),                        &
                               leaf%veg_albedo(i,j,ip),                          &
                               leaf%sfcwater_nlev(i,j,ip),                       &
-                              radiate%rshort(i,j), radiate%rlong(i,j),          &
-                              radiate%albedt(i,j), radiate%rlongup(i,j),        &
-                              radiate%cosz(i,j)                                 &
+                              oneRadiateFields%rshort(i,j), oneRadiateFields%rlong(i,j),          &
+                              oneRadiateFields%albedt(i,j), oneRadiateFields%rlongup(i,j),        &
+                              oneRadiateFields%cosz(i,j)                                 &
                               )
                       endif
 
@@ -631,8 +636,8 @@ contains
                          endif
 
                          call LEAF3_TEB_INTERFACE(ISTP,DTLT,DTLL,          &
-                              radiate%COSZ(i,j), ZTS,                      &
-                              radiate%rlong(i,j), radiate%rshort(i,j),     &
+                              oneRadiateFields%COSZ(i,j), ZTS,                      &
+                              oneRadiateFields%rlong(i,j), oneRadiateFields%rshort(i,j),     &
                               psup2, airt, ups, vps, oneBasicFields%rv(2,i,j),      &
                               pcpgl/dtlt, pteb%fuso(i,j),                  &
                               pteb%T_CANYON(i,j), pteb%R_CANYON(i,j),      &
@@ -703,8 +708,8 @@ contains
                            leaf%veg_ndvip(i,j,ip),         &
                            leaf%veg_ndvic(i,j,ip),         &
                            leaf%veg_ndvif(i,j,ip),         &
-                           radiate%rshort(i,j),            &
-                           radiate%cosz(i,j),              &
+                           oneRadiateFields%rshort(i,j),            &
+                           oneRadiateFields%cosz(i,j),              &
                            ip,i,j                          )
 
                    endif
@@ -729,11 +734,11 @@ contains
        enddo
     enddo
     !call dumpVarAllLatLonk(oneTurbFields%sflux_w,'Lsflux_w',683,0,0,ia-1,iz+1,ja-1,jz+1,1,1,0.0,0.0) !
-    if (ilwrtyp > 0 .or. iswrtyp > 0) then
+    if (oneNamelistFile%ilwrtyp > 0 .or. oneNamelistFile%iswrtyp > 0) then
        do j = ja,jz
           do i = ia,iz
-             radiate%albedt (i,j) = radiate%albedt (i,j) * dtll_factor
-             radiate%rlongup(i,j) = radiate%rlongup(i,j) * dtll_factor
+             oneRadiateFields%albedt (i,j) = oneRadiateFields%albedt (i,j) * dtll_factor
+             oneRadiateFields%rlongup(i,j) = oneRadiateFields%rlongup(i,j) * dtll_factor
           enddo
        enddo
     endif
