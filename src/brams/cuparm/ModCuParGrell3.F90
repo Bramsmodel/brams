@@ -8,11 +8,9 @@ module ModCuParGrell3
   use ModChemConvTransp, only: &
        trans_conv_mflx_GF
   
-  use mem_radiate, only: &
-       ilwrtyp, &
-       iswrtyp, &
-       radiate_g
-
+  use ModRadiateFields, only: &
+       RadiateFields
+  
   use ModGrid, only: &
        Grid
 
@@ -23,7 +21,7 @@ module ModCuParGrell3
        prep_convflx_to_stilt
 
   use ModNamelistFile, only: &
-       namelistFile
+       NamelistFile
 
   use ModMessageSet, only: &
        PostSendRecvMsgs,    &
@@ -763,7 +761,7 @@ contains
           if(g3d_spread == 0 )cugd_avedx=1
           if(g3d_spread == 1 )cugd_avedx=3
 
-          if(ilwrtyp==4 .or. iswrtyp==4) then
+          if(oneGrid%oneNamelistFile%ilwrtyp==4 .or. oneGrid%oneNamelistFile%iswrtyp==4) then
              aot500(:,:)=carma(ngrid)%aot(:,:,11)
           else
              aot500(:,:)=0.0
@@ -811,7 +809,7 @@ contains
                ,grid_g(ngrid)%topt              &
                ,leaf_g(ngrid)%patch_area        &
                ,npatch                          &
-               ,radiate_g(ngrid)%rshort         &
+               ,oneGrid%oneRadiateFields%rshort         &
                
                ,cugd_avedx&
                ,imomentum          &
@@ -890,7 +888,7 @@ contains
           !- no lateral spreading
           cugd_avedx=1
 
-          if(ilwrtyp==4 .or. iswrtyp==4) then
+          if(oneGrid%oneNamelistFile%ilwrtyp==4 .or. oneGrid%oneNamelistFile%iswrtyp==4) then
              aot500(:,:)=carma(ngrid)%aot(:,:,11)
           else
              aot500(:,:)=0.0
@@ -944,7 +942,7 @@ contains
                ,grid_g(ngrid)%topt             & !2d ok
                ,leaf_g(ngrid)%patch_area       & !3d *** Borda
                ,npatch                         & !
-               ,radiate_g(ngrid)%rshort        & !2d ok
+               ,oneGrid%oneRadiateFields%rshort        & !2d ok
                ,cugd_avedx                     & !
                ,imomentum                      & !
                ,ensdim_g3d                     & !
@@ -1016,7 +1014,7 @@ contains
           !- no lateral spreading
           cugd_avedx=1
 
-          if(ilwrtyp==4 .or. iswrtyp==4) then
+          if(oneGrid%oneNamelistFile%ilwrtyp==4 .or. oneGrid%oneNamelistFile%iswrtyp==4) then
              aot500(:,:)=carma(ngrid)%aot(:,:,11)
           else
              aot500(:,:)=0.0
@@ -1078,7 +1076,7 @@ contains
                ,grid_g(ngrid)%topt              &
                ,leaf_g(ngrid)%patch_area        &
                ,npatch                          &
-               ,radiate_g(ngrid)%rshort         &
+               ,oneGrid%oneRadiateFields%rshort         &
                ,cugd_avedx        &
                ,imomentum            &
                ,ensdim_g3d,maxiens,maxens_g3d,maxens2_g3d,maxens3_g3d,icoic      &
@@ -1218,7 +1216,7 @@ contains
                    vp     (k,i,j) = oneGrid%oneBasicFields%vp(kr,i,j) !m/s
                    wp     (k,i,j) = oneGrid%oneBasicFields%wp(kr,i,j)*(-g*oneGrid%oneBasicFields%dn0(kr,i,j)) ! omega Pa/s
 
-                   gsf_t (k,i,j) = (cuforc_g   (ngrid)%lsfth(kr,i,j) + radiate_g(ngrid)%fthrd(kr,i,j))* theta2temp ! Adv+Rad, K/s
+                   gsf_t (k,i,j) = (cuforc_g   (ngrid)%lsfth(kr,i,j) + oneGrid%oneRadiateFields%fthrd(kr,i,j))* theta2temp ! Adv+Rad, K/s
                    gsf_q (k,i,j) =  cuforc_g   (ngrid)%lsfrt(kr,i,j)              !kg/kg/s  Adv only
                    sgsf_t (k,i,j) =  cuforc_sh_g(ngrid)%lsfth(kr,i,j) * theta2temp !K/s     PBL only 
                    sgsf_q (k,i,j) =  cuforc_sh_g(ngrid)%lsfrt(kr,i,j)              !kg/kg/s PBL only 
@@ -1258,7 +1256,7 @@ contains
              enddo
           enddo
 
-          if(ilwrtyp==4 .or. iswrtyp==4) then
+          if(oneGrid%oneNamelistFile%ilwrtyp==4 .or. oneGrid%oneNamelistFile%iswrtyp==4) then
              aot500(:,:)=carma(ngrid)%aot(:,:,11)
           else
              aot500(:,:)=0.0
@@ -1433,7 +1431,7 @@ contains
           endif
 
           !--- output for RRTM/CARMA and convective transport
-          if((ilwrtyp>0 .or. iswrtyp>0) .or. chemistry >= 0) then
+          if((oneGrid%oneNamelistFile%ilwrtyp>0 .or. oneGrid%oneNamelistFile%iswrtyp>0) .or. chemistry >= 0) then
              do j=1,myp
                 do i=1,mxp
                    if(do_this_column(i,j)==0) cycle
@@ -2320,10 +2318,13 @@ contains
   end subroutine mcphysics3
 
   !------------------------------------------------------------------------
-  subroutine prepare_lsf(nnqparm,nnshcu,iwork, oneBasicFields)
+  subroutine prepare_lsf(nnqparm,nnshcu,iwork, &
+       oneNamelistFile, oneBasicFields, oneRadiateFields)
     character(len=3) :: forcing
     integer,intent(IN) :: nnqparm,nnshcu,iwork
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(RadiateFields), pointer, intent(in) :: oneRadiateFields
 
     !- scratchs (local arrays)
     real :: vt3da(mzp,mxp,myp)
@@ -2353,8 +2354,8 @@ contains
        if(iwork.eq.1) then
 
           !----------- include radiation for theta
-          if(ilwrtyp + iswrtyp > 0  .and. nnqparm /= 8 ) then
-             cuforc_g(ngrid)%lsfth(1:mzp,1:mxp,1:myp)= radiate_g(ngrid)%fthrd(1:mzp,1:mxp,1:myp)
+          if(oneNamelistFile%ilwrtyp + oneNamelistFile%iswrtyp > 0  .and. nnqparm /= 8 ) then
+             cuforc_g(ngrid)%lsfth(1:mzp,1:mxp,1:myp)= oneRadiateFields%fthrd(1:mzp,1:mxp,1:myp)
           else
              cuforc_g(ngrid)%lsfth(1:mzp,1:mxp,1:myp)= 0.
           endif

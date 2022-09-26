@@ -112,10 +112,6 @@ module ModRConvGrellCatt
        grell_g, &
        grell_g_sh
 
-  use mem_radiate, only: &
-       ISWRTYP, &
-       ILWRTYP ! Intent(in)
-
   use ccatt_start, only: &
        CCATT           ! intent(in)
 
@@ -148,6 +144,9 @@ contains
 
     integer,parameter :: do_cupar_mcphys_coupling = 1 ! direct link cupar-microphysics
     ! =0 , no coupling
+
+    character(len=*), parameter :: h="**(cuparm_grell_catt)**"
+    
     !------------------------ deep convection --------------------------------------------
     if(iens == 1) then 
        !
@@ -164,7 +163,10 @@ contains
 
           iruncon=1
 
-          if( (ISWRTYP /= 4 .or. ILWRTYP /= 4) .and. AUTOCONV == 2 )  stop ' berry formulation needs carma radiation'
+          if( (oneGrid%oneNamelistFile%iswrtyp /= 4 .or. oneGrid%oneNamelistFile%ilwrtyp /= 4) &
+               .and. AUTOCONV == 2 )  then
+             call fatal_error(h//' berry formulation needs carma radiation')
+          end if
 
           cuparm_g(ngrid)%thsrc=0.
           cuparm_g(ngrid)%rtsrc=0.

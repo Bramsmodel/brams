@@ -533,7 +533,10 @@ contains
     !- large and subgrid scale forcing for shallow and deep cumulus
     !!1  IF(  NNQPARM(ngrid) >=2 .OR. NNSHCU(ngrid)>=2 ) CALL prepare_lsf_OLD(NNQPARM(ngrid), NNSHCU(ngrid),4)
     if( NNQPARM(ngrid) >=2 .or. NNSHCU(ngrid)>=2 ) then
-       call prepare_lsf(NNQPARM(ngrid), NNSHCU(ngrid),1, oneGrid%oneBasicFields)
+       call DeepCopyToRadiateFields(oneGrid%oneRadiateFields, h)
+       call prepare_lsf(NNQPARM(ngrid), NNSHCU(ngrid),1, &
+            oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneRadiateFields)
+       call DeepCopyFromRadiateFields(oneGrid%oneRadiateFields, h)
     end if
 
     !-   Cumulus parameterization options 2->6:
