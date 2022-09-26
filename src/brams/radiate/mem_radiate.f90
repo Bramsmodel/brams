@@ -12,6 +12,9 @@ module mem_radiate
 
   use ModNamelistFile, only: namelistFile
 
+  use ModRadiateFields, only: &
+       RadiateFields
+  
   type radiate_vars
      ! Variables to be dimensioned by (nzp,nxp,nyp)
      real, pointer, contiguous :: fthrd(:,:,:) => null()
@@ -42,6 +45,8 @@ module mem_radiate
   integer :: ncall_i !Indica primeira chamada
   real    :: prsnz,prsnzp !Calculadas na primeira chamada
 
+  character(len=128), private :: lastTo=""
+  character(len=128), private :: lastFrom=""
 contains
 
   subroutine alloc_radiate(radiate,n1,n2,n3,ng)
@@ -296,4 +301,58 @@ contains
     radfrq = oneNamelistFile%radfrq
     radtun = oneNamelistFile%radtun
   end subroutine StoreNamelistFileAtMem_radiate
+
+
+
+
+  subroutine DeepCopyToRadiateFields(oneRadiateFields, name)
+    type(RadiateFields), pointer, intent(in) :: oneRadiateFields
+    character(len=*), intent(in) :: name
+
+    character(len=*), parameter :: h="**(DeepCopyToRadiateFields)**"
+
+    if (lastTo /= "") then
+       call fatal_error(h//" wrong order; previously invoked by "//&
+            trim(adjustl(lastTo))//" and now invoked by "//&
+            trim(adjustl(name)))
+    end if
+
+    lastTo=name
+    lastFrom=""
+    
+    oneRadiateFields%fthrd = radiate_g(1)%fthrd
+    oneRadiateFields%cloud_fraction = radiate_g(1)%cloud_fraction
+    oneRadiateFields%rshort = radiate_g(1)%rshort
+    oneRadiateFields%rlong = radiate_g(1)%rlong
+    oneRadiateFields%rlongup = radiate_g(1)%rlongup
+    oneRadiateFields%albedt = radiate_g(1)%albedt
+    oneRadiateFields%cosz = radiate_g(1)%cosz
+  end subroutine DeepCopyToRadiateFields
+
+
+
+
+  subroutine DeepCopyFromRadiateFields(oneRadiateFields, name)
+    type(RadiateFields), pointer, intent(in) :: oneRadiateFields
+    character(len=*), intent(in) :: name
+
+    character(len=*), parameter :: h="**(DeepCopyFromRadiateFields)**"
+
+    if (lastFrom /= "") then
+       call fatal_error(h//" wrong order; previously invoked by "//&
+            trim(adjustl(lastFrom))//" and now invoked by "//&
+            trim(adjustl(name)))
+    end if
+
+    lastFrom=name
+    lastTo=""
+    
+    radiate_g(1)%fthrd = oneRadiateFields%fthrd
+    radiate_g(1)%cloud_fraction = oneRadiateFields%cloud_fraction
+    radiate_g(1)%rshort = oneRadiateFields%rshort
+    radiate_g(1)%rlong = oneRadiateFields%rlong
+    radiate_g(1)%rlongup = oneRadiateFields%rlongup
+    radiate_g(1)%albedt = oneRadiateFields%albedt
+    radiate_g(1)%cosz = oneRadiateFields%cosz
+  end subroutine DeepCopyFromRadiateFields  
 end module mem_radiate

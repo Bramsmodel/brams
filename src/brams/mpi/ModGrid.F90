@@ -115,6 +115,13 @@ module ModGrid
        CreateEmptyScalarFields, &
        DestroyScalarFields, &
        DumpScalarFields
+  
+  use ModRadiateFields, only: &
+       RadiateFields, &
+       CreateRadiateFields, &
+       CreateEmptyRadiateFields, &
+       DestroyRadiateFields, &
+       DumpRadiateFields
 
   use meteogramType, only: &
        PolygonContainer
@@ -238,6 +245,9 @@ module ModGrid
 
      type(Aero2McphysFields), pointer, contiguous :: oneAero2McphysFields(:) => null()
      type(Aero2McphysFields), pointer, contiguous :: oneAveAero2McphysFields(:) => null()
+
+     type(RadiateFields), pointer :: oneRadiateFields => null()
+     type(RadiateFields), pointer :: oneAveRadiateFields => null()
      
      type(NeighbourNodes), pointer :: oneNeighbourNodes => null()
      ! oneNeighbourNodes: list of BRAMS process numbers that are neighbours
@@ -642,6 +652,23 @@ contains
        end if
     end if
     
+    ! this node RadiateFields
+
+    oneGrid%oneRadiateFields => CreateRadiateFields(&
+         oneGrid%oneNodeDimensions, &
+         oneGrid%oneNamelistFile)
+    if (createAve) then
+       oneGrid%oneAveRadiateFields => CreateRadiateFields(&
+            oneGrid%oneNodeDimensions, &
+            oneGrid%oneNamelistFile)
+    else
+       ! oneAveRadiateFields is created with null components
+       oneGrid%oneAveRadiateFields => CreateEmptyRadiateFields(&
+            oneGrid%oneNamelistFile)
+    end if
+
+
+       
     if (dumpLocal) then
        call MsgDump(h//" dumping OneGrid at the end of CreateGrid")
        call DumpGrid(OneGrid)
@@ -832,6 +859,8 @@ contains
        call DestroyScalarFields(oneGrid%oneAveScalarFields)
        call DestroyAero2McphysFields(oneGrid%oneAero2McphysFields)
        call DestroyAero2McphysFields(oneGrid%oneAveAero2McphysFields)
+       call DestroyRadiateFields(oneGrid%oneRadiateFields)
+       call DestroyRadiateFields(oneGrid%oneAveRadiateFields)
        call DestroyAcousticMessageSet(&
             oneGrid%AcouSendU, oneGrid%AcouRecvU, &
             oneGrid%AcouSendV, oneGrid%AcouRecvV, &
@@ -1039,6 +1068,8 @@ contains
     call DumpScalarFields(oneGrid%oneAveScalarFields, "oneGrid%oneAveScalarFields")
     call DumpAero2McphysFields(oneGrid%oneAero2McphysFields, "oneGrid%oneAero2McphysFields")
     call DumpAero2McphysFields(oneGrid%oneAveAero2McphysFields, "oneGrid%oneAveAero2McphysFields")
+    call DumpRadiateFields(oneGrid%oneRadiateFields, "oneGrid%oneRadiateFields")
+    call DumpRadiateFields(oneGrid%oneAveRadiateFields, "oneGrid%oneAveRadiateFields")
     call MsgDump(h//" finishes")
   end subroutine DumpGrid
 end module ModGrid
