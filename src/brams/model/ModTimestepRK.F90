@@ -235,7 +235,10 @@ module ModTimestepRK
        imassflx,       &  ! (IN)
        stilt_g            ! %dnp (IN)
 
-  use mem_radiate, only: radiate_g
+  use mem_radiate, only: &
+       radiate_g, &
+       DeepCopyToRadiateFields, &
+       DeepCopyFromRadiateFields
 
   use chem_sources, only :     &
        alloc_emiss_cycle,      &  ! Subroutine
@@ -570,6 +573,7 @@ contains
     end if
     !---------------------------------------------------
 
+    call DeepCopyToRadiateFields(oneGrid%oneRadiateFields, h)
     if (TEB_SPM==1) then
        ! Update urban emissions
        !----------------------------------------
@@ -581,9 +585,11 @@ contains
        !----------------------------------------
        if (ichemi==1) then
           call ozone(mzp, mxp, myp, ia, iz, ja, jz, ngrid, dtlt, &
-               oneGrid%oneBasicFields, oneGrid%oneGaspartFields)
+               oneGrid%oneBasicFields, oneGrid%oneGaspartFields, &
+               oneGrid%oneRadiateFields)
        endif
     endif
+    call DeepCopyFromRadiateFields(oneGrid%oneRadiateFields, h)
 
 !!$    call SynchronizedTimeStamp(TS_PHYSICS) ! Exper1.2, 2021_12
 

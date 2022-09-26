@@ -66,6 +66,10 @@ contains
 
     if (oneNamelistFile%ilwrtyp + oneNamelistFile%iswrtyp > 0)  then
 
+       mzp=oneNodeDimensions%mzp
+       mxp=oneNodeDimensions%mxp
+       myp=oneNodeDimensions%myp
+       
        allocate (res, stat=ierr)
        if (ierr /= 0) then
           write(str(1),"(i8)") ierr
@@ -294,6 +298,10 @@ contains
 
     if (associated(oneRadiateFields)) then
 
+       if (.not. associated(oneAveRadiateFields)) then
+          call fatal_error(h//" oneAveRadiateFields not associated")
+       end if
+       
        ! Fill pointers to arrays into variable tables
 
        if (associated(oneRadiateFields%cloud_fraction))  then

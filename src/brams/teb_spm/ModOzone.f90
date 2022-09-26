@@ -16,8 +16,8 @@ module ModOzone
   use ModGaspartFields, only: &
        GaspartFields
 
-  use mem_radiate, only: &
-       radiate_g
+  use ModRadiateFields, only: &
+       RadiateFields
 
   use rconstants, only: &
        cpi, &
@@ -69,12 +69,13 @@ contains
 
 
   subroutine ozone(mzp, mxp, myp, ia, iz, ja, jz, ng, deltat, &
-       oneBasicFields, oneGaspartFields)
+       oneBasicFields, oneGaspartFields, oneRadiateFields)
     ! Arguments:
     integer, intent(in) :: mzp, mxp, myp, ia, iz, ja, jz, ng
     real, intent(in)    :: deltat
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(GaspartFields), pointer, intent(in) :: oneGaspartFields
+    type(RadiateFields), pointer, intent(in) :: oneRadiateFields
 
     call chemistry (mzp, mxp, myp, ia, iz, ja, jz,              &
          oneGaspartFields%pno,   oneGaspartFields%pno2, &
@@ -87,7 +88,7 @@ contains
          oneBasicFields%theta,   oneBasicFields%dn0,    &
          oneBasicFields%pi0,     oneBasicFields%pp,     &
          oneBasicFields%rv,                                 &
-         radiate_g(ng)%cosz,   &
+         oneRadiateFields%cosz,   &
          grid_g(ng)%rtgt,       grid_g(ng)%topma ,    &
          deltat, cpi, cpor, p00, zt,                            &
          oneGaspartFields%pnot,      oneGaspartFields%pno2t,    &
