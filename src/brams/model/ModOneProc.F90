@@ -893,7 +893,7 @@ contains
 
     ! Additional checks, mainly for nesting
 
-    call opspec2()
+    call opspec2(oneGrid%oneNamelistFile)
 
     ! decomp_node just copy grid variables to node_mod;
     ! does not work with more than one grid;

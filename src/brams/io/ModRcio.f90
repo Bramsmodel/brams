@@ -114,12 +114,6 @@ module ModRcio
        dthcon, &
        slz
 
-  use mem_radiate, only: &
-       lonrad, &
-       ilwrtyp, &
-       iswrtyp, &
-       radfrq
-
   use ModMicControl, only: &
        MicControl
 
@@ -628,7 +622,7 @@ contains
     ie=cio(iun,irw,'jdim',jdim)
     ie=cio(iun,irw,'iadvl',iadvl)
     ie=cio(iun,irw,'iadvf',iadvf)
-    ie=cio(iun,irw,'lonrad',lonrad)
+    ie=cio(iun,irw,'lonrad',oneNamelistFile%lonrad)
     ie=cio(iun,irw,'lsflg',lsflg)
     ie=cio(iun,irw,'ibnd',ibnd)
     ie=cio(iun,irw,'jbnd',jbnd)
@@ -640,8 +634,8 @@ contains
     ie=cio(iun,irw,'imassflx',imassflx)
     !ML]
     !--(DMK-CCATT-END)-----------------------------------------------------
-    ie=cio(iun,irw,'ilwrtyp',ilwrtyp)
-    ie=cio(iun,irw,'iswrtyp',iswrtyp)
+    ie=cio(iun,irw,'ilwrtyp',oneNamelistFile%ilwrtyp)
+    ie=cio(iun,irw,'iswrtyp',oneNamelistFile%iswrtyp)
     ie=cio(iun,irw,'iref',iref)
     ie=cio(iun,irw,'jref',jref)
     ie=cio(iun,irw,'ihtran',ihtran)
@@ -673,7 +667,7 @@ contains
     ie=cio(iun,irw,'wcldbs',wcldbs)
     ie=cio(iun,irw,'drtcon',drtcon)
     ie=cio(iun,irw,'rmin',rmin)
-    ie=cio(iun,irw,'radfrq',radfrq)
+    ie=cio(iun,irw,'radfrq',oneNamelistFile%radfrq)
     ie=cio(iun,irw,'distim',distim)
     ie=cio(iun,irw,'seatmp',seatmp)
     ie=cio(iun,irw,'confrq',confrq)

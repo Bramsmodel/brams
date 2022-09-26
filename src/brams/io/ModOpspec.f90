@@ -84,10 +84,6 @@ module ModOpspec
        vwaittot, &
        vwait1
 
-  use mem_radiate, only: &
-       ISWRTYP, &
-       ILWRTYP ! Intent(in)
-
   use mem_globrad, only: &
        raddatfn ! Intent(in)
 
@@ -593,7 +589,8 @@ contains
 
   ! ************************************************************************
 
-  subroutine opspec2
+  subroutine opspec2(oneNamelistFile)
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
 
     ! check that fine mesh is a valid subset of its coarser mesh.
     !   and that top and bottom boundary flags are set correctly.
@@ -757,7 +754,7 @@ contains
     enddo
 
     ! Checking problems with CARMA Radiation - BRAMS 4
-    if (ISWRTYP==4 .or. ILWRTYP==4) then
+    if (oneNamelistFile%iswrtyp==4 .or. oneNamelistFile%ilwrtyp==4) then
        if(trim(raddatfn)=='') then
           ifaterr=ifaterr+1
           print *,'FATAL ERROR: rad data file name not set (empty).'
@@ -853,13 +850,13 @@ contains
     ! check that moisture is turned on if radiation is used.
     !   (severity - f)
 
-    if(ilwrtyp+iswrtyp.gt.0.and.oneMicControl%level.eq.0)then
+    if(oneNamelistFile%ilwrtyp+oneNamelistFile%iswrtyp.gt.0.and.oneMicControl%level.eq.0)then
        print*,' fatal  - radiation scheme must be run with moisture.'
        ifaterr=ifaterr+1
     endif
 
-    if(ilwrtyp==1 .or. ilwrtyp==2 .or. ilwrtyp==3 .or. ilwrtyp==5 .or. &
-         iswrtyp==1 .or. iswrtyp==2 .or. iswrtyp==3 .or. iswrtyp==5 ) then
+    if(oneNamelistFile%ilwrtyp==1 .or. oneNamelistFile%ilwrtyp==2 .or. oneNamelistFile%ilwrtyp==3 .or. oneNamelistFile%ilwrtyp==5 .or. &
+         oneNamelistFile%iswrtyp==1 .or. oneNamelistFile%iswrtyp==2 .or. oneNamelistFile%iswrtyp==3 .or. oneNamelistFile%iswrtyp==5 ) then
        print*,' fatal  - radiation schemes 1,2,3 and 5 are not allowed'
        print*,' fatal  - BRAMS 5.2+ allows only 4 (CARMA) or 6 (RRTM)'
        ifaterr=ifaterr+1
@@ -1095,7 +1092,7 @@ contains
     !   that the radiation be turned on. (severity - f )
 
     do ngr=1,ngrids
-       if(isfcl.gt.0.and.ilwrtyp+iswrtyp.eq.0)then
+       if(isfcl.gt.0.and.oneNamelistFile%ilwrtyp+oneNamelistFile%iswrtyp.eq.0)then
           print*,' fatal  - radiation scheme must be run with soil',  &
                ' model.'
           ifaterr=ifaterr+1
@@ -1291,11 +1288,11 @@ contains
        !     IFATERR=IFATERR+1
        !  endif
        if(CHEMISTRY > 0) then
-          if( (ilwrtyp .ne. 4 .or. iswrtyp .ne. 4) .and. trim(PhotojMethod) == 'FAST-JX')then
+          if( (oneNamelistFile%ilwrtyp .ne. 4 .or. oneNamelistFile%iswrtyp .ne. 4) .and. trim(PhotojMethod) == 'FAST-JX')then
              print*,' FATAL  -  CARMA radiation scheme must be run with FAST-JX WHEN CHEMISTRY  IS ON.'
              IFATERR=IFATERR+1
           endif
-          if (ilwrtyp == 6 .or. iswrtyp == 6) then
+          if (oneNamelistFile%ilwrtyp == 6 .or. oneNamelistFile%iswrtyp == 6) then
              if(trim(PhotojMethod) /= 'FAST-TUV' .and. trim(PhotojMethod) /= 'LUT' ) then
                 print*,' FATAL  -  CARMA/RRTM radiation schemes must be run with FAST-TUV WHEN CHEMISTRY  IS ON.'
                 IFATERR=IFATERR+1
@@ -1374,18 +1371,8 @@ contains
     end do
     !MLO]
 
-    !--(DMK-CCATT-END)-----------------------------------------------------
-    !  if (ISWRTYP==4 .or. ILWRTYP==4) then
-    !       if( (nnqparm(ng) /= 5 .and.&
-    !    nnqparm(ng) /= 6 .and.&
-    !    nnqparm(ng) /= 2) )    THEN
-    !          ifaterr=ifaterr+1
-    !          print *,'FATAL ERROR: CARMA radiation requires NNQPARM= 2, 5 or 6 *'
-    !          print *, "Program will stop."
-    !    endif
-    !  endif
     do ng=1,ngrids
-       if (ISWRTYP==6 .or. ILWRTYP==6) then
+       if (oneNamelistFile%iswrtyp==6 .or. oneNamelistFile%ilwrtyp==6) then
           if( oneMicControl%mcphys_type <= 1 .and. oneMicControl%icloud < 5 )    then
              ifaterr=ifaterr+1
              print *,'FATAL ERROR: RRTM radiation requires ICLOUD >=5'
