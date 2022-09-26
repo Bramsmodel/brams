@@ -21,6 +21,9 @@ module ModMicThompsonDriver
        cpi4, &
        cp253i
 
+  use ModNamelistFile, only: &
+       NamelistFile
+  
   use ModBasicFields, only : &
        BasicFields
 
@@ -65,10 +68,6 @@ module ModMicThompsonDriver
   use io_params, only: &
        frqanl !INTENT(IN)
 
-  use mem_radiate, only: &
-       ilwrtyp, &
-       iswrtyp 
-
   use mem_leaf, only: &
        leaf_g
 
@@ -83,7 +82,8 @@ contains
 
 
 
-  subroutine micro_thompson(oneBasicFields, oneMicControl, oneMicroFields)
+  subroutine micro_thompson(oneNamelistFile, oneBasicFields, oneMicControl, oneMicroFields)
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(MicControl), pointer, intent(in) :: oneMicControl
     type(MicroFields), pointer, intent(in) :: oneMicroFields
@@ -131,8 +131,8 @@ contains
           !endif
 
           call brams_to_mic_thompson(ia,ja,iz,jz, &
-               ilwrtyp     &
-               ,iswrtyp     &
+               oneNamelistFile%ilwrtyp,      &
+               oneNamelistFile%iswrtyp     &
                ,j           &
                ,i           &
                ,IDS, IDE, JDS, JDE, KDS, KDE   &

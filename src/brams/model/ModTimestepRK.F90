@@ -870,9 +870,10 @@ contains
 
     elseif (oneGrid%oneMicVars%mcphys_type == 2 .or. oneGrid%oneMicVars%mcphys_type == 3 ) then
        !- G. Thompson microphysics
-       call micro_thompson(oneGrid%oneBasicFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
+       call micro_thompson(oneGrid%oneNamelistFile, &
+            oneGrid%oneBasicFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
     elseif(oneGrid%oneMicVars%mcphys_type == 4 ) then
-       call micro_gfdl(oneGrid%oneBasicFields, oneGrid%oneMicroFields)
+       call micro_gfdl(oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneMicroFields)
     endif
     !----------------------------------------
 

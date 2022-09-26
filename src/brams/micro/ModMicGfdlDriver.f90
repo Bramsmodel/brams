@@ -4,6 +4,9 @@
 !==========================================================================================
 module ModMicGfdlDriver
 
+  use ModNamelistFile, only: &
+       NamelistFile
+  
   use ModBasicFields, only: &
        BasicFields
 
@@ -47,10 +50,6 @@ module ModMicGfdlDriver
   use io_params, only: &
        frqanl !INTENT(IN)
 
-  use mem_radiate, only: &
-       ilwrtyp, &
-       iswrtyp
-
   use gfdl_cloud_microphys_mod, only: &
        gfdl_cloud_microphys_driver,  &
        gfdl_cloud_microphys_init
@@ -80,7 +79,8 @@ contains
 
 
 
-  subroutine micro_gfdl(oneBasicFields, oneMicroFields)
+  subroutine micro_gfdl(oneNamelistFile, oneBasicFields, oneMicroFields)
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(MicroFields), pointer, intent(in) :: oneMicroFields
     
@@ -91,9 +91,9 @@ contains
     jms = 1; jme = myp 
     kms = 1; kme = mzp-2
 
-    call brams_to_mic_gfdl(ia,ja,iz,jz&
-         ,ilwrtyp     &
-         ,iswrtyp     &
+    call brams_to_mic_gfdl(ia,ja,iz,jz, &
+         oneNamelistFile%ilwrtyp,     &
+         oneNamelistFile%iswrtyp     &
          ,ims, ime, jms, jme, kms, kme&
          ,mzp    &
          ,ngrid    &

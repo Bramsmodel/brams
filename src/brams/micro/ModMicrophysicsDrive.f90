@@ -66,13 +66,6 @@ module ModMicrophysicsDrive
        chemic_vars, &        ! INTENT(IN) ! Only a type structure
        chemic_g
 
-  use mem_radiate, only: &
-       radiate_vars,     & ! INTENT(IN)
-       iswrtyp,          & ! INTENT(IN)
-       ilwrtyp,          & ! INTENT(IN)
-       radfrq, &              ! INTENT(IN)
-       radiate_g          ! INTENT(INOUT)
-
   use ModBasicFields, only : &
        BasicFields
 
@@ -192,7 +185,7 @@ contains
 
           call mcphys(mzp,k1,k2,k3,i,j,ngrid,jdim,maxnzp             &
                ,nembfall,maxkfall,mynum,dtlt,dtlti,time,zm,dzt                 &
-               ,zt,itime1,radiate_g(ngr)                &
+               ,zt,itime1 &
                ,oneBasicFields%thp(:,i,j), oneBasicFields%theta(:1,i,j)   &
                ,oneBasicFields%pp(:,i,j), oneBasicFields%rtp(:,i,j)   &
                ,oneBasicFields%rv(:,i,j), oneBasicFields%wp(:,i,j)   &
@@ -221,7 +214,7 @@ contains
 
   subroutine mcphys(m1,k1,k2,k3,i,j,ngr,jdim,maxnzp  &
        ,nembfall,maxkfall,mynum,dtlt,dtlti,time,zm,dzt,zt  &
-       ,itime1,radiate  &
+       ,itime1 &
        ,thp,theta,pp,rtp,rv,wp,dn0,pi0  &
        ,rtgt,lpw_R,pcpg,qpcpg,dpcpg  &
        ,pcpfillc,pcpfillr,sfcpcp  &
@@ -245,7 +238,6 @@ contains
     real, intent(in) :: zm(m1)
     real, intent(in) :: dzt(m1) ! Not used
     integer, intent(in) :: itime1 ! Not used
-    type (radiate_vars), intent(inout)    :: radiate
     real, intent(inout) :: thp(m1)
     real, intent(inout) :: theta(m1)
     real, intent(in) :: pp(m1)
@@ -308,20 +300,6 @@ contains
     enddo
 
     ! Evaluate radiative heating rates if using Harrington radiation scheme
-
-    !srf- this radiation is not available in BRAMS 5.2 onwards
-    !  if (iswrtyp .eq. 3 .or. ilwrtyp .eq. 3) then
-    !     if (mod(time + .001,radfrq) .lt. dtlt .or. time .lt. .001) then
-    !
-    !        call radcalc3(m1,maxnzp,ncat,iswrtyp,ilwrtyp,if_adap,lpw  &
-    !     ,glat,rtgt,topt  &
-    !             ,radiate%albedt  (i,j) ,radiate%cosz  (i,j)  &
-    !             ,radiate%rlongup (i,j) ,radiate%rshort(i,j)  &
-    !             ,radiate%rlong   (i,j)  &
-    !             ,zm,zt,rv(1),dn0(1),radiate%fthrd(1,i,j),i,j,time,ngr)!
-    !
-    !     endif
-    !  endif
 
     do lcat = 1,7
        if (oneMicControl%jnmb(lcat) .ge. 1) then

@@ -487,7 +487,7 @@ contains
 
   subroutine mcphys(m1,k1,k2,k3,i,j,ngr,jdim,maxnzp ,imonthx,npatch   &
        ,nembfall,maxkfall,mynum,dtlt,dtlti,time,zm,dzt,zt  &
-       ,itime1  &!radiate  &
+       ,itime1  &
        ,thp,theta,pp,rtp,rv,wp,dn0,pi0  &
        ,rtgt,lpw_R,pcpg,qpcpg,dpcpg  &
        ,pcpfillc,pcpfillr,sfcpcp,allpcp  &
@@ -733,26 +733,6 @@ contains
           call enemb(m1,k1(lcat),k2(lcat),lcat,dn0(1),i,j,oneMicControl)
        endif
     enddo
-
-    ! Evaluate radiative heating rates if using Harrington radiation scheme
-    !
-    !if (iswrtyp .eq. 3 .or. ilwrtyp .eq. 3) then
-    !   if (mod(time + .001,radfrq) .lt. dtlt .or. time .lt. .001) then
-    !      !Saleeby(2008): Change passing of 7 to 8 if adding drizzle mode
-    !      ! and modify locations in radcalc3 and radcomp3 to match
-    !
-    !      call radcalc3(m1,maxnzp,7,iswrtyp,ilwrtyp,if_adap,lpw  &
-    !     ,glat,rtgt,topt  &
-    !         ,radiate%albedt  (i,j) ,radiate%cosz  (i,j)  &
-    !         ,radiate%rlongup (i,j) ,radiate%rshort(i,j)  &
-    !         ,radiate%rlong   (i,j)  &
-    !        ,zm,zt,rv(1),dn0(1),radiate%fthrd(1,i,j),i,j,time,ngr &
-    !         !Saleeby(2011): Variables for the radiatively active aerosol
-    !         ,radiate%bext(1,i,j),radiate%swup(1,i,j),radiate%swdn(1,i,j) &
-    !         ,radiate%lwup(1,i,j),radiate%lwdn(1,i,j))
-    !
-    !   endif
-    !endif
 
     ! Save rx and qx before vapor diffusion...
     rx_lhr = rx
