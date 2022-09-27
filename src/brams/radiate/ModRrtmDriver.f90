@@ -7,6 +7,9 @@ module ModRrtmDriver
   use ccatt_start, only: &
        ccatt
 
+  use ModNamelistFile, only: &
+       NamelistFile
+  
   use ModBasicFields, only: &
        BasicFields
 
@@ -123,16 +126,8 @@ module ModRrtmDriver
        MicroFields
 
   use mem_radiate, only:        &
-       ilwrtyp, &
-       iswrtyp, & ! intent(in)
        radiate_g, &
-       radiate_vars, & ! intent(inout)
-       radfrq, & ! intent(in)
-       ncall_i, &
-       prsnz, &
-       prsnzp, & ! intent(inout)
-       lonrad, &
-       radtun
+       radiate_vars
 
   use parkind, only : &
        im => kind_im, &
@@ -235,9 +230,10 @@ contains
 
 
   subroutine rrtm_driver(mzp, mxp, myp, ia, iz, ja, jz, mynum, &
-       oneBasicFields, oneMicVars, oneMicroFields)
+       oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields)
 
     integer, intent(in) :: mzp, mxp, myp, ia, iz, ja, jz, mynum
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(MicControl), pointer, intent(in) :: oneMicVars
     type(MicroFields), pointer, intent(in) :: oneMicroFields
@@ -256,7 +252,7 @@ contains
     integer, parameter :: ngpt = 141
 
     !- if not including radiation, return
-    if ((ilwrtyp + iswrtyp)==0) return
+    if ((oneNamelistFile%ilwrtyp + oneNamelistFile%iswrtyp)==0) return
 
     icount = icount + 1
     if (icount>ngpt) icount = 0
@@ -268,7 +264,7 @@ contains
     !--- check if it is time to recompute radiative tendency and fluxes
     !
     !--- radiation calculation is updated only every radfrq seconds
-    if ( (mod(time+.001, radfrq) < dtlt .or. time<0.001)) then
+    if ( (mod(time+.001, oneNamelistFile%radfrq) < dtlt .or. time<0.001)) then
 
        !--- set radiation tendency for theta to zero
        radiate_g(ngrid)%fthrd(1:mzp,1:mxp,1:myp) = 0.0
@@ -283,21 +279,21 @@ contains
             ,rain  &
             ,lwl  &
             ,iwl,  &
-            oneBasicFields, oneMicVars, oneMicroFields)
+            oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields)
 
        !-srf tuning section for cloud fraction and other parameters for radiation
-       if(radtun /= 1.0) then
-          radiate_g(ngrid)%cloud_fraction=  min(1.,radtun* radiate_g(ngrid)%cloud_fraction)
-          rain          =  radtun*rain
-          lwl           =  radtun*lwl
-          iwl           =  radtun*iwl
+       if(oneNamelistFile%radtun /= 1.0) then
+          radiate_g(ngrid)%cloud_fraction=  min(1.,oneNamelistFile%radtun* radiate_g(ngrid)%cloud_fraction)
+          rain          =  oneNamelistFile%radtun*rain
+          lwl           =  oneNamelistFile%radtun*lwl
+          iwl           =  oneNamelistFile%radtun*iwl
        endif
 
 
 
        !- Compute solar zenith angle [cosz(i,j)] & solar constant factr [solfac].
        call zen_rtm(imonth1, idate1, iyear1, time, itime1, centlat, centlon, &
-            lonrad, pi180, ia, iz, ja, jz, jday, solfac, hranglelocal, cdec,&
+            oneNamelistFile%lonrad, pi180, ia, iz, ja, jz, jday, solfac, hranglelocal, cdec,&
             mynum)
 
        !- compute patch-averaged surface albedo [albedt(i,j)] and up longwave
@@ -436,9 +432,6 @@ contains
 
     !-ner dayhr  = time/3600. + float(itime1/100) + float(mod(itime1,100))/60.
     dayhr = (time / 3600. + float(itime1/100) + float(mod(itime1,100)) / 60.) !&
-    !+ (radfrq/(2.*3600.))
-
-    !-ner (radfrq/(2*3600)) - rad transfer shift half of radfrq(improving rad tendency representativity)
 
     do j = ja,jz
        do i = ia,iz
@@ -1573,9 +1566,10 @@ contains
        , rain            &
        , lwl             &
        , iwl,            &
-       oneBasicFields, oneMicVars, oneMicroFields)
+       oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields)
 
     integer, intent(in) :: m1,m2,m3,ia,iz,ja,jz
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(MicControl), pointer, intent(in) :: oneMicVars
     type(MicroFields), pointer, intent(in) :: oneMicroFields
@@ -1923,7 +1917,7 @@ contains
 
     !- rrtmg radiation  -  continue calculation of cloud effective radius
 
-    if (ilwrtyp==6 .or. iswrtyp==6) then
+    if (oneNamelistFile%ilwrtyp==6 .or. oneNamelistFile%iswrtyp==6) then
 
        if(oneMicVars%mcphys_type == 2 .or. oneMicVars%mcphys_type == 4 ) then
           !- rei and rel are calculated by gt microphysics (no-aer option)

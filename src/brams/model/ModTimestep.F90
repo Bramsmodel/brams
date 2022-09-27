@@ -339,7 +339,8 @@ contains
     !  Radiation parameterization
     !--------------------------------
     call radiate(mzp,mxp,myp,ia,iz,ja,jz,mynum, &
-         oneGrid%oneBasicFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
+         oneGrid%oneNamelistFile, oneGrid%oneBasicFields, &
+         oneGrid%oneMicVars, oneGrid%oneMicroFields)
 
     !  Surface layer, soil and veggie model
     !----------------------------------------

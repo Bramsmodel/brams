@@ -4,6 +4,9 @@ module radiation
        ilwrtyp, &
        iswrtyp
 
+  use ModNamelistFile, only: &
+       NamelistFile
+  
   use ModRrtmDriver  , only: &
        rrtm_driver
 
@@ -29,9 +32,10 @@ contains
 
 
   subroutine radiate(mzp, mxp, myp, ia, iz, ja, jz, mynum, &
-       oneBasicFields, oneMicVars, oneMicroFields)
+       oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields)
 
     integer, intent(IN) :: mzp, mxp, myp, ia, iz, ja, jz, mynum
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(MicControl), pointer, intent(in) :: oneMicVars
     type(MicroFields), pointer, intent(in) :: oneMicroFields
@@ -44,7 +48,7 @@ contains
          then
 
        call rrtm_driver(mzp, mxp, myp, ia, iz, ja, jz, mynum, &
-            oneBasicFields, oneMicVars, oneMicroFields)
+            oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields)
 
     elseif( ilwrtyp==4 .and. iswrtyp==4) then
 
