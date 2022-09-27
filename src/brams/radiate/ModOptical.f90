@@ -102,15 +102,6 @@ module ModOptical
   use ModBasicFields, only: &
        BasicFields
   
-  use mem_radiate, only:        &
-       radfrq, &
-       iswrtyp
-
-  use mem_radiate, only:        &
-       radfrq
-
-
-
   use mem_grid, only: &
        ngrids,         &!(in)
        nnxp,           &!(in)
@@ -318,7 +309,8 @@ contains
     real :: caer(m2,m3,m1)
 
     !--- radiation calculation is updated only every radfrq seconds
-    IF ( .not. (mod(time+.001, radfrq) < dtlt .or. time<0.001) .or. iswrtyp/=6) return
+    IF ( .not. (mod(time+.001, oneNamelistFile%radfrq) < dtlt .or. time<0.001) .or. &
+         oneNamelistFile%iswrtyp/=6) return
 
     totm=0.0
     tauaer=0.0
