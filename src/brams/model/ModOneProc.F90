@@ -2066,7 +2066,7 @@ contains
        !call dumpAer('Aer_pos2')
        ! Read Radiation Parameters if CARMA or RRTMG Radiation is selected
        if (ilwrtyp==4 .or. iswrtyp==4 .or. ilwrtyp==6 .or. iswrtyp==6 ) then
-          call master_read_carma_data(mchnum, master_num)
+          call master_read_carma_data(oneGrid%oneNamelistFile, mchnum, master_num)
           call read_aotMap(oneGrid%Id, oneGrid%oneControlVars, oneGrid%oneBasicFields, oneGrid%oneTurbFields)
        endif
 
@@ -2215,7 +2215,7 @@ contains
 
        ! Read Radiation Parameters if CARMA or RRTMG Radiation is selected
        if (ilwrtyp==4 .or. iswrtyp==4 .or. ilwrtyp==6 .or. iswrtyp==6 ) then
-          call master_read_carma_data(mchnum, master_num)
+          call master_read_carma_data(oneGrid%oneNamelistFile, mchnum, master_num)
           call read_aotMap(oneGrid%Id, oneGrid%oneControlVars, oneGrid%oneBasicFields, oneGrid%oneTurbFields)
        endif
 
