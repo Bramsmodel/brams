@@ -56,7 +56,7 @@ contains
     else if (oneNamelistFile%ilwrtyp==4 .and. oneNamelistFile%iswrtyp==4) then
 
        call carma_driver(mzp,mxp,myp,ia,iz,ja,jz,mynum, &
-            oneBasicFields, oneMicVars, oneMicroFields) !teste 2
+            oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields) !teste 2
 
     else
        call fatal_error(h//" unknown radiation scheme")

@@ -1,5 +1,8 @@
 module ModCarmaDriver
 
+  use ModNamelistFile, only: &
+       NamelistFile
+  
   use ModDateUtils, only: &
        julday
 
@@ -102,9 +105,10 @@ module ModCarmaDriver
 contains
 
   subroutine carma_driver(mzp, mxp, myp, ia, iz, ja, jz, mynum, &
-       oneBasicFields, oneMicVars, oneMicroFields)
+       oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields)
     ! arguments:
     integer, intent(in) :: mzp, mxp, myp, ia, iz, ja, jz, mynum
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(MicControl), pointer, intent(in) :: oneMicVars
     type(MicroFields), pointer, intent(in) :: oneMicroFields
@@ -281,7 +285,7 @@ contains
          ,npatch     &
          ,hrAngleLocal   &
          ,carma_aotMap(ngrid)%aotMap &
-         )
+         ,oneNamelistFile)
 
     !    if(mynum== 5) then
     !     write(mynum+1,*) "============= radiation-carma ==================="
