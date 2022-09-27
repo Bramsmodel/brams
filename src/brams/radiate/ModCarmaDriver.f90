@@ -24,14 +24,7 @@ module ModCarmaDriver
        isfcl  !DSM
 
   use mem_radiate, only: &
-       ilwrtyp, &
-       iswrtyp, &       ! INTENT(IN)
-       radiate_g,        &       ! INTENT(INOUT)
-       radfrq, &                 ! INTENT(IN)
-       ncall_i, &
-       prsnz, &
-       prsnzp, & ! INTENT(INOUT)
-       lonrad                    ! INTENT(IN)
+       radiate_g
 
   use node_mod, only: &
        mynum ! INTENT(IN)
@@ -131,13 +124,13 @@ contains
     real, parameter :: fxx = 0.2 
 
     !- if not including radiation, return
-    if ((ilwrtyp + iswrtyp)==0) return
+    if ((oneNamelistFile%ilwrtyp + oneNamelistFile%iswrtyp)==0) return
     !   
     !--- apply radiative tendencies to model tendencies
     call tend_accum(mzp, mxp, myp, ia, iz, ja, jz)
 
     !--- radiation is called on each radfrq seconds
-    if (.not. (mod(time+.001, radfrq) < dtlt .or. time<0.001)) return
+    if (.not. (mod(time+.001, oneNamelistFile%radfrq) < dtlt .or. time<0.001)) return
 
     !- TEB_SPM
     if (TEB_SPM==1) then
@@ -157,7 +150,7 @@ contains
 
     if (TEB_SPM==1) then 
        call radprep(TEB_SPM, imonth1, idate1, iyear1, time, itime1, &
-            centlat, centlon, lonrad, pi180,                        &
+            centlat, centlon, oneNamelistFile%lonrad, pi180,                        &
             nzg, nzs, npatch, ia, iz, ja, jz, jday,       &
             leaf_g(ngrid)%soil_water,                               &
             leaf_g(ngrid)%soil_energy,                              &
@@ -182,12 +175,12 @@ contains
             radiate_g(ngrid)%cosz,                                  &
             hrAngleLocal,                                           &       
             cdec,                                                   &
-                                ! TEB_SPM
-            EMIS_TOWN, ALB_TOWN, TS_TOWN, G_URBAN                   )
+            oneNamelistFile,                                        &
+            EMIS_TOWN, ALB_TOWN, TS_TOWN, G_URBAN)
     else
 
        call radprep(TEB_SPM, imonth1, idate1, iyear1, time, itime1, &
-            centlat, centlon, lonrad, pi180,                        &
+            centlat, centlon, oneNamelistFile%lonrad, pi180,                        &
             nzg, nzs, npatch, ia, iz, ja, jz, jday,       &
             leaf_g(ngrid)%soil_water,                               &
             leaf_g(ngrid)%soil_energy,                              &
@@ -211,7 +204,8 @@ contains
             radiate_g(ngrid)%albedt,                                &
             radiate_g(ngrid)%cosz,                                  &
             hrAngleLocal,                                           &       
-            cdec                                                    )
+            cdec,                                                   &
+            oneNamelistFile)
     endif
 
 
@@ -315,9 +309,8 @@ contains
        solfac, glat, glon, rshort, rlong, rlongup, albedt, cosz,            &
        hrAngleLocal,                                                        &
        cdec,                                                                &
-       EMIS_TOWN, ALB_TOWN, TS_TOWN, G_URBAN                                &
-                                !
-       )
+       oneNamelistFile,                                                     &
+       EMIS_TOWN, ALB_TOWN, TS_TOWN, G_URBAN)
     ! Arguments:
     integer, intent(IN)      :: TEB_SPM
     integer, intent(IN)      :: imonth1, idate1, iyear1, itime1
@@ -352,6 +345,7 @@ contains
 
     real, intent(OUT)        :: hrAngleLocal
 
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     ! Local Variables
     real, pointer :: L_EMIS_TOWN, L_ALB_TOWN, L_TS_TOWN, L_G_URBAN
     !
@@ -367,7 +361,7 @@ contains
 
     call zen(imonth1, idate1, iyear1, time, itime1, centlat, centlon, &
          lonrad, pi180, ia, iz, ja, jz, jday, glat, glon, cosz, &
-         solfac, hrAngleLocal, cdec)
+         solfac, hrAngleLocal, cdec, oneNamelistFile)
 
     ! Compute patch-averaged surface albeDO [albedt(i,j)] and up longwave
     ! radiative flux [rlongup(i,j)].
@@ -429,7 +423,7 @@ contains
   subroutine zen(imonth1, idate1, iyear1, time, itime1, centlat, centlon, &
        lonrad, pi180, &
        ia, iz, ja, jz, jday, glat, glon, cosz, solfac, hrangle,&
-       cdec)
+       cdec, oneNamelistFile)
     ! Arguments:
     integer, intent(IN)  :: imonth1, idate1, iyear1, itime1
     real, intent(IN)     :: time
@@ -446,6 +440,7 @@ contains
     real, intent(OUT)    :: hrangle
 
     real, intent(OUT)    :: cdec
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     ! Local Variables:
     integer :: i, j! , julday
     real    :: sdec, declin, d0, d02, dayhr, radlat, cslcsd, snlsnd, gglon, &
@@ -479,8 +474,8 @@ contains
          - 0.040849*sin(d02))*1440/(2*3.141593)   
     !NER_f - including solar time equation
 
-    dayhr = (time / 3600. + float(itime1/100) + float(mod(itime1,100)) / 60.)+ (radfrq/(2*3600))
-    !NER (radfrq/(2*3600)) - rad transfer shift half of radfrq(improving rad tendency representativity)
+    dayhr = (time / 3600. + float(itime1/100) + float(mod(itime1,100)) / 60.)+ &
+         (oneNamelistFile%radfrq/(2*3600))
     !--(DMK-CCATT-OLD)-----------------------------------------------------
     !    dayhr  = time/3600. + float(itime1/100) + float(mod(itime1,100))/60.
     !--(DMK-CCATT-FIM)-----------------------------------------------------
