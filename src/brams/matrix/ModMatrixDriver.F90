@@ -72,9 +72,6 @@ module ModMatrixDriver
   use ModParticle, only: &
        copyDensRadius
 
-  use mem_radiate, only: &
-       radfrq
-
   use mem_leaf, only: &
        leaf_g
 

@@ -15,9 +15,10 @@ module mem_scratch
   ! are dimensioned to store the full domain, not the mpi decomposed one
   !
 
+  use ModNamelistFile, only: &
+       NamelistFile
+  
   use mem_aerad,   only: nwave      !intent(in)
-  use mem_radiate, only: ilwrtyp, & !intent(in)
-       iswrtyp                      !intent(in)
 
   type scratch_vars
      real, pointer :: scr1(:)
@@ -58,7 +59,8 @@ module mem_scratch
 contains
 
   subroutine alloc_scratch(nmzp, nmxp, nmyp, nnzp, nnxp, nnyp,  &
-       maxgrds, ngrids, nzg, nzs, npatch, proc_type, maxnxp, maxnyp, maxnzp)
+       maxgrds, ngrids, nzg, nzs, npatch, proc_type, maxnxp, maxnyp, maxnzp, &
+       oneNamelistFile)
 
     ! FOR CATT
 
@@ -79,6 +81,7 @@ contains
     integer, intent(out) :: maxnxp
     integer, intent(out) :: maxnyp
     integer, intent(out) :: maxnzp
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
 
     ! Local Variables:
     integer :: ng,ntpts,ntpts1,ntpts2,ntptsx !,maxnxp,maxnyp,maxnzp
@@ -107,7 +110,7 @@ contains
 
     ! For CARMA
     !if (CATT == 1) then
-    if (ilwrtyp==4 .or. iswrtyp==4) then
+    if (oneNamelistFile%ilwrtyp==4 .or. oneNamelistFile%iswrtyp==4) then
        ntpts_catt = max(ntptsx,ntpts_catt,(maxnxp*maxnyp*nwave))+1000
     else
        ntpts_catt = ntptsx

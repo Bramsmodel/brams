@@ -1406,7 +1406,8 @@ contains
     call nullify_scratch()
 
     call alloc_scratch(nmzp, nmxp, nmyp, nnzp, nnxp, nnyp, maxgrds, ngrids,  &
-         nzg, nzs, npatch, proc_type, maxnxp, maxnyp, maxnzp)
+         nzg, nzs, npatch, proc_type, maxnxp, maxnyp, maxnzp, &
+         oneGrid%oneNamelistFile)
     ! Reproducibility - Saulo Barros
     call nullify_scratch1()
     call alloc_scratch1(oneGrid%oneScalarTableSize, &
