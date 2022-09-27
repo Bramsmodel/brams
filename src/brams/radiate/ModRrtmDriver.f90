@@ -16,6 +16,9 @@ module ModRrtmDriver
   use ModMicControl, only: &
        MicControl
   
+  use ModRadiateFields, only: &
+       RadiateFields
+  
   use mem_grid    , only: &
        ngrid, &
        time, &
@@ -125,10 +128,6 @@ module ModRrtmDriver
   use ModMicroFields, only: &
        MicroFields
 
-  use mem_radiate, only:        &
-       radiate_g, &
-       radiate_vars
-
   use parkind, only : &
        im => kind_im, &
        rb => kind_rb
@@ -230,13 +229,15 @@ contains
 
 
   subroutine rrtm_driver(mzp, mxp, myp, ia, iz, ja, jz, mynum, &
-       oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields)
+       oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields, &
+       oneRadiateFields)
 
     integer, intent(in) :: mzp, mxp, myp, ia, iz, ja, jz, mynum
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(MicControl), pointer, intent(in) :: oneMicVars
     type(MicroFields), pointer, intent(in) :: oneMicroFields
+    type(RadiateFields), pointer, intent(in) :: oneRadiateFields
 
     real,dimension(mzp,mxp,myp) :: lwl,iwl
     real,dimension(mxp,myp) :: rain
@@ -257,25 +258,21 @@ contains
     icount = icount + 1
     if (icount>ngpt) icount = 0
 
-    !-srf moved the update to the end of the routine.
-    !!    !--- apply radiative tendencies to model tendencies
-    !!    call tend_accum_rtm(mzp, mxp, myp, ia, iz, ja, jz)
-
     !--- check if it is time to recompute radiative tendency and fluxes
     !
     !--- radiation calculation is updated only every radfrq seconds
     if ( (mod(time+.001, oneNamelistFile%radfrq) < dtlt .or. time<0.001)) then
 
        !--- set radiation tendency for theta to zero
-       radiate_g(ngrid)%fthrd(1:mzp,1:mxp,1:myp) = 0.0
+       oneRadiateFields%fthrd(1:mzp,1:mxp,1:myp) = 0.0
 
        !- call routine to calculate cloud properties for RRTM/CARMA
        !--1st, set zero to the local arrays
-       radiate_g(ngrid)%cloud_fraction=0.0;  rain=0.0; lwl=0.0; iwl =0.0
+       oneRadiateFields%cloud_fraction=0.0;  rain=0.0; lwl=0.0; iwl =0.0
 
        call  cloud_prop_rrtm(mzp, mxp, myp, ia, iz, ja, jz &
                                 !-- output
-            ,radiate_g(ngrid)%cloud_fraction  &
+            ,oneRadiateFields%cloud_fraction  &
             ,rain  &
             ,lwl  &
             ,iwl,  &
@@ -283,7 +280,7 @@ contains
 
        !-srf tuning section for cloud fraction and other parameters for radiation
        if(oneNamelistFile%radtun /= 1.0) then
-          radiate_g(ngrid)%cloud_fraction=  min(1.,oneNamelistFile%radtun* radiate_g(ngrid)%cloud_fraction)
+          oneRadiateFields%cloud_fraction=  min(1.,oneNamelistFile%radtun* oneRadiateFields%cloud_fraction)
           rain          =  oneNamelistFile%radtun*rain
           lwl           =  oneNamelistFile%radtun*lwl
           iwl           =  oneNamelistFile%radtun*iwl
@@ -294,14 +291,14 @@ contains
        !- Compute solar zenith angle [cosz(i,j)] & solar constant factr [solfac].
        call zen_rtm(imonth1, idate1, iyear1, time, itime1, centlat, centlon, &
             oneNamelistFile%lonrad, pi180, ia, iz, ja, jz, jday, solfac, hranglelocal, cdec,&
-            mynum)
+            mynum, oneRadiateFields)
 
        !- compute patch-averaged surface albedo [albedt(i,j)] and up longwave
        !- radiative flux [rlongup(i,j)].
        !DSM ---- In case of JULES surface scheme, rlongup and albedt are already provided
        if (isfcl /= 5 .or. time<0.001) then
-          radiate_g(ngrid)%albedt  = 0.
-          radiate_g(ngrid)%rlongup = 0.
+          oneRadiateFields%albedt  = 0.
+          oneRadiateFields%rlongup = 0.
 
           do ip = 1,npatch
              do j = 1,jz
@@ -323,11 +320,11 @@ contains
                    veg_albedo            =leaf_g(ngrid)%veg_albedo   (i,j,ip)
                    sfcwater_nlev         =leaf_g(ngrid)%sfcwater_nlev(i,j,ip)
 
-                   rshort                =radiate_g(ngrid)%rshort (i,j)
-                   rlong                 =radiate_g(ngrid)%rlong  (i,j)
-                   albedt                =radiate_g(ngrid)%albedt (i,j)
-                   rlongup               =radiate_g(ngrid)%rlongup(i,j)
-                   cosz                  =radiate_g(ngrid)%cosz   (i,j)
+                   rshort                =oneRadiateFields%rshort (i,j)
+                   rlong                 =oneRadiateFields%rlong  (i,j)
+                   albedt                =oneRadiateFields%albedt (i,j)
+                   rlongup               =oneRadiateFields%rlongup(i,j)
+                   cosz                  =oneRadiateFields%cosz   (i,j)
 
                    !
                    call sfcrad_rtm(nzg, nzs, ip,             &
@@ -343,8 +340,8 @@ contains
                         )
 
                    !Copy back albedo and rlongUP to memory
-                   radiate_g(ngrid)%albedt (i,j)=albedt
-                   radiate_g(ngrid)%rlongup(i,j)=rlongup
+                   oneRadiateFields%albedt (i,j)=albedt
+                   oneRadiateFields%rlongup(i,j)=rlongup
 
                 end do
              end do
@@ -355,23 +352,24 @@ contains
 
        !- RRTM Radiation
        call radrrtmdrv(ia,iz,ja,jz,mxp,myp,mzp,mynum&
-            , radiate_g(ngrid)%cloud_fraction         &
+            , oneRadiateFields%cloud_fraction         &
             ,rain                   &
             ,lwl                    &
             ,iwl                    &
             ,icount                 &
             ,ngpt,                  &
-            oneBasicFields, oneMicroFields)
+            oneBasicFields, oneMicroFields, oneRadiateFields)
     endif
     !--- apply radiative tendencies to model tendencies
-    call tend_accum_rtm(mzp, mxp, myp, ia, iz, ja, jz)
+    call tend_accum_rtm(mzp, mxp, myp, ia, iz, ja, jz, oneRadiateFields)
 
   end subroutine rrtm_driver
 
   ! ****************************************************************************
 
-  subroutine tend_accum_rtm(m1,m2,m3,ia,iz,ja,jz)
+  subroutine tend_accum_rtm(m1,m2,m3,ia,iz,ja,jz, oneRadiateFields)
     integer, intent(in) :: m1, m2, m3, ia, iz, ja, jz
+    type(RadiateFields), pointer, intent(in) :: oneRadiateFields
 
     ! local variables:
     integer :: i, j, k,ipos
@@ -381,7 +379,7 @@ contains
        do i=1,m2
           do k=1,m1
              ipos=ipos+1
-             tend%tht(ipos) = tend%tht(ipos) + radiate_g(ngrid)%fthrd(k,i,j)
+             tend%tht(ipos) = tend%tht(ipos) + oneRadiateFields%fthrd(k,i,j)
           end do
        end do
     end do
@@ -390,7 +388,8 @@ contains
   ! ****************************************************************************
 
   subroutine zen_rtm(imonth1, idate1, iyear1, time, itime1, centlat, centlon, &
-       lonrad, pi180, ia, iz, ja, jz, jday, solfac, hrangle, cdec,mynum)
+       lonrad, pi180, ia, iz, ja, jz, jday, solfac, hrangle, cdec, mynum, &
+       oneRadiateFields)
 
     ! arguments:
     integer, intent(in)  :: imonth1, idate1, iyear1, itime1,mynum
@@ -403,6 +402,7 @@ contains
     real, intent(out)    :: solfac
     real, intent(out)    :: hrangle
     real, intent(out)    :: cdec
+    type(RadiateFields), pointer, intent(in) :: oneRadiateFields
     ! local variables:
     integer :: i, j
     real    :: sdec, declin, d0, d02, dayhr, radlat, cslcsd, snlsnd, gglon, &
@@ -448,12 +448,12 @@ contains
           !          dayhrr    = mod(dayhr+gglon/15.+24., 24.)
           !          hrangl    = 15.*(dayhrr - 12.)*pi180
 
-          radiate_g(ngrid)%cosz(i,j) = snlsnd + cslcsd*cos(hrangle)
+          oneRadiateFields%cosz(i,j) = snlsnd + cslcsd*cos(hrangle)
 
-          !radiate_g(ngrid)%cosz(i,j) = min(radiate_g(ngrid)%cosz(i,j), 1.0)
-          !radiate_g(ngrid)%cosz(i,j) = max(radiate_g(ngrid)%cosz(i,j),-1.0)
+          !oneRadiateFields%cosz(i,j) = min(oneRadiateFields%cosz(i,j), 1.0)
+          !oneRadiateFields%cosz(i,j) = max(oneRadiateFields%cosz(i,j),-1.0)
 
-          radiate_g(ngrid)%cosz(i,j) = max(radiate_g(ngrid)%cosz(i,j),1.0e-10)
+          oneRadiateFields%cosz(i,j) = max(oneRadiateFields%cosz(i,j),1.0e-10)
 
        end do
     end do
@@ -663,7 +663,7 @@ contains
        ,iwl                      &
        ,icount                   &
        ,ngpt,                    &
-       oneBasicFields, oneMicroFields)
+       oneBasicFields, oneMicroFields, oneRadiateFields)
     integer, intent(in) :: ia,iz,ja,jz
     integer, intent(in) :: icount
     integer, intent(in) :: ngpt
@@ -675,6 +675,7 @@ contains
     real, intent(in), dimension(mzp,mxp,myp) :: iwl !total cloud ice water (kg/kg for carma and g/m2 for rrtm)
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(MicroFields), pointer, intent(in) :: oneMicroFields
+    type(RadiateFields), pointer, intent(in) :: oneRadiateFields
 
     integer,allocatable,dimension(:) :: ipos,jpos
     integer (kind=int64),allocatable,dimension(:)  :: imask
@@ -1077,15 +1078,15 @@ contains
           jpos(noc)=j
 
           !- 2d input data
-          coszen(noc)= radiate_g(ngrid)%cosz(i,j)
-          tsfc  (noc)=(radiate_g(ngrid)%rlongup(i,j)/stefan)** 0.25e0_rb
+          coszen(noc)= oneRadiateFields%cosz(i,j)
+          tsfc  (noc)=(oneRadiateFields%rlongup(i,j)/stefan)** 0.25e0_rb
 
           if(.not. firsttime) then
-             asdir(noc)=radiate_g(ngrid)%albedt(i,j)
-             aldir(noc)=radiate_g(ngrid)%albedt(i,j) !infrared
-             asdif(noc)=radiate_g(ngrid)%albedt(i,j)
-             aldif(noc)=radiate_g(ngrid)%albedt(i,j) !infrared
-             emis(noc,:)=1.-radiate_g(ngrid)%albedt(i,j)
+             asdir(noc)=oneRadiateFields%albedt(i,j)
+             aldir(noc)=oneRadiateFields%albedt(i,j) !infrared
+             asdif(noc)=oneRadiateFields%albedt(i,j)
+             aldif(noc)=oneRadiateFields%albedt(i,j) !infrared
+             emis(noc,:)=1.-oneRadiateFields%albedt(i,j)
           end if
           !
           !- surface pressure
@@ -1449,15 +1450,15 @@ contains
     do j=ja,jz
        do i=ia,iz
           noc=noc+1
-          radiate_g(ngrid)%rlong (i,j)=   dflx(noc,1)
-          radiate_g(ngrid)%rshort(i,j)= swdflx(noc,1)
-          if(swdflx(noc,1)<.5) radiate_g(ngrid)%rshort(i,j)=0.0
+          oneRadiateFields%rlong (i,j)=   dflx(noc,1)
+          oneRadiateFields%rshort(i,j)= swdflx(noc,1)
+          if(swdflx(noc,1)<.5) oneRadiateFields%rshort(i,j)=0.0
           do k=2,mzp-1
              !- radiative tendency of temperature (Kelvin/sec)
-             radiate_g(ngrid)%fthrd(k,i,j)=(swhr(noc,k-1)+hr(noc,k-1))/86400.
+             oneRadiateFields%fthrd(k,i,j)=(swhr(noc,k-1)+hr(noc,k-1))/86400.
           enddo
-          radiate_g(ngrid)%fthrd(1  ,i,j)= radiate_g(ngrid)%fthrd(2    ,i,j)
-          radiate_g(ngrid)%fthrd(mzp,i,j)= radiate_g(ngrid)%fthrd(mzp-1,i,j)
+          oneRadiateFields%fthrd(1  ,i,j)= oneRadiateFields%fthrd(2    ,i,j)
+          oneRadiateFields%fthrd(mzp,i,j)= oneRadiateFields%fthrd(mzp-1,i,j)
        end do
     end do
 

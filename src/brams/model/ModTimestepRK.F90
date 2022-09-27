@@ -406,10 +406,13 @@ contains
 
     !  Radiation parameterization
     !--------------------------------
+    call DeepCopyToRadiateFields(oneGrid%oneRadiateFields, h)
     call radiate(mzp,mxp,myp,ia,iz,ja,jz,mynum, &
          oneGrid%oneNamelistFile, oneGrid%oneBasicFields, &
-         oneGrid%oneMicVars, oneGrid%oneMicroFields)
-
+         oneGrid%oneMicVars, oneGrid%oneMicroFields, &
+         oneGrid%oneRadiateFields)
+    call DeepCopyFromRadiateFields(oneGrid%oneRadiateFields, h)
+    
     !  Surface layer, soil and veggie model
     !----------------------------------------
     if (isfcl<=2) then

@@ -1,9 +1,5 @@
 module radiation
 
-  use mem_radiate, only: &
-       ilwrtyp, &
-       iswrtyp
-
   use ModNamelistFile, only: &
        NamelistFile
   
@@ -22,6 +18,9 @@ module radiation
   use ModMicroFields, only: &
        MicroFields
   
+  use ModRadiateFields, only: &
+       RadiateFields
+  
   implicit none
 
   private
@@ -32,32 +31,36 @@ contains
 
 
   subroutine radiate(mzp, mxp, myp, ia, iz, ja, jz, mynum, &
-       oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields)
+       oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields, &
+       oneRadiateFields)
 
-    integer, intent(IN) :: mzp, mxp, myp, ia, iz, ja, jz, mynum
+    integer, intent(in) :: mzp, mxp, myp, ia, iz, ja, jz, mynum
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(MicControl), pointer, intent(in) :: oneMicVars
     type(MicroFields), pointer, intent(in) :: oneMicroFields
+    type(RadiateFields), pointer, intent(in) :: oneRadiateFields
 
-    if &
-         ((ilwrtyp + iswrtyp)==0) return ! teste
+    character(len=*), parameter :: h="**(radiate)**"
+    
+    if ((oneNamelistFile%ilwrtyp + oneNamelistFile%iswrtyp)==0) then
 
-    if &
-         ( ilwrtyp==6 .and. iswrtyp==6) &
-         then
+       return
+
+    else if (oneNamelistFile%ilwrtyp==6 .and. oneNamelistFile%iswrtyp==6) then
 
        call rrtm_driver(mzp, mxp, myp, ia, iz, ja, jz, mynum, &
-            oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields)
+            oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields, &
+            oneRadiateFields)
 
-    elseif( ilwrtyp==4 .and. iswrtyp==4) then
+    else if (oneNamelistFile%ilwrtyp==4 .and. oneNamelistFile%iswrtyp==4) then
 
        call carma_driver(mzp,mxp,myp,ia,iz,ja,jz,mynum, &
             oneBasicFields, oneMicVars, oneMicroFields) !teste 2
 
     else
-       stop "unknown radiation scheme"
-    endif
+       call fatal_error(h//" unknown radiation scheme")
+    end if
 
   end subroutine radiate
 
