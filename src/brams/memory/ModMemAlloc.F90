@@ -84,6 +84,9 @@ module ModMemAlloc
        filltab_radiate, &
        dealloc_radiate
 
+  use ModRadiateFields, only: &
+       InsertRadiateFieldsAtVarTable
+  
   use ModScalarFields, only: &
        InsertScalarFieldsAtVarTable 
 
@@ -678,8 +681,10 @@ contains
           call alloc_radiate(radiatem_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
        endif
 
-       call filltab_radiate(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-            radiate_g, radiatem_g, ng, imean)
+!!$       call filltab_radiate(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+!!$            radiate_g, radiatem_g, ng, imean)
+       call InsertRadiateFieldsAtVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+            oneGrid%oneRadiateFields, oneGrid%oneAveRadiateFields, imean)
     enddo
 
     !- only for CARMA/RRTM Radiations schems
