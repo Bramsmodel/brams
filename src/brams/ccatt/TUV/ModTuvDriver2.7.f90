@@ -43,8 +43,8 @@ module ModTuvDriver
   
   use mem_radiate, only: &
        radiate_g, &
-       prsnz, &
-       prsnzp, &
+!!$       prsnz, &
+!!$       prsnzp, &
        iswrtyp, &
        ilwrtyp
   
@@ -123,6 +123,9 @@ module ModTuvDriver
   logical :: no2Present,so2Present
   integer :: iPosNo2,iPosSo2
   logical :: tuvDriverInit
+
+  
+  real    :: prsnz,prsnzp !Calculadas na primeira chamada
 
   real,parameter,dimension(33,9,6) :: mcdat=reshape((/ &
        0.000000E+00,0.100000E+04,0.200000E+04,0.300000E+04, & !
