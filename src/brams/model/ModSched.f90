@@ -104,9 +104,6 @@ module ModSched
        frqmean,         & !INTENT(IN)
        frqhis             !INTENT(IN)
 
-  use mem_radiate, only: &
-       radfrq              ! INTENT(IN)
-
   use mem_cuparm, only: &
        confrq
 
@@ -294,7 +291,7 @@ contains
 
 
   !=============================================================================================
-  function nextMainPoint(ngrid) result(dt)
+  function nextMainPoint(ngrid, oneNamelistFile) result(dt)
     !# return the time distance for the next main step point
     !#
     !# @note
@@ -324,6 +321,7 @@ contains
 
     !Input/Output variables
     integer, intent(in) :: ngrid
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
 
     real :: dt
 
@@ -345,7 +343,7 @@ contains
             ,tnudtop    &
             ,frqhis     &
             ,frqanl     &
-            ,radfrq     &
+            ,oneNamelistFile%radfrq     &
             ,confrq     &
             ,shcufrq    &
             /))
@@ -356,7 +354,7 @@ contains
        local_tnudtop =tnudtop 
        local_frqhis  =frqhis  
        local_frqanl  =frqanl  
-       local_radfrq  =radfrq  
+       local_radfrq  =oneNamelistFile%radfrq  
        local_confrq  =confrq  
        local_shcufrq =shcufrq 
 
@@ -366,7 +364,7 @@ contains
        if(tnudtop ==0.) local_tnudtop =mxval
        if(frqhis  ==0.) local_frqhis  =mxval
        if(frqanl  ==0.) local_frqanl  =mxval
-       if(radfrq  ==0.) local_radfrq  =mxval
+       if(oneNamelistFile%radfrq  ==0.) local_radfrq  =mxval
        if(confrq  ==0.) local_confrq  =mxval
        if(shcufrq ==0.) local_shcufrq =mxval
        firstTime=.false.
@@ -800,7 +798,7 @@ contains
     !caso ultrapasse, ajusta o dtlong para valores menores para evitar instabilizacao
     if (time>0.0) then 
 
-       call commCFL(cfl_max_sum,ngrid)
+       call commCFL(cfl_max_sum,ngrid, oneNamelistFile)
 
     endif
 
@@ -845,7 +843,7 @@ contains
 
 
   !=============================================================================================
-  subroutine commCFL(cfl_max_sum,ngrid)
+  subroutine commCFL(cfl_max_sum,ngrid, oneNamelistFile)
     !# COmunicate de CFL_max 
     !#
     !# @note
@@ -877,6 +875,7 @@ contains
     !Input/Output variables
     integer, intent(in) :: ngrid
     real, intent(in) :: cfl_max_sum
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
 
     !Local variables
     real :: mcfl(1),cfl_max(nMachs),cfl_max_rec(nMachs)
@@ -951,7 +950,7 @@ contains
        ssodx = ssmax * dxtmax
        sscourn(nGrid) = 2. * ssodx * dtlongn(nGrid)
 
-       dtlongn(ngrid)=nextMainPoint(ngrid)
+       dtlongn(ngrid)=nextMainPoint(ngrid, oneNamelistFile)
 
     endif
 

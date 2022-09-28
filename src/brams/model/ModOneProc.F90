@@ -249,8 +249,6 @@ module ModOneProc
        StoreNamelistFileAtMem_oda
 
   use mem_radiate, only: &
-       iswrtyp,          &
-       ilwrtyp, &
        StoreNamelistFileAtMem_radiate
 
   use ModSoilMoisture, only: &
@@ -1745,7 +1743,7 @@ contains
           call thermo(mzp, mxp, myp, 1, mxp, 1, myp, &
                oneGrid%oneBasicFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
 
-          if(ilwrtyp==6 .or. iswrtyp==6 ) then
+          if(oneGrid%oneNamelistFile%ilwrtyp==6 .or. oneGrid%oneNamelistFile%iswrtyp==6 ) then
              if (oneGrid%oneMicVars%level  ==  3) &
                   call effective_radius(mzp,mxp,myp &
                   ,oneGrid%oneMicroFields%rei             &
@@ -2065,7 +2063,7 @@ contains
        end if
        !call dumpAer('Aer_pos2')
        ! Read Radiation Parameters if CARMA or RRTMG Radiation is selected
-       if (ilwrtyp==4 .or. iswrtyp==4 .or. ilwrtyp==6 .or. iswrtyp==6 ) then
+       if (oneGrid%oneNamelistFile%ilwrtyp==4 .or. oneGrid%oneNamelistFile%iswrtyp==4 .or. oneGrid%oneNamelistFile%ilwrtyp==6 .or. oneGrid%oneNamelistFile%iswrtyp==6 ) then
           call master_read_carma_data(oneGrid%oneNamelistFile, mchnum, master_num)
           call read_aotMap(oneGrid%Id, oneGrid%oneControlVars, oneGrid%oneBasicFields, oneGrid%oneTurbFields)
        endif
@@ -2214,7 +2212,7 @@ contains
 
 
        ! Read Radiation Parameters if CARMA or RRTMG Radiation is selected
-       if (ilwrtyp==4 .or. iswrtyp==4 .or. ilwrtyp==6 .or. iswrtyp==6 ) then
+       if (oneGrid%oneNamelistFile%ilwrtyp==4 .or. oneGrid%oneNamelistFile%iswrtyp==4 .or. oneGrid%oneNamelistFile%ilwrtyp==6 .or. oneGrid%oneNamelistFile%iswrtyp==6 ) then
           call master_read_carma_data(oneGrid%oneNamelistFile, mchnum, master_num)
           call read_aotMap(oneGrid%Id, oneGrid%oneControlVars, oneGrid%oneBasicFields, oneGrid%oneTurbFields)
        endif

@@ -236,7 +236,6 @@ module ModTimestepRK
        stilt_g            ! %dnp (IN)
 
   use mem_radiate, only: &
-       radiate_g, &
        DeepCopyToRadiateFields, &
        DeepCopyFromRadiateFields
 
@@ -278,9 +277,6 @@ module ModTimestepRK
   use ModRamsMicrophysics2M, only: &
        micro_2M_rams60, &
        negadj1_2M_rams60
-
-  use mem_radiate, only: &
-       ilwrtyp, iswrtyp
 
   use MODCUPARGRELL3, only: g3d_g
 
@@ -467,9 +463,10 @@ contains
        !plume_mean_g(:,:) instead of plume_mean_g(:,ngrid) to avoid memory errors.
        !emiss_cycle(:,:)  instead of emiss_cycle(:,ngrid)  to avoid memory errors.
        !the same for the others var
+       call DeepCopyToRadiateFields(oneGrid%oneRadiateFields, h)
        call sources_driver(ngrid, mzp,mxp,myp,ia,iz,ja,jz,                          &
             g,cp,cpor,p00,rgas,pi180,                                &
-            radiate_g(ngrid)%cosz,oneGrid%oneBasicFields%theta,              &
+            oneGrid%oneRadiateFields%cosz,oneGrid%oneBasicFields%theta,              &
             oneGrid%oneBasicFields%pp,oneGrid%oneBasicFields%pi0,oneGrid%oneBasicFields%rv,  &
             oneGrid%oneBasicFields%dn0,oneGrid%oneBasicFields%up,oneGrid%oneBasicFields%vp,  &
             time,iyear1,imonth1,idate1,itime1,dtlt,                  &
@@ -485,6 +482,7 @@ contains
             emiss_cycle  (:,:),                                  &
             aer2_g       (:,:),                                  &
             plume_fre_g  (:,:)                                   )
+       call DeepCopyFromRadiateFields(oneGrid%oneRadiateFields, h)
 
 
        !- call dry deposition and sedimentation routines

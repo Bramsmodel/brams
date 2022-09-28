@@ -77,8 +77,6 @@ module ModMemAlloc
        dealloc_oda
 
   use mem_radiate, only: &
-       ilwrtyp, &
-       iswrtyp, &
        radiate_g, &
        radiatem_g, &
        nullify_radiate, &
@@ -468,7 +466,6 @@ module ModMemAlloc
   private
 
   public :: MemAlloc
-  public :: MemDealloc
 
 contains
 
@@ -518,7 +515,7 @@ contains
        nmzp => nnzp
        nmxp => nodemxp(mynum,:)
        nmyp => nodemyp(mynum,:)
-       call MemDealloc()
+!!$       call MemDealloc()
     endif
 
     ! Call global grid dimension definitions
@@ -550,7 +547,7 @@ contains
     enddo
     !
     !Allocate and prepare optical properties memory
-    if (iswrtyp==6) then
+    if (oneGrid%oneNamelistFile%iswrtyp==6) then
        call setOptMemory(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
             ngrids,imean,nmzp,nmxp,nmyp)
     end if
@@ -686,7 +683,7 @@ contains
     enddo
 
     !- only for CARMA/RRTM Radiations schems
-    if (ilwrtyp==4 .or. iswrtyp==4 .or. ilwrtyp==6 .or. iswrtyp==6 ) then
+    if (oneGrid%oneNamelistFile%ilwrtyp==4 .or. oneGrid%oneNamelistFile%iswrtyp==4 .or. oneGrid%oneNamelistFile%ilwrtyp==6 .or. oneGrid%oneNamelistFile%iswrtyp==6 ) then
        call initial_definitions_aerad()
        call initial_definitions_globrad()
        call initial_definitions_globaer()
@@ -758,13 +755,13 @@ contains
        end do
 
        !-only CARMA
-       if (ilwrtyp==4 .or. iswrtyp==4 .or. iswrtyp==6) then !Colocando o RTM para alocar AOT
+       if (oneGrid%oneNamelistFile%ilwrtyp==4 .or. oneGrid%oneNamelistFile%iswrtyp==4 .or. oneGrid%oneNamelistFile%iswrtyp==6) then !Colocando o RTM para alocar AOT
 
           allocate(carma(ngrids), STAT=ierr)
           if (ierr/=0) call fatal_error(h//"Allocating carma/AOT rtm")
           allocate(carma_m(ngrids), STAT=ierr)
           if (ierr/=0) call fatal_error(h//"Allocating carma_m")
-          !if(iswrtyp==4) then
+          !if(oneGrid%oneNamelistFile%iswrtyp==4) then
           do ng=1,ngrids
              call nullify_carma(carma,ng)
              call alloc_carma(carma, ng, nmxp(ng), nmyp(ng), nwave)
@@ -1575,81 +1572,4 @@ contains
     timeCount=0
 
   end subroutine MemAlloc
-
-
-
-  subroutine MemDealloc()
-
-    ! deallocate all model memory.  Used on dynamic balance
-
-    integer :: ng
-
-!!$    deallocate(num_var,vtab_r)
-
-    call dealloc_tend(naddsc)
-    call dealloc_scratch()
-
-    call dealloc_opt_scratch() ! For optimization - ALF
-
-    if (ilwrtyp==4 .or. iswrtyp==4) then ! For CARMA
-       call final_definitions_aerad()
-       call final_definitions_globrad()
-       call final_definitions_globaer()
-    endif
-
-    call dealloc_cuparm(cuparm_g)
-    call dealloc_cuparm(cuparmm_g)
-    call dealloc_cuparm(cuparm_g_sh)
-    call dealloc_cuparm(cuparmm_g_sh)
-
-    do ng=1,ngrids
-       call dealloc_grid(grid_g(ng))
-       call dealloc_grid(gridm_g(ng))
-       call dealloc_leaf(leaf_g(ng))
-       call dealloc_leaf(leafm_g(ng))
-#ifdef JULES
-!!$       call dealloc_jules(jules_g(ng))
-!!$       call dealloc_jules(julesm_g(ng))
-#endif
-       call dealloc_radiate(radiate_g(ng))
-       call dealloc_radiate(radiatem_g(ng))
-       call dealloc_varinit(varinit_g(ng))
-
-       call dealloc_oda(oda_g(ng))
-       call dealloc_oda(odam_g(ng))
-
-       if (TEB_SPM==1) then
-          if(allocated(tebc_g)) then
-             call dealloc_tebc(tebc_g(ng))      !for teb common
-             call dealloc_tebc(tebcm_g(ng))     !for teb common
-          endif
-          if(allocated(teb_g)) then
-             call dealloc_teb(teb_g(ng))      !for teb
-             call dealloc_teb(tebm_g(ng))     !for teb
-          endif
-       endif
-
-    enddo
-    deallocate(cuparm_g,cuparmm_g)
-    deallocate(grid_g,gridm_g)
-    deallocate(leaf_g,leafm_g)
-#ifdef JULES
-!!$    deallocate(jules_g,julesm_g)
-#endif
-    deallocate(radiate_g,radiatem_g)
-    deallocate(varinit_g)
-    deallocate(oda_g,odam_g)
-
-    if (TEB_SPM==1) then
-       if(allocated(teb_g)) then
-          deallocate(teb_g, tebm_g)         ! for urban parameterization
-       endif
-       if(allocated(tebc_g)) then
-          deallocate(tebc_g, tebcm_g)         ! for urban parameterization
-       endif
-    endif
-
-    return
-  end subroutine MemDealloc
-
 end module ModMemAlloc
