@@ -410,9 +410,11 @@ contains
 
 
        !- call dry deposition and sedimentation routines
+       call DeepCopyToRadiateFields(oneGrid%oneRadiateFields, h)
        call drydep_driver(mzp,mxp,myp,ia,iz,ja,jz, &
             oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicVars, &
-            oneGrid%oneMicroFields)
+            oneGrid%oneMicroFields, oneGrid%oneRadiateFields)
+       call DeepCopyFromRadiateFields(oneGrid%oneRadiateFields, h)
 
        !- call Matrix Aerosol Model
        !----------------------------------------

@@ -40,8 +40,8 @@ module ChemDryDepDriver
   use mem_leaf, only: &
        leaf_g
 
-  use mem_radiate, only: &
-       radiate_g
+  use ModRadiateFields, only: &
+       RadiateFields
 
   use mem_chem1, only: &
        chem1_g,        &
@@ -68,10 +68,10 @@ module ChemDryDepDriver
 
 contains
 
-
   !========================================================================
   subroutine drydep_driver(m1,m2,m3,ia,iz,ja,jz, &
-       oneBasicFields, oneTurbFields, oneMicControl, oneMicroFields)
+       oneBasicFields, oneTurbFields, oneMicControl, oneMicroFields, &
+       oneRadiateFields)
 
     integer,              intent(IN)    :: m1
     integer,              intent(IN)    :: m2
@@ -84,6 +84,7 @@ contains
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     type(MicControl), pointer, intent(in) :: oneMicControl
     type(MicroFields), pointer, intent(in) :: oneMicroFields
+    type(RadiateFields), pointer, intent(in) :: oneRadiateFields
 
 
     return

@@ -41,8 +41,8 @@ module ChemDryDepDriver
   use ModMicroFields, only: &
        MicroFields
 
-  use mem_radiate, only: &
-       radiate_g
+  use ModRadiateFields, only: &
+       RadiateFields
 
   use mem_chem1, only: &
        chem1_g,        &
@@ -72,7 +72,8 @@ contains
 
   !========================================================================
   subroutine drydep_driver(m1,m2,m3,ia,iz,ja,jz, &
-       oneBasicFields, oneTurbFields, oneMicControl, oneMicroFields)
+       oneBasicFields, oneTurbFields, oneMicControl, oneMicroFields, &
+       oneRadiateFields)
 
     integer,              intent(IN)    :: m1
     integer,              intent(IN)    :: m2
@@ -85,6 +86,7 @@ contains
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     type(MicControl), pointer, intent(in) :: oneMicControl
     type(MicroFields), pointer, intent(in) :: oneMicroFields
+    type(RadiateFields), pointer, intent(in) :: oneRadiateFields
 
     real, pointer :: conprr_dummy(:,:)    
 
@@ -123,7 +125,7 @@ contains
          ,oneMicroFields%rcp        & 
          ,oneMicroFields%pcpg            & 
          ,grid_g(ngrid)%rtgt        & 
-         ,radiate_g(ngrid)%rshort        & 
+         ,oneRadiateFields%rshort        & 
          !                ,cuparm_g(ngrid)%conprr         & 
          ,conprr_dummy                   & 
          !-srf-27jan2015
