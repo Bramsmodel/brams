@@ -88,14 +88,6 @@ module ModChemistryDriver
   use ModRadiateFields, only: &
        RadiateFields
   
-  use mem_radiate, only : &
-       radfrq,            & ! (IN)
-       lonrad,            & ! (IN) (nao usado)
-       radiate_g,         & ! %cosz(IN), %rlongup(IN), %albedt(IN)
-       radiate_vars,      & ! Type
-       ilwrtyp,           & ! (IN)
-       iswrtyp              ! (IN)
-
   use FastJX, only :  &
        FastJX_driver, & ! Subroutine
        Initialize_Fast_JX, &
@@ -331,7 +323,7 @@ contains
           end if
 
           !- photolysis or attenuation calculations
-          if (mod(time + .001,radfrq) .lt. dtlt .or. time .lt. 0.001) then
+          if (mod(time + .001,oneNamelistFile%radfrq) .lt. dtlt .or. time .lt. 0.001) then
              if (trim(PhotojMethod) == 'FAST-JX') then
 
                 call FastJX_driver(mzp,mxp,myp,ia,iz,ja,jz,nzpmax,ngrid,ngrids,grid_g(ngrid)%lpw, &
@@ -339,21 +331,21 @@ contains
                      grid_g(ngrid)%rtgt,zm,imonth1,idate1,iyear1,time,dzt, &
                      nodemzp(mynum,:),nodemxp(mynum,:),nodemyp(mynum,:),i0,j0,ngrids,&
                      oneBasicFields%pp,oneBasicFields%pi0, &
-                     oneBasicFields%theta,oneBasicFields%dn0,radiate_g(ngrid)%rlongup, &
-                     radiate_g(ngrid)%cosz,radiate_g(ngrid)%albedt,raddatfn,do3,daer,na)
+                     oneBasicFields%theta,oneBasicFields%dn0,oneRadiateFields%rlongup, &
+                     oneRadiateFields%cosz,oneRadiateFields%albedt,raddatfn,do3,daer,na)
 
              elseif(trim(PhotojMethod) == 'LUT') then
 
-                if(ilwrtyp==4 .or. iswrtyp==4) then
+                if(oneNamelistFile%ilwrtyp==4 .or. oneNamelistFile%iswrtyp==4) then
                    call uv_attenuation(mxp,myp,ia,iz,ja,jz,i0,j0, &
                         platn(ngrid),plonn(ngrid),deltaxn(ngrid),deltayn(ngrid), &
                         nxpmax,nypmax,xt,yt,nwave,carma(ngrid)%aot, &
-                        ilwrtyp,iswrtyp,uv_atten_g(ngrid)%att,11)
-                elseif(ilwrtyp==6 .or. iswrtyp==6) then
+                        oneNamelistFile%ilwrtyp,oneNamelistFile%iswrtyp,uv_atten_g(ngrid)%att,11)
+                elseif(oneNamelistFile%ilwrtyp==6 .or. oneNamelistFile%iswrtyp==6) then
                    call uv_attenuation(mxp,myp,ia,iz,ja,jz,i0,j0, &
                         platn(ngrid),plonn(ngrid),deltaxn(ngrid),deltayn(ngrid), &
                         nxpmax,nypmax,xt,yt,nbndlw,real(aot_rrtm_lw), &
-                        ilwrtyp,iswrtyp,uv_atten_g(ngrid)%att,2)
+                        oneNamelistFile%ilwrtyp,oneNamelistFile%iswrtyp,uv_atten_g(ngrid)%att,2)
                 end if
 
              elseif(trim(PhotojMethod) == 'FAST-TUV') then
@@ -390,7 +382,7 @@ contains
 
                 call chem_qssa(mzp,mxp,myp,itchim(ngrid),nr,mynum,dtlt,oneBasicFields%pp, &
                      oneBasicFields%pi0, oneBasicFields%theta,oneBasicFields%rv, &
-                     radiate_g(ngrid)%cosz,fast_JX_g(ngrid)%jphoto, &
+                     oneRadiateFields%cosz,fast_JX_g(ngrid)%jphoto, &
                      nspecies,nr_photo,weight,PhotoJMethod,chem1_g(:,ngrid), &
                      nob(ngrid),maxblock_size, &
                      index_g(ngrid)%block_end,index_g(ngrid)%indexk,index_g(ngrid)%indexi, &
@@ -407,7 +399,7 @@ contains
 
                 call chem_ros(mzp,mxp,myp,dtlt,oneBasicFields%pp,oneBasicFields%pi0, &
                      oneBasicFields%theta,oneBasicFields%rv,oneBasicFields%dn0, &
-                     radiate_g(ngrid)%cosz,oneMicroFields%rcp,nspecies,nr,nr_photo,weight, &
+                     oneRadiateFields%cosz,oneMicroFields%rcp,nspecies,nr,nr_photo,weight, &
                      PhotojMethod,fast_JX_g(ngrid)%jphoto,maxnspecies,nspecies_chem_transported, &
                      nspecies_chem_no_transported,transp_chem_index,no_transp_chem_index, &
                      chem1_g(:,ngrid),nob(ngrid),maxblock_size, &
@@ -421,7 +413,7 @@ contains
 
                 call chem_ros_dyndt(mzp,mxp,myp,dtlt,oneBasicFields%pp,oneBasicFields%pi0, &
                      oneBasicFields%theta,oneBasicFields%rv,oneBasicFields%dn0, &
-                     radiate_g(ngrid)%cosz,oneMicroFields%rcp,nspecies,nr,nr_photo,weight, &
+                     oneRadiateFields%cosz,oneMicroFields%rcp,nspecies,nr,nr_photo,weight, &
                      PhotojMethod,maxnspecies,nspecies_chem_transported, &
                      nspecies_chem_no_transported,transp_chem_index,no_transp_chem_index, &
                      chem1_g(:,ngrid),nob(ngrid),maxblock_size, &
@@ -434,7 +426,7 @@ contains
 
                 call chem_rodas3_dyndt(mzp,mxp,myp,dtlt,oneBasicFields%pp,oneBasicFields%pi0, &
                      oneBasicFields%theta,oneBasicFields%rv,oneBasicFields%dn0, &
-                     radiate_g(ngrid)%cosz,oneMicroFields%rcp,nspecies,nr,nr_photo,weight, &
+                     oneRadiateFields%cosz,oneMicroFields%rcp,nspecies,nr,nr_photo,weight, &
                      PhotojMethod,maxnspecies,nspecies_chem_transported, &
                      nspecies_chem_no_transported,transp_chem_index,no_transp_chem_index, &
                      chem1_g(:,ngrid),nob(ngrid),maxblock_size, &
