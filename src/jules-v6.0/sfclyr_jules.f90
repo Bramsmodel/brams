@@ -58,8 +58,8 @@ module ModSfcLyrJules
        p00, &
        cpor
 
-  use mem_radiate, only: &
-       radiate_g 
+  use ModRadiateFields, only: &
+       RadiateFields
 
   use ModTurbFields, only: &
        TurbFields
@@ -168,7 +168,7 @@ contains
 
   subroutine sfclyr_jules(mzp,mxp,myp,iaI,izI,jaI,jzI,jdim,julesFile,&
        oneBasicFields, oneTurbFields, oneMicControl, oneMicroFields, &
-       oneJulesFields)
+       oneJulesFields, oneRadiateFields)
 
     !--- Modulos do BRAMS ---
 
@@ -186,6 +186,7 @@ contains
     type(MicControl), pointer, intent(in) :: oneMicControl
     type(MicroFields), pointer, intent(in) :: oneMicroFields
     type(JulesFields), pointer, intent(in) :: oneJulesFields
+    type(RadiateFields), pointer, intent(in) :: oneRadiateFields
     
     integer               :: nsoil, fase,ia,iz,ja,jz,hh,mm
     integer, parameter :: fat_dtlong=1  ! > 1 para nao executar o JULES em todos os timestep do BRAMS
@@ -269,8 +270,8 @@ contains
     runtypeB=runtype
     hfilinB=hfilin
 
-    swdownB(:,:)   =radiate_g(ng)%rshort(ia:iz, ja:jz) 
-    lwdownB(:,:)   =radiate_g(ng)%rlong(ia:iz, ja:jz)
+    swdownB(:,:)   =oneRadiateFields%rshort(ia:iz, ja:jz) 
+    lwdownB(:,:)   =oneRadiateFields%rlong(ia:iz, ja:jz)
 
     !--- TMP ate resolver o problema de borda da radiacao ---{
     swdownB(ia,:)=swdownB(ia+1,:)
@@ -285,7 +286,7 @@ contains
     !------------------------------------------------}
 
     precipB(:,:)   =pcpgl(ia:iz, ja:jz)
-    diff_radB(:,:) =0.0 !radiate_g(ng)%rshortdif(ia:iz, ja:jz)  !TMP
+    diff_radB(:,:) =0.0 !oneRadiateFields%rshortdif(ia:iz, ja:jz)  !TMP
     tempB(:,:)     =temp2(ia:iz, ja:jz)
     upsB(:,:)      =ups2(ia:iz, ja:jz)
     vpsB(:,:)      =vps2(ia:iz, ja:jz)
@@ -438,7 +439,7 @@ contains
 
     !--- ACOPLANDO - JULES p/ BRAMS ------{
     !--- Acoplando o albedt ---{
-    radiate_g(ng)%albedt(:,:)=(land_albedo_ij(:,:,1)+land_albedo_ij(:,:,2)+land_albedo_ij(:,:,3)+land_albedo_ij(:,:,4))/4
+    oneRadiateFields%albedt(:,:)=(land_albedo_ij(:,:,1)+land_albedo_ij(:,:,2)+land_albedo_ij(:,:,3)+land_albedo_ij(:,:,4))/4
 
     allocate(rlongupJ(land_pts))
     rlongupJ(:)=sbcon * surftiles_to_gbm(emis_surft * progs%tstar_surft**4, ainfo)
@@ -450,7 +451,7 @@ contains
           stop
        endif
        !--- Acoplando o rlongup ---{
-       radiate_g(ng)%rlongup(i+ia-1,j+ja-1) = rlongupJ(l)
+       oneRadiateFields%rlongup(i+ia-1,j+ja-1) = rlongupJ(l)
 
        !--- Acoplando a umidade do solo ---
        do k=1,sm_levelsB

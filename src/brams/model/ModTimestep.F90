@@ -358,9 +358,11 @@ contains
                oneGrid%oneMicVars, oneGrid%oneMicroFields, oneGrid%oneRadiateFields)
           call DeepCopyFromRadiateFields(oneGrid%oneRadiateFields, h)
        end if
+       call DeepCopyToRadiateFields(oneGrid%oneRadiateFields, h)
        call sfclyr_jules(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile, &
             oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicVars, &
-            oneGrid%oneMicroFields, oneGrid%oneJulesFields)
+            oneGrid%oneMicroFields, oneGrid%oneJulesFields, oneGrid%oneRadiateFields)
+       call DeepCopyFromRadiateFields(oneGrid%oneRadiateFields, h)
 #endif
     endif
 
