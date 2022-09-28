@@ -248,9 +248,6 @@ module ModOneProc
        if_oda, &
        StoreNamelistFileAtMem_oda
 
-  use mem_radiate, only: &
-       StoreNamelistFileAtMem_radiate
-
   use ModSoilMoisture, only: &
        soilMoistureInit, &
        StoreNamelistFileAtSoilMoisture
@@ -786,7 +783,6 @@ contains
     call StoreNamelistFileAtMem_grid(oneNamelistFile)
     call StoreNamelistFileAtMem_leaf(oneNamelistFile)
     call StoreNamelistFileAtMem_oda(oneNamelistFile)
-    call StoreNamelistFileAtMem_radiate(oneNamelistFile)
     call StoreNamelistFileAtSoilMoisture(oneNamelistFile)
     call StoreNamelistFileAtMem_varinit(oneNamelistFile)
     call StoreNamelistFileAtNode_mod(oneNamelistFile%load_bal)

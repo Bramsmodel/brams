@@ -75,10 +75,6 @@ module ModPostOneField2d
   use dump, only: &
        dumpMessage
 
-  use mem_radiate, only: &
-       ISWRTYP, &
-       ILWRTYP
-
   use node_mod, only:  &
        mynum, &
        master_num

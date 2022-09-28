@@ -218,10 +218,6 @@ module ModTimestep
        imassflx,       &  ! (IN)
        stilt_g            ! %dnp (IN)
 
-  use mem_radiate, only: &
-       DeepCopyToRadiateFields, &
-       DeepCopyFromRadiateFields
-
   use chem_sources, only :     &
        alloc_emiss_cycle,      &  ! Subroutine
        init_actual_time_index, &  ! Subroutine
@@ -334,35 +330,27 @@ contains
 
     !  Radiation parameterization
     !--------------------------------
-    call DeepCopyToRadiateFields(oneGrid%oneRadiateFields, h)
     call radiate(mzp,mxp,myp,ia,iz,ja,jz,mynum, &
          oneGrid%oneNamelistFile, oneGrid%oneBasicFields, &
          oneGrid%oneMicVars, oneGrid%oneMicroFields, &
          oneGrid%oneRadiateFields)
-    call DeepCopyFromRadiateFields(oneGrid%oneRadiateFields, h)
 
     !  Surface layer, soil and veggie model
     !----------------------------------------
     if (isfcl<=2) then
-       call DeepCopyToRadiateFields(oneGrid%oneRadiateFields, h)
        call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
             oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, &
             oneGrid%oneMicVars, oneGrid%oneMicroFields, oneGrid%oneRadiateFields)
-       call DeepCopyFromRadiateFields(oneGrid%oneRadiateFields, h)
 #ifdef JULES
     elseif (isfcl == 5) then
        if (time==0.) then
-          call DeepCopyToRadiateFields(oneGrid%oneRadiateFields, h)
           call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
                oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, &
                oneGrid%oneMicVars, oneGrid%oneMicroFields, oneGrid%oneRadiateFields)
-          call DeepCopyFromRadiateFields(oneGrid%oneRadiateFields, h)
        end if
-       call DeepCopyToRadiateFields(oneGrid%oneRadiateFields, h)
        call sfclyr_jules(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile, &
             oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicVars, &
             oneGrid%oneMicroFields, oneGrid%oneJulesFields, oneGrid%oneRadiateFields)
-       call DeepCopyFromRadiateFields(oneGrid%oneRadiateFields, h)
 #endif
     endif
 
@@ -408,11 +396,9 @@ contains
 
 
        !- call dry deposition and sedimentation routines
-       call DeepCopyToRadiateFields(oneGrid%oneRadiateFields, h)
        call drydep_driver(mzp,mxp,myp,ia,iz,ja,jz, &
             oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicVars, &
             oneGrid%oneMicroFields, oneGrid%oneRadiateFields)
-       call DeepCopyFromRadiateFields(oneGrid%oneRadiateFields, h)
 
        !- call Matrix Aerosol Model
        !----------------------------------------
@@ -537,10 +523,8 @@ contains
     !- large and subgrid scale forcing for shallow and deep cumulus
     !!1  IF(  NNQPARM(ngrid) >=2 .OR. NNSHCU(ngrid)>=2 ) CALL prepare_lsf_OLD(NNQPARM(ngrid), NNSHCU(ngrid),4)
     if( NNQPARM(ngrid) >=2 .or. NNSHCU(ngrid)>=2 ) then
-       call DeepCopyToRadiateFields(oneGrid%oneRadiateFields, h)
        call prepare_lsf(NNQPARM(ngrid), NNSHCU(ngrid),1, &
             oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneRadiateFields)
-       call DeepCopyFromRadiateFields(oneGrid%oneRadiateFields, h)
     end if
 
     !-   Cumulus parameterization options 2->6:
@@ -562,13 +546,11 @@ contains
 
     !- task 2:  NO production by "eclair"
     if (ccatt == 1) then
-       call DeepCopyToRadiateFields(oneGrid%oneRadiateFields, h)
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,2,50,&
             oneGrid%oneNamelistFile, &
             oneGrid%oneBasicFields, &
             oneGrid%oneMicroFields, &
             oneGrid%oneRadiateFields)
-       call DeepCopyFromRadiateFields(oneGrid%oneRadiateFields, h)
     end if
 
     !- CATT & Chemistry == CCATT
@@ -576,23 +558,19 @@ contains
     if (ccatt==1 .and. split_method== 'PARALLEL' .and. n_dyn_chem==1) then
        ! task 3 : production/loss by chemical processes and inclusion of the
        ! chemistry tendency at the total tendency
-       call DeepCopyToRadiateFields(oneGrid%oneRadiateFields, h)
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,3,50,&
             oneGrid%oneNamelistFile, &
             oneGrid%oneBasicFields, &
             oneGrid%oneMicroFields, &
             oneGrid%oneRadiateFields)
-       call DeepCopyFromRadiateFields(oneGrid%oneRadiateFields, h)
     endif
     if (ccatt==1 ) then
        ! task 4 : mass transfer between gas and liquid
-       call DeepCopyToRadiateFields(oneGrid%oneRadiateFields, h)
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,4,50,&
             oneGrid%oneNamelistFile, &
             oneGrid%oneBasicFields, &
             oneGrid%oneMicroFields, &
             oneGrid%oneRadiateFields)
-       call DeepCopyFromRadiateFields(oneGrid%oneRadiateFields, h)
     endif
 
     !---------------------------------------------------
@@ -618,7 +596,6 @@ contains
                oneGrid%oneRadiateFields)
        endif
     endif
-    call DeepCopyFromRadiateFields(oneGrid%oneRadiateFields, h)
 
     !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
     !  call SynchronizedTimeStamp(TS_PHYSICS)
@@ -664,13 +641,11 @@ contains
     !- chemistry - microphysics tranfers - sedimentation and tranfer from clouds to rain
     if (ccatt==1) then
        ! task 5 : sedimentation and mass transfer between clouds and rain
-       call DeepCopyToRadiateFields(oneGrid%oneRadiateFields, h)
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,5,50,&
             oneGrid%oneNamelistFile, &
             oneGrid%oneBasicFields, &
             oneGrid%oneMicroFields, &
             oneGrid%oneRadiateFields)
-       call DeepCopyFromRadiateFields(oneGrid%oneRadiateFields, h)
     endif
 
     !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
@@ -793,13 +768,11 @@ contains
 
           ! task 3 : production/loss by chemical processes and final updated
           !  of each specie
-          call DeepCopyToRadiateFields(oneGrid%oneRadiateFields, h)
           call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,3,50,&
             oneGrid%oneNamelistFile, &
             oneGrid%oneBasicFields, &
             oneGrid%oneMicroFields, &
             oneGrid%oneRadiateFields)
-          call DeepCopyFromRadiateFields(oneGrid%oneRadiateFields, h)
        endif
 
        !- call Matrix Aerosol Model
