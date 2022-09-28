@@ -41,14 +41,14 @@ module ModTuvDriver
   use mem_aerad, only: &
        nwave
   
-  use mem_radiate, only: &
-       radiate_g
-
   use ModNamelistFile, only: &
        NamelistFile
   
   use ModBasicFields, only: &
        BasicFields
+
+  use ModRadiateFields, only: &
+       RadiateFields
   
   use mem_carma, only: &
        carma, &   !aot
@@ -597,10 +597,12 @@ module ModTuvDriver
 contains
 
 
-  subroutine tuvDriver(m1,m2,m3,ia,iz,ja,jz, oneBasicFields, oneNamelistFile)
+  subroutine tuvDriver(m1,m2,m3,ia,iz,ja,jz, &
+       oneBasicFields, oneNamelistFile, oneRadiateFields)
     integer,intent(IN) :: m1,m2,m3,ia,iz,ja,jz
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
+    type(RadiateFields), pointer, intent(in) :: oneRadiateFields
     
     !INTEGER,INTENT(IN) :: nstr   !number of streams
     !INTEGER,INTENT(IN) :: nwint  !number of wavelength intervals. Equally spaces
@@ -857,7 +859,7 @@ contains
             ,grid_g(ngrid)%glat    (1,1)  &
             ,grid_g(ngrid)%rtgt    (1,1)  &
             ,grid_g(ngrid)%topt    (1,1)  &
-            ,radiate_g(ngrid)%rlongup (1,1)  &
+            ,oneRadiateFields%rlongup (1,1)  &
             ,zm,zt,prd ,temprd(ia,ja,2:2),dair(ia,ja,2:2),rv , &
             zml(ia,ja,2:2),ztl(ia,ja,2:2),do3(ia,ja,2:2),&
             dzl(ia,ja,2:2),1,1,rgas,g,stefan,1,mclat,mcol)
@@ -884,7 +886,7 @@ contains
     do j=ja,jz
        do i=ia,iz
           !Zenital angle
-          sza_(i,j) = dble(acos(radiate_g(ngrid)%cosz(i,j)))*f180PI
+          sza_(i,j) = dble(acos(oneRadiateFields%cosz(i,j)))*f180PI
           if(abs(sza_(i,j))<=90.0) then
              is2DoTuv=.true.
              exit
@@ -896,8 +898,8 @@ contains
 
     do j=ja,jz
        do i=ia,iz
-          sza_(i,j)   = dble(acos(radiate_g(ngrid)%cosz(i,j)))*f180PI
-          albedo_(i,j)= radiate_g(ngrid)%albedt(i,j)
+          sza_(i,j)   = dble(acos(oneRadiateFields%cosz(i,j)))*f180PI
+          albedo_(i,j)= oneRadiateFields%albedt(i,j)
        end do
     end do
 
@@ -906,7 +908,7 @@ contains
          ,grid_g(ngrid)%glat    (1,1)  &
          ,grid_g(ngrid)%rtgt    (1,1)  &
          ,grid_g(ngrid)%topt    (1,1)  &
-         ,radiate_g(ngrid)%rlongup (1,1)  &
+         ,oneRadiateFields%rlongup (1,1)  &
          ,zm,zt,prd ,temprd(ia,ja,:), &
          dair(ia,ja,:),rv ,zml(ia,ja,2:2),ztl(ia,ja,2:2), do3(ia,ja,2:2),&
          dzl(ia,ja,2:2),1,1,rgas,g,stefan,1,mclat,mcol)
@@ -961,7 +963,7 @@ contains
                ,grid_g(ngrid)%glat   (i,j)  &
                ,rtgt(i,j) &
                ,topt(i,j) &
-               ,radiate_g(ngrid)%rlongup (i,j)  &
+               ,oneRadiateFields%rlongup (i,j)  &
                ,zm,zt   &
                ,prd(1:nrad(i,j))     &
                ,temprd(i,j,1:nrad(i,j))  &
@@ -1180,7 +1182,7 @@ contains
     if(Is2PrintIn) then
        do j=ja,jz
           do i=ia,iz
-             rshort(i,j)=radiate_g(ngrid)%rshort(i,j)
+             rshort(i,j)=oneRadiateFields%rshort(i,j)
           end do
        end do
        if(mod(time+0.001,1800.0)<dtlt) then

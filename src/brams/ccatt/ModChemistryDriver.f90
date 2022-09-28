@@ -85,6 +85,9 @@ module ModChemistryDriver
   use ModBasicFields, only: &
        BasicFields
 
+  use ModRadiateFields, only: &
+       RadiateFields
+  
   use mem_radiate, only : &
        radfrq,            & ! (IN)
        lonrad,            & ! (IN) (nao usado)
@@ -245,7 +248,7 @@ contains
 
   !------------------------------------------------------------------
   subroutine chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,task,nt, &
-       oneNamelistFile, oneBasicFields, oneMicroFields)
+       oneNamelistFile, oneBasicFields, oneMicroFields, oneRadiateFields)
 
     integer , intent(IN) :: mzp
     integer , intent(IN) :: mxp
@@ -259,6 +262,7 @@ contains
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(MicroFields), pointer, intent(in) :: oneMicroFields
+    type(RadiateFields), pointer, intent(in) :: oneRadiateFields
     
     integer, dimension(ngrids) :: itchim
     integer, dimension(ngrids) :: ncycle
@@ -268,7 +272,6 @@ contains
     character(len=*), parameter :: h="**(chemistry_driver)**"
 
     !     INTEGER,PARAMETER :: blockSize=1 !tmp
-
 
 
     !-  call NO production by "eclair"
@@ -354,14 +357,16 @@ contains
                 end if
 
              elseif(trim(PhotojMethod) == 'FAST-TUV') then
-                call tuvDriver(mzp,mxp,myp,ia,iz,ja,jz, oneBasicFields, oneNamelistFile)
+                call tuvDriver(mzp,mxp,myp,ia,iz,ja,jz, &
+                     oneBasicFields, oneNamelistFile, oneRadiateFields)
 
              else
                 stop ' unknonw photolysis calculation method '
 
              endif
              if(trim(PhotojMethod) == 'LUT') then
-                call tuvDriver(mzp,mxp,myp,ia,iz,ja,jz, oneBasicFields, oneNamelistFile)
+                call tuvDriver(mzp,mxp,myp,ia,iz,ja,jz, &
+                     oneBasicFields, oneNamelistFile, oneRadiateFields)
              endif
           endif
 

@@ -565,7 +565,8 @@ contains
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,2,50,&
             oneGrid%oneNamelistFile, &
             oneGrid%oneBasicFields, &
-            oneGrid%oneMicroFields)
+            oneGrid%oneMicroFields, &
+            oneGrid%oneRadiateFields)
     end if
 
     !- CATT & Chemistry == CCATT
@@ -576,7 +577,8 @@ contains
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,3,50,&
             oneGrid%oneNamelistFile, &
             oneGrid%oneBasicFields, &
-            oneGrid%oneMicroFields)
+            oneGrid%oneMicroFields, &
+            oneGrid%oneRadiateFields)
 
     endif
     if (ccatt==1 ) then
@@ -584,7 +586,8 @@ contains
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,4,50,&
             oneGrid%oneNamelistFile, &
             oneGrid%oneBasicFields, &
-            oneGrid%oneMicroFields)
+            oneGrid%oneMicroFields, &
+            oneGrid%oneRadiateFields)
     endif
 
     !---------------------------------------------------
@@ -659,7 +662,8 @@ contains
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,5,50,&
             oneGrid%oneNamelistFile, &
             oneGrid%oneBasicFields, &
-            oneGrid%oneMicroFields)
+            oneGrid%oneMicroFields, &
+            oneGrid%oneRadiateFields)
 
     endif
 
@@ -786,7 +790,8 @@ contains
           call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,3,50,&
             oneGrid%oneNamelistFile, &
             oneGrid%oneBasicFields, &
-            oneGrid%oneMicroFields)
+            oneGrid%oneMicroFields, &
+            oneGrid%oneRadiateFields)
        endif
 
        !- call Matrix Aerosol Model
