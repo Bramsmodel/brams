@@ -42,11 +42,10 @@ module ModTuvDriver
        nwave
   
   use mem_radiate, only: &
-       radiate_g, &
-!!$       prsnz, &
-!!$       prsnzp, &
-       iswrtyp, &
-       ilwrtyp
+       radiate_g
+
+  use ModNamelistFile, only: &
+       NamelistFile
   
   use ModBasicFields, only: &
        BasicFields
@@ -598,9 +597,11 @@ module ModTuvDriver
 contains
 
 
-  subroutine tuvDriver(m1,m2,m3,ia,iz,ja,jz, oneBasicFields)
+  subroutine tuvDriver(m1,m2,m3,ia,iz,ja,jz, oneBasicFields, oneNamelistFile)
     integer,intent(IN) :: m1,m2,m3,ia,iz,ja,jz
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
+    
     !INTEGER,INTENT(IN) :: nstr   !number of streams
     !INTEGER,INTENT(IN) :: nwint  !number of wavelength intervals. Equally spaces
     !INTEGER,INTENT(IN) :: blockSize !Size of each column block
@@ -831,8 +832,8 @@ contains
           end if
        end do
 
-       if((ilwrtyp == 4 .and. iswrtyp == 4) .or. &
-            (ilwrtyp == 6 .and. iswrtyp == 6) ) then
+       if((oneNamelistFile%ilwrtyp == 4 .and. oneNamelistFile%iswrtyp == 4) .or. &
+            (oneNamelistFile%ilwrtyp == 6 .and. oneNamelistFile%iswrtyp == 6) ) then
           !
           !Adapt lambda from carma to tuv
           tuv2carma=1
@@ -970,7 +971,7 @@ contains
                ,do3(i,j,1:nrad(i,j)),dzl(i,j,1:nrad(i,j)) &
                ,i,j,rgas,g,stefan,nrad(i,j),mclat,mcol)
 
-          if(ilwrtyp == 4 .and. iswrtyp == 4 ) then ! carma ON
+          if(oneNamelistFile%ilwrtyp == 4 .and. oneNamelistFile%iswrtyp == 4 ) then ! carma ON
 
              !idaot(i,j) = MAX(MIN(INT(10*((ANINT(10.*carma(ngrid)%aot(i,j,11))/10.)+0.1)/2.),9),1)
              !DO n=1,nw-1
@@ -1014,7 +1015,7 @@ contains
        end do
     end do
 
-    if(ilwrtyp == 6 .and. iswrtyp == 6) then
+    if(oneNamelistFile%ilwrtyp == 6 .and. oneNamelistFile%iswrtyp == 6) then
        do j=ja,jz
           do i=ia,iz
              do k = 1,nrad(i,j)
@@ -1143,7 +1144,7 @@ contains
        end do
     end do
 
-    if(ilwrtyp == 4 .and. iswrtyp == 4 ) then ! carma on
+    if(oneNamelistFile%ilwrtyp == 4 .and. oneNamelistFile%iswrtyp == 4 ) then ! carma on
        do j=ja,jz
           do i=ia,iz
              do k = 1,nlayer!,   nrad(i,j)

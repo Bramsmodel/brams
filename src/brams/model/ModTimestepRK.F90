@@ -561,7 +561,9 @@ contains
 
     if (ccatt == 1) then
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,2,50,&
-            oneGrid%oneBasicFields, oneGrid%oneMicroFields)
+            oneGrid%oneNamelistFile, &
+            oneGrid%oneBasicFields, &
+            oneGrid%oneMicroFields)
     end if
 
     !- CATT & Chemistry == CCATT
@@ -570,12 +572,16 @@ contains
        ! task 3 : production/loss by chemical processes and inclusion of the
        ! chemistry tendency at the total tendency
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,3,50,&
-            oneGrid%oneBasicFields, oneGrid%oneMicroFields)
+            oneGrid%oneNamelistFile, &
+            oneGrid%oneBasicFields, &
+            oneGrid%oneMicroFields)
     endif
     if (ccatt==1 ) then
        ! task 4 : mass transfer between gas and liquid
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,4,50,&
-            oneGrid%oneBasicFields, oneGrid%oneMicroFields)
+            oneGrid%oneNamelistFile, &
+            oneGrid%oneBasicFields, &
+            oneGrid%oneMicroFields)
     endif
 
     !---------------------------------------------------
@@ -931,7 +937,9 @@ contains
     if (ccatt==1) then
        ! task 5 : sedimentation and mass transfer between clouds and rain
        call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,5,50,&
-            oneGrid%oneBasicFields, oneGrid%oneMicroFields)
+            oneGrid%oneNamelistFile, &
+            oneGrid%oneBasicFields, &
+            oneGrid%oneMicroFields)
     endif
 
     !----------------------------------------
@@ -944,7 +952,9 @@ contains
           ! task 3 : production/loss by chemical processes and final updated
           !  of each specie
           call chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,3,50,&
-               oneGrid%oneBasicFields, oneGrid%oneMicroFields)
+            oneGrid%oneNamelistFile, &
+            oneGrid%oneBasicFields, &
+            oneGrid%oneMicroFields)
        endif
 
        !- call Matrix Aerosol Model

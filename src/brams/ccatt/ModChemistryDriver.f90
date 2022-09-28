@@ -112,6 +112,9 @@ module ModChemistryDriver
        j0,             & ! (IN)
        ibcon             ! (IN)
 
+  use ModNamelistFile, only: &
+       NamelistFile
+  
   use ModMicroFields, only: &
        MicroFields
 
@@ -242,7 +245,7 @@ contains
 
   !------------------------------------------------------------------
   subroutine chemistry_driver(mzp,mxp,myp,ia,iz,ja,jz,task,nt, &
-       oneBasicFields, oneMicroFields)
+       oneNamelistFile, oneBasicFields, oneMicroFields)
 
     integer , intent(IN) :: mzp
     integer , intent(IN) :: mxp
@@ -253,6 +256,7 @@ contains
     integer , intent(IN) :: jz
     integer , intent(IN) :: task
     integer , intent(IN) :: nt
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(MicroFields), pointer, intent(in) :: oneMicroFields
     
@@ -350,14 +354,14 @@ contains
                 end if
 
              elseif(trim(PhotojMethod) == 'FAST-TUV') then
-                call tuvDriver(mzp,mxp,myp,ia,iz,ja,jz, oneBasicFields)
+                call tuvDriver(mzp,mxp,myp,ia,iz,ja,jz, oneBasicFields, oneNamelistFile)
 
              else
                 stop ' unknonw photolysis calculation method '
 
              endif
              if(trim(PhotojMethod) == 'LUT') then
-                call tuvDriver(mzp,mxp,myp,ia,iz,ja,jz, oneBasicFields)
+                call tuvDriver(mzp,mxp,myp,ia,iz,ja,jz, oneBasicFields, oneNamelistFile)
              endif
           endif
 

@@ -43,7 +43,6 @@ module mem_radiate
   real    :: radfrq ! from RAMSIN
   real    :: radtun ! from RAMSIN
   integer :: ncall_i !Indica primeira chamada
-!!$  real    :: prsnz,prsnzp !Calculadas na primeira chamada
 
   character(len=128), private :: lastTo=""
   character(len=128), private :: lastFrom=""
