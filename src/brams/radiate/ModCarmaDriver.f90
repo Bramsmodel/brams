@@ -6,6 +6,9 @@ module ModCarmaDriver
   use ModDateUtils, only: &
        julday
 
+  use ModRadiateFields, only: &
+       RadiateFields
+  
   use rad_carma, only: &
        radcomp_carma 
 
@@ -22,9 +25,6 @@ module ModCarmaDriver
   use mem_leaf, only: &
        leaf_g, & ! INTENT(IN)
        isfcl  !DSM
-
-  use mem_radiate, only: &
-       radiate_g
 
   use node_mod, only: &
        mynum ! INTENT(IN)
@@ -98,13 +98,15 @@ module ModCarmaDriver
 contains
 
   subroutine carma_driver(mzp, mxp, myp, ia, iz, ja, jz, mynum, &
-       oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields)
+       oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields, &
+       oneRadiateFields)
     ! arguments:
     integer, intent(in) :: mzp, mxp, myp, ia, iz, ja, jz, mynum
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(MicControl), pointer, intent(in) :: oneMicVars
     type(MicroFields), pointer, intent(in) :: oneMicroFields
+    type(RadiateFields), pointer, intent(in) :: oneRadiateFields
     
     ! local variables:
     real :: hranglelocal
@@ -127,7 +129,7 @@ contains
     if ((oneNamelistFile%ilwrtyp + oneNamelistFile%iswrtyp)==0) return
     !   
     !--- apply radiative tendencies to model tendencies
-    call tend_accum(mzp, mxp, myp, ia, iz, ja, jz)
+    call tend_accum(mzp, mxp, myp, ia, iz, ja, jz, oneRadiateFields)
 
     !--- radiation is called on each radfrq seconds
     if (.not. (mod(time+.001, oneNamelistFile%radfrq) < dtlt .or. time<0.001)) return
@@ -168,11 +170,11 @@ contains
             solfac,                                                 &
             grid_g(ngrid)%glat,                                     &
             grid_g(ngrid)%glon,                                     &
-            radiate_g(ngrid)%rshort,                                &
-            radiate_g(ngrid)%rlong,                                 &
-            radiate_g(ngrid)%rlongup,                               &
-            radiate_g(ngrid)%albedt,                                &
-            radiate_g(ngrid)%cosz,                                  &
+            oneRadiateFields%rshort,                                &
+            oneRadiateFields%rlong,                                 &
+            oneRadiateFields%rlongup,                               &
+            oneRadiateFields%albedt,                                &
+            oneRadiateFields%cosz,                                  &
             hrAngleLocal,                                           &       
             cdec,                                                   &
             oneNamelistFile,                                        &
@@ -198,11 +200,11 @@ contains
             solfac,                                                 &
             grid_g(ngrid)%glat,                                     &
             grid_g(ngrid)%glon,                                     &
-            radiate_g(ngrid)%rshort,                                &
-            radiate_g(ngrid)%rlong,                                 &
-            radiate_g(ngrid)%rlongup,                               &
-            radiate_g(ngrid)%albedt,                                &
-            radiate_g(ngrid)%cosz,                                  &
+            oneRadiateFields%rshort,                                &
+            oneRadiateFields%rlong,                                 &
+            oneRadiateFields%rlongup,                               &
+            oneRadiateFields%albedt,                                &
+            oneRadiateFields%cosz,                                  &
             hrAngleLocal,                                           &       
             cdec,                                                   &
             oneNamelistFile)
@@ -210,7 +212,7 @@ contains
 
 
     !--- set radiation tendency for theta to zero
-    radiate_g(ngrid)%fthrd(1:mzp,1:mxp,1:myp) = 0.0
+    oneRadiateFields%fthrd(1:mzp,1:mxp,1:myp) = 0.0
 
 
     !--- get cloud properties         
@@ -262,17 +264,17 @@ contains
          ,RAIN,LWL,IWL   &
          ,oneBasicFields%dn0   &
          ,oneBasicFields%rtp   &
-         ,radiate_g(ngrid)%fthrd     &
+         ,oneRadiateFields%fthrd     &
          ,grid_g(ngrid)%rtgt   &
          ,grid_g(ngrid)%f13t   &
          ,grid_g(ngrid)%f23t   &
          ,grid_g(ngrid)%glat   &
          ,grid_g(ngrid)%glon   &
-         ,radiate_g(ngrid)%rshort    &
-         ,radiate_g(ngrid)%rlong     &
-         ,radiate_g(ngrid)%albedt    &
-         ,radiate_g(ngrid)%cosz   &
-         ,radiate_g(ngrid)%rlongup   &
+         ,oneRadiateFields%rshort    &
+         ,oneRadiateFields%rlong     &
+         ,oneRadiateFields%albedt    &
+         ,oneRadiateFields%cosz   &
+         ,oneRadiateFields%rlongup   &
          ,mynum   &
          ,grid_g(ngrid)%fmapt   &
          ,leaf_g(ngrid)%patch_area   &
@@ -284,10 +286,10 @@ contains
     !    if(mynum== 5) then
     !     write(mynum+1,*) "============= radiation-carma ==================="
     !     write(mynum+1,*) "mynum=",mynum
-    !     write(mynum+1,*) "max/min rlong ",maxval(radiate_g(ngrid)%rlong),minval(radiate_g(ngrid)%rlong)
-    !     write(mynum+1,*) "max/min rshort",maxval(radiate_g(ngrid)%rshort),minval(radiate_g(ngrid)%rshort)
-    !     write(mynum+1,*) "max/min fthrd ",maxval(86400.*radiate_g(ngrid)%fthrd ),&
-    !                        minval(86400.*radiate_g(ngrid)%fthrd )
+    !     write(mynum+1,*) "max/min rlong ",maxval(oneRadiateFields%rlong),minval(oneRadiateFields%rlong)
+    !     write(mynum+1,*) "max/min rshort",maxval(oneRadiateFields%rshort),minval(oneRadiateFields%rshort)
+    !     write(mynum+1,*) "max/min fthrd ",maxval(86400.*oneRadiateFields%fthrd ),&
+    !                        minval(86400.*oneRadiateFields%fthrd )
     !     write(mynum+1,*) "max/min theta ",maxval(oneBasicFields%theta),minval(oneBasicFields%theta)
     !     write(mynum+1,*) "============= radiation-carma ===================="
     !     call flush(mynum+1)
@@ -519,8 +521,9 @@ contains
   end subroutine zen
   !--------------------------------------------------------------------------------
 
-  subroutine tend_accum(m1,m2,m3,ia,iz,ja,jz)
+  subroutine tend_accum(m1,m2,m3,ia,iz,ja,jz, oneRadiateFields)
     integer, intent(in) :: m1, m2, m3, ia, iz, ja, jz
+    type(RadiateFields), pointer, intent(in) :: oneRadiateFields
 
     ! local variables:
     integer :: i, j, k,ipos
@@ -532,7 +535,7 @@ contains
        do i=1,m2
           do k=1,m1
              ipos=ipos+1 
-             tend%tht(ipos) = tend%tht(ipos) + radiate_g(ngrid)%fthrd(k,i,j)
+             tend%tht(ipos) = tend%tht(ipos) + oneRadiateFields%fthrd(k,i,j)
           end do
        end do
     end do
