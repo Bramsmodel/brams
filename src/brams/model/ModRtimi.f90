@@ -46,10 +46,6 @@ module ModRtimi
   use shcu_vars_const, only: &
        NNSHCU
 
-  use mem_cuparm, only: &
-       confrq, &
-       NNQPARM
-
   use mem_scratch, only: &
        scratch
 
@@ -79,25 +75,6 @@ contains
     tend%vt(1:mxyzp) = 0.
     tend%wt(1:mxyzp) = 0.
     tend%pt(1:mxyzp) = 0.
-    !-srf if RK scheme - check if this is necessary -
-    !if (dyncore_flag == 2 ) then
-    !   tend%ut_rk (:) = 0.0
-    !   tend%vt_rk (:) = 0.0
-    !   tend%wt_rk (:) = 0.0
-    !   tend%pt_rk (:) = 0.0
-    !   tend%tht_rk(:) = 0.0
-    !endif
-    !IF(mod(time,confrq).lt.dtlt .or. time .lt. .01) then  
-    !  if(NNQPARM(ngrid) >1) then
-    !    cuforc_g   (ngrid)%lsfth(1:mzp,1:mxp,1:myp) = 0. 
-    !    cuforc_g   (ngrid)%lsfrt(1:mzp,1:mxp,1:myp) = 0.
-    !  endif 
-    !  if(NNSHCU(ngrid) >1) then
-    !    cuforc_sh_g(ngrid)%lsfth(1:mzp,1:mxp,1:myp) = 0. 
-    !    cuforc_sh_g(ngrid)%lsfrt(1:mzp,1:mxp,1:myp) = 0.
-    !  endif 
-    !ENDIF 
-    !     Now sclrr tendencies
 
     do n = 1,oneScalarTabSize        
 

@@ -130,9 +130,6 @@ module ModTurbK
   use mem_grell,  only:        &
        cuforc_sh_g
 
-  use mem_cuparm, only : &
-       nnqparm
-
   use mem_chem1, only: &
        chemistry, &
        nspecies_transported
@@ -615,24 +612,8 @@ contains
                oneScalarTab(n)%name=='THC') then
              call atob(mxp*myp, oneTurbFields%sflux_t(:,:), scratch%vt2da(:))
 
-             ! Large Scale Forcing for GRELL CUPAR
-             !if (nnqparm(ngrid)>=2) then
-             !   !---------------------------------------
-             !   !srf- Large Scale Forcing for GRELL CUPAR
-             !   lsfcupar_p => cuforc_sh_g(ngrid)%lsfth
-             !---------------------------------------
-             ! endif
           elseif (oneScalarTab(n)%name=='RTP') then
              call atob(mxp*myp, oneTurbFields%sflux_r(:,:), scratch%vt2da(:))
-
-             ! Large Scale Forcing for GRELL CUPAR not used
-             ! CATT
-             !if (nnqparm(ngrid)>=2) then
-             !   !---------------------------------------
-             !   !srf- Large Scale Forcing for GRELL CUPAR
-             !   lsfcupar_p => cuforc_sh_g(ngrid)%lsfrt
-             !   !---------------------------------------
-             !endif
 
           endif
        endif
@@ -707,7 +688,7 @@ contains
                vkh_p(:)                 , hkh_p(:),                  &
                oneNamelistFile%ihorgrad)
           !
-          if (nnqparm(ngrid)>=2) then
+          if (oneNamelistFile%nnqparm(ngrid)>=2) then
              ! SGScale Forcing for GRELL CUPAR
              if (oneScalarTab(n)%name=='THP' .or. oneScalarTab(n)%name=='THC')     &
                   call PBLforcing(ngrid, mzp, mxp, myp, ia, iz, ja, jz, &

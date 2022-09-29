@@ -122,8 +122,7 @@ module ModRrtmDriver
 
   use mem_cuparm, only: &
        cuparm_g, &
-       cuparm_vars, &
-       nnqparm  ! intent(in)
+       cuparm_vars
 
   use ModMicroFields, only: &
        MicroFields
@@ -1621,7 +1620,9 @@ contains
     !--- convective cloud fraction
     !clcn = 0.0
     !
-    if(nnqparm(ngrid) == 5 .or. nnqparm(ngrid) == 6 .or. nnqparm(ngrid) == 8) then
+    if(oneNamelistFile%nnqparm(ngrid) == 5 .or. &
+         oneNamelistFile%nnqparm(ngrid) == 6 .or. &
+         oneNamelistFile%nnqparm(ngrid) == 8) then
        upmf      (     1:m2,1:m3)= xmb4d(     1:m2,1:m3,1,ngrid) !- mass flux deep    convection
        upmfsh    (     1:m2,1:m3)= xmb4d(     1:m2,1:m3,2,ngrid) !- mass flux shallow convection
        zup       (1:m1,1:m2,1:m3)= zup5d(1:m1,1:m2,1:m3,1,ngrid) !- normalized mass flux
@@ -1630,8 +1631,6 @@ contains
        if(coupl_rad_cupar == 1 ) then
           clwup     (1:m1,1:m2,1:m3)= tun_rad_deep *clwup5d(1:m1,1:m2,1:m3,1,ngrid)
           clwupsh   (1:m1,1:m2,1:m3)= tun_rad_shall*clwup5d(1:m1,1:m2,1:m3,2,ngrid)
-          !if (nnqparm(ngrid) == 8) & ! includes mid convection
-          !     clwup(1:m1,1:m2,1:m3) = clwup(1:m1,1:m2,1:m3) + tun_rad_deep *clwup5d(1:m1,1:m2,1:m3,3,ngrid)
        endif
        !--- convective cloud fraction (to implement this scheme, CLCN needs to be transported as a scalar)
     else
@@ -1824,12 +1823,12 @@ contains
     if (oneMicVars%level==2) then
        lwl(1:m1,ia:iz,ja:jz) = oneMicroFields%rcp(1:m1,ia:iz,ja:jz)
 
-       if (nnqparm(ngrid)/=0) then
+       if (oneNamelistFile%nnqparm(ngrid)/=0) then
           rain(ia:iz,ja:jz)= cuparm_g(ngrid)%conprr(ia:iz,ja:jz)* 3600.
        endif
 
     elseif (oneMicVars%level>=3) then
-       if (nnqparm(ngrid)/=0) then
+       if (oneNamelistFile%nnqparm(ngrid)/=0) then
           rain(ia:iz,ja:jz) = cuparm_g(ngrid)%conprr(ia:iz,ja:jz) + &
                oneMicroFields%pcpg(ia:iz,ja:jz)
        else

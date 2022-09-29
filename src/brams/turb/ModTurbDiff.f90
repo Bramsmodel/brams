@@ -29,9 +29,6 @@ module ModTurbDiff
        vctr2,    &     !INTENT(OUT)
        vctr3     !INTENT(OUT)
 
-  use mem_cuparm, only : &
-       nnqparm       ! intent(in)
-
   use mem_opt, only : &
        opt
 
@@ -768,8 +765,6 @@ contains
     integer :: i, j, k
     real    :: dtlti
 
-    !srf--------- PBL Forcing for GRELL CUPAR (only vertical term) ------
-    !if (nnqparm(ngrid)>=2) then
     dtlti = 1.0/dtlt
     do j=ja,jz
        do i=ia,iz

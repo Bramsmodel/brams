@@ -118,11 +118,6 @@ module ModTimestep
        nodemxp,  &  !intent(in)
        nodemzp      !intent(in)
 
-
-  use mem_cuparm, only: &
-       NNQPARM, & ! INTENT(IN)
-       IF_CUINV   ! INTENT(IN)
-
   use mem_varinit, only: &
        NUD_TYPE ! INTENT(IN)
 
@@ -306,8 +301,6 @@ contains
     !--------------------------------
     call tend0(oneGrid%oneScalarTable, oneGrid%oneScalarTableSize)
 
-!!!!  IF( NNQPARM(ngrid) >=2 .OR. NNSHCU(ngrid) >=2 )CALL prepare_lsf_OLD(NNQPARM(ngrid), NNSHCU(ngrid),1)
-
 
     !  Thermodynamic diagnosis
     !--------------------------------
@@ -409,9 +402,6 @@ contains
 
     endif
 
-!!!  !srf- large and subgrid scale forcing for shallow and deep cumulus
-!!!  IF( NNQPARM(ngrid) >=2 .OR. NNSHCU(ngrid) >=2 )CALL prepare_lsf_OLD(NNQPARM(ngrid), NNSHCU(ngrid),2)
-
     !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
     !  call SynchronizedTimeStamp(TS_PHYSICS)
 
@@ -435,7 +425,8 @@ contains
 
     !  Cumulus parameterization version 1
     !----------------------------------------
-    if (NNQPARM(ngrid)==1 .or. IF_CUINV==1) then
+    if (oneGrid%oneNamelistFile%nnqparm(ngrid)==1 .or. &
+         oneGrid%oneNamelistFile%if_cuinv==1) then
        call cuparm(oneGrid%oneBasicFields)
     end if
 
@@ -494,8 +485,6 @@ contains
             oneGrid%oneMicVars, oneGrid%oneMicroFields)
     endif
 
-!!!!!  IF( NNQPARM(ngrid) >=2 .OR. NNSHCU(ngrid)>=2 ) CALL prepare_lsf_OLD(NNQPARM(ngrid), NNSHCU(ngrid),3)
-
     !  Velocity advection
     !----------------------------------------
     if(advmnt >= 1) then
@@ -521,16 +510,15 @@ contains
     end if
 
     !- large and subgrid scale forcing for shallow and deep cumulus
-    !!1  IF(  NNQPARM(ngrid) >=2 .OR. NNSHCU(ngrid)>=2 ) CALL prepare_lsf_OLD(NNQPARM(ngrid), NNSHCU(ngrid),4)
-    if( NNQPARM(ngrid) >=2 .or. NNSHCU(ngrid)>=2 ) then
-       call prepare_lsf(NNQPARM(ngrid), NNSHCU(ngrid),1, &
+    if( oneGrid%oneNamelistFile%nnqparm(ngrid) >=2 .or. NNSHCU(ngrid)>=2 ) then
+       call prepare_lsf(oneGrid%oneNamelistFile%nnqparm(ngrid), NNSHCU(ngrid),1, &
             oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneRadiateFields)
     end if
 
     !-   Cumulus parameterization options 2->6:
     !                    Deep Convection scheme
     !- call deep first, if there is deep convection , turn off shallow.
-    if (nnqparm(ngrid)==2) then
+    if (oneGrid%oneNamelistFile%nnqparm(ngrid)==2) then
        call cuparm_grell_catt(OneGrid, 1)
     end if
     !
@@ -540,8 +528,9 @@ contains
     end if
     !
     !- G3d - GD-FIM and GF
-    if (NNQPARM(ngrid)>=3) then
-       call cuparm_grell3_catt(onegrid,1,nnqparm(ngrid),nnshcu(ngrid))
+    if (oneGrid%oneNamelistFile%nnqparm(ngrid)>=3) then
+       call cuparm_grell3_catt(onegrid,1,&
+            oneGrid%oneNamelistFile%nnqparm(ngrid),nnshcu(ngrid))
     end if
 
     !- task 2:  NO production by "eclair"

@@ -130,10 +130,6 @@ module ModTimestepRK
        nodemxp,  &  !intent(in)
        nodemzp      !intent(in)
 
-  use mem_cuparm, only: &
-       NNQPARM, & ! INTENT(IN)
-       IF_CUINV   ! INTENT(IN)
-
   use mem_varinit, only: &
        NUD_TYPE   &! INTENT(IN)
        ,varinit_g  ! INTENT(IN)
@@ -494,7 +490,8 @@ contains
 
     !  Cumulus parameterization version 1
     !----------------------------------------
-    if (NNQPARM(ngrid)==1 .or. IF_CUINV==1) then
+    if (oneGrid%oneNamelistFile%nnqparm(ngrid)==1 .or. &
+         oneGrid%oneNamelistFile%if_cuinv==1) then !
        call cuparm(oneGrid%oneBasicFields)
     end if
 
@@ -622,14 +619,14 @@ contains
     end if
 
     !- large and subgrid scale forcing for shallow and deep cumulus
-    if( NNQPARM(ngrid) >=2  ) then
-       call prepare_lsf(NNQPARM(ngrid), NNSHCU(ngrid),1, &
+    if( oneGrid%oneNamelistFile%nnqparm(ngrid) >=2  ) then
+       call prepare_lsf(oneGrid%oneNamelistFile%nnqparm(ngrid), NNSHCU(ngrid),1, &
             oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneRadiateFields)
     end if
 
     !- cumulus parameterizations options: G3d - GD-FIM and GF
-    if (NNQPARM(ngrid)>=3) then
-       call cuparm_grell3_catt(onegrid,1,nnqparm(ngrid),nnshcu(ngrid))
+    if (oneGrid%oneNamelistFile%nnqparm(ngrid)>=3) then
+       call cuparm_grell3_catt(onegrid,1,oneGrid%oneNamelistFile%nnqparm(ngrid),nnshcu(ngrid))
     end if
 
     !------------------------------------------------------------------------------

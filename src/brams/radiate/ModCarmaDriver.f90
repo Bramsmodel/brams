@@ -46,9 +46,8 @@ module ModCarmaDriver
 
   use mem_cuparm, only: &
        cuparm_g, &
-       cuparm_vars, &
-       nnqparm  ! INTENT(IN)
-
+       cuparm_vars
+  
   use rconstants  , only : &
        cp, &
        cpor, &
@@ -234,7 +233,7 @@ contains
          ,lwl  &
          ,iwl  &
          ,ice_frac,  &
-         oneBasicFields, oneMicVars, oneMicroFields)
+         oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields)
 
     !- CARMA Radiation
 
@@ -550,8 +549,9 @@ contains
        , lwl             &
        , iwl             &
        , ice_frac,      &
-       oneBasicFields, oneMicVars, oneMicroFields)
+       oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields)
     integer, intent(in) :: m1,m2,m3,ia,iz,ja,jz
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(MicControl), pointer, intent(in) :: oneMicVars
     type(MicroFields), pointer, intent(in) :: oneMicroFields
@@ -603,7 +603,7 @@ contains
     rhpert = 0.01 
 
     !- initialization of cuparm parameters
-    if(nnqparm(ngrid) == 5 .or. nnqparm(ngrid) == 6) then
+    if(oneNamelistFile%nnqparm(ngrid) == 5 .or. oneNamelistFile%nnqparm(ngrid) == 6) then
        upmf      (     1:m2,1:m3)= xmb4d(     1:m2,1:m3,1,ngrid) !- mass flux deep    convection
        upmfsh    (     1:m2,1:m3)= xmb4d(     1:m2,1:m3,2,ngrid) !- mass flux shallow convection
        zup       (1:m1,1:m2,1:m3)= zup5d(1:m1,1:m2,1:m3,1,ngrid) !- normalized mass flux
@@ -809,13 +809,13 @@ contains
     if (oneMicVars%level==2) then
        lwl(1:m1,ia:iz,ja:jz) = oneMicroFields%rcp(1:m1,ia:iz,ja:jz)
 
-       if (nnqparm(ngrid)/=0) then
+       if (oneNamelistFile%nnqparm(ngrid)/=0) then
           rain(ia:iz,ja:jz)= cuparm_g(ngrid)%conprr(ia:iz,ja:jz)* 3600.    
        endif
 
     elseif (oneMicVars%level>=3) then
 
-       if (nnqparm(ngrid)/=0) then
+       if (oneNamelistFile%nnqparm(ngrid)/=0) then
           rain(ia:iz,ja:jz) = cuparm_g(ngrid)%conprr(ia:iz,ja:jz) + &
                oneMicroFields%pcpg(ia:iz,ja:jz)
        else 

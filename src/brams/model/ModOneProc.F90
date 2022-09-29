@@ -228,8 +228,6 @@ module ModOneProc
   use mem_cuparm, only: &
        ncufl, &
        cu_times, &
-       NNQPARM, &
-       if_cuinv, &
        cuparm_g, &
        StoreNamelistFileAtMem_cuparm
 
@@ -336,7 +334,7 @@ module ModOneProc
        StoreNamelistFileAtCup_grell3
 
   use ModNamelistFile, only : &
-       namelistFile, &
+       NamelistFile, &
        CreateNamelistFile, &
        DestroyNamelistFile, &
        GetNamelistFileName, &
@@ -695,13 +693,13 @@ contains
     integer :: ierr
     integer :: nn2, nn3
     logical :: AKMIN_ALLOC
-    character(len=f_name_length) :: namelistFileName ! namelist file name
+    character(len=f_name_length) :: NamelistFileName ! namelist file name
     character(len=*), parameter :: h="**(OneProc)**"
     character(len=*), parameter :: header="**(OneProc)**"
     character(len=*), parameter :: version="6.0"
 
     type(parallelEnvironment), pointer :: oneParallelEnvironment => null()
-    type(namelistFile), pointer :: oneNamelistFile => null()
+    type(NamelistFile), pointer :: oneNamelistFile => null()
     type(GridTree), pointer :: AllGrids => null()
     type(GridTree), pointer :: oneGridTreeNode => null()
     type(Grid), pointer :: oneGrid => null()
@@ -744,7 +742,7 @@ contains
 
     wtime_start = walltime()
 
-    ! create namelistFile object
+    ! create NamelistFile object
 
     call CreateNamelistFile(oneNamelistFile)
 
@@ -935,7 +933,7 @@ contains
 
        ! on a "MAKEVFILE" run, call ISAN, then exit.
 
-       call chem_isan_driver(namelistFileName, oneGrid%oneControlVars)
+       call chem_isan_driver(NamelistFileName, oneGrid%oneControlVars)
        if(ccatt==1 .and. chem_assim==1 .and. chemistry >= 0)then
           iErrNumber=dumpMessage(c_tty,c_yes,header,version,c_notice," CHEM_ISAN complete ")
        else
@@ -1024,7 +1022,7 @@ contains
 
        ! initialization driver
 
-       call initOneProc(AllGrids, namelistFileName)
+       call initOneProc(AllGrids, NamelistFileName)
 
        ! Compute Courant numbers cflxy and cflz, get maximum over all processes  and dump
 
@@ -1258,7 +1256,7 @@ contains
           ! compute output flags for this iteration and input flags for
           ! next iteration
 
-          call comm_time(isendflg, isendlite, isendmean, isendboth, &
+          call comm_time(oneGrid%oneNamelistFile, isendflg, isendlite, isendmean, isendboth, &
                isendbackflg, isendiv, isendsst, isendndvi, isendsrc)
 
           if(applyDF) then
@@ -2079,9 +2077,11 @@ contains
 
        !srf-g3d: training for G3d
        do ifm=1,ngrids
-          if(nnqparm(ifm) == 3 .or. nnqparm(ifm) == 5) then ! and training==1
+          if(oneGrid%oneNamelistFile%nnqparm(ifm) == 3 .or. &
+               oneGrid%oneNamelistFile%nnqparm(ifm) == 5) then ! and training==1
              call newgrid(ifm)
-             call init_weights(ifm,nodemxp(mynum,ifm),nodemyp(mynum,ifm),nnqparm(ifm))
+             call init_weights(ifm,nodemxp(mynum,ifm),nodemyp(mynum,ifm),&
+                  oneGrid%oneNamelistFile%nnqparm(ifm))
           endif
        enddo
        !srf-g3d
@@ -2325,10 +2325,8 @@ contains
 
     ! Read cumulus heating fields
 
-    if (if_cuinv == 1) then
+    if (oneGrid%oneNamelistFile%if_cuinv == 1) then
 
-       !**(JP)** not worked yet
-       !call fatal_error(h//"**(JP)** if_cuinv==1 was not worked yet")
        iErrNumber=dumpMessage(c_tty,c_yes,h,c_modelVersion,c_fatal, &
             "**(JP)** if_cuinv==1 was not worked yet")
        call cu_read(1)
@@ -2492,9 +2490,10 @@ contains
 
 
 
-  subroutine comm_time(isendflg, isendlite, isendmean, isendboth, &
+  subroutine comm_time(oneNamelistFile, isendflg, isendlite, isendmean, isendboth, &
        isendbackflg, isendiv, isendsst, isendndvi, isendsrc)
 
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     integer, intent(out) :: isendflg, isendlite, isendmean, isendboth, &
          isendbackflg, isendiv, isendsst, isendndvi
 
@@ -2664,7 +2663,7 @@ contains
        enddo
     endif
 
-    if (if_cuinv  ==  1 ) then
+    if (oneNamelistFile%if_cuinv  ==  1 ) then
        do ifm = 1,ngrids
           if (timemf  >=  cu_times(ncufl+1) .and.  &
                timemf  <  timmax) then

@@ -104,9 +104,6 @@ module ModSched
        frqmean,         & !INTENT(IN)
        frqhis             !INTENT(IN)
 
-  use mem_cuparm, only: &
-       confrq
-
   use shcu_vars_const, only: &
        shcufrq   
 
@@ -344,7 +341,7 @@ contains
             ,frqhis     &
             ,frqanl     &
             ,oneNamelistFile%radfrq     &
-            ,confrq     &
+            ,oneNamelistFile%confrq     &
             ,shcufrq    &
             /))
 
@@ -355,7 +352,7 @@ contains
        local_frqhis  =frqhis  
        local_frqanl  =frqanl  
        local_radfrq  =oneNamelistFile%radfrq  
-       local_confrq  =confrq  
+       local_confrq  =oneNamelistFile%confrq  
        local_shcufrq =shcufrq 
 
        if(aux     ==0.) local_isan_inc=mxval
@@ -365,7 +362,7 @@ contains
        if(frqhis  ==0.) local_frqhis  =mxval
        if(frqanl  ==0.) local_frqanl  =mxval
        if(oneNamelistFile%radfrq  ==0.) local_radfrq  =mxval
-       if(confrq  ==0.) local_confrq  =mxval
+       if(oneNamelistFile%confrq  ==0.) local_confrq  =mxval
        if(shcufrq ==0.) local_shcufrq =mxval
        firstTime=.false.
 
