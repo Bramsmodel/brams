@@ -145,7 +145,6 @@ module ModLeaf3
 
   use mem_cuparm, only: &
        cuparm_vars, &
-       nnqparm, &
        cuparm_g
 
   use node_mod, only: &
@@ -434,7 +433,7 @@ contains
 
           ! Fill surface precipitation arrays for input to leaf
 
-          call sfc_pcp(nnqparm(ngrid),oneMicControl%level,i,j,cuparm,oneMicroFields,&
+          call sfc_pcp(oneNamelistFile%nnqparm(ngrid),oneMicControl%level,i,j,cuparm,oneMicroFields,&
                oneMicControl)
 
           ! Zero out albedo, upward surface longwave, and momentum, heat, and moisture

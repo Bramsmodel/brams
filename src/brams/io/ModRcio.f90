@@ -22,11 +22,6 @@ module ModRcio
   use grid_dims, only: &
        nzgmax
 
-  use mem_cuparm, only: &
-       nnqparm, &
-       wcldbs, &
-       confrq
-
   use mem_grid, only: &
        iversion, &
        expnme, &
@@ -558,7 +553,7 @@ contains
     ie=cio(iun,irw,'nnxp',nnxp(1:ngrids))
     ie=cio(iun,irw,'nnyp',nnyp(1:ngrids))
     ie=cio(iun,irw,'nnzp',nnzp(1:ngrids))
-    ie=cio(iun,irw,'nnqparm',nnqparm(1:ngrids))
+    ie=cio(iun,irw,'nnqparm',oneNamelistFile%nnqparm(1:ngrids))
     ie=cio(iun,irw,'nndtrat',nndtrat(1:ngrids))
     ie=cio(iun,irw,'nstratx',nstratx(1:ngrids))
     ie=cio(iun,irw,'nstraty',nstraty(1:ngrids))
@@ -664,13 +659,13 @@ contains
     ie=cio(iun,irw,'ihail',oneMicControl%ihail)
 
     ie=cio(iun,irw,'brunt',brunt)
-    ie=cio(iun,irw,'wcldbs',wcldbs)
+    ie=cio(iun,irw,'wcldbs',oneNamelistFile%wcldbs)
     ie=cio(iun,irw,'drtcon',drtcon)
     ie=cio(iun,irw,'rmin',rmin)
     ie=cio(iun,irw,'radfrq',oneNamelistFile%radfrq)
     ie=cio(iun,irw,'distim',distim)
     ie=cio(iun,irw,'seatmp',seatmp)
-    ie=cio(iun,irw,'confrq',confrq)
+    ie=cio(iun,irw,'confrq',oneNamelistFile%confrq)
     ie=cio(iun,irw,'rmax',rmax)
     ie=cio(iun,irw,'eps',eps)
     ie=cio(iun,irw,'albedo',albedo)

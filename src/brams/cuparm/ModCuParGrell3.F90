@@ -1596,7 +1596,7 @@ contains
             ,ierr4d,jmin4d,kdet4d,k224d,kbcon4d,ktop4d,kpbl4d   &
             ,kstabi4d,kstabm4d,xmb4d,edt4d  &
             ,zcup5d,pcup5d,enup5d,endn5d,deup5d,dedn5d,zup5d,zdn5d  &
-            ,1)! = iens
+            ,1, oneGrid%oneNamelistFile%nnqparm)! = iens
        !-srf if shallow convection was solved by GF version 2015, call again
        !-    the convective transport routine to include the mass fluxes
        !-    from the shallow convection scheme.
@@ -1606,7 +1606,7 @@ contains
             ,ierr4d,jmin4d,kdet4d,k224d,kbcon4d,ktop4d,kpbl4d   &
             ,kstabi4d,kstabm4d,xmb4d,edt4d  &
             ,zcup5d,pcup5d,enup5d,endn5d,deup5d,dedn5d,zup5d,zdn5d  &
-            ,2)! = iens
+            ,2, oneGrid%oneNamelistFile%nnqparm)! = iens
 
     endif
     ! ------------- Stilt - BRAMS coupling  ------------------ ML]

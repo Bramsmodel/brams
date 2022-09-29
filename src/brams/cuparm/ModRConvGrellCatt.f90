@@ -288,7 +288,7 @@ contains
                   ,ierr4d,jmin4d,kdet4d,k224d,kbcon4d,ktop4d,kpbl4d           &
                   ,kstabi4d,kstabm4d,xmb4d,edt4d                              &
                   ,zcup5d,pcup5d,enup5d,endn5d,deup5d,dedn5d,zup5d,zdn5d      & 
-                  ,iens)
+                  ,iens, oneGrid%oneNamelistFile%nnqparm)
           end if
           ! ------------- Stilt - RAMS coupling  ------------------ ML]
           !--(DMK-CCATT-FIM)------------------------------------------------------------
@@ -429,7 +429,7 @@ contains
                   ,ierr4d,jmin4d,kdet4d,k224d,kbcon4d,ktop4d,kpbl4d           &
                   ,kstabi4d,kstabm4d,xmb4d,edt4d                              &
                   ,zcup5d,pcup5d,enup5d,endn5d,deup5d,dedn5d,zup5d,zdn5d      & 
-                  ,iens)
+                  ,iens, oneGrid%oneNamelistFile%nnqparm)
           end if
           ! ------------- Stilt - RAMS coupling  ------------------ ML]
           !

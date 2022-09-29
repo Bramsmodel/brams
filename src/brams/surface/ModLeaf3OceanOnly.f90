@@ -43,7 +43,6 @@ module ModLeaf3OceanOnly
 
   use mem_cuparm, only: &
        cuparm_vars, &
-       nnqparm, &
        cuparm_g
 
   use ModTurbFields, only: &

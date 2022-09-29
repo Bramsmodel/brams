@@ -21,9 +21,6 @@ module ModRstilt
        dd_massdetr5d, &
        dd_massentr5d
 
-  use mem_cuparm, only: &
-       NNQPARM ! INTENT(IN)
-
   use grid_dims, only: &
        nzpmax
 
@@ -155,7 +152,7 @@ contains
   subroutine prep_convflx_to_stilt(m1,m2,m3,ia,iz,ja,jz,mgmxp,mgmyp,mgmzp,maxiens,ngrid      &
        ,ngrids_cp,ierr4d,jmin4d,kdet4d,k224d,kbcon4d,ktop4d       &
        ,kpbl4d,kstabi4d,kstabm4d,xmb4d,edt4d,zcup5d,pcup5d,enup5d &
-       ,endn5d,deup5d,dedn5d,zup5d,zdn5d,iens)
+       ,endn5d,deup5d,dedn5d,zup5d,zdn5d,iens, nnqparm)
     integer, intent(in) :: mgmxp,mgmyp,mgmzp,ngrid,ngrids_cp,iens, maxiens,m1,m2,m3,ia,iz,ja,jz
 
     integer, intent(in),dimension(mgmxp,mgmyp,maxiens,ngrids_cp) ::                            &
@@ -165,7 +162,8 @@ contains
 
     real, intent(in), dimension(mgmzp,mgmxp,mgmyp,maxiens,ngrids_cp) ::                        &
          enup5d,endn5d,deup5d,dedn5d,zup5d,zdn5d,zcup5d,pcup5d
-
+    integer, intent(in) :: nnqparm(:)
+    
     integer :: i, j
 
 
@@ -208,7 +206,7 @@ contains
        do i=ia,iz
           !    if((iens == 1 .and. ierr4d(i,j,iens,ngrid) == 0) .or. iens == 2) then
           if(ierr4d(i,j,iens,ngrid) == 0) then
-             call get_convflx(iens,i,j,mgmzp,m1,m2,m3,nnqparm(ngrid)                               &
+             call get_convflx(iens,i,j,mgmzp,m1,m2,m3,nnqparm(ngrid)       &
                   ,   xmb4d(i,j,iens,ngrid),   edt4d(i,j,iens,ngrid)                       &
                   ,  jmin4d(i,j,iens,ngrid),  kdet4d(i,j,iens,ngrid)                       &
                   ,   k224d(i,j,iens,ngrid), kbcon4d(i,j,iens,ngrid)                       &

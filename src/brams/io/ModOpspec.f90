@@ -914,7 +914,7 @@ contains
     ! convective parameterization flags and parameter settings
 
     do ng=1,ngrids
-       if (nnqparm(ng)/=0 .and. oneMicControl%level==0) then
+       if (oneNamelistFile%nnqparm(ng)/=0 .and. oneMicControl%level==0) then
           print 27
 27        format (' fatal - level must be at least'  &
                ,' 1 for the cumulus parameterization')
@@ -959,7 +959,7 @@ contains
 
     !Mass flux  cannot be output with Kuo parameterization
     do NG=1, NGRIDS
-       if (IMASSFLX == 1 .and. NNQPARM(NG) == 1) then
+       if (IMASSFLX == 1 .and. oneNamelistFile%nnqparm(ng) == 1) then
           print *, 'FATAL - Convective mass flux cannot be used with Kuo convective parameterization (NNQPARM=1)'
           IFATERR=IFATERR+1
        endif
@@ -1231,7 +1231,7 @@ contains
        !    print*,' FATAL - cannot use nnhscu = 2 scheme with GT microphysics'
        !    IFATERR=IFATERR+1
        !   endif
-       if( (oneMicControl%mcphys_type >= 2 ) .and. nnqparm(NGR) ==2) then
+       if( (oneMicControl%mcphys_type >= 2 ) .and. oneNamelistFile%nnqparm(ngr) ==2) then
           print*,' FATAL - cannot use nnqparm = 2 scheme with  microphysics >= 2'
           IFATERR=IFATERR+1
        endif
@@ -1361,7 +1361,10 @@ contains
     endif
     do ng=1,ngrids
        ![MLO - Blocking Grell deep/shallow convection without TKE
-       if (nnshcu(ng) == 2 .or. NNQPARM(NG) == 2  .or. NNQPARM(NG) == 5 .or. NNQPARM(NG) == 6) then
+       if (nnshcu(ng) == 2 .or. &
+            oneNamelistFile%nnqparm(ng) == 2  .or. &
+            oneNamelistFile%nnqparm(ng) == 5 .or. &
+            oneNamelistFile%nnqparm(ng) == 6) then
           if (idiffk == 2 .or. idiffk == 3) then
              print *, 'FATAL - deep (nnqparm 2 or  5 or 6) and shallow (nnshcu 2) requires turbulence scheme with TKE (1,4,5,6,7)'
              print *, 'Please change your setup for grid ',ng,'...'
