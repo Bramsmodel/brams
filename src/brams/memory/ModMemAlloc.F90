@@ -17,7 +17,6 @@ module ModMemAlloc
        alloc_scratch3_grell_sh
 
   use mem_cuparm, only: &
-       nnqparm, &
        cuparm_g_sh, &
        cuparmm_g_sh, &
        cuparm_g, &
@@ -860,13 +859,13 @@ contains
     Alloc_Grell3_Flag =0
     do ng=1, ngrids
        if (NNSHCU (ng)== 1 .or. NNSHCU (ng)== 2) Alloc_SHCU_Flag   = 1
-       if (NNQPARM(ng) == 2) Alloc_Grell_Flag  = 1
-       if (NNQPARM(ng) >  2) Alloc_Grell3_Flag = 1
+       if (oneGrid%oneNamelistFile%nnqparm(ng) == 2) Alloc_Grell_Flag  = 1
+       if (oneGrid%oneNamelistFile%nnqparm(ng) >  2) Alloc_Grell3_Flag = 1
     enddo
 
     if (Alloc_Grell_Flag == 1 .or. Alloc_SHCU_Flag == 1 .or. Alloc_Grell3_Flag == 1) then
        ! Calculating the necessary space for scratch data
-       call define_memory(nmxp, nmyp, nmzp, ngrids, nnqparm, nnshcu)
+       call define_memory(nmxp, nmyp, nmzp, ngrids, oneGrid%oneNamelistFile%nnqparm, nnshcu)
        ! Allocating data for scratch data
        call alloc_scratch1_grell()
 
@@ -970,7 +969,7 @@ contains
 
        ng_cp = 1
        do ng=1,ngrids
-          if (NNQPARM(ng) == 2) then
+          if (oneGrid%oneNamelistFile%nnqparm(ng) == 2) then
              call nullify_grell(grell_g (ng))
              call nullify_grell(grellm_g(ng))
 
@@ -981,7 +980,7 @@ contains
              endif
 
              call filltab_grell(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-                  grell_g(ng), grellm_g(ng), nnqparm(ng), imean)
+                  grell_g(ng), grellm_g(ng), oneGrid%oneNamelistFile%nnqparm(ng), imean)
              ng_cp = ng_cp + 1
           endif
        enddo
@@ -1017,7 +1016,7 @@ contains
 
        ng_cp = 1
        do ng=1,ngrids
-          if (NNQPARM(ng) > 2) then
+          if (oneGrid%oneNamelistFile%nnqparm(ng) > 2) then
              !-- arrays needed for G3d , GD-FIM and GF schemes
 
              call nullify_grell3(g3d_ens_g (:,ng_cp) , g3d_g(ng_cp),train_dim)
@@ -1036,7 +1035,7 @@ contains
                   g3d_g,&
                   g3d_ensm_g, &
                   g3dm_g,&
-                  train_dim, nnqparm(ng), ng_cp, imean)
+                  train_dim, oneGrid%oneNamelistFile%nnqparm(ng), ng_cp, imean)
 
              ng_cp = ng_cp + 1
              if  (CLOSURE_TYPE == 'EN') then

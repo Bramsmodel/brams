@@ -3,6 +3,9 @@
 ! 
 module ModSfcLyrJules
 
+  use ModNamelistFile, only: &
+       NamelistFile
+  
   use ModLeaf3Init, only: &
        sfcdata
   
@@ -167,7 +170,7 @@ contains
 
 
   subroutine sfclyr_jules(mzp,mxp,myp,iaI,izI,jaI,jzI,jdim,julesFile,&
-       oneBasicFields, oneTurbFields, oneMicControl, oneMicroFields, &
+       oneNamelistFile, oneBasicFields, oneTurbFields, oneMicControl, oneMicroFields, &
        oneJulesFields, oneRadiateFields)
 
     !--- Modulos do BRAMS ---
@@ -181,6 +184,7 @@ contains
     integer, intent(in) :: jzI
     integer, intent(in) :: jdim
     character(len=*), intent(in) :: julesFile
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     type(MicControl), pointer, intent(in) :: oneMicControl
@@ -245,9 +249,9 @@ contains
 
     !--- Precipitacao total ---
     pcpgl(:,:)=0.
-    if (nnqparm(ng) > 0 .and. oneMicControl%level >= 3) then
+    if (oneNamelistFile%nnqparm(ng) > 0 .and. oneMicControl%level >= 3) then
        pcpgl(:,:)=cuparm_g(ng)%conprr(:,:) + oneMicroFields%pcpg(:,:)
-    elseif(nnqparm(ng) == 0 .and. oneMicControl%level >= 3) then
+    elseif(oneNamelistFile%nnqparm(ng) == 0 .and. oneMicControl%level >= 3) then
        pcpgl(:,:)=oneMicroFields%pcpg(:,:)
     endif
 
