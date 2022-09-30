@@ -1,6 +1,8 @@
 module ChemDryDepDriver
 
-
+  use ModNamelistFile, only: &
+       NamelistFile
+  
   use rconstants, only: &
        cpi,             &
        cpor,            &
@@ -25,8 +27,7 @@ module ChemDryDepDriver
        MicControl
 
   use mem_cuparm, only: &
-       cuparm_g,        &
-       nnqparm
+       cuparm_g
 
   use ModBasicFields, only: &
        BasicFields
@@ -71,7 +72,11 @@ contains
 
   !========================================================================
   subroutine drydep_driver(m1,m2,m3,ia,iz,ja,jz, &
-       oneBasicFields, oneTurbFields, oneMicControl, oneMicroFields, &
+       oneNamelistFile, &
+       oneBasicFields, &
+       oneTurbFields, &
+       oneMicControl, &
+       oneMicroFields, &
        oneRadiateFields)
 
     integer,              intent(IN)    :: m1
@@ -81,6 +86,7 @@ contains
     integer,              intent(IN)    :: iz
     integer,              intent(IN)    :: ja
     integer,              intent(IN)    :: jz
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     type(MicControl), pointer, intent(in) :: oneMicControl
@@ -100,7 +106,8 @@ contains
     call dry_dep(m1,m2,m3,ia,iz,ja,jz           & 
          ,cpi,cpor,p00,g,vonk            &
          ,jdim,dzt,zt,nzpmax,npatch,dtlt &
-         ,oneMicControl%level,nnqparm(ngrid)           &
+         ,oneMicControl%level &
+         ,oneNamelistFile%nnqparm(ngrid)           &
          ,imonth1,idate1,iyear1          &
          ,chemistry,aerosol              &
          ,oneBasicFields%theta        &

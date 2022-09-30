@@ -469,8 +469,12 @@ contains
 
        !- call dry deposition and sedimentation routines
        call drydep_driver(mzp,mxp,myp,ia,iz,ja,jz, &
-            oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicVars,&
-            oneGrid%oneMicroFields, oneGrid%oneRadiateFields)
+            oneGrid%oneNamelistFile, &
+            oneGrid%oneBasicFields, &
+            oneGrid%oneTurbFields, &
+            oneGrid%oneMicVars, &
+            oneGrid%oneMicroFields, &
+            oneGrid%oneRadiateFields)
     endif
 
 !!$    call SynchronizedTimeStamp(TS_PHYSICS) ! Exper1.2, 2021_12
