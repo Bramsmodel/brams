@@ -31,10 +31,8 @@ module ModCuParGrell3
        tend
 
   use mem_cuparm, only: &
-       confrq,&
        cuparm_g,&
-       cuparm_g_sh, &
-       nnqparm
+       cuparm_g_sh
 
   use node_mod, only: &
        mynum,   &   ! INTENT(IN)
@@ -357,14 +355,18 @@ contains
 
   end subroutine nullify_grell3
   !-----------------------------------------
-  subroutine alloc_grell3(g3d_ens,g3d, m1, m2, m3, ng,ndim_train)
+  subroutine alloc_grell3(oneNamelistFile, &
+       g3d_ens,g3d, m1, m2, m3, ng,ndim_train)
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type (g3d_ens_vars),dimension(ndim_train) :: g3d_ens
     type (g3d_vars) :: g3d
     integer, intent(in) :: m1, m2, m3, ng,ndim_train
     integer :: i
 
-    if(nnqparm(ng) == 3 .or. nnqparm(ng) == 6 .or. nnqparm(ng) == 5  &
-         .or. nnqparm(ng) == 8) then
+    if(oneNamelistFile%nnqparm(ng) == 3 .or. &
+         oneNamelistFile%nnqparm(ng) == 6 .or. &
+         oneNamelistFile%nnqparm(ng) == 5  .or. &
+         oneNamelistFile%nnqparm(ng) == 8) then
        do i=1,ndim_train
           allocate(g3d_ens(i)%apr   (m2,m3))
           g3d_ens(i)%apr    =0.0
@@ -399,7 +401,7 @@ contains
     allocate (g3d%nisrc(m1, m2, m3))
     g3d%nisrc=0.0
 
-    if( (imomentum==0 .or. imomentum==1 ) .and. nnqparm(ng) >= 4) then
+    if( (imomentum==0 .or. imomentum==1 ) .and. oneNamelistFile%nnqparm(ng) >= 4) then
        allocate (g3d%usrc(m1, m2, m3))
        g3d%usrc=0.0
        allocate (g3d%vsrc(m1, m2, m3))
@@ -695,7 +697,9 @@ contains
     idiffk=oneGrid%oneNamelistFile%idiffk(gridId)
     akmin=oneGrid%oneNamelistFile%akmin(gridId)
 
-    if(mod(time,confrq) < dtlt  .or. time < 0.01 .or. abs(time-cptime) < 0.01) then
+    if(mod(time,oneGrid%oneNamelistFile%confrq) < dtlt  .or. &
+         time < 0.01 .or. &
+         abs(time-cptime) < 0.01) then
 
        !-start convective transport of tracers
        iruncon=1
@@ -713,7 +717,7 @@ contains
           g3d_g(ngrid)%nlsrc     = 0.0
           g3d_g(ngrid)%nisrc     = 0.0
        endif
-       if(imomentum == 1 .and. nnqparm(ngrid) >= 4) then
+       if(imomentum == 1 .and. oneGrid%oneNamelistFile%nnqparm(ngrid) >= 4) then
           g3d_g(ngrid)%usrc      = 0.0
           g3d_g(ngrid)%vsrc      = 0.0
        endif
@@ -1507,7 +1511,7 @@ contains
        g3d_g(ngrid)%THSRC(mzp,1:mxp,1:myp)= g3d_g(ngrid)%THSRC(mzp-1,1:mxp,1:myp)
        g3d_g(ngrid)%RTSRC(mzp,1:mxp,1:myp)= g3d_g(ngrid)%RTSRC(mzp-1,1:mxp,1:myp)
        g3d_g(ngrid)%CLSRC(mzp,1:mxp,1:myp)= g3d_g(ngrid)%CLSRC(mzp-1,1:mxp,1:myp)
-       if(imomentum==1 .and. nnqparm(ngrid) >= 4) then
+       if(imomentum==1 .and. oneGrid%oneNamelistFile%nnqparm(ngrid) >= 4) then
           g3d_g(ngrid)%USRC(1  ,1:mxp,1:myp)= g3d_g(ngrid)%USRC (2    ,1:mxp,1:myp)
           g3d_g(ngrid)%VSRC(1  ,1:mxp,1:myp)= g3d_g(ngrid)%VSRC (2    ,1:mxp,1:myp)
           g3d_g(ngrid)%USRC(mzp,1:mxp,1:myp)= g3d_g(ngrid)%USRC (mzp-1,1:mxp,1:myp)
@@ -1521,7 +1525,7 @@ contains
     endif! 002
     !-------------------------------------------------------------
     ! stores precipitation rate for each closure, only for output/training
-    if(nnqparm(ngrid) == 3) then
+    if(oneGrid%oneNamelistFile%nnqparm(ngrid) == 3) then
        if (training > 0) then
           do i=1,train_dim
              call update(mxp*myp, g3d_ens_g(i,ngrid)%accapr,g3d_ens_g(i,ngrid)%apr,dtlt)
@@ -1529,7 +1533,7 @@ contains
        endif
     endif
     !--- for output only 
-    if(nnqparm(ngrid) == 8) then
+    if(oneGrid%oneNamelistFile%nnqparm(ngrid) == 8) then
        do i=1,train_dim
           call update(mxp*myp, g3d_ens_g(i,ngrid)%accapr,g3d_ens_g(i,ngrid)%apr,dtlt)
        enddo
@@ -1541,7 +1545,7 @@ contains
     call accum(int(mxp*myp*mzp,i8), tend%tht, g3d_g(ngrid)%thsrc)
     call accum(int(mxp*myp*mzp,i8), tend%rtt, g3d_g(ngrid)%rtsrc)
 
-    if(imomentum == 1 .and. nnqparm(ngrid) >= 4) then
+    if(imomentum == 1 .and. oneGrid%oneNamelistFile%nnqparm(ngrid) >= 4) then
        call accum(int(mxp*myp*mzp,i8), tend%ut, g3d_g(ngrid)%usrc)
        call accum(int(mxp*myp*mzp,i8), tend%vt, g3d_g(ngrid)%vsrc)
     endif
@@ -2346,7 +2350,8 @@ contains
     logical,parameter :: forc_deep_pbl = .false.
 
 
-    if(mod(time,confrq).lt.dtlt .or. time .lt. dtlt+.01) then
+    if(mod(time,oneNamelistFile%confrq).lt.dtlt .or. &
+         time .lt. dtlt+.01) then
 
        !-
        !  the forcing for shallow is only due to diffusion in PBL only (which is calculated in turb routines)

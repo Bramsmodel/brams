@@ -68,8 +68,7 @@ module ModSfcLyrJules
        TurbFields
 
   use mem_cuparm, only: &
-       cuparm_g, &
-       nnqparm
+       cuparm_g
 
   use ModMicroFields, only: &
        MicroFields

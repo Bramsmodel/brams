@@ -2,6 +2,9 @@
 
 module mem_grell
 
+  use ModNamelistFile, only: &
+       NamelistFile
+  
   type grell_vars
 
      ! Variables to be dimensioned by (m2,m3)
@@ -43,12 +46,11 @@ module mem_grell
 
 contains
 
-  subroutine alloc_grell(grell, m1, m2, m3, ng)
-
-    use mem_cuparm, only : nnqparm  ! INTENT(IN)
+  subroutine alloc_grell(oneNamelistFile, grell, m1, m2, m3, ng)
 
     implicit none
     ! Arguments
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type (grell_vars), intent(INOUT) :: grell
     integer, intent(IN)              :: m1, m2, m3, ng
     ! Local Variables:
@@ -56,7 +58,7 @@ contains
     character(len=*), parameter :: h="**(alloc_grell)**"
 
     ! Allocate arrays based on options (if necessary)
-    if (abs(nnqparm(ng))==2)  then
+    if (abs(oneNamelistFile%nnqparm(ng))==2)  then
        allocate (grell%UPMF     (m2, m3), STAT=ierr)
        if (ierr/=0) call fatal_error(h//"Allocating grell%UPMF")
        allocate (grell%DNMF     (m2, m3), STAT=ierr)
@@ -99,7 +101,6 @@ contains
   !---------------------------------------------------------------
   subroutine alloc_grell_sh(grell, m1, m2, m3, ng)
 
-    use mem_cuparm, only : nnqparm  ! INTENT(IN)
     use shcu_vars_const, only : nnshcu   ! INTENT(IN)
 
     implicit none
@@ -125,7 +126,6 @@ contains
   !---------------------------------------------------------------
   subroutine alloc_cu_forcings(cuforc, m1, m2, m3, ng)
 
-    !    use mem_cuparm, only : nnqparm 
     !    use shcu_vars_const, only : nnshcu   
 
     implicit none

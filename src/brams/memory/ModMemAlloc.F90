@@ -973,10 +973,12 @@ contains
              call nullify_grell(grell_g (ng))
              call nullify_grell(grellm_g(ng))
 
-             call alloc_grell(grell_g(ng),nmzp(ng),nmxp(ng),nmyp(ng),ng)
+             call alloc_grell(oneGrid%oneNamelistFile, &
+                  grell_g(ng),nmzp(ng),nmxp(ng),nmyp(ng),ng)
 
              if (imean == 1) then
-                call alloc_grell(grellm_g(ng),nmzp(ng),nmxp(ng),nmyp(ng),ng)
+                call alloc_grell(oneGrid%oneNamelistFile, &
+                     grellm_g(ng),nmzp(ng),nmxp(ng),nmyp(ng),ng)
              endif
 
              call filltab_grell(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
@@ -1022,10 +1024,12 @@ contains
              call nullify_grell3(g3d_ens_g (:,ng_cp) , g3d_g(ng_cp),train_dim)
              call nullify_grell3(g3d_ensm_g(:,ng_cp) ,g3dm_g(ng_cp),train_dim)
 
-             call alloc_grell3(g3d_ens_g(:,ng_cp),g3d_g(ng_cp),nmzp(ng),nmxp(ng),nmyp(ng),ng,train_dim)
+             call alloc_grell3(oneGrid%oneNamelistFile, &
+                  g3d_ens_g(:,ng_cp),g3d_g(ng_cp),nmzp(ng),nmxp(ng),nmyp(ng),ng,train_dim)
 
              if (imean == 1) then
-                call alloc_grell3(g3d_ensm_g(:,ng_cp),g3dm_g(ng_cp),nmzp(ng),nmxp(ng),nmyp(ng),ng,train_dim)
+                call alloc_grell3(oneGrid%oneNamelistFile, &
+                     g3d_ensm_g(:,ng_cp),g3dm_g(ng_cp),nmzp(ng),nmxp(ng),nmyp(ng),ng,train_dim)
              endif
 
              call filltab_grell3(&

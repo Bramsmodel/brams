@@ -127,9 +127,6 @@ module ModChemistryDriver
        maxiens,              & ! (IN)
        ngrids_cp               ! (IN)
 
-  use mem_cuparm, only: &
-       nnqparm            ! (IN)
-
   use mem_stilt, only: &
        iexev,          & ! (IN)
        stilt_g           ! %dnp(IN)
@@ -273,7 +270,7 @@ contains
 
           call eclair_driver(mzp,mxp,myp,ia,iz,ja,jz,dtlt,grid_g(ngrid)%rtgt, &
                grid_g(ngrid)%dxt,grid_g(ngrid)%dyt,dzt,zt,nzpmax,mgmxp,mgmyp, &
-               maxiens,nnqparm(ngrid),oneBasicFields%wp, &
+               maxiens,oneNamelistFile%nnqparm(ngrid),oneBasicFields%wp, &
                oneBasicFields%rtp,oneBasicFields%rv,oneBasicFields%pp, &
                oneBasicFields%pi0,oneBasicFields%theta,chem1_g(NO,ngrid)%sc_t, &
                weight,nspecies,no,cp,cpor)

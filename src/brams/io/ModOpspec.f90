@@ -97,9 +97,6 @@ module ModOpspec
        isbval, &
        ixsctn
 
-  use mem_cuparm, only: &
-       nnqparm
-
   use mem_leaf, only: &
        isfcl, &
        slz
