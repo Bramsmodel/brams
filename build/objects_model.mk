@@ -75,6 +75,7 @@ OBJ_MOD = \
 	ModCarmaDriver.o \
 	mem_carma.o \
 	mem_cuparm.o \
+	CuParmVars.o \
 	mem_cutrans.o \
 	mem_globaer.o \
 	mem_globrad.o \

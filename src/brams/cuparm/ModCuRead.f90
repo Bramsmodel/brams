@@ -41,8 +41,10 @@ module ModCuRead
        cu_times,   &
        fnames_cu,        &
        itotdate_cu,      &
-       maxcufiles,       &
        cuparm_g
+
+  use grid_dims, only: &
+       maxfiles          ! INTENT(IN)
 
   implicit none
 
@@ -133,7 +135,7 @@ contains
     integer :: inyear,inmonth,indate,inhour
 
 
-    character(len=f_name_length), dimension(maxcufiles) :: fnames
+    character(len=f_name_length), dimension(maxfiles) :: fnames
     character(len=f_name_length) :: rams_filelist_arg
     character(len=14)  :: itotdate
     real(kind=8) :: secs_init,secs_cu
@@ -194,7 +196,7 @@ contains
     nhftot = indice - 1
 
 
-    if(nhftot > maxcufiles) then
+    if(nhftot > maxfiles) then
        print*,'too many cu files'
        stop 'lots_of_cu_files'
     endif

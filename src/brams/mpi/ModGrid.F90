@@ -123,6 +123,12 @@ module ModGrid
        DestroyRadiateFields, &
        DumpRadiateFields
 
+  use ModCuParmVars, only: &
+       CuParmVars, &
+       CreateCuParmVars, &
+       DestroyCuParmVars, &
+       DumpCuParmVars
+       
   use meteogramType, only: &
        PolygonContainer
 
@@ -248,6 +254,8 @@ module ModGrid
 
      type(RadiateFields), pointer :: oneRadiateFields => null()
      type(RadiateFields), pointer :: oneAveRadiateFields => null()
+
+     type(CuParmVars), pointer :: oneCuParmVars => null()
      
      type(NeighbourNodes), pointer :: oneNeighbourNodes => null()
      ! oneNeighbourNodes: list of BRAMS process numbers that are neighbours
@@ -350,7 +358,7 @@ contains
     logical :: createAve
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(CreateGrid)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! correctness of input arguments
 
@@ -667,7 +675,9 @@ contains
             oneGrid%oneNamelistFile)
     end if
 
+    ! this node CuParmVars
 
+    oneGrid%oneCuParmVars => CreateCuParmVars()
        
     if (dumpLocal) then
        call MsgDump(h//" dumping OneGrid at the end of CreateGrid")
@@ -861,6 +871,7 @@ contains
        call DestroyAero2McphysFields(oneGrid%oneAveAero2McphysFields)
        call DestroyRadiateFields(oneGrid%oneRadiateFields)
        call DestroyRadiateFields(oneGrid%oneAveRadiateFields)
+       call DestroyCuParmVars(oneGrid%oneCuParmVars)
        call DestroyAcousticMessageSet(&
             oneGrid%AcouSendU, oneGrid%AcouRecvU, &
             oneGrid%AcouSendV, oneGrid%AcouRecvV, &
@@ -1070,6 +1081,7 @@ contains
     call DumpAero2McphysFields(oneGrid%oneAveAero2McphysFields, "oneGrid%oneAveAero2McphysFields")
     call DumpRadiateFields(oneGrid%oneRadiateFields, "oneGrid%oneRadiateFields")
     call DumpRadiateFields(oneGrid%oneAveRadiateFields, "oneGrid%oneAveRadiateFields")
+    call DumpCuParmVars(oneGrid%oneCuParmVars, "oneGrid%oneCuParmVars")
     call MsgDump(h//" finishes")
   end subroutine DumpGrid
 end module ModGrid
