@@ -44,17 +44,17 @@ module mem_cuparm
 
   include "files.h"
 
-  integer, parameter :: maxcufiles = maxfiles
-  integer, parameter :: maxcugrids = 10
+!!$  integer, parameter :: maxcufiles = maxfiles
+!!$  integer, parameter :: maxcugrids = 10
 
-  character(len=f_name_length) :: fnames_cu(maxcufiles)
-  character(len=14)  :: itotdate_cu(maxcufiles)
-  real :: cu_times(maxcufiles)
+!!$  character(len=f_name_length) :: fnames_cu(maxcufiles)
+!!$  character(len=14)  :: itotdate_cu(maxcufiles)
+!!$  real :: cu_times(maxcufiles)
 
-  integer :: ncufiles
-  integer :: ncufl
-  real :: cutime1
-  real :: cutime2
+!!$  integer :: ncufiles
+!!$  integer :: ncufl
+!!$  real :: cutime1
+!!$  real :: cutime2
 
 contains
 

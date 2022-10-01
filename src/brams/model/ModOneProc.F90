@@ -34,6 +34,9 @@ module ModOneProc
   !#
   !#--- ----------------------------------------------------------------------------------------
 
+  use ModCuParmVars, only: &
+       CuParmVars
+  
   use ModNestIntrp, only: &
        fmrefs1d, &
        fmrefs3d
@@ -226,8 +229,6 @@ module ModOneProc
        ICFILETYPE
 
   use mem_cuparm, only: &
-       ncufl, &
-       cu_times, &
        cuparm_g
 
   use Mem_globrad, only: &
@@ -1254,7 +1255,8 @@ contains
           ! compute output flags for this iteration and input flags for
           ! next iteration
 
-          call comm_time(oneGrid%oneNamelistFile, isendflg, isendlite, isendmean, isendboth, &
+          call comm_time(oneGrid%oneNamelistFile, oneGrid%oneCuParmVars, &
+               isendflg, isendlite, isendmean, isendboth, &
                isendbackflg, isendiv, isendsst, isendndvi, isendsrc)
 
           if(applyDF) then
@@ -2327,7 +2329,7 @@ contains
 
        iErrNumber=dumpMessage(c_tty,c_yes,h,c_modelVersion,c_fatal, &
             "**(JP)** if_cuinv==1 was not worked yet")
-       call cu_read(1,oneGrid%oneNamelistFile)
+       call cu_read(1,oneGrid%oneNamelistFile, oneGrid%oneCuParmVars)
 
     end if
 
@@ -2488,10 +2490,12 @@ contains
 
 
 
-  subroutine comm_time(oneNamelistFile, isendflg, isendlite, isendmean, isendboth, &
+  subroutine comm_time(oneNamelistFile, oneCuParmVars, &
+       isendflg, isendlite, isendmean, isendboth, &
        isendbackflg, isendiv, isendsst, isendndvi, isendsrc)
 
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
+    type(CuParmVars), pointer, intent(in) :: oneCuParmVars
     integer, intent(out) :: isendflg, isendlite, isendmean, isendboth, &
          isendbackflg, isendiv, isendsst, isendndvi
 
@@ -2663,7 +2667,7 @@ contains
 
     if (oneNamelistFile%if_cuinv  ==  1 ) then
        do ifm = 1,ngrids
-          if (timemf  >=  cu_times(ncufl+1) .and.  &
+          if (timemf  >=  oneCuParmVars%cu_times(oneCuParmVars%ncufl+1) .and.  &
                timemf  <  timmax) then
              isendflg = 1
              isendbackflg = 1 ! ALF

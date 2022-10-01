@@ -9,13 +9,14 @@ module ModRConv
 
   use ModNamelistFile, only: &
        NamelistFile
+
+  use ModCuParmVars, only: &
+       CuParmVars
   
   use mem_tend, only: &
        tend !INTENT(INOUT)
 
   use mem_cuparm, only: &
-       cutime1, &
-       cutime2, &
        cuparm_g
 
   use ModBasicFields, only: &
@@ -129,9 +130,10 @@ contains
 
 
 
-  subroutine cuparm(oneBasicFields, oneNamelistFile)
+  subroutine cuparm(oneBasicFields, oneNamelistFile, oneCuParmVars)
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
+    type(CuParmVars), pointer, intent(in) :: oneCuParmVars
 
     real, save :: cptime=7200.
 
@@ -195,7 +197,8 @@ contains
             ,cuparm_g(ngrid)%conprr &
             ,cuparm_g(ngrid)%conprrp &
             ,cuparm_g(ngrid)%conprrf &
-            ,oneNamelistFile)
+            ,oneNamelistFile &
+            ,oneCuParmVars)
     endif
 
 
@@ -213,11 +216,12 @@ contains
 
   subroutine cu_inv_tend(m1,m2,m3,ia,iz,ja,jz  &
        ,thsrc,thsrcp,thsrcf,rtsrc,rtsrcp,rtsrcf  &
-       ,conprr,conprrp,conprrf, oneNamelistFile)
+       ,conprr,conprrp,conprrf, oneNamelistFile, oneCuParmVars)
     integer :: m1,m2,m3,ia,iz,ja,jz
     real, dimension(m2,m3) :: conprr,conprrp,conprrf
     real, dimension(m1,m2,m3) :: thsrc,thsrcp,thsrcf,rtsrc,rtsrcp,rtsrcf
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
+    type(CuParmVars), pointer, intent(in) :: oneCuParmVars
 
     integer :: k,i,j
     real :: tfact,grwt
@@ -232,10 +236,10 @@ contains
 
     grwt = oneNamelistFile%wt_cu_grid(ngrid)/oneNamelistFile%tnudcu
 
-    if ( (cutime2-cutime1) <= oneNamelistFile%cu_til ) then
+    if ( (oneCuParmVars%cutime2-oneCuParmVars%cutime1) <= oneNamelistFile%cu_til ) then
        ! If past and future files are good for interpolation...
 
-       tfact= (time-cutime1)/(cutime2-cutime1) * grwt
+       tfact= (time-oneCuParmVars%cutime1)/(oneCuParmVars%cutime2-oneCuParmVars%cutime1) * grwt
        do j=ja,jz
           do i=ia,iz
              do k=2,m1-1
@@ -251,7 +255,7 @@ contains
 
        return
 
-    elseif ( abs(time-cutime1) <= oneNamelistFile%cu_tel ) then
+    elseif ( abs(time-oneCuParmVars%cutime1) <= oneNamelistFile%cu_tel ) then
        ! Past file close enough...
        do j=ja,jz
           do i=ia,iz
@@ -265,7 +269,7 @@ contains
 
        return
 
-    elseif ( abs(time-cutime2) <= oneNamelistFile%cu_tel ) then
+    elseif ( abs(time-oneCuParmVars%cutime2) <= oneNamelistFile%cu_tel ) then
        ! Future file close enough...
        do j=ja,jz
           do i=ia,iz

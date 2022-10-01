@@ -9,6 +9,9 @@ module ModCuRead
 
   use ModNamelistFile, only: &
        NamelistFile
+
+  use ModCuParmVars, only: &
+       CuParmVars
   
   use ModDateUtils, only: &
        date_abs_secs2,   &
@@ -34,13 +37,6 @@ module ModCuRead
        isan_inc
 
   use mem_cuparm, only: &
-       cutime1,    &
-       cutime2,    &
-       ncufiles,   &
-       ncufl,      &
-       cu_times,   &
-       fnames_cu,        &
-       itotdate_cu,      &
        cuparm_g
 
   use grid_dims, only: &
@@ -58,7 +54,7 @@ contains
 
 
 
-  subroutine cu_read(initflag, oneNamelistFile)
+  subroutine cu_read(initflag, oneNamelistFile, oneCuParmVars)
 
 
     !------------------------------------------------------
@@ -66,6 +62,7 @@ contains
     !------------------------------------------------------
     integer, intent(in) :: initflag
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
+    type(CuParmVars), pointer, intent(in) :: oneCuParmVars
 
     character(len=14)  :: itotdate_start
     integer :: iyears,imonths,idates,ihours,nf,ifm
@@ -73,7 +70,7 @@ contains
     if (initflag == 1) then   ! Initialization
 
        ! Inventory all cu inversion files. 
-       call cu_file_inv (iyear1,imonth1,idate1,itime1, oneNamelistFile)
+       call cu_file_inv (iyear1,imonth1,idate1,itime1, oneNamelistFile, oneCuParmVars)
 
        ! Find past time file
 
@@ -90,46 +87,47 @@ contains
                ,itotdate_start)
        endif
 
-       do nf=1,ncufiles
-          if(itotdate_start >= itotdate_cu(nf) .and.  &
-               itotdate_start <  itotdate_cu(nf+1) ) then
-             ncufl=nf
+       do nf=1,oneCuParmVars%ncufiles
+          if(itotdate_start >= oneCuParmVars%itotdate_cu(nf) .and.  &
+               itotdate_start <  oneCuParmVars%itotdate_cu(nf+1) ) then
+             oneCuParmVars%ncufl=nf
              exit
           endif
        enddo
 
-       print*,'nud starting at history file:',ncufl
+       print*,'nud starting at history file:',oneCuParmVars%ncufl
 
        ! Read initial files.
 
-       call cu_update(0,ncufl,oneNamelistFile)
+       call cu_update(0,oneCuParmVars%ncufl,oneNamelistFile, oneCuParmVars)
 
 
     elseif (initflag == 2) then   ! Runtime file increment
 
-       if ( time >= cu_times(ncufl+1) ) ncufl = ncufl + 1
+       if ( time >= oneCuParmVars%cu_times(oneCuParmVars%ncufl+1) ) oneCuParmVars%ncufl = oneCuParmVars%ncufl + 1
 
     endif
 
 
     ! Read new files.
 
-    call cu_update(1,ncufl+1,oneNamelistFile)
+    call cu_update(1,oneCuParmVars%ncufl+1,oneNamelistFile,oneCuParmVars)
 
 
-    cutime1=cu_times(ncufl)
-    cutime2=cu_times(ncufl+1)
+    oneCuParmVars%cutime1=oneCuParmVars%cu_times(oneCuParmVars%ncufl)
+    oneCuParmVars%cutime2=oneCuParmVars%cu_times(oneCuParmVars%ncufl+1)
 
     return
   end subroutine cu_read
 
 
-  subroutine cu_file_inv (iyear1,imonth1,idate1,itime1, oneNamelistFile)
+  subroutine cu_file_inv (iyear1,imonth1,idate1,itime1, oneNamelistFile, oneCuParmVars)
     integer, intent(in) :: iyear1
     integer, intent(in) :: imonth1
     integer, intent(in) :: idate1
     integer, intent(in) :: itime1
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
+    type(CuParmVars), pointer, intent(in) :: oneCuParmVars
 
     integer :: nc,nf,lnf,nhftot
     integer :: inyear,inmonth,indate,inhour
@@ -201,7 +199,7 @@ contains
        stop 'lots_of_cu_files'
     endif
 
-    ncufiles=0
+    oneCuParmVars%ncufiles=0
     do nf=1,nhftot
 
        ! only save grid 1 files names and times. 
@@ -213,17 +211,17 @@ contains
 
           call date_make_big(inyear,inmonth,indate,inhour,itotdate)
 
-          ncufiles=ncufiles+1
-          fnames_cu(ncufiles)=fnames(nf)
-          itotdate_cu(ncufiles)=itotdate
+          oneCuParmVars%ncufiles=oneCuParmVars%ncufiles+1
+          oneCuParmVars%fnames_cu(oneCuParmVars%ncufiles)=fnames(nf)
+          oneCuParmVars%itotdate_cu(oneCuParmVars%ncufiles)=itotdate
 
           call date_abs_secs2(inyear,inmonth,indate,inhour,secs_cu)
-          cu_times(ncufiles)=secs_cu - secs_init
+          oneCuParmVars%cu_times(oneCuParmVars%ncufiles)=secs_cu - secs_init
        endif
 
     enddo
 
-    call RAMS_dintsort(ncufiles,itotdate_cu,fnames_cu)
+    call RAMS_dintsort(oneCuParmVars%ncufiles,oneCuParmVars%itotdate_cu,oneCuParmVars%fnames_cu)
 
     !  start printing section
     !--------------------------------------------------------------
@@ -234,9 +232,9 @@ contains
     print*,'-------------------------------------------------------------'
     print*,'-----------  Cumulus Tendency Input File Inventory -------------'
     print*,'-------------------------------------------------------------'
-    do nf=1,ncufiles
-       print*,  itotdate_cu(nf),'   ',cu_times(nf)  &
-            ,fnames_cu(nf)(1:len_trim(fnames_cu(nf)))
+    do nf=1,oneCuParmVars%ncufiles
+       print*,  oneCuParmVars%itotdate_cu(nf),'   ',oneCuParmVars%cu_times(nf)  &
+            ,trim(oneCuParmVars%fnames_cu(nf))
     enddo
     print*,'------------------------------------------------------'
 
@@ -248,10 +246,11 @@ contains
 
   !******************************************************************************
 
-  subroutine cu_update(iswap,ncu, oneNamelistFile)
+  subroutine cu_update(iswap,ncu, oneNamelistFile, oneCuParmVars)
     integer, intent(in) :: iswap
     integer, intent(in) :: ncu
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
+    type(CuParmVars), pointer, intent(in) :: oneCuParmVars
 
     include "files.h"
 
@@ -286,10 +285,10 @@ contains
        ifm=ngr
        icm=nxtnest(ifm)
 
-       print*,'ncu:',ncu,fnames_cu(ncu)
-       nc=len_trim(fnames_cu(ncu))
+       print*,'ncu:',ncu,oneCuParmVars%fnames_cu(ncu)
+       nc=len_trim(oneCuParmVars%fnames_cu(ncu))
        write(cng,'(i1)') ngr
-       cunamein=fnames_cu(ncu)(1:nc-5)//cng//'.vfm'
+       cunamein=oneCuParmVars%fnames_cu(ncu)(1:nc-5)//cng//'.vfm'
        print*,'ncu:',ncu,cunamein
 
        inquire (file=cunamein(1:len_trim(cunamein)), exist=there)

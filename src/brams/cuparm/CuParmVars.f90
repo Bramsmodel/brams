@@ -27,7 +27,6 @@ module ModCuParmVars
   public :: CreateCuParmVars
   public :: DestroyCuParmVars
   public :: DumpCuParmVars
-  public :: hasAconpr
   
   type CuParmVars
      character(len=f_name_length) :: fnames_cu(maxfiles)
@@ -106,17 +105,5 @@ contains
        call MsgDump(h//" oneCuParmVars from "//trim(name)//" is not associated")
     end if
   end subroutine DumpCuParmVars
-
-
-
-
-  
-  logical function hasAconpr(oneNamelistFile, ng)
-    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
-    integer, intent(IN) :: ng
-
-    hasAconpr = oneNamelistFile%nnqparm(ng)>= 1 .or. oneNamelistFile%if_cuinv == 1
-
-  end function hasAconpr
 
 end module ModCuParmVars
