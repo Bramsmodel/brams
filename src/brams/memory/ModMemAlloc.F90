@@ -817,7 +817,7 @@ contains
     do ng=1,ngrids
        call nullify_cuparm(cuparm_g(ng))
        call nullify_cuparm(cuparmm_g(ng))
-       call alloc_cuparm(cuparm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
+       call alloc_cuparm(oneGrid%oneNamelistFile, cuparm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
 
        !-srf-feb2012: for shallow cumulus
        if (nnshcu(ng) > 1) then
@@ -829,7 +829,7 @@ contains
        endif
 
        if (imean==1) then
-          call alloc_cuparm(cuparmm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
+          call alloc_cuparm(oneGrid%oneNamelistFile, cuparmm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
        endif
 
        call filltab_cuparm(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &

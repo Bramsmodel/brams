@@ -228,8 +228,7 @@ module ModOneProc
   use mem_cuparm, only: &
        ncufl, &
        cu_times, &
-       cuparm_g, &
-       StoreNamelistFileAtMem_cuparm
+       cuparm_g
 
   use Mem_globrad, only: &
        master_read_carma_data, &
@@ -774,7 +773,6 @@ contains
 
     call StoreNamelistFileAtIo_Params(oneNamelistFile)
     call StoreNamelistFileAtIsan_coms(oneNamelistFile)
-    call StoreNamelistFileAtMem_cuparm(oneNamelistFile)
     call StoreNamelistFileAtCup_grell3(oneNameListFile)
     call StoreNamelistFileAtMem_globrad(oneNamelistFile)
     call StoreNamelistFileAtMem_grell_param(oneNamelistFile)

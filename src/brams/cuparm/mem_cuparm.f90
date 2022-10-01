@@ -10,7 +10,7 @@
 module mem_cuparm
 
   use ModNamelistFile, only: &
-       namelistFile
+       NamelistFile
 
   use grid_dims, only: &
        maxgrds,        & ! INTENT(IN)
@@ -37,11 +37,6 @@ module mem_cuparm
 
   end type cuparm_vars
 
-!!$  type (cuparm_vars), allocatable :: cuparm_g(:)
-!!$  type (cuparm_vars), allocatable :: cuparmm_g(:)
-!!$  type (cuparm_vars), allocatable :: cuparm_g_sh(:)
-!!$  type (cuparm_vars), allocatable :: cuparmm_g_sh(:)
-
   type (cuparm_vars), pointer :: cuparm_g(:) => null()
   type (cuparm_vars), pointer :: cuparmm_g(:) => null()
   type (cuparm_vars), pointer :: cuparm_g_sh(:) => null()
@@ -52,15 +47,6 @@ module mem_cuparm
   integer, parameter :: maxcufiles = maxfiles
   integer, parameter :: maxcugrids = 10
 
-  integer :: if_cuinv             ! from RAMSIN
-  real :: tcu_beg                 ! from RAMSIN
-  real :: tcu_end                 ! from RAMSIN
-  real :: cu_til                  ! from RAMSIN
-  real :: cu_tel                  ! from RAMSIN
-  real :: tnudcu                  ! from RAMSIN
-  real :: wt_cu_grid(maxcugrids)  ! from RAMSIN
-  character(len=128) :: cu_prefix ! from RAMSIN
-
   character(len=f_name_length) :: fnames_cu(maxcufiles)
   character(len=14)  :: itotdate_cu(maxcufiles)
   real :: cu_times(maxcufiles)
@@ -70,23 +56,19 @@ module mem_cuparm
   real :: cutime1
   real :: cutime2
 
-  integer :: nnqparm(maxgrds) ! from RAMSIN
-  real :: wcldbs              ! from RAMSIN
-  real :: confrq              ! from RAMSIN
-
-  public :: hasAconpr
-
 contains
 
-  logical function hasAconpr(ng)
+  logical function hasAconpr(oneNamelistFile, ng)
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     integer, intent(IN) :: ng
 
-    hasAconpr = nnqparm(ng)>= 1 .or. if_cuinv == 1
+    hasAconpr = oneNamelistFile%nnqparm(ng)>= 1 .or. oneNamelistFile%if_cuinv == 1
 
   end function hasAconpr
 
-  subroutine alloc_cuparm(cuparm, n1, n2, n3, ng)
+  subroutine alloc_cuparm(oneNamelistFile, cuparm, n1, n2, n3, ng)
     ! Arguments:
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type (cuparm_vars), intent(INOUT) :: cuparm
     integer, intent(IN)               :: n1, n2, n3, ng
     ! Local Variables:
@@ -95,8 +77,8 @@ contains
 
     ! Allocate arrays based on options (if necessary)
 
-    if( hasAconpr(ng) )  then
-       if(nnqparm(ng) < 3) then !srf: for conv 3 and 4, special arrays
+    if( hasAconpr(oneNamelistFile, ng) )  then
+       if(oneNamelistFile%nnqparm(ng) < 3) then !srf: for conv 3 and 4, special arrays
           !srf:  are allocated instead of these ones
 
           allocate (cuparm%thsrc(n1,n2,n3), STAT=ierr)
@@ -117,7 +99,7 @@ contains
        if (ierr/=0) call fatal_error(h//"Allocating cuparm%conprr")
        cuparm%conprr = 0.  
 
-       if (if_cuinv == 1) then
+       if (oneNamelistFile%if_cuinv == 1) then
           allocate (cuparm%thsrcp(n1,n2,n3), STAT=ierr)
           if (ierr/=0) call fatal_error(h//"Allocating cuparm%thsrcp")
           cuparm%thsrcp=0.0
@@ -350,23 +332,4 @@ contains
     end if
 
   end subroutine filltab_cuparm
-
-
-
-
-  subroutine StoreNamelistFileAtMem_cuparm(oneNamelistFile)
-    type(namelistFile), pointer :: oneNamelistFile
-    confrq = oneNamelistFile%confrq
-    cu_prefix = oneNamelistFile%cu_prefix
-    cu_tel = oneNamelistFile%cu_tel
-    cu_til = oneNamelistFile%cu_til
-    if_cuinv = oneNamelistFile%if_cuinv
-    nnqparm = oneNamelistFile%nnqparm
-    tcu_beg = oneNamelistFile%tcu_beg
-    tcu_end = oneNamelistFile%tcu_end
-    tnudcu = oneNamelistFile%tnudcu
-    wcldbs = oneNamelistFile%wcldbs
-    wt_cu_grid = oneNamelistFile%wt_cu_grid
-  end subroutine StoreNamelistFileAtMem_cuparm
-
 end module mem_cuparm

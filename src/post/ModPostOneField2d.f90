@@ -1425,7 +1425,7 @@ contains
 
     real :: aconpr(oneBramsGrid%mxp, oneBramsGrid%myp)
 
-    if(hasAconpr(oneBramsGrid%currGrid)) then
+    if(hasAconpr(oneNamelistFile, oneBramsGrid%currGrid)) then
        call GetVarFromMemToOutput ('ACONPR', oneBramsGrid%currGrid, aconpr, &
             oneNamelistFile, oneBasicFields, oneTurbFields, &
             oneVarTable, oneVarTableSize)
