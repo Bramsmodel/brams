@@ -431,7 +431,7 @@ contains
     !----------------------------------------
     if (oneGrid%oneNamelistFile%nnqparm(ngrid)==1 .or. &
          oneGrid%oneNamelistFile%if_cuinv==1) then
-       call cuparm(oneGrid%oneBasicFields)
+       call cuparm(oneGrid%oneBasicFields, oneGrid%oneNamelistFile)
     end if
 
     !  Urban canopy parameterization

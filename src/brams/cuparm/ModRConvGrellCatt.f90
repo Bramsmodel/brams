@@ -55,7 +55,6 @@ module ModRConvGrellCatt
        tend
 
   use mem_cuparm, only: &
-       confrq, &
        cuparm_g, &
        cuparm_g_sh
 
@@ -159,7 +158,7 @@ contains
 
        if(INITIAL.eq.2.and.TIME.lt.CPTIME-dtlt) return
 
-       if(mod(TIME,CONFRQ).lt.DTLT.or.time.lt. .01 .or.abs(time-cptime) .lt. 0.01) then !002
+       if(mod(TIME,oneGrid%oneNamelistFile%confrq).lt.DTLT.or.time.lt. .01 .or.abs(time-cptime) .lt. 0.01) then !002
 
           iruncon=1
 
@@ -269,7 +268,7 @@ contains
                grell_g(ngrid)%xkdt   ,  & !69
                grell_g(ngrid)%xiact_p,  & !70
                grell_g(ngrid)%xiact_c,  & !71
-               confrq,frqanl,                &
+               oneGrid%oneNamelistFile%confrq,frqanl,                &
                deltaxn(ngrid)*deltayn(ngrid),&
                leaf_g(ngrid)%patch_area, &
                npatch,                       &
@@ -322,7 +321,7 @@ contains
        end if
 
        if(INITIAL.eq.2.and.TIME.lt.CPTIME-dtlt) return
-       if(mod(TIME,CONFRQ).lt.DTLT.or.time.lt. .01 .or. abs(time-cptime).lt. 0.01) then !005
+       if(mod(TIME,oneGrid%oneNamelistFile%confrq).lt.DTLT.or.time.lt. .01 .or. abs(time-cptime).lt. 0.01) then !005
           iruncon=1
 
           cuparm_g_sh(ngrid)%thsrc=0.
@@ -414,7 +413,7 @@ contains
                grell_g_sh(ngrid)%xk22  ,  & 
                                 !            grell_g   (ngrid)%xierr (1,1),  & !para uso futuro, inibir shallow se deep is ON
                grell_g_sh   (ngrid)%xierr ,  & 
-               confrq,frqanl,                  &
+               oneGrid%oneNamelistFile%confrq,frqanl,                  &
                deltaxn(ngrid)*deltayn(ngrid),  &
                leaf_g(ngrid)%patch_area,&
                npatch,                         &

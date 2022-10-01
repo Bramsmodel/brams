@@ -2329,7 +2329,7 @@ contains
 
        iErrNumber=dumpMessage(c_tty,c_yes,h,c_modelVersion,c_fatal, &
             "**(JP)** if_cuinv==1 was not worked yet")
-       call cu_read(1)
+       call cu_read(1,oneGrid%oneNamelistFile)
 
     end if
 

@@ -7,6 +7,9 @@
 !###########################################################################
 module ModCuRead
 
+  use ModNamelistFile, only: &
+       NamelistFile
+  
   use ModDateUtils, only: &
        date_abs_secs2,   &
        date_add_to,      &
@@ -35,14 +38,11 @@ module ModCuRead
        cutime2,    &
        ncufiles,   &
        ncufl,      &
-       tcu_beg,    &
        cu_times,   &
-       cu_prefix,        &
        fnames_cu,        &
        itotdate_cu,      &
        maxcufiles,       &
-       cuparm_g,         &
-       wt_cu_grid
+       cuparm_g
 
   implicit none
 
@@ -56,13 +56,14 @@ contains
 
 
 
-  subroutine cu_read(initflag)
+  subroutine cu_read(initflag, oneNamelistFile)
 
 
     !------------------------------------------------------
     !  Read cumulus inversion tendencies
     !------------------------------------------------------
     integer, intent(in) :: initflag
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
 
     character(len=14)  :: itotdate_start
     integer :: iyears,imonths,idates,ihours,nf,ifm
@@ -70,19 +71,19 @@ contains
     if (initflag == 1) then   ! Initialization
 
        ! Inventory all cu inversion files. 
-       call cu_file_inv (iyear1,imonth1,idate1,itime1)
+       call cu_file_inv (iyear1,imonth1,idate1,itime1, oneNamelistFile)
 
        ! Find past time file
 
        if (runtype == 'HISTORY') then
           call date_add_to(iyear1,imonth1,idate1,itime1*100  &
-               ,max(time,tcu_beg),'s',iyears,imonths,idates,ihours)
+               ,max(time,oneNamelistFile%tcu_beg),'s',iyears,imonths,idates,ihours)
           call date_make_big(iyears,imonths,idates,ihours  &
                ,itotdate_start)
 
        elseif (runtype == 'INITIAL') then
           call date_add_to(iyear1,imonth1,idate1,itime1*100  &
-               ,tcu_beg,'s',iyears,imonths,idates,ihours)
+               ,oneNamelistFile%tcu_beg,'s',iyears,imonths,idates,ihours)
           call date_make_big(iyears,imonths,idates,ihours  &
                ,itotdate_start)
        endif
@@ -99,7 +100,7 @@ contains
 
        ! Read initial files.
 
-       call cu_update(0,ncufl)
+       call cu_update(0,ncufl,oneNamelistFile)
 
 
     elseif (initflag == 2) then   ! Runtime file increment
@@ -111,7 +112,7 @@ contains
 
     ! Read new files.
 
-    call cu_update(1,ncufl+1)
+    call cu_update(1,ncufl+1,oneNamelistFile)
 
 
     cutime1=cu_times(ncufl)
@@ -121,11 +122,12 @@ contains
   end subroutine cu_read
 
 
-  subroutine cu_file_inv (iyear1,imonth1,idate1,itime1)
+  subroutine cu_file_inv (iyear1,imonth1,idate1,itime1, oneNamelistFile)
     integer, intent(in) :: iyear1
     integer, intent(in) :: imonth1
     integer, intent(in) :: idate1
     integer, intent(in) :: itime1
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
 
     integer :: nc,nf,lnf,nhftot
     integer :: inyear,inmonth,indate,inhour
@@ -168,7 +170,8 @@ contains
           call date_add_to(iyears, imonths, idates, localTime*100,  &
                0., 's', iyears, imonths, idates, ihours)
 
-          write(sVarName,100) cu_prefix(1:len_trim(cu_prefix)),iyears,'-',imonths,'-',idates,'-',ihours/100   
+          write(sVarName,100) trim(oneNamelistFile%cu_prefix), &
+               iyears,'-',imonths,'-',idates,'-',ihours/100   
 100       format(a,i4.4,a1,i2.2,a1,i2.2,a1,i4.4)
 
           inquire(file=sVarName(1:len_trim(sVarName)),exist=there)
@@ -243,9 +246,10 @@ contains
 
   !******************************************************************************
 
-  subroutine cu_update(iswap,ncu)
+  subroutine cu_update(iswap,ncu, oneNamelistFile)
     integer, intent(in) :: iswap
     integer, intent(in) :: ncu
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
 
     include "files.h"
 
@@ -288,7 +292,7 @@ contains
 
        inquire (file=cunamein(1:len_trim(cunamein)), exist=there)
 
-       if (wt_cu_grid(ngr) > 0.) then
+       if (oneNamelistFile%wt_cu_grid(ngr) > 0.) then
           if (there) then
 
              call rams_f_open(iun,cunamein(1:len_trim(cunamein)),'FORMATTED','OLD','READ',0)

@@ -7,23 +7,16 @@
 !###########################################################################
 module ModRConv
 
-
+  use ModNamelistFile, only: &
+       NamelistFile
+  
   use mem_tend, only: &
        tend !INTENT(INOUT)
 
   use mem_cuparm, only: &
-       wt_cu_grid, &
-       tnudcu, &
-       tcu_beg, &
-       tcu_end, &
        cutime1, &
        cutime2, &
-       cu_til, &
-       cu_tel, &
-       wcldbs, &
-       cuparm_g,        & !INTENT(INOUT)
-       confrq,          & !INTENT(IN)
-       if_cuinv           !INTENT(IN)
+       cuparm_g
 
   use ModBasicFields, only: &
        BasicFields
@@ -136,12 +129,13 @@ contains
 
 
 
-  subroutine cuparm(oneBasicFields)
+  subroutine cuparm(oneBasicFields, oneNamelistFile)
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
 
     real, save :: cptime=7200.
 
-    if (if_cuinv==0) then
+    if (oneNamelistFile%if_cuinv==0) then
 
        !        Zero out tendencies initially
 
@@ -156,7 +150,7 @@ contains
 
        if (initial==2 .and. time<cptime) return
 
-       if (mod(time+dtlt+.001,confrq)<=dtlt .or. time<0.01) then
+       if (mod(time+dtlt+.001,oneNamelistFile%confrq)<=dtlt .or. time<0.01) then
 
 !!$      print 90,time+dtlt,(time+dtlt)/3600.  &
 !!$               +(itime1/100+mod(itime1,100)/60.)
@@ -182,11 +176,13 @@ contains
                ,cuparm_g(ngrid)%thsrc    &
                ,cuparm_g(ngrid)%rtsrc    &
                ,grid_g(ngrid)%rtgt       &
-               ,cuparm_g(ngrid)%conprr , grid_g(ngrid)%lpw  )
+               ,cuparm_g(ngrid)%conprr   &
+               ,grid_g(ngrid)%lpw        &
+               ,oneNamelistFile)
 
        endif
 
-    elseif (if_cuinv==1) then
+    elseif (oneNamelistFile%if_cuinv==1) then
        ! Check cumulus inversion tendencies and see if they are usable. If so,
        !   put in thsrc,rtscr,conprr arrays.
        call cu_inv_tend(mzp,mxp,myp,ia,iz,ja,jz  &
@@ -198,7 +194,8 @@ contains
             ,cuparm_g(ngrid)%rtsrcf &
             ,cuparm_g(ngrid)%conprr &
             ,cuparm_g(ngrid)%conprrp &
-            ,cuparm_g(ngrid)%conprrf )
+            ,cuparm_g(ngrid)%conprrf &
+            ,oneNamelistFile)
     endif
 
 
@@ -216,10 +213,11 @@ contains
 
   subroutine cu_inv_tend(m1,m2,m3,ia,iz,ja,jz  &
        ,thsrc,thsrcp,thsrcf,rtsrc,rtsrcp,rtsrcf  &
-       ,conprr,conprrp,conprrf)
+       ,conprr,conprrp,conprrf, oneNamelistFile)
     integer :: m1,m2,m3,ia,iz,ja,jz
     real, dimension(m2,m3) :: conprr,conprrp,conprrf
     real, dimension(m1,m2,m3) :: thsrc,thsrcp,thsrcf,rtsrc,rtsrcp,rtsrcf
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
 
     integer :: k,i,j
     real :: tfact,grwt
@@ -228,11 +226,13 @@ contains
     rtsrc(1:m1,1:m2,1:m3) = 0.
     conprr(1:m2,1:m3) = 0.
 
-    if (time < tcu_beg .or. time > tcu_end ) return
+    if (time < oneNamelistFile%tcu_beg .or. time > oneNamelistFile%tcu_end ) then
+       return
+    end if
 
-    grwt = wt_cu_grid(ngrid)/tnudcu
+    grwt = oneNamelistFile%wt_cu_grid(ngrid)/oneNamelistFile%tnudcu
 
-    if ( (cutime2-cutime1) <= CU_TIL ) then
+    if ( (cutime2-cutime1) <= oneNamelistFile%cu_til ) then
        ! If past and future files are good for interpolation...
 
        tfact= (time-cutime1)/(cutime2-cutime1) * grwt
@@ -251,7 +251,7 @@ contains
 
        return
 
-    elseif ( abs(time-cutime1) <= CU_TEL ) then
+    elseif ( abs(time-cutime1) <= oneNamelistFile%cu_tel ) then
        ! Past file close enough...
        do j=ja,jz
           do i=ia,iz
@@ -265,7 +265,7 @@ contains
 
        return
 
-    elseif ( abs(time-cutime2) <= CU_TEL ) then
+    elseif ( abs(time-cutime2) <= oneNamelistFile%cu_tel ) then
        ! Future file close enough...
        do j=ja,jz
           do i=ia,iz
@@ -288,12 +288,13 @@ contains
 
   subroutine conpar(m1,m2,m3,ia,iz,ja,jz,ibcon  &
        ,up,vp,wp,theta,pp,pi0,dn0,rv  &
-       ,thsrc,rtsrc,rtgt,conprr,lpw_R)
+       ,thsrc,rtsrc,rtgt,conprr,lpw_R, oneNamelistFile)
     integer :: m1,m2,m3,ia,iz,ja,jz,ibcon
     real :: up(m1,m2,m3),vp(m1,m2,m3),wp(m1,m2,m3),theta(m1,m2,m3)  &
          ,pp(m1,m2,m3),pi0(m1,m2,m3),dn0(m1,m2,m3),rv(m1,m2,m3)  &
          ,thsrc(m1,m2,m3),rtsrc(m1,m2,m3),conprr(m2,m3)  &
          ,rtgt(m2,m3)
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     real, dimension(m2,m3) :: lpw_R
 
     integer :: icpcnt=0,i1,i2,j1,j2,i,j,k,iprtfrq,iqmax,jqmax,kqmax
@@ -361,8 +362,8 @@ contains
              rtsrc(k,i,j)=0.
           enddo
           conprr(i,j)=0.
-          wconmin=wcldbs
-          contim=confrq
+          wconmin=oneNamelistFile%wcldbs
+          contim=oneNamelistFile%confrq
 
           call cu_environ(lpw(i,j),m1-1)
           if(igo.ne.0) call kuocp
