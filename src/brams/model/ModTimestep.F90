@@ -189,6 +189,11 @@ module ModTimestep
   use mem_tend, only: &
        tend
 
+  use mem_cuparm, only: &
+       DeepCopyToCuParmFields, &
+       DeepCopyFromCuParmFields
+
+
   use mem_chem1, only: &
        nvert_src=>chem1_src_z_dim_g, & ! (IN)
        chem1_g,                      & ! (INOUT)
@@ -523,12 +528,16 @@ contains
     !                    Deep Convection scheme
     !- call deep first, if there is deep convection , turn off shallow.
     if (oneGrid%oneNamelistFile%nnqparm(ngrid)==2) then
+       call DeepCopyToCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
        call cuparm_grell_catt(OneGrid, 1)
+       call DeepCopyFromCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
     end if
     !
     !                    Shallow Convection scheme
     if (NNSHCU(ngrid)==2 ) then
+       call DeepCopyToCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
        call cuparm_grell_catt(OneGrid, 2)
+       call DeepCopyFromCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
     end if
     !
     !- G3d - GD-FIM and GF

@@ -54,10 +54,6 @@ module ModRConvGrellCatt
   use mem_tend, only: &
        tend
 
-  use mem_cuparm, only: &
-       cuparm_g, &
-       cuparm_g_sh
-
   use rconstants, only: &
        tkmin
 
@@ -151,9 +147,9 @@ contains
        !
        !      Zero out tendencies initially
        if (TIME.eq.0.) then 
-          cuparm_g(ngrid)%thsrc=0.
-          cuparm_g(ngrid)%rtsrc=0.
-          cuparm_g(ngrid)%clsrc=0.
+          oneGrid%oneCuParmFields%thsrc=0.
+          oneGrid%oneCuParmFields%rtsrc=0.
+          oneGrid%oneCuParmFields%clsrc=0.
        end if
 
        if(INITIAL.eq.2.and.TIME.lt.CPTIME-dtlt) return
@@ -167,10 +163,10 @@ contains
              call fatal_error(h//' berry formulation needs carma radiation')
           end if
 
-          cuparm_g(ngrid)%thsrc=0.
-          cuparm_g(ngrid)%rtsrc=0.
-          cuparm_g(ngrid)%conprr=0.
-          cuparm_g(ngrid)%clsrc=0.
+          oneGrid%oneCuParmFields%thsrc=0.
+          oneGrid%oneCuParmFields%rtsrc=0.
+          oneGrid%oneCuParmFields%conprr=0.
+          oneGrid%oneCuParmFields%clsrc=0.
 
           !srf - use the old way to define the cumulus forcing
           if(i_forcing /= 1) then
@@ -223,10 +219,10 @@ contains
                cuforc_g(ngrid)%lsfth  ,& !33 
                cuforc_g(ngrid)%lsfrt  ,& !34 
                tend%PT,                   & !35
-               cuparm_g(ngrid)%THSRC ,& !36 
-               cuparm_g(ngrid)%RTSRC ,& !37 
-               cuparm_g(ngrid)%CLSRC ,& !37 
-               cuparm_g(ngrid)%CONPRR,  & !38      
+               oneGrid%oneCuParmFields%THSRC ,& !36 
+               oneGrid%oneCuParmFields%RTSRC ,& !37 
+               oneGrid%oneCuParmFields%CLSRC ,& !37 
+               oneGrid%oneCuParmFields%CONPRR,  & !38      
                                 !
                                 !             extra3d(5,ngrid)%d3   (1,1,1),& !39 ! cloud/ice tendency
                                 !             extra3d(1,ngrid)%d3   (1,1,1),& !39 ! ensemble output
@@ -294,14 +290,14 @@ contains
 
        end if
 
-       call accum(int(mxp*myp*mzp,i8), tend%tht, cuparm_g(ngrid)%thsrc)
-       call accum(int(mxp*myp*mzp,i8), tend%rtt, cuparm_g(ngrid)%rtsrc)
+       call accum(int(mxp*myp*mzp,i8), tend%tht, oneGrid%oneCuParmFields%thsrc)
+       call accum(int(mxp*myp*mzp,i8), tend%rtt, oneGrid%oneCuParmFields%rtsrc)
 
-       call update(mxp*myp, cuparm_g(ngrid)%aconpr,cuparm_g(ngrid)%conprr,dtlt)
+       call update(mxp*myp, oneGrid%oneCuParmFields%aconpr,oneGrid%oneCuParmFields%conprr,dtlt)
 
        if(do_cupar_mcphys_coupling == 1) then
           call cupar2mcphysics(mzp,mxp,myp,ia,iz,ja,jz,ngrid,dtlt,& 
-               cuparm_g(ngrid)%clsrc,    &
+               oneGrid%oneCuParmFields%clsrc,    &
                OneGrid%oneBasicFields%theta,    & 
                OneGrid%oneBasicFields%pp,    & 
                OneGrid%oneBasicFields%pi0, &
@@ -316,16 +312,16 @@ contains
     if(iens == 2) then !006
 
        if(TIME.eq.0.) then !004
-          cuparm_g_sh(ngrid)%thsrc=0.
-          cuparm_g_sh(ngrid)%rtsrc=0.
+          oneGrid%oneCuParmShFields%thsrc=0.
+          oneGrid%oneCuParmShFields%rtsrc=0.
        end if
 
        if(INITIAL.eq.2.and.TIME.lt.CPTIME-dtlt) return
        if(mod(TIME,oneGrid%oneNamelistFile%confrq).lt.DTLT.or.time.lt. .01 .or. abs(time-cptime).lt. 0.01) then !005
           iruncon=1
 
-          cuparm_g_sh(ngrid)%thsrc=0.
-          cuparm_g_sh(ngrid)%rtsrc =0.           
+          oneGrid%oneCuParmShFields%thsrc=0.
+          oneGrid%oneCuParmShFields%rtsrc =0.           
 
           !srf - use the old way to define the cumulus forcing
           if(i_forcing /= 1) then
@@ -375,8 +371,8 @@ contains
                cuforc_sh_g(ngrid)%lsfth, &   
                cuforc_sh_g(ngrid)%lsfrt, &   
                tend%PT,     &   
-               cuparm_g_sh(ngrid)%thsrc,&   
-               cuparm_g_sh(ngrid)%rtsrc,&   
+               oneGrid%oneCuParmShFields%thsrc,&   
+               oneGrid%oneCuParmShFields%rtsrc,&   
                                 !
                                 !             extra3d(2,ngrid)%d3     (1,1,1),&   !39 !<< usando extra3d(2)
                                 !             extra2d(2,ngrid)%d2     (1,1),  &   !39 !<< usando extra2d(2)
@@ -434,8 +430,8 @@ contains
           !
        end if
 
-       call accum(int(mxp*myp*mzp,i8), tend%tht, cuparm_g_sh(ngrid)%thsrc)
-       call accum(int(mxp*myp*mzp,i8), tend%rtt, cuparm_g_sh(ngrid)%rtsrc)
+       call accum(int(mxp*myp*mzp,i8), tend%tht, oneGrid%oneCuParmShFields%thsrc)
+       call accum(int(mxp*myp*mzp,i8), tend%rtt, oneGrid%oneCuParmShFields%rtsrc)
     end if
 
 
