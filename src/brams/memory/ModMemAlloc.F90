@@ -660,20 +660,7 @@ contains
 
     !-------------
     ! insert radiate fields at var table
-!!$    allocate(radiate_g(ngrids), STAT=ierr)
-!!$    if (ierr/=0) call fatal_error(h//"Allocating radiate_g")
-!!$    allocate(radiatem_g(ngrids), STAT=ierr)
-!!$    if (ierr/=0) call fatal_error(h//"Allocating radiatem_g")
     do ng=1,ngrids
-!!$       call nullify_radiate(radiate_g(ng))
-!!$       call alloc_radiate(radiate_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
-!!$       call nullify_radiate(radiatem_g(ng))
-!!$       if (imean==1) then
-!!$          call alloc_radiate(radiatem_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
-!!$       endif
-!!$
-!!$       call filltab_radiate(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-!!$            radiate_g, radiatem_g, ng, imean)
        call InsertRadiateFieldsAtVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
             oneGrid%oneRadiateFields, oneGrid%oneAveRadiateFields, imean)
     enddo

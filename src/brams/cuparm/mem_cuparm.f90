@@ -9,6 +9,9 @@
 
 module mem_cuparm
 
+  use ModCuParmFields, only: &
+       CuParmFields
+  
   use ModNamelistFile, only: &
        NamelistFile
 
@@ -44,18 +47,9 @@ module mem_cuparm
 
   include "files.h"
 
-!!$  integer, parameter :: maxcufiles = maxfiles
-!!$  integer, parameter :: maxcugrids = 10
 
-!!$  character(len=f_name_length) :: fnames_cu(maxcufiles)
-!!$  character(len=14)  :: itotdate_cu(maxcufiles)
-!!$  real :: cu_times(maxcufiles)
-
-!!$  integer :: ncufiles
-!!$  integer :: ncufl
-!!$  real :: cutime1
-!!$  real :: cutime2
-
+  character(len=128) :: toName=""
+  character(len=128) :: fromName=""
 contains
 
   logical function hasAconpr(oneNamelistFile, ng)
@@ -332,4 +326,156 @@ contains
     end if
 
   end subroutine filltab_cuparm
+
+
+
+
+  subroutine DeepCopyToCuParmFields(oneCuParmFields, oneCuParmShFields, name)
+    type(CuParmFields), pointer, intent(in) :: oneCuParmFields
+    type(CuParmFields), pointer, intent(in) :: oneCuParmShFields
+    character(len=*), intent(in) :: name
+
+    character(len=*), parameter :: h="**(DeepCopyToCuParmFields)**"
+
+    if (toName /= "") then
+       call fatal_error(h//" em "//trim(name)//" apos mesma invocacao em "//trim(toName))
+    else
+       toName=trim(name)
+       fromName=""
+    end if
+
+    if (.not. associated(oneCuParmFields)) then
+       call fatal_error(h//" oneCuParmFields not associated")
+    else if (.not. associated(oneCuParmShFields)) then
+       call fatal_error(h//" oneCuParmShFields not associated")
+    end if
+
+    if (associated(oneCuParmFields%thsrc)) then
+       oneCuParmFields%thsrc = cuparm_g(1)%thsrc
+    end if
+
+    if (associated(oneCuParmFields%rtsrc)) then
+       oneCuParmFields%rtsrc = cuparm_g(1)%rtsrc
+    end if
+
+    if (associated(oneCuParmFields%clsrc)) then
+       oneCuParmFields%clsrc = cuparm_g(1)%clsrc
+    end if
+
+    if (associated(oneCuParmFields%aconpr)) then
+       oneCuParmFields%aconpr = cuparm_g(1)%aconpr
+    end if
+
+    if (associated(oneCuParmFields%conprr)) then
+       oneCuParmFields%conprr = cuparm_g(1)%conprr
+    end if
+
+    if (associated(oneCuParmFields%thsrcp)) then
+       oneCuParmFields%thsrcp = cuparm_g(1)%thsrcp
+    end if
+
+    if (associated(oneCuParmFields%rtsrcp)) then
+       oneCuParmFields%rtsrcp = cuparm_g(1)%rtsrcp
+    end if
+
+    if (associated(oneCuParmFields%thsrcf)) then
+       oneCuParmFields%thsrcf = cuparm_g(1)%thsrcf
+    end if
+
+    if (associated(oneCuParmFields%rtsrcf)) then
+       oneCuParmFields%rtsrcf = cuparm_g(1)%rtsrcf
+    end if
+
+    if (associated(oneCuParmFields%conprrp)) then
+       oneCuParmFields%conprrp = cuparm_g(1)%conprrp
+    end if
+
+    if (associated(oneCuParmFields%conprrf)) then
+       oneCuParmFields%conprrf = cuparm_g(1)%conprrf
+    end if
+
+    if (associated(oneCuParmShFields%thsrc)) then
+       oneCuParmShFields%thsrc = cuparm_g(1)%thsrc
+    end if
+
+    if (associated(oneCuParmShFields%rtsrc)) then
+       oneCuParmShFields%rtsrc = cuparm_g(1)%rtsrc
+    end if
+  end subroutine DeepCopyToCuParmFields
+
+
+
+  subroutine DeepCopyFromCuParmFields(oneCuParmFields, oneCuParmShFields, name)
+    type(CuParmFields), pointer, intent(in) :: oneCuParmFields
+    type(CuParmFields), pointer, intent(in) :: oneCuParmShFields
+    character(len=*), intent(in) :: name
+
+    character(len=*), parameter :: h="**(DeepCopyFromCuParmFields)**"
+
+    if (fromName /= "") then
+       call fatal_error(h//" em "//trim(name)//" apos mesma invocacao em "//trim(fromName))
+    else
+       fromName=trim(name)
+       toName=""
+    end if
+
+    if (.not. associated(oneCuParmFields)) then
+       call fatal_error(h//" oneCuParmFields not associated")
+    else if (.not. associated(oneCuParmShFields)) then
+       call fatal_error(h//" oneCuParmShFields not associated")
+    end if
+
+    if (associated(oneCuParmFields%thsrc)) then
+       cuparm_g(1)%thsrc = oneCuParmFields%thsrc  
+    end if
+
+    if (associated(oneCuParmFields%rtsrc)) then
+       cuparm_g(1)%rtsrc = oneCuParmFields%rtsrc  
+    end if
+
+    if (associated(oneCuParmFields%clsrc)) then
+       cuparm_g(1)%clsrc = oneCuParmFields%clsrc  
+    end if
+
+    if (associated(oneCuParmFields%aconpr)) then
+       cuparm_g(1)%aconpr = oneCuParmFields%aconpr  
+    end if
+
+    if (associated(oneCuParmFields%conprr)) then
+       cuparm_g(1)%conprr = oneCuParmFields%conprr  
+    end if
+
+    if (associated(oneCuParmFields%thsrcp)) then
+       cuparm_g(1)%thsrcp = oneCuParmFields%thsrcp  
+    end if
+
+    if (associated(oneCuParmFields%rtsrcp)) then
+       cuparm_g(1)%rtsrcp = oneCuParmFields%rtsrcp  
+    end if
+
+    if (associated(oneCuParmFields%thsrcf)) then
+       cuparm_g(1)%thsrcf = oneCuParmFields%thsrcf  
+    end if
+
+    if (associated(oneCuParmFields%rtsrcf)) then
+       cuparm_g(1)%rtsrcf = oneCuParmFields%rtsrcf  
+    end if
+
+    if (associated(oneCuParmFields%conprrp)) then
+       cuparm_g(1)%conprrp = oneCuParmFields%conprrp  
+    end if
+
+    if (associated(oneCuParmFields%conprrf)) then
+       cuparm_g(1)%conprrf = oneCuParmFields%conprrf  
+    end if
+
+    if (associated(oneCuParmShFields%thsrc)) then
+       cuparm_g(1)%thsrc = oneCuParmShFields%thsrc  
+    end if
+
+    if (associated(oneCuParmShFields%rtsrc)) then
+       cuparm_g(1)%rtsrc = oneCuParmShFields%rtsrc  
+    end if
+  end subroutine DeepCopyFromCuParmFields
 end module mem_cuparm
+

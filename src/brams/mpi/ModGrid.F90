@@ -146,7 +146,18 @@ module ModGrid
        CreateEmptyAero2McphysFields, &
        DestroyAero2McphysFields, &
        DumpAero2McphysFields
-       
+
+  use ModCuParmFields, only: &
+       CuParmFields, &
+       CreateCuParmFields, &
+       CreateEmptyCuParmFields, &
+       DestroyCuParmFields, &
+       DumpCuParmFields, &
+       CreateCuParmShFields, &
+       CreateEmptyCuParmShFields, &
+       DestroyCuParmShFields, &
+       DumpCuParmShFields
+
   use mem_tend, only: &
        tend
 
@@ -256,7 +267,13 @@ module ModGrid
      type(RadiateFields), pointer :: oneAveRadiateFields => null()
 
      type(CuParmVars), pointer :: oneCuParmVars => null()
-     
+
+     type(CuParmFields), pointer :: oneCuParmFields => null()
+     type(CuParmFields), pointer :: oneAveCuParmFields => null()
+
+     type(CuParmFields), pointer :: oneCuParmShFields => null()
+     type(CuParmFields), pointer :: oneAveCuParmShFields => null()
+
      type(NeighbourNodes), pointer :: oneNeighbourNodes => null()
      ! oneNeighbourNodes: list of BRAMS process numbers that are neighbours
      !        of this node for usual ghost zone update operations
@@ -679,6 +696,37 @@ contains
 
     oneGrid%oneCuParmVars => CreateCuParmVars()
        
+    ! this node CuParmFields
+
+    oneGrid%oneCuParmFields => CreateCuParmFields(&
+         oneGrid%oneNamelistFile, &
+         oneGrid%oneNodeDimensions, &
+         gridId)
+    if (createAve) then
+       oneGrid%oneAveCuParmFields => CreateCuParmFields(&
+            oneGrid%oneNamelistFile, &
+            oneGrid%oneNodeDimensions, &
+            gridId)
+    else
+       oneGrid%oneAveCuParmFields => CreateEmptyCuParmFields()
+    end if
+       
+    ! this node CuParmShFields
+
+    if (oneGrid%oneNamelistFile%nnshcu(gridId) > 1) then
+       oneGrid%oneCuParmShFields => CreateCuParmShFields(&
+            oneGrid%oneNodeDimensions)
+       if (createAve) then
+          oneGrid%oneAveCuParmShFields => CreateCuParmShFields(&
+               oneGrid%oneNodeDimensions)
+       else
+          oneGrid%oneAveCuParmShFields => CreateEmptyCuParmShFields()
+       end if
+    else
+       oneGrid%oneCuParmShFields => CreateEmptyCuParmShFields()
+       oneGrid%oneAveCuParmShFields => CreateEmptyCuParmShFields()
+    end if
+
     if (dumpLocal) then
        call MsgDump(h//" dumping OneGrid at the end of CreateGrid")
        call DumpGrid(OneGrid)

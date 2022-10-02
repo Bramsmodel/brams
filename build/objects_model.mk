@@ -76,6 +76,7 @@ OBJ_MOD = \
 	mem_carma.o \
 	mem_cuparm.o \
 	CuParmVars.o \
+	CuParmFields.o \
 	mem_cutrans.o \
 	mem_globaer.o \
 	mem_globrad.o \
