@@ -346,8 +346,6 @@ contains
 
     if (.not. associated(oneCuParmFields)) then
        call fatal_error(h//" oneCuParmFields not associated")
-    else if (.not. associated(oneCuParmShFields)) then
-       call fatal_error(h//" oneCuParmShFields not associated")
     end if
 
     if (associated(oneCuParmFields%thsrc)) then
@@ -394,12 +392,15 @@ contains
        oneCuParmFields%conprrf = cuparm_g(1)%conprrf
     end if
 
-    if (associated(oneCuParmShFields%thsrc)) then
-       oneCuParmShFields%thsrc = cuparm_g(1)%thsrc
-    end if
+    if (associated(oneCuParmShFields)) then
 
-    if (associated(oneCuParmShFields%rtsrc)) then
-       oneCuParmShFields%rtsrc = cuparm_g(1)%rtsrc
+       if (associated(oneCuParmShFields%thsrc)) then
+          oneCuParmShFields%thsrc = cuparm_g_sh(1)%thsrc
+       end if
+
+       if (associated(oneCuParmShFields%rtsrc)) then
+          oneCuParmShFields%rtsrc = cuparm_g_sh(1)%rtsrc
+       end if
     end if
   end subroutine DeepCopyToCuParmFields
 
@@ -421,8 +422,6 @@ contains
 
     if (.not. associated(oneCuParmFields)) then
        call fatal_error(h//" oneCuParmFields not associated")
-    else if (.not. associated(oneCuParmShFields)) then
-       call fatal_error(h//" oneCuParmShFields not associated")
     end if
 
     if (associated(oneCuParmFields%thsrc)) then
@@ -469,12 +468,15 @@ contains
        cuparm_g(1)%conprrf = oneCuParmFields%conprrf  
     end if
 
-    if (associated(oneCuParmShFields%thsrc)) then
-       cuparm_g(1)%thsrc = oneCuParmShFields%thsrc  
-    end if
+    if (associated(oneCuParmShFields)) then
 
-    if (associated(oneCuParmShFields%rtsrc)) then
-       cuparm_g(1)%rtsrc = oneCuParmShFields%rtsrc  
+       if (associated(oneCuParmShFields%thsrc)) then
+          cuparm_g_sh(1)%thsrc = oneCuParmShFields%thsrc  
+       end if
+       
+       if (associated(oneCuParmShFields%rtsrc)) then
+          cuparm_g_sh(1)%rtsrc = oneCuParmShFields%rtsrc  
+       end if
     end if
   end subroutine DeepCopyFromCuParmFields
 end module mem_cuparm

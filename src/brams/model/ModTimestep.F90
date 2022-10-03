@@ -193,7 +193,6 @@ module ModTimestep
        DeepCopyToCuParmFields, &
        DeepCopyFromCuParmFields
 
-
   use mem_chem1, only: &
        nvert_src=>chem1_src_z_dim_g, & ! (IN)
        chem1_g,                      & ! (INOUT)
@@ -346,9 +345,12 @@ contains
                oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, &
                oneGrid%oneMicVars, oneGrid%oneMicroFields, oneGrid%oneRadiateFields)
        end if
+
+       call DeepCopyToCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
        call sfclyr_jules(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile, &
             oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicVars, &
-            oneGrid%oneMicroFields, oneGrid%oneJulesFields, oneGrid%oneRadiateFields)
+            oneGrid%oneMicroFields, oneGrid%oneJulesFields, oneGrid%oneRadiateFields, oneGrid%oneCuParmFields)
+       call DeepCopyFromCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
 #endif
     endif
 

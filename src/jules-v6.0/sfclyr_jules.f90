@@ -67,9 +67,9 @@ module ModSfcLyrJules
   use ModTurbFields, only: &
        TurbFields
 
-  use mem_cuparm, only: &
-       cuparm_g
-
+  use ModCuParmFields, only: &
+       CuParmFields
+  
   use ModMicroFields, only: &
        MicroFields
 
@@ -170,7 +170,7 @@ contains
 
   subroutine sfclyr_jules(mzp,mxp,myp,iaI,izI,jaI,jzI,jdim,julesFile,&
        oneNamelistFile, oneBasicFields, oneTurbFields, oneMicControl, oneMicroFields, &
-       oneJulesFields, oneRadiateFields)
+       oneJulesFields, oneRadiateFields, oneCuParmFields)
 
     !--- Modulos do BRAMS ---
 
@@ -190,6 +190,7 @@ contains
     type(MicroFields), pointer, intent(in) :: oneMicroFields
     type(JulesFields), pointer, intent(in) :: oneJulesFields
     type(RadiateFields), pointer, intent(in) :: oneRadiateFields
+    type(CuParmFields), pointer, intent(in) :: oneCuParmFields
     
     integer               :: nsoil, fase,ia,iz,ja,jz,hh,mm
     integer, parameter :: fat_dtlong=1  ! > 1 para nao executar o JULES em todos os timestep do BRAMS
@@ -249,7 +250,7 @@ contains
     !--- Precipitacao total ---
     pcpgl(:,:)=0.
     if (oneNamelistFile%nnqparm(ng) > 0 .and. oneMicControl%level >= 3) then
-       pcpgl(:,:)=cuparm_g(ng)%conprr(:,:) + oneMicroFields%pcpg(:,:)
+       pcpgl(:,:)=oneCuParmFields%conprr(:,:) + oneMicroFields%pcpg(:,:)
     elseif(oneNamelistFile%nnqparm(ng) == 0 .and. oneMicControl%level >= 3) then
        pcpgl(:,:)=oneMicroFields%pcpg(:,:)
     endif

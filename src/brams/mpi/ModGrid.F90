@@ -698,6 +698,66 @@ contains
        
     ! this node CuParmFields
 
+!!$    JP: the original code at ModMemAlloc seems wrong; 
+!!$    JP: Original code is
+!!$   
+!!$    allocate(cuparm_g(ngrids), STAT=ierr)
+!!$    if (ierr/=0) call fatal_error(h//"Allocating cuparm_g")
+!!$    allocate(cuparmm_g(ngrids), STAT=ierr)
+!!$    if (ierr/=0) call fatal_error(h//"Allocating cuparmm_g")
+!!$
+!!$    allocate(cuparm_g_sh(ngrids), STAT=ierr)
+!!$    if (ierr/=0) call fatal_error(h//"Allocating cuparm_g_sh")
+!!$    allocate(cuparmm_g_sh(ngrids), STAT=ierr)
+!!$    if (ierr/=0) call fatal_error(h//"Allocating cuparmm_g_sh")
+!!$
+!!$    do ng=1,ngrids
+!!$       call nullify_cuparm(cuparm_g(ng))
+!!$       call nullify_cuparm(cuparmm_g(ng))
+!!$       call alloc_cuparm(oneGrid%oneNamelistFile, cuparm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
+!!$
+!!$       !-srf-feb2012: for shallow cumulus
+!!$       if (nnshcu(ng) > 1) then
+!!$          call nullify_cuparm(cuparm_g_sh(ng))
+!!$          call nullify_cuparm(cuparmm_g_sh(ng))
+!!$          if (imean == 1) then
+!!$             call alloc_cuparm_sh(cuparm_g_sh(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
+!!$          end if
+!!$       endif
+!!$
+!!$       if (imean==1) then
+!!$          call alloc_cuparm(oneGrid%oneNamelistFile, cuparmm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
+!!$       endif
+!!$
+!!$       call filltab_cuparm(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+!!$            cuparm_g,cuparmm_g, ng, imean)
+!!$
+!!$       !-srf-feb2012: for shallow cumulus
+!!$       if (nnshcu(ng) == 2) then
+!!$          call filltab_cuparm_sh(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+!!$               cuparm_g_sh, cuparmm_g_sh, ng, imean)
+!!$       end if
+!!$
+!!$    enddo
+!!$
+!!$    JP: cuparm_g is allways alocated with its components
+!!$
+!!$    JP: cuparmm_g is alocated with its components if imean == 1
+!!$    JP: cuparmm_g is alocated with null components if imean /= 1
+!!$
+!!$    JP: cuparm_g_sh is null if nnshcu <= 1
+!!$    JP: cuparm_g_sh is allocated with null components if nnshcu > 1 and imean /= 1
+!!$    JP: cuparm_g_sh is allocated with its components if nnshcu > 1 and imean == 1
+!!$
+!!$    JP: cuparmm_g_sh is null if nnshcu > 1
+!!$    JP: cuparmm_g_sh is allocated with null components if nnshcu <=1
+!!$
+!!$    JP: code bellow mimics the above, with:
+!!$        oneCuParmFields replacing cuparm_g;    
+!!$        oneAveCuParmFields replacing cuparmm_g;    
+!!$        oneCuParmShFields replacing cuparm_g_sh;    
+!!$        oneAveCuParmShFields replacing cuparmm_g_sh;    
+    
     oneGrid%oneCuParmFields => CreateCuParmFields(&
          oneGrid%oneNamelistFile, &
          oneGrid%oneNodeDimensions, &
@@ -714,16 +774,19 @@ contains
     ! this node CuParmShFields
 
     if (oneGrid%oneNamelistFile%nnshcu(gridId) > 1) then
-       oneGrid%oneCuParmShFields => CreateCuParmShFields(&
-            oneGrid%oneNodeDimensions)
        if (createAve) then
-          oneGrid%oneAveCuParmShFields => CreateCuParmShFields(&
+          oneGrid%oneCuParmShFields => CreateCuParmShFields(&
                oneGrid%oneNodeDimensions)
        else
-          oneGrid%oneAveCuParmShFields => CreateEmptyCuParmShFields()
+          oneGrid%oneCuParmShFields => CreateEmptyCuParmShFields()
        end if
     else
-       oneGrid%oneCuParmShFields => CreateEmptyCuParmShFields()
+       nullify(oneGrid%oneCuParmShFields)
+    end if
+    
+    if (oneGrid%oneNamelistFile%nnshcu(gridId) > 1) then
+       nullify(oneGrid%oneAveCuParmShFields)
+    else
        oneGrid%oneAveCuParmShFields => CreateEmptyCuParmShFields()
     end if
 
