@@ -21,6 +21,9 @@ module radiation
   use ModRadiateFields, only: &
        RadiateFields
   
+  use ModCuParmFields, only: &
+       CuParmFields
+  
   implicit none
 
   private
@@ -32,7 +35,7 @@ contains
 
   subroutine radiate(mzp, mxp, myp, ia, iz, ja, jz, mynum, &
        oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields, &
-       oneRadiateFields)
+       oneRadiateFields, oneCuParmFields)
 
     integer, intent(in) :: mzp, mxp, myp, ia, iz, ja, jz, mynum
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
@@ -40,6 +43,7 @@ contains
     type(MicControl), pointer, intent(in) :: oneMicVars
     type(MicroFields), pointer, intent(in) :: oneMicroFields
     type(RadiateFields), pointer, intent(in) :: oneRadiateFields
+    type(CuParmFields), pointer, intent(in) :: oneCuParmFields
 
     character(len=*), parameter :: h="**(radiate)**"
     
@@ -51,13 +55,13 @@ contains
 
        call rrtm_driver(mzp, mxp, myp, ia, iz, ja, jz, mynum, &
             oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields, &
-            oneRadiateFields)
+            oneRadiateFields, oneCuParmFields)
 
     else if (oneNamelistFile%ilwrtyp==4 .and. oneNamelistFile%iswrtyp==4) then
 
        call carma_driver(mzp,mxp,myp,ia,iz,ja,jz,mynum, &
             oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields, &
-            oneRadiateFields) !teste 2
+            oneRadiateFields, oneCuParmFields) !teste 2
 
     else
        call fatal_error(h//" unknown radiation scheme")

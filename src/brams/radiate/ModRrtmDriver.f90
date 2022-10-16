@@ -120,9 +120,8 @@ module ModRrtmDriver
   use grid_dims, only: &
        nzpmax
 
-  use mem_cuparm, only: &
-       cuparm_g, &
-       cuparm_vars
+  use ModCuParmFields, only: &
+       CuParmFields
 
   use ModMicroFields, only: &
        MicroFields
@@ -229,7 +228,7 @@ contains
 
   subroutine rrtm_driver(mzp, mxp, myp, ia, iz, ja, jz, mynum, &
        oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields, &
-       oneRadiateFields)
+       oneRadiateFields, oneCuParmFields)
 
     integer, intent(in) :: mzp, mxp, myp, ia, iz, ja, jz, mynum
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
@@ -237,6 +236,7 @@ contains
     type(MicControl), pointer, intent(in) :: oneMicVars
     type(MicroFields), pointer, intent(in) :: oneMicroFields
     type(RadiateFields), pointer, intent(in) :: oneRadiateFields
+    type(CuParmFields), pointer, intent(in) :: oneCuParmFields
 
     real,dimension(mzp,mxp,myp) :: lwl,iwl
     real,dimension(mxp,myp) :: rain
@@ -275,7 +275,8 @@ contains
             ,rain  &
             ,lwl  &
             ,iwl,  &
-            oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields)
+            oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields, &
+            oneCuParmFields)
 
        !-srf tuning section for cloud fraction and other parameters for radiation
        if(oneNamelistFile%radtun /= 1.0) then
@@ -1566,13 +1567,15 @@ contains
        , rain            &
        , lwl             &
        , iwl,            &
-       oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields)
+       oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields, &
+       oneCuParmFields)
 
     integer, intent(in) :: m1,m2,m3,ia,iz,ja,jz
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(MicControl), pointer, intent(in) :: oneMicVars
     type(MicroFields), pointer, intent(in) :: oneMicroFields
+    type(CuParmFields), pointer, intent(in) :: oneCuParmFields
     
     real, intent(out), dimension(m1,m2,m3) :: cloud_fraction !cloud_fraction
     real, intent(out), dimension(m2,m3   ) :: rain !total rain water
@@ -1824,12 +1827,12 @@ contains
        lwl(1:m1,ia:iz,ja:jz) = oneMicroFields%rcp(1:m1,ia:iz,ja:jz)
 
        if (oneNamelistFile%nnqparm(ngrid)/=0) then
-          rain(ia:iz,ja:jz)= cuparm_g(ngrid)%conprr(ia:iz,ja:jz)* 3600.
+          rain(ia:iz,ja:jz)= oneCuParmFields%conprr(ia:iz,ja:jz)* 3600.
        endif
 
     elseif (oneMicVars%level>=3) then
        if (oneNamelistFile%nnqparm(ngrid)/=0) then
-          rain(ia:iz,ja:jz) = cuparm_g(ngrid)%conprr(ia:iz,ja:jz) + &
+          rain(ia:iz,ja:jz) = oneCuParmFields%conprr(ia:iz,ja:jz) + &
                oneMicroFields%pcpg(ia:iz,ja:jz)
        else
           rain(ia:iz,ja:jz) = oneMicroFields%pcpg(ia:iz,ja:jz)
