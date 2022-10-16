@@ -444,7 +444,7 @@ contains
     if (oneGrid%oneNamelistFile%nnqparm(ngrid)==1 .or. &
          oneGrid%oneNamelistFile%if_cuinv==1) then
        call DeepCopyToCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
-       call cuparm(oneGrid%oneBasicFields, oneGrid%oneNamelistFile, oneGrid%oneCuParmVars)
+       call cuparm(oneGrid%oneBasicFields, oneGrid%oneNamelistFile, oneGrid%oneCuParmVars, oneGrid%oneCuParmFields)
        call DeepCopyFromCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
     end if
 

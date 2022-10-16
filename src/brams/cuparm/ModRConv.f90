@@ -12,12 +12,12 @@ module ModRConv
 
   use ModCuParmVars, only: &
        CuParmVars
+
+  use ModCuParmFields, only: &
+       CuParmFields
   
   use mem_tend, only: &
        tend !INTENT(INOUT)
-
-  use mem_cuparm, only: &
-       cuparm_g
 
   use ModBasicFields, only: &
        BasicFields
@@ -130,10 +130,11 @@ contains
 
 
 
-  subroutine cuparm(oneBasicFields, oneNamelistFile, oneCuParmVars)
+  subroutine cuparm(oneBasicFields, oneNamelistFile, oneCuParmVars, oneCuParmFields)
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(CuParmVars), pointer, intent(in) :: oneCuParmVars
+    type(CuParmFields), pointer, intent(in) :: oneCuParmFields
 
     real, save :: cptime=7200.
 
@@ -142,29 +143,18 @@ contains
        !        Zero out tendencies initially
 
        if (time==0.) then
-!!$        call azero(mxp*myp*mzp, cuparm_g(ngrid)%thsrc(1,1,1))
-!!$        call azero(mxp*myp*mzp, cuparm_g(ngrid)%rtsrc(1,1,1))
-!!$        call azero(mxp*myp, cuparm_g(ngrid)%conprr(1,1))
-          cuparm_g(ngrid)%thsrc  = 0.
-          cuparm_g(ngrid)%rtsrc  = 0.
-          cuparm_g(ngrid)%conprr = 0.
+          oneCuParmFields%thsrc  = 0.
+          oneCuParmFields%rtsrc  = 0.
+          oneCuParmFields%conprr = 0.
        endif
 
        if (initial==2 .and. time<cptime) return
 
        if (mod(time+dtlt+.001,oneNamelistFile%confrq)<=dtlt .or. time<0.01) then
 
-!!$      print 90,time+dtlt,(time+dtlt)/3600.  &
-!!$               +(itime1/100+mod(itime1,100)/60.)
-!!$      90   format('  Convective tendencies updated    time =',f10.1,  &
-!!$               '  Real time (hrs) =',f6.1)
-
-!!$        call azero(mxp*myp*mzp, cuparm_g(ngrid)%thsrc(1,1,1))
-!!$        call azero(mxp*myp*mzp, cuparm_g(ngrid)%rtsrc(1,1,1))
-!!$        call azero(mxp*myp, cuparm_g(ngrid)%conprr(1,1))
-          cuparm_g(ngrid)%thsrc  = 0.
-          cuparm_g(ngrid)%rtsrc  = 0.
-          cuparm_g(ngrid)%conprr = 0.
+          oneCuParmFields%thsrc  = 0.
+          oneCuParmFields%rtsrc  = 0.
+          oneCuParmFields%conprr = 0.
 
           call conpar(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
                ,oneBasicFields%up        &
@@ -175,10 +165,10 @@ contains
                ,oneBasicFields%pi0       &
                ,oneBasicFields%dn0       &
                ,oneBasicFields%rv        &
-               ,cuparm_g(ngrid)%thsrc    &
-               ,cuparm_g(ngrid)%rtsrc    &
+               ,oneCuParmFields%thsrc    &
+               ,oneCuParmFields%rtsrc    &
                ,grid_g(ngrid)%rtgt       &
-               ,cuparm_g(ngrid)%conprr   &
+               ,oneCuParmFields%conprr   &
                ,grid_g(ngrid)%lpw        &
                ,oneNamelistFile)
 
@@ -188,27 +178,25 @@ contains
        ! Check cumulus inversion tendencies and see if they are usable. If so,
        !   put in thsrc,rtscr,conprr arrays.
        call cu_inv_tend(mzp,mxp,myp,ia,iz,ja,jz  &
-            ,cuparm_g(ngrid)%thsrc  &
-            ,cuparm_g(ngrid)%thsrcp &
-            ,cuparm_g(ngrid)%thsrcf &
-            ,cuparm_g(ngrid)%rtsrc  &
-            ,cuparm_g(ngrid)%rtsrcp &
-            ,cuparm_g(ngrid)%rtsrcf &
-            ,cuparm_g(ngrid)%conprr &
-            ,cuparm_g(ngrid)%conprrp &
-            ,cuparm_g(ngrid)%conprrf &
+            ,oneCuParmFields%thsrc  &
+            ,oneCuParmFields%thsrcp &
+            ,oneCuParmFields%thsrcf &
+            ,oneCuParmFields%rtsrc  &
+            ,oneCuParmFields%rtsrcp &
+            ,oneCuParmFields%rtsrcf &
+            ,oneCuParmFields%conprr &
+            ,oneCuParmFields%conprrp &
+            ,oneCuParmFields%conprrf &
             ,oneNamelistFile &
             ,oneCuParmVars)
     endif
 
 
-    call accum(int(mxp*myp*mzp,i8), tend%tht, cuparm_g(ngrid)%thsrc)
-    call accum(int(mxp*myp*mzp,i8), tend%rtt, cuparm_g(ngrid)%rtsrc)
+    call accum(int(mxp*myp*mzp,i8), tend%tht, oneCuParmFields%thsrc)
+    call accum(int(mxp*myp*mzp,i8), tend%rtt, oneCuParmFields%rtsrc)
 
-!!$  call update(int(mxp*myp,i8), cuparm_g(ngrid)%aconpr(1,1),  &
-!!$       cuparm_g(ngrid)%conprr(1,1), dtlt)
-    cuparm_g(ngrid)%aconpr(:,:) = cuparm_g(ngrid)%aconpr(:,:) + &
-         cuparm_g(ngrid)%conprr(:,:)*dtlt
+    oneCuParmFields%aconpr(:,:) = oneCuParmFields%aconpr(:,:) + &
+         oneCuParmFields%conprr(:,:)*dtlt
 
   end subroutine cuparm
 
