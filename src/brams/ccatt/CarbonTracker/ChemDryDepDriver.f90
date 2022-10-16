@@ -26,8 +26,8 @@ module ChemDryDepDriver
   use ModMicControl, only: &
        MicControl
 
-  use mem_cuparm, only: &
-       cuparm_g
+  use ModCuParmFields, only: &
+       CuParmFields
 
   use ModBasicFields, only: &
        BasicFields
@@ -77,7 +77,8 @@ contains
        oneTurbFields, &
        oneMicControl, &
        oneMicroFields, &
-       oneRadiateFields)
+       oneRadiateFields, &
+       oneCuParmFields)
 
     integer,              intent(IN)    :: m1
     integer,              intent(IN)    :: m2
@@ -92,12 +93,13 @@ contains
     type(MicControl), pointer, intent(in) :: oneMicControl
     type(MicroFields), pointer, intent(in) :: oneMicroFields
     type(RadiateFields), pointer, intent(in) :: oneRadiateFields
+    type(CuParmFields), pointer, intent(in) :: oneCuParmFields
     
     real, pointer :: conprr_dummy(:,:)    
 
 
-    if (associated(cuparm_g(ngrid)%conprr)) then
-       conprr_dummy=>cuparm_g(ngrid)%conprr
+    if (associated(oneCuParmFields%conprr)) then
+       conprr_dummy=>oneCuParmFields%conprr
     else
        allocate(conprr_dummy(m2,m3))
        nullify(conprr_dummy)
@@ -132,7 +134,6 @@ contains
          ,oneMicroFields%pcpg            & 
          ,grid_g(ngrid)%rtgt        & 
          ,oneRadiateFields%rshort        & 
-         !                ,cuparm_g(ngrid)%conprr         & 
          ,conprr_dummy                   & 
          ,aer1_g(:,:,ngrid)              & 
          ,chem1_g(:,ngrid)               & 

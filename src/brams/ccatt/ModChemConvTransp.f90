@@ -118,9 +118,6 @@ module ModChemConvTransp
   use mem_scratch, only: &
        scratch
   
-  use mem_cuparm, only: &
-       cuparm_g
-
   implicit none
 
   private

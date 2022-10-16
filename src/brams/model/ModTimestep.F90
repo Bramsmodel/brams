@@ -327,6 +327,7 @@ contains
 
     !  Radiation parameterization
     !--------------------------------
+    call DeepCopyToCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
     call radiate(mzp,mxp,myp,ia,iz,ja,jz,mynum, &
          oneGrid%oneNamelistFile, oneGrid%oneBasicFields, &
          oneGrid%oneMicVars, oneGrid%oneMicroFields, &
@@ -348,13 +349,12 @@ contains
                oneGrid%oneCuParmFields)
        end if
 
-       call DeepCopyToCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
        call sfclyr_jules(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile, &
             oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicVars, &
             oneGrid%oneMicroFields, oneGrid%oneJulesFields, oneGrid%oneRadiateFields, oneGrid%oneCuParmFields)
-       call DeepCopyFromCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
 #endif
     endif
+    call DeepCopyFromCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
 
     !-LFR Sea salt Aerossol inline source
     call SeaSaltDriver(ia,iz,ja,jz,ngrid,mxp,myp, oneGrid%oneBasicFields)
@@ -404,7 +404,8 @@ contains
             oneGrid%oneTurbFields, &
             oneGrid%oneMicVars, &
             oneGrid%oneMicroFields, &
-            oneGrid%oneRadiateFields)
+            oneGrid%oneRadiateFields, &
+            oneGrid%oneCuParmFields)
 
        !- call Matrix Aerosol Model
        !----------------------------------------

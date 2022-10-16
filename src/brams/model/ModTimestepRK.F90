@@ -405,6 +405,7 @@ contains
     
     !  Surface layer, soil and veggie model
     !----------------------------------------
+    call DeepCopyToCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
     if (isfcl<=2) then
        call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
             oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, &
@@ -418,11 +419,9 @@ contains
                oneGrid%oneMicVars, oneGrid%oneMicroFields, oneGrid%oneRadiateFields, &
                oneGrid%oneCuParmFields)
        end if
-       call DeepCopyToCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
        call sfclyr_jules(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile, &
             oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicVars, &
             oneGrid%oneMicroFields, oneGrid%oneJulesFields, oneGrid%oneRadiateFields, oneGrid%oneCuParmFields)
-       call DeepCopyFromCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
        
        !--- this combines the JULES land + LEAF ocean models.
        if (isfcl_ocean == 1) then
@@ -432,6 +431,7 @@ contains
        end if
 #endif
     endif
+    call DeepCopyFromCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
 
     !- Sea salt Aerossol inline source
     call SeaSaltDriver(ia,iz,ja,jz,ngrid,mxp,myp, oneGrid%oneBasicFields)
@@ -476,13 +476,16 @@ contains
 
 
        !- call dry deposition and sedimentation routines
+       call DeepCopyToCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
        call drydep_driver(mzp,mxp,myp,ia,iz,ja,jz, &
             oneGrid%oneNamelistFile, &
             oneGrid%oneBasicFields, &
             oneGrid%oneTurbFields, &
             oneGrid%oneMicVars, &
             oneGrid%oneMicroFields, &
-            oneGrid%oneRadiateFields)
+            oneGrid%oneRadiateFields, &
+            oneGrid%oneCuParmFields)
+       call DeepCopyFromCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
     endif
 
 !!$    call SynchronizedTimeStamp(TS_PHYSICS) ! Exper1.2, 2021_12

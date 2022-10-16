@@ -26,8 +26,8 @@ module ChemDryDepDriver
   use ModMicControl, only: &
        MicControl
 
-  use mem_cuparm, only: &
-       cuparm_g
+  use ModCuParmFields, only: &
+       CuParmFields
 
   use ModBasicFields, only: &
        BasicFields
@@ -76,7 +76,8 @@ contains
        oneTurbFields, &
        oneMicControl, &
        oneMicroFields, &
-       oneRadiateFields)
+       oneRadiateFields, &
+       oneCuParmFields)
 
     integer,              intent(IN)    :: m1
     integer,              intent(IN)    :: m2
@@ -91,6 +92,7 @@ contains
     type(MicControl), pointer, intent(in) :: oneMicControl
     type(MicroFields), pointer, intent(in) :: oneMicroFields
     type(RadiateFields), pointer, intent(in) :: oneRadiateFields
+    type(CuParmFields), pointer, intent(in) :: oneCuParmFields
 
 
     return
