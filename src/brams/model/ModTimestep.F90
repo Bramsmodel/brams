@@ -398,6 +398,7 @@ contains
 
 
        !- call dry deposition and sedimentation routines
+       call DeepCopyToCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
        call drydep_driver(mzp,mxp,myp,ia,iz,ja,jz, &
             oneGrid%oneNamelistFile, &
             oneGrid%oneBasicFields, &
@@ -406,6 +407,7 @@ contains
             oneGrid%oneMicroFields, &
             oneGrid%oneRadiateFields, &
             oneGrid%oneCuParmFields)
+       call DeepCopyFromCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
 
        !- call Matrix Aerosol Model
        !----------------------------------------
@@ -441,7 +443,9 @@ contains
     !----------------------------------------
     if (oneGrid%oneNamelistFile%nnqparm(ngrid)==1 .or. &
          oneGrid%oneNamelistFile%if_cuinv==1) then
+       call DeepCopyToCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
        call cuparm(oneGrid%oneBasicFields, oneGrid%oneNamelistFile, oneGrid%oneCuParmVars)
+       call DeepCopyFromCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
     end if
 
     !  Urban canopy parameterization

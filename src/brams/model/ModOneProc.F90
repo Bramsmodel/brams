@@ -229,7 +229,8 @@ module ModOneProc
        ICFILETYPE
 
   use mem_cuparm, only: &
-       cuparm_g
+       DeepCopyToCuParmFields, &
+       DeepCopyFromCuParmFields
 
   use Mem_globrad, only: &
        master_read_carma_data, &
@@ -1255,9 +1256,11 @@ contains
           ! compute output flags for this iteration and input flags for
           ! next iteration
 
+          call DeepCopyToCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
           call comm_time(oneGrid%oneNamelistFile, oneGrid%oneCuParmVars, &
                isendflg, isendlite, isendmean, isendboth, &
                isendbackflg, isendiv, isendsst, isendndvi, isendsrc)
+          call DeepCopyFromCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
 
           if(applyDF) then
              if( abs(time+dtlongn(1) - timeWindowDF)<0.0001 .or. & ! timemf>=vtime2 (=timewindowDF)
@@ -1438,15 +1441,17 @@ contains
 
           if (posFlag) then
              if(damModule==1) then
+                call DeepCopyToCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
                 call acumPrecipInDam(nodemxp(mynum,1),nodemyp(mynum,1) &
                      ,ia,iz,ja,jz,oneGrid%oneMicVars%mcphys_type &
-                     ,cuparm_g(1)%aconpr &
+                     ,oneGrid%oneCuParmFields%aconpr &
                      ,oneGrid%oneMicroFields%accpr &
                      ,oneGrid%oneMicroFields%accpp &
                      ,oneGrid%oneMicroFields%accps &
                      ,oneGrid%oneMicroFields%accpa &
                      ,oneGrid%oneMicroFields%accpg &
                      ,oneGrid%oneMicroFields%accph)
+                call DeepCopyFromCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
 
                 call outputDamPrecip(time,dtlongn(1),timmax,mchnum,master_num)
              endif
@@ -2329,8 +2334,9 @@ contains
 
        iErrNumber=dumpMessage(c_tty,c_yes,h,c_modelVersion,c_fatal, &
             "**(JP)** if_cuinv==1 was not worked yet")
+       call DeepCopyToCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
        call cu_read(1,oneGrid%oneNamelistFile, oneGrid%oneCuParmVars)
-
+       call DeepCopyFromCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
     end if
 
     ! Initialize urban canopy drag coefficients
