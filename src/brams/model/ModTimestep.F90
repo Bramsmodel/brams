@@ -337,13 +337,15 @@ contains
     if (isfcl<=2) then
        call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
             oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, &
-            oneGrid%oneMicVars, oneGrid%oneMicroFields, oneGrid%oneRadiateFields)
+            oneGrid%oneMicVars, oneGrid%oneMicroFields, oneGrid%oneRadiateFields, &
+            oneGrid%oneCuParmFields)
 #ifdef JULES
     elseif (isfcl == 5) then
        if (time==0.) then
           call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
                oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, &
-               oneGrid%oneMicVars, oneGrid%oneMicroFields, oneGrid%oneRadiateFields)
+               oneGrid%oneMicVars, oneGrid%oneMicroFields, oneGrid%oneRadiateFields, &
+               oneGrid%oneCuParmFields)
        end if
 
        call DeepCopyToCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)

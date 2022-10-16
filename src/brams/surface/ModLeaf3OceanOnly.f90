@@ -41,9 +41,8 @@ module ModLeaf3OceanOnly
        nzg, &
        nzs
 
-  use mem_cuparm, only: &
-       cuparm_vars, &
-       cuparm_g
+  use ModCuParmFields, only: &
+       CuParmFields
 
   use ModTurbFields, only: &
        TurbFields
@@ -156,7 +155,8 @@ contains
   !*****************************************************************************
 
   subroutine sfclyr_ocean_only(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
-       oneNamelistFile, oneBasicFields, oneTurbFields, oneRadiateFields)
+       oneNamelistFile, oneBasicFields, oneTurbFields, oneRadiateFields, &
+       oneCuParmFields)
     implicit none
 
     !Arguments:
@@ -165,6 +165,7 @@ contains
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(TurbFields), pointer, intent(in) :: oneTurbFields
     type(RadiateFields), pointer, intent(in) :: oneRadiateFields
+    type(CuParmFields), pointer, intent(in) :: oneCuParmFields
 
     !Local Variables
     real :: rslif
@@ -181,7 +182,7 @@ contains
 
     call sub_leaf3_ocean_only(mzp,mxp,myp,nzg,nzs,npatch,ia,iz,ja,jz             &
          ,leaf_g (ng), oneNamelistFile, oneBasicFields, oneTurbFields, oneRadiateFields   &
-         ,grid_g (ng), cuparm_g(ng) &
+         ,grid_g (ng), oneCuParmFields &
          ,l_ths2, l_rvs2, l_pis2                   &
          ,l_dens2,l_ups2, l_vps2                   &
          ,l_zts2                                             &
@@ -214,7 +215,8 @@ contains
   !*****************************************************************************
 
   subroutine sub_leaf3_ocean_only(m1,m2,m3,mzg,mzs,np,ia,iz,ja,jz  &
-       ,leaf,oneNamelistFile,oneBasicFields,oneTurbFields,oneRadiateFields,grid,cuparm &
+       ,leaf,oneNamelistFile,oneBasicFields,oneTurbFields,oneRadiateFields,grid,&
+       oneCuParmFields &
        ,ths2,rvs2,pis2,dens2,ups2,vps2,zts2           &
        )
 
@@ -229,7 +231,7 @@ contains
     type (TurbFields)    :: oneTurbFields
     type (RadiateFields), pointer, intent(in) :: oneRadiateFields
     type (grid_vars)    :: grid
-    type (cuparm_vars)  :: cuparm
+    type (CuParmFields), pointer, intent(in)  :: oneCuParmFields
     real, dimension(m2,m3), intent(out) :: ths2,rvs2,pis2,dens2,ups2,vps2,zts2
 
     ! Local variables:

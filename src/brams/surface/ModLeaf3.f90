@@ -131,6 +131,9 @@ module ModLeaf3
        rm, &
        alvl
 
+  use ModCuParmFields, only: &
+       CuParmFields
+  
   use ccatt_start, only: &
        ccatt
 
@@ -142,10 +145,6 @@ module ModLeaf3
 
   use ModMicroFields, only: &
        MicroFields
-
-  use mem_cuparm, only: &
-       cuparm_vars, &
-       cuparm_g
 
   use node_mod, only: &
        mynum ! INTENT(IN)
@@ -223,7 +222,8 @@ contains
 
   subroutine sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
        oneNamelistFile, oneBasicFields, oneTurbFields, &
-       oneMicControl, oneMicroFields, oneRadiateFields)
+       oneMicControl, oneMicroFields, oneRadiateFields, &
+       oneCuParmFields)
     !Arguments:
     integer, intent(in) :: mzp,mxp,myp,ia,iz,ja,jz,ibcon
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
@@ -232,6 +232,7 @@ contains
     type(MicControl), pointer, intent(in) :: oneMicControl
     type(MicroFields), pointer, intent(in) :: oneMicroFields
     type(RadiateFields), pointer, intent(in) :: oneRadiateFields
+    type(CuParmFields), pointer, intent(in) :: oneCuParmFields
 
     !Local Variables
     real :: rslif
@@ -273,7 +274,7 @@ contains
     call leaf3(mzp,mxp,myp,nzg,nzs,npatch,ia,iz,ja,jz             &
          ,leaf_g (ng), oneNamelistFile, &
          oneBasicFields, oneTurbFields, oneRadiateFields   &
-         ,grid_g (ng), cuparm_g(ng), oneMicroFields                  &
+         ,grid_g (ng), oneCuParmFields, oneMicroFields                  &
          ,l_ths2, l_rvs2, l_pis2                   &
          ,l_dens2,l_ups2, l_vps2                   &
          ,l_zts2                                             &
@@ -318,7 +319,8 @@ contains
 
   subroutine leaf3(m1,m2,m3,mzg,mzs,np,ia,iz,ja,jz,  &
        leaf,oneNamelistFile, &
-       oneBasicFields,oneTurbFields,oneRadiateFields,grid,cuparm,oneMicroFields, &
+       oneBasicFields,oneTurbFields,oneRadiateFields,grid,&
+       oneCuParmFields,oneMicroFields, &
        ths2,rvs2,pis2,dens2,ups2,vps2,zts2,  &
        pteb,ptebc, oneMicControl)
     ! Arguments:
@@ -329,7 +331,7 @@ contains
     type (TurbFields)    :: oneTurbFields
     type (RadiateFields) :: oneRadiateFields
     type (grid_vars)    :: grid
-    type (cuparm_vars)  :: cuparm
+    type (CuParmFields), pointer, intent(in)  :: oneCuParmFields
     type (MicroFields)   :: oneMicroFields
     ! For TEB
     type (teb_vars), pointer   :: pteb
@@ -433,8 +435,8 @@ contains
 
           ! Fill surface precipitation arrays for input to leaf
 
-          call sfc_pcp(oneNamelistFile%nnqparm(ngrid),oneMicControl%level,i,j,cuparm,oneMicroFields,&
-               oneMicControl)
+          call sfc_pcp(oneNamelistFile%nnqparm(ngrid),oneMicControl%level,i,j,&
+               oneCuParmFields,oneMicroFields,oneMicControl)
 
           ! Zero out albedo, upward surface longwave, and momentum, heat, and moisture
           ! flux arrays before summing over patches
@@ -2041,15 +2043,16 @@ contains
 
   !****************************************************************************
 
-  subroutine sfc_pcp(nqparm,level,i,j,cuparm,oneMicroFields,oneMicControl)
+  subroutine sfc_pcp(nqparm,level,i,j,&
+       oneCuParmFields,oneMicroFields,oneMicControl)
     integer :: nqparm,level,i,j
-    type (cuparm_vars)  cuparm
+    type (CuParmFields), pointer, intent(in) :: oneCuParmFields
     type (MicroFields)   oneMicroFields
     type(MicControl), pointer, intent(in) :: oneMicControl
 
     if (nqparm>0) then
 
-       pcpgl  = cuparm%conprr(i,j) * dtll
+       pcpgl  = oneCuParmFields%conprr(i,j) * dtll
        qpcpgl = pcpgl  * 4186. * (ths * pis - 193.36)
        dpcpgl = pcpgl  * .001
        pcpgc  = dtlc_factor * pcpgl

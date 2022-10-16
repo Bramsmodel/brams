@@ -408,13 +408,15 @@ contains
     if (isfcl<=2) then
        call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
             oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, &
-            oneGrid%oneMicVars, oneGrid%oneMicroFields, oneGrid%oneRadiateFields)
+            oneGrid%oneMicVars, oneGrid%oneMicroFields, oneGrid%oneRadiateFields, &
+            oneGrid%oneCuParmFields)
 #ifdef JULES
     elseif (isfcl == 5) then
        if (time==0.) then
           call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
                oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, &
-               oneGrid%oneMicVars, oneGrid%oneMicroFields, oneGrid%oneRadiateFields)
+               oneGrid%oneMicVars, oneGrid%oneMicroFields, oneGrid%oneRadiateFields, &
+               oneGrid%oneCuParmFields)
        end if
        call DeepCopyToCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
        call sfclyr_jules(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile, &
@@ -426,7 +428,7 @@ contains
        if (isfcl_ocean == 1) then
           call sfclyr_ocean_only  (mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
                oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, &
-               oneGrid%oneRadiateFields)
+               oneGrid%oneRadiateFields, oneGrid%oneCuParmFields)
        end if
 #endif
     endif
