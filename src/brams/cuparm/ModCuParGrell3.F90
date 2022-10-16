@@ -31,7 +31,6 @@ module ModCuParGrell3
        tend
 
   use mem_cuparm, only: &
-       cuparm_g,&
        cuparm_g_sh
 
   use node_mod, only: &
@@ -711,7 +710,7 @@ contains
        g3d_g(ngrid)%mupsh       = 0.0
        g3d_g(ngrid)%mup         = 0.0
        g3d_g(ngrid)%mdd         = 0.0
-       cuparm_g(ngrid)%conprr   = 0.0
+       oneGrid%oneCuParmFields%conprr   = 0.0
 
        if(liq_ice_number_conc > 0) then 
           g3d_g(ngrid)%nlsrc     = 0.0
@@ -777,7 +776,7 @@ contains
                ,autoconv                     & !
                ,aerovap                      & !
                ,oneGrid%oneBasicFields%dn0           & !
-               ,cuparm_g(ngrid)%CONPRR       & !
+               ,oneGrid%oneCuParmFields%CONPRR       & !
                ,oneGrid%oneBasicFields%up            & !
                ,oneGrid%oneBasicFields%vp            & !
                ,oneGrid%oneBasicFields%theta         & !
@@ -860,7 +859,7 @@ contains
                ,rm                           &
                ,p00                          &
                ,cpor                         &
-               ,cuparm_g(ngrid)%CONPRR       &!preci rate
+               ,oneGrid%oneCuParmFields%CONPRR       &!preci rate
                ,oneGrid%oneBasicFields%theta         &
                ,oneGrid%oneBasicFields%thp           &
                ,oneGrid%oneBasicFields%pp            &
@@ -908,7 +907,7 @@ contains
                ,autoconv                       & ! Const
                ,aerovap                        & ! Const
                ,oneGrid%oneBasicFields%dn0             & !3d ok
-               ,cuparm_g(ngrid)%CONPRR         & !2d ok
+               ,oneGrid%oneCuParmFields%CONPRR         & !2d ok
                ,oneGrid%oneBasicFields%up              & !3d ok
                ,oneGrid%oneBasicFields%vp              & !3d ok
                ,oneGrid%oneBasicFields%theta           & !3d ok
@@ -1042,7 +1041,7 @@ contains
                ,autoconv                     & !
                ,aerovap                      & !
                ,oneGrid%oneBasicFields%dn0           & !
-               ,cuparm_g(ngrid)%CONPRR       & !
+               ,oneGrid%oneCuParmFields%CONPRR       & !
                ,oneGrid%oneBasicFields%up            & !
                ,oneGrid%oneBasicFields%vp            & !
                ,oneGrid%oneBasicFields%theta         & !
@@ -1321,7 +1320,7 @@ contains
                ,sgsf_t   & ! forcing for theta pbl
                ,sgsf_q   & ! forcing for rv    pbl
                                 !---- output ----
-               ,cuparm_g(ngrid)%CONPRR  &
+               ,oneGrid%oneCuParmFields%CONPRR  &
                ,LIGHTN_DENS             &
                ,g3d_g(ngrid)%THSRC      & ! temp tendency
                ,g3d_g(ngrid)%RTSRC      & ! rv tendency
@@ -1540,7 +1539,7 @@ contains
     endif
     !----------------------------------------------------------
 
-    call update(mxp*myp, cuparm_g(ngrid)%aconpr   ,cuparm_g(ngrid)%conprr   ,dtlt)
+    call update(mxp*myp, oneGrid%oneCuParmFields%aconpr   ,oneGrid%oneCuParmFields%conprr   ,dtlt)
 
     call accum(int(mxp*myp*mzp,i8), tend%tht, g3d_g(ngrid)%thsrc)
     call accum(int(mxp*myp*mzp,i8), tend%rtt, g3d_g(ngrid)%rtsrc)

@@ -551,8 +551,10 @@ contains
     !
     !- G3d - GD-FIM and GF
     if (oneGrid%oneNamelistFile%nnqparm(ngrid)>=3) then
+       call DeepCopyToCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
        call cuparm_grell3_catt(onegrid,1,&
             oneGrid%oneNamelistFile%nnqparm(ngrid),nnshcu(ngrid))
+       call DeepCopyToCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
     end if
 
     !- task 2:  NO production by "eclair"
