@@ -16,6 +16,10 @@ module ModMemAlloc
   use mem_scratch3_grell_sh, only: &
        alloc_scratch3_grell_sh
 
+  use ModCuParmFields, only: &
+       InsertCuParmFieldsAtVarTable, &
+       InsertCuParmShFieldsAtVarTable
+  
   use mem_cuparm, only: &
        cuparm_g_sh, &
        cuparmm_g_sh, &
@@ -819,13 +823,17 @@ contains
           call alloc_cuparm(oneGrid%oneNamelistFile, cuparmm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
        endif
 
-       call filltab_cuparm(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-            cuparm_g,cuparmm_g, ng, imean)
+       call InsertCuParmFieldsAtVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+            oneGrid%oneCuParmFields, oneGrid%oneAveCuParmFields, imean)
+!!$       call filltab_cuparm(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+!!$            cuparm_g,cuparmm_g, ng, imean)
 
        !-srf-feb2012: for shallow cumulus
        if (nnshcu(ng) == 2) then
-          call filltab_cuparm_sh(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-               cuparm_g_sh, cuparmm_g_sh, ng, imean)
+          call InsertCuParmShFieldsAtVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+               oneGrid%oneCuParmFields, oneGrid%oneAveCuParmFields, imean)
+!!$          call filltab_cuparm_sh(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+!!$               cuparm_g_sh, cuparmm_g_sh, ng, imean)
        end if
 
     enddo
