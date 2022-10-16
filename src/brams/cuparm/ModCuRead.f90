@@ -13,6 +13,9 @@ module ModCuRead
   use ModCuParmVars, only: &
        CuParmVars
   
+  use ModCuParmFields, only: &
+       CuParmFields
+
   use ModDateUtils, only: &
        date_abs_secs2,   &
        date_add_to,      &
@@ -36,9 +39,6 @@ module ModCuRead
   use isan_coms, only: &
        isan_inc
 
-  use mem_cuparm, only: &
-       cuparm_g
-
   use grid_dims, only: &
        maxfiles          ! INTENT(IN)
 
@@ -54,7 +54,7 @@ contains
 
 
 
-  subroutine cu_read(initflag, oneNamelistFile, oneCuParmVars)
+  subroutine cu_read(initflag, oneNamelistFile, oneCuParmVars, oneCuParmFields)
 
 
     !------------------------------------------------------
@@ -63,6 +63,7 @@ contains
     integer, intent(in) :: initflag
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(CuParmVars), pointer, intent(in) :: oneCuParmVars
+    type(CuParmFields), pointer, intent(in) :: oneCuParmFields
 
     character(len=14)  :: itotdate_start
     integer :: iyears,imonths,idates,ihours,nf,ifm
@@ -99,7 +100,7 @@ contains
 
        ! Read initial files.
 
-       call cu_update(0,oneCuParmVars%ncufl,oneNamelistFile, oneCuParmVars)
+       call cu_update(0,oneCuParmVars%ncufl,oneNamelistFile, oneCuParmVars, oneCuParmFields)
 
 
     elseif (initflag == 2) then   ! Runtime file increment
@@ -111,7 +112,7 @@ contains
 
     ! Read new files.
 
-    call cu_update(1,oneCuParmVars%ncufl+1,oneNamelistFile,oneCuParmVars)
+    call cu_update(1,oneCuParmVars%ncufl+1,oneNamelistFile,oneCuParmVars, oneCuParmFields)
 
 
     oneCuParmVars%cutime1=oneCuParmVars%cu_times(oneCuParmVars%ncufl)
@@ -246,11 +247,12 @@ contains
 
   !******************************************************************************
 
-  subroutine cu_update(iswap,ncu, oneNamelistFile, oneCuParmVars)
+  subroutine cu_update(iswap,ncu, oneNamelistFile, oneCuParmVars, oneCuParmFields)
     integer, intent(in) :: iswap
     integer, intent(in) :: ncu
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(CuParmVars), pointer, intent(in) :: oneCuParmVars
+    type(CuParmFields), pointer, intent(in) :: oneCuParmFields
 
     include "files.h"
 
@@ -267,12 +269,12 @@ contains
 
     if (iswap == 1) then
        do ngr=1,ngrids
-          cuparm_g(ngr)%thsrcp(1:nnzp(ngr),1:nnxp(ngr),1:nnyp(ngr))=  &
-               cuparm_g(ngr)%thsrcf(1:nnzp(ngr),1:nnxp(ngr),1:nnyp(ngr))
-          cuparm_g(ngr)%rtsrcp(1:nnzp(ngr),1:nnxp(ngr),1:nnyp(ngr))=  &
-               cuparm_g(ngr)%rtsrcf(1:nnzp(ngr),1:nnxp(ngr),1:nnyp(ngr))
-          cuparm_g(ngr)%conprrp(1:nnxp(ngr),1:nnyp(ngr))=  &
-               cuparm_g(ngr)%conprrf(1:nnxp(ngr),1:nnyp(ngr))
+          oneCuParmFields%thsrcp(1:nnzp(ngr),1:nnxp(ngr),1:nnyp(ngr))=  &
+               oneCuParmFields%thsrcf(1:nnzp(ngr),1:nnxp(ngr),1:nnyp(ngr))
+          oneCuParmFields%rtsrcp(1:nnzp(ngr),1:nnxp(ngr),1:nnyp(ngr))=  &
+               oneCuParmFields%rtsrcf(1:nnzp(ngr),1:nnxp(ngr),1:nnyp(ngr))
+          oneCuParmFields%conprrp(1:nnxp(ngr),1:nnyp(ngr))=  &
+               oneCuParmFields%conprrf(1:nnxp(ngr),1:nnyp(ngr))
        enddo
     endif
 
@@ -299,11 +301,11 @@ contains
              call rams_f_open(iun,cunamein(1:len_trim(cunamein)),'FORMATTED','OLD','READ',0)
 
              npts=nnzp(ngr)*nnxp(ngr)*nnyp(ngr)
-             call vfirec(iun,cuparm_g(ngr)%thsrcf,npts,'LIN')
-             call vfirec(iun,cuparm_g(ngr)%rtsrcf,npts,'LIN')
+             call vfirec(iun,oneCuParmFields%thsrcf,npts,'LIN')
+             call vfirec(iun,oneCuParmFields%rtsrcf,npts,'LIN')
 
              npts=nnxp(ngr)*nnyp(ngr)
-             call vfirec(iun,cuparm_g(ngr)%conprrf,npts,'LIN')
+             call vfirec(iun,oneCuParmFields%conprrf,npts,'LIN')
           endif
        endif
 
