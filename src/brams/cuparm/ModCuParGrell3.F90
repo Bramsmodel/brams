@@ -14,6 +14,9 @@ module ModCuParGrell3
   use ModGrid, only: &
        Grid
 
+  use ModCuParmFields, only: &
+       CuParmFields
+  
   use mem_stilt, only: &
        imassflx
 
@@ -29,9 +32,6 @@ module ModCuParGrell3
 
   use mem_tend, only: &
        tend
-
-  use mem_cuparm, only: &
-       cuparm_g_sh
 
   use node_mod, only: &
        mynum,   &   ! INTENT(IN)
@@ -2322,12 +2322,14 @@ contains
 
   !------------------------------------------------------------------------
   subroutine prepare_lsf(nnqparm,nnshcu,iwork, &
-       oneNamelistFile, oneBasicFields, oneRadiateFields)
+       oneNamelistFile, oneBasicFields, oneRadiateFields, &
+       oneCuParmShFields)
     character(len=3) :: forcing
     integer,intent(IN) :: nnqparm,nnshcu,iwork
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(RadiateFields), pointer, intent(in) :: oneRadiateFields
+    type(CuParmFields), pointer, intent(in) :: oneCuParmShFields
 
     !- scratchs (local arrays)
     real :: vt3da(mzp,mxp,myp)
@@ -2486,8 +2488,8 @@ contains
        endif
        if(iwork.eq.2) then
 
-          call accum(int(mxp*myp*mzp,i8), cuforc_g(ngrid)%lsfth, cuparm_g_sh(ngrid)%thsrc)
-          call accum(int(mxp*myp*mzp,i8), cuforc_g(ngrid)%lsfrt, cuparm_g_sh(ngrid)%rtsrc)
+          call accum(int(mxp*myp*mzp,i8), cuforc_g(ngrid)%lsfth, oneCuParmShFields%thsrc)
+          call accum(int(mxp*myp*mzp,i8), cuforc_g(ngrid)%lsfrt, oneCuParmShFields%rtsrc)
 
        endif
 
