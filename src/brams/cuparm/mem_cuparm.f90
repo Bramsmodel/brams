@@ -342,6 +342,7 @@ contains
     else
        toName=trim(name)
        fromName=""
+       return
     end if
 
     if (.not. associated(oneCuParmFields)) then
@@ -418,6 +419,7 @@ contains
     else
        fromName=trim(name)
        toName=""
+       return
     end if
 
     if (.not. associated(oneCuParmFields)) then
