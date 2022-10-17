@@ -74,7 +74,6 @@ OBJ_MOD = \
 	mem_aerad.o \
 	ModCarmaDriver.o \
 	mem_carma.o \
-	mem_cuparm.o \
 	CuParmVars.o \
 	CuParmFields.o \
 	mem_cutrans.o \

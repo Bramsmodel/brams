@@ -20,17 +20,17 @@ module ModMemAlloc
        InsertCuParmFieldsAtVarTable, &
        InsertCuParmShFieldsAtVarTable
   
-  use mem_cuparm, only: &
-       cuparm_g_sh, &
-       cuparmm_g_sh, &
-       cuparm_g, &
-       cuparmm_g, &
-       nullify_cuparm, &
-       alloc_cuparm, &
-       alloc_cuparm_sh, &
-       filltab_cuparm, &
-       filltab_cuparm_sh, &
-       dealloc_cuparm
+!!$  use mem_cuparm, only: &
+!!$       cuparm_g_sh, &
+!!$       cuparmm_g_sh, &
+!!$       cuparm_g, &
+!!$       cuparmm_g, &
+!!$       nullify_cuparm, &
+!!$       alloc_cuparm, &
+!!$       alloc_cuparm_sh, &
+!!$       filltab_cuparm, &
+!!$       filltab_cuparm_sh, &
+!!$       dealloc_cuparm
 
   use mem_grid, only: &
        nxtnest, &
@@ -795,33 +795,33 @@ contains
     Alloc_Grell_Flag = 0
     Alloc_Grell3_Flag =0
 
-    allocate(cuparm_g(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error(h//"Allocating cuparm_g")
-    allocate(cuparmm_g(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error(h//"Allocating cuparmm_g")
-
-    allocate(cuparm_g_sh(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error(h//"Allocating cuparm_g_sh")
-    allocate(cuparmm_g_sh(ngrids), STAT=ierr)
-    if (ierr/=0) call fatal_error(h//"Allocating cuparmm_g_sh")
-
+!!$    allocate(cuparm_g(ngrids), STAT=ierr)
+!!$    if (ierr/=0) call fatal_error(h//"Allocating cuparm_g")
+!!$    allocate(cuparmm_g(ngrids), STAT=ierr)
+!!$    if (ierr/=0) call fatal_error(h//"Allocating cuparmm_g")
+!!$
+!!$    allocate(cuparm_g_sh(ngrids), STAT=ierr)
+!!$    if (ierr/=0) call fatal_error(h//"Allocating cuparm_g_sh")
+!!$    allocate(cuparmm_g_sh(ngrids), STAT=ierr)
+!!$    if (ierr/=0) call fatal_error(h//"Allocating cuparmm_g_sh")
+!!$
     do ng=1,ngrids
-       call nullify_cuparm(cuparm_g(ng))
-       call nullify_cuparm(cuparmm_g(ng))
-       call alloc_cuparm(oneGrid%oneNamelistFile, cuparm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
-
-       !-srf-feb2012: for shallow cumulus
-       if (nnshcu(ng) > 1) then
-          call nullify_cuparm(cuparm_g_sh(ng))
-          call nullify_cuparm(cuparmm_g_sh(ng))
-          if (imean == 1) then
-             call alloc_cuparm_sh(cuparm_g_sh(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
-          end if
-       endif
-
-       if (imean==1) then
-          call alloc_cuparm(oneGrid%oneNamelistFile, cuparmm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
-       endif
+!!$       call nullify_cuparm(cuparm_g(ng))
+!!$       call nullify_cuparm(cuparmm_g(ng))
+!!$       call alloc_cuparm(oneGrid%oneNamelistFile, cuparm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
+!!$
+!!$       !-srf-feb2012: for shallow cumulus
+!!$       if (nnshcu(ng) > 1) then
+!!$          call nullify_cuparm(cuparm_g_sh(ng))
+!!$          call nullify_cuparm(cuparmm_g_sh(ng))
+!!$          if (imean == 1) then
+!!$             call alloc_cuparm_sh(cuparm_g_sh(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
+!!$          end if
+!!$       endif
+!!$
+!!$       if (imean==1) then
+!!$          call alloc_cuparm(oneGrid%oneNamelistFile, cuparmm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
+!!$       endif
 
        call InsertCuParmFieldsAtVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
             oneGrid%oneCuParmFields, oneGrid%oneAveCuParmFields, imean)

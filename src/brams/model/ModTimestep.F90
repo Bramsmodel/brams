@@ -189,10 +189,6 @@ module ModTimestep
   use mem_tend, only: &
        tend
 
-  use mem_cuparm, only: &
-       DeepCopyToCuParmFields, &
-       DeepCopyFromCuParmFields
-
   use mem_chem1, only: &
        nvert_src=>chem1_src_z_dim_g, & ! (IN)
        chem1_g,                      & ! (INOUT)
@@ -327,7 +323,6 @@ contains
 
     !  Radiation parameterization
     !--------------------------------
-    call DeepCopyToCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
     call radiate(mzp,mxp,myp,ia,iz,ja,jz,mynum, &
          oneGrid%oneNamelistFile, oneGrid%oneBasicFields, &
          oneGrid%oneMicVars, oneGrid%oneMicroFields, &
@@ -354,7 +349,6 @@ contains
             oneGrid%oneMicroFields, oneGrid%oneJulesFields, oneGrid%oneRadiateFields, oneGrid%oneCuParmFields)
 #endif
     endif
-    call DeepCopyFromCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
 
     !-LFR Sea salt Aerossol inline source
     call SeaSaltDriver(ia,iz,ja,jz,ngrid,mxp,myp, oneGrid%oneBasicFields)
@@ -398,7 +392,6 @@ contains
 
 
        !- call dry deposition and sedimentation routines
-       call DeepCopyToCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
        call drydep_driver(mzp,mxp,myp,ia,iz,ja,jz, &
             oneGrid%oneNamelistFile, &
             oneGrid%oneBasicFields, &
@@ -407,7 +400,6 @@ contains
             oneGrid%oneMicroFields, &
             oneGrid%oneRadiateFields, &
             oneGrid%oneCuParmFields)
-       call DeepCopyFromCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
 
        !- call Matrix Aerosol Model
        !----------------------------------------
@@ -443,9 +435,7 @@ contains
     !----------------------------------------
     if (oneGrid%oneNamelistFile%nnqparm(ngrid)==1 .or. &
          oneGrid%oneNamelistFile%if_cuinv==1) then
-       call DeepCopyToCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
        call cuparm(oneGrid%oneBasicFields, oneGrid%oneNamelistFile, oneGrid%oneCuParmVars, oneGrid%oneCuParmFields)
-       call DeepCopyFromCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
     end if
 
     !  Urban canopy parameterization
@@ -529,35 +519,27 @@ contains
 
     !- large and subgrid scale forcing for shallow and deep cumulus
     if( oneGrid%oneNamelistFile%nnqparm(ngrid) >=2 .or. NNSHCU(ngrid)>=2 ) then
-       call DeepCopyToCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
        call prepare_lsf(oneGrid%oneNamelistFile%nnqparm(ngrid), NNSHCU(ngrid),1, &
             oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneRadiateFields, &
             oneGrid%oneCuParmShFields)
-       call DeepCopyFromCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
     end if
 
     !-   Cumulus parameterization options 2->6:
     !                    Deep Convection scheme
     !- call deep first, if there is deep convection , turn off shallow.
     if (oneGrid%oneNamelistFile%nnqparm(ngrid)==2) then
-       call DeepCopyToCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
        call cuparm_grell_catt(OneGrid, 1)
-       call DeepCopyFromCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
     end if
     !
     !                    Shallow Convection scheme
     if (NNSHCU(ngrid)==2 ) then
-       call DeepCopyToCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
        call cuparm_grell_catt(OneGrid, 2)
-       call DeepCopyFromCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
     end if
     !
     !- G3d - GD-FIM and GF
     if (oneGrid%oneNamelistFile%nnqparm(ngrid)>=3) then
-       call DeepCopyToCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
        call cuparm_grell3_catt(onegrid,1,&
             oneGrid%oneNamelistFile%nnqparm(ngrid),nnshcu(ngrid))
-       call DeepCopyToCuParmFields(oneGrid%oneCuParmFields, oneGrid%oneCuParmShFields, h)
     end if
 
     !- task 2:  NO production by "eclair"

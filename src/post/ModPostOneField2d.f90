@@ -82,7 +82,7 @@ module ModPostOneField2d
   use mem_aerad, only: &
        nwave
 
-  use mem_cuparm, only: &
+  use ModCuParmFields, only: &
        hasAconpr
 
   implicit none
