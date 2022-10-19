@@ -9,18 +9,16 @@ module mem_chem1aq
 !--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
   use ModNamelistFile, only: namelistFile
 
-  include "constants.h"
+  include "i8.h"
 !--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
 
   type chem1aq_vars   
-     real, contiguous, pointer :: sc_pr(:,:,:)
-     real, contiguous, pointer :: sc_pc(:,:,:) 
-     real, contiguous, pointer :: sc_tr(:)
-     real, contiguous, pointer :: sc_tc(:)
+!--- All families
+     real, pointer, dimension(:,:,:)  :: sc_pr,sc_pc ! r:rain, c:cloud
+     real, pointer, dimension(:    )  :: sc_tr,sc_tc
+!-----------
   end type chem1aq_vars
-
-  type(chem1aq_vars), allocatable, target :: chem1aq_g(:,:)
-  type(chem1aq_vars), allocatable, target :: chem1maq_g(:,:)
+  type (chem1aq_vars)    , allocatable :: chem1aq_g(:,:) , chem1maq_g(:,:)
   
   integer :: CHEMISTRY_AQ
 
@@ -95,44 +93,64 @@ contains
 
   !---------------------------------------------------------------
 
-  subroutine filltab_chem1aq(oneVarTable, oneVarTableSize, &
-       chem1aq, chem1maq, imean)
-    
+  subroutine filltab_chem1aq(chem1aq,chem1maq,imean,n1,n2,n3,nspeciesaq,ng)
+
+!    use var_tables
     use chem1aq_list, only: spcaq_name
 
-    use ModVarTable, only: &
-         VarTable, &
-         InsertVarTable
-    
-    implicit none
-    
-    type(VarTable), pointer, intent(in) :: oneVarTable(:)
-    integer, intent(inout) :: oneVarTableSize
-    type(chem1aq_vars), pointer, intent(in) :: chem1aq(:)
-    type(chem1aq_vars), pointer, intent(in) :: chem1maq(:)
-    integer, intent(in) :: imean
-    
-    integer :: ispcaq  
-    integer :: nspeciesaq
+!--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
+    use var_tables, only: InsertVTab
+!--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
 
-    nspeciesaq=size(chem1aq,1)
+    implicit none
+
+    integer, intent(in) :: imean,n1,n2,n3,nspeciesaq,ng
+    type (chem1aq_vars)  ,dimension(   nspeciesaq) :: chem1aq,chem1maq
+
+    integer :: ispcaq  
+
+!--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
+    integer(kind=i8) :: npts
+!--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
+    
+    character(len=8) :: str_recycle
+   
+    str_recycle = ''
 
     !- Fill pointers to arrays into variable tables
     do ispcaq=1,nspeciesaq
-       if (associated(chem1aq(ispcaq)%sc_pr)) then
-             call InsertVarTable(oneVarTable, oneVarTableSize, &
-                  chem1aq(ispcaq)%sc_pr, &
-                  trim(spcaq_name(ispcaq)) //'PR :3:hist:anal:mpti:mpt3:mpt1', &
-                  chem1maq(ispcaq)%sc_pr, imean)
-       end if
 
-       if (associated(chem1aq(ispcaq)%sc_pc)) then
-             call InsertVarTable(oneVarTable, oneVarTableSize, &
-                  chem1aq(ispcaq)%sc_pc, &
-                  trim(spcaq_name(ispcaq)) //'PC :3:hist:anal:mpti:mpt3:mpt1', &
-                  chem1maq(ispcaq)%sc_pc, imean)
-       end if
-    end do
+     if (associated(chem1aq(ispcaq)%sc_pr)) then
+!--- tracer mixing ratio (dimension 3d)
+       npts = n1 * n2 * n3
+
+!--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
+        call InsertVTab(chem1aq(ispcaq)%sc_pr, chem1maq(ispcaq)%sc_pr,  &
+                        ng, npts, imean,                                &
+                        trim(spcaq_name(ispcaq)) //'PR :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle))
+!--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
+!        call vtables2 (chem1aq(ispcaq)%sc_pr(1,1,1), chem1maq(ispcaq)%sc_pr(1,1,1)  &
+!         ,ng, npts, imean, trim(spcaq_name(ispcaq)) //'PR :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle))
+!--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
+
+     end if
+!     
+     if (associated(chem1aq(ispcaq)%sc_pc)) then
+!--- tracer mixing ratio (dimension 3d)
+       npts = n1 * n2 * n3
+
+!--(DMK-CCATT-BRAMS-5.0-INI)------------------------------------------------------------------
+        call InsertVTab(chem1aq(ispcaq)%sc_pc, chem1maq(ispcaq)%sc_pc,  &
+                        ng, npts, imean,                                &
+                        trim(spcaq_name(ispcaq)) //'PC :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle))
+!--(DMK-CCATT-BRAMS-4-OLD)--------------------------------------------------------------------
+!        call vtables2 (chem1aq(ispcaq)%sc_pc(1,1,1), chem1maq(ispcaq)%sc_pc(1,1,1)  &
+!         ,ng, npts, imean, trim(spcaq_name(ispcaq)) //'PC :3:hist:anal:mpti:mpt3:mpt1'//trim(str_recycle))
+!--(DMK-CCATT-BRAMS-5.0-FIM)------------------------------------------------------------------
+
+     end if
+
+    enddo
   end subroutine filltab_chem1aq
 
 
@@ -199,18 +217,12 @@ subroutine alloc_tend_chem1aq(nmzp,nmxp,nmyp,ngrs,nspeciesaq,proc_type)
    
   !---------------------------------------------------------------
 
-  subroutine filltab_tend_chem1aq(oneScalarTab, oneScalarTabSize, nspeciesaq, ng)
-    use ModScalarTable, only: &
-         ScalarTable, &
-         InsertAtScalarTab
-    
+  subroutine filltab_tend_chem1aq(nspeciesaq,ng)
     use chem1aq_list, only:spcaq_name
     use mem_chem1, only: nspecies_transported ! this is first calculated at chemistry 
                                               ! "filltab_tend_chem1" routine
     implicit none
 
-    type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
-    integer, intent(inout) :: oneScalarTabSize
     integer,intent(in) :: nspeciesaq,ng
     integer ::ispcaq
     integer :: elements
@@ -222,21 +234,31 @@ subroutine alloc_tend_chem1aq(nmzp,nmxp,nmyp,ngrs,nspeciesaq,proc_type)
 
 
       if ( associated(chem1aq_g(ispcaq,ng)%sc_tr)) then
-        elements = size(chem1aq_g(ispcaq,ng)%sc_tr)
-        call InsertAtScalarTab(chem1aq_g(ispcaq,ng)%sc_pr, chem1aq_g(ispcaq,ng)%sc_tr, trim(spcaq_name(ispcaq))//'PR',&
-             oneScalarTab, oneScalarTabSize)
+      	call vtables_scalar (chem1aq_g(ispcaq,ng)%sc_pr(1,1,1),&
+        chem1aq_g(ispcaq,ng)%sc_tr(1),ng,trim(spcaq_name(ispcaq))//'PR')
+        
+	elements = size(chem1aq_g(ispcaq,ng)%sc_tr)
+        
+        call vtables_scalar_new (chem1aq_g(ispcaq,ng)%sc_pr(1,1,1),&
+        chem1aq_g(ispcaq,ng)%sc_tr(1),ng, trim(spcaq_name(ispcaq))//'PR',elements)
 
-        !- total number of transported species (CHEM + CHEM_AQ)
-        nspecies_transported = nspecies_transported + 1 
+	!- total number of transported species (CHEM + CHEM_AQ)
+	nspecies_transported = nspecies_transported + 1 		
+
+
       endif
 !      
       if ( associated(chem1aq_g(ispcaq,ng)%sc_tc)) then
-        elements = size(chem1aq_g(ispcaq,ng)%sc_tc)
-        call InsertAtScalarTab(chem1aq_g(ispcaq,ng)%sc_pc, chem1aq_g(ispcaq,ng)%sc_tc, trim(spcaq_name(ispcaq))//'PC',&
-             oneScalarTab, oneScalarTabSize)
+    	call vtables_scalar (chem1aq_g(ispcaq,ng)%sc_pc(1,1,1),&
+       chem1aq_g(ispcaq,ng)%sc_tc(1),ng,trim(spcaq_name(ispcaq))//'PC')
+       
+	elements = size(chem1aq_g(ispcaq,ng)%sc_tc)
+        
+        call vtables_scalar_new (chem1aq_g(ispcaq,ng)%sc_pc(1,1,1),&
+        chem1aq_g(ispcaq,ng)%sc_tc(1),ng, trim(spcaq_name(ispcaq))//'PC',elements)
 
-        !- total number of transported species (CHEM + CHEM_AQ)
-        nspecies_transported = nspecies_transported + 1 
+	!- total number of transported species (CHEM + CHEM_AQ)
+	nspecies_transported = nspecies_transported + 1 		
 
 
       endif

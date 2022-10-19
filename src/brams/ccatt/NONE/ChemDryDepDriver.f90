@@ -1,16 +1,14 @@
-module ChemDryDepDriver
+MODULE ChemDryDepDriver
 
-  use ModNamelistFile, only: &
-       NamelistFile
 
-  use rconstants, only: &
+  USE rconstants, ONLY: &
        cpi,             &
        cpor,            &
        p00,             &
        g,               &
        vonk
-
-  use mem_grid, only: &
+       
+  USE mem_grid, ONLY: &
        grid_g,        &
        jdim,          &
        dzt,           &
@@ -23,81 +21,69 @@ module ChemDryDepDriver
        iyear1,        &
        ngrid
 
-  use ModMicControl, only: &
-       MicControl
+  USE micphys, ONLY: &
+       level
 
-  use ModCuParmFields, only: &
-       CuParmFields
+  USE mem_cuparm, ONLY: &
+       cuparm_g,        &
+       nnqparm
 
-  use ModBasicFields, only: &
-       BasicFields
+  USE mem_basic, ONLY: &
+       basic_g
 
-  use ModMicroFields, only: &
-       MicroFields
-  
-  use ModTurbFields, only: &
-       TurbFields
+  USE mem_turb, ONLY: &
+       turb_g
 
-  use mem_leaf, only: &
+  USE mem_leaf, ONLY: &
        leaf_g
 
-  use ModRadiateFields, only: &
-       RadiateFields
+  USE mem_micro, ONLY: &
+       micro_g
 
-  use mem_chem1, only: &
+  USE mem_radiate, ONLY: &
+       radiate_g
+
+  USE mem_chem1, ONLY: &
        chem1_g,        &
        chemistry
-
-  use mem_aer1, only: &
+  
+  USE mem_aer1, ONLY: &
        aerosol, &
        aer1_g
 
-  use module_dry_dep, only: &
+  USE module_dry_dep, ONLY: &
        dd_sedim,            &
        dry_dep                 ! Subroutine
 
 
 
-  implicit none
+  IMPLICIT NONE
 
-  private
-
-
-  public :: drydep_driver
+  PRIVATE
 
 
+  PUBLIC :: drydep_driver
 
-contains
+
+
+CONTAINS
+
 
   !========================================================================
-  subroutine drydep_driver(m1,m2,m3,ia,iz,ja,jz, &
-       oneNamelistFile, &
-       oneBasicFields, &
-       oneTurbFields, &
-       oneMicControl, &
-       oneMicroFields, &
-       oneRadiateFields, &
-       oneCuParmFields)
+  SUBROUTINE drydep_driver(m1,m2,m3,ia,iz,ja,jz)
 
-    integer,              intent(IN)    :: m1
-    integer,              intent(IN)    :: m2
-    integer,              intent(IN)    :: m3
-    integer,              intent(IN)    :: ia
-    integer,              intent(IN)    :: iz
-    integer,              intent(IN)    :: ja
-    integer,              intent(IN)    :: jz
-    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
-    type(BasicFields), pointer, intent(in) :: oneBasicFields
-    type(TurbFields), pointer, intent(in) :: oneTurbFields
-    type(MicControl), pointer, intent(in) :: oneMicControl
-    type(MicroFields), pointer, intent(in) :: oneMicroFields
-    type(RadiateFields), pointer, intent(in) :: oneRadiateFields
-    type(CuParmFields), pointer, intent(in) :: oneCuParmFields
+    INTEGER,              INTENT(IN)    :: m1
+    INTEGER,              INTENT(IN)    :: m2
+    INTEGER,              INTENT(IN)    :: m3
+    INTEGER,              INTENT(IN)    :: ia
+    INTEGER,              INTENT(IN)    :: iz
+    INTEGER,              INTENT(IN)    :: ja
+    INTEGER,              INTENT(IN)    :: jz
 
 
-    return
-  end subroutine drydep_driver
+    RETURN
+  END SUBROUTINE drydep_driver
   !========================================================================
 
 
-end module ChemDryDepDriver
+END MODULE ChemDryDepDriver

@@ -17,12 +17,6 @@ Module grid_struct
      real, pointer, dimension(:,:) :: topo
      
   End Type grid_def
-
-  interface check_real
-     module procedure check_real_s
-     module procedure check_real_1d
-     module procedure check_real_2d
-  end interface check_real
   
 Contains
 
@@ -106,7 +100,8 @@ Contains
     character(len=*) :: string
     
     integer :: ict,nd
-
+    integer, external :: check_real
+    
     ict=0
     ierr=0
     
@@ -169,7 +164,7 @@ Contains
        endif
        
        if (g1%nzp == g2%nzp) then
-          nd =check_real(g1%ztn,g2%ztn,g1%nzp)
+          nd =check_real(g1%ztn(1),g2%ztn(1),g1%nzp)
           if ( nd > 0 ) then
              ict=ict+1
              print*,'Compare_grid:',trim(string), &
@@ -180,7 +175,7 @@ Contains
        endif
 
        if(g1%nxp == g2%nxp .and. g1%nyp == g2%nyp) then
-          nd =check_real(g1%topo,g2%topo,g1%nxp*g1%nyp)
+          nd =check_real(g1%topo(1,1),g2%topo(1,1),g1%nxp*g1%nyp)
           if ( nd > 0 ) then
              ict=ict+1
              print*,'Compare_grid:',trim(string),':topo different'
@@ -200,73 +195,5 @@ Contains
     
     return
   end subroutine compare_grid_def
-  !-------------------
 
-  integer function check_real_s(xx, x, nx)
-    ! Check two corresponding real arrays and see values are close enough
-    integer, intent(in) :: nx
-    real, intent(in) :: xx
-    real, intent(in) :: x
-
-    integer :: i
-    real :: tol
-
-    tol = 0.0
-
-    if (abs(xx-x) > tol) then
-       check_real_s=1
-    else
-       check_real_s = 0
-    endif
-  end function check_real_s
-
-  !-------------------
-
-  integer function check_real_1d(xx, x, nx)
-    ! Check two corresponding real arrays and see values are close enough
-    integer, intent(in) :: nx
-    real, intent(in) :: xx(:)
-    real, intent(in) :: x(:)
-
-    integer :: i
-    real :: tol
-
-    tol = min( (maxval(xx)-minval(xx)),(maxval(x)-minval(x)) )*.0001
-
-    do i = 1, nx
-       if (abs(xx(i)-x(i)) > tol) then
-          check_real_1d=i
-          return
-       endif
-    enddo
-
-    check_real_1d = 0
-  end function check_real_1d
-
-  !-------------------
-
-  integer function check_real_2d(xx, x, nx)
-    ! Check two corresponding real arrays and see values are close enough
-    integer, intent(in) :: nx
-    real, intent(in) :: xx(:,:)
-    real, intent(in) :: x(:,:)
-
-    integer :: i, j
-    real :: tol
-
-    tol = min( (maxval(xx)-minval(xx)),(maxval(x)-minval(x)) )*.0001
-
-    do j = 1, size(xx,2)
-       do i = 1, size(xx,1)
-          if (abs(xx(i,j)-x(i,j)) > tol) then
-             check_real_2d=i+(j-1)*size(xx,2)
-             return
-          endif
-       enddo
-    end do
-
-    check_real_2d = 0
-  end function check_real_2d
-
-  
 End Module grid_struct

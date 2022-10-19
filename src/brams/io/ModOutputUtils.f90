@@ -1,20 +1,16 @@
 module ModOutputUtils
+  use var_tables, only: &
+       var_tables_r, &
+       GetVTabEntry
 
-  use ModNamelistFile, only: &
-       NamelistFile
+  use mem_basic, only: basic_g
 
-  use ModVarTable, only: &
-       VarTable, &
-       Name2VarTableEntry
+  use mem_turb, only: &
+       turb_g, &
+       idiffk, &
+       xkhkm
 
-  use ModBasicFields, only: &
-       BasicFields
-
-  use ModTurbFields, only: &
-       TurbFields
-
-  use dump, only: &
-       dumpMessage
+  use dump
 
   implicit none
 
@@ -25,35 +21,29 @@ module ModOutputUtils
      module procedure GetVarFromMemToOutput_2D
      module procedure GetVarFromMemToOutput_3D
      module procedure GetVarFromMemToOutput_4D
-  end interface GetVarFromMemToOutput
+  end interface
 
   character(len=*),parameter :: sourceName='ModOutputUtils.f90' !Name of source code
-  include "constants.h"
+  include "constants.f90"
 contains
 
 
-  subroutine GetVarFromMemToOutput_2D (varName, gridId, arrayOut, &
-       oneNamelistFile, oneBasicFields, oneTurbFields, &
-       oneVarTable, oneVarTableSize)
+  subroutine GetVarFromMemToOutput_2D (varName, ngrd, arrayOut)
     character(LEN=*),   intent(in ) :: varName
-    integer,            intent(in ) :: gridId
-    real,        intent(out) :: arrayOut(:,:)
-    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
-    type(BasicFields), pointer, intent(in) :: oneBasicFields
-    type(TurbFields), pointer, intent(in) :: oneTurbFields
-    type(VarTable), pointer, intent(in) :: oneVarTable(:)
-    integer, intent(inout) :: oneVarTableSize
+    integer,            intent(in ) :: ngrd
+    real,	        intent(out) :: arrayOut(:,:)
 
-    type(VarTable), pointer   :: vtabPtr
+    type(var_tables_r), pointer   :: vtabPtr
     character(len=30), parameter :: h="**(GetVarFromMemToOutput_2D)**"
 
 
     ! get vtab_r entry that points to the field; stop if not there
 
-    vtabPtr => Name2VarTableEntry(oneVarTable, oneVarTableSize, varName)
+    vtabPtr => null()
+    call GetVTabEntry(varName, ngrd, vtabPtr)
     if (.not. associated(vtabPtr)) then
-       iErrNumber=dumpMessage(c_tty,c_yes,sourceName,h &
-            ,c_fatal,'var '//trim(varName)//' not found in vtab_r')
+        iErrNumber=dumpMessage(c_tty,c_yes,sourceName,h &
+              ,c_fatal,'var '//trim(varName)//' not found in vtab_r')
     end if
 
     ! copy the field
@@ -65,32 +55,18 @@ contains
 
 
 
-  subroutine GetVarFromMemToOutput_3D (varName, gridId, arrayOut, &
-       oneNamelistFile, oneBasicFields, oneTurbFields, &
-       oneVarTable, oneVarTableSize)
+  subroutine GetVarFromMemToOutput_3D (varName, ngrd, arrayOut)
     character(LEN=*),   intent(in ) :: varName
-    integer,            intent(in ) :: gridId
-    real,        intent(out) :: arrayOut(:,:,:)
-    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
-    type(BasicFields), pointer, intent(in) :: oneBasicFields
-    type(TurbFields), pointer, intent(in) :: oneTurbFields
-    type(VarTable), pointer, intent(in) :: oneVarTable(:)
-    integer, intent(inout) :: oneVarTableSize
+    integer,            intent(in ) :: ngrd
+    real,	        intent(out) :: arrayOut(:,:,:)
 
-    integer :: idiffk
-    real :: xkhkm
-    type(VarTable), pointer   :: vtabPtr
+    type(var_tables_r), pointer   :: vtabPtr
     real :: transposed(size(arrayOut,3),size(arrayOut,1),size(arrayOut,2))
     character(len=len(varName)) :: varnIn, varnOut
     character(len=8) :: c0, c1
     character(len=30), parameter :: h="**(GetVarFromMemToOutput_3D)**"
     integer :: i, j, k
     integer :: n1, n2, n3
-
-    ! select current grid idiffk and xkhkm from Ramsin
-
-    idiffk=oneNamelistFile%idiffk(gridId)
-    xkhkm=oneNamelistFile%xkhkm(gridId)
 
     ! arrayOut has index order prepared for output, that is,
     ! horizontal planes for all verticals, patches or waves
@@ -111,10 +87,11 @@ contains
        varnIn = varName
     end if
 
-    vtabPtr => Name2VarTableEntry(oneVarTable, oneVarTableSize, varnIn)
+    vtabPtr => null()
+    call GetVTabEntry(varnIn, ngrd, vtabPtr)
     if (.not. associated(vtabPtr)) then
-       iErrNumber=dumpMessage(c_tty,c_yes,sourceName,h &
-            ,c_fatal,'var '//trim(varName)//' not found in vtab_r')
+               iErrNumber=dumpMessage(c_tty,c_yes,sourceName,h &
+              ,c_fatal,'var '//trim(varName)//' not found in vtab_r')
     end if
 
     ! copy the field observing that
@@ -155,7 +132,7 @@ contains
           do i = 1, n1
              do k = 1, n3
                 arrayOut(i,j,k) = transposed(k,i,j) + &
-                     oneBasicFields%pi0(k,i,j)
+                     basic_g(ngrd)%pi0(k,i,j)
              end do
           end do
        end do
@@ -165,24 +142,24 @@ contains
        ! Convert to HKM to HKH (note that VKH is HKH for Deardorff)
        ! and transpose
 
-       if (idiffk <= 3) then
+       if (idiffk(ngrd) <= 3) then
 
           do j = 1, n2
              do i = 1, n1
                 do k = 1, n3
                    arrayOut(i,j,k) = transposed(k,i,j) * &
-                        xkhkm / oneBasicFields%dn0(k,i,j)
+                        xkhkm(ngrd) / basic_g(ngrd)%dn0(k,i,j)
                 end do
              end do
           end do
 
-       else if (idiffk >= 4) then
+       else if (idiffk(ngrd) >= 4) then
 
           do j = 1, n2
              do i = 1, n1
                 do k = 1, n3
-                   arrayOut(i,j,k) = oneTurbFields%vkh(k,i,j) / &
-                        oneBasicFields%dn0(k,i,j)
+                   arrayOut(i,j,k) = turb_g(ngrd)%vkh(k,i,j) / &
+                        basic_g(ngrd)%dn0(k,i,j)
                 end do
              end do
           end do
@@ -196,7 +173,7 @@ contains
           do i = 1, n1
              do k = 1, n3
                 arrayOut(i,j,k) = transposed(k,i,j) / &
-                     oneBasicFields%dn0(k,i,j)
+                     basic_g(ngrd)%dn0(k,i,j)
              end do
           end do
        end do
@@ -219,19 +196,12 @@ contains
 
 
 
-  subroutine GetVarFromMemToOutput_4D (varName, gridId, arrayOut, &
-       oneNamelistFile, oneBasicFields, oneTurbFields, &
-       oneVarTable, oneVarTableSize)
+  subroutine GetVarFromMemToOutput_4D (varName, ngrd, arrayOut)
     character(LEN=*),   intent(in ) :: varName
-    integer,            intent(in ) :: gridId
-    real,        intent(out) :: arrayOut(:,:,:,:)
-    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
-    type(BasicFields), pointer, intent(in) :: oneBasicFields
-    type(TurbFields), pointer, intent(in) :: oneTurbFields
-    type(VarTable), pointer, intent(in) :: oneVarTable(:)
-    integer, intent(inout) :: oneVarTableSize
+    integer,            intent(in ) :: ngrd
+    real,	        intent(out) :: arrayOut(:,:,:,:)
 
-    type(VarTable), pointer   :: vtabPtr
+    type(var_tables_r), pointer   :: vtabPtr
     integer :: i, j, k, l
     integer :: n1, n2, n3, n4
     real :: transposed(size(arrayOut,3),size(arrayOut,4),size(arrayOut,1),size(arrayOut,2))
@@ -248,10 +218,11 @@ contains
 
     ! get vtab_r entry that points to the field; stop if not there
 
-    vtabPtr => Name2VarTableEntry(oneVarTable, oneVarTableSize, varName)
+    vtabPtr => null()
+    call GetVTabEntry(varName, ngrd, vtabPtr)
     if (.not. associated(vtabPtr)) then
-       iErrNumber=dumpMessage(c_tty,c_yes,sourceName,h &
-            ,c_fatal,'var '//trim(varName)//' not found in vtab_r')
+               iErrNumber=dumpMessage(c_tty,c_yes,sourceName,h &
+              ,c_fatal,'var '//trim(varName)//' not found in vtab_r')
     end if
 
     ! prepared for idim_type 4 or 5

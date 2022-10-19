@@ -206,11 +206,11 @@ subroutine comunicateStatistic(soma,somaQ)
   !# Sum of error for each var
   real, intent(inout) :: somaQ(nnzp(1),nVars)
   !# Sum of quadratic error for each var
-  type dm_eval 
+  type dm 
     real,pointer,dimension(:) :: dados
     !# Data to be communicated
-  end type dm_eval
-  type(dm_eval),allocatable :: dataMess(:)
+  end type dm
+  type(dm),allocatable :: dataMess(:)
   !# Comunicated data from each processor
 
 

@@ -1,5 +1,3 @@
-module rrtmg_lw_k_g
-  contains
 !     path:      $Source$
 !     author:    $Author$
 !     revision:  $Revision$
@@ -76237,5 +76235,3 @@ module rrtmg_lw_k_g
      & 5.38186e-03_rb, 5.02023e-03_rb, 4.68290e-03_rb, 4.36823e-03_rb, 4.07471e-03_rb/)
 
       end subroutine lw_kgb16
-    end module rrtmg_lw_k_g
-    

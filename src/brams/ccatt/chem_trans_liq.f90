@@ -48,7 +48,7 @@ CONTAINS
     REAL    , INTENT(IN) :: coll  (m1,m2,m3)
     REAL    , INTENT(IN) :: sedimr(m1,m2,m3)
 
-    ! oneMicroFields
+    ! mem_micro
     REAL    , INTENT(IN) :: rcp(m1,m2,m3)
     REAL    , INTENT(IN) :: rrp(m1,m2,m3)
 

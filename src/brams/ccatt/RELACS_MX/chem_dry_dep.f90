@@ -305,7 +305,7 @@ CONTAINS
     ! mem_radiate
     REAL    , INTENT(IN)    :: rshort(m2,m3)
 
-    ! oneMicroFields
+    ! mem_micro
     REAL    , INTENT(IN)    :: rcp(m1,m2,m3)
     REAL    , INTENT(IN)    :: pcpg(m2,m3)
 

@@ -76,7 +76,7 @@ CONTAINS
     use ccatt_start, only: ccatt
     IMPLICIT NONE
 
-    include "constants.h"
+    include "constants.f90"
     character(len=*), parameter :: header='**(alloc_scratch1_grell)**'
 
     !-srf this array must be allocated anyway because it will be used to stor
@@ -182,6 +182,17 @@ CONTAINS
     DEALLOCATE (conv_cld_fr5d)
     DEALLOCATE (prdn5d)
   END SUBROUTINE dealloc_scratch1_grell
+
+!!$  SUBROUTINE filltab_scratch1_grell()
+!!$
+!!$    USE var_tables
+!!$
+!!$    IMPLICIT NONE
+!!$
+!!$    ! Can't think of anything to do here...
+!!$
+!!$    RETURN
+!!$  END SUBROUTINE filltab_scratch1_grell
 
 ! subroutine zero_scratch1_grell()
 !

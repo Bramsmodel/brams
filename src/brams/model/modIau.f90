@@ -27,11 +27,6 @@ module modIau
     !# @endwarning
     !#######################################################################
     !---
-  
-  use ModMPassFull, only: &
-       mk_3_buff, &
-       ex_3_buff
-  
     use dump, only: &
         dumpMessage     !subroutine
       
@@ -71,7 +66,7 @@ module modIau
 
     implicit none
     include "files.h"
-    include "constants.h"
+    include "i8.h"
 
     character(len=*),parameter :: sourceName='modIau.f90' !Name of source code
 
@@ -806,10 +801,11 @@ contains
             !#
             
             !Use area
+            use dump
     
             implicit none
 
-            include "constants.h"
+            include "constants.f90"
     
             character(len=*),parameter :: procedureName='**initComIau**' !Name of this procedure
             !

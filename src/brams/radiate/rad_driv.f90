@@ -1,72 +1,34 @@
-module radiation
 
-  use ModNamelistFile, only: &
-       NamelistFile
-  
-  use ModRrtmDriver  , only: &
-       rrtm_driver
+MODULE RADIATION
 
-  use ModCarmaDriver , only: &
-       carma_driver
+CONTAINS
 
-  use ModBasicFields, only: &
-       BasicFields
+  SUBROUTINE radiate(mzp, mxp, myp, ia, iz, ja, jz, mynum)
 
-  use ModMicControl, only: &
-       MicControl
+    USE mem_radiate, only: ilwrtyp, iswrtyp
+    USE rrtm_driv  , only: rrtm_driver
+    USE carma_driv , only: carma_driver
 
-  use ModMicroFields, only: &
-       MicroFields
-  
-  use ModRadiateFields, only: &
-       RadiateFields
-  
-  use ModCuParmFields, only: &
-       CuParmFields
-  
-  implicit none
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: mzp, mxp, myp, ia, iz, ja, jz, mynum
 
-  private
+    if &
+       ((ilwrtyp + iswrtyp)==0) return ! teste
 
-  public :: radiate
+    if &
+      ( ilwrtyp==6 .and. iswrtyp==6) &
+      then
 
-contains
+       call rrtm_driver(mzp, mxp, myp, ia, iz, ja, jz, mynum)
 
+    elseif( ilwrtyp==4 .and. iswrtyp==4) then
 
-  subroutine radiate(mzp, mxp, myp, ia, iz, ja, jz, mynum, &
-       oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields, &
-       oneRadiateFields, oneCuParmFields)
-
-    integer, intent(in) :: mzp, mxp, myp, ia, iz, ja, jz, mynum
-    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
-    type(BasicFields), pointer, intent(in) :: oneBasicFields
-    type(MicControl), pointer, intent(in) :: oneMicVars
-    type(MicroFields), pointer, intent(in) :: oneMicroFields
-    type(RadiateFields), pointer, intent(in) :: oneRadiateFields
-    type(CuParmFields), pointer, intent(in) :: oneCuParmFields
-
-    character(len=*), parameter :: h="**(radiate)**"
-    
-    if ((oneNamelistFile%ilwrtyp + oneNamelistFile%iswrtyp)==0) then
-
-       return
-
-    else if (oneNamelistFile%ilwrtyp==6 .and. oneNamelistFile%iswrtyp==6) then
-
-       call rrtm_driver(mzp, mxp, myp, ia, iz, ja, jz, mynum, &
-            oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields, &
-            oneRadiateFields, oneCuParmFields)
-
-    else if (oneNamelistFile%ilwrtyp==4 .and. oneNamelistFile%iswrtyp==4) then
-
-       call carma_driver(mzp,mxp,myp,ia,iz,ja,jz,mynum, &
-            oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields, &
-            oneRadiateFields, oneCuParmFields) !teste 2
+       call carma_driver(mzp,mxp,myp,ia,iz,ja,jz,mynum) !teste 2
 
     else
-       call fatal_error(h//" unknown radiation scheme")
-    end if
+       stop "unknown radiation scheme"
+    endif
 
-  end subroutine radiate
+  END SUBROUTINE radiate
 
-end module radiation
+END MODULE RADIATION
