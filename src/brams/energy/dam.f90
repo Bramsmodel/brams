@@ -48,7 +48,7 @@ module  dam
 
   logical :: firstTime
 
-  include "constants.f90"
+  include "constants.h"
   character(len=*), parameter :: header="**(dam)**"
 
   !Parameters(constants)
@@ -112,7 +112,7 @@ module  dam
   use dump, only: &
     dumpMessage
 
-  include "constants.f90"
+  include "constants.h"
   character(len=*), parameter :: header="**(getDistance)**"
 
   !Input/output variables
@@ -191,7 +191,7 @@ logical function isInside(latP,lonP,numberOfPoints,latsBorder,lonsBorder)
   !# @endwarning
   !#
   !#---
-  include "constants.f90"
+  include "constants.h"
   character(len=*), parameter :: header="**(isInside)**"
 
   !Parameters(constants)
@@ -312,7 +312,7 @@ subroutine readDamTable(filePath,fileName)
 
   implicit none
 
-  include "constants.f90"
+  include "constants.h"
   character(len=*), parameter :: header="**(readDamTable)**"
 
   !Parameters(constants)
@@ -359,7 +359,7 @@ subroutine allocDams(nx,ny)
 
   implicit none
 
-  include "constants.f90"
+  include "constants.h"
   character(len=*), parameter :: header="**(allocDams)**"
 
   !Parameters(constants)
@@ -420,7 +420,7 @@ subroutine readBln()
   use dump, only: &
     dumpMessage
 
-  include "constants.f90"
+  include "constants.h"
   character(len=*), parameter :: header="**(readBln)**"
 
   !Parameters(constants)
@@ -507,7 +507,7 @@ subroutine fillValidLatLons(nx,ny,glat,glon)
 
   implicit none
 
-  include "constants.f90"
+  include "constants.h"
   character(len=*), parameter :: header="**(fillValidLatLons)**"
 
   !Parameters(constants)
@@ -587,7 +587,7 @@ subroutine initDams(nx,ny,glat,glon,mchnum,master_num)
 
   implicit none
 
-  include "constants.f90"
+  include "constants.h"
   include "mpif.h"
 
   character(len=*), parameter :: header="**(initDams)**"
@@ -695,7 +695,7 @@ subroutine gradsWrite()
   use dump, only: &
     dumpMessage
 
-  include "constants.f90"
+  include "constants.h"
   character(len=*), parameter :: header="**(gradsWrite)**"
 
   !Parameters(constants)
@@ -826,7 +826,7 @@ subroutine acumPrecipInDam(nx,ny,ia,iz,ja,jz,mcphys_type,aconpr,accpr &
 
   implicit none
 
-  include "constants.f90"
+  include "constants.h"
   character(len=*), parameter :: header="**(acumPrecipInDam)**"
 
   !Parameters(constants)
@@ -934,7 +934,7 @@ subroutine outputDamPrecip(time,dtlongn,timmax,mchnum,master_num)
 
   implicit none
 
-  include "constants.f90"
+  include "constants.h"
   include "mpif.h"
 
   character(len=*), parameter :: header="**(outputDamPrecip)**"

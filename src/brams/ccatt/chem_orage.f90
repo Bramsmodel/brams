@@ -80,8 +80,8 @@ CONTAINS
        RETURN
        !ierr(1:mxp,1:myp) = 0
     ENDIF
-    CALL eclair(mzp,mxp,myp,ia,iz,ja,jz,sc_t(1),wp(1,1,1),rtp(1,1,1),rv(1,1,1),pp(1,1,1), & 
-                pi0(1,1,1),theta(1,1,1),rtgt(1,1),dxt(1,1),dyt(1,1),dzt,zt,dtlt,ierr, &
+    CALL eclair(mzp,mxp,myp,ia,iz,ja,jz,sc_t,wp,rtp,rv,pp, & 
+                pi0,theta,rtgt,dxt,dyt,dzt,zt,dtlt,ierr, &
                 weight,nspecies,no,cp,cpor)
 
   END SUBROUTINE eclair_driver

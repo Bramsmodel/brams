@@ -9,37 +9,42 @@
 
 module mem_varinit
 
-  use ModNamelistFile, only: namelistFile
+  use ModNamelistFile, only: &
+       namelistFile
 
-  use grid_dims
+  use grid_dims, only: &
+       maxfiles, &
+       maxgrds
 
-!--(DMK-CCATT-INI)-----------------------------------------------------
   use chem1_list, only: &
        nspecies
 
   use mem_chem1, only: &
        chem_assim
-!--(DMK-CCATT-FIM)-----------------------------------------------------
 
   ! Memory for varfile, history, and condensate nudging
 
   type varinit_vars
-
      ! Variables to be dimensioned by (nzp,nxp,nyp)
-     real, pointer, dimension(:,:,:) :: &
-           varup,varvp,varpp,vartp,varrp  &
-          ,varuf,varvf,varpf,vartf,varrf  &
-          ,varwts &
-
-!--(DMK-CCATT-INI)-----------------------------------------------------
-          ,varwts_chem &
-!--(DMK-CCATT-FIM)-----------------------------------------------------
-	  
-          ,varrph,varrfh,varcph,varcfh
-
+     real, pointer, contiguous :: varup(:,:,:)
+     real, pointer, contiguous :: varvp(:,:,:)
+     real, pointer, contiguous :: varpp(:,:,:)
+     real, pointer, contiguous :: vartp(:,:,:)
+     real, pointer, contiguous :: varrp(:,:,:)
+     real, pointer, contiguous :: varuf(:,:,:)
+     real, pointer, contiguous :: varvf(:,:,:)
+     real, pointer, contiguous :: varpf(:,:,:)
+     real, pointer, contiguous :: vartf(:,:,:)
+     real, pointer, contiguous :: varrf(:,:,:)
+     real, pointer, contiguous :: varwts(:,:,:)
+     real, pointer, contiguous :: varwts_chem(:,:,:)
+     real, pointer, contiguous :: varrph(:,:,:)
+     real, pointer, contiguous :: varrfh(:,:,:)
+     real, pointer, contiguous :: varcph(:,:,:)
+     real, pointer, contiguous :: varcfh(:,:,:)
   end type varinit_vars
 
-  type (varinit_vars), allocatable :: varinit_g(:), varinitm_g(:)
+  type (varinit_vars), pointer :: varinit_g(:) => null()
 
 
   integer, parameter :: maxnudfiles=maxfiles !500
@@ -116,11 +121,11 @@ module mem_varinit
 
 contains
 
-  subroutine alloc_varinit(varinit,n1,n2,n3,ng)
+  subroutine alloc_varinit(varinit,n1,n2,n3)
 
     implicit none
     type (varinit_vars) :: varinit
-    integer, intent(in) :: n1,n2,n3,ng
+    integer, intent(in) :: n1,n2,n3
 
     ! Allocate arrays based on options (if necessary)
 
@@ -136,11 +141,7 @@ contains
        allocate (varinit%vartf(n1,n2,n3))
        allocate (varinit%varrf(n1,n2,n3))                      
        allocate (varinit%varwts(n1,n2,n3))
-
-!--(DMK-CCATT-INI)-----------------------------------------------------       
        if(chem_assim == 1 ) allocate (varinit%varwts_chem(n1,n2,n3))
-!--(DMK-CCATT-FIM)-----------------------------------------------------
-       
     endif
 
     if (nud_cond == 1) then
@@ -149,8 +150,6 @@ contains
        allocate (varinit%varrph(n1,n2,n3))
        allocate (varinit%varrfh(n1,n2,n3))                      
     endif
-
-    return
   end subroutine alloc_varinit
 
 
@@ -171,17 +170,11 @@ contains
     if (associated(varinit%vartf))     nullify (varinit%vartf)
     if (associated(varinit%varrf))     nullify (varinit%varrf)
     if (associated(varinit%varwts))    nullify (varinit%varwts)
-
-!--(DMK-CCATT-INI)-----------------------------------------------------
     if (associated(varinit%varwts_chem)) nullify (varinit%varwts_chem)
-!--(DMK-CCATT-FIM)-----------------------------------------------------
-
     if (associated(varinit%varcph))     nullify (varinit%varcph)
     if (associated(varinit%varcfh))     nullify (varinit%varcfh)
     if (associated(varinit%varrph))     nullify (varinit%varrph)
     if (associated(varinit%varrfh))     nullify (varinit%varrfh)
-
-    return
   end subroutine nullify_varinit
 
   subroutine dealloc_varinit(varinit)
@@ -215,91 +208,164 @@ contains
   end subroutine dealloc_varinit
 
 
-  subroutine filltab_varinit(varinit,varinitm,imean,n1,n2,n3,ng)
-    use var_tables, only: InsertVTab
+  subroutine filltab_varinit(oneVarTable, oneVarTableSize, &
+       varinit, imean, ng)
+
+    ! Build VarTable entry with varinit_vars components
+
+    use ModVarTable, only: &
+         VarTable, &
+         InsertVarTable
+
     implicit none
-    include "i8.h"
-    type (varinit_vars) :: varinit,varinitm
-    integer, intent(in) :: imean,n1,n2,n3,ng
-    integer(kind=i8) :: npts
-    real, pointer :: var,varm
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
+    type(varinit_vars), pointer, intent(in) :: varinit(:)
+    integer, intent(in) :: imean
+    integer, intent(in) :: ng
+
+    integer, parameter :: notIMean=0
+    real, pointer, contiguous :: null3D(:,:,:) => null()
+    character(len=*), parameter :: h="**(filltab_varinit)**"
 
     ! Fill pointers to arrays into variable tables
 
-    npts=n1*n2*n3
+    if (.not. associated(oneVarTable)) then
+       call fatal_error(h//" oneVarTable not associated")
+    else if (.not. associated(varinit)) then
+       call fatal_error(h//" varinit not associated")
+    end if
 
-    if (associated(varinit%varup))  &
-         call InsertVTab (varinit%varup,varinitm%varup  &
-         ,ng, npts, imean,  &
-         'VARUP :3:mpti')
-    if (associated(varinit%varvp))  &
-         call InsertVTab (varinit%varvp,varinitm%varvp  &
-         ,ng, npts, imean,  &
-         'VARVP :3:mpti')
-    if (associated(varinit%varpp))  &
-         call InsertVTab (varinit%varpp,varinitm%varpp  &
-         ,ng, npts, imean,  &
-         'VARPP :3:mpti')
-    if (associated(varinit%vartp))  &
-         call InsertVTab (varinit%vartp,varinitm%vartp  &
-         ,ng, npts, imean,  &
-         'VARTP :3:mpti')
-    if (associated(varinit%varrp))  &
-         call InsertVTab (varinit%varrp,varinitm%varrp  &
-         ,ng, npts, imean,  &
-         'VARRP :3:mpti')
-    if (associated(varinit%varuf))  &
-         call InsertVTab (varinit%varuf,varinitm%varuf  &
-         ,ng, npts, imean,  &
-         'VARUF :3:mpti')
-    if (associated(varinit%varvf))  &
-         call InsertVTab (varinit%varvf,varinitm%varvf  &
-         ,ng, npts, imean,  &
-         'VARVF :3:mpti')
-    if (associated(varinit%varpf))  &
-         call InsertVTab (varinit%varpf,varinitm%varpf  &
-         ,ng, npts, imean,  &
-         'VARPF :3:mpti')
-    if (associated(varinit%vartf))  &
-         call InsertVTab (varinit%vartf,varinitm%vartf  &
-         ,ng, npts, imean,  &
-         'VARTF :3:mpti')
-    if (associated(varinit%varrf))  &
-         call InsertVTab (varinit%varrf,varinitm%varrf  &
-         ,ng, npts, imean,  &
-         'VARRF :3:mpti')
-    if (associated(varinit%varwts))  &
-         call InsertVTab (varinit%varwts,varinitm%varwts  &
-         ,ng, npts, imean,  &
-         'VARWTS :3:mpti')
+    if (associated(varinit(ng)%varup))  then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            varinit(ng)%varup, &
+            'VARUP :3:mpti', &
+            null3D, &
+            notIMean)
+    end if
 
-!--(DMK-CCATT-INI)-----------------------------------------------------
-    if(chem_assim == 1 .and. associated(varinit%varwts_chem)) &
-         call InsertVTab (varinit%varwts_chem,varinitm%varwts_chem  &
-         ,ng, npts, imean,  &
-         'VARWTS_CHEM :3:mpti')
-!--(DMK-CCATT-FIM)-----------------------------------------------------
+    if (associated(varinit(ng)%varvp))  then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            varinit(ng)%varvp, &
+            'VARVP :3:mpti', &
+            null3D, &
+            notIMean)
+    end if
 
-    if (nud_cond == 1) then               ! Inc. by ALF
-       if (associated(varinit%varcph))  &
-            call InsertVTab (varinit%varcph,varinitm%varcph  &
-            ,ng, npts, imean,  &
-            'VARCPH :3:mpti')
-       if (associated(varinit%varcfh))  &
-            call InsertVTab (varinit%varcfh,varinitm%varcfh  &
-            ,ng, npts, imean,  &
-            'VARCFH :3:mpti')
-       if (associated(varinit%varrph))  &
-            call InsertVTab (varinit%varrph,varinitm%varrph  &
-            ,ng, npts, imean,  &
-            'VARRPH :3:mpti')
-       if (associated(varinit%varrfh))  &
-            call InsertVTab (varinit%varrfh,varinitm%varrfh  &
-            ,ng, npts, imean,  &
-            'VARRFH :3:mpti')
+    if (associated(varinit(ng)%varpp))  then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            varinit(ng)%varpp, &
+            'VARPP :3:mpti', &
+            null3D, &
+            notIMean)
+    end if
+
+    if (associated(varinit(ng)%vartp))  then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            varinit(ng)%vartp, &
+            'VARTP :3:mpti', &
+            null3D, &
+            notIMean)
+    end if
+
+    if (associated(varinit(ng)%varrp))  then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            varinit(ng)%varrp, &
+            'VARRP :3:mpti', &
+            null3D, &
+            notIMean)
+    end if
+
+    if (associated(varinit(ng)%varuf))  then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            varinit(ng)%varuf, &
+            'VARUF :3:mpti', &
+            null3D, &
+            notIMean)
+    end if
+
+    if (associated(varinit(ng)%varvf))  then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            varinit(ng)%varvf, &
+            'VARVF :3:mpti', &
+            null3D, &
+            notIMean)
+    end if
+
+    if (associated(varinit(ng)%varpf))  then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            varinit(ng)%varpf, &
+            'VARPF :3:mpti', &
+            null3D, &
+            notIMean)
+    end if
+
+    if (associated(varinit(ng)%vartf))  then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            varinit(ng)%vartf, &
+            'VARTF :3:mpti', &
+            null3D, &
+            notIMean)
+    end if
+
+    if (associated(varinit(ng)%varrf))  then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            varinit(ng)%varrf, &
+            'VARRF :3:mpti', &
+            null3D, &
+            notIMean)
+    end if
+
+    if (associated(varinit(ng)%varwts))  then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            varinit(ng)%varwts, &
+            'VARWTS :3:mpti', &
+            null3D, &
+            notIMean)
+    end if
+
+    if(chem_assim == 1 .and. associated(varinit(ng)%varwts_chem)) then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            varinit(ng)%varwts_chem, &
+            'VARWTS_CHEM :3:mpti', &
+            null3D, &
+            notIMean)
+    end if
+
+
+    if (nud_cond == 1) then
+       if (associated(varinit(ng)%varcph))  then
+          call InsertVarTable (oneVarTable, oneVarTableSize, &
+               varinit(ng)%varcph, &
+               'VARCPH :3:mpti', &
+               null3D, &
+               notIMean)
+       end if
+
+       if (associated(varinit(ng)%varcfh))  then
+          call InsertVarTable (oneVarTable, oneVarTableSize, &
+               varinit(ng)%varcfh, &
+               'VARCFH :3:mpti', &
+               null3D, &
+               notIMean)
+       end if
+
+       if (associated(varinit(ng)%varrph))  then
+          call InsertVarTable (oneVarTable, oneVarTableSize, &
+               varinit(ng)%varrph, &
+               'VARRPH :3:mpti', &
+               null3D, &
+               notIMean)
+       end if
+
+       if (associated(varinit(ng)%varrfh))  then
+          call InsertVarTable (oneVarTable, oneVarTableSize, &
+               varinit(ng)%varrfh, &
+               'VARRFH :3:mpti', &
+               null3D, &
+               notIMean)
+       end if
     endif
-
-    return
   end subroutine filltab_varinit
 
 

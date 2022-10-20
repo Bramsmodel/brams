@@ -4,6 +4,8 @@ Module ModPostOneFieldNetcdf
       netCdfPostField2D, &
       netCdfPostField3D
 
+  implicit none
+  
   contains
 
   subroutine writeNetCdf2D(fieldName,nLon,nLat,OutputArray)
@@ -17,7 +19,7 @@ Module ModPostOneFieldNetcdf
   end subroutine writeNetCdf2D
   
   subroutine writeNetCdf3D(fieldName,nLon,nLat,iLev,OutputArray)
-    integer, intent(in) :: nlon,nlat
+    integer, intent(in) :: nlon,nlat,iLev
     character(len=*), intent(in) :: fieldName
     real, intent(in) :: OutputArray(nlon, nlat)
   

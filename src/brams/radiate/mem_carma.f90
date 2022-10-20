@@ -9,34 +9,47 @@
 
 module mem_carma
 
-  use grid_dims, only: nzpmax ! INTENT(IN)
-  use ModNamelistFile, only: namelistFile
+  use ModSoilMoisture, only: &
+       interpolacao, &
+       apiPrlatlon
+
+  use ModRamsGrid, only: &
+       newgrid
+  
+  use ModMPassFull, only: &
+       mk_2_buff
+  
+  use grid_dims, only: &
+       nzpmax ! INTENT(IN)
+
+  use ModNamelistFile, only: &
+       NamelistFile
+  
+  use ModControlVars, only: &
+       ControlVars
 
   implicit none
 
   type carma_v
-
-     real, pointer :: aot(:,:,:)
-
+     real, pointer, contiguous :: aot(:,:,:) => null()
   end type carma_v
 
-  !RMF
+
   type aotMap_t
-  	real, pointer, dimension(:,:) :: aotMap
+     real, pointer, dimension(:,:) :: aotMap
   end type aotMap_t
 
-  TYPE(aotMap_t), allocatable, DIMENSION(:) :: carma_aotMap, &
-  					    carma_aotMapm
-  !RMF
+  type(aotMap_t), allocatable, target, dimension(:) :: carma_aotMap, &
+       carma_aotMapm
 
-
-  type(carma_v), allocatable :: carma(:), carma_m(:)
+  type(carma_v), pointer, contiguous :: carma(:) => null()
+  type(carma_v), pointer, contiguous :: carma_m(:) => null()
 
   !Used in radcomp_carma (radcom) - radriv
 
-!--(DMK-CCATT-INI)----------------------------------------------------------
+  !--(DMK-CCATT-INI)----------------------------------------------------------
   integer, parameter:: ntotal_aer = 2 !ner & rmf
-!--(DMK-CCATT-FIM)----------------------------------------------------------
+  !--(DMK-CCATT-FIM)----------------------------------------------------------
 
   real :: tdec
   real :: sdec
@@ -69,15 +82,15 @@ module mem_carma
   real, allocatable :: t_aerad(:,:)
   real, allocatable :: p_aerad(:,:)
   real, allocatable :: qv_aerad(:,:)
-!kmlnew
+  !kmlnew
   real, allocatable :: LWL_aerad(:,:)
   real, allocatable :: IWL_aerad(:,:)
   real, allocatable :: LWP_aerad(:,:)
   real, allocatable :: IWP_aerad(:,:)
   real, allocatable :: xland_aerad(:)
-!srf  REAL, ALLOCATABLE, DIMENSION(:,:)     :: RAIN_aerad
+  !srf  REAL, ALLOCATABLE, DIMENSION(:,:)     :: RAIN_aerad
   real, allocatable :: RAIN_aerad(:)
-!kmlnew
+  !kmlnew
   real, allocatable :: press(:,:)
   real, allocatable :: dpg(:,:)
   real, allocatable :: tt(:,:)
@@ -104,7 +117,7 @@ module mem_carma
   real, allocatable :: gcld(:,:,:)
   real, allocatable :: w0(:,:,:)
   real, allocatable :: g0(:,:,:)
-!kmlnew
+  !kmlnew
   real, allocatable :: taucldlw(:,:,:)
   real, allocatable :: wolc(:,:,:)
   real, allocatable :: gl(:,:,:)
@@ -112,13 +125,13 @@ module mem_carma
   real, allocatable :: woice(:,:,:)
   real, allocatable :: gice(:,:,:)
 
-!--(DMK-CCATT-INI)----------------------------------------------------------
+  !--(DMK-CCATT-INI)----------------------------------------------------------
   real, allocatable, dimension(:,:,:,:) :: tauaer_x
   real, allocatable, dimension(:,:,:,:) :: wol_x
   real, allocatable, dimension(:,:,:,:) :: gol_x
-!--(DMK-CCATT-FIM)----------------------------------------------------------
+  !--(DMK-CCATT-FIM)----------------------------------------------------------
 
-!kmlnew
+  !kmlnew
   real, allocatable :: opd(:,:,:)
   real, allocatable :: uopd(:,:,:)
   real, allocatable :: ptemp(:,:,:)
@@ -163,18 +176,18 @@ module mem_carma
   integer :: ir_aerad
   real :: solfac
 
-!--(DMK-CCATT-INI)----------------------------------------------------------
+  !--(DMK-CCATT-INI)----------------------------------------------------------
   !for tuv
-  INTEGER, PARAMETER :: na = 4  ! number of aerosols
-  REAL,ALLOCATABLE,DIMENSION(:,:,:,:) :: g_tauaer
-  REAL,ALLOCATABLE,DIMENSION(:,:,:,:) :: g_wol
-  REAL,ALLOCATABLE,DIMENSION(:,:,:,:) :: g_gol
-  REAL,ALLOCATABLE,DIMENSION(:,:,:,:) :: g_taucld
-  REAL,ALLOCATABLE,DIMENSION(:,:,:,:) :: g_wcld
-  REAL,ALLOCATABLE,DIMENSION(:,:,:,:) :: g_gcld
-!--(DMK-CCATT-FIM)----------------------------------------------------------
+  integer, parameter :: na = 4  ! number of aerosols
+  real,allocatable,dimension(:,:,:,:) :: g_tauaer
+  real,allocatable,dimension(:,:,:,:) :: g_wol
+  real,allocatable,dimension(:,:,:,:) :: g_gol
+  real,allocatable,dimension(:,:,:,:) :: g_taucld
+  real,allocatable,dimension(:,:,:,:) :: g_wcld
+  real,allocatable,dimension(:,:,:,:) :: g_gcld
+  !--(DMK-CCATT-FIM)----------------------------------------------------------
 
-   CHARACTER(len=256) :: MapAOTFile !From RAMSIN
+  character(len=256) :: MapAOTFile !From RAMSIN
 
 contains
 
@@ -230,46 +243,54 @@ contains
 
   !---------------------------------------------------------------
 
-  subroutine filltab_carma(cv, cvm, ng, imean, n1, n2, n3)
-    use var_tables, only: InsertVTab
-    use mem_scalar, only: RECYCLE_TRACERS ! INTENT(IN)
+  subroutine filltab_carma(oneVarTable, oneVarTableSize, oneNamelistFile, &
+       cv, cvm, ng, imean)
+
+    use ModNamelistFile, only: &
+         NamelistFile
+    
+    use ModVarTable, only: &
+         VarTable, &
+         InsertVarTable
+    
     use io_params, only : ipastin, ioutput         ! INTENT(IN)
 
     implicit none
-
-!--(DMK-LFR NEC-SX6)----------------------------------------------
-    include 'i8.h'
-!--(DMK-LFR NEC-SX6)----------------------------------------------
-
     ! Arguments:
-    integer, intent(in) :: ng, n1, n2, n3, imean
-    type(carma_v), intent(in) :: cv, cvm
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
+    type(carma_v), pointer, intent(in) :: cv(:)
+    type(carma_v), pointer, intent(in) :: cvm(:)
+    integer, intent(in) :: ng
+    integer, intent(in) :: imean
+
     ! Local Variables:
-
-!--(DMK-LFR NEC-SX6)----------------------------------------------
-!    integer          :: npts
-    integer(kind=i8) :: npts
-!--(DMK-LFR NEC-SX6)----------------------------------------------
-
+    logical :: assThis
     character(len=7) :: sname
-    ! ALF
     character(len=8) :: str_recycle
+    character(len=*), parameter :: h="**(filltab_carma)**"
 
-    ! ALF
+    if (.not. associated(oneVarTable)) then
+       call fatal_error(h//" oneVarTable not associated")
+    else if (.not. associated(cv)) then
+       call fatal_error(h//" cv not associated")
+    else if (.not. associated(cvm)) then
+       call fatal_error(h//" cvm not associated")
+    end if
+    
     str_recycle = ''
-    if (RECYCLE_TRACERS==1 .or. ipastin==1 .or. ioutput==5) then
+    if (oneNamelistFile%recycle_tracers==1 .or. ipastin==1 .or. ioutput==5) then
        str_recycle = ':recycle'
     endif
 
-    if (associated(cv%aot)) then
-       npts = n1*n2*n3
+    if (associated(cv(ng)%aot)) then
        write(sname,'(a4)') 'AOT'
-       call InsertVTab (cv%aot, cvm%aot, ng, &
-            npts, imean,sname//' :7:hist:anal:mpti:mpt3'//trim(str_recycle))
-       ! Not necessary MPT1 - Comunication NODE to NODE on DTLONG
-       ! Radiation is a Column oriented process
-    endif
-
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            cv(ng)%aot, &
+            sname//' :7:hist:anal:mpti:mpt3'//trim(str_recycle), &
+            cvm(ng)%aot, imean)
+    end if
   end subroutine filltab_carma
 
   !---------------------------------------------------------------
@@ -279,7 +300,7 @@ contains
     use mem_globrad, only: ntotal, nlayer, ndbl, ngauss, nrad
     use mem_aerad, only: nz_rad, ngas, nelem, ngroup, nbin
 
-    IMPLICIT NONE
+    implicit none
     ! Arguments:
     integer,intent(IN) :: ia, iz, ja, jz, m1, m2, m3
     ! Local Variables:
@@ -341,11 +362,11 @@ contains
     allocate(woice    (iend,ntotal,nlayer))
     allocate(gice     (iend,ntotal,nlayer))
 
-!--(DMK-CCATT-INI)----------------------------------------------------------
+    !--(DMK-CCATT-INI)----------------------------------------------------------
     allocate(tauaer_x (iend,ntotal,nlayer,ntotal_aer))
     allocate(wol_x    (iend,ntotal,nlayer,ntotal_aer))
     allocate(gol_x    (iend,ntotal,nlayer,ntotal_aer))
-!--(DMK-CCATT-FIM)----------------------------------------------------------
+    !--(DMK-CCATT-FIM)----------------------------------------------------------
 
     !kmlnew
     allocate(w0(iend,ntotal,nlayer))
@@ -441,11 +462,11 @@ contains
     woice=0.0
     gice=0.0
 
-!--(DMK-CCATT-INI)----------------------------------------------------------
+    !--(DMK-CCATT-INI)----------------------------------------------------------
     tauaer_x=0.0
     wol_x=0.0
     gol_x=0.0
-!--(DMK-CCATT-FIM)----------------------------------------------------------
+    !--(DMK-CCATT-FIM)----------------------------------------------------------
 
     !kmlnew
     wcld=0.0
@@ -551,11 +572,11 @@ contains
     deallocate(woice)
     deallocate(gice)
 
-!--(DMK-CCATT-INI)----------------------------------------------------------
+    !--(DMK-CCATT-INI)----------------------------------------------------------
     deallocate(tauaer_x)
     deallocate(wol_x)
     deallocate(gol_x)
-!--(DMK-CCATT-FIM)----------------------------------------------------------
+    !--(DMK-CCATT-FIM)----------------------------------------------------------
 
     !kmlnew
 
@@ -605,23 +626,23 @@ contains
     type(aotMap_t) :: c_aotMap
     integer, intent(in) ::  nx,ny
 
-   	!if(.not. ALLOCATED(carma_aotMap))then
-	!	allocate(carma_aotMap(ngrids))
+    !if(.not. ALLOCATED(carma_aotMap))then
+    !	allocate(carma_aotMap(ngrids))
 
-		allocate(c_aotMap%aotMap(nx,ny))
-		c_aotMap%aotMap(:,:) = 0.
+    allocate(c_aotMap%aotMap(nx,ny))
+    c_aotMap%aotMap(:,:) = 0.
 
 
-	!end if
+    !end if
 
-	!if(.not. ALLOCATED(carma_aotMapm))then
-	!	allocate(carma_aotMapm(ngrids))
-	!
-	!	do idx = 1, ngrids
-	!		allocate(carma_aotMapm(idx)%aotMap(nnxp(idx), nnyp(idx)))
-	!		carma_aotMapm(idx)%aotMap(:,:) = 0.
-	!	end do
-	!end if
+    !if(.not. ALLOCATED(carma_aotMapm))then
+    !	allocate(carma_aotMapm(ngrids))
+    !
+    !	do idx = 1, ngrids
+    !		allocate(carma_aotMapm(idx)%aotMap(nnxp(idx), nnyp(idx)))
+    !		carma_aotMapm(idx)%aotMap(:,:) = 0.
+    !	end do
+    !end if
 
 
   end subroutine alloc_aotMap
@@ -639,54 +660,81 @@ contains
 
   subroutine dealloc_aotMap()
 
-   use mem_grid, only: &
-       ngrids,         &!(in)
-       nnxp,           &!(in)
-       nnyp,           &!(in)
-       nnzp             !(in)
+    use mem_grid, only: &
+         ngrids,         &!(in)
+         nnxp,           &!(in)
+         nnyp,           &!(in)
+         nnzp             !(in)
 
 
-   integer :: idx
+    integer :: idx
 
-   	if(ALLOCATED(carma_aotMap))then
+    if(allocated(carma_aotMap))then
 
-		do idx = 1, ngrids
-			deallocate(carma_aotMap(idx)%aotMap)
-		end do
-		deallocate(carma_aotMap)
-	end if
+       do idx = 1, ngrids
+          deallocate(carma_aotMap(idx)%aotMap)
+       end do
+       deallocate(carma_aotMap)
+    end if
 
-	if(ALLOCATED(carma_aotMapm))then
+    if(allocated(carma_aotMapm))then
 
-		do idx = 1, ngrids
-			deallocate(carma_aotMapm(idx)%aotMap)
-		end do
-		deallocate(carma_aotMapm)
-	end if
+       do idx = 1, ngrids
+          deallocate(carma_aotMapm(idx)%aotMap)
+       end do
+       deallocate(carma_aotMapm)
+    end if
 
   end subroutine dealloc_aotMap
 
-  subroutine filltab_aotMap(imap, imapm, ng, imean, n1, n2)
-   use var_tables, only: InsertVTab
-   include "i8.h"
-   integer, intent(in)    :: ng, n1, n2, imean
-   integer(kind=i8)       :: npts
-   type(aotMap_t) :: imap, imapm
+  subroutine filltab_aotMap(oneVarTable, oneVarTableSize, &
+       imap, imapm, ng, imean)
 
-   	if(associated(imap%aotMap))then
-		npts = n1*n2
-		call InsertVTab(imap%aotMap, imapm%aotMap, ng, npts, imean, &
-			      'AOTMAP :2:hist:anal:mpti')
-	end if
+    use ModVarTable, only: &
+         VarTable, &
+         InsertVarTable
+    
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
+    type(aotMap_t), pointer, intent(in):: imap(:)
+    type(aotMap_t), pointer, intent(in):: imapm(:)
+    integer, intent(in) :: ng
+    integer, intent(in) :: imean
 
+    character(len=*), parameter :: h="**(filltab_aotMap)**"
+
+    if (.not. associated(oneVarTable)) then
+       call fatal_error(h//" oneVarTable not associated")
+    else if (.not. associated(imap)) then
+       call fatal_error(h//" imap not associated")
+    else if (.not. associated(imapm)) then
+       call fatal_error(h//" imapm not associated")
+    end if
+    
+    if(associated(imap(ng)%aotMap))then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            imap(ng)%aotMap, &
+            'AOTMAP :2:hist:anal:mpti', &
+            imapm(ng)%aotMap, imean)
+    end if
   end subroutine filltab_aotMap
 
 
-  subroutine read_aotMap()
+  subroutine read_aotMap(gridId, oneControlVars, oneBasicFields, oneTurbFields)
 
-   use mem_grid
-   use mem_globrad, only: aotMapPath
-   USE node_mod, ONLY: &
+    use ModBasicFields, only: &
+         BasicFields
+
+    use ModTurbFields, only: &
+         TurbFields
+    
+    use mem_grid, only: grid_g,    &
+                        nnxp,      &
+                        nnyp,      &
+                        ngrids
+
+    use mem_globrad, only: aotMapPath
+    use node_mod, only: &
          nodei0, nodej0, & ! INTENT(IN)
          nodemxp, nodemyp, & ! INTENT(IN)
          nmachs,  & ! INTENT(IN)
@@ -695,219 +743,229 @@ contains
          master_num, & ! INTENT(IN)
          ia,iz,ja,jz,mxp,myp,mzp, &
          nxbeg, &
-        nxend, &
-        nybeg, &
-        nyend
+         nxend, &
+         nybeg, &
+         nyend
 
-   use ParLib, only: parf_bcast ! Subroutine
-   USE ReadBcst, ONLY: &
+    use ParLib, only: parf_bcast ! Subroutine
+    use ReadBcst, only: &
          gatherData
 
-   integer :: i,       &
-              j,       &
-	      nLon,    &
-	      nLat,    &
-	      ii,      &
-	      jj,      &
-	      effSite, &
-	      nSites,  &
-	      ifm,     &
-	      i1,      &
-	      i2,      &
-	      ic,      &
-	      j1,      &
-	      j2,      &
-	      jc,      &
-	      qi1,     &
-	      qi2,     &
-	      qj1,     &
-	      qj2
-   real    :: latni,   &
-   	      latnf,   &
-	      lonni,   &
-	      lonnf,   &
-	      latstep, &
-	      lonstep, &
-	      dlonr,   &
-	      dlatr,   &
-	      undef
-    REAL :: comm(10)
+    implicit none
+    include 'constants.h'
 
-   integer, allocatable, dimension(:,:) :: infMap
-   REAL, allocatable, dimension(:,:) :: infMapReal
-   real, allocatable, dimension(:)      :: moda
-   real, allocatable, dimension(:,:)    :: prlon, &
-   				           prlat
+    integer, intent(in) :: gridId
+    type(ControlVars), pointer, intent(in) :: oneControlVars
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
+    
+    integer :: i,       &
+         j,       &
+         nLon,    &
+         nLat,    &
+         ii,      &
+         jj,      &
+         effSite, &
+         nSites,  &
+         ifm,     &
+         i1,      &
+         i2,      &
+         ic,      &
+         j1,      &
+         j2,      &
+         jc,      &
+         qi1,     &
+         qi2,     &
+         qj1,     &
+         qj2
+    real    :: latni,   &
+         latnf,   &
+         lonni,   &
+         lonnf,   &
+         latstep, &
+         lonstep, &
+         dlonr,   &
+         dlatr,   &
+         undef
+    real :: comm(10)
 
-    REAL               :: globalGlon(nnxp(1), nnyp(1)) !apenas para uma grade teste
-    REAL               :: globalGlat(nnxp(1), nnyp(1)) !apenas para uma grade teste
-    REAL               :: globalAot(nnxp(1), nnyp(1))
+    integer, allocatable, dimension(:,:) :: infMap
+    real, allocatable, dimension(:,:) :: infMapReal
+    real, allocatable, dimension(:)      :: moda
+    real, allocatable, dimension(:,:)    :: prlon, &
+         prlat
 
-    CHARACTER(len=16)  :: varn
+    real               :: globalGlon(nnxp(1), nnyp(1)) !apenas para uma grade teste
+    real               :: globalGlat(nnxp(1), nnyp(1)) !apenas para uma grade teste
+    real               :: globalAot(nnxp(1), nnyp(1))
 
-  !---------------
-  ! 00 undef
-  ! 01 Abracos_Hill.lev15
-  ! 02 CUIABA-MIRANDA.lev15
-  ! 03 Rio_Branco.lev15
-  ! 04 Alta_Floresta.lev15
-  ! 05 Campo_Grande_SONDA.lev15
-  ! 06 CEILAP-BA.lev15
-  ! 07 Cordoba-CETT.lev15
-  ! 08 SANTA_CRUZ.lev15
-  ! 09 Sao_Paulo.lev15
-  ! faltam
-  ! 10 belterra.
-  ! 11 1 oceanico
-  ! 12 continental
-  !-----------------
+    character(len=16)  :: varn
 
-      if (mchnum==master_num) then
-!--- tmp
-!  	    open(unit=17, file=trim(aotMapPath), status='old')
-  	   open(unit=17, file=trim(MapAOTFile), status='old')
-!--- tmp
+    !---------------
+    ! 00 undef
+    ! 01 Abracos_Hill.lev15
+    ! 02 CUIABA-MIRANDA.lev15
+    ! 03 Rio_Branco.lev15
+    ! 04 Alta_Floresta.lev15
+    ! 05 Campo_Grande_SONDA.lev15
+    ! 06 CEILAP-BA.lev15
+    ! 07 Cordoba-CETT.lev15
+    ! 08 SANTA_CRUZ.lev15
+    ! 09 Sao_Paulo.lev15
+    ! faltam
+    ! 10 belterra.
+    ! 11 1 oceanico
+    ! 12 continental
+    !-----------------
 
-	     read(17,*) lonni, latni, lonnf, latnf
-	     read(17,*) nlon, nlat, lonstep, latstep
-	     read(17,*) nsites, undef
+    if (mchnum==master_num) then
+       !--- tmp
+       !  	    open(unit=17, file=trim(aotMapPath), status='old')
+       open(unit=17, file=trim(MapAOTFile), status='old')
+       !--- tmp
 
-
-        comm(1) =lonni
-        comm(2) =latni
-        comm(3) =lonnf
-        comm(4) =latnf
-        comm(5) =lonstep
-        comm(6) =latstep
-        comm(7) =undef
-        comm(8) =real(nlon)
-        comm(9) =REAL(nlat)
-        comm(10)=REAL(nsites)
-
-      END IF
-
-      !Broadcasting data
-      call parf_bcast(comm, int(size(comm,1),i8), master_num)
-
-      lonni    =comm(1)
-      latni    =comm(2)
-      lonnf    =comm(3)
-      latnf    =comm(4)
-      lonstep  =comm(5)
-      latstep  =comm(6)
-      undef    =comm(7)
-      nlon     =int(comm(8) )
-      nlat     =int(comm(9) )
-      nsites   =int(comm(10))
-
-      allocate(infMap(nlon, nlat),infMapReal(nlon, nlat))
-
-      IF (mchnum==master_num) then
-
-        call viirec(17, infMap, nlon*nlat, 'LIN')
-        infMapREal=real(infMap)
-
-	       close(17)
-
-      END IF
-
-       !Broadcasting data
-       call parf_bcast(infMapREal, int(size(infMap,1),i8), int(size(infMap,2),i8), master_num)
-
-       infMap=int(infMapREal)
+       read(17,*) lonni, latni, lonnf, latnf
+       read(17,*) nlon, nlat, lonstep, latstep
+       read(17,*) nsites, undef
 
 
-	!print*,'LFR: ',nlon, nlat, lonni, latni, lonnf, latnf, lonstep, latstep
-	!OPEN(UNIT=10, FILE='infmap.bin', ACCESS='DIRECT', RECL=nlon*nlat, STATUS='replace')
- 	!WRITE(10,REC=1)infMap
- 	!CLOSE(10)
+       comm(1) =lonni
+       comm(2) =latni
+       comm(3) =lonnf
+       comm(4) =latnf
+       comm(5) =lonstep
+       comm(6) =latstep
+       comm(7) =undef
+       comm(8) =real(nlon)
+       comm(9) =real(nlat)
+       comm(10)=real(nsites)
 
-	!print*, minval(infMap), maxval(infmap)
+    end if
 
-	!stop
+    !Broadcasting data
+    call parf_bcast(comm, int(size(comm,1),i8), master_num)
+
+    lonni    =comm(1)
+    latni    =comm(2)
+    lonnf    =comm(3)
+    latnf    =comm(4)
+    lonstep  =comm(5)
+    latstep  =comm(6)
+    undef    =comm(7)
+    nlon     =int(comm(8) )
+    nlat     =int(comm(9) )
+    nsites   =int(comm(10))
+
+    allocate(infMap(nlon, nlat),infMapReal(nlon, nlat))
+
+    if (mchnum==master_num) then
+
+       call viirec(17, infMap, nlon*nlat, 'LIN')
+       infMapREal=real(infMap)
+
+       close(17)
+
+    end if
+
+    !Broadcasting data
+    call parf_bcast(infMapREal, int(size(infMap,1),i8), int(size(infMap,2),i8), master_num)
+
+    infMap=int(infMapREal)
 
 
-	allocate(prlat(nlon, nlat), prlon(nlon,nlat), moda(nsites))
-	!print *,'LFR-sizes: ', size(prlat,1),Size(prlat,2),size(prlon,1),size(prlon,2)
-	call apiPrlatlon(nlon, nlat, prlat, prlon, latstep, lonstep, latni, lonni)
+    !print*,'LFR: ',nlon, nlat, lonni, latni, lonnf, latnf, lonstep, latstep
+    !OPEN(UNIT=10, FILE='infmap.bin', ACCESS='DIRECT', RECL=nlon*nlat, STATUS='replace')
+    !WRITE(10,REC=1)infMap
+    !CLOSE(10)
 
-	DO ifm =1, ngrids
+    !print*, minval(infMap), maxval(infmap)
 
-	 carma_aotMap(ifm)%aotMap(:,:) = 0.
+    !stop
 
-	 CALL NEWGRID(ifm)
-         varn = 'GLON'
-         call gatherData(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
+
+    allocate(prlat(nlon, nlat), prlon(nlon,nlat), moda(nsites))
+    !print *,'LFR-sizes: ', size(prlat,1),Size(prlat,2),size(prlon,1),size(prlon,2)
+    call apiPrlatlon(nlon, nlat, prlat, prlon, latstep, lonstep, latni, lonni)
+
+    do ifm =1, ngrids
+
+       carma_aotMap(ifm)%aotMap(:,:) = 0.
+
+       call NEWGRID(ifm)
+       varn = 'GLON'
+       call gatherData(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
             nmachs, mchnum, mynum, master_num,             &
-             grid_g(ifm)%glon, globalGlon)
-         varn = 'GLAT'
-         call gatherData(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
+            grid_g(ifm)%glon, globalGlon, &
+            oneControlVars, oneBasicFields, oneTurbFields)
+       varn = 'GLAT'
+       call gatherData(2, varn, ifm, nnxp(ifm), nnyp(ifm), &
             nmachs, mchnum, mynum, master_num,             &
-            grid_g(ifm)%glat, globalGlat)
+            grid_g(ifm)%glat, globalGlat, &
+            oneControlVars, oneBasicFields, oneTurbFields)
 
-			DO i =1, nnxp(ifm)
-				DO j=1, nnyp(ifm)
-         ! evitando pontos fora do dominio da grade de umidade de solo
-         IF ( globalGlat(i,j)<latni .OR. globalGlat(i,j)>latnf .OR. &
-             globalGlon(i,j)<lonni .OR. globalGlon(i,j)>lonnf) CYCLE
-					!LFR  IF(grid_g(ifm)%glat(i,j) .lt. latni .or. grid_g(ifm)%glat(i,j) .gt. latnf .or. &
-                			   !LFR  grid_g(ifm)%glon(i,j) .lt. lonni .or. grid_g(ifm)%glon(i,j) .gt. lonnf) CYCLE
-					   !interpolate to model grids
+       do i =1, nnxp(ifm)
+          do j=1, nnyp(ifm)
+             ! evitando pontos fora do dominio da grade de umidade de solo
+             if ( globalGlat(i,j)<latni .or. globalGlat(i,j)>latnf .or. &
+                  globalGlon(i,j)<lonni .or. globalGlon(i,j)>lonnf) cycle
+             !LFR  IF(grid_g(ifm)%glat(i,j) .lt. latni .or. grid_g(ifm)%glat(i,j) .gt. latnf .or. &
+             !LFR  grid_g(ifm)%glon(i,j) .lt. lonni .or. grid_g(ifm)%glon(i,j) .gt. lonnf) CYCLE
+             !interpolate to model grids
 
-					!LFR  CALL interpolacao(grid_g(ifm)%glon(i,j),grid_g(ifm)%glat(i,j),nlon,nlat,prlat,prlon,  &
-                                		          !LFR  i1,i2,ic,j1,j2,jc)
-            CALL interpolacao(globalGlon(i,j), globalGlat(i,j), nlon, nlat, &
-                              prlat, prlon, i1, i2, ic, j1, j2, jc)
+             !LFR  CALL interpolacao(grid_g(ifm)%glon(i,j),grid_g(ifm)%glat(i,j),nlon,nlat,prlat,prlon,  &
+             !LFR  i1,i2,ic,j1,j2,jc)
+             call interpolacao(globalGlon(i,j), globalGlat(i,j), nlon, nlat, &
+                  prlat, prlon, i1, i2, ic, j1, j2, jc)
 
-	    			IF(ic.ge.0 .and. jc .ge. 0)THEN
+             if(ic.ge.0 .and. jc .ge. 0)then
               	!LFR  dlonr=0.5*(grid_g(ifm)%glon(nnxp(ifm),j)-grid_g(ifm)%glon(1,j))/float(nnxp(ifm)-1)
               	!LFR  dlatr=0.5*(grid_g(ifm)%glat(i,nnyp(ifm))-grid_g(ifm)%glat(i,1))/float(nnyp(ifm)-1)
                 dlonr = 0.5*(globalGlon(nodemxp(mynum,ifm),j) - globalGlon(1,j))/&
-                                                         float(nnxp(ifm)-1)
+                     float(nnxp(ifm)-1)
                 dlatr = 0.5*(globalGlat(i,nodemyp(mynum,ifm)) - globalGlat(i,1))/&
-                                                         float(nnyp(ifm)-1)
-      					qi1=int(dlonr/lonstep+0.5)
-      					qi2=int(dlonr/lonstep+0.5)
-      					qj1=int(dlatr/latstep+0.5)
-       					qj2=int(dlatr/latstep+0.5)
+                     float(nnyp(ifm)-1)
+                qi1=int(dlonr/lonstep+0.5)
+                qi2=int(dlonr/lonstep+0.5)
+                qj1=int(dlatr/latstep+0.5)
+                qj2=int(dlatr/latstep+0.5)
 
-						    moda(:) = 0
+                moda(:) = 0
 
-     						DO jj =max(1,jc-qj1),min(nlat,jc+qj2)
-       							DO ii = max(1,ic-qi1),min(nlon,ic+qi2)
-								      IF( infMap(ii,jj) .NE. undef)THEN
-									      moda(infMap(ii,jj)) = moda(infMap(ii,jj)) + 1
-								      END IF
-      							END DO
-     						END DO
+                do jj =max(1,jc-qj1),min(nlat,jc+qj2)
+                   do ii = max(1,ic-qi1),min(nlon,ic+qi2)
+                      if( infMap(ii,jj) .ne. undef)then
+                         moda(infMap(ii,jj)) = moda(infMap(ii,jj)) + 1
+                      end if
+                   end do
+                end do
 
-						    effSite = 1
+                effSite = 1
 
-						    DO ii = 1, nsites
-							    DO jj = 1, nsites-1
-								    IF(moda(ii) .GT. moda(jj))THEN
-									    effSite = ii
-								    END IF
-							    END DO
-						    END DO
+                do ii = 1, nsites
+                   do jj = 1, nsites-1
+                      if(moda(ii) .gt. moda(jj))then
+                         effSite = ii
+                      end if
+                   end do
+                end do
 
-						    globalAot(i,j)= effSite !to remove 0 values
+                globalAot(i,j)= effSite !to remove 0 values
 
-     			END IF
-				END DO
-			END DO
-      !print *,'LFR-DBG: buff (1): ',mynum,ifm,nnxp(ifm),nnyp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm),ia,iz,ja,jz; call flush(6)
-      !print *,'LFR-DBG: buff (2): ', mynum,ifm,nxbeg(mynum,ifm),nxend(mynum,ifm),nybeg(mynum,ifm),nyend(mynum,ifm); call flush(6)
-      call mk_2_buff(globalAot,carma_aotMap(ifm)%aotMap, &
-                              nnxp(ifm), nnyp(ifm), &
-                              nodemxp(mynum,ifm), nodemyp(mynum,ifm), &
-                              nxbeg(mynum,ifm),nxend(mynum,ifm),nybeg(mynum,ifm),nyend(mynum,ifm))
-
-
-		END DO
+             end if
+          end do
+       end do
+       !print *,'LFR-DBG: buff (1): ',mynum,ifm,nnxp(ifm),nnyp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm),ia,iz,ja,jz; call flush(6)
+       !print *,'LFR-DBG: buff (2): ', mynum,ifm,nxbeg(mynum,ifm),nxend(mynum,ifm),nybeg(mynum,ifm),nyend(mynum,ifm); call flush(6)
+       call mk_2_buff(globalAot,carma_aotMap(ifm)%aotMap, &
+            nnxp(ifm), nnyp(ifm), &
+            nodemxp(mynum,ifm), nodemyp(mynum,ifm), &
+            nxbeg(mynum,ifm),nxend(mynum,ifm),nybeg(mynum,ifm),nyend(mynum,ifm))
 
 
-  !print*,"aotmap=max-min",maxval(carma_aotMap(1)%aotMap),minval(carma_aotMap(1)%aotMap);call flush(6)
+    end do
+
+
+    !print*,"aotmap=max-min",maxval(carma_aotMap(1)%aotMap),minval(carma_aotMap(1)%aotMap);call flush(6)
 
   end subroutine read_aotMap
 
@@ -920,6 +978,6 @@ contains
 
 
 
-    !RMF - aotMap end
+  !RMF - aotMap end
 
 end module mem_carma

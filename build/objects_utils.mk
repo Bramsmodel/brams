@@ -1,11 +1,11 @@
 OBJ_UTILS = \
- 	ModDateUtils.o \
+	ModDateUtils.o \
 	an_header.o \
 	charutils.o \
 	dateutils.o \
 	dted.o \
 	error_mess.o \
-	getvar.o \
+	ModGetVar.o \
 	hdf5_utils.o \
 	htint-opt.o \
 	interp_lib.o \

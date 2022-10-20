@@ -1,86 +1,105 @@
-MODULE mem_teb_common
+module mem_teb_common
 
-  TYPE teb_common
-
+  type teb_common
      ! Variables to be dimensioned by (nxp,nyp)
+     real, pointer, contiguous :: EMIS_TOWN(:,:) => null()
+     real, pointer, contiguous :: ALB_TOWN(:,:) => null()
+     real, pointer, contiguous :: TS_TOWN(:,:) => null()
+  end type teb_common
 
-     REAL, POINTER, DIMENSION(:,:) ::              &
-          
-          EMIS_TOWN,ALB_TOWN,TS_TOWN
+  type(teb_common), allocatable, target :: tebc_g(:)
+  type(teb_common), allocatable, target :: tebcm_g(:)
 
-  END TYPE teb_common
+contains
 
-  TYPE (teb_common), ALLOCATABLE, target :: tebc_g(:), tebcm_g(:)
 
-CONTAINS
-  SUBROUTINE alloc_tebc(tebc,n1,n2,n3,ng)
+  
+  subroutine alloc_tebc(tebc,n1,n2,n3,ng)
 
-    IMPLICIT NONE
-    TYPE (teb_common) :: tebc
-    INTEGER, INTENT(in) :: n1,n2,n3,ng
+    implicit none
+    type(teb_common), intent(inout) :: tebc
+    integer, intent(in) :: n1,n2,n3,ng
 
-    ALLOCATE (tebc%EMIS_TOWN(n2,n3),tebc%ALB_TOWN(n2,n3), &
+    allocate (tebc%EMIS_TOWN(n2,n3),tebc%ALB_TOWN(n2,n3), &
          tebc%TS_TOWN(n2,n3))
 
-    RETURN
-  END SUBROUTINE alloc_tebc
+    return
+  end subroutine alloc_tebc
 
 
-  SUBROUTINE nullify_tebc(tebc)
+  subroutine nullify_tebc(tebc)
 
-    IMPLICIT NONE
-    TYPE (teb_common) :: tebc
+    implicit none
+    type(teb_common), intent(inout) :: tebc
 
-    IF (ASSOCIATED(tebc%EMIS_TOWN))  NULLIFY (tebc%EMIS_TOWN)
-    IF (ASSOCIATED(tebc%ALB_TOWN))   NULLIFY (tebc%ALB_TOWN)
-    IF (ASSOCIATED(tebc%TS_TOWN))    NULLIFY (tebc%TS_TOWN)
+    if (associated(tebc%EMIS_TOWN))  nullify (tebc%EMIS_TOWN)
+    if (associated(tebc%ALB_TOWN))   nullify (tebc%ALB_TOWN)
+    if (associated(tebc%TS_TOWN))    nullify (tebc%TS_TOWN)
 
-    RETURN
-  END SUBROUTINE nullify_tebc
+    return
+  end subroutine nullify_tebc
 
-  SUBROUTINE dealloc_tebc(tebc)
+  subroutine dealloc_tebc(tebc)
 
-    IMPLICIT NONE
+    implicit none
 
-    TYPE (teb_common) :: tebc
+    type(teb_common), intent(inout) :: tebc
 
-    IF (ASSOCIATED(tebc%EMIS_TOWN))  DEALLOCATE (tebc%EMIS_TOWN)
-    IF (ASSOCIATED(tebc%ALB_TOWN))   DEALLOCATE (tebc%ALB_TOWN)
-    IF (ASSOCIATED(tebc%TS_TOWN))    DEALLOCATE (tebc%TS_TOWN)
+    if (associated(tebc%EMIS_TOWN))  deallocate (tebc%EMIS_TOWN)
+    if (associated(tebc%ALB_TOWN))   deallocate (tebc%ALB_TOWN)
+    if (associated(tebc%TS_TOWN))    deallocate (tebc%TS_TOWN)
 
-    RETURN
-  END SUBROUTINE dealloc_tebc
+    return
+  end subroutine dealloc_tebc
 
 
-  SUBROUTINE filltab_tebc(tebc,tebcm,imean,n1,n2,n3,ng)
+  subroutine filltab_tebc (oneVarTable, oneVarTableSize, &
+       tebc, tebcm, imean)
 
-    USE var_tables
+    use ModVarTable, only: &
+         VarTable, &
+         InsertVarTable
 
-    IMPLICIT NONE
-    include "i8.h"
-    TYPE (teb_common) :: tebc,tebcm
-    INTEGER, INTENT(in) :: imean,n1,n2,n3,ng
-    INTEGER(kind=i8) :: npts
-    REAL, POINTER :: var,varm
+    implicit none
 
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
+    type(teb_common), intent(in) :: tebc
+    type(teb_common), intent(in) :: tebcm
+    integer, intent(in) :: imean
+
+    character(len=*), parameter :: h="**(filltab_tebc)**"
+
+
+    if (.not. associated(oneVarTable)) then
+       call fatal_error(h//" oneVarTable not associated")
+    end if
+       
     ! Fill pointers to arrays into variable tables
 
+    if (associated(tebc%EMIS_TOWN)) then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            tebc%EMIS_TOWN, &
+            'EMIS_TOWN :2:hist:anal:lite:mpti:mpt3:mpt1', &
+            tebcm%EMIS_TOWN, &
+            imean)
+    end if
+    
+    if (associated(tebc%ALB_TOWN)) then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            tebc%ALB_TOWN, &
+            'ALB_TOWN :2:hist:anal:lite:mpti:mpt3:mpt1', &
+            tebcm%ALB_TOWN, &
+            imean)
+    end if
+    
+    if (associated(tebc%TS_TOWN)) then
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            tebc%TS_TOWN, &
+            'TS_TOWN :2:hist:anal:lite:mpti:mpt3:mpt1', &
+            tebcm%TS_TOWN, &
+            imean)
+    end if
+  end subroutine filltab_tebc
 
-    npts=n2*n3
-
-    IF (ASSOCIATED(tebc%EMIS_TOWN))  &
-         CALL InsertVTab (tebc%EMIS_TOWN,tebcm%EMIS_TOWN&
-         ,ng, npts, imean,  &
-         'EMIS_TOWN :2:hist:anal:lite:mpti:mpt3:mpt1')
-    IF (ASSOCIATED(tebc%ALB_TOWN))  &
-         CALL InsertVTab (tebc%ALB_TOWN,tebcm%ALB_TOWN&
-         ,ng, npts, imean,  &
-         'ALB_TOWN :2:hist:anal:lite:mpti:mpt3:mpt1')
-    IF (ASSOCIATED(tebc%TS_TOWN))  &
-         CALL InsertVTab (tebc%TS_TOWN,tebcm%TS_TOWN&
-         ,ng, npts, imean,  &
-         'TS_TOWN :2:hist:anal:lite:mpti:mpt3:mpt1')
-    RETURN
-  END SUBROUTINE filltab_tebc
-
-END MODULE mem_teb_common
+end module mem_teb_common

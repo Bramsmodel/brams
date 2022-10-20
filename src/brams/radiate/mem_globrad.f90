@@ -762,14 +762,18 @@ module mem_globrad
 
   ! **************************************************************************
 
-  subroutine master_read_carma_data()
+  subroutine master_read_carma_data(oneNamelistFile, mchnum, master_num)
 
-    use mem_radiate, only: ISWRTYP, ILWRTYP ! Intent(in)
-    use node_mod, only: mchnum, master_num ! Intent(in)
+    use ModNamelistFile, only: &
+         NamelistFile
+    
     use ParLib, only: parf_bcast ! Subroutine
 
     implicit none
-    include "i8.h"
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
+    integer, intent(in) :: mchnum
+    integer, intent(in) :: master_num
+    include "constants.h"
     ! Local Variables
     integer, parameter :: input_unit=22
     character(len=*), parameter :: h="**(master_read_carma_data)**"
@@ -786,12 +790,11 @@ module mem_globrad
          wia,wib,gia,gib,alpha,gama,caseE,caseW,caseG,caseR,caseD
 
     ! Check if CARMA Radiation is selected
-    if (.not. (ISWRTYP==4 .or. ILWRTYP==4  .or. ISWRTYP==6 .or. ILWRTYP==6)) return
-!    if (ISWRTYP/=4 .and. ILWRTYP/=4 .and. ISWRTYP/=6 .and. ILWRTYP/=6) return
+    if (.not. (oneNamelistFile%iswrtyp==4 .or. &
+         oneNamelistFile%ilwrtyp==4  .or. &
+         oneNamelistFile%iswrtyp==6 .or. &
+         oneNamelistFile%ilwrtyp==6)) return
 
-!!$    !**(JP)** not worked yet
-!!$    call fatal_error(h//"**(JP)** ISWRTYP==4 .or. ILWRTYP==4 not worked yet")
-    
     ! *** Falta selecionar que apenas o MASTER faz Leitura e Broadcast para
     !     todos os processos.
     ! Master Process reads data and braodcast to all

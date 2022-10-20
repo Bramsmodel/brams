@@ -6,14 +6,16 @@ Module ModPostgridNetCDF
 
   use ModPostUtils, only: UpperCase
 
-  use ModPostTypes
+  use ModPostTypes, ONLY: PostVarType, &
+                          postgrid,   &
+                          getPostVarible, &
+                          all_post_variables
 
   use mem_grid, only: time
 
-  use dump
 
   !For netCDF
-  include "constants.f90"
+  include "constants.h"
   character(len=256) :: netCDFFileName
   logical :: netCDFFirstTime
   integer :: ncid,LatDimID,LonDimID,LevDimID,timDimId,SurDimID,SoiDimID
@@ -32,8 +34,9 @@ Module ModPostgridNetCDF
 contains
 
 subroutine OpenNetCDFBinaryFile(oneNamelistFile, onePostGrid, oneBramsGrid, igrid) 
-    use netCDF 
-    use dump
+    use netCDF, ONLY: nf90_create,&
+                      nf90_write
+    IMPLICIT NONE
     type(NamelistFile), pointer :: oneNamelistFile
     type(PostGrid), pointer :: onePostGrid
     type(BramsGrid), pointer :: oneBramsGrid  
@@ -63,9 +66,18 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
                         iyear1,imonth1,idate1,ihour1, &
                         timmax, timeunit,npatch
     use io_params, only: frqanl
-    use netcdf
+    use netcdf, ONLY: nf90_def_var, &
+                      nf90_def_dim, &
+                      nf90_redef,   &
+                      nf90_put_att, &
+                      nf90_enddef,  &
+                      nf90_put_var, &
+                      nf90_noerr,   &
+                      nf90_float
+
     use dump, only: dumpMessage
-    use ModDateUtils
+    use ModDateUtils, ONLY: date_abs_secs2
+    IMPLICIT NONE
 
     type(NamelistFile), pointer :: oneNamelistFile
     type(PostGrid), pointer :: onePostGrid
@@ -73,8 +85,7 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
     type(PostVarType) :: one_post_variable
     character(len=*), parameter :: h='**(FillNetcdfVarControlFile)**'
 
-    include "constants.f90"
-    include "ranks.h"
+    include "constants.h"
 
     integer :: i,ndims,nvars,cnt
     character(len=256) :: name,varname(30),atName(300),atValue(300)
@@ -253,12 +264,12 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
 
   subroutine netCdfPostField2D(fieldName,nLon,nLat,OutputArray)
 
-    use netcdf
+    use netcdf, ONLY: nf90_put_var
     use dump, only: dumpMessage
     use mem_grid, only: time
     use io_params, only: frqanl
 
-    include "constants.f90"
+    include "constants.h"
     integer, intent(in) :: nlon,nlat
     character(len=*), intent(in) :: fieldName
     real, intent(in) :: OutputArray(nlon, nlat)
@@ -276,12 +287,12 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
 
   subroutine netCdfPostField3D(fieldName,nLon,nLat,ilev,OutputArray)
 
-    use netcdf
+    use netcdf, ONLY: nf90_put_var
     use dump, only: dumpMessage
     use mem_grid, only: time
     use io_params, only: frqanl
 
-    include "constants.f90"
+    include "constants.h"
     integer, intent(in) :: nlon,nlat,iLev
     character(len=*), intent(in) :: fieldName
     real, intent(in) :: OutputArray(nlon,nlat)

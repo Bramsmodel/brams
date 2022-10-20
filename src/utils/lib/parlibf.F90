@@ -99,7 +99,7 @@ module ParLib
           parf_allreduce_sum_vector
   end interface
 
-  include "i8.h"
+  include "constants.h"
 #if defined (RAMS_MPI)
   include 'mpif.h'
 #endif
@@ -1658,7 +1658,7 @@ subroutine fatal_error(msg)
     dumpMessage
   implicit none
 
-  include "constants.f90"
+  include "constants.h"
   character(len=*), intent(in) :: msg
 
   iErrNumber=dumpMessage(c_tty,c_yes,'Undefined - Old',modelVersion,c_fatal,msg)

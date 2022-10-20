@@ -22,18 +22,20 @@ module mem_chemic
                           
 contains                  
                           
-  subroutine alloc_chemic(chemic,n1,n2,n3)
+  subroutine alloc_chemic(chemic,n1,n2,n3,oneMicControl)
 
-    use micphys
-
+    use ModMicControl, only: &
+         MicControl
+    
     implicit none          
     type (chemic_vars) :: chemic
     integer, intent(in) :: n1,n2,n3
+    type(MicControl), pointer, intent(in) :: oneMicControl
 
     ! Allocate arrays based on options (if necessary)
 
-    if (level >= 3) then
-       if(irain >= 1)  then
+    if (oneMicControl%level >= 3) then
+       if(oneMicControl%irain >= 1)  then
           allocate (chemic%coll(n1,n2,n3)); chemic%coll=0.
           allocate (chemic%sedimr(n1,n2,n3)); chemic%sedimr=0.
        endif

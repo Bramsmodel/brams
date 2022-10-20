@@ -208,7 +208,7 @@ int  ARGC;
 #endif
 #define MEAN(x,n,mean,n2) 	( ( n * mean + x ) / (n2) )
 
-  BOOLEAN  input=0,output=0;
+  BOOLEAN  input_dted=0,output=0;
   char input_file[128],output_file[128];
   FILE *fpin,*fpout;
 
