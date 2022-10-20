@@ -2282,6 +2282,9 @@ CONTAINS
        !print*,'VT3dk',k,dzt(k) , dne(k)
     ENDDO
 
+    !      scalarp => scalar_tab(n,ngrid)%var_p
+    !      scalart => scalar_tab(n,ngrid)%var_t
+
     !- temp advection tendency (TT)
     scr1=T
 !!$    CALL fa_zc_plumerise(mzp,T,scr1(1),vt3dc(1),vt3df(1),vt3dg(1), &

@@ -13,15 +13,7 @@ USE io_constants, ONLY: max_file_name_len, namelist_unit
 
 USE string_utils_mod, ONLY: to_string
 
-USE jules_irrig_mod , ONLY: irr_crop_all_year, &
-                           irr_crop_doell, &
-                           irr_crop_dvimax, &
-                           irr_crop, &
-                           l_irrig_dmd, &
-                           l_irrig_limit, &
-                           read_nml_jules_irrig, &
-                           print_nlist_jules_irrig, &
-                           check_jules_irrig
+USE jules_irrig_mod
 
 USE jules_hydrology_mod, ONLY: l_top
 

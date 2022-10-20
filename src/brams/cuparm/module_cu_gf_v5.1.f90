@@ -14,21 +14,7 @@ MODULE module_cu_gf2
 !     the aerosol coupling is turned off.                      !
 !                                                              !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-   USE module_gate, ONLY: cupout,  &
-                          jl,   &
-                          ppres,   &
-                          ptemp,   &
-                          ptemp,   &
-                          pq,      &
-                          pu,      &
-                          pv,      &
-                          pvervel, &
-                          pgeo,    &
-                          zqr,     &
-                          zadvq,   &
-                          zadvt,   &
-                          use_gate
-
+   USE module_gate
 
    IMPLICIT NONE
    REAL   , PARAMETER,PRIVATE:: c1=.001

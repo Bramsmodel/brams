@@ -17,18 +17,17 @@ module mem_oda
 
      ! Variables to be dimensioned by (nzp,nxp,nyp)
 
-     real, pointer, contiguous :: uk(:,:,:) => null()
-     real, pointer, contiguous :: vk(:,:,:) => null()
-     real, pointer, contiguous :: tk(:,:,:) => null()
-     real, pointer, contiguous :: rk(:,:,:) => null()
-     real, pointer, contiguous :: ukv(:,:,:) => null()
-     real, pointer, contiguous :: vkv(:,:,:) => null()
-     real, pointer, contiguous :: tkv(:,:,:) => null()
-     real, pointer, contiguous :: rkv(:,:,:) => null()
+     real, pointer :: uk(:,:,:)
+     real, pointer :: vk(:,:,:)
+     real, pointer :: tk(:,:,:)
+     real, pointer :: rk(:,:,:)
+     real, pointer :: ukv(:,:,:)
+     real, pointer :: vkv(:,:,:)
+     real, pointer :: tkv(:,:,:)
+     real, pointer :: rkv(:,:,:)
   end type oda_vars
 
-  type(oda_vars), allocatable, target :: oda_g(:)
-  type(oda_vars), allocatable, target :: odam_g(:)
+  type (oda_vars), allocatable :: oda_g(:), odam_g(:)
 
   integer, parameter :: maxodafiles=maxfiles !1000
   integer, parameter :: maxodasta=2000
@@ -97,18 +96,12 @@ module mem_oda
 
 
   type oda_sfc_type
-     real, pointer, contiguous :: temp(:)
-     real, pointer, contiguous :: dewpt(:)
-     real, pointer, contiguous :: us(:)
-     real, pointer, contiguous :: vs(:)
-     real, pointer, contiguous :: ps(:)
-     real, pointer, contiguous :: u(:)
-     real, pointer, contiguous :: v(:)
-     real, pointer, contiguous :: time(:)
+     real, pointer, dimension(:) :: temp, dewpt, us, vs, ps,u,v 
+     real, pointer, dimension(:) :: time 
   end type oda_sfc_type
 
-  type(oda_sfc_info_type), allocatable, target :: oda_sfc_info(:)
-  type(oda_sfc_type)     , allocatable, target :: oda_sfc_obs(:)
+  type(oda_sfc_info_type), allocatable :: oda_sfc_info(:)
+  type(oda_sfc_type)     , allocatable :: oda_sfc_obs(:)
 
 
   ! Upper air info
@@ -212,89 +205,53 @@ contains
   end subroutine dealloc_oda
 
 
-  subroutine filltab_oda(oneVarTable, oneVarTableSize, &
-       oda, odam, imean)
-
-    use ModVarTable, only: &
-         VarTable, &
-         InsertVarTable
-
+  subroutine filltab_oda(oda,odam,imean,n1,n2,n3,ng)
+    use var_tables, only: InsertVTab
     implicit none
-    type(VarTable), pointer, intent(in) :: oneVarTable(:)
-    integer, intent(inout) :: oneVarTableSize
-    type(oda_vars), pointer, intent(in) :: oda
-    type(oda_vars), pointer, intent(in) :: odam
-    integer, intent(in) :: imean
-
-    character(len=*), parameter :: h="**(filltab_oda)**"
-
-    if (.not. associated(oda)) then
-       call fatal_error(h//" invoked with unassociated oda")
-    else if (.not. associated(odam)) then
-       call fatal_error(h//" invoked with unassociated odam")
-    else if (.not. associated(oneVarTable)) then
-       call fatal_error(h//" invoked with unasociated oneVarTable")
-    end if
+    include "i8.h"
+    type (oda_vars) :: oda,odam
+    integer, intent(in) :: imean,n1,n2,n3,ng
+    integer(kind=i8) :: npts
+    real, pointer :: var,varm
 
     ! Fill pointers to arrays into variable tables
 
+    npts=n1*n2*n3
 
-    if (associated(oda%uk)) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oda%uk, &
-            'UKODA :3:', &
-            odam%uk, imean)
-    end if
+    if (associated(oda%uk))  &
+         call InsertVTab (oda%uk,odam%uk  &
+         ,ng, npts, imean,  &
+         'UKODA :3:')
+    if (associated(oda%vk))  &
+         call InsertVTab (oda%vk,odam%vk  &
+         ,ng, npts, imean,  &
+         'VKODA :3:')
+    if (associated(oda%tk))  &
+         call InsertVTab (oda%tk,odam%tk  &
+         ,ng, npts, imean,  &
+         'TKODA :3:')
+    if (associated(oda%rk))  &
+         call InsertVTab (oda%rk,odam%rk  &
+         ,ng, npts, imean,  &
+         'RKODA :3:')
+    if (associated(oda%ukv))  &
+         call InsertVTab (oda%ukv,odam%ukv  &
+         ,ng, npts, imean,  &
+         'UVODA :3:')
+    if (associated(oda%vkv))  &
+         call InsertVTab (oda%vkv,odam%vkv  &
+         ,ng, npts, imean,  &
+         'VVODA :3:')
+    if (associated(oda%tkv))  &
+         call InsertVTab (oda%tkv,odam%tkv  &
+         ,ng, npts, imean,  &
+         'TVODA :3:')
+    if (associated(oda%rkv))  &
+         call InsertVTab (oda%rkv,odam%rkv  &
+         ,ng, npts, imean,  &
+         'RVODA :3:')
 
-    if (associated(oda%vk)) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oda%vk, &
-            'VKODA :3:', &
-            odam%vk, imean)
-    end if
-
-    if (associated(oda%tk)) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oda%tk, &
-            'TKODA :3:', &
-            odam%tk, imean)
-    end if
-
-    if (associated(oda%rk)) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oda%rk, &
-            'RKODA :3:', &
-            odam%rk, imean)
-    end if
-
-    if (associated(oda%ukv)) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oda%ukv, &
-            'UVODA :3:', &
-            odam%ukv, imean)
-    end if
-
-    if (associated(oda%vkv)) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oda%vkv, &
-            'VVODA :3:', &
-            odam%vkv, imean)
-    end if
-
-    if (associated(oda%tkv)) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oda%tkv, &
-            'TVODA :3:', &
-            odam%tkv, imean)
-    end if
-
-    if (associated(oda%rkv)) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oda%rkv, &
-            'RVODA :3:', &
-            odam%rkv, imean)
-    end if
-
+    return
   end subroutine filltab_oda
 
   subroutine StoreNamelistFileAtMem_oda(oneNamelistFile)

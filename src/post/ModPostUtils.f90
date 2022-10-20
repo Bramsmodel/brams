@@ -1693,7 +1693,7 @@ contains
      use dump, only: &
       dumpMessage
 
-      include "constants.h"
+      include "constants.f90"
       character(len=*), parameter :: header="**(DumpRealPairs)**"
 
       character(len = *), intent(in) :: h

@@ -1,46 +1,38 @@
 ! Module for urban canopy parameterization (land classes 19 and 21).
 
-module mem_teb
+MODULE mem_teb
 
-  type teb_vars
+  TYPE teb_vars
+
      ! Variables to be dimensioned by (3,nxp,nyp)
-     real, pointer, contiguous :: T_ROOF(:,:,:)
-     real, pointer, contiguous :: T_ROAD(:,:,:)
-     real, pointer, contiguous :: T_WALL(:,:,:)
+     REAL, POINTER, DIMENSION(:,:,:) :: &
+          T_ROOF,T_ROAD,T_WALL
+
      ! Variables to be dimensioned by (nxp,nyp)
-     real, pointer, contiguous :: T_CANYON(:,:)
-     real, pointer, contiguous :: R_CANYON(:,:)
-     real, pointer, contiguous :: TS_ROOF(:,:)
-     real, pointer, contiguous :: TS_ROAD(:,:)
-     real, pointer, contiguous :: TS_WALL(:,:)
-     real, pointer, contiguous :: TI_ROAD(:,:)
-     real, pointer, contiguous :: WS_ROOF(:,:)
-     real, pointer, contiguous :: WS_ROAD(:,:)
-     real, pointer, contiguous :: TI_BLD(:,:)
-     real, pointer, contiguous :: LE_TRAFFIC(:,:)
-     real, pointer, contiguous :: H_TRAFFIC(:,:)
-     real, pointer, contiguous :: LE_INDUSTRY(:,:)
-     real, pointer, contiguous :: H_INDUSTRY(:,:)
-     real, pointer, contiguous :: T2M_TOWN(:,:)
-     real, pointer, contiguous :: R2M_TOWN(:,:)
-     real, pointer, contiguous :: fuso(:,:)
-  end type teb_vars
 
-  type (teb_vars), allocatable, target :: teb_g(:), tebm_g(:)
+     REAL, POINTER, DIMENSION(:,:) ::              &
+          T_CANYON,R_CANYON,TS_ROOF,TS_ROAD,TS_WALL,    &
+          TI_ROAD,WS_ROOF,WS_ROAD,TI_BLD,               &
+          LE_TRAFFIC,H_TRAFFIC,LE_INDUSTRY,H_INDUSTRY,  &
+          T2M_TOWN,R2M_TOWN,fuso
 
-contains
+  END TYPE teb_vars
 
-  subroutine alloc_teb(teb,n1,n2,n3,ng)
+  TYPE (teb_vars), ALLOCATABLE, target :: teb_g(:), tebm_g(:)
 
-    implicit none
-    type (teb_vars) :: teb
-    integer, intent(in) :: n1,n2,n3,ng
+CONTAINS
+
+  SUBROUTINE alloc_teb(teb,n1,n2,n3,ng)
+
+    IMPLICIT NONE
+    TYPE (teb_vars) :: teb
+    INTEGER, INTENT(in) :: n1,n2,n3,ng
 
 
-    allocate (teb%T_ROOF(n1,n2,n3),teb%T_ROAD(n1,n2,n3), &
+    ALLOCATE (teb%T_ROOF(n1,n2,n3),teb%T_ROAD(n1,n2,n3), &
          teb%T_WALL(n1,n2,n3) )
 
-    allocate (teb%T_CANYON(n2,n3),teb%R_CANYON(n2,n3), &
+    ALLOCATE (teb%T_CANYON(n2,n3),teb%R_CANYON(n2,n3), &
          teb%TS_ROOF(n2,n3),teb%TS_ROAD(n2,n3),teb%TS_WALL(n2,n3), &
          teb%TI_ROAD(n2,n3),teb%WS_ROOF(n2,n3),teb%WS_ROAD(n2,n3), &
          teb%TI_BLD(n2,n3),teb%LE_TRAFFIC(n2,n3),teb%H_TRAFFIC(n2,n3), &
@@ -48,225 +40,181 @@ contains
          teb%T2M_TOWN(n2,n3),teb%R2M_TOWN(n2,n3),teb%fuso(n2,n3))
 
 
-    return
-  end subroutine alloc_teb
+    RETURN
+  END SUBROUTINE alloc_teb
 
 
-  subroutine nullify_teb(teb)
+  SUBROUTINE nullify_teb(teb)
 
-    implicit none
-    type (teb_vars) :: teb
-
-
-    if (associated(teb%T_ROOF))  nullify (teb%T_ROOF)
-    if (associated(teb%T_ROAD))  nullify (teb%T_ROAD)
-    if (associated(teb%T_WALL))  nullify (teb%T_WALL)
-
-    if (associated(teb%T_CANYON))  nullify  (teb%T_CANYON)
-    if (associated(teb%R_CANYON))  nullify  (teb%R_CANYON)
-    if (associated(teb%TS_ROOF))   nullify  (teb%TS_ROOF)
-    if (associated(teb%TS_ROAD))   nullify  (teb%TS_ROAD)
-    if (associated(teb%TS_WALL))   nullify  (teb%TS_WALL)
-    if (associated(teb%TI_ROAD))   nullify  (teb%TI_ROAD)
-    if (associated(teb%WS_ROOF))   nullify  (teb%WS_ROOF)
-    if (associated(teb%WS_ROAD))   nullify  (teb%WS_ROAD)
-    if (associated(teb%TI_BLD))    nullify  (teb%TI_BLD)
-    if (associated(teb%LE_TRAFFIC)) nullify (teb%LE_TRAFFIC)
-    if (associated(teb%H_TRAFFIC))  nullify (teb%H_TRAFFIC)
-    if (associated(teb%LE_INDUSTRY)) nullify (teb%LE_INDUSTRY)
-    if (associated(teb%H_INDUSTRY))  nullify (teb%H_INDUSTRY)
-    if (associated(teb%T2M_TOWN))    nullify (teb%T2M_TOWN)
-    if (associated(teb%R2M_TOWN))    nullify (teb%R2M_TOWN)
-    if (associated(teb%fuso))    nullify (teb%fuso)
-
-    return
-  end subroutine nullify_teb
-
-  subroutine dealloc_teb(teb)
-
-    implicit none
-    type (teb_vars) :: teb
-
-    if (associated(teb%T_ROOF))  deallocate (teb%T_ROOF)
-    if (associated(teb%T_ROAD))  deallocate (teb%T_ROAD)
-    if (associated(teb%T_WALL))  deallocate (teb%T_WALL)
-
-    if (associated(teb%T_CANYON))  deallocate  (teb%T_CANYON)
-    if (associated(teb%R_CANYON))  deallocate  (teb%R_CANYON)
-    if (associated(teb%TS_ROOF))   deallocate  (teb%TS_ROOF)
-    if (associated(teb%TS_ROAD))   deallocate  (teb%TS_ROAD)
-    if (associated(teb%TS_WALL))   deallocate  (teb%TS_WALL)
-    if (associated(teb%TI_ROAD))   deallocate  (teb%TI_ROAD)
-    if (associated(teb%WS_ROOF))   deallocate  (teb%WS_ROOF)
-    if (associated(teb%WS_ROAD))   deallocate  (teb%WS_ROAD)
-    if (associated(teb%TI_BLD))    deallocate  (teb%TI_BLD)
-    if (associated(teb%LE_TRAFFIC)) deallocate (teb%LE_TRAFFIC)
-    if (associated(teb%H_TRAFFIC))  deallocate (teb%H_TRAFFIC)
-    if (associated(teb%LE_INDUSTRY)) deallocate (teb%LE_INDUSTRY)
-    if (associated(teb%H_INDUSTRY))  deallocate (teb%H_INDUSTRY)
-
-    if (associated(teb%T2M_TOWN))    deallocate (teb%T2M_TOWN)
-    if (associated(teb%R2M_TOWN))    deallocate (teb%R2M_TOWN)
-    if (associated(teb%fuso))    deallocate (teb%fuso)
-
-    return
-  end subroutine dealloc_teb
+    IMPLICIT NONE
+    TYPE (teb_vars) :: teb
 
 
-  subroutine filltab_teb(oneVarTable, oneVarTableSize, &
-       teb, tebm, imean)
+    IF (ASSOCIATED(teb%T_ROOF))  NULLIFY (teb%T_ROOF)
+    IF (ASSOCIATED(teb%T_ROAD))  NULLIFY (teb%T_ROAD)
+    IF (ASSOCIATED(teb%T_WALL))  NULLIFY (teb%T_WALL)
 
-    ! Build VarTable entry with teb_vars components
+    IF (ASSOCIATED(teb%T_CANYON))  NULLIFY  (teb%T_CANYON)
+    IF (ASSOCIATED(teb%R_CANYON))  NULLIFY  (teb%R_CANYON)
+    IF (ASSOCIATED(teb%TS_ROOF))   NULLIFY  (teb%TS_ROOF)
+    IF (ASSOCIATED(teb%TS_ROAD))   NULLIFY  (teb%TS_ROAD)
+    IF (ASSOCIATED(teb%TS_WALL))   NULLIFY  (teb%TS_WALL)
+    IF (ASSOCIATED(teb%TI_ROAD))   NULLIFY  (teb%TI_ROAD)
+    IF (ASSOCIATED(teb%WS_ROOF))   NULLIFY  (teb%WS_ROOF)
+    IF (ASSOCIATED(teb%WS_ROAD))   NULLIFY  (teb%WS_ROAD)
+    IF (ASSOCIATED(teb%TI_BLD))    NULLIFY  (teb%TI_BLD)
+    IF (ASSOCIATED(teb%LE_TRAFFIC)) NULLIFY (teb%LE_TRAFFIC)
+    IF (ASSOCIATED(teb%H_TRAFFIC))  NULLIFY (teb%H_TRAFFIC)
+    IF (ASSOCIATED(teb%LE_INDUSTRY)) NULLIFY (teb%LE_INDUSTRY)
+    IF (ASSOCIATED(teb%H_INDUSTRY))  NULLIFY (teb%H_INDUSTRY)
+    IF (ASSOCIATED(teb%T2M_TOWN))    NULLIFY (teb%T2M_TOWN)
+    IF (ASSOCIATED(teb%R2M_TOWN))    NULLIFY (teb%R2M_TOWN)
+    IF (ASSOCIATED(teb%fuso))    NULLIFY (teb%fuso)
 
-    use ModVarTable, only: &
-         VarTable, &
-         InsertVarTable
+    RETURN
+  END SUBROUTINE nullify_teb
 
-    implicit none
-    type(VarTable), pointer, intent(in) :: oneVarTable(:)
-    integer, intent(inout) :: oneVarTableSize
-    type(teb_vars), pointer, intent(in) :: teb
-    type(teb_vars), pointer, intent(in) :: tebm
-    integer, intent(in) :: imean
+  SUBROUTINE dealloc_teb(teb)
 
-    character(len=*), parameter :: h="**(filltab_ted)**"
+    IMPLICIT NONE
+    TYPE (teb_vars) :: teb
 
-    if (.not. associated(oneVarTable)) then
-       call fatal_error(h//" oneVarTable not associated")
-    end if
+    IF (ASSOCIATED(teb%T_ROOF))  DEALLOCATE (teb%T_ROOF)
+    IF (ASSOCIATED(teb%T_ROAD))  DEALLOCATE (teb%T_ROAD)
+    IF (ASSOCIATED(teb%T_WALL))  DEALLOCATE (teb%T_WALL)
 
-    if (associated(teb%T_ROOF)) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            teb%T_ROOF, & 
-            'T_ROOF :3:hist:anal:lite:mpti:mpt3:mpt1', &
-            tebm%T_ROOF, imean)
-    end if
+    IF (ASSOCIATED(teb%T_CANYON))  DEALLOCATE  (teb%T_CANYON)
+    IF (ASSOCIATED(teb%R_CANYON))  DEALLOCATE  (teb%R_CANYON)
+    IF (ASSOCIATED(teb%TS_ROOF))   DEALLOCATE  (teb%TS_ROOF)
+    IF (ASSOCIATED(teb%TS_ROAD))   DEALLOCATE  (teb%TS_ROAD)
+    IF (ASSOCIATED(teb%TS_WALL))   DEALLOCATE  (teb%TS_WALL)
+    IF (ASSOCIATED(teb%TI_ROAD))   DEALLOCATE  (teb%TI_ROAD)
+    IF (ASSOCIATED(teb%WS_ROOF))   DEALLOCATE  (teb%WS_ROOF)
+    IF (ASSOCIATED(teb%WS_ROAD))   DEALLOCATE  (teb%WS_ROAD)
+    IF (ASSOCIATED(teb%TI_BLD))    DEALLOCATE  (teb%TI_BLD)
+    IF (ASSOCIATED(teb%LE_TRAFFIC)) DEALLOCATE (teb%LE_TRAFFIC)
+    IF (ASSOCIATED(teb%H_TRAFFIC))  DEALLOCATE (teb%H_TRAFFIC)
+    IF (ASSOCIATED(teb%LE_INDUSTRY)) DEALLOCATE (teb%LE_INDUSTRY)
+    IF (ASSOCIATED(teb%H_INDUSTRY))  DEALLOCATE (teb%H_INDUSTRY)
 
-    if (associated(teb%T_ROAD)) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            teb%T_ROAD, & 
-            'T_ROAD :3:hist:anal:lite:mpti:mpt3:mpt1', &
-            tebm%T_ROAD, imean)
-    end if
+    IF (ASSOCIATED(teb%T2M_TOWN))    DEALLOCATE (teb%T2M_TOWN)
+    IF (ASSOCIATED(teb%R2M_TOWN))    DEALLOCATE (teb%R2M_TOWN)
+    IF (ASSOCIATED(teb%fuso))    DEALLOCATE (teb%fuso)
 
-    if (associated(teb%T_WALL)) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            teb%T_WALL, & 
-            'T_WALL :3:hist:anal:lite:mpti:mpt3:mpt1', &
-            tebm%T_WALL, imean)
-    end if
+    RETURN
+  END SUBROUTINE dealloc_teb
 
-    if (associated(teb%T_CANYON)) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            teb%T_CANYON, & 
-            'T_CANYON :2:hist:anal:lite:mpti:mpt3:mpt1', &
-            tebm%T_CANYON, imean)
-    end if
 
-    if (associated(teb%R_CANYON)) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            teb%R_CANYON, & 
-            'R_CANYON :2:hist:anal:lite:mpti:mpt3:mpt1', &
-            tebm%R_CANYON, imean)
-    end if
+  SUBROUTINE filltab_teb(teb,tebm,imean,n1,n2,n3,ng)
 
-    if (associated(teb%TS_ROOF)) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            teb%TS_ROOF, & 
-            'TS_ROOF :2:hist:anal:lite:mpti:mpt3:mpt1', &
-            tebm%TS_ROOF, imean)
-    end if
+    USE var_tables
 
-    if (associated(teb%TS_ROAD)) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            teb%TS_ROAD, & 
-            'TS_ROAD :2:hist:anal:lite:mpti:mpt3:mpt1', &
-            tebm%TS_ROAD, imean)
-    end if
+    IMPLICIT NONE
+    include "i8.h"
+    TYPE (teb_vars) :: teb,tebm
+    INTEGER, INTENT(in) :: imean,n1,n2,n3,ng
+    INTEGER(kind=i8) :: npts
+    REAL, POINTER :: var,varm
 
-    if (associated(teb%TS_WALL)) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            teb%TS_WALL, & 
-            'TS_WALL :2:hist:anal:lite:mpti:mpt3:mpt1', &
-            tebm%TS_WALL, imean)
-    end if
+    ! Fill pointers to arrays into variable tables
 
-    if (associated(teb%TI_ROAD)) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            teb%TI_ROAD, & 
-            'TI_ROAD :2:hist:anal:lite:mpti:mpt3:mpt1', &
-            tebm%TI_ROAD, imean)
-    end if
+    npts=n1*n2*n3
 
-    if (associated(teb%WS_ROOF)) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            teb%WS_ROOF, & 
-            'WS_ROOF :2:hist:anal:lite:mpti:mpt3:mpt1', &
-            tebm%WS_ROOF, imean)
-    end if
+    IF (ASSOCIATED(teb%T_ROOF))  &
+         CALL InsertVTab (teb%T_ROOF,tebm%T_ROOF&
+         ,ng, npts, imean,  &
+         'T_ROOF :3:hist:anal:lite:mpti:mpt3:mpt1')
+    IF (ASSOCIATED(teb%T_ROAD))  &
+         CALL InsertVTab (teb%T_ROAD,tebm%T_ROAD&
+         ,ng, npts, imean,  &
+         'T_ROAD :3:hist:anal:lite:mpti:mpt3:mpt1')
+    IF (ASSOCIATED(teb%T_WALL))  &
+         CALL InsertVTab (teb%T_WALL,tebm%T_WALL&
+         ,ng, npts, imean,  &
+         'T_WALL :3:hist:anal:lite:mpti:mpt3:mpt1')
 
-    if (associated(teb%WS_ROAD)) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            teb%WS_ROAD, & 
-            'WS_ROAD :2:hist:anal:lite:mpti:mpt3:mpt1', &
-            tebm%WS_ROAD, imean)
-    end if
+    npts=n2*n3
 
-    if (associated(teb%TI_BLD)) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            teb%TI_BLD, & 
-            'TI_BLD :2:hist:anal:lite:mpti:mpt3:mpt1', &
-            tebm%TI_BLD, imean)
-    end if
+    IF (ASSOCIATED(teb%T_CANYON))  &
+         CALL InsertVTab (teb%T_CANYON,tebm%T_CANYON&
+         ,ng, npts, imean,  &
+         'T_CANYON :2:hist:anal:lite:mpti:mpt3:mpt1')
 
-    if (associated(teb%LE_TRAFFIC)) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            teb%LE_TRAFFIC, & 
-            'LE_TRAFFIC :2:hist:anal:lite:mpti:mpt3:mpt1', &
-            tebm%LE_TRAFFIC, imean)
-    end if
+    IF (ASSOCIATED(teb%R_CANYON))  &
+         CALL InsertVTab (teb%R_CANYON,tebm%R_CANYON&
+         ,ng, npts, imean,  &
+         'R_CANYON :2:hist:anal:lite:mpti:mpt3:mpt1')
 
-    if (associated(teb%H_TRAFFIC)) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            teb%H_TRAFFIC, & 
-            'H_TRAFFIC :2:hist:anal:lite:mpti:mpt3:mpt1', &
-            tebm%H_TRAFFIC, imean)
-    end if
+    IF (ASSOCIATED(teb%TS_ROOF))  &
+         CALL InsertVTab (teb%TS_ROOF,tebm%TS_ROOF&
+         ,ng, npts, imean,  &
+         'TS_ROOF :2:hist:anal:lite:mpti:mpt3:mpt1')
 
-    if (associated(teb%LE_INDUSTRY)) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            teb%LE_INDUSTRY, & 
-            'LE_INDUSTRY :2:hist:anal:lite:mpti:mpt3:mpt1', &
-            tebm%LE_INDUSTRY, imean)
-    end if
+    IF (ASSOCIATED(teb%TS_ROAD))  &
+         CALL InsertVTab (teb%TS_ROAD,tebm%TS_ROAD&
+         ,ng, npts, imean,  &
+         'TS_ROAD :2:hist:anal:lite:mpti:mpt3:mpt1')
 
-    if (associated(teb%H_INDUSTRY)) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            teb%H_INDUSTRY, & 
-            'H_INDUSTRY :2:hist:anal:lite:mpti:mpt3:mpt1', &
-            tebm%H_INDUSTRY, imean)
-    end if
+    IF (ASSOCIATED(teb%TS_WALL))  &
+         CALL InsertVTab (teb%TS_WALL,tebm%TS_WALL&
+         ,ng, npts, imean,  &
+         'TS_WALL :2:hist:anal:lite:mpti:mpt3:mpt1')
 
-    if (associated(teb%T2M_TOWN)) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            teb%T2M_TOWN, & 
-            'T2M_TOWN :2:hist:anal:lite:mpti:mpt3:mpt1', &
-            tebm%T2M_TOWN, imean)
-    end if
+    IF (ASSOCIATED(teb%TI_ROAD))  &
+         CALL InsertVTab (teb%TI_ROAD,tebm%TI_ROAD&
+         ,ng, npts, imean,  &
+         'TI_ROAD :2:hist:anal:lite:mpti:mpt3:mpt1')
 
-    if (associated(teb%R2M_TOWN)) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            teb%R2M_TOWN, & 
-            'R2M_TOWN :2:hist:anal:lite:mpti:mpt3:mpt1', &
-            tebm%R2M_TOWN, imean)
-    end if
+    IF (ASSOCIATED(teb%WS_ROOF))  &
+         CALL InsertVTab (teb%WS_ROOF,tebm%WS_ROOF&
+         ,ng, npts, imean,  &
+         'WS_ROOF :2:hist:anal:lite:mpti:mpt3:mpt1')
 
-    if (associated(teb%fuso)) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            teb%fuso, & 
-            'FUSO :2:hist:anal:lite:mpti:mpt3:mpt1', &
-            tebm%fuso, imean)
-    end if
-  end subroutine filltab_teb
+    IF (ASSOCIATED(teb%WS_ROAD))  &
+         CALL InsertVTab (teb%WS_ROAD,tebm%WS_ROAD&
+         ,ng, npts, imean,  &
+         'WS_ROAD :2:hist:anal:lite:mpti:mpt3:mpt1')
 
-end module mem_teb
+    IF (ASSOCIATED(teb%TI_BLD))  &
+         CALL InsertVTab (teb%TI_BLD,tebm%TI_BLD&
+         ,ng, npts, imean,  &
+         'TI_BLD :2:hist:anal:lite:mpti:mpt3:mpt1')
+    IF (ASSOCIATED(teb%LE_TRAFFIC))  &
+         CALL InsertVTab (teb%LE_TRAFFIC,tebm%LE_TRAFFIC&
+         ,ng, npts, imean,  &
+         'LE_TRAFFIC :2:hist:anal:lite:mpti:mpt3:mpt1')
+
+    IF (ASSOCIATED(teb%H_TRAFFIC))  &
+         CALL InsertVTab (teb%H_TRAFFIC,tebm%H_TRAFFIC&
+         ,ng, npts, imean,  &
+         'H_TRAFFIC :2:hist:anal:lite:mpti:mpt3:mpt1')
+
+    IF (ASSOCIATED(teb%LE_INDUSTRY))  &
+         CALL InsertVTab (teb%LE_INDUSTRY,tebm%LE_INDUSTRY&
+         ,ng, npts, imean,  &
+         'LE_INDUSTRY :2:hist:anal:lite:mpti:mpt3:mpt1')
+
+    IF (ASSOCIATED(teb%H_INDUSTRY))  &
+         CALL InsertVTab (teb%H_INDUSTRY,tebm%H_INDUSTRY&
+         ,ng, npts, imean,  &
+         'H_INDUSTRY :2:hist:anal:lite:mpti:mpt3:mpt1')
+
+    IF (ASSOCIATED(teb%T2M_TOWN))  &
+         CALL InsertVTab (teb%T2M_TOWN,tebm%T2M_TOWN&
+         ,ng, npts, imean,  &
+         'T2M_TOWN :2:hist:anal:lite:mpti:mpt3:mpt1')
+
+    IF (ASSOCIATED(teb%R2M_TOWN))  &
+         CALL InsertVTab (teb%R2M_TOWN,tebm%R2M_TOWN&
+         ,ng, npts, imean,  &
+         'R2M_TOWN :2:hist:anal:lite:mpti:mpt3:mpt1')
+
+    IF (ASSOCIATED(teb%fuso))  &
+         CALL InsertVTab (teb%fuso,tebm%fuso&
+         ,ng, npts, imean,  &
+         'FUSO :2:hist:anal:lite:mpti:mpt3:mpt1')
+
+    RETURN
+  END SUBROUTINE filltab_teb
+
+END MODULE mem_teb
