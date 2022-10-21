@@ -10,32 +10,27 @@
 
 module mem_turb_scalar
 
-  use grid_dims
-
   implicit none
 
   type turb_s_vars
-
-     real, pointer, dimension(:,:,:) :: &
-          hksc
-
+     real, pointer, contiguous ::  hksc(:,:,:) => null()
   end type turb_s_vars
 
-  type (turb_s_vars), allocatable :: turb_s(:),turbm_s(:)
+  type (turb_s_vars), allocatable, target :: turb_s(:)
+  type (turb_s_vars), allocatable, target :: turbm_s(:)
 
 
 contains
 
-  subroutine alloc_turb_s(turb_s_local, n1, n2, n3, ng)
+  subroutine alloc_turb_s(turb_s_local, n1, n2, n3)
 
     implicit none
 
     type (turb_s_vars)  :: turb_s_local
-    integer, intent(in) :: n1,n2,n3,ng
+    integer, intent(in) :: n1,n2,n3
 
-    !print*, 'enter alloc_turb_s',n1,n2,n3
-
-    allocate (turb_s_local%hksc(n1,n2,n3));turb_s_local%hksc=0.0
+    allocate (turb_s_local%hksc(n1,n2,n3))
+    turb_s_local%hksc=0.0
 
     return
   end subroutine alloc_turb_s
@@ -75,24 +70,36 @@ contains
 
   !---------------------------------------------------------------
 
-  subroutine filltab_turb_s(turb_s,turbm_s,imean,n1,n2,n3,ng)
-    use var_tables, only: InsertVTab
+  subroutine filltab_turb_s(oneVarTable, oneVarTableSize, &
+       turb_s, turbm_s, imean)
+
+    ! Build VarTable entry with turb_s_vars components
+
+    use ModVarTable, only: &
+         VarTable, &
+         InsertVarTable
+    
     implicit none
-    include "i8.h"
-    type (turb_s_vars) :: turb_s,turbm_s
-    integer, intent(in) :: n1,n2,n3,ng,imean
-    integer(kind=i8) :: npts
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
+    type(turb_s_vars), pointer, intent(in) :: turb_s
+    type(turb_s_vars), pointer, intent(in) :: turbm_s
+    integer, intent(in) :: imean
 
-    ! Fill pointers to arrays into variable tables
+    character(len=*), parameter :: h="**(filltab_turb_s)**"
 
-    npts=n1*n2*n3
-
-    if (associated(turb_s%hksc))  &
-         call InsertVTab (turb_s%hksc,turbm_s%hksc  &
-         ,ng, npts, imean,  &
-         'HKSC :3:hist:anal:mpti:mpt3:mpt1')
-
-    return
+    if (.not. associated(oneVarTable)) then
+       call fatal_error(h//" oneVarTable not associated")
+    else if (.not. associated(turb_s)) then
+       call fatal_error(h//" turb_s not associated")
+    end if
+    
+    if (associated(turb_s%hksc)) then
+       call InsertVarTable (OneVarTable, oneVarTableSize, &
+            turb_s%hksc, &
+            'HKSC :3:hist:anal:mpti:mpt3:mpt1', &
+            turbm_s%hksc, imean)
+    end if
   end subroutine filltab_turb_s
 
 end module mem_turb_scalar

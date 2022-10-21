@@ -50,7 +50,7 @@
       use parrrsw, only : nbndsw, ngptsw
       use rrsw_con, only: grav
       use rrsw_wvn, only: ngb
-      use rrsw_vsn
+      use rrsw_vsn, ONLY:
 
       implicit none
 
@@ -356,7 +356,6 @@
   !   without cloud condensate or the opposite).
   !---------------------------------------------------------------------------------------------------------------
 
-      use mcica_random_numbers
 ! The Mersenne Twister random number engine
       use MersenneTwister, only: randomNumberSequence, &   
                                  new_RandomNumberSequence, getRandomReal

@@ -10,7 +10,7 @@ module an_header
 
   implicit none
 
-  include "i8.h"
+  include "constants.h"
   include "files.h"
 
   ! head_table: single field on i/o file descriptor data structure
@@ -413,8 +413,7 @@ contains
        ! file opened OK?
 
        if (oneIOFileDS%unit == -1) then
-!!$          call fatal_error(h//" open file for "//trim(oneIOFileDS%fId)//" fails")
-          call fatal_error(h//" file "//trim(oneIOFileDS%fName(index))//" not found")
+          call fatal_error(h//" open file for "//trim(oneIOFileDS%fId)//" fails")
        end if
 
     else
@@ -650,7 +649,7 @@ contains
 
     ! local variables
 
-    integer          :: ierr
+    integer          :: i, ierr
     integer(kind=i8) :: fieldSize_i8
     character(len=8) :: c0
     character(len=8) :: c1
@@ -678,7 +677,9 @@ contains
        write(c0,"(i8)") oneIOFileDS%unit
        write(*,"(a)") h//" will write field "//varn//" at unit "//trim(adjustl(c0))
     end if
-    call writebin(oneIOFileDS%unit, field, fieldSize_i8)
+
+    write(oneIOFileDS%unit) (field(i),i=1,fieldSize_i8)
+
     oneIOFileDS%fPos = oneIOFileDS%fPos + fieldSize_i8
 
   end subroutine ArrayWriteBinStoreInfo
@@ -729,7 +730,7 @@ contains
        write(c0,"(i8)") oneIOFileDS%unit
        write(*,"(a)") h//" will write field "//varn//" at unit "//trim(adjustl(c0))
     end if
-    call writebin(oneIOFileDS%unit, field, fieldSize)
+    call writebin(oneIOFileDS%unit, (/field/), int(fieldSize,i8))
     oneIOFileDS%fPos = oneIOFileDS%fPos + fieldSize
 
   end subroutine PointerWriteBinStoreInfo
@@ -789,68 +790,6 @@ contains
 
 
 
-  subroutine DumpIOHeadTable(oneIOFileDS)
-
-    type(IOFileDS), intent(inout) :: oneIOFileDS
-
-    integer, parameter :: unitLow=10
-    integer, parameter :: unitHigh=99
-    integer :: iunit
-    integer :: nv
-    logical :: op
-    character(len=8) :: c0
-    character(len=*), parameter :: h="**(DumpIOHeadTable)**"
-
-    ! return if disabled 
-
-    if (.not. oneIOFileDS%enable) return
-
-    ! find available Fortran unit
-    
-    do iunit = unitLow, unitHigh
-       inquire (unit=iunit, opened=op)
-       if (.not. op) exit
-    end do
-    if (iunit <= unitHigh) then
-       oneIOFileDS%unit = iunit
-    else
-       call fatal_error(h//" Fortran i/o units exausted")
-    end if
-
-    ! open file, write header information, close file
-
-    call rams_f_open_u(oneIOFileDS%unit, oneIOFileDS%fHeadName,  &
-         'FORMATTED','REPLACE','WRITE', "ASIS", oneIOFileDS%iclobber)
-    if (dumpLocal) then
-       write(c0,"(i8)") oneIOFileDS%unit
-       write(*, "(a)") h//" opened new file "//trim(oneIOFileDS%fHeadName)//&
-            " at unit "//trim(adjustl(c0))
-    end if
-
-    write(oneIOFileDS%unit,'(i6)') oneIOFileDS%ht%lastUsed
-    do nv = 1, oneIOFileDS%ht%lastUsed
-       write(oneIOFileDS%unit,fmt='(a16,1x,i12,i3,i3,1x,i9)') &
-            oneIOFileDS%ht%f(nv)%string,                      &
-            oneIOFileDS%ht%f(nv)%npointer,                    &
-            oneIOFileDS%ht%f(nv)%idim_type,                   &
-            oneIOFileDS%ht%f(nv)%ngrid,                       &
-            oneIOFileDS%ht%f(nv)%nvalues
-    end do
-
-    call commio(oneIOFileDS%fId,'WRITE',oneIOFileDS%unit)
-    close(oneIOFileDS%unit)
-    if (dumpLocal) then
-       write(c0,"(i8)") oneIOFileDS%unit
-       write(*, "(a)") h//" dumped and close file "//trim(oneIOFileDS%fHeadName)//&
-            " at unit "//trim(adjustl(c0))
-    end if
-
-    oneIOFileDS%unit = -1
-  end subroutine DumpIOHeadTable
-
-
-
-
   subroutine DestroyIOFileDS(oneIOFileDS)
     type(IOFileDS), intent(inout) :: oneIOFileDS
 
@@ -874,4 +813,13 @@ contains
     oneIOFileDS%enable = .false.
     oneIOFileDS%fId = "    "
   end subroutine DestroyIOFileDS
+
+  subroutine WriteBin(iun,var,npts)
+    ! moved from io/ModRio.f90 to avoid circular dependencies
+    integer(kind=i8), intent(in) :: npts
+    real, intent(in)             :: var(npts)
+    integer, intent(in)          :: iun
+    integer                      :: i
+    write(iun) (var(i),i=1,npts)
+  end subroutine WriteBin
 end module an_header

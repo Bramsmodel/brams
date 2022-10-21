@@ -1,5 +1,5 @@
  module mem_tuv
-   USE ModTuv, ONLY: nw,kz,ks
+   use ModTuv, only: nw,kz,ks
 
   implicit none
 
@@ -47,21 +47,25 @@
 
 
   type mtuv
-  REAL,POINTER,DIMENSION(:,:,:,:) :: g_tauaer
-  REAL,POINTER,DIMENSION(:,:,:,:) :: g_wol
-  REAL,POINTER,DIMENSION(:,:,:,:) :: g_gol
-  REAL,POINTER,DIMENSION(:,:,:,:) :: g_taucld
-  REAL,POINTER,DIMENSION(:,:,:,:) :: g_wcld
-  REAL,POINTER,DIMENSION(:,:,:,:) :: g_gcld
-  end type
-  type (mtuv), allocatable, dimension(:) :: carma_tuv,carma_tuvm
+     real, pointer, contiguous :: g_tauaer(:,:,:,:)
+     real, pointer, contiguous :: g_wol(:,:,:,:)
+     real, pointer, contiguous :: g_gol(:,:,:,:)
+     real, pointer, contiguous :: g_taucld(:,:,:,:)
+     real, pointer, contiguous :: g_wcld(:,:,:,:)
+     real, pointer, contiguous :: g_gcld(:,:,:,:)
+  end type mtuv
+  
+  type (mtuv), allocatable, target :: carma_tuv(:)
+  type (mtuv), allocatable, target :: carma_tuvm(:)
 
   type tuvbio
-    REAL,POINTER,DIMENSION(:,:) :: rateUV
+     real, pointer, contiguous :: rateUV(:,:)
   end type tuvbio
-  type(tuvbio), allocatable, dimension(:,:) :: tuv_bio,tuv_biom
+ 
+  type(tuvbio), allocatable, target :: tuv_bio(:,:)
+  type(tuvbio), allocatable, target :: tuv_biom(:,:)
 
-  INTEGER,DIMENSION(:),allocatable :: tuv2carma
+  integer,dimension(:),allocatable :: tuv2carma
 
 
  contains
@@ -190,27 +194,37 @@
 
   end subroutine nullify_carma_tuv
 
-  subroutine filltab_tuv_bio(tuv_bio, tuv_biom, imean, n1, n2, n3, ng)
+  subroutine filltab_tuv_bio(oneVarTable, oneVarTableSize, &
+       tuv_bio, tuv_biom, nbio, imean)
 
-    use var_tables, only: InsertVTab
-    use mem_stilt, only: iexev
+    use ModVarTable, only: &
+         VarTable, &
+         InsertVarTable
+
     implicit none
 
-    type (tuvbio), intent(in) :: tuv_bio, tuv_biom
-    integer, intent(in)           :: imean, n1, n2, n3, ng
-    integer, parameter :: i8 = selected_int_kind(14) !Kind for 64-bits Integer Numbers
-    integer(kind=i8) :: npts
-    real, pointer :: var, varm
-    integer :: k
+    type(VarTable), pointer, intent(in) :: oneVarTable(:)
+    integer, intent(inout) :: oneVarTableSize
+    type(tuvbio), pointer, intent(in) :: tuv_bio
+    type(tuvbio), pointer, intent(in) :: tuv_biom
+    integer, intent(in) :: nbio
+    integer, intent(in) :: imean
+    
+    character(len=*), parameter :: h="**(filltab_tuv_bio)**"
 
+    if (.not. associated(oneVarTable)) then
+       call fatal_error(h//" oneVarTable not associated")
+    else if (.not. associated(tuv_bio)) then
+       call fatal_error(h//" tuv_bio not associated")
+    end if
+    
     ! Fill pointers to arrays into variable tables
 
-    npts = n2*n3
-
     if (associated(tuv_bio%rateUV)) then
-      call InsertVTab (tuv_bio%rateUV(:,:),tuv_biom%rateUV(:,:)  &
-         ,ng, npts, imean,  &
-         nameVar(n1)//' :2:hist:anal:mpti:mpt3:mpt2')
+          call InsertVarTable (oneVarTable, oneVarTableSize, &
+               tuv_bio%rateUV, &
+               nameVar(nbio)//' :2:hist:anal:mpti:mpt3:mpt2', &
+               tuv_biom%rateUV, imean)
     end if
 
   end subroutine filltab_tuv_bio

@@ -9,67 +9,70 @@
 
 Module mem_leaf
 
-  use ModNamelistFile, only: namelistFile
+  use ModNamelistFile, only: &
+       namelistFile
 
-  use grid_dims
+  use grid_dims, only: &
+       nzgmax
 
   Type leaf_vars
 
      ! Variables to be dimensioned by (nxp,nyp,nzg,npatch)
 
-     real, pointer :: soil_water(:,:,:,:)
-     real, pointer :: soil_energy(:,:,:,:)
-     real, pointer :: soil_text(:,:,:,:)
+     real, pointer, contiguous :: soil_water(:,:,:,:)
+     real, pointer, contiguous :: soil_energy(:,:,:,:)
+     real, pointer, contiguous :: soil_text(:,:,:,:)
 
      ! Variables to be dimensioned by (nxp,nyp,nzs,npatch)
 
-     real, pointer :: sfcwater_mass(:,:,:,:)
-     real, pointer :: sfcwater_energy(:,:,:,:)
-     real, pointer :: sfcwater_depth(:,:,:,:)
+     real, pointer, contiguous :: sfcwater_mass(:,:,:,:)
+     real, pointer, contiguous :: sfcwater_energy(:,:,:,:)
+     real, pointer, contiguous :: sfcwater_depth(:,:,:,:)
 
      ! Variables to be dimensioned by (nxp,nyp,npatch)
 
-     real, pointer :: ustar(:,:,:)
-     real, pointer :: tstar(:,:,:)
-     real, pointer :: rstar(:,:,:)
-     real, pointer :: veg_fracarea(:,:,:)
-     real, pointer :: veg_lai(:,:,:)
-     real, pointer :: veg_rough(:,:,:)
-     real, pointer :: veg_height(:,:,:)
-     real, pointer :: veg_albedo(:,:,:)
-     real, pointer :: veg_tai(:,:,:)
-     real, pointer :: patch_area(:,:,:)
-     real, pointer :: patch_rough(:,:,:)
-     real, pointer :: patch_wetind(:,:,:)
-     real, pointer :: leaf_class(:,:,:)
-     real, pointer :: soil_rough(:,:,:)
-     real, pointer :: sfcwater_nlev(:,:,:)
-     real, pointer :: stom_resist(:,:,:)
-     real, pointer :: ground_rsat(:,:,:)
-     real, pointer :: ground_rvap(:,:,:)
-     real, pointer :: veg_water(:,:,:)
-     real, pointer :: veg_temp(:,:,:)
-     real, pointer :: can_rvap(:,:,:)
-     real, pointer :: can_temp(:,:,:)
-     real, pointer :: veg_ndvip(:,:,:)
-     real, pointer :: veg_ndvic(:,:,:)
-     real, pointer :: veg_ndvif(:,:,:)
+     real, pointer, contiguous :: ustar(:,:,:)
+     real, pointer, contiguous :: tstar(:,:,:)
+     real, pointer, contiguous :: rstar(:,:,:)
+     real, pointer, contiguous :: veg_fracarea(:,:,:)
+     real, pointer, contiguous :: veg_lai(:,:,:)
+     real, pointer, contiguous :: veg_rough(:,:,:)
+     real, pointer, contiguous :: veg_height(:,:,:)
+     real, pointer, contiguous :: veg_albedo(:,:,:)
+     real, pointer, contiguous :: veg_tai(:,:,:)
+     real, pointer, contiguous :: patch_area(:,:,:)
+     real, pointer, contiguous :: patch_rough(:,:,:)
+     real, pointer, contiguous :: patch_wetind(:,:,:)
+     real, pointer, contiguous :: leaf_class(:,:,:)
+     real, pointer, contiguous :: soil_rough(:,:,:)
+     real, pointer, contiguous :: sfcwater_nlev(:,:,:)
+     real, pointer, contiguous :: stom_resist(:,:,:)
+     real, pointer, contiguous :: ground_rsat(:,:,:)
+     real, pointer, contiguous :: ground_rvap(:,:,:)
+     real, pointer, contiguous :: veg_water(:,:,:)
+     real, pointer, contiguous :: veg_temp(:,:,:)
+     real, pointer, contiguous :: can_rvap(:,:,:)
+     real, pointer, contiguous :: can_temp(:,:,:)
+     real, pointer, contiguous :: veg_ndvip(:,:,:)
+     real, pointer, contiguous :: veg_ndvic(:,:,:)
+     real, pointer, contiguous :: veg_ndvif(:,:,:)
 
 
      ! TEB_SPM
-     real, pointer :: G_URBAN(:,:,:)
+     real, pointer, contiguous :: G_URBAN(:,:,:)
 
-     real, pointer :: R_aer(:,:,:)   !kml drydep
+     real, pointer, contiguous :: R_aer(:,:,:)   !kml drydep
 
      ! Variables to be dimensioned by (nxp,nyp)
 
-     real, pointer :: snow_mass(:,:)
-     real, pointer :: snow_depth(:,:)
-     real, pointer :: seatp(:,:)
-     real, pointer :: seatf(:,:)
+     real, pointer, contiguous :: snow_mass(:,:)
+     real, pointer, contiguous :: snow_depth(:,:)
+     real, pointer, contiguous :: seatp(:,:)
+     real, pointer, contiguous :: seatf(:,:)
   End Type leaf_vars
 
-  type (leaf_vars), allocatable :: leaf_g(:), leafm_g(:)
+  type (leaf_vars), pointer :: leaf_g(:) => null()
+  type (leaf_vars), pointer :: leafm_g(:) => null()
 
   !----------------------------------------------------------------------------
   integer :: nslcon ! from RAMSIN
@@ -136,13 +139,13 @@ Contains
 
     allocate (leaf%ground_rsat  (nx,ny,np));leaf%ground_rsat=0.0
     allocate (leaf%ground_rvap  (nx,ny,np));leaf%ground_rvap=0.0
-;
+    ;
     allocate (leaf%veg_water    (nx,ny,np));leaf%veg_water  =0.0
     allocate (leaf%veg_temp     (nx,ny,np));leaf%veg_temp   =0.0
-;                                          
+    ;                                          
     allocate (leaf%can_rvap     (nx,ny,np));leaf%can_rvap   =0.0
     allocate (leaf%can_temp     (nx,ny,np));leaf%can_temp   =0.0
-;                                          
+    ;                                          
     allocate (leaf%veg_ndvip    (nx,ny,np));leaf%veg_ndvip  =0.0
     allocate (leaf%veg_ndvic    (nx,ny,np));leaf%veg_ndvic  =0.0
     allocate (leaf%veg_ndvif    (nx,ny,np));leaf%veg_ndvif  =0.0
@@ -288,23 +291,28 @@ Contains
 
   ! ********************************************************************
 
-  subroutine filltab_leaf(leaf,leafm,imean,nz,nx,ny,nzg,nzs,np,ng)
-    ! TEB_SPM
-    use teb_spm_start, only: TEB_SPM ! INTENT(IN)
-    ! ALF
-    use io_params, only: ipastin ! INTENT(IN)
-    use var_tables, only: InsertVTab
+  subroutine filltab_leaf(oneVarTable, oneVarTableSize, &
+       leaf, leafm, imean)
+
+    use teb_spm_start, only: &
+         TEB_SPM
+
+    use io_params, only: &
+         ipastin
+
+    use ModVarTable, only: &
+         VarTable, &
+         InsertVarTable
 
     implicit none
-    include "i8.h"
-    type (leaf_vars) :: leaf,leafm
-    integer, intent(in) :: imean,nz,nx,ny,nzg,nzs,np,ng
-    integer(kind=i8) :: npts
-    real, pointer :: var,varm
-    ! ALF
+    type(VarTable), pointer, intent(in) :: oneVarTable(:) 
+    integer, intent(inout) :: oneVarTableSize
+    type (leaf_vars), pointer, intent(in) :: leaf
+    type (leaf_vars), pointer, intent(in) :: leafm
+    integer, intent(in) :: imean
+
     character(len=8) :: str_recycle
 
-    ! ALF
     str_recycle = ''
     if (ipastin == 1) then
        str_recycle = ':recycle'
@@ -312,136 +320,193 @@ Contains
 
     ! Fill pointers to arrays into variable tables
 
-    npts=nzg*nx*ny*np
-    call InsertVTab (leaf%soil_water,leafm%soil_water  &
-         ,ng, npts, imean,  &
-         'SOIL_WATER :4:hist:anal:mpti:mpt3'//trim(str_recycle))
-    call InsertVTab (leaf%soil_energy,leafm%soil_energy  &
-         ,ng, npts, imean,  &
-         'SOIL_ENERGY :4:hist:anal:mpti:mpt3'//trim(str_recycle))
-    call InsertVTab (leaf%soil_text,leafm%soil_text  &
-         ,ng, npts, imean,  &
-         'SOIL_TEXT :4:hist:anal:mpti:mpt3'//trim(str_recycle))
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%soil_water, &
+         'SOIL_WATER :4:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%soil_water, imean)
 
-    npts=nzs*nx*ny*np
-    call InsertVTab (leaf%sfcwater_mass,leafm%sfcwater_mass  &
-         ,ng, npts, imean,  &
-         'SFCWATER_MASS :5:hist:anal:mpti:mpt3'//trim(str_recycle))
-    call InsertVTab (leaf%sfcwater_energy, leafm%sfcwater_energy &
-         ,ng, npts, imean,  &
-         'SFCWATER_ENERGY :5:hist:anal:mpti:mpt3'//trim(str_recycle))
-    call InsertVTab (leaf%sfcwater_depth,leafm%sfcwater_depth  &
-         ,ng, npts, imean,  &
-         'SFCWATER_DEPTH :5:hist:anal:mpti:mpt3'//trim(str_recycle))
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%soil_energy, &
+         'SOIL_ENERGY :4:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%soil_energy, imean)
 
-    npts=nx*ny*np
-    call InsertVTab (leaf%ustar,leafm%ustar  &
-         ,ng, npts, imean,  &
-         'USTAR :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    call InsertVTab (leaf%tstar,leafm%tstar  &
-         ,ng, npts, imean,  &
-         'TSTAR :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    call InsertVTab (leaf%rstar,leafm%rstar  &
-         ,ng, npts, imean,  &
-         'RSTAR :6:hist:anal:mpti:mpt3'//trim(str_recycle))
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%soil_text, &
+         'SOIL_TEXT :4:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%soil_text, imean)
 
-    call InsertVTab (leaf%veg_fracarea,leafm%veg_fracarea  &
-         ,ng, npts, imean,  &
-         'VEG_FRACAREA :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    call InsertVTab (leaf%veg_lai,leafm%veg_lai  &
-         ,ng, npts, imean,  &
-         'VEG_LAI :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    call InsertVTab (leaf%veg_rough,leafm%veg_rough  &
-         ,ng, npts, imean,  &
-         'VEG_ROUGH :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    call InsertVTab (leaf%veg_height,leafm%veg_height  &
-         ,ng, npts, imean,  &
-         'VEG_HEIGHT :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    call InsertVTab (leaf%veg_albedo,leafm%veg_albedo  &
-         ,ng, npts, imean,  &
-         'VEG_ALBEDO :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    call InsertVTab (leaf%veg_tai,leafm%veg_tai  &
-         ,ng, npts, imean,  &
-         'VEG_TAI :6:hist:anal:mpti:mpt3'//trim(str_recycle))
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%sfcwater_mass, &
+         'SFCWATER_MASS :5:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%sfcwater_mass, imean)
 
-    call InsertVTab (leaf%patch_area,leafm%patch_area  &
-         ,ng, npts, imean,  &
-         'PATCH_AREA :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    call InsertVTab (leaf%patch_rough,leafm%patch_rough  &
-         ,ng, npts, imean,  &
-         'PATCH_ROUGH :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    call InsertVTab (leaf%patch_wetind,leafm%patch_wetind  &
-         ,ng, npts, imean,  &
-         'PATCH_WETIND :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    call InsertVTab (leaf%leaf_class,leafm%leaf_class  &
-         ,ng, npts, imean,  &
-         'LEAF_CLASS :6:hist:anal:mpti:mpt3'//trim(str_recycle))
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%sfcwater_energy,  &
+         'SFCWATER_ENERGY :5:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%sfcwater_energy, imean)
+
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%sfcwater_depth, &
+         'SFCWATER_DEPTH :5:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%sfcwater_depth, imean)
+
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%ustar, &
+         'USTAR :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%ustar, imean)
+
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%tstar, &
+         'TSTAR :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%tstar, imean)
+
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%rstar, &
+         'RSTAR :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%rstar, imean)
+
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%veg_fracarea, &
+         'VEG_FRACAREA :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%veg_fracarea, imean)
+
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%veg_lai, &
+         'VEG_LAI :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%veg_lai, imean)
+
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%veg_rough, &
+         'VEG_ROUGH :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%veg_rough, imean)
+
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%veg_height, &
+         'VEG_HEIGHT :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%veg_height, imean)
+
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%veg_albedo, &
+         'VEG_ALBEDO :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%veg_albedo, imean)
+
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%veg_tai, &
+         'VEG_TAI :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%veg_tai, imean)
+
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%patch_area, &
+         'PATCH_AREA :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%patch_area, imean)
+
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%patch_rough, &
+         'PATCH_ROUGH :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%patch_rough, imean)
+
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%patch_wetind, &
+         'PATCH_WETIND :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%patch_wetind, imean)
+
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%leaf_class, &
+         'LEAF_CLASS :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%leaf_class, imean)
 
     ! TEB_SPM
     if (TEB_SPM==1) then
-       call InsertVTab (leaf%G_URBAN,leafm%G_URBAN  &
-            ,ng, npts, imean,  &
-            'G_URBAN :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    endif
+       call InsertVarTable (oneVarTable, oneVarTableSize, &
+            leaf%G_URBAN, &
+            'G_URBAN :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+            leafm%G_URBAN, imean)
+    end if
 
-    call InsertVTab (leaf%soil_rough,leafm%soil_rough  &
-         ,ng, npts, imean,  &
-         'SOIL_ROUGH :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    call InsertVTab (leaf%sfcwater_nlev,leafm%sfcwater_nlev  &
-         ,ng, npts, imean,  &
-         'SFCWATER_NLEV :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    call InsertVTab (leaf%stom_resist,leafm%stom_resist  &
-         ,ng, npts, imean,  &
-         'STOM_RESIST :6:hist:anal:mpti:mpt3'//trim(str_recycle))
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%soil_rough, &
+         'SOIL_ROUGH :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%soil_rough, imean)
 
-    call InsertVTab (leaf%ground_rsat,leafm%ground_rsat  &
-         ,ng, npts, imean,  &
-         'GROUND_RSAT :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    call InsertVTab (leaf%ground_rvap,leafm%ground_rvap  &
-         ,ng, npts, imean,  &
-         'GROUND_RVAP :6:hist:anal:mpti:mpt3'//trim(str_recycle))
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%sfcwater_nlev, &
+         'SFCWATER_NLEV :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%sfcwater_nlev, imean)
 
-    call InsertVTab (leaf%veg_water,leafm%veg_water  &
-         ,ng, npts, imean,  &
-         'VEG_WATER :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    call InsertVTab (leaf%veg_temp,leafm%veg_temp  &
-         ,ng, npts, imean,  &
-         'VEG_TEMP :6:hist:anal:mpti:mpt3'//trim(str_recycle))
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%stom_resist, &
+         'STOM_RESIST :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%stom_resist, imean)
 
-    call InsertVTab (leaf%can_rvap,leafm%can_rvap  &
-         ,ng, npts, imean,  &
-         'CAN_RVAP :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    call InsertVTab (leaf%can_temp,leafm%can_temp  &
-         ,ng, npts, imean,  &
-         'CAN_TEMP :6:hist:anal:mpti:mpt3'//trim(str_recycle))
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%ground_rsat, &
+         'GROUND_RSAT :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%ground_rsat, imean)
 
-    call InsertVTab (leaf%veg_ndvip,leafm%veg_ndvip  &
-         ,ng, npts, imean,  &
-         'VEG_NDVIP :6:hist:mpti')
-    call InsertVTab (leaf%veg_ndvic,leafm%veg_ndvic  &
-         ,ng, npts, imean,  &
-         'VEG_NDVIC :6:hist:anal:mpti:mpt3'//trim(str_recycle))
-    call InsertVTab (leaf%veg_ndvif,leafm%veg_ndvif  &
-         ,ng, npts, imean,  &
-         'VEG_NDVIF :6:hist:mpti')
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%ground_rvap, &
+         'GROUND_RVAP :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%ground_rvap, imean)
 
-    call InsertVTab (leaf%R_aer,leafm%R_aer  &      !kml drydep
-         ,ng, npts, imean,  &                          !kml drydep
-         'R_aer :6:hist:mpti')                         !kml drydep
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%veg_water, &
+         'VEG_WATER :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%veg_water, imean)
 
-    npts=nx*ny
-    call InsertVTab (leaf%snow_mass,leafm%snow_mass  &
-         ,ng, npts, imean,  &
-         'SNOW_MASS :2:mpti')
-    call InsertVTab (leaf%snow_depth,leafm%snow_depth  &
-         ,ng, npts, imean,  &
-         'SNOW_DEPTH :2:mpti')
-    call InsertVTab (leaf%seatp,leafm%seatp  &
-         ,ng, npts, imean,  &
-         'SEATP :2:mpti')
-    call InsertVTab (leaf%seatf,leafm%seatf  &
-         ,ng, npts, imean,  &
-         'SEATF :2:mpti')
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%veg_temp, &
+         'VEG_TEMP :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%veg_temp, imean)
+
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%can_rvap, &
+         'CAN_RVAP :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%can_rvap, imean)
+
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%can_temp, &
+         'CAN_TEMP :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%can_temp, imean)
+
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%veg_ndvip, &
+         'VEG_NDVIP :6:hist:mpti', &
+         leafm%veg_ndvip, imean)
+
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%veg_ndvic, &
+         'VEG_NDVIC :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
+         leafm%veg_ndvic, imean)
+
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%veg_ndvif,  &
+         'VEG_NDVIF :6:hist:mpti', &
+         leafm%veg_ndvif, imean)
+
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%R_aer, &
+         'R_aer :6:hist:mpti', &
+         leafm%R_aer, imean)
+
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%snow_mass, &
+         'SNOW_MASS :2:mpti', &
+         leafm%snow_mass, imean)
+
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%snow_depth, &
+         'SNOW_DEPTH :2:mpti', &
+         leafm%snow_depth, imean)
+
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%seatp, &
+         'SEATP :2:mpti', &
+         leafm%seatp, imean)
+
+    call InsertVarTable (oneVarTable, oneVarTableSize, &
+         leaf%seatf, &
+         'SEATF :2:mpti', &
+         leafm%seatf, imean)
 
   end subroutine filltab_leaf
 

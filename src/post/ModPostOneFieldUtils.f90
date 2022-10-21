@@ -1,7 +1,5 @@
 module ModPostOneFieldUtils
 
-   use ModOutputUtils, only : GetVarFromMemToOutput
-
    use ModPostGrid, only : OutputGradsField
    use ModPostTypes, only : PostGrid
    use ModBramsGrid, only : BramsGrid

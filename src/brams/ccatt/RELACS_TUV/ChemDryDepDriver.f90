@@ -1,19 +1,23 @@
-MODULE ChemDryDepDriver
+module ChemDryDepDriver
 
+  use ModNamelistFile, only: &
+       NamelistFile
 
-  USE rconstants, ONLY: &
+  use grid_dims, only: &
+       nzpmax
+
+  use rconstants, only: &
        cpi,             &
        cpor,            &
        p00,             &
        g,               &
        vonk
-       
-  USE mem_grid, ONLY: &
+
+  use mem_grid, only: &
        grid_g,        &
        jdim,          &
        dzt,           &
        zt,            &
-       nzpmax,        &
        npatch,        &
        dtlt,          &
        imonth1,       &
@@ -21,118 +25,131 @@ MODULE ChemDryDepDriver
        iyear1,        &
        ngrid
 
-  USE micphys, ONLY: &
-       level
+  use ModMicControl, only: &
+       MicControl
 
-  USE mem_cuparm, ONLY: &
-       cuparm_g,        &
-       nnqparm
+  use ModCuParmFields, only: &
+       CuParmFields
 
-  USE mem_basic, ONLY: &
-       basic_g
+  use ModBasicFields, only: &
+       BasicFields
 
-  USE mem_turb, ONLY: &
-       turb_g
+  use ModTurbFields, only: &
+       TurbFields
 
-  USE mem_leaf, ONLY: &
+  use mem_leaf, only: &
        leaf_g
 
-  USE mem_micro, ONLY: &
-       micro_g
+  use ModMicroFields, only: &
+       MicroFields
 
-  USE mem_radiate, ONLY: &
-       radiate_g
+  use ModRadiateFields, only: &
+       RadiateFields
 
-  USE mem_chem1, ONLY: &
+  use mem_chem1, only: &
        chem1_g,        &
        chemistry
-  
-  USE mem_aer1, ONLY: &
+
+  use mem_aer1, only: &
        aerosol, &
        aer1_g
 
-  USE module_dry_dep, ONLY: &
+  use module_dry_dep, only: &
        dd_sedim,            &
        dry_dep                 ! Subroutine
 
 
 
-  IMPLICIT NONE
+  implicit none
 
-  PRIVATE
-
-
-  PUBLIC :: drydep_driver
+  private
 
 
+  public :: drydep_driver
 
-CONTAINS
+
+
+contains
 
 
   !========================================================================
-  SUBROUTINE drydep_driver(m1,m2,m3,ia,iz,ja,jz)
+  subroutine drydep_driver(m1,m2,m3,ia,iz,ja,jz, &
+       oneNamelistFile, &
+       oneBasicFields, &
+       oneTurbFields, &
+       oneMicControl, &
+       oneMicroFields, &
+       oneRadiateFields, &
+       oneCuParmFields)
 
-    INTEGER,              INTENT(IN)    :: m1
-    INTEGER,              INTENT(IN)    :: m2
-    INTEGER,              INTENT(IN)    :: m3
-    INTEGER,              INTENT(IN)    :: ia
-    INTEGER,              INTENT(IN)    :: iz
-    INTEGER,              INTENT(IN)    :: ja
-    INTEGER,              INTENT(IN)    :: jz
+    integer,              intent(IN)    :: m1
+    integer,              intent(IN)    :: m2
+    integer,              intent(IN)    :: m3
+    integer,              intent(IN)    :: ia
+    integer,              intent(IN)    :: iz
+    integer,              intent(IN)    :: ja
+    integer,              intent(IN)    :: jz
+    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
+    type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(TurbFields), pointer, intent(in) :: oneTurbFields
+    type(MicControl), pointer, intent(in) :: oneMicControl
+    type(MicroFields), pointer, intent(in) :: oneMicroFields
+    type(RadiateFields), pointer, intent(in) :: oneRadiateFields
+    type(CuParmFields), pointer, intent(in) :: oneCuParmFields
 
-    REAL, POINTER :: conprr_dummy(:,:)    
+    real, pointer :: conprr_dummy(:,:)    
 
-       
-    IF (associated(cuparm_g(ngrid)%conprr)) THEN
-       conprr_dummy=>cuparm_g(ngrid)%conprr
-    ELSE
-       ALLOCATE(conprr_dummy(m2,m3))
-       NULLIFY(conprr_dummy)
-    ENDIF
 
-    CALL dry_dep(m1,m2,m3,ia,iz,ja,jz           & 
-                ,cpi,cpor,p00,g,vonk            &
-                ,jdim,dzt,zt,nzpmax,npatch,dtlt &
-                ,level,nnqparm(ngrid)           &
-                ,imonth1,idate1,iyear1          &
-                ,chemistry,aerosol              &
-                ,basic_g(ngrid)%theta	        &
-                ,basic_g(ngrid)%rv	        &
-                ,basic_g(ngrid)%pp	        &
-                ,basic_g(ngrid)%dn0	        &
-                ,basic_g(ngrid)%pi0	        &
-                ,basic_g(ngrid)%up              &
-                ,basic_g(ngrid)%vp   	        &
-                ,turb_g(ngrid)%tkep	        &
-                ,turb_g(ngrid)%sflux_t          &
-                ,turb_g(ngrid)%sflux_r          &
-                ,turb_g(ngrid)%sflux_u          &
-                ,turb_g(ngrid)%sflux_v          &
-                ,leaf_g(ngrid)%r_aer            &
-                ,leaf_g(ngrid)%ustar	        &
-                ,leaf_g(ngrid)%tstar	        &
-                ,leaf_g(ngrid)%patch_area       &
-                ,leaf_g(ngrid)%leaf_class       &
-                ,leaf_g(ngrid)%patch_rough      & 
-                ,micro_g(ngrid)%rcp	        & 
-                ,micro_g(ngrid)%pcpg            & 
-                ,grid_g(ngrid)%rtgt	        & 
-                ,radiate_g(ngrid)%rshort        & 
-!                ,cuparm_g(ngrid)%conprr         & 
-                ,conprr_dummy                   & 
-!-srf-27jan2015
-!-    changed (:,:,ngrid) to (:,:,:) to avoid
-!-    seg violation when AEROSOL=0
-!               ,aer1_g(:,:,ngrid)             & 
-!               ,chem1_g(:,ngrid)              & 
-!               ,dd_sedim(:,ngrid))    
-                ,aer1_g  (:,:,:)              & 
-                ,chem1_g (:,:)                & 
-                ,dd_sedim(:,:)                )    
+    if (associated(oneCuParmFields%conprr)) then
+       conprr_dummy=>oneCuParmFields%conprr
+    else
+       allocate(conprr_dummy(m2,m3))
+       nullify(conprr_dummy)
+    endif
 
-    RETURN
-  END SUBROUTINE drydep_driver
+    call dry_dep(m1,m2,m3,ia,iz,ja,jz           & 
+         ,cpi,cpor,p00,g,vonk            &
+         ,jdim,dzt,zt,nzpmax,npatch,dtlt &
+         ,oneMicControl%level &
+         ,oneNamelistFile%nnqparm(ngrid)           &
+         ,imonth1,idate1,iyear1          &
+         ,chemistry,aerosol              &
+         ,oneBasicFields%theta        &
+         ,oneBasicFields%rv        &
+         ,oneBasicFields%pp        &
+         ,oneBasicFields%dn0        &
+         ,oneBasicFields%pi0        &
+         ,oneBasicFields%up              &
+         ,oneBasicFields%vp           &
+         ,oneTurbFields%tkep        &
+         ,oneTurbFields%sflux_t          &
+         ,oneTurbFields%sflux_r          &
+         ,oneTurbFields%sflux_u          &
+         ,oneTurbFields%sflux_v          &
+         ,leaf_g(ngrid)%r_aer            &
+         ,leaf_g(ngrid)%ustar        &
+         ,leaf_g(ngrid)%tstar        &
+         ,leaf_g(ngrid)%patch_area       &
+         ,leaf_g(ngrid)%leaf_class       &
+         ,leaf_g(ngrid)%patch_rough      & 
+         ,oneMicroFields%rcp        & 
+         ,oneMicroFields%pcpg            & 
+         ,grid_g(ngrid)%rtgt        & 
+         ,oneRadiateFields%rshort        & 
+         ,conprr_dummy                   & 
+         !-srf-27jan2015
+         !-    changed (:,:,ngrid) to (:,:,:) to avoid
+         !-    seg violation when AEROSOL=0
+         !               ,aer1_g(:,:,ngrid)             & 
+         !               ,chem1_g(:,ngrid)              & 
+         !               ,dd_sedim(:,ngrid))    
+         ,aer1_g  (:,:,:)              & 
+         ,chem1_g (:,:)                & 
+         ,dd_sedim(:,:)                )    
+
+    return
+  end subroutine drydep_driver
   !========================================================================
 
 
-END MODULE ChemDryDepDriver
+end module ChemDryDepDriver

@@ -1,5 +1,18 @@
 MODULE module_cu_gd_fim
- USE module_gate
+ USE module_gate, ONLY: cupout,   &
+                        jl    ,   &
+                        ppres,    &
+                        ptemp,    &
+                        pq,    &
+                        pu,    &
+                        pv,    &
+                        pvervel,    &
+                        pgeo,    &
+                        zqr,    &
+                        zadvq,   &
+                        zadvt,   &
+                        use_gate
+
 
  USE Phys_const, only: cp, p00, tcrit, g, cpor ,XLV => XL, r_v =>rm,rgas
  real, parameter:: c1=.002,c1m=.002,c1_shal=.001
@@ -4161,6 +4174,7 @@ if(j.eq.312772)write(12,*)'xaa0,aa0,aa1 = ',xaa0(1),aa0(1),aa1(1)
 !====================================================================
    SUBROUTINE neg_check(name,j,outc,dt,q,outq,outt,outu,outv,    &
                            outqc,pret,its,ite,kts,kte,itf,ktf,numc)
+   IMPLICIT NONE
 
    INTEGER,      INTENT(IN   ) ::      numc,j,its,ite,kts,kte,itf,ktf
 
@@ -4183,6 +4197,7 @@ if(j.eq.312772)write(12,*)'xaa0,aa0,aa1 = ',xaa0(1),aa0(1),aa1(1)
         dt
      real :: names,scalef,thresh,qmem,qmemf,qmem2,qtest,qmem1
      integer :: icheck
+     integer :: i, k
 !
 ! first do check on vertical heating rate
 !

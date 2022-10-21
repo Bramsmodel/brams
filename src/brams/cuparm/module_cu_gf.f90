@@ -3961,6 +3961,7 @@ CONTAINS
      real                                 ::                           &
         dz,da
 !
+
         do i=its,itf
          aa0(i)=0.
         enddo
@@ -4104,7 +4105,7 @@ CONTAINS
    END SUBROUTINE g3init
 
    SUBROUTINE neg_check(j,subt,subq,dt,q,outq,outt,outqc,pret,its,ite,kts,kte,itf,ktf)
-
+   IMPLICIT NONE
    INTEGER,      INTENT(IN   ) ::            j,its,ite,kts,kte,itf,ktf
 
      real, dimension (its:ite,kts:kte  )                    ,                 &
@@ -4123,6 +4124,8 @@ CONTAINS
 !
 ! first do check on vertical heating rate
 !
+     integer :: i,k
+
       thresh=300.01
       do i=its,itf
       qmemf=1.
@@ -4571,6 +4574,7 @@ CONTAINS
      real,    dimension (kts:kte)         ::                           &
         prop_b
 !
+
         prop_b(kts:kte)=0
         iall=0
         c0=.002

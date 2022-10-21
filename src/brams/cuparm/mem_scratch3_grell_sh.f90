@@ -689,15 +689,4 @@ contains
 !
 !  end subroutine zero_scratch3_grell_sh
 
-!!$  SUBROUTINE filltab_scratch3_grell(=0.
-!!$
-!!$    USE var_tables
-!!$
-!!$    IMPLICIT NONE
-!!$
-!!$    ! Can't think of anything to do here...
-!!$
-!!$    RETURN
-!!$  END SUBROUTINE filltab_scratch3_grell
-
 end module mem_scratch3_grell_sh
