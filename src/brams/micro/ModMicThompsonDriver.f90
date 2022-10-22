@@ -123,13 +123,6 @@ contains
        do i = ia,iz
           ocean_fraction = leaf_g(ngrid)%patch_area(i,j,1)
 
-          !if(mcphys_type == 3) then
-          !  ccp1d  (1:mzp)   = max(oneMicroFields%ccp  (1:mzp,i,j) , 0.) 
-          !  cccnp1d(1:mzp)   = max(oneMicroFields%cccnp(1:mzp,i,j) , 0.)   
-          !  cifnp1d(1:mzp)   = max(oneMicroFields%cifnp(1:mzp,i,j) , 0.) 
-          ! print*,"mic1:",maxval(  ccp1d)
-          !endif
-
           call brams_to_mic_thompson(ia,ja,iz,jz, &
                oneNamelistFile%ilwrtyp,      &
                oneNamelistFile%iswrtyp     &
@@ -155,13 +148,6 @@ contains
                ,oneMicroFields &
                ,ocean_fraction, &
                oneMicControl)
-
-          !if(mcphys_type == 3) then
-          !   oneMicroFields%ccp  (1:mzp,i,j)  = ccp1d  (1:mzp)
-          !  !- commented out for now
-          !  !oneMicroFields%cccnp(1:mzp,i,j)  = cccnp1d(1:mzp)!checar necessidade pois sera um array nao         
-          !  !oneMicroFields%cifnp(1:mzp,i,j)  = cifnp1d(1:mzp)!checar necessidade pois sera um array nao         
-          !endif
 
        enddo
     enddo
@@ -577,12 +563,6 @@ contains
          qg_curr,                   &! QG=qg_curr,     
          qni_curr,                  &! NI=qni_curr,    
          qnr_curr,                  &! NR=qnr_curr,    
-                                !-these are optional arrays (only for oneMicControl%mcphys_type == 3)
-                                !                    qnc_curr,                  &! NC=qnc_curr,     
-                                !                    qnwfa_curr,                &! NWFA=qnwfa_curr, 
-                                !                    qnifa_curr,                &! NIFA=qnifa_curr, 
-                                !                    qnwfa2d,                   &! NWFA2D=qnwfa2d,  
-                                !-
          TH,                        &! potential temperature    (K)
          pi_phy,                    &! exner function (dimensionless)
          P,                         &! pressure(Pa)

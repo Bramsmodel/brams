@@ -966,10 +966,8 @@ contains
           call InitTuvDriver()
        endif
 
-       if(oneGrid%oneMicVars%mcphys_type==0) then
+       if(oneGrid%oneMicVars%mcphys_type == 0) then
           call jnmbinit(oneGrid%oneMicVars)
-       elseif(oneGrid%oneMicVars%mcphys_type==1) then
-          call jnmbinit_2M(oneGrid%oneMicVars)
        endif
 
        ! Allocate memory for this process sub-domain only
@@ -1741,89 +1739,20 @@ contains
                   ,oneGrid%oneMicroFields%rel)
           endif
 
-          if (oneGrid%oneMicVars%mcphys_type == 0) then
-             if (oneGrid%oneMicVars%level  ==  3) then
-
-
-                call initqin(mzp,mxp,myp        &
-                     ,oneGrid%oneMicroFields%q2      &
-                     ,oneGrid%oneMicroFields%q6      &
-                     ,oneGrid%oneMicroFields%q7      &
-                     ,oneGrid%oneBasicFields%pi0     &
-                     ,oneGrid%oneBasicFields%pp      &
-                     ,oneGrid%oneBasicFields%theta   &
-                     ,oneGrid%oneBasicFields%dn0     &
-                     ,oneGrid%oneMicroFields%cccnp   &
-                     ,oneGrid%oneMicroFields%cifnp,&
-                     oneGrid%oneMicVars)
-
-
-
-             endif
-
-          elseif(oneGrid%oneMicVars%mcphys_type == 1) then
-
-             if (oneGrid%oneMicVars%level  ==  3) then
-
-
-                call initqin_2M(mzp,mxp,myp        &
-                     ,oneGrid%oneMicroFields%q2   &
-                     ,oneGrid%oneMicroFields%q6      &
-                     ,oneGrid%oneMicroFields%q7      &
-                     ,oneGrid%oneBasicFields%pi0     &
-                     ,oneGrid%oneBasicFields%pp      &
-                     ,oneGrid%oneBasicFields%theta   &
-                     ,oneGrid%oneBasicFields%dn0, &
-                     oneGrid%oneMicVars )
-
-
-
-
-                if(oneGrid%oneMicVars%icloud >= 5) then
-
-
-                   call initqin2_2M(mzp,mxp,myp        &
-                        ,oneGrid%oneMicroFields%cccnp   &
-                        ,oneGrid%oneMicroFields%cccmp   &
-                        ,oneGrid%oneBasicFields%dn0, &
-                        oneGrid%oneMicVars   )
-
-
-                end if
-
-                if(oneGrid%oneMicVars%idriz  >= 5) then
-
-
-                   call initqin3_2M(mzp,mxp,myp        &
-                        ,oneGrid%oneMicroFields%gccnp   &
-                        ,oneGrid%oneMicroFields%gccmp   &
-                        ,oneGrid%oneBasicFields%dn0, &
-                     oneGrid%oneMicVars   )
-
-
-                end if
-
-                if(oneGrid%oneMicVars%ipris  >= 5) then
-
-
-                   call initqin4_2M(mzp,mxp,myp        &
-                        ,oneGrid%oneMicroFields%cifnp   &
-                        ,oneGrid%oneBasicFields%dn0, &
-                     oneGrid%oneMicVars   )
-
-
-                end if
-
-                if(oneGrid%oneMicVars%idust > 0 .or. &
-                     oneGrid%oneMicVars%imd1flg > 0 .or. &
-                     oneGrid%oneMicVars%imd2flg > 0)  then
-                   call initqin5_2M(mzp,mxp,myp    &
-                        ,oneGrid%oneMicroFields%md1np   &
-                        ,oneGrid%oneMicroFields%md2np, &
-                     oneGrid%oneMicVars )
-                end if
-             endif
-          endif
+          if (oneGrid%oneMicVars%mcphys_type == 0 .and. &
+               oneGrid%oneMicVars%level  ==  3) then
+             call initqin(mzp,mxp,myp        &
+                  ,oneGrid%oneMicroFields%q2      &
+                  ,oneGrid%oneMicroFields%q6      &
+                  ,oneGrid%oneMicroFields%q7      &
+                  ,oneGrid%oneBasicFields%pi0     &
+                  ,oneGrid%oneBasicFields%pp      &
+                  ,oneGrid%oneBasicFields%theta   &
+                  ,oneGrid%oneBasicFields%dn0     &
+                  ,oneGrid%oneMicroFields%cccnp   &
+                  ,oneGrid%oneMicroFields%cifnp,&
+                  oneGrid%oneMicVars)
+          end if
           !-- initialization of current theta_il field
           !-- only for RK time integration
           if(dyncore_flag==2) then
@@ -2250,8 +2179,6 @@ contains
 
     if     (oneGrid%oneMicVars%mcphys_type == 0) then
        call micro_master(oneGrid%oneMicVars)
-    elseif (oneGrid%oneMicVars%mcphys_type == 1) then
-       call micro_master_2M(oneGrid%oneMicVars)
     endif
 
     !       Fill latitude-longitude, map factor, and Coriolis arrays.

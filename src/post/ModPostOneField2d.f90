@@ -400,7 +400,7 @@ contains
             oneVarTable, oneVarTableSize)
        ScrT3N05 = ScrT3N05 + ScrT3N04
        !-For GThompson microphysics micphys_type>1 : RAP does not exist
-       if(oneMicControl%mcphys_type .le. 1) then
+       if(oneMicControl%mcphys_type == 0) then
           call GetVarFromMemToOutput ('RAP', oneBramsGrid%currGrid, ScrT3N04, &
                oneNamelistFile, oneBasicFields, oneTurbFields, &
                oneVarTable, oneVarTableSize)
@@ -1471,7 +1471,7 @@ contains
          oneVarTable, oneVarTableSize)
     OutputField = OutputField + ScrT2N01
     !-For GThompson microphysics micphys_type>1 : ACCPR is already the total precip
-    if(oneMicControl%mcphys_type .le. 1) then
+    if(oneMicControl%mcphys_type == 0) then
        call GetVarFromMemToOutput ('ACCPP', oneBramsGrid%currGrid, ScrT2N01, &
             oneNamelistFile, oneBasicFields, oneTurbFields, &
             oneVarTable, oneVarTableSize)

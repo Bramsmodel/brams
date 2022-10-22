@@ -437,7 +437,7 @@ contains
        ifaterr=ifaterr+1
     endif
 
-    if(oneMicControl%mcphys_type .le. 1) then
+    if(oneMicControl%mcphys_type == 0) then
        ! if level is less than 3, set microphysics parameters to zero.
        ! if level equals 3, check for values of microphysics parameters
        ! that are out of bounds.  if level is equal to 4, set microphysics
@@ -1230,17 +1230,12 @@ contains
        enddo
     enddo
 
-    !if( (oneMicControl%mcphys_type == 2 .or. oneMicControl%mcphys_type == 3) .and. (isfcl<=2 .and. isfcl >=1)) then
-    !    print*,' FATAL - cannot use LEAF-3 scheme with GT microphysics'
-    !    print*," FATAL - arrays qpcpg and dpcpg are not avalaible in this scheme"
-    !    IFATERR=IFATERR+1
-    !endif
-
+    if (oneMicControl%mcphys_type == 1) then
+       strLong = "FATAL - Unavailable selected mcphys_type option = 1"
+       call fatal_error(h//" Unavailable selected mcphys_type option = 1")
+    end if
+    
     do ngr=1,ngrids
-       !   if( (oneMicControl%mcphys_type == 2 .or. oneMicControl%mcphys_type == 3) .and. nnshcu(NGR) ==2) then
-       !    print*,' FATAL - cannot use nnhscu = 2 scheme with GT microphysics'
-       !    IFATERR=IFATERR+1
-       !   endif
        if( (oneMicControl%mcphys_type >= 2 ) .and. oneNamelistFile%nnqparm(ngr) ==2) then
           print*,' FATAL - cannot use nnqparm = 2 scheme with  microphysics >= 2'
           IFATERR=IFATERR+1
@@ -1386,7 +1381,7 @@ contains
 
     do ng=1,ngrids
        if (oneNamelistFile%iswrtyp==6 .or. oneNamelistFile%ilwrtyp==6) then
-          if( oneMicControl%mcphys_type <= 1 .and. oneMicControl%icloud < 5 )    then
+          if( oneMicControl%mcphys_type == 0 .and. oneMicControl%icloud < 5 )    then
              ifaterr=ifaterr+1
              print *,'FATAL ERROR: RRTM radiation requires ICLOUD >=5'
              !print*,"values=",icloud

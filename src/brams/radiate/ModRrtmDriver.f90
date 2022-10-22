@@ -1843,7 +1843,7 @@ contains
           lwl(1:m1,ia:iz,ja:jz) = lwl(1:m1,ia:iz,ja:jz) + oneMicroFields%rcp(1:m1,ia:iz,ja:jz)
        end if
        if (oneMicVars%igraup>0) then
-          if(oneMicVars%mcphys_type <= 1) then
+          if(oneMicVars%mcphys_type == 0) then
              do k=1,m1
                 do i=ia,iz
                    do j=ja,jz

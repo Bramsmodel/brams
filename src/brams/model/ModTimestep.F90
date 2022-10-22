@@ -248,11 +248,6 @@ module ModTimestep
   use ModMatrixDriver, only: &
        MatrixDriver  !Matrix Aerosol Model
 
-
-  use ModRamsMicrophysics2M, only: &
-       micro_2M_rams60,&
-       negadj1_2M_rams60
-
   use MODCUPARGRELL3, only: g3d_g
 
   use ModWindFarm, only: &
@@ -304,7 +299,7 @@ contains
 
     !  Thermodynamic diagnosis
     !--------------------------------
-    if (oneGrid%oneMicVars%mcphys_type <= 1 .and. oneGrid%oneMicVars%level/=3) then
+    if (oneGrid%oneMicVars%mcphys_type == 0 .and. oneGrid%oneMicVars%level/=3) then
        call thermo(mzp, mxp, myp, ia, iz, ja, jz, &
             oneGrid%oneBasicFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
     endif
@@ -607,10 +602,6 @@ contains
     !----------------------------------------
     if    (oneGrid%oneMicVars%mcphys_type == 0) then
        call negadj1(mzp,mxp,myp, oneGrid%oneBasicFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
-
-
-    elseif(oneGrid%oneMicVars%mcphys_type == 1) then
-       call negadj1_2M_rams60(mzp,mxp,myp, oneGrid%oneBasicFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
     endif
 
     !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
@@ -621,17 +612,11 @@ contains
     if (oneGrid%oneMicVars%mcphys_type == 0 .and. oneGrid%oneMicVars%level==3) then
        ! Original Version used in a Generic IA32 machine
        call micro(oneGrid%oneBasicFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
-    endif
-    if (oneGrid%oneMicVars%mcphys_type == 1 .and. oneGrid%oneMicVars%level==3) then
-       ! 2M rams microphysics
-       call micro_2M_rams60(oneGrid%oneBasicFields,oneGrid%oneMicVars, oneGrid%oneMicroFields)
-    endif
-    if (oneGrid%oneMicVars%mcphys_type == 2 .or. oneGrid%oneMicVars%mcphys_type == 3 ) then
+    else if (oneGrid%oneMicVars%mcphys_type == 2 .or. oneGrid%oneMicVars%mcphys_type == 3 ) then
        ! G. Thompson microphysics
        call micro_thompson(oneGrid%oneNamelistFile, oneGrid%oneBasicFields, &
             oneGrid%oneMicVars, oneGrid%oneMicroFields)
-    endif
-    if (oneGrid%oneMicVars%mcphys_type == 4 ) then
+    else if (oneGrid%oneMicVars%mcphys_type == 4 ) then
        call micro_gfdl(oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneMicroFields)
     endif
 
@@ -652,7 +637,7 @@ contains
     !
     !  Thermodynamic diagnosis
     !----------------------------------------
-    if (oneGrid%oneMicVars%mcphys_type <= 1 .and. oneGrid%oneMicVars%level==3)  then
+    if (oneGrid%oneMicVars%mcphys_type == 0 .and. oneGrid%oneMicVars%level==3)  then
        call thermo(mzp,mxp,myp,1,mxp,1,myp, &
             oneGrid%oneBasicFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
     endif

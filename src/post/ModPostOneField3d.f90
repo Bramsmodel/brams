@@ -322,7 +322,7 @@ contains
        OutputField = ScrT3N01 +(ScrT3N02-ScrT3N01 )*tfact
     case ('AGGREGATES')
        !-For GThompson microphysics micphys_type>1 : RAP does not exist
-       if(oneMicControl%mcphys_type .le. 1) then
+       if(oneMicControl%mcphys_type == 0) then
           call GetVarFromMemToOutput ('RAP', oneBramsGrid%currGrid, OutputField, &
                oneNamelistFile, oneBasicFields, oneTurbFields, &
                oneVarTable, oneVarTableSize)
@@ -344,7 +344,7 @@ contains
        OutputField = OutputField * 1.e3
        OutputField = max(OutputField, 0.0)
     case ('HAIL')
-       if(oneMicControl%mcphys_type .le. 1) then
+       if(oneMicControl%mcphys_type == 0) then
           call GetVarFromMemToOutput ('RHP', oneBramsGrid%currGrid, OutputField, &
                oneNamelistFile, oneBasicFields, oneTurbFields, &
                oneVarTable, oneVarTableSize)
@@ -370,7 +370,7 @@ contains
             oneVarTable, oneVarTableSize)
        OutputField = OutputField + ScrT3N01
 
-       if(oneMicControl%mcphys_type .le. 1) then
+       if(oneMicControl%mcphys_type == 0) then
           call GetVarFromMemToOutput ('RGP', oneBramsGrid%currGrid, ScrT3N01, &
                oneNamelistFile, oneBasicFields, oneTurbFields, &
                oneVarTable, oneVarTableSize)
@@ -415,7 +415,7 @@ contains
             oneVarTable, oneVarTableSize)
        OutputField = OutputField + ScrT3N01
        !-For GThompson microphysics micphys_type>1 : RAP does not exist
-       if(oneMicControl%mcphys_type .le. 1) then
+       if(oneMicControl%mcphys_type == 0) then
           call GetVarFromMemToOutput ('RAP', oneBramsGrid%currGrid, ScrT3N01, &
                oneNamelistFile, oneBasicFields, oneTurbFields, &
                oneVarTable, oneVarTableSize)
@@ -425,7 +425,7 @@ contains
             oneNamelistFile, oneBasicFields, oneTurbFields, &
             oneVarTable, oneVarTableSize)
 
-       if(oneMicControl%mcphys_type .le. 1) then
+       if(oneMicControl%mcphys_type == 0) then
           call GetVarFromMemToOutput ('Q6', oneBramsGrid%currGrid, ScrT3N02, &
                oneNamelistFile, oneBasicFields, oneTurbFields, &
                oneVarTable, oneVarTableSize)
@@ -437,7 +437,7 @@ contains
        endif
        OutputField = OutputField + ScrT3N01
 
-       if(oneMicControl%mcphys_type .le. 1) then
+       if(oneMicControl%mcphys_type == 0) then
           call GetVarFromMemToOutput ('RHP', oneBramsGrid%currGrid, ScrT3N01, &
                oneNamelistFile, oneBasicFields, oneTurbFields, &
                oneVarTable, oneVarTableSize)
@@ -490,7 +490,7 @@ contains
             oneVarTable, oneVarTableSize)
        OutputField = OutputField + ScrT3N01
        !-For GThompson microphysics micphys_type>1 : RAP does not exist
-       if(oneMicControl%mcphys_type .le. 1) then
+       if(oneMicControl%mcphys_type == 0) then
           call GetVarFromMemToOutput ('RAP', oneBramsGrid%currGrid, ScrT3N01, &
                oneNamelistFile, oneBasicFields, oneTurbFields, &
                oneVarTable, oneVarTableSize)
@@ -500,7 +500,7 @@ contains
             oneNamelistFile, oneBasicFields, oneTurbFields, &
             oneVarTable, oneVarTableSize)
        OutputField = OutputField + ScrT3N01
-       if(oneMicControl%mcphys_type .le. 1) then
+       if(oneMicControl%mcphys_type == 0) then
           call GetVarFromMemToOutput ('RHP', oneBramsGrid%currGrid, ScrT3N01, &
                oneNamelistFile, oneBasicFields, oneTurbFields, &
                oneVarTable, oneVarTableSize)

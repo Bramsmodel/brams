@@ -872,7 +872,7 @@ subroutine acumPrecipInDam(nx,ny,ia,iz,ja,jz,mcphys_type,aconpr,accpr &
       do j=ja,jz
         if(dams(nd)%inside(i,j)) then
           dams(nd)%precipitation=dams(nd)%precipitation+aconpr(i,j)+accpr(i,j)
-          if(mcphys_type .le. 1) then
+          if(mcphys_type == 0) then
             dams(nd)%precipitation=dams(nd)%precipitation &
             +accpp(i,j)+accps(i,j)+accpa(i,j)+accpg(i,j)+accph(i,j)
           endif

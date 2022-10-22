@@ -81,7 +81,7 @@ contains
 
     elseif (oneMicVars%level .eq. 3) then
 
-       if(oneMicVars%mcphys_type .le. 1) then
+       if(oneMicVars%mcphys_type == 0) then
 
           call wetthrm3(mzp,mxp,myp,ia,iz,ja,jz,oneMicVars%jnmb  &
                ,oneBasic%pi0 ,oneBasic%pp     &
@@ -319,7 +319,7 @@ contains
           endif
 
           if (jnmb(6) .ge. 1) then
-             if(mcphys_type .le. 1) then 
+             if(mcphys_type == 0) then 
                 do k = 1,m1
                    call qtc(q6(k,i,j),tcoal,fracliq)
                    rliq(k) = rliq(k) + rgp(k,i,j) * fracliq
@@ -497,7 +497,7 @@ contains
 
     else if (oneMicVars%level .eq. 3) then
 
-       if(oneMicVars%mcphys_type .le. 1) then
+       if(oneMicVars%mcphys_type == 0) then
 
           if (trim(action)=="get_thetail") then
              call fatal_error(h//" not ready for option get_thetail")
