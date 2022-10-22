@@ -594,15 +594,6 @@ module ModOneProc
        meteogramFreq,                &
        meteogramMap
 
-  use ModRamsMicrophysics2M, only :  &
-       jnmbinit_2M=>jnmbinit       &
-       ,initqin_2M  =>initqin      &
-       ,initqin2_2M =>initqin2     &
-       ,initqin3_2M =>initqin3     &
-       ,initqin4_2M =>initqin4     &
-       ,initqin5_2M =>initqin5     &
-       ,micro_master_2M =>micro_master
-
   use mem_carma, only: &
        read_aotMap, &
        StoreNamelistFileAtmem_carma, &
