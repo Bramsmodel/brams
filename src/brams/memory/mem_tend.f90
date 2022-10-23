@@ -83,15 +83,6 @@ module mem_tend
      real, contiguous, pointer :: gccnt(:)
      real, contiguous, pointer :: cccmt(:)
      real, contiguous, pointer :: gccmt(:)
-     real, contiguous, pointer :: cnm1t(:)
-     real, contiguous, pointer :: cnm2t(:)
-     real, contiguous, pointer :: cnm3t(:)
-     real, contiguous, pointer :: cnm8t(:)
-     real, contiguous, pointer :: md1nt(:)
-     real, contiguous, pointer :: md2nt(:)
-     real, contiguous, pointer :: salt_filmt(:)
-     real, contiguous, pointer :: salt_jett(:)
-     real, contiguous, pointer :: salt_spmt(:)
      real, contiguous, pointer :: ut_rk(:)
      real, contiguous, pointer :: vt_rk(:)
      real, contiguous, pointer :: wt_rk(:)
@@ -279,42 +270,6 @@ contains
        allocate (tend%gccmt(ntpts))  ;tend%gccmt=0.0
     endif
 
-    if (associated(oneMicroFields%cnm1p))   then
-       allocate (tend%cnm1t(ntpts))  ;tend%cnm1t=0.0
-    endif
-
-    if (associated(oneMicroFields%cnm2p))   then
-       allocate (tend%cnm2t(ntpts))  ;tend%cnm2t=0.0
-    endif
-    if (associated(oneMicroFields%cnm3p))   then
-       allocate (tend%cnm3t(ntpts))  ;tend%cnm3t=0.0
-    endif
-
-    if (associated(oneMicroFields%cnm8p))   then
-       allocate (tend%cnm8t(ntpts))  ;tend%cnm8t=0.0
-    endif
-
-    if (associated(oneMicroFields%md1np))   then
-       allocate (tend%md1nt(ntpts))  ;tend%md1nt=0.0
-    endif
-
-    if (associated(oneMicroFields%md2np))   then
-       allocate (tend%md2nt(ntpts))  ;tend%md2nt=0.0
-    endif
-
-    if (associated(oneMicroFields%salt_filmp)) then
-       allocate (tend%salt_filmt(ntpts))  ;tend%salt_filmt=0.0
-    endif
-    if (associated(oneMicroFields%salt_jetp))  then
-       allocate (tend%salt_jett(ntpts))  ;tend%salt_jett=0.0
-    endif
-
-    if (associated(oneMicroFields%salt_spmp))  then
-       allocate (tend%salt_spmt(ntpts))  ;tend%salt_spmt=0.0
-    endif
-    !GC - 2M microphysics
-
-    !--(DMK-LFR NEC-SX6)----------------------------------------------
 
     ! TEB_SPM
     if (TEB_SPM==1) then
@@ -464,15 +419,6 @@ contains
     if (associated(tend%gccnt)) nullify(tend%gccnt)
     if (associated(tend%cccmt)) nullify(tend%cccmt)
     if (associated(tend%gccmt)) nullify(tend%gccmt)
-    if (associated(tend%cnm1t)) nullify(tend%cnm1t)
-    if (associated(tend%cnm2t)) nullify(tend%cnm2t)
-    if (associated(tend%cnm3t)) nullify(tend%cnm3t)
-    if (associated(tend%cnm8t)) nullify(tend%cnm8t)
-    if (associated(tend%md1nt)) nullify(tend%md1nt)
-    if (associated(tend%md2nt)) nullify(tend%md2nt)
-    if (associated(tend%salt_filmt ))  nullify(tend%salt_filmt)
-    if (associated(tend%salt_jett  ))  nullify(tend%salt_jett)
-    if (associated(tend%salt_spmt  ))  nullify(tend%salt_spmt)
     !-2015- for 2M microphysics (from G. Camponogara)
     !- for RK/ABM3 method
     if (associated(tend%ut_rk))   nullify (tend%ut_rk)
@@ -558,15 +504,6 @@ contains
     if (associated(tend%gccnt)) deallocate(tend%gccnt)
     if (associated(tend%cccmt)) deallocate(tend%cccmt)
     if (associated(tend%gccmt)) deallocate(tend%gccmt)
-    if (associated(tend%cnm1t)) deallocate(tend%cnm1t)
-    if (associated(tend%cnm2t)) deallocate(tend%cnm2t)
-    if (associated(tend%cnm3t)) deallocate(tend%cnm3t)
-    if (associated(tend%cnm8t)) deallocate(tend%cnm8t)
-    if (associated(tend%md1nt)) deallocate(tend%md1nt)
-    if (associated(tend%md2nt)) deallocate(tend%md2nt)
-    if (associated(tend%salt_filmt ))  deallocate(tend%salt_filmt)
-    if (associated(tend%salt_jett  ))  deallocate(tend%salt_jett)
-    if (associated(tend%salt_spmt  ))  deallocate(tend%salt_spmt)
     !-2015- for 2M microphysics (from G. Camponogara)
 
     ! TEB_SPM
@@ -758,42 +695,6 @@ contains
     endif
     if (associated(tend%gccmt))  then
        call InsertAtScalarTab(oneMicroFields%gccmp,tend%gccmt, 'GCCMP', &
-            oneScalarTab, oneScalarTabSize)
-    endif
-    if (associated(tend%cnm1t))  then
-       call InsertAtScalarTab(oneMicroFields%cnm1p,tend%cnm1t, 'CNM1P', &
-            oneScalarTab, oneScalarTabSize)
-    endif
-    if (associated(tend%cnm2t))  then
-       call InsertAtScalarTab(oneMicroFields%cnm2p,tend%cnm2t, 'CNM2P', &
-            oneScalarTab, oneScalarTabSize)
-    endif
-    if (associated(tend%cnm3t))  then
-       call InsertAtScalarTab(oneMicroFields%cnm3p,tend%cnm3t, 'CNM3P', &
-            oneScalarTab, oneScalarTabSize)
-    endif
-    if (associated(tend%cnm8t))  then
-       call InsertAtScalarTab(oneMicroFields%cnm8p,tend%cnm8t, 'CNM8P', &
-            oneScalarTab, oneScalarTabSize)
-    endif
-    if (associated(tend%md1nt))  then
-       call InsertAtScalarTab(oneMicroFields%md1np,tend%md1nt, 'MD1NP', &
-            oneScalarTab, oneScalarTabSize)
-    endif
-    if (associated(tend%md2nt))  then
-       call InsertAtScalarTab(oneMicroFields%md2np,tend%md2nt, 'MD2NP', &
-            oneScalarTab, oneScalarTabSize)
-    endif
-    if (associated(tend%salt_filmt))  then
-       call InsertAtScalarTab(oneMicroFields%salt_filmp,tend%salt_filmt, 'SALT_FILMP', &
-            oneScalarTab, oneScalarTabSize)
-    endif
-    if (associated(tend%salt_jett))  then
-       call InsertAtScalarTab(oneMicroFields%salt_jetp,tend%salt_jett, 'SALT_JETP', &
-            oneScalarTab, oneScalarTabSize)
-    endif
-    if (associated(tend%salt_spmt))  then
-       call InsertAtScalarTab(oneMicroFields%salt_spmp,tend%salt_spmt, 'SALT_SPMP', &
             oneScalarTab, oneScalarTabSize)
     endif
     !-2015- for 2M microphysics (from G. Camponogara)

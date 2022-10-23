@@ -81,15 +81,6 @@ module ModMicroFields
      real, contiguous, pointer :: cldfr(:,:,:)
      real, contiguous, pointer :: cccmp(:,:,:)
      real, contiguous, pointer :: gccmp(:,:,:)
-     real, contiguous, pointer :: cnm1p(:,:,:)
-     real, contiguous, pointer :: cnm2p(:,:,:)
-     real, contiguous, pointer :: cnm3p(:,:,:)
-     real, contiguous, pointer :: cnm8p(:,:,:)
-     real, contiguous, pointer :: md1np(:,:,:)
-     real, contiguous, pointer :: md2np(:,:,:)
-     real, contiguous, pointer :: salt_filmp(:,:,:)
-     real, contiguous, pointer :: salt_jetp(:,:,:)
-     real, contiguous, pointer :: salt_spmp(:,:,:)
      real, contiguous, pointer :: pcpvr(:,:,:)
      real, contiguous, pointer :: pcpvp(:,:,:)
      real, contiguous, pointer :: pcpvs(:,:,:)
@@ -944,78 +935,6 @@ contains
                trim(adjustl(str(1))))
        end if
     end if
-    if (associated(oneMicroFields%cnm1p)) then
-       deallocate(oneMicroFields%cnm1p, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate cnm1p fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%cnm2p)) then
-       deallocate(oneMicroFields%cnm2p, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate cnm2p fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%cnm3p)) then
-       deallocate(oneMicroFields%cnm3p, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate cnm3p fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%cnm8p)) then
-       deallocate(oneMicroFields%cnm8p, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate cnm8p fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%md1np)) then
-       deallocate(oneMicroFields%md1np, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate md1np fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%md2np)) then
-       deallocate(oneMicroFields%md2np, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate md2np fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%salt_filmp)) then
-       deallocate(oneMicroFields%salt_filmp, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate salt_filmp fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%salt_jetp)) then
-       deallocate(oneMicroFields%salt_jetp, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate salt_jetp fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%salt_spmp)) then
-       deallocate(oneMicroFields%salt_spmp, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate salt_spmp fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
     if (associated(oneMicroFields%pcpvr)) then
        deallocate(oneMicroFields%pcpvr, stat=ierr)
        if (ierr /= 0) then
@@ -1397,69 +1316,6 @@ contains
             oneMicroFields%gccmp, &
             'GCCMP :3:hist:anal:mpti:mpt3:mpt1', &
             oneAveMicroFields%gccmp, imean)
-    end if
-
-    if (associated(oneMicroFields%cnm1p)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%cnm1p, &
-            'CNM1P :3:hist:anal:mpti:mpt3:mpt1', &
-            oneAveMicroFields%cnm1p, imean)
-    end if
-
-    if (associated(oneMicroFields%cnm2p)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%cnm2p, &
-            'CNM2P :3:hist:anal:mpti:mpt3:mpt1', &
-            oneAveMicroFields%cnm2p, imean)
-    end if
-
-    if (associated(oneMicroFields%cnm3p)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%cnm3p, &
-            'CNM3P :3:hist:anal:mpti:mpt3:mpt1', &
-            oneAveMicroFields%cnm3p, imean)
-    end if
-
-    if (associated(oneMicroFields%cnm8p)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%cnm8p, &
-            'CNM8P :3:hist:anal:mpti:mpt3:mpt1', &
-            oneAveMicroFields%cnm8p, imean)
-    end if
-
-    if (associated(oneMicroFields%md1np)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%md1np, &
-            'MD1NP :3:hist:anal:mpti:mpt3:mpt1', &
-            oneAveMicroFields%md1np, imean)
-    end if
-
-    if (associated(oneMicroFields%md2np)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%md2np, &
-            'MD2NP :3:hist:anal:mpti:mpt3:mpt1', &
-            oneAveMicroFields%md2np, imean)
-    end if
-
-    if (associated(oneMicroFields%salt_filmp)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%salt_filmp, &
-            'SALT_FILMP :3:hist:anal:mpti:mpt3:mpt1', &
-            oneAveMicroFields%salt_filmp, imean)
-    end if
-
-    if (associated(oneMicroFields%salt_jetp)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%salt_jetp, &
-            'SALT_JETP :3:hist:anal:mpti:mpt3:mpt1', &
-            oneAveMicroFields%salt_jetp, imean)
-    end if
-
-    if (associated(oneMicroFields%salt_spmp)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%salt_spmp, &
-            'SALT_SPMP :3:hist:anal:mpti:mpt3:mpt1', &
-            oneAveMicroFields%salt_spmp, imean)
     end if
 
     if (associated(oneMicroFields%rei)) then   
