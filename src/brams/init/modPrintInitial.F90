@@ -52,6 +52,14 @@ module modPrintInitial
        ,'UkMet        ' &
        ,'rrtmg        '/)
 
+  character(len=*), parameter :: c_microphysics(5) = (/&
+       "RAMS original microphysics                       ",&
+       "Microphysics code removed from this BRAMS version",&
+       "G. Thompson microphysics, aerosol unaware        ", &
+       "G. Thompson microphysics, aerosol aware          ", &
+       "GFDL microphysics                                " &
+       /)
+  
   ! 0- off,
   ! 1- Tremback formulation
   ! 2- Grell-Deveny scheme
@@ -110,7 +118,7 @@ module modPrintInitial
 
   public printGridHeader,printOneVarGrid,printGridTail,bramsHeader,printVarHeader,printVarTAil &
        ,conv2String,printOneLineVars,printOneFile,printFileHeader,printFileTail,csvTail,csvHeader &
-       ,printOnecsv,c_dyncore_flag
+       ,printOnecsv,c_dyncore_flag, c_microphysics
 
   logical :: lastIsBold=.false.
 

@@ -147,7 +147,8 @@ module ModOpspec
        tnudtop
 
   use modPrintInitial, only: &
-       c_dyncore_flag
+       c_dyncore_flag, &
+       c_microphysics
   
   implicit none 
 
@@ -1232,6 +1233,13 @@ contains
 
     if (oneMicControl%mcphys_type == 1) then
        strLong = "FATAL - Unavailable selected mcphys_type option = 1"
+       print *, trim(strLong)
+       strLong="Available mcphys_type options are:"
+       print *, trim(strLong)
+       do isrc = 1, size(c_microphysics)
+          write(str(2),"(i8)") isrc-1
+          strLong="Option "//trim(adjustl(str(2)))//": "//c_microphysics(isrc)
+       end do
        call fatal_error(h//" Unavailable selected mcphys_type option = 1")
     end if
     
