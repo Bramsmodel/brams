@@ -100,64 +100,16 @@ module ModMicroFields
      real, contiguous, pointer :: nuccldc(:,:,:)
      real, contiguous, pointer :: nucicer(:,:,:)
      real, contiguous, pointer :: nucicec(:,:,:)
-     real, contiguous, pointer :: inuchomr(:,:,:)
-     real, contiguous, pointer :: inuchomc(:,:,:)
-     real, contiguous, pointer :: inuccontr(:,:,:)
-     real, contiguous, pointer :: inuccontc(:,:,:)
-     real, contiguous, pointer :: inucifnr(:,:,:)
-     real, contiguous, pointer :: inucifnc(:,:,:)
-     real, contiguous, pointer :: inuchazr(:,:,:)
-     real, contiguous, pointer :: inuchazc(:,:,:)
      real, contiguous, pointer :: vapliq(:,:,:)
      real, contiguous, pointer :: vapice(:,:,:)
-     real, contiguous, pointer :: vapcld(:,:,:)
-     real, contiguous, pointer :: vaprain(:,:,:)
-     real, contiguous, pointer :: vappris(:,:,:)
-     real, contiguous, pointer :: vapsnow(:,:,:)
-     real, contiguous, pointer :: vapaggr(:,:,:)
-     real, contiguous, pointer :: vapgrau(:,:,:)
-     real, contiguous, pointer :: vaphail(:,:,:)
-     real, contiguous, pointer :: vapdriz(:,:,:)
      real, contiguous, pointer :: meltice(:,:,:)
-     real, contiguous, pointer :: meltpris(:,:,:)
-     real, contiguous, pointer :: meltsnow(:,:,:)
-     real, contiguous, pointer :: meltaggr(:,:,:)
-     real, contiguous, pointer :: meltgrau(:,:,:)
-     real, contiguous, pointer :: melthail(:,:,:)
      real, contiguous, pointer :: cld2rain(:,:,:)
      real, contiguous, pointer :: rimecld(:,:,:)
-     real, contiguous, pointer :: rimecldsnow(:,:,:)
-     real, contiguous, pointer :: rimecldaggr(:,:,:)
-     real, contiguous, pointer :: rimecldgrau(:,:,:)
-     real, contiguous, pointer :: rimecldhail(:,:,:)
      real, contiguous, pointer :: rain2ice(:,:,:)
-     real, contiguous, pointer :: rain2pr(:,:,:)
-     real, contiguous, pointer :: rain2sn(:,:,:)
-     real, contiguous, pointer :: rain2ag(:,:,:)
-     real, contiguous, pointer :: rain2gr(:,:,:)
-     real, contiguous, pointer :: rain2ha(:,:,:)
-     real, contiguous, pointer :: rain2ha_xtra(:,:,:)
      real, contiguous, pointer :: ice2rain(:,:,:)
-     real, contiguous, pointer :: aggregate(:,:,:)
-     real, contiguous, pointer :: aggrselfpris(:,:,:)
-     real, contiguous, pointer :: aggrselfsnow(:,:,:)
-     real, contiguous, pointer :: aggrprissnow(:,:,:)
+!!$     real, contiguous, pointer :: aggregate(:,:,:)
      real, contiguous, pointer :: latheatvap(:,:,:)
      real, contiguous, pointer :: latheatfrz(:,:,:)
-     real, contiguous, pointer :: nuccldrt(:,:,:)
-     real, contiguous, pointer :: nuccldct(:,:,:)
-     real, contiguous, pointer :: nucicert(:,:,:)
-     real, contiguous, pointer :: nucicect(:,:,:)
-     real, contiguous, pointer :: vapliqt(:,:,:)
-     real, contiguous, pointer :: vapicet(:,:,:)
-     real, contiguous, pointer :: melticet(:,:,:)
-     real, contiguous, pointer :: cld2raint(:,:,:)
-     real, contiguous, pointer :: rimecldt(:,:,:)
-     real, contiguous, pointer :: rain2icet(:,:,:)
-     real, contiguous, pointer :: ice2raint(:,:,:)
-     real, contiguous, pointer :: aggregatet(:,:,:)
-     real, contiguous, pointer :: latheatvapt(:,:,:)
-     real, contiguous, pointer :: latheatfrzt(:,:,:)
 
      ! Variables to be dimensioned by (nnxp,nyp)
      real, contiguous, pointer :: accpr(:,:)
@@ -1158,70 +1110,6 @@ contains
                trim(adjustl(str(1))))
        end if
     end if
-    if (associated(oneMicroFields%inuchomr)) then
-       deallocate(oneMicroFields%inuchomr, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate inuchomr fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%inuchomc)) then
-       deallocate(oneMicroFields%inuchomc, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate inuchomc fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%inuccontr)) then
-       deallocate(oneMicroFields%inuccontr, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate inuccontr fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%inuccontc)) then
-       deallocate(oneMicroFields%inuccontc, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate inuccontc fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%inucifnr)) then
-       deallocate(oneMicroFields%inucifnr, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate inucifnr fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%inucifnc)) then
-       deallocate(oneMicroFields%inucifnc, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate inucifnc fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%inuchazr)) then
-       deallocate(oneMicroFields%inuchazr, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate inuchazr fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%inuchazc)) then
-       deallocate(oneMicroFields%inuchazc, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate inuchazc fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
     if (associated(oneMicroFields%vapliq)) then
        deallocate(oneMicroFields%vapliq, stat=ierr)
        if (ierr /= 0) then
@@ -1238,115 +1126,11 @@ contains
                trim(adjustl(str(1))))
        end if
     end if
-    if (associated(oneMicroFields%vapcld)) then
-       deallocate(oneMicroFields%vapcld, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate vapcld fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%vaprain)) then
-       deallocate(oneMicroFields%vaprain, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate vaprain fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%vappris)) then
-       deallocate(oneMicroFields%vappris, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate vappris fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%vapsnow)) then
-       deallocate(oneMicroFields%vapsnow, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate vapsnow fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%vapaggr)) then
-       deallocate(oneMicroFields%vapaggr, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate vapaggr fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%vapgrau)) then
-       deallocate(oneMicroFields%vapgrau, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate vapgrau fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%vaphail)) then
-       deallocate(oneMicroFields%vaphail, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate vaphail fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%vapdriz)) then
-       deallocate(oneMicroFields%vapdriz, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate vapdriz fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
     if (associated(oneMicroFields%meltice)) then
        deallocate(oneMicroFields%meltice, stat=ierr)
        if (ierr /= 0) then
           write(str(1),"(i8)") ierr
           call fatal_error(h//" deallocate meltice fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%meltpris)) then
-       deallocate(oneMicroFields%meltpris, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate meltpris fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%meltsnow)) then
-       deallocate(oneMicroFields%meltsnow, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate meltsnow fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%meltaggr)) then
-       deallocate(oneMicroFields%meltaggr, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate meltaggr fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%meltgrau)) then
-       deallocate(oneMicroFields%meltgrau, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate meltgrau fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%melthail)) then
-       deallocate(oneMicroFields%melthail, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate melthail fails with stat="//&
                trim(adjustl(str(1))))
        end if
     end if
@@ -1366,91 +1150,11 @@ contains
                trim(adjustl(str(1))))
        end if
     end if
-    if (associated(oneMicroFields%rimecldsnow)) then
-       deallocate(oneMicroFields%rimecldsnow, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate rimecldsnow fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%rimecldaggr)) then
-       deallocate(oneMicroFields%rimecldaggr, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate rimecldaggr fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%rimecldgrau)) then
-       deallocate(oneMicroFields%rimecldgrau, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate rimecldgrau fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%rimecldhail)) then
-       deallocate(oneMicroFields%rimecldhail, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate rimecldhail fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
     if (associated(oneMicroFields%rain2ice)) then
        deallocate(oneMicroFields%rain2ice, stat=ierr)
        if (ierr /= 0) then
           write(str(1),"(i8)") ierr
           call fatal_error(h//" deallocate rain2ice fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%rain2pr)) then
-       deallocate(oneMicroFields%rain2pr, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate rain2pr fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%rain2sn)) then
-       deallocate(oneMicroFields%rain2sn, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate rain2sn fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%rain2ag)) then
-       deallocate(oneMicroFields%rain2ag, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate rain2ag fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%rain2gr)) then
-       deallocate(oneMicroFields%rain2gr, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate rain2gr fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%rain2ha)) then
-       deallocate(oneMicroFields%rain2ha, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate rain2ha fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%rain2ha_xtra)) then
-       deallocate(oneMicroFields%rain2ha_xtra, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate rain2ha_xtra fails with stat="//&
                trim(adjustl(str(1))))
        end if
     end if
@@ -1462,38 +1166,14 @@ contains
                trim(adjustl(str(1))))
        end if
     end if
-    if (associated(oneMicroFields%aggregate)) then
-       deallocate(oneMicroFields%aggregate, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate aggregate fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%aggrselfpris)) then
-       deallocate(oneMicroFields%aggrselfpris, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate aggrselfpris fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%aggrselfsnow)) then
-       deallocate(oneMicroFields%aggrselfsnow, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate aggrselfsnow fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%aggrprissnow)) then
-       deallocate(oneMicroFields%aggrprissnow, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate aggrprissnow fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
+!!$    if (associated(oneMicroFields%aggregate)) then
+!!$       deallocate(oneMicroFields%aggregate, stat=ierr)
+!!$       if (ierr /= 0) then
+!!$          write(str(1),"(i8)") ierr
+!!$          call fatal_error(h//" deallocate aggregate fails with stat="//&
+!!$               trim(adjustl(str(1))))
+!!$       end if
+!!$    end if
     if (associated(oneMicroFields%latheatvap)) then
        deallocate(oneMicroFields%latheatvap, stat=ierr)
        if (ierr /= 0) then
@@ -1507,118 +1187,6 @@ contains
        if (ierr /= 0) then
           write(str(1),"(i8)") ierr
           call fatal_error(h//" deallocate latheatfrz fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%nuccldrt)) then
-       deallocate(oneMicroFields%nuccldrt, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate nuccldrt fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%nuccldct)) then
-       deallocate(oneMicroFields%nuccldct, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate nuccldct fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%nucicert)) then
-       deallocate(oneMicroFields%nucicert, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate nucicert fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%nucicect)) then
-       deallocate(oneMicroFields%nucicect, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate nucicect fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%vapliqt)) then
-       deallocate(oneMicroFields%vapliqt, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate vapliqt fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%vapicet)) then
-       deallocate(oneMicroFields%vapicet, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate vapicet fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%melticet)) then
-       deallocate(oneMicroFields%melticet, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate melticet fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%cld2raint)) then
-       deallocate(oneMicroFields%cld2raint, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate cld2raint fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%rimecldt)) then
-       deallocate(oneMicroFields%rimecldt, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate rimecldt fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%rain2icet)) then
-       deallocate(oneMicroFields%rain2icet, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate rain2icet fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%ice2raint)) then
-       deallocate(oneMicroFields%ice2raint, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate ice2raint fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%aggregatet)) then
-       deallocate(oneMicroFields%aggregatet, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate aggregatet fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%latheatvapt)) then
-       deallocate(oneMicroFields%latheatvapt, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate latheatvapt fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-    end if
-    if (associated(oneMicroFields%latheatfrzt)) then
-       deallocate(oneMicroFields%latheatfrzt, stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" deallocate latheatfrzt fails with stat="//&
                trim(adjustl(str(1))))
        end if
     end if
@@ -2113,62 +1681,6 @@ contains
             oneAveMicroFields%nucicec, imean)
     end if
 
-    if (associated(oneMicroFields%inuchomr)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%inuchomr, &
-            'INUCHOMR :3:hist:anal:mpt3', &
-            oneAveMicroFields%inuchomr, imean)
-    end if
-
-    if (associated(oneMicroFields%inuchomc)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%inuchomc, &
-            'INUCHOMC :3:hist:anal:mpt3', &
-            oneAveMicroFields%inuchomc, imean)
-    end if
-
-    if (associated(oneMicroFields%inuccontr)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%inuccontr, &
-            'INUCCONTR :3:hist:anal:mpt3', &
-            oneAveMicroFields%inuccontr, imean)
-    end if
-
-    if (associated(oneMicroFields%inuccontc)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%inuccontc, &
-            'INUCCONTC :3:hist:anal:mpt3', &
-            oneAveMicroFields%inuccontc, imean)
-    end if
-
-    if (associated(oneMicroFields%inucifnr)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%inucifnr, &
-            'INUCIFNR :3:hist:anal:mpt3', &
-            oneAveMicroFields%inucifnr, imean)
-    end if
-
-    if (associated(oneMicroFields%inucifnc)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%inucifnc, &
-            'INUCIFNC :3:hist:anal:mpt3', &
-            oneAveMicroFields%inucifnc, imean)
-    end if
-
-    if (associated(oneMicroFields%inuchazr)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%inuchazr, &
-            'INUCHAZR :3:hist:anal:mpt3', &
-            oneAveMicroFields%inuchazr, imean)
-    end if
-
-    if (associated(oneMicroFields%inuchazc)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%inuchazc, &
-            'INUCHAZC :3:hist:anal:mpt3', &
-            oneAveMicroFields%inuchazc, imean)
-    end if
-
     if (associated(oneMicroFields%vapliq)) then 
        call InsertVarTable (oneVarTable, oneVarTableSize, &
             oneMicroFields%vapliq, &
@@ -2183,105 +1695,12 @@ contains
             oneAveMicroFields%vapice, imean)
     end if
 
-    if (associated(oneMicroFields%vapcld)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%vapcld, &
-            'VAPCLD :3:hist:anal:mpt3', &
-            oneAveMicroFields%vapcld, imean)
-    end if
-
-    if (associated(oneMicroFields%vaprain)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%vaprain, &
-            'VAPRAIN :3:hist:anal:mpt3', &
-            oneAveMicroFields%vaprain, imean)
-    end if
-
-    if (associated(oneMicroFields%vappris)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%vappris, &
-            'VAPPRIS :3:hist:anal:mpt3', &
-            oneAveMicroFields%vappris, imean)
-    end if
-
-    if (associated(oneMicroFields%vapsnow)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%vapsnow, &
-            'VAPSNOW :3:hist:anal:mpt3', &
-            oneAveMicroFields%vapsnow, imean)
-    end if
-
-    if (associated(oneMicroFields%vapaggr)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%vapaggr, &
-            'VAPAGGR :3:hist:anal:mpt3', &
-            oneAveMicroFields%vapaggr, imean)
-    end if
-
-    if (associated(oneMicroFields%vapgrau)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%vapgrau, &
-            'VAPGRAU :3:hist:anal:mpt3', &
-            oneAveMicroFields%vapgrau, imean)
-    end if
-
-    if (associated(oneMicroFields%vaphail)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%vaphail, &
-            'VAPHAIL :3:hist:anal:mpt3', &
-            oneAveMicroFields%vaphail, imean)
-    end if
-
-    if (associated(oneMicroFields%vapdriz)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%vapdriz, &
-            'VAPDRIZ :3:hist:anal:mpt3', &
-            oneAveMicroFields%vapdriz, imean)
-    end if
-
-
     if (associated(oneMicroFields%meltice)) then 
        call InsertVarTable (oneVarTable, oneVarTableSize, &
             oneMicroFields%meltice, &
             'MELTICE :3:hist:anal:mpt3', &
             oneAveMicroFields%meltice, imean)
     end if
-
-    if (associated(oneMicroFields%meltpris)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%meltpris, &
-            'MELTPRIS :3:hist:anal:mpt3', &
-            oneAveMicroFields%meltpris, imean)
-    end if
-
-    if (associated(oneMicroFields%meltsnow)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%meltsnow, &
-            'MELTSNOW :3:hist:anal:mpt3', &
-            oneAveMicroFields%meltsnow, imean)
-    end if
-
-    if (associated(oneMicroFields%meltaggr)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%meltaggr, &
-            'MELTAGGR :3:hist:anal:mpt3', &
-            oneAveMicroFields%meltaggr, imean)
-    end if
-
-    if (associated(oneMicroFields%meltgrau)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%meltgrau, &
-            'MELTGRAU :3:hist:anal:mpt3', &
-            oneAveMicroFields%meltgrau, imean)
-    end if
-
-    if (associated(oneMicroFields%melthail)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%melthail, &
-            'MELTHAIL :3:hist:anal:mpt3', &
-            oneAveMicroFields%melthail, imean)
-    end if
-
 
     if (associated(oneMicroFields%cld2rain)) then 
        call InsertVarTable (oneVarTable, oneVarTableSize, &
@@ -2297,82 +1716,11 @@ contains
             oneAveMicroFields%rimecld, imean)
     end if
 
-    if (associated(oneMicroFields%rimecldsnow)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%rimecldsnow, &
-            'RIMECLDSNOW :3:hist:anal:mpt3', &
-            oneAveMicroFields%rimecldsnow, imean)
-    end if
-
-    if (associated(oneMicroFields%rimecldaggr)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%rimecldaggr, &
-            'RIMECLDAGGR :3:hist:anal:mpt3', &
-            oneAveMicroFields%rimecldaggr, imean)
-    end if
-
-    if (associated(oneMicroFields%rimecldgrau)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%rimecldgrau, &
-            'RIMECLDGRAU :3:hist:anal:mpt3', &
-            oneAveMicroFields%rimecldgrau, imean)
-    end if
-
-    if (associated(oneMicroFields%rimecldhail)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%rimecldhail, &
-            'RIMECLDHAIL :3:hist:anal:mpt3', &
-            oneAveMicroFields%rimecldhail, imean)
-    end if
-
-
     if (associated(oneMicroFields%rain2ice)) then 
        call InsertVarTable (oneVarTable, oneVarTableSize, &
             oneMicroFields%rain2ice, &
             'RAIN2ICE :3:hist:anal:mpt3', &
             oneAveMicroFields%rain2ice, imean)
-    end if
-
-    if (associated(oneMicroFields%rain2pr)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%rain2pr, &
-            'RAIN2PR :3:hist:anal:mpt3', &
-            oneAveMicroFields%rain2pr, imean)
-    end if
-
-    if (associated(oneMicroFields%rain2sn)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%rain2sn, &
-            'RAIN2SN :3:hist:anal:mpt3', &
-            oneAveMicroFields%rain2sn, imean)
-    end if
-
-    if (associated(oneMicroFields%rain2ag)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%rain2ag, &
-            'RAIN2AG :3:hist:anal:mpt3', &
-            oneAveMicroFields%rain2ag, imean)
-    end if
-
-    if (associated(oneMicroFields%rain2gr)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%rain2gr, &
-            'RAIN2GR :3:hist:anal:mpt3', &
-            oneAveMicroFields%rain2gr, imean)
-    end if
-
-    if (associated(oneMicroFields%rain2ha)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%rain2ha, &
-            'RAIN2HA :3:hist:anal:mpt3', &
-            oneAveMicroFields%rain2ha, imean)
-    end if
-
-    if (associated(oneMicroFields%rain2ha_xtra)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%rain2ha_xtra, &
-            'RAIN2HA_XTRA :3:hist:anal:mpt3', &
-            oneAveMicroFields%rain2ha_xtra, imean)
     end if
 
     if (associated(oneMicroFields%ice2rain)) then 
@@ -2382,35 +1730,13 @@ contains
             oneAveMicroFields%ice2rain, imean)
     end if
 
-    if (associated(oneMicroFields%aggregate)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%aggregate, &
-            'AGGREGATE :3:hist:anal:mpt3', &
-            oneAveMicroFields%aggregate, imean)
-    end if
-
-    if (associated(oneMicroFields%aggrselfpris)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%aggrselfpris, &
-            'AGGRSELFPRIS :3:hist:anal:mpt3', &
-            oneAveMicroFields%aggrselfpris, imean)
-    end if
-
-    if (associated(oneMicroFields%aggrselfsnow)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%aggrselfsnow, &
-            'AGGRSELFSNOW :3:hist:anal:mpt3', &
-            oneAveMicroFields%aggrselfsnow, imean)
-    end if
-
-    if (associated(oneMicroFields%aggrprissnow)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%aggrprissnow, &
-            'AGGRPRISSNOW :3:hist:anal:mpt3', &
-            oneAveMicroFields%aggrprissnow, imean)
-    end if
-
-
+!!$    if (associated(oneMicroFields%aggregate)) then 
+!!$       call InsertVarTable (oneVarTable, oneVarTableSize, &
+!!$            oneMicroFields%aggregate, &
+!!$            'AGGREGATE :3:hist:anal:mpt3', &
+!!$            oneAveMicroFields%aggregate, imean)
+!!$    end if
+!!$
     if (associated(oneMicroFields%latheatvap)) then 
        call InsertVarTable (oneVarTable, oneVarTableSize, &
             oneMicroFields%latheatvap, &
@@ -2426,108 +1752,6 @@ contains
     end if
 
     !END MICRO BUDGET PROCESSES (instantaneous)
-
-    !COMPUTE AND OUTPUT MICRO BUDGET PROCESSES (totals)
-    if (associated(oneMicroFields%nuccldrt)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%nuccldrt, &
-            'NUCCLDRT :3:hist:anal:mpti:mpt3', &
-            oneAveMicroFields%nuccldrt, imean)
-    end if
-
-    if (associated(oneMicroFields%nuccldct)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%nuccldct, &
-            'NUCCLDCT :3:hist:anal:mpti:mpt3', &
-            oneAveMicroFields%nuccldct, imean)
-    end if
-
-    if (associated(oneMicroFields%nucicert)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%nucicert, &
-            'NUCICERT :3:hist:anal:mpti:mpt3', &
-            oneAveMicroFields%nucicert, imean)
-    end if
-
-    if (associated(oneMicroFields%nucicect)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%nucicect, &
-            'NUCICECT :3:hist:anal:mpti:mpt3', &
-            oneAveMicroFields%nucicect, imean)
-    end if
-
-    if (associated(oneMicroFields%vapliqt)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%vapliqt, &
-            'VAPLIQT :3:hist:anal:mpti:mpt3', &
-            oneAveMicroFields%vapliqt, imean)
-    end if
-
-    if (associated(oneMicroFields%vapicet)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%vapicet, &
-            'VAPICET :3:hist:anal:mpti:mpt3', &
-            oneAveMicroFields%vapicet, imean)
-    end if
-
-    if (associated(oneMicroFields%melticet)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%melticet, &
-            'MELTICET :3:hist:anal:mpti:mpt3', &
-            oneAveMicroFields%melticet, imean)
-    end if
-
-    if (associated(oneMicroFields%cld2raint)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%cld2raint, &
-            'CLD2RAINT :3:hist:anal:mpti:mpt3', &
-            oneAveMicroFields%cld2raint, imean)
-    end if
-
-    if (associated(oneMicroFields%rimecldt)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%rimecldt, &
-            'RIMECLDT :3:hist:anal:mpti:mpt3', &
-            oneAveMicroFields%rimecldt, imean)
-    end if
-
-    if (associated(oneMicroFields%rain2icet)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%rain2icet, &
-            'RAIN2ICET :3:hist:anal:mpti:mpt3', &
-            oneAveMicroFields%rain2icet, imean)
-    end if
-
-    if (associated(oneMicroFields%ice2raint)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%ice2raint, &
-            'ICE2RAINT :3:hist:anal:mpti:mpt3', &
-            oneAveMicroFields%ice2raint, imean)
-    end if
-
-
-    if (associated(oneMicroFields%aggregatet)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%aggregatet, &
-            'AGGREGATET :3:hist:anal:mpti:mpt3', &
-            oneAveMicroFields%aggregatet, imean)
-    end if
-
-    if (associated(oneMicroFields%latheatvapt)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%latheatvapt, &
-            'LATHEATVAPT :3:hist:anal:mpti:mpt3', &
-            oneAveMicroFields%latheatvapt, imean)
-    end if
-
-    if (associated(oneMicroFields%latheatfrzt)) then 
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            oneMicroFields%latheatfrzt, &
-            'LATHEATFRZT :3:hist:anal:mpti:mpt3', &
-            oneAveMicroFields%latheatfrzt, imean)
-    end if
-
-    !END MICRO BUDGET PROCECCES (totals)
 
     if (associated(oneMicroFields%accpr)) then 
        call InsertVarTable (oneVarTable, oneVarTableSize, &
