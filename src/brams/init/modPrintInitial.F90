@@ -59,7 +59,8 @@ module modPrintInitial
        "G. Thompson microphysics, aerosol aware          ", &
        "GFDL microphysics                                " &
        /)
-  
+
+       
   ! 0- off,
   ! 1- Tremback formulation
   ! 2- Grell-Deveny scheme
@@ -69,7 +70,8 @@ module modPrintInitial
   ! 6- Grell-Freitas scheme 6
   ! 7- Grell-Freitas scheme 7
   ! 8- Grell-Freitas scheme 8
-  character(len=*), parameter,dimension(9) :: c_nnqparm=(/'off                               ' &
+  character(len=*), parameter,dimension(9) :: c_nnqparm=(/&
+       'off                               ' &
        ,  'Tremback formulation              ' &
        ,  'Grell-Deveny scheme               ' &
        ,  'Grell-3d formulation              ' &
@@ -118,7 +120,7 @@ module modPrintInitial
 
   public printGridHeader,printOneVarGrid,printGridTail,bramsHeader,printVarHeader,printVarTAil &
        ,conv2String,printOneLineVars,printOneFile,printFileHeader,printFileTail,csvTail,csvHeader &
-       ,printOnecsv,c_dyncore_flag, c_microphysics
+       ,printOnecsv,c_dyncore_flag, c_microphysics, c_nnqparm
 
   logical :: lastIsBold=.false.
 

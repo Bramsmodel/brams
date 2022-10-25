@@ -28,9 +28,6 @@ module ModTimestep
   use ModRShCuPar, only: &
        shcupa
 
-  use ModRConv, only: &
-       cuparm
-
   use ModMicThompsonDriver, only: &
        micro_thompson
 
@@ -425,13 +422,6 @@ contains
 
     !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
     !  call SynchronizedTimeStamp(TS_DYNAMICS)
-
-    !  Cumulus parameterization version 1
-    !----------------------------------------
-    if (oneGrid%oneNamelistFile%nnqparm(ngrid)==1 .or. &
-         oneGrid%oneNamelistFile%if_cuinv==1) then
-       call cuparm(oneGrid%oneBasicFields, oneGrid%oneNamelistFile, oneGrid%oneCuParmVars, oneGrid%oneCuParmFields)
-    end if
 
     !  Urban canopy parameterization
     !----------------------------------------

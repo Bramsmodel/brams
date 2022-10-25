@@ -26,9 +26,6 @@ module ModTimestepRK
   use ModRShCuPar, only: &
        shcupa
 
-  use ModRConv, only: &
-       cuparm
-
   use ModMicThompsonDriver, only: &
        micro_thompson
 
@@ -489,13 +486,6 @@ contains
     end if
 
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
-
-    !  Cumulus parameterization version 1
-    !----------------------------------------
-    if (oneGrid%oneNamelistFile%nnqparm(ngrid)==1 .or. &
-         oneGrid%oneNamelistFile%if_cuinv==1) then !
-       call cuparm(oneGrid%oneBasicFields, oneGrid%oneNamelistFile, oneGrid%oneCuParmVars, oneGrid%oneCuParmFields)
-    end if
 
     !  Urban canopy parameterization
     !----------------------------------------

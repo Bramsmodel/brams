@@ -88,10 +88,6 @@ module ModRShCuPar
        icprtfl,                 &   ! intent(out)   ! maybe local variable
        icpltfl
 
-  use ModRConv, only: &
-       lcl, &
-       vertmap2
-
   use shcu_vars_const, only : &
        dtdt, &   ! intent(in/out)
        alvl,                        &   ! intent(in) ! parameter
@@ -135,6 +131,11 @@ module ModRShCuPar
        r,                       &   ! intent(in)  ! parameter
        kzi,                     &   ! intent(out) ! maybe local var.?
        akvde                        ! intent(in/out)
+
+  use rconstants, only: &
+       cpor, &
+       rocp, &
+       p00k
 
   implicit none
 
@@ -912,4 +913,123 @@ contains
   end subroutine SH_RATES
   !                           
   !*********************************************************************
+
+
+  subroutine vertmap2(datin,zin,n3in,datout,zout,n3out)
+    integer :: n3in,n3out
+    real, dimension(n3in) :: datin,zin
+    real, dimension(n3out) :: datout,zout(n3out)
+
+    real, allocatable :: qvct(:),vctr(:)
+    integer :: k,l
+    real :: dzlft
+    !  This routine assumes that output vertical structure will be lower than
+    !   input vertical structure!!!!
+
+
+    !         Transfer quantity from input grid levels to output grid
+
+    allocate(qvct(n3in),vctr(n3out))
+
+    do k=1,n3out
+       vctr(k)=0.
+    enddo
+
+    dzlft=0.
+    l=2
+    do k=2,n3out
+       !     print *,'******************************* working on output layer ',k
+       if(dzlft.ne.0.) then
+          if(zin(l) .gt. zout(k)) then
+             vctr(k)=vctr(k)+datin(l)*(zout(k)-zout(k-1))
+             dzlft=zin(l)-zout(k)
+             !  print*,'dzlft2 layer:',k,l,datin(l),dzlft
+             go to 61
+          else
+             vctr(k)=vctr(k)+datin(l)*dzlft
+             !   print*,'dzlft layer:',k,l,datin(l),dzlft
+             l=l+1
+             if(l > n3in) exit
+             dzlft=0.
+          endif
+       endif
+60     continue
+       if(zin(l) <= zout(k)) then
+          vctr(k)=vctr(k)+datin(l)*(zin(l)-zin(l-1))
+          !   print*,'full layer:',k,l,datin(l),zin(L),zin(L-1)
+          l=l+1
+          if(l > n3in) exit
+          dzlft=0.
+          if(zin(l-1) == zout(k)) go to 61
+          go to 60
+       else
+          vctr(k)=vctr(k)+datin(l)*(zout(k)-zin(l-1))
+          !    print*,'part layer:',k,l,vctr(k),datin(l),zout(k),zin(l-1)
+          dzlft=zin(l)-zout(k)
+       endif
+61     continue
+       !  print *,'****************************** done with output layer ',k
+    enddo
+
+
+    !         Change energy tendencies to temperature and mixing ratio
+    !           tendencies.
+
+    do k=2,n3out
+       datout(k)=vctr(k)/(zout(k)-zout(k-1))
+    enddo
+
+    deallocate(qvct,vctr)
+
+    return
+  end subroutine vertmap2
+
+  !     ******************************************************************
+
+  subroutine lcl(t0,pp0,r0,tlcl,plcl,dzlcl)
+    real :: t0,pp0,r0,tlcl,plcl,dzlcl
+
+    real, parameter :: cpg=102.45
+
+    integer :: nitt,ip
+    real :: p0k,pi0i,ttth0,ttd,dz,pki,pppi,ti,rvs
+    real, external :: td,rs
+
+    ip=0
+11  continue
+
+    plcl=pp0
+    tlcl=t0
+    p0k=pp0**rocp
+    pi0i=p0k/p00k*cp
+    ttth0=t0*p00k/p0k
+    ttd=td(pp0,r0)
+    dz=cpg*(t0-ttd)
+    if(dz.le.0.)then
+       dzlcl=0.
+       return
+    endif
+    do nitt=1,50
+       pki=pi0i-g*dz/(ttth0*(1.+.61*r0))
+       pppi=(pki/cp)**cpor*p00
+       ti=ttth0*pki/cp
+       rvs=rs(pppi,ti)
+       if(abs(rvs-r0).lt..00003)go to 110
+       ttd=td(pppi,r0)
+       dz=dz+cp/g*(ti-ttd)
+       !print*,nitt,rvs-r0,ttd,ti,dz
+    end do
+    print*, 'no converge in LCL:',t0,pp0,r0
+    ip=ip+1
+    if(ip==1)go to 11
+    stop 'LCL no convergence'
+
+110 continue
+    plcl=pppi
+    tlcl=ti
+    dzlcl=dz
+
+    return
+  end subroutine lcl
+
 end module ModRShCuPar

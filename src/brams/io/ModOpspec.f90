@@ -148,7 +148,8 @@ module ModOpspec
 
   use modPrintInitial, only: &
        c_dyncore_flag, &
-       c_microphysics
+       c_microphysics, &
+       c_nnqparm
   
   implicit none 
 
@@ -917,6 +918,25 @@ contains
     ! convective parameterization flags and parameter settings
 
     do ng=1,ngrids
+       if (oneNamelistFile%nnqparm(ng) /= 0 .and. &
+            oneNamelistFile%nnqparm(ng) /= 3 .and. &
+            oneNamelistFile%nnqparm(ng) /= 6 .and. &
+            oneNamelistFile%nnqparm(ng) /= 8) then
+          write(str(1),"(i8)") oneNamelistFile%nnqparm(ng)
+          strLong="FATAL - Unavailable selected nnqparm option ="//trim(adjustl(str(1)))
+          print *, trim(strLong)
+          strLong="Avaliable nnqparm options are"
+          print *, trim(strLong)
+          strLong="Option 0: "//trim(c_nnqparm(1))
+          print *, trim(strLong)
+          strLong="Option 3: "//trim(c_nnqparm(4))
+          print *, trim(strLong)
+          strLong="Option 6: "//trim(c_nnqparm(7))
+          print *, trim(strLong)
+          strLong="Option 8: "//trim(c_nnqparm(9))
+          print *, trim(strLong)
+          call fatal_error(h//" Unavailable selected nnqparm option =" //trim(adjustl(str(1))))
+       end if
        if (oneNamelistFile%nnqparm(ng)/=0 .and. oneMicControl%level==0) then
           print 27
 27        format (' fatal - level must be at least'  &
@@ -935,6 +955,7 @@ contains
        do isrc = 1, size(c_dyncore_flag)
           write(str(2),"(i8)") isrc-1
           strLong="Option "//trim(adjustl(str(2)))//": "//c_dyncore_flag(isrc)
+          print *, trim(strLong)
        end do
        call fatal_error(h//'unavailable dyncore_flag == '//trim(adjustl(str(1))))
        IFATERR=IFATERR+1
@@ -1239,6 +1260,7 @@ contains
        do isrc = 1, size(c_microphysics)
           write(str(2),"(i8)") isrc-1
           strLong="Option "//trim(adjustl(str(2)))//": "//c_microphysics(isrc)
+          print *, trim(strLong)
        end do
        call fatal_error(h//" Unavailable selected mcphys_type option = 1")
     end if
