@@ -22,9 +22,6 @@ module ModTimestep
   use ModSeaSalt, only: &
        SeaSaltDriver
   
-  use ModRConvGrellCatt, only: &
-       cuparm_grell_catt
-
   use ModRShCuPar, only: &
        shcupa
 
@@ -510,16 +507,6 @@ contains
     end if
 
     !-   Cumulus parameterization options 2->6:
-    !                    Deep Convection scheme
-    !- call deep first, if there is deep convection , turn off shallow.
-    if (oneGrid%oneNamelistFile%nnqparm(ngrid)==2) then
-       call cuparm_grell_catt(OneGrid, 1)
-    end if
-    !
-    !                    Shallow Convection scheme
-    if (NNSHCU(ngrid)==2 ) then
-       call cuparm_grell_catt(OneGrid, 2)
-    end if
     !
     !- G3d - GD-FIM and GF
     if (oneGrid%oneNamelistFile%nnqparm(ngrid)>=3) then

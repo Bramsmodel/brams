@@ -161,7 +161,6 @@ OBJ_MOD = \
 	ModRbnd.o \
 	ModRcio.o \
 	rconstants.o \
-	ModRConvGrellCatt.o \
 	ModChemConvTransp.o \
 	ModNamelistFile.o  \
 	ModControlVars.o \
