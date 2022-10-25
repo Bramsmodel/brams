@@ -152,7 +152,7 @@ contains
   subroutine prep_convflx_to_stilt(m1,m2,m3,ia,iz,ja,jz,mgmxp,mgmyp,mgmzp,maxiens,ngrid      &
        ,ngrids_cp,ierr4d,jmin4d,kdet4d,k224d,kbcon4d,ktop4d       &
        ,kpbl4d,kstabi4d,kstabm4d,xmb4d,edt4d,zcup5d,pcup5d,enup5d &
-       ,endn5d,deup5d,dedn5d,zup5d,zdn5d,iens, nnqparm)
+       ,endn5d,deup5d,dedn5d,zup5d,zdn5d,iens)
     integer, intent(in) :: mgmxp,mgmyp,mgmzp,ngrid,ngrids_cp,iens, maxiens,m1,m2,m3,ia,iz,ja,jz
 
     integer, intent(in),dimension(mgmxp,mgmyp,maxiens,ngrids_cp) ::                            &
@@ -162,7 +162,6 @@ contains
 
     real, intent(in), dimension(mgmzp,mgmxp,mgmyp,maxiens,ngrids_cp) ::                        &
          enup5d,endn5d,deup5d,dedn5d,zup5d,zdn5d,zcup5d,pcup5d
-    integer, intent(in) :: nnqparm(:)
     
     integer :: i, j
 
@@ -206,7 +205,7 @@ contains
        do i=ia,iz
           !    if((iens == 1 .and. ierr4d(i,j,iens,ngrid) == 0) .or. iens == 2) then
           if(ierr4d(i,j,iens,ngrid) == 0) then
-             call get_convflx(iens,i,j,mgmzp,m1,m2,m3,nnqparm(ngrid)       &
+             call get_convflx(iens,i,j,mgmzp,m1,m2,m3       &
                   ,   xmb4d(i,j,iens,ngrid),   edt4d(i,j,iens,ngrid)                       &
                   ,  jmin4d(i,j,iens,ngrid),  kdet4d(i,j,iens,ngrid)                       &
                   ,   k224d(i,j,iens,ngrid), kbcon4d(i,j,iens,ngrid)                       &
@@ -242,13 +241,13 @@ contains
   !   This subroutine aims at getting the convective fluxes from Grell shallow and           !
   ! deep convective parameterizations.                                                       !
   !------------------------------------------------------------------------------------------!
-  subroutine get_convflx(iens,i,j,mgmzp,m1,m2,m3,nnqparm,xmb,edt,jmin,kdet,k22,kbcon,ktop,kpbl &
+  subroutine get_convflx(iens,i,j,mgmzp,m1,m2,m3,xmb,edt,jmin,kdet,k22,kbcon,ktop,kpbl &
        ,kstabi,kstabm,z_cup,p_cup,cd,entr,cdd,entrd,zu,zd&!,cfxup1,cfxdn1       &
                                 !-srf for GF scheme
        ,up_massdetro,up_massentro,dd_massdetro,dd_massentro                   &
        ,cfxup1,cfxdn1,dfxup1,efxup1,dfxdn1,efxdn1,cfxup2,dfxup2,efxup2)
     integer, intent(in)                      ::  iens,i,j,mgmzp,m1,m2,m3,jmin,kdet,k22,kbcon   &
-         ,ktop,kpbl,kstabi,kstabm,nnqparm
+         ,ktop,kpbl,kstabi,kstabm
 
     real, intent(in)                         ::  xmb,edt
 
@@ -268,7 +267,7 @@ contains
        kr= k + 1   ! level K of conv grid  corresponds to level K + 1 of RAMS grid
        dz =  z_cup(kr) - z_cup(k)
 
-       if(iens==2 .or. (iens==1 .and. nnqparm == 2)) then
+       if(iens==2) then
           if(k==1) cycle ! k=1 only for GF scheme
           entup   = 0.
           detup   = 0.
@@ -291,32 +290,6 @@ contains
           if(k > kdet)   detdo  = 0.
           if(k == ktop)  subin  = 0.
           if(k < kbcon)  detup  = 0.
-       endif
-
-       if(iens==1 .and. nnqparm == 5) then ! GF scheme
-          entdoj  = 0. 
-          entupk  = 0. 
-          detupk  = 0. 
-
-          subdown = zu(k  ) - edt*zd(k  ) 
-          subin   = zu(k+1) - edt*zd(k+1) 
-          ! detrainment and entrainment for downdrafts
-          detdo=edt*dd_massdetro(k)
-          entdo=edt*dd_massentro(k)
-          !
-          ! entrainment/detrainment for updraft
-          entup=up_massentro(k)
-          detup=up_massdetro(k)
-
-          if(k==jmin)  entdoj=edt*zd(k)
-
-          if(k == ktop)then
-             detupk=zu(ktop)
-             detdo=0.
-             entdo=0.
-             entup=0.
-             detup=0.
-          endif
        endif
 
 
@@ -352,45 +325,6 @@ contains
        end if
 
     end do
-
-    !------------------------------------------------------------------------------------------!
-    ! Bottom layer                                                                             !
-    !------------------------------------------------------------------------------------------!
-    if(iens == 1 .and. nnqparm == 2) then  ! Deep convection
-       k = 1
-       kr= k + 1  ! the K-level of Grell is equivalent to the BRAMS K+1-level
-
-       dz        =  z_cup(2)-z_cup(1)
-
-       detdo1    = edt*zd(2)*  cdd(1)*dz
-       detdo2    = edt*zd(1)
-       entdo     = edt*zd(2)*entrd(1)*dz
-       subin     =-edt*zd(2)           
-
-       cfxup1(kr,i,j) = 0.
-       cfxdn1(kr,i,j) =-edt*xmb* zd(1)
-       dfxup1(kr,i,j) = 0.
-       efxup1(kr,i,j) = 0.
-       dfxdn1(kr,i,j) = xmb*(detdo1+detdo2) !edt already is at detdo1,2
-       efxdn1(kr,i,j) =-xmb* entdo          !edt already is at entdo
-
-
-       !------------------------------------------------------------------------------------------!
-       ! Checking the mass conservation                                                           !
-       !------------------------------------------------------------------------------------------!
-       totmas = detdo1+detdo2-entdo+subin
-       if(abs(totmas) > 1.e-6) then
-          write (unit=*,fmt='(a)')                 '----------- Subroutine Get_convflx ----------'
-          write(unit=*, fmt='(4(a,1x,i3,1x))')     '  K= ',k,'   I=',i,'   J=',j,'   IENS=',iens
-          write(unit=*, fmt='(2(a,1x,es10.3,1x))') '  subin=  ',    subin,'entdo=  ',entdo
-          write(unit=*, fmt='(2(a,1x,es10.3,1x))') '  detdo1= ',   detdo1,'detdo2= ',detdo2
-          write(unit=*, fmt='(1(a,1x,es10.3,1x))') '  totmas= ',   totmas
-          write(unit=*, fmt='(a)')                 '---------------------------------------------'
-          stop 'The model will stop since it is not conserving mass...' 
-       end if
-    end if
-
-    return
   end subroutine get_convflx
   !------------------------------------------------------------------------------------------!
 

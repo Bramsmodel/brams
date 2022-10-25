@@ -500,7 +500,7 @@ contains
     end if
 
     !- large and subgrid scale forcing for shallow and deep cumulus
-    if( oneGrid%oneNamelistFile%nnqparm(ngrid) >=2 .or. NNSHCU(ngrid)>=2 ) then
+    if( oneGrid%oneNamelistFile%nnqparm(ngrid) >=3 .or. NNSHCU(ngrid)>=2 ) then
        call prepare_lsf(oneGrid%oneNamelistFile%nnqparm(ngrid), NNSHCU(ngrid),1, &
             oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneRadiateFields, &
             oneGrid%oneCuParmShFields)

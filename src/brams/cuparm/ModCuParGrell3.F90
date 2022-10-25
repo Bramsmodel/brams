@@ -364,7 +364,6 @@ contains
 
     if(oneNamelistFile%nnqparm(ng) == 3 .or. &
          oneNamelistFile%nnqparm(ng) == 6 .or. &
-         oneNamelistFile%nnqparm(ng) == 5  .or. &
          oneNamelistFile%nnqparm(ng) == 8) then
        do i=1,ndim_train
           allocate(g3d_ens(i)%apr   (m2,m3))
@@ -400,7 +399,7 @@ contains
     allocate (g3d%nisrc(m1, m2, m3))
     g3d%nisrc=0.0
 
-    if( (imomentum==0 .or. imomentum==1 ) .and. oneNamelistFile%nnqparm(ng) >= 4) then
+    if( (imomentum==0 .or. imomentum==1 ) .and. oneNamelistFile%nnqparm(ng) >= 6) then
        allocate (g3d%usrc(m1, m2, m3))
        g3d%usrc=0.0
        allocate (g3d%vsrc(m1, m2, m3))
@@ -558,7 +557,7 @@ contains
     end if
 
 
-    if(imomentum==1 .and. nnqparm >= 4) then
+    if(imomentum==1 .and. nnqparm >= 6) then
        !- these arrays does not need to be parallelized (only column)
        if (associated(g3d(ng_cp)%usrc)) then
              call InsertVarTable (oneVarTable, oneVarTableSize, &
@@ -716,7 +715,7 @@ contains
           g3d_g(ngrid)%nlsrc     = 0.0
           g3d_g(ngrid)%nisrc     = 0.0
        endif
-       if(imomentum == 1 .and. oneGrid%oneNamelistFile%nnqparm(ngrid) >= 4) then
+       if(imomentum == 1 .and. oneGrid%oneNamelistFile%nnqparm(ngrid) >= 6) then
           g3d_g(ngrid)%usrc      = 0.0
           g3d_g(ngrid)%vsrc      = 0.0
        endif
@@ -1510,7 +1509,7 @@ contains
        g3d_g(ngrid)%THSRC(mzp,1:mxp,1:myp)= g3d_g(ngrid)%THSRC(mzp-1,1:mxp,1:myp)
        g3d_g(ngrid)%RTSRC(mzp,1:mxp,1:myp)= g3d_g(ngrid)%RTSRC(mzp-1,1:mxp,1:myp)
        g3d_g(ngrid)%CLSRC(mzp,1:mxp,1:myp)= g3d_g(ngrid)%CLSRC(mzp-1,1:mxp,1:myp)
-       if(imomentum==1 .and. oneGrid%oneNamelistFile%nnqparm(ngrid) >= 4) then
+       if(imomentum==1 .and. oneGrid%oneNamelistFile%nnqparm(ngrid) >= 6) then
           g3d_g(ngrid)%USRC(1  ,1:mxp,1:myp)= g3d_g(ngrid)%USRC (2    ,1:mxp,1:myp)
           g3d_g(ngrid)%VSRC(1  ,1:mxp,1:myp)= g3d_g(ngrid)%VSRC (2    ,1:mxp,1:myp)
           g3d_g(ngrid)%USRC(mzp,1:mxp,1:myp)= g3d_g(ngrid)%USRC (mzp-1,1:mxp,1:myp)
@@ -1523,14 +1522,6 @@ contains
        !-------------------------------------------------------------
     endif! 002
     !-------------------------------------------------------------
-    ! stores precipitation rate for each closure, only for output/training
-    if(oneGrid%oneNamelistFile%nnqparm(ngrid) == 3) then
-       if (training > 0) then
-          do i=1,train_dim
-             call update(mxp*myp, g3d_ens_g(i,ngrid)%accapr,g3d_ens_g(i,ngrid)%apr,dtlt)
-          enddo
-       endif
-    endif
     !--- for output only 
     if(oneGrid%oneNamelistFile%nnqparm(ngrid) == 8) then
        do i=1,train_dim
@@ -1539,12 +1530,12 @@ contains
     endif
     !----------------------------------------------------------
 
-    call update(mxp*myp, oneGrid%oneCuParmFields%aconpr   ,oneGrid%oneCuParmFields%conprr   ,dtlt)
+    call update(mxp*myp, oneGrid%oneCuParmFields%aconpr, oneGrid%oneCuParmFields%conprr, dtlt)
 
     call accum(int(mxp*myp*mzp,i8), tend%tht, g3d_g(ngrid)%thsrc)
     call accum(int(mxp*myp*mzp,i8), tend%rtt, g3d_g(ngrid)%rtsrc)
 
-    if(imomentum == 1 .and. oneGrid%oneNamelistFile%nnqparm(ngrid) >= 4) then
+    if(imomentum == 1 .and. oneGrid%oneNamelistFile%nnqparm(ngrid) >= 6) then
        call accum(int(mxp*myp*mzp,i8), tend%ut, g3d_g(ngrid)%usrc)
        call accum(int(mxp*myp*mzp,i8), tend%vt, g3d_g(ngrid)%vsrc)
     endif
@@ -1598,8 +1589,7 @@ contains
             ,mgmxp,mgmyp,mgmzp,maxiens,ngrid,ngrids_cp  &
             ,ierr4d,jmin4d,kdet4d,k224d,kbcon4d,ktop4d,kpbl4d   &
             ,kstabi4d,kstabm4d,xmb4d,edt4d  &
-            ,zcup5d,pcup5d,enup5d,endn5d,deup5d,dedn5d,zup5d,zdn5d  &
-            ,1, oneGrid%oneNamelistFile%nnqparm)! = iens
+            ,zcup5d,pcup5d,enup5d,endn5d,deup5d,dedn5d,zup5d,zdn5d,1)! = iens
        !-srf if shallow convection was solved by GF version 2015, call again
        !-    the convective transport routine to include the mass fluxes
        !-    from the shallow convection scheme.
@@ -1608,8 +1598,7 @@ contains
             ,mgmxp,mgmyp,mgmzp,maxiens,ngrid,ngrids_cp  &
             ,ierr4d,jmin4d,kdet4d,k224d,kbcon4d,ktop4d,kpbl4d   &
             ,kstabi4d,kstabm4d,xmb4d,edt4d  &
-            ,zcup5d,pcup5d,enup5d,endn5d,deup5d,dedn5d,zup5d,zdn5d  &
-            ,2, oneGrid%oneNamelistFile%nnqparm)! = iens
+            ,zcup5d,pcup5d,enup5d,endn5d,deup5d,dedn5d,zup5d,zdn5d,2)! = iens
 
     endif
     ! ------------- Stilt - BRAMS coupling  ------------------ ML]
@@ -1634,39 +1623,10 @@ contains
     !-- training on closures
     if(training == 1) then
        if(nnqparm==3) hweight = 0.2
-       if(nnqparm==5) hweight = 0.25
        do j=1,n3
           do i=1,n2
              do it=1,train_dim
-
                 g3d_ens_g(it,ng)%weight(i,j)=hweight
-                !print*,'weights=', it,i,j, g3d_ens_g(it,ng)%weight(i,j)
-
-                !if(it==apr_st) g3d_ens_g(it,ng)%weight(i,j)=0.175
-                !if(it==apr_as) g3d_ens_g(it,ng)%weight(i,j)=0.25
-                !if(it==apr_w ) g3d_ens_g(it,ng)%weight(i,j)=0.25
-                !if(it==apr_mc) g3d_ens_g(it,ng)%weight(i,j)=0.25
-                if(nnqparm==5) then
-
-                   !-special treatment over the ocean
-                   if(leaf_g(ng)%patch_area(i,j,1) .gt. 0.9 ) then ! water
-                      if(it==apr_as) g3d_ens_g(it,ng)%weight(i,j)=0.0
-                      if(it==apr_st) g3d_ens_g(it,ng)%weight(i,j)=0.425
-                      if(it==apr_gr) g3d_ens_g(it,ng)%weight(i,j)=0.1667
-                      if(it==apr_w ) g3d_ens_g(it,ng)%weight(i,j)=0.1667
-                      if(it==apr_mc) g3d_ens_g(it,ng)%weight(i,j)=0.1667
-
-                   else ! land
-
-                      if(it==apr_as) g3d_ens_g(it,ng)%weight(i,j)=0.0
-                      if(it==apr_st) g3d_ens_g(it,ng)%weight(i,j)=0.175
-                      if(it==apr_gr) g3d_ens_g(it,ng)%weight(i,j)=0.25
-                      if(it==apr_w ) g3d_ens_g(it,ng)%weight(i,j)=0.25
-                      if(it==apr_mc) g3d_ens_g(it,ng)%weight(i,j)=0.25
-                   endif
-                endif
-                !g3d_ens_g(it,ng)%weight(i,j)=float(i+j)*exp(-(float(it-2))**2)*float(i*j)
-
              enddo
           enddo
        enddo
