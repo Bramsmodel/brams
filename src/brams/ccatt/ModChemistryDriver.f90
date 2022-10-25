@@ -175,9 +175,6 @@ module ModChemistryDriver
   use mod_chem_trans_gasaq, only: &
        trans_gaq         ! Subroutine
 
-  use mod_chem_orage, only: &
-       eclair_driver     ! Subroutine
-
   use mod_chem_spack_rodas3_dyndt, only: &
        chem_rodas3_dyndt ! Subroutine
 
@@ -263,23 +260,7 @@ contains
     !     INTEGER,PARAMETER :: blockSize=1 !tmp
 
 
-    !-  call NO production by "eclair"
-    if( task == 2 .and. CHEMISTRY >= 0) then
-
-       if(associated(chem1_g(NO,ngrid)%sc_t)) then
-
-          call eclair_driver(mzp,mxp,myp,ia,iz,ja,jz,dtlt,grid_g(ngrid)%rtgt, &
-               grid_g(ngrid)%dxt,grid_g(ngrid)%dyt,dzt,zt,nzpmax,mgmxp,mgmyp, &
-               maxiens,oneNamelistFile%nnqparm(ngrid),oneBasicFields%wp, &
-               oneBasicFields%rtp,oneBasicFields%rv,oneBasicFields%pp, &
-               oneBasicFields%pi0,oneBasicFields%theta,chem1_g(NO,ngrid)%sc_t, &
-               weight,nspecies,no,cp,cpor)
-
-       endif
-
-       return
-
-    elseif( task == 3 .and. CHEMISTRY >= 0) then
+    if( task == 3 .and. CHEMISTRY >= 0) then
 
        if (CHEMISTRY == 0) then
 

@@ -58,43 +58,6 @@ contains
     character(len=*), parameter :: h="**(alloc_grell)**"
 
     ! Allocate arrays based on options (if necessary)
-    if (abs(oneNamelistFile%nnqparm(ng))==2)  then
-       allocate (grell%UPMF     (m2, m3), STAT=ierr)
-       if (ierr/=0) call fatal_error(h//"Allocating grell%UPMF")
-       allocate (grell%DNMF     (m2, m3), STAT=ierr)
-       if (ierr/=0) call fatal_error(h//"Allocating grell%DNMF")
-       allocate (grell%XIACT_C  (m2, m3), STAT=ierr)
-       if (ierr/=0) call fatal_error(h//"Allocating grell%XIACT_C")
-       allocate (grell%XIACT_P  (m2, m3), STAT=ierr)
-       if (ierr/=0) call fatal_error(h//"Allocating grell%XIACT_P")
-       allocate (grell%XIERR    (m2, m3), STAT=ierr)
-       if (ierr/=0) call fatal_error(h//"Allocating grell%XIERR")
-       allocate (grell%XKDT     (m2, m3), STAT=ierr)
-       if (ierr/=0) call fatal_error(h//"Allocating grell%XKDT")
-       allocate (grell%XKTOP    (m2, m3), STAT=ierr)
-       if (ierr/=0) call fatal_error(h//"Allocating grell%XKTOP")
-       allocate (grell%XKBCON   (m2, m3), STAT=ierr)
-       if (ierr/=0) call fatal_error(h//"Allocating grell%XKBCON")
-       allocate (grell%XJMIN    (m2, m3), STAT=ierr)
-       if (ierr/=0) call fatal_error(h//"Allocating grell%XJMIN")
-       allocate (grell%XK22     (m2, m3), STAT=ierr)
-       if (ierr/=0) call fatal_error(h//"Allocating grell%XK22")
-
-
-       !--(DMK-LFR NEC-SX6)----------------------------------------------
-       grell%upmf = 0.
-       grell%dnmf = 0.
-       grell%xiact_c = 0.
-       grell%xiact_p = 0.
-       grell%xierr = 0.
-       grell%xkdt = 0.
-       grell%xktop = 0.
-       grell%xkbcon = 0.
-       grell%xjmin = 0.
-       grell%xk22 = 0.
-       !--(DMK-LFR NEC-SX6)----------------------------------------------
-
-    endif
 
   end subroutine alloc_grell
   !---------------------------------------------------------------

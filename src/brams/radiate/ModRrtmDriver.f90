@@ -1623,8 +1623,7 @@ contains
     !--- convective cloud fraction
     !clcn = 0.0
     !
-    if(oneNamelistFile%nnqparm(ngrid) == 5 .or. &
-         oneNamelistFile%nnqparm(ngrid) == 6 .or. &
+    if(oneNamelistFile%nnqparm(ngrid) == 6 .or. &
          oneNamelistFile%nnqparm(ngrid) == 8) then
        upmf      (     1:m2,1:m3)= xmb4d(     1:m2,1:m3,1,ngrid) !- mass flux deep    convection
        upmfsh    (     1:m2,1:m3)= xmb4d(     1:m2,1:m3,2,ngrid) !- mass flux shallow convection

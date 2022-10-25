@@ -1991,8 +1991,7 @@ contains
 
        !srf-g3d: training for G3d
        do ifm=1,ngrids
-          if(oneGrid%oneNamelistFile%nnqparm(ifm) == 3 .or. &
-               oneGrid%oneNamelistFile%nnqparm(ifm) == 5) then ! and training==1
+          if(oneGrid%oneNamelistFile%nnqparm(ifm) == 3) then ! and training==1
              call newgrid(ifm)
              call init_weights(ifm,nodemxp(mynum,ifm),nodemyp(mynum,ifm),&
                   oneGrid%oneNamelistFile%nnqparm(ifm))

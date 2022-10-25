@@ -70,7 +70,7 @@ contains
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     integer, intent(IN) :: ng
 
-    hasAconpr = oneNamelistFile%nnqparm(ng)>= 1 .or. oneNamelistFile%if_cuinv == 1
+    hasAconpr = oneNamelistFile%nnqparm(ng)>= 3 .or. oneNamelistFile%if_cuinv == 1
 
   end function hasAconpr
 

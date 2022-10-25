@@ -688,7 +688,7 @@ contains
                vkh_p(:)                 , hkh_p(:),                  &
                oneNamelistFile%ihorgrad)
           !
-          if (oneNamelistFile%nnqparm(ngrid)>=2) then
+          if (oneNamelistFile%nnqparm(ngrid)>=3) then
              ! SGScale Forcing for GRELL CUPAR
              if (oneScalarTab(n)%name=='THP' .or. oneScalarTab(n)%name=='THC')     &
                   call PBLforcing(ngrid, mzp, mxp, myp, ia, iz, ja, jz, &

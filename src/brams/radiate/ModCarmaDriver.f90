@@ -606,7 +606,7 @@ contains
     rhpert = 0.01 
 
     !- initialization of cuparm parameters
-    if(oneNamelistFile%nnqparm(ngrid) == 5 .or. oneNamelistFile%nnqparm(ngrid) == 6) then
+    if(oneNamelistFile%nnqparm(ngrid) == 6) then
        upmf      (     1:m2,1:m3)= xmb4d(     1:m2,1:m3,1,ngrid) !- mass flux deep    convection
        upmfsh    (     1:m2,1:m3)= xmb4d(     1:m2,1:m3,2,ngrid) !- mass flux shallow convection
        zup       (1:m1,1:m2,1:m3)= zup5d(1:m1,1:m2,1:m3,1,ngrid) !- normalized mass flux

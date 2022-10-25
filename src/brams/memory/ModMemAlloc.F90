@@ -854,7 +854,6 @@ contains
     Alloc_Grell3_Flag =0
     do ng=1, ngrids
        if (NNSHCU (ng)== 1 .or. NNSHCU (ng)== 2) Alloc_SHCU_Flag   = 1
-       if (oneGrid%oneNamelistFile%nnqparm(ng) == 2) Alloc_Grell_Flag  = 1
        if (oneGrid%oneNamelistFile%nnqparm(ng) >  2) Alloc_Grell3_Flag = 1
     enddo
 
@@ -963,25 +962,6 @@ contains
        if (ierr/=0) call fatal_error(h//"Allocating grellm_g")
 
        ng_cp = 1
-       do ng=1,ngrids
-          if (oneGrid%oneNamelistFile%nnqparm(ng) == 2) then
-             call nullify_grell(grell_g (ng))
-             call nullify_grell(grellm_g(ng))
-
-             call alloc_grell(oneGrid%oneNamelistFile, &
-                  grell_g(ng),nmzp(ng),nmxp(ng),nmyp(ng),ng)
-
-             if (imean == 1) then
-                call alloc_grell(oneGrid%oneNamelistFile, &
-                     grellm_g(ng),nmzp(ng),nmxp(ng),nmyp(ng),ng)
-             endif
-
-             call filltab_grell(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-                  grell_g(ng), grellm_g(ng), oneGrid%oneNamelistFile%nnqparm(ng), imean)
-             ng_cp = ng_cp + 1
-          endif
-       enddo
-
        ! call zero_scratch3_grell()
        Flag_Grell = 2
        ! For New Grell Param.

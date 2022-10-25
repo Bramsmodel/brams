@@ -254,7 +254,6 @@ OBJ_MOD = \
 	chem_spack_qssa.o \
 	chem_trans_gasaq.o \
 	chem_trans_liq.o \
-	chem_orage.o \
 	ModChemistryDriver.o \
 	ModPostProcess.o \
 	ModPostOneField.o \

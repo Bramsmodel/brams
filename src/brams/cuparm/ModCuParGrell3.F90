@@ -885,132 +885,6 @@ contains
                ,g3d_ens_g(apr_as,ngrid)%apr  )
 
           !-------------------------------------------------------------
-       elseif(iinqparm==5) then  ! GF 2014 scheme
-          !
-          !- no lateral spreading
-          cugd_avedx=1
-
-          if(oneGrid%oneNamelistFile%ilwrtyp==4 .or. oneGrid%oneNamelistFile%iswrtyp==4) then
-             aot500(:,:)=carma(ngrid)%aot(:,:,11)
-          else
-             aot500(:,:)=0.0
-          endif
-
-          if(iinshcu == 3) ishallow_g3=1
-
-          call GFDRV( CCATT                        &
-               ,mgmxp,mgmyp,mgmzp,ngrid,ngrids_cp,iens &
-               ,mynum,i0,j0,time,mzp,mxp,myp &
-               ,dtlt                           & !
-               ,grid_length                    & !
-               ,autoconv                       & ! Const
-               ,aerovap                        & ! Const
-               ,oneGrid%oneBasicFields%dn0             & !3d ok
-               ,oneGrid%oneCuParmFields%CONPRR         & !2d ok
-               ,oneGrid%oneBasicFields%up              & !3d ok
-               ,oneGrid%oneBasicFields%vp              & !3d ok
-               ,oneGrid%oneBasicFields%theta           & !3d ok
-               ,oneGrid%oneBasicFields%thp             & !3d ok
-               ,oneGrid%oneBasicFields%pp              & !3d ok
-               ,oneGrid%oneBasicFields%pi0             & !3d ok
-               ,oneGrid%oneBasicFields%wp              & !3d ok
-               ,oneGrid%oneBasicFields%rv              & !3d ok
-               ,oneGrid%oneBasicFields%rtp             & !3d ok
-               ,grid_g(ngrid)%rtgt             & !2d ok
-               ,tend%pt                        & !3d !*** borda
-               ,xl                             & ! Const
-               ,cp                             & ! Const
-               ,g                              & ! Const
-               ,rm                             & ! Const
-               ,p00                            & ! Const
-               ,cpor                           & ! Const
-               ,rgas                           & ! Const
-               ,zmn(:,ngrid)                   & !
-               ,ztn(:,ngrid)                   & !
-               ,g3d_ens_g(apr_gr,ngrid)%apr    & !2d ok
-               ,g3d_ens_g(apr_w ,ngrid)%apr    & !2d ok
-               ,g3d_ens_g(apr_mc,ngrid)%apr    & !2d ok
-               ,g3d_ens_g(apr_st,ngrid)%apr    & !2d ok
-               ,g3d_ens_g(apr_as,ngrid)%apr    & !2d ok
-               ,g3d_g(ngrid)%xmb_deep          & !2d ok
-               ,g3d_g(ngrid)%err_deep          & !2d ok
-               ,g3d_g(ngrid)%xmb_shallow       & !2d ok
-               ,g3d_ens_g(apr_gr,ngrid)%weight & !2d ok
-               ,g3d_ens_g(apr_w ,ngrid)%weight & !2d ok
-               ,g3d_ens_g(apr_mc,ngrid)%weight & !2d ok
-               ,g3d_ens_g(apr_st,ngrid)%weight & !2d ok
-               ,g3d_ens_g(apr_as,ngrid)%weight & !2d ok
-               ,training                       & !
-               ,grid_g(ngrid)%topt             & !2d ok
-               ,leaf_g(ngrid)%patch_area       & !3d *** Borda
-               ,npatch                         & !
-               ,oneGrid%oneRadiateFields%rshort        & !2d ok
-               ,cugd_avedx                     & !
-               ,imomentum                      & !
-               ,ensdim_g3d                     & !
-               ,maxiens                        & !
-               ,maxens_g3d                     & !
-               ,maxens2_g3d                    & !
-               ,maxens3_g3d                    & !
-               ,icoic                          & !
-               ,ishallow_g3                    & !
-               ,ids,ide, jds,jde, kds,kde      & !
-               ,ims,ime, jms,jme, kms,kme      & !
-               ,ips,ipe, jps,jpe, kps,kpe      & !
-               ,its,ite, jts,jte, kts,kte      & !
-               ,g3d_g(ngrid)%THSRC             & !3d ok ! temp tendency
-               ,g3d_g(ngrid)%RTSRC             & !3d ok ! rv tendency
-               ,g3d_g(ngrid)%CLSRC             & !3d ok ! cloud/ice tendency
-               ,g3d_g(ngrid)%cugd_ttens        & !3d ok
-               ,g3d_g(ngrid)%cugd_qvtens       & !3d ok
-               ,cuforc_g(ngrid)%lsfth        & !3d *** borda forcing for theta deep
-               ,cuforc_g(ngrid)%lsfrt        & !3d *** borda forcing for rv deep
-               ,cuforc_sh_g(ngrid)%lsfth       & !3d *** borda forcing for theta shallow
-               ,cuforc_sh_g(ngrid)%lsfrt       & !3d *** borda forcing for rv shallow
-               ,oneGrid%oneMicVars%level   &
-               ,oneGrid%oneMicroFields%rcp             & !3d ok ! liquid water
-               ,oneGrid%oneMicroFields%rrp             & !3d ok ! pristine
-               ,oneGrid%oneMicroFields%rpp             & !3d ok
-               ,oneGrid%oneMicroFields%rsp             & !3d ok
-               ,oneGrid%oneMicroFields%rgp             & !3d ok
-               ,aot500                         &! aot at 500nm
-               ,oneGrid%oneTurbFields%sflux_r          & !2d *** borda
-               ,oneGrid%oneTurbFields%sflux_t          & !2d *** borda
-               ,oneGrid%oneTurbFields%tkep             & !3d ok
-               ,TKMIN                          &
-               ,akmin                   &
-                                !- for convective transport-start
-               ,ierr4d                         & !4d *** borda
-               ,jmin4d                         & !4d ok
-               ,kdet4d                         & !4d ok
-               ,k224d                          & !4d ok
-               ,kbcon4d                        & !4d ok
-               ,ktop4d                         & !4d ok
-               ,kpbl4d                         & !4d ok
-               ,kstabi4d                       & !4d ok
-               ,kstabm4d                       & !4d ok
-               ,xmb4d                          & !4d ok
-               ,edt4d                          & !4d ok
-               ,pwav4d                         & !4d ok
-               ,pcup5d                         & !5d ok
-               ,up_massentr5d                  & !5d ok
-               ,up_massdetr5d                  & !5d ok
-               ,dd_massentr5d                  & !5d ok
-               ,dd_massdetr5d                  & !5d ok
-               ,zup5d                          & !5d *** ERRO !!!!!
-               ,zdn5d                          & !5d ok
-               ,prup5d                         & !5d ok
-               ,prdn5d                         & !5d ok
-               ,clwup5d                        & !5d ok
-               ,tup5d                          & !5d ok
-                                !- for convective transport- end
-               )
-
-          !.. call dumpVarAllLatLonK(g3d_g(ngrid)%THSRC,'THSRC',938,0,0,1,mxp,1,myp,1,mzp,0.,660.,header)
-          !.. call dumpVarAllLatLonK(g3d_g(ngrid)%RTSRC,'RTSRC',938,0,0,1,mxp,1,myp,1,mzp,0.,660.,header)
-          !.. call dumpVarAllLatLonK(g3d_g(ngrid)%CLSRC,'CLSRC',938,0,0,1,mxp,1,myp,1,mzp,0.,660.,header)
-
-          !-------------------------------------------------------------
        elseif(iinqparm==6) then  ! GF 2015 scheme
           !
           !- no lateral spreading
@@ -1556,10 +1430,7 @@ contains
     endif
     !
     !--------- Convective Transport based on mass flux scheme -
-    if (CCATT == 1 .and. iruncon == 1 .and. (iinqparm==5 .or. iinqparm==6) ) then
-
-       if(iinqparm==5 .and. iens .ne. 1 ) &
-            stop 'conv transp with GF scheme version 2014 only for deep convection'
+    if (CCATT == 1 .and. iruncon == 1 .and. iinqparm == 6 ) then
 
        !- this call convective transport for deep convection
        call trans_conv_mflx_GF(1,iinqparm)
@@ -1584,7 +1455,7 @@ contains
     if (imassflx == 1 ) then
 
        !-srf -  mass fluxes from deep convection
-       if( iinqparm==5 .or. iinqparm==6 )                                 &
+       if( iinqparm==6 )                                 &
             call prep_convflx_to_stilt(mzp,mxp,myp,ia,iz,ja,jz              &
             ,mgmxp,mgmyp,mgmzp,maxiens,ngrid,ngrids_cp  &
             ,ierr4d,jmin4d,kdet4d,k224d,kbcon4d,ktop4d,kpbl4d   &

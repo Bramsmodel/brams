@@ -69,7 +69,7 @@ contains
 
     do i=1, ngrids
 !srf-g3d
-       if (nnqparm(i) >= 2 .or. nnschu(i) >= 2)  then
+       if (nnqparm(i) >= 3 .or. nnschu(i) >= 2)  then
 
           mgmxp = max(mgmxp,mmxp(i))
           mgmyp = max(mgmyp,mmyp(i))

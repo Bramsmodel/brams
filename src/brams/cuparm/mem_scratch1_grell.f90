@@ -71,8 +71,6 @@ CONTAINS
          maxiens,                       & ! INTENT(IN)
          ngrids_cp                        ! INTENT(IN)
 
-    !use mem_cuparm     , only: NNQPARM   ! INTENT(IN)
-    !use shcu_vars_const, only: NNSHCU    ! INTENT(IN)
     use ccatt_start, only: ccatt
     IMPLICIT NONE
 
