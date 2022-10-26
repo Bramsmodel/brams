@@ -10,28 +10,16 @@ module ModMemAlloc
   use ModLeafComs, only: &
        alloc_leafcol
 
-  use mem_scratch2_grell, only: &
-       alloc_scratch2_grell
-
-  use mem_scratch3_grell_sh, only: &
-       alloc_scratch3_grell_sh
-
+!!$  use mem_scratch2_grell, only: &
+!!$       alloc_scratch2_grell
+!!$
+!!$  use mem_scratch3_grell_sh, only: &
+!!$       alloc_scratch3_grell_sh
+!!$
   use ModCuParmFields, only: &
        InsertCuParmFieldsAtVarTable, &
        InsertCuParmShFieldsAtVarTable
   
-!!$  use mem_cuparm, only: &
-!!$       cuparm_g_sh, &
-!!$       cuparmm_g_sh, &
-!!$       cuparm_g, &
-!!$       cuparmm_g, &
-!!$       nullify_cuparm, &
-!!$       alloc_cuparm, &
-!!$       alloc_cuparm_sh, &
-!!$       filltab_cuparm, &
-!!$       filltab_cuparm_sh, &
-!!$       dealloc_cuparm
-
   use mem_grid, only: &
        nxtnest, &
        oneGlobalGridData, &
@@ -230,11 +218,11 @@ module ModMemAlloc
   use mem_scratch1_grell, only: &
        alloc_scratch1_grell
 
-  use mem_scratch2_grell_sh, only: &
-       alloc_scratch2_grell_sh
-
-  use mem_scratch3_grell, only: &
-       alloc_scratch3_grell
+!!$  use mem_scratch2_grell_sh, only: &
+!!$       alloc_scratch2_grell_sh
+!!$
+!!$  use mem_scratch3_grell, only: &
+!!$       alloc_scratch3_grell
 
   use mem_carma, only: &
        carma,          &
@@ -513,7 +501,6 @@ contains
        nmzp => nnzp
        nmxp => nodemxp(mynum,:)
        nmyp => nodemyp(mynum,:)
-!!$       call MemDealloc()
     endif
 
     ! Call global grid dimension definitions
@@ -524,17 +511,6 @@ contains
     !  If we are doing time-averaging for output, set flag ...
     imean = 0
     if (avgtim/=0.) imean = 1
-    !-------------
-
-    !-------------
-    ! Allocate universal variable tables
-!!$    allocate (num_var(ngrids), STAT=ierr)
-!!$    if (ierr/=0) call fatal_error(h//"Allocating num_var")
-!!$    allocate (vtab_r(maxvars,ngrids), STAT=ierr)
-!!$    if (ierr/=0) call fatal_error(h//"Allocating vtab_r")
-!!$    num_var(:) = 0
-    !-------------
-
     !-------------
 
     !-------------
@@ -795,45 +771,14 @@ contains
     Alloc_Grell_Flag = 0
     Alloc_Grell3_Flag =0
 
-!!$    allocate(cuparm_g(ngrids), STAT=ierr)
-!!$    if (ierr/=0) call fatal_error(h//"Allocating cuparm_g")
-!!$    allocate(cuparmm_g(ngrids), STAT=ierr)
-!!$    if (ierr/=0) call fatal_error(h//"Allocating cuparmm_g")
-!!$
-!!$    allocate(cuparm_g_sh(ngrids), STAT=ierr)
-!!$    if (ierr/=0) call fatal_error(h//"Allocating cuparm_g_sh")
-!!$    allocate(cuparmm_g_sh(ngrids), STAT=ierr)
-!!$    if (ierr/=0) call fatal_error(h//"Allocating cuparmm_g_sh")
-!!$
     do ng=1,ngrids
-!!$       call nullify_cuparm(cuparm_g(ng))
-!!$       call nullify_cuparm(cuparmm_g(ng))
-!!$       call alloc_cuparm(oneGrid%oneNamelistFile, cuparm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
-!!$
-!!$       !-srf-feb2012: for shallow cumulus
-!!$       if (nnshcu(ng) > 1) then
-!!$          call nullify_cuparm(cuparm_g_sh(ng))
-!!$          call nullify_cuparm(cuparmm_g_sh(ng))
-!!$          if (imean == 1) then
-!!$             call alloc_cuparm_sh(cuparm_g_sh(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
-!!$          end if
-!!$       endif
-!!$
-!!$       if (imean==1) then
-!!$          call alloc_cuparm(oneGrid%oneNamelistFile, cuparmm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
-!!$       endif
-
        call InsertCuParmFieldsAtVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
             oneGrid%oneCuParmFields, oneGrid%oneAveCuParmFields, imean)
-!!$       call filltab_cuparm(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-!!$            cuparm_g,cuparmm_g, ng, imean)
 
        !-srf-feb2012: for shallow cumulus
        if (nnshcu(ng) == 2) then
           call InsertCuParmShFieldsAtVarTable(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
                oneGrid%oneCuParmFields, oneGrid%oneAveCuParmFields, imean)
-!!$          call filltab_cuparm_sh(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-!!$               cuparm_g_sh, cuparmm_g_sh, ng, imean)
        end if
 
     enddo
@@ -919,71 +864,71 @@ contains
        enddo
     endif
 
-    !- shallow convection version 2
-    if  (Alloc_SHCU_Flag  == 1) then
-
-       call alloc_scratch2_grell_sh()
-       call alloc_scratch3_grell_sh()
-
-       allocate(grell_g_sh(ngrids_cp), STAT=ierr)
-       if (ierr/=0) call fatal_error(h//"Allocating grell_g_sh_g")
-
-       allocate(grellm_g_sh(ngrids_cp), STAT=ierr)
-       if (ierr/=0) call fatal_error(h//"Allocating grell_g_sh_g")
-
-       do ng=1,ngrids
-          if (NNSHCU(ng) > 1) then
-             call nullify_grell(grell_g_sh (ng))
-             call nullify_grell(grellm_g_sh(ng))
-
-             call alloc_grell_sh(grell_g_sh(ng),nmzp(ng),nmxp(ng),nmyp(ng),ng)
-
-             if (imean == 1) then
-                call alloc_grell_sh(grellm_g_sh(ng),nmzp(ng),nmxp(ng),nmyp(ng),ng)
-             endif
-
-             call filltab_grell_sh(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-                  grell_g_sh(ng), grellm_g_sh(ng), nnshcu(ng), imean)
-          endif
-       enddo
-    endif
-    ! Allocate data for Grell's deep cumulus - old GD
-    !
-    if (Alloc_Grell_Flag == 1) then
-
-       call alloc_scratch2_grell()
-       call alloc_scratch3_grell()
-
-       ! Allocating data for main Grell data
-       ! Allocate to a quantity set by ngrids_cp not ngrids
-       allocate(grell_g(ngrids_cp), STAT=ierr)
-       if (ierr/=0) call fatal_error(h//"Allocating grell_g")
-       allocate(grellm_g(ngrids_cp), STAT=ierr)
-       if (ierr/=0) call fatal_error(h//"Allocating grellm_g")
-
-       ng_cp = 1
-       ! call zero_scratch3_grell()
-       Flag_Grell = 2
-       ! For New Grell Param.
-       if     (CLOSURE_TYPE == 'EN') then
-          icoic = 0
-       elseif (CLOSURE_TYPE == 'GR') then
-          icoic = 1
-       elseif (CLOSURE_TYPE == 'LO') then
-          icoic = 4
-       elseif (CLOSURE_TYPE == 'MC') then
-          icoic = 7
-       elseif (CLOSURE_TYPE == 'SC') then
-          icoic = 10
-       elseif (CLOSURE_TYPE == 'AS') then
-          icoic = 13
-       else
-          print *, "****Grell Closure type ERROR for GD scheme"
-          ! the subroutine opspec3 stop the program before this point.
-       endif
-
-       icoic_sh=icoic
-    endif
+!!$    !- shallow convection version 2
+!!$    if  (Alloc_SHCU_Flag  == 1) then
+!!$
+!!$       call alloc_scratch2_grell_sh()
+!!$       call alloc_scratch3_grell_sh()
+!!$
+!!$       allocate(grell_g_sh(ngrids_cp), STAT=ierr)
+!!$       if (ierr/=0) call fatal_error(h//"Allocating grell_g_sh_g")
+!!$
+!!$       allocate(grellm_g_sh(ngrids_cp), STAT=ierr)
+!!$       if (ierr/=0) call fatal_error(h//"Allocating grell_g_sh_g")
+!!$
+!!$       do ng=1,ngrids
+!!$          if (NNSHCU(ng) > 1) then
+!!$             call nullify_grell(grell_g_sh (ng))
+!!$             call nullify_grell(grellm_g_sh(ng))
+!!$
+!!$             call alloc_grell_sh(grell_g_sh(ng),nmzp(ng),nmxp(ng),nmyp(ng),ng)
+!!$
+!!$             if (imean == 1) then
+!!$                call alloc_grell_sh(grellm_g_sh(ng),nmzp(ng),nmxp(ng),nmyp(ng),ng)
+!!$             endif
+!!$
+!!$             call filltab_grell_sh(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+!!$                  grell_g_sh(ng), grellm_g_sh(ng), nnshcu(ng), imean)
+!!$          endif
+!!$       enddo
+!!$    endif
+!!$    ! Allocate data for Grell's deep cumulus - old GD
+!!$    !
+!!$    if (Alloc_Grell_Flag == 1) then
+!!$
+!!$       call alloc_scratch2_grell()
+!!$       call alloc_scratch3_grell()
+!!$
+!!$       ! Allocating data for main Grell data
+!!$       ! Allocate to a quantity set by ngrids_cp not ngrids
+!!$       allocate(grell_g(ngrids_cp), STAT=ierr)
+!!$       if (ierr/=0) call fatal_error(h//"Allocating grell_g")
+!!$       allocate(grellm_g(ngrids_cp), STAT=ierr)
+!!$       if (ierr/=0) call fatal_error(h//"Allocating grellm_g")
+!!$
+!!$       ng_cp = 1
+!!$       ! call zero_scratch3_grell()
+!!$       Flag_Grell = 2
+!!$       ! For New Grell Param.
+!!$       if     (CLOSURE_TYPE == 'EN') then
+!!$          icoic = 0
+!!$       elseif (CLOSURE_TYPE == 'GR') then
+!!$          icoic = 1
+!!$       elseif (CLOSURE_TYPE == 'LO') then
+!!$          icoic = 4
+!!$       elseif (CLOSURE_TYPE == 'MC') then
+!!$          icoic = 7
+!!$       elseif (CLOSURE_TYPE == 'SC') then
+!!$          icoic = 10
+!!$       elseif (CLOSURE_TYPE == 'AS') then
+!!$          icoic = 13
+!!$       else
+!!$          print *, "****Grell Closure type ERROR for GD scheme"
+!!$          ! the subroutine opspec3 stop the program before this point.
+!!$       endif
+!!$
+!!$       icoic_sh=icoic
+!!$    endif
     !- Allocate data for Grell Cumulus version 3d,GD-FIM and GF schemes
     if (Alloc_Grell3_Flag == 1) then
        allocate(g3d_ens_g(train_dim,ngrids_cp))

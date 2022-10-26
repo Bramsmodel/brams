@@ -85,10 +85,6 @@ OBJ_MOD = \
 	mem_scratch.o \
 	mem_scratch1_brams.o \
 	mem_scratch1_grell.o \
-	mem_scratch2_grell.o \
-	mem_scratch2_grell_sh.o \
-	mem_scratch3_grell.o \
-	mem_scratch3_grell_sh.o \
 	ShcuFields.o \
 	mem_tconv.o \
 	mem_tend.o \
@@ -867,11 +863,7 @@ MOD_MOD = \
 	ccatt_start.mod \
 	machine_arq.mod \
 	grid_struct.mod \
-	mem_scratch2_grell.mod \
-	mem_scratch3_grell.mod \
 	mem_carma.mod \
-	mem_scratch2_grell_sh.mod \
-	mem_scratch3_grell_sh.mod \
 	ke_coms.mod \
 	ModLeafComs.mod \
 	mem_mksfc.mod \
