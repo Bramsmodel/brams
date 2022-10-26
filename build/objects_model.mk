@@ -49,13 +49,6 @@ OBJ_MOD = \
 	ModConvComs.o \
 	ModCoriolis.o \
 	ModCuRead.o \
-	ModCupDn.o \
-	ModCupEnv.o \
-	ModCupEnvCatt.o \
-	ModCupGrellCattDeep.o \
-	ModCupGrellCattShallow.o \
-	cup_output_vars.o \
-	ModCupUp.o \
 	ModDiffSclr.o \
 	ModDiffuse.o \
 	ModGeodat.o \
@@ -76,7 +69,6 @@ OBJ_MOD = \
 	mem_carma.o \
 	CuParmVars.o \
 	CuParmFields.o \
-	mem_cutrans.o \
 	mem_globaer.o \
 	mem_globrad.o \
 	mem_grell.o \
@@ -266,11 +258,9 @@ OBJ_MOD = \
 	ModPostGrid.o \
 	ModBramsGrid.o \
 	ModOutputUtils.o \
-	kbcon_ecmwf.o \
 	module_cu_g3.o \
 	module_cu_gf.o \
 	module_cu_gf_v5.1.o \
-	module_cu_gd_fim.o \
 	ModCuParGrell3.o \
 	ModRexev.o \
 	ModRstilt.o \
@@ -877,11 +867,9 @@ MOD_MOD = \
 	ccatt_start.mod \
 	machine_arq.mod \
 	grid_struct.mod \
-	cup_output_vars.mod \
 	mem_scratch2_grell.mod \
 	mem_scratch3_grell.mod \
 	mem_carma.mod \
-	kbcon_ecmwf.mod \
 	mem_scratch2_grell_sh.mod \
 	mem_scratch3_grell_sh.mod \
 	ke_coms.mod \
@@ -894,7 +882,6 @@ MOD_MOD = \
 	rad_carma.mod \
 	mem_scratch1_grell.mod \
 	carma_driv.mod \
-	mem_cutrans.mod \
 	mem_grell.mod \
 	mem_tconv.mod \
 	mem_turb_scalar.mod \
@@ -1011,7 +998,6 @@ MOD_MOD = \
 	modpostonefield.mod \
 	modpostprocess.mod \
 	module_cu_g3.mod \
-	module_cu_gd_fim.mod \
 	module_cu_gf.mod \
 	module_cu_gf2.mod \
 	mapl_constantsmod.mod \
