@@ -153,9 +153,6 @@ module ModCuParGrell3
   use module_cu_g3, only: &
        G3DRV
 
-  use module_cu_gf, only: &
-       GFDRV
-
   use module_cu_gf2, only: &
        GFDRV2
 

@@ -255,7 +255,6 @@ OBJ_MOD = \
 	ModBramsGrid.o \
 	ModOutputUtils.o \
 	module_cu_g3.o \
-	module_cu_gf.o \
 	module_cu_gf_v5.1.o \
 	ModCuParGrell3.o \
 	ModRexev.o \
@@ -990,7 +989,6 @@ MOD_MOD = \
 	modpostonefield.mod \
 	modpostprocess.mod \
 	module_cu_g3.mod \
-	module_cu_gf.mod \
 	module_cu_gf2.mod \
 	mapl_constantsmod.mod \
 	henrys_law_constantsmod.mod \
