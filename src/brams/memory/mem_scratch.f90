@@ -52,7 +52,6 @@ module mem_scratch
   !-------------------------------------------------------------------
   real, allocatable :: vctr1(:)
   real, allocatable :: vctr2(:)
-  real, allocatable :: vctr3(:)
 
   !---------------------------------------------------------------
 
@@ -292,8 +291,6 @@ contains
     IF (ierr/=0) CALL fatal_error("ERROR allocating vctr1 (createVctr)")
     ALLOCATE(vctr2(maxxyz), STAT=ierr)
     IF (ierr/=0) CALL fatal_error("ERROR allocating vctr2 (createVctr)")
-    ALLOCATE(vctr3(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr3 (createVctr)")
 
 !!$    ALLOCATE(ivctr(maxxyz), STAT=ierr)
 !!$    IF (ierr/=0) CALL fatal_error("ERROR allocating ivctr (createVctr)")
@@ -301,7 +298,6 @@ contains
 !--(DMK-LFR NEC-SX6)----------------------------------------------
     vctr1  = 0.
     vctr2  = 0.
-    vctr3  = 0.
 
 
 
@@ -318,8 +314,6 @@ contains
     IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr1 (destroyVctr)")
     DEALLOCATE(vctr2, STAT=ierr)
     IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr2 (destroyVctr)")
-    DEALLOCATE(vctr3, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr3 (destroyVctr)")
 
   END SUBROUTINE destroyVctr
 

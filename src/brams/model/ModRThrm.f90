@@ -12,7 +12,7 @@ module ModRThrm
 
   use ModMicControl, only: &
        MicControl
-  
+
   use mem_grid, only: &
        ngrid !INTENT(IN)
 
@@ -22,8 +22,7 @@ module ModRThrm
   use mem_scratch, only: &
        scratch, &
        vctr1,   &
-       vctr2,   &
-       vctr3
+       vctr2
 
   use rconstants, only: &
        cpi,  & ! INTENT(IN)
@@ -60,10 +59,11 @@ contains
     type(MicroFields), pointer, intent(in) :: oneMicroFields
 
     character(len=*), parameter :: h="**(thermo)**"
+    real :: vctr3(mzp)
     real :: vctr4(mzp)
     real :: vctr5(mzp)
     real :: vctr6(mzp)
-    
+
     if (oneMicVars%level .le. 1) then
 
        call drythrm(mzp,mxp,myp,ia,iz,ja,jz  &
@@ -114,7 +114,7 @@ contains
 
     endif
 
-    
+
   end subroutine thermo
 
 
@@ -137,7 +137,7 @@ contains
     type(BasicFields), pointer, intent(in) :: oneBasic
     type(MicControl), pointer, intent(in) :: oneMicVars
     type(MicroFields), pointer, intent(in) :: oneMicroFields
-    
+
     ! Local Variables
     ! real, parameter :: frq_thermo_bd = 100. !in seconds
 
@@ -447,7 +447,7 @@ contains
 
 
 
-  
+
   subroutine theta_thp_rk(mzp,mxp,myp,ia,iz,ja,jz,action, &
        oneBasic, oneMicVars, oneMicroFields)
     !-this is only for RK scheme (uses thc and pc)
@@ -465,10 +465,11 @@ contains
     type(MicroFields), pointer, intent(in) :: oneMicroFields
 
     character(len=*), parameter :: h="**(theta_thp_rk)**"
+    real :: vctr3(mzp) 
     real :: vctr4(mzp) 
     real :: vctr5(mzp) 
     real :: vctr6(mzp) 
-    
+
     if (trim(action).ne. "get_thetail" .and. trim(action).ne."get_theta") then
        call fatal_error(h//" unknow action at theta_thp_rk routine")
     end if
@@ -533,8 +534,8 @@ contains
        stop 'theta_thp option not supported...LEVEL out of bounds'
 
     endif
-    
-    
+
+
   end subroutine theta_thp_rk
 
 
@@ -542,7 +543,7 @@ contains
 
 
 
-  
+
   subroutine theta_thp_GT(m1,m2,m3,ia,iz,ja,jz,jnmb  &
        ,pi0,pp,thp,theta,rtp,rv,rcp,rrp,rpp,rsp,rgp,ngrid,mcphys_type &
        ,action)

@@ -15,8 +15,7 @@ module ModDiffSclr
 
   use mem_scratch, only :   &
        vctr1,   &   !INTENT(INOUT)
-       vctr2,   &   !INTENT(INOUT)
-       vctr3   !INTENT(INOUT)
+       vctr2
 
   implicit none
 
@@ -83,6 +82,7 @@ contains
 
     !! For optimization
     integer      :: htint_i, htint_j
+    real :: vctr3(m1)
     real :: vctr4(m1)
     real :: vctr5(m1)
     real :: vctr6(m1)

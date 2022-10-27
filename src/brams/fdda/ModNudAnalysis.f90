@@ -10,7 +10,7 @@ module ModNudAnalysis
   use ModNestFillDens, only: &
        fillscr, &
        fillvar
-  
+
   use mem_tend, only: &
        tend
 
@@ -32,7 +32,8 @@ module ModNudAnalysis
        ztn, &
        nxtnest, &
        maxnxp, &
-       maxnyp
+       maxnyp, &
+       maxnzp
 
   use mem_varinit, only: &
        nud_cond, &
@@ -95,7 +96,6 @@ module ModNudAnalysis
   use mem_scratch, only: &
        vctr1, &
        vctr2, &
-       vctr3, &
        scratch
 
   use ModEvaluation, only: &
@@ -124,7 +124,7 @@ contains
 
   subroutine datassim(oneBasicFields)
     type(BasicFields), pointer, intent(in) :: oneBasicFields
-    
+
     integer :: il,ir,jl,jr
 
     !--(DMK-CCATT-INI)-----------------------------------------------------
@@ -194,12 +194,13 @@ contains
        ,varuf,varvf,varpf,vartf,varrf  &
        ,up,vp,theta,rtp,pp,ut,vt,tht,rtt,pt,oneBasicFields)
     type(BasicFields), pointer, intent(in) :: oneBasicFields
-    
+
     integer :: m1,m2,m3,ia,iz,ja,jz
     real, dimension(m1,m2,m3) :: varup,varvp,vartp,varrp,varpp  &
          ,varuf,varvf,vartf,varrf,varpf  &
          ,varwts,up,vp,theta,rtp,pp  &
          ,ut,vt,tht,rtt,pt
+    real :: vctr3(m1+2)
 
     integer :: i,j,k,iCount,v
     real :: tfact, wt_uv, wt_th, wt_pi, wt_rt
@@ -211,8 +212,7 @@ contains
     real :: vctr12(m1)
     real :: vctr13(m1)
     real :: vctr14(m1)
-    !real :: vctr3(m1)
-     
+
 
     !srf - special weights for pressure and/or UV (only for operations) 
     real, dimension(m1,m2,m3) :: varwts_for_operations_only
@@ -243,6 +243,7 @@ contains
        somaQ=0
        !iCount=0
     endif
+    vctr3=0.0
     do j=ja,jz
        do i=ia,iz
           !iCount=iCount+1
@@ -456,10 +457,10 @@ contains
     integer :: m1,m2,m3,ia,iz,ja,jz
     real, dimension(m1,m2,m3) :: varrph,varcph,varrfh,varcfh  &
          ,varwts,rtp,rtt
+    real :: vctr3(maxnzp)
 
     integer :: i,j,k
     real :: tfact, wt_rc
-    real :: vctr3(m1)
 
 
     ! tfact is temporal interpolation weight,
