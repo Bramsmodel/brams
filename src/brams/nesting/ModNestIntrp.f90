@@ -32,7 +32,7 @@ module ModNestIntrp
 
   use mem_scratch, only: &
        scratch, &
-       vctr1, vctr2, vctr3
+       vctr1, vctr2 
 
   use mem_nestb, only: &
        nbounds
@@ -61,11 +61,12 @@ contains
     integer :: ifm,icm,k
     real :: c1,c2
     
-    real :: vctr4(ngend)
-    real :: vctr5(ngend)
-    real :: vctr6(ngend)
-    real :: vctr7(ngend)
-    real :: vctr8(ngend)
+    real :: vctr3(maxnzp)
+    real :: vctr4(maxnzp)
+    real :: vctr5(maxnzp)
+    real :: vctr6(maxnzp)
+    real :: vctr7(maxnzp)
+    real :: vctr8(maxnzp)
 
     !     Interpolate the fine mesh 1-d reference state variables.
 
@@ -361,6 +362,7 @@ contains
     character(len=*), intent(in) :: vpnt
 
     integer :: i,j,k
+    real :: vctr3(n1)
     !     Do special vertical interpolation in case terrain on this grid
     !     (topt) is different from what would be interpolated from the
     !     coarser grid (vt2da).
@@ -751,6 +753,8 @@ contains
   subroutine cofnest
     integer :: nf,nc,nrat,if,jf,kf,kc
     real :: alpha,et,ev
+
+    real :: vctr3(maxnzp)
 
     do nf = 2,ngrids
        nc = nxtnest(nf)

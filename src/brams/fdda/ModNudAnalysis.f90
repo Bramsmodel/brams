@@ -211,9 +211,12 @@ contains
     real :: vctr12(m1)
     real :: vctr13(m1)
     real :: vctr14(m1)
+    !real :: vctr3(m1)
+     
 
     !srf - special weights for pressure and/or UV (only for operations) 
     real, dimension(m1,m2,m3) :: varwts_for_operations_only
+
     if(  wt_nudge_pi < 0. .or. wt_nudge_uv < 0. ) varwts_for_operations_only=0.
 
     !         Linearly interpolate values in time, then nudge.
@@ -456,7 +459,7 @@ contains
 
     integer :: i,j,k
     real :: tfact, wt_rc
-
+    real :: vctr3(m1)
 
 
     ! tfact is temporal interpolation weight,

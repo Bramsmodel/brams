@@ -43,8 +43,7 @@ module ModRhhi
 
 
   use mem_scratch, only: &
-       vctr1, &
-       vctr3
+       vctr1
 
   use ref_sounding, only: &
        ps, &
@@ -380,6 +379,7 @@ contains
     integer :: i,j,k
     real :: qlatu,qlonu,qlatv,qlonv,dummy
     real, dimension(nzpmax) :: p0,temp,rvls,rc
+    real :: vctr3(n1)
     real :: vctr5(n1)
     real :: vctr6(n1)
     real :: vctr11(n1)

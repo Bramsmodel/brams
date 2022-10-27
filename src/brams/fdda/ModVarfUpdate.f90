@@ -23,7 +23,7 @@ module ModVarfUpdate
        ngrid
 
   use mem_scratch, only: &
-       vctr1, vctr2, vctr2, vctr3
+       vctr1, vctr2
 
   use rconstants, only: &
        p00, cp, cpor, g
@@ -50,6 +50,7 @@ contains
     real, dimension(:,:) :: topta
 
     integer :: i,j,k
+    real :: vctr3(n1)
     real :: vctr4(n1)
     real :: vctr10(n1)
     real :: vctr11(n1)
@@ -171,6 +172,7 @@ contains
 
     integer :: i,j,k,np,ii,jj
     real :: xxm,yym,fixxm,fiyym,topoh,rtgth
+    real :: vctr3(n1)
     real :: vctr10(m1)
 
 

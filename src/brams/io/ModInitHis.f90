@@ -72,8 +72,7 @@ module ModInitHis
 
   use mem_scratch, only: &
        vctr1, &
-       vctr2, &
-       vctr3
+       vctr2
 
   use ModMicControl, only: &
        MicControl
@@ -889,6 +888,7 @@ contains
     real :: xxm,yym,fixxm,fiyym,topoh,rtgth
     real, allocatable :: scr3(:,:,:,:)
     real :: vctr10(m1)
+    real :: vctr3(m1)
     ! This routine will interpolate the new run's coarse grid only
 
     !print*,'nssssss1:',n1,n2,n3,n4,vname

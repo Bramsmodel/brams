@@ -26,8 +26,7 @@ module ModTurbDiff
 
   use mem_scratch, only: &
        vctr1,    &     !INTENT(OUT)
-       vctr2,    &     !INTENT(OUT)
-       vctr3     !INTENT(OUT)
+       vctr2      !INTENT(OUT)
 
   use mem_opt, only : &
        opt
@@ -113,6 +112,7 @@ contains
     integer :: i,j,k
 
     real :: akn,ako,akp,cross,c1,c2,dtlvi
+    real :: vctr3(m1)
     real :: vctr4(m1)
     real :: vctr5(m1)
     real :: vctr6(m1)
@@ -516,6 +516,7 @@ contains
     real :: c1(m2,m3)
     ! **(JP)** fim de modificacao
     real :: dtlti
+    real :: vctr3(m1)
     real :: vctr4(m1)
     real :: vctr5(m1)
     real :: vctr6(m1)

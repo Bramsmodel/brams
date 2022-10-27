@@ -48,8 +48,7 @@ module ModRadvc
   use mem_scratch, only: &
        scratch, &
        vctr1, &
-       vctr2, &
-       vctr3
+       vctr2 
 
   use ModScalarTable, only: &
        ScalarTable
@@ -534,6 +533,7 @@ contains
     real, dimension(m1,m2,m3) :: vt3da,vt3db,vt3dc,vt3dd,vt3de,vt3df  &
          ,vt3dh,vt3di,vt3dj,vt3dk
     character(len=*), parameter :: h="**(fa_preptc)**"
+    real :: vctr3(m1)
 
     ! VT3DA, VT3DB, and VT3DC are input as the velocity components (averaged
     ! between past and current time levels) times dtlt.

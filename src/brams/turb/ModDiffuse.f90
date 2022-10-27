@@ -51,8 +51,7 @@ module ModDiffuse
                                 ! %vt3df, %vt3dg, %vt3dh, %vt3di, %vt3dj,
                                 ! %vt3dn, %scr2
        vctr1,             &   !
-       vctr2,             &   !
-       vctr3
+       vctr2    !
 
   use node_mod, only:     &
        mxp,     &     !INTENT(IN)
@@ -151,6 +150,7 @@ contains
     real, target :: scr2(mxp*myp*mzp)
 
     character(len=*), parameter :: h="**(diffuse_brams31)**" 
+    real :: vctr3(mzp)
     real :: vctr34(mzp)
     
     idiffk=oneNamelistFile%idiffk(gridId)

@@ -37,8 +37,7 @@ module ModTurbK
   use mem_scratch, only: &
        scratch,           &
        vctr1,     &     !INTENT(INOUT)
-       vctr2,     &     !INTENT(INOUT)
-       vctr3            !INTENT(INOUT)
+       vctr2      !INTENT(INOUT)
 
   use ModMicControl, only: &
        MicControl
@@ -688,7 +687,7 @@ contains
                vkh_p(:)                 , hkh_p(:),                  &
                oneNamelistFile%ihorgrad)
           !
-          if (oneNamelistFile%nnqparm(ngrid)>=3) then
+          if (oneNamelistFile%nnqparm(ngrid)>=2) then
              ! SGScale Forcing for GRELL CUPAR
              if (oneScalarTab(n)%name=='THP' .or. oneScalarTab(n)%name=='THC')     &
                   call PBLforcing(ngrid, mzp, mxp, myp, ia, iz, ja, jz, &
@@ -873,6 +872,7 @@ contains
     ! **(JP)** fatora expressoes logicas para fora dos lacos
     logical :: log1, log2, log3, log4
 
+    real :: vctr3(m1)
     real :: vctr4(m1)
     real :: vctr11(m1)
     real :: vctr12(m1)
