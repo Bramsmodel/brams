@@ -169,14 +169,6 @@ module ModMemAlloc
        define_memory
 
   use mem_grell, only: &
-       grell_g,        &
-       grellm_g,       &
-       grell_g_sh,     &
-       grellm_g_sh,    &
-       alloc_grell,    &
-       nullify_grell,  &
-       filltab_grell,  &
-       filltab_grell_sh, &
        cuforc_g, &
        cuforc_sh_g, &
        cuforcm_g, &
@@ -184,8 +176,7 @@ module ModMemAlloc
        nullify_cuforc, &
        alloc_cu_forcings, &
        filltab_cuforc_sh, &
-       filltab_cuforc, &
-       alloc_grell_sh
+       filltab_cuforc
 
   use mem_scratch1_grell, only: &
        alloc_scratch1_grell
