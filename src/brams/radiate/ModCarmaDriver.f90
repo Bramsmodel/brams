@@ -83,7 +83,6 @@ module ModCarmaDriver
        ngrids     ! INTENT(IN)
 
   use mem_scratch1_grell, only: &
-       ierr4d, &
        xmb4d, &
        zup5d, &
        clwup5d

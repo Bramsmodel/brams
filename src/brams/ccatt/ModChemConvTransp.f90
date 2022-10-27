@@ -51,11 +51,7 @@ module ModChemConvTransp
        naddsc
 
   use mem_grell_param, only: &
-       mgmxp, &
-       mgmyp, &
-       mgmzp, &
-       maxiens, &
-       ngrids_cp
+       mgmzp
 
   use mem_scratch1_grell, only: &
        clwup5d, &

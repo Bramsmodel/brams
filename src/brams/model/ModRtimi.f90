@@ -39,10 +39,6 @@ module ModRtimi
        mzp, &
        nmachs
 
-  use mem_grell, only: &
-       cuforc_g, &
-       cuforc_sh_g
-
   use shcu_vars_const, only: &
        NNSHCU
 

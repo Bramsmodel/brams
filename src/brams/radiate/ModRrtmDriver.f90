@@ -175,11 +175,7 @@ module ModRrtmDriver
        carma_tuv, &
        tuv2carma
 
-  use mem_grell_param, only: &
-       maxiens ! INTENT(IN)
-
   use mem_scratch1_grell, only: &
-       ierr4d, &
        xmb4d, &
        zup5d, &
        clwup5d, &

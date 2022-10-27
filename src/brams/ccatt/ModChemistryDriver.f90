@@ -121,12 +121,6 @@ module ModChemistryDriver
   use mem_scratch1_grell, only: &
        ierr4d                     ! (IN)
 
-  use mem_grell_param, only: &
-       mgmxp,                & ! (IN)
-       mgmyp,                & ! (IN)
-       maxiens,              & ! (IN)
-       ngrids_cp               ! (IN)
-
   use mem_stilt, only: &
        iexev,          & ! (IN)
        stilt_g           ! %dnp(IN)
