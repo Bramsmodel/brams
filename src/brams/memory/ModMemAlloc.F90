@@ -10,12 +10,6 @@ module ModMemAlloc
   use ModLeafComs, only: &
        alloc_leafcol
 
-!!$  use mem_scratch2_grell, only: &
-!!$       alloc_scratch2_grell
-!!$
-!!$  use mem_scratch3_grell_sh, only: &
-!!$       alloc_scratch3_grell_sh
-!!$
   use ModCuParmFields, only: &
        InsertCuParmFieldsAtVarTable, &
        InsertCuParmShFieldsAtVarTable
@@ -111,28 +105,6 @@ module ModMemAlloc
        initial_definitions_globrad, & !Subroutine
        final_definitions_globrad !Subroutine
 
-  use teb_spm_start, only: &
-       TEB_SPM ! INTENT(IN)
-
-  use mem_teb, only: &
-       teb_g,        & ! INTENT(IN)
-       tebm_g,       & ! INTENT(IN)
-       nullify_teb,  & ! Subroutine
-       alloc_teb,    & ! Subroutine
-       filltab_teb, &     ! Subroutine
-       dealloc_teb         ! Subroutine
-
-  use mem_teb_common, only: &
-       tebc_g,              & ! INTENT(IN)
-       tebcm_g,             & ! INTENT(IN)
-       nullify_tebc,        & ! Subroutine
-       alloc_tebc,          & ! Subroutine
-       filltab_tebc, &        ! Subroutine
-       dealloc_tebc            ! Subroutine
-
-  use ModGaspartFields, only: &
-       InsertGaspartFieldsAtVarTable
-
   use mem_scratch, only: &
        alloc_scratch,    &
        nullify_scratch,  &
@@ -218,12 +190,6 @@ module ModMemAlloc
   use mem_scratch1_grell, only: &
        alloc_scratch1_grell
 
-!!$  use mem_scratch2_grell_sh, only: &
-!!$       alloc_scratch2_grell_sh
-!!$
-!!$  use mem_scratch3_grell, only: &
-!!$       alloc_scratch3_grell
-
   use mem_carma, only: &
        carma,          &
        carma_m,        &
@@ -265,12 +231,6 @@ module ModMemAlloc
 
   use mem_grid_dim_defs, only: &
        define_grid_dim_pointer ! subroutine
-
-  use mem_emiss, only: &
-       isource ! INTENT(IN)
-
-  use teb_vars_const, only: &
-       iteb ! INTENT(IN)
 
   use ModCuParGrell3, only: &
        alloc_grell3, &
@@ -740,25 +700,6 @@ contains
                   oneGrid%oneNamelistFile, &
                   carma, carma_m, ng, imean)
           end do
-          ! else !Case rtmg
-          !   do ng=1,ngrids
-          !      call nullify_carma(carma,ng)
-          !      call alloc_carma(carma, ng, nmxp(ng), nmyp(ng), nbndsw)
-          !      call zero_carma(carma, ng)
-          !      call nullify_carma(carma_m, ng)
-          !
-          !      if(imean==1) then
-          !         call alloc_carma(carma_m, ng, nmxp(ng), nmyp(ng), nbndsw)
-          !         call zero_carma(carma_m, ng)
-          !      elseif (imean==0) then
-          !         call alloc_carma(carma_m, ng,        1,        1, nbndsw)
-          !         call zero_carma(carma_m, ng)
-          !      end if
-          !
-          !      call filltab_carma(carma(ng), carma_m(ng), ng, imean,  &
-          !       nmxp(ng), nmyp(ng), nbndsw)
-          !   end do
-          ! endif
        end if
     endif
     !-------------
@@ -864,71 +805,6 @@ contains
        enddo
     endif
 
-!!$    !- shallow convection version 2
-!!$    if  (Alloc_SHCU_Flag  == 1) then
-!!$
-!!$       call alloc_scratch2_grell_sh()
-!!$       call alloc_scratch3_grell_sh()
-!!$
-!!$       allocate(grell_g_sh(ngrids_cp), STAT=ierr)
-!!$       if (ierr/=0) call fatal_error(h//"Allocating grell_g_sh_g")
-!!$
-!!$       allocate(grellm_g_sh(ngrids_cp), STAT=ierr)
-!!$       if (ierr/=0) call fatal_error(h//"Allocating grell_g_sh_g")
-!!$
-!!$       do ng=1,ngrids
-!!$          if (NNSHCU(ng) > 1) then
-!!$             call nullify_grell(grell_g_sh (ng))
-!!$             call nullify_grell(grellm_g_sh(ng))
-!!$
-!!$             call alloc_grell_sh(grell_g_sh(ng),nmzp(ng),nmxp(ng),nmyp(ng),ng)
-!!$
-!!$             if (imean == 1) then
-!!$                call alloc_grell_sh(grellm_g_sh(ng),nmzp(ng),nmxp(ng),nmyp(ng),ng)
-!!$             endif
-!!$
-!!$             call filltab_grell_sh(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-!!$                  grell_g_sh(ng), grellm_g_sh(ng), nnshcu(ng), imean)
-!!$          endif
-!!$       enddo
-!!$    endif
-!!$    ! Allocate data for Grell's deep cumulus - old GD
-!!$    !
-!!$    if (Alloc_Grell_Flag == 1) then
-!!$
-!!$       call alloc_scratch2_grell()
-!!$       call alloc_scratch3_grell()
-!!$
-!!$       ! Allocating data for main Grell data
-!!$       ! Allocate to a quantity set by ngrids_cp not ngrids
-!!$       allocate(grell_g(ngrids_cp), STAT=ierr)
-!!$       if (ierr/=0) call fatal_error(h//"Allocating grell_g")
-!!$       allocate(grellm_g(ngrids_cp), STAT=ierr)
-!!$       if (ierr/=0) call fatal_error(h//"Allocating grellm_g")
-!!$
-!!$       ng_cp = 1
-!!$       ! call zero_scratch3_grell()
-!!$       Flag_Grell = 2
-!!$       ! For New Grell Param.
-!!$       if     (CLOSURE_TYPE == 'EN') then
-!!$          icoic = 0
-!!$       elseif (CLOSURE_TYPE == 'GR') then
-!!$          icoic = 1
-!!$       elseif (CLOSURE_TYPE == 'LO') then
-!!$          icoic = 4
-!!$       elseif (CLOSURE_TYPE == 'MC') then
-!!$          icoic = 7
-!!$       elseif (CLOSURE_TYPE == 'SC') then
-!!$          icoic = 10
-!!$       elseif (CLOSURE_TYPE == 'AS') then
-!!$          icoic = 13
-!!$       else
-!!$          print *, "****Grell Closure type ERROR for GD scheme"
-!!$          ! the subroutine opspec3 stop the program before this point.
-!!$       endif
-!!$
-!!$       icoic_sh=icoic
-!!$    endif
     !- Allocate data for Grell Cumulus version 3d,GD-FIM and GF schemes
     if (Alloc_Grell3_Flag == 1) then
        allocate(g3d_ens_g(train_dim,ngrids_cp))
@@ -995,22 +871,6 @@ contains
     allocate(odam_g(ngrids), STAT=ierr)
     if (ierr/=0) call fatal_error(h//"Allocating odam_g")
 
-    !  do ng=1,ngrids
-    !
-    !     call nullify_oda(oda_g(ng)); call nullify_oda(odam_g(ng))
-    !
-    !     call alloc_oda(oda_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng, proc_type)
-    !     call alloc_oda(odam_g(ng),       1,        1,        1, ng, proc_type)
-    !
-    !     call filltab_oda(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-    !          oda_g(ng), odam_g(ng))
-    !
-    !  enddo
-    !-srf tmp
-    !-------------
-
-
-
     !-------------
     ! Allocate any added Scalar types
     ! NOT ALLOWING DIFFERENT NUMBERS OF SCALARS ON DIFFERENT NESTS
@@ -1033,22 +893,6 @@ contains
 
     call alloc_tend(nmzp, nmxp, nmyp, ngrids, naddsc, proc_type, &
          oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicroFields)
-    !-------------
-
-    !-------------
-    ! TEB_SPM
-    if (TEB_SPM==1) then
-       if (isource==1) then
-          !-----------------------------------------------------------------------
-          ! insert Gaspart Field variables at var_table
-          call InsertGaspartFieldsAtVarTable(&
-               oneGrid%oneVarTable, &
-               oneGrid%oneVarTableSize, &
-               oneGrid%oneGaspartFields, &
-               oneGrid%oneAveGaspartFields, &
-               imean)
-       endif
-    endif
     !-------------
 
     !-------------
@@ -1283,11 +1127,10 @@ contains
     !--------------
     ! filltab tendencies for TEB and CCATT submodels
     do ng=1,ngrids
-       !- TEB_SPM
 
        call filltab_tend(oneGrid%oneScalarTable, oneGrid%oneScalarTableSize, &
             oneGrid%oneBasicFields, oneGrid%oneMicroFields, oneGrid%oneTurbFields,  &
-            oneGrid%oneGaspartFields, oneGrid%oneScalarFields, naddsc, ng)
+            oneGrid%oneScalarFields, naddsc, ng)
 
        if (ccatt == 1  .and. chemistry >= 0)  then
 
@@ -1417,51 +1260,6 @@ contains
        end do
     end do
     !--------------
-
-    !--------------
-    if (TEB_SPM==1) then
-       !---------------------------------------------------------------------
-       ! Allocate common use variables (TEB_SPM,LEAF)
-       allocate(tebc_g(ngrids), STAT=ierr)
-       if (ierr/=0) call fatal_error(h//"Allocating tebc_g")
-       allocate(tebcm_g(ngrids), STAT=ierr)
-       if (ierr/=0) call fatal_error(h//"Allocating tebcm_g")
-       do ng=1,ngrids
-          call nullify_tebc(tebc_g(ng))
-          call nullify_tebc(tebcm_g(ng))
-          call alloc_tebc(tebc_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
-          if (imean==1) then
-             call alloc_tebc(tebcm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
-          endif
-
-          call filltab_tebc(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-               tebc_g(ng), tebcm_g(ng), imean)
-       enddo
-
-       !---------------------------------------------------------------------
-       ! Allocate data for urban canopy parameterization
-       if (iteb==1) then
-          allocate(teb_g(ngrids), STAT=ierr)
-          if (ierr/=0) call fatal_error(h//"Allocating teb_g")
-          allocate(tebm_g(ngrids), STAT=ierr)
-          if (ierr/=0) call fatal_error(h//"Allocating tebm_g")
-          do ng=1,ngrids
-             call nullify_teb(teb_g(ng))
-             call nullify_teb(tebm_g(ng))
-             call alloc_teb(teb_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
-             if (imean==1) then
-                call alloc_teb(tebm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
-             endif
-
-             call filltab_teb(&
-                  oneGrid%oneVarTable, &
-                  oneGrid%oneVarTableSize, &
-                  teb_g(ng), &
-                  tebm_g(ng), imean)
-          enddo
-       endif
-    endif
-    !-------------
 
     !-------------
     ! allocate date for digital filter - rmf

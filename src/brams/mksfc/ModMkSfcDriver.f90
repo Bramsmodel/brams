@@ -29,17 +29,12 @@ module ModMkSfcDriver
   
   use ModNestGeoSst, only: &
        toptnest, &
-       geonest_file, &
-       fusonest
+       geonest_file
 
   use ModMkSfcSfc, only: &
        sfc_check, &
        sfc_write
   
-  use ModMkSfcFuso, only: &
-       fuso_check, &
-       fuso_write
-
   use ModMkSfcTop, only: &
        top_check, &
        top_write
@@ -108,9 +103,6 @@ module ModMkSfcDriver
   use ReadBcst, only: &
        Broadcast
 
-  ! TEB_SPM
-  use teb_spm_start, only: TEB_SPM !INTENT(IN)
-  !
 
   implicit none
 
@@ -125,10 +117,6 @@ contains
     integer :: ifm,icm,nvtime,ivtime,ng1,ng2,ng1t,ng2t,ng1s,ng2s
     integer :: isfcerr,itoperr,issterr,indvierr
 
-    ! TEB_SPM
-    integer :: ng1f, ng2f
-    integer :: ifusoerr
-    !
 
     ! This subroutine makes sure that all surface, topo, sst, and ndvi
     ! files required for the present run exist and are correct. 
@@ -151,7 +139,7 @@ contains
     !       incorrect files, make sst and ndvi files.
 
     integer :: ierr
-    integer :: intVec(3)
+    integer :: intVec(2)
     character(len=8) :: c0, c1, c2
     character(len=*), parameter :: h="**(MakeSfcFiles)**"
 
@@ -161,7 +149,6 @@ contains
     itoperr = 0
     issterr = 0
     indvierr = 0
-    ifusoerr = 0
 
     ! Allocate memory needed for initializing sfcfiles
 
@@ -236,11 +223,6 @@ contains
        ng1t=1 ; ng2t=ngrids    ! topo grid bounds
        ng1s=1 ; ng2s=ngrids    ! sfc grid bounds
 
-       if (TEB_SPM==1) then
-          ifusoerr = 1
-          ng1f=1 ; ng2f=ngrids    ! fuso grid bounds
-       end if
-
     elseif (runtype(1:7) == 'INITIAL' .or. runtype(1:9) == 'MAKEVFILE') then
 
        ! One process checks sfc files (no side effects)
@@ -281,24 +263,14 @@ contains
        end do
 !!$     endif
 
-       ! One process checks fuso files 
-
-       if (TEB_SPM==1 .and. mchnum == master_num) then
-          do ifm = 1,ngrids
-             call fuso_check(ifm,ifusoerr)
-             if(ifusoerr == 1) exit
-          end do
-       end if
-
        ! broadcast checking results done by a single process
 
-       intVec=(/isfcerr, itoperr, ifusoerr/)
+       intVec=(/isfcerr, itoperr/)
 
-       call Broadcast(intVec(1:3), master_num, "isfcerr,itoperr,ifusoerr")
+       call Broadcast(intVec(1:2), master_num, "isfcerr,itoperr")
 
        isfcerr = intVec(1)
        itoperr = intVec(2)
-       ifusoerr = intVec(3)
 
        ! If we are making ndvi files, we must also make the sfc files (and vice versa)
 
@@ -308,8 +280,7 @@ contains
        ! return if no check error
 
        if (isfcerr==0 .and. issterr==0 .and.  &
-            itoperr==0 .and.indvierr==0 .and. &
-            ifusoerr==0) then
+            itoperr==0 .and.indvierr==0) then
           return
        else
           if (mchnum == master_num) then
@@ -319,18 +290,12 @@ contains
              if(itoperr == 1 ) print*, h//'   top files'
              if(issterr == 1 ) print*, h//'   sst files'
              if(indvierr == 1) print*, h//'   ndvi files'
-             if (TEB_SPM==1) then
-                if(ifusoerr == 1) print*, h//'   fuso files'
-             end if
           end if
        end if
 
        ng1=1 ; ng2=ngrids
        ng1t=1 ; ng2t=ngrids
        ng1s=1 ; ng2s=ngrids
-       if (TEB_SPM==1) then
-          ng1f=1 ; ng2f=ngrids
-       end if
 
     elseif (runtype(1:7) == 'HISTORY') then
 
@@ -361,16 +326,6 @@ contains
           if(isfcerr == 1) exit
        end do
        ng1s=ngridsh+1 ; ng2s=ngrids
-
-       if (TEB_SPM==1) then
-          ! Check fuso files for added grids. Existing grid info is read from
-          !   history file.
-          do ifm = ngridsh+1,ngrids
-             call fuso_check(ifm,ifusoerr)
-             if(ifusoerr == 1) exit
-          end do
-          ng1f=ngridsh+1 ; ng2f=ngrids
-       end if
 
        ! Check sst files for all grids. This is a potentially time-dependent field,
        !   so we need to check if all files are there. If there is a set of files
@@ -413,19 +368,6 @@ contains
              call top_write(ifm)
           end do
        endif
-
-       ! TEB_SPM
-       if (TEB_SPM==1) then
-          !------------------------------------------
-          !  FUSO  file creation
-          if(ifusoerr == 1) then
-             ! do FUSO (Local Time) on all grids
-             call fusonest(ng1f,ng2f)
-             do ifm = 1,ngrids
-                call fuso_write(ifm)
-             end do
-          end if
-       end if
 
        !------------------------------------------
        !  SFC (veg class, patch area, soil type) and NDVI file creation

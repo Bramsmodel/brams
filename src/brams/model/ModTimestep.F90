@@ -46,13 +46,6 @@ module ModTimestep
   use ModLeaf3, only: &
        sfclyr
 
-  use ModOzone, only: &
-       ozone
-
-  use ModGasPart, only: &
-       le_fontes, &
-       sources_teb
-
   use ModCoriolis, only: &
        corlos
 
@@ -157,13 +150,6 @@ module ModTimestep
 
   use mem_leaf, only: & ! For SiB
        ISFCL ! INTENT(IN)
-
-  ! TEB_SPM
-  use teb_spm_start, only: &
-       TEB_SPM ! INTENT(IN)
-  use mem_emiss, only: &
-       ichemi,         & ! INTENT(IN)
-       isource           ! INTENT(IN)
 
   ! For specific optimization depending the type of machine
   use machine_arq, only: &
@@ -551,22 +537,6 @@ contains
     end if
     !---------------------------------------------------
 
-    if (TEB_SPM==1) then
-       ! Update urban emissions
-       !----------------------------------------
-       if (isource==1) then
-          call sources_teb(mzp, mxp, myp, ia, iz, ja, jz, ngrid, ngrids, &
-               oneGrid%oneGaspartFields)
-       endif
-       !  Update chemistry
-       !----------------------------------------
-       if (ichemi==1) then
-          call ozone(mzp, mxp, myp, ia, iz, ja, jz, ngrid, dtlt, &
-               oneGrid%oneBasicFields, oneGrid%oneGaspartFields, &
-               oneGrid%oneRadiateFields)
-       endif
-    endif
-
     !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
     !  call SynchronizedTimeStamp(TS_PHYSICS)
 
@@ -747,19 +717,6 @@ contains
     endif
     !----------------------------------------
 
-    if (TEB_SPM==1) then
-       !EDF  emission module
-       if (isource==1) then
-          ! Apply only for last finner grid
-          if (ngrid==ngrids) then
-             call le_fontes(ngrid, mzp, mxp, myp, &
-                  npatch, ia, iz, ja, jz, (time+dtlongn(1)), &
-                  oneGrid%oneBasicFields, oneGrid%oneGaspartFields)
-          endif
-       endif
-       !EDF
-    endif
-
     !windfarm
     call wind_farm_driver(ngrid,mzp,mxp,myp,ia,iz,ja,jz, &
          oneGrid%oneBasicFields, oneGrid%oneTurbFields)
@@ -776,85 +733,6 @@ contains
 
   end subroutine timestep
 
-  !*************************************************************************
-
-!!$  subroutine mass_flux(n1,n2,n3,m1,m2,m3,up,vp,wp  &
-!!$       ,dn0,rtgu,rtgv,dyu,dxv,pp,pi0)
-!!$
-!!$    use mem_grid
-!!$    use rconstants
-!!$
-!!$    implicit none
-!!$    integer :: n1,n2,n3,m1,m2,m3
-!!$    real :: up(m1,m2,m3),vp(m1,m2,m3),wp(m1,m2,m3)  &
-!!$         ,dn0(n1,n2,n3),rtgu(n2,n3),dyu(n2,n3),dxv(n2,n3)  &
-!!$         ,rtgv(n2,n3),pp(m1,m2,m3),pi0(n1,n2,n3)
-!!$
-!!$    real, save :: aintmass=0.
-!!$
-!!$    integer :: i,j,k
-!!$    real :: wmass,emass,smass,nmass,prtot,tmass,ppp,area
-!!$
-!!$    !cc      if (mod(time,300.).gt..1) return
-!!$
-!!$    !  west/east bound
-!!$    wmass=0.
-!!$    emass=0.
-!!$    do j=2,nyp-1
-!!$       do k=2,nzp-1
-!!$          i=1
-!!$          wmass=wmass +  &
-!!$               up(k,i,j)*rtgu(i,j)/(dyu(i,j)*dzt(k))  &
-!!$               *(dn0(k,i,j)+dn0(k,i+1,j))*.5
-!!$          i=nxp-1
-!!$          emass=emass -  &
-!!$               up(k,i,j)*rtgu(i,j)/(dyu(i,j)*dzt(k))  &
-!!$               *(dn0(k,i,j)+dn0(k,i+1,j))*.5
-!!$       enddo
-!!$    enddo
-!!$
-!!$    !  north/south bound
-!!$    smass=0.
-!!$    nmass=0.
-!!$    do i=2,nxp-1
-!!$       do k=2,nzp-1
-!!$          j=1
-!!$          smass=smass +  &
-!!$               vp(k,i,j)*rtgv(i,j)/(dxv(i,j)*dzt(k))  &
-!!$               *(dn0(k,i,j)+dn0(k,i,j+1))*.5
-!!$          j=nyp-1
-!!$          nmass=nmass -  &
-!!$               vp(k,i,j)*rtgv(i,j)/(dxv(i,j)*dzt(k))  &
-!!$               *(dn0(k,i,j)+dn0(k,i,j+1))*.5
-!!$       enddo
-!!$    enddo
-!!$
-!!$    k=2
-!!$    prtot=0.
-!!$    do j=2,nyp-1
-!!$       do i=2,nxp-1
-!!$          ppp= ( (pp(k,i,j)+pi0(k,i,j))/cp )**cpor*p00
-!!$          prtot=prtot+ppp/(dyu(i,j)*dxv(i,j))
-!!$       enddo
-!!$    enddo
-!!$
-!!$
-!!$    tmass=wmass+emass+smass+nmass
-!!$    aintmass=aintmass+tmass*dtlong
-!!$    area=(nxp-2)*deltax*(nyp-2)*deltay
-!!$
-!!$
-!!$    print*,'==============================='
-!!$    print*,' Mass flux - W, E, S, N'
-!!$    print*,  wmass,emass,smass,nmass
-!!$    print*, 'total (kg/(m2 s):',tmass/area
-!!$    print*, 'total (kg/m2):',aintmass/area
-!!$    print*, 'total pr change (pa):',aintmass/area*9.8
-!!$    print*, 'computed mean press:',prtot/area
-!!$    print*,'==============================='
-!!$
-!!$    return
-!!$  end subroutine mass_flux
   !     *****************************************************************
 
   subroutine w_damping(mzp,mxp,myp,ia,iz,ja,jz,mynum,&

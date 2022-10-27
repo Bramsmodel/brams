@@ -1,7 +1,7 @@
 !############################# Change Log ##################################
 ! 5.2.0
 !
-!MB: new file for the Runge-Kutta dynamical core
+!    Runge-Kutta dynamical core
 !    (after Wicker, Skamarock, 2002, MWR)
 !    Saulo Freitas (INPE), Michael Baldauf (DWD)
 !
@@ -46,13 +46,6 @@ module ModTimestepRK
 
   use ModLeaf3, only: &
        sfclyr
-
-  use ModOzone, only: &
-       ozone
-
-  use ModGasPart, only: &
-       le_fontes, &
-       sources_teb
 
   use ModTimestep, only: &
        w_damping
@@ -176,13 +169,6 @@ module ModTimestepRK
   use mem_leaf, only: & 
        ISFCL          & ! INTENT(IN)
        ,ISFCL_OCEAN      ! INTENT(IN)
-
-  ! TEB_SPM
-  use teb_spm_start, only: &
-       TEB_SPM ! INTENT(IN)
-  use mem_emiss, only: &
-       ichemi,         & ! INTENT(IN)
-       isource           ! INTENT(IN)
 
   ! For specific optimization depending the type of machine
   use machine_arq, only: &
@@ -568,22 +554,6 @@ contains
     end if
     !---------------------------------------------------
 
-    if (TEB_SPM==1) then
-       ! Update urban emissions
-       !----------------------------------------
-       if (isource==1) then
-          call sources_teb(mzp, mxp, myp, ia, iz, ja, jz, ngrid, ngrids, &
-               oneGrid%oneGaspartFields)
-       endif
-       !  Update chemistry
-       !----------------------------------------
-       if (ichemi==1) then
-          call ozone(mzp, mxp, myp, ia, iz, ja, jz, ngrid, dtlt, &
-               oneGrid%oneBasicFields, oneGrid%oneGaspartFields, &
-               oneGrid%oneRadiateFields)
-       endif
-    endif
-
 !!$    call SynchronizedTimeStamp(TS_PHYSICS) ! Exper1.2, 2021_12
 
     if (iexev == 2) then
@@ -934,19 +904,6 @@ contains
        call aer_background(ngrid,mzp,mxp,myp,ia,iz,ja,jz)
     endif
     !----------------------------------------
-
-    if (TEB_SPM==1) then
-       !EDF  emission module
-       if (isource==1) then
-          ! Apply only for last finner grid
-          if (ngrid==ngrids) then
-             call le_fontes(ngrid, mzp, mxp, myp, &
-                  npatch, ia, iz, ja, jz, (time+dtlongn(1)), &
-                  oneGrid%oneBasicFields, oneGrid%oneGaspartFields)
-          endif
-       endif
-       !EDF
-    endif
 
     !- windfarm
     call wind_farm_driver(ngrid,mzp,mxp,myp,ia,iz,ja,jz, &

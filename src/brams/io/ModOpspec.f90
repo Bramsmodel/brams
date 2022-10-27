@@ -104,13 +104,6 @@ module ModOpspec
   use mem_grell_param, only : &
        CLOSURE_TYPE ! INTENT(IN)
 
-  use teb_spm_start, only: &
-       TEB_SPM ! INTENT(IN)
-
-  use mem_emiss, only: &
-       ichemi, &
-       isource ! INTENT(IN)
-
   use mem_stilt, only: &
        iexev,          &
        imassflx
@@ -816,20 +809,12 @@ contains
     iwarerr=0
     infoerr=0
 
-    ! TEB_SPM
-    !##########################################################################
-    !EDF - Adition tho check if isource is activated if ichemi is
-    !##########################################################################
-    if (TEB_SPM==1) then
-       if (ichemi==1) then
-          if (isource==0) then
-             print*, 'FATAL - The SPM can not be activated without sources.'
-             print*, '        ISOURCE must be equal to 1.'
-             IFATERR = IFATERR + 1
-          endif
-       endif
-    endif
-    !##########################################################################
+    if (oneNamelistFile%teb_spm /= 0 ) then
+       strLong="FATAL - TEB_SPM not available at this version of BRAMS"
+       print *, trim(strLong)
+       call fatal_error(h//" TEB_SPM not available at this version of BRAMS")
+       ifaterr = ifaterr+1
+    end if
 
     ! CCATT
 

@@ -29,16 +29,6 @@ module mem_tend
   use mem_grid,   only: &
        dyncore_flag
 
-  use ModGaspartFields, only: &
-       GaspartFields
-
-  use teb_spm_start, only: &
-       TEB_SPM
-
-  use mem_emiss, only: &
-       ichemi, &
-       isource
-
   use ModNamelistFile, only: &
        namelistFile
 
@@ -270,109 +260,6 @@ contains
        allocate (tend%gccmt(ntpts))  ;tend%gccmt=0.0
     endif
 
-
-    ! TEB_SPM
-    if (TEB_SPM==1) then
-       if(isource==1)then
-          call fatal_error(h//" allocation of gaspart not converted; "//&
-               "seems wrong whenever TEB_SPM and isource are both 1")
-!!$          if (associated(gaspart_g(1)%pno).and.  &
-!!$               (.not.associated(gaspart_g(1)%pnot)))  &
-!!$               allocate (gaspart_g(1)%pnot(ntpts))
-!!$
-!!$          if (associated(gaspart_g(1)%pno2).and.  &
-!!$               (.not.associated(gaspart_g(1)%pno2t)))  &
-!!$               allocate (gaspart_g(1)%pno2t(ntpts))
-!!$
-!!$          if (associated(gaspart_g(1)%ppm25).and.  &
-!!$               (.not.associated(gaspart_g(1)%ppm25t)))  &
-!!$               allocate (gaspart_g(1)%ppm25t(ntpts))
-!!$
-!!$          if (associated(gaspart_g(1)%pco).and.  &
-!!$               (.not.associated(gaspart_g(1)%pcot)))  &
-!!$               allocate (gaspart_g(1)%pcot(ntpts))
-!!$
-!!$          if (associated(gaspart_g(1)%pso2).and.  &
-!!$               (.not.associated(gaspart_g(1)%pso2t)))  &
-!!$               allocate (gaspart_g(1)%pso2t(ntpts))
-!!$
-!!$          if (associated(gaspart_g(1)%pso4).and.  &
-!!$               (.not.associated(gaspart_g(1)%pso4t)))  &
-!!$               allocate (gaspart_g(1)%pso4t(ntpts))
-!!$
-!!$          if (associated(gaspart_g(1)%paer).and.  &
-!!$               (.not.associated(gaspart_g(1)%paert)))  &
-!!$               allocate (gaspart_g(1)%paert(ntpts))
-!!$
-!!$          if (associated(gaspart_g(1)%pvoc).and.  &
-!!$               (.not.associated(gaspart_g(1)%pvoct)))  &
-!!$               allocate (gaspart_g(1)%pvoct(ntpts))
-!!$
-!!$          if(ichemi==1)then
-!!$
-!!$             if (associated(gaspart_g(1)%po3).and.  &
-!!$                  (.not.associated(gaspart_g(1)%po3t)))  &
-!!$                  allocate (gaspart_g(1)%po3t(ntpts))
-!!$
-!!$             if (associated(gaspart_g(1)%prhco).and.  &
-!!$                  (.not.associated(gaspart_g(1)%prhcot)))  &
-!!$                  allocate (gaspart_g(1)%prhcot(ntpts))
-!!$
-!!$             if (associated(gaspart_g(1)%pho2).and.  &
-!!$                  (.not.associated(gaspart_g(1)%pho2t)))  &
-!!$                  allocate (gaspart_g(1)%pho2t(ntpts))
-!!$
-!!$             if (associated(gaspart_g(1)%po3p).and.  &
-!!$                  (.not.associated(gaspart_g(1)%po3pt)))  &
-!!$                  allocate (gaspart_g(1)%po3pt(ntpts))
-!!$
-!!$             if (associated(gaspart_g(1)%po1d).and.  &
-!!$                  (.not.associated(gaspart_g(1)%po1dt)))  &
-!!$                  allocate (gaspart_g(1)%po1dt(ntpts))
-!!$
-!!$             if (associated(gaspart_g(1)%pho).and.  &
-!!$                  (.not.associated(gaspart_g(1)%phot)))  &
-!!$                  allocate (gaspart_g(1)%phot(ntpts))
-!!$
-!!$             if (associated(gaspart_g(1)%proo).and.  &
-!!$                  (.not.associated(gaspart_g(1)%proot)))  &
-!!$                  allocate (gaspart_g(1)%proot(ntpts))
-!!$          endif
-!!$
-!!$          do ng=2,ngrs
-!!$             gaspart_g(ng)%pnot   => gaspart_g(1)%pnot
-!!$             gaspart_g(ng)%pno2t  => gaspart_g(1)%pno2t
-!!$             gaspart_g(ng)%ppm25t => gaspart_g(1)%ppm25t
-!!$             gaspart_g(ng)%pcot   => gaspart_g(1)%pcot
-!!$             gaspart_g(ng)%pso2t  => gaspart_g(1)%pso2t
-!!$             gaspart_g(ng)%pso4t  => gaspart_g(1)%pso4t
-!!$             gaspart_g(ng)%paert  => gaspart_g(1)%paert
-!!$             gaspart_g(ng)%pvoct  => gaspart_g(1)%pvoct
-!!$             if(ichemi==1)then
-!!$                gaspart_g(ng)%po3t   => gaspart_g(1)%po3t
-!!$                gaspart_g(ng)%prhcot => gaspart_g(1)%prhcot
-!!$                gaspart_g(ng)%pho2t  => gaspart_g(1)%pho2t
-!!$                gaspart_g(ng)%po3pt  => gaspart_g(1)%po3pt
-!!$                gaspart_g(ng)%po1dt  => gaspart_g(1)%po1dt
-!!$                gaspart_g(ng)%phot   => gaspart_g(1)%phot
-!!$                gaspart_g(ng)%proot  => gaspart_g(1)%proot
-!!$             endif
-!!$          enddo
-!!$
-       endif
-
-    endif
-    !
-
-!!$    do nsc=1,naddsc
-!!$       if (associated(scalar_g(nsc,1)%sclp).and.  &
-!!$            (.not.associated(scalar_g(nsc,1)%sclt)))  &
-!!$            allocate (scalar_g(nsc,1)%sclt(ntpts))
-!!$       do ng=2,ngrs
-!!$          scalar_g(nsc,ng)%sclt => scalar_g(nsc,1)%sclt
-!!$       enddo
-!!$    enddo
-
   end subroutine alloc_tend
 
   !---------------------------------------------------------------
@@ -427,38 +314,6 @@ contains
     if (associated(tend%pt_rk))   nullify (tend%pt_rk)
     if (associated(tend%tht_rk))  nullify (tend%tht_rk)
 
-    ! TEB_SPM
-    if (TEB_SPM==1) then
-       if(isource==1)then
-          call fatal_error(h//" nullify gaspart not converted; "//&
-               "seems wrong whenever TEB_SPM and isource are both 1")
-!!$          if (associated(gaspart_g(1)%pnot  )) nullify (gaspart_g(1)%pnot  )
-!!$          if (associated(gaspart_g(1)%pno2t )) nullify (gaspart_g(1)%pno2t )
-!!$          if (associated(gaspart_g(1)%ppm25t)) nullify (gaspart_g(1)%ppm25t)
-!!$          if (associated(gaspart_g(1)%pcot  )) nullify (gaspart_g(1)%pcot  )
-!!$          if (associated(gaspart_g(1)%pso2t )) nullify (gaspart_g(1)%pso2t )
-!!$          if (associated(gaspart_g(1)%pso4t )) nullify (gaspart_g(1)%pso4t )
-!!$          if (associated(gaspart_g(1)%paert )) nullify (gaspart_g(1)%paert )
-!!$          if (associated(gaspart_g(1)%pvoct )) nullify (gaspart_g(1)%pvoct )
-!!$
-!!$          if(ichemi==1)then
-!!$             if (associated(gaspart_g(1)%po3t  )) nullify (gaspart_g(1)%po3t  )
-!!$             if (associated(gaspart_g(1)%prhcot)) nullify (gaspart_g(1)%prhcot)
-!!$             if (associated(gaspart_g(1)%pho2t )) nullify (gaspart_g(1)%pho2t )
-!!$             if (associated(gaspart_g(1)%po3pt )) nullify (gaspart_g(1)%po3pt )
-!!$             if (associated(gaspart_g(1)%po1dt )) nullify (gaspart_g(1)%po1dt )
-!!$             if (associated(gaspart_g(1)%phot  )) nullify (gaspart_g(1)%phot  )
-!!$             if (associated(gaspart_g(1)%proot )) nullify (gaspart_g(1)%proot )
-!!$          endif
-       endif
-    endif
-    !
-
-!!$    do nsc=1,naddsc
-!!$       if (associated(scalar_g(nsc,1)%sclt)) nullify (scalar_g(nsc,1)%sclt)
-!!$    enddo
-
-    return
   end subroutine nullify_tend
   !---------------------------------------------------------------
 
@@ -506,48 +361,18 @@ contains
     if (associated(tend%gccmt)) deallocate(tend%gccmt)
     !-2015- for 2M microphysics (from G. Camponogara)
 
-    ! TEB_SPM
-    if (TEB_SPM==1) then
-       if(isource==1)then
-          call fatal_error(h//" deallocation of gaspart not converted; "//&
-               "seems wrong whenever TEB_SPM and isource are both 1")
-!!$          if (associated(gaspart_g(1)%pnot  )) deallocate (gaspart_g(1)%pnot  )
-!!$          if (associated(gaspart_g(1)%pno2t )) deallocate (gaspart_g(1)%pno2t )
-!!$          if (associated(gaspart_g(1)%ppm25t)) deallocate (gaspart_g(1)%ppm25t)
-!!$          if (associated(gaspart_g(1)%pcot  )) deallocate (gaspart_g(1)%pcot  )
-!!$          if (associated(gaspart_g(1)%pso2t )) deallocate (gaspart_g(1)%pso2t )
-!!$          if (associated(gaspart_g(1)%pso4t )) deallocate (gaspart_g(1)%pso4t )
-!!$          if (associated(gaspart_g(1)%paert )) deallocate (gaspart_g(1)%paert )
-!!$          if (associated(gaspart_g(1)%pvoct )) deallocate (gaspart_g(1)%pvoct )
-!!$
-!!$          if(ichemi==1)then
-!!$             if (associated(gaspart_g(1)%po3t  )) deallocate (gaspart_g(1)%po3t)
-!!$             if (associated(gaspart_g(1)%prhcot)) deallocate (gaspart_g(1)%prhcot)
-!!$             if (associated(gaspart_g(1)%pho2t )) deallocate (gaspart_g(1)%pho2t)
-!!$             if (associated(gaspart_g(1)%po3pt )) deallocate (gaspart_g(1)%po3pt)
-!!$             if (associated(gaspart_g(1)%po1dt )) deallocate (gaspart_g(1)%po1dt)
-!!$             if (associated(gaspart_g(1)%phot  )) deallocate (gaspart_g(1)%phot)
-!!$             if (associated(gaspart_g(1)%proot )) deallocate (gaspart_g(1)%proot)
-!!$          endif
-
-       endif
-    endif
-
-!!$    do nsc=1,naddsc
-!!$       if (associated(scalar_g(nsc,1)%sclt)) deallocate (scalar_g(nsc,1)%sclt)
-!!$    enddo
     if (associated(tend%ut_rk))   deallocate (tend%ut_rk)
     if (associated(tend%vt_rk))   deallocate (tend%vt_rk)
     if (associated(tend%wt_rk))   deallocate (tend%wt_rk)
     if (associated(tend%pt_rk))   deallocate (tend%pt_rk)
     if (associated(tend%tht_rk))  deallocate (tend%tht_rk)
-    return
+
   end subroutine dealloc_tend
 
   !---------------------------------------------------------------
 
   subroutine filltab_tend(oneScalarTab, oneScalarTabSize, &
-       oneBasicFields, oneMicroFields, oneTurbFields, oneGaspartFields, &
+       oneBasicFields, oneMicroFields, oneTurbFields, &
        oneScalarFields, naddsc, ng)
     ! Arguments:
     type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
@@ -555,7 +380,6 @@ contains
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(MicroFields), intent(in) :: oneMicroFields 
     type(TurbFields), pointer, intent(in) :: oneTurbFields
-    type(GaspartFields), pointer, intent(in) :: oneGaspartFields
     type(ScalarFields), pointer, intent(in) :: oneScalarFields(:)
     integer, intent(in)             :: naddsc, ng
 
@@ -697,97 +521,6 @@ contains
        call InsertAtScalarTab(oneMicroFields%gccmp,tend%gccmt, 'GCCMP', &
             oneScalarTab, oneScalarTabSize)
     endif
-    !-2015- for 2M microphysics (from G. Camponogara)
-
-
-    ! TEB_SPM
-    if (TEB_SPM==1) then
-       if (.not. associated(oneGaspartFields)) then
-          call fatal_error(h//" oneGaspartFields not associated, but TEB_SPM==1")
-       end if
-       if(isource==1)then
-
-          if (associated(oneGaspartFields%pnot)) then
-             call InsertAtScalarTab(oneGaspartFields%pno,oneGaspartFields%pnot, 'PNO', &
-                  oneScalarTab, oneScalarTabSize)
-          endif
-
-          if (associated(oneGaspartFields%pno2t)) then
-             call InsertAtScalarTab(oneGaspartFields%pno2,oneGaspartFields%pno2t, 'PNO2', &
-                  oneScalarTab, oneScalarTabSize)
-          endif
-
-          if (associated(oneGaspartFields%ppm25t)) then
-             call InsertAtScalarTab(oneGaspartFields%ppm25,oneGaspartFields%ppm25t, 'PM25', &
-                  oneScalarTab, oneScalarTabSize)
-          endif
-
-          if (associated(oneGaspartFields%pcot)) then
-             call InsertAtScalarTab(oneGaspartFields%pco,oneGaspartFields%pcot, 'PCO', &
-                  oneScalarTab, oneScalarTabSize)
-          endif
-
-          if (associated(oneGaspartFields%pso2t)) then
-             call InsertAtScalarTab(oneGaspartFields%pso2,oneGaspartFields%pso2t, 'PSO2', &
-                  oneScalarTab, oneScalarTabSize)
-          endif
-
-          if (associated(oneGaspartFields%pso4t)) then
-             call InsertAtScalarTab(oneGaspartFields%pso4,oneGaspartFields%pso4t, 'PSO4', &
-                  oneScalarTab, oneScalarTabSize)
-          endif
-
-          if (associated(oneGaspartFields%paert)) then
-             call InsertAtScalarTab(oneGaspartFields%paer,oneGaspartFields%paert, 'PAER', &
-                  oneScalarTab, oneScalarTabSize)
-          endif
-
-          if (associated(oneGaspartFields%pvoct)) then
-             call InsertAtScalarTab(oneGaspartFields%pvoc,oneGaspartFields%pvoct, 'PVOC', &
-                  oneScalarTab, oneScalarTabSize)
-          endif
-
-          if(ichemi==1) then
-             if (associated(oneGaspartFields%po3t)) then
-                call InsertAtScalarTab(oneGaspartFields%po3,oneGaspartFields%po3t, 'PO3', &
-                     oneScalarTab, oneScalarTabSize)
-             endif
-
-             if (associated(oneGaspartFields%prhcot)) then
-                call InsertAtScalarTab(oneGaspartFields%prhco,oneGaspartFields%prhcot, 'PRHCO', &
-                     oneScalarTab, oneScalarTabSize)
-             endif
-
-             if (associated(oneGaspartFields%pho2t)) then
-                call InsertAtScalarTab(oneGaspartFields%pho2,oneGaspartFields%pho2t, 'PHO2', &
-                     oneScalarTab, oneScalarTabSize)
-             endif
-
-             if (associated(oneGaspartFields%po3pt)) then
-                call InsertAtScalarTab(oneGaspartFields%po3p,oneGaspartFields%po3pt, 'PO3P', &
-                     oneScalarTab, oneScalarTabSize)
-             endif
-
-             if (associated(oneGaspartFields%po1dt)) then
-                call InsertAtScalarTab(oneGaspartFields%po1d,oneGaspartFields%po1dt, 'PO1D', &
-                     oneScalarTab, oneScalarTabSize)
-             endif
-
-             if (associated(oneGaspartFields%phot)) then
-                call InsertAtScalarTab(oneGaspartFields%pho,oneGaspartFields%phot, 'PHO', &
-                     oneScalarTab, oneScalarTabSize)
-             endif
-
-             if (associated(oneGaspartFields%proot)) then
-                call InsertAtScalarTab(oneGaspartFields%proo,oneGaspartFields%proot, 'PROO', &
-                     oneScalarTab, oneScalarTabSize)
-             endif
-          endif
-
-       endif
-
-    endif
-    !
 
     do nsc=1,naddsc
        write(sname,'(a4,i3.3)') 'SCLP',nsc

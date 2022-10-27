@@ -201,10 +201,6 @@ module ModRrtmDriver
        slmsts, &
        rshort_s
 
-  use teb_spm_start, only: &
-       teb_spm ! INTENT(IN)
-
-
   implicit none
 
   private
@@ -459,10 +455,7 @@ contains
   subroutine sfcrad_rtm(nzg, nzs, ip,                                            &
        soil_energy, soil_water, soil_text, sfcwater_energy, sfcwater_depth,  &
        patch_area, can_temp, veg_temp, leaf_class, veg_height, veg_fracarea, &
-       veg_albedo, sfcwater_nlev, rshort, rlong, albedt, rlongup, cosz,      &
-                                ! For TEB
-       G_URBAN, ETOWN, ALBTOWN, TSTOWN                                       &
-                                !
+       veg_albedo, sfcwater_nlev, rshort, rlong, albedt, rlongup, cosz      &
        )
 
     ! Arguments:
@@ -485,9 +478,7 @@ contains
     real, intent(INOUT) :: albedt
     real, intent(INOUT) :: rlongup
     real, intent(IN)    :: cosz
-    ! for TEB
-    real, pointer, optional :: G_URBAN, ETOWN, ALBTOWN, TSTOWN
-    !
+
     ! Local Variables:
     integer :: k, nsoil, nveg, ksn
     real :: alb, vfc, fcpct, alg, rad, als, fractrans, absg, algs, emv, emgs, &
@@ -590,17 +581,6 @@ contains
 
        alb = vf*alv + vfc*vfc*algs
 
-       ! TEB
-       if (TEB_SPM==1 .and. present(G_URBAN) .and. present(ALBTOWN)) then
-          if (nint(G_URBAN)==0) then
-             albedt = albedt + patch_area*alb
-          else
-             albedt = albedt + patch_area*ALBTOWN
-          endif
-       else
-          albedt = albedt + patch_area*alb
-       endif
-
        ! Longwave radiation calculations
 
        emv  = emisv(nveg)
@@ -616,18 +596,6 @@ contains
        rlonggs_v = gslong*vf*emv
        rlonggs_a = gslong*vfc
        rlonga_a  = rlong*(vf*(1. - emv) + vfc*vfc*(1. - emgs))
-
-       ! TEB
-       if (TEB_SPM==1 .and. present(G_URBAN) .and. present(ETOWN) .and. &
-            present(TSTOWN)) then
-          if (nint(G_URBAN)==0) then
-             rlongup = rlongup + patch_area*(rlongv_a + rlonggs_a + rlonga_a)
-          else
-             rlongup = rlongup + patch_area*ETOWN*STEFAN*TSTOWN**4
-          endif
-       else
-          rlongup = rlongup + patch_area*(rlongv_a + rlonggs_a + rlonga_a)
-       endif
 
        !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
        ! In case rlong is not computed, zero out all longwave fluxes other

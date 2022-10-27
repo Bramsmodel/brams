@@ -14,9 +14,6 @@ module ModLeaf3
   use ModMicControl, only: &
        MicControl
   
-  use ModLeaf3Teb, only: &
-       leaf3_teb_interface
-  
   use ModLeaf3Hyd, only: &
        hydro
   
@@ -78,7 +75,6 @@ module ModLeaf3
        pcpgc, &
        hflxvc, &
        nvtyp, &
-       nvtyp_teb, &
        rlonga_a, &
        rlonggs_a, &
        fracliq, & 
@@ -137,9 +133,6 @@ module ModLeaf3
   use ccatt_start, only: &
        ccatt
 
-  use teb_spm_start, only: &
-       teb_spm !INTENT(IN)
-
   use ModBasicFields, only: &
        BasicFields
 
@@ -192,14 +185,6 @@ module ModLeaf3
   use ModRadiateFields, only: &
        RadiateFields
 
-  use mem_teb, only: &
-       teb_g,        &        !Data type
-       teb_vars               !Type
-
-
-  use mem_teb_common, only: &
-       tebc_g,              & !Data Type
-       teb_common             !Type
   
   !use mem_scratch, only: vctr32
   implicit none
@@ -238,9 +223,6 @@ contains
     real :: rslif
     integer :: ng
     !integer, save :: ncall=0
-    !Pointer to TEB data. Can be associated or not
-    type(teb_vars), pointer   :: p_teb_g
-    type(teb_common), pointer :: p_tebc_g
     ! New automatic arrays for use as scratch instead of:
     ! scratch%vt2da, scratch%vt2db, scratch%vt2dc, scratch%vt2dd,
     ! scratch%vt2de, scratch%vt2df, scratch%vt3da
@@ -262,15 +244,6 @@ contains
 
     ng=ngrid
 
-    ! TEB
-    if (TEB_SPM==1) then
-       p_teb_g  => teb_g(ngrid)
-       p_tebc_g => tebc_g(ngrid)
-    else
-       nullify(p_teb_g)
-       nullify(p_tebc_g)
-    endif
-
     call leaf3(mzp,mxp,myp,nzg,nzs,npatch,ia,iz,ja,jz             &
          ,leaf_g (ng), oneNamelistFile, &
          oneBasicFields, oneTurbFields, oneRadiateFields   &
@@ -278,7 +251,7 @@ contains
          ,l_ths2, l_rvs2, l_pis2                   &
          ,l_dens2,l_ups2, l_vps2                   &
          ,l_zts2                                             &
-         ,p_teb_g, p_tebc_g, oneMicControl)
+         ,oneMicControl)
 
 
     if (isfcl == 2) then
@@ -322,7 +295,7 @@ contains
        oneBasicFields,oneTurbFields,oneRadiateFields,grid,&
        oneCuParmFields,oneMicroFields, &
        ths2,rvs2,pis2,dens2,ups2,vps2,zts2,  &
-       pteb,ptebc, oneMicControl)
+       oneMicControl)
     ! Arguments:
     integer, intent(in) :: m1,m2,m3,mzg,mzs,np,ia,iz,ja,jz
     type (leaf_vars)    :: leaf
@@ -333,9 +306,6 @@ contains
     type (grid_vars)    :: grid
     type (CuParmFields), pointer, intent(in)  :: oneCuParmFields
     type (MicroFields)   :: oneMicroFields
-    ! For TEB
-    type (teb_vars), pointer   :: pteb
-    type (teb_common), pointer :: ptebc
     real, dimension(m2,m3), intent(out) :: ths2,rvs2,pis2,dens2,ups2,vps2,zts2
     type(MicControl), pointer, intent(in) :: oneMicControl
 
@@ -344,18 +314,8 @@ contains
     real :: rslif
     integer :: k2
     real :: dvelu,dvelv,velnew,sflux_uv,cosine1,sine1
-    ! Local variables used for TEB
-    real :: PSUP1,PSUP2,depe,alt2,deze,dpdz,exn1ST,airt
-    real :: ZH_TOWN,ZLE_TOWN,ZSFU_TOWN,ZSFV_TOWN
-    real, pointer :: EMIS_TOWN, ALB_TOWN, TS_TOWN
-    real, pointer :: G_URBAN
 
     dtll=0.0
-    !TEB
-    nullify(G_URBAN)
-    nullify(EMIS_TOWN)
-    nullify(ALB_TOWN)
-    nullify(TS_TOWN)
 
     ! Time interpolation factor for updating SST
 
@@ -490,32 +450,6 @@ contains
 
                    if (ip == 1 .or. leaf%patch_area(i,j,ip) >= .009) then
 
-                      ! TEB - defining pointers
-                      if (TEB_SPM==1) then
-                         G_URBAN   => leaf%G_URBAN(i,j,ip)
-                         EMIS_TOWN => ptebc%EMIS_TOWN(i,j)
-                         ALB_TOWN  => ptebc%ALB_TOWN(i,j)
-                         TS_TOWN   => ptebc%TS_TOWN(i,j)
-                         call sfcrad(mzg, mzs, ip,                              &
-                              leaf%soil_energy(1:mzg,i,j,ip),                   &
-                              leaf%soil_water(1:mzg,i,j,ip),                    &
-                              leaf%soil_text(1:mzg,i,j,ip),                     &
-                              leaf%sfcwater_energy(1:mzs,i,j,ip),               &
-                              leaf%sfcwater_depth(1:mzs,i,j,ip),                &
-                              leaf%patch_area(i,j,ip),                          &
-                              leaf%can_temp(i,j,ip), leaf%veg_temp(i,j,ip),     &
-                              leaf%leaf_class(i,j,ip), leaf%veg_height(i,j,ip), &
-                              leaf%veg_fracarea(i,j,ip),                        &
-                              leaf%veg_albedo(i,j,ip),                          &
-                              leaf%sfcwater_nlev(i,j,ip),                       &
-                              oneRadiateFields%rshort(i,j), oneRadiateFields%rlong(i,j),          &
-                              oneRadiateFields%albedt(i,j), oneRadiateFields%rlongup(i,j),        &
-                              oneRadiateFields%cosz(i,j),                                &
-                                ! For TEB
-                              G_URBAN, EMIS_TOWN, ALB_TOWN, TS_TOWN             &
-                                !
-                              )
-                      else
                          call sfcrad(mzg, mzs, ip,                              &
                               leaf%soil_energy(1:mzg,i,j,ip),                   &
                               leaf%soil_water(1:mzg,i,j,ip),                    &
@@ -532,8 +466,6 @@ contains
                               oneRadiateFields%albedt(i,j), oneRadiateFields%rlongup(i,j),        &
                               oneRadiateFields%cosz(i,j)                                 &
                               )
-                      endif
-
                    endif
 
                 endif
@@ -576,17 +508,12 @@ contains
                      ,leaf%R_aer(i,j,ip))
                 !kml drydep
 
-                ! TEB
-                if (TEB_SPM==1) then
-                   G_URBAN => leaf%G_URBAN(i,j,ip)
-                else
-                   call sfclmcv(i,j,leaf%ustar(i,j,ip), leaf%tstar(i,j,ip),         &
-                        leaf%rstar(i,j,ip), vels, vels_pat, ups, vps, gzotheta, &
-                        leaf%patch_area(i,j,ip), oneTurbFields%sflux_u(i,j),             &
-                        oneTurbFields%sflux_v(i,j), oneTurbFields%sflux_w(i,j),                   &
-                        oneTurbFields%sflux_t(i,j), oneTurbFields%sflux_r(i,j)                    &
-                        )
-                endif
+                call sfclmcv(i,j,leaf%ustar(i,j,ip), leaf%tstar(i,j,ip),         &
+                     leaf%rstar(i,j,ip), vels, vels_pat, ups, vps, gzotheta, &
+                     leaf%patch_area(i,j,ip), oneTurbFields%sflux_u(i,j),             &
+                     oneTurbFields%sflux_v(i,j), oneTurbFields%sflux_w(i,j),                   &
+                     oneTurbFields%sflux_t(i,j), oneTurbFields%sflux_r(i,j)                    &
+                     )
 
                 ! For water patches, update temperature and moisture of "canopy" from
                 ! divergence of fluxes with water surface and atmosphere.  rdi = ustar/5
@@ -611,64 +538,6 @@ contains
 
                 endif
 
-                if (TEB_SPM==1) then
-
-                   !TEB Urban canopy parameterization starts here
-                   if (ip >= 2) then
-
-                      if (nint(leaf%G_URBAN(i,j,ip))/=0.) then
-
-                         !edmilson
-                         PSUP1  = ((oneBasicFields%PI0(1,I,J) + oneBasicFields%pp(1,i,j))*cpi)** &
-                              CPOR*P00
-                         PSUP2  = ((oneBasicFields%PI0(2,I,J) + oneBasicFields%pp(2,i,j))*cpi)** &
-                              CPOR*P00
-                         depe   = psup2 - psup1
-                         alt2   = zt(1)*grid%rtgt(i,j)
-                         deze   = zts - alt2
-                         dpdz   = depe/deze
-                         exn1ST = (psup2/p00)**rocp
-
-                         airt   = oneBasicFields%theta(2,i,j)*exn1st
-
-                         ! TEB - defining pointers
-                         if (TEB_SPM==1) then
-                            G_URBAN => leaf%G_URBAN(i,j,ip)
-                         endif
-
-                         call LEAF3_TEB_INTERFACE(ISTP,DTLT,DTLL,          &
-                              oneRadiateFields%COSZ(i,j), ZTS,                      &
-                              oneRadiateFields%rlong(i,j), oneRadiateFields%rshort(i,j),     &
-                              psup2, airt, ups, vps, oneBasicFields%rv(2,i,j),      &
-                              pcpgl/dtlt, pteb%fuso(i,j),                  &
-                              pteb%T_CANYON(i,j), pteb%R_CANYON(i,j),      &
-                              pteb%TS_ROOF(i,j), pteb%TS_ROAD(i,j),        &
-                              pteb%TS_WALL(i,j), pteb%TI_ROAD(i,j),        &
-                              pteb%TI_BLD(i,j), pteb%WS_ROOF(i,j),         &
-                              pteb%WS_ROAD(i,j), pteb%T_ROOF(2:4,i,j),     &
-                              pteb%T_ROAD(2:4,i,j), pteb%T_WALL(2:4,i,j),  &
-                              ZH_TOWN, ZLE_TOWN, ptebc%EMIS_TOWN(i,j),     &
-                              ZSFU_TOWN, ZSFV_TOWN, ptebc%TS_TOWN(i,j),    &
-                              ptebc%ALB_TOWN(i,j), nint(G_URBAN),          &
-                              pteb%H_TRAFFIC(i,j), pteb%H_INDUSTRY(i,j),   &
-                              pteb%LE_TRAFFIC(i,j), pteb%LE_INDUSTRY(i,j), &
-                              pteb%T2M_TOWN(i,j), pteb%R2M_TOWN(i,j),      &
-                              time, itime1, dpdz, dens                     )
-
-                         oneTurbFields%sflux_u(i,j) = &
-                              oneTurbFields%sflux_u(i,j) + leaf%patch_area(i,j,ip)*ZSFU_TOWN
-                         oneTurbFields%sflux_v(i,j) = &
-                              oneTurbFields%sflux_v(i,j) + leaf%patch_area(i,j,ip)*ZSFV_TOWN
-                         oneTurbFields%sflux_t(i,j) = &
-                              oneTurbFields%sflux_t(i,j) + &
-                              leaf%patch_area(i,j,ip)*ZH_TOWN/(CP*DENS)
-                         oneTurbFields%sflux_r(i,j) = &
-                              oneTurbFields%sflux_r(i,j) + &
-                              leaf%patch_area(i,j,ip)*ZLE_TOWN/(ALVL*DENS)
-
-                      endif
-                   endif
-                endif
 
                 ! For soil model patches, update temperature and moisture of soil,
                 ! vegetation, and canopy
@@ -1658,8 +1527,7 @@ contains
     real, intent(in)    :: ustar, tstar, rstar, vels,vels_pat, ups, vps, &
          gzotheta, patch_area
     real, intent(inout) :: sflux_u, sflux_v, sflux_w, sflux_t, sflux_r
-    ! For TEB
-    !real, pointer, optional :: G_URBAN
+
     ! Local Variables:
     real :: zoverl
     real :: wtol, cosine1, sine1, vtscr, cx, psin
@@ -2108,13 +1976,13 @@ contains
     real, save :: ccc=-2.9657
     real, save :: bz=.91,hz=.0075,extinc_veg=.5
 
-    real, dimension(nvtyp+nvtyp_teb), save :: dfpardsr
+    real, dimension(nvtyp), save :: dfpardsr
 
     !  Initialize dfpardsr array
 
     if (nvcall == 0) then
        nvcall = 1
-       do nveg = 1,(nvtyp+nvtyp_teb)
+       do nveg = 1,(nvtyp)
           dfpardsr(nveg) = (fpar_max - fpar_min) / (sr_max(nveg) - sr_min)
        enddo
     endif
@@ -2199,10 +2067,7 @@ contains
   subroutine sfcrad(mzg, mzs, ip,                                            &
        soil_energy, soil_water, soil_text, sfcwater_energy, sfcwater_depth,  &
        patch_area, can_temp, veg_temp, leaf_class, veg_height, veg_fracarea, &
-       veg_albedo, sfcwater_nlev, rshort, rlong, albedt, rlongup, cosz,      &
-                                ! For TEB
-       G_URBAN, ETOWN, ALBTOWN, TSTOWN                                       &
-                                !
+       veg_albedo, sfcwater_nlev, rshort, rlong, albedt, rlongup, cosz       &
        )
     ! Arguments:
     integer, intent(IN) :: mzg, mzs, ip
@@ -2224,9 +2089,7 @@ contains
     real, intent(INOUT) :: albedt
     real, intent(INOUT) :: rlongup
     real, intent(IN)    :: cosz
-    ! for TEB
-    real, pointer, optional :: G_URBAN, ETOWN, ALBTOWN, TSTOWN
-    !
+
     ! Local Variables:
     integer :: k, nsoil, nveg, ksn
     real :: alb, vfc, fcpct, alg, rad, als, fractrans, absg, algs, emv, emgs, &
@@ -2331,16 +2194,7 @@ contains
 
        alb = vf*alv + vfc*vfc*algs
 
-       ! TEB
-       if (TEB_SPM==1 .and. present(G_URBAN) .and. present(ALBTOWN)) then
-          if (nint(G_URBAN)==0) then
-             albedt = albedt + patch_area*alb
-          else
-             albedt = albedt + patch_area*ALBTOWN
-          endif
-       else
-          albedt = albedt + patch_area*alb
-       endif
+       albedt = albedt + patch_area*alb
 
        ! Longwave radiation calculations
 
@@ -2358,17 +2212,7 @@ contains
        rlonggs_a = gslong*vfc
        rlonga_a  = rlong*(vf*(1. - emv) + vfc*vfc*(1. - emgs))
 
-       ! TEB
-       if (TEB_SPM==1 .and. present(G_URBAN) .and. present(ETOWN) .and. &
-            present(TSTOWN)) then
-          if (nint(G_URBAN)==0) then
-             rlongup = rlongup + patch_area*(rlongv_a + rlonggs_a + rlonga_a)
-          else
-             rlongup = rlongup + patch_area*ETOWN*STEFAN*TSTOWN**4
-          endif
-       else
-          rlongup = rlongup + patch_area*(rlongv_a + rlonggs_a + rlonga_a)
-       endif
+       rlongup = rlongup + patch_area*(rlongv_a + rlonggs_a + rlonga_a)
 
        !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
        ! In case rlong is not computed, zero out all longwave fluxes other

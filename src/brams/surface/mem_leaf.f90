@@ -57,10 +57,6 @@ Module mem_leaf
      real, pointer, contiguous :: veg_ndvic(:,:,:)
      real, pointer, contiguous :: veg_ndvif(:,:,:)
 
-
-     ! TEB_SPM
-     real, pointer, contiguous :: G_URBAN(:,:,:)
-
      real, pointer, contiguous :: R_aer(:,:,:)   !kml drydep
 
      ! Variables to be dimensioned by (nxp,nyp)
@@ -95,9 +91,6 @@ Contains
 
   subroutine alloc_leaf(leaf,nz,nx,ny,nzg,nzs,np,ng)
 
-    ! TEB_SPM
-    use teb_spm_start, only: TEB_SPM ! INTENT(IN)
-
     implicit none
     type (leaf_vars) :: leaf
     integer, intent(in) :: nz,nx,ny,nzg,nzs,np,ng
@@ -127,11 +120,6 @@ Contains
     allocate (leaf%patch_rough  (nx,ny,np));leaf%patch_rough =0.0
     allocate (leaf%patch_wetind (nx,ny,np));leaf%patch_wetind=0.0
     allocate (leaf%leaf_class   (nx,ny,np));leaf%leaf_class  =0.0
-
-    ! TEB_SPM
-    if (TEB_SPM==1) then
-       allocate (leaf%G_URBAN   (nx,ny,np));leaf%G_URBAN=0.0
-    endif
 
     allocate (leaf%soil_rough   (nx,ny,np));leaf%soil_rough   =0.0
     allocate (leaf%sfcwater_nlev(nx,ny,np));leaf%sfcwater_nlev=0.0
@@ -163,9 +151,6 @@ Contains
 
   subroutine nullify_leaf(leaf)
 
-    ! TEB_SPM
-    use teb_spm_start, only: TEB_SPM ! INTENT(IN)
-
     implicit none
     type (leaf_vars) :: leaf
 
@@ -192,11 +177,6 @@ Contains
     if(associated(leaf%patch_rough))     nullify (leaf%patch_rough)
     if(associated(leaf%patch_wetind))    nullify (leaf%patch_wetind)
     if(associated(leaf%leaf_class))      nullify (leaf%leaf_class)
-
-    ! TEB_SPM
-    if (TEB_SPM==1) then
-       if(associated(leaf%G_URBAN))      nullify (leaf%G_URBAN)
-    endif
 
     if(associated(leaf%soil_rough))      nullify (leaf%soil_rough)
     if(associated(leaf%sfcwater_nlev))   nullify (leaf%sfcwater_nlev)
@@ -228,9 +208,6 @@ Contains
 
   subroutine dealloc_leaf(leaf)
 
-    ! TEB_SPM
-    use teb_spm_start, only: TEB_SPM ! INTENT(IN)
-
     implicit none
     type (leaf_vars) :: leaf
 
@@ -257,11 +234,6 @@ Contains
     if(associated(leaf%patch_rough))     deallocate (leaf%patch_rough)
     if(associated(leaf%patch_wetind))    deallocate (leaf%patch_wetind)
     if(associated(leaf%leaf_class))      deallocate (leaf%leaf_class)
-
-    ! TEB_SPM
-    if (TEB_SPM==1) then
-       if(associated(leaf%G_URBAN))      deallocate (leaf%G_URBAN)
-    endif
 
     if(associated(leaf%soil_rough))      deallocate (leaf%soil_rough)
     if(associated(leaf%sfcwater_nlev))   deallocate (leaf%sfcwater_nlev)
@@ -293,9 +265,6 @@ Contains
 
   subroutine filltab_leaf(oneVarTable, oneVarTableSize, &
        leaf, leafm, imean)
-
-    use teb_spm_start, only: &
-         TEB_SPM
 
     use io_params, only: &
          ipastin
@@ -414,14 +383,6 @@ Contains
          leaf%leaf_class, &
          'LEAF_CLASS :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
          leafm%leaf_class, imean)
-
-    ! TEB_SPM
-    if (TEB_SPM==1) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            leaf%G_URBAN, &
-            'G_URBAN :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-            leafm%G_URBAN, imean)
-    end if
 
     call InsertVarTable (oneVarTable, oneVarTableSize, &
          leaf%soil_rough, &

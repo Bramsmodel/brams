@@ -42,7 +42,6 @@ OBJ_MOD = \
 	ModAVarF.o \
 	ccatt_start.o \
 	machine_arq.o \
-	teb_spm_start.o \
 	mem_grid_dim_defs.o \
 	ModCondRead.o \
 	ModCondUpdate.o \
@@ -63,7 +62,6 @@ OBJ_MOD = \
 	ModLeaf3Hyd.o \
 	ModLeaf3Init.o \
 	ModLeafComs.o \
-	ModLeaf3Teb.o \
 	mem_aerad.o \
 	ModCarmaDriver.o \
 	mem_carma.o \
@@ -199,15 +197,6 @@ OBJ_MOD = \
 	ModTuvDriver2.7.o \
 	VarTable.o \
 	ModVarfUpdate.o \
-	ModMkSfcFuso.o \
-	mem_teb.o \
-	mem_teb_common.o \
-	mem_teb_vars_const.o \
-	GaspartFields.o \
-	mem_emiss.o \
-	ModUrban.o \
-	ModGasPart.o \
-	ModOzone.o \
 	chem_isan_coms.o \
 	ModChemAObj.o \
 	ModChemAsgen.o \
@@ -833,12 +822,10 @@ MOD_MOD = \
 	isan_coms.mod \
 	mem_cuparm.mod \
 	mem_grell_param.mod \
-	teb_spm_start.mod \
 	mem_leaf.mod \
 	mem_oda.mod \
 	memsoilmoisture.mod \
 	micphys.mod \
-	mem_emiss.mod \
 	teb_vars_const.mod \
 	readbcst.mod \
 	aer1_list.mod \
@@ -856,8 +843,6 @@ MOD_MOD = \
 	mem_opt.mod \
 	mem_shcu.mod \
 	mem_globaer.mod \
-	mem_teb.mod \
-	mem_teb_common.mod \
 	mem_jules.mod \
 	ccatt_start.mod \
 	machine_arq.mod \

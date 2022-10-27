@@ -52,10 +52,6 @@ module ModOneProc
   use ModCuRead, only: &
        cu_read
   
-  use ModLeaf3Teb, only: &
-       teb_init, &
-       tebc_init
-  
   use ModLeaf3Init, only: &
        snowinit, &
        sfcdata
@@ -108,9 +104,6 @@ module ModOneProc
   use ModSstRead, only: &
        SstReadStoreOwnChunk
 
-  use ModMkSfcFuso, only:&
-       FusoReadStoreOwnChunk
-  
   use ModOpspec, only: &
        opspec1, &
        opspec2, &
@@ -144,11 +137,6 @@ module ModOneProc
 
   use ModUrbanCanopy, only: &
        urb_drag_init
-
-  use ModGasPart, only: &
-       init_conc1, &
-       init_conc2, &
-       init_conc_prev
 
   use ModSched, only: &
        schedule, &
@@ -186,16 +174,6 @@ module ModOneProc
 
   use memSoilMoisture, only : &
        SOIL_MOIST ! INTENT(IN)
-
-  use mem_teb, only       : &
-       teb_g     ! intent(inout)
-
-  use mem_teb_common, only: &
-       tebc_g    ! intent(inout)
-
-  use teb_vars_const, only: &
-       iteb, &      ! intent(in)
-       StoreNamelistFileAtTeb_vars_const
 
   use ModVarTable, only: &
        FixVarTableForIOUTPUT5
@@ -256,16 +234,6 @@ module ModOneProc
        StoreNamelistFileAtMem_varinit
 
   use Shcu_vars_const, only: StoreNamelistFileAtShcu_vars_const
-
-  use Teb_spm_start, only: &
-       TEB_SPM, &
-       StoreNamelistFileAtTeb_spm_start
-
-  use mem_emiss, only: &
-       ichemi,   &                    ! intent(inout)
-       isource,  &                    ! intent(inout)
-       ichemi_in, &                   ! intent(inout)
-       StoreNamelistFileAtMem_emiss
 
   use Domain_decomp, only: StoreNamelistFileAtDomain_decomp
   use ModPostProcess, only: AllPostTypes, CreatePostProcess, &
@@ -782,9 +750,6 @@ contains
     call StoreNamelistFileAtMem_plumeChem1(oneNamelistFile)
     call StoreNamelistFileAtMem_volcChem1(oneNamelistFile)
     call StoreNamelistFileAtMem_stilt(oneNamelistFile)
-    call StoreNamelistFileAtTeb_spm_start(oneNamelistFile)
-    call StoreNamelistFileAtMem_emiss(oneNamelistFile)
-    call StoreNamelistFileAtTeb_vars_const(oneNamelistFile)
     call StoreNamelistFileAtDomain_decomp(oneNamelistFile)
     call StoreNamelistFileAtAdvMnt(oneNamelistFile)
     call StoreNamelistFileAtdigitalFilter(oneNamelistFile)
@@ -1658,15 +1623,6 @@ contains
                ,leaf_g(ifm)%snow_mass,leaf_g(ifm)%snow_depth)
        enddo
 
-       ! TEB_SPM
-       if (TEB_SPM==1) then
-          ! read FUSO (Local Time) files
-          do ifm = 1,ngrids
-             call FusoReadStoreOwnChunk(ifm, oneGrid%oneControlVars, &
-                  oneGrid%oneGaspartFields)
-          enddo
-       endif
-
        ! The following things will be done for INITIAL = 1 or 3...
        if ( initial == 1 .or. initial == 3) then
 
@@ -1816,113 +1772,6 @@ contains
 
        endif
 
-
-
-       ! TEB
-       if (TEB_SPM==1) then
-
-          !**(JP)** not worked yet
-!!$        call fatal_error(h//"**(JP)** TEB_SPM==1 was not worked yet")
-          ! Initial values for Common use TEB vars
-          ! For now, it is only being used to zero out this four common
-          ! use variables.
-          ! This variables will be used for other purposes later.
-          ! Edmilson D. Freitas 07/07/2006
-
-          do ifm=1,ngrids
-             call TEBC_INIT(nodemxp(mynum,ifm), nodemyp(mynum,ifm), npatch, &
-                  leaf_g(ifm)%G_URBAN,             &
-                  tebc_g(ifm)%EMIS_TOWN,             &
-                  tebc_g(ifm)%ALB_TOWN,              &
-                  tebc_g(ifm)%TS_TOWN                )
-          enddo
-
-          if (iteb==1) then
-
-
-             do ifm=1,ngrids
-                call TEB_INIT(                      &
-                     nnzp(ifm),                     &
-                     nodemxp(mynum,ifm),            &
-                     nodemyp(mynum,ifm),            &
-                     npatch,                        &
-                     leaf_g(ifm)%leaf_class, &
-                     oneGrid%oneBasicFields%theta    , &
-                     oneGrid%oneBasicFields%rv       , &
-                     oneGrid%oneBasicFields%pi0      , &
-                     oneGrid%oneBasicFields%pp       , &
-                     teb_g(ifm)%T_ROOF     , &
-                     teb_g(ifm)%T_ROAD     , &
-                     teb_g(ifm)%T_WALL     , &
-                     teb_g(ifm)%TI_BLD       , &
-                     teb_g(ifm)%TI_ROAD      , &
-                     teb_g(ifm)%T_CANYON     , &
-                     teb_g(ifm)%R_CANYON     , &
-                     teb_g(ifm)%TS_ROOF      , &
-                     teb_g(ifm)%TS_ROAD      , &
-                     teb_g(ifm)%TS_WALL      , &
-                     teb_g(ifm)%H_TRAFFIC    , &
-                     teb_g(ifm)%LE_TRAFFIC   , &
-                     teb_g(ifm)%H_INDUSTRY   , &
-                     teb_g(ifm)%LE_INDUSTRY  , &
-                     teb_g(ifm)%WS_ROOF      , &
-                     teb_g(ifm)%WS_ROAD      , &
-                     tebc_g(ifm)%EMIS_TOWN   , &
-                     tebc_g(ifm)%ALB_TOWN    , &
-                     tebc_g(ifm)%TS_TOWN     , &
-                     leaf_g(ifm)%G_URBAN    )
-
-             enddo
-
-
-          endif
-
-          ! Initialize gases and particulate matter
-
-          if (isource==1) then
-             do ifm=1,ngrids
-                call init_conc1(1, ifm,           &
-                     nnzp(ifm),                   &
-                     nodemxp(mynum,ifm),          &
-                     nodemyp(mynum,ifm),          &
-                     npatch,                      &
-                     leaf_g(ifm)%G_URBAN , &
-                     oneGrid%oneGaspartFields%pno  , &
-                     oneGrid%oneGaspartFields%pno2 , &
-                     oneGrid%oneGaspartFields%ppm25, &
-                     oneGrid%oneGaspartFields%pco  , &
-                     oneGrid%oneGaspartFields%pvoc , &
-                     oneGrid%oneGaspartFields%pso2 , &
-                     oneGrid%oneGaspartFields%pso4 , &
-                     oneGrid%oneGaspartFields%paer , &
-                     zt                           )
-
-                if (ichemi==1) then  !calling more added scalars for chemistry
-                   if (ichemi_in==1) then !reading init.values from previous run
-                      call init_conc_prev(oneGrid%oneVarTable, oneGrid%oneVarTableSize)
-                   else
-                      call init_conc2(1, ifm,           &
-                           nnzp(ifm),                   &
-                           nodemxp(mynum,ifm),          &
-                           nodemyp(mynum,ifm),          &
-                           npatch,                      &
-                           leaf_g(ifm)%G_URBAN,  &
-                           oneGrid%oneGaspartFields%po3,   &
-                           oneGrid%oneGaspartFields%prhco, &
-                           oneGrid%oneGaspartFields%pho2,  &
-                           oneGrid%oneGaspartFields%po3p,  &
-                           oneGrid%oneGaspartFields%po1d,  &
-                           oneGrid%oneGaspartFields%pho,   &
-                           oneGrid%oneGaspartFields%proo,  &
-                           zt                           )
-                   endif
-                endif
-             enddo
-          endif
-
-       endif
-
-       !--(DMK-CCATT-INI)-----------------------------------------------------
        ! CCATT - CHEMISTRY
 
        !-srf  Initialize the true air density
@@ -2051,18 +1900,6 @@ contains
        do ifm = 1,ngrids
           call NdviReadStoreOwnChunk(1, ifm, ierr, oneGrid%oneControlVars)
        enddo
-
-       ! TEB
-
-       if (TEB_SPM==1) then
-          ! Read FUSO (Local Time) files for any added grids
-          do ifm = ngridsh+1,ngrids
-             call FusoReadStoreOwnChunk(ifm, oneGrid%oneControlVars, &
-                  oneGrid%oneGaspartFields)
-          enddo
-       endif
-
-
 
        do ifm = 1,ngrids
           icm = nxtnest(ifm)

@@ -2,21 +2,15 @@ module ModCarmaDriver
 
   use ModNamelistFile, only: &
        NamelistFile
-  
+
   use ModDateUtils, only: &
        julday
 
   use ModRadiateFields, only: &
        RadiateFields
-  
+
   use rad_carma, only: &
        radcomp_carma 
-
-  use teb_spm_start, only: &
-       TEB_SPM ! INTENT(IN)
-
-  use mem_teb_common, only: &
-       tebc_g ! INTENT(INOUT)
 
   use mem_carma, only: &
        carma_aotMap, &
@@ -34,7 +28,7 @@ module ModCarmaDriver
 
   use ModMicControl, only: &
        MicControl
-  
+
   use mem_tend, only: &
        tend ! INTENT(INOUT)
 
@@ -46,7 +40,7 @@ module ModCarmaDriver
 
   use ModCuParmFields, only: &
        CuParmFields
-  
+
   use rconstants  , only : &
        cp, &
        cpor, &
@@ -105,7 +99,7 @@ contains
     type(MicroFields), pointer, intent(in) :: oneMicroFields
     type(RadiateFields), pointer, intent(in) :: oneRadiateFields
     type(CuParmFields), pointer, intent(in) :: oneCuParmFields
-    
+
     ! local variables:
     real :: hranglelocal
     real :: solc
@@ -114,8 +108,6 @@ contains
     real,allocatable,dimension(:,:) :: rain
     real :: dummy
     integer :: i, j, k, ncols
-    ! teb_spm
-    real, pointer :: emis_town(:,:), alb_town(:,:), ts_town(:,:), g_urban(:,:,:)
     !
     real      :: cdec
     integer   :: jday
@@ -132,81 +124,36 @@ contains
     !--- radiation is called on each radfrq seconds
     if (.not. (mod(time+.001, oneNamelistFile%radfrq) < dtlt .or. time<0.001)) return
 
-    !- TEB_SPM
-    if (TEB_SPM==1) then
-       EMIS_TOWN => tebc_g(ngrid)%EMIS_TOWN
-       ALB_TOWN  => tebc_g(ngrid)%ALB_TOWN
-       TS_TOWN   => tebc_g(ngrid)%TS_TOWN
-       G_URBAN   => leaf_g(ngrid)%G_URBAN
-    else
-       nullify(EMIS_TOWN)
-       nullify(ALB_TOWN)
-       nullify(TS_TOWN)
-       nullify(G_URBAN)
-    endif
-
     ! Compute solar zenith angle, multiplier for solar constant, sfc albeDO,
     ! and surface upward longwave radiation.
 
-    if (TEB_SPM==1) then 
-       call radprep(TEB_SPM, imonth1, idate1, iyear1, time, itime1, &
-            centlat, centlon, oneNamelistFile%lonrad, pi180,                        &
-            nzg, nzs, npatch, ia, iz, ja, jz, jday,       &
-            leaf_g(ngrid)%soil_water,                               &
-            leaf_g(ngrid)%soil_energy,                              &
-            leaf_g(ngrid)%soil_text,                                &
-            leaf_g(ngrid)%sfcwater_energy,                          &
-            leaf_g(ngrid)%sfcwater_depth,                           &
-            leaf_g(ngrid)%leaf_class,                               &
-            leaf_g(ngrid)%veg_fracarea,                             &
-            leaf_g(ngrid)%veg_height,                               &
-            leaf_g(ngrid)%veg_albedo,                               &
-            leaf_g(ngrid)%patch_area,                               &
-            leaf_g(ngrid)%sfcwater_nlev,                            &
-            leaf_g(ngrid)%veg_temp,                                 &
-            leaf_g(ngrid)%can_temp,                                 &
-            solfac,                                                 &
-            grid_g(ngrid)%glat,                                     &
-            grid_g(ngrid)%glon,                                     &
-            oneRadiateFields%rshort,                                &
-            oneRadiateFields%rlong,                                 &
-            oneRadiateFields%rlongup,                               &
-            oneRadiateFields%albedt,                                &
-            oneRadiateFields%cosz,                                  &
-            hrAngleLocal,                                           &       
-            cdec,                                                   &
-            oneNamelistFile,                                        &
-            EMIS_TOWN, ALB_TOWN, TS_TOWN, G_URBAN)
-    else
-
-       call radprep(TEB_SPM, imonth1, idate1, iyear1, time, itime1, &
-            centlat, centlon, oneNamelistFile%lonrad, pi180,                        &
-            nzg, nzs, npatch, ia, iz, ja, jz, jday,       &
-            leaf_g(ngrid)%soil_water,                               &
-            leaf_g(ngrid)%soil_energy,                              &
-            leaf_g(ngrid)%soil_text,                                &
-            leaf_g(ngrid)%sfcwater_energy,                          &
-            leaf_g(ngrid)%sfcwater_depth,                           &
-            leaf_g(ngrid)%leaf_class,                               &
-            leaf_g(ngrid)%veg_fracarea,                             &
-            leaf_g(ngrid)%veg_height,                               &
-            leaf_g(ngrid)%veg_albedo,                               &
-            leaf_g(ngrid)%patch_area,                               &
-            leaf_g(ngrid)%sfcwater_nlev,                            &
-            leaf_g(ngrid)%veg_temp,                                 &
-            leaf_g(ngrid)%can_temp,                                 &
-            solfac,                                                 &
-            grid_g(ngrid)%glat,                                     &
-            grid_g(ngrid)%glon,                                     &
-            oneRadiateFields%rshort,                                &
-            oneRadiateFields%rlong,                                 &
-            oneRadiateFields%rlongup,                               &
-            oneRadiateFields%albedt,                                &
-            oneRadiateFields%cosz,                                  &
-            hrAngleLocal,                                           &       
-            cdec,                                                   &
-            oneNamelistFile)
-    endif
+    call radprep(imonth1, idate1, iyear1, time, itime1, &
+         centlat, centlon, oneNamelistFile%lonrad, pi180,                        &
+         nzg, nzs, npatch, ia, iz, ja, jz, jday,       &
+         leaf_g(ngrid)%soil_water,                               &
+         leaf_g(ngrid)%soil_energy,                              &
+         leaf_g(ngrid)%soil_text,                                &
+         leaf_g(ngrid)%sfcwater_energy,                          &
+         leaf_g(ngrid)%sfcwater_depth,                           &
+         leaf_g(ngrid)%leaf_class,                               &
+         leaf_g(ngrid)%veg_fracarea,                             &
+         leaf_g(ngrid)%veg_height,                               &
+         leaf_g(ngrid)%veg_albedo,                               &
+         leaf_g(ngrid)%patch_area,                               &
+         leaf_g(ngrid)%sfcwater_nlev,                            &
+         leaf_g(ngrid)%veg_temp,                                 &
+         leaf_g(ngrid)%can_temp,                                 &
+         solfac,                                                 &
+         grid_g(ngrid)%glat,                                     &
+         grid_g(ngrid)%glon,                                     &
+         oneRadiateFields%rshort,                                &
+         oneRadiateFields%rlong,                                 &
+         oneRadiateFields%rlongup,                               &
+         oneRadiateFields%albedt,                                &
+         oneRadiateFields%cosz,                                  &
+         hrAngleLocal,                                           &       
+         cdec,                                                   &
+         oneNamelistFile)
 
 
     !--- set radiation tendency for theta to zero
@@ -301,7 +248,7 @@ contains
 
   ! ****************************************************************************
 
-  subroutine radprep(TEB_SPM, imonth1, idate1, iyear1, time, itime1,        &
+  subroutine radprep(imonth1, idate1, iyear1, time, itime1,        &
        centlat, centlon, lonrad, pi180,                                     &
        mzg, mzs, np, ia, iz, ja, jz, jday,                          &
        soil_water, soil_energy, soil_text, sfcwater_energy, sfcwater_depth, &
@@ -310,10 +257,8 @@ contains
        solfac, glat, glon, rshort, rlong, rlongup, albedt, cosz,            &
        hrAngleLocal,                                                        &
        cdec,                                                                &
-       oneNamelistFile,                                                     &
-       EMIS_TOWN, ALB_TOWN, TS_TOWN, G_URBAN)
+       oneNamelistFile)
     ! Arguments:
-    integer, intent(IN)      :: TEB_SPM
     integer, intent(IN)      :: imonth1, idate1, iyear1, itime1
     real, intent(IN)         :: time
     real, intent(IN)         :: centlat(:), centlon(:)
@@ -331,11 +276,6 @@ contains
     real, intent(IN)         :: leaf_class(:,:,:), veg_fracarea(:,:,:), &
          veg_height(:,:,:), veg_albedo(:,:,:), patch_area(:,:,:),       &
          sfcwater_nlev(:,:,:), veg_temp(:,:,:), can_temp(:,:,:)
-    !TEB_SPM
-    !DIMENSION(m2,m3)
-    real, pointer, optional :: EMIS_TOWN(:,:), ALB_TOWN(:,:), TS_TOWN(:,:)
-    !DIMENSION(m2,m3,np)
-    real, pointer, optional :: G_URBAN(:,:,:)
     !
     real, intent(OUT)        :: solfac
     !DIMENSION(m2,m3)
@@ -348,15 +288,7 @@ contains
 
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     ! Local Variables
-    real, pointer :: L_EMIS_TOWN, L_ALB_TOWN, L_TS_TOWN, L_G_URBAN
-    !
     integer :: ip, i, j
-
-    ! TEB_SPM
-    nullify(L_EMIS_TOWN)
-    nullify(L_ALB_TOWN)
-    nullify(L_TS_TOWN)
-    nullify(L_G_URBAN)
 
     ! Compute solar zenith angle [cosz(i,j)] & solar constant factr [solfac].
 
@@ -375,41 +307,17 @@ contains
           do j = 1,jz
              do i = 1,iz
 
-                ! TEB_SPM
-                if (TEB_SPM==1 .and. present(G_URBAN) .and.           &
-                     present(EMIS_TOWN) .and. present(ALB_TOWN) .and. &
-                     present(TS_TOWN))                                then
-                   L_G_URBAN   => G_URBAN(i,j,ip)
-                   L_EMIS_TOWN => EMIS_TOWN(i,j)
-                   L_ALB_TOWN  => ALB_TOWN(i,j)
-                   L_TS_TOWN   => TS_TOWN(i,j)
-                   call sfcrad(mzg, mzs, ip,                                     &
-                        soil_energy(1:mzg,i,j,ip), soil_water(1:mzg,i,j,ip),     &
-                        soil_text(1:mzg,i,j,ip),   sfcwater_energy(1:mzs,i,j,ip),&
-                        sfcwater_depth(1:mzs,i,j,ip), patch_area(i,j,ip),        &
-                        can_temp(i,j,ip),         veg_temp(i,j,ip),              &
-                        leaf_class(i,j,ip),       veg_height(i,j,ip),            &
-                        veg_fracarea(i,j,ip),     veg_albedo(i,j,ip),            &
-                        sfcwater_nlev(i,j,ip),                                   &
-                        rshort(i,j), rlong(i,j), albedt(i,j),                    &
-                        rlongup(i,j), cosz(i,j),                                 &
-                                ! TEB_SPM
-                        L_G_URBAN, L_EMIS_TOWN, L_ALB_TOWN, L_TS_TOWN            &
-                                !
-                        )
-                else
-                   call sfcrad(mzg, mzs, ip,                                     &
-                        soil_energy(1:mzg,i,j,ip), soil_water(1:mzg,i,j,ip),     &
-                        soil_text(1:mzg,i,j,ip),   sfcwater_energy(1:mzs,i,j,ip),&
-                        sfcwater_depth(1:mzs,i,j,ip), patch_area(i,j,ip),        &
-                        can_temp(i,j,ip),         veg_temp(i,j,ip),              &
-                        leaf_class(i,j,ip),       veg_height(i,j,ip),            &
-                        veg_fracarea(i,j,ip),     veg_albedo(i,j,ip),            &
-                        sfcwater_nlev(i,j,ip),                                   &
-                        rshort(i,j), rlong(i,j), albedt(i,j),                    &
-                        rlongup(i,j), cosz(i,j)                                  &
-                        )
-                endif
+                call sfcrad(mzg, mzs, ip,                                     &
+                     soil_energy(1:mzg,i,j,ip), soil_water(1:mzg,i,j,ip),     &
+                     soil_text(1:mzg,i,j,ip),   sfcwater_energy(1:mzs,i,j,ip),&
+                     sfcwater_depth(1:mzs,i,j,ip), patch_area(i,j,ip),        &
+                     can_temp(i,j,ip),         veg_temp(i,j,ip),              &
+                     leaf_class(i,j,ip),       veg_height(i,j,ip),            &
+                     veg_fracarea(i,j,ip),     veg_albedo(i,j,ip),            &
+                     sfcwater_nlev(i,j,ip),                                   &
+                     rshort(i,j), rlong(i,j), albedt(i,j),                    &
+                     rlongup(i,j), cosz(i,j)                                  &
+                     )
 
              end do
           end do
@@ -557,7 +465,7 @@ contains
     type(MicControl), pointer, intent(in) :: oneMicVars
     type(MicroFields), pointer, intent(in) :: oneMicroFields
     type(CuParmFields), pointer, intent(in) :: oneCuParmFields
-    
+
     real, intent(out), dimension(m1,m2,m3) :: cloud_fraction !cloud_fraction
     real, intent(out), dimension(m2,m3   ) :: rain !total rain water 
     real, intent(out), dimension(m1,m2,m3) :: lwl !total cloud liquid water (kg/kg for carma and g/m2 for rrtm)

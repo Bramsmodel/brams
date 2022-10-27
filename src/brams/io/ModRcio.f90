@@ -134,7 +134,6 @@ module ModRcio
   use ModLeafComs, only: &
        nstyp, &
        nvtyp, &
-       nvtyp_teb, &
        kroot, &
        slden, &
        slcpd, &
@@ -608,7 +607,7 @@ contains
        ie=cio(iun,irw,'rt01dn'//cng,rt01dn(1:nnzp(ng),ng))
     enddo
 
-    ie=cio(iun,irw,'kroot',kroot(1:nvtyp+nvtyp_teb))
+    ie=cio(iun,irw,'kroot',kroot(1:nvtyp))
 
     ie=cio(iun,irw,'itopo',itopo)
     ie=cio(iun,irw,'initial',initial)
@@ -706,7 +705,7 @@ contains
     ie=cio(iun,irw,'slfc',slfc(1:nstyp))
     ie=cio(iun,irw,'emisg',emisg(1:nstyp))
 
-    ie=cio(iun,irw,'emisv',emisv(1:nvtyp+nvtyp_teb))
+    ie=cio(iun,irw,'emisv',emisv(1:nvtyp))
 
     ie=cio(iun,irw,'root',root)
     ie=cio(iun,irw,'slz',slz(1:nzg))

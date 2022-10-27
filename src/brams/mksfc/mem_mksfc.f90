@@ -25,9 +25,6 @@ module mem_mksfc
      real, pointer :: seatf(:,:)
      real, pointer :: topzo(:,:)
      
-     ! TEB_SPM
-     real, pointer :: fuso(:,:)
-     
   end type sfcfile_vars
    
 
@@ -101,7 +98,6 @@ contains
 
 
   subroutine alloc_sfcfile(sfcfile,nx,ny,nzg,npat)
-    use teb_spm_start, only: TEB_SPM ! INTENT(IN)
 
     implicit none
 
@@ -187,23 +183,11 @@ contains
             trim(adjustl(c3))//") fails with stat="//trim(adjustl(c0)))
     end if
     
-    if (TEB_SPM==1) then
-       allocate (sfcfile%fuso(nx,ny), stat=ierr)
-       if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          write(c2,"(i8)") nx
-          write(c3,"(i8)") ny
-          call fatal_error(h//" allocate fuso("//trim(adjustl(c2))//","//&
-               trim(adjustl(c3))//") fails with stat="//trim(adjustl(c0)))
-       end if
-    end if
   end subroutine alloc_sfcfile
   
   ! ******************************************************************
   
   subroutine dealloc_sfcfile(sfcfile)
-    
-    use teb_spm_start, only: TEB_SPM ! INTENT(IN)
     
     implicit none
     
@@ -254,12 +238,5 @@ contains
        call fatal_error(h//" deallocate topzo fails with stat="//trim(adjustl(c0)))
     end if
 
-    if (TEB_SPM==1) then
-       deallocate (sfcfile%fuso, stat=ierr)
-       if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate fuso fails with stat="//trim(adjustl(c0)))
-       end if
-    endif
   end subroutine dealloc_sfcfile
 end module mem_mksfc

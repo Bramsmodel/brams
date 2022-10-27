@@ -128,7 +128,6 @@ module ModNestGeoSst
   public :: toptnest
   public :: geonest_file
   public :: GeonestNoFile
-  public :: fusonest
 
 contains
 
@@ -506,49 +505,6 @@ contains
     return
   end subroutine patch_minsize
 
-  ! TEB
-  !#############################################################################
-  subroutine fusonest(ngra,ngrb)
-    !#############################################################################
-    integer :: ngra,ngrb
-
-    integer :: ifm,icm,ipat,i,j,k,indfm,ivtime,nc1,mynum
-
-
-
-    do ifm = ngra,ngrb
-       icm = nxtnest(ifm)
-       ! Initialize FUSO in fusoinit.
-
-       !     write(*,*)'glon =',grid_g(ifm)%glon (1,1)
-       !     call fusoinit(nnxp(ifm),nnyp(ifm),ifm  &
-       !          ,sfcfile_p(ifm)%fuso(1,1),grid_g(ifm)%glon (1,1))
-
-       if (icm .ge. 1 .and. ifusflg(ifm) .eq. 0) then
-
-          ! Interpolate FUSO from coarser grid:
-          call fillscr(1,maxnxp,maxnyp,1,nnxp(icm),nnyp(icm),1,1  &
-               ,mksfc_scr1,sfcfile_p(icm)%fuso)
-!!$        call eintp(mksfc_scr1,mksfc_scr2,1,maxnxp,maxnyp  &
-!!$             ,1,nnxp(ifm),nnyp(ifm),ifm,2,'t',0,0)
-          call fillvar(1,maxnxp,maxnyp,1,nnxp(ifm),nnyp(ifm),1,1  &
-               ,mksfc_scr2,sfcfile_p(ifm)%fuso)
-
-       elseif (ifusflg(ifm) .eq. 1) then
-
-          ! Interpolate FUSO from standard dataset:
-          call geodat(nnxp(ifm),nnyp(ifm),sfcfile_p(ifm)%fuso  &
-               ,ifusfn(ifm)(1:len_trim(ifusfn(ifm))),ifusfn(ifm)(1:len_trim(ifusfn(ifm))),mksfc_vt2da,mksfc_vt2db,ifm,'FUS')
-
-       endif
-
-
-    enddo
-
-    if (ngra .eq. ngrb) return
-
-    return
-  end subroutine fusonest
 
   !*************************************************************************
 

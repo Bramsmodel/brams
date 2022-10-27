@@ -7,9 +7,6 @@
 !###########################################################################
 module ModLeaf3Init
 
-  use teb_spm_start, only : &
-       TEB_SPM ! INTENT(in)
-
   use ModLeaf3, only: &
        vegndvi, &
        grndvap
@@ -30,7 +27,7 @@ module ModLeaf3Init
        nvgcon
 
   use ModLeafComs, only: &
-       nstyp, nvtyp, nvtyp_teb, cka, ckw, &
+       nstyp, nvtyp, cka, ckw, &
        slpots, slmsts, slbs, slcons, slcpd, slden, sfldcap, &
        emisg, slfc, soilcp, albv_green, albv_brown, emisv, &
        sr_max, tai_max, sai, veg_clump, veg_frac, veg_ht, &
@@ -77,7 +74,7 @@ contains
     real :: romin,roorg,slfcap,refdepth,tmin,ratio,xmin
     real, dimension     (nstyp) :: xsand,xclay,xorgan,xrobulk
     real, dimension   (8,nstyp) :: soilparms
-    real, dimension (12,0:nvtyp+nvtyp_teb) :: bioparms
+    real, dimension (12,0:nvtyp) :: bioparms
 
     !---------srf-05052006---------------------------
     real, dimension(2,0:nvtyp)        :: root_data ! Arora & Boer (EI, vol.7, 2003)
@@ -156,8 +153,7 @@ contains
                                 !.20, .36, .96, 5.1, 6.0, 1.0,  .0, .80,  7.0, 1.0, .0, 100., & ! 18  Wooded grassland
          .13, .30, .96, 5.1, 6.0, 1.0,  .0, .80,  7.0, 1.0, .0, 100., & ! 18  Wooded grassland
          .20, .36, .90, 5.1, 3.6, 1.0,  .0, .74,  6.0,  .8, .0, 500., & ! 19  Urban and built up
-         .17, .24, .95, 4.1, 7.0, 1.0,  .0, .90, 32.0, 1.5, .0, 500., & ! 20  Wetland evergreen broadleaf tree
-         .16, .24, .96, 5.1, 2.0, 1.5, 1.0, .10, 20.0, 1.5, .0, 500./   ! 21  Very urban
+         .17, .24, .95, 4.1, 7.0, 1.0,  .0, .90, 32.0, 1.5, .0, 500./   ! 20  Wetland evergreen broadleaf tree
 
     !---------srf-05052006---------------------------
     ! root profiles
@@ -229,7 +225,6 @@ contains
           endif
        endif
     enddo
-    root(nvtyp_teb,:) = 0.
     !---------srf-05052006---------------------------
 
 
@@ -292,7 +287,7 @@ contains
 
     enddo
 
-    do nnn = 1,(nvtyp+nvtyp_teb)
+    do nnn = 1,(nvtyp)
        albv_green(nnn) = bioparms(1,nnn)
        albv_brown(nnn) = bioparms(2,nnn)
        emisv(nnn)      = bioparms(3,nnn)
@@ -616,11 +611,6 @@ contains
          18,15,15,15,19,16,16,16,16,16/    ! 90
     !-------------------------------------------!
     !     1  2  3  4  5  6  7  8  9 10
-
-    ! IF TEB_SPM:
-    ! Using the Global Ecosystem legend 95 maped to RAMS type 21 (Very Urban Type)
-    ! Otherwise the OGE legend 95 is maped to RAMS type 19 (Urban)
-    if (TEB_SPM==1) catb(95) = 21
 
     !srf 2008 : OGE-INPE data set has value greater than 94
     !if( nint(datp) > 95. .or. nint(datp) < 0. ) datp= 0.

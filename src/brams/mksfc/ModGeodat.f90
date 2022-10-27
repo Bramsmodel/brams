@@ -27,9 +27,6 @@ module ModGeodat
        z0fact, &
        z0max
 
-  use teb_spm_start, only: &
-       TEB_SPM
-
   use mem_leaf, only: &
        zrough
 
@@ -388,15 +385,7 @@ contains
              DATR(IR,JR) = max(0., RVAL)
              !               print*,'z0r',IR,JR,DATR(IR,JR)
           else
-             if (TEB_SPM==1) then
-                if (vnam/='FUS') then
-                   DATR(IR,JR) = max(0., RVAL)
-                else
-                   datr(ir,jr) = rval
-                endif
-             else
-                DATR(IR,JR) = max(0., RVAL)
-             endif
+             DATR(IR,JR) = max(0., RVAL)
           endif
 
           call GDTOST(SDQ, NIQ, NJQ, XR, YR, RVAL)
