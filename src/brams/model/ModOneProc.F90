@@ -49,9 +49,6 @@ module ModOneProc
        GridSetup, &
        newgrid
   
-  use ModCuRead, only: &
-       cu_read
-  
   use ModLeaf3Init, only: &
        snowinit, &
        sfcdata
@@ -2068,16 +2065,6 @@ contains
             "**(JP)** if_oda==1 was not worked yet")
        call oda_read()
 
-    end if
-
-
-    ! Read cumulus heating fields
-
-    if (oneGrid%oneNamelistFile%if_cuinv == 1) then
-
-       iErrNumber=dumpMessage(c_tty,c_yes,h,c_modelVersion,c_fatal, &
-            "**(JP)** if_cuinv==1 was not worked yet")
-       call cu_read(1,oneGrid%oneNamelistFile, oneGrid%oneCuParmVars, oneGrid%oneCuParmFields)
     end if
 
     ! Initialize urban canopy drag coefficients

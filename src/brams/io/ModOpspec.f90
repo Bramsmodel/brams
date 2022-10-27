@@ -816,6 +816,13 @@ contains
        ifaterr = ifaterr+1
     end if
 
+    if (oneNamelistFile%if_cuinv /= 0 ) then
+       strLong="FATAL - if_cuinv not available at this version of BRAMS"
+       print *, trim(strLong)
+       call fatal_error(h//" if_cuinv not available at this version of BRAMS")
+       ifaterr = ifaterr+1
+    end if
+
     ! CCATT
 
     !--(DMK-CCATT-INI)-----------------------------------------------------

@@ -47,7 +47,6 @@ OBJ_MOD = \
 	ModCondUpdate.o \
 	ModConvComs.o \
 	ModCoriolis.o \
-	ModCuRead.o \
 	ModDiffSclr.o \
 	ModDiffuse.o \
 	ModGeodat.o \
