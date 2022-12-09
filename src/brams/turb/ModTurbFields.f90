@@ -152,16 +152,6 @@ contains
     end if
     res%vkh=0.0
 
-    if (oneNamelistFile%if_urban_canopy > 0) then
-       allocate (res%cdrag(mzp,mxp,myp), stat=ierr)
-       if (ierr /= 0) then
-          write(str(1),"(i8)") ierr
-          call fatal_error(h//" allocate cdrag fails with stat="//&
-               trim(adjustl(str(1))))
-       end if
-       res%cdrag=0.0
-    end if
-
     allocate (res%sflux_u(mxp,myp), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr

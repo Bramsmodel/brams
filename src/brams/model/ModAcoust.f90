@@ -66,8 +66,7 @@ module ModAcoust
 
 
   use mem_scratch, only : &
-       scratch, &
-       vctr2
+       scratch
 
   use ref_sounding, only : &
        u01dn, &
@@ -75,9 +74,6 @@ module ModAcoust
 
   use ModGrid, only: &
        Grid
-
-  use ModAcoustAdap, only: &
-       acoust_adap
 
   use ModParallelEnvironment, only: &
        MsgDump
@@ -236,7 +232,8 @@ contains
 
     real :: zmkf,c1,c2
     integer :: kf,i,j,k
-    real :: vctr5(mzp)
+    real :: vctr2(nzp)
+    real :: vctr5(nzp)
 
     !
 
@@ -373,7 +370,8 @@ contains
 
     real :: zmkf,c1,c2
     integer :: kf,i,j,k
-    real :: vctr5(mzp)
+    real :: vctr2(nzp)
+    real :: vctr5(nzp)
 
     if (nfpt /= 0 .and. distim > 0 .and. (jdim /= 0 .or. icorflg /= 0)) then
        kf = nnz(1) - nfpt
@@ -512,6 +510,7 @@ contains
 
     real :: zmkf,c1,c2
     integer :: kf,i,j,k
+    real :: vctr2(nzp)
 
     if (nfpt /= 0 .and. distim > 0) then
        kf = nnz(1) - nfpt
@@ -902,7 +901,9 @@ contains
     integer :: mzp
     integer :: ierr
     integer :: nmbr_gpts  !MB: only for testing
+    real, allocatable :: scr1(:)
     real, allocatable :: scr2(:)
+    real, allocatable :: vt2da(:)
 
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(acoustic_new)**"
@@ -918,6 +919,14 @@ contains
     mzp = OneGrid%oneNodeDimensions%mzp
 
 
+    allocate(scr1(mzp*mxp*myp), stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" allocate scr1 fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
+    scr1=0.0
+
     allocate(scr2(mzp*mxp*myp), stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
@@ -925,6 +934,14 @@ contains
             trim(adjustl(str(1))))
     end if
     scr2=0.0
+
+    allocate(vt2da(mzp*mxp*myp), stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" allocate vt2da fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
+    vt2da=0.0
 
 
     if ( ( dyncore_flag == 0 ) .or. ( dyncore_flag == 1 ) ) then
@@ -949,31 +966,6 @@ contains
                grid_g(ngrid)%f23t,grid_g(ngrid)%fmapui,  &
                grid_g(ngrid)%fmapvi,grid_g(ngrid)%dxt,  &
                grid_g(ngrid)%dyt,grid_g(ngrid)%fmapt,0)
-
-       else
-
-          call acoust_adap(OneGrid, &
-               mzp,mxp,myp   &
-               ,grid_g(ngrid)%lpu      ,grid_g(ngrid)%lpv       &
-               ,grid_g(ngrid)%lpw      ,scratch%scr1              &
-               ,scr2             ,scratch%vt3da       &
-               ,scratch%vt3db        ,scratch%vt3dc       &
-               ,scratch%vt3dd        ,scratch%vt3de       &
-               ,scratch%vt3df        ,scratch%vt3dg       &
-               ,scratch%vt3dh        ,scratch%vt2da       &
-               ,oneGrid%oneBasicFields%dn0   ,oneGrid%oneBasicFields%pi0  &
-               ,oneGrid%oneBasicFields%th0   ,oneGrid%oneBasicFields%up   &
-               ,oneGrid%oneBasicFields%vp    ,oneGrid%oneBasicFields%wp   &
-               ,oneGrid%oneBasicFields%pp    ,tend%ut       &
-               ,tend%vt              ,tend%wt       &
-               ,tend%pt              ,grid_g(ngrid)%dxu   &
-               ,grid_g(ngrid)%dyv    ,grid_g(ngrid)%fmapu &
-               ,grid_g(ngrid)%fmapvi ,grid_g(ngrid)%dxt   &
-               ,grid_g(ngrid)%dyt    ,grid_g(ngrid)%fmapt &
-               ,grid_g(ngrid)%aru    ,grid_g(ngrid)%arv   &
-               ,grid_g(ngrid)%arw    ,grid_g(ngrid)%volt  &
-               ,grid_g(ngrid)%volu   ,grid_g(ngrid)%volv  &
-               ,grid_g(ngrid)%volw         )
 
        endif
 
@@ -1006,10 +998,24 @@ contains
        call fatal_error(h//" value of dyncore_flag is not 0, 1 or 2 at acoustic_new")
     end if
 
+    deallocate(scr1, stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" deallocate scr1 fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
+
     deallocate(scr2, stat=ierr)
     if (ierr /= 0) then
        write(str(1),"(i8)") ierr
        call fatal_error(h//" deallocate scr2 fails with stat="//&
+            trim(adjustl(str(1))))
+    end if
+
+    deallocate(vt2da, stat=ierr)
+    if (ierr /= 0) then
+       write(str(1),"(i8)") ierr
+       call fatal_error(h//" deallocate vt2da fails with stat="//&
             trim(adjustl(str(1))))
     end if
   end subroutine acoustic_new

@@ -25,10 +25,8 @@ module ModRstilt
        nzpmax
 
   use mem_scratch, only: &
-       scratch, &
-       vctr1, &
-       vctr2
-
+       scratch
+  
   use mem_grid, only: &
        ngrid, &
        grid_g, &
@@ -476,6 +474,9 @@ contains
     real, dimension(m2,m3) :: rtgt,rtgu,rtgv,fmapt,fmapui,fmapvi,f13t,f23t  &
          ,dxu,dyv,dxt,dyt
 
+    real :: vctr1(m1)
+    real :: vctr2(m1)
+    
     ! VT3DA, VT3DB, and VT3DC are input as the velocity components (averaged
     ! between past and current time levels) times dtlt.
 

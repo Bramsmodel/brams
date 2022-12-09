@@ -99,6 +99,7 @@ contains
     integer :: ncall=0, nobs, ng,i,j,k
 
     real, allocatable, dimension(:,:) :: plt
+    real, allocatable, dimension(:,:) :: scr1
 
     ! Namelist variables:
 
@@ -142,7 +143,8 @@ contains
 
     if ( (ngrid==1 .and. time>=todabeg .and. time<=todaend)  &
          .or. time==timstr ) then
-
+     
+       if (allocated(scr1)) deallocate(scr1); allocate(scr1(nnxp(ngrids),nnyp(ngrids)))
        ! Compute new krigged fields and variances
 
        do ng=1,ngrids
@@ -154,7 +156,7 @@ contains
              call oda_proc_obs(nnzp(ng), nodemxp(mynum,ng), nodemyp(mynum,ng), &
                   nodei0(mynum,ng), nodej0(mynum,ng),  &
                   oneBasicFields%pp, oneBasicFields%pi0,  &
-                  scratch%scr1, ng, nobs)
+                  scr1, ng, nobs)
 
              oda_g(ng)%uk(1:nnzp(ng),1:nodemxp(mynum,ng),1:nodemyp(mynum,ng)) = 0.
              oda_g(ng)%ukv(1:nnzp(ng),1:nodemxp(mynum,ng),1:nodemyp(mynum,ng)) = 0.

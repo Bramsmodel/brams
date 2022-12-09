@@ -866,10 +866,10 @@ contains
 
   ! *********************************************************************
 
-  subroutine alloc_grid(grid,n1,n2,n3,ng,if_adap)
+  subroutine alloc_grid(grid,n1,n2,n3,ng)
     implicit none
     type (grid_vars) :: grid
-    integer, intent(in) :: n1,n2,n3,ng,if_adap
+    integer, intent(in) :: n1,n2,n3,ng
 
     ! Allocate arrays based on options (if necessary)
 
@@ -910,16 +910,6 @@ contains
     allocate (grid%glat(n2,n3))
     allocate (grid%glon(n2,n3))
     allocate (grid%topzo(n2,n3))
-    !TO modify to Xeon-Phi Intel
-    if (if_adap == 1) then
-       allocate (grid%aru(n1,n2,n3))
-       allocate (grid%arv(n1,n2,n3))
-       allocate (grid%arw(n1,n2,n3))
-       allocate (grid%volu(n1,n2,n3))
-       allocate (grid%volv(n1,n2,n3))
-       allocate (grid%volw(n1,n2,n3))
-       allocate (grid%volt(n1,n2,n3))
-    endif
     allocate (grid%lpu(n2,n3))
     allocate (grid%lpv(n2,n3))
     allocate (grid%lpw(n2,n3))
@@ -962,16 +952,6 @@ contains
     grid%glat = 0.
     grid%glon = 0.
     grid%topzo = 0.
-    !TO modify to Xeon-Phi Intel
-    if (if_adap == 1) then
-       grid%aru = 0.
-       grid%arv = 0.
-       grid%arw = 0.
-       grid%volu = 0.
-       grid%volv = 0.
-       grid%volw = 0.
-       grid%volt = 0.
-    endif
     grid%lpu = 0
     grid%lpv = 0
     grid%lpw =0
@@ -1577,7 +1557,7 @@ contains
 
 
 
-  subroutine ExtractLocalFromGlobal (global, nzp, nxp, nyp, i0, j0, if_adap, local)
+  subroutine ExtractLocalFromGlobal (global, nzp, nxp, nyp, i0, j0, local)
     implicit none
     type(grid_vars), intent(in   ) :: global
     integer,         intent(in   ) :: nzp
@@ -1585,7 +1565,6 @@ contains
     integer,         intent(in   ) :: nyp
     integer,         intent(in   ) :: i0
     integer,         intent(in   ) :: j0
-    integer,         intent(in   ) :: if_adap
     type(grid_vars), intent(inout) :: local
 
     integer :: i, ig

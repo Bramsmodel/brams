@@ -20,9 +20,7 @@ module ModRThrm
        MicroFields
 
   use mem_scratch, only: &
-       scratch, &
-       vctr1,   &
-       vctr2
+       scratch
 
   use rconstants, only: &
        cpi,  & ! INTENT(IN)
@@ -59,10 +57,13 @@ contains
     type(MicroFields), pointer, intent(in) :: oneMicroFields
 
     character(len=*), parameter :: h="**(thermo)**"
+    real :: vctr1(mzp)
+    real :: vctr2(mzp)
     real :: vctr3(mzp)
     real :: vctr4(mzp)
     real :: vctr5(mzp)
     real :: vctr6(mzp)
+    real :: scr1(mzp)
 
     if (oneMicVars%level .le. 1) then
 
@@ -73,7 +74,7 @@ contains
     elseif (oneMicVars%level .eq. 2) then
 
        call satadjst(mzp,mxp,myp,ia,iz,ja,jz  &
-            ,oneBasic%pp  ,scratch%scr1             &
+            ,oneBasic%pp  ,scr1             &
             ,oneBasic%thp ,oneBasic%theta &
             ,scratch%vt3db      ,oneBasic%pi0   &
             ,oneBasic%rtp ,oneBasic%rv    &
@@ -465,10 +466,13 @@ contains
     type(MicroFields), pointer, intent(in) :: oneMicroFields
 
     character(len=*), parameter :: h="**(theta_thp_rk)**"
+    real :: vctr1(mzp) 
+    real :: vctr2(mzp) 
     real :: vctr3(mzp) 
     real :: vctr4(mzp) 
     real :: vctr5(mzp) 
     real :: vctr6(mzp) 
+    real :: scr1(mzp) 
 
     if (trim(action).ne. "get_thetail" .and. trim(action).ne."get_theta") then
        call fatal_error(h//" unknow action at theta_thp_rk routine")
@@ -490,7 +494,7 @@ contains
        end if
 
        call satadjst(mzp,mxp,myp,ia,iz,ja,jz  &
-            ,oneBasic%pc  ,scratch%scr1             &
+            ,oneBasic%pc  ,scr1             &
             ,oneBasic%thc ,oneBasic%theta &
             ,scratch%vt3db          ,oneBasic%pi0   &
             ,oneBasic%rtp ,oneBasic%rv    &

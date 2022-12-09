@@ -13,10 +13,6 @@ module ModDiffSclr
        ngrid,   &      !INTENT(IN)
        zt              !INTENT(IN)
 
-  use mem_scratch, only :   &
-       vctr1,   &   !INTENT(INOUT)
-       vctr2
-
   implicit none
 
   private
@@ -32,7 +28,7 @@ contains
   subroutine diffsclr_brams31(m1,m2,m3,ia,iz,ja,jz,jd,  &
        ia_1,ja_1,ia1,ja1,iz_1,jz_1,iz1,jz1,n,ksf,  &
        scp,sct,vt3da,vt3db,vt3df,vt3dg,  &
-       vt3dj,vt3dk,vt3do,vt3dc,dn03i,vt3dl,vt3dm,vt2db,rtgt,sfcflx,  &
+       vt3dj,vt3dk,vt3do,vt3dc,dn03i,vt3dl,vt3dm,rtgt,sfcflx,  &
        dn0,vkkh,hkkh)
 
     integer, intent(in) :: m1
@@ -71,7 +67,6 @@ contains
     real, intent(inout) :: vt3dm(m1,m2,m3)
     real, intent(inout) :: vt3dl(m1,m2,m3)
     real, intent(inout) :: vt3dc(m1,m2,m3)
-    real, intent(inout) :: vt2db(m2,m3)
 
     integer :: i
     integer :: j
@@ -82,6 +77,9 @@ contains
 
     !! For optimization
     integer      :: htint_i, htint_j
+    real :: vt2db(m2,m3)
+    real :: vctr1(m1)
+    real :: vctr2(m1)
     real :: vctr3(m1)
     real :: vctr4(m1)
     real :: vctr5(m1)

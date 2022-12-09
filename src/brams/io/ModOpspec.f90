@@ -823,25 +823,19 @@ contains
        ifaterr = ifaterr+1
     end if
 
-    ! CCATT
+    if (oneNamelistFile%if_urban_canopy /= 0 ) then
+       strLong="FATAL - if_urban_canopy not available at this version of BRAMS"
+       print *, trim(strLong)
+       call fatal_error(h//" if_urban_canopy not available at this version of BRAMS")
+       ifaterr = ifaterr+1
+    end if
 
-    !--(DMK-CCATT-INI)-----------------------------------------------------
-    if (ccatt == 1) then
-       ! Consistency in CCATT
-       ! Checking the tracers
-       !--(DMK-CCATT-OLD)-----------------------------------------------------
-       !  if (CATT==1) then
-       !     if (naddsc < 4) then
-       !        print*, 'FATAL - If using CCATT, the variable NADDSC must be >= 4.'
-       !        IFATERR = IFATERR + 1
-       !     endif
-       !--(DMK-CCATT-FIM)-----------------------------------------------------
-       ! Fatal error if using Shaved-ETA
-       if (IF_ADAP==1) then
-          print*, 'FATAL - It is not allowed running CCATT with Shaved-ETA vertical coordinate system.'
-          IFATERR = IFATERR + 1
-       endif
-    endif
+    if (oneNamelistFile%if_adap /= 0 ) then
+       strLong="FATAL - shaved-eta not available at this version of BRAMS"
+       print *, trim(strLong)
+       call fatal_error(h//" shaved-eta not available at this version of BRAMS")
+       ifaterr = ifaterr+1
+    end if
 
     ! check that moisture is turned on if radiation is used.
     !   (severity - f)
@@ -969,12 +963,7 @@ contains
     endif
 
     !--(DMK-CCATT-INI)-----------------------------------------------------
-    ![ML
-    ! Complete Exner tendency and vertical coordinate.
-    if (IEXEV .eq. 2 .and. IF_ADAP .ne. 0) then
-       call fatal_error('IEXEV cannot be set to 2 with shaved-eta coordinate')
-       IFATERR=IFATERR+1
-    endif
+
     !srf
     if (IEXEV .eq. 2 .and. oneMicControl%level .eq. 0) then
        call fatal_error('IEXEV cannot be set to 2 with microphyics level = 0 ')

@@ -9,14 +9,6 @@ module ModRadvc
 
   use iso_fortran_env, only: &
        real64
-
-  use ModRadvcAdap, only: &
-       vel_advectc_adap, &
-       fa_preptc_adap, &
-       fa_xc_adap, &
-       fa_yc_adap, &
-       fa_zc_adap, &
-       advtndc_adap
        
   use ModBasicFields, only: &
        BasicFields
@@ -46,9 +38,7 @@ module ModRadvc
        dyncore_flag
 
   use mem_scratch, only: &
-       scratch, &
-       vctr1, &
-       vctr2 
+       scratch
 
   use ModScalarTable, only: &
        ScalarTable
@@ -102,6 +92,9 @@ contains
     integer, intent(inout) :: oneScalarTabSize
     type(BasicFields), pointer, intent(in) :: oneBasic
     integer :: mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,n
+    real :: vctr1(mzp)
+    real :: vctr2(mzp)
+    real :: scr1(mzp)
     integer(kind=real64) :: mxyzp
     character(len=*) :: varn
 
@@ -112,11 +105,14 @@ contains
     logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(advectc)**"
 
+    real :: vt3dp(mzp*mxp*myp)
     integer :: i_scl
 
     integer, dimension(maxgrds), save :: ncall
     data ncall/maxgrds*0/
 
+    vctr2=0.0
+    
     if (ncall(ngrid) == 0 .or. dtlt .ne. save_dtlt(ngrid) ) then
        ncall(ngrid) = 1
        save_dtlt(ngrid) = dtlt
@@ -147,22 +143,6 @@ contains
                   ,scratch%vt3db             ,scratch%vt3dc, &
                   oneBasic)
           end if
-
-       else
-
-          call vel_advectc_adap(mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,jdim    &
-               ,grid_g(ngrid)%lpu    ,grid_g(ngrid)%lpv       &
-               ,grid_g(ngrid)%lpw    ,oneBasic%uc     &
-               ,oneBasic%vc    ,oneBasic%wc     &
-               ,tend%ut              ,tend%vt               &
-               ,tend%wt              ,oneBasic%dn0    &
-               ,oneBasic%dn0u  ,oneBasic%dn0v   &
-               ,grid_g(ngrid)%aru    ,grid_g(ngrid)%arv     &
-               ,grid_g(ngrid)%arw    ,grid_g(ngrid)%volu    &
-               ,grid_g(ngrid)%volv   ,grid_g(ngrid)%volw    &
-               ,scratch%vt3da        ,scratch%vt3db         &
-               ,scratch%vt3dc        ,scratch%vt3dd         &
-               ,scratch%vt3de        ,scratch%vt3df        ,time)
 
        endif
 
@@ -197,22 +177,7 @@ contains
                ,scratch%vt3de             ,scratch%vt3df              &
                ,scratch%vt3dh             ,scratch%vt3di              &
                ,scratch%vt3dj             ,scratch%vt3dk              &
-               ,mynum, &
-               oneBasic)
-
-       else
-
-          call fa_preptc_adap(mzp,mxp,myp                               &
-               ,scratch%vt3da            ,scratch%vt3db             &
-               ,scratch%vt3dc            ,scratch%vt3dd             &
-               ,scratch%vt3de            ,scratch%vt3df             &
-               ,scratch%vt3dh            ,oneBasic%dn0    &
-               ,oneBasic%dn0u ,oneBasic%dn0v   &
-               ,grid_g(ngrid)%aru   ,grid_g(ngrid)%arv     &
-               ,grid_g(ngrid)%arw   ,grid_g(ngrid)%volt    &
-               ,grid_g(ngrid)%dxu   ,grid_g(ngrid)%dyv     &
-               ,grid_g(ngrid)%dxt   ,grid_g(ngrid)%dyt     &
-               ,zt,zm,dzm,vctr1,vctr2,jdim,mynum                          )
+               ,mynum, oneBasic, vctr1, vctr2)
 
        endif
 
@@ -248,7 +213,7 @@ contains
                         ,num_scalar_aer_1st    & ! 1st aerosol at scalar table
                         ,oneBasic%wp         & ! air vertical velocity (P time)
                         ,oneBasic%wc         & ! air vertical velocity (C time)
-                        ,scratch%vt3dp             & ! ) ! to save horizontal contribution on the sigmaz velocity
+                        ,vt3dp             & ! ) ! to save horizontal contribution on the sigmaz velocity
                         ,nzpmax,hw4,dzm,dzt,dd_sedim(:,ngrid))   ! (DMK) deposicao seca (cod. limpo)
                 else
                    print*,'sedim not yet prepared for shaved eta'
@@ -258,25 +223,25 @@ contains
           endif
           !--(DMK-CCATT-FIM)-----------------------------------------------------
 
-          call atob_long(mxyzp, oneScalarTab(n)%var_p_3D, scratch%scr1)
+          call atob_long(mxyzp, oneScalarTab(n)%var_p_3D, scr1)
 
           if (if_adap == 0) then
 
              call fa_xc(mzp,mxp,myp,ia,iz,1,myp        &
-                  ,oneScalarTab(n)%var_p_3D ,scratch%scr1   &
+                  ,oneScalarTab(n)%var_p_3D ,scr1   &
                   ,scratch%vt3da ,scratch%vt3dd  &
                   ,scratch%vt3dg ,scratch%vt3dh  &
                   ,scratch%vt3di ,mynum              )
 
              if (jdim .eq. 1)  &
                   call fa_yc(mzp,mxp,myp,ia,iz,ja,jz        &
-                  ,oneScalarTab(n)%var_p_3D ,scratch%scr1    &
+                  ,oneScalarTab(n)%var_p_3D ,scr1    &
                   ,scratch%vt3db  ,scratch%vt3de   &
                   ,scratch%vt3dg  ,scratch%vt3dj   &
                   ,scratch%vt3di  ,jdim,mynum         )
 
              call fa_zc(mzp,mxp,myp,ia,iz,ja,jz        &
-                  ,oneScalarTab(n)%var_p_3D ,scratch%scr1    &
+                  ,oneScalarTab(n)%var_p_3D ,scr1    &
                   ,scratch%vt3dc  ,scratch%vt3df   &
                   ,scratch%vt3dg  ,scratch%vt3dk   &
                   ,vctr1,vctr2,mynum                     )
@@ -287,36 +252,8 @@ contains
              end if
 
              call advtndc(mzp,mxp,myp,ia,iz,ja,jz    &
-                  ,oneScalarTab(n)%var_p_3D ,scratch%scr1  &
+                  ,oneScalarTab(n)%var_p_3D ,scr1  &
                   ,oneScalarTab(n)%var_t_1D ,dtlt,mynum        )
-
-          else
-
-             call fa_xc_adap(mzp,mxp,myp,ia,iz,1,myp         &
-                  ,grid_g(ngrid)%lpw ,oneScalarTab(n)%var_p_3D            &
-                  ,scratch%scr1      ,scratch%vt3da  &
-                  ,scratch%vt3dd     ,scratch%vt3dg  &
-                  ,scratch%vt3dh     ,mynum              )
-
-             if (jdim .eq. 1)                                &
-                  call fa_yc_adap(mzp,mxp,myp,ia,iz,ja,jz         &
-                  ,grid_g(ngrid)%lpw ,oneScalarTab(n)%var_p_3D   &
-                  ,scratch%scr1      ,scratch%vt3db   &
-                  ,scratch%vt3de     ,scratch%vt3dg   &
-                  ,scratch%vt3dh   &
-                  ,jdim                    ,mynum              )
-
-             call fa_zc_adap(mzp,mxp,myp,ia,iz,ja,jz         &
-                  ,grid_g(ngrid)%lpw ,oneScalarTab(n)%var_p_3D  &
-                  ,scratch%scr1      ,scratch%vt3dc   &
-                  ,scratch%vt3df     ,scratch%vt3dg   &
-                  ,scratch%vt3dh     ,vctr1              &
-                  ,vctr2                   ,mynum              )
-
-             call advtndc_adap(mzp,mxp,myp,ia,iz,ja,jz  &
-                  ,grid_g(ngrid)%lpw ,oneScalarTab(n)%var_p_3D   &
-                  ,scratch%scr1      ,oneScalarTab(n)%var_t_1D   &
-                  ,dtlt                    ,mynum         )
 
           endif
 
@@ -513,7 +450,7 @@ contains
   !     *********************************************************************
 
   subroutine fa_preptc(m1,m2,m3,vt3da,vt3db,vt3dc,vt3dd,vt3de,vt3df  &
-       ,vt3dh,vt3di,vt3dj,vt3dk,mynum, oneBasic)
+       ,vt3dh,vt3di,vt3dj,vt3dk,mynum, oneBasic, vctr1, vctr2)
     !> @brief:  fa_preptc                                      
     !! @author:  unknow
     !! @date:  18/Nov/2015
@@ -527,7 +464,9 @@ contains
     integer,intent(in) :: m1,m2,m3,mynum
     integer :: j,i,k,im,ip,jm,jp
     type(BasicFields), pointer, intent(in) :: oneBasic
-
+    real, intent(out) :: vctr1(m1)
+    real, intent(out) :: vctr2(m1)
+    
     real :: c1,c2,c3,c4,rtgti
 
     real, dimension(m1,m2,m3) :: vt3da,vt3db,vt3dc,vt3dd,vt3de,vt3df  &

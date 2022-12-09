@@ -519,6 +519,8 @@ contains
     integer :: isiz,ifm,icm,ipat,i,j,k,indfm,ivtime,nc1,ic,jc
 
     character(len=*), parameter :: h="**(GeonestNofile)**"
+    real :: vt2da(maxnxp * maxnyp)
+    real :: vt2db(maxnxp * maxnyp)
 
     ! Initialization/interpolation of leaf-2 variables for which standard RAMS
     ! datasets never exist.
@@ -658,124 +660,124 @@ contains
                   ,nzg,nnxp(icm),nnyp(icm),npatch,nzg,nnxp(ifm),nnyp(ifm),npatch  &
                   ,leaf_g(icm)%soil_water,leaf_g(ifm)%soil_water &
                   ,leaf_g(icm)%patch_area,leaf_g(icm)%patch_area &
-                  ,scratch%vt3da,scratch%vt3db,scratch%vt2da,scratch%vt2db )
+                  ,scratch%vt3da,scratch%vt3db,vt2da,vt2db )
              call patch_interp(icm,ifm  &
                   ,nzg,nnxp(icm),nnyp(icm),npatch,nzg,nnxp(ifm),nnyp(ifm),npatch  &
                   ,leaf_g(icm)%soil_energy,leaf_g(ifm)%soil_energy &
                   ,leaf_g(icm)%patch_area,leaf_g(icm)%patch_area &
-                  ,scratch%vt3da,scratch%vt3db,scratch%vt2da,scratch%vt2db )
+                  ,scratch%vt3da,scratch%vt3db,vt2da,vt2db )
 
              call patch_interp(icm,ifm  &
                   ,nzs,nnxp(icm),nnyp(icm),npatch,nzs,nnxp(ifm),nnyp(ifm),npatch  &
                   ,leaf_g(icm)%sfcwater_mass,leaf_g(ifm)%sfcwater_mass &
                   ,leaf_g(icm)%patch_area,leaf_g(icm)%patch_area &
-                  ,scratch%vt3da,scratch%vt3db,scratch%vt2da,scratch%vt2db )
+                  ,scratch%vt3da,scratch%vt3db,vt2da,vt2db )
              call patch_interp(icm,ifm  &
                   ,nzs,nnxp(icm),nnyp(icm),npatch,nzs,nnxp(ifm),nnyp(ifm),npatch  &
                   ,leaf_g(icm)%sfcwater_energy,leaf_g(ifm)%sfcwater_energy &
                   ,leaf_g(icm)%patch_area,leaf_g(icm)%patch_area &
-                  ,scratch%vt3da,scratch%vt3db,scratch%vt2da,scratch%vt2db )
+                  ,scratch%vt3da,scratch%vt3db,vt2da,vt2db )
              call patch_interp(icm,ifm  &
                   ,nzs,nnxp(icm),nnyp(icm),npatch,nzs,nnxp(ifm),nnyp(ifm),npatch  &
                   ,leaf_g(icm)%sfcwater_depth,leaf_g(ifm)%sfcwater_depth &
                   ,leaf_g(icm)%patch_area,leaf_g(icm)%patch_area &
-                  ,scratch%vt3da,scratch%vt3db,scratch%vt2da,scratch%vt2db )
+                  ,scratch%vt3da,scratch%vt3db,vt2da,vt2db )
 
              call patch_interp(icm,ifm  &
                   ,1,nnxp(icm),nnyp(icm),npatch,1,nnxp(ifm),nnyp(ifm),npatch  &
                   ,leaf_g(icm)%veg_fracarea,leaf_g(ifm)%veg_fracarea &
                   ,leaf_g(icm)%patch_area,leaf_g(icm)%patch_area &
-                  ,scratch%vt3da,scratch%vt3db,scratch%vt2da,scratch%vt2db )
+                  ,scratch%vt3da,scratch%vt3db,vt2da,vt2db )
              call patch_interp(icm,ifm  &
                   ,1,nnxp(icm),nnyp(icm),npatch,1,nnxp(ifm),nnyp(ifm),npatch  &
                   ,leaf_g(icm)%veg_lai,leaf_g(ifm)%veg_lai &
                   ,leaf_g(icm)%patch_area,leaf_g(icm)%patch_area &
-                  ,scratch%vt3da,scratch%vt3db,scratch%vt2da,scratch%vt2db )
+                  ,scratch%vt3da,scratch%vt3db,vt2da,vt2db )
              call patch_interp(icm,ifm  &
                   ,1,nnxp(icm),nnyp(icm),npatch,1,nnxp(ifm),nnyp(ifm),npatch  &
                   ,leaf_g(icm)%veg_tai,leaf_g(ifm)%veg_tai &
                   ,leaf_g(icm)%patch_area,leaf_g(icm)%patch_area &
-                  ,scratch%vt3da,scratch%vt3db,scratch%vt2da,scratch%vt2db )
+                  ,scratch%vt3da,scratch%vt3db,vt2da,vt2db )
              call patch_interp(icm,ifm  &
                   ,1,nnxp(icm),nnyp(icm),npatch,1,nnxp(ifm),nnyp(ifm),npatch  &
                   ,leaf_g(icm)%veg_rough,leaf_g(ifm)%veg_rough &
                   ,leaf_g(icm)%patch_area,leaf_g(icm)%patch_area &
-                  ,scratch%vt3da,scratch%vt3db,scratch%vt2da,scratch%vt2db )
+                  ,scratch%vt3da,scratch%vt3db,vt2da,vt2db )
              call patch_interp(icm,ifm  &
                   ,1,nnxp(icm),nnyp(icm),npatch,1,nnxp(ifm),nnyp(ifm),npatch  &
                   ,leaf_g(icm)%veg_height,leaf_g(ifm)%veg_height &
                   ,leaf_g(icm)%patch_area,leaf_g(icm)%patch_area &
-                  ,scratch%vt3da,scratch%vt3db,scratch%vt2da,scratch%vt2db )
+                  ,scratch%vt3da,scratch%vt3db,vt2da,vt2db )
              call patch_interp(icm,ifm  &
                   ,1,nnxp(icm),nnyp(icm),npatch,1,nnxp(ifm),nnyp(ifm),npatch  &
                   ,leaf_g(icm)%veg_albedo,leaf_g(ifm)%veg_albedo &
                   ,leaf_g(icm)%patch_area,leaf_g(icm)%patch_area &
-                  ,scratch%vt3da,scratch%vt3db,scratch%vt2da,scratch%vt2db )
+                  ,scratch%vt3da,scratch%vt3db,vt2da,vt2db )
              call patch_interp(icm,ifm  &
                   ,1,nnxp(icm),nnyp(icm),npatch,1,nnxp(ifm),nnyp(ifm),npatch  &
                   ,leaf_g(icm)%patch_rough,leaf_g(ifm)%patch_rough &
                   ,leaf_g(icm)%patch_area,leaf_g(icm)%patch_area &
-                  ,scratch%vt3da,scratch%vt3db,scratch%vt2da,scratch%vt2db )
+                  ,scratch%vt3da,scratch%vt3db,vt2da,vt2db )
              call patch_interp(icm,ifm  &
                   ,1,nnxp(icm),nnyp(icm),npatch,1,nnxp(ifm),nnyp(ifm),npatch  &
                   ,leaf_g(icm)%veg_fracarea,leaf_g(ifm)%veg_fracarea &
                   ,leaf_g(icm)%patch_area,leaf_g(icm)%patch_area &
-                  ,scratch%vt3da,scratch%vt3db,scratch%vt2da,scratch%vt2db )
+                  ,scratch%vt3da,scratch%vt3db,vt2da,vt2db )
              call patch_interp(icm,ifm  &
                   ,1,nnxp(icm),nnyp(icm),npatch,1,nnxp(ifm),nnyp(ifm),npatch  &
                   ,leaf_g(icm)%patch_wetind,leaf_g(ifm)%patch_wetind &
                   ,leaf_g(icm)%patch_area,leaf_g(icm)%patch_area &
-                  ,scratch%vt3da,scratch%vt3db,scratch%vt2da,scratch%vt2db )
+                  ,scratch%vt3da,scratch%vt3db,vt2da,vt2db )
              call patch_interp(icm,ifm  &
                   ,1,nnxp(icm),nnyp(icm),npatch,1,nnxp(ifm),nnyp(ifm),npatch  &
                   ,leaf_g(icm)%soil_rough,leaf_g(ifm)%soil_rough &
                   ,leaf_g(icm)%patch_area,leaf_g(icm)%patch_area &
-                  ,scratch%vt3da,scratch%vt3db,scratch%vt2da,scratch%vt2db )
+                  ,scratch%vt3da,scratch%vt3db,vt2da,vt2db )
              call patch_interp(icm,ifm  &
                   ,1,nnxp(icm),nnyp(icm),npatch,1,nnxp(ifm),nnyp(ifm),npatch  &
                   ,leaf_g(icm)%sfcwater_nlev,leaf_g(ifm)%sfcwater_nlev &
                   ,leaf_g(icm)%patch_area,leaf_g(icm)%patch_area &
-                  ,scratch%vt3da,scratch%vt3db,scratch%vt2da,scratch%vt2db )
+                  ,scratch%vt3da,scratch%vt3db,vt2da,vt2db )
              call patch_interp(icm,ifm  &
                   ,1,nnxp(icm),nnyp(icm),npatch,1,nnxp(ifm),nnyp(ifm),npatch  &
                   ,leaf_g(icm)%stom_resist,leaf_g(ifm)%stom_resist &
                   ,leaf_g(icm)%patch_area,leaf_g(icm)%patch_area &
-                  ,scratch%vt3da,scratch%vt3db,scratch%vt2da,scratch%vt2db )
+                  ,scratch%vt3da,scratch%vt3db,vt2da,vt2db )
              call patch_interp(icm,ifm  &
                   ,1,nnxp(icm),nnyp(icm),npatch,1,nnxp(ifm),nnyp(ifm),npatch  &
                   ,leaf_g(icm)%ground_rsat,leaf_g(ifm)%ground_rsat &
                   ,leaf_g(icm)%patch_area,leaf_g(icm)%patch_area &
-                  ,scratch%vt3da,scratch%vt3db,scratch%vt2da,scratch%vt2db )
+                  ,scratch%vt3da,scratch%vt3db,vt2da,vt2db )
              call patch_interp(icm,ifm  &
                   ,1,nnxp(icm),nnyp(icm),npatch,1,nnxp(ifm),nnyp(ifm),npatch  &
                   ,leaf_g(icm)%ground_rvap,leaf_g(ifm)%ground_rvap &
                   ,leaf_g(icm)%patch_area,leaf_g(icm)%patch_area &
-                  ,scratch%vt3da,scratch%vt3db,scratch%vt2da,scratch%vt2db )
+                  ,scratch%vt3da,scratch%vt3db,vt2da,vt2db )
              call patch_interp(icm,ifm  &
                   ,1,nnxp(icm),nnyp(icm),npatch,1,nnxp(ifm),nnyp(ifm),npatch  &
                   ,leaf_g(icm)%veg_water,leaf_g(ifm)%veg_water &
                   ,leaf_g(icm)%patch_area,leaf_g(icm)%patch_area &
-                  ,scratch%vt3da,scratch%vt3db,scratch%vt2da,scratch%vt2db )
+                  ,scratch%vt3da,scratch%vt3db,vt2da,vt2db )
              call patch_interp(icm,ifm  &
                   ,1,nnxp(icm),nnyp(icm),npatch,1,nnxp(ifm),nnyp(ifm),npatch  &
                   ,leaf_g(icm)%veg_temp,leaf_g(ifm)%veg_temp &
                   ,leaf_g(icm)%patch_area,leaf_g(icm)%patch_area &
-                  ,scratch%vt3da,scratch%vt3db,scratch%vt2da,scratch%vt2db )
+                  ,scratch%vt3da,scratch%vt3db,vt2da,vt2db )
              call patch_interp(icm,ifm  &
                   ,1,nnxp(icm),nnyp(icm),npatch,1,nnxp(ifm),nnyp(ifm),npatch  &
                   ,leaf_g(icm)%can_rvap,leaf_g(ifm)%can_rvap &
                   ,leaf_g(icm)%patch_area,leaf_g(icm)%patch_area &
-                  ,scratch%vt3da,scratch%vt3db,scratch%vt2da,scratch%vt2db )
+                  ,scratch%vt3da,scratch%vt3db,vt2da,vt2db )
              call patch_interp(icm,ifm  &
                   ,1,nnxp(icm),nnyp(icm),npatch,1,nnxp(ifm),nnyp(ifm),npatch  &
                   ,leaf_g(icm)%can_temp,leaf_g(ifm)%can_temp &
                   ,leaf_g(icm)%patch_area,leaf_g(icm)%patch_area &
-                  ,scratch%vt3da,scratch%vt3db,scratch%vt2da,scratch%vt2db )
+                  ,scratch%vt3da,scratch%vt3db,vt2da,vt2db )
              call patch_interp(icm,ifm  &
                   ,1,nnxp(icm),nnyp(icm),npatch,1,nnxp(ifm),nnyp(ifm),npatch  &
                   ,leaf_g(icm)%veg_ndvic,leaf_g(ifm)%veg_ndvic &
                   ,leaf_g(icm)%patch_area,leaf_g(icm)%patch_area &
-                  ,scratch%vt3da,scratch%vt3db,scratch%vt2da,scratch%vt2db )
+                  ,scratch%vt3da,scratch%vt3db,vt2da,vt2db )
 
           endif
 

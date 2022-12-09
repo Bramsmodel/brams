@@ -44,8 +44,7 @@ module ModRbnd
        naddsc
 
   use mem_scratch, only:  &
-       scratch,&
-       vctr2
+       scratch
 
   use mem_tend, only: tend       !tend%ut
 
@@ -82,7 +81,6 @@ module ModRbnd
   public :: TopSetScalar
   public :: TopSet2Scalar
   public :: BotSetScalar
-  public :: BotSetAdapScalar
   public :: KeepTracersNonnegScalar
   public :: latbnd 
   public :: latnormv
@@ -93,8 +91,6 @@ module ModRbnd
   public :: rayft 
   public :: rayf 
   public :: trsets
-  public :: botset_adap
-  public :: rayf_adap
 
 contains
 
@@ -462,59 +458,6 @@ contains
     return
   end subroutine BotSetScalar
 
-  subroutine BotSetAdapScalar(m1,m2,m3,ia,iz,ja,jz,ibcon,lpx,aa,vnam)
-    integer, intent(in) :: m1
-    integer, intent(in) :: m2
-    integer, intent(in) :: m3
-    integer, intent(in) :: ia
-    integer, intent(in) :: iz
-    integer, intent(in) :: ja
-    integer, intent(in) :: jz
-    integer, intent(in) :: ibcon
-    character(len=*) :: vnam
-    integer, intent(in) :: lpx(m2,m3)
-    real, pointer, intent(in) :: aa(:,:,:)
-    ! pointer intent(in), values intent(inout)
-
-
-    integer :: i,j,k,ka
-    real :: dzmr
-
-    if (vnam .eq. 'P') then
-       dzmr = dzm(2) / dzm(1)
-       do i = 1,m2
-          do j = 1,m3
-             ka = lpx(i,j)
-             do k = ka-1,1,-1
-                aa(k,i,j) = aa(k+1,i,j) + (aa(k+1,i,j) - aa(k+2,i,j)) * dzmr
-             enddo
-          enddo
-       enddo
-    else
-       do i = 1,m2
-          do j = 1,m3
-             ka = lpx(i,j)
-             do k = ka-1,1,-1
-                aa(k,i,j) = aa(k+1,i,j)
-             enddo
-          enddo
-       enddo
-    endif
-
-    if (vnam == 'U' .or. vnam == 'V' .or. vnam == 'W') then
-       do i = 1,m2
-          do j = 1,m3
-             ka = lpx(i,j)
-             do k = ka-1,1,-1
-                aa(k,i,j) = 0.
-             enddo
-          enddo
-       enddo
-    endif
-
-    return
-  end subroutine BotSetAdapScalar
-
   subroutine KeepTracersNonnegScalar(mxyzp,scp)
     integer, intent(in) :: mxyzp
     real, pointer, intent(in) :: scp(:)
@@ -755,11 +698,6 @@ contains
                ,up,'U')
           call botset(mzp,mxp,myp,ia,iz,ja,jz,ibcon   &
                ,vp,'V')
-       else
-          call botset_adap(mzp,mxp,myp,ia,iz,ja,jz,ibcon,int(lpu)  &
-               ,up,'U')
-          call botset_adap(mzp,mxp,myp,ia,iz,ja,jz,ibcon,int(lpv)  &
-               ,vp,'V')
        endif
     endif
 
@@ -768,9 +706,6 @@ contains
 
     if (if_adap == 0) then
        call botset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-            ,pp,'P')
-    else
-       call botset_adap(mzp,mxp,myp,ia,iz,ja,jz,ibcon,int(lpw)  &
             ,pp,'P')
     endif
 
@@ -817,11 +752,6 @@ contains
                ,uc,'U')
           call botset(mzp,mxp,myp,ia,iz,ja,jz,ibcon   &
                ,vc,'V')
-       else
-          call botset_adap(mzp,mxp,myp,ia,iz,ja,jz,ibcon,int(lpu)  &
-               ,uc,'U')
-          call botset_adap(mzp,mxp,myp,ia,iz,ja,jz,ibcon,int(lpv)  &
-               ,vc,'V')
        endif
     endif
 
@@ -831,9 +761,6 @@ contains
 
     if (if_adap == 0) then
        call botset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-            ,pc,'P')
-    else
-       call botset_adap(mzp,mxp,myp,ia,iz,ja,jz,ibcon,int(lpw)  &
             ,pc,'P')
     endif
 
@@ -1249,12 +1176,6 @@ contains
             ,tend%tht     ,grid_g(ngrid)%rtgt  &
             ,grid_g(ngrid)%topt)
 
-    else
-
-       call rayf_adap(4,mzp,mxp,myp,ia,iz,ja,jz,ibcon     &
-            ,int(grid_g(ngrid)%lpw) ,scratch%vt3da  &
-            ,oneBasicFields%th0 ,tend%tht      )
-
     endif
     return
   end subroutine rayft
@@ -1283,6 +1204,7 @@ contains
     real :: zmkf,c1,c2
     integer :: kf,i,j,k
     real :: vctr5(m1)
+    real :: vctr2(mzp)
 
     !     This routine calculates rayleigh friction terms velocity and theta_il
 
@@ -1398,9 +1320,6 @@ contains
        if (nstbot .eq. 1)  then
           if (if_adap == 0) then
              call BotSetScalar(mzp,mxp,myp,ia,iz,ja,jz,ibcon,oneScalarTab(n)%var_p_3D,'T')
-          else
-             call BotSetAdapScalar(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-                  ,int(grid_g(ngrid)%lpw),oneScalarTab(n)%var_p_3D,'T')
           endif
        endif
     enddo
@@ -1425,137 +1344,6 @@ contains
     endif
 
   end subroutine trsets
-
-  subroutine botset_adap(m1,m2,m3,ia,iz,ja,jz,ibcon,lpx,aa,vnam)
-    integer, intent(in)    :: m1
-    integer, intent(in)    :: m2
-    integer, intent(in)    :: m3
-    integer, intent(in)    :: ia
-    integer, intent(in)    :: iz
-    integer, intent(in)    :: ja
-    integer, intent(in)    :: jz
-    integer, intent(in)    :: ibcon
-    integer, intent(in) :: lpx(m2,m3)
-    real, intent(inout) :: aa(m1,m2,m3)
-    character(len=*) :: vnam
-
-    integer :: i,j,k,ka
-    real :: dzmr
-
-    if (vnam .eq. 'P') then
-       dzmr = dzm(2) / dzm(1)
-       do i = 1,m2
-          do j = 1,m3
-             ka = lpx(i,j)
-             do k = ka-1,1,-1
-                aa(k,i,j) = aa(k+1,i,j) + (aa(k+1,i,j) - aa(k+2,i,j)) * dzmr
-             enddo
-          enddo
-       enddo
-    else
-       do i = 1,m2
-          do j = 1,m3
-             ka = lpx(i,j)
-             do k = ka-1,1,-1
-                aa(k,i,j) = aa(k+1,i,j)
-             enddo
-          enddo
-       enddo
-    endif
-
-    if (vnam == 'U' .or. vnam == 'V' .or. vnam == 'W') then
-       do i = 1,m2
-          do j = 1,m3
-             ka = lpx(i,j)
-             do k = ka-1,1,-1
-                aa(k,i,j) = 0.
-             enddo
-          enddo
-       enddo
-    endif
-
-    return
-  end subroutine botset_adap
-
-  subroutine rayf_adap(ifrom,m1,m2,m3,ia,iz,ja,jz,ibcon,lpx,var,th0,tht)
-    integer :: ifrom,m1,m2,m3,ia,iz,ja,jz,ibcon
-    integer, dimension(m2,m3) :: lpx
-    real, dimension(m1,m2,m3) :: var,th0,tht
-
-    real :: zmkf,c1,c2
-    integer :: kf,i,j,k
-
-    !     This routine calculates rayleigh friction terms velocity and theta_il
-
-    if (nfpt .eq. 0 .or. distim .le. 0) return
-    kf = nnz(1) - nfpt
-    zmkf = zmn(kf,1)
-    c1 = 1. / (distim * (ztop - zmkf))
-    c2 = dts * c1
-    goto(100,200,300,400) ifrom
-100 continue
-
-    !     u friction
-    do j = ja,jz
-       do i = ia,iz
-          do k = m1-1,lpx(i,j),-1
-             if (zt(k) .le. zmkf) go to 10
-
-             var(k,i,j) = var(k,i,j) + c2 * (zt(k) - zmkf)  &
-                  * (u01dn(k,ngrid) - var(k,i,j))
-
-          enddo
-10        continue
-       enddo
-    enddo
-    return
-200 continue
-
-    !     V friction
-
-    if (jdim .eq. 0 .and. icorflg .eq. 0) return
-    do j = ja,jz
-       do i = ia,iz
-          do k = m1-1,lpx(i,j),-1
-             if (zt(k) .le. zmkf) go to 20
-             var(k,i,j) = var(k,i,j) + c2 * (zt(k) - zmkf)  &
-                  * (v01dn(1,ngrid) - var(k,i,j))
-          enddo
-20        continue
-       enddo
-    enddo
-    return
-300 continue
-
-    !     W friction
-
-    do j = ja,jz
-       do i = ia,iz
-          do k = m1-1,lpx(i,j),-1
-             if (zt(k) .le. zmkf) go to 30
-             var(k,i,j) = var(k,i,j) - c2 * (zt(k) - zmkf) * var(k,i,j)
-          enddo
-30        continue
-       enddo
-    enddo
-    return
-400 continue
-
-    !     THETA FRICTION
-
-    do j = ja,jz
-       do i = ia,iz
-          do k = m1-1,lpx(i,j),-1
-             if (zt(k) .le. zmkf) go to 40
-             tht(k,i,j) = tht(k,i,j) + c1 * (zt(k) - zmkf)  &
-                  * (th0(k,i,j) - var(k,i,j))
-          enddo
-40        continue
-       enddo
-    enddo
-    return
-  end subroutine rayf_adap
-
 
 end module ModRbnd
 

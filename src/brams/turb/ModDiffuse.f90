@@ -47,11 +47,7 @@ module ModDiffuse
        MicroFields
 
   use mem_scratch, only:  &
-       scratch,           &   ! %vt3da, %vt3db, %vt3dc, %vt3dd, %vt3de, 
-                                ! %vt3df, %vt3dg, %vt3dh, %vt3di, %vt3dj,
-                                ! %vt3dn, %scr2
-       vctr1,             &   !
-       vctr2    !
+       scratch
 
   use node_mod, only:     &
        mxp,     &     !INTENT(IN)
@@ -147,9 +143,13 @@ contains
     !! ALF
     !
     ! (JP) removing scr2 from scratch
+    real, target :: scr1(mxp*myp*mzp)
     real, target :: scr2(mxp*myp*mzp)
+    real, target :: vt2da(mxp*myp)
 
     character(len=*), parameter :: h="**(diffuse_brams31)**" 
+    real :: vctr1(mzp)
+    real :: vctr2(mzp)
     real :: vctr3(mzp)
     real :: vctr34(mzp)
     
@@ -191,7 +191,7 @@ contains
        call mxdefm(mzp,mxp,myp,ia,iz,ja,jz,ibcon,jdim            &
             ,scratch%vt3dh      ,scratch%vt3di      &
             ,scratch%vt3dj      ,scratch%vt3dk      &
-            ,scratch%scr1       ,scr2           &
+            ,scr1       ,scr2           &
             ,oneBasicFields%dn0 ,grid_g(ngrid)%rtgt &
             ,grid_g(ngrid)%dxt  ,grid_g(ngrid)%dyt  &
             ,grid_g(ngrid)%lpw  ,mynum  &
@@ -202,7 +202,7 @@ contains
        call tkemy(mzp,mxp,myp,ia,iz,ja,jz,ibcon,jdim,nodei0(mynum,ngrid),nodej0(mynum,ngrid)  &
             ,oneTurbFields%tkep   ,tend%tket            &
             ,scratch%vt3dh        ,scratch%vt3di        &
-            ,scratch%vt3dj        ,scratch%scr1         &
+            ,scratch%vt3dj        ,scr1         &
             ,grid_g(ngrid)%rtgt   ,oneBasicFields%theta &
             ,oneBasicFields%dn0   ,oneBasicFields%up    &
             ,oneBasicFields%vp    ,oneBasicFields%wp    &
@@ -221,7 +221,7 @@ contains
             ,oneBasicFields%rv    ,oneBasicFields%theta &
             ,scratch%vt3da        ,scratch%vt3dc        &
             ,scratch%vt3dh        ,scratch%vt3dj        &
-            ,scratch%scr1         ,scr2             &
+            ,scr1         ,scr2             &
             ,oneTurbFields%sflux_u   ,oneTurbFields%sflux_v    &
             ,oneTurbFields%sflux_w   ,oneTurbFields%sflux_t    &
             ,grid_g(ngrid)%dxt       ,grid_g(ngrid)%rtgt       &
@@ -238,7 +238,7 @@ contains
             ,oneTurbFields%epsp,tend%epst &
             ,scratch%vt3da,scratch%vt3dc  &
             ,scratch%vt3dh,scratch%vt3di  &
-            ,scratch%vt3dj,scratch%scr1  &
+            ,scratch%vt3dj,scr1  &
             ,scr2 ,grid_g(ngrid)%rtgt  &
             ,scratch%vt3dd,scratch%vt3de,grid_g(ngrid)%dxt  &
             ,leaf_g(ngrid)%ustar,leaf_g(ngrid)%patch_area &
@@ -254,7 +254,7 @@ contains
             ,oneTurbFields%epsp,tend%epst  &
             ,scratch%vt3da,scratch%vt3dc  &
             ,scratch%vt3dh,scratch%vt3di  &
-            ,scratch%vt3dj,scratch%scr1  &
+            ,scratch%vt3dj,scr1  &
             ,scr2 ,grid_g(ngrid)%rtgt  &
             ,leaf_g(ngrid)%ustar,leaf_g(ngrid)%patch_area &
             ,grid_g(ngrid)%lpw,oneBasicFields%dn0  )
@@ -269,7 +269,7 @@ contains
     !_STC............................................................
 
     call klbnd(mzp,mxp,myp,ibcon,jdim  &
-         ,scratch%scr1 ,oneBasicFields%dn0,grid_g(ngrid)%lpw)
+         ,scr1 ,oneBasicFields%dn0,grid_g(ngrid)%lpw)
     call klbnd(mzp,mxp,myp,ibcon,jdim  &
          ,scr2 ,oneBasicFields%dn0,grid_g(ngrid)%lpw)
     call klbnd(mzp,mxp,myp,ibcon,jdim  &
@@ -288,10 +288,10 @@ contains
           do k = 1,nnzp(ngrid)
              ind = ind + 1
              s1 = scr2(ind)
-             s2 = scratch%scr1(ind)
+             s2 = scr1(ind)
              s3 = scratch%vt3dh(ind)
              scr2(ind) = oneTurbFields%hkm(k,i,j)
-             scratch%scr1(ind) = oneTurbFields%vkm(k,i,j)
+             scr1(ind) = oneTurbFields%vkm(k,i,j)
              scratch%vt3dh(ind) = oneTurbFields%vkh(k,i,j)
              !! also for vt3di = K(tke) ?????    22 March 02
              !!         scratch%vt3di(ind) = oneTurbFields%vke(k,i,j)
@@ -318,7 +318,7 @@ contains
          ,oneTurbFields%sflux_u ,oneTurbFields%sflux_v  &
          ,oneTurbFields%sflux_w ,oneBasicFields%dn0     &
          ,oneBasicFields%dn0u   ,oneBasicFields%dn0v    &
-         ,scratch%scr1          ,scr2                   &
+         ,scr1          ,scr2                   &
          ,ibcon,mynum,oneNamelistFile%ihorgrad)
 
     ! Convert momentum K's to scalar K's, if necessary
@@ -329,7 +329,7 @@ contains
        enddo
     elseif (idiffk == 4) then
        do ind = 1,mxyzp
-          scratch%vt3di(ind) = 2. * scratch%scr1(ind)
+          scratch%vt3di(ind) = 2. * scr1(ind)
        enddo
     endif
 
@@ -408,13 +408,13 @@ contains
 
           do n = 1, oneScalarTabSize
 
-             scratch%vt2da = 0.
+             vt2da = 0.
              if (nstbot == 1) then
                 if (oneScalarTab(n)%name == 'THP' .or. &
                      oneScalarTab(n)%name == 'THC' ) then
-                   call atob(mxp*myp, oneTurbFields%sflux_t, scratch%vt2da)
+                   call atob(mxp*myp, oneTurbFields%sflux_t, vt2da)
                 elseif (oneScalarTab(n)%name == 'RTP') then
-                   call atob(mxp*myp, oneTurbFields%sflux_r, scratch%vt2da)
+                   call atob(mxp*myp, oneTurbFields%sflux_r, vt2da)
                 endif
              endif
 
@@ -480,8 +480,8 @@ contains
                   ,scratch%vt3dk           ,scratch%vt3do            &
                   ,scratch%vt3dc           ,scratch%vt3dd            &
                   ,scratch%vt3dl           ,scratch%vt3dm            &
-                  ,scratch%vt2db           ,grid_g(ngrid)%rtgt     &
-                  ,scratch%vt2da           ,oneBasicFields%dn0   &
+                  ,grid_g(ngrid)%rtgt     &
+                  ,vt2da           ,oneBasicFields%dn0   &
                   ,vkh_p                   ,hkh_p                       )
 
              if (oneScalarTab(n)%name == 'EPSP') then

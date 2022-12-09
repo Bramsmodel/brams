@@ -568,10 +568,10 @@ contains
     if (ierr/=0) call fatal_error(h//"Allocating gridm_g")
     do ng=1,ngrids
        call nullify_grid(grid_g(ng))
-       call alloc_grid(grid_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng, if_adap)
+       call alloc_grid(grid_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
        call nullify_grid(gridm_g(ng))
        if (imean == 1) then
-          call alloc_grid(gridm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng, if_adap)
+          call alloc_grid(gridm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
        end if
 
        call filltab_grid(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &

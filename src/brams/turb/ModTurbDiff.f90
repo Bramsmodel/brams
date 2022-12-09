@@ -24,10 +24,6 @@ module ModTurbDiff
        zm,       &     !INTENT(IN)
        dtlt            !INTENT(IN)
 
-  use mem_scratch, only: &
-       vctr1,    &     !INTENT(OUT)
-       vctr2      !INTENT(OUT)
-
   use mem_opt, only : &
        opt
 
@@ -112,6 +108,8 @@ contains
     integer :: i,j,k
 
     real :: akn,ako,akp,cross,c1,c2,dtlvi
+    real :: vctr1(m1)
+    real :: vctr2(m1)
     real :: vctr3(m1)
     real :: vctr4(m1)
     real :: vctr5(m1)
@@ -497,7 +495,7 @@ contains
          vt3dk(m1,m2,m3), vt3do(m1,m2,m3), dn03i(m1,m2,m3), vt3dl(m1,m2,m3), &
          vt3dm(m1,m2,m3)
     real, intent(in)    :: sfcflx(m2,m3), rtgt(m2,m3)
-    real, intent(inout) :: vt2db(m2,m3)
+    real, intent(out) :: vt2db(m2,m3)
 !!$  real, pointer       :: lsfcupar(:,:,:)
 !!$  integer, intent(in) :: nsc
 
@@ -512,10 +510,13 @@ contains
     ! Local variables:
     integer :: i, j, k
     integer, save :: ksf_save = 0
+
     ! **(JP)** vetoriza calculo de c1
     real :: c1(m2,m3)
     ! **(JP)** fim de modificacao
     real :: dtlti
+    real :: vctr1(m1)
+    real :: vctr2(m1)
     real :: vctr3(m1)
     real :: vctr4(m1)
     real :: vctr5(m1)

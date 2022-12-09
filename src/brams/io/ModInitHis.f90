@@ -70,10 +70,6 @@ module ModInitHis
   use io_params, only: &
        hfilin
 
-  use mem_scratch, only: &
-       vctr1, &
-       vctr2
-
   use ModMicControl, only: &
        MicControl
   
@@ -169,6 +165,7 @@ contains
 
     type (head_table), allocatable,save :: hr_table(:)
 
+    real :: vctr1(nnzp(ngrid))
     real :: vctr4(nnzp(ngrid))
 
     ! Open the input history header file and read some of the info.
@@ -887,8 +884,11 @@ contains
     integer :: i,j,k,np,ii,jj
     real :: xxm,yym,fixxm,fiyym,topoh,rtgth
     real, allocatable :: scr3(:,:,:,:)
-    real :: vctr10(m1)
+    real :: vctr1(m1)
+    real :: vctr2(m1)
     real :: vctr3(m1)
+    real :: vctr10(m1)
+    
     ! This routine will interpolate the new run's coarse grid only
 
     !print*,'nssssss1:',n1,n2,n3,n4,vname

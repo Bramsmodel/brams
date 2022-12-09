@@ -353,15 +353,7 @@ contains
 
     ! Copy surface atmospheric variables into 2d arrays for input to leaf
 
-    if (if_adap == 1) then
-       call sfc_fields_adap(m1,m2,m3,ia,iz,ja,jz,jdim             &
-            ,int(grid%lpu)    ,int(grid%lpv)  ,int(grid%lpw)    &
-            ,grid%topma  ,grid%aru  ,grid%arv  &
-            ,oneBasicFields%theta ,oneBasicFields%rv  ,oneBasicFields%up  &
-            ,oneBasicFields%vp    ,oneBasicFields%dn0 ,oneBasicFields%pp  &
-            ,oneBasicFields%pi0   ,zt,zm,dzt                          &
-            ,ths2,rvs2,ups2,vps2,pis2,dens2,zts2                    )
-    else
+    if (if_adap /= 1) then
        call sfc_fields(m1,m2,m3,ia,iz,ja,jz,jdim                  &
             ,oneBasicFields%theta ,oneBasicFields%rv ,oneBasicFields%up  &
             ,oneBasicFields%vp    ,oneBasicFields%dn0,oneBasicFields%pp  &
@@ -1840,74 +1832,6 @@ contains
 
     return
   end subroutine sfc_fields
-
-  !****************************************************************************
-
-  subroutine sfc_fields_adap(m1,m2,m3,ia,iz,ja,jz,jd,lpu,lpv,lpw  &
-       ,topma,aru,arv,theta,rv,up,vp,dn0,pp,pi0,zt,zm,dzt       &
-       ,ths2,rvs2,ups2,vps2,pis2,dens2,zts2)
-    integer :: m1,m2,m3,ia,iz,ja,jz,jd
-    integer, dimension(m2,m3) :: lpu,lpv,lpw
-    real, dimension(m1,m2,m3) :: aru,arv,theta,rv,up,vp,dn0,pp,pi0
-    real, dimension(m2,m3) :: topma,ths2,rvs2,ups2,vps2,pis2,dens2,zts2
-    real, dimension(m1) :: zt,zm,dzt
-
-    integer :: i,j,k1,k2,k3
-    real :: topma_t,wtw,wtu1,wtu2,wtv1,wtv2
-
-    ! Compute surface atmospheric conditions
-
-    do j = ja,jz
-       do i = ia,iz
-          k2 = lpw(i,j)
-          k1 = k2 - 1
-          k3 = k2 + 1
-
-          topma_t = .25 * (topma(i,j) + topma(i-1,j)  &
-               + topma(i,j-jd) + topma(i-1,j-jd))
-
-          ! weights for lowest predicted points, relative to points above them
-
-          wtw = (zm(k2) - topma_t) * dzt(k2)
-          wtu1 = aru(lpu(i-1,j),i-1,j)   / aru(lpu(i-1,j)+1,i-1,j)
-          wtu2 = aru(lpu(i,j),i,j)       / aru(lpu(i,j)+1,i,j)
-          wtv1 = arv(lpv(i,j-jd),i,j-jd) / arv(lpv(i,j-jd)+1,i,j-jd)
-          wtv2 = arv(lpv(i,j),i,j)       / arv(lpv(i,j)+1,i,j)
-
-          ths2(i,j) =  wtw * theta(k2,i,j) + (1. - wtw)  * theta(k3,i,j)
-
-          rvs2(i,j) =  wtw * rv(k2,i,j)    + (1. - wtw)  * rv(k3,i,j)
-
-          ups2(i,j) = (wtu1        * up(lpu(i-1,j),i-1,j)    &
-               +  (1. - wtu1) * up(lpu(i-1,j)+1,i-1,j)  &
-               +  wtu2        * up(lpu(i,j),i,j)        &
-               +  (1. - wtu2) * up(lpu(i,j)+1,i,j)) * .5
-
-          vps2(i,j) = (wtv1        * vp(lpv(i,j-jd),i,j-jd)    &
-               +  (1. - wtv1) * vp(lpv(i,j-jd)+1,i,j-jd)  &
-               +  wtv2        * vp(lpv(i,j),i,j)          &
-               +  (1. - wtv2) * vp(lpv(i,j)+1,i,j)) * .5
-
-          zts2(i,j) = (wtw * (zt(k2) - zm(k1))  &
-               + (1. - wtw) * (zt(k3) - zm(k2)))
-
-          if (wtw >= .5) then
-             pis2(i,j)  = ((wtw - .5) * (pp(k1,i,j) + pi0(k1,i,j))  &
-                  + (1.5 - wtw) * (pp(k2,i,j) + pi0(k2,i,j))) * cpi
-             dens2(i,j) = (wtw - .5)  * dn0(k1,i,j)  &
-                  + (1.5 - wtw) * dn0(k2,i,j)
-          else
-             pis2(i,j)  = ((wtw + .5) * (pp(k2,i,j) + pi0(k2,i,j))  &
-                  + (.5 - wtw) * (pp(k3,i,j) + pi0(k3,i,j))) * cpi
-             dens2(i,j) = (wtw + .5) * dn0(k2,i,j)  &
-                  + (.5 - wtw) * dn0(k3,i,j)
-          endif
-
-       enddo
-    enddo
-
-    return
-  end subroutine sfc_fields_adap
 
   !****************************************************************************
 

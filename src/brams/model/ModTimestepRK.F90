@@ -41,9 +41,6 @@ module ModTimestepRK
   use ModRstilt, only: &
        prep_advflx_to_stilt
 
-  use ModUrbanCanopy, only: &
-       urban_canopy
-
   use ModLeaf3, only: &
        sfclyr
 
@@ -472,12 +469,6 @@ contains
     end if
 
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
-
-    !  Urban canopy parameterization
-    !----------------------------------------
-    if (OneGrid%oneNamelistFile%if_urban_canopy==1) then
-       call urban_canopy(oneGrid%oneBasicFields, oneGrid%oneTurbFields)
-    end if
 
     !  Analysis nudging and boundary condition
     !------------------------------------------

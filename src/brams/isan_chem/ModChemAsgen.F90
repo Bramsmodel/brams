@@ -253,7 +253,7 @@ contains
     do ng=1,ngrids
        write (*,fmt='("Proc #",I4.4,", start ISAN grid alloc, grid=",I1,", nnzp=",I3.3,", nnxp=",I3.3,", nnyp=",I3.3)') mynum,ng,nnzp(ng),nnxp(ng),nnyp(ng)
        call nullify_grid(grid_g(ng))
-       call alloc_grid(grid_g(ng),nnzp(ng),nnxp(ng),nnyp(ng),ng,if_adap) 
+       call alloc_grid(grid_g(ng),nnzp(ng),nnxp(ng),nnyp(ng),ng) 
     enddo
 
     ! Allocate global grid variables data type.
@@ -579,7 +579,7 @@ contains
                 call fmrefs3d_isan(ifm,icm,nnzp(ifm),nnxp(ifm),nnyp(ifm) &
                      ,nnzp(icm),nnxp(icm),nnyp(icm),maxiz,maxix,maxiy  &
                      ,nnstbot(ifm),nnsttop(ifm),jdim  &
-                     ,rr_scr1,rr_scr2,rr_vt2da  &
+                     ,rr_scr1,rr_scr2 &
                      ,grid_g(ifm)%topt,grid_g(icm)%topt &
                      ,is_grids(icm)%rr_dn0,is_grids(ifm)%rr_dn0 &
                      ,is_grids(icm)%rr_th0,is_grids(ifm)%rr_th0 &
@@ -682,7 +682,7 @@ contains
                    print*,'-------------------------------------------------'                   
                    write(*,fmt='("Writing chemistry assimilation for ",I3.3," Species.")') nspecies                   
                    do nspc=1,nspecies
-                      call vforec(2,chem_is_grids(ng)%rr_sc(1,1,1,nspc),nxyzp,18  &
+                      call vforec(2,chem_is_grids(ng)%rr_sc(:,:,:,nspc),nxyzp,18  &
                            ,rr_scr1,'LIN')
 
                       write(*,fmt='("Spc: ",I3.3,1X,A16," MaxVal: ",E13.4," MinVal: ",E13.4)') nspc, &
@@ -700,7 +700,7 @@ contains
                    write(*,fmt='("Writing aerosol assimilation for ",I3.3," Species.")') nspecies_aer_in                   
                    do nspc=1,nspecies_aer_in
 
-                      call vforec(2,aer_is_grids(ng)%rr_sc(1,1,1,nspc),nxyzp,18  &
+                      call vforec(2,aer_is_grids(ng)%rr_sc(:,:,:,nspc),nxyzp,18  &
                            ,rr_scr1,'LIN')
 
                       write(*,fmt='("Spc: ",I3.3,1X,A16," MaxVal: ",E13.4," MinVal: ",E13.4)') nspc, &

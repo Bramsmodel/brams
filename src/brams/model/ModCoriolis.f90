@@ -40,8 +40,7 @@ module ModCoriolis
        tend
 
   use mem_scratch, only: &
-       scratch, &
-       vctr2
+       scratch
 
   use ref_sounding, only: &
        u01dn, &
@@ -153,6 +152,7 @@ contains
     type(BasicFields), pointer, intent(in) :: oneBasicFields
 
     real :: vt3da(mzp,mxp,myp)
+    real :: scr1(mzp,mxp,myp)
     character(len=*), parameter :: h="**(corlos)**"
 
     if(icorflg.eq.0) return
@@ -161,12 +161,7 @@ contains
     do j=1,myp
        do i=1,mxp
           do k=1,mzp
-             n=n+1
-             !ut(k,i,j)=tend%ut(n)  !MB: (original code)
-             !vt(k,i,j)=tend%vt(n)
-             !ut(k,i,j) = ut_ptr(n)
-             !vt(k,i,j) = vt_ptr(n)
-             vt3da(k,i,j)=scratch%scr1(n)   !MB: really necessary ???
+             vt3da(k,i,j)=scr1(k,i,j)   !MB: really necessary ???
           end do
        end do
     end do
@@ -180,11 +175,7 @@ contains
        do i=1,mxp
           do k=1,mzp
              n=n+1
-             !tend%ut(n)=ut(k,i,j)   !MB: (original code)
-             !tend%vt(n)=vt(k,i,j)
-             !ut_ptr(n) = ut(k,i,j) 
-             !vt_ptr(n) = vt(k,i,j)
-             scratch%scr1(n)=vt3da(k,i,j)  !MB: really necessary ???
+             scr1(k,i,j)=vt3da(k,i,j)  !MB: really necessary ???
           end do
        end do
     end do
@@ -209,6 +200,7 @@ contains
 
     integer :: i,j,k
     real :: c1
+    real :: vctr2(m1)
     real :: vctr5(m1)
 
     do j=ja,jz
@@ -280,6 +272,7 @@ contains
 
     integer :: i,j,k
     real :: c1
+    real :: vctr2(m1)
     real :: vctr5(m1)
 
     do j = ja,jz

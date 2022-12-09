@@ -22,9 +22,6 @@ module ModVarfUpdate
        ztop, &
        ngrid
 
-  use mem_scratch, only: &
-       vctr1, vctr2
-
   use rconstants, only: &
        p00, cp, cpor, g
 
@@ -39,74 +36,9 @@ module ModVarfUpdate
 
   private
 
-  public :: varf_adap
   public :: PrtOpt
   public :: hi_interpInitial4
 contains
-
-  subroutine varf_adap(n1,n2,n3,varu,varv,varp,vart,varr,topta)
-    integer :: n1,n2,n3
-    real, dimension(:,:,:) :: varu,varv,varp,vart,varr
-    real, dimension(:,:) :: topta
-
-    integer :: i,j,k
-    real :: vctr3(n1)
-    real :: vctr4(n1)
-    real :: vctr10(n1)
-    real :: vctr11(n1)
-    real :: vctr12(n1)
-    real :: vctr13(n1)
-    real :: vctr14(n1)
-    real :: vctr15(n1)
-    real :: vctr16(n1)
-
-    ! Interpolate from sigma-z varfile vertical coords to ADAP grid
-
-
-    do j=1,n3
-       do i=1,n2
-
-          do k=1,n1
-             vctr10(k)=topta(i,j) + (1.-topta(i,j)/ztop)*ztn(k,ngrid)
-          enddo
-          vctr1(1:n1)=varu(1:n1,i,j)
-          vctr2(1:n1)=varv(1:n1,i,j)
-          vctr3(1:n1)=vart(1:n1,i,j)
-          vctr4(1:n1)=varr(1:n1,i,j)
-          call htint2(n1,vctr1,vctr10,n1,vctr11,ztn(1,ngrid))
-          call htint2(n1,vctr2,vctr10,n1,vctr12,ztn(1,ngrid))
-          call htint2(n1,vctr3,vctr10,n1,vctr13,ztn(1,ngrid))
-          call htint2(n1,vctr4,vctr10,n1,vctr14,ztn(1,ngrid))
-
-          ! Do hydrostatic balance
-          do k=1,n1
-             vctr15(k) = vctr13(k)* (1.+.61*vctr14(k))
-          enddo
-
-          vctr16(n1)= varp(n1,i,j) + g * (ztn(n1,ngrid) - vctr10(n1) )  &
-               / vctr15(n1)
-          do k = n1-1,1,-1
-             vctr16(k) = vctr16(k+1) + g * (ztn(k+1,ngrid)-ztn(k,ngrid))  &
-                  /((vctr15(k)+vctr15(k+1))*.5)
-          enddo
-
-          varu(1:n1,i,j)= vctr11(1:n1)
-          varv(1:n1,i,j)= vctr12(1:n1)
-          vart(1:n1,i,j)= vctr13(1:n1)
-          varr(1:n1,i,j)= vctr14(1:n1)
-          varp(1:n1,i,j)= vctr16(1:n1)
-
-       enddo
-    enddo
-
-    return
-  end subroutine varf_adap
-
-  !     **************************************************************
-
-
-
-
 
   subroutine PrtOpt()
     integer :: k
@@ -172,6 +104,8 @@ contains
 
     integer :: i,j,k,np,ii,jj
     real :: xxm,yym,fixxm,fiyym,topoh,rtgth
+    real :: vctr1(m1)
+    real :: vctr2(m1)
     real :: vctr3(n1)
     real :: vctr10(m1)
 

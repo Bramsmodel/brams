@@ -20,9 +20,6 @@ module ModTurbKE
        time, &     !INTENT(IN)
        nstbot      !INTENT(IN)
 
-  use mem_scratch, only: &
-       vctr1      !INTENT(OUT)
-
   use ke_coms, only: &
        c_eps, &       !INTENT(IN)
        iopzl, &       !INTENT(IN)
@@ -122,6 +119,7 @@ contains
     real :: al0,al0_zil,scl,sumtkz,sumtk,tkep_k2,dzloc,dpsi2dz,scl_max
 !!$real, external :: ssum
     integer :: k,i,j,np,k2
+    real :: vctr1(m1)
     real :: vctr25(m1)
     real :: vctr27(m1)
     real :: vctr28(m1)
@@ -640,6 +638,7 @@ contains
     real :: a1,a2,b1,b2,c1,aux1,aux2,rf1,rf2,rf3,rf4,wght1,wght3,sumtkz,sumtk  &
          ,al0,tket2,ri,rf,shr,smr,tker,qq,ssmf,shf,sh0,ssm,aux,gm,gh,sm1,sm2  &
          ,sh1,sh2,dzloc !,ssum
+    real :: vctr1(m1)
     real :: vctr5(m1)
     real :: vctr9(m1)
     real :: vctr30(m1)

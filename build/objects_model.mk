@@ -126,13 +126,11 @@ OBJ_MOD = \
 	ModParaInit.o \
 	Phys_const.o \
 	ModAcoust.o \
-	ModAcoustAdap.o \
 	rad_carma.o \
 	rad_driv.o \
 	ModRrtmDriver.o \
 	ModRadvc.o \
 	ModRadvcRK.o \
-	ModRadvcAdap.o \
 	ModMonotonicAdvection.o \
 	mod_GhostBlock.o \
 	mod_GhostBlockPartition.o \
@@ -169,11 +167,8 @@ OBJ_MOD = \
 	ModSoilMoisture.o \
 	ModSstRead.o \
 	ModTurbDiff.o \
-	ModTurbDiffAdap.o \
 	ModTurbK.o \
-	ModTurbKAdap.o \
 	ModTurbKE.o \
-	ModUrbanCanopy.o \
 	extra.o \
 	aer1_list.o \
 	mem_aer1.o \

@@ -80,9 +80,6 @@ module ModChemFirstRams
        ztn, &
        nxtnest
 
-  use mem_scratch, only: &
-       vctr2
-
   implicit none
 
   include "files.h"
@@ -276,7 +273,7 @@ contains
           call fmrefs3d_isan(ifm,icm,nnzp(ifm),nnxp(ifm),nnyp(ifm) &
                ,nnzp(icm),nnxp(icm),nnyp(icm),maxiz,maxix,maxiy  &
                ,nnstbot(ifm),nnsttop(ifm),jdim  &
-               ,rr_scr1,rr_scr2,rr_vt2da  &
+               ,rr_scr1,rr_scr2  &
                ,grid_g(ifm)%topt,grid_g(icm)%topt &
                ,is_grids(icm)%rr_dn0,is_grids(ifm)%rr_dn0 &
                ,is_grids(icm)%rr_th0,is_grids(ifm)%rr_th0 &
@@ -315,7 +312,7 @@ contains
        call fmrefs3d_isan(ifm,icm,nnzp(ifm),nnxp(ifm),nnyp(ifm) &
             ,nnzp(icm),nnxp(icm),nnyp(icm),maxiz,maxix,maxiy  &
             ,nnstbot(ifm),nnsttop(ifm),jdim  &
-            ,rr_scr1,rr_scr2,rr_vt2da  &
+            ,rr_scr1,rr_scr2  &
             ,grid_g(ifm)%topt,grid_g(icm)%topt &
             ,is_grids(icm)%rr_dn0,is_grids(ifm)%rr_dn0 &
             ,is_grids(icm)%rr_th0,is_grids(ifm)%rr_th0 &
@@ -490,6 +487,7 @@ contains
 
     integer :: i,j,k, nmax
     real :: c1,c2,c3
+    real :: vctr2(n1)
     real :: vctr11(n1)
     real :: vctr12(n1)
 

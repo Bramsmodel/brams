@@ -14,7 +14,7 @@ module ModRamsGrid
        ExtractLocalFromGlobal, alloc_grid, dealloc_grid, deltax, deltaxn, &
        deltay, deltayn, deltaz, dtlongn, dtlt, dtlv, dump_mem_grid, dzm, &
        dzm2, dzm2n, dzmn, dzt, dzt2, dzt2n, dztn, grid_g, grid_vars, ht, &
-       ht2, ht2n, ht4, ht4n, htn, hw, hw2, hw2n, hw4, hw4n, hwn, if_adap, &
+       ht2, ht2n, ht4, ht4n, htn, hw, hw2, hw2n, hw4, hw4n, hwn, &
        ihtran, itopo, jdim, ngrid, ngrids, nnstbot, nnsttop, nnx, nnx1, &
        nnx2, nnxp, nnxyp, nnxysp, nnxyzp, nny, nny1, nny2, nnyp, nnz, nnz1, &
        nnzp, npatch, nstbot, nsttop, nullify_grid, nx, nx1, nx2, nxp, nxyp, &
@@ -34,7 +34,6 @@ module ModRamsGrid
        gridset
 
   use ModAdapInit, only: &
-       ctrlvols, &
        lpuvw_init
 
   implicit none
@@ -296,16 +295,6 @@ contains
        enddo
     enddo
 
-    if (if_adap == 1) then
-       do j = 1,n3
-          do i = 1,n2
-             topt(i,j) = 0.
-             topu(i,j) = 0.
-             topv(i,j) = 0.
-             topm(i,j) = 0.
-          enddo
-       enddo
-    endif
   end subroutine fill_toptuvm
 
 
@@ -569,7 +558,7 @@ contains
           ! allocate a grid_vars variable for the full domain
 
           call nullify_grid(globalGrid)
-          call alloc_grid(globalGrid, nnzp(ifm),nnxp(ifm),nnyp(ifm),ifm,if_adap)
+          call alloc_grid(globalGrid, nnzp(ifm),nnxp(ifm),nnyp(ifm),ifm)
 
           ! copy topography
           if (num==2) then !INITIAL or HISTORY
@@ -626,33 +615,10 @@ contains
           call lpuvw_init(nnxp(ifm),nnyp(ifm),globalGrid%lpu  &
                ,globalGrid%lpv,globalGrid%lpw  )
 
-          if (if_adap == 1) then
-
-             !**(JP)** not converted
-
-             !call fatal_error(h//" if_adap==1 not converted")
-             iErrNumber=dumpMessage(c_tty,c_yes,h,modelVersion,c_fatal, &
-                  "if_adap==1 not converted")
-
-             call ctrlvols (nnzp(ifm),nnxp(ifm),nnyp(ifm),nnstbot(ifm)  &
-                  ,dztn(:,ifm),xmn(:,ifm),ymn(:,ifm),zmn(:,ifm)           &
-                  ,platn(ifm),plonn(ifm)                                  &
-                  ,globalGrid%aru   ,globalGrid%arv       &
-                  ,globalGrid%arw   ,globalGrid%volt      &
-                  ,globalGrid%volu  ,globalGrid%volv      &
-                  ,globalGrid%volw  ,globalGrid%lpu       &
-                  ,globalGrid%lpv   ,globalGrid%lpw       &
-                  ,globalGrid%dxu   ,globalGrid%dxv       &
-                  ,globalGrid%dxt   ,globalGrid%dyu       &
-                  ,globalGrid%dyv   ,globalGrid%dyt       &
-                  ,globalGrid%topma ,globalGrid%topm      &
-                  ,ifm, nzg, npatch  )
-          endif
-
           ! extract local chunk from the full domain
           call ExtractLocalFromGlobal (globalGrid, &
                nnzp(ifm), nodemxp(mynum,ifm), nodemyp(mynum,ifm), &
-               nodei0(mynum,ifm), nodej0(mynum,ifm), if_adap, &
+               nodei0(mynum,ifm), nodej0(mynum,ifm), &
                grid_g(ifm))
 
           ! destroy full domain

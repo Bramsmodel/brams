@@ -413,7 +413,7 @@ contains
     real :: c1,airtemp
 
     real, dimension(n1,n2,n3) :: theta,pi0,pp,rv
-    real, dimension(n2,n3)    :: rvv,prsv,piv,vt2da,vt2db,glat,glon,zot  &
+    real, dimension(n2,n3)    :: rvv,prsv,piv,glat,glon,zot  &
          ,seatp,seatf,snow_mass,snow_depth
     real, dimension(n2,n3) :: lpw_R
 

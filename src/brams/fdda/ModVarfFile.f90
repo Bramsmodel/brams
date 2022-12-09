@@ -7,7 +7,6 @@ module ModVarfFile
        newgrid
   
   use ModVarfUpdate, only: &
-       varf_adap, &
        hi_interpInitial4
   
   use ModRamsReadHeader, only: &
@@ -27,10 +26,6 @@ module ModVarfFile
   use ModDateUtils, only: date_abs_secs2,  &
                           date_add_to,     &
                           date_make_big
-
-       
-  use mem_scratch, only: &
-       vctr2
 
   use ParLib, only: &
        parf_bcast,  &
@@ -1295,16 +1290,6 @@ contains
     end if !if(initialFlag .eq. 2)
     !--(DMK-CCATT-FIM)-----------------------------------------------------
 
-    ! If running ADAP coord, do interpolation to Cartesian levels
-
-    if (if_adap == 1) then
-
-       call varf_adap(nnzp(ngrid),nnxp(ngrid),nnyp(ngrid)  &
-            ,varinit_g(ngrid)%varuf,varinit_g(ngrid)%varvf  &
-            ,varinit_g(ngrid)%varpf,varinit_g(ngrid)%vartf  &
-            ,varinit_g(ngrid)%varrf,grid_g(ngrid)%topta )
-    endif
-
     ! Find the reference state
 
     if(initflag == 1 .and. ngrid == 1) then
@@ -1595,6 +1580,7 @@ contains
     ! Local Variables:
     integer :: i, j, k
     real :: c1, c2, c3
+    real :: vctr2(n1)
     character(len=*), parameter :: h="**(PropRefSound3D)**"
 
     ! +---------------------------------------------------------------------
@@ -1605,15 +1591,7 @@ contains
     do j=1,n3
        do i=1,n2
 
-          if (if_adap==1) then
-
-             do k=1,n1
-                pi0(k,i,j) = pi01dn(k,ngrid)
-                th0(k,i,j) = th01dn(k,ngrid)
-             end do
-             c1 = g*2.
-
-          else
+          if (if_adap /= 1) then
 
              do k=1,n1
                 vctr2(k) = zt(k)*rtgt(i,j) + topt(i,j)

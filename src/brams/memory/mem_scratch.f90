@@ -21,7 +21,6 @@ module mem_scratch
   use mem_aerad,   only: nwave      !intent(in)
 
   type scratch_vars
-     real, pointer :: scr1(:)
      real, pointer :: vt3da(:)
      real, pointer :: vt3db(:)
      real, pointer :: vt3dc(:)
@@ -39,19 +38,12 @@ module mem_scratch
      real, pointer :: vt3do(:)
      real, pointer :: vt3dp(:)
      real, pointer :: vt3dq(:)
-     real, pointer :: vt2da(:)
      real, pointer :: vt2db(:)
-     real, pointer :: vt2dc(:)
-     real, pointer :: vt2dd(:)
-     real, pointer :: vt2de(:)
-     real, pointer :: vt2df(:)
   end type scratch_vars
 
   type (scratch_vars) :: scratch
 
   !-------------------------------------------------------------------
-  real, allocatable :: vctr1(:)
-  real, allocatable :: vctr2(:)
 
   !---------------------------------------------------------------
 
@@ -129,8 +121,6 @@ contains
 
 
     ! For CATT
-    allocate (scratch%scr1 (ntpts_catt))
-    scratch%scr1 = 0.
     allocate (scratch%vt3da(ntpts))
     scratch%vt3da = 0.
     allocate (scratch%vt3db(ntpts))
@@ -169,18 +159,8 @@ contains
     scratch%vt3dq = 0. 
 !--(DMK-CCATT-FIM)----------------------------------------------------------------
     
-    allocate (scratch%vt2da(ntpts2))
-    scratch%vt2da = 0.
     allocate (scratch%vt2db(ntpts2))
     scratch%vt2db = 0.
-    allocate (scratch%vt2dc(ntpts2))
-    scratch%vt2dc = 0.
-    allocate (scratch%vt2dd(ntpts2))
-    scratch%vt2dd = 0.
-    allocate (scratch%vt2de(ntpts2))
-    scratch%vt2de = 0.
-    allocate (scratch%vt2df(ntpts2))
-    scratch%vt2df = 0.
     return
   end subroutine alloc_scratch
 
@@ -192,7 +172,6 @@ contains
 
     ! Deallocate all scratch arrays
 
-    if (associated(scratch%scr1 ))  nullify (scratch%scr1 )
 !!$    if (associated(scratch%scr2 ))  nullify (scratch%scr2 )
     if (associated(scratch%vt3da))  nullify (scratch%vt3da)
     if (associated(scratch%vt3db))  nullify (scratch%vt3db)
@@ -215,13 +194,7 @@ contains
     if (associated(scratch%vt3dq))  nullify (scratch%vt3dq)
 !--(DMK-CCATT-FIM)----------------------------------------------------------------
     
-    if (associated(scratch%vt2da))  nullify (scratch%vt2da)
     if (associated(scratch%vt2db))  nullify (scratch%vt2db)
-    if (associated(scratch%vt2dc))  nullify (scratch%vt2dc)
-    if (associated(scratch%vt2dd))  nullify (scratch%vt2dd)
-    if (associated(scratch%vt2de))  nullify (scratch%vt2de)
-    if (associated(scratch%vt2df))  nullify (scratch%vt2df)
-
 
     return
   end subroutine nullify_scratch
@@ -233,7 +206,6 @@ contains
 
     ! Deallocate all scratch arrays
 
-    if (associated(scratch%scr1 ))  deallocate (scratch%scr1 )
 !!$    if (associated(scratch%scr2 ))  deallocate (scratch%scr2 )
     if (associated(scratch%vt3da))  deallocate (scratch%vt3da)
     if (associated(scratch%vt3db))  deallocate (scratch%vt3db)
@@ -256,12 +228,7 @@ contains
     if (associated(scratch%vt3dq))  deallocate (scratch%vt3dq)
 !--(DMK-CCATT-FIM)---------------------------------------------------------------- 
     
-    if (associated(scratch%vt2da))  deallocate (scratch%vt2da)
     if (associated(scratch%vt2db))  deallocate (scratch%vt2db)
-    if (associated(scratch%vt2dc))  deallocate (scratch%vt2dc)
-    if (associated(scratch%vt2dd))  deallocate (scratch%vt2dd)
-    if (associated(scratch%vt2de))  deallocate (scratch%vt2de)
-    if (associated(scratch%vt2df))  deallocate (scratch%vt2df)
 
     return
   end subroutine dealloc_scratch
@@ -287,19 +254,10 @@ contains
     maxz   = maxval(nnzp(1:ngrids))
     maxxyz = max(maxx, maxy, maxz) + 2
 
-    ALLOCATE(vctr1(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr1 (createVctr)")
-    ALLOCATE(vctr2(maxxyz), STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR allocating vctr2 (createVctr)")
-
 !!$    ALLOCATE(ivctr(maxxyz), STAT=ierr)
 !!$    IF (ierr/=0) CALL fatal_error("ERROR allocating ivctr (createVctr)")
 
 !--(DMK-LFR NEC-SX6)----------------------------------------------
-    vctr1  = 0.
-    vctr2  = 0.
-
-
 
   END SUBROUTINE createVctr
 
@@ -310,10 +268,6 @@ contains
     ! Local variables:
     INTEGER :: ierr
 
-    DEALLOCATE(vctr1, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr1 (destroyVctr)")
-    DEALLOCATE(vctr2, STAT=ierr)
-    IF (ierr/=0) CALL fatal_error("ERROR deallocating vctr2 (destroyVctr)")
 
   END SUBROUTINE destroyVctr
 

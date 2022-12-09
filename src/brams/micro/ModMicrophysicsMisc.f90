@@ -772,18 +772,6 @@ contains
        endif
     enddo
 
-    ! From RAMS 6.0
-    if (if_adap == 1) then
-       do k = 2,lpw-1
-          oneMicControl%pcprx(lcat) = oneMicControl%pcprx(lcat) + rnew(k) * dn0(k) / dzt(k)
-          qpcpg = qpcpg + qrnew(k) * dn0(k) / dzt(k)
-
-          cnew(k) = 0.
-          rnew(k) = 0.
-          qrnew(k) = 0.
-       enddo
-    endif
-
     pcpg = pcpg + oneMicControl%pcprx(lcat)
     oneMicControl%accpx(lcat) = oneMicControl%pcprx(lcat)
     dpcpg = dpcpg + oneMicControl%pcprx(lcat) * alphasfc

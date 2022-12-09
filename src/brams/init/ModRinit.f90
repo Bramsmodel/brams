@@ -45,9 +45,6 @@ module ModRinit
   use mem_varinit, only: &
        nudlat
 
-  use mem_scratch, only: &
-       vctr2
-
   use ref_sounding, only: &
        pi01dn, &
        th01dn
@@ -239,7 +236,8 @@ contains
 
     integer :: i,j,k
     real :: c1,c2,c3
-
+    real :: vctr2(n1)
+    
     ! +---------------------------------------------------------------------
     ! _    This routine initializes the 3-D reference state arrays from the
     !        1-D reference state.
@@ -248,15 +246,7 @@ contains
     do j=1,n3
        do i=1,n2
 
-          if (if_adap == 1) then
-
-             do k = 1,n1
-                pi0(k,i,j) = pi01dn(k,ngrid)
-                th0(k,i,j) = th01dn(k,ngrid)
-             end do
-             c1 = g * 2.
-
-          else
+          if (if_adap /= 1) then
 
              do k = 1,n1
                 vctr2(k) = zt(k) * rtgt(i,j) + topt(i,j)

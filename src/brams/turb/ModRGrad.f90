@@ -17,9 +17,6 @@ module ModRGrad
        , grid_g    !INTENT(IN)
 
 
-  use mem_scratch, only : vctr1    &   ! INTENT(INOUT)
-       , vctr2        ! INTENT(INOUT)
-
   implicit none
 
   private
@@ -127,6 +124,8 @@ contains
     character(len=6), intent(IN) :: optyp
 
     integer :: jaa,jzz
+    real :: vctr2(m1)
+    real :: vctr1(m1)
 
     jaa=ja
     jzz=jz

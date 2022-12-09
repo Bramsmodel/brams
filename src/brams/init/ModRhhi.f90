@@ -41,10 +41,6 @@ module ModRhhi
        yt, &
        grid_g
 
-
-  use mem_scratch, only: &
-       vctr1
-
   use ref_sounding, only: &
        ps, &
        thds, &
@@ -133,16 +129,6 @@ contains
                   ,grid_g(ifm)%topt   ,grid_g(ifm)%topu     &
                   ,grid_g(ifm)%topv   ,grid_g(ifm)%rtgt     &
                   ,grid_g(ifm)%rtgu   ,grid_g(ifm)%rtgv,&
-                  oneMicVars)
-
-          else
-
-             call flds3d_adap(nzp,nxp,nyp  ,grid_g(ifm)%lpu        &
-                  ,grid_g(ifm)%lpv    ,grid_g(ifm)%lpw      &
-                  ,oneBasicFields%uc    ,oneBasicFields%vc      &
-                  ,oneBasicFields%pi0   ,oneBasicFields%theta   &
-                  ,oneBasicFields%thp   ,oneBasicFields%rtp     &
-                  ,oneBasicFields%pc    ,oneBasicFields%rv, &
                   oneMicVars)
 
           endif
@@ -321,6 +307,7 @@ contains
     ! +---------------------------------------------------------------------
 
     integer :: k
+    real :: vctr1(nnzp(ngrid))
     real :: vctr4(nnzp(ngrid))
 
     if (ztn(nnzp(ngrid),ngrid) .gt. hs(nsndg)) then
@@ -470,96 +457,4 @@ contains
 
   ! ***************************************************************
 
-  subroutine flds3d_adap(n1,n2,n3,lpu_R,lpv_R,lpw_R  &
-       ,uc,vc,pi0,theta,thp,rtp,pc,rv,oneMicVars)
-    type(MicControl), pointer, intent(in) :: oneMicVars
-    integer :: n1,n2,n3
-    real, dimension(n2,n3) :: lpu_R,lpv_R,lpw_R
-    real, dimension(n1,n2,n3) :: uc,vc,pi0,thp,theta,rtp,pc,rv
-
-    real, dimension(nzpmax) :: p0,temp,rvls,rc
-    integer :: k,i,j
-    real :: qlatu,qlonu,qlatv,qlonv,dummy
-
-    integer, dimension(n2,n3) :: lpu,lpv,lpw
-    ! ---------------------------------------------------------------------
-    ! _    This routine initializes the 3-D velocity and thermodynamic 
-    ! _      fields from the 1-D reference state sounding.
-    ! +---------------------------------------------------------------------
-
-    lpu=int(lpu_R);lpv=int(lpv_R);lpw=int(lpw_R)
-
-    do j = 1,n3
-       do i = 1,n2
-
-          ! If sounding winds are to be interpreted as eastward (U) and 
-          ! northward (V) components, rotate winds from geographic to
-          ! polar stereographic orientation
-
-          if (ihtran == 1) then
-
-             call xy_ll(qlatu,qlonu,platn(ngrid),plonn(ngrid),xm(i),yt(j))
-             call xy_ll(qlatv,qlonv,platn(ngrid),plonn(ngrid),xt(i),ym(j))
-
-
-             do k = 1,n1
-                call uevetouv(uc(k,i,j),dummy,u01dn(k,ngrid),v01dn(k,ngrid)  &
-                     ,qlatu,qlonu,platn(ngrid),plonn(ngrid))
-             enddo
-
-             do k = 1,n1
-                call uevetouv(dummy,vc(k,i,j),u01dn(k,ngrid),v01dn(k,ngrid)  &
-                     ,qlatv,qlonv,platn(ngrid),plonn(ngrid))
-             enddo
-
-          else
-
-             do k = 1,n1
-                uc(k,i,j) = u01dn(k,ngrid)
-             enddo
-             do k = 1,n1
-                vc(k,i,j) = v01dn(k,ngrid)
-             enddo
-
-          endif
-
-          if (oneMicVars%level >= 1) then
-             do k = 1,n1
-                rtp(k,i,j) = rt01dn(k,ngrid)
-                thp(k,i,j) = th01dn(k,ngrid) / (1.+.61*rtp(k,i,j))
-             enddo
-          else
-             do k = 1,n1
-                thp(k,i,j) = th01dn(k,ngrid)
-             enddo
-          endif
-
-          do k = 1,n1
-             theta(k,i,j) = thp(k,i,j)
-             pc(k,i,j) = 0.
-          enddo
-
-          if (oneMicVars%level == 1) then
-             do k = 1,n1
-                rv(k,i,j) = rtp(k,i,j)
-             enddo
-          endif
-
-          if (oneMicVars%level >= 2) then
-             do k = 1,n1
-                p0(k) = (pi0(k,i,j)/cp) ** cpor * p00
-                temp(k) = pi0(k,i,j) * thp(k,i,j) / cp
-             enddo
-             call mrsl(n1,p0(1),temp(1),rvls(1))
-             do k = 1,n1
-                rc(k) = max(0.,rtp(k,i,j) - rvls(k))
-                thp(k,i,j) = theta(k,i,j)  &
-                     / (1.+(aklv*rc(k)) / max(temp(k),253.))
-                rv(k,i,j) = rtp(k,i,j) - rc(k)
-             enddo
-          endif
-
-       enddo
-    enddo
-  end subroutine flds3d_adap
 end module ModRhhi

@@ -23,9 +23,7 @@
 module ModRexev
 
   use mem_scratch, only: &
-       scratch, & ! intent(in)
-       vctr1,   & ! intent(in)
-       vctr2   ! ! intent(in)
+       scratch
   
   use ModRadvc, only:&
        advtndc, &
@@ -192,6 +190,9 @@ contains
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     !----- Local variables -----------------------------------------------------------------!
     integer                                     :: i,j,k,isiz
+    real :: vctr1(m1)
+    real :: vctr2(m1)
+    real :: scr1(m1*m2*m3)
     !---------------------------------------------------------------------------------------!
 
     !----- Finding the total size of matrices ----------------------------------------------!
@@ -208,23 +209,23 @@ contains
 
     call fa_preptc(m1,m2,m3,scratch%vt3da,scratch%vt3db,scratch%vt3dc,scratch%vt3dd         &
          ,scratch%vt3de,scratch%vt3df,scratch%vt3dh,scratch%vt3di,scratch%vt3dj    &
-         ,scratch%vt3dk,mynum, oneBasicFields)
-    call atob(m1*m2*m3,lnthetav,scratch%scr1)
+         ,scratch%vt3dk,mynum, oneBasicFields, vctr1, vctr2)
+    call atob(m1*m2*m3,lnthetav,scr1)
 
 
-    call fa_xc(m1,m2,m3,ia,iz,1,m3,lnthetav,scratch%scr1,scratch%vt3da,scratch%vt3dd        &
+    call fa_xc(m1,m2,m3,ia,iz,1,m3,lnthetav,scr1,scratch%vt3da,scratch%vt3dd        &
          ,scratch%vt3dg,scratch%vt3dh,scratch%vt3di,mynum)
 
     if (jdim == 1)                                                                          &
-         call fa_yc(m1,m2,m3,ia,iz,ja,jz,lnthetav,scratch%scr1,scratch%vt3db,scratch%vt3de    &
+         call fa_yc(m1,m2,m3,ia,iz,ja,jz,lnthetav,scr1,scratch%vt3db,scratch%vt3de    &
          ,scratch%vt3dg,scratch%vt3dj,scratch%vt3di,jdim,mynum)
 
-    call fa_zc(m1,m2,m3,ia,iz,ja,jz,lnthetav,scratch%scr1,scratch%vt3dc,scratch%vt3df       &
+    call fa_zc(m1,m2,m3,ia,iz,ja,jz,lnthetav,scr1,scratch%vt3dc,scratch%vt3df       &
          ,scratch%vt3dg,scratch%vt3dk,vctr1,vctr2,mynum)
 
     lnthvadv = 0.
 
-    call advtndc(m1,m2,m3,ia,iz,ja,jz,lnthetav,scratch%scr1,lnthvadv,edt,mynum)
+    call advtndc(m1,m2,m3,ia,iz,ja,jz,lnthetav,scr1,lnthvadv,edt,mynum)
 
     !---------------------------------------------------------------------------------------!
     !     Switching the sign of the advection term... This is because we need to total      !

@@ -944,10 +944,7 @@ contains
              rv  (k) = dble( oneBasicFields% rv(kvert,i,j) *  &
                   oneBasicFields%dn0(kvert,i,j)    )
 
-             if (if_adap == 1) then
-                zml(i,j,k) = zm(k+koff(i,j))
-                ztl(i,j,k) = zt(k+koff(i,j))
-             else
+             if (if_adap /= 1) then
                 zml(i,j,k) = topt(i,j) + zm(k) * rtgt(i,j)
                 ztl(i,j,k) = topt(i,j) + zt(k) * rtgt(i,j)
              endif
@@ -1032,11 +1029,7 @@ contains
        do i=ia,iz
           do k = 1,nrad(i,j)
              if(k>1) dzl(i,j,k) = zml(i,j,k) - zml(i,j,k-1)
-             if (if_adap == 1) then
-                z_(i,j,k)=zml(i,j,k)* 1.e-3 !km
-             else
-                z_(i,j,k)=zml(i,j,k) * 1.e-3 !km
-             endif
+             z_(i,j,k)=zml(i,j,k) * 1.e-3 !km
           end do
        end do
     end do

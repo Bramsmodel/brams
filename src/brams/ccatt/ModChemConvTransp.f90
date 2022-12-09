@@ -111,9 +111,6 @@ module ModChemConvTransp
   use Phys_const, only: &
        g
 
-  use mem_scratch, only: &
-       scratch
-  
   implicit none
 
   private

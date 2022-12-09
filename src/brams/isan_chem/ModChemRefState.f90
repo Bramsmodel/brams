@@ -103,7 +103,7 @@ contains
 
   subroutine fmrefs3d_isan (ifm,icm,n1f,n2f,n3f,n1c,n2c,n3c  &
        ,maxiz,maxix,maxiy,nbot,ntop,jd  &
-       ,scr1,scr2,vt2da,toptf,toptc,dn0c,dn0f,th0c,th0f  &
+       ,scr1,scr2,toptf,toptc,dn0c,dn0f,th0c,th0f  &
        ,pi0f,dn0uf,dn0vf,zt,ztop)
     integer, intent(in) :: ifm
     integer, intent(in) :: icm
@@ -121,7 +121,6 @@ contains
     integer, intent(in) :: jd
     real, intent(inout) :: scr1(:)
     real, intent(in) :: scr2(:)
-    real, intent(in) :: vt2da(:) !**(JP)** unused
     real, intent(inout) :: toptf(:,:)  ! (n2f,n3f)
     real, intent(in) :: toptc(:,:) ! (n2c,n3c)
     real, intent(in) :: dn0c(:,:,:) ! (n1c,n2c,n3c) **(JP)** unused

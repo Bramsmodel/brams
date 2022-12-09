@@ -93,11 +93,6 @@ module ModNudAnalysis
        chem1_g,        &
        chem_assim
 
-  use mem_scratch, only: &
-       vctr1, &
-       vctr2, &
-       scratch
-
   use ModEvaluation, only: &
        comunicateStatistic, &
        evaluate
@@ -200,6 +195,8 @@ contains
          ,varuf,varvf,vartf,varrf,varpf  &
          ,varwts,up,vp,theta,rtp,pp  &
          ,ut,vt,tht,rtt,pt
+    real :: vctr1(m1+2)
+    real :: vctr2(m1+2)
     real :: vctr3(m1+2)
 
     integer :: i,j,k,iCount,v
@@ -457,6 +454,8 @@ contains
     integer :: m1,m2,m3,ia,iz,ja,jz
     real, dimension(m1,m2,m3) :: varrph,varcph,varrfh,varcfh  &
          ,varwts,rtp,rtt
+    real :: vctr1(maxnzp)
+    real :: vctr2(maxnzp)
     real :: vctr3(maxnzp)
 
     integer :: i,j,k
@@ -570,6 +569,7 @@ contains
     real :: scr1(maxnxp*maxnyp)
     real :: scr2(maxnxp*maxnyp)
     integer :: ifm,ifflag,icm
+    real :: vt2da(maxnxp*maxnyp)
 
     icm = nxtnest(ifm)
     if (icm == 0) return
@@ -579,7 +579,7 @@ contains
     call fillscr(1,maxnxp,maxnyp,1,nnxp(icm),nnyp(icm),1,1  &
          ,scr1,grid_g(icm)%topt)
     call fillvar(1,maxnxp,maxnyp,1,nnxp(ifm),nnyp(ifm),1,1  &
-         ,scr2,scratch%vt2da)
+         ,scr2,vt2da)
 
   end subroutine vfintrpf
 
@@ -591,6 +591,7 @@ contains
     integer :: ifm,ifflag,icm
     real :: scr1(maxnxp*maxnyp)
     real :: scr2(maxnxp*maxnyp)
+    real :: vt2da(maxnxp*maxnyp)
     character(len=*), parameter :: h="**(VarfIntrp)**"
 
     !--(DMK-CCATT-INI)-----------------------------------------------------
@@ -610,7 +611,7 @@ contains
     call fillscr(1,maxnxp,maxnyp,1,nnxp(icm),nnyp(icm),1,1  &
          ,scr1,grid_g(icm)%topt)
     call fillvar(1,maxnxp,maxnyp,1,nnxp(ifm),nnyp(ifm),1,1  &
-         ,scr2,scratch%vt2da)
+         ,scr2,vt2da)
 
   end subroutine VarfIntrp
 

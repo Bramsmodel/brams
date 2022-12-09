@@ -30,10 +30,6 @@ module ModNestIntrp
        jdim, jpm, kpm, maxnxp, maxnyp, maxnzp, ngrids, nnstbot, nnsttop, &
        nnxp, nnyp, nnzp, nstratx, nstraty, nxtnest, zmn, ztn, ztop
 
-  use mem_scratch, only: &
-       scratch, &
-       vctr1, vctr2 
-
   use mem_nestb, only: &
        nbounds
 
@@ -61,6 +57,8 @@ contains
     integer :: ifm,icm,k
     real :: c1,c2
     
+    real :: vctr1(maxnzp)
+    real :: vctr2(maxnzp)
     real :: vctr3(maxnzp)
     real :: vctr4(maxnzp)
     real :: vctr5(maxnzp)
@@ -114,6 +112,7 @@ contains
     real :: c1,c2
     character(len=*), parameter :: h="**(fmrefs3d)**"
     real, allocatable :: scr1(:), scr2(:)
+    real :: vt2da(maxnxp*maxnyp)
 
     !     Interpolate the fine mesh 3-D reference state variables.
 
@@ -134,7 +133,7 @@ contains
          ,oneBasicFields%dn0,otherBasicFields%dn0  &
          ,oneBasicFields%dn0,otherBasicFields%dn0  &
          ,scr1,scr2  &
-         ,grid_g(ifm)%topt,scratch%vt2da  &
+         ,grid_g(ifm)%topt,vt2da  &
          ,nbounds(ifm)%bux,nbounds(ifm)%buy  &
          ,nbounds(ifm)%buz)
 
@@ -143,7 +142,7 @@ contains
          ,oneBasicFields%th0,otherBasicFields%th0  &
          ,oneBasicFields%dn0,otherBasicFields%dn0  &
          ,scr1,scr2  &
-         ,grid_g(ifm)%topt,scratch%vt2da  &
+         ,grid_g(ifm)%topt,vt2da  &
          ,nbounds(ifm)%bux,nbounds(ifm)%buy  &
          ,nbounds(ifm)%buz)
 
@@ -362,7 +361,10 @@ contains
     character(len=*), intent(in) :: vpnt
 
     integer :: i,j,k
+    real :: vctr1(n1)
+    real :: vctr2(n1)
     real :: vctr3(n1)
+
     !     Do special vertical interpolation in case terrain on this grid
     !     (topt) is different from what would be interpolated from the
     !     coarser grid (vt2da).
@@ -754,6 +756,8 @@ contains
     integer :: nf,nc,nrat,if,jf,kf,kc
     real :: alpha,et,ev
 
+    real :: vctr1(maxnzp)
+    real :: vctr2(maxnzp)
     real :: vctr3(maxnzp)
 
     do nf = 2,ngrids

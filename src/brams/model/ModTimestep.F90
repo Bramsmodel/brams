@@ -40,9 +40,6 @@ module ModTimestep
   use ModRstilt, only: &
        prep_advflx_to_stilt
 
-  use ModUrbanCanopy, only: &
-       urban_canopy
-
   use ModLeaf3, only: &
        sfclyr
 
@@ -405,12 +402,6 @@ contains
 
     !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
     !  call SynchronizedTimeStamp(TS_DYNAMICS)
-
-    !  Urban canopy parameterization
-    !----------------------------------------
-    if (OneGrid%oneNamelistFile%if_urban_canopy==1) then
-       call urban_canopy(oneGrid%oneBasicFields, oneGrid%oneTurbFields)
-    end if
 
     !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
     !  call SynchronizedTimeStamp(TS_PHYSICS)

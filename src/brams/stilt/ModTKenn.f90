@@ -2,10 +2,6 @@ module ModTKenn
   use mem_grid, only: &
        nstbot,zm,zt
 
-  use mem_scratch, only:  &
-       vctr1 
-       
-
   use rconstants, only: &
        abslmomin,abswltlmin,cp,grav,ltscalemax,sigwmin,vonk,lturbmin &
        ,tkmin,onethird
@@ -153,6 +149,7 @@ contains
     real, parameter                                :: ustarmin=0.1
     !---------------------------------------------------------------------------------------!
     integer  , dimension(m2,m3)    :: flpu,flpv,flpw
+    real :: vctr1(m1)
     real :: vctr5(m1)
     real :: vctr9(m1)
     real :: vctr19(m1)

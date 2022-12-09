@@ -195,10 +195,6 @@ module ModCuParGrell3
   use grid_dims, only: &
        nzpmax
 
-  use mem_scratch, only: &
-       vctr1, &
-       vctr2
-
   use ModBasicFields, only: &
        BasicFields
 
@@ -2171,8 +2167,8 @@ contains
     real :: vt3dg(mzp,mxp,myp)
     real :: vt3de(mzp,mxp,myp)
     real :: vt3dd(mzp,mxp,myp)
-    ! real :: vctr1(mzp)
-    ! real :: vctr2(mzp)
+    real :: vctr1(mzp)
+    real :: vctr2(mzp)
     real :: scr1(mzp,mxp,myp)
     integer :: i,j,k
     !- parameter to define if include or not diffusion tendencies at forcing for deep convection
@@ -2236,7 +2232,7 @@ contains
                ,vt3dh     ,vt3di       &
                ,vt3dj     ,vt3dk       &
                ,mynum, &
-               oneBasicFields)
+               oneBasicFields, vctr1, vctr2)
 
           if(dyncore_flag == 0) then
              !---- thp

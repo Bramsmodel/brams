@@ -132,9 +132,6 @@ module ModOneProc
   use ModNestGeoSst, only: &
        GeonestNoFile
 
-  use ModUrbanCanopy, only: &
-       urb_drag_init
-
   use ModSched, only: &
        schedule, &
        dump_schedule, &
@@ -463,17 +460,13 @@ module ModOneProc
        MaxCFLOverall
 
   use mem_scratch, only : &
-       scratch, &
+       createVctr, &
        destroyVctr ! subroutine
 
   use ref_sounding, only : &
        createRefSounding,  & ! subroutine
        destroyRefSounding, &! subroutine
        StoreNamelistFileAtRef_sounding
-
-  use mem_scratch, only: &
-       createvctr, &
-       destroyvctr
 
   use digitalFilter, only: &
        StoreNamelistFileAtdigitalFilter,&
@@ -2065,17 +2058,6 @@ contains
             "**(JP)** if_oda==1 was not worked yet")
        call oda_read()
 
-    end if
-
-    ! Initialize urban canopy drag coefficients
-
-    if (OneGrid%oneNamelistFile%if_urban_canopy == 1) then
-
-       !**(JP)** not worked yet
-       !call fatal_error(h//"**(JP)** if_urban_canopy==1 was not worked yet")
-       iErrNumber=dumpMessage(c_tty,c_yes,h,c_modelVersion,c_fatal, &
-            "**(JP)** if_urban_canopy==1 was not worked yet")
-       call urb_drag_init(oneGrid%oneTurbFields)
     end if
 
     ! one process prints locations of all grids
