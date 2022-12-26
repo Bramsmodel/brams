@@ -24,9 +24,6 @@ module ModRstilt
   use grid_dims, only: &
        nzpmax
 
-  use mem_scratch, only: &
-       scratch
-  
   use mem_grid, only: &
        ngrid, &
        grid_g, &
@@ -71,6 +68,9 @@ contains
     integer, intent(in) :: jz
     integer, intent(in) :: ng
     type(BasicFields), pointer, intent(in) :: oneBasicFields
+    real :: vt3dc(mzp*mxp*myp)
+    real :: vt3db(mzp*mxp*myp)
+    real :: vt3da(mzp*mxp*myp)
     !----- Local variables. ----------------------------------------------------------------!
     real                :: dtlti
     real                :: frqmassi
@@ -97,7 +97,7 @@ contains
     call get_adv_fluxes_for_stilt(mzp,mxp,myp,ia,iz,ja,jz, oneBasicFields)
 
     call compute_mass_flux(mzp,mxp,myp,ia,iz,ja,jz,dtlti,frqmassi                           &
-         ,scratch%vt3da            , scratch%vt3db           , scratch%vt3dc             &
+         ,vt3da            , vt3db           , vt3dc             &
          ,stilt_g(ng)%afxu          , stilt_g(ng)%afxv         , stilt_g(ng)%afxw           &
          ,stilt_g(ng)%afxub         , stilt_g(ng)%afxvb        , stilt_g(ng)%afxwb          )
 
@@ -415,7 +415,9 @@ contains
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     integer :: mzp,mxp,myp,ia,iz,ja,jz!,izu,jzv,mynum,n
     integer(kind=i8) :: mxyzp
-
+    real :: vt3dc(mzp*mxp*myp)
+    real :: vt3db(mzp*mxp*myp)
+    real :: vt3da(mzp*mxp*myp)
 
     real :: dtlto2
     integer :: i,j,k,ind
@@ -430,19 +432,19 @@ contains
        do i = 1,mxp
           do k = 1,mzp
              ind = ind + 1
-             scratch%vt3da(ind) = (oneBasicFields%up(k,i,j)  &
+             vt3da(ind) = (oneBasicFields%up(k,i,j)  &
                   + oneBasicFields%uc(k,i,j)) * dtlto2
-             scratch%vt3db(ind) = (oneBasicFields%vp(k,i,j)  &
+             vt3db(ind) = (oneBasicFields%vp(k,i,j)  &
                   + oneBasicFields%vc(k,i,j)) * dtlto2
-             scratch%vt3dc(ind) = (oneBasicFields%wp(k,i,j)  &
+             vt3dc(ind) = (oneBasicFields%wp(k,i,j)  &
                   + oneBasicFields%wc(k,i,j)) * dtlto2
           enddo
        enddo
     enddo
 
     call fa_preptc_for_stilt(mzp,mxp,myp        &
-         ,scratch%vt3da             ,scratch%vt3db              &
-         ,scratch%vt3dc              & 
+         ,vt3da             ,vt3db              &
+         ,vt3dc              & 
          ,oneBasicFields%dn0   ,oneBasicFields%dn0u    &
          ,oneBasicFields%dn0v  ,grid_g(ngrid)%rtgt     &
          ,grid_g(ngrid)%rtgu   ,grid_g(ngrid)%rtgv     &

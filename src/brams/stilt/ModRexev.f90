@@ -22,9 +22,6 @@
 !------------------------------------------------------------------------------------------!
 module ModRexev
 
-  use mem_scratch, only: &
-       scratch
-  
   use ModRadvc, only:&
        advtndc, &
        fa_preptc, &
@@ -193,35 +190,46 @@ contains
     real :: vctr1(m1)
     real :: vctr2(m1)
     real :: scr1(m1*m2*m3)
+    real :: vt3dk(m1*m2*m3)
+    real :: vt3dj(m1*m2*m3)
+    real :: vt3di(m1*m2*m3)
+    real :: vt3dh(m1*m2*m3)
+    real :: vt3dg(m1*m2*m3)
+    real :: vt3df(m1*m2*m3)
+    real :: vt3de(m1*m2*m3)
+    real :: vt3dd(m1*m2*m3)
+    real :: vt3dc(m1*m2*m3)
+    real :: vt3db(m1*m2*m3)
+    real :: vt3da(m1*m2*m3)
     !---------------------------------------------------------------------------------------!
 
     !----- Finding the total size of matrices ----------------------------------------------!
     isiz=m1*m2*m3
 
-    scratch%vt3da = 0.
-    scratch%vt3db = 0.
-    scratch%vt3dc = 0.
+    vt3da = 0.
+    vt3db = 0.
+    vt3dc = 0.
 
-    call prep_timeave(m1,m2,m3,edt,up,uc,vp,vc,wp,wc,scratch%vt3da,scratch%vt3db            &
-         ,scratch%vt3dc)
+    call prep_timeave(m1,m2,m3,edt,up,uc,vp,vc,wp,wc,vt3da,vt3db            &
+         ,vt3dc)
 
     call prep_lnthetv(m1,m2,m3,ia,iz,ja,jz,theta,rtp,rv,lnthetav)
 
-    call fa_preptc(m1,m2,m3,scratch%vt3da,scratch%vt3db,scratch%vt3dc,scratch%vt3dd         &
-         ,scratch%vt3de,scratch%vt3df,scratch%vt3dh,scratch%vt3di,scratch%vt3dj    &
-         ,scratch%vt3dk,mynum, oneBasicFields, vctr1, vctr2)
+    call fa_preptc(m1,m2,m3,vt3da,vt3db,vt3dc,vt3dd         &
+         ,vt3de,vt3df,vt3dh,vt3di,vt3dj    &
+         ,vt3dk,mynum, oneBasicFields, vctr1, vctr2)
     call atob(m1*m2*m3,lnthetav,scr1)
 
 
-    call fa_xc(m1,m2,m3,ia,iz,1,m3,lnthetav,scr1,scratch%vt3da,scratch%vt3dd        &
-         ,scratch%vt3dg,scratch%vt3dh,scratch%vt3di,mynum)
+    call fa_xc(m1,m2,m3,ia,iz,1,m3,lnthetav,scr1,vt3da,vt3dd        &
+         ,vt3dg,vt3dh,vt3di,mynum)
 
     if (jdim == 1)                                                                          &
-         call fa_yc(m1,m2,m3,ia,iz,ja,jz,lnthetav,scr1,scratch%vt3db,scratch%vt3de    &
-         ,scratch%vt3dg,scratch%vt3dj,scratch%vt3di,jdim,mynum)
+         call fa_yc(m1,m2,m3,ia,iz,ja,jz,lnthetav,scr1,vt3db,vt3de    &
+         ,vt3dg,vt3dj,vt3di,jdim,mynum)
 
-    call fa_zc(m1,m2,m3,ia,iz,ja,jz,lnthetav,scr1,scratch%vt3dc,scratch%vt3df       &
-         ,scratch%vt3dg,scratch%vt3dk,vctr1,vctr2,mynum)
+    call fa_zc(m1,m2,m3,ia,iz,ja,jz,lnthetav,scr1,vt3dc,vt3df       &
+         ,vt3dg,vt3dk,vctr1,vctr2,mynum)
 
     lnthvadv = 0.
 

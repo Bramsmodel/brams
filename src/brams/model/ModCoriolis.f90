@@ -39,8 +39,6 @@ module ModCoriolis
   use mem_tend, only: &
        tend
 
-  use mem_scratch, only: &
-       scratch
 
   use ref_sounding, only: &
        u01dn, &

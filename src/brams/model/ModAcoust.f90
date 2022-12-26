@@ -64,10 +64,6 @@ module ModAcoust
   use mem_tend, only :&
        tend
 
-
-  use mem_scratch, only : &
-       scratch
-
   use ref_sounding, only : &
        u01dn, &
        v01dn
@@ -1119,6 +1115,9 @@ contains
     character(LEN=5) :: ctime
     integer :: nmbr_gpts
     real :: dtacum
+    real :: vt3dh(mzp*mxp*myp)
+    real :: vt3db(mzp*mxp*myp)
+    real :: vt3da(mzp*mxp*myp)
 
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(acoust_new)**"
@@ -1189,7 +1188,7 @@ contains
              ! application of divergence damping in the 1st timestep is detrimental to stability
              call get_wind_div_v2 (mzp,mxp,myp,ia,iz,ja,jz,izu,jzv    &
                   ,up,vp,wp                   &
-                  ,scratch%vt3da, scratch%vt3db, scratch%vt3dh &
+                  ,vt3da, vt3db, vt3dh &
                   ,div          &
                   ,rtgt,rtgu,dxu,rtgv,dyv,f13t&
                   ,f23t,fmapui,fmapvi   &

@@ -42,9 +42,6 @@ module ModRtimi
   use shcu_vars_const, only: &
        NNSHCU
 
-  use mem_scratch, only: &
-       scratch
-
   implicit none
 
 !!$  include "constants.h"
@@ -89,6 +86,10 @@ contains
     integer(kind=int64) :: mxyzp
     logical :: RAW
     real :: vt3da(mzp,mxp,myp)
+    real :: vt3dl(mzp,mxp,myp)
+    real :: vt3dk(mzp,mxp,myp)
+    real :: vt3dj(mzp,mxp,myp)
+    real :: vt3di(mzp,mxp,myp)
     character(len=*), parameter :: h="**(hadvance)**"
 
     !     It is here that the Asselin filter is applied.  For the velocities
@@ -110,8 +111,8 @@ contains
        !- be used for other procedure.
        !- For this filter, the arrays vt3d-i,-j,-k,-l must be allocated with size mxyzp.
 
-       if(min(  size(scratch%vt3di), size(scratch%vt3dj) & 
-            ,size(scratch%vt3dk), size(scratch%vt3dl) ) < mxyzp )&
+       if(min(  size(vt3di), size(vt3dj) & 
+            ,size(vt3dk), size(vt3dl) ) < mxyzp )&
             stop "===> size of vt3di or vt3dj or vt3dk or vt3dl is less than mxyzp in hadvance"  
     ENDIF
 
@@ -125,7 +126,7 @@ contains
          tend%ut, &
          vt3da,&
          iac, dtlv,  &
-         scratch%vt3di,&
+         vt3di,&
          RAW)
 
     if (icorflg .eq. 1 .or. jdim .eq. 1) then
@@ -136,7 +137,7 @@ contains
             tend%vt, &
             vt3da,&
             iac, dtlv, &
-            scratch%vt3dj, &
+            vt3dj, &
             RAW)
     endif
 
@@ -147,7 +148,7 @@ contains
          tend%wt, &
          vt3da,&
          iac, dtlv, &
-         scratch%vt3dk, &
+         vt3dk, &
          RAW)
 
     call predict(mxyzp,&
@@ -156,7 +157,7 @@ contains
          tend%pt, &
          vt3da, &
          iac, dtlv, &
-         scratch%vt3dl, &
+         vt3dl, &
          RAW)
 
 

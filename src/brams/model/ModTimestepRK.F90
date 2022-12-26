@@ -272,9 +272,6 @@ module ModTimestepRK
   use ModAdvectc_rk, only: &
        advectc_rk
 
-  use mem_scratch, only: &
-       scratch    
-
   use iso_fortran_env, only: &
        int64
 
@@ -316,6 +313,7 @@ contains
     logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(timestep_rk)**"
     character(len=8) :: str(10)
+    real,target  :: vt3da(mzp*mxp*myp)
 
     !MB: only for testing
     !integer :: nmbr_gpts
@@ -491,7 +489,7 @@ contains
     !  Rayleigh friction for theta
     !----------------------------------------
     call rayft(mxp,myp,mzp,mynum,ngrid,nnzp,if_adap,oneGrid%oneMicVars%level,nodemyp,nodemxp,&
-         scratch%vt3da,oneGrid%oneBasicFields)
+         vt3da,oneGrid%oneBasicFields)
 
     !  Get the overlap region between parallel nodes
     !---------------------------------------------------

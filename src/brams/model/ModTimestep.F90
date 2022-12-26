@@ -238,8 +238,6 @@ module ModTimestep
        rayft,  &
        trsets
 
-  use mem_scratch, only: scratch
-
   implicit none
 
   private
@@ -261,7 +259,7 @@ contains
     character(len=256) :: julesFile
 
     character(len=*), parameter :: h="**(timestep)**"
-
+    real, target :: vt3da(mzp*mxp*myp)
     julesFile=oneGrid%oneNamelistFile%julesin
 
     !        +-------------------------------------------------------------+
@@ -429,7 +427,7 @@ contains
     !  Rayleigh friction for theta
     !----------------------------------------
     call rayft(mxp,myp,mzp,mynum,ngrid,nnzp,if_adap,oneGrid%oneMicVars%level,nodemyp,nodemxp,&
-         scratch%vt3da,oneGrid%oneBasicFields)
+         vt3da,oneGrid%oneBasicFields)
 
     !  Get the overlap region between parallel nodes
     !---------------------------------------------------

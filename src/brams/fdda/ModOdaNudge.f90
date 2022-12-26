@@ -45,9 +45,6 @@ module ModOdaNudge
        caykrg, &
        cazkrg
   
-  use mem_scratch, only: &
-       scratch
-  
   use mem_tend, only: &
        tend
        

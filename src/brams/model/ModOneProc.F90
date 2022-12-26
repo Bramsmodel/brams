@@ -459,10 +459,6 @@ module ModOneProc
   use ReadBcst, only: &
        MaxCFLOverall
 
-  use mem_scratch, only : &
-       createVctr, &
-       destroyVctr ! subroutine
-
   use ref_sounding, only : &
        createRefSounding,  & ! subroutine
        destroyRefSounding, &! subroutine
@@ -821,9 +817,7 @@ contains
     ! number of grid points, deltas, coordinate and nesting coefficients,
     ! all stored at mem_grid
 
-    call createVctr(ngrids, nnxp, nnyp, nnzp)
     call GridSetup(1)
-    call destroyVctr()
 
     ! Additional checks, mainly for nesting
 
@@ -1493,8 +1487,8 @@ contains
 
     ! Deallocating dynamic arrays
 
-    if (runtype(1:7)/='MAKESFC' .and. runtype(1:9)/='MAKEVFILE') &
-         call destroyVctr()
+    !TO if (runtype(1:7)/='MAKESFC' .and. runtype(1:9)/='MAKEVFILE') &
+    !TO      call destroyVctr()
 
     call dealloc_bounds(runtype)
 

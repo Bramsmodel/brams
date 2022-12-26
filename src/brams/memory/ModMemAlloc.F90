@@ -105,11 +105,6 @@ module ModMemAlloc
        initial_definitions_globrad, & !Subroutine
        final_definitions_globrad !Subroutine
 
-  use mem_scratch, only: &
-       alloc_scratch,    &
-       nullify_scratch,  &
-       createvctr, &
-       dealloc_scratch
 
   use mem_tend, only: &
        nullify_tend, &
@@ -1152,13 +1147,8 @@ contains
     !--------------
     ! Allocate Scratch data type, This also fills the max's that are needed
     !    by nesting stuff.
-    call createVctr(ngrids, nodemxp(mynum,:), nodemyp(mynum,:), nnzp)
 
-    call nullify_scratch()
 
-    call alloc_scratch(nmzp, nmxp, nmyp, nnzp, nnxp, nnyp, maxgrds, ngrids,  &
-         nzg, nzs, npatch, proc_type, maxnxp, maxnyp, maxnzp, &
-         oneGrid%oneNamelistFile)
     ! Reproducibility - Saulo Barros
     call nullify_scratch1()
     call alloc_scratch1(oneGrid%oneScalarTableSize, &

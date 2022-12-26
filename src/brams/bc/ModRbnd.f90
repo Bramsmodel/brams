@@ -43,9 +43,6 @@ module ModRbnd
        zt,     &
        naddsc
 
-  use mem_scratch, only:  &
-       scratch
-
   use mem_tend, only: tend       !tend%ut
 
   use ModBasicFields, only: &
@@ -1158,13 +1155,13 @@ contains
           do i = 1,nodemxp(mynum,ngrid)
              do k = 1,nnzp(ngrid)
                 ind = ind + 1
-                scratch%vt3da(ind) = oneBasicFields%theta(k,i,j)  &
+                vt3da(ind) = oneBasicFields%theta(k,i,j)  &
                      * (1. + .61 * oneBasicFields%rv(k,i,j))
              enddo
           enddo
        enddo
     else
-       call atob_long(mxyzp, oneBasicFields%theta, scratch%vt3da)
+       call atob_long(mxyzp, oneBasicFields%theta, vt3da)
     endif
 
     !     Now get rayleigh friction tendency
@@ -1172,7 +1169,7 @@ contains
     if (if_adap == 0) then
 
        call rayf(4,mzp,mxp,myp,ia,iz,ja,jz,ibcon                  &
-            ,scratch%vt3da,oneBasicFields%th0  &
+            ,vt3da,oneBasicFields%th0  &
             ,tend%tht     ,grid_g(ngrid)%rtgt  &
             ,grid_g(ngrid)%topt)
 

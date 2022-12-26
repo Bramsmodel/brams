@@ -19,9 +19,6 @@ module ModRThrm
   use ModMicroFields, only: &
        MicroFields
 
-  use mem_scratch, only: &
-       scratch
-
   use rconstants, only: &
        cpi,  & ! INTENT(IN)
        p00,  & ! INTENT(IN)
@@ -64,6 +61,7 @@ contains
     real :: vctr5(mzp)
     real :: vctr6(mzp)
     real :: scr1(mzp)
+    real :: vt3db(mzp*mxp*myp)
 
     if (oneMicVars%level .le. 1) then
 
@@ -76,7 +74,7 @@ contains
        call satadjst(mzp,mxp,myp,ia,iz,ja,jz  &
             ,oneBasic%pp  ,scr1             &
             ,oneBasic%thp ,oneBasic%theta &
-            ,scratch%vt3db      ,oneBasic%pi0   &
+            ,vt3db      ,oneBasic%pi0   &
             ,oneBasic%rtp ,oneBasic%rv    &
             ,oneMicroFields%rcp )
 
@@ -473,6 +471,7 @@ contains
     real :: vctr5(mzp) 
     real :: vctr6(mzp) 
     real :: scr1(mzp) 
+    real :: vt3db(mzp*mxp*myp)
 
     if (trim(action).ne. "get_thetail" .and. trim(action).ne."get_theta") then
        call fatal_error(h//" unknow action at theta_thp_rk routine")
@@ -496,7 +495,7 @@ contains
        call satadjst(mzp,mxp,myp,ia,iz,ja,jz  &
             ,oneBasic%pc  ,scr1             &
             ,oneBasic%thc ,oneBasic%theta &
-            ,scratch%vt3db          ,oneBasic%pi0   &
+            ,vt3db          ,oneBasic%pi0   &
             ,oneBasic%rtp ,oneBasic%rv    &
             ,oneMicroFields%rcp )
 

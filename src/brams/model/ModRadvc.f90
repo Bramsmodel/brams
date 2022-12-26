@@ -37,9 +37,6 @@ module ModRadvc
        time, &
        dyncore_flag
 
-  use mem_scratch, only: &
-       scratch
-
   use ModScalarTable, only: &
        ScalarTable
 
@@ -106,6 +103,17 @@ contains
     character(len=*), parameter :: h="**(advectc)**"
 
     real :: vt3dp(mzp*mxp*myp)
+    real :: vt3dk(mzp*mxp*myp)
+    real :: vt3dj(mzp*mxp*myp)
+    real :: vt3di(mzp*mxp*myp)
+    real :: vt3dh(mzp*mxp*myp)
+    real :: vt3dg(mzp*mxp*myp)
+    real :: vt3df(mzp*mxp*myp)
+    real :: vt3de(mzp*mxp*myp)
+    real :: vt3dd(mzp*mxp*myp)
+    real :: vt3dc(mzp*mxp*myp)
+    real :: vt3db(mzp*mxp*myp)
+    real :: vt3da(mzp*mxp*myp)
     integer :: i_scl
 
     integer, dimension(maxgrds), save :: ncall
@@ -129,8 +137,8 @@ contains
              call vel_advectc(mzp,mxp,myp,ia,iz,ja,jz,izu,jzv  &
                   ,tend%ut                    &
                   ,tend%vt                   ,tend%wt                    &
-                  ,scratch%vt3da              &
-                  ,scratch%vt3db             ,scratch%vt3dc, &
+                  ,vt3da              &
+                  ,vt3db             ,vt3dc, &
                   oneBasic)
 
           else if (dyncore_flag == 2) then 
@@ -139,8 +147,8 @@ contains
              call vel_advectc(mzp,mxp,myp,ia,iz,ja,jz,izu,jzv  &
                   ,tend%ut_rk                 &
                   ,tend%vt_rk                ,tend%wt_rk                 &
-                  ,scratch%vt3da              &
-                  ,scratch%vt3db             ,scratch%vt3dc, &
+                  ,vt3da              &
+                  ,vt3db             ,vt3dc, &
                   oneBasic)
           end if
 
@@ -159,11 +167,11 @@ contains
           do i = 1,mxp
              do k = 1,mzp
                 ind = ind + 1
-                scratch%vt3da(ind) = (oneBasic%up(k,i,j)  &
+                vt3da(ind) = (oneBasic%up(k,i,j)  &
                      + oneBasic%uc(k,i,j)) * dtlto2
-                scratch%vt3db(ind) = (oneBasic%vp(k,i,j)  &
+                vt3db(ind) = (oneBasic%vp(k,i,j)  &
                      + oneBasic%vc(k,i,j)) * dtlto2
-                scratch%vt3dc(ind) = (oneBasic%wp(k,i,j)  &
+                vt3dc(ind) = (oneBasic%wp(k,i,j)  &
                      + oneBasic%wc(k,i,j)) * dtlto2
              enddo
           enddo
@@ -172,11 +180,11 @@ contains
        if (if_adap == 0) then
 
           call fa_preptc(mzp,mxp,myp        &
-               ,scratch%vt3da             ,scratch%vt3db              &
-               ,scratch%vt3dc             ,scratch%vt3dd              &
-               ,scratch%vt3de             ,scratch%vt3df              &
-               ,scratch%vt3dh             ,scratch%vt3di              &
-               ,scratch%vt3dj             ,scratch%vt3dk              &
+               ,vt3da             ,vt3db              &
+               ,vt3dc             ,vt3dd              &
+               ,vt3de             ,vt3df              &
+               ,vt3dh             ,vt3di              &
+               ,vt3dj             ,vt3dk              &
                ,mynum, oneBasic, vctr1, vctr2)
 
        endif
@@ -202,9 +210,9 @@ contains
              if( n >= num_scalar_aer_1st ) then 
                 if (if_adap == 0) then
                    call fa_preptc_with_sedim(mzp,mxp,myp    &
-                        ,scratch%vt3da             ,scratch%vt3db      &
-                        ,scratch%vt3dc              ,scratch%vt3df &
-                        ,scratch%vt3dk      &
+                        ,vt3da             ,vt3db      &
+                        ,vt3dc              ,vt3df &
+                        ,vt3dk      &
                         ,oneBasic%dn0        ,grid_g(ngrid)%rtgt       &
                         ,grid_g(ngrid)%f13t        ,grid_g(ngrid)%f23t       &
                                 !srf- aerosol section 
@@ -229,21 +237,21 @@ contains
 
              call fa_xc(mzp,mxp,myp,ia,iz,1,myp        &
                   ,oneScalarTab(n)%var_p_3D ,scr1   &
-                  ,scratch%vt3da ,scratch%vt3dd  &
-                  ,scratch%vt3dg ,scratch%vt3dh  &
-                  ,scratch%vt3di ,mynum              )
+                  ,vt3da ,vt3dd  &
+                  ,vt3dg ,vt3dh  &
+                  ,vt3di ,mynum              )
 
              if (jdim .eq. 1)  &
                   call fa_yc(mzp,mxp,myp,ia,iz,ja,jz        &
                   ,oneScalarTab(n)%var_p_3D ,scr1    &
-                  ,scratch%vt3db  ,scratch%vt3de   &
-                  ,scratch%vt3dg  ,scratch%vt3dj   &
-                  ,scratch%vt3di  ,jdim,mynum         )
+                  ,vt3db  ,vt3de   &
+                  ,vt3dg  ,vt3dj   &
+                  ,vt3di  ,jdim,mynum         )
 
              call fa_zc(mzp,mxp,myp,ia,iz,ja,jz        &
                   ,oneScalarTab(n)%var_p_3D ,scr1    &
-                  ,scratch%vt3dc  ,scratch%vt3df   &
-                  ,scratch%vt3dg  ,scratch%vt3dk   &
+                  ,vt3dc  ,vt3df   &
+                  ,vt3dg  ,vt3dk   &
                   ,vctr1,vctr2,mynum                     )
 
 

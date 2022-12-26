@@ -79,7 +79,6 @@ OBJ_MOD = \
 	mem_precision.o \
 	RadiateFields.o \
 	ScalarFields.o \
-	mem_scratch.o \
 	mem_scratch1_brams.o \
 	mem_scratch1_grell.o \
 	ShcuFields.o \
@@ -802,7 +801,6 @@ MOD_MOD = \
 	mem_grid_dim_defs.mod \
 	mem_aerad.mod \
 	mem_radiate.mod \
-	mem_scratch.mod \
 	ref_sounding.mod \
 	chem1_list.mod \
 	mem_chem1.mod \

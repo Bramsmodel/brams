@@ -27,9 +27,6 @@ module ModTurbK
        diffsclr, &
        PBLforcing
   
-  use mem_scratch, only: &
-       scratch
-
   use ModMicControl, only: &
        MicControl
   
@@ -192,6 +189,23 @@ contains
     real, target :: scr2(mxp*myp*mzp)
     real, target :: scr3(mxp*myp*mzp)
     real, target :: vt2da(mxp*myp)
+    real, target :: vt2db(mxp*myp)
+    real, target :: vt3dp(mxp*myp*mzp)
+    real, target :: vt3dn(mxp*myp*mzp)
+    real, target :: vt3do(mxp*myp*mzp)
+    real, target :: vt3dm(mxp*myp*mzp)
+    real, target :: vt3dl(mxp*myp*mzp)
+    real, target :: vt3dk(mxp*myp*mzp)
+    real, target :: vt3dj(mxp*myp*mzp)
+    real, target :: vt3di(mxp*myp*mzp)
+    real, target :: vt3dh(mxp*myp*mzp)
+    real, target :: vt3dg(mxp*myp*mzp)
+    real, target :: vt3df(mxp*myp*mzp)
+    real, target :: vt3dd(mxp*myp*mzp)
+    real, target :: vt3de(mxp*myp*mzp)
+    real, target :: vt3dc(mxp*myp*mzp)
+    real, target :: vt3db(mxp*myp*mzp)
+    real, target :: vt3da(mxp*myp*mzp)
 
     character(len=*), parameter :: h="**(diffuse)**" 
     real :: vctr34(mzp)
@@ -222,7 +236,7 @@ contains
     scr1 = 0.0
     scr2 = 0.0
     scr3 = 0.0
-    scratch%vt3dg = 0. !LFR - Avoiding overflow in strain
+    vt3dg = 0. !LFR - Avoiding overflow in strain
     !-srf - opt turb_k com nakanishi
     !-srf passando rv e rtp em vez de vt3dp e vt3dq
     !if(oneMicControl%level == 0) then
@@ -238,35 +252,35 @@ contains
        call strain(mzp,mxp,myp,ia,iz,ja,jz                       &
             ,ia_1,ja_1,iz1,jz1,jdim                                &
             ,oneBasicFields%up (:,:,:) ,oneBasicFields%vp (:,:,:)  &
-            ,oneBasicFields%wp (:,:,:) ,scratch%vt3da     (:)      &
-            ,scratch%vt3db     (:)     ,scratch%vt3dc     (:)      &
-            ,scratch%vt3dd     (:)     ,scratch%vt3de     (:)      &
-            ,scratch%vt3df     (:)     ,scratch%vt3dg     (:)      &
-            ,scratch%vt3dh     (:)     ,scratch%vt3di     (:)      &
-            ,scratch%vt3dn     (:)     ,scr2      (:)      &
+            ,oneBasicFields%wp (:,:,:) ,vt3da     (:)      &
+            ,vt3db     (:)     ,vt3dc     (:)      &
+            ,vt3dd     (:)     ,vt3de     (:)      &
+            ,vt3df     (:)     ,vt3dg     (:)      &
+            ,vt3dh     (:)     ,vt3di     (:)      &
+            ,vt3dn     (:)     ,scr2      (:)      &
             ,idiffk)
 
     endif
 
     if (oneMicControl%level<=1) &
-         scratch%vt3dp = 0.
+         vt3dp = 0.
 
     if (oneMicControl%level>=2) &
-         call ae1_l(int(mxyzp,i8), scratch%vt3dp(:), oneMicroFields%rcp(:,:,:))
+         call ae1_l(int(mxyzp,i8), vt3dp(:), oneMicroFields%rcp(:,:,:))
 
     !-srf 29/12/2008 adapted from OLAM
     call bruvais_OLAM(mzp, mxp, myp, ia, iz, ja, jz,                  &
          oneBasicFields%theta, oneBasicFields%rtp, &
-         oneBasicFields%rv,    scratch%vt3dp,          &
+         oneBasicFields%rv,    vt3dp,          &
          oneBasicFields%pp,    oneBasicFields%pi0, &
-         scratch%vt3dj,            grid_g(ngrid)%rtgt,   &
+         vt3dj,            grid_g(ngrid)%rtgt,   &
          grid_g(ngrid)%lpw, oneMicControl)
 
     !ml/srf- for new turn scheme
     if (idiffk <= 3 .or. idiffk == 7.or. idiffk == 8) then
        call mxdefm(mzp,mxp,myp,ia,iz,ja,jz,ibcon,jdim            &
-            ,scratch%vt3dh      (:)     ,scratch%vt3di      (:)    &
-            ,scratch%vt3dj      (:)     ,scratch%vt3dk      (:)    &
+            ,vt3dh      (:)     ,vt3di      (:)    &
+            ,vt3dj      (:)     ,vt3dk      (:)    &
             ,scr1       (:)     ,scr2       (:)    &
             ,oneBasicFields%dn0 (:,:,:) ,grid_g(ngrid)%rtgt (:,:)  &
             ,grid_g(ngrid)%dxt  (:,:)   ,grid_g(ngrid)%dyt  (:,:)  &
@@ -277,7 +291,7 @@ contains
           !srf------
           !coef de difusao horizontal diferente  para tracers
           call mxdefm_tracer(mzp,mxp,myp,ia,iz,ja,jz  &
-               ,ibcon,jdim,scratch%vt3dh(:),scr3(:) &
+               ,ibcon,jdim,vt3dh(:),scr3(:) &
                ,oneBasicFields%dn0(:,:,:),grid_g(ngrid)%dxt(:,:),&
                grid_g(ngrid)%dyt(:,:),grid_g(ngrid)%lpw(:,:),mynum, &
                csx, akmin)
@@ -292,9 +306,9 @@ contains
 
        !    if(IMASSFLX==1)then
        call nakanishi(mzp, mxp, myp, npatch, ia, iz, ja, jz, jdim                           &
-            ,oneTurbFields%tkep       ,tend%tket                ,scratch%vt3dd            &
-            ,scratch%vt3de            ,scratch%vt3dh            ,scratch%vt3di            &
-            ,scratch%vt3dj            ,scr1             ,grid_g(ngrid)%rtgt       &
+            ,oneTurbFields%tkep       ,tend%tket                ,vt3dd            &
+            ,vt3de            ,vt3dh            ,vt3di            &
+            ,vt3dj            ,scr1             ,grid_g(ngrid)%rtgt       &
                                 !srf         ,oneBasicFields%theta     ,scratch%vt3dp            ,scratch%vt3dq            &
             ,oneBasicFields%theta     ,oneBasicFields%rv        ,oneBasicFields%rtp     &
                                 !
@@ -317,9 +331,9 @@ contains
        !---------------------------------------------------------------------------------------!
        !    else
        !      call nakanishi_light(mzp, mxp, myp, npatch, ia, iz, ja, jz, jdim                     &
-       !             ,oneTurbFields%tkep       ,tend%tket                ,scratch%vt3dd            &
-       !             ,scratch%vt3de            ,scratch%vt3dh            ,scratch%vt3di            &
-       !             ,scratch%vt3dj            ,scr1             ,grid_g(ngrid)%rtgt       &
+       !             ,oneTurbFields%tkep       ,tend%tket                ,vt3dd            &
+       !             ,vt3de            ,vt3dh            ,vt3di            &
+       !             ,vt3dj            ,scr1             ,grid_g(ngrid)%rtgt       &
        !srf-opt     ,oneBasicFields%theta     ,scratch%vt3dp            ,scratch%vt3dq            &
        !             ,oneBasicFields%theta     ,oneBasicFields%rv        ,oneBasicFields%rtp     &
        !
@@ -341,8 +355,8 @@ contains
     if (idiffk==1) then
        call tkemy(mzp,mxp,myp,ia,iz,ja,jz,ibcon,jdim,nodei0(mynum,ngrid),nodej0(mynum,ngrid)  &
             ,oneTurbFields%tkep   (:,:,:) ,tend%tket            (:)      &
-            ,scratch%vt3dh        (:)     ,scratch%vt3di        (:)      &
-            ,scratch%vt3dj        (:)     ,scr1         (:)      &
+            ,vt3dh        (:)     ,vt3di        (:)      &
+            ,vt3dj        (:)     ,scr1         (:)      &
             ,grid_g(ngrid)%rtgt   (:,:)   ,oneBasicFields%theta (:,:,:)  &
             ,oneBasicFields%dn0   (:,:,:) ,oneBasicFields%up    (:,:,:)  &
             ,oneBasicFields%vp    (:,:,:) ,oneBasicFields%wp    (:,:,:)  &
@@ -359,8 +373,8 @@ contains
             ,oneBasicFields%up    (:,:,:) ,oneBasicFields%vp    (:,:,:)  &
             ,oneBasicFields%wp    (:,:,:) ,oneBasicFields%rtp   (:,:,:)  &
             ,oneBasicFields%rv    (:,:,:) ,oneBasicFields%theta (:,:,:)  &
-            ,scratch%vt3da        (:)     ,scratch%vt3dc        (:)      &
-            ,scratch%vt3dh        (:)     ,scratch%vt3dj        (:)      &
+            ,vt3da        (:)     ,vt3dc        (:)      &
+            ,vt3dh        (:)     ,vt3dj        (:)      &
             ,scr1         (:)     ,scr2         (:)      &
             ,oneTurbFields%sflux_u(:,:)   ,oneTurbFields%sflux_v(:,:)    &
             ,oneTurbFields%sflux_w(:,:)   ,oneTurbFields%sflux_t(:,:)    &
@@ -376,11 +390,11 @@ contains
        call tkescl(mzp,mxp,myp,npatch,ia,iz,ja,jz  &
             ,oneTurbFields%tkep(:,:,:),tend%tket(:)  &
             ,oneTurbFields%epsp(:,:,:),tend%epst(:)  &
-            ,scratch%vt3da(:),scratch%vt3dc(:)  &
-            ,scratch%vt3dh(:),scratch%vt3di(:)  &
-            ,scratch%vt3dj(:),scr1(:)  &
+            ,vt3da(:),vt3dc(:)  &
+            ,vt3dh(:),vt3di(:)  &
+            ,vt3dj(:),scr1(:)  &
             ,scr2(:) ,grid_g(ngrid)%rtgt(:,:)  &
-            ,scratch%vt3dd(:),scratch%vt3de(:),grid_g(ngrid)%dxt(:,:)  &
+            ,vt3dd(:),vt3de(:),grid_g(ngrid)%dxt(:,:)  &
             ,leaf_g(ngrid)%ustar(:,:,:),leaf_g(ngrid)%patch_area(:,:,:) &
             ,grid_g(ngrid)%lpw(:,:),oneBasicFields%dn0(:,:,:)  )
     endif
@@ -392,9 +406,9 @@ contains
        call tkeeps(mzp,mxp,myp,npatch,ia,iz,ja,jz  &
             ,oneTurbFields%tkep(:,:,:),tend%tket(:)  &
             ,oneTurbFields%epsp(:,:,:),tend%epst(:)  &
-            ,scratch%vt3da(:),scratch%vt3dc(:)  &
-            ,scratch%vt3dh(:),scratch%vt3di(:)  &
-            ,scratch%vt3dj(:),scr1(:)  &
+            ,vt3da(:),vt3dc(:)  &
+            ,vt3dh(:),vt3di(:)  &
+            ,vt3dj(:),scr1(:)  &
             ,scr2(:) ,grid_g(ngrid)%rtgt(:,:)  &
             ,leaf_g(ngrid)%ustar(:,:,:),leaf_g(ngrid)%patch_area(:,:,:) &
             ,grid_g(ngrid)%lpw(:,:),oneBasicFields%dn0(:,:,:)  )
@@ -425,10 +439,10 @@ contains
             ,grid_g(ngrid)%rtgt   (:,:)          &
             ,grid_g(ngrid)%lpw    (:,:)          &
             ,scr1   (:)            &
-            ,scratch%vt3dh   (:)            &
-            ,scratch%vt3di        (:)            &
-            ,scratch%vt3dj        (:)            &
-            ,scratch%vt3dk        (:)            &
+            ,vt3dh   (:)            &
+            ,vt3di        (:)            &
+            ,vt3dj        (:)            &
+            ,vt3dk        (:)            &
             ,oneNamelistFile%zkhkm(gridId))
     endif
 
@@ -437,7 +451,7 @@ contains
     call klbnd(mzp,mxp,myp,ibcon,jdim  &
          ,scr2 (:),oneBasicFields%dn0(:,:,:),grid_g(ngrid)%lpw(:,:))
     call klbnd(mzp,mxp,myp,ibcon,jdim  &
-         ,scratch%vt3dh(:),oneBasicFields%dn0(:,:,:),grid_g(ngrid)%lpw(:,:))
+         ,vt3dh(:),oneBasicFields%dn0(:,:,:),grid_g(ngrid)%lpw(:,:))
 
 
     ! CATT
@@ -450,7 +464,7 @@ contains
     !_STC ....... boundary conditions even on Ke diffusion coefficient
     if (idiffk==5 .or. idiffk==6) &
          call klbnd(mzp,mxp,myp,ibcon,jdim  &
-         ,scratch%vt3di(:),oneBasicFields%dn0(:,:,:),grid_g(ngrid)%lpw(:,:))
+         ,vt3di(:),oneBasicFields%dn0(:,:,:),grid_g(ngrid)%lpw(:,:))
 
     !bob  swap new hkm, vkm, and vkh with past time level:  lagged K's have
     !bob  internal lateral boundary values from neighboring nodes
@@ -462,10 +476,10 @@ contains
              ind = ind + 1
              s1 = scr2(ind)
              s2 = scr1(ind)
-             s3 = scratch%vt3dh(ind)
+             s3 = vt3dh(ind)
              scr2(ind) = oneTurbFields%hkm(k,i,j)
              scr1(ind) = oneTurbFields%vkm(k,i,j)
-             scratch%vt3dh(ind) = oneTurbFields%vkh(k,i,j)
+             vt3dh(ind) = oneTurbFields%vkh(k,i,j)
              !! also for vt3di = K(tke) ?????    22 March 02
              oneTurbFields%hkm(k,i,j) = s1
              oneTurbFields%vkm(k,i,j) = s2
@@ -492,13 +506,13 @@ contains
             ,oneBasicFields%up    (:,:,:) ,oneBasicFields%vp    (:,:,:)  &
             ,oneBasicFields%wp    (:,:,:) ,tend%ut              (:)      &
             ,tend%vt              (:)     ,tend%wt              (:)      &
-            ,scratch%vt3da        (:)     ,scratch%vt3db        (:)      &
-            ,scratch%vt3dc        (:)     ,scratch%vt3dd        (:)      &
-            ,scratch%vt3de        (:)     ,scratch%vt3df        (:)      &
-            ,scratch%vt3dg        (:)     ,scratch%vt3dj        (:)      &
-            ,scratch%vt3dk        (:)     ,scratch%vt3dl        (:)      &
-            ,scratch%vt3dm        (:)     ,scratch%vt3dn        (:)      &
-            ,scratch%vt3do        (:)     ,grid_g(ngrid)%rtgu   (:,:)    &
+            ,vt3da        (:)     ,vt3db        (:)      &
+            ,vt3dc        (:)     ,vt3dd        (:)      &
+            ,vt3de        (:)     ,vt3df        (:)      &
+            ,vt3dg        (:)     ,vt3dj        (:)      &
+            ,vt3dk        (:)     ,vt3dl        (:)      &
+            ,vt3dm        (:)     ,vt3dn        (:)      &
+            ,vt3do        (:)     ,grid_g(ngrid)%rtgu   (:,:)    &
             ,grid_g(ngrid)%rtgv   (:,:)   ,grid_g(ngrid)%rtgt   (:,:)    &
             ,oneTurbFields%sflux_u(:,:)   ,oneTurbFields%sflux_v(:,:)    &
             ,oneTurbFields%sflux_w(:,:)   ,oneBasicFields%dn0   (:,:,:)  &
@@ -516,7 +530,7 @@ contains
        enddo
     elseif (idiffk == 4) then
        do ind = 1,mxyzp
-          scratch%vt3di(ind) = 2. * scr1(ind)
+          vt3di(ind) = 2. * scr1(ind)
        enddo
     endif
 
@@ -581,31 +595,31 @@ contains
        !_STC..................................................
 
        if (oneScalarTab(n)%name=='TKEP') then
-          vkh_p => scratch%vt3di
+          vkh_p => vt3di
           hkh_p => scr2
           !-ml/srf - for new turb scheme
           if (idiffk >= 4 .and. idiffk /= 7 .and. idiffk /= 8) &
-               hkh_p => scratch%vt3di
-          !       if (idiffk>=4) hkh_p => scratch%vt3di
+               hkh_p => vt3di
+          !       if (idiffk>=4) hkh_p => vt3di
           ksf = 1
        elseif (oneScalarTab(n)%name=='EPSP') then
-          vkh_p => scratch%vt3di
+          vkh_p => vt3di
           hkh_p => scr2
           !-ml/srf - for new turb scheme
           if (idiffk >= 4 .and. idiffk /= 7.and. idiffk /= 8) &
-               hkh_p => scratch%vt3di
-          !        if (idiffk>=4)  hkh_p => scratch%vt3di
+               hkh_p => vt3di
+          !        if (idiffk>=4)  hkh_p => vt3di
           ksf = 3
           ! Convert Ktke to Keps; it will be converted back after use below
           call ae1t0_l(mxyzp, vkh_p, vkh_p, (ALF_EPS/ALF_TKE))
           call ae1t0_l(mxyzp, hkh_p, hkh_p, (ALF_EPS/ALF_TKE))
        else
-          vkh_p => scratch%vt3dh
+          vkh_p => vt3dh
           hkh_p => scr2
           !-ml/srf - for new turb scheme
           if (idiffk>=4 .and. idiffk /= 7.and. idiffk /= 8) &
-               hkh_p => scratch%vt3dh
-          !       if (idiffk>=4)  hkh_p => scratch%vt3di
+               hkh_p => vt3dh
+          !       if (idiffk>=4)  hkh_p => vt3di
           ksf = 2
        endif
 
@@ -629,10 +643,10 @@ contains
           call diffsclr(mzp, mxp, myp, ia, iz, ja, jz, jdim,         &
                ia_1, ja_1, ia1, ja1, iz_1, jz_1, iz1, jz1, n, ksf,   &
                oneScalarTab(n)%a_var_p_1D, oneScalarTab(n)%a_var_t_1D,                               &
-               scratch%vt3da(:), scratch%vt3db(:), scratch%vt3df(:), &
-               scratch%vt3dg(:), scratch%vt3dj(:), scratch%vt3dk(:), &
-               scratch%vt3do(:), scratch%vt3dc(:), scratch%vt3dd(:), &
-               scratch%vt3dl(:), scratch%vt3dm(:), scratch%vt2db(:), &
+               vt3da(:), vt3db(:), vt3df(:), &
+               vt3dg(:), vt3dj(:), vt3dk(:), &
+               vt3do(:), vt3dc(:), vt3dd(:), &
+               vt3dl(:), vt3dm(:), vt2db(:), &
                grid_g(ngrid)%rtgt(:,:), vt2da(:),            &
                oneBasicFields%dn0(:,:,:),                            &
                vkh_p(:)                 , hkh_p(:),                  &
@@ -642,11 +656,11 @@ contains
              ! SGScale Forcing for GRELL CUPAR
              if (oneScalarTab(n)%name=='THP' .or. oneScalarTab(n)%name=='THC')     &
                   call PBLforcing(ngrid, mzp, mxp, myp, ia, iz, ja, jz, &
-                  scratch%vt3df, oneScalarTab(n)%a_var_p_1D, cuforc_sh_g(ngrid)%lsfth, n)
+                  vt3df, oneScalarTab(n)%a_var_p_1D, cuforc_sh_g(ngrid)%lsfth, n)
 
              if (oneScalarTab(n)%name=='RTP')                                          &
                   call PBLforcing(ngrid, mzp, mxp, myp, ia, iz, ja, jz, &
-                  scratch%vt3df, oneScalarTab(n)%a_var_p_1D, cuforc_sh_g(ngrid)%lsfrt, n)
+                  vt3df, oneScalarTab(n)%a_var_p_1D, cuforc_sh_g(ngrid)%lsfrt, n)
 
           endif
 

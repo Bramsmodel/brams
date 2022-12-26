@@ -186,7 +186,6 @@ module ModLeaf3
        RadiateFields
 
   
-  !use mem_scratch, only: vctr32
   implicit none
 
   private
