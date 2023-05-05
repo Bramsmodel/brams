@@ -65,6 +65,7 @@ module ModMessageSet
        DumpNeighbourNodes
 
   use ModDomainDecomp, only: &
+       DumpDomainDecomp, &
        DomainDecomp
 
   use ModFieldSection, only: &
@@ -3451,9 +3452,9 @@ contains
     logical, parameter :: TwoD=.true.
     logical, parameter :: ThreeD=.false.
 
-    logical, parameter :: dumpLocal=.false.
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(CreateAdvMntMessageSet)**"
+    logical, parameter :: dumpLocal=.true.
 
     ! no message set if no neighbours
 
@@ -3487,10 +3488,9 @@ contains
     mzp=NodeDims%mzp
 
     if (dumpLocal) then
-       write(str(1),"(i8)") nMachs
-       write(str(2),"(i8)") myNum
-       call MsgDump(h//" enter with nMachs="//trim(adjustl(str(1)))//&
-            "; myNum="//trim(adjustl(str(2))))
+       call MsgDump(h//" starts with:")
+       call DumpDomainDecomp(GlobalOwnWithBC,"GlobalOwnWithBC")
+       call DumpDomainDecomp(GlobalWithGhostAdvMnt,"GlobalWithGhostAdvMnt")
        call DumpNeighbourNodes(Neigh,"AdvMnt")
     end if
 
@@ -3524,8 +3524,8 @@ contains
          thisNode=myNum, &
          oneNeighbourNodes=Neigh, &
          GlobalOwn=GlobalOwnWithBC, &
-         xbToUpdate=GlobalOwnWithBC%xb, &
-         xeToUpdate=GlobalOwnWithBC%xe, &
+         xbToUpdate=GlobalWithGhostAdvMnt%xb, &
+         xeToUpdate=GlobalWithGhostAdvMnt%xe, &
          ybToUpdate=GlobalOwnWithBC%ye+1, &
          yeToUpdate=GlobalOwnWithBC%ye+ghostZoneWidth, &
          xbSend=xbSendNorth, &
@@ -3540,60 +3540,32 @@ contains
          willRecv=willRecvNorth, &
          varName=NameSendRecvNorth)
 
-    ! extend send/recv region to include ghost zone
-    ! this is technically wrong but required to replicate
-    ! previous message passsing routines, to be excluded from the code
-
-    do iNeigh = 1, nNeigh
-       if (willSendNorth(iNeigh)) then
-          bramsProcNbr = Neigh%neigh(iNeigh)
-          if (dumpLocal) then
-             write(str(1),"(i8)") Brams2MpiProcNbr(bramsProcNbr)
-             write(str(2),"(i8)") xbSendNorth(iNeigh)
-             write(str(3),"(i8)") xeSendNorth(iNeigh)
-          end if
-          ! west boundary
-          if (.not. NodeDimsAdvMnt%borderWest) then
-             xbSendNorth(iNeigh)=xbSendNorth(iNeigh)-ghostZoneWidth
-          end if
-          ! east boundary
-          if (.not. NodeDimsAdvMnt%borderEast) then
-             xeSendNorth(iNeigh)=xeSendNorth(iNeigh)+ghostZoneWidth
-          end if
-          if (dumpLocal) then
-             write(str(4),"(i8)") xbSendNorth(iNeigh)
-             write(str(5),"(i8)") xeSendNorth(iNeigh)
-             call MsgDump(h//" send north to MPI #"//trim(adjustl(str(1)))//&
-                  " expanded x interval from "//&
-                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//")"//&
-                  " to "//&
-                  "("//trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
-          end if
-       end if
-       if (willRecvNorth(iNeigh)) then
+    if (dumpLocal) then
+       do iNeigh = 1, nNeigh
           bramsProcNbr = Neigh%neigh(iNeigh)
           write(str(1),"(i8)") Brams2MpiProcNbr(bramsProcNbr)
-          write(str(2),"(i8)") xbRecvNorth(iNeigh)
-          write(str(3),"(i8)") xeRecvNorth(iNeigh)
-          ! west boundary
-          if (.not. NodeDimsAdvMnt%borderWest) then
-             xbRecvNorth(iNeigh)=xbRecvNorth(iNeigh)-ghostZoneWidth
+          if (willSendNorth(iNeigh)) then
+             write(str(2),"(i8)") xbSendNorth(iNeigh)
+             write(str(3),"(i8)") xeSendNorth(iNeigh)
+             write(str(4),"(i8)") ybSendNorth(iNeigh)
+             write(str(5),"(i8)") yeSendNorth(iNeigh)
+             call MsgDump(h//" send north to MPI #"//trim(adjustl(str(1)))//&
+                  " global (xs:xe;ys:ye) "//&
+                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//"; "//&
+                  trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
           end if
-          ! east boundary
-          if (.not. NodeDimsAdvMnt%borderEast) then
-             xeRecvNorth(iNeigh)=xeRecvNorth(iNeigh)+ghostZoneWidth
-          end if
-          if (dumpLocal) then
-             write(str(4),"(i8)") xbRecvNorth(iNeigh)
-             write(str(5),"(i8)") xeRecvNorth(iNeigh)
+          if (willRecvNorth(iNeigh)) then
+             write(str(2),"(i8)") xbRecvNorth(iNeigh)
+             write(str(3),"(i8)") xeRecvNorth(iNeigh)
+             write(str(4),"(i8)") ybRecvNorth(iNeigh)
+             write(str(5),"(i8)") yeRecvNorth(iNeigh)
              call MsgDump(h//" recv north from MPI #"//trim(adjustl(str(1)))//&
-                  " expanded x interval from "//&
-                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//")"//&
-                  " to "//&
-                  "("//trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
+                  " global (xs:xe;ys:ye) "//&
+                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//"; "//&
+                  trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
           end if
-       end if
-    end do
+       end do
+    end if
 
     ! south neighbour communication
 
@@ -3605,8 +3577,8 @@ contains
          thisNode=myNum, &
          oneNeighbourNodes=Neigh, &
          GlobalOwn=GlobalOwnWithBC, &
-         xbToUpdate=GlobalOwnWithBC%xb, &
-         xeToUpdate=GlobalOwnWithBC%xe, &
+         xbToUpdate=GlobalWithGhostAdvMnt%xb, &
+         xeToUpdate=GlobalWithGhostAdvMnt%xe, &
          ybToUpdate=GlobalOwnWithBC%yb-ghostZoneWidth, &
          yeToUpdate=GlobalOwnWithBC%yb-1, &
          xbSend=xbSendSouth, &
@@ -3621,60 +3593,32 @@ contains
          willRecv=willRecvSouth, &
          varName=NameSendRecvSouth)
 
-    ! extend send/recv region to include ghost zone
-    ! this is technically wrong but required to replicate
-    ! previous message passsing routines, to be excluded from the code
-
-    do iNeigh = 1, nNeigh
-       if (willSendSouth(iNeigh)) then
-          bramsProcNbr = Neigh%neigh(iNeigh)
-          if (dumpLocal) then
-             write(str(1),"(i8)") Brams2MpiProcNbr(bramsProcNbr)
-             write(str(2),"(i8)") xbSendSouth(iNeigh)
-             write(str(3),"(i8)") xeSendSouth(iNeigh)
-          end if
-          ! west boundary
-          if (.not. NodeDimsAdvMnt%borderWest) then
-             xbSendSouth(iNeigh)=xbSendSouth(iNeigh)-ghostZoneWidth
-          end if
-          ! east boundary
-          if (.not. NodeDimsAdvMnt%borderEast) then
-             xeSendSouth(iNeigh)=xeSendSouth(iNeigh)+ghostZoneWidth
-          end if
-          if (dumpLocal) then
-             write(str(4),"(i8)") xbSendSouth(iNeigh)
-             write(str(5),"(i8)") xeSendSouth(iNeigh)
-             call MsgDump(h//" send south to MPI #"//trim(adjustl(str(1)))//&
-                  " expanded x interval from "//&
-                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//")"//&
-                  " to "//&
-                  "("//trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
-          end if
-       end if
-       if (willRecvSouth(iNeigh)) then
+    if (dumpLocal) then
+       do iNeigh = 1, nNeigh
           bramsProcNbr = Neigh%neigh(iNeigh)
           write(str(1),"(i8)") Brams2MpiProcNbr(bramsProcNbr)
-          write(str(2),"(i8)") xbRecvSouth(iNeigh)
-          write(str(3),"(i8)") xeRecvSouth(iNeigh)
-          ! west boundary
-          if (.not. NodeDimsAdvMnt%borderWest) then
-             xbRecvSouth(iNeigh)=xbRecvSouth(iNeigh)-ghostZoneWidth
+          if (willSendSouth(iNeigh)) then
+             write(str(2),"(i8)") xbSendSouth(iNeigh)
+             write(str(3),"(i8)") xeSendSouth(iNeigh)
+             write(str(4),"(i8)") ybSendSouth(iNeigh)
+             write(str(5),"(i8)") yeSendSouth(iNeigh)
+             call MsgDump(h//" send south to MPI #"//trim(adjustl(str(1)))//&
+                  " global (xs:xe;ys:ye) "//&
+                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//"; "//&
+                  trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
           end if
-          ! east boundary
-          if (.not. NodeDimsAdvMnt%borderEast) then
-             xeRecvSouth(iNeigh)=xeRecvSouth(iNeigh)+ghostZoneWidth
-          end if
-          if (dumpLocal) then
-             write(str(4),"(i8)") xbRecvSouth(iNeigh)
-             write(str(5),"(i8)") xeRecvSouth(iNeigh)
+          if (willRecvSouth(iNeigh)) then
+             write(str(2),"(i8)") xbRecvSouth(iNeigh)
+             write(str(3),"(i8)") xeRecvSouth(iNeigh)
+             write(str(4),"(i8)") ybRecvSouth(iNeigh)
+             write(str(5),"(i8)") yeRecvSouth(iNeigh)
              call MsgDump(h//" recv south from MPI #"//trim(adjustl(str(1)))//&
-                  " expanded x interval from "//&
-                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//")"//&
-                  " to "//&
-                  "("//trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
+                  " global (xs:xe;ys:ye) "//&
+                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//"; "//&
+                  trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
           end if
-       end if
-    end do
+       end do
+    end if
 
     ! east neighbour communication
 
@@ -3688,8 +3632,8 @@ contains
          GlobalOwn=GlobalOwnWithBC, &
          xbToUpdate=GlobalOwnWithBC%xe+1, &
          xeToUpdate=GlobalOwnWithBC%xe+ghostZoneWidth, &
-         ybToUpdate=GlobalOwnWithBC%yb, &
-         yeToUpdate=GlobalOwnWithBC%ye, &
+         ybToUpdate=GlobalWithGhostAdvMnt%yb, &
+         yeToUpdate=GlobalWithGhostAdvMnt%ye, &
          xbSend=xbSendEast, &
          xeSend=xeSendEast, &
          ybSend=ybSendEast, &
@@ -3702,60 +3646,32 @@ contains
          willRecv=willRecvEast, &
          varName=NameSendRecvEast)
 
-    ! extend send/recv region to include ghost zone
-    ! this is technically wrong but required to replicate
-    ! previous message passsing routines, to be excluded from the code
-
-    do iNeigh = 1, nNeigh
-       if (willSendEast(iNeigh)) then
-          bramsProcNbr = Neigh%neigh(iNeigh)
-          if (dumpLocal) then
-             write(str(1),"(i8)") Brams2MpiProcNbr(bramsProcNbr)
-             write(str(2),"(i8)") ybSendEast(iNeigh)
-             write(str(3),"(i8)") yeSendEast(iNeigh)
-          end if
-          ! south boundary
-          if (.not. NodeDimsAdvMnt%borderSouth) then
-             ybSendEast(iNeigh)=ybSendEast(iNeigh)-ghostZoneWidth
-          end if
-          ! north boundary
-          if (.not. NodeDimsAdvMnt%borderNorth) then
-             yeSendEast(iNeigh)=yeSendEast(iNeigh)+ghostZoneWidth
-          end if
-          if (dumpLocal) then
+    if (dumpLocal) then
+       do iNeigh = 1, nNeigh
+          bramsProcNbr = Neigh%neigh(iNeigh) 
+          write(str(1),"(i8)") Brams2MpiProcNbr(bramsProcNbr)
+          if (willSendEast(iNeigh)) then
+             write(str(2),"(i8)") xbSendEast(iNeigh)
+             write(str(3),"(i8)") xeSendEast(iNeigh)
              write(str(4),"(i8)") ybSendEast(iNeigh)
              write(str(5),"(i8)") yeSendEast(iNeigh)
              call MsgDump(h//" send east to MPI #"//trim(adjustl(str(1)))//&
-                  " expanded y interval from "//&
-                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//")"//&
-                  " to "//&
-                  "("//trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
+                  " global (xs:xe;ys:ye) "//&
+                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//"; "//&
+                  trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
           end if
-       end if
-       if (willRecvEast(iNeigh)) then
-          bramsProcNbr = Neigh%neigh(iNeigh)
-          write(str(1),"(i8)") Brams2MpiProcNbr(bramsProcNbr)
-          write(str(2),"(i8)") ybRecvEast(iNeigh)
-          write(str(3),"(i8)") yeRecvEast(iNeigh)
-          ! south boundary
-          if (.not. NodeDimsAdvMnt%borderSouth) then
-             ybRecvEast(iNeigh)=ybRecvEast(iNeigh)-ghostZoneWidth
-          end if
-          ! north boundary
-          if (.not. NodeDimsAdvMnt%borderNorth) then
-             yeRecvEast(iNeigh)=yeRecvEast(iNeigh)+ghostZoneWidth
-          end if
-          if (dumpLocal) then
+          if (willRecvEast(iNeigh)) then
+             write(str(2),"(i8)") xbRecvEast(iNeigh)
+             write(str(3),"(i8)") xeRecvEast(iNeigh)
              write(str(4),"(i8)") ybRecvEast(iNeigh)
              write(str(5),"(i8)") yeRecvEast(iNeigh)
              call MsgDump(h//" recv east from MPI #"//trim(adjustl(str(1)))//&
-                  " expanded y interval from "//&
-                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//")"//&
-                  " to "//&
-                  "("//trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
+                  " global (xs:xe;ys:ye) "//&
+                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//"; "//&
+                  trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
           end if
-       end if
-    end do
+       end do
+    end if
 
     ! west neighbour communication
 
@@ -3769,8 +3685,8 @@ contains
          GlobalOwn=GlobalOwnWithBC, &
          xbToUpdate=GlobalOwnWithBC%xb-ghostZoneWidth, &
          xeToUpdate=GlobalOwnWithBC%xb-1, &
-         ybToUpdate=GlobalOwnWithBC%yb, &
-         yeToUpdate=GlobalOwnWithBC%ye, &
+         ybToUpdate=GlobalWithGhostAdvMnt%yb, &
+         yeToUpdate=GlobalWithGhostAdvMnt%ye, &
          xbSend=xbSendWest, &
          xeSend=xeSendWest, &
          ybSend=ybSendWest, &
@@ -3783,60 +3699,32 @@ contains
          willRecv=willRecvWest, &
          varName=NameSendRecvWest)
 
-    ! extend send/recv region to include ghost zone
-    ! this is technically wrong but required to replicate
-    ! previous message passsing routines, to be excluded from the code
-
-    do iNeigh = 1, nNeigh
-       if (willSendWest(iNeigh)) then
+    if (dumpLocal) then
+       do iNeigh = 1, nNeigh
           bramsProcNbr = Neigh%neigh(iNeigh)
-          if (dumpLocal) then
-             write(str(1),"(i8)") Brams2MpiProcNbr(bramsProcNbr)
-             write(str(2),"(i8)") ybSendWest(iNeigh)
-             write(str(3),"(i8)") yeSendWest(iNeigh)
-          end if
-          ! south boundary
-          if (.not. NodeDimsAdvMnt%borderSouth) then
-             ybSendWest(iNeigh)=ybSendWest(iNeigh)-ghostZoneWidth
-          end if
-          ! north boundary
-          if (.not. NodeDimsAdvMnt%borderNorth) then
-             yeSendWest(iNeigh)=yeSendWest(iNeigh)+ghostZoneWidth
-          end if
-          if (dumpLocal) then
+          write(str(1),"(i8)") Brams2MpiProcNbr(bramsProcNbr)
+          if (willSendWest(iNeigh)) then
+             write(str(2),"(i8)") xbSendWest(iNeigh)
+             write(str(3),"(i8)") xeSendWest(iNeigh)
              write(str(4),"(i8)") ybSendWest(iNeigh)
              write(str(5),"(i8)") yeSendWest(iNeigh)
              call MsgDump(h//" send west to MPI #"//trim(adjustl(str(1)))//&
-                  " expanded y interval from "//&
-                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//")"//&
-                  " to "//&
-                  "("//trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
+                  " global (xs:xe;ys:ye) "//&
+                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//"; "//&
+                  trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
           end if
-       end if
-       if (willRecvWest(iNeigh)) then
-          bramsProcNbr = Neigh%neigh(iNeigh)
-          write(str(1),"(i8)") Brams2MpiProcNbr(bramsProcNbr)
-          write(str(2),"(i8)") ybRecvWest(iNeigh)
-          write(str(3),"(i8)") yeRecvWest(iNeigh)
-          ! south boundary
-          if (.not. NodeDimsAdvMnt%borderSouth) then
-             ybRecvWest(iNeigh)=ybRecvWest(iNeigh)-ghostZoneWidth
-          end if
-          ! north boundary
-          if (.not. NodeDimsAdvMnt%borderNorth) then
-             yeRecvWest(iNeigh)=yeRecvWest(iNeigh)+ghostZoneWidth
-          end if
-          if (dumpLocal) then
+          if (willRecvWest(iNeigh)) then
+             write(str(2),"(i8)") xbRecvWest(iNeigh)
+             write(str(3),"(i8)") xeRecvWest(iNeigh)
              write(str(4),"(i8)") ybRecvWest(iNeigh)
              write(str(5),"(i8)") yeRecvWest(iNeigh)
              call MsgDump(h//" recv west from MPI #"//trim(adjustl(str(1)))//&
-                  " expanded y interval from "//&
-                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//")"//&
-                  " to "//&
-                  "("//trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
+                  " global (xs:xe;ys:ye) "//&
+                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//"; "//&
+                  trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
           end if
-       end if
-    end do
+       end do
+    end if
 
     ! create message set for UV 
 

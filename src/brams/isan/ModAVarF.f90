@@ -7,6 +7,9 @@
 !###########################################################################
 module ModAvArf
 
+  use ModNestFeed, only: &
+       fdback
+
   use ModRbnd, only: &
        topset, &
        botset

@@ -474,23 +474,26 @@ contains
 
     !-------------
     ! Allocate Leaf surface scheme type
+    
     allocate(leaf_g(ngrids), STAT=ierr)
     if (ierr/=0) call fatal_error(h//"Allocating leaf_g")
+    
     allocate(leafm_g(ngrids), STAT=ierr)
     if (ierr/=0) call fatal_error(h//"Allocating leafm_g")
+
     do ng=1,ngrids
-       call nullify_leaf(leaf_g(ng))
        call alloc_leaf(leaf_g(ng), nmzp(ng), nmxp(ng), nmyp(ng),  &
             nzg, nzs, npatch, ng)
-       call nullify_leaf(leafm_g(ng))
        if (imean==1) then
           call alloc_leaf(leafm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng),  &
                nzg, nzs, npatch, ng)
        endif
-
+       
        call filltab_leaf(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
             leaf_g(ng), leafm_g(ng), imean)
     enddo
+
+
     ! Bob (1/10/2002) added the following line.  Is this the right place for
     ! the long term??
     call alloc_leafcol(nzg, nzs)
@@ -559,12 +562,12 @@ contains
     ! Allocate grid variables data type.
     allocate(grid_g(ngrids), STAT=ierr)
     if (ierr/=0) call fatal_error(h//"Allocating grid_g")
+
     allocate(gridm_g(ngrids), STAT=ierr)
     if (ierr/=0) call fatal_error(h//"Allocating gridm_g")
+
     do ng=1,ngrids
-       call nullify_grid(grid_g(ng))
        call alloc_grid(grid_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
-       call nullify_grid(gridm_g(ng))
        if (imean == 1) then
           call alloc_grid(gridm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
        end if

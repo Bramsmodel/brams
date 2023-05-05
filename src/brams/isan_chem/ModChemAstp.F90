@@ -7,6 +7,9 @@
 !###########################################################################
 module ModChemAstp
 
+  use ModParallelEnvironment, only: &
+       MsgDump
+  
   use dump, only: &
        dumpMessage
 
@@ -2324,6 +2327,10 @@ contains
     character(len=8),allocatable :: gradsVarsNames(:)
     character(len=15) :: dataCtl
 
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(chem_pressure_stage_grads)**"
+    logical, parameter :: dumpLocal=.false.
+
     xnelat=0.0;xnelon=0.0;cntlat=0.0;cntlon=0.0;secondlat=0.0
 
     ctlFileName=innpr(1:len_trim(innpr)-3)//'ctl'
@@ -2346,6 +2353,12 @@ contains
        read(33,*) gradsVarsNames(i)
        print *,'LFR->',i,gradsVarsNames(i)
     enddo
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") nGradsVars
+       call MsgDump(h//" found "//trim(adjustl(str(1)))//&
+         " fields at file "//trim(ctlFileName))
+    end if
 
     close(33)
 
@@ -2630,6 +2643,10 @@ contains
     character(len=256) :: message
     integer, external :: outRealSize
 
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(chem_get_press_grads)**"
+    logical, parameter :: dumpLocal=.false.
+
     !Allocate array for trimmer area
     allocate(aux_as(nprx,npry))
     iAbove=0
@@ -2673,7 +2690,6 @@ contains
 
     close(33)
 
-
     do lv=1,nprz_grib2
 
        levpr(lv)=levpr_grib2(lv)
@@ -2713,6 +2729,13 @@ contains
           endif
        enddo
     enddo
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") nprz_grib2
+       write(str(2),"(i8)") 5+nspecies+nspecies_aer_in
+       call MsgDump(h//" read "//trim(adjustl(str(2)))//" fields "//&
+            " with "//trim(adjustl(str(1)))//" verticals from grads file "//trim(innpr))
+    end if
 
     if(ccGradsWrite==1) call writeGradsSub4Grads(nGradsVars,gradsVarsNames)
 
@@ -2851,7 +2874,10 @@ contains
     integer, external :: outRealSize
 
     real :: cs(nprx,npry)
-
+    
+    character(len=*), parameter :: h="**(WriteGradsSub4Grads)**"
+    logical, parameter :: dumpLocal=.false.
+    
     !Code
     write(cYear,fmt='(I4.4)') iyear
     write(cMonth,fmt='(I2.2)') iMonth
@@ -2939,6 +2965,9 @@ contains
 
     close(33)
 
+    if (dumpLocal) then
+       call MsgDump(h//" wrote files "//trim(gradsFileName)//" .ctl and .gra")
+    end if
   end subroutine writeGradsSub4Grads
 end module ModChemAstp
 

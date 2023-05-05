@@ -1,5 +1,10 @@
 ## Make object rules ##
 
+ModParallelEnvironment.o : $(MPI)/ModParallelEnvironment.f90 
+	@cp -f $< $(<F:.f90=.f90)
+	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
+	rm -f $(<F:.f90=.f90)
+
 an_header.o  : $(UTILS_MODS)/an_header.f90 
 	 @cp -f $< $(<F:.f90=.f90)
 	 $(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
@@ -134,13 +139,16 @@ utils_c.o    : $(UTILS_LIB)/utils_c.c
 eenviron.o   : $(EFF)/eenviron.c
 	  $(C_COMMAND) $< $(EXTRAFLAGSC)
 
-spAllocate.o : $(UTILS_LIB)/spAllocate.c
+spAllocate.o : $(UTILS_LIB)/spAllocate.c $(UTILS_INCS)/spAllocate.h \
+	$(UTILS_INCS)/spConfig.h  $(UTILS_INCS)/spmatrix.h  $(UTILS_INCS)/spDefs.h
 	  $(C_COMMAND) $< $(EXTRAFLAGSC)
 
-spBuild.o : $(UTILS_LIB)/spBuild.c
+spBuild.o : $(UTILS_LIB)/spBuild.c $(UTILS_INCS)/spBuild.h  \
+	$(UTILS_INCS)/spConfig.h  $(UTILS_INCS)/spmatrix.h  $(UTILS_INCS)/spDefs.h
 	  $(C_COMMAND) $< $(EXTRAFLAGSC)
 
-spFactor.o : $(UTILS_LIB)/spFactor.c
+spFactor.o : $(UTILS_LIB)/spFactor.c $(UTILS_INCS)/spFactor.h \
+	$(UTILS_INCS)/spConfig.h  $(UTILS_INCS)/spmatrix.h  $(UTILS_INCS)/spDefs.h
 	  $(C_COMMAND) $< $(EXTRAFLAGSC)
 
 spOutput.o : $(UTILS_LIB)/spOutput.c

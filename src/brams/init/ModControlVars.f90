@@ -24,8 +24,8 @@ module ModControlVars
   type ControlVars
 
      ! namelist variables indexed by grid number
-     ! copied to this grid scalar vars, to avoid
-     ! indexing by grid number
+     ! are copied as scalar variables for this grid,
+     ! to avoid indexing namelist variables by grid number
 
      integer :: nnxp
      integer :: nnyp

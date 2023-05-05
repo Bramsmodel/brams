@@ -7,6 +7,9 @@
 !###########################################################################
 module ModSstRead
 
+  use ModParallelEnvironment, only: &
+       MsgDump
+
   use ModMkSfcSst, only: &
        sst_read_dataheader
 
@@ -31,9 +34,9 @@ module ModSstRead
 
 
   use ModDateUtils, only: date_abs_secs,   &
-                          date_add_to_big, &
-                          date_make_big,   &
-                          date_abs_secs2
+       date_add_to_big, &
+       date_make_big,   &
+       date_abs_secs2
 
 
   use mem_leaf, only: &
@@ -74,22 +77,22 @@ module ModSstRead
        Broadcast, &
        ReadStoreOwnChunk
 
-
-
   use ModControlVars, only: &
        ControlVars
-
-
 
   implicit none
 
   include "files.h"
+  include "UseVfm.h" 
+
+  integer, parameter :: fUnit=25
 
   private
 
   public :: SstReadStoreOwnChunk
 
 contains
+
 
   subroutine sst_check_header(ifm,flnm,ierr)
 
@@ -107,18 +110,43 @@ contains
          ,isfc_marker,isfc_ver,nsfx,nsfy
     real :: sfdx,sfdy,sfplat,sfplon,sflat,sflon,glatr,glonr
 
+    integer :: ios
+
+    character(len=16) :: str(10)
+    character(len=*), parameter :: h="**(sst_check_header)**"
+    logical, parameter :: dumpLocal=.true.
+
     ierr = 0
 
     call xy_ll(glatr,glonr,platn(ifm),plonn(ifm),xtn(1,ifm),ytn(1,ifm))
 
-    call rams_f_open(25,flnm(1:len_trim(flnm)),'FORMATTED','OLD','READ',0)
+    if (useVfm) then
 
-    read (25,*) isfc_marker,isfc_ver
-    read (25,*) iiyear,iimonth,iidate,iihour
-    read (25,*) nsfx,nsfy
-    read (25,*) sfdx,sfdy,sfplat,sfplon,sflat,sflon
-    close (25)
+       call rams_f_open(fUnit,flnm(1:len_trim(flnm)),'FORMATTED','OLD','READ',0)
+       read (fUnit,*) isfc_marker,isfc_ver
+       read (fUnit,*) iiyear,iimonth,iidate,iihour
+       read (fUnit,*) nsfx,nsfy
+       read (fUnit,*) sfdx,sfdy,sfplat,sfplon,sflat,sflon
+       close (fUnit)
 
+    else
+
+       open(fUnit, action="read", file=trim(flnm), form="unformatted", iostat=ios)
+       if (ios /= 0) then
+          call fatal_error(h//" error opening file "//trim(flnm))
+       end if
+       read (fUnit) isfc_marker,isfc_ver
+       read (fUnit) iiyear,iimonth,iidate,iihour
+       read (fUnit) nsfx,nsfy
+       read (fUnit) sfdx,sfdy,sfplat,sfplon,sflat,sflon
+       close (fUnit)
+    end if
+
+    if (dumpLocal) then
+       write(str(1),"(e16.8)") sflon
+       call MsgDump(h//" read sflon="//trim(adjustl(str(1))))
+    end if
+    
     if (nsfx                   .ne. nnxp(ifm) .or.  &
          nsfy                   .ne. nnyp(ifm) .or.  &
          abs(sfdx-deltaxn(ifm)) .gt. .001      .or.  &
@@ -143,9 +171,19 @@ contains
        print*,'SW lon:',glonr,sflon
        print*,'-------------------'
 
+
+       if (dumpLocal) then
+          call MsgDump(h//" sst header mismatch at file "//trim(flnm))
+       end if
+
     else
 
        ierr = 0
+
+       if (dumpLocal) then
+          call MsgDump(h//" match header at file "//trim(flnm))
+       end if
+
     endif
   end subroutine sst_check_header
 
@@ -161,7 +199,9 @@ contains
     character(len=14)  :: totdate, totdatem
     integer :: iyears, imonths, idates, ihours, nf, ng
     real(kind=8) :: secs_init, secs1, secs2
+
     character(len=*), parameter :: h="**(SstReadStoreOwnChunk)**"
+    logical, parameter :: dumpLocal=.false.
 
     ierr = 0
 
@@ -377,14 +417,14 @@ contains
 
   subroutine SstFileInv(sfilin, ierr)
     character(len=*), intent(IN) :: sfilin
-    integer, intent(OUT)           :: ierr
+    integer, intent(out)           :: ierr
 
     integer :: nc, nf, lnf, nftot, ng, icm, ifm
     integer :: inyear, inmonth, indate, inhour
 
 !!$  integer, parameter :: maxfiles=1000
     character(len=f_name_length) :: fnames(maxfiles)
-    character(len=f_name_length) :: rams_filelist_arg
+!!$    character(len=f_name_length) :: rams_filelist_arg
     character(len=014) :: itotdate
     character(len=001) :: cgrid
 
@@ -404,9 +444,16 @@ contains
     integer :: nvtime,ivtime,indice
     character(len=2) :: cgrid2
     character(len=f_name_length) :: flnm
+
+    character(len=8) :: str(10)
     character(len=*), parameter :: h="**(SstFileInv)**"
+    logical, parameter :: dumpLocal=.false.
 
     ! size and length of data to be broadcasted
+
+    if (dumpLocal) then
+       call MsgDump(h//" enter with sfilin="//trim(sfilin))
+    end if
 
     sizeIntVec = ngrids+3
     lenFnames  = len(fnames_sst)
@@ -439,13 +486,7 @@ contains
 
           nftot = -1
           write(cgrid,'(i1)') ng
-          rams_filelist_arg = trim(sfilin)//'-W-*-g'//cgrid//'.vfm'
-
-!!$        print *, "DEBUG-ALF:SstFileInv:trim(sfilin)=", trim(sfilin)
-!!$        print *, "DEBUG-ALF:SstFileInv:cgrid=", cgrid
-!!$        print *, "DEBUG-ALF:SstFileInv:argumento=", rams_filelist_arg
-!!$        call flush(6)
-
+!!$          rams_filelist_arg = trim(sfilin)//'-W-*-g'//cgrid//'.vfm'
 
           if (isstflg(ng) == 1) then
              call sst_read_dataheader(ng)
@@ -471,16 +512,26 @@ contains
                 ihourvs (1:nvsstf(ifm),ifm) = ihourvs (1:nvsstf(ifm),icm)
              endif
 
-             call makefnam(flnm, sfilin, 0., &
-                  iyearvs(ivtime,ng), imonthvs(ivtime,ng), &
-                  idatevs(ivtime,ng), ihourvs(ivtime,ng)*10000, &
-                  'W',cgrid2,'vfm')
+             if (useVfm) then
+                call makefnam(flnm, sfilin, 0., &
+                     iyearvs(ivtime,ng), imonthvs(ivtime,ng), &
+                     idatevs(ivtime,ng), ihourvs(ivtime,ng)*10000, &
+                     'W',cgrid2,'vfm')
+             else
+                call makefnam(flnm, sfilin, 0., &
+                     iyearvs(ivtime,ng), imonthvs(ivtime,ng), &
+                     idatevs(ivtime,ng), ihourvs(ivtime,ng)*10000, &
+                     'W',cgrid2,'bin')
+             end if
 
              inquire(file=flnm(1:len_trim(flnm)), exist=there)
 
              if (there) then
                 fnames(indice) = trim(flnm)
                 indice = indice + 1 
+                if (dumpLocal) then
+                   call MsgDump(h//" inserted file "//trim(flnm)//" at fnames array for grid "//cgrid)
+                end if
              endif
 
           end do
@@ -493,6 +544,9 @@ contains
           if (nftot<=0) then
              print *, 'No sst files for grid '//cgrid
              ierr = 1
+             if (dumpLocal) then
+                call MsgDump(h//" no sst files for grid "//cgrid)
+             end if
              exit
           end if
 
@@ -524,6 +578,9 @@ contains
              nsstfiles(ng)                  = nsstfiles(ng) + 1
              fnames_sst(nsstfiles(ng),ng)   = fnames(nf)
              itotdate_sst(nsstfiles(ng),ng) = itotdate
+             if (dumpLocal) then
+                call MsgDump(h//" inserted file "//trim(fnames(nf))//" at fnames_sst array for grid "//cgrid)
+             end if
           end do
 
           if (ierr==0) then
@@ -544,6 +601,15 @@ contains
              enddo
              write(unit=22,fmt='(A)') '------------------------------------------------------'
              close(unit=22)
+
+             if (dumpLocal) then
+                write(str(1),"(i8)") ng
+                call MsgDump(h//" for grid "//trim(adjustl(str(1)))//&
+                     " inserted at fnames_sst files and itotdate:")
+                do nf=1,nsstfiles(ng)
+                   call MsgDump(h//" file "//trim(fnames_sst(nf,ng))//" with itotdate="//trim(itotdate_sst(nf,ng)))
+                end do
+             end if
           end if
           if (ierr/=0) exit
        end do
@@ -685,11 +751,13 @@ contains
     integer, intent(IN) :: iswap, nfile
     type(ControlVars), pointer, intent(in) :: oneControlVars
 
-    integer            :: ng, nc
+    integer            :: ng, nc, ios
     character(len=001) :: cgrid
     character(len=f_name_length) :: flnm
     character(len=001) :: dummy
 
+    character(len=*), parameter :: h="**(SstUpdate)**"
+    logical, parameter :: dumpLocal=.false.
 
     ! Put new fields into future arrays. If iswap == 1,
     !     swap future into past first
@@ -713,22 +781,41 @@ contains
           nc          = len_trim(flnm) - 4
           flnm(nc:nc) = cgrid
 
-          call rams_f_open(25, flnm(1:len_trim(flnm)), 'FORMATTED', 'OLD', 'READ', 0)
+          if (dumpLocal) then
+             call MsgDump(h//" will read file "//trim(flnm))
+          end if
 
-          read(25,*) dummy
-          read(25,*) dummy
-          read(25,*) dummy
-          read(25,*) dummy
+          if (useVfm) then
+             call rams_f_open(fUnit, flnm(1:len_trim(flnm)), 'FORMATTED', 'OLD', 'READ', 0)
+
+             read(fUnit,*) dummy
+             read(fUnit,*) dummy
+             read(fUnit,*) dummy
+             read(fUnit,*) dummy
+
+          else
+             open(fUnit, action="read", file=trim(flnm), form="unformatted", iostat=ios)
+             if (ios /= 0) then
+                call fatal_error(h//" error opening file "//trim(flnm))
+             end if
+
+             read(fUnit) dummy
+             read(fUnit) dummy
+             read(fUnit) dummy
+             read(fUnit) dummy
+          end if
+
        end if
 
        ! deals with seatf
 
-       call ReadStoreOwnChunk(ng, 25, leaf_g(ng)%seatf, "seatf", oneControlVars)
+       call ReadStoreOwnChunk(ng, fUnit, leaf_g(ng)%seatf, "seatf", &
+            oneControlVars)
 
        ! master process closes file
 
        if (mchnum==master_num) then
-          close(25)
+          close(fUnit)
        end if
     enddo
 

@@ -13,10 +13,11 @@ module ModChemIsanIo
        pi_v, ps_p, ps_r, ps_scra, ps_scrb, ps_t, ps_u, ps_v, rs_p, rs_qual, &
        rs_r, rs_s, rs_sfp, rs_sft, rs_slp, rs_snow, rs_sst, rs_t, rs_top, &
        rs_u, rs_v, sigz
-  
+
   implicit none
-  
+
   include "constants.h"
+  include "UseVfm.h" 
 
   private
 
@@ -32,135 +33,260 @@ contains
   subroutine isenio (inout,iun,n1,n2)
     integer, intent(in) :: iun,n1,n2
     character(len=*),intent(in) :: inout
-    
+
     integer :: nlt,nx3,ny3,ninn,l !npts
     integer(kind=8) :: npts
 
-    if(inout.eq.'IN') THEN
+    if (useVfm) then
 
-       read(iun,920) iyy,imm,idd,ihh,nx3,ny3,ninn,(levth(l),l=1,ninn)
-920    format(7i4,(13i6))
-       if(nx3.ne.n1.or.ny3.ne.n2.or.ninn.ne.nisn) then
-          print*,'Isentropic stage grid dimensions do not match'
-          print*,'   configuration file on read !'
-          print*,' File dimens - ',nx3,ny3,ninn
-          print*,' Run  dimens - ',n1,n2,nisn
-          stop 'IO3-2'
+       ! vfm coded file
+
+       if(inout.eq.'IN') THEN
+          read(iun,920) iyy,imm,idd,ihh,nx3,ny3,ninn,(levth(l),l=1,ninn)
+920       format(7i4,(13i6))
+          if(nx3.ne.n1.or.ny3.ne.n2.or.ninn.ne.nisn) then
+             print*,'Isentropic stage grid dimensions do not match'
+             print*,'   configuration file on read !'
+             print*,' File dimens - ',nx3,ny3,ninn
+             print*,' Run  dimens - ',n1,n2,nisn
+             stop 'IO3-2'
+          endif
+
+          npts=n1*n2
+          do nlt=1,nisn
+             call vfirec(iun,pi_u(1,1,nlt),npts,'LIN')
+             call vmissr(pi_u(:,:,nlt),npts,1e30,-998.)
+             call vfirec(iun,pi_v(1,1,nlt),npts,'LIN')
+             call vmissr(pi_v(:,:,nlt),npts,1e30,-998.)
+             call vfirec(iun,pi_s(1,1,nlt),npts,'LIN')
+             call vmissr(pi_p(:,:,nlt),npts,1e30,-.5)
+             call vfirec(iun,pi_p(1,1,nlt),npts,'LIN')
+             call vmissr(pi_s(:,:,nlt),npts,1e30,-.5)
+             call vfirec(iun,pi_r(1,1,nlt),npts,'LIN')
+             call vmissr(pi_r(:,:,nlt),npts,1e30,-.5)
+          enddo
+
+          call vfirec(iun,rs_u,npts,'LIN')
+          call vmissr(rs_u,npts,1e30,-998.)
+          call vfirec(iun,rs_v,npts,'LIN')
+          call vmissr(rs_v,npts,1e30,-998.)
+          call vfirec(iun,rs_p,npts,'LIN')
+          call vmissr(rs_p,npts,1e30,-.5)
+          call vfirec(iun,rs_t,npts,'LIN')
+          call vmissr(rs_t,npts,1e30,-.5)
+          call vfirec(iun,rs_r,npts,'LIN')
+          call vmissr(rs_r,npts,1e30,-.5)
+          call vfirec(iun,rs_s,npts,'LIN')
+          call vmissr(rs_s,npts,1e30,-.5)
+          call vfirec(iun,rs_top,npts,'LIN')
+          call vmissr(rs_top,npts,1e30,-.5)
+          call vfirec(iun,rs_qual,npts,'LIN')
+          call vmissr(rs_qual,npts,1e30,-.5)
+
+          call vfirec(iun,rs_slp,npts,'LIN')
+          call vmissr(rs_slp,npts,1e30,-.5)
+          call vfirec(iun,rs_sfp,npts,'LIN')
+          call vmissr(rs_sfp,npts,1e30,-.5)
+          call vfirec(iun,rs_sft,npts,'LIN')
+          call vmissr(rs_sft,npts,1e30,-.5)
+          call vfirec(iun,rs_snow,npts,'LIN')
+          call vmissr(rs_snow,npts,1e30,-.5)
+          call vfirec(iun,rs_sst,npts,'LIN')
+          call vmissr(rs_sst,npts,1e30,-.5)
+
+          print 201,' *****  Isentropic file input *****************'  &
+               ,iyear,imonth,idate,ihour,n1,n2,nisn  &
+               ,(levth(l),l=1,nisn)
+201       format(//,a,//  &
+               ,' *',7X,' Date (year,month,day,hour)  - ',4I5,/  &
+               ,' *',7X,' Number of X,Y points        - ',2I5,/  &
+               ,' *',7X,' Number of isentropic levels - ',I5,/  &
+               ,' *',7X,' Isentropic levels (K)       - '/,(32X,8I5))
+          print '(a)',' **********************************************'
+
        endif
 
-       npts=n1*n2
-       do nlt=1,nisn
-          call vfirec(iun,pi_u(1,1,nlt),npts,'LIN')
-          call vmissr(pi_u(:,:,nlt),npts,1e30,-998.)
-          call vfirec(iun,pi_v(1,1,nlt),npts,'LIN')
-          call vmissr(pi_v(:,:,nlt),npts,1e30,-998.)
-          call vfirec(iun,pi_s(1,1,nlt),npts,'LIN')
-          call vmissr(pi_p(:,:,nlt),npts,1e30,-.5)
-          call vfirec(iun,pi_p(1,1,nlt),npts,'LIN')
-          call vmissr(pi_s(:,:,nlt),npts,1e30,-.5)
-          call vfirec(iun,pi_r(1,1,nlt),npts,'LIN')
-          call vmissr(pi_r(:,:,nlt),npts,1e30,-.5)
-       enddo
+       if(inout.eq.'out') then
 
-       call vfirec(iun,rs_u,npts,'LIN')
-       call vmissr(rs_u,npts,1e30,-998.)
-       call vfirec(iun,rs_v,npts,'LIN')
-       call vmissr(rs_v,npts,1e30,-998.)
-       call vfirec(iun,rs_p,npts,'LIN')
-       call vmissr(rs_p,npts,1e30,-.5)
-       call vfirec(iun,rs_t,npts,'LIN')
-       call vmissr(rs_t,npts,1e30,-.5)
-       call vfirec(iun,rs_r,npts,'LIN')
-       call vmissr(rs_r,npts,1e30,-.5)
-       call vfirec(iun,rs_s,npts,'LIN')
-       call vmissr(rs_s,npts,1e30,-.5)
-       call vfirec(iun,rs_top,npts,'LIN')
-       call vmissr(rs_top,npts,1e30,-.5)
-       call vfirec(iun,rs_qual,npts,'LIN')
-       call vmissr(rs_qual,npts,1e30,-.5)
+          write(iun,920) iyear,imonth,idate,ihour,n1,n2,nisn  &
+               ,(levth(l),l=1,nisn)
 
-       call vfirec(iun,rs_slp,npts,'LIN')
-       call vmissr(rs_slp,npts,1e30,-.5)
-       call vfirec(iun,rs_sfp,npts,'LIN')
-       call vmissr(rs_sfp,npts,1e30,-.5)
-       call vfirec(iun,rs_sft,npts,'LIN')
-       call vmissr(rs_sft,npts,1e30,-.5)
-       call vfirec(iun,rs_snow,npts,'LIN')
-       call vmissr(rs_snow,npts,1e30,-.5)
-       call vfirec(iun,rs_sst,npts,'LIN')
-       call vmissr(rs_sst,npts,1e30,-.5)
+          npts=n1*n2
+          do nlt=1,nisn
+             call vmissw(pi_u(:,:,nlt),npts,pi_scra(:,:,nlt),1E30,-999.)
+             call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
+             call vmissw(pi_v(:,:,nlt),npts,pi_scra(:,:,nlt),1E30,-999.)
+             call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
+             call vmissw(pi_p(:,:,nlt),npts,pi_scra(:,:,nlt),1E30,-1.)
+             call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
+             call vmissw(pi_s(:,:,nlt),npts,pi_scra(:,:,nlt),1E30,-1.)
+             call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
+             call vmissw(pi_r(:,:,nlt),npts,pi_scra(:,:,nlt),1E30,-1.)
+             call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
+          ENDDO
 
-       print 201,' *****  Isentropic file input *****************'  &
-            ,iyear,imonth,idate,ihour,n1,n2,nisn  &
-            ,(levth(l),l=1,nisn)
-201    format(//,a,//  &
-            ,' *',7X,' Date (year,month,day,hour)  - ',4I5,/  &
-            ,' *',7X,' Number of X,Y points        - ',2I5,/  &
-            ,' *',7X,' Number of isentropic levels - ',I5,/  &
-            ,' *',7X,' Isentropic levels (K)       - '/,(32X,8I5))
-       print '(a)',' **********************************************'
-
-    endif
-
-    if(inout.eq.'out') then
-
-       write(iun,920) iyear,imonth,idate,ihour,n1,n2,nisn  &
-            ,(levth(l),l=1,nisn)
-
-       npts=n1*n2
-       do nlt=1,nisn
-          call vmissw(pi_u(:,:,nlt),npts,pi_scra(:,:,nlt),1E30,-999.)
+          call vmissw(rs_u,npts,pi_scra(:,:,1),1E30,-999.)
           call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
-          call vmissw(pi_v(:,:,nlt),npts,pi_scra(:,:,nlt),1E30,-999.)
+          call vmissw(rs_v,npts,pi_scra(:,:,1),1E30,-999.)
           call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
-          call vmissw(pi_p(:,:,nlt),npts,pi_scra(:,:,nlt),1E30,-1.)
+          call vmissw(rs_p,npts,pi_scra(:,:,1),1E30,-1.)
           call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
-          call vmissw(pi_s(:,:,nlt),npts,pi_scra(:,:,nlt),1E30,-1.)
+          call vmissw(rs_t,npts,pi_scra(:,:,1),1E30,-1.)
           call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
-          call vmissw(pi_r(:,:,nlt),npts,pi_scra(:,:,nlt),1E30,-1.)
+          call vmissw(rs_r,npts,pi_scra(:,:,1),1E30,-1.)
           call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
-       ENDDO
+          call vmissw(rs_s,npts,pi_scra(:,:,1),1E30,-1.)
+          call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
+          call vmissw(rs_top,npts,pi_scra(:,:,1),1E30,-1.)
+          call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
+          call vmissw(rs_qual,npts,pi_scra(:,:,1),1E30,-1.)
+          call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
 
-       call vmissw(rs_u,npts,pi_scra(:,:,1),1E30,-999.)
-       call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
-       call vmissw(rs_v,npts,pi_scra(:,:,1),1E30,-999.)
-       call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
-       call vmissw(rs_p,npts,pi_scra(:,:,1),1E30,-1.)
-       call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
-       call vmissw(rs_t,npts,pi_scra(:,:,1),1E30,-1.)
-       call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
-       call vmissw(rs_r,npts,pi_scra(:,:,1),1E30,-1.)
-       call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
-       call vmissw(rs_s,npts,pi_scra(:,:,1),1E30,-1.)
-       call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
-       call vmissw(rs_top,npts,pi_scra(:,:,1),1E30,-1.)
-       call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
-       call vmissw(rs_qual,npts,pi_scra(:,:,1),1E30,-1.)
-       call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
+          call vmissw(rs_slp,npts,pi_scra(:,:,1),1E30,-1.)
+          call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
+          call vmissw(rs_sfp,npts,pi_scra(:,:,1),1E30,-1.)
+          call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
+          call vmissw(rs_sft,npts,pi_scra(:,:,1),1E30,-1.)
+          call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
+          call vmissw(rs_snow,npts,pi_scra(:,:,1),1E30,-1.)
+          call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
+          call vmissw(rs_sst,npts,pi_scra(:,:,1),1E30,-1.)
+          call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
 
-       call vmissw(rs_slp,npts,pi_scra(:,:,1),1E30,-1.)
-       call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
-       call vmissw(rs_sfp,npts,pi_scra(:,:,1),1E30,-1.)
-       call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
-       call vmissw(rs_sft,npts,pi_scra(:,:,1),1E30,-1.)
-       call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
-       call vmissw(rs_snow,npts,pi_scra(:,:,1),1E30,-1.)
-       call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
-       call vmissw(rs_sst,npts,pi_scra(:,:,1),1E30,-1.)
-       call vforec(iun,pi_scra,npts,18,pi_scrb,'LIN')
+          print 201,' *****  Isentropic file written *************'  &
+               ,iyear,imonth,idate,ihour,n1,n2,nisn  &
+               ,(levth(l),l=1,nisn)
 
-       print 201,' *****  Isentropic file written *************'  &
-            ,iyear,imonth,idate,ihour,n1,n2,nisn  &
-            ,(levth(l),l=1,nisn)
+          print 303,igridfl,gobsep,gobrad
+303       format(/,  &
+               ' Grid flag (IGRIDFL)               -',I4,/  &
+               ,' Grid-obs separation in degrees    -',F5.2,/  &
+               ,' Grid-obs radius influence degrees -',F5.2)
 
-       print 303,igridfl,gobsep,gobrad
-303    format(/,  &
-            ' Grid flag (IGRIDFL)               -',I4,/  &
-            ,' Grid-obs separation in degrees    -',F5.2,/  &
-            ,' Grid-obs radius influence degrees -',F5.2)
+       endif
 
-    endif
+    else
 
+       ! binary file
+
+       if(inout.eq.'IN') THEN
+
+          read (iun) iyy,imm,idd,ihh,nx3,ny3,ninn,(levth(l),l=1,ninn)
+          if(nx3.ne.n1.or.ny3.ne.n2.or.ninn.ne.nisn) then
+             print*,'Isentropic stage grid dimensions do not match'
+             print*,'   configuration file on read !'
+             print*,' File dimens - ',nx3,ny3,ninn
+             print*,' Run  dimens - ',n1,n2,nisn
+             stop 'IO3-2'
+          endif
+
+          npts=n1*n2
+          do nlt=1,nisn
+             read (iun) pi_u(:,:,nlt)
+             call vmissr(pi_u(:,:,nlt),npts,1e30,-998.)
+             read (iun) pi_v(:,:,nlt)
+             call vmissr(pi_v(:,:,nlt),npts,1e30,-998.)
+             read (iun) pi_p(:,:,nlt)
+             call vmissr(pi_p(:,:,nlt),npts,1e30,-.5)
+             read (iun) pi_s(:,:,nlt)
+             call vmissr(pi_s(:,:,nlt),npts,1e30,-.5)
+             read (iun) pi_r(:,:,nlt)
+             call vmissr(pi_r(:,:,nlt),npts,1e30,-.5)
+          enddo
+
+          read (iun) rs_u(:,:)
+          call vmissr(rs_u,npts,1e30,-998.)
+          read (iun) rs_v(:,:)
+          call vmissr(rs_v,npts,1e30,-998.)
+          read (iun) rs_p(:,:)
+          call vmissr(rs_p,npts,1e30,-.5)
+          read (iun) rs_t(:,:)
+          call vmissr(rs_t,npts,1e30,-.5)
+          read (iun) rs_r(:,:)
+          call vmissr(rs_r,npts,1e30,-.5)
+          read (iun) rs_s(:,:)
+          call vmissr(rs_s,npts,1e30,-.5)
+          read (iun) rs_top(:,:)
+          call vmissr(rs_top,npts,1e30,-.5)
+          read (iun) rs_qual(:,:)
+          call vmissr(rs_qual,npts,1e30,-.5)
+
+          read (iun) rs_slp(:,:)
+          call vmissr(rs_slp,npts,1e30,-.5)
+          read (iun) rs_sfp(:,:)
+          call vmissr(rs_sfp,npts,1e30,-.5)
+          read (iun) rs_sft(:,:)
+          call vmissr(rs_sft,npts,1e30,-.5)
+          read (iun) rs_snow(:,:)
+          call vmissr(rs_snow,npts,1e30,-.5)
+          read (iun) rs_sst(:,:)
+          call vmissr(rs_sst,npts,1e30,-.5)
+
+          print 201,' *****  Isentropic file input *****************'  &
+               ,iyear,imonth,idate,ihour,n1,n2,nisn  &
+               ,(levth(l),l=1,nisn)
+          print '(a)',' **********************************************'
+
+       endif
+
+       if(inout.eq.'out') then
+
+          write (iun) iyear,imonth,idate,ihour,n1,n2,nisn,(levth(l),l=1,nisn)
+
+          npts=n1*n2
+          do nlt=1,nisn
+             call vmissw(pi_u(:,:,nlt),npts,pi_scra(:,:,nlt),1E30,-999.)
+             write (iun) pi_scra(:,:,nlt)
+             call vmissw(pi_v(:,:,nlt),npts,pi_scra(:,:,nlt),1E30,-999.)
+             write (iun) pi_scra(:,:,nlt)
+             call vmissw(pi_p(:,:,nlt),npts,pi_scra(:,:,nlt),1E30,-1.)
+             write (iun) pi_scra(:,:,nlt)
+             call vmissw(pi_s(:,:,nlt),npts,pi_scra(:,:,nlt),1E30,-1.)
+             write (iun) pi_scra(:,:,nlt)
+             call vmissw(pi_r(:,:,nlt),npts,pi_scra(:,:,nlt),1E30,-1.)
+             write (iun) pi_scra(:,:,nlt)
+          ENDDO
+
+          call vmissw(rs_u,npts,pi_scra(:,:,1),1E30,-999.)
+          write (iun) pi_scra(:,:,nlt)
+          call vmissw(rs_v,npts,pi_scra(:,:,1),1E30,-999.)
+          write (iun) pi_scra(:,:,nlt)
+          call vmissw(rs_p,npts,pi_scra(:,:,1),1E30,-1.)
+          write (iun) pi_scra(:,:,nlt)
+          call vmissw(rs_t,npts,pi_scra(:,:,1),1E30,-1.)
+          write (iun) pi_scra(:,:,nlt)
+          call vmissw(rs_r,npts,pi_scra(:,:,1),1E30,-1.)
+          write (iun) pi_scra(:,:,nlt)
+          call vmissw(rs_s,npts,pi_scra(:,:,1),1E30,-1.)
+          write (iun) pi_scra(:,:,nlt)
+          call vmissw(rs_top,npts,pi_scra(:,:,1),1E30,-1.)
+          write (iun) pi_scra(:,:,nlt)
+          call vmissw(rs_qual,npts,pi_scra(:,:,1),1E30,-1.)
+          write (iun) pi_scra(:,:,nlt)
+
+          call vmissw(rs_slp,npts,pi_scra(:,:,1),1E30,-1.)
+          write (iun) pi_scra(:,:,nlt)
+          call vmissw(rs_sfp,npts,pi_scra(:,:,1),1E30,-1.)
+          write (iun) pi_scra(:,:,nlt)
+          call vmissw(rs_sft,npts,pi_scra(:,:,1),1E30,-1.)
+          write (iun) pi_scra(:,:,nlt)
+          call vmissw(rs_snow,npts,pi_scra(:,:,1),1E30,-1.)
+          write (iun) pi_scra(:,:,nlt)
+          call vmissw(rs_sst,npts,pi_scra(:,:,1),1E30,-1.)
+          write (iun) pi_scra(:,:,nlt)
+
+          print 201,' *****  Isentropic file written *************'  &
+               ,iyear,imonth,idate,ihour,n1,n2,nisn  &
+               ,(levth(l),l=1,nisn)
+
+          print 303,igridfl,gobsep,gobrad
+
+       endif
+
+
+
+
+    end if
     return
   end subroutine isenio
 
@@ -175,68 +301,128 @@ contains
     integer(kind=i8) :: npts
 
 
-    if(inout.eq.'IN') then
-       read(iun,920) iyy,imm,idd,ihh,nx3,ny3,ninn  &
-            ,(sigz(l),l=1,ninn)
-920    format(7i4,(9f8.2))
-       if(nx3.ne.n1.or.ny3.ne.n2.or.ninn.ne.nsigz)then
-          print*,'Sigma-z grid dimensions do not match'
-          print*,'   input data on read !'
-          print*,' File  dimensions - ',nx3,ny3,ninn
-          print*,' Input dimensions - ',n1,n2,nsigz
-          stop 'iO3-2'
+    if (useVfm) then
+
+       ! vfm coded file
+
+       if(inout.eq.'IN') then
+          read(iun,920) iyy,imm,idd,ihh,nx3,ny3,ninn  &
+               ,(sigz(l),l=1,ninn)
+920       format(7i4,(9f8.2))
+          if(nx3.ne.n1.or.ny3.ne.n2.or.ninn.ne.nsigz)then
+             print*,'Sigma-z grid dimensions do not match'
+             print*,'   input data on read !'
+             print*,' File  dimensions - ',nx3,ny3,ninn
+             print*,' Input dimensions - ',n1,n2,nsigz
+             stop 'iO3-2'
+          endif
+
+          npts=n1*n2
+          do nlt=1,nsigz
+             call vfirec(iun,ps_u(1,1,nlt),npts,'LIN')
+             call vmissr(ps_u(:,:,nlt),npts,1e30,-998.)
+             call vfirec(iun,ps_v(1,1,nlt),npts,'LIN')
+             call vmissr(ps_v(:,:,nlt),npts,1e30,-998.)
+             call vfirec(iun,ps_p(1,1,nlt),npts,'LIN')
+             call vmissr(ps_p(:,:,nlt),npts,1e30,-.5)
+             call vfirec(iun,ps_t(1,1,nlt),npts,'LIN')
+             call vmissr(ps_t(:,:,nlt),npts,1e30,-.5)
+             call vfirec(iun,ps_r(1,1,nlt),npts,'LIN')
+             call vmissr(ps_r(:,:,nlt),npts,1e30,-.5)
+          enddo
+
+          print 201,' *****  Sigma-z file input *****************'  &
+               ,iyear,imonth,idate,ihour,n1,n2,nsigz  &
+               ,(sigz(l),l=1,nsigz)
+201       format(//,a,//  &
+               ,' *',7X,' Date (year,month,day,hour)  - ',4I5,/  &
+               ,' *',7X,' Number of X,Y points        - ',2I5,/  &
+               ,' *',7X,' Number of sigma-z levels    - ',I5,/  &
+               ,' *',7X,' Sigma-z levels (m)          - '/,(32X,7F8.1))
+          print '(a)',' **********************************************'
+
+       else if(inout.eq.'OUT') then
+          write(iun,920) iyear,imonth,idate,ihour,n1,n2,nsigz  &
+               ,(sigz(l),l=1,nsigz)
+
+          npts=n1*n2
+          do nlt=1,nsigz
+             call vmissw(ps_u(:,:,nlt),npts,ps_scra(:,:,nlt),1E30,-999.)
+             call vforec(iun,ps_scra,npts,18,ps_scrb,'LIN')
+             call vmissw(ps_v(:,:,nlt),npts,ps_scra(:,:,nlt),1E30,-999.)
+             call vforec(iun,ps_scra,npts,18,ps_scrb,'LIN')
+             call vmissw(ps_p(:,:,nlt),npts,ps_scra(:,:,nlt),1E30,-1.)
+             call vforec(iun,ps_scra,npts,18,ps_scrb,'LIN')
+             call vmissw(ps_t(:,:,nlt),npts,ps_scra(:,:,nlt),1E30,-1.)
+             call vforec(iun,ps_scra,npts,18,ps_scrb,'LIN')
+             call vmissw(ps_r(:,:,nlt),npts,ps_scra(:,:,nlt),1E30,-1.)
+             call vforec(iun,ps_scra,npts,18,ps_scrb,'LIN')
+          enddo
+
+          print 201,' *****  Sigma-z file written *************'  &
+               ,iyear,imonth,idate,ihour,n1,n2,nsigz   &
+               ,(sigz(l),l=1,nsigz)
+
        endif
 
-       npts=n1*n2
-       do nlt=1,nsigz
-          call vfirec(iun,ps_u(1,1,nlt),npts,'LIN')
-          call vmissr(ps_u(:,:,nlt),npts,1e30,-998.)
-          call vfirec(iun,ps_v(1,1,nlt),npts,'LIN')
-          call vmissr(ps_v(:,:,nlt),npts,1e30,-998.)
-          call vfirec(iun,ps_p(1,1,nlt),npts,'LIN')
-          call vmissr(ps_p(:,:,nlt),npts,1e30,-.5)
-          call vfirec(iun,ps_t(1,1,nlt),npts,'LIN')
-          call vmissr(ps_t(:,:,nlt),npts,1e30,-.5)
-          call vfirec(iun,ps_r(1,1,nlt),npts,'LIN')
-          call vmissr(ps_r(:,:,nlt),npts,1e30,-.5)
-       enddo
+    else
 
-       print 201,' *****  Sigma-z file input *****************'  &
-            ,iyear,imonth,idate,ihour,n1,n2,nsigz  &
-            ,(sigz(l),l=1,nsigz)
-201    format(//,a,//  &
-            ,' *',7X,' Date (year,month,day,hour)  - ',4I5,/  &
-            ,' *',7X,' Number of X,Y points        - ',2I5,/  &
-            ,' *',7X,' Number of sigma-z levels    - ',I5,/  &
-            ,' *',7X,' Sigma-z levels (m)          - '/,(32X,7F8.1))
-       print '(a)',' **********************************************'
+       ! binary file
 
-    endif
+       if(inout.eq.'IN') then
+          read(iun) iyy,imm,idd,ihh,nx3,ny3,ninn  &
+               ,(sigz(l),l=1,ninn)
+          if(nx3.ne.n1.or.ny3.ne.n2.or.ninn.ne.nsigz)then
+             print*,'Sigma-z grid dimensions do not match'
+             print*,'   input data on read !'
+             print*,' File  dimensions - ',nx3,ny3,ninn
+             print*,' Input dimensions - ',n1,n2,nsigz
+             stop 'iO3-2'
+          endif
 
-    if(inout.eq.'OUT') then
-       write(iun,920) iyear,imonth,idate,ihour,n1,n2,nsigz  &
-            ,(sigz(l),l=1,nsigz)
+          npts=n1*n2
+          do nlt=1,nsigz
+             read(iun) ps_u(:,:,nlt)
+             call vmissr(ps_u(:,:,nlt),npts,1e30,-998.)
+             read(iun) ps_v(:,:,nlt)
+             call vmissr(ps_v(:,:,nlt),npts,1e30,-998.)
+             read(iun) ps_p(:,:,nlt)
+             call vmissr(ps_p(:,:,nlt),npts,1e30,-.5)
+             read(iun) ps_t(:,:,nlt)
+             call vfirec(iun,ps_t(1,1,nlt),npts,'LIN')
+             read(iun) ps_r(:,:,nlt)
+             call vmissr(ps_r(:,:,nlt),npts,1e30,-.5)
+          enddo
 
-       npts=n1*n2
-       do nlt=1,nsigz
-          call vmissw(ps_u(:,:,nlt),npts,ps_scra(:,:,nlt),1E30,-999.)
-          call vforec(iun,ps_scra,npts,18,ps_scrb,'LIN')
-          call vmissw(ps_v(:,:,nlt),npts,ps_scra(:,:,nlt),1E30,-999.)
-          call vforec(iun,ps_scra,npts,18,ps_scrb,'LIN')
-          call vmissw(ps_p(:,:,nlt),npts,ps_scra(:,:,nlt),1E30,-1.)
-          call vforec(iun,ps_scra,npts,18,ps_scrb,'LIN')
-          call vmissw(ps_t(:,:,nlt),npts,ps_scra(:,:,nlt),1E30,-1.)
-          call vforec(iun,ps_scra,npts,18,ps_scrb,'LIN')
-          call vmissw(ps_r(:,:,nlt),npts,ps_scra(:,:,nlt),1E30,-1.)
-          call vforec(iun,ps_scra,npts,18,ps_scrb,'LIN')
-       enddo
+          print 201,' *****  Sigma-z file input *****************'  &
+               ,iyear,imonth,idate,ihour,n1,n2,nsigz  &
+               ,(sigz(l),l=1,nsigz)
+          print '(a)',' **********************************************'
 
-       print 201,' *****  Sigma-z file written *************'  &
-            ,iyear,imonth,idate,ihour,n1,n2,nsigz   &
-            ,(sigz(l),l=1,nsigz)
+       else if(inout.eq.'OUT') then
+          write(iun) iyear,imonth,idate,ihour,n1,n2,nsigz  &
+               ,(sigz(l),l=1,nsigz)
 
-    endif
+          npts=n1*n2
+          do nlt=1,nsigz
+             call vmissw(ps_u(:,:,nlt),npts,ps_scra(:,:,nlt),1E30,-999.)
+             write(iun) ps_scra(:,:,nlt)
+             call vmissw(ps_v(:,:,nlt),npts,ps_scra(:,:,nlt),1E30,-999.)
+             write(iun) ps_scra(:,:,nlt)
+             call vmissw(ps_p(:,:,nlt),npts,ps_scra(:,:,nlt),1E30,-1.)
+             write(iun) ps_scra(:,:,nlt)
+             call vmissw(ps_t(:,:,nlt),npts,ps_scra(:,:,nlt),1E30,-1.)
+             write(iun) ps_scra(:,:,nlt)
+             call vmissw(ps_r(:,:,nlt),npts,ps_scra(:,:,nlt),1E30,-1.)
+             write(iun) ps_scra(:,:,nlt)
+          enddo
 
+          print 201,' *****  Sigma-z file written *************'  &
+               ,iyear,imonth,idate,ihour,n1,n2,nsigz   &
+               ,(sigz(l),l=1,nsigz)
+
+       endif
+    end if
     return
   end subroutine sigzio
 

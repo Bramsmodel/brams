@@ -1,31 +1,34 @@
 module ModVarfFile
 
+  use ModParallelEnvironment, only: &
+       MsgDump
+
   use ModGetVar, only: &
        RAMS_getvar
 
   use ModRamsGrid, only: &
        newgrid
-  
+
   use ModVarfUpdate, only: &
        hi_interpInitial4
-  
+
   use ModRamsReadHeader, only: &
        rams_read_header
-  
+
   use ModRcio, only: &
        cio
-  
+
   use ModControlVars, only: &
        ControlVars
-  
+
   use ModNudAnalysis, only: &
        VariableWeight, &
        VariableWeightChem, &
        VarfIntrp
-  
+
   use ModDateUtils, only: date_abs_secs2,  &
-                          date_add_to,     &
-                          date_make_big
+       date_add_to,     &
+       date_make_big
 
   use ParLib, only: &
        parf_bcast,  &
@@ -66,6 +69,7 @@ module ModVarfFile
        tnudtop, &
        nvarffl, &
        varinit_g
+
   use node_mod, only: &
        i0,            &
        j0,            &
@@ -127,7 +131,6 @@ module ModVarfFile
        zt, &
        dzm
 
-
   use ModGridTree, only: &
        GridTree, &
        FetchGrid
@@ -162,12 +165,11 @@ module ModVarfFile
        PostSendRecvMsgs, &
        WaitSendRecvMsgs
 
-
   use mem_aer1, only: &
        AEROSOL, &
        aer1_g, &
        AER_ASSIM
-  
+
   use aer1_list, only: &
        aer_name=>spc_name,     &
        aer_mod_spc=>aer_name, &
@@ -182,6 +184,7 @@ module ModVarfFile
 
   include "files.h"
   include "constants.h"
+  include "UseVfm.h"
 
   private
   public :: VarfReadStoreOwnChunk
@@ -218,7 +221,7 @@ contains
           print *, '  Check interval:', vwait1, ' Fail time:', vwaittot
        end if
        nwaits = int(vwaittot/vwait1) + 1
-    endif
+    end if
 
     if (ivflag==0) then   ! Initialization of initial fields
 
@@ -231,14 +234,15 @@ contains
           call VarfFileInv(varfpfx, iyear1, imonth1, idate1, itime1, initialFlag)
 
           ! The initial time must have an exact time match.
+
           nvarffl = 0
           do nf=1,nvarffiles
 
              if (itotdate_current==itotdate_varf(nf)) then
                 nvarffl = nf
                 exit wait
-             endif
-          enddo
+             end if
+          end do
           if (ivar_wait==0 ) then
              call fatal_error(h//' No initial varfiles found with prefix '//&
                   trim(varfpfx))
@@ -247,16 +251,16 @@ contains
                 print *, 'No initial varfiles found: ', trim(varfpfx)
                 print *, '    Waiting:', vwait1, ' seconds.   Total wait:', &
                      nw*vwait1
-             endif
+             end if
              ivwait1 = nint(vwait1)
              irslp   = irsleep(ivwait1)
           elseif (ivar_wait==1 .and. nw==nwaits) then
              call fatal_error(h//&
                   " Waited too long; no initial varfiles found with prefix "//&
                   trim(varfpfx))
-          endif
+          end if
 
-       enddo wait
+       end do wait
 
        ! Now do actual initialization for the coarse grid
        !     and find 1D reference state
@@ -272,7 +276,6 @@ contains
 
 !!$       call FineMeshRefSound1D(2, ngrids)
 
-       ! ALF
        lastdate_iv = itotdate_varf(nvarffl)
 
        return
@@ -293,12 +296,12 @@ contains
           if (itotdate_varf(nf)<=itotdate_current) then
              nvarffl = nf
              exit
-          endif
-       enddo
+          end if
+       end do
        if (nvarffl==0) then
           call fatal_error(h//&
                "No past varfiles found on nudge fill:"//trim(varfpfx))
-       endif
+       end if
 
        ! Compute weighting factors for grid 1
 
@@ -321,6 +324,7 @@ contains
           call newgrid(ifm)
 
           ! Interpolate weights to all other grids
+
           if (ifm>1) then
              call VarfIntrp(ifm, 1)
           end if
@@ -335,23 +339,22 @@ contains
              ! Everything's cool...
              if (mchnum==master_num) then
                 write(unit=22,fmt='(A,1X,I2.2)')  'Varfile read of grid-', ifm
-             endif
+             end if
           else
              ! Using interpolated nudging arrays from parent grid.
              call VarfIntrp(ifm, 2)
              if (mchnum==master_num) then
                 write(unit=22,fmt='(A,1X,I2.2)') 'Interpolation of grid-', ifm
-             endif
-          endif
+             end if
+          end if
 
-       enddo
+       end do
        vtime2 = varf_times(nvarffl)
        if (mchnum==master_num) then
           write(unit=22,fmt='(A,1X,I2.2,1X,F12.2)') 'New varfile times:', nvarffl, vtime2
-       endif
+       end if
        close(unit=22)
 
-       ! ALF
        lastdate_iv = itotdate_varf(nvarffl)
 
     elseif (ivflag==2) then   ! Runtime file increment
@@ -362,7 +365,7 @@ contains
             time, 's', iyears, imonths, idates, ihours)
        call date_make_big(iyears, imonths, idates, ihours, itotdate_current)
 
-    endif
+    end if
 
     ! Find the next varfile in the list, waiting for it if necessary
 
@@ -377,8 +380,8 @@ contains
           if (itotdate_varf(nf)>itotdate_current) then
              nvarffl = nf
              exit wait2
-          endif
-       enddo
+          end if
+       end do
        if (ivar_wait==0) then
           call fatal_error(h//' No future varfiles found with prefix '//&
                trim(varfpfx))
@@ -393,12 +396,11 @@ contains
           call fatal_error(h//&
                " Waited too long; no future varfiles found with prefix "//&
                trim(varfpfx))
-       endif
+       end if
 
-    enddo wait2
+    end do wait2
 
     ! Read future files
-
 
     do ifm=1,ngrids
        icm = nxtnest(ifm)
@@ -415,13 +417,13 @@ contains
           ! Everything's cool...
           if (mchnum==master_num) then
              write(unit=22,fmt='(A,1X,I2.2)') 'Future varfile read of grid-', ifm
-          endif
+          end if
        else
           call VarfIntrp(ifm, 2)
           if (mchnum==master_num) then
              write(unit=22,fmt='(A,1X,I2.2)') 'Future interpolation of grid-', ifm
-          endif
-       endif
+          end if
+       end if
        close(unit=22)
 
     end do
@@ -430,13 +432,11 @@ contains
     vtime2 = varf_times(nvarffl)
 
     if (mchnum==master_num) then
-        open(unit=22,file='brams.log',position='append',action='write')
-        write(unit=22,fmt='(A,1X,I2.2,2(F12.2,1X))') 'New varfile times:', nvarffl, vtime1, vtime2
-        close(unit=22)
-    endif
+       open(unit=22,file='brams.log',position='append',action='write')
+       write(unit=22,fmt='(A,1X,I2.2,2(F12.2,1X))') 'New varfile times:', nvarffl, vtime1, vtime2
+       close(unit=22)
+    end if
 
-
-    ! ALF
     lastdate_iv = itotdate_varf(nvarffl)
   end subroutine VarfReadStoreOwnChunk
 
@@ -488,52 +488,41 @@ contains
 
        nvarffiles = ceiling(((timmax/3600)/(isan_inc/100)) + 1)
 
-!print*,"A===|" ,iyear1, imonth1, idate1, itime1*100,time
-
        call date_add_to(iyear1, imonth1, idate1, itime1*100,  &
             time, 's', iyears, imonths, idates, ihours)
 
        localTime = itime1
 
-!print*,"B===|" , nvarffiles,iyears, imonths, idates, ihours,time
- 
        call makefnam (sVarName, varpref, 0, iyears, imonths, idates, ihours, 'V', '$', 'tag')
        inquire(file=sVarName(1:len_trim(sVarName)), exist=there)
        indice    = 1 
        if (there) then
-             fnames(indice) = trim(sVarName)
-             indice         = indice + 1
-        else
-	!     print*,"IVAR file not found:",sVarName(1:len_trim(sVarName))
-	endif
+          fnames(indice) = trim(sVarName)
+          indice         = indice + 1
+       else
+          !     print*,"IVAR file not found:",sVarName(1:len_trim(sVarName))
+       end if
 
-       !print*,"================================================================"
-       !print*,"Making Varfile Input Inventory for the remaining time simulation"
+       ! Making Varfile Input Inventory for the remaining time simulation
 
        do nf=1,nvarffiles
 
-!print*,"===|A" , nf,iyears, imonths, idates, ihours, localTime*100
-
           time_inc_sec = isan_inc/100 * 3600.
 
-!          call date_add_to(iyears, imonths, idates, localTime*100,  &
           call date_add_to(iyears, imonths, idates, ihours,  &
                time_inc_sec, 's', iyears, imonths, idates, ihours)
 
-!print*,"===|B" , nf,iyears, imonths, idates, ihours
 
-          !--(DMK-CCATT-INI)-----------------------------------------------------
           if(flag .eq. 2)then
 
              call makefnam (sVarName, varpref, 0, iyears, imonths, idates, ihours, 'V', '$', 'tag')
-            !print*,"2 sVarName",trim(sVarName), iyears, imonths, idates, ihours
+
           else if(flag .eq. 4)then
 
              call makefnam (sVarName, varpref, 0, iyears, imonths, idates, ihours, 'A', 'head', 'txt')
 
           end if
 
-          !
 	  inquire(file=sVarName(1:len_trim(sVarName)), exist=there)
 
           if (there) then
@@ -541,23 +530,16 @@ contains
              indice         = indice + 1
           else
 	     !print*,"IVAR file not found:",sVarName(1:len_trim(sVarName))
-	  endif
+	  end if
 
-          !if (localTime<=2100) then
-!         ! if (localTime<=1800) then
-          !   localTime = localTime + isan_inc
-          !else
-          !   localTime = 000000
-          !   localTime = localTime + isan_inc
-          !endif
-       enddo
+       end do
 
        nvarffiles = indice - 1
 
        if (nvarffiles>maxnudfiles) then
           call fatal_error(h//' too many varf files')
-       endif
-    endif
+       end if
+    end if
 
     ! broadcast number of files
 
@@ -573,7 +555,7 @@ contains
        write (c1,"(i8)") sizeCharVec
        call fatal_error(h//" allocate charVec("//trim(adjustl(c1))//&
             ") failed with stat="//trim(adjustl(c0)))
-    endif
+    end if
 
     ! master process prepares broadcast data
 
@@ -582,9 +564,9 @@ contains
        do nf=1,nvarffiles
           do nc=1,lenFnames
              charVec(lastChar+nc) = fnames(nf)(nc:nc)
-          enddo
+          end do
           lastChar = lastChar + lenFnames
-       enddo
+       end do
     end if
 
     ! broadcast character data to remaining processes
@@ -598,9 +580,9 @@ contains
     do nf=1,nvarffiles
        do nc=1,lenFnames
           fnames(nf)(nc:nc) = charVec(lastChar+nc)
-       enddo
+       end do
        lastChar = lastChar + lenFnames
-    enddo
+    end do
 
     ! deallocate broadcast area
 
@@ -609,23 +591,18 @@ contains
        write (c0,"(i8)") ierr2
        call fatal_error(h//" deallocate charVec fails with stat="//&
             trim(adjustl(c0)))
-    endif
-
-    !
+    end if
 
     do nf=1,nvarffiles
        lnf = len_trim(fnames(nf))
 
-       !--(DMK-CCATT-INI)-----------------------------------------------------
        if(flag .eq. 2)then
-          read(fnames(nf)(lnf-20:lnf-4), "(i4,1x,i2,1x,i2,1x,i6)") inyear, inmonth, indate, inhour
+          read(fnames(nf)(lnf-20:lnf-4), "(i4,1x,i2,1x,i2,1x,i6)") &
+               inyear, inmonth, indate, inhour
        else if(flag .eq. 4)then
-          read(fnames(nf)(lnf-25:lnf-9), "(i4,1x,i2,1x,i2,1x,i6)") inyear, inmonth, indate, inhour
+          read(fnames(nf)(lnf-25:lnf-9), "(i4,1x,i2,1x,i2,1x,i6)") &
+               inyear, inmonth, indate, inhour
        end if
-       !--(DMK-CCATT-OLD)-----------------------------------------------------
-       !     read(fnames(nf)(lnf-20:lnf-4), "(i4,1x,i2,1x,i2,1x,i6)") &
-       !          inyear, inmonth, indate, inhour
-       !--(DMK-CCATT-FIM)-----------------------------------------------------
 
        call date_make_big(inyear, inmonth, indate, inhour, itotdate)
 
@@ -636,7 +613,7 @@ contains
        call date_abs_secs2(inyear, inmonth, indate, inhour, secs_varf)
        varf_times(nf) = secs_varf - secs_init
 
-    enddo
+    end do
 
     call RAMS_dintsort(nvarffiles, itotdate_varf, fnames_varf)
 
@@ -652,11 +629,11 @@ contains
        write(unit=22,fmt='(A)')  '-------------------------------------------------------------'
        do nf=1,nvarffiles
           write (unit=22,fmt='(i4,1x,a16,1x,f10.0,2x,a)') nf, itotdate_varf(nf) &
-          ,varf_times(nf) ,trim(fnames_varf(nf))
-       enddo
+               ,varf_times(nf) ,trim(fnames_varf(nf))
+       end do
        write(unit=22,fmt='(A)') '------------------------------------------------------'
        close(unit=22)
-    endif
+    end if
 
   end subroutine VarfFileInv
 
@@ -680,20 +657,19 @@ contains
     real :: rlatx,wlon1x,deltaxx,deltayx,deltazx,dzratx,dzmaxx
     character(len=7)   :: cgrid
 
-    !--(DMK-CCATT-INI)-----------------------------------------------------
     integer :: nspc,k
     character(len=32) :: chemical_mechanism_test
-    !--(DMK-CCATT-END)-----------------------------------------------------
 
     character(len=f_name_length) :: flnm
     character(len=*), parameter :: h="**(VarfUpdate)**"
+    logical, parameter :: dumpLocal=.false.
 
-    !--(DMK-CCATT-INI)-----------------------------------------------------
     !initial 4 related
     character(len=2)			:: cng
     character(len=f_name_length)		:: fileName
 
     logical				:: sameGrid
+    integer                             :: ios
     integer                             :: imode
     integer				:: ngr
     integer				:: ie
@@ -731,19 +707,15 @@ contains
     real, allocatable, dimension(:,:)	:: ytn1
     real, allocatable, dimension(:,:)	:: zmn1
     real, allocatable, dimension(:,:)	:: ztn1
-    !--(DMK-CCATT-FIM)-----------------------------------------------------
 
     !      Check and see what we are doing. If it is initial time, read
     !        fields into regular arrays. If not, see if nudging will be done
     !        on this grid if it is a nested grid.
+
     if (ngrid > 1 .and. tnudcent+tnudtop < .001 .and. initflag == 0) return
 
     ! Put new fields into varinit future arrays. If iswap == 1,
     !     swap future into past first
-
-
-    ! print*,"====>In",trim(h),time,initialFlag
-
 
 
     if (iswap == 1) then
@@ -753,13 +725,12 @@ contains
        varinit_g(ngrid)%vartp(:,:,:)=varinit_g(ngrid)%vartf(:,:,:)
        varinit_g(ngrid)%varrp(:,:,:)=varinit_g(ngrid)%varrf(:,:,:)
 
-       !--(DMK-CCATT-INI)-----------------------------------------------------
        if(chem_assim == 1 .and. chemistry >= 0) then
           do nspc=1,nspecies
              if(spc_alloc(fdda,nspc) == 1) &
                   chem1_g(nspc,ngrid)%sc_pp(:,:,:) = chem1_g(nspc,ngrid)%sc_pf(:,:,:)
-          enddo
-       endif
+          end do
+       end if
 
        if(aer_assim == 1 .and. aerosol >= 1 .and. chemistry >= 0) then
           do nspc=1,aer_nspecies
@@ -767,11 +738,9 @@ contains
                 if(aer_alloc(aer_fdda,imode,nspc) == aer_on)then
                    aer1_g(imode,nspc,ngrid)%sc_pp(:,:,:)=aer1_g(imode,nspc,ngrid)%sc_pf(:,:,:)
                 end if
-             enddo
+             end do
           end do
-       endif
-
-       !--(DMK-CCATT-FIM)-----------------------------------------------------
+       end if
 
     end if
 
@@ -779,32 +748,37 @@ contains
 
     if (mchnum == master_num) then
 
-       !--(DMK-CCATT-INI)-----------------------------------------------------
        if(initialFlag .eq. 2)then
-          !--(DMK-CCATT-FIM)-----------------------------------------------------
 
-          write(cgrid,'(a2,i1,a4)') '-g',ngrid,'.vfm'
+          if (useVfm) then
+             write(cgrid,'(a2,i1,a4)') '-g',ngrid,'.vfm'
+          else
+             write(cgrid,'(a2,i1,a4)') '-g',ngrid,'.bin'
+          end if
+
           nc=len_trim(fnames_varf(nvarffl))
           flnm=fnames_varf(nvarffl)(1:nc-4)//trim(cgrid)
 
+          if (dumpLocal) then
+             call MsgDump(h//" initialFlag == 2; procura arquivo "//trim(flnm))
+          end if
+
           inquire(file=flnm(1:len_trim(flnm)),exist=there)
-
-
-          !print*,"====>In",trim(h),time,initialFlag,trim(flnm)
-
 
           ! Gotta have grid 1...
           if (.not.there .and. ngrid == 1) then
-             print*
              call fatal_error(h//" No grid 1 varfile ("//trim(flnm)//") found")
-          endif
+          end if
 
-          !--(DMK-CCATT-INI)-----------------------------------------------------
        else if(initialFlag .eq. 4)then
           iunhd=11
           inhunt=10
 
           fileName = fnames_varf(nvarffl)!fnames_varf(1)
+
+          if (dumpLocal) then
+             call MsgDump(h//" initialFlag == 4; procura arquivo "//trim(fileName))
+          end if
 
           inquire(file=trim(fileName),exist=there)
 
@@ -812,23 +786,21 @@ contains
              print*
              call fatal_error(h//" No grid 1 varfile ("//trim(fileName)//") found")
              stop ! # RMF: isnt the right way to stop the model for sure!
-          endif
+          end if
 
           call rams_read_header(fileName(1:len_trim(fileName)-9))
 
           call rams_f_open(iunhd,fileName,'FORMATTED','OLD','READ',0)
 
           ie=cio(iunhd,1,'ngrids',ngrids1(1))
-          !print*,"====>In",trim(h),time,initialFlag,trim(flnm)
 
        end if
-       !--(DMK-CCATT-FIM)-----------------------------------------------------
 
        if(there) then
           ifileok=1
        else
           ifileok=0
-       endif
+       end if
     end if
 
     ! all processes decide on continuing computing
@@ -838,9 +810,7 @@ contains
        return
     end if
 
-    !--(DMK-CCATT-INI)-----------------------------------------------------
     if(initialFlag .eq. 2)then
-       !--(DMK-CCATT-FIM)-----------------------------------------------------
 
        ! master opens var file to find out var file version
        ! and to check adequacy to specified problem
@@ -850,26 +820,50 @@ contains
 	  open(unit=42,file='brams.log',position='append',action='write')
 	  write(unit=42,fmt='(A)')  "======================================================================="
 	  write(unit=42,fmt='(A,1X,A)') "in:",trim(h) 
-          write (unit=42,fmt='(a,2x,f10.0,2x,a)') ' time (s)', time,trim(flnm(1:len_trim(flnm)))
+          write(unit=42,fmt='(a,2x,f10.0,2x,a)') ' time (s)', time,trim(flnm(1:len_trim(flnm)))
 	  write(unit=42,fmt='(A)') "======================================================================="
           close(unit=42)
 
-          call rams_f_open(iun,flnm(1:len_trim(flnm)),'FORMATTED','OLD','READ',0)
+          if (useVfm) then
+             call rams_f_open(iun,flnm(1:len_trim(flnm)),'FORMATTED','OLD','READ',0)
 
-          ! Find varfile "version"
+             ! Find varfile "version"
 
-          read(iun,*) imarker
-          rewind(iun)
+             read(iun,*) imarker
+             rewind(iun)
 
-          if(imarker == 999999) then
-             read(iun,*) imarker,iver_var
+             if(imarker == 999999) then
+                read(iun,*) imarker,iver_var
+             else
+                iver_var=1
+             end if
+
+             read(iun,*) iyearx,imonthx,idatex,ihourx  &
+                  ,nxpx,nypx,nzpx,rlatx,wlon1x,deltaxx,deltayx,deltazx  &
+                  ,dzratx,dzmaxx
+
           else
-             iver_var=1
-          end if
+             open(iun, action="read", file=trim(flnm), form="unformatted", iostat=ios)
+             if (ios /= 0) then
+                call fatal_error(h//" failure opening file "//trim(flnm))
+             end if
 
-          read(iun,*) iyearx,imonthx,idatex,ihourx  &
-               ,nxpx,nypx,nzpx,rlatx,wlon1x,deltaxx,deltayx,deltazx  &
-               ,dzratx,dzmaxx
+             ! Find varfile "version"
+
+             read(iun) imarker
+             rewind(iun)
+
+             if(imarker == 999999) then
+                read(iun) imarker,iver_var
+             else
+                iver_var=1
+             end if
+
+             read(iun) iyearx,imonthx,idatex,ihourx  &
+                  ,nxpx,nypx,nzpx,rlatx,wlon1x,deltaxx,deltayx,deltazx  &
+                  ,dzratx,dzmaxx
+
+          end if
 
           if(nxp.ne.nxpx.or.  &
                nyp.ne.nypx.or.  &
@@ -885,17 +879,20 @@ contains
              call fatal_error(h//" grid mismatch between varfile ("//trim(flnm)//") and namelist")
           end if
 
-          !--(DMK-CCATT-INI)-----------------------------------------------------
           !- test if the source data is for the chemical mechanism that will be used:
+
           if (chem_assim == 1 .and. chemistry >= 0) then
-             read(iun,*)  chemical_mechanism_test
+             if (useVfm) then
+                read(iun,*)  chemical_mechanism_test
+             else
+                read(iun)  chemical_mechanism_test
+             end if
              if(trim( chemical_mechanism_test ) /=  trim(chemical_mechanism)) then
                 call fatal_error(h//" Wrong Chem mechanism in Varfiles. Expected="// &
                      trim(chemical_mechanism(1:len_trim(chemical_mechanism)))//" Read="// &
                      trim(chemical_mechanism_test(1:len_trim(chemical_mechanism_test))))
-             endif
-          endif
-          !--(DMK-CCATT-END)-----------------------------------------------------
+             end if
+          end if
 
           !  !-- SRF added to reuse ivar files with chemical fields but
           !  !-- only reading the meteo fields (meteo runs only).
@@ -903,7 +900,7 @@ contains
           !     read(iun,*)  chemical_mechanism_test
           !     print*,"Reading IVAR file for chemical mechanism ", trim( chemical_mechanism_test )
           !     print*,"but model will only consider the meteo fields for assimilation"
-          !  endif
+          !  end if
 
        end if
 
@@ -911,9 +908,9 @@ contains
 
        call Broadcast(iver_var, master_num, "iver_var")
 
-
        ! deals with varfile fields into the "future" varinit arrays,
        ! to be swapped to the past arrays when needed.
+
        call ReadStoreOwnChunk(ngrid, iun, varinit_g(ngrid)%varuf, nzp, "varuf", oneGrid%oneControlVars)
        call ReadStoreOwnChunk(ngrid, iun, varinit_g(ngrid)%varvf, nzp, "varvf", oneGrid%oneControlVars)
        call ReadStoreOwnChunk(ngrid, iun, varinit_g(ngrid)%varpf, nzp, "varpf", oneGrid%oneControlVars)
@@ -925,56 +922,79 @@ contains
        if(chem_assim == 1 .and. chemistry >= 0) then
           if (mchnum == master_num) then
              print*,'--------------------------------------------------------------------------'
-             print*,' 4DDA using chem mechanism= ',trim(chemical_mechanism(1:len_trim(chemical_mechanism)))
+             print*,' 4DDA using chem mechanism= ',&
+                  trim(chemical_mechanism(1:len_trim(chemical_mechanism)))
              print*,' specie name - max - min values in assimilated dataset'
           end if
 
           do nspc=1,nspecies
              if(spc_alloc(fdda,nspc) == 1) then
 
-                call ReadStoreOwnChunk(ngrid, iun, chem1_g(nspc,ngrid)%sc_pf, nzp, "sc_pf", oneGrid%oneControlVars)
+                call ReadStoreOwnChunk(ngrid, iun, chem1_g(nspc,ngrid)%sc_pf, &
+                     nzp, "sc_pf", oneGrid%oneControlVars)
 
                 !no futuro cheque o limite inferior (e-23)
-                chem1_g(nspc,ngrid)%sc_pf(:,:,:)= init_ajust(nspc)*max(1.e-23,chem1_g(nspc,ngrid)%sc_pf(:,:,:))
-                if (mchnum == master_num)print*, ' chem spc=',nspc,spc_name(nspc),maxval(chem1_g(nspc,ngrid)%sc_pf(:,:,:))&
-                     ,minval(chem1_g(nspc,ngrid)%sc_pf(:,:,:))
-             endif
-          enddo
+                chem1_g(nspc,ngrid)%sc_pf(:,:,:)= init_ajust(nspc)*&
+                     max(1.e-23,chem1_g(nspc,ngrid)%sc_pf(:,:,:))
+                if (mchnum == master_num) then
+                   print*, ' chem spc=',nspc,spc_name(nspc),&
+                        maxval(chem1_g(nspc,ngrid)%sc_pf(:,:,:)),&
+                        minval(chem1_g(nspc,ngrid)%sc_pf(:,:,:))
+                end if
+             end if
+          end do
           do nspc=1,aer_nspecies
              do nm=1,aer_nmodes
                 if(aer_alloc(aer_fdda,nm,nspc) == 1) then
 
-                   call ReadStoreOwnChunk(ngrid, iun, aer1_g(nm,nspc,ngrid)%sc_pf, nzp, "sc_pf", oneGrid%oneControlVars)
+                   call ReadStoreOwnChunk(ngrid, iun, aer1_g(nm,nspc,ngrid)%sc_pf, &
+                        nzp, "sc_pf", oneGrid%oneControlVars)
 
                    !no futuro cheque o limite inferior (e-23)
-                   aer1_g(nm,nspc,ngrid)%sc_pf(:,:,:)= init_ajust(nspc)*max(1.e-23,aer1_g(nm,nspc,ngrid)%sc_pf(:,:,:))
-                   if (mchnum == master_num)print*, ' aer spc=',nm,nspc,aer_mod_spc(nm,nspc),maxval(aer1_g(nm,nspc,ngrid)%sc_pf(:,:,:))&
-                        ,minval(aer1_g(nm,nspc,ngrid)%sc_pf(:,:,:))
-                endif
-             enddo
-          enddo
+                   aer1_g(nm,nspc,ngrid)%sc_pf(:,:,:)= init_ajust(nspc)*&
+                        max(1.e-23,aer1_g(nm,nspc,ngrid)%sc_pf(:,:,:))
+                   if (mchnum == master_num) then
+                      print*, ' aer spc=',nm,nspc,aer_mod_spc(nm,nspc),&
+                           maxval(aer1_g(nm,nspc,ngrid)%sc_pf(:,:,:)), &
+                           minval(aer1_g(nm,nspc,ngrid)%sc_pf(:,:,:))
+                   end if
+                end if
+             end do
+          end do
 
-          if (mchnum == master_num) &
-               print*,'--------------------------------------------------------------------------'
-       endif
+          if (mchnum == master_num) then
+             print*,'--------------------------------------------------------------------------'
+          end if
+       end if
 
        ! master skips a few fields and deals with snow_mass
+
        if(initflag == 1 .and. iver_var == 2) then
           ! Extract snow depth from the varfile. Ignore other 2D fields for now.
           if (mchnum == master_num) then
-             call vfirec(iun,scratch,nxyp,'LIN')
-             call vfirec(iun,scratch,nxyp,'LIN')
-             call vfirec(iun,scratch,nxyp,'LIN')
+             if (useVfm) then
+                call vfirec(iun,scratch,nxyp,'LIN')
+                call vfirec(iun,scratch,nxyp,'LIN')
+                call vfirec(iun,scratch,nxyp,'LIN')
+             else
+                read(iun) scratch
+                read(iun) scratch
+                read(iun) scratch
+             end if
           end if
-          call ReadStoreOwnChunk(ngrid, iun, leaf_g(ngrid)%snow_mass, "snow_mass", oneGrid%oneControlVars)
+          call ReadStoreOwnChunk(ngrid, iun, leaf_g(ngrid)%snow_mass, &
+               "snow_mass", oneGrid%oneControlVars)
 
           if (mchnum == master_num) then
-             call vfirec(iun,scratch,nxyp,'LIN')
+             if (useVfm) then
+                call vfirec(iun,scratch,nxyp,'LIN')
+             else
+                read(iun) scratch
+             end if
              close(iun)
           end if
        end if
 
-       !--(DMK-CCATT-INI)-----------------------------------------------------
     elseif(initialFlag .eq. 4)then
 
 
@@ -1007,7 +1027,7 @@ contains
              print*,'nzg: ',nzg,nzg1
              print*,'nzs: ',nzs,nzs1
              stop 'LEAF hist-init'
-          endif
+          end if
 
        end if
 
@@ -1032,10 +1052,11 @@ contains
        ! Find maximum size of any array on history file. Allocate scratch array of
        ! this size.
        ! # RMF: is it really necessary? only interpolates grid1
+
        do ngr=1,ngrids1(1)
           maxarr  = max(maxarr,nnxp1(ngr)*nnyp1(ngr)*nnzp1(ngr),  &
                nnxp1(ngr)*nnyp1(ngr)*nzg1*npatch1, &
-               nnxp1(ngr)*nnyp1(ngr)*nzs1*npatch1 )! # RMF: this 'nwave' var is used by CCATT only -  nnxp1(ngr)*nnyp1(ngr)*nwave)!srf
+               nnxp1(ngr)*nnyp1(ngr)*nzs1*npatch1 )
 
           maxarr2 = max(maxarr2,nnxp1(ngr)*nnyp1(ngr))
           maxx1   = max(maxx1,nnxp1(ngr))
@@ -1062,7 +1083,7 @@ contains
              ie=cio(iunhd,1,'ytn'//cng,ytn1(1:nnyp1(ngr),ngr))
              ie=cio(iunhd,1,'zmn'//cng,zmn1(1:nnzp1(ngr),ngr))
              ie=cio(iunhd,1,'ztn'//cng,ztn1(1:nnzp1(ngr),ngr))
-          enddo
+          end do
           close(iunhd)
           close(inhunt)
 
@@ -1104,7 +1125,6 @@ contains
 
        ! ##### UP
 
-
        if (mchnum == master_num) then
 
           ie = RAMS_getvar('UP', 1, scr, scr2, trim(fileName(1:len_trim(fileName)-9)))
@@ -1124,9 +1144,11 @@ contains
        else
           !!write(*,*) 'LFR - DEBUG: ','VarfUpdate - 1089'
           call unarrange(nnzp1(ngrid1), nnxp1(ngrid1), nnyp1(ngrid1), scr, scr3)
-          call storeOwnChunk_3D(ngrid1, scr3, varinit_g(ngrid1)%varuf, nnzp(1), nnxp(1), nnyp(1), &
+          call storeOwnChunk_3D(ngrid1, scr3, varinit_g(ngrid1)%varuf,&
+               nnzp(1), nnxp(1), nnyp(1), &
                'UP', oneGrid%oneControlVars)
        end if
+
        ! ##### VP
 
        if (mchnum == master_num) then
@@ -1146,7 +1168,8 @@ contains
        else
 
           call unarrange(nnzp1(ngrid1), nnxp1(ngrid1), nnyp1(ngrid1), scr, scr3)
-          call storeOwnChunk_3D(ngrid1, scr3, varinit_g(ngrid1)%varvf, nnzp(1), nnxp(1), nnyp(1), &
+          call storeOwnChunk_3D(ngrid1, scr3, varinit_g(ngrid1)%varvf, &
+               nnzp(1), nnxp(1), nnyp(1), &
                'VP', oneGrid%oneControlVars)
        end if
 
@@ -1169,7 +1192,8 @@ contains
        else
 
           call unarrange(nnzp1(ngrid1), nnxp1(ngrid1), nnyp1(ngrid1), scr, scr3)
-          call storeOwnChunk_3D(ngrid1, scr3, varinit_g(ngrid1)%vartf, nnzp(1), nnxp(1), nnyp(1), &
+          call storeOwnChunk_3D(ngrid1, scr3, varinit_g(ngrid1)%vartf, &
+               nnzp(1), nnxp(1), nnyp(1), &
                'THETA', oneGrid%oneControlVars)
        end if
 
@@ -1190,12 +1214,12 @@ contains
                topt1,ztop1,mzp,mxp,myp,  &
                varinit_g(ngrid1)%varpf, ngrid1,ngrid1,'PI',3)
        else
-          !!  write(*,*) 'LFR - DEBUG: ','VarfUpdate - 1154'
+
           call unarrange(nnzp1(ngrid1), nnxp1(ngrid1), nnyp1(ngrid1), scr, scr3)
-          call storeOwnChunk_3D(ngrid1, scr3, varinit_g(ngrid1)%varpf, nnzp(1), nnxp(1), nnyp(1), &
+          call storeOwnChunk_3D(ngrid1, scr3, varinit_g(ngrid1)%varpf, &
+               nnzp(1), nnxp(1), nnyp(1), &
                'PI', oneGrid%oneControlVars)
        end if
-
 
        ! ##### RV
 
@@ -1221,8 +1245,8 @@ contains
 
        varinit_g(ngrid)%varrf(:,:,:) =  max(1.e-8,varinit_g(ngrid)%varrf(:,:,:) )
 
-
        ! #### CHEM
+
        if(CHEM_ASSIM == on .and. CHEMISTRY >= 0) then
           do nspc=1,nspecies
              !print*, trim(vtab_r(ni,ng)%name), '>>', trim(spc_name(nspc))//'P'
@@ -1252,8 +1276,8 @@ contains
           end do
        end if
 
-
        ! ### AERO
+
        if(AER_ASSIM == on .and. AEROSOL >= 1 .and. CHEMISTRY >= 0) then
           do nspc=1,aer_nspecies
              do imode = 1, aer_nmodes
@@ -1288,7 +1312,6 @@ contains
        end if
 
     end if !if(initialFlag .eq. 2)
-    !--(DMK-CCATT-FIM)-----------------------------------------------------
 
     ! Find the reference state
 
@@ -1315,23 +1338,22 @@ contains
        oneGrid%oneBasicFields%thp(:,:,:)=varinit_g(ngrid)%vartf(:,:,:)
        oneGrid%oneBasicFields%rtp(:,:,:)=varinit_g(ngrid)%varrf(:,:,:)
 
-       !--(DMK-CCATT-INI)------------------------------------------------------
        if(chem_assim == 1 .and. chemistry >= 0) then
           do nspc=1,nspecies
              if(spc_alloc(fdda,nspc) == 1) &
                   chem1_g(nspc,ngrid)%sc_p(:,:,:)=chem1_g(nspc,ngrid)%sc_pf(:,:,:)
-          enddo
-       endif
-       !--(DMK-CCATT-FIM)------------------------------------------------------
+          end do
+       end if
+
        if(aer_assim == 1 .and. aerosol >= 1 .and. chemistry >=0) then
           do nspc=1,aer_nspecies
              do imode = 1, aer_nmodes
                 if(aer_alloc(aer_fdda,imode,nspc) == aer_on)then
                    aer1_g(imode,nspc,ngrid)%sc_p(:,:,:)=aer1_g(imode,nspc,ngrid)%sc_pf(:,:,:)
                 end if
-             enddo
+             end do
           end do
-       endif
+       end if
     end if
 
   end subroutine VarfUpdate
@@ -1394,11 +1416,9 @@ contains
     ! average procedures
     ! Allocating global data
 
-
     nxyp = nnxp(1)*nnyp(1)
 
     ! master process gathers global data and computes average per level
-
 
     ! for THP
 
@@ -1410,7 +1430,7 @@ contains
     if (mchnum==master_num) then
        do k=1,n1
           thp_ref(k) = sum(global_data(k,:,:))/real(nxyp)
-       enddo
+       end do
     end if
     call parf_barrier(0)
 
@@ -1424,7 +1444,7 @@ contains
     if (mchnum==master_num) then
        do k=1,n1
           uc_ref(k) = sum(global_data(k,:,:))/real(nxyp)
-       enddo
+       end do
     end if
     call parf_barrier(0)
 
@@ -1438,7 +1458,7 @@ contains
     if (mchnum==master_num) then
        do k=1,n1
           vc_ref(k) = sum(global_data(k,:,:))/real(nxyp)
-       enddo
+       end do
     end if
     call parf_barrier(0)
 
@@ -1452,7 +1472,7 @@ contains
     if (mchnum==master_num) then
        do k=1,n1
           rtp_ref(k) = sum(global_data(k,:,:))/real(nxyp)
-       enddo
+       end do
     end if
     call parf_barrier(0)
 
@@ -1466,7 +1486,7 @@ contains
     if (mchnum==master_num) then
        do k=1,n1
           pc_ref(k) = sum(global_data(k,:,:))/real(nxyp)
-       enddo
+       end do
     end if
     call parf_barrier(0)
 
@@ -1506,21 +1526,21 @@ contains
     if (if_adap==0) then
        do k=1,nzp
           vctr2(k) = ztn(k,ngrid)*(1. - topref/ztop) + topref
-       enddo
+       end do
        if (dumpLocal) then
           print *, h//"mynum, vctr2=", mynum, vctr2
-       endif
+       end if
        call htint2(nzp, thp_ref(1), vctr2, nzp, vctr1,          zt)
        if (dumpLocal) then
           print *, h//"new mynum, vctr1=", mynum, vctr1
-       endif
+       end if
        call htint2(nzp, uc_ref(1),  vctr2, nzp, u01dn(1,ngrid), zt)
        call htint2(nzp, vc_ref(1),  vctr2, nzp, v01dn(1,ngrid), zt)
        if (level>=1) then
           call htint2(nzp, rtp_ref(1), vctr2, nzp, rt01dn(1,ngrid), zt)
        else
           rt01dn(1:nzp,ngrid) = 0.
-       endif
+       end if
     else
        ! *********Check latter for Shaved-ETA:
        vctr2(1:nzp)        = ztn(1:nzp,ngrid)
@@ -1529,11 +1549,11 @@ contains
        v01dn(1:nzp,ngrid)  = vc_ref(1:nzp)  !vc(1:nzp,iref,jref)
        rt01dn(1:nzp,ngrid) = 0.
        if (level>=1) rt01dn(1:nzp,ngrid) = rtp_ref(1:nzp)  !rtp(1:nzp,iref,jref)
-    endif
+    end if
 
     do k=1,nzp
        th01dn(k,ngrid) = vctr1(k)*(1. + 0.61*rt01dn(k,ngrid))
-    enddo
+    end do
     u01dn(1,ngrid)  = u01dn(2,ngrid)
     v01dn(1,ngrid)  = v01dn(2,ngrid)
     rt01dn(1,ngrid) = rt01dn(2,ngrid)
@@ -1545,16 +1565,15 @@ contains
        if (dumpLocal) then
           print *, h//"mynum,nzp,k,dzm(k-1),th01dn(k,ngrid),th01dn(k-1,ngrid)=", &
                mynum, nzp, k, dzm(k-1), th01dn(k,ngrid), th01dn(k-1,ngrid)
-       endif
+       end if
        pi01dn(k,ngrid) = pi01dn(k-1,ngrid) - g/(dzm(k-1)*0.5* &
             (th01dn(k,ngrid) + th01dn(k-1,ngrid)))
-    enddo
+    end do
 
     do k=1,nzp
        vctr4(k)        = (pi01dn(k,ngrid)/cp)**cpor*p00
        dn01dn(k,ngrid) = cp*vctr4(k)/(rgas*th01dn(k,ngrid)*pi01dn(k,ngrid))
-    enddo
-
+    end do
 
     ! Compute 3-D reference state from 1-D reference state
 

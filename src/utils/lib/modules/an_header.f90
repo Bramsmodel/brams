@@ -8,6 +8,9 @@
 
 module an_header
 
+  use ModParallelEnvironment, only: &
+       MsgDump
+
   implicit none
 
   include "constants.h"
@@ -106,7 +109,7 @@ contains
 
     if (dumpLocal) then
        write(c0,"(i8)") maxSize
-       write(*,"(a)") h//" with maxSize="//trim(adjustl(c0))
+       call MsgDump(h//" with maxSize="//trim(adjustl(c0)))
     end if
   end subroutine CreateIOHeadTable
 
@@ -133,7 +136,7 @@ contains
     oneIOHeadTable%maxSize=0
     oneIOHeadTable%lastUsed=0
     if (dumpLocal) then
-       write(*,"(a)") h//" done"
+       call MsgDump(h//" done")
     end if
   end subroutine DestroyIOHeadTable
 
@@ -176,9 +179,9 @@ contains
        write(c1,"(i8)") idim_type
        write(c2,"(i8)") ngrid
        write(c3,"(i8)") nvalues
-       write(*,"(a)") h//" field "//trim(string)//" at pos "//trim(adjustl(c0))//&
+       call MsgDump(h//" field "//trim(string)//" at pos "//trim(adjustl(c0))//&
             "; idim_type="//trim(adjustl(c1))//"; grid="//trim(adjustl(c2))//&
-            "; nvalues="//trim(adjustl(c3))
+            "; nvalues="//trim(adjustl(c3)))
     end if
   end subroutine InsertFieldOnIOHeadTable
 
@@ -193,7 +196,7 @@ contains
     oneIOFileDS%fId = cfId
     oneIOFileDS%enable = .false.
     if (dumpLocal) then
-       write(*,"(a)") h//" for fId "//trim(cfId)
+       call MsgDump(h//" for fId "//trim(cfId))
     end if
   end subroutine CreateDisabledIOFileDS
 
@@ -242,9 +245,9 @@ contains
        write(l1,"(l1)") binary
        write(c1,"(f8.3)") tinc
        write(c2,"(i4.4,3i2.2)") iyr, imn, idy, itm
-       write(*,"(a)") h//" for "//cfId//", iclobber="//trim(adjustl(c0))//&
+       call MsgDump(h//" for "//cfId//", iclobber="//trim(adjustl(c0))//&
             ", collapsed="//l0//", binary="//l1//", tinc="//c1//&
-            ", iyr,imn,idy,itm="//c2
+            ", iyr,imn,idy,itm="//c2)
        call flush(6)
     end if
        
@@ -254,7 +257,7 @@ contains
          tinc, iyr, imn, idy, itm*100, cType, "head", "txt")
 
     if (dumpLocal) then
-       write(*,"(a)") h//" named header file "//trim(oneIOFileDS%fHeadName)
+       call MsgDump(h//" named header file "//trim(oneIOFileDS%fHeadName))
        call flush(6)
     end if
 
@@ -282,7 +285,7 @@ contains
             cType, "$", cFmt)
 
        if (dumpLocal) then
-          write(*,"(a)") h//" named data file "//trim(oneIOFileDS%fName(1))
+          call MsgDump(h//" named data file "//trim(oneIOFileDS%fName(1)))
        end if
 
     else
@@ -302,7 +305,7 @@ contains
           call makefnam (oneIOFileDS%fName(ng), cPrefix, tinc, iyr, imn, idy, itm*100, &
                cType, cGrid, cFmt)
           if (dumpLocal) then
-             write(*,"(a)") h//" named data file "//trim(oneIOFileDS%fName(ng))
+             call MsgDump(h//" named data file "//trim(oneIOFileDS%fName(ng)))
           end if
        end do
 
@@ -380,9 +383,9 @@ contains
                   oneIOFileDS%iclobber)
              if (dumpLocal) then
                 write(c0,"(i8)") oneIOFileDS%unit
-                write(*,"(a)") h//" open to append old Fortran file "//&
+                call MsgDump(h//" open to append old Fortran file "//&
                      trim(oneIOFileDS%fName(index))//&
-                     " at unit "//trim(adjustl(c0))
+                     " at unit "//trim(adjustl(c0)))
              end if
           else
              call rams_f_open_u (oneIOFileDS%unit, trim(oneIOFileDS%fName(index)), &
@@ -391,8 +394,8 @@ contains
              oneIOFileDS%fPos = 0_i8
              if (dumpLocal) then
                 write(c0,"(i8)") oneIOFileDS%unit
-                write(*,"(a)") h//" open new Fortran file "//trim(oneIOFileDS%fName(index))//&
-                     " at unit "//trim(adjustl(c0))
+                call MsgDump(h//" open new Fortran file "//trim(oneIOFileDS%fName(index))//&
+                     " at unit "//trim(adjustl(c0)))
              end if
           end if
        else
@@ -405,15 +408,16 @@ contains
           oneIOFileDS%fPos = 0_i8
           if (dumpLocal) then
              write(c0,"(i8)") oneIOFileDS%unit
-             write(*,"(a)") h//" open new C file "//trim(oneIOFileDS%fName(index))//&
-                  " at unit "//trim(adjustl(c0))
+             call MsgDump(h//" open new C file "//trim(oneIOFileDS%fName(index))//&
+                  " at unit "//trim(adjustl(c0)))
           end if
        end if
 
        ! file opened OK?
 
        if (oneIOFileDS%unit == -1) then
-          call fatal_error(h//" open file for "//trim(oneIOFileDS%fId)//" fails")
+!!$          call fatal_error(h//" open file for "//trim(oneIOFileDS%fId)//" fails")
+          call fatal_error(h//" open file "//trim(oneIOFileDS%fName(index))//" fails")
        end if
 
     else
@@ -444,12 +448,12 @@ contains
        if (oneIOFileDS%binary) then
           close(oneIOFileDS%unit)
           if (dumpLocal) then
-             write (*,"(a)") h//" close Fortran file for "//oneIOFileDS%fId
+             call MsgDump(h//" close Fortran file for "//oneIOFileDS%fId)
           end if
        else
           call rams_c_close_u(oneIOFileDS%unit)
           if (dumpLocal) then
-             write (*,"(a)") h//" close C file for "//oneIOFileDS%fId
+             call MsgDump(h//" close C file for "//oneIOFileDS%fId)
           end if
        end if
        oneIOFileDS%unit=-1
@@ -479,6 +483,7 @@ contains
     integer(kind=i8) :: fieldSize_i8
     character(len=8) :: c0
     character(len=8) :: c1
+    character(len=16) :: fc0
     character(len=*), parameter :: h="**(ArrayWriteASCIIStoreInfo)**"
 
     integer :: tam
@@ -515,7 +520,7 @@ contains
     ! store info on field to be written info at next available table entry
 
     if (dumpLocal) then
-       write(*,"(a)") h//" will insert field "//varn//" at "//oneIOFileDS%fId
+       call MsgDump(h//" will insert field "//varn//" at "//oneIOFileDS%fId)
     end if
     fieldSize_i8 = int(fieldSize,i8)
     call InsertFieldOnIOHeadTable(oneIOFileDS%ht, &
@@ -525,7 +530,9 @@ contains
 
     if (dumpLocal) then
        write(c0,"(i8)") oneIOFileDS%unit
-       write(*,"(a)") h//" will write field "//varn//" at unit "//trim(adjustl(c0))
+       write(fc0,"(e15.7)") field(1)
+       call MsgDump(h//" invoking vforecr_u will write field "//trim(adjustl(varn))//" at unit "//&
+            trim(adjustl(c0))//"; first value="//trim(adjustl(fc0)))
     end if
     call vforecr_u(oneIOFileDS%unit, field, fieldSize_i8, 18,  scr, cscr, &
          'LIN', oneIOFileDS%fPos)
@@ -565,6 +572,7 @@ contains
     integer(kind=i8) :: fieldSize_i8
     character(len=8) :: c0
     character(len=8) :: c1
+    character(len=16) :: fc0
     character(len=*), parameter :: h="**(PointerWriteASCIIStoreInfo)**"
 
     integer :: tam
@@ -600,7 +608,7 @@ contains
     ! store info on field to be written info at next available table entry
 
     if (dumpLocal) then
-       write(*,"(a)") h//" will insert field "//varn//" at "//oneIOFileDS%fId
+       call MsgDump(h//" will insert field "//varn//" at "//oneIOFileDS%fId)
     end if
     fieldSize_i8 = int(fieldSize,i8)
     call InsertFieldOnIOHeadTable(oneIOFileDS%ht, &
@@ -610,7 +618,9 @@ contains
 
     if (dumpLocal) then
        write(c0,"(i8)") oneIOFileDS%unit
-       write(*,"(a)") h//" will write field "//varn//" at unit "//trim(adjustl(c0))
+       write(fc0,"(e15.7)") field
+       call MsgDump(h//" will write field "//varn//" at unit "//&
+            trim(adjustl(c0))//"; first value="//trim(adjustl(fc0)))
     end if
     call vforecr_u(oneIOFileDS%unit, field, fieldSize_i8, 18,  scr, cscr, &
          'LIN', oneIOFileDS%fPos)
@@ -653,6 +663,7 @@ contains
     integer(kind=i8) :: fieldSize_i8
     character(len=8) :: c0
     character(len=8) :: c1
+    character(len=16) :: fc0
     character(len=*), parameter :: h="**(ArrayWriteBinStoreInfo)**"
 
     integer :: tam
@@ -665,7 +676,7 @@ contains
     ! store info on field to be written info at next available table entry
 
     if (dumpLocal) then
-       write(*,"(a)") h//" will insert field "//varn//" at "//oneIOFileDS%fId
+       call MsgDump(h//" will insert field "//varn//" at "//oneIOFileDS%fId)
     end if
     fieldSize_i8 = int(fieldSize,i8)
     call InsertFieldOnIOHeadTable(oneIOFileDS%ht, &
@@ -675,7 +686,9 @@ contains
 
     if (dumpLocal) then
        write(c0,"(i8)") oneIOFileDS%unit
-       write(*,"(a)") h//" will write field "//varn//" at unit "//trim(adjustl(c0))
+       write(fc0,"(e15.7)") field(1)
+       call MsgDump(h//" will write field "//varn//" at unit "//&
+            trim(adjustl(c0))//"; first value="//trim(adjustl(fc0)))
     end if
 
     write(oneIOFileDS%unit) (field(i),i=1,fieldSize_i8)
@@ -706,6 +719,7 @@ contains
     integer(kind=i8) :: fieldSize_i8
     character(len=8) :: c0
     character(len=8) :: c1
+    character(len=16) :: fc0
     character(len=*), parameter :: h="**(PointerWriteBinStoreInfo)**"
 
     integer :: tam
@@ -718,7 +732,7 @@ contains
     ! store info on field to be written info at next available table entry
 
     if (dumpLocal) then
-       write(*,"(a)") h//" will insert field "//varn//" at "//oneIOFileDS%fId
+       call MsgDump(h//" will insert field "//varn//" at "//oneIOFileDS%fId)
     end if
     fieldSize_i8 = int(fieldSize,i8)
     call InsertFieldOnIOHeadTable(oneIOFileDS%ht, &
@@ -728,7 +742,9 @@ contains
 
     if (dumpLocal) then
        write(c0,"(i8)") oneIOFileDS%unit
-       write(*,"(a)") h//" will write field "//varn//" at unit "//trim(adjustl(c0))
+       write(fc0,"(e15.7)") field
+       call MsgDump(h//" will write field "//varn//" at unit "//&
+            trim(adjustl(c0))//"; first value="//trim(adjustl(fc0)))
     end if
     call writebin(oneIOFileDS%unit, (/field/), int(fieldSize,i8))
     oneIOFileDS%fPos = oneIOFileDS%fPos + fieldSize
@@ -798,7 +814,7 @@ contains
     character(len=*), parameter :: h="**(DestroyIOFileDS)**"
 
     if (dumpLocal) then
-       write(*,"(a)") h//" named "//oneIOFileDS%fId
+       call MsgDump(h//" named "//oneIOFileDS%fId)
     end if
 
     if (oneIOFileDS%enable) then

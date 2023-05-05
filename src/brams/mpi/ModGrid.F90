@@ -367,7 +367,7 @@ contains
     logical :: createAve
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(CreateGrid)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! correctness of input arguments
 

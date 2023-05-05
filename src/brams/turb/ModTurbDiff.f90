@@ -8,6 +8,9 @@
 
 module ModTurbDiff
 
+  use ModParallelEnvironment, only: &
+       MsgDump
+  
   use ModRGrad, only: &
        divcart, &
        grad
@@ -22,7 +25,9 @@ module ModTurbDiff
        zt,       &     !INTENT(IN)
        ngrid,    &     !INTENT(IN)
        zm,       &     !INTENT(IN)
-       dtlt            !INTENT(IN)
+       dtlt
+  
+  use node_mod, only:  mynum            !INTENT(IN)
 
   use mem_opt, only : &
        opt
@@ -523,6 +528,9 @@ contains
     real :: vctr6(m1)
     real :: vctr7(m1)
 
+    character(len=16) :: scr(10)
+    character(len=*), parameter :: h="**(diffsclr)**"
+
     !          compute vertical diffusion matrix coefficients for scalars
 
     if (n==1 .or. ksf/=ksf_save) then
@@ -539,6 +547,24 @@ contains
        do j=ja,jz
           do i=ia,iz
              do k=1,m1-1
+!!$                if (mynum == 1) then
+!!$                   write(scr(1),"(e15.7)") dzm(k)
+!!$                   write(scr(2),"(i3)") k
+!!$                   write(scr(3),"(i3)") k+1
+!!$                   write(scr(4),"(i3)") i
+!!$                   write(scr(5),"(i3)") j
+!!$                   call MsgDump(h//" dzm("//trim(adjustl(scr(2)))//")="//trim(adjustl(scr(1))))
+!!$                   write(scr(1),"(e15.7)") vkkh(k,i,j)
+!!$                   call MsgDump(h//" vkkh("//trim(adjustl(scr(2)))//&
+!!$                        ","//trim(adjustl(scr(4)))//&
+!!$                        ","//trim(adjustl(scr(5)))//&
+!!$                        ")="//trim(adjustl(scr(1))))
+!!$                   write(scr(1),"(e15.7)") vkkh(k+1,i,j)
+!!$                   call MsgDump(h//" vkkh("//trim(adjustl(scr(3)))//&
+!!$                        ","//trim(adjustl(scr(4)))//&
+!!$                        ","//trim(adjustl(scr(5)))//&
+!!$                        ")="//trim(adjustl(scr(1))))
+!!$                end if
                 vctr1(k) = dzm(k)*(vkkh(k,i,j) + vkkh(k+1,i,j))
              enddo
              ! **(JP)** vetoriza calculo de c1

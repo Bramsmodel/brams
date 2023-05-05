@@ -9,62 +9,68 @@
 
 Module mem_leaf
 
+  use ModParallelEnvironment, only: &
+       MsgDump
+
   use ModNamelistFile, only: &
        namelistFile
 
   use grid_dims, only: &
        nzgmax
 
+  use node_mod, only: &
+       mynum
+
   Type leaf_vars
 
      ! Variables to be dimensioned by (nxp,nyp,nzg,npatch)
 
-     real, pointer, contiguous :: soil_water(:,:,:,:)
-     real, pointer, contiguous :: soil_energy(:,:,:,:)
-     real, pointer, contiguous :: soil_text(:,:,:,:)
+     real, pointer, contiguous :: soil_water(:,:,:,:) => null()
+     real, pointer, contiguous :: soil_energy(:,:,:,:) => null()
+     real, pointer, contiguous :: soil_text(:,:,:,:) => null()
 
      ! Variables to be dimensioned by (nxp,nyp,nzs,npatch)
 
-     real, pointer, contiguous :: sfcwater_mass(:,:,:,:)
-     real, pointer, contiguous :: sfcwater_energy(:,:,:,:)
-     real, pointer, contiguous :: sfcwater_depth(:,:,:,:)
+     real, pointer, contiguous :: sfcwater_mass(:,:,:,:) => null()
+     real, pointer, contiguous :: sfcwater_energy(:,:,:,:) => null()
+     real, pointer, contiguous :: sfcwater_depth(:,:,:,:) => null()
 
      ! Variables to be dimensioned by (nxp,nyp,npatch)
 
-     real, pointer, contiguous :: ustar(:,:,:)
-     real, pointer, contiguous :: tstar(:,:,:)
-     real, pointer, contiguous :: rstar(:,:,:)
-     real, pointer, contiguous :: veg_fracarea(:,:,:)
-     real, pointer, contiguous :: veg_lai(:,:,:)
-     real, pointer, contiguous :: veg_rough(:,:,:)
-     real, pointer, contiguous :: veg_height(:,:,:)
-     real, pointer, contiguous :: veg_albedo(:,:,:)
-     real, pointer, contiguous :: veg_tai(:,:,:)
-     real, pointer, contiguous :: patch_area(:,:,:)
-     real, pointer, contiguous :: patch_rough(:,:,:)
-     real, pointer, contiguous :: patch_wetind(:,:,:)
-     real, pointer, contiguous :: leaf_class(:,:,:)
-     real, pointer, contiguous :: soil_rough(:,:,:)
-     real, pointer, contiguous :: sfcwater_nlev(:,:,:)
-     real, pointer, contiguous :: stom_resist(:,:,:)
-     real, pointer, contiguous :: ground_rsat(:,:,:)
-     real, pointer, contiguous :: ground_rvap(:,:,:)
-     real, pointer, contiguous :: veg_water(:,:,:)
-     real, pointer, contiguous :: veg_temp(:,:,:)
-     real, pointer, contiguous :: can_rvap(:,:,:)
-     real, pointer, contiguous :: can_temp(:,:,:)
-     real, pointer, contiguous :: veg_ndvip(:,:,:)
-     real, pointer, contiguous :: veg_ndvic(:,:,:)
-     real, pointer, contiguous :: veg_ndvif(:,:,:)
+     real, pointer, contiguous :: ustar(:,:,:) => null()
+     real, pointer, contiguous :: tstar(:,:,:) => null()
+     real, pointer, contiguous :: rstar(:,:,:) => null()
+     real, pointer, contiguous :: veg_fracarea(:,:,:) => null()
+     real, pointer, contiguous :: veg_lai(:,:,:) => null()
+     real, pointer, contiguous :: veg_rough(:,:,:)  => null()
+     real, pointer, contiguous :: veg_height(:,:,:)  => null()
+     real, pointer, contiguous :: veg_albedo(:,:,:)  => null()
+     real, pointer, contiguous :: veg_tai(:,:,:)  => null()
+     real, pointer, contiguous :: patch_area(:,:,:)  => null()
+     real, pointer, contiguous :: patch_rough(:,:,:)  => null()
+     real, pointer, contiguous :: patch_wetind(:,:,:)  => null()
+     real, pointer, contiguous :: leaf_class(:,:,:)  => null()
+     real, pointer, contiguous :: soil_rough(:,:,:)  => null()
+     real, pointer, contiguous :: sfcwater_nlev(:,:,:)  => null()
+     real, pointer, contiguous :: stom_resist(:,:,:)  => null()
+     real, pointer, contiguous :: ground_rsat(:,:,:)  => null()
+     real, pointer, contiguous :: ground_rvap(:,:,:)  => null()
+     real, pointer, contiguous :: veg_water(:,:,:)  => null()
+     real, pointer, contiguous :: veg_temp(:,:,:)  => null()
+     real, pointer, contiguous :: can_rvap(:,:,:)  => null()
+     real, pointer, contiguous :: can_temp(:,:,:)  => null()
+     real, pointer, contiguous :: veg_ndvip(:,:,:)  => null()
+     real, pointer, contiguous :: veg_ndvic(:,:,:)  => null()
+     real, pointer, contiguous :: veg_ndvif(:,:,:)  => null()
 
-     real, pointer, contiguous :: R_aer(:,:,:)   !kml drydep
+     real, pointer, contiguous :: R_aer(:,:,:) => null()   !kml drydep
 
      ! Variables to be dimensioned by (nxp,nyp)
 
-     real, pointer, contiguous :: snow_mass(:,:)
-     real, pointer, contiguous :: snow_depth(:,:)
-     real, pointer, contiguous :: seatp(:,:)
-     real, pointer, contiguous :: seatf(:,:)
+     real, pointer, contiguous :: snow_mass(:,:)  => null()
+     real, pointer, contiguous :: snow_depth(:,:)  => null()
+     real, pointer, contiguous :: seatp(:,:)  => null()
+     real, pointer, contiguous :: seatf(:,:)  => null()
   End Type leaf_vars
 
   type (leaf_vars), pointer :: leaf_g(:) => null()
@@ -95,7 +101,21 @@ Contains
     type (leaf_vars) :: leaf
     integer, intent(in) :: nz,nx,ny,nzg,nzs,np,ng
 
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(alloc_leaf)**"
+    logical, parameter :: dumpLocal=.true.
+
     ! Allocate arrays based on options (if necessary)
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") nx
+       write(str(2),"(i8)") ny
+       write(str(3),"(i8)") np
+       call MsgDump(h//" aloca componentes 3D de leaf dimensionados ("//&
+            trim(adjustl(str(1)))//","//&
+            trim(adjustl(str(2)))//","//&
+            trim(adjustl(str(3)))//")")
+    end if
 
     allocate (leaf%soil_water     (nzg,nx,ny,np));leaf%soil_water =0.0
     allocate (leaf%soil_energy    (nzg,nx,ny,np));leaf%soil_energy=0.0
@@ -276,198 +296,422 @@ Contains
     implicit none
     type(VarTable), pointer, intent(in) :: oneVarTable(:) 
     integer, intent(inout) :: oneVarTableSize
-    type (leaf_vars), pointer, intent(in) :: leaf
-    type (leaf_vars), pointer, intent(in) :: leafm
+    type (leaf_vars), target, intent(in) :: leaf
+    type (leaf_vars), target, intent(in) :: leafm
     integer, intent(in) :: imean
 
+    real, pointer, contiguous :: pLeaf4D(:,:,:,:) => null()
+    real, pointer, contiguous :: pLeafM4D(:,:,:,:) => null()
+    real, pointer, contiguous :: pLeaf3D(:,:,:) => null()
+    real, pointer, contiguous :: pLeafM3D(:,:,:) => null()
+    real, pointer, contiguous :: pLeaf2D(:,:) => null()
+    real, pointer, contiguous :: pLeafM2D(:,:) => null()
     character(len=8) :: str_recycle
-
+    character(len=*), parameter :: h="**(filltab_leaf)**"
+    
     str_recycle = ''
     if (ipastin == 1) then
        str_recycle = ':recycle'
     endif
 
+
     ! Fill pointers to arrays into variable tables
 
+    pLeaf4D => leaf%soil_water
+    if (imean == 1) then
+       pLeafM4D => leafm%soil_water
+    else
+       pLeafM4D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%soil_water, &
+         pLeaf4D, &
          'SOIL_WATER :4:hist:anal:mpti:mpt3'//trim(str_recycle), &
-         leafm%soil_water, imean)
-
+         pLeafM4D, imean)
+    
+    pLeaf4D => leaf%soil_energy
+    if (imean == 1) then
+       pLeafM4D => leafm%soil_energy
+    else
+       pLeafM4D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%soil_energy, &
+         pLeaf4D, &
          'SOIL_ENERGY :4:hist:anal:mpti:mpt3'//trim(str_recycle), &
-         leafm%soil_energy, imean)
+         pLeafM4D, imean)
 
+    pLeaf4D => leaf%soil_text
+    if (imean == 1) then
+       pLeafM4D => leafm%soil_text
+    else
+       pLeafM4D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%soil_text, &
+         pLeaf4D, &
          'SOIL_TEXT :4:hist:anal:mpti:mpt3'//trim(str_recycle), &
-         leafm%soil_text, imean)
+         pLeafM4D, imean)
 
+    pLeaf4D => leaf%sfcwater_mass
+    if (imean == 1) then
+       pLeafM4D => leafm%sfcwater_mass
+    else
+       pLeafM4D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%sfcwater_mass, &
+         pLeaf4D, &
          'SFCWATER_MASS :5:hist:anal:mpti:mpt3'//trim(str_recycle), &
-         leafm%sfcwater_mass, imean)
+         pLeafM4D, imean)
 
+    pLeaf4D => leaf%sfcwater_energy
+    if (imean == 1) then
+       pLeafM4D => leafm%sfcwater_energy
+    else
+       pLeafM4D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%sfcwater_energy,  &
+         pLeaf4D, &
          'SFCWATER_ENERGY :5:hist:anal:mpti:mpt3'//trim(str_recycle), &
-         leafm%sfcwater_energy, imean)
+         pLeafM4D, imean)
 
+    pLeaf4D => leaf%sfcwater_depth
+    if (imean == 1) then
+       pLeafM4D => leafm%sfcwater_depth
+    else
+       pLeafM4D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%sfcwater_depth, &
+         pLeaf4D, &
          'SFCWATER_DEPTH :5:hist:anal:mpti:mpt3'//trim(str_recycle), &
-         leafm%sfcwater_depth, imean)
+         pLeafM4D, imean)
 
+    pLeaf3D => leaf%ustar
+    if (imean == 1) then
+       pLeafM3D => leafm%ustar
+    else
+       pLeafM3D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%ustar, &
+         pLeaf3D, &
          'USTAR :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-         leafm%ustar, imean)
+         pLeafM3D, imean)
 
+    pLeaf3D => leaf%tstar
+    if (imean == 1) then
+       pLeafM3D => leafm%tstar
+    else
+       pLeafM3D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%tstar, &
+         pLeaf3D, &
          'TSTAR :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-         leafm%tstar, imean)
+         pLeafM3D, imean)
 
+    pLeaf3D => leaf%rstar
+    if (imean == 1) then
+       pLeafM3D => leafm%rstar
+    else
+       pLeafM3D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%rstar, &
+         pLeaf3D, &
          'RSTAR :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-         leafm%rstar, imean)
+         pLeafM3D, imean)
 
+    pLeaf3D => leaf%veg_fracarea
+    if (imean == 1) then
+       pLeafM3D => leafm%veg_fracarea
+    else
+       pLeafM3D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%veg_fracarea, &
+         pLeaf3D, &
          'VEG_FRACAREA :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-         leafm%veg_fracarea, imean)
+         pLeafM3D, imean)
 
+    pLeaf3D => leaf%veg_lai
+    if (imean == 1) then
+       pLeafM3D => leafm%veg_lai
+    else
+       pLeafM3D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%veg_lai, &
+         pLeaf3D, &
          'VEG_LAI :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-         leafm%veg_lai, imean)
+         pLeafM3D, imean)
 
+    pLeaf3D => leaf%veg_rough
+    if (imean == 1) then
+       pLeafM3D => leafm%veg_rough
+    else
+       pLeafM3D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%veg_rough, &
+         pLeaf3D, &
          'VEG_ROUGH :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-         leafm%veg_rough, imean)
+         pLeafM3D, imean)
 
+    pLeaf3D => leaf%veg_height
+    if (imean == 1) then
+       pLeafM3D => leafm%veg_height
+    else
+       pLeafM3D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%veg_height, &
+         pLeaf3D, &
          'VEG_HEIGHT :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-         leafm%veg_height, imean)
+         pLeafM3D, imean)
 
+    pLeaf3D => leaf%veg_albedo
+    if (imean == 1) then
+       pLeafM3D => leafm%veg_albedo
+    else
+       pLeafM3D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%veg_albedo, &
+         pLeaf3D, &
          'VEG_ALBEDO :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-         leafm%veg_albedo, imean)
+         pLeafM3D, imean)
 
+    pLeaf3D => leaf%veg_tai
+    if (imean == 1) then
+       pLeafM3D => leafm%veg_tai
+    else
+       pLeafM3D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%veg_tai, &
+         pLeaf3D, &
          'VEG_TAI :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-         leafm%veg_tai, imean)
+         pLeafM3D, imean)
 
+    pLeaf3D => leaf%patch_area
+    if (imean == 1) then
+       pLeafM3D => leafm%patch_area
+    else
+       pLeafM3D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%patch_area, &
+         pLeaf3D, &
          'PATCH_AREA :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-         leafm%patch_area, imean)
+         pLeafM3D, imean)
 
+    pLeaf3D => leaf%patch_rough
+    if (imean == 1) then
+       pLeafM3D => leafm%patch_rough
+    else
+       pLeafM3D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%patch_rough, &
+         pLeaf3D, &
          'PATCH_ROUGH :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-         leafm%patch_rough, imean)
+         pLeafM3D, imean)
 
+    pLeaf3D => leaf%patch_wetind
+    if (imean == 1) then
+       pLeafM3D => leafm%patch_wetind
+    else
+       pLeafM3D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%patch_wetind, &
+         pLeaf3D, &
          'PATCH_WETIND :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-         leafm%patch_wetind, imean)
+         pLeafM3D, imean)
 
+    pLeaf3D => leaf%leaf_class
+    if (imean == 1) then
+       pLeafM3D => leafm%leaf_class
+    else
+       pLeafM3D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%leaf_class, &
+         pLeaf3D, &
          'LEAF_CLASS :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-         leafm%leaf_class, imean)
+         pLeafM3D, imean)
 
+    pLeaf3D => leaf%soil_rough
+    if (imean == 1) then
+       pLeafM3D => leafm%soil_rough
+    else
+       pLeafM3D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%soil_rough, &
+         pLeaf3D, &
          'SOIL_ROUGH :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-         leafm%soil_rough, imean)
+         pLeafM3D, imean)
 
+    pLeaf3D => leaf%sfcwater_nlev
+    if (imean == 1) then
+       pLeafM3D => leafm%sfcwater_nlev
+    else
+       pLeafM3D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%sfcwater_nlev, &
+         pLeaf3D, &
          'SFCWATER_NLEV :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-         leafm%sfcwater_nlev, imean)
+         pLeafM3D, imean)
 
+    pLeaf3D => leaf%stom_resist
+    if (imean == 1) then
+       pLeafM3D => leafm%stom_resist
+    else
+       pLeafM3D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%stom_resist, &
+         pLeaf3D, &
          'STOM_RESIST :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-         leafm%stom_resist, imean)
+         pLeafM3D, imean)
 
+    pLeaf3D => leaf%ground_rsat
+    if (imean == 1) then
+       pLeafM3D => leafm%ground_rsat
+    else
+       pLeafM3D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%ground_rsat, &
+         pLeaf3D, &
          'GROUND_RSAT :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-         leafm%ground_rsat, imean)
+         pLeafM3D, imean)
 
+    pLeaf3D => leaf%ground_rvap
+    if (imean == 1) then
+       pLeafM3D => leafm%ground_rvap
+    else
+       pLeafM3D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%ground_rvap, &
+         pLeaf3D, &
          'GROUND_RVAP :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-         leafm%ground_rvap, imean)
+         pLeafM3D, imean)
 
+    pLeaf3D => leaf%veg_water
+    if (imean == 1) then
+       pLeafM3D => leafm%veg_water
+    else
+       pLeafM3D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%veg_water, &
+         pLeaf3D, &
          'VEG_WATER :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-         leafm%veg_water, imean)
+         pLeafM3D, imean)
 
+    pLeaf3D => leaf%veg_temp
+    if (imean == 1) then
+       pLeafM3D => leafm%veg_temp
+    else
+       pLeafM3D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%veg_temp, &
+         pLeaf3D, &
          'VEG_TEMP :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-         leafm%veg_temp, imean)
+         pLeafM3D, imean)
 
+    pLeaf3D => leaf%can_rvap
+    if (imean == 1) then
+       pLeafM3D => leafm%can_rvap
+    else
+       pLeafM3D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%can_rvap, &
+         pLeaf3D, &
          'CAN_RVAP :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-         leafm%can_rvap, imean)
+         pLeafM3D, imean)
 
+    pLeaf3D => leaf%can_temp
+    if (imean == 1) then
+       pLeafM3D => leafm%can_temp
+    else
+       pLeafM3D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%can_temp, &
+         pLeaf3D, &
          'CAN_TEMP :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-         leafm%can_temp, imean)
+         pLeafM3D, imean)
 
+    pLeaf3D => leaf%veg_ndvip
+    if (imean == 1) then
+       pLeafM3D => leafm%veg_ndvip
+    else
+       pLeafM3D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%veg_ndvip, &
+         pLeaf3D, &
          'VEG_NDVIP :6:hist:mpti', &
-         leafm%veg_ndvip, imean)
+         pLeafM3D, imean)
 
+    pLeaf3D => leaf%veg_ndvic
+    if (imean == 1) then
+       pLeafM3D => leafm%veg_ndvic
+    else
+       pLeafM3D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%veg_ndvic, &
+         pLeaf3D, &
          'VEG_NDVIC :6:hist:anal:mpti:mpt3'//trim(str_recycle), &
-         leafm%veg_ndvic, imean)
+         pLeafM3D, imean)
 
+    pLeaf3D => leaf%veg_ndvif
+    if (imean == 1) then
+       pLeafM3D => leafm%veg_ndvif
+    else
+       pLeafM3D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%veg_ndvif,  &
+         pLeaf3D, &
          'VEG_NDVIF :6:hist:mpti', &
-         leafm%veg_ndvif, imean)
+         pLeafM3D, imean)
 
+    pLeaf3D => leaf%R_aer
+    if (imean == 1) then
+       pLeafM3D => leafm%R_aer
+    else
+       pLeafM3D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%R_aer, &
+         pLeaf3D, &
          'R_aer :6:hist:mpti', &
-         leafm%R_aer, imean)
+         pLeafM3D, imean)
 
+    pLeaf2D => leaf%snow_mass
+    if (imean == 1) then
+       pLeafM2D => leafm%snow_mass
+    else
+       pLeafM2D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%snow_mass, &
+         pLeaf2D, &
          'SNOW_MASS :2:mpti', &
-         leafm%snow_mass, imean)
+         pLeafM2D, imean)
 
+    pLeaf2D => leaf%snow_depth
+    if (imean == 1) then
+       pLeafM2D => leafm%snow_depth
+    else
+       pLeafM2D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%snow_depth, &
+         pLeaf2D, &
          'SNOW_DEPTH :2:mpti', &
-         leafm%snow_depth, imean)
+         pLeafM2D, imean)
 
+    pLeaf2D => leaf%seatp
+    if (imean == 1) then
+       pLeafM2D => leafm%seatp
+    else
+       pLeafM2D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%seatp, &
+         pLeaf2D, &
          'SEATP :2:mpti', &
-         leafm%seatp, imean)
+         pLeafM2D, imean)
 
+    pLeaf2D => leaf%seatf
+    if (imean == 1) then
+       pLeafM2D => leafm%seatf
+    else
+       pLeafM2D => null()
+    end if
     call InsertVarTable (oneVarTable, oneVarTableSize, &
-         leaf%seatf, &
+         pLeaf2D, &
          'SEATF :2:mpti', &
-         leafm%seatf, imean)
+         pLeafM2D, imean)
 
   end subroutine filltab_leaf
 

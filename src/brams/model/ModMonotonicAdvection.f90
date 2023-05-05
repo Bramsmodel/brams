@@ -1656,7 +1656,7 @@ contains
        ia, iz, ja, jz, n, dt, &
        current_aer_ispc, current_ndt_z, IsThisScalarAer)
 
-    type(MonotonicAdvection), pointer, intent(in) :: oneAdvMnt
+    type(MonotonicAdvection), pointer, intent(inout) :: oneAdvMnt
     type(Grid), pointer, intent(in) :: oneGrid
     integer, intent(in) :: ngrid
     integer, intent(in) :: mzp
@@ -2075,7 +2075,7 @@ contains
     ! pointer and values intent(in)
     real, pointer, intent(in) :: dd0(:,:,:)
     ! pointer and values intent(in)
-    real, pointer, intent(out):: qn(:,:,:)
+    real, pointer, intent(inout):: qn(:,:,:)
     ! pointer intent(in), values intent(out)
 
     integer :: i

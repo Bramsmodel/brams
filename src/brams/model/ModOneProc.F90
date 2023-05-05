@@ -36,59 +36,59 @@ module ModOneProc
 
   use ModCuParmVars, only: &
        CuParmVars
-  
+
   use ModNestIntrp, only: &
        fmrefs1d, &
        fmrefs3d
-  
+
   use ModRnode, only: &
        node_index, &
        InitFields
-  
+
   use ModRamsGrid, only: &
        GridSetup, &
        newgrid
-  
+
   use ModLeaf3Init, only: &
        snowinit, &
        sfcdata
-  
+
   use ModRUser, only: &
        change_soil_moisture_init, &
        eng_params
-  
+
   use ModMPassDtl, only: &
        reduce_max_cfl_to_master, &
        reduce_max_cfl_and_broadcast, &
        gather_cpu_time_master_print
-       
+
   use ModOdaRead, only: &
        oda_read
-  
+
   use ModVarfUpdate, only: &
        PrtOpt
-  
+
   use ModNudRead, only: &
        nud_read
 
   use ModCondRead, only: &
        cond_read
-  
+
   use ModMicInit, only: &
        micro_master, &
        initqin, &
        effective_radius, &
        jnmbinit
-  
+
   use ModRecycle, only: &
        recycle
-  
+
   use ModChemAsgen, only: &
        chem_isan_driver
-  
+
   use ModNdviRead, only: &
        NdviReadStoreOwnChunk
-  
+
   use ModMkSfcDriver, only: &
        MakeSfcFiles
 
@@ -97,7 +97,7 @@ module ModOneProc
 
   use ModMkSfcTop, only: &
        TRSFFieldAndOwnChunk
-  
+
   use ModSstRead, only: &
        SstReadStoreOwnChunk
 
@@ -171,7 +171,7 @@ module ModOneProc
 
   use ModVarTable, only: &
        FixVarTableForIOUTPUT5
-  
+
   use ModTimestep, only: &
        timestep
 
@@ -268,7 +268,7 @@ module ModOneProc
        aerosol, &
        FixChemAerVarTableForIOUTPUT5, &
        StoreNamelistFileAtMem_aer1
-  
+
   use mem_chem1aq, only: StoreNamelistFileAtMem_chem1aq
   use mem_plume_chem1, only: StoreNamelistFileAtMem_plumeChem1
   use mem_volc_chem1, only: StoreNamelistFileAtMem_volcChem1
@@ -651,7 +651,7 @@ contains
 
     logical :: dirExist
     character(len=255) :: tmpdir
-    character(len=8) :: str
+    character(len=8) :: str(10)
 
     !XXXsrf    integer :: iau_phase
 
@@ -837,7 +837,13 @@ contains
 
     ! Check sfc,sst,ndvi files; remake if needed
 
+    if (dumpLocal) then
+       call MsgDump(h//" will make surface files")
+    end if
     call MakeSfcfiles(oneGrid%oneControlVars)
+    if (dumpLocal) then
+       call MsgDump(h//" done making surface files")
+    end if
 
 
     ! Behave accordingly to run typ
@@ -869,12 +875,18 @@ contains
 
        ! on a "MAKEVFILE" run, call ISAN, then exit.
 
+       if (dumpLocal) then
+          call MsgDump(h//" will make vfiles")
+       end if
        call chem_isan_driver(NamelistFileName, oneGrid%oneControlVars)
        if(ccatt==1 .and. chem_assim==1 .and. chemistry >= 0)then
           iErrNumber=dumpMessage(c_tty,c_yes,header,version,c_notice," CHEM_ISAN complete ")
        else
           iErrNumber=dumpMessage(c_tty,c_yes,header,version,c_notice," ISAN complete ")
        endif
+       if (dumpLocal) then
+          call MsgDump(h//" done making vfiles")
+       end if
 
        !================================================================================================
        !================================================================================================
@@ -914,6 +926,23 @@ contains
        !**(JP)** This should allocate memory for all modules (to be certified!!!)
        call MemAlloc(oneGrid, 2)
 
+!!$       if (mynum == 1) then
+!!$          if (associated(leaf_g(1)%patch_area)) then
+!!$             write(str(1),"(i8)") size(leaf_g(1)%patch_area,1)
+!!$             write(str(2),"(i8)") size(leaf_g(1)%patch_area,2)
+!!$             write(str(3),"(i8)") size(leaf_g(1)%patch_area,3)
+!!$             write (*,fmt='(a)') h//" logo apos MemAlloc; patch_area has size("//&
+!!$                  trim(adjustl(str(1)))//","//&
+!!$                  trim(adjustl(str(2)))//","//&
+!!$                  trim(adjustl(str(3)))//")"
+!!$             write (*,fmt='(a)') h//" patch_area(:,1,1)="
+!!$             write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,1,1)
+!!$             write (*,fmt='(a)') h//" patch_area(:,2,1)="
+!!$             write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,2,1)
+!!$          else
+!!$             write (*,fmt='(a)') h//" logo apos MemAlloc; patch_area not associated"
+!!$          end if
+!!$       end if
        if (ioutput == 5) then
           call FixVarTableForIOUTPUT5(oneGrid%oneVarTable, oneGrid%oneVarTableSize)          
           call FixChemAerVarTableForIOUTPUT5(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
@@ -953,10 +982,26 @@ contains
 
        call InitFields(1, oneGrid%oneScalarTableSize, &
             oneGrid%oneVarTable, oneGrid%oneVarTableSize)
+!!$       if (mynum == 1) then
+!!$          write (*,fmt='(a)') h//" logo antes initOneProc"
+!!$          write (*,fmt='(a)') h//" patch_area(:,1,1)="
+!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,1,1)
+!!$          write (*,fmt='(a)') h//" patch_area(:,2,1)="
+!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,2,1)
+!!$       end if
 
        ! initialization driver
 
        call initOneProc(AllGrids, NamelistFileName)
+
+!!$       if (mynum == 1) then
+!!$          write (*,fmt='(a)') h//" logo apos initOneProc"
+!!$          write (*,fmt='(a)') h//" patch_area(:,1,1)="
+!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,1,1)
+!!$          write (*,fmt='(a)') h//" patch_area(:,2,1)="
+!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,2,1)
+!!$       end if
+
 
        ! Compute Courant numbers cflxy and cflz, get maximum over all processes  and dump
 
@@ -974,6 +1019,13 @@ contains
           call dump_dtset(nndtflg)
        end if
 
+!!$       if (mynum == 1) then
+!!$          write (*,fmt='(a)') h//" logo apos SetDt"
+!!$          write (*,fmt='(a)') h//" patch_area(:,1,1)="
+!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,1,1)
+!!$          write (*,fmt='(a)') h//" patch_area(:,2,1)="
+!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,2,1)
+!!$       end if
 
        call schedule(isched, maxsched, maxschent, ngrids, nxtnest, &
             nndtrat, nsubs)
@@ -1044,6 +1096,13 @@ contains
 
        if(oneGrid%oneMicVars%mcphys_type==3) call readDataFriendly()
 
+!!$       if (mynum == 1) then
+!!$          write (*,fmt='(a)') h//" logo apos readDataFriendly"
+!!$          write (*,fmt='(a)') h//" patch_area(:,1,1)="
+!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,1,1)
+!!$          write (*,fmt='(a)') h//" patch_area(:,2,1)="
+!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,2,1)
+!!$       end if
        if (aerosol==-1 .and. .not. (CCATT==1 .and. chemistry >= 1)) then
           call gradsRead('./tables/aerClim/','aerosols.gra',&
                grid_g(1)%glat,grid_g(1)%glon, &
@@ -1072,6 +1131,13 @@ contains
                oneGrid%oneBasicFields, oneGrid%oneTurbFields, &
                oneGrid%oneVarTable, oneGrid%oneVarTableSize)
        endif
+!!$       if (mynum == 1) then
+!!$          write (*,fmt='(a)') h//" logo apos CreatePostProcess"
+!!$          write (*,fmt='(a)') h//" patch_area(:,1,1)="
+!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,1,1)
+!!$          write (*,fmt='(a)') h//" patch_area(:,2,1)="
+!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,2,1)
+!!$       end if
 
        select case (IPOS)
 
@@ -1129,6 +1195,13 @@ contains
        if (dumpLocal) then
           call MsgDump(h//" timestep loop starts")
        end if
+!!$       if (mynum == 1) then
+!!$          write (*,fmt='(a)') h//" antes do laco no tempo; patch_area="
+!!$          write (*,fmt='(a)') h//" patch_area(:,1,1)="
+!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,1,1)
+!!$          write (*,fmt='(a)') h//" patch_area(:,2,1)="
+!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,2,1)
+!!$       end if
 
        do while (time<timmax)
 
@@ -1140,9 +1213,9 @@ contains
           begtime = time
 
           if (dumpLocal) then
-             write(str,"(i8)") istp
+             write(str(1),"(i8)") istp
              call MsgDump(" ")
-             call MsgDump(h//" timestep "//trim(adjustl(str))//" starts")
+             call MsgDump(h//" timestep "//trim(adjustl(str(1)))//" starts")
              call MsgDump(" ")
           end if
 
@@ -1397,10 +1470,12 @@ contains
           ! call SynchronizedTimeStamp(TS_POST)
 
 !!$ METEOGRAMA
-          if(applyMeteogram)then
+          if (applyMeteogram .and. meteogramFreq > 0.0) then
              if(mod(time,meteogramFreq) .lt. dtlongn(1) .or.  &
                   time .ge. timmax - 0.01*dtlongn(1)      .or. &
-                  iflag .eq. 1)call ProcessLocalMeteogram(oneGrid%meteoPolygons)
+                  iflag .eq. 1) then
+                call ProcessLocalMeteogram(oneGrid%meteoPolygons)
+             end if
           end if
 
           if(windfarm==1) then
@@ -1582,9 +1657,23 @@ contains
           !--(DMK-LFR NEC-SX6)----------------------------------------------
 
        enddo
+!!$       if (mynum == 1) then
+!!$          write (*,fmt='(a)') h//" logo antes sfcReadStoreOwnChunk"
+!!$          write (*,fmt='(a)') h//" patch_area(:,1,1)="
+!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,1,1)
+!!$          write (*,fmt='(a)') h//" patch_area(:,2,1)="
+!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,2,1)
+!!$       end if
        do ifm = 1,ngrids
           call SfcReadStoreOwnChunk(ifm, oneGrid%oneControlVars)
        enddo
+!!$       if (mynum == 1) then
+!!$          write (*,fmt='(a)') h//" logo apos sfcReadStoreOwnChunk"
+!!$          write (*,fmt='(a)') h//" patch_area(:,1,1)="
+!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,1,1)
+!!$          write (*,fmt='(a)') h//" patch_area(:,2,1)="
+!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,2,1)
+!!$       end if
        !     Define grid topography, transform, latitude-longitude,
        !        and map factor arrays.
 
@@ -2126,7 +2215,7 @@ contains
                            " var_p_2D(1:"//trim(adjustl(str(2)))//")")
                    end if
                    oneGrid%oneVarTable(nv)%var_m_2D(:,:)=oneGrid%oneVarTable(nv)%var_p_2D(:,:)
-                        
+
                 else if (oneGrid%oneVarTable(nv)%idim_type == 3) then
                    if (dumpLocal) then
                       write(str(1),"(i8)") size(oneGrid%oneVarTable(nv)%var_m_3D)
@@ -2137,7 +2226,7 @@ contains
                            " var_p_3D(1:"//trim(adjustl(str(2)))//")")
                    end if
                    oneGrid%oneVarTable(nv)%var_m_3D(:,:,:)=oneGrid%oneVarTable(nv)%var_p_3D(:,:,:)
-                        
+
                 else if (oneGrid%oneVarTable(nv)%idim_type == 4) then
                    if (dumpLocal) then
                       write(str(1),"(i8)") size(oneGrid%oneVarTable(nv)%var_m_4D)
@@ -2148,7 +2237,7 @@ contains
                            " var_p_4D(1:"//trim(adjustl(str(2)))//")")
                    end if
                    oneGrid%oneVarTable(nv)%var_m_4D(:,:,:,:)=oneGrid%oneVarTable(nv)%var_p_4D(:,:,:,:)
-                        
+
                 else if (oneGrid%oneVarTable(nv)%idim_type == 5) then
                    if (dumpLocal) then
                       write(str(1),"(i8)") size(oneGrid%oneVarTable(nv)%var_m_4D)
@@ -2159,7 +2248,7 @@ contains
                            " var_p_4D(1:"//trim(adjustl(str(2)))//")")
                    end if
                    oneGrid%oneVarTable(nv)%var_m_4D(:,:,:,:)=oneGrid%oneVarTable(nv)%var_p_4D(:,:,:,:)
-                        
+
                 else if (oneGrid%oneVarTable(nv)%idim_type == 6) then
                    if (dumpLocal) then
                       write(str(1),"(i8)") size(oneGrid%oneVarTable(nv)%var_m_3D)
@@ -2170,7 +2259,7 @@ contains
                            " var_p_3D(1:"//trim(adjustl(str(2)))//")")
                    end if
                    oneGrid%oneVarTable(nv)%var_m_3D(:,:,:)=oneGrid%oneVarTable(nv)%var_p_3D(:,:,:)
-                        
+
                 else if (oneGrid%oneVarTable(nv)%idim_type == 7) then
                    if (dumpLocal) then
                       write(str(1),"(i8)") size(oneGrid%oneVarTable(nv)%var_m_3D)
@@ -2181,7 +2270,7 @@ contains
                            " var_p_3D(1:"//trim(adjustl(str(2)))//")")
                    end if
                    oneGrid%oneVarTable(nv)%var_m_3D(:,:,:)=oneGrid%oneVarTable(nv)%var_p_3D(:,:,:)
-                        
+
                 end if
              endif
           enddo
@@ -2216,6 +2305,8 @@ contains
     real :: timemf
     integer :: ifm
     real :: frqqueim  ! CATT
+    character(len=16) :: str(10)
+    character(len=*), parameter :: h="**(comm_time)**"
 
     !         ISENDFLG designates whether nodes should send back
     !            stuff things it normally doesn't have to
@@ -2250,7 +2341,8 @@ contains
     if (ccatt == 1) then
        if (chemistry >= 0 &
             .and. srcmapfn(1:len_trim(srcmapfn)) /= 'NONE' &
-            .and. srcmapfn(1:len_trim(srcmapfn)) /= 'none') then
+            .and. srcmapfn(1:len_trim(srcmapfn)) /= 'none' &
+            .and. srctime2 > 0.0) then
 
           !time para leitura dos mapas de queimadas
           !frqqueim=24.*3600.
@@ -2309,12 +2401,15 @@ contains
     if(runtype(1:7) == 'INITIAL'.and.timemf < dtlongn(1))isendboth=0
     if(runtype(1:7) == 'HISTORY'.and.timemf <= timstr)isendboth=0
 
-    if (ioutput  /=  0) then
-       if ( mod(timemf,frqanl)  <  dtlongn(1) .or.  &
-            mod(timemf,frqhis)  <  dtlongn(1)) then
+    if (ioutput /= 0 .and. frqanl > 0.0) then
+       if (mod(timemf,frqanl)  <  dtlongn(1)) then
           isendflg = 1
-          !return
-       endif
+       end if
+    end if
+    if (ioutput /= 0 .and. frqhis > 0.0) then
+       if (mod(timemf,frqhis)  <  dtlongn(1)) then
+          isendflg = 1
+       end if
     endif
 
     if( timemf  >=  timmax - .01*dtlongn(1) ) then
@@ -2343,9 +2438,10 @@ contains
        !return
     endif
 
-    if (mod(timemf,frqprt)  <  dtlongn(1) ) then
-       isendflg = 1
-       !return
+    if (frqprt > 0.0) then
+       if (mod(timemf,frqprt)  <  dtlongn(1) ) then
+          isendflg = 1
+       end if
     endif
 
     if (iupdsst  ==  1 ) then

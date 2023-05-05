@@ -69,10 +69,12 @@ static char RCSid[] =
 #include "spConfig.h"
 #include "spmatrix.h"
 #include "spDefs.h"
+#include "spFactor.h" 
+#include "spBuild.h" 
 
-
-
-
+/*
+ * PROTOTYPES
+ */
 
 
 /*
@@ -169,8 +171,7 @@ static char RCSid[] =
  *  Error is cleared in this function.
  */
 
-int
-spOrderAndFactor( eMatrix, RHS, RelThreshold, AbsThreshold, DiagPivoting )
+int spOrderAndFactor( eMatrix, RHS, RelThreshold, AbsThreshold, DiagPivoting )
 
 char *eMatrix;
 RealNumber  RHS[], RelThreshold, AbsThreshold;
@@ -432,8 +433,7 @@ RealNumber Mult;
  */
 
 //static //LFR
-int
-FactorComplexMatrix( Matrix )
+int FactorComplexMatrix( Matrix )
 
 MatrixPtr  Matrix;
 {
@@ -721,7 +721,7 @@ BOOLEAN *DoRealDirect, *DoCmplxDirect;
  */
 
 //static //LFR
-CreateInternalVectors( Matrix )
+int CreateInternalVectors( Matrix )
 
 MatrixPtr  Matrix;
 {
@@ -810,7 +810,7 @@ int  Size;
  */
 
 //static //LFR
-CountMarkowitz( Matrix, RHS, Step )
+int CountMarkowitz( Matrix, RHS, Step )
 
 MatrixPtr Matrix;
 register RealVector  RHS;
@@ -920,7 +920,7 @@ int  ExtRow;
  */
 #include "spConfig.h" //LFR
 //static //LFR
-MarkowitzProducts( Matrix, Step )
+int MarkowitzProducts( Matrix, Step )
 
 MatrixPtr Matrix;
 int Step;
@@ -1008,8 +1008,7 @@ double fProduct;
  */
 
 //static  //LFR
-ElementPtr
-SearchForPivot( Matrix, Step, DiagPivoting )
+ElementPtr SearchForPivot( Matrix, Step, DiagPivoting )
 
 MatrixPtr Matrix;
 int Step, DiagPivoting;
@@ -1110,8 +1109,7 @@ ElementPtr  SearchEntireMatrix();
  */
 
 //static  //LFR
-ElementPtr
-SearchForSingleton( Matrix, Step )
+ElementPtr SearchForSingleton( Matrix, Step )
 
 MatrixPtr Matrix;
 int Step;
@@ -1321,8 +1319,7 @@ RealNumber  PivotMag, FindBiggestInColExclude();
  */
 
 //static //LFR
-ElementPtr
-QuicklySearchDiagonal( Matrix, Step )
+ElementPtr QuicklySearchDiagonal( Matrix, Step )
 
 MatrixPtr Matrix;
 int Step;
@@ -1689,8 +1686,7 @@ RealNumber  FindBiggestInColExclude();
  */
 
 //static //LFR
-ElementPtr
-SearchDiagonal( Matrix, Step )
+ElementPtr SearchDiagonal( Matrix, Step )
 
 MatrixPtr Matrix;
 register int Step;
@@ -1822,8 +1818,7 @@ RealNumber  FindBiggestInColExclude();
  */
 
 //static  //LFR
-ElementPtr
-SearchEntireMatrix( Matrix, Step )
+ElementPtr SearchEntireMatrix( Matrix, Step )
 
 MatrixPtr Matrix;
 int Step;
@@ -1948,8 +1943,7 @@ RealNumber  FindLargestInCol();
  */
 
 //static  //LFR
-RealNumber
-FindLargestInCol( pElement )
+RealNumber FindLargestInCol( pElement )
 
 register  ElementPtr  pElement;
 {
@@ -2015,8 +2009,7 @@ RealNumber  Magnitude, Largest = 0.0;
  */
 
 //static  //LFR
-RealNumber
-FindBiggestInColExclude( Matrix, pElement, Step )
+RealNumber FindBiggestInColExclude( Matrix, pElement, Step )
 
 MatrixPtr Matrix;
 register  ElementPtr  pElement;
@@ -2093,7 +2086,7 @@ RealNumber  Largest, Magnitude;
  */
 
 //static //LFR
-ExchangeRowsAndCols( Matrix, pPivot, Step )
+int ExchangeRowsAndCols( Matrix, pPivot, Step )
 
 MatrixPtr Matrix;
 ElementPtr  pPivot;
@@ -2222,7 +2215,7 @@ ElementPtr spcFindElementInCol();
  *      Pointer to the element in Row2 to be exchanged.
  */
 
-spcRowExchange( Matrix, Row1, Row2 )
+int spcRowExchange( Matrix, Row1, Row2 )
 
 MatrixPtr Matrix;
 int  Row1, Row2;
@@ -2323,7 +2316,7 @@ ElementPtr  Element1, Element2;
  *      Pointer to the element in Col2 to be exchanged.
  */
 
-spcColExchange( Matrix, Col1, Col2 )
+int spcColExchange( Matrix, Col1, Col2 )
 
 MatrixPtr Matrix;
 int  Col1, Col2;
@@ -2430,7 +2423,7 @@ ElementPtr  Element1, Element2;
  */
 
 //static //LFR
-ExchangeColElements( Matrix, Row1, Element1, Row2, Element2, Column )
+int ExchangeColElements( Matrix, Row1, Element1, Row2, Element2, Column )
 
 MatrixPtr Matrix;
 register  ElementPtr  Element1, Element2;
@@ -2572,7 +2565,7 @@ register  ElementPtr  pElement;
  */
 
 //static //LFR
-ExchangeRowElements( Matrix, Col1, Element1, Col2, Element2, Row )
+int ExchangeRowElements( Matrix, Col1, Element1, Col2, Element2, Row )
 
 MatrixPtr Matrix;
 int  Col1, Col2, Row;
@@ -2707,7 +2700,7 @@ register   ElementPtr  pElement;
  */
 
 //static //LFR
-RealRowColElimination( Matrix, pPivot )
+int RealRowColElimination( Matrix, pPivot )
 
 MatrixPtr Matrix;
 register  ElementPtr  pPivot;
@@ -2796,7 +2789,7 @@ extern ElementPtr  CreateFillin();
  */
 
 //static //LFR
-ComplexRowColElimination( Matrix, pPivot )
+int ComplexRowColElimination( Matrix, pPivot )
 
 MatrixPtr Matrix;
 register  ElementPtr  pPivot;
@@ -2880,7 +2873,7 @@ ElementPtr  CreateFillin();
  */
 
 //static //LFR
-UpdateMarkowitzNumbers( Matrix, pPivot )
+int UpdateMarkowitzNumbers( Matrix, pPivot )
 
 MatrixPtr Matrix;
 ElementPtr  pPivot;
@@ -2970,8 +2963,7 @@ double Product;
  */
 
 //static //LFR
-ElementPtr
-CreateFillin( Matrix, Row, Col )
+ElementPtr CreateFillin( Matrix, Row, Col )
 
 MatrixPtr Matrix;
 register int  Row;
@@ -3033,8 +3025,7 @@ ElementPtr  spcCreateElement();
  */
 
 //static  //LFR
-int
-MatrixIsSingular( Matrix, Step )
+int MatrixIsSingular( Matrix, Step )
 
 MatrixPtr  Matrix;
 int  Step;
@@ -3048,8 +3039,7 @@ int  Step;
 
 
 //static  //LFR
-int
-ZeroPivot( Matrix, Step )
+int ZeroPivot( Matrix, Step )
 
 MatrixPtr  Matrix;
 int  Step;
@@ -3076,7 +3066,7 @@ int  Step;
  */
 
 //static //LFR
-WriteStatus( Matrix, Step )
+int WriteStatus( Matrix, Step )
 
 MatrixPtr Matrix;
 int Step;

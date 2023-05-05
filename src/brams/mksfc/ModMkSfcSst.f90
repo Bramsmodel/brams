@@ -7,6 +7,9 @@
 !###########################################################################
 module ModMkSfcSst
 
+  use ModParallelEnvironment, only: &
+       MsgDump
+  
   use ModNestFillDens, only: &
        fillscr, &
        fillvar
@@ -61,7 +64,9 @@ module ModMkSfcSst
   implicit none
 
   include "files.h"
+  include "UseVfm.h"
 
+  integer, parameter :: fUnit=25
   private
 
   public :: sst_read_dataheader
@@ -77,6 +82,9 @@ contains
     character(len=f_name_length) :: flnm,line,line2
     character(len=1) :: dummy
     logical :: there
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(sst_read_dataheader)**"
+    logical, parameter :: dumpLocal=.false.
 
     ! Read header file for all sstdata files (all times and locations).  The header
     ! file contains:
@@ -92,6 +100,15 @@ contains
     flnm=trim(isstfn(ifm))//'HEADER'
 
     inquire(file=flnm(1:len_trim(flnm)),exist=there)
+
+    if (dumpLocal) then
+       if (there) then
+          call MsgDump(h//" found file "//trim(flnm))
+       else
+          call MsgDump(h//" did not find file "//trim(flnm))
+       end if
+    end if
+          
     if (.not.there) then
        print*,'SSTDATA header file:', trim(flnm), ' for grid ',ifm,' not there.'
        stop 'sst_read_fileheader-1'
@@ -99,33 +116,44 @@ contains
 
     ! Read this header file
 
-    call rams_f_open(25,flnm(1:len_trim(flnm)),'FORMATTED','OLD','READ',0)
-    rewind 25
+    call rams_f_open(fUnit,flnm(1:len_trim(flnm)),'FORMATTED','OLD','READ',0)
+    rewind fUnit
 
     ! read number of data times in dataset
 
-    read(25,*) dummy
-    read(25,*) nvsstf(ifm)
+    read(fUnit,*) dummy
+    read(fUnit,*) nvsstf(ifm)
 
     if (nvsstf(ifm) <= 0) then
        print*, 'No SST input files found with specified prefix or incorrect header'
-       close(25)
+       close(fUnit)
        stop 'sst_read_fileheader-2'
     endif
 
     ! read prefix list and times 
 
     do itime = 1,nvsstf(ifm)
-       read(25,'(A80)') line
+       read(fUnit,'(A80)') line
        call char_strip_var(line, flnm, line2)
        read (line2,*) iyearvs(itime,ifm), imonthvs(itime,ifm),  &
             idatevs(itime,ifm), ihourvs(itime,ifm)
 
        vsstfil(itime,ifm)=trim(isstfn(ifm))//trim(flnm)
 
+       if (dumpLocal) then
+          write(str(1),"(i8)") ihourvs(itime,ifm)
+          write(str(2),"(i8)") idatevs(itime,ifm)
+          write(str(3),"(i8)") imonthvs(itime,ifm)
+          write(str(4),"(i8)") iyearvs(itime,ifm)
+          call MsgDump(h//" inserted file "//trim(adjustl(vsstfil(itime,ifm)))//&
+               " of "//trim(adjustl(str(1)))//":"//&
+               trim(adjustl(str(2)))//"/"//&
+               trim(adjustl(str(3)))//"/"//&
+               trim(adjustl(str(4)))//" at mksfc file inventory")
+       end if
     enddo
 
-    close(25)
+    close(fUnit)
 
     return
   end subroutine sst_read_dataheader
@@ -204,44 +232,80 @@ contains
   !****************************************************************************
 
   subroutine sst_write(ifm,ivt)
-    integer :: ifm,ivt,i,j
+    integer, intent(in) :: ifm
+    integer, intent(in) :: ivt
 
+    integer :: i,j
+    integer :: ios
+    
     real :: glatr,glonr
     character(len=f_name_length) :: flnm
     character(len=2) :: cgrid
+    character(len=*), parameter :: h="**(sst_write)**"
+    logical, parameter :: dumpLocal=.false.
 
     ! Write sst data to sst file for one grid and one time
-    write(cgrid,'(a1,i1)') 'g',ifm
-    call makefnam(flnm,sstfpfx,0.,iyearvs(ivt,ifm),imonthvs(ivt,ifm) &
-         ,idatevs(ivt,ifm),ihourvs (ivt,ifm)*10000,'W',cgrid,'vfm')
 
+    write(cgrid,'(a1,i1)') 'g',ifm
+
+    if (useVfm) then
+       call makefnam(flnm,sstfpfx,0.,iyearvs(ivt,ifm),imonthvs(ivt,ifm) &
+            ,idatevs(ivt,ifm),ihourvs (ivt,ifm)*10000,'W',cgrid,'vfm')
+    else
+       call makefnam(flnm,sstfpfx,0.,iyearvs(ivt,ifm),imonthvs(ivt,ifm) &
+            ,idatevs(ivt,ifm),ihourvs (ivt,ifm)*10000,'W',cgrid,'bin')
+    end if
+    if (dumpLocal) then
+       call MsgDump(h//" build fileName "//trim(flnm))
+    end if
+       
     call xy_ll(glatr,glonr,platn(ifm),plonn(ifm),xtn(1,ifm),ytn(1,ifm))
 
-    call rams_f_open(25,flnm(1:len_trim(flnm)),'FORMATTED','REPLACE','WRITE',1)
-    rewind 25
+    if (useVfm) then
 
-    write(25,99) 999999,2
-    write(25,100) iyearvs(ivt,ifm),imonthvs(ivt,ifm) &
-         ,idatevs(ivt,ifm),ihourvs (ivt,ifm)
-    write(25,101) nnxp(ifm),nnyp(ifm)
-    write(25,102) deltaxn(ifm),deltayn(ifm),platn(ifm),plonn(ifm)  &
-         ,glatr,glonr
+       call rams_f_open(fUnit,flnm(1:len_trim(flnm)),'FORMATTED','REPLACE','WRITE',1)
+       rewind fUnit
+       
+       write(fUnit,99) 999999,2
+       write(fUnit,100) iyearvs(ivt,ifm),imonthvs(ivt,ifm) &
+            ,idatevs(ivt,ifm),ihourvs (ivt,ifm)
+       write(fUnit,101) nnxp(ifm),nnyp(ifm)
+       write(fUnit,102) deltaxn(ifm),deltayn(ifm),platn(ifm),plonn(ifm)  &
+            ,glatr,glonr
+       
+99     format(2i8)
+100    format(1x,i4.4,2(1x,i2.2),1x,i4.4)
+101    format(4i5)
+102    format(6f16.5)
+       
+       call vforec(fUnit,sfcfile_p(ifm)%seatf,nnxp(ifm)*nnyp(ifm),24,scrx,'LIN')
 
-99  format(2i8)
-100 format(1x,i4.4,2(1x,i2.2),1x,i4.4)
-101 format(4i5)
-102 format(6f16.5)
+       close(fUnit)
 
-    call vforec(25,sfcfile_p(ifm)%seatf,nnxp(ifm)*nnyp(ifm),24,scrx,'LIN')
 
-    !do j=1,nnyp(ifm)
-    !do i=1,nnxp(ifm)
-    !print*,i,j,sfcfile_p(ifm)%seatf(i,j)
-    !enddo
-    !enddo
+    else
 
-    close(25)
+       open(fUnit, action="write", file=trim(flnm), form="unformatted", iostat=ios)
+       if (ios /= 0) then
+          call fatal_error(h//" opening file "//trim(flnm))
+       end if
+       rewind fUnit
+       
+       write(fUnit) 999999,2
+       write(fUnit) iyearvs(ivt,ifm),imonthvs(ivt,ifm) &
+            ,idatevs(ivt,ifm),ihourvs (ivt,ifm)
+       write(fUnit) nnxp(ifm),nnyp(ifm)
+       write(fUnit) deltaxn(ifm),deltayn(ifm),platn(ifm),plonn(ifm)  &
+            ,glatr,glonr
+       
+       write(fUnit) sfcfile_p(ifm)%seatf
+       
+       close(fUnit)
+    end if
 
+    if (dumpLocal) then
+       call MsgDump(h//" wrote field seatf at file "//trim(flnm))
+    end if
     return
   end subroutine sst_write
 end module ModMkSfcSst

@@ -8,11 +8,11 @@
 
 module ModNdviRead
 
+  use ModParallelEnvironment, only: &
+       MsgDump
+  
   use ModMkSfcNdvi, only: &
        ndvi_read_dataheader
-  
-  use ModControlVars, only: &
-       ControlVars
   
   use mem_grid, only: &
        platn, &
@@ -80,17 +80,19 @@ module ModNdviRead
        Broadcast, &
        ReadStoreOwnChunk
 
+  use ModControlVars, only: &
+       ControlVars
+  
   implicit none
 
   include "files.h"
   include "constants.h"
+  include "UseVfm.h" 
 
+  integer, parameter :: fUnit=25
   private
 
-  public :: ndvi_check_header
   public :: NdviReadStoreOwnChunk
-  public :: NdviFileInv
-  public :: NdviUpdate
 
 contains
 
@@ -111,23 +113,43 @@ contains
     integer, intent(IN)       :: ifm
     integer, intent(OUT)      :: ierr
     character(len=*), intent(IN) :: flnm
+    
     ! Local Variables:
     integer :: iiyear, iimonth, iidate, iihour,  &
          isfc_marker, isfc_ver, nsfx, nsfy, nsfpat
+    integer :: ios
     real :: sfdx, sfdy, sfplat, sfplon, sflat, sflon, glatr, glonr
 
+    character(len=*), parameter :: h="**(ndvi_check_header)**"
+    logical, parameter :: dumpLocal=.false.
+    
     ierr = 0
 
     call xy_ll(glatr, glonr, platn(ifm), plonn(ifm), xtn(1,ifm), ytn(1,ifm))
 
-    call rams_f_open(25, flnm(1:len_trim(flnm)), 'FORMATTED', 'OLD', 'READ', 0)
+    if (useVfm) then
 
-    read (25,*) isfc_marker, isfc_ver
-    read (25,*) iiyear, iimonth, iidate, iihour
-    read (25,*) nsfx, nsfy, nsfpat
-    read (25,*) sfdx, sfdy, sfplat, sfplon, sflat, sflon
-    close (25)
+       call rams_f_open(fUnit, flnm(1:len_trim(flnm)), 'FORMATTED', 'OLD', 'READ', 0)
+       read (fUnit,*) isfc_marker, isfc_ver
+       read (fUnit,*) iiyear, iimonth, iidate, iihour
+       read (fUnit,*) nsfx, nsfy, nsfpat
+       read (fUnit,*) sfdx, sfdy, sfplat, sfplon, sflat, sflon
+       close (fUnit)
 
+    else
+
+       open(fUnit, action="read", file=trim(flnm), form="unformatted", iostat=ios)
+       if (ios /= 0) then
+          call fatal_error(h//" error opening file "//trim(flnm))
+       end if
+       read (fUnit) isfc_marker, isfc_ver
+       read (fUnit) iiyear, iimonth, iidate, iihour
+       read (fUnit) nsfx, nsfy, nsfpat
+       read (fUnit) sfdx, sfdy, sfplat, sfplon, sflat, sflon
+       close (fUnit)
+
+    end if
+    
     if (nsfx/=nnxp(ifm) .or. nsfy/=nnyp(ifm) .or. nsfpat/=npatch .or. &
          abs(sfdx-deltaxn(ifm))>0.001 .or. &
          abs(sfdy-deltayn(ifm))>0.001 .or. &
@@ -152,10 +174,17 @@ contains
        print *, 'SW lon:', glonr, sflon
        print *, '-------------------'
 
+       if (dumpLocal) then
+          call MsgDump(h//" ndvi header mismatch at file "//trim(flnm))
+       end if
+
     else
 
        ierr = 0
 
+       if (dumpLocal) then
+          call MsgDump(h//" match header at file "//trim(flnm))
+       end if
     endif
 
   end subroutine ndvi_check_header
@@ -175,8 +204,14 @@ contains
     integer :: iyears, imonths, idates, ihours, nf, ng, i, j, ip
     real    :: timefac_ndvi
     real(kind=8) :: secs_init, secs1, secs2
-    character(len=*), parameter :: h="**(NdviReadStoreOwnChunk)**"
 
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(NdviReadStoreOwnChunk)**"
+    logical, parameter :: dumpLocal=.false.
+    
+    if (dumpLocal) then
+       call MsgDump(h//" starts")
+    end if
     ierr = 0
 
     if (runflag==1 .or. runflag==2) then   ! Initialization(1) or file check(2)
@@ -186,7 +221,12 @@ contains
        call NdviFileInv(ndvifpfx(1:len_trim(ndvifpfx)), ierr)
 
        if (ierr==1) then
-          if (runflag==2) return
+          if (runflag==2) then
+             if (dumpLocal) then
+                call MsgDump(h//" finishes with ierr=1")
+             end if
+             return
+          end if
           if (runflag==1) then
              call fatal_error(h//' ndvi_read: error on init')
           end if
@@ -212,6 +252,11 @@ contains
                      ' later than beginning of run'
              end if
              ierr = 1
+             if (dumpLocal) then
+                write(str(1),"(i8)") ng
+                call MsgDump(h//' initial ndvi file time for grid '//trim(adjustl(str(1)))//&
+                     ' later than beginning of run')
+             end if
              return
           end if
 
@@ -219,6 +264,11 @@ contains
              if (mchnum==master_num) then
                 print*, h//' updating ndvi values but only one ndvi file', &
                      ' for grid', ng
+             end if
+             if (dumpLocal) then
+                write(str(1),"(i8)") ng
+                call MsgDump(h//' updating ndvi values but only one ndvi file'//&
+                     ' for grid'//trim(adjustl(str(1))))
              end if
              ierr = 1
              return
@@ -230,6 +280,11 @@ contains
              if (mchnum==master_num) then
                 print*, h//' final ndvi file time for grid ', ng, &
                      'earlier than end of run - making new ndvi files'
+             end if
+             if (dumpLocal) then
+                write(str(1),"(i8)") ng
+                call MsgDump(h//' final ndvi file time for grid '//trim(adjustl(str(1)))//&
+                     ' earlier than end of run - making new ndvi files')
              end if
              ierr = 1
              return
@@ -244,7 +299,12 @@ contains
 
        ! If we are only checking, we're done.
 
-       if (runflag==2) return 
+       if (runflag==2) then
+          if (dumpLocal) then
+             call MsgDump(h//" finishes")
+          end if
+          return
+       end if
 
        do ng=1,ngrids
 
@@ -333,6 +393,9 @@ contains
 
        enddo
 
+       if (dumpLocal) then
+          call MsgDump(h//" finishes")
+       end if
        return
 
     elseif (runflag==3) then   ! Runtime file increment
@@ -379,9 +442,15 @@ contains
           end if
 
        else
+          if (dumpLocal) then
+             call MsgDump(h//" finishes")
+          end if
           return
        endif
     endif
+    if (dumpLocal) then
+       call MsgDump(h//" finishes")
+    end if
   end subroutine NdviReadStoreOwnChunk
 
 
@@ -394,6 +463,7 @@ contains
     ! Arguments:
     character(len=*), intent(IN) :: sfilin
     integer, intent(OUT)         :: ierr
+    
     ! Local Variables:
     integer :: nc, nf, lnf, nftot, ng, icm, ifm
     integer :: inyear, inmonth, indate, inhour
@@ -413,12 +483,18 @@ contains
     integer, allocatable :: intVec(:)
     character, allocatable :: charVec(:)
     character(len=8) :: c0, c1
-    character(len=*), parameter :: h="**(NdviFileInv)**"
     character(len=f_name_length) :: flnm
     logical :: there
 
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(NdviFileInv)**"
+    logical, parameter :: dumpLocal=.false.
+
     ! size and length of data to be broadcasted
 
+    if (dumpLocal) then
+       call MsgDump(h//" starts")
+    end if
     sizeIntVec = ngrids+3
     lenFnames  = len(fnames_ndvi)
     lenItot    = len(itotdate_ndvi)
@@ -478,16 +554,26 @@ contains
                 ihourvn (1:nvndvif(ifm),ifm) = ihourvn (1:nvndvif(ifm),icm)
              endif
 
-             call makefnam(flnm, sfilin, 0., &
-                  iyearvn(ivtime,ng), imonthvn(ivtime,ng), &
-                  idatevn(ivtime,ng), ihourvn (ivtime,ng)*10000, &
-                  'N', cgrid2, 'vfm')
-
+             if (useVfm) then
+                call makefnam(flnm, sfilin, 0., &
+                     iyearvn(ivtime,ng), imonthvn(ivtime,ng), &
+                     idatevn(ivtime,ng), ihourvn (ivtime,ng)*10000, &
+                     'N', cgrid2, 'vfm')
+             else
+                call makefnam(flnm, sfilin, 0., &
+                     iyearvn(ivtime,ng), imonthvn(ivtime,ng), &
+                     idatevn(ivtime,ng), ihourvn (ivtime,ng)*10000, &
+                     'N', cgrid2, 'bin')
+             end if
+             
              inquire(file=flnm(1:len_trim(flnm)), exist=there)
 
              if (there) then
                 fnames(indice) = trim(flnm)
                 indice = indice + 1 
+                if (dumpLocal) then
+                   call MsgDump(h//" inserted file "//trim(flnm)//" at fnames")
+                end if
              endif
           end do
 
@@ -497,6 +583,9 @@ contains
 
           if (nftot<=0) then
              print *, 'No ndvi files for grid '//cgrid
+             if (dumpLocal) then
+                call MsgDump(h//" no ndvi files for grid "//cgrid)
+             end if
              ierr = 1
              exit
           end if
@@ -548,6 +637,13 @@ contains
              end do
              write(unit=22,fmt='(A)') '------------------------------------------------------'
              close(unit=22)
+
+             if (dumpLocal) then
+                call MsgDump(h//" ndvi file inventory:")
+                do nf=1,nndvifiles(ng)
+                   call MsgDump(h//itotdate_ndvi(nf,ng)//' '//trim(fnames_ndvi(nf,ng)))
+                end do
+             end if
           else
              exit
           end if
@@ -673,6 +769,9 @@ contains
           call fatal_error(h//" deallocate charVec fails with stat="//trim(adjustl(c0)))
        end if
     end if
+    if (dumpLocal) then
+       call MsgDump(h//" finishes")
+    end if
   end subroutine NdviFileInv
 
 
@@ -687,14 +786,19 @@ contains
     integer, intent(in) :: nfile
     type(ControlVars), pointer, intent(in) :: oneControlVars
 
-    integer,save :: iun=25
-
     integer :: ng,nc,ip
+    integer :: ios
     character(len=1) :: cgrid
     character(len=f_name_length) :: flnm
     character(len=1) :: dummy
     real, pointer :: p2D(:,:)
 
+    character(len=*), parameter :: h="**(NdviUpdate)**"
+    logical, parameter :: dumpLocal=.false.
+
+    if (dumpLocal) then
+       call MsgDump(h//" starts")
+    end if
 
     ! Put new fields into future arrays. If iswap == 1, 
     !     swap future into past first
@@ -719,25 +823,42 @@ contains
           nc=len_trim(flnm)-4
           flnm(nc:nc)=cgrid
 
-          call rams_f_open(iun,flnm(1:len_trim(flnm)),'FORMATTED','OLD','READ',0)
-          read(iun,*) dummy
-          read(iun,*) dummy
-          read(iun,*) dummy
-          read(iun,*) dummy
+          if (useVfm) then
+             call rams_f_open(fUnit,flnm(1:len_trim(flnm)),'FORMATTED','OLD','READ',0)
+             read(fUnit,*) dummy
+             read(fUnit,*) dummy
+             read(fUnit,*) dummy
+             read(fUnit,*) dummy
+          else
+             open(fUnit, action="read", file=trim(flnm), form="unformatted", iostat=ios)
+             if (ios /= 0) then
+                call fatal_error(h//" error opening file "//trim(flnm))
+             end if
+             read(fUnit) dummy
+             read(fUnit) dummy
+             read(fUnit) dummy
+             read(fUnit) dummy
+          end if
+          if (dumpLocal) then
+             call MsgDump(h//" opened file "//trim(flnm))
+          end if
        end if
 
        ! deals with ndivf
 
        do ip = 1,npatch
           p2D => leaf_g(ng)%veg_ndvif(:,:,ip)
-          call ReadStoreOwnChunk(ng, iun, p2D, "ndvif", oneControlVars)
+          call ReadStoreOwnChunk(ng, fUnit, p2D, "ndvif", oneControlVars)
        end do
 
        ! master process close the input file
 
        if (mchnum == master_num) then
-          close(iun)
+          close(fUnit)
        end if
     end do
+    if (dumpLocal) then
+       call MsgDump(h//" finishes")
+    end if
   end subroutine NdviUpdate
 end module ModNdviRead

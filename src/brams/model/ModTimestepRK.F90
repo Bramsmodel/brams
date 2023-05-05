@@ -9,6 +9,8 @@
 
 module ModTimestepRK
 
+  use mem_leaf, only: leaf_g
+  
 #ifdef JULES
   use ModSfcLyrJules, only: &
        sfclyr_jules
@@ -296,6 +298,7 @@ contains
     logical, parameter :: flag_Coriolis_in_every_RK_step = .false.
 
     integer :: l_rk
+    integer :: ierr
     real    :: rk_beta(3)
     integer :: rk_nmbr_small_timesteps(3)
     integer, parameter ::  &!rk_order = 2 ! for testing purposes (but works only with upwind1 and upwind3 advection)
@@ -305,7 +308,7 @@ contains
     character(len=2) :: crk
     logical :: singleProcRun
     character(len=2) :: cnzp
-    integer :: nv,itime,i,j
+    integer :: nv,itime,i,j,ip
     integer :: lenCopy
     character(len=256) :: julesFile
 
@@ -313,6 +316,7 @@ contains
     logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(timestep_rk)**"
     character(len=8) :: str(10)
+    character(len=16) :: fstr(10)
     real,target  :: vt3da(mzp*mxp*myp)
 
     !MB: only for testing
@@ -323,6 +327,12 @@ contains
        call MsgDump(h//" starts")
     end if
 
+!!$    if (mynum == 1) then
+!!$       write (*,fmt='(a)') h//" inicio; patch_area="
+!!$       write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,1,1)
+!!$       write (*,fmt='(45(e9.3,1x))') (oneGrid%oneBasicFields%theta(i,2,2),i=1,mzp)
+!!$    end if
+    
     singleProcRun = nmachs == 1
     julesFile=oneGrid%oneNamelistFile%julesin
 
@@ -336,6 +346,10 @@ contains
     !  Zero out all tendency arrays.
     !--------------------------------
     call tend0(oneGrid%oneScalarTable, oneGrid%oneScalarTableSize)  
+!!$    if (mynum == 1) then
+!!$       write (*,fmt='(a)') h//" apos tend0, tend%wt_rk="
+!!$       write (*,fmt='(45(e9.3,1x))') (tend%wt_rk(i),i=(mxp+1)*mzp,(mxp+2)*mzp-1)
+!!$    end if
 
     ! Implements the Incremental Analysis Update procedure -
     ! phase 2: add the IAU tendencies
@@ -379,6 +393,9 @@ contains
             oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, &
             oneGrid%oneMicVars, oneGrid%oneMicroFields, oneGrid%oneRadiateFields, &
             oneGrid%oneCuParmFields)
+       if (dumpLocal) then
+          call MsgDump(h//" sfclyr para isfcl<=2")
+       end if
 #ifdef JULES
     elseif (isfcl == 5) then
        if (time==0.) then
@@ -386,20 +403,53 @@ contains
                oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, &
                oneGrid%oneMicVars, oneGrid%oneMicroFields, oneGrid%oneRadiateFields, &
                oneGrid%oneCuParmFields)
+          if (dumpLocal) then
+             call MsgDump(h//" sfclyr para isfcl==2 and time==0")
+          end if
        end if
        call sfclyr_jules(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile, &
             oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicVars, &
             oneGrid%oneMicroFields, oneGrid%oneJulesFields, oneGrid%oneRadiateFields, oneGrid%oneCuParmFields)
-       
+          if (dumpLocal) then
+             call MsgDump(h//" sfclyr_jules para isfcl==5")
+          end if
        !--- this combines the JULES land + LEAF ocean models.
        if (isfcl_ocean == 1) then
           call sfclyr_ocean_only  (mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
                oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, &
                oneGrid%oneRadiateFields, oneGrid%oneCuParmFields)
+          if (dumpLocal) then
+             call MsgDump(h//" sfclyr_ocean_only para isfcl_ocean==1")
+          end if
        end if
 #endif
     endif
 
+    if (any(leaf_g(1)%patch_area < 0)) then
+!!$       do ip = 1, size(leaf_g(1)%patch_area,3)
+!!$          do j = 1, size(leaf_g(1)%patch_area,2)
+!!$             do i = 1, size(leaf_g(1)%patch_area,1)
+!!$                if (leaf_g(1)%patch_area(i,j,ip) < 0.0) then
+!!$                   write(str(1),"(i8)") i
+!!$                   write(str(2),"(i8)") j
+!!$                   write(str(3),"(i8)") ip
+!!$                   write(fstr(1),"(e15.7)") leaf_g(1)%patch_area(i,j,ip)
+!!$                   call MsgDump(h//"at line 415, leaf_g(1)%patch_area("//&
+!!$                        trim(adjustl(str(1)))//","//&
+!!$                        trim(adjustl(str(2)))//","//&
+!!$                        trim(adjustl(str(3)))//") = "//&
+!!$                        trim(adjustl(fstr(1))))
+!!$                end if
+!!$             end do
+!!$          end do
+!!$       end do
+       call fatal_error(h//" algum patch_area < 0 na linha 415")
+    else
+       if (dumpLocal) then
+          call MsgDump(h//"todos os patch_area>=0 na linha 439")
+       end if
+    end if
+    
     !- Sea salt Aerossol inline source
     call SeaSaltDriver(ia,iz,ja,jz,ngrid,mxp,myp, oneGrid%oneBasicFields)
 
@@ -561,6 +611,10 @@ contains
             oneGrid%oneTurbFields, oneGrid%oneNamelistFile, oneGrid%Id, &
             oneGrid%oneMicVars, oneGrid%oneMicroFields)
     endif
+!!$    if (mynum == 1) then
+!!$       write (*,fmt='(a)') h//" apos diffuse, tend%wt_rk="
+!!$       write (*,fmt='(45(e9.3,1x))') (tend%wt_rk(i),i=(mxp+1)*mzp,(mxp+2)*mzp-1)
+!!$    end if
 
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
 
@@ -655,8 +709,19 @@ contains
 !!$    call SynchronizedTimeStamp(TS_RK_RESTO) ! Exper1.2, 2021_12
 
 
+!!$    if (mynum == 1) then
+!!$       write (*,fmt='(a)') h//" inicio RK loop; pp="
+!!$       write (*,fmt='(45(e9.3,1x))') (oneGrid%oneBasicFields%pp(i,2,2),i=1,mzp)
+!!$       write (*,fmt='(a)') h//" inicio RK loop; pc="
+!!$       write (*,fmt='(45(e9.3,1x))') (oneGrid%oneBasicFields%pc(i,2,2),i=1,mzp)
+!!$    end if
+    
     do l_rk = 1, rk_order
 
+!!$       if (mynum == 1) then
+!!$          write (*,fmt='(a,i1,a)') h//" inicio laco RK com l_rk=",l_rk,", theta="
+!!$          write (*,fmt='(45(e9.3,1x))') (oneGrid%oneBasicFields%theta(i,2,2),i=1,mzp)
+!!$       end if
        !initialize the tendencies with the physics tendencies
        tend%ut_rk (:) =tend%ut (:)
        tend%vt_rk (:) =tend%vt (:)
@@ -664,6 +729,11 @@ contains
        tend%pt_rk (:) =tend%pt (:)
        tend%tht_rk(:) =tend%tht(:)
 
+!!$       if (mynum == 1) then
+!!$          write (*,fmt='(a,i1,a)') h//" apos inicializacao com l_rk=",l_rk," tend%wt_rk="
+!!$          write (*,fmt='(45(e9.3,1x))') (tend%wt_rk(i),i=(mxp+1)*mzp,(mxp+2)*mzp-1)
+!!$       end if
+       
 !!$       call SynchronizedTimeStamp(TS_RK_RESTO) ! Exper1.2, 2021_12
 
        ! advection should give back tendencies
@@ -686,6 +756,11 @@ contains
        end if
        call advectc_rk(oneGrid,'PI'     ,mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
 
+!!$       if (mynum == 1) then
+!!$          write (*,fmt='(a,i1,a)') h//" apos dois advectc_rk com l_rk=",l_rk," tend%wt_rk="
+!!$          write (*,fmt='(45(e9.3,1x))') (tend%wt_rk(i),i=(mxp+1)*mzp,(mxp+2)*mzp-1)
+!!$       end if
+
 !!$       call SynchronizedTimeStamp(TS_RK_ADV) ! Exper1.2, 2021_12
 
        if ( flag_Coriolis_in_every_RK_step ) then
@@ -695,11 +770,31 @@ contains
 
        !  Buoyancy term for w equation
        !----------------------------------------
+!!$       if (mynum == 1) then
+!!$          write (*,fmt='(a,i1,a)') h//" antes buoyancy com l_rk=",l_rk," tend%wt_rk="
+!!$          write (*,fmt='(45(e9.3,1x))') (tend%wt_rk(i),i=(mxp+1)*mzp,(mxp+2)*mzp-1)
+!!$       end if
+!!$       if (mynum == 1) then
+!!$          write (*,fmt='(a,i1,a)') h//" antes buoyancy com l_rk=",l_rk,", theta="
+!!$          write (*,fmt='(45(e9.3,1x))') (oneGrid%oneBasicFields%theta(i,2,2),i=1,mzp)
+!!$       end if
        call buoyancy(tend%wt_rk, oneGrid%oneBasicFields, oneGrid%oneMicVars)
+!!$       if (mynum == 1) then
+!!$          write (*,fmt='(a,i1,a)') h//" apos buoyancy com l_rk=",l_rk," tend%wt_rk="
+!!$          write (*,fmt='(45(e9.3,1x))') (tend%wt_rk(i),i=(mxp+1)*mzp,(mxp+2)*mzp-1)
+!!$       end if
 
        if (dumpLocal) then
           call MsgDump(h//" starts exchanging borders of tend%tht_rk")
        end if
+
+!!$       if (mynum == 1) then
+!!$          write (*,fmt='(a,i3)') h//" pp antes PostSend no RK loop; l_rk=",l_rk
+!!$          write (*,fmt='(45(e9.3,1x))') (oneGrid%oneBasicFields%pp(i,2,2),i=1,mzp)
+!!$          write (*,fmt='(a,i3)') h//" pc antes PostSend no RK loop; l_rk=",l_rk
+!!$          write (*,fmt='(45(e9.3,1x))') (oneGrid%oneBasicFields%pc(i,2,2),i=1,mzp)
+!!$       end if
+    
        call PostSendRecvMsgs(oneGrid%AcoustNewThtSend, oneGrid%AcoustNewThtRecv)
 
        if ( l_rk > 1 ) then
@@ -711,22 +806,60 @@ contains
           oneGrid%oneBasicFields%thc(:,:,:) = oneGrid%oneBasicFields%thp(:,:,:)
        end if
 
-       !-  Acoustic small timesteps
-       call acoustic_new(oneGrid, rk_nmbr_small_timesteps(l_rk),l_rk )
+!!$       if (mynum == 1) then
+!!$          write (*,fmt='(a,i3)') h//" pp antes acoustic_new entre send/recv no RK loop; l_rk=",l_rk
+!!$          write (*,fmt='(45(e9.3,1x))') (oneGrid%oneBasicFields%pp(i,2,2),i=1,mzp)
+!!$          write (*,fmt='(a,i3)') h//" pc antes acoustic_new entre send/recv no RK loop; l_rk=",l_rk
+!!$          write (*,fmt='(45(e9.3,1x))') (oneGrid%oneBasicFields%pc(i,2,2),i=1,mzp)
+!!$       end if
+    
 
+       !-  Acoustic small timesteps
+!!$       if (mynum == 1) then
+!!$          write (*,fmt='(a,i1,a)') h//" antes acoustic_new com l_rk=",l_rk," tend%wt_rk="
+!!$          write (*,fmt='(45(e9.3,1x))') (tend%wt_rk(i),i=(mxp+1)*mzp,(mxp+2)*mzp-1)
+!!$       end if
+       call acoustic_new(oneGrid, rk_nmbr_small_timesteps(l_rk),l_rk )
+!!$       if (mynum == 1) then
+!!$          write (*,fmt='(a,i1,a)') h//" apos acoustic_new com l_rk=",l_rk," tend%wt_rk="
+!!$          write (*,fmt='(45(e9.3,1x))') (tend%wt_rk(i),i=(mxp+1)*mzp,(mxp+2)*mzp-1)
+!!$       end if
+
+!!$       if (mynum == 1) then
+!!$          write (*,fmt='(a,i3)') h//" pp apos acoustic_new entre send/recv no RK loop; l_rk=",l_rk
+!!$          write (*,fmt='(45(e9.3,1x))') (oneGrid%oneBasicFields%pp(i,2,2),i=1,mzp)
+!!$          write (*,fmt='(a,i3)') h//" pc apos acoustic_new entre send/recv no RK loop; l_rk=",l_rk
+!!$          write (*,fmt='(45(e9.3,1x))') (oneGrid%oneBasicFields%pc(i,2,2),i=1,mzp)
+!!$       end if
+    
        !- update thp -> thc (theta_il is not contained in acoustic_new)
        if (dumpLocal) then
           call MsgDump(h//" waits exchanging borders of tend%tht_rk")
        end if
        call WaitSendRecvMsgs(oneGrid%AcoustNewThtSend, oneGrid%AcoustNewThtRecv)
 
+!!$       if (mynum == 1) then
+!!$          write (*,fmt='(a,i3)') h//" pp apos WaitSend no RK loop; l_rk=",l_rk
+!!$          write (*,fmt='(45(e9.3,1x))') (oneGrid%oneBasicFields%pp(i,2,2),i=1,mzp)
+!!$          write (*,fmt='(a,i3)') h//" pc apos WaitSend no RK loop; l_rk=",l_rk
+!!$          write (*,fmt='(45(e9.3,1x))') (oneGrid%oneBasicFields%pc(i,2,2),i=1,mzp)
+!!$       end if
+    
        call update_long_rk(int(mxp*myp*mzp,int64),dtlt,rk_beta(l_rk) &
             ,oneGrid%oneBasicFields%thc,oneGrid%oneBasicFields%thp  &
             ,tend%tht_rk)
 
+!!$       if (mynum == 1) then
+!!$          write (*,fmt='(a,i1,a)') h//" antes theta_thp_rk com l_rk=",l_rk,", theta="
+!!$          write (*,fmt='(45(e9.3,1x))') (oneGrid%oneBasicFields%theta(i,2,2),i=1,mzp)
+!!$       end if
        !- determine theta (dry potential temp.) for the buoyancy term:
        call theta_thp_rk(mzp,mxp,myp,ia,iz,ja,jz,"get_theta", &
             oneGrid%oneBasicFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
+!!$       if (mynum == 1) then
+!!$          write (*,fmt='(a,i1,a)') h//" apos theta_thp_rk com l_rk=",l_rk,", theta="
+!!$          write (*,fmt='(45(e9.3,1x))') (oneGrid%oneBasicFields%theta(i,2,2),i=1,mzp)
+!!$       end if
 
        !-damping on vertical velocity to keep stability
        !MB: does this act on wc???
@@ -735,8 +868,28 @@ contains
                oneGrid%oneBasicFields)
        end if
 !!$       call SynchronizedTimeStamp(TS_RK_RESTO) ! Exper1.2, 2021_12
+!!$       if (mynum == 1) then
+!!$          write (*,fmt='(a,i1,a)') h//" ao fim do laco com l_rk=",l_rk," tend%wt_rk="
+!!$          write (*,fmt='(45(e9.3,1x))') (tend%wt_rk(i),i=(mxp+1)*mzp,(mxp+2)*mzp-1)
+!!$       end if
+!!$       if (mynum == 1) then
+!!$          write (*,fmt='(a,i1,a)') h//" ao final do laco RK com l_rk=",l_rk,", theta="
+!!$          write (*,fmt='(45(e9.3,1x))') (oneGrid%oneBasicFields%theta(i,2,2),i=1,mzp)
+!!$       end if
 
     end do
+
+!!$    if (mynum == 1) then
+!!$       write (*,fmt='(a)') h//" apos laco RK, tend%wt_rk="
+!!$       write (*,fmt='(45(e9.3,1x))') (tend%wt_rk(i),i=(mxp+1)*mzp,(mxp+2)*mzp-1)
+!!$    end if
+!!$    if (mynum == 1) then
+!!$       write (*,fmt='(a)') h//" fim RK loop; pp="
+!!$       write (*,fmt='(45(e9.3,1x))') (oneGrid%oneBasicFields%pp(i,2,2),i=1,mzp)
+!!$       write (*,fmt='(a)') h//" fim RK loop; pc="
+!!$       write (*,fmt='(45(e9.3,1x))') (oneGrid%oneBasicFields%pc(i,2,2),i=1,mzp)
+!!$    end if
+    
     ! end of Runge-Kutta loop
     ! i.e. the fields
     !    basic_g%uc, ..%vc, ..%wc, ..%pc, ..%thc
@@ -774,6 +927,11 @@ contains
     !  Update scalars (water species, tke and tracers)
     !----------------------------------------
     call predtr(oneGrid%oneScalarTable, oneGrid%oneScalarTableSize)
+
+!!$    if (mynum == 1) then
+!!$       write (*,fmt='(a)') h//" apos predtr, pc antes de copiado para pp"
+!!$       write (*,fmt='(45(e9.3,1x))') (oneGrid%oneBasicFields%pc(i,2,2),i=1,mzp)
+!!$    end if
 
     !-  copy current time into past time (u,v,w,pi,thetail)
     !---> thp   must be changed to THC for microphysics/bc/theta update
@@ -831,6 +989,12 @@ contains
     !  Lateral velocity boundaries - radiative
     !-------------------------------------------
     !srf  call LATBND()
+
+    
+!!$    if (mynum == 1) then
+!!$       write (*,fmt='(a)') h//" antes vpsets; pp="
+!!$       write (*,fmt='(45(e9.3,1x))') (oneGrid%oneBasicFields%pp(i,2,2),i=1,mzp)
+!!$    end if
 
     !  Velocity/pressure boundary conditions
     !----------------------------------------
@@ -930,6 +1094,11 @@ contains
             ,oneGrid%oneBasicFields%pp     (:,:,:)                                )
     endif
 
+!!$    if (mynum == 1) then
+!!$       write (*,fmt='(a)') h//" fim; pp="
+!!$       write (*,fmt='(45(e9.3,1x))') (oneGrid%oneBasicFields%pp(i,2,2),i=1,mzp)
+!!$    end if
+    
 !!$    call SynchronizedTimeStamp(TS_PHYSICS) ! Exper1.2, 2021_12
 
   end subroutine timestep_rk

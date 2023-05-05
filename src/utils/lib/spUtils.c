@@ -71,7 +71,9 @@ static char RCSid[] =
 #include "spConfig.h"
 #include "spmatrix.h"
 #include "spDefs.h"
-
+#include "spUtils.h"
+#include "spBuild.h"
+#include "spFactor.h"
 
 
 
@@ -230,8 +232,7 @@ BOOLEAN  Swapped, AnotherPassNeeded;
  */
 
 //static //LFR
-int
-CountTwins( Matrix, Col, ppTwin1, ppTwin2 )
+int CountTwins( Matrix, Col, ppTwin1, ppTwin2 )
 
 MatrixPtr Matrix;
 int Col;
@@ -272,7 +273,7 @@ ElementPtr pTwin1, pTwin2;
  */
 
 //static //LFR
-SwapCols( Matrix, pTwin1, pTwin2 )
+int SwapCols( Matrix, pTwin1, pTwin2 )
 
 MatrixPtr Matrix;
 ElementPtr pTwin1, pTwin2;

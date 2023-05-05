@@ -1415,7 +1415,7 @@
                           rainprod, evapprod
 !#endif
 
-!..Local variables
+      !..Local variables
       REAL, DIMENSION(kts:kte):: tten, qvten, qcten, qiten, &
            qrten, qsten, qgten, niten, nrten, ncten, nwfaten, nifaten
 
@@ -1499,8 +1499,14 @@
       LOGICAL, DIMENSION(kts:kte):: L_qc, L_qi, L_qr, L_qs, L_qg
       LOGICAL:: debug_flag
       CHARACTER*256:: mp_debug
-      INTEGER:: nu_c
+      INTEGER:: nu_c, ncinv
 
+      character(len=8) :: str(10)
+      character(len=16) :: fstr(10)
+      character(len=*), parameter :: h="**(mp_thompson)**" 
+
+
+      
 !+---+
 
       debug_flag = .false.
@@ -1648,7 +1654,17 @@
             rc(k) = qc1d(k)*rho(k)
             nc(k) = MAX(2., MIN(nc1d(k)*rho(k), Nt_c_max))
             L_qc(k) = .true.
-            nu_c = MIN(15, NINT(1000.E6/nc(k)) + 2)
+            ncinv = NINT(1000.E6/nc(k)) + 2
+            nu_c = MIN(15, ncinv)
+            if (nu_c < 1) then
+               write(str(1),"(i8)") k
+               write(str(2),"(i8)") nu_c
+               write(str(3),"(i8)") ncinv
+               write(fstr(1),"(e16.7)") nc(k)
+               call fatal_error(h//" at line 1659, nc("//trim(adjustl(str(1)))//&
+                    ")="//trim(adjustl(fstr(1)))//", resulting ncinv="//trim(adjustl(str(3)))//&
+                    " and nu_c="//trim(adjustl(str(2)))//", indexing ccg(2,nu_c) out of bounds")
+            end if
             lamc = (nc(k)*am_r*ccg(2,nu_c)*ocg1(nu_c)/rc(k))**obmr
             xDc = (bm_r + nu_c + 1.) / lamc
             if (xDc.lt. D0c) then

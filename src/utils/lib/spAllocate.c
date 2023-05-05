@@ -29,7 +29,7 @@
  *  ExpandTranslationArrays
  */
 
-
+  
 /*
  *  Revision and copyright information.
  *
@@ -71,12 +71,10 @@ static char RCSid[] =
 #include "spConfig.h"
 #include "spmatrix.h"
 #include "spDefs.h"
+#include "spAllocate.h"
 
 
 
-
-
-
 /*
  *  MATRIX ALLOCATION
  *
@@ -113,8 +111,7 @@ static char RCSid[] =
  *  Error is cleared in this routine.
  */
 
-char *
-spCreate( Size, Complex, pError )
+char *spCreate( Size, Complex, pError )
 
 int  Size, *pError;
 BOOLEAN  Complex;
@@ -369,7 +366,7 @@ ElementPtr  pElement;
  */
 
 //static //LFR
-InitializeElementBlocks( Matrix, InitialNumberOfElements,NumberOfFillinsExpected )
+int InitializeElementBlocks( Matrix, InitialNumberOfElements,NumberOfFillinsExpected )
 
 MatrixPtr Matrix;
 int  InitialNumberOfElements, NumberOfFillinsExpected;
@@ -511,7 +508,7 @@ ElementPtr  pFillins;
  */
 
 //static //LFR
-RecordAllocation( Matrix, AllocatedPtr )
+int RecordAllocation( Matrix, AllocatedPtr )
 
 MatrixPtr Matrix;
 char  *AllocatedPtr;
@@ -568,7 +565,7 @@ char  *AllocatedPtr;
  */
 
 //static //LFR
-AllocateBlockOfAllocationList( Matrix )
+int AllocateBlockOfAllocationList( Matrix )
 
 MatrixPtr Matrix;
 {

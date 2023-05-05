@@ -431,7 +431,7 @@ extern void *malloc(), *calloc(), *realloc();
     extern void free();
     extern void abort();
 #else
-    extern free();
+    extern void free();
     extern void abort();
 #endif
 

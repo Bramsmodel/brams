@@ -8,6 +8,9 @@
 
 module ModMkSfcSfc
 
+  use ModParallelEnvironment, only: &
+       MsgDump
+
   use mem_grid, only: &
        platn, &
        plonn, &
@@ -54,6 +57,8 @@ module ModMkSfcSfc
 
   include "files.h"
   include "constants.h"
+  include "UseVfm.h"
+  integer, parameter :: fUnit=25
 
   private
   public :: sfc_check
@@ -76,9 +81,9 @@ contains
 
     integer, intent(in) :: ifm
     integer, intent(out) :: ierr
-
+    
     integer :: lc,isfc_marker,isfc_ver,nsfx,nsfy,nsfzg  &
-         ,nsivegtflg,nsisoilflg,nsnofilflg,nspatch
+         ,nsivegtflg,nsisoilflg,nsnofilflg,nspatch, ios
     real ::  sfdx,sfdy,sfplat,sfplon,sflat,sflon,glatr,glonr
 
 
@@ -86,11 +91,27 @@ contains
     character(len=2) :: cgrid
     logical there
 
+    character(len=16) :: str(10)
+    character(len=*), parameter :: h="**(sfc_check)**"
+    logical, parameter :: dumpLocal=.true.
+
     lc=len_trim(sfcfiles)
     write(cgrid,'(a1,i1)') 'g',ifm
-    flnm=trim(sfcfiles)//'-S-'//cgrid//'.vfm'
-
+    if (useVfm) then
+       flnm=trim(sfcfiles)//'-S-'//cgrid//'.vfm'
+    else
+       flnm=trim(sfcfiles)//'-S-'//cgrid//'.bin'
+    end if
+    
     inquire(file=flnm(1:len_trim(flnm)),exist=there)
+
+    if (dumpLocal) then
+       if (there) then
+          call MsgDump(h//" found file "//trim(adjustl(flnm))) 
+       else
+          call MsgDump(h//" did not find file "//trim(adjustl(flnm))) 
+       end if
+    end if
 
     if(.not.there) then
        ierr = 1
@@ -101,16 +122,30 @@ contains
 
     call xy_ll(glatr,glonr,platn(ifm),plonn(ifm),xtn(1,ifm),ytn(1,ifm))
 
-    call rams_f_open(25,flnm(1:len_trim(flnm)),'FORMATTED','OLD','READ',0)
+    if (useVfm) then
 
-    read (25,*) isfc_marker,isfc_ver
-    read (25,100) nsfx,nsfy,nsfzg,nspatch  &
-         ,sfdx,sfdy,sfplat,sfplon,sflat,sflon
-    read (25,101) nsivegtflg,nsisoilflg,nsnofilflg
-100 format(4i5,2f15.5,4f11.5)
-101 format(5i5,2f11.5,i5,2f11.5)
-    close (25)
+       call rams_f_open(fUnit,flnm(1:len_trim(flnm)),'FORMATTED','OLD','READ',0)
+       read (fUnit,*) isfc_marker,isfc_ver
+       read (fUnit,100) nsfx,nsfy,nsfzg,nspatch  &
+            ,sfdx,sfdy,sfplat,sfplon,sflat,sflon
+       read (fUnit,101) nsivegtflg,nsisoilflg,nsnofilflg
+100    format(4i5,2f15.5,4f11.5)
+101    format(5i5,2f11.5,i5,2f11.5)
+       close (fUnit)
+    else
+       
+       open(fUnit, action="read", file=trim(flnm), form="unformatted", iostat=ios)
+       read (fUnit) isfc_marker,isfc_ver
+       read (fUnit) nsfx,nsfy,nsfzg,nspatch  &
+            ,sfdx,sfdy,sfplat,sfplon,sflat,sflon
+       read (fUnit) nsivegtflg,nsisoilflg,nsnofilflg
+       close (fUnit)
+    end if
 
+    if (dumpLocal) then
+       write(str(1),"(e16.8)") sflon
+       call MsgDump(h//" read sflon="//trim(adjustl(str(1))))
+    end if
 
     if (nsfx                       .ne. nnxp(ifm)     .or.  &
          nsfy                       .ne. nnyp(ifm)     .or.  &
@@ -150,6 +185,13 @@ contains
 
     endif
 
+    if (dumpLocal) then
+       if (ierr == 0) then
+          call MsgDump(h//" dimensions agree at file "//trim(adjustl(flnm)))
+       else
+          call MsgDump(h//" dimensions disagree at file "//trim(adjustl(flnm)))
+       end if
+    end if
     return
   end subroutine sfc_check
 
@@ -158,50 +200,99 @@ contains
   subroutine sfc_write(ifm)
     integer, intent(in) :: ifm
 
-    integer :: ip,k,i,j
+    integer :: ip,k,i,j, ios
+!!$    integer :: ii
     real :: glatr,glonr
     character(len=f_name_length) :: flnm
     character(len=2) :: cgrid
+    character(len=*), parameter :: h="**(sfc_write)**"
+    character(len=8) :: str(10)
+    character(len=16) :: lstr
+    character(len=256) :: longStr
+    logical, parameter :: dumpLocal=.false.
 
     !     write surface characteristics, one file for each grid
 
 
     write(cgrid,'(a1,i1)') 'g',ifm
-
-    flnm=trim(sfcfiles)//'-S-'//cgrid//'.vfm'
+    
+    if (useVfm) then
+       flnm=trim(sfcfiles)//'-S-'//cgrid//'.vfm'
+    else
+       flnm=trim(sfcfiles)//'-S-'//cgrid//'.bin'
+    end if
+    
+    if (dumpLocal) then
+       call MsgDump(h//" will write file "//trim(adjustl(flnm)))
+    end if
 
     call xy_ll(glatr,glonr,platn(ifm),plonn(ifm),xtn(1,ifm),ytn(1,ifm))
 
-    call rams_f_open (25,flnm(1:len_trim(flnm)),'FORMATTED','REPLACE','WRITE',1)
-    rewind 25
+    if (useVfm) then
+       call rams_f_open (fUnit,flnm(1:len_trim(flnm)),'FORMATTED','REPLACE','WRITE',1)
+       rewind fUnit
+       
+       write(fUnit,99) 999999,3
+99     format(2i8)
 
-    write(25,99) 999999,3
-99  format(2i8)
+       write(fUnit,100) nnxp(ifm),nnyp(ifm),nzg,npatch  &
+            ,deltaxn(ifm),deltayn(ifm),platn(ifm),plonn(ifm)  &
+            ,glatr,glonr
+100    format(4i5,2f15.5,4f11.5)
 
-    write(25,100) nnxp(ifm),nnyp(ifm),nzg,npatch  &
-         ,deltaxn(ifm),deltayn(ifm),platn(ifm),plonn(ifm)  &
-         ,glatr,glonr
-100 format(4i5,2f15.5,4f11.5)
-
-    write(25,101) ivegtflg(ifm),isoilflg(ifm),nofilflg(ifm)
-101 format(3i5)
+       write(fUnit,101) ivegtflg(ifm),isoilflg(ifm),nofilflg(ifm)
+101    format(3i5)
 
 
-    do ip = 1,npatch
-       call vforec(25,sfcfile_p(ifm)%patch_area(1,1,ip),nnxyp(ifm),24,scrx,'LIN')
-    enddo
+       do ip = 1,npatch
+          call vforec(fUnit,sfcfile_p(ifm)%patch_area(1,1,ip),nnxyp(ifm),24,scrx,'LIN')
+       enddo
 
-    do ip = 1,npatch
-       call vforec(25,sfcfile_p(ifm)%leaf_class(1,1,ip),nnxyp(ifm),24,scrx,'LIN')
-    enddo
+       do ip = 1,npatch
+          call vforec(fUnit,sfcfile_p(ifm)%leaf_class(1,1,ip),nnxyp(ifm),24,scrx,'LIN')
+       enddo
+          
+       do ip = 1,npatch
+          call vforec(fUnit,sfcfile_p(ifm)%soil_text(1,1,1,ip),nzg*nnxyp(ifm),24,scrx,'LIN')
+       enddo
 
-    do ip = 1,npatch
-       call vforec(25,sfcfile_p(ifm)%soil_text(1,1,1,ip),nzg*nnxyp(ifm),24,scrx,'LIN')
-    enddo
+       close(fUnit)
 
-    close(25)
+    else
 
-    return
+       open(fUnit, action="write", file=trim(flnm), form="unformatted", iostat=ios)
+       if (ios /= 0) then
+          call fatal_error(h//" opening file "//trim(flnm))
+       end if
+       
+       write(fUnit) 999999,3
+
+       write(fUnit) nnxp(ifm),nnyp(ifm),nzg,npatch  &
+            ,deltaxn(ifm),deltayn(ifm),platn(ifm),plonn(ifm)  &
+            ,glatr,glonr
+
+       write(fUnit) ivegtflg(ifm),isoilflg(ifm),nofilflg(ifm)
+
+       do ip = 1,npatch
+          write(fUnit) sfcfile_p(ifm)%patch_area(:,:,ip)
+       enddo
+
+       do ip = 1,npatch
+          write(fUnit) sfcfile_p(ifm)%leaf_class(:,:,ip)
+       enddo
+       
+       do ip = 1,npatch
+          write(fUnit) sfcfile_p(ifm)%soil_text(:,:,:,ip)
+       enddo
+
+       close(fUnit)
+    end if
+
+    if (dumpLocal) then
+       call MsgDump(h//" wrote file "//trim(adjustl(flnm))//&
+            " containing patch_area, leaf_class and soil_text")
+    end if
+
   end subroutine sfc_write
 
 
@@ -210,25 +301,38 @@ contains
     integer, intent(in) :: ifm
     type(ControlVars), pointer, intent(in) :: oneControlVars
 
-    integer :: ipat
+    integer :: ipat, ios
     logical :: there
     character(len=f_name_length) :: flnm
     character(len=2) :: cgrid
     character(len=1) :: dummy
-    integer :: ierr
-    character(len=8) :: c0
-    character(len=*), parameter :: h="**(SfcReadStoreOwnChunk)**"
     character(len=2) :: cipat
 
     real, pointer :: p2D(:,:), p3D(:,:,:)
+
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(SfcReadStoreOwnChunk)**"
+    logical, parameter :: dumpLocal=.false.
 
     ! master process opens file and skips headers
 
     if (mchnum == master_num) then
        write(cgrid,'(a1,i1)') 'g',ifm
-       flnm=trim(sfcfiles)//'-S-'//cgrid//'.vfm'
-
+       if (useVfm) then
+          flnm=trim(sfcfiles)//'-S-'//cgrid//'.vfm'
+       else
+          flnm=trim(sfcfiles)//'-S-'//cgrid//'.bin'
+       end if
+       
        inquire(file=flnm(1:len_trim(flnm)),exist=there)
+
+       if (dumpLocal) then
+          if (there) then
+             call MsgDump(h//" found file "//flnm(1:len_trim(flnm)))
+          else
+             call MsgDump(h//" did not find file "//flnm(1:len_trim(flnm)))
+          end if
+       end if
 
        if(.not.there) then
           !call fatal_error(h//" file "//trim(flnm)//" not there")
@@ -236,39 +340,57 @@ contains
                " file "//trim(flnm)//" not there")
        end if
 
-       call rams_f_open(25,flnm(1:len_trim(flnm)),'FORMATTED','OLD','READ',0)
-       rewind 25
+       if (useVfm) then
 
-       ! Skip header records (already been checked)
-       read(25,*) dummy
-       read(25,*) dummy
-       read(25,*) dummy
+          ! use VFM format
+          
+          call rams_f_open(fUnit,flnm(1:len_trim(flnm)),'FORMATTED','OLD','READ',0)
+          rewind fUnit
+          
+          ! Skip header records (already been checked)
+          read(fUnit,*) dummy
+          read(fUnit,*) dummy
+          read(fUnit,*) dummy
+          
+       else
+          
+          ! use binary format
+          
+          open(fUnit, action="read", file=trim(flnm), form="unformatted", iostat=ios)
+          read(fUnit,*) dummy
+          read(fUnit,*) dummy
+          read(fUnit,*) dummy
+       end if
     end if
 
     ! deals with patch_area
-
+       
     do ipat = 1,npatch
        write(cipat,fmt='(I2.2)') ipat
        p2D => leaf_g(ifm)%patch_area(:,:,ipat)
-       call ReadStoreOwnChunk(ifm, 25, p2D, "patch_area"//cipat, oneControlVars)
+       call ReadStoreOwnChunk(ifm, fUnit, p2D, "patch_area"//cipat, &
+            oneControlVars)
     end do
+
     ! deals with leaf_class
 
     do ipat = 1,npatch
        p2D => leaf_g(ifm)%leaf_class(:,:,ipat)
-       call ReadStoreOwnChunk(ifm, 25, p2D, "leaf_class", oneControlVars)
+       call ReadStoreOwnChunk(ifm, fUnit, p2D, "leaf_class", &
+            oneControlVars)
     end do
 
     ! deals with soil_text
 
     do ipat = 1,npatch
        p3D => leaf_g(ifm)%soil_text(:,:,:,ipat)
-       call ReadStoreOwnChunk(ifm, 25, p3D, nzg, "soil_text", oneControlVars)
+       call ReadStoreOwnChunk(ifm, fUnit, p3D, nzg, "soil_text", &
+            oneControlVars)
     end do
 
 
     if (mchnum == master_num) then
-       close (25)
+       close (fUnit)
     end if
 
   end subroutine SfcReadStoreOwnChunk

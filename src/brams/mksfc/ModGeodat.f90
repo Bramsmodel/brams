@@ -6,6 +6,10 @@
 !  Regional Atmospheric Modeling System - RAMS
 !###########################################################################
 module ModGeodat
+
+  use ModParallelEnvironment, only: &
+       MsgDump
+  
   use mem_grid, only: &
        ngrid, &
        xmn, &
@@ -63,6 +67,10 @@ contains
     integer :: ierr
     real, allocatable :: dato(:)
 
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(geodat)**"
+    logical, parameter :: dumpLocal=.false.
+
     LB = len_trim(HFN)
     if (LB<=0) then
        print *, '==================================================='
@@ -94,14 +102,20 @@ contains
        offlat   =   0.
        offlon   =   0.
        DELTALLO = FLOAT(IBLKSIZO)/FLOAT(NO)
+       if (dumpLocal) then
+          call MsgDump(h//" default values for  iblksizo, no, isbego, iwbego, offlat, offlon")
+       end if
     else
        TITLE    = HFN(1:LB)//'HEADER'
        LB       = len_trim(TITLE)
        call rams_f_open(29, title(1:lb), 'FORMATTED', 'OLD', 'READ', 0)
-       read (29,*) IBLKSIZO, NO, ISBEGO, IWBEGO, offlat, offlon
+       read (29,*) iblksizo, no, isbego, iwbego, offlat, offlon
        close (29)
        DELTALLO = FLOAT(IBLKSIZO)/FLOAT(NO-1)
-    endif
+       if (dumpLocal) then
+          call MsgDump(h//" read iblksizo, no, isbego, iwbego, offlat, offlon from file "//trim(TITLE))
+       end if
+    end if
 
     iodim = max(100000, 4*no*no)
     MOF   = IODIM/(NO*NO)
@@ -131,6 +145,10 @@ contains
          ISBEGO, IWBEGO, DATO(1), VT2DA, VT2DB, DATR,                   &
          OFN, offlat, offlon, VNAM, NGR, itopsflg(ngr), iz0flg(ngr))
 
+    if (dumpLocal) then
+       write(str(1),"(i8)") ngr
+       call MsgDump(h//" interpolated initialized data for grid "//trim(adjustl(str(1))))
+    end if
     deallocate(dato)
 
   end subroutine geodat
@@ -153,7 +171,9 @@ contains
     real, intent(IN)               :: offlat, offlon
     character(len=003), intent(IN) :: vnam
     integer, intent(IN)            :: ngr, itopsflg, iz0flg
+
     ! Local Variables:
+
     character(len=f_name_length) :: title3
     character(len=003) :: title1
     character(len=004) :: title2
@@ -170,6 +190,19 @@ contains
          io_full, jo_full, iofr, jofr, ir, jr, is, js, i, j
     integer            :: ierr
 
+    character(len=*), parameter :: h="**(sfcopqr)**"
+    logical, parameter :: dumpLocal=.false.
+
+    if (dumpLocal) then
+       if (vnam/='TOD' .and. vnam/='ZOD') then
+          call MsgDump(h//" not using dted data")
+       else if (vnam=='TOD' .or. vnam=='ZOD') then
+          call MsgDump(h//" using dted data")
+       else
+          call MsgDump(h//" using data from "//trim(adjustl(ofn)))
+       end if
+    end if
+    
     allocate (sdq(niq,njq), STAT=ierr)
     if (ierr/=0) call fatal_error("Error allocating sdq")
     allocate (shaq(niq,njq), STAT=ierr)
@@ -451,6 +484,9 @@ contains
     integer :: iq, jq, jmin, imin, ire, jre, imax, jmax
     real    :: rad, count, total, remax, remin, average
 
+    character(len=*), parameter :: h="**(topoq)**"
+    logical, parameter :: dumpLocal=.false.
+    
     !     orographic schemes
 
     if (ITOPSFLG(ngr)<0) then                         ! No orography
@@ -461,8 +497,14 @@ contains
           enddo
        enddo
        print *,'No orography'
+       if (dumpLocal) then
+          call MsgDump(h//" no orography")
+       end if
     elseif (ITOPSFLG(ngr)<0) then                     ! Average
        print *, 'No orography enhancement applied'
+       if (dumpLocal) then
+          call MsgDump(h//" no orography enhancement applied")
+       end if
     elseif (ITOPSFLG(ngr)==1) then                    ! Silhouette
        do jq=1,njq
           do iq=1,niq
@@ -473,6 +515,9 @@ contains
        enddo
        print *, 'Silhouette Orography applied with'
        print *, 'weighting = ', toptenh(ngr)
+       if (dumpLocal) then
+          call MsgDump(h//" silhouette orography applied")
+       end if
     elseif (ITOPSFLG(ngr)==2) then                    ! Envelope
        do jq=1,njq
           do iq=1,niq
@@ -482,6 +527,9 @@ contains
        enddo
        print *, 'Envelope Orography applied with'
        print *, 'enhancement = ', toptenh(ngr), ' x std dev'
+       if (dumpLocal) then
+          call MsgDump(h//" envelope orography applied")
+       end if
     else if (ITOPSFLG(ngr)>=3) then                   ! Reflected Envelope
 
        !        the radius we want to search for the current pts relative
@@ -525,6 +573,9 @@ contains
        print *, 'Reflected Envelope Orography applied with'
        print *, 'enhancement = ', toptenh(ngr), ' x std dev'
        print *, 'and search radius (grid points) = ', Rad
+       if (dumpLocal) then
+          call MsgDump(h//" reflected envelope orography applied")
+       end if
     endif
 
   end subroutine topoq
@@ -539,6 +590,9 @@ contains
     ! Local Variables
     integer :: iq, jq
 
+    character(len=*), parameter :: h="**(zoq)**"
+    logical, parameter :: dumpLocal=.false.
+    
     !     topo base roughness length.
 
     do jq=1,njq
@@ -560,7 +614,11 @@ contains
 !!$     print *, 'factor  = ', z0fact, ' x std dev'
 !!$     print *, 'maximum = ', z0max(NGR)
     endif
-
+    
+    if (dumpLocal) then
+       call MsgDump(h//' subgrid terrain roughness applied')
+    end if
+       
   end subroutine ZOQ
 
   !**********************************************************************
@@ -576,9 +634,12 @@ contains
     real, intent(OUT)              :: dato(no,no)
     character(len=256), intent(IN) :: pathname
     ! Local Variables:
-!!$  character(len=80) :: fname
-    integer :: ifact, notfnd
 
+    integer :: ifact, notfnd
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(dted)**"
+    logical, parameter :: dumpLocal=.false.
+    
     ifact = 6
     if (lat>=0) then
        if (lat<=75)  ifact = 4
@@ -592,6 +653,12 @@ contains
        if (lat<=-70) ifact = 4
        if (lat<=-75) ifact = 6
     end if
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") ifact
+       call MsgDump(h//" with ifact="//trim(adjustl(str(1))))
+    end if
+
     call dtedint(no, ifact, lon, lat, notfnd, pathname, dato)
 
   end subroutine dted
@@ -627,6 +694,13 @@ contains
     real :: rvaln, wt
     real, external :: readdted1
 
+    character(len=*), parameter :: h="**(dtedint)**"
+    logical, parameter :: dumpLocal=.false.
+
+    if (dumpLocal) then
+       call MsgDump(h//" starts with pathname="//trim(pathname))
+    end if
+    
     no_blanks = 1
     do i = 1, len(pathname)
        if (pathname(i:i)/=' ') no_blanks = i
@@ -669,6 +743,10 @@ contains
     write (ifile, fmt='(a12)') dtedfile
     close (ifile)
 
+    if (dumpLocal) then
+       call MsgDump(h//" wrote "//trim(dtedfile)//" at file namefils.out")
+    end if
+    
     !     Call all the decompress stuff from this Fortran code.
     lc = len_trim(newname1)
 
@@ -687,6 +765,10 @@ contains
 1003 format('mv tmp ',a)
     call system(newname1)
 
+    if (dumpLocal) then
+       call MsgDump(h//" created file "//trim(dtedfile))
+    end if
+    
 !!$  call azero(no*no,dato)
     dato = 0.
 
@@ -712,6 +794,10 @@ contains
 1004 format('rm -f ', a)
     call system(newname1)
 
+    if (dumpLocal) then
+       call MsgDump(h//" removed file "//trim(dtedfile))
+    end if
+    
     do j=1,no
        do i=1,no-iwres+1
           id        = (i+iwres-1)/iwres
@@ -747,13 +833,29 @@ contains
     real    :: TOPTWVL_2d(n2,n3)
     integer :: ierr
 
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(geodat_var)**"
+    logical, parameter :: dumpLocal=.false.
+    
     print *, '====================================================='
     if(VNAM(1:2)=='TO') then
        print *, 'starting topography on grid:', NGR
+       if (dumpLocal) then
+          write(str(1),"(i8)") ngr
+          call MsgDump(h//' starting topography on grid:'//trim(adjustl(str(1))))
+       end if
     elseif(VNAM(1:2)=='ZO') then
        print *, 'starting surface roughness on grid:', NGR
+       if (dumpLocal) then
+          write(str(1),"(i8)") ngr
+          call MsgDump(h//' starting surface roughness on grid:'//trim(adjustl(str(1))))
+       end if
     else
        print *, 'starting '//vnam//' data on grid:', NGR
+       if (dumpLocal) then
+          write(str(1),"(i8)") ngr
+          call MsgDump(h//' starting '//trim(vnam)//' on grid:'//trim(adjustl(str(1))))
+       end if
     endif
 
     LB = len_trim(HFN)
@@ -794,6 +896,11 @@ contains
        read(29,*) IBLKSIZO, NO, ISBEGO, IWBEGO, offlat, offlon
        close(29)
        DELTALLO = FLOAT(IBLKSIZO)/FLOAT(NO-1)
+
+       if (dumpLocal) then
+          call MsgDump(h//" read iblksizo, no, isbego, iwbego, offlat, offlon from file "//&
+               trim(title))
+       end if
     endif
 
     iodim = max(100000, 4*no*no)
@@ -821,6 +928,10 @@ contains
     DELTAXP = DELTAXQ/FLOAT(NP)
     DELTAYP = DELTAYQ/FLOAT(NP)
 
+    if (dumpLocal) then
+       call MsgDump(h//" will interpolate dato, vt2da, vt2db, datr")
+    end if
+    
     call SFCOPQR(NO, MOF, NP, NIQ, NJQ, N2, N3, XTN(1,NGR), YTN(1,NGR), &
          platn(ngr), plonn(ngr),                                        &
          ERAD, DELTALLO, DELTAXP, DELTAYP, DELTAXQ, DELTAYQ, IBLKSIZO,  &
@@ -830,9 +941,17 @@ contains
     ! - part 2  - variable smoothing
 
     !-srf:  get TOPTWVL with grid dependence
+    if (dumpLocal) then
+       call MsgDump(h//" will get toptwvl_2d")
+    end if
+    
     call get_TOPTWVL(ngr, n2, n3, TOPTWVL_2d)
     !-srf end
 
+    if (dumpLocal) then
+       call MsgDump(h//" will interpolate dato, vt2da, vt2db, datr")
+    end if
+    
     do j=2,n3-1
        do i=2,n2-1
 

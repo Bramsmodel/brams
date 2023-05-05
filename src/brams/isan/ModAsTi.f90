@@ -7,9 +7,23 @@
 !###########################################################################
 module ModAsTi
 
+  use ModChemAsti2, only: &
+       input_sfc, &
+       input_rawi
+
   use ModChemAObj, only: &
+       obj_anal, &
        stainterp
-  
+
+  use ModChemVInterps, only: &
+       obs_isen, &
+       obs_sigz, &
+       vterpp_i, &
+       vterpp_s
+ 
+  use ModChemFirstRams, only: &
+       first_rams
+ 
   use isan_coms, only: &
        cntlat, cntlon, gdatdx, gdatdy, guess1st, idatelin, iglobew, iglobn, &
        iglobs, igridfl, inproj, inrawi, insrfce, iproc_flag, iproc_names, &
@@ -432,7 +446,7 @@ contains
 
     if (nsta > 0)  call obs_sigz(maxsta,maxlev  &
          ,up_t,up_p,up_z,up_r,up_ur,up_vr,up_zz,up_lat,up_lon  &
-         ,up_top,up_lp,up_lz,up_topg(1,ngrid)  &
+         ,up_top,up_lp,up_lz,up_topg(:,ngrid)  &
          ,ups_u,ups_v,ups_p,ups_t,ups_r,nsta,zmn(nnzp(1)-1,1))
 
     call obj_anal('sigz',ngrid,nnxp(ngrid),nnyp(ngrid)  &

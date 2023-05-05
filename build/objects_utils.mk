@@ -1,5 +1,6 @@
 OBJ_UTILS = \
 	ModDateUtils.o \
+	ModParallelEnvironment.o  \
 	an_header.o \
 	charutils.o \
 	dateutils.o \

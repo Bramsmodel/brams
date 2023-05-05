@@ -317,13 +317,15 @@ contains
        if (vnam .eq. 'w') ivartyp2 = 3
        if (vnam .eq. 't' .and. idwt .eq. 0) ivartyp2 = 4
        if (vnam .eq. 't' .and. idwt .eq. 1) ivartyp2 = 5
-       call par_bintp(scr1,scr2,dn0xf,maxnzp,maxnxp,maxnyp,n1f,n1f,n2f,n3f, &
-            ifm,ivartyp2,0,0,15,bx,by,bz, &
-            maxgrds, nxpmax, nypmax, nzpmax, nxtnest, &
-            nsttop, nstbot, nnzp, ipm, ei1, ei2, ei3, &
-            ei4, ei5, ei6, ei7, jpm, ej1, ej2, ej3, ej4, &
-            ej5, ej6, ej7, kpm, ek1, ek2, ek3, ek4, ek5, &
-            ek6, ek7)
+!**(JP)** definition of this procedure was removed; 
+!**(JP)** call comment out just for compilation
+!       call par_bintp(scr1,scr2,dn0xf,maxnzp,maxnxp,maxnyp,n1f,n1f,n2f,n3f, &
+!            ifm,ivartyp2,0,0,15,bx,by,bz, &
+!            maxgrds, nxpmax, nypmax, nzpmax, nxtnest, &
+!            nsttop, nstbot, nnzp, ipm, ei1, ei2, ei3, &
+!            ei4, ei5, ei6, ei7, jpm, ej1, ej2, ej3, ej4, &
+!            ej5, ej6, ej7, kpm, ek1, ek2, ek3, ek4, ek5, &
+!            ek6, ek7)
 
     else
 

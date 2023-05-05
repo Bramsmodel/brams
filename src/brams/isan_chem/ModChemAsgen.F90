@@ -7,42 +7,42 @@
 !###########################################################################
 module ModChemAsgen
 
+  use ModParallelEnvironment, only: &
+       MsgDump
+
   use ModChemAvarf, only: &
        chem_makevarf, &
        chem_varfile_nstfeed
-  
+
   use ModChemAstp, only: &
        chem_pressure_stage, &
        chem_pressure_stage_netcdf, &
        chem_pressure_stage_grib2, &
        chem_pressure_stage_grads
-  
+
   use ModChemFileInv, only: &
        chem_isan_file_inv
-  
+
   use ModChemAsti, only: &
        chem_isnstage
-  
+
   use ModChemRefState, only: &
        fmrefs1d_isan, &
        fmrefs3d_isan, &
        fmdn0_isan, &
        varfile_refstate
-  
+
   use ModChemIsanIo, only: &
        isenio, &
        sigzio, &
        vmissw
-  
+
   use ModRamsGrid, only: &
        GridSetup, &
        newgrid
-  
+
   use ModAsGen, only: &
        opspec4
-
-  use ModControlVars, only: &
-       ControlVars
 
   use ModMkSfcTop, only: &
        TopReadStoreOwnChunk
@@ -124,19 +124,19 @@ module ModChemAsgen
   use chem1_list, only : chemical_mechanism, & ! intent(in)
        spc_name
   use chem_isan_coms, only: chem_is_grids,  &
-                            aer_is_grids,   &
-                            pi_sc,          &
-                            pi_aer_sc,      &
-                            fdda,           &
-                            nmodes,         &
-                            nspecies,       &
-                            nspecies_aer_in,&
-                            total_nspecies, &
-                            total_speciesaer,&
-                            ps_sc,          &
-                            ps_aer_sc,      &
-                            spc_alloc,      &
-                            spc_alloc_aer
+       aer_is_grids,   &
+       pi_sc,          &
+       pi_aer_sc,      &
+       fdda,           &
+       nmodes,         &
+       nspecies,       &
+       nspecies_aer_in,&
+       total_nspecies, &
+       total_speciesaer,&
+       ps_sc,          &
+       ps_aer_sc,      &
+       spc_alloc,      &
+       spc_alloc_aer
 
   use mem_chem1, only:  CHEM_ASSIM, CHEMISTRY     ! intent(in)
   use aer1_list, only: aer_name
@@ -177,10 +177,10 @@ module ModChemAsgen
        nullify_globalgriddata, &
        nxyzp, &
        nxyp
-  
+
   use io_params, only: &
        iclobber
-  
+
   use node_mod, only:  &
        mynum, &
        mchnum, &
@@ -192,11 +192,16 @@ module ModChemAsgen
   use dump, only: &
        dumpMessage
 
+  use ModControlVars, only: &
+       ControlVars
+  
   implicit none
 
   include "files.h"
   include "constants.h"
+  include "UseVfm.h" 
 
+  integer, parameter :: fUnit=13
   private
 
   public :: chem_isan_driver
@@ -206,7 +211,7 @@ contains
   subroutine chem_isan_driver (name_name, oneControlVars)
     character(len=*), intent(IN) :: name_name
     type(ControlVars), pointer, intent(in) :: oneControlVars
-    
+
     !--(DMK-CCATT-INI)----------------------------------------------------------------
     !srf-chem
     character(len=*),parameter :: sourceName='chem_asgen.F90'
@@ -234,8 +239,11 @@ contains
 
     real, allocatable :: scratch2D(:,:)
     integer :: ierr
+    integer :: ios
     character(len=8) :: str(10)
-    character(len=*), parameter :: h="**(chem_isan_driver)**" 
+    character(len=*), parameter :: h="**(chem_isan_driver)**"
+    logical, parameter :: dumpLocal=.false.
+
     ! Not necessary because all information is read by Namelist
 
 !!$  ! Read input ISAN namelists
@@ -359,6 +367,11 @@ contains
 
     write(*,fmt='("Proc #",I4.4,", Total of dates to process=",I4.4," using ",I4.4," procs ",I2.2)') mynum,npdates,nmachs,nhemgrd2
 
+    if (dumpLocal) then
+       write(str(1),"(i8)") npdates
+       call MsgDump(h//" Found "//trim(adjustl(str(1)))//" dates to process")
+    end if
+
     do natime=1,npdates
        !if(mynum/=natime) cycle 
        if (iproc_flag(natime,1) == 0) cycle
@@ -426,7 +439,7 @@ contains
              endif
              print*,'after pressure stagep_u(nprx/2,npry/2,1:nprz):',nprx,npry,p_u(nprx/2,npry/2,1:nprz)
           endif
-       endif
+       end if
 
        ! Isentropic/sigma-z analysis to all requested RAMS grids
 
@@ -522,25 +535,54 @@ contains
 
              if(ioflgisz == 1)then
                 write(csuff,'(a1,i1)') 'g',ngrid
-                call makefnam (locfn,varpfx,0,iyear,imonth,idate,  &
-                     ihour*100,'I',csuff,'vfm')
-                call rams_f_open(13,locfn(1:len_trim(locfn)),'FORMATTED','REPLACE','READ',iclobber)
-                call isenio ('OUT',13,nnxp(ngrid),nnyp(ngrid))
-                call sigzio ('OUT',13,nnxp(ngrid),nnyp(ngrid))
-                close(13)
+                if (useVfm) then
+                   call makefnam (locfn,varpfx,0,iyear,imonth,idate,  &
+                        ihour*100,'I',csuff,'vfm')
+                   call rams_f_open(fUnit,locfn(1:len_trim(locfn)),'FORMATTED','REPLACE','READ',iclobber)
+                else
+                   call makefnam (locfn,varpfx,0,iyear,imonth,idate,  &
+                        ihour*100,'I',csuff,'bin')
+                   open(fUnit, action="read", file=trim(locfn), form="unformatted", iostat=ios)
+                   if (ios /= 0) then
+                      write(str(1),"(i8)") ios
+                      call fatal_error(h//" opening file "//trim(locfn)//" returns "//trim(adjustl(str(1))))
+                   end if
+                end if
+                call isenio ('OUT',fUnit,nnxp(ngrid),nnyp(ngrid))
+                call sigzio ('OUT',fUnit,nnxp(ngrid),nnyp(ngrid))
+                close(fUnit)
+                if (dumpLocal) then
+                   call MsgDump(h//" #1 wrote file "//trim(locfn))
+                end if
              endif
 
           elseif(ivrstage == 1) then
              write(csuff,'(a1,i1)') 'g',ngrid
-             call makefnam(locfn,varpfx,0,iyear,imonth,idate,  &
-                  ihour*100,'I',csuff,'vfm')
-             call rams_f_open(13,locfn(1:len_trim(locfn)),'FORMATTED','OLD','READ',iclobber)
-             call isenio('IN',13,nnxp(ngrid),nnyp(ngrid))
-             call sigzio('IN',13,nnxp(ngrid),nnyp(ngrid))
-             close(13)
+             if (useVfm) then
+                call makefnam(locfn,varpfx,0,iyear,imonth,idate,  &
+                     ihour*100,'I',csuff,'vfm')
+                call rams_f_open(fUnit,locfn(1:len_trim(locfn)),'FORMATTED','OLD','READ',iclobber)
+             else
+                call makefnam(locfn,varpfx,0,iyear,imonth,idate,  &
+                     ihour*100,'I',csuff,'bin')
+                open(fUnit, action="read", file=trim(locfn), form="unformatted", iostat=ios)
+                if (ios /= 0) then
+                   write(str(1),"(i8)") ios
+                   call fatal_error(h//" opening file "//trim(locfn)//" returns "//trim(adjustl(str(1))))
+                end if
+             end if
+             call isenio('IN',fUnit,nnxp(ngrid),nnyp(ngrid))
+             call sigzio('IN',fUnit,nnxp(ngrid),nnyp(ngrid))
+             close(fUnit)
+             if (dumpLocal) then
+                call MsgDump(h//" #2 wrote file "//trim(locfn))
+             end if
           endif
 
           if(ivrstage == 1) then
+             if (dumpLocal) then
+                call MsgDump(h//" will call chem_makevarf")
+             end if
              call chem_makevarf(ngrid)
           endif
 
@@ -561,6 +603,9 @@ contains
 
              ! fill reference states for all grids
 
+             if (dumpLocal) then
+                call MsgDump(h//" will call varfile_refstate")
+             end if
              call varfile_refstate(nnzp(1),nnxp(1),nnyp(1)  &
                   ,is_grids(1)%rr_t,is_grids(1)%rr_p  &
                   ,is_grids(1)%rr_pi0,is_grids(1)%rr_th0  &
@@ -574,8 +619,14 @@ contains
 
              do ifm=2,nigrids
                 icm=nxtnest(ifm)
+                if (dumpLocal) then
+                   call MsgDump(h//" will call fmrefs1d_isan")
+                end if
                 call fmrefs1d_isan(ifm,icm,maxsigz,nnzp(ifm)  &
                      ,piref,thref,dnref,rtref)
+                if (dumpLocal) then
+                   call MsgDump(h//" will call fmrefs3d_isan")
+                end if
                 call fmrefs3d_isan(ifm,icm,nnzp(ifm),nnxp(ifm),nnyp(ifm) &
                      ,nnzp(icm),nnxp(icm),nnyp(icm),maxiz,maxix,maxiy  &
                      ,nnstbot(ifm),nnsttop(ifm),jdim  &
@@ -586,6 +637,9 @@ contains
                      ,is_grids(ifm)%rr_pi0,is_grids(ifm)%rr_dn0u &
                      ,is_grids(ifm)%rr_dn0v,ztn(:,ifm),ztop )
 
+                if (dumpLocal) then
+                   call MsgDump(h//" will call fmdn0_isan")
+                end if
                 call fmdn0_isan(ifm,icm,nnzp(ifm),nnxp(ifm),nnyp(ifm) &
                      ,nnzp(icm),nnxp(icm),nnyp(icm),maxiz,maxix,maxiy &
                      ,rr_scr1,rr_scr2  &
@@ -604,6 +658,9 @@ contains
              do ifm=nigrids,2,-1
                 icm=nxtnest(ifm)
                 if (icm == 0) cycle
+                if (dumpLocal) then
+                   call MsgDump(h//" will call chem_varfile_nstfeed")
+                end if
                 call chem_varfile_nstfeed(ifm,icm,nnzp(ifm),nnxp(ifm),nnyp(ifm) &
                      ,nnzp(icm),nnxp(icm),nnyp(icm)  &
                      ,nnstbot(icm),nnsttop(icm))
@@ -632,99 +689,202 @@ contains
                 nxyzp=nnxp(ng)*nnyp(ng)*nnzp(ng)
                 nxyp =nnxp(ng)*nnyp(ng)
                 write(csuff,'(a1,i1)') 'g',ng
-                call makefnam (locfn,varpfx,0,iyear,imonth,idate  &
-                     ,ihour*100,'V',csuff,'vfm')
+                if (useVfm) then
 
-                print *,'*** Open  '//locfn(1:len_trim(locfn))//' for write *** '
-                call rams_f_open (2,locfn(1:len_trim(locfn)),'FORMATTED','REPLACE','WRITE',iclobber)
-                write(2,11) 999999,2
-11              format(i7,i3)
-                write(2,10) iyear,imonth,idate,ihour  &
-                     ,nnxp(ng),nnyp(ng),nnzp(ng)  &
-                     ,platn(ng),plonn(ng),deltaxn(ng)  &
-                     ,deltayn(ng),deltazn(ng),dzrat,dzmax
-10              format(7i5,7f14.5)
+                   ! vfm file
+                   
+                   call makefnam (locfn,varpfx,0,iyear,imonth,idate  &
+                        ,ihour*100,'V',csuff,'vfm')
 
-                !- chemicam mechanism that this file is prepared for
-                if(CHEM_ASSIM == 1 .and. nspecies>0) then
-                   write(2,*)  trim(chemical_mechanism(1:len_trim(chemical_mechanism)))
-                endif
-                write(*,fmt='("Writing Meteo assimilation for ",I3.3," vars.")') 5 
+                   if (dumpLocal) then
+                      call MsgDump(h//" #4 will write file "//trim(locfn))
+                   end if
+                   print *,'*** Open  '//locfn(1:len_trim(locfn))//' for write *** '
+                   call rams_f_open (fUnit,locfn(1:len_trim(locfn)),'FORMATTED','REPLACE','WRITE',iclobber)
+                   write(fUnit,11) 999999,2
+11                 format(i7,i3)
+                   write(fUnit,10) iyear,imonth,idate,ihour  &
+                        ,nnxp(ng),nnyp(ng),nnzp(ng)  &
+                        ,platn(ng),plonn(ng),deltaxn(ng)  &
+                        ,deltayn(ng),deltazn(ng),dzrat,dzmax
+10                 format(7i5,7f14.5)
 
-                call vforec(2,is_grids(ng)%rr_u,nxyzp,18  &
-                     ,rr_scr1,'LIN')
-                call vforec(2,is_grids(ng)%rr_v,nxyzp,18  &
-                     ,rr_scr1,'LIN')
-                call vforec(2,is_grids(ng)%rr_p,nxyzp,18  &
-                     ,rr_scr1,'LIN')
-                call vforec(2,is_grids(ng)%rr_t,nxyzp,18  &
-                     ,rr_scr1,'LIN')
-                call vforec(2,is_grids(ng)%rr_r,nxyzp,18  &
-                     ,rr_scr1,'LIN')
+                   !- chemicam mechanism that this file is prepared for
+                   if(CHEM_ASSIM == 1 .and. nspecies>0) then
+                      write(fUnit,*)  trim(chemical_mechanism(1:len_trim(chemical_mechanism)))
+                   endif
+                   write(*,fmt='("Writing Meteo assimilation for ",I3.3," vars.")') 5 
 
-                write(*,fmt='("Var: ",I3.3,1X,A16," MaxVal: ",E13.4," MinVal: ",E13.4)') 1, &
-                     'U',maxval(is_grids(ng)%rr_u(:,:,:)), &
-                     minval(is_grids(ng)%rr_u(:,:,:))
-                write(*,fmt='("Var: ",I3.3,1X,A16," MaxVal: ",E13.4," MinVal: ",E13.4)') 2, &
-                     'V',maxval(is_grids(ng)%rr_v(:,:,:)), &
-                     minval(is_grids(ng)%rr_v(:,:,:))
-                write(*,fmt='("Var: ",I3.3,1X,A16," MaxVal: ",E13.4," MinVal: ",E13.4)') 3, &
-                     'P',maxval(is_grids(ng)%rr_p(:,:,:)), &
-                     minval(is_grids(ng)%rr_p(:,:,:))
-                write(*,fmt='("Var: ",I3.3,1X,A16," MaxVal: ",E13.4," MinVal: ",E13.4)') 4, &
-                     'T',maxval(is_grids(ng)%rr_t(:,:,:)), &
-                     minval(is_grids(ng)%rr_t(:,:,:))
-                write(*,fmt='("Var: ",I3.3,1X,A16," MaxVal: ",E13.4," MinVal: ",E13.4)') 5, &
-                     'R',maxval(is_grids(ng)%rr_r(:,:,:)), &
-                     minval(is_grids(ng)%rr_r(:,:,:))
+                   call vforec(fUnit,is_grids(ng)%rr_u,nxyzp,18  &
+                        ,rr_scr1,'LIN')
+                   call vforec(fUnit,is_grids(ng)%rr_v,nxyzp,18  &
+                        ,rr_scr1,'LIN')
+                   call vforec(fUnit,is_grids(ng)%rr_p,nxyzp,18  &
+                        ,rr_scr1,'LIN')
+                   call vforec(fUnit,is_grids(ng)%rr_t,nxyzp,18  &
+                        ,rr_scr1,'LIN')
+                   call vforec(fUnit,is_grids(ng)%rr_r,nxyzp,18  &
+                        ,rr_scr1,'LIN')
 
-                if(CHEM_ASSIM == 1 .and. nspecies>0) then
-                   print*,'-------------------------------------------------'                   
-                   write(*,fmt='("Writing chemistry assimilation for ",I3.3," Species.")') nspecies                   
-                   do nspc=1,nspecies
-                      call vforec(2,chem_is_grids(ng)%rr_sc(:,:,:,nspc),nxyzp,18  &
-                           ,rr_scr1,'LIN')
+                   write(*,fmt='("Var: ",I3.3,1X,A16," MaxVal: ",E13.4," MinVal: ",E13.4)') 1, &
+                        'U',maxval(is_grids(ng)%rr_u(:,:,:)), &
+                        minval(is_grids(ng)%rr_u(:,:,:))
+                   write(*,fmt='("Var: ",I3.3,1X,A16," MaxVal: ",E13.4," MinVal: ",E13.4)') 2, &
+                        'V',maxval(is_grids(ng)%rr_v(:,:,:)), &
+                        minval(is_grids(ng)%rr_v(:,:,:))
+                   write(*,fmt='("Var: ",I3.3,1X,A16," MaxVal: ",E13.4," MinVal: ",E13.4)') 3, &
+                        'P',maxval(is_grids(ng)%rr_p(:,:,:)), &
+                        minval(is_grids(ng)%rr_p(:,:,:))
+                   write(*,fmt='("Var: ",I3.3,1X,A16," MaxVal: ",E13.4," MinVal: ",E13.4)') 4, &
+                        'T',maxval(is_grids(ng)%rr_t(:,:,:)), &
+                        minval(is_grids(ng)%rr_t(:,:,:))
+                   write(*,fmt='("Var: ",I3.3,1X,A16," MaxVal: ",E13.4," MinVal: ",E13.4)') 5, &
+                        'R',maxval(is_grids(ng)%rr_r(:,:,:)), &
+                        minval(is_grids(ng)%rr_r(:,:,:))
+                   
+                   if(CHEM_ASSIM == 1 .and. nspecies>0) then
+                      print*,'-------------------------------------------------'                   
+                      write(*,fmt='("Writing chemistry assimilation for ",I3.3," Species.")') nspecies                   
+                      do nspc=1,nspecies
+                         call vforec(fUnit,chem_is_grids(ng)%rr_sc(:,:,:,nspc),nxyzp,18  &
+                              ,rr_scr1,'LIN')
+                         
+                         write(*,fmt='("Spc: ",I3.3,1X,A16," MaxVal: ",E13.4," MinVal: ",E13.4)') nspc, &
+                              trim(assSpecieName(nspc)),maxval(chem_is_grids(ng)%rr_sc(:,:,:,nspc)), &
+                              minval(chem_is_grids(ng)%rr_sc(:,:,:,nspc))
+                         
+                         if(maxval(chem_is_grids(ng)%rr_sc(:,:,:,nspc)) < 1.e-10) &
+                              iErrNumber=dumpMessage(c_tty,c_yes,sourceName,procedureName &
+                              ,c_fatal,'wrong dpchem file. Maxval < 1.0e-10')      
+                         
+                      enddo
+                   endif
+                   if(AER_ASSIM == 1 .and. nspecies_aer_in>0) then
+                      print*,'-------------------------------------------------'                   
+                      write(*,fmt='("Writing aerosol assimilation for ",I3.3," Species.")') nspecies_aer_in                   
+                      do nspc=1,nspecies_aer_in
+                         
+                         call vforec(fUnit,aer_is_grids(ng)%rr_sc(:,:,:,nspc),nxyzp,18  &
+                              ,rr_scr1,'LIN')
+                         
+                         write(*,fmt='("Spc: ",I3.3,1X,A16," MaxVal: ",E13.4," MinVal: ",E13.4)') nspc, &
+                              trim(assAerSpecieName(nspc)),maxval(aer_is_grids(ng)%rr_sc(:,:,:,nspc)), &
+                              minval(aer_is_grids(ng)%rr_sc(:,:,:,nspc))
+                         
+                         if(maxval(aer_is_grids(ng)%rr_sc(:,:,:,nspc)) < 1.e-10) &
+                              iErrNumber=dumpMessage(c_tty,c_yes,sourceName,procedureName &
+                              ,c_fatal,'wrong dpchem file. Maxval < 1.0e-10')        
+                         
+                      enddo
+                   endif
 
-                      write(*,fmt='("Spc: ",I3.3,1X,A16," MaxVal: ",E13.4," MinVal: ",E13.4)') nspc, &
-                           trim(assSpecieName(nspc)),maxval(chem_is_grids(ng)%rr_sc(:,:,:,nspc)), &
-                           minval(chem_is_grids(ng)%rr_sc(:,:,:,nspc))
+                   call vmissw(is_grids(ng)%rr_slp,nxyp,scratch2D,1E30,-1.)
+                   call vforec(fUnit,scratch2D,nxyp,18,rr_scr1,'LIN')
+                   call vmissw(is_grids(ng)%rr_sfp,nxyp,scratch2D,1E30,-1.)
+                   call vforec(fUnit,scratch2D,nxyp,18,rr_scr1,'LIN')
+                   call vmissw(is_grids(ng)%rr_sft,nxyp,scratch2D,1E30,-1.)
+                   call vforec(fUnit,scratch2D,nxyp,18,rr_scr1,'LIN')
+                   call vmissw(is_grids(ng)%rr_snow,nxyp,scratch2D,1E30,-1.)
+                   call vforec(fUnit,scratch2D,nxyp,18,rr_scr1,'LIN')
+                   call vmissw(is_grids(ng)%rr_sst,nxyp,scratch2D,1E30,-1.)
+                   call vforec(fUnit,scratch2D,nxyp,18,rr_scr1,'LIN')
+                   close(fUnit)
+                else
 
-                      if(maxval(chem_is_grids(ng)%rr_sc(:,:,:,nspc)) < 1.e-10) &
-                           iErrNumber=dumpMessage(c_tty,c_yes,sourceName,procedureName &
-                           ,c_fatal,'wrong dpchem file. Maxval < 1.0e-10')      
+                   ! binary file
+                   
+                   call makefnam (locfn,varpfx,0,iyear,imonth,idate  &
+                        ,ihour*100,'V',csuff,'bin')
 
-                   enddo
-                endif
-                if(AER_ASSIM == 1 .and. nspecies_aer_in>0) then
-                   print*,'-------------------------------------------------'                   
-                   write(*,fmt='("Writing aerosol assimilation for ",I3.3," Species.")') nspecies_aer_in                   
-                   do nspc=1,nspecies_aer_in
+                   if (dumpLocal) then
+                      call MsgDump(h//" #5 will write file "//trim(locfn))
+                   end if
+                   print *,'*** Open  '//locfn(1:len_trim(locfn))//' for write *** '
+                   open(fUnit, action="write", file=trim(locfn), form="unformatted", iostat=ios)
+                   if (ios /= 0) then
+                      write(str(1),"(i8)") ios
+                      call fatal_error(h//" opening file "//trim(locfn)//" returns "//trim(adjustl(str(1))))
+                   end if
+                   write(fUnit) 999999,2
+                   write(fUnit) iyear,imonth,idate,ihour  &
+                        ,nnxp(ng),nnyp(ng),nnzp(ng)  &
+                        ,platn(ng),plonn(ng),deltaxn(ng)  &
+                        ,deltayn(ng),deltazn(ng),dzrat,dzmax
 
-                      call vforec(2,aer_is_grids(ng)%rr_sc(:,:,:,nspc),nxyzp,18  &
-                           ,rr_scr1,'LIN')
+                   !- chemicam mechanism that this file is prepared for
+                   if(CHEM_ASSIM == 1 .and. nspecies>0) then
+                      write(fUnit)  trim(chemical_mechanism(1:len_trim(chemical_mechanism)))
+                   endif
+                   write(*,fmt='("Writing Meteo assimilation for ",I3.3," vars.")') 5 
 
-                      write(*,fmt='("Spc: ",I3.3,1X,A16," MaxVal: ",E13.4," MinVal: ",E13.4)') nspc, &
-                           trim(assAerSpecieName(nspc)),maxval(aer_is_grids(ng)%rr_sc(:,:,:,nspc)), &
-                           minval(aer_is_grids(ng)%rr_sc(:,:,:,nspc))
+                   write (fUnit) is_grids(ng)%rr_u
+                   write (fUnit) is_grids(ng)%rr_v
+                   write (fUnit) is_grids(ng)%rr_p,nxyzp
+                   write (fUnit) is_grids(ng)%rr_t
+                   write (fUnit) is_grids(ng)%rr_r
 
-                      if(maxval(aer_is_grids(ng)%rr_sc(:,:,:,nspc)) < 1.e-10) &
-                           iErrNumber=dumpMessage(c_tty,c_yes,sourceName,procedureName &
-                           ,c_fatal,'wrong dpchem file. Maxval < 1.0e-10')        
+                   write(*,fmt='("Var: ",I3.3,1X,A16," MaxVal: ",E13.4," MinVal: ",E13.4)') 1, &
+                        'U',maxval(is_grids(ng)%rr_u(:,:,:)), &
+                        minval(is_grids(ng)%rr_u(:,:,:))
+                   write(*,fmt='("Var: ",I3.3,1X,A16," MaxVal: ",E13.4," MinVal: ",E13.4)') 2, &
+                        'V',maxval(is_grids(ng)%rr_v(:,:,:)), &
+                        minval(is_grids(ng)%rr_v(:,:,:))
+                   write(*,fmt='("Var: ",I3.3,1X,A16," MaxVal: ",E13.4," MinVal: ",E13.4)') 3, &
+                        'P',maxval(is_grids(ng)%rr_p(:,:,:)), &
+                        minval(is_grids(ng)%rr_p(:,:,:))
+                   write(*,fmt='("Var: ",I3.3,1X,A16," MaxVal: ",E13.4," MinVal: ",E13.4)') 4, &
+                        'T',maxval(is_grids(ng)%rr_t(:,:,:)), &
+                        minval(is_grids(ng)%rr_t(:,:,:))
+                   write(*,fmt='("Var: ",I3.3,1X,A16," MaxVal: ",E13.4," MinVal: ",E13.4)') 5, &
+                        'R',maxval(is_grids(ng)%rr_r(:,:,:)), &
+                        minval(is_grids(ng)%rr_r(:,:,:))
+                   
+                   if(CHEM_ASSIM == 1 .and. nspecies>0) then
+                      print*,'-------------------------------------------------'                   
+                      write(*,fmt='("Writing chemistry assimilation for ",I3.3," Species.")') nspecies                   
+                      do nspc=1,nspecies
+                         write (fUnit) chem_is_grids(ng)%rr_sc(:,:,:,nspc)
+                         
+                         write(*,fmt='("Spc: ",I3.3,1X,A16," MaxVal: ",E13.4," MinVal: ",E13.4)') nspc, &
+                              trim(assSpecieName(nspc)),maxval(chem_is_grids(ng)%rr_sc(:,:,:,nspc)), &
+                              minval(chem_is_grids(ng)%rr_sc(:,:,:,nspc))
+                         
+                         if(maxval(chem_is_grids(ng)%rr_sc(:,:,:,nspc)) < 1.e-10) &
+                              iErrNumber=dumpMessage(c_tty,c_yes,sourceName,procedureName &
+                              ,c_fatal,'wrong dpchem file. Maxval < 1.0e-10')      
+                         
+                      enddo
+                   endif
+                   if(AER_ASSIM == 1 .and. nspecies_aer_in>0) then
+                      print*,'-------------------------------------------------'                   
+                      write(*,fmt='("Writing aerosol assimilation for ",I3.3," Species.")') nspecies_aer_in                   
+                      do nspc=1,nspecies_aer_in
+                         
+                         write (fUnit) aer_is_grids(ng)%rr_sc(:,:,:,nspc)
+                         
+                         write(*,fmt='("Spc: ",I3.3,1X,A16," MaxVal: ",E13.4," MinVal: ",E13.4)') nspc, &
+                              trim(assAerSpecieName(nspc)),maxval(aer_is_grids(ng)%rr_sc(:,:,:,nspc)), &
+                              minval(aer_is_grids(ng)%rr_sc(:,:,:,nspc))
+                         
+                         if(maxval(aer_is_grids(ng)%rr_sc(:,:,:,nspc)) < 1.e-10) &
+                              iErrNumber=dumpMessage(c_tty,c_yes,sourceName,procedureName &
+                              ,c_fatal,'wrong dpchem file. Maxval < 1.0e-10')        
+                         
+                      enddo
+                   endif
 
-                   enddo
-                endif
-
-                call vmissw(is_grids(ng)%rr_slp,nxyp,scratch2D,1E30,-1.)
-                call vforec(2,scratch2D,nxyp,18,rr_scr1,'LIN')
-                call vmissw(is_grids(ng)%rr_sfp,nxyp,scratch2D,1E30,-1.)
-                call vforec(2,scratch2D,nxyp,18,rr_scr1,'LIN')
-                call vmissw(is_grids(ng)%rr_sft,nxyp,scratch2D,1E30,-1.)
-                call vforec(2,scratch2D,nxyp,18,rr_scr1,'LIN')
-                call vmissw(is_grids(ng)%rr_snow,nxyp,scratch2D,1E30,-1.)
-                call vforec(2,scratch2D,nxyp,18,rr_scr1,'LIN')
-                call vmissw(is_grids(ng)%rr_sst,nxyp,scratch2D,1E30,-1.)
-                call vforec(2,scratch2D,nxyp,18,rr_scr1,'LIN')
-                close(2)
+                   call vmissw(is_grids(ng)%rr_slp,nxyp,scratch2D,1E30,-1.)
+                   write (fUnit) scratch2D
+                   call vmissw(is_grids(ng)%rr_sfp,nxyp,scratch2D,1E30,-1.)
+                   write (fUnit) scratch2D
+                   call vmissw(is_grids(ng)%rr_sft,nxyp,scratch2D,1E30,-1.)
+                   write (fUnit) scratch2D
+                   call vmissw(is_grids(ng)%rr_snow,nxyp,scratch2D,1E30,-1.)
+                   write (fUnit) scratch2D
+                   call vmissw(is_grids(ng)%rr_sst,nxyp,scratch2D,1E30,-1.)
+                   write (fUnit) scratch2D
+                   close(fUnit)
+                end if
                 deallocate(scratch2D, stat=ierr)
                 if (ierr /= 0) then
                    write(str(1),"(i8)") ierr
@@ -732,17 +892,19 @@ contains
                         " fails with ierr="//trim(adjustl(str(1))))
                 end if
              end do
+
              call makefnam (locfn,varpfx,0,iyear,imonth,idate  &
                   ,ihour*100,'V','$','tag')
-             call rams_f_open (2,locfn(1:len_trim(locfn)),'FORMATTED','REPLACE','WRITE',iclobber)
-             write(2,*) nigrids
-             close(2)
+             if (dumpLocal) then
+                call MsgDump(h//" #3 will write file "//trim(locfn))
+             end if
+             call rams_f_open (fUnit,locfn(1:len_trim(locfn)),'FORMATTED','REPLACE','WRITE',iclobber)
+             write(fUnit,*) nigrids
+             close(fUnit)
 
-          endif
+          end if
 
-       endif
-
+       end if
     end do
-
   end subroutine chem_isan_driver
 end module ModChemAsgen

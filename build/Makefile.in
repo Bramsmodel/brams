@@ -111,9 +111,9 @@ endif
 ifeq ($(notdir $(FPCOMP)),mpif90)
 FC=$(FPCOMP) #-f90=$(FCOMP)
 FC_LOADER=$(FC)
-    # For intel compiler debugging
-	#FC_FLAGS=-O0 -mcmodel=large -check bounds -traceback -fpe0 -check uninit -init=snan,arrays
-	#CCFLAGS=-O0
+# For intel compiler debugging
+#FC_FLAGS=-O0 -mcmodel=large -check bounds -traceback -fpe0 -check uninit -init=snan,arrays
+#CCFLAGS=-O0
 endif
 
 ifeq ($(notdir $(FPCOMP)),ftn)
@@ -138,11 +138,13 @@ endif
 
 ifeq ($(notdir $(FCOMP)),ifort)
 JULES_DEFS = $(JULES_DEFS0) INTEL_FORTRAN
-FC_FLAGS=-O3
-CCFLAGS=-O3
-    # For intel compiler debugging
-	#FC_FLAGS=-O0 -mcmodel=large -check bounds -traceback -fpe0 -check uninit -init=snan,arrays
-	#CCFLAGS=-O0
+#FC_FLAGS=-O3
+#CCFLAGS=-O3
+# For intel compiler debugging
+#FC_FLAGS=-O0 -mcmodel=large -check bounds -traceback -fpe0 -check uninit -init=snan,arrays
+#CCFLAGS=-O0
+FC_FLAGS=-O0 -mcmodel=large -check bounds,pointers,shape,stack,uninit -traceback 
+CC_FLAGS=-O0 -mcmodel=large -check bounds,pointers,shape,stack,uninit -traceback 
 FPP=-fpp
 FPP_VARSI = INTEL
 endif
@@ -167,9 +169,7 @@ endif
 ifeq ($(notdir $(FCOMP)),gfortran)
 JULES_DEFS = $(JULES_DEFS0) GNU_FORTRAN
 #FC_FLAGS=-O3 -ffree-form -ffree-line-length-none -fbacktrace -g -fcheck=bounds -fcheck=all -finit-real=nan # -Wall -ffpe-trap=invalid,zero
-#FC_FLAGS=-ffree-form -ffree-line-length-none -fbacktrace -g -fcheck=bounds,pointer
-FC_FLAGS=-ffree-form -ffree-line-length-none -fbacktrace -g -fcheck=bounds,pointer
-#FC_FLAGS=-ffree-form -ffree-line-length-none -fbacktrace -g -fno-range-check
+FC_FLAGS=-ffree-form -ffree-line-length-none -fbacktrace -g -fno-range-check
 
 ifeq ($(GCC_VER_GTE10),)
      FC_FLAGS +=-fallow-argument-mismatch
@@ -257,7 +257,7 @@ endif
 EXTRAFLAGSF = $(INCLUDES) $(FCFLAGS) $(FPP_DEFS)
 #EXTRAFLAGSF = $(JULES_DEFS) $(INCLUDES) $(FCFLAGS) $(FPP)
 F_COMMAND = $(VERBOSE_FC) $(FC) -c
-F_COMMAND_MACRO = $(F_COMMAND) -D$(AER) -D$(MATRIXLEV)
+F_COMMAND_MACRO = $(F_COMMAND) -D$(AER) -D$(MATRIXLEV) -D$(COLOR)
 F_COMMAND_LIGHT = $(FPCOMP) -O0 -c
 
 # Define objects.
@@ -269,6 +269,7 @@ all: $(EXE)
 
 $(EXE): libjules $(LIBUTILS) $(LIBIFS) $(LIBMODEL) $(MAINOBJ) $(WGRIBDIR) $(NETCDFFDIR)
 	@echo ""
+	#$(FC_LOADER) -o $(EXE) rammain.o $(LOADERFLAGS) $(LIBMODEL) $(LIBUTILS) $(LIBIFS) $(JULES_LIB) -L$(PAR_LIBS) $(HDF5_LIB)
 	$(FC_LOADER) -o $(EXE) rammain.o $(LOADERFLAGS) $(LIBMODEL) $(LIBUTILS) $(LIBIFS) -L$(PAR_LIBS) $(WGRIB_LIB) $(NETCDFF_LIB) $(NETCDFC_LIB) $(HDF5_LIB) $(MPI_LIB)
 	@echo ""
 	@echo Finished building === $(EXE)

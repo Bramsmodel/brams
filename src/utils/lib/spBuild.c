@@ -70,8 +70,7 @@ static char RCSid[] =
 #include "spConfig.h"
 #include "spmatrix.h"
 #include "spDefs.h"
-
-
+#include "spBuild.h"
 
 
 
@@ -866,7 +865,7 @@ ElementPtr  pCreatedElement, spcGetElement(), spcGetFillin();
  *      Column currently being operated upon.
  */
 
-spcLinkRows( Matrix )
+int spcLinkRows( Matrix )
 
 MatrixPtr Matrix;
 {
@@ -917,7 +916,7 @@ register  int  Col;
  */
 
 //static //LFR
-EnlargeMatrix( Matrix, NewSize )
+int EnlargeMatrix( Matrix, NewSize )
 
 MatrixPtr Matrix;
 register int  NewSize;
@@ -1006,7 +1005,7 @@ register int I, OldAllocatedSize = Matrix->AllocatedSize;
  */
 
 //static //LFR
-ExpandTranslationArrays( Matrix, NewSize )
+int ExpandTranslationArrays( Matrix, NewSize )
 
 MatrixPtr Matrix;
 register int  NewSize;

@@ -31,70 +31,70 @@ module mem_grid
 
      ! Variables to be dimensioned by (nxp,nyp)
 
-     real, pointer, contiguous :: topt(:,:)
-     real, pointer, contiguous :: topu(:,:)
-     real, pointer, contiguous :: topv(:,:)
-     real, pointer, contiguous :: topm(:,:)
-     real, pointer, contiguous :: topma(:,:)
-     real, pointer, contiguous :: topta(:,:)
-     real, pointer, contiguous :: rtgt(:,:)
-     real, pointer, contiguous :: rtgu(:,:)
-     real, pointer, contiguous :: rtgv(:,:)
-     real, pointer, contiguous :: rtgm(:,:)
-     real, pointer, contiguous :: f13t(:,:)
-     real, pointer, contiguous :: f13u(:,:)
-     real, pointer, contiguous :: f13v(:,:)
-     real, pointer, contiguous :: f13m(:,:)
-     real, pointer, contiguous :: f23t(:,:)
-     real, pointer, contiguous :: f23u(:,:)
-     real, pointer, contiguous :: f23v(:,:)
-     real, pointer, contiguous :: f23m(:,:)
-     real, pointer, contiguous :: dxt(:,:)
-     real, pointer, contiguous :: dxu(:,:)
-     real, pointer, contiguous :: dxv(:,:)
-     real, pointer, contiguous :: dxm(:,:)
-     real, pointer, contiguous :: dyt(:,:)
-     real, pointer, contiguous :: dyu(:,:)
-     real, pointer, contiguous :: dyv(:,:)
-     real, pointer, contiguous :: dym(:,:)
-     real, pointer, contiguous :: fmapt(:,:)
-     real, pointer, contiguous :: fmapu(:,:)
-     real, pointer, contiguous :: fmapv(:,:)
-     real, pointer, contiguous :: fmapm(:,:)
-     real, pointer, contiguous :: fmapti(:,:)
-     real, pointer, contiguous :: fmapui(:,:)
-     real, pointer, contiguous :: fmapvi(:,:)
-     real, pointer, contiguous :: fmapmi(:,:)
-     real, pointer, contiguous :: glat(:,:)
-     real, pointer, contiguous :: glon(:,:)
-     real, pointer, contiguous :: topzo(:,:)
+     real, pointer, contiguous :: topt(:,:) => null()
+     real, pointer, contiguous :: topu(:,:) => null()
+     real, pointer, contiguous :: topv(:,:) => null()
+     real, pointer, contiguous :: topm(:,:) => null()
+     real, pointer, contiguous :: topma(:,:) => null()
+     real, pointer, contiguous :: topta(:,:) => null()
+     real, pointer, contiguous :: rtgt(:,:) => null()
+     real, pointer, contiguous :: rtgu(:,:) => null()
+     real, pointer, contiguous :: rtgv(:,:) => null()
+     real, pointer, contiguous :: rtgm(:,:) => null()
+     real, pointer, contiguous :: f13t(:,:) => null()
+     real, pointer, contiguous :: f13u(:,:) => null()
+     real, pointer, contiguous :: f13v(:,:) => null()
+     real, pointer, contiguous :: f13m(:,:) => null()
+     real, pointer, contiguous :: f23t(:,:) => null()
+     real, pointer, contiguous :: f23u(:,:) => null()
+     real, pointer, contiguous :: f23v(:,:) => null()
+     real, pointer, contiguous :: f23m(:,:) => null()
+     real, pointer, contiguous :: dxt(:,:) => null()
+     real, pointer, contiguous :: dxu(:,:) => null()
+     real, pointer, contiguous :: dxv(:,:) => null()
+     real, pointer, contiguous :: dxm(:,:) => null()
+     real, pointer, contiguous :: dyt(:,:) => null()
+     real, pointer, contiguous :: dyu(:,:) => null()
+     real, pointer, contiguous :: dyv(:,:) => null()
+     real, pointer, contiguous :: dym(:,:) => null()
+     real, pointer, contiguous :: fmapt(:,:) => null()
+     real, pointer, contiguous :: fmapu(:,:) => null()
+     real, pointer, contiguous :: fmapv(:,:) => null()
+     real, pointer, contiguous :: fmapm(:,:) => null()
+     real, pointer, contiguous :: fmapti(:,:) => null()
+     real, pointer, contiguous :: fmapui(:,:) => null()
+     real, pointer, contiguous :: fmapvi(:,:) => null()
+     real, pointer, contiguous :: fmapmi(:,:) => null()
+     real, pointer, contiguous :: glat(:,:) => null()
+     real, pointer, contiguous :: glon(:,:) => null()
+     real, pointer, contiguous :: topzo(:,:) => null()
 
      !  Variables for the ADAP coordinate
 
-     real, pointer, contiguous :: aru(:,:,:)
-     real, pointer, contiguous :: arv(:,:,:)
-     real, pointer, contiguous :: arw(:,:,:)
-     real, pointer, contiguous :: volu(:,:,:)
-     real, pointer, contiguous :: volv(:,:,:)
-     real, pointer, contiguous :: volw(:,:,:)
-     real, pointer, contiguous :: volt(:,:,:)
-     real, pointer, contiguous :: lpu(:,:)
-     real, pointer, contiguous :: lpv(:,:)
-     real, pointer, contiguous :: lpw(:,:)
+     real, pointer, contiguous :: aru(:,:,:) => null()
+     real, pointer, contiguous :: arv(:,:,:) => null()
+     real, pointer, contiguous :: arw(:,:,:) => null()
+     real, pointer, contiguous :: volu(:,:,:) => null()
+     real, pointer, contiguous :: volv(:,:,:) => null()
+     real, pointer, contiguous :: volw(:,:,:) => null()
+     real, pointer, contiguous :: volt(:,:,:) => null()
+     real, pointer, contiguous :: lpu(:,:) => null()
+     real, pointer, contiguous :: lpv(:,:) => null()
+     real, pointer, contiguous :: lpw(:,:) => null()
   end type grid_vars
 
 
-  type (grid_vars), public, pointer :: grid_g(:)
-  type (grid_vars), public, pointer :: gridm_g(:)
+  type (grid_vars), public, pointer :: grid_g(:) => null()
+  type (grid_vars), public, pointer :: gridm_g(:) => null()
 
   ! data on entire grid (not domain decomposed)
   ! topography on entire grid (not domain decomposed)
 
   public :: GlobalGridData
   type GlobalGridData
-     real, pointer, contiguous :: global_topta(:,:)
-     real, pointer, contiguous :: global_glat(:,:)      ! set by GridSetup
-     real, pointer, contiguous :: global_glon(:,:)      ! set by GridSetup
+     real, pointer, contiguous :: global_topta(:,:) => null()
+     real, pointer, contiguous :: global_glat(:,:) => null()
+     real, pointer, contiguous :: global_glon(:,:) => null()
   end type GlobalGridData
 
   type(GlobalGridData), public, pointer :: oneGlobalGridData(:)
@@ -1050,341 +1050,630 @@ contains
     implicit none
     type(VarTable), pointer, intent(in) :: oneVarTable(:)
     integer, intent(inout) :: oneVarTableSize
-    type (grid_vars), pointer, intent(in) :: grid
-    type (grid_vars), pointer, intent(in) :: gridm
-    integer, intent(in) :: imean
+    type (grid_vars), target, intent(in) :: grid
+    type (grid_vars), target, intent(in) :: gridm
 
+    integer, intent(in) :: imean
+    character(len=*), parameter :: h="**(filltab_grid)**"
+
+    real, pointer, contiguous :: pGrid2D(:,:) => null()
+    real, pointer, contiguous :: pGridM2D(:,:) => null()
+    real, pointer, contiguous :: pGrid3D(:,:,:) => null()
+    real, pointer, contiguous :: pGridM3D(:,:,:) => null()
+    
     if (associated(grid%topt)) then
+       pGrid2D => grid%topt
+       if (imean == 1) then
+          pGridM2D => gridm%topt
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%topt, &
+            pGrid2D, &
             'TOPT :2:hist:anal:mpti', &
-            gridm%topt, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%topu)) then
+       pGrid2D => grid%topu
+       if (imean == 1) then
+          pGridM2D => gridm%topu
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%topu, &
+            pGrid2D, &
             'TOPU :2:mpti', &
-            gridm%topu, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%topv)) then
+       pGrid2D => grid%topv
+       if (imean == 1) then
+          pGridM2D => gridm%topv
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%topv, &
+            pGrid2D, &
             'TOPV :2:mpti', &
-            gridm%topv, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%topm)) then
+       pGrid2D => grid%topm
+       if (imean == 1) then
+          pGridM2D => gridm%topm
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%topm, &
+            pGrid2D, &
             'TOPM :2:mpti', &
-            gridm%topm, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%topma)) then
+       pGrid2D => grid%topma
+       if (imean == 1) then
+          pGridM2D => gridm%topma
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%topma, &
+            pGrid2D, &
             'TOPMA :2:hist:anal:mpti', &
-            gridm%topma, imean)
+            pGridM2D, imean)
     end if
 
 
     if (associated(grid%topta)) then
+       pGrid2D => grid%topta
+       if (imean == 1) then
+          pGridM2D => gridm%topta
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%topta, &
+            pGrid2D, &
             'TOPTA :2:hist:anal:mpti', &
-            gridm%topta, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%rtgt)) then
+       pGrid2D => grid%rtgt
+       if (imean == 1) then
+          pGridM2D => gridm%rtgt
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%rtgt, &
+            pGrid2D, &
             'RTGT :2:mpti', &
-            gridm%rtgt, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%rtgu)) then
+       pGrid2D => grid%rtgu
+       if (imean == 1) then
+          pGridM2D => gridm%rtgu
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%rtgu, &
+            pGrid2D, &
             'RTGU :2:mpti', &
-            gridm%rtgu, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%rtgv)) then
+       pGrid2D => grid%rtgv
+       if (imean == 1) then
+          pGridM2D => gridm%rtgv
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%rtgv, &
+            pGrid2D, &
             'RTGV :2:mpti', &
-            gridm%rtgv, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%rtgm)) then
+       pGrid2D => grid%rtgm
+       if (imean == 1) then
+          pGridM2D => gridm%rtgm
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%rtgm, &
+            pGrid2D, &
             'RTGM :2:mpti', &
-            gridm%rtgm, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%f13t)) then
+       pGrid2D => grid%f13t
+       if (imean == 1) then
+          pGridM2D => gridm%f13t
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%f13t, &
+            pGrid2D, &
             'F13T :2:mpti', &
-            gridm%f13t, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%f13u)) then
+       pGrid2D => grid%f13u
+       if (imean == 1) then
+          pGridM2D => gridm%f13u
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%f13u, &
+            pGrid2D, &
             'F13U :2:mpti', &
-            gridm%f13u, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%f13v)) then
+       pGrid2D => grid%f13v
+       if (imean == 1) then
+          pGridM2D => gridm%f13v
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%f13v, &
+            pGrid2D, &
             'F13V :2:mpti', &
-            gridm%f13v, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%f13m)) then
+       pGrid2D => grid%f13m
+       if (imean == 1) then
+          pGridM2D => gridm%f13m
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%f13m, &
+            pGrid2D, &
             'F13M :2:mpti', &
-            gridm%f13m, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%f23t)) then
+       pGrid2D => grid%f23t
+       if (imean == 1) then
+          pGridM2D => gridm%f23t
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%f23t, &
+            pGrid2D, &
             'F23T :2:mpti', &
-            gridm%f23t, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%f23u)) then
+       pGrid2D => grid%f23u
+       if (imean == 1) then
+          pGridM2D => gridm%f23u
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%f23u, &
+            pGrid2D, &
             'F23U :2:mpti', &
-            gridm%f23u, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%f23v)) then
+       pGrid2D => grid%f23v
+       if (imean == 1) then
+          pGridM2D => gridm%f23v
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%f23v, &
+            pGrid2D, &
             'F23V :2:mpti', &
-            gridm%f23v, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%f23m)) then
+       pGrid2D => grid%f23m
+       if (imean == 1) then
+          pGridM2D => gridm%f23m
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%f23m, &
+            pGrid2D, &
             'F23M :2:mpti', &
-            gridm%f23m, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%dxt)) then
+       pGrid2D => grid%dxt
+       if (imean == 1) then
+          pGridM2D => gridm%dxt
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%dxt, &
+            pGrid2D, &
             'DXT :2:mpti', &
-            gridm%dxt, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%dxu)) then
+       pGrid2D => grid%dxu
+       if (imean == 1) then
+          pGridM2D => gridm%dxu
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%dxu, &
+            pGrid2D, &
             'DXU :2:mpti', &
-            gridm%dxu, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%dxv)) then
+       pGrid2D => grid%dxv
+       if (imean == 1) then
+          pGridM2D => gridm%dxv
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%dxv, &
+            pGrid2D, &
             'DXV :2:mpti', &
-            gridm%dxv, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%dxm)) then
+       pGrid2D => grid%dxm
+       if (imean == 1) then
+          pGridM2D => gridm%dxm
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%dxm, &
+            pGrid2D, &
             'DXM :2:mpti', &
-            gridm%dxm, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%dyt)) then
+       pGrid2D => grid%dyt
+       if (imean == 1) then
+          pGridM2D => gridm%dyt
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%dyt, &
+            pGrid2D, &
             'DYT :2:mpti', &
-            gridm%dyt, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%dyu)) then
+       pGrid2D => grid%dyu
+       if (imean == 1) then
+          pGridM2D => gridm%dyu
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%dyu, &
+            pGrid2D, &
             'DYU :2:mpti', &
-            gridm%dyu, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%dyv)) then
+       pGrid2D => grid%dyv
+       if (imean == 1) then
+          pGridM2D => gridm%dyv
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%dyv, &
+            pGrid2D, &
             'DYV :2:mpti', &
-            gridm%dyv, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%dym)) then
+       pGrid2D => grid%dym
+       if (imean == 1) then
+          pGridM2D => gridm%dym
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%dym, &
+            pGrid2D, &
             'DYM :2:mpti', &
-            gridm%dym, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%fmapt)) then
+       pGrid2D => grid%fmapt
+       if (imean == 1) then
+          pGridM2D => gridm%fmapt
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%fmapt, &
+            pGrid2D, &
             'FMAPT :2:mpti', &
-            gridm%fmapt, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%fmapu)) then
+       pGrid2D => grid%fmapu
+       if (imean == 1) then
+          pGridM2D => gridm%fmapu
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%fmapu, &
+            pGrid2D, &
             'FMAPU :2:mpti', &
-            gridm%fmapu, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%fmapv)) then
+       pGrid2D => grid%fmapv
+       if (imean == 1) then
+          pGridM2D => gridm%fmapv
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%fmapv, &
+            pGrid2D, &
             'FMAPV :2:mpti', &
-            gridm%fmapv, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%fmapm)) then
+       pGrid2D => grid%fmapm
+       if (imean == 1) then
+          pGridM2D => gridm%fmapm
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%fmapm, &
+            pGrid2D, &
             'FMAPM :2:mpti', &
-            gridm%fmapm, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%fmapti)) then
+       pGrid2D => grid%fmapti
+       if (imean == 1) then
+          pGridM2D => gridm%fmapti
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%fmapti, &
+            pGrid2D, &
             'FMAPTI :2:mpti', &
-            gridm%fmapti, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%fmapui)) then
+       pGrid2D => grid%fmapui
+       if (imean == 1) then
+          pGridM2D => gridm%fmapui
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%fmapui, &
+            pGrid2D, &
             'FMAPUI :2:mpti', &
-            gridm%fmapui, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%fmapvi)) then
+       pGrid2D => grid%fmapvi
+       if (imean == 1) then
+          pGridM2D => gridm%fmapvi
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%fmapvi, &
+            pGrid2D, &
             'FMAPVI :2:mpti', &
-            gridm%fmapvi, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%fmapmi)) then
+       pGrid2D => grid%fmapmi
+       if (imean == 1) then
+          pGridM2D => gridm%fmapmi
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%fmapmi, &
+            pGrid2D, &
             'FMAPMI :2:mpti', &
-            gridm%fmapmi, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%glat)) then
+       pGrid2D => grid%glat
+       if (imean == 1) then
+          pGridM2D => gridm%glat
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%glat, &
+            pGrid2D, &
             'GLAT :2:mpti:anal', &
-            gridm%glat, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%glon)) then
+       pGrid2D => grid%glon
+       if (imean == 1) then
+          pGridM2D => gridm%glon
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%glon, &
+            pGrid2D, &
             'GLON :2:mpti:anal', &
-            gridm%glon, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%topzo)) then
+       pGrid2D => grid%topzo
+       if (imean == 1) then
+          pGridM2D => gridm%topzo
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%topzo, &
+            pGrid2D, &
             'TOPZO :2:mpti', &
-            gridm%topzo, imean)
+            pGridM2D, imean)
     end if
 
 
     if (associated(grid%lpu)) then
+       pGrid2D => grid%lpu
+       if (imean == 1) then
+          pGridM2D => gridm%lpu
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%lpu, &
+            pGrid2D, &
             'LPU :2:mpti', &
-            gridm%lpu, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%lpv)) then
+       pGrid2D => grid%lpv
+       if (imean == 1) then
+          pGridM2D => gridm%lpv
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%lpv, &
+            pGrid2D, &
             'LPV :2:mpti', &
-            gridm%lpv, imean)
+            pGridM2D, imean)
     end if
 
     if (associated(grid%lpw)) then
+       pGrid2D => grid%lpw
+       if (imean == 1) then
+          pGridM2D => gridm%lpw
+       else
+          pGridM2D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%lpw, &
+            pGrid2D, &
             'LPW :2:mpti', &
-            gridm%lpw, imean)
+            pGridM2D, imean)
     end if
 
 
     if (associated(grid%aru)) then
+       pGrid3D => grid%aru
+       if (imean == 1) then
+          pGridM3D => gridm%aru
+       else
+          pGridM3D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%aru, &
+            pGrid3D, &
             'ARU :3:mpti', &
-            gridm%aru, imean)
+            pGridM3D, imean)
     end if
 
     if (associated(grid%arv)) then
+       pGrid3D => grid%arv
+       if (imean == 1) then
+          pGridM3D => gridm%arv
+       else
+          pGridM3D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%arv, &
+            pGrid3D, &
             'ARV :3:mpti', &
-            gridm%arv, imean)
+            pGridM3D, imean)
     end if
 
     if (associated(grid%arw)) then
+       pGrid3D => grid%arw
+       if (imean == 1) then
+          pGridM3D => gridm%arw
+       else
+          pGridM3D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%arw, &
+            pGrid3D, &
             'ARW :3:mpti', &
-            gridm%arw, imean)
+            pGridM3D, imean)
     end if
 
 
     if (associated(grid%volu)) then
+       pGrid3D => grid%volu
+       if (imean == 1) then
+          pGridM3D => gridm%volu
+       else
+          pGridM3D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%volu, &
+            pGrid3D, &
             'VOLU :3:mpti', &
-            gridm%volu, imean)
+            pGridM3D, imean)
     end if
 
     if (associated(grid%volv)) then
+       pGrid3D => grid%volv
+       if (imean == 1) then
+          pGridM3D => gridm%volv
+       else
+          pGridM3D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%volv, &
+            pGrid3D, &
             'VOLV :3:mpti', &
-            gridm%volv, imean)
+            pGridM3D, imean)
     end if
 
     if (associated(grid%volw)) then
+       pGrid3D => grid%volw
+       if (imean == 1) then
+          pGridM3D => gridm%volw
+       else
+          pGridM3D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%volw, &
+            pGrid3D, &
             'VOLW :3:mpti', &
-            gridm%volw, imean)
+            pGridM3D, imean)
     end if
 
     if (associated(grid%volt)) then
+       pGrid3D => grid%volt
+       if (imean == 1) then
+          pGridM3D => gridm%volt
+       else
+          pGridM3D => null()
+       end if
        call InsertVarTable(oneVarTable, oneVarTableSize, &
-            grid%volt, &
+            pGrid3D, &
             'VOLT :3:anal:mpti', &
-            gridm%volt, imean)
+            pGridM3D, imean)
     end if
   end subroutine filltab_grid
 

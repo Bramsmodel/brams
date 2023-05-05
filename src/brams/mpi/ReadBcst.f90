@@ -1,5 +1,8 @@
 module ReadBcst
 
+  use ModParallelEnvironment, only: &
+       MsgDump
+
   use utilsMod, only: &
        CopyLocalChunk
   
@@ -80,6 +83,7 @@ module ReadBcst
   integer, parameter :: idim_type_max=7
   logical, parameter :: dumpLocal=.false.
   include "constants.h"
+  include "UseVfm.h" 
 contains
 
 
@@ -100,6 +104,7 @@ contains
     character(len=*), parameter :: h="**(ReadStoreOwnChunk_2D)**"
 
     ! check allocated memory
+    
     if (runtype(1:9)=='MAKEVFILE') then
        ldimx = oneControlVars%nnxp
        ldimy = oneControlVars%nnyp
@@ -107,9 +112,11 @@ contains
        ldimx = nodemxp(mynum,grid)
        ldimy = nodemyp(mynum,grid)
     endif
+
     if (.not. associated(toStore)) then
        call fatal_error(h//" will store at not associated pointer var "//trim(fieldName))
     end if
+
     lin = size(toStore,1)
     if (ldimx /= lin) then
        write(c0,"(i8)") ldimx
@@ -164,6 +171,7 @@ contains
     integer :: lin
     integer :: ierr
     character(len=8) :: c0, c1
+    character(len=8) :: str(10)
     character(len=*), parameter :: h="**(AllocReadStoreOwnChunk_2D)**"
     integer :: i,j,n
 
@@ -172,11 +180,25 @@ contains
     !'master process opens file and reads first data into full domain scratch
 
     if (mchnum == master_num) then
-       call vfirec(fUnit,fullGrid(1,1),nnxp*nnyp,'LIN')
+
+       if (useVfm) then
+          call vfirec(fUnit,fullGrid(1,1),nnxp*nnyp,'LIN')
+       else
+          read(fUnit) fullGrid
+       end if
+       
+!!$       write(*,"(a)") h//" leu arquivo "//trim(fieldName)
+!!$       if (len_trim(fieldName) > 10) then
+!!$          if (fieldName(1:10) == "patch_area") then
+!!$             write(*,"(a,'(',i4,',',i4,')')") h//trim(fieldName)//" com tamanho ",&
+!!$                  size(fullGrid,1), size(fullGrid,2)
+!!$          end if
+!!$       end if
     end if
 
     ! broadcast full domain scratch; 
-    !local chunk is extracted and stored at desired variable
+    ! local chunk is extracted and stored at desired variable
+
     if (runtype(1:9)/='MAKEVFILE') then
        call parf_bcast(fullGrid, int(nnxp,i8), int(nnyp,i8), &
             master_num)
@@ -186,9 +208,18 @@ contains
          nnxp, nnyp, ldimx, ldimy, ia, iz, ja, jz)
 
     if (dumpLocal) then
-       write(*,"(a,i4,a,i4,a,i4,a,i4,a,i4,a,i4,a)") &
-            h//trim(fieldName)//"(   1:",ldimx, ",   1:",ldimy, &
-            ")=fullGrid(",ia,":",iz,",",ja,":",jz,")"
+       write(str(1),"(i8)") ldimx
+       write(str(2),"(i8)") ldimy
+       write(str(3),"(i8)") ia
+       write(str(4),"(i8)") iz
+       write(str(5),"(i8)") ja
+       write(str(6),"(i8)") jz
+       call MsgDump(h//trim(fieldName)//"(   1:"//trim(adjustl(str(1)))//&
+            ",   1:"//trim(adjustl(str(2)))//&
+            ")=fullGrid("//trim(adjustl(str(3)))//&
+            ":"//trim(adjustl(str(4)))//&
+            ","//trim(adjustl(str(5)))//&
+            ":"//trim(adjustl(str(6)))//")")
     end if
   end subroutine AllocReadStoreOwnChunk_2D
 
@@ -206,7 +237,7 @@ contains
     integer :: ldimx, ldimy, lin
     integer :: ia, iz, ja, jz, ka, kz
     integer :: ierr
-    character(len=8) :: c0, c1
+    character(len=8) :: c0, c1, str(10)
     character(len=*), parameter :: h="**(ReadStoreOwnChunk_3D)**"
 
     ! check allocated memory
@@ -247,9 +278,23 @@ contains
          mchnum, master_num, runtype)
 
     if (dumpLocal) then
-       write(*,"(a,i4,a,i4,a,i4,a,i4,a,i4,a,i4,a,i4,a,i4,a)") &
-            h//trim(fieldName)//"(   1: ",nz, ",   1:",ldimx, ",   1:",ldimy, &
-            ")=fullGrid(   1: ",nz,",",ia,":",iz,",",ja,":",jz,")"
+       write(str(1),"(i8)") ldimx
+       write(str(2),"(i8)") ldimy
+       write(str(3),"(i8)") ia
+       write(str(4),"(i8)") iz
+       write(str(5),"(i8)") ja
+       write(str(6),"(i8)") jz
+       write(str(7),"(i8)") nz
+       call MsgDump(h//trim(fieldName)//&
+            "(1:"//trim(adjustl(str(7)))//&
+            ", 1:"//trim(adjustl(str(1)))//&
+            ", 1:"//trim(adjustl(str(2)))//&
+            ")=fullGrid("//&
+            "(1:"//trim(adjustl(str(7)))//&
+            ","//trim(adjustl(str(3)))//&
+            ":"//trim(adjustl(str(4)))//&
+            ","//trim(adjustl(str(5)))//&
+            ":"//trim(adjustl(str(6)))//")")
     end if
   end subroutine ReadStoreOwnChunk_3D
 
@@ -279,14 +324,18 @@ contains
 
     real :: fullGrid(nz,nnxp,nnyp)
     integer :: ierr
-    character(len=8) :: c0, c1
+    character(len=8) :: c0, c1, str(10)
     character(len=*), parameter :: h="**(AllocReadStoreOwnChunk_3D)**"
 
 
     ! master process opens file and reads first data into full domain scratch
 
     if (mchnum == master_num) then
-       call vfirec(fUnit,fullGrid(1,1,1),nz*nnxp*nnyp,'LIN')
+       if (useVfm) then
+          call vfirec(fUnit,fullGrid(1,1,1),nz*nnxp*nnyp,'LIN')
+       else
+          read(fUnit) fullGrid
+       end if
     end if
 
     ! broadcast full domain scratch; 
@@ -299,9 +348,23 @@ contains
          nz, nnxp, nnyp, nz, ldimx, ldimy, ia, iz, ja, jz)
 
     if (dumpLocal) then
-       write(*,"(a,i4,a,i4,a,i4,a,i4,a,i4,a,i4,a,i4,a,i4,a)") &
-            h//trim(fieldName)//"(   1: ",nz, ",   1:",ldimx, ",   1:",ldimy, &
-            ")=fullGrid(   1: ",nz,",",ia,":",iz,",",ja,":",jz,")"
+       write(str(1),"(i8)") ldimx
+       write(str(2),"(i8)") ldimy
+       write(str(3),"(i8)") ia
+       write(str(4),"(i8)") iz
+       write(str(5),"(i8)") ja
+       write(str(6),"(i8)") jz
+       write(str(7),"(i8)") nz
+       call MsgDump(h//trim(fieldName)//&
+            "(1:"//trim(adjustl(str(7)))//&
+            ", 1:"//trim(adjustl(str(1)))//&
+            ", 1:"//trim(adjustl(str(2)))//&
+            ")=fullGrid("//&
+            "(1:"//trim(adjustl(str(7)))//&
+            ","//trim(adjustl(str(3)))//&
+            ":"//trim(adjustl(str(4)))//&
+            ","//trim(adjustl(str(5)))//&
+            ":"//trim(adjustl(str(6)))//")")
     end if
   end subroutine AllocReadStoreOwnChunk_3D
 
@@ -318,7 +381,7 @@ contains
     integer :: ldimx, ldimy, lin
     integer :: ia, iz, ja, jz
     integer :: ierr
-    character(len=8) :: c0, c1
+    character(len=8) :: c0, c1, str(20)
     character(len=*), parameter :: h="**(ReadStoreFullFieldAndOwnChunk)**"
 
     ! check full field allocated memory
@@ -375,7 +438,11 @@ contains
     ! master process opens file and reads first data into full domain
     !print *, 'LFR-DBG->',fieldName,'Reading... vfirec',mchnum 
     if (mchnum == master_num) then
-       call vfirec(fUnit,full(1,1),oneControlVars%nnxp*oneControlVars%nnyp,'LIN')
+       if (useVfm) then
+          call vfirec(fUnit,full(1,1),oneControlVars%nnxp*oneControlVars%nnyp,'LIN')
+       else
+          read(fUnit) full
+       end if
     end if
     !print *,'FieldName, Max e min lido: ',fieldName,maxval(full),minval(full),mchnum,master_num
     ! broadcast full domain; 
@@ -388,9 +455,18 @@ contains
          oneControlVars%nnxp, oneControlVars%nnyp, ldimx, ldimy, ia, iz, ja, jz)
 
     if (dumpLocal) then
-       write(*,"(a,i4,a,i4,a,i4,a,i4,a,i4,a,i4,a)") &
-            h//trim(fieldName)//"(   1:",ldimx, ",   1:",ldimy, &
-            ")=full(",ia,":",iz,",",ja,":",jz,")"
+       write(str(1),"(i8)") ldimx
+       write(str(2),"(i8)") ldimy
+       write(str(3),"(i8)") ia
+       write(str(4),"(i8)") iz
+       write(str(5),"(i8)") ja
+       write(str(6),"(i8)") jz
+       call MsgDump(h//trim(fieldName)//"(   1:"//trim(adjustl(str(1)))//&
+            ",   1:"//trim(adjustl(str(2)))//&
+            ")=fullGrid("//trim(adjustl(str(3)))//&
+            ":"//trim(adjustl(str(4)))//&
+            ","//trim(adjustl(str(5)))//&
+            ":"//trim(adjustl(str(6)))//")")
     end if
   end subroutine ReadStoreFullFieldAndOwnChunk
 
@@ -409,9 +485,9 @@ contains
     if (dumpLocal) then
        write(c0, "(i8)") root
        write(c1, "(i8)") dataBcst
-       write(*,"(a)") h//" process "//trim(adjustl(c0))//&
+       call MsgDump (h//" process "//trim(adjustl(c0))//&
             " before broadcast "//trim(dataName)//" with value "//&
-            trim(adjustl(c1))
+            trim(adjustl(c1)))
     endif
 
     IntArr(1) = dataBcst
@@ -421,9 +497,9 @@ contains
     if (dumpLocal) then
        write(c0, "(i8)") root
        write(c1, "(i8)") dataBcst
-       write(*,"(a)") h//" process "//trim(adjustl(c0))//&
+       call MsgDump (h//" process "//trim(adjustl(c0))//&
             " broadcast "//trim(dataName)//" with value "//&
-            trim(adjustl(c1))
+            trim(adjustl(c1)))
     end if
   end subroutine Broadcast_I
 
@@ -443,18 +519,17 @@ contains
     if (dumpLocal) then
        write(c0, "(i8)") root
        write(c1, "(i8)") size(dataBcst)
-       write(*,"(a)") h//" process "//trim(adjustl(c0))//&
+       call MsgDump(h//" process "//trim(adjustl(c0))//&
             " before broadcast "//trim(dataName)//" with size "//&
-            trim(adjustl(c1))
-       call flush(6)
+            trim(adjustl(c1)))
     endif
 
     call parf_bcast(dataBcst, int(size(dataBcst),i8), root)
 
     if (dumpLocal) then
        write(c0, "(i8)") root
-       write(*,"(a)") h//" process "//trim(adjustl(c0))//&
-            " broadcast "//trim(dataName)
+       call MsgDump (h//" process "//trim(adjustl(c0))//&
+            " broadcast "//trim(dataName))
     end if
   end subroutine Broadcast_I1D
 
@@ -479,9 +554,9 @@ contains
     if (dumpLocal) then
        write(c0, "(i8)") root
        write(c1, "(f8.4)") dataBcst
-       write(*,"(a)") h//" process "//trim(adjustl(c0))//&
+       call MsgDump(h//" process "//trim(adjustl(c0))//&
             " broadcast "//trim(dataName)//" with value "//&
-            trim(adjustl(c1))
+            trim(adjustl(c1)))
     end if
   end subroutine Broadcast_R
 
@@ -504,8 +579,8 @@ contains
 
     if (dumpLocal) then
        write(c0, "(i8)") root
-       write(*,"(a)") h//" process "//trim(adjustl(c0))//&
-            " broadcast "//trim(dataName)
+       call MsgDump (h//" process "//trim(adjustl(c0))//&
+            " broadcast "//trim(dataName))
     end if
   end subroutine Broadcast_R1D
 
@@ -529,8 +604,8 @@ contains
 
     if (dumpLocal) then
        write(c0, "(i8)") root
-       write(*,"(a)") h//" process "//trim(adjustl(c0))//&
-            " broadcast "//trim(dataName)
+       call MsgDump(h//" process "//trim(adjustl(c0))//&
+            " broadcast "//trim(dataName))
     end if
   end subroutine Broadcast_R2D
 
@@ -551,8 +626,8 @@ contains
 
     if (dumpLocal) then
        write(c0, "(i8)") root
-       write(*,"(a)") h//" process "//trim(adjustl(c0))//&
-            " broadcast "//trim(dataName)
+       call MsgDump(h//" process "//trim(adjustl(c0))//&
+            " broadcast "//trim(dataName))
     end if
   end subroutine Broadcast_C
 
@@ -573,8 +648,8 @@ contains
 
     if (dumpLocal) then
        write(c0, "(i8)") root
-       write(*,"(a)") h//" process "//trim(adjustl(c0))//&
-            " broadcast "//trim(dataName)
+       call MsgDump(h//" process "//trim(adjustl(c0))//&
+            " broadcast "//trim(dataName))
     end if
   end subroutine Broadcast_C1D
 
@@ -785,7 +860,7 @@ contains
 
        if (dumpLocal) then
           write(c0,"(i8)") thisChunkSize
-          write(*,"(a)") h//cProc//"  with thisChunkSize="//trim(adjustl(c0))
+          call MsgDump(h//cProc//"  with thisChunkSize="//trim(adjustl(c0)))
        end if
 
        ! pre-process LocalChunk before gathering
@@ -864,25 +939,24 @@ contains
 
     if (dumpLocal) then
        write(c0,"(i8)") thisChunkSize
-       write(*,"(a)") h//" will gather with local size "//trim(adjustl(c0))
-       call flush(6)
+       call MsgDump(h//" will gather with local size "//trim(adjustl(c0)))
     end if
     call GatherAllChunks (LocalChunk, thisChunkSize, idim_type, &
          localSize, disp, gathered, sizeGathered)
     if (dumpLocal) then
-       write(*,"(a)") h//" done gathering"
+       call MsgDump(h//" done gathering")
     end if
 
     ! master_num unpacks fields (removes unnecessary ghost zones and positions entries)
 
     if (mchnum == master_num) then
        if (dumpLocal) then
-          write(*,"(a)") h//" master will RemoveGhost"
+          call MsgDump(h//" master will RemoveGhost")
        end if
        call RemoveGhost (ngrid, idim_type, sizeGathered, gathered, &
             il1, ir2, jb1, jt2, disp, localSize, sizeFullField, FullField, oneControlVars)
        if (dumpLocal) then
-          write(*,"(a)") h//" done RemoveGhost"
+          call MsgDump(h//" done RemoveGhost")
        end if
     end if
   end subroutine GatherOneFullField
@@ -909,9 +983,8 @@ contains
     if (dumpLocal) then
        write(c0,"(i8)") thisChunkSize
        write(c1,"(i8)") sizeGathered
-       write(*,"(a)") h//" thisChunkSize="//trim(adjustl(c0))//&
-            "; sizeGathered="//trim(adjustl(c1))
-       call flush(6)
+       call MsgDump(h//" thisChunkSize="//trim(adjustl(c0))//&
+            "; sizeGathered="//trim(adjustl(c1)))
     end if
 
     ! gather a field
@@ -919,8 +992,7 @@ contains
     call parf_GatherAllChunks(LocalChunk, thisChunkSize, idim_type, &
          localSize, disp, gathered, sizeGathered, master_num, nmachs)
     if (dumpLocal) then
-       write(*,"(a)") h//" done"
-       call flush(6)
+       call MsgDump(h//" done")
     end if
 
   end subroutine GatherAllChunks
@@ -1051,14 +1123,19 @@ contains
     real,             intent(out  ) :: Rear(sizeFullField)
     type(ControlVars), pointer, intent(in) :: oneControlVars
 
+    character(len=8) :: str(10)
     character(len=*), parameter :: h="**(RearrangeAndDump)**"
 
     if (dumpLocal) then
-       write(*,"(4(a,l1))") h//" enter field "//trim(varn)//":"//&
-            " histFlag=",histFlag, &
-            " instFlag=",instFlag, &
-            " liteFlag=",liteFlag, &
-            " meanFlag=",meanFlag
+       write(str(1),"(l1)") histFlag
+       write(str(2),"(l1)") instFlag
+       write(str(3),"(l1)") liteFlag
+       write(str(4),"(l1)") meanFlag
+       call MsgDump(h//" enter field "//trim(varn)//":"//&
+            " histFlag="//trim(adjustl(str(1)))//&
+            " instFlag="//trim(adjustl(str(2)))//&
+            " liteFlag="//trim(adjustl(str(3)))//&
+            " meanFlag="//trim(adjustl(str(4))))
     end if
 
     ! if field to be rearranged, rearrange and dump
@@ -1106,6 +1183,9 @@ contains
                varn, idim_type, ngrid, histFileDS)
        end if
     end if
+    if (dumpLocal) then
+       call MsgDump(h//" field "//trim(varn)//" done")
+    end if
   end subroutine RearrangeAndDump
 
 
@@ -1116,8 +1196,6 @@ contains
        localData2D, globalData2D, &
        oneControlVars, oneBasicFields, oneTurbFields)
 
-    implicit none
-    include "constants.h"
     ! Arguments:
     integer, intent(IN)           :: idim_type, ifm, nnxp, nnyp, &
          nmachs, mchnum, mynum, master_num
@@ -1206,8 +1284,6 @@ contains
        localData3D, globalData3D, &
        oneControlVars, oneBasicFields, oneTurbFields)
 
-    implicit none
-    include "constants.h"
     ! Arguments:
     integer, intent(IN)           :: idim_type, ifm, nnzp, nnxp, nnyp, &
          nmachs, mchnum, mynum, master_num
@@ -1297,8 +1373,6 @@ contains
        localData4D, globalData4D, &
        oneControlVars, oneBasicFields, oneTurbFields)
 
-    implicit none
-    include "constants.h"
     ! Arguments:
     integer, intent(IN)           :: idim_type, ifm, mzg, nnxp, nnyp, npat, &
          nmachs, mchnum, mynum, master_num
@@ -1386,7 +1460,6 @@ contains
   !temporary function 
   subroutine storeOwnChunk_3D(grid, fullGrid, toStore, nz, nx, ny, fieldName, oneControlVars)
 
-    include "constants.h"
 
     integer, intent(in) :: grid
     integer, intent(in) :: nz

@@ -7,6 +7,9 @@ module ModRrtmDriver
   use ccatt_start, only: &
        ccatt
 
+  use ModParallelEnvironment, only: &
+       MsgDump
+  
   use ModNamelistFile, only: &
        NamelistFile
   
@@ -243,6 +246,9 @@ contains
     integer :: icount = 0
     integer, parameter :: ngpt = 141
 
+    character(len=16) :: str(10)
+    character(len=*), parameter :: h="**(rrtm_driver)**"
+    
     !- if not including radiation, return
     if ((oneNamelistFile%ilwrtyp + oneNamelistFile%iswrtyp)==0) return
 
@@ -318,6 +324,20 @@ contains
                    rlongup               =oneRadiateFields%rlongup(i,j)
                    cosz                  =oneRadiateFields%cosz   (i,j)
 
+                   if (patch_area < 0.0) then
+                      write(str(1),"(i3)") i
+                      write(str(2),"(i3)") j
+                      write(str(3),"(i3)") ip
+                      write(str(4),"(i3)") ngrid
+                      write(str(5),"(e15.7)") patch_area
+                      call MsgDump(h//" patch_area("//trim(adjustl(str(1)))//&
+                           ","//trim(adjustl(str(2)))//&
+                           ","//trim(adjustl(str(3)))//&
+                           ")="//trim(adjustl(str(5)))//&
+                           " para ngrid="//trim(adjustl(str(4)))//&
+                           " na linha 343")
+                      call fatal_error(h//" line 343")
+                   end if
                    !
                    call sfcrad_rtm(nzg, nzs, ip,             &
                         soil_energy,    soil_water,     &
@@ -335,6 +355,15 @@ contains
                    oneRadiateFields%albedt (i,j)=albedt
                    oneRadiateFields%rlongup(i,j)=rlongup
 
+                   if (rlongup < 0.0) then
+                      write(str(1),"(i3)") i
+                      write(str(2),"(i3)") j
+                      write(str(3),"(e15.7)") rlongup
+                      call MsgDump(h//" rlongup("//trim(adjustl(str(1)))//&
+                           ","//trim(adjustl(str(2)))//&
+                           "="//trim(adjustl(str(3))))
+                      call fatal_error(h//" line 357")
+                   end if
                 end do
              end do
           end do
@@ -483,7 +512,13 @@ contains
     integer :: k, nsoil, nveg, ksn
     real :: alb, vfc, fcpct, alg, rad, als, fractrans, absg, algs, emv, emgs, &
          gslong, vlong, alv
+    real :: salvo
+    
     real :: vctr32(nint(sfcwater_nlev)+10)
+
+    character(len=16) :: str(10)
+    character(len=*), parameter :: h="**(sfcrad_rtm)**"
+    
     ! This routine is called by the radiation parameterization and by leaf.
     ! It computes net surface albedo plus radiative exchange between the
     ! atmosphere, vegetation, and the snow/ground given previously computed
@@ -505,18 +540,45 @@ contains
 
     if (ip==1) then
 
+       if (rlongup < 0.0) then
+          write(str(3),"(e15.7)") rlongup
+          call MsgDump(h//" rlongup"//&
+               "="//trim(adjustl(str(3))))
+          call fatal_error(h//" na entrada, linha 545")
+       end if
+
        if (cosz>0.03) then
           alb    = min(max(-.0139 + .0467*tan(acos(cosz)), 0.03), 0.999)
           albedt = albedt + patch_area*alb
        endif
 
        call qtk(soil_energy(nzg), tempk(nzg), fracliq(nzg))
+       salvo=rlongup
        rlongup = rlongup + patch_area*stefan*tempk(nzg)**4
 
+       if (rlongup < 0.0) then
+          write(str(1),"(e15.7)") salvo
+          write(str(2),"(e15.7)") patch_area
+          write(str(3),"(e15.7)") stefan
+          write(str(4),"(e15.7)") tempk(nzg)**4
+          write(str(5),"(e15.7)") rlongup
+          call MsgDump(h//" na linha 556, "//&
+               trim(adjustl(str(5)))//" = "//trim(adjustl(str(1)))//&
+               " + "//trim(adjustl(str(2)))//"*"//trim(adjustl(str(3)))//&
+               "*"//trim(adjustl(str(4))))
+          call fatal_error(h//" line 556")
+       end if
+       
     elseif (isfcl==0) then
 
        albedt  = albedt + patch_area*albedo
        rlongup = rlongup + patch_area*stefan*can_temp**4
+       if (rlongup < 0.0) then
+          write(str(3),"(e15.7)") rlongup
+          call MsgDump(h//" rlongup"//&
+               "="//trim(adjustl(str(3))))
+          call fatal_error(h//" line 553")
+       end if
 
     else
 
@@ -850,6 +912,9 @@ contains
     integer :: itime(4)
     integer(kind=im) :: ncbandssw,ncbandslw
 
+    character(len=16) :: str(10)
+    character(len=*), parameter :: h="**(radrrtmdrv)**"
+    
     integer(kind=im) :: iaer !LFR for the 5.0 version
     integer(kind=im), parameter :: isolvar=-1         ! Flag for solar variability method
     !#Solar variability scaling factors or indices (ISOLVAR=-1,1,2,3 only)
@@ -1741,10 +1806,14 @@ contains
              endif
           enddo
           if( k700 > m1 .or.   k700 < 1) then
-             write (*,fmt='(a)') "wrong k700 at cloud_prop routine, see press:"
-             write (cm1,fmt='(i3.3)') m1
-             write (*,fmt='('//cm1//'(e9.3,1x))') (press(k),k=1,m1)
-             write (*,fmt='(a,i3.3,a,i3.3,a,i3.3)') 'k700= ',k700, ' - for column ',i,' , ',j
+             if (mynum == 1) then
+                write (*,fmt='(a,i3.3,a,i3.3)') "wrong k700 at cloud_prop routine for i=",i,"; j=",j
+                write (*,fmt='(a,i3.3,a,i8)') "m1=",m1,"; k700=",k700
+                write (*,fmt='(a,45(e9.3,1x))') "press=",(press(k),k=1,m1)
+                write (*,"(2(a,e15.7))") "p00=",p00,"; cpor=",cpor
+                write (*,fmt='(a,45(e9.3,1x))') "oneBasicFields%pi0=",(oneBasicFields%pi0(k,i,j),k=1,m1)
+                write (*,fmt='(a,45(e9.3,1x))') "oneBasicFields%pp=",(oneBasicFields%pp(k,i,j),k=1,m1)
+             end if
              stop
           end if
           if (kdthdp /= 0) then
@@ -1974,6 +2043,8 @@ contains
     call flush(6)
 
   end subroutine cloud_prop_rrtm
+  
+
 
   ! ****************************************************************************
 

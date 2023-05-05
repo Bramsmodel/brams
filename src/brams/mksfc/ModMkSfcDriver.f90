@@ -7,6 +7,9 @@
 !###########################################################################
 module ModMkSfcDriver
 
+  use ModParallelEnvironment, only: &
+       MsgDump
+  
   use ModMkSfcNdvi, only: &
        ndvi_read_dataheader, &
        ndvi_write, &
@@ -111,6 +114,9 @@ module ModMkSfcDriver
   public :: MakeSfcFiles
 
 contains
+
+
+
   subroutine MakeSfcFiles(oneControlVars)
     type(ControlVars), pointer, intent(in) :: oneControlVars
     
@@ -142,7 +148,8 @@ contains
     integer :: intVec(2)
     character(len=8) :: c0, c1, c2
     character(len=*), parameter :: h="**(MakeSfcFiles)**"
-
+    logical, parameter :: dumpLocal=.false.
+    
     ! initialize error flags
 
     isfcerr = 0
@@ -150,6 +157,10 @@ contains
     issterr = 0
     indvierr = 0
 
+    if (dumpLocal) then
+       call MsgDump(h//" starts for runtype= "//trim(runtype))
+    end if
+    
     ! Allocate memory needed for initializing sfcfiles
 
     if (allocated(sfcfile_p)) then
@@ -159,6 +170,7 @@ contains
           call fatal_error(h//" deallocate sfcfile_p fails with stat="//trim(adjustl(c0)))
        end if
     end if
+
     allocate(sfcfile_p(ngrids), stat=ierr)
     if (ierr /= 0) then
        write(c0,"(i8)") ierr
@@ -167,8 +179,6 @@ contains
             ") fails with stat="//trim(adjustl(c0)))
     end if
     do ifm = 1,ngrids
-!!$     call alloc_sfcfile(sfcfile_p(ifm), &
-!!$          nodemxp(mynum,ifm), nodemyp(mynum,ifm), nzg, npatch)
        call alloc_sfcfile(sfcfile_p(ifm), nnxp(ifm), nnyp(ifm), nzg, npatch)
     end do
 
@@ -180,6 +190,7 @@ contains
        call fatal_error(h//" allocate scr1("//trim(adjustl(c1))//&
             ","//trim(adjustl(c2))//") fails with stat="//trim(adjustl(c0)))
     end if
+
     allocate (mksfc_scr2(nxpmax,nypmax), stat=ierr)
     if (ierr /= 0) then
        write(c0,"(i8)") ierr
@@ -188,6 +199,7 @@ contains
        call fatal_error(h//" allocate scr2("//trim(adjustl(c1))//&
             ","//trim(adjustl(c2))//") fails with stat="//trim(adjustl(c0)))
     end if
+
     allocate (mksfc_vt2da(nxpmax,nypmax), stat=ierr)
     if (ierr /= 0) then
        write(c0,"(i8)") ierr
@@ -196,6 +208,7 @@ contains
        call fatal_error(h//" allocate vt2da("//trim(adjustl(c1))//&
             ","//trim(adjustl(c2))//") fails with stat="//trim(adjustl(c0)))
     end if
+
     allocate (mksfc_vt2db(nxpmax,nypmax), stat=ierr)
     if (ierr /= 0) then
        write(c0,"(i8)") ierr
@@ -204,6 +217,7 @@ contains
        call fatal_error(h//" allocate vt2db("//trim(adjustl(c1))//&
             ","//trim(adjustl(c2))//") fails with stat="//trim(adjustl(c0)))
     end if
+
     allocate (scrx(maxval(nnxyp(1:ngrids))*nzg) , stat=ierr)
     if (ierr /= 0) then
        write(c0,"(i8)") ierr
@@ -228,6 +242,9 @@ contains
        ! One process checks sfc files (no side effects)
 
        if (mchnum == master_num) then
+          if (dumpLocal) then
+             call MsgDump(h//" will check surface files")
+          end if
           do ifm = 1,ngrids
              call sfc_check(ifm,isfcerr)
              if(isfcerr == 1) exit
@@ -237,6 +254,9 @@ contains
        ! One process checks topo files (no side effects)
 
        if (mchnum == master_num) then
+          if (dumpLocal) then
+             call MsgDump(h//" will check topo files")
+          end if
           do ifm = 1,ngrids
              call top_check(ifm,itoperr)
              if(itoperr == 1) exit
@@ -246,8 +266,10 @@ contains
        ! Check sst files: builds sst file data structure at module io_params;
        ! all processes should build the data structure and return issterr
 
-!!$     if (runtype(1:9)=='MAKEVFILE') then
        do ifm = 1,ngrids
+          if (dumpLocal) then
+             call MsgDump(h//" will check sst files")
+          end if
           call SstReadStoreOwnChunk(2,ifm,issterr, oneControlVars)
           if(issterr == 1) exit
        end do
@@ -257,11 +279,13 @@ contains
 
        do ifm = 1,ngrids
           if(ndviflg(ifm) >= 0) then
+             if (dumpLocal) then
+                call MsgDump(h//" will check ndvi files")
+             end if
              call NdviReadStoreOwnChunk(2,ifm,indvierr, oneControlVars)
           end if
           if(indvierr == 1) exit
        end do
-!!$     endif
 
        ! broadcast checking results done by a single process
 
@@ -281,6 +305,9 @@ contains
 
        if (isfcerr==0 .and. issterr==0 .and.  &
             itoperr==0 .and.indvierr==0) then
+          if (dumpLocal) then
+             call MsgDump(h//" finishes")
+          end if
           return
        else
           if (mchnum == master_num) then
@@ -290,6 +317,15 @@ contains
              if(itoperr == 1 ) print*, h//'   top files'
              if(issterr == 1 ) print*, h//'   sst files'
              if(indvierr == 1) print*, h//'   ndvi files'
+
+             if (dumpLocal) then
+                call MsgDump(h//' Nonexistent or incorrect surface files for'//&
+                     ' INITIAL or MAKEVFILE runtype (re)making; these are')
+                if(isfcerr == 1 ) call MsgDump(h//'   sfc files')
+                if(itoperr == 1 ) call MsgDump(h//'   top files')
+                if(issterr == 1 ) call MsgDump(h//'   sst files')
+                if(indvierr == 1) call MsgDump(h//'   ndvi files')
+             end if
           end if
        end if
 
@@ -306,6 +342,9 @@ contains
        ! Check topo files for added grids. If these are not correct, only
        !   allow remakes if topo is to be interpolated from existing grids.
 
+       if (dumpLocal) then
+          call MsgDump(h//" runtype HISTORY not dumped")
+       end if
        do ifm = ngridsh+1,ngrids
           call top_check(ifm,itoperr)
           if (itoperr == 1) then
@@ -342,8 +381,10 @@ contains
 
        ! Do same for NDVI files
        do ifm = 1,ngrids
-          if(ndviflg(ifm) >= 0) call NdviReadStoreOwnChunk(2, ifm, indvierr, oneControlVars)
-          if(indvierr == 1) exit
+          if (ndviflg(ifm) >= 0) then
+             call NdviReadStoreOwnChunk(2, ifm, indvierr, oneControlVars)
+          end if
+          if (indvierr == 1) exit
        end do
 
        ! If we are making ndvi files, we must also make the sfc files. We will
@@ -361,6 +402,9 @@ contains
        !------------------------------------------
        !  TOP (topo and roughness) file creation
        if(itoperr == 1) then
+          if (dumpLocal) then
+             call MsgDump(h//" will do topo")
+          end if
           ! do topography, topo roughness on all grids
           call toptnest(ng1t,ng2t)
 
@@ -417,11 +461,18 @@ contains
              end if
 
              ! do sfcfile
+
+             if (dumpLocal) then
+                call MsgDump(h//" will do sfc")
+             end if
              call geonest_file(ifm)
              call sfc_write(ifm)
 
              ! do ndvifile
              if (ndviflg(ifm)==1) then
+                if (dumpLocal) then
+                   call MsgDump(h//" will do ndvi")
+                end if
                 call ndvi_read_dataheader(ifm)
                 nvtime = nvndvif(ifm)
              elseif (isstflg(ifm)==0) then
@@ -467,6 +518,9 @@ contains
           do ifm = ng1,ng2
              ! do sstfile
              if (isstflg(ifm) == 1) then
+                if (dumpLocal) then
+                   call MsgDump(h//" will do sst")
+                end if
                 call sst_read_dataheader(ifm)
                 nvtime = nvsstf(ifm)
              elseif (isstflg(ifm) == 0) then
@@ -483,7 +537,7 @@ contains
 
        end if
 
-    endif
+    end if
 
     ! Deallocate memory needed for initializing sfcfiles
 
@@ -539,5 +593,8 @@ contains
             ") fails with stat="//trim(adjustl(c0)))
     end if
 
+    if (dumpLocal) then
+       call MsgDump(h//" finishes")
+    end if
   end subroutine MakeSfcFiles
 end module ModMkSfcDriver

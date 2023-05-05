@@ -7,6 +7,9 @@
 !###########################################################################
 module ModChemFileInv
 
+  use ModParallelEnvironment, only: &
+       MsgDump
+  
   use ModDateUtils, only: &
        date_add_to, &
        date_make_big
@@ -39,6 +42,7 @@ module ModChemFileInv
 
   include "files.h" 
   include "constants.h"
+  include "UseVfm.h"
 
   private
 
@@ -47,9 +51,10 @@ module ModChemFileInv
 contains
 
 
-  
 
-  subroutine chem_isan_file_inv (iyear1,imonth1,idate1,itime1,timmax,chem_assim, chemistry)
+
+  subroutine chem_isan_file_inv (iyear1,imonth1,idate1,itime1,timmax,chem_assim, &
+       chemistry)
     integer, intent(in) :: iyear1
     integer, intent(in) :: imonth1
     integer, intent(in) :: idate1
@@ -70,8 +75,6 @@ contains
     integer :: iyearf,imonthf,idatef,ihourf
     integer :: iyear2,imonth2,idate2,ihour2,ihour1
     real :: tinc
-
-    character(len=*),parameter :: header='**(chem_ISAN_file_inv)**'
     character(len=14) :: itotdate_fg(maxisfiles),itotdate_up(maxisfiles)  &
          ,itotdate_sf(maxisfiles),itotdates(4*maxisfiles),idate_end
     character(len=f_name_length), dimension(maxisfiles) :: fnames_fg, &
@@ -82,6 +85,12 @@ contains
     character(len=f_name_length) :: sVarName 
     integer :: iyears,imonths,idates,ihours
     integer :: indice
+    character(len=3) :: suffix
+
+    character(len=8) :: str(10)
+    character(len=*),parameter :: h='**(chem_ISAN_file_inv)**'
+    logical, parameter :: dumpLocal=.false.
+    
 
     ! Define variables -------------------------------------------------------
     nfgfiles = 0
@@ -95,16 +104,11 @@ contains
     if(igridfl.ne.0) then
        if(iapr(1:1).ne.' '.and.iapr(1:1).ne.char(0) ) then
 
-          !--(DMK-CCATT-INI)----------------------------------------------------------------
           print*,'----> performing the data inventory'
 
           nfgfiles=-1
           nc=len_trim(iapr)
           indice = 1
-
-!!$ if(guess1st.eq.'PRESS') then
-!!$ rams_filelist_arg = iapr(1:nc)//'????-??-??-????'
-!!$ call RAMS_filelist(fnames_fg, rams_filelist_arg, nfgfiles)
 
           nfgfiles = ((timmax/3600) / (isan_inc/100)) + 1    
 
@@ -124,11 +128,15 @@ contains
              if(guess1st.eq.'PRESS')  then 
                 if(CHEM_ASSIM == 1 .and. CHEMISTRY >= 0)  then 
                    write(sVarName,100) iapr(1:len_trim(iapr)),'-',iyears,'-',imonths,'-',idates,'-',ihours/100   
-                   sVarName = trim(sVarName) // '.vfm'
+                   if (useVfm) then
+                      sVarName = trim(sVarName) // '.vfm'
+                   else
+                      sVarName = trim(sVarName) // '.bin'
+                   end if
                 else 
                    write(sVarName,101) iapr(1:len_trim(iapr)),iyears,'-',imonths,'-',idates,'-',ihours/100   
-                endif
-             endif
+                end if
+             end if
 100          format(a,a1,i4.4,a1,i2.2,a1,i2.2,a1,i4.4)
 101          format(a,   i4.4,a1,i2.2,a1,i2.2,a1,i4.4)
 
@@ -137,38 +145,17 @@ contains
                 write(sVarName,102) iapr(1:len_trim(iapr)),'-A-',iyears,'-',imonths,'-',idates,'-',ihours   
                 sVarName = sVarName // "-head.txt"
 102             format(a,a3,i4.4,a1,i2.2,a1,i2.2,a1,i6.6)
-             endif
-
-
-             !--(DMK-CCATT-OLD)----------------------------------------------------------------
-             !           write(sVarName,100) iapr(1:len_trim(iapr)),iyears,'-',imonths,'-',idates,'-',ihours/100   
-             !100        format(a,i4.4,a1,i2.2,a1,i2.2,a1,i4.4)
-             !--(DMK-CCATT-FIM)----------------------------------------------------------------
-             !           if(guess1st.eq.'RAMS') then
-             !              sVarName = sVarName // "-head.txt"
-             !--(DMK-CCATT-INI)----------------------------------------------------------------
-             !           else
-             !srf - introduzindo diferenças entre assimilaçao de dp + chem e dp meteo somente 
-             !     if(CHEM_ASSIM == 1 .and. CHEMISTRY >= 0) then 
-             !       sVarName = TRIM(sVarName) // '.vfm'
-             !     else
-             !       sVarName = TRIM(sVarName)
-             !     endif
-             !srf
-             !--(DMK-CCATT-FIM)----------------------------------------------------------------      
-             !           endif
-
-
-             !--(DMK-CCATT-INI)----------------------------------------------------------------
-             print*,'sVarName=',trim(sVarName)
-             !--(DMK-CCATT-FIM)----------------------------------------------------------------
+             end if
 
              inquire(file=sVarName(1:len_trim(sVarName)),exist=there)
 
              if (there) then
                 fnames_fg(indice) = trim(sVarName)
                 indice = indice + 1
-             endif
+                if (dumpLocal) then
+                   call MsgDump(h//" inserted "//trim(sVarName)//" at fnames_fg inventory")
+                end if
+             end if
 
              !--srf change LE 18000 to LE 2100 for  3/3 ivars
              if(localTime .le. 2100)then
@@ -176,64 +163,41 @@ contains
              else
                 localTime = 000000
                 localTime = localTime + isan_inc
-             endif
-          enddo
+             end if
+          end do
 
           nfgfiles = indice - 1
-
-!!$ endif
-
-!!$ if(guess1st.eq.'RAMS') then
-!!$ rams_filelist_arg = iapr(1:nc)//'*-head.txt'
-!!$ call RAMS_filelist(fnames_fg, rams_filelist_arg, nfgfiles)
-!!$ endif
-
-          !      do nf=1,nfgfiles
-          !         print*,'reading fg:',nc,nfgfiles,fnames_fg(nf)
-          !      enddo
 
           if(nfgfiles.gt.maxisfiles) then
              print*,'too many first guess files'
              call fatal_error('lots_of_first_guess')
-          endif
+          end if
 
           do nf=1,nfgfiles
 
              lnf=len_trim(fnames_fg(nf))
 
-             !--(DMK-CCATT-INI)----------------------------------------------------------------
-             !srf-chem         
-             if(trim(fnames_fg(nf)(len_trim(fnames_fg(nf))-2:len_trim(fnames_fg(nf)))) == 'vfm') then
-                if(guess1st.eq.'PRESS')  &
-                     read(fnames_fg(nf)(lnf-18:lnf-4),20) inyear,inmonth,indate,inhour
-             else
-                !--(DMK-CCATT-FIM)----------------------------------------------------------------
+             suffix = trim(fnames_fg(nf)(len_trim(fnames_fg(nf))-2:len_trim(fnames_fg(nf))))
 
-                if(guess1st.eq.'PRESS')  &
-                     read(fnames_fg(nf)(lnf-14:lnf),20) inyear,inmonth,indate,inhour
-
-                !--(DMK-CCATT-INI)----------------------------------------------------------------
-             endif
+             if (guess1st.eq.'PRESS') then
+                read(fnames_fg(nf)(lnf-18:lnf-4),20) inyear,inmonth,indate,inhour
+             end if
              !--(DMK-CCATT-FIM)----------------------------------------------------------------
 
              ! form of a-A-2000-07-01-060000-head.txt
-             if(guess1st.eq.'RAMS')  &
-                  read(fnames_fg(nf)(lnf-25:lnf-10),20) inyear,inmonth,indate,inhour
+             if(guess1st.eq.'RAMS') then
+                read(fnames_fg(nf)(lnf-25:lnf-10),20) inyear,inmonth,indate,inhour
+             end if
 
 20           format(i4,1x,i2,1x,i2,1x,i4)
 
              call date_make_big(inyear,inmonth,indate,inhour*100,itotdate_fg(nf))
 
-          enddo
+          end do
 
           call RAMS_dintsort(nfgfiles,itotdate_fg,fnames_fg)
-
-          !      do nf=1,nfgfiles
-          !         print*,'fg files:',nf,itotdate_fg(nf),fnames_fg(nf)
-          !      enddo
-
-       endif
-    endif
+       end if
+    end if
 
 
     if(igridfl.ne.3) then
@@ -241,8 +205,6 @@ contains
 
           nupfiles=-1
           nc=len_trim(iarawi)
-!!$         rams_filelist_arg = iarawi(1:nc)//'????-??-??-????'
-!!$         call RAMS_filelist(fnames_up, rams_filelist_arg, nupfiles)
 
           nupfiles = ((timmax/3600) / (isan_inc/100)) + 1    
 
@@ -265,47 +227,40 @@ contains
              if (there) then
                 fnames_up(indice) = trim(sVarName)
                 indice = indice + 1
-             endif
+                if (dumpLocal) then
+                   call MsgDump(h//" inserted "//trim(sVarName)//" at fnames_up inventory")
+                end if
+             end if
 
              if(localTime .le. 1800)then
                 localTime = localTime + isan_inc
              else
                 localTime = 000000
                 localTime = localTime + isan_inc
-             endif
-          enddo
+             end if
+          end do
 
           nupfiles = indice - 1
 
           if(nupfiles.gt.maxisfiles) then
              print*,'too many upper air files'
              call fatal_error('lots_of_upper_air')
-          endif
+          end if
 
           do nf=1,nupfiles
              lnf=len_trim(fnames_up(nf))
              read(fnames_up(nf)(lnf-14:lnf),20) inyear,inmonth,indate,inhour
-
              call date_make_big(inyear,inmonth,indate,inhour*100,itotdate_up(nf))
-
-          enddo
-
+          end do
           call RAMS_dintsort(nupfiles,itotdate_up,fnames_up)
 
-          !      do nf=1,nupfiles
-          !         print*,'up files:',nf,itotdate_up(nf),fnames_up(nf)
-          !      enddo
-
-       endif
+       end if
 
 
        if(iasrfce(1:1).ne.' '.and.iasrfce(1:1).ne.char(0) ) then
 
           nsffiles=-1
           nc=len_trim(iasrfce)
-!!$        rams_filelist_arg = iasrfce(1:nc)//'????-??-??-????'
-!!$        call RAMS_filelist(fnames_sf, rams_filelist_arg, nsffiles)
-
           nsffiles = ((timmax/3600) / (isan_inc/100)) + 1    
 
           call date_add_to(iyear1,imonth1,idate1,itime1*100  &
@@ -327,39 +282,36 @@ contains
              if (there) then
                 fnames_sf(indice) = trim(sVarName)
                 indice = indice + 1
-             endif
+                if (dumpLocal) then
+                   call MsgDump(h//" inserted "//trim(sVarName)//" at fnames_sf inventory")
+                end if
+             end if
 
              if(localTime .le. 1800)then
                 localTime = localTime + isan_inc
              else
                 localTime = 000000
                 localTime = localTime + isan_inc
-             endif
-          enddo
+             end if
+          end do
 
           nsffiles = indice - 1
 
           if(nsffiles.gt.maxisfiles) then
              print*,'too many surface air files'
              call fatal_error('lots_of_surface')
-          endif
+          end if
 
           do nf=1,nsffiles
              lnf=len_trim(fnames_sf(nf))
              read(fnames_sf(nf)(lnf-14:lnf),20) inyear,inmonth,indate,inhour
-
              call date_make_big(inyear,inmonth,indate,inhour*100,itotdate_sf(nf))
-          enddo
-
+          end do
           call RAMS_dintsort(nsffiles,itotdate_sf,fnames_sf)
 
-          !      do nf=1,nsffiles
-          !         print*,'sf files:',nf,itotdate_sf(nf),fnames_sf(nf)
-          !      enddo
+       end if
 
-       endif
-
-    endif
+    end if
 
     ! put dates in order, removing duplicates
 
@@ -368,11 +320,6 @@ contains
          ,ndates,itotdates)
 
     call RAMS_unique_dint(ndates,itotdates)
-
-    !print*,'dates:',ndates
-    !do nn=1,ndates
-    !   print*,'dates:',itotdates(nn)
-    !enddo
 
     !  start printing section
     !--------------------------------------------------------------
@@ -383,6 +330,14 @@ contains
     print*,'---------------------------------------------------------'
     write (*,fmt='(A,I1,A,I3,A)')'-- ISAN Input File Date Inventory for icFileType = ',icFileType,', with ',ndates,' dates.'
     print*,'---------------------------------------------------------'
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") icFileType
+       write(str(2),"(i8)") ndates
+       call MsgDump(h//" ISAN Input File Date Inventory for icFileType="//trim(adjustl(str(1)))//&
+            ", with "//trim(adjustl(str(2)))//" dates")
+    end if
+    
     do nn=1,ndates
        print*,'---- Date:',itotdates(nn)
 
@@ -391,51 +346,70 @@ contains
                ,iproc_names(nn,5),iproc_names(nn,6))
           print*,'---- First guess grib2 file:'  &
                ,iproc_names(nn,5)(1:len_trim(iproc_names(nn,5)))
+          if (dumpLocal) then
+             call MsgDump(h//'---- First guess grib2 file: '//trim(iproc_names(nn,5)))
+          end if
        elseif(icFileType==2) then
           iproc_names(nn,5)=trim(icPrefix)
           print*,'---- First guess netCDF file:'  &
                ,iproc_names(nn,5)(1:len_trim(iproc_names(nn,5)))
+          if (dumpLocal) then
+             call MsgDump(h//'---- First guess netCDF file: '//trim(iproc_names(nn,5)))
+          end if
        elseif(icFileType==3) then
           call makeGeosfileName(trim(icPrefix),isan_inc,nn &
                ,iproc_names(nn,5),iproc_names(nn,6),itotdates(nn),iyear1,imonth1,idate1,itime1)
+          if (dumpLocal) then
+             call MsgDump(h//'---- First guess Geos file: '//trim(iproc_names(nn,5))//&
+                  " and "//trim(iproc_names(nn,6)))
+          end if
        elseif(icFileType==4) then
           call makeGradsfileName(trim(icPrefix),isan_inc,nn &
                ,iproc_names(nn,5),iproc_names(nn,6),itotdates(nn),iyear1,imonth1,idate1,itime1)
+          if (dumpLocal) then
+             call MsgDump(h//'---- First guess grads file: '//trim(iproc_names(nn,5))//&
+                  " and "//trim(iproc_names(nn,6)))
+          end if
        else
           do nf=1,nfgfiles
              if(itotdates(nn).eq.itotdate_fg(nf)) then
                 print*,'---- First guess file:'  &
                      ,fnames_fg(nf)(1:len_trim(fnames_fg(nf)))
-             endif
-          enddo
-       endif
+                if (dumpLocal) then
+                   call MsgDump(h//'---- First guess file: '//trim(fnames_fg(nf)))
+                end if
+             end if
+          end do
+       end if
 
        do nf=1,nupfiles
           if(itotdates(nn).eq.itotdate_up(nf)) then
              print*,'---- Upper air   file:'  &
                   ,fnames_up(nf)(1:len_trim(fnames_up(nf)))
-          endif
-       enddo
+             if (dumpLocal) then
+                call MsgDump(h//'---- upper air file: '//trim(fnames_up(nf)))
+             end if
+          end if
+       end do
        do nf=1,nsffiles
           if(itotdates(nn).eq.itotdate_sf(nf)) then
              print*,'---- Surface obs file:'  &
                   ,fnames_sf(nf)(1:len_trim(fnames_sf(nf)))
-          endif
-       enddo
+             if (dumpLocal) then
+                call MsgDump(h//'---- surface obs file: '//trim(fnames_sf(nf)))
+             end if
+          end if
+       end do
        print*,'------------------------------------------------------'
-    enddo
-    !stop 666
+    end do
     !--------------------------------------------------------------
 
     ! Find dates we are going to process
 
-    !print*,'start dates:',timmax,iyear1,imonth1,idate1,itime1,isan_inc
-
-    !Find end date
+    ! Find end date
     call date_add_to(iyear1,imonth1,idate1,itime1*100  &
          ,timmax,'s',iyearf,imonthf,idatef,ihourf)
     call date_make_big(iyearf,imonthf,idatef,ihourf,idate_end)
-    !print*,'end dates:',iyearf,imonthf,idatef,ihourf,idate_end
 
     ihour1=itime1*100
     tinc= (isan_inc/100) * 60.  + mod(isan_inc,100)
@@ -446,10 +420,6 @@ contains
          ,iproc_dates(npdates))
     do while (iproc_dates(npdates) .lt. idate_end)
        npdates = npdates + 1
-
-       !--(DMK-CCATT-INI)---------------------------------------------------------     
-       !   print*,npdates,iproc_dates(npdates),maxisfiles,tinc
-       !--(DMK-CCATT-FIM)---------------------------------------------------------     
 
        call date_add_to (iyear1,imonth1,idate1,ihour1  &
             ,tinc*(npdates-1),'m',iyear2,imonth2,idate2,ihour2)
@@ -496,47 +466,69 @@ contains
                ,iproc_names(nn,5),iproc_names(nn,6))
           print*,'---- First guess grib2 (NCEP) file:'  &
                ,iproc_names(nn,5)(1:len_trim(iproc_names(nn,5)))
+          if (dumpLocal) then
+             call MsgDump(h//'---- First guess grib2 file: '//trim(iproc_names(nn,5)))
+          end if
        elseif(icFileType==2) then
           iproc_names(nn,5)=trim(icPrefix)
           print*,'---- First guess nc4 (NASA) file:'  &
                ,iproc_names(nn,5)(1:len_trim(iproc_names(nn,5)))       
+          if (dumpLocal) then
+             call MsgDump(h//'---- First guess nc4 file: '//trim(iproc_names(nn,5)))
+          end if
        elseif(icFileType==3) then
           call makeGeosfileName(trim(icPrefix),isan_inc,nn &
                ,iproc_names(nn,5),iproc_names(nn,6),iproc_dates(nn),iyear1,imonth1,idate1,itime1)
+          if (dumpLocal) then
+             call MsgDump(h//'---- First guess geos file: '//trim(iproc_names(nn,5))//&
+                  " and "//trim(iproc_names(nn,6)))
+          end if
        elseif(icFileType==4) then
           call makeGradsfileName(trim(icPrefix),isan_inc,nn &
                ,iproc_names(nn,5),iproc_names(nn,6),iproc_dates(nn),iyear1,imonth1,idate1,itime1)
-       endif
+          if (dumpLocal) then
+             call MsgDump(h//'---- First guess grads file: '//trim(iproc_names(nn,5))//&
+                  " and "//trim(iproc_names(nn,6)))
+          end if
+       end if
 
        if(icFileType==1) then
 
           inquire(file=iproc_names(nn,5)(1:len_trim(iproc_names(nn,5))), exist=fileExist )
-          if(.not. fileExist)  iErrNumber=dumpMessage(c_tty,c_yes,header,'468' &
-               ,c_fatal,'File '//iproc_names(nn,5)(1:len_trim(iproc_names(nn,5))) &
-               //' not found. Please, verify and solve it!')
+
+          if(.not. fileExist) then
+             iErrNumber=dumpMessage(c_tty,c_yes,h,'468' &
+                  ,c_fatal,'File '//iproc_names(nn,5)(1:len_trim(iproc_names(nn,5))) &
+                  //' not found. Please, verify and solve it!')
+          end if
           write(*,fmt='(A)') '---- First guess file' &
                //iproc_names(nn,5)(1:len_trim(iproc_names(nn,5)))//' exists.'
           iproc_flag(nn,2)=1
        elseif(icFileType==2) then
+
           inquire(file=iproc_names(nn,5)(1:len_trim(iproc_names(nn,5))), exist=fileExist )
-          if(.not. fileExist)  iErrNumber=dumpMessage(c_tty,c_yes,header,'468' &
+
+          if(.not. fileExist)  iErrNumber=dumpMessage(c_tty,c_yes,h,'468' &
                ,c_fatal,'File '//iproc_names(nn,5)(1:len_trim(iproc_names(nn,5))) &
                //' not found. Please, verify and solve it!')
           write(*,fmt='(A)') '---- First guess file' &
                //iproc_names(nn,5)(1:len_trim(iproc_names(nn,5)))//' exists.'
           iproc_flag(nn,2)=1
        elseif(icFileType==3) then
+
           inquire(file=iproc_names(nn,5)(1:len_trim(iproc_names(nn,5))), exist=fileExist )
-          if(.not. fileExist)  iErrNumber=dumpMessage(c_tty,c_yes,header,'468' &
+
+          if(.not. fileExist)  iErrNumber=dumpMessage(c_tty,c_yes,h,'468' &
                ,c_fatal,'File '//iproc_names(nn,5)(1:len_trim(iproc_names(nn,5))) &
                //' not found. Please, verify and solve it!')
           write(*,fmt='(A)') '---- First guess file' &
                //iproc_names(nn,5)(1:len_trim(iproc_names(nn,5)))//' exists.'
           iproc_flag(nn,2)=1
        elseif(icFileType==4) then
-          write(*,fmt='(A)') 'Checking for '//iproc_names(nn,5)(1:len_trim(iproc_names(nn,5)))
+
           inquire(file=iproc_names(nn,5)(1:len_trim(iproc_names(nn,5))), exist=fileExist )
-          if(.not. fileExist)  iErrNumber=dumpMessage(c_tty,c_yes,header,'468' &
+          
+          if(.not. fileExist)  iErrNumber=dumpMessage(c_tty,c_yes,h,'468' &
                ,c_fatal,'File '//iproc_names(nn,5)(1:len_trim(iproc_names(nn,5))) &
                //' not found. Please, verify and solve it!')
           write(*,fmt='(A)') '---- First guess file' &
@@ -553,28 +545,42 @@ contains
                    iproc_flag(nn,2)=2
                 else
                    iproc_flag(nn,2)=1
-                endif
+                end if
                 iproc_names(nn,1)=fnames_fg(nf)
+
+                if (dumpLocal) then
+                   call MsgDump(h//" First guess file "//trim(iproc_names(nn,1))//" included")
+                end if
+
                 goto 71
-             endif
-          enddo
+             end if
+          end do
           ! file doesn't exist
           if(i1st_flg.eq.1) then
              print*,'---- First guess file does not exist.'  &
                   ,' Will not process this time.'
              iproc_flag(nn,1)=0
+             if (dumpLocal) then
+                call MsgDump(h//" First guess file does not exist; will not process this time")
+             end if
           elseif(i1st_flg.eq.2) then
              isan_err_flag=1
              print*,'---- First guess file does not exist.'  &
                   ,' Will STOP run.'
              iproc_flag(nn,1)=0
+             if (dumpLocal) then
+                call MsgDump(h//" First guess file does not exist; will stop run")
+             end if
           elseif(i1st_flg.eq.3) then
              print*,'---- First guess file does not exist.'  &
                   ,' Will attempt interpolation.'
              iproc_flag(nn,2)=3
-          endif
+             if (dumpLocal) then
+                call MsgDump(h//" First guess file does not exist; will attemp interpolation")
+             end if
+          end if
 
-       endif
+       end if
 71     continue
 
        ! upper air
@@ -586,25 +592,37 @@ contains
                 iproc_flag(nn,3)=2
              else
                 iproc_flag(nn,3)=1
-             endif
+             end if
              iproc_names(nn,2)=fnames_up(nf)
+             if (dumpLocal) then
+                call MsgDump(h//" Upper air file "//trim(adjustl(iproc_names(nn,2)))//" should exist")
+             end if
              goto 72
-          endif
-       enddo
+          end if
+       end do
 
        ! file doesn't exist
        if(iupa_flg.eq.1) then
           print*,'---- Upper air file does not exist.'  &
                ,' Will not process this time.'
           iproc_flag(nn,1)=0
+          if (dumpLocal) then
+             call MsgDump(h//" Upper air file does not exist; will not process this time")
+          end if
        elseif(iupa_flg.eq.2) then
           isan_err_flag=1
           print*,'---- Upper air file does not exist.',' Will STOP run.'
           iproc_flag(nn,1)=0
+          if (dumpLocal) then
+             call MsgDump(h//" Upper air file does not exist; will stop run")
+          end if
        elseif(iupa_flg.eq.3) then
           print*,'---- Upper air file does not exist.',' Will try running without.'
           iproc_flag(nn,3)=3
-       endif
+          if (dumpLocal) then
+             call MsgDump(h//" Upper air file does not exist; will try running without")
+          end if
+       end if
 72     continue
 
        ! surface
@@ -616,40 +634,52 @@ contains
                 iproc_flag(nn,4)=2
              else
                 iproc_flag(nn,4)=1
-             endif
+             end if
              iproc_names(nn,3)=fnames_sf(nf)
+             if (dumpLocal) then
+                call MsgDump(h//" Surface obs file "//trim(adjustl(iproc_names(nn,3)))//" should exist")
+             end if
              goto 73
-          endif
-       enddo
+          end if
+       end do
 
        ! file doesn't exist
        if(isfc_flg.eq.1) then
           print*,'---- Surface file does not exist.',' Will not process this time.'
           iproc_flag(nn,1)=0
+          if (dumpLocal) then
+             call MsgDump(h//" Surface file does not exist; will not process this time")
+          end if
        elseif(isfc_flg.eq.2) then
           isan_err_flag=1
           print*,'---- Surface file does not exist.',' Will STOP run.'
           iproc_flag(nn,1)=0
+          if (dumpLocal) then
+             call MsgDump(h//" Surface file does not exist; will stop run")
+          end if
        elseif(isfc_flg.eq.3) then
           print*,'---- Surface file does not exist.',' Will try running without.'
           iproc_flag(nn,4)=3
-       endif
+          if (dumpLocal) then
+             call MsgDump(h//" Surface file does not exist; will try running without")
+          end if
+       end if
 73     continue
 
-    enddo
+    end do
     print*,'---------------------------------------------------------'
     if (isan_err_flag.ne.0) then
        print*,'ISAN run stopping because of errors!'
        print*,'See previous output listing.'
        call fatal_error('isan_file_errors')
-    endif
+    end if
   end subroutine chem_isan_file_inv
 
 
 
 
 
-  
+
   subroutine makeGrib2fileName(prefix,itime1,isan_inc,nn,gribFileName,invFileName)
     ! Input/Output variables
     character(len=*), intent(in) :: prefix 
@@ -661,7 +691,9 @@ contains
     !#
     !Local variables
     character(len=3) :: ctime
-    character(len=*),parameter :: header='**(makeGrib2fileName)**'
+
+    character(len=*),parameter :: h='**(makeGrib2fileName)**'
+    logical, parameter :: dumpLocal=.false.
 
     !Code
     !print *,'In: ',itime1,nn,isan_inc
@@ -673,10 +705,10 @@ contains
   end subroutine makeGrib2fileName
 
 
-  
+
   subroutine makeGradsfileName(prefix,isan_inc,nn,gradsFileName,invFileName,&
        iproc_date,iyear1,imonth1,idate1,itime1)
-    character(len=*),parameter :: header='**(makeGradsfileName)**'
+
     ! Input/Output variables
     character(len=*), intent(in) :: prefix 
     integer,intent(in)    :: isan_inc
@@ -693,6 +725,9 @@ contains
     character(len=2) :: ctime,cdate,cmonth
     character(len=4) :: cyear!,cntime
 
+    character(len=*),parameter :: h='**(makeGradsfileName)**'
+    logical, parameter :: dumpLocal=.false.
+
 
     !Code
     !print *,'In: nn,isan_inc,iproc_date,iyear1,imonth1,idate1,itime1= ',nn,isan_inc,iproc_date,iyear1,imonth1,idate1,itime1
@@ -708,7 +743,7 @@ contains
 
 
 
-  
+
 
   subroutine makeGeosfileName(prefix,isan_inc,nn,geosFileName,invFileName,&
        iproc_date,iyear1,imonth1,idate1,itime1)
@@ -726,11 +761,12 @@ contains
     integer,intent(in)    :: itime1
 
     !Local variables
-    character(len=*),parameter :: header='**(makeGeosfileName)**'
     character(len=2) :: ctime,cdate,cmonth
     character(len=4) :: cyear!,cntime
 
-
+    character(len=*), parameter :: h='**(makeGeosfileName)**'
+    logical, parameter :: dumpLocal=.false.
+    
     !Code
     print *,'In: nn,isan_inc,iproc_date,iyear1,imonth1,idate1,itime1= ',nn,isan_inc,iproc_date,iyear1,imonth1,idate1,itime1
     ! GEOS.fp.fcst.inst3_3d_asm_Cp.20200213_00+20200214_0300.V01.nc4

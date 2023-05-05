@@ -7,6 +7,9 @@
 !###########################################################################
 module ModMkSfcNdvi
 
+  use ModParallelEnvironment, only: &
+       MsgDump
+  
   use ModRUser, only: &
        ndviinit_user
   
@@ -63,7 +66,9 @@ module ModMkSfcNdvi
 
   include "files.h"
   include "constants.h"
-
+  include "UseVfm.h" 
+  integer, parameter :: fUnit=25
+  
   private
 
   public :: ndvi_read_dataheader
@@ -82,8 +87,10 @@ contains
     character(len=f_name_length)  :: flnm, line, line2
     character(len=1)    :: dummy
     logical             :: there
-    character(len=*),parameter :: header='***(ndvi_read_dataheader)***'
+    character(len=*),parameter :: h='***(ndvi_read_dataheader)***'
     character(len=*),parameter :: version=''
+    logical, parameter :: dumpLocal=.false.
+    character(len=8) :: str(10)
     integer :: ierr
 
     ! Read header file for all ndvidata files (all times and locations).  The header
@@ -100,35 +107,44 @@ contains
     flnm = trim(ndvifn(ifm))//'HEADER'
 
     inquire(file=flnm(1:len_trim(flnm)), exist=there)
+
+    if (dumpLocal) then
+       if (there) then
+          call MsgDump(h//" found file "//trim(flnm))
+       else
+          call MsgDump(h//" did not find file "//trim(flnm))
+       end if
+    end if
+    
     if (.not.there) then
        print *, 'ndvifn data header file:', trim(flnm), &
             ' for grid ', ifm ,' not there.'
        !call fatal_error('ndvi_read_fileheader-1')
-       iErrNumber=dumpMessage(c_tty,c_yes,header,modelVersion,c_fatal,'ndvi_read_fileheader-1')
+       iErrNumber=dumpMessage(c_tty,c_yes,h,modelVersion,c_fatal,'ndvi_read_fileheader-1')
     endif
 
     ! Read this header file
 
-    call rams_f_open(25, flnm(1:len_trim(flnm)), 'FORMATTED', 'OLD', 'READ', 0)
-    rewind 25
+    call rams_f_open(fUnit, flnm(1:len_trim(flnm)), 'FORMATTED', 'OLD', 'READ', 0)
+    rewind fUnit
 
     ! read number of data times in dataset
 
-    read (25,*) dummy
-    read (25,*) nvndvif(ifm)
+    read (fUnit,*) dummy
+    read (fUnit,*) nvndvif(ifm)
 
     if (nvndvif(ifm)<=0) then
        print *, &
             'No ndvi input files found with specified prefix or incorrect header'
-       close(25)
+       close(fUnit)
        !call fatal_error('ndvi_read_fileheader-2')
-       iErrNumber=dumpMessage(c_tty,c_yes,header,modelVersion,c_fatal,'ndvi_read_fileheader-2')
+       iErrNumber=dumpMessage(c_tty,c_yes,h,modelVersion,c_fatal,'ndvi_read_fileheader-2')
     endif
 
     ! read prefix list and times
 
     do itime = 1,nvndvif(ifm)
-       read (25,'(A80)') line
+       read (fUnit,'(A80)') line
        call char_strip_var(line, flnm, line2)
        read (line2,*) iyearvn(itime,ifm), imonthvn(itime,ifm),  &
             idatevn(itime,ifm), ihourvn(itime,ifm)
@@ -137,8 +153,16 @@ contains
 
     enddo
 
-    close(25)
+    close(fUnit)
 
+    if (dumpLocal) then
+       write(str(1),"(i8)") ifm
+       call MsgDump(h//" for grid "//trim(adjustl(str(1)))//" found files")
+       do itime = 1,nvndvif(ifm)
+          call MsgDump(trim(vndvifil(itime,ifm)))
+       end do
+    end if
+       
   end subroutine ndvi_read_dataheader
 
   !******************************************************************************
@@ -242,44 +266,82 @@ contains
 
   subroutine ndvi_write(ifm,ivt)
 
-    integer :: ifm,ivt,ip
+    integer, intent(in) :: ifm
+    integer, intent(in) :: ivt
 
+    integer :: ip
+    integer :: ios
     real :: glatr,glonr
     character(len=f_name_length) :: flnm
     character(len=2) :: cgrid
+    character(len=*), parameter :: h="**(ndvi_write)**"
+    logical, parameter :: dumpLocal=.false.
 
     ! Write ndvi data to ndvi file for one grid and one time
 
     write(cgrid,'(a1,i1)') 'g',ifm
 
-    call makefnam(flnm,ndvifpfx,0.,iyearvn(ivt,ifm),imonthvn(ivt,ifm) &
-         ,idatevn(ivt,ifm),ihourvn (ivt,ifm)*10000,'N',cgrid,'vfm')
+    if (useVfm) then
+       call makefnam(flnm,ndvifpfx,0.,iyearvn(ivt,ifm),imonthvn(ivt,ifm) &
+            ,idatevn(ivt,ifm),ihourvn (ivt,ifm)*10000,'N',cgrid,'vfm')
+    else
+       call makefnam(flnm,ndvifpfx,0.,iyearvn(ivt,ifm),imonthvn(ivt,ifm) &
+            ,idatevn(ivt,ifm),ihourvn (ivt,ifm)*10000,'N',cgrid,'bin')
+    end if
+
+    if (dumpLocal) then
+       call MsgDump(h//" will write file "//trim(flnm))
+    end if
 
     call xy_ll(glatr,glonr,platn(ifm),plonn(ifm),xtn(1,ifm),ytn(1,ifm))
 
-    call rams_f_open(25,flnm(1:len_trim(flnm)),'FORMATTED','REPLACE','WRITE',1)
-    rewind 25
+    if (useVfm) then
+       call rams_f_open(fUnit,flnm(1:len_trim(flnm)),'FORMATTED','REPLACE','WRITE',1)
+       rewind fUnit
+       
+       write(fUnit,99) 999999,2
+99     format(2i8)
+       
+       write(fUnit,100) iyearvn(ivt,ifm),imonthvn(ivt,ifm) &
+            ,idatevn(ivt,ifm),ihourvn (ivt,ifm)
+100    format(1x,i4.4,2(1x,i2.2),1x,i4.4)
+       
+       write(fUnit,101) nnxp(ifm),nnyp(ifm),npatch
+101    format(4i5)
+       
+       write(fUnit,102) deltaxn(ifm),deltayn(ifm),platn(ifm),plonn(ifm)  &
+            ,glatr,glonr
+102    format(6f16.5)
 
-    write(25,99) 999999,2
-99  format(2i8)
+       do ip = 1,npatch
+          call vforec(fUnit,sfcfile_p(ifm)%veg_ndvif(1,1,ip),nnxyp(ifm),24,scrx,'LIN')
+       enddo
 
-    write(25,100) iyearvn(ivt,ifm),imonthvn(ivt,ifm) &
-         ,idatevn(ivt,ifm),ihourvn (ivt,ifm)
-100 format(1x,i4.4,2(1x,i2.2),1x,i4.4)
+       close(fUnit)
 
-    write(25,101) nnxp(ifm),nnyp(ifm),npatch
-101 format(4i5)
+    else
+       open(fUnit, action="write", file=trim(flnm), form="unformatted", iostat=ios)
+       if (ios /= 0) then
+          call fatal_error(h//" opening file "//trim(flnm))
+       end if
+       rewind fUnit
+       
+       write(fUnit) 999999,2
+       write(fUnit) iyearvn(ivt,ifm),imonthvn(ivt,ifm) &
+            ,idatevn(ivt,ifm),ihourvn (ivt,ifm)
+       write(fUnit) nnxp(ifm),nnyp(ifm),npatch
+       write(fUnit) deltaxn(ifm),deltayn(ifm),platn(ifm),plonn(ifm)  &
+            ,glatr,glonr
+       do ip = 1,npatch
+          write(fUnit) sfcfile_p(ifm)%veg_ndvif(:,:,ip)
+       enddo
 
-    write(25,102) deltaxn(ifm),deltayn(ifm),platn(ifm),plonn(ifm)  &
-         ,glatr,glonr
-102 format(6f16.5)
+       close(fUnit)
+    end if
 
-    do ip = 1,npatch
-       call vforec(25,sfcfile_p(ifm)%veg_ndvif(1,1,ip),nnxyp(ifm),24,scrx,'LIN')
-    enddo
-
-    close(25)
-
-    return
+    if (dumpLocal) then
+       call MsgDump(h//" wrote field veg_ndvif at file "//trim(flnm))
+    end if
+    
   end subroutine ndvi_write
 end module ModMkSfcNdvi

@@ -8,6 +8,9 @@
 module ModLeaf3
   !---------srf-05052006---------------------------
 
+  use ModParallelEnvironment, only: &
+       MsgDump
+
   use ModNamelistFile, only: &
        NamelistFile
   

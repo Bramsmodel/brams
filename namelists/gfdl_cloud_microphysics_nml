@@ -25,11 +25,7 @@
   dw_ocean = 0.2
   ql_gen = 1.0e-3
   ql_mlt = 1.0e-3
-  qi0_crt = 8.0E-5
-  qs0_crt = 1.0e-3
   tau_revp = 600.
-  c_psaci = 0.05
-  c_pgacs = 0.01
   rh_inc = 0.10
   rh_inr = 0.30
   rh_ins = 0.30
@@ -46,4 +42,18 @@
   fix_negative = .true.
   icloud_f = 0
   mp_time = 150.
+
+  ! slj, the following parameters are for cloud - resolving 
+  !      resolution: 1 - 5 km
+  qi0_crt = 0.8e-4
+  qs0_crt = 0.6e-3
+  c_psaci = 0.1
+  c_pgacs = 0.1
+  c_pgaci = 0.05
+ 
+  !qi0_crt = 8.0E-5
+  !qs0_crt = 1.0e-3
+  !c_psaci = 0.05
+  !c_pgacs = 0.01
+
 /

@@ -484,6 +484,7 @@ contains
     integer(kind=i8) :: vsize_i8
     character(len=8) :: c0
     character(len=8) :: c1
+    character(len=8) :: str(10)
     character(len=*), parameter :: h="**(OneFieldWrite)**"
 
     logical, parameter :: dumpLocal=.false.
@@ -507,7 +508,7 @@ contains
        line=trim(line)//"; %npointer="//trim(adjustl(c0))
        write(c0,"(i8)") vsize
        line=trim(line)//"; %nvalues="//trim(adjustl(c0))
-       print *, trim(line); call flush(6)
+       call MsgDump(trim(line))
     end if
 
     ! scratch areas
@@ -543,13 +544,13 @@ contains
     ! debug dumping
 
     if (dumpLocal) then
-       print *, h//" test scr"; call flush(6)
+       call MsgDump(h//" test scr")
        scr(1)=sum(scr(1:vsize))
-       print *, h//" test cscr"; call flush(6)
+       call MsgDump(h//" test cscr")
        scr(1)=sum(cscr(1:vsize))
-       print *, h//" test v_pointer"; call flush(6)
+       call MsgDump(h//" test v_pointer")
        scr(1)=sum(v_pointer(1:vsize))
-       print *, h//" test OK; invokes vforecr"; call flush(6)
+       call MsgDump(h//" test OK; invokes vforecr")
     end if
 
     ! code field and dump coded field on file
@@ -573,7 +574,7 @@ contains
     end if
 
     if (dumpLocal) then
-       print *, h//" done"; call flush(6)
+       call MsgDump(h//" done")
     end if
   end subroutine OneFieldWrite
 
@@ -734,7 +735,9 @@ contains
     write(cProc,"(a5,i2)") " Proc",mchnum
 
     if (.not. (histFlag .or. instFlag .or. liteFlag .or. meanFlag)) then
-       if (dumpLocal) write(*, "(a)") h//cProc//" nothing to do"
+       if (dumpLocal) then
+          call MsgDump(h//cProc//" nothing to do")
+       end if
        checkTimeIO = .false.
     else
        checkTimeIO = .true.
@@ -764,9 +767,9 @@ contains
     write(cProc,"(a5,i2)") " Proc",mchnum
 
     if (dumpLocal) then
-       write(*, "(a)") h//cProc//" initiates "
+       call MsgDump(h//cProc//" initiates ")
        write(c0, "(i8)") oneVarTableSize
-       write(*, "(a)") h//cProc//" oneVarTableSize="//trim(adjustl(c0))
+       call MsgDump(h//cProc//" oneVarTableSize="//trim(adjustl(c0)))
     end if
 
     do ng = 1, ngrids
@@ -787,7 +790,7 @@ contains
 
     if (dumpLocal) then
        write(c0, "(i8)") maxNFields
-       write(*, "(a)") h//cProc//" will write "//trim(adjustl(c0))//" fields"
+       call MsgDump(h//cProc//" will write "//trim(adjustl(c0))//" fields")
     end if
 
   end subroutine fieldWrite
@@ -1359,8 +1362,7 @@ contains
 
        if (dumpLocal) then
           write(c0,"(i8)") ng
-          write(*,"(a)") h//cProc//" starts processing grid "//trim(adjustl(c0))
-          call flush(6)
+          call MsgDump(h//cProc//" starts processing grid "//trim(adjustl(c0)))
        end if
 
        ! grid dependent, field independent constants for gather and unpacking
@@ -1380,8 +1382,7 @@ contains
                trim(adjustl(c1)))
        else if (dumpLocal) then
           write(c0,"(i8)") maxLocalSize
-          write(*,"(a)") h//cProc//" allocated LocalSize("//trim(adjustl(c0))//")"
-          call flush(6)
+          call MsgDump(h//cProc//" allocated LocalSize("//trim(adjustl(c0))//")")
        end if
 
        call OpenNodeWrite(25, time, iyear1, imonth1, idate1, &
@@ -1389,7 +1390,7 @@ contains
        ! for all fields on this grid
 
        if (dumpLocal) then
-          write(*, "(4(a,l1))") h//cProc//" File Open for IOUTPUT=3"
+          call MsgDump(h//cProc//" File Open for IOUTPUT=3")
        endif
 
        do nv = 1, oneVarTableSize
@@ -1411,10 +1412,11 @@ contains
              end if
 
              if (dumpLocal) then
-                write(*,"(2(a,l1))") h//cProc//" on var_p field "//&
-                     oneVarTable(nv)%name//"; thisHistFlag =",&
-                     thisHistFlag, ", thisInstFlag=", thisInstFlag
-                call flush(6)
+                write(c0,"(l1)") thisHistFlag
+                write(c1,"(l1)") thisInstFlag
+                call MsgDump(h//cProc//" on var_p field "//&
+                     oneVarTable(nv)%name//"; thisHistFlag ="//&
+                     trim(adjustl(c0))//", thisInstFlag="//trim(adjustl(c1)))
              end if
 
              ! case 1: output current field values (for hist, inst and lite output files)
@@ -1500,6 +1502,7 @@ contains
     character(len=7)            :: cProc
     character(len=16)           :: varn
     character(len=8)            :: c0, c1
+    character(len=8)            :: str(20)
     character(len=*), parameter :: h="**(saveBinMPIIO)**"
     logical, parameter          :: dumpLocal = .false.
     integer                     :: ierr
@@ -1535,8 +1538,7 @@ contains
 
        if (dumpLocal) then
           write(c0,"(i8)") ng
-          write(*,"(a)") h//cProc//" starts processing grid "//trim(adjustl(c0))
-          call flush(6)
+          call MsgDump(h//cProc//" starts processing grid "//trim(adjustl(c0)))
        end if
 
        ! maximum space for pre-processed local field
@@ -1560,7 +1562,7 @@ contains
                trim(adjustl(c1)))
        else if (dumpLocal) then
           write(c0,"(i8)") maxLocalSize
-          write(*,"(a)") h//cProc//" allocated LocalSize("//trim(adjustl(c0))//")"
+          call MsgDump(h//cProc//" allocated LocalSize("//trim(adjustl(c0))//")")
           call flush(6)
        end if
 
@@ -1575,15 +1577,37 @@ contains
           if (Willwrite(nv,ng)) then
              if (oneVarTable(nv)%imean/=1) then
                 if (dumpLocal) then
-                   write(*,*) h//cProc//" MPI-IO on var_p field "//varn//&
-                        "; idim_type=", oneVarTable(nv)%idim_type, &
-                        ", nnzp(ng), nnxp(ng), nnyp(ng), nzg, nzs, npatch, nwave=", &
-                        nnzp(ng), nnxp(ng), nnyp(ng), nzg, nzs, npatch, nwave, &
-                        "mchnum,rankplus1,ng,ixb,ixe,iyb,iye=", mchnum, &
-                        rankplus1, ng, &
-                        ixb(rankplus1,ng), ixe(rankplus1,ng), &
-                        iyb(rankplus1,ng), iye(rankplus1,ng)
-                   call flush(6)
+                   write(str(1),"(i8)") oneVarTable(nv)%idim_type
+                   write(str(2),"(i8)") nnzp(ng)
+                   write(str(3),"(i8)") nnxp(ng)
+                   write(str(4),"(i8)") nnyp(ng)
+                   write(str(5),"(i8)") nzg
+                   write(str(6),"(i8)") nzs
+                   write(str(7),"(i8)") npatch
+                   write(str(8),"(i8)") nwave
+                   write(str(9),"(i8)") mchnum
+                   write(str(10),"(i8)") rankplus1
+                   write(str(11),"(i8)") ng
+                   write(str(12),"(i8)") ixb(rankplus1,ng)
+                   write(str(13),"(i8)") ixe(rankplus1,ng)
+                   write(str(14),"(i8)") iyb(rankplus1,ng)
+                   write(str(15),"(i8)") iye(rankplus1,ng)                   
+                   call MsgDump(h//cProc//" MPI-IO on var_p field "//varn//&
+                        "; idim_type="//trim(adjustl(str(1)))//&
+                        " nnzp(ng)="//trim(adjustl(str(2)))//&
+                        " nnxp(ng)="//trim(adjustl(str(3)))//&
+                        " nnyp(ng)="//trim(adjustl(str(4)))//&
+                        " nzg="//trim(adjustl(str(5)))//&
+                        " nzs="//trim(adjustl(str(6)))//&
+                        " npatch="//trim(adjustl(str(7)))//&
+                        " nwave="//trim(adjustl(str(8)))//&
+                        " mchnum="//trim(adjustl(str(9)))//&
+                        " rankplus1="//trim(adjustl(str(10)))//&
+                        " ng="//trim(adjustl(str(11)))//&
+                        " ixb="//trim(adjustl(str(12)))//&
+                        " ixe="//trim(adjustl(str(13)))//&
+                        " iyb="//trim(adjustl(str(14)))//&
+                        " iye="//trim(adjustl(str(15))))
                 end if
                 if (oneVarTable(nv)%idim_type==2) then
                    nz = 1
@@ -1705,7 +1729,7 @@ contains
     character(len=7)            :: cProc
     character(len=*), parameter :: h="**(OpenNodeWrite)**"
     logical, parameter          :: dumpLocal = .false.
-
+    
     write(cProc,"(a5,i2)") " Proc",mchnum
 
 
@@ -1724,7 +1748,7 @@ contains
          dd//"-"//hh//"-g"//trim(gg)//".bin"
 
     if (dumpLocal) then
-       write(*, "(4(a,l1))") h//cProc//" filename="//filename
+       call MsgDump(h//cProc//" filename="//filename)
     endif
 
     open (unit, file=filename(1:len_trim(filename)), form='unformatted', &
