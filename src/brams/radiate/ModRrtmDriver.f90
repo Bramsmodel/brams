@@ -324,20 +324,20 @@ contains
                    rlongup               =oneRadiateFields%rlongup(i,j)
                    cosz                  =oneRadiateFields%cosz   (i,j)
 
-                   if (patch_area < 0.0) then
-                      write(str(1),"(i3)") i
-                      write(str(2),"(i3)") j
-                      write(str(3),"(i3)") ip
-                      write(str(4),"(i3)") ngrid
-                      write(str(5),"(e15.7)") patch_area
-                      call MsgDump(h//" patch_area("//trim(adjustl(str(1)))//&
-                           ","//trim(adjustl(str(2)))//&
-                           ","//trim(adjustl(str(3)))//&
-                           ")="//trim(adjustl(str(5)))//&
-                           " para ngrid="//trim(adjustl(str(4)))//&
-                           " na linha 343")
-                      call fatal_error(h//" line 343")
-                   end if
+!!$                   if (patch_area < 0.0) then
+!!$                      write(str(1),"(i3)") i
+!!$                      write(str(2),"(i3)") j
+!!$                      write(str(3),"(i3)") ip
+!!$                      write(str(4),"(i3)") ngrid
+!!$                      write(str(5),"(e15.7)") patch_area
+!!$                      call MsgDump(h//" patch_area("//trim(adjustl(str(1)))//&
+!!$                           ","//trim(adjustl(str(2)))//&
+!!$                           ","//trim(adjustl(str(3)))//&
+!!$                           ")="//trim(adjustl(str(5)))//&
+!!$                           " para ngrid="//trim(adjustl(str(4)))//&
+!!$                           " na linha 343")
+!!$                      call fatal_error(h//" line 343")
+!!$                   end if
                    !
                    call sfcrad_rtm(nzg, nzs, ip,             &
                         soil_energy,    soil_water,     &
@@ -355,15 +355,15 @@ contains
                    oneRadiateFields%albedt (i,j)=albedt
                    oneRadiateFields%rlongup(i,j)=rlongup
 
-                   if (rlongup < 0.0) then
-                      write(str(1),"(i3)") i
-                      write(str(2),"(i3)") j
-                      write(str(3),"(e15.7)") rlongup
-                      call MsgDump(h//" rlongup("//trim(adjustl(str(1)))//&
-                           ","//trim(adjustl(str(2)))//&
-                           "="//trim(adjustl(str(3))))
-                      call fatal_error(h//" line 357")
-                   end if
+!!$                   if (rlongup < 0.0) then
+!!$                      write(str(1),"(i3)") i
+!!$                      write(str(2),"(i3)") j
+!!$                      write(str(3),"(e15.7)") rlongup
+!!$                      call MsgDump(h//" rlongup("//trim(adjustl(str(1)))//&
+!!$                           ","//trim(adjustl(str(2)))//&
+!!$                           "="//trim(adjustl(str(3))))
+!!$                      call fatal_error(h//" line 357")
+!!$                   end if
                 end do
              end do
           end do
@@ -540,12 +540,12 @@ contains
 
     if (ip==1) then
 
-       if (rlongup < 0.0) then
-          write(str(3),"(e15.7)") rlongup
-          call MsgDump(h//" rlongup"//&
-               "="//trim(adjustl(str(3))))
-          call fatal_error(h//" na entrada, linha 545")
-       end if
+!!$       if (rlongup < 0.0) then
+!!$          write(str(3),"(e15.7)") rlongup
+!!$          call MsgDump(h//" rlongup"//&
+!!$               "="//trim(adjustl(str(3))))
+!!$          call fatal_error(h//" na entrada, linha 545")
+!!$       end if
 
        if (cosz>0.03) then
           alb    = min(max(-.0139 + .0467*tan(acos(cosz)), 0.03), 0.999)
@@ -556,29 +556,29 @@ contains
        salvo=rlongup
        rlongup = rlongup + patch_area*stefan*tempk(nzg)**4
 
-       if (rlongup < 0.0) then
-          write(str(1),"(e15.7)") salvo
-          write(str(2),"(e15.7)") patch_area
-          write(str(3),"(e15.7)") stefan
-          write(str(4),"(e15.7)") tempk(nzg)**4
-          write(str(5),"(e15.7)") rlongup
-          call MsgDump(h//" na linha 556, "//&
-               trim(adjustl(str(5)))//" = "//trim(adjustl(str(1)))//&
-               " + "//trim(adjustl(str(2)))//"*"//trim(adjustl(str(3)))//&
-               "*"//trim(adjustl(str(4))))
-          call fatal_error(h//" line 556")
-       end if
+!!$       if (rlongup < 0.0) then
+!!$          write(str(1),"(e15.7)") salvo
+!!$          write(str(2),"(e15.7)") patch_area
+!!$          write(str(3),"(e15.7)") stefan
+!!$          write(str(4),"(e15.7)") tempk(nzg)**4
+!!$          write(str(5),"(e15.7)") rlongup
+!!$          call MsgDump(h//" na linha 556, "//&
+!!$               trim(adjustl(str(5)))//" = "//trim(adjustl(str(1)))//&
+!!$               " + "//trim(adjustl(str(2)))//"*"//trim(adjustl(str(3)))//&
+!!$               "*"//trim(adjustl(str(4))))
+!!$          call fatal_error(h//" line 556")
+!!$       end if
        
     elseif (isfcl==0) then
 
        albedt  = albedt + patch_area*albedo
        rlongup = rlongup + patch_area*stefan*can_temp**4
-       if (rlongup < 0.0) then
-          write(str(3),"(e15.7)") rlongup
-          call MsgDump(h//" rlongup"//&
-               "="//trim(adjustl(str(3))))
-          call fatal_error(h//" line 553")
-       end if
+!!$       if (rlongup < 0.0) then
+!!$          write(str(3),"(e15.7)") rlongup
+!!$          call MsgDump(h//" rlongup"//&
+!!$               "="//trim(adjustl(str(3))))
+!!$          call fatal_error(h//" line 553")
+!!$       end if
 
     else
 

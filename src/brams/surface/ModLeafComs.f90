@@ -105,22 +105,25 @@ module ModLeafComs
 
 
   integer, parameter :: nstyp=12,nvtyp=20
+  ! TEB
+  ! Considering an extra urban type. Equivalent to code 21 - Very urban.
+  integer, parameter :: nvtyp_teb = 1
 
   real, dimension(nstyp)           :: alfa_vG,PHIsat,Wwilt,slden,slcpd,slbs,slcond,sfldcap  &
        ,slcons,slmsts,slpots,ssand,sclay  &
        ,sorgan,sporo,soilcp,slfc,emisg
 
-  real, dimension(nvtyp) :: albv_green,albv_brown,emisv,sr_max,tai_max &
+  real, dimension(nvtyp+nvtyp_teb) :: albv_green,albv_brown,emisv,sr_max,tai_max &
        ,sai,veg_clump,veg_frac,veg_ht,glai_max  &
        ,dead_frac,rcmin
 
   real                             :: cmin,corg,cwat,cair,cka,ckw
 
-  integer, dimension(nvtyp) :: kroot
+  integer, dimension(nvtyp+nvtyp_teb) :: kroot
 
   !---------srf-root---------------------------
   !real, dimension(nzgmax,nvtyp) :: root
-  real, dimension(nvtyp,nzgmax) :: root
+  real, dimension(nvtyp+nvtyp_teb,nzgmax) :: root
   !---------srf-root---------------------------
 
 contains

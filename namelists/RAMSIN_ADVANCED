@@ -7,7 +7,7 @@ $MODEL_GRIDS2
 
    NACOUST  = 4,           ! Small timestep ratio
    IDELTAT  = 0,            ! =0 - constant timesteps
-                            ! =1 - variable down, =2 variable down and up
+                            ! >0 - initial computation <0 - variable
                             ! Nest ratios between this grid
                             !  and the next coarser grid.
    NSTRATX =   1, 3, 2, 4, 4,      ! x-direction
@@ -54,7 +54,7 @@ $CCATT_INFO2
    NA_EXTRA2D = 0,   !Number of extras 2d arrays
    NA_EXTRA3D = 0,   !Number of extras 3d arrays
 
-   PLUMERISE  =1, !0-Desativated, 1-Activated Plume Rise process
+   PLUMERISE  =0, !0-Desativated, 1-Activated Plume Rise process
    
 
    PRFRQ =7200.,
@@ -79,8 +79,8 @@ $END
                              ! =0 - no analysis nudging
                              !                  2=variable
 
-   VWAIT1   = 0.,            ! wait between each VFILE check (s)
-   VWAITTOT = 0.,            ! total wait befor giving up on a VFILE (s)
+   VWAIT1   = 60.,            ! wait between each VFILE check (s)
+   VWAITTOT = 3600.,            ! total wait befor giving up on a VFILE (s)
 
    NUD_HFILE = './H/a-H-2001-07-21-000000-head.txt', 
             ! Header file name for history nudging files (only prefix is used)
@@ -105,9 +105,9 @@ $END
                              !   to determine full nudging weight. 
                              !   (Timescales)/(WT_NUDGE_*) 
                              !    must be larger than DTLONG
-   WT_NUDGE_UV = 1.,         ! Anal nudging weight for u and v
+   WT_NUDGE_UV = -1.,         ! Anal nudging weight for u and v
    WT_NUDGE_TH = 1.,         ! Anal nudging weight for theta
-   WT_NUDGE_PI = 4.,         ! Anal nudging weight for pi
+   WT_NUDGE_PI = -4.,         ! Anal nudging weight for pi
    WT_NUDGE_RT = 1.,         ! Anal nudging weight for r_tot
  
    ! - Incremental Analysis Update (IAU)
@@ -133,9 +133,9 @@ $END
 
    IPASTIN   = 0,            ! Initialize various fields from analysis file?
                              !  1=yes, 0=no
-   PASTFN    = './ANL/OPQUE-A-2020-08-03-000000-head.txt', ! usar a linha abaixo para o primeiro dia somente
+  ! PASTFN    = './ANL/OPQUE-A-2020-08-03-000000-head.txt', ! usar a linha abaixo para o primeiro dia somente
 
-!   PASTFN    = 'NONE',
+   PASTFN    = 'NONE',
                              ! Input analysis file name
 
 !-----------------------------------------------------------------------
@@ -170,7 +170,7 @@ $END
                              ! For ITOPSFLG=2 or 3, Reflected Envelope
                              !   and Envelope Orography enhancement
                              !   factor
-   TOPTWVL  = -7.,-2.,2.,2.,   ! Topo wavelength cutoff in filter 
+   TOPTWVL  = -4.,-2.,2.,2.,   ! Topo wavelength cutoff in filter 
                                 
 ! Surface Roughness scheme
 
@@ -237,6 +237,8 @@ $MODEL_OPTIONS2
 ! Parameters needed by CARMA radiation scheme
    RADDATFN  = './tables/rad_carma/rad_param.data',
 
+   RADTUN = 0.7,
+
    LONRAD   = 1,        ! Longitudinal variation of shortwave
                               !    (0-no, 1-yes)
 
@@ -282,17 +284,19 @@ $MODEL_OPTIONS2
    DTHCON   = 0.,            ! Constant sfc layer  temp grad for no soil
    DRTCON   = 0.,            ! Constant sfc layer moist grad for no soil
    
-   SOIL_MOIST = 'n', ! n => Homogeneous (standard)
+   SOIL_MOIST = 'i', ! n => Homogeneous (standard)
                      ! i,h,a => Heterogenous Soil Moist.Init.
                      !          with file.
                      !          i => INITIAL
                      !          h => HISTORY
                      !          a => INITIAL or HISTORY
 
-  SLZ     =  -12.25, -7.25, -4.250, -2.25, -1.0, -0.35, -0.10,      ! soil grid levels
+   SLZ     =  -7.0, -5.0, -3.4, -2.0, -1.0, -0.4, -0.10,       ! soil grid levels  
 
-   SLMSTR  =   0.45,0.45,0.30,0.25,0.22, 0.22,0.22, ! initial soil moisture
-                          
+  !SLMSTR  =   0.45,0.45,0.30,0.25,0.22, 0.22,0.22, ! initial soil moisture
+   SLMSTR  =   0.48,0.47,0.44,0.40,0.39, 0.38,0.37, ! initial soil moisture
+   
+                       
    STGOFF =    .0,  .0,  .0,  .0,   .0, .0, .0,  ! Initial soil temperature offset
                                                       ! from lowest atmospheric level
 !--------------------------------------------------------------------------
@@ -556,9 +560,9 @@ $ISAN_ISENTROPIC2
    !          U     V      T      Z       R
    ULIMIT =  500., 500., 500., 500000., 100., !Superior valid values for each var
 
-   CCGRADSWRITE = 1, !Is to write a grads with CI?
+   CCGRADSWRITE = 0, !Is to write a grads with CI?
 
-   ICGRADSPREFIX = "./dataout/IC/icGrads",  !Prefix for grads file with IC
+   ICGRADSPREFIX = "../dataout/TMP/IC/icGrads",  !Prefix for grads file with IC
 
 $END
 
@@ -573,7 +577,7 @@ $END
      meteogramFreq  = 1800.,
 !    meteogramMap   = './tables/meteogram/citiesBr.txt',
      meteogramMap   = './tables/meteogram/citiesBr.txt',
-!    meteogramDir   = './dataout/HST/HST2020061200'
-     meteogramDir   = './HST/HST2020061200'
+    meteogramDir   = '../dataout/TMP/HIS/HST2020061200'
+!     meteogramDir   = './HST/HST2020061200'
  $END
 

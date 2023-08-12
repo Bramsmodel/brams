@@ -96,7 +96,7 @@ contains
 
     character(len=16) :: str(10)
     character(len=*), parameter :: h="**(top_check)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     lc=len_trim(topfiles)
     write(cgrid,'(a1,i1)') 'g',ifm

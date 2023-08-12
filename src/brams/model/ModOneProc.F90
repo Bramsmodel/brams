@@ -207,6 +207,10 @@ module ModOneProc
   use Mem_grell_param, only: StoreNamelistFileAtMem_grell_param
 
   use Mem_leaf, only: &
+!!$       ComparaLeaf, &
+!!$       CriaComparaLeaf, &
+!!$       LeLeafFile, &
+!!$       ComparaDoisComparaLeaf, &
        StoreNamelistFileAtMem_leaf, &
        isfcl, &
        leaf_g
@@ -652,7 +656,11 @@ contains
     logical :: dirExist
     character(len=255) :: tmpdir
     character(len=8) :: str(10)
+!!$    character(len=256) :: fName
 
+!!$    type(ComparaLeaf), pointer :: ComparaLeafMeu => null()
+!!$    type(ComparaLeaf), pointer :: ComparaLeafProd => null()
+    
     !XXXsrf    integer :: iau_phase
 
     if (dumpLocal) then
@@ -845,7 +853,16 @@ contains
        call MsgDump(h//" done making surface files")
     end if
 
-
+!!$    ComparaLeafMeu => CriaComparaLeaf(oneGrid%oneNamelistFile)
+!!$    ComparaLeafProd => CriaComparaLeaf(oneGrid%oneNamelistFile)
+!!$
+!!$    fName="/scr2-exa/panetta/Furnas/runBramsProducaoEstragada/bin/dataout/SFC/sfc_OQ3g-S-g1.vfm"
+!!$    call LeLeafFile(fName, ComparaLeafMeu, oneGrid%oneControlVars, oneGrid%oneNamelistFile)
+!!$    fName="/scr2-exa/panetta/Furnas/runBramsComparaMeuProducao/bin/dataout/SFC/sfc_OQ3g-S-g1.vfm"
+!!$    call LeLeafFile(fName, ComparaLeafProd, oneGrid%oneControlVars, oneGrid%oneNamelistFile)
+!!$
+!!$    call ComparaDoisComparaLeaf(ComparaLeafMeu, ComparaLeafProd, .true.)
+    
     ! Behave accordingly to run typ
     !================================================================================================
     !================================================================================================
@@ -1257,6 +1274,10 @@ contains
              endif
           end if
 
+          if (dumpLocal) then
+             call MsgDump(h//" done possibly grabbing new fields from master")
+          end if
+
           !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
           !   call SynchronizedTimeStamp(TS_INPUT) ! timestamp In
 
@@ -1298,6 +1319,10 @@ contains
                   nndtrat, nsubs)
           end if
 
+          if (dumpLocal) then
+             call MsgDump(h//" done examining Courant numbers")
+          end if
+
           ! loop through all grids and advance them in time by a dtlong
 
           if (RUNTYPE/='POS') then
@@ -1322,9 +1347,19 @@ contains
 
                 if ( ( dyncore_flag == 0 ) .or. ( dyncore_flag == 1 ) ) then
                    ! Leapfrog/forward-time based scheme
+
+                   if (dumpLocal) then
+                      call MsgDump(h//" invoke timestep")
+                   end if
+
                    call timestep(oneGrid)
                 else if ( dyncore_flag == 2 ) then
                    ! Runge-Kutta based scheme
+
+                   if (dumpLocal) then
+                      call MsgDump(h//" invoke timestep_rk")
+                   end if
+
                    call timestep_rk(oneGrid)
                 else
                    iErrNumber=dumpMessage(c_tty,c_yes,header,modelVersion,c_fatal &
@@ -1353,6 +1388,12 @@ contains
 
                    call fatal_error(h//" multiple grids not converted yet")
                 end if
+
+                if (dumpLocal) then
+                   write(str(1),"(i8)") npass
+                   call MsgDump(h//" done npass="//trim(adjustl(str(1))))
+                end if
+
              end do
 
           end if

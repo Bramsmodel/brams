@@ -779,6 +779,13 @@ contains
                (oneVarTable(nv)%ianal==1) .or. &
                (oneVarTable(nv)%ilite==1) .or. &
                (oneVarTable(nv)%imean==1)
+          if (dumpLocal) then
+             if (WillWrite(nv,ng)) then
+                call MsgDump(h//" will write field "//trim(adjustl(oneVarTable(nv)%name)))
+             else
+                call MsgDump(h//" will not write field "//trim(adjustl(oneVarTable(nv)%name)))
+             end if
+          end if
        end do
        do nv = oneVarTableSize+1, nvMax
           Willwrite(nv,ng)=.false.

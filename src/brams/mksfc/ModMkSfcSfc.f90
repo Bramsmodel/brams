@@ -93,7 +93,7 @@ contains
 
     character(len=16) :: str(10)
     character(len=*), parameter :: h="**(sfc_check)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     lc=len_trim(sfcfiles)
     write(cgrid,'(a1,i1)') 'g',ifm
@@ -226,7 +226,19 @@ contains
        call MsgDump(h//" will write file "//trim(adjustl(flnm)))
     end if
 
+    open(64, action="write", file="/scr2-exa/panetta/Furnas/runBramsComparaMeuProducao/bin/Saida_sfc_write_meu.bin", &
+         form="unformatted", iostat=ios)
+    if (ios /= 0) then
+       call fatal_error(h//" abrindo arquivo /scr2-exa/panetta/Furnas/runBramsComparaMeuProducao/bin/SaiMeu")
+    end if
+    write(64) platn(ifm),plonn(ifm),xtn(1,ifm),ytn(1,ifm)
+    
     call xy_ll(glatr,glonr,platn(ifm),plonn(ifm),xtn(1,ifm),ytn(1,ifm))
+
+    write(64) glatr, glonr
+    close(64)
+    
+    print *, h//" glonr apos xy_ll=",glonr
 
     if (useVfm) then
        call rams_f_open (fUnit,flnm(1:len_trim(flnm)),'FORMATTED','REPLACE','WRITE',1)
@@ -292,6 +304,8 @@ contains
        call MsgDump(h//" wrote file "//trim(adjustl(flnm))//&
             " containing patch_area, leaf_class and soil_text")
     end if
+
+    print *, h//" escreveu sflon (glonr)= ",glonr
 
   end subroutine sfc_write
 

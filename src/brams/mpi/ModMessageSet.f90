@@ -3454,7 +3454,7 @@ contains
 
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(CreateAdvMntMessageSet)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! no message set if no neighbours
 

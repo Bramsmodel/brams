@@ -7,6 +7,9 @@
 !###########################################################################
 module ModLeaf3Init
 
+  use ModParallelEnvironment, only: &
+       MsgDump
+  
   use ModLeaf3, only: &
        vegndvi, &
        grndvap
@@ -27,7 +30,7 @@ module ModLeaf3Init
        nvgcon
 
   use ModLeafComs, only: &
-       nstyp, nvtyp, cka, ckw, &
+       nstyp, nvtyp, nvtyp_teb, cka, ckw, &
        slpots, slmsts, slbs, slcons, slcpd, slden, sfldcap, &
        emisg, slfc, soilcp, albv_green, albv_brown, emisv, &
        sr_max, tai_max, sai, veg_clump, veg_frac, veg_ht, &
@@ -63,6 +66,7 @@ contains
 
 
   subroutine sfcdata
+
     !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
     real, dimension(nzgmax,nstyp) :: slcons1
     real, dimension(nstyp) :: slcons0,fhydraul
@@ -74,7 +78,7 @@ contains
     real :: romin,roorg,slfcap,refdepth,tmin,ratio,xmin
     real, dimension     (nstyp) :: xsand,xclay,xorgan,xrobulk
     real, dimension   (8,nstyp) :: soilparms
-    real, dimension (12,0:nvtyp) :: bioparms
+    real, dimension (12,0:nvtyp+nvtyp_teb) :: bioparms
 
     !---------srf-05052006---------------------------
     real, dimension(2,0:nvtyp)        :: root_data ! Arora & Boer (EI, vol.7, 2003)
@@ -93,10 +97,10 @@ contains
     !  slden   - dry soil density (kg/m3) (also total soil porosity)
 
     data soilparms/  &
-                                !-----------------------------------------------------------------------------
-                                !slpots        slbs          slcons0         slden       USDA SOIL CLASS
-                                !      slmsts         slcons          slcpd              # AND NAME
-                                !-----------------------------------------------------------------------------
+         !-----------------------------------------------------------------------------
+         !slpots        slbs          slcons0         slden       USDA SOIL CLASS
+         !      slmsts         slcons          slcpd              # AND NAME
+         !-----------------------------------------------------------------------------
          -.121, .395,  4.05, .18e-3, .50e-3, 1465.e3, 1600.,.135  & !  1 sand
          ,-.090, .410,  4.38, .16e-3, .60e-3, 1407.e3, 1600.,.150  & !  2 loamy sand
          ,-.218, .435,  4.9 , .34e-4, .77e-3, 1344.e3, 1600.,.195  & !  3 sandy loam
@@ -120,22 +124,22 @@ contains
     !         LEAF-3 BIOPHYSICAL PARAMETERS BY LANDUSE CLASS NUMBER
 
     data bioparms/  &
-                                !-----------------------------------------------------------------------------
-                                !albv_green     sr_max         veg_clump       rootdep             LEAF-3 CLASS #
-                                !     albv_brown     tai_max        veg_frac        dead_frac      AND DESCRIPTION
-                                !          emisv          sai            veg_ht         rcmin
-                                !-----------------------------------------------------------------------------
+         !-----------------------------------------------------------------------------
+         !albv_green     sr_max         veg_clump       rootdep             LEAF-3 CLASS #
+         !     albv_brown     tai_max        veg_frac        dead_frac      AND DESCRIPTION
+         !          emisv          sai            veg_ht         rcmin
+         !-----------------------------------------------------------------------------
          .00, .00, .00,  .0, 0.0,  .0,  .0, .00,   .0,  .0, .0,   0., & !  0  Ocean
          .00, .00, .00,  .0, 0.0,  .0,  .0, .00,   .0,  .0, .0,   0., & !  1  Lakes, rivers, streams
          .00, .00, .00,  .0, 0.0,  .0,  .0, .00,   .0,  .0, .0,   0., & !  2  Ice cap/glacier
          .00, .00, .00,  .0, 0.0,  .0,  .0, .00,   .0,  .0, .0,   0., & !  3  Desert, bare soil
          .14, .24, .97, 5.4, 8.0, 1.0, 1.0, .80, 20.0, 1.5, .0, 500., & !  4  Evergreen needleleaf tree
          .14, .24, .95, 5.4, 8.0, 1.0, 1.0, .80, 22.0, 1.5, .0, 500., & !  5  Deciduous needleleaf tree
-                                !srf --- Validated by CATT experiment 2002
-                                ! .20, .24, .95, 6.2, 7.0, 1.0,  .0, .80, 22.0, 1.5, .0, 500., & !  6  Deciduous broadleaf tree
+         !srf --- Validated by CATT experiment 2002
+         ! .20, .24, .95, 6.2, 7.0, 1.0,  .0, .80, 22.0, 1.5, .0, 500., & !  6  Deciduous broadleaf tree
          .20, .24, .95, 6.2, 7.0, 1.0,  .0, .80, 22.0, 3.5, .0, 500., & !  6  Deciduous broadleaf tree
-                                !srf --- Validated by CATT experiment 2002
-                                !.17, .24, .95, 4.1, 7.0, 1.0,  .0, .90, 32.0, 1.5, .0, 500., & !  7  Evergreen broadleaf tree
+         !srf --- Validated by CATT experiment 2002
+         !.17, .24, .95, 4.1, 7.0, 1.0,  .0, .90, 32.0, 1.5, .0, 500., & !  7  Evergreen broadleaf tree
          .12, .18, .95, 4.1, 6.5, 1.0,  .0, .90, 32.0, 3.5, .0, 500., & !  7  Evergreen broadleaf tree
          .13, .30, .96, 5.1, 4.0, 1.0,  .0, .75,   .3,  .7, .7, 100., & !  8  Short grass
          .24, .43, .96, 5.1, 5.0, 1.0,  .0, .80,  1.2, 1.0, .7, 100., & !  9  Tall grass
@@ -143,26 +147,27 @@ contains
          .20, .24, .95, 5.1, 4.5,  .5, 1.0, .60,   .2, 1.0, .0,  50., & ! 11  Tundra
          .14, .24, .97, 5.1, 5.5, 1.0, 1.0, .70,  1.0, 1.0, .0, 500., & ! 12  Evergreen shrub
          .20, .28, .97, 5.1, 5.5, 1.0, 1.0, .70,  1.0, 1.0, .0, 500., & ! 13  Deciduous shrub
-                                !srf --- Validated by CATT experiment 2002
-                                !.16, .24, .96, 6.2, 7.0, 1.0,  .5, .80, 22.0, 1.5, .0, 500., & ! 14  Mixed woodland
+         !srf --- Validated by CATT experiment 2002
+         !.16, .24, .96, 6.2, 7.0, 1.0,  .5, .80, 22.0, 1.5, .0, 500., & ! 14  Mixed woodland
          .16, .24, .96, 6.2, 7.0, 1.0,  .5, .80, 22.0, 2.0, .0, 500., & ! 14  Mixed woodland
          .22, .40, .95, 5.1, 5.0,  .5,  .0, .85,  1.0, 1.0, .0, 100., & ! 15  Crop/mixed farming, C3 grassland
          .18, .40, .95, 5.1, 5.0,  .5,  .0, .80,  1.1, 1.0, .0, 500., & ! 16  Irrigated crop
          .12, .43, .98, 5.1, 7.0, 1.0,  .0, .80,  1.6, 1.0, .0, 500., & ! 17  Bog or marsh
-                                !srf ---Validated by CATT experiment 2002
-                                !.20, .36, .96, 5.1, 6.0, 1.0,  .0, .80,  7.0, 1.0, .0, 100., & ! 18  Wooded grassland
+         !srf ---Validated by CATT experiment 2002
+         !.20, .36, .96, 5.1, 6.0, 1.0,  .0, .80,  7.0, 1.0, .0, 100., & ! 18  Wooded grassland
          .13, .30, .96, 5.1, 6.0, 1.0,  .0, .80,  7.0, 1.0, .0, 100., & ! 18  Wooded grassland
          .20, .36, .90, 5.1, 3.6, 1.0,  .0, .74,  6.0,  .8, .0, 500., & ! 19  Urban and built up
-         .17, .24, .95, 4.1, 7.0, 1.0,  .0, .90, 32.0, 1.5, .0, 500./   ! 20  Wetland evergreen broadleaf tree
+         .17, .24, .95, 4.1, 7.0, 1.0,  .0, .90, 32.0, 1.5, .0, 500., & ! 20  Wetland evergreen broadleaf tree
+         .16, .24, .96, 5.1, 2.0, 1.5, 1.0, .10, 20.0, 1.5, .0, 500./   ! 21  Very urban
 
     !---------srf-05052006---------------------------
     ! root profiles
 
     data root_data/  &
-                                !------------------------------------------
-                                ! a    B(kg/m^2         LEAF-3 CLASS #
-                                !                      AND DESCRIPTION
-                                !------------------------------------------
+         !------------------------------------------
+         ! a    B(kg/m^2         LEAF-3 CLASS #
+         !                      AND DESCRIPTION
+         !------------------------------------------
          .00,    .00   & !  0  Ocean
          , .00,    .00   & !  1  Lakes, rivers, streams (inland water)
          , .00,    .00   & !  2  Ice cap/glacier
@@ -184,6 +189,12 @@ contains
          ,2.00,   1.40	& ! 18  Wooded grassland  (orig= 2.84)
          ,3.97,   0.15   & ! 19  Urban and built up  == short grass
          ,3.87,   4.90   / ! 20  Wetland evergreen broadleaf tree === Evergreen broadleaf tree
+
+    character(len=8) :: str(10)
+    character(len=16) :: fstr(10)
+    character(len=*), parameter :: h="**(sfcdata)**"
+    logical, parameter :: dumpLocal=.false.
+
 
     !initial root
     do nnn = 1,nvtyp
@@ -225,6 +236,7 @@ contains
           endif
        endif
     enddo
+    root(nvtyp_teb,:) = 0.
     !---------srf-05052006---------------------------
 
 
@@ -287,7 +299,7 @@ contains
 
     enddo
 
-    do nnn = 1,(nvtyp)
+    do nnn = 1,(nvtyp+nvtyp_teb)
        albv_green(nnn) = bioparms(1,nnn)
        albv_brown(nnn) = bioparms(2,nnn)
        emisv(nnn)      = bioparms(3,nnn)
@@ -303,8 +315,27 @@ contains
 
        !srf root(1,nnn)  = 0.              ! not used
        kroot(nnn)   = nzg
+
+       if (dumpLocal) then
+          write(str(1),"(i8)") nnn
+          write(str(2),"(i8)") kroot(nnn)
+          call MsgDump(h//" kroot("//trim(adjustl(str(1)))//") = "//trim(adjustl(str(2))))
+       end if
        do k = nzg-1,1,-1
-          if (slz(k+1) .gt. -bioparms(10,nnn)) kroot(nnn) = k
+          if (slz(k+1) .gt. -bioparms(10,nnn)) then
+             kroot(nnn) = k
+             if (dumpLocal) then
+                write(str(1),"(i8)") nnn
+                write(str(2),"(i8)") kroot(nnn)
+                write(str(3),"(i8)") k+1
+                write(fstr(4),"(e15.7)") slz(k+1)
+                write(fstr(5),"(e15.7)") -bioparms(10,nnn)
+                call MsgDump(h//" kroot("//trim(adjustl(str(1)))//") received "//trim(adjustl(str(2)))//&
+                     " since slz("//trim(adjustl(str(3)))//") [value="//trim(adjustl(fstr(4)))//&
+                     "] > -bioparms(10,"//trim(adjustl(str(1)))//")  [value="//trim(adjustl(fstr(5)))//&
+                     "]")
+             end if
+          end if
        enddo
     enddo
 

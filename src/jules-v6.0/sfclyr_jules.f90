@@ -3,6 +3,9 @@
 ! 
 module ModSfcLyrJules
 
+  use ModParallelEnvironment, only: &
+       MsgDump
+  
   use ModNamelistFile, only: &
        NamelistFile
   
@@ -221,16 +224,25 @@ contains
 
     character(LEN=256) :: aux
 
+    character(len=*), parameter :: h="**(sfclyr_jules)**"
+    logical, parameter :: dumpLocal=.true.
+    character(len=8) :: str(10)
+    
     nml_dir=trim(julesFile)
 
+    if (dumpLocal) then
+       call MsgDump(h//" starts")
+    end if
+    
     inquire(FILE=trim(nml_dir)//'/drive.nml',EXIST=there)
 
     if (.not. there) then
-       print*;print*;print*;print*, 'Not found:  '//trim(nml_dir)//'/drive.nml'
-       print*;print*, 'Check JULESIN variable in RAMSIN'
-       print*;stop
+       call fatal_error(h//"File"//trim(nml_dir)//"/drive.nml not found; Check JULESIN variable in RAMSIN")
+!!$       print*;print*;print*;print*, 'Not found:  '//trim(nml_dir)//'/drive.nml'
+!!$       print*;print*, 'Check JULESIN variable in RAMSIN'
+!!$       print*;stop
     endif
-
+    
     ia=iaI-1
     iz=izI+1
     ja=jaI-1
@@ -319,6 +331,10 @@ contains
 
        call sfcdata
 
+       if (dumpLocal) then
+          call MsgDump(h//"at start, done with sfcdata")
+       end if
+
        !--- ACOPLANDO - BRAMS p/ JULES ------{
        do j=ja,jz
           do i=ia,iz
@@ -400,7 +416,16 @@ contains
           write(unit=66,fmt='(A)') '---- Inicio da FASE-1 ---'
           close(unit=66)
        endif
+
+       if (dumpLocal) then
+          call MsgDump(h//"will read namelist at fase_1 jules_subroutine")
+       end if
+
        fase=1; call jules_subroutine(nml_dir,fase)  ! faz leitura do namelist (le o ntype)
+
+       if (dumpLocal) then
+          call MsgDump(h//"done reading namelist at fase_1 jules_subroutine")
+       end if
 
        !--- Converte o vegetacao do BRAMS (Leaf3) para a do JULES ---{
        allocate(fracB(nxB,nyB,ntype))
@@ -415,7 +440,16 @@ contains
           write(unit=66,fmt='(A)') '---- Inicio da FASE-2 ---'
           close(unit=66)
        endif
+
+       if (dumpLocal) then
+          call MsgDump(h//"will read namelist at fase_2 jules_subroutine")
+       end if
+
        fase=2; call jules_subroutine(nml_dir,fase)  ! finaliza a inicializacao do JULES
+
+       if (dumpLocal) then
+          call MsgDump(h//"done reading namelist at fase_2 jules_subroutine")
+       end if
 
        if (allocated(dzsoilB)) deallocate(dzsoilB)
        if (allocated(sthuB)) deallocate(sthuB)
@@ -423,7 +457,14 @@ contains
 
     endif
 
-    if (.not. run_jules(istp)) return
+    if (.not. run_jules(istp)) then
+
+       if (dumpLocal) then
+          call MsgDump(h//"returns, since run_jules(istp) is false")
+       end if
+
+       return
+    end if
 
     if(mynum==1 .and. time==0) then
        open(unit=66,file='jules.log',status='old',position='append',action='write')
@@ -439,7 +480,15 @@ contains
     !DSM    END IF
     !-------------------------------------}
 
+    if (dumpLocal) then
+       call MsgDump(h//"will read namelist at fase_3 jules_subroutine")
+    end if
+
     fase=3; call jules_subroutine(nml_dir,fase) !--- para cada timstep do BRAMS
+
+    if (dumpLocal) then
+       call MsgDump(h//"done reading namelist at fase_3 jules_subroutine")
+    end if
 
     !--- ACOPLANDO - JULES p/ BRAMS ------{
     !--- Acoplando o albedt ---{
@@ -451,8 +500,14 @@ contains
        j = ( ainfo%land_index(l)-1 ) / row_length + 1
        i = ainfo%land_index(l) - ( j-1 ) * row_length
        if (i<1 .or. i>nxB .or. j<1 .or. j>nyB .or. i+ia-1>iz .or. j+ja-1>jz) then
-          print*, "ERRO... conversao incorreta de l para i,j -> l,i,j=",l,i,j
-          stop
+          write(str(1),"(i8)") l
+          write(str(2),"(i8)") i
+          write(str(3),"(i8)") j
+          call fatal_error(h//" Wrong conversion from l (="//trim(adjustl(str(1)))//&
+               ") to i (="//trim(adjustl(str(2)))//") and j (="//&
+               trim(adjustl(str(3)))//")")
+!!$          print*, "ERRO... conversao incorreta de l para i,j -> l,i,j=",l,i,j
+!!$          stop
        endif
        !--- Acoplando o rlongup ---{
        oneRadiateFields%rlongup(i+ia-1,j+ja-1) = rlongupJ(l)
@@ -526,8 +581,14 @@ contains
 
 
        if (i<1 .or. i>nxB .or. j<1 .or. j>nyB .or. i+ia-1>iz .or. j+ja-1>jz) then
-          print*, "ERRO... conversao incorreta de l para i,j -> l,i,j=",l,i,j
-          stop
+          write(str(1),"(i8)") l
+          write(str(2),"(i8)") i
+          write(str(3),"(i8)") j
+          call fatal_error(h//" Wrong conversion from l (="//trim(adjustl(str(1)))//&
+               ") to i (="//trim(adjustl(str(2)))//") and j (="//&
+               trim(adjustl(str(3)))//")")
+!!$          print*, "ERRO... conversao incorreta de l para i,j -> l,i,j=",l,i,j
+!!$          stop
        endif
 
        oneJulesFields%gpp(i+ia-1,j+ja-1)=trifctltype%gpp_gb(l)
@@ -546,9 +607,20 @@ contains
           close(unit=66)
        endif
 
+       if (dumpLocal) then
+          call MsgDump(h//"will read namelist at fase_4 jules_subroutine")
+       end if
 
        fase=4; call jules_subroutine(nml_dir,fase) ! apos o ultimo timestep do BRAMS
+
+       if (dumpLocal) then
+          call MsgDump(h//"done reading namelist at fase_4 jules_subroutine")
+       end if
     endif
+    
+    if (dumpLocal) then
+       call MsgDump(h//"ends")
+    end if
 
   end subroutine sfclyr_jules
 

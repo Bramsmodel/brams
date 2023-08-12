@@ -388,6 +388,7 @@ contains
     
     !  Surface layer, soil and veggie model
     !----------------------------------------
+
     if (isfcl<=2) then
        call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
             oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, &
@@ -399,13 +400,19 @@ contains
 #ifdef JULES
     elseif (isfcl == 5) then
        if (time==0.) then
+          if (dumpLocal) then
+             call MsgDump(h//" invoking sfclyr for isfcl==5 and time==0")
+          end if
           call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
                oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, &
                oneGrid%oneMicVars, oneGrid%oneMicroFields, oneGrid%oneRadiateFields, &
                oneGrid%oneCuParmFields)
           if (dumpLocal) then
-             call MsgDump(h//" sfclyr para isfcl==2 and time==0")
+             call MsgDump(h//" done sfclyr para isfcl==5 and time==0")
           end if
+       end if
+       if (dumpLocal) then
+          call MsgDump(h//" invoking sfclyr_jules for isfcl==5")
        end if
        call sfclyr_jules(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile, &
             oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicVars, &
@@ -425,7 +432,7 @@ contains
 #endif
     endif
 
-    if (any(leaf_g(1)%patch_area < 0)) then
+!!$    if (any(leaf_g(1)%patch_area < 0)) then
 !!$       do ip = 1, size(leaf_g(1)%patch_area,3)
 !!$          do j = 1, size(leaf_g(1)%patch_area,2)
 !!$             do i = 1, size(leaf_g(1)%patch_area,1)
@@ -443,12 +450,12 @@ contains
 !!$             end do
 !!$          end do
 !!$       end do
-       call fatal_error(h//" algum patch_area < 0 na linha 415")
-    else
-       if (dumpLocal) then
-          call MsgDump(h//"todos os patch_area>=0 na linha 439")
-       end if
-    end if
+!!$       call fatal_error(h//" algum patch_area < 0 na linha 415")
+!!$    else
+!!$       if (dumpLocal) then
+!!$          call MsgDump(h//"todos os patch_area>=0 na linha 439")
+!!$       end if
+!!$    end if
     
     !- Sea salt Aerossol inline source
     call SeaSaltDriver(ia,iz,ja,jz,ngrid,mxp,myp, oneGrid%oneBasicFields)

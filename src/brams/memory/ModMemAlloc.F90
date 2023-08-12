@@ -418,8 +418,6 @@ contains
     ! Flag to control new Grell MEmory allocation
     integer :: Alloc_Grell3_Flag
 
-    character(len=8) :: str(10)
-    character(len=*), parameter :: h="**(MemAlloc)**"
     integer :: ierr,n
     integer :: ne2d, ne3d, nsa
     integer :: idiffk
@@ -427,6 +425,10 @@ contains
 
     integer, parameter :: maxvars=1000
 
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(MemAlloc)**"
+    logical, parameter :: dumpLocal=.false.
+    
     call alloc_paths(ngrids, nmachs)
 
     !-------------
@@ -468,8 +470,15 @@ contains
     !
     !Allocate and prepare optical properties memory
     if (oneGrid%oneNamelistFile%iswrtyp==6) then
+       if (dumpLocal) then
+          call MsgDump(h//" invokes setOptMemory")
+       end if
        call setOptMemory(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
             ngrids,imean,nmzp,nmxp,nmyp)
+    else
+     if (dumpLocal) then
+        call MsgDump(h//" does not invoke setOptMemory")
+     end if
     end if
 
     !-------------

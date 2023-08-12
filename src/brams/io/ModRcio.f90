@@ -134,6 +134,7 @@ module ModRcio
   use ModLeafComs, only: &
        nstyp, &
        nvtyp, &
+       nvtyp_teb, &
        kroot, &
        slden, &
        slcpd, &
@@ -234,7 +235,9 @@ contains
     integer :: i
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(cio_i_1d)**"
+    logical, parameter :: dumpLocal=.false.
 
+    
     if (irw == 1) then
        call cio_pos_file (iun,cstr,cio_i_1d)
        if (cio_i_1d == 1) then
@@ -244,12 +247,20 @@ contains
        end if
        read(iun,*) nn
        read(iun,*) ia
+       if (dumpLocal) then
+          write(str(1),"(i8)") nn
+          call MsgDump(h//" read "//trim(cstr)//" of size "//trim(adjustl(str(1))))
+       end if
     else if (irw == 2) then
        nn=size(ia)
        write(iun,"('__',a)") cstr
        write(iun,*) nn
        write(iun,"(i6)") (ia(i),i=1,nn)
        cio_i_1d=0
+       if (dumpLocal) then
+          write(str(1),"(i8)") nn
+          call MsgDump(h//" wrote "//trim(cstr)//" of size "//trim(adjustl(str(1))))
+       end if
     else
        write(str(1),"(i8)") irw
        call fatal_error(h//" invoked with unknown irw="//&
@@ -472,8 +483,8 @@ contains
          'FORMATTED','REPLACE','WRITE', "ASIS", oneIOFileDS%iclobber)
     if (dumpLocal) then
        write(c0,"(i8)") oneIOFileDS%unit
-       write(*, "(a)") h//" opened new file "//trim(oneIOFileDS%fHeadName)//&
-            " at unit "//trim(adjustl(c0))
+       call MsgDump(h//" opened new file "//trim(oneIOFileDS%fHeadName)//&
+            " at unit "//trim(adjustl(c0)))
     end if
 
     write(oneIOFileDS%unit,'(i6)') oneIOFileDS%ht%lastUsed
@@ -484,14 +495,17 @@ contains
             oneIOFileDS%ht%f(nv)%idim_type,                   &
             oneIOFileDS%ht%f(nv)%ngrid,                       &
             oneIOFileDS%ht%f(nv)%nvalues
+       if (dumpLocal) then
+          call MsgDump(h//" wrote info for field "//trim(adjustl(oneIOFileDS%ht%f(nv)%string)))
+       end if
     end do
 
     call commio(oneIOFileDS%fId,'WRITE',oneIOFileDS%unit, oneNamelistFile, oneMicControl)
     close(oneIOFileDS%unit)
     if (dumpLocal) then
        write(c0,"(i8)") oneIOFileDS%unit
-       write(*, "(a)") h//" dumped and close file "//trim(oneIOFileDS%fHeadName)//&
-            " at unit "//trim(adjustl(c0))
+       call MsgDump(h//" dumped and close file "//trim(oneIOFileDS%fHeadName)//&
+            " at unit "//trim(adjustl(c0)))
     end if
 
     oneIOFileDS%unit = -1
@@ -527,8 +541,14 @@ contains
 
     if (io == 'READ') then
        irw=1
+       if (dumpLocal) then
+          call MsgDump(h//" starts reading file")
+       end if
     else if (io == 'WRITE') then
        irw=2
+       if (dumpLocal) then
+          call MsgDump(h//" starts writing file")
+       end if
     else
        call fatal_error(h//" invoked with io not READ or WRITE, but **"//&
             io//"**")
@@ -607,7 +627,11 @@ contains
        ie=cio(iun,irw,'rt01dn'//cng,rt01dn(1:nnzp(ng),ng))
     enddo
 
-    ie=cio(iun,irw,'kroot',kroot(1:nvtyp))
+    if (dumpLocal) then
+       write(str(1),"(i8)") nvtyp+nvtyp_teb
+       call MsgDump(h//" kroot for i/o is dimensioned "//trim(adjustl(str(1))))
+    end if
+    ie=cio(iun,irw,'kroot',kroot(1:nvtyp+nvtyp_teb))
 
     ie=cio(iun,irw,'itopo',itopo)
     ie=cio(iun,irw,'initial',initial)
@@ -705,7 +729,7 @@ contains
     ie=cio(iun,irw,'slfc',slfc(1:nstyp))
     ie=cio(iun,irw,'emisg',emisg(1:nstyp))
 
-    ie=cio(iun,irw,'emisv',emisv(1:nvtyp))
+    ie=cio(iun,irw,'emisv',emisv(1:nvtyp+nvtyp_teb))
 
     ie=cio(iun,irw,'root',root)
     ie=cio(iun,irw,'slz',slz(1:nzg))

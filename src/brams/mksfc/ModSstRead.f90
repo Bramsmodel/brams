@@ -114,7 +114,7 @@ contains
 
     character(len=16) :: str(10)
     character(len=*), parameter :: h="**(sst_check_header)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ierr = 0
 

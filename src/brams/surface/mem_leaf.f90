@@ -9,11 +9,20 @@
 
 Module mem_leaf
 
-  use ModParallelEnvironment, only: &
-       MsgDump
+  use ModCompare, only: &
+       Compare
+  
+  use ReadBcst, only: &
+       ReadStoreOwnChunk
+
+  use ModControlVars, only: &
+       ControlVars
 
   use ModNamelistFile, only: &
-       namelistFile
+       NamelistFile
+
+  use ModParallelEnvironment, only: &
+       MsgDump
 
   use grid_dims, only: &
        nzgmax
@@ -73,6 +82,40 @@ Module mem_leaf
      real, pointer, contiguous :: seatf(:,:)  => null()
   End Type leaf_vars
 
+
+
+  Type ComparaLeaf
+     integer :: lc
+     integer :: isfc_marker
+     integer :: isfc_ver
+     integer :: nsfx
+     integer :: nsfy
+     integer :: nsfzg
+     integer :: nspatch
+     integer :: nsivegtflg
+     integer :: nsisoilflg
+     integer :: nsnofilflg
+     real :: sfdx
+     real :: sfdy
+     real :: sfplat
+     real :: sfplon
+     real :: sflat
+     real :: sflon
+
+     ! Variables to be dimensioned by (nxp,nyp,nzg,npatch)
+
+     real, pointer, contiguous :: soil_text(:,:,:,:) => null()
+
+     ! Variables to be dimensioned by (nxp,nyp,npatch)
+
+     real, pointer, contiguous :: patch_area(:,:,:)  => null()
+     real, pointer, contiguous :: leaf_class(:,:,:)  => null()
+  End Type ComparaLeaf
+
+  integer, parameter :: UNDEF_INT = huge(1)
+  real, parameter :: UNDEF_REAL = huge(1.0)
+
+
   type (leaf_vars), pointer :: leaf_g(:) => null()
   type (leaf_vars), pointer :: leafm_g(:) => null()
 
@@ -93,6 +136,8 @@ Module mem_leaf
   real    :: slmstr(nzgmax) ! from RAMSIN
   real    :: slz(nzgmax) ! from RAMSIN
 
+  include "UseVfm.h"
+
 Contains
 
   subroutine alloc_leaf(leaf,nz,nx,ny,nzg,nzs,np,ng)
@@ -103,7 +148,7 @@ Contains
 
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(alloc_leaf)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! Allocate arrays based on options (if necessary)
 
@@ -308,7 +353,7 @@ Contains
     real, pointer, contiguous :: pLeafM2D(:,:) => null()
     character(len=8) :: str_recycle
     character(len=*), parameter :: h="**(filltab_leaf)**"
-    
+
     str_recycle = ''
     if (ipastin == 1) then
        str_recycle = ':recycle'
@@ -327,7 +372,7 @@ Contains
          pLeaf4D, &
          'SOIL_WATER :4:hist:anal:mpti:mpt3'//trim(str_recycle), &
          pLeafM4D, imean)
-    
+
     pLeaf4D => leaf%soil_energy
     if (imean == 1) then
        pLeafM4D => leafm%soil_energy
@@ -738,4 +783,207 @@ Contains
        isfcl_ocean = isfcl
     endif
   end subroutine StoreNamelistFileAtMem_leaf
+
+
+
+  function CriaComparaLeaf(oneNamelistFile) result(res)
+    implicit none
+    type(NamelistFile), pointer :: oneNamelistFile
+    type(ComparaLeaf), pointer :: res
+
+    integer :: nx
+    integer :: ny
+    integer :: np
+    integer :: nzg
+    integer :: ierr
+    character(len=*), parameter :: h="**(CriaComparaLeaf)**"
+
+    nx = oneNamelistFile%nnxp(1)
+    ny = oneNamelistFile%nnyp(1)
+    np = oneNamelistFile%npatch
+    nzg = oneNamelistFile%nzg
+
+    allocate(res, stat=ierr)
+    if (ierr /= 0) then
+       call fatal_error(h//" falhou alocando res")
+    end if
+
+    res%lc=UNDEF_INT
+    res%isfc_marker=UNDEF_INT
+    res%isfc_ver=UNDEF_INT
+    res%nsfx=UNDEF_INT
+    res%nsfy=UNDEF_INT
+    res%nsfzg=UNDEF_INT
+    res%nspatch=UNDEF_INT
+    res%nsivegtflg=UNDEF_INT
+    res%nsisoilflg=UNDEF_INT
+    res%nsnofilflg=UNDEF_INT
+
+    res%sfdx=UNDEF_REAL
+    res%sfdy=UNDEF_REAL
+    res%sfplat=UNDEF_REAL
+    res%sfplon=UNDEF_REAL
+    res%sflat=UNDEF_REAL
+    res%sflon=UNDEF_REAL
+
+    allocate (res%soil_text(nzg,nx,ny,np), stat=ierr)
+    if (ierr /= 0) then
+       call fatal_error(h//" falhou alocando res%soil_text")
+    end if
+    res%soil_text=UNDEF_REAL
+
+    allocate (res%patch_area(nx,ny,np), stat=ierr)
+    if (ierr /= 0) then
+       call fatal_error(h//" falhou alocando res%patch_area")
+    end if
+    res%patch_area=UNDEF_REAL
+
+    allocate (res%leaf_class(nx,ny,np), stat=ierr)
+    if (ierr /= 0) then
+       call fatal_error(h//" falhou alocando res%leaf_class")
+    end if
+    res%leaf_class=UNDEF_REAL
+  end function CriaComparaLeaf
+
+
+
+  subroutine LeLeafFile(fName, oneComparaLeaf, oneControlVars, oneNamelistFile)
+    implicit none
+    character(len=*), intent(in) :: fName
+    type(ComparaLeaf), pointer :: oneComparaLeaf
+    type(ControlVars), pointer :: oneControlVars
+    type(NamelistFile), pointer :: oneNamelistFile
+
+    integer :: npatch
+    integer :: ipat
+    integer, parameter :: fUnit=45
+    integer :: ios
+    real, pointer :: p2D(:,:) => null()
+    real, pointer :: p3D(:,:,:) => null()
+
+    logical, parameter :: dumpLocal=.false.
+    character(len=2) :: cipat
+    character(len=*), parameter :: h="**(LeLeafFile)**"
+
+    if (dumpLocal) then
+       call MsgDump(h//" vai ler arquivo "//trim(fName))
+       print *, h//" vai ler arquivo "//trim(fName)
+    end if
+
+    if (useVfm) then
+
+       call rams_f_open(fUnit,trim(fName),'FORMATTED','OLD','READ',0)
+       read (fUnit,*) &
+            oneComparaLeaf%isfc_marker,&
+            oneComparaLeaf%isfc_ver
+       read (fUnit,100) &
+            oneComparaLeaf%nsfx,&
+            oneComparaLeaf%nsfy,&
+            oneComparaLeaf%nsfzg,&
+            oneComparaLeaf%nspatch,&
+            oneComparaLeaf%sfdx,&
+            oneComparaLeaf%sfdy,&
+            oneComparaLeaf%sfplat,&
+            oneComparaLeaf%sfplon,&
+            oneComparaLeaf%sflat,&
+            oneComparaLeaf%sflon
+       read (fUnit,101) &
+            oneComparaLeaf%nsivegtflg,&
+            oneComparaLeaf%nsisoilflg,&
+            oneComparaLeaf%nsnofilflg
+100    format(4i5,2f15.5,4f11.5)
+101    format(5i5,2f11.5,i5,2f11.5)
+
+    else
+
+       open(fUnit, action="read", file=trim(fName), form="unformatted", iostat=ios)
+       read (fUnit) &
+            oneComparaLeaf%isfc_marker,&
+            oneComparaLeaf%isfc_ver
+       read (fUnit) &
+            oneComparaLeaf%nsfx,&
+            oneComparaLeaf%nsfy,&
+            oneComparaLeaf%nsfzg,&
+            oneComparaLeaf%nspatch,&
+            oneComparaLeaf%sfdx,&
+            oneComparaLeaf%sfdy,&
+            oneComparaLeaf%sfplat,&
+            oneComparaLeaf%sfplon,&
+            oneComparaLeaf%sflat,&
+            oneComparaLeaf%sflon
+       read (fUnit) &
+            oneComparaLeaf%nsivegtflg,&
+            oneComparaLeaf%nsisoilflg,&
+            oneComparaLeaf%nsnofilflg
+
+    end if
+
+    print *, h//" leu sflon= ",oneComparaLeaf%sflon
+
+    ! deals with patch_area
+
+    npatch=size(oneComparaLeaf%patch_area,3)
+
+    do ipat = 1,npatch
+       write(cipat,fmt='(I2.2)') ipat
+       p2D => oneComparaLeaf%patch_area(:,:,ipat)
+       call ReadStoreOwnChunk(1, fUnit, &
+            p2D, &
+            "patch_area"//cipat, oneControlVars)
+    end do
+
+    ! deals with leaf_class
+
+    do ipat = 1,npatch
+       p2D => oneComparaLeaf%leaf_class(:,:,ipat)
+       call ReadStoreOwnChunk(1, fUnit, &
+            p2D, &
+            "leaf_class", oneControlVars)
+    end do
+
+    ! deals with soil_text
+
+    do ipat = 1,npatch
+       p3D => oneComparaLeaf%soil_text(:,:,:,ipat)
+       call ReadStoreOwnChunk(1, fUnit,&
+            p3D, oneNamelistFile%nzg, &
+            "soil_text", oneControlVars)
+    end do
+
+    close (fUnit)
+    if (dumpLocal) then
+       call MsgDump(h//" terminou ")
+    end if
+  end subroutine LeLeafFile
+
+
+
+
+  subroutine ComparaDoisComparaLeaf(um, outro, verb)
+    implicit none
+    type(ComparaLeaf), pointer :: um
+    type(ComparaLeaf), pointer :: outro
+    logical, intent(in) :: verb
+
+    call Compare(um%lc, outro%lc, "lc", verb)
+    call Compare(um%isfc_marker, outro%isfc_marker, "isfc_marker", verb)
+    call Compare(um%isfc_ver, outro%isfc_ver, "isfc_ver", verb)
+    call Compare(um%nsfx, outro%nsfx, "nsfx", verb)
+    call Compare(um%nsfy, outro%nsfy, "nsfy", verb)
+    call Compare(um%nsfzg, outro%nsfzg, "nsfzg", verb)
+    call Compare(um%nspatch, outro%nspatch, "nspatch", verb)
+    call Compare(um%nsivegtflg, outro%nsivegtflg, "nsivegtflg", verb)
+    call Compare(um%nsisoilflg, outro%nsisoilflg, "nsisoilflg", verb)
+    call Compare(um%nsnofilflg, outro%nsnofilflg, "nsnofilflg", verb)
+    call Compare(um%sfdx, outro%sfdx, "sfdx", verb)
+    call Compare(um%sfdy, outro%sfdy, "sfdy", verb)
+    call Compare(um%sfplat, outro%sfplat, "sfplat", verb)
+    call Compare(um%sfplon, outro%sfplon, "sfplon", verb)
+    call Compare(um%sflat, outro%sflat, "sflat", verb)
+    call Compare(um%sflon, outro%sflon, "sflon", verb)
+    call Compare(um%soil_text, outro%soil_text, "soil_text", verb)
+    call Compare(um%patch_area, outro%patch_area, "patch_area", verb)
+    call Compare(um%leaf_class, outro%leaf_class, "leaf_class", verb)
+  end subroutine ComparaDoisComparaLeaf
+
 End Module mem_leaf

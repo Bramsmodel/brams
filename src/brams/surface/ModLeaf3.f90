@@ -78,6 +78,7 @@ module ModLeaf3
        pcpgc, &
        hflxvc, &
        nvtyp, &
+       nvtyp_teb, &
        rlonga_a, &
        rlonggs_a, &
        fracliq, & 
@@ -1902,13 +1903,13 @@ contains
     real, save :: ccc=-2.9657
     real, save :: bz=.91,hz=.0075,extinc_veg=.5
 
-    real, dimension(nvtyp), save :: dfpardsr
+    real, dimension(nvtyp+nvtyp_teb), save :: dfpardsr
 
     !  Initialize dfpardsr array
 
     if (nvcall == 0) then
        nvcall = 1
-       do nveg = 1,(nvtyp)
+       do nveg = 1,(nvtyp+nvtyp_teb)
           dfpardsr(nveg) = (fpar_max - fpar_min) / (sr_max(nveg) - sr_min)
        enddo
     endif
