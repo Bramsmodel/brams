@@ -853,16 +853,6 @@ contains
        call MsgDump(h//" done making surface files")
     end if
 
-!!$    ComparaLeafMeu => CriaComparaLeaf(oneGrid%oneNamelistFile)
-!!$    ComparaLeafProd => CriaComparaLeaf(oneGrid%oneNamelistFile)
-!!$
-!!$    fName="/scr2-exa/panetta/Furnas/runBramsProducaoEstragada/bin/dataout/SFC/sfc_OQ3g-S-g1.vfm"
-!!$    call LeLeafFile(fName, ComparaLeafMeu, oneGrid%oneControlVars, oneGrid%oneNamelistFile)
-!!$    fName="/scr2-exa/panetta/Furnas/runBramsComparaMeuProducao/bin/dataout/SFC/sfc_OQ3g-S-g1.vfm"
-!!$    call LeLeafFile(fName, ComparaLeafProd, oneGrid%oneControlVars, oneGrid%oneNamelistFile)
-!!$
-!!$    call ComparaDoisComparaLeaf(ComparaLeafMeu, ComparaLeafProd, .true.)
-    
     ! Behave accordingly to run typ
     !================================================================================================
     !================================================================================================
