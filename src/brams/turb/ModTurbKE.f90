@@ -810,10 +810,12 @@ contains
     type(TurbFields), pointer, intent(in) :: oneTurbFields
 
     !srf-chem
-    integer, parameter :: nznot=3     ! number of vertical layers with tke >= tkeminot
+!TO    integer, parameter :: nznot=3     ! number of vertical layers with tke >= tkeminot
+    integer, parameter :: nznot=6    !Era 3 010822 Angel_DC, testei =5  !number of vertical layers with tke >= tkeminot
     ! use = 0, to turn off the this minumum background
     !          of TKE at night time
-    real, parameter :: tkeminnot=0.08 ! or 0.05 m^2/s^2
+!TO    real, parameter :: tkeminnot=0.08 ! or 0.05 m^2/s^2
+    real, parameter :: tkeminnot=0.2 !Era 0.08 010822 Angel_DC testei =0.1 ! or 0.05 m^2/s^2
 
     integer :: i,j,k
     real :: epsmin

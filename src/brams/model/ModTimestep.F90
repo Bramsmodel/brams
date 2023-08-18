@@ -250,7 +250,7 @@ contains
 
 
   subroutine timestep(oneGrid)
-    type(Grid), pointer, intent(in) :: oneGrid
+    type(Grid), pointer :: oneGrid
 
     ! execution time instrumentation
     include "tsNames.h"
@@ -259,7 +259,7 @@ contains
     character(len=256) :: julesFile
 
     character(len=*), parameter :: h="**(timestep)**"
-    real, target :: vt3da(mzp*mxp*myp)
+    real, pointer :: vt3da(:)      
     julesFile=oneGrid%oneNamelistFile%julesin
 
     !        +-------------------------------------------------------------+
@@ -656,9 +656,10 @@ contains
     !  Velocity/pressure boundary conditions
     !----------------------------------------
     call vpsets(mzp,mxp,myp,ia,iz,ja,jz,ibcon,nstbot, &
-         oneGrid%oneBasicFields%up,oneGrid%oneBasicFields%vp,oneGrid%oneBasicFields%wp,&
-         oneGrid%oneBasicFields%pp,oneGrid%oneBasicFields%uc,oneGrid%oneBasicFields%vc,&
-         oneGrid%oneBasicFields%wc,oneGrid%oneBasicFields%pc,grid_g(ngrid)%dxu,&
+         !TO oneGrid%oneBasicFields%up,oneGrid%oneBasicFields%vp,oneGrid%oneBasicFields%wp,&
+         !TO oneGrid%oneBasicFields%pp,oneGrid%oneBasicFields%uc,oneGrid%oneBasicFields%vc,&
+         !TO oneGrid%oneBasicFields%wc,oneGrid%oneBasicFields%pc,grid_g(ngrid)%dxu,&
+         grid_g(ngrid)%dxu,&
          grid_g(ngrid)%dxm,grid_g(ngrid)%dyv,grid_g(ngrid)%dym,&
          grid_g(ngrid)%lpu,grid_g(ngrid)%lpv,grid_g(ngrid)%lpw, &
          oneGrid%oneBasicFields)

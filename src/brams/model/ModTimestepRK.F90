@@ -317,20 +317,21 @@ contains
     character(len=*), parameter :: h="**(timestep_rk)**"
     character(len=8) :: str(10)
     character(len=16) :: fstr(10)
-    real,target  :: vt3da(mzp*mxp*myp)
+    real, pointer :: vt3da(:)
 
     !MB: only for testing
     !integer :: nmbr_gpts
     !real    :: pm,tm
+
 
     if (dumpLocal) then
        call MsgDump(h//" starts")
     end if
 
 !!$    if (mynum == 1) then
-!!$       write (*,fmt='(a)') h//" inicio; patch_area="
-!!$       write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,1,1)
-!!$       write (*,fmt='(45(e9.3,1x))') (oneGrid%oneBasicFields%theta(i,2,2),i=1,mzp)
+!!$       write (*,fmt='(a)') h//" inicio; theta=     "
+!!$       !TO write (*,fmt='(45(e9.3,1x))') (oneGrid%oneBasicFields%theta(i,2,2),i=1,mzp)
+!!$       write (44,fmt='(45(e12.6,1x))') (oneGrid%oneBasicFields%theta)
 !!$    end if
     
     singleProcRun = nmachs == 1
@@ -359,6 +360,7 @@ contains
        call GetIauTendency (ngrid, mzp*mxp*myp, mzp, mxp, myp,ia,iz,ja,jz ,time,dtlt)      
     endif
 
+    
     !  Thermodynamic diagnosis
     !--------------------------------
     if (oneGrid%oneMicVars%mcphys_type == 0 .and. oneGrid%oneMicVars%level/=3) then
@@ -366,6 +368,7 @@ contains
             oneGrid%oneBasicFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
     endif
 
+    
     ! evolution of the Exner pressure: compression term
     if (iexev == 2) then
        call exevolve(mzp,mxp,myp,ngrid,ia,iz,ja,jz,izu,jzv,jdim,mynum,dtlt,'ADV', &
@@ -385,10 +388,10 @@ contains
          oneGrid%oneNamelistFile, oneGrid%oneBasicFields, &
          oneGrid%oneMicVars, oneGrid%oneMicroFields, &
          oneGrid%oneRadiateFields, oneGrid%oneCuParmFields)
+
     
     !  Surface layer, soil and veggie model
     !----------------------------------------
-
     if (isfcl<=2) then
        call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
             oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, &
@@ -400,19 +403,13 @@ contains
 #ifdef JULES
     elseif (isfcl == 5) then
        if (time==0.) then
-          if (dumpLocal) then
-             call MsgDump(h//" invoking sfclyr for isfcl==5 and time==0")
-          end if
           call sfclyr(mzp,mxp,myp,ia,iz,ja,jz,ibcon, &
                oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, &
                oneGrid%oneMicVars, oneGrid%oneMicroFields, oneGrid%oneRadiateFields, &
                oneGrid%oneCuParmFields)
           if (dumpLocal) then
-             call MsgDump(h//" done sfclyr para isfcl==5 and time==0")
+             call MsgDump(h//" sfclyr para isfcl==2 and time==0")
           end if
-       end if
-       if (dumpLocal) then
-          call MsgDump(h//" invoking sfclyr_jules for isfcl==5")
        end if
        call sfclyr_jules(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile, &
             oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicVars, &
@@ -431,6 +428,7 @@ contains
        end if
 #endif
     endif
+
 
 !!$    if (any(leaf_g(1)%patch_area < 0)) then
 !!$       do ip = 1, size(leaf_g(1)%patch_area,3)
@@ -459,6 +457,7 @@ contains
     
     !- Sea salt Aerossol inline source
     call SeaSaltDriver(ia,iz,ja,jz,ngrid,mxp,myp, oneGrid%oneBasicFields)
+
 
     !-- emission/deposition for CCATT chemistry models
     if (CCATT==1 .and. chemistry >= 0) then
@@ -509,6 +508,7 @@ contains
             oneGrid%oneRadiateFields, &
             oneGrid%oneCuParmFields)
     endif
+      
 
 !!$    call SynchronizedTimeStamp(TS_PHYSICS) ! Exper1.2, 2021_12
 
@@ -522,6 +522,7 @@ contains
        call corlos(mzp, mxp, myp, i0, j0, ia, iz, ja, jz, izu, jzv, &
             tend%ut, tend%vt, oneGrid%oneBasicFields)
     end if
+
 
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
 
@@ -547,6 +548,7 @@ contains
     !----------------------------------------
     call rayft(mxp,myp,mzp,mynum,ngrid,nnzp,if_adap,oneGrid%oneMicVars%level,nodemyp,nodemxp,&
          vt3da,oneGrid%oneBasicFields)
+
 
     !  Get the overlap region between parallel nodes
     !---------------------------------------------------
@@ -591,7 +593,6 @@ contains
             oneGrid%oneMicroFields, &
             oneGrid%oneRadiateFields)
     endif
-
     !---------------------------------------------------
     ! Shallow  cumulus parameterization by Souza
     if (NNSHCU(ngrid)==1) then
@@ -618,6 +619,8 @@ contains
             oneGrid%oneTurbFields, oneGrid%oneNamelistFile, oneGrid%Id, &
             oneGrid%oneMicVars, oneGrid%oneMicroFields)
     endif
+
+    
 !!$    if (mynum == 1) then
 !!$       write (*,fmt='(a)') h//" apos diffuse, tend%wt_rk="
 !!$       write (*,fmt='(45(e9.3,1x))') (tend%wt_rk(i),i=(mxp+1)*mzp,(mxp+2)*mzp-1)
@@ -629,6 +632,7 @@ contains
     if (imassflx == 1) then
        call prep_advflx_to_stilt(mzp,mxp,myp,ia,iz,ja,jz,ngrid, oneGrid%oneBasicFields)
     end if
+    
 
     !- large and subgrid scale forcing for shallow and deep cumulus
     if( oneGrid%oneNamelistFile%nnqparm(ngrid) >=3  ) then
@@ -713,6 +717,8 @@ contains
          oneGrid%oneBasicFields%uc,tend%ut,oneGrid%oneBasicFields%vp,oneGrid%oneBasicFields%vc,&
          tend%vt,grid_g(ngrid)%dxt,grid_g(ngrid)%dyt)
 
+
+ 
 !!$    call SynchronizedTimeStamp(TS_RK_RESTO) ! Exper1.2, 2021_12
 
 
@@ -729,6 +735,7 @@ contains
 !!$          write (*,fmt='(a,i1,a)') h//" inicio laco RK com l_rk=",l_rk,", theta="
 !!$          write (*,fmt='(45(e9.3,1x))') (oneGrid%oneBasicFields%theta(i,2,2),i=1,mzp)
 !!$       end if
+
        !initialize the tendencies with the physics tendencies
        tend%ut_rk (:) =tend%ut (:)
        tend%vt_rk (:) =tend%vt (:)
@@ -752,6 +759,7 @@ contains
           call MsgDump(h//" invokes advectc_rk for V")
        end if
        call advectc_rk(oneGrid,'V',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
+
 
        !  advection of pi and theta_il
        if (dumpLocal) then
@@ -929,6 +937,7 @@ contains
 
     endif
 
+    
 !!$    call SynchronizedTimeStamp(TS_RK_ADVMON) ! Exper1.2, 2021_12
 
     !  Update scalars (water species, tke and tracers)
@@ -950,6 +959,8 @@ contains
     oneGrid%oneBasicFields%wp (:,:,:) = oneGrid%oneBasicFields%wc (:,:,:)
     oneGrid%oneBasicFields%pp (:,:,:) = oneGrid%oneBasicFields%pc (:,:,:)
     oneGrid%oneBasicFields%thp(:,:,:) = oneGrid%oneBasicFields%thc(:,:,:)
+
+
     !---->
     !---->
     !
@@ -988,6 +999,7 @@ contains
     call trsets(oneGrid%oneScalarTable, oneGrid%oneScalarTableSize, oneGrid%oneBasicFields, &
          oneGrid%oneTurbFields,oneGrid%oneMicVars, oneGrid%oneMicroFields)
 
+
     !---> THC must be changed to THP to include microphysics/trsets changes
     !---> for the next timestep
     oneGrid%oneBasicFields%thc(:,:,:) = oneGrid%oneBasicFields%thp(:,:,:)
@@ -1006,9 +1018,10 @@ contains
     !  Velocity/pressure boundary conditions
     !----------------------------------------
     call vpsets(mzp,mxp,myp,ia,iz,ja,jz,ibcon,nstbot, &
-         oneGrid%oneBasicFields%up,oneGrid%oneBasicFields%vp,oneGrid%oneBasicFields%wp,&
-         oneGrid%oneBasicFields%pp,oneGrid%oneBasicFields%uc,oneGrid%oneBasicFields%vc,&
-         oneGrid%oneBasicFields%wc,oneGrid%oneBasicFields%pc,grid_g(ngrid)%dxu,&
+!TO         oneGrid%oneBasicFields%up,oneGrid%oneBasicFields%vp,oneGrid%oneBasicFields%wp,&
+!TO         oneGrid%oneBasicFields%pp,oneGrid%oneBasicFields%uc,oneGrid%oneBasicFields%vc,&
+!TO         oneGrid%oneBasicFields%wc,oneGrid%oneBasicFields%pc,grid_g(ngrid)%dxu,&
+         grid_g(ngrid)%dxu, &
          grid_g(ngrid)%dxm,grid_g(ngrid)%dyv,grid_g(ngrid)%dym,&
          grid_g(ngrid)%lpu,grid_g(ngrid)%lpv,grid_g(ngrid)%lpw, &
          oneGrid%oneBasicFields)
@@ -1018,6 +1031,7 @@ contains
          f_thermo_e(ngrid), f_thermo_w(ngrid), &
          f_thermo_s(ngrid), f_thermo_n(ngrid), &
          nzp, mxp, myp, jdim, oneGrid%oneBasicFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
+
 
     if (iexev == 2) then
        call get_true_air_density(mzp,mxp,myp,ia,iz,ja,jz,&
@@ -1036,6 +1050,8 @@ contains
             oneGrid%oneMicroFields, &
             oneGrid%oneRadiateFields)
     endif
+
+    
 
     !----------------------------------------
     !- chemistry/aerosol solvers
@@ -1065,9 +1081,11 @@ contains
     endif
     !----------------------------------------
 
+    
     !- windfarm
     call wind_farm_driver(ngrid,mzp,mxp,myp,ia,iz,ja,jz, &
          oneGrid%oneBasicFields, oneGrid%oneTurbFields)
+
 
     !- apply digital filter
     if (applyDF) then
@@ -1075,6 +1093,7 @@ contains
             oneGrid%oneBasicFields, oneGrid%oneControlVars, &
             oneGrid%oneVarTable, oneGrid%oneVarTableSize)
     end if
+
 
 
     ! Implements the Incremental Analysis Update procedure -

@@ -1109,8 +1109,8 @@ contains
     real :: amof(mzp,mxp,myp)
     real :: amog(mzp,mxp,myp)
     real :: heatfx1(mxp,myp)
-    real, pointer :: div(:,:,:)
-    real, pointer :: pp_t_minus_dt(:,:,:)
+    real, pointer :: div(:,:,:) => null()
+    real, pointer :: pp_t_minus_dt(:,:,:) => null()
     real, allocatable, target :: pp_minus_div(:,:,:)
     character(LEN=5) :: ctime
     integer :: nmbr_gpts

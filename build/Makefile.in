@@ -176,7 +176,8 @@ ifeq ($(GCC_VER_GTE10),)
      FC_FLAGS +=-fallow-argument-mismatch
 endif
 
-OT_FLAGS=-O3
+#OT_FLAGS=-O3
+OT_FLAGS=-O0
 #CCFLAGS=-O2
 CCFLAGS=-O0
 FPP=-cpp

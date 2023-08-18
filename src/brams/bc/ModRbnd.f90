@@ -102,19 +102,19 @@ contains
     integer, intent(in) :: jz
     integer, intent(in) :: ibcon
     character(len=*) :: vnam
-    real, pointer, intent(in) :: ap(:,:,:)
+    real, pointer :: ap(:,:,:)
     ! pointer intent(in), values intent(inout)
-    real, pointer, intent(in) :: uc(:,:,:)
+    real, pointer :: uc(:,:,:)
     ! pointer and values intent(in)
-    real, pointer, intent(in) :: vc(:,:,:)
+    real, pointer :: vc(:,:,:)
     ! pointer and values intent(in)
-    real, pointer, intent(in) :: dxu(:,:)
+    real, pointer :: dxu(:,:)
     ! pointer and values intent(in)
-    real, pointer, intent(in) :: dxm(:,:)
+    real, pointer :: dxm(:,:)
     ! pointer and values intent(in)
-    real, pointer, intent(in) :: dyv(:,:)
+    real, pointer :: dyv(:,:)
     ! pointer and values intent(in)
-    real, pointer, intent(in) :: dym(:,:)
+    real, pointer :: dym(:,:)
     ! pointer and values intent(in)
 
     integer :: i,j,k,lbw,lbe,lbs,lbn
@@ -132,6 +132,7 @@ contains
     if (iand(ibcon,2) .gt. 0) lbe = iz + 1
     if (iand(ibcon,4) .gt. 0) lbs = ja - 1
     if (iand(ibcon,8) .gt. 0) lbn = jz + 1
+    
 
     thresh = 0.
     if (vnam .eq. 'U' .or. vnam .eq. 'V' .or. vnam .eq. 'W' .or. vnam .eq.'P') then
@@ -351,7 +352,7 @@ contains
     integer, intent(in) :: jz
     integer, intent(in) :: ibcon
     character(len=*) :: vnam
-    real, pointer, intent(in) :: ap(:,:,:)
+    real, pointer :: ap(:,:,:)
     ! pointer intent(in), values intent(inout)
 
     integer :: i,j
@@ -391,7 +392,7 @@ contains
     integer, intent(in) :: jz
     integer, intent(in) :: ibcon
     character(len=*) :: vnam
-    real, pointer, intent(in) :: ap(:,:,:)
+    real, pointer :: ap(:,:,:)
     ! pointer intent(in), values intent(inout)
 
     integer :: i, j
@@ -431,7 +432,7 @@ contains
     integer, intent(in) :: jz
     integer, intent(in) :: ibcon
     character(len=*) :: vnam
-    real, pointer, intent(in) :: aa(:,:,:)
+    real, pointer :: aa(:,:,:)
     ! pointer intent(in), values intent(inout)
 
     integer :: i,j
@@ -457,7 +458,7 @@ contains
 
   subroutine KeepTracersNonnegScalar(mxyzp,scp)
     integer, intent(in) :: mxyzp
-    real, pointer, intent(in) :: scp(:)
+    real, pointer :: scp(:)
     ! pointer intent(in), values intent(inout)
 
     integer :: i 
@@ -480,16 +481,16 @@ contains
     integer, intent(in) :: ngrid
     integer, intent(in) :: ibnd 
     integer, intent(in) :: jbnd 
-    real,    pointer, intent(in)    :: lpu(:,:)
-    real,    pointer, intent(in)    :: lpv(:,:)
-    real,    pointer, intent(in)    :: up(:,:,:)
-    real,    pointer, intent(in)    :: uc(:,:,:)
+    real,    pointer    :: lpu(:,:)
+    real,    pointer    :: lpv(:,:)
+    real,    pointer    :: up(:,:,:)
+    real,    pointer    :: uc(:,:,:)
+    real,    pointer    :: vp(:,:,:)
+    real,    pointer    :: vc(:,:,:)
+    real,    pointer    :: dxt(:,:)
+    real,    pointer    :: dyt(:,:)
     real, dimension(mzp,mxp,myp), intent(in) :: ut
-    real,    pointer, intent(in)    :: vp(:,:,:)
-    real,    pointer, intent(in)    :: vc(:,:,:)
     real, dimension(mzp,mxp,myp), intent(in) :: vt
-    real,    pointer, intent(in)    :: dxt(:,:)
-    real,    pointer, intent(in)    :: dyt(:,:)
 
     !     This routine drives the computation of the radiative lateral
     !     boundary condition for normal velocity on the coarsest grid
@@ -527,16 +528,16 @@ contains
     integer, intent(in) :: jz
     integer, intent(in) :: ibcon
 
-    real, pointer, intent(in) :: lpu_R(:,:) 
-    real, pointer, intent(in) :: lpv_R(:,:)
-    real, pointer, intent(in) :: dxt(:,:)
-    real, pointer, intent(in) :: dyt(:,:)
+    real, pointer :: lpu_R(:,:) 
+    real, pointer :: lpv_R(:,:)
+    real, pointer :: dxt(:,:)
+    real, pointer :: dyt(:,:)
 
-    real, pointer, intent(in) :: up(:,:,:) 
-    real, pointer, intent(in) :: uc(:,:,:) 
+    real, pointer :: up(:,:,:) 
+    real, pointer :: uc(:,:,:) 
+    real, pointer :: vp(:,:,:) 
+    real, pointer :: vc(:,:,:) 
     real, dimension(m1,m2,m3) :: ut  !TO recebe pointer 1D
-    real, pointer, intent(in) :: vp(:,:,:) 
-    real, pointer, intent(in) :: vc(:,:,:) 
     real, dimension(m1,m2,m3) :: vt  !TO recebe pointer 1D
 
     integer :: i,j,k
@@ -631,8 +632,11 @@ contains
   end subroutine latnormv
 
   subroutine vpsets(mzp,mxp,myp,ia,iz,ja,jz,ibcon,nstbot, &
-       up,vp,wp,pp,uc,vc,wc,pc,dxu,dxm,dyv,dym,&
+       !TO up,vp,wp,pp,uc,vc,wc,pc,dxu,dxm,dyv,dym,&
+       dxu,dxm,dyv,dym,&
        lpu,lpv,lpw, oneBasicFields)
+
+    implicit none
     integer, intent(in) :: mzp
     integer, intent(in) :: mxp
     integer, intent(in) :: myp
@@ -642,68 +646,73 @@ contains
     integer, intent(in) :: jz
     integer, intent(in) :: ibcon
     integer, intent(in) :: nstbot
-    ! pointer intent(in), values intent(inout)
-    real, pointer, intent(in) :: up(:,:,:) 
-    real, pointer, intent(in) :: vp(:,:,:) 
-    real, pointer, intent(in) :: wp(:,:,:) 
-    real, pointer, intent(in) :: pp(:,:,:) 
-    real, pointer, intent(in) :: uc(:,:,:) 
-    real, pointer, intent(in) :: vc(:,:,:) 
-    real, pointer, intent(in) :: wc(:,:,:) 
-    real, pointer, intent(in) :: pc(:,:,:) 
-    real, pointer, intent(in) :: dxu(:,:)
-    real, pointer, intent(in) :: dxm(:,:)
-    real, pointer, intent(in) :: dyv(:,:)
-    real, pointer, intent(in) :: dym(:,:)
-    real, pointer, intent(in) :: lpu(:,:)
-    real, pointer, intent(in) :: lpv(:,:)
-    real, pointer, intent(in) :: lpw(:,:)
-    type(BasicFields), pointer, intent(in) :: oneBasicFields
+
+
+    real, pointer :: dxu(:,:)
+    real, pointer :: dxm(:,:)
+    real, pointer :: dyv(:,:)
+    real, pointer :: dym(:,:)
+    real, pointer :: lpu(:,:)
+    real, pointer :: lpv(:,:)
+    real, pointer :: lpw(:,:)
     
+    !TO real :: dxu(mxp,myp)
+    !TO real :: dxm(mxp,myp)
+    !TO real :: dyv(mxp,myp)
+    !TO real :: dym(mxp,myp)
+    !TO real :: lpu(mxp,myp)
+    !TO real :: lpv(mxp,myp)
+    !TO real :: lpw(mxp,myp)
+    type(BasicFields), pointer :: oneBasicFields
+    
+
     if (nxtnest(ngrid) .eq. 0) then
+
        call latset(mzp,mxp,myp,ia,iz,ja,jz,ibcon,'U'              &
-            ,up ,up &
-            ,vp ,dxu &
+            ,oneBasicFields%up ,oneBasicFields%up &
+            ,oneBasicFields%vp ,dxu &
             ,dxm,dyv &
             ,dym )
+            
        call latset(mzp,mxp,myp,ia,iz,ja,jz,ibcon,'V'              &
-            ,vp ,up  &
-            ,vp ,dxu  &
+            ,oneBasicFields%vp ,oneBasicFields%up  &
+            ,oneBasicFields%vp ,dxu  &
             ,dxm,dyv  &
             ,dym )
        call latset(mzp,mxp,myp,ia,iz,ja,jz,ibcon,'W'              &
-            ,wp ,up  &
-            ,vp ,dxu  &
+            ,oneBasicFields%wp ,oneBasicFields%up  &
+            ,oneBasicFields%vp ,dxu  &
             ,dxm,dyv  &
             ,dym )
        call latset(mzp,mxp,myp,ia,iz,ja,jz,ibcon,'P'              &
-            ,pp ,up  &
-            ,vp ,dxu  &
+            ,oneBasicFields%pp ,oneBasicFields%up  &
+            ,oneBasicFields%vp ,dxu  &
             ,dxm,dyv  &
             ,dym )
     endif
+
     if (nsttop .eq. 1) then
        call topset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-            ,up ,'U')
+            ,oneBasicFields%up ,'U')
        call topset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-            ,vp ,'V')
+            ,oneBasicFields%vp ,'V')
     endif
 
     if (nstbot .eq. 1) then
        if (if_adap == 0) then
           call botset(mzp,mxp,myp,ia,iz,ja,jz,ibcon   &
-               ,up,'U')
+               ,oneBasicFields%up,'U')
           call botset(mzp,mxp,myp,ia,iz,ja,jz,ibcon   &
-               ,vp,'V')
+               ,oneBasicFields%vp,'V')
        endif
     endif
 
     call topset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-         ,pp,'P')
+         ,oneBasicFields%pp,'P')
 
     if (if_adap == 0) then
        call botset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-            ,pp,'P')
+            ,oneBasicFields%pp,'P')
     endif
 
     call dumset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
@@ -716,49 +725,49 @@ contains
 
     if (nxtnest(ngrid) .eq. 0) then
        call latset(mzp,mxp,myp,ia,iz,ja,jz,ibcon,'U'  &
-            ,uc ,up  &
-            ,vp ,dxu  &
+            ,oneBasicFields%uc ,oneBasicFields%up  &
+            ,oneBasicFields%vp ,dxu  &
             ,dxm,dyv  &
             ,dym )
        call latset(mzp,mxp,myp,ia,iz,ja,jz,ibcon,'V'  &
-            ,vc ,up &
-            ,vp ,dxu &
+            ,oneBasicFields%vc ,oneBasicFields%up &
+            ,oneBasicFields%vp ,dxu &
             ,dxm,dyv &
             ,dym )
        call latset(mzp,mxp,myp,ia,iz,ja,jz,ibcon ,'W' &
-            ,wc ,up &
-            ,vp ,dxu &
+            ,oneBasicFields%wc ,oneBasicFields%up &
+            ,oneBasicFields%vp ,dxu &
             ,dxm,dyv &
             ,dym )
        call latset(mzp,mxp,myp,ia,iz,ja,jz,ibcon,'P'  &
-            ,pc ,up  &
-            ,vp ,dxu  &
+            ,oneBasicFields%pc ,oneBasicFields%up  &
+            ,oneBasicFields%vp ,dxu  &
             ,dxm,dyv  &
             ,dym )
     endif
     if (nsttop .eq. 1) then
        call topset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-            ,uc ,'U')
+            ,oneBasicFields%uc ,'U')
        call topset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-            ,vc ,'V')
+            ,oneBasicFields%vc ,'V')
     endif
 
     if (nstbot .eq. 1) then
        if (if_adap == 0) then
           call botset(mzp,mxp,myp,ia,iz,ja,jz,ibcon   &
-               ,uc,'U')
+               ,oneBasicFields%uc,'U')
           call botset(mzp,mxp,myp,ia,iz,ja,jz,ibcon   &
-               ,vc,'V')
+               ,oneBasicFields%vc,'V')
        endif
     endif
 
 
     call topset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-         ,pc,'P')
+         ,oneBasicFields%pc,'P')
 
     if (if_adap == 0) then
        call botset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
-            ,pc,'P')
+            ,oneBasicFields%pc,'P')
     endif
 
     call dumset(mzp,mxp,myp,ia,iz,ja,jz,ibcon  &
@@ -772,14 +781,23 @@ contains
   end subroutine vpsets
 
   subroutine latset(m1,m2,m3,ia,iz,ja,jz,ibcon,vnam,ap,uc,vc,dxu,dxm,dyv,dym)
+
+    implicit none      
     integer,intent(in) :: m1,m2,m3,ia,iz,ja,jz,ibcon
-    real,  pointer, intent(in) :: ap(:,:,:)
-    real,  pointer, intent(in) :: uc(:,:,:)
-    real,  pointer, intent(in) :: vc(:,:,:)
-    real,  pointer, intent(in) :: dxu(:,:)
-    real,  pointer, intent(in) :: dxm(:,:)
-    real,  pointer, intent(in) :: dyv(:,:)
-    real,  pointer, intent(in) :: dym(:,:)
+    real,  pointer :: ap(:,:,:)
+    real,  pointer :: uc(:,:,:)
+    real,  pointer :: vc(:,:,:)
+    real,  pointer :: dxu(:,:)
+    real,  pointer :: dxm(:,:)
+    real,  pointer :: dyv(:,:)
+    real,  pointer :: dym(:,:)
+    !TO real :: ap(m1,m2,m3)
+    !TO real :: uc(m1,m2,m3)
+    !TO real :: vc(m1,m2,m3)
+    !TO real :: dxu(m2,m3)
+    !TO real :: dxm(m2,m3)
+    !TO real :: dyv(m2,m3)
+    !TO real :: dym(m2,m3)
     character(len=*) :: vnam
 
     integer :: i,j,k,lbw,lbe,lbs,lbn
@@ -787,223 +805,223 @@ contains
     real :: vctr17(m1)
     real :: vctr18(m1)
 
-    if (iand(ibcon,1) .gt. 0) lbw = ia - 1
-    if (iand(ibcon,2) .gt. 0) lbe = iz + 1
-    if (iand(ibcon,4) .gt. 0) lbs = ja - 1
-    if (iand(ibcon,8) .gt. 0) lbn = jz + 1
+
+if (iand(ibcon,1) .gt. 0) lbw = ia - 1
+if (iand(ibcon,2) .gt. 0) lbe = iz + 1
+if (iand(ibcon,4) .gt. 0) lbs = ja - 1
+if (iand(ibcon,8) .gt. 0) lbn = jz + 1
 
 !!$print *, "DEBUG-ALF:latset:m1,m2,m3,lbw,lbe,lbs,lbn=", &
 !!$     m1,m2,m3,lbw,lbe,lbs,lbn
 !!$call flush(8)
 
-    thresh = 0.
-    if (vnam .eq. 'U' .or. vnam .eq. 'V' .or. vnam .eq. 'W' .or. vnam .eq.'P') then
-       dtlx = dtlv
-    else
-       dtlx = dtlt
-    endif
+thresh = 0.
+if (vnam .eq. 'U' .or. vnam .eq. 'V' .or. vnam .eq. 'W' .or. vnam .eq.'P') then
+   dtlx = dtlv
+else
+   dtlx = dtlt
+endif
 
-    if (ibnd .ne. 4 .and. vnam .ne. 'U' .and. lsflg .ne. 3) then
+if (ibnd .ne. 4 .and. vnam .ne. 'U' .and. lsflg .ne. 3) then
 
-       !     Western and Eastern boundaries for zero gradient option
+!     Western and Eastern boundaries for zero gradient option
 
-       if (lsflg .eq. 0) then
-          if (iand(ibcon,1) .gt. 0) then
-             do j = 1,m3
-                do k = 1,m1
-                   ap(k,lbw,j) = ap(k,ia,j)
-                enddo
-             enddo
-          endif
-          if (iand(ibcon,2) .gt. 0) then
-             do j = 1,m3
-                do k = 1,m1
-                   ap(k,lbe,j) = ap(k,iz,j)
-                enddo
-             enddo
-          endif
-       else
+   if (lsflg .eq. 0) then
+      if (iand(ibcon,1) .gt. 0) then
+         do j = 1,m3
+            do k = 1,m1
+               ap(k,lbw,j) = ap(k,ia,j)
+            enddo
+         enddo
+      endif
+      if (iand(ibcon,2) .gt. 0) then
+         do j = 1,m3
+            do k = 1,m1
+               ap(k,lbe,j) = ap(k,iz,j)
+            enddo
+         enddo
+      endif
+   else
 
-          !     Western boundary for lsflg = 1 or 2
+!     Western boundary for lsflg = 1 or 2
 
-          if (iand(ibcon,1) .gt. 0) then
-             do j = 1,m3-1 !m3  !ALF
-                if (vnam .eq. 'V') then
-                   dxr = dxm(ia,j) / dxm(lbw,j)
-                   c1 = .5 * dtlx * dxm(lbw,j)
-                   do k = 1,m1
-                      vctr17(k) = -c1 * (uc(k,lbw,j) + uc(k,lbw,j+jdim))
-                   enddo
-                elseif (vnam .eq. 'W') then
-                   dxr = dxu(ia,j) / dxu(lbw,j)
-                   c1 = .5 * dtlx * dxu(lbw,j)
-                   do k = 1,m1-1 !m1  !ALF
-                      vctr17(k) = -c1 * (uc(k,lbw,j) + uc(k+1,lbw,j))
-                   enddo
-                else
-                   dxr = dxu(ia,j) / dxu(lbw,j)
-                   c1 = dtlx * dxu(lbw,j)
-                   do k = 1,m1
-                      vctr17(k) = -c1 * uc(k,lbw,j)
-                   enddo
-                endif
-                do k = 1,m1
-                   vctr18(k) = ap(k,ia,j) + dxr * (ap(k,ia,j) - ap(k,ia+1,j))
-                enddo
-                do k = 1,m1
-                   if (vctr17(k) .ge. thresh) then
-                      ap(k,lbw,j) = vctr18(k)
-                   elseif (lsflg .eq. 1) then
-                      ap(k,lbw,j) = ap(k,ia,j)
-                   endif
-                enddo
-             enddo
-          endif
+      if (iand(ibcon,1) .gt. 0) then
+         do j = 1,m3-1 !m3  !ALF
+            if (vnam .eq. 'V') then
+               dxr = dxm(ia,j) / dxm(lbw,j)
+               c1 = .5 * dtlx * dxm(lbw,j)
+               do k = 1,m1
+                  vctr17(k) = -c1 * (uc(k,lbw,j) + uc(k,lbw,j+jdim))
+               enddo
+            elseif (vnam .eq. 'W') then
+               dxr = dxu(ia,j) / dxu(lbw,j)
+               c1 = .5 * dtlx * dxu(lbw,j)
+               do k = 1,m1-1 !m1  !ALF
+                  vctr17(k) = -c1 * (uc(k,lbw,j) + uc(k+1,lbw,j))
+               enddo
+            else
+               dxr = dxu(ia,j) / dxu(lbw,j)
+               c1 = dtlx * dxu(lbw,j)
+               do k = 1,m1
+                  vctr17(k) = -c1 * uc(k,lbw,j)
+               enddo
+            endif
+            do k = 1,m1
+               vctr18(k) = ap(k,ia,j) + dxr * (ap(k,ia,j) - ap(k,ia+1,j))
+            enddo
+            do k = 1,m1
+               if (vctr17(k) .ge. thresh) then
+                  ap(k,lbw,j) = vctr18(k)
+               elseif (lsflg .eq. 1) then
+                  ap(k,lbw,j) = ap(k,ia,j)
+               endif
+            enddo
+         enddo
+      endif
 
-          !     Eastern Boundary for LSFLG = 1 or 2
+!     Eastern Boundary for LSFLG = 1 or 2
 
-          if (iand(ibcon,2) .gt. 0) then
-             do j = 1,m3-1 !m3  !ALF
-                if (vnam .eq. 'V') then
-                   dxr = dxm(iz-1,j) / dxm(iz,j)
-                   c1 = .5 * dtlx * dxm(iz,j)
-                   do k = 1,m1
-                      vctr17(k) = c1 * (uc(k,iz,j) + uc(k,iz,j+jdim))
-                   enddo
-                elseif (vnam .eq. 'W') then
-                   dxr = dxu(iz-1,j) / dxu(iz,j)
-                   c1 = .5 * dtlx * dxu(iz,j)
-                   do k = 1,m1-1 !m1  !ALF
-                      vctr17(k) = c1 * (uc(k,iz,j) + uc(k+1,iz,j))
-                   enddo
-                else
-                   dxr = dxu(iz-1,j) / dxu(iz,j)
-                   c1 = dtlx * dxu(iz,j)
-                   do k = 1,m1
-                      vctr17(k) = c1 * uc(k,iz,j)
-                   enddo
-                endif
-                do k = 1,m1
-                   vctr18(k) = ap(k,iz,j) + dxr * (ap(k,iz,j) - ap(k,iz-1,j))
-                enddo
-                do k = 1,m1
-                   if (vctr17(k) .ge. thresh) then
-                      ap(k,lbe,j) = vctr18(k)
-                   elseif (lsflg .eq. 1) then
-                      ap(k,lbe,j) = ap(k,iz,j)
-                   endif
-                enddo
-             enddo
-          endif
-       endif
-    endif
+      if (iand(ibcon,2) .gt. 0) then
+         do j = 1,m3-1 !m3  !ALF
+            if (vnam .eq. 'V') then
+               dxr = dxm(iz-1,j) / dxm(iz,j)
+               c1 = .5 * dtlx * dxm(iz,j)
+               do k = 1,m1
+                  vctr17(k) = c1 * (uc(k,iz,j) + uc(k,iz,j+jdim))
+               enddo
+            elseif (vnam .eq. 'W') then
+               dxr = dxu(iz-1,j) / dxu(iz,j)
+               c1 = .5 * dtlx * dxu(iz,j)
+               do k = 1,m1-1 !m1  !ALF
+                  vctr17(k) = c1 * (uc(k,iz,j) + uc(k+1,iz,j))
+               enddo
+            else
+               dxr = dxu(iz-1,j) / dxu(iz,j)
+               c1 = dtlx * dxu(iz,j)
+               do k = 1,m1
+                  vctr17(k) = c1 * uc(k,iz,j)
+               enddo
+            endif
+            do k = 1,m1
+               vctr18(k) = ap(k,iz,j) + dxr * (ap(k,iz,j) - ap(k,iz-1,j))
+            enddo
+            do k = 1,m1
+               if (vctr17(k) .ge. thresh) then
+                  ap(k,lbe,j) = vctr18(k)
+               elseif (lsflg .eq. 1) then
+                  ap(k,lbe,j) = ap(k,iz,j)
+               endif
+            enddo
+         enddo
+      endif
+   endif
+endif
 
-    if(jdim.eq.1.and.jbnd.ne.4.and.vnam.ne.'V'.and.lsflg.ne.3)then
+if(jdim.eq.1.and.jbnd.ne.4.and.vnam.ne.'V'.and.lsflg.ne.3)then
 
-       !     Southern and Northern boundaries for zero gradient option
+!     Southern and Northern boundaries for zero gradient option
 
-       if (lsflg .eq. 0) then
-          if (iand(ibcon,4) .gt. 0) then
-             do i = 1,m2
-                do k = 1,m1
-                   ap(k,i,lbs) = ap(k,i,ja)
-                enddo
-             enddo
-          endif
-          if (iand(ibcon,8) .gt. 0) then
-             do i = 1,m2
-                do k = 1,m1
-                   ap(k,i,lbn) = ap(k,i,jz)
-                enddo
-             enddo
-          endif
-       else
+  if (lsflg .eq. 0) then
+     if (iand(ibcon,4) .gt. 0) then
+        do i = 1,m2
+           do k = 1,m1
+              ap(k,i,lbs) = ap(k,i,ja)
+           enddo
+        enddo
+     endif
 
-          !     Southern boundary for LSFLG = 1 or 2
+     if (iand(ibcon,8) .gt. 0) then
+        do i = 1,m2
+           do k = 1,m1
+              ap(k,i,lbn) = ap(k,i,jz)
+           enddo
+        enddo
+     endif
+  else
 
+!     Southern boundary for LSFLG = 1 or 2
 
-          if (iand(ibcon,4) .gt. 0) then
-             do i = 1,m2-1 !m2 !ALF
-                if (vnam .eq. 'U') then
-                   dyr = dym(i,ja) / dym(i,lbs)
-                   c1 = .5 * dtlx * dym(i,lbs)
-                   do k = 1,m1
-                      vctr17(k) = -c1 * (vc(k,i,lbs) + vc(k,i+1,lbs))
-                   enddo
-                elseif (vnam .eq. 'W') then
-                   dyr = dyv(i,ja) / dyv(i,lbs)
-                   c1 = .5 * dtlx * dyv(i,lbs)
-                   do k = 1,m1-1 !m1  !ALF
-                      vctr17(k) = -c1 * (vc(k,i,lbs) + vc(k+1,i,lbs))
-                   enddo
-                else
-                   dyr = dyv(i,ja) / dyv(i,lbs)
-                   c1 = dtlx * dyv(i,lbs)
+     if (iand(ibcon,4) .gt. 0) then
+        do i = 1,m2-1 !m2 !ALF
+           if (vnam .eq. 'U') then
+              dyr = dym(i,ja) / dym(i,lbs)
+              c1 = .5 * dtlx * dym(i,lbs)
+              do k = 1,m1
+                 vctr17(k) = -c1 * (vc(k,i,lbs) + vc(k,i+1,lbs))
+              enddo
+           elseif (vnam .eq. 'W') then
+              dyr = dyv(i,ja) / dyv(i,lbs)
+              c1 = .5 * dtlx * dyv(i,lbs)
+              do k = 1,m1-1 !m1  !ALF
+                 vctr17(k) = -c1 * (vc(k,i,lbs) + vc(k+1,i,lbs))
+              enddo
+           else
+              dyr = dyv(i,ja) / dyv(i,lbs)
+              c1 = dtlx * dyv(i,lbs)
 
-                   !--(DMK-CCATT-INI)-----------------------------------------------------
-                   !srf - fix from rams 60
-                   do k = 1,m1
-                      !--(DMK-CCATT-OLD)-----------------------------------------------------
-                      !                  do k = 1,nz
-                      !--(DMK-CCATT-FIM)-----------------------------------------------------       
+!--(DMK-CCATT-INI)-----------------------------------------------------
+              !srf - fix from rams 60
+              do k = 1,m1
+!--(DMK-CCATT-OLD)-----------------------------------------------------
+!              do k = 1,nz
+!--(DMK-CCATT-FIM)-----------------------------------------------------       
 
-                      vctr17(k) = -c1 * vc(k,i,lbs)
-                   enddo
-                endif
-                do k = 1,m1
-                   vctr18(k) = ap(k,i,ja) + dyr * (ap(k,i,ja) - ap(k,i,ja+1))
-                enddo
-                do k = 1,m1
-                   if (vctr17(k) .ge. thresh) then
-                      ap(k,i,lbs) = vctr18(k)
-                   elseif (lsflg .eq. 1) then
-                      ap(k,i,lbs) = ap(k,i,ja)
-                   endif
-                enddo
-             enddo
-          endif
+                 vctr17(k) = -c1 * vc(k,i,lbs)
+              enddo
+           endif
+           do k = 1,m1
+              vctr18(k) = ap(k,i,ja) + dyr * (ap(k,i,ja) - ap(k,i,ja+1))
+           enddo
+           do k = 1,m1
+              if (vctr17(k) .ge. thresh) then
+                 ap(k,i,lbs) = vctr18(k)
+              elseif (lsflg .eq. 1) then
+                 ap(k,i,lbs) = ap(k,i,ja)
+              endif
+           enddo
+        enddo
+     endif
 
-          !     Northern Boundary for LSFLG = 1 or 2
+!     Northern Boundary for LSFLG = 1 or 2
 
-          if (iand(ibcon,8) .gt. 0) then
-             do i = 1,m2-1 !m2 !ALF
-                if (vnam .eq. 'U') then
-                   dyr = dym(i,jz-1) / dym(i,jz)
-                   c1 = .5 * dtlx * dym(i,jz)
-                   do k = 1,m1
-                      vctr17(k) = c1 * (vc(k,i,jz) + vc(k,i+1,jz))
-                   enddo
-                elseif (vnam .eq. 'W') then
-                   dyr = dyv(i,jz-1) / dyv(i,jz)
-                   c1 = .5 * dtlx * dyv(i,jz)
-                   do k = 1,m1-1 !m1  !ALF
-                      vctr17(k) = c1 * (vc(k,i,jz) + vc(k+1,i,jz))
-                   enddo
-                else
-                   dyr = dyv(i,jz-1) / dyv(i,jz)
-                   c1 = dtlx * dyv(i,jz)
-                   do k = 1,m1
-                      vctr17(k) = c1 * vc(k,i,jz)
-                   enddo
-                endif
-                do k = 1,m1
-                   vctr18(k) = ap(k,i,jz) + dyr * (ap(k,i,jz) - ap(k,i,jz-1))
-                enddo
-                do k = 1,m1
-                   if (vctr17(k) .ge. thresh) then
-                      ap(k,i,lbn) = vctr18(k)
-                   elseif (lsflg .eq. 1) then
-                      ap(k,i,lbn) = ap(k,i,jz)
-                   endif
-                enddo
-             enddo
-          endif
-       endif
-    endif
+     if (iand(ibcon,8) .gt. 0) then
+        do i = 1,m2-1 !m2 !ALF
+           if (vnam .eq. 'U') then
+              dyr = dym(i,jz-1) / dym(i,jz)
+              c1 = .5 * dtlx * dym(i,jz)
+              do k = 1,m1
+                 vctr17(k) = c1 * (vc(k,i,jz) + vc(k,i+1,jz))
+              enddo
+           elseif (vnam .eq. 'W') then
+              dyr = dyv(i,jz-1) / dyv(i,jz)
+              c1 = .5 * dtlx * dyv(i,jz)
+              do k = 1,m1-1 !m1  !ALF
+                 vctr17(k) = c1 * (vc(k,i,jz) + vc(k+1,i,jz))
+              enddo
+           else
+              dyr = dyv(i,jz-1) / dyv(i,jz)
+              c1 = dtlx * dyv(i,jz)
+              do k = 1,m1
+                 vctr17(k) = c1 * vc(k,i,jz)
+              enddo
+           endif
+           do k = 1,m1
+              vctr18(k) = ap(k,i,jz) + dyr * (ap(k,i,jz) - ap(k,i,jz-1))
+           enddo
+           do k = 1,m1
+              if (vctr17(k) .ge. thresh) then
+                 ap(k,i,lbn) = vctr18(k)
+              elseif (lsflg .eq. 1) then
+                 ap(k,i,lbn) = ap(k,i,jz)
+              endif
+           enddo
+        enddo
+     endif
+  endif
+endif
 
-    return
-  end subroutine latset
-
+return
+end subroutine latset
 
   subroutine topset(m1,m2,m3,ia,iz,ja,jz,ibcon,ap,vnam)
     integer, intent(in) :: m1
@@ -1015,7 +1033,7 @@ contains
     integer, intent(in) :: jz
     integer, intent(in) :: ibcon
 
-    real,    pointer, intent(in) :: ap(:,:,:)
+    real,    pointer :: ap(:,:,:)
     ! pointer intent(in), values intent(inout)
     character(len=*) :: vnam
 
@@ -1056,7 +1074,7 @@ contains
     integer, intent(in) :: jz
     integer, intent(in) :: ibcon
 
-    real, pointer, intent(in) :: aa(:,:,:)
+    real, pointer :: aa(:,:,:)
     ! pointer intent(in), values intent(inout)
     character(len=*) :: vnam
 
@@ -1091,7 +1109,7 @@ contains
     integer, intent(in) :: jz
     integer, intent(in) :: ibcon
 
-    real, pointer, intent(in) :: aa(:,:,:)
+    real, pointer :: aa(:,:,:)
     ! pointer intent(in), values intent(inout)
     character(len=*) :: vnam
 
@@ -1132,10 +1150,11 @@ contains
     integer, intent(in)   :: level  
     integer, intent(in)   :: nodemyp(:,:)
     integer, intent(in)   :: nodemxp(:,:)
-    real   , pointer, intent(in)   :: vt3da(:)
+    real   , pointer   :: vt3da(:)
     ! pointer intent(in), values intent(inout)
-    type(BasicFields), pointer, intent(in) :: oneBasicFields
+    type(BasicFields), pointer :: oneBasicFields
     
+    real    :: vt3da_3d(mzp,mxp,myp)
     integer :: ii,i,j,k
 
     integer(kind=i8) :: mxyzp, ind
@@ -1148,7 +1167,6 @@ contains
     mxyzp = mxp * myp * mzp
 
     !     First load past virtual theta into temporary.
-
     if (level .ge. 1) then
        ind = 0
        do j = 1,nodemyp(mynum,ngrid)
@@ -1169,7 +1187,7 @@ contains
     if (if_adap == 0) then
 
        call rayf(4,mzp,mxp,myp,ia,iz,ja,jz,ibcon                  &
-            ,vt3da,oneBasicFields%th0  &
+            ,vt3da_3d,oneBasicFields%th0  &
             ,tend%tht     ,grid_g(ngrid)%rtgt  &
             ,grid_g(ngrid)%topt)
 
@@ -1187,14 +1205,14 @@ contains
     integer, intent(in) :: ja
     integer, intent(in) :: jz
     integer, intent(in) :: ibcon
-    real, intent(inout), dimension(m1,m2,m3) :: var !TO recebe pointer 1D
-    real, intent(inout), dimension(m1,m2,m3) :: tht !TO recebe pointer 1D
+    real :: var(:,:,:) !TO recebe pointer 1D
+    real, dimension(m1,m2,m3)  :: tht !TO recebe pointer 1D
 
-    real, pointer, intent(in) :: th0(:,:,:)
+    real, pointer :: th0(:,:,:)
     ! pointer intent(in), values intent(in)
-    real, pointer, intent(in) :: rtgx(:,:)
+    real, pointer :: rtgx(:,:)
     ! pointer intent(in), values intent(in)
-    real, pointer, intent(in) :: topx(:,:)
+    real, pointer :: topx(:,:)
     ! pointer intent(in), values intent(in)
 
 
@@ -1287,12 +1305,12 @@ contains
 
   subroutine trsets(oneScalarTab, oneScalarTabSize, oneBasicFields, &
        oneTurbFields, oneMicControl, oneMicroFields)
-    type(ScalarTable), pointer, intent(in) :: oneScalarTab(:)
+    type(ScalarTable), pointer :: oneScalarTab(:)
     integer, intent(inout) :: oneScalarTabSize
-    type(BasicFields), pointer, intent(in) :: oneBasicFields
-    type(TurbFields), pointer, intent(in) :: oneTurbFields
-    type(MicControl), pointer, intent(in) :: oneMicControl
-    type(MicroFields), pointer, intent(in) :: oneMicroFields
+    type(BasicFields), pointer :: oneBasicFields
+    type(TurbFields), pointer :: oneTurbFields
+    type(MicControl), pointer :: oneMicControl
+    type(MicroFields), pointer:: oneMicroFields
     integer :: n, mxyzp
     character(len=*), parameter :: h="**(trsets)**"
 

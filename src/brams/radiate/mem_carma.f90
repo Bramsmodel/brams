@@ -711,12 +711,12 @@ contains
        call fatal_error(h//" imapm not associated")
     end if
     
-    if(associated(imap(ng)%aotMap))then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            imap(ng)%aotMap, &
-            'AOTMAP :2:hist:anal:mpti', &
-            imapm(ng)%aotMap, imean)
-    end if
+!TO    if(associated(imap(ng)%aotMap))then
+!TO       call InsertVarTable (oneVarTable, oneVarTableSize, &
+!TO            imap(ng)%aotMap, &
+!TO            'AOTMAP :2:hist:anal:mpti', &
+!TO            imapm(ng)%aotMap, imean)
+!TO    end if
   end subroutine filltab_aotMap
 
 

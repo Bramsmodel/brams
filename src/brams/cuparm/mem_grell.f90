@@ -66,19 +66,19 @@ contains
        call fatal_error(h//" cuforc not associated")
     end if
 
-    if (associated(cuforc%lsfth)) then
-       call InsertVarTable(oneVarTable, oneVarTableSize, &
-            cuforc%lsfth, &
-            'LSFTH_SH :3:hist:anal:mpti:mpt3', &
-            cuforcm%lsfth, imean)
-    end if
+!TO    if (associated(cuforc%lsfth)) then
+!TO       call InsertVarTable(oneVarTable, oneVarTableSize, &
+!TO            cuforc%lsfth, &
+!TO            'LSFTH_SH :3:hist:anal:mpti:mpt3', &
+!TO            cuforcm%lsfth, imean)
+!TO    end if
 
-    if (associated(cuforc%lsfrt)) then
-       call InsertVarTable(oneVarTable, oneVarTableSize, &
-            cuforc%lsfrt, &
-            'LSFRT_SH :3:hist:anal:mpti:mpt3', &
-            cuforcm%lsfrt, imean)
-    end if
+!TO    if (associated(cuforc%lsfrt)) then
+!TO       call InsertVarTable(oneVarTable, oneVarTableSize, &
+!TO            cuforc%lsfrt, &
+!TO            'LSFRT_SH :3:hist:anal:mpti:mpt3', &
+!TO            cuforcm%lsfrt, imean)
+!TO    end if
   end subroutine filltab_cuforc_sh
 
   !---------------------------------------------------------------
@@ -106,19 +106,19 @@ contains
        call fatal_error(h//" cuforc not associated")
     end if
 
-    if (associated(cuforc%lsfth)) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            cuforc%lsfth, &
-            'LSFTH :3:hist:anal:mpti:mpt3', &
-            cuforcm%lsfth, imean)
-    end if
+!TO    if (associated(cuforc%lsfth)) then
+!TO       call InsertVarTable (oneVarTable, oneVarTableSize, &
+!TO            cuforc%lsfth, &
+!TO            'LSFTH :3:hist:anal:mpti:mpt3', &
+!TO            cuforcm%lsfth, imean)
+!TO    end if
 
-    if (associated(cuforc%lsfrt)) then
-       call InsertVarTable (oneVarTable, oneVarTableSize, &
-            cuforc%lsfrt, &
-            'LSFRT :3:hist:anal:mpti:mpt3', &
-            cuforcm%lsfrt, imean)
-    end if
+!TO    if (associated(cuforc%lsfrt)) then
+!TO       call InsertVarTable (oneVarTable, oneVarTableSize, &
+!TO            cuforc%lsfrt, &
+!TO            'LSFRT :3:hist:anal:mpti:mpt3', &
+!TO            cuforcm%lsfrt, imean)
+!TO    end if
   end subroutine filltab_cuforc
 
 end module mem_grell

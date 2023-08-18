@@ -239,6 +239,11 @@ module ModCuParGrell3
      real, pointer, contiguous :: xmb_deep_dd(:,:) => null()
      real, pointer, contiguous :: err_deep(:,:) => null()
      real, pointer, contiguous :: xmb_shallow(:,:) => null()
+     real, pointer, contiguous :: rh_dicy_fct(:,:) => null()
+     real, pointer, contiguous :: lightn_dens(:,:) => null()
+     real, pointer, contiguous :: aa0(:,:) => null()
+     real, pointer, contiguous :: aa1(:,:) => null()
+     real, pointer, contiguous :: aa1_bl(:,:) => null()
      real, pointer, contiguous :: cugd_ttens(:,:,:) => null()
      real, pointer, contiguous :: cugd_qvtens(:,:,:) => null()
      real, pointer, contiguous :: thsrc(:,:,:) => null()
@@ -330,6 +335,12 @@ contains
     if (associated(g3d%xmb_deep_dd)) nullify (g3d%xmb_deep_dd)
     if (associated(g3d%err_deep))    nullify (g3d%err_deep)
     if (associated(g3d%xmb_shallow)) nullify (g3d%xmb_shallow)
+    if (associated(g3d%rh_dicy_fct)) nullify (g3d%rh_dicy_fct)
+    if (associated(g3d%lightn_dens)) nullify (g3d%lightn_dens)
+    if (associated(g3d%aa0))    nullify (g3d%aa0)
+    if (associated(g3d%aa1))    nullify (g3d%aa1)
+    if (associated(g3d%aa1_bl)) nullify (g3d%aa1_bl)
+
 
     if (associated(g3d%cugd_ttens))  nullify (g3d%cugd_ttens)
     if (associated(g3d%cugd_qvtens)) nullify (g3d%cugd_qvtens)
@@ -380,6 +391,16 @@ contains
     g3d%err_deep   =0.0
     allocate (g3d%xmb_shallow(m2,m3))
     g3d%xmb_shallow=0.0
+    allocate (g3d%rh_dicy_fct(m2,m3))       
+    g3d%rh_dicy_fct=0.0
+    allocate (g3d%lightn_dens(m2,m3))       
+    g3d%lightn_dens=0.0
+    allocate (g3d%aa0        (m2,m3))       
+    g3d%aa0        =0.0
+    allocate (g3d%aa1        (m2,m3))       
+    g3d%aa1        =0.0
+    allocate (g3d%aa1_bl     (m2,m3))       
+    g3d%aa1_bl     =0.0
 
     allocate (g3d%thsrc(m1, m2, m3))
     g3d%thsrc=0.0
@@ -639,13 +660,14 @@ contains
          ,SUB_MPQL & ! subsidence transport applied to cloud mix ratio
          ,SUB_MPCF   ! subsidence transport applied to cloud fraction
 
-    real   , dimension(mxp,myp)  :: var2d,col_sat ,LIGHTN_DENS,stochastic_sig
+!TO     real   , dimension(mxp,myp)  :: var2d,col_sat ,LIGHTN_DENS,stochastic_sig
+    real   , dimension(mxp,myp)  :: var2d,col_sat,stochastic_sig
 
     real   ,dimension(mtp,mzp,mxp,myp)  :: SRC_CHEM
     !---
     real   ,dimension(mxp,myp,mzp,mtp)  :: TRACER  !geos-5 data structure
     !---
-    real   , dimension(mxp,myp)  :: dx2d ,lons,lats,sfc_press,xland
+    real   , dimension(mxp,myp)  :: dx2d ,lons,lats,sfc_press,xland, tke_pbl
 
     integer :: kr,n,i1,i2,j1,j2
     integer :: gridID
@@ -687,6 +709,7 @@ contains
     gridId=oneGrid%Id
     idiffk=oneGrid%oneNamelistFile%idiffk(gridId)
     akmin=oneGrid%oneNamelistFile%akmin(gridId)
+     AA1_BL=0.0   !TO
 
     if(mod(time,oneGrid%oneNamelistFile%confrq) < dtlt  .or. &
          time < 0.01 .or. &
@@ -708,7 +731,8 @@ contains
           g3d_g(ngrid)%nlsrc     = 0.0
           g3d_g(ngrid)%nisrc     = 0.0
        endif
-       if(imomentum == 1 .and. oneGrid%oneNamelistFile%nnqparm(ngrid) >= 6) then
+       !TO if(imomentum == 1 .and. oneGrid%oneNamelistFile%nnqparm(ngrid) >= 6) then
+       if(imomentum == 1 .and. oneGrid%oneNamelistFile%nnqparm(ngrid) >= 4) then
           g3d_g(ngrid)%usrc      = 0.0
           g3d_g(ngrid)%vsrc      = 0.0
        endif
@@ -834,7 +858,7 @@ contains
                ,oneGrid%oneMicroFields%rhp         &
                ,aot500                     & ! aot at 500nm
                )
-          !
+
           !- exchange border information for parallel run
           if( g3d_spread == 1 .or. g3d_smoothh == 1) then
              call PostSendRecvMsgs(oneGrid%SendG3D, oneGrid%RecvG3D)
@@ -1052,7 +1076,8 @@ contains
           enddo
           if( idiffk /= 2 .and. idiffk /= 3) then 
              if(idiffk == 7 ) then          
-                kpbl (:,:) = nint(oneGrid%oneTurbFields%kpbl(:,:))
+                !TO kpbl (:,:) = nint(oneGrid%oneTurbFields%kpbl(:,:))
+                kpbl (:,:) = max(1,nint(oneGrid%oneTurbFields%kpbl(:,:)))
              else
                 do j=1,myp
                    do i=1,mxp
@@ -1063,10 +1088,23 @@ contains
                    enddo
                 enddo
              end if
-          else
-             kpbl = 5  ! check later (introduce better formulation for Zi )
-          endif
+          !TO else
+          !TO    kpbl = 5  ! check later (introduce better formulation for Zi )
+          !TO endif
           !
+          !--- mean pbl TKE for new shallow convection mass flux closure
+            do j=1,myp
+              do i=1,mxp
+                call get_mean_tke(mzp,tkmin,oneGrid%oneTurbFields%tkep(:,i,j) ,grid_g(ngrid)%rtgt(i,j) &
+                                 ,kpbl(i,j),oneGrid%oneBasicFields%dn0(:,i,j), tke_pbl(i,j) )
+               enddo
+            enddo
+            !print*,"tkemean=",maxval(tke_pbl),minval(tke_pbl),maxval(kpbl),minval(kpbl)
+          else
+            kpbl       = 5  ! check later (introduce better formulation for Zi )
+            tke_pbl(:,:) = tkmin
+          endif
+           
           do j=1,myp
              do i=1,mxp
                 do_this_column(i,j)=0
@@ -1097,6 +1135,7 @@ contains
              enddo
           enddo
 
+
           if(APPLY_SUB_MP == 1) then
              do j=1,myp
                 do i=1,mxp
@@ -1125,6 +1164,7 @@ contains
              enddo
           enddo
 
+
           if(oneGrid%oneNamelistFile%ilwrtyp==4 .or. oneGrid%oneNamelistFile%iswrtyp==4) then
              aot500(:,:)=carma(ngrid)%aot(:,:,11)
           else
@@ -1139,9 +1179,9 @@ contains
                   oneGrid%oneBasicFields%theta(2,:,:)*&
                   (oneGrid%oneBasicFields%pp(2,:,:)+oneGrid%oneBasicFields%pi0(2,:,:))/cp ) !Kelvin
           endif
-
+     
           !- call the driver routine to apply the parameterization
-          call GF_GEOS5_DRV(mxp,myp,mzp,mtp ,nmp        &
+          call GF_GEOS5_DRV(mxp,myp,mzp,mtp ,nmp, time, itime1   &
                ,ims,ime, jms,jme, kms,kme   &
                ,its,ite, jts,jte, kts,kte   &
                ,flip        &
@@ -1153,7 +1193,7 @@ contains
                ,zm3d        &
                ,zt3d        &
                ,dm3d        &
-                                !--- sfc inputs
+               !--- sfc inputs
                ,lons        &
                ,lats        &
                ,aot500      &
@@ -1164,7 +1204,8 @@ contains
                ,xland                 &
                ,sfc_press   &
                ,kpbl        &
-                                !--- atmos state
+               ,tke_pbl     &
+               !--- atmos state
                ,col_sat     &
                ,up     &
                ,vp     &
@@ -1187,7 +1228,8 @@ contains
                ,sgsf_q   & ! forcing for rv    pbl
                                 !---- output ----
                ,oneGrid%oneCuParmFields%CONPRR  &
-               ,LIGHTN_DENS             &
+               ,g3d_g(ngrid)%lightn_dens             &
+               ,g3d_g(ngrid)%rh_dicy_fct&
                ,g3d_g(ngrid)%THSRC      & ! temp tendency
                ,g3d_g(ngrid)%RTSRC      & ! rv tendency
                ,g3d_g(ngrid)%CLSRC      & ! cloud/ice  mass   mix ratio tendency
@@ -1235,6 +1277,12 @@ contains
                )
           !
           !-- outputs ....
+     
+          if( icumulus_gf(deep) == 1) then   !TO 
+                  g3d_g(ngrid)%aa0    (:,:) = AA0    (:,:)
+                  g3d_g(ngrid)%aa1    (:,:) = AA1    (:,:)
+                  g3d_g(ngrid)%aa1_bl (:,:) = AA1_BL (:,:)
+          endif                              !TO
 
           !if( icumulus_gf(deep) == 1) then 
           ! g3d_ens_g(1,ngrid)%accapr(:,:)=AA0(:,:) !Tpert_h(2, :,:)
@@ -1274,6 +1322,7 @@ contains
 
           !-- converting Dtemp/Dt to Dtheta/ Dt (temp = cp * theta/exner function) 
           g3d_g(ngrid)%THSRC = g3d_g(ngrid)%THSRC * cp / (oneGrid%oneBasicFields%pp + oneGrid%oneBasicFields%pi0)
+
 
           if( icumulus_gf(deep) == 1) then 
              do j=1,myp
@@ -1348,7 +1397,6 @@ contains
                 enddo
              enddo
           endif
-
           !
           !for checking
           !do j=1,myp
@@ -1396,13 +1444,13 @@ contains
        enddo
     endif
     !----------------------------------------------------------
-
     call update(mxp*myp, oneGrid%oneCuParmFields%aconpr, oneGrid%oneCuParmFields%conprr, dtlt)
 
     call accum(int(mxp*myp*mzp,i8), tend%tht, g3d_g(ngrid)%thsrc)
     call accum(int(mxp*myp*mzp,i8), tend%rtt, g3d_g(ngrid)%rtsrc)
 
-    if(imomentum == 1 .and. oneGrid%oneNamelistFile%nnqparm(ngrid) >= 6) then
+    !TO if(imomentum == 1 .and. oneGrid%oneNamelistFile%nnqparm(ngrid) >= 6) then
+    if(imomentum == 1 .and. oneGrid%oneNamelistFile%nnqparm(ngrid) >= 4) then
        call accum(int(mxp*myp*mzp,i8), tend%ut, g3d_g(ngrid)%usrc)
        call accum(int(mxp*myp*mzp,i8), tend%vt, g3d_g(ngrid)%vsrc)
     endif
@@ -1487,6 +1535,7 @@ contains
     !-- training on closures
     if(training == 1) then
        if(nnqparm==3) hweight = 0.2
+       if(nnqparm==5) hweight = 0.25
        do j=1,n3
           do i=1,n2
              do it=1,train_dim
@@ -2361,4 +2410,35 @@ contains
     !pbl(i) = max( z(i,kzi(i))-ztop(i), z(i,1)-ztop(i) )
   end subroutine get_zi_gf2018
   !-------------------------------------------------------------------
+SUBROUTINE get_mean_tke(m1,tkmin,tke1d,rtgt,kzi,dn01d,tke_pbl)
+
+  use mem_grid, only:   dzt ! intent(IN)
+  implicit none
+  integer,intent(in):: m1, kzi
+  real, intent(in):: tkmin,rtgt
+  real, intent(in), dimension(m1) :: tke1d,dn01d
+  real, intent(out) :: tke_pbl
+  integer :: k
+  real :: dzpho,total_dz, shmf
+  real :: k1 = 1.2 , cloud_area = 0.15
+
+  tke_pbl  = 0.
+  total_dz = 0.
+
+  do k = 2, kzi + 1
+      dzpho    = rtgt/dzt(k) * dn01d(k)
+      tke_pbl  = tke_pbl  + tke1d(k) * dzpho
+      total_dz = total_dz + dzpho
+  enddo
+  tke_pbl = tke_pbl / (1.e-6 + total_dz)
+  tke_pbl = max(tkmin, tke_pbl)
+
+  !-- just for checking
+    !-- potential closure for the mass flux shallow convection
+    !shmf = cloud_area * dn01d(kzi) * k1 * sqrt(tke_pbl)
+    !tke_pbl = shmf
+  !--
+
+ END SUBROUTINE get_mean_tke
+!-------------------------------------------------------------------
 end module ModCuParGrell3
