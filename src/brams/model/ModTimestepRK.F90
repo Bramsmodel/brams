@@ -318,7 +318,7 @@ contains
     character(len=8) :: str(10)
     character(len=16) :: fstr(10)
     real, pointer :: vt3da(:)
-
+    integer :: k
     !MB: only for testing
     !integer :: nmbr_gpts
     !real    :: pm,tm
@@ -328,12 +328,6 @@ contains
        call MsgDump(h//" starts")
     end if
 
-!!$    if (mynum == 1) then
-!!$       write (*,fmt='(a)') h//" inicio; theta=     "
-!!$       !TO write (*,fmt='(45(e9.3,1x))') (oneGrid%oneBasicFields%theta(i,2,2),i=1,mzp)
-!!$       write (44,fmt='(45(e12.6,1x))') (oneGrid%oneBasicFields%theta)
-!!$    end if
-    
     singleProcRun = nmachs == 1
     julesFile=oneGrid%oneNamelistFile%julesin
 
@@ -360,10 +354,10 @@ contains
        call GetIauTendency (ngrid, mzp*mxp*myp, mzp, mxp, myp,ia,iz,ja,jz ,time,dtlt)      
     endif
 
-    
     !  Thermodynamic diagnosis
     !--------------------------------
-    if (oneGrid%oneMicVars%mcphys_type == 0 .and. oneGrid%oneMicVars%level/=3) then
+    if (oneGrid%oneMicVars%mcphys_type <= 1 .and. oneGrid%oneMicVars%level/=3) then
+
        call thermo(mzp, mxp, myp, ia, iz, ja, jz, &
             oneGrid%oneBasicFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
     endif
@@ -509,7 +503,6 @@ contains
             oneGrid%oneCuParmFields)
     endif
       
-
 !!$    call SynchronizedTimeStamp(TS_PHYSICS) ! Exper1.2, 2021_12
 
     !  Send boundaries to adjoining nodes
@@ -522,7 +515,6 @@ contains
        call corlos(mzp, mxp, myp, i0, j0, ia, iz, ja, jz, izu, jzv, &
             tend%ut, tend%vt, oneGrid%oneBasicFields)
     end if
-
 
 !!$    call SynchronizedTimeStamp(TS_DYNAMICS) ! Exper1.2, 2021_12
 
@@ -717,7 +709,6 @@ contains
          oneGrid%oneBasicFields%uc,tend%ut,oneGrid%oneBasicFields%vp,oneGrid%oneBasicFields%vc,&
          tend%vt,grid_g(ngrid)%dxt,grid_g(ngrid)%dyt)
 
-
  
 !!$    call SynchronizedTimeStamp(TS_RK_RESTO) ! Exper1.2, 2021_12
 
@@ -760,12 +751,12 @@ contains
        end if
        call advectc_rk(oneGrid,'V',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
 
-
        !  advection of pi and theta_il
        if (dumpLocal) then
           call MsgDump(h//" invokes advectc_rk for THETAIL")
        end if
        call advectc_rk(oneGrid,'THETAIL',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum,l_rk)
+       
        if (dumpLocal) then
           call MsgDump(h//" invokes advectc_rk for PI")
        end if
@@ -794,6 +785,7 @@ contains
 !!$          write (*,fmt='(45(e9.3,1x))') (oneGrid%oneBasicFields%theta(i,2,2),i=1,mzp)
 !!$       end if
        call buoyancy(tend%wt_rk, oneGrid%oneBasicFields, oneGrid%oneMicVars)
+
 !!$       if (mynum == 1) then
 !!$          write (*,fmt='(a,i1,a)') h//" apos buoyancy com l_rk=",l_rk," tend%wt_rk="
 !!$          write (*,fmt='(45(e9.3,1x))') (tend%wt_rk(i),i=(mxp+1)*mzp,(mxp+2)*mzp-1)
@@ -828,13 +820,13 @@ contains
 !!$          write (*,fmt='(45(e9.3,1x))') (oneGrid%oneBasicFields%pc(i,2,2),i=1,mzp)
 !!$       end if
     
-
        !-  Acoustic small timesteps
 !!$       if (mynum == 1) then
 !!$          write (*,fmt='(a,i1,a)') h//" antes acoustic_new com l_rk=",l_rk," tend%wt_rk="
 !!$          write (*,fmt='(45(e9.3,1x))') (tend%wt_rk(i),i=(mxp+1)*mzp,(mxp+2)*mzp-1)
 !!$       end if
        call acoustic_new(oneGrid, rk_nmbr_small_timesteps(l_rk),l_rk )
+
 !!$       if (mynum == 1) then
 !!$          write (*,fmt='(a,i1,a)') h//" apos acoustic_new com l_rk=",l_rk," tend%wt_rk="
 !!$          write (*,fmt='(45(e9.3,1x))') (tend%wt_rk(i),i=(mxp+1)*mzp,(mxp+2)*mzp-1)
@@ -871,6 +863,7 @@ contains
        !- determine theta (dry potential temp.) for the buoyancy term:
        call theta_thp_rk(mzp,mxp,myp,ia,iz,ja,jz,"get_theta", &
             oneGrid%oneBasicFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
+
 !!$       if (mynum == 1) then
 !!$          write (*,fmt='(a,i1,a)') h//" apos theta_thp_rk com l_rk=",l_rk,", theta="
 !!$          write (*,fmt='(45(e9.3,1x))') (oneGrid%oneBasicFields%theta(i,2,2),i=1,mzp)
@@ -989,10 +982,12 @@ contains
 !!$    call SynchronizedTimeStamp(TS_PHYSICS) ! Exper1.2, 2021_12
 
     !- Thermodynamic diagnosis
-    if (oneGrid%oneMicVars%mcphys_type == 0 .and. oneGrid%oneMicVars%level==3)  then
+    if (oneGrid%oneMicVars%mcphys_type <= 1 .and. oneGrid%oneMicVars%level==3)  then
+
        call thermo(mzp, mxp, myp, 1, mxp, 1, myp, &
             oneGrid%oneBasicFields, oneGrid%oneMicVars, oneGrid%oneMicroFields)
     endif
+    
 
     !  Apply scalar b.c.'s (THP is changed here)
     !----------------------------------------
@@ -1018,15 +1013,13 @@ contains
     !  Velocity/pressure boundary conditions
     !----------------------------------------
     call vpsets(mzp,mxp,myp,ia,iz,ja,jz,ibcon,nstbot, &
-!TO         oneGrid%oneBasicFields%up,oneGrid%oneBasicFields%vp,oneGrid%oneBasicFields%wp,&
-!TO         oneGrid%oneBasicFields%pp,oneGrid%oneBasicFields%uc,oneGrid%oneBasicFields%vc,&
-!TO         oneGrid%oneBasicFields%wc,oneGrid%oneBasicFields%pc,grid_g(ngrid)%dxu,&
          grid_g(ngrid)%dxu, &
          grid_g(ngrid)%dxm,grid_g(ngrid)%dyv,grid_g(ngrid)%dym,&
          grid_g(ngrid)%lpu,grid_g(ngrid)%lpv,grid_g(ngrid)%lpw, &
          oneGrid%oneBasicFields)
 
     !- call THERMO on the boundaries
+
     call thermo_boundary_driver((time+dtlongn(ngrid)), dtlong, &
          f_thermo_e(ngrid), f_thermo_w(ngrid), &
          f_thermo_s(ngrid), f_thermo_n(ngrid), &
@@ -1052,7 +1045,6 @@ contains
     endif
 
     
-
     !----------------------------------------
     !- chemistry/aerosol solvers
     if (ccatt==1) then
@@ -1080,8 +1072,6 @@ contains
        call aer_background(ngrid,mzp,mxp,myp,ia,iz,ja,jz)
     endif
     !----------------------------------------
-
-    
     !- windfarm
     call wind_farm_driver(ngrid,mzp,mxp,myp,ia,iz,ja,jz, &
          oneGrid%oneBasicFields, oneGrid%oneTurbFields)
@@ -1093,7 +1083,6 @@ contains
             oneGrid%oneBasicFields, oneGrid%oneControlVars, &
             oneGrid%oneVarTable, oneGrid%oneVarTableSize)
     end if
-
 
 
     ! Implements the Incremental Analysis Update procedure -

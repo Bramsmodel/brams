@@ -83,10 +83,10 @@ contains
 
 
   subroutine micro_thompson(oneNamelistFile, oneBasicFields, oneMicControl, oneMicroFields)
-    type(NamelistFile), pointer, intent(in) :: oneNamelistFile
-    type(BasicFields), pointer, intent(in) :: oneBasicFields
-    type(MicControl), pointer, intent(in) :: oneMicControl
-    type(MicroFields), pointer, intent(in) :: oneMicroFields
+    type(NamelistFile), pointer :: oneNamelistFile
+    type(BasicFields),  pointer :: oneBasicFields
+    type(MicControl),   pointer :: oneMicControl
+    type(MicroFields),  pointer :: oneMicroFields
 
     integer,parameter :: &
          IDS=1, IDE=2, JDS=1, JDE=2, KDS=1, &
@@ -187,8 +187,8 @@ contains
        oneMicControl&
        )
 
-    type(BasicFields), pointer, intent(in) ::oneBasicFields
-    type(MicControl), pointer, intent(in) :: oneMicControl
+    type(BasicFields), pointer :: oneBasicFields
+    type(MicControl),  pointer :: oneMicControl
     type(grid_vars)  :: grd
     type(MicroFields) :: oneMicroFields
 
@@ -319,6 +319,9 @@ contains
     real :: dt                  ! model timestep (s)
     logical :: start_of_simulation =.true. 
     integer, save ::it=0
+    integer :: ke_diag              ! check this latter
+    logical :: wetscav_on = .false. ! check this latter
+    
 
     real,  dimension(m1) :: &
          thp    &
@@ -355,7 +358,7 @@ contains
          ,accpg   &! kg/m2 - graupel
          ,pcprg    ! kg/m2 - graupel
     real, parameter :: nt_c_ocean=100.E6 &
-         ,nt_c_land =200.E6 
+                      ,nt_c_land =200.E6 
 
     real :: nt_c_var
 
@@ -450,6 +453,7 @@ contains
     ! ( for land surface models)
 
     refl_10cm =0.0  ! 
+    ke_diag   = kte
 
     dx=10000. !- typical x- horizontal grid spacing (only for the local aerosol emission)
     dy=10000. !- typical y- horizontal grid spacing (only for the local aerosol emission)
@@ -577,10 +581,12 @@ contains
          GRAUPELNC,                 & 
          GRAUPELNCV,                & 
          SR,                        &
+         wetscav_on,                &
          rainprod,                  &
          evapprod,                  &
          refl_10cm,                 &
          diagflag,                  &
+         ke_diag,                   &
          do_radar_ref,              &
          re_cloud,                  & 
          re_ice,                    &
@@ -590,8 +596,9 @@ contains
          has_reqs,                  & ! G. Thompson
          IDS,IDE, JDS,JDE, KDS,KDE, &
          IMS,IME, JMS,JME, KMS,KME, &
-         ITS,ITE, JTS,JTE, KTS,KTE, &
-         nt_c_var)
+         ITS,ITE, JTS,JTE, KTS,KTE  &
+!         nt_c_var&
+         )
 
 
     !- this call cloud water 2-mom / aerosol aware scheme
@@ -606,12 +613,12 @@ contains
          qg_curr,                   &! QG=qg_curr,     
          qni_curr,                  &! NI=qni_curr,    
          qnr_curr,                  &! NR=qnr_curr,    
-                                !-these are optional arrays and were moved to the end of this list
-                                !                    qnc_curr,                  &! NC=qnc_curr,     
-                                !                    qnwfa_curr,                 &! NWFA=qnwfa_curr, 
-                                !                    qnifa_curr,                 &! NIFA=qnifa_curr, 
-                                !                    qnwfa2d,                   &! NWFA2D=qnwfa2d,  
-                                !-
+!-these are optional arrays and were moved to the end of this list
+!        qnc_curr,                  &! NC=qnc_curr,     
+!        qnwfa_curr,                 &! NWFA=qnwfa_curr, 
+!        qnifa_curr,                 &! NIFA=qnifa_curr, 
+!        qnwfa2d,                   &! NWFA2D=qnwfa2d,  
+!-
          TH,                        &! potential temperature    (K)
          pi_phy,                    &! exner function (dimensionless)
          P,                         &! pressure(Pa)
@@ -626,10 +633,12 @@ contains
          GRAUPELNC,                 & 
          GRAUPELNCV,                & 
          SR,                        &
+         wetscav_on,                &
          rainprod,                  &
          evapprod,                  &
          refl_10cm,                 &
          diagflag,                  &
+         ke_diag,                   &
          do_radar_ref,              &
          re_cloud,                  & 
          re_ice,                    &
@@ -640,7 +649,7 @@ contains
          IDS,IDE, JDS,JDE, KDS,KDE, &
          IMS,IME, JMS,JME, KMS,KME, &
          ITS,ITE, JTS,JTE, KTS,KTE, &
-         nt_c_var,                  &
+!         nt_c_var,                  &
                                 !- moving optional arrays to the end of the argument list
          qnc_curr,                  &! NC=qnc_curr,     
          qnwfa_curr,                &! NWFA=qnwfa_curr, 
@@ -676,7 +685,7 @@ contains
 
        !- update liq-ice potential temperature THP in Kelvin including microphysics processes
        thp(k)   =  theta(k)*(1. + alvl * rliq/(cp * max(tempK,253.))  &
-            + alvi * rice/(cp * max(tempK,253.)) ) **(-1.0)      
+                                + alvi * rice/(cp * max(tempK,253.)) ) **(-1.0)      
     enddo
     !- definition for k=1
     rtp(1)  = rtp(2)  

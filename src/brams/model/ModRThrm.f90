@@ -49,9 +49,9 @@ contains
     integer, intent(in) :: iz
     integer, intent(in) :: ja
     integer, intent(in) :: jz
-    type(BasicFields), pointer, intent(in) :: oneBasic
-    type(MicControl), pointer, intent(in) :: oneMicVars
-    type(MicroFields), pointer, intent(in) :: oneMicroFields
+    type(BasicFields), pointer :: oneBasic
+    type(MicControl), pointer :: oneMicVars
+    type(MicroFields), pointer :: oneMicroFields
 
     character(len=*), parameter :: h="**(thermo)**"
     real :: vctr1(mzp)
@@ -62,7 +62,8 @@ contains
     real :: vctr6(mzp)
     real :: scr1(mzp)
     real :: vt3db(mzp*mxp*myp)
-
+    integer :: i,j,k
+    
     if (oneMicVars%level .le. 1) then
 
        call drythrm(mzp,mxp,myp,ia,iz,ja,jz  &
@@ -80,7 +81,7 @@ contains
 
     elseif (oneMicVars%level .eq. 3) then
 
-       if(oneMicVars%mcphys_type == 0) then
+       if(oneMicVars%mcphys_type .le. 1) then
 
           call wetthrm3(mzp,mxp,myp,ia,iz,ja,jz,oneMicVars%jnmb  &
                ,oneBasic%pi0 ,oneBasic%pp     &
@@ -95,15 +96,14 @@ contains
 
        elseif(oneMicVars%mcphys_type >= 2 .or. oneMicVars%mcphys_type == 3 .or. oneMicVars%mcphys_type == 4) then
 
-          !-srf for GThompson/GFDL uphysics
-          call wetthrm3_GT(mzp,mxp,myp,ia,iz,ja,jz,oneMicVars%jnmb  &
-               ,oneBasic%pi0 ,oneBasic%pp     &
-               ,oneBasic%thp ,oneBasic%theta  &
-               ,oneBasic%rtp ,oneBasic%rv     &
-               ,oneMicroFields%rcp ,oneMicroFields%rrp    &
-               ,oneMicroFields%rpp ,oneMicroFields%rsp    &
-               ,oneMicroFields%rgp    &
-               ,ngrid,oneMicVars%mcphys_type)
+          !-srf for GThompson/GFDL/WSM uphysics
+           call wetthrm3_generic(mzp,mxp,myp,ia,iz,ja,jz,oneMicVars%jnmb  &
+          ,oneBasic%pi0 ,oneBasic%pp     &
+          ,oneBasic%thp ,oneBasic%theta  &
+          ,oneBasic%rtp ,oneBasic%rv     &
+          ,oneMicroFields &
+          ,ngrid,oneMicVars%mcphys_type)
+
        endif
 
 
@@ -112,7 +112,6 @@ contains
        call fatal_error(h//' Thermo option not supported...LEVEL out of bounds')
 
     endif
-
 
   end subroutine thermo
 
@@ -133,9 +132,9 @@ contains
     integer, intent(in) :: mxp
     integer, intent(in) :: myp
     integer, intent(in) :: jdim
-    type(BasicFields), pointer, intent(in) :: oneBasic
-    type(MicControl), pointer, intent(in) :: oneMicVars
-    type(MicroFields), pointer, intent(in) :: oneMicroFields
+    type(BasicFields), pointer :: oneBasic
+    type(MicControl), pointer :: oneMicVars
+    type(MicroFields), pointer :: oneMicroFields
 
     ! Local Variables
     ! real, parameter :: frq_thermo_bd = 100. !in seconds
@@ -318,7 +317,7 @@ contains
           endif
 
           if (jnmb(6) .ge. 1) then
-             if(mcphys_type == 0) then 
+             if(mcphys_type .le. 1) then 
                 do k = 1,m1
                    call qtc(q6(k,i,j),tcoal,fracliq)
                    rliq(k) = rliq(k) + rgp(k,i,j) * fracliq
@@ -329,6 +328,8 @@ contains
                 do k = 1,m1
                    rice(k) = rice(k) + rgp(k,i,j) 
                 enddo
+             else   
+               stop "stop at wetthrm3 "  
              endif
           endif
 
@@ -359,6 +360,100 @@ contains
     enddo
     return
   end subroutine wetthrm3
+
+!
+!     ***************************************************************
+!
+subroutine wetthrm3_generic(m1,m2,m3,ia,iz,ja,jz,jnmb  &
+   ,pi0,pp,thp,theta,rtp,rv,mic &
+   ,ngrid,mcphys_type)
+
+  ! This routine calculates theta and rv for "level 3 microphysics"
+  ! given prognosed theta_il, cloud, rain, pristine ice, snow, graupel
+
+  implicit none
+
+  ! Arguments:
+  integer, intent(in)  :: m1, m2, m3, ia, iz, ja, jz, jnmb(*), ngrid,mcphys_type
+  real , intent(in)    :: pi0(m1,m2,m3), pp(m1,m2,m3), thp(m1,m2,m3)  &
+                         ,rtp(m1,m2,m3)
+  real , intent(inout) ::  rv(m1,m2,m3), theta(m1,m2,m3)
+  type(MicroFields) ::mic
+
+  ! Local Variables:
+  integer :: i, j, k
+  real    :: tcoal, fracliq, tairstr
+  real ,dimension(m1) :: picpi, tair, til, rliq, rice,  qhydm
+
+
+  do j = ja,jz
+     do i = ia,iz
+
+        do k = 1,m1
+           picpi(k) = (pi0(k,i,j) + pp(k,i,j)) * cpi
+           tair(k) = theta(k,i,j) * picpi(k)
+           til(k) = thp(k,i,j) * picpi(k)
+           rliq(k) = 0.
+           rice(k) = 0.
+        enddo
+        if (jnmb(1) .ge. 1) then
+           do k = 1,m1
+              rliq(k) = rliq(k) + mic%rcp(k,i,j)
+           enddo
+        endif
+
+        if (jnmb(2) .ge. 1) then
+           do k = 1,m1
+              rliq(k) = rliq(k) + mic%rrp(k,i,j)
+           enddo
+        endif
+
+        if (jnmb(3) .ge. 1) then
+           do k = 1,m1
+              rice(k) = rice(k) + mic%rpp(k,i,j)
+           enddo
+        endif
+
+        if (jnmb(4) .ge. 1) then
+           do k = 1,m1
+              rice(k) = rice(k) + mic%rsp(k,i,j)
+           enddo
+        endif
+
+        if (jnmb(6) .ge. 1) then
+             do k = 1,m1
+              rice(k) = rice(k) + mic%rgp(k,i,j)
+             enddo
+        endif
+
+        if (jnmb(7) .ge. 1) then
+           do k = 1,m1
+              rice(k) = rice(k) + mic%rhp(k,i,j)
+           enddo
+        endif
+
+        do k = 1,m1
+           qhydm(k) = alvl * rliq(k) + alvi * rice(k)
+           rv(k,i,j) = rtp(k,i,j) - rliq(k) - rice(k)
+        enddo
+
+        do k = 1,m1
+           if (tair(k) .gt. 253.) then
+              tairstr = 0.5 * (til(k)  &
+                   + sqrt(til(k) * (til(k) + cpi4 * qhydm(k))))
+           else
+              tairstr = til(k) * (1. + qhydm(k) * cp253i)
+           endif
+           theta(k,i,j) = tairstr / picpi(k)
+        enddo
+
+     enddo
+  enddo
+  return
+end subroutine wetthrm3_generic
+
+
+
   !
   !     ***************************************************************
   !
@@ -459,9 +554,9 @@ contains
     integer, intent(in) :: ja
     integer, intent(in) :: jz
     character(len=*), intent(in) :: action
-    type(BasicFields), pointer, intent(in) :: oneBasic
-    type(MicControl), pointer, intent(in) :: oneMicVars
-    type(MicroFields), pointer, intent(in) :: oneMicroFields
+    type(BasicFields), pointer :: oneBasic
+    type(MicControl), pointer :: oneMicVars
+    type(MicroFields), pointer :: oneMicroFields
 
     character(len=*), parameter :: h="**(theta_thp_rk)**"
     real :: vctr1(mzp) 
@@ -476,6 +571,7 @@ contains
     if (trim(action).ne. "get_thetail" .and. trim(action).ne."get_theta") then
        call fatal_error(h//" unknow action at theta_thp_rk routine")
     end if
+    
 
     if (oneMicVars%level .le. 1) then
        if (trim(action)=="get_thetail") then
@@ -501,7 +597,7 @@ contains
 
     else if (oneMicVars%level .eq. 3) then
 
-       if(oneMicVars%mcphys_type == 0) then
+       if(oneMicVars%mcphys_type .le. 1) then
 
           if (trim(action)=="get_thetail") then
              call fatal_error(h//" not ready for option get_thetail")
@@ -520,14 +616,14 @@ contains
 
        else if(oneMicVars%mcphys_type == 2 .or. oneMicVars%mcphys_type == 3.or. oneMicVars%mcphys_type == 4) then
 
-          !-srf for GThompson uphysics
+          !-srf for GThompson uphysics/GFDL/WSM6
           call theta_thp_GT(mzp,mxp,myp,ia,iz,ja,jz,oneMicVars%jnmb  &
                ,oneBasic%pi0 ,oneBasic%pc     &
                ,oneBasic%thc ,oneBasic%theta  &
                ,oneBasic%rtp ,oneBasic%rv     &
                ,oneMicroFields%rcp ,oneMicroFields%rrp    &
-               ,oneMicroFields%rpp ,oneMicroFields%rsp    &
-               ,oneMicroFields%rgp    &
+          !    ,oneMicroFields%rpp ,oneMicroFields%rsp    &
+          !    ,oneMicroFields%rgp    &
                ,ngrid,oneMicVars%mcphys_type,action)
        endif
 
@@ -537,18 +633,14 @@ contains
        stop 'theta_thp option not supported...LEVEL out of bounds'
 
     endif
-
+   
 
   end subroutine theta_thp_rk
 
 
 
-
-
-
-
   subroutine theta_thp_GT(m1,m2,m3,ia,iz,ja,jz,jnmb  &
-       ,pi0,pp,thp,theta,rtp,rv,rcp,rrp,rpp,rsp,rgp,ngrid,mcphys_type &
+       ,pi0,pp,thp,theta,rtp,rv,rcp,rrp,ngrid,mcphys_type &
        ,action)
 
     ! This routine calculates theta for "level 3 microphysics"
@@ -556,10 +648,9 @@ contains
 
     ! Arguments:
     integer, intent(in)  :: m1, m2, m3, ia, iz, ja, jz, jnmb(*), ngrid,mcphys_type
-    real , intent(in)    :: pi0(m1,m2,m3), pp(m1,m2,m3)  &
-         ,rtp(m1,m2,m3), rcp(m1,m2,m3), rrp(m1,m2,m3), rpp(m1,m2,m3),   &
-         rsp(m1,m2,m3),  rgp(m1,m2,m3)
-    real , intent(inout) ::  rv(m1,m2,m3), theta(m1,m2,m3),thp(m1,m2,m3)
+    real, intent(in)     :: pi0(m1,m2,m3), pp(m1,m2,m3)  
+    real, intent(in)     :: rtp(m1,m2,m3), rcp(m1,m2,m3), rrp(m1,m2,m3) 
+    real , intent(inout) :: rv(m1,m2,m3), theta(m1,m2,m3),thp(m1,m2,m3)
     character*(*) :: action
 
     ! Local Variables:
@@ -610,7 +701,7 @@ contains
 
                 !- ice-liq potential temperature (Kelvin)
                 thp(k,i,j)   =  theta(k,i,j)*(1. + alvl * rliq(k)/(cp * max(tair(k),253.))  &
-                     + alvi * rice(k)/(cp * max(tair(k),253.)) ) **(-1.0)      
+                                                 + alvi * rice(k)/(cp * max(tair(k),253.)) ) **(-1.0)      
              enddo
 
           enddo
