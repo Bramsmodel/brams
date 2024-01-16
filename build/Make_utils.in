@@ -127,7 +127,9 @@ CC_LOADER=$(CC)
 endif
 
 ifeq ($(notdir $(FCOMP)),gfortran)
-FC_FLAGS=-O3 -ffree-form -ffree-line-length-none -static
+# era essa linha
+# FC_FLAGS=-O3 -ffree-form -ffree-line-length-none -static
+FC_FLAGS=-O3 -ffree-form -ffree-line-length-none -fbacktrace -g -fcheck=bounds,mem,pointer -finit-real=nan -ffpe-trap=invalid,zero
 #FC_FLAGS=-O0 -ffree-form -ffree-line-length-none -fcheck=bounds -fbacktrace -fcheck=bounds -g -fcheck=all -finit-real=nan # -Wall -ffpe-trap=invalid,zero
 
 ifeq ($(GCC_VER_GTE10),)

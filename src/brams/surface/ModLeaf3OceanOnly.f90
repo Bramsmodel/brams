@@ -8,6 +8,9 @@
 
 module ModLeaf3OceanOnly
 
+  use ModParallelEnvironment, only: &
+       MsgDump
+
   use ModNamelistFile, only: &
        NamelistFile
   
@@ -247,6 +250,10 @@ contains
 
     real, parameter :: beta= 1. ,min_ocean=0.1
 
+    character(len=16) :: str_f(10)
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(sub_leaf3_ocean_only)**"
+    logical, parameter :: dumpLocal=.true.
 
     if(firsttime) then 
        firsttime = .FALSE. 
@@ -323,11 +330,37 @@ contains
           vels = sqrt(ups ** 2 + vps ** 2)
           temps = ths * pis 
 
+          ! **(JP)** wrong code
           !--- downdraft mass flux for the gustiness parameterization
           !--- based on Redelsperger et al (2000).
+          !gust = g3d_g(ngrid)%xmb_deep_dd(i,j)
+          !gust = min( 0.6, max(0.0, gust ) )
+          !gust = log(1. + 600.4*gust -4375.*gust**2) 
+          ! **(JP)**: since argument to (log) can be negative when gust prior to log
+          ! is in the range [0.0 : 0.6]
+          ! 
+          ! **(JP)**: the polinomial -4375*x**2 + 600.4*x + 1.0 has roots
+          ! -0.00166458 and +0.1388801
+          !
+          ! **(JP)**: consequently, to garantee non-negative log argument,
+          ! gust prior to log should be on the range [0.0 : 0.138]
+          !
+          ! **(JP)**: code replacement:
+
           gust = g3d_g(ngrid)%xmb_deep_dd(i,j)
-          gust = min( 0.6, max(0.0, gust ) )
+          gust = min( 0.138, max(0.0, gust ) )
           gust = log(1. + 600.4*gust -4375.*gust**2) 
+          
+!          if (dumpLocal) then
+!             write(str(1),"(i8)") i
+!             write(str(2),"(i8)") j
+!             write(str_f(1),"(e15.7)") gust
+!             write(str_f(2),"(e15.7)") 1. + 600.4*gust -4375.*gust**2 
+!             call MsgDump(h//" at i="//trim(adjustl(str(1)))// &
+!             ", j="//trim(adjustl(str(2)))// &
+!             "; gust after minmax="//trim(adjustl(str_f(1)))// &
+!             ", log argument="//trim(adjustl(str_f(2))))
+!          end if
 
           !--- add the gustiness to the grid scale wind
           vels2 = vels**2 + use_gustiness*(gust**2)

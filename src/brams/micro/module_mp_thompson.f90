@@ -3637,6 +3637,14 @@ CONTAINS
     DOUBLE PRECISION, DIMENSION(nbr):: vr, N_r
     DOUBLE PRECISION:: N0_r, N0_g, lam_exp, lamg, lamr
     DOUBLE PRECISION:: massg, massr, dvg, dvr, t1, t2, z1, z2, y1, y2
+
+    ! **(JP)** initialize force_read_thompson
+    ! This variable did not receive any value, but was referenced
+    ! on control flow statements.
+    ! Consecutive executions lead to different code behaviour,
+    ! depending on the value stored at the non-initialized  memory position.
+    ! The selected initialization conducts to table look-up computation
+    ! whenever the file that stores table look-up data is not available.
     LOGICAL, PARAMETER :: force_read_thompson=.false.
     LOGICAL lexist,lopen
     INTEGER good

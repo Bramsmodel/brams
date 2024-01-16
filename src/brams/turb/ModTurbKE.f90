@@ -8,6 +8,8 @@
 
 module ModTurbKE
 
+  use ModParallelEnvironment, only: &
+       MsgDump
 
   use mem_grid, only: &
        zt, &       !INTENT(IN)
@@ -165,8 +167,15 @@ contains
              !
 !!$               sumtkz=ssum(m1-k2,vctr32(k2),1)
 !!$               sumtk =ssum(m1-k2,vctr33(k2),1)
-             sumtkz = sum(vctr32(k2:m1))
-             sumtk  = sum(vctr33(k2:m1))
+
+             ! **(JP)** wrong code:
+             ! sumtkz = sum(vctr32(k2:m1))
+             ! sumtk  = sum(vctr33(k2:m1))
+             ! since vctr32 and vctr33 are not computed at m1.
+             ! Code correction:
+             sumtkz = sum(vctr32(k2:m1-1))
+             sumtk  = sum(vctr33(k2:m1-1))
+
              al0=.1*sumtkz/sumtk
 
           endif
@@ -646,6 +655,11 @@ contains
     real :: vctr32(m1)
     real :: vctr33(m1)
 
+    character(len=16) :: str_f(10)
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(tkemy)**"
+    logical, parameter :: dumpLocal=.false.
+    
     data a1,a2,b1,b2,c1/0.92,0.74,16.6,10.1,0.08/
     data aux1,aux2/0.758964199,2.58286747/
     data rf1,rf2,rf3,rf4/1.,0.191232309,0.223117196,0.234067819/
@@ -664,6 +678,16 @@ contains
        do i=ia,iz
           k2=lpw(i,j)
           !     wght3=zt(k2)/zt(k2+1)
+          if (dumpLocal) then
+             write(str(1),"(i8)") i
+             write(str(2),"(i8)") j
+             write(str(3),"(i8)") k2
+             write(str(4),"(i8)") m1
+             call MsgDump(h//" for i="//trim(adjustl(str(1)))//&
+                  ", j="//trim(adjustl(str(2)))//&
+                  ", k2="//trim(adjustl(str(3)))//&
+                  ", m1="//trim(adjustl(str(4))))
+          end if
           do k=k2,m1-1
              !if(i+i0==28 .and. j+j0==28) then
              !   tkep(k,i,j)=1.
@@ -677,16 +701,58 @@ contains
              dzloc=(zm(k)-zm(k-1))*rtgt(i,j)
              vctr33(k)=vctr30(k)*dzloc
              vctr32(k)=vctr33(k)*vctr1(k)
+             if (dumpLocal) then
+                write(str(1),"(i8)") k
+                write(str_f(1),"(e15.7)") tkep2(k)
+                write(str_f(2),"(e15.7)") vctr30(k)
+                write(str_f(3),"(e15.7)") vctr31(k)
+                write(str_f(4),"(e15.7)") vctr1(k)
+                write(str_f(5),"(e15.7)") dzloc
+                write(str_f(6),"(e15.7)") vctr33(k)
+                write(str_f(7),"(e15.7)") vctr32(k)
+                call MsgDump(h//" for k="//trim(adjustl(str(1)))//&
+                     ", tkep2="//trim(adjustl(str_f(1)))//&
+                     ", vctr30="//trim(adjustl(str_f(2)))//&
+                     ", vctr31="//trim(adjustl(str_f(3)))//&
+                     ", vctr1="//trim(adjustl(str_f(4)))//&
+                     ", dzloc="//trim(adjustl(str_f(5)))//&
+                     ", vctr33="//trim(adjustl(str_f(6)))//&
+                     ", vctr32="//trim(adjustl(str_f(7))))
+             end if
           enddo
 
 !!$      sumtkz=ssum(m1-k2,vctr32(k2),1)
 !!$      sumtk =ssum(m1-k2,vctr33(k2),1)
-          sumtkz = sum(vctr32(k2:m1))
-          sumtk  = sum(vctr33(k2:m1))
+
+          ! **(JP)** wrong code:
+          ! sumtkz = sum(vctr32(k2:m1))
+          ! sumtk  = sum(vctr33(k2:m1))
+          ! since vctr32 and vctr33 are not computed at m1.
+          ! Code correction:
+          sumtkz = sum(vctr32(k2:m1-1))
+          sumtk  = sum(vctr33(k2:m1-1))
 
           al0=.1*sumtkz/sumtk
           tket2=tket(k2,i,j)
 
+          if (dumpLocal) then
+             write(str(1),"(i8)") i
+             write(str(2),"(i8)") j
+             write(str(3),"(i8)") k2
+             write(str(4),"(i8)") m1
+             write(str_f(1),"(e15.7)") al0
+             write(str_f(2),"(e15.7)") vonk
+             write(str_f(3),"(e15.7)") sumtkz
+             write(str_f(4),"(e15.7)") sumtk
+             call MsgDump(h//" for i="//trim(adjustl(str(1)))//&
+                  ", j="//trim(adjustl(str(2)))//&
+                  ", k2="//trim(adjustl(str(3)))//&
+                  ", m1="//trim(adjustl(str(4)))//&
+                  ", sumtkz="//trim(adjustl(str_f(3)))//&
+                  ", sumtk="//trim(adjustl(str_f(4)))//&
+                  ", al0="//trim(adjustl(str_f(1)))//&
+                  ", vonk="//trim(adjustl(str_f(2))))
+          end if
           do k=k2,m1-1
              vctr9(k)=min(vonk*vctr1(k)/(1.+vonk*vctr1(k)/al0)  &
                   ,vctr31(k))

@@ -361,9 +361,9 @@ contains
           ! use binary format
           
           open(fUnit, action="read", file=trim(flnm), form="unformatted", iostat=ios)
-          read(fUnit,*) dummy
-          read(fUnit,*) dummy
-          read(fUnit,*) dummy
+          read(fUnit) dummy
+          read(fUnit) dummy
+          read(fUnit) dummy
        end if
     end if
 

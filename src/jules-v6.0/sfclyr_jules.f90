@@ -225,7 +225,7 @@ contains
     character(LEN=256) :: aux
 
     character(len=*), parameter :: h="**(sfclyr_jules)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     character(len=8) :: str(10)
     
     nml_dir=trim(julesFile)

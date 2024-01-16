@@ -8,5 +8,5 @@
 !         and consumed by BRAMS mode Initial. Currently, files produced by
 !         BRAMS mode Initial are unnafected by this flag (still VFM format).
      
-logical, parameter :: useVfm=.true.
+logical, parameter :: useVfm=.false.
 

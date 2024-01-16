@@ -951,7 +951,7 @@ ModLeaf3.o : $(SURFACE)/ModLeaf3.f90 mem_grid.o ModMicControl.o CuParmFields.o \
 ModLeaf3OceanOnly.o : $(SURFACE)/ModLeaf3OceanOnly.f90 mem_grid.o CuParmFields.o \
 	ModBasicFields.o ModLeafComs.o ModCuParGrell3.o ModTurbFields.o \
 	ModNamelistFile.o rconstants.o ConvPar_GF_GEOS5.o ModLeaf3.o ccatt_start.o \
-	io_params.o RadiateFields.o node_mod.o mem_leaf.o 
+	io_params.o RadiateFields.o node_mod.o mem_leaf.o ModParallelEnvironment.o
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND_LIGHT) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)
@@ -1487,7 +1487,7 @@ ModTurbK.o : $(TURB)/ModTurbK.f90 ModMicControl.o rconstants.o ModNamelistFile.o
 	rm -f $(<F:.f90=.f90)
 
 ModTurbKE.o : $(TURB)/ModTurbKE.f90 mem_grid.o rconstants.o ke_coms.o \
-	ModTurbFields.o 
+	ModTurbFields.o ModParallelEnvironment.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	rm -f $(<F:.f90=.f90)

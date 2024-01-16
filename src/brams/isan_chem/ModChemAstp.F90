@@ -434,11 +434,17 @@ contains
     character (len=300) :: grid_info
     character (len=99) :: invline
     real, allocatable :: var(:,:),lat(:,:),lon(:,:)
-    integer :: nx,ny,thisHour
+    integer :: nx,ny,thisHour,inicial,final
     integer :: iyyl,imml,iddl,ihhl
+!!$    character(len=3) :: cnz, fctC
     character(len=3) :: cnz
+    character(len=16) :: fctC
 
     character(len=32) :: chemical_mechanism_test
+
+    character(len=8) :: str(10)
+    character(len=*), parameter :: h="**(chem_pressure_stage_grib2)**"
+    logical, parameter :: dumpLocal=.false.
 
     call str2int(innpr(len_trim(innpr)-2:len_trim(innpr)),thisHour,stat)
 #ifdef GRIB2
@@ -518,6 +524,58 @@ contains
     call str2int(invline(9:10),iddl,stat)
     call str2int(invline(11:12),ihhl,stat)
 
+    ! **(JP)** wrong code:
+    !
+    ! inicial=index(invline,'hour fcst')-4
+    ! final=index(invline,'hour fcst')-1
+    ! fctC=invline( inicial:final)
+    ! inicial=index(fctC,':')+1
+    ! fctC=fctC(inicial:3)
+    ! call str2int(fctC,thisHour,stat)
+    !
+    ! **(JP)** why?
+    ! in general, string "invline" contains the current forecast hour
+    ! with respect to the starting date,
+    ! except when dealing with the analysis (zero hours);
+    ! in the former case, the value of "thisHour" lies between the strings
+    ! " surface:" and "hour fcst";
+    ! in the latter case, string "hour fcst" is not there; instead, contains the string "anl"
+    !
+    ! **(JP)** the wrong code deals only with the former case
+    ! It was replaced by the code bellow, that deals with both cases
+
+    inicial=index(invline," surface:")
+    final=index(invline,'hour fcst')
+    if (inicial == 0) then
+       call fatal_error(h//" invline string **"//trim(invline)//"** does not have string ** surface:**")
+    end if
+    if (final == 0) then
+       if (index(invline,' surface:anl:') == 0) then
+          call fatal_error(h//" invline string **"//trim(invline)//"** does not have string ** surface:anl:**")
+       else
+          thisHour=0
+       end if
+    else
+       inicial=inicial+9 ! index after " surface:"
+       final=final-1 ! index prior to "hour fcst"
+       fctC=invline(inicial:final)
+       call str2int(fctC,thisHour,stat)
+    end if
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") iyyl
+       write(str(2),"(i8)") imml
+       write(str(3),"(i8)") iddl
+       write(str(4),"(i8)") ihhl
+       write(str(5),"(i8)") thisHour
+       call MsgDump(h//" converting character data "//trim(adjustl(invline))//&
+         " into integers results start year="//trim(adjustl(str(1)))//&
+         ", month="//trim(adjustl(str(2)))//&
+         ", day="//trim(adjustl(str(3)))//&
+         ", hour="//trim(adjustl(str(4)))//&
+         " and thisHour increment is "//trim(adjustl(str(5))))
+    end if
+
     !Setting initial lon and lat
     xswlon=initial_longitude-360.0
     xswlat=initial_latitude
@@ -525,7 +583,6 @@ contains
     inproj=1
     !if(iyy.lt.100) iyy=iyy+1900
     !ihh=(ihh+thisHour)*100
-    !print *,iyyl,imml,iddl,ihhl,real(thisHour*3600)
     call date_add_to(iyyl,imml,iddl,ihhl,real(thisHour*3600),'s' &
          ,iyy,imm,idd,ihh)
     ihh=ihh/100
@@ -536,7 +593,7 @@ contains
     ! Check for consistency between file parameters and namelist parameters
     if(iyy.ne.iyear.or.imm.ne.imonth  &
          .or.idd.ne.idate.or.ihh.ne.ihour) then
-       print*,'Pressure file dates not the same as namelist!'
+       print*,'Pressure file dates not the same as namelist! file and namelist dates are:'
        print*,'Year :',iyy,iyear
        print*,'Month:',imm,imonth
        print*,'Day  :',idd,idate
@@ -734,6 +791,7 @@ contains
     stop
 #endif
   end subroutine chem_pressure_stage_grib2
+  
 
 
 

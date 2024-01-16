@@ -138,13 +138,13 @@ endif
 
 ifeq ($(notdir $(FCOMP)),ifort)
 JULES_DEFS = $(JULES_DEFS0) INTEL_FORTRAN
-#FC_FLAGS=-O3
-#CCFLAGS=-O3
+FC_FLAGS=-O3
+CCFLAGS=-O3
 # For intel compiler debugging
 #FC_FLAGS=-O0 -mcmodel=large -check bounds -traceback -fpe0 -check uninit -init=snan,arrays
 #CCFLAGS=-O0
-FC_FLAGS=-O0 -mcmodel=large -check bounds,pointers,shape,stack,uninit -traceback 
-CC_FLAGS=-O0 -mcmodel=large -check bounds,pointers,shape,stack,uninit -traceback 
+#FC_FLAGS=-O0 -mcmodel=large -check bounds,pointers,shape,stack,uninit -traceback 
+#CC_FLAGS=-O0 -mcmodel=large -check bounds,pointers,shape,stack,uninit -traceback 
 FPP=-fpp
 FPP_VARSI = INTEL
 endif
@@ -168,16 +168,16 @@ endif
 
 ifeq ($(notdir $(FCOMP)),gfortran)
 JULES_DEFS = $(JULES_DEFS0) GNU_FORTRAN
-#FC_FLAGS=-O3 -ffree-form -ffree-line-length-none -fbacktrace -g -fcheck=bounds -fcheck=all -finit-real=nan # -Wall -ffpe-trap=invalid,zero
-FC_FLAGS=-ffree-form -ffree-line-length-none -fbacktrace -g -fcheck=bounds,pointer #-fcheck=all -finit-real=nan  -Wall -ffpe-trap=invalid,zero
+FC_FLAGS=-O3 -ffree-form -ffree-line-length-none -fbacktrace -g -fcheck=bounds,mem,pointer -finit-real=nan -ffpe-trap=invalid,zero
+#FC_FLAGS=-ffree-form -ffree-line-length-none -fbacktrace -g -fcheck=bounds,pointer #-fcheck=all -finit-real=nan  -Wall -ffpe-trap=invalid,zero
+# JP: a linha a seguir era a utilizada
 #FC_FLAGS=-ffree-form -ffree-line-length-none -fbacktrace -g -fno-range-check
 
 ifeq ($(GCC_VER_GTE10),)
      FC_FLAGS +=-fallow-argument-mismatch
 endif
 
-#OT_FLAGS=-O3
-OT_FLAGS=-O0
+OT_FLAGS=-O3
 #CCFLAGS=-O2
 CCFLAGS=-O0
 FPP=-cpp
