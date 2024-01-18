@@ -382,6 +382,17 @@ contains
        print*,'================================================================================================'
        print*
        ihour=ihour/100
+
+       if (dumpLocal) then
+          write(str(1),"(i8)") idate
+          write(str(2),"(i8)") imonth
+          write(str(3),"(i8)") iyear
+          write(str(4),"(i8)") ihour/100
+          call MsgDump(h//" starts processing date "//trim(adjustl(str(1)))//"/"//&
+               trim(adjustl(str(2)))//"/"//&
+               trim(adjustl(str(3)))//" at "//trim(adjustl(str(4)))//" hour")
+       end if
+       
        if(icFileType==1 .or. icFileType==2 .or. icFileType==3 .or. icFileType==4) then
           innpr=iproc_names(natime,5)(1:len_trim(iproc_names(natime,5)))
        else
@@ -445,6 +456,11 @@ contains
 
        do ngrid=1,nigrids
 
+          if (dumpLocal) then
+             write(str(1),"(i8)") ngrid
+             call MsgDump(h//" starts isentropic/sigma-z analysis for grid "//trim(adjustl(str(1))))
+          end if
+          
           ! Find number of sigma-z levels
 
           if(guess1st == 'RAMS') then
@@ -594,18 +610,28 @@ contains
           if(CHEM_ASSIM == 1 .and. nspecies>0) deallocate(pi_sc,ps_sc)
           if(AER_ASSIM == 1 .and. nspecies_aer_in>0) deallocate(pi_aer_sc,ps_aer_sc)
 
+          if (dumpLocal) then
+             write(str(1),"(i8)") ngrid
+             call MsgDump(h//" finishes isentropic/sigma-z analysis for grid "//trim(adjustl(str(1))))
+          end if
+          
        enddo
 
        ! Do the nesting feedback and write out the "varfiles"
        if(ivrstage == 1) then
 
+          if (dumpLocal) then
+             call MsgDump(h//" starts nesting feedback")
+          end if
+          
           if(nfeedvar == 1 .and. nigrids > 1) then
 
              ! fill reference states for all grids
 
              if (dumpLocal) then
-                call MsgDump(h//" will call varfile_refstate")
+                call MsgDump(h//" fills reference state by calling varfile_refstate")
              end if
+
              call varfile_refstate(nnzp(1),nnxp(1),nnyp(1)  &
                   ,is_grids(1)%rr_t,is_grids(1)%rr_p  &
                   ,is_grids(1)%rr_pi0,is_grids(1)%rr_th0  &
@@ -697,8 +723,10 @@ contains
                         ,ihour*100,'V',csuff,'vfm')
 
                    if (dumpLocal) then
-                      call MsgDump(h//" #4 will write file "//trim(locfn))
+                      write(str(1),"(i8)") ng
+                      call MsgDump(h//" will write file "//trim(locfn)//" for grid "//trim(adjustl(str(1))))
                    end if
+
                    print *,'*** Open  '//locfn(1:len_trim(locfn))//' for write *** '
                    call rams_f_open (fUnit,locfn(1:len_trim(locfn)),'FORMATTED','REPLACE','WRITE',iclobber)
                    write(fUnit,11) 999999,2
@@ -797,8 +825,10 @@ contains
                         ,ihour*100,'V',csuff,'bin')
 
                    if (dumpLocal) then
-                      call MsgDump(h//" #5 will write file "//trim(locfn))
+                      write(str(1),"(i8)") ng
+                      call MsgDump(h//" will write file "//trim(locfn)//" for grid "//trim(adjustl(str(1))))
                    end if
+
                    print *,'*** Open  '//locfn(1:len_trim(locfn))//' for write *** '
                    open(fUnit, action="write", file=trim(locfn), form="unformatted", iostat=ios)
                    if (ios /= 0) then
@@ -819,7 +849,7 @@ contains
 
                    write (fUnit) is_grids(ng)%rr_u
                    write (fUnit) is_grids(ng)%rr_v
-                   write (fUnit) is_grids(ng)%rr_p,nxyzp
+                   write (fUnit) is_grids(ng)%rr_p
                    write (fUnit) is_grids(ng)%rr_t
                    write (fUnit) is_grids(ng)%rr_r
 
@@ -891,20 +921,43 @@ contains
                    call fatal_error(h//" deallocate scratch2d"//&
                         " fails with ierr="//trim(adjustl(str(1))))
                 end if
+
+                if (dumpLocal) then
+                   write(str(1),"(i8)") ng
+                   call MsgDump(h//" finishes writing file "//trim(locfn)//" for grid "//trim(adjustl(str(1))))
+                end if
              end do
 
              call makefnam (locfn,varpfx,0,iyear,imonth,idate  &
                   ,ihour*100,'V','$','tag')
+
              if (dumpLocal) then
-                call MsgDump(h//" #3 will write file "//trim(locfn))
+                write(str(1),"(i8)") nigrids
+                call MsgDump(h//" will write file "//trim(locfn)//" for "//trim(adjustl(str(1)))//" grids")
              end if
+
              call rams_f_open (fUnit,locfn(1:len_trim(locfn)),'FORMATTED','REPLACE','WRITE',iclobber)
              write(fUnit,*) nigrids
              close(fUnit)
 
           end if
 
+          if (dumpLocal) then
+             call MsgDump(h//" finishes nesting feedback")
+          end if
+
        end if
+       
+       if (dumpLocal) then
+          write(str(1),"(i8)") idate
+          write(str(2),"(i8)") imonth
+          write(str(3),"(i8)") iyear
+          write(str(4),"(i8)") ihour
+          call MsgDump(h//" finishes processing date "//trim(adjustl(str(1)))//"/"//&
+               trim(adjustl(str(2)))//"/"//&
+               trim(adjustl(str(3)))//" at "//trim(adjustl(str(4)))//" hour")
+       end if
+       
     end do
   end subroutine chem_isan_driver
 end module ModChemAsgen

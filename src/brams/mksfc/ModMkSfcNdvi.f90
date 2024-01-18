@@ -89,7 +89,7 @@ contains
     logical             :: there
     character(len=*),parameter :: h='***(ndvi_read_dataheader)***'
     character(len=*),parameter :: version=''
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=8) :: str(10)
     integer :: ierr
 
@@ -275,7 +275,7 @@ contains
     character(len=f_name_length) :: flnm
     character(len=2) :: cgrid
     character(len=*), parameter :: h="**(ndvi_write)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! Write ndvi data to ndvi file for one grid and one time
 

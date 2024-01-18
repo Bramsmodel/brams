@@ -662,7 +662,7 @@ contains
 
     character(len=f_name_length) :: flnm
     character(len=*), parameter :: h="**(VarfUpdate)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     !initial 4 related
     character(len=2)			:: cng
@@ -1391,7 +1391,7 @@ contains
     real :: vctr2(nzp)
     real :: vctr4(nzp)
     integer :: indRefVar(2)
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     character(len=16) :: c0, c1, c2, c3
     character(len=*), parameter :: h="**(RefVar)**"
 

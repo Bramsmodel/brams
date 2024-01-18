@@ -114,7 +114,7 @@ contains
 
     character(len=16) :: str(10)
     character(len=*), parameter :: h="**(sst_check_header)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ierr = 0
 
@@ -201,7 +201,7 @@ contains
     real(kind=8) :: secs_init, secs1, secs2
 
     character(len=*), parameter :: h="**(SstReadStoreOwnChunk)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ierr = 0
 
@@ -447,7 +447,7 @@ contains
 
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(SstFileInv)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! size and length of data to be broadcasted
 
@@ -757,7 +757,7 @@ contains
     character(len=001) :: dummy
 
     character(len=*), parameter :: h="**(SstUpdate)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     ! Put new fields into future arrays. If iswap == 1,
     !     swap future into past first

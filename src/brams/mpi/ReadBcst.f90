@@ -81,7 +81,7 @@ module ReadBcst
 
   integer, parameter :: idim_type_min=2
   integer, parameter :: idim_type_max=7
-  logical, parameter :: dumpLocal=.false.
+  logical, parameter :: dumpLocal=.true.
   include "constants.h"
   include "UseVfm.h" 
 contains

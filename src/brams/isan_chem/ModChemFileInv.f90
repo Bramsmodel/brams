@@ -89,7 +89,7 @@ contains
 
     character(len=8) :: str(10)
     character(len=*),parameter :: h='**(chem_ISAN_file_inv)**'
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     
 
     ! Define variables -------------------------------------------------------
@@ -693,7 +693,7 @@ contains
     character(len=3) :: ctime
 
     character(len=*),parameter :: h='**(makeGrib2fileName)**'
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     !Code
     !print *,'In: ',itime1,nn,isan_inc
@@ -726,7 +726,7 @@ contains
     character(len=4) :: cyear!,cntime
 
     character(len=*),parameter :: h='**(makeGradsfileName)**'
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
 
     !Code
@@ -765,7 +765,7 @@ contains
     character(len=4) :: cyear!,cntime
 
     character(len=*), parameter :: h='**(makeGeosfileName)**'
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     
     !Code
     print *,'In: nn,isan_inc,iproc_date,iyear1,imonth1,idate1,itime1= ',nn,isan_inc,iproc_date,iyear1,imonth1,idate1,itime1
