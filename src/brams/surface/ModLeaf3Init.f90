@@ -465,6 +465,9 @@ contains
     integer :: k2
     integer, dimension(n2,n3) :: lpw
 
+    character(len=*), parameter :: h="**(sfcinit_nofile)**"
+    logical, parameter :: dumpLocal=.true.
+    
     ! This subroutine fills the primary LEAF3 arrays for which standard RAMS
     ! data files do not exist with initial default values.  Many of the
     ! initial values are horizontally homogeneous, although some depend on
@@ -484,6 +487,10 @@ contains
        timefac_sst = (time - ssttime1(ifm)) / (ssttime2(ifm) - ssttime1(ifm))
     endif
 
+    if (dumpLocal) then
+       call MsgDump(h//" computes soil_energy")
+    end if
+    
     do j = 1,n3
        do i = 1,n2
           k2=lpw(i,j)

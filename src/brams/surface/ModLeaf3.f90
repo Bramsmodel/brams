@@ -232,6 +232,9 @@ contains
     real, dimension(mxp,myp) :: l_ths2, l_rvs2, l_pis2, l_dens2, &
          l_ups2, l_vps2, l_zts2
 
+    character(len=*), parameter :: h="**(sfclyr)**"
+    logical, parameter :: dumpLocal=.true.
+    
     if (nstbot == 0) return
 
     !print*,'ncall=',ncall
@@ -258,6 +261,11 @@ contains
 
 
     if (isfcl == 2) then
+
+       if (dumpLocal) then
+          call MsgDump(h//" invokes hydro passing soil_energy")
+       end if
+       
        call hydro(mxp,myp,nzg,nzs,npatch         &
             ,leaf_g(ng)%soil_water        &
             ,leaf_g(ng)%soil_energy       &
@@ -270,6 +278,11 @@ contains
 
     ! Apply lateral boundary conditions to leaf3 arrays
 
+
+    if (dumpLocal) then
+       call MsgDump(h//" invokes leaf_bcond passing soil_energy")
+    end if
+       
     call leaf_bcond(mxp,myp,nzg,nzs,npatch,jdim     &
          ,leaf_g(ng)%soil_water  ,leaf_g(ng)%sfcwater_mass    &
          ,leaf_g(ng)%soil_energy ,leaf_g(ng)%sfcwater_energy  &
@@ -318,6 +331,9 @@ contains
     integer :: k2
     real :: dvelu,dvelv,velnew,sflux_uv,cosine1,sine1
 
+    character(len=*), parameter :: h="**(leaf3)**"
+    logical, parameter :: dumpLocal=.true.
+    
     dtll=0.0
 
     ! Time interpolation factor for updating SST
@@ -364,6 +380,11 @@ contains
             ,ths2,rvs2,ups2,vps2,pis2,dens2,zts2                    )
     endif
 
+
+    if (dumpLocal) then
+       call MsgDump(h//" recalculates soil_energy using time-dependent sst")
+    end if
+       
 
     do j = ja,jz
        do i = ia,iz
@@ -445,6 +466,10 @@ contains
 
                    if (ip == 1 .or. leaf%patch_area(i,j,ip) >= .009) then
 
+                      if (dumpLocal) then
+                         call MsgDump(h//" invokes sfcrad passing soil_energy")
+                      end if
+                      
                          call sfcrad(mzg, mzs, ip,                              &
                               leaf%soil_energy(1:mzg,i,j,ip),                   &
                               leaf%soil_water(1:mzg,i,j,ip),                    &
@@ -541,6 +566,10 @@ contains
 
                    if (leaf%patch_area(i,j,ip) >= .009) then
 
+                      if (dumpLocal) then
+                         call MsgDump(h//" invokes leaftw passing soil_energy")
+                      end if
+                      
                       call leaftw(mzg,mzs,np,              &
                            leaf%soil_water(:,i,j,ip),      &
                            leaf%soil_energy(:,i,j,ip),     &
@@ -680,7 +709,9 @@ contains
     real :: vctr16(mzg)
     real :: vctr18(mzg)
 
-
+    character(len=*), parameter :: h="**(leaftw)**"
+    logical, parameter :: dumpLocal=.true.
+    
     do k = 1,mzg
        dslz   (k) = slz(k+1) - slz(k)
        dslzi  (k) = 1. / dslz(k)
@@ -721,6 +752,11 @@ contains
     ! Evaluate any exchanges of heat and moisture to or from vegetation, apply
     ! moisture and heat changes to vegetation, and evaluate the resistance
     ! parameter rd between canopy air and the top soil or snow surface.
+
+    if (dumpLocal) then
+       call MsgDump(h//" invokes canopy passing soil_energy")
+    end if
+                      
 
     call canopy(mzg,mzs,ksn,nveg  &
          ,soil_energy,soil_water,soil_text,sfcwater_mass  &
@@ -767,6 +803,11 @@ contains
     ! upward water vapor (latent heat), longwave, and shortwave fluxes.
     ! This excludes effects of dew/frost formation, precipitation, shedding,
     ! and percolation.  Update top soil or snow moisture from evaporation only.
+
+    if (dumpLocal) then
+       call MsgDump(h//" recompute soil_energy from fluxes")
+    end if
+                      
 
     do k = 1,mzg
        soil_energy(k) = soil_energy(k) + dslzidt(k) * (hfluxgsc(k) - hfluxgsc(k+1))
@@ -825,6 +866,11 @@ contains
           ! heat between them.
 
           if (ksnnew == 1 .and. sfcwater_mass(k) < 3.) then
+
+             if (dumpLocal) then
+                call MsgDump(h//" recompute soil_energy exchanging heat with snow layer")
+             end if
+                      
              qwt = qw + soil_energy(mzg) * dslz(mzg)
              wt = w + soil_water(mzg) * 1.e3 * dslz(mzg)
              soilhcap = slcpd(nsoil) * dslz(mzg)
@@ -845,6 +891,11 @@ contains
           wfreeb = max (0.,w * (fracliq(k+mzg) - .1) / 0.9)
           depthloss = wfreeb * 1.e-3
           if (k == 1) then
+             
+             if (dumpLocal) then
+                call MsgDump(h//" recompute soil_energy at lowest show layer")
+             end if
+                      
              soilcap = 1.e3 * max (0.,-slz(mzg) * (slmsts(nsoil) - soil_water(mzg)))
              wfreeb = min (wfreeb, soilcap)
              qwfree = wfreeb * 4186. * (tempk(k+mzg) - 193.36)
@@ -974,6 +1025,11 @@ contains
 
     ! Update soil moisture (impose minimum value of soilcp) and q value.
 
+    if (dumpLocal) then
+       call MsgDump(h//" recompute soil_energy updating soil moisture")
+    end if
+                      
+
     do k = 1,mzg
        nsoil = nint(soil_text(k))
        !
@@ -1002,6 +1058,11 @@ contains
 
        if(maxval(fswpk(1:mzg)) == 0.) stop "wrong fswpk"
 
+
+       if (dumpLocal) then
+          call MsgDump(h//" recompute soil_energy after removing water")
+       end if
+                      
        wg=0.
        do k = 1,mzg
           nsoil = nint(soil_text(k))
@@ -1022,6 +1083,11 @@ contains
        enddo
 
     else  ! RAMS original way
+
+       if (dumpLocal) then
+          call MsgDump(h//" recompute soil_energy without removing water")
+       end if
+                      
 
        wg = 0.
        nsl = nint(soil_text(mzg))
@@ -1053,6 +1119,11 @@ contains
     ! Compute ground vap mxrat for availability on next timestep; put into
     ! ground_rsat.
 
+
+    if (dumpLocal) then
+       call MsgDump(h//" invokes grndvap passing soil_energy")
+    end if
+                      
     call grndvap(soil_energy(mzg),soil_water(mzg),soil_text(mzg)  &
          ,sfcwater_energy(mzs),sfcwater_nlev,ground_rsat            &
          ,ground_rvap,can_temp,can_rvap,prss                        )
@@ -1567,7 +1638,9 @@ contains
     real :: rslif
     real :: auxVar
 
-
+    character(len=*), parameter :: h="**(grndvap)**"
+    logical, parameter :: dumpLocal=.true.
+    
     !write (88,fmt='(A,7(E18.6,1X))') 'slbs(1:7)= ',slbs(1:7)
 
     gdrm = g / rm
@@ -1587,6 +1660,11 @@ contains
        ! "alpha" term or soil "relative humidity" and the "beta" term.
 
        nsoil = nint(soil_text)
+
+       if (dumpLocal) then
+          call MsgDump(h//" invokes wqtk passing soil_energy")
+       end if
+                      
 
        call qwtk(soil_energy,soil_water*1.e3,slcpd(nsoil),tempkk,fracliqq)
        ground_rsat = rslif(prsg,tempkk)
@@ -1646,6 +1724,13 @@ contains
 
     integer :: i,j,k,ipat
 
+    character(len=*), parameter :: h="**(leaf_bcond)**"
+    logical, parameter :: dumpLocal=.true.
+    
+    if (dumpLocal) then
+       call MsgDump(h//" recomputes soil_energy")
+    end if
+    
     do ipat = 1,npat
        do j = 1,m3
 
@@ -2024,6 +2109,10 @@ contains
 
      real :: vctr32(nint(sfcwater_nlev)+10)
 
+
+     character(len=*), parameter :: h="**(sfcrad)**"
+     logical, parameter :: dumpLocal=.true.
+     
     ! This routine is called by the radiation parameterization and by leaf.
     ! It computes net surface albedo plus radiative exchange between the
     ! atmosphere, vegetation, and the snow/ground given previously computed
@@ -2050,6 +2139,10 @@ contains
           albedt = albedt + patch_area*alb
        endif
 
+       if (dumpLocal) then
+          call MsgDump(h//" invokes qtk passing soil_energy")
+       end if
+       
        call qtk(soil_energy(mzg), tempk(mzg), fracliq(mzg))
        rlongup = rlongup + patch_area*stefan*tempk(mzg)**4
 
@@ -2061,6 +2154,11 @@ contains
     else
 
        ! Diagnose soil temperature and liquid fraction
+
+       if (dumpLocal) then
+          call MsgDump(h//" invokes qwtk passing soil_energy")
+       end if
+       
 
        do k=1,mzg
           nsoil = nint(soil_text(k))

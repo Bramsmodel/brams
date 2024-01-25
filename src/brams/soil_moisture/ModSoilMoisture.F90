@@ -8,6 +8,9 @@
 !========================================================================
 module ModSoilMoisture
 
+  use ModParallelEnvironment, only: &
+       MsgDump
+  
   use ModMPassFull, only: &
        mk_3_buff, &
        mk_4_buff
@@ -212,6 +215,9 @@ contains
     integer, external :: outRealSize
     character(len(usdata)+100)  :: outs  !DSM
 
+    character(len=*), parameter :: h="**(soilmoistureinit)**"
+    logical, parameter :: dumpLocal=.true.
+    
     namelist /gradeumso/ latni, latnf, lonni, lonnf, ilatn, ilonn, nlat, nlon
 
     lpw=int(lpw_r)
@@ -460,6 +466,10 @@ contains
 
     c1 = 0.5*cpi
 
+    if (dumpLocal) then
+       call MsgDump(h//" inicializa soil_energy")
+    end if
+    
     do j=1,n3
        do i=1,n2
 
@@ -1014,6 +1024,10 @@ contains
             soil_water, globalsoilwater, &
             oneControlVars, oneBasicFields, oneTurbFields)
 
+       if (dumpLocal) then
+          call  MsgDump(h//" invoca gatherdata para ler soil_energy")
+       end if
+       
        varn = 'soil_energy'
        call gatherdata(idim_type, varn, ifm, mzg, nnxp(ifm), nnyp(ifm), &
             npat, nmachs, mchnum, mynum, master_num,			 &
@@ -1134,6 +1148,10 @@ contains
     call mk_4_buff(globalsoilwater(:,:,:,:), soil_water(:,:,:,:), &
          mzg, nnxp(ifm), nnyp(ifm), npat, mzg, n2, n3, npat, ia, iz, ja, jz)
 
+    if (dumpLocal) then
+       call MsgDump(h//" recalcula soil_energ")
+    end if
+    
     if (trim(pref) .ne. 'GFS.SOIL:UMID_TEMP.' .and. &
          trim(pref) .ne. 'ERA5.SOIL:UMID_TEMP.'.and. &
          usdata_in(ipref-10:ipref) .ne. 'YYYYMMDD.nc' ) then
@@ -1169,7 +1187,10 @@ contains
        !- GFS/ERA5 soil moisture and soil temperature
     elseif (trim(pref) == 'GFS.SOIL:UMID_TEMP.' .or. trim(pref) == 'ERA5.SOIL:UMID_TEMP.') then
 
-
+       if (dumpLocal) then
+          call MsgDump(h//" recalcula soil_energy usando gfs/era5")
+       end if
+       
        !-- scattering local data 
        !-- 2) soil temperature (using soil_energy array)
        call mk_4_buff(globalsoilenergy(:,:,:,:), soil_energy(:,:,:,:), &
@@ -1221,6 +1242,10 @@ contains
 
     elseif (usdata_in(ipref-10:ipref)=='YYYYMMDD.nc') then  !DSM - Lendo a temperatura e umidade do solo proveniente do JULES
 
+       if (dumpLocal) then
+          call MsgDump(h//" recalcula soil_energy usando jules")
+       end if
+       
        !-- 2) soil temperature (using soil_energy array)
 !!$       call mk_4_buff(globalsoilenergy(:,:,:,2), soil_energy(:,:,:,2), &
 !!$            mzg, nnxp(ifm), nnyp(ifm), npat, mzg, n2, n3, npat, ia, iz, ja, jz)

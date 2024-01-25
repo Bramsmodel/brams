@@ -632,7 +632,7 @@ contains
 
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(GeonestNofile)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
     
     real :: vt2da(maxnxp * maxnyp)
     real :: vt2db(maxnxp * maxnyp)
@@ -654,6 +654,10 @@ contains
 
        ! First, fill NOFILE LEAF-2 variables with default values in SFCINIT.
 
+       if (dumpLocal) then
+          call MsgDump(h//" invoca sfcinit_nofile")
+       end if
+       
        call sfcinit_nofile(nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm),nzg,nzs,npatch,ifm    &
             ,oneBasicFields%theta              &
             ,oneBasicFields%pi0                &
@@ -707,6 +711,11 @@ contains
 
              ! Assign values from coarse grid cells and patches
 
+
+             if (dumpLocal) then
+                call MsgDump(h//" Assign values from coarse grid cells and patches")
+             end if
+       
              do ipat = 1,npatch
                 do j = 1,nnyp(ifm)
                    do i = 1,nnxp(ifm)
@@ -778,11 +787,16 @@ contains
              !   coarse grid land patches, interpolate, then assign back to all
              !   fine grid land patches.
 
+             if (dumpLocal) then
+                call MsgDump(h//" Interpolate from coarse grid")
+             end if
+             
              call patch_interp(icm,ifm  &
                   ,nzg,nnxp(icm),nnyp(icm),npatch,nzg,nnxp(ifm),nnyp(ifm),npatch  &
                   ,leaf_g(icm)%soil_water,leaf_g(ifm)%soil_water &
                   ,leaf_g(icm)%patch_area,leaf_g(icm)%patch_area &
                   ,vt3da,vt3db,vt2da,vt2db )
+
              call patch_interp(icm,ifm  &
                   ,nzg,nnxp(icm),nnyp(icm),npatch,nzg,nnxp(ifm),nnyp(ifm),npatch  &
                   ,leaf_g(icm)%soil_energy,leaf_g(ifm)%soil_energy &
@@ -915,6 +929,10 @@ contains
        if ((SOIL_MOIST == 'i').or.(SOIL_MOIST == 'I').or.  &
             (SOIL_MOIST == 'a').or.(SOIL_MOIST == 'A')) then
 
+          if (dumpLocal) then
+             call MsgDump(h//" invoca soilMoistureInit")
+          end if
+          
           call soilMoistureInit(nnzp(ifm), nodemxp(mynum,ifm),         &
                nodemyp(mynum,ifm), nzg, nzs, npatch, ifm,              &
                oneBasicFields%theta, oneBasicFields%pi0, oneBasicFields%pp,  &
@@ -951,6 +969,10 @@ contains
                trim(adjustl(str(1)))//" by user selected values")
        end if
 
+       if (dumpLocal) then
+          call MsgDump(h//" invoca sfcinit_nofile_user")
+       end if
+       
        call sfcinit_nofile_user(nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm)      &
             ,nzg,nzs,npatch,ifm              &
             ,oneBasicFields%theta ,oneBasicFields%pi0   &

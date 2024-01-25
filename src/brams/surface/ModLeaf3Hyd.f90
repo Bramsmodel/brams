@@ -7,6 +7,9 @@
 !###########################################################################
 module ModLeaf3Hyd
 
+  use ModParallelEnvironment, only: &
+       MsgDump
+  
   use mem_grid, only: &
        dtlt,    &
        time
@@ -87,6 +90,9 @@ contains
 
     real, dimension(7,10) :: profile
 
+    character(len=*), parameter :: h="**(hydro)**"
+    logical, parameter :: dumpLocal=.true.
+    
     data rhow,rhowi/1.e3,1.e-3/
 
 
@@ -127,6 +133,10 @@ contains
 
     if (ngrps .lt. 1) return
 
+    if (dumpLocal) then
+       call MsgDump(h//" invokes hydrol passing soil_energy")
+    end if
+    
     call hydrol(m2,m3,mzg,mzs,np,maxpatch,ngrps                &
          ,soil_energy,soil_water,soil_text                       &
          ,sfcwater_energy,sfcwater_mass,patch_area,patch_wetind  &
@@ -186,6 +196,9 @@ contains
          ,dtltopm,baseflow,ziadd,wsum,qwsum,delta_water,delta_energy  &
          ,tempk,q,capacity,add,qw,wfreeb,qwfree
 
+    character(len=*), parameter :: h="**(hydrol)**"
+    logical, parameter :: dumpLocal=.true.
+
     !  tgfa is the total group fractional area of the grid cell, not including
     !     the group's bottomland patch
     !  fa as computed here is the patch's fractional area of a group
@@ -193,6 +206,10 @@ contains
     !  l is a consecutive counter over the patches in a group up to lpg(mzg),
     !     the number in the group
 
+    if (dumpLocal) then
+       call MsgDump(h//" recalculate soil_energy")
+    end if
+    
     do ngd = 1,ngrps
 
        i = ig(ngd)

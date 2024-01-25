@@ -7,6 +7,9 @@
 !###########################################################################
 module ModInitHis
 
+  use ModParallelEnvironment, only: &
+       MsgDump
+  
   use ModGetVar, only: &
        RAMS_getvar
 
@@ -772,6 +775,9 @@ contains
     real :: c1
     real, allocatable, dimension(:,:) :: hpis,hprss
 
+    character(len=*), parameter :: h="**(sfcinit_hstart)**"
+    logical, parameter :: dumpLocal=.true.
+    
     ! This subroutine fills the LEAF arrays for a history-initial start.
 
     ! Refill many of the LEAF variables, as the interpolated values may not be relevant.
@@ -840,6 +846,10 @@ contains
                      ,leaf_g(ifm)%veg_ndvic (i,j,ipat)  &
                      ,leaf_g(ifm)%veg_ndvif   (i,j,ipat)        )
 
+                if (dumpLocal) then
+                   call MsgDump(h//" invoca grndvap")
+                end if
+                
                 call grndvap(  &
                      leaf_g(ifm)%soil_energy    (nzg,i,j,ipat) &
                      ,leaf_g(ifm)%soil_water    (nzg,i,j,ipat)  &

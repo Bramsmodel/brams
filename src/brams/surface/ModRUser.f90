@@ -600,6 +600,9 @@ contains
        ,lpw_R, leaf_class  &
        )
 
+    use ModParallelEnvironment, only: &
+         MsgDump
+    
     use mem_grid, only : RUNTYPE,  &          ! INTENT(IN)
          iyear1, imonth1, idate1, itime1      ! INTENT(IN)
 
@@ -643,6 +646,10 @@ contains
     real, dimension(mzg):: fx
     real :: tempk,fracliq
     real, parameter :: fct=1.0
+
+    character(len=*), parameter :: h="**(change_soil_moisture_init)**"
+    logical, parameter :: dumpLocal=.true.
+    
     !- this routine is left to the user to change the soil-moisture for
     !- sensitivity studies.
     !- For that, the "return" command below must be comment out and the
@@ -659,6 +666,10 @@ contains
     !----- recalculate soil_energy
     c1 = .5 * cpi
 
+    if (dumpLocal) then
+       call MsgDump(h//" recalculate soil_energy")
+    end if
+    
     do j = 1,n3
        do i = 1,n2
 

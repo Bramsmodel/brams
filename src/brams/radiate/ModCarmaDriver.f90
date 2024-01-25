@@ -1,5 +1,8 @@
 module ModCarmaDriver
 
+  use ModParallelEnvironment, only: &
+       MsgDump
+  
   use ModNamelistFile, only: &
        NamelistFile
 
@@ -115,6 +118,9 @@ contains
     !srf -03/03/2013 cloud fraction
     real, parameter :: fxx = 0.2 
 
+    character(len=*), parameter :: h="**(carma_driver)**"
+    logical, parameter :: dumpLocal=.true.
+    
     !- if not including radiation, return
     if ((oneNamelistFile%ilwrtyp + oneNamelistFile%iswrtyp)==0) return
     !   
@@ -127,6 +133,10 @@ contains
     ! Compute solar zenith angle, multiplier for solar constant, sfc albeDO,
     ! and surface upward longwave radiation.
 
+    if (dumpLocal) then
+       call MsgDump(h//" invoca radprep")
+    end if
+    
     call radprep(imonth1, idate1, iyear1, time, itime1, &
          centlat, centlon, oneNamelistFile%lonrad, pi180,                        &
          nzg, nzs, npatch, ia, iz, ja, jz, jday,       &
@@ -289,6 +299,8 @@ contains
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     ! Local Variables
     integer :: ip, i, j
+    character(len=*), parameter :: h="**(radprep)**"
+    logical, parameter :: dumpLocal=.true.
 
     ! Compute solar zenith angle [cosz(i,j)] & solar constant factr [solfac].
 
@@ -303,6 +315,10 @@ contains
        albedt  = 0.
        rlongup = 0.
 
+       if (dumpLocal) then
+          call MsgDump(h//" invoca sfcrad")
+       end if
+       
        do ip = 1,np
           do j = 1,jz
              do i = 1,iz

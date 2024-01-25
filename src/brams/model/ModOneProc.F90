@@ -207,10 +207,6 @@ module ModOneProc
   use Mem_grell_param, only: StoreNamelistFileAtMem_grell_param
 
   use Mem_leaf, only: &
-!!$       ComparaLeaf, &
-!!$       CriaComparaLeaf, &
-!!$       LeLeafFile, &
-!!$       ComparaDoisComparaLeaf, &
        StoreNamelistFileAtMem_leaf, &
        isfcl, &
        leaf_g
@@ -651,15 +647,11 @@ contains
     type(Grid), pointer :: oneGrid => null()
     type(AllPostTypes), pointer :: oneAllPostTypes => null()
 
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     logical :: dirExist
     character(len=255) :: tmpdir
     character(len=8) :: str(10)
-!!$    character(len=256) :: fName
-
-!!$    type(ComparaLeaf), pointer :: ComparaLeafMeu => null()
-!!$    type(ComparaLeaf), pointer :: ComparaLeafProd => null()
     
     !XXXsrf    integer :: iau_phase
 
@@ -1853,7 +1845,9 @@ contains
        !- change initial soil moisture if desired
        if(change_soilm) then
 
-
+          if (dumpLocal) then
+             call MsgDump(h//" invoca change_soil_moisture_init")
+          end if
 
           do ifm=1,ngrids
              call change_soil_moisture_init(nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm)    &
@@ -2041,6 +2035,11 @@ contains
 
           do ifm = 1,min(ngrids,ngridsh)
              call newgrid(ifm)
+
+             if (dumpLocal) then
+                call MsgDump(h//" invoca soilMoistureInit")
+             end if
+
              call soilMoistureInit(nnzp(ifm), nodemxp(mynum,ifm),         &
                   nodemyp(mynum,ifm), nzg, nzs, npatch, ifm,              &
                   oneGrid%oneBasicFields%theta, oneGrid%oneBasicFields%pi0, oneGrid%oneBasicFields%pp,  &

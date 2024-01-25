@@ -177,6 +177,8 @@ contains
     real, dimension(mxp,myp) :: l_ths2, l_rvs2, l_pis2, l_dens2, &
          l_ups2, l_vps2, l_zts2
 
+    character(len=*), parameter :: h="**(sfclyr_ocean_only)**"
+    logical, parameter :: dumpLocal=.true.
 
     if (nstbot == 0) return
 
@@ -194,6 +196,10 @@ contains
 
     ! Apply lateral boundary conditions to leaf3 arrays
 
+    if (dumpLocal) then
+       call MsgDump(h//" apply lateral bc to soil_energy invoking leaf_bcond")
+    end if
+    
     call leaf_bcond(mxp,myp,nzg,nzs,1,jdim     &
          ,leaf_g(ng)%soil_water  ,leaf_g(ng)%sfcwater_mass    &
          ,leaf_g(ng)%soil_energy ,leaf_g(ng)%sfcwater_energy  &
@@ -253,7 +259,7 @@ contains
     character(len=16) :: str_f(10)
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(sub_leaf3_ocean_only)**"
-    logical, parameter :: dumpLocal=.false.
+    logical, parameter :: dumpLocal=.true.
 
     if(firsttime) then 
        firsttime = .FALSE. 
@@ -386,6 +392,11 @@ contains
           vels = sqrt(vels2)
 
           ! Update water internal energy from time-dependent SST
+
+          if (dumpLocal) then
+             call MsgDump(h//" update soil_energy from time-dependent sst")
+          end if
+          
           leaf%soil_energy(mzg,i,j,1) = 334000.  &
                + 4186. * (leaf%seatp(i,j) + (leaf%seatf(i,j) - leaf%seatp(i,j))  &
                * timefac_sst - 273.15)
@@ -423,6 +434,10 @@ contains
 
                 O_albedt(i,j)= O_albedt(i,j) + patch_area*alb
 
+                if (dumpLocal) then
+                   call MsgDump(h//" invokes qtk passing soil_energy")
+                end if
+                
                 call qtk(leaf%soil_energy(mzg,i,j,ip), tempk(mzg), fracliq(mzg))
 
                 O_rlongup(i,j) = O_rlongup(i,j) + stefan*tempk(mzg)**4
