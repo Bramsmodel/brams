@@ -84,7 +84,7 @@ contains
     logical :: there
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(sst_read_dataheader)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! Read header file for all sstdata files (all times and locations).  The header
     ! file contains:
@@ -242,7 +242,7 @@ contains
     character(len=f_name_length) :: flnm
     character(len=2) :: cgrid
     character(len=*), parameter :: h="**(sst_write)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! Write sst data to sst file for one grid and one time
 

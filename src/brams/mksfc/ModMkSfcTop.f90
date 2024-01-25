@@ -96,7 +96,7 @@ contains
 
     character(len=16) :: str(10)
     character(len=*), parameter :: h="**(top_check)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     lc=len_trim(topfiles)
     write(cgrid,'(a1,i1)') 'g',ifm
@@ -217,7 +217,7 @@ contains
 
     integer :: i,j
     character(len=*), parameter :: h="**(toptinit)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     
     ! Fill the TOPT array with a default value of 0.  This default is used only
     ! when a standard RAMS topography dataset is not used and when no overrides
@@ -247,7 +247,7 @@ contains
     character(len=f_name_length) :: flnm
     character(len=2) :: cgrid
     character(len=*), parameter :: h="**(top_write)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     !     write surface characteristics, one file for each grid
 
@@ -329,7 +329,7 @@ contains
     integer :: ios
     character(len=8) :: c0
     character(len=*), parameter :: h="**(TopReadStoreOwnChunk)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     
     ! master opens file
 
@@ -415,7 +415,7 @@ contains
     integer :: ios
     character(len=8) :: c0
     character(len=*), parameter :: h="**(TRSFFieldAndOwnChunk)**"
-    logical :: dumpLocal=.true.
+    logical :: dumpLocal=.false.
 
     ! master opens file
 

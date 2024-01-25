@@ -39,7 +39,7 @@ module ModNamelistFile
   use ModParallelEnvironment, only: parallelEnvironment
 
   implicit none
-  
+
   private
   public :: NamelistFile
   public :: CreateNamelistFile
@@ -59,14 +59,14 @@ module ModNamelistFile
   integer, parameter :: maxisn=100
   integer, parameter :: maxagrds=10
 
-!--(DMK-CCATT-INI)-----------------------------------------------------------
+  !--(DMK-CCATT-INI)-----------------------------------------------------------
   integer, parameter :: nsrc=4   !  number_sources
-!--(DMK-CCATT-FIM)-----------------------------------------------------------
+  !--(DMK-CCATT-FIM)-----------------------------------------------------------
 
   type NamelistFile
      character(len=f_name_length) :: fileName
 
-     ! namelist /MODEL_GRID/
+     ! namelist /MODEL_GRIDS/
 
      character(len=64) :: expnme
      character(len=16) :: runtype
@@ -123,7 +123,6 @@ module ModNamelistFile
      character(len=20) :: split_method
      real    :: chem_timestep
      integer :: chemistry_aq
-     !integer :: aerosol
      integer :: chem_assim
      character(len=256) :: srcmapfn
      integer :: recycle_tracers
@@ -140,17 +139,6 @@ module ModNamelistFile
      integer :: aer_assim
      integer :: mech
 
-
-!--(DMK-CCATT-OLD)-----------------------------------------------------------
-!     ! namelist /CATT_INFO/
-!
-     integer :: catt
-     character(len=256) :: firemapfn
-!    integer :: recycle_tracers
-!    integer :: plumerise
-     integer :: define_proc
-!    real :: prfrq
-!--(DMK-CCATT-FIM)-----------------------------------------------------------
 
      ! namelist /TEB_SPM_INFO/                                              &
 
@@ -210,7 +198,7 @@ module ModNamelistFile
      real            :: pleindu(maxubtp)
 
 
-     !namelist /MODEL_FILE_INFO/                                           &
+     !namelist /MODEL_FILE_INFO/ and /MODEL_FILE_INFO2/
 
      integer :: initial
      integer :: nud_type
@@ -331,11 +319,11 @@ module ModNamelistFile
      integer :: order_h
      integer :: order_v
 
-!--(DMK-CCATT-INI)-----------------------------------------------------------
+     !--(DMK-CCATT-INI)-----------------------------------------------------------
      integer :: iexev
      integer :: imassflx
      integer :: vveldamp
-!--(DMK-CCATT-FIM)-----------------------------------------------------------
+     !--(DMK-CCATT-FIM)-----------------------------------------------------------
      integer :: ibnd
      integer :: jbnd
      real :: cphas
@@ -624,7 +612,7 @@ contains
     ! namelist /MODEL_ADV_RAMSIN/
     character(len=f_name_length) :: advanced_ramsin
 
-     namelist /MODEL_ADV_RAMSIN/                                               &
+    namelist /MODEL_ADV_RAMSIN/                                               &
          advanced_ramsin
 
 
@@ -689,19 +677,8 @@ contains
          nacoust, ideltat, nstratx, nstraty, nndtrat, nestz1,    &
          nstratz1, nestz2, nstratz2, &
          ninest, njnest, nknest, nnsttop, nnstbot, gridu, gridv
-!--(DMK-CCATT-FIM)-----------------------------------------------------------
 
-
-!    ! namelist /CATT_INFO/
-!
-!    integer :: catt
-!    character(len=256) :: firemapfn
-!    integer :: recycle_tracers
-!    integer :: plumerise
-!    integer :: define_proc
-!    real :: prfrq
-
-!--(DMK-CCATT-INI)-----------------------------------------------------------
+    !--(DMK-CCATT-INI)-----------------------------------------------------------
     ! namelist /CCATT_INFO/
 
     integer :: ccatt
@@ -730,12 +707,12 @@ contains
     integer :: damModule
     real :: frqPrecip
     character(len=256) :: damOutPrefix
-     integer :: evaluate
-     character(len=256) :: evaluatePrefix
+    integer :: evaluate
+    character(len=256) :: evaluatePrefix
 
-!--(DMK-CCATT-FIM)-----------------------------------------------------------
+    !--(DMK-CCATT-FIM)-----------------------------------------------------------
 
-!--(DMK-CCATT-INI)-----------------------------------------------------------
+    !--(DMK-CCATT-INI)-----------------------------------------------------------
     namelist /CCATT_INFO/                                                &
          ccatt, chemistry, chem_timestep, chem_assim, srcmapfn, plumerise, &
          aerosol,aer_timestep, aer_assim
@@ -744,12 +721,6 @@ contains
          split_method, chemistry_aq,  &
          chem_assim, recycle_tracers, def_proc_src, diur_cycle,&
          na_extra2d, na_extra3d, plumerise, prfrq, volcanoes, mech
-!--(DMK-CCATT-OLD)-----------------------------------------------------------
-!    namelist /CATT_INFO/                                                 &
-!         catt,                                                           &
-!         firemapfn, recycle_tracers,                                     &
-!         plumerise, define_proc, prfrq
-!--(DMK-CCATT-FIM)-----------------------------------------------------------
 
     ! namelist /TEB_SPM_INFO/
 
@@ -841,7 +812,7 @@ contains
     real :: wt_nudge_th
     real :: wt_nudge_pi
     real :: wt_nudge_rt
-    
+
     integer :: applyIAU
     character(len=f_name_length) :: fileNameIAU
 
@@ -968,11 +939,11 @@ contains
     integer :: order_h
     integer :: order_v
 
-!--(DMK-CCATT-INI)-----------------------------------------------------------
+    !--(DMK-CCATT-INI)-----------------------------------------------------------
     integer :: iexev
     integer :: imassflx
     integer :: vveldamp
-!--(DMK-CCATT-FIM)-----------------------------------------------------------
+    !--(DMK-CCATT-FIM)-----------------------------------------------------------
     integer :: ibnd
     integer :: jbnd
     real :: cphas
@@ -1114,7 +1085,7 @@ contains
     integer :: ioflgvar
 
     namelist /ISAN_CONTROL/ &
-          isan_inc,iapr,varpfx
+         isan_inc,iapr,varpfx
 
     namelist /ISAN_CONTROL2/ &
          iszstage, ivrstage, guess1st, i1st_flg, iupa_flg,       &
@@ -1204,35 +1175,35 @@ contains
          latf, lonf, zlevmax, ipresslev, inplevs, iplevs, &
          mechanism, ascii_data, site_lat, site_lon
 
-	!namelist digital filter
-	logical :: applyDigitalFilter
-	real	:: digitalFilterTimeWindow
-     namelist /DIGITALFILTER/ &
-	       applyDigitalFilter, digitalFilterTimeWindow
+    !namelist digital filter
+    logical :: applyDigitalFilter
+    real	:: digitalFilterTimeWindow
+    namelist /DIGITALFILTER/ &
+         applyDigitalFilter, digitalFilterTimeWindow
 
 
-     logical                      :: applyMeteogram
-     real                         :: meteogramFreq
-     character(len=f_name_length) :: meteogramMap
-     character(len=f_name_length) :: meteogramDir
+    logical                      :: applyMeteogram
+    real                         :: meteogramFreq
+    character(len=f_name_length) :: meteogramMap
+    character(len=f_name_length) :: meteogramDir
 
-     namelist /METEOGRAM/ &
-     applyMeteogram,      &
-     meteogramFreq,       &
-     meteogramMap,        &
-     meteogramDir
+    namelist /METEOGRAM/ &
+         applyMeteogram,      &
+         meteogramFreq,       &
+         meteogramMap,        &
+         meteogramDir
 
-!--(DMK-CCATT-INI)-----------------------------------------------------------
-    ! CCATT_INFO
+    ! default for namelist MODEL_ADV_RAMSIN
 
     advanced_ramsin = './RAMSIN_ADVANCED'
+
+    ! default for namelist CCATT_INFO
 
     ccatt               = 0
     chemistry           = 0
     split_method        = ''
     chem_timestep       = 0.
     chemistry_aq        = 0
-!    aerosol             = 0
     chem_assim          = 0
     srcmapfn            = ''
     recycle_tracers     = 0
@@ -1243,53 +1214,46 @@ contains
     plumerise           = 0
     prfrq               = 3600. ! Initial Value for PlumeRise Frequency - CCATT
     volcanoes           = 0
-!Matrix
+    !Matrix
     aerosol             = 0
     aer_timestep        = 0.
     aer_assim           = 0
     mech                = 8
-!--(DMK-CCATT-OLD)-----------------------------------------------------------
-!    ! CATT_INFO
-!    catt                = 0
-!    firemapfn           = ''
-!    recycle_tracers     = 0
-!    plumerise           = 0
-!    define_proc         = 0
-!    prfrq               = 3600. ! Initial Value for PlumeRise Frequency - CATT
-!--(DMK-CCATT-FIM)-----------------------------------------------------------
 
-    ! ISAN_CONTROL
-    iszstage            = 1
-    ivrstage            = 1
-    isan_inc            = 0600
+    ! default for namelist ISAN_CONTROL
+    
+    iszstage          = 1
+    ivrstage          = 1
+    isan_inc          = 0600
     guess1st	      = 'PRESS'
     i1st_flg	      = 1
     iupa_flg	      = 3
     isfc_flg	      = 3
-    iapr		      = './dprep/dp' ! 2
+    iapr	      = './dprep/dp' ! 2
     iarawi	      = ''
     iasrfce	      = ''
     varpfx	      = './ivar/iv-brams4' ! 2
     ioflgisz 	      = 0
     ioflgvar 	      = 1
 
-    ! ISAN_ISENTROPIC
+    ! default for namelist ISAN_ISENTROPIC
+    
     nisn                = 43
     levth               = 800
     levth(1:nisn)       = (/280,282,284,286,288,290,292,294,296,298,300,303,306,309,&
          312,315,318,321,324,327,330,335,340,345,350,355,360,380,400,420,440, &
          460,480,500,520,540,570,600,630,670,700,750,800/)
-    nigrids             = 1
+    nigrids           = 1
     topsigz	      = 20000.
     hybbot	      = 4000.
     hybtop	      = 6000.
     sfcinf	      = 1000.
     sigzwt	      = 1.
-    nfeedvar            = 1.
+    nfeedvar          = 1.
     maxsta 	      = 150
     maxsfc 	      = 1000
     notsta 	      = 0
-    notid               = ''
+    notid             = ''
     iobswin	      = 1800
     stasep	      = .1
     igridfl	      = 3
@@ -1317,7 +1281,8 @@ contains
     ccGradsWrite = 0
     icGradsPrefix = './icGrads'
 
-    ! MODEL_FILE_INFO
+    ! default for namelist MODEL_FILE_INFO and MODEL_FILE_INFO2
+    
     initial	      = 2 ! 2
     nud_type	      = 2 ! 2
     varfpfx	      = varpfx ! will be rewrited on the namelist read, and after too
@@ -1339,8 +1304,8 @@ contains
     wt_nudge_rt	      = 1.
     applyIAU          = 0
     fileNameIAU       = 'IAUFILE'
- 
- 
+
+
     nud_cond	      = 0
     cond_hfile	      = ''
     tcond_beg	      = 0.
@@ -1415,6 +1380,7 @@ contains
     kwrite 	      = 0
     frqprt 	      = 21600.
     initfld	      = 1
+    prtcputime          = 0
     topfiles	      = './data/toph-'
     sfcfiles	      = './data/sfc-'
     sstfpfx 	      = './data/sst-'
@@ -1459,9 +1425,8 @@ contains
     coltabfn            = './micro/ct2.0' ! duvida!
     mapaotfile          = './tables2/rad_carma/infMapAOT.vfm'
     julesin             = './julesin'
-    prtcputime          = 0
 
-    ! MODEL_GRIDS
+    ! default for namelist MODEL_GRIDS
     expnme              = 'BRAMS 41' ! 2
     timeunit 	      = 'h' ! 2
     load_bal 	      = 0
@@ -1511,7 +1476,7 @@ contains
     gridv               = 0.
     gridv(1:4)          = (/0.,0.,0.,0./)
 
-!--(DMK-CCATT-INI)-----------------------------------------------------------
+    !--(DMK-CCATT-INI)-----------------------------------------------------------
     dyncore_flag        = 0 !default value
     pd_or_mnt_constraint =0
     order_h = 3
@@ -1525,18 +1490,18 @@ contains
     damOutPrefix = './damOutput'
     evaluate = 0
     evaluatePrefix = './statistic-'
-!--(DMK-CCATT-FIM)-----------------------------------------------------------
+    !--(DMK-CCATT-FIM)-----------------------------------------------------------
 
     domain_fname        = ''
 
     ! MODEL_OPTIONS
     naddsc  	      = 0
     icorflg 	      = 1
-!--(DMK-CCATT-INI)-----------------------------------------------------------
+    !--(DMK-CCATT-INI)-----------------------------------------------------------
     iexev             = 1
     imassflx          = 0
     vveldamp          = 0
-!--(DMK-CCATT-FIM)-----------------------------------------------------------
+    !--(DMK-CCATT-FIM)-----------------------------------------------------------
     ibnd    	      = 1
     jbnd    	      = 1
     cphas   	      = 20.
@@ -1637,16 +1602,21 @@ contains
     isbval              = 2
     isbval(1:4)         = (/2,2,2,2/)
 
-    ! MODEL_SOUND
+    ! default for namelist MODEL_SOUND
     ipsflg  	      = 1 ! 2
     itsflg  	      = 0 ! 2
     irtsflg 	      = 3 ! 2
     iusflg  	      = 0 ! 2
     hs      	      = 0. ! 2
+    ps                = 0.0
     ps(1:11)	      = (/1010.,1000.,2000.,3000.,4000.,6000.,8000.,11000.,15000.,20000.,25000./) ! 2
+    ts                = 0.0
     ts(1:11)	      = (/25.,18.5,12.,4.5,-11.,-24.,-37.,-56.5,-56.5,-56.5,-56.5/) ! 2
+    rts               = 0.0
     rts(1:11) 	      = (/70.,70.,70.,70.,20.,20.,20.,20.,10.,10.,10./) ! 2
+    us                = 0.0
     us(1:11)  	      = (/10.,10.,10.,10.,10.,10.,10.,10.,10.,10.,10./) ! 2
+    vs                = 0.0
     vs(1:11)  	      = (/0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0./) ! 2
 
     ! TEB
@@ -1806,8 +1776,8 @@ contains
 
     inquire(file=trim(oneNamelistFile%fileName), exist=ex)
     if (.not. ex) then
-      print *," namelist file "//trim(oneNamelistFile%fileName)//&
-           " does not exist"; call flush(6)
+       print *," namelist file "//trim(oneNamelistFile%fileName)//&
+            " does not exist"; call flush(6)
        call fatal_error(" namelist file "//trim(oneNamelistFile%fileName)//&
             " does not exist")
 
@@ -1821,17 +1791,17 @@ contains
             " returned iostat="//trim(adjustl(c0)))
     end if
 
-!LFR - INicio da leitura do RAMSIN em partes. Leitura do nome do RAMSIN avançado
+    !LFR - INicio da leitura do RAMSIN em partes. Leitura do nome do RAMSIN avançado
     read(iunit, iostat=err, NML=MODEL_ADV_RAMSIN)
     if (err /= 0) then
-      write(*,"(a)") h//"**(ERROR)** reading section MODEL_ADV_RAMSIN "//&
+       write(*,"(a)") h//"**(ERROR)** reading section MODEL_ADV_RAMSIN "//&
             &"of namelist file "//trim(oneNamelistFile%fileName)
-      call fatal_error(h//" reading namelist")
-    endif 
+       call fatal_error(h//" reading namelist")
+    endif
     inquire(file=trim(advanced_ramsin), exist=ex)
     if (.not. ex) then
-      print *," namelist file "//trim(advanced_ramsin)//&
-           " does not exist"; call flush(6)
+       print *," namelist file "//trim(advanced_ramsin)//&
+            " does not exist"; call flush(6)
        call fatal_error(" namelist file "//trim(advanced_ramsin)//&
             " does not exist")
     end if
@@ -1841,15 +1811,15 @@ contains
     end do
     if (iunit2 > lastUnit) then
        call fatal_error(h//" all i/o units in use")
-    end if    
+    end if
     open(iunit2, file=trim(advanced_ramsin), status="old", action="read",&
          iostat=err)
     if (err /= 0) then
        write(c0,"(i10)") err
        call fatal_error(h//" open namelist file "//trim(advanced_ramsin)//&
             " returned iostat="//trim(adjustl(c0)))
-    end if    
-!
+    end if
+    !
     read (iunit, iostat=err, NML=MODEL_GRIDS)
     if (err /= 0) then
        write(*,"(a)") h//"**(ERROR)** reading section MODEL_GRIDS "//&
@@ -1969,7 +1939,7 @@ contains
 
 
 
-!--(DMK-CCATT-INI)-----------------------------------------------------------
+    !--(DMK-CCATT-INI)-----------------------------------------------------------
     read (iunit, iostat=err, NML=CCATT_INFO)
     if (err /= 0) then
        write(*,"(a)") h//"**(ERROR)** reading section CCATT_INFO "//&
@@ -1998,7 +1968,7 @@ contains
     end if
 
 
-!--(DMK-CCATT-INI)-----------------------------------------------------------
+    !--(DMK-CCATT-INI)-----------------------------------------------------------
     read (iunit2, iostat=err, NML=CCATT_INFO2)
     if (err /= 0) then
        write(*,"(a)") h//"**(ERROR)** reading section CCATT_INFO "//&
@@ -2314,10 +2284,10 @@ contains
        oneNamelistFile%wt_nudge_th=wt_nudge_th
        oneNamelistFile%wt_nudge_pi=wt_nudge_pi
        oneNamelistFile%wt_nudge_rt=wt_nudge_rt
-       
+
        oneNamelistFile%applyIAU=applyIAU
        oneNamelistFile%fileNameIAU=fileNameIAU       
-       
+
        oneNamelistFile%nud_cond=nud_cond
        oneNamelistFile%cond_hfile=cond_hfile
        oneNamelistFile%tcond_beg=tcond_beg
@@ -2415,7 +2385,7 @@ contains
        write (*, *) "level=",level
        call fatal_error(h//" reading namelist")
     else
- !--(DMK-CCATT-INI)-----------------------------------------------------------
+       !--(DMK-CCATT-INI)-----------------------------------------------------------
        oneNamelistFile%iswrtyp=iswrtyp
        oneNamelistFile%ilwrtyp=ilwrtyp
        oneNamelistFile%radfrq=radfrq
@@ -2845,24 +2815,24 @@ contains
             &"of namelist file "//trim(advanced_ramsin)
 
     else
-	oneNamelistFile%applyDigitalFilter = applyDigitalFilter
-      	oneNamelistFile%digitalFilterTimeWindow=digitalFilterTimeWindow
+       oneNamelistFile%applyDigitalFilter = applyDigitalFilter
+       oneNamelistFile%digitalFilterTimeWindow=digitalFilterTimeWindow
     end if
 
-       ! namelist METEOGRAM
+    ! namelist METEOGRAM
     read (iunit2, iostat=err, NML=METEOGRAM)
     if (err /= 0 .and. err /= 106) then
        write(*,"(a)") h//"**(ERROR)** reading section METEOGRAM "//&
             &"of namelist file "//trim(advanced_ramsin)
 
     else
-	oneNamelistFile%applyDigitalFilter = applyDigitalFilter
-      	oneNamelistFile%digitalFilterTimeWindow=digitalFilterTimeWindow
+       oneNamelistFile%applyDigitalFilter = applyDigitalFilter
+       oneNamelistFile%digitalFilterTimeWindow=digitalFilterTimeWindow
 
-	oneNamelistFile%applyMeteogram = applyMeteogram
-     	oneNamelistFile%meteogramFreq  = meteogramFreq
-     	oneNamelistFile%meteogramMap   = meteogramMap
-     	oneNamelistFile%meteogramDir   = meteogramDir
+       oneNamelistFile%applyMeteogram = applyMeteogram
+       oneNamelistFile%meteogramFreq  = meteogramFreq
+       oneNamelistFile%meteogramMap   = meteogramMap
+       oneNamelistFile%meteogramDir   = meteogramDir
 
     end if
 
@@ -3032,8 +3002,8 @@ contains
          oneParallelEnvironment%master_num)
     call parf_bcast(oneNamelistFile%chemistry_aq,&
          oneParallelEnvironment%master_num)
-!    call parf_bcast(oneNamelistFile%aerosol,&
-!         oneParallelEnvironment%master_num)
+    !    call parf_bcast(oneNamelistFile%aerosol,&
+    !         oneParallelEnvironment%master_num)
     call parf_bcast(oneNamelistFile%chem_assim,&
          oneParallelEnvironment%master_num)
     call parf_bcast(oneNamelistFile%srcmapfn,&
@@ -3057,7 +3027,7 @@ contains
          oneParallelEnvironment%master_num)
     call parf_bcast(oneNamelistFile%volcanoes,&
          oneParallelEnvironment%master_num)
-!Matrix
+    !Matrix
     call parf_bcast(oneNamelistFile%aerosol,&
          oneParallelEnvironment%master_num)
     call parf_bcast(oneNamelistFile%aer_timestep,&
@@ -3067,22 +3037,22 @@ contains
 
     call parf_bcast(oneNamelistFile%mech,&
          oneParallelEnvironment%master_num)
-!--(DMK-CCATT-OLD)-----------------------------------------------------------
-!    ! CATT_INFO
-!    call parf_bcast(oneNamelistFile%catt,&
-!         oneParallelEnvironment%master_num)
-!    call parf_bcast(oneNamelistFile%firemapfn,&
-!         int(len(oneNamelistFile%firemapfn),i8),&
-!         oneParallelEnvironment%master_num)
-!    call parf_bcast(oneNamelistFile%recycle_tracers,&
-!         oneParallelEnvironment%master_num)
-!    call parf_bcast(oneNamelistFile%plumerise,&
-!         oneParallelEnvironment%master_num)
-!    call parf_bcast(oneNamelistFile%define_proc,&
-!         oneParallelEnvironment%master_num)
-!    call parf_bcast(oneNamelistFile%prfrq,&
-!         oneParallelEnvironment%master_num)
-!--(DMK-CCATT-FIM)-----------------------------------------------------------
+    !--(DMK-CCATT-OLD)-----------------------------------------------------------
+    !    ! CATT_INFO
+    !    call parf_bcast(oneNamelistFile%catt,&
+    !         oneParallelEnvironment%master_num)
+    !    call parf_bcast(oneNamelistFile%firemapfn,&
+    !         int(len(oneNamelistFile%firemapfn),i8),&
+    !         oneParallelEnvironment%master_num)
+    !    call parf_bcast(oneNamelistFile%recycle_tracers,&
+    !         oneParallelEnvironment%master_num)
+    !    call parf_bcast(oneNamelistFile%plumerise,&
+    !         oneParallelEnvironment%master_num)
+    !    call parf_bcast(oneNamelistFile%define_proc,&
+    !         oneParallelEnvironment%master_num)
+    !    call parf_bcast(oneNamelistFile%prfrq,&
+    !         oneParallelEnvironment%master_num)
+    !--(DMK-CCATT-FIM)-----------------------------------------------------------
     ! TEB_SPM_INFO
     call parf_bcast(oneNamelistFile%teb_spm,&
          oneParallelEnvironment%master_num)
@@ -3267,7 +3237,7 @@ contains
 
     call parf_bcast(oneNamelistFile%applyIAU,&
          oneParallelEnvironment%master_num)
-    
+
     call parf_bcast(oneNamelistFile%fileNameIAU,&
          int(len(oneNamelistFile%fileNameIAU),i8),&
          oneParallelEnvironment%master_num)
@@ -3500,7 +3470,7 @@ contains
          int(len(oneNamelistFile%julesin),i8),&
          oneParallelEnvironment%master_num)
     ! MODEL_OPTIONS
-!--(DMK-CCATT-INI)-----------------------------------------------------------
+    !--(DMK-CCATT-INI)-----------------------------------------------------------
     call parf_bcast(oneNamelistFile%dyncore_flag,&
          oneParallelEnvironment%master_num)
     call parf_bcast(oneNamelistFile%pd_or_mnt_constraint, &
@@ -3519,14 +3489,14 @@ contains
     call parf_bcast(oneNamelistFile%icorflg,&
          oneParallelEnvironment%master_num)
 
-!--(DMK-CCATT-INI)-----------------------------------------------------------
+    !--(DMK-CCATT-INI)-----------------------------------------------------------
     call parf_bcast(oneNamelistFile%iexev,&
          oneParallelEnvironment%master_num)
     call parf_bcast(oneNamelistFile%imassflx,&
          oneParallelEnvironment%master_num)
     call parf_bcast(oneNamelistFile%vveldamp,&
          oneParallelEnvironment%master_num)
-!--(DMK-CCATT-FIM)-----------------------------------------------------------
+    !--(DMK-CCATT-FIM)-----------------------------------------------------------
     call parf_bcast(oneNamelistFile%ibnd,&
          oneParallelEnvironment%master_num)
     call parf_bcast(oneNamelistFile%jbnd,&
@@ -3571,11 +3541,11 @@ contains
     call parf_bcast(oneNamelistFile%wcldbs,&
          oneParallelEnvironment%master_num)
 
-     call parf_bcast(oneNamelistFile%g3d_spread,&
+    call parf_bcast(oneNamelistFile%g3d_spread,&
          oneParallelEnvironment%master_num)
-     call parf_bcast(oneNamelistFile%g3d_smoothh,&
+    call parf_bcast(oneNamelistFile%g3d_smoothh,&
          oneParallelEnvironment%master_num)
-     call parf_bcast(oneNamelistFile%g3d_smoothv,&
+    call parf_bcast(oneNamelistFile%g3d_smoothv,&
          oneParallelEnvironment%master_num)
 
     call parf_bcast(oneNamelistFile%npatch,&
@@ -3713,7 +3683,7 @@ contains
     call parf_bcast(oneNamelistFile%evaluatePrefix,&
          int(len(oneNamelistFile%evaluatePrefix),i8),&
          oneParallelEnvironment%master_num)
-     call parf_bcast(oneNamelistFile%evaluate,&
+    call parf_bcast(oneNamelistFile%evaluate,&
          oneParallelEnvironment%master_num)   
     !-------
     ! MODEL_SOUND
@@ -3842,7 +3812,7 @@ contains
          oneParallelEnvironment%master_num)
     !
     call parf_bcast(oneNamelistFile%icFileType, &
-        oneParallelEnvironment%master_num)
+         oneParallelEnvironment%master_num)
     call parf_bcast(oneNamelistFile%icPrefix, &
          int(len(oneNamelistFile%icPrefix),i8),&
          oneParallelEnvironment%master_num)
@@ -3940,26 +3910,26 @@ contains
     call parf_bcast(oneNamelistFile%site_lon, &
          oneParallelEnvironment%master_num)
 
- !digital filter
+    !digital filter
 
     call parf_bcast(oneNamelistFile%applyDigitalFilter, &
          oneParallelEnvironment%master_num)
     call parf_bcast(oneNamelistFile%digitalFilterTimeWindow, &
          oneParallelEnvironment%master_num)
 
- !meteogram
+    !meteogram
 
-   call parf_bcast(oneNamelistFile%applyMeteogram, &
-                   oneParallelEnvironment%master_num)
-
- call parf_bcast(oneNamelistFile%meteogramFreq, &
+    call parf_bcast(oneNamelistFile%applyMeteogram, &
          oneParallelEnvironment%master_num)
 
-  call parf_bcast(oneNamelistFile%meteogramMap, &
+    call parf_bcast(oneNamelistFile%meteogramFreq, &
+         oneParallelEnvironment%master_num)
+
+    call parf_bcast(oneNamelistFile%meteogramMap, &
          int(len(oneNamelistFile%meteogramMap),i8), &
          oneParallelEnvironment%master_num)
 
-  call parf_bcast(oneNamelistFile%meteogramDir, &
+    call parf_bcast(oneNamelistFile%meteogramDir, &
          int(len(oneNamelistFile%meteogramDir),i8), &
          oneParallelEnvironment%master_num)
 
@@ -4015,9 +3985,9 @@ contains
 
 
     iErrNumber=bramsHeader(revision,license,nmachs,trim(oneNamelistFile%runtype),oneNamelistFile%fileName &
-                          ,mchnum,master_num,oneNamelistFile%iyear1,oneNamelistFile%imonth1,oneNamelistFile%idate1 &
-                          ,oneNamelistFile%itime1,oneNamelistFile%expnme,oneNamelistFile%ngrids &
-                          ,oneNamelistFile%timmax,oneNamelistFile%timeunit)
+         ,mchnum,master_num,oneNamelistFile%iyear1,oneNamelistFile%imonth1,oneNamelistFile%idate1 &
+         ,oneNamelistFile%itime1,oneNamelistFile%expnme,oneNamelistFile%ngrids &
+         ,oneNamelistFile%timmax,oneNamelistFile%timeunit)
 
     ngrids=oneNamelistFile%ngrids
 
@@ -4065,550 +4035,550 @@ contains
     iErrNumber=printOneVarGrid(ngrids,'NDVIFLG ',oneNamelistFile%ndviflg,"I14.1") 
     iErrNumber=printOneVarGrid(ngrids,'NOFILFLG',oneNamelistFile%nofilflg,"I14.1") 
     if(oneNamelistFile%ipos>0) then
-      iErrNumber=printOneVarGrid(ngrids,'ZLEVMAX',oneNamelistFile%zlevmax,"I14.3") 
-      iErrNumber=printOneVarGrid(ngrids,'LATI',oneNamelistFile%lati,'F14.2')
-      iErrNumber=printOneVarGrid(ngrids,'LATF',oneNamelistFile%latf,'F14.2')
-      iErrNumber=printOneVarGrid(ngrids,'LONI',oneNamelistFile%loni,'F14.2')
-      iErrNumber=printOneVarGrid(ngrids,'LONF',oneNamelistFile%lonf,'F14.2')
+       iErrNumber=printOneVarGrid(ngrids,'ZLEVMAX',oneNamelistFile%zlevmax,"I14.3") 
+       iErrNumber=printOneVarGrid(ngrids,'LATI',oneNamelistFile%lati,'F14.2')
+       iErrNumber=printOneVarGrid(ngrids,'LATF',oneNamelistFile%latf,'F14.2')
+       iErrNumber=printOneVarGrid(ngrids,'LONI',oneNamelistFile%loni,'F14.2')
+       iErrNumber=printOneVarGrid(ngrids,'LONF',oneNamelistFile%lonf,'F14.2')
     endif
     iErrNumber=printGridTail(ngrids)
 
     iErrNumber=printVarHeader(4)
     !Block1
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('POLELAT',"")          &
-      ,conv2String('POLELON',"")          &
-      ,conv2String('NZG    ',"")          &
-      ,conv2String('NZS    ',"")/),(/     &
-       conv2String(oneNamelistFile%polelat     ,"F14.3"    ) &
-      ,conv2String(oneNamelistFile%polelon     ,"F14.3"    ) &
-      ,conv2String(oneNamelistFile%nzg         ,"I14.2"      ) &
-      ,conv2String(oneNamelistFile%nzs         ,"I14.2"      )/))
+         conv2String('POLELAT',"")          &
+         ,conv2String('POLELON',"")          &
+         ,conv2String('NZG    ',"")          &
+         ,conv2String('NZS    ',"")/),(/     &
+         conv2String(oneNamelistFile%polelat     ,"F14.3"    ) &
+         ,conv2String(oneNamelistFile%polelon     ,"F14.3"    ) &
+         ,conv2String(oneNamelistFile%nzg         ,"I14.2"      ) &
+         ,conv2String(oneNamelistFile%nzs         ,"I14.2"      )/))
     !Block2
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('DELTAX ',"")          &
-      ,conv2String('DELTAY ',"")          &
-      ,conv2String('DTLONG ',"")          &
-      ,conv2String('IDELTAT',"")/),(/     &
-       conv2String(oneNamelistFile%deltax ,"F14.1") &
-      ,conv2String(oneNamelistFile%deltay ,"F14.1") &
-      ,conv2String(oneNamelistFile%dtlong ,"F14.1") &
-      ,conv2String(oneNamelistFile%ideltat,"I14.1"  )/))    
+         conv2String('DELTAX ',"")          &
+         ,conv2String('DELTAY ',"")          &
+         ,conv2String('DTLONG ',"")          &
+         ,conv2String('IDELTAT',"")/),(/     &
+         conv2String(oneNamelistFile%deltax ,"F14.1") &
+         ,conv2String(oneNamelistFile%deltay ,"F14.1") &
+         ,conv2String(oneNamelistFile%dtlong ,"F14.1") &
+         ,conv2String(oneNamelistFile%ideltat,"I14.1"  )/))    
     !Block3
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('DELTAZ   ',"")          &
-      ,conv2String('DZRAT    ',"")          &
-      ,conv2String('DZMAX    ',"")          &
-      ,conv2String('FIXLEVELS',"")/),(/     &
-       conv2String(oneNamelistFile%deltaz   ,"F14.1") &
-      ,conv2String(oneNamelistFile%dzrat    ,"F14.2") &
-      ,conv2String(oneNamelistFile%dzmax    ,"F14.1") &
-      ,conv2String(oneNamelistFile%fixlevels,"I14"  )/))    
+         conv2String('DELTAZ   ',"")          &
+         ,conv2String('DZRAT    ',"")          &
+         ,conv2String('DZMAX    ',"")          &
+         ,conv2String('FIXLEVELS',"")/),(/     &
+         conv2String(oneNamelistFile%deltaz   ,"F14.1") &
+         ,conv2String(oneNamelistFile%dzrat    ,"F14.2") &
+         ,conv2String(oneNamelistFile%dzmax    ,"F14.1") &
+         ,conv2String(oneNamelistFile%fixlevels,"I14"  )/))    
     !Block4
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('NESTZ1      ',"")          &
-      ,conv2String('NESTZ2      ',"")          &
-      ,conv2String('IF_ADAP     ',"")          &
-      ,conv2String('IHTRAN      ',"")/),(/     &
-       conv2String(oneNamelistFile%nestz1       ,"I14.1") &
-      ,conv2String(oneNamelistFile%nestz2       ,"I14.1") &
-      ,conv2String(oneNamelistFile%if_adap      ,"I14.1") &
-      ,conv2String(oneNamelistFile%ihtran       ,"I14.1"  )/))
+         conv2String('NESTZ1      ',"")          &
+         ,conv2String('NESTZ2      ',"")          &
+         ,conv2String('IF_ADAP     ',"")          &
+         ,conv2String('IHTRAN      ',"")/),(/     &
+         conv2String(oneNamelistFile%nestz1       ,"I14.1") &
+         ,conv2String(oneNamelistFile%nestz2       ,"I14.1") &
+         ,conv2String(oneNamelistFile%if_adap      ,"I14.1") &
+         ,conv2String(oneNamelistFile%ihtran       ,"I14.1"  )/))
     !Block5
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('NACOUST'                    ,"")          &
-      ,conv2String('DYNCORE_FLAG'               ,"")          &
-      ,conv2String('ADVMNT     '                ,"")          &
-      ,conv2String('PD_OR_MNT_CONSTRAINT'       ,"")/),(/     &
-       conv2String(oneNamelistFile%nacoust                   ,"I14.1") &
-      ,conv2String(oneNamelistFile%dyncore_flag              ,"I14.1") &
-      ,conv2String(oneNamelistFile%advmnt                    ,"I14.1") &
-      ,conv2String(oneNamelistFile%pd_or_mnt_constraint      ,"I14.1"  )/))
+         conv2String('NACOUST'                    ,"")          &
+         ,conv2String('DYNCORE_FLAG'               ,"")          &
+         ,conv2String('ADVMNT     '                ,"")          &
+         ,conv2String('PD_OR_MNT_CONSTRAINT'       ,"")/),(/     &
+         conv2String(oneNamelistFile%nacoust                   ,"I14.1") &
+         ,conv2String(oneNamelistFile%dyncore_flag              ,"I14.1") &
+         ,conv2String(oneNamelistFile%advmnt                    ,"I14.1") &
+         ,conv2String(oneNamelistFile%pd_or_mnt_constraint      ,"I14.1"  )/))
     !Block6
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('ORDER_H    '       ,"")          &
-      ,conv2String('ORDER_V    '       ,"")          &
-      ,conv2String('GHOSTZONE  '       ,"")          &
-      ,conv2String('IPOS       '       ,"")/),(/     &
-       conv2String(oneNamelistFile%order_h        ,"I14.1") &
-      ,conv2String(oneNamelistFile%order_v        ,"I14.1") &
-      ,conv2String(oneNamelistFile%ghostzonelength,"I14.1") &
-      ,conv2String(oneNamelistFile%ipos           ,"I14.1"  )/))
+         conv2String('ORDER_H    '       ,"")          &
+         ,conv2String('ORDER_V    '       ,"")          &
+         ,conv2String('GHOSTZONE  '       ,"")          &
+         ,conv2String('IPOS       '       ,"")/),(/     &
+         conv2String(oneNamelistFile%order_h        ,"I14.1") &
+         ,conv2String(oneNamelistFile%order_v        ,"I14.1") &
+         ,conv2String(oneNamelistFile%ghostzonelength,"I14.1") &
+         ,conv2String(oneNamelistFile%ipos           ,"I14.1"  )/))
     !Block7
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('IOUTPUT      '       ,"")          &
-      ,conv2String('ICLOBBER     '       ,"")          &
-      ,conv2String('IHISTDEL     '       ,"")          &
-      ,conv2String('FRQHIS       '       ,"")/),(/     &
-       conv2String(oneNamelistFile%ioutput ,"I14.1") &
-      ,conv2String(oneNamelistFile%iclobber,"I14.1") &
-      ,conv2String(oneNamelistFile%ihistdel,"I14.1") &
-      ,conv2String(oneNamelistFile%frqhis  ,"F14.1"  )/))
+         conv2String('IOUTPUT      '       ,"")          &
+         ,conv2String('ICLOBBER     '       ,"")          &
+         ,conv2String('IHISTDEL     '       ,"")          &
+         ,conv2String('FRQHIS       '       ,"")/),(/     &
+         conv2String(oneNamelistFile%ioutput ,"I14.1") &
+         ,conv2String(oneNamelistFile%iclobber,"I14.1") &
+         ,conv2String(oneNamelistFile%ihistdel,"I14.1") &
+         ,conv2String(oneNamelistFile%frqhis  ,"F14.1"  )/))
     !Block8
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('FRQANL    '       ,"")          &
-      ,conv2String('APPLYIAU  '       ,"")          &
-      ,conv2String('TIMEW  IAU'       ,"")          &
-      ,conv2String('RAMP      '       ,"")/),(/     &
-       conv2String(oneNamelistFile%frqanl       ,"F14.1") &
-      ,conv2String(oneNamelistFile%applyIAU     ,"I14.1") &
-      ,conv2String(oneNamelistFile%timeWindowIAU,"F14.1") &
-      ,conv2String(oneNamelistFile%ramp         ,"F14.1"  )/))
+         conv2String('FRQANL    '       ,"")          &
+         ,conv2String('APPLYIAU  '       ,"")          &
+         ,conv2String('TIMEW  IAU'       ,"")          &
+         ,conv2String('RAMP      '       ,"")/),(/     &
+         conv2String(oneNamelistFile%frqanl       ,"F14.1") &
+         ,conv2String(oneNamelistFile%applyIAU     ,"I14.1") &
+         ,conv2String(oneNamelistFile%timeWindowIAU,"F14.1") &
+         ,conv2String(oneNamelistFile%ramp         ,"F14.1"  )/))
     !Block9
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('NUD_TYPE  '       ,"")          &
-      ,conv2String('TNUDCENT  '       ,"")          &
-      ,conv2String('TNUDLAT   '       ,"")          &
-      ,conv2String('TNUDTOP   '       ,"")/),(/     &
-       conv2String(oneNamelistFile%nud_type,"I14.1") &
-      ,conv2String(oneNamelistFile%tnudcent,"F14.1") &
-      ,conv2String(oneNamelistFile%tnudlat ,"F14.1") &
-      ,conv2String(oneNamelistFile%tnudtop ,"F14.1"  )/))
+         conv2String('NUD_TYPE  '       ,"")          &
+         ,conv2String('TNUDCENT  '       ,"")          &
+         ,conv2String('TNUDLAT   '       ,"")          &
+         ,conv2String('TNUDTOP   '       ,"")/),(/     &
+         conv2String(oneNamelistFile%nud_type,"I14.1") &
+         ,conv2String(oneNamelistFile%tnudcent,"F14.1") &
+         ,conv2String(oneNamelistFile%tnudlat ,"F14.1") &
+         ,conv2String(oneNamelistFile%tnudtop ,"F14.1"  )/))
     !Block10
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('ZNUDTOP    '       ,"")          &
-      ,conv2String('NUDLAT     '       ,"")          &
-      ,conv2String('WT_NUDGE_UV'       ,"")          &
-      ,conv2String('WT_NUDGE_TH'       ,"")/),(/     &
-       conv2String(oneNamelistFile%znudtop    ,"F14.1") &
-      ,conv2String(oneNamelistFile%nudlat     ,"I14.2") &
-      ,conv2String(oneNamelistFile%wt_nudge_uv,"F14.1") &
-      ,conv2String(oneNamelistFile%wt_nudge_th,"F14.1"  )/))
+         conv2String('ZNUDTOP    '       ,"")          &
+         ,conv2String('NUDLAT     '       ,"")          &
+         ,conv2String('WT_NUDGE_UV'       ,"")          &
+         ,conv2String('WT_NUDGE_TH'       ,"")/),(/     &
+         conv2String(oneNamelistFile%znudtop    ,"F14.1") &
+         ,conv2String(oneNamelistFile%nudlat     ,"I14.2") &
+         ,conv2String(oneNamelistFile%wt_nudge_uv,"F14.1") &
+         ,conv2String(oneNamelistFile%wt_nudge_th,"F14.1"  )/))
     !Block11
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('WT_NUDGE_PI'       ,"")          &
-      ,conv2String('WT_NUDGE_RT'       ,"")          &
-      ,conv2String('INITIAL    '       ,"")          &
-      ,conv2String('IPASTIN    '       ,"")/),(/     &
-       conv2String(oneNamelistFile%wt_nudge_pi,"F14.1") &
-      ,conv2String(oneNamelistFile%wt_nudge_rt,"F14.1") &
-      ,conv2String(oneNamelistFile%initial    ,"I14.1") &
-      ,conv2String(oneNamelistFile%ipastin    ,"I14.1"  )/))
+         conv2String('WT_NUDGE_PI'       ,"")          &
+         ,conv2String('WT_NUDGE_RT'       ,"")          &
+         ,conv2String('INITIAL    '       ,"")          &
+         ,conv2String('IPASTIN    '       ,"")/),(/     &
+         conv2String(oneNamelistFile%wt_nudge_pi,"F14.1") &
+         ,conv2String(oneNamelistFile%wt_nudge_rt,"F14.1") &
+         ,conv2String(oneNamelistFile%initial    ,"I14.1") &
+         ,conv2String(oneNamelistFile%ipastin    ,"I14.1"  )/))
     !Block12
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('IOFLGISZ '       ,"")          &
-      ,conv2String('IOFLGVAR '       ,"")          &
-      ,conv2String('VWAIT1   '       ,"")          &
-      ,conv2String('VWAITTOT '       ,"")/),(/     &
-       conv2String(oneNamelistFile%ioflgisz,"I14.1") &
-      ,conv2String(oneNamelistFile%ioflgvar,"I14.1") &
-      ,conv2String(oneNamelistFile%vwait1  ,"F14.1") &
-      ,conv2String(oneNamelistFile%vwaittot,"F14.1"  )/))
+         conv2String('IOFLGISZ '       ,"")          &
+         ,conv2String('IOFLGVAR '       ,"")          &
+         ,conv2String('VWAIT1   '       ,"")          &
+         ,conv2String('VWAITTOT '       ,"")/),(/     &
+         conv2String(oneNamelistFile%ioflgisz,"I14.1") &
+         ,conv2String(oneNamelistFile%ioflgvar,"I14.1") &
+         ,conv2String(oneNamelistFile%vwait1  ,"F14.1") &
+         ,conv2String(oneNamelistFile%vwaittot,"F14.1"  )/))
     !Block13
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('TIMSTR  '       ,"")          &
-      ,conv2String('KWRITE  '       ,"")          &
-      ,conv2String('FRQPRT  '       ,"")          &
-      ,conv2String('INITFLD '       ,"")/),(/     &
-       conv2String(oneNamelistFile%timstr ,"F14.1") &
-      ,conv2String(oneNamelistFile%kwrite ,"I14.1") &
-      ,conv2String(oneNamelistFile%frqprt ,"F14.1") &
-      ,conv2String(oneNamelistFile%initfld,"I14.1"  )/))
+         conv2String('TIMSTR  '       ,"")          &
+         ,conv2String('KWRITE  '       ,"")          &
+         ,conv2String('FRQPRT  '       ,"")          &
+         ,conv2String('INITFLD '       ,"")/),(/     &
+         conv2String(oneNamelistFile%timstr ,"F14.1") &
+         ,conv2String(oneNamelistFile%kwrite ,"I14.1") &
+         ,conv2String(oneNamelistFile%frqprt ,"F14.1") &
+         ,conv2String(oneNamelistFile%initfld,"I14.1"  )/))
     !Block14
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('TEB_SPM    ',"")          &
-      ,conv2String('ICORFLG    ',"")          &
-      ,conv2String('VVELDAMP   ',"")          &
-      ,conv2String('IEXEV      ',"")/),(/     &
-       conv2String(oneNamelistFile%teb_spm ,"I14.1") &
-      ,conv2String(oneNamelistFile%icorflg ,"I14.1") &
-      ,conv2String(oneNamelistFile%vveldamp,"I14.1") &
-      ,conv2String(oneNamelistFile%iexev   ,"I14.1"  )/))
+         conv2String('TEB_SPM    ',"")          &
+         ,conv2String('ICORFLG    ',"")          &
+         ,conv2String('VVELDAMP   ',"")          &
+         ,conv2String('IEXEV      ',"")/),(/     &
+         conv2String(oneNamelistFile%teb_spm ,"I14.1") &
+         ,conv2String(oneNamelistFile%icorflg ,"I14.1") &
+         ,conv2String(oneNamelistFile%vveldamp,"I14.1") &
+         ,conv2String(oneNamelistFile%iexev   ,"I14.1"  )/))
     !Block15
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('IMASSFLX '       ,"")          &
-      ,conv2String('IBND     '       ,"")          &
-      ,conv2String('JBND     '       ,"")          &
-      ,conv2String('CPHAS    '       ,"")/),(/     &
-       conv2String(oneNamelistFile%imassflx,"I14.1") &
-      ,conv2String(oneNamelistFile%ibnd    ,"I14.2") &
-      ,conv2String(oneNamelistFile%jbnd    ,"I14.2") &
-      ,conv2String(oneNamelistFile%cphas   ,"F14.1"  )/))
+         conv2String('IMASSFLX '       ,"")          &
+         ,conv2String('IBND     '       ,"")          &
+         ,conv2String('JBND     '       ,"")          &
+         ,conv2String('CPHAS    '       ,"")/),(/     &
+         conv2String(oneNamelistFile%imassflx,"I14.1") &
+         ,conv2String(oneNamelistFile%ibnd    ,"I14.2") &
+         ,conv2String(oneNamelistFile%jbnd    ,"I14.2") &
+         ,conv2String(oneNamelistFile%cphas   ,"F14.1"  )/))
     !Block16
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('LSFLG   '       ,"")          &
-      ,conv2String('NFPT    '       ,"")          &
-      ,conv2String('DISTIM  '       ,"")          &
-      ,conv2String('ISWRTYP '       ,"")/),(/     &
-       conv2String(oneNamelistFile%lsflg  ,"I14.1") &
-      ,conv2String(oneNamelistFile%nfpt   ,"I14.1") &
-      ,conv2String(oneNamelistFile%distim ,"F14.1") &
-      ,conv2String(oneNamelistFile%iswrtyp,"I14.1"  )/))
+         conv2String('LSFLG   '       ,"")          &
+         ,conv2String('NFPT    '       ,"")          &
+         ,conv2String('DISTIM  '       ,"")          &
+         ,conv2String('ISWRTYP '       ,"")/),(/     &
+         conv2String(oneNamelistFile%lsflg  ,"I14.1") &
+         ,conv2String(oneNamelistFile%nfpt   ,"I14.1") &
+         ,conv2String(oneNamelistFile%distim ,"F14.1") &
+         ,conv2String(oneNamelistFile%iswrtyp,"I14.1"  )/))
     !Block17
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('ILWRTYP     ',"")          &
-      ,conv2String('LONRAD      ',"")          &
-      ,conv2String('RADFRQ      ',"")          &
-      ,conv2String('CLOSURE_TYPE',"")/),(/     &
-       conv2String(oneNamelistFile%ilwrtyp     ,"I14.1") &
-      ,conv2String(oneNamelistFile%lonrad      ,"I14.1") &
-      ,conv2String(oneNamelistFile%radfrq      ,"F14.1") &
-      ,conv2String(oneNamelistFile%closure_type,"A14"  )/))
+         conv2String('ILWRTYP     ',"")          &
+         ,conv2String('LONRAD      ',"")          &
+         ,conv2String('RADFRQ      ',"")          &
+         ,conv2String('CLOSURE_TYPE',"")/),(/     &
+         conv2String(oneNamelistFile%ilwrtyp     ,"I14.1") &
+         ,conv2String(oneNamelistFile%lonrad      ,"I14.1") &
+         ,conv2String(oneNamelistFile%radfrq      ,"F14.1") &
+         ,conv2String(oneNamelistFile%closure_type,"A14"  )/))
     !Block18
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('G3D_SPREAD '       ,"")          &
-      ,conv2String('CONFRQ     '       ,"")          &
-      ,conv2String('SHCUFRQ    '       ,"")          &
-      ,conv2String('WCLDBS     '       ,"")/),(/     &
-       conv2String(oneNamelistFile%g3d_spread,"I14.1") &
-      ,conv2String(oneNamelistFile%confrq    ,"F14.1") &
-      ,conv2String(oneNamelistFile%shcufrq   ,"F14.1") &
-      ,conv2String(oneNamelistFile%wcldbs    ,"F14.1"  )/))
+         conv2String('G3D_SPREAD '       ,"")          &
+         ,conv2String('CONFRQ     '       ,"")          &
+         ,conv2String('SHCUFRQ    '       ,"")          &
+         ,conv2String('WCLDBS     '       ,"")/),(/     &
+         conv2String(oneNamelistFile%g3d_spread,"I14.1") &
+         ,conv2String(oneNamelistFile%confrq    ,"F14.1") &
+         ,conv2String(oneNamelistFile%shcufrq   ,"F14.1") &
+         ,conv2String(oneNamelistFile%wcldbs    ,"F14.1"  )/))
     !Block19
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('Z0FACT     '       ,"")          &
-      ,conv2String('MCPHYS_TYPE'       ,"")          &
-      ,conv2String('M  LEVEL   '       ,"")          &
-      ,conv2String('IRIME      '       ,"")/),(/     &
-       conv2String(oneNamelistFile%z0fact     ,"F14.1") &
-      ,conv2String(oneNamelistFile%mcphys_type,"I14.1") &
-      ,conv2String(oneNamelistFile%level      ,"I14.1") &
-      ,conv2String(oneNamelistFile%irime      ,"I14.1")/))
+         conv2String('Z0FACT     '       ,"")          &
+         ,conv2String('MCPHYS_TYPE'       ,"")          &
+         ,conv2String('M  LEVEL   '       ,"")          &
+         ,conv2String('IRIME      '       ,"")/),(/     &
+         conv2String(oneNamelistFile%z0fact     ,"F14.1") &
+         ,conv2String(oneNamelistFile%mcphys_type,"I14.1") &
+         ,conv2String(oneNamelistFile%level      ,"I14.1") &
+         ,conv2String(oneNamelistFile%irime      ,"I14.1")/))
     !Block20
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('IPLAWS'       ,"")          &
-      ,conv2String('ICLOUD'       ,"")          &
-      ,conv2String('IDRIZ '       ,"")          &
-      ,conv2String('IRAIN '       ,"")/),(/     &
-       conv2String(oneNamelistFile%iplaws,"I14.1") &
-      ,conv2String(oneNamelistFile%icloud,"I14.1") &
-      ,conv2String(oneNamelistFile%idriz ,"I14.1") &
-      ,conv2String(oneNamelistFile%irain ,"I14.1"  )/))
+         conv2String('IPLAWS'       ,"")          &
+         ,conv2String('ICLOUD'       ,"")          &
+         ,conv2String('IDRIZ '       ,"")          &
+         ,conv2String('IRAIN '       ,"")/),(/     &
+         conv2String(oneNamelistFile%iplaws,"I14.1") &
+         ,conv2String(oneNamelistFile%icloud,"I14.1") &
+         ,conv2String(oneNamelistFile%idriz ,"I14.1") &
+         ,conv2String(oneNamelistFile%irain ,"I14.1"  )/))
     !Block21
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('IPRIS '       ,"")          &
-      ,conv2String('ISNOW '       ,"")          &
-      ,conv2String('IAGGR '       ,"")          &
-      ,conv2String('IGRAUP'       ,"")/),(/     &
-       conv2String(oneNamelistFile%ipris ,"I14.1") &
-      ,conv2String(oneNamelistFile%isnow ,"I14.1") &
-      ,conv2String(oneNamelistFile%iaggr ,"I14.1") &
-      ,conv2String(oneNamelistFile%igraup,"I14.1"  )/))
+         conv2String('IPRIS '       ,"")          &
+         ,conv2String('ISNOW '       ,"")          &
+         ,conv2String('IAGGR '       ,"")          &
+         ,conv2String('IGRAUP'       ,"")/),(/     &
+         conv2String(oneNamelistFile%ipris ,"I14.1") &
+         ,conv2String(oneNamelistFile%isnow ,"I14.1") &
+         ,conv2String(oneNamelistFile%iaggr ,"I14.1") &
+         ,conv2String(oneNamelistFile%igraup,"I14.1"  )/))
     !Block22
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('IHAIL'       ,"")          &
-      ,conv2String('CPARM'       ,"")          &
-      ,conv2String('RPARM'       ,"")          &
-      ,conv2String('PPARM'       ,"")/),(/     &
-       conv2String(oneNamelistFile%ihail,"I14.1") &
-      ,conv2String(oneNamelistFile%cparm,"E14.6") &
-      ,conv2String(oneNamelistFile%rparm,"E14.6") &
-      ,conv2String(oneNamelistFile%pparm,"E14.6")/))
+         conv2String('IHAIL'       ,"")          &
+         ,conv2String('CPARM'       ,"")          &
+         ,conv2String('RPARM'       ,"")          &
+         ,conv2String('PPARM'       ,"")/),(/     &
+         conv2String(oneNamelistFile%ihail,"I14.1") &
+         ,conv2String(oneNamelistFile%cparm,"E14.6") &
+         ,conv2String(oneNamelistFile%rparm,"E14.6") &
+         ,conv2String(oneNamelistFile%pparm,"E14.6")/))
     !Block23
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('SPARM'       ,"")          &
-      ,conv2String('APARM'       ,"")          &
-      ,conv2String('GPARM'       ,"")          &
-      ,conv2String('HPARM'       ,"")/),(/     &
-       conv2String(oneNamelistFile%sparm,"E14.6") &
-      ,conv2String(oneNamelistFile%aparm,"E14.6") &
-      ,conv2String(oneNamelistFile%gparm,"E14.6") &
-      ,conv2String(oneNamelistFile%hparm,"E14.6")/))
+         conv2String('SPARM'       ,"")          &
+         ,conv2String('APARM'       ,"")          &
+         ,conv2String('GPARM'       ,"")          &
+         ,conv2String('HPARM'       ,"")/),(/     &
+         conv2String(oneNamelistFile%sparm,"E14.6") &
+         ,conv2String(oneNamelistFile%aparm,"E14.6") &
+         ,conv2String(oneNamelistFile%gparm,"E14.6") &
+         ,conv2String(oneNamelistFile%hparm,"E14.6")/))
     !Block24
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('DPARM   '       ,"")          &
-      ,conv2String('EPSIL   '       ,"")          &
-      ,conv2String('MKCOLTAB'       ,"")          &
-      ,conv2String('IHORGRAD'       ,"")/),(/     &
-       conv2String(oneNamelistFile%dparm   ,"E14.6") &
-      ,conv2String(oneNamelistFile%epsil   ,"E14.6") &
-      ,conv2String(oneNamelistFile%mkcoltab,"I14.1") &
-      ,conv2String(oneNamelistFile%ihorgrad,"I14.1")/))
+         conv2String('DPARM   '       ,"")          &
+         ,conv2String('EPSIL   '       ,"")          &
+         ,conv2String('MKCOLTAB'       ,"")          &
+         ,conv2String('IHORGRAD'       ,"")/),(/     &
+         conv2String(oneNamelistFile%dparm   ,"E14.6") &
+         ,conv2String(oneNamelistFile%epsil   ,"E14.6") &
+         ,conv2String(oneNamelistFile%mkcoltab,"I14.1") &
+         ,conv2String(oneNamelistFile%ihorgrad,"I14.1")/))
     !Block25
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('DPARM   '       ,"")          &
-      ,conv2String('EPSIL   '       ,"")          &
-      ,conv2String('MKCOLTAB'       ,"")          &
-      ,conv2String('IHORGRAD'       ,"")/),(/     &
-       conv2String(oneNamelistFile%dparm   ,"F14.6") &
-      ,conv2String(oneNamelistFile%epsil   ,"F14.6") &
-      ,conv2String(oneNamelistFile%mkcoltab,"I14.1") &
-      ,conv2String(oneNamelistFile%ihorgrad,"I14.1")/))
+         conv2String('DPARM   '       ,"")          &
+         ,conv2String('EPSIL   '       ,"")          &
+         ,conv2String('MKCOLTAB'       ,"")          &
+         ,conv2String('IHORGRAD'       ,"")/),(/     &
+         conv2String(oneNamelistFile%dparm   ,"F14.6") &
+         ,conv2String(oneNamelistFile%epsil   ,"F14.6") &
+         ,conv2String(oneNamelistFile%mkcoltab,"I14.1") &
+         ,conv2String(oneNamelistFile%ihorgrad,"I14.1")/))
     !Block26
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('NPATCH     '       ,"")          &
-      ,conv2String('NVEGPAT    '       ,"")          &
-      ,conv2String('ISFCL      '       ,"")          &
-      ,conv2String('ISFCL_OCEAN'       ,"")/),(/     &
-       conv2String(oneNamelistFile%npatch     ,"I14.1") &
-      ,conv2String(oneNamelistFile%nvegpat    ,"I14.1") &
-      ,conv2String(oneNamelistFile%isfcl      ,"I14.1") &
-      ,conv2String(oneNamelistFile%isfcl_ocean,"I14.1")/))
+         conv2String('NPATCH     '       ,"")          &
+         ,conv2String('NVEGPAT    '       ,"")          &
+         ,conv2String('ISFCL      '       ,"")          &
+         ,conv2String('ISFCL_OCEAN'       ,"")/),(/     &
+         conv2String(oneNamelistFile%npatch     ,"I14.1") &
+         ,conv2String(oneNamelistFile%nvegpat    ,"I14.1") &
+         ,conv2String(oneNamelistFile%isfcl      ,"I14.1") &
+         ,conv2String(oneNamelistFile%isfcl_ocean,"I14.1")/))
     !Block27
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('NVGCON '       ,"")          &
-      ,conv2String('PCTLCON'       ,"")          &
-      ,conv2String('NSLCON '       ,"")          &
-      ,conv2String('ZROUGH '       ,"")/),(/     &
-       conv2String(oneNamelistFile%iplaws ,"I14.1") &
-      ,conv2String(oneNamelistFile%pctlcon,"F14.1") &
-      ,conv2String(oneNamelistFile%nslcon ,"I14.1") &
-      ,conv2String(oneNamelistFile%zrough ,"F14.2")/))
+         conv2String('NVGCON '       ,"")          &
+         ,conv2String('PCTLCON'       ,"")          &
+         ,conv2String('NSLCON '       ,"")          &
+         ,conv2String('ZROUGH '       ,"")/),(/     &
+         conv2String(oneNamelistFile%iplaws ,"I14.1") &
+         ,conv2String(oneNamelistFile%pctlcon,"F14.1") &
+         ,conv2String(oneNamelistFile%nslcon ,"I14.1") &
+         ,conv2String(oneNamelistFile%zrough ,"F14.2")/))
     !Block28
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('ALBEDO'       ,"")          &
-      ,conv2String('DTHCON'       ,"")          &
-      ,conv2String('DRTCON'       ,"")          &
-      ,conv2String('IPSFLG'       ,"")/),(/     &
-       conv2String(oneNamelistFile%albedo,"F14.2") &
-      ,conv2String(oneNamelistFile%dthcon,"F14.2") &
-      ,conv2String(oneNamelistFile%drtcon,"F14.2") &
-      ,conv2String(oneNamelistFile%ipsflg,"I14.1")/))
+         conv2String('ALBEDO'       ,"")          &
+         ,conv2String('DTHCON'       ,"")          &
+         ,conv2String('DRTCON'       ,"")          &
+         ,conv2String('IPSFLG'       ,"")/),(/     &
+         conv2String(oneNamelistFile%albedo,"F14.2") &
+         ,conv2String(oneNamelistFile%dthcon,"F14.2") &
+         ,conv2String(oneNamelistFile%drtcon,"F14.2") &
+         ,conv2String(oneNamelistFile%ipsflg,"I14.1")/))
     !Block29
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('ITSFLG  '       ,"")          &
-      ,conv2String('IRTSFLG '       ,"")          &
-      ,conv2String('IUSFLG  '       ,"")          &
-      ,conv2String('WINDFARM'       ,"")/),(/     &
-       conv2String(oneNamelistFile%itsflg  ,"I14.1") &
-      ,conv2String(oneNamelistFile%irtsflg ,"I14.1") &
-      ,conv2String(oneNamelistFile%iusflg  ,"I14.1") &
-      ,conv2String(oneNamelistFile%windfarm,"I14.1")/))
+         conv2String('ITSFLG  '       ,"")          &
+         ,conv2String('IRTSFLG '       ,"")          &
+         ,conv2String('IUSFLG  '       ,"")          &
+         ,conv2String('WINDFARM'       ,"")/),(/     &
+         conv2String(oneNamelistFile%itsflg  ,"I14.1") &
+         ,conv2String(oneNamelistFile%irtsflg ,"I14.1") &
+         ,conv2String(oneNamelistFile%iusflg  ,"I14.1") &
+         ,conv2String(oneNamelistFile%windfarm,"I14.1")/))
     !Block30
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('DAMMODULE'       ,"")          &
-      ,conv2String('FRQPRECIP'       ,"")          &
-      ,conv2String('EVALUATE '       ,"")          &
-      ,conv2String('CHEMISTRY'       ,"")/),(/     &
-       conv2String(oneNamelistFile%dammodule,"I14.1") &
-      ,conv2String(oneNamelistFile%frqPrecip,"F14.4") &
-      ,conv2String(oneNamelistFile%evaluate ,"I14.1") &
-      ,conv2String(oneNamelistFile%chemistry,"I14.1")/))
+         conv2String('DAMMODULE'       ,"")          &
+         ,conv2String('FRQPRECIP'       ,"")          &
+         ,conv2String('EVALUATE '       ,"")          &
+         ,conv2String('CHEMISTRY'       ,"")/),(/     &
+         conv2String(oneNamelistFile%dammodule,"I14.1") &
+         ,conv2String(oneNamelistFile%frqPrecip,"F14.4") &
+         ,conv2String(oneNamelistFile%evaluate ,"I14.1") &
+         ,conv2String(oneNamelistFile%chemistry,"I14.1")/))
     !Block31
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('SPLIT_METHOD'       ,"")          &
-      ,conv2String('CHEM_TIMESTEP'       ,"")          &
-      ,conv2String('CHEMISTRY_AQ '       ,"")          &
-      ,conv2String('CHEM_ASSIM'       ,"")/),(/     &
-       conv2String(oneNamelistFile%split_method,"A14") &
-      ,conv2String(oneNamelistFile%chem_timestep,"F14.4") &
-      ,conv2String(oneNamelistFile%chemistry_aq ,"I14.1") &
-      ,conv2String(oneNamelistFile%chem_assim,"I14.1")/))
+         conv2String('SPLIT_METHOD'       ,"")          &
+         ,conv2String('CHEM_TIMESTEP'       ,"")          &
+         ,conv2String('CHEMISTRY_AQ '       ,"")          &
+         ,conv2String('CHEM_ASSIM'       ,"")/),(/     &
+         conv2String(oneNamelistFile%split_method,"A14") &
+         ,conv2String(oneNamelistFile%chem_timestep,"F14.4") &
+         ,conv2String(oneNamelistFile%chemistry_aq ,"I14.1") &
+         ,conv2String(oneNamelistFile%chem_assim,"I14.1")/))
     !Block32
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('RECYCLE_TRACERS'       ,"")          &
-      ,conv2String('DEF_PROC_SRC'       ,"")          &
-      ,conv2String('NA_EXTRA2D '       ,"")          &
-      ,conv2String('NA_EXTRA3D'       ,"")/),(/     &
-       conv2String(oneNamelistFile%recycle_tracers,"I14.1") &
-      ,conv2String(oneNamelistFile%def_proc_src,"A14") &
-      ,conv2String(oneNamelistFile%na_extra2d ,"I14.4") &
-      ,conv2String(oneNamelistFile%na_extra3d,"I14.4")/))
+         conv2String('RECYCLE_TRACERS'       ,"")          &
+         ,conv2String('DEF_PROC_SRC'       ,"")          &
+         ,conv2String('NA_EXTRA2D '       ,"")          &
+         ,conv2String('NA_EXTRA3D'       ,"")/),(/     &
+         conv2String(oneNamelistFile%recycle_tracers,"I14.1") &
+         ,conv2String(oneNamelistFile%def_proc_src,"A14") &
+         ,conv2String(oneNamelistFile%na_extra2d ,"I14.4") &
+         ,conv2String(oneNamelistFile%na_extra3d,"I14.4")/))
     !Block33
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('PLUMERISE'       ,"")          &
-      ,conv2String('PRFRQ'       ,"")          &
-      ,conv2String('VOLCANOES '       ,"")          &
-      ,conv2String('AEROSOL'       ,"")/),(/     &
-       conv2String(oneNamelistFile%plumerise,"I14.1") &
-      ,conv2String(oneNamelistFile%prfrq,"F14.4") &
-      ,conv2String(oneNamelistFile%volcanoes ,"I14.1") &
-      ,conv2String(oneNamelistFile%aerosol,"I14.1")/))
+         conv2String('PLUMERISE'       ,"")          &
+         ,conv2String('PRFRQ'       ,"")          &
+         ,conv2String('VOLCANOES '       ,"")          &
+         ,conv2String('AEROSOL'       ,"")/),(/     &
+         conv2String(oneNamelistFile%plumerise,"I14.1") &
+         ,conv2String(oneNamelistFile%prfrq,"F14.4") &
+         ,conv2String(oneNamelistFile%volcanoes ,"I14.1") &
+         ,conv2String(oneNamelistFile%aerosol,"I14.1")/))
     !Block34
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('AER_TIMESTEP'       ,"")          &
-      ,conv2String('CCATT'       ,"")          &
-      ,conv2String('ISZSTAGE '       ,"")          &
-      ,conv2String('IVRSTAGE'       ,"")/),(/     &
-       conv2String(oneNamelistFile%aer_timestep,"F14.4") &
-      ,conv2String(oneNamelistFile%catt,"I14.1") &
-      ,conv2String(oneNamelistFile%iszstage ,"I14.1") &
-      ,conv2String(oneNamelistFile%ivrstage,"I14.1")/))
+         conv2String('AER_TIMESTEP'       ,"")          &
+         ,conv2String('CCATT'       ,"")          &
+         ,conv2String('ISZSTAGE '       ,"")          &
+         ,conv2String('IVRSTAGE'       ,"")/),(/     &
+         conv2String(oneNamelistFile%aer_timestep,"F14.4") &
+         ,conv2String(oneNamelistFile%ccatt,"I14.1") &
+         ,conv2String(oneNamelistFile%iszstage ,"I14.1") &
+         ,conv2String(oneNamelistFile%ivrstage,"I14.1")/))
     !Block35
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('ISAN_INC    '       ,"")          &
-      ,conv2String('GUESS1ST    '       ,"")          &
-      ,conv2String('I1ST_FLG    '       ,"")          &
-      ,conv2String('IUPA_FLG    '       ,"")/),(/     &
-       conv2String(oneNamelistFile%isan_inc       ,"I14.6") &
-      ,conv2String(oneNamelistFile%guess1st,"A14") &
-      ,conv2String(oneNamelistFile%i1st_flg,"I14.1") &
-      ,conv2String(oneNamelistFile%iupa_flg,"I14.1"  )/))
+         conv2String('ISAN_INC    '       ,"")          &
+         ,conv2String('GUESS1ST    '       ,"")          &
+         ,conv2String('I1ST_FLG    '       ,"")          &
+         ,conv2String('IUPA_FLG    '       ,"")/),(/     &
+         conv2String(oneNamelistFile%isan_inc       ,"I14.6") &
+         ,conv2String(oneNamelistFile%guess1st,"A14") &
+         ,conv2String(oneNamelistFile%i1st_flg,"I14.1") &
+         ,conv2String(oneNamelistFile%iupa_flg,"I14.1"  )/))
     !Block36
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('ISFC_FLG    '       ,"")          &
-      ,conv2String('IUPDNDVI    '       ,"")          &
-      ,conv2String('IUPDSST     '       ,"")          &
-      ,conv2String('NOT USED    '       ,"")/),(/     &
-       conv2String(oneNamelistFile%isfc_flg,"I14.1") &
-      ,conv2String(oneNamelistFile%iupdndvi,"I14.1") &
-      ,conv2String(oneNamelistFile%iupdsst,"I14.1") &
-      ,conv2String('',"A14"  )/))
+         conv2String('ISFC_FLG    '       ,"")          &
+         ,conv2String('IUPDNDVI    '       ,"")          &
+         ,conv2String('IUPDSST     '       ,"")          &
+         ,conv2String('NOT USED    '       ,"")/),(/     &
+         conv2String(oneNamelistFile%isfc_flg,"I14.1") &
+         ,conv2String(oneNamelistFile%iupdndvi,"I14.1") &
+         ,conv2String(oneNamelistFile%iupdsst,"I14.1") &
+         ,conv2String('',"A14"  )/))
     !Block37
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('NISN        '       ,"")          &
-      ,conv2String('NIGRIDS     '       ,"")          &
-      ,conv2String('TOPSIGZ     '       ,"")          &
-      ,conv2String('HYBBOT      '       ,"")/),(/     &
-       conv2String(oneNamelistFile%nisn   ,"I14.4") &
-      ,conv2String(oneNamelistFile%nigrids,"I14.4") &
-      ,conv2String(oneNamelistFile%topsigz,"F14.6") &
-      ,conv2String(oneNamelistFile%hybbot ,"F14.6"  )/))
+         conv2String('NISN        '       ,"")          &
+         ,conv2String('NIGRIDS     '       ,"")          &
+         ,conv2String('TOPSIGZ     '       ,"")          &
+         ,conv2String('HYBBOT      '       ,"")/),(/     &
+         conv2String(oneNamelistFile%nisn   ,"I14.4") &
+         ,conv2String(oneNamelistFile%nigrids,"I14.4") &
+         ,conv2String(oneNamelistFile%topsigz,"F14.6") &
+         ,conv2String(oneNamelistFile%hybbot ,"F14.6"  )/))
     !Block38
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('HYBTOP      '       ,"")          &
-      ,conv2String('SFCINF      '       ,"")          &
-      ,conv2String('SIGZWT      '       ,"")          &
-      ,conv2String('NFEEDVAR    '       ,"")/),(/     &
-       conv2String(oneNamelistFile%hybtop   ,"F14.6") &
-      ,conv2String(oneNamelistFile%sfcinf   ,"F14.6") &
-      ,conv2String(oneNamelistFile%sigzwt   ,"F14.6") &
-      ,conv2String(oneNamelistFile%nfeedvar ,"I14.1"  )/))
+         conv2String('HYBTOP      '       ,"")          &
+         ,conv2String('SFCINF      '       ,"")          &
+         ,conv2String('SIGZWT      '       ,"")          &
+         ,conv2String('NFEEDVAR    '       ,"")/),(/     &
+         conv2String(oneNamelistFile%hybtop   ,"F14.6") &
+         ,conv2String(oneNamelistFile%sfcinf   ,"F14.6") &
+         ,conv2String(oneNamelistFile%sigzwt   ,"F14.6") &
+         ,conv2String(oneNamelistFile%nfeedvar ,"I14.1"  )/))
     !Block40
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('MAXSTA      '       ,"")          &
-      ,conv2String('MAXSFC      '       ,"")          &
-      ,conv2String('NOTSTA      '       ,"")          &
-      ,conv2String('NOT USED     '       ,"")/),(/     &
-       conv2String(oneNamelistFile%maxsta   ,"I14.6") &
-      ,conv2String(oneNamelistFile%maxsfc   ,"I14.6") &
-      ,conv2String(oneNamelistFile%notsta   ,"I14.1") &
-      ,conv2String('' ,"A14"  )/))
+         conv2String('MAXSTA      '       ,"")          &
+         ,conv2String('MAXSFC      '       ,"")          &
+         ,conv2String('NOTSTA      '       ,"")          &
+         ,conv2String('NOT USED     '       ,"")/),(/     &
+         conv2String(oneNamelistFile%maxsta   ,"I14.6") &
+         ,conv2String(oneNamelistFile%maxsfc   ,"I14.6") &
+         ,conv2String(oneNamelistFile%notsta   ,"I14.1") &
+         ,conv2String('' ,"A14"  )/))
     !Block41
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('IOBSWIN      '       ,"")          &
-      ,conv2String('STASEP      '       ,"")          &
-      ,conv2String('IGRIDFL      '       ,"")          &
-      ,conv2String('NOT USED'       ,"")/),(/     &
-       conv2String(oneNamelistFile%iobswin  ,"I14.6") &
-      ,conv2String(oneNamelistFile%stasep   ,"F14.2") &
-      ,conv2String(oneNamelistFile%igridfl  ,"I14.1") &
-      ,conv2String(''   ,"A14"  )/))
+         conv2String('IOBSWIN      '       ,"")          &
+         ,conv2String('STASEP      '       ,"")          &
+         ,conv2String('IGRIDFL      '       ,"")          &
+         ,conv2String('NOT USED'       ,"")/),(/     &
+         conv2String(oneNamelistFile%iobswin  ,"I14.6") &
+         ,conv2String(oneNamelistFile%stasep   ,"F14.2") &
+         ,conv2String(oneNamelistFile%igridfl  ,"I14.1") &
+         ,conv2String(''   ,"A14"  )/))
     !Block42
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('GRIDWT(1)   '       ,"")          &
-      ,conv2String('GRIDWT(2)   '       ,"")          &
-      ,conv2String('WVLNTH(1)      '       ,"")          &
-      ,conv2String('WVLNTH(2)       '       ,"")/),(/     &
-       conv2String(oneNamelistFile%gridwt(1)  ,"F14.6") &
-      ,conv2String(oneNamelistFile%gridwt(2)  ,"F14.6") &
-      ,conv2String(oneNamelistFile%wvlnth(1)  ,"F14.6") &
-      ,conv2String(oneNamelistFile%wvlnth(2)  ,"F14.6"  )/))
+         conv2String('GRIDWT(1)   '       ,"")          &
+         ,conv2String('GRIDWT(2)   '       ,"")          &
+         ,conv2String('WVLNTH(1)      '       ,"")          &
+         ,conv2String('WVLNTH(2)       '       ,"")/),(/     &
+         conv2String(oneNamelistFile%gridwt(1)  ,"F14.6") &
+         ,conv2String(oneNamelistFile%gridwt(2)  ,"F14.6") &
+         ,conv2String(oneNamelistFile%wvlnth(1)  ,"F14.6") &
+         ,conv2String(oneNamelistFile%wvlnth(2)  ,"F14.6"  )/))
     !Block43
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('SWVLNTH(1)   '       ,"")          &
-      ,conv2String('SWVLNTH(2)   '       ,"")          &
-      ,conv2String('RESPON(1)      '       ,"")          &
-      ,conv2String('RESPON(2)       '       ,"")/),(/     &
-       conv2String(oneNamelistFile%swvlnth(1)  ,"F14.6") &
-      ,conv2String(oneNamelistFile%swvlnth(2)  ,"F14.6") &
-      ,conv2String(oneNamelistFile%respon(1)  ,"F14.6") &
-      ,conv2String(oneNamelistFile%respon(2)  ,"F14.6"  )/))
+         conv2String('SWVLNTH(1)   '       ,"")          &
+         ,conv2String('SWVLNTH(2)   '       ,"")          &
+         ,conv2String('RESPON(1)      '       ,"")          &
+         ,conv2String('RESPON(2)       '       ,"")/),(/     &
+         conv2String(oneNamelistFile%swvlnth(1)  ,"F14.6") &
+         ,conv2String(oneNamelistFile%swvlnth(2)  ,"F14.6") &
+         ,conv2String(oneNamelistFile%respon(1)  ,"F14.6") &
+         ,conv2String(oneNamelistFile%respon(2)  ,"F14.6"  )/))
     !Block44
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('GOBSEP   '       ,"")          &
-      ,conv2String('GOBRAD   '       ,"")          &
-      ,conv2String('ICFILETYPE    '       ,"")          &
-      ,conv2String('WIND_U_VARNAME'       ,"")/),(/     &
-       conv2String(oneNamelistFile%gobsep  ,"F14.6") &
-      ,conv2String(oneNamelistFile%gobrad  ,"F14.6") &
-      ,conv2String(oneNamelistFile%icFileType  ,"I14.1") &
-      ,conv2String(oneNamelistFile%wind_u_varname  ,"A14"  )/))
+         conv2String('GOBSEP   '       ,"")          &
+         ,conv2String('GOBRAD   '       ,"")          &
+         ,conv2String('ICFILETYPE    '       ,"")          &
+         ,conv2String('WIND_U_VARNAME'       ,"")/),(/     &
+         conv2String(oneNamelistFile%gobsep  ,"F14.6") &
+         ,conv2String(oneNamelistFile%gobrad  ,"F14.6") &
+         ,conv2String(oneNamelistFile%icFileType  ,"I14.1") &
+         ,conv2String(oneNamelistFile%wind_u_varname  ,"A14"  )/))
     !Block45
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('WIND_V_VARNAME'       ,"")          &
-      ,conv2String('TEMP_VARNAME  '       ,"")          &
-      ,conv2String('GEO_VARNAME   '       ,"")          &
-      ,conv2String('UR_VARNAME    '       ,"")/),(/     &
-       conv2String(oneNamelistFile%wind_v_varname  ,"A14") &
-      ,conv2String(oneNamelistFile%temperature_varname  ,"A14") &
-      ,conv2String(oneNamelistFile%geo_varname  ,"A14") &
-      ,conv2String(oneNamelistFile%ur_varname  ,"A14"  )/))
+         conv2String('WIND_V_VARNAME'       ,"")          &
+         ,conv2String('TEMP_VARNAME  '       ,"")          &
+         ,conv2String('GEO_VARNAME   '       ,"")          &
+         ,conv2String('UR_VARNAME    '       ,"")/),(/     &
+         conv2String(oneNamelistFile%wind_v_varname  ,"A14") &
+         ,conv2String(oneNamelistFile%temperature_varname  ,"A14") &
+         ,conv2String(oneNamelistFile%geo_varname  ,"A14") &
+         ,conv2String(oneNamelistFile%ur_varname  ,"A14"  )/))
     !Block46
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('DLIMIT U'       ,"")          &
-      ,conv2String('DLIMIT V'       ,"")          &
-      ,conv2String('ULIMIT U'       ,"")          &
-      ,conv2String('ULIMIT V'       ,"")/),(/     &
-       conv2String(oneNamelistFile%dlimit(1)  ,"F14.4") &
-      ,conv2String(oneNamelistFile%dlimit(2)  ,"F14.4") &
-      ,conv2String(oneNamelistFile%ulimit(1)  ,"F14.4") &
-      ,conv2String(oneNamelistFile%ulimit(2)  ,"F14.4"  )/))
+         conv2String('DLIMIT U'       ,"")          &
+         ,conv2String('DLIMIT V'       ,"")          &
+         ,conv2String('ULIMIT U'       ,"")          &
+         ,conv2String('ULIMIT V'       ,"")/),(/     &
+         conv2String(oneNamelistFile%dlimit(1)  ,"F14.4") &
+         ,conv2String(oneNamelistFile%dlimit(2)  ,"F14.4") &
+         ,conv2String(oneNamelistFile%ulimit(1)  ,"F14.4") &
+         ,conv2String(oneNamelistFile%ulimit(2)  ,"F14.4"  )/))
     !Block47
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('DLIMIT T'       ,"")          &
-      ,conv2String('DLIMIT Z'       ,"")          &
-      ,conv2String('ULIMIT T'       ,"")          &
-      ,conv2String('ULIMIT Z'       ,"")/),(/     &
-       conv2String(oneNamelistFile%dlimit(3)  ,"F14.4") &
-      ,conv2String(oneNamelistFile%dlimit(4)  ,"F14.4") &
-      ,conv2String(oneNamelistFile%ulimit(3)  ,"F14.4") &
-      ,conv2String(oneNamelistFile%ulimit(4)  ,"F14.4"  )/))
+         conv2String('DLIMIT T'       ,"")          &
+         ,conv2String('DLIMIT Z'       ,"")          &
+         ,conv2String('ULIMIT T'       ,"")          &
+         ,conv2String('ULIMIT Z'       ,"")/),(/     &
+         conv2String(oneNamelistFile%dlimit(3)  ,"F14.4") &
+         ,conv2String(oneNamelistFile%dlimit(4)  ,"F14.4") &
+         ,conv2String(oneNamelistFile%ulimit(3)  ,"F14.4") &
+         ,conv2String(oneNamelistFile%ulimit(4)  ,"F14.4"  )/))
     !Block48
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('DLIMIT R'       ,"")          &
-      ,conv2String('ULIMIT R'       ,"")          &
-      ,conv2String('SCALE_FACTOR U'       ,"")          &
-      ,conv2String('SCALE_FACTOR V'       ,"")/),(/     &
-       conv2String(oneNamelistFile%dlimit(5)  ,"F14.4") &
-      ,conv2String(oneNamelistFile%ulimit(5)  ,"F14.4") &
-      ,conv2String(oneNamelistFile%scale_factor(1)  ,"F14.4") &
-      ,conv2String(oneNamelistFile%scale_factor(2)  ,"F14.4"  )/))
+         conv2String('DLIMIT R'       ,"")          &
+         ,conv2String('ULIMIT R'       ,"")          &
+         ,conv2String('SCALE_FACTOR U'       ,"")          &
+         ,conv2String('SCALE_FACTOR V'       ,"")/),(/     &
+         conv2String(oneNamelistFile%dlimit(5)  ,"F14.4") &
+         ,conv2String(oneNamelistFile%ulimit(5)  ,"F14.4") &
+         ,conv2String(oneNamelistFile%scale_factor(1)  ,"F14.4") &
+         ,conv2String(oneNamelistFile%scale_factor(2)  ,"F14.4"  )/))
     !Block49
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('SCALE_FACTOR T'       ,"")          &
-      ,conv2String('SCALE_FACTOR Z'       ,"")          &
-      ,conv2String('SCALE_FACTOR R'       ,"")          &
-      ,conv2String('NPLT          '       ,"")/),(/     &
-       conv2String(oneNamelistFile%scale_factor(3)  ,"F14.4") &
-      ,conv2String(oneNamelistFile%scale_factor(4)  ,"F14.4") &
-      ,conv2String(oneNamelistFile%scale_factor(5)  ,"F14.4") &
-      ,conv2String(oneNamelistFile%nplt  ,"I14.2"  )/))
+         conv2String('SCALE_FACTOR T'       ,"")          &
+         ,conv2String('SCALE_FACTOR Z'       ,"")          &
+         ,conv2String('SCALE_FACTOR R'       ,"")          &
+         ,conv2String('NPLT          '       ,"")/),(/     &
+         conv2String(oneNamelistFile%scale_factor(3)  ,"F14.4") &
+         ,conv2String(oneNamelistFile%scale_factor(4)  ,"F14.4") &
+         ,conv2String(oneNamelistFile%scale_factor(5)  ,"F14.4") &
+         ,conv2String(oneNamelistFile%nplt  ,"I14.2"  )/))
     !Block50
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('INITIAL_LATITUDE'       ,"")          &
-      ,conv2String('FINAL_LATITUDE  '       ,"")          &
-      ,conv2String('INITIAL_LONGITUDE   '       ,"")          &
-      ,conv2String('FINAL_LONGITUDE    '       ,"")/),(/     &
-       conv2String(oneNamelistFile%initial_latitude  ,"F14.4") &
-      ,conv2String(oneNamelistFile%final_latitude  ,"F14.4") &
-      ,conv2String(oneNamelistFile%initial_longitude  ,"F14.4") &
-      ,conv2String(oneNamelistFile%final_longitude  ,"F14.4"  )/))
+         conv2String('INITIAL_LATITUDE'       ,"")          &
+         ,conv2String('FINAL_LATITUDE  '       ,"")          &
+         ,conv2String('INITIAL_LONGITUDE   '       ,"")          &
+         ,conv2String('FINAL_LONGITUDE    '       ,"")/),(/     &
+         conv2String(oneNamelistFile%initial_latitude  ,"F14.4") &
+         ,conv2String(oneNamelistFile%final_latitude  ,"F14.4") &
+         ,conv2String(oneNamelistFile%initial_longitude  ,"F14.4") &
+         ,conv2String(oneNamelistFile%final_longitude  ,"F14.4"  )/))
     !Block51
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('Z_MAX_LEVEL'       ,"")          &
-      ,conv2String('CCGRADSWRITE  '       ,"")          &
-      ,conv2String('NVP   '       ,"")          &
-      ,conv2String('ANL2GRA    '       ,"")/),(/     &
-       conv2String(oneNamelistFile%z_max_level  ,"I14.3") &
-      ,conv2String(oneNamelistFile%ccGradsWrite  ,"I14.1") &
-      ,conv2String(oneNamelistFile%nvp  ,"I14.3") &
-      ,conv2String(oneNamelistFile%anl2gra  ,"A14"  )/))
+         conv2String('Z_MAX_LEVEL'       ,"")          &
+         ,conv2String('CCGRADSWRITE  '       ,"")          &
+         ,conv2String('NVP   '       ,"")          &
+         ,conv2String('ANL2GRA    '       ,"")/),(/     &
+         conv2String(oneNamelistFile%z_max_level  ,"I14.3") &
+         ,conv2String(oneNamelistFile%ccGradsWrite  ,"I14.1") &
+         ,conv2String(oneNamelistFile%nvp  ,"I14.3") &
+         ,conv2String(oneNamelistFile%anl2gra  ,"A14"  )/))
     !Block52
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('PROJ'       ,"")          &
-      ,conv2String('MEAN_TYPE  '       ,"")          &
-      ,conv2String('IPRESSLEV   '       ,"")          &
-      ,conv2String('INPLEVS    '       ,"")/),(/     &
-       conv2String(oneNamelistFile%proj  ,"A14") &
-      ,conv2String(oneNamelistFile%mean_type  ,"A14") &
-      ,conv2String(oneNamelistFile%ipresslev  ,"I14.1") &
-      ,conv2String(oneNamelistFile%inplevs  ,"I14.3"  )/))
+         conv2String('PROJ'       ,"")          &
+         ,conv2String('MEAN_TYPE  '       ,"")          &
+         ,conv2String('IPRESSLEV   '       ,"")          &
+         ,conv2String('INPLEVS    '       ,"")/),(/     &
+         conv2String(oneNamelistFile%proj  ,"A14") &
+         ,conv2String(oneNamelistFile%mean_type  ,"A14") &
+         ,conv2String(oneNamelistFile%ipresslev  ,"I14.1") &
+         ,conv2String(oneNamelistFile%inplevs  ,"I14.3"  )/))
     !Block53
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('ASCII_DATA'       ,"")          &
-      ,conv2String('SITE_LAT  '       ,"")          &
-      ,conv2String('SITE_LON   '       ,"")          &
-      ,conv2String('INPLEVS    '       ,"")/),(/     &
-       conv2String(oneNamelistFile%ascii_data  ,"A14") &
-      ,conv2String(oneNamelistFile%site_lat  ,"F14.4") &
-      ,conv2String(oneNamelistFile%site_lon  ,"F14.4") &
-      ,conv2String(oneNamelistFile%inplevs  ,"I14.3"  )/))
+         conv2String('ASCII_DATA'       ,"")          &
+         ,conv2String('SITE_LAT  '       ,"")          &
+         ,conv2String('SITE_LON   '       ,"")          &
+         ,conv2String('INPLEVS    '       ,"")/),(/     &
+         conv2String(oneNamelistFile%ascii_data  ,"A14") &
+         ,conv2String(oneNamelistFile%site_lat  ,"F14.4") &
+         ,conv2String(oneNamelistFile%site_lon  ,"F14.4") &
+         ,conv2String(oneNamelistFile%inplevs  ,"I14.3"  )/))
     !Block54
     iErrNumber=printOneLineVars(4,(/      &
-       conv2String('APPLYDIGITALFILTER'       ,"")          &
-      ,conv2String('DFILTERIMEWINDOW'       ,"")          &
-      ,conv2String('APPLYMETEOGRAM   '       ,"")          &
-      ,conv2String('METEOGRAMFREQ    '       ,"")/),(/     &
-       conv2String(oneNamelistFile%applyDigitalFilter  ,"A14") &
-      ,conv2String(oneNamelistFile%digitalFilterTimeWindow  ,"F14.1") &
-      ,conv2String(oneNamelistFile%applyMeteogram  ,"A14") &
-      ,conv2String(oneNamelistFile%meteogramFreq  ,"F14.4"  )/))
+         conv2String('APPLYDIGITALFILTER'       ,"")          &
+         ,conv2String('DFILTERIMEWINDOW'       ,"")          &
+         ,conv2String('APPLYMETEOGRAM   '       ,"")          &
+         ,conv2String('METEOGRAMFREQ    '       ,"")/),(/     &
+         conv2String(oneNamelistFile%applyDigitalFilter  ,"A14") &
+         ,conv2String(oneNamelistFile%digitalFilterTimeWindow  ,"F14.1") &
+         ,conv2String(oneNamelistFile%applyMeteogram  ,"A14") &
+         ,conv2String(oneNamelistFile%meteogramFreq  ,"F14.4"  )/))
     iErrNumber=printVarTail(4)
     if(oneNamelistFile%deltaz==0) then 
-      iErrNumber=dumpMessage(c_tty,c_yes,'','',c_noError,'ZZ       :',oneNamelistFile%zz,"F7.1")
+       iErrNumber=dumpMessage(c_tty,c_yes,'','',c_noError,'ZZ       :',oneNamelistFile%zz,"F7.1")
     elseif(oneNamelistFile%fixlevels>0) then 
-      iErrNumber=dumpMessage(c_tty,c_yes,'','',c_noError,'ZZ FIX   :',oneNamelistFile%zz(1:oneNamelistFile%fixlevels),"F7.1")
+       iErrNumber=dumpMessage(c_tty,c_yes,'','',c_noError,'ZZ FIX   :',oneNamelistFile%zz(1:oneNamelistFile%fixlevels),"F7.1")
     endif
     iErrNumber=dumpMessage(c_tty,c_yes,'','',c_noError,'SLZ       :',oneNamelistFile%slz,"F8.2")
     iErrNumber=dumpMessage(c_tty,c_yes,'','',c_noError,'SLMSTR    :',oneNamelistFile%slmstr,"F8.2")
@@ -4648,17 +4618,17 @@ contains
     iErrNumber=printOneFile('DAMOUTPREFIX  ',trim(oneNamelistFile%damOutPrefix),"O")
     iErrNumber=printOneFile('EVALUATEPREFIX',trim(oneNamelistFile%evaluatePrefix),"O")
     do k=1,ngrids
-      write(ck,fmt='(I1.1)') k
-      iErrNumber=printOneFile('ITOPTFN('//ck//')',trim(oneNamelistFile%itoptfn(k)),"I")
-      iErrNumber=printOneFile('ISSTFN ('//ck//')',trim(oneNamelistFile%isstfn(k)),"I")
-      iErrNumber=printOneFile('IVEGTFN('//ck//')',trim(oneNamelistFile%ivegtfn(k)),"I")
-      iErrNumber=printOneFile('ISOILFN('//ck//')',trim(oneNamelistFile%isoilfn(k)),"I")
-      iErrNumber=printOneFile('NDVIFN ('//ck//')',trim(oneNamelistFile%ndvifn(k)),"I")
+       write(ck,fmt='(I1.1)') k
+       iErrNumber=printOneFile('ITOPTFN('//ck//')',trim(oneNamelistFile%itoptfn(k)),"I")
+       iErrNumber=printOneFile('ISSTFN ('//ck//')',trim(oneNamelistFile%isstfn(k)),"I")
+       iErrNumber=printOneFile('IVEGTFN('//ck//')',trim(oneNamelistFile%ivegtfn(k)),"I")
+       iErrNumber=printOneFile('ISOILFN('//ck//')',trim(oneNamelistFile%isoilfn(k)),"I")
+       iErrNumber=printOneFile('NDVIFN ('//ck//')',trim(oneNamelistFile%ndvifn(k)),"I")
     enddo
     if (len_trim(oneNamelistFile%domain_fname) > 0) then
-      iErrNumber=printOneFile('DOMAIN_FNAME ('//ck//')',trim(oneNamelistFile%domain_fname),"I")
+       iErrNumber=printOneFile('DOMAIN_FNAME ('//ck//')',trim(oneNamelistFile%domain_fname),"I")
     else
-      iErrNumber=printOneFile('DOMAIN_FNAME ('//ck//')','Using Domain decomposition',"*")
+       iErrNumber=printOneFile('DOMAIN_FNAME ('//ck//')','Using Domain decomposition',"*")
     endif
     iErrNumber=printOneFile('ICPREFIX',trim(oneNamelistFile%icPrefix),"I")
     iErrNumber=printOneFile('ICGRADSPREFIX',trim(oneNamelistFile%icGradsPrefix),"O")
@@ -4673,19 +4643,19 @@ contains
 
 
     if(oneNamelistFile%ipos>0) then
-      write(*,fmt='(A)') 
-      write(*,"(a)") "+---------------------------------------Variables Selected to Output-----------------------------------------------"
-      write(*,fmt='(A)') 
-      iErrNumber=csvHeader(oneNamelistFile%csvFile)
-      do k=1,oneNamelistFile%nvp
+       write(*,fmt='(A)') 
+       write(*,"(a)") "+---------------------------------------Variables Selected to Output-----------------------------------------------"
+       write(*,fmt='(A)') 
+       iErrNumber=csvHeader(oneNamelistFile%csvFile)
+       do k=1,oneNamelistFile%nvp
           iErrNumber=printOnecsv(oneNamelistFile%vp(k))
-      enddo 
-      iErrNumber=csvTail()
-      iErrNumber=dumpMessage(c_tty,c_yes,'','',c_noError,'IPLEVS:' &
-                             ,oneNamelistFile%iplevs(1:oneNamelistFile%inplevs),"I4")
-    
+       enddo
+       iErrNumber=csvTail()
+       iErrNumber=dumpMessage(c_tty,c_yes,'','',c_noError,'IPLEVS:' &
+            ,oneNamelistFile%iplevs(1:oneNamelistFile%inplevs),"I4")
+
     endif
-    
+
     !iErrNumber=dumpMessage(c_tty,c_yes,'RAMSIN','Namelist',c_notice,'HS         :',oneNamelistFile%hs,"F4.1")
     !iErrNumber=dumpMessage(c_tty,c_yes,'RAMSIN','Namelist',c_notice,'PS         :',oneNamelistFile%ps,"F8.2")
     !iErrNumber=dumpMessage(c_tty,c_yes,'RAMSIN','Namelist',c_notice,'TS         :',oneNamelistFile%ts,"F8.2") 

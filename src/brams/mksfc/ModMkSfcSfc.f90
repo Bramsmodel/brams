@@ -93,7 +93,7 @@ contains
 
     character(len=16) :: str(10)
     character(len=*), parameter :: h="**(sfc_check)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     lc=len_trim(sfcfiles)
     write(cgrid,'(a1,i1)') 'g',ifm
@@ -209,7 +209,7 @@ contains
     character(len=8) :: str(10)
     character(len=16) :: lstr
     character(len=256) :: longStr
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     !     write surface characteristics, one file for each grid
 
@@ -316,7 +316,7 @@ contains
 
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(SfcReadStoreOwnChunk)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! master process opens file and skips headers
 
