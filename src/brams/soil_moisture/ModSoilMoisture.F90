@@ -82,7 +82,7 @@ module ModSoilMoisture
 
 contains
 
-  subroutine soilmoistureinit(n1, n2, n3, mzg, mzs, npat, ifm,   &
+  subroutine soilMoistureInit(n1, n2, n3, mzg, mzs, npat, ifm,   &
        theta, pi0, pp,                                           &
        soil_water, soil_energy, soil_text,                       &
        glat, glon,                                               &
@@ -215,9 +215,12 @@ contains
     integer, external :: outRealSize
     character(len(usdata)+100)  :: outs  !DSM
 
-    character(len=*), parameter :: h="**(soilmoistureinit)**"
-    logical, parameter :: dumpLocal=.true.
-    
+    character(len=8) :: str(10)
+    character(len=16) :: str_f(10)
+    character(len=256) :: str_line
+    character(len=*), parameter :: h="**(soilMoistureInit)**"
+    logical, parameter :: dumpLocal=.false.
+
     namelist /gradeumso/ latni, latnf, lonni, lonnf, ilatn, ilonn, nlat, nlon
 
     lpw=int(lpw_r)
@@ -248,19 +251,25 @@ contains
     ipref = len_trim(usdata_in)
     pref = usdata_in(ipref_start:ipref)
 
-    if (pref=='SM_V2.') then
+    if (dumpLocal) then
+       call MsgDump(h//" file usdata_in is "//trim(usdata_in))
+       call MsgDump(h//" file usmodel_in is "//trim(usmodel_in))
+       call MsgDump(h//" pref="//trim(pref))
+    end if
+
+    if (trim(pref)=='SM_V2.') then
        n4us = 6                    ! modelo v2 com 6 camadas
        allocate(slz_us(0:n4us))
        slz_us = (/-3.0, -2.0, -1.0, -0.5, -0.25, -0.1, 0. /)
-    elseif (pref=='GL_SM.GPCP.' .or.  pref=='GL_SM.GPNR.' ) then
+    elseif (trim(pref)=='GL_SM.GPCP.' .or.  trim(pref)=='GL_SM.GPNR.' ) then
        n4us = 8                    ! modelo glsm v2 com 8 camadas
        allocate(slz_us(0:n4us))
        slz_us = (/-4.5, -2.5, -1.75, -1.0, -0.5, -0.25, -0.13, -0.05, 0./)
-    elseif (pref=='GFS025GR.SOILM.') then
+    elseif (trim(pref)=='GFS025GR.SOILM.') then
        n4us = 4                    ! modelo do gfs 4 camadas
        allocate(slz_us(0:n4us))
        slz_us = (/-2.0, -1.0,  -0.40, -0.10, 0./)
-    elseif (pref=='SM.GEOS.') then
+    elseif (trim(pref)=='SM.GEOS.') then
        !do nothing
 
     elseif (usdata_in(ipref-10:ipref)=='YYYYMMDD.nc') then  !DSM - Lendo a umidade do solo proveniente do JULES
@@ -299,14 +308,14 @@ contains
        stop 'STOP in: src/brams/soil_moisture/soilMoisture.F90'
 
 #endif
-    elseif (pref=='GFS.SOIL:UMID_TEMP.') then
+    elseif (trim(pref)=='GFS.SOIL:UMID_TEMP.') then
        n4us = 4                    ! modelo GFS com 4 camadas
        allocate(slz_us(0:n4us))
        slz_us = (/ -2.0, -1.0, -0.4, -0.1, 0. /)
        shift_lon = 360.
        !print*,"UMID1=",trim(pref),slz_us;call flush(6)
 
-    elseif (pref=='ERA5.SOIL:UMID_TEMP.') then
+    elseif (trim(pref)=='ERA5.SOIL:UMID_TEMP.') then
        n4us = 4                    ! modelo ERA5 com 4 camadas
        allocate(slz_us(0:n4us))
        slz_us = (/ -2.89, -1.0, -0.28, -0.07, 0. /)
@@ -317,6 +326,17 @@ contains
        slz_us = (/-2.4, -0.4, -0.1, 0./)
 
     endif
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") n4us
+       str_line=" "
+       do i = 1, n4us
+          write(str_f(1),"(e15.7)") slz_us(i)
+          str_line=trim(str_line)//trim(adjustl(str_f(1)))//", "
+       end do
+       call MsgDump(h//" n4us="//trim(adjustl(str(1))))
+       call MsgDump(h//" str_line="//trim(str_line))
+    end if
 
     ! composicao do nome dos arquivos de entrada e saida
 
@@ -362,16 +382,16 @@ contains
        ! calculating the hour of simulation
        if ((itime1>=0000) .and. (itime1<1200)) then
           hourmin = 0000
-          if (pref=='GL_SM.GPCP.' .or. pref=='GL_SM.GPNR.' .or. pref=='GFS.SOIL:UMID_TEMP.' &
-               .or. pref=='ERA5.SOIL:UMID_TEMP.' ) hourmin = 00
+          if (trim(pref)=='GL_SM.GPCP.' .or. trim(pref)=='GL_SM.GPNR.' .or. trim(pref)=='GFS.SOIL:UMID_TEMP.' &
+               .or. trim(pref)=='ERA5.SOIL:UMID_TEMP.' ) hourmin = 00
        else
           hourmin = 1200
-          if (pref=='GL_SM.GPCP.'         .or. pref=='GL_SM.GPNR.'          ) hourmin = 12
-	  if (pref=='GFS.SOIL:UMID_TEMP.' .or. pref=='ERA5.SOIL:UMID_TEMP.' ) hourmin = 21
+          if (trim(pref)=='GL_SM.GPCP.'         .or. trim(pref)=='GL_SM.GPNR.'          ) hourmin = 12
+	  if (trim(pref)=='GFS.SOIL:UMID_TEMP.' .or. trim(pref)=='ERA5.SOIL:UMID_TEMP.' ) hourmin = 21
        endif
 
-       if (pref=='GL_SM.GPCP.' .or. pref=='GL_SM.GPNR.' .or.  pref=='GFS.SOIL:UMID_TEMP.' &
-            .or. pref=='ERA5.SOIL:UMID_TEMP.' ) then
+       if (trim(pref)=='GL_SM.GPCP.' .or. trim(pref)=='GL_SM.GPNR.' .or.  trim(pref)=='GFS.SOIL:UMID_TEMP.' &
+            .or. trim(pref)=='ERA5.SOIL:UMID_TEMP.' ) then
           write (cihourmin, '(i2.2)') hourmin
           icihourmin = 2
        else
@@ -379,19 +399,31 @@ contains
           icihourmin = 4
        endif
 
-       if (pref=='us') then
+       if (trim(pref)=='us') then
           cihourmin  = ''
           icihourmin = 0
        endif
 
-       if (pref=='GFS.SOIL:UMID_TEMP.' .or. pref=='ERA5.SOIL:UMID_TEMP.' ) then
+       if (trim(pref)=='GFS.SOIL:UMID_TEMP.' .or. trim(pref)=='ERA5.SOIL:UMID_TEMP.' ) then
           usdata = trim(usdata_in)//ciyear//cimon//cidate//cihourmin(1:icihourmin)//'.bin'
        elseif (usdata_in(ipref-10:ipref)/='YYYYMMDD.nc') then
           usdata = trim(usdata_in)//ciyear//cimon//cidate//cihourmin(1:icihourmin)//'.vfm'
        endif
        ifname = len_trim(usdata)
 
-       if (mchnum==master_num) inquire(file=usdata(1:ifname),exist=theref)
+       if (mchnum==master_num) then
+          inquire(file=usdata(1:ifname),exist=theref)
+
+          if (dumpLocal) then
+             if (theref) then
+                call MsgDump(h//" found file "//trim(usdata))
+             else
+                call MsgDump(h//" did not find file "//trim(usdata))
+             end if
+          end if
+
+       end if
+
        call parf_bcast(theref, master_num)
 
        if (.not.theref) &
@@ -400,6 +432,12 @@ contains
        usmodel = trim(usmodel_in)//ciyear//cimon//cidate//cihourmin(1:icihourmin)//'_g'//cgrid//'.mod'
 
        if (mchnum==master_num) then
+
+          if (dumpLocal) then
+             call MsgDump(h//" will read file usdata="//trim(usdata))
+             call MsgDump(h//" will read file usmodel="//trim(usmodel))
+          end if
+
           print *, 'looking up soil moisture date files: '
           print *, '  usdata : ', usdata(1:len_trim(usdata))
           print *, '  usmodel: ', usmodel(1:len_trim(usmodel))
@@ -407,10 +445,26 @@ contains
           ifname = len_trim(usmodel)
           inquire(file=usmodel(1:ifname), exist=there)
 
+          if (dumpLocal) then
+             if (there) then
+                call MsgDump(h//" found file usmodel="//trim(usmodel))
+             else
+                call MsgDump(h//" did not find file usmodel="//trim(usmodel))
+             end if
+          end if
+
           if(.not.there) then
 
              ifname = len_trim(usdata)
              inquire(file=usdata(1:ifname), exist=there)
+
+             if (dumpLocal) then
+                if (there) then
+                   call MsgDump(h//" found file usdata="//trim(usdata))
+                else
+                   call MsgDump(h//" did not find file usdata="//trim(usdata))
+                end if
+             end if
 
              if (there) then
                 sair = 1
@@ -420,7 +474,7 @@ contains
              endif
           else
              sair = 1
-          endif
+          end if
        endif !(mchnum==master_num)
 
        call parf_bcast(sair, master_num)
@@ -430,11 +484,18 @@ contains
        call changeday(idate1, imonth1, iyear1, (int_dif_time - i),   &
             idate2, imonth2, iyear2)
 
-    enddo
+    end do
 
     ifname = len_trim(usmodel)
 
-    if (mchnum==master_num) inquire(file=usmodel(1:ifname), exist=there)
+    if (mchnum==master_num) then
+       inquire(file=usmodel(1:ifname), exist=there)
+
+       if (dumpLocal) then
+          call MsgDump(h//" after changeday, file usmodel is "//trim(usmodel))
+       end if
+    end if
+
     call parf_bcast(there, master_num)
 
     !    because the the soil moisture dataset interpolated to the model grid
@@ -461,15 +522,15 @@ contains
              print *, '  homogeneous soil moisture initialization.'
           end if
           return
-       endif
-    endif
+       end if
+    end if
 
     c1 = 0.5*cpi
 
     if (dumpLocal) then
-       call MsgDump(h//" inicializa soil_energy")
+       call MsgDump(h//" calcula soil_energy")
     end if
-    
+
     do j=1,n3
        do i=1,n2
 
@@ -489,7 +550,23 @@ contains
              enddo
           enddo
        enddo
-    enddo
+    end do
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") size(soil_energy,1)
+       write(str(2),"(i8)") size(soil_energy,2)
+       write(str(3),"(i8)") size(soil_energy,3)
+       write(str(4),"(i8)") size(soil_energy,4)
+       call MsgDump(h//" salva inicializacao de soil_energy("//&
+            trim(adjustl(str(1)))//","//&
+            trim(adjustl(str(2)))//","//&
+            trim(adjustl(str(3)))//","//&
+            trim(adjustl(str(4)))//")"//&
+            " no arquivo IniSoilProd_1.bin")
+       open(56, file="IniSoilBrams_1.bin", action="write", form="unformatted", status="replace")
+       write(56) soil_energy
+       close(56)
+    end if
 
     !--------------------------------------------------------- heterogeneous
     if (mchnum==master_num) then
@@ -500,8 +577,17 @@ contains
 
     ! dados da grade de precipitacao
 
-    if (mchnum==master_num) &
-         inquire(file=trim(usdata_in)//'_ent', exist=general)
+    if (mchnum==master_num) then
+       inquire(file=trim(usdata_in)//'_ent', exist=general)
+
+       if (dumpLocal) then
+          if (general) then
+             call MsgDump(h//" found usdata_in file "//trim(usdata_in)//"_ent")
+          else
+             call MsgDump(h//" did not find usdata_in file "//trim(usdata_in)//"_ent")
+          end if
+       end if
+    end if
 
     call parf_bcast(general, master_num)
 
@@ -520,7 +606,7 @@ contains
        call parf_bcast(nlat,  master_num)
        call parf_bcast(nlon,  master_num)
 
-    elseif (pref=='GL_SM.GPCP.') then
+    elseif (trim(pref)=='GL_SM.GPCP.') then
        latni =  -89.5            !  gpcp global
        latnf =   89.5
        lonni = -179.5
@@ -529,7 +615,7 @@ contains
        ilonn =    1.
        nlat  =  180
        nlon  =  360
-    elseif (pref=='GL_SM.GPNR.') then
+    elseif (trim(pref)=='GL_SM.GPNR.') then
        latni =  -89.875             !  trmm/navy + gpcp global
        latnf =   89.875
        lonni = -179.875
@@ -541,7 +627,7 @@ contains
 
 
        !====== GFS soil moisture (volumetric: [0-1]) and soil temperature (Kelvin)
-    elseif (pref=='GFS.SOIL:UMID_TEMP.') then
+    elseif (trim(pref)=='GFS.SOIL:UMID_TEMP.') then
        latni =  -89.875          
        latnf =   89.875
        lonni =   0. !-179.875
@@ -581,7 +667,7 @@ contains
        call parf_bcast(soilT_GFS, int(nlon,i8), int(nlat,i8), int(n4us,i8), master_num)
 
        !====== ERA5 soil moisture (wetness: [0-1]) and soil temperature (Kelvin)
-    elseif (pref=='ERA5.SOIL:UMID_TEMP.') then
+    elseif (trim(pref)=='ERA5.SOIL:UMID_TEMP.') then
        latni =  -59.875          
        latnf =   29.875
        lonni =  -110. !-179.875
@@ -626,7 +712,7 @@ contains
 
 
        !====== GEOS soil moisture 
-    elseif(pref=='SM.GEOS.') then
+    elseif(trim(pref)=='SM.GEOS.') then
 
        !Opening the descriptor file to read info
        print *, usdata(1:len_trim(usdata)-3)//'ctl'
@@ -796,7 +882,7 @@ contains
        endif
 
        if (.not.theref) then ! arquivo .gra
-          if ( pref=='SM.GEOS.') then   ! arquivo .gra acesso direto
+          if ( trim(pref)=='SM.GEOS.') then   ! arquivo .gra acesso direto
              if (mchnum==master_num) then
                 do k=1,n4us,1
                    api_us(1:nlon,1:nlat,k)=us_geos(1:nlon,1:nlat,k) ! wetness
@@ -928,14 +1014,16 @@ contains
                                enddo
                             endif
 
-                            globalsoilenergy(k,i,j,2)=t_soilJ(iii,jjj,k)
+                            do ipat=2,npat
+                               globalsoilenergy(k,i,j,ipat)=t_soilJ(iii,jjj,k)
+                            enddo
                             api_us(ii,jj,k)=api_us(iii,jjj,k)
                          endif  !DSM }
 
 
                          if (api_us(ii,jj,k)>1.e-5) then
                             !If the value is undef probably is ocean
-                            if(pref=='SM.GEOS.') then
+                            if(trim(pref)=='SM.GEOS.') then
                                if(api_us(ii,jj,k)>=undef) then
                                   api_us(ii,jj,k)=0.0
                                endif
@@ -963,10 +1051,10 @@ contains
                             globalsoilwater(k,i,j,ipat) = usdum(kk+1)
                             !write(90,fmt='(6(I4.4,1X),3(F18.6,1X))') k,kk,i,j,ipat,nsoil,globalsoilwater(k,i,j,ipat),usdum(kk+1),slmsts(nsoil)
                             ! umidade lida em % (armazenamento)
-                            if ( pref=='sm_v2.'      .or. &
-                                 pref=='gl_sm.gpcp.' .or. &
-                                 pref=='gl_sm.gpnr.' .or. &
-                                 pref=='SM.GEOS.') then
+                            if ( trim(pref)=='sm_v2.'      .or. &
+                                 trim(pref)=='gl_sm.gpcp.' .or. &
+                                 trim(pref)=='gl_sm.gpnr.' .or. &
+                                 trim(pref)=='SM.GEOS.') then
                                globalsoilwater(k,i,j,ipat) = &
                                     globalsoilwater(k,i,j,ipat)*slmsts(nsoil)
                             endif
@@ -984,10 +1072,10 @@ contains
                             !- umidade em mm3/mm3 (gfs case)
                             globalsoilwater(k,i,j,ipat) = usdum(1)
                             ! umidade lida em % (armazenamento) - v2 (sm_v2.)
-                            if ( pref=='sm_v2.'      .or. &
-                                 pref=='gl_sm.gpcp.' .or. &
-                                 pref=='gl_sm.gpnr.' .or. &
-                                 pref=='SM.GEOS.') then
+                            if ( trim(pref)=='sm_v2.'      .or. &
+                                 trim(pref)=='gl_sm.gpcp.' .or. &
+                                 trim(pref)=='gl_sm.gpnr.' .or. &
+                                 trim(pref)=='SM.GEOS.') then
                                globalsoilwater(k,i,j,ipat) = &
                                     globalsoilwater(k,i,j,ipat)*slmsts(nsoil)
                             endif
@@ -1027,7 +1115,7 @@ contains
        if (dumpLocal) then
           call  MsgDump(h//" invoca gatherdata para ler soil_energy")
        end if
-       
+
        varn = 'soil_energy'
        call gatherdata(idim_type, varn, ifm, mzg, nnxp(ifm), nnyp(ifm), &
             npat, nmachs, mchnum, mynum, master_num,			 &
@@ -1151,7 +1239,7 @@ contains
     if (dumpLocal) then
        call MsgDump(h//" recalcula soil_energ")
     end if
-    
+
     if (trim(pref) .ne. 'GFS.SOIL:UMID_TEMP.' .and. &
          trim(pref) .ne. 'ERA5.SOIL:UMID_TEMP.'.and. &
          usdata_in(ipref-10:ipref) .ne. 'YYYYMMDD.nc' ) then
@@ -1190,7 +1278,7 @@ contains
        if (dumpLocal) then
           call MsgDump(h//" recalcula soil_energy usando gfs/era5")
        end if
-       
+
        !-- scattering local data 
        !-- 2) soil temperature (using soil_energy array)
        call mk_4_buff(globalsoilenergy(:,:,:,:), soil_energy(:,:,:,:), &
@@ -1245,12 +1333,14 @@ contains
        if (dumpLocal) then
           call MsgDump(h//" recalcula soil_energy usando jules")
        end if
-       
+
        !-- 2) soil temperature (using soil_energy array)
+       call mk_4_buff(globalsoilenergy(:,:,:,:), soil_energy(:,:,:,:), &
+            mzg, nnxp(ifm), nnyp(ifm), npat, mzg, n2, n3, npat, ia, iz, ja, jz)
 !!$       call mk_4_buff(globalsoilenergy(:,:,:,2), soil_energy(:,:,:,2), &
 !!$            mzg, nnxp(ifm), nnyp(ifm), npat, mzg, n2, n3, npat, ia, iz, ja, jz)
-       call mk_3_buff(globalsoilenergy(:,:,:,2), soil_energy(:,:,:,2), &
-            mzg, nnxp(ifm), nnyp(ifm), mzg, n2, n3, ia, iz, ja, jz)
+!!$       call mk_3_buff(globalsoilenergy(:,:,:,2), soil_energy(:,:,:,2), &
+!!$            mzg, nnxp(ifm), nnyp(ifm), mzg, n2, n3, ia, iz, ja, jz)
 
        do j=1,n3
           do i=1,n2
@@ -1258,8 +1348,8 @@ contains
              do ipat=2,npat
                 do k=1,mzg
                    nsoil = nint(soil_text(k,i,j,ipat))
-                   if (soil_energy(k,i,j,2)>223. .and. soil_energy(k,i,j,2)<323.) then        
-                      soiltemp = soil_energy(k,i,j,2)-273.15        !- this is actually soil temp
+                   if (soil_energy(k,i,j,ipat)>223. .and. soil_energy(k,i,j,ipat)<323.) then        
+                      soiltemp = soil_energy(k,i,j,ipat)-273.15        !- this is actually soil temp
                    else
                       soiltemp = 0.5*(seatf(i,j) + seatp(i,j))-273.15
                    endif
@@ -1278,9 +1368,6 @@ contains
 
 
     deallocate(api_us, usdum,  tempdum, prlat, prlon,api_temp)
-
-
-
   end subroutine soilMoistureInit
 
 

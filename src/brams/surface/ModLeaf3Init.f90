@@ -466,7 +466,7 @@ contains
     integer, dimension(n2,n3) :: lpw
 
     character(len=*), parameter :: h="**(sfcinit_nofile)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     
     ! This subroutine fills the primary LEAF3 arrays for which standard RAMS
     ! data files do not exist with initial default values.  Many of the

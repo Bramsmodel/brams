@@ -248,7 +248,7 @@ contains
 
     character(len=16) :: str(10)
     character(len=*), parameter :: h="**(rrtm_driver)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     
     !- if not including radiation, return
     if ((oneNamelistFile%ilwrtyp + oneNamelistFile%iswrtyp)==0) return
@@ -525,7 +525,7 @@ contains
 
     character(len=16) :: str(10)
     character(len=*), parameter :: h="**(sfcrad_rtm)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     
     ! This routine is called by the radiation parameterization and by leaf.
     ! It computes net surface albedo plus radiative exchange between the
@@ -560,10 +560,6 @@ contains
           albedt = albedt + patch_area*alb
        endif
 
-       if (dumpLocal) then
-          call MsgDump(h//" invoca qtk")
-       end if
-       
        call qtk(soil_energy(nzg), tempk(nzg), fracliq(nzg))
        salvo=rlongup
        rlongup = rlongup + patch_area*stefan*tempk(nzg)**4
@@ -597,10 +593,6 @@ contains
        ! Diagnose soil temperature and liquid fraction
 
 
-       if (dumpLocal) then
-          call MsgDump(h//" invoca qwtk")
-       end if
-       
        do k=1,nzg
           nsoil = nint(soil_text(k))
           call qwtk(soil_energy(k), soil_water(k)*1.e3,  &

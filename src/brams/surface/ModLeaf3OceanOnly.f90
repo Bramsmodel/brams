@@ -178,7 +178,7 @@ contains
          l_ups2, l_vps2, l_zts2
 
     character(len=*), parameter :: h="**(sfclyr_ocean_only)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if (nstbot == 0) return
 
@@ -259,7 +259,7 @@ contains
     character(len=16) :: str_f(10)
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(sub_leaf3_ocean_only)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     if(firsttime) then 
        firsttime = .FALSE. 

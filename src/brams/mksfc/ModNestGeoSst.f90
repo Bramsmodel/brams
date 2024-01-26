@@ -632,7 +632,7 @@ contains
 
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(GeonestNofile)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     
     real :: vt2da(maxnxp * maxnyp)
     real :: vt2db(maxnxp * maxnyp)
@@ -649,15 +649,11 @@ contains
 
        if (dumpLocal) then
           write(str(1),"(i8)") ifm
-          call MsgDump(h//" assign default values for leaf_g variables of grid "//trim(adjustl(str(1))))
+          call MsgDump(h//" initialize leaf_g variables of grid "//trim(adjustl(str(1)))//" without data sets by invoking sfcinit_nofile")
        end if
 
        ! First, fill NOFILE LEAF-2 variables with default values in SFCINIT.
 
-       if (dumpLocal) then
-          call MsgDump(h//" invoca sfcinit_nofile")
-       end if
-       
        call sfcinit_nofile(nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm),nzg,nzs,npatch,ifm    &
             ,oneBasicFields%theta              &
             ,oneBasicFields%pi0                &
@@ -696,6 +692,13 @@ contains
             ,grid_g(ifm)%glat  &
             ,grid_g(ifm)%glon        ,grid_g(ifm)%topzo         &
             ,grid_g(ifm)%lpw        )
+
+       if (dumpLocal) then
+          call MsgDump(h//" dump leaf_g%soil_energy after sfcinit_nofile at file EneBrams_1.bin")
+          open(67, file="EneBrams_1.bin", form="unformatted", action="write", status="replace")
+          write (67) leaf_g(ifm)%soil_energy
+          close(67)
+       end if
 
        ! Assignment section for NOFILE leaf-2 variables
 
@@ -921,16 +924,11 @@ contains
 
        ! Heterogeneous Soil Moisture Initialization
 
-       if (dumpLocal) then
-          write(str(1),"(i8)") ifm
-          call MsgDump(h//" assign default values for leaf_g soil variables of grid "//trim(adjustl(str(1))))
-       end if
-
        if ((SOIL_MOIST == 'i').or.(SOIL_MOIST == 'I').or.  &
             (SOIL_MOIST == 'a').or.(SOIL_MOIST == 'A')) then
 
           if (dumpLocal) then
-             call MsgDump(h//" invoca soilMoistureInit")
+             call MsgDump(h//" heterogeneous soil moisture initialization by invoking soilMoistureInit")
           end if
           
           call soilMoistureInit(nnzp(ifm), nodemxp(mynum,ifm),         &
@@ -941,6 +939,14 @@ contains
                grid_g(ifm)%glat , grid_g(ifm)%glon, grid_g(ifm)%lpw,   &
                leaf_g(ifm)%seatp, leaf_g(ifm)%seatf, &
                oneControlVars, oneBasicFields, oneTurbFields)
+
+          if (dumpLocal) then
+             call MsgDump(h//" dump leafg%soil_energy after soilMoistureInit at file EneBrams_2.bin")
+             open(67, file="EneBrams_2.bin", form="unformatted", action="write", status="replace")
+             write (67) leaf_g(ifm)%soil_energy
+             close(67)
+          end if
+
 
           !-moved to initOneProc
           !        call change_soil_moisture_init(nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm)    &
@@ -966,13 +972,9 @@ contains
        if (dumpLocal) then
           write(str(1),"(i8)") ifm
           call MsgDump(h//" overwrite assigned values of leaf_g variables of grid "//&
-               trim(adjustl(str(1)))//" by user selected values")
+               trim(adjustl(str(1)))//" by user selected values, invoking sfcinit_nofile_user")
        end if
 
-       if (dumpLocal) then
-          call MsgDump(h//" invoca sfcinit_nofile_user")
-       end if
-       
        call sfcinit_nofile_user(nnzp(ifm),nodemxp(mynum,ifm),nodemyp(mynum,ifm)      &
             ,nzg,nzs,npatch,ifm              &
             ,oneBasicFields%theta ,oneBasicFields%pi0   &
@@ -1010,6 +1012,14 @@ contains
             ,leaf_g(ifm)%snow_mass, leaf_g(ifm)%snow_depth      &
             ,grid_g(ifm)%glat          &
             ,grid_g(ifm)%glon, grid_g(ifm)%topzo, grid_g(ifm)%lpw)
+
+       if (dumpLocal) then
+          call MsgDump(h//" dump leaf_g%soil_energy after sfcinit_nofile_user at file EneBrams_3.bin")
+          open(67, file="EneBrams_3.bin", form="unformatted", action="write", status="replace")
+          write (67) leaf_g(ifm)%soil_energy
+          close(67)
+       end if
+
 
     enddo
   end subroutine GeonestNofile

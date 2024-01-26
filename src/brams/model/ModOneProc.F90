@@ -647,7 +647,7 @@ contains
     type(Grid), pointer :: oneGrid => null()
     type(AllPostTypes), pointer :: oneAllPostTypes => null()
 
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     logical :: dirExist
     character(len=255) :: tmpdir
@@ -1193,6 +1193,8 @@ contains
 
        if (dumpLocal) then
           call MsgDump(h//" timestep loop starts")
+          call MsgDump(h//" retorna, forcando termino")
+          return
        end if
 !!$       if (mynum == 1) then
 !!$          write (*,fmt='(a)') h//" antes do laco no tempo; patch_area="

@@ -776,7 +776,7 @@ contains
     real, allocatable, dimension(:,:) :: hpis,hprss
 
     character(len=*), parameter :: h="**(sfcinit_hstart)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     
     ! This subroutine fills the LEAF arrays for a history-initial start.
 

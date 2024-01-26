@@ -648,7 +648,7 @@ contains
     real, parameter :: fct=1.0
 
     character(len=*), parameter :: h="**(change_soil_moisture_init)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     
     !- this routine is left to the user to change the soil-moisture for
     !- sensitivity studies.

@@ -120,6 +120,40 @@ Contains
     ! Allocate arrays based on options (if necessary)
 
     if (dumpLocal) then
+       write(str(1),"(i8)") nzg
+       write(str(2),"(i8)") nx
+       write(str(3),"(i8)") ny
+       write(str(4),"(i8)") np
+       call MsgDump(h//" aloca componentes 4D de leaf dimensionados ("//&
+            trim(adjustl(str(1)))//","//&
+            trim(adjustl(str(2)))//","//&
+            trim(adjustl(str(3)))//","//&
+            trim(adjustl(str(4)))//")")
+    end if
+
+    allocate (leaf%soil_water     (nzg,nx,ny,np));leaf%soil_water =0.0
+    allocate (leaf%soil_energy    (nzg,nx,ny,np));leaf%soil_energy=0.0
+    allocate (leaf%soil_text      (nzg,nx,ny,np));leaf%soil_text  =0.0
+
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") nzs
+       write(str(2),"(i8)") nx
+       write(str(3),"(i8)") ny
+       write(str(4),"(i8)") np
+       call MsgDump(h//" aloca componentes 4D de leaf dimensionados ("//&
+            trim(adjustl(str(1)))//","//&
+            trim(adjustl(str(2)))//","//&
+            trim(adjustl(str(3)))//","//&
+            trim(adjustl(str(4)))//")")
+    end if
+
+    allocate (leaf%sfcwater_mass  (nzs,nx,ny,np));leaf%sfcwater_mass  =0.0
+    allocate (leaf%sfcwater_energy(nzs,nx,ny,np));leaf%sfcwater_energy=0.0
+    allocate (leaf%sfcwater_depth (nzs,nx,ny,np));leaf%sfcwater_depth =0.0
+
+
+    if (dumpLocal) then
        write(str(1),"(i8)") nx
        write(str(2),"(i8)") ny
        write(str(3),"(i8)") np
@@ -128,14 +162,6 @@ Contains
             trim(adjustl(str(2)))//","//&
             trim(adjustl(str(3)))//")")
     end if
-
-    allocate (leaf%soil_water     (nzg,nx,ny,np));leaf%soil_water =0.0
-    allocate (leaf%soil_energy    (nzg,nx,ny,np));leaf%soil_energy=0.0
-    allocate (leaf%soil_text      (nzg,nx,ny,np));leaf%soil_text  =0.0
-
-    allocate (leaf%sfcwater_mass  (nzs,nx,ny,np));leaf%sfcwater_mass  =0.0
-    allocate (leaf%sfcwater_energy(nzs,nx,ny,np));leaf%sfcwater_energy=0.0
-    allocate (leaf%sfcwater_depth (nzs,nx,ny,np));leaf%sfcwater_depth =0.0
 
     allocate (leaf%ustar        (nx,ny,np));leaf%ustar=0.0
     allocate (leaf%tstar        (nx,ny,np));leaf%tstar=0.0
@@ -171,6 +197,14 @@ Contains
     allocate (leaf%veg_ndvif    (nx,ny,np));leaf%veg_ndvif  =0.0
 
     allocate (leaf%R_aer        (nx,ny,np));leaf%R_aer =0.0  !kml drydep
+
+    if (dumpLocal) then
+       write(str(1),"(i8)") nx
+       write(str(2),"(i8)") ny
+       call MsgDump(h//" aloca componentes 2D de leaf dimensionados ("//&
+            trim(adjustl(str(1)))//","//&
+            trim(adjustl(str(2)))//")")
+    end if
 
     allocate (leaf%snow_mass    (nx,ny));leaf%snow_mass =0.0
     allocate (leaf%snow_depth   (nx,ny));leaf%snow_depth=0.0
@@ -320,7 +354,7 @@ Contains
     real, pointer, contiguous :: pLeafM2D(:,:) => null()
     character(len=8) :: str_recycle
     character(len=*), parameter :: h="**(filltab_leaf)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     str_recycle = ''
     if (ipastin == 1) then

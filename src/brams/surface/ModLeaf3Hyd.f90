@@ -91,7 +91,7 @@ contains
     real, dimension(7,10) :: profile
 
     character(len=*), parameter :: h="**(hydro)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     
     data rhow,rhowi/1.e3,1.e-3/
 
@@ -197,7 +197,7 @@ contains
          ,tempk,q,capacity,add,qw,wfreeb,qwfree
 
     character(len=*), parameter :: h="**(hydrol)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     !  tgfa is the total group fractional area of the grid cell, not including
     !     the group's bottomland patch

@@ -119,7 +119,7 @@ contains
     real, parameter :: fxx = 0.2 
 
     character(len=*), parameter :: h="**(carma_driver)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     
     !- if not including radiation, return
     if ((oneNamelistFile%ilwrtyp + oneNamelistFile%iswrtyp)==0) return
@@ -300,7 +300,7 @@ contains
     ! Local Variables
     integer :: ip, i, j
     character(len=*), parameter :: h="**(radprep)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
 
     ! Compute solar zenith angle [cosz(i,j)] & solar constant factr [solfac].
 

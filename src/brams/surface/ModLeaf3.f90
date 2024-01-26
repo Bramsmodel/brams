@@ -233,7 +233,7 @@ contains
          l_ups2, l_vps2, l_zts2
 
     character(len=*), parameter :: h="**(sfclyr)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     
     if (nstbot == 0) return
 
@@ -332,7 +332,7 @@ contains
     real :: dvelu,dvelv,velnew,sflux_uv,cosine1,sine1
 
     character(len=*), parameter :: h="**(leaf3)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     
     dtll=0.0
 
@@ -710,7 +710,7 @@ contains
     real :: vctr18(mzg)
 
     character(len=*), parameter :: h="**(leaftw)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     
     do k = 1,mzg
        dslz   (k) = slz(k+1) - slz(k)
@@ -1639,7 +1639,7 @@ contains
     real :: auxVar
 
     character(len=*), parameter :: h="**(grndvap)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     
     !write (88,fmt='(A,7(E18.6,1X))') 'slbs(1:7)= ',slbs(1:7)
 
@@ -1660,11 +1660,6 @@ contains
        ! "alpha" term or soil "relative humidity" and the "beta" term.
 
        nsoil = nint(soil_text)
-
-       if (dumpLocal) then
-          call MsgDump(h//" invokes wqtk passing soil_energy")
-       end if
-                      
 
        call qwtk(soil_energy,soil_water*1.e3,slcpd(nsoil),tempkk,fracliqq)
        ground_rsat = rslif(prsg,tempkk)
@@ -1725,7 +1720,7 @@ contains
     integer :: i,j,k,ipat
 
     character(len=*), parameter :: h="**(leaf_bcond)**"
-    logical, parameter :: dumpLocal=.true.
+    logical, parameter :: dumpLocal=.false.
     
     if (dumpLocal) then
        call MsgDump(h//" recomputes soil_energy")
@@ -2111,7 +2106,7 @@ contains
 
 
      character(len=*), parameter :: h="**(sfcrad)**"
-     logical, parameter :: dumpLocal=.true.
+     logical, parameter :: dumpLocal=.false.
      
     ! This routine is called by the radiation parameterization and by leaf.
     ! It computes net surface albedo plus radiative exchange between the
