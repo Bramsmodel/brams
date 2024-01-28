@@ -1191,18 +1191,6 @@ contains
        ! loop over time, advancing all grids one long timestep forward for model time integration
        istp = 0
 
-       if (dumpLocal) then
-          call MsgDump(h//" timestep loop starts")
-          call MsgDump(h//" retorna, forcando termino")
-          return
-       end if
-!!$       if (mynum == 1) then
-!!$          write (*,fmt='(a)') h//" antes do laco no tempo; patch_area="
-!!$          write (*,fmt='(a)') h//" patch_area(:,1,1)="
-!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,1,1)
-!!$          write (*,fmt='(a)') h//" patch_area(:,2,1)="
-!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,2,1)
-!!$       end if
 
        do while (time<timmax)
 
