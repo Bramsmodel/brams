@@ -1333,6 +1333,11 @@ contains
                    end if
 
                    call timestep_rk(oneGrid)
+
+                   if (dumpLocal) then
+                      call MsgDump(h//" done with timestep_rk")
+                   end if
+
                 else
                    iErrNumber=dumpMessage(c_tty,c_yes,header,modelVersion,c_fatal &
                         ,'ERROR in subroutine OneProc: value of dyncore_flag is unknown')

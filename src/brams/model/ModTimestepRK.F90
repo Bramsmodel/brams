@@ -402,15 +402,18 @@ contains
                oneGrid%oneMicVars, oneGrid%oneMicroFields, oneGrid%oneRadiateFields, &
                oneGrid%oneCuParmFields)
           if (dumpLocal) then
-             call MsgDump(h//" sfclyr para isfcl==2 and time==0")
+             call MsgDump(h//" sfclyr para isfcl==5 and time==0")
           end if
+       end if
+       if (dumpLocal) then
+          call MsgDump(h//" invokes sfclyr_jules para isfcl==5")
        end if
        call sfclyr_jules(mzp,mxp,myp,ia,iz,ja,jz,jdim,julesFile, &
             oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%oneMicVars, &
             oneGrid%oneMicroFields, oneGrid%oneJulesFields, oneGrid%oneRadiateFields, oneGrid%oneCuParmFields)
-          if (dumpLocal) then
-             call MsgDump(h//" sfclyr_jules para isfcl==5")
-          end if
+       if (dumpLocal) then
+          call MsgDump(h//" sfclyr_jules para isfcl==5")
+       end if
        !--- this combines the JULES land + LEAF ocean models.
        if (isfcl_ocean == 1) then
           call sfclyr_ocean_only  (mzp,mxp,myp,ia,iz,ja,jz,ibcon, &

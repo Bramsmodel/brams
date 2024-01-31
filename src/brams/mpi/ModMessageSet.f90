@@ -860,10 +860,18 @@ contains
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvU)
 
     if (dumpLocal) then
-       call MsgDump(h//" finishes AcouSendU MessageSet:")
-       call DumpMessageSet(AcouSendU)
-       call MsgDump(h//" finishes AcouRecvU MessageSet:")
-       call DumpMessageSet(AcouRecvU)
+       if (.not. associated(AcouSendU)) then
+          call MsgDump(h//" finishes empty AcouSendU MessageSet")
+       else
+          call MsgDump(h//" finishes AcouSendU MessageSet:")
+          call DumpMessageSet(AcouSendU)
+       end if
+       if (.not. associated(AcouRecvU)) then
+          call MsgDump(h//" finishes empty AcouRecvU MessageSet")
+       else
+          call MsgDump(h//" finishes AcouRecvU MessageSet:")
+          call DumpMessageSet(AcouRecvU)
+       end if
        call MsgDump(h//" starts creating AcousSend/RecvV")
     end if
 
@@ -911,10 +919,18 @@ contains
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvV)
 
     if (dumpLocal) then
-       call MsgDump(h//" finishes AcouSendV MessageSet:")
-       call DumpMessageSet(AcouSendV)
-       call MsgDump(h//" finishes AcouRecvV MessageSet:")
-       call DumpMessageSet(AcouRecvV)
+       if (.not. associated(AcouSendV)) then
+          call MsgDump(h//" finishes empty AcouSendV MessageSet")
+       else
+          call MsgDump(h//" finishes AcouSendV MessageSet:")
+          call DumpMessageSet(AcouSendV)
+       end if
+       if (.not. associated(AcouRecvV)) then
+          call MsgDump(h//" finishes empty AcouRecvV MessageSet")
+       else
+          call MsgDump(h//" finishes AcouRecvV MessageSet:")
+          call DumpMessageSet(AcouRecvV)
+       end if
        call MsgDump(h//" starts creating AcousSend/RecvPNorth")
     end if
 
@@ -962,10 +978,18 @@ contains
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvPNorth)
 
     if (dumpLocal) then
-       call MsgDump(h//" finishes AcouSendPNorth MessageSet:")
-       call DumpMessageSet(AcouSendPNorth)
-       call MsgDump(h//" finishes AcouRecvPNorth MessageSet:")
-       call DumpMessageSet(AcouRecvPNorth)
+       if (.not. associated(AcouSendPNorth)) then
+          call MsgDump(h//" finishes empty AcouSendPNorth MessageSet")
+       else
+          call MsgDump(h//" finishes AcouSendPNorth MessageSet:")
+          call DumpMessageSet(AcouSendPNorth)
+       end if
+       if (.not. associated(AcouRecvPNorth)) then
+          call MsgDump(h//" finishes empty AcouRecvPNorth MessageSet")
+       else
+          call MsgDump(h//" finishes AcouRecvPNorth MessageSet:")
+          call DumpMessageSet(AcouRecvPNorth)
+       end if
        call MsgDump(h//" starts creating AcousSend/RecvPEast")
     end if
 
@@ -1013,10 +1037,18 @@ contains
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvPEast)
 
     if (dumpLocal) then
-       call MsgDump(h//" finishes AcouSendPEast MessageSet:")
-       call DumpMessageSet(AcouSendPEast)
-       call MsgDump(h//" finishes AcouRecvPEast MessageSet:")
-       call DumpMessageSet(AcouRecvPEast)
+       if (.not. associated(AcouSendPEast)) then
+          call MsgDump(h//" finishes empty AcouSendPEast MessageSet")
+       else
+          call MsgDump(h//" finishes AcouSendPEast MessageSet:")
+          call DumpMessageSet(AcouSendPEast)
+       end if
+       if (.not. associated(AcouRecvPEast)) then
+          call MsgDump(h//" finishes empty AcouRecvPEast MessageSet")
+       else
+          call MsgDump(h//" finishes AcouRecvPEast MessageSet:")
+          call DumpMessageSet(AcouRecvPEast)
+       end if
        call MsgDump(h//" starts creating AcousSend/RecvUV")
     end if
 
@@ -1078,10 +1110,18 @@ contains
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvUV)
 
     if (dumpLocal) then
-       call MsgDump(h//" finishes with AcouSendUV MessageSet:")
-       call DumpMessageSet(AcouSendUV)
-       call MsgDump(h//" finishes with AcouRecvUV MessageSet:")
-       call DumpMessageSet(AcouRecvUV)
+       if (.not. associated(AcouSendUV)) then
+          call MsgDump(h//" finishes empty AcouSendUV MessageSet")
+       else
+          call MsgDump(h//" finishes AcouSendUV MessageSet:")
+          call DumpMessageSet(AcouSendUV)
+       end if
+       if (.not. associated(AcouRecvUV)) then
+          call MsgDump(h//" finishes empty AcouRecvUV MessageSet")
+       else
+          call MsgDump(h//" finishes AcouRecvUV MessageSet:")
+          call DumpMessageSet(AcouRecvUV)
+       end if
        call MsgDump(h//" starts creating AcousSend/RecvWP")
     end if
 
@@ -1143,10 +1183,18 @@ contains
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, AcouRecvWP)
 
     if (dumpLocal) then
-       call MsgDump(h//" finishes AcouSendWP MessageSet:")
-       call DumpMessageSet(AcouSendWP)
-       call MsgDump(h//" finishes AcouRecvWP MessageSet:")
-       call DumpMessageSet(AcouRecvWP)
+       if (.not. associated(AcouSendWP)) then
+          call MsgDump(h//" finishes empty AcouSendWP MessageSet")
+       else
+          call MsgDump(h//" finishes AcouSendWP MessageSet:")
+          call DumpMessageSet(AcouSendWP)
+       end if
+       if (.not. associated(AcouRecvWP)) then
+          call MsgDump(h//" finishes AcouRecvWP MessageSet:")
+       else
+          call MsgDump(h//" finishes AcouRecvWP MessageSet:")
+          call DumpMessageSet(AcouRecvWP)
+       end if
     end if
 
   end subroutine CreateAcousticMessageSet
@@ -1330,10 +1378,18 @@ contains
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvDn0u)
 
     if (dumpLocal) then
-       call MsgDump(h//" done building SendDn0u MessageSet:")
-       call DumpMessageSet(SendDn0u)
-       call MsgDump(h//" done building RecvDn0u MessageSet:")
-       call DumpMessageSet(RecvDn0u)
+       if (.not. associated(SendDn0u)) then
+          call MsgDump(h//" finishes empty SendDn0u MessageSet")
+       else
+          call MsgDump(h//" finishes SendDn0u MessageSet:")
+          call DumpMessageSet(SendDn0u)
+       end if
+       if (.not. associated(RecvDn0u)) then
+          call MsgDump(h//" finishes empty RecvDn0u MessageSet")
+       else
+          call MsgDump(h//" finishes RecvDn0u MessageSet:")
+          call DumpMessageSet(RecvDn0u)
+       end if
     end if
 
     ! SendDn0v, RecvDn0v:
@@ -1376,10 +1432,18 @@ contains
          xbRecv, xeRecv, ybRecv, yeRecv, willRecv, RecvDn0v)
 
     if (dumpLocal) then
-       call MsgDump(h//" done building SendDn0v MessageSet:")
-       call DumpMessageSet(SendDn0v)
-       call MsgDump(h//" done building RecvDn0v MessageSet:")
-       call DumpMessageSet(RecvDn0v)
+       if (.not. associated(SendDn0v)) then
+          call MsgDump(h//" finishes empty SendDn0v MessageSet")
+       else
+          call MsgDump(h//" finishes SendDn0v MessageSet:")
+          call DumpMessageSet(SendDn0v)
+       end if
+       if (.not. associated(RecvDn0v)) then
+          call MsgDump(h//" finishes empty RecvDn0v MessageSet")
+       else
+          call MsgDump(h//" finishes RecvDn0v MessageSet:")
+          call DumpMessageSet(RecvDn0v)
+       end if
     end if
   end subroutine CreateDn0MessageSet
 
@@ -1727,10 +1791,18 @@ contains
     end do
 
     if (dumpLocal) then
-       call MsgDump(h//" finishes with SelectedGhostZoneSend MessageSet:")
-       call DumpMessageSet(SelectedGhostZoneSend)
-       call MsgDump(h//" finishes with SelectedGhostZoneRecv MessageSet:")
-       call DumpMessageSet(SelectedGhostZoneRecv)
+       if (.not. associated(SelectedGhostZoneSend)) then
+          call MsgDump(h//" finishes empty SelectedGhostZoneSend MessageSet")
+       else
+          call MsgDump(h//" finishes SelectedGhostZoneSend MessageSet:")
+          call DumpMessageSet(SelectedGhostZoneSend)
+       end if
+       if (.not. associated(SelectedGhostZoneRecv)) then
+          call MsgDump(h//" finishes empty SelectedGhostZoneRecv MessageSet")
+       else
+          call MsgDump(h//" finishes SelectedGhostZoneRecv MessageSet:")
+          call DumpMessageSet(SelectedGhostZoneRecv)
+       end if
     end if
   end subroutine CreateSelectedGhostZoneMessageSet
 
@@ -1885,10 +1957,18 @@ contains
     end do
 
     if (dumpLocal) then
-       call MsgDump(h//" finishes with AllGhostZoneSend MessageSet:")
-       call DumpMessageSet(AllGhostZoneSend)
-       call MsgDump(h//" finishes with AllGhostZoneRecv MessageSet:")
-       call DumpMessageSet(AllGhostZoneRecv)
+       if (.not. associated(AllGhostZoneSend)) then
+          call MsgDump(h//" finishes empty AllGhostZoneSend MessageSet")
+       else
+          call MsgDump(h//" finishes AllGhostZoneSend MessageSet:")
+          call DumpMessageSet(AllGhostZoneSend)
+       end if
+       if (.not. associated(AllGhostZoneRecv)) then
+          call MsgDump(h//" finishes empty AllGhostZoneRecv MessageSet")
+       else
+          call MsgDump(h//" finishes AllGhostZoneRecv MessageSet:")
+          call DumpMessageSet(AllGhostZoneRecv)
+       end if
     end if
   end subroutine CreateAllGhostZoneMessageSet
 
@@ -3487,12 +3567,12 @@ contains
     nNeigh=Neigh%nNeigh
     mzp=NodeDims%mzp
 
-    if (dumpLocal) then
-       call MsgDump(h//" starts with:")
-       call DumpDomainDecomp(GlobalOwnWithBC,"GlobalOwnWithBC")
-       call DumpDomainDecomp(GlobalWithGhostAdvMnt,"GlobalWithGhostAdvMnt")
-       call DumpNeighbourNodes(Neigh,"AdvMnt")
-    end if
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" starts with:")
+!!$       call DumpDomainDecomp(GlobalOwnWithBC,"GlobalOwnWithBC")
+!!$       call DumpDomainDecomp(GlobalWithGhostAdvMnt,"GlobalWithGhostAdvMnt")
+!!$       call DumpNeighbourNodes(Neigh,"AdvMnt")
+!!$    end if
 
     ! offsets to convert global indices to local indices at this proc
 
@@ -3516,9 +3596,9 @@ contains
 
     ! north neighbour communication
 
-    if (dumpLocal) then
-       call MsgDump(h//" compute NodesToSendRecvMessages to update North Ghost Zone")
-    end if
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" compute NodesToSendRecvMessages to update North Ghost Zone")
+!!$    end if
 
     call NodesToSendRecvMessages( &
          thisNode=myNum, &
@@ -3540,38 +3620,38 @@ contains
          willRecv=willRecvNorth, &
          varName=NameSendRecvNorth)
 
-    if (dumpLocal) then
-       do iNeigh = 1, nNeigh
-          bramsProcNbr = Neigh%neigh(iNeigh)
-          write(str(1),"(i8)") Brams2MpiProcNbr(bramsProcNbr)
-          if (willSendNorth(iNeigh)) then
-             write(str(2),"(i8)") xbSendNorth(iNeigh)
-             write(str(3),"(i8)") xeSendNorth(iNeigh)
-             write(str(4),"(i8)") ybSendNorth(iNeigh)
-             write(str(5),"(i8)") yeSendNorth(iNeigh)
-             call MsgDump(h//" send north to MPI #"//trim(adjustl(str(1)))//&
-                  " global (xs:xe;ys:ye) "//&
-                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//"; "//&
-                  trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
-          end if
-          if (willRecvNorth(iNeigh)) then
-             write(str(2),"(i8)") xbRecvNorth(iNeigh)
-             write(str(3),"(i8)") xeRecvNorth(iNeigh)
-             write(str(4),"(i8)") ybRecvNorth(iNeigh)
-             write(str(5),"(i8)") yeRecvNorth(iNeigh)
-             call MsgDump(h//" recv north from MPI #"//trim(adjustl(str(1)))//&
-                  " global (xs:xe;ys:ye) "//&
-                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//"; "//&
-                  trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
-          end if
-       end do
-    end if
+!!$    if (dumpLocal) then
+!!$       do iNeigh = 1, nNeigh
+!!$          bramsProcNbr = Neigh%neigh(iNeigh)
+!!$          write(str(1),"(i8)") Brams2MpiProcNbr(bramsProcNbr)
+!!$          if (willSendNorth(iNeigh)) then
+!!$             write(str(2),"(i8)") xbSendNorth(iNeigh)
+!!$             write(str(3),"(i8)") xeSendNorth(iNeigh)
+!!$             write(str(4),"(i8)") ybSendNorth(iNeigh)
+!!$             write(str(5),"(i8)") yeSendNorth(iNeigh)
+!!$             call MsgDump(h//" send north to MPI #"//trim(adjustl(str(1)))//&
+!!$                  " global (xs:xe;ys:ye) "//&
+!!$                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//"; "//&
+!!$                  trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
+!!$          end if
+!!$          if (willRecvNorth(iNeigh)) then
+!!$             write(str(2),"(i8)") xbRecvNorth(iNeigh)
+!!$             write(str(3),"(i8)") xeRecvNorth(iNeigh)
+!!$             write(str(4),"(i8)") ybRecvNorth(iNeigh)
+!!$             write(str(5),"(i8)") yeRecvNorth(iNeigh)
+!!$             call MsgDump(h//" recv north from MPI #"//trim(adjustl(str(1)))//&
+!!$                  " global (xs:xe;ys:ye) "//&
+!!$                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//"; "//&
+!!$                  trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
+!!$          end if
+!!$       end do
+!!$    end if
 
     ! south neighbour communication
 
-    if (dumpLocal) then
-       call MsgDump(h//" compute NodesToSendRecvMessages to update South Ghost Zone")
-    end if
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" compute NodesToSendRecvMessages to update South Ghost Zone")
+!!$    end if
 
     call NodesToSendRecvMessages( &
          thisNode=myNum, &
@@ -3593,38 +3673,38 @@ contains
          willRecv=willRecvSouth, &
          varName=NameSendRecvSouth)
 
-    if (dumpLocal) then
-       do iNeigh = 1, nNeigh
-          bramsProcNbr = Neigh%neigh(iNeigh)
-          write(str(1),"(i8)") Brams2MpiProcNbr(bramsProcNbr)
-          if (willSendSouth(iNeigh)) then
-             write(str(2),"(i8)") xbSendSouth(iNeigh)
-             write(str(3),"(i8)") xeSendSouth(iNeigh)
-             write(str(4),"(i8)") ybSendSouth(iNeigh)
-             write(str(5),"(i8)") yeSendSouth(iNeigh)
-             call MsgDump(h//" send south to MPI #"//trim(adjustl(str(1)))//&
-                  " global (xs:xe;ys:ye) "//&
-                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//"; "//&
-                  trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
-          end if
-          if (willRecvSouth(iNeigh)) then
-             write(str(2),"(i8)") xbRecvSouth(iNeigh)
-             write(str(3),"(i8)") xeRecvSouth(iNeigh)
-             write(str(4),"(i8)") ybRecvSouth(iNeigh)
-             write(str(5),"(i8)") yeRecvSouth(iNeigh)
-             call MsgDump(h//" recv south from MPI #"//trim(adjustl(str(1)))//&
-                  " global (xs:xe;ys:ye) "//&
-                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//"; "//&
-                  trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
-          end if
-       end do
-    end if
+!!$    if (dumpLocal) then
+!!$       do iNeigh = 1, nNeigh
+!!$          bramsProcNbr = Neigh%neigh(iNeigh)
+!!$          write(str(1),"(i8)") Brams2MpiProcNbr(bramsProcNbr)
+!!$          if (willSendSouth(iNeigh)) then
+!!$             write(str(2),"(i8)") xbSendSouth(iNeigh)
+!!$             write(str(3),"(i8)") xeSendSouth(iNeigh)
+!!$             write(str(4),"(i8)") ybSendSouth(iNeigh)
+!!$             write(str(5),"(i8)") yeSendSouth(iNeigh)
+!!$             call MsgDump(h//" send south to MPI #"//trim(adjustl(str(1)))//&
+!!$                  " global (xs:xe;ys:ye) "//&
+!!$                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//"; "//&
+!!$                  trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
+!!$          end if
+!!$          if (willRecvSouth(iNeigh)) then
+!!$             write(str(2),"(i8)") xbRecvSouth(iNeigh)
+!!$             write(str(3),"(i8)") xeRecvSouth(iNeigh)
+!!$             write(str(4),"(i8)") ybRecvSouth(iNeigh)
+!!$             write(str(5),"(i8)") yeRecvSouth(iNeigh)
+!!$             call MsgDump(h//" recv south from MPI #"//trim(adjustl(str(1)))//&
+!!$                  " global (xs:xe;ys:ye) "//&
+!!$                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//"; "//&
+!!$                  trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
+!!$          end if
+!!$       end do
+!!$    end if
 
     ! east neighbour communication
 
-    if (dumpLocal) then
-       call MsgDump(h//" compute NodesToSendRecvMessages to update East Ghost Zone")
-    end if
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" compute NodesToSendRecvMessages to update East Ghost Zone")
+!!$    end if
 
     call NodesToSendRecvMessages( &
          thisNode=myNum, &
@@ -3646,38 +3726,38 @@ contains
          willRecv=willRecvEast, &
          varName=NameSendRecvEast)
 
-    if (dumpLocal) then
-       do iNeigh = 1, nNeigh
-          bramsProcNbr = Neigh%neigh(iNeigh) 
-          write(str(1),"(i8)") Brams2MpiProcNbr(bramsProcNbr)
-          if (willSendEast(iNeigh)) then
-             write(str(2),"(i8)") xbSendEast(iNeigh)
-             write(str(3),"(i8)") xeSendEast(iNeigh)
-             write(str(4),"(i8)") ybSendEast(iNeigh)
-             write(str(5),"(i8)") yeSendEast(iNeigh)
-             call MsgDump(h//" send east to MPI #"//trim(adjustl(str(1)))//&
-                  " global (xs:xe;ys:ye) "//&
-                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//"; "//&
-                  trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
-          end if
-          if (willRecvEast(iNeigh)) then
-             write(str(2),"(i8)") xbRecvEast(iNeigh)
-             write(str(3),"(i8)") xeRecvEast(iNeigh)
-             write(str(4),"(i8)") ybRecvEast(iNeigh)
-             write(str(5),"(i8)") yeRecvEast(iNeigh)
-             call MsgDump(h//" recv east from MPI #"//trim(adjustl(str(1)))//&
-                  " global (xs:xe;ys:ye) "//&
-                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//"; "//&
-                  trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
-          end if
-       end do
-    end if
+!!$    if (dumpLocal) then
+!!$       do iNeigh = 1, nNeigh
+!!$          bramsProcNbr = Neigh%neigh(iNeigh) 
+!!$          write(str(1),"(i8)") Brams2MpiProcNbr(bramsProcNbr)
+!!$          if (willSendEast(iNeigh)) then
+!!$             write(str(2),"(i8)") xbSendEast(iNeigh)
+!!$             write(str(3),"(i8)") xeSendEast(iNeigh)
+!!$             write(str(4),"(i8)") ybSendEast(iNeigh)
+!!$             write(str(5),"(i8)") yeSendEast(iNeigh)
+!!$             call MsgDump(h//" send east to MPI #"//trim(adjustl(str(1)))//&
+!!$                  " global (xs:xe;ys:ye) "//&
+!!$                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//"; "//&
+!!$                  trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
+!!$          end if
+!!$          if (willRecvEast(iNeigh)) then
+!!$             write(str(2),"(i8)") xbRecvEast(iNeigh)
+!!$             write(str(3),"(i8)") xeRecvEast(iNeigh)
+!!$             write(str(4),"(i8)") ybRecvEast(iNeigh)
+!!$             write(str(5),"(i8)") yeRecvEast(iNeigh)
+!!$             call MsgDump(h//" recv east from MPI #"//trim(adjustl(str(1)))//&
+!!$                  " global (xs:xe;ys:ye) "//&
+!!$                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//"; "//&
+!!$                  trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
+!!$          end if
+!!$       end do
+!!$    end if
 
     ! west neighbour communication
 
-    if (dumpLocal) then
-       call MsgDump(h//" compute NodesToSendRecvMessages to update West Ghost Zone")
-    end if
+!!$    if (dumpLocal) then
+!!$       call MsgDump(h//" compute NodesToSendRecvMessages to update West Ghost Zone")
+!!$    end if
 
     call NodesToSendRecvMessages( &
          thisNode=myNum, &
@@ -3699,32 +3779,32 @@ contains
          willRecv=willRecvWest, &
          varName=NameSendRecvWest)
 
-    if (dumpLocal) then
-       do iNeigh = 1, nNeigh
-          bramsProcNbr = Neigh%neigh(iNeigh)
-          write(str(1),"(i8)") Brams2MpiProcNbr(bramsProcNbr)
-          if (willSendWest(iNeigh)) then
-             write(str(2),"(i8)") xbSendWest(iNeigh)
-             write(str(3),"(i8)") xeSendWest(iNeigh)
-             write(str(4),"(i8)") ybSendWest(iNeigh)
-             write(str(5),"(i8)") yeSendWest(iNeigh)
-             call MsgDump(h//" send west to MPI #"//trim(adjustl(str(1)))//&
-                  " global (xs:xe;ys:ye) "//&
-                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//"; "//&
-                  trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
-          end if
-          if (willRecvWest(iNeigh)) then
-             write(str(2),"(i8)") xbRecvWest(iNeigh)
-             write(str(3),"(i8)") xeRecvWest(iNeigh)
-             write(str(4),"(i8)") ybRecvWest(iNeigh)
-             write(str(5),"(i8)") yeRecvWest(iNeigh)
-             call MsgDump(h//" recv west from MPI #"//trim(adjustl(str(1)))//&
-                  " global (xs:xe;ys:ye) "//&
-                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//"; "//&
-                  trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
-          end if
-       end do
-    end if
+!!$    if (dumpLocal) then
+!!$       do iNeigh = 1, nNeigh
+!!$          bramsProcNbr = Neigh%neigh(iNeigh)
+!!$          write(str(1),"(i8)") Brams2MpiProcNbr(bramsProcNbr)
+!!$          if (willSendWest(iNeigh)) then
+!!$             write(str(2),"(i8)") xbSendWest(iNeigh)
+!!$             write(str(3),"(i8)") xeSendWest(iNeigh)
+!!$             write(str(4),"(i8)") ybSendWest(iNeigh)
+!!$             write(str(5),"(i8)") yeSendWest(iNeigh)
+!!$             call MsgDump(h//" send west to MPI #"//trim(adjustl(str(1)))//&
+!!$                  " global (xs:xe;ys:ye) "//&
+!!$                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//"; "//&
+!!$                  trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
+!!$          end if
+!!$          if (willRecvWest(iNeigh)) then
+!!$             write(str(2),"(i8)") xbRecvWest(iNeigh)
+!!$             write(str(3),"(i8)") xeRecvWest(iNeigh)
+!!$             write(str(4),"(i8)") ybRecvWest(iNeigh)
+!!$             write(str(5),"(i8)") yeRecvWest(iNeigh)
+!!$             call MsgDump(h//" recv west from MPI #"//trim(adjustl(str(1)))//&
+!!$                  " global (xs:xe;ys:ye) "//&
+!!$                  "("//trim(adjustl(str(2)))//":"//trim(adjustl(str(3)))//"; "//&
+!!$                  trim(adjustl(str(4)))//":"//trim(adjustl(str(5)))//")")
+!!$          end if
+!!$       end do
+!!$    end if
 
     ! create message set for UV 
 
@@ -3836,46 +3916,126 @@ contains
          fldName_Y=vc3d_outName)
 
     if (dumpLocal) then
-       call MsgDump(h//" finishes with AdvMntUVSendX MessageSet:")
-       call DumpMessageSet(AdvMntUVSendX)
-       call MsgDump(h//" finishes with AdvMntUVRecvX MessageSet:")
-       call DumpMessageSet(AdvMntUVRecvX)
-       call MsgDump(h//" finishes with AdvMntDxDySendX MessageSet:")
-       call DumpMessageSet(AdvMntDxDySendX)
-       call MsgDump(h//" finishes with AdvMntDxDyRecvX MessageSet:")
-       call DumpMessageSet(AdvMntDxDyRecvX)
-       call MsgDump(h//" finishes with AdvMntDd0SendX MessageSet:")
-       call DumpMessageSet(AdvMntDd0SendX)
-       call MsgDump(h//" finishes with AdvMntDd0RecvX MessageSet:")
-       call DumpMessageSet(AdvMntDd0RecvX)
-       call MsgDump(h//" finishes with AdvMntDenSendX MessageSet:")
-       call DumpMessageSet(AdvMntDenSendX)
-       call MsgDump(h//" finishes with AdvMntDenRecvX MessageSet:")
-       call DumpMessageSet(AdvMntDenRecvX)
-       call MsgDump(h//" finishes with AdvMntScaSendX MessageSet:")
-       call DumpMessageSet(AdvMntScaSendX)
-       call MsgDump(h//" finishes with AdvMntScaRecvX MessageSet:")
-       call DumpMessageSet(AdvMntScaRecvX)
-       call MsgDump(h//" finishes with AdvMntUVSendY MessageSet:")
-       call DumpMessageSet(AdvMntUVSendY)
-       call MsgDump(h//" finishes with AdvMntUVRecvY MessageSet:")
-       call DumpMessageSet(AdvMntUVRecvY)
-       call MsgDump(h//" finishes with AdvMntDxDySendY MessageSet:")
-       call DumpMessageSet(AdvMntDxDySendY)
-       call MsgDump(h//" finishes with AdvMntDxDyRecvY MessageSet:")
-       call DumpMessageSet(AdvMntDxDyRecvY)
-       call MsgDump(h//" finishes with AdvMntDd0SendY MessageSet:")
-       call DumpMessageSet(AdvMntDd0SendY)
-       call MsgDump(h//" finishes with AdvMntDd0RecvY MessageSet:")
-       call DumpMessageSet(AdvMntDd0RecvY)
-       call MsgDump(h//" finishes with AdvMntDenSendY MessageSet:")
-       call DumpMessageSet(AdvMntDenSendY)
-       call MsgDump(h//" finishes with AdvMntDenRecvY MessageSet:")
-       call DumpMessageSet(AdvMntDenRecvY)
-       call MsgDump(h//" finishes with AdvMntScaSendY MessageSet:")
-       call DumpMessageSet(AdvMntScaSendY)
-       call MsgDump(h//" finishes with AdvMntScaRecvY MessageSet:")
-       call DumpMessageSet(AdvMntScaRecvY)
+       if (.not. associated(AdvMntUVSendX)) then
+          call MsgDump(h//" finishes empty AdvMntUVSendX MessageSet")
+       else
+          call MsgDump(h//" finishes AdvMntUVSendX MessageSet:")
+          call DumpMessageSet(AdvMntUVSendX)
+       end if
+       if (.not. associated(AdvMntUVRecvX)) then
+          call MsgDump(h//" finishes empty AdvMntUVRecvX MessageSet")
+       else
+          call MsgDump(h//" finishes AdvMntUVRecvX MessageSet:")
+          call DumpMessageSet(AdvMntUVRecvX)
+       end if
+       if (.not. associated(AdvMntDxDySendX)) then
+          call MsgDump(h//" finishes empty AdvMntDxDySendX MessageSet")
+       else
+          call MsgDump(h//" finishes AdvMntDxDySendX MessageSet:")
+          call DumpMessageSet(AdvMntDxDySendX)
+       end if
+       if (.not. associated(AdvMntDxDyRecvX)) then
+          call MsgDump(h//" finishes empty AdvMntDxDyRecvX MessageSet")
+       else
+          call MsgDump(h//" finishes AdvMntDxDyRecvX MessageSet:")
+          call DumpMessageSet(AdvMntDxDyRecvX)
+       end if
+       if (.not. associated(AdvMntDd0SendX)) then
+          call MsgDump(h//" finishes empty AdvMntDd0SendX MessageSet")
+       else
+          call MsgDump(h//" finishes AdvMntDd0SendX MessageSet:")
+          call DumpMessageSet(AdvMntDd0SendX)
+       end if
+       if (.not. associated(AdvMntDd0RecvX)) then
+          call MsgDump(h//" finishes empty AdvMntDd0RecvX MessageSet")
+       else
+          call MsgDump(h//" finishes AdvMntDd0RecvX MessageSet:")
+          call DumpMessageSet(AdvMntDd0RecvX)
+       end if
+       if (.not. associated(AdvMntDenSendX)) then
+          call MsgDump(h//" finishes empty AdvMntDenSendX MessageSet")
+       else
+          call MsgDump(h//" finishes AdvMntDenSendX MessageSet:")
+          call DumpMessageSet(AdvMntDenSendX)
+       end if
+       if (.not. associated(AdvMntDenRecvX)) then
+          call MsgDump(h//" finishes empty AdvMntDenRecvX MessageSet")
+       else
+          call MsgDump(h//" finishes AdvMntDenRecvX MessageSet:")
+          call DumpMessageSet(AdvMntDenRecvX)
+       end if
+       if (.not. associated(AdvMntScaSendX)) then
+          call MsgDump(h//" finishes empty AdvMntScaSendX MessageSet")
+       else
+          call MsgDump(h//" finishes AdvMntScaSendX MessageSet:")
+          call DumpMessageSet(AdvMntScaSendX)
+       end if
+       if (.not. associated(AdvMntScaRecvX)) then
+          call MsgDump(h//" finishes empty AdvMntScaRecvX MessageSet")
+       else
+          call MsgDump(h//" finishes AdvMntScaRecvX MessageSet:")
+          call DumpMessageSet(AdvMntScaRecvX)
+       end if
+       if (.not. associated(AdvMntUVSendY)) then
+          call MsgDump(h//" finishes empty AdvMntUVSendY MessageSet")
+       else
+          call MsgDump(h//" finishes AdvMntUVSendY MessageSet:")
+          call DumpMessageSet(AdvMntUVSendY)
+       end if
+       if (.not. associated(AdvMntUVRecvY)) then
+          call MsgDump(h//" finishes empty AdvMntUVRecvY MessageSet")
+       else
+          call MsgDump(h//" finishes AdvMntUVRecvY MessageSet:")
+          call DumpMessageSet(AdvMntUVRecvY)
+       end if
+       if (.not. associated(AdvMntDxDySendY)) then
+          call MsgDump(h//" finishes empty AdvMntDxDySendY MessageSet")
+       else
+          call MsgDump(h//" finishes AdvMntDxDySendY MessageSet:")
+          call DumpMessageSet(AdvMntDxDySendY)
+       end if
+       if (.not. associated(AdvMntDxDyRecvY)) then
+          call MsgDump(h//" finishes empty AdvMntDxDyRecvY MessageSet")
+       else
+          call MsgDump(h//" finishes AdvMntDxDyRecvY MessageSet:")
+          call DumpMessageSet(AdvMntDxDyRecvY)
+       end if
+       if (.not. associated(AdvMntDd0SendY)) then
+          call MsgDump(h//" finishes empty AdvMntDd0SendY MessageSet")
+       else
+          call MsgDump(h//" finishes AdvMntDd0SendY MessageSet:")
+          call DumpMessageSet(AdvMntDd0SendY)
+       end if
+       if (.not. associated(AdvMntDd0RecvY)) then
+          call MsgDump(h//" finishes empty AdvMntDd0RecvY MessageSet")
+       else
+          call MsgDump(h//" finishes AdvMntDd0RecvY MessageSet:")
+          call DumpMessageSet(AdvMntDd0RecvY)
+       end if
+       if (.not. associated(AdvMntDenSendY)) then
+          call MsgDump(h//" finishes empty AdvMntDenSendY MessageSet")
+       else
+          call MsgDump(h//" finishes AdvMntDenSendY MessageSet:")
+          call DumpMessageSet(AdvMntDenSendY)
+       end if
+       if (.not. associated(AdvMntDenRecvY)) then
+          call MsgDump(h//" finishes empty AdvMntDenRecvY MessageSet")
+       else
+          call MsgDump(h//" finishes AdvMntDenRecvY MessageSet:")
+          call DumpMessageSet(AdvMntDenRecvY)
+       end if
+       if (.not. associated(AdvMntScaSendY)) then
+          call MsgDump(h//" finishes empty AdvMntScaSendY MessageSet")
+       else
+          call MsgDump(h//" finishes AdvMntScaSendY MessageSet:")
+          call DumpMessageSet(AdvMntScaSendY)
+       end if
+       if (.not. associated(AdvMntScaRecvY)) then
+          call MsgDump(h//" finishes empty AdvMntScaRecvY MessageSet")
+       else
+          call MsgDump(h//" finishes AdvMntScaRecvY MessageSet:")
+          call DumpMessageSet(AdvMntScaRecvY)
+       end if
     end if
   end subroutine CreateAdvMntMessageSet
 
@@ -4158,10 +4318,18 @@ contains
     end if
 
     if (dumpLocal) then
-       call MsgDump(h//" built "//trim(NameSend)//" MessageSet:")
-       call DumpMessageSet(AcoustNewSend)
-       call MsgDump(h//" built "//trim(NameRecv)//" MessageSet:")
-       call DumpMessageSet(AcoustNewRecv)
+       if (.not. associated(AcoustNewSend)) then
+          call MsgDump(h//" finishes empty "//trim(NameSend)//" MessageSet")
+       else
+          call MsgDump(h//" finishes "//trim(NameSend)//" MessageSet:")
+          call DumpMessageSet(AcoustNewSend)
+       end if
+       if (.not. associated(AcoustNewRecv)) then
+          call MsgDump(h//" finishes empty "//trim(NameRecv)//" MessageSet:")
+       else
+          call MsgDump(h//" finishes "//trim(NameRecv)//" MessageSet:")
+          call DumpMessageSet(AcoustNewRecv)
+       end if
     end if
   end subroutine OneAcoustNewSendRecv
 
@@ -4830,10 +4998,10 @@ contains
           end if
 
        end do
-    else
-       if (dumpLocal) then
-          call MsgDump(h//" empty receive message set")
-       end if
+!!$    else
+!!$       if (dumpLocal) then
+!!$          call MsgDump(h//" empty receive message set")
+!!$       end if
     end if
 
     ! for each sending message,
@@ -4883,10 +5051,10 @@ contains
                   " and request "//trim(adjustl(str(5))))
           end if
        end do
-    else
-       if (dumpLocal) then
-          call MsgDump(h//" empty send message set")
-       end if
+!!$    else
+!!$       if (dumpLocal) then
+!!$          call MsgDump(h//" empty send message set")
+!!$       end if
     end if
   end subroutine PostSendRecvMsgs
 
@@ -4942,10 +5110,10 @@ contains
           call DecomposeMessageDataBuffer(RecvMsg%msgData(recvNbr))
           call DeallocateMessageDataBuffer(RecvMsg%msgData(recvNbr))
        end do
-    else
-       if (dumpLocal) then
-          call MsgDump(h//" empty receive message set")
-       end if
+!!$    else
+!!$       if (dumpLocal) then
+!!$          call MsgDump(h//" empty receive message set")
+!!$       end if
     end if
 
     ! for all posted send messages, wait on pending request,
@@ -4958,10 +5126,10 @@ contains
                SendMsg%request, sendNbr)
           call DeallocateMessageDataBuffer(SendMsg%msgData(sendNbr))
        end do
-    else
-       if (dumpLocal) then
-          call MsgDump(h//" empty send message set")
-       end if
+!!$    else
+!!$       if (dumpLocal) then
+!!$          call MsgDump(h//" empty send message set")
+!!$       end if
     end if
   end subroutine WaitSendRecvMsgs
 end module ModMessageSet
