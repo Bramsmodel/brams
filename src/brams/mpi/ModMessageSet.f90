@@ -696,7 +696,7 @@ contains
 
   subroutine CreateAcousticMessageSet(&
        oneVarTable, oneVarTableSize, &
-       gridId, GridSize, ParEnv, Neigh, &
+       gridId, GridSize, oneParallelEnvironment, Neigh, &
        GlobalOwn, &
        GlobalOwnWithBC, &
        GlobalWithGhost, &
@@ -712,7 +712,7 @@ contains
 
     integer, intent(in) :: gridId
     type(GridDims), pointer, intent(in) :: GridSize
-    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+    type(ParallelEnvironment), pointer, intent(in) :: oneParallelEnvironment
     type(NeighbourNodes), pointer, intent(in) :: Neigh
     type(DomainDecomp), pointer, intent(in) :: GlobalOwn
     type(DomainDecomp), pointer, intent(in) :: GlobalOwnWithBC
@@ -744,20 +744,20 @@ contains
     ! scratch arrays of size number of neighbour nodes
     ! containing global indices of regions for send and receive
 
-    integer :: xbSend(parEnv%nMachs)
-    integer :: xeSend(parEnv%nMachs)
-    integer :: ybSend(parEnv%nMachs)
-    integer :: yeSend(parEnv%nMachs)
-    integer :: xbRecv(parEnv%nMachs)
-    integer :: xeRecv(parEnv%nMachs)
-    integer :: ybRecv(parEnv%nMachs)
-    integer :: yeRecv(parEnv%nMachs)
+    integer :: xbSend(oneParallelEnvironment%nMachs)
+    integer :: xeSend(oneParallelEnvironment%nMachs)
+    integer :: ybSend(oneParallelEnvironment%nMachs)
+    integer :: yeSend(oneParallelEnvironment%nMachs)
+    integer :: xbRecv(oneParallelEnvironment%nMachs)
+    integer :: xeRecv(oneParallelEnvironment%nMachs)
+    integer :: ybRecv(oneParallelEnvironment%nMachs)
+    integer :: yeRecv(oneParallelEnvironment%nMachs)
 
     ! scratch arrays of size number of neighbour nodes
     ! containing which neighbour nodes will send of receive
 
-    logical :: willSend(parEnv%nMachs)
-    logical :: willRecv(parEnv%nMachs)
+    logical :: willSend(oneParallelEnvironment%nMachs)
+    logical :: willRecv(oneParallelEnvironment%nMachs)
 
     character(len=*), parameter :: NameSendU="AcouSendU"
     character(len=*), parameter :: NameRecvU="AcouRecvU"
@@ -782,8 +782,8 @@ contains
 
     ! verify input arguments
 
-    if (.not. associated(ParEnv)) then
-       call fatal_error(h//" starts with null ParEnv")
+    if (.not. associated(oneParallelEnvironment)) then
+       call fatal_error(h//" starts with null oneParallelEnvironment")
     else if (.not. associated(GlobalOwn)) then
        call fatal_error(h//" starts with null GlobalOwn")
     else if (.not. associated(GlobalWithGhost)) then
@@ -812,8 +812,8 @@ contains
        call MsgDump(h//" starts creating AcousSend/RecvU")
     end if
 
-    myNum  = ParEnv%myNum
-    nMachs = ParEnv%nMachs
+    myNum  = oneParallelEnvironment%myNum
+    nMachs = oneParallelEnvironment%nMachs
     nNeigh = Neigh%nNeigh
 
     ! AcouSendU, AcouRecvU:
@@ -1258,7 +1258,7 @@ contains
 
   subroutine CreateDn0MessageSet(&
        oneVarTable, oneVarTableSize, &
-       gridId, GridSize, ParEnv, Neigh, &
+       gridId, GridSize, oneParallelEnvironment, Neigh, &
        GlobalOwn, GlobalWithGhost, &
        SendDn0u, RecvDn0u, TagDn0u, &
        SendDn0v, RecvDn0v, TagDn0v)
@@ -1268,7 +1268,7 @@ contains
 
     integer, intent(in) :: gridId
     type(GridDims), pointer, intent(in) :: GridSize
-    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+    type(ParallelEnvironment), pointer, intent(in) :: oneParallelEnvironment
     type(NeighbourNodes), pointer, intent(in) :: Neigh
     type(DomainDecomp), pointer, intent(in) :: GlobalOwn
     type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
@@ -1286,20 +1286,20 @@ contains
     ! scratch arrays of size number of neighbour nodes
     ! containing global indices of regions for send and receive
 
-    integer :: xbSend(parEnv%nMachs)
-    integer :: xeSend(parEnv%nMachs)
-    integer :: ybSend(parEnv%nMachs)
-    integer :: yeSend(parEnv%nMachs)
-    integer :: xbRecv(parEnv%nMachs)
-    integer :: xeRecv(parEnv%nMachs)
-    integer :: ybRecv(parEnv%nMachs)
-    integer :: yeRecv(parEnv%nMachs)
+    integer :: xbSend(oneParallelEnvironment%nMachs)
+    integer :: xeSend(oneParallelEnvironment%nMachs)
+    integer :: ybSend(oneParallelEnvironment%nMachs)
+    integer :: yeSend(oneParallelEnvironment%nMachs)
+    integer :: xbRecv(oneParallelEnvironment%nMachs)
+    integer :: xeRecv(oneParallelEnvironment%nMachs)
+    integer :: ybRecv(oneParallelEnvironment%nMachs)
+    integer :: yeRecv(oneParallelEnvironment%nMachs)
 
     ! scratch arrays of size number of neighbour nodes
     ! containing which neighbour nodes will send of receive
 
-    logical :: willSend(parEnv%nMachs)
-    logical :: willRecv(parEnv%nMachs)
+    logical :: willSend(oneParallelEnvironment%nMachs)
+    logical :: willRecv(oneParallelEnvironment%nMachs)
 
     character(len=*), parameter :: NameSendDn0u="SendDn0u"
     character(len=*), parameter :: NameRecvDn0u="RecvDn0u"
@@ -1313,8 +1313,8 @@ contains
 
     ! verify input arguments
 
-    if (.not. associated(ParEnv)) then
-       call fatal_error(h//" starts with null ParEnv")
+    if (.not. associated(oneParallelEnvironment)) then
+       call fatal_error(h//" starts with null oneParallelEnvironment")
     else if (.not. associated(GlobalOwn)) then
        call fatal_error(h//" starts with null GlobalOwn")
     else if (.not. associated(GlobalWithGhost)) then
@@ -1335,14 +1335,14 @@ contains
        call MsgDump(h//" will create Send/RecvDn0u and Send/RecvDn0v")
     end if
 
-    myNum  = ParEnv%myNum
+    myNum  = oneParallelEnvironment%myNum
     nNeigh = Neigh%nNeigh
 
     ! SendDn0u, RecvDn0u:
     ! messages update GlobalOwn [xe+1:xe+1,yb:ye]
 
     call NodesRegionsSendRecv(&
-         nMachs=ParEnv%nMachs, &
+         nMachs=oneParallelEnvironment%nMachs, &
          nNeigh=nNeigh, &
          myNum=myNum, &
          tag=TagDn0u, &
@@ -1479,7 +1479,7 @@ contains
 
   subroutine CreateG3DMessageSet(&
        oneVarTable, oneVarTableSize, &
-       gridId, GridSize, ParEnv, Neigh, &
+       gridId, GridSize, oneParallelEnvironment, Neigh, &
        GlobalOwnWithBC, GlobalWithGhost, &
        Ramsin, &
        SendG3D, RecvG3D, TagG3D)
@@ -1489,7 +1489,7 @@ contains
 
     integer, intent(in) :: gridId
     type(GridDims), pointer, intent(in) :: GridSize
-    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+    type(ParallelEnvironment), pointer, intent(in) :: oneParallelEnvironment
     type(NeighbourNodes), pointer, intent(in) :: Neigh
     type(DomainDecomp), pointer, intent(in) :: GlobalOwnWithBC
     type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
@@ -1507,20 +1507,20 @@ contains
     ! scratch arrays of size number of neighbour nodes
     ! containing global indices of regions for send and receive
 
-    integer :: xbSend(parEnv%nMachs)
-    integer :: xeSend(parEnv%nMachs)
-    integer :: ybSend(parEnv%nMachs)
-    integer :: yeSend(parEnv%nMachs)
-    integer :: xbRecv(parEnv%nMachs)
-    integer :: xeRecv(parEnv%nMachs)
-    integer :: ybRecv(parEnv%nMachs)
-    integer :: yeRecv(parEnv%nMachs)
+    integer :: xbSend(oneParallelEnvironment%nMachs)
+    integer :: xeSend(oneParallelEnvironment%nMachs)
+    integer :: ybSend(oneParallelEnvironment%nMachs)
+    integer :: yeSend(oneParallelEnvironment%nMachs)
+    integer :: xbRecv(oneParallelEnvironment%nMachs)
+    integer :: xeRecv(oneParallelEnvironment%nMachs)
+    integer :: ybRecv(oneParallelEnvironment%nMachs)
+    integer :: yeRecv(oneParallelEnvironment%nMachs)
 
     ! scratch arrays of size number of neighbour nodes
     ! containing which neighbour nodes will send of receive
 
-    logical :: willSend(parEnv%nMachs)
-    logical :: willRecv(parEnv%nMachs)
+    logical :: willSend(oneParallelEnvironment%nMachs)
+    logical :: willRecv(oneParallelEnvironment%nMachs)
 
     character(len=*), parameter :: NameSendG3D="SendG3D"
     character(len=*), parameter :: NameRecvG3D="RecvG3D"
@@ -1532,8 +1532,8 @@ contains
 
     ! verify input arguments
 
-    if (.not. associated(ParEnv)) then
-       call fatal_error(h//" starts with null ParEnv")
+    if (.not. associated(oneParallelEnvironment)) then
+       call fatal_error(h//" starts with null oneParallelEnvironment")
     else if (.not. associated(GlobalOwnWithBC)) then
        call fatal_error(h//" starts with null GlobalOwnWithBC")
     else if (.not. associated(GlobalWithGhost)) then
@@ -1563,8 +1563,8 @@ contains
           call MsgDump(h//" will create Send/RecvG3D")
        end if
 
-       myNum  = ParEnv%myNum
-       nMachs = ParEnv%nMachs
+       myNum  = oneParallelEnvironment%myNum
+       nMachs = oneParallelEnvironment%nMachs
        nNeigh = Neigh%nNeigh
 
        ! SendG3D, RecvG3D:
@@ -1674,7 +1674,7 @@ contains
 
   subroutine CreateSelectedGhostZoneMessageSet(&
        oneVarTable, oneVarTableSize, gridId, &
-       GridSize, ParEnv, Neigh, &
+       GridSize, oneParallelEnvironment, Neigh, &
        GlobalOwnWithBC, GlobalWithGhost, &
        SelectedGhostZoneSend, SelectedGhostZoneRecv, TagSelectedGhostZone)
 
@@ -1683,7 +1683,7 @@ contains
 
     integer, intent(in) :: gridId
     type(GridDims), pointer, intent(in) :: GridSize
-    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+    type(ParallelEnvironment), pointer, intent(in) :: oneParallelEnvironment
     type(NeighbourNodes), pointer, intent(in) :: Neigh
     type(DomainDecomp), pointer, intent(in) :: GlobalOwnWithBC
     type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
@@ -1700,20 +1700,20 @@ contains
     ! scratch arrays of size number of neighbour nodes
     ! containing global indices of regions for send and receive
 
-    integer :: xbSend(parEnv%nMachs)
-    integer :: xeSend(parEnv%nMachs)
-    integer :: ybSend(parEnv%nMachs)
-    integer :: yeSend(parEnv%nMachs)
-    integer :: xbRecv(parEnv%nMachs)
-    integer :: xeRecv(parEnv%nMachs)
-    integer :: ybRecv(parEnv%nMachs)
-    integer :: yeRecv(parEnv%nMachs)
+    integer :: xbSend(oneParallelEnvironment%nMachs)
+    integer :: xeSend(oneParallelEnvironment%nMachs)
+    integer :: ybSend(oneParallelEnvironment%nMachs)
+    integer :: yeSend(oneParallelEnvironment%nMachs)
+    integer :: xbRecv(oneParallelEnvironment%nMachs)
+    integer :: xeRecv(oneParallelEnvironment%nMachs)
+    integer :: ybRecv(oneParallelEnvironment%nMachs)
+    integer :: yeRecv(oneParallelEnvironment%nMachs)
 
     ! scratch arrays of size number of neighbour nodes
     ! containing which neighbour nodes will send of receive
 
-    logical :: willSend(parEnv%nMachs)
-    logical :: willRecv(parEnv%nMachs)
+    logical :: willSend(oneParallelEnvironment%nMachs)
+    logical :: willRecv(oneParallelEnvironment%nMachs)
 
     character(len=*), parameter :: NameSendSelectedGhostZone="SelectedGhostZoneSend"
     character(len=*), parameter :: NameRecvSelectedGhostZone="SelectedGhostZoneRecv"
@@ -1723,8 +1723,8 @@ contains
 
     ! verify input arguments
 
-    if (.not. associated(ParEnv)) then
-       call fatal_error(h//" starts with null ParEnv")
+    if (.not. associated(oneParallelEnvironment)) then
+       call fatal_error(h//" starts with null oneParallelEnvironment")
     else if (.not. associated(GlobalOwnWithBC)) then
        call fatal_error(h//" starts with null GlobalOwnWithBC")
     else if (.not. associated(GlobalWithGhost)) then
@@ -1743,8 +1743,8 @@ contains
        call MsgDump(h//" will create SelectedGhostZoneSend/Recv")
     end if
 
-    myNum  = ParEnv%myNum
-    nMachs = ParEnv%nMachs
+    myNum  = oneParallelEnvironment%myNum
+    nMachs = oneParallelEnvironment%nMachs
     nNeigh = Neigh%nNeigh
 
     ! SelectedGhostZoneSend, SelectedGhostZoneRecv:
@@ -1832,7 +1832,7 @@ contains
 
   subroutine CreateAllGhostZoneMessageSet(&
        oneVarTable, oneVarTableSize, gridId, &
-       GridSize, ParEnv, Neigh, &
+       GridSize, oneParallelEnvironment, Neigh, &
        GlobalOwnWithBC, GlobalWithGhost, &
        AllGhostZoneSend, AllGhostZoneRecv, TagAllGhostZone)
 
@@ -1842,7 +1842,7 @@ contains
 
     integer, intent(in) :: gridId
     type(GridDims), pointer, intent(in) :: GridSize
-    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+    type(ParallelEnvironment), pointer, intent(in) :: oneParallelEnvironment
     type(NeighbourNodes), pointer, intent(in) :: Neigh
     type(DomainDecomp), pointer, intent(in) :: GlobalOwnWithBC
     type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
@@ -1860,20 +1860,20 @@ contains
     ! scratch arrays of size number of neighbour nodes
     ! containing global indices of regions for send and receive
 
-    integer :: xbSend(parEnv%nMachs)
-    integer :: xeSend(parEnv%nMachs)
-    integer :: ybSend(parEnv%nMachs)
-    integer :: yeSend(parEnv%nMachs)
-    integer :: xbRecv(parEnv%nMachs)
-    integer :: xeRecv(parEnv%nMachs)
-    integer :: ybRecv(parEnv%nMachs)
-    integer :: yeRecv(parEnv%nMachs)
+    integer :: xbSend(oneParallelEnvironment%nMachs)
+    integer :: xeSend(oneParallelEnvironment%nMachs)
+    integer :: ybSend(oneParallelEnvironment%nMachs)
+    integer :: yeSend(oneParallelEnvironment%nMachs)
+    integer :: xbRecv(oneParallelEnvironment%nMachs)
+    integer :: xeRecv(oneParallelEnvironment%nMachs)
+    integer :: ybRecv(oneParallelEnvironment%nMachs)
+    integer :: yeRecv(oneParallelEnvironment%nMachs)
 
     ! scratch arrays of size number of neighbour nodes
     ! containing which neighbour nodes will send of receive
 
-    logical :: willSend(parEnv%nMachs)
-    logical :: willRecv(parEnv%nMachs)
+    logical :: willSend(oneParallelEnvironment%nMachs)
+    logical :: willRecv(oneParallelEnvironment%nMachs)
 
     character(len=*), parameter :: NameSendAllGhostZone="AllGhostZoneSend"
     character(len=*), parameter :: NameRecvAllGhostZone="AllGhostZoneRecv"
@@ -1883,8 +1883,8 @@ contains
 
     ! verify input arguments
 
-    if (.not. associated(ParEnv)) then
-       call fatal_error(h//" starts with null ParEnv")
+    if (.not. associated(oneParallelEnvironment)) then
+       call fatal_error(h//" starts with null oneParallelEnvironment")
     else if (.not. associated(GlobalOwnWithBC)) then
        call fatal_error(h//" starts with null GlobalOwnWithBC")
     else if (.not. associated(GlobalWithGhost)) then
@@ -1904,8 +1904,8 @@ contains
        call MsgDump(h//" will create AllGhostZoneSend/Recv")
     end if
 
-    myNum  = ParEnv%myNum
-    nMachs = ParEnv%nMachs
+    myNum  = oneParallelEnvironment%myNum
+    nMachs = oneParallelEnvironment%nMachs
     nNeigh = Neigh%nNeigh
 
     ! AllGhostZoneSend, AllGhostZoneRecv:
@@ -1997,12 +1997,12 @@ contains
 
 
   subroutine CreateWideGhostZoneMessageSet(&
-       ParEnv, Neigh, &
+       oneParallelEnvironment, Neigh, &
        GlobalOwnWithBC, GlobalWithGhost, NodeDims, &
        zStartAdvMnt, zEndAdvMnt, &
        TagWideGhostZone, WideGhostZoneSend, WideGhostZoneRecv)
 
-    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+    type(ParallelEnvironment), pointer, intent(in) :: oneParallelEnvironment
     type(NeighbourNodes), pointer, intent(in) :: Neigh
     type(DomainDecomp), pointer, intent(in) :: GlobalOwnWithBC
     type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
@@ -2016,59 +2016,59 @@ contains
     ! scratch arrays of size number of neighbour nodes
     ! containing global indices of regions to send and receive
 
-    integer :: xbSendNorth(parEnv%nMachs)
-    integer :: xeSendNorth(parEnv%nMachs)
-    integer :: ybSendNorth(parEnv%nMachs)
-    integer :: yeSendNorth(parEnv%nMachs)
-    integer :: xbRecvNorth(parEnv%nMachs)
-    integer :: xeRecvNorth(parEnv%nMachs)
-    integer :: ybRecvNorth(parEnv%nMachs)
-    integer :: yeRecvNorth(parEnv%nMachs)
+    integer :: xbSendNorth(oneParallelEnvironment%nMachs)
+    integer :: xeSendNorth(oneParallelEnvironment%nMachs)
+    integer :: ybSendNorth(oneParallelEnvironment%nMachs)
+    integer :: yeSendNorth(oneParallelEnvironment%nMachs)
+    integer :: xbRecvNorth(oneParallelEnvironment%nMachs)
+    integer :: xeRecvNorth(oneParallelEnvironment%nMachs)
+    integer :: ybRecvNorth(oneParallelEnvironment%nMachs)
+    integer :: yeRecvNorth(oneParallelEnvironment%nMachs)
 
-    integer :: xbSendSouth(parEnv%nMachs)
-    integer :: xeSendSouth(parEnv%nMachs)
-    integer :: ybSendSouth(parEnv%nMachs)
-    integer :: yeSendSouth(parEnv%nMachs)
-    integer :: xbRecvSouth(parEnv%nMachs)
-    integer :: xeRecvSouth(parEnv%nMachs)
-    integer :: ybRecvSouth(parEnv%nMachs)
-    integer :: yeRecvSouth(parEnv%nMachs)
+    integer :: xbSendSouth(oneParallelEnvironment%nMachs)
+    integer :: xeSendSouth(oneParallelEnvironment%nMachs)
+    integer :: ybSendSouth(oneParallelEnvironment%nMachs)
+    integer :: yeSendSouth(oneParallelEnvironment%nMachs)
+    integer :: xbRecvSouth(oneParallelEnvironment%nMachs)
+    integer :: xeRecvSouth(oneParallelEnvironment%nMachs)
+    integer :: ybRecvSouth(oneParallelEnvironment%nMachs)
+    integer :: yeRecvSouth(oneParallelEnvironment%nMachs)
 
-    integer :: xbSendEast(parEnv%nMachs)
-    integer :: xeSendEast(parEnv%nMachs)
-    integer :: ybSendEast(parEnv%nMachs)
-    integer :: yeSendEast(parEnv%nMachs)
-    integer :: xbRecvEast(parEnv%nMachs)
-    integer :: xeRecvEast(parEnv%nMachs)
-    integer :: ybRecvEast(parEnv%nMachs)
-    integer :: yeRecvEast(parEnv%nMachs)
+    integer :: xbSendEast(oneParallelEnvironment%nMachs)
+    integer :: xeSendEast(oneParallelEnvironment%nMachs)
+    integer :: ybSendEast(oneParallelEnvironment%nMachs)
+    integer :: yeSendEast(oneParallelEnvironment%nMachs)
+    integer :: xbRecvEast(oneParallelEnvironment%nMachs)
+    integer :: xeRecvEast(oneParallelEnvironment%nMachs)
+    integer :: ybRecvEast(oneParallelEnvironment%nMachs)
+    integer :: yeRecvEast(oneParallelEnvironment%nMachs)
 
-    integer :: xbSendWest(parEnv%nMachs)
-    integer :: xeSendWest(parEnv%nMachs)
-    integer :: ybSendWest(parEnv%nMachs)
-    integer :: yeSendWest(parEnv%nMachs)
-    integer :: xbRecvWest(parEnv%nMachs)
-    integer :: xeRecvWest(parEnv%nMachs)
-    integer :: ybRecvWest(parEnv%nMachs)
-    integer :: yeRecvWest(parEnv%nMachs)
+    integer :: xbSendWest(oneParallelEnvironment%nMachs)
+    integer :: xeSendWest(oneParallelEnvironment%nMachs)
+    integer :: ybSendWest(oneParallelEnvironment%nMachs)
+    integer :: yeSendWest(oneParallelEnvironment%nMachs)
+    integer :: xbRecvWest(oneParallelEnvironment%nMachs)
+    integer :: xeRecvWest(oneParallelEnvironment%nMachs)
+    integer :: ybRecvWest(oneParallelEnvironment%nMachs)
+    integer :: yeRecvWest(oneParallelEnvironment%nMachs)
 
     ! scratch arrays of size number of neighbour nodes
     ! containing which neighbour nodes will send of receive
 
-    logical :: willSendNorth(parEnv%nMachs)
-    logical :: willRecvNorth(parEnv%nMachs)
+    logical :: willSendNorth(oneParallelEnvironment%nMachs)
+    logical :: willRecvNorth(oneParallelEnvironment%nMachs)
 
-    logical :: willSendSouth(parEnv%nMachs)
-    logical :: willRecvSouth(parEnv%nMachs)
+    logical :: willSendSouth(oneParallelEnvironment%nMachs)
+    logical :: willRecvSouth(oneParallelEnvironment%nMachs)
 
-    logical :: willSendEast(parEnv%nMachs)
-    logical :: willRecvEast(parEnv%nMachs)
+    logical :: willSendEast(oneParallelEnvironment%nMachs)
+    logical :: willRecvEast(oneParallelEnvironment%nMachs)
 
-    logical :: willSendWest(parEnv%nMachs)
-    logical :: willRecvWest(parEnv%nMachs)
+    logical :: willSendWest(oneParallelEnvironment%nMachs)
+    logical :: willRecvWest(oneParallelEnvironment%nMachs)
 
-    logical :: willSend(parEnv%nMachs)
-    logical :: willRecv(parEnv%nMachs)
+    logical :: willSend(oneParallelEnvironment%nMachs)
+    logical :: willRecv(oneParallelEnvironment%nMachs)
 
     character(len=*), parameter :: NameSend="SendWideGhostZone"
     character(len=*), parameter :: NameRecv="RecvWideGhostZone"
@@ -2119,8 +2119,8 @@ contains
        return
     end if
 
-    nMachs=ParEnv%nmachs
-    myNum=ParEnv%mynum
+    nMachs=oneParallelEnvironment%nmachs
+    myNum=oneParallelEnvironment%mynum
     nNeigh=Neigh%nNeigh
     mzp=NodeDims%mzp
     mzpp3=mzp+3
@@ -3373,7 +3373,7 @@ contains
 
 
   subroutine CreateAdvMntMessageSet(&
-       ParEnv, Neigh, &
+       oneParallelEnvironment, Neigh, &
        GlobalOwnWithBC, GlobalWithGhostAdvMnt, &
        NodeDims, NodeDimsAdvMnt, &
        TagAdvMntUVX, AdvMntUVSendX, AdvMntUVRecvX, &
@@ -3387,7 +3387,7 @@ contains
        TagAdvMntScaX, AdvMntScaSendX, AdvMntScaRecvX, &
        TagAdvMntScaY, AdvMntScaSendY, AdvMntScaRecvY)
 
-    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+    type(ParallelEnvironment), pointer, intent(in) :: oneParallelEnvironment
     type(NeighbourNodes), pointer, intent(in) :: Neigh
     type(DomainDecomp), pointer, intent(in) :: GlobalOwnWithBC
     type(DomainDecomp), pointer, intent(in) :: GlobalWithGhostAdvMnt
@@ -3427,56 +3427,56 @@ contains
     ! scratch arrays of size number of neighbour nodes
     ! containing global indices of regions to send and receive
 
-    integer :: xbSendNorth(parEnv%nMachs)
-    integer :: xeSendNorth(parEnv%nMachs)
-    integer :: ybSendNorth(parEnv%nMachs)
-    integer :: yeSendNorth(parEnv%nMachs)
-    integer :: xbRecvNorth(parEnv%nMachs)
-    integer :: xeRecvNorth(parEnv%nMachs)
-    integer :: ybRecvNorth(parEnv%nMachs)
-    integer :: yeRecvNorth(parEnv%nMachs)
+    integer :: xbSendNorth(oneParallelEnvironment%nMachs)
+    integer :: xeSendNorth(oneParallelEnvironment%nMachs)
+    integer :: ybSendNorth(oneParallelEnvironment%nMachs)
+    integer :: yeSendNorth(oneParallelEnvironment%nMachs)
+    integer :: xbRecvNorth(oneParallelEnvironment%nMachs)
+    integer :: xeRecvNorth(oneParallelEnvironment%nMachs)
+    integer :: ybRecvNorth(oneParallelEnvironment%nMachs)
+    integer :: yeRecvNorth(oneParallelEnvironment%nMachs)
 
-    integer :: xbSendSouth(parEnv%nMachs)
-    integer :: xeSendSouth(parEnv%nMachs)
-    integer :: ybSendSouth(parEnv%nMachs)
-    integer :: yeSendSouth(parEnv%nMachs)
-    integer :: xbRecvSouth(parEnv%nMachs)
-    integer :: xeRecvSouth(parEnv%nMachs)
-    integer :: ybRecvSouth(parEnv%nMachs)
-    integer :: yeRecvSouth(parEnv%nMachs)
+    integer :: xbSendSouth(oneParallelEnvironment%nMachs)
+    integer :: xeSendSouth(oneParallelEnvironment%nMachs)
+    integer :: ybSendSouth(oneParallelEnvironment%nMachs)
+    integer :: yeSendSouth(oneParallelEnvironment%nMachs)
+    integer :: xbRecvSouth(oneParallelEnvironment%nMachs)
+    integer :: xeRecvSouth(oneParallelEnvironment%nMachs)
+    integer :: ybRecvSouth(oneParallelEnvironment%nMachs)
+    integer :: yeRecvSouth(oneParallelEnvironment%nMachs)
 
-    integer :: xbSendEast(parEnv%nMachs)
-    integer :: xeSendEast(parEnv%nMachs)
-    integer :: ybSendEast(parEnv%nMachs)
-    integer :: yeSendEast(parEnv%nMachs)
-    integer :: xbRecvEast(parEnv%nMachs)
-    integer :: xeRecvEast(parEnv%nMachs)
-    integer :: ybRecvEast(parEnv%nMachs)
-    integer :: yeRecvEast(parEnv%nMachs)
+    integer :: xbSendEast(oneParallelEnvironment%nMachs)
+    integer :: xeSendEast(oneParallelEnvironment%nMachs)
+    integer :: ybSendEast(oneParallelEnvironment%nMachs)
+    integer :: yeSendEast(oneParallelEnvironment%nMachs)
+    integer :: xbRecvEast(oneParallelEnvironment%nMachs)
+    integer :: xeRecvEast(oneParallelEnvironment%nMachs)
+    integer :: ybRecvEast(oneParallelEnvironment%nMachs)
+    integer :: yeRecvEast(oneParallelEnvironment%nMachs)
 
-    integer :: xbSendWest(parEnv%nMachs)
-    integer :: xeSendWest(parEnv%nMachs)
-    integer :: ybSendWest(parEnv%nMachs)
-    integer :: yeSendWest(parEnv%nMachs)
-    integer :: xbRecvWest(parEnv%nMachs)
-    integer :: xeRecvWest(parEnv%nMachs)
-    integer :: ybRecvWest(parEnv%nMachs)
-    integer :: yeRecvWest(parEnv%nMachs)
+    integer :: xbSendWest(oneParallelEnvironment%nMachs)
+    integer :: xeSendWest(oneParallelEnvironment%nMachs)
+    integer :: ybSendWest(oneParallelEnvironment%nMachs)
+    integer :: yeSendWest(oneParallelEnvironment%nMachs)
+    integer :: xbRecvWest(oneParallelEnvironment%nMachs)
+    integer :: xeRecvWest(oneParallelEnvironment%nMachs)
+    integer :: ybRecvWest(oneParallelEnvironment%nMachs)
+    integer :: yeRecvWest(oneParallelEnvironment%nMachs)
 
     ! scratch arrays of size number of neighbour nodes
     ! containing which neighbour nodes will send of receive
 
-    logical :: willSendNorth(parEnv%nMachs)
-    logical :: willRecvNorth(parEnv%nMachs)
+    logical :: willSendNorth(oneParallelEnvironment%nMachs)
+    logical :: willRecvNorth(oneParallelEnvironment%nMachs)
 
-    logical :: willSendSouth(parEnv%nMachs)
-    logical :: willRecvSouth(parEnv%nMachs)
+    logical :: willSendSouth(oneParallelEnvironment%nMachs)
+    logical :: willRecvSouth(oneParallelEnvironment%nMachs)
 
-    logical :: willSendEast(parEnv%nMachs)
-    logical :: willRecvEast(parEnv%nMachs)
+    logical :: willSendEast(oneParallelEnvironment%nMachs)
+    logical :: willRecvEast(oneParallelEnvironment%nMachs)
 
-    logical :: willSendWest(parEnv%nMachs)
-    logical :: willRecvWest(parEnv%nMachs)
+    logical :: willSendWest(oneParallelEnvironment%nMachs)
+    logical :: willRecvWest(oneParallelEnvironment%nMachs)
 
     character(len=*), parameter :: NameSendUVX="AdvMntUVSendX"
     character(len=*), parameter :: NameRecvUVX="AdvMntUVRecvX"
@@ -3562,8 +3562,8 @@ contains
        return
     end if
 
-    nMachs=ParEnv%nmachs
-    myNum=ParEnv%mynum
+    nMachs=oneParallelEnvironment%nmachs
+    myNum=oneParallelEnvironment%mynum
     nNeigh=Neigh%nNeigh
     mzp=NodeDims%mzp
 
@@ -4340,7 +4340,7 @@ contains
 
 
   subroutine CreateAcoustNewMessageSet(&
-       GridSize, ParEnv, Neigh, &
+       GridSize, oneParallelEnvironment, Neigh, &
        GlobalOwn, GlobalWithGhost, NodeDims, &
        TagDiv, AcoustNewDivSend, AcoustNewDivRecv, &
        TagPP, AcoustNewPPSend, AcoustNewPPRecv, &
@@ -4348,7 +4348,7 @@ contains
        TagTht, AcoustNewThtSend, AcoustNewThtRecv, tht)
 
     type(GridDims), pointer, intent(in) :: GridSize
-    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+    type(ParallelEnvironment), pointer, intent(in) :: oneParallelEnvironment
     type(NeighbourNodes), pointer, intent(in) :: Neigh
     type(DomainDecomp), pointer, intent(in) :: GlobalOwn
     type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
@@ -4377,21 +4377,21 @@ contains
     ! scratch arrays of size number of neighbour nodes
     ! containing global indices of regions for send and receive
 
-    integer :: xbSend(parEnv%nMachs)
-    integer :: xeSend(parEnv%nMachs)
-    integer :: ybSend(parEnv%nMachs)
-    integer :: yeSend(parEnv%nMachs)
+    integer :: xbSend(oneParallelEnvironment%nMachs)
+    integer :: xeSend(oneParallelEnvironment%nMachs)
+    integer :: ybSend(oneParallelEnvironment%nMachs)
+    integer :: yeSend(oneParallelEnvironment%nMachs)
 
-    integer :: xbRecv(parEnv%nMachs)
-    integer :: xeRecv(parEnv%nMachs)
-    integer :: ybRecv(parEnv%nMachs)
-    integer :: yeRecv(parEnv%nMachs)
+    integer :: xbRecv(oneParallelEnvironment%nMachs)
+    integer :: xeRecv(oneParallelEnvironment%nMachs)
+    integer :: ybRecv(oneParallelEnvironment%nMachs)
+    integer :: yeRecv(oneParallelEnvironment%nMachs)
 
     ! scratch arrays of size number of neighbour nodes
     ! containing which neighbour nodes will send of receive
 
-    logical :: willSend(parEnv%nMachs)
-    logical :: willRecv(parEnv%nMachs)
+    logical :: willSend(oneParallelEnvironment%nMachs)
+    logical :: willRecv(oneParallelEnvironment%nMachs)
 
     character(len=*), parameter :: sendDirection="send"
     character(len=*), parameter :: recvDirection="recv"
@@ -4411,8 +4411,8 @@ contains
 
     ! verify input arguments
 
-    if (.not. associated(ParEnv)) then
-       call fatal_error(h//" starts with null ParEnv")
+    if (.not. associated(oneParallelEnvironment)) then
+       call fatal_error(h//" starts with null oneParallelEnvironment")
     else if (.not. associated(GlobalOwn)) then
        call fatal_error(h//" starts with null GlobalOwn")
     else if (.not. associated(GlobalWithGhost)) then
@@ -4437,8 +4437,8 @@ contains
        call MsgDump(h//" will create AcoustNewOneSend/Recv")
     end if
 
-    myNum  = ParEnv%myNum
-    nMachs = ParEnv%nMachs
+    myNum  = oneParallelEnvironment%myNum
+    nMachs = oneParallelEnvironment%nMachs
     nNeigh = Neigh%nNeigh
     mzp = GridSize%nnzp
     x0 = GlobalWithGhost%xb(myNum) - 1
