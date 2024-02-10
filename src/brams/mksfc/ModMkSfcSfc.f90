@@ -95,6 +95,7 @@ contains
     character(len=*), parameter :: h="**(sfc_check)**"
     logical, parameter :: dumpLocal=.false.
 
+    flnm=""
     lc=len_trim(sfcfiles)
     write(cgrid,'(a1,i1)') 'g',ifm
     if (useVfm) then
@@ -213,7 +214,7 @@ contains
 
     !     write surface characteristics, one file for each grid
 
-
+    flnm=""
     write(cgrid,'(a1,i1)') 'g',ifm
     
     if (useVfm) then
@@ -319,7 +320,7 @@ contains
     logical, parameter :: dumpLocal=.false.
 
     ! master process opens file and skips headers
-
+    flnm=""
     if (mchnum == master_num) then
        write(cgrid,'(a1,i1)') 'g',ifm
        if (useVfm) then
