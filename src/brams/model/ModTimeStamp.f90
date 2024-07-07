@@ -60,7 +60,7 @@ module ModTimeStamp
   integer, parameter   :: unitDir=59                  ! unit directory file name
   character(len=18)    :: fNameDir                    ! directory file name 
   logical, parameter   :: dumpLocal=.false.           ! module debug (set to .true. for dumping exec info)
-  logical, parameter   :: noInstrumentation=.false.    ! disable instrumentation (if set to true)
+  logical, parameter   :: noInstrumentation=.true.    ! disable instrumentation (if set to true)
 
   public :: CreateTimeStamp
   public :: TimeStamp

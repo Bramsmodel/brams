@@ -48,4 +48,6 @@ build/Make_utils
 build/Makefile
 build/config.status
 
-
+#Downloads e bibliotecas
+installation_scripts/*
+!installation_scripts/*.bash
