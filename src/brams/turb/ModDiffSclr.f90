@@ -50,23 +50,23 @@ contains
     integer, intent(in) :: n
     integer, intent(in) :: ksf
     real, intent(in) :: scp(m1,m2,m3)
-    real, intent(in) :: vt3dg(m1,m2,m3)
+    real, intent(in) :: vt3dg(:,:,:)    
     real, intent(in) :: rtgt(m2,m3)
     real, intent(in) :: sfcflx(m2,m3)
     real, intent(in) :: dn0(m1,m2,m3)
     real, intent(in) :: vkkh(m1,m2,m3)
     real, intent(in) :: hkkh(m1,m2,m3)
-    real, intent(inout) :: vt3da(m1,m2,m3) 
-    real, intent(inout) :: vt3dj(m1,m2,m3)
-    real, intent(inout) :: vt3dk(m1,m2,m3)
-    real, intent(inout) :: vt3do(m1,m2,m3)
+    real, intent(inout) :: vt3da(:,:,:)    
+    real, intent(inout) :: vt3dj(:,:,:)   
+    real, intent(inout) :: vt3dk(:,:,:)   
+    real, intent(inout) :: vt3do(:,:,:)    
     real, intent(inout) :: dn03i(m1,m2,m3)
-    real, intent(inout) :: vt3df(m1,m2,m3)
+    real, intent(inout) :: vt3df(:,:,:)   
     real, intent(inout) :: sct(m1,m2,m3)
-    real, intent(inout) :: vt3db(m1,m2,m3)
-    real, intent(inout) :: vt3dm(m1,m2,m3)
-    real, intent(inout) :: vt3dl(m1,m2,m3)
-    real, intent(inout) :: vt3dc(m1,m2,m3)
+    real, intent(inout) :: vt3db(:,:,:)   
+    real, intent(inout) :: vt3dm(:,:,:)   
+    real, intent(inout) :: vt3dl(:,:,:)   
+    real, intent(inout) :: vt3dc(:,:,:)   
 
     integer :: i
     integer :: j

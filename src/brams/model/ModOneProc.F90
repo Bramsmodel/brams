@@ -925,23 +925,6 @@ contains
        !**(JP)** This should allocate memory for all modules (to be certified!!!)
        call MemAlloc(oneGrid, 2)
 
-!!$       if (mynum == 1) then
-!!$          if (associated(leaf_g(1)%patch_area)) then
-!!$             write(str(1),"(i8)") size(leaf_g(1)%patch_area,1)
-!!$             write(str(2),"(i8)") size(leaf_g(1)%patch_area,2)
-!!$             write(str(3),"(i8)") size(leaf_g(1)%patch_area,3)
-!!$             write (*,fmt='(a)') h//" logo apos MemAlloc; patch_area has size("//&
-!!$                  trim(adjustl(str(1)))//","//&
-!!$                  trim(adjustl(str(2)))//","//&
-!!$                  trim(adjustl(str(3)))//")"
-!!$             write (*,fmt='(a)') h//" patch_area(:,1,1)="
-!!$             write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,1,1)
-!!$             write (*,fmt='(a)') h//" patch_area(:,2,1)="
-!!$             write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,2,1)
-!!$          else
-!!$             write (*,fmt='(a)') h//" logo apos MemAlloc; patch_area not associated"
-!!$          end if
-!!$       end if
        if (ioutput == 5) then
           call FixVarTableForIOUTPUT5(oneGrid%oneVarTable, oneGrid%oneVarTableSize)          
           call FixChemAerVarTableForIOUTPUT5(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
@@ -981,26 +964,10 @@ contains
 
        call InitFields(1, oneGrid%oneScalarTableSize, &
             oneGrid%oneVarTable, oneGrid%oneVarTableSize)
-!!$       if (mynum == 1) then
-!!$          write (*,fmt='(a)') h//" logo antes initOneProc"
-!!$          write (*,fmt='(a)') h//" patch_area(:,1,1)="
-!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,1,1)
-!!$          write (*,fmt='(a)') h//" patch_area(:,2,1)="
-!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,2,1)
-!!$       end if
 
        ! initialization driver
 
        call initOneProc(AllGrids, NamelistFileName)
-
-!!$       if (mynum == 1) then
-!!$          write (*,fmt='(a)') h//" logo apos initOneProc"
-!!$          write (*,fmt='(a)') h//" patch_area(:,1,1)="
-!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,1,1)
-!!$          write (*,fmt='(a)') h//" patch_area(:,2,1)="
-!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,2,1)
-!!$       end if
-
 
        ! Compute Courant numbers cflxy and cflz, get maximum over all processes  and dump
 
@@ -1017,14 +984,6 @@ contains
        if (mchnum==master_num) then
           call dump_dtset(nndtflg)
        end if
-
-!!$       if (mynum == 1) then
-!!$          write (*,fmt='(a)') h//" logo apos SetDt"
-!!$          write (*,fmt='(a)') h//" patch_area(:,1,1)="
-!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,1,1)
-!!$          write (*,fmt='(a)') h//" patch_area(:,2,1)="
-!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,2,1)
-!!$       end if
 
        call schedule(isched, maxsched, maxschent, ngrids, nxtnest, &
             nndtrat, nsubs)
@@ -1095,13 +1054,6 @@ contains
 
        if(oneGrid%oneMicVars%mcphys_type==3) call readDataFriendly()
 
-!!$       if (mynum == 1) then
-!!$          write (*,fmt='(a)') h//" logo apos readDataFriendly"
-!!$          write (*,fmt='(a)') h//" patch_area(:,1,1)="
-!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,1,1)
-!!$          write (*,fmt='(a)') h//" patch_area(:,2,1)="
-!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,2,1)
-!!$       end if
        if (aerosol==-1 .and. .not. (CCATT==1 .and. chemistry >= 1)) then
           call gradsRead('./tables/aerClim/','aerosols.gra',&
                grid_g(1)%glat,grid_g(1)%glon, &
@@ -1130,28 +1082,35 @@ contains
                oneGrid%oneBasicFields, oneGrid%oneTurbFields, &
                oneGrid%oneVarTable, oneGrid%oneVarTableSize)
        endif
-!!$       if (mynum == 1) then
-!!$          write (*,fmt='(a)') h//" logo apos CreatePostProcess"
-!!$          write (*,fmt='(a)') h//" patch_area(:,1,1)="
-!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,1,1)
-!!$          write (*,fmt='(a)') h//" patch_area(:,2,1)="
-!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,2,1)
-!!$       end if
 
        select case (IPOS)
-
-!!$     case (1)
-!!$        ! post process initial state of the atmosphere in HDF5
-!!$        call PostProcessHDF5(oneNamelistFile, oneAllPostTypes)
 
        case (2,3)
           ! post process initial state of the atmosphere in Grads
           call PostProcess(AllGrids, oneAllPostTypes)
        end select
 
-       ! wall time at the end of initialization
+       ! end of old initialization
 
        call parf_barrier(777)
+
+       !--Digital Filter ------------------------------------------------------
+       if(applyDF)then
+          frqanldf=frqanl
+          frqanl= 0.
+          iposDF=ipos
+          ipos=0
+       endif
+
+
+       if (applyMeteogram) then
+          call InitMeteogram(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
+               oneGrid%meteoPolygons, oneGrid%id, trim(meteogramMap))
+       end if
+
+       ! wall time at the end of real initialization
+
+       call parf_barrier(888)
        if (mchnum==master_num) then
           w2=walltime()
           write(c1,"(f12.2)") w2-wtime_start
@@ -1168,21 +1127,6 @@ contains
           write(*,fmt='(A)') c_empty
           !write(output_unit,"(/,a,/)") " === Finish initialization; Wall(sec)="// &
           !     trim(adjustl(c1))
-       end if
-
-
-       !--Digital Filter ------------------------------------------------------
-       if(applyDF)then
-          frqanldf=frqanl
-          frqanl= 0.
-          iposDF=ipos
-          ipos=0
-       endif
-
-
-       if (applyMeteogram) then
-          call InitMeteogram(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-               oneGrid%meteoPolygons, oneGrid%id, trim(meteogramMap))
        end if
 
        !Uncoment to calculate execution time and set noInstrumentation = false in ModTimestamp.f90
@@ -1675,23 +1619,11 @@ contains
           !--(DMK-LFR NEC-SX6)----------------------------------------------
 
        enddo
-!!$       if (mynum == 1) then
-!!$          write (*,fmt='(a)') h//" logo antes sfcReadStoreOwnChunk"
-!!$          write (*,fmt='(a)') h//" patch_area(:,1,1)="
-!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,1,1)
-!!$          write (*,fmt='(a)') h//" patch_area(:,2,1)="
-!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,2,1)
-!!$       end if
+
        do ifm = 1,ngrids
           call SfcReadStoreOwnChunk(ifm, oneGrid%oneControlVars)
        enddo
-!!$       if (mynum == 1) then
-!!$          write (*,fmt='(a)') h//" logo apos sfcReadStoreOwnChunk"
-!!$          write (*,fmt='(a)') h//" patch_area(:,1,1)="
-!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,1,1)
-!!$          write (*,fmt='(a)') h//" patch_area(:,2,1)="
-!!$          write (*,fmt='((45e9.3,1x))') leaf_g(1)%patch_area(:,2,1)
-!!$       end if
+
        !     Define grid topography, transform, latitude-longitude,
        !        and map factor arrays.
 
@@ -1812,8 +1744,6 @@ contains
 
        endif
 
-       !call dumpAer('Aer_pos1')
-
        ! Fill land surface data for all grids that have no standard input files
 
        ! ALF - For use with SiB
@@ -1911,7 +1841,7 @@ contains
 
 
        end if
-       !call dumpAer('Aer_pos2')
+
        ! Read Radiation Parameters if CARMA or RRTMG Radiation is selected
        if (oneGrid%oneNamelistFile%ilwrtyp==4 .or. oneGrid%oneNamelistFile%iswrtyp==4 .or. oneGrid%oneNamelistFile%ilwrtyp==6 .or. oneGrid%oneNamelistFile%iswrtyp==6 ) then
           call master_read_carma_data(oneGrid%oneNamelistFile, mchnum, master_num)

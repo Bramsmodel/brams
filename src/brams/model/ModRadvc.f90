@@ -102,18 +102,18 @@ contains
     logical, parameter :: dumpLocal=.false.
     character(len=*), parameter :: h="**(advectc)**"
 
-    real :: vt3dp(mzp*mxp*myp)
-    real :: vt3dk(mzp*mxp*myp)
-    real :: vt3dj(mzp*mxp*myp)
+    real :: vt3dp(mzp,mxp,myp)
+    real :: vt3dk(mzp,mxp,myp)
+    real :: vt3dj(mzp,mxp,myp)
     real :: vt3di(mzp*mxp*myp)
     real :: vt3dh(mzp*mxp*myp)
-    real :: vt3dg(mzp*mxp*myp)
-    real :: vt3df(mzp*mxp*myp)
-    real :: vt3de(mzp*mxp*myp)
-    real :: vt3dd(mzp*mxp*myp)
-    real :: vt3dc(mzp*mxp*myp)
-    real :: vt3db(mzp*mxp*myp)
-    real :: vt3da(mzp*mxp*myp)
+    real :: vt3dg(mzp,mxp,myp)
+    real :: vt3df(mzp,mxp,myp)
+    real :: vt3de(mzp,mxp,myp)
+    real :: vt3dd(mzp,mxp,myp)
+    real :: vt3dc(mzp,mxp,myp)
+    real :: vt3db(mzp,mxp,myp)
+    real :: vt3da(mzp,mxp,myp)
     integer :: i_scl
 
     integer, dimension(maxgrds), save :: ncall
@@ -167,11 +167,11 @@ contains
           do i = 1,mxp
              do k = 1,mzp
                 ind = ind + 1
-                vt3da(ind) = (oneBasic%up(k,i,j)  &
+                vt3da(k,i,j) = (oneBasic%up(k,i,j)  &
                      + oneBasic%uc(k,i,j)) * dtlto2
-                vt3db(ind) = (oneBasic%vp(k,i,j)  &
+                vt3db(k,i,j) = (oneBasic%vp(k,i,j)  &
                      + oneBasic%vc(k,i,j)) * dtlto2
-                vt3dc(ind) = (oneBasic%wp(k,i,j)  &
+                vt3dc(k,i,j) = (oneBasic%wp(k,i,j)  &
                      + oneBasic%wc(k,i,j)) * dtlto2
              enddo
           enddo
@@ -477,8 +477,8 @@ contains
     
     real :: c1,c2,c3,c4,rtgti
 
-    real, dimension(m1,m2,m3) :: vt3da,vt3db,vt3dc,vt3dd,vt3de,vt3df  &
-         ,vt3dh,vt3di,vt3dj,vt3dk
+    real, dimension(m1,m2,m3) :: vt3dh,vt3di 
+    real, dimension(:,:,:) :: vt3dj,vt3df,vt3dd,vt3de,vt3dc,vt3da,vt3db,vt3dk
     character(len=*), parameter :: h="**(fa_preptc)**"
     real :: vctr3(m1)
 
@@ -564,7 +564,8 @@ contains
     integer :: m1,m2,m3,ia,iz,ja,jz,i,j,k,mynum
 
     real :: dfact
-    real, dimension(m1,m2,m3) :: scp,scr1,vt3da,vt3dd,vt3dg,vt3dh,vt3di
+    real, dimension(m1,m2,m3) :: scp,scr1,vt3dh,vt3di
+    real, dimension(:,:,:) :: vt3dg,vt3dd,vt3da
 
     dfact = .5
     do j = 1,m3
@@ -629,7 +630,8 @@ contains
     integer :: m1,m2,m3,ia,iz,ja,jz,jdim,mynum,i,j,k
 
     real :: dfact
-    real, dimension(m1,m2,m3) :: scp,scr1,vt3db,vt3de,vt3dg,vt3dj,vt3di
+    real, dimension(m1,m2,m3) :: scp,scr1,vt3di
+    real, dimension(:,:,:) :: vt3dj,vt3dg,vt3de,vt3db
 
     dfact = .5
     do j = 1,jz
@@ -694,7 +696,8 @@ contains
     integer :: m1,m2,m3,ia,iz,ja,jz,mynum,i,j,k
 
     real :: dfact
-    real, dimension(m1,m2,m3) :: scp,scr1,vt3dc,vt3df,vt3dg,vt3dk
+    real, dimension(m1,m2,m3) :: scp,scr1,vt3dk
+    real, dimension(:,:,:) :: vt3dg,vt3df,vt3dc
     real, dimension(m1) :: vctr1,vctr2
 
     dfact = .5

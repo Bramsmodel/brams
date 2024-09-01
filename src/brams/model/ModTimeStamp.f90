@@ -59,7 +59,7 @@ module ModTimeStamp
   character(len=4)     :: cpId                        ! MPI rank in characters
   integer, parameter   :: unitDir=59                  ! unit directory file name
   character(len=18)    :: fNameDir                    ! directory file name 
-  logical, parameter   :: dumpLocal=.false.           ! module debug (set to .true. for dumping exec info)
+  logical, parameter   :: dumpLocal=.false.           ! module debug 
   logical, parameter   :: noInstrumentation=.true.    ! disable instrumentation (if set to true)
 
   public :: CreateTimeStamp

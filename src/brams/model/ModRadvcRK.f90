@@ -2124,7 +2124,7 @@ contains
     real,    intent(in) :: wfx(mzp,mxp,myp)
     real,    intent(in) :: vt3dh(mzp,mxp,myp)
     real,    intent(in) :: vt3dj(mzp,mxp,myp)
-    real,    intent(in) :: vt3dk(mzp,mxp,myp)
+    real,    intent(in) :: vt3dk(:,:,:)       
     real,    intent(in) :: scp(mzp,mxp,myp)
     real,    intent(in) :: sct(mzp,mxp,myp)
     real,    intent(in) :: scr      (mzi:mzpp3,mxi:mxpp3,myi:mypp3)
@@ -2419,7 +2419,7 @@ contains
     real,    intent(in) :: dt
     real,    intent(in) :: vt3dh(mzp,mxp,myp)
     real,    intent(in) :: vt3dj(mzp,mxp,myp)
-    real,    intent(in) :: vt3dk(mzp,mxp,myp)
+    real,    intent(in) :: vt3dk(:,:,:)       
     real,    intent(in) :: scp(mzp,mxp,myp)
     real,    intent(in) :: ufx(mzp,mxp,myp)!(-2:mzp+3,-2:mxp+3,-2:myp+3)
     real,    intent(in) :: vfx(mzp,mxp,myp)!(-2:mzp+3,-2:mxp+3,-2:myp+3)

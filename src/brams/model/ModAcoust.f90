@@ -1116,8 +1116,8 @@ contains
     integer :: nmbr_gpts
     real :: dtacum
     real :: vt3dh(mzp*mxp*myp)
-    real :: vt3db(mzp*mxp*myp)
-    real :: vt3da(mzp*mxp*myp)
+    real :: vt3db(mzp,mxp,myp)
+    real :: vt3da(mzp,mxp,myp)
 
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(acoust_new)**"

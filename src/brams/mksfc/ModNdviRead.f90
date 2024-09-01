@@ -514,6 +514,9 @@ contains
 
        ! Get abs seconds of run start
 
+       if (dumpLocal) then
+          call MsgDump(h//" invoca date_abs_secs2")
+       end if
        call date_abs_secs2(iyear1, imonth1, idate1, itime1*100, secs_init)
 
        ! Go through ndvi files and make inventory. We unfortunately have to do this

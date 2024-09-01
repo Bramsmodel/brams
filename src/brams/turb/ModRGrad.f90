@@ -37,9 +37,9 @@ contains
          , ja   &
          , jz
 
-    real, intent(IN)    :: vc3da(m1,m2,m3)
+    real, intent(IN)    :: vc3da(:,:,:)    
 
-    real, intent(INOUT) :: vc3db(m1,m2,m3)
+    real, intent(INOUT) :: vc3db(:,:,:)
 
     character(len=*), intent(IN) :: dir,gpnt
 
@@ -47,9 +47,8 @@ contains
 
     optyp='GRADNT'
 
-    call rams_grad(m1,m2,m3,ia,iz,ja,jz,VC3DA,VC3DB,DIR,GPNT,optyp)
+    call rams_grad(m1,m2,m3,ia,iz,ja,jz,vc3da,vc3db,DIR,GPNT,optyp)
 
-    return
   end subroutine grad
 
   !------------------------------------------------------------------------------------
@@ -63,7 +62,7 @@ contains
          , ja   &
          , jz
 
-    real, intent(IN)    :: vc3da(m1,m2,m3)
+    real, intent(IN)    :: vc3da(:,:,:)    
 
     real, intent(INOUT) :: vc3db(m1,m2,m3)
 
@@ -73,7 +72,7 @@ contains
 
     optyp='DIVCRT'
 
-    call rams_grad(m1,m2,m3,ia,iz,ja,jz,VC3DA,VC3DB,DIR,GPNT,optyp)
+    call rams_grad(m1,m2,m3,ia,iz,ja,jz,vc3da,vc3db,DIR,GPNT,optyp)
 
     return
   end subroutine divcart
@@ -99,7 +98,7 @@ contains
 !!$
 !!$    optyp='DIVSTR'
 !!$
-!!$    call rams_grad(m1,m2,m3,ia,iz,ja,jz,VC3DA,VC3DB,DIR,GPNT,optyp)
+!!$    call rams_grad(m1,m2,m3,ia,iz,ja,jz,vc3da,vc3db,DIR,GPNT,optyp)
 !!$
 !!$    return
 !!$  end subroutine divstar
@@ -115,7 +114,7 @@ contains
          , ja    &
          , jz
 
-    real, intent(IN)    :: vc3da(m1,m2,m3)
+    real, intent(IN)    :: vc3da(:,:,:)    
 
     real, intent(INOUT) :: vc3db(m1,m2,m3)
 
@@ -136,57 +135,57 @@ contains
 
     if(DIR.eq.'XDIR')then
        if(GPNT.eq.'UPNT')then
-          call GRADXU(m1,m2,m3,ia,iz,jaa,jzz  &
-               ,OPTYP,VC3DA,VC3DB,VCTR1,GRID_G(NGRID)%RTGU  &
+          call gradxu(m1,m2,m3,ia,iz,jaa,jzz  &
+               ,OPTYP,vc3da,vc3db,VCTR1,GRID_G(NGRID)%RTGU  &
                ,GRID_G(NGRID)%RTGT,GRID_G(NGRID)%DXT,DZT  &
                ,GRID_G(NGRID)%FMAPUI,GRID_G(NGRID)%FMAPT  &
                ,GRID_G(NGRID)%F13T  &
                ,HW,VCTR2,'T',JDIM)
        elseif(GPNT.eq.'VPNT')then
-          call GRADXT(m1,m2,m3,ia,iz,jaa,jzz  &
-               ,OPTYP,VC3DA,VC3DB,VCTR1,GRID_G(NGRID)%RTGV  &
+          call gradxt(m1,m2,m3,ia,iz,jaa,jzz  &
+               ,OPTYP,vc3da,vc3db,VCTR1,GRID_G(NGRID)%RTGV  &
                ,GRID_G(NGRID)%RTGM,GRID_G(NGRID)%DXM,DZT  &
                ,GRID_G(NGRID)%FMAPVI,GRID_G(NGRID)%FMAPM  &
                ,GRID_G(NGRID)%F13M  &
                ,HW,VCTR2,'T',JDIM)
        elseif(GPNT.eq.'WPNT')then
-          call GRADXT(m1,m2,m3,ia,iz,jaa,jzz  &
-               ,OPTYP,VC3DA,VC3DB,VCTR1,GRID_G(NGRID)%RTGT  &
+          call gradxt(m1,m2,m3,ia,iz,jaa,jzz  &
+               ,OPTYP,vc3da,vc3db,VCTR1,GRID_G(NGRID)%RTGT  &
                ,GRID_G(NGRID)%RTGU,GRID_G(NGRID)%DXU,DZM  &
                ,GRID_G(NGRID)%FMAPTI,GRID_G(NGRID)%FMAPU  &
                ,GRID_G(NGRID)%F13U  &
                ,HT,VCTR2,'W',JDIM)
        elseif(GPNT.eq.'TPNT')then
-          call GRADXT(m1,m2,m3,ia,iz,jaa,jzz  &
-               ,OPTYP,VC3DA,VC3DB,VCTR1,GRID_G(NGRID)%RTGT  &
+          call gradxt(m1,m2,m3,ia,iz,jaa,jzz  &
+               ,OPTYP,vc3da,vc3db,VCTR1,GRID_G(NGRID)%RTGT  &
                ,GRID_G(NGRID)%RTGU,GRID_G(NGRID)%DXU,DZT  &
                ,GRID_G(NGRID)%FMAPTI,GRID_G(NGRID)%FMAPU  &
                ,GRID_G(NGRID)%F13U  &
                ,HW,VCTR2,'T',JDIM)
        elseif(GPNT.eq.'NPNT')then
-          call GRADXT(m1,m2,m3,ia,iz,jaa,jzz  &
-               ,OPTYP,VC3DA,VC3DB,VCTR1,GRID_G(NGRID)%RTGV  &
+          call gradxt(m1,m2,m3,ia,iz,jaa,jzz  &
+               ,OPTYP,vc3da,vc3db,VCTR1,GRID_G(NGRID)%RTGV  &
                ,GRID_G(NGRID)%RTGM,GRID_G(NGRID)%DXM,DZM  &
                ,GRID_G(NGRID)%FMAPVI,GRID_G(NGRID)%FMAPM  &
                ,GRID_G(NGRID)%F13M  &
                ,HT,VCTR2,'W',JDIM)
        elseif(GPNT.eq.'OPNT')then
-          call GRADXU(m1,m2,m3,ia,iz,jaa,jzz  &
-               ,OPTYP,VC3DA,VC3DB,VCTR1,GRID_G(NGRID)%RTGU  &
+          call gradxu(m1,m2,m3,ia,iz,jaa,jzz  &
+               ,OPTYP,vc3da,vc3db,VCTR1,GRID_G(NGRID)%RTGU  &
                ,GRID_G(NGRID)%RTGT,GRID_G(NGRID)%DXT,DZM  &
                ,GRID_G(NGRID)%FMAPUI,GRID_G(NGRID)%FMAPT  &
                ,GRID_G(NGRID)%F13T  &
                ,HT,VCTR2,'W',JDIM)
        elseif(GPNT.eq.'PPNT')then
-          call GRADXU(m1,m2,m3,ia,iz,jaa,jzz  &
-               ,OPTYP,VC3DA,VC3DB,VCTR1,GRID_G(NGRID)%RTGM  &
+          call gradxu(m1,m2,m3,ia,iz,jaa,jzz  &
+               ,OPTYP,vc3da,vc3db,VCTR1,GRID_G(NGRID)%RTGM  &
                ,GRID_G(NGRID)%RTGV,GRID_G(NGRID)%DXV,DZT  &
                ,GRID_G(NGRID)%FMAPMI,GRID_G(NGRID)%FMAPV  &
                ,GRID_G(NGRID)%F13V  &
                ,HW,VCTR2,'T',JDIM)
        elseif(GPNT.eq.'MPNT')then
-          call GRADXU(m1,m2,m3,ia,iz,jaa,jzz  &
-               ,OPTYP,VC3DA,VC3DB,VCTR1,GRID_G(NGRID)%RTGM  &
+          call gradxu(m1,m2,m3,ia,iz,jaa,jzz  &
+               ,OPTYP,vc3da,vc3db,VCTR1,GRID_G(NGRID)%RTGM  &
                ,GRID_G(NGRID)%RTGV,GRID_G(NGRID)%DXV,DZM  &
                ,GRID_G(NGRID)%FMAPMI,GRID_G(NGRID)%FMAPV  &
                ,GRID_G(NGRID)%F13V  &
@@ -194,57 +193,57 @@ contains
        endif
     elseif(DIR.eq.'YDIR')then
        if(GPNT.eq.'UPNT')then
-          call GRADYT(m1,m2,m3,ia,iz,jaa,jzz  &
-               ,OPTYP,VC3DA,VC3DB,VCTR1,GRID_G(NGRID)%RTGU  &
+          call gradyt(m1,m2,m3,ia,iz,jaa,jzz  &
+               ,OPTYP,vc3da,vc3db,VCTR1,GRID_G(NGRID)%RTGU  &
                ,GRID_G(NGRID)%RTGM,GRID_G(NGRID)%DYM,DZT  &
                ,GRID_G(NGRID)%FMAPUI,GRID_G(NGRID)%FMAPM  &
                ,GRID_G(NGRID)%F23M  &
                ,HW,VCTR2,'T',JDIM)
        elseif(GPNT.eq.'VPNT')then
-          call GRADYV(m1,m2,m3,ia,iz,jaa,jzz  &
-               ,OPTYP,VC3DA,VC3DB,VCTR1,GRID_G(NGRID)%RTGV  &
+          call gradyv(m1,m2,m3,ia,iz,jaa,jzz  &
+               ,OPTYP,vc3da,vc3db,VCTR1,GRID_G(NGRID)%RTGV  &
                ,GRID_G(NGRID)%RTGT,GRID_G(NGRID)%DYT,DZT  &
                ,GRID_G(NGRID)%FMAPVI,GRID_G(NGRID)%FMAPT  &
                ,GRID_G(NGRID)%F23T  &
                ,HW,VCTR2,'T',JDIM)
        elseif(GPNT.eq.'WPNT')then
-          call GRADYT(m1,m2,m3,ia,iz,jaa,jzz  &
-               ,OPTYP,VC3DA,VC3DB,VCTR1,GRID_G(NGRID)%RTGT  &
+          call gradyt(m1,m2,m3,ia,iz,jaa,jzz  &
+               ,OPTYP,vc3da,vc3db,VCTR1,GRID_G(NGRID)%RTGT  &
                ,GRID_G(NGRID)%RTGV,GRID_G(NGRID)%DYV,DZM  &
                ,GRID_G(NGRID)%FMAPTI,GRID_G(NGRID)%FMAPV  &
                ,GRID_G(NGRID)%F23V  &
                ,HT,VCTR2,'W',JDIM)
        elseif(GPNT.eq.'TPNT')then
-          call GRADYT(m1,m2,m3,ia,iz,jaa,jzz  &
-               ,OPTYP,VC3DA,VC3DB,VCTR1,GRID_G(NGRID)%RTGT  &
+          call gradyt(m1,m2,m3,ia,iz,jaa,jzz  &
+               ,OPTYP,vc3da,vc3db,VCTR1,GRID_G(NGRID)%RTGT  &
                ,GRID_G(NGRID)%RTGV,GRID_G(NGRID)%DYV,DZT  &
                ,GRID_G(NGRID)%FMAPTI,GRID_G(NGRID)%FMAPV  &
                ,GRID_G(NGRID)%F23V  &
                ,HW,VCTR2,'T',JDIM)
        elseif(GPNT.eq.'NPNT')then
-          call GRADYV(m1,m2,m3,ia,iz,jaa,jzz  &
-               ,OPTYP,VC3DA,VC3DB,VCTR1,GRID_G(NGRID)%RTGV  &
+          call gradyv(m1,m2,m3,ia,iz,jaa,jzz  &
+               ,OPTYP,vc3da,vc3db,VCTR1,GRID_G(NGRID)%RTGV  &
                ,GRID_G(NGRID)%RTGT,GRID_G(NGRID)%DYT,DZM  &
                ,GRID_G(NGRID)%FMAPVI,GRID_G(NGRID)%FMAPT  &
                ,GRID_G(NGRID)%F23T  &
                ,HT,VCTR2,'W',JDIM)
        elseif(GPNT.eq.'OPNT')then
-          call GRADYT(m1,m2,m3,ia,iz,jaa,jzz  &
-               ,OPTYP,VC3DA,VC3DB,VCTR1,GRID_G(NGRID)%RTGU  &
+          call gradyt(m1,m2,m3,ia,iz,jaa,jzz  &
+               ,OPTYP,vc3da,vc3db,VCTR1,GRID_G(NGRID)%RTGU  &
                ,GRID_G(NGRID)%RTGM,GRID_G(NGRID)%DYM,DZM  &
                ,GRID_G(NGRID)%FMAPUI,GRID_G(NGRID)%FMAPM  &
                ,GRID_G(NGRID)%F23M  &
                ,HT,VCTR2,'W',JDIM)
        elseif(GPNT.eq.'PPNT')then
-          call GRADYV(m1,m2,m3,ia,iz,jaa,jzz  &
-               ,OPTYP,VC3DA,VC3DB,VCTR1,GRID_G(NGRID)%RTGM &
+          call gradyv(m1,m2,m3,ia,iz,jaa,jzz  &
+               ,OPTYP,vc3da,vc3db,VCTR1,GRID_G(NGRID)%RTGM &
                ,GRID_G(NGRID)%RTGU,GRID_G(NGRID)%DYU,DZT  &
                ,GRID_G(NGRID)%FMAPMI,GRID_G(NGRID)%FMAPU  &
                ,GRID_G(NGRID)%F23U  &
                ,HW,VCTR2,'T',JDIM)
        elseif(GPNT.eq.'MPNT')then
-          call GRADYV(m1,m2,m3,ia,iz,jaa,jzz  &
-               ,OPTYP,VC3DA,VC3DB,VCTR1,GRID_G(NGRID)%RTGM  &
+          call gradyv(m1,m2,m3,ia,iz,jaa,jzz  &
+               ,OPTYP,vc3da,vc3db,VCTR1,GRID_G(NGRID)%RTGM  &
                ,GRID_G(NGRID)%RTGU,GRID_G(NGRID)%DYU,DZM  &
                ,GRID_G(NGRID)%FMAPMI,GRID_G(NGRID)%FMAPU  &
                ,GRID_G(NGRID)%F23U  &
@@ -252,28 +251,28 @@ contains
        endif
     elseif(DIR.eq.'ZDIR')then
        if(GPNT.eq.'UPNT')then
-          call GRADZT(m1,m2,m3,ia,iz,jaa,jzz,VC3DA,VC3DB  &
+          call gradzt(m1,m2,m3,ia,iz,jaa,jzz,vc3da,vc3db  &
                ,GRID_G(NGRID)%RTGU,DZM)
        elseif(GPNT.eq.'VPNT')then
-          call GRADZT(m1,m2,m3,ia,iz,jaa,jzz,VC3DA,VC3DB  &
+          call gradzt(m1,m2,m3,ia,iz,jaa,jzz,vc3da,vc3db  &
                ,GRID_G(NGRID)%RTGV,DZM)
        elseif(GPNT.eq.'WPNT')then
-          call GRADZW(m1,m2,m3,ia,iz,jaa,jzz,VC3DA,VC3DB  &
+          call gradzw(m1,m2,m3,ia,iz,jaa,jzz,vc3da,vc3db  &
                ,GRID_G(NGRID)%RTGT,DZT)
        elseif(GPNT.eq.'TPNT')then
-          call GRADZT(m1,m2,m3,ia,iz,jaa,jzz,VC3DA,VC3DB  &
+          call gradzt(m1,m2,m3,ia,iz,jaa,jzz,vc3da,vc3db  &
                ,GRID_G(NGRID)%RTGT,DZM)
        elseif(GPNT.eq.'NPNT')then
-          call GRADZW(m1,m2,m3,ia,iz,jaa,jzz,VC3DA,VC3DB  &
+          call gradzw(m1,m2,m3,ia,iz,jaa,jzz,vc3da,vc3db  &
                ,GRID_G(NGRID)%RTGV,DZT)
        elseif(GPNT.eq.'OPNT')then
-          call GRADZW(m1,m2,m3,ia,iz,jaa,jzz,VC3DA,VC3DB  &
+          call gradzw(m1,m2,m3,ia,iz,jaa,jzz,vc3da,vc3db  &
                ,GRID_G(NGRID)%RTGU,DZT)
        elseif(GPNT.eq.'PPNT')then
-          call GRADZT(m1,m2,m3,ia,iz,jaa,jzz,VC3DA,VC3DB  &
+          call gradzt(m1,m2,m3,ia,iz,jaa,jzz,vc3da,vc3db  &
                ,GRID_G(NGRID)%RTGM,DZM)
        elseif(GPNT.eq.'MPNT')then
-          call GRADZW(m1,m2,m3,ia,iz,jaa,jzz,VC3DA,VC3DB  &
+          call gradzw(m1,m2,m3,ia,iz,jaa,jzz,vc3da,vc3db  &
                ,GRID_G(NGRID)%RTGM,DZT)
        endif
     endif
@@ -284,7 +283,7 @@ contains
   !     ******************************************************************
   !
   !     This is a general subroutine which computes any component of the
-  !     gradient or divergence of VC3DA and stores it in VC3DB.
+  !     gradient or divergence of vc3da and stores it in vc3db.
 
   subroutine gradxu(m1,m2,m3,ia,iz,ja,jz  &
        ,optyp,vc3da,vc3db,vc1da,rtge,rtgc  &
@@ -298,8 +297,9 @@ contains
          ,jz  &
          ,jd
 
-    real, intent(IN) :: vc3da(m1,m2,m3)   &
-         , rtge(m2,m3)       &
+    real, intent(IN) :: vc3da(:,:,:)       
+    real, intent(IN) ::    &
+          rtge(m2,m3)       &
          , rtgc(m2,m3)       &
          , dx(m2,m3)         &
          , fmap(m2,m3)       &
@@ -320,8 +320,8 @@ contains
        do J=ja,jz
           do I=ia,iz
              do K=1,m1
-                VC3DB(K,I,J)=(VC3DA(K,I,J)*RTGE(I,J)  &
-                     -VC3DA(K,I-1,J)*RTGE(I-1,J))  &
+                vc3db(K,I,J)=(vc3da(K,I,J)*RTGE(I,J)  &
+                     -vc3da(K,I-1,J)*RTGE(I-1,J))  &
                      *DX(I,J)/RTGC(I,J)
              enddo
           enddo
@@ -330,9 +330,9 @@ contains
        do J=ja,jz
           do I=ia,iz
              do K=1,m1
-                VC3DB(K,I,J)=(VC3DA(K,I,J)*RTGE(I,J)  &
+                vc3db(K,I,J)=(vc3da(K,I,J)*RTGE(I,J)  &
                      *FMAPI(I,J)  &
-                     -VC3DA(K,I-1,J)*RTGE(I-1,J)  &
+                     -vc3da(K,I-1,J)*RTGE(I-1,J)  &
                      *FMAPI(I-1,J))  &
                      *DX(I,J)/RTGC(I,J)*FMAP(I,J)
              enddo
@@ -390,8 +390,8 @@ contains
     return
   end subroutine gradxu
 
-  subroutine GRADXT(m1,m2,m3,ia,iz,ja,jz  &
-       ,OPTYP,VC3DA,VC3DB,VC1DA,RTGE,RTGC  &
+  subroutine gradxt(m1,m2,m3,ia,iz,ja,jz  &
+       ,OPTYP,vc3da,vc3db,VC1DA,RTGE,RTGC  &
        ,DX,DZ,FMAPI,FMAP,FQ,HQ,HQ4,LEV,JD)
     integer, intent(IN) :: m1   &
          , m2   &
@@ -402,8 +402,9 @@ contains
          , jz   &
          , jd
 
-    real, intent(IN)    :: VC3DA(m1,m2,m3)  &
-         , RTGE(m2,m3)      &
+    real, intent(IN)    :: vc3da(:,:,:)      
+    real, intent(IN)    ::  &
+          RTGE(m2,m3)      &
          , RTGC(m2,m3)      &
          , DX(m2,m3)        &
          , FMAP(m2,m3)      &
@@ -413,7 +414,7 @@ contains
          , HQ(*)
 
     real, intent(INOUT) :: VC1DA(*)         &
-         , VC3DB(m1,m2,m3)  &
+         , vc3db(m1,m2,m3)  &
          , HQ4(*)           
 
     character(len=*), intent(IN) :: OPTYP,LEV
@@ -425,8 +426,8 @@ contains
        do J=ja,jz
           do I=ia,iz
              do K=1,m1
-                VC3DB(K,I,J)=(VC3DA(K,I+1,J)*RTGE(I+1,J)  &
-                     -VC3DA(K,I,J)*RTGE(I,J))  &
+                vc3db(K,I,J)=(vc3da(K,I+1,J)*RTGE(I+1,J)  &
+                     -vc3da(K,I,J)*RTGE(I,J))  &
                      *DX(I,J)/RTGC(I,J)
              enddo
           enddo
@@ -435,9 +436,9 @@ contains
        do J=ja,jz
           do I=ia,iz
              do K=1,m1
-                VC3DB(K,I,J)=(VC3DA(K,I+1,J)*RTGE(I+1,J)  &
+                vc3db(K,I,J)=(vc3da(K,I+1,J)*RTGE(I+1,J)  &
                      *FMAPI(I+1,J)  &
-                     -VC3DA(K,I,J)*RTGE(I,J)  &
+                     -vc3da(K,I,J)*RTGE(I,J)  &
                      *FMAPI(I,J))  &
                      *DX(I,J)/RTGC(I,J)*FMAP(I,J)
              enddo
@@ -493,12 +494,12 @@ contains
     endif
 
     return
-  end subroutine GRADXT
+  end subroutine gradxt
 
   !
 
-  subroutine GRADYV(m1,m2,m3,ia,iz,ja,jz  &
-       ,OPTYP,VC3DA,VC3DB,VC1DA,RTGE,RTGC  &
+  subroutine gradyv(m1,m2,m3,ia,iz,ja,jz  &
+       ,OPTYP,vc3da,vc3db,VC1DA,RTGE,RTGC  &
        ,DY,DZ,FMAPI,FMAP,FQ,HQ,HQ4,LEV,JD)
     integer, intent(IN) :: m1   &
          , m2   &
@@ -509,8 +510,9 @@ contains
          , jz   &
          , jd
 
-    real, intent(IN)  :: VC3DA(m1,m2,m3)   &
-         , RTGE(m2,m3)       &
+    real, intent(IN)  :: vc3da(:,:,:)       
+    real, intent(IN)  ::    &
+          RTGE(m2,m3)       &
          , RTGC(m2,m3)       &
          , DY(m2,m3)         &
          , FMAP(m2,m3)       &
@@ -519,7 +521,7 @@ contains
          , FQ(m2,m3)         &
          , HQ(*)
 
-    real, intent(INOUT) :: VC3DB(m1,m2,m3)   &
+    real, intent(INOUT) :: vc3db(m1,m2,m3)   &
          , HQ4(*)            &
          , VC1DA(*)
 
@@ -532,8 +534,8 @@ contains
        do J=ja,jz
           do I=ia,iz
              do K=1,m1
-                VC3DB(K,I,J)=(VC3DA(K,I,J)*RTGE(I,J)  &
-                     -VC3DA(K,I,J-jd)*RTGE(I,J-jd))  &
+                vc3db(K,I,J)=(vc3da(K,I,J)*RTGE(I,J)  &
+                     -vc3da(K,I,J-jd)*RTGE(I,J-jd))  &
                      *DY(I,J)/RTGC(I,J)
              enddo
           enddo
@@ -542,9 +544,9 @@ contains
        do J=ja,jz
           do I=ia,iz
              do K=1,m1
-                VC3DB(K,I,J)=(VC3DA(K,I,J)*RTGE(I,J)  &
+                vc3db(K,I,J)=(vc3da(K,I,J)*RTGE(I,J)  &
                      *FMAPI(I,J)  &
-                     -VC3DA(K,I,J-jd)*RTGE(I,J-jd)  &
+                     -vc3da(K,I,J-jd)*RTGE(I,J-jd)  &
                      *FMAPI(I,J-jd))  &
                      *DY(I,J)/RTGC(I,J)*FMAP(I,J)
              enddo
@@ -600,10 +602,10 @@ contains
     endif
 
     return
-  end subroutine GRADYV
+  end subroutine gradyv
 
-  subroutine GRADYT(m1,m2,m3,ia,iz,ja,jz  &
-       ,OPTYP,VC3DA,VC3DB,VC1DA,RTGE,RTGC  &
+  subroutine gradyt(m1,m2,m3,ia,iz,ja,jz  &
+       ,OPTYP,vc3da,vc3db,VC1DA,RTGE,RTGC  &
        ,DY,DZ,FMAPI,FMAP,FQ,HQ,HQ4,LEV,JD)
     integer, intent(IN) :: m1    &
          , m2    &
@@ -614,8 +616,9 @@ contains
          , jz    &
          , jd
 
-    real, intent(IN) :: VC3DA(m1,m2,m3)   &
-         , RTGE(m2,m3)       &
+    real, intent(IN) :: vc3da(:,:,:)       
+    real, intent(IN) ::    &
+          RTGE(m2,m3)       &
          , RTGC(m2,m3)       &
          , DY(m2,m3)         &
          , FMAP(m2,m3)       &
@@ -624,7 +627,7 @@ contains
          , FQ(m2,m3)         &
          , HQ(*)
 
-    real, intent(INOUT) :: VC3DB(m1,m2,m3)   &
+    real, intent(INOUT) :: vc3db(m1,m2,m3)   &
          , HQ4(*)            &
          , VC1DA(*)          
 
@@ -636,8 +639,8 @@ contains
        do J=ja,jz
           do I=ia,iz
              do K=1,m1
-                VC3DB(K,I,J)=(VC3DA(K,I,J+jd)*RTGE(I,J+jd)  &
-                     -VC3DA(K,I,J)*RTGE(I,J))  &
+                vc3db(K,I,J)=(vc3da(K,I,J+jd)*RTGE(I,J+jd)  &
+                     -vc3da(K,I,J)*RTGE(I,J))  &
                      *DY(I,J)/RTGC(I,J)
              enddo
           enddo
@@ -646,9 +649,9 @@ contains
        do J=ja,jz
           do I=ia,iz
              do K=1,m1
-                VC3DB(K,I,J)=(VC3DA(K,I,J+jd)*RTGE(I,J+jd)  &
+                vc3db(K,I,J)=(vc3da(K,I,J+jd)*RTGE(I,J+jd)  &
                      *FMAPI(I,J+jd)  &
-                     -VC3DA(K,I,J)*RTGE(I,J)  &
+                     -vc3da(K,I,J)*RTGE(I,J)  &
                      *FMAPI(I,J))  &
                      *DY(I,J)/RTGC(I,J)*FMAP(I,J)
              enddo
@@ -704,9 +707,9 @@ contains
     endif
 
     return
-  end subroutine GRADYT
+  end subroutine gradyt
 
-  subroutine GRADZW(m1,m2,m3,ia,iz,ja,jz,VC3DA,VC3DB,RTGC,DZ)
+  subroutine gradzw(m1,m2,m3,ia,iz,ja,jz,vc3da,vc3db,RTGC,DZ)
     integer, intent(IN) :: m1  &
          , m2  &
          , m3  &
@@ -715,44 +718,46 @@ contains
          , ja  &
          , jz
 
-    real, intent(IN)    :: VC3DA(m1,m2,m3)  &
-         , RTGC(m2,m3)      &
+    real, intent(IN)    :: vc3da(:,:,:)      
+    real, intent(IN)    ::   &
+          RTGC(m2,m3)      &
          , DZ(*)
 
-    real, intent(INOUT) :: VC3DB(m1,m2,m3) 
+    real, intent(INOUT) :: vc3db(m1,m2,m3) 
 
     integer :: i,j,k
 
     do J=ja,jz
        do I=ia,iz
           do K=2,m1
-             VC3DB(K,I,J)=(VC3DA(K,I,J)-VC3DA(K-1,I,J))*DZ(K)  &
+             vc3db(K,I,J)=(vc3da(K,I,J)-vc3da(K-1,I,J))*DZ(K)  &
                   /RTGC(I,J)
           enddo
        enddo
     enddo
     return
-  end subroutine GRADZW
+  end subroutine gradzw
 
-  subroutine GRADZT(m1,m2,m3,ia,iz,ja,jz,VC3DA,VC3DB,RTGC,DZ)
+  subroutine gradzt(m1,m2,m3,ia,iz,ja,jz,vc3da,vc3db,RTGC,DZ)
     integer :: m1,m2,m3,ia,iz,ja,jz
 
-    real, intent(IN)    :: VC3DA(m1,m2,m3) &
-         , RTGC(m2,m3)     &
+    real, intent(IN)    :: vc3da(:,:,:)     
+    real, intent(IN)    :: &
+          RTGC(m2,m3)     &
          , DZ(*)
 
-    real, intent(INOUT) :: VC3DB(m1,m2,m3)
+    real, intent(INOUT) :: vc3db(m1,m2,m3)
 
     integer :: i,j,k
 
     do J=ja,jz
        do I=ia,iz
           do K=1,m1-1
-             VC3DB(K,I,J)=(VC3DA(K+1,I,J)-VC3DA(K,I,J))*DZ(K)  &
+             vc3db(K,I,J)=(vc3da(K+1,I,J)-vc3da(K,I,J))*DZ(K)  &
                   /RTGC(I,J)
           enddo
        enddo
     enddo
     return
-  end subroutine GRADZT
+  end subroutine gradzt
 end module ModRGrad

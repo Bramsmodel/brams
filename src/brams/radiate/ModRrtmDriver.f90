@@ -651,6 +651,7 @@ contains
        !  rshort_a = rshort*(vf*alv + vfc*vfc*algs)
 
        alb = vf*alv + vfc*vfc*algs
+       albedt = albedt + patch_area*alb
 
        ! Longwave radiation calculations
 
@@ -667,6 +668,7 @@ contains
        rlonggs_v = gslong*vf*emv
        rlonggs_a = gslong*vfc
        rlonga_a  = rlong*(vf*(1. - emv) + vfc*vfc*(1. - emgs))
+       rlongup = rlongup + patch_area*(rlongv_a + rlonggs_a + rlonga_a)
 
        !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
        ! In case rlong is not computed, zero out all longwave fluxes other

@@ -112,8 +112,10 @@ contains
     integer  , intent(in)                          :: m1,m2,m3,m4,ia,iz,ja,jz,jd
     real     , intent(in)    , dimension(m2,m3)    :: flpu_R,flpv_R,flpw_R
     real     , intent(in)    , dimension(m2,m3)    :: rtgt, sflux_u, sflux_v, sflux_t
-    real     , intent(in)    , dimension(m1,m2,m3) :: tkep, vt3dd, vt3de, theta
-    real     , intent(in)    , dimension(m1,m2,m3) :: vt3dj, rv, rtp, dn0, up, vp
+    real     , intent(in)    , dimension(m1,m2,m3) :: tkep, theta
+    !TO real     , intent(in)    , dimension(m1,m2,m3) :: vt3dj, rv, rtp, dn0, up, vp
+    real     , intent(in)    , dimension(m1,m2,m3) :: rv, rtp, dn0, up, vp
+    real     , intent(in)    , dimension(:,:,:)    :: vt3dj,vt3dd,vt3de
     real     , intent(in)    , dimension(m2,m3,m4) :: vegz0, patchz0, ustar
     real     , intent(in)    , dimension(m2,m3,m4) :: tstar, patch_area 
     real     , intent(inout) , dimension(m2,m3)    :: kpbl

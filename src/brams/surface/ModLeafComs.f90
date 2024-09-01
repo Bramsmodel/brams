@@ -129,30 +129,115 @@ module ModLeafComs
 contains
 
   subroutine alloc_leafcol(nzg,nzs)
-    integer, intent(in) :: nzg,nzs
+    integer, intent(in) :: nzg
+    integer, intent(in) :: nzs
 
     ! Allocate leaf column arrays
-    allocate (dslz         (nzg)        &
-         ,dslzi        (nzg)        &
-         ,dslzidt      (nzg)        &
-         ,slzt         (nzg)        &
-         ,dslzt        (nzg)        &
-         ,dslzti       (nzg)        &
-         ,dslztidt     (nzg)        &
-         
-         ,rshort_s     (nzs)        &
-         ,tempk        (nzg+nzs)    &
-         ,fracliq      (nzg+nzs)    &
-         
-         ,hfluxgsc     (nzg+nzs+1)  &
-         ,psiplusz     (nzg)        &
-         ,half_soilair (nzg)        &
-         ,rfactor      (nzg+nzs)    &
-         ,wflux        (nzg+1)      &
-         ,qwflux       (nzg+1)      &
-         ,soil_liq     (nzg)        )
 
-    return
+    integer :: ierr
+    character(len=*), parameter :: h="**(alloc_leafcol)**"
+
+    allocate(dslz(nzg),stat=ierr)
+    if (ierr /= 0) then
+       call fatal_error(h//" allocate dslz(nzg) fails")
+    end if
+    dslz = 0.0
+    
+    allocate(dslzi(nzg),stat=ierr)
+    if (ierr /= 0) then
+       call fatal_error(h//" allocate dslzi(nzg) fails")
+    end if
+    dslzi = 0.0
+    
+    allocate(dslzidt(nzg),stat=ierr)
+    if (ierr /= 0) then
+       call fatal_error(h//" allocate dslzidt(nzg) fails")
+    end if
+    dslzidt = 0.0
+    
+    allocate(slzt(nzg),stat=ierr)
+    if (ierr /= 0) then
+       call fatal_error(h//" allocate slzt(nzg) fails")
+    end if
+    slzt = 0.0
+    
+    allocate(dslzt(nzg),stat=ierr)
+    if (ierr /= 0) then
+       call fatal_error(h//" allocate dslzt(nzg) fails")
+    end if
+    dslzt = 0.0
+    
+    allocate(dslzti(nzg),stat=ierr)
+    if (ierr /= 0) then
+       call fatal_error(h//" allocate dslzti(nzg) fails")
+    end if
+    dslzti = 0.0
+    
+    allocate(dslztidt(nzg),stat=ierr)
+    if (ierr /= 0) then
+       call fatal_error(h//" allocate dslztidt(nzg) fails")
+    end if
+    dslztidt = 0.0
+    
+    allocate(rshort_s(nzs),stat=ierr)
+    if (ierr /= 0) then
+       call fatal_error(h//" allocate rshort_s(nzs) fails")
+    end if
+    rshort_s = 0.0
+    
+    allocate(tempk(nzg+nzs),stat=ierr)
+    if (ierr /= 0) then
+       call fatal_error(h//" allocate tempk(nzg+nzs) fails")
+    end if
+    tempk = 0.0
+    
+    allocate(fracliq(nzg+nzs),stat=ierr)
+    if (ierr /= 0) then
+       call fatal_error(h//" allocate fracliq(nzg+nzs) fails")
+    end if
+    fracliq = 0.0
+    
+    allocate(hfluxgsc(nzg+nzs+1),stat=ierr)
+    if (ierr /= 0) then
+       call fatal_error(h//" allocate hfluxgsc(nzg+nzs+1) fails")
+    end if
+    hfluxgsc = 0.0
+    
+    allocate(psiplusz(nzg),stat=ierr)
+    if (ierr /= 0) then
+       call fatal_error(h//" allocate psiplusz(nzg) fails")
+    end if
+    psiplusz = 0.0
+    
+    allocate(half_soilair(nzg),stat=ierr)
+    if (ierr /= 0) then
+       call fatal_error(h//" allocate half_soilair(nzg) fails")
+    end if
+    half_soilair = 0.0
+    
+    allocate(rfactor(nzg+nzs),stat=ierr)
+    if (ierr /= 0) then
+       call fatal_error(h//" allocate rfactor(nzg+nzs) fails")
+    end if
+    rfactor = 0.0
+    
+    allocate(wflux(nzg+1),stat=ierr)
+    if (ierr /= 0) then
+       call fatal_error(h//" allocate wflux(nzg+1) fails")
+    end if
+    wflux = 0.0
+    
+    allocate(qwflux(nzg+1),stat=ierr)
+    if (ierr /= 0) then
+       call fatal_error(h//" allocate qwflux(nzg+1) fails")
+    end if
+    qwflux = 0.0
+    
+    allocate(soil_liq(nzg),stat=ierr)
+    if (ierr /= 0) then
+       call fatal_error(h//" allocate soil_liq(nzg) fails")
+    end if
+    soil_liq = 0.0
   end subroutine alloc_leafcol
 
 end module ModLeafComs

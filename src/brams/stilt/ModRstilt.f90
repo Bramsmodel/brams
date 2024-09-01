@@ -68,12 +68,12 @@ contains
     integer, intent(in) :: jz
     integer, intent(in) :: ng
     type(BasicFields), pointer, intent(in) :: oneBasicFields
-    real :: vt3dc(mzp*mxp*myp)
-    real :: vt3db(mzp*mxp*myp)
-    real :: vt3da(mzp*mxp*myp)
     !----- Local variables. ----------------------------------------------------------------!
     real                :: dtlti
     real                :: frqmassi
+    real :: vt3dc(mzp,mxp,myp)
+    real :: vt3db(mzp,mxp,myp)
+    real :: vt3da(mzp,mxp,myp)
     !---------------------------------------------------------------------------------------!
 
 
@@ -117,7 +117,8 @@ contains
     integer                        , intent(in)    :: mzp,mxp,myp
     integer                        , intent(in)    :: ia,iz,ja,jz
     real                           , intent(in)    :: dtlti,frqmassi
-    real   , dimension(mzp,mxp,myp), intent(in)    :: vt3da,vt3db,vt3dc
+    real   , dimension(:,:,:)      , intent(in)    :: vt3da,vt3db
+    real   , dimension(:,:,:)      , intent(in)    :: vt3dc
     real   , dimension(mzp,mxp,myp), intent(out)   :: afxu,afxv,afxw
     real   , dimension(mzp,mxp,myp), intent(inout) :: afxub,afxvb,afxwb
     integer                                        :: i,j,k
@@ -415,9 +416,10 @@ contains
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     integer :: mzp,mxp,myp,ia,iz,ja,jz!,izu,jzv,mynum,n
     integer(kind=i8) :: mxyzp
-    real :: vt3dc(mzp*mxp*myp)
-    real :: vt3db(mzp*mxp*myp)
-    real :: vt3da(mzp*mxp*myp)
+    !Local
+    real :: vt3dc(mzp,mxp,myp)
+    real :: vt3db(mzp,mxp,myp)
+    real :: vt3da(mzp,mxp,myp)
 
     real :: dtlto2
     integer :: i,j,k,ind
@@ -432,11 +434,11 @@ contains
        do i = 1,mxp
           do k = 1,mzp
              ind = ind + 1
-             vt3da(ind) = (oneBasicFields%up(k,i,j)  &
+             vt3da(k,i,j) = (oneBasicFields%up(k,i,j)  &
                   + oneBasicFields%uc(k,i,j)) * dtlto2
-             vt3db(ind) = (oneBasicFields%vp(k,i,j)  &
+             vt3db(k,i,j) = (oneBasicFields%vp(k,i,j)  &
                   + oneBasicFields%vc(k,i,j)) * dtlto2
-             vt3dc(ind) = (oneBasicFields%wp(k,i,j)  &
+             vt3dc(k,i,j) = (oneBasicFields%wp(k,i,j)  &
                   + oneBasicFields%wc(k,i,j)) * dtlto2
           enddo
        enddo
@@ -469,10 +471,8 @@ contains
 
     real :: c1,c2,c3,c4,rtgti
 
-    real, dimension(m1,m2,m3) :: vt3da,vt3db,vt3dc &!&,vt3dd,vt3de,vt3df  &
-                                !,vt3dh,vt3di,vt3dj,vt3dk&
-         ,dn0,dn0u,dn0v
-
+    real, dimension(m1,m2,m3) :: dn0,dn0u,dn0v  
+    real, dimension(:,:,:) ::  vt3da,vt3db,vt3dc
     real, dimension(m2,m3) :: rtgt,rtgu,rtgv,fmapt,fmapui,fmapvi,f13t,f23t  &
          ,dxu,dyv,dxt,dyt
 

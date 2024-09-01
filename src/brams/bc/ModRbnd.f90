@@ -1175,6 +1175,8 @@ end subroutine latset
                 ind = ind + 1
                 vt3da(ind) = oneBasicFields%theta(k,i,j)  &
                      * (1. + .61 * oneBasicFields%rv(k,i,j))
+                vt3da_3d(k,i,j) = oneBasicFields%theta(k,i,j)  &
+                     * (1. + .61 * oneBasicFields%rv(k,i,j))
              enddo
           enddo
        enddo
@@ -1205,7 +1207,7 @@ end subroutine latset
     integer, intent(in) :: ja
     integer, intent(in) :: jz
     integer, intent(in) :: ibcon
-    real :: var(:,:,:) !TO recebe pointer 1D
+    real :: var(:,:,:) !TO recebe 3D
     real, dimension(m1,m2,m3)  :: tht !TO recebe pointer 1D
 
     real, pointer :: th0(:,:,:)

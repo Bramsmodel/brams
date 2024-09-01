@@ -7,7 +7,9 @@
 !###########################################################################
 module ModOdaStaInput
 
-
+  use ModParallelEnvironment, only: &
+       MsgDump
+  
   use ModOdaStaCount, only: &
        findgrid
 
@@ -81,6 +83,9 @@ contains
     data varn/'ue','ve'/
     real :: vars(num_convars),varp1(1000),varp2(1000)
 
+    character(len=*), parameter :: h="**(oda_sta_input)**"
+    logical, parameter :: dumpLocal=.false.
+
     ! Read all observation data
 
     ! Transfer station id's to structure and assign integer id
@@ -100,6 +105,9 @@ contains
 
     ! Get abs seconds of run start
 
+    if (dumpLocal) then
+       call MsgDump(h//" invokes date_abs_secs2")
+    end if
     call date_abs_secs2(iyear1,imonth1,idate1,itime1*100,secs_init)
 
     ! Process surface files
@@ -162,6 +170,9 @@ contains
                 endif
 
                 ! Find time in seconds relative to run start         
+                if (dumpLocal) then
+                   call MsgDump(h//" invokes date_abs_secs2")
+                end if
                 call date_abs_secs2(rsfc_obs%jyear,rsfc_obs%jmonth  &
                      ,rsfc_obs%jdate,rsfc_obs%jtime*100,secs_obs)
                 oda_sfc_obs(ns)%time(ntimes)=secs_obs - secs_init
@@ -261,6 +272,9 @@ contains
                 endif
 
                 ! Find time in seconds relative to run start         
+                if (dumpLocal) then
+                   call MsgDump(h//" invokes date_abs_secs2")
+                end if
                 call date_abs_secs2(rupa_obs%jyear,rupa_obs%jmonth  &
                      ,rupa_obs%jdate,rupa_obs%jtime*100,secs_obs)
                 oda_upa_obs(ns)%time(ntimes)=secs_obs - secs_init

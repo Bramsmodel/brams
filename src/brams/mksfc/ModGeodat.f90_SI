@@ -139,10 +139,10 @@ contains
     DELTAXP = DELTAXQ/FLOAT(NP)
     DELTAYP = DELTAYQ/FLOAT(NP)
 
-    call SFCOPQR(NO, MOF, NP, NIQ, NJQ, N2, N3, XTN(1,NGR), YTN(1,NGR), &
+    call sfcopqr(NO, MOF, NP, NIQ, NJQ, N2, N3, XTN(1,NGR), YTN(1,NGR), &
          platn(ngr), plonn(ngr),                                        &
          ERAD, DELTALLO, DELTAXP, DELTAYP, DELTAXQ, DELTAYQ, IBLKSIZO,  &
-         ISBEGO, IWBEGO, DATO(1), VT2DA, VT2DB, DATR,                   &
+         ISBEGO, IWBEGO, DATO(1), vt2da, vt2db, DATR,                   &
          OFN, offlat, offlon, VNAM, NGR, itopsflg(ngr), iz0flg(ngr))
 
     if (dumpLocal) then
@@ -165,7 +165,7 @@ contains
     real, intent(IN)               :: platn, plonn, erad, deltallo, &
          deltaxp, deltayp, deltaxq, deltayq
     integer, intent(IN)            :: iblksizo, isbego, iwbego
-    real, intent(INOUT)            :: dato(no,no,mof), datp(np,np), datq(niq,njq), &
+    real, intent(INOUT)            :: dato(no,no,mof), datp(:,:), datq(:,:), &
          datr(n2,n3)
     character(len=*), intent(IN) :: ofn
     real, intent(IN)               :: offlat, offlon
@@ -932,10 +932,10 @@ contains
        call MsgDump(h//" will interpolate dato, vt2da, vt2db, datr")
     end if
     
-    call SFCOPQR(NO, MOF, NP, NIQ, NJQ, N2, N3, XTN(1,NGR), YTN(1,NGR), &
+    call sfcopqr(NO, MOF, NP, NIQ, NJQ, N2, N3, XTN(1,NGR), YTN(1,NGR), &
          platn(ngr), plonn(ngr),                                        &
          ERAD, DELTALLO, DELTAXP, DELTAYP, DELTAXQ, DELTAYQ, IBLKSIZO,  &
-         ISBEGO, IWBEGO, DATO(1), VT2DA, VT2DB, DATR,                   &
+         ISBEGO, IWBEGO, DATO(1), vt2da, vt2db, DATR,                   &
          OFN, offlat, offlon, VNAM, NGR, itopsflg(ngr), iz0flg(ngr))
 
     ! - part 2  - variable smoothing
@@ -988,10 +988,10 @@ contains
           DELTAXP = DELTAXQ/FLOAT(NP)
           DELTAYP = DELTAYQ/FLOAT(NP)
 
-          call SFCOPQR_VAR(NO, MOF, NP, NIQ, NJQ, N2, N3, XTN(1,NGR), YTN(1,NGR), &
+          call sfcopqr_VAR(NO, MOF, NP, NIQ, NJQ, N2, N3, XTN(1,NGR), YTN(1,NGR), &
                platn(ngr), plonn(ngr),                                            &
                ERAD, DELTALLO, DELTAXP, DELTAYP, DELTAXQ, DELTAYQ, IBLKSIZO,      &
-               ISBEGO, IWBEGO, DATO(1), VT2DA, VT2DB, DATR,                       &
+               ISBEGO, IWBEGO, DATO(1), vt2da, vt2db, DATR,                       &
                OFN, offlat, offlon, VNAM, NGR, itopsflg(ngr), iz0flg(ngr), i, j)
 
        enddo
@@ -1020,8 +1020,7 @@ contains
     real, intent(IN)               :: platn, plonn, erad, deltallo, &
          deltaxp, deltayp, deltaxq, deltayq
     integer, intent(IN)            :: iblksizo, isbego, iwbego
-    real, intent(INOUT)            :: dato(no,no,mof), datp(np,np), datq(niq,njq), &
-         datr(n2,n3)
+    real, intent(INOUT)            :: dato(no,no,mof), datp(:,:), datq(:,:), datr(n2,n3)
     character(len=256), intent(IN) :: ofn
     real, intent(IN)               :: offlat, offlon
     character(len=03), intent(IN)  :: vnam
@@ -1487,10 +1486,10 @@ contains
           DELTAXP = DELTAXQ/FLOAT(NP)
           DELTAYP = DELTAYQ/FLOAT(NP)
 
-          call SFCOPQR(NO, MOF, NP, NIQ, NJQ, N2, N3, XTN(1,NGR), YTN(1,NGR), &
+          call sfcopqr(NO, MOF, NP, NIQ, NJQ, N2, N3, XTN(1,NGR), YTN(1,NGR), &
                platn(ngr), plonn(ngr),        &
                ERAD, DELTALLO, DELTAXP, DELTAYP, DELTAXQ, DELTAYQ, IBLKSIZO,  &
-               ISBEGO, IWBEGO, DATO(1), VT2DA, VT2DB, DATRX(ITPX,:,:),        &
+               ISBEGO, IWBEGO, DATO(1), vt2da, vt2db, DATRX(ITPX,:,:),        &
                OFN, offlat, offlon, VNAM, NGR, itopsflg(ngr), iz0flg(ngr))
        enddo
        call datrx2datr(ngr,n2,n3,max_number_toptwvl,TOPTWVLX,DATRX,DATR)
@@ -1507,10 +1506,10 @@ contains
        DELTAXP = DELTAXQ/FLOAT(NP)
        DELTAYP = DELTAYQ/FLOAT(NP)
 
-       call SFCOPQR(NO, MOF, NP, NIQ, NJQ, N2, N3, XTN(1,NGR), YTN(1,NGR), &
+       call sfcopqr(NO, MOF, NP, NIQ, NJQ, N2, N3, XTN(1,NGR), YTN(1,NGR), &
             platn(ngr), plonn(ngr),    &
             ERAD, DELTALLO, DELTAXP, DELTAYP, DELTAXQ, DELTAYQ, IBLKSIZO,  &
-            ISBEGO, IWBEGO, DATO(1), VT2DA, VT2DB, DATR,    &
+            ISBEGO, IWBEGO, DATO(1), vt2da, vt2db, DATR,    &
             OFN, offlat, offlon, VNAM, NGR, itopsflg(ngr), iz0flg(ngr))
     endif
 

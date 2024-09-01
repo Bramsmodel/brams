@@ -2383,13 +2383,13 @@ CONTAINS
     INTEGER , INTENT(IN)    :: m2
     INTEGER , INTENT(IN)    :: m3
 
-    REAL    , INTENT(IN)    :: vt3da(m1,m2,m3)
-    REAL    , INTENT(IN)    :: vt3db(m1,m2,m3)
-    REAL    , INTENT(OUT)   :: vt3dc(m1,m2,m3)
+    REAL    , INTENT(IN)    :: vt3da(:,:,:)    
+    REAL    , INTENT(IN)    :: vt3db(:,:,:)    
+    REAL    , INTENT(OUT)   :: vt3dc(:,:,:)    
 
-    REAL    , INTENT(INOUT) :: vt3df(m1,m2,m3)
+    REAL    , INTENT(INOUT) :: vt3df(:,:,:)    
 
-    REAL    , INTENT(INOUT) :: vt3dk(m1,m2,m3)
+    REAL    , INTENT(INOUT) :: vt3dk(:,:,:)    
     REAL    , INTENT(IN)    :: dn0(m1,m2,m3)
 
     REAL    , INTENT(IN)    :: rtgt(m2,m3)
@@ -2404,7 +2404,7 @@ CONTAINS
 
     REAL    , INTENT(IN)    :: wp(m1,m2,m3)
     REAL    , INTENT(IN)    :: wc(m1,m2,m3)
-    REAL    , INTENT(INOUT) :: vt3dp(m1,m2,m3)
+    REAL    , INTENT(INOUT) :: vt3dp(:,:,:)   
 
     ! grid_dims
     INTEGER , INTENT(IN)    :: nzpmax

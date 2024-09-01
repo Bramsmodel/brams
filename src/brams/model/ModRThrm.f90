@@ -52,7 +52,7 @@ contains
     type(BasicFields), pointer :: oneBasic
     type(MicControl), pointer :: oneMicVars
     type(MicroFields), pointer :: oneMicroFields
-
+    !Local
     character(len=*), parameter :: h="**(thermo)**"
     real :: vctr1(mzp)
     real :: vctr2(mzp)
@@ -61,7 +61,7 @@ contains
     real :: vctr5(mzp)
     real :: vctr6(mzp)
     real :: scr1(mzp)
-    real :: vt3db(mzp*mxp*myp)
+    real :: vt3db(mzp,mxp,myp)
     integer :: i,j,k
     
     if (oneMicVars%level .le. 1) then
@@ -557,7 +557,7 @@ end subroutine wetthrm3_generic
     type(BasicFields), pointer :: oneBasic
     type(MicControl), pointer :: oneMicVars
     type(MicroFields), pointer :: oneMicroFields
-
+    !Local
     character(len=*), parameter :: h="**(theta_thp_rk)**"
     real :: vctr1(mzp) 
     real :: vctr2(mzp) 
@@ -566,7 +566,7 @@ end subroutine wetthrm3_generic
     real :: vctr5(mzp) 
     real :: vctr6(mzp) 
     real :: scr1(mzp) 
-    real :: vt3db(mzp*mxp*myp)
+    real :: vt3db(mzp,mxp,myp)
 
     if (trim(action).ne. "get_thetail" .and. trim(action).ne."get_theta") then
        call fatal_error(h//" unknow action at theta_thp_rk routine")

@@ -474,12 +474,17 @@ contains
 
     character(len=8) :: c0, c1
     character(len=*), parameter :: h="**(VarfFileInv)**"
+    logical, parameter :: dumpLocal=.false.
+    
     logical there
     real :: time_inc_sec
 
     ! Get abs seconds of run start
 
     nvarffiles = -1
+    if (dumpLocal) then
+       call MsgDump(h//" invokes date_abs_secs2")
+    end if
     call date_abs_secs2(iyear1, imonth1, idate1, itime1*100, secs_init)
 
     ! one process goes through history files and make inventory
@@ -610,6 +615,9 @@ contains
 
        itotdate_varf(nf) = itotdate
 
+       if (dumpLocal) then
+          call MsgDump(h//" invokes date_abs_secs2")
+       end if
        call date_abs_secs2(inyear, inmonth, indate, inhour, secs_varf)
        varf_times(nf) = secs_varf - secs_init
 

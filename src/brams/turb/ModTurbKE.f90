@@ -79,15 +79,9 @@ contains
          ja, &
          jz  
 
-    real, intent(in),    dimension(m1, m2, m3) :: &
-         tkep,  &
-         vt3da, &
-         vt3dc, &
-         vt3dj, &
-         vt3dd, &
-         vt3de, &
-         dn0
+    real, intent(in),    dimension(m1, m2, m3) :: tkep, dn0
 
+    real, intent(in),    dimension(:,:,:)  ::  vt3dj,vt3dd,vt3de,vt3dc,vt3da
 
     real, intent(inout), dimension(m1, m2, m3) :: & 
          tket,  &
@@ -366,11 +360,10 @@ contains
     real, intent(in),    dimension(m1,m2,m3) :: &
          tkep,  &
          epsp,  &
-         vt3da, &
-         vt3dc, &
-         vt3dj, &
          dn0
 
+
+    real, intent(in),    dimension(:,:,:) :: vt3dj,vt3dc,vt3da
 
     real, intent(inout), dimension(m1,m2,m3) :: &
          tket,  &
@@ -520,11 +513,9 @@ contains
          wp, &     !not used in this subroutine
          rtp, &    !not used in this subroutine
          rv, &     !not used in this subroutine
-         theta, &  !not used in this subroutine
-         vt3da, & 
-         vt3dc, &
-         vt3dj
+         theta  !not used in this subroutine
 
+    real, intent(in), dimension(:,:,:) :: vt3dj,vt3dc,vt3da
 
 
     real, intent(inout), dimension(m1, m2, m3) :: &
@@ -618,7 +609,6 @@ contains
          vp,    &
          wp
 
-
     real, intent(out)  , dimension(m1,m2,m3) :: vt3dh, &
          scr1
 
@@ -663,6 +653,13 @@ contains
     data a1,a2,b1,b2,c1/0.92,0.74,16.6,10.1,0.08/
     data aux1,aux2/0.758964199,2.58286747/
     data rf1,rf2,rf3,rf4/1.,0.191232309,0.223117196,0.234067819/
+
+    vctr1=0.0
+    vctr5=0.0
+    vctr9=0.0
+    vctr30=0.0
+    vctr31=0.0
+    vctr32=0.0
 
     !lfr: Solving a  problem with integer inside vtables
     lpu=int(lpu_r);lpv=int(lpv_r);lpw=int(lpw_r)

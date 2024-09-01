@@ -53,7 +53,7 @@ module utilsMod
   public :: date_make_big
   public :: date_unmake_big
   public :: date_abs_secs
-  public :: date_abs_secs2
+!!$  public :: date_abs_secs2
   public :: date_secs_ymdt
   public :: date_add_to_big
   public :: date_add_to

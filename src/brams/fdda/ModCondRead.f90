@@ -7,6 +7,9 @@
 !###########################################################################
 module ModCondRead
 
+  use ModParallelEnvironment, only: &
+       MsgDump
+  
   use ModRamsGrid, only: &
        newgrid
 
@@ -165,8 +168,14 @@ contains
     character(len=14)  :: itotdate
     real(kind=8) :: secs_init, secs_nud
 
+    character(len=*), parameter :: h="**(cond_file_inv)**"
+    logical, parameter :: dumpLocal=.false.
+
     ! Get abs seconds of run start
 
+    if (dumpLocal) then
+       call MsgDump(h//" invokes date_abs_secs2")
+    end if
     call date_abs_secs2(iyear1,imonth1,idate1,itime1*100,secs_init)
 
     ! Go through history files and make inventory
@@ -228,6 +237,9 @@ contains
        fnames_cond(ncondfiles)=fnames(nf)
        itotdate_cond(ncondfiles)=itotdate
 
+       if (dumpLocal) then
+          call MsgDump(h//" invokes date_abs_secs2")
+       end if
        call date_abs_secs2(inyear,inmonth,indate,inhour,secs_nud)
        cond_times(ncondfiles)=secs_nud - secs_init
 

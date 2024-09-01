@@ -1,4 +1,7 @@
 module ModDateUtils
+  use ModParallelEnvironment, only: &
+       MsgDump
+
   implicit none
 
   ! provides gregorian calendar utilities
@@ -116,7 +119,7 @@ contains
 
   subroutine date_abs_secs(indate1, seconds)
     use dump, only: &
-      dumpMessage
+         dumpMessage
 
     implicit none
 
@@ -140,8 +143,8 @@ contains
        !call fatal_error(h//" input year should be <= 1970; it was "&
        !      &//trim(adjustl(c0)))
        iErrNumber=dumpMessage(c_tty,c_yes,h,modelVersion,c_fatal, &
-                 " input year should be <= 1970; it was "&
-                      &//trim(adjustl(c0)))
+            " input year should be <= 1970; it was "&
+            &//trim(adjustl(c0)))
 
     end if
 
@@ -160,7 +163,7 @@ contains
 
   subroutine date_abs_secs2 (year1,month1,date1,hour1,seconds)
     use dump, only: &
-      dumpMessage
+         dumpMessage
 
     implicit none
 
@@ -179,15 +182,29 @@ contains
     real(kind=r8) :: s1,s2,s3,s4
     integer :: iy,ndays
     character(len=8) :: c0
+    character(len=8) :: str(10)
+    character(len=16) :: rstr(10)
     character(len=*), parameter :: h="**(date_abs_secs2)**"
+    logical, parameter :: dumpLocal=.false.
 
+    if (dumpLocal) then
+       write(str(1),"(i8)") year1
+       write(str(2),"(i8)") month1
+       write(str(3),"(i8)") date1
+       write(str(4),"(i8)") hour1
+       call MsgDump(h//" enter with "//&
+            " year1="//trim(adjustl(str(1)))//&
+            " month1="//trim(adjustl(str(2)))//&
+            " date1="//trim(adjustl(str(3)))//&
+            " hour1="//trim(adjustl(str(4))))
+    end if
     if (year1 < 1900) then
        write(c0,"(i8)") year1
        !call fatal_error(h//" input year should be <= 1970; it was "&
-      !      &//trim(adjustl(c0)))
+       !      &//trim(adjustl(c0)))
        iErrNumber=dumpMessage(c_tty,c_yes,h,modelVersion,c_fatal, &
-                      " input year should be <= 1970; it was "&
-                           &//trim(adjustl(c0)))
+            " input year should be <= 1970; it was "&
+            &//trim(adjustl(c0)))
     end if
 
     iy = year1 - 1900
@@ -197,6 +214,11 @@ contains
     s3= dble(mod(hour1,10000)/100)*60.
     s4= dble(mod(hour1,100))
     seconds= s1+s2+s3+s4
+    if (dumpLocal) then
+       write(rstr(1),"(e15.7)") real(seconds)
+       call MsgDump(h//" exits with "//&
+            " seconds="//trim(adjustl(rstr(1))))
+    end if
   end subroutine date_abs_secs2
 
 
@@ -279,6 +301,18 @@ contains
     integer :: inyear,inmonth,indate,inhour  &
          ,outyear,outmonth,outdate,outhour
 
+    character(len=16) :: rstr
+    character(len=*), parameter :: h="**(date_add_to_big)**"
+    logical, parameter :: dumpLocal=.false.
+
+    if (dumpLocal) then
+       write(rstr,"(f15.7)") tinc
+       call MsgDump(h//" enters with"//&
+            " cindate="//trim(adjustl(cindate))//&
+            " tinc="//trim(adjustl(rstr))//&
+            " tunits="//trim(adjustl(tunits)))
+    end if
+
     ! convert input increment to seconds
 
     select case(tunits)
@@ -296,6 +330,9 @@ contains
 
     call date_unmake_big(inyear,inmonth,indate,inhour,cindate)
 
+    if (dumpLocal) then
+       call MsgDump(h//" invokes date_abs_secs2")
+    end if
     call date_abs_secs2(inyear,inmonth,indate,inhour,secs)
 
     secs=secs+ttinc
@@ -303,6 +340,11 @@ contains
     call date_secs_ymdt(secs,outyear,outmonth,outdate,outhour)
     call date_make_big(outyear,outmonth,outdate,outhour,coutdate)
 
+    if (dumpLocal) then
+       call MsgDump(h//" exits with"//&
+            " coutdate="//trim(adjustl(coutdate)))
+    end if
+    
     return
   end subroutine date_add_to_big
 
@@ -313,7 +355,6 @@ contains
 
   subroutine date_add_to (inyear,inmonth,indate,inhour,  &
        tinc,tunits,outyear,outmonth,outdate,outhour)
-
     integer,          intent(in ) :: inyear
     integer,          intent(in ) :: inmonth
     integer,          intent(in ) :: indate
@@ -327,6 +368,9 @@ contains
 
     real(kind=8) :: ttinc,secs
 
+    character(len=*), parameter :: h="**(date_add_to)**"
+    logical, parameter :: dumpLocal=.false.
+
     ! convert input increment to seconds
 
     select case(tunits)
@@ -342,6 +386,9 @@ contains
 
     ! convert input time to seconds
 
+    if (dumpLocal) then
+       call MsgDump(h//" invokes date_abs_secs2")
+    end if
     call date_abs_secs2(inyear,inmonth,indate,inhour,secs)
 
     ! add increment
@@ -353,9 +400,8 @@ contains
     call date_secs_ymdt(secs,outyear,outmonth,outdate,outhour)
   end subroutine date_add_to
 
-    subroutine date_add_to_dble (inyear,inmonth,indate,inhour,  &
+  subroutine date_add_to_dble (inyear,inmonth,indate,inhour,  &
        tinc,tunits,outyear,outmonth,outdate,outhour)
-
     integer,          intent(in ) :: inyear
     integer,          intent(in ) :: inmonth
     integer,          intent(in ) :: indate
@@ -369,6 +415,9 @@ contains
 
     real(kind=8) :: ttinc,secs
 
+    character(len=*), parameter :: h="**(date_add_to_dble)**"
+    logical, parameter :: dumpLocal=.false.
+
     ! convert input increment to seconds
 
     select case(tunits)
@@ -384,6 +433,9 @@ contains
 
     ! convert input time to seconds
 
+    if (dumpLocal) then
+       call MsgDump(h//" invokes date_abs_secs2")
+    end if
     call date_abs_secs2(inyear,inmonth,indate,inhour,secs)
 
     ! add increment

@@ -193,7 +193,8 @@ contains
     !! Please, read @link https://creativecommons.org/licenses/GPL/2.0/legalcode.pt
     !!
     integer,intent(in) :: m1,m2,m3,i0,j0,ia,iz,ja,jz
-    real,intent(inout) :: ut(m1,m2,m3),vt3da(m1,m2,m3)
+    real,intent(inout) :: ut(m1,m2,m3)
+    real,intent(inout) :: vt3da(:,:,:)   
     type(BasicFields), pointer, intent(in) :: oneBasicFields
 
     integer :: i,j,k
@@ -265,7 +266,8 @@ contains
     !! Please, read @link https://creativecommons.org/licenses/GPL/2.0/legalcode.pt
     !!
     integer,intent(in) :: m1,m2,m3,i0,j0,ia,iz,ja,jz
-    real,intent(inout) :: vt(m1,m2,m3),vt3da(m1,m2,m3)
+    real,intent(inout) :: vt(m1,m2,m3)
+    real,intent(inout) :: vt3da(:,:,:)    
     type(BasicFields), pointer, intent(in) :: oneBasicFields
 
     integer :: i,j,k

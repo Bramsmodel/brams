@@ -1,5 +1,8 @@
 Module ModPostgridNetCDF
 #ifdef cdf
+  use ModParallelEnvironment, only: &
+       MsgDump
+  
   use ModNamelistFile, only: namelistFile
 
   use ModBramsGrid, only: BramsGrid
@@ -83,7 +86,6 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
     type(PostGrid), pointer :: onePostGrid
     type(BramsGrid), pointer :: oneBramsGrid
     type(PostVarType) :: one_post_variable
-    character(len=*), parameter :: h='**(FillNetcdfVarControlFile)**'
 
     include "constants.h"
 
@@ -97,6 +99,9 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
     real(kind=r8) :: seconds
     real :: lon(nnxp(1)-1),lat(nnyp(1)-1)
     character(len=8) :: cVar
+
+    character(len=*), parameter :: h='**(FillNetcdfVarControlFile)**'
+    logical, parameter :: dumpLocal=.false.
 
     !if(.not. netCDFFirstTime) return
     if (oneBramsGrid%mchnum /= oneBramsGrid%master_num) return
@@ -249,6 +254,9 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
     
     !Filling Times
     !First convert the initial date to seconds
+    if (dumpLocal) then
+       call MsgDump(h//" invokes date_abs_secs2")
+    end if
     call date_abs_secs2(iyear1,imonth1,idate1,ihour1,seconds)
     !Now put increments of frqanl in hours inside array
     do i=1,ntimes

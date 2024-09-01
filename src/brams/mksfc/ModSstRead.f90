@@ -200,9 +200,15 @@ contains
     integer :: iyears, imonths, idates, ihours, nf, ng
     real(kind=8) :: secs_init, secs1, secs2
 
+    character(len=8) :: str(10)
     character(len=*), parameter :: h="**(SstReadStoreOwnChunk)**"
     logical, parameter :: dumpLocal=.false.
 
+    if (dumpLocal) then
+       write(str(1),"(i8)") runflag
+       call MsgDump(h//" enters with runflag="//trim(adjustl(str(1))))
+    end if
+    
     ierr = 0
 
     if (runflag==1 .or. runflag==2) then   ! Initialization(1) or file check(2)
@@ -212,6 +218,9 @@ contains
        call SstFileInv(sstfpfx(1:len_trim(sstfpfx)), ierr)
        if (ierr==1) then
           if (runflag==2) then
+             if (dumpLocal) then
+                call MsgDump(h//" returns with runflag==2 and ierr==1")
+             end if
              return
           else if (runflag==1) then
              call fatal_error(h//' sst_read: error on init')
@@ -221,12 +230,27 @@ contains
        ! Find init and start date
 
        call date_make_big(iyear1, imonth1, idate1, itime1*100, totdate_init)
+       if (dumpLocal) then
+          call MsgDump(h//" returned from date_make_big with totdate_init="//trim(adjustl(totdate_init)))
+       end if
        if (runtype=='HISTORY') then
+          if (dumpLocal) then
+             call MsgDump(h//" invoke date_add_to_big in runtype==HISTORY")
+          end if
           call date_add_to_big(totdate_init, time, 's', totdate_start)
+          if (dumpLocal) then
+             call MsgDump(h//" returned from date_make_big with totdate_start="//trim(adjustl(totdate_start)))
+          end if
        elseif (runtype=='INITIAL') then
           totdate_start = totdate_init
+          if (dumpLocal) then
+             call MsgDump(h//" on INITIAL run, totdate_start="//trim(adjustl(totdate_start)))
+          end if
        elseif (runtype=='MAKEVFILE') then
           totdate_start = totdate_init
+          if (dumpLocal) then
+             call MsgDump(h//" on MAKEVFILE run, totdate_start="//trim(adjustl(totdate_start)))
+          end if
        endif
 
        ! Do some checks on times
@@ -238,6 +262,9 @@ contains
                      ' later than beginning of run'
              end if
              ierr = 1
+             if (dumpLocal) then
+                call MsgDump(h//" returns with ierr=1 since initial sst file time later than beginning of run")
+             end if
              return
           endif
 
@@ -247,10 +274,19 @@ contains
                      ' for grid', ng
              end if
              ierr = 1
+             if (dumpLocal) then
+                call MsgDump(h//" returns with ierr=1 since only one sst file")
+             end if
              return
           endif
 
+          if (dumpLocal) then
+             call MsgDump(h//" invokes date_add_to_big to compute totdatem")
+          end if
           call date_add_to_big(totdate_init, timmax, 's', totdatem)
+          if (dumpLocal) then
+             call MsgDump(h//" returns from date_add_to_big with totdatem="//trim(adjustl(totdatem)))
+          end if
           if (iupdsst==1 .and. isstcycdata==0 .and. &
                itotdate_sst(nsstfiles(ng),ng)<totdatem) then
              if (mchnum==master_num) then
@@ -258,6 +294,9 @@ contains
                      'earlier than end of run - making new sst files'
              end if
              ierr = 1
+             if (dumpLocal) then
+                call MsgDump(h//" returns with ierr=1 since final sst file earlier than end of run")
+             end if
              return
           endif
        enddo
@@ -269,7 +308,12 @@ contains
        end if
 
        ! If we are only checking, we're done.
-       if (runflag==2) return
+       if (runflag==2) then
+          if (dumpLocal) then
+             call MsgDump(h//" returns since runflag==2")
+          end if
+          return
+       end if
 
        do ng=1,ngrids
 
@@ -277,9 +321,18 @@ contains
           !   when we need to read a future file.
 
           if (isstcycdata==1) then
+             if (dumpLocal) then
+                call MsgDump(h//" will change itotdate_sst since isstcycdata==1")
+             end if
              do nf=1,nsstfiles(ng)
                 itotdate_sst(nf,ng)(1:4) = totdate_start(1:4)
              end do
+             if (dumpLocal) then
+                do nf=1,nsstfiles(ng)
+                   write(str(1),"(i8)") nf
+                   call MsgDump(h//" itotdate_sst("//trim(adjustl(str(1)))//"="//trim(adjustl(itotdate_sst(nf,ng))))
+                end do
+             end if
           end if
 
           ! Find past time file. The files are ordered in time, so we only
@@ -292,6 +345,10 @@ contains
                 exit
              end if
           end do
+          if (dumpLocal) then
+             write(str(1),"(i8)") isstflp(ng)
+             call MsgDump(h//" past file in isstflp="//trim(adjustl(str(1))))
+          end if
 
           isstflf(ng) = isstflp(ng) + 1
 
@@ -303,15 +360,29 @@ contains
           if (isstcycdata==1) then
              if (isstflp(ng)==0)            isstflp(ng) = nsstfiles(ng)
              if (isstflf(ng)>nsstfiles(ng)) isstflf(ng) = 1
+             if (dumpLocal) then
+                write(str(1),"(i8)") isstflp(ng)
+                write(str(2),"(i8)") isstflf(ng)
+                call MsgDump(h//" since isstcycdata==1,"//&
+                     " isstflp(ng)="//trim(adjustl(str(1)))//&
+                     " isstflf(ng)="//trim(adjustl(str(2))))
+             end if
           endif
 
           ! Read past time sst field
 
+          if (dumpLocal) then
+             call MsgDump(h//" will read past time sst")
+          end if
           call SstUpdate(0, isstflp(ng), oneControlVars)
 
           if (iupdsst==1) then
 
              ! Read future time sst field if updating
+
+             if (dumpLocal) then
+                call MsgDump(h//" will read future time sst")
+             end if
 
              call SstUpdate(1, isstflf(ng), oneControlVars)
 
@@ -326,8 +397,12 @@ contains
 
                 ! If month of past file > current month, subtract a year
 
-                if (totdatem(5:6)>totdate_start(5:6)) &
-                     call date_add_to_big(totdatem, -365., 'd', totdatem)
+                if (totdatem(5:6)>totdate_start(5:6)) then
+                   if (dumpLocal) then
+                      call MsgDump(h//" invoke date_add_to_big on month of past file > current month")
+                   end if
+                   call date_add_to_big(totdatem, -365., 'd', totdatem)
+                end if
              endif
              call date_abs_secs(totdatem, secs1)
 
@@ -337,6 +412,9 @@ contains
 
                    ! Future file is in next year. Update all file names for a new year
 
+                   if (dumpLocal) then
+                      call MsgDump(h//" invoke date_add_to_big on future file is in next year")
+                   end if
                    call date_add_to_big(totdatem, 365., 'd', totdatem)
                    do nf=1,nsstfiles(ng)
                       itotdate_sst(nf,ng)(1:4) = totdatem(1:4)
@@ -368,6 +446,9 @@ contains
           ! Compute times as number of seconds past 1 Jan 1900
           !   If cyclic, modify file date
           call date_abs_secs(totdate_init, secs_init)
+          if (dumpLocal) then
+             call MsgDump(h//" invoke date_add_to_big on cyclic, modify file date")
+          end if
           call date_add_to_big(totdate_init,time, 's', totdate)
 
           totdatem = itotdate_sst(isstflp(ifm),ifm)
@@ -378,6 +459,9 @@ contains
              isstflf(ifm) = 1
              ! Update all file names for a new year
              totdatem     = itotdate_sst(isstflf(ifm),ifm)
+             if (dumpLocal) then
+                call MsgDump(h//" invoke date_add_to_big on update all file names for a new year")
+             end if
              call date_add_to_big(totdatem, 365., 'd', totdatem)
              do nf=1,nsstfiles(ifm)
                 itotdate_sst(nf,ifm)(1:4) = totdatem(1:4)
@@ -474,6 +558,9 @@ contains
 
        ! Get abs seconds of run start
 
+       if (dumpLocal) then
+          call MsgDump(h//" invoca date_abs_secs2")
+       end if
        call date_abs_secs2(iyear1, imonth1, idate1, itime1*100, secs_init)
 
        ! Go through sst files and make inventory. We unfortunately have to do this
@@ -756,6 +843,7 @@ contains
     character(len=f_name_length) :: flnm
     character(len=001) :: dummy
 
+    character(len=8) :: str(10)
     character(len=*), parameter :: h="**(SstUpdate)**"
     logical, parameter :: dumpLocal=.false.
 
@@ -782,7 +870,9 @@ contains
           flnm(nc:nc) = cgrid
 
           if (dumpLocal) then
-             call MsgDump(h//" will read file "//trim(flnm))
+             write(str(1),"(i8)") nfile
+             call MsgDump(h//" will read file #"//trim(adjustl(str(1)))//&
+                  " named "//trim(flnm))
           end if
 
           if (useVfm) then
@@ -816,6 +906,9 @@ contains
 
        if (mchnum==master_num) then
           close(fUnit)
+       end if
+       if (dumpLocal) then
+          call MsgDump(h//" done reading file "//trim(flnm))
        end if
     enddo
 

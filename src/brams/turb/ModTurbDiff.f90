@@ -87,8 +87,9 @@ contains
 
     real, dimension(m1,m2,m3), intent(inout) :: ut      &
          , vt      &
-         , wt      &
-         , vt3da   &
+         , wt     
+    real, dimension(m1,m2,m3), intent(inout) :: & 
+          vt3da   &
          , vt3db   &
          , vt3dc   &
          , vt3dd   &
@@ -101,6 +102,8 @@ contains
          , vt3dm   &
          , vt3dn   &
          , vt3do
+    
+    !TO real, dimension(:,:,:) :: vt3dn
 
     real, dimension(m2,m3), intent(in)  :: sflux_u    &
          , sflux_v    &
@@ -831,8 +834,10 @@ contains
          , cim1
 
     real, dimension(m1,m2,m3), intent(inout) :: cjp1    &
-         , rhs     &
+         !TO , rhs     &
          , cj
+
+    real, dimension(:,:,:) , intent(inout) :: rhs      
 
     !local variables:
     integer :: i,j,k

@@ -190,17 +190,17 @@ contains
     real :: vctr1(m1)
     real :: vctr2(m1)
     real :: scr1(m1*m2*m3)
-    real :: vt3dk(m1*m2*m3)
-    real :: vt3dj(m1*m2*m3)
+    real :: vt3dk(m1,m2,m3)
+    real :: vt3dj(m1,m2,m3)
     real :: vt3di(m1*m2*m3)
     real :: vt3dh(m1*m2*m3)
-    real :: vt3dg(m1*m2*m3)
-    real :: vt3df(m1*m2*m3)
-    real :: vt3de(m1*m2*m3)
-    real :: vt3dd(m1*m2*m3)
-    real :: vt3dc(m1*m2*m3)
-    real :: vt3db(m1*m2*m3)
-    real :: vt3da(m1*m2*m3)
+    real :: vt3dg(m1,m2,m3)
+    real :: vt3df(m1,m2,m3)
+    real :: vt3de(m1,m2,m3)
+    real :: vt3dd(m1,m2,m3)
+    real :: vt3dc(m1,m2,m3)
+    real :: vt3db(m1,m2,m3)
+    real :: vt3da(m1,m2,m3)
     !---------------------------------------------------------------------------------------!
 
     !----- Finding the total size of matrices ----------------------------------------------!
@@ -533,7 +533,7 @@ contains
     integer                       , intent(in)  :: m1,m2,m3
     real                          , intent(in)  :: edt
     real    , dimension(m1,m2,m3) , intent(in)  :: up,uc,vp,vc,wp,wc
-    real    , dimension(m1,m2,m3) , intent(out) :: vt3da,vt3db,vt3dc
+    real    , dimension(:,:,:)    , intent(out) :: vt3da,vt3db,vt3dc
     !----- Local variables -----------------------------------------------------------------!
     integer                                     :: i,j,k
     !---------------------------------------------------------------------------------------!

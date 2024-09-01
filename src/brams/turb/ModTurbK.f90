@@ -190,22 +190,22 @@ contains
     real, target :: scr3(mxp*myp*mzp)
     real, target :: vt2da(mxp*myp)
     real, target :: vt2db(mxp*myp)
-    real, target :: vt3dp(mxp*myp*mzp)
-    real, target :: vt3dn(mxp*myp*mzp)
-    real, target :: vt3do(mxp*myp*mzp)
-    real, target :: vt3dm(mxp*myp*mzp)
-    real, target :: vt3dl(mxp*myp*mzp)
-    real, target :: vt3dk(mxp*myp*mzp)
-    real, target :: vt3dj(mxp*myp*mzp)
+    real, target :: vt3dp(mxp,myp,mzp)
+    real, target :: vt3dn(mxp,myp,mzp)
+    real, target :: vt3do(mxp,myp,mzp)
+    real, target :: vt3dm(mxp,myp,mzp)
+    real, target :: vt3dl(mxp,myp,mzp)
+    real, target :: vt3dk(mxp,myp,mzp)
+    real, target :: vt3dj(mxp,myp,mzp)
     real, target :: vt3di(mxp*myp*mzp)
     real, target :: vt3dh(mxp*myp*mzp)
-    real, target :: vt3dg(mxp*myp*mzp)
-    real, target :: vt3df(mxp*myp*mzp)
-    real, target :: vt3dd(mxp*myp*mzp)
-    real, target :: vt3de(mxp*myp*mzp)
-    real, target :: vt3dc(mxp*myp*mzp)
-    real, target :: vt3db(mxp*myp*mzp)
-    real, target :: vt3da(mxp*myp*mzp)
+    real, target :: vt3dg(mxp,myp,mzp)
+    real, target :: vt3df(mxp,myp,mzp)
+    real, target :: vt3dd(mxp,myp,mzp)
+    real, target :: vt3de(mxp,myp,mzp)
+    real, target :: vt3dc(mxp,myp,mzp)
+    real, target :: vt3db(mxp,myp,mzp)
+    real, target :: vt3da(mxp,myp,mzp)
 
     character(len=*), parameter :: h="**(diffuse)**" 
     real :: vctr34(mzp)
@@ -225,6 +225,28 @@ contains
     ! Nullifing pointer to Large Scale Forcing for GRELL CUPAR - Not used
     !nullify(lsfcupar_p)
     !
+    scr1=0.0
+    scr2=0.0
+    scr3=0.0
+    vt2da=0.0
+    vt2db=0.0
+    vt3dp=0.0
+    vt3dn=0.0
+    vt3do=0.0
+    vt3dm=0.0
+    vt3dl=0.0
+    vt3dk=0.0
+    vt3dj=0.0
+    vt3di=0.0
+    vt3dh=0.0
+    vt3dg=0.0
+    vt3df=0.0
+    vt3dd=0.0
+    vt3de=0.0
+    vt3dc=0.0
+    vt3db=0.0
+    vt3da=0.0
+    vctr34=0.0
 
     csx=oneNamelistFile%csx(gridId)
     idiffk=oneNamelistFile%idiffk(gridId)
@@ -252,12 +274,12 @@ contains
        call strain(mzp,mxp,myp,ia,iz,ja,jz                       &
             ,ia_1,ja_1,iz1,jz1,jdim                                &
             ,oneBasicFields%up (:,:,:) ,oneBasicFields%vp (:,:,:)  &
-            ,oneBasicFields%wp (:,:,:) ,vt3da     (:)      &
-            ,vt3db     (:)     ,vt3dc     (:)      &
-            ,vt3dd     (:)     ,vt3de     (:)      &
-            ,vt3df     (:)     ,vt3dg     (:)      &
-            ,vt3dh     (:)     ,vt3di     (:)      &
-            ,vt3dn     (:)     ,scr2      (:)      &
+            ,oneBasicFields%wp (:,:,:) ,vt3da           &
+            ,vt3db          ,vt3dc           &
+            ,vt3dd          ,vt3de           &
+            ,vt3df          ,vt3dg           &
+            ,vt3dh          ,vt3di           &
+            ,vt3dn     ,scr2      (:)      &
             ,idiffk)
 
     endif
@@ -266,7 +288,7 @@ contains
          vt3dp = 0.
 
     if (oneMicControl%level>=2) &
-         call ae1_l(int(mxyzp,i8), vt3dp(:), oneMicroFields%rcp(:,:,:))
+         call ae1_l(int(mxyzp,i8), vt3dp, oneMicroFields%rcp(:,:,:))
 
     !-srf 29/12/2008 adapted from OLAM
     call bruvais_OLAM(mzp, mxp, myp, ia, iz, ja, jz,                  &
@@ -279,8 +301,8 @@ contains
     !ml/srf- for new turn scheme
     if (idiffk <= 3 .or. idiffk == 7.or. idiffk == 8) then
        call mxdefm(mzp,mxp,myp,ia,iz,ja,jz,ibcon,jdim            &
-            ,vt3dh      (:)     ,vt3di      (:)    &
-            ,vt3dj      (:)     ,vt3dk      (:)    &
+            ,vt3dh      ,vt3di   &
+            ,vt3dj      ,vt3dk   &
             ,scr1       (:)     ,scr2       (:)    &
             ,oneBasicFields%dn0 (:,:,:) ,grid_g(ngrid)%rtgt (:,:)  &
             ,grid_g(ngrid)%dxt  (:,:)   ,grid_g(ngrid)%dyt  (:,:)  &
@@ -291,7 +313,7 @@ contains
           !srf------
           !coef de difusao horizontal diferente  para tracers
           call mxdefm_tracer(mzp,mxp,myp,ia,iz,ja,jz  &
-               ,ibcon,jdim,vt3dh(:),scr3(:) &
+               ,ibcon,jdim,vt3dh,scr3(:) &
                ,oneBasicFields%dn0(:,:,:),grid_g(ngrid)%dxt(:,:),&
                grid_g(ngrid)%dyt(:,:),grid_g(ngrid)%lpw(:,:),mynum, &
                csx, akmin)
@@ -355,8 +377,8 @@ contains
     if (idiffk==1) then
        call tkemy(mzp,mxp,myp,ia,iz,ja,jz,ibcon,jdim,nodei0(mynum,ngrid),nodej0(mynum,ngrid)  &
             ,oneTurbFields%tkep   (:,:,:) ,tend%tket            (:)      &
-            ,vt3dh        (:)     ,vt3di        (:)      &
-            ,vt3dj        (:)     ,scr1         (:)      &
+            ,vt3dh             ,vt3di              &
+            ,vt3dj             ,scr1         (:)      &
             ,grid_g(ngrid)%rtgt   (:,:)   ,oneBasicFields%theta (:,:,:)  &
             ,oneBasicFields%dn0   (:,:,:) ,oneBasicFields%up    (:,:,:)  &
             ,oneBasicFields%vp    (:,:,:) ,oneBasicFields%wp    (:,:,:)  &
@@ -373,8 +395,8 @@ contains
             ,oneBasicFields%up    (:,:,:) ,oneBasicFields%vp    (:,:,:)  &
             ,oneBasicFields%wp    (:,:,:) ,oneBasicFields%rtp   (:,:,:)  &
             ,oneBasicFields%rv    (:,:,:) ,oneBasicFields%theta (:,:,:)  &
-            ,vt3da        (:)     ,vt3dc        (:)      &
-            ,vt3dh        (:)     ,vt3dj        (:)      &
+            ,vt3da             ,vt3dc              &
+            ,vt3dh             ,vt3dj              &
             ,scr1         (:)     ,scr2         (:)      &
             ,oneTurbFields%sflux_u(:,:)   ,oneTurbFields%sflux_v(:,:)    &
             ,oneTurbFields%sflux_w(:,:)   ,oneTurbFields%sflux_t(:,:)    &
@@ -390,11 +412,11 @@ contains
        call tkescl(mzp,mxp,myp,npatch,ia,iz,ja,jz  &
             ,oneTurbFields%tkep(:,:,:),tend%tket(:)  &
             ,oneTurbFields%epsp(:,:,:),tend%epst(:)  &
-            ,vt3da(:),vt3dc(:)  &
-            ,vt3dh(:),vt3di(:)  &
-            ,vt3dj(:),scr1(:)  &
+            ,vt3da,vt3dc  &
+            ,vt3dh,vt3di  &
+            ,vt3dj,scr1(:)  &
             ,scr2(:) ,grid_g(ngrid)%rtgt(:,:)  &
-            ,vt3dd(:),vt3de(:),grid_g(ngrid)%dxt(:,:)  &
+            ,vt3dd,vt3de,grid_g(ngrid)%dxt(:,:)  &
             ,leaf_g(ngrid)%ustar(:,:,:),leaf_g(ngrid)%patch_area(:,:,:) &
             ,grid_g(ngrid)%lpw(:,:),oneBasicFields%dn0(:,:,:)  )
     endif
@@ -406,9 +428,9 @@ contains
        call tkeeps(mzp,mxp,myp,npatch,ia,iz,ja,jz  &
             ,oneTurbFields%tkep(:,:,:),tend%tket(:)  &
             ,oneTurbFields%epsp(:,:,:),tend%epst(:)  &
-            ,vt3da(:),vt3dc(:)  &
-            ,vt3dh(:),vt3di(:)  &
-            ,vt3dj(:),scr1(:)  &
+            ,vt3da,vt3dc  &
+            ,vt3dh,vt3di  &
+            ,vt3dj,scr1(:)  &
             ,scr2(:) ,grid_g(ngrid)%rtgt(:,:)  &
             ,leaf_g(ngrid)%ustar(:,:,:),leaf_g(ngrid)%patch_area(:,:,:) &
             ,grid_g(ngrid)%lpw(:,:),oneBasicFields%dn0(:,:,:)  )
@@ -439,10 +461,10 @@ contains
             ,grid_g(ngrid)%rtgt   (:,:)          &
             ,grid_g(ngrid)%lpw    (:,:)          &
             ,scr1   (:)            &
-            ,vt3dh   (:)            &
-            ,vt3di        (:)            &
-            ,vt3dj        (:)            &
-            ,vt3dk        (:)            &
+            ,vt3dh               &
+            ,vt3di              &
+            ,vt3dj              &
+            ,vt3dk              &
             ,oneNamelistFile%zkhkm(gridId))
     endif
 
@@ -451,7 +473,7 @@ contains
     call klbnd(mzp,mxp,myp,ibcon,jdim  &
          ,scr2 (:),oneBasicFields%dn0(:,:,:),grid_g(ngrid)%lpw(:,:))
     call klbnd(mzp,mxp,myp,ibcon,jdim  &
-         ,vt3dh(:),oneBasicFields%dn0(:,:,:),grid_g(ngrid)%lpw(:,:))
+         ,vt3dh,oneBasicFields%dn0(:,:,:),grid_g(ngrid)%lpw(:,:))
 
 
     ! CATT
@@ -464,7 +486,7 @@ contains
     !_STC ....... boundary conditions even on Ke diffusion coefficient
     if (idiffk==5 .or. idiffk==6) &
          call klbnd(mzp,mxp,myp,ibcon,jdim  &
-         ,vt3di(:),oneBasicFields%dn0(:,:,:),grid_g(ngrid)%lpw(:,:))
+         ,vt3di,oneBasicFields%dn0(:,:,:),grid_g(ngrid)%lpw(:,:))
 
     !bob  swap new hkm, vkm, and vkh with past time level:  lagged K's have
     !bob  internal lateral boundary values from neighboring nodes
@@ -505,14 +527,14 @@ contains
             ,ia1,ja1,iz_1,jz_1,iz1,jz1,izu,jzv,idiffk             &
             ,oneBasicFields%up    (:,:,:) ,oneBasicFields%vp    (:,:,:)  &
             ,oneBasicFields%wp    (:,:,:) ,tend%ut              (:)      &
-            ,tend%vt              (:)     ,tend%wt              (:)      &
-            ,vt3da        (:)     ,vt3db        (:)      &
-            ,vt3dc        (:)     ,vt3dd        (:)      &
-            ,vt3de        (:)     ,vt3df        (:)      &
-            ,vt3dg        (:)     ,vt3dj        (:)      &
-            ,vt3dk        (:)     ,vt3dl        (:)      &
-            ,vt3dm        (:)     ,vt3dn        (:)      &
-            ,vt3do        (:)     ,grid_g(ngrid)%rtgu   (:,:)    &
+            ,tend%vt      (:)     ,tend%wt              (:)      &
+            ,vt3da             ,vt3db              &
+            ,vt3dc             ,vt3dd              &
+            ,vt3de             ,vt3df              &
+            ,vt3dg             ,vt3dj              &
+            ,vt3dk             ,vt3dl              &
+            ,vt3dm             ,vt3dn        &
+            ,vt3do             ,grid_g(ngrid)%rtgu   (:,:)    &
             ,grid_g(ngrid)%rtgv   (:,:)   ,grid_g(ngrid)%rtgt   (:,:)    &
             ,oneTurbFields%sflux_u(:,:)   ,oneTurbFields%sflux_v(:,:)    &
             ,oneTurbFields%sflux_w(:,:)   ,oneBasicFields%dn0   (:,:,:)  &
@@ -643,13 +665,13 @@ contains
           call diffsclr(mzp, mxp, myp, ia, iz, ja, jz, jdim,         &
                ia_1, ja_1, ia1, ja1, iz_1, jz_1, iz1, jz1, n, ksf,   &
                oneScalarTab(n)%a_var_p_1D, oneScalarTab(n)%a_var_t_1D,                               &
-               vt3da(:), vt3db(:), vt3df(:), &
-               vt3dg(:), vt3dj(:), vt3dk(:), &
-               vt3do(:), vt3dc(:), vt3dd(:), &
-               vt3dl(:), vt3dm(:), vt2db(:), &
-               grid_g(ngrid)%rtgt(:,:), vt2da(:),            &
+               vt3da, vt3db, vt3df, &
+               vt3dg, vt3dj, vt3dk, &
+               vt3do, vt3dc, vt3dd, &
+               vt3dl, vt3dm, vt2db, &
+               grid_g(ngrid)%rtgt(:,:), vt2da,            &
                oneBasicFields%dn0(:,:,:),                            &
-               vkh_p(:)                 , hkh_p(:),                  &
+               vkh_p                 , hkh_p(:),                  &
                oneNamelistFile%ihorgrad)
           !
           if (oneNamelistFile%nnqparm(ngrid)>=2) then
@@ -703,13 +725,15 @@ contains
          vt3dc,      &
          vt3dd,      &
          vt3de,      &
-         vt3df,      &
-         vt3dg,      &
+         !TO vt3df,      &
+         !TO vt3dg,      &
          vt3dh,      &
          vt3di,      &
          vt3dn,      &
          scr2
 
+    !TO real, dimension(:,:,:), intent(inout):: vt3dn
+    real, dimension(:,:,:), intent(inout):: vt3dg,vt3df
     !local variables:
     integer              :: i,j,k
 
@@ -1011,7 +1035,8 @@ contains
     integer, intent(IN) :: ibcon, jd, mynum   !- EHE -> nao sao usadas!!!
     real, intent(INOUT) :: vt3dh(m1,m2,m3), vt3dk(m1,m2,m3), &
          scr1(m1,m2,m3), scr2(m1,m2,m3)
-    real, intent(IN)    :: dn0(m1,m2,m3), vt3di(m1,m2,m3), vt3dj(m1,m2,m3)
+    real, intent(IN)    :: dn0(m1,m2,m3), vt3di(m1,m2,m3) !TO, vt3dj(m1,m2,m3)
+    real, intent(IN)    :: vt3dj(:,:,:)   
     real, intent(IN)    :: rtgt(m2,m3), dxt(m2,m3)
     real, intent(IN)    :: dyt(m2,m3)  !- EHE -> nao e' usada!!!
     real, intent(IN) :: lpw_R(m2,m3)
@@ -1487,7 +1512,8 @@ contains
        ,vt3dk       &
        ,zkhkm       )
 
-    real, intent(out)  , dimension(m1,m2,m3) :: scr1,vt3dh,vt3di,vt3dj,vt3dk
+    real, intent(out)  , dimension(m1,m2,m3) :: scr1,vt3dh,vt3di,vt3dk
+    real, intent(out)  , dimension(:,:,:)    :: vt3dj
 
     real, intent(in)   , dimension(m2,m3)    :: rtgt
 
@@ -1565,7 +1591,8 @@ contains
 
              !Compute boundary layer depth [h] for CLC - using gradient Richardon number [Ri]
 
-             call get_richgrad(h,k2,m1,zt,rtgt(i,j),vt3dj(1,i,j),vt3di(1,i,j)&
+             !TO call get_richgrad(h,k2,m1,zt,rtgt(i,j),vt3dj(1,i,j),vt3di(1,i,j)&
+             call get_richgrad(h,k2,m1,zt,rtgt(i,j),vt3dj,vt3di(1,i,j)&
                   ,vt3dk(1,i,j),zkhkm,i,j)
           endif
 
@@ -1638,7 +1665,8 @@ contains
     integer, intent (in) :: k2,m1,i,j
     real, intent(out) :: h
     real, intent(in)  :: zkhkm,rtgt
-    real, dimension(m1), intent(in)     :: zt,vt3dj,vt3di
+    real, dimension(m1), intent(in)     :: zt,vt3di !,vt3dj
+    real, dimension(:,:,:), intent(in)     :: vt3dj
     real, dimension(m1), intent(inout)  :: vt3dk
     real :: rmin,rmax,agrich,rchmax
     integer k,irich
@@ -1646,7 +1674,7 @@ contains
     rmin = -100.
     rmax = 1. / zkhkm
     do k = k2,m1-1
-       vt3dk(k) = max(min(vt3dj(k)  &
+       vt3dk(k) = max(min(vt3dj(k,i,j)  &
             / max(vt3di(k),1.e-15),rmax),rmin)
     enddo
     rchmax = 1.0 + 9.0 * float(irich)
