@@ -22,37 +22,13 @@ module ParLib
   public :: parf_wait_any_nostatus
   public :: parf_wait_all_nostatus
   public :: parf_pack
-  private:: parf_pack_int_1d
-  private:: parf_pack_int_2d
-  private:: parf_pack_int_scalar
-  private:: parf_pack_real_1d
-  private:: parf_pack_real_scalar
-  private:: parf_pack_char
   public :: parf_unpack
-  private:: parf_unpack_int_1d
-  private:: parf_unpack_int_1d_2d
-  private:: parf_unpack_int_scalar
-  private:: parf_unpack_real_1d
-  private:: parf_unpack_real_scalar
-  private:: parf_unpack_char
   public :: parf_barrier
   public :: parf_pack_max_size
   public :: parf_bcast
-  private:: parf_bcast_logical_scalar
-  private:: parf_bcast_real_scalar
-  private:: parf_bcast_real_1d
-  private:: parf_bcast_real_2d
-  private:: parf_bcast_real_3d
-  private:: parf_bcast_real_4d
-  private:: parf_bcast_int_1d
-  private:: parf_bcast_int_scalar
-  private:: parf_bcast_char
-  private:: parf_bcast_char_vec
   public :: parf_minloc
   public :: parf_reduce_max
   public :: parf_allreduce_max
-  private:: parf_allreduce_sum_scalar
-  private:: parf_allreduce_sum_vector
   public :: parf_allreduce_sum
   public :: parf_GatherAllChunks
   public :: parf_GatherPostSfc
@@ -852,7 +828,7 @@ contains
 
   subroutine parf_bcast_logical_scalar(buff, source_host)
     integer, intent(in) :: source_host
-    logical, intent(in) :: buff
+    logical, intent(inout) :: buff
     ! Local Variables:
     integer             :: ierr, ierr_b, rank
     character(len=20)   :: string
@@ -964,7 +940,7 @@ contains
 
   subroutine parf_bcast_real_scalar(buff, source_host)
     integer,          intent(in) :: source_host
-    real,             intent(in) :: buff
+    real,             intent(inout) :: buff
     ! Local Variables:
     integer                      :: ierr, ierr_b, rank
     character(len=20)            :: string
@@ -1002,7 +978,7 @@ contains
   !--------------------------------------------------------------------
 
   subroutine parf_bcast_int_scalar(buff, source_host)
-    integer,          intent(in) :: buff
+    integer,          intent(inout) :: buff
     integer,          intent(in) :: source_host
     ! Local Variables:
     integer                      :: ierr, ierr_b, rank
@@ -1262,9 +1238,9 @@ contains
 
   ! -------------------------------------------------------------------
 
-  subroutine parf_error()
-    stop
-  end subroutine parf_error
+!!$  subroutine parf_error()
+!!$    stop
+!!$  end subroutine parf_error
 
   !--------------------------------------------------------------------
 
