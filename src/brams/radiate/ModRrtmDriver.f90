@@ -957,6 +957,8 @@ contains
     !# 1360.49 occurs at SOLCYCFRAC = 0.0265, and the maximum total solar irradiance 
     !# of 1361.34 occurs at SOLCYCFRAC = 0.3826. 
 
+    ! **(JP)** required for binary reproducibitily whcn using GCC
+    real :: inv86400=1.0/86400.0
 
     iaer=10 !LFR for the 5.0 version
 
@@ -1495,7 +1497,9 @@ contains
           if(swdflx(noc,1)<.5) oneRadiateFields%rshort(i,j)=0.0
           do k=2,mzp-1
              !- radiative tendency of temperature (Kelvin/sec)
-             oneRadiateFields%fthrd(k,i,j)=(swhr(noc,k-1)+hr(noc,k-1))/86400.
+             ! **(JP)** required for binary reproducibility when using GCC
+             !!$oneRadiateFields%fthrd(k,i,j)=(swhr(noc,k-1)+hr(noc,k-1))/86400.
+             oneRadiateFields%fthrd(k,i,j)=(swhr(noc,k-1)+hr(noc,k-1))*inv86400
           enddo
           oneRadiateFields%fthrd(1  ,i,j)= oneRadiateFields%fthrd(2    ,i,j)
           oneRadiateFields%fthrd(mzp,i,j)= oneRadiateFields%fthrd(mzp-1,i,j)
