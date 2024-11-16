@@ -12455,7 +12455,7 @@ contains
 
       integer, dimension (its:ite)         ,intent (in )  :: ierr,ktop
       real,    dimension (its:ite,kts:kte) ,intent (in )  :: outqc,tempco,rho
-      real,    dimension (its:ite,kts:kte) ,intent (out)  :: outnliq,outnice
+      real,    dimension (its:ite,kts:kte) ,intent (inout)  :: outnliq,outnice
 
       integer :: i,k
       real    :: fr,tqliq,tqice,dtinv
@@ -12476,13 +12476,13 @@ contains
             tqliq = dtime * outqc(i,k)* rho(i,k) * fr
             tqice = dtime * outqc(i,k)* rho(i,k) * (1.-fr)
 
-            outnice(i,k) = max(0.0,  make_IceNumber    (tqice, tempco(i,k))/rho(i,k))
-            outnliq(i,k) = max(0.0,  make_DropletNumber(tqliq, nwfa  (i,k))/rho(i,k))
+            outnice(i,k) = dtinv * max(0.0,  make_IceNumber    (tqice, tempco(i,k))/rho(i,k))
+            outnliq(i,k) = dtinv * max(0.0,  make_DropletNumber(tqliq, nwfa  (i,k))/rho(i,k))
 
          enddo
          !-- convert in tendencies
-         outnice = outnice * dtinv ! unit [1/s]
-         outnliq = outnliq * dtinv ! unit [1/s]
+         ! outnice = outnice * dtinv ! unit [1/s]
+         ! outnliq = outnliq * dtinv ! unit [1/s]
       !--- for update
       ! nwfa =nwfa + outnliq*dtime
       ! nifa =nifa + outnice*dtime
