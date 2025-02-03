@@ -116,6 +116,8 @@ CONTAINS
        srctime1,          &
        srctime2
 
+       use mem_sfire, only: sfire
+
     INTEGER, INTENT(IN)  :: ngrid
     ! original
     INTEGER , INTENT(IN) :: mzp
@@ -187,11 +189,11 @@ CONTAINS
     lpw=int(lpw_R)
     
 
-    IF( CHEMISTRY < 0 .OR. srcmapfn(1:LEN_TRIM(srcmapfn)) == 'NONE' &
-                      .OR. srcmapfn(1:LEN_TRIM(srcmapfn)) == 'none') RETURN
+    IF(( CHEMISTRY < 0 .OR. srcmapfn(1:LEN_TRIM(srcmapfn)) == 'NONE' &
+                      .OR. srcmapfn(1:LEN_TRIM(srcmapfn)) == 'none') .and. SFIRE ==0) RETURN
 
 
-    IF(MOD(time+0.001,emiss_cycle_time) .LT. dtlt .OR. time .LT. .01)     & 
+    IF((MOD(time+0.001,emiss_cycle_time) .LT. dtlt .OR. time .LT. .01) .and. SFIRE==0)    & 
          CALL get_diurnal_cycle_normalized(mxp,myp,ia,iz,ja,jz,dtlt,glat,       &
                                            glon,imonth1,idate1,iyear1,itime1,   &
                                            antro,bioge,pi180,nsrc,emiss_cycle(:))

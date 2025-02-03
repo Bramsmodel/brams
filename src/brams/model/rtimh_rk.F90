@@ -348,8 +348,8 @@ subroutine timestep_rk(OneGrid,oneNamelistFile)
      !- emission
      !- allocation for diurnal cycle of emission arrays   and
      !- actual_time_index on nodes
-     if( (.not. emiss_cycle_alloc) .and. (chemistry >= 0) .and. &
-          trim(srcmapfn) .ne.  'NONE' .and. trim(srcmapfn) .ne.  'none') then
+     if( ((.not. emiss_cycle_alloc) .and. (chemistry >= 0) .and. &
+          trim(srcmapfn) .ne.  'NONE' .and. trim(srcmapfn) .ne.  'none') .or. SFIRE==1) then
 
 	  call alloc_emiss_cycle(mxp,myp,ngrids,nsrc)
 
@@ -759,7 +759,7 @@ subroutine timestep_rk(OneGrid,oneNamelistFile)
         call micro_wsm()
   endif
   !=====================================================
-  if (sfire > 0) print *,'Sfire ON. Time:',time
+  !if (sfire > 0) print *,'Sfire ON. Time:',time
   if (sfire > 0) call sfclyr_sfire(mzp,mxp,myp,ia,iz,ja,jz)
 
   !=====================================================

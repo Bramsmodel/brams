@@ -2113,6 +2113,7 @@ integer                                  :: simulation_start_second
 logical                                  :: reset_simulation_start
 integer                                  :: sr_x
 integer                                  :: sr_y
+real                                     :: grid_radius !INTRODUZIDO POR ISILDA CM
 character*256                               :: sgfdda_inname
 character*256                               :: gfdda_inname
 integer                                  :: sgfdda_interval_d
@@ -3910,6 +3911,8 @@ real      ,DIMENSION(:,:)     ,POINTER   :: lfn_s2
 real      ,DIMENSION(:,:)     ,POINTER   :: lfn_s3
 real      ,DIMENSION(:,:)     ,POINTER   :: fuel_frac
 real      ,DIMENSION(:,:)     ,POINTER   :: fire_area
+real      ,DIMENSION(:,:)     ,POINTER   :: fire_area_burn !INTRODUZIDO POR ISILDA CM
+real      ,DIMENSION(:,:)     ,POINTER   :: TIME_burn !INTRODUZIDO POR ISILDA CM
 real      ,DIMENSION(:,:)     ,POINTER   :: tign_in
 real      ,DIMENSION(:,:)     ,POINTER   :: lfn_out
 real      ,DIMENSION(:,:)     ,POINTER   :: fuel_frac_burnt
@@ -3921,6 +3924,7 @@ real      ,DIMENSION(:,:)     ,POINTER   :: fgrnhfx
 real      ,DIMENSION(:,:)     ,POINTER   :: fgrnqfx
 real      ,DIMENSION(:,:)     ,POINTER   :: fcanhfx
 real      ,DIMENSION(:,:)     ,POINTER   :: fcanqfx
+real      ,DIMENSION(:,:)     ,POINTER   :: FRP !INTRODUZIDO POR ISILDA CM
 real      ,DIMENSION(:,:)     ,POINTER   :: ros
 real      ,DIMENSION(:,:)     ,POINTER   :: burnt_area_dt
 real      ,DIMENSION(:,:)     ,POINTER   :: flame_length

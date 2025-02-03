@@ -2016,6 +2016,7 @@ integer :: simulation_start_second
 logical :: reset_simulation_start
 integer , DIMENSION(max_domains) :: sr_x
 integer , DIMENSION(max_domains) :: sr_y
+real , DIMENSION(max_domains) :: grid_radius !INTRODUZIDO POR ISILDA CM
 character*256 :: sgfdda_inname
 character*256 :: gfdda_inname
 integer , DIMENSION(max_domains) :: sgfdda_interval_d
@@ -4205,6 +4206,7 @@ integer :: simulation_start_second
 logical :: reset_simulation_start
 integer :: sr_x
 integer :: sr_y
+real :: grid_radius !INTRODUZIDO POR ISILDA CM
 character*256 :: sgfdda_inname
 character*256 :: gfdda_inname
 integer :: sgfdda_interval_d
@@ -6463,6 +6465,7 @@ integer :: simulation_start_second
 logical :: reset_simulation_start
 integer , DIMENSION(max_domains) :: sr_x
 integer , DIMENSION(max_domains) :: sr_y
+real, DIMENSION(max_domains) :: grid_radius ! INTRODUZIDO POR ISILDA CM
 character*256 :: sgfdda_inname
 character*256 :: gfdda_inname
 integer , DIMENSION(max_domains) :: sgfdda_interval_d
@@ -8571,6 +8574,7 @@ NAMELIST /time_control/ inputout_end_s
 NAMELIST /time_control/ reset_simulation_start
 NAMELIST /domains/ sr_x
 NAMELIST /domains/ sr_y
+NAMELIST /domains/ grid_radius !INTRODUZIDO POR ISILDA CM
 NAMELIST /fdda/ sgfdda_inname
 NAMELIST /fdda/ gfdda_inname
 NAMELIST /fdda/ sgfdda_interval_d
@@ -10765,6 +10769,7 @@ simulation_start_second = 0
 reset_simulation_start = .false.
 sr_x = 0
 sr_y = 0
+grid_radius = 0. !INTRODUZIDO POR ISILDA CM
 sgfdda_inname = "sgfdda_d<domain>"
 gfdda_inname = "gfdda_d<domain>"
 sgfdda_interval_d = 0
@@ -13085,6 +13090,7 @@ chem_opt = 0
  model_config_rec % reset_simulation_start     =  reset_simulation_start 
  model_config_rec % sr_x                       =  sr_x 
  model_config_rec % sr_y                       =  sr_y 
+ model_config_rec % grid_radius                =  grid_radius ! INTRODUZIDO POR ISILDA CM
  model_config_rec % sgfdda_inname              =  sgfdda_inname 
  model_config_rec % gfdda_inname               =  gfdda_inname 
  model_config_rec % sgfdda_interval_d          =  sgfdda_interval_d 
@@ -13092,7 +13098,7 @@ chem_opt = 0
  model_config_rec % sgfdda_interval_m          =  sgfdda_interval_m 
  model_config_rec % sgfdda_interval_s          =  sgfdda_interval_s 
  model_config_rec % sgfdda_interval_y          =  sgfdda_interval_y 
- model_config_rec % sgfdda_interval            =  sgfdda_interval 
+ model_config_rec % sgfdda_interval            =  sgfdda_interval
  model_config_rec % gfdda_interval_d           =  gfdda_interval_d 
  model_config_rec % gfdda_interval_h           =  gfdda_interval_h 
  model_config_rec % gfdda_interval_m           =  gfdda_interval_m 
@@ -15363,6 +15369,7 @@ chem_opt = 0
  grid_config_rec % reset_simulation_start     = model_config_rec % reset_simulation_start 
  grid_config_rec % sr_x                       = model_config_rec % sr_x (id_id)
  grid_config_rec % sr_y                       = model_config_rec % sr_y (id_id)
+ grid_config_rec % grid_radius                = model_config_rec % grid_radius (id_id) ! INTRODUZIDO POR ISILDA CM
  grid_config_rec % sgfdda_inname              = model_config_rec % sgfdda_inname 
  grid_config_rec % gfdda_inname               = model_config_rec % gfdda_inname 
  grid_config_rec % sgfdda_interval_d          = model_config_rec % sgfdda_interval_d (id_id)
@@ -36979,6 +36986,7 @@ integer :: simulation_start_second
 logical :: reset_simulation_start
 integer , DIMENSION(max_domains) :: sr_x
 integer , DIMENSION(max_domains) :: sr_y
+real, DIMENSION(max_domains) :: grid_radius ! INTRODOZIDO POR ISILDA CM
 character*256 :: sgfdda_inname
 character*256 :: gfdda_inname
 integer , DIMENSION(max_domains) :: sgfdda_interval_d
@@ -39085,6 +39093,7 @@ NAMELIST /time_control/ inputout_end_s
 NAMELIST /time_control/ reset_simulation_start
 NAMELIST /domains/ sr_x
 NAMELIST /domains/ sr_y
+NAMELIST /domains/ grid_radius ! INTRODOZIDO POR ISILDA CM
 NAMELIST /fdda/ sgfdda_inname
 NAMELIST /fdda/ gfdda_inname
 NAMELIST /fdda/ sgfdda_interval_d

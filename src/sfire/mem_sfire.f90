@@ -6,10 +6,8 @@ MODULE mem_sfire
   implicit none
   TYPE(domain) :: sfire_g
   TYPE(grid_config_rec_type), pointer :: config_flags => null()
-
   integer :: sfire
   
-
 CONTAINS
 
   SUBROUTINE alloc_sfire_brams(sfire &
@@ -58,6 +56,8 @@ CONTAINS
     ALLOCATE(sfire%lfn_out(ifms:ifme,jfms:jfme)) !INTRODUZIDO POR ISILDA CM
     ALLOCATE(sfire%tign_g(ifms:ifme,jfms:jfme))
     ALLOCATE(sfire%fire_area(ifms:ifme,jfms:jfme))
+    ALLOCATE(sfire%fire_area_burn(ifms:ifme,jfms:jfme))!INTRODUZIDO POR ISILDA CM
+    ALLOCATE(sfire%TIME_burn(ifms:ifme,jfms:jfme))!INTRODUZIDO POR ISILDA CM
     ALLOCATE(sfire%fuel_frac(ifms:ifme,jfms:jfme))
     ALLOCATE(sfire%zsf(ifms:ifme,jfms:jfme))
     ALLOCATE(sfire%dzdxf(ifms:ifme,jfms:jfme))
@@ -94,6 +94,8 @@ CONTAINS
     ALLOCATE(sfire%fgrnqfx(ifms:ifme, jfms:jfme))
     ALLOCATE(sfire%fcanhfx(ifms:ifme, jfms:jfme))
     ALLOCATE(sfire%fcanqfx(ifms:ifme, jfms:jfme))
+    ALLOCATE(sfire%FRP(ifms:ifme, jfms:jfme)) !INTRODUZIDO POR ISILDA CM
+  !  ALLOCATE(sfire%tburn(ifms:ifme, jfms:jfme)) !Introduzido por Luiz Flávio
     ALLOCATE(sfire%ros(ifms:ifme,jfms:jfme))
     ALLOCATE(sfire%flineint(ifms:ifme,jfms:jfme))
     ALLOCATE(sfire%flineint2(ifms:ifme,jfms:jfme))
@@ -157,6 +159,8 @@ CONTAINS
     IF (ASSOCIATED(sfire%lfn_out))  NULLIFY (sfire%lfn_out)!INTRODUZIDO POR ISILDA CM
     IF (ASSOCIATED(sfire%tign_g))  NULLIFY (sfire%tign_g)
     IF (ASSOCIATED(sfire%fire_area))  NULLIFY (sfire%fire_area)
+    IF (ASSOCIATED(sfire%fire_area_burn))  NULLIFY (sfire%fire_area_burn)!INTRODUZIDO POR ISILDA CM
+    IF (ASSOCIATED(sfire%TIME_burn))  NULLIFY (sfire%TIME_burn)!INTRODUZIDO POR ISILDA CM
     IF (ASSOCIATED(sfire%fuel_frac))  NULLIFY (sfire%fuel_frac)
     IF (ASSOCIATED(sfire%zsf))  NULLIFY (sfire%zsf)
     IF (ASSOCIATED(sfire%dzdxf))  NULLIFY (sfire%dzdxf)
@@ -193,6 +197,7 @@ CONTAINS
     IF (ASSOCIATED(sfire%fgrnqfx))  NULLIFY (sfire%fgrnqfx)
     IF (ASSOCIATED(sfire%fcanhfx))  NULLIFY (sfire%fcanhfx)
     IF (ASSOCIATED(sfire%fcanqfx))  NULLIFY (sfire%fcanqfx)
+    IF (ASSOCIATED(sfire%FRP))  NULLIFY (sfire%FRP) !INTRODUZIDO POR ISILDA CM
     IF (ASSOCIATED(sfire%ros))  NULLIFY (sfire%ros)
     IF (ASSOCIATED(sfire%flineint))  NULLIFY (sfire%flineint)
     IF (ASSOCIATED(sfire%flineint2))  NULLIFY (sfire%flineint2)
@@ -254,6 +259,8 @@ CONTAINS
     IF (ASSOCIATED(sfire%lfn_out))  DEALLOCATE (sfire%lfn_out) !INTRODUZIDO POR ISILDA CUNHA MENEZES
     IF (ASSOCIATED(sfire%tign_g))  DEALLOCATE (sfire%tign_g)
     IF (ASSOCIATED(sfire%fire_area))  DEALLOCATE (sfire%fire_area)
+    IF (ASSOCIATED(sfire%fire_area_burn))  DEALLOCATE (sfire%fire_area_burn)!INTRODUZIDO POR ISILDA CUNHA MENEZES
+    IF (ASSOCIATED(sfire%TIME_burn))  DEALLOCATE(sfire%TIME_burn)!INTRODUZIDO POR ISILDA CUNHA MENEZES
     IF (ASSOCIATED(sfire%fuel_frac))  DEALLOCATE (sfire%fuel_frac)
     IF (ASSOCIATED(sfire%zsf))  DEALLOCATE (sfire%zsf)
     IF (ASSOCIATED(sfire%dzdxf))  DEALLOCATE (sfire%dzdxf)
@@ -290,6 +297,7 @@ CONTAINS
     IF (ASSOCIATED(sfire%fgrnqfx))  DEALLOCATE (sfire%fgrnqfx)
     IF (ASSOCIATED(sfire%fcanhfx))  DEALLOCATE (sfire%fcanhfx)
     IF (ASSOCIATED(sfire%fcanqfx))  DEALLOCATE (sfire%fcanqfx)
+    IF (ASSOCIATED(sfire%FRP))  DEALLOCATE (sfire%FRP) !INTRODUZIDO POR ISILDA CM
     IF (ASSOCIATED(sfire%ros))  DEALLOCATE (sfire%ros)
     IF (ASSOCIATED(sfire%flineint))  DEALLOCATE (sfire%flineint)
     IF (ASSOCIATED(sfire%flineint2)) DEALLOCATE  (sfire%flineint2)
@@ -340,12 +348,14 @@ CONTAINS
     sfire%lfn_out(:,:)=0.  !INTRODUZIDO POR ISILDA CUNHA MENEZES
     sfire%tign_g(:,:)= 0.
     sfire%fire_area(:,:)= 0.
+    sfire%fire_area_burn(:,:)= 0.!INTRODUZIDO POR ISILDA CUNHA MENEZES
+    sfire%TIME_burn(:,:)= 0.!INTRODUZIDO POR ISILDA CUNHA MENEZES
     sfire%fuel_frac(:,:)= 0.
     sfire%zsf(:,:)= 0.
     sfire%dzdxf(:,:)= 0.
     sfire%dzdyf(:,:)= 0.
     sfire%fmc_g(:,:)= 0.
-    sfire%nfuel_cat(:,:)= 0.
+    sfire%nfuel_cat(:,:)= 14.
     sfire%fuel_time(:,:) = 0.
     sfire%fuel_frac_burnt(:,:)= 0.
     sfire%uf(:,:)= 0.
@@ -369,6 +379,7 @@ CONTAINS
     sfire%fgrnqfx(:, :)= 0.
     sfire%fcanhfx(:, :)= 0.
     sfire%fcanqfx(:, :)= 0.
+    sfire%FRP(:, :)= 0. !INTRODUZIDO POR ISILDA CM
     sfire%ros(:,:)= 0.
     sfire%flineint(:,:)= 0.
     sfire%flineint2(:,:)= 0.

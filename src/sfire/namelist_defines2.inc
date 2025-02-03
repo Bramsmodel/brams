@@ -1838,6 +1838,7 @@ integer :: simulation_start_second
 logical :: reset_simulation_start
 integer :: sr_x
 integer :: sr_y
+real :: grid_radius ! INTRODUZIDO POR ISILDA CM
 character*256 :: sgfdda_inname
 character*256 :: gfdda_inname
 integer :: sgfdda_interval_d

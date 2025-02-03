@@ -25,8 +25,9 @@ MODULE chem_sources
   USE mem_volc_chem1, ONLY:  &
        volc_mean_vars          ! Type
 
-  USE ModNamelistFile, ONLY: &
-       namelistFile
+   !USE ModNamelistFile, ONLY: &
+   !     namelistFile
+
 
   USE ModDateUtils, ONLY: &
        date_abs_secs2,    &    ! Subroutine
@@ -48,14 +49,17 @@ MODULE chem_sources
        src_times,         &
        actual_time_index, &
        nsrcfiles,         &
-       next_srcfile
+       next_srcfile  
+
+ ! use mem_sfire, only: sfire
+
 
 
   IMPLICIT NONE
 
   INCLUDE "ranks.h"
 
-
+  
   CHARACTER(len=256)  :: srcmapfn
 
   CHARACTER(len=32)   :: def_proc_src ! 'last_sources' 
@@ -113,6 +117,7 @@ MODULE chem_sources
   INTEGER,PARAMETER :: bioge=004
   INTEGER,PARAMETER :: marin=005
   INTEGER,PARAMETER :: v_ash=006
+
 
   PUBLIC :: read_sourcemaps,                & ! Subroutine
             sources,                        & ! Subroutine
@@ -248,6 +253,9 @@ CONTAINS
     
     INTEGER ng,isrc
 
+    if(allocated(emiss_cycle)) return
+!print *,'LFR-DBG Alocando emission_rate ###############################################'
+    
     ALLOCATE (emiss_cycle(nsrc,ngrids))
     DO ng=1,ngrids
        DO isrc=1,nsrc      
@@ -495,10 +503,10 @@ CONTAINS
       srctime1	 =   src_times(next_srcfile(ng)-1,1)
       srctime2	 =   src_times(next_srcfile(ng)  ,1)
     END IF
-    if (mchnum == master_num) print *, mchnum,'LFR-DBG - Comunicando srctime2 = ',srctime2; call flush(6)
+    !if (mchnum == master_num) print *, mchnum,'LFR-DBG - Comunicando srctime2 = ',srctime2; call flush(6)
     !CALL Broadcast(srctime1, master_num, "srctime1") !LFR
     CALL Broadcast(srctime2, master_num, "srctime2") 
-    print *, mchnum, 'LFR-DBG - recebido srctime2 = ',srctime2, src_times(next_srcfile(ng)  ,1); call flush(6)
+    !print *, mchnum, 'LFR-DBG - recebido srctime2 = ',srctime2, src_times(next_srcfile(ng)  ,1); call flush(6)
     !******* debug *****
     !write(*,fmt='(I3.3,1X,A,F12.6,1X,F12.6)') &
     !    mchnum,'LFR:srctime1 and 2',srctime1,srctime2
@@ -2281,8 +2289,12 @@ END SUBROUTINE read_sources_vfm
     real, dimension(nemis_spcs) ::recip_part_mass,dp0_emis
     REAL, DIMENSION(m1,m2,m3) :: dummy_src
     REAL :: factor
-    !-end of parameters for matrix.
+   !##INTRODUZIDO POR ISILDA
+    integer:: sfire
+   !####
 
+    !-end of parameters for matrix.
+!print *,'LFR-DBG inside sources'
     dummy_src=0.0
    
     !- if using mass conservation fix : air dens changes with the time evolution
@@ -2298,7 +2310,7 @@ END SUBROUTINE read_sources_vfm
     idays = INT(( float(itime1)/100. + time/3600.)/24.+.00001)  
 
     
-    
+!print *,'LFR-DBG bburn ', diur_cycle(bburn)
     IF(diur_cycle(bburn) == ON) THEN
        !-------------biomass burning diurnal cycle --------------------
        tign  = REAL(idays)*24.*3600.
@@ -2306,20 +2318,24 @@ END SUBROUTINE read_sources_vfm
        ! Modulacao da queimada media durante o ciclo diurno(unidade: 1/s)
        ! com a int( r_q dt) (0 - 24h)= 1.
        timeq= ( time + float(itime1)*0.01*3600. - tign )
-
+!print *,'LFR-DBG bburn-r_q '
        r_q  = rinti*( ax * EXP( -(timeq-bx_bburn)**2/(2.*cx**2) ) + 100. -  &
             5.6712963e-4*( timeq ))
+rt(bburn)= r_q
+alfa(bburn) = 0.
+!print *,'LFR-DBG bburn-emiss_cycle ',bburn,size(emiss_cycle),size(rt),size(alfa)
+!print *,size(emiss_cycle(bburn)%emission_rate,1),size(emiss_cycle(bburn)%emission_rate,2)
 
-       emiss_cycle(bburn)%emission_rate(:,:)=r_q
-       rt(bburn)= r_q
-       alfa(bburn) = 0.
+emiss_cycle(bburn)%emission_rate(:,:)=r_q
+
+!print *,'LFR-DBG bburn-alfa '
     ELSE
        emiss_cycle(bburn)%emission_rate(:,:)= um86400 ! = 1./86400.
        rt(bburn)= um86400 ! = 1./86400.
        alfa(bburn) = 1.
     ENDIF
 
-
+!print *,'LFR-DBG antro'
     IF(diur_cycle(antro) == ON) THEN
 
        !------------- anthropogenic diurnal cycle (industrial,urban, ...)
@@ -2362,6 +2378,7 @@ END SUBROUTINE read_sources_vfm
          ENDDO
        
        ENDIF
+!print *,'LFR-DBG CETESB'
        IF (diur_cetesb_flag == 1) THEN
           
            DO j=ja,jz
@@ -2428,7 +2445,7 @@ END SUBROUTINE read_sources_vfm
        emiss_cycle(antro)%emission_rate(:,:)=tlinterp
        alfa(antro)= 1.
     ENDIF
-
+!print *,'LFR-DBG BIOGE'
     IF(diur_cycle(bioge) == ON) THEN
 
        !---------- sources with diurnal cycle and spatial dependence
@@ -2447,7 +2464,7 @@ END SUBROUTINE read_sources_vfm
        emiss_cycle(bioge)%emission_rate(:,:) = tlinterp
        alfa(bioge) = 1.
     ENDIF
-
+!print *,'LFR-DBG Geoge'
     IF(diur_cycle(geoge) == ON  ) THEN
        emiss_cycle(geoge)%emission_rate(:,:)=um86400 ! 1./86400 sec
        alfa(geoge) = 0.
@@ -2471,7 +2488,11 @@ END SUBROUTINE read_sources_vfm
     ! ,srctime1,srctime2,tlinterp
 
     !-------------------------- perform emissions
-    !- chemistry section 
+    !- chemistry section
+!    print *,'LFR-DBG chemistry'
+    print*,"ISILDA_LF_sources sfire",sfire
+    call flush(6)
+    if (sfire == 0) then
     DO ispc=1,chem_nspecies
 
        IF(spc_chem_alloc(src,ispc) == off .OR. spc_chem_alloc(transport,ispc) == off)  CYCLE
@@ -2539,7 +2560,8 @@ END SUBROUTINE read_sources_vfm
           ENDDO
        ENDDO
     ENDDO
-
+   end if
+!print *,'LFR-DBG aerosol'
     !- aerosol section ----------------------------------------
     IF(AEROSOL == 1)  THEN
        !- still need implementation of the emission cycle with space dependence
@@ -2651,6 +2673,7 @@ END SUBROUTINE read_sources_vfm
        !- this section will provide emissions for aerosol species akk_sulf and acc_sulf
        !- for antro and bio-burn processes. These emissions are based on the SO2 gas emission
        !===> be sure emissions for the SO2 gas is provided (arrays chem1_src_g(*,isrc,SO2)%sc_src)
+!print *,'LFR-DBG so2'
        IF(spc_chem_alloc(src,SO2) == ON)  then
        
          DO ispc=sulf,sulf
@@ -2716,6 +2739,7 @@ END SUBROUTINE read_sources_vfm
        !
        !--- section for emission of number concentration
        !- A) getting parameter recip_part_mass
+!print *,'LFR-DBG Nemis'
        DO i =1,nemis_spcs
        
          dp0_emis(i) = 1.0e-06 * dgn0_emis(i) * exp( 1.5e+00 * ( log(sig0_emis(i)) )**2 )  ! convert from [um] to [m]
@@ -3498,6 +3522,8 @@ END SUBROUTINE read_sources_vfm
 
 
  SUBROUTINE StoreNamelistFileAtChemSources(oneNamelistFile)
+   USE ModNamelistFile, ONLY: &
+       namelistFile
    TYPE(namelistFile), POINTER :: oneNamelistFile
    srcmapfn = oneNamelistFile%srcmapfn
    def_proc_src = oneNamelistFile%def_proc_src
