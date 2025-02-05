@@ -1043,7 +1043,7 @@ chem_sources.o  : $(CCATT)/chem_sources.f90 mem_chem1.o mem_aer1.o \
 
 chem_plumerise_scalar.o : $(CCATT)/chem_plumerise_scalar.f90 mem_basic.o mem_grid.o extra.o \
 	node_mod.o mem_scalar.o  rconstants.o chem1_list.o \
-	mem_chem1.o aer1_list.o mem_aer1.o mem_plume_chem1.o
+	mem_chem1.o aer1_list.o mem_aer1.o mem_plume_chem1.o mem_sfire.o
 	@cp -f  $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
 	@mv -f $(<F:.f90=.f90) ../doc/src
