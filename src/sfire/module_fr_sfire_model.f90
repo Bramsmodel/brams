@@ -459,13 +459,13 @@ contains
                do j = jfds, jfde
                do i = ifds, ifde
                heat_Q=fire_atm_feedback*fgrnhfx(i,j)
-               ter_A=fp%fgip(i,j)*fuel_frac_burnt(i,j)
+               ter_A=(fp%fgip(i,j)*fuel_frac_burnt(i,j))/dt
                ! valores de c para a madeira 1500 a 1756
                if (ter_A == 0.) then
                FRP(i,j) = 0.
                else               
              !  print*,'ter_A,massa,frac_queima, fire_area',ter_A,fp%fgip(i,j),fuel_frac_burnt(i,j),fire_area(i,j)
-               ter_B= 0.85*(5.67*(10.0**(-8.)))*(fire_area(i,j)*(fdx*fdy)*(heat_Q/(ter_A*1500.))**(4.))
+               ter_B= 0.85*(5.67*(10.0**(-8.)))*(fire_area(i,j)*(fdx*fdy)*((heat_Q/(ter_A*1500.))**(4.)))
                FRP(i,j)=ter_B ! em inidade W
                endif
                enddo

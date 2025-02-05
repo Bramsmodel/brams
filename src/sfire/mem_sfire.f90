@@ -86,6 +86,8 @@ CONTAINS
     ALLOCATE(sfire%avg_fuel_frac(ims:ime, jms:jme))
     ALLOCATE(sfire%grnhfx(ims:ime, jms:jme))
     ALLOCATE(sfire%grnqfx(ims:ime, jms:jme))
+    ALLOCATE(sfire%fire_area_brams(ims:ime, jms:jme))!INTRODUZIDO POR ISILDA CM
+    ALLOCATE(sfire%FRP_brams(ims:ime, jms:jme))!INTRODUZIDO POR ISILDA CM
     ALLOCATE(sfire%canhfx(ims:ime, jms:jme))
     ALLOCATE(sfire%canqfx(ims:ime, jms:jme))
     ALLOCATE(sfire%uah(ims:ime,jms:jme))
@@ -189,6 +191,8 @@ CONTAINS
     IF (ASSOCIATED(sfire%avg_fuel_frac))  NULLIFY (sfire%avg_fuel_frac)
     IF (ASSOCIATED(sfire%grnhfx))  NULLIFY (sfire%grnhfx)
     IF (ASSOCIATED(sfire%grnqfx))  NULLIFY (sfire%grnqfx)
+    IF (ASSOCIATED(sfire%fire_area_brams))  NULLIFY(sfire%fire_area_brams)!INTRODUZIDO POR ISILDA CM
+    IF (ASSOCIATED(sfire%FRP_brams))  NULLIFY (sfire%FRP_brams)!INTRODUZIDO POR ISILDA CM
     IF (ASSOCIATED(sfire%canhfx))  NULLIFY (sfire%canhfx)
     IF (ASSOCIATED(sfire%canqfx))  NULLIFY (sfire%canqfx)
     IF (ASSOCIATED(sfire%uah))  NULLIFY (sfire%uah)
@@ -201,7 +205,7 @@ CONTAINS
     IF (ASSOCIATED(sfire%ros))  NULLIFY (sfire%ros)
     IF (ASSOCIATED(sfire%flineint))  NULLIFY (sfire%flineint)
     IF (ASSOCIATED(sfire%flineint2))  NULLIFY (sfire%flineint2)
-	IF (ASSOCIATED(sfire%flineint_total))  NULLIFY (sfire%flineint_total)  !!!!INTRODUZIDO POR ISILDA CUNHA MENEZES
+    IF (ASSOCIATED(sfire%flineint_total))  NULLIFY (sfire%flineint_total)  !!!!INTRODUZIDO POR ISILDA CUNHA MENEZES
     IF (ASSOCIATED(sfire%f_ros0))  NULLIFY (sfire%f_ros0)
     IF (ASSOCIATED(sfire%f_rosx))  NULLIFY (sfire%f_rosx)
     IF (ASSOCIATED(sfire%f_rosy))  NULLIFY (sfire%f_rosy)
@@ -289,6 +293,8 @@ CONTAINS
     IF (ASSOCIATED(sfire%avg_fuel_frac))  DEALLOCATE (sfire%avg_fuel_frac)
     IF (ASSOCIATED(sfire%grnhfx))  DEALLOCATE (sfire%grnhfx)
     IF (ASSOCIATED(sfire%grnqfx))  DEALLOCATE (sfire%grnqfx)
+    IF (ASSOCIATED(sfire%fire_area_brams))  DEALLOCATE (sfire%fire_area_brams)
+    IF (ASSOCIATED(sfire%FRP_brams))  DEALLOCATE (sfire%FRP_brams)
     IF (ASSOCIATED(sfire%canhfx))  DEALLOCATE (sfire%canhfx)
     IF (ASSOCIATED(sfire%canqfx))  DEALLOCATE (sfire%canqfx)
     IF (ASSOCIATED(sfire%uah))  DEALLOCATE (sfire%uah)
@@ -429,6 +435,8 @@ CONTAINS
     sfire%avg_fuel_frac(:, :)= 0.
     sfire%grnhfx(:, :)= 0.
     sfire%grnqfx(:, :)= 0.
+    sfire%fire_area_brams(:, :)= 0.
+    sfire%FRP_brams(:, :)= 0.
     sfire%canhfx(:, :)= 0.
     sfire%canqfx(:, :)= 0.
     sfire%uah(:,:)= 0.

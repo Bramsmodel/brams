@@ -55,3 +55,8 @@ engineMod.o : $(PRE-BRAMS)/engineMod.f90 dump.o
 	cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) -I$(UTILS_INCS) $(FC_FLAGS)
 	rm -f $(<F:.f90=.f90)
+
+utilsMod.o : $(PRE-BRAMS)/utilsMod.f90 dump.o
+	cp -f $< $(<F:.f90=.f90)
+	$(F_COMMAND) $(<F:.f90=.f90) -I$(UTILS_INCS) $(FC_FLAGS)
+	rm -f $(<F:.f90=.f90)

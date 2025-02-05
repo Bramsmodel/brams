@@ -339,7 +339,7 @@ module module_fr_sfire_driver
                fp%fmc_g, &
                grid%ndwi, &
                grid%fndwi, &
-               grid%flineint_total,grid%FRP) !!!! flineint_total e FRP introduzido por ISILDA CUNHA MENEZES
+               grid%flineint_total,grid%FRP,grid%fire_area_brams,grid%FRP_brams) !!!! flineint_total e FRP introduzido por ISILDA CUNHA MENEZES
 
 
             if (fire_ifun .eq. 2) then
@@ -435,7 +435,7 @@ module module_fr_sfire_driver
                                 fmc_g, &
                                 ndwi, &
                                 fndwi, &
-                                flineint_total,FRP) !!!! flineint_total e FRP introduzido por ISILDA CUNHA MENEZES
+                                flineint_total,FRP,fire_area_brams,FRP_brams) !!!! esta linha  introduzido por ISILDA CUNHA MENEZES
 
       implicit none
 
@@ -507,7 +507,7 @@ module module_fr_sfire_driver
          f_int, f_lineint, f_lineint2, &
          f_ros11, f_ros12, f_ros13, f_ros21, &
          f_ros23, f_ros31, f_ros32, f_ros33, &
-         flineint_total,FRP !!!! flineint_total e FRP introduzido por ISILDA CUNHA MENEZES
+         flineint_total,FRP,fire_area_brams,FRP_brams !!!! linha introduzida por ISILDA CUNHA MENEZES
 
       logical, intent(in)::run_advance_moisture, run_fuel_moisture
       real, intent(in)::dt_moisture
@@ -1164,6 +1164,21 @@ module module_fr_sfire_driver
                                      ims, ime, jms, jme, &
                                      ids, ide, jds, jde, &
                                      grnqfx)
+
+                  !### INTRODUZIDO POR ISILDA CM
+                  call sum_2d_cells( ifms, ifme, jfms, jfme, &
+                                     ifds, ifde, jfds, jfde, &
+                                     FRP, &
+                                     ims, ime, jms, jme, &
+                                     ids, ide, jds, jde, &
+                                     FRP_brams)
+                   call sum_2d_cells( ifms, ifme, jfms, jfme, &
+                                     ifds, ifde, jfds, jfde, &
+                                     fire_area, &
+                                     ims, ime, jms, jme, &
+                                     ids, ide, jds, jde, &
+                                     fire_area_brams)
+                   !#######
                                      
                   ! print*,'GRTFTP',grnqfx
                   ! call flush(6)

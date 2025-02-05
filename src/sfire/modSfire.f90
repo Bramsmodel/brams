@@ -451,7 +451,7 @@ contains
             !  write(52,*)'FRP',sfire_g%FRP(i,j),'tign_g',sfire_g%tign_g(i,j),step_isil
             !  endif
 
-             sfire_g%fire_area_burn(i,j) = sfire_g%fire_area(i,j)*((sfire_g%dx/sfire_g%sr_x)*(sfire_g%dy/sfire_g%sr_y))
+             sfire_g%fire_area_burn(i,j) = sfire_g%fire_area_brams(i,j)*(sfire_g%dx*sfire_g%dy)
              sfire_g%TIME_burn(i,j) = step_isil
             !  if(sfire_g%FRP(i,j) > 0.) then
             !  write(54,*)sfire_g%fxlat(i,j),sfire_g%fxlong(i,j),'sfire_g%fire_area_burn',sfire_g%fire_area_burn(i,j),'sfire_g%TIME_burn',sfire_g%TIME_burn(i,j)

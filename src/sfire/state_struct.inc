@@ -3895,6 +3895,8 @@ real      ,DIMENSION(:,:,:)   ,POINTER   :: rqvfrten
 real      ,DIMENSION(:,:)     ,POINTER   :: avg_fuel_frac
 real      ,DIMENSION(:,:)     ,POINTER   :: grnhfx
 real      ,DIMENSION(:,:)     ,POINTER   :: grnqfx
+real      ,DIMENSION(:,:)     ,POINTER   :: fire_area_brams
+real      ,DIMENSION(:,:)     ,POINTER   :: FRP_brams
 real      ,DIMENSION(:,:)     ,POINTER   :: canhfx
 real      ,DIMENSION(:,:)     ,POINTER   :: canqfx
 real      ,DIMENSION(:,:)     ,POINTER   :: uah
