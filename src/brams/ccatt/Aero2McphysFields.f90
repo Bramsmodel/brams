@@ -44,7 +44,7 @@ contains
     type(NodeDimensions), pointer, intent(in) :: oneNodeDimensions
     integer, intent(in) :: nmodes
     integer, intent(in) :: mcphys_type
-    type (Aero2McphysFields), pointer :: res(:)
+    type (Aero2McphysFields), pointer, contiguous :: res(:)
 
     integer :: i
     integer :: mxp
@@ -119,7 +119,7 @@ contains
 
 
   function CreateEmptyAero2McphysFields(nmodes, mcphys_type) result(res)
-    type (Aero2McphysFields), pointer :: res(:)
+    type (Aero2McphysFields), pointer, contiguous :: res(:)
     integer, intent(in) :: nmodes
     integer, intent(in) :: mcphys_type
 

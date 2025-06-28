@@ -1498,8 +1498,10 @@ contains
           do k=2,mzp-1
              !- radiative tendency of temperature (Kelvin/sec)
              ! **(JP)** required for binary reproducibility when using GCC
-             !!$oneRadiateFields%fthrd(k,i,j)=(swhr(noc,k-1)+hr(noc,k-1))/86400.
-             oneRadiateFields%fthrd(k,i,j)=(swhr(noc,k-1)+hr(noc,k-1))*inv86400
+             ! **(JP)** use next statement if gfortran version is 8-5
+             oneRadiateFields%fthrd(k,i,j)=(swhr(noc,k-1)+hr(noc,k-1))/86400.
+             ! **(JP)** use next statement if gfortran version is newer (required for 13.2)
+             !!$oneRadiateFields%fthrd(k,i,j)=(swhr(noc,k-1)+hr(noc,k-1))*inv86400
           enddo
           oneRadiateFields%fthrd(1  ,i,j)= oneRadiateFields%fthrd(2    ,i,j)
           oneRadiateFields%fthrd(mzp,i,j)= oneRadiateFields%fthrd(mzp-1,i,j)

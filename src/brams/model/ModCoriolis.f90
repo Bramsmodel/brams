@@ -106,8 +106,8 @@ contains
     omega2 = 2. * omega
 
     do j = 1,max(1,n3-1)
-!GCC$ novector
-!DIR$ novector
+!!$ !GCC$ novector
+!!$ !DIR$ novector
        do i = 1,n2-1
           fcoru(i,j) = omega2*sin((glat(i,j)+glat(i+1,j))  &
                *.5*pi180)
