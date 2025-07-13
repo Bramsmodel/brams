@@ -65,24 +65,24 @@ module ModMonotonicAdvection
   private
 
   type MonotonicAdvection
-     real,pointer :: u3d(:,:,:)
-     real,pointer :: v3d(:,:,:)
-     real,pointer :: w3d(:,:,:)
-     real,pointer :: vc3d_in(:,:,:)
-     real,pointer :: vc3d_out(:,:,:)
-     real,pointer :: vc3d_x(:,:,:)
-     real,pointer :: vc3d_y(:,:,:)
-     real,pointer :: dd0_3d(:,:,:)
-     real,pointer :: dd0_3du(:,:,:)
-     real,pointer :: dd0_3dv(:,:,:)
-     real,pointer :: dd0_3dw(:,:,:)
-     real,pointer :: den0_3d(:,:,:)
-     real,pointer :: den1_3d(:,:,:)
-     real,pointer :: den2_3d(:,:,:)
-     real,pointer :: den3_3d(:,:,:)
-     real,pointer :: dxtW(:,:)
-     real,pointer :: dytW(:,:)
-     real,pointer :: dztW(:)
+     real, pointer, contiguous :: u3d(:,:,:)
+     real, pointer, contiguous :: v3d(:,:,:)
+     real, pointer, contiguous :: w3d(:,:,:)
+     real, pointer, contiguous :: vc3d_in(:,:,:)
+     real, pointer, contiguous :: vc3d_out(:,:,:)
+     real, pointer, contiguous :: vc3d_x(:,:,:)
+     real, pointer, contiguous :: vc3d_y(:,:,:)
+     real, pointer, contiguous :: dd0_3d(:,:,:)
+     real, pointer, contiguous :: dd0_3du(:,:,:)
+     real, pointer, contiguous :: dd0_3dv(:,:,:)
+     real, pointer, contiguous :: dd0_3dw(:,:,:)
+     real, pointer, contiguous :: den0_3d(:,:,:)
+     real, pointer, contiguous :: den1_3d(:,:,:)
+     real, pointer, contiguous :: den2_3d(:,:,:)
+     real, pointer, contiguous :: den3_3d(:,:,:)
+     real, pointer, contiguous :: dxtW(:,:)
+     real, pointer, contiguous :: dytW(:,:)
+     real, pointer, contiguous :: dztW(:)
   end type MonotonicAdvection
 
   public :: MonotonicAdvection
@@ -566,7 +566,7 @@ contains
          oneGrid%AdvMntDenSendY, oneGrid%AdvMntDenRecvY, &
          oneGrid%AdvMntScaSendX, oneGrid%AdvMntScaRecvX, &
          oneGrid%AdvMntScaSendY, oneGrid%AdvMntScaRecvY, &
-         oneAdvMnt%u3d, oneAdvMnt%v3d, &
+         oneAdvMnt%u3d, oneAdvMnt%v3d, oneAdvMnt%w3d, &
          oneAdvMnt%dxtW, oneAdvMnt%dytW, &
          oneAdvMnt%dd0_3d, oneAdvMnt%dd0_3du, &
          oneAdvMnt%dd0_3dv, oneAdvMnt%dd0_3dw, &
@@ -693,7 +693,7 @@ contains
     end if
 
     !srf- do n=1,oneGrid%oneScalarTableSize     ! original
-    do n=i_scl,oneGrid%oneScalarTableSize
+    SCALARS: do n=i_scl,oneGrid%oneScalarTableSize
 
        !- if RK or ABM3 scheme, THP/THC are not transported here
 
@@ -775,7 +775,7 @@ contains
        end if
 
 
-    end do
+    end do SCALARS
 
     ! destroy local memory area for large GhostZoneWidth variables
 

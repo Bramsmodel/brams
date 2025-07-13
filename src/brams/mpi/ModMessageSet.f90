@@ -3505,6 +3505,7 @@ contains
 
     character(len=*), parameter :: u3dName="U3D"
     character(len=*), parameter :: v3dName="V3D"
+    character(len=*), parameter :: w3dName="W3D"
     character(len=*), parameter :: dxName="DXTW"
     character(len=*), parameter :: dyName="DYTW"
     character(len=*), parameter :: dd0_3dName="DDO_3D"
@@ -3825,7 +3826,8 @@ contains
          x0, y0, ghostZoneWidth, idim_type_3D, &
          AdvMntUVSendX, AdvMntUVRecvX, AdvMntUVSendY, AdvMntUVRecvY, &
          fldName_1=u3dName, &
-         fldName_2=v3dName)
+         fldName_2=v3dName, &
+         fldName_3=w3dName)
 
     ! create message set for Dd0
 
@@ -4687,7 +4689,7 @@ contains
        AdvMntDenSendY, AdvMntDenRecvY, &
        AdvMntScaSendX, AdvMntScaRecvX, &
        AdvMntScaSendY, AdvMntScaRecvY, &
-       u3d, v3d, dxtW, dytW, &
+       u3d, v3d, w3d, dxtW, dytW, &
        dd0_3d, dd0_3du, dd0_3dv, dd0_3dw, &
        den0_3d, den1_3d, den2_3d, den3_3d, &
        vc3d_in, vc3d_out)
@@ -4713,6 +4715,7 @@ contains
     type(MessageSet), pointer, intent(in) :: AdvMntScaRecvY
     real, pointer, intent(in) :: u3d(:,:,:)
     real, pointer, intent(in) :: v3d(:,:,:)
+    real, pointer, intent(in) :: w3d(:,:,:)
     real, pointer, intent(in) :: dxtW(:,:)
     real, pointer, intent(in) :: dytW(:,:)
     real, pointer, intent(in) :: dd0_3d(:,:,:)
@@ -4736,6 +4739,8 @@ contains
           call UpdateFieldAdress(fsnode%entry, u3d, "U3D")
           fsnode => fsnode%next
           call UpdateFieldAdress(fsnode%entry, v3d, "V3D")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, w3d, "W3D")
        end do
     end if
 
@@ -4745,6 +4750,8 @@ contains
           call UpdateFieldAdress(fsnode%entry, u3d, "U3D")
           fsnode => fsnode%next
           call UpdateFieldAdress(fsnode%entry, v3d, "V3D")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, w3d, "W3D")
        end do
     end if
 
@@ -4754,6 +4761,8 @@ contains
           call UpdateFieldAdress(fsnode%entry, u3d, "U3D")
           fsnode => fsnode%next
           call UpdateFieldAdress(fsnode%entry, v3d, "V3D")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, w3d, "W3D")
        end do
     end if
 
@@ -4763,6 +4772,8 @@ contains
           call UpdateFieldAdress(fsnode%entry, u3d, "U3D")
           fsnode => fsnode%next
           call UpdateFieldAdress(fsnode%entry, v3d, "V3D")
+          fsnode => fsnode%next
+          call UpdateFieldAdress(fsnode%entry, w3d, "W3D")
        end do
     end if
 
