@@ -24,6 +24,13 @@ module ModNodeDimensions
 
      integer :: GhostZoneWidth
 
+     ! Full Direction: Which type of domain decomposition. It is one of
+     ! "B" (for Brams domain decomposition),
+     ! "X" (for Monotonic Advection in the X direction),
+     ! "Y" (for Monotonic Advection in the Y direction)
+
+     character :: FullDirection
+
      ! nxp, nyp, nzp are sizes (in grid points) of this process sub-domain,
      ! including ghost zone;
      ! fields with this GhostZoneWidth should be dimensioned (nzp,nxp,nyp)
@@ -37,24 +44,26 @@ module ModNodeDimensions
 
      ! bounds of the own sub-domain part, that is, lower and upper
      ! index at x and y dimensions in this process sub-domain
-     ! that are exclusively owned by this process, excluding ghost zones.
+     ! that are exclusively owned by this process, excluding ghost zones
+     ! and boundary conditions.
      ! These variables should be the lower and upper bounds of 
-     ! loops intended to run through all sub-domain points
+     ! loops intended to run through all sub-domain points exclusivelly
+     ! owned by this process, excluding boundary conditions.
 
      integer :: ia
-     ! first x index of the sub-domain exclusively owned by this process
+     ! first x index of the sub-domain exclusively owned by this process without boundary conditions
      integer :: iz
-     ! last x index of the sub-domain exclusively owned by this process
+     ! last x index of the sub-domain exclusively owned by this process without boundary conditions
      integer :: izu
-     ! last x index of the sub-domainexclusively owned by this process
+     ! last x index of the sub-domain exclusively owned by this process without boundary conditions
      ! for wind x-component (u) - due to staggered grid
 
      integer :: ja
-     ! first y index of the sub-domain exclusively owned by this process
+     ! first y index of the sub-domain exclusively owned by this process without boundary conditions
      integer :: jz
-     ! last y index of the sub-domain exclusively owned by this process
+     ! last y index of the sub-domain exclusively owned by this process without boundary conditions
      integer :: jzv
-     ! last y index of the sub-domainexclusively owned by this process
+     ! last y index of the sub-domain exclusively owned by this process without boundary conditions
      ! for wind y-component (v) - due to staggered grid
 
      ! local index <--> global index conversion:
@@ -133,7 +142,7 @@ contains
     end if
 
     res%GhostZoneWidth = surfaceGhostZoneWidth
-
+    res%FullDirection = LocalOwn%FullDirection
     res%borderNorth = btest(LocalOwn%ibcon(myNum),4)
     res%borderSouth = btest(LocalOwn%ibcon(myNum),3)
     res%borderEast = btest(LocalOwn%ibcon(myNum),2)
@@ -153,7 +162,7 @@ contains
     end if
     res%mxp = LocalOwn%xe(myNum)-LocalOwn%xb(myNum)+1+borderLow+borderHigh
     
-    ! nxp is x axis span + boundary condition or ghost zone
+    ! nyp is y axis span + boundary condition or ghost zone
 
     if (res%borderSouth) then
        borderLow=1
@@ -259,7 +268,8 @@ contains
     else
        write(str(1),"(i8)") oneNodeDimensions%GhostZoneWidth
        call MsgDump (h//" of variable "//trim(adjustl(varName))//&
-            " with ghost zone of width "//trim(adjustl(str(1))))
+            " with ghost zone of width "//trim(adjustl(str(1)))//&
+            " and FullDirection="//oneNodeDimensions%FullDirection)
     end if
 
     write(str(1),"(i8)") oneNodeDimensions%mzp

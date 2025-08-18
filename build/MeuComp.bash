@@ -1,7 +1,7 @@
 #!/bin/bash
 # Use in BRAMS-6.0 folder
 
-FROM_SCRATCH=1
+FROM_SCRATCH=0
 
 PREREQ_DIR=/home/mateusff/opt-gcc
 

@@ -454,8 +454,23 @@ contains
     !----------------------------------------
     if(advmnt >= 1) then
        !-srf monotonic advection scheme
-       call advmnt_driver(oneGrid, 'T',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,&
-            i0,j0,nodemxp,nodemyp,nodemzp,mynum, oneGrid%oneMicVars)
+       call advmnt_driver(&
+            oneNodeDimensions=oneGrid%oneNodeDimensions, &
+            oneNodeDimensionsMonAdvX=oneGrid%oneNodeDimensionsMonAdvX, &
+            oneNodeDimensionsMonAdvY=oneGrid%oneNodeDimensionsMonAdvY, &
+            oneBasicFields=oneGrid%oneBasicFields, &
+            oneScalarTableSize=oneGrid%oneScalarTableSize, &
+            oneScalarTable=oneGrid%oneScalarTable, &
+            Id=oneGrid%Id, &
+            varn='T', &
+            oneMicVars=oneGrid%oneMicVars, &
+            MonAdvInputSend=oneGrid%MonAdvInputSend, &
+            MonAdvInputRecv=oneGrid%MonAdvInputRecv, &
+            ConvertBramsToMonAdvX=oneGrid%ConvertBramsToMonAdvX, &
+            ConvertBramsToMonAdvY=oneGrid%ConvertBramsToMonAdvY, &
+            ConvertMonAdvXToMonAdvY=oneGrid%ConvertMonAdvXToMonAdvY, &
+            ConvertBramsToBrams=oneGrid%ConvertBramsToBrams, &
+            ConvertMonAdvYToBrams=oneGrid%ConvertMonAdvYToBrams)
        if(advmnt >= 2) &
             call advectc(oneGrid%oneScalarTable, oneGrid%oneScalarTableSize, oneGrid%oneBasicFields, &
             'T',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,mynum)

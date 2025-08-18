@@ -135,6 +135,7 @@ ObjSrcActionAtDependModel=[
 	('ModAerClim.o', '$(AERCLIM)/ModAerClim.f90', '\t@cp -f $< $(<F:.f90=.f90)\n\t$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)\n\trm -f $(<F:.f90=.f90)\n'),
 	('ModBasicFields.o', '$(MEMORY)/ModBasicFields.f90', '\t@cp -f $< $(<F:.f90=.f90)\n\t$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)\n\trm -f $(<F:.f90=.f90)\n'),
 	('ModBramsGrid.o', '$(POST_SRC)/ModBramsGrid.f90', '\t@cp -f $< $(<F:.f90=.f90)\n\t$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)\n\trm -f $(<F:.f90=.f90)\n'),
+	('ConvertDomainDecomp.o', '$(MPI)/ConvertDomainDecomp.f90', '\t@cp -f $< $(<F:.f90=.f90)\n\t$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)\n\trm -f $(<F:.f90=.f90)\n'),
 	('ModBuffering.o', '$(MPI)/ModBuffering.f90', '\t@cp -f $< $(<F:.f90=.f90)\n\t$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)\n\trm -f $(<F:.f90=.f90)\n'),
 	('ModCarmaDriver.o', '$(RADIATE)/ModCarmaDriver.f90', '\t@cp -f $< $(<F:.f90=.f90)\n\t$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)\n\trm -f $(<F:.f90=.f90)\n'),
 	('ModChemAsgen.o', '$(ISAN_CHEM)/ModChemAsgen.F90', '\t@cp -f $< $(<F:.f90=.f90)\n\t$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)\n\trm -f $(<F:.f90=.f90)\n'),

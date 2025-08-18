@@ -33,6 +33,7 @@ module ModNeighbourNodes
 
   implicit none
   private
+  public :: Inter
   public :: NeighbourNodes
   public :: CreateNeighbourNodes
   public :: DumpNeighbourNodes
@@ -278,8 +279,8 @@ contains
     else
        write(c0,"(i8)") oneNeighbourNodes%nNeigh
        call MsgDump(h//" for variable "//trim(varName)//&
-            " this node has "//trim(adjustl(c0))//&
-            " neighbour MPI ranks:", .true.)
+            " this node will send/recv msgs from "//trim(adjustl(c0))//&
+            " MPI ranks:", .true.)
        do neigh = 1, oneNeighbourNodes%nNeigh-1
           write(c0,"(i8)") Brams2MpiProcNbr(oneNeighbourNodes%neigh(neigh))
           call MsgDump(" "//trim(adjustl(c0))//",",.true.)

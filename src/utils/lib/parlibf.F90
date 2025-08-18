@@ -22,13 +22,27 @@ module ParLib
   public :: parf_wait_any_nostatus
   public :: parf_wait_all_nostatus
   public :: parf_pack
+  private:: parf_pack_int_1d
+  private:: parf_pack_int_2d
+  private:: parf_pack_int_scalar
+  private:: parf_pack_real_1d
+  private:: parf_pack_real_scalar
+  private:: parf_pack_char
   public :: parf_unpack
+  private:: parf_unpack_int_1d
+  private:: parf_unpack_int_1d_2d
+  private:: parf_unpack_int_scalar
+  private:: parf_unpack_real_1d
+  private:: parf_unpack_real_scalar
+  private:: parf_unpack_char
   public :: parf_barrier
   public :: parf_pack_max_size
   public :: parf_bcast
   public :: parf_minloc
   public :: parf_reduce_max
   public :: parf_allreduce_max
+  private:: parf_allreduce_sum_scalar
+  private:: parf_allreduce_sum_vector
   public :: parf_allreduce_sum
   public :: parf_GatherAllChunks
   public :: parf_GatherPostSfc
@@ -944,7 +958,7 @@ contains
     ! Local Variables:
     integer                      :: ierr, ierr_b, rank
     character(len=20)            :: string
-
+    
     call MPI_BCAST(buff, 1, MPI_REAL, source_host, MPI_COMM_WORLD, ierr)
 
     if(ierr /= MPI_SUCCESS) then
@@ -1239,7 +1253,7 @@ contains
   ! -------------------------------------------------------------------
 
 !!$  subroutine parf_error()
-!!$    stop
+!!$    error stop
 !!$  end subroutine parf_error
 
   !--------------------------------------------------------------------
@@ -1630,16 +1644,47 @@ subroutine fatal_error(msg)
 
   use ParLib, only: &
        parf_error
+
   use dump, only: &
     dumpMessage
+
+  use ModParallelEnvironment, only: &
+       MsgDump, &
+       DumpUnit
+
   implicit none
 
   include "constants.h"
   character(len=*), intent(in) :: msg
 
-  iErrNumber=dumpMessage(c_tty,c_yes,'Undefined - Old',modelVersion,c_fatal,msg)
+!!$  iErrNumber=dumpMessage(c_tty,c_yes,'Undefined - Old',modelVersion,c_fatal,msg)
 
+  call MsgDump("**(FATAL_ERROR)** "//trim(msg))
+  close(DumpUnit)
   call parf_error()
   stop
 
 end subroutine fatal_error
+
+
+subroutine Terminate(msg)
+
+  use ParLib, only: &
+       parf_barrier, &
+       parf_exit_mpi
+
+  use ModParallelEnvironment, only: &
+       MsgDump, &
+       DumpUnit
+
+  ! finishes execution
+
+  character(len=*), intent(in) :: msg
+  character(len=*), parameter :: h="**(Terminate)**"
+  
+  call MsgDump(h//" stop forced from "//trim(msg))
+  call parf_barrier(5)
+  close(DumpUnit)
+  call parf_exit_mpi()
+  stop
+end subroutine Terminate

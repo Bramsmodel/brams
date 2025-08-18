@@ -1277,7 +1277,16 @@ contains
                    end if
 
                    call timestep_rk(oneGrid)
+                   !**(JP)** remover
+                   call OutputFields(.false., .true., .false., .false., &
+                        oneGrid%oneNamelistFile, oneGrid%oneBasicFields, oneGrid%oneTurbFields, oneGrid%Id, &
+                        oneGrid%oneControlVars, oneGrid%oneMicVars, oneGrid%oneVarTable, oneGrid%oneVarTableSize)
 
+                   write(str(1),"(i8)") istp
+                   call MsgDump(h//"  **(JP)** Parada forcada apos timestep_rk e OutputFields no Timestep "//trim(adjustl(str(1))))
+                   write(output_unit, "(a,i6)") h//" **(JP)** Parada forcada apos timestep_rk e OutputFields no Timestep ",istp
+                   return
+                   !**(JP)** ate aqui
                    if (dumpLocal) then
                       call MsgDump(h//" done with timestep_rk")
                    end if

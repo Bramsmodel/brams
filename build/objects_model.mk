@@ -9,6 +9,7 @@ MAINOBJ = rammain.o
 # Define objects.
 
 OBJ_MOD = \
+	ConvertDomainDecomp.o \
 	DumpFields.o \
 	ModCompare.o \
 	utils_f.o \

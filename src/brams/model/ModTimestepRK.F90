@@ -921,8 +921,27 @@ contains
     !----------------------------------------
     if(advmnt == 1) then
        !- monotonic advection scheme
-       call advmnt_driver(oneGrid, 'SCALAR',mzp,mxp,myp,ia,iz,ja,jz,izu,jzv,&
-            i0,j0,nodemxp,nodemyp,nodemzp,mynum, oneGrid%oneMicVars)
+       call advmnt_driver(&
+            oneNodeDimensions=oneGrid%oneNodeDimensions, &
+            oneNodeDimensionsMonAdvX=oneGrid%oneNodeDimensionsMonAdvX, &
+            oneNodeDimensionsMonAdvY=oneGrid%oneNodeDimensionsMonAdvY, &
+            oneBasicFields=oneGrid%oneBasicFields, &
+            oneScalarTableSize=oneGrid%oneScalarTableSize, &
+            oneScalarTable=oneGrid%oneScalarTable, &
+            Id=oneGrid%Id, &
+            varn='SCALAR', &
+            oneMicVars=oneGrid%oneMicVars, &
+            MonAdvInputSend=oneGrid%MonAdvInputSend, &
+            MonAdvInputRecv=oneGrid%MonAdvInputRecv, &
+            ConvertBramsToMonAdvX=oneGrid%ConvertBramsToMonAdvX, &
+            ConvertBramsToMonAdvY=oneGrid%ConvertBramsToMonAdvY, &
+            ConvertMonAdvXToMonAdvY=oneGrid%ConvertMonAdvXToMonAdvY, &
+            ConvertBramsToBrams=oneGrid%ConvertBramsToBrams, &
+            ConvertMonAdvYToBrams=oneGrid%ConvertMonAdvYToBrams)
+       !**(JP)** remover
+       call MsgDump(h//" retorna apos advmnt_driver")
+       return
+       !**(JP)** ate aqui
     elseif(advmnt == 0) then
        !- using the 2nd order forward upstream
        call advectc(oneGrid%oneScalarTable, oneGrid%oneScalarTableSize, oneGrid%oneBasicFields, &

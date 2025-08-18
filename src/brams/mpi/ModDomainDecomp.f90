@@ -8,19 +8,10 @@ module ModDomainDecomp
        GridDims
 
   implicit none
-  private
-  public :: DomainDecomp
-  public :: CreateGlobalOwn
-  public :: CreateGlobalOwnWithBC
-  public :: CreateGlobalWithGhost
-  public :: CreateLocalOwn
-  public :: DestroyDomainDecomp
-  public :: DumpDomainDecomp
-  public :: DumpDomainDecompHistogram
 
 
   ! DomainDecomp: stores indices of a domain decomposed grid for all MPI ranks.
-  !               Arrays are indexed by (rank+1), to avoid starting from 0.
+  !               Arrays are indexed (MPI rank+1), to avoid starting from 0.
   !               Refering to the array index i (MPI rank i-1),
   !               the indices of the sub-domain stored at
   !               this rank are [xb(i):xe(i), yb(i),ye(i)] and
@@ -29,23 +20,45 @@ module ModDomainDecomp
   !               GhostZoneWidth is the width of the ghost zone
   !               (0 if no ghost zone).
   !
-  !               There are three procedures that return DomainDecomp ponters:
-  !               GlobalOwn: a complete partition of domain [2:nnxp-1,2:nnyp-1],
-  !                              that is, the given full, unpartitioned grid except
-  !                              boundary conditions cells;
-  !                              indices are global indices, without ghost zone
+  !               Variables of type DomainDecomp ponter have the following names and meaning:
+  !
+  !               GlobalOwn: Brams X-Y partition of domain [2:nnxp-1,2:nnyp-1]
+  !                          which is the full domain except boundary conditions.
+  !                          Boundary conditions are marked as so.
+  !                          Stores global indices, not including ghost zone.
+  !                          Created by calling CreateGlobalOwn with FullDirection="B"
+  !
+  !               GlobalOwnMonAdvX and GlobalOwnMonAdvY:
+  !                          Partition of domain [2:nnxp-1,2:nnyp-1] for monotonic advection,
+  !                          which is the full domain except boundary conditions.
+  !                          For MonAdvX, only the Y direction is partitioned across ranks; each
+  !                          rank keeps the entire X domain. except boundary conditions extremes.
+  !                          For MonAdvY, only the X direction is partitioned across ranks; each
+  !                          rank keeps the entire Y domain, except boundary conditions extremes.
+  !                          Boundary conditions are marked as so.
+  !                          Stores global indices, not including ghost zone.
+  !                          Created by calling CreateGlobalOwn, passing "X" or "Y" as 
+  !                          argument FullDirection (the direction that will not be partitioned).
   !                              
-  !               GlobalWithGhost: GlobalOwn with ghost zone of given width;
-  !                                not a real partition, since ghost zone
-  !                                of one sub-domain instersect with interior
-  !                                points of other sub-domains;
-  !                                indices are global indices;
-  !                                ghost zone is valid and included.
-  !               LocalOwn: Local indices of interior columns of GlobalWithGhost;
-  !                              Stores indices used throughout BRAMS (both dynamics and physics);
-  !                              xb, xe, yb and ye are the local indices converted from
-  !                              GlobalWithGhost using GlobalOwn info;
-  !                              nx and ny are total sub-domain size (same as GlobalWithGhost)
+  !               GlobalOwnWithBC: It extends GlobalOwn by including boundary conditions. 
+  !                          Stores global indices. Created by calling CreateGlobalOwnWithBC, given GlobalOwn.
+  !                          Procedure CreateGlobalOwnWithBC applies to Brams or Monotonic Advection partitions.
+  !                              
+  !               GlobalWithGhost: It extends GlobalOwn by including ghost zone and boundary conditions. 
+  !                          Not a real partition, since ghost zone of one sub-domain instersect with 
+  !                          interior points of other sub-domains. Ghost zone width is given. 
+  !                          Stores global indices. Created by calling CreateGlobalWithGhost,
+  !                          given GlobalOwn and GhostZoneWidth. Procedure CreateGlobalWithGhost applies
+  !                          only to Brams domain decompositions, since Monotonic Advection domain
+  !                          decomposition has no ghost zone.
+  !
+  !               LocalOwn: Local indices of interior columns of GlobalWithGhost for Brams domain decomposition
+  !                         or of GlobalOwnWithBC for Monotonic Advection domain decomposition.
+  !                         Stores indices used throughout BRAMS (both dynamics and physics);
+  !                         xb, xe, yb and ye are the local indices converted from GlobalWithGhost (Brams)
+  !                         or GlobalWithBC (Monotonic Advection) using GlobalOwn info;
+  !                         nx and ny are total sub-domain size, including boundary conditions and
+  !                         ghost zone (same as GlobalWithGhost)
 
   type DomainDecomp
 
@@ -53,6 +66,13 @@ module ModDomainDecomp
 
      integer :: GhostZoneWidth
 
+     ! Full Direction: Which type of domain decomposition. It is one of
+     ! "B" (for Brams domain decomposition),
+     ! "X" (for Monotonic Advection in the X direction),
+     ! "Y" (for Monotonic Advection in the Y direction)
+
+     character :: FullDirection
+     
      ! all arrays are indexed by BRAMS process number
      
      ! x axis indexed from xb to xe with nx indices;
@@ -89,13 +109,22 @@ module ModDomainDecomp
 
   end type DomainDecomp
 
+  private
+  public :: DomainDecomp
+  public :: CreateGlobalOwn
+  public :: CreateGlobalOwnWithBC
+  public :: CreateGlobalWithGhost
+  public :: CreateLocalOwn
+  public :: DestroyDomainDecomp
+  public :: DumpDomainDecomp
+  
 contains
 
 
 
 
 
-  function AllocDomainDecomp(nmachs) result(ptr)
+  function CreateDomainDecomp(nmachs) result(ptr)
 
     ! Allocates all fields of a pointer of 
     ! type DomainDecomp, returning the pointer
@@ -104,7 +133,7 @@ contains
     type(DomainDecomp), pointer :: ptr
 
     integer :: ierr
-    character(len=*), parameter :: h="**(AllocDomainDecomp)**"
+    character(len=*), parameter :: h="**(CreateDomainDecomp)**"
     character(len=8) :: c0
     character(len=10) :: c1
 
@@ -163,21 +192,172 @@ contains
             trim(adjustl(c1))//" fails with stat="//&
             trim(adjustl(c0)))
     end if
-  end function AllocDomainDecomp
+  end function CreateDomainDecomp
 
 
 
 
 
-  function CreateGlobalOwn(GridSize, ParEnv, varName)
+  subroutine DestroyDomainDecomp(OneDomainDecomp)
+
+    ! Removes storage allocated to a variable of type DomainDecomp
+
+    type(DomainDecomp), pointer, intent(inout) :: OneDomainDecomp
+
+    integer :: ierr
+    character(len=*), parameter :: h="**(DestroyDomainDecomp)**"
+    character(len=8) :: c0
+
+    if (associated(oneDomainDecomp)) then
+       deallocate(oneDomainDecomp%xb, stat=ierr)
+       if (ierr /= 0) then
+          write(c0,"(i8)") ierr
+          call fatal_error(h//" deallocate xb fails with stat="//&
+               trim(adjustl(c0)))
+       end if
+       deallocate(oneDomainDecomp%xe, stat=ierr)
+       if (ierr /= 0) then
+          write(c0,"(i8)") ierr
+          call fatal_error(h//" deallocate xe fails with stat="//&
+               trim(adjustl(c0)))
+       end if
+       deallocate(oneDomainDecomp%nx, stat=ierr)
+       if (ierr /= 0) then
+          write(c0,"(i8)") ierr
+          call fatal_error(h//" deallocate nx fails with stat="//&
+               trim(adjustl(c0)))
+       end if
+       deallocate(oneDomainDecomp%yb, stat=ierr)
+       if (ierr /= 0) then
+          write(c0,"(i8)") ierr
+          call fatal_error(h//" deallocate yb fails with stat="//&
+               trim(adjustl(c0)))
+       end if
+       deallocate(oneDomainDecomp%ye, stat=ierr)
+       if (ierr /= 0) then
+          write(c0,"(i8)") ierr
+          call fatal_error(h//" deallocate ye fails with stat="//&
+               trim(adjustl(c0)))
+       end if
+       deallocate(oneDomainDecomp%ny, stat=ierr)
+       if (ierr /= 0) then
+          write(c0,"(i8)") ierr
+          call fatal_error(h//" deallocate ny fails with stat="//&
+               trim(adjustl(c0)))
+       end if
+       deallocate(oneDomainDecomp%ibcon, stat=ierr)
+       if (ierr /= 0) then
+          write(c0,"(i8)") ierr
+          call fatal_error(h//" deallocate ibcon fails with stat="//&
+               trim(adjustl(c0)))
+       end if
+       deallocate(oneDomainDecomp, stat=ierr)
+       if (ierr /= 0) then
+          write(c0,"(i8)") ierr
+          call fatal_error(h//" deallocate oneDomainDecomp fails with stat="//&
+               trim(adjustl(c0)))
+       end if
+    end if
+    nullify(oneDomainDecomp)
+  end subroutine DestroyDomainDecomp
+
+
+
+
+
+  subroutine DumpDomainDecomp(oneDomainDecomp, varName)
+
+    ! Dumps info stored at a variable of type DomainDecomp
+    
+    type(DomainDecomp), pointer, intent(in) :: oneDomainDecomp
+    character(len=*), intent(in) :: varName
+
+    integer :: nmachs
+    integer :: mach
+    character(len=*), parameter :: h="**(DumpDomainDecomp)**"
+    character(len=8) :: c0, c1, c2, bnd
+    character(len=256) :: strOut
+    character(len=128) :: msg
+
+    ! dumps at selected unit
+
+    if (.not. associated(oneDomainDecomp)) then
+       call MsgDump (h//" empty DomainDecomp named "//trim(varName))
+       return
+    else if (.not. allocated(oneDomainDecomp%xb)) then
+       call fatal_error(h//" oneDomainDecomp%xb not allocated")
+    else if (.not. allocated(oneDomainDecomp%xe)) then
+       call fatal_error(h//" oneDomainDecomp%xe not allocated")
+    else if (.not. allocated(oneDomainDecomp%nx)) then
+       call fatal_error(h//" oneDomainDecomp%nx not allocated")
+    else if (.not. allocated(oneDomainDecomp%yb)) then
+       call fatal_error(h//" oneDomainDecomp%yb not allocated")
+    else if (.not. allocated(oneDomainDecomp%ye)) then
+       call fatal_error(h//" oneDomainDecomp%ye not allocated")
+    else if (.not. allocated(oneDomainDecomp%ny)) then
+       call fatal_error(h//" oneDomainDecomp%ny not allocated")
+    else if (.not. allocated(oneDomainDecomp%ibcon)) then
+       call fatal_error(h//" oneDomainDecomp%ibcon not allocated")
+    end if
+
+    nmachs = size(oneDomainDecomp%xb)
+
+    write(c0,"(i8)") nmachs
+    write(c1,"(i8)") oneDomainDecomp%GhostZoneWidth
+    strOut=" named "//trim(adjustl(varName))//" is"
+
+    select case (oneDomainDecomp%FullDirection)
+    case ("B")
+       strOut = trim(strOut)//" Brams"
+    case ("X")
+       strOut = trim(strOut)//" Monotonic Advection in X"
+    case ("Y")
+       strOut = trim(strOut)//" Monotonic Advection in Y"
+    case default
+       call fatal_error(h//" unknown FullDirection **"//trim(oneDomainDecomp%FullDirection)//"**")
+    end select
+
+    strOut = trim(strOut)//" domain decomposition with "//&
+         trim(adjustl(c0))//" sub-domains and ghost zone of width "//&
+         trim(adjustl(c1))
+
+    call MsgDump (h//trim(strOut))
+
+    call MsgDump(' MPIrank   x-beg   x-end      nx   y-beg   y-end      ny    cols    ibcon')
+    do mach = 1,nmachs
+       bnd=""
+       if (btest(oneDomainDecomp%ibcon(mach),1)) bnd=trim(bnd)//"X-"
+       if (btest(oneDomainDecomp%ibcon(mach),2)) bnd=trim(bnd)//"X+"
+       if (btest(oneDomainDecomp%ibcon(mach),3)) bnd=trim(bnd)//"Y-"
+       if (btest(oneDomainDecomp%ibcon(mach),4)) bnd=trim(bnd)//"Y+"
+       write(msg,"(8i8,4x,a8)") &
+            Brams2MpiProcNbr(mach), &
+            oneDomainDecomp%xb(mach), &
+            oneDomainDecomp%xe(mach), &
+            oneDomainDecomp%nx(mach), &
+            oneDomainDecomp%yb(mach), &
+            oneDomainDecomp%ye(mach), &
+            oneDomainDecomp%ny(mach), &
+            oneDomainDecomp%nx(mach)*oneDomainDecomp%ny(mach), &
+            adjustl(bnd)
+       call MsgDump (trim(msg))
+    end do
+  end subroutine DumpDomainDecomp
+
+
+
+
+  
+  function CreateGlobalOwn(GridSize, ParEnv, varName, FullDirection)
 
     ! Creates a pointer to a variable of type DomainDecomp named
-    ! varName for given grid and parallel environment. Performs domain
-    ! decomposition, filling all components of the created variable
+    ! varName for given grid and parallel environment. Performs Brams 
+    ! domain decomposition, filling all components of the created variable
 
     type(GridDims), pointer, intent(in) :: GridSize
     type(ParallelEnvironment), pointer, intent(in) :: ParEnv
     character(len=*), intent(in) :: varName
+    character(len=*), intent(in) :: FullDirection
     type(DomainDecomp), pointer :: CreateGlobalOwn
 
     character(len=8) :: c0, c1, c2
@@ -187,6 +367,9 @@ contains
     integer :: nxp
     integer :: nyp
     integer :: nmachs
+    integer :: mach
+    integer :: quo
+    integer :: rem
 
     if (.not. associated(GridSize)) then
        call fatal_error(h//" invoked with null GridSize")
@@ -202,62 +385,123 @@ contains
        write(c0,"(i8)") nxp
        write(c1,"(i8)") nyp
        write(c2,"(i8)") nmachs
-       call MsgDump (h//" partitions domain ["//&
-            trim(adjustl(c0))//" x "//trim(adjustl(c1))//&
-            "] into "//trim(adjustl(c2))//" sub-domains")
+       select case (FullDirection)
+       case ("X","Y")
+          call MsgDump (h//" partitions domain ["//&
+               trim(adjustl(c0))//" x "//trim(adjustl(c1))//&
+               "] into "//trim(adjustl(c2))//" sub-domains"//&
+               " for Monotonic Advection in the "//&
+               trim(FullDirection)//" direction")
+       case ("B")
+          call MsgDump (h//" partitions domain ["//&
+               trim(adjustl(c0))//" x "//trim(adjustl(c1))//&
+               "] into "//trim(adjustl(c2))//" sub-domains"//&
+               " for X-Y regular Brams domain decomposition")
+       case default
+          call fatal_error(h//" unknown FullDirection **"//trim(FullDirection)//"**")
+       end select
     end if
 
     ! no ghost zone info
 
-    CreateGlobalOwn => AllocDomainDecomp(nmachs)
+    CreateGlobalOwn => CreateDomainDecomp(nmachs)
     CreateGlobalOwn%GhostZoneWidth = 0
+    CreateGlobalOwn%FullDirection = FullDirection
 
-    ! find Rams domain decomposition xb, xe, yb, ye
+    ! select domain decomposition
+       
+    select case (trim(FullDirection))
+    case ("Y")
+       
+       ! Monotonic Advection at Y only partitions the X direction
+       
+       quo = (nxp-2)/nmachs
+       rem = mod(nxp-2,nmachs)
+       
+       do mach = 1, nmachs
+          CreateGlobalOwn%yb(mach) = 2
+          CreateGlobalOwn%ye(mach) = nyp-1
+          if (mach <= rem) then
+             CreateGlobalOwn%xb(mach) = (mach-1)*(quo+1) + 2
+             CreateGlobalOwn%xe(mach) = (mach  )*(quo+1) + 1
+          else
+             CreateGlobalOwn%xb(mach) = (mach-1)*(quo) + rem + 2
+             CreateGlobalOwn%xe(mach) = (mach  )*(quo) + rem + 1
+          end if
+       end do
+       
+    case ("X") 
+       
+       ! Monotonic Advection at X only partitions the Y direction
+       
+       quo = (nyp-2)/nmachs
+       rem = mod(nyp-2,nmachs)
+       
+       do mach = 1, nmachs
+          CreateGlobalOwn%xb(mach) = 2
+          CreateGlobalOwn%xe(mach) = nyp-1
+          if (mach <= rem) then
+             CreateGlobalOwn%yb(mach) = (mach-1)*(quo+1) + 2
+             CreateGlobalOwn%ye(mach) = (mach  )*(quo+1) + 1
+          else
+             CreateGlobalOwn%yb(mach) = (mach-1)*(quo) + rem + 2
+             CreateGlobalOwn%ye(mach) = (mach  )*(quo) + rem + 1
+          end if
+       end do
+       
+    case ("B") 
+       
+       ! Brams domain decomposition in the X-Y directions
 
-    call DomainDecompRams(nxp, nyp, nmachs, &
-         CreateGlobalOwn%xb, CreateGlobalOwn%xe, &
-         CreateGlobalOwn%yb, CreateGlobalOwn%ye)
+       call DomainDecompRams(nxp, nyp, nmachs, &
+            CreateGlobalOwn%xb, CreateGlobalOwn%xe, &
+            CreateGlobalOwn%yb, CreateGlobalOwn%ye)
+       
+    case default
+       call fatal_error(h//" unknown FullDirection **"//trim(FullDirection)//"**")
+    end select
 
     ! fill boundary condition ibcon
-
+    
     call MarkBoundary(nxp, nyp, nmachs, &
          CreateGlobalOwn%xb, CreateGlobalOwn%xe, &
          CreateGlobalOwn%yb, CreateGlobalOwn%ye, &
          CreateGlobalOwn%ibcon)
-
+    
     ! fill number of points at each sub-domain 
-
+    
     CreateGlobalOwn%nx = CreateGlobalOwn%xe - CreateGlobalOwn%xb + 1
     CreateGlobalOwn%ny = CreateGlobalOwn%ye - CreateGlobalOwn%yb + 1
-
+    
     ! Verify partition correctness
-
+    
     call CheckPartition(nxp, nyp, nmachs, &
          CreateGlobalOwn%xb, CreateGlobalOwn%xe, &
          CreateGlobalOwn%yb, CreateGlobalOwn%ye, &
          CreateGlobalOwn%ibcon)
-
+    
     if (dumpLocal) then
        call DumpDomainDecomp(CreateGlobalOwn, varName)
     end if
   end function CreateGlobalOwn
 
+  
 
 
-
-
-  function CreateGlobalOwnWithBC(GridSize, ParEnv, GlobalOwn)
+  
+  function CreateGlobalOwnWithBC(GridSize, ParEnv, GlobalOwn, varName)
 
     ! Creates a pointer to a variable of type DomainDecomp named
-    ! varName for given grid and parallel environment. Performs domain
-    ! decomposition, filling all components of the created variable
+    ! varName for given grid and parallel environment. The variable
+    ! extends the domain decomposition GlobalOwn by including
+    ! boundary conditions. 
 
     type(GridDims), pointer, intent(in) :: GridSize
     type(ParallelEnvironment), pointer, intent(in) :: ParEnv
     type(DomainDecomp), pointer, intent(in) :: GlobalOwn
+    character(len=*), intent(in) :: varName
     type(DomainDecomp), pointer :: CreateGlobalOwnWithBC
 
-    character(len=*), parameter :: varName="GlobalOwnWithBC"
     character(len=8) :: c0, c1, c2
     character(len=*), parameter :: h="**(CreateGlobalOwnWithBC)**"
     logical, parameter :: dumpLocal=.false.
@@ -286,9 +530,10 @@ contains
             "] into "//trim(adjustl(c2))//" sub-domains including boundary conditions")
     end if
 
-    CreateGlobalOwnWithBC => AllocDomainDecomp(nmachs)
+    CreateGlobalOwnWithBC => CreateDomainDecomp(nmachs)
 
     CreateGlobalOwnWithBC%GhostZoneWidth = GlobalOwn%GhostZoneWidth
+    CreateGlobalOwnWithBC%FullDirection = GlobalOwn%FullDirection
 
     ! include boundary conditions if at border
 
@@ -339,9 +584,179 @@ contains
 
 
 
+  
+
+  function CreateGlobalWithGhost(GridSize, ParEnv, &
+       GlobalOwn, GhostZoneWidth, varName)
+
+    ! Creates a pointer to a variable of type DomainDecomp
+    ! named varName that extends
+    ! the sub-domains of GlobalOwn to include ghost zone
+    ! of width GhostZoneWidth. Sub-domain [xb:xe] is limited
+    ! by [1:nxp], same with [yb:ye]. Number of points nx, ny
+    ! include ghost zone width. Boundary conditions ibcon are copied
+    ! from GlobalOwn
+
+    type(GridDims), pointer, intent(in) :: GridSize
+    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
+    integer, intent(in) :: GhostZoneWidth
+    character(len=*), intent(in) :: varName
+    type(DomainDecomp), pointer :: CreateGlobalWithGhost
+
+    integer :: nxp
+    integer :: nyp
+    integer :: nmachs
+    integer :: cell
+    integer :: ierr
+    character(len=8) :: c0, c1, c2
+    character(len=*), parameter :: h="**(CreateGlobalWithGhost)**"
+    logical, parameter :: dumpLocal = .false.
+
+    if (.not. associated(GridSize)) then
+       call fatal_error(h//" invoked with null GridSize")
+    else if (.not. associated(ParEnv)) then
+       call fatal_error(h//" invoked with null ParEnv")
+    else if (.not. associated(GlobalOwn)) then
+       call fatal_error(h//" invoked with null GlobalOwn ")
+    else if (GhostZoneWidth < 1) then
+       write (c0,"(i8)") GhostZoneWidth
+       call fatal_error(h//" GhostZoneWidth sould be >= 1 but it is "//&
+            trim(adjustl(c0)))
+    end if
+
+
+    nmachs = ParEnv%nmachs
+    nxp = GridSize%nnxp
+    nyp = GridSize%nnyp
+
+    if (dumpLocal) then
+       write(c0,"(i8)") nxp
+       write(c1,"(i8)") nyp
+       write(c2,"(i8)") GhostZoneWidth
+       call MsgDump (h//" "//varName//&
+            " inserts ghost zone of width "//trim(adjustl(c2))//&
+            " into GlobalOwn ["//&
+            trim(adjustl(c0))//" x "//trim(adjustl(c1))//"]")
+    end if
+
+    ! allocate return function value
+    
+    CreateGlobalWithGhost => CreateDomainDecomp(nmachs)
+
+    ! set DomainDecomp components
+    
+    CreateGlobalWithGhost%GhostZoneWidth = GhostZoneWidth
+    CreateGlobalWithGhost%FullDirection = GlobalOwn%FullDirection
+
+    do cell = 1, nmachs
+       CreateGlobalWithGhost%ibcon(cell) = GlobalOwn%ibcon(cell)
+       ! west boundary (lower x axis)
+       if (btest(CreateGlobalWithGhost%ibcon(cell),1)) then
+          CreateGlobalWithGhost%xb(cell) = 1
+       else
+          CreateGlobalWithGhost%xb(cell) = max(1,GlobalOwn%xb(cell) - GhostZoneWidth)
+       end if
+       ! east boundary (higher x axis)
+       if (btest(CreateGlobalWithGhost%ibcon(cell),2)) then
+          CreateGlobalWithGhost%xe(cell) = nxp
+       else
+          CreateGlobalWithGhost%xe(cell) = min(nxp,GlobalOwn%xe(cell) + GhostZoneWidth)
+       end if
+       ! south boundary (lower y axis)
+       if (btest(CreateGlobalWithGhost%ibcon(cell),3)) then
+          CreateGlobalWithGhost%yb(cell) = 1
+       else
+          CreateGlobalWithGhost%yb(cell) = max(1,GlobalOwn%yb(cell) - GhostZoneWidth)
+       end if
+       ! north boundary (higher y axis)
+       if (btest(CreateGlobalWithGhost%ibcon(cell),4)) then
+          CreateGlobalWithGhost%ye(cell) = nyp
+       else
+          CreateGlobalWithGhost%ye(cell) = min(nyp,GlobalOwn%ye(cell) + GhostZoneWidth)
+       end if
+       CreateGlobalWithGhost%nx(cell) = CreateGlobalWithGhost%xe(cell)-CreateGlobalWithGhost%xb(cell)+1
+       CreateGlobalWithGhost%ny(cell) = CreateGlobalWithGhost%ye(cell)-CreateGlobalWithGhost%yb(cell)+1
+    end do
+
+    if (dumpLocal) then
+       call DumpDomainDecomp(CreateGlobalWithGhost, varName)
+    end if
+  end function CreateGlobalWithGhost
 
 
 
+
+  
+  function CreateLocalOwn(ParEnv, GlobalWithGhost, &
+       GlobalOwn, varName)
+
+    ! Creates a pointer to a variable of type DomainDecomp that defines
+    ! the **interior** points of GlobalWithGhost input variable,
+    ! that is, the local indices of the sub-domain except ghost zone
+    ! and boundary conditions.
+    ! Returned pointer stores at [xb:xe,yb:ye] the local indices
+    ! of interior points that should be computed at most physics
+    ! and dynamics routines. Variables nx, ny should be used to
+    ! dimension fields, since they include ghost zones and boundary
+    ! conditions.
+    
+    
+    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
+    type(DomainDecomp), pointer, intent(in) :: GlobalWithGhost
+    type(DomainDecomp), pointer, intent(in) :: GlobalOwn
+    character(len=*), intent(in) :: varName
+    type(DomainDecomp), pointer :: CreateLocalOwn
+
+    integer :: nmachs
+    integer :: cell
+    integer :: x0
+    integer :: y0
+    character(len=*), parameter :: h="**(CreateLocalOwn)**"
+    logical, parameter :: dumpLocal = .false.
+
+    if (.not. associated(ParEnv)) then
+       call fatal_error(h//" invoked with null ParEnv")
+    else if (.not. associated(GlobalWithGhost)) then
+       call fatal_error(h//" invoked with null GlobalWithGhost ")
+    else if (.not. associated(GlobalOwn)) then
+       call fatal_error(h//" invoked with null GlobalOwn ")
+    end if
+
+    if (dumpLocal) then
+       call MsgDump (h//" "//trim(adjustl(varName))//&
+            " stores local indices from global indices")
+    end if
+
+    nmachs=ParEnv%nmachs
+
+    ! Local Interior info
+    
+    CreateLocalOwn => CreateDomainDecomp(nmachs)
+    CreateLocalOwn%GhostZoneWidth = GlobalWithGhost%GhostZoneWidth 
+    CreateLocalOwn%FullDirection = GlobalWithGhost%FullDirection 
+
+    do cell = 1, nmachs
+       x0 = GlobalWithGhost%xb(cell)-1
+       CreateLocalOwn%xb(cell) = GlobalOwn%xb(cell) - x0
+       CreateLocalOwn%xe(cell) = GlobalOwn%xe(cell) - x0
+       CreateLocalOwn%nx(cell) = GlobalWithGhost%nx(cell)
+       y0 = GlobalWithGhost%yb(cell)-1
+       CreateLocalOwn%yb(cell) = GlobalOwn%yb(cell) - y0
+       CreateLocalOwn%ye(cell) = GlobalOwn%ye(cell) - y0
+       CreateLocalOwn%ny(cell) = GlobalWithGhost%ny(cell)
+       CreateLocalOwn%ibcon(cell) = GlobalOwn%ibcon(cell)
+    end do
+
+    if (dumpLocal) then
+       call DumpDomainDecomp(CreateLocalOwn, varName)
+    end if
+  end function CreateLocalOwn
+
+
+
+
+  
   subroutine DomainDecompRams(nxp,nyp,ranks,&
        xb,xe,yb,ye)
 
@@ -658,389 +1073,4 @@ contains
        end if
     end do
   end subroutine MarkBoundary
-
-
-
-
-
-  function CreateGlobalWithGhost(GridSize, ParEnv, &
-       GlobalOwn, GhostZoneWidth, varName)
-
-    ! Creates a pointer to a variable of type DomainDecomp
-    ! named varName that extends
-    ! the sub-domains of GlobalOwn to include ghost zone
-    ! of width GhostZoneWidth. Sub-domain [xb:xe] is limited
-    ! by [1:nxp], same with [yb:ye]. Number of points nx, ny
-    ! include ghost zone width. Boundary conditions ibcon are copied
-    ! from GlobalOwn
-
-    type(GridDims), pointer, intent(in) :: GridSize
-    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
-    type(domainDecomp), pointer, intent(in) :: GlobalOwn
-    integer, intent(in) :: GhostZoneWidth
-    character(len=*), intent(in) :: varName
-    type(domainDecomp), pointer :: CreateGlobalWithGhost
-
-    integer :: nxp
-    integer :: nyp
-    integer :: nmachs
-    integer :: cell
-    integer :: ierr
-    character(len=8) :: c0, c1, c2
-    character(len=*), parameter :: h="**(CreateGlobalWithGhost)**"
-    logical, parameter :: dumpLocal = .false.
-
-    if (.not. associated(GridSize)) then
-       call fatal_error(h//" invoked with null GridSize")
-    else if (.not. associated(ParEnv)) then
-       call fatal_error(h//" invoked with null ParEnv")
-    else if (.not. associated(GlobalOwn)) then
-       call fatal_error(h//" invoked with null GlobalOwn ")
-    else if (GhostZoneWidth < 1) then
-       write (c0,"(i8)") GhostZoneWidth
-       call fatal_error(h//" GhostZoneWidth sould be >= 1 but it is "//&
-            trim(adjustl(c0)))
-    end if
-
-
-    nmachs = ParEnv%nmachs
-    nxp = GridSize%nnxp
-    nyp = GridSize%nnyp
-
-    if (dumpLocal) then
-       write(c0,"(i8)") nxp
-       write(c1,"(i8)") nyp
-       write(c2,"(i8)") GhostZoneWidth
-       call MsgDump (h//" "//varName//&
-            " inserts ghost zone of width "//trim(adjustl(c2))//&
-            " into GlobalOwn ["//&
-            trim(adjustl(c0))//" x "//trim(adjustl(c1))//"]")
-    end if
-
-    ! allocate return function value
-    
-    CreateGlobalWithGhost => AllocDomainDecomp(nmachs)
-
-    ! set DomainDecomp components
-    
-    CreateGlobalWithGhost%GhostZoneWidth = GhostZoneWidth
-    do cell = 1, nmachs
-       CreateGlobalWithGhost%ibcon(cell) = GlobalOwn%ibcon(cell)
-       ! west boundary (lower x axis)
-       if (btest(CreateGlobalWithGhost%ibcon(cell),1)) then
-          CreateGlobalWithGhost%xb(cell) = 1
-       else
-          CreateGlobalWithGhost%xb(cell) = max(1,GlobalOwn%xb(cell) - GhostZoneWidth)
-       end if
-       ! east boundary (higher x axis)
-       if (btest(CreateGlobalWithGhost%ibcon(cell),2)) then
-          CreateGlobalWithGhost%xe(cell) = nxp
-       else
-          CreateGlobalWithGhost%xe(cell) = min(nxp,GlobalOwn%xe(cell) + GhostZoneWidth)
-       end if
-       ! south boundary (lower y axis)
-       if (btest(CreateGlobalWithGhost%ibcon(cell),3)) then
-          CreateGlobalWithGhost%yb(cell) = 1
-       else
-          CreateGlobalWithGhost%yb(cell) = max(1,GlobalOwn%yb(cell) - GhostZoneWidth)
-       end if
-       ! north boundary (higher y axis)
-       if (btest(CreateGlobalWithGhost%ibcon(cell),4)) then
-          CreateGlobalWithGhost%ye(cell) = nyp
-       else
-          CreateGlobalWithGhost%ye(cell) = min(nyp,GlobalOwn%ye(cell) + GhostZoneWidth)
-       end if
-       CreateGlobalWithGhost%nx(cell) = CreateGlobalWithGhost%xe(cell)-CreateGlobalWithGhost%xb(cell)+1
-       CreateGlobalWithGhost%ny(cell) = CreateGlobalWithGhost%ye(cell)-CreateGlobalWithGhost%yb(cell)+1
-    end do
-
-    if (dumpLocal) then
-       call DumpDomainDecomp(CreateGlobalWithGhost, varName)
-    end if
-  end function CreateGlobalWithGhost
-
-
-
-
-
-  function CreateLocalOwn(ParEnv, GlobalWithGhost, &
-       GlobalOwn, varName)
-
-    ! Creates a pointer to a variable of type DomainDecomp that defines
-    ! the interior points of GlobalWithGhost input variable,
-    ! that is, the local indices of the sub-domain without ghost zone.
-    ! Returned pointer stores at [xb:xe,yb:ye] the local indices
-    ! of interior points that should be computed at most physics
-    ! and dynamics routines. Variables nx, ny should be used to
-    ! dimension fields, since they include ghost zones.
-    
-    type(ParallelEnvironment), pointer, intent(in) :: ParEnv
-    type(domainDecomp), pointer, intent(in) :: GlobalWithGhost
-    type(domainDecomp), pointer, intent(in) :: GlobalOwn
-    character(len=*), intent(in) :: varName
-    type(domainDecomp), pointer :: CreateLocalOwn
-
-    integer :: nmachs
-    integer :: cell
-    integer :: x0
-    integer :: y0
-    character(len=*), parameter :: h="**(CreateLocalOwn)**"
-    logical, parameter :: dumpLocal = .false.
-
-    if (.not. associated(ParEnv)) then
-       call fatal_error(h//" invoked with null ParEnv")
-    else if (.not. associated(GlobalWithGhost)) then
-       call fatal_error(h//" invoked with null GlobalWithGhost ")
-    else if (.not. associated(GlobalOwn)) then
-       call fatal_error(h//" invoked with null GlobalOwn ")
-    end if
-
-    if (dumpLocal) then
-       call MsgDump (h//" "//trim(adjustl(varName))//&
-            " stores local indices from global indices")
-    end if
-
-    nmachs=ParEnv%nmachs
-
-    ! Local Interior info
-    
-    CreateLocalOwn => AllocDomainDecomp(nmachs)
-    CreateLocalOwn%GhostZoneWidth = GlobalWithGhost%GhostZoneWidth 
-    do cell = 1, nmachs
-       x0 = GlobalWithGhost%xb(cell)-1
-       CreateLocalOwn%xb(cell) = GlobalOwn%xb(cell) - x0
-       CreateLocalOwn%xe(cell) = GlobalOwn%xe(cell) - x0
-       CreateLocalOwn%nx(cell) = GlobalWithGhost%nx(cell)
-       y0 = GlobalWithGhost%yb(cell)-1
-       CreateLocalOwn%yb(cell) = GlobalOwn%yb(cell) - y0
-       CreateLocalOwn%ye(cell) = GlobalOwn%ye(cell) - y0
-       CreateLocalOwn%ny(cell) = GlobalWithGhost%ny(cell)
-       CreateLocalOwn%ibcon(cell) = GlobalOwn%ibcon(cell)
-    end do
-
-    if (dumpLocal) then
-       call DumpDomainDecomp(CreateLocalOwn, varName)
-    end if
-  end function CreateLocalOwn
-
-
-
-
-
-  subroutine DestroyDomainDecomp(OneDomainDecomp)
-
-    ! Removes storage allocated to a variable of type DomainDecomp
-
-    type(domainDecomp), pointer, intent(inout) :: OneDomainDecomp
-
-    integer :: ierr
-    character(len=*), parameter :: h="**(DestroyDomainDecomp)**"
-    character(len=8) :: c0
-
-    if (associated(oneDomainDecomp)) then
-       deallocate(oneDomainDecomp%xb, stat=ierr)
-       if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate xb fails with stat="//&
-               trim(adjustl(c0)))
-       end if
-       deallocate(oneDomainDecomp%xe, stat=ierr)
-       if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate xe fails with stat="//&
-               trim(adjustl(c0)))
-       end if
-       deallocate(oneDomainDecomp%nx, stat=ierr)
-       if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate nx fails with stat="//&
-               trim(adjustl(c0)))
-       end if
-       deallocate(oneDomainDecomp%yb, stat=ierr)
-       if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate yb fails with stat="//&
-               trim(adjustl(c0)))
-       end if
-       deallocate(oneDomainDecomp%ye, stat=ierr)
-       if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate ye fails with stat="//&
-               trim(adjustl(c0)))
-       end if
-       deallocate(oneDomainDecomp%ny, stat=ierr)
-       if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate ny fails with stat="//&
-               trim(adjustl(c0)))
-       end if
-       deallocate(oneDomainDecomp%ibcon, stat=ierr)
-       if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate ibcon fails with stat="//&
-               trim(adjustl(c0)))
-       end if
-       deallocate(oneDomainDecomp, stat=ierr)
-       if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate oneDomainDecomp fails with stat="//&
-               trim(adjustl(c0)))
-       end if
-    end if
-    nullify(oneDomainDecomp)
-  end subroutine DestroyDomainDecomp
-
-
-
-
-
-  subroutine DumpDomainDecomp(oneDomainDecomp, varName)
-
-    ! Dumps info stored at a variable of type DomainDecomp
-    
-    type(DomainDecomp), pointer, intent(in) :: oneDomainDecomp
-    character(len=*), intent(in) :: varName
-
-    integer :: nmachs
-    integer :: mach
-    character(len=*), parameter :: h="**(DumpDomainDecomp)**"
-    character(len=8) :: c0, c1, c2, bnd
-    character(len=128) :: msg
-
-    ! dumps at selected unit
-
-    if (.not. associated(oneDomainDecomp)) then
-       call MsgDump (h//" empty DomainDecomp named "//trim(varName))
-       return
-    else if (.not. allocated(oneDomainDecomp%xb)) then
-       call fatal_error(h//" oneDomainDecomp%xb not allocated")
-    else if (.not. allocated(oneDomainDecomp%xe)) then
-       call fatal_error(h//" oneDomainDecomp%xe not allocated")
-    else if (.not. allocated(oneDomainDecomp%nx)) then
-       call fatal_error(h//" oneDomainDecomp%nx not allocated")
-    else if (.not. allocated(oneDomainDecomp%yb)) then
-       call fatal_error(h//" oneDomainDecomp%yb not allocated")
-    else if (.not. allocated(oneDomainDecomp%ye)) then
-       call fatal_error(h//" oneDomainDecomp%ye not allocated")
-    else if (.not. allocated(oneDomainDecomp%ny)) then
-       call fatal_error(h//" oneDomainDecomp%ny not allocated")
-    else if (.not. allocated(oneDomainDecomp%ibcon)) then
-       call fatal_error(h//" oneDomainDecomp%ibcon not allocated")
-    end if
-
-    nmachs = size(oneDomainDecomp%xb)
-
-    write(c0,"(i8)") nmachs
-    write(c1,"(i8)") oneDomainDecomp%GhostZoneWidth
-    call MsgDump (h//" named "//trim(adjustl(varName))//" has "//&
-         trim(adjustl(c0))//" sub-domains and ghost zone of width "//&
-         trim(adjustl(c1)))
-
-    call MsgDump(' MPIrank   x-beg   x-end      nx   y-beg   y-end      ny    cols   ibcon')
-    do mach = 1,nmachs
-       bnd=""
-       if (btest(oneDomainDecomp%ibcon(mach),1)) bnd=trim(bnd)//"X-"
-       if (btest(oneDomainDecomp%ibcon(mach),2)) bnd=trim(bnd)//"X+"
-       if (btest(oneDomainDecomp%ibcon(mach),3)) bnd=trim(bnd)//"Y-"
-       if (btest(oneDomainDecomp%ibcon(mach),4)) bnd=trim(bnd)//"Y+"
-       write(msg,"(8i8,a8)") &
-            Brams2MpiProcNbr(mach), &
-            oneDomainDecomp%xb(mach), &
-            oneDomainDecomp%xe(mach), &
-            oneDomainDecomp%nx(mach), &
-            oneDomainDecomp%yb(mach), &
-            oneDomainDecomp%ye(mach), &
-            oneDomainDecomp%ny(mach), &
-            oneDomainDecomp%nx(mach)*oneDomainDecomp%ny(mach), &
-            adjustr(bnd)
-       call MsgDump (trim(msg))
-    end do
-  end subroutine DumpDomainDecomp
-
-
-
-
-
-  subroutine DumpDomainDecompHistogram(oneDomainDecomp, varName)
-
-    ! Dumps an histogram of sub-domains of a variable of type DomainDecomp
-
-    type(DomainDecomp), pointer, intent(in) :: oneDomainDecomp
-    character(len=*), intent(in) :: varName
-
-    integer :: nmachs
-    integer :: mach
-    integer, allocatable :: ncols(:)
-    integer, allocatable :: bins(:) 
-    integer :: low, high, ibin
-    character(len=8) :: c0, c1, c2, c3
-    character(len=*), parameter :: h="**(DumpDomainDecompHistogram)**"
-    logical, parameter :: dumpLocal=.false.
-
-    ! dumps at selected unit
-
-    if (.not. associated(oneDomainDecomp)) then
-       call fatal_error(h//" null oneDomainDecomp")
-    else if (.not. allocated(oneDomainDecomp%xb)) then
-       call fatal_error(h//" oneDomainDecomp%xb not allocated")
-    else if (.not. allocated(oneDomainDecomp%xe)) then
-       call fatal_error(h//" oneDomainDecomp%xe not allocated")
-    else if (.not. allocated(oneDomainDecomp%nx)) then
-       call fatal_error(h//" oneDomainDecomp%nx not allocated")
-    else if (.not. allocated(oneDomainDecomp%yb)) then
-       call fatal_error(h//" oneDomainDecomp%yb not allocated")
-    else if (.not. allocated(oneDomainDecomp%ye)) then
-       call fatal_error(h//" oneDomainDecomp%ye not allocated")
-    else if (.not. allocated(oneDomainDecomp%ny)) then
-       call fatal_error(h//" oneDomainDecomp%ny not allocated")
-    else if (.not. allocated(oneDomainDecomp%ibcon)) then
-       call fatal_error(h//" oneDomainDecomp%ibcon not allocated")
-    end if
-
-    ! number of ranks
-
-    nmachs = size(oneDomainDecomp%xb)
-
-    ! dumps
-
-    write(c0,"(i8)") nmachs
-    write(c1,"(i8)") oneDomainDecomp%GhostZoneWidth
-    call MsgDump (h//" named "//trim(varName)//" has "//&
-         trim(adjustl(c0))//" sub-domains and ghost zone of width "//&
-         trim(adjustl(c1)))
-
-    ! grid points per rank
-
-    allocate(ncols(nmachs))
-    do mach = 1, nmachs
-       ncols(mach)= &
-            (1+oneDomainDecomp%xe(mach)-oneDomainDecomp%xb(mach))  &
-            *(1+oneDomainDecomp%ye(mach)-oneDomainDecomp%yb(mach))
-    end do
-
-    ! build histogram
-
-    low=minval(ncols(:))
-    high=maxval(ncols(:))
-
-    allocate(bins(low:high))
-    bins = 0
-    do mach=1, nmachs
-       bins(ncols(mach)) = bins(ncols(mach)) + 1
-    end do
-
-    ! dump histogram
-
-    do ibin = low, high
-       if (bins(ibin) == 0) cycle
-       write(c0,"(i8)") bins(ibin)
-       write(c1,"(i8)") ibin
-       write(c2,"(i8)") (100*bins(ibin))/nmachs
-       call MsgDump(trim(adjustl(c0))//" ranks with "//&
-            trim(adjustl(c1))//" surface points; "//trim(adjustl(c2))//"% of ranks")
-    end do
-    
-    deallocate(ncols)
-    deallocate(bins)
-  end subroutine DumpDomainDecompHistogram
 end module ModDomainDecomp

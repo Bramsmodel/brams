@@ -1,6 +1,13 @@
 module ModGrid
   ! ModGrid: 
-       
+
+  use ModConvertDomainDecomp, only: &
+       ConvertDomainDecomp, &
+       CreateConvertDomainDecomp, &
+       DestroyConvertDomainDecomp, &
+       DumpConvertDomainDecomp, &
+       TestSendRecvConvertDomainDecomp
+         
   use ModNamelistFile, only: &
        NamelistFile
 
@@ -44,10 +51,10 @@ module ModGrid
        DestroyAllGhostZoneMessageSet, &
        CreateAcoustNewMessageSet, &
        DestroyAcoustNewMessageSet, &
+       CreateMonAdvInputMessageSet, &
+       DestroyMonAdvInputMessageSet, &
        CreateWideGhostZoneMessageSet, &
-       DestroyWideGhostZoneMessageSet, &
-       CreateAdvMntMessageSet, &
-       DestroyAdvMntMessageSet
+       DestroyWideGhostZoneMessageSet
 
   use ModNodeDimensions, only: &
        NodeDimensions, &
@@ -183,14 +190,15 @@ module ModGrid
      ! oneParallelEnvironment: mpi size, rank and communicator for this run
      type(GridDims), pointer :: oneGridDims => null()
      ! oneGridDims: this grid dimensions as defined by namelist
+
      type(DomainDecomp), pointer :: GlobalOwn => null()
      ! GlobalOwn: global indices of this grid domain
      !            decomposition (domain partition) owned by
-     !            each rank - Ghost Zone not included
+     !            each rank - Ghost Zone and Boundary Conditions not included
      type(DomainDecomp), pointer :: GlobalOwnWithBC => null()
      ! GlobalOwnWithBC: global indices of this grid domain
-     !            decomposition (domain partition) owned by
-     !            each rank including Boundary Conditions
+     !                  decomposition (domain partition) owned by
+     !                  each rank including Boundary Conditions
      type(DomainDecomp), pointer :: GlobalWithGhost => null()
      ! GlobalWithGhost: global indices of this grid domain
      !                  decomposition at each rank, including
@@ -201,23 +209,61 @@ module ModGrid
      ! LocalOwn: local indices of this grid domain
      !           decomposition owned by each rank. 
      !           Convertion of GlobalOwn to local indices
-     type(DomainDecomp), pointer :: GlobalWithGhostAdvMnt => null()
-     ! GlobalWithGhostAdvMnt: global indices of this grid domain
-     !                        decomposition at each rank, including
-     !                        the owned points and a ghost zone of 
-     !                        parametrized width, used at MonotonicAdvection. 
-     !                        Not a domain partition, due to ghost zone inclusion.
-     type(DomainDecomp), pointer :: LocalOwnAdvMnt => null()
-     ! LocalOwnAdvMnt: local indices of this grid domain
-     !                 decomposition owned by each rank,
-     !                 use at MonotonicAdvection.
-     !                 Convertion of GlobalWithGhostAdvMnt to local indices
      type(NodeDimensions), pointer :: oneNodeDimensions => null()
      ! oneNodeDimensions: indices and dimensions of this process
-     ! domain decomposed sub-domain
-     type(NodeDimensions), pointer :: oneNodeDimensionsAdvMnt => null()
-     ! oneNodeDimensionsAdvMnt: indices and dimensions of this process
-     ! domain decomposed sub-domain for use inside MonotonicAdvection
+     !                    domain decomposed sub-domain
+     type(NeighbourNodes), pointer :: oneNeighbourNodes => null()
+     ! oneNeighbourNodes: list of BRAMS process numbers that are neighbours
+     !                    of this node for usual ghost zone update operations
+
+     type(DomainDecomp), pointer :: GlobalOwnMonAdvX => null()
+     ! GlobalOwnMonAdvX: global indices of this grid domain
+     !                   decomposition (domain partition) for
+     !                   monotonic advection in X owned by
+     !                   each rank - Ghost Zone and Boundary Conditions not included
+     type(DomainDecomp), pointer :: GlobalOwnWithBCMonAdvX => null()
+     ! GlobalOwnWithBC: global indices of this grid domain
+     !                  decomposition (domain partition) for
+     !                  monotonic advection in X owned by
+     !                  each rank including Boundary Conditions
+     type(DomainDecomp), pointer :: GlobalWithGhostMonAdvX => null()
+     ! GlobalWithGhostMonAdvX: global indices of this grid domain
+     !                         decomposition for monotonic advection in X 
+     !                         at each rank, including
+     !                         the owned points and a ghost zone of length one.
+     !                         Not a domain partition, due to ghost
+     !                         zone inclusion.
+     type(DomainDecomp), pointer :: LocalOwnMonAdvX => null()
+     ! LocalOwnMonAdvX: local indices of this grid domain
+     !                  decomposition for monotonic advection in X owned by each rank. 
+     !                  Convertion of GlobalOwn to local indices
+     type(NodeDimensions), pointer :: oneNodeDimensionsMonAdvX => null()
+     ! oneNodeDimensionsMonAdvX: indices and dimensions of this process
+     !                           domain decomposed sub-domain for monotonic advection in X
+     type(DomainDecomp), pointer :: GlobalOwnMonAdvY => null()
+     ! GlobalOwnMonAdvY: global indices of this grid domain
+     !                   decomposition (domain partition) for
+     !                   monotonic advection in Y owned by
+     !                   each rank - Ghost Zone and Boundary Conditions not included
+     type(DomainDecomp), pointer :: GlobalOwnWithBCMonAdvY => null()
+     ! GlobalOwnWithBC: global indices of this grid domain
+     !                  decomposition (domain partition) for
+     !                  monotonic advection in Y owned by
+     !                  each rank including Boundary Conditions
+     type(DomainDecomp), pointer :: GlobalWithGhostMonAdvY => null()
+     ! GlobalWithGhostMonAdvY: global indices of this grid domain
+     !                        decomposition for monotonic advection in Y 
+     !                        at each rank, including
+     !                        the owned points and a ghost zone of length one.
+     !                        Not a domain partition, due to ghost
+     !                        zone inclusion.
+     type(DomainDecomp), pointer :: LocalOwnMonAdvY => null()
+     ! LocalOwnMonAdvY: local indices of this grid domain
+     !                  decomposition for monotonic advection in Y owned by each rank. 
+     !                  Convertion of GlobalOwn to local indices
+     type(NodeDimensions), pointer :: oneNodeDimensionsMonAdvY => null()
+     ! oneNodeDimensionsMonAdvY: indices and dimensions of this process
+     !                           domain decomposed sub-domain for monotonic advection in Y
      type(BasicFields), pointer :: oneBasicFields => null()
      type(BasicFields), pointer :: oneAveBasicFields => null()
 
@@ -265,10 +311,7 @@ module ModGrid
 
      type(CuParmFields), pointer :: oneCuParmShFields => null()
      type(CuParmFields), pointer :: oneAveCuParmShFields => null()
-
-     type(NeighbourNodes), pointer :: oneNeighbourNodes => null()
-     ! oneNeighbourNodes: list of BRAMS process numbers that are neighbours
-     !        of this node for usual ghost zone update operations
+     
      type(MessageSet), pointer :: AcouSendU => null()
      type(MessageSet), pointer :: AcouRecvU => null()
      ! AcouSend/RecvU: Ghost Zone update at acoust_new and acoust_adap
@@ -313,6 +356,14 @@ module ModGrid
      ! Fields to update are local variables to these procedures,
      ! allocated and deallocated at each call. As so, field
      ! memory address vary with procedure invocation
+
+     type(MessageSet), pointer :: MonAdvInputSend => null()
+     type(MessageSet), pointer :: MonAdvInputRecv => null()
+     ! MonAdvInputSend/Recv: Ghost Zone update of fields
+     ! used at advmnt_driver initialization
+
+
+
      type(MessageSet), pointer :: WideGhostZoneSend => null()
      type(MessageSet), pointer :: WideGhostZoneRecv => null()
      ! WideGhostZoneSend/Recv: Ghost Zone update of four fields
@@ -321,30 +372,11 @@ module ModGrid
      ! allocated and deallocated at each call. As so, field
      ! memory address vary with procedure invocation
 
-     type(MessageSet), pointer :: AdvMntUVSendX => null()
-     type(MessageSet), pointer :: AdvMntUVRecvX => null()
-     type(MessageSet), pointer :: AdvMntUVSendY => null()
-     type(MessageSet), pointer :: AdvMntUVRecvY => null()
-
-     type(MessageSet), pointer :: AdvMntDxDySendX => null()
-     type(MessageSet), pointer :: AdvMntDxDyRecvX => null()
-     type(MessageSet), pointer :: AdvMntDxDySendY => null()
-     type(MessageSet), pointer :: AdvMntDxDyRecvY => null()
-
-     type(MessageSet), pointer :: AdvMntDd0SendX => null()
-     type(MessageSet), pointer :: AdvMntDd0RecvX => null()
-     type(MessageSet), pointer :: AdvMntDd0SendY => null()
-     type(MessageSet), pointer :: AdvMntDd0RecvY => null()
-
-     type(MessageSet), pointer :: AdvMntDenSendX => null()
-     type(MessageSet), pointer :: AdvMntDenRecvX => null()
-     type(MessageSet), pointer :: AdvMntDenSendY => null()
-     type(MessageSet), pointer :: AdvMntDenRecvY => null()
-
-     type(MessageSet), pointer :: AdvMntScaSendX => null()
-     type(MessageSet), pointer :: AdvMntScaRecvX => null()
-     type(MessageSet), pointer :: AdvMntScaSendY => null()
-     type(MessageSet), pointer :: AdvMntScaRecvY => null()
+     type(ConvertDomainDecomp), pointer :: ConvertBramsToMonAdvX => null()
+     type(ConvertDomainDecomp), pointer :: ConvertBramsToMonAdvY => null()
+     type(ConvertDomainDecomp), pointer :: ConvertMonAdvXToMonAdvY => null()
+     type(ConvertDomainDecomp), pointer :: ConvertMonAdvYToBrams => null()
+     type(ConvertDomainDecomp), pointer :: ConvertBramsToBrams => null()
   end type Grid
 
 
@@ -410,47 +442,40 @@ contains
     ! cells owned by each rank and store at GlobalOwn
 
     oneGrid%GlobalOwn => CreateGlobalOwn(&
-         oneGrid%oneGridDims, &
-         oneGrid%oneParallelEnvironment, &
-         "GlobalOwn" &
+         GridSize=oneGrid%oneGridDims, &
+         ParEnv=oneGrid%oneParallelEnvironment, &
+         varName="GlobalOwn", &
+         FullDirection="B" &
          )
 
     ! include boundary conditions (no ghost zone)
 
     oneGrid%GlobalOwnWithBC => CreateGlobalOwnWithBC(&
-         oneGrid%oneGridDims, &
-         oneGrid%oneParallelEnvironment, &
-         oneGrid%GlobalOwn &
+         GridSize=oneGrid%oneGridDims, &
+         ParEnv=oneGrid%oneParallelEnvironment, &
+         GlobalOwn=oneGrid%GlobalOwn, &
+         varName="GlobalOwnWithBC" &
          )
 
     ! insert original ghost zone of widht 1
     ! at GlobalOwn and store at GlobalWithGhost
 
     oneGrid%GlobalWithGhost => CreateGlobalWithGhost(&
-         oneGrid%oneGridDims, &
-         oneGrid%oneParallelEnvironment, &
-         oneGrid%GlobalOwn, &
-         1, &
-         "GlobalWithGhost" &
+         GridSize=oneGrid%oneGridDims, &
+         ParEnv=oneGrid%oneParallelEnvironment, &
+         GlobalOwn=oneGrid%GlobalOwn, &
+         GhostZoneWidth=1, &
+         varName="GlobalWithGhost" &
          )
 
     ! convert global indices from GlobalWithGhost
     ! into local indices stored at LocalOwn
 
     oneGrid%LocalOwn => CreateLocalOwn(&
-         oneGrid%oneParallelEnvironment, &
-         oneGrid%GlobalWithGhost, &
-         oneGrid%GlobalOwn, &
-         "LocalOwn" &
-         )
-
-    ! neighbour nodes for original ghost zone update operations
-
-    oneGrid%oneNeighbourNodes => CreateNeighbourNodes(&
          ParEnv=oneGrid%oneParallelEnvironment, &
-         GlobalOwn=oneGrid%GlobalOwn, &
          GlobalWithGhost=oneGrid%GlobalWithGhost, &
-         varName="oneGrid%oneNeighbourNodes" &
+         GlobalOwn=oneGrid%GlobalOwn, &
+         varName="LocalOwn" &
          )
 
     ! this node dimensions and indexing limits
@@ -465,38 +490,229 @@ contains
          varName="oneNodeDimensions" &
          )
 
-    ! for MonotonicAdvection, insert ghost zone of parametrized widht
-    ! at GlobalOwn and store at GlobalWithGhostAdvMnt
+    ! neighbour nodes for original ghost zone update operations
 
-    oneGrid%GlobalWithGhostAdvMnt => CreateGlobalWithGhost(&
-         GridSize=oneGrid%oneGridDims, &
+    oneGrid%oneNeighbourNodes => CreateNeighbourNodes(&
          ParEnv=oneGrid%oneParallelEnvironment, &
          GlobalOwn=oneGrid%GlobalOwn, &
-         GhostZoneWidth=oneNamelistFile%ghostzonelength, &
-         varName="GlobalWithGhostAdvMnt" &
+         GlobalWithGhost=oneGrid%GlobalWithGhost, &
+         varName="oneGrid%oneNeighbourNodes" &
          )
 
-    ! convert global indices from GlobalWithGhostAdvMnt
-    ! into local indices stored at LocalOwnAdvMnt
+    ! domain decomposition for Monotonic Advection in X, 
+    ! defining cells owned by each rank and store at GlobalOwnMonAdvX
 
-    oneGrid%LocalOwnAdvMnt => CreateLocalOwn(&
-         ParEnv=oneGrid%oneParallelEnvironment, &
-         GlobalWithGhost=oneGrid%GlobalWithGhostAdvMnt, &
-         GlobalOwn=oneGrid%GlobalOwn, &
-         varName="LocalOwnAdvMnt" &
-         )
-
-    ! this node dimensions and indexing limits
-
-    oneGrid%oneNodeDimensionsAdvMnt => CreateNodeDimensions(&
+    oneGrid%GlobalOwnMonAdvX => CreateGlobalOwn(&
          GridSize=oneGrid%oneGridDims, &
          ParEnv=oneGrid%oneParallelEnvironment, &
-         LocalOwn=oneGrid%LocalOwnAdvMnt, &
-         GlobalOwn=oneGrid%GlobalOwn, &
+         varName="GlobalOwnMonAdvX", &
+         FullDirection="X"&
+         )
+
+    ! include boundary conditions (no ghost zone)
+
+    oneGrid%GlobalOwnWithBCMonAdvX => CreateGlobalOwnWithBC(&
+         GridSize=oneGrid%oneGridDims, &
+         ParEnv=oneGrid%oneParallelEnvironment, &
+         GlobalOwn=oneGrid%GlobalOwnMonAdvX, &
+         varName="GlobalOwnWithBCMonAdvX" &
+         )
+
+    ! no ghost zone at Monotonic Advection in X direction;
+    ! as so, GlobalWithGhostMonAdvX is identical to
+
+    oneGrid%GlobalWithGhostMonAdvX => oneGrid%GlobalOwnWithBCMonAdvX
+
+    ! convert global indices from GlobalWithGhostMonAdvX
+    ! into local indices stored at LocalOwnMonAdvX
+
+    oneGrid%LocalOwnMonAdvX => CreateLocalOwn(&
+         ParEnv=oneGrid%oneParallelEnvironment, &
+         GlobalWithGhost=oneGrid%GlobalWithGhostMonAdvX, &
+         GlobalOwn=oneGrid%GlobalOwnMonAdvX, &
+         varName="LocalOwnMonAdvX" &
+         )
+
+    ! this node dimensions and indexing limits for monotonic advection in X
+
+    oneGrid%oneNodeDimensionsMonAdvX => CreateNodeDimensions(&
+         GridSize=oneGrid%oneGridDims, &
+         ParEnv=oneGrid%oneParallelEnvironment, &
+         LocalOwn=oneGrid%LocalOwnMonAdvX, &
+         GlobalOwn=oneGrid%GlobalOwnMonAdvX, &
          verticalGhostZoneWidth=0, &
-         surfaceGhostZoneWidth=oneNamelistFile%ghostzonelength, &
-         varName="oneNodeDimensionsAdvMnt" &
+         surfaceGhostZoneWidth=0, &
+         varName="oneNodeDimensionsMonAdvX" &
          )
+
+    ! domain decomposition for Monotonic Advection in Y, 
+    ! defining cells owned by each rank and store at GlobalOwnMonAdvY
+
+    oneGrid%GlobalOwnMonAdvY => CreateGlobalOwn(&
+         GridSize=oneGrid%oneGridDims, &
+         ParEnv=oneGrid%oneParallelEnvironment, &
+         varName="GlobalOwnMonAdvY", &
+         FullDirection="Y" &
+         )
+
+    ! include boundary conditions (no ghost zone)
+
+    oneGrid%GlobalOwnWithBCMonAdvY => CreateGlobalOwnWithBC(&
+         GridSize=oneGrid%oneGridDims, &
+         ParEnv=oneGrid%oneParallelEnvironment, &
+         GlobalOwn=oneGrid%GlobalOwnMonAdvY, &
+         varName="GlobalOwnWithBCMonAdvY" &
+         )
+
+    ! no ghost zone at Monotonic Advection in Y direction;
+    ! as so, GlobalWithGhostMonAdvY is identical to
+
+    oneGrid%GlobalWithGhostMonAdvY => oneGrid%GlobalOwnWithBCMonAdvY
+
+    ! convert global indices from GlobalWithGhostMonAdvY
+    ! into local indices stored at LocalOwnMonAdvY
+
+    oneGrid%LocalOwnMonAdvY => CreateLocalOwn(&
+         ParEnv=oneGrid%oneParallelEnvironment, &
+         GlobalWithGhost=oneGrid%GlobalWithGhostMonAdvY, &
+         GlobalOwn=oneGrid%GlobalOwnMonAdvY, &
+         varName="LocalOwnMonAdvY" &
+         )
+
+    ! this node dimensions and indexing limits for monotonic advection in X
+
+    oneGrid%oneNodeDimensionsMonAdvY => CreateNodeDimensions(&
+         GridSize=oneGrid%oneGridDims, &
+         ParEnv=oneGrid%oneParallelEnvironment, &
+         LocalOwn=oneGrid%LocalOwnMonAdvY, &
+         GlobalOwn=oneGrid%GlobalOwnMonAdvY, &
+         verticalGhostZoneWidth=0, &
+         surfaceGhostZoneWidth=0, &
+         varName="oneNodeDimensionsMonAdvY" &
+         )
+
+    ! convert BRAMS domain decomposition to Monotonic Advection Full X domain decomposition
+    
+    oneGrid%ConvertBramsToMonAdvX => CreateConvertDomainDecomp( &
+         oneParallelEnvironment=oneGrid%oneParallelEnvironment, &
+         oneGridDims=oneGrid%oneGridDims, &
+         GlobalWithGhostFrom=oneGrid%GlobalWithGhost, &
+         FromName="GlobalWithGhost", &
+         GlobalWithGhostTo=oneGrid%GlobalWithGhostMonAdvX, &
+         ToName="GlobalWithGhostMonAdvX",&
+         varName="ConvertBramsToMonAdvX"&
+         )
+
+    call TestSendRecvConvertDomainDecomp(&
+         testDim=2, &
+         oneNodeDimensionsFrom=oneGrid%oneNodeDimensions, &
+         oneNodeDimensionsTo=oneGrid%oneNodeDimensionsMonAdvX, &
+         oneConvertDomainDecomp=oneGrid%ConvertBramsToMonAdvX)
+
+    call TestSendRecvConvertDomainDecomp(&
+         testDim=3, &
+         oneNodeDimensionsFrom=oneGrid%oneNodeDimensions, &
+         oneNodeDimensionsTo=oneGrid%oneNodeDimensionsMonAdvX, &
+         oneConvertDomainDecomp=oneGrid%ConvertBramsToMonAdvX)
+
+    ! convert BRAMS domain decomposition to Monotonic Advection Full Y domain decomposition
+    
+    oneGrid%ConvertBramsToMonAdvY => CreateConvertDomainDecomp( &
+         oneParallelEnvironment=oneGrid%oneParallelEnvironment, &
+         oneGridDims=oneGrid%oneGridDims, &
+         GlobalWithGhostFrom=oneGrid%GlobalWithGhost, &
+         FromName="GlobalWithGhost", &
+         GlobalWithGhostTo=oneGrid%GlobalWithGhostMonAdvY, &
+         ToName="GlobalWithGhostMonAdvY",&
+         varName="ConvertBramsToMonAdvY"&
+         )
+
+    call TestSendRecvConvertDomainDecomp(&
+         testDim=2, &
+         oneNodeDimensionsFrom=oneGrid%oneNodeDimensions, &
+         oneNodeDimensionsTo=oneGrid%oneNodeDimensionsMonAdvY, &
+         oneConvertDomainDecomp=oneGrid%ConvertBramsToMonAdvY)
+
+    call TestSendRecvConvertDomainDecomp(&
+         testDim=3, &
+         oneNodeDimensionsFrom=oneGrid%oneNodeDimensions, &
+         oneNodeDimensionsTo=oneGrid%oneNodeDimensionsMonAdvY, &
+         oneConvertDomainDecomp=oneGrid%ConvertBramsToMonAdvY)
+
+    ! convert Monotonic Advection Full X domain decomposition to Monotonic Advection Full Y domain decomposition
+    
+    oneGrid%ConvertMonAdvXToMonAdvY => CreateConvertDomainDecomp( &
+         oneParallelEnvironment=oneGrid%oneParallelEnvironment, &
+         oneGridDims=oneGrid%oneGridDims, &
+         GlobalWithGhostFrom=oneGrid%GlobalWithGhostMonAdvX, &
+         FromName="GlobalWithGhostMonAdvX", &
+         GlobalWithGhostTo=oneGrid%GlobalWithGhostMonAdvY, &
+         ToName="GlobalWithGhostMonAdvY",&
+         varName="ConvertMonAdvXToMonAdvY"&
+         )
+
+    call TestSendRecvConvertDomainDecomp(&
+         testDim=2, &
+         oneNodeDimensionsFrom=oneGrid%oneNodeDimensionsMonAdvX, &
+         oneNodeDimensionsTo=oneGrid%oneNodeDimensionsMonAdvY, &
+         oneConvertDomainDecomp=oneGrid%ConvertMonAdvXToMonAdvY)
+
+    call TestSendRecvConvertDomainDecomp(&
+         testDim=3, &
+         oneNodeDimensionsFrom=oneGrid%oneNodeDimensionsMonAdvX, &
+         oneNodeDimensionsTo=oneGrid%oneNodeDimensionsMonAdvY, &
+         oneConvertDomainDecomp=oneGrid%ConvertMonAdvXToMonAdvY)
+
+    ! convert Monotonic Advection Full Y domain decomposition to BRAMS domain decomposition
+    
+    oneGrid%ConvertMonAdvYToBrams => CreateConvertDomainDecomp( &
+         oneParallelEnvironment=oneGrid%oneParallelEnvironment, &
+         oneGridDims=oneGrid%oneGridDims, &
+         GlobalWithGhostFrom=oneGrid%GlobalWithGhostMonAdvY, &
+         FromName="GlobalWithGhostMonAdvY", &
+         GlobalWithGhostTo=oneGrid%GlobalWithGhost, &
+         ToName="GlobalWithGhost",&
+         varName="ConvertMonAdvYToBrams"&
+         )
+
+    call TestSendRecvConvertDomainDecomp(&
+         testDim=2, &
+         oneNodeDimensionsFrom=oneGrid%oneNodeDimensionsMonAdvY, &
+         oneNodeDimensionsTo=oneGrid%oneNodeDimensions, &
+         oneConvertDomainDecomp=oneGrid%ConvertMonAdvYToBrams)
+
+    call TestSendRecvConvertDomainDecomp(&
+         testDim=3, &
+         oneNodeDimensionsFrom=oneGrid%oneNodeDimensionsMonAdvY, &
+         oneNodeDimensionsTo=oneGrid%oneNodeDimensions, &
+         oneConvertDomainDecomp=oneGrid%ConvertMonAdvYToBrams)
+
+    ! update Ghost Zone of Brams fields by converting Brams to Brams
+    
+    oneGrid%ConvertBramsToBrams => CreateConvertDomainDecomp( &
+         oneParallelEnvironment=oneGrid%oneParallelEnvironment, &
+         oneGridDims=oneGrid%oneGridDims, &
+         GlobalWithGhostFrom=oneGrid%GlobalWithGhost, &
+         FromName="GlobalWithGhost", &
+         GlobalWithGhostTo=oneGrid%GlobalWithGhost, &
+         ToName="GlobalWithGhost",&
+         varName="ConvertBramsToBrams"&
+         )
+
+    call TestSendRecvConvertDomainDecomp(&
+         testDim=2, &
+         oneNodeDimensionsFrom=oneGrid%oneNodeDimensions, &
+         oneNodeDimensionsTo=oneGrid%oneNodeDimensions, &
+         oneConvertDomainDecomp=oneGrid%ConvertBramsToBrams)
+
+    call TestSendRecvConvertDomainDecomp(&
+         testDim=3, &
+         oneNodeDimensionsFrom=oneGrid%oneNodeDimensions, &
+         oneNodeDimensionsTo=oneGrid%oneNodeDimensions, &
+         oneConvertDomainDecomp=oneGrid%ConvertBramsToBrams)
+
+!!$    call Terminate(h//" apos converter decomposicoes")
+
 
     ! this node Basic Fields
 
@@ -795,16 +1011,7 @@ contains
     integer, parameter :: TagAcoustNewAlpha=38
     integer, parameter :: TagAcoustNewTht=39
     integer, parameter :: TagWideGhostZone=40
-    integer, parameter :: TagAdvMntUVX=41
-    integer, parameter :: TagAdvMntUVY=42
-    integer, parameter :: TagAdvMntDxDyX=43
-    integer, parameter :: TagAdvMntDxDyY=44
-    integer, parameter :: TagAdvMntDd0X=45
-    integer, parameter :: TagAdvMntDd0Y=46
-    integer, parameter :: TagAdvMntDenX=47
-    integer, parameter :: TagAdvMntDenY=48
-    integer, parameter :: TagAdvMntScaX=49
-    integer, parameter :: TagAdvMntScaY=50
+    integer, parameter :: TagMonAdvInput=51
 
     ! Field pointer for fields not yet allocated
     ! not yet allocated; CreateAcoustNewMessageSet
@@ -879,28 +1086,18 @@ contains
          TagAcoustNewTht, oneGrid%AcoustNewThtSend, oneGrid%AcoustNewThtRecv, &
          tend%tht_rk)
 
+    call CreateMonAdvInputMessageSet(&
+         oneGrid%oneVarTable, oneGrid%oneVarTableSize, oneGrid%Id, &
+         oneGrid%oneGridDims, oneGrid%oneParallelEnvironment, oneGrid%oneNeighbourNodes, &
+         oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhost, &
+         oneGrid%MonAdvInputSend, oneGrid%MonAdvInputRecv, TagMonAdvInput)
+
 
     call CreateWideGhostZoneMessageSet(&
          oneGrid%oneParallelEnvironment, oneGrid%oneNeighbourNodes, &
          oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhost, oneGrid%oneNodeDimensions, &
          1, oneGrid%oneNodeDimensions%mzp, &
          TagWideGhostZone, oneGrid%WideGhostZoneSend, oneGrid%WideGhostZoneRecv)
-
-    call CreateAdvMntMessageSet(&
-         oneGrid%oneParallelEnvironment, oneGrid%oneNeighbourNodes, &
-         oneGrid%GlobalOwnWithBC, oneGrid%GlobalWithGhostAdvMnt, &
-         oneGrid%oneNodeDimensions, oneGrid%oneNodeDimensionsAdvMnt, &
-         TagAdvMntUVX, oneGrid%AdvMntUVSendX, oneGrid%AdvMntUVRecvX, &
-         TagAdvMntUVY, oneGrid%AdvMntUVSendY, oneGrid%AdvMntUVRecvY, &
-         TagAdvMntDxDyX, oneGrid%AdvMntDxDySendX, oneGrid%AdvMntDxDyRecvX, &
-         TagAdvMntDxDyY, oneGrid%AdvMntDxDySendY, oneGrid%AdvMntDxDyRecvY, &
-         TagAdvMntDd0X, oneGrid%AdvMntDd0SendX, oneGrid%AdvMntDd0RecvX, &
-         TagAdvMntDd0Y, oneGrid%AdvMntDd0SendY, oneGrid%AdvMntDd0RecvY, &
-         TagAdvMntDenX, oneGrid%AdvMntDenSendX, oneGrid%AdvMntDenRecvX, &
-         TagAdvMntDenY, oneGrid%AdvMntDenSendY, oneGrid%AdvMntDenRecvY, &
-         TagAdvMntScaX, oneGrid%AdvMntScaSendX, oneGrid%AdvMntScaRecvX, &
-         TagAdvMntScaY, oneGrid%AdvMntScaSendY, oneGrid%AdvMntScaRecvY)
-
 
     if (dumpLocal) then
        call MsgDump(h//" dumping oneGrid at the end of InsertMessageSetAtOneGrid")
@@ -926,11 +1123,10 @@ contains
        call DestroyDomainDecomp(oneGrid%GlobalOwnWithBC)
        call DestroyDomainDecomp(oneGrid%GlobalWithGhost)
        call DestroyDomainDecomp(oneGrid%LocalOwn)
+       call DestroyDomainDecomp(oneGrid%GlobalOwnWithBCMonAdvX)
+       call DestroyDomainDecomp(oneGrid%GlobalOwnWithBCMonAdvY)
        call DestroyNeighbourNodes(oneGrid%oneNeighbourNodes)
        call DestroyNodeDimensions(oneGrid%oneNodeDimensions)
-       call DestroyDomainDecomp(oneGrid%GlobalWithGhostAdvMnt)
-       call DestroyDomainDecomp(oneGrid%LocalOwnAdvMnt)
-       call DestroyNodeDimensions(oneGrid%oneNodeDimensionsAdvMnt)
        call DestroyBasicFields(oneGrid%oneBasicFields)
        call DestroyBasicFields(oneGrid%oneAveBasicFields)
        call DestroyTurbFields(oneGrid%oneTurbFields)
@@ -978,19 +1174,10 @@ contains
             oneGrid%AcoustNewPPSend, oneGrid%AcoustNewPPRecv, &
             oneGrid%AcoustNewAlphaSend, oneGrid%AcoustNewAlphaRecv, &
             oneGrid%AcoustNewThtSend, oneGrid%AcoustNewThtRecv)
+       call DestroyMonAdvInputMessageSet( &
+            oneGrid%MonAdvInputSend, oneGrid%MonAdvInputRecv)
        call DestroyWideGhostZoneMessageSet(&
             oneGrid%WideGhostZoneSend, oneGrid%WideGhostZoneRecv)
-       call DestroyAdvMntMessageSet(&
-            oneGrid%AdvMntUVSendX, oneGrid%AdvMntUVRecvX, &
-            oneGrid%AdvMntUVSendY, oneGrid%AdvMntUVRecvY, &
-            oneGrid%AdvMntDxDySendX, oneGrid%AdvMntDxDyRecvX, &
-            oneGrid%AdvMntDxDySendY, oneGrid%AdvMntDxDyRecvY, &
-            oneGrid%AdvMntDd0SendX, oneGrid%AdvMntDd0RecvX, &
-            oneGrid%AdvMntDd0SendY, oneGrid%AdvMntDd0RecvY, &
-            oneGrid%AdvMntDenSendX, oneGrid%AdvMntDenRecvX, &
-            oneGrid%AdvMntDenSendY, oneGrid%AdvMntDenRecvY, &
-            oneGrid%AdvMntScaSendX, oneGrid%AdvMntScaRecvX, &
-            oneGrid%AdvMntScaSendY, oneGrid%AdvMntScaRecvY)
        deallocate(oneGrid)
     end if
     nullify(oneGrid)
@@ -1026,8 +1213,8 @@ contains
     call DumpDomainDecomp(oneGrid%GlobalOwnWithBC, "GlobalOwnWithBC")
     call DumpDomainDecomp(oneGrid%GlobalWithGhost, "GlobalWithGhost")
     call DumpDomainDecomp(oneGrid%LocalOwn, "LocalOwn")
-    call DumpDomainDecomp(oneGrid%GlobalWithGhostAdvMnt, "GlobalWithGhostAdvMnt")
-    call DumpDomainDecomp(oneGrid%LocalOwnAdvMnt, "LocalOwnAdvMnt")
+    call DumpDomainDecomp(oneGrid%GlobalOwnWithBCMonAdvX, "GlobalOwnWithBCMonAdvX")
+    call DumpDomainDecomp(oneGrid%GlobalOwnWithBCMonAdvY, "GlobalOwnWithBCMonAdvY")
     
     call MsgDump(h//" dumping neighborhood components")
     call DumpNeighbourNodes(oneGrid%oneNeighbourNodes,"oneGrid%oneNeighbourNodes")
@@ -1098,47 +1285,6 @@ contains
     call MsgDump(h//" dumping WideGhostZoneRecv")
     call DumpMessageSet(oneGrid%WideGhostZoneRecv)
     call DumpNodeDimensions(oneGrid%oneNodeDimensions, "oneNodeDimensions")
-    call DumpNodeDimensions(oneGrid%oneNodeDimensionsAdvMnt, "oneNodeDimensionsAdvMnt")
-    call MsgDump(h//" dumping AdvMntUVSendX")
-    call DumpMessageSet(oneGrid%AdvMntUVSendX)
-    call MsgDump(h//" dumping AdvMntUVRecvX")
-    call DumpMessageSet(oneGrid%AdvMntUVRecvX)
-    call MsgDump(h//" dumping AdvMntUVSendY")
-    call DumpMessageSet(oneGrid%AdvMntUVSendY)
-    call MsgDump(h//" dumping AdvMntUVRecvY")
-    call DumpMessageSet(oneGrid%AdvMntUVRecvY)
-    call MsgDump(h//" dumping AdvMntDxDySendX")
-    call DumpMessageSet(oneGrid%AdvMntDxDySendX)
-    call MsgDump(h//" dumping AdvMntDxDyRecvX")
-    call DumpMessageSet(oneGrid%AdvMntDxDyRecvX)
-    call MsgDump(h//" dumping AdvMntDxDySendY")
-    call DumpMessageSet(oneGrid%AdvMntDxDySendY)
-    call MsgDump(h//" dumping AdvMntDxDyRecvY")
-    call DumpMessageSet(oneGrid%AdvMntDxDyRecvY)
-    call MsgDump(h//" dumping AdvMntDd0SendX")
-    call DumpMessageSet(oneGrid%AdvMntDd0SendX)
-    call MsgDump(h//" dumping AdvMntDd0RecvX")
-    call DumpMessageSet(oneGrid%AdvMntDd0RecvX)
-    call MsgDump(h//" dumping AdvMntDd0SendY")
-    call DumpMessageSet(oneGrid%AdvMntDd0SendY)
-    call MsgDump(h//" dumping AdvMntDd0RecvY")
-    call DumpMessageSet(oneGrid%AdvMntDd0RecvY)
-    call MsgDump(h//" dumping AdvMntDenSendX")
-    call DumpMessageSet(oneGrid%AdvMntDenSendX)
-    call MsgDump(h//" dumping AdvMntDenRecvX")
-    call DumpMessageSet(oneGrid%AdvMntDenRecvX)
-    call MsgDump(h//" dumping AdvMntDenSendY")
-    call DumpMessageSet(oneGrid%AdvMntDenSendY)
-    call MsgDump(h//" dumping AdvMntDenRecvY")
-    call DumpMessageSet(oneGrid%AdvMntDenRecvY)
-    call MsgDump(h//" dumping AdvMntScaSendX")
-    call DumpMessageSet(oneGrid%AdvMntScaSendX)
-    call MsgDump(h//" dumping AdvMntScaRecvX")
-    call DumpMessageSet(oneGrid%AdvMntScaRecvX)
-    call MsgDump(h//" dumping AdvMntScaSendY")
-    call DumpMessageSet(oneGrid%AdvMntScaSendY)
-    call MsgDump(h//" dumping AdvMntScaRecvY")
-    call DumpMessageSet(oneGrid%AdvMntScaRecvY)
 
 
     call DumpBasicFields(oneGrid%oneBasicFields, "oneGrid%oneBasicFields")
