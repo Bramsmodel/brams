@@ -8,7 +8,7 @@ PREREQ_DIR=/home/mateusff/opt-gcc
 BRAMS_DIR=${BRAMS_DIR:-"${PWD}/../"}
 BRAMS_INSTALL_DIR=`pwd`
 
-source /home/mateusff/modules.sh
+#source /home/mateusff/modules.sh
 
 export LD_LIBRARY_PATH=${PREREQ_DIR}/lib:/opt/spack/opt/spack/linux-rocky8-zen/gcc-8.5.0/libpciaccess-0.17-u577d6vkumv2ku5u3jljfmpl54ejgkxi/lib/:$LD_LIBRARY_PATH
 export PATH=${PREREQ_DIR}/bin:$PATH

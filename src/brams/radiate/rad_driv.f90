@@ -23,6 +23,9 @@ module radiation
   
   use ModCuParmFields, only: &
        CuParmFields
+
+  use ModGridDims, only: &
+       GridDims
   
   implicit none
 
@@ -35,7 +38,7 @@ contains
 
   subroutine radiate(mzp, mxp, myp, ia, iz, ja, jz, mynum, &
        oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields, &
-       oneRadiateFields, oneCuParmFields)
+       oneRadiateFields, oneCuParmFields, oneGridDims)
 
     integer, intent(in) :: mzp, mxp, myp, ia, iz, ja, jz, mynum
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
@@ -44,6 +47,7 @@ contains
     type(MicroFields), pointer, intent(in) :: oneMicroFields
     type(RadiateFields), pointer, intent(in) :: oneRadiateFields
     type(CuParmFields), pointer, intent(in) :: oneCuParmFields
+    type(GridDims), pointer, intent(in) :: oneGridDims
 
     character(len=*), parameter :: h="**(radiate)**"
     
@@ -55,7 +59,7 @@ contains
 
        call rrtm_driver(mzp, mxp, myp, ia, iz, ja, jz, mynum, &
             oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields, &
-            oneRadiateFields, oneCuParmFields)
+            oneRadiateFields, oneCuParmFields, oneGridDims)
 
     else if (oneNamelistFile%ilwrtyp==4 .and. oneNamelistFile%iswrtyp==4) then
 

@@ -51,6 +51,7 @@
       use parrrtm, only : nbndlw, ngptlw
       use rrlw_con, only: grav
       use rrlw_wvn, only: ngb
+      use mem_rrtm, only: jumping
 
       implicit none
 
@@ -433,7 +434,7 @@
 
 ! Indices
       integer(kind=im) :: ilev, isubcol, i, n         ! indices
-
+      integer :: iJump
 !------------------------------------------------------------------------------------------ 
 
 ! Check that irng is in bounds; if not, set to default
@@ -554,11 +555,23 @@
          elseif (irng.eq.1) then
             do isubcol = 1, nsubcol
                do i = 1, ncol
+                  !**(JP)** jump random for binary reproducibility
+                  do iJump = 1, jumping(i)
+                     rand_num_mt = getRandomReal(randomNumbers)
+                  end do
+                  !**(JP)** for this atmospheric column,
+                  !**(JP)** generate the same random as in sequential runs
                   rand_num_mt = getRandomReal(randomNumbers)
                   do ilev = 1, nlay
                      CDF(isubcol,i,ilev) = rand_num_mt
                   enddo
                enddo
+               !**(JP)** jump random at partition end, so that
+               !**(JP)** the same random will be produced for each column
+               !**(JP)** for the next subcol
+               do iJump = 1, jumping(ncol+1)
+                  rand_num_mt = getRandomReal(randomNumbers)
+               end do
              enddo
          endif
 

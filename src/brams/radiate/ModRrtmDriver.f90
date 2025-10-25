@@ -58,7 +58,9 @@ module ModRrtmDriver
        carma_aotMap
 
   use node_mod, only: &
-       mynum ! INTENT(IN)
+       mynum, &
+       i0, &
+       j0
 
   use mem_rrtm, only: &
        aot_rrtm_lw, &
@@ -103,7 +105,9 @@ module ModRrtmDriver
        initRRTM, &
        flip, &
        irng, &
-       permuteseed
+       permuteseed, &
+       CreateJumping, &
+       jumping
 
   use mem_tend, only: &
        tend
@@ -204,6 +208,9 @@ module ModRrtmDriver
        slmsts, &
        rshort_s
 
+  use ModGridDims, only: &
+       GridDims
+  
   implicit none
 
   private
@@ -223,7 +230,7 @@ contains
 
   subroutine rrtm_driver(mzp, mxp, myp, ia, iz, ja, jz, mynum, &
        oneNamelistFile, oneBasicFields, oneMicVars, oneMicroFields, &
-       oneRadiateFields, oneCuParmFields)
+       oneRadiateFields, oneCuParmFields, oneGridDims)
 
     integer, intent(in) :: mzp, mxp, myp, ia, iz, ja, jz, mynum
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
@@ -232,6 +239,7 @@ contains
     type(MicroFields), pointer, intent(in) :: oneMicroFields
     type(RadiateFields), pointer, intent(in) :: oneRadiateFields
     type(CuParmFields), pointer, intent(in) :: oneCuParmFields
+    type(GridDims), pointer, intent(in) :: oneGridDims
 
     real,dimension(mzp,mxp,myp) :: lwl,iwl
     real,dimension(mxp,myp) :: rain
@@ -379,7 +387,8 @@ contains
 
 
        !- RRTM Radiation
-       call radrrtmdrv(ia,iz,ja,jz,mxp,myp,mzp,mynum&
+       call radrrtmdrv(ia,iz,ja,jz,mxp,myp,mzp,&
+            oneGridDims%nnxp,oneGridDims%nnyp,mynum&
             , oneRadiateFields%cloud_fraction         &
             ,rain                   &
             ,lwl                    &
@@ -693,7 +702,7 @@ contains
   end subroutine sfcrad_rtm
 
   ! ****************************************************************************
-  subroutine radrrtmdrv(ia,iz,ja,jz,mxp,myp,mzp,mynum &
+  subroutine radrrtmdrv(ia,iz,ja,jz,mxp,myp,mzp,nnxp,nnyp,mynum &
        ,cloud_fraction           &
        ,rain                     &
        ,lwl                      &
@@ -705,7 +714,7 @@ contains
     integer, intent(in) :: icount
     integer, intent(in) :: ngpt
 
-    integer, intent(in) :: mxp,myp,mzp,mynum
+    integer, intent(in) :: mxp,myp,mzp,nnxp,nnyp,mynum
     real, intent(in), dimension(mzp,mxp,myp) :: cloud_fraction !cloud_fraction
     real, intent(in), dimension(    mxp,myp) :: rain !total rain water
     real, intent(in), dimension(mzp,mxp,myp) :: lwl !total cloud liquid water (kg/kg for carma and g/m2 for rrtm)
@@ -1090,6 +1099,20 @@ contains
 
     !-initialization of rrtm memory
     if(firsttime) call initrrtm()
+
+
+    !**(JP)** To achieve binary reproducibility, the random number generated for
+    !**(JP)** each atmospheric column should be the same regardless of the number
+    !**(JP)** of MPI ranks and domain decomposition of the current run.
+    !**(JP)** Since random numbers are generated in the sequence of atmospheric
+    !**(JP)** columns (defined by ipos,jpos), to achieve the same random number
+    !**(JP)** generated on sequential runs, a set of random numbers has to be
+    !**(JP)** jumped among consecutive columns of this rank domain.
+    !**(JP)** The number of jumped comulns is stored at array jumping@mem_rrtm
+    if (firsttime) then
+       call CreateJumping(ia, iz, ja, jz, i0, j0, nnxp, nnyp)
+    end if
+       
     !
     !- day of year
     dyofyr=julday(imonth1, idate1, iyear1)
@@ -1235,7 +1258,6 @@ contains
           end if
        end do
     end do
-
 
     ecaer =0.0_rb
 

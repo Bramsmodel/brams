@@ -377,7 +377,7 @@ contains
     call radiate(mzp,mxp,myp,ia,iz,ja,jz,mynum, &
          oneGrid%oneNamelistFile, oneGrid%oneBasicFields, &
          oneGrid%oneMicVars, oneGrid%oneMicroFields, &
-         oneGrid%oneRadiateFields, oneGrid%oneCuParmFields)
+         oneGrid%oneRadiateFields, oneGrid%oneCuParmFields, oneGrid%oneGridDims)
 
     
     !  Surface layer, soil and veggie model

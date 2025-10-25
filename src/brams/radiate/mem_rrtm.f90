@@ -84,6 +84,8 @@ MODULE mem_rrtm
 !kml - 19 ago
    
    LOGICAL :: firstTime=.true.
+
+   integer, allocatable :: jumping(:)
    
    CONTAINS
    
@@ -156,5 +158,67 @@ MODULE mem_rrtm
       END DO
       
    END SUBROUTINE initRRTM
-   
+
+
+
+
+
+   subroutine CreateJumping(ia, iz, ja, jz, i0, j0, nnxp, nnyp)
+     implicit none
+     integer, intent(in) :: ia
+     integer, intent(in) :: iz
+     integer, intent(in) :: ja
+     integer, intent(in) :: jz
+     integer, intent(in) :: i0
+     integer, intent(in) :: j0
+     integer, intent(in) :: nnxp
+     integer, intent(in) :: nnyp
+
+     integer :: nofcols ! columns at this domain partition
+     integer :: col ! this domain partition column counter
+     integer :: iEnum, jEnum ! loop counters at i and j
+     integer :: iGlob, jGlob ! i, j position at the full domain
+     integer :: prevEnum ! previous column enumeration in the full domain
+     integer :: thisEnum ! current column enumeration in the full domain
+
+     integer :: ierr ! allocate return code
+     character(len=512) :: message  ! allocate error message
+
+     character(len=*), parameter :: h="**(CreateJumping)**" 
+
+     ! number of atmospheric columns at this partition
+     nofcols=(iz-ia+1)*(jz-ja+1)
+     
+     ! how many random numbers should be jumped at each column of this
+     ! domain partition including jumping after the end of the domain
+     allocate(jumping(nofcols+1), stat=ierr, errmsg=message)
+     if (ierr /= 0) then
+        call fatal_error(h//" allocate jumping fails with message "//trim(message))
+     end if
+
+     ! suppose columns at the full domain without borders are enumerated
+     ! in Fortran order, starting at zero;
+     ! for all columns of this domain partition, compute the difference
+     ! of the enumeration of two consecutive columns;
+     ! such difference (minus one) is the number of randoms that have to be
+     ! jumped from one column to the next
+     col=0
+     prevEnum=-1 
+     do jEnum=ja,jz
+        do iEnum = ia, iz
+           iGlob=iEnum+i0
+           jGlob=jEnum+j0
+           thisEnum=(jGlob-2)*(nnxp-2) + iGlob-2
+           col = col + 1
+           jumping(col)=thisEnum-prevEnum-1
+           prevEnum=thisEnum
+        end do
+     end do
+     ! after the domain partition is over, there still randoms
+     ! to jump to allow multiple sweeps over the domain partition
+     thisEnum=(nnyp-2)*(nnxp-2) + nnxp-2
+     col = col + 1
+     jumping(col)=thisEnum-prevEnum-1
+   end subroutine CreateJumping
+     
 END MODULE mem_rrtm
