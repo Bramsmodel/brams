@@ -21,6 +21,8 @@ module modPrintInitial
   !# @endwarning
   !#
 
+  use ModGit
+  
   implicit none
 
   include "constants.h"
@@ -195,15 +197,19 @@ contains
        write (*,fmt='(A)') "B:::::::::::::::::B R::::::R     R:::::R  A:::::A               A:::::A  M::::::M               M::::::MS::::::SSSSSS:::::S"
        write (*,fmt='(A)') "B::::::::::::::::B  R::::::R     R:::::R A:::::A                 A:::::A M::::::M               M::::::MS:::::::::::::::SS "
        write (*,fmt='(A)') "BBBBBBBBBBBBBBBBB   RRRRRRRR     RRRRRRRAAAAAAA                   AAAAAAAMMMMMMMM               MMMMMMMM SSSSSSSSSSSSSSS   "
-       write (*,fmt='(A)') '--------------------- Brazilian developments on the Regional Atmospheric Modeling System ----------------------------------'
+       write (*,fmt='(A)')'---------------------------- Brazilian developments on the Regional Atmospheric Modeling System ---------------------------'
        write (*,fmt='(A)') '                                                '//c_pearlWhite//'Revision '//version//c_noColor
+       write (*,fmt='(A)')
+       write (*,fmt='(A)') '                source from git branch '//GitBranch//'; hash key '//GitHash//'; commit date '//GitDate
+       write (*,fmt='(A)') '                                    compilation date '//CompDate
+       write (*,fmt='(A)')
        write (*,fmt='(A)') '                             See more information >> http://brams.cptec.inpe.br'
        write (*,fmt='(A)')
        write (*,fmt='(A)') '                           *** Under license: '//license//' ***'
        write (*,fmt='(A)') c_noColor
        write (*,fmt='(A)')
        son=len(trim(experiment))
-       write (*,fmt='(A)') c_pearlWhite//repeat(" ",80-(50-son/2))//trim(experiment)//c_noColor
+       write (*,fmt='(A)') c_pearlWhite//repeat(" ",60-son/2)//trim(experiment)//c_noColor
        write (*,fmt='(A)')
        write (*,fmt='(A,I4,1X,A3,1X,I2.2," - ",I4.4,"h",A,F8.1,1X,A)') c_lightYellow//repeat(" ",25)//'Start at '&
             ,year,month_name(month),day,hour  &
@@ -218,8 +224,8 @@ contains
        write(*,"(a,I1,a)") "                    ******   Parallel execution using "//c_lightYellow//trim(adjustl(c0))//c_noColor//" processes and " &
             //c_lightYellow,ngrids,c_noColor//' grids *****'
        write(*,"(a)") "+----------------------------------------------------------------------------------------------------------------------------+"   
-       write(*,"(a)") "| "//c_lightYellow//"   More information about submission(non fatal errors, notices, warnings), please, see the file brams.log" &
-            //" and jules.log"//c_noColor//"    |"
+       write(*,"(a)") "| "//c_lightYellow//"              Further execution information (non fatal errors, notices, warnings) at files brams.log" &
+            //" and jules.log"//c_noColor//"         |"
        write(*,"(a)") "+----------------------------------------------------------------------------------------------------------------------------+"
 
     endif

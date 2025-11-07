@@ -3969,7 +3969,7 @@ contains
   subroutine DumpNamelistFile(oneNamelistFile,nmachs,mchnum,master_num)
     type(NamelistFile), pointer :: oneNamelistFile
 
-    character(len=*),parameter :: revision='6.0'
+    character(len=*),parameter :: revision='7.0'
     character(len=*),parameter :: license='CC Attribution-ShareAlike 4.0 International'
 
     include "constants.h"

@@ -360,7 +360,7 @@ contains
     character(len=*), intent(in) :: FullDirection
     type(DomainDecomp), pointer :: CreateGlobalOwn
 
-    character(len=8) :: c0, c1, c2
+    character(len=8) :: str(10)
     character(len=*), parameter :: h="**(CreateGlobalOwn)**"
     logical, parameter :: dumpLocal=.false.
 
@@ -382,20 +382,20 @@ contains
     nmachs = ParEnv%nmachs
 
     if (dumpLocal) then
-       write(c0,"(i8)") nxp
-       write(c1,"(i8)") nyp
-       write(c2,"(i8)") nmachs
+       write(str(3),"(i8)") nxp
+       write(str(1),"(i8)") nyp
+       write(str(2),"(i8)") nmachs
        select case (FullDirection)
        case ("X","Y")
           call MsgDump (h//" partitions domain ["//&
-               trim(adjustl(c0))//" x "//trim(adjustl(c1))//&
-               "] into "//trim(adjustl(c2))//" sub-domains"//&
+               trim(adjustl(str(3)))//" x "//trim(adjustl(str(1)))//&
+               "] into "//trim(adjustl(str(2)))//" sub-domains"//&
                " for Monotonic Advection in the "//&
                trim(FullDirection)//" direction")
        case ("B")
           call MsgDump (h//" partitions domain ["//&
-               trim(adjustl(c0))//" x "//trim(adjustl(c1))//&
-               "] into "//trim(adjustl(c2))//" sub-domains"//&
+               trim(adjustl(str(3)))//" x "//trim(adjustl(str(1)))//&
+               "] into "//trim(adjustl(str(2)))//" sub-domains"//&
                " for X-Y regular Brams domain decomposition")
        case default
           call fatal_error(h//" unknown FullDirection **"//trim(FullDirection)//"**")
@@ -412,6 +412,14 @@ contains
        
     select case (trim(FullDirection))
     case ("Y")
+
+       ! stop if too many processors
+
+       if (nxp < nmachs) then
+          write(str(1),"(i8)") nxp
+          call fatal_error(h//" too many processors for monotonic advection at Y;"//&
+               " use at most "//trim(adjustl(str(1)))//" processors")
+       end if
        
        ! Monotonic Advection at Y only partitions the X direction
        
@@ -431,6 +439,14 @@ contains
        end do
        
     case ("X") 
+
+       ! stop if too many processors
+
+       if (nyp < nmachs) then
+          write(str(1),"(i8)") nyp
+          call fatal_error(h//" too many processors for monotonic advection at X;"//&
+               " use at most "//trim(adjustl(str(1)))//" processors")
+       end if
        
        ! Monotonic Advection at X only partitions the Y direction
        
@@ -473,16 +489,16 @@ contains
     CreateGlobalOwn%nx = CreateGlobalOwn%xe - CreateGlobalOwn%xb + 1
     CreateGlobalOwn%ny = CreateGlobalOwn%ye - CreateGlobalOwn%yb + 1
     
+    if (dumpLocal) then
+       call DumpDomainDecomp(CreateGlobalOwn, varName)
+    end if
+    
     ! Verify partition correctness
     
     call CheckPartition(nxp, nyp, nmachs, &
          CreateGlobalOwn%xb, CreateGlobalOwn%xe, &
          CreateGlobalOwn%yb, CreateGlobalOwn%ye, &
          CreateGlobalOwn%ibcon)
-    
-    if (dumpLocal) then
-       call DumpDomainDecomp(CreateGlobalOwn, varName)
-    end if
   end function CreateGlobalOwn
 
   

@@ -1,5 +1,6 @@
 ObjSrcActionAtDependModel=[
 	('actv.o', '$(MATRIX)/actv.f90', '\t@cp -f $< $(<F:.f90=.f90)\n\t$(F_COMMAND) $(<F:.f90=.f90)\n\trm -f $(<F:.f90=.f90)\n'),
+	('ModGit.o', '$(INIT)/ModGit.f90', '\t@cp -f $< $(<F:.f90=.f90)\n\t$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)\n\trm -f $(<F:.f90=.f90)\n'),
 	('ModAdapInit.o', '$(INIT)/ModAdapInit.f90', '\t@cp -f $< $(<F:.f90=.f90)\n\t$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)\n\trm -f $(<F:.f90=.f90)\n'),
 	('aer1_list.o', '$(AEROSOL)/aer1_list_$(AERLEVEL).f90', '\t@cp -f $< $(<F:.f90=.f90)\n\t$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)\n\trm -f $(<F:.f90=.f90)\n\t@ln -fs aer1_list_$(AERLEVEL).o aer1_list.o\n'),
 	('utils_f.o', '$(UTILS_LIB)/utils_f.f90', '\t@cp -f $< $(<F:.f90=.f90)\n\t$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)\n\trm -f $(<F:.f90=.f90)\n'),

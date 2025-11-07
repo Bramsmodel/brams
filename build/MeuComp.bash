@@ -1,7 +1,7 @@
 #!/bin/bash
 # Use in BRAMS-6.0 folder
 
-FROM_SCRATCH=0
+FROM_SCRATCH=1
 
 PREREQ_DIR=/home/mateusff/opt-gcc
 
@@ -24,6 +24,6 @@ if [ $FROM_SCRATCH == 1 ]; then
 		--with-netcdff=${PREREQ_DIR} --with-netcdfc=${PREREQ_DIR} --with-wgrib2=${PREREQ_DIR}
     make clean
 fi
-
-make
+make --jobs -f Make_utils
+make --jobs -f Makefile 
 

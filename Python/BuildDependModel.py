@@ -260,6 +260,13 @@ for modName,objName in DicModName.items():
     
 # verify if all module names @ use set are known
 OutSet=set()
+#print("DicObjName")
+#for key, val in DicObjName.items():
+#    print(key,val)
+#print("\n\n")
+#print("DicModName")
+#for key, val in DicModName.items():
+#    print(key,val)
 for key, value in DicObjName.items():
     useSet=value[3]
     for modName in useSet:
@@ -275,6 +282,7 @@ if len(OutSet) != 0:
 # build new file depend_model.mk
 fNameOut=basePath+"build/depend_model.mk"
 fOut=open(fNameOut,"w")
+fOut.write("rammain.o : $(MODEL)/rammain.F90 ModTimeStamp.o ModOneProc.o\n\n")
 for objName,tpl in DicObjName.items():
     srcName=tpl[0]
     useSet=tpl[3]

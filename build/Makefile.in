@@ -55,7 +55,6 @@ PAR_INCS=./
 PAR_LIBS=./
 
 include paths.mk
-include objects_model.mk
 
 ifeq ($(WGRIBDIR),)
 WGRIB_LIB  =
@@ -263,6 +262,9 @@ EXTRAFLAGSF = $(INCLUDES) $(FCFLAGS) $(FPP_DEFS)
 F_COMMAND = $(VERBOSE_FC) $(FC) -c
 F_COMMAND_MACRO = $(F_COMMAND) -D$(AER) -D$(MATRIXLEV) -D$(COLOR)
 F_COMMAND_LIGHT = $(FPCOMP) -O0 -c
+
+# Build Fortran module with git info
+include git.mk
 
 # Define objects.
 include objects_model.mk
