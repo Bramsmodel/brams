@@ -140,6 +140,10 @@ endif
 
 CCFLAGS=-O3 -DLITTLE
 #CCFLAGS=-O0 -DLITTLE
+
+ifeq ($(GCC_VER_GTE14),)
+     CCFLAGS +=-fpermissive -std=gnu89
+endif
 FPP=-cpp 
 endif 
 

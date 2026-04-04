@@ -181,6 +181,11 @@ endif
 OT_FLAGS=-O3
 #CCFLAGS=-O2
 CCFLAGS=-O0
+
+ifeq ($(GCC_VER_GTE14),)
+     CCFLAGS +=-fpermissive -std=gnu89
+endif
+
 FPP=-cpp
 FC=$(FPCOMP) $(OT_FLAGS)
 endif
