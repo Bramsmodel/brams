@@ -131,7 +131,7 @@ endif
 
 ifeq ($(notdir $(FCOMP)),pgf90)
 JULES_DEFS = $(JULES_DEFS0)
-FC_FLAGS=-fast -O3 -fastsse -Munroll=n:4 #-Mipa=fast,inline,safe  -Msmart
+FC_FLAGS=-fast -O3 -fastsse -Munroll=n:4
 CCFLAGS=-O2
 FPP=-Mpreprocess
 endif
@@ -147,7 +147,7 @@ CCFLAGS=-O3
 #FC_FLAGS=-O0 -mcmodel=large -check bounds,pointers,shape,stack,uninit -traceback 
 #CC_FLAGS=-O0 -mcmodel=large -check bounds,pointers,shape,stack,uninit -traceback 
 FPP=-fpp
-FPP_VARSI = INTEL
+FPP_VARSI = INTEL cdf
 endif
 
 ifeq ($(notdir $(FPCOMP)),mpifort) 
@@ -167,6 +167,25 @@ FC_LOADER=$(FC) #-traceback
 CC_LOADER=$(CC)
 endif
 
+ifeq ($(notdir $(FPCOMP)),mpiifx)
+JULES_DEFS = $(JULES_DEFS0) INTEL_FORTRAN
+FC=$(FPCOMP)
+CC=$(CPCOMP)
+FC_LOADER=$(FC)
+CC_LOADER=$(CC)
+endif
+
+ifeq ($(notdir $(FCOMP)),ifx)
+JULES_DEFS = $(JULES_DEFS0) INTEL_FORTRAN
+FC_FLAGS=-O3 -xHOST  -fma -ftz -fomit-frame-pointer -align array64byte
+CCFLAGS=-O3 -fpermissive -std=gnu89  -XHOST -fma -ftz -fomit-frame-pointer
+            # For intel compiler debugging
+            #FC_FLAGS=-O0  -traceback
+            #CCFLAGS=-O0  -fpermissive -std=gnu89
+FPP=-fpp
+FPP_VARSI = INTEL cdf
+endif
+
 ifeq ($(notdir $(FCOMP)),gfortran)
 JULES_DEFS = $(JULES_DEFS0) GNU_FORTRAN
 # JP: utilizei a linha a seguir para testar correcao
@@ -179,8 +198,7 @@ ifeq ($(GCC_VER_GTE10),)
 endif
 
 OT_FLAGS=-O3
-#CCFLAGS=-O2
-CCFLAGS=-O0
+CCFLAGS=-O2
 
 ifeq ($(GCC_VER_GTE14),)
      CCFLAGS +=-fpermissive -std=gnu89

@@ -649,7 +649,7 @@ contains
 
   subroutine VarfUpdate(iswap, OneGrid, ifileok, initflag, initialFlag)
     integer, intent(in) :: iswap
-    type(Grid), pointer :: OneGrid
+    type(Grid), pointer, intent(in) :: OneGrid
     integer, intent(out) :: ifileok
     integer, intent(in) :: initflag
     integer, intent(in) :: initialFlag

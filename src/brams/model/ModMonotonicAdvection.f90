@@ -832,8 +832,8 @@ contains
        ConvertBramsToMonAdvX, ConvertMonAdvXToMonAdvY, ConvertMonAdvYToBrams)
 
     type(MonAdvBramsDD), pointer, intent(in) :: oneMonAdvBramsDD
-    type(MonAdvOneDirDD), pointer, intent(in) :: oneMonAdvXDD
-    type(MonAdvOneDirDD), pointer, intent(in) :: oneMonAdvYDD
+    type(MonAdvOneDirDD), pointer, intent(inout) :: oneMonAdvXDD
+    type(MonAdvOneDirDD), pointer, intent(inout) :: oneMonAdvYDD
     type(ScalarTable), pointer, intent(in) :: oneScalarTable(:)
     integer, intent(in) :: scalarNbr
     real   , intent(in) :: dt

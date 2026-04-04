@@ -128,6 +128,24 @@ FC_LOADER=$(FC) #-traceback
 CC_LOADER=$(CC)
 endif
 
+ifeq ($(notdir $(FPCOMP)),mpiifx) #INTEL LLVM MPI COMPILER
+FC=$(FPCOMP) #-traceback
+CC=$(CPCOMP)
+FC_LOADER=$(FC) #-traceback
+CC_LOADER=$(CC)
+endif
+
+
+ifeq ($(notdir $(FCOMP)),ifx)
+FC_FLAGS=-O3 -fma -ftz -fomit-frame-pointer -align array64byte -xHOST
+CCFLAGS=-O3 -fpermissive -std=gnu89 -xHOST #fma -ftz -fomit-frame-pointer
+ # For intel compiler debugging
+ #FC_FLAGS=-O0  -traceback 
+ #CCFLAGS=-O0  -fpermissive -std=gnu89
+
+FPP=-fpp
+endif
+
 ifeq ($(notdir $(FCOMP)),gfortran)
 FC_FLAGS=-O3 -ffree-form -ffree-line-length-none -static
 # JP: utilizei a linha a seguir para testar correcao

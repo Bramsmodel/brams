@@ -51,7 +51,8 @@
 ! =======================================================================
 module gfdl_cloud_microphys_mod
 
-  USE module_mp_radar, ONLY: rayleigh_soak_wetgraupel
+  USE module_mp_radar, ONLY: rayleigh_soak_wetgraupel, &
+                             radar_init
   use node_mod, only: mynum
   ! use mpp_mod, only: stdlog, mpp_pe, mpp_root_pe, mpp_clock_id, &
   ! mpp_clock_begin, mpp_clock_end, clock_routine, &
