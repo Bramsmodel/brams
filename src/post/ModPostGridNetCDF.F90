@@ -38,7 +38,9 @@ contains
 
 subroutine OpenNetCDFBinaryFile(oneNamelistFile, onePostGrid, oneBramsGrid, igrid) 
     use netCDF, ONLY: nf90_create,&
-                      nf90_write
+                      nf90_write, &
+                      nf90_clobber, &
+                      nf90_netcdf4
     IMPLICIT NONE
     type(NamelistFile), pointer :: oneNamelistFile
     type(PostGrid), pointer :: onePostGrid
@@ -59,7 +61,7 @@ subroutine OpenNetCDFBinaryFile(oneNamelistFile, onePostGrid, oneBramsGrid, igri
          oneNamelistFile%idate1, oneNamelistFile%itime1*100, &
           'A', 'g'//c0, 'nc ')
 
-    iErrNumber = nf90_create(path = trim(netCDFFileName), cmode = nf90_write, ncid = ncid)
+    iErrNumber = nf90_create(path = trim(netCDFFileName), cmode = or(nf90_clobber,nf90_netcdf4), ncid = ncid)
     !if (iErrNumber /= nf90_noerr) ierr=dumpMessage(c_tty,c_yes,'','',c_fatal,'Error in create file '//trim(netCDFFileName)//' NetCDF err:',iErrNumber)
 
 end subroutine OpenNetCDFBinaryFile
@@ -80,7 +82,8 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
 
     use dump, only: dumpMessage
     use ModDateUtils, ONLY: date_abs_secs2
-    IMPLICIT NONE
+    use, intrinsic :: ieee_arithmetic, only: IEEE_Value, IEEE_QUIET_NAN
+    implicit none
 
     type(NamelistFile), pointer :: oneNamelistFile
     type(PostGrid), pointer :: onePostGrid
@@ -91,14 +94,16 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
 
     integer :: i,ndims,nvars,cnt
     character(len=256) :: name,varname(30),atName(300),atValue(300)
-    character(len = 16) :: varNameUpper,vName
+    character(len = 16) :: varNameUpper,vName,vNameTmp
 
     integer, dimension(300) :: lenDim,nat
     integer :: vdim,levs,an,ntimes,id,ivp
     real :: slayer(oneBramsGrid%nzg)
     real(kind=r8) :: seconds
-    real :: lon(nnxp(1)-1),lat(nnyp(1)-1)
+    real :: lon(nnxp(1)),lat(nnyp(1))
     character(len=8) :: cVar
+    integer :: deflate_level = 1
+    real :: nan
 
     character(len=*), parameter :: h='**(FillNetcdfVarControlFile)**'
     logical, parameter :: dumpLocal=.false.
@@ -106,40 +111,41 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
     !if(.not. netCDFFirstTime) return
     if (oneBramsGrid%mchnum /= oneBramsGrid%master_num) return
 
+    nan = IEEE_Value(nan, IEEE_QUIET_NAN)
 
-    iErrNumber = nf90_def_dim(ncid, "Longitude", nnxp(1)-1, LonDimID)
+    iErrNumber = nf90_def_dim(ncid, "longitude", nnxp(1), LonDimID)
     if (iErrNumber /= nf90_noerr) print *,'err'
-    iErrNumber = nf90_def_dim(ncid, "Latitude", nnyp(1)-1, LatDimID)
+    iErrNumber = nf90_def_dim(ncid, "latitude", nnyp(1), LatDimID)
     if (iErrNumber /= nf90_noerr) print *,'err'
-    iErrNumber = nf90_def_dim(ncid, "Level",onePostGrid%nVert, LevDimID)
+    iErrNumber = nf90_def_dim(ncid, "level",onePostGrid%nVert, LevDimID)
     if (iErrNumber /= nf90_noerr) print *,'err'
     ntimes=1!timmax/frqanl
-    iErrNumber = nf90_def_dim(ncid, "Time", ntimes, TimDimID)
+    iErrNumber = nf90_def_dim(ncid, "time", ntimes, TimDimID)
     if (iErrNumber /= nf90_noerr) print *,'err'
-    iErrNumber = nf90_def_dim(ncid, "soilLevel", oneBramsGrid%nzg, SoiDimID)
+    iErrNumber = nf90_def_dim(ncid, "soil_level", oneBramsGrid%nzg, SoiDimID)
     if (iErrNumber /= nf90_noerr) print *,'err'
 
     ntimes=1
     if (.not. allocated(hoursFrom1900)) allocate(hoursFrom1900(nTimes))
 
     ! Define the variable Longitude
-    iErrNumber = nf90_def_var(ncid, "Longitude", nf90_float, &
+    iErrNumber = nf90_def_var(ncid, "longitude", nf90_float, &
     (/LonDimId/), LonDimId)
 
     ! Define the variable Latitude
-    iErrNumber = nf90_def_var(ncid, "Latitude", nf90_float, &
+    iErrNumber = nf90_def_var(ncid, "latitude", nf90_float, &
     (/LatDimId/), LatDimId)
 
     ! Define the variable Level
-    iErrNumber = nf90_def_var(ncid, "Level", nf90_float, &
+    iErrNumber = nf90_def_var(ncid, "level", nf90_float, &
     (/LevDimId/), LevDimId)
 
     ! Define the variable Level
-    iErrNumber = nf90_def_var(ncid, "Time", nf90_float, &
+    iErrNumber = nf90_def_var(ncid, "time", nf90_float, &
     (/TimDimId/), TimDimId)
 
     ! Define the variable Level
-    iErrNumber = nf90_def_var(ncid, "SoilLevel", nf90_float, &
+    iErrNumber = nf90_def_var(ncid, "soil_level", nf90_float, &
     (/SoiDimId/), SoiDimId)
 
     iErrNumber = nf90_redef(ncid)
@@ -170,33 +176,37 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
             cnt=cnt+1
             netCdfFieldDescription(cnt)=one_post_variable%fieldDescription
             netCdfFieldUnits(cnt)=one_post_variable%fieldUnits      
-            iErrNumber = nf90_def_var(ncid,name=varNameUpper, xtype=nf90_float, &
-                  dimids=(/LonDimId,LatDimId,TimDimId/),varid=VarDimId(cnt))
+            iErrNumber = nf90_def_var(ncid,name=vName, xtype=nf90_float, &
+                  dimids=(/LonDimId,LatDimId,TimDimId/),varid=VarDimId(cnt), &
+                  shuffle=.true., deflate_level=deflate_level)
          case (3) !Athmos var
             cnt=cnt+1
             netCdfFieldDescription(cnt)=one_post_variable%fieldDescription
             netCdfFieldUnits(cnt)=one_post_variable%fieldUnits
-            iErrNumber = nf90_def_var(ncid,name=varNameUpper, xtype=nf90_float, &
-                  dimids=(/LonDimId,LatDimId,LevDimId,TimDimId/),varid=VarDimId(cnt)) 
+            iErrNumber = nf90_def_var(ncid,name=vName, xtype=nf90_float, &
+                  dimids=(/LonDimId,LatDimId,LevDimId,TimDimId/),varid=VarDimId(cnt), &
+                  shuffle=.true., deflate_level=deflate_level)
          case (7) !Surface Soil var
             do i=1,npatch
               cnt=cnt+1
               write(cvar,fmt='(I8)') i 
-              vName=trim(varNameUpper)//trim(adjustl(cvar))
+              vNameTmp=trim(vName)//trim(adjustl(cvar))
               netCdfFieldDescription(cnt)=trim(one_post_variable%fieldDescription)//': patch #'//trim(cvar)
               netCdfFieldUnits(cnt)=one_post_variable%fieldUnits
-              iErrNumber = nf90_def_var(ncid,name=vName, xtype=nf90_float, &
-              dimids=(/LonDimId,LatDimId,TimDimId/),varid=VarDimId(cnt))
+              iErrNumber = nf90_def_var(ncid,name=vNameTmp, xtype=nf90_float, &
+              dimids=(/LonDimId,LatDimId,TimDimId/),varid=VarDimId(cnt), &
+                  shuffle=.true., deflate_level=deflate_level)
             enddo
          case (8) !
             do i=1,npatch
               cnt=cnt+1
               write(cvar,fmt='(I8)') i 
-              vName=trim(varNameUpper)//trim(adjustl(cvar))
+              vNameTmp=trim(vName)//trim(adjustl(cvar))
               netCdfFieldDescription(cnt)=trim(one_post_variable%fieldDescription)//': patch #'//trim(cvar)
               netCdfFieldUnits(cnt)=one_post_variable%fieldUnits
-              iErrNumber = nf90_def_var(ncid,name=vName, xtype=nf90_float, &
-                  dimids=(/LonDimId,LatDimId,SoiDimId,TimDimId/),varid=VarDimId(cnt))
+              iErrNumber = nf90_def_var(ncid,name=vNameTmp, xtype=nf90_float, &
+                  dimids=(/LonDimId,LatDimId,SoiDimId,TimDimId/),varid=VarDimId(cnt), &
+                  shuffle=.true., deflate_level=deflate_level)
             enddo
          end select
          do i = 1, size(all_post_variables)
@@ -210,14 +220,10 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
  
     do i=1,cnt
     !   print *,'vardim(i)=',VarDimId(i)
-       iErrNumber = nf90_put_att(ncid, VarDimId(i), "scale_factor", (/1.0/))
-    !   if (iErrNumber /= nf90_noerr) print *,'err 1'
-       iErrNumber = nf90_put_att(ncid, VarDimId(i), "add_offset", (/0.0/))
-    !   if (iErrNumber /= nf90_noerr) print *,'err 2'
-       iErrNumber = nf90_put_att(ncid, VarDimId(i), "_FillValue", (/-32767./))
-    !   if (iErrNumber /= nf90_noerr) print *,'err 3'
-       iErrNumber = nf90_put_att(ncid, VarDimId(i), "missing_value",(/-32767./))
-    !   if (iErrNumber /= nf90_noerr) print *,'err 4'
+       iErrNumber = nf90_put_att(ncid, VarDimId(i), "_FillValue", nan)
+       if (iErrNumber /= nf90_noerr) print *,'err 3'
+       iErrNumber = nf90_put_att(ncid, VarDimId(i), "missing_value", nan)
+       if (iErrNumber /= nf90_noerr) print *,'err 4'
        iErrNumber = nf90_put_att(ncid, VarDimId(i), "units" &
                  ,trim(netCdfFieldUnits(i)))
        if (iErrNumber /= nf90_noerr) print *,'err 5'
@@ -230,14 +236,14 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
 
     !Fiiling lons, lats and pressure levels 
 !print *,'LFR->Fiiling lons, lats and pressure levels '
-    do i=1,nnyp(1)-1
+    do i=1,nnyp(1)
       lat(i)=oneGlobalGridData(1)%global_glat(1,nnyp(1)-i+1)
     enddo
 !    print *,lat
     iErrNumber = nf90_put_var(ncid, LatDimId, lat)
 
     !Making glon from 0 to 360 east direction
-    do i=1,nnxp(1)-1
+    do i=1,nnxp(1)
       if(oneGlobalGridData(1)%global_glon(i,1)<0) &
         lon(i)=360+oneGlobalGridData(1)%global_glon(i,1)
     enddo
@@ -307,7 +313,7 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
     integer :: id,nt
     character(len=256) :: varName(500),name
     real :: varArray(nlon,nlat)
-       type(PostVarType) :: one_post_variable
+    type(PostVarType) :: one_post_variable
 
     one_post_variable = getPostVarible(fieldName)
 
