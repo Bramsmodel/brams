@@ -14,7 +14,7 @@ module grid_dims
 
   ! Logo BRAMS version
 
-  character(len=*), parameter :: BRAMS_version="Revision 6.0 (See: http://brams.cptec.inpe.br)"
+  character(len=*), parameter :: BRAMS_version="Revision 7.0 (See: http://brams.cptec.inpe.br)"
 
   ! Grid dimensions:
   !   MAXGRDS - Maximum number of grids

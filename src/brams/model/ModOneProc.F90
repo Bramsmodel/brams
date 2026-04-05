@@ -638,7 +638,7 @@ contains
     character(len=f_name_length) :: NamelistFileName ! namelist file name
     character(len=*), parameter :: h="**(OneProc)**"
     character(len=*), parameter :: header="**(OneProc)**"
-    character(len=*), parameter :: version="6.0"
+    character(len=*), parameter :: version="7.0"
 
     type(parallelEnvironment), pointer :: oneParallelEnvironment => null()
     type(NamelistFile), pointer :: oneNamelistFile => null()

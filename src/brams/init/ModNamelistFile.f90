@@ -607,7 +607,7 @@ contains
     character(len=10) :: c0             ! scratch
     character(len=*), parameter :: h="**(ReadNamelistFile)**"  ! program unit name
     character(len=*), parameter :: header=h
-    character(len=*), parameter :: version="5.4"
+    character(len=*), parameter :: version="7.0"
 
     ! namelist /MODEL_ADV_RAMSIN/
     character(len=f_name_length) :: advanced_ramsin
