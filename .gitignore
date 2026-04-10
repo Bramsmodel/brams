@@ -1,9 +1,12 @@
 #logs
 *.log
 log.txt
+src/jules-v6.0/.fcm-make/log*
+
 
 #Sources in build
-./build/*.f90
+build/*.f90
+build/*.F90
 
 # Prerequisites
 *.d
@@ -39,13 +42,17 @@ log.txt
 *.app
 
 #documents
-/doc/html/*
-/doc/src/*
-/doc/src
+doc/html/*
+doc/src/*
+doc/src
+src/PREP-CHEM-SRC-1.8.3/doc/
 
 #Makes e status
 build/Make_utils
 build/Makefile
 build/config.status
+build/brams-6.0
+build/brams-7.0
 
-
+*.pyc
+Python/__*
