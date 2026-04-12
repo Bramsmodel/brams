@@ -102,9 +102,9 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
     real(kind=r8) :: seconds
     real :: lon(nnxp(1)),lat(nnyp(1))
     character(len=8) :: cVar
-    integer :: deflate_level = 1
     real :: nan
 
+    integer, parameter :: deflate_level = 1
     character(len=*), parameter :: h='**(FillNetcdfVarControlFile)**'
     logical, parameter :: dumpLocal=.false.
 
@@ -244,8 +244,9 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
 
     !Making glon from 0 to 360 east direction
     do i=1,nnxp(1)
-      if(oneGlobalGridData(1)%global_glon(i,1)<0) &
-        lon(i)=360+oneGlobalGridData(1)%global_glon(i,1)
+      !if(oneGlobalGridData(1)%global_glon(i,1)<0) &
+        !lon(i)=360+oneGlobalGridData(1)%global_glon(i,1)
+        lon(i)=oneGlobalGridData(1)%global_glon(i,1)
     enddo
 !    print *,lon
     iErrNumber = nf90_put_var(ncid, LonDimId, lon)
