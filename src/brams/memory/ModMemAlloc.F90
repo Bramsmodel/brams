@@ -652,7 +652,7 @@ contains
              !
              do n=1,nbio
                 call filltab_tuv_bio(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-                     tuv_bio(ng,n), tuv_bio(ng,n), n, imean)
+                     tuv_bio(ng,n), tuv_biom(ng,n), n, imean)
              end do
           end do
        endif
