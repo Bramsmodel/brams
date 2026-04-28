@@ -2116,11 +2116,9 @@ contains
     ! produce analysis and history output
     !**(JP)** lite and mean output options not converted
 
-    if (IOUTPUT/=0) then
-       histFlag=.true.; instFlag=.true.
-    else
-       histFlag=.false.; instFlag=.false.
-    endif
+    histFlag = (frqhis>0.0 .and. IOUTPUT/=0)
+    instFlag = (frqanl>0.0 .and. IOUTPUT/=0)
+
     if (FRQLITE/=0.) then
        liteFlag=.true.
     else
