@@ -7,6 +7,8 @@ module ModPostOneFieldUtils
       PostVarType, &
       all_post_variables
 
+    use mem_grid, only: npatch
+
    implicit none
 
    private
@@ -23,7 +25,7 @@ module ModPostOneFieldUtils
    public :: initialize_all_post_variables
    public :: finalize_all_post_variables
    public :: add_post_variable
-   !public :: getPostVarible
+   !public :: getPostVariable
    public :: PrepareGradsField
 
 contains
@@ -96,6 +98,14 @@ contains
       new_post_variable%fieldName = varName
       new_post_variable%fieldDescription = varDescription
       new_post_variable%fieldUnits = varUnit
+
+       select case (varType)
+         case (2,3)
+            allocate(new_post_variable%netcdfId(1))
+         case (7,8)
+            allocate(new_post_variable%netcdfId(npatch))
+      end select
+
       all_size = size(all_post_variables) + 1
       if(all_size .gt. 1) then
          allocate(all_post_variables_copy(all_size - 1))

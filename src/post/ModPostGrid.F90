@@ -1885,9 +1885,6 @@ contains
   end subroutine DumpPostGrid
 
 
-
-
-
   subroutine saveCurrentFieldID(onePostGrid, vertCode)
     type(PostGrid), pointer :: onePostGrid
     integer, intent(in) :: vertCode
@@ -2014,7 +2011,7 @@ contains
              write (onePostGrid%unitBinFile, rec=onePostGrid%lastRec) OutputArray
 #ifdef cdf
           elseif(IPOS==3) then
-             call writeNetCdf2D(trim(onePostGrid%fieldName),onePostGrid%nLon,onePostGrid%nLat,OutputArray)
+             call writeNetCdf2D(trim(onePostGrid%fieldName),onePostGrid%nLon,onePostGrid%nLat,OutputArray,1)
 #endif
           endif
 
@@ -2040,7 +2037,6 @@ contains
 
     integer :: k
     integer :: i
-    integer :: zSize
     integer :: xBrams, yBrams
     integer :: lenName
     integer :: lenDescription
@@ -2061,9 +2057,6 @@ contains
     ! if ivar_type == 2, dumps surface of 3D field;
     ! if ivar_type == 3, dumps selected verticals
     ! if ivar_type == 7, dumps all npatches
-
-
-    zSize=size(OutputField,3)
 
     select case (onePostGrid%ivar_type)
     case (2)
@@ -2101,7 +2094,7 @@ contains
 #ifdef cdf
           elseif(IPOS==3) then
              call writeNetCdf2D(trim(onePostGrid%fieldName),onePostGrid%nLon &
-                  ,onePostGrid%nLat,gathered(onePostGrid%unpackMap(:)))
+                  ,onePostGrid%nLat,gathered(onePostGrid%unpackMap(:)),1)
 #endif
           endif
           if (dumpLocal) then
@@ -2155,7 +2148,7 @@ contains
 #ifdef cdf
              elseif(IPOS==3) then
                 call writeNetCdf3D(trim(onePostGrid%fieldName),onePostGrid%nLon &
-                     ,onePostGrid%nLat,k,gathered(onePostGrid%unpackMap(:)))
+                     ,onePostGrid%nLat,k,gathered(onePostGrid%unpackMap(:)),1)
 #endif
              endif
 
@@ -2220,8 +2213,8 @@ contains
                      gathered(onePostGrid%unpackMap(:))
 #ifdef cdf
              elseif(IPOS==3) then
-                call writeNetCdf2D(trim(onePostGrid%fieldName),onePostGrid%nLon &
-                     ,onePostGrid%nLat,gathered(onePostGrid%unpackMap(:)))
+                call writeNetCdf2D(trim(onePostGrid%fieldName(1:lenName)),onePostGrid%nLon &
+                     ,onePostGrid%nLat,gathered(onePostGrid%unpackMap(:)),k)
 #endif
              endif
 
@@ -2252,7 +2245,6 @@ contains
     integer :: i
     integer :: lenName
     integer :: lenDescription
-    integer :: vSize
     real :: localChunk(onePostGrid%localSizeThisProc)
     real :: gathered(onePostGrid%nLon*onePostGrid%nLat)
     character(len=8) :: c0, c1, c2, c3
@@ -2264,7 +2256,6 @@ contains
     if (dumpLocal) then
        write(*,"(a)") h//" starts for field "//trim(onePostGrid%fieldName)
     end if
-    vSize=size(OutputField,3)
     ! outputs selected part of the computed field:
     ! all verticals of each patch
 
@@ -2323,8 +2314,8 @@ contains
                         gathered(onePostGrid%unpackMap(:))
 #ifdef cdf
                 elseif(ipos==3) then
-                   call writeNetCdf3D(trim(onePostGrid%fieldName),onePostGrid%nLon &
-                        ,onePostGrid%nLat,k,gathered(onePostGrid%unpackMap(:)))
+                   call writeNetCdf3D(trim(onePostGrid%fieldName(1:lenName)),onePostGrid%nLon &
+                        ,onePostGrid%nLat,k,gathered(onePostGrid%unpackMap(:)),l)
 #endif
                 endif
 

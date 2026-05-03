@@ -81,9 +81,6 @@ module ModCuParGrell3
   use ModMicroFields, only: &
        MicroFields
 
-  use io_params, only: &
-       frqanl
-
   use mem_leaf, only: &
        leaf_g, &
        isfcl

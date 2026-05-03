@@ -53,6 +53,7 @@ module ModPostUtils
    public :: calccine
    public :: calccape
    public :: UpperCase
+   public :: LowerCase
    public :: DumpFloating
    public :: DumpFixed
    public :: DumpInteger
@@ -1595,6 +1596,24 @@ contains
          end if
       end do
    end function UpperCase
+
+   function LowerCase(strIn) result(strOut)
+
+      character(len=*), intent(in) :: strIn
+      character(len=len(strIn)) :: strOut
+      integer :: i,j
+      integer, parameter :: lastUpperCase = iachar("Z")
+      integer, parameter :: firstUpperCase = iachar("A")
+
+      do i = 1, len(strIn)
+         j = iachar(strIn(i:i))
+         if (j>= firstUpperCase .and. j<=lastUpperCase ) then
+               strOut(i:i) = achar(iachar(strIn(i:i))+32)
+         else
+               strOut(i:i) = strIn(i:i)
+         end if
+      end do
+   end function LowerCase
 
 
    subroutine DumpInteger(h, array)

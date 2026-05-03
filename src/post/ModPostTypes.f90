@@ -8,7 +8,7 @@ module ModPostTypes
     character(len = 16) :: fieldName        ! post field name
     character(len = 64) :: fieldDescription ! post field description
     character(len = 16) :: fieldUnits       ! post field units
-    integer             :: netcdfId
+    integer, allocatable :: netcdfId(:)
   end type PostVarType
 
   type(PostVarType), allocatable :: all_post_variables(:)
@@ -274,18 +274,22 @@ module ModPostTypes
 
   contains
 
-   function getPostVarible(varName) result(one_post_variable)
+   function getPostVariable(varName, index) result(one_post_variable)
       character(len = *), intent(in) :: varName
+      integer, intent(out), optional :: index
       type(PostVarType) :: one_post_variable
       integer :: i
 
       do i = 1, size(all_post_variables)
          if(varName .eq. all_post_variables(i)%fieldName) then
             one_post_variable = all_post_variables(i)
+             if (present(index)) then
+               index = i
+             end if
             return
          end if
       end do
       one_post_variable%fieldName = ''
-   end function getPostVarible
+   end function getPostVariable
 
 end module ModPostTypes

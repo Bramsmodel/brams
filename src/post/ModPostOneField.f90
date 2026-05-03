@@ -18,7 +18,7 @@ module ModPostOneField
   use ModPostTypes, only: &
        PostGrid, &
        PostVarType, &
-       getPostVarible
+       getPostVariable
 
   use ModPostOneField2d, only: &
        Brams2Post_2d
@@ -113,7 +113,7 @@ contains
     integer :: err
 
     varNameUpper = trim(UpperCase(varName))
-    one_post_variable = getPostVarible(varNameUpper)
+    one_post_variable = getPostVariable(varNameUpper)
     if (len(trim(one_post_variable%fieldName)) .eq. 0) then
        if (mchnum==master_num) &
             err=dumpMessage(c_tty,c_yes,'Post','',c_warning,'Post field "' // varName &

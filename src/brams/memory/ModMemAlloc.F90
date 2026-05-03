@@ -131,8 +131,7 @@ module ModMemAlloc
        alloc_nestb
 
   use io_params, only: &
-       avgtim, &
-       frqanl
+       avgtim
 
   use ModBasicFields, only: &
        InsertBasicFieldsAtVarTable
