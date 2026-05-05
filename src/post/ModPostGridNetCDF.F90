@@ -276,12 +276,12 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
     do i=1,nnyp(1)
       lat(i)=oneGlobalGridData(1)%global_glat(1,nnyp(1)-i+1)
     end do
-    
+
     !Making glon from 0 to 360 east direction
     do i=1,nnxp(1)
       !if(oneGlobalGridData(1)%global_glon(i,1)<0) &
         !lon(i)=360+oneGlobalGridData(1)%global_glon(i,1)
-        lon(i)=oneGdolobalGridData(1)%global_glon(i,1)
+        lon(i)=oneGlobalGridData(1)%global_glon(i,1)
     enddo
 
     iErrNumber = nf90_put_var(ncid, LonDimId, lon)
