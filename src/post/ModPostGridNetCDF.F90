@@ -354,11 +354,6 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
     iErrNumber = nf90_put_var(ncid, LatDimId, lat)
     CHECK_NF90(iErrNumber)
 
-    !Making glon from 0 to 360 east direction
-    do i=1,nnxp(1)
-      !if(oneGlobalGridData(1)%global_glon(i,1)<0) &
-        !lon(i)=360+oneGlobalGridData(1)%global_glon(i,1)
-        lon(i)=oneG
     one_post_variable = getPostVariable(fieldName)
     call invertLats(OutputArray,varArray,nlon,nlat)
 
