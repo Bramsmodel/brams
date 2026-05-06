@@ -498,7 +498,11 @@ contains
 
        localTime = itime1
 
-       call makefnam (sVarName, varpref, 0, iyears, imonths, idates, ihours, 'V', '$', 'tag')
+       if(flag .eq. 2)then
+         call makefnam (sVarName, varpref, 0, iyears, imonths, idates, ihours, 'V', '$', 'tag')
+       else if(flag .eq. 4)then
+         call makefnam (sVarName, varpref, 0, iyears, imonths, idates, ihours, 'A', 'head', 'txt')
+       end if  
        inquire(file=sVarName(1:len_trim(sVarName)), exist=there)
        indice    = 1 
        if (there) then
