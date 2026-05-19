@@ -441,6 +441,9 @@ contains
     ! compute domain decomposition, obtaining
     ! cells owned by each rank and store at GlobalOwn
 
+    if (dumpLocal) then
+       call MsgDump(h//" Creating GlobalOwn")
+    end if
     oneGrid%GlobalOwn => CreateGlobalOwn(&
          GridSize=oneGrid%oneGridDims, &
          ParEnv=oneGrid%oneParallelEnvironment, &
@@ -450,6 +453,9 @@ contains
 
     ! include boundary conditions (no ghost zone)
 
+    if (dumpLocal) then
+       call MsgDump(h//" Creating GlobalOwnWithBC")
+    end if
     oneGrid%GlobalOwnWithBC => CreateGlobalOwnWithBC(&
          GridSize=oneGrid%oneGridDims, &
          ParEnv=oneGrid%oneParallelEnvironment, &
@@ -460,6 +466,9 @@ contains
     ! insert original ghost zone of widht 1
     ! at GlobalOwn and store at GlobalWithGhost
 
+    if (dumpLocal) then
+       call MsgDump(h//" Creating GlobalWithGhost")
+    end if
     oneGrid%GlobalWithGhost => CreateGlobalWithGhost(&
          GridSize=oneGrid%oneGridDims, &
          ParEnv=oneGrid%oneParallelEnvironment, &
@@ -471,6 +480,9 @@ contains
     ! convert global indices from GlobalWithGhost
     ! into local indices stored at LocalOwn
 
+    if (dumpLocal) then
+       call MsgDump(h//" Creating LocalOwn")
+    end if
     oneGrid%LocalOwn => CreateLocalOwn(&
          ParEnv=oneGrid%oneParallelEnvironment, &
          GlobalWithGhost=oneGrid%GlobalWithGhost, &
@@ -480,6 +492,9 @@ contains
 
     ! this node dimensions and indexing limits
 
+    if (dumpLocal) then
+       call MsgDump(h//" Creating oneNodeDimensions")
+    end if
     oneGrid%oneNodeDimensions => CreateNodeDimensions(&
          GridSize=oneGrid%oneGridDims, &
          ParEnv=oneGrid%oneParallelEnvironment, &
@@ -492,6 +507,9 @@ contains
 
     ! neighbour nodes for original ghost zone update operations
 
+    if (dumpLocal) then
+       call MsgDump(h//" Creating oneNeighbourNodes")
+    end if
     oneGrid%oneNeighbourNodes => CreateNeighbourNodes(&
          ParEnv=oneGrid%oneParallelEnvironment, &
          GlobalOwn=oneGrid%GlobalOwn, &
@@ -502,6 +520,9 @@ contains
     ! domain decomposition for Monotonic Advection in X, 
     ! defining cells owned by each rank and store at GlobalOwnMonAdvX
 
+    if (dumpLocal) then
+       call MsgDump(h//" Creating GlobalOwnMonAdvX")
+    end if
     oneGrid%GlobalOwnMonAdvX => CreateGlobalOwn(&
          GridSize=oneGrid%oneGridDims, &
          ParEnv=oneGrid%oneParallelEnvironment, &
@@ -511,6 +532,9 @@ contains
 
     ! include boundary conditions (no ghost zone)
 
+    if (dumpLocal) then
+       call MsgDump(h//" Creating GlobalOwnWithBCMonAdvX")
+    end if
     oneGrid%GlobalOwnWithBCMonAdvX => CreateGlobalOwnWithBC(&
          GridSize=oneGrid%oneGridDims, &
          ParEnv=oneGrid%oneParallelEnvironment, &
@@ -526,6 +550,9 @@ contains
     ! convert global indices from GlobalWithGhostMonAdvX
     ! into local indices stored at LocalOwnMonAdvX
 
+    if (dumpLocal) then
+       call MsgDump(h//" Creating LocalOwnMonAdvX")
+    end if
     oneGrid%LocalOwnMonAdvX => CreateLocalOwn(&
          ParEnv=oneGrid%oneParallelEnvironment, &
          GlobalWithGhost=oneGrid%GlobalWithGhostMonAdvX, &
@@ -535,6 +562,9 @@ contains
 
     ! this node dimensions and indexing limits for monotonic advection in X
 
+    if (dumpLocal) then
+       call MsgDump(h//" Creating oneNodeDimensionsMonAdvX")
+    end if
     oneGrid%oneNodeDimensionsMonAdvX => CreateNodeDimensions(&
          GridSize=oneGrid%oneGridDims, &
          ParEnv=oneGrid%oneParallelEnvironment, &
@@ -548,6 +578,9 @@ contains
     ! domain decomposition for Monotonic Advection in Y, 
     ! defining cells owned by each rank and store at GlobalOwnMonAdvY
 
+    if (dumpLocal) then
+       call MsgDump(h//" Creating GlobalOwnMonAdvY")
+    end if
     oneGrid%GlobalOwnMonAdvY => CreateGlobalOwn(&
          GridSize=oneGrid%oneGridDims, &
          ParEnv=oneGrid%oneParallelEnvironment, &
@@ -557,6 +590,9 @@ contains
 
     ! include boundary conditions (no ghost zone)
 
+    if (dumpLocal) then
+       call MsgDump(h//" Creating GlobalOwnWithBCMonAdvY")
+    end if
     oneGrid%GlobalOwnWithBCMonAdvY => CreateGlobalOwnWithBC(&
          GridSize=oneGrid%oneGridDims, &
          ParEnv=oneGrid%oneParallelEnvironment, &
@@ -572,6 +608,9 @@ contains
     ! convert global indices from GlobalWithGhostMonAdvY
     ! into local indices stored at LocalOwnMonAdvY
 
+    if (dumpLocal) then
+       call MsgDump(h//" Creating LocalOwnMonAdvY")
+    end if
     oneGrid%LocalOwnMonAdvY => CreateLocalOwn(&
          ParEnv=oneGrid%oneParallelEnvironment, &
          GlobalWithGhost=oneGrid%GlobalWithGhostMonAdvY, &
@@ -581,6 +620,9 @@ contains
 
     ! this node dimensions and indexing limits for monotonic advection in X
 
+    if (dumpLocal) then
+       call MsgDump(h//" Creating oneNodeDimensionsMonAdvY")
+    end if
     oneGrid%oneNodeDimensionsMonAdvY => CreateNodeDimensions(&
          GridSize=oneGrid%oneGridDims, &
          ParEnv=oneGrid%oneParallelEnvironment, &
@@ -593,6 +635,9 @@ contains
 
     ! convert BRAMS domain decomposition to Monotonic Advection Full X domain decomposition
     
+    if (dumpLocal) then
+       call MsgDump(h//" Creating ConvertBramsMonAdvX")
+    end if
     oneGrid%ConvertBramsToMonAdvX => CreateConvertDomainDecomp( &
          oneParallelEnvironment=oneGrid%oneParallelEnvironment, &
          oneGridDims=oneGrid%oneGridDims, &
@@ -617,6 +662,9 @@ contains
 
     ! convert BRAMS domain decomposition to Monotonic Advection Full Y domain decomposition
     
+    if (dumpLocal) then
+       call MsgDump(h//" Creating ConvertBramsMonAdvY")
+    end if
     oneGrid%ConvertBramsToMonAdvY => CreateConvertDomainDecomp( &
          oneParallelEnvironment=oneGrid%oneParallelEnvironment, &
          oneGridDims=oneGrid%oneGridDims, &
@@ -641,6 +689,9 @@ contains
 
     ! convert Monotonic Advection Full X domain decomposition to Monotonic Advection Full Y domain decomposition
     
+    if (dumpLocal) then
+       call MsgDump(h//" Creating ConvertMonAdvXToMonAdvY")
+    end if
     oneGrid%ConvertMonAdvXToMonAdvY => CreateConvertDomainDecomp( &
          oneParallelEnvironment=oneGrid%oneParallelEnvironment, &
          oneGridDims=oneGrid%oneGridDims, &
@@ -665,6 +716,9 @@ contains
 
     ! convert Monotonic Advection Full Y domain decomposition to BRAMS domain decomposition
     
+    if (dumpLocal) then
+       call MsgDump(h//" Creating ConvertMonAdvYToBrams")
+    end if
     oneGrid%ConvertMonAdvYToBrams => CreateConvertDomainDecomp( &
          oneParallelEnvironment=oneGrid%oneParallelEnvironment, &
          oneGridDims=oneGrid%oneGridDims, &
@@ -689,6 +743,9 @@ contains
 
     ! update Ghost Zone of Brams fields by converting Brams to Brams
     
+    if (dumpLocal) then
+       call MsgDump(h//" Creating ConvertBramsToBrams")
+    end if
     oneGrid%ConvertBramsToBrams => CreateConvertDomainDecomp( &
          oneParallelEnvironment=oneGrid%oneParallelEnvironment, &
          oneGridDims=oneGrid%oneGridDims, &
@@ -711,11 +768,11 @@ contains
          oneNodeDimensionsTo=oneGrid%oneNodeDimensions, &
          oneConvertDomainDecomp=oneGrid%ConvertBramsToBrams)
 
-!!$    call Terminate(h//" apos converter decomposicoes")
-
-
     ! this node Basic Fields
 
+    if (dumpLocal) then
+       call MsgDump(h//" Creating oneBasicFields")
+    end if
     oneGrid%oneBasicFields => CreateBasicFields(&
          oneGrid%oneNodeDimensions, &
          oneGrid%oneNamelistFile)
@@ -735,6 +792,9 @@ contains
 
     ! this node Turb Fields
 
+    if (dumpLocal) then
+       call MsgDump(h//" Creating oneTurbFields")
+    end if
     oneGrid%oneTurbFields => CreateTurbFields(&
          oneGrid%oneNodeDimensions, &
          oneGrid%oneNamelistFile, &
@@ -756,10 +816,16 @@ contains
 
     ! this node MicControl
 
+    if (dumpLocal) then
+       call MsgDump(h//" Creating oneMicVars")
+    end if
     oneGrid%oneMicVars => CreateMicControl(oneGrid%oneNamelistFile)
 
     ! this node Micro Fields
 
+    if (dumpLocal) then
+       call MsgDump(h//" Creating oneMicroFields")
+    end if
     oneGrid%oneMicroFields => CreateMicroFields(&
          oneGrid%Id, &
          oneGrid%oneNamelistFile, &
@@ -783,11 +849,17 @@ contains
 
     ! this node Scalar Table
 
+    if (dumpLocal) then
+       call MsgDump(h//" Creating oneScalarTable")
+    end if
     oneGrid%oneScalarTable => CreateScalarTab()
     oneGrid%oneScalarTableSize = 0
 
     ! this node Var Table
 
+    if (dumpLocal) then
+       call MsgDump(h//" Creating oneVarTable")
+    end if
     oneGrid%oneVarTable => CreateVarTable()
     oneGrid%oneVarTableSize = 0
 
@@ -795,6 +867,9 @@ contains
 
 #ifdef JULES
     if (oneGrid%oneNamelistFile%isfcl == 5) then
+       if (dumpLocal) then
+          call MsgDump(h//" Creating oneJulesFields")
+       end if
        oneGrid%oneJulesFields => CreateJulesFields(&
             oneGrid%oneNodeDimensions, &
             oneGrid%oneNamelistFile)
@@ -816,6 +891,9 @@ contains
 
     ! this node Shcu Fields
     
+    if (dumpLocal) then
+       call MsgDump(h//" Creating oneShcuFields")
+    end if
     oneGrid%oneShcuFields => CreateShcuFields(&
          oneGrid%oneNodeDimensions, &
          oneGrid%oneControlVars)
@@ -831,6 +909,9 @@ contains
 
     ! this node Scalar Fields
 
+    if (dumpLocal) then
+       call MsgDump(h//" Creating oneScalarFields")
+    end if
     oneGrid%oneScalarFields => CreateScalarFields(&
          oneGrid%oneNodeDimensions, &
          oneGrid%oneNamelistFile, oneGrid%Id)
@@ -851,6 +932,9 @@ contains
          oneGrid%oneNamelistFile%aerosol==2 .and. &
          aerosol_mechanism(1:6)=='MATRIX') then
     
+       if (dumpLocal) then
+          call MsgDump(h//" Creating oneAero2McphysFields")
+       end if
        oneGrid%oneAero2McphysFields => CreateAero2McphysFields(&
             oneGrid%oneNodeDimensions, &
             nmodes, &
@@ -869,6 +953,9 @@ contains
     
     ! this node RadiateFields
 
+    if (dumpLocal) then
+       call MsgDump(h//" Creating oneRadiateFields")
+    end if
     oneGrid%oneRadiateFields => CreateRadiateFields(&
          oneGrid%oneNodeDimensions, &
          oneGrid%oneNamelistFile)
@@ -884,70 +971,16 @@ contains
 
     ! this node CuParmVars
 
+    if (dumpLocal) then
+       call MsgDump(h//" Creating oneCuParmVars")
+    end if
     oneGrid%oneCuParmVars => CreateCuParmVars()
        
     ! this node CuParmFields
 
-!!$    JP: the original code at ModMemAlloc seems wrong; 
-!!$    JP: Original code is
-!!$   
-!!$    allocate(cuparm_g(ngrids), STAT=ierr)
-!!$    if (ierr/=0) call fatal_error(h//"Allocating cuparm_g")
-!!$    allocate(cuparmm_g(ngrids), STAT=ierr)
-!!$    if (ierr/=0) call fatal_error(h//"Allocating cuparmm_g")
-!!$
-!!$    allocate(cuparm_g_sh(ngrids), STAT=ierr)
-!!$    if (ierr/=0) call fatal_error(h//"Allocating cuparm_g_sh")
-!!$    allocate(cuparmm_g_sh(ngrids), STAT=ierr)
-!!$    if (ierr/=0) call fatal_error(h//"Allocating cuparmm_g_sh")
-!!$
-!!$    do ng=1,ngrids
-!!$       call nullify_cuparm(cuparm_g(ng))
-!!$       call nullify_cuparm(cuparmm_g(ng))
-!!$       call alloc_cuparm(oneGrid%oneNamelistFile, cuparm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
-!!$
-!!$       !-srf-feb2012: for shallow cumulus
-!!$       if (nnshcu(ng) > 1) then
-!!$          call nullify_cuparm(cuparm_g_sh(ng))
-!!$          call nullify_cuparm(cuparmm_g_sh(ng))
-!!$          if (imean == 1) then
-!!$             call alloc_cuparm_sh(cuparm_g_sh(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
-!!$          end if
-!!$       endif
-!!$
-!!$       if (imean==1) then
-!!$          call alloc_cuparm(oneGrid%oneNamelistFile, cuparmm_g(ng), nmzp(ng), nmxp(ng), nmyp(ng), ng)
-!!$       endif
-!!$
-!!$       call filltab_cuparm(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-!!$            cuparm_g,cuparmm_g, ng, imean)
-!!$
-!!$       !-srf-feb2012: for shallow cumulus
-!!$       if (nnshcu(ng) == 2) then
-!!$          call filltab_cuparm_sh(oneGrid%oneVarTable, oneGrid%oneVarTableSize, &
-!!$               cuparm_g_sh, cuparmm_g_sh, ng, imean)
-!!$       end if
-!!$
-!!$    enddo
-!!$
-!!$    JP: cuparm_g is allways alocated with its components
-!!$
-!!$    JP: cuparmm_g is alocated with its components if imean == 1
-!!$    JP: cuparmm_g is alocated with null components if imean /= 1
-!!$
-!!$    JP: cuparm_g_sh is null if nnshcu <= 1
-!!$    JP: cuparm_g_sh is allocated with null components if nnshcu > 1 and imean /= 1
-!!$    JP: cuparm_g_sh is allocated with its components if nnshcu > 1 and imean == 1
-!!$
-!!$    JP: cuparmm_g_sh is null if nnshcu > 1
-!!$    JP: cuparmm_g_sh is allocated with null components if nnshcu <=1
-!!$
-!!$    JP: code bellow mimics the above, with:
-!!$        oneCuParmFields replacing cuparm_g;    
-!!$        oneAveCuParmFields replacing cuparmm_g;    
-!!$        oneCuParmShFields replacing cuparm_g_sh;    
-!!$        oneAveCuParmShFields replacing cuparmm_g_sh;    
-    
+    if (dumpLocal) then
+       call MsgDump(h//" Creating oneCuParmFields")
+    end if
     oneGrid%oneCuParmFields => CreateCuParmFields(&
          oneGrid%oneNamelistFile, &
          oneGrid%oneNodeDimensions, &
@@ -964,6 +997,9 @@ contains
     ! this node CuParmShFields
 
     if (oneGrid%oneNamelistFile%nnshcu(gridId) > 1) then
+       if (dumpLocal) then
+          call MsgDump(h//" Creating oneCuParmShFields")
+       end if
        if (createAve) then
           oneGrid%oneCuParmShFields => CreateCuParmShFields(&
                oneGrid%oneNodeDimensions)

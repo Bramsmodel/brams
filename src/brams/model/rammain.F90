@@ -53,20 +53,20 @@ program main
 
   use ParLib, only: &
        parf_init_mpi, & ! subroutine
-       parf_barrier, &  ! subroutine
-       parf_exit_mpi    ! subroutine
+       parf_exit_mpi, & ! subroutine
+       parf_barrier     ! subroutine
 
   use ModOneProc, only: &
-       OneProc
+       OneProc   ! subroutine
 
   use dump, only: &
-        dumpMessage ! Subroutine
+        dumpMessage ! subroutine
 
   ! Main:
   !   starts MPI
   !   initializes memory use and execution time instrumentation
   !   dispatches processes
-  !   invoking master/slave processes or full model process
+  !   invoking full model process
   !   dumps and destroys instrumentation
   !   finishes MPI
 
@@ -106,27 +106,36 @@ program main
 
   call OneProc(nmachs_in, mchnum_in, master_num_in)
 
-  ! finishes execution
+  ! wait for all processes
 
   call parf_barrier(0)
 
+  ! finalizes execution time instrumentation
+
   call DestroyTimeStamp()
 
+  ! finalizes memory instrumentation
+
   if (mchnum_in==master_num_in) then
-     call DumpMemory("Fim")
+     call DumpMemory("Ends")
      call DestroyMemory()
   end if
 
-  if (mchnum_in==master_num_in) then!write(*,"(a)") " ****** BRAMS execution ends ******"
+  ! signals correct execution at stdout
+
+  if (mchnum_in==master_num_in) then
 #ifdef color
-    iErrNumber=dumpMessage(c_tty,c_yes,header,version,c_notice,'BRAMS execution normal ends!')
+    iErrNumber=dumpMessage(c_tty,c_yes,header,version,c_notice,'BRAMS execution ends correctly!')
     iErrNumber=dumpMessage(c_tty,c_yes,header,version,c_notice &
          ,'for more information about submission(non fatal errors, notices, warnings), please, see the file brams.log and jules.log !')
 #else
-    iErrNumber=dumpMessage(c_tty,c_no,header,version,c_notice,'BRAMS execution normal ends!')
+    iErrNumber=dumpMessage(c_tty,c_no,header,version,c_notice,'BRAMS execution ends correctly!')
     iErrNumber=dumpMessage(c_tty,c_no,header,version,c_notice &
      ,'for more information about submission(non fatal errors, notices, warnings), please, see the file brams.log and jules.log  !')
 #endif
   endif
+
+  ! signals correct execution at Dump file
+  
   call parf_exit_mpi()
 end program main

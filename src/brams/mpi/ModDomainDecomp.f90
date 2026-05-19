@@ -455,7 +455,7 @@ contains
        
        do mach = 1, nmachs
           CreateGlobalOwn%xb(mach) = 2
-          CreateGlobalOwn%xe(mach) = nyp-1
+          CreateGlobalOwn%xe(mach) = nxp-1
           if (mach <= rem) then
              CreateGlobalOwn%yb(mach) = (mach-1)*(quo+1) + 2
              CreateGlobalOwn%ye(mach) = (mach  )*(quo+1) + 1

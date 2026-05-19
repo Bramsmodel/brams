@@ -1682,7 +1682,7 @@ subroutine Terminate(msg)
   character(len=*), intent(in) :: msg
   character(len=*), parameter :: h="**(Terminate)**"
   
-  call MsgDump(h//" stop forced from "//trim(msg))
+  call MsgDump(h//" "//trim(msg))
   call parf_barrier(5)
   close(DumpUnit)
   call parf_exit_mpi()
