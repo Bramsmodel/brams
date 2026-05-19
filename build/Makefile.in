@@ -332,11 +332,6 @@ filter:
 install-filter:
 	\cp -f -R $(RAMS_ROOT)/build/filter $(BINDIR)/filter
 
-pre-brams:
-	cd ./ && $(MAKE) -f Make_pre
-
-install-pre-brams:
-	\cp -f -R $(RAMS_ROOT)/build/pre $(BINDIR)/pre
 
 clean:
 	$(MAKE) -f Make_utils  clean
