@@ -10,11 +10,6 @@ module ModNodeDimensions
        DomainDecomp
   
   implicit none
-  private
-  public :: NodeDimensions
-  public :: CreateNodeDimensions
-  public :: DestroyNodeDimensions
-  public :: DumpNodeDimensions
 
   ! NodeDimensions: stores indices of this process domain decomposed sub-domain
 
@@ -31,7 +26,11 @@ module ModNodeDimensions
 
      character :: FullDirection
 
-     ! nxp, nyp, nzp are sizes (in grid points) of this process sub-domain,
+     ! Empty indicates if this process domain decomposition is empty
+
+     logical :: Empty
+     
+     ! mxp, myp, mzp are sizes (in grid points) of this process sub-domain,
      ! including ghost zone;
      ! fields with this GhostZoneWidth should be dimensioned (nzp,nxp,nyp)
 
@@ -87,6 +86,16 @@ module ModNodeDimensions
      
   end type NodeDimensions
 
+  private
+  public :: NodeDimensions
+  public :: CreateNodeDimensions
+  public :: DestroyNodeDimensions
+  public :: DumpNodeDimensions
+
+  ! scratch areas for dumping
+  character(len=8) :: str(10)
+  character(len=512) :: message
+
 contains
 
 
@@ -97,8 +106,8 @@ contains
        verticalGhostZoneWidth, surfaceGhostZoneWidth, varName) result(res)
 
     ! Creates a pointer to a variable of type NodeDimensions named
-    ! varName for given grid and parallel environment. Performs domain
-    ! decomposition, filling all components of the created variable
+    ! varName for given grid and parallel environment, from 
+    ! domain decomposed variables
 
     type(GridDims), pointer, intent(in) :: GridSize
     type(ParallelEnvironment), pointer, intent(in) :: ParEnv
@@ -114,7 +123,6 @@ contains
     integer :: borderLow
     integer :: borderHigh
 
-    character(len=8) :: c0
     character(len=*), parameter :: h="**(CreateNodeDimensions)**"
     logical, parameter :: dumpLocal=.false.
 
@@ -134,15 +142,14 @@ contains
 
     myNum = ParEnv%myNum
 
-    allocate(res, stat=ierr)
+    allocate(res, stat=ierr, errmsg=message)
     if (ierr /= 0) then
-       write(c0,"(i8)") ierr
-       call fatal_error(h//" allocate CreateNodeDimensions fails with stat="//&
-            trim(adjustl(c0)))
+       call fatal_error(h//" allocate CreateNodeDimensions fails with message="//trim(message))
     end if
 
     res%GhostZoneWidth = surfaceGhostZoneWidth
     res%FullDirection = LocalOwn%FullDirection
+    res%Empty = LocalOwn%Empty(myNum)
     res%borderNorth = btest(LocalOwn%ibcon(myNum),4)
     res%borderSouth = btest(LocalOwn%ibcon(myNum),3)
     res%borderEast = btest(LocalOwn%ibcon(myNum),2)
@@ -160,7 +167,7 @@ contains
     else
        borderHigh=surfaceGhostZoneWidth
     end if
-    res%mxp = LocalOwn%xe(myNum)-LocalOwn%xb(myNum)+1+borderLow+borderHigh
+    res%mxp = max(0,LocalOwn%xe(myNum)-LocalOwn%xb(myNum)+1+borderLow+borderHigh)
     
     ! nyp is y axis span + boundary condition or ghost zone
 
@@ -174,7 +181,7 @@ contains
     else
        borderHigh=surfaceGhostZoneWidth
     end if
-    res%myp = LocalOwn%ye(myNum)-LocalOwn%yb(myNum)+1+borderLow+borderHigh
+    res%myp = max(0,LocalOwn%ye(myNum)-LocalOwn%yb(myNum)+1+borderLow+borderHigh)
 
     ! nzp 
 
@@ -232,14 +239,11 @@ contains
 
     integer :: ierr
     character(len=*), parameter :: h="**(DestroyNodeDimensions)**"
-    character(len=8) :: c0
 
     if (associated(oneNodeDimensions)) then
-       deallocate(oneNodeDimensions, stat=ierr)
+       deallocate(oneNodeDimensions, stat=ierr, errmsg=message)
        if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate oneNodeDimensions fails with stat="//&
-               trim(adjustl(c0)))
+          call fatal_error(h//" deallocate oneNodeDimensions fails with message="//trim(message))
        end if
     end if
     nullify(oneNodeDimensions)
@@ -263,7 +267,7 @@ contains
     ! dumps at selected unit
 
     if (.not. associated(oneNodeDimensions)) then
-       call MsgDump (h//" empty NodeDimensions named "//trim(varName))
+       call MsgDump (h//" not associated NodeDimensions named "//trim(varName))
        return
     else
        write(str(1),"(i8)") oneNodeDimensions%GhostZoneWidth
@@ -272,6 +276,11 @@ contains
             " and FullDirection="//oneNodeDimensions%FullDirection)
     end if
 
+    if (oneNodeDimensions%Empty) then
+       call MsgDump(h//" empty node dimensions")
+       return
+    end if
+    
     write(str(1),"(i8)") oneNodeDimensions%mzp
     write(str(2),"(i8)") oneNodeDimensions%mxp
     write(str(3),"(i8)") oneNodeDimensions%myp

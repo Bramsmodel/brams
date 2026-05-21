@@ -25,9 +25,9 @@ module ModParallelEnvironment
   type ParallelEnvironment
      integer :: communicator 
      integer :: nmachs             ! number of processes (MPI size)
-     integer :: mchnum             ! MPI number of this process
+     integer :: mchnum             ! MPI number of this process (MPI rank)
      integer :: master_num         ! MPI number of the master process
-     integer :: myNum              ! Brams number of this process
+     integer :: myNum              ! Brams number of this process (= MPI rank +1, to ensure indexing from 1)
   end type ParallelEnvironment
 
   include "mpif.h"

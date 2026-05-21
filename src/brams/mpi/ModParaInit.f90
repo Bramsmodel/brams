@@ -1134,33 +1134,45 @@ contains
     integer :: ngr
     integer :: jnode
     integer :: ncols
-    logical, parameter :: dumpLocal=.false.
-    character(len=*), parameter :: h="**(domain_decomposition_dump)**"
-    character(len=*), parameter :: header="**(domain_decomposition_dump)**"
-    character(len=*), parameter :: version="para_init.f90"
     integer :: err
     integer :: colsInx
     integer :: colsInY
     integer :: minColValid
-    character(len=8) :: c0
+    integer :: fId
+    integer :: ios
+    character(len=512) :: message
+    
+    character(len=8) :: str(10)
+    character(len=*), parameter :: header="**(domain_decomposition_dump)**"
+    logical, parameter :: dumpLocal=.false.
 
-    ! dumps at selected unit
+    ! dumps at selected fId
 
-    open(unit=22,file='brams.log',position='append',action='write')
-    write(unit=22,fmt="(a30,i8.8,a12,i8.8,a11)") ' === Domain decomposition for ',&
-         ngrids,' grids with ',nmachs,' cores ==='
+    open(newunit=fId,file='brams.log',position='append',action='write',iostat=ios,iomsg=message)
+    if (ios /= 0) then
+       call fatal_error(header//" open brams.log fails with message="//trim(message))
+    end if
 
-    write(unit=22,fmt="(a)") '      grid    node   x-beg   x-end   y-beg   y-end      cols'
+    write(str(1),"(i8)") ngrids
+    write(str(2),"(i8)") nmachs
+    write(fId,"(a)") ' === Domain decomposition for '//trim(adjustl(str(1)))//&
+         ' grids with '//trim(adjustl(str(2)))//' cores ==='
+
+    write(fId,"(a)") '      grid    node   x-beg   x-end   y-beg   y-end      cols'
     do ngr = 1, ngrids
        do jnode = 1,nmachs
           ncols= (1+ixe(jnode,ngr)-ixb(jnode,ngr))  &
                *(1+iye(jnode,ngr)-iyb(jnode,ngr))
-          write(unit=22,fmt="('  ',7i8)") ngr,jnode,ixb(jnode,ngr),ixe(jnode,ngr)  &
+          write(fId,fmt="('  ',7i8)") ngr,jnode,ixb(jnode,ngr),ixe(jnode,ngr)  &
                ,iyb(jnode,ngr),iye(jnode,ngr),ncols
        enddo
-       write(unit=22,fmt="(a)")
+       write(fId,fmt="(a)")
     end do
-    close(unit=22)
+    flush(fId)
+    close(fId,iostat=ios,iomsg=message)
+    if (ios /= 0) then
+       call fatal_error(header//" close brams.log fails with message="//trim(message))
+    end if
 
     !Checking number of columns for Runge-Kupta
     if(dyncore_flag==2) then
@@ -1170,17 +1182,27 @@ contains
              colsInX=1+ixe(jnode,ngr)-ixb(jnode,ngr)
              colsInY=1+iye(jnode,ngr)-iyb(jnode,ngr)
              if(colsInx<minColValid) then
-                write(*,fmt='(A)') 'ERR: Grid set incompatible for Runge Kupta'
-                write(*,fmt='(A,I5.5,A,I5,A,I5)') 'Processor: ',jnode,', Cols:',colsInX,' for a minimum of ',minColValid
+                write(*,'(a)') header//' ERR: Grid internal points in the X direction too low for Runge Kupta'
+                write(str(1),"(i8)") jnode
+                write(str(2),"(i8)") colsInX
+                write(str(3),"(i8)") minColValid
+                write(*,"(a)") header//" For process "//trim(adjustl(str(1)))//" grid partition in X has only "//trim(adjustl(str(2)))//&
+                     " internal points, lower than the minimum of "//trim(adjustl(str(3)))//" points required by Runge Kutta."//&
+                     " Either increase NNXP in RAMSIN or decrease the number of processes"
                 err=dumpMessage(c_tty,c_yes,header,' !!! ',c_fatal&
-                     ,'Number of columns in X less than allowed. Please, increase NNXP in RAMSIN '//&
+                     ,'Number of grid partition internal points in X less than allowed. Please, increase NNXP in RAMSIN '//&
                      'or decrease the amount of processors')
              endif
              if(colsInY<minColValid) then
-                write(*,fmt='(A)') 'ERR: Grid set incompatible for Runge Kupta'
-                write(*,fmt='(A,I5.5,A,I5,A,I5)') 'Processor: ',jnode,', Cols:',colsInY,' for a minimum of ',minColValid
+                write(*,'(a)') header//' ERR: Grid internal points in the Y direction too low for Runge Kupta'
+                write(str(1),"(i8)") jnode
+                write(str(2),"(i8)") colsInY
+                write(str(3),"(i8)") minColValid
+                write(*,"(a)") header//" For process "//trim(adjustl(str(1)))//" grid partition in Y has only "//trim(adjustl(str(2)))//&
+                     " internal points, lower than the minimum of "//trim(adjustl(str(3)))//" points required by Runge Kutta."//&
+                     " Either increase NNYP in RAMSIN or decrease the number of processes"
                 err=dumpMessage(c_tty,c_yes,header,' !!! ',c_fatal&
-                     ,'Number of columns in Y less than allowed. Please, increase NNYP in RAMSIN '//&
+                     ,'Number of grid partition internal points in Y less than allowed. Please, increase NNYP in RAMSIN '//&
                      'or decrease the amount of processors')
              endif
           enddo

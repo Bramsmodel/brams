@@ -11,57 +11,36 @@ module ModDomainDecomp
 
 
   ! DomainDecomp: stores indices of a domain decomposed grid for all MPI ranks.
-  !               Arrays are indexed (MPI rank+1), to avoid starting from 0.
-  !               Refering to the array index i (MPI rank i-1),
-  !               the indices of the sub-domain stored at
-  !               this rank are [xb(i):xe(i), yb(i),ye(i)] and
+  !               Arrays are indexed BRAMS rank (MPI rank+1), to avoid starting from 0.
+  !               Refering to BRAMS rank i (MPI rank i-1), the indices of the sub-domain
+  !               stored at this rank are [xb(i):xe(i), yb(i),ye(i)] and
   !               ibcon(i) stores if any sub-domain boundary is
   !               a full domain boundary.
   !               GhostZoneWidth is the width of the ghost zone
   !               (0 if no ghost zone).
+  !               
+  !               Starting at BRAMS 7.0, code uses 3 domain decompositions:
+  !               (1) RAMS original, that partitions x-y grid surface into x-y rectangles
+  !                   as evenly in the number of grid points as possible;
+  !               (2) Monotonic Advection in the x direction, partitioning the grid keeping
+  !                   all points of the x direction in a rank;
+  !               (3) Monotonic Advection in the y direction, partitioning the grid keeping
+  !                   all points of the y direction in a rank;
   !
-  !               Variables of type DomainDecomp ponter have the following names and meaning:
-  !
-  !               GlobalOwn: Brams X-Y partition of domain [2:nnxp-1,2:nnyp-1]
-  !                          which is the full domain except boundary conditions.
-  !                          Boundary conditions are marked as so.
-  !                          Stores global indices, not including ghost zone.
-  !                          Created by calling CreateGlobalOwn with FullDirection="B"
-  !
-  !               GlobalOwnMonAdvX and GlobalOwnMonAdvY:
-  !                          Partition of domain [2:nnxp-1,2:nnyp-1] for monotonic advection,
-  !                          which is the full domain except boundary conditions.
-  !                          For MonAdvX, only the Y direction is partitioned across ranks; each
-  !                          rank keeps the entire X domain. except boundary conditions extremes.
-  !                          For MonAdvY, only the X direction is partitioned across ranks; each
-  !                          rank keeps the entire Y domain, except boundary conditions extremes.
-  !                          Boundary conditions are marked as so.
-  !                          Stores global indices, not including ghost zone.
-  !                          Created by calling CreateGlobalOwn, passing "X" or "Y" as 
-  !                          argument FullDirection (the direction that will not be partitioned).
-  !                              
-  !               GlobalOwnWithBC: It extends GlobalOwn by including boundary conditions. 
-  !                          Stores global indices. Created by calling CreateGlobalOwnWithBC, given GlobalOwn.
-  !                          Procedure CreateGlobalOwnWithBC applies to Brams or Monotonic Advection partitions.
-  !                              
-  !               GlobalWithGhost: It extends GlobalOwn by including ghost zone and boundary conditions. 
-  !                          Not a real partition, since ghost zone of one sub-domain instersect with 
-  !                          interior points of other sub-domains. Ghost zone width is given. 
-  !                          Stores global indices. Created by calling CreateGlobalWithGhost,
-  !                          given GlobalOwn and GhostZoneWidth. Procedure CreateGlobalWithGhost applies
-  !                          only to Brams domain decompositions, since Monotonic Advection domain
-  !                          decomposition has no ghost zone.
-  !
-  !               LocalOwn: Local indices of interior columns of GlobalWithGhost for Brams domain decomposition
-  !                         or of GlobalOwnWithBC for Monotonic Advection domain decomposition.
-  !                         Stores indices used throughout BRAMS (both dynamics and physics);
-  !                         xb, xe, yb and ye are the local indices converted from GlobalWithGhost (Brams)
-  !                         or GlobalWithBC (Monotonic Advection) using GlobalOwn info;
-  !                         nx and ny are total sub-domain size, including boundary conditions and
-  !                         ghost zone (same as GlobalWithGhost)
+  !               Domain decompositions (2) and (3) are required to obtain binary reproducibility
+  !               and are used only when monotonic advection is selected at RAMSIN.
+  !               In such a case, if the number of MPI ranks is greater than the number of points in
+  !               x (or y) direction, the exceeding ranks will have empty partition.
+  !               Ranks with empty partitions have component "Empty" set to .true.
 
   type DomainDecomp
 
+     ! Empty is true iff the rank has no partition
+     ! Empty is always false for BRAMS domain decomposition, and maybe true
+     ! for some ranks in both X and Y Monotonic Advection decompositions
+
+     logical, allocatable :: Empty(:)
+     
      ! GhostZoneWidth: Width of Ghost Zone in surface points, 0 if no Ghost Zone
 
      integer :: GhostZoneWidth
@@ -84,6 +63,8 @@ module ModDomainDecomp
      ! global x index = local x index + (GlobalWithGhost%xb-1)
      ! global y index = local y index + (GlobalWithGhost%yb-1)
 
+     ! Empty domains have nx=ny=0 and xb>nnxp, xe<1, yb>nnyp, ye<1
+     ! at the ranks where domains are empty
      integer, allocatable :: xb(:)   ! first x
      integer, allocatable :: xe(:)   ! last x 
      integer, allocatable :: nx(:)   ! # points x
@@ -105,9 +86,57 @@ module ModDomainDecomp
      !  if btest(ibcon(mach),3) is true, sub-domain south boundary is a global boundary
      !  if btest(ibcon(mach),4) is true, sub-domain north boundary is a global boundary
 
+     ! Empty domains have ibcon=0
      integer, allocatable :: ibcon(:) ! full domain boundary flag
 
   end type DomainDecomp
+
+  
+  ! Public procedures create specific domain decompositions and return pointers
+  ! to instances of type DomainDecomposition. These procedures are invoked by
+  ! ModGrid.f90, and stored as components of type Grid:
+  !
+  ! GlobalOwn: Brams X-Y partition of domain [2:nnxp-1,2:nnyp-1]
+  !            which is the full domain except boundary conditions.
+  !            Boundary conditions are marked as so.
+  !            Stores global indices, not including ghost zone.
+  !            Created by calling CreateGlobalOwn with FullDirection="B"
+  !
+  ! GlobalOwnMonAdvX and GlobalOwnMonAdvY:
+  !            Partition of domain [2:nnxp-1,2:nnyp-1] for monotonic advection,
+  !            which is the full domain except boundary conditions.
+  !            For MonAdvX, only the Y direction is partitioned across ranks; each
+  !            rank keeps the entire X domain. except boundary conditions extremes.
+  !            For MonAdvY, only the X direction is partitioned across ranks; each
+  !            rank keeps the entire Y domain, except boundary conditions extremes.
+  !            Boundary conditions are marked as so.
+  !            Stores global indices, not including ghost zone.
+  !            If there are more ranks than points in X or Y direction, exceding
+  !            ranks have Empty set to true. In such a case, remaining components
+  !            are set as described above.
+  !            Created by calling CreateGlobalOwn, passing "X" or "Y" as 
+  !            argument FullDirection (the direction that will not be partitioned).
+  !  
+  ! GlobalOwnWithBC: It extends GlobalOwn by including boundary conditions. 
+  !            Stores global indices. Created by calling CreateGlobalOwnWithBC, given GlobalOwn.
+  !            Procedure CreateGlobalOwnWithBC applies to Brams or Monotonic Advection partitions.
+  !  
+  ! GlobalWithGhost: It extends GlobalOwn by including ghost zone and boundary conditions. 
+  !            Not a real partition, since ghost zone of one sub-domain intersects with 
+  !            interior points of other sub-domains. Ghost zone width is given. 
+  !            Stores global indices. Created by calling CreateGlobalWithGhost,
+  !            given GlobalOwn and GhostZoneWidth. Procedure CreateGlobalWithGhost applies
+  !            only to Brams domain decompositions, since Monotonic Advection domain
+  !            decomposition has no ghost zone.
+  !
+  ! LocalOwn: Local indices of interior columns of GlobalWithGhost for Brams domain decomposition
+  !           or of GlobalOwnWithBC for Monotonic Advection domain decomposition.
+  !           Stores indices used throughout BRAMS (both dynamics and physics);
+  !           xb, xe, yb and ye are the local indices converted from GlobalWithGhost (Brams)
+  !           or GlobalWithBC (Monotonic Advection) using GlobalOwn info;
+  !           nx and ny are total sub-domain size, including boundary conditions and
+  !           ghost zone (same as GlobalWithGhost)
+
 
   private
   public :: DomainDecomp
@@ -117,7 +146,10 @@ module ModDomainDecomp
   public :: CreateLocalOwn
   public :: DestroyDomainDecomp
   public :: DumpDomainDecomp
-  
+
+  ! scratch areas for dumping
+  character(len=8) :: str(10)
+  character(len=512) :: message
 contains
 
 
@@ -126,71 +158,68 @@ contains
 
   function CreateDomainDecomp(nmachs) result(ptr)
 
-    ! Allocates all fields of a pointer of 
+    ! Allocates all components of a pointer of 
     ! type DomainDecomp, returning the pointer
+    ! Components are not initialized
     
     integer, intent(in) :: nmachs
     type(DomainDecomp), pointer :: ptr
 
     integer :: ierr
     character(len=*), parameter :: h="**(CreateDomainDecomp)**"
-    character(len=8) :: c0
-    character(len=10) :: c1
 
-    allocate(ptr, stat=ierr)
+    allocate(ptr, stat=ierr, errmsg=message)
     if (ierr /= 0) then
-       write(c0,"(i8)") ierr
-       call fatal_error(h//" allocate ptr fails with stat="//&
-            trim(adjustl(c0)))
+       call fatal_error(h//" allocate ptr fails with message="//trim(message))
     end if
-    write(c1,"(a1,i8,a1)") "(",nmachs,")"
-    allocate(ptr%xb(nmachs), stat=ierr)
+
+    write(str(1),"(i8)") nmachs
+    str(2)="("//trim(adjustl(str(1)))//")"
+
+    allocate(ptr%Empty(nmachs), stat=ierr, errmsg=message)
     if (ierr /= 0) then
-       write(c0,"(i8)") ierr
-       call fatal_error(h//" allocate ptr%xb"//trim(adjustl(c1))//" fails with stat="//&
-            trim(adjustl(c0)))
+       call fatal_error(h//" allocate ptr%Empty"//trim(adjustl(str(2)))//" fails with message="//trim(message))
     end if
-    allocate(ptr%xe(nmachs), stat=ierr)
+    
+    allocate(ptr%xb(nmachs), stat=ierr, errmsg=message)
     if (ierr /= 0) then
-       write(c0,"(i8)") ierr
+       call fatal_error(h//" allocate ptr%xb"//trim(adjustl(str(2)))//" fails with message="//trim(message))
+    end if
+
+    allocate(ptr%xe(nmachs), stat=ierr, errmsg=message)
+    if (ierr /= 0) then
        call fatal_error(h//" allocate ptr%xe"//&
-            trim(adjustl(c1))//" fails with stat="//&
-            trim(adjustl(c0)))
+            trim(adjustl(str(2)))//" fails with message="//trim(message))
     end if
-    allocate(ptr%nx(nmachs), stat=ierr)
+
+    allocate(ptr%nx(nmachs), stat=ierr, errmsg=message)
     if (ierr /= 0) then
-       write(c0,"(i8)") ierr
        call fatal_error(h//" allocate ptr%nx"//&
-            trim(adjustl(c1))//" fails with stat="//&
-            trim(adjustl(c0)))
+            trim(adjustl(str(2)))//" fails with message="//trim(message))
     end if
-    allocate(ptr%yb(nmachs), stat=ierr)
+
+    allocate(ptr%yb(nmachs), stat=ierr, errmsg=message)
     if (ierr /= 0) then
-       write(c0,"(i8)") ierr
        call fatal_error(h//" allocate ptr%yb"//&
-            trim(adjustl(c1))//" fails with stat="//&
-            trim(adjustl(c0)))
+            trim(adjustl(str(2)))//" fails with message="//trim(message))
     end if
-    allocate(ptr%ye(nmachs), stat=ierr)
+
+    allocate(ptr%ye(nmachs), stat=ierr, errmsg=message)
     if (ierr /= 0) then
-       write(c0,"(i8)") ierr
        call fatal_error(h//" allocate ptr%ye"//&
-            trim(adjustl(c1))//" fails with stat="//&
-            trim(adjustl(c0)))
+            trim(adjustl(str(2)))//" fails with message="//trim(message))
     end if
-    allocate(ptr%ny(nmachs), stat=ierr)
+
+    allocate(ptr%ny(nmachs), stat=ierr, errmsg=message)
     if (ierr /= 0) then
-       write(c0,"(i8)") ierr
        call fatal_error(h//" allocate ptr%ny"//&
-            trim(adjustl(c1))//" fails with stat="//&
-            trim(adjustl(c0)))
+            trim(adjustl(str(2)))//" fails with message="//trim(message))
     end if
-    allocate(ptr%ibcon(nmachs), stat=ierr)
+
+    allocate(ptr%ibcon(nmachs), stat=ierr, errmsg=message)
     if (ierr /= 0) then
-       write(c0,"(i8)") ierr
        call fatal_error(h//" allocate ptr%ibcon"//&
-            trim(adjustl(c1))//" fails with stat="//&
-            trim(adjustl(c0)))
+            trim(adjustl(str(2)))//" fails with message="//trim(message))
     end if
   end function CreateDomainDecomp
 
@@ -206,56 +235,52 @@ contains
 
     integer :: ierr
     character(len=*), parameter :: h="**(DestroyDomainDecomp)**"
-    character(len=8) :: c0
 
     if (associated(oneDomainDecomp)) then
-       deallocate(oneDomainDecomp%xb, stat=ierr)
+
+       deallocate(oneDomainDecomp%Empty, stat=ierr, errmsg=message)
        if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate xb fails with stat="//&
-               trim(adjustl(c0)))
+          call fatal_error(h//" deallocate Empty fails with message="//trim(message))
        end if
-       deallocate(oneDomainDecomp%xe, stat=ierr)
+
+       deallocate(oneDomainDecomp%xb, stat=ierr, errmsg=message)
        if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate xe fails with stat="//&
-               trim(adjustl(c0)))
+          call fatal_error(h//" deallocate xb fails with message="//trim(message))
        end if
-       deallocate(oneDomainDecomp%nx, stat=ierr)
+
+       deallocate(oneDomainDecomp%xe, stat=ierr, errmsg=message)
        if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate nx fails with stat="//&
-               trim(adjustl(c0)))
+          call fatal_error(h//" deallocate xe fails with message="//trim(message))
        end if
-       deallocate(oneDomainDecomp%yb, stat=ierr)
+
+       deallocate(oneDomainDecomp%nx, stat=ierr, errmsg=message)
        if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate yb fails with stat="//&
-               trim(adjustl(c0)))
+          call fatal_error(h//" deallocate nx fails with message="//trim(message))
        end if
-       deallocate(oneDomainDecomp%ye, stat=ierr)
+
+       deallocate(oneDomainDecomp%yb, stat=ierr, errmsg=message)
        if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate ye fails with stat="//&
-               trim(adjustl(c0)))
+          call fatal_error(h//" deallocate yb fails with message="//trim(message))
        end if
-       deallocate(oneDomainDecomp%ny, stat=ierr)
+
+       deallocate(oneDomainDecomp%ye, stat=ierr, errmsg=message)
        if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate ny fails with stat="//&
-               trim(adjustl(c0)))
+          call fatal_error(h//" deallocate ye fails with message="//trim(message))
        end if
-       deallocate(oneDomainDecomp%ibcon, stat=ierr)
+
+       deallocate(oneDomainDecomp%ny, stat=ierr, errmsg=message)
        if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate ibcon fails with stat="//&
-               trim(adjustl(c0)))
+          call fatal_error(h//" deallocate ny fails with message="//trim(message))
        end if
-       deallocate(oneDomainDecomp, stat=ierr)
+
+       deallocate(oneDomainDecomp%ibcon, stat=ierr, errmsg=message)
        if (ierr /= 0) then
-          write(c0,"(i8)") ierr
-          call fatal_error(h//" deallocate oneDomainDecomp fails with stat="//&
-               trim(adjustl(c0)))
+          call fatal_error(h//" deallocate ibcon fails with message="//trim(message))
+       end if
+
+       deallocate(oneDomainDecomp, stat=ierr, errmsg=message)
+       if (ierr /= 0) then
+          call fatal_error(h//" deallocate oneDomainDecomp fails with message="//trim(message))
        end if
     end if
     nullify(oneDomainDecomp)
@@ -275,15 +300,16 @@ contains
     integer :: nmachs
     integer :: mach
     character(len=*), parameter :: h="**(DumpDomainDecomp)**"
-    character(len=8) :: c0, c1, c2, bnd
     character(len=256) :: strOut
-    character(len=128) :: msg
+    character(len=8) :: bnd
 
     ! dumps at selected unit
 
     if (.not. associated(oneDomainDecomp)) then
        call MsgDump (h//" empty DomainDecomp named "//trim(varName))
        return
+    else if (.not. allocated(oneDomainDecomp%Empty)) then
+       call fatal_error(h//" oneDomainDecomp%Empty not allocated")
     else if (.not. allocated(oneDomainDecomp%xb)) then
        call fatal_error(h//" oneDomainDecomp%xb not allocated")
     else if (.not. allocated(oneDomainDecomp%xe)) then
@@ -302,8 +328,6 @@ contains
 
     nmachs = size(oneDomainDecomp%xb)
 
-    write(c0,"(i8)") nmachs
-    write(c1,"(i8)") oneDomainDecomp%GhostZoneWidth
     strOut=" named "//trim(adjustl(varName))//" is"
 
     select case (oneDomainDecomp%FullDirection)
@@ -317,21 +341,24 @@ contains
        call fatal_error(h//" unknown FullDirection **"//trim(oneDomainDecomp%FullDirection)//"**")
     end select
 
+    write(str(1),"(i8)") nmachs
+    write(str(2),"(i8)") oneDomainDecomp%GhostZoneWidth
     strOut = trim(strOut)//" domain decomposition with "//&
-         trim(adjustl(c0))//" sub-domains and ghost zone of width "//&
-         trim(adjustl(c1))
+         trim(adjustl(str(1)))//" sub-domains and ghost zone of width "//&
+         trim(adjustl(str(2)))
 
     call MsgDump (h//trim(strOut))
 
-    call MsgDump(' MPIrank   x-beg   x-end      nx   y-beg   y-end      ny    cols    ibcon')
+    call MsgDump(' MPIrank   Empty   x-beg   x-end      nx   y-beg   y-end      ny    cols    ibcon')
     do mach = 1,nmachs
        bnd=""
        if (btest(oneDomainDecomp%ibcon(mach),1)) bnd=trim(bnd)//"X-"
        if (btest(oneDomainDecomp%ibcon(mach),2)) bnd=trim(bnd)//"X+"
        if (btest(oneDomainDecomp%ibcon(mach),3)) bnd=trim(bnd)//"Y-"
        if (btest(oneDomainDecomp%ibcon(mach),4)) bnd=trim(bnd)//"Y+"
-       write(msg,"(8i8,4x,a8)") &
+       write(message,"(i8,l8,7i8,4x,a8)") &
             Brams2MpiProcNbr(mach), &
+            oneDomainDecomp%Empty(mach), &
             oneDomainDecomp%xb(mach), &
             oneDomainDecomp%xe(mach), &
             oneDomainDecomp%nx(mach), &
@@ -340,7 +367,7 @@ contains
             oneDomainDecomp%ny(mach), &
             oneDomainDecomp%nx(mach)*oneDomainDecomp%ny(mach), &
             adjustl(bnd)
-       call MsgDump (trim(msg))
+       call MsgDump (trim(message))
     end do
   end subroutine DumpDomainDecomp
 
@@ -360,13 +387,13 @@ contains
     character(len=*), intent(in) :: FullDirection
     type(DomainDecomp), pointer :: CreateGlobalOwn
 
-    character(len=8) :: str(10)
     character(len=*), parameter :: h="**(CreateGlobalOwn)**"
     logical, parameter :: dumpLocal=.false.
 
     integer :: nxp
     integer :: nyp
     integer :: nmachs
+    integer :: maxMachs
     integer :: mach
     integer :: quo
     integer :: rem
@@ -380,6 +407,7 @@ contains
     nxp = GridSize%nnxp
     nyp = GridSize%nnyp
     nmachs = ParEnv%nmachs
+    
 
     if (dumpLocal) then
        write(str(3),"(i8)") nxp
@@ -413,20 +441,23 @@ contains
     select case (trim(FullDirection))
     case ("Y")
 
-       ! stop if too many processors
+       ! maximum number of non-empty ranks
 
-       if (nxp < nmachs) then
-          write(str(1),"(i8)") nxp
-          call fatal_error(h//" too many processors for monotonic advection at Y;"//&
-               " use at most "//trim(adjustl(str(1)))//" processors")
+       if (nmachs > nxp-2) then
+          maxMachs = nxp-2
+       else
+          maxMachs = nmachs
        end if
        
        ! Monotonic Advection at Y only partitions the X direction
        
-       quo = (nxp-2)/nmachs
-       rem = mod(nxp-2,nmachs)
+       quo = (nxp-2)/maxMachs
+       rem = mod(nxp-2,maxMachs)
+
+       ! ranks with non-empty partition
        
-       do mach = 1, nmachs
+       do mach = 1, maxMachs
+          CreateGlobalOwn%Empty(mach) = .false.
           CreateGlobalOwn%yb(mach) = 2
           CreateGlobalOwn%ye(mach) = nyp-1
           if (mach <= rem) then
@@ -437,23 +468,36 @@ contains
              CreateGlobalOwn%xe(mach) = (mach  )*(quo) + rem + 1
           end if
        end do
+
+       ! ranks with empty partition
        
+       do mach = maxMachs + 1, nmachs
+          CreateGlobalOwn%Empty(mach) = .true.
+          CreateGlobalOwn%yb(mach) = nyp+1
+          CreateGlobalOwn%ye(mach) = 0
+          CreateGlobalOwn%xb(mach) = nxp+1
+          CreateGlobalOwn%xe(mach) = 0
+       end do
+
     case ("X") 
 
-       ! stop if too many processors
+        ! maximum number of non-empty ranks
 
-       if (nyp < nmachs) then
-          write(str(1),"(i8)") nyp
-          call fatal_error(h//" too many processors for monotonic advection at X;"//&
-               " use at most "//trim(adjustl(str(1)))//" processors")
+       if (nmachs > nyp-2) then
+          maxMachs = nyp-2
+       else
+          maxMachs = nmachs
        end if
        
        ! Monotonic Advection at X only partitions the Y direction
        
        quo = (nyp-2)/nmachs
        rem = mod(nyp-2,nmachs)
+
+       ! ranks with non-empty partition
        
-       do mach = 1, nmachs
+       do mach = 1, maxMachs
+          CreateGlobalOwn%Empty(mach) = .false.
           CreateGlobalOwn%xb(mach) = 2
           CreateGlobalOwn%xe(mach) = nxp-1
           if (mach <= rem) then
@@ -464,6 +508,16 @@ contains
              CreateGlobalOwn%ye(mach) = (mach  )*(quo) + rem + 1
           end if
        end do
+
+       ! ranks with empty partition
+       
+       do mach = maxMachs + 1, nmachs
+          CreateGlobalOwn%Empty(mach) = .true.
+          CreateGlobalOwn%yb(mach) = nyp+1
+          CreateGlobalOwn%ye(mach) = 0
+          CreateGlobalOwn%xb(mach) = nxp+1
+          CreateGlobalOwn%xe(mach) = 0
+       end do
        
     case ("B") 
        
@@ -472,6 +526,8 @@ contains
        call DomainDecompRams(nxp, nyp, nmachs, &
             CreateGlobalOwn%xb, CreateGlobalOwn%xe, &
             CreateGlobalOwn%yb, CreateGlobalOwn%ye)
+
+       CreateGlobalOwn%Empty=.false.
        
     case default
        call fatal_error(h//" unknown FullDirection **"//trim(FullDirection)//"**")
@@ -479,15 +535,15 @@ contains
 
     ! fill boundary condition ibcon
     
-    call MarkBoundary(nxp, nyp, nmachs, &
+    call MarkBoundary(nxp, nyp, nmachs, CreateGlobalOwn%Empty, &
          CreateGlobalOwn%xb, CreateGlobalOwn%xe, &
          CreateGlobalOwn%yb, CreateGlobalOwn%ye, &
          CreateGlobalOwn%ibcon)
     
     ! fill number of points at each sub-domain 
     
-    CreateGlobalOwn%nx = CreateGlobalOwn%xe - CreateGlobalOwn%xb + 1
-    CreateGlobalOwn%ny = CreateGlobalOwn%ye - CreateGlobalOwn%yb + 1
+    CreateGlobalOwn%nx = max(0, CreateGlobalOwn%xe - CreateGlobalOwn%xb + 1)
+    CreateGlobalOwn%ny = max(0, CreateGlobalOwn%ye - CreateGlobalOwn%yb + 1)
     
     if (dumpLocal) then
        call DumpDomainDecomp(CreateGlobalOwn, varName)
@@ -495,7 +551,7 @@ contains
     
     ! Verify partition correctness
     
-    call CheckPartition(nxp, nyp, nmachs, &
+    call CheckPartition(nxp, nyp, nmachs, CreateGlobalOwn%empty, &
          CreateGlobalOwn%xb, CreateGlobalOwn%xe, &
          CreateGlobalOwn%yb, CreateGlobalOwn%ye, &
          CreateGlobalOwn%ibcon)
@@ -518,7 +574,6 @@ contains
     character(len=*), intent(in) :: varName
     type(DomainDecomp), pointer :: CreateGlobalOwnWithBC
 
-    character(len=8) :: c0, c1, c2
     character(len=*), parameter :: h="**(CreateGlobalOwnWithBC)**"
     logical, parameter :: dumpLocal=.false.
 
@@ -538,57 +593,65 @@ contains
     nmachs = ParEnv%nmachs
 
     if (dumpLocal) then
-       write(c0,"(i8)") nxp
-       write(c1,"(i8)") nyp
-       write(c2,"(i8)") nmachs
+       write(str(1),"(i8)") nxp
+       write(str(2),"(i8)") nyp
+       write(str(3),"(i8)") nmachs
        call MsgDump (h//" partitions domain ["//&
-            trim(adjustl(c0))//" x "//trim(adjustl(c1))//&
-            "] into "//trim(adjustl(c2))//" sub-domains including boundary conditions")
+            trim(adjustl(str(1)))//" x "//trim(adjustl(str(2)))//&
+            "] into "//trim(adjustl(str(3)))//" sub-domains including boundary conditions")
     end if
 
     CreateGlobalOwnWithBC => CreateDomainDecomp(nmachs)
 
     CreateGlobalOwnWithBC%GhostZoneWidth = GlobalOwn%GhostZoneWidth
     CreateGlobalOwnWithBC%FullDirection = GlobalOwn%FullDirection
+    CreateGlobalOwnWithBC%Empty = GlobalOwn%Empty
 
     ! include boundary conditions if at border
 
     do i = 1, nmachs
-       if (btest(GlobalOwn%ibcon(i),1)) then
-          CreateGlobalOwnWithBC%xb(i) = 1
+       if (GlobalOwn%Empty(i)) then
+          CreateGlobalOwnWithBC%xb(i) = nxp+1
+          CreateGlobalOwnWithBC%xe(i) = 0
+          CreateGlobalOwnWithBC%yb(i) = nyp+1
+          CreateGlobalOwnWithBC%ye(i) = 0
        else
-          CreateGlobalOwnWithBC%xb(i) = GlobalOwn%xb(i)
-       end if
-       if (btest(GlobalOwn%ibcon(i),2)) then
-          CreateGlobalOwnWithBC%xe(i) = nxp
-       else
-          CreateGlobalOwnWithBC%xe(i) = GlobalOwn%xe(i)
-       end if
-       if (btest(GlobalOwn%ibcon(i),3)) then
-          CreateGlobalOwnWithBC%yb(i) = 1
-       else
-          CreateGlobalOwnWithBC%yb(i) = GlobalOwn%yb(i)
-       end if
-       if (btest(GlobalOwn%ibcon(i),4)) then
-          CreateGlobalOwnWithBC%ye(i) = nyp
-       else
-          CreateGlobalOwnWithBC%ye(i) = GlobalOwn%ye(i)
+          if (btest(GlobalOwn%ibcon(i),1)) then
+             CreateGlobalOwnWithBC%xb(i) = 1
+          else
+             CreateGlobalOwnWithBC%xb(i) = GlobalOwn%xb(i)
+          end if
+          if (btest(GlobalOwn%ibcon(i),2)) then
+             CreateGlobalOwnWithBC%xe(i) = nxp
+          else
+             CreateGlobalOwnWithBC%xe(i) = GlobalOwn%xe(i)
+          end if
+          if (btest(GlobalOwn%ibcon(i),3)) then
+             CreateGlobalOwnWithBC%yb(i) = 1
+          else
+             CreateGlobalOwnWithBC%yb(i) = GlobalOwn%yb(i)
+          end if
+          if (btest(GlobalOwn%ibcon(i),4)) then
+             CreateGlobalOwnWithBC%ye(i) = nyp
+          else
+             CreateGlobalOwnWithBC%ye(i) = GlobalOwn%ye(i)
+          end if
        end if
     end do
 
-    CreateGlobalOwnWithBC%nx = &
+    CreateGlobalOwnWithBC%nx = max(0, &
          CreateGlobalOwnWithBC%xe - &
-         CreateGlobalOwnWithBC%xb + 1
+         CreateGlobalOwnWithBC%xb + 1)
 
-    CreateGlobalOwnWithBC%ny = &
+    CreateGlobalOwnWithBC%ny = max(0,&
          CreateGlobalOwnWithBC%ye - &
-         CreateGlobalOwnWithBC%yb + 1
+         CreateGlobalOwnWithBC%yb + 1)
 
     CreateGlobalOwnWithBC%ibcon = GlobalOwn%ibcon
 
     ! Verify partition correctness
 
-    call CheckPartition(nxp, nyp, nmachs, &
+    call CheckPartition(nxp, nyp, nmachs, CreateGlobalOwnWithBC%empty, &
          CreateGlobalOwnWithBC%xb, CreateGlobalOwnWithBC%xe, &
          CreateGlobalOwnWithBC%yb, CreateGlobalOwnWithBC%ye, &
          CreateGlobalOwnWithBC%ibcon)
@@ -625,7 +688,6 @@ contains
     integer :: nmachs
     integer :: cell
     integer :: ierr
-    character(len=8) :: c0, c1, c2
     character(len=*), parameter :: h="**(CreateGlobalWithGhost)**"
     logical, parameter :: dumpLocal = .false.
 
@@ -636,9 +698,9 @@ contains
     else if (.not. associated(GlobalOwn)) then
        call fatal_error(h//" invoked with null GlobalOwn ")
     else if (GhostZoneWidth < 1) then
-       write (c0,"(i8)") GhostZoneWidth
+       write (str(1),"(i8)") GhostZoneWidth
        call fatal_error(h//" GhostZoneWidth sould be >= 1 but it is "//&
-            trim(adjustl(c0)))
+            trim(adjustl(str(1))))
     end if
 
 
@@ -647,13 +709,13 @@ contains
     nyp = GridSize%nnyp
 
     if (dumpLocal) then
-       write(c0,"(i8)") nxp
-       write(c1,"(i8)") nyp
-       write(c2,"(i8)") GhostZoneWidth
+       write(str(1),"(i8)") nxp
+       write(str(2),"(i8)") nyp
+       write(str(3),"(i8)") GhostZoneWidth
        call MsgDump (h//" "//varName//&
-            " inserts ghost zone of width "//trim(adjustl(c2))//&
+            " inserts ghost zone of width "//trim(adjustl(str(3)))//&
             " into GlobalOwn ["//&
-            trim(adjustl(c0))//" x "//trim(adjustl(c1))//"]")
+            trim(adjustl(str(1)))//" x "//trim(adjustl(str(2)))//"]")
     end if
 
     ! allocate return function value
@@ -664,35 +726,38 @@ contains
     
     CreateGlobalWithGhost%GhostZoneWidth = GhostZoneWidth
     CreateGlobalWithGhost%FullDirection = GlobalOwn%FullDirection
+    CreateGlobalWithGhost%Empty = GlobalOwn%Empty
 
     do cell = 1, nmachs
        CreateGlobalWithGhost%ibcon(cell) = GlobalOwn%ibcon(cell)
-       ! west boundary (lower x axis)
-       if (btest(CreateGlobalWithGhost%ibcon(cell),1)) then
-          CreateGlobalWithGhost%xb(cell) = 1
-       else
-          CreateGlobalWithGhost%xb(cell) = max(1,GlobalOwn%xb(cell) - GhostZoneWidth)
+       if (.not. CreateGlobalWithGhost%Empty(cell)) then
+          ! west boundary (lower x axis)
+          if (btest(CreateGlobalWithGhost%ibcon(cell),1)) then
+             CreateGlobalWithGhost%xb(cell) = 1
+          else
+             CreateGlobalWithGhost%xb(cell) = max(1,GlobalOwn%xb(cell) - GhostZoneWidth)
+          end if
+          ! east boundary (higher x axis)
+          if (btest(CreateGlobalWithGhost%ibcon(cell),2)) then
+             CreateGlobalWithGhost%xe(cell) = nxp
+          else
+             CreateGlobalWithGhost%xe(cell) = min(nxp,GlobalOwn%xe(cell) + GhostZoneWidth)
+          end if
+          ! south boundary (lower y axis)
+          if (btest(CreateGlobalWithGhost%ibcon(cell),3)) then
+             CreateGlobalWithGhost%yb(cell) = 1
+          else
+             CreateGlobalWithGhost%yb(cell) = max(1,GlobalOwn%yb(cell) - GhostZoneWidth)
+          end if
+          ! north boundary (higher y axis)
+          if (btest(CreateGlobalWithGhost%ibcon(cell),4)) then
+             CreateGlobalWithGhost%ye(cell) = nyp
+          else
+             CreateGlobalWithGhost%ye(cell) = min(nyp,GlobalOwn%ye(cell) + GhostZoneWidth)
+          end if
        end if
-       ! east boundary (higher x axis)
-       if (btest(CreateGlobalWithGhost%ibcon(cell),2)) then
-          CreateGlobalWithGhost%xe(cell) = nxp
-       else
-          CreateGlobalWithGhost%xe(cell) = min(nxp,GlobalOwn%xe(cell) + GhostZoneWidth)
-       end if
-       ! south boundary (lower y axis)
-       if (btest(CreateGlobalWithGhost%ibcon(cell),3)) then
-          CreateGlobalWithGhost%yb(cell) = 1
-       else
-          CreateGlobalWithGhost%yb(cell) = max(1,GlobalOwn%yb(cell) - GhostZoneWidth)
-       end if
-       ! north boundary (higher y axis)
-       if (btest(CreateGlobalWithGhost%ibcon(cell),4)) then
-          CreateGlobalWithGhost%ye(cell) = nyp
-       else
-          CreateGlobalWithGhost%ye(cell) = min(nyp,GlobalOwn%ye(cell) + GhostZoneWidth)
-       end if
-       CreateGlobalWithGhost%nx(cell) = CreateGlobalWithGhost%xe(cell)-CreateGlobalWithGhost%xb(cell)+1
-       CreateGlobalWithGhost%ny(cell) = CreateGlobalWithGhost%ye(cell)-CreateGlobalWithGhost%yb(cell)+1
+       CreateGlobalWithGhost%nx(cell) = max(0,CreateGlobalWithGhost%xe(cell)-CreateGlobalWithGhost%xb(cell)+1)
+       CreateGlobalWithGhost%ny(cell) = max(0,CreateGlobalWithGhost%ye(cell)-CreateGlobalWithGhost%yb(cell)+1)
     end do
 
     if (dumpLocal) then
@@ -751,6 +816,7 @@ contains
     CreateLocalOwn => CreateDomainDecomp(nmachs)
     CreateLocalOwn%GhostZoneWidth = GlobalWithGhost%GhostZoneWidth 
     CreateLocalOwn%FullDirection = GlobalWithGhost%FullDirection 
+    CreateLocalOwn%Empty = GlobalWithGhost%Empty
 
     do cell = 1, nmachs
        x0 = GlobalWithGhost%xb(cell)-1
@@ -798,6 +864,8 @@ contains
     integer :: nblocks(ranks)
     real :: relspeed(ranks)
     real :: bfact
+    logical :: insuficient
+    
     character(len=*), parameter :: h="**(DomainDecompRams)**"
 
     integer :: irank,i,j,islab,jranks,nslabs,min_blocks,nbigslabs,iblock &
@@ -964,20 +1032,36 @@ contains
     ! Check to make sure that each subdomain has at least 2 interior 
     ! rows and columns.
 
+    insuficient=.false.
     do jrank = 1,ranks
        if (ye(jrank) - yb(jrank) .lt. 1 .or.  &
             xe(jrank) - xb(jrank) .lt. 1) then
-          call fatal_error(h//" too many processors")
-          return
-       endif
-    enddo
+          insuficient=.true.
+          write(str(1),"(i8)") nxp
+          write(str(2),"(i8)") nyp
+          write(str(3),"(i8)") ranks
+          write(str(4),"(i8)") jrank
+          write(str(5),"(i8)") xb(jrank)
+          write(str(6),"(i8)") xe(jrank)
+          write(str(7),"(i8)") yb(jrank)
+          write(str(8),"(i8)") ye(jrank)
+          call MsgDump(h//" process "//trim(adjustl(str(4)))//" received insuficient domain ["//&
+               trim(adjustl(str(5)))//":"//trim(adjustl(str(6)))//" x "//&
+               trim(adjustl(str(7)))//":"//trim(adjustl(str(8)))//"]")
+       end if
+    end do
+    if (insuficient) then
+       call fatal_error(h//" Partition domain ["//trim(adjustl(str(1)))//" x "//trim(adjustl(str(2)))//"]"//&
+            " for "//trim(adjustl(str(3)))//&
+            " processes produce sub-domains with less than 2 points in x or y; reduce number of processes")
+    end if
   end subroutine DomainDecompRams
 
 
 
 
 
-  subroutine CheckPartition(nxp, nyp, ranks, &
+  subroutine CheckPartition(nxp, nyp, ranks, empty, &
        xb, xe, yb, ye, ibcon)
 
     ! verifies if arrays xb, xe, yb, ye
@@ -985,7 +1069,8 @@ contains
 
     integer, intent(in)  :: nxp
     integer, intent(in)  :: nyp
-    integer, intent(in)  :: ranks
+    integer, intent(in)  :: ranks 
+    logical, intent(in)  :: empty(:)
     integer, intent(in)  :: xb(:)
     integer, intent(in)  :: xe(:)
     integer, intent(in)  :: yb(:)
@@ -997,53 +1082,63 @@ contains
     integer :: iy, ystart, yend
     integer, parameter :: UNASSIGNED=-1
     integer :: owner(nxp,nyp)
-    character(len=8) :: c0, c1, c2, c3
     character(len=*), parameter :: h="**(CheckPartition)**"
 
     owner = UNASSIGNED
     do rank = 1, ranks
-       if (btest(ibcon(rank),1)) then
-          xstart = 1
-       else
-          xstart = xb(rank)
+       if (.not. empty(rank)) then
+          if (btest(ibcon(rank),1)) then
+             xstart = 1
+          else
+             xstart = xb(rank)
+          end if
+          
+          if (btest(ibcon(rank),2)) then
+             xend = nxp
+          else
+             xend = xe(rank)
+          end if
+          
+          if (btest(ibcon(rank),3)) then
+             ystart = 1
+          else
+             ystart = yb(rank)
+          end if
+          
+          if (btest(ibcon(rank),4)) then
+             yend = nyp
+          else
+             yend = ye(rank)
+          end if
+          
+          do iy = ystart, yend
+             do ix = xstart, xend
+                if (owner(ix,iy) == UNASSIGNED) then
+                   owner(ix,iy) = rank
+                else
+                   write(str(1),"(i8)") ix
+                   write(str(2),"(i8)") iy
+                   write(str(3),"(i8)") rank
+                   write(str(4),"(i8)") owner(ix,iy)
+                   call fatal_error(h//"  point "//&
+                        "("//trim(adjustl(str(1)))//","//trim(adjustl(str(2)))//")"//&
+                        " is assigned to rank "//trim(adjustl(str(3)))//&
+                        " and to rank "//trim(adjustl(str(4))))
+                end if
+             end do
+          end do
        end if
-
-       if (btest(ibcon(rank),2)) then
-          xend = nxp
-       else
-          xend = xe(rank)
-       end if
-
-       if (btest(ibcon(rank),3)) then
-          ystart = 1
-       else
-          ystart = yb(rank)
-       end if
-
-       if (btest(ibcon(rank),4)) then
-          yend = nyp
-       else
-          yend = ye(rank)
-       end if
-
+    end do
+    if (any(owner == UNASSIGNED)) then
        do iy = ystart, yend
           do ix = xstart, xend
              if (owner(ix,iy) == UNASSIGNED) then
-                owner(ix,iy) = rank
-             else
-                write(c0,"(i8)") ix
-                write(c1,"(i8)") iy
-                write(c2,"(i8)") rank
-                write(c3,"(i8)") owner(ix,iy)
-                call fatal_error(h//"  point "//&
-                     "("//trim(adjustl(c1))//","//trim(adjustl(c2))//")"//&
-                     " is assigned to rank "//trim(adjustl(c2))//&
-                     " and to rank "//trim(adjustl(c3)))
+                write(str(1),"(i8)") ix
+                write(str(2),"(i8)") iy
+                call MsgDump(h//" point ("//trim(adjustl(str(1)))//","//trim(adjustl(str(2)))//" is unasigned")
              end if
           end do
        end do
-    end do
-    if (any(owner == UNASSIGNED)) then
        call fatal_error(h//" there are unassigned domain points")
     end if
   end subroutine CheckPartition
@@ -1052,7 +1147,7 @@ contains
 
 
 
-  subroutine MarkBoundary(nxp, nyp, ranks, &
+  subroutine MarkBoundary(nxp, nyp, ranks, empty, &
        xb, xe, yb, ye, ibcon)
 
     ! verify if sub-domain boundaries are global domain 
@@ -1061,6 +1156,7 @@ contains
     integer, intent(in)  :: nxp
     integer, intent(in)  :: nyp
     integer, intent(in)  :: ranks
+    logical, intent(in)  :: empty(:)
     integer, intent(in)  :: xb(:)
     integer, intent(in)  :: xe(:)
     integer, intent(in)  :: yb(:)
@@ -1075,17 +1171,19 @@ contains
 
     do rank = 1, ranks
        ibcon(rank) = 0
-       if (xb(rank) == 2) then
-          ibcon(rank)=ibset(ibcon(rank),1)
-       end if
-       if (xe(rank) == nxp-1) then
-          ibcon(rank)=ibset(ibcon(rank),2)
-       end if
-       if (yb(rank) == 2) then
-          ibcon(rank)=ibset(ibcon(rank),3)
-       end if
-       if (ye(rank) == nyp-1) then
-          ibcon(rank)=ibset(ibcon(rank),4)
+       if (.not. empty(rank)) then
+          if (xb(rank) == 2) then
+             ibcon(rank)=ibset(ibcon(rank),1)
+          end if
+          if (xe(rank) == nxp-1) then
+             ibcon(rank)=ibset(ibcon(rank),2)
+          end if
+          if (yb(rank) == 2) then
+             ibcon(rank)=ibset(ibcon(rank),3)
+          end if
+          if (ye(rank) == nyp-1) then
+             ibcon(rank)=ibset(ibcon(rank),4)
+          end if
        end if
     end do
   end subroutine MarkBoundary

@@ -327,8 +327,9 @@ contains
 
 
 
-  function CreateMonAdvOneDirDD(oneNodeDimensions) result(oneMonAdvOneDirDD)
+  function CreateMonAdvOneDirDD(oneNodeDimensions, varName) result(oneMonAdvOneDirDD)
     type(NodeDimensions), pointer, intent(in) :: oneNodeDimensions
+    character(len=*), intent(in) :: varName
     type(MonAdvOneDirDD), pointer :: oneMonAdvOneDirDD
 
     integer :: mzp
@@ -337,6 +338,7 @@ contains
 
     integer :: ierr
     character(len=512) :: message
+    logical :: emptyFields
 
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(CreateMonAdvOneDirDD)**"
@@ -346,56 +348,81 @@ contains
        call fatal_error(h//" oneNodeDimensions not associated")
     end if
 
-    mzp = oneNodeDimensions%mzp
-    mxp = oneNodeDimensions%mxp
-    myp = oneNodeDimensions%myp
-
-    if (dumpLocal) then
-       write(str(1),"(i8)") mzp
-       write(str(2),"(i8)") mxp
-       write(str(3),"(i8)") myp
-       call MsgDump(h//" FullDirection="//oneNodeDimensions%FullDirection//" allocates "//&
-            "all 3D at ("//&
-            trim(adjustl(str(1)))//","//&
-            trim(adjustl(str(2)))//","//&
-            trim(adjustl(str(3)))//"), 2D at ("//&
-            trim(adjustl(str(2)))//","//&
-            trim(adjustl(str(3)))//"), 1D at ("//&
-            trim(adjustl(str(1)))//")")
-    end if
-
+    ! in any case, create output variable of type MonAdvOneDirDD
+    
     allocate(oneMonAdvOneDirDD, stat=ierr, errmsg=message)
     if (ierr /= 0) then
        call fatal_error(h//" allocate oneMonAdvOneDirDD fails with message "//trim(message))
     end if
 
-    allocate(oneMonAdvOneDirDD%u(mzp,mxp,myp), stat=ierr, errmsg=message)
-    if (ierr/=0) then
-       call fatal_error(h//" allocate u fails with message "//trim(message))
-    end if
-    allocate(oneMonAdvOneDirDD%q0(mzp,mxp,myp), stat=ierr, errmsg=message)
-    if (ierr/=0) then
-       call fatal_error(h//" allocate q0 fails with message "//trim(message))
-    end if
-    allocate(oneMonAdvOneDirDD%qn(mzp,mxp,myp), stat=ierr, errmsg=message)
-    if (ierr/=0) then
-       call fatal_error(h//" allocate qn fails with message "//trim(message))
-    end if
-    allocate(oneMonAdvOneDirDD%dd0(mzp,mxp,myp), stat=ierr, errmsg=message)
-    if (ierr/=0) then
-       call fatal_error(h//" allocate dd0 fails with message "//trim(message))
-    end if
-    allocate(oneMonAdvOneDirDD%den0(mzp,mxp,myp), stat=ierr, errmsg=message)
-    if (ierr/=0) then
-       call fatal_error(h//" allocate den0 fails with message "//trim(message))
-    end if
-    allocate(oneMonAdvOneDirDD%den1(mzp,mxp,myp), stat=ierr, errmsg=message)
-    if (ierr/=0) then
-       call fatal_error(h//" allocate den1 fails with message "//trim(message))
-    end if
-    allocate(oneMonAdvOneDirDD%dxx(mxp,myp), stat=ierr, errmsg=message)
-    if (ierr/=0) then
-       call fatal_error(h//" allocate dxx fails with message "//trim(message))
+    emptyFields = oneNodeDimensions%Empty
+
+    ! treat empty and non-empty node dimensions
+    
+    if (emptyFields) then
+
+       ! treat case output variable has empty fields
+    
+       nullify(oneMonAdvOneDirDD%u)
+       nullify(oneMonAdvOneDirDD%q0)
+       nullify(oneMonAdvOneDirDD%qn)
+       nullify(oneMonAdvOneDirDD%dd0)
+       nullify(oneMonAdvOneDirDD%den0)
+       nullify(oneMonAdvOneDirDD%den1)
+       nullify(oneMonAdvOneDirDD%dxx)
+       if (dumpLocal) then
+          call MsgDump(h//" all fields are empty for "//trim(varName))
+       end if
+    else
+
+       ! treat case output variable has full fields
+    
+       mzp = oneNodeDimensions%mzp
+       mxp = oneNodeDimensions%mxp
+       myp = oneNodeDimensions%myp
+       
+       if (dumpLocal) then
+          write(str(1),"(i8)") mzp
+          write(str(2),"(i8)") mxp
+          write(str(3),"(i8)") myp
+          call MsgDump(h//" variable "//trim(varName)//": FullDirection="//oneNodeDimensions%FullDirection//" allocates "//&
+               "all 3D at ("//&
+               trim(adjustl(str(1)))//","//&
+               trim(adjustl(str(2)))//","//&
+               trim(adjustl(str(3)))//"), 2D at ("//&
+               trim(adjustl(str(2)))//","//&
+               trim(adjustl(str(3)))//"), 1D at ("//&
+               trim(adjustl(str(1)))//")")
+       end if
+       
+       allocate(oneMonAdvOneDirDD%u(mzp,mxp,myp), stat=ierr, errmsg=message)
+       if (ierr/=0) then
+          call fatal_error(h//" allocate u fails with message "//trim(message))
+       end if
+       allocate(oneMonAdvOneDirDD%q0(mzp,mxp,myp), stat=ierr, errmsg=message)
+       if (ierr/=0) then
+          call fatal_error(h//" allocate q0 fails with message "//trim(message))
+       end if
+       allocate(oneMonAdvOneDirDD%qn(mzp,mxp,myp), stat=ierr, errmsg=message)
+       if (ierr/=0) then
+          call fatal_error(h//" allocate qn fails with message "//trim(message))
+       end if
+       allocate(oneMonAdvOneDirDD%dd0(mzp,mxp,myp), stat=ierr, errmsg=message)
+       if (ierr/=0) then
+          call fatal_error(h//" allocate dd0 fails with message "//trim(message))
+       end if
+       allocate(oneMonAdvOneDirDD%den0(mzp,mxp,myp), stat=ierr, errmsg=message)
+       if (ierr/=0) then
+          call fatal_error(h//" allocate den0 fails with message "//trim(message))
+       end if
+       allocate(oneMonAdvOneDirDD%den1(mzp,mxp,myp), stat=ierr, errmsg=message)
+       if (ierr/=0) then
+          call fatal_error(h//" allocate den1 fails with message "//trim(message))
+       end if
+       allocate(oneMonAdvOneDirDD%dxx(mxp,myp), stat=ierr, errmsg=message)
+       if (ierr/=0) then
+          call fatal_error(h//" allocate dxx fails with message "//trim(message))
+       end if
     end if
   end function CreateMonAdvOneDirDD
 
@@ -412,6 +439,17 @@ contains
     character(len=*), parameter :: h="**(DestroyMonAdvOneDirDD)**"
     logical, parameter :: dumpLocal=.false.
 
+    if (.not. associated(oneMonAdvOneDirDD)) then
+       return
+    end if
+
+    ! if one field is not associated, none are
+    
+    if (.not. associated(oneMonAdvOneDirDD%u)) then
+       return
+    end if
+
+    
     deallocate(oneMonAdvOneDirDD%u, stat=ierr, errmsg=message)
     if (ierr/=0) then
        call fatal_error(h//" deallocate u fails with message "//trim(message))
@@ -546,12 +584,12 @@ contains
     if (dumpLocal) then
        call MsgDump(h//" call CreateMonAdvOneDirDD for X")
     end if
-    oneMonAdvXDD => CreateMonAdvOneDirDD(oneNodeDimensionsMonAdvX)
+    oneMonAdvXDD => CreateMonAdvOneDirDD(oneNodeDimensionsMonAdvX,"oneMonAdvXDD")
 
     if (dumpLocal) then
        call MsgDump(h//" call CreateMonAdvOneDirDD for Y")
     end if
-    oneMonAdvYDD => CreateMonAdvOneDirDD(oneNodeDimensionsMonAdvY)
+    oneMonAdvYDD => CreateMonAdvOneDirDD(oneNodeDimensionsMonAdvY,"oneMonAdvYDD")
 
     ! dxtW, dytW, dztW from external fields
 
@@ -592,22 +630,30 @@ contains
 
     call SendRecvConvertDomainDecomp(&
          fieldSend=oneMonAdvBramsDD%dd0_3d, &
+         nameSend="oneMonAdvBramsDD%dd0_3d", &
          fieldRecv=oneMonAdvBramsDD%dd0_3d, &
+         nameRecv="oneMonAdvBramsDD%dd0_3d", &
          oneConvertDomainDecomp=ConvertBramsToBrams)
 
     call SendRecvConvertDomainDecomp(&
          fieldSend=oneMonAdvBramsDD%dd0_3du, &
+         nameSend="oneMonAdvBramsDD%dd0_3du", &
          fieldRecv=oneMonAdvBramsDD%dd0_3du, &
+         nameRecv="oneMonAdvBramsDD%dd0_3du", &
          oneConvertDomainDecomp=ConvertBramsToBrams)
 
     call SendRecvConvertDomainDecomp(&
          fieldSend=oneMonAdvBramsDD%dd0_3dv, &
+         nameSend="oneMonAdvBramsDD%dd0_3dv", &
          fieldRecv=oneMonAdvBramsDD%dd0_3dv, &
+         nameRecv="oneMonAdvBramsDD%dd0_3dv", &
          oneConvertDomainDecomp=ConvertBramsToBrams)
 
     call SendRecvConvertDomainDecomp(&
          fieldSend=oneMonAdvBramsDD%dd0_3dw, &
+         nameSend="oneMonAdvBramsDD%dd0_3dw", &
          fieldRecv=oneMonAdvBramsDD%dd0_3dw, &
+         nameRecv="oneMonAdvBramsDD%dd0_3dw", &
          oneConvertDomainDecomp=ConvertBramsToBrams)
 
     !- prepare wind velocities including map factors
@@ -634,7 +680,9 @@ contains
 
     call SendRecvConvertDomainDecomp(&
          fieldSend=oneMonAdvBramsDD%w3d, &
+         nameSend="oneMonAdvBramsDD%w3d", &
          fieldRecv=oneMonAdvBramsDD%w3d, &
+         nameRecv="oneMonAdvBramsDD%w3d", &
          oneConvertDomainDecomp=ConvertBramsToBrams)
 
     !- prepare Walcek's air densities
@@ -655,22 +703,30 @@ contains
 
     call SendRecvConvertDomainDecomp(&
          fieldSend=oneMonAdvBramsDD%den0_3d, &
+         nameSend="oneMonAdvBramsDD%den0_3d", &
          fieldRecv=oneMonAdvBramsDD%den0_3d, &
+         nameRecv="oneMonAdvBramsDD%den0_3d", &
          oneConvertDomainDecomp=ConvertBramsToBrams)
 
     call SendRecvConvertDomainDecomp(&
          fieldSend=oneMonAdvBramsDD%den1_3d, &
+         nameSend="oneMonAdvBramsDD%den1_3d", &
          fieldRecv=oneMonAdvBramsDD%den1_3d, &
+         nameRecv="oneMonAdvBramsDD%den1_3d", &
          oneConvertDomainDecomp=ConvertBramsToBrams)
 
     call SendRecvConvertDomainDecomp(&
          fieldSend=oneMonAdvBramsDD%den2_3d, &
+         nameSend="oneMonAdvBramsDD%den2_3d", &
          fieldRecv=oneMonAdvBramsDD%den2_3d, &
+         nameRecv="oneMonAdvBramsDD%den2_3d", &
          oneConvertDomainDecomp=ConvertBramsToBrams)
 
     call SendRecvConvertDomainDecomp(&
          fieldSend=oneMonAdvBramsDD%den3_3d, &
+         nameSend="oneMonAdvBramsDD%den3_3d", &
          fieldRecv=oneMonAdvBramsDD%den3_3d, &
+         nameRecv="oneMonAdvBramsDD%den3_3d", &
          oneConvertDomainDecomp=ConvertBramsToBrams)
 
     ! convert fields required by Advect3X from Brams domain decomposition
@@ -678,27 +734,37 @@ contains
 
     call SendRecvConvertDomainDecomp(&
          fieldSend=oneMonAdvBramsDD%u3d, &
+         nameSend="oneMonAdvBramsDD%u3d", &
          fieldRecv=oneMonAdvXDD%u, &
+         nameRecv="oneMonAdvXDD%u", &
          oneConvertDomainDecomp=ConvertBramsToMonAdvX)
 
     call SendRecvConvertDomainDecomp(&
          fieldSend=oneMonAdvBramsDD%dd0_3du, &
+         nameSend="oneMonAdvBramsDD%dd0_3du", &
          fieldRecv=oneMonAdvXDD%dd0, &
+         nameRecv="oneMonAdvXDD%dd0", &
          oneConvertDomainDecomp=ConvertBramsToMonAdvX)
 
     call SendRecvConvertDomainDecomp(&
          fieldSend=oneMonAdvBramsDD%den0_3d, &
+         nameSend="oneMonAdvBramsDD%den0_3d", &
          fieldRecv=oneMonAdvXDD%den0, &
+         nameRecv="oneMonAdvXDD%den0", &
          oneConvertDomainDecomp=ConvertBramsToMonAdvX)
 
     call SendRecvConvertDomainDecomp(&
          fieldSend=oneMonAdvBramsDD%den1_3d, &
+         nameSend="oneMonAdvBramsDD%den1_3d", &
          fieldRecv=oneMonAdvXDD%den1, &
+         nameRecv="oneMonAdvXDD%den1", &
          oneConvertDomainDecomp=ConvertBramsToMonAdvX)
 
     call SendRecvConvertDomainDecomp(&
          fieldSend=oneMonAdvBramsDD%dxtW, &
+         nameSend="oneMonAdvBramsDD%dxtW", &
          fieldRecv=oneMonAdvXDD%dxx, &
+         nameRecv="oneMonAdvXDD%dxx", &
          oneConvertDomainDecomp=ConvertBramsToMonAdvX)
 
     ! convert fields required by Advect3Y from Brams domain decomposition
@@ -706,27 +772,37 @@ contains
 
     call SendRecvConvertDomainDecomp(&
          fieldSend=oneMonAdvBramsDD%v3d, &
+         nameSend="oneMonAdvBramsDD%v3d", &
          fieldRecv=oneMonAdvYDD%u, &
+         nameRecv="oneMonAdvYDD%u", &
          oneConvertDomainDecomp=ConvertBramsToMonAdvY)
 
     call SendRecvConvertDomainDecomp(&
          fieldSend=oneMonAdvBramsDD%dd0_3dv, &
+         nameSend="oneMonAdvBramsDD%dd0_3dv", &
          fieldRecv=oneMonAdvYDD%dd0, &
+         nameRecv="oneMonAdvYDD%dd0", &
          oneConvertDomainDecomp=ConvertBramsToMonAdvY)
 
     call SendRecvConvertDomainDecomp(&
          fieldSend=oneMonAdvBramsDD%den1_3d, &
+         nameSend="oneMonAdvBramsDD%den1_3d", &
          fieldRecv=oneMonAdvYDD%den0, &
+         nameRecv="oneMonAdvYDD%den0", &
          oneConvertDomainDecomp=ConvertBramsToMonAdvY)
 
     call SendRecvConvertDomainDecomp(&
          fieldSend=oneMonAdvBramsDD%den2_3d, &
+         nameSend="oneMonAdvBramsDD%den2_3d", &
          fieldRecv=oneMonAdvYDD%den1, &
+         nameRecv="oneMonAdvYDD%den1", &
          oneConvertDomainDecomp=ConvertBramsToMonAdvY)
 
     call SendRecvConvertDomainDecomp(&
          fieldSend=oneMonAdvBramsDD%dytW, &
+         nameSend="oneMonAdvBramsDD%dytW", &
          fieldRecv=oneMonAdvYDD%dxx, &
+         nameRecv="oneMonAdvYDD%dxx", &
          oneConvertDomainDecomp=ConvertBramsToMonAdvY)
 
     !- ready to do advection, loop over all scalars
@@ -783,7 +859,9 @@ contains
           
           call SendRecvConvertDomainDecomp(&
                fieldSend=oneMonAdvBramsDD%vc3d_out, &
+               nameSend="oneMonAdvBramsDD%vc3d_out", &
                fieldRecv=oneMonAdvBramsDD%vc3d_out, &
+               nameRecv="oneMonAdvBramsDD%vc3d_out", &
                oneConvertDomainDecomp=ConvertBramsToBrams)
 
           if (dumpLocal) then
@@ -816,7 +894,6 @@ contains
     if (dumpLocal) then
        call MsgDump(h//" finishes")
     end if
-    !1$    call Terminate(h//" fim da primeira execucao")
   end subroutine advmnt_driver
 
 
@@ -850,7 +927,9 @@ contains
     integer :: mzp
     integer :: mxp
     integer :: myp
-
+    logical :: emptyMonAdvX
+    logical :: emptyMonAdvY
+    
     !- type of sedimentation scheme (0= Walcek, 1=upwind)
     integer , parameter :: iupwind = 0
     character(len=128) :: fieldName
@@ -858,6 +937,9 @@ contains
     character(len=*), parameter :: h="**(AdvectMnt)**"
     logical, parameter :: dumpLocal=.false.
 
+    emptyMonAdvX = oneNodeDimensionsMonAdvX%Empty
+    emptyMonAdvY = oneNodeDimensionsMonAdvY%Empty
+    
     mzp=oneNodeDimensions%mzp
     mxp=oneNodeDimensions%mxp
     myp=oneNodeDimensions%myp
@@ -873,7 +955,9 @@ contains
 
     call SendRecvConvertDomainDecomp(&
          fieldSend=oneScalarTable(scalarNbr)%var_p_3D, &
+         nameSend="oneScalarTable(scalarNbr)%var_p_3D", &
          fieldRecv=oneMonAdvXDD%q0, &
+         nameRecv="oneMonAdvXDD%q0", &
          oneConvertDomainDecomp=ConvertBramsToMonAdvX)
 
     ! do X-advection 
@@ -882,24 +966,28 @@ contains
        call MsgDump(h//" call Advec3DX")
     end if
 
-    call Advec3DX(&
-         q0=oneMonAdvXDD%q0, &
-         u=oneMonAdvXDD%u, &
-         den0=oneMonAdvXDD%den0, &
-         den1=oneMonAdvXDD%den1, &
-         dt=dt, &
-         dxx=oneMonAdvXDD%dxx, &
-         dd0=oneMonAdvXDD%dd0, &
-         qn=oneMonAdvXDD%qn, &
-         fieldName=trim(fieldName), &
-         oneNodeDimensionsMonAdv=oneNodeDimensionsMonAdvX)
+    if (.not. emptyMonAdvX) then
+       call Advec3DX(&
+            q0=oneMonAdvXDD%q0, &
+            u=oneMonAdvXDD%u, &
+            den0=oneMonAdvXDD%den0, &
+            den1=oneMonAdvXDD%den1, &
+            dt=dt, &
+            dxx=oneMonAdvXDD%dxx, &
+            dd0=oneMonAdvXDD%dd0, &
+            qn=oneMonAdvXDD%qn, &
+            fieldName=trim(fieldName), &
+            oneNodeDimensionsMonAdv=oneNodeDimensionsMonAdvX)
+    end if
 
     ! convert field to be advected from monotonic advection X 
     ! domain decomposition to monotonic advection Y domain decomposition
 
     call SendRecvConvertDomainDecomp(&
          fieldSend=oneMonAdvXDD%qn, &
+         nameSend="oneMonAdvXDD%qn", &
          fieldRecv=oneMonAdvYDD%q0, &
+         nameRecv="oneMonAdvYDD%q0", &
          oneConvertDomainDecomp=ConvertMonAdvXToMonAdvY)
 
     !--- do Y-advection
@@ -908,24 +996,28 @@ contains
        call MsgDump(h//" call Advec3DY")
     end if
 
-    call Advec3DY(&
-         q0=oneMonAdvYDD%q0, &
-         u=oneMonAdvYDD%u, &
-         den0=oneMonAdvYDD%den0, &
-         den1=oneMonAdvYDD%den1, &
-         dt=dt, &
-         dxx=oneMonAdvYDD%dxx, &
-         dd0=oneMonAdvYDD%dd0, &
-         qn=oneMonAdvYDD%qn, &
-         fieldName = trim(fieldName), &
-         oneNodeDimensionsMonAdv=oneNodeDimensionsMonAdvY)
+    if (.not. emptyMonAdvY) then
+       call Advec3DY(&
+            q0=oneMonAdvYDD%q0, &
+            u=oneMonAdvYDD%u, &
+            den0=oneMonAdvYDD%den0, &
+            den1=oneMonAdvYDD%den1, &
+            dt=dt, &
+            dxx=oneMonAdvYDD%dxx, &
+            dd0=oneMonAdvYDD%dd0, &
+            qn=oneMonAdvYDD%qn, &
+            fieldName = trim(fieldName), &
+            oneNodeDimensionsMonAdv=oneNodeDimensionsMonAdvY)
+    end if
 
     ! convert field to be advected from monotonic advection Y
     ! domain decomposition to Brams domain decomposition
 
     call SendRecvConvertDomainDecomp(&
          fieldSend=oneMonAdvYDD%qn, &
+         nameSend="oneMonAdvYDD%qn", &
          fieldRecv=oneMonAdvBramsDD%vc3d_in, &
+         nameRecv="oneMonAdvBramsDD%vc3d_in", &
          oneConvertDomainDecomp=ConvertMonAdvYToBrams)
 
     !--- do k-advection

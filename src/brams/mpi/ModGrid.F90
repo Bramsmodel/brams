@@ -397,6 +397,8 @@ contains
 
     integer :: ierr
     logical :: createAve
+    logical :: selectedMonotonicAdvection
+
     character(len=8) :: str(10)
     character(len=*), parameter :: h="**(CreateGrid)**"
     logical, parameter :: dumpLocal=.false.
@@ -435,10 +437,18 @@ contains
     oneGrid%oneGridDims => CreateGridDims(gridId, &
          oneNamelistFile)
 
+    ! creates Control Vars, that one day will store all
+    ! control flow variabels
+    
     oneGrid%oneControlVars => CreateControlVars(&
          oneGrid%oneNamelistFile, gridId)
+
+    ! define if monotonic advection was selected
+    ! by the user
+
+    selectedMonotonicAdvection = oneGrid%oneNamelistFile%advmnt /= 0
     
-    ! compute domain decomposition, obtaining
+    ! BRAMS domain decomposition, obtaining
     ! cells owned by each rank and store at GlobalOwn
 
     if (dumpLocal) then
@@ -451,7 +461,42 @@ contains
          FullDirection="B" &
          )
 
+    ! Monotonic Advection in X domain decomposition, obtainint 
+    ! cells owned by each rank and store at GlobalOwnMonAdvX
+
+    if (selectedMonotonicAdvection) then
+       if (dumpLocal) then
+          call MsgDump(h//" Creating GlobalOwnMonAdvX")
+       end if
+       oneGrid%GlobalOwnMonAdvX => CreateGlobalOwn(&
+            GridSize=oneGrid%oneGridDims, &
+            ParEnv=oneGrid%oneParallelEnvironment, &
+            varName="GlobalOwnMonAdvX", &
+            FullDirection="X"&
+            )
+    else
+       oneGrid%GlobalOwnMonAdvX => null()
+    end if
+    
+    ! Monotonic Advection in Y domain decomposition, obtainint 
+    ! cells owned by each rank and store at GlobalOwnMonAdvY
+
+    if (selectedMonotonicAdvection) then
+       if (dumpLocal) then
+          call MsgDump(h//" Creating GlobalOwnMonAdvY")
+       end if
+       oneGrid%GlobalOwnMonAdvY => CreateGlobalOwn(&
+            GridSize=oneGrid%oneGridDims, &
+            ParEnv=oneGrid%oneParallelEnvironment, &
+            varName="GlobalOwnMonAdvY", &
+            FullDirection="Y" &
+            )
+    else
+       oneGrid%GlobalOwnMonAdvY => null()
+    end if
+
     ! include boundary conditions (no ghost zone)
+    ! to BRAMS Domain Decomposition
 
     if (dumpLocal) then
        call MsgDump(h//" Creating GlobalOwnWithBC")
@@ -463,8 +508,42 @@ contains
          varName="GlobalOwnWithBC" &
          )
 
+    ! include boundary conditions (no ghost zone)
+    ! to Monotonic Advection in X Domain ecomposition
+
+    if (selectedMonotonicAdvection) then
+       if (dumpLocal) then
+          call MsgDump(h//" Creating GlobalOwnWithBCMonAdvX")
+       end if
+       oneGrid%GlobalOwnWithBCMonAdvX => CreateGlobalOwnWithBC(&
+            GridSize=oneGrid%oneGridDims, &
+            ParEnv=oneGrid%oneParallelEnvironment, &
+            GlobalOwn=oneGrid%GlobalOwnMonAdvX, &
+            varName="GlobalOwnWithBCMonAdvX" &
+            )
+    else
+       oneGrid%GlobalOwnWithBCMonAdvX => null()
+    end if
+
+    ! include boundary conditions (no ghost zone)
+    ! to Monotonic Advection in Y Domain ecomposition
+
+    if (selectedMonotonicAdvection) then
+       if (dumpLocal) then
+          call MsgDump(h//" Creating GlobalOwnWithBCMonAdvY")
+       end if
+       oneGrid%GlobalOwnWithBCMonAdvY => CreateGlobalOwnWithBC(&
+            GridSize=oneGrid%oneGridDims, &
+            ParEnv=oneGrid%oneParallelEnvironment, &
+            GlobalOwn=oneGrid%GlobalOwnMonAdvY, &
+            varName="GlobalOwnWithBCMonAdvY" &
+            )
+    else
+       oneGrid%GlobalOwnWithBCMonAdvY => null()
+    end if
+
     ! insert original ghost zone of widht 1
-    ! at GlobalOwn and store at GlobalWithGhost
+    ! at BRAMS Domain Decomposition GlobalOwn and store at GlobalWithGhost
 
     if (dumpLocal) then
        call MsgDump(h//" Creating GlobalWithGhost")
@@ -476,6 +555,24 @@ contains
          GhostZoneWidth=1, &
          varName="GlobalWithGhost" &
          )
+
+    ! no ghost zone at Monotonic Advection in X direction;
+    ! as so, GlobalWithGhostMonAdvX is identical to
+
+    if (selectedMonotonicAdvection) then
+       oneGrid%GlobalWithGhostMonAdvX => oneGrid%GlobalOwnWithBCMonAdvX
+    else
+       oneGrid%GlobalWithGhostMonAdvX => null()
+    end if
+
+    ! no ghost zone at Monotonic Advection in Y direction;
+    ! as so, GlobalWithGhostMonAdvY is identical to
+
+    if (selectedMonotonicAdvection) then
+       oneGrid%GlobalWithGhostMonAdvY => oneGrid%GlobalOwnWithBCMonAdvY
+    else
+       oneGrid%GlobalWithGhostMonAdvY => null()
+    end if
 
     ! convert global indices from GlobalWithGhost
     ! into local indices stored at LocalOwn
@@ -490,7 +587,41 @@ contains
          varName="LocalOwn" &
          )
 
-    ! this node dimensions and indexing limits
+    ! convert global indices from GlobalWithGhostMonAdvX
+    ! into local indices stored at LocalOwnMonAdvX
+
+    if (selectedMonotonicAdvection) then
+       if (dumpLocal) then
+          call MsgDump(h//" Creating LocalOwnMonAdvX")
+       end if
+       oneGrid%LocalOwnMonAdvX => CreateLocalOwn(&
+            ParEnv=oneGrid%oneParallelEnvironment, &
+            GlobalWithGhost=oneGrid%GlobalWithGhostMonAdvX, &
+            GlobalOwn=oneGrid%GlobalOwnMonAdvX, &
+            varName="LocalOwnMonAdvX" &
+            )
+    else
+       oneGrid%LocalOwnMonAdvX => null()
+    end if
+
+    ! convert global indices from GlobalWithGhostMonAdvY
+    ! into local indices stored at LocalOwnMonAdvY
+
+    if (selectedMonotonicAdvection) then
+       if (dumpLocal) then
+          call MsgDump(h//" Creating LocalOwnMonAdvY")
+       end if
+       oneGrid%LocalOwnMonAdvY => CreateLocalOwn(&
+            ParEnv=oneGrid%oneParallelEnvironment, &
+            GlobalWithGhost=oneGrid%GlobalWithGhostMonAdvY, &
+            GlobalOwn=oneGrid%GlobalOwnMonAdvY, &
+            varName="LocalOwnMonAdvY" &
+            )
+    else
+       oneGrid%LocalOwnMonAdvY => null()
+    end if
+
+    ! this node dimensions and indexing limits for BRAMS domain decomposition
 
     if (dumpLocal) then
        call MsgDump(h//" Creating oneNodeDimensions")
@@ -505,6 +636,44 @@ contains
          varName="oneNodeDimensions" &
          )
 
+    ! this node dimensions and indexing limits for monotonic advection in X
+
+    if (selectedMonotonicAdvection) then
+       if (dumpLocal) then
+          call MsgDump(h//" Creating oneNodeDimensionsMonAdvX")
+       end if
+       oneGrid%oneNodeDimensionsMonAdvX => CreateNodeDimensions(&
+            GridSize=oneGrid%oneGridDims, &
+            ParEnv=oneGrid%oneParallelEnvironment, &
+            LocalOwn=oneGrid%LocalOwnMonAdvX, &
+            GlobalOwn=oneGrid%GlobalOwnMonAdvX, &
+            verticalGhostZoneWidth=0, &
+            surfaceGhostZoneWidth=0, &
+            varName="oneNodeDimensionsMonAdvX" &
+            )
+    else
+       oneGrid%oneNodeDimensionsMonAdvX => null()
+    end if
+
+    ! this node dimensions and indexing limits for monotonic advection in Y
+
+    if (selectedMonotonicAdvection) then
+       if (dumpLocal) then
+          call MsgDump(h//" Creating oneNodeDimensionsMonAdvY")
+       end if
+       oneGrid%oneNodeDimensionsMonAdvY => CreateNodeDimensions(&
+            GridSize=oneGrid%oneGridDims, &
+            ParEnv=oneGrid%oneParallelEnvironment, &
+            LocalOwn=oneGrid%LocalOwnMonAdvY, &
+            GlobalOwn=oneGrid%GlobalOwnMonAdvY, &
+            verticalGhostZoneWidth=0, &
+            surfaceGhostZoneWidth=0, &
+            varName="oneNodeDimensionsMonAdvY" &
+            )
+    else
+       oneGrid%oneNodeDimensionsMonAdvY => null()
+    end if
+
     ! neighbour nodes for original ghost zone update operations
 
     if (dumpLocal) then
@@ -517,257 +686,191 @@ contains
          varName="oneGrid%oneNeighbourNodes" &
          )
 
-    ! domain decomposition for Monotonic Advection in X, 
-    ! defining cells owned by each rank and store at GlobalOwnMonAdvX
-
-    if (dumpLocal) then
-       call MsgDump(h//" Creating GlobalOwnMonAdvX")
-    end if
-    oneGrid%GlobalOwnMonAdvX => CreateGlobalOwn(&
-         GridSize=oneGrid%oneGridDims, &
-         ParEnv=oneGrid%oneParallelEnvironment, &
-         varName="GlobalOwnMonAdvX", &
-         FullDirection="X"&
-         )
-
-    ! include boundary conditions (no ghost zone)
-
-    if (dumpLocal) then
-       call MsgDump(h//" Creating GlobalOwnWithBCMonAdvX")
-    end if
-    oneGrid%GlobalOwnWithBCMonAdvX => CreateGlobalOwnWithBC(&
-         GridSize=oneGrid%oneGridDims, &
-         ParEnv=oneGrid%oneParallelEnvironment, &
-         GlobalOwn=oneGrid%GlobalOwnMonAdvX, &
-         varName="GlobalOwnWithBCMonAdvX" &
-         )
-
-    ! no ghost zone at Monotonic Advection in X direction;
-    ! as so, GlobalWithGhostMonAdvX is identical to
-
-    oneGrid%GlobalWithGhostMonAdvX => oneGrid%GlobalOwnWithBCMonAdvX
-
-    ! convert global indices from GlobalWithGhostMonAdvX
-    ! into local indices stored at LocalOwnMonAdvX
-
-    if (dumpLocal) then
-       call MsgDump(h//" Creating LocalOwnMonAdvX")
-    end if
-    oneGrid%LocalOwnMonAdvX => CreateLocalOwn(&
-         ParEnv=oneGrid%oneParallelEnvironment, &
-         GlobalWithGhost=oneGrid%GlobalWithGhostMonAdvX, &
-         GlobalOwn=oneGrid%GlobalOwnMonAdvX, &
-         varName="LocalOwnMonAdvX" &
-         )
-
-    ! this node dimensions and indexing limits for monotonic advection in X
-
-    if (dumpLocal) then
-       call MsgDump(h//" Creating oneNodeDimensionsMonAdvX")
-    end if
-    oneGrid%oneNodeDimensionsMonAdvX => CreateNodeDimensions(&
-         GridSize=oneGrid%oneGridDims, &
-         ParEnv=oneGrid%oneParallelEnvironment, &
-         LocalOwn=oneGrid%LocalOwnMonAdvX, &
-         GlobalOwn=oneGrid%GlobalOwnMonAdvX, &
-         verticalGhostZoneWidth=0, &
-         surfaceGhostZoneWidth=0, &
-         varName="oneNodeDimensionsMonAdvX" &
-         )
-
-    ! domain decomposition for Monotonic Advection in Y, 
-    ! defining cells owned by each rank and store at GlobalOwnMonAdvY
-
-    if (dumpLocal) then
-       call MsgDump(h//" Creating GlobalOwnMonAdvY")
-    end if
-    oneGrid%GlobalOwnMonAdvY => CreateGlobalOwn(&
-         GridSize=oneGrid%oneGridDims, &
-         ParEnv=oneGrid%oneParallelEnvironment, &
-         varName="GlobalOwnMonAdvY", &
-         FullDirection="Y" &
-         )
-
-    ! include boundary conditions (no ghost zone)
-
-    if (dumpLocal) then
-       call MsgDump(h//" Creating GlobalOwnWithBCMonAdvY")
-    end if
-    oneGrid%GlobalOwnWithBCMonAdvY => CreateGlobalOwnWithBC(&
-         GridSize=oneGrid%oneGridDims, &
-         ParEnv=oneGrid%oneParallelEnvironment, &
-         GlobalOwn=oneGrid%GlobalOwnMonAdvY, &
-         varName="GlobalOwnWithBCMonAdvY" &
-         )
-
-    ! no ghost zone at Monotonic Advection in Y direction;
-    ! as so, GlobalWithGhostMonAdvY is identical to
-
-    oneGrid%GlobalWithGhostMonAdvY => oneGrid%GlobalOwnWithBCMonAdvY
-
-    ! convert global indices from GlobalWithGhostMonAdvY
-    ! into local indices stored at LocalOwnMonAdvY
-
-    if (dumpLocal) then
-       call MsgDump(h//" Creating LocalOwnMonAdvY")
-    end if
-    oneGrid%LocalOwnMonAdvY => CreateLocalOwn(&
-         ParEnv=oneGrid%oneParallelEnvironment, &
-         GlobalWithGhost=oneGrid%GlobalWithGhostMonAdvY, &
-         GlobalOwn=oneGrid%GlobalOwnMonAdvY, &
-         varName="LocalOwnMonAdvY" &
-         )
-
-    ! this node dimensions and indexing limits for monotonic advection in X
-
-    if (dumpLocal) then
-       call MsgDump(h//" Creating oneNodeDimensionsMonAdvY")
-    end if
-    oneGrid%oneNodeDimensionsMonAdvY => CreateNodeDimensions(&
-         GridSize=oneGrid%oneGridDims, &
-         ParEnv=oneGrid%oneParallelEnvironment, &
-         LocalOwn=oneGrid%LocalOwnMonAdvY, &
-         GlobalOwn=oneGrid%GlobalOwnMonAdvY, &
-         verticalGhostZoneWidth=0, &
-         surfaceGhostZoneWidth=0, &
-         varName="oneNodeDimensionsMonAdvY" &
-         )
-
     ! convert BRAMS domain decomposition to Monotonic Advection Full X domain decomposition
     
-    if (dumpLocal) then
-       call MsgDump(h//" Creating ConvertBramsMonAdvX")
+    if (selectedMonotonicAdvection) then
+       if (dumpLocal) then
+          call MsgDump(h//" Creating ConvertBramsMonAdvX")
+       end if
+       oneGrid%ConvertBramsToMonAdvX => CreateConvertDomainDecomp( &
+            oneParallelEnvironment=oneGrid%oneParallelEnvironment, &
+            oneGridDims=oneGrid%oneGridDims, &
+            GlobalWithGhostFrom=oneGrid%GlobalWithGhost, &
+            FromName="GlobalWithGhost", &
+            GlobalWithGhostTo=oneGrid%GlobalWithGhostMonAdvX, &
+            ToName="GlobalWithGhostMonAdvX",&
+            varName="ConvertBramsToMonAdvX"&
+            )
+
+       if (dumpLocal) then
+          call MsgDump(h//" testing ConvertBramsToMonAdvX_2D")
+       end if
+       call TestSendRecvConvertDomainDecomp(&
+            testDim=2, &
+            oneNodeDimensionsFrom=oneGrid%oneNodeDimensions, &
+            oneNodeDimensionsTo=oneGrid%oneNodeDimensionsMonAdvX, &
+            oneConvertDomainDecomp=oneGrid%ConvertBramsToMonAdvX)
+       
+       if (dumpLocal) then
+          call MsgDump(h//" testing ConvertBramsToMonAdvX_3D")
+       end if
+       call TestSendRecvConvertDomainDecomp(&
+            testDim=3, &
+            oneNodeDimensionsFrom=oneGrid%oneNodeDimensions, &
+            oneNodeDimensionsTo=oneGrid%oneNodeDimensionsMonAdvX, &
+            oneConvertDomainDecomp=oneGrid%ConvertBramsToMonAdvX)
+    else
+       oneGrid%ConvertBramsToMonAdvX => null()
     end if
-    oneGrid%ConvertBramsToMonAdvX => CreateConvertDomainDecomp( &
-         oneParallelEnvironment=oneGrid%oneParallelEnvironment, &
-         oneGridDims=oneGrid%oneGridDims, &
-         GlobalWithGhostFrom=oneGrid%GlobalWithGhost, &
-         FromName="GlobalWithGhost", &
-         GlobalWithGhostTo=oneGrid%GlobalWithGhostMonAdvX, &
-         ToName="GlobalWithGhostMonAdvX",&
-         varName="ConvertBramsToMonAdvX"&
-         )
-
-    call TestSendRecvConvertDomainDecomp(&
-         testDim=2, &
-         oneNodeDimensionsFrom=oneGrid%oneNodeDimensions, &
-         oneNodeDimensionsTo=oneGrid%oneNodeDimensionsMonAdvX, &
-         oneConvertDomainDecomp=oneGrid%ConvertBramsToMonAdvX)
-
-    call TestSendRecvConvertDomainDecomp(&
-         testDim=3, &
-         oneNodeDimensionsFrom=oneGrid%oneNodeDimensions, &
-         oneNodeDimensionsTo=oneGrid%oneNodeDimensionsMonAdvX, &
-         oneConvertDomainDecomp=oneGrid%ConvertBramsToMonAdvX)
 
     ! convert BRAMS domain decomposition to Monotonic Advection Full Y domain decomposition
     
-    if (dumpLocal) then
-       call MsgDump(h//" Creating ConvertBramsMonAdvY")
+    if (selectedMonotonicAdvection) then
+       if (dumpLocal) then
+          call MsgDump(h//" Creating ConvertBramsMonAdvY")
+       end if
+       oneGrid%ConvertBramsToMonAdvY => CreateConvertDomainDecomp( &
+            oneParallelEnvironment=oneGrid%oneParallelEnvironment, &
+            oneGridDims=oneGrid%oneGridDims, &
+            GlobalWithGhostFrom=oneGrid%GlobalWithGhost, &
+            FromName="GlobalWithGhost", &
+            GlobalWithGhostTo=oneGrid%GlobalWithGhostMonAdvY, &
+            ToName="GlobalWithGhostMonAdvY",&
+            varName="ConvertBramsToMonAdvY"&
+            )
+       
+       if (dumpLocal) then
+          call MsgDump(h//" testing ConvertBramsToMonAdvY_2D")
+       end if
+       call TestSendRecvConvertDomainDecomp(&
+            testDim=2, &
+            oneNodeDimensionsFrom=oneGrid%oneNodeDimensions, &
+            oneNodeDimensionsTo=oneGrid%oneNodeDimensionsMonAdvY, &
+            oneConvertDomainDecomp=oneGrid%ConvertBramsToMonAdvY)
+       
+       if (dumpLocal) then
+          call MsgDump(h//" testing ConvertBramsToMonAdvY_3D")
+       end if
+       call TestSendRecvConvertDomainDecomp(&
+            testDim=3, &
+            oneNodeDimensionsFrom=oneGrid%oneNodeDimensions, &
+            oneNodeDimensionsTo=oneGrid%oneNodeDimensionsMonAdvY, &
+            oneConvertDomainDecomp=oneGrid%ConvertBramsToMonAdvY)
+    else
+       oneGrid%ConvertBramsToMonAdvY => null()
     end if
-    oneGrid%ConvertBramsToMonAdvY => CreateConvertDomainDecomp( &
-         oneParallelEnvironment=oneGrid%oneParallelEnvironment, &
-         oneGridDims=oneGrid%oneGridDims, &
-         GlobalWithGhostFrom=oneGrid%GlobalWithGhost, &
-         FromName="GlobalWithGhost", &
-         GlobalWithGhostTo=oneGrid%GlobalWithGhostMonAdvY, &
-         ToName="GlobalWithGhostMonAdvY",&
-         varName="ConvertBramsToMonAdvY"&
-         )
-
-    call TestSendRecvConvertDomainDecomp(&
-         testDim=2, &
-         oneNodeDimensionsFrom=oneGrid%oneNodeDimensions, &
-         oneNodeDimensionsTo=oneGrid%oneNodeDimensionsMonAdvY, &
-         oneConvertDomainDecomp=oneGrid%ConvertBramsToMonAdvY)
-
-    call TestSendRecvConvertDomainDecomp(&
-         testDim=3, &
-         oneNodeDimensionsFrom=oneGrid%oneNodeDimensions, &
-         oneNodeDimensionsTo=oneGrid%oneNodeDimensionsMonAdvY, &
-         oneConvertDomainDecomp=oneGrid%ConvertBramsToMonAdvY)
 
     ! convert Monotonic Advection Full X domain decomposition to Monotonic Advection Full Y domain decomposition
     
-    if (dumpLocal) then
-       call MsgDump(h//" Creating ConvertMonAdvXToMonAdvY")
+    if (selectedMonotonicAdvection) then
+       if (dumpLocal) then
+          call MsgDump(h//" Creating ConvertMonAdvXToMonAdvY")
+       end if
+       oneGrid%ConvertMonAdvXToMonAdvY => CreateConvertDomainDecomp( &
+            oneParallelEnvironment=oneGrid%oneParallelEnvironment, &
+            oneGridDims=oneGrid%oneGridDims, &
+            GlobalWithGhostFrom=oneGrid%GlobalWithGhostMonAdvX, &
+            FromName="GlobalWithGhostMonAdvX", &
+            GlobalWithGhostTo=oneGrid%GlobalWithGhostMonAdvY, &
+            ToName="GlobalWithGhostMonAdvY",&
+            varName="ConvertMonAdvXToMonAdvY"&
+            )
+       
+       if (dumpLocal) then
+          call MsgDump(h//" testing ConvertMonAdvXToMonAdvY_2D")
+       end if
+       call TestSendRecvConvertDomainDecomp(&
+            testDim=2, &
+            oneNodeDimensionsFrom=oneGrid%oneNodeDimensionsMonAdvX, &
+            oneNodeDimensionsTo=oneGrid%oneNodeDimensionsMonAdvY, &
+            oneConvertDomainDecomp=oneGrid%ConvertMonAdvXToMonAdvY)
+       
+       if (dumpLocal) then
+          call MsgDump(h//" testing ConvertMonAdvXToMonAdvY_3D")
+       end if
+       call TestSendRecvConvertDomainDecomp(&
+            testDim=3, &
+            oneNodeDimensionsFrom=oneGrid%oneNodeDimensionsMonAdvX, &
+            oneNodeDimensionsTo=oneGrid%oneNodeDimensionsMonAdvY, &
+            oneConvertDomainDecomp=oneGrid%ConvertMonAdvXToMonAdvY)
+    else
+       oneGrid%ConvertMonAdvXToMonAdvY => null()
     end if
-    oneGrid%ConvertMonAdvXToMonAdvY => CreateConvertDomainDecomp( &
-         oneParallelEnvironment=oneGrid%oneParallelEnvironment, &
-         oneGridDims=oneGrid%oneGridDims, &
-         GlobalWithGhostFrom=oneGrid%GlobalWithGhostMonAdvX, &
-         FromName="GlobalWithGhostMonAdvX", &
-         GlobalWithGhostTo=oneGrid%GlobalWithGhostMonAdvY, &
-         ToName="GlobalWithGhostMonAdvY",&
-         varName="ConvertMonAdvXToMonAdvY"&
-         )
-
-    call TestSendRecvConvertDomainDecomp(&
-         testDim=2, &
-         oneNodeDimensionsFrom=oneGrid%oneNodeDimensionsMonAdvX, &
-         oneNodeDimensionsTo=oneGrid%oneNodeDimensionsMonAdvY, &
-         oneConvertDomainDecomp=oneGrid%ConvertMonAdvXToMonAdvY)
-
-    call TestSendRecvConvertDomainDecomp(&
-         testDim=3, &
-         oneNodeDimensionsFrom=oneGrid%oneNodeDimensionsMonAdvX, &
-         oneNodeDimensionsTo=oneGrid%oneNodeDimensionsMonAdvY, &
-         oneConvertDomainDecomp=oneGrid%ConvertMonAdvXToMonAdvY)
-
+       
     ! convert Monotonic Advection Full Y domain decomposition to BRAMS domain decomposition
     
-    if (dumpLocal) then
-       call MsgDump(h//" Creating ConvertMonAdvYToBrams")
+    if (selectedMonotonicAdvection) then
+       if (dumpLocal) then
+          call MsgDump(h//" Creating ConvertMonAdvYToBrams")
+       end if
+       oneGrid%ConvertMonAdvYToBrams => CreateConvertDomainDecomp( &
+            oneParallelEnvironment=oneGrid%oneParallelEnvironment, &
+            oneGridDims=oneGrid%oneGridDims, &
+            GlobalWithGhostFrom=oneGrid%GlobalWithGhostMonAdvY, &
+            FromName="GlobalWithGhostMonAdvY", &
+            GlobalWithGhostTo=oneGrid%GlobalWithGhost, &
+            ToName="GlobalWithGhost",&
+            varName="ConvertMonAdvYToBrams"&
+            )
+       
+       if (dumpLocal) then
+          call MsgDump(h//" testing ConvertMonAdvYToBrams_2D")
+       end if
+       call TestSendRecvConvertDomainDecomp(&
+            testDim=2, &
+            oneNodeDimensionsFrom=oneGrid%oneNodeDimensionsMonAdvY, &
+            oneNodeDimensionsTo=oneGrid%oneNodeDimensions, &
+            oneConvertDomainDecomp=oneGrid%ConvertMonAdvYToBrams)
+       
+       if (dumpLocal) then
+          call MsgDump(h//" testing ConvertMonAdvYToBrams_3D")
+       end if
+       call TestSendRecvConvertDomainDecomp(&
+            testDim=3, &
+            oneNodeDimensionsFrom=oneGrid%oneNodeDimensionsMonAdvY, &
+            oneNodeDimensionsTo=oneGrid%oneNodeDimensions, &
+            oneConvertDomainDecomp=oneGrid%ConvertMonAdvYToBrams)
+    else
+       oneGrid%ConvertMonAdvYToBrams => null()
     end if
-    oneGrid%ConvertMonAdvYToBrams => CreateConvertDomainDecomp( &
-         oneParallelEnvironment=oneGrid%oneParallelEnvironment, &
-         oneGridDims=oneGrid%oneGridDims, &
-         GlobalWithGhostFrom=oneGrid%GlobalWithGhostMonAdvY, &
-         FromName="GlobalWithGhostMonAdvY", &
-         GlobalWithGhostTo=oneGrid%GlobalWithGhost, &
-         ToName="GlobalWithGhost",&
-         varName="ConvertMonAdvYToBrams"&
-         )
-
-    call TestSendRecvConvertDomainDecomp(&
-         testDim=2, &
-         oneNodeDimensionsFrom=oneGrid%oneNodeDimensionsMonAdvY, &
-         oneNodeDimensionsTo=oneGrid%oneNodeDimensions, &
-         oneConvertDomainDecomp=oneGrid%ConvertMonAdvYToBrams)
-
-    call TestSendRecvConvertDomainDecomp(&
-         testDim=3, &
-         oneNodeDimensionsFrom=oneGrid%oneNodeDimensionsMonAdvY, &
-         oneNodeDimensionsTo=oneGrid%oneNodeDimensions, &
-         oneConvertDomainDecomp=oneGrid%ConvertMonAdvYToBrams)
 
     ! update Ghost Zone of Brams fields by converting Brams to Brams
     
-    if (dumpLocal) then
-       call MsgDump(h//" Creating ConvertBramsToBrams")
+    if (selectedMonotonicAdvection) then
+       if (dumpLocal) then
+          call MsgDump(h//" Creating ConvertBramsToBrams")
+       end if
+       oneGrid%ConvertBramsToBrams => CreateConvertDomainDecomp( &
+            oneParallelEnvironment=oneGrid%oneParallelEnvironment, &
+            oneGridDims=oneGrid%oneGridDims, &
+            GlobalWithGhostFrom=oneGrid%GlobalWithGhost, &
+            FromName="GlobalWithGhost", &
+            GlobalWithGhostTo=oneGrid%GlobalWithGhost, &
+            ToName="GlobalWithGhost",&
+            varName="ConvertBramsToBrams"&
+            )
+       
+       if (dumpLocal) then
+          call MsgDump(h//" testing ConvertBramsToBrams_2D")
+       end if
+       call TestSendRecvConvertDomainDecomp(&
+            testDim=2, &
+            oneNodeDimensionsFrom=oneGrid%oneNodeDimensions, &
+            oneNodeDimensionsTo=oneGrid%oneNodeDimensions, &
+            oneConvertDomainDecomp=oneGrid%ConvertBramsToBrams)
+       
+       if (dumpLocal) then
+          call MsgDump(h//" testing ConvertBramsToBrams_3D")
+       end if
+       call TestSendRecvConvertDomainDecomp(&
+            testDim=3, &
+            oneNodeDimensionsFrom=oneGrid%oneNodeDimensions, &
+            oneNodeDimensionsTo=oneGrid%oneNodeDimensions, &
+            oneConvertDomainDecomp=oneGrid%ConvertBramsToBrams)
+    else
+       oneGrid%ConvertBramsToBrams => null()
     end if
-    oneGrid%ConvertBramsToBrams => CreateConvertDomainDecomp( &
-         oneParallelEnvironment=oneGrid%oneParallelEnvironment, &
-         oneGridDims=oneGrid%oneGridDims, &
-         GlobalWithGhostFrom=oneGrid%GlobalWithGhost, &
-         FromName="GlobalWithGhost", &
-         GlobalWithGhostTo=oneGrid%GlobalWithGhost, &
-         ToName="GlobalWithGhost",&
-         varName="ConvertBramsToBrams"&
-         )
-
-    call TestSendRecvConvertDomainDecomp(&
-         testDim=2, &
-         oneNodeDimensionsFrom=oneGrid%oneNodeDimensions, &
-         oneNodeDimensionsTo=oneGrid%oneNodeDimensions, &
-         oneConvertDomainDecomp=oneGrid%ConvertBramsToBrams)
-
-    call TestSendRecvConvertDomainDecomp(&
-         testDim=3, &
-         oneNodeDimensionsFrom=oneGrid%oneNodeDimensions, &
-         oneNodeDimensionsTo=oneGrid%oneNodeDimensions, &
-         oneConvertDomainDecomp=oneGrid%ConvertBramsToBrams)
-
+    
     ! this node Basic Fields
 
     if (dumpLocal) then

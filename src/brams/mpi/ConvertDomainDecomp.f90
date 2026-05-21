@@ -181,94 +181,21 @@ contains
 
     ! sections to send from this node to all nodes
 
-    ! this node should send all points that it owns,
-    ! which are GlobalWithGhost without ghost zone
-    ! but including boundary conditions
+    ! empty domain has nothing to send
 
-    xbOwns = GlobalWithGhostFrom%xb(myRank)
-    xeOwns = GlobalWithGhostFrom%xe(myRank)
-    ybOwns = GlobalWithGhostFrom%yb(myRank)
-    yeOwns = GlobalWithGhostFrom%ye(myRank)
-    ! do not send ghost zone in Brams Domain Decomposition
-    if (GlobalWithGhostFrom%FullDirection == "B") then
-       if (xbOwns /= 1) then
-          xbOwns = xbOwns + 1
-       end if
-       if (xeOwns /= oneGridDims%nnxp) then
-          xeOwns = xeOwns - 1
-       end if
-       if (ybOwns /= 1) then
-          ybOwns = ybOwns + 1
-       end if
-       if (yeOwns /= oneGridDims%nnyp) then
-          yeOwns = yeOwns - 1
-       end if
-    end if
-    do rank = 1, oneParallelEnvironment%nmachs
-
-       ! intersection of points owned by this node "From" domain decomposition
-       ! with points owned by node "rank" in the "To" domain decomposition;
-       ! intersection is computed in global indices
-       
-       call Inter(&
-            xbOwns, xeOwns, &
-            ybOwns, yeOwns, &
-            GlobalWithGhostTo%xb(rank), GlobalWithGhostTo%xe(rank), &
-            GlobalWithGhostTo%yb(rank), GlobalWithGhostTo%ye(rank), &
-            xbInter, xeInter, ybInter, yeInter, &
-            hasInter)
-
-       ! if there is intersection, store domain region,
-       ! converting global indices into local indices and
-       ! Brams rank enumeration into MPI rank enumeration
-       
-       if (hasInter) then
-          oneConvertDomainDecomp%nSend = oneConvertDomainDecomp%nSend+1
-          oneConvertDomainDecomp%xbSend(oneConvertDomainDecomp%nSend) = xbInter+1-GlobalWithGhostFrom%xb(myRank)
-          oneConvertDomainDecomp%xeSend(oneConvertDomainDecomp%nSend) = xeInter+1-GlobalWithGhostFrom%xb(myRank)
-          oneConvertDomainDecomp%ybSend(oneConvertDomainDecomp%nSend) = ybInter+1-GlobalWithGhostFrom%yb(myRank)
-          oneConvertDomainDecomp%yeSend(oneConvertDomainDecomp%nSend) = yeInter+1-GlobalWithGhostFrom%yb(myRank)
-          oneConvertDomainDecomp%destRankSend(oneConvertDomainDecomp%nSend) = rank-1
-
-          if (dumpLocal) then
-             write(str(1),"(i8)") xbInter
-             write(str(2),"(i8)") xeInter
-             write(str(3),"(i8)") ybInter
-             write(str(4),"(i8)") yeInter
-             write(str(5),"(i8)") myRank-1
-             write(str(6),"(i8)") rank-1
-             call MsgDump(h//" MPI rank "//trim(adjustl(str(5)))//" sends global ["//&
-                  trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
-                  trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//"]"//&
-                  " to MPI rank "//trim(adjustl(str(6))))
-             write(str(1),"(i8)") oneConvertDomainDecomp%xbSend(oneConvertDomainDecomp%nSend)
-             write(str(2),"(i8)") oneConvertDomainDecomp%xeSend(oneConvertDomainDecomp%nSend)
-             write(str(3),"(i8)") oneConvertDomainDecomp%ybSend(oneConvertDomainDecomp%nSend)
-             write(str(4),"(i8)") oneConvertDomainDecomp%yeSend(oneConvertDomainDecomp%nSend)
-             call MsgDump(h//" these are locals ["//&
-                  trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
-                  trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//"]")
-          end if
-       end if
-    end do
-
-    ! sections received by this node from all nodes
-
-    ! this node will receive all points that it owns in "To" domain decomposition,
-    ! including boundary conditions and ghost zone, from all ranks in the
-    ! "From" domain decomposition excluding ghost zone
-
-    do rank = 1, oneParallelEnvironment%nmachs
-
-       ! the other node should send all points that it owns,
+    nonempty_tosend: if (.not. GlobalWithGhostFrom%Empty(myRank)) then
+    
+       ! this node should send all points that it owns,
        ! which are GlobalWithGhost without ghost zone
        ! but including boundary conditions
 
-       xbOwns = GlobalWithGhostFrom%xb(rank)
-       xeOwns = GlobalWithGhostFrom%xe(rank)
-       ybOwns = GlobalWithGhostFrom%yb(rank)
-       yeOwns = GlobalWithGhostFrom%ye(rank)
+       xbOwns = GlobalWithGhostFrom%xb(myRank)
+       xeOwns = GlobalWithGhostFrom%xe(myRank)
+       ybOwns = GlobalWithGhostFrom%yb(myRank)
+       yeOwns = GlobalWithGhostFrom%ye(myRank)
+       
        ! do not send ghost zone in Brams Domain Decomposition
+       
        if (GlobalWithGhostFrom%FullDirection == "B") then
           if (xbOwns /= 1) then
              xbOwns = xbOwns + 1
@@ -283,51 +210,154 @@ contains
              yeOwns = yeOwns - 1
           end if
        end if
-       
-       ! intersection of points owned by this node "To" domain decomposition
-       ! with points owned by node "rank" in the "From" domain decomposition
-       
-       call Inter(&
-            xbOwns, xeOwns, &
-            ybOwns, yeOwns, &
-            GlobalWithGhostTo%xb(myRank), GlobalWithGhostTo%xe(myRank), &
-            GlobalWithGhostTo%yb(myRank), GlobalWithGhostTo%ye(myRank), &
-            xbInter, xeInter, ybInter, yeInter, &
-            hasInter)
 
-       ! if there is intersection, store domain region,
-       ! converting global indices into local indices and
-       ! Brams rank enumeration into MPI rank enumeration
+       ! inspect all possible receiving nodes
        
-       if (hasInter) then
-          oneConvertDomainDecomp%nRecv = oneConvertDomainDecomp%nRecv+1
-          oneConvertDomainDecomp%xbRecv(oneConvertDomainDecomp%nRecv) = xbInter+1-GlobalWIthGhostTo%xb(myRank)
-          oneConvertDomainDecomp%xeRecv(oneConvertDomainDecomp%nRecv) = xeInter+1-GlobalWIthGhostTo%xb(myRank)
-          oneConvertDomainDecomp%ybRecv(oneConvertDomainDecomp%nRecv) = ybInter+1-GlobalWIthGhostTo%yb(myRank)
-          oneConvertDomainDecomp%yeRecv(oneConvertDomainDecomp%nRecv) = yeInter+1-GlobalWIthGhostTo%yb(myRank)
-          oneConvertDomainDecomp%srcRankRecv(oneConvertDomainDecomp%nRecv) = rank-1
-               
-          if (dumpLocal) then
-             write(str(1),"(i8)") xbInter
-             write(str(2),"(i8)") xeInter
-             write(str(3),"(i8)") ybInter
-             write(str(4),"(i8)") yeInter
-             write(str(5),"(i8)") myRank-1
-             write(str(6),"(i8)") rank-1
-             call MsgDump(h//" MPI rank "//trim(adjustl(str(5)))//" receives globals ["//&
-                  trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
-                  trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//"]"//&
-                  " from MPI rank "//trim(adjustl(str(6))))
-             write(str(1),"(i8)") oneConvertDomainDecomp%xbRecv(oneConvertDomainDecomp%nRecv)
-             write(str(2),"(i8)") oneConvertDomainDecomp%xeRecv(oneConvertDomainDecomp%nRecv)
-             write(str(3),"(i8)") oneConvertDomainDecomp%ybRecv(oneConvertDomainDecomp%nRecv)
-             write(str(4),"(i8)") oneConvertDomainDecomp%yeRecv(oneConvertDomainDecomp%nRecv)
-             call MsgDump(h//" these are locals ["//&
-                  trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
-                  trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//"]")
-          end if
-       end if
-    end do
+       do rank = 1, oneParallelEnvironment%nmachs
+
+          ! avoid empty domain receiving node
+
+          nonempty_recvnode: if (.not. GlobalWithGhostTo%Empty(rank)) then
+             
+             ! intersection of points owned by this node "From" domain decomposition
+             ! with points owned by node "rank" in the "To" domain decomposition;
+             ! intersection is computed in global indices
+       
+             call Inter(&
+                  xbOwns, xeOwns, &
+                  ybOwns, yeOwns, &
+                  GlobalWithGhostTo%xb(rank), GlobalWithGhostTo%xe(rank), &
+                  GlobalWithGhostTo%yb(rank), GlobalWithGhostTo%ye(rank), &
+                  xbInter, xeInter, ybInter, yeInter, &
+                  hasInter)
+
+             ! if there is intersection, store domain region,
+             ! converting global indices into local indices and
+             ! Brams rank enumeration into MPI rank enumeration
+             
+             if (hasInter) then
+                oneConvertDomainDecomp%nSend = oneConvertDomainDecomp%nSend+1
+                oneConvertDomainDecomp%xbSend(oneConvertDomainDecomp%nSend) = xbInter+1-GlobalWithGhostFrom%xb(myRank)
+                oneConvertDomainDecomp%xeSend(oneConvertDomainDecomp%nSend) = xeInter+1-GlobalWithGhostFrom%xb(myRank)
+                oneConvertDomainDecomp%ybSend(oneConvertDomainDecomp%nSend) = ybInter+1-GlobalWithGhostFrom%yb(myRank)
+                oneConvertDomainDecomp%yeSend(oneConvertDomainDecomp%nSend) = yeInter+1-GlobalWithGhostFrom%yb(myRank)
+                oneConvertDomainDecomp%destRankSend(oneConvertDomainDecomp%nSend) = rank-1
+
+                if (dumpLocal) then
+                   write(str(1),"(i8)") xbInter
+                   write(str(2),"(i8)") xeInter
+                   write(str(3),"(i8)") ybInter
+                   write(str(4),"(i8)") yeInter
+                   write(str(5),"(i8)") myRank-1
+                   write(str(6),"(i8)") rank-1
+                   call MsgDump(h//" MPI rank "//trim(adjustl(str(5)))//" sends global ["//&
+                        trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+                        trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//"]"//&
+                        " to MPI rank "//trim(adjustl(str(6))))
+                   write(str(1),"(i8)") oneConvertDomainDecomp%xbSend(oneConvertDomainDecomp%nSend)
+                   write(str(2),"(i8)") oneConvertDomainDecomp%xeSend(oneConvertDomainDecomp%nSend)
+                   write(str(3),"(i8)") oneConvertDomainDecomp%ybSend(oneConvertDomainDecomp%nSend)
+                   write(str(4),"(i8)") oneConvertDomainDecomp%yeSend(oneConvertDomainDecomp%nSend)
+                   call MsgDump(h//" these are locals ["//&
+                        trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+                        trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//"]")
+                end if
+             end if
+          end if nonempty_recvnode
+       end do
+    end if nonempty_tosend
+
+    ! sections received by this node from all nodes
+
+    ! empty domain has nothing to receive
+
+    nonempty_torecv: if (.not. GlobalWithGhostTo%Empty(myRank)) then
+    
+
+       ! this node will receive all points that it owns in "To" domain decomposition,
+       ! including boundary conditions and ghost zone, from all ranks in the
+       ! "From" domain decomposition excluding ghost zone
+       
+       ! inspect all possible receiving nodes
+       
+       do rank = 1, oneParallelEnvironment%nmachs
+
+          ! avoid empty domain send node
+
+          nonempty_sendnode: if (.not. GlobalWithGhostFrom%Empty(rank)) then
+
+             ! the other node should send all points that it owns,
+             ! which are GlobalWithGhost without ghost zone
+             ! but including boundary conditions
+
+             xbOwns = GlobalWithGhostFrom%xb(rank)
+             xeOwns = GlobalWithGhostFrom%xe(rank)
+             ybOwns = GlobalWithGhostFrom%yb(rank)
+             yeOwns = GlobalWithGhostFrom%ye(rank)
+             
+             ! do not send ghost zone in Brams Domain Decomposition
+             
+             if (GlobalWithGhostFrom%FullDirection == "B") then
+                if (xbOwns /= 1) then
+                   xbOwns = xbOwns + 1
+                end if
+                if (xeOwns /= oneGridDims%nnxp) then
+                   xeOwns = xeOwns - 1
+                end if
+                if (ybOwns /= 1) then
+                   ybOwns = ybOwns + 1
+                end if
+                if (yeOwns /= oneGridDims%nnyp) then
+                   yeOwns = yeOwns - 1
+                end if
+             end if
+       
+             ! intersection of points owned by this node "To" domain decomposition
+             ! with points owned by node "rank" in the "From" domain decomposition
+       
+             call Inter(&
+                  xbOwns, xeOwns, &
+                  ybOwns, yeOwns, &
+                  GlobalWithGhostTo%xb(myRank), GlobalWithGhostTo%xe(myRank), &
+                  GlobalWithGhostTo%yb(myRank), GlobalWithGhostTo%ye(myRank), &
+                  xbInter, xeInter, ybInter, yeInter, &
+                  hasInter)
+
+             ! if there is intersection, store domain region,
+             ! converting global indices into local indices and
+             ! Brams rank enumeration into MPI rank enumeration
+             
+             if (hasInter) then
+                oneConvertDomainDecomp%nRecv = oneConvertDomainDecomp%nRecv+1
+                oneConvertDomainDecomp%xbRecv(oneConvertDomainDecomp%nRecv) = xbInter+1-GlobalWIthGhostTo%xb(myRank)
+                oneConvertDomainDecomp%xeRecv(oneConvertDomainDecomp%nRecv) = xeInter+1-GlobalWIthGhostTo%xb(myRank)
+                oneConvertDomainDecomp%ybRecv(oneConvertDomainDecomp%nRecv) = ybInter+1-GlobalWIthGhostTo%yb(myRank)
+                oneConvertDomainDecomp%yeRecv(oneConvertDomainDecomp%nRecv) = yeInter+1-GlobalWIthGhostTo%yb(myRank)
+                oneConvertDomainDecomp%srcRankRecv(oneConvertDomainDecomp%nRecv) = rank-1
+                
+                if (dumpLocal) then
+                   write(str(1),"(i8)") xbInter
+                   write(str(2),"(i8)") xeInter
+                   write(str(3),"(i8)") ybInter
+                   write(str(4),"(i8)") yeInter
+                   write(str(5),"(i8)") myRank-1
+                   write(str(6),"(i8)") rank-1
+                   call MsgDump(h//" MPI rank "//trim(adjustl(str(5)))//" receives globals ["//&
+                        trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+                        trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//"]"//&
+                        " from MPI rank "//trim(adjustl(str(6))))
+                   write(str(1),"(i8)") oneConvertDomainDecomp%xbRecv(oneConvertDomainDecomp%nRecv)
+                   write(str(2),"(i8)") oneConvertDomainDecomp%xeRecv(oneConvertDomainDecomp%nRecv)
+                   write(str(3),"(i8)") oneConvertDomainDecomp%ybRecv(oneConvertDomainDecomp%nRecv)
+                   write(str(4),"(i8)") oneConvertDomainDecomp%yeRecv(oneConvertDomainDecomp%nRecv)
+                   call MsgDump(h//" these are locals ["//&
+                        trim(adjustl(str(1)))//":"//trim(adjustl(str(2)))//","//&
+                        trim(adjustl(str(3)))//":"//trim(adjustl(str(4)))//"]")
+                end if
+             end if
+          end if nonempty_sendnode
+       end do
+    end if nonempty_torecv
 
     if (dumpLocal) then
        call DumpConvertDomainDecomp(oneConvertDomainDecomp)
@@ -482,15 +512,17 @@ contains
 
 
 
-  subroutine SendRecvConvertDomainDecomp_2D(fieldSend, fieldRecv, oneConvertDomainDecomp)
+  subroutine SendRecvConvertDomainDecomp_2D(fieldSend, nameSend, fieldRecv, nameRecv, oneConvertDomainDecomp)
 
     ! posts all nonblocking send and recv operations of
     ! a message set pair of variables
 
     real, pointer, contiguous, intent(in) :: fieldSend(:,:)
     ! pointer intent(in), values intent(in)
+    character(len=*), intent(in) :: nameSend
     real, pointer, contiguous, intent(in) :: fieldRecv(:,:)
     ! pointer intent(in), values intent(out)
+    character(len=*), intent(in) :: nameRecv
     type(ConvertDomainDecomp), pointer, intent(in) :: oneConvertDomainDecomp
     ! pointer intent(in), values intent(inout)
 
@@ -515,6 +547,8 @@ contains
     integer, allocatable :: requestRecv(:)
     integer, allocatable :: statusRecv(:,:)
     character(len=512) :: message
+    logical :: fieldSendEmpty
+    logical :: fieldRecvEmpty
     
     character(len=8) :: str(10)
     character(len=16) :: strL(10)
@@ -530,16 +564,50 @@ contains
        return
     end if
 
+    fieldSendEmpty = .not. associated(fieldSend)
+    fieldRecvEmpty = .not. associated(fieldRecv)
+    
     nSend = oneConvertDomainDecomp%nSend
     nRecv = oneConvertDomainDecomp%nRecv
 
+    if (dumpLocal) then
+       if (fieldSendEmpty) then
+          call MsgDump(h//" field "//trim(nameSend)//" is empty")
+       else
+          call MsgDump(h//" field "//trim(nameSend)//" is full")
+       end if
+       if (fieldRecvEmpty) then
+          call MsgDump(h//" field "//trim(nameRecv)//" is empty")
+       else
+          call MsgDump(h//" field "//trim(nameRecv)//" is full")
+       end if
+       write(str(1),"(i8)") nSend
+       write(str(2),"(i8)") nRecv
+       call MsgDump(h//" there are "//trim(adjustl(str(1)))//" sends and "//trim(adjustl(str(2)))//" receives to be performed")
+       if ((.not. fieldSendEmpty) .and. (.not. fieldRecvEmpty)) then
+          call MsgDump(h//" starts send/recv variables "//trim(nameSend)//" and "//trim(nameRecv)//" using "//trim(oneConvertDomainDecomp%VarName))
+       else if (.not. fieldSendEmpty) then
+          call MsgDump(h//" starts send variable "//trim(nameSend)//" to "//trim(nameRecv)//" using "//trim(oneConvertDomainDecomp%VarName))
+       else if (.not. fieldRecvEmpty) then
+          call MsgDump(h//" starts recv variable "//trim(nameRecv)//" from variable "//trim(nameSend)//" using "//trim(oneConvertDomainDecomp%VarName))
+       else
+          call MsgDump(h//" no send/recv of variables "//trim(nameSend)//" and "//trim(nameRecv)//" using "//trim(oneConvertDomainDecomp%VarName))
+       end if
+    end if
+
     if (nSend > 0) then
+       if (fieldSendEmpty) then
+          call fatal_error(h//" field to send is null() but there is data to send")
+       end if
        allocate(allBuffSend(nSend), stat=ierr, errmsg=message)
        if (ierr /= 0) then
           call fatal_error(h//" allocate allBuffSend fails with message "//trim(message))
        end if
     end if
     if (nRecv > 0) then
+       if (fieldRecvEmpty) then
+          call fatal_error(h//" field to recv is null() but there is data to recv")
+       end if
        allocate(allBuffRecv(nRecv), stat=ierr, errmsg=message)
        if (ierr /= 0) then
           call fatal_error(h//" allocate allBuffRecv fails with message "//trim(message))
@@ -767,15 +835,17 @@ contains
   
 
   
-  subroutine SendRecvConvertDomainDecomp_3D(fieldSend, fieldRecv, oneConvertDomainDecomp)
+  subroutine SendRecvConvertDomainDecomp_3D(fieldSend, nameSend, fieldRecv, nameRecv, oneConvertDomainDecomp)
 
     ! posts all nonblocking send and recv operations of
     ! a message set pair of variables
 
     real, pointer, contiguous, intent(in) :: fieldSend(:,:,:)
     ! pointer intent(in), values intent(in)
+    character(len=*), intent(in) :: nameSend
     real, pointer, contiguous, intent(in) :: fieldRecv(:,:,:)
     ! pointer intent(in), values intent(out)
+    character(len=*), intent(in) :: nameRecv
     type(ConvertDomainDecomp), pointer, intent(in) :: oneConvertDomainDecomp
     ! pointer intent(in), values intent(inout)
 
@@ -797,11 +867,14 @@ contains
     integer :: x
     integer :: y
     integer :: z
-    integer :: nz
+    integer :: nzSend
+    integer :: nzRecv
     integer :: cnt
     integer, allocatable :: requestRecv(:)
     integer, allocatable :: statusRecv(:,:)
     character(len=512) :: message
+    logical :: fieldSendEmpty
+    logical :: fieldRecvEmpty
     
     character(len=8) :: str(10)
     character(len=16) :: strL(10)
@@ -817,21 +890,53 @@ contains
        return
     end if
 
-    nz = size(fieldRecv,1)
-    if (nz /= size(fieldSend,1)) then
-       call fatal_error(h//" first dimension of fieldSend and fieldRecv dissagree")
+    fieldSendEmpty = .not. associated(fieldSend)
+    fieldRecvEmpty = .not. associated(fieldRecv)
+          
+    nSend = oneConvertDomainDecomp%nSend
+    nRecv = oneConvertDomainDecomp%nRecv
+
+    if (dumpLocal) then
+       if (fieldSendEmpty) then
+          call MsgDump(h//" field "//trim(nameSend)//" is empty")
+       else
+          call MsgDump(h//" field "//trim(nameSend)//" is full")
+       end if
+       if (fieldRecvEmpty) then
+          call MsgDump(h//" field "//trim(nameRecv)//" is empty")
+       else
+          call MsgDump(h//" field "//trim(nameRecv)//" is full")
+       end if
+       write(str(1),"(i8)") nSend
+       write(str(2),"(i8)") nRecv
+       call MsgDump(h//" there are "//trim(adjustl(str(1)))//" sends and "//trim(adjustl(str(2)))//" receives to be performed")
+       if ((.not. fieldSendEmpty) .and. (.not. fieldRecvEmpty)) then
+          call MsgDump(h//" starts send/recv variables "//trim(nameSend)//" and "//trim(nameRecv)//" using "//trim(oneConvertDomainDecomp%VarName))
+       else if (.not. fieldSendEmpty) then
+          call MsgDump(h//" starts send variable "//trim(nameSend)//" to "//trim(nameRecv)//" using "//trim(oneConvertDomainDecomp%VarName))
+       else if (.not. fieldRecvEmpty) then
+          call MsgDump(h//" starts recv variable "//trim(nameRecv)//" from variable "//trim(nameSend)//" using "//trim(oneConvertDomainDecomp%VarName))
+       else
+          call MsgDump(h//" no send/recv of variables "//trim(nameSend)//" and "//trim(nameRecv)//" using "//trim(oneConvertDomainDecomp%VarName))
+       end if
     end if
 
-    nSend = oneConvertDomainDecomp%nSend
     if (nSend > 0) then
+       if (fieldSendEmpty) then
+          call fatal_error(h//" field to send is null() but there is data to send")
+       end if
+       nzSend = size(fieldSend,1)
        allocate(allBuffSend(nSend), stat=ierr, errmsg=message)
        if (ierr /= 0) then
           call fatal_error(h//" allocate allBuffSend fails with message "//trim(message))
        end if
     end if
 
-    nRecv = oneConvertDomainDecomp%nRecv
     if (nRecv > 0) then
+       if (fieldRecvEmpty) then
+          call fatal_error(h//" field to recv is null() but there is data to recv")
+       end if
+       nzRecv = size(fieldRecv,1)
        allocate(allBuffRecv(nRecv), stat=ierr, errmsg=message)
        if (ierr /= 0) then
           call fatal_error(h//" allocate allBuffRecv fails with message "//trim(message))
@@ -841,7 +946,16 @@ contains
           call fatal_error(h//" allocate requestRecv fails with message "//trim(message))
        end if
     end if
-    
+
+    if (nSend>0 .and. nRecv>0) then
+       if (nzSend /= nzRecv) then
+          write(str(1),"(i8)") nzSend
+          write(str(2),"(i8)") nzRecv
+          call fatal_error(h//" first dimension of fieldSend ("//trim(adjustl(str(1)))//&
+               ") and fieldRecv ("//trim(adjustl(str(2)))//") dissagree")
+       end if
+    end if
+     
     ! post nonblocking receive for each receiving message
 
     if (dumpLocal) then
@@ -853,7 +967,7 @@ contains
     do iRecv= 1, nRecv
 
        dataSize = &
-            nz * &
+            nzRecv * &
             (oneConvertDomainDecomp%xeRecv(iRecv) - oneConvertDomainDecomp%xbRecv(iRecv) + 1) * &
             (oneConvertDomainDecomp%yeRecv(iRecv) - oneConvertDomainDecomp%ybRecv(iRecv) + 1)
 
@@ -878,7 +992,7 @@ contains
           write(str(2),"(i8)") oneConvertDomainDecomp%xeRecv(iRecv)
           write(str(3),"(i8)") oneConvertDomainDecomp%ybRecv(iRecv)
           write(str(4),"(i8)") oneConvertDomainDecomp%yeRecv(iRecv)
-          write(str(5),"(i8)") nz
+          write(str(5),"(i8)") nzRecv
           call MPI_Error_string(ierr, message, messageLen, ierr2)
           call fatal_error(h//" Irecv convertion "//trim(oneConvertDomainDecomp%VarName)//&
                " for variable "//trim(oneConvertDomainDecomp%ToName)//"("//&
@@ -890,7 +1004,7 @@ contains
 
        if (dumpLocal) then
           write(str(1),"(i8)") oneConvertDomainDecomp%srcRankRecv(iRecv)
-          write(str(2),"(i8)") nz
+          write(str(2),"(i8)") nzRecv
           write(str(3),"(i8)") oneConvertDomainDecomp%xbRecv(iRecv)
           write(str(4),"(i8)") oneConvertDomainDecomp%xeRecv(iRecv)
           write(str(5),"(i8)") oneConvertDomainDecomp%ybRecv(iRecv)
@@ -914,7 +1028,7 @@ contains
     do iSend = 1, nSend
 
        dataSize = &
-            nz * &
+            nzSend * &
             (oneConvertDomainDecomp%xeSend(iSend) - oneConvertDomainDecomp%xbSend(iSend) + 1) * &
             (oneConvertDomainDecomp%yeSend(iSend) - oneConvertDomainDecomp%ybSend(iSend) + 1)
 
@@ -927,8 +1041,8 @@ contains
        cnt = 0
        do y = oneConvertDomainDecomp%ybSend(iSend), oneConvertDomainDecomp%yeSend(iSend)
           do x = oneConvertDomainDecomp%xbSend(iSend), oneConvertDomainDecomp%xeSend(iSend)
-             allBuffSend(iSend)%buffer(cnt+1:cnt+nz) = fieldSend(1:nz,x,y)
-             cnt = cnt + nz
+             allBuffSend(iSend)%buffer(cnt+1:cnt+nzSend) = fieldSend(1:nzSend,x,y)
+             cnt = cnt + nzSend
           end do
        end do
 
@@ -955,7 +1069,7 @@ contains
 
        if (dumpLocal) then
           write(str(1),"(i8)") oneConvertDomainDecomp%destRankSend(iSend)
-          write(str(2),"(i8)") nz
+          write(str(2),"(i8)") nzSend
           write(str(3),"(i8)") oneConvertDomainDecomp%xbSend(iSend)
           write(str(4),"(i8)") oneConvertDomainDecomp%xeSend(iSend)
           write(str(5),"(i8)") oneConvertDomainDecomp%ybSend(iSend)
@@ -1008,14 +1122,14 @@ contains
           cnt = 0
           do y = oneConvertDomainDecomp%ybRecv(iRecv), oneConvertDomainDecomp%yeRecv(iRecv)
              do x = oneConvertDomainDecomp%xbRecv(iRecv), oneConvertDomainDecomp%xeRecv(iRecv)
-                fieldRecv(1:nz,x,y) = allBuffRecv(iRecv)%buffer(cnt+1:cnt+nz)
-                cnt = cnt + nz
+                fieldRecv(1:nzRecv,x,y) = allBuffRecv(iRecv)%buffer(cnt+1:cnt+nzRecv)
+                cnt = cnt + nzRecv
              end do
           end do
 
           if (dumpLocal) then
              write(str(1),"(i8)") statusRecv(MPI_SOURCE,iRecv)
-             write(str(2),"(i8)") nz
+             write(str(2),"(i8)") nzRecv
              write(str(3),"(i8)") oneConvertDomainDecomp%xbRecv(iRecv)
              write(str(4),"(i8)") oneConvertDomainDecomp%xeRecv(iRecv)
              write(str(5),"(i8)") oneConvertDomainDecomp%ybRecv(iRecv)
@@ -1224,9 +1338,9 @@ contains
     ! message passing to test
     
     if (testDim == 2) then
-       call SendRecvConvertDomainDecomp(fieldFrom_2D, fieldTo_2D, oneConvertDomainDecomp)
+       call SendRecvConvertDomainDecomp(fieldFrom_2D, "enum2D", fieldTo_2D, "enum2D", oneConvertDomainDecomp)
     else
-       call SendRecvConvertDomainDecomp(fieldFrom_3D, fieldTo_3D, oneConvertDomainDecomp)
+       call SendRecvConvertDomainDecomp(fieldFrom_3D, "enum3D", fieldTo_3D, "enum3D", oneConvertDomainDecomp)
     end if
 
     ! verify received field correctness
@@ -1299,3 +1413,5 @@ contains
     end if
   end subroutine TestSendRecvConvertDomainDecomp
 end module ModConvertDomainDecomp
+
+  

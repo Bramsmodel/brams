@@ -862,11 +862,11 @@ contains
 
              ! Find varfile "version"
 
-             read(iun) imarker
+             read(iun) imarker; print *,'LFR-DBG: imarker=',imarker
              rewind(iun)
 
              if(imarker == 999999) then
-                read(iun) imarker,iver_var
+                read(iun) imarker,iver_var; print *,'LFR-DBG: imarker=',imarker,' iver_var=',iver_var
              else
                 iver_var=1
              end if
@@ -874,6 +874,10 @@ contains
              read(iun) iyearx,imonthx,idatex,ihourx  &
                   ,nxpx,nypx,nzpx,rlatx,wlon1x,deltaxx,deltayx,deltazx  &
                   ,dzratx,dzmaxx
+             print *,'LFR-DBG: iyearx=',iyearx,' imonthx=',imonthx,' idatex=',idatex,' ihourx=',ihourx
+             print *,'LFR-DBG: nxpx=',nxpx,' nypx=',nypx,' nzpx=',nzpx
+             print *,'LFR-DBG: rlatx=',rlatx,' wlon1x=',wlon1x,' deltaxx=',deltaxx,' deltayx=',deltayx,' deltazx=',deltazx
+             print *,'LFR-DBG: dzratx=',dzratx,' dzmaxx=',dzmaxx
 
           end if
 
