@@ -935,6 +935,30 @@ contains
 
   end subroutine filltab_tend_aer1_inorg
 
+  subroutine NonNegScalar(mx,my,mz,scp)
+      !# Make scalars non-negative
+      !#
+      !# @note
+      !# ![](http://brams.cptec.inpe.br/wp-content/uploads/2015/11/logo-brams.navigation.png "")
+      !#
+      !# **Brief**: Make scalars non-negative
+      !#
+      !# **Documentation**: <http://brams.cptec.inpe.br/documentation/>
+      !#
+      !# **Author(s)**: Luiz Flavio Rodrigues **&#9993;**<
+      implicit none 
+      integer, intent(in) :: mx,my,mz
+      real, intent(inout) :: scp(mx,my,mz)
+      integer :: i,j,k
+      do k=1,mz
+         do j=1,my
+            do i=1,mx
+               if(scp(i,j,k) < 0.) scp(i,j,k)=0.
+            enddo
+         enddo
+      enddo
+      
+  end subroutine NonNegScalar
 
   !=============================================================================================
   subroutine dumpAer(fileName)

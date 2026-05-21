@@ -321,7 +321,7 @@ contains
                 end if
 
              elseif(trim(PhotojMethod) == 'FAST-TUV') then
-                call tuvDriver(mzp,mxp,myp,ia,iz,ja,jz, &
+                call tuvDriver(mzp,mxp,myp,ia,iz,ja,jz,mzp, &
                      oneBasicFields, oneNamelistFile, oneRadiateFields)
 
              else
@@ -329,7 +329,7 @@ contains
 
              endif
              if(trim(PhotojMethod) == 'LUT') then
-                call tuvDriver(mzp,mxp,myp,ia,iz,ja,jz, &
+                call tuvDriver(mzp,mxp,myp,ia,iz,ja,jz,mzp, &
                      oneBasicFields, oneNamelistFile, oneRadiateFields)
              endif
           endif

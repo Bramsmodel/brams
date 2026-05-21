@@ -8,7 +8,7 @@ module ModTuvDriver
        nnzp,    &
        if_adap, &
        dzt,     &
-       maxnzp,  &
+       !maxnzp,  &
        imonth1, &
        idate1,  &
        iyear1,  &
@@ -597,9 +597,9 @@ module ModTuvDriver
 contains
 
 
-  subroutine tuvDriver(m1,m2,m3,ia,iz,ja,jz, &
+  subroutine tuvDriver(m1,m2,m3,ia,iz,ja,jz,maxnzp, &
        oneBasicFields, oneNamelistFile, oneRadiateFields)
-    integer,intent(IN) :: m1,m2,m3,ia,iz,ja,jz
+    integer,intent(IN) :: m1,m2,m3,ia,iz,ja,jz,maxnzp
     type(BasicFields), pointer, intent(in) :: oneBasicFields
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile
     type(RadiateFields), pointer, intent(in) :: oneRadiateFields
@@ -952,7 +952,6 @@ contains
              !-ozone from CTM model (conversion from ppbm to kg/m3)
              do3(i,j,k)=chem1_g(O3,ngrid)%sc_p(kvert,i,j)*1.D-9*dair(i,j,k)
           end do
-
 
 
           call mclatchyTuv(3,m1,IF_adap,koff(i,j),jday  &

@@ -69,6 +69,9 @@ module ModRbnd
   use ModScalarTable, only: &
        ScalarTable
 
+   use mem_aer1, only: &
+       NonNegScalar
+
   implicit none
 
   include "constants.h"
@@ -462,9 +465,11 @@ contains
     ! pointer intent(in), values intent(inout)
 
     integer :: i 
+print *,'LFR-DBG: ',mxyzp,scp(1:10),size(scp), associated(scp)
     do i = 1,mxyzp
-       scp(i) = max(0.,scp(i))
+         scp(i) = max(0.,scp(i))
     enddo
+
   end subroutine KeepTracersNonnegScalar
 
   subroutine latbnd(mzp,mxp,myp,ia,iz,ja,jz,ibcon,nxtnest,ngrid,ibnd,jbnd, &
@@ -1352,11 +1357,14 @@ end subroutine latset
     if( ccatt == 1 .and. CHEMISTRY >= 0) then
        mxyzp = mzp*mxp*myp
        do n = 1,oneScalarTabSize
-
+         !print *,'LFR-DBG: trsets: n, oneScalarTabSize, NADDSC, NSPECIES_TRANSPORTED = ', &
+         !     n, oneScalarTabSize, NADDSC, NSPECIES_TRANSPORTED
           if(n .le. (oneScalarTabSize - ( NADDSC + NSPECIES_TRANSPORTED) )) cycle
+          !if(.not. associated(oneScalarTab(n)%var_p_1D)) cycle !LFR-teste - retirar
 
-          call KeepTracersNonnegScalar(mxyzp,oneScalarTab(n)%var_p_1D)
-
+          !call KeepTracersNonnegScalar(mxyzp,oneScalarTab(n)%var_p_1D)
+          call NonNegScalar(mxp,myp,mzp,oneScalarTab(n)%var_p_3D)
+       
        enddo
     endif
 
