@@ -893,7 +893,7 @@ contains
           endif
        end do
     end do
-
+!print *,'LFR-DBG: is2DoTuv? ',is2DoTuv;call flush(6)
     if(.not. is2DoTuv) return
 
     do j=ja,jz
@@ -913,7 +913,7 @@ contains
          dair(ia,ja,:),rv ,zml(ia,ja,2:2),ztl(ia,ja,2:2), do3(ia,ja,2:2),&
          dzl(ia,ja,2:2),1,1,rgas,g,stefan,1,mclat,mcol)
     !print*,'3 NARAD=',narad;call flush(6)
-
+!print *,'LFR-DBG: after mclatchyTuv(2)';call flush(6)
     !Doing the vertical levels
     do j=ja,jz
        do i=ia,iz
@@ -968,7 +968,7 @@ contains
                ,zml(i,j,1:nrad(i,j)),ztl(i,j,1:nrad(i,j)) &
                ,do3(i,j,1:nrad(i,j)),dzl(i,j,1:nrad(i,j)) &
                ,i,j,rgas,g,stefan,nrad(i,j),mclat,mcol)
-
+!print *,'LFR-DBG: after mclatchyTuv(3)';call flush(6)
           if(oneNamelistFile%ilwrtyp == 4 .and. oneNamelistFile%iswrtyp == 4 ) then ! carma ON
 
              !idaot(i,j) = MAX(MIN(INT(10*((ANINT(10.*carma(ngrid)%aot(i,j,11))/10.)+0.1)/2.),9),1)
@@ -1012,7 +1012,7 @@ contains
           endif
        end do
     end do
-
+!print *,'LFR-DBG: after set aerosol - Radiation selected = ',oneNamelistFile%ilwrtyp,'/',oneNamelistFile%iswrtyp;call flush(6)
     if(oneNamelistFile%ilwrtyp == 6 .and. oneNamelistFile%iswrtyp == 6) then
        do j=ja,jz
           do i=ia,iz
@@ -1021,9 +1021,9 @@ contains
              end do
           end do
        end do
-       return
+       !return
     endif
-
+!print *,'LFR-DBG: after set co3 from TUV';call flush(6)
     do j=ja,jz
        do i=ia,iz
           do k = 1,nrad(i,j)
@@ -1032,7 +1032,7 @@ contains
           end do
        end do
     end do
-
+!print *,'LFR-DBG: after set z and dzl';call flush(6)
     do j=ja,jz
        do i=ia,iz
           zbase(i,j)=zml(i,j,1) * 1.e-3 !unit (km)
@@ -1040,7 +1040,7 @@ contains
           dzl(i,j,1)  = zml(i,j,2) - zml(i,j,1)!unit (m)
        end do
     end do
-
+!print *,'LFR-DBG: after set zbase and ztop';call flush(6)
 
     ! -adjust  dzl
     do j=ja,jz
@@ -1050,7 +1050,7 @@ contains
           end do
        end do
     end do
-
+!print *,'LFR-DBG: after adjust dzl';call flush(6)
 
     do j=ja,jz
        do i=ia,iz
@@ -1077,7 +1077,7 @@ contains
           end do
        end do
     end do
-
+!print *,'LFR-DBG: after set co3, cair, airden';call flush(6)
     !LFR>   !--------lixo - start
     !LFR>     DO j=ja,jz
     !LFR>   DO i=ia,iz
@@ -1126,7 +1126,7 @@ contains
        end do
     end if
     !----------- ok end
-
+!print *,'LFR-DBG: after set so2col and no2col';call flush(6)
     do j=ja,jz
        do i=ia,iz
           do k = 1,nrad(i,j)-1
@@ -1137,7 +1137,7 @@ contains
           tlay_(i,j,nrad(i,j)) = temprd(i,j,nrad(i,j))
        end do
     end do
-
+!print *,'LFR-DBG: before set cloud and aerosol';call flush(6)
     if(oneNamelistFile%ilwrtyp == 4 .and. oneNamelistFile%iswrtyp == 4 ) then ! carma on
        do j=ja,jz
           do i=ia,iz
@@ -1171,6 +1171,7 @@ contains
 
     endif
 
+    !print *,'LFR-DBG: after set cloud and aerosol';call flush(6)
     if(Is2PrintIn) then
        do j=ja,jz
           do i=ia,iz
@@ -1204,6 +1205,7 @@ contains
     call AllocIndex(blockSize,ia,ja,iz,jz,sza_(ia:iz,ja:jz),.true.)
 
     !For each block
+!    print *,'LFR-DBG: number of blocks = ',nob, ' - begin loop!';call flush(6)
     do nOfBlock=1,nob
 
        !Allocating internal data structure
@@ -1285,6 +1287,7 @@ contains
              albedo(iob,iw)=albedo_(iaux,jaux)
           end do
        end do !
+!print *,'LFR-DBG: calling TUV for block ',nOfBlock,'/',nob;call flush(6)
        call Tuv( &
             mynum,     & ! Number of this processor
             block_End(nOfBlock), & ! Size of each column
