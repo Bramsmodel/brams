@@ -92,6 +92,7 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
     use mem_grid, only: oneGlobalGridData, nnxp, nnyp, &
                         iyear1,imonth1,idate1,ihour1, &
                         timmax, timeunit,npatch
+    use mem_leaf, only : slz
     use io_params, only: frqanl
     use netcdf, ONLY: nf90_def_var, &
                       nf90_def_dim, &
@@ -119,7 +120,6 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
 
     integer, dimension(300) :: lenDim,nat
     integer :: vdim,levs,an,ntimes,id,ivp
-    real :: slayer(oneBramsGrid%nzg)
     real(kind=r8) :: seconds
     real :: lon(nnxp(1)),lat(nnyp(1))
     character(len=8) :: cVar
@@ -139,7 +139,7 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
     CHECK_NF90(iErrNumber)
     iErrNumber = nf90_def_dim(ncid, "latitude", nnyp(1), LatDimId)
     CHECK_NF90(iErrNumber)
-    iErrNumber = nf90_def_dim(ncid, "level",onePostGrid%nVert, LevDimId)
+    iErrNumber = nf90_def_dim(ncid, "pressure_level",onePostGrid%nVert, LevDimId)
     CHECK_NF90(iErrNumber)
     ntimes=1!timmax/frqanl
     iErrNumber = nf90_def_dim(ncid, "time", ntimes, TimDimID)
@@ -157,7 +157,7 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
     iErrNumber = nf90_def_var(ncid, "latitude", nf90_float, (/LatDimId/), LatVarId)
     CHECK_NF90(iErrNumber)
 
-    iErrNumber = nf90_def_var(ncid, "level", nf90_float, (/LevDimId/), LevVarId)
+    iErrNumber = nf90_def_var(ncid, "pressure_level", nf90_float, (/LevDimId/), LevVarId)
     CHECK_NF90(iErrNumber)
 
     iErrNumber = nf90_def_var(ncid, "time", nf90_float, (/TimDimId/), TimVarId)
@@ -170,7 +170,7 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
     iErrNumber = nf90_put_att(ncid, LonVarId, "long_name", "longitude")
     iErrNumber = nf90_put_att(ncid, LatVarId, "units", "degrees_north")
     iErrNumber = nf90_put_att(ncid, LatVarId, "long_name", "latitude")
-    iErrNumber = nf90_put_att(ncid, LevVarId, "units", "mBar")
+    iErrNumber = nf90_put_att(ncid, LevVarId, "units", "mb")
     iErrNumber = nf90_put_att(ncid, LevVarId, "long_name", "pressure level")
     iErrNumber = nf90_put_att(ncid, TimVarId, "units", "hours since 1900-01-01 00:00:00")
     iErrNumber = nf90_put_att(ncid, TimVarId, "long_name", "time")
@@ -283,11 +283,7 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
     iErrNumber = nf90_put_var(ncid, LevVarId, onePostGrid%vertScaleValues)
     CHECK_NF90(iErrNumber)
 
-    !Filling Soil layers - Just putting a number to represent it
-    do i=1,oneBramsGrid%nzg
-      slayer(i)=real(i)
-    enddo
-    iErrNumber = nf90_put_var(ncid, SoiVarId, slayer)
+    iErrNumber = nf90_put_var(ncid, SoiVarId, slz(1:oneBramsGrid%nzg))
     CHECK_NF90(iErrNumber)
     
     !Filling Times
