@@ -17,12 +17,14 @@ Module ModPostgridNetCDF
 
   use mem_grid, only: time
 
+  implicit none
 
   !For netCDF
   include "constants.h"
   character(len=256) :: netCDFFileName
   logical :: netCDFFirstTime
-  integer :: ncid,LatDimID,LonDimID,LevDimID,timDimId,SurDimID,SoiDimID
+  integer :: ncid,LatDimId,LonDimId,LevDimId,timDimId,SoiDimId
+  integer :: LonVarId, LatVarId, LevVarId, TimVarId, SoiVarId
   character(len=256), allocatable :: netCdfFieldName(:)
   integer, allocatable :: netCdfNLevCode(:)
   integer :: VarDimId(1000)
@@ -133,60 +135,48 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
 
     nan = IEEE_Value(nan, IEEE_QUIET_NAN)
 
-    iErrNumber = nf90_def_dim(ncid, "longitude", nnxp(1), LonDimID)
+    iErrNumber = nf90_def_dim(ncid, "longitude", nnxp(1), LonDimId)
     CHECK_NF90(iErrNumber)
-    iErrNumber = nf90_def_dim(ncid, "latitude", nnyp(1), LatDimID)
+    iErrNumber = nf90_def_dim(ncid, "latitude", nnyp(1), LatDimId)
     CHECK_NF90(iErrNumber)
-    iErrNumber = nf90_def_dim(ncid, "level",onePostGrid%nVert, LevDimID)
+    iErrNumber = nf90_def_dim(ncid, "level",onePostGrid%nVert, LevDimId)
     CHECK_NF90(iErrNumber)
     ntimes=1!timmax/frqanl
     iErrNumber = nf90_def_dim(ncid, "time", ntimes, TimDimID)
     CHECK_NF90(iErrNumber)
-    iErrNumber = nf90_def_dim(ncid, "soil_level", oneBramsGrid%nzg, SoiDimID)
+    iErrNumber = nf90_def_dim(ncid, "soil_level", oneBramsGrid%nzg, SoiDimId)
     CHECK_NF90(iErrNumber)
 
     ntimes=1
     if (.not. allocated(hoursFrom1900)) allocate(hoursFrom1900(nTimes))
 
-    ! Define the variable Longitude
-    iErrNumber = nf90_def_var(ncid, "longitude", nf90_float, &
-    (/LonDimId/), LonDimId)
+    ! Define the variables of the dimensions
+    iErrNumber = nf90_def_var(ncid, "longitude", nf90_float, (/LonDimId/), LonVarId)
     CHECK_NF90(iErrNumber)
 
-    ! Define the variable Latitude
-    iErrNumber = nf90_def_var(ncid, "latitude", nf90_float, &
-    (/LatDimId/), LatDimId)
+    iErrNumber = nf90_def_var(ncid, "latitude", nf90_float, (/LatDimId/), LatVarId)
     CHECK_NF90(iErrNumber)
 
-    ! Define the variable Level
-    iErrNumber = nf90_def_var(ncid, "level", nf90_float, &
-    (/LevDimId/), LevDimId)
+    iErrNumber = nf90_def_var(ncid, "level", nf90_float, (/LevDimId/), LevVarId)
     CHECK_NF90(iErrNumber)
 
-    ! Define the variable Level
-    iErrNumber = nf90_def_var(ncid, "time", nf90_float, &
-    (/TimDimId/), TimDimId)
+    iErrNumber = nf90_def_var(ncid, "time", nf90_float, (/TimDimId/), TimVarId)
     CHECK_NF90(iErrNumber)
 
-    ! Define the variable Level
-    iErrNumber = nf90_def_var(ncid, "soil_level", nf90_float, &
-    (/SoiDimId/), SoiDimId)
+    iErrNumber = nf90_def_var(ncid, "soil_level", nf90_float, (/SoiDimId/), SoiVarId)
     CHECK_NF90(iErrNumber)
 
-    iErrNumber = nf90_redef(ncid)
-    CHECK_NF90(iErrNumber)
-
-    iErrNumber = nf90_put_att(ncid, LonDimId, "units", "degrees_east")
-    iErrNumber = nf90_put_att(ncid, LonDimId, "long name", "longitude")
-    iErrNumber = nf90_put_att(ncid, LatDimId, "units", "degrees_north")
-    iErrNumber = nf90_put_att(ncid, LatDimId, "long name", "latitude")
-    iErrNumber = nf90_put_att(ncid, LevDimId, "units", "mBar")
-    iErrNumber = nf90_put_att(ncid, LevDimId, "long name", "pressure level")
-    iErrNumber = nf90_put_att(ncid, TimDimId, "units", "hours since 1900-01-01 00:00:00")
-    iErrNumber = nf90_put_att(ncid, TimDimId, "long name", "time")   
-    iErrNumber = nf90_put_att(ncid, TimDimId, "calendar", "gregorian")
-    iErrNumber = nf90_put_att(ncid, soiDimId, "units", "m")
-    iErrNumber = nf90_put_att(ncid, soiDimId, "long name", "soil level")
+    iErrNumber = nf90_put_att(ncid, LonVarId, "units", "degrees_east")
+    iErrNumber = nf90_put_att(ncid, LonVarId, "long_name", "longitude")
+    iErrNumber = nf90_put_att(ncid, LatVarId, "units", "degrees_north")
+    iErrNumber = nf90_put_att(ncid, LatVarId, "long_name", "latitude")
+    iErrNumber = nf90_put_att(ncid, LevVarId, "units", "mBar")
+    iErrNumber = nf90_put_att(ncid, LevVarId, "long_name", "pressure level")
+    iErrNumber = nf90_put_att(ncid, TimVarId, "units", "hours since 1900-01-01 00:00:00")
+    iErrNumber = nf90_put_att(ncid, TimVarId, "long_name", "time")
+    iErrNumber = nf90_put_att(ncid, TimVarId, "calendar", "gregorian")
+    iErrNumber = nf90_put_att(ncid, SoiVarId, "units", "m")
+    iErrNumber = nf90_put_att(ncid, SoiVarId, "long_name", "soil level")
 
     cnt=0
     do ivp = 1, oneNamelistFile%nvp
@@ -277,7 +267,7 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
       lat(i)=oneGlobalGridData(1)%global_glat(1,nnyp(1)-i+1)
     end do
 
-    iErrNumber = nf90_put_var(ncid, LatDimId, lat)
+    iErrNumber = nf90_put_var(ncid, LatVarId, lat)
     CHECK_NF90(iErrNumber)
 
     !Making glon from 0 to 360 east direction
@@ -287,17 +277,17 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
         lon(i)=oneGlobalGridData(1)%global_glon(i,1)
     enddo
 
-    iErrNumber = nf90_put_var(ncid, LonDimId, lon)
+    iErrNumber = nf90_put_var(ncid, LonVarId, lon)
     CHECK_NF90(iErrNumber)
 
-    iErrNumber = nf90_put_var(ncid, LevDimId, onePostGrid%vertScaleValues)
+    iErrNumber = nf90_put_var(ncid, LevVarId, onePostGrid%vertScaleValues)
     CHECK_NF90(iErrNumber)
 
     !Filling Soil layers - Just putting a number to represent it
     do i=1,oneBramsGrid%nzg
       slayer(i)=real(i)
     enddo
-    iErrNumber = nf90_put_var(ncid, SoiDimId, slayer)
+    iErrNumber = nf90_put_var(ncid, SoiVarId, slayer)
     CHECK_NF90(iErrNumber)
     
     !Filling Times
@@ -310,8 +300,8 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
     do i=1,ntimes
       hoursFrom1900(i)=(((frqanl*(i-1))+seconds)/3600.)-24
     enddo
-    !Finally put the array in TimDimId
-    iErrNumber = nf90_put_var(ncid, TimDimId, hoursFrom1900)
+    !Finally put the array in TimVarId
+    iErrNumber = nf90_put_var(ncid, TimVarId, hoursFrom1900)
     CHECK_NF90(iErrNumber)
 
     netCDFFirstTime=.false.
@@ -359,10 +349,6 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
     character(len=256) :: varName(500),name
     real :: varArray(nlon,nlat)
     type(PostVarType) :: one_post_variable
-
-    iErrNumber = nf90_put_var(ncid, LatDimId, lat)
-    CHECK_NF90(iErrNumber)
-
 
     one_post_variable = getPostVariable(fieldName)
     call invertLats(OutputArray,varArray,nlon,nlat)
