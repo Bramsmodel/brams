@@ -47,9 +47,6 @@ module ModMicGfdlDriver
        i0, &
        j0        ! INTENT(IN)
 
-  use io_params, only: &
-       frqanl !INTENT(IN)
-
   use gfdl_cloud_microphys_mod, only: &
        gfdl_cloud_microphys_driver,  &
        gfdl_cloud_microphys_init
@@ -74,10 +71,6 @@ module ModMicGfdlDriver
   public :: micro_gfdl
 
 contains
-
-
-
-
 
   subroutine micro_gfdl(oneNamelistFile, oneBasicFields, oneMicroFields)
     type(NamelistFile), pointer, intent(in) :: oneNamelistFile

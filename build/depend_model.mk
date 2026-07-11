@@ -1017,7 +1017,7 @@ ModMessageSet.o : $(MPI)/ModMessageSet.f90 ModNeighbourNodes.o mem_grid.o \
 	rm -f $(<F:.f90=.f90)
 
 ModMicGfdlDriver.o : $(MICRO)/ModMicGfdlDriver.f90 node_mod.o ModBasicFields.o \
-	mem_grid.o rconstants.o io_params.o gfdl_cloud_microphys.o ModMicroFields.o \
+	mem_grid.o rconstants.o gfdl_cloud_microphys.o ModMicroFields.o \
 	ModNamelistFile.o mem_leaf.o 
 	@cp -f $< $(<F:.f90=.f90)
 	$(F_COMMAND) $(<F:.f90=.f90) $(EXTRAFLAGSF)
