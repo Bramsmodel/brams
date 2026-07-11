@@ -52,8 +52,8 @@
    integer, parameter :: kind_rn = kind(1.0)
    !# native real
 
-   character(len=*), parameter :: c_modelVersion='Rev. 6.0'
-   character(len=*), parameter :: modelVersion='Rev. 6.0'
+   character(len=*), parameter :: c_modelVersion='Rev. 7.0'
+   character(len=*), parameter :: modelVersion='Rev. 7.0'
    character(len=*), parameter :: c_license='CC Attribution-ShareAlike 4.0 International'
    !# Last version of model
 
