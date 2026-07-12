@@ -58,6 +58,7 @@ module io_params
 
   real, public :: frqhis ! from RAMSIN
   real, public :: frqanl ! from RAMSIN
+  real, public :: frqpost ! from RAMSIN
   real, public :: timstr ! from RAMSIN
   real, public :: avgtim ! from RAMSIN
   real, public :: frqlite ! from RAMSIN
@@ -299,6 +300,7 @@ contains
     afilout = oneNamelistFile%afilout
     avgtim = oneNamelistFile%avgtim
     frqanl = oneNamelistFile%frqanl
+    frqpost = oneNamelistFile%frqpost
     frqhis = oneNamelistFile%frqhis
     frqlite = oneNamelistFile%frqlite
     frqmean = oneNamelistFile%frqmean

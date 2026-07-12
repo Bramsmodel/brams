@@ -104,6 +104,7 @@ module mem_varinit
   real :: varf_times(maxnudfiles)
 
   character(len=f_name_length)       :: varfpfx ! from RAMSIN
+  character(len=20)       :: varfpfx_vartype ! from RAMSIN
   ! Modif. by ALF
 
   real :: vtime1
@@ -386,6 +387,7 @@ contains
     tnudlat = oneNamelistFile%tnudlat
     tnudtop = oneNamelistFile%tnudtop
     varfpfx = oneNamelistFile%varfpfx
+    varfpfx_vartype = oneNamelistFile%varfpfx_vartype
     vwait1 = oneNamelistFile%vwait1
     vwaittot = oneNamelistFile%vwaittot
     wt_nudge_grid = oneNamelistFile%wt_nudge_grid

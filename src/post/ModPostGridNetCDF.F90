@@ -8,34 +8,32 @@ Module ModPostgridNetCDF
   use ModBramsGrid, only: BramsGrid
 
   use ModPostUtils, only: UpperCase, &
-                          LowerCase
+                          LowerCase, &
+                          undef
 
   use ModPostTypes, ONLY: PostVarType, &
                           postgrid,   &
                           getPostVariable, &
                           all_post_variables
 
-  use mem_grid, only: time
 
   implicit none
 
   !For netCDF
-  include "constants.h"
   character(len=256) :: netCDFFileName
   logical :: netCDFFirstTime
   integer :: ncid,LatDimId,LonDimId,LevDimId,timDimId,SoiDimId
   integer :: LonVarId, LatVarId, LevVarId, TimVarId, SoiVarId
-  character(len=256), allocatable :: netCdfFieldName(:)
-  integer, allocatable :: netCdfNLevCode(:)
   integer :: VarDimId(1000)
   character(len=256) :: netCdfFieldDescription(1000)
   character(len=256) :: netCdfFieldUnits(1000)
-  real,allocatable :: hoursFrom1900(:)
 
   public :: FillNetcdfVarControlFile
   public :: netCDFFileName
   public :: netCDFFirstTime
   public :: OpenNetCDFBinaryFile
+  public :: netCdfPostField2D
+  public :: netCdfPostField3D
 
 contains
 
@@ -64,14 +62,15 @@ subroutine OpenNetCDFBinaryFile(oneNamelistFile, onePostGrid, oneBramsGrid, igri
                       nf90_write, &
                       nf90_clobber, &
                       nf90_netcdf4
+    use mem_grid, only: time
+
     IMPLICIT NONE
     type(NamelistFile), pointer :: oneNamelistFile
     type(PostGrid), pointer :: onePostGrid
     type(BramsGrid), pointer :: oneBramsGrid  
     integer, intent(in) :: igrid
 
-    integer :: ierr
-
+    integer :: iErrNumber
     character(len=1) :: c0
 
     write(c0,fmt='(I1)') igrid
@@ -89,22 +88,20 @@ subroutine OpenNetCDFBinaryFile(oneNamelistFile, onePostGrid, oneBramsGrid, igri
 end subroutine OpenNetCDFBinaryFile
 
 subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
-    use mem_grid, only: oneGlobalGridData, nnxp, nnyp, &
-                        iyear1,imonth1,idate1,ihour1, &
-                        timmax, timeunit,npatch
-    use mem_leaf, only : slz
-    use io_params, only: frqanl
-    use netcdf, ONLY: nf90_def_var, &
+    use mem_grid, only: oneGlobalGridData,npatch,time &
+                        iyear1,imonth1,idate1,ihour1
+    use mem_leaf, only: slz
+    use netcdf, only: nf90_def_var, &
                       nf90_def_dim, &
                       nf90_redef,   &
                       nf90_put_att, &
                       nf90_enddef,  &
                       nf90_put_var, &
-                      nf90_float
+                      nf90_float,   &
+                      nf90_int
 
     use dump, only: dumpMessage
     use ModDateUtils, ONLY: date_abs_secs2
-    use, intrinsic :: ieee_arithmetic, only: IEEE_Value, IEEE_QUIET_NAN
     implicit none
 
     type(NamelistFile), pointer :: oneNamelistFile
@@ -112,58 +109,44 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
     type(BramsGrid), pointer :: oneBramsGrid
     type(PostVarType) :: one_post_variable
 
-    include "constants.h"
-
-    integer :: i,ndims,nvars,cnt
-    character(len=256) :: name,varname(30),atName(300),atValue(300)
+    integer :: iErrNumber
+    integer :: i,cnt,ivp
     character(len = 16) :: varNameUpper,vName,vNameTmp
 
-    integer, dimension(300) :: lenDim,nat
-    integer :: vdim,levs,an,ntimes,id,ivp
-    real(kind=r8) :: seconds
-    real :: lon(nnxp(1)),lat(nnyp(1))
+    real :: lon(onePostGrid%nLon),lat(onePostGrid%nLat)
     character(len=8) :: cVar
-    real :: nan
+    character(len=24) :: datestring
     integer :: all_post_idx
 
     integer, parameter :: deflate_level = 1
+    integer, parameter :: ntimes = 1
     character(len=*), parameter :: h='**(FillNetcdfVarControlFile)**'
     logical, parameter :: dumpLocal=.false.
 
     !if(.not. netCDFFirstTime) return
     if (oneBramsGrid%mchnum /= oneBramsGrid%master_num) return
 
-    nan = IEEE_Value(nan, IEEE_QUIET_NAN)
-
-    iErrNumber = nf90_def_dim(ncid, "longitude", nnxp(1), LonDimId)
+    iErrNumber = nf90_def_dim(ncid, "longitude", onePostGrid%nLon, LonDimId)
     CHECK_NF90(iErrNumber)
-    iErrNumber = nf90_def_dim(ncid, "latitude", nnyp(1), LatDimId)
+    iErrNumber = nf90_def_dim(ncid, "latitude", onePostGrid%nLat, LatDimId)
     CHECK_NF90(iErrNumber)
     iErrNumber = nf90_def_dim(ncid, "pressure_level",onePostGrid%nVert, LevDimId)
     CHECK_NF90(iErrNumber)
-    ntimes=1!timmax/frqanl
-    iErrNumber = nf90_def_dim(ncid, "time", ntimes, TimDimID)
-    CHECK_NF90(iErrNumber)
     iErrNumber = nf90_def_dim(ncid, "soil_level", oneBramsGrid%nzg, SoiDimId)
     CHECK_NF90(iErrNumber)
-
-    ntimes=1
-    if (.not. allocated(hoursFrom1900)) allocate(hoursFrom1900(nTimes))
+    iErrNumber = nf90_def_dim(ncid, "time", ntimes, TimDimID)
+    CHECK_NF90(iErrNumber)
 
     ! Define the variables of the dimensions
     iErrNumber = nf90_def_var(ncid, "longitude", nf90_float, (/LonDimId/), LonVarId)
     CHECK_NF90(iErrNumber)
-
     iErrNumber = nf90_def_var(ncid, "latitude", nf90_float, (/LatDimId/), LatVarId)
     CHECK_NF90(iErrNumber)
-
     iErrNumber = nf90_def_var(ncid, "pressure_level", nf90_float, (/LevDimId/), LevVarId)
     CHECK_NF90(iErrNumber)
-
-    iErrNumber = nf90_def_var(ncid, "time", nf90_float, (/TimDimId/), TimVarId)
-    CHECK_NF90(iErrNumber)
-
     iErrNumber = nf90_def_var(ncid, "soil_level", nf90_float, (/SoiDimId/), SoiVarId)
+    CHECK_NF90(iErrNumber)
+    iErrNumber = nf90_def_var(ncid, "time", nf90_int, (/TimDimId/), TimVarId)
     CHECK_NF90(iErrNumber)
 
     iErrNumber = nf90_put_att(ncid, LonVarId, "units", "degrees_east")
@@ -172,7 +155,10 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
     iErrNumber = nf90_put_att(ncid, LatVarId, "long_name", "latitude")
     iErrNumber = nf90_put_att(ncid, LevVarId, "units", "mb")
     iErrNumber = nf90_put_att(ncid, LevVarId, "long_name", "pressure level")
-    iErrNumber = nf90_put_att(ncid, TimVarId, "units", "hours since 1900-01-01 00:00:00")
+
+    write(datestring, '(I4.4, "-", I2.2, "-", I2.2, " ", I2.2, ":00:00")') iyear1, imonth1, idate1, ihour1
+
+    iErrNumber = nf90_put_att(ncid, TimVarId, "units", "seconds since "//datestring)
     iErrNumber = nf90_put_att(ncid, TimVarId, "long_name", "time")
     iErrNumber = nf90_put_att(ncid, TimVarId, "calendar", "gregorian")
     iErrNumber = nf90_put_att(ncid, SoiVarId, "units", "m")
@@ -186,8 +172,8 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
       vName = trim(LowerCase(vName))
 
       if (len(trim(one_post_variable%fieldName)) .eq. 0) then
-         write(logUnit, "(a)") "**(OnePostField)** Post field " // varName // " does not exists in list of variables."
-         write(logUnit, "(a)") "Model will continue ..."
+         print *,"**(OnePostField)** Post field " // vName // " does not exists in list of variables."
+         print *,"Model will continue ..."
       else
          select case (one_post_variable%ivar_type)
          case (2) !Surface var
@@ -247,9 +233,9 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
 
     do i=1,cnt
 
-       iErrNumber = nf90_put_att(ncid, VarDimId(i), "_FillValue", nan)
+       iErrNumber = nf90_put_att(ncid, VarDimId(i), "_FillValue", undef)
        CHECK_NF90(iErrNumber)
-       iErrNumber = nf90_put_att(ncid, VarDimId(i), "missing_value", nan)
+       iErrNumber = nf90_put_att(ncid, VarDimId(i), "missing_value", undef)
        CHECK_NF90(iErrNumber)
        iErrNumber = nf90_put_att(ncid, VarDimId(i), "units" &
                  ,trim(netCdfFieldUnits(i)))
@@ -263,15 +249,15 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
     CHECK_NF90(iErrNumber)
 
     !Fiiling lons, lats and pressure levels 
-    do i=1,nnyp(1)
-      lat(i)=oneGlobalGridData(1)%global_glat(1,nnyp(1)-i+1)
+    do i=1,onePostGrid%nLat
+      lat(i)=oneGlobalGridData(1)%global_glat(1,onePostGrid%nLat-i+1)
     end do
 
     iErrNumber = nf90_put_var(ncid, LatVarId, lat)
     CHECK_NF90(iErrNumber)
 
     !Making glon from 0 to 360 east direction
-    do i=1,nnxp(1)
+    do i=1,onePostGrid%nLon
       !if(oneGlobalGridData(1)%global_glon(i,1)<0) &
         !lon(i)=360+oneGlobalGridData(1)%global_glon(i,1)
         lon(i)=oneGlobalGridData(1)%global_glon(i,1)
@@ -279,45 +265,28 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
 
     iErrNumber = nf90_put_var(ncid, LonVarId, lon)
     CHECK_NF90(iErrNumber)
-
     iErrNumber = nf90_put_var(ncid, LevVarId, onePostGrid%vertScaleValues)
     CHECK_NF90(iErrNumber)
-
     iErrNumber = nf90_put_var(ncid, SoiVarId, slz(1:oneBramsGrid%nzg))
     CHECK_NF90(iErrNumber)
-    
-    !Filling Times
-    !First convert the initial date to seconds
-    if (dumpLocal) then
-       call MsgDump(h//" invokes date_abs_secs2")
-    end if
-    call date_abs_secs2(iyear1,imonth1,idate1,ihour1,seconds)
-    !Now put increments of frqanl in hours inside array
-    do i=1,ntimes
-      hoursFrom1900(i)=(((frqanl*(i-1))+seconds)/3600.)-24
-    enddo
-    !Finally put the array in TimVarId
-    iErrNumber = nf90_put_var(ncid, TimVarId, hoursFrom1900)
+    iErrNumber = nf90_put_var(ncid, TimVarId, time)
     CHECK_NF90(iErrNumber)
 
     netCDFFirstTime=.false.
 
-  end subroutine FillNetcdfVarControlFile
+end subroutine FillNetcdfVarControlFile
 
-  subroutine netCdfPostField2D(fieldName,nLon,nLat,OutputArray,netcdfIdIndex)
+subroutine netCdfPostField2D(fieldName,nLon,nLat,OutputArray,netcdfIdIndex)
 
     use netcdf, ONLY: nf90_put_var
     use dump, only: dumpMessage
-    use mem_grid, only: time
 
-    include "constants.h"
     integer, intent(in) :: nlon,nlat
     character(len=*), intent(in) :: fieldName
     real, intent(in) :: OutputArray(nlon, nlat)
     integer, intent(in) :: netcdfIdIndex
 
-    integer :: id, nt
-    character(len=256) :: varName(500),name
+    integer :: iErrNumber
     real :: varArray(nlon, nlat)
     type(PostVarType) :: one_post_variable
 
@@ -327,22 +296,19 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
     iErrNumber = nf90_put_var(ncid,one_post_variable%netcdfId(netcdfIdIndex),varArray,start=(/1, 1, 1/))
     CHECK_NF90(iErrNumber)
 
-  end subroutine netCdfPostField2D
+end subroutine netCdfPostField2D
 
-  subroutine netCdfPostField3D(fieldName,nLon,nLat,ilev,OutputArray,netcdfIdIndex)
+subroutine netCdfPostField3D(fieldName,nLon,nLat,ilev,OutputArray,netcdfIdIndex)
 
     use netcdf, ONLY: nf90_put_var
     use dump, only: dumpMessage
-    use mem_grid, only: time
 
-    include "constants.h"
     integer, intent(in) :: nlon,nlat,iLev
     character(len=*), intent(in) :: fieldName
     real, intent(in) :: OutputArray(nlon,nlat)
     integer, intent(in) :: netcdfIdIndex
 
-    integer :: id,nt
-    character(len=256) :: varName(500),name
+    integer :: iErrNumber
     real :: varArray(nlon,nlat)
     type(PostVarType) :: one_post_variable
 
@@ -352,9 +318,9 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
     iErrNumber = nf90_put_var(ncid,one_post_variable%netcdfId(netcdfIdIndex),varArray,start=(/1,1,iLev,1/))
     CHECK_NF90(iErrNumber)
 
-  end subroutine netCdfPostField3D
+end subroutine netCdfPostField3D
 
-  subroutine invertLats(iArray,oArray,nLon,nLat)
+subroutine invertLats(iArray,oArray,nLon,nLat)
 
     integer,intent(in) :: nLon,nLat
     real,intent(in) :: iArray(nLon,nLat)
@@ -368,7 +334,7 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
       enddo
     enddo
 
-  end subroutine invertLats
+end subroutine invertLats
 #endif
 end Module ModPostgridNetCDF
 

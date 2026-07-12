@@ -19,7 +19,7 @@ module ModPostOneField2d
        time   ! INTENT(IN)  !DSM
 
   use io_params, only: &
-       frqanl
+       frqpost
 
   use ModOutputUtils, only: &
        GetVarFromMemToOutput
@@ -174,7 +174,7 @@ contains
             oneTurbFields, & ! save for the next step
             oneVarTable, oneVarTableSize)
        !--- output mm/hour
-       OutputField = max(OutputField, 0.0)/(frqanl/3600.)
+       OutputField = max(OutputField, 0.0)/(frqpost/3600.)
 
     case ('RSHORT')
        call GetVarFromMemToOutput ('RSHORT', oneBramsGrid%currGrid, OutputField, &
@@ -272,7 +272,7 @@ contains
        TotPrec= ScrT2N02 + ScrT2N01  ! save for the next step
 
        !--- output mm/hour
-       OutputField = max(OutputField, 0.0)/(frqanl/3600.)
+       OutputField = max(OutputField, 0.0)/(frqpost/3600.)
     case ('LE')
        call GetVarFromMemToOutput ('SFLUX_R', oneBramsGrid%currGrid, OutputField, &
             oneNamelistFile, oneBasicFields, oneTurbFields, &

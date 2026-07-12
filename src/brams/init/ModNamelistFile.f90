@@ -203,6 +203,7 @@ module ModNamelistFile
      integer :: initial
      integer :: nud_type
      character(len=f_name_length)       :: varfpfx
+     character(len=20)       :: varfpfx_vartype
      real :: vwait1
      real :: vwaittot
      character(len=f_name_length) :: nud_hfile
@@ -267,6 +268,7 @@ module ModNamelistFile
      integer :: ihistdel
      real :: frqhis
      real :: frqanl
+     real :: frqpost
      real :: frqlite
      integer :: ipos
      character(len=20)  :: xlite
@@ -797,6 +799,7 @@ contains
     integer :: initial
     integer :: nud_type
     character(len=f_name_length)       :: varfpfx
+    character(len=20)       :: varfpfx_vartype ! MEAN,BOTH,INST,LITE,HIST,ANAL
     real :: vwait1
     real :: vwaittot
     character(len=f_name_length) :: nud_hfile
@@ -863,6 +866,7 @@ contains
     integer :: ihistdel
     real :: frqhis
     real :: frqanl
+    real :: frqpost
     real :: frqlite
     integer :: ipos
     character(len=20)  :: xlite
@@ -908,12 +912,12 @@ contains
 
     namelist /MODEL_FILE_INFO/                                           &
          initial, varfpfx, nudlat,tnudlat, tnudcent, tnudtop, znudtop,   &
-         ioutput, hfilout, afilout, frqhis, frqanl, ipos, topfiles,      &
+         ioutput, hfilout, afilout, frqhis, frqanl, frqpost, ipos, topfiles,      &
          sfcfiles, sstfpfx, ndvifpfx, itoptfn, isstfn, ivegtfn, isoilfn, &
          ndvifn
 
     namelist /MODEL_FILE_INFO2/                                           &
-         nud_type, varfpfx, vwait1, vwaittot, nud_hfile, &
+         nud_type, varfpfx_vartype, vwait1, vwaittot, nud_hfile, &
          timeWindowIAU,ramp, wt_nudge_grid, wt_nudge_uv,&
          wt_nudge_th, wt_nudge_pi, wt_nudge_rt, applyIAU,fileNameIAU,    &
          nud_cond, cond_hfile,    &
@@ -1286,6 +1290,7 @@ contains
     initial	      = 2 ! 2
     nud_type	      = 2 ! 2
     varfpfx	      = varpfx ! will be rewrited on the namelist read, and after too
+    varfpfx_vartype = 'ANAL'
     vwait1	      = 0.
     vwaittot	      = 0.
     nud_hfile	      = '' ! 2
@@ -1364,6 +1369,7 @@ contains
     ipos              = 0
     frqhis	      = 21600. ! 2
     frqanl	      = 10800. ! 2
+    frqpost          =  -1. ! Default value must be less than 0 in order to maintain past behavior when frqanl was the only option
     frqlite             = 0.
     xlite 	      = '/0:0/'
     ylite 	      = '/0:0/'
@@ -2121,6 +2127,8 @@ contains
 
     read (iunit, iostat=err, NML=MODEL_FILE_INFO)
 
+    if ( frqpost < 0) frqpost=frqanl ! Maintain past behavior of Post being controlled by frqanl
+
     if (err /= 0 .and. err /= 106) then
        write(*,"(a)") h//"**(ERROR)** reading section MODEL_FILE_INFO "//&
             &"of namelist file "//trim(oneNamelistFile%fileName)
@@ -2138,6 +2146,7 @@ contains
        write (*,*) "afilout=", trim(afilout)
        write (*,*) "frqhis=", frqhis
        write (*,*) "frqanl=", frqanl
+       write (*,*) "frqpost=", frqpost
        write (*,*) "ipos=", ipos
        write (*,*) "topfiles=", trim(topfiles)
        write (*,*) "sfcfiles=", trim(sfcfiles)
@@ -2162,6 +2171,7 @@ contains
        oneNamelistFile%afilout=afilout
        oneNamelistFile%frqhis=frqhis
        oneNamelistFile%frqanl=frqanl
+       oneNamelistFile%frqpost=frqpost
        oneNamelistFile%ipos=ipos
        oneNamelistFile%topfiles=topfiles
        oneNamelistFile%sfcfiles=sfcfiles
@@ -2239,6 +2249,7 @@ contains
        write (*,*) "pastfn=", trim(pastfn)
        write (*,*) "iclobber=", iclobber
        write (*,*) "ihistdel=", ihistdel
+       write (*,*) "varfpfx_vartype=", varfpfx_vartype
        write (*,*) "frqlite=", frqlite
        write (*,*) "xlite=", xlite
        write (*,*) "ylite=", ylite
@@ -2330,6 +2341,7 @@ contains
        oneNamelistFile%pastfn=pastfn
        oneNamelistFile%iclobber=iclobber
        oneNamelistFile%ihistdel=ihistdel
+       oneNamelistFile%varfpfx_vartype=varfpfx_vartype
        oneNamelistFile%frqlite=frqlite
        oneNamelistFile%xlite=xlite
        oneNamelistFile%ylite=ylite
@@ -3200,6 +3212,9 @@ contains
     call parf_bcast(oneNamelistFile%varfpfx,&
          int(len(oneNamelistFile%varfpfx),i8),&
          oneParallelEnvironment%master_num)
+    call parf_bcast(oneNamelistFile%varfpfx_vartype,&
+         int(len(oneNamelistFile%varfpfx_vartype),i8),&
+         oneParallelEnvironment%master_num)
     call parf_bcast(oneNamelistFile%vwait1,&
          oneParallelEnvironment%master_num)
     call parf_bcast(oneNamelistFile%vwaittot,&
@@ -3353,6 +3368,8 @@ contains
     call parf_bcast(oneNamelistFile%frqhis,&
          oneParallelEnvironment%master_num)
     call parf_bcast(oneNamelistFile%frqanl,&
+         oneParallelEnvironment%master_num)
+    call parf_bcast(oneNamelistFile%frqpost,&
          oneParallelEnvironment%master_num)
     call parf_bcast(oneNamelistFile%frqlite,&
          oneParallelEnvironment%master_num)
@@ -4117,13 +4134,23 @@ contains
     !Block8
     iErrNumber=printOneLineVars(4,(/      &
          conv2String('FRQANL    '       ,"")          &
+         ,conv2String('FRQPOST  '       ,"")          &
+         ,conv2String('FRQLITE  '       ,"")          &
+         ,conv2String('VARFPFX_VARTYPE'       ,"")/),(/     &
+         conv2String(oneNamelistFile%frqanl       ,"F14.1") &
+         ,conv2String(oneNamelistFile%frqpost     ,"F14.1") &
+         ,conv2String(oneNamelistFile%frqlite      ,"F14.1") &
+         ,conv2String(oneNamelistFile%varfpfx_vartype,"A14")/))
+     !Block 8.1
+     iErrNumber=printOneLineVars(4,(/      &
+         conv2String('RAMP       '       ,"")          &
          ,conv2String('APPLYIAU  '       ,"")          &
          ,conv2String('TIMEW  IAU'       ,"")          &
-         ,conv2String('RAMP      '       ,"")/),(/     &
-         conv2String(oneNamelistFile%frqanl       ,"F14.1") &
+         ,conv2String('NOT USED'         ,"")/),(/     &
+         conv2String(oneNamelistFile%ramp       ,"F14.1") &
          ,conv2String(oneNamelistFile%applyIAU     ,"I14.1") &
          ,conv2String(oneNamelistFile%timeWindowIAU,"F14.1") &
-         ,conv2String(oneNamelistFile%ramp         ,"F14.1"  )/))
+         ,conv2String(""         ,"A14"  )/))
     !Block9
     iErrNumber=printOneLineVars(4,(/      &
          conv2String('NUD_TYPE  '       ,"")          &
@@ -4600,7 +4627,7 @@ contains
     iErrNumber=printOneFile('HFILOUT    ',trim(oneNamelistFile%hfilout)    ," O " )
     iErrNumber=printOneFile('AFILOUT    ',trim(oneNamelistFile%afilout)    ," O " )
     iErrNumber=printOneFile('FILENAMEIAU',trim(oneNamelistFile%fileNameIAU),"I/O" )
-    iErrNumber=printOneFile('VARFPFX    ',trim(oneNamelistFile%varfpfx)    ," O " ) 
+    iErrNumber=printOneFile('VARFPFX    ',trim(oneNamelistFile%varfpfx)    ," O " )
     iErrNumber=printOneFile('VARPFX     ',trim(oneNamelistFile%varpfx)     ," I " )
     iErrNumber=printOneFile('NUD_HFILE  ',trim(oneNamelistFile%nud_hfile)  ," I " ) 
     iErrNumber=printOneFile('HFILIN     ',trim(oneNamelistFile%hfilin)     ," I " ) 

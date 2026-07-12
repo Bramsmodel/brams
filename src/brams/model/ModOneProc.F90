@@ -326,6 +326,7 @@ module ModOneProc
        prtcputime,      & ! intent(in)
        avgtim,          & !INTENT(IN)
        frqanl,          & !INTENT(IN)
+       frqpost,         & !INTENT(IN)
        frqlite,         & !INTENT(IN)
        frqmean,         & !INTENT(IN)
        frqhis,          & !INTENT(IN)
@@ -583,8 +584,6 @@ module ModOneProc
        NodePathsBuffAlloc, &
        domain_decomposition_dump
 
-  use dump, only: &
-       dumpMessage !dump function
 
   implicit none
 
@@ -1389,10 +1388,12 @@ contains
                   iflag==1
           end if
 
-          posFlag = (frqanl>0.0)
+
+
+          posFlag = (frqpost>0.0)
           if (posFlag) then
              posFlag = &
-                  mod(time,frqanl)<dtlongn(1)    .or.  &
+                  mod(time,frqpost)<dtlongn(1)    .or.  &
                   time>=timmax - 0.01*dtlongn(1) .or.  &
                   iflag==1
           end if
@@ -2129,6 +2130,12 @@ contains
     else
        meanFlag=.false.
     endif
+
+   if (mchnum == master_num .and. frqpost /= frqanl) then
+      iErrNumber=dumpMessage(c_tty,c_no,h,c_modelVersion,c_warning, &
+      "FRQPOST != FRQANL is experimental. Not every subroutine has been checked for equality of results.")
+   end if
+
     !srf
     !--(DMK-CCATT-INI)--------------------------------------------------------
     if(applyDF)then

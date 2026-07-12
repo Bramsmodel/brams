@@ -57,6 +57,7 @@ module ModVarfFile
        vwait1, &
        vwaittot, &
        varfpfx, &
+       varfpfx_vartype, &
        lastdate_iv, &
        vtime1, &
        vtime2, &
@@ -456,6 +457,7 @@ contains
     integer :: nc, nf, lnf
     integer :: inyear, inmonth, indate, inhour
     character(len=f_name_length) :: sVarName
+    character(len=1)  :: vnam
 
     integer :: localTime
 
@@ -501,7 +503,14 @@ contains
        if(flag .eq. 2)then
          call makefnam (sVarName, varpref, 0, iyears, imonths, idates, ihours, 'V', '$', 'tag')
        else if(flag .eq. 4)then
-         call makefnam (sVarName, varpref, 0, iyears, imonths, idates, ihours, 'A', 'head', 'txt')
+         if(varfpfx_vartype == 'INST') vnam='A'
+         if(varfpfx_vartype == 'ANAL') vnam='A'
+         if(varfpfx_vartype == 'LITE') vnam='L'
+         if(varfpfx_vartype == 'MEAN') vnam='M'
+         if(varfpfx_vartype == 'BOTH') vnam='B'
+
+         call makefnam (sVarName, varpref, 0, iyears, imonths, idates, ihours, vnam, 'head', 'txt')
+
        end if  
        inquire(file=sVarName(1:len_trim(sVarName)), exist=there)
        indice    = 1 

@@ -164,10 +164,10 @@ contains
     onePostGrid%template = .false. ! temporary
 
     ! chstep for time scale on post control file
-    ! frqanl should be in seconds; check if it
+    ! frqpost should be in seconds; check if it
     ! represents minutes or hours
 
-    iFrq = oneNamelistFile%frqanl
+    iFrq = oneNamelistFile%frqpost
     cUnits = "sec"
     if (mod(iFrq, 3600) == 0) then
        iFrq = iFrq/3600
