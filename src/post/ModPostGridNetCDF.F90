@@ -88,7 +88,7 @@ subroutine OpenNetCDFBinaryFile(oneNamelistFile, onePostGrid, oneBramsGrid, igri
 end subroutine OpenNetCDFBinaryFile
 
 subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
-    use mem_grid, only: oneGlobalGridData,npatch,time &
+    use mem_grid, only: oneGlobalGridData,npatch,time, &
                         iyear1,imonth1,idate1,ihour1
     use mem_leaf, only: slz
     use netcdf, only: nf90_def_var, &
@@ -113,7 +113,6 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
     integer :: i,cnt,ivp
     character(len = 16) :: varNameUpper,vName,vNameTmp
 
-    real :: lon(onePostGrid%nLon),lat(onePostGrid%nLat)
     character(len=8) :: cVar
     character(len=24) :: datestring
     integer :: all_post_idx
@@ -248,22 +247,9 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
     iErrNumber = nf90_enddef(ncid)
     CHECK_NF90(iErrNumber)
 
-    !Fiiling lons, lats and pressure levels 
-    do i=1,onePostGrid%nLat
-      lat(i)=oneGlobalGridData(1)%global_glat(1,onePostGrid%nLat-i+1)
-    end do
-
-    iErrNumber = nf90_put_var(ncid, LatVarId, lat)
+    iErrNumber = nf90_put_var(ncid, LatVarId, onePostGrid%lat)
     CHECK_NF90(iErrNumber)
-
-    !Making glon from 0 to 360 east direction
-    do i=1,onePostGrid%nLon
-      !if(oneGlobalGridData(1)%global_glon(i,1)<0) &
-        !lon(i)=360+oneGlobalGridData(1)%global_glon(i,1)
-        lon(i)=oneGlobalGridData(1)%global_glon(i,1)
-    enddo
-
-    iErrNumber = nf90_put_var(ncid, LonVarId, lon)
+    iErrNumber = nf90_put_var(ncid, LonVarId, onePostGrid%lon)
     CHECK_NF90(iErrNumber)
     iErrNumber = nf90_put_var(ncid, LevVarId, onePostGrid%vertScaleValues)
     CHECK_NF90(iErrNumber)
@@ -287,13 +273,11 @@ subroutine netCdfPostField2D(fieldName,nLon,nLat,OutputArray,netcdfIdIndex)
     integer, intent(in) :: netcdfIdIndex
 
     integer :: iErrNumber
-    real :: varArray(nlon, nlat)
     type(PostVarType) :: one_post_variable
 
     one_post_variable = getPostVariable(fieldName)
-    call invertLats(OutputArray,varArray,nlon,nlat)
 
-    iErrNumber = nf90_put_var(ncid,one_post_variable%netcdfId(netcdfIdIndex),varArray,start=(/1, 1, 1/))
+    iErrNumber = nf90_put_var(ncid,one_post_variable%netcdfId(netcdfIdIndex),OutputArray,start=(/1, 1, 1/))
     CHECK_NF90(iErrNumber)
 
 end subroutine netCdfPostField2D
@@ -309,13 +293,11 @@ subroutine netCdfPostField3D(fieldName,nLon,nLat,ilev,OutputArray,netcdfIdIndex)
     integer, intent(in) :: netcdfIdIndex
 
     integer :: iErrNumber
-    real :: varArray(nlon,nlat)
     type(PostVarType) :: one_post_variable
 
     one_post_variable = getPostVariable(fieldName)
-    call invertLats(OutputArray,varArray,nlon,nlat)
 
-    iErrNumber = nf90_put_var(ncid,one_post_variable%netcdfId(netcdfIdIndex),varArray,start=(/1,1,iLev,1/))
+    iErrNumber = nf90_put_var(ncid,one_post_variable%netcdfId(netcdfIdIndex),OutputArray,start=(/1,1,iLev,1/))
     CHECK_NF90(iErrNumber)
 
 end subroutine netCdfPostField3D
