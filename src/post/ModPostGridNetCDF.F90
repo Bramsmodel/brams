@@ -98,7 +98,9 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
                       nf90_enddef,  &
                       nf90_put_var, &
                       nf90_float,   &
-                      nf90_int
+                      nf90_int,     &
+                      nf90_set_fill,&
+                      nf90_nofill
 
     use dump, only: dumpMessage
     use ModDateUtils, ONLY: date_abs_secs2
@@ -124,6 +126,9 @@ subroutine FillNetcdfVarControlFile(oneNamelistFile, onePostGrid, oneBramsGrid)
 
     !if(.not. netCDFFirstTime) return
     if (oneBramsGrid%mchnum /= oneBramsGrid%master_num) return
+
+    iErrNumber = nf90_set_fill(ncid, nf90_nofill, i)
+    CHECK_NF90(iErrNumber)
 
     iErrNumber = nf90_def_dim(ncid, "longitude", onePostGrid%nLon, LonDimId)
     CHECK_NF90(iErrNumber)
