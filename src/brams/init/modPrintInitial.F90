@@ -21,7 +21,9 @@ module modPrintInitial
   !# @endwarning
   !#
 
-  use ModGit
+  use ModGit, only: GitBranch, &
+                    GitHash,   &
+                    GitDate
   
   implicit none
 
@@ -201,7 +203,6 @@ contains
        write (*,fmt='(A)') '                                                '//c_pearlWhite//'Revision '//version//c_noColor
        write (*,fmt='(A)')
        write (*,fmt='(A)') '                source from git branch '//GitBranch//'; hash key '//GitHash//'; commit date '//GitDate
-       write (*,fmt='(A)') '                                    compilation date '//CompDate
        write (*,fmt='(A)')
        write (*,fmt='(A)') '                             See more information >> http://brams.cptec.inpe.br'
        write (*,fmt='(A)')
