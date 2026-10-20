@@ -726,7 +726,7 @@ flag_inventario_RJ = 1 !Informa√ß√£o do invent√°rio local por vias para os jogos
 
 
 
-!############# As emissıes para o municÌpio de RJ v„o ser georeferenciadas, por vias ############
+!############# As emiss√µes para o munic√≠pio de RJ v√£o ser georeferenciadas, por vias ############
 
 
 
@@ -767,7 +767,7 @@ if (flag_inventario_RJ == 1) then
                  OPEN(UNIT = 17, FILE = '../extra/UserData/Local.dat',STATUS = 'OLD')
 
                  
-!## Quantidade de pontos para cada tipo de vias onde v„o ser distribuÌdas as emissıes. 
+!## Quantidade de pontos para cada tipo de vias onde v√£o ser distribu√≠das as emiss√µes. 
 
                  pontos_MRJ(1) = 2950   !Estrutural 290516, Angel
                  pontos_MRJ(2) = 3216   !Primarias
@@ -775,11 +775,11 @@ if (flag_inventario_RJ == 1) then
                  pontos_MRJ(4) = 9099   !Coletoras
                  pontos_MRJ(5) = 31802  !Locais
 
-!## Emissıes para o municÌpios de Rio de Janeiro (10^7 kg/ano)
+!## Emiss√µes para o munic√≠pios de Rio de Janeiro (10^7 kg/ano)
                  CO_MRJ = 2.78     
                  NOX_MRJ = 1.76  
 
-!## Porcentagem das emissıes para cada tipo de via.
+!## Porcentagem das emiss√µes para cada tipo de via.
 
                  porcentage(1) = 0.395
                  porcentage(2) = 0.164
@@ -788,7 +788,7 @@ if (flag_inventario_RJ == 1) then
                  porcentage(5) = 0.199
 
 
- !## Ciclo para incluir os dados de emissıes nas vias por tipo.     
+ !## Ciclo para incluir os dados de emiss√µes nas vias por tipo.     
 
 
      DO i=1,5

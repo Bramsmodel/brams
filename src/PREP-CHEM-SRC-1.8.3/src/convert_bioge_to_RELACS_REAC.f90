@@ -120,7 +120,7 @@ endif
 ! KET
 !     change MP 201108   KET = 0 (low reaction of acetone with OH)
 ! in spite of the precious comment, i will convert it, 
-! since in this approach reactivity is taken into account (M S Gácita)
+! since in this approach reactivity is taken into account (M S GÃ¡cita)
 !- ACETONE	=> KET  (Agg_RACM=0.33) (Agg=1)
 if(spc_name == 'KET') then
    ident = ACETONE

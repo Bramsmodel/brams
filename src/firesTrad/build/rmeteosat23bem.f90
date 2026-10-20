@@ -54,7 +54,7 @@ PROGRAM meteosat
 
 
 ! Variables to cross fire location with land use and land cover
-! Uso do solo MCD12Q1 com resuluá∆o variada para cada dado de entrada
+! Uso do solo MCD12Q1 com resolu√ß√£o variada para cada dado de entrada
 ! MODIS E VIIRS 2 km e GOES 8 km. 0,072
 
 	INTEGER, PARAMETER ::  n_cols= 867

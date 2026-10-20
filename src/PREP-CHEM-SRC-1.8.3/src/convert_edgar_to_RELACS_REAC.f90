@@ -60,7 +60,7 @@ character (len=*), intent(in)  :: spc_name_dummy  !kml
 !--     Acids			3.6	1.9		15.1	1.9
 !--     Others		8.1	4.9		-	-
 !--
-!--	All emissions will be consedered as industrial´s 
+!--	All emissions will be consedered as industrial's 
 !-----------------------------------------------------------------------------------
 !--------------------------------------------------------------------
 !--	VOC from TAR -> RACM -> RELACS  

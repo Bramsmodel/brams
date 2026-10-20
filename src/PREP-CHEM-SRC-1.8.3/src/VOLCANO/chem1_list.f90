@@ -70,7 +70,7 @@ MODULE chem1_list
 !     of Potential Importance in 
 !     Environmental Chemistry (Version 3) 
 !     http://www.henrys-law.org 
-!     * indica artigos nao encontrados nesse endereço eletronico
+!     * indica artigos nao encontrados nesse endereÃ§o eletronico
   REAL,PARAMETER,DIMENSION(nspecies) :: hstar=(/&
     1.40E+0              ,   & ! SO2 - 010
     9.90E-4              ,   & ! CO - 012

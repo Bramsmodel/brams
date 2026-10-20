@@ -2634,7 +2634,7 @@ endif
 	    XHE(I,K)=(dsubh(i,k)+DELLAH(I,K))*MBDT+HEO(I,K)
             XQ (I,K)=(dsubq(i,k)+DELLAQ(I,K)+DELLAQC(i,k))*MBDT+QO(I,K)
 
-	    !- don´t feed dellat with dellaqc if
+	    !- don't feed dellat with dellaqc if
 	    !- the detrainment of liquid water will be used as
 	    !- a source for cloud microphysics
 	    DELLAT(I,K)=(1./cp)*(DELLAH(I,K)-xl*DELLAQ(I,K))
@@ -6169,7 +6169,7 @@ endif
             XHE(I,K)=(dsubh(i,k)+DELLAH(I,K))*MBDT+HEO(I,K)
             XQ(I,K) =(dsubq(i,k)+DELLAQ(I,K)+DELLAQC(i,k))*MBDT+QO(I,K)
 
-	    !- don´t feed dellat with dellaqc if
+	    !- don't feed dellat with dellaqc if
 	    !- the detrainment of liquid water will be used as
 	    !- a source for cloud microphysics (then microphysics will
 	    !- evaporate this excess and provide the cooling at the
@@ -6325,7 +6325,7 @@ endif
             xff_shal(9)= xff_shal(7)
 !----            
 !- closure from the heat-engine principle 
-!- Rennó and Ingersoll(1996), Souza et al (1999)
+!- RennÃ³ and Ingersoll(1996), Souza et al (1999)
            !- get the averaged environment temperature between cloud base
            !- and cloud top
            tcold=0.

@@ -333,7 +333,7 @@ MODULE chem1_list
 !     Henrys law coefficient
 !     [KH298]=mole/(l atm)
 !     Referencias em http://www.mpch-mainz.mpg.de/~sander/res/henry.html
-!     * indica artigos nao encontrados nesse endereço eletronico
+!     * indica artigos nao encontrados nesse endereÃ§o eletronico
   REAL,PARAMETER,DIMENSION(nspecies) :: hstar=(/&
     1.10E-2              ,   & ! O3 - 001
     8.30E+4              ,   & ! H2O2 - 002

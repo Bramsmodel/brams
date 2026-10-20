@@ -72,7 +72,7 @@ endif
 !        .  API = 0.5*terpenes
 !        .  LIM = 0.2*terpenes
 !
-!Note (Madeleine Sánchez)
+!Note (Madeleine SÃ¡nchez)
 !Following the message above, I will use just monoterpenes 
 ! disconsidering the sesquiterpenes
 ! this might be re-evaluated!!

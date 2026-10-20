@@ -45,7 +45,7 @@ PROGRAM modis
         REAL		:: lona,lata,ya,xa
 
 ! Variables to cross fire location with land use and land cover
-! Uso do solo MCD12Q1 com resulu��o variada para cada dado de entrada
+! Uso do solo MCD12Q1 com resolução variada para cada dado de entrada
 ! MODIS E VIIRS 2 km e GOES 8 km. 0,072
 
   INTEGER, PARAMETER ::  n_cols= 3120
@@ -387,7 +387,7 @@ PROGRAM modis
 !     	IF (confidence(i) .GE. 40) THEN
 !            CONTINUE
 !        ELSE
-	    	! Calculo da  rea do pixel para o MODIS
+	    	! Calculo da área do pixel para o MODIS
 
 	      Re = 6378.137
 	      r = 7083.137
