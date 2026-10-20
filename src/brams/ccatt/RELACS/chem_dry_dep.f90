@@ -173,7 +173,7 @@ CONTAINS
 
   !=========================================================================
   SUBROUTINE alloc_aer_sedim_numb(npatch,ngrids &
-                            ,nmodes,  &
+                            ,nmodes  &
                             ,mode_alloc,on          &
                             ,mmzp,mmxp,mmyp)
 
@@ -222,11 +222,11 @@ CONTAINS
     NAER_TRANSPORTED_numb  =  naer_z
     IF(NAER_TRANSPORTED_numb == 0) RETURN
 
-    ALLOCATE (dd_sedim_numb(NAER_TRANSPORTED,ngrids))
+    ALLOCATE (dd_sedim_numb(ngrids))
     DO ng=1,ngrids
        DO ispc=1,NAER_TRANSPORTED
-          ALLOCATE(dd_sedim_numb(,ng)%v_sed_part (mmzp(ng),mmxp(ng),mmyp(ng)))
-          dd_sedim_numb(,ng)%v_sed_part = 0.
+          ALLOCATE(dd_sedim_numb(ng)%v_sed_part (mmzp(ng),mmxp(ng),mmyp(ng)))
+          dd_sedim_numb(ng)%v_sed_part = 0.
           ALLOCATE(dd_sedim_numb(ng)%r_lsl_part (mmxp(ng),mmyp(ng),npatch))
           dd_sedim_numb(ng)%r_lsl_part = 0.
           ALLOCATE(dd_sedim_numb(ng)%v_dep_part (mmxp(ng),mmyp(ng)))
