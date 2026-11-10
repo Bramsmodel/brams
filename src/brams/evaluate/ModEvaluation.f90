@@ -43,7 +43,8 @@ use ParLib  , only: & !SUbroutines for parallel comunications
     parf_send_noblock_real, &
     parf_get_noblock_real , &
     parf_wait_any_nostatus, &
-    parf_wait_all_nostatus
+    parf_wait_all_nostatus, &
+    parf_wait_nostatus
 
 use node_mod, only:  &
        mynum, &
@@ -286,6 +287,7 @@ subroutine comunicateStatistic(soma,somaQ)
     tag=1000+mchnum
     !write(40+mchnum,fmt='(3(A,I5.5,1X))') 'I am ', mchnum,'send to ',master_num, 'with tag=',tag; call flush(6)
     call parf_send_noblock_real(sendMess,sizeMess,master_num,tag,reqSend)
+    call parf_wait_nostatus(reqSend)
   endif
 
 end subroutine comunicateStatistic

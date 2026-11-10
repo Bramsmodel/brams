@@ -71,7 +71,8 @@ module ModSched
        parf_send_noblock_real, &
        parf_get_noblock_real , &
        parf_wait_any_nostatus, &
-       parf_wait_all_nostatus
+       parf_wait_all_nostatus, &
+       parf_wait_nostatus
 
   use node_mod, only: &
        mynum, &        ! INTENT(IN)
@@ -891,6 +892,7 @@ contains
     else
        !print *, 'Sou o ',mynum,' enviando ',cfl_max_sum; call flush()
        call parf_send_noblock_real((/cfl_max_sum/),1,0,mynum-1+10000,reqsend)
+       call parf_wait_nostatus(reqsend)
        !print *,mynum,mynum-1+10000; call flush(6)
     endif
     if(mynum==1) then
